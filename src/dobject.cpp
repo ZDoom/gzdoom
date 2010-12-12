@@ -540,11 +540,6 @@ void DObject::SerializeUserVars(FArchive &arc)
 	DWORD count, j;
 	int *varloc;
 
-	if (SaveVersion < 1933)
-	{
-		return;
-	}
-
 	symt = &GetClass()->Symbols;
 
 	if (arc.IsStoring())

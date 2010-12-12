@@ -291,7 +291,11 @@ template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
 }
 
 struct FStrifeDialogueNode;
+struct FSwitchDef;
+struct FDoorAnimation;
 template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node);
+template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &sw);
+template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &da);
 
 
 

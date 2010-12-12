@@ -75,7 +75,7 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 1848
+#define MINSAVEVER 3030
 
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // If we don't know the current revision write something very high to ensure that
@@ -85,8 +85,11 @@
 static inline const char *MakeSaveSig()
 {
 	static char foo[] = { 'Z','D','O','O','M','S','A','V','E',
+#if SAVEVER > 99999
+		'0' + (SAVEVER / 100000),
+#endif
 #if SAVEVER > 9999
-		'0' + (SAVEVER / 10000),
+		'0' + ((SAVEVER / 10000) % 10),
 #endif
 #if SAVEVER > 999
 		'0' + ((SAVEVER / 1000) % 10),

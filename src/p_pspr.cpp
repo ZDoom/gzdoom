@@ -861,15 +861,7 @@ void P_MovePsprites (player_t *player)
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)
 {
-	arc << def.state << def.tics << def.sx << def.sy;
-	if (SaveVersion >= 2295)
-	{
-		arc << def.sprite << def.frame;
-	}
-	else
-	{
-		def.sprite = def.state->sprite;
-		def.frame = def.state->Frame;
-	}
+	arc << def.state << def.tics << def.sx << def.sy
+		<< def.sprite << def.frame;
 	return arc;
 }

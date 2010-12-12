@@ -638,14 +638,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec)
 void DAnimatedDoor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-
-	FTextureID basetex;
 	
-	if (arc.IsStoring()) 
-	{
-		basetex = m_DoorAnim->BaseTexture;
-	}
-
 	arc << m_Line1 << m_Line2
 		<< m_Frame
 		<< m_Timer
@@ -653,20 +646,8 @@ void DAnimatedDoor::Serialize (FArchive &arc)
 		<< m_Status
 		<< m_Speed
 		<< m_Delay
-		<< basetex;
-	if (SaveVersion < 2336)
-	{
-		m_SetBlocking1 = m_SetBlocking2 = true;
-	}
-	else
-	{
-		arc << m_SetBlocking1 << m_SetBlocking2;
-	}
-
-	if (arc.IsLoading())
-	{
-		m_DoorAnim = TexMan.FindAnimatedDoor (basetex);
-	}
+		<< m_DoorAnim
+		<< m_SetBlocking1 << m_SetBlocking2;
 }
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)

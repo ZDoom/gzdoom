@@ -63,8 +63,6 @@ void FTextureManager::InitSwitchList ()
 {
 	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	int lump = Wads.CheckNumForName ("SWITCHES");
-	FSwitchDef **origMap;
-	int i, j;
 
 	if (lump != -1)
 	{
@@ -87,46 +85,19 @@ void FTextureManager::InitSwitchList ()
 			{
 				def1 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
-				def1->PreTexture = def2->u[0].Texture = CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
-				def2->PreTexture = def1->u[0].Texture = CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
+				def1->PreTexture = def2->frames[0].Texture = CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
+				def2->PreTexture = def1->frames[0].Texture = CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
 				def1->Sound = def2->Sound = 0;
 				def1->NumFrames = def2->NumFrames = 1;
-				def1->u[0].Time = def2->u[0].Time = 0;
-				def2->PairIndex = AddSwitchDef (def1);
-				def1->PairIndex = AddSwitchDef (def2);
+				def1->frames[0].TimeMin = def2->frames[0].TimeMin = 0;
+				def1->frames[0].TimeRnd = def2->frames[0].TimeRnd = 0;
+				AddSwitchPair(def1, def2);
 			}
 		}
 	}
 
 	mSwitchDefs.ShrinkToFit ();
-
-	// Sort mSwitchDefs for quick searching
-	origMap = new FSwitchDef *[mSwitchDefs.Size ()];
-	for (i = 0; i < (int)mSwitchDefs.Size (); i++)
-	{
-		origMap[i] = mSwitchDefs[i];
-	}
-
-	qsort (&mSwitchDefs[0], i, sizeof(FSwitchDef *), SortSwitchDefs);
-
-	// Correct the PairIndex of each switch def, since the sorting broke them
-	for (i = (int)(mSwitchDefs.Size () - 1); i >= 0; i--)
-	{
-		FSwitchDef *def = mSwitchDefs[i];
-		if (def->PairIndex != 65535)
-		{
-			for (j = (int)(mSwitchDefs.Size () - 1); j >= 0; j--)
-			{
-				if (mSwitchDefs[j] == origMap[def->PairIndex])
-				{
-					def->PairIndex = (WORD)j;
-					break;
-				}
-			}
-		}
-	}
-
-	delete[] origMap;
+	qsort (&mSwitchDefs[0], mSwitchDefs.Size(), sizeof(FSwitchDef *), SortSwitchDefs);
 }
 
 //==========================================================================
@@ -228,18 +199,18 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 		def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 		def2->Sound = def1->Sound;
 		def2->NumFrames = 1;
-		def2->u[0].Time = 0;
-		def2->u[0].Texture = picnum;
+		def2->frames[0].TimeMin = 0;
+		def2->frames[0].TimeRnd = 0;
+		def2->frames[0].Texture = picnum;
 	}
 
 	def1->PreTexture = picnum;
-	def2->PreTexture = def1->u[def1->NumFrames-1].Texture;
+	def2->PreTexture = def1->frames[def1->NumFrames-1].Texture;
 	if (def1->PreTexture == def2->PreTexture)
 	{
 		sc.ScriptError ("The on state for switch %s must end with a texture other than %s", picname.GetChars(), picname.GetChars());
 	}
-	def2->PairIndex = AddSwitchDef (def1);
-	def1->PairIndex = AddSwitchDef (def2);
+	AddSwitchPair(def1, def2);
 	def1->QuestPanel = def2->QuestPanel = quest;
 }
 
@@ -286,7 +257,8 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 			if (sc.Compare ("tics"))
 			{
 				sc.MustGetNumber ();
-				thisframe.Time = sc.Number & 65535;
+				thisframe.TimeMin = sc.Number & 65535;
+				thisframe.TimeRnd = 0;
 			}
 			else if (sc.Compare ("rand"))
 			{
@@ -300,11 +272,13 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				{
 					swapvalues (min, max);
 				}
-				thisframe.Time = ((max - min + 1) << 16) | min;
+				thisframe.TimeMin = min;
+				thisframe.TimeRnd = (max - min + 1);
 			}
 			else
 			{
-			    thisframe.Time = 0;     // Shush, GCC.
+			    thisframe.TimeMin = 0;     // Shush, GCC.
+				thisframe.TimeRnd = 0;
 				sc.ScriptError ("Must specify a duration for switch frame");
 			}
 			frames.Push(thisframe);
@@ -324,11 +298,11 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 		return NULL;
 	}
 
-	def = (FSwitchDef *)M_Malloc (myoffsetof (FSwitchDef, u[0]) + frames.Size()*sizeof(frames[0]));
+	def = (FSwitchDef *)M_Malloc (myoffsetof (FSwitchDef, frames[0]) + frames.Size()*sizeof(frames[0]));
 	def->Sound = sound;
 	def->NumFrames = frames.Size();
-	memcpy (&def->u[0], &frames[0], frames.Size() * sizeof(frames[0]));
-	def->PairIndex = 65535;
+	memcpy (&def->frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
+	def->PairDef = NULL;
 	return def;
 }
 
@@ -338,20 +312,54 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 //
 //==========================================================================
 
-WORD FTextureManager::AddSwitchDef (FSwitchDef *def)
+void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 {
 	unsigned int i;
+	FSwitchDef *sw1 = NULL;
+	FSwitchDef *sw2 = NULL;
+	unsigned int index1 = -1, index2 = -1;
 
 	for (i = mSwitchDefs.Size (); i-- > 0; )
 	{
-		if (mSwitchDefs[i]->PreTexture == def->PreTexture)
+		if (mSwitchDefs[i]->PreTexture == def1->PreTexture)
 		{
-			M_Free (mSwitchDefs[i]);
-			mSwitchDefs[i] = def;
-			return (WORD)i;
+			index1 = i;
+			sw1 = mSwitchDefs[index1];
+			if (index2 != -1) break;
+		}
+		if (mSwitchDefs[i]->PreTexture == def2->PreTexture)
+		{
+			index2 = i;
+			sw2 = mSwitchDefs[index2];
+			if (index1 != -1) break;
 		}
 	}
-	return (WORD)mSwitchDefs.Push (def);
+
+	def1->PairDef = def2;
+	def2->PairDef = def1;
+
+	if (sw1 != NULL && sw2 != NULL && sw1->PairDef == sw2 && sw2->PairDef == sw1)
+	{
+		//We are replacing an existing pair so we can safely delete the old definitions
+		M_Free(sw1);
+		M_Free(sw2);
+		mSwitchDefs[index1] = def1;
+		mSwitchDefs[index2] = def2;
+	}
+	else
+	{
+		// This new switch will not or only partially replace an existing pair.
+		// We should not break up an old pair if the new one only redefined one
+		// of the two textures. These paired definitions will only be used
+		// as the return animation so their names don't matter. Better clear them to be safe.
+		if (sw1 != NULL) sw1->PreTexture.SetInvalid();
+		if (sw2 != NULL) sw2->PreTexture.SetInvalid();
+		sw1 = NULL;
+		sw2 = NULL;
+		unsigned int pos = mSwitchDefs.Reserve(2);
+		mSwitchDefs[pos] = def1;
+		mSwitchDefs[pos+1] = def2;
+	}
 }
 
 //==========================================================================
@@ -360,7 +368,7 @@ WORD FTextureManager::AddSwitchDef (FSwitchDef *def)
 //
 //==========================================================================
 
-int FTextureManager::FindSwitch (FTextureID texture)
+FSwitchDef *FTextureManager::FindSwitch (FTextureID texture)
 {
 	int mid, low, high;
 
@@ -373,7 +381,7 @@ int FTextureManager::FindSwitch (FTextureID texture)
 			mid = (high + low) / 2;
 			if (mSwitchDefs[mid]->PreTexture == texture)
 			{
-				return mid;
+				return mSwitchDefs[mid];
 			}
 			else if (texture < mSwitchDefs[mid]->PreTexture)
 			{
@@ -385,6 +393,27 @@ int FTextureManager::FindSwitch (FTextureID texture)
 			}
 		} while (low <= high);
 	}
-	return -1;
+	return NULL;
+}
+
+//==========================================================================
+//
+// operator<<
+//
+//==========================================================================
+
+template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &Switch)
+{
+	if (arc.IsStoring())
+	{
+		arc << Switch->PreTexture;
+	}
+	else
+	{
+		FTextureID tex;
+		arc << tex;
+		Switch = TexMan.FindSwitch(tex);
+	}
+	return arc;
 }
 

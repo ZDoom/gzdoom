@@ -432,10 +432,6 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< MorphWeapon
 		<< DamageFade
 		<< PlayerFlags;
-	if (SaveVersion < 2435)
-	{
-		DamageFade.a = 255;
-	}
 }
 
 //===========================================================================
@@ -2554,33 +2550,9 @@ void player_t::Serialize (FArchive &arc)
 		<< poisoncount
 		<< poisoner
 		<< attacker
-		<< extralight;
-	if (SaveVersion < 1858)
-	{
-		int fixedmap;
-		arc << fixedmap;
-		fixedcolormap = NOFIXEDCOLORMAP;
-		fixedlightlevel = -1;
-		if (fixedmap >= NUMCOLORMAPS)
-		{
-			fixedcolormap = fixedmap - NUMCOLORMAPS;
-		}
-		else if (fixedmap > 0)
-		{
-			fixedlightlevel = fixedmap;
-		}
-	}
-	else if (SaveVersion < 1893)
-	{
-		int ll;
-		arc	<< fixedcolormap << ll;
-		fixedlightlevel = ll;
-	}
-	else
-	{
-		arc	<< fixedcolormap << fixedlightlevel;
-	}
-	arc << morphTics
+		<< extralight
+		<< fixedcolormap << fixedlightlevel
+		<< morphTics
 		<< MorphedPlayerClass
 		<< MorphStyle
 		<< MorphExitFlash

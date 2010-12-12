@@ -2016,10 +2016,6 @@ void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bActive << NextCheck;
-	if (SaveVersion < 2798)
-	{
-		NextCheck += level.maptime;
-	}
 }
 
 //==========================================================================

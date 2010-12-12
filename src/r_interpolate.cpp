@@ -826,16 +826,7 @@ void DPolyobjInterpolation::Serialize(FArchive &arc)
 	arc << po << oldverts;
 	poly = polyobjs + po;
 
-	if (SaveVersion >= 2448) 
-	{
-		arc << oldcx << oldcy;
-	}
-	else
-	{
-		// This will glitch if an old savegame is loaded but at least it'll allow loading it.
-		oldcx = poly->CenterSpot.x;
-		oldcy = poly->CenterSpot.y;
-	}
+	arc << oldcx << oldcy;
 	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
 }
 

@@ -903,3 +903,24 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 	}
 }
 
+//==========================================================================
+//
+// operator<<
+//
+//==========================================================================
+
+template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &Doorani)
+{
+	if (arc.IsStoring())
+	{
+		arc << Doorani->BaseTexture;
+	}
+	else
+	{
+		FTextureID tex;
+		arc << tex;
+		Doorani = TexMan.FindAnimatedDoor(tex);
+	}
+	return arc;
+}
+

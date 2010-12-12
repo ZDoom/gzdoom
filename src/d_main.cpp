@@ -2226,6 +2226,7 @@ void D_DoomMain (void)
 
 	Printf ("P_Init: Init Playloop state.\n");
 	StartScreen->LoadingStatus ("Init game engine", 0x3f);
+	AM_StaticInit();
 	P_Init ();
 
 	P_SetupWeapons_ntohton();

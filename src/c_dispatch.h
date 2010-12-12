@@ -58,6 +58,7 @@ int C_ExecFile (const char *cmd, bool usePullin);
 void C_ArchiveAliases (FConfigFile *f);
 
 void C_SetAlias (const char *name, const char *cmd);
+void C_ClearAliases ();
 
 // build a single string out of multiple strings
 FString BuildString (int argc, char **argv);

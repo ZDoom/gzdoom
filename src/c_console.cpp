@@ -94,7 +94,7 @@ extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
 int			ConCols, PhysRows;
-bool		vidactive = false, gotconback = false;
+bool		vidactive = false;
 bool		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 int			CursorTicker;
@@ -232,7 +232,7 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 static void maybedrawnow (bool tick, bool force)
 {
 	// FIXME: Does not work right with hw2d
-	if (ConsoleDrawing || !gotconback || screen == NULL || screen->IsLocked () || screen->Accel2D)
+	if (ConsoleDrawing || screen == NULL || screen->IsLocked () || screen->Accel2D || ConFont == NULL)
 	{
 		return;
 	}
@@ -297,32 +297,28 @@ void DequeueConsoleText ()
 	EnqueuedTextTail = &EnqueuedText;
 }
 
+void C_InitConback()
+{
+	conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
+
+	if (!conback.isValid())
+	{
+		conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
+		conshade = MAKEARGB(175,0,0,0);
+		conline = true;
+	}
+	else
+	{
+		conshade = 0;
+		conline = false;
+	}
+}
+
 void C_InitConsole (int width, int height, bool ingame)
 {
-	if ( (vidactive = ingame) )
-	{
-		if (!gotconback)
-		{
-			conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
-
-			if (!conback.isValid())
-			{
-				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
-				conshade = MAKEARGB(175,0,0,0);
-				conline = true;
-			}
-			else
-			{
-				conshade = 0;
-				conline = false;
-			}
-
-			gotconback = true;
-		}
-	}
-
 	int cwidth, cheight;
 
+	vidactive = ingame;
 	if (ConFont != NULL)
 	{
 		cwidth = ConFont->GetCharWidth ('M');

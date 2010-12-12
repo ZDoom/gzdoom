@@ -143,6 +143,9 @@ void ParseCompatibility()
 	int i, x;
 	unsigned int j;
 
+	BCompatMap.Clear();
+	CompatParams.Clear();
+
 	// The contents of this file are not cumulative, as it should not
 	// be present in user-distributed maps.
 	FScanner sc(Wads.GetNumForFullName("compatibility.txt"));

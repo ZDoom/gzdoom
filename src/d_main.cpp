@@ -926,6 +926,7 @@ void D_DoomLoop ()
 
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
+	Page = Advisory = NULL;
 
 	vid_cursor.Callback();
 
@@ -1818,20 +1819,12 @@ static void SetMapxxFlag()
 
 //==========================================================================
 //
-// D_DoomMain
+// Initialize
 //
 //==========================================================================
 
-void D_DoomMain (void)
+static void D_DoomInit()
 {
-	int p, flags;
-	const char *v;
-	const char *wad;
-	DArgs *execFiles;
-	TArray<FString> pwads;
-	FString *args;
-	int argcount;
-
 	// Set the FPU precision to 53 significant bits. This is the default
 	// for Visual C++, but not for GCC, so some slight math variances
 	// might crop up if we leave it alone.
@@ -1859,7 +1852,6 @@ void D_DoomMain (void)
 	Args->CollectFiles("-playdemo", ".lmp");
 	Args->CollectFiles("-file", NULL);	// anything left goes after -file
 
-	PClass::StaticInit ();
 	atterm (C_DeinitConsole);
 
 	gamestate = GS_STARTUP;
@@ -1872,30 +1864,16 @@ void D_DoomMain (void)
 	Printf ("M_LoadDefaults: Load system defaults.\n");
 	M_LoadDefaults ();			// load before initing other systems
 
-	// [RH] Make sure zdoom.pk3 is always loaded,
-	// as it contains magic stuff we need.
+}
 
-	wad = BaseFileSearch (BASEWAD, NULL, true);
-	if (wad == NULL)
-	{
-		I_FatalError ("Cannot find " BASEWAD);
-	}
-	FString basewad = wad;
+//==========================================================================
+//
+// AddAutoloadFiles
+//
+//==========================================================================
 
-	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
-	// the IWAD is known.
-
-	GetCmdLineFiles(pwads);
-	FString iwad = CheckGameInfo(pwads);
-
-	FIWadManager *iwad_man = new FIWadManager;
-	const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
-	gameinfo.gametype = iwad_info->gametype;
-	gameinfo.flags = iwad_info->flags;
-	gameinfo.ConfigName = iwad_info->Configname;
-
-	GameConfig->DoGameSetup (gameinfo.ConfigName);
-
+static void AddAutoloadFiles(const char *gamesection)
+{
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
 		FString file;
@@ -1905,7 +1883,7 @@ void D_DoomMain (void)
 		// voices. I never got around to writing the utility to do it, though.
 		// And I probably never will now. But I know at least one person uses
 		// it for something else, so this gets to stay here.
-		wad = BaseFileSearch ("zvox.wad", NULL);
+		const char *wad = BaseFileSearch ("zvox.wad", NULL);
 		if (wad)
 			D_AddFile (allwads, wad);
 	
@@ -1932,66 +1910,28 @@ void D_DoomMain (void)
 		D_AddConfigWads (allwads, file);
 
 		// Add IWAD-specific wads
-		if (iwad_info->Autoname != NULL)
+		if (gamesection != NULL)
 		{
-			file = iwad_info->Autoname;
+			file = gamesection;
 			file += ".Autoload";
 			D_AddConfigWads(allwads, file);
 		}
 	}
+}
 
-	// Run automatically executed files
-	execFiles = new DArgs;
-	GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
-	D_MultiExec (execFiles, true);
+//==========================================================================
+//
+// CheckCmdLine
+//
+//==========================================================================
 
-	// Run .cfg files at the start of the command line.
-	execFiles = Args->GatherFiles ("-exec");
-	D_MultiExec (execFiles, true);
+static void CheckCmdLine()
+{
+	int flags = dmflags;
+	int p;
+	const char *v;
 
-	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
-
-	CopyFiles(allwads, pwads);
-
-	// Since this function will never leave we must delete this array here manually.
-	pwads.Clear();
-	pwads.ShrinkToFit();
-
-	Printf ("W_Init: Init WADfiles.\n");
-	Wads.InitMultipleFiles (allwads);
-	allwads.Clear();
-	allwads.ShrinkToFit();
-	SetMapxxFlag();
-	
-	// [RH] Initialize localizable strings.
-	GStrings.LoadStrings (false);
-
-	V_InitFontColors ();
-
-	// [RH] Moved these up here so that we can do most of our
-	//		startup output in a fullscreen console.
-
-	CT_Init ();
-
-	Printf ("I_Init: Setting up machine state.\n");
-	I_Init ();
-
-	Printf ("V_Init: allocate screen.\n");
-	V_Init ();
-
-	// Base systems have been inited; enable cvar callbacks
-	FBaseCVar::EnableCallbacks ();
-
-	Printf ("S_Init: Setting up sound.\n");
-	S_Init ();
-
-	Printf ("ST_Init: Init startup screen.\n");
-	StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
-
-	ParseCompatibility();
-
-	Printf ("P_Init: Checking cmd-line parameters...\n");
-	flags = dmflags;
+	Printf ("Checking cmd-line parameters...\n");
 	if (Args->CheckParm ("-nomonsters"))	flags |= DF_NO_MONSTERS;
 	if (Args->CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
 	if (Args->CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
@@ -2126,6 +2066,104 @@ void D_DoomMain (void)
 		temp.Format ("Warp to map %s, Skill %d ", startmap.GetChars(), gameskill + 1);
 		StartScreen->AppendStatusLine(temp);
 	}
+}
+
+//==========================================================================
+//
+// D_DoomMain
+//
+//==========================================================================
+
+void D_DoomMain (void)
+{
+	int p;
+	const char *v;
+	const char *wad;
+	DArgs *execFiles;
+	TArray<FString> pwads;
+	FString *args;
+	int argcount;
+
+	D_DoomInit();
+	PClass::StaticInit ();
+
+	// [RH] Make sure zdoom.pk3 is always loaded,
+	// as it contains magic stuff we need.
+
+	wad = BaseFileSearch (BASEWAD, NULL, true);
+	if (wad == NULL)
+	{
+		I_FatalError ("Cannot find " BASEWAD);
+	}
+	FString basewad = wad;
+
+	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
+	// the IWAD is known.
+
+	GetCmdLineFiles(pwads);
+	FString iwad = CheckGameInfo(pwads);
+
+	FIWadManager *iwad_man = new FIWadManager;
+	const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
+	gameinfo.gametype = iwad_info->gametype;
+	gameinfo.flags = iwad_info->flags;
+	gameinfo.ConfigName = iwad_info->Configname;
+
+	GameConfig->DoGameSetup (gameinfo.ConfigName);
+
+	AddAutoloadFiles(iwad_info->Autoname);
+
+	// Run automatically executed files
+	execFiles = new DArgs;
+	GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
+	D_MultiExec (execFiles, true);
+
+	// Run .cfg files at the start of the command line.
+	execFiles = Args->GatherFiles ("-exec");
+	D_MultiExec (execFiles, true);
+
+	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
+
+	CopyFiles(allwads, pwads);
+
+	// Since this function will never leave we must delete this array here manually.
+	pwads.Clear();
+	pwads.ShrinkToFit();
+
+	Printf ("W_Init: Init WADfiles.\n");
+	Wads.InitMultipleFiles (allwads);
+	allwads.Clear();
+	allwads.ShrinkToFit();
+	SetMapxxFlag();
+	
+	// [RH] Initialize localizable strings.
+	GStrings.LoadStrings (false);
+
+	V_InitFontColors ();
+
+	// [RH] Moved these up here so that we can do most of our
+	//		startup output in a fullscreen console.
+
+	CT_Init ();
+
+	Printf ("I_Init: Setting up machine state.\n");
+	I_Init ();
+
+	Printf ("V_Init: allocate screen.\n");
+	V_Init ();
+
+	// Base systems have been inited; enable cvar callbacks
+	FBaseCVar::EnableCallbacks ();
+
+	Printf ("S_Init: Setting up sound.\n");
+	S_Init ();
+
+	Printf ("ST_Init: Init startup screen.\n");
+	StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+
+	ParseCompatibility();
+
+	CheckCmdLine();
 
 	// [RH] Load sound environments
 	S_ParseReverbDef ();
@@ -2141,6 +2179,7 @@ void D_DoomMain (void)
 
 	Printf ("Texman.Init: Init texture manager.\n");
 	TexMan.Init();
+	C_InitConback();
 
 	// [CW] Parse any TEAMINFO lumps.
 	Printf ("ParseTeamInfo: Load team definitions.\n");
@@ -2199,20 +2238,8 @@ void D_DoomMain (void)
 
 	FActorInfo::StaticSetActorNums ();
 
-	// [RH] User-configurable startup strings. Because BOOM does.
-	static const char *startupString[5] = {
-		"STARTUP1", "STARTUP2", "STARTUP3", "STARTUP4", "STARTUP5"
-	};
-	for (p = 0; p < 5; ++p)
-	{
-		const char *str = GStrings[startupString[p]];
-		if (str != NULL && str[0] != '\0')
-		{
-			Printf ("%s\n", str);
-		}
-	}
-
 	//Added by MC:
+	bglobal.getspawned.Clear();
 	argcount = Args->CheckParmList("-bots", &args);
 	for (p = 0; p < argcount; ++p)
 	{
@@ -2233,6 +2260,19 @@ void D_DoomMain (void)
 
 	//SBarInfo support.
 	SBarInfo::Load();
+
+	// [RH] User-configurable startup strings. Because BOOM does.
+	static const char *startupString[5] = {
+		"STARTUP1", "STARTUP2", "STARTUP3", "STARTUP4", "STARTUP5"
+	};
+	for (p = 0; p < 5; ++p)
+	{
+		const char *str = GStrings[startupString[p]];
+		if (str != NULL && str[0] != '\0')
+		{
+			Printf ("%s\n", str);
+		}
+	}
 
 	Printf ("D_CheckNetGame: Checking network game status.\n");
 	StartScreen->LoadingStatus ("Checking network game status.", 0x3f);

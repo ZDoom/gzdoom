@@ -1211,6 +1211,30 @@ void C_ArchiveAliases (FConfigFile *f)
 	}
 }
 
+void C_ClearAliases ()
+{
+	int bucket;
+	FConsoleCommand *alias;
+
+	for (bucket = 0; bucket < FConsoleCommand::HASH_SIZE; bucket++)
+	{
+		alias = Commands[bucket];
+		while (alias)
+		{
+			FConsoleCommand *next = alias->m_Next;
+			if (alias->IsAlias())
+				static_cast<FConsoleAlias *>(alias)->SafeDelete();
+			alias = next;
+		}
+	}
+}
+
+CCMD(clearaliases)
+{
+	C_ClearAliases();
+}
+
+
 // This is called only by the ini parser.
 void C_SetAlias (const char *name, const char *cmd)
 {

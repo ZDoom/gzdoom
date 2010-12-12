@@ -346,7 +346,7 @@ void DActiveButton::Tick ()
 				def = TexMan.GetSwitch(def->PairIndex);
 				m_Frame = 65535;
 				S_Sound (m_X, m_Y, 0, CHAN_VOICE|CHAN_LISTENERZ,
-					def->Sound != 0 ? def->Sound : FSoundID("switches/normbutn"),
+					def->Sound != 0 ? FSoundID(def->Sound) : FSoundID("switches/normbutn"),
 					1, ATTN_STATIC);
 				bFlippable = false;
 			}

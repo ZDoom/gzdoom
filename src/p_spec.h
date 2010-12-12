@@ -595,23 +595,12 @@ inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
 	return arc;
 }
 
-struct FDoorAnimation
-{
-	FTextureID BaseTexture;
-	FTextureID *TextureFrames;
-	int NumTextureFrames;
-	FName OpenSound;
-	FName CloseSound;
-};
-
-void P_ParseAnimatedDoor (FScanner &sc);
-
 class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)
 public:
 	DAnimatedDoor (sector_t *sector);
-	DAnimatedDoor (sector_t *sector, line_t *line, int speed, int delay);
+	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -620,7 +609,7 @@ public:
 protected:
 	line_t *m_Line1, *m_Line2;
 	int m_Frame;
-	int m_WhichDoorIndex;
+	FDoorAnimation *m_DoorAnim;
 	int m_Timer;
 	fixed_t m_BotDist;
 	int m_Status;

@@ -282,7 +282,7 @@ void FTextureManager::InitAnimDefs ()
 			}
 			else if (sc.Compare ("animatedDoor"))
 			{
-				P_ParseAnimatedDoor (sc);
+				ParseAnimatedDoor (sc);
 			}
 			else if (sc.Compare("skyoffset"))
 			{
@@ -701,6 +701,93 @@ void FTextureManager::FixAnimations ()
 
 //==========================================================================
 //
+// ParseAnimatedDoor
+//
+// Parses an animated door definition
+//
+//==========================================================================
+
+void FTextureManager::ParseAnimatedDoor(FScanner &sc)
+{
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	FDoorAnimation anim;
+	TArray<FTextureID> frames;
+	bool error = false;
+	FTextureID v;
+
+	sc.MustGetString();
+	anim.BaseTexture = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+
+	if (!anim.BaseTexture.Exists())
+	{
+		error = true;
+	}
+
+	while (sc.GetString ())
+	{
+		if (sc.Compare ("opensound"))
+		{
+			sc.MustGetString ();
+			anim.OpenSound = sc.String;
+		}
+		else if (sc.Compare ("closesound"))
+		{
+			sc.MustGetString ();
+			anim.CloseSound = sc.String;
+		}
+		else if (sc.Compare ("pic"))
+		{
+			sc.MustGetString ();
+			if (IsNum (sc.String))
+			{
+				v = anim.BaseTexture + (atoi(sc.String) - 1);
+			}
+			else
+			{
+				v = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+				if (!v.Exists() && anim.BaseTexture.Exists() && !error)
+				{
+					sc.ScriptError ("Unknown texture %s", sc.String);
+				}
+				frames.Push (v);
+			}
+		}
+		else
+		{
+			sc.UnGet ();
+			break;
+		}
+	}
+	if (!error)
+	{
+		anim.TextureFrames = new FTextureID[frames.Size()];
+		memcpy (anim.TextureFrames, &frames[0], sizeof(FTextureID) * frames.Size());
+		anim.NumTextureFrames = frames.Size();
+		mAnimatedDoors.Push (anim);
+	}
+}
+
+//==========================================================================
+//
+// Return index into "DoorAnimations" array for which door type to use
+//
+//==========================================================================
+
+FDoorAnimation *FTextureManager::FindAnimatedDoor (FTextureID picnum)
+{
+	unsigned int i;
+
+	for (i = 0; i < mAnimatedDoors.Size(); ++i)
+	{
+		if (picnum == mAnimatedDoors[i].BaseTexture)
+			return &mAnimatedDoors[i];
+	}
+
+	return NULL;
+}
+
+//==========================================================================
+//
 // FAnimDef :: SetSwitchTime
 //
 // Determines when to switch to the next frame.
@@ -815,3 +902,4 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 		}
 	}
 }
+

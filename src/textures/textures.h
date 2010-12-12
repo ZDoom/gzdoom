@@ -96,6 +96,16 @@ struct FSwitchDef
 	} u[1];
 };
 
+struct FDoorAnimation
+{
+	FTextureID BaseTexture;
+	FTextureID *TextureFrames;
+	int NumTextureFrames;
+	FName OpenSound;
+	FName CloseSound;
+};
+
+
 
 // Patches.
 // A patch holds one or more columns.
@@ -393,6 +403,7 @@ public:
 		if (index < mSwitchDefs.Size()) return mSwitchDefs[index];
 		else return NULL;
 	}
+	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
 
 private:
 
@@ -422,6 +433,7 @@ private:
 	void ParseTime (FScanner &sc, DWORD &min, DWORD &max);
 	FTexture *Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
+	void ParseAnimatedDoor(FScanner &sc);
 
 	// Switches
 
@@ -444,6 +456,7 @@ private:
 
 	TArray<FAnimDef *> mAnimations;
 	TArray<FSwitchDef *> mSwitchDefs;
+	TArray<FDoorAnimation> mAnimatedDoors;
 	TArray<BYTE *> BuildTileFiles;
 };
 

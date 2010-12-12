@@ -114,6 +114,15 @@ void FTextureManager::DeleteAll()
 	}
 	mSwitchDefs.Clear();
 
+	for (unsigned i = 0; i < mAnimatedDoors.Size(); i++)
+	{
+		if (mAnimatedDoors[i].TextureFrames != NULL)
+		{
+			delete mAnimatedDoors[i].TextureFrames;
+			mAnimatedDoors[i].TextureFrames = NULL;
+		}
+	}
+	mAnimatedDoors.Clear();
 
 	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
 	{

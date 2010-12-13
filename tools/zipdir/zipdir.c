@@ -610,6 +610,7 @@ dir_tree_t *add_dirs(char **argv)
 		{
 			// Skip hidden directories. (Prevents SVN bookkeeping
 			// info from being included.)
+			// [BL] Also skip backup files.
 			fts_set(fts, ent, FTS_SKIP);
 		}
 		if (ent->fts_info == FTS_D && ent->fts_level == 0)
@@ -626,6 +627,11 @@ dir_tree_t *add_dirs(char **argv)
 		if (ent->fts_info != FTS_F)
 		{
 			// We're only interested in remembering files.
+			continue;
+		}
+		else if(ent->fts_name[strlen(ent->fts_name)-1] == '~')
+		{
+			// Don't remember backup files.
 			continue;
 		}
 		file = alloc_file_entry("", ent->fts_path, ent->fts_statp->st_mtime);

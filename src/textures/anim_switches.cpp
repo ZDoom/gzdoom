@@ -325,13 +325,13 @@ void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 		{
 			index1 = i;
 			sw1 = mSwitchDefs[index1];
-			if (index2 != -1) break;
+			if (index2 != -1u) break;
 		}
 		if (mSwitchDefs[i]->PreTexture == def2->PreTexture)
 		{
 			index2 = i;
 			sw2 = mSwitchDefs[index2];
-			if (index1 != -1) break;
+			if (index1 != -1u) break;
 		}
 	}
 

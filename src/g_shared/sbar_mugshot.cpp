@@ -335,6 +335,7 @@ bool FMugShot::SetState(const char *state_name, bool wait_till_done, bool reset)
 //
 //===========================================================================
 
+CVAR(Bool,st_oldouch,false,CVAR_ARCHIVE)
 int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 {
 	int 		i;
@@ -357,9 +358,10 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 			}
 		}
 
+		bool ouch = (!st_oldouch && FaceHealth - player->health > ST_MUCHPAIN) || (st_oldouch && player->health - FaceHealth > ST_MUCHPAIN);
 		if (player->damagecount && 
 			// Now go in if pain is disabled but we think ouch will be shown (and ouch is not disabled!)
-			(!(stateflags & DISABLEPAIN) || (((FaceHealth != -1 && FaceHealth - player->health > ST_MUCHPAIN) || bOuchActive) && !(stateflags & DISABLEOUCH))))
+			(!(stateflags & DISABLEPAIN) || (((FaceHealth != -1 && ouch) || bOuchActive) && !(stateflags & DISABLEOUCH))))
 		{
 			int damage_angle = 1;
 			if (player->attacker && player->attacker != player->mo)
@@ -391,7 +393,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 				}
 			}
 			bool use_ouch = false;
-			if (((FaceHealth != -1 && FaceHealth - player->health > ST_MUCHPAIN) || bOuchActive) && !(stateflags & DISABLEOUCH))
+			if (((FaceHealth != -1 && ouch) || bOuchActive) && !(stateflags & DISABLEOUCH))
 			{
 				use_ouch = true;
 				full_state_name = "ouch.";
@@ -418,7 +420,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 			else
 			{
 				bool use_ouch = false;
-				if (((FaceHealth != -1 && player->health - FaceHealth > ST_MUCHPAIN) || bOuchActive) && !(stateflags & DISABLEOUCH))
+				if (((FaceHealth != -1 && ouch) || bOuchActive) && !(stateflags & DISABLEOUCH))
 				{
 					use_ouch = true;
 					full_state_name = "ouch.";

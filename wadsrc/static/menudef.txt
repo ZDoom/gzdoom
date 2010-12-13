@@ -736,6 +736,7 @@ OptionMenu "HUDOptions"
 	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
 	Option "Nametag color",				"nametagcolor", "TextColors", "displaynametags"
 	Option "Stretch status bar",		"st_scale", "OnOff"
+	Option "Use old ouch mug shot formula",	"st_oldouch", "OnOff"
 }
 	
 //-------------------------------------------------------------------------------------------

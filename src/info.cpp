@@ -101,6 +101,7 @@ int GetSpriteIndex(const char * spritename)
 
 void FActorInfo::StaticInit ()
 {
+	sprites.Clear();
 	if (sprites.Size() == 0)
 	{
 		spritedef_t temp;

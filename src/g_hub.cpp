@@ -76,7 +76,7 @@ struct FHubInfo
 };
 
 
-TArray<FHubInfo> hubdata;
+static TArray<FHubInfo> hubdata;
 
 void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 {
@@ -181,4 +181,9 @@ void G_ReadHubInfo (PNGHandle *png)
 		FPNGChunkArchive arc (png->File->GetFile(), HUBS_ID, chunklen);
 		G_SerializeHub(arc);
 	}
+}
+
+void G_ClearHubInfo()
+{
+	hubdata.Clear();
 }

@@ -180,8 +180,6 @@ wbstartstruct_t wminfo; 				// parms for world map / intermission
  
 short			consistancy[MAXPLAYERS][BACKUPTICS];
  
-BYTE*			savebuffer;
- 
  
 #define MAXPLMOVE				(forwardmove[1]) 
  

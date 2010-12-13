@@ -16,6 +16,7 @@
 #include "a_specialspot.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+#include "g_game.h"
 #include "doomstat.h"
 
 static FRandom pr_restore ("RestorePos");
@@ -1033,6 +1034,10 @@ void AInventory::Destroy ()
 	}
 	Inventory = NULL;
 	Super::Destroy ();
+
+	// Although contrived it can theoretically happen that these variables still got a pointer to this item
+	if (SendItemUse == this) SendItemUse = NULL;
+	if (SendItemDrop == this) SendItemDrop = NULL;
 }
 
 //===========================================================================

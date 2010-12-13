@@ -347,6 +347,15 @@ void FDecalLib::ReadAllDecals ()
 	int lump, lastlump = 0;
 	unsigned int i;
 
+	for(unsigned i=0;i<Animators.Size(); i++)
+	{
+		delete Animators[i];
+	}
+	Animators.Clear();
+	FDecalCombinerAnim::AnimatorList.Clear();
+
+	DecalLibrary.Clear();
+
 	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);

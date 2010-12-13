@@ -514,6 +514,7 @@ void G_UnSnapshotLevel (bool keepPlayers);
 struct PNGHandle;
 void G_ReadSnapshots (PNGHandle *png);
 void G_WriteSnapshots (FILE *file);
+void G_ClearHubInfo();
 
 enum ESkillProperty
 {

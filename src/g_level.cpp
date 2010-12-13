@@ -119,7 +119,6 @@ bool savegamerestore;
 
 extern int mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
-extern const AInventory *SendItemUse, *SendItemDrop;
 
 void *statcopy;					// for statistics driver
 
@@ -309,6 +308,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
+	G_ClearHubInfo();
 	if (!savegamerestore)
 	{
 		G_ClearSnapshots ();

@@ -85,6 +85,8 @@ void G_AddViewAngle (int yaw);
 class AActor;
 extern AActor *bodyque[BODYQUESIZE]; 
 extern int bodyqueslot; 
+class AInventory;
+extern const AInventory *SendItemUse, *SendItemDrop;
 
 
 #endif

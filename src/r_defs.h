@@ -67,6 +67,16 @@ extern size_t MaxDrawSegs;
 // Note: transformed values not buffered locally,
 //	like some DOOM-alikes ("wt", "WebView") did.
 //
+enum
+{
+	VERTEXFLAG_ZCeilingEnabled = 0x01,
+	VERTEXFLAG_ZFloorEnabled   = 0x02
+};
+struct vertexdata_t
+{
+	fixed_t zCeiling, zFloor;
+	DWORD flags;
+};
 struct vertex_t
 {
 	fixed_t x, y;

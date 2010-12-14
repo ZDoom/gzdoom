@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Doom Map Format ZDoom extensions v1.10 - 25.04.2010
+Universal Doom Map Format ZDoom extensions v1.15 - 14.12.2010
 
 
     Copyright (c) 2008 Christoph Oelckers.
@@ -83,6 +83,12 @@ field to 'strifeally', even for the 'Doom' namespace.
 
 In addition to the standard fields, ZDoom defines the following:
 Note: All <bool> fields default to false unless mentioned otherwise.
+
+   vertex
+   {
+      zfloor = <float>;         // Floor height at this vertex. Only applies to triangular sectors
+      zceiling = <float>;       // Ceiling height at this vertex. Only applies to triangular sectors
+   }
 
    linedef
    {
@@ -282,6 +288,9 @@ Added 'hidden' sector property.
 
 1.14 19.09.2010
 Added 'countsecret' actor property.
+
+1.15 14.12.2010
+Added vertex floor and ceiling height properties
 
 ===============================================================================
 EOF

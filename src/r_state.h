@@ -55,6 +55,8 @@ extern DWORD NumStdSprites;
 
 extern int				numvertexes;
 extern vertex_t*		vertexes;
+extern int				numvertexdatas;
+extern vertexdata_t*		vertexdatas;
 
 extern int				numsegs;
 extern seg_t*			segs;

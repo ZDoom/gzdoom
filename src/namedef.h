@@ -280,6 +280,8 @@ xx(Communicator)
 // Textmap properties
 //xx(X)
 //xx(Y)
+xx(ZFloor)
+xx(ZCeiling)
 xx(Height)
 //xx(Tid)
 //xx(Angle)

@@ -309,6 +309,27 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
 			mt->type = 0;
 		}
 	}
+
+	for(int i = 0; i < numvertexdatas; i++)
+	{
+		if (vertexdatas[i].flags & VERTEXFLAG_ZCeilingEnabled)
+		{
+			vt_heights[1][i] = vertexdatas[i].zCeiling;
+			vt_found = true;
+		}
+
+		if (vertexdatas[i].flags & VERTEXFLAG_ZFloorEnabled)
+		{
+			vt_heights[0][i] = vertexdatas[i].zFloor;
+			vt_found = true;
+		}
+	}
+
+	// If vertexdata_t is ever extended for non-slope usage, this will obviously have to be deferred or removed.
+	delete[] vertexdatas;
+	vertexdatas = NULL;
+	numvertexdatas = 0;
+
 	if (vt_found)
 	{
 		for (int i = 0; i < numsectors; i++)

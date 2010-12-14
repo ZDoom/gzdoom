@@ -102,6 +102,8 @@ bool P_IsBuildMap(MapData *map);
 //
 int 			numvertexes;
 vertex_t*		vertexes;
+int 			numvertexdatas;
+vertexdata_t*		vertexdatas;
 
 int 			numsegs;
 seg_t*			segs;
@@ -755,6 +757,7 @@ void P_LoadVertexes (MapData * map)
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
 	numvertexes = map->MapLumps[ML_VERTEXES].Size / sizeof(mapvertex_t);
+	numvertexdatas = 0;
 
 	if (numvertexes == 0)
 	{
@@ -763,6 +766,7 @@ void P_LoadVertexes (MapData * map)
 
 	// Allocate memory for buffer.
 	vertexes = new vertex_t[numvertexes];		
+	vertexdatas = NULL;
 
 	map->Seek(ML_VERTEXES);
 		

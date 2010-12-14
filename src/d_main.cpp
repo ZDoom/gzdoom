@@ -131,6 +131,7 @@ void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
+void D_LoadWadSettings ();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -1561,80 +1562,6 @@ bool ConsiderPatches (const char *arg)
 		}
 	}
 	return argc > 0;
-}
-
-//==========================================================================
-//
-// D_LoadWadSettings
-//
-// Parses any loaded KEYCONF lumps. These are restricted console scripts
-// that can only execute the alias, defaultbind, addkeysection,
-// addmenukey, weaponsection, and addslotdefault commands.
-//
-//==========================================================================
-
-void D_LoadWadSettings ()
-{
-	char cmd[4096];
-	int lump, lastlump = 0;
-
-	ParsingKeyConf = true;
-
-	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
-	{
-		FMemLump data = Wads.ReadLump (lump);
-		const char *eof = (char *)data.GetMem() + Wads.LumpLength (lump);
-		const char *conf = (char *)data.GetMem();
-
-		while (conf < eof)
-		{
-			size_t i;
-
-			// Fetch a line to execute
-			for (i = 0; conf + i < eof && conf[i] != '\n'; ++i)
-			{
-				cmd[i] = conf[i];
-			}
-			cmd[i] = 0;
-			conf += i;
-			if (*conf == '\n')
-			{
-				conf++;
-			}
-
-			// Comments begin with //
-			char *stop = cmd + i - 1;
-			char *comment = cmd;
-			int inQuote = 0;
-
-			if (*stop == '\r')
-				*stop-- = 0;
-
-			while (comment < stop)
-			{
-				if (*comment == '\"')
-				{
-					inQuote ^= 1;
-				}
-				else if (!inQuote && *comment == '/' && *(comment + 1) == '/')
-				{
-					break;
-				}
-				comment++;
-			}
-			if (comment == cmd)
-			{ // Comment at line beginning
-				continue;
-			}
-			else if (comment < stop)
-			{ // Comment in middle of line
-				*comment = 0;
-			}
-
-			AddCommandString (cmd);
-		}
-	}
-	ParsingKeyConf = false;
 }
 
 //==========================================================================

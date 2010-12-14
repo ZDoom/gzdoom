@@ -145,6 +145,11 @@ void SetStrifeType(int convid, const PClass *Class)
 	StrifeTypes[convid] = Class;
 }
 
+void ClearStrifeTypes()
+{
+	StrifeTypes.Clear();
+}
+
 void SetConversation(int convid, const PClass *Class, int dlgindex)
 {
 	if (convid != -1)

@@ -134,6 +134,7 @@ static void ParseStatistics(const char *fn, TArray<FStatistics> &statlist)
 	{
 		FScanner sc;
 		sc.OpenFile(fn);
+		statlist.Clear();
 
 		while (sc.GetString())
 		{

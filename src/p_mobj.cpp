@@ -5586,12 +5586,13 @@ void FreeDropItemChain(FDropItem *chain)
 	}
 }
 
-FDropItemPtrArray::~FDropItemPtrArray()
+void FDropItemPtrArray::Clear()
 {
 	for (unsigned int i = 0; i < Size(); ++i)
 	{
 		FreeDropItemChain ((*this)[i]);
 	}
+	TArray<FDropItem *>::Clear();
 }
 
 int StoreDropItemChain(FDropItem *chain)

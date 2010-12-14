@@ -77,7 +77,7 @@ static gameborder_t StrifeBorder =
 
 // Custom GAMEINFO ------------------------------------------------------------
 
-const char* GameInfoBoarders[] =
+const char* GameInfoBorders[] =
 {
 	"DoomBorder",
 	"HereticBorder",
@@ -219,7 +219,7 @@ void FMapInfoParser::ParseGameInfo()
 		{
 			if(sc.CheckToken(TK_Identifier))
 			{
-				switch(sc.MustMatchString(GameInfoBoarders))
+				switch(sc.MustMatchString(GameInfoBorders))
 				{
 					default:
 						gameinfo.border = &DoomBorder;

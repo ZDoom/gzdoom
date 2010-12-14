@@ -584,6 +584,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of properties
+	if (properties.Size() == 0)
 	{
 		FAutoSegIterator probe(GRegHead, GRegTail);
 
@@ -596,6 +597,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of native action functions
+	if (AFTable.Size() == 0)
 	{
 		FAutoSegIterator probe(ARegHead, ARegTail);
 
@@ -608,6 +610,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of native variables
+	if (variables.Size() == 0)
 	{
 		FAutoSegIterator probe(MRegHead, MRegTail);
 

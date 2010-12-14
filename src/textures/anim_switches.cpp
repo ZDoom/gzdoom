@@ -317,7 +317,7 @@ void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 	unsigned int i;
 	FSwitchDef *sw1 = NULL;
 	FSwitchDef *sw2 = NULL;
-	unsigned int index1 = -1, index2 = -1;
+	unsigned int index1 = 0xffffffff, index2 = 0xffffffff;
 
 	for (i = mSwitchDefs.Size (); i-- > 0; )
 	{
@@ -325,13 +325,13 @@ void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 		{
 			index1 = i;
 			sw1 = mSwitchDefs[index1];
-			if (index2 != -1u) break;
+			if (index2 != 0xffffffff) break;
 		}
 		if (mSwitchDefs[i]->PreTexture == def2->PreTexture)
 		{
 			index2 = i;
 			sw2 = mSwitchDefs[index2];
-			if (index1 != -1u) break;
+			if (index1 != 0xffffffff) break;
 		}
 	}
 

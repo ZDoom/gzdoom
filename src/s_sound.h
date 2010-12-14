@@ -331,7 +331,7 @@ void S_UpdateSounds (AActor *listener);
 void S_RestoreEvictedChannels();
 
 // [RH] S_sfx "maintenance" routines
-void S_ParseSndInfo ();
+void S_ParseSndInfo (bool redefine);
 void S_ParseReverbDef ();
 void S_UnloadReverbDef ();
 

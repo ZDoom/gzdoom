@@ -70,7 +70,6 @@ CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 DMenu *DMenu::CurrentMenu;
 int DMenu::MenuTime;
 
-FListMenuDescriptor *MainMenu;
 FGameStartup GameStartupInfo;
 EMenuState		menuactive;
 bool			M_DemoNoPlay;

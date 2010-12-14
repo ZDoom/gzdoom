@@ -3491,6 +3491,7 @@ void P_FreeExtraLevelData()
 			delete node;
 			node = next;
 		}
+		FBlockNode::FreeBlocks = NULL;
 	}
 	{
 		msecnode_t *node = headsecnode;
@@ -3528,8 +3529,11 @@ void P_SetupLevel (char *lumpname, int position)
 
 	wminfo.partime = 180;
 
+	MapThingsConverted.Clear();
+	linemap.Clear();
 	FCanvasTextureInfo::EmptyList ();
 	R_FreePastViewers ();
+	P_ClearUDMFKeys();
 
 	if (!savegamerestore)
 	{

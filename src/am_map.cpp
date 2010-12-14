@@ -545,6 +545,21 @@ void AM_StaticInit()
 	}
 	markpointnum = 0;
 	mapback.SetInvalid();
+
+	static DWORD *lastpal = NULL;
+	//static int lastback = -1;
+	DWORD *palette;
+	
+	palette = (DWORD *)GPalette.BaseColors;
+
+	int i, j;
+
+	for (i = j = 0; i < 11; i++, j += 3)
+	{
+		DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
+		StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
+		RavenColors[i].FromRGB(RavenPaletteVals[j], RavenPaletteVals[j+1], RavenPaletteVals[j+2]);
+	}
 }
 
 //=============================================================================
@@ -878,24 +893,6 @@ void AM_initVariables ()
 
 static void AM_initColors (bool overlayed)
 {
-	static DWORD *lastpal = NULL;
-	//static int lastback = -1;
-	DWORD *palette;
-	
-	palette = (DWORD *)GPalette.BaseColors;
-
-	if (lastpal != palette)
-	{
-		int i, j;
-
-		for (i = j = 0; i < 11; i++, j += 3)
-		{
-			DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
-			StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
-			RavenColors[i].FromRGB(RavenPaletteVals[j], RavenPaletteVals[j+1], RavenPaletteVals[j+2]);
-		}
-	}
-
 	if (overlayed)
 	{
 		YourColor.FromCVar (am_ovyourcolor);
@@ -1020,8 +1017,6 @@ static void AM_initColors (bool overlayed)
 			break;
 
 	}
-
-	lastpal = palette;
 }
 
 //=============================================================================

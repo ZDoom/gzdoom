@@ -353,6 +353,7 @@ void FDecalLib::ReadAllDecals ()
 	}
 	Animators.Clear();
 	FDecalCombinerAnim::AnimatorList.Clear();
+	DecalTranslations.Clear();
 
 	DecalLibrary.Clear();
 

@@ -2357,6 +2357,7 @@ void R_InitParticles ()
 	if ( NumParticles < 100 )
 		NumParticles = 100;
 
+	R_DeinitParticles();
 	Particles = new particle_t[NumParticles];
 	R_ClearParticles ();
 	atterm (R_DeinitParticles);

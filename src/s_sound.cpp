@@ -322,7 +322,7 @@ void S_Init ()
 void S_InitData ()
 {
 	LastLocalSndInfo = LastLocalSndSeq = "";
-	S_ParseSndInfo ();
+	S_ParseSndInfo (false);
 	S_ParseSndSeq (-1);
 	S_ParseMusInfo();
 }
@@ -408,7 +408,7 @@ void S_Start ()
 			}
 			
 			// Parse the global SNDINFO
-			S_ParseSndInfo();
+			S_ParseSndInfo(true);
 		
 			if (*LocalSndInfo)
 			{

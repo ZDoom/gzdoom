@@ -857,6 +857,8 @@ static void S_ClearSoundData()
 	PlayerSounds.Clear();
 	DefPlayerClass = 0;
 	DefPlayerClassName = "";
+	MusicAliases.Clear();
+	MidiDevices.Clear();
 }
 
 //==========================================================================
@@ -867,10 +869,11 @@ static void S_ClearSoundData()
 // Also registers Blood SFX files and Strife's voices.
 //==========================================================================
 
-void S_ParseSndInfo ()
+void S_ParseSndInfo (bool redefine)
 {
 	int lump;
 
+	if (!redefine) SavedPlayerSounds.Clear();	// clear skin sounds only for initial parsing.
 	atterm (S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 

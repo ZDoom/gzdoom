@@ -242,6 +242,8 @@ void P_InitTerrainTypes ()
 	int lump;
 	int size;
 
+	Splashes.Clear();
+	Terrains.Clear();
 	size = (TexMan.NumTextures()+1);
 	TerrainTypes.Resize(size);
 	TerrainTypes.Clear();

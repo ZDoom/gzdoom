@@ -529,7 +529,12 @@ struct FDropItem
 class FDropItemPtrArray : public TArray<FDropItem *>
 {
 public:
-	~FDropItemPtrArray();
+	~FDropItemPtrArray()
+	{
+		Clear();
+	}
+
+	void Clear();
 };
 
 extern FDropItemPtrArray DropItemList;

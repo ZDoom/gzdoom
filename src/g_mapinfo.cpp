@@ -1809,6 +1809,7 @@ static void ClearMapinfo()
 	AllSkills.Clear();
 	DefaultSkill = -1;
 	DeinitIntermissions();
+	level.info = NULL;
 }
 
 //==========================================================================

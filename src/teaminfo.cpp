@@ -131,6 +131,7 @@ void FTeam::ParseTeamInfo ()
 {
 	int iLump, iLastLump = 0;
 
+	Teams.Clear();
 	while ((iLump = Wads.FindLump ("TEAMINFO", &iLastLump)) != -1)
 	{
 		FScanner Scan (iLump);

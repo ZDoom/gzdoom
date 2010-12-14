@@ -53,6 +53,7 @@
 
 extern void LoadActors ();
 extern void InitBotStuff();
+extern void ClearStrifeTypes();
 
 
 //==========================================================================
@@ -122,6 +123,7 @@ void FActorInfo::StaticInit ()
 	}
 
 	Printf ("LoadActors: Load actor definitions.\n");
+	ClearStrifeTypes();
 	LoadActors ();
 	InitBotStuff();
 }

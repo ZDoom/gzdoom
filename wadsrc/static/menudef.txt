@@ -795,9 +795,9 @@ OptionMenu "MiscOptions"
 	{
 		Option "Merge left+right Alt/Ctrl/Shift", 		"k_mergekeys", "OnOff"
 		Option "Alt-Enter toggles fullscreen",			"k_allowfullscreentoggle", "OnOff"
-		Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
-		StaticText " "
 	}
+	Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
+	StaticText " "
 	Option "Enable cheats from all games",			"allcheats", "OnOff"
 	Option "Enable autosaves",						"disableautosave", "OffOn"
 	Slider "Number of autosaves",					"autosavecount", 1, 32, 1, 0

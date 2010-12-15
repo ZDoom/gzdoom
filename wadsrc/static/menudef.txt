@@ -870,6 +870,7 @@ OptionMenu AutomapOptions
 	Option "Show map label",			"am_showmaplabel", "MaplabelTypes"
 	Option "Draw map background",		"am_drawmapback", "OnOff"
 	Option "Show keys (cheat)",			"am_showkeys", "OnOff"
+	Option "Show trigger lines",		"am_showtriggerlines", "OnOff"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -922,6 +923,7 @@ OptionMenu MapColorMenu
 	ColorPicker "Teleporter to the same map",				"am_intralevelcolor"	
 	ColorPicker "Teleporter to a different map",			"am_interlevelcolor"	
 	ColorPicker "Secret sector",							"am_secretsectorcolor"	
+	ColorPicker "Special trigger lines",					"am_specialwallcolor"
 	StaticText " "
 	StaticText "Cheat Mode", 1
 	ColorPicker "Invisible 2-sided walls",		"am_tswallcolor"		
@@ -939,6 +941,7 @@ OptionMenu MapColorMenu
 	ColorPicker "Not-yet-seen walls",			"am_ovunseencolor"	
 	ColorPicker "Teleporter",					"am_ovtelecolor"		
 	ColorPicker "Secret sector",				"am_ovsecretsectorcolor"	
+	ColorPicker "Special trigger lines",		"am_ovspecialwallcolor"
 	StaticText " "
 	StaticText "Overlay Cheat Mode", 1
 	ColorPicker "Actors",						"am_ovthingcolor"		

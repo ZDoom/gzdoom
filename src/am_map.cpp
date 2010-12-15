@@ -91,7 +91,7 @@ struct AMColor
 static AMColor Background, YourColor, WallColor, TSWallColor,
 		   FDWallColor, CDWallColor, ThingColor,
 		   ThingColor_Item, ThingColor_CountItem, ThingColor_Monster, ThingColor_Friend,
-		   SecretWallColor, GridColor, XHairColor,
+		   SpecialWallColor, SecretWallColor, GridColor, XHairColor,
 		   NotSeenColor,
 		   LockedColor,
 		   AlmostBackground,
@@ -167,6 +167,7 @@ CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
 CVAR (Color, am_yourcolor,			0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_wallcolor,			0x2c1808,	CVAR_ARCHIVE);
 CVAR (Color, am_secretwallcolor,	0x000000,	CVAR_ARCHIVE);
+CVAR (Color, am_specialwallcolor,	0xffffff,	CVAR_ARCHIVE);
 CVAR (Color, am_tswallcolor,		0x888888,	CVAR_ARCHIVE);
 CVAR (Color, am_fdwallcolor,		0x887058,	CVAR_ARCHIVE);
 CVAR (Color, am_cdwallcolor,		0x4c3820,	CVAR_ARCHIVE);
@@ -177,6 +178,7 @@ CVAR (Color, am_notseencolor,		0x6c6c6c,	CVAR_ARCHIVE);
 CVAR (Color, am_lockedcolor,		0x007800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovyourcolor,		0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_ovwallcolor,		0x00ff00,	CVAR_ARCHIVE);
+CVAR (Color, am_ovspecialwallcolor,	0xffffff,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovotherwallscolor,	0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovunseencolor,		0x00226e,	CVAR_ARCHIVE);
@@ -188,6 +190,7 @@ CVAR (Color, am_ovsecretsectorcolor,0x00ffff,	CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_monster,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_item,		0xfcfcfc,	CVAR_ARCHIVE);
@@ -897,6 +900,7 @@ static void AM_initColors (bool overlayed)
 	{
 		YourColor.FromCVar (am_ovyourcolor);
 		WallColor.FromCVar (am_ovwallcolor);
+		SpecialWallColor.FromCVar(am_ovspecialwallcolor);
 		SecretWallColor = WallColor;
 		SecretSectorColor.FromCVar (am_ovsecretsectorcolor);
 		ThingColor_Item.FromCVar (am_ovthingcolor_item);
@@ -919,6 +923,7 @@ static void AM_initColors (bool overlayed)
 			Background.FromCVar (am_backcolor);
 			YourColor.FromCVar (am_yourcolor);
 			SecretWallColor.FromCVar (am_secretwallcolor);
+			SpecialWallColor.FromCVar (am_specialwallcolor);
 			WallColor.FromCVar (am_wallcolor);
 			TSWallColor.FromCVar (am_tswallcolor);
 			FDWallColor.FromCVar (am_fdwallcolor);
@@ -960,6 +965,7 @@ static void AM_initColors (bool overlayed)
 			AlmostBackground = DoomColors[2];
 			SecretSectorColor = 		
 				SecretWallColor =
+				SpecialWallColor =
 				WallColor = DoomColors[3];
 			TSWallColor = DoomColors[4];
 			FDWallColor = DoomColors[5];
@@ -981,6 +987,7 @@ static void AM_initColors (bool overlayed)
 			AlmostBackground = DoomColors[2];
 			SecretSectorColor = 		
 				SecretWallColor =
+				SpecialWallColor =
 				WallColor = StrifeColors[3];
 			TSWallColor = StrifeColors[4];
 			FDWallColor = StrifeColors[5];
@@ -1002,6 +1009,7 @@ static void AM_initColors (bool overlayed)
 			AlmostBackground = DoomColors[2];
 			SecretSectorColor = 		
 				SecretWallColor =
+				SpecialWallColor =
 				WallColor = RavenColors[3];
 			TSWallColor = RavenColors[4];
 			FDWallColor = RavenColors[5];
@@ -1836,14 +1844,16 @@ void AM_drawWalls (bool allmap)
 			else if (lines[i].special == Door_LockedRaise ||
 					 lines[i].special == ACS_LockedExecute ||
 					 lines[i].special == ACS_LockedExecuteDoor ||
-					 (lines[i].special == Generic_Door && lines[i].args[4] !=0 ))
+					 (lines[i].special == Door_Animated && lines[i].args[3] != 0) ||
+					 (lines[i].special == Generic_Door && lines[i].args[4] != 0))
 			{
 				if (am_colorset == 0 || am_colorset == 3)	// Raven games show door colors
 				{
 					int P_GetMapColorForLock(int lock);
 					int lock;
 
-					if (lines[i].special==Door_LockedRaise) lock=lines[i].args[3];
+					if (lines[i].special==Door_LockedRaise || lines[i].special==Door_Animated)
+						lock=lines[i].args[3];
 					else lock=lines[i].args[4];
 
 					int color = P_GetMapColorForLock(lock);
@@ -1859,6 +1869,17 @@ void AM_drawWalls (bool allmap)
 				{
 					AM_drawMline (&l, LockedColor);  // locked special
 				}
+			}
+			else if (am_showtriggerlines && am_colorset == 0 && lines[i].special != 0
+				&& lines[i].special != Door_Open
+				&& lines[i].special != Door_Close
+				&& lines[i].special != Door_CloseWaitOpen
+				&& lines[i].special != Door_Raise
+				&& lines[i].special != Door_Animated
+				&& lines[i].special != Generic_Door
+				&& (lines[i].activation & SPAC_PlayerActivate))
+			{
+				AM_drawMline(&l, SpecialWallColor);	// wall with special non-door action the player can do
 			}
 			else if (lines[i].backsector == NULL)
 			{

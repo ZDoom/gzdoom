@@ -1781,6 +1781,7 @@ void P_SetLineID (line_t *ld)
 			{
 				ld->id = ld->args[0];
 			}
+			ld->special = 0;
 			break;
 
 		case TranslucentLine:

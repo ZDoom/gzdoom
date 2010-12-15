@@ -85,6 +85,8 @@ static void DeinitMenus()
 			pair->Value = NULL;
 		}
 	}
+	MenuDescriptors.Clear();
+	OptionValues.Clear();
 	DMenu::CurrentMenu = NULL;
 	DefaultListMenuSettings.mItems.Clear();
 	ClearSaveGames();
@@ -1236,10 +1238,11 @@ void M_CreateMenus()
 // THe skill menu must be refeshed each time it starts up
 //
 //=============================================================================
+extern int restart;
 
 void M_StartupSkillMenu(FGameStartup *gs)
 {
-	static bool done = false;
+	static int done = -1;
 	bool success = false;
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Skillmenu);
 	if (desc != NULL)
@@ -1265,9 +1268,9 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				}
 			}
 
-			if (!done)
+			if (done != restart)
 			{
-				done = true;
+				done = restart;
 				int defskill = DefaultSkill;
 				if ((unsigned int)defskill >= AllSkills.Size())
 				{

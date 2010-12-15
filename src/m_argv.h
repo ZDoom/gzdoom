@@ -54,6 +54,7 @@ public:
 	void AppendArg(FString arg);
 	void AppendArgs(int argc, const FString *argv);
 	void RemoveArg(int argindex);
+	void RemoveArgs(const char *check);
 	void SetArgs(int argc, char **argv);
 	void CollectFiles(const char *param, const char *extension);
 	DArgs *GatherFiles(const char *param) const;

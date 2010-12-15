@@ -80,6 +80,24 @@ void PClass::StaticInit ()
 	}
 }
 
+void PClass::ClearRuntimeData ()
+{
+	StaticShutdown();
+
+	m_RuntimeActors.Clear();
+	m_Types.Clear();
+	memset(TypeHash, 0, sizeof(TypeHash));
+	bShutdown = false;
+
+	// Immediately reinitialize the internal classes
+	FAutoSegIterator probe(CRegHead, CRegTail);
+
+	while (*++probe != NULL)
+	{
+		((ClassReg *)*probe)->RegisterClass ();
+	}
+}
+
 void PClass::StaticShutdown ()
 {
 	TArray<size_t *> uniqueFPs(64);
@@ -105,6 +123,8 @@ void PClass::StaticShutdown ()
 				uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
 			}
 		}
+		type->FlatPointers = NULL;
+
 		// For runtime classes, this call will also delete the PClass.
 		PClass::StaticFreeData (type);
 	}

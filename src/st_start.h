@@ -42,15 +42,15 @@ public:
 	FStartupScreen(int max_progress);
 	virtual ~FStartupScreen();
 
-	virtual void Progress() = 0;
+	virtual void Progress();
 	virtual void LoadingStatus(const char *message, int colors); // Used by Heretic only
 	virtual void AppendStatusLine(const char *status);			 // Used by Heretic only
 
-	virtual void NetInit(const char *message, int num_players) = 0;
-	virtual void NetProgress(int count) = 0;
-	virtual void NetMessage(const char *format, ...) = 0;	// cover for printf
-	virtual void NetDone() = 0;
-	virtual bool NetLoop(bool (*timer_callback)(void *), void *userdata) = 0;
+	virtual void NetInit(const char *message, int num_players);
+	virtual void NetProgress(int count);
+	virtual void NetMessage(const char *format, ...);	// cover for printf
+	virtual void NetDone();
+	virtual bool NetLoop(bool (*timer_callback)(void *), void *userdata);
 protected:
 	int MaxPos, CurPos, NotchPos;
 };

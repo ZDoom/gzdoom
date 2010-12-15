@@ -1605,7 +1605,7 @@ CCMD (vid_setmode)
 // V_Init
 //
 
-void V_Init (void) 
+void V_Init (bool restart) 
 { 
 	const char *i;
 	int width, height, bits;
@@ -1615,40 +1615,43 @@ void V_Init (void)
 	// [RH] Initialize palette management
 	InitPalette ();
 
-	width = height = bits = 0;
-
-	if ( (i = Args->CheckValue ("-width")) )
-		width = atoi (i);
-
-	if ( (i = Args->CheckValue ("-height")) )
-		height = atoi (i);
-
-	if ( (i = Args->CheckValue ("-bits")) )
-		bits = atoi (i);
-
-	if (width == 0)
+	if (!restart)
 	{
-		if (height == 0)
+		width = height = bits = 0;
+
+		if ( (i = Args->CheckValue ("-width")) )
+			width = atoi (i);
+
+		if ( (i = Args->CheckValue ("-height")) )
+			height = atoi (i);
+
+		if ( (i = Args->CheckValue ("-bits")) )
+			bits = atoi (i);
+
+		if (width == 0)
 		{
-			width = vid_defwidth;
-			height = vid_defheight;
+			if (height == 0)
+			{
+				width = vid_defwidth;
+				height = vid_defheight;
+			}
+			else
+			{
+				width = (height * 8) / 6;
+			}
 		}
-		else
+		else if (height == 0)
 		{
-			width = (height * 8) / 6;
+			height = (width * 6) / 8;
 		}
-	}
-	else if (height == 0)
-	{
-		height = (width * 6) / 8;
+
+		if (bits == 0)
+		{
+			bits = vid_defbits;
+		}
+		screen = new DDummyFrameBuffer (width, height);
 	}
 
-	if (bits == 0)
-	{
-		bits = vid_defbits;
-	}
-
-	screen = new DDummyFrameBuffer (width, height);
 
 	BuildTransTable (GPalette.BaseColors);
 }

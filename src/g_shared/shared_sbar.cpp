@@ -253,6 +253,7 @@ void DBaseStatusBar::Destroy ()
 		msg->Destroy();
 		msg = next;
 	}
+	Messages = NULL;
 	Super::Destroy();
 }
 

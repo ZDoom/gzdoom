@@ -58,6 +58,7 @@ void DeinitIntermissions()
 		delete pair->Value;
 		pair->Value = NULL;
 	}
+	IntermissionDescriptors.Clear();
 }
 
 //==========================================================================

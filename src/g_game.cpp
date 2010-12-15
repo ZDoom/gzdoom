@@ -2573,6 +2573,7 @@ bool G_CheckDemoStatus (void)
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 		M_Free (demobuffer);
+		demobuffer = NULL;
 
 		P_SetupWeapons_ntohton();
 		demoplayback = false;

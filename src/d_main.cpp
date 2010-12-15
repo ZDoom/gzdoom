@@ -223,6 +223,8 @@ FTexture *Page;
 FTexture *Advisory;
 bool nospriterename;
 FStartupInfo DoomStartupInfo;
+FString lastIWAD;
+int restart = 0;
 
 cycle_t FrameCycles;
 
@@ -890,7 +892,7 @@ void D_Display ()
 //
 // D_ErrorCleanup ()
 //
-// Cleanup after a recoverable error.
+// Cleanup after a recoverable error or a restart
 //==========================================================================
 
 void D_ErrorCleanup ()
@@ -2025,269 +2027,368 @@ void D_DoomMain (void)
 	}
 	FString basewad = wad;
 
-	// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
-	// the IWAD is known.
 
-	GetCmdLineFiles(pwads);
-	FString iwad = CheckGameInfo(pwads);
+	// reinit from here
 
-	FIWadManager *iwad_man = new FIWadManager;
-	const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
-	gameinfo.gametype = iwad_info->gametype;
-	gameinfo.flags = iwad_info->flags;
-	gameinfo.ConfigName = iwad_info->Configname;
-
-	GameConfig->DoGameSetup (gameinfo.ConfigName);
-
-	AddAutoloadFiles(iwad_info->Autoname);
-
-	// Run automatically executed files
-	execFiles = new DArgs;
-	GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
-	D_MultiExec (execFiles, true);
-
-	// Run .cfg files at the start of the command line.
-	execFiles = Args->GatherFiles ("-exec");
-	D_MultiExec (execFiles, true);
-
-	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
-
-	CopyFiles(allwads, pwads);
-
-	// Since this function will never leave we must delete this array here manually.
-	pwads.Clear();
-	pwads.ShrinkToFit();
-
-	Printf ("W_Init: Init WADfiles.\n");
-	Wads.InitMultipleFiles (allwads);
-	allwads.Clear();
-	allwads.ShrinkToFit();
-	SetMapxxFlag();
-	
-	// [RH] Initialize localizable strings.
-	GStrings.LoadStrings (false);
-
-	V_InitFontColors ();
-
-	// [RH] Moved these up here so that we can do most of our
-	//		startup output in a fullscreen console.
-
-	CT_Init ();
-
-	Printf ("I_Init: Setting up machine state.\n");
-	I_Init ();
-
-	Printf ("V_Init: allocate screen.\n");
-	V_Init ();
-
-	// Base systems have been inited; enable cvar callbacks
-	FBaseCVar::EnableCallbacks ();
-
-	Printf ("S_Init: Setting up sound.\n");
-	S_Init ();
-
-	Printf ("ST_Init: Init startup screen.\n");
-	StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
-
-	ParseCompatibility();
-
-	CheckCmdLine();
-
-	// [RH] Load sound environments
-	S_ParseReverbDef ();
-
-	// [RH] Parse through all loaded mapinfo lumps
-	Printf ("G_ParseMapInfo: Load map definitions.\n");
-	G_ParseMapInfo (iwad_info->MapInfo);
-	ReadStatistics();
-
-	// [RH] Parse any SNDINFO lumps
-	Printf ("S_InitData: Load sound definitions.\n");
-	S_InitData ();
-
-	Printf ("Texman.Init: Init texture manager.\n");
-	TexMan.Init();
-	C_InitConback();
-
-	// [CW] Parse any TEAMINFO lumps.
-	Printf ("ParseTeamInfo: Load team definitions.\n");
-	TeamLibrary.ParseTeamInfo ();
-
-	FActorInfo::StaticInit ();
-
-	// [GRB] Initialize player class list
-	SetupPlayerClasses ();
-
-
-	// [RH] Load custom key and weapon settings from WADs
-	D_LoadWadSettings ();
-
-	// [GRB] Check if someone used clearplayerclasses but not addplayerclass
-	if (PlayerClasses.Size () == 0)
+	do
 	{
-		I_FatalError ("No player classes defined");
-	}
-
-	StartScreen->Progress ();
-
-	Printf ("R_Init: Init %s refresh subsystem.\n", gameinfo.ConfigName.GetChars());
-	StartScreen->LoadingStatus ("Loading graphics", 0x3f);
-	R_Init ();
-
-	Printf ("DecalLibrary: Load decals.\n");
-	DecalLibrary.ReadAllDecals ();
-
-	// [RH] Add any .deh and .bex files on the command line.
-	// If there are none, try adding any in the config file.
-	// Note that the command line overrides defaults from the config.
-
-	if ((ConsiderPatches("-deh") | ConsiderPatches("-bex")) == 0 &&
-		gameinfo.gametype == GAME_Doom && GameConfig->SetSection ("Doom.DefaultDehacked"))
-	{
-		const char *key;
-		const char *value;
-
-		while (GameConfig->NextInSection (key, value))
+		if (restart)
 		{
-			if (stricmp (key, "Path") == 0 && FileExists (value))
-			{
-				Printf ("Applying patch %s\n", value);
-				D_LoadDehFile(value);
-			}
+			C_InitConsole(SCREENWIDTH, SCREENHEIGHT, false);
 		}
-	}
+		nospriterename = false;
 
-	// Load embedded Dehacked patches
-	D_LoadDehLumps();
+		// Load zdoom.pk3 alone so that we can get access to the internal gameinfos before 
+		// the IWAD is known.
 
-	// Create replacements for dehacked pickups
-	FinishDehPatch();
+		GetCmdLineFiles(pwads);
+		FString iwad = CheckGameInfo(pwads);
 
-	FActorInfo::StaticSetActorNums ();
+		// The IWAD selection dialogue dpes not show in fullscreen so if the
+		// restart is initiated without a defined IWAD assume for now that it's not going to change.
+		if (iwad.Len() == 0) iwad = lastIWAD;
 
-	//Added by MC:
-	bglobal.getspawned.Clear();
-	argcount = Args->CheckParmList("-bots", &args);
-	for (p = 0; p < argcount; ++p)
-	{
-		bglobal.getspawned.Push(args[p]);
-	}
-	bglobal.spawn_tries = 0;
-	bglobal.wanted_botnum = bglobal.getspawned.Size();
+		FIWadManager *iwad_man = new FIWadManager;
+		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
+		gameinfo.gametype = iwad_info->gametype;
+		gameinfo.flags = iwad_info->flags;
+		gameinfo.ConfigName = iwad_info->Configname;
+		lastIWAD = iwad;
 
-	Printf ("M_Init: Init menus.\n");
-	M_Init ();
+		FBaseCVar::DisableCallbacks();
+		GameConfig->DoGameSetup (gameinfo.ConfigName);
 
-	Printf ("P_Init: Init Playloop state.\n");
-	StartScreen->LoadingStatus ("Init game engine", 0x3f);
-	AM_StaticInit();
-	P_Init ();
+		AddAutoloadFiles(iwad_info->Autoname);
 
-	P_SetupWeapons_ntohton();
+		// Run automatically executed files
+		execFiles = new DArgs;
+		GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
+		D_MultiExec (execFiles, true);
 
-	//SBarInfo support.
-	SBarInfo::Load();
-	HUD_InitHud();
+		// Run .cfg files at the start of the command line.
+		execFiles = Args->GatherFiles ("-exec");
+		D_MultiExec (execFiles, true);
 
-	// [RH] User-configurable startup strings. Because BOOM does.
-	static const char *startupString[5] = {
-		"STARTUP1", "STARTUP2", "STARTUP3", "STARTUP4", "STARTUP5"
-	};
-	for (p = 0; p < 5; ++p)
-	{
-		const char *str = GStrings[startupString[p]];
-		if (str != NULL && str[0] != '\0')
-		{
-			Printf ("%s\n", str);
-		}
-	}
+		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
-	Printf ("D_CheckNetGame: Checking network game status.\n");
-	StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
-	D_CheckNetGame ();
+		CopyFiles(allwads, pwads);
 
-	// [RH] Lock any cvars that should be locked now that we're
-	// about to begin the game.
-	FBaseCVar::EnableNoSet ();
+		// Since this function will never leave we must delete this array here manually.
+		pwads.Clear();
+		pwads.ShrinkToFit();
 
-	delete iwad_man;	// now we won't need this anymore
-
-	// [RH] Run any saved commands from the command line or autoexec.cfg now.
-	gamestate = GS_FULLCONSOLE;
-	Net_NewMakeTic ();
-	DThinker::RunThinkers ();
-	gamestate = GS_STARTUP;
-
-	// start the apropriate game based on parms
-	v = Args->CheckValue ("-record");
-
-	if (v)
-	{
-		G_RecordDemo (v);
-		autostart = true;
-	}
-
-	delete StartScreen;
-	StartScreen = NULL;
-
-	if (Args->CheckParm("-norun"))
-	{
-		throw CNoRunExit();
-	}
-
-	V_Init2();
-
-	v = Args->CheckValue("-playdemo");
-	if (v != NULL)
-	{
-		singledemo = true;				// quit after one demo
-		G_DeferedPlayDemo (v);
-		D_DoomLoop ();	// never returns
-	}
-
-	v = Args->CheckValue ("-timedemo");
-	if (v)
-	{
-		G_TimeDemo (v);
-		D_DoomLoop ();	// never returns
-	}
+		Printf ("W_Init: Init WADfiles.\n");
+		Wads.InitMultipleFiles (allwads);
+		allwads.Clear();
+		allwads.ShrinkToFit();
+		SetMapxxFlag();
 		
-	v = Args->CheckValue ("-loadgame");
-	if (v)
-	{
-		FString file(v);
-		FixPathSeperator (file);
-		DefaultExtension (file, ".zds");
-		G_LoadGame (file);
-	}
+		// [RH] Initialize localizable strings.
+		GStrings.LoadStrings (false);
 
-	if (gameaction != ga_loadgame)
-	{
-		if (autostart || netgame)
+		V_InitFontColors ();
+
+		// [RH] Moved these up here so that we can do most of our
+		//		startup output in a fullscreen console.
+
+		CT_Init ();
+
+		if (!restart)
 		{
-			// Do not do any screenwipes when autostarting a game.
-			if (!Args->CheckParm("-warpwipe"))
+			Printf ("I_Init: Setting up machine state.\n");
+			I_Init ();
+		}
+
+		Printf ("V_Init: allocate screen.\n");
+		V_Init (!!restart);
+
+		// Base systems have been inited; enable cvar callbacks
+		FBaseCVar::EnableCallbacks ();
+
+		Printf ("S_Init: Setting up sound.\n");
+		S_Init ();
+
+		Printf ("ST_Init: Init startup screen.\n");
+		if (!restart) StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+		else StartScreen = new FStartupScreen(0);
+
+		ParseCompatibility();
+
+		CheckCmdLine();
+
+		// [RH] Load sound environments
+		S_ParseReverbDef ();
+
+		// [RH] Parse through all loaded mapinfo lumps
+		Printf ("G_ParseMapInfo: Load map definitions.\n");
+		G_ParseMapInfo (iwad_info->MapInfo);
+		ReadStatistics();
+
+		// [RH] Parse any SNDINFO lumps
+		Printf ("S_InitData: Load sound definitions.\n");
+		S_InitData ();
+
+		Printf ("Texman.Init: Init texture manager.\n");
+		TexMan.Init();
+		C_InitConback();
+
+		// [CW] Parse any TEAMINFO lumps.
+		Printf ("ParseTeamInfo: Load team definitions.\n");
+		TeamLibrary.ParseTeamInfo ();
+
+		FActorInfo::StaticInit ();
+
+		// [GRB] Initialize player class list
+		SetupPlayerClasses ();
+
+
+		// [RH] Load custom key and weapon settings from WADs
+		D_LoadWadSettings ();
+
+		// [GRB] Check if someone used clearplayerclasses but not addplayerclass
+		if (PlayerClasses.Size () == 0)
+		{
+			I_FatalError ("No player classes defined");
+		}
+
+		StartScreen->Progress ();
+
+		Printf ("R_Init: Init %s refresh subsystem.\n", gameinfo.ConfigName.GetChars());
+		StartScreen->LoadingStatus ("Loading graphics", 0x3f);
+		R_Init ();
+
+		Printf ("DecalLibrary: Load decals.\n");
+		DecalLibrary.ReadAllDecals ();
+
+		// [RH] Add any .deh and .bex files on the command line.
+		// If there are none, try adding any in the config file.
+		// Note that the command line overrides defaults from the config.
+
+		if ((ConsiderPatches("-deh") | ConsiderPatches("-bex")) == 0 &&
+			gameinfo.gametype == GAME_Doom && GameConfig->SetSection ("Doom.DefaultDehacked"))
+		{
+			const char *key;
+			const char *value;
+
+			while (GameConfig->NextInSection (key, value))
 			{
-				NoWipe = TICRATE;
+				if (stricmp (key, "Path") == 0 && FileExists (value))
+				{
+					Printf ("Applying patch %s\n", value);
+					D_LoadDehFile(value);
+				}
 			}
-			CheckWarpTransMap (startmap, true);
-			if (demorecording)
-				G_BeginRecording (startmap);
-			G_InitNew (startmap, false);
+		}
+
+		// Load embedded Dehacked patches
+		D_LoadDehLumps();
+
+		// Create replacements for dehacked pickups
+		FinishDehPatch();
+
+		FActorInfo::StaticSetActorNums ();
+
+		//Added by MC:
+		bglobal.getspawned.Clear();
+		argcount = Args->CheckParmList("-bots", &args);
+		for (p = 0; p < argcount; ++p)
+		{
+			bglobal.getspawned.Push(args[p]);
+		}
+		bglobal.spawn_tries = 0;
+		bglobal.wanted_botnum = bglobal.getspawned.Size();
+
+		Printf ("M_Init: Init menus.\n");
+		M_Init ();
+
+		Printf ("P_Init: Init Playloop state.\n");
+		StartScreen->LoadingStatus ("Init game engine", 0x3f);
+		AM_StaticInit();
+		P_Init ();
+
+		P_SetupWeapons_ntohton();
+
+		//SBarInfo support.
+		SBarInfo::Load();
+		HUD_InitHud();
+
+		// [RH] User-configurable startup strings. Because BOOM does.
+		static const char *startupString[5] = {
+			"STARTUP1", "STARTUP2", "STARTUP3", "STARTUP4", "STARTUP5"
+		};
+		for (p = 0; p < 5; ++p)
+		{
+			const char *str = GStrings[startupString[p]];
+			if (str != NULL && str[0] != '\0')
+			{
+				Printf ("%s\n", str);
+			}
+		}
+
+		if (!restart)
+		{
+			Printf ("D_CheckNetGame: Checking network game status.\n");
+			StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
+			D_CheckNetGame ();
+		}
+
+		// [RH] Lock any cvars that should be locked now that we're
+		// about to begin the game.
+		FBaseCVar::EnableNoSet ();
+
+		delete iwad_man;	// now we won't need this anymore
+
+		// [RH] Run any saved commands from the command line or autoexec.cfg now.
+		gamestate = GS_FULLCONSOLE;
+		Net_NewMakeTic ();
+		DThinker::RunThinkers ();
+		gamestate = GS_STARTUP;
+
+		if (!restart)
+		{
+			// start the apropriate game based on parms
+			v = Args->CheckValue ("-record");
+
+			if (v)
+			{
+				G_RecordDemo (v);
+				autostart = true;
+			}
+
+			delete StartScreen;
+			StartScreen = NULL;
+
+			if (Args->CheckParm("-norun"))
+			{
+				throw CNoRunExit();
+			}
+
+			V_Init2();
+
+			v = Args->CheckValue("-playdemo");
+			if (v != NULL)
+			{
+				singledemo = true;				// quit after one demo
+				G_DeferedPlayDemo (v);
+				D_DoomLoop ();	// never returns
+			}
+
+			v = Args->CheckValue ("-timedemo");
+			if (v)
+			{
+				G_TimeDemo (v);
+				D_DoomLoop ();	// never returns
+			}
+				
+			v = Args->CheckValue ("-loadgame");
+			if (v)
+			{
+				FString file(v);
+				FixPathSeperator (file);
+				DefaultExtension (file, ".zds");
+				G_LoadGame (file);
+			}
+
+			if (gameaction != ga_loadgame)
+			{
+				if (autostart || netgame)
+				{
+					// Do not do any screenwipes when autostarting a game.
+					if (!Args->CheckParm("-warpwipe"))
+					{
+						NoWipe = TICRATE;
+					}
+					CheckWarpTransMap (startmap, true);
+					if (demorecording)
+						G_BeginRecording (startmap);
+					G_InitNew (startmap, false);
+				}
+				else
+				{
+					D_StartTitle ();				// start up intro loop
+				}
+			}
+			else if (demorecording)
+			{
+				G_BeginRecording (NULL);
+			}
+						
+			atterm (D_QuitNetGame);		// killough
 		}
 		else
 		{
+			// These calls from inside V_Init2 are still necessary
+			C_NewModeAdjust();
+			M_InitVideoModesMenu();
 			D_StartTitle ();				// start up intro loop
+			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
+		}
+
+		try
+		{
+			D_DoomLoop ();		// never returns
+		}
+		catch (CRestartException &ex)
+		{
+			// Music and sound should be stopped first
+			S_StopMusic(true);
+			S_StopAllChannels ();
+
+			// clean up game state
+			ST_Clear();
+			D_ErrorCleanup ();
+			P_FreeLevelData();
+			P_FreeExtraLevelData();
+
+			M_SaveDefaults(NULL);			// save config before the restart
+
+			// delete all data that cannot be left until reinitialization
+			V_ClearFonts();					// must clear global font pointers
+			R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
+			gameinfo.~gameinfo_t();
+			new (&gameinfo) gameinfo_t;		// Reset gameinfo
+			S_Shutdown();					// free all channels and delete playlist
+			C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
+
+			GC::FullGC();					// perform one final garbage collection before deleting the class data
+			PClass::ClearRuntimeData();		// clear all runtime generated class data
+			restart++;
 		}
 	}
-	else if (demorecording)
-	{
-		G_BeginRecording (NULL);
-	}
-				
-	atterm (D_QuitNetGame);		// killough
+	while (1);
+}
 
-	D_DoomLoop ();		// never returns
+//==========================================================================
+//
+// restart the game
+//
+//==========================================================================
+
+CCMD(restart)
+{
+	// remove command line args that would get in the way during restart
+	Args->RemoveArgs("-iwad");
+	Args->RemoveArgs("-deh");
+	Args->RemoveArgs("-bex");
+	Args->RemoveArgs("-playdemo");
+	Args->RemoveArgs("-file");
+	Args->RemoveArgs("-altdeath");
+	Args->RemoveArgs("-deathmatch");
+	Args->RemoveArgs("-skill");
+	Args->RemoveArgs("-savedir");
+	Args->RemoveArgs("-xlat");
+	Args->RemoveArgs("-oldsprites");
+
+	if (argv.argc() > 1)
+	{
+		for(int i=1;i<argv.argc(); i++)
+		{
+			Args->AppendArg(argv[i]);
+		}
+	}
+
+	// initiate the restart
+	throw CRestartException();
 }
 
 //==========================================================================
@@ -2336,6 +2437,14 @@ void FStartupScreen::LoadingStatus(const char *message, int colors)
 void FStartupScreen::AppendStatusLine(const char *status)
 {
 }
+
+
+void FStartupScreen::Progress(void) {}
+void FStartupScreen::NetInit(char const *,int) {}
+void FStartupScreen::NetProgress(int) {}
+void FStartupScreen::NetMessage(char const *,...) {}
+void FStartupScreen::NetDone(void) {}
+bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
 
 //==========================================================================
 //

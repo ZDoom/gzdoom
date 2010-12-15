@@ -600,6 +600,11 @@ void FBaseCVar::EnableCallbacks ()
 	}
 }
 
+void FBaseCVar::DisableCallbacks ()
+{
+	m_UseCallback = false;
+}
+
 //
 // Boolean cvar implementation
 //

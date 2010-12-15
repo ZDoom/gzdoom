@@ -36,6 +36,12 @@ struct event_t;
 // calls all startup code, parses command line options.
 // If not overrided by user input, calls N_AdvanceDemo.
 //
+
+struct CRestartException
+{
+	char dummy;
+};
+
 void D_DoomMain (void);
 
 

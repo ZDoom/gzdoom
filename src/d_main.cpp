@@ -2317,6 +2317,8 @@ void D_DoomMain (void)
 		}
 		else
 		{
+			// let the renderer reinitialize some stuff if needed
+			screen->GameRestart();
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
 			M_InitVideoModesMenu();
@@ -2331,7 +2333,6 @@ void D_DoomMain (void)
 		catch (CRestartException &)
 		{
 			// Music and sound should be stopped first
-			screen->GameRestart();
 			S_StopMusic(true);
 			S_StopAllChannels ();
 

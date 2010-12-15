@@ -2050,6 +2050,11 @@ void V_InitFontColors ()
 
 	info.Index = -1;
 
+	TranslationParms[0].Clear();
+	TranslationParms[1].Clear();
+	TranslationLookup.Clear();
+	TranslationColors.Clear();
+
 	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
 		if (gameinfo.flags & GI_NOTEXTCOLOR)
@@ -2434,4 +2439,14 @@ void V_InitFonts()
 			IntermissionFont = BigFont;
 		}
 	}
+}
+
+void V_ClearFonts()
+{
+	while (FFont::FirstFont != NULL)
+	{
+		delete FFont::FirstFont;
+	}
+	FFont::FirstFont = NULL;
+	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = NULL;
 }

@@ -44,6 +44,7 @@
 #include "w_wad.h"
 
 TArray<FKeySection> KeySections;
+extern TArray<FString> KeyConfWeapons;
 
 static void LoadKeys (const char *modname, bool dbl)
 {
@@ -159,6 +160,7 @@ void D_LoadWadSettings ()
 
 	ParsingKeyConf = true;
 	KeySections.Clear();
+	KeyConfWeapons.Clear();
 
 	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
 	{

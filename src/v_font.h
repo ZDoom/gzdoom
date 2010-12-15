@@ -128,7 +128,7 @@ protected:
 	static FFont *FirstFont;
 	friend struct FontsDeleter;
 
-	friend void V_Shutdown();
+	friend void V_ClearFonts();
 
 	friend FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);
 };
@@ -137,6 +137,7 @@ protected:
 extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
 
 void V_InitFonts();
+void V_ClearFonts();
 EColorRange V_FindFontColor (FName name);
 PalEntry V_LogColorFromColorRange (EColorRange range);
 EColorRange V_ParseFontColor (const BYTE *&color_value, int normalcolor, int boldcolor);

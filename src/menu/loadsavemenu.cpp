@@ -53,9 +53,10 @@
 class DLoadSaveMenu : public DListMenu
 {
 	DECLARE_CLASS(DLoadSaveMenu, DListMenu)
+	friend void ClearSaveGames();
 
 protected:
-	static TDeletingArray<FSaveGameNode*> SaveGames;
+	static TArray<FSaveGameNode*> SaveGames;
 	static int LastSaved;
 	static int LastAccessed;
 
@@ -114,11 +115,26 @@ public:
 
 IMPLEMENT_CLASS(DLoadSaveMenu)
 
-TDeletingArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
+TArray<FSaveGameNode*> DLoadSaveMenu::SaveGames;
 int DLoadSaveMenu::LastSaved = -1;
 int DLoadSaveMenu::LastAccessed = -1;
 
 FSaveGameNode *quickSaveSlot;
+
+//=============================================================================
+//
+// Save data maintenance (stored statically)
+//
+//=============================================================================
+
+void ClearSaveGames()
+{
+	for(unsigned i=0;i<DLoadSaveMenu::SaveGames.Size(); i++)
+	{
+		delete DLoadSaveMenu::SaveGames[i];
+	}
+	DLoadSaveMenu::SaveGames.Clear();
+}
 
 //=============================================================================
 //
@@ -194,6 +210,8 @@ void DLoadSaveMenu::ReadSaveStrings ()
 		findstate_t c_file;
 		FString filter;
 
+		LastSaved = LastAccessed = -1;
+		quickSaveSlot = NULL;
 		filter = G_BuildSaveName ("*.zds", -1);
 		filefirst = I_FindFirst (filter.GetChars(), &c_file);
 		if (filefirst != ((void *)(-1)))

@@ -587,6 +587,7 @@ void S_ParseReverbDef ()
 	int lump, lastlump = 0;
 
 	atterm (S_UnloadReverbDef);
+	S_UnloadReverbDef ();
 
 	while ((lump = Wads.FindLump ("REVERBS", &lastlump)) != -1)
 	{
@@ -597,14 +598,20 @@ void S_ParseReverbDef ()
 void S_UnloadReverbDef ()
 {
 	ReverbContainer *probe = Environments;
+	ReverbContainer **pNext = NULL;
 
 	while (probe != NULL)
 	{
 		ReverbContainer *next = probe->Next;
 		if (!probe->Builtin)
 		{
+			if (pNext != NULL) *pNext = probe->Next;
 			delete[] const_cast<char *>(probe->Name);
 			delete probe;
+		}
+		else
+		{
+			pNext = &probe->Next;
 		}
 		probe = next;
 	}

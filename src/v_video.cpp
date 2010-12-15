@@ -1692,10 +1692,7 @@ void V_Shutdown()
 		s->ObjectFlags |= OF_YesReallyDelete;
 		delete s;
 	}
-	while (FFont::FirstFont != NULL)
-	{
-		delete FFont::FirstFont;
-	}
+	V_ClearFonts();
 }
 
 EXTERN_CVAR (Bool, vid_tft)

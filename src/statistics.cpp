@@ -130,11 +130,11 @@ extern TArray<level_info_t> wadlevelinfos;
 
 static void ParseStatistics(const char *fn, TArray<FStatistics> &statlist)
 {
+	statlist.Clear();
 	try
 	{
 		FScanner sc;
 		sc.OpenFile(fn);
-		statlist.Clear();
 
 		while (sc.GetString())
 		{

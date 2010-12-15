@@ -122,6 +122,7 @@ extern void M_SetDefaultMode ();
 extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
+extern void HUD_InitHud();
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -2134,7 +2135,6 @@ void D_DoomMain (void)
 	R_Init ();
 
 	Printf ("DecalLibrary: Load decals.\n");
-	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
 
 	// [RH] Add any .deh and .bex files on the command line.
@@ -2187,6 +2187,7 @@ void D_DoomMain (void)
 
 	//SBarInfo support.
 	SBarInfo::Load();
+	HUD_InitHud();
 
 	// [RH] User-configurable startup strings. Because BOOM does.
 	static const char *startupString[5] = {

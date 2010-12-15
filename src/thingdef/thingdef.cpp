@@ -337,6 +337,8 @@ void LoadActors ()
 {
 	int lastlump, lump;
 
+	StateParams.Clear();
+	GlobalSymbols.ReleaseSymbols();
 	DropItemList.Clear();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();

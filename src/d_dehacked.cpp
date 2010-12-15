@@ -2880,6 +2880,8 @@ void FinishDehPatch ()
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
 	StateMap.Clear();
 	StateMap.ShrinkToFit();
+	TouchedActors.Clear();
+	TouchedActors.ShrinkToFit();
 }
 
 void ModifyDropAmount(AInventory *inv, int dropamount);

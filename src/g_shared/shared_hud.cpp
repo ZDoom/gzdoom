@@ -769,13 +769,10 @@ static void DrawCoordinates(player_t * CPlayer)
 // draw the overlay
 //
 //---------------------------------------------------------------------------
-void HUD_InitHud();
 
 void DrawHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
-
-	if (HudFont==NULL) HUD_InitHud();
 
 	players[consoleplayer].inventorytics = 0;
 	if (hud_althudscale && SCREENWIDTH>640) 

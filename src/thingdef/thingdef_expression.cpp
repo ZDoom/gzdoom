@@ -2765,7 +2765,7 @@ FStateExpressions StateParams;
 //
 //==========================================================================
 
-FStateExpressions::~FStateExpressions()
+void FStateExpressions::Clear()
 {
 	for(unsigned i=0; i<Size(); i++)
 	{
@@ -2774,6 +2774,7 @@ FStateExpressions::~FStateExpressions()
 			delete expressions[i].expr;
 		}
 	}
+	expressions.Clear();
 }
 
 //==========================================================================

@@ -111,6 +111,22 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	const PClass *mClass;
 	FMenuDescriptor *mRedirect;	// used to redirect overlong skill and episode menus to option menu based alternatives
 	bool mCenter;
+
+	void Reset()
+	{
+		// Reset the default settings (ignore all other values in the struct)
+		mSelectOfsX = 0;
+		mSelectOfsY = 0;
+		mSelector.SetInvalid();
+		mDisplayTop = 0;
+		mXpos = 0;
+		mYpos = 0;
+		mLinespacing = 0;
+		mNetgameMessage = "";
+		mFont = NULL;
+		mFontColor = CR_UNTRANSLATED;
+		mFontColor2 = CR_UNTRANSLATED;
+	}
 };
 
 struct FOptionMenuSettings
@@ -141,6 +157,14 @@ struct FOptionMenuDescriptor : public FMenuDescriptor
 
 	void CalcIndent();
 	FOptionMenuItem *GetItem(FName name);
+	void Reset()
+	{
+		// Reset the default settings (ignore all other values in the struct)
+		mPosition = 0;
+		mScrollTop = 0;
+		mIndent = 0;
+		mDontDim = 0;
+	}
 
 };
 						

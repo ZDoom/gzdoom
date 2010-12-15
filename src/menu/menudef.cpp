@@ -52,6 +52,8 @@
 
 #include "optionmenuitems.h"
 
+void ClearSaveGames();
+
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
 static FOptionMenuDescriptor DefaultOptionMenuSettings;	// contains common settings for all Option menus
@@ -84,6 +86,8 @@ static void DeinitMenus()
 		}
 	}
 	DMenu::CurrentMenu = NULL;
+	DefaultListMenuSettings.mItems.Clear();
+	ClearSaveGames();
 }
 
 //=============================================================================
@@ -825,8 +829,11 @@ void M_ParseMenuDefs()
 	OptionSettings.mFontColorHeader = V_FindFontColor(gameinfo.mFontColorHeader);
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
+	DefaultListMenuSettings.Reset();
+	DefaultOptionMenuSettings.Reset();
 
 	atterm(	DeinitMenus);
+	DeinitMenus();
 	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
@@ -841,6 +848,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("DEFAULTLISTMENU"))
 			{
 				ParseListMenuBody(sc, &DefaultListMenuSettings);
+				if (DefaultListMenuSettings.mItems.Size() > 0)
+				{
+					I_FatalError("You cannot add menu items to the menu default settings.");
+				}
 			}
 			else if (sc.Compare("OPTIONVALUE"))
 			{
@@ -861,6 +872,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("DEFAULTOPTIONMENU"))
 			{
 				ParseOptionMenuBody(sc, &DefaultOptionMenuSettings);
+				if (DefaultOptionMenuSettings.mItems.Size() > 0)
+				{
+					I_FatalError("You cannot add menu items to the menu default settings.");
+				}
 			}
 			else
 			{

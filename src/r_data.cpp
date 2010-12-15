@@ -129,6 +129,22 @@ void R_SetDefaultColormap (const char *name)
 
 //==========================================================================
 //
+// R_DeinitColormaps
+//
+//==========================================================================
+
+void R_DeinitColormaps ()
+{
+	fakecmaps.Clear();
+	if (realcolormaps != NULL)
+	{
+		delete[] realcolormaps;
+		realcolormaps = NULL;
+	}
+}
+
+//==========================================================================
+//
 // R_InitColormaps
 //
 //==========================================================================
@@ -140,6 +156,8 @@ void R_InitColormaps ()
 	//		not doing anything with them at all (right?)
 
 	FakeCmap cm;
+
+	R_DeinitColormaps();
 
 	cm.name[0] = 0;
 	cm.blend = 0;
@@ -213,21 +231,6 @@ void R_InitColormaps ()
 	}
 	NormalLight.Maps = realcolormaps;
 	numfakecmaps = fakecmaps.Size();
-}
-
-//==========================================================================
-//
-// R_DeinitColormaps
-//
-//==========================================================================
-
-void R_DeinitColormaps ()
-{
-	if (realcolormaps != NULL)
-	{
-		delete[] realcolormaps;
-		realcolormaps = NULL;
-	}
 }
 
 //==========================================================================

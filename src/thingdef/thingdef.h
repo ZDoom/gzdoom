@@ -123,7 +123,8 @@ class FStateExpressions
 	TArray<FStateExpression> expressions;
 
 public:
-	~FStateExpressions();
+	~FStateExpressions() { Clear(); }
+	void Clear();
 	int Add(FxExpression *x, const PClass *o, bool c);
 	int Reserve(int num, const PClass *cls);
 	void Set(int num, FxExpression *x, bool cloned = false);

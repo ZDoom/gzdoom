@@ -869,7 +869,9 @@ void R_DeinitTranslationTables()
 				translationtables[i][j] = NULL;
 			}
 		}
+		translationtables[i].Clear();
 	}
+	BloodTranslationColors.Clear();
 }
 
 //----------------------------------------------------------------------------

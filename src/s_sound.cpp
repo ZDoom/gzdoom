@@ -292,6 +292,7 @@ void S_Init ()
 	if (S_SoundCurve != NULL)
 	{
 		delete[] S_SoundCurve;
+		S_SoundCurve = NULL;
 	}
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.

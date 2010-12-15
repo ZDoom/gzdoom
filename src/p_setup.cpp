@@ -4074,11 +4074,7 @@ static void P_Shutdown ()
 	P_DeinitKeyMessages ();
 	P_FreeLevelData ();
 	P_FreeExtraLevelData ();
-	if (StatusBar != NULL)
-	{
-		StatusBar->Destroy();
-		StatusBar = NULL;
-	}
+	ST_Clear();
 }
 
 #if 0

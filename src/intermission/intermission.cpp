@@ -110,8 +110,11 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	{
 		texname = GStrings[texname+1];
 	}
-	mBackground = TexMan.CheckForTexture(texname, FTexture::TEX_MiscPatch);
-	mFlatfill = desc->mFlatfill;
+	if (texname[0] != 0)
+	{
+		mBackground = TexMan.CheckForTexture(texname, FTexture::TEX_MiscPatch);
+		mFlatfill = desc->mFlatfill;
+	}
 	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
 	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
 	{

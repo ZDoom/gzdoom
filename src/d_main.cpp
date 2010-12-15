@@ -2328,9 +2328,10 @@ void D_DoomMain (void)
 		{
 			D_DoomLoop ();		// never returns
 		}
-		catch (CRestartException &ex)
+		catch (CRestartException &)
 		{
 			// Music and sound should be stopped first
+			screen->GameRestart();
 			S_StopMusic(true);
 			S_StopAllChannels ();
 

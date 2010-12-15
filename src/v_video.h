@@ -407,6 +407,9 @@ public:
 	virtual void GetHitlist(BYTE *hitlist);
 	virtual void PrecacheTexture(FTexture *tex, int cache);
 
+	// Report a game restart
+	virtual void GameRestart();
+
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);
 	virtual void WipeEndScreen();

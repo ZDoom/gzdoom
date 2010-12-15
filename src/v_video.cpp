@@ -1384,6 +1384,16 @@ int DFrameBuffer::GetMaxViewPitch(bool down)
 	return down? MAX_DN_ANGLE*ANGLE_1 : -MAX_UP_ANGLE*ANGLE_1;
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: GameRestart
+//
+//==========================================================================
+
+void DFrameBuffer::GameRestart()
+{
+}
+
 //===========================================================================
 //
 // 

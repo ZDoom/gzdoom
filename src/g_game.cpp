@@ -1904,6 +1904,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+static int nextautosave = -1;
 CVAR (Int, disableautosave, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Int, autosavecount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -1924,10 +1925,25 @@ void G_DoAutoSave ()
 	const char *readableTime;
 	int count = autosavecount != 0 ? autosavecount : 1;
 	
-	num.Int = (autosavenum + 1) % count;
+	if (nextautosave == -1) 
+	{
+		nextautosave = (autosavenum + 1) % count;
+	}
+
+	num.Int = nextautosave;
 	autosavenum.ForceSet (num, CVAR_Int);
 
-	file = G_BuildSaveName ("auto", num.Int);
+	file = G_BuildSaveName ("auto", nextautosave);
+
+	if (!(level.flags2 & LEVEL2_NOAUTOSAVEHINT))
+	{
+		nextautosave = (nextautosave + 1) % count;
+	}
+	else
+	{
+		// This flag can only be used once per level
+		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
+	}
 
 	readableTime = myasctime ();
 	strcpy (description, "Autosave ");

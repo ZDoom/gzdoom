@@ -262,7 +262,7 @@ include "xlat/defines.i"
 257 = WALK|REP,		Stairs_BuildUpDoom (tag, ST_TURBO, 16, 0, 0)
 258 = USE|REP,		Stairs_BuildUpDoom (tag, ST_SLOW, 8, 0, 0)
 259 = USE|REP,		Stairs_BuildUpDoom (tag, ST_TURBO, 16, 0, 0)
-260 = 0,		TranslucentLine (lineid, 168)	// Changed to better reflect the BOOM default
+260 = 0,		TranslucentLine (lineid, 128)	// Changed to better reflect the BOOM default
 261 = 0,		Transfer_CeilingLight (tag)
 262 = WALK|MONST,	Teleport_Line (tag, tag, 1)
 263 = WALK|REP|MONST,	Teleport_Line (tag, tag, 1)
@@ -275,12 +275,21 @@ include "xlat/defines.i"
 
 /****** MBF linetypes ******/
 
+270 = WALK|REP,		FS_Execute(tag)
 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
 272 = 0,		Static_Init (tag, Init_TransferSky, 1)
 
-/****** Legacy linetype ******/
-
+/****** Legacy linetypes ******/
+273 = WALK|REP,		FS_Execute(tag, 1)
+274 = WALK,		FS_Execute(tag)
+275 = WALK,		FS_Execute(tag, 1)
+276 = USE|REP,		FS_Execute(tag)
+277 = USE,		FS_Execute(tag)
+278 = SHOOT|REP,	FS_Execute(tag)
+279 = SHOOT,		FS_Execute(tag)
 280 = 0,		Transfer_Heights (tag, 12)
+281 = 0,		Sector_Set3DFloor(tag, 1, 0, 255)
+282 = 0,		Static_Init(tag, 1)
 
 // No, I haven't actually looked at these in Legacy. But these look like they
 // should give results equivalent to hardware Legacy rendering.
@@ -289,12 +298,18 @@ include "xlat/defines.i"
 286 = 0,		TranslucentLine (lineid,  48, 0)
 287 = 0,		TranslucentLine (lineid, 128, 1)
 
-281 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick extra floor
-301 = 0,		ExtraFloor_LightOnly (tag, 1)	// thick water
-302 = 0,		ExtraFloor_LightOnly (tag, 1)	// fog
-303 = 0,		ExtraFloor_LightOnly (tag, 0)	// light
-304 = 0,		ExtraFloor_LightOnly (tag, 1)	// opaque water
-305 = 0,		ExtraFloor_LightOnly (tag, 1)	// light block
+288 = 0,    		TranslucentLine(lineid, 255, 0)
+289 = 0,     		Sector_Set3DFloor(tag, 1, 1, 255)
+
+300 = 0,     		Sector_Set3DFloor(tag, 1, 1, 127)
+301 = 0,     		Sector_Set3DFloor(tag, 2, 2, 127)
+302 = 0,     		Sector_Set3DFloor(tag, 3, 6, 127)
+303 = 0,     		Sector_Set3DFloor(tag, 3)
+304 = 0,     		Sector_Set3DFloor(tag, 2, 2, 255)
+305 = 0,     		Sector_Set3DFloor(tag, 3, 2)
+306 = 0,     		Sector_Set3DFloor(tag, 1)
+
+332 = 0,		Sector_Set3DFloor(tag, 4)
 
 /****** ZDoom linetypes ******/
 
@@ -327,20 +342,20 @@ include "xlat/defines.i"
 
 /****** EDGE linetypes ******/
 
-400 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick
-401 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick, side_upper
-402 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick, side_lower
-403 = 0,		ExtraFloor_LightOnly (tag, 2)	// opaque liquid, flooder
-404 = 0,		ExtraFloor_LightOnly (tag, 2)	// 80% liquid, flooder
-405 = 0,		ExtraFloor_LightOnly (tag, 2)	// 60% liquid, flooder
-406 = 0,		ExtraFloor_LightOnly (tag, 2)	// 40% liquid, flooder
-407 = 0,		ExtraFloor_LightOnly (tag, 2)	// 20% liquid, flooder
-408 = 0,		ExtraFloor_LightOnly (tag, 0)	// light
-413 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin opaque floor
-414 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 80% floor
-415 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 60% floor
-416 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 40% floor
-417 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 20% floor
+400 = 0,     Sector_Set3DFloor(tag, 1, 0, 255)
+401 = 0,     Sector_Set3DFloor(tag, 1, 16, 255)
+402 = 0,     Sector_Set3DFloor(tag, 1, 32, 255)
+403 = 0,     Sector_Set3DFloor(tag, 2, 2, 255)
+404 = 0,     Sector_Set3DFloor(tag, 2, 2, 204)
+405 = 0,     Sector_Set3DFloor(tag, 2, 2, 153)
+406 = 0,     Sector_Set3DFloor(tag, 2, 2, 102)
+407 = 0,     Sector_Set3DFloor(tag, 2, 2, 51)
+408 = 0,     Sector_Set3DFloor(tag, 2, 2)
+413 = 0,     Sector_Set3DFloor(tag, 1, 8, 255)
+414 = 0,     Sector_Set3DFloor(tag, 1, 8, 204)
+415 = 0,     Sector_Set3DFloor(tag, 1, 8, 153)
+416 = 0,     Sector_Set3DFloor(tag, 1, 8, 102)
+417 = 0,     Sector_Set3DFloor(tag, 1, 8, 51)
 
 409 = 0,		TranslucentLine (lineid, 204)	// 80% translucent
 410 = 0,		TranslucentLine (lineid, 153)	// 60% translucent

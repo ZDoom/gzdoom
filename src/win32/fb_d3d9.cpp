@@ -2763,7 +2763,7 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 	{
 		return;
 	}
-	if (palcolor >= 0)
+	if (palcolor >= 0 && color == 0)
 	{
 		color = GPalette.BaseColors[palcolor];
 	}

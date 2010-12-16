@@ -94,9 +94,9 @@ struct F3DFloor
 	int					alpha;
 
 	// kg3D - for software
-	short	floorclip[MAXWIDTH];
-	short	ceilingclip[MAXWIDTH];
-	int		validcount;
+	short	*floorclip;
+	short	*ceilingclip;
+	int	validcount;
 };
 
 

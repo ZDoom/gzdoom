@@ -1291,7 +1291,8 @@ void R_Subsector (subsector_t *sub)
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
 			if(!(fakeFloor->flags & FF_EXISTS)) continue;
 			if(!fakeFloor->model) continue;
-			if(fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES) || frontsector->e->XFloor.lightlist.Size())
+			if(fakeFloor->bottom.plane->a || fakeFloor->bottom.plane->b) continue;
+			if(!(fakeFloor->flags & FF_NOSHADE) || fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES))
 				R_3D_AddHeight(fakeFloor->top.plane, frontsector);
 			if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if(fakeFloor->alpha == 0) continue;
@@ -1299,8 +1300,7 @@ void R_Subsector (subsector_t *sub)
 			if(fakeAlpha > OPAQUE) fakeAlpha = OPAQUE;
 			if(fakeFloor->validcount != validcount) {
 				fakeFloor->validcount = validcount;
-				memcpy(fakeFloor->floorclip, floorclip, sizeof(short) * MAXWIDTH);
-				memcpy(fakeFloor->ceilingclip, ceilingclip, sizeof(short) * MAXWIDTH);
+				R_3D_NewClip();
 			}
 			fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->soundorg[0], frontsector->soundorg[0]);
 			if(fakeHeight < viewz && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1])) {
@@ -1342,7 +1342,8 @@ void R_Subsector (subsector_t *sub)
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
 			if(!(fakeFloor->flags & FF_EXISTS)) continue;
 			if(!fakeFloor->model) continue;
-			if(fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES) || frontsector->e->XFloor.lightlist.Size())
+			if(fakeFloor->top.plane->a || fakeFloor->top.plane->b) continue;
+			if(!(fakeFloor->flags & FF_NOSHADE) || fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES))
 				R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
 			if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if(fakeFloor->alpha == 0) continue;
@@ -1351,8 +1352,7 @@ void R_Subsector (subsector_t *sub)
 
 			if(fakeFloor->validcount != validcount) {
 				fakeFloor->validcount = validcount;
-				memcpy(fakeFloor->floorclip, floorclip, sizeof(short) * MAXWIDTH);
-				memcpy(fakeFloor->ceilingclip, ceilingclip, sizeof(short) * MAXWIDTH);
+				R_3D_NewClip();
 			}
 			fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]);
 			if(fakeHeight > viewz && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1])) {
@@ -1438,17 +1438,12 @@ void R_Subsector (subsector_t *sub)
 					if(!fakeFloor->model) continue;
 					fake3D = 4;
 					tempsec = *fakeFloor->model;
-					if(!(fakeFloor->flags & FF_THISINSIDE)) {
-						templane = tempsec.floorplane;
-						tempsec.floorplane = tempsec.ceilingplane;
-						tempsec.ceilingplane = templane;
-					}
-
+					tempsec.floorplane = *fakeFloor->top.plane;
+					tempsec.ceilingplane = *fakeFloor->bottom.plane;
 					backsector = &tempsec;
 					if(fakeFloor->validcount != validcount) {
 						fakeFloor->validcount = validcount;
-						memcpy(fakeFloor->floorclip, floorclip, sizeof(short) * MAXWIDTH);
-						memcpy(fakeFloor->ceilingclip, ceilingclip, sizeof(short) * MAXWIDTH);
+						R_3D_NewClip();
 					}
 					if(frontsector->CenterFloor() >= backsector->CenterFloor()) fake3D |= 8;
 					if(frontsector->CenterCeiling() <= backsector->CenterCeiling()) fake3D |= 16;

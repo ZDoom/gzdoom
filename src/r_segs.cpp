@@ -483,9 +483,9 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	xscale = FixedMul(rw_pic->xScale, sidedef->GetTextureXScale(side_t::mid));
 	yscale = FixedMul(rw_pic->yScale, sidedef->GetTextureYScale(side_t::mid));
 	// encapsulate the lifetime of rowoffset
-	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 	dc_texturemid = rover->model->GetPlaneTexZ(sector_t::ceiling);
-	rw_offset = curline->sidedef->GetTextureXOffset(side_t::mid);
+	rw_offset = curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid);
 	if (rowoffset < 0)
 	{
 		rowoffset += rw_pic->GetHeight() << FRACBITS;
@@ -629,7 +629,12 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				// nothing
 				if(!fover || j == -1) break;
 				// correct texture
-				rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
+				if(fover->flags & FF_UPPERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+				else if(fover->flags & FF_LOWERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				else
+					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
 			} else if(frontsector->e->XFloor.ffloors.Size()) {
 				// maybe not visible?
 				fover = NULL;
@@ -663,7 +668,12 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			}
 			if(!rw_pic) {
 				fover = NULL;
-				rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+				if(rover->flags & FF_UPPERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+				else if(rover->flags & FF_LOWERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				else
+					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
 			}
 			// correct colors now
 			basecolormap = frontsector->ColorMap;
@@ -736,7 +746,12 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				// nothing
 				if(!fover || j == frontsector->e->XFloor.ffloors.Size()) break;
 				// correct texture
-				rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
+				if(fover->flags & FF_UPPERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+				else if(fover->flags & FF_LOWERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				else
+					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
 			} else if(frontsector->e->XFloor.ffloors.Size()) {
 				// maybe not visible?
 				fover = NULL;
@@ -766,7 +781,12 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			}
 			if(!rw_pic) {
 				fover = NULL;
-				rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+				if(rover->flags & FF_UPPERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+				else if(rover->flags & FF_LOWERTEXTURE)
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				else
+					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
 			}
 			// correct colors now
 			basecolormap = frontsector->ColorMap;

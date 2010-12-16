@@ -31,16 +31,16 @@ int CurrentSkybox = 0;
 // private variables
 int height_max = -1;
 TArray<HeightStack> toplist;
+ClipStack *clip_top = NULL;
+ClipStack *clip_cur = NULL;
 
 void R_3D_DeleteHeights()
 {
-	if(height_max >= 0) {
-		height_cur = height_top;
-		while(height_cur) {
-			height_top = height_cur;
-			height_cur = height_cur->next;
-			M_Free(height_top);
-		}
+	height_cur = height_top;
+	while(height_cur) {
+		height_top = height_cur;
+		height_cur = height_cur->next;
+		M_Free(height_top);
 	}
 	height_max = -1;
 	height_top = height_cur = NULL;
@@ -85,6 +85,37 @@ void R_3D_AddHeight(secplane_t *add, sector_t *sec)
 		height_top->next = NULL;
 	}
 	height_max++;
+}
+
+void R_3D_NewClip()
+{
+	ClipStack *curr;
+//	extern short floorclip[MAXWIDTH];
+//	extern short ceilingclip[MAXWIDTH];
+
+	curr = (ClipStack*)M_Malloc(sizeof(ClipStack));
+	curr->next = 0;
+	memcpy(curr->floorclip, floorclip, sizeof(short) * MAXWIDTH);
+	memcpy(curr->ceilingclip, ceilingclip, sizeof(short) * MAXWIDTH);
+	fakeFloor->floorclip = curr->floorclip;
+	fakeFloor->ceilingclip = curr->ceilingclip;
+	if(clip_top) {
+		clip_cur->next = curr;
+		clip_cur = curr;
+	} else {
+		clip_top = clip_cur = curr;
+	}
+}
+
+void R_3D_ResetClip()
+{
+	clip_cur = clip_top;
+	while(clip_cur) {
+		clip_top = clip_cur;
+		clip_cur = clip_cur->next;
+		M_Free(clip_top);
+	}
+	clip_cur = clip_top = NULL;
 }
 
 void R_3D_EnterSkybox()

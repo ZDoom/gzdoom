@@ -19,6 +19,13 @@ struct HeightStack
 	int height_max;
 };
 
+struct ClipStack
+{
+	short floorclip[MAXWIDTH];
+	short ceilingclip[MAXWIDTH];
+	ClipStack *next;
+};
+
 // external varialbes
 
 /*
@@ -48,9 +55,9 @@ extern int CurrentSkybox;
 // functions
 void R_3D_DeleteHeights();
 void R_3D_AddHeight(secplane_t *add, sector_t *sec);
+void R_3D_NewClip();
+void R_3D_ResetClip();
 void R_3D_EnterSkybox();
 void R_3D_LeaveSkybox();
 
 #endif
-
-

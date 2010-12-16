@@ -1746,6 +1746,7 @@ void R_DrawPlayerSprites ()
 	sector_t*	sec = NULL;
 	static sector_t tempsec;
 	int			floorlight, ceilinglight;
+	F3DFloor *rover;
 
 	if (!r_drawplayersprites ||
 		!camera->player ||
@@ -1755,8 +1756,12 @@ void R_DrawPlayerSprites ()
 	if(fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size()) {
 		for(i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			if(viewz <= viewsector->e->XFloor.lightlist[i].plane.ZatPoint(0, 0)) {
-				if(viewsector->e->XFloor.lightlist[i].caster)
-					sec = viewsector->e->XFloor.lightlist[i].caster->model;
+				rover = viewsector->e->XFloor.lightlist[i].caster;
+				if(rover) {
+					if(rover->flags & FF_DOUBLESHADOW && viewz <= rover->bottom.plane->ZatPoint(0, 0))
+						break;
+					sec = rover->model;
+				}
 				break;
 			}
 		if(!sec) sec = viewsector;
@@ -2098,6 +2103,7 @@ void R_DrawSprite (vissprite_t *spr)
 	short topclip, botclip;
 	short *clip1, *clip2;
 	lighttable_t *colormap = spr->colormap;
+	F3DFloor *rover;
 
 	// [RH] Check for particles
 	if (spr->pic == NULL)
@@ -2127,8 +2133,12 @@ void R_DrawSprite (vissprite_t *spr)
 		sector_t *sec = NULL;
 		for(i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			if(sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.ZatPoint(0, 0)) {
-				if(spr->sector->e->XFloor.lightlist[i].caster)
-					sec = spr->sector->e->XFloor.lightlist[i].caster->model;
+				rover = spr->sector->e->XFloor.lightlist[i].caster;
+				if(rover) {
+					if(rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->ZatPoint(0, 0))
+						break;
+					sec = rover->model;
+				}
 				break;
 			}
 		// found new values, recalculate

@@ -86,9 +86,6 @@ extern subsector_t * 	gamesubsectors;
 extern int 				numgamesubsectors;
 
 
-extern FExtraLight*		ExtraLights;
-extern FLightStack*		LightStacks;
-
 inline FArchive &operator<< (FArchive &arc, sector_t *&sec)
 {
 	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));

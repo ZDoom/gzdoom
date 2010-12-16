@@ -1012,65 +1012,6 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	return true;
 }
 
-void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
-{
-	FDynamicColormap *floodcolormap;
-	int floodlight;
-	bool flooding;
-	vertex_t **triangle;
-	int i, j;
-	fixed_t diff;
-
-	if (el == NULL)
-	{
-		return;
-	}
-
-	triangle = frontsector->Triangle;
-	flooding = false;
-	floodcolormap = basecolormap;
-	floodlight = *light;
-
-	for (i = 0; i < el->NumUsedLights; ++i)
-	{
-		for (j = 0; j < 3; ++j)
-		{
-			diff = plane.ZatPoint (triangle[j]) - el->Lights[i].Plane.ZatPoint (triangle[j]);
-			if (diff != 0)
-			{
-				break;
-			}
-		}
-		if (diff >= 0)
-		{
-			break;
-		}
-
-		if (!flooding || el->Lights[i].bFlooder)
-		{
-			if (el->Lights[i].Master == NULL)
-			{
-				basecolormap = floodcolormap;
-				*light = floodlight;
-			}
-			else
-			{
-				basecolormap = el->Lights[i].Master->ColorMap;
-				*light = el->Lights[i].Master->lightlevel;
-				if (el->Lights[i].bFlooder)
-				{
-					flooding = true;
-					floodcolormap = basecolormap;
-					floodlight = *light;
-				}
-			}
-		}
-	}
-}
-
-
-
-
 //==========================================================================
 //
 // FMiniBSP Constructor

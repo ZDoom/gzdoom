@@ -2541,6 +2541,7 @@ enum
 	APROP_WaterLevel	= 28,
 	APROP_ScaleX        = 29,
 	APROP_ScaleY        = 30,
+	APROP_Dormant		= 31,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2769,6 +2770,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);
 	case APROP_Notarget:	return !!(actor->flags3 & MF3_NOTARGET);
 	case APROP_Notrigger:	return !!(actor->flags6 & MF6_NOTRIGGER);
+	case APROP_Dormant:		return !!(actor->flags2 & MF2_DORMANT);
 	case APROP_SpawnHealth: if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->MaxHealth;
@@ -2838,6 +2840,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Friendly:
 		case APROP_Notarget:
 		case APROP_Notrigger:
+		case APROP_Dormant:
 			return (GetActorProperty(tid, property) == (!!value));
 
 		// Strings are not covered by GetActorProperty, so make the check here

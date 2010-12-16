@@ -49,6 +49,7 @@
 #include "r_interpolate.h"
 #include "r_bsp.h"
 #include "r_plane.h"
+#include "r_3dfloors.h"
 #include "v_palette.h"
 #include "po_man.h"
 
@@ -1344,6 +1345,8 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
 
+	CurrentMirror++;
+
 	unsigned int mirrorsAtStart = WallMirrors.Size ();
 
 	vertex_t *v1 = ds->curline->v1;
@@ -1468,6 +1471,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	PlaneCycles.Reset();
 	MaskedCycles.Reset();
 	WallScanCycles.Reset();
+
+	fakeActive = 0; // kg3D - reset fake floor idicator
 
 	R_SetupBuffer ();
 	R_SetupFrame (actor);

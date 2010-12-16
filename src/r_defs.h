@@ -615,7 +615,10 @@ struct sector_t
 
 	sector_t *GetHeightSec() const 
 	{
-		return (heightsec && !(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))? heightsec : NULL;
+		return (heightsec &&
+			!(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+			!(this->e && this->e->XFloor.ffloors.Size())
+			)? heightsec : NULL;
 	}
 
 	void ChangeLightLevel(int newval)

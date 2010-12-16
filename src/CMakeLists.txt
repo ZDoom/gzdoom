@@ -707,6 +707,7 @@ add_executable( zdoom WIN32
 	p_xlat.cpp
 	parsecontext.cpp
 	po_man.cpp
+	r_3dfloors.cpp
 	r_bsp.cpp
 	r_data.cpp
 	r_draw.cpp

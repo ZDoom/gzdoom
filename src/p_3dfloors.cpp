@@ -60,9 +60,11 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 {
 	F3DFloor*      ffloor;
 	unsigned  i;
-		
-	for(i = 0; i < sec2->e->XFloor.attached.Size(); i++) if(sec2->e->XFloor.attached[i] == sec) return;
-	sec2->e->XFloor.attached.Push(sec);
+
+	if(!(flags & FF_THISINSIDE)) {
+		for(i = 0; i < sec2->e->XFloor.attached.Size(); i++) if(sec2->e->XFloor.attached[i] == sec) return;
+		sec2->e->XFloor.attached.Push(sec);
+	}
 	
 	//Add the floor
 	ffloor = new F3DFloor;
@@ -133,7 +135,18 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 		ffloor->flags &= ~FF_ADDITIVETRANS;
 	}
 
+	if(flags & FF_THISINSIDE) {
+		// switch the planes
+		F3DFloor::planeref sp = ffloor->top;
+		ffloor->top=ffloor->bottom;
+		ffloor->bottom=sp;
+	}
+
 	sec->e->XFloor.ffloors.Push(ffloor);
+
+	// kg3D - software renderer only hack
+	// this is really required because of ceilingclip and floorclip
+	if(flags & FF_BOTHPLANES) P_Add3DFloor(sec, sec2, master, FF_EXISTS | FF_THISINSIDE | FF_RENDERPLANES | FF_NOSHADE, transluc);
 }
 
 //==========================================================================
@@ -676,6 +689,11 @@ void P_Spawn3DFloors (void)
 		}
 		line->special=0;
 		line->args[0] = line->args[1] = line->args[2] = line->args[3] = line->args[4] = 0;
+	}
+	// kg3D - do it in software
+	for (i = 0; i < numsectors; i++)
+	{
+		P_Recalculate3DFloors(&sectors[i]);
 	}
 }
 

@@ -50,6 +50,7 @@
 #include "r_bsp.h"
 #include "r_plane.h"
 #include "r_segs.h"
+#include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_translate.h"
 
@@ -1389,6 +1390,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	fixed_t yscale = DivScale16(thing->scaleY, tex->yScale);
 	vis->renderflags = thing->renderflags;
+	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->RenderStyle = thing->RenderStyle;
 	vis->FillColor = thing->fillcolor;
 	vis->xscale = xscale;
@@ -1736,12 +1738,12 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 //
 //==========================================================================
 
-void R_DrawPlayerSprites (void)
+void R_DrawPlayerSprites ()
 {
 	int 		i;
 	int 		lightnum;
 	pspdef_t*	psp;
-	sector_t*	sec;
+	sector_t*	sec = NULL;
 	static sector_t tempsec;
 	int			floorlight, ceilinglight;
 
@@ -1750,10 +1752,21 @@ void R_DrawPlayerSprites (void)
 		(players[consoleplayer].cheats & CF_CHASECAM))
 		return;
 
-	// This used to use camera->Sector but due to interpolation that can be incorrect
-	// when the interpolated viewpoint is in a different sector than the camera.
-	sec = R_FakeFlat (viewsector, &tempsec, &floorlight,
-		&ceilinglight, false);
+	if(fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size()) {
+		for(i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+			if(viewz <= viewsector->e->XFloor.lightlist[i].plane.ZatPoint(0, 0)) {
+				if(viewsector->e->XFloor.lightlist[i].caster)
+					sec = viewsector->e->XFloor.lightlist[i].caster->model;
+				break;
+			}
+		if(!sec) sec = viewsector;
+		floorlight = ceilinglight = sec->lightlevel;
+	} else {
+		// This used to use camera->Sector but due to interpolation that can be incorrect
+		// when the interpolated viewpoint is in a different sector than the camera.
+		sec = R_FakeFlat (viewsector, &tempsec, &floorlight,
+			&ceilinglight, false);
+	}
 
 	// [RH] set foggy flag
 	foggy = (level.fadeto || sec->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE));
@@ -2084,10 +2097,14 @@ void R_DrawSprite (vissprite_t *spr)
 	int r1, r2;
 	short topclip, botclip;
 	short *clip1, *clip2;
+	lighttable_t *colormap = spr->colormap;
 
 	// [RH] Check for particles
 	if (spr->pic == NULL)
 	{
+		// kg3D - reject invisible parts
+		if(fake3D & 1 && spr->texturemid <= sclipBottom) return;
+		if(fake3D & 2 && spr->texturemid >= sclipTop) return;
 		R_DrawParticle (spr);
 		return;
 	}
@@ -2099,6 +2116,72 @@ void R_DrawSprite (vissprite_t *spr)
 	// [RH] Sprites split behind a one-sided line can also be discarded.
 	if (spr->sector == NULL)
 		return;
+
+	// kg3D - reject invisible parts
+	if(fake3D & 1 && spr->gzt <= sclipBottom) return;
+	if(fake3D & 2 && spr->gz >= sclipTop) return;
+
+	// kg3D - correct colors now
+	if(!fixedcolormap && fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size()) {
+		if(!(fake3D & 2)) sclipTop = spr->sector->ceilingplane.ZatPoint(viewx, viewy);
+		sector_t *sec = NULL;
+		for(i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+			if(sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.ZatPoint(0, 0)) {
+				if(spr->sector->e->XFloor.lightlist[i].caster)
+					sec = spr->sector->e->XFloor.lightlist[i].caster->model;
+				break;
+			}
+		// found new values, recalculate
+		if(sec) {
+			INTBOOL invertcolormap = (spr->RenderStyle.Flags & STYLEF_InvertOverlay);
+
+			if (spr->RenderStyle.Flags & STYLEF_InvertSource)
+			{
+				invertcolormap = !invertcolormap;
+			}
+
+			FDynamicColormap *mybasecolormap = sec->ColorMap;
+
+			// Sprites that are added to the scene must fade to black.
+			if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
+			{
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, 0, mybasecolormap->Desaturate);
+			}
+
+			if (spr->RenderStyle.Flags & STYLEF_FadeToBlack)
+			{
+				if (invertcolormap)
+				{ // Fade to white
+					mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255,255,255), mybasecolormap->Desaturate);
+					invertcolormap = false;
+				}
+				else
+				{ // Fade to black
+					mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0,0,0), mybasecolormap->Desaturate);
+				}
+			}
+
+			// get light level
+			if (invertcolormap)
+			{
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, mybasecolormap->Fade.InverseColor(), mybasecolormap->Desaturate);
+			}
+			if (fixedlightlev >= 0)
+			{
+				spr->colormap = mybasecolormap->Maps + fixedlightlev;
+			}
+			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
+			{ // full bright
+				spr->colormap = mybasecolormap->Maps;
+			}
+			else
+			{ // diminished light
+				spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
+				spr->colormap = mybasecolormap->Maps + (GETPALOOKUP (
+					(fixed_t)DivScale12 (r_SpriteVisibility, spr->depth), spriteshade) << COLORMAPSHIFT);
+			}
+		}
+	}
 
 	// [RH] Initialize the clipping arrays to their largest possible range
 	// instead of using a special "not clipped" value. This eliminates
@@ -2169,6 +2252,17 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 	}
 
+	if(fake3D & 1) {
+		fixed_t h = (centeryfrac - FixedMul (sclipBottom-viewz, scale)) >> FRACBITS;
+		if (h < botclip)
+			botclip = MAX<short> (0, h);
+	}
+	if(fake3D & 2) {
+		fixed_t h = (centeryfrac - FixedMul (sclipTop-viewz, scale)) >> FRACBITS;
+		if (h > topclip)
+			topclip = MIN<short> (h, viewheight);
+	}
+
 #if 0
 	// [RH] Sprites that were split by a drawseg should also be clipped
 	// by the sector's floor and ceiling. (Not sure how/if to handle this
@@ -2211,6 +2305,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 	for (ds = ds_p; ds-- > firstdrawseg; )  // new -- killough
 	{
+		// kg3D - no clipping on fake segs
+		if(ds->fake) continue;
 		// determine if the drawseg obscures the sprite
 		if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
 			(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1 &&
@@ -2282,12 +2378,14 @@ void R_DrawSprite (vissprite_t *spr)
 	mfloorclip = clipbot;
 	mceilingclip = cliptop;
 	R_DrawVisSprite (spr);
+	spr->colormap = colormap;
 }
 
-//
-// R_DrawMasked
-//
-void R_DrawMasked (void)
+// kg3D:
+// R_DrawMasked contains sorting
+// original renamed to R_DrawMaskedSingle
+
+void R_DrawMaskedSingle (bool renew)
 {
 	drawseg_t *ds;
 	int i;
@@ -2295,7 +2393,6 @@ void R_DrawMasked (void)
 #if 0
 	R_SplitVisSprites ();
 #endif
-	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
 
 	for (i = vsprcount; i > 0; i--)
 	{
@@ -2310,14 +2407,66 @@ void R_DrawMasked (void)
 
 	//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
+	if(renew) fake3D |= 4;
 	for (ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
 	{
+		// kg3D - no fake segs
+		if(ds->fake) continue;
 		if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
 		{
 			R_RenderMaskedSegRange (ds, ds->x1, ds->x2);
 		}
 	}
-	
+}
+
+void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
+
+void R_DrawMasked (void)
+{
+	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
+
+	if(height_top == NULL)
+	{
+		// kg3D - no visible 3D floors, normal rendering
+		R_DrawMaskedSingle(false);
+	} else {
+		// kg3D - correct sorting
+		int pos, mid;
+		HeightLevel *hl;
+
+		// ceilings
+		hl = height_cur;
+		while(hl) {
+			if(hl->height < viewz) break;
+			if(hl->next) {
+				fake3D = 3;
+				sclipTop = hl->next->height;
+			} else fake3D = 1;
+			sclipBottom = hl->height;
+			R_DrawMaskedSingle(true);
+			R_DrawHeightPlanes(hl->height);
+			hl = hl->prev;
+		}
+
+		// floors
+		fake3D = 10;
+		sclipTop = height_top->height;
+		R_DrawMaskedSingle(true);
+		hl = height_top;
+		while(hl) {
+			if(hl->height >= viewz) break;
+			R_DrawHeightPlanes(hl->height);
+			if(hl->next) {
+				fake3D = 11;
+				sclipTop = hl->next->height;
+			} else fake3D = 9;
+			sclipBottom = hl->height;
+			R_DrawMaskedSingle(true);
+			hl = hl->next;
+		}
+		R_3D_DeleteHeights();
+		fake3D = 0;
+	}
 	// draw the psprites on top of everything but does not draw on side views
 	if (!viewangleoffset)
 	{
@@ -2538,6 +2687,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->cx = tx;
 	vis->gx = particle->x;
 	vis->gy = particle->y;
+	vis->texturemid = particle->z; // kg3D
 	vis->gz = y1;
 	vis->gzt = y2;
 	vis->x1 = x1;
@@ -2548,7 +2698,6 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;
-	vis->heightsec = heightsec;
 
 	if (fixedlightlev >= 0)
 	{
@@ -2577,6 +2726,8 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
 	{
 		drawseg_t *ds = &drawsegs[InterestingDrawsegs[p]];
+		// kg3D - no fake segs
+		if(ds->fake) continue;
 		if (ds->x1 >= x2 || ds->x2 < x1)
 		{
 			continue;

@@ -184,6 +184,7 @@ bool P_GiveBody (AActor *actor, int num)
 	int max;
 	player_t *player = actor->player;
 
+	num = clamp(num, -65536, 65536);	// prevent overflows for bad values
 	if (player != NULL)
 	{
 		max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->stamina;

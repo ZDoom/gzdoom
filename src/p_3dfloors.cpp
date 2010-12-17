@@ -53,6 +53,57 @@
 
 //==========================================================================
 //
+// Wrappers to access the colormap information
+//
+//==========================================================================
+
+FDynamicColormap *F3DFloor::GetColormap()
+{
+	// If there's no fog in either model or target sector this is easy and fast.
+	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & FF_FADEWALLS))
+	{
+		return model->ColorMap;
+	}
+	else
+	{
+		// We must create a new colormap combining the properties we need
+		return GetSpecialLights(model->ColorMap->Color, target->ColorMap->Fade, model->ColorMap->Desaturate);
+	}
+}
+
+PalEntry F3DFloor::GetBlend()
+{
+	// The model sector's fog is used as blend unless FF_FADEWALLS is set.
+	if (!(flags & FF_FADEWALLS))
+	{
+		return model->ColorMap->Fade;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void F3DFloor::UpdateColormap(FDynamicColormap *&map)
+{
+	// If there's no fog in either model or target sector this is easy and fast.
+	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & FF_FADEWALLS))
+	{
+		map = model->ColorMap;
+	}
+	else
+	{
+		// since rebuilding the map is not a cheap operation let's only do it if something really changed.
+		if (map->Color != model->ColorMap->Color || map->Fade != target->ColorMap->Fade ||
+			map->Desaturate != model->ColorMap->Desaturate)
+		{
+			map = GetSpecialLights(model->ColorMap->Color, target->ColorMap->Fade, model->ColorMap->Desaturate);
+		}
+	}
+}
+
+//==========================================================================
+//
 // Add one 3D floor to the sector
 //
 //==========================================================================
@@ -473,7 +524,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 		lightlist[0].plane = sector->ceilingplane;
 		lightlist[0].p_lightlevel = &sector->lightlevel;
 		lightlist[0].caster = NULL;
-		lightlist[0].p_extra_colormap = &sector->ColorMap;
+		lightlist[0].lightsource = NULL;
+		lightlist[0].extra_colormap = sector->ColorMap;
+		lightlist[0].blend = 0;
 		lightlist[0].flags = 0;
 		
 		maxheight = sector->CenterCeiling();
@@ -492,7 +545,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 				newlight.plane = *rover->top.plane;
 				newlight.p_lightlevel = rover->toplightlevel;
 				newlight.caster = rover;
-				newlight.p_extra_colormap=&rover->model->ColorMap;
+				newlight.lightsource = rover;
+				newlight.extra_colormap = rover->GetColormap();
+				newlight.blend = rover->GetBlend();
 				newlight.flags = rover->flags;
 				lightlist.Push(newlight);
 			}
@@ -504,7 +559,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 					// this segment begins over the ceiling and extends beyond it
 					lightlist[0].p_lightlevel = rover->toplightlevel;
 					lightlist[0].caster = rover;
-					lightlist[0].p_extra_colormap=&rover->model->ColorMap;
+					lightlist[0].lightsource = rover;
+					lightlist[0].extra_colormap = rover->GetColormap();
+					lightlist[0].blend = rover->GetBlend();
 					lightlist[0].flags = rover->flags;
 				}
 			}
@@ -517,13 +574,17 @@ void P_Recalculate3DFloors(sector_t * sector)
 					newlight.plane = *rover->bottom.plane;
 					if (lightlist.Size()>1)
 					{
+						newlight.lightsource = lightlist[lightlist.Size()-2].lightsource;
 						newlight.p_lightlevel = lightlist[lightlist.Size()-2].p_lightlevel;
-						newlight.p_extra_colormap = lightlist[lightlist.Size()-2].p_extra_colormap;
+						newlight.extra_colormap = lightlist[lightlist.Size()-2].extra_colormap;
+						newlight.blend = lightlist[lightlist.Size()-2].blend;
 					}
 					else
 					{
+						newlight.lightsource = NULL;
 						newlight.p_lightlevel = &sector->lightlevel;
-						newlight.p_extra_colormap = &sector->ColorMap;
+						newlight.extra_colormap = sector->ColorMap;
+						newlight.blend = 0;
 					}
 					newlight.flags = rover->flags;
 					lightlist.Push(newlight);
@@ -533,6 +594,11 @@ void P_Recalculate3DFloors(sector_t * sector)
 	}
 }
 
+//==========================================================================
+//
+// recalculates 3D floors for all attached sectors
+//
+//==========================================================================
 
 void P_RecalculateAttached3DFloors(sector_t * sec)
 {
@@ -547,9 +613,53 @@ void P_RecalculateAttached3DFloors(sector_t * sec)
 
 //==========================================================================
 //
+// recalculates light lists for this sector
+//
+//==========================================================================
+
+void P_RecalculateLights(sector_t *sector)
+{
+	TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
+
+	for(unsigned i = 0; i < lightlist.Size(); i++)
+	{
+		lightlist_t *ll = &lightlist[i];
+		if (ll->lightsource != NULL)
+		{
+			ll->lightsource->UpdateColormap(ll->extra_colormap);
+			ll->blend = ll->lightsource->GetBlend();
+		}
+		else
+		{
+			ll->extra_colormap = sector->ColorMap;
+			ll->blend = 0;
+		}
+	}
+}
+
+//==========================================================================
+//
+// recalculates light lists for all attached sectors
+//
+//==========================================================================
+
+void P_RecalculateAttachedLights(sector_t *sector)
+{
+	extsector_t::xfloor &x = sector->e->XFloor;
+
+	for(unsigned int i=0; i<x.attached.Size(); i++)
+	{
+		P_RecalculateLights(x.attached[i]);
+	}
+	P_RecalculateLights(sector);
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
+
 lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool underside)
 {
 	unsigned   i;

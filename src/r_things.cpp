@@ -2441,7 +2441,7 @@ void R_DrawMasked (void)
 		R_DrawMaskedSingle(false);
 	} else {
 		// kg3D - correct sorting
-		int pos, mid;
+		//int pos, mid;
 		HeightLevel *hl;
 
 		// ceilings

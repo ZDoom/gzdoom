@@ -690,12 +690,14 @@ void sector_t::SetColor(int r, int g, int b, int desat)
 {
 	PalEntry color = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (color, ColorMap->Fade, desat);
+	P_RecalculateAttachedLights(this);
 }
 
 void sector_t::SetFade(int r, int g, int b)
 {
 	PalEntry fade = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
+	P_RecalculateAttachedLights(this);
 }
 
 //===========================================================================

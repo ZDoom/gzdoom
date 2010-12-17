@@ -64,6 +64,8 @@ enum
 
 
 struct secplane_t;
+struct FDynamicColormap;
+
 
 struct F3DFloor
 {
@@ -97,18 +99,22 @@ struct F3DFloor
 	short	*floorclip;
 	short	*ceilingclip;
 	int	validcount;
+
+	FDynamicColormap *GetColormap();
+	void UpdateColormap(FDynamicColormap *&map);
+	PalEntry GetBlend();
 };
 
-
-struct FDynamicColormap;
 
 
 struct lightlist_t
 {
 	secplane_t				plane;
 	unsigned char *			p_lightlevel;
-	FDynamicColormap **		p_extra_colormap;
+	FDynamicColormap *		extra_colormap;
+	PalEntry				blend;
 	int						flags;
+	F3DFloor*				lightsource;
 	F3DFloor*				caster;
 };
 
@@ -122,6 +128,9 @@ bool P_CheckFor3DFloorHit(AActor * mo);
 bool P_CheckFor3DCeilingHit(AActor * mo);
 void P_Recalculate3DFloors(sector_t *);
 void P_RecalculateAttached3DFloors(sector_t * sec);
+void P_RecalculateLights(sector_t *sector);
+void P_RecalculateAttachedLights(sector_t *sector);
+
 lightlist_t * P_GetPlaneLight(sector_t * , secplane_t * plane, bool underside);
 void P_Spawn3DFloors( void );
 

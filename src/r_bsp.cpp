@@ -1117,7 +1117,7 @@ void R_Subsector (subsector_t *sub)
 	// kg3D - fake floor stuff
 	visplane_t *backupfp;
 	visplane_t *backupcp;
-	secplane_t templane;
+	//secplane_t templane;
 	lightlist_t *light;
 
 	if (InSubsector != NULL)
@@ -1166,7 +1166,7 @@ void R_Subsector (subsector_t *sub)
 	// kg3D - fake lights
 	if(fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size()) {
 		light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
-		basecolormap = *light->p_extra_colormap;
+		basecolormap = light->extra_colormap;
 		ceilinglightlevel = *light->p_lightlevel;
 	} else {
 		basecolormap = frontsector->ColorMap;
@@ -1194,7 +1194,7 @@ void R_Subsector (subsector_t *sub)
 
 	if(fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size()) {
 		light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
-		basecolormap = *light->p_extra_colormap;
+		basecolormap = light->extra_colormap;
 		floorlightlevel = *light->p_lightlevel;
 	} else {
 		basecolormap = frontsector->ColorMap;
@@ -1228,7 +1228,7 @@ void R_Subsector (subsector_t *sub)
 		backupfp = floorplane;
 		backupcp = ceilingplane;
 		// first check all floors
-		for(int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++) {
+		for(int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
 			if(!(fakeFloor->flags & FF_EXISTS)) continue;
 			if(!fakeFloor->model) continue;
@@ -1256,7 +1256,7 @@ void R_Subsector (subsector_t *sub)
 
 				if(fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size()) {
 					light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
-					basecolormap = *light->p_extra_colormap;
+					basecolormap = light->extra_colormap;
 					floorlightlevel = *light->p_lightlevel;
 				}
 
@@ -1279,7 +1279,7 @@ void R_Subsector (subsector_t *sub)
 			}
 		}
 		// and now ceilings
-		for(int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++) {
+		for(unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++) {
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
 			if(!(fakeFloor->flags & FF_EXISTS)) continue;
 			if(!fakeFloor->model) continue;
@@ -1309,7 +1309,7 @@ void R_Subsector (subsector_t *sub)
 				tempsec.ceilingplane.ChangeHeight(-1);
 				if(fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size()) {
 					light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
-					basecolormap = *light->p_extra_colormap;
+					basecolormap = light->extra_colormap;
 					ceilinglightlevel = *light->p_lightlevel;
 				}
 				tempsec.ceilingplane.ChangeHeight(1);
@@ -1372,7 +1372,7 @@ void R_Subsector (subsector_t *sub)
 				backupcp = ceilingplane;
 				floorplane = NULL;
 				ceilingplane = NULL;
-				for(int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++) {
+				for(unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++) {
 					fakeFloor = line->backsector->e->XFloor.ffloors[i];
 					if(!(fakeFloor->flags & FF_EXISTS)) continue;
 					if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;

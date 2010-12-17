@@ -254,7 +254,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	for(i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--) {
 		if(!(fake3D & 2)) sclipTop = sec->ceilingplane.ZatPoint(viewx, viewy);
 		if(sclipTop <= frontsector->e->XFloor.lightlist[i].plane.ZatPoint(viewx, viewy)) {
-			basecolormap = *frontsector->e->XFloor.lightlist[i].p_extra_colormap;
+			basecolormap = frontsector->e->XFloor.lightlist[i].extra_colormap;
 			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[i].p_lightlevel) + r_actualextralight);
 			break;
 		}
@@ -552,7 +552,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 // kg3D - walls of fake floors
 void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 {
-	int i, j;
+	int i,j;
 	F3DFloor *rover, *fover;
 	int passed, last;
 	fixed_t floorheight;
@@ -682,14 +682,14 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				if((ds->bFakeBoundary & 3) == 2) {
 					for(j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
-							basecolormap = *backsector->e->XFloor.lightlist[j].p_extra_colormap;
+							basecolormap = backsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *backsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
 				} else {
 					for(j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
-							basecolormap = *frontsector->e->XFloor.lightlist[j].p_extra_colormap;
+							basecolormap = frontsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
@@ -700,7 +700,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			break;
 		}
 	} else { // top to viewz
-		for(i = 0; i < backsector->e->XFloor.ffloors.Size(); i++) {
+		for(i = 0; i < (int)backsector->e->XFloor.ffloors.Size(); i++) {
 			rover = backsector->e->XFloor.ffloors[i];
 			if(!(rover->flags & FF_EXISTS)) continue;
 
@@ -719,7 +719,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if(rover->top.plane->ZatPoint(0, 0) <= sclipBottom || passed) {
 				// maybe wall from inside rendering?
 				fover = NULL;
-				for(j = 0; j < frontsector->e->XFloor.ffloors.Size(); j++) {
+				for(j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++) {
 					fover = frontsector->e->XFloor.ffloors[j];
 					if(fover->model == rover->model) {
 						// never
@@ -755,7 +755,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			} else if(frontsector->e->XFloor.ffloors.Size()) {
 				// maybe not visible?
 				fover = NULL;
-				for(j = 0; j < frontsector->e->XFloor.ffloors.Size(); j++) {
+				for(j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++) {
 					fover = frontsector->e->XFloor.ffloors[j];
 					if(fover->model == rover->model) // never
 						break;
@@ -795,14 +795,14 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				if((ds->bFakeBoundary & 3) == 2) {
 					for(j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
-							basecolormap = *backsector->e->XFloor.lightlist[j].p_extra_colormap;
+							basecolormap = backsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *backsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
 				} else {
 					for(j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
-							basecolormap = *frontsector->e->XFloor.lightlist[j].p_extra_colormap;
+							basecolormap = frontsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
@@ -1008,7 +1008,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	assert(WallSX2 > x2);
 
 	// kg3D - fake floors instead of zdoom light list
-	for (int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
+	for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 	{
 		int j = WallMost (most3, frontsector->e->XFloor.lightlist[i].plane);
 		if (j != 3)
@@ -1021,7 +1021,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 			up = down;
 			down = (down == most1) ? most2 : most1;
 		}
-		basecolormap = *frontsector->e->XFloor.lightlist[i].p_extra_colormap;
+		basecolormap = frontsector->e->XFloor.lightlist[i].extra_colormap;
 		wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess,
 			*frontsector->e->XFloor.lightlist[i].p_lightlevel) + r_actualextralight);
  	}
@@ -2069,7 +2069,7 @@ void R_StoreWallRange (int start, int stop)
 		}
 
 		if(!ds_p->fake && backsector->e && backsector->e->XFloor.ffloors.Size()) {
-			for(i = 0; i < backsector->e->XFloor.ffloors.Size(); i++) {
+			for(i = 0; i < (int)backsector->e->XFloor.ffloors.Size(); i++) {
 				F3DFloor *rover = backsector->e->XFloor.ffloors[i];
 				if(rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
 					ds_p->bFakeBoundary |= 1;
@@ -2078,7 +2078,7 @@ void R_StoreWallRange (int start, int stop)
 			}
 		}
 		if(!ds_p->fake && frontsector->e && frontsector->e->XFloor.ffloors.Size()) {
-			for(i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++) {
+			for(i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
 				F3DFloor *rover = frontsector->e->XFloor.ffloors[i];
 				if(rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
 					ds_p->bFakeBoundary |= 2;

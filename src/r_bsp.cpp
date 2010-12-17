@@ -1237,6 +1237,7 @@ void R_Subsector (subsector_t *sub)
 				R_3D_AddHeight(fakeFloor->top.plane, frontsector);
 			if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if(fakeFloor->alpha == 0) continue;
+			if(fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
 			fakeAlpha = Scale(fakeFloor->alpha, OPAQUE, 255);
 			if(fakeAlpha > OPAQUE) fakeAlpha = OPAQUE;
 			if(fakeFloor->validcount != validcount) {
@@ -1248,10 +1249,8 @@ void R_Subsector (subsector_t *sub)
 				fake3D = 1;
 				tempsec = *fakeFloor->model;
 				tempsec.floorplane = *fakeFloor->top.plane;
-				if(!(fakeFloor->flags & FF_THISINSIDE)) {
-					tempsec.floorplane.FlipVert();
+				if(!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR))
 					tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
-				}
 				frontsector = &tempsec;
 
 				if(fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size()) {
@@ -1288,6 +1287,7 @@ void R_Subsector (subsector_t *sub)
 				R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
 			if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
 			if(fakeFloor->alpha == 0) continue;
+			if(!(fakeFloor->flags & FF_THISINSIDE) && fakeFloor->flags & FF_SWIMMABLE && fakeFloor->flags & FF_INVERTSECTOR) continue;
 			fakeAlpha = Scale(fakeFloor->alpha, OPAQUE, 255);
 			if(fakeAlpha > OPAQUE) fakeAlpha = OPAQUE;
 
@@ -1300,10 +1300,9 @@ void R_Subsector (subsector_t *sub)
 				fake3D = 2;
 				tempsec = *fakeFloor->model;
 				tempsec.ceilingplane = *fakeFloor->bottom.plane;
-				if(!(fakeFloor->flags & FF_THISINSIDE)) {
-					tempsec.ceilingplane.FlipVert();
+				if(!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR) ||
+					fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR)
 					tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
-				}
 				frontsector = &tempsec;
 
 				tempsec.ceilingplane.ChangeHeight(-1);

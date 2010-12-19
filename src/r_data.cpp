@@ -589,9 +589,13 @@ FVoxel *R_LoadKVX(int lumpnum)
 		// How much space do we have for voxdata?
 		int offsetsize = (mipl->SizeX + 1) * 4 + mipl->SizeX * (mipl->SizeY + 1) * 2;
 		int voxdatasize = numbytes - 24 - offsetsize;
-		if (voxdatasize <= 0)
+		if (voxdatasize < 0)
 		{ // Clearly, not enough.
 			break;
+		}
+		if (voxdatasize == 0)
+		{ // This mip level is empty.
+			goto nextmip;
 		}
 
 		// Allocate slab data space.
@@ -644,6 +648,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 		slabs[mip] = (kvxslab_t *)(rawmip + 24 + offsetsize);
 
 		// Time for the next mip Level.
+nextmip:
 		rawmip += numbytes;
 		maxmipsize -= numbytes + 4;
 	}
@@ -653,6 +658,13 @@ FVoxel *R_LoadKVX(int lumpnum)
 	{
 bad:	delete voxel;
 		return NULL;
+	}
+
+	// Do not count empty mips at the end.
+	for (; mip > 0; --mip)
+	{
+		if (voxel->Mips[mip - 1].SlabData != NULL)
+			break;
 	}
 	voxel->NumMips = mip;
 

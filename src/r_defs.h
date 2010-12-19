@@ -1174,6 +1174,7 @@ struct FVoxelDef
 	int PlacedSpin;			// degrees/sec to spin actors without MF_DROPPED set
 	int DroppedSpin;		// degrees/sec to spin actors with MF_DROPPED set
 	fixed_t Scale;
+	angle_t AngleOffset;	// added to actor's angle to compensate for wrong-facing voxels
 };
 
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.

@@ -129,12 +129,13 @@ char*			spritename;
 struct VoxelOptions
 {
 	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT)
+	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(0)
 	{}
 
 	int			DroppedSpin;
 	int			PlacedSpin;
 	fixed_t		Scale;
+	angle_t		AngleOffset;
 };
 
 // [RH] skin globals
@@ -492,6 +493,7 @@ void R_InitSpriteDefs ()
 					voxdef->Voxel = vox;
 					voxdef->Scale = FRACUNIT;
 					voxdef->DroppedSpin = voxdef->PlacedSpin = vh->Spin;
+					voxdef->AngleOffset = 0;
 
 					Voxels.Push(vox);
 					VoxelDefs.Push(voxdef);
@@ -669,6 +671,20 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			sc.MustGetToken(TK_IntConst);
 			opts.DroppedSpin = sc.Number;
 		}
+		else if (sc.Compare("angleoffset"))
+		{
+			sc.MustGetToken('=');
+			sc.MustGetAnyToken();
+			if (sc.TokenType == TK_IntConst)
+			{
+				sc.Float = sc.Number;
+			}
+			else
+			{
+				sc.TokenMustBe(TK_FloatConst);
+			}
+			opts.AngleOffset = angle_t(sc.Float * ANGLE_180 / 180.0);
+		}
 		else
 		{
 			sc.ScriptMessage("Unknown voxel option '%s'\n", sc.String);
@@ -774,6 +790,7 @@ void R_InitVoxels()
 				def->Scale = opts.Scale;
 				def->DroppedSpin = opts.DroppedSpin;
 				def->PlacedSpin = opts.PlacedSpin;
+				def->AngleOffset = opts.AngleOffset;
 				VoxelDefs.Push(def);
 
 				for (unsigned i = 0; i < vsprites.Size(); ++i)
@@ -1930,7 +1947,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 		fz -= thing->floorclip;
 
-		vis->angle = thing->angle;
+		vis->angle = thing->angle + voxel->AngleOffset;
 
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)

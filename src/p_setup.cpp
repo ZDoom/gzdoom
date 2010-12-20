@@ -67,6 +67,8 @@
 #include "compatibility.h"
 #include "po_man.h"
 
+#include "fragglescript/t_fs.h"
+
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
 void P_CopySlopes();
@@ -1603,6 +1605,7 @@ void SpawnMapThing(int index, FMapThing *mt, int position)
 			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->type, mt->flags, 
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
+	T_AddSpawnedThing(spawned);
 }
 
 //===========================================================================
@@ -3513,7 +3516,7 @@ void P_SetupLevel (char *lumpname, int position)
 			P_LoadTranslator(translator);
 		}
 		CheckCompatibility(map);
-
+		T_LoadScripts(map);
 
 		if (!map->HasBehavior || map->isText)
 		{
@@ -3866,6 +3869,7 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 	}
 
+	T_PreprocessScripts();        // preprocess FraggleScript scripts
 
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();

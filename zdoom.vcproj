@@ -3629,6 +3629,58 @@
 			</File>
 		</Filter>
 		<Filter
+			Name="FraggleScript"
+			>
+			<File
+				RelativePath=".\src\fragglescript\t_cmd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_fs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_fspic.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_func.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_load.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_oper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_parse.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_prepro.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_script.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_script.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_spec.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_variable.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
 			Name="Resource Files"
 			>
 			<File

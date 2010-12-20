@@ -262,7 +262,7 @@ include "xlat/defines.i"
 257 = WALK|REP,		Stairs_BuildUpDoom (tag, ST_TURBO, 16, 0, 0)
 258 = USE|REP,		Stairs_BuildUpDoom (tag, ST_SLOW, 8, 0, 0)
 259 = USE|REP,		Stairs_BuildUpDoom (tag, ST_TURBO, 16, 0, 0)
-260 = 0,		TranslucentLine (lineid, 128)	// Changed to better reflect the BOOM default
+260 = 0,		TranslucentLine (lineid, 168)	// Changed to better reflect the BOOM default
 261 = 0,		Transfer_CeilingLight (tag)
 262 = WALK|MONST,	Teleport_Line (tag, tag, 1)
 263 = WALK|REP|MONST,	Teleport_Line (tag, tag, 1)

@@ -116,10 +116,10 @@ enum
 	IF_PICKUPGOOD		= 1<<2,		// HandlePickup wants normal pickup FX to happen
 	IF_QUIET			= 1<<3,		// Don't give feedback when picking up
 	IF_AUTOACTIVATE		= 1<<4,		// Automatically activate item on pickup
-	IF_UNDROPPABLE		= 1<<5,		// The player cannot manually drop the item
+	IF_UNDROPPABLE		= 1<<5,		// Item cannot be removed unless done explicitly with RemoveInventory
 	IF_INVBAR			= 1<<6,		// Item appears in the inventory bar
 	IF_HUBPOWER			= 1<<7,		// Powerup is kept when moving in a hub
-//	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
+	IF_UNTOSSABLE		= 1<<8,		// The player cannot manually drop the item
 	IF_ADDITIVETIME		= 1<<9,		// when picked up while another item is active, time is added instead of replaced.
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode

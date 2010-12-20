@@ -2336,6 +2336,9 @@ void D_DoomMain (void)
 			S_StopMusic(true);
 			S_StopAllChannels ();
 
+			M_ClearMenus();					// close menu if open
+			F_EndFinale();					// If an intermission is active, end it now
+
 			// clean up game state
 			ST_Clear();
 			D_ErrorCleanup ();

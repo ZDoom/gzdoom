@@ -174,6 +174,7 @@ void R_InitPlanes ()
 
 void R_DeinitPlanes ()
 {
+	fakeActive = 0;
 	R_ClearPlanes(false);
 	for (visplane_t *pl = freetail; pl != NULL; )
 	{

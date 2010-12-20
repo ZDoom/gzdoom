@@ -97,6 +97,9 @@ void R_3D_NewClip()
 	curr->next = 0;
 	memcpy(curr->floorclip, floorclip, sizeof(short) * MAXWIDTH);
 	memcpy(curr->ceilingclip, ceilingclip, sizeof(short) * MAXWIDTH);
+	curr->ffloor = fakeFloor;
+	assert(fakeFloor->floorclip == NULL);
+	assert(fakeFloor->ceilingclip == NULL);
 	fakeFloor->floorclip = curr->floorclip;
 	fakeFloor->ceilingclip = curr->ceilingclip;
 	if(clip_top) {
@@ -110,7 +113,11 @@ void R_3D_NewClip()
 void R_3D_ResetClip()
 {
 	clip_cur = clip_top;
-	while(clip_cur) {
+	while(clip_cur) 
+	{
+		assert(clip_cur->ffloor->floorclip != NULL);
+		assert(clip_cur->ffloor->ceilingclip != NULL);
+		clip_cur->ffloor->ceilingclip = clip_cur->ffloor->floorclip = NULL;
 		clip_top = clip_cur;
 		clip_cur = clip_cur->next;
 		M_Free(clip_top);

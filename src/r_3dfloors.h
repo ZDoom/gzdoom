@@ -23,6 +23,7 @@ struct ClipStack
 {
 	short floorclip[MAXWIDTH];
 	short ceilingclip[MAXWIDTH];
+	F3DFloor *ffloor;
 	ClipStack *next;
 };
 

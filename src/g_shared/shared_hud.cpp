@@ -283,16 +283,42 @@ static void DrawHealth(int health, int x, int y)
 //===========================================================================
 //
 // Draw Armor.
-// very similar to drawhealth.
+// very similar to drawhealth, but adapted to handle Hexen armor too
 //
 //===========================================================================
 
-static void DrawArmor(AInventory * armor, int x, int y)
+static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 {
-	if (armor)
-	{
-		int ap=armor->Amount;
+	int ap = 0;
+	int bestslot = 4;
 
+	if (harmor)
+	{
+		int ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		ac >>= FRACBITS;
+		ap += ac;
+		
+		if (ac)
+		{
+			// Find the part of armor that protects the most
+			bestslot = 0;
+			for (int i = 1; i < 4; ++i)
+			{
+				if (harmor->Slots[i] > harmor->Slots[bestslot])
+				{
+					bestslot = i;
+				}
+			}
+		}
+	}
+
+	if (barmor)
+	{
+		ap += barmor->Amount;
+	}
+
+	if (ap)
+	{
 		// decide on color
 		int fontcolor =
 			ap < hud_armor_red ? CR_RED :
@@ -301,11 +327,23 @@ static void DrawArmor(AInventory * armor, int x, int y)
 			CR_BLUE;
 
 
-		if (ap)
+		// Use the sprite of one of the predefined Hexen armor bonuses.
+		// This is not a very generic approach, but it is not possible
+		// to truly create new types of Hexen armor bonus items anyway.
+		if (harmor && bestslot < 4)
 		{
-			DrawImageToBox(TexMan[armor->Icon], x, y, 31, 17);
-			DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
+			char icon[] = "AR_1A0";
+			switch (bestslot)
+			{
+			case 1: icon[3] = '2'; break;
+			case 2: icon[3] = '3'; break;
+			case 3: icon[3] = '4'; break;
+			default: break;
+			}
+			DrawImageToBox(TexMan.FindTexture(icon, FTexture::TEX_Sprite), x, y, 31, 17);
 		}
+		else if (barmor) DrawImageToBox(TexMan[barmor->Icon], x, y, 31, 17);
+		DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
 	}
 }
 
@@ -815,9 +853,8 @@ void DrawHUD()
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
 		DrawHealth(CPlayer->health, 5, hudheight-45);
-		// Yes, that doesn't work properly for Hexen but frankly, I have no
-		// idea how to make a meaningful value out of Hexen's armor system!
-		DrawArmor(CPlayer->mo->FindInventory(RUNTIME_CLASS(ABasicArmor)), 5, hudheight-20);
+		DrawArmor(CPlayer->mo->FindInventory<ABasicArmor>(), 
+			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
 		DrawWeapons(CPlayer, hudwidth-5, i);

@@ -1593,6 +1593,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	WallMirrors.Clear ();
 	interpolator.RestoreInterpolations ();
 	R_SetupBuffer ();
+	R_3D_ResetClip(); // reset clips (floor/ceiling)
 }
 
 //==========================================================================

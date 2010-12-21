@@ -879,7 +879,18 @@ add_executable( zdoom WIN32
 	timidity/resample.cpp
 	timidity/timidity.cpp
 	xlat/parse_xlat.cpp
-	autozend.cpp )
+	fragglescript/t_fspic.cpp
+	fragglescript/t_func.cpp
+	fragglescript/t_load.cpp
+	fragglescript/t_oper.cpp
+	fragglescript/t_parse.cpp
+	fragglescript/t_prepro.cpp
+	fragglescript/t_script.cpp
+	fragglescript/t_spec.cpp
+	fragglescript/t_variable.cpp
+	fragglescript/t_cmd.cpp
+	autozend.cpp
+)
 
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )

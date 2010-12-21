@@ -1223,6 +1223,7 @@ static void CreateCachedNodes(MapData *map)
 	FILE *f = fopen(path, "wb");
 	fwrite(compressed, 1, outlen+offset, f);
 	fclose(f);
+	delete [] compressed;
 }
 
 

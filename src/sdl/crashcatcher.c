@@ -97,8 +97,7 @@ static void gdb_info(pid_t pid)
 	strcpy(respfile, "gdb-respfile-XXXXXX");
 	if((fd = mkstemp(respfile)) >= 0 && (f = fdopen(fd, "w")))
 	{
-		fprintf(f, "signal SIGCHLD\n"
-		           "shell echo \"\"\n"
+		fprintf(f, "shell echo \"\"\n"
 		           "shell echo \"* Loaded Libraries\"\n"
 		           "info sharedlibrary\n"
 		           "shell echo \"\"\n"
@@ -115,36 +114,8 @@ static void gdb_info(pid_t pid)
 		           "x/x $eip-3\nx/x $eip\n"
 		           "shell echo \"\"\n"
 		           "shell echo \"* Backtrace\"\n"
-		           "backtrace full\n"
-#if 0 /* This sorta works to print out the core, but is too slow and skips 0's.. */
-		           "shell echo \"\"\n"
-		           "shell echo \"* Stack\"\n"
-		           "set var $_sp = $esp\n"
-		           "while $_sp <= $ebp - 12\n"
-		           " printf \"%%08x: \", $_sp\n"
-		           "  set var $_i = $_sp\n"
-		           "  while $_i < $_sp + 16\n"
-		           "    printf \"%%08x \", {int} $_i\n"
-		           "    set $_i += 4\n"
-		           "  end\n"
-		           "  set var $_i = $_sp\n"
-		           "  while $_i < $_sp + 16\n"
-		           "    printf \"%%c\", {int} $_i\n"
-		           "    set ++$_i\n"
-		           "  end\n"
-		           "  set var $_sp += 16\n"
-		           "  printf \"\\n\"\n"
-		           "end\n"
-		           "if $_sp <= $ebp\n"
-		           "  printf \"%%08x: \", $esp\n"
-		           "  while $_sp <= $ebp\n"
-		           "    printf \"%%08x \", {int} $_i\n"
-		           "    set $_sp += 4\n"
-		           "  end\n"
-		           "  printf \"\\n\"\n"
-		           "end\n"
-#endif
-		           "kill\n"
+		           "thread apply all backtrace full\n"
+		           "detach\n"
 		           "quit\n");
 		fclose(f);
 
@@ -152,8 +123,8 @@ static void gdb_info(pid_t pid)
 		snprintf(buf, sizeof(buf), "gdb --quiet --batch --command=%s --pid=%i", respfile, pid);
 		printf("Executing: %s\n", buf);
 		fflush(stdout);
-		system(buf);
 
+		system(buf);
 		/* Clean up */
 		remove(respfile);
 	}
@@ -168,6 +139,7 @@ static void gdb_info(pid_t pid)
 		printf("Could not create gdb command file\n");
 	}
 	fflush(stdout);
+	kill(pid, SIGKILL);
 }
 
 
@@ -267,8 +239,8 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 	/* Make sure the effective uid is the real uid */
 	if (getuid() != geteuid())
 	{
-		fprintf(stderr, "%s (signal %i)\ngetuid() does not match geteuid().\n", sigdesc, signum);
-		_exit(-1);
+		raise(signum);
+		return;
 	}
 #endif
 
@@ -325,48 +297,18 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 			}
 			gdb_info(pid);
 
-#if 0 /* Why won't this work? */
-			if(ucontext)
-			{
-				unsigned char *ptr = ucontext->uc_stack.ss_sp;
-				size_t len;
-
-				fprintf(f, "\n* Stack\n");
-				for(len = ucontext->uc_stack.ss_size/4;len > 0; len -= 4)
-				{
-					fprintf(f, "0x%08x:", (int)ptr);
-					for(i = 0;i < ((len < 4) ? len : 4);++i)
-					{
-						fprintf(f, " %02x%02x%02x%02x", ptr[i*4 + 0], ptr[i*4 + 1],
-						                                ptr[i*4 + 2], ptr[i*4 + 3]);
-					}
-					fputc(' ', f);
-					fflush(f);
-					for(i = 0;i < ((len < 4) ? len : 4);++i)
-					{
-						fprintf(f, "%c", *(ptr++));
-						fprintf(f, "%c", *(ptr++));
-						fprintf(f, "%c", *(ptr++));
-						fprintf(f, "%c", *(ptr++));
-					}
-					fputc('\n', f);
-					fflush(f);
-				}
-			}
-#endif
-
 			if(f != stderr)
 			{
 				fclose(f);
 #if (defined __unix__)
 				if(cc_logfile)
 				{
-					char buf[256];
+					char buf[512];
 					snprintf(buf, sizeof(buf),
-					         "if (which gxmessage > /dev/null 2>&1);"
-					             "then gxmessage -buttons \"Damn it:0\" -center -title \"Very Fatal Error\" -file %s;"
-					         "elif (which xmessage > /dev/null 2>&1);"
-					             "then xmessage -buttons \"Damn it:0\" -center -file %s -geometry 600x400;"
+					         "if (which gxmessage > /dev/null 2>&1) ; then\n"
+					         "    gxmessage -buttons \"Damn it:0\" -center -title \"Very Fatal Error\" -file %s\n"
+					         "elif (which xmessage > /dev/null 2>&1) ; then\n"
+					         "    xmessage -buttons \"Damn it:0\" -center -file %s -geometry 600x400\n"
 					         "fi", cc_logfile, cc_logfile);
 					system(buf);
 				}
@@ -376,8 +318,8 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 			_exit(0);
 
 		default:
-			/* Wait and let the child attach gdb */
-			waitpid(dbg_pid, NULL, 0);
+			/* Wait indefinitely; we'll be killed when gdb is done */
+			while(1) usleep(1000000);
 	}
 }
 
@@ -388,12 +330,13 @@ int cc_install_handlers(int num_signals, int *signals, const char *logfile, int 
 	memset(&sa, 0, sizeof(sa));
 
 	sa.sa_sigaction = crash_catcher;
-	
-#if !defined(__FreeBSD__) && !defined(__APPLE__)
+
+#ifdef SA_ONESHOT
 	sa.sa_flags = SA_ONESHOT | SA_NODEFER | SA_SIGINFO;
 #else
 	sa.sa_flags = SA_NODEFER | SA_SIGINFO;
 #endif
+	sigemptyset(&sa.sa_mask);
 
 	cc_logfile = logfile;
 	cc_user_info = user_info;

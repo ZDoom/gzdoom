@@ -584,7 +584,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 						check->viewz == stacked_viewz &&
 						(
 							// headache inducing logic... :(
-							(ib_compatflags & BCOMPATF_BADPORTALS) ||
+							(!(skybox->flags & MF_JUSTATTACKED)) ||
 							(
 								check->alpha == alpha &&
 								(alpha == 0 ||	// if alpha is > 0 everything needs to be checked

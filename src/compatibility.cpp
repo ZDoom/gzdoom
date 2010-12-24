@@ -90,7 +90,6 @@ static FCompatOption Options[] =
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
 	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
 	{ "ignoreteleporttags",		0, BCOMPATF_BADTELEPORTERS },
-	{ "oldportals",				0, BCOMPATF_BADPORTALS },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, 0 },
@@ -282,12 +281,6 @@ void CheckCompatibility(MapData *map)
 	{
 		ii_compatflags = COMPATF_POLYOBJ;
 		ib_compatflags = 0;
-		ii_compatparams = -1;
-	}
-	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPORTAL))
-	{
-		ii_compatflags = 0;
-		ib_compatflags = BCOMPATF_BADPORTALS;
 		ii_compatparams = -1;
 	}
 	else

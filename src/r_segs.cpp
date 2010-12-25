@@ -1968,19 +1968,21 @@ void R_CheckDrawSegs ()
 // R_CheckOpenings
 //
 
-void R_CheckOpenings (size_t need)
-{	
-	need += lastopening;
-
-	if (need > maxopenings)
+ptrdiff_t R_NewOpening (ptrdiff_t len)
+{
+	ptrdiff_t res = lastopening;
+	lastopening += len;
+	if ((size_t)lastopening > maxopenings)
 	{
 		do
 			maxopenings = maxopenings ? maxopenings*2 : 16384;
-		while (need > maxopenings);
+		while ((size_t)lastopening > maxopenings);
 		openings = (short *)M_Realloc (openings, maxopenings * sizeof(*openings));
 		DPrintf ("MaxOpenings increased to %zu\n", maxopenings);
 	}
+	return res;
 }
+
 
 //
 // R_StoreWallRange
@@ -2035,8 +2037,6 @@ void R_StoreWallRange (int start, int stop)
 	else ds_p->fake = 0;
 
 	// killough 1/6/98, 2/1/98: remove limit on openings
-	R_CheckOpenings ((stop - start)*6);
-
 	ds_p->sprtopclip = ds_p->sprbottomclip = ds_p->maskedtexturecol = ds_p->bkup = ds_p->swall = -1;
 
 	if (rw_markmirror)

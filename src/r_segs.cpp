@@ -552,6 +552,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 // kg3D - walls of fake floors
 void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 {
+	FTexture *const DONT_DRAW = ((FTexture*)(intptr_t)-1);
 	int i,j;
 	F3DFloor *rover, *fover;
 	int passed, last;
@@ -581,7 +582,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 
 	if(fake3D & 8) { // bottom to viewz
 		last = 0;
-		for(i = backsector->e->XFloor.ffloors.Size() - 1; i >= 0; i--) {
+		for(i = backsector->e->XFloor.ffloors.Size() - 1; i >= 0; i--) 
+		{
 			rover = backsector->e->XFloor.ffloors[i];
 			if(!(rover->flags & FF_EXISTS)) continue;
 
@@ -598,7 +600,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			}
 
 			rw_pic = NULL;
-			if(rover->bottom.plane->ZatPoint(0, 0) >= sclipTop || passed) {
+			if(rover->bottom.plane->ZatPoint(0, 0) >= sclipTop || passed) 
+			{
 				if(last) break;
 				// maybe wall from inside rendering?
 				fover = NULL;
@@ -629,13 +632,17 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				// nothing
 				if(!fover || j == -1) break;
 				// correct texture
-				if(fover->flags & FF_UPPERTEXTURE)
+				if (fover->flags & rover->flags & FF_SWIMMABLE)
+					rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
+				else if(fover->flags & FF_UPPERTEXTURE)
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
 				else if(fover->flags & FF_LOWERTEXTURE)
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
 				else
 					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
-			} else if(frontsector->e->XFloor.ffloors.Size()) {
+			} 
+			else if(frontsector->e->XFloor.ffloors.Size()) 
+			{
 				// maybe not visible?
 				fover = NULL;
 				for(j = frontsector->e->XFloor.ffloors.Size() - 1; j >= 0; j--) {
@@ -657,6 +664,10 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if((fover->flags & FF_SOLID) == (rover->flags & FF_SOLID) &&
 						!(!(fover->flags & FF_SOLID) && (fover->alpha == 255 || rover->alpha == 255))
 					) break;
+
+					if (fover->flags & rover->flags & FF_SWIMMABLE)
+						rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
+
 					fover = NULL; // visible
 					break;
 				}
@@ -666,7 +677,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					continue; // not visible
 				}
 			}
-			if(!rw_pic) {
+			if(!rw_pic) 
+			{
 				fover = NULL;
 				if(rover->flags & FF_UPPERTEXTURE)
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
@@ -695,8 +707,11 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 						}
 				}
 			}
-
-			R_RenderFakeWall(ds, x1, x2, fover ? fover : rover);
+			if (rw_pic != DONT_DRAW)
+			{
+				R_RenderFakeWall(ds, x1, x2, fover ? fover : rover);
+			}
+			else rw_pic = NULL;
 			break;
 		}
 	} else { // top to viewz
@@ -746,7 +761,9 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				// nothing
 				if(!fover || j == frontsector->e->XFloor.ffloors.Size()) break;
 				// correct texture
-				if(fover->flags & FF_UPPERTEXTURE)
+				if (fover->flags & rover->flags & FF_SWIMMABLE)
+					rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
+				else if(fover->flags & FF_UPPERTEXTURE)
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
 				else if(fover->flags & FF_LOWERTEXTURE)
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
@@ -774,6 +791,10 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if((fover->flags & FF_SOLID) == (rover->flags & FF_SOLID) &&
 						!(!(rover->flags & FF_SOLID) && (fover->alpha == 255 || rover->alpha == 255))
 					) break;
+
+					if (fover->flags & rover->flags & FF_SWIMMABLE)
+						rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
+
 					fover = NULL; // visible
 					break;
 				}
@@ -809,7 +830,12 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				}
 			}
 
-			R_RenderFakeWall(ds, x1, x2, fover ? fover : rover);
+			if (rw_pic != DONT_DRAW)
+			{
+				R_RenderFakeWall(ds, x1, x2, fover ? fover : rover);
+			}
+			else rw_pic = NULL;
+
 			break;
 		}
 	}

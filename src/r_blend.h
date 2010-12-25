@@ -48,6 +48,7 @@ enum ERenderStyle
 	STYLE_Add,				// Draw additive
 	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
 	STYLE_TranslucentStencil,
+	STYLE_Shadow,
 
 	STYLE_Count
 };
@@ -63,6 +64,9 @@ enum ERenderOp
 	STYLEOP_FuzzOrAdd,		// Draw fuzzy or add, based on user preference
 	STYLEOP_FuzzOrSub,		// Draw fuzzy or subtract, based on user preference
 	STYLEOP_FuzzOrRevSub,	// Draw fuzzy or reverse subtract, based on user preference
+
+	// special styles
+	STYLEOP_Shadow,			
 };
 
 enum ERenderAlpha

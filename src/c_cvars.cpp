@@ -221,7 +221,16 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 #else
 	case CVAR_Float:		res = (int)value.Float; break;
 #endif
-	case CVAR_String:		res = strtol (value.String, NULL, 0); break;
+	case CVAR_String:		
+		{
+			if (stricmp (value.String, "true") == 0)
+				res = 1;
+			else if (stricmp (value.String, "false") == 0)
+				res = 0;
+			else
+				res = strtol (value.String, NULL, 0); 
+			break;
+		}
 	case CVAR_GUID:			res = 0; break;
 	default:				res = 0; break;
 	}
@@ -444,7 +453,12 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		break;
 
 	case CVAR_Int:
-		ret.Int = strtol (value, NULL, 0);
+		if (stricmp (value, "true") == 0)
+			ret.Int = 1;
+		else if (stricmp (value, "false") == 0)
+			ret.Int = 0;
+		else
+			ret.Int = strtol (value, NULL, 0);
 		break;
 
 	case CVAR_Float:

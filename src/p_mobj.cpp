@@ -81,7 +81,6 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 extern cycle_t BotSupportCycles;
 extern int BotWTG;
-EXTERN_CVAR (Bool, r_drawfuzz);
 EXTERN_CVAR (Int,  cl_rockettrails)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

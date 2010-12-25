@@ -1014,7 +1014,7 @@ void R_DrawHeightPlanes(fixed_t height)
 			// kg3D - draw only correct planes
 			if(pl->CurrentSkybox != CurrentSkybox)
 				continue;
-			if(pl->sky < 0 && pl->height.ZatPoint(0, 0) == height) {
+			if(pl->sky < 0 && pl->height.Zat0() == height) {
 				viewx = pl->viewx;
 				viewy = pl->viewy;
 				viewangle = pl->viewangle;

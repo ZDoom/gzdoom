@@ -592,15 +592,15 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if(	!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->a || rover->top.plane->b ||
 				rover->bottom.plane->a || rover->bottom.plane->b ||
-				rover->top.plane->ZatPoint(0, 0) <= sclipBottom ||
-				rover->bottom.plane->ZatPoint(0, 0) >= ceilingheight)
+				rover->top.plane->Zat0() <= sclipBottom ||
+				rover->bottom.plane->Zat0() >= ceilingheight)
 			{
 				if(!i) passed = 1;
 				else continue;
 			}
 
 			rw_pic = NULL;
-			if(rover->bottom.plane->ZatPoint(0, 0) >= sclipTop || passed) 
+			if(rover->bottom.plane->Zat0() >= sclipTop || passed) 
 			{
 				if(last) break;
 				// maybe wall from inside rendering?
@@ -618,8 +618,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->top.plane->ZatPoint(0, 0) <= sclipBottom) continue; // no
-					if(fover->bottom.plane->ZatPoint(0, 0) >= sclipTop) {
+					if(fover->top.plane->Zat0() <= sclipBottom) continue; // no
+					if(fover->bottom.plane->Zat0() >= sclipTop) {
 						// no, last possible
  						fover = NULL;
 						break;
@@ -655,8 +655,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->top.plane->ZatPoint(0, 0) <= sclipBottom) continue; // no
-					if(fover->bottom.plane->ZatPoint(0, 0) >= sclipTop) {
+					if(fover->top.plane->Zat0() <= sclipBottom) continue; // no
+					if(fover->bottom.plane->Zat0() >= sclipTop) {
 						// visible, last possible
  						fover = NULL;
 						break;
@@ -693,14 +693,14 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if(fixedlightlev < 0) {
 				if((ds->bFakeBoundary & 3) == 2) {
 					for(j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
+						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0()) {
 							basecolormap = backsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *backsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
 				} else {
 					for(j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
+						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0()) {
 							basecolormap = frontsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
@@ -724,14 +724,14 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if(	!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->a || rover->top.plane->b ||
 				rover->bottom.plane->a || rover->bottom.plane->b ||
-				rover->bottom.plane->ZatPoint(0, 0) >= sclipTop ||
-				rover->top.plane->ZatPoint(0, 0) <= floorheight)
+				rover->bottom.plane->Zat0() >= sclipTop ||
+				rover->top.plane->Zat0() <= floorheight)
 			{
 				if(i == backsector->e->XFloor.ffloors.Size() - 1) passed = 1;
 				else continue;
 			}
 			rw_pic = NULL;
-			if(rover->top.plane->ZatPoint(0, 0) <= sclipBottom || passed) {
+			if(rover->top.plane->Zat0() <= sclipBottom || passed) {
 				// maybe wall from inside rendering?
 				fover = NULL;
 				for(j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++) {
@@ -747,8 +747,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->bottom.plane->ZatPoint(0, 0) >= sclipTop) continue; // no
-					if(fover->top.plane->ZatPoint(0, 0) <= sclipBottom) {
+					if(fover->bottom.plane->Zat0() >= sclipTop) continue; // no
+					if(fover->top.plane->Zat0() <= sclipBottom) {
 						// no, last possible
  						fover = NULL;
 						break;
@@ -782,8 +782,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->bottom.plane->ZatPoint(0, 0) >= sclipTop) continue; // no
-					if(fover->top.plane->ZatPoint(0, 0) <= sclipBottom) {
+					if(fover->bottom.plane->Zat0() >= sclipTop) continue; // no
+					if(fover->top.plane->Zat0() <= sclipBottom) {
 						// visible, last possible
  						fover = NULL;
 						break;
@@ -815,14 +815,14 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if(fixedlightlev < 0) {
 				if((ds->bFakeBoundary & 3) == 2) {
 					for(j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
+						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0()) {
 							basecolormap = backsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *backsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
 				} else {
 					for(j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.ZatPoint(0, 0)) {
+						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0()) {
 							basecolormap = frontsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;

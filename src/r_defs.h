@@ -211,6 +211,12 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
+	fixed_t Zat0 () const
+	{
+		return ic < 0? d:-d;
+	}
+
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{

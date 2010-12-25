@@ -1755,10 +1755,10 @@ void R_DrawPlayerSprites ()
 
 	if(fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size()) {
 		for(i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
-			if(viewz <= viewsector->e->XFloor.lightlist[i].plane.ZatPoint(0, 0)) {
+			if(viewz <= viewsector->e->XFloor.lightlist[i].plane.Zat0()) {
 				rover = viewsector->e->XFloor.lightlist[i].caster;
 				if(rover) {
-					if(rover->flags & FF_DOUBLESHADOW && viewz <= rover->bottom.plane->ZatPoint(0, 0))
+					if(rover->flags & FF_DOUBLESHADOW && viewz <= rover->bottom.plane->Zat0())
 						break;
 					sec = rover->model;
 				}
@@ -2132,10 +2132,10 @@ void R_DrawSprite (vissprite_t *spr)
 		if(!(fake3D & 2)) sclipTop = spr->sector->ceilingplane.ZatPoint(viewx, viewy);
 		sector_t *sec = NULL;
 		for(i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
-			if(sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.ZatPoint(0, 0)) {
+			if(sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0()) {
 				rover = spr->sector->e->XFloor.lightlist[i].caster;
 				if(rover) {
-					if(rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->ZatPoint(0, 0))
+					if(rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->Zat0())
 						break;
 					sec = rover->model;
 				}

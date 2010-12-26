@@ -677,6 +677,10 @@ public:
 	void Serialize (FArchive &arc);
 	void Tick ();
 
+	static DCeiling *Create(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag,
+						fixed_t speed, fixed_t speed2, fixed_t height,
+						int crush, int silent, int change, bool hexencrush);
+
 protected:
 	ECeiling	m_Type;
 	fixed_t 	m_BottomHeight;
@@ -702,9 +706,6 @@ protected:
 private:
 	DCeiling ();
 
-	friend bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
-		int tag, fixed_t speed, fixed_t speed2, fixed_t height,
-		int crush, int silent, int change, bool hexencrush);
 	friend bool EV_CeilingCrushStop (int tag);
 	friend void P_ActivateInStasisCeiling (int tag);
 };

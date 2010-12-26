@@ -3244,6 +3244,8 @@ static fixed_t distrecip(fixed_t y)
 	return y == 0 ? 0 : SafeDivScale32(centerxwide, y);
 }
 
+extern fixed_t baseyaspectmul;
+
 void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
@@ -3293,7 +3295,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	maxslabz >>= k;
 
 	daxscale <<= (k+8); dayscale <<= (k+8);
-	dazscale = FixedDiv(dayscale, yaspectmul);
+	dazscale = FixedDiv(dayscale, baseyaspectmul);
 	daxscale = FixedDiv(daxscale, yaspectmul);
 	daxscale = Scale(daxscale, xdimenscale, centerxwide << 9);
 	dayscale = Scale(dayscale, FixedMul(xdimenscale, viewingrangerecip), centerxwide << 9);

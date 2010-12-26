@@ -160,6 +160,7 @@ fixed_t			globaluclip, globaldclip;
 fixed_t 		centerxfrac;
 fixed_t 		centeryfrac;
 fixed_t			yaspectmul;
+fixed_t			baseyaspectmul;		// yaspectmul without a forced aspect ratio
 float			iyaspectmulfloat;
 fixed_t			InvZtoScale;
 
@@ -604,7 +605,7 @@ void R_SetViewSize (int blocks)
 
 void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 {
-	int virtheight, virtwidth;
+	int virtheight, virtwidth, trueratio, virtwidth2, virtheight2;
 
 	if (windowSize >= 11)
 	{
@@ -625,7 +626,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	}
 
 	// If the screen is approximately 16:9 or 16:10, consider it widescreen.
-	WidescreenRatio = CheckRatio (fullWidth, fullHeight);
+	WidescreenRatio = CheckRatio (fullWidth, fullHeight, &trueratio);
 
 	DrawFSHUD = (windowSize == 11);
 	
@@ -648,8 +649,18 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	centerxfrac = centerx<<FRACBITS;
 	centeryfrac = centery<<FRACBITS;
 
-	virtwidth = fullWidth;
-	virtheight = fullHeight;
+	virtwidth = virtwidth2 = fullWidth;
+	virtheight = virtheight2 = fullHeight;
+
+	if (trueratio & 4)
+	{
+		virtheight2 = virtheight2 * BaseRatioSizes[trueratio][3] / 48;
+	}
+	else
+	{
+		virtwidth2 = virtwidth2 * BaseRatioSizes[trueratio][3] / 48;
+	}
+
 	if (WidescreenRatio & 4)
 	{
 		virtheight = virtheight * BaseRatioSizes[WidescreenRatio][3] / 48;
@@ -661,6 +672,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 		centerxwide = centerx * BaseRatioSizes[WidescreenRatio][3] / 48;
 	}
 
+	baseyaspectmul = Scale(320 << FRACBITS, virtheight2, r_Yaspect * virtwidth2);
 	yaspectmul = Scale ((320<<FRACBITS), virtheight, r_Yaspect * virtwidth);
 	iyaspectmulfloat = (float)virtwidth * r_Yaspect / 320.f / (float)virtheight;
 	InvZtoScale = yaspectmul * centerx;

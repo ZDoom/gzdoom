@@ -500,7 +500,7 @@ void V_DrawFrame (int left, int top, int width, int height);
 extern "C" void ASM_PatchPitch (void);
 #endif
 
-int CheckRatio (int width, int height);
+int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
 extern const int BaseRatioSizes[5][4];
 

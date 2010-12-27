@@ -2660,6 +2660,58 @@ class CommandPlayerClass : public SBarInfoCommandFlowControl
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class CommandPlayerType : public SBarInfoCommandFlowControl
+{
+	public:
+		CommandPlayerType(SBarInfo *script) : SBarInfoCommandFlowControl(script)
+		{
+		}
+
+		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		{
+			sc.MustGetToken(TK_Identifier);
+			do
+			{
+				bool foundClass = false;
+				const PClass *cls = PClass::FindClass(sc.String);
+				if (cls != NULL)
+				{
+					foundClass = true;
+					classes.Push(cls);
+				}
+				/*
+				if(!foundClass)
+					sc.ScriptError("Unkown PlayerClass '%s'.", sc.String);
+				*/
+				if(!sc.CheckToken(','))
+					break;
+			}
+			while(sc.CheckToken(TK_Identifier));
+			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			if(statusBar->CPlayer->cls == NULL)
+				return; //No class so we can not continue
+		
+			for(unsigned int i = 0;i < classes.Size();i++)
+			{
+				if (statusBar->CPlayer->cls->IsDescendantOf(classes[i]))
+				{
+					SetTruth(true, block, statusBar);
+					return;
+				}
+			}
+			SetTruth(false, block, statusBar);
+		}
+	protected:
+		TArray<const PClass *> classes;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 {
 	public:
@@ -3082,7 +3134,7 @@ static const char *SBarInfoCommandNames[] =
 	"drawmugshot", "drawselectedinventory",
 	"drawinventorybar", "drawbar", "drawgem",
 	"drawshader", "drawstring", "drawkeybar",
-	"gamemode", "playerclass", "aspectratio",
+	"gamemode", "playerclass", "playertype", "aspectratio",
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
 	"weaponammo", "ininventory", "alpha",
@@ -3095,7 +3147,7 @@ enum SBarInfoCommands
 	SBARINFO_DRAWMUGSHOT, SBARINFO_DRAWSELECTEDINVENTORY,
 	SBARINFO_DRAWINVENTORYBAR, SBARINFO_DRAWBAR, SBARINFO_DRAWGEM,
 	SBARINFO_DRAWSHADER, SBARINFO_DRAWSTRING, SBARINFO_DRAWKEYBAR,
-	SBARINFO_GAMEMODE, SBARINFO_PLAYERCLASS, SBARINFO_ASPECTRATIO,
+	SBARINFO_GAMEMODE, SBARINFO_PLAYERCLASS, SBARINFO_PLAYERTYPE, SBARINFO_ASPECTRATIO,
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
 	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA,
@@ -3126,6 +3178,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_ASPECTRATIO: return new CommandAspectRatio(script);
 			case SBARINFO_ISSELECTED: return new CommandIsSelected(script);
 			case SBARINFO_PLAYERCLASS: return new CommandPlayerClass(script);
+			case SBARINFO_PLAYERTYPE: return new CommandPlayerType(script);
 			case SBARINFO_HASWEAPONPIECE: return new CommandHasWeaponPiece(script);
 			case SBARINFO_WEAPONAMMO: return new CommandWeaponAmmo(script);
 			case SBARINFO_ININVENTORY: return new CommandInInventory(script);

@@ -836,5 +836,59 @@ secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z)
 	return retplane;
 }
 
+//==========================================================================
+//
+// Gives the index to an extra floor above or below the given location.
+// -1 means normal floor or ceiling
+//
+//==========================================================================
+
+int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz)
+{
+	// If no sector given, find the one appropriate
+	if (sec == NULL)
+		sec = R_PointInSubsector(x, y)->sector;
+
+	// Above normal ceiling
+	cmpz = sec->ceilingplane.ZatPoint(x, y);
+	if (z >= cmpz)
+		return -1;
+
+	// Below normal floor
+	cmpz = sec->floorplane.ZatPoint(x, y);
+	if (z <= cmpz)
+		return -1;
+
+	// Looking through planes from top to bottom
+	for (int i = 0; i < (signed)sec->e->XFloor.ffloors.Size(); ++i)
+	{
+		F3DFloor *rover = sec->e->XFloor.ffloors[i];
+
+		// We are only interested in solid 3D floors here
+		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+		if (above)
+		{
+			// z is above that floor
+			if (floor && (z >= (cmpz = rover->top.plane->ZatPoint(x, y))))
+				return i - 1;
+			// z is above that ceiling
+			if (z >= (cmpz = rover->bottom.plane->ZatPoint(x, y)))
+				return i - 1;
+		}
+		else // below
+		{
+			// z is below that ceiling
+			if (!floor && (z <= (cmpz = rover->bottom.plane->ZatPoint(x, y))))
+				return i;
+			// z is below that floor
+			if (z <= (cmpz = rover->top.plane->ZatPoint(x, y)))
+				return i;
+		}
+	}
+
+	// Failsafe
+	return -1;
+}
 
 #endif

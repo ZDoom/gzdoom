@@ -140,6 +140,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy);
 
 secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z);
+int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz);
 							
 #else
 

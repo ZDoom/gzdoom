@@ -1045,6 +1045,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	x = self->x + ((pr_storm()&127) - 64) * FRACUNIT;
 	y = self->y + ((pr_storm()&127) - 64) * FRACUNIT;
 	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ, ALLOW_REPLACE);
+#ifdef _3DFLOORS
+	// We used bouncecount to store the 3D floor index in A_HideInCeiling
+	if (!mo) return;
+	fixed_t newz;
+	if (self->bouncecount >= 0 
+		&& (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
+		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(x, y);// - 40 * FRACUNIT;
+	else
+		newz = self->Sector->ceilingplane.ZatPoint(x, y);
+	int moceiling = P_Find3DFloor(NULL, x, y, newz, false, false, newz);
+	if (moceiling >= 0)
+		mo->z = newz - mo->height;
+#endif
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_PlayersExtra,self->special2) : 0;
 	mo->target = self->target;
@@ -1084,6 +1097,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 {
+#ifdef _3DFLOORS
+	// We use bouncecount to store the 3D floor index
+	fixed_t foo;
+	for (unsigned int i=0; i< self->Sector->e->XFloor.ffloors.Size(); i++)
+	{
+		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
+		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+		 
+		if ((foo = rover->bottom.plane->ZatPoint(self->x, self->y)) >= (self->z + self->height))
+		{
+			self->z = foo + 4*FRACUNIT;
+			self->bouncecount = i;
+			return;
+		}
+	}
+	self->bouncecount = -1;
+#endif
 	self->z = self->ceilingz + 4*FRACUNIT;
 }
 

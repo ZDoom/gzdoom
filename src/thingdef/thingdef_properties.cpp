@@ -601,11 +601,11 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * renderstyles[]={
-		"NONE","NORMAL","FUZZY","SOULTRANS","OPTFUZZY","STENCIL","TRANSLUCENT", "ADD", "SHADED", "SHADOW", NULL};
+		"NONE","NORMAL","FUZZY","SOULTRANS","OPTFUZZY","STENCIL","TRANSLUCENT", "ADD","SHADED", NULL};
 
 	static const int renderstyle_values[]={
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
-			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded, STYLE_Shadow};
+			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded};
 
 	// make this work for old style decorations, too.
 	if (!strnicmp(str, "style_", 6)) str+=6;
@@ -2068,6 +2068,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, morphweapon, S, PlayerPawn)
 {
 	PROP_STRING_PARM(z, 0);
 	defaults->MorphWeapon = FName(z);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, flechettetype, S, PlayerPawn)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->FlechetteType = FindClassTentative(str, "ArtiPoisonBag");
 }
 
 //==========================================================================

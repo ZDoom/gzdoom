@@ -143,6 +143,27 @@ bool AArtiPoisonBag3::Use (bool pickup)
 
 //============================================================================
 //
+// GetFlechetteType
+//
+//============================================================================
+
+const PClass *GetFlechetteType(AActor *other)
+{
+	const PClass *spawntype = NULL;
+	if (other->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	{
+		spawntype = static_cast<APlayerPawn*>(other)->FlechetteType;
+	}
+	if (spawntype == NULL)
+	{
+		// default fallback if nothing valid defined.
+		spawntype = RUNTIME_CLASS(AArtiPoisonBag3);
+	}
+	return spawntype;
+}
+
+//============================================================================
+//
 // AArtiPoisonBag :: HandlePickup
 //
 //============================================================================
@@ -155,21 +176,7 @@ bool AArtiPoisonBag::HandlePickup (AInventory *item)
 		return Super::HandlePickup (item);
 	}
 
-	bool matched;
-
-	if (Owner->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
-	{
-		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag1));
-	}
-	else if (Owner->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{
-		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag2));
-	}
-	else
-	{
-		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag3));
-	}
-	if (matched)
+	if (GetClass() == GetFlechetteType(Owner))
 	{
 		if (Amount < MaxAmount)
 		{
@@ -204,20 +211,8 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	}
 
 	AInventory *copy;
-	const PClass *spawntype;
 
-	if (other->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
-	{
-		spawntype = RUNTIME_CLASS(AArtiPoisonBag1);
-	}
-	else if (other->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{
-		spawntype = RUNTIME_CLASS(AArtiPoisonBag2);
-	}
-	else
-	{
-		spawntype = RUNTIME_CLASS(AArtiPoisonBag3);
-	}
+	const PClass *spawntype = GetFlechetteType(other);
 	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0, NO_REPLACE));
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;

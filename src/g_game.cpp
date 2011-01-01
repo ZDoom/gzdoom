@@ -455,6 +455,8 @@ CCMD (drop)
 	}
 }
 
+const PClass *GetFlechetteType(AActor *other);
+
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
 	static const ENamedName bagnames[3] =
@@ -463,22 +465,26 @@ CCMD (useflechette)
 		NAME_ArtiPoisonBag2,
 		NAME_ArtiPoisonBag3
 	};
-	int i, j;
 
 	if (who == NULL)
 		return;
 
-	if (who->IsKindOf (PClass::FindClass (NAME_ClericPlayer)))
-		i = 0;
-	else if (who->IsKindOf (PClass::FindClass (NAME_MagePlayer)))
-		i = 1;
-	else
-		i = 2;
-
-	for (j = 0; j < 3; ++j)
+	const PClass *type = GetFlechetteType(who);
+	if (type != NULL)
 	{
 		AInventory *item;
-		if ( (item = who->FindInventory (bagnames[(i+j)%3])) )
+		if ( (item = who->FindInventory (type) ))
+		{
+			SendItemUse = item;
+			return;
+		}
+	}
+
+	// The default flechette could not be found. Try all 3 types then.
+	for (int j = 0; j < 3; ++j)
+	{
+		AInventory *item;
+		if ( (item = who->FindInventory (bagnames[j])) )
 		{
 			SendItemUse = item;
 			break;

@@ -53,6 +53,12 @@ ACTOR MapSpot 9001
 	RenderStyle None
 }	
 
+// same with different editor number for Legacy maps -----------------------
+
+ACTOR FS_Mapspot : Mapspot 5004
+{
+}
+
 // Map spot with gravity ---------------------------------------------------
 
 ACTOR MapSpotGravity : MapSpot 9013

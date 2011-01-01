@@ -608,6 +608,57 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		return defaultiwad;
 	}
 
+#if !defined(__APPLE__)
+	const char *str;
+	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	{
+		FString cmd("kdialog --title \""GAMESIG" "DOTVERSIONSTR": Select an IWAD to use\""
+		            " --menu \"ZDoom found more than one IWAD\n"
+		            "Select from the list below to determine which one to use:\"");
+
+		for(i = 0; i < numwads; ++i)
+		{
+			const char *filepart = strrchr(wads[i].Path, '/');
+			if(filepart == NULL)
+				filepart = wads[i].Path;
+			else
+				filepart++;
+			// Menu entries are specified in "tag" "item" pairs, where when a
+			// particular item is selected (and the Okay button clicked), its
+			// corresponding tag is printed to stdout for identification.
+			cmd.AppendFormat(" \"%d\" \"%s (%s)\"", i, wads[i].Name.GetChars(), filepart);
+		}
+
+		if(defaultiwad >= 0 && defaultiwad < numwads)
+		{
+			const char *filepart = strrchr(wads[defaultiwad].Path, '/');
+			if(filepart == NULL)
+				filepart = wads[defaultiwad].Path;
+			else
+				filepart++;
+			cmd.AppendFormat(" --default \"%s (%s)\"", wads[defaultiwad].Name.GetChars(), filepart);
+		}
+
+		FILE *f = popen(cmd, "r");
+		if(f != NULL)
+		{
+			char gotstr[16];
+
+			if(fgets(gotstr, sizeof(gotstr), f) == NULL ||
+			   sscanf(gotstr, "%d", &i) != 1)
+				i = -1;
+
+			// Exit status = 1 means the selection was canceled (either by
+			// Cancel/Esc or the X button), not that there was an error running
+			// the program. In that case, nothing was printed so fgets will
+			// have failed. Other values can indicate an error running the app,
+			// so fall back to whatever else can be used.
+			int status = pclose(f);
+			if(WIFEXITED(status) && (WEXITSTATUS(status) == 0 || WEXITSTATUS(status) == 1))
+				return i;
+		}
+	}
+#endif
 #ifndef NO_GTK
 	if (GtkAvailable)
 	{

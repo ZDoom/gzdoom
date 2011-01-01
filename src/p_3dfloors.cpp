@@ -74,7 +74,7 @@ FDynamicColormap *F3DFloor::GetColormap()
 PalEntry F3DFloor::GetBlend()
 {
 	// The model sector's fog is used as blend unless FF_FADEWALLS is set.
-	if (!(flags & FF_FADEWALLS))
+	if (!(flags & FF_FADEWALLS) && target->ColorMap->Fade != model->ColorMap->Fade)
 	{
 		return model->ColorMap->Fade;
 	}
@@ -86,8 +86,9 @@ PalEntry F3DFloor::GetBlend()
 
 void F3DFloor::UpdateColormap(FDynamicColormap *&map)
 {
-	// If there's no fog in either model or target sector this is easy and fast.
-	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & FF_FADEWALLS))
+	// If there's no fog in either model or target sector (or both have the same fog) this is easy and fast.
+	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & FF_FADEWALLS) ||
+		target->ColorMap->Fade == model->ColorMap->Fade)
 	{
 		map = model->ColorMap;
 	}

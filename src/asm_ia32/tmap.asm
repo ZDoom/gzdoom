@@ -850,8 +850,8 @@ GLOBAL	R_DrawColumnHorizP_ASM
 	align 16
 
 @R_DrawColumnHorizP_ASM@0:
-R_DrawColumnHorizP_ASM:
 _R_DrawColumnHorizP_ASM:
+R_DrawColumnHorizP_ASM:
 
 ; count = dc_yh - dc_yl;
 
@@ -870,8 +870,10 @@ _R_DrawColumnHorizP_ASM:
 	inc	eax			; make 0 count mean 0 pixels
 	 and	edx,3
 	push	eax
-	 mov	esi,[dc_ctspan+edx*4]
-	lea	eax,[dc_temp+ecx*4+edx] ; eax = top of column in buffer
+	 mov	eax,[dc_temp]
+	mov	esi,[dc_ctspan+edx*4]
+	 add	eax,edx
+	lea	eax,[eax+ecx*4] ; eax = top of column in buffer
 	 mov	ebp,[dc_yh]
 	mov	[esi],ecx
 	 mov	[esi+4],ebp
@@ -1102,8 +1104,9 @@ _rt_copy1col_asm:
 	lea	esi,[eax*4]
 	inc	ebx			; ebx = count
 	mov	eax,edx
-	lea	ecx,[dc_temp+ecx+esi]	; ecx = source
+	add ecx,esi
 	mov	edi,[ylookup+esi]
+	add ecx,[dc_temp]	; ecx = source
 	mov	esi,[dc_pitch]		; esi = pitch
 	add	eax,edi			; eax = dest
 	add	eax,[dc_destorg]
@@ -1169,10 +1172,11 @@ _rt_copy4cols_asm:
 	inc	ebx			; ebx = count
 	mov	eax,ecx
 	mov	esi,[ylookup+edx*4]
-	lea	ecx,[dc_temp+edx*4]	; ecx = source
-	mov	edx,[dc_pitch]		; edx = pitch
+	mov ecx,[dc_temp]
 	add	eax,esi			; eax = dest
 	add	eax,[dc_destorg]
+	lea	ecx,[ecx+edx*4]	; ecx = source
+	mov	edx,[dc_pitch]		; edx = pitch
 
 	shr	ebx,1
 	jnc	.even
@@ -1241,7 +1245,8 @@ _rt_map1col_asm:
 	mov	esi,[dc_colormap]		; esi = colormap
 	inc	ebx				; ebx = count
 	mov	eax,edx
-	lea	ebp,[dc_temp+ecx+edi]		; ebp = source
+	lea	ebp,[ecx+edi]		; ebp = source
+	add ebp,[dc_temp]
 	mov	ecx,[ylookup+edi]
 	mov	edi,[dc_pitch]			; edi = pitch
 	add	eax,ecx				; eax = dest
@@ -1320,7 +1325,8 @@ _rt_map4cols_asm1:
 	mov	eax,ecx
 	inc	ebx			; ebx = count
 	mov	edi,[ylookup+edx]
-	lea	ebp,[dc_temp+edx]	; ebp = source
+	mov	ebp,[dc_temp]
+	add ebp,edx		; ebp = source
 	add	eax,edi			; eax = dest
 	mov	edi,[dc_pitch]		; edi = pitch
 	add	eax,[dc_destorg]
@@ -1414,7 +1420,8 @@ _rt_map4cols_asm2:
 	mov	eax,ecx
 	inc	ebx			; ebx = count
 	mov	edi,[ylookup+edx]
-	lea	ebp,[dc_temp+edx]	; ebp = source
+	mov ebp,[dc_temp]
+	add ebp,edx		; ebp = source
 	add	eax,edi			; eax = dest
 	mov	edi,[dc_pitch]		; edi = pitch
 	add	eax,[dc_destorg]
@@ -1493,10 +1500,11 @@ _rt_shaded4cols_asm:
 		add		eax,[dc_destorg]				; eax = destination
 		push	ebx
 		push	esi
+		mov		esi,[dc_temp]
 		inc		ebp								; ebp = count
 		add		eax,[esp+16]
 		push	edi
-		lea		esi,[dc_temp+ecx*4]				; esi = source
+		lea		esi,[esi+ecx*4]				; esi = source
 
 		align	16
 
@@ -1580,10 +1588,11 @@ _rt_add4cols_asm:
 		add		eax,[dc_destorg]
 		push	ebx
 		push	esi
+		mov		esi,[dc_temp]
 		push	ebp
 		inc		edi
 		add		eax,[esp+20]
-		lea		esi,[dc_temp+ecx*4]
+		lea		esi,[esi+ecx*4]
 		
 		align 16
 a4loop:
@@ -1659,10 +1668,11 @@ _rt_addclamp4cols_asm:
 		add		eax,[dc_destorg]
 		push	ebx
 		push	esi
+		mov		esi,[dc_temp]
 		push	ebp
 		inc		edi
 		add		eax,[esp+20]
-		lea		esi,[dc_temp+ecx*4]
+		lea		esi,[esi+ecx*4]
 		push	edi
 		
 		align	16

@@ -1352,6 +1352,97 @@ void R_FillSpan (void)
 	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, ds_x2 - ds_x1 + 1);
 }
 
+// Draw a voxel slab
+//
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+
+// Actually, this is just R_DrawColumn with an extra width parameter.
+
+#ifndef X86_ASM
+static const BYTE *slabcolormap;
+
+extern "C" void R_SetupDrawSlab(const BYTE *colormap)
+{
+	slabcolormap = colormap;
+}
+
+extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+{
+	int x;
+	const BYTE *colormap = slabcolormap;
+	int pitch = dc_pitch;
+
+	assert(dx > 0);
+
+	if (dx == 1)
+	{
+		while (dy > 0)
+		{
+			*p = colormap[vptr[v >> FRACBITS]];
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 2)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 3)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p[2] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 4)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p[2] = color;
+			p[3] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else while (dy > 0)
+	{
+		BYTE color = colormap[vptr[v >> FRACBITS]];
+		// The optimizer will probably turn this into a memset call.
+		// Since dx is not likely to be large, I'm not sure that's a good thing,
+		// hence the alternatives above.
+		for (x = 0; x < dx; x++)
+		{
+			p[x] = color;
+		}
+		p += pitch;
+		v += vi;
+		dy--;
+	}
+}
+#endif
+
+
 /****************************************************/
 /****************************************************/
 

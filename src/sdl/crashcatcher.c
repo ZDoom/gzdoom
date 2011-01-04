@@ -4,21 +4,39 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/param.h>
+#include <sys/ucontext.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/ucontext.h>
 
-// Solaris doesn't have SA_ONESHOT
-// According to the Linux header this is the same.
-#ifndef SA_ONESHOT
-#define SA_ONESHOT SA_RESETHAND
+#ifdef __linux__
+#include <sys/prctl.h>
+#ifndef PR_SET_PTRACER
+#define PR_SET_PTRACER 0x59616d61
+#endif
 #endif
 
-static const char *cc_logfile = NULL;
 
-static char respfile[256];
-static char buf[256];
-static char user_info_buf[1024];
+static const char crash_switch[] = "--cc-handle-crash";
+
+static const char fatal_err[] = "\n\n*** Fatal Error ***\n";
+static const char pipe_err[] = "!!! Failed to create pipe\n";
+static const char fork_err[] = "!!! Failed to fork debug process\n";
+static const char exec_err[] = "!!! Failed to exec debug process\n";
+
+static char argv0[PATH_MAX];
+
+static char altstack[SIGSTKSZ];
+
+
+static struct {
+	int signum;
+	pid_t pid;
+	int has_siginfo;
+	siginfo_t siginfo;
+	char buf[1024];
+} crash_info;
+
 
 static const struct {
 	const char *name;
@@ -88,16 +106,20 @@ static const struct {
 
 static int (*cc_user_info)(char*, char*);
 
+
 static void gdb_info(pid_t pid)
 {
+	char respfile[64];
+	char cmd_buf[128];
 	FILE *f;
 	int fd;
 
 	/* Create a temp file to put gdb commands into */
 	strcpy(respfile, "gdb-respfile-XXXXXX");
-	if((fd = mkstemp(respfile)) >= 0 && (f = fdopen(fd, "w")))
+	if((fd=mkstemp(respfile)) >= 0 && (f=fdopen(fd, "w")) != NULL)
 	{
-		fprintf(f, "shell echo \"\"\n"
+		fprintf(f, "attach %d\n"
+		           "shell echo \"\"\n"
 		           "shell echo \"* Loaded Libraries\"\n"
 		           "info sharedlibrary\n"
 		           "shell echo \"\"\n"
@@ -110,21 +132,18 @@ static void gdb_info(pid_t pid)
 		           "shell echo \"* Registers\"\n"
 		           "info registers\n"
 		           "shell echo \"\"\n"
-		           "shell echo \"* Bytes near %%eip:\"\n"
-		           "x/x $eip-3\nx/x $eip\n"
-		           "shell echo \"\"\n"
 		           "shell echo \"* Backtrace\"\n"
 		           "thread apply all backtrace full\n"
 		           "detach\n"
-		           "quit\n");
+		           "quit\n", pid);
 		fclose(f);
 
 		/* Run gdb and print process info. */
-		snprintf(buf, sizeof(buf), "gdb --quiet --batch --command=%s --pid=%i", respfile, pid);
-		printf("Executing: %s\n", buf);
+		snprintf(cmd_buf, sizeof(cmd_buf), "gdb --quiet --batch --command=%s", respfile);
+		printf("Executing: %s\n", cmd_buf);
 		fflush(stdout);
 
-		system(buf);
+		system(cmd_buf);
 		/* Clean up */
 		remove(respfile);
 	}
@@ -136,56 +155,137 @@ static void gdb_info(pid_t pid)
 			close(fd);
 			remove(respfile);
 		}
-		printf("Could not create gdb command file\n");
+		printf("!!! Could not create gdb command file\n");
 	}
 	fflush(stdout);
-	kill(pid, SIGKILL);
+}
+
+static void sys_info(void)
+{
+#ifdef __unix__
+	system("echo \"System: `uname -a`\"");
+	putchar('\n');
+	fflush(stdout);
+#endif
 }
 
 
-/* Generic system info */
-static void sys_info(void)
+static size_t safe_write(int fd, const void *buf, size_t len)
 {
-#if (defined __unix__)
-	system("echo \"System: `uname -a`\"");
-#endif
-	system("echo \"GCC version: `gcc -dumpversion`\"");
-	putchar('\n');
-	fflush(stdout);
+	size_t ret = 0;
+	while(ret < len)
+	{
+		ssize_t rem;
+		if((rem=write(fd, (const char*)buf+ret, len-ret)) == -1)
+		{
+			if(errno == EINTR)
+				continue;
+			break;
+		}
+		ret += rem;
+	}
+	return ret;
 }
 
 static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 {
 	ucontext_t *ucontext = (ucontext_t*)context;
-	const char *sigdesc = NULL;
-	pid_t pid, dbg_pid;
-	struct stat sbuf;
-#ifndef __FreeBSD__
-	struct rlimit rl;
+	pid_t dbg_pid;
+	int fd[2];
+
+	/* Make sure the effective uid is the real uid */
+	if(getuid() != geteuid())
+	{
+		raise(signum);
+		return;
+	}
+
+	safe_write(STDERR_FILENO, fatal_err, sizeof(fatal_err)-1);
+	if(pipe(fd) == -1)
+	{
+		safe_write(STDERR_FILENO, pipe_err, sizeof(pipe_err)-1);
+		raise(signum);
+		return;
+	}
+
+	crash_info.signum = signum;
+	crash_info.pid = getpid();
+	crash_info.has_siginfo = !!siginfo;
+	if(siginfo)
+		crash_info.siginfo = *siginfo;
+	if(cc_user_info)
+		cc_user_info(crash_info.buf, crash_info.buf+sizeof(crash_info.buf));
+
+	/* Fork off to start a crash handler */
+	switch((dbg_pid=fork()))
+	{
+		/* Error */
+		case -1:
+			safe_write(STDERR_FILENO, fork_err, sizeof(fork_err)-1);
+			raise(signum);
+			return;
+
+		case 0:
+			dup2(fd[0], STDIN_FILENO);
+			close(fd[0]);
+			close(fd[1]);
+
+			execl(argv0, argv0, crash_switch, NULL);
+
+			safe_write(STDERR_FILENO, exec_err, sizeof(exec_err)-1);
+			_exit(1);
+
+		default:
+#ifdef __linux__
+			prctl(PR_SET_PTRACER, dbg_pid, 0, 0, 0);
 #endif
-	int status, i;
-	FILE *f;
+			safe_write(fd[1], &crash_info, sizeof(crash_info));
+			close(fd[0]);
+			close(fd[1]);
+
+			/* Wait; we'll be killed when gdb is done */
+			do {
+				int status;
+				if(waitpid(dbg_pid, &status, 0) == dbg_pid &&
+				   (WIFEXITED(status) || WIFSIGNALED(status)))
+				{
+					/* The debug process died before it could kill us */
+					raise(signum);
+					break;
+				}
+			} while(1);
+	}
+}
+
+static void crash_handler(const char *logfile)
+{
+	const char *sigdesc = "";
+	int i;
+
+	if(fread(&crash_info, sizeof(crash_info), 1, stdin) != 1)
+	{
+		fprintf(stderr, "!!! Failed to retrieve info from crashed process\n");
+		exit(1);
+	}
 
 	/* Get the signal description */
-	if(!siginfo)
+	for(i = 0;signals[i].name;++i)
 	{
-		for(i = 0;signals[i].name;++i)
+		if(signals[i].signum == crash_info.signum)
 		{
-			if(signals[i].signum == signum)
-			{	
-				sigdesc = signals[i].name;
-				break;
-			}
+			sigdesc = signals[i].name;
+			break;
 		}
 	}
-	else
+
+	if(crash_info.has_siginfo)
 	{
-		switch(signum)
+		switch(crash_info.signum)
 		{
 			case SIGSEGV:
 				for(i = 0;sigsegv_codes[i].name;++i)
 				{
-					if(sigsegv_codes[i].code == siginfo->si_code)
+					if(sigsegv_codes[i].code == crash_info.siginfo.si_code)
 					{
 						sigdesc = sigsegv_codes[i].name;
 						break;
@@ -196,7 +296,7 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 			case SIGFPE:
 				for(i = 0;sigfpe_codes[i].name;++i)
 				{
-					if(sigfpe_codes[i].code == siginfo->si_code)
+					if(sigfpe_codes[i].code == crash_info.siginfo.si_code)
 					{
 						sigdesc = sigfpe_codes[i].name;
 						break;
@@ -207,7 +307,7 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 			case SIGILL:
 				for(i = 0;sigill_codes[i].name;++i)
 				{
-					if(sigill_codes[i].code == siginfo->si_code)
+					if(sigill_codes[i].code == crash_info.siginfo.si_code)
 					{
 						sigdesc = sigill_codes[i].name;
 						break;
@@ -218,7 +318,7 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 			case SIGBUS:
 				for(i = 0;sigbus_codes[i].name;++i)
 				{
-					if(sigbus_codes[i].code == siginfo->si_code)
+					if(sigbus_codes[i].code == crash_info.siginfo.si_code)
 					{
 						sigdesc = sigbus_codes[i].name;
 						break;
@@ -227,120 +327,91 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 				break;
 		}
 	}
+	fprintf(stderr, "%s (signal %i)\n", sigdesc, crash_info.signum);
+	if(crash_info.has_siginfo)
+		fprintf(stderr, "Address: %p\n", crash_info.siginfo.si_addr);
+	fputc('\n', stderr);
 
-	if(!sigdesc)
+	if(logfile)
 	{
-		/* Unknown signal, let the default handler deal with it */
-		raise(signum);
-		return;
-	}
-
-#if 0 /* Do we need this? */
-	/* Make sure the effective uid is the real uid */
-	if (getuid() != geteuid())
-	{
-		raise(signum);
-		return;
-	}
-#endif
-
-	/* Create crash log file */
-	if(cc_logfile)
-	{
-		f = fopen(cc_logfile, "w");
-		if(!f)
+		/* Create crash log file and redirect shell output to it */
+		if(freopen(logfile, "wa", stdout) != stdout)
 		{
-			fprintf(stderr, "Could not create %s following signal.\n", cc_logfile);
-			raise(signum);
-			return;
+			fprintf(stderr, "!!! Could not create %s following signal\n", logfile);
+			exit(1);
 		}
-	}
-	else
-		f = stderr;
+		fprintf(stderr, "Generating %s and killing process %d, please wait... ", logfile, crash_info.pid);
 
-	/* Get current process id and fork off */
-	pid = getpid();
-	switch ((dbg_pid = fork()))
+		printf("*** Fatal Error ***\n"
+		       "%s (signal %i)\n", sigdesc, crash_info.signum);
+		if(crash_info.has_siginfo)
+			printf("Address: %p\n", crash_info.siginfo.si_addr);
+		fputc('\n', stdout);
+		fflush(stdout);
+	}
+
+	sys_info();
+
+	crash_info.buf[sizeof(crash_info.buf)-1] = '\0';
+	printf("%s\n", crash_info.buf);
+	fflush(stdout);
+
+	if(crash_info.pid > 0)
 	{
-		/* Error */
-		case -1:
-			break;
-
-		case 0:
-			fprintf(stderr, "\n\n*** Fatal Error ***\n"
-			                "%s (signal %i)\n", sigdesc, signum);
-
-			/* Redirect shell output */
-			close(STDOUT_FILENO);
-			dup2(fileno(f), STDOUT_FILENO);
-
-			if(f != stderr)
-			{
-				fprintf(stderr, "\nGenerating %s and killing process %i, please wait... ", cc_logfile, pid);
-				fprintf(f, "*** Fatal Error ***\n"
-				           "%s (signal %i)\n", sigdesc, signum);
-			}
-			if(siginfo)
-				fprintf(f, "Address: %p\n", siginfo->si_addr);
-			fputc('\n', f);
-			fflush(f);
-
-			/* Get info */
-			sys_info();
-			if(cc_user_info)
-			{
-				if(cc_user_info(user_info_buf, user_info_buf+sizeof(user_info_buf)) > 0)
-				{
-					fprintf(f, "%s\n", user_info_buf);
-					fflush(f);
-				}
-			}
-			gdb_info(pid);
-
-			if(f != stderr)
-			{
-				fclose(f);
-#if (defined __unix__)
-				if(cc_logfile)
-				{
-					char buf[512];
-					snprintf(buf, sizeof(buf),
-					         "if (which gxmessage > /dev/null 2>&1) ; then\n"
-					         "    gxmessage -buttons \"Damn it:0\" -center -title \"Very Fatal Error\" -file %s\n"
-					         "elif (which xmessage > /dev/null 2>&1) ; then\n"
-					         "    xmessage -buttons \"Damn it:0\" -center -file %s -geometry 600x400\n"
-					         "fi", cc_logfile, cc_logfile);
-					system(buf);
-				}
-#endif
-			}
-
-			_exit(0);
-
-		default:
-			/* Wait indefinitely; we'll be killed when gdb is done */
-			while(1) usleep(1000000);
+		gdb_info(crash_info.pid);
+		kill(crash_info.pid, SIGKILL);
 	}
+
+	if(logfile)
+	{
+		const char *str;
+		char buf[512];
+
+		if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+			snprintf(buf, sizeof(buf), "kdialog --title \"Very Fatal Error\" --textbox \"%s\" 800 600", logfile);
+		else if((str=getenv("GNOME_DESKTOP_SESSION_ID")) && str[0] != '\0')
+			snprintf(buf, sizeof(buf), "gxmessage -buttons \"Okay:0\" -geometry 800x600 -title \"Very Fatal Error\" -center -file \"%s\"", logfile);
+		else
+			snprintf(buf, sizeof(buf), "xmessage -buttons \"Okay:0\" -center -file \"%s\"", logfile);
+
+		system(buf);
+	}
+	exit(0);
 }
 
-int cc_install_handlers(int num_signals, int *signals, const char *logfile, int (*user_info)(char*, char*))
+int cc_install_handlers(int argc, char **argv, int num_signals, int *signals, const char *logfile, int (*user_info)(char*, char*))
 {
-	int retval = 0;
 	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+	stack_t altss;
+	int retval;
 
-	sa.sa_sigaction = crash_catcher;
+	if(argc == 2 && strcmp(argv[1], crash_switch) == 0)
+		crash_handler(logfile);
 
-#ifdef SA_ONESHOT
-	sa.sa_flags = SA_ONESHOT | SA_NODEFER | SA_SIGINFO;
-#else
-	sa.sa_flags = SA_NODEFER | SA_SIGINFO;
-#endif
-	sigemptyset(&sa.sa_mask);
-
-	cc_logfile = logfile;
 	cc_user_info = user_info;
 
+	if(argv[0][0] == '/')
+		snprintf(argv0, sizeof(argv0), "%s", argv[0]);
+	else
+	{
+		getcwd(argv0, sizeof(argv0));
+		retval = strlen(argv0);
+		snprintf(argv0+retval, sizeof(argv0)-retval, "/%s", argv[0]);
+	}
+
+	/* Set an alternate signal stack so SIGSEGVs caused by stack overflows
+	 * still run */
+	altss.ss_sp = altstack;
+	altss.ss_flags = 0;
+	altss.ss_size = sizeof(altstack);
+	sigaltstack(&altss, NULL);
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_sigaction = crash_catcher;
+	sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_SIGINFO | SA_ONSTACK;
+	sigemptyset(&sa.sa_mask);
+
+	retval = 0;
 	while(num_signals--)
 	{
 		if((*signals != SIGSEGV && *signals != SIGILL && *signals != SIGFPE &&
@@ -351,6 +422,5 @@ int cc_install_handlers(int num_signals, int *signals, const char *logfile, int 
 		}
 		++signals;
 	}
-
 	return retval;
 }

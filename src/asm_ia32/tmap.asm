@@ -342,13 +342,13 @@ dsy3:	shr	ebp,26
 	mov	edx,[ds_ystep]
 	 mov	ecx,[ds_xfrac]
 dsy4:	shr	ecx,26
-dsm8:	 and	edx,0xffffffc0
+dsm8:	 and	edx,strict dword 0xffffffc0
 	or	ebp,edx
 	 mov	[esp+4],ebp
 	mov	ebp,[ds_yfrac]
 	 mov	edx,[ds_xfrac]
 dsy2:	shl	edx,6
-dsm9:	 and	ebp,0xffffffc0
+dsm9:	 and	ebp,strict dword 0xffffffc0
 	or	ecx,ebp
 	 shr	esi,1
 	jnc	dseven1
@@ -485,13 +485,13 @@ dmsy3:	shr	ebp,26
 	mov	edx,[ds_ystep]
 	 mov	ecx,[ds_xfrac]
 dmsy4:	shr	ecx,26
-dmsm8:	 and	edx,0xffffffc0
+dmsm8:	 and	edx,strict dword 0xffffffc0
 	or	ebp,edx
 	 mov	[esp+4],ebp
 	mov	ebp,[ds_yfrac]
 	 mov	edx,[ds_xfrac]
 dmsy2:	shl	edx,6
-dmsm9:	 and	ebp,0xffffffc0
+dmsm9:	 and	ebp,strict dword 0xffffffc0
 	or	ecx,ebp
 	 shr	esi,1
 	jnc	dmseven1

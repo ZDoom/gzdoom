@@ -529,6 +529,7 @@ xx(res_9)
 xx(AlwaysRun)
 
 // end sequences
+xx(Inter_Chess)
 xx(Inter_Strife)
 xx(Inter_Strife_Good)
 xx(Inter_Strife_Sad)

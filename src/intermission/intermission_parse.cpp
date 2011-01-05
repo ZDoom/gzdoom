@@ -810,7 +810,8 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 					const char *text, INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText, 
 					bool ending, FName endsequence)
 {
-	if (text != NULL && *text != 0)
+	// Hexen's chess ending doesn't have a text screen, even if the cluster has a message defined.
+	if (text != NULL && *text != 0 && endsequence != NAME_Inter_Chess)
 	{
 		FIntermissionActionTextscreen *textscreen = new FIntermissionActionTextscreen;
 		if (textInLump)

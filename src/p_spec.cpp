@@ -921,39 +921,6 @@ static bool SpreadCeilingPortal(AStackPoint *pt, fixed_t alpha, sector_t *sector
 	return fail;
 }
 
-static bool SpreadFloorPortal(AStackPoint *pt, fixed_t alpha, sector_t *sector)
-{
-	bool fail = false;
-	sector->validcount = validcount;
-	for(int i=0; i<sector->linecount; i++)
-	{
-		line_t *line = sector->lines[i];
-		sector_t *backsector = sector == line->frontsector? line->backsector : line->frontsector;
-		if (line->backsector == line->frontsector) continue;
-		if (backsector == NULL) { fail = true; continue; }
-		if (backsector->validcount == validcount) continue;
-		if (backsector->FloorSkyBox == pt) continue;
-
-		// Check if the backside would map to the same visplane
-		if (backsector->FloorSkyBox != NULL) { fail = true; continue; }
-		if (backsector->floorplane != sector->ceilingplane) { fail = true; continue; }
-		if (backsector->lightlevel != sector->lightlevel) { fail = true; continue; }
-		if (backsector->GetTexture(sector_t::floor)		!= sector->GetTexture(sector_t::floor)) { fail = true; continue; }
-		if (backsector->GetXOffset(sector_t::floor)		!= sector->GetXOffset(sector_t::floor)) { fail = true; continue; }
-		if (backsector->GetYOffset(sector_t::floor)		!= sector->GetYOffset(sector_t::floor)) { fail = true; continue; }
-		if (backsector->GetXScale(sector_t::floor)		!= sector->GetXScale(sector_t::floor)) { fail = true; continue; }
-		if (backsector->GetYScale(sector_t::floor)		!= sector->GetYScale(sector_t::floor)) { fail = true; continue; }
-		if (backsector->GetAngle(sector_t::floor)		!= sector->GetAngle(sector_t::floor)) { fail = true; continue; }
-		if (SpreadFloorPortal(pt, alpha, backsector)) { fail = true; continue; }
-	}
-	if (!fail) 
-	{
-		sector->FloorSkyBox = pt;
-		sector->SetAlpha(sector_t::floor, alpha);
-	}
-	return fail;
-}
-
 void P_SetupPortals()
 {
 	TThinkerIterator<AStackPoint> it;
@@ -973,51 +940,6 @@ void P_SetupPortals()
 		}
 		pt->special1 = 0;
 		points.Push(pt);
-	}
-
-	// Maps using undefined portal hacks may not benefit from portal optimizations.
-	if (ib_compatflags & BCOMPATF_BADPORTALS) return;
-
-	for(unsigned i=0;i<points.Size(); i++)
-	{
-		if (points[i]->special1 == 0 && points[i]->Mate != NULL)
-		{
-			for(unsigned j=1;j<points.Size(); j++)
-			{
-				if (points[j]->special1 == 0 && points[j]->Mate != NULL && points[i]->GetClass() == points[j]->GetClass())
-				{
-					fixed_t deltax1 = points[i]->Mate->x - points[i]->x;
-					fixed_t deltay1 = points[i]->Mate->y - points[i]->y;
-					fixed_t deltax2 = points[j]->Mate->x - points[j]->x;
-					fixed_t deltay2 = points[j]->Mate->y - points[j]->y;
-
-					if (deltax1 == deltax2 && deltay1 == deltay2)
-					{
-						if (points[j]->Sector->FloorSkyBox == points[j]->Mate)
-							points[j]->Sector->FloorSkyBox = points[i]->Mate;
-
-						if (points[j]->Sector->CeilingSkyBox == points[j]->Mate)
-							points[j]->Sector->CeilingSkyBox = points[i]->Mate;
-
-						points[j]->special1 = 1;
-					}
-				}
-			}
-		}
-	}
-	validcount++;
-	// Some fudging to preserve an unintended 'portal bleeding' effect caused by incomplete checks in the rendering code.
-	// Due to the addition of linedef-based portals this effect no longer works.
-	for(int i=0;i<numsectors; i++)
-	{
-		if (sectors[i].CeilingSkyBox != NULL && sectors[i].CeilingSkyBox->bAlways && sectors[i].validcount != validcount)
-		{
-			SpreadCeilingPortal(barrier_cast<AStackPoint*>(sectors[i].CeilingSkyBox), sectors[i].GetAlpha(sector_t::ceiling), &sectors[i]);
-		}
-		if (sectors[i].FloorSkyBox != NULL && sectors[i].FloorSkyBox->bAlways && sectors[i].validcount != validcount)
-		{
-			SpreadFloorPortal(barrier_cast<AStackPoint*>(sectors[i].FloorSkyBox), sectors[i].GetAlpha(sector_t::floor), &sectors[i]);
-		}
 	}
 }
 

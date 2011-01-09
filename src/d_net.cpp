@@ -57,6 +57,7 @@
 #include "g_level.h"
 #include "d_event.h"
 #include "m_argv.h"
+#include "p_lnspec.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
@@ -2316,10 +2317,35 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			
 			for (i = 0; i < argn; ++i)
 			{
-				arg[i] = ReadLong (stream);
+				int argval = ReadLong(stream);
+				if (i < countof(arg))
+				{
+					arg[i] = argval;
+				}
 			}
 			P_StartScript (players[player].mo, NULL, snum, level.mapname, false,
 				arg[0], arg[1], arg[2], type == DEM_RUNSCRIPT2, false, true);
+		}
+		break;
+
+	case DEM_RUNSPECIAL:
+		{
+			int snum = ReadByte(stream);
+			int argn = ReadByte(stream);
+			int arg[5] = { 0, 0, 0, 0, 0 };
+
+			for (i = 0; i < argn; ++i)
+			{
+				int argval = ReadLong(stream);
+				if (i < countof(arg))
+				{
+					arg[i] = argval;
+				}
+			}
+			if (!CheckCheatmode(player == consoleplayer))
+			{
+				LineSpecials[snum](NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
+			}
 		}
 		break;
 
@@ -2519,6 +2545,10 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_RUNSCRIPT:
 		case DEM_RUNSCRIPT2:
 			skip = 3 + *(*stream + 2) * 4;
+			break;
+
+		case DEM_RUNSPECIAL:
+			skip = 2 + *(*stream + 1) * 4;
 			break;
 
 		case DEM_CONVREPLY:

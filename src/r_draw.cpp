@@ -141,6 +141,7 @@ FRenderStyle LegacyRenderStyles[STYLE_Count] =
 			 /* STYLE_Add */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		0 }},
 		  /* STYLE_Shaded */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed }},
 /* STYLE_TranslucentStencil */{{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed }},
+            /* STYLE_Shadow */{{ STYLEOP_Shadow,	0,					0,					0 }},
 };
 #else
 FRenderStyle LegacyRenderStyles[STYLE_Count];
@@ -157,6 +158,7 @@ static const BYTE Styles[STYLE_Count * 4] =
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		0,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed,
+	STYLEOP_Shadow,		0,					0,					0
 };
 
 static struct LegacyInit
@@ -1350,6 +1352,97 @@ void R_FillSpan (void)
 	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, ds_x2 - ds_x1 + 1);
 }
 
+// Draw a voxel slab
+//
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+
+// Actually, this is just R_DrawColumn with an extra width parameter.
+
+#ifndef X86_ASM
+static const BYTE *slabcolormap;
+
+extern "C" void R_SetupDrawSlab(const BYTE *colormap)
+{
+	slabcolormap = colormap;
+}
+
+extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+{
+	int x;
+	const BYTE *colormap = slabcolormap;
+	int pitch = dc_pitch;
+
+	assert(dx > 0);
+
+	if (dx == 1)
+	{
+		while (dy > 0)
+		{
+			*p = colormap[vptr[v >> FRACBITS]];
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 2)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 3)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p[2] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else if (dx == 4)
+	{
+		while (dy > 0)
+		{
+			BYTE color = colormap[vptr[v >> FRACBITS]];
+			p[0] = color;
+			p[1] = color;
+			p[2] = color;
+			p[3] = color;
+			p += pitch;
+			v += vi;
+			dy--;
+		}
+	}
+	else while (dy > 0)
+	{
+		BYTE color = colormap[vptr[v >> FRACBITS]];
+		// The optimizer will probably turn this into a memset call.
+		// Since dx is not likely to be large, I'm not sure that's a good thing,
+		// hence the alternatives above.
+		for (x = 0; x < dx; x++)
+		{
+			p[x] = color;
+		}
+		p += pitch;
+		v += vi;
+		dy--;
+	}
+}
+#endif
+
+
 /****************************************************/
 /****************************************************/
 
@@ -2068,7 +2161,7 @@ void R_InitColumnDrawers ()
 }
 
 // [RH] Choose column drawers in a single place
-EXTERN_CVAR (Bool, r_drawfuzz)
+EXTERN_CVAR (Int, r_drawfuzz)
 EXTERN_CVAR (Float, transsouls)
 CVAR (Bool, r_drawtrans, true, 0)
 
@@ -2235,6 +2328,13 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 
 	style.CheckFuzz();
 
+	if (style.BlendOp == STYLEOP_Shadow)
+	{
+		style = LegacyRenderStyles[STYLE_TranslucentStencil];
+		alpha = FRACUNIT*3/10;
+		color = 0;
+	}
+
 	if (style.Flags & STYLEF_TransSoulsAlpha)
 	{
 		alpha = fixed_t(transsouls * FRACUNIT);
@@ -2390,16 +2490,42 @@ bool FRenderStyle::IsVisible(fixed_t alpha) const throw()
 
 void FRenderStyle::CheckFuzz()
 {
-	if (BlendOp == STYLEOP_FuzzOrAdd)
+	switch (BlendOp)
 	{
-		BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_Add;
+	default:
+		return;
+
+	case STYLEOP_FuzzOrAdd:
+		if (r_drawtrans && r_drawfuzz == 0)
+		{
+			BlendOp = STYLEOP_Add;
+			return;
+		}
+		break;
+
+	case STYLEOP_FuzzOrSub:
+		if (r_drawtrans && r_drawfuzz == 0)
+		{
+			BlendOp = STYLEOP_Sub;
+			return;
+		}
+		break;
+
+	case STYLEOP_FuzzOrRevSub:
+		if (r_drawtrans && r_drawfuzz == 0)
+		{
+			BlendOp = STYLEOP_RevSub;
+			return;
+		}
+		break;
 	}
-	else if (BlendOp == STYLEOP_FuzzOrSub)
+
+	if (r_drawfuzz == 2)
 	{
-		BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_Sub;
+		BlendOp = STYLEOP_Shadow;
 	}
-	else if (BlendOp == STYLEOP_FuzzOrRevSub)
+	else
 	{
-		BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_RevSub;
+		BlendOp = STYLEOP_Fuzz;
 	}
 }

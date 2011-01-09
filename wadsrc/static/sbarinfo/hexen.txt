@@ -114,29 +114,26 @@ statusbar Normal
 	drawimage "ARMCLS", 255, 178;
 	drawnumber 2, HUDFONT_RAVEN, untranslated, armorclass, 275, 176, 1;
 
-	playerclass Cleric
+	playertype ClericPlayer
 	{
 		drawimage "WPSLOT1", 190, 162;
-		hasweaponpiece CWeapWraithverge, 1
+		ininventory CWeapWraithverge
 		{
-			drawimage "WPIECEC1", 190, 162;
+			drawimage "WPFULL1", 190, 162;
 		}
-		hasweaponpiece CWeapWraithverge, 2
+		else
 		{
-			drawimage "WPIECEC2", 212, 162;
-		}
-		hasweaponpiece CWeapWraithverge, 3
-		{
-			drawimage "WPIECEC3", 225, 162;
-		}
-		hasweaponpiece CWeapWraithverge, 1
-		{
+			hasweaponpiece CWeapWraithverge, 1
+			{
+				drawimage "WPIECEC1", 190, 162;
+			}
 			hasweaponpiece CWeapWraithverge, 2
 			{
-				hasweaponpiece CWeapWraithverge, 3
-				{
-					drawimage "WPFULL1", 190, 162;
-				}
+				drawimage "WPIECEC2", 212, 162;
+			}
+			hasweaponpiece CWeapWraithverge, 3
+			{
+				drawimage "WPIECEC3", 225, 162;
 			}
 		}
 
@@ -145,29 +142,26 @@ statusbar Normal
 		else
 			drawgem translatable, interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
 	}
-	else playerclass Mage
+	else playertype MagePlayer
 	{
 		drawimage "WPSLOT2", 190, 162;
-		hasweaponpiece MWeapBloodscourge, 1
+		ininventory MWeapBloodscourge
 		{
-			drawimage "WPIECEM1", 190, 162;
+			drawimage "WPFULL2", 190, 162;
 		}
-		hasweaponpiece MWeapBloodscourge, 2
+		else
 		{
-			drawimage "WPIECEM2", 205, 162;
-		}
-		hasweaponpiece MWeapBloodscourge, 3
-		{
-			drawimage "WPIECEM3", 224, 162;
-		}
-		hasweaponpiece MWeapBloodscourge, 1
-		{
+			hasweaponpiece MWeapBloodscourge, 1
+			{
+				drawimage "WPIECEM1", 190, 162;
+			}
 			hasweaponpiece MWeapBloodscourge, 2
 			{
-				hasweaponpiece MWeapBloodscourge, 3
-				{
-					drawimage "WPFULL2", 190, 162;
-				}
+				drawimage "WPIECEM2", 205, 162;
+			}
+			hasweaponpiece MWeapBloodscourge, 3
+			{
+				drawimage "WPIECEM3", 224, 162;
 			}
 		}
 
@@ -179,26 +173,23 @@ statusbar Normal
 	else
 	{
 		drawimage "WPSLOT0", 190, 162;
-		hasweaponpiece FWeapQuietus, 1
+		ininventory FWeapQuietus
 		{
-			drawimage "WPIECEF1", 190, 162;
+			drawimage "WPFULL0", 190, 162;
 		}
-		hasweaponpiece FWeapQuietus, 2
+		else
 		{
-			drawimage "WPIECEF2", 225, 162;
-		}
-		hasweaponpiece FWeapQuietus, 3
-		{
-			drawimage "WPIECEF3", 234, 162;
-		}
-		hasweaponpiece FWeapQuietus, 1
-		{
+			hasweaponpiece FWeapQuietus, 1
+			{
+				drawimage "WPIECEF1", 190, 162;
+			}
 			hasweaponpiece FWeapQuietus, 2
 			{
-				hasweaponpiece FWeapQuietus, 3
-				{
-					drawimage "WPFULL0", 190, 162;
-				}
+				drawimage "WPIECEF2", 225, 162;
+			}
+			hasweaponpiece FWeapQuietus, 3
+			{
+				drawimage "WPIECEF3", 234, 162;
 			}
 		}
 
@@ -222,21 +213,21 @@ statusbar Automap
 	drawimage hexenarmor amulet, "ARMSLOT4", 243, 164;
 
 	// Also draw the life gem here
-	playerclass Fighter
+	playertype FighterPlayer
 	{
 		gamemode singleplayer
 			drawgem interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
 		else
 			drawgem translatable, interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
 	}
-	else playerclass Cleric
+	else playertype ClericPlayer
 	{
 		gamemode singleplayer
 			drawgem interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
 		else
 			drawgem translatable, interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
 	}
-	else playerclass Mage
+	else playertype MagePlayer
 	{
 		gamemode singleplayer
 			drawgem interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;

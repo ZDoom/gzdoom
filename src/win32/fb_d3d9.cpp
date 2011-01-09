@@ -3677,6 +3677,14 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 		alpha = clamp<fixed_t> (parms.alpha, 0, FRACUNIT) / 65536.f;
 	}
 
+	style.CheckFuzz();
+	if (style.BlendOp == STYLEOP_Shadow)
+	{
+		style = LegacyRenderStyles[STYLE_TranslucentStencil];
+		alpha = 0.3f;
+		parms.fillcolor = 0;
+	}
+
 	// FIXME: Fuzz effect is not written
 	if (style.BlendOp == STYLEOP_FuzzOrAdd || style.BlendOp == STYLEOP_Fuzz)
 	{

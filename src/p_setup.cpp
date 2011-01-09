@@ -2519,10 +2519,10 @@ void P_LoadSideDefs2 (MapData * map)
 // as possible from its ZDBSP incarnation.
 //
 
-static unsigned int BlockHash (TArray<WORD> *block)
+static unsigned int BlockHash (TArray<int> *block)
 {
 	int hash = 0;
-	WORD *ar = &(*block)[0];
+	int *ar = &(*block)[0];
 	for (size_t i = 0; i < block->Size(); ++i)
 	{
 		hash = hash * 12235 + ar[i];
@@ -2530,7 +2530,7 @@ static unsigned int BlockHash (TArray<WORD> *block)
 	return hash & 0x7fffffff;
 }
 
-static bool BlockCompare (TArray<WORD> *block1, TArray<WORD> *block2)
+static bool BlockCompare (TArray<int> *block1, TArray<int> *block2)
 {
 	size_t size = block1->Size();
 
@@ -2542,8 +2542,8 @@ static bool BlockCompare (TArray<WORD> *block1, TArray<WORD> *block2)
 	{
 		return true;
 	}
-	WORD *ar1 = &(*block1)[0];
-	WORD *ar2 = &(*block2)[0];
+	int *ar1 = &(*block1)[0];
+	int *ar2 = &(*block2)[0];
 	for (size_t i = 0; i < size; ++i)
 	{
 		if (ar1[i] != ar2[i])
@@ -2554,20 +2554,20 @@ static bool BlockCompare (TArray<WORD> *block1, TArray<WORD> *block2)
 	return true;
 }
 
-static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<WORD> *blocks, int bmapwidth, int bmapheight)
+static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<int> *blocks, int bmapwidth, int bmapheight)
 {
 	int buckets[4096];
 	int *hashes, hashblock;
-	TArray<WORD> *block;
+	TArray<int> *block;
 	int zero = 0;
 	int terminator = -1;
-	WORD *array;
+	int *array;
 	int i, hash;
 	int hashed = 0, nothashed = 0;
 
 	hashes = new int[bmapwidth * bmapheight];
 
-	memset (hashes, 0xff, sizeof(WORD)*bmapwidth*bmapheight);
+	memset (hashes, 0xff, sizeof(int)*bmapwidth*bmapheight);
 	memset (buckets, 0xff, sizeof(buckets));
 
 	for (i = 0; i < bmapwidth * bmapheight; ++i)
@@ -2614,12 +2614,12 @@ static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<WORD> *blocks, i
 
 static void P_CreateBlockMap ()
 {
-	TArray<WORD> *BlockLists, *block, *endblock;
-	WORD adder;
+	TArray<int> *BlockLists, *block, *endblock;
+	int adder;
 	int bmapwidth, bmapheight;
 	int minx, maxx, miny, maxy;
 	int i;
-	WORD line;
+	int line;
 
 	if (numvertexes <= 0)
 		return;
@@ -2651,7 +2651,7 @@ static void P_CreateBlockMap ()
 	adder = bmapwidth;		BlockMap.Push (adder);
 	adder = bmapheight;		BlockMap.Push (adder);
 
-	BlockLists = new TArray<WORD>[bmapwidth * bmapheight];
+	BlockLists = new TArray<int>[bmapwidth * bmapheight];
 
 	for (line = 0; line < numlines; ++line)
 	{

@@ -453,7 +453,7 @@ CCMD (puke)
 
 	if (argc < 2 || argc > 5)
 	{
-		Printf (" puke <script> [arg1] [arg2] [arg3]\n");
+		Printf ("Usage: puke <script> [arg1] [arg2] [arg3]\n");
 	}
 	else
 	{
@@ -485,6 +485,52 @@ CCMD (puke)
 		for (i = 0; i < argn; ++i)
 		{
 			Net_WriteLong (arg[i]);
+		}
+	}
+}
+
+CCMD (special)
+{
+	int argc = argv.argc();
+
+	if (argc < 2 || argc > 7)
+	{
+		Printf("Usage: special <special-name> [arg1] [arg2] [arg3] [arg4] [arg5]\n");
+	}
+	else
+	{
+		int specnum;
+
+		if (argv[1][0] >= '0' && argv[1][0] <= '9')
+		{
+			specnum = atoi(argv[1]);
+			if (specnum < 0 || specnum > 255)
+			{
+				Printf("Bad special number\n");
+				return;
+			}
+		}
+		else
+		{
+			int min_args;
+			specnum = P_FindLineSpecial(argv[1], &min_args);
+			if (specnum == 0 || min_args < 0)
+			{
+				Printf("Unknown special\n");
+				return;
+			}
+			if (argc < 2 + min_args)
+			{
+				Printf("%s needs at least %d argument%s\n", argv[1], min_args, min_args == 1 ? "" : "s");
+				return;
+			}
+		}
+		Net_WriteByte(DEM_RUNSPECIAL);
+		Net_WriteByte(specnum);
+		Net_WriteByte(argc - 2);
+		for (int i = 2; i < argc; ++i)
+		{
+			Net_WriteLong(atoi(argv[i]));
 		}
 	}
 }

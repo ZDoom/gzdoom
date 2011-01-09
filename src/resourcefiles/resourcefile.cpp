@@ -116,6 +116,7 @@ void FResourceLump::LumpNameSetup(const char *iname)
 				!strncmp(iname, "textures/", 9)		? ns_newtextures :
 				!strncmp(iname, "hires/", 6)		? ns_hires :
 				!strncmp(iname, "sprites/", 8)		? ns_sprites :
+				!strncmp(iname, "voxels/", 7)		? ns_voxels :
 				!strncmp(iname, "colormaps/", 10)	? ns_colormaps :
 				!strncmp(iname, "acs/", 4)			? ns_acslibrary :
 				!strncmp(iname, "voices/", 7)		? ns_strifevoices :
@@ -137,7 +138,7 @@ void FResourceLump::LumpNameSetup(const char *iname)
 	// Since '\' can't be used as a file name's part inside a ZIP
 	// we have to work around this for sprites because it is a valid
 	// frame character.
-	else if (Namespace == ns_sprites)
+	else if (Namespace == ns_sprites || Namespace == ns_voxels)
 	{
 		char *c;
 

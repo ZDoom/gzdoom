@@ -144,4 +144,6 @@ extern size_t numfakecmaps;
 
 int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 
+FVoxel *R_LoadKVX(int lumpnum);
+
 #endif

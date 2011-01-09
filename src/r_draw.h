@@ -53,7 +53,7 @@ extern "C" BYTE*		palookupoffse[4];
 extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
-extern "C" BYTE			dc_temp[MAXHEIGHT*4];
+extern "C" BYTE			*dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
@@ -178,7 +178,7 @@ extern void (STACK_ARGS *rt_map4cols)(int sx, int yl, int yh);
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
-void rt_initcols (void);
+void rt_initcols (BYTE *buffer=NULL);
 
 void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
@@ -215,6 +215,9 @@ void	R_DrawTlatedLucentColumnP_C (void);
 void	R_FillColumnP (void);
 void	R_FillColumnHorizP (void);
 void	R_FillSpan (void);
+
+extern "C" void			   R_SetupDrawSlab(const BYTE *colormap);
+extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 
 extern "C" int				ds_y;
 extern "C" int				ds_x1;

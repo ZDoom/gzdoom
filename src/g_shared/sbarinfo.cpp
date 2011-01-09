@@ -1190,7 +1190,7 @@ public:
 			}
 
 			if(clearDontDraw)
-				screen->Clear(static_cast<int>(MAX<double>(dx, dcx)), static_cast<int>(MAX<double>(dy, dcy)), static_cast<int>(dcr), static_cast<int>(dcb), GPalette.BlackIndex, 0);
+				screen->Clear(static_cast<int>(MAX<double>(dx, dcx)), static_cast<int>(MAX<double>(dy, dcy)), static_cast<int>(MIN<double>(dcr,w+MAX<double>(dx, dcx))), static_cast<int>(MIN<double>(dcb,MAX<double>(dy, dcy)+h)), GPalette.BlackIndex, 0);
 			else
 			{
 				if(alphaMap)

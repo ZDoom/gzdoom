@@ -73,7 +73,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*));
+extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(char*, char*));
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -156,13 +156,14 @@ static void STACK_ARGS NewFailure ()
 static int DoomSpecificInfo (char *buffer, char *end)
 {
 	const char *arg;
-	int size = end-buffer;
+	int size = end-buffer-2;
 	int i, p;
-
-	SDL_Quit();
 
 	p = 0;
 	p += snprintf (buffer+p, size-p, GAMENAME" version " DOTVERSIONSTR " (" __DATE__ ")\n");
+#ifdef __VERSION__
+	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
+#endif
 	p += snprintf (buffer+p, size-p, "\nCommand line:");
 	for (i = 0; i < Args->NumArgs(); ++i)
 	{
@@ -250,13 +251,13 @@ void I_ShutdownJoysticks();
 
 int main (int argc, char **argv)
 {
-	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
-		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
-
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-		cc_install_handlers(4, s, "zdoom-crash.log", DoomSpecificInfo);
+		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
 	}
+
+	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
+		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);

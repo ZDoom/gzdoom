@@ -64,7 +64,7 @@
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
 // Otherwise, it should be safe to leave it alone.
-#define DEMOGAMEVERSION 0x213
+#define DEMOGAMEVERSION 0x214
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.
@@ -75,7 +75,7 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 3030
+#define MINSAVEVER 3085
 
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // If we don't know the current revision write something very high to ensure that

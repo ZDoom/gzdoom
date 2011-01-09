@@ -104,6 +104,14 @@ void R_ClearSprites ();
 void R_DrawMasked ();
 void R_DrawRemainingPlayerSprites ();
 
+void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
+
+enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2 };
+
+void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
+	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
+
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 
 

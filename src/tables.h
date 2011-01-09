@@ -60,7 +60,7 @@ extern	fixed_t 		finesine[5*FINEANGLES/4];
 // (encapsulated in a struct so that we can still use array accesses).
 struct cosine_inline
 {
-	fixed_t operator[] (unsigned int x)
+	fixed_t operator[] (unsigned int x) const
 	{
 		return finesine[x+FINEANGLES/4];
 	}

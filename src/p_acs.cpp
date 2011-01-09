@@ -2829,6 +2829,9 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MasterTID:
 		case APROP_TargetTID:
 		case APROP_TracerTID:
+		case APROP_WaterLevel:
+		case APROP_ScaleX:
+		case APROP_ScaleY:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

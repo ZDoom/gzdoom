@@ -2073,6 +2073,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, morphweapon, S, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, flechettetype, S, PlayerPawn)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->FlechetteType = FindClassTentative(str, "ArtiPoisonBag");
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, scoreicon, S, PlayerPawn)
 {
 	PROP_STRING_PARM(z, 0);

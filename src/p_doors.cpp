@@ -36,6 +36,12 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 
+//============================================================================
+//
+// VERTICAL DOORS
+//
+//============================================================================
+
 IMPLEMENT_CLASS (DDoor)
 
 DDoor::DDoor ()
@@ -55,14 +61,12 @@ void DDoor::Serialize (FArchive &arc)
 		<< m_LightTag;
 }
 
-
-//
-// VERTICAL DOORS
-//
-
+//============================================================================
 //
 // T_VerticalDoor
 //
+//============================================================================
+
 void DDoor::Tick ()
 {
 	EResult res;
@@ -215,7 +219,12 @@ void DDoor::Tick ()
 	}
 }
 
+//============================================================================
+//
 // [RH] DoorSound: Plays door sound depending on direction and speed
+//
+//============================================================================
+
 void DDoor::DoorSound (bool raise) const
 {
 	int choice;
@@ -309,10 +318,12 @@ DDoor::DDoor (sector_t *sector)
 {
 }
 
-// [RH] Merged EV_VerticalDoor and EV_DoLockedDoor into EV_DoDoor
-//		and made them more general to support the new specials.
-
+//============================================================================
+//
 // [RH] SpawnDoor: Helper function for EV_DoDoor
+//
+//============================================================================
+
 DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag)
 	: DMovingCeiling (sec),
   	  m_Type (type), m_Speed (speed), m_TopWait (delay), m_LightTag (lightTag)
@@ -370,6 +381,13 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 	}
 	m_OldFloorDist = sec->floorplane.d;
 }
+
+//============================================================================
+//
+// [RH] Merged EV_VerticalDoor and EV_DoLockedDoor into EV_DoDoor
+//		and made them more general to support the new specials.
+//
+//============================================================================
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, int speed, int delay, int lock, int lightTag)
@@ -464,10 +482,12 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 	return rtn;
 }
 
-
+//============================================================================
 //
 // Spawn a door that closes after 30 seconds
 //
+//============================================================================
+
 void P_SpawnDoorCloseIn30 (sector_t *sec)
 {
 	fixed_t height;
@@ -487,18 +507,56 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 	door->m_LightTag = 0;
 }
 
+//============================================================================
 //
 // Spawn a door that opens after 5 minutes
 //
+//============================================================================
+
 void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
 {
 	sec->special = 0;
 	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7, 0);
 }
 
-// EV_SlidingDoor : slide a door horizontally
-// (animate midtexture, then set noblocking line)
+
+//============================================================================
 //
+// animated doors
+//
+//============================================================================
+
+IMPLEMENT_CLASS (DAnimatedDoor)
+
+DAnimatedDoor::DAnimatedDoor ()
+{
+}
+
+DAnimatedDoor::DAnimatedDoor (sector_t *sec)
+	: DMovingCeiling (sec)
+{
+}
+
+void DAnimatedDoor::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	
+	arc << m_Line1 << m_Line2
+		<< m_Frame
+		<< m_Timer
+		<< m_BotDist
+		<< m_Status
+		<< m_Speed
+		<< m_Delay
+		<< m_DoorAnim
+		<< m_SetBlocking1 << m_SetBlocking2;
+}
+
+//============================================================================
+//
+// Starts a closing action on an animated door
+//
+//============================================================================
 
 bool DAnimatedDoor::StartClosing ()
 {
@@ -527,6 +585,12 @@ bool DAnimatedDoor::StartClosing ()
 	m_Timer = m_Speed;
 	return true;
 }
+
+//============================================================================
+//
+//
+//
+//============================================================================
 
 void DAnimatedDoor::Tick ()
 {
@@ -624,31 +688,11 @@ void DAnimatedDoor::Tick ()
 	}
 }
 
-IMPLEMENT_CLASS (DAnimatedDoor)
-
-DAnimatedDoor::DAnimatedDoor ()
-{
-}
-
-DAnimatedDoor::DAnimatedDoor (sector_t *sec)
-	: DMovingCeiling (sec)
-{
-}
-
-void DAnimatedDoor::Serialize (FArchive &arc)
-{
-	Super::Serialize (arc);
-	
-	arc << m_Line1 << m_Line2
-		<< m_Frame
-		<< m_Timer
-		<< m_BotDist
-		<< m_Status
-		<< m_Speed
-		<< m_Delay
-		<< m_DoorAnim
-		<< m_SetBlocking1 << m_SetBlocking2;
-}
+//============================================================================
+//
+//
+//
+//============================================================================
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)
 	: DMovingCeiling (sec)
@@ -706,7 +750,8 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 
 //============================================================================
 //
-// EV_SlidingDoor
+// EV_SlidingDoor : slide a door horizontally
+// (animate midtexture, then set noblocking line)
 //
 //============================================================================
 

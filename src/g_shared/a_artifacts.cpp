@@ -36,8 +36,6 @@ static FRandom pr_torch ("Torch");
 #define	TIMEFREEZE_TICS	( 12 * TICRATE )
 */
 
-EXTERN_CVAR (Bool, r_drawfuzz);
-
 IMPLEMENT_CLASS (APowerup)
 
 // Powerup-Giver -------------------------------------------------------------

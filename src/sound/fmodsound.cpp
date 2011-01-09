@@ -2555,7 +2555,7 @@ void FMODSoundRenderer::DrawWaveDebug(int mode)
 	// 16 pixels of padding between each window.
 	window_size = (screen->GetWidth() - 16) / numoutchans - 16;
 
-	float *wavearray = (float*)alloca(window_size*sizeof(float));
+	float *wavearray = (float*)alloca(MAX(SPECTRUM_SIZE,window_size)*sizeof(float));
 
 	y = 16;
 	y = DrawChannelGroupOutput(SfxGroup, wavearray, window_size, window_height, y, mode);

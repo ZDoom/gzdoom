@@ -89,7 +89,7 @@ struct AMColor
 };
 
 static AMColor Background, YourColor, WallColor, TSWallColor,
-		   FDWallColor, CDWallColor, ThingColor,
+		   FDWallColor, CDWallColor, EFWallColor, ThingColor,
 		   ThingColor_Item, ThingColor_CountItem, ThingColor_Monster, ThingColor_Friend,
 		   SpecialWallColor, SecretWallColor, GridColor, XHairColor,
 		   NotSeenColor,
@@ -171,6 +171,7 @@ CVAR (Color, am_specialwallcolor,	0xffffff,	CVAR_ARCHIVE);
 CVAR (Color, am_tswallcolor,		0x888888,	CVAR_ARCHIVE);
 CVAR (Color, am_fdwallcolor,		0x887058,	CVAR_ARCHIVE);
 CVAR (Color, am_cdwallcolor,		0x4c3820,	CVAR_ARCHIVE);
+CVAR (Color, am_efwallcolor,		0x665555,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor,			0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_gridcolor,			0x8b5a2b,	CVAR_ARCHIVE);
 CVAR (Color, am_xhaircolor,			0x808080,	CVAR_ARCHIVE);
@@ -909,7 +910,7 @@ static void AM_initColors (bool overlayed)
 		ThingColor_Monster.FromCVar (am_ovthingcolor_monster);
 		ThingColor.FromCVar (am_ovthingcolor);
 		LockedColor.FromCVar (am_ovotherwallscolor);
-		FDWallColor = CDWallColor = LockedColor;
+		EFWallColor = FDWallColor = CDWallColor = LockedColor;
 		TSWallColor.FromCVar (am_ovunseencolor);
 		NotSeenColor = TSWallColor;
 		InterTeleportColor.FromCVar (am_ovtelecolor);
@@ -928,6 +929,7 @@ static void AM_initColors (bool overlayed)
 			TSWallColor.FromCVar (am_tswallcolor);
 			FDWallColor.FromCVar (am_fdwallcolor);
 			CDWallColor.FromCVar (am_cdwallcolor);
+			EFWallColor.FromCVar (am_efwallcolor);
 			ThingColor_Item.FromCVar (am_thingcolor_item);
 			ThingColor_CountItem.FromCVar (am_thingcolor_citem);
 			ThingColor_Friend.FromCVar (am_thingcolor_friend);
@@ -968,7 +970,7 @@ static void AM_initColors (bool overlayed)
 				SpecialWallColor =
 				WallColor = DoomColors[3];
 			TSWallColor = DoomColors[4];
-			FDWallColor = DoomColors[5];
+			EFWallColor = FDWallColor = DoomColors[5];
 			LockedColor =
 				CDWallColor = DoomColors[6];
 			ThingColor_Item = 
@@ -990,7 +992,7 @@ static void AM_initColors (bool overlayed)
 				SpecialWallColor =
 				WallColor = StrifeColors[3];
 			TSWallColor = StrifeColors[4];
-			FDWallColor = StrifeColors[5];
+			EFWallColor = FDWallColor = StrifeColors[5];
 			LockedColor =
 				CDWallColor = StrifeColors[6];
 			ThingColor_Item = StrifeColors[10];
@@ -1012,7 +1014,7 @@ static void AM_initColors (bool overlayed)
 				SpecialWallColor =
 				WallColor = RavenColors[3];
 			TSWallColor = RavenColors[4];
-			FDWallColor = RavenColors[5];
+			EFWallColor = FDWallColor = RavenColors[5];
 			LockedColor =
 				CDWallColor = RavenColors[6];
 			ThingColor = 
@@ -1647,6 +1649,56 @@ void AM_drawSubsectors()
 		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 		// Coloring for the polygon
 		colormap = sec->ColorMap;
+
+		FTextureID maptex = sec->GetTexture(sector_t::floor);
+
+#ifdef _3DFLOORS
+
+		if (sec->e->XFloor.ffloors.Size())
+		{
+			secplane_t *floorplane = &sec->floorplane;
+
+			// Look for the highest floor below the camera viewpoint.
+			// Check the center of the subsector's sector. Do not check each
+			// subsector separately because that might result in different planes for
+			// different subsectors of the same sector which is not wanted here.
+			// (Make the comparison in floating point to avoid overflows and improve performance.)
+			double secx;
+			double secy;
+			double cmpz = FIXED2DBL(viewz);
+
+			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
+			{
+				// For the actual camera sector use the current viewpoint as reference.
+				secx = FIXED2DBL(viewx);
+				secy = FIXED2DBL(viewy);
+			}
+			else
+			{
+				secx = FIXED2DBL(sec->soundorg[0]);
+				secy = FIXED2DBL(sec->soundorg[1]);
+			}
+			
+			for (unsigned int i = 0; i < sec->e->XFloor.ffloors.Size(); ++i)
+			{
+				F3DFloor *rover = sec->e->XFloor.ffloors[i];
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if (rover->flags & FF_FOG) continue;
+				if (rover->alpha == 0) continue;
+				if (rover->top.plane->ZatPoint(secx, secy) < cmpz)
+				{
+					maptex = *(rover->top.texture);
+					floorplane = rover->top.plane;
+					break;
+				}
+			}
+
+			lightlist_t *light = P_GetPlaneLight(sec, floorplane, false);
+			floorlight = *light->p_lightlevel;
+			colormap = *light->p_extra_colormap;
+		}
+#endif
+
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.
 		if (!(subsectors[i].flags & SSECF_DRAWN))
@@ -1662,8 +1714,7 @@ void AM_drawSubsectors()
 		}
 
 		// Draw the polygon.
-		screen->FillSimplePoly(
-			TexMan(sec->GetTexture(sector_t::floor)),
+		screen->FillSimplePoly(TexMan(maptex),
 			&points[0], points.Size(),
 			originx, originy,
 			scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
@@ -1776,6 +1827,69 @@ void AM_showSS()
 		}
 	}
 }
+
+#ifdef _3DFLOORS
+
+//=============================================================================
+//
+// Determines if a 3D floor boundary should be drawn
+//
+//=============================================================================
+
+bool AM_Check3DFloors(line_t *line)
+{
+	TArray<F3DFloor*> &ff_front = line->frontsector->e->XFloor.ffloors;
+	TArray<F3DFloor*> &ff_back = line->backsector->e->XFloor.ffloors;
+
+	// No 3D floors so there's no boundary
+	if (ff_back.Size() == 0 && ff_front.Size() == 0) return false;
+
+	int realfrontcount = 0;
+	int realbackcount = 0;
+
+	for(unsigned i=0;i<ff_front.Size();i++)
+	{
+		F3DFloor *rover = ff_front[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		if (rover->alpha == 0) continue;
+		realfrontcount++;
+	}
+
+	for(unsigned i=0;i<ff_back.Size();i++)
+	{
+		F3DFloor *rover = ff_back[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		if (rover->alpha == 0) continue;
+		realbackcount++;
+	}
+	// if the amount of 3D floors does not match there is a boundary
+	if (realfrontcount != realbackcount) return true;
+
+	for(unsigned i=0;i<ff_front.Size();i++)
+	{
+		F3DFloor *rover = ff_front[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		if (rover->alpha == 0) continue;
+
+		bool found = false;
+		for(unsigned j=0;j<ff_back.Size();j++)
+		{
+			F3DFloor *rover2 = ff_back[j];
+			if (!(rover2->flags & FF_EXISTS)) continue;
+			if (rover2->alpha == 0) continue;
+			if (rover->model == rover2->model && rover->flags == rover2->flags) 
+			{
+				found = true;
+				break;
+			}
+		}
+		// At least one 3D floor in the front sector didn't have a match in the back sector so there is a boundary.
+		if (!found) return true;
+	}
+	// All 3D floors could be matched so let's not draw a boundary.
+	return false;
+}
+#endif
 
 //=============================================================================
 //
@@ -1895,6 +2009,12 @@ void AM_drawWalls (bool allmap)
 			{
 				AM_drawMline(&l, CDWallColor); // ceiling level change
 			}
+#ifdef _3DFLOORS
+			else if (AM_Check3DFloors(&lines[i]))
+			{
+				AM_drawMline(&l, EFWallColor); // Extra floor border
+			}
+#endif
 			else if (am_cheat != 0)
 			{
 				AM_drawMline(&l, TSWallColor);

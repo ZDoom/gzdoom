@@ -1695,7 +1695,7 @@ void AM_drawSubsectors()
 
 			lightlist_t *light = P_GetPlaneLight(sec, floorplane, false);
 			floorlight = *light->p_lightlevel;
-			colormap = *light->p_extra_colormap;
+			colormap = light->extra_colormap;
 		}
 #endif
 

@@ -141,36 +141,4 @@ inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
 #define FIXED2FLOAT(f)		((f) / float(65536))
 #define FIXED2DBL(f)		((f) / double(65536))
 
-class Fixed
-{
-	int v;
-
-public:
-
-	Fixed() {}
-	Fixed(int val) { v = val; }
-	Fixed(double val) { v = xs_Fix<16>::ToFix(val); }
-	Fixed &operator = (int val) { v = val; return *this; }
-	Fixed &operator = (double val) { v = xs_Fix<16>::ToFix(val); return *this; }
-
-	Fixed &operator += (Fixed val) { v += val.v; return *this; }
-	Fixed &operator -= (Fixed val) { v -= val.v; return *this; }
-	Fixed &operator *= (Fixed val) { v = FixedMul(v, val.v); return *this; }
-	Fixed &operator /= (Fixed val) { v = FixedDiv(v, val.v); return *this; }
-	Fixed &operator += (double val) { v += xs_Fix<16>::ToFix(val); return *this; }
-	Fixed &operator -= (double val) { v -= xs_Fix<16>::ToFix(val); return *this; }
-	Fixed &operator *= (Fixed val) { v = FixedMul(v, xs_Fix<16>::ToFix(val)); return *this; }
-	Fixed &operator /= (Fixed val) { v = FixedDiv(v, xs_Fix<16>::ToFix(val)); return *this; }
-
-	Fixed operator + (Fixed val) { return v + val.v; }
-	Fixed operator - (Fixed val) { return v - val.v; }
-	Fixed operator * (Fixed val) { return FixedMul(v, val.v); }
-	Fixed operator / (Fixed val) { return FixedDiv(v, val.v); }
-	Fixed operator + (double val) { return v + xs_Fix<16>::ToFix(val); }
-	Fixed operator - (double val) { return v - xs_Fix<16>::ToFix(val); }
-	Fixed operator * (Fixed val) { return FixedMul(v, xs_Fix<16>::ToFix(val)); }
-	Fixed operator / (Fixed val) { return FixedDiv(v, xs_Fix<16>::ToFix(val)); }
-};
-
-
 #endif

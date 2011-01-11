@@ -34,7 +34,7 @@
 //
 // As this may be a problem for you, I hereby grant an exception to my 
 // copyright on the SMMU source (including FraggleScript). You may use 
-// any code from SMMU in GZDoom, provided that:
+// any code from SMMU in (G)ZDoom, provided that:
 //
 //    * For any binary release of the port, the source code is also made 
 //      available.

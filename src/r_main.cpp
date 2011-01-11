@@ -1442,6 +1442,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	MirrorFlags = (depth + 1) & 1;
 
 	R_RenderBSPNode (nodes + numnodes - 1);
+	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
 	R_DrawPlanes ();
 	R_DrawSkyBoxes ();
@@ -1569,6 +1570,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (r_polymost < 2)
 	{
 		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
+		R_3D_ResetClip(); // reset clips (floor/ceiling)
 	}
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
@@ -1610,7 +1612,6 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	WallMirrors.Clear ();
 	interpolator.RestoreInterpolations ();
 	R_SetupBuffer ();
-	R_3D_ResetClip(); // reset clips (floor/ceiling)
 }
 
 //==========================================================================

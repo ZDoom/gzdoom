@@ -2331,6 +2331,10 @@ void R_DrawPlayerSprites ()
 					if(rover->flags & FF_DOUBLESHADOW && viewz <= rover->bottom.plane->Zat0())
 						break;
 					sec = rover->model;
+					if(rover->flags & FF_FADEWALLS)
+						basecolormap = sec->ColorMap;
+					else
+						basecolormap = viewsector->e->XFloor.lightlist[i].extra_colormap;
 				}
 				break;
 			}
@@ -2341,14 +2345,14 @@ void R_DrawPlayerSprites ()
 		// when the interpolated viewpoint is in a different sector than the camera.
 		sec = R_FakeFlat (viewsector, &tempsec, &floorlight,
 			&ceilinglight, false);
+
+		// [RH] set basecolormap
+		basecolormap = sec->ColorMap;
 	}
 
 	// [RH] set foggy flag
-	foggy = (level.fadeto || sec->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE));
+	foggy = (level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE));
 	r_actualextralight = foggy ? 0 : extralight << 4;
-
-	// [RH] set basecolormap
-	basecolormap = sec->ColorMap;
 
 	// get light level
 	lightnum = ((floorlight + ceilinglight) >> 1) + r_actualextralight;
@@ -2675,13 +2679,14 @@ void R_DrawSprite (vissprite_t *spr)
 	short *clip1, *clip2;
 	lighttable_t *colormap = spr->colormap;
 	F3DFloor *rover;
+	FDynamicColormap *mybasecolormap;
 
 	// [RH] Check for particles
 	if (!spr->bIsVoxel && spr->pic == NULL)
 	{
 		// kg3D - reject invisible parts
-		if(fake3D & 1 && spr->texturemid <= sclipBottom) return;
-		if(fake3D & 2 && spr->texturemid >= sclipTop) return;
+		if(fake3D & 1 && spr->gz <= sclipBottom) return;
+		if(fake3D & 2 && spr->gz >= sclipTop) return;
 		R_DrawParticle (spr);
 		return;
 	}
@@ -2699,7 +2704,7 @@ void R_DrawSprite (vissprite_t *spr)
 
 	// kg3D - reject invisible parts
 	if(fake3D & 1 && spr->gzt <= sclipBottom) return;
-	if(fake3D & 2 && spr->gz >= sclipTop) return;
+	if(fake3D & 2 && spr->gzb >= sclipTop) return;
 
 	// kg3D - correct colors now
 	if(!fixedcolormap && fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size()) 
@@ -2716,6 +2721,8 @@ void R_DrawSprite (vissprite_t *spr)
 					if(rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->Zat0())
 						break;
 					sec = rover->model;
+					if(rover->flags & FF_FADEWALLS) mybasecolormap = sec->ColorMap;
+					else mybasecolormap = spr->sector->e->XFloor.lightlist[i].extra_colormap;
 				}
 				break;
 			}
@@ -2729,8 +2736,6 @@ void R_DrawSprite (vissprite_t *spr)
 			{
 				invertcolormap = !invertcolormap;
 			}
-
-			FDynamicColormap *mybasecolormap = sec->ColorMap;
 
 			// Sprites that are added to the scene must fade to black.
 			if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && mybasecolormap->Fade != 0)
@@ -2851,14 +2856,18 @@ void R_DrawSprite (vissprite_t *spr)
 	}
 
 	if(fake3D & 1) {
-		fixed_t h = (centeryfrac - FixedMul (sclipBottom-viewz, scale)) >> FRACBITS;
-		if (h < botclip)
-			botclip = MAX<short> (0, h);
+		if (!spr->bIsVoxel) {
+			fixed_t h = (centeryfrac - FixedMul (sclipBottom-viewz, scale)) >> FRACBITS;
+			if(h < botclip) botclip = MAX<short> (0, h);
+		}
+		hzb = MAX(hzb, sclipBottom);
 	}
 	if(fake3D & 2) {
-		fixed_t h = (centeryfrac - FixedMul (sclipTop-viewz, scale)) >> FRACBITS;
-		if (h > topclip)
-			topclip = MIN<short> (h, viewheight);
+		if (!spr->bIsVoxel) {
+			fixed_t h = (centeryfrac - FixedMul (sclipTop-viewz, scale)) >> FRACBITS;
+			if(h > topclip) topclip = MIN<short> (h, viewheight);
+		}
+		hzt = MIN(hzt, sclipTop);
 	}
 
 #if 0
@@ -3058,7 +3067,6 @@ void R_DrawMasked (void)
 		R_DrawMaskedSingle(false);
 	} else {
 		// kg3D - correct sorting
-		//int pos, mid;
 		HeightLevel *hl;
 
 		// ceilings

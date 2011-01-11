@@ -1242,6 +1242,7 @@ void R_DrawSkyBoxes ()
 		visplaneStack.Push (pl);
 
 		R_RenderBSPNode (nodes + numnodes - 1);
+		R_3D_ResetClip(); // reset clips (floor/ceiling)
 		R_DrawPlanes ();
 
 		sky->bInSkybox = false;

@@ -300,7 +300,6 @@ void AActor::Serialize (FArchive &arc)
 		<< pushfactor
 		<< Species
 		<< Score
-		<< Tag
 		<< lastpush << lastbump
 		<< PainThreshold
 		<< DamageFactor
@@ -308,6 +307,17 @@ void AActor::Serialize (FArchive &arc)
 		<< PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner
 		<< PoisonDamage << PoisonDuration << PoisonPeriod
 		<< ConversationRoot << Conversation;
+
+	{
+		FString tagstr;
+		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;
+		arc << tagstr;
+		if (arc.IsLoading())
+		{
+			if (tagstr.Len() == 0) Tag = NULL;
+			else Tag = mStringPropertyData.Alloc(tagstr);
+		}
+	}
 
 	if (arc.IsLoading ())
 	{
@@ -5521,11 +5531,13 @@ bool AActor::IsSentient() const
 }
 
 
+FSharedStringArena AActor::mStringPropertyData;
+
 const char *AActor::GetTag(const char *def) const
 {
-	if (Tag != NAME_None)
+	if (Tag != NULL)
 	{
-		const char *tag = Tag.GetChars();
+		const char *tag = Tag->GetChars();
 		if (tag[0] == '$')
 		{
 			return GStrings(tag + 1);
@@ -5542,6 +5554,18 @@ const char *AActor::GetTag(const char *def) const
 	else
 	{
 		return GetClass()->TypeName.GetChars();
+	}
+}
+
+void AActor::SetTag(const char *def)
+{
+	if (def == NULL || *def == 0) 
+	{
+		Tag = NULL;
+	}
+	else 
+	{
+		Tag = mStringPropertyData.Alloc(def);
 	}
 }
 

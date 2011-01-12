@@ -75,7 +75,7 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 3085
+#define MINSAVEVER 3100
 
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // If we don't know the current revision write something very high to ensure that

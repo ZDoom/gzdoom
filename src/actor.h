@@ -39,6 +39,7 @@
 #include "textures/textures.h"
 #include "r_blend.h"
 #include "s_sound.h"
+#include "memarena.h"
 
 struct subsector_t;
 //
@@ -760,6 +761,7 @@ public:
 	fixed_t GetGravity() const;
 	bool IsSentient() const;
 	const char *GetTag(const char *def = NULL) const;
+	void SetTag(const char *def);
 
 
 // info for drawing
@@ -855,7 +857,7 @@ public:
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
 	int				lastbump;		// Last time the actor was bumped, used to control BUMPSPECIAL
 	int				Score;			// manipulated by score items, ACS or DECORATE. The engine doesn't use this itself for anything.
-	FNameNoInit		Tag;			// Strife's tag name. FIXME: should be case sensitive!
+	FString *		Tag;			// Strife's tag name.
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
@@ -927,6 +929,7 @@ public:
 private:
 	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
+	static FSharedStringArena mStringPropertyData;
 
 	friend class FActorIterator;
 

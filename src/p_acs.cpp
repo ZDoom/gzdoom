@@ -2709,7 +2709,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->Score = value;
 
 	case APROP_NameTag:
-		actor->Tag = FBehavior::StaticLookupString(value);
+		actor->SetTag(FBehavior::StaticLookupString(value));
 		break;
 
 	case APROP_DamageFactor:

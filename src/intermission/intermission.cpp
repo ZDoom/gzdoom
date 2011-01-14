@@ -612,6 +612,17 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;
 }
 
+int DIntermissionScreenScroller::Responder (event_t *ev)
+{
+	int res = Super::Responder(ev);
+	if (res == -1)
+	{
+		mBackground = mSecondPic;
+		mTicker = mScrollDelay + mScrollTime;
+	}
+	return res;
+}
+
 void DIntermissionScreenScroller::Drawer ()
 {
 	FTexture *tex = TexMan[mFirstPic];

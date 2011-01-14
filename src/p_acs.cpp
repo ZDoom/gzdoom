@@ -3053,6 +3053,7 @@ enum EACSFunctions
 	ACSF_GetPolyobjX,
 	ACSF_GetPolyobjY,
     ACSF_CheckSight,
+	ACSF_SpawnForced,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3523,6 +3524,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
             return 0;
         }
+
+		case ACSF_SpawnForced:
+			return DoSpawn(args[0], args[1], args[2], args[3], args[4], args[5], true);
 
 		default:
 			break;

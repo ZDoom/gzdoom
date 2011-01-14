@@ -2543,6 +2543,7 @@ enum
 	APROP_ScaleX        = 29,
 	APROP_ScaleY        = 30,
 	APROP_Dormant		= 31,
+	APROP_Mass			= 32,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2731,6 +2732,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->scaleY = value;
 		break;
 
+	case APROP_Mass:
+		actor->Mass = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -2796,6 +2801,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_WaterLevel:	return actor->waterlevel;
 	case APROP_ScaleX: 		return actor->scaleX;
 	case APROP_ScaleY: 		return actor->scaleY;
+	case APROP_Mass: 		return actor->Mass;
 
 	default:				return 0;
 	}
@@ -2833,6 +2839,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_WaterLevel:
 		case APROP_ScaleX:
 		case APROP_ScaleY:
+		case APROP_Mass:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

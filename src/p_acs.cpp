@@ -1964,6 +1964,7 @@ DLevelScript::~DLevelScript ()
 {
 	if (localvars != NULL)
 		delete[] localvars;
+	localvars = NULL;
 }
 
 void DLevelScript::Unlink ()
@@ -6725,9 +6726,18 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	script = num;
 	numlocalvars = code->VarCount;
 	localvars = new SDWORD[code->VarCount];
-	localvars[0] = arg0;
-	localvars[1] = arg1;
-	localvars[2] = arg2;
+	if (code->VarCount > 0)
+	{
+		localvars[0] = arg0;
+		if (code->VarCount > 1)
+		{
+			localvars[1] = arg1;
+			if (code->VarCount > 2)
+			{
+				localvars[2] = arg2;
+			}
+		}
+	}
 	memset (localvars+code->ArgCount, 0, (code->VarCount-code->ArgCount)*sizeof(SDWORD));
 	pc = module->GetScriptAddress (code);
 	activator = who;

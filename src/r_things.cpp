@@ -1683,7 +1683,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 // R_ProjectSprite
 // Generates a vissprite for a thing if it might be visible.
 //
-void R_ProjectSprite (AActor *thing, int fakeside)
+void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling)
 {
 	fixed_t				fx, fy, fz;
 	fixed_t 			tr_x;
@@ -1984,6 +1984,8 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
 	vis->alpha = thing->alpha;
+	vis->fakefloor = fakefloor;
+	vis->fakeceiling = fakeceiling;
 
 	if (voxel != NULL)
 	{
@@ -2064,6 +2066,9 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 {
 	AActor *thing;
+	F3DFloor *rover;
+	F3DFloor *fakeceiling = NULL;
+	F3DFloor *fakefloor = NULL;
 
 	// BSP is traversed by subsector.
 	// A sector might have been split into several
@@ -2080,7 +2085,20 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 	// Handle all things in sector.
 	for (thing = sec->thinglist; thing; thing = thing->snext)
 	{
-		R_ProjectSprite (thing, fakeside);
+		// find fake level
+		for(int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
+			rover = frontsector->e->XFloor.ffloors[i];
+			if(!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERPLANES)) continue;
+			if(!(rover->flags & FF_SOLID) || rover->alpha != 255) continue;
+			if(!fakefloor)
+				if(!(rover->top.plane->a) && !(rover->top.plane->b))
+					if(rover->top.plane->Zat0() <= thing->z) fakefloor = rover;
+			if(!(rover->bottom.plane->a) && !(rover->bottom.plane->b))
+				if(rover->bottom.plane->Zat0() >= thing->z) fakeceiling = rover;
+		}	
+		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling);
+		fakeceiling = NULL;
+		fakefloor = NULL;
 	}
 }
 
@@ -2338,7 +2356,10 @@ void R_DrawPlayerSprites ()
 				}
 				break;
 			}
-		if(!sec) sec = viewsector;
+		if(!sec) {
+			sec = viewsector;
+			basecolormap = sec->ColorMap;
+		}
 		floorlight = ceilinglight = sec->lightlevel;
 	} else {
 		// This used to use camera->Sector but due to interpolation that can be incorrect
@@ -2857,14 +2878,18 @@ void R_DrawSprite (vissprite_t *spr)
 
 	if(fake3D & 1) {
 		if (!spr->bIsVoxel) {
-			fixed_t h = (centeryfrac - FixedMul (sclipBottom-viewz, scale)) >> FRACBITS;
+			fixed_t h = sclipBottom;
+			if(spr->fakefloor && viewz > spr->fakefloor->top.plane->Zat0()) h = spr->fakefloor->bottom.plane->Zat0();
+			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 			if(h < botclip) botclip = MAX<short> (0, h);
 		}
 		hzb = MAX(hzb, sclipBottom);
 	}
 	if(fake3D & 2) {
 		if (!spr->bIsVoxel) {
-			fixed_t h = (centeryfrac - FixedMul (sclipTop-viewz, scale)) >> FRACBITS;
+			fixed_t h = sclipTop;
+			if(spr->fakeceiling && viewz < spr->fakeceiling->bottom.plane->Zat0()) h = spr->fakeceiling->top.plane->Zat0();
+			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 			if(h > topclip) topclip = MIN<short> (h, viewheight);
 		}
 		hzt = MIN(hzt, sclipTop);
@@ -2894,6 +2919,7 @@ void R_DrawSprite (vissprite_t *spr)
 
 	if (topclip >= botclip)
 	{
+		spr->colormap = colormap;
 		return;
 	}
 
@@ -3007,6 +3033,7 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			if (i == x2)
 			{
+				spr->colormap = colormap;
 				return;
 			}
 		}

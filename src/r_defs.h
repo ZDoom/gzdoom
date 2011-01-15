@@ -1059,6 +1059,8 @@ struct vissprite_t
 	lighttable_t	*colormap;
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
+	F3DFloor	*fakefloor;
+	F3DFloor	*fakeceiling;
 	fixed_t			alpha;
 	fixed_t			floorclip;
 	union

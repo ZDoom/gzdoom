@@ -6025,18 +6025,17 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
-		case PCD_CHECKWEAPON:
-			if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
-				activator->player->ReadyWeapon == NULL)
-			{
-				STACK(1) = 0;
-			}
-			else
-			{
-				STACK(1) = 0 == stricmp (FBehavior::StaticLookupString (STACK(1)),
-					activator->player->ReadyWeapon->GetClass()->TypeName.GetChars());
-			}
-			break;
+        case PCD_CHECKWEAPON:
+            if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
+                activator->player->ReadyWeapon == NULL)
+            {
+                STACK(1) = 0;
+            }
+            else
+            {
+				STACK(1) = activator->player->ReadyWeapon->GetClass()->TypeName == FName(FBehavior::StaticLookupString (STACK(1)), true);
+            }
+            break;
 
 		case PCD_SETWEAPON:
 			if (activator == NULL || activator->player == NULL)

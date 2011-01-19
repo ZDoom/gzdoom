@@ -190,7 +190,10 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 		{
 			// Post is entirely visible (above start).
 			R_StoreWallRange (first, last);
-			if(fake3D & 7) return true;
+			if (fake3D & FAKE3D_FAKEMASK)
+			{
+				return true;
+			}
 
 			// Insert a new clippost for solid walls.
 			if (solid)
@@ -219,7 +222,7 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 		R_StoreWallRange (first, start->first);
 
 		// Adjust the clip size for solid walls
-		if (solid && !(fake3D & 7))
+		if (solid && !(fake3D & FAKE3D_FAKEMASK))
 		{
 			start->first = first;
 		}
@@ -248,7 +251,10 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 	R_StoreWallRange (next->last, last);
 
 crunch:
-	if(fake3D & 7) return true;
+	if (fake3D & FAKE3D_FAKEMASK)
+	{
+		return true;
+	}
 	if (solid)
 	{
 		// Adjust the clip size.
@@ -718,8 +724,10 @@ void R_AddLine (seg_t *line)
 	WallDepthScale = WallInvZstep * WallTMapScale2;
 	WallDepthOrg = -WallUoverZstep * WallTMapScale2;
 
-	if(!(fake3D & 4)) backsector = line->backsector;
-
+	if (!(fake3D & FAKE3D_FAKEBACK))
+	{
+		backsector = line->backsector;
+	}
 	rw_frontcz1 = frontsector->ceilingplane.ZatPoint (line->v1->x, line->v1->y);
 	rw_frontfz1 = frontsector->floorplane.ZatPoint (line->v1->x, line->v1->y);
 	rw_frontcz2 = frontsector->ceilingplane.ZatPoint (line->v2->x, line->v2->y);
@@ -736,10 +744,10 @@ void R_AddLine (seg_t *line)
 	else
 	{
 		// kg3D - its fake, no transfer_heights
-		if(!(fake3D & 4))
-		// killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-		backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
-
+		if (!(fake3D & FAKE3D_FAKEBACK))
+		{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
+			backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
+		}
 		doorclosed = 0;		// killough 4/16/98
 
 		rw_backcz1 = backsector->ceilingplane.ZatPoint (line->v1->x, line->v1->y);
@@ -1164,11 +1172,14 @@ void R_Subsector (subsector_t *sub)
 	r_actualextralight = foggy ? 0 : extralight << 4;
 
 	// kg3D - fake lights
-	if(fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size()) {
+	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+	{
 		light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
 		basecolormap = light->extra_colormap;
 		ceilinglightlevel = *light->p_lightlevel;
-	} else {
+	}
+	else
+	{
 		basecolormap = frontsector->ColorMap;
 		ceilinglightlevel = frontsector->lightlevel;
 	}
@@ -1192,11 +1203,14 @@ void R_Subsector (subsector_t *sub)
 					frontsector->CeilingSkyBox
 					) : NULL;
 
-	if(fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size()) {
+	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+	{
 		light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
 		basecolormap = light->extra_colormap;
 		floorlightlevel = *light->p_lightlevel;
-	} else {
+	}
+	else
+	{
 		basecolormap = frontsector->ColorMap;
 		floorlightlevel = frontsector->lightlevel;
 	}
@@ -1224,36 +1238,45 @@ void R_Subsector (subsector_t *sub)
 					) : NULL;
 
 	// kg3D - fake planes rendering
-	if(frontsector->e && frontsector->e->XFloor.ffloors.Size()) {
+	if (frontsector->e && frontsector->e->XFloor.ffloors.Size())
+	{
 		backupfp = floorplane;
 		backupcp = ceilingplane;
 		// first check all floors
-		for(int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
+		for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
+		{
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
-			if(!(fakeFloor->flags & FF_EXISTS)) continue;
-			if(!fakeFloor->model) continue;
-			if(fakeFloor->bottom.plane->a || fakeFloor->bottom.plane->b) continue;
-			if(!(fakeFloor->flags & FF_NOSHADE) || fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES))
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!fakeFloor->model) continue;
+			if (fakeFloor->bottom.plane->a || fakeFloor->bottom.plane->b) continue;
+			if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES)))
+			{
 				R_3D_AddHeight(fakeFloor->top.plane, frontsector);
-			if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
-			if(fakeFloor->alpha == 0) continue;
-			if(fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
-			fakeAlpha = Scale(fakeFloor->alpha, OPAQUE, 255);
-			if(fakeAlpha > OPAQUE) fakeAlpha = OPAQUE;
-			if(fakeFloor->validcount != validcount) {
+			}
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->alpha == 0) continue;
+			if (fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
+			fakeAlpha = MIN(Scale(fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+			if (fakeFloor->validcount != validcount)
+			{
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
 			fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->soundorg[0], frontsector->soundorg[0]);
-			if(fakeHeight < viewz && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1])) {
-				fake3D = 1;
+			if (fakeHeight < viewz &&
+				fakeHeight > frontsector->floorplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]))
+			{
+				fake3D = FAKE3D_FAKEFLOOR;
 				tempsec = *fakeFloor->model;
 				tempsec.floorplane = *fakeFloor->top.plane;
-				if(!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR))
+				if (!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR))
+				{
 					tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
+				}
 				frontsector = &tempsec;
 
-				if(fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size()) {
+				if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+				{
 					light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
 					basecolormap = light->extra_colormap;
 					floorlightlevel = *light->p_lightlevel;
@@ -1278,35 +1301,45 @@ void R_Subsector (subsector_t *sub)
 			}
 		}
 		// and now ceilings
-		for(unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++) {
+		for (unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++)
+		{
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
-			if(!(fakeFloor->flags & FF_EXISTS)) continue;
-			if(!fakeFloor->model) continue;
-			if(fakeFloor->top.plane->a || fakeFloor->top.plane->b) continue;
-			if(!(fakeFloor->flags & FF_NOSHADE) || fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES))
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!fakeFloor->model) continue;
+			if (fakeFloor->top.plane->a || fakeFloor->top.plane->b) continue;
+			if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES)))
+			{
 				R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
-			if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
-			if(fakeFloor->alpha == 0) continue;
-			if(!(fakeFloor->flags & FF_THISINSIDE) && fakeFloor->flags & FF_SWIMMABLE && fakeFloor->flags & FF_INVERTSECTOR) continue;
-			fakeAlpha = Scale(fakeFloor->alpha, OPAQUE, 255);
-			if(fakeAlpha > OPAQUE) fakeAlpha = OPAQUE;
+			}
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->alpha == 0) continue;
+			if (!(fakeFloor->flags & FF_THISINSIDE) && (fakeFloor->flags & (FF_SWIMMABLE|FF_INVERTSECTOR)) == (FF_SWIMMABLE|FF_INVERTSECTOR)) continue;
+			fakeAlpha = MIN(Scale(fakeFloor->alpha, OPAQUE, 255), OPAQUE);
 
-			if(fakeFloor->validcount != validcount) {
+			if (fakeFloor->validcount != validcount)
+			{
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
 			fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]);
-			if(fakeHeight > viewz && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1])) {
-				fake3D = 2;
+			if (fakeHeight > viewz &&
+				fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]))
+			{
+				fake3D = FAKE3D_FAKECEILING;
 				tempsec = *fakeFloor->model;
 				tempsec.ceilingplane = *fakeFloor->bottom.plane;
-				if(!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR) ||
-					fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR)
+				if (!(fakeFloor->flags & FF_THISINSIDE) &&
+					!(fakeFloor->flags & FF_INVERTSECTOR) ||
+					fakeFloor->flags & FF_THISINSIDE &&
+					fakeFloor->flags & FF_INVERTSECTOR)
+				{
 					tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
+				}
 				frontsector = &tempsec;
 
 				tempsec.ceilingplane.ChangeHeight(-1);
-				if(fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size()) {
+				if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+				{
 					light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
 					basecolormap = light->extra_colormap;
 					ceilinglightlevel = *light->p_lightlevel;
@@ -1366,27 +1399,36 @@ void R_Subsector (subsector_t *sub)
 		if (!outersubsector || line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
 			// kg3D - fake planes bounding calculation
-			if(line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size()) {
+			if (line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
+			{
 				backupfp = floorplane;
 				backupcp = ceilingplane;
 				floorplane = NULL;
 				ceilingplane = NULL;
-				for(unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++) {
+				for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
+				{
 					fakeFloor = line->backsector->e->XFloor.ffloors[i];
-					if(!(fakeFloor->flags & FF_EXISTS)) continue;
-					if(!(fakeFloor->flags & FF_RENDERPLANES)) continue;
-					if(!fakeFloor->model) continue;
-					fake3D = 4;
+					if (!(fakeFloor->flags & FF_EXISTS)) continue;
+					if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+					if (!fakeFloor->model) continue;
+					fake3D = FAKE3D_FAKEBACK;
 					tempsec = *fakeFloor->model;
 					tempsec.floorplane = *fakeFloor->top.plane;
 					tempsec.ceilingplane = *fakeFloor->bottom.plane;
 					backsector = &tempsec;
-					if(fakeFloor->validcount != validcount) {
+					if (fakeFloor->validcount != validcount)
+					{
 						fakeFloor->validcount = validcount;
 						R_3D_NewClip();
 					}
-					if(frontsector->CenterFloor() >= backsector->CenterFloor()) fake3D |= 8;
-					if(frontsector->CenterCeiling() <= backsector->CenterCeiling()) fake3D |= 16;
+					if (frontsector->CenterFloor() >= backsector->CenterFloor())
+					{
+						fake3D |= FAKE3D_DOWN2UP;
+					}
+					if (frontsector->CenterCeiling() <= backsector->CenterCeiling())
+					{
+						fake3D |= FAKE3D_16;
+					}
 					R_AddLine(line); // fake
 				}
 				fakeFloor = NULL;

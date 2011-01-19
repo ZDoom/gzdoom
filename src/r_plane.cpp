@@ -568,7 +568,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		// kg3D - hack, store alpha in sky
 		// i know there is ->alpha, but this also allows to identify fake plane
 		// and ->alpha is for stacked sectors
-		if(fake3D & 3) sky = 0x80000000 | fakeAlpha;
+		if (fake3D & (FAKE3D_FAKEFLOOR|FAKE3D_FAKECEILING)) sky = 0x80000000 | fakeAlpha;
 		else sky = 0;	// not skyflatnum so it can't be a sky
 		skybox = NULL;
 		alpha = FRACUNIT;

@@ -250,13 +250,20 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_lightstep = ds->lightstep;
 	rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
-	if(fixedlightlev < 0)
-	for(i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--) {
-		if(!(fake3D & 2)) sclipTop = sec->ceilingplane.ZatPoint(viewx, viewy);
-		if(sclipTop <= frontsector->e->XFloor.lightlist[i].plane.ZatPoint(viewx, viewy)) {
-			basecolormap = frontsector->e->XFloor.lightlist[i].extra_colormap;
-			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[i].p_lightlevel) + r_actualextralight);
-			break;
+	if (fixedlightlev < 0)
+	{
+		for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+		{
+			if (!(fake3D & FAKE3D_CLIPTOP))
+			{
+				sclipTop = sec->ceilingplane.ZatPoint(viewx, viewy);
+			}
+			if (sclipTop <= frontsector->e->XFloor.lightlist[i].plane.ZatPoint(viewx, viewy))
+			{
+				basecolormap = frontsector->e->XFloor.lightlist[i].extra_colormap;
+				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[i].p_lightlevel) + r_actualextralight);
+				break;
+			}
 		}
 	}
 
@@ -337,18 +344,36 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			goto clearfog;
 		}
 
-		if(fake3D & 1 && textop <= sclipBottom - viewz) goto clearfog;
-		if(fake3D & 2 && textop - texheight >= sclipTop - viewz) goto clearfog;
+		if ((fake3D & FAKE3D_CLIPBOTTOM) && textop <= sclipBottom - viewz)
+		{
+			goto clearfog;
+		}
+		if ((fake3D & FAKE3D_CLIPTOP) && textop - texheight >= sclipTop - viewz)
+		{
+			goto clearfog;
+		}
 
 		WallSZ1 = ds->sz1;
 		WallSZ2 = ds->sz2;
 		WallSX1 = ds->sx1;
 		WallSX2 = ds->sx2;
 
-		if(fake3D & 2) OWallMost (wallupper, textop < sclipTop - viewz ? textop : sclipTop - viewz);
-		else OWallMost (wallupper, textop);
-		if(fake3D & 1) OWallMost (walllower, textop - texheight > sclipBottom - viewz ? textop - texheight : sclipBottom - viewz);
-		else OWallMost (walllower, textop - texheight);
+		if (fake3D & FAKE3D_CLIPTOP)
+		{
+			OWallMost (wallupper, textop < sclipTop - viewz ? textop : sclipTop - viewz);
+		}
+		else
+		{
+			OWallMost (wallupper, textop);
+		}
+		if (fake3D & FAKE3D_CLIPBOTTOM)
+		{
+			OWallMost (walllower, textop - texheight > sclipBottom - viewz ? textop - texheight : sclipBottom - viewz);
+		}
+		else
+		{
+			OWallMost (walllower, textop - texheight);
+		}
 
 		for (i = x1; i <= x2; i++)
 		{
@@ -412,7 +437,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		WallSX1 = ds->sx1;
 		WallSX2 = ds->sx2;
 
-		if(fake3D & 2) {
+		if (fake3D & FAKE3D_CLIPTOP)
+		{
 			OWallMost (wallupper, sclipTop - viewz);
 			for (i = x1; i <= x2; i++)
 			{
@@ -421,7 +447,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			}
 			mceilingclip = wallupper;
 		}			
-		if(fake3D & 1) {
+		if (fake3D & FAKE3D_CLIPBOTTOM)
+		{
 			OWallMost (walllower, sclipBottom - viewz);
 			for (i = x1; i <= x2; i++)
 			{
@@ -445,11 +472,18 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 clearfog:
 	R_FinishSetPatchStyle ();
-	if(ds->bFakeBoundary & 3) R_RenderFakeWallRange(ds, x1, x2);
-	if(fake3D & 4)
+	if (ds->bFakeBoundary & 3)
+	{
+		R_RenderFakeWallRange(ds, x1, x2);
+	}
+	if (fake3D & FAKE3D_REFRESHCLIP)
+	{
 		memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2-ds->x1+1) * 2);
+	}
 	else
-		clearbufshort (openings + ds->sprtopclip - ds->x1 + x1, x2-x1+1, viewheight);
+	{
+		clearbufshort(openings + ds->sprtopclip - ds->x1 + x1, x2-x1+1, viewheight);
+	}
 	return;
 }
 
@@ -565,9 +599,12 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	frontsector = curline->frontsector;
 	backsector = curline->backsector;
 
-	if(!backsector) return;
-
-	if((ds->bFakeBoundary & 3) == 2) {
+	if (backsector == NULL)
+	{
+		return;
+	}
+	if ((ds->bFakeBoundary & 3) == 2)
+	{
 		sector_t *sec = backsector;
 		backsector = frontsector;
 		frontsector = sec;
@@ -577,134 +614,181 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	ceilingheight = backsector->CenterCeiling();
 
 	// maybe fix clipheights
-	if(!(fake3D & 1)) sclipBottom = floorheight;
-	if(!(fake3D & 2)) sclipTop = ceilingheight;
+	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
+	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
 
-	if(fake3D & 8) { // bottom to viewz
+	if (fake3D & FAKE3D_DOWN2UP)
+	{ // bottom to viewz
 		last = 0;
-		for(i = backsector->e->XFloor.ffloors.Size() - 1; i >= 0; i--) 
+		for (i = backsector->e->XFloor.ffloors.Size() - 1; i >= 0; i--) 
 		{
 			rover = backsector->e->XFloor.ffloors[i];
-			if(!(rover->flags & FF_EXISTS)) continue;
+			if (!(rover->flags & FF_EXISTS)) continue;
 
 			// visible?
 			passed = 0;
-			if(	!(rover->flags & FF_RENDERSIDES) ||
+			if (!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->a || rover->top.plane->b ||
 				rover->bottom.plane->a || rover->bottom.plane->b ||
 				rover->top.plane->Zat0() <= sclipBottom ||
 				rover->bottom.plane->Zat0() >= ceilingheight)
 			{
-				if(!i) passed = 1;
-				else continue;
+				if (!i)
+				{
+					passed = 1;
+				}
+				else
+				{
+					continue;
+				}
 			}
 
 			rw_pic = NULL;
-			if(rover->bottom.plane->Zat0() >= sclipTop || passed) 
+			if (rover->bottom.plane->Zat0() >= sclipTop || passed) 
 			{
-				if(last) break;
+				if (last)
+				{
+					break;
+				}
 				// maybe wall from inside rendering?
 				fover = NULL;
-				for(j = frontsector->e->XFloor.ffloors.Size() - 1; j >= 0; j--) {
+				for (j = frontsector->e->XFloor.ffloors.Size() - 1; j >= 0; j--)
+				{
 					fover = frontsector->e->XFloor.ffloors[j];
-					if(fover->model == rover->model) {
-						// never
+					if (fover->model == rover->model)
+					{ // never
 						fover = NULL;
 						break;
 					}
-					if(!(fover->flags & FF_EXISTS)) continue;
-					if(!(fover->flags & FF_RENDERSIDES)) continue;
-					// no sloped walls, its bugged
-					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					if (!(fover->flags & FF_EXISTS)) continue;
+					if (!(fover->flags & FF_RENDERSIDES)) continue;
+					// no sloped walls, it's bugged
+					if (fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->top.plane->Zat0() <= sclipBottom) continue; // no
-					if(fover->bottom.plane->Zat0() >= sclipTop) {
-						// no, last possible
+					if (fover->top.plane->Zat0() <= sclipBottom) continue; // no
+					if (fover->bottom.plane->Zat0() >= sclipTop)
+					{ // no, last possible
  						fover = NULL;
 						break;
 					}
 					// it is, render inside?
-					if(!(fover->flags & (FF_BOTHPLANES|FF_INVERTPLANES)))
-						fover = NULL; // no
+					if (!(fover->flags & (FF_BOTHPLANES|FF_INVERTPLANES)))
+					{ // no
+						fover = NULL;
+					}
 					break;
 				}
 				// nothing
-				if(!fover || j == -1) break;
+				if (!fover || j == -1)
+				{
+					break;
+				}
 				// correct texture
 				if (fover->flags & rover->flags & FF_SWIMMABLE)
-					rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
+				{	// don't ever draw (but treat as something has been found)
+					rw_pic = DONT_DRAW;
+				}
 				else if(fover->flags & FF_UPPERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+				}
 				else if(fover->flags & FF_LOWERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				}
 				else
+				{
 					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
+				}
 			} 
-			else if(frontsector->e->XFloor.ffloors.Size()) 
+			else if (frontsector->e->XFloor.ffloors.Size()) 
 			{
 				// maybe not visible?
 				fover = NULL;
-				for(j = frontsector->e->XFloor.ffloors.Size() - 1; j >= 0; j--) {
+				for (j = frontsector->e->XFloor.ffloors.Size() - 1; j >= 0; j--)
+				{
 					fover = frontsector->e->XFloor.ffloors[j];
-					if(fover->model == rover->model) // never
+					if (fover->model == rover->model) // never
+					{
 						break;
-					if(!(fover->flags & FF_EXISTS)) continue;
-					if(!(fover->flags & FF_RENDERSIDES)) continue;
-					// no sloped walls, its bugged
-					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					}
+					if (!(fover->flags & FF_EXISTS)) continue;
+					if (!(fover->flags & FF_RENDERSIDES)) continue;
+					// no sloped walls, it's bugged
+					if (fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->top.plane->Zat0() <= sclipBottom) continue; // no
-					if(fover->bottom.plane->Zat0() >= sclipTop) {
-						// visible, last possible
+					if (fover->top.plane->Zat0() <= sclipBottom) continue; // no
+					if (fover->bottom.plane->Zat0() >= sclipTop)
+					{ // visible, last possible
  						fover = NULL;
 						break;
 					}
-					if((fover->flags & FF_SOLID) == (rover->flags & FF_SOLID) &&
+					if ((fover->flags & FF_SOLID) == (rover->flags & FF_SOLID) &&
 						!(!(fover->flags & FF_SOLID) && (fover->alpha == 255 || rover->alpha == 255))
-					) break;
-
+					)
+					{
+						break;
+					}
 					if (fover->flags & rover->flags & FF_SWIMMABLE)
-						rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
-
+					{ // don't ever draw (but treat as something has been found)
+						rw_pic = DONT_DRAW;
+					}
 					fover = NULL; // visible
 					break;
 				}
-				if(fover && j != -1) {
+				if (fover && j != -1)
+				{
 					fover = NULL;
 					last = 1;
 					continue; // not visible
 				}
 			}
-			if(!rw_pic) 
+			if (!rw_pic) 
 			{
 				fover = NULL;
-				if(rover->flags & FF_UPPERTEXTURE)
+				if (rover->flags & FF_UPPERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+				}
 				else if(rover->flags & FF_LOWERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				}
 				else
+				{
 					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+				}
 			}
 			// correct colors now
 			basecolormap = frontsector->ColorMap;
 			wallshade = ds->shade;
-			if(fixedlightlev < 0) {
-				if((ds->bFakeBoundary & 3) == 2) {
-					for(j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0()) {
+			if (fixedlightlev < 0)
+			{
+				if ((ds->bFakeBoundary & 3) == 2)
+				{
+					for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
+					{
+						if (sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
+						{
 							basecolormap = backsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *backsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
-				} else {
-					for(j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0()) {
+					}
+				}
+				else
+				{
+					for (j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
+					{
+						if (sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
+						{
 							basecolormap = frontsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
+					}
 				}
 			}
 			if (rw_pic != DONT_DRAW)
@@ -714,119 +798,169 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			else rw_pic = NULL;
 			break;
 		}
-	} else { // top to viewz
-		for(i = 0; i < (int)backsector->e->XFloor.ffloors.Size(); i++) {
+	}
+	else
+	{ // top to viewz
+		for (i = 0; i < (int)backsector->e->XFloor.ffloors.Size(); i++)
+		{
 			rover = backsector->e->XFloor.ffloors[i];
-			if(!(rover->flags & FF_EXISTS)) continue;
+			if (!(rover->flags & FF_EXISTS)) continue;
 
 			// visible?
 			passed = 0;
-			if(	!(rover->flags & FF_RENDERSIDES) ||
+			if (!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->a || rover->top.plane->b ||
 				rover->bottom.plane->a || rover->bottom.plane->b ||
 				rover->bottom.plane->Zat0() >= sclipTop ||
 				rover->top.plane->Zat0() <= floorheight)
 			{
-				if(i == backsector->e->XFloor.ffloors.Size() - 1) passed = 1;
-				else continue;
+				if (i == backsector->e->XFloor.ffloors.Size() - 1)
+				{
+					passed = 1;
+				}
+				else
+				{
+					continue;
+				}
 			}
 			rw_pic = NULL;
-			if(rover->top.plane->Zat0() <= sclipBottom || passed) {
-				// maybe wall from inside rendering?
+			if (rover->top.plane->Zat0() <= sclipBottom || passed)
+			{ // maybe wall from inside rendering?
 				fover = NULL;
-				for(j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++) {
+				for (j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++)
+				{
 					fover = frontsector->e->XFloor.ffloors[j];
-					if(fover->model == rover->model) {
-						// never
+					if (fover->model == rover->model)
+					{ // never
 						fover = NULL;
 						break;
 					}
-					if(!(fover->flags & FF_EXISTS)) continue;
-					if(!(fover->flags & FF_RENDERSIDES)) continue;
-					// no sloped walls, its bugged
-					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					if (!(fover->flags & FF_EXISTS)) continue;
+					if (!(fover->flags & FF_RENDERSIDES)) continue;
+					// no sloped walls, it's bugged
+					if (fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->bottom.plane->Zat0() >= sclipTop) continue; // no
-					if(fover->top.plane->Zat0() <= sclipBottom) {
-						// no, last possible
+					if (fover->bottom.plane->Zat0() >= sclipTop) continue; // no
+					if (fover->top.plane->Zat0() <= sclipBottom)
+					{ // no, last possible
  						fover = NULL;
 						break;
 					}
 					// it is, render inside?
-					if(!(fover->flags & (FF_BOTHPLANES|FF_INVERTPLANES)))
-						fover = NULL; // no
+					if (!(fover->flags & (FF_BOTHPLANES|FF_INVERTPLANES)))
+					{ // no
+						fover = NULL;
+					}
 					break;
 				}
 				// nothing
-				if(!fover || j == frontsector->e->XFloor.ffloors.Size()) break;
+				if (!fover || j == frontsector->e->XFloor.ffloors.Size())
+				{
+					break;
+				}
 				// correct texture
 				if (fover->flags & rover->flags & FF_SWIMMABLE)
+				{
 					rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
-				else if(fover->flags & FF_UPPERTEXTURE)
+				}
+				else if (fover->flags & FF_UPPERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
-				else if(fover->flags & FF_LOWERTEXTURE)
+				}
+				else if (fover->flags & FF_LOWERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				}
 				else
+				{
 					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
-			} else if(frontsector->e->XFloor.ffloors.Size()) {
-				// maybe not visible?
+				}
+			}
+			else if (frontsector->e->XFloor.ffloors.Size())
+			{ // maybe not visible?
 				fover = NULL;
-				for(j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++) {
+				for (j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++)
+				{
 					fover = frontsector->e->XFloor.ffloors[j];
-					if(fover->model == rover->model) // never
+					if (fover->model == rover->model)
+					{ // never
 						break;
-					if(!(fover->flags & FF_EXISTS)) continue;
-					if(!(fover->flags & FF_RENDERSIDES)) continue;
+					}
+					if (!(fover->flags & FF_EXISTS)) continue;
+					if (!(fover->flags & FF_RENDERSIDES)) continue;
 					// no sloped walls, its bugged
 					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
 
 					// visible?
-					if(fover->bottom.plane->Zat0() >= sclipTop) continue; // no
-					if(fover->top.plane->Zat0() <= sclipBottom) {
-						// visible, last possible
+					if (fover->bottom.plane->Zat0() >= sclipTop) continue; // no
+					if (fover->top.plane->Zat0() <= sclipBottom)
+					{ // visible, last possible
  						fover = NULL;
 						break;
 					}
-					if((fover->flags & FF_SOLID) == (rover->flags & FF_SOLID) &&
+					if ((fover->flags & FF_SOLID) == (rover->flags & FF_SOLID) &&
 						!(!(rover->flags & FF_SOLID) && (fover->alpha == 255 || rover->alpha == 255))
-					) break;
-
+					)
+					{
+						break;
+					}
 					if (fover->flags & rover->flags & FF_SWIMMABLE)
-						rw_pic = DONT_DRAW;	// don't ever draw (but treat as something has been found)
-
+					{ // don't ever draw (but treat as something has been found)
+						rw_pic = DONT_DRAW;
+					}
 					fover = NULL; // visible
 					break;
 				}
-				if(fover && j != frontsector->e->XFloor.ffloors.Size()) break; // not visible
+				if (fover && j != frontsector->e->XFloor.ffloors.Size())
+				{ // not visible
+					break;
+				}
 			}
-			if(!rw_pic) {
+			if (rw_pic == NULL)
+			{
 				fover = NULL;
-				if(rover->flags & FF_UPPERTEXTURE)
+				if (rover->flags & FF_UPPERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
-				else if(rover->flags & FF_LOWERTEXTURE)
+				}
+				else if (rover->flags & FF_LOWERTEXTURE)
+				{
 					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+				}
 				else
+				{
 					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+				}
 			}
 			// correct colors now
 			basecolormap = frontsector->ColorMap;
 			wallshade = ds->shade;
-			if(fixedlightlev < 0) {
-				if((ds->bFakeBoundary & 3) == 2) {
-					for(j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0()) {
+			if (fixedlightlev < 0)
+			{
+				if ((ds->bFakeBoundary & 3) == 2)
+				{
+					for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
+					{
+						if (sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
+						{
 							basecolormap = backsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *backsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
-				} else {
-					for(j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0()) {
+					}
+				}
+				else
+				{
+					for (j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
+					{
+						if(sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
+						{
 							basecolormap = frontsector->e->XFloor.lightlist[j].extra_colormap;
 							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *frontsector->e->XFloor.lightlist[j].p_lightlevel) + r_actualextralight);
 							break;
 						}
+					}
 				}
 			}
 
@@ -834,8 +968,10 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			{
 				R_RenderFakeWall(ds, x1, x2, fover ? fover : rover);
 			}
-			else rw_pic = NULL;
-
+			else
+			{
+				rw_pic = NULL;
+			}
 			break;
 		}
 	}
@@ -1472,19 +1608,26 @@ void R_RenderSegLoop ()
 	}
 
 	// kg3D - fake planes clipping
-	if(fake3D & 4) {
-		if(fake3D & 8) {
+	if (fake3D & FAKE3D_REFRESHCLIP)
+	{
+		if (fake3D & FAKE3D_DOWN2UP)
+		{
 			memcpy (fakeFloor->floorclip+x1, wallbottom+x1, (x2-x1)*sizeof(short));
-		} else {
+		}
+		else
+		{
 			for (x = x1; x < x2; ++x)
 			{
 				walllower[x] = MIN (MAX (walllower[x], ceilingclip[x]), wallbottom[x]);
 			}
 			memcpy (fakeFloor->floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}
-		if(fake3D & 16) {
+		if (fake3D & FAKE3D_16)
+		{
 			memcpy (fakeFloor->ceilingclip+x1, walltop+x1, (x2-x1)*sizeof(short));
-		} else {
+		}
+		else
+		{
 			for (x = x1; x < x2; ++x)
 			{
 				wallupper[x] = MAX (MIN (wallupper[x], floorclip[x]), walltop[x]);

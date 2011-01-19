@@ -2706,8 +2706,8 @@ void R_DrawSprite (vissprite_t *spr)
 	if (!spr->bIsVoxel && spr->pic == NULL)
 	{
 		// kg3D - reject invisible parts
-		if(fake3D & 1 && spr->gz <= sclipBottom) return;
-		if(fake3D & 2 && spr->gz >= sclipTop) return;
+		if ((fake3D & FAKE3D_CLIPBOTTOM) && spr->gz <= sclipBottom) return;
+		if ((fake3D & FAKE3D_CLIPTOP)    && spr->gz >= sclipTop) return;
 		R_DrawParticle (spr);
 		return;
 	}
@@ -2724,32 +2724,43 @@ void R_DrawSprite (vissprite_t *spr)
 		return;
 
 	// kg3D - reject invisible parts
-	if(fake3D & 1 && spr->gzt <= sclipBottom) return;
-	if(fake3D & 2 && spr->gzb >= sclipTop) return;
+	if ((fake3D & FAKE3D_CLIPBOTTOM) && spr->gzt <= sclipBottom) return;
+	if ((fake3D & FAKE3D_CLIPTOP)    && spr->gzb >= sclipTop) return;
 
 	// kg3D - correct colors now
-	if(!fixedcolormap && fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size()) 
+	if (!fixedcolormap && fixedlightlev < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size()) 
 	{
-		if(!(fake3D & 2)) sclipTop = spr->sector->ceilingplane.ZatPoint(viewx, viewy);
-		sector_t *sec = NULL;
-		for(i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+		if (!(fake3D & FAKE3D_CLIPTOP))
 		{
-			if(sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0()) 
+			sclipTop = spr->sector->ceilingplane.ZatPoint(viewx, viewy);
+		}
+		sector_t *sec = NULL;
+		for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+		{
+			if (sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0()) 
 			{
 				rover = spr->sector->e->XFloor.lightlist[i].caster;
-				if(rover) 
+				if (rover) 
 				{
-					if(rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->Zat0())
+					if (rover->flags & FF_DOUBLESHADOW && sclipTop <= rover->bottom.plane->Zat0())
+					{
 						break;
+					}
 					sec = rover->model;
-					if(rover->flags & FF_FADEWALLS) mybasecolormap = sec->ColorMap;
-					else mybasecolormap = spr->sector->e->XFloor.lightlist[i].extra_colormap;
+					if (rover->flags & FF_FADEWALLS)
+					{
+						mybasecolormap = sec->ColorMap;
+					}
+					else
+					{
+						mybasecolormap = spr->sector->e->XFloor.lightlist[i].extra_colormap;
+					}
 				}
 				break;
 			}
 		}
 		// found new values, recalculate
-		if(sec) 
+		if (sec) 
 		{
 			INTBOOL invertcolormap = (spr->RenderStyle.Flags & STYLEF_InvertOverlay);
 
@@ -2876,21 +2887,37 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 	}
 
-	if(fake3D & 1) {
-		if (!spr->bIsVoxel) {
+	if (fake3D & FAKE3D_CLIPBOTTOM)
+	{
+		if (!spr->bIsVoxel)
+		{
 			fixed_t h = sclipBottom;
-			if(spr->fakefloor && viewz > spr->fakefloor->top.plane->Zat0()) h = spr->fakefloor->bottom.plane->Zat0();
-			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
-			if(h < botclip) botclip = MAX<short> (0, h);
+			if (spr->fakefloor && viewz > spr->fakefloor->top.plane->Zat0())
+			{
+				h = spr->fakefloor->bottom.plane->Zat0();
+			}
+			h = (centeryfrac - FixedMul(h-viewz, scale)) >> FRACBITS;
+			if (h < botclip)
+			{
+				botclip = MAX<short>(0, h);
+			}
 		}
 		hzb = MAX(hzb, sclipBottom);
 	}
-	if(fake3D & 2) {
-		if (!spr->bIsVoxel) {
+	if (fake3D & FAKE3D_CLIPTOP)
+	{
+		if (!spr->bIsVoxel)
+		{
 			fixed_t h = sclipTop;
-			if(spr->fakeceiling && viewz < spr->fakeceiling->bottom.plane->Zat0()) h = spr->fakeceiling->top.plane->Zat0();
+			if (spr->fakeceiling && viewz < spr->fakeceiling->bottom.plane->Zat0())
+			{
+				h = spr->fakeceiling->top.plane->Zat0();
+			}
 			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
-			if(h > topclip) topclip = MIN<short> (h, viewheight);
+			if (h > topclip)
+			{
+				topclip = MIN<short>(h, viewheight);
+			}
 		}
 		hzt = MIN(hzt, sclipTop);
 	}
@@ -3070,11 +3097,14 @@ void R_DrawMaskedSingle (bool renew)
 
 	//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
-	if(renew) fake3D |= 4;
+	if (renew)
+	{
+		fake3D |= FAKE3D_REFRESHCLIP;
+	}
 	for (ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
 	{
 		// kg3D - no fake segs
-		if(ds->fake) continue;
+		if (ds->fake) continue;
 		if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
 		{
 			R_RenderMaskedSegRange (ds, ds->x1, ds->x2);
@@ -3088,43 +3118,50 @@ void R_DrawMasked (void)
 {
 	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
 
-	if(height_top == NULL)
-	{
-		// kg3D - no visible 3D floors, normal rendering
+	if (height_top == NULL)
+	{ // kg3D - no visible 3D floors, normal rendering
 		R_DrawMaskedSingle(false);
-	} else {
-		// kg3D - correct sorting
+	}
+	else
+	{ // kg3D - correct sorting
 		HeightLevel *hl;
 
 		// ceilings
-		hl = height_cur;
-		while(hl) {
-			if(hl->height < viewz) break;
-			if(hl->next) {
-				fake3D = 3;
+		for (hl = height_cur; hl != NULL && hl->height >= viewz; hl = hl->prev)
+		{
+			if (hl->next)
+			{
+				fake3D = FAKE3D_CLIPBOTTOM | FAKE3D_CLIPTOP;
 				sclipTop = hl->next->height;
-			} else fake3D = 1;
+			}
+			else
+			{
+				fake3D = FAKE3D_CLIPBOTTOM;
+			}
 			sclipBottom = hl->height;
 			R_DrawMaskedSingle(true);
 			R_DrawHeightPlanes(hl->height);
-			hl = hl->prev;
 		}
 
 		// floors
-		fake3D = 10;
+		fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP;
 		sclipTop = height_top->height;
 		R_DrawMaskedSingle(true);
 		hl = height_top;
-		while(hl) {
-			if(hl->height >= viewz) break;
+		for (hl = height_top; hl != NULL && hl->height < viewz; hl = hl->next)
+		{
 			R_DrawHeightPlanes(hl->height);
-			if(hl->next) {
-				fake3D = 11;
+			if (hl->next)
+			{
+				fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP | FAKE3D_CLIPBOTTOM;
 				sclipTop = hl->next->height;
-			} else fake3D = 9;
+			}
+			else
+			{
+				fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPBOTTOM;
+			}
 			sclipBottom = hl->height;
 			R_DrawMaskedSingle(true);
-			hl = hl->next;
 		}
 		R_3D_DeleteHeights();
 		fake3D = 0;

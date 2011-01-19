@@ -1,5 +1,5 @@
-#ifndef __SOFT_FAKE3D_H
-#define __SOFT_FAKE3D_H
+#ifndef SOFT_FAKE3D_H
+#define SOFT_FAKE3D_H
 
 #include "p_3dfloors.h"
 
@@ -29,18 +29,23 @@ struct ClipStack
 
 // external varialbes
 
-/*
-	fake3D flags:
-		BSP stage:
-		1 - fake floor, mark seg as FAKE
-		2 - fake ceiling, mark seg as FAKE
-		4 - R_AddLine with fake backsector, mark seg as FAKE
-		sorting stage:
-		1 - clip bottom
-		2 - clip top
-		4 - refresh clip info
-		8 - rendering from down to up (floors)
-*/
+// fake3D flags:
+enum
+{
+	// BSP stage:
+	FAKE3D_FAKEFLOOR		= 1,	// fake floor, mark seg as FAKE
+	FAKE3D_FAKECEILING		= 2,	// fake ceiling, mark seg as FAKE
+	FAKE3D_FAKEBACK			= 4,	// R_AddLine with fake backsector, mark seg as FAKE
+	FAKE3D_FAKEMASK			= 7,
+
+	// sorting stage:
+	FAKE3D_CLIPBOTTOM		= 1,	// clip bottom
+	FAKE3D_CLIPTOP			= 2,	// clip top
+	FAKE3D_REFRESHCLIP		= 4,	// refresh clip info
+	FAKE3D_DOWN2UP			= 8,	// rendering from down to up (floors)
+	FAKE3D_16				= 16,	// what is this?
+};
+
 extern int fake3D;
 extern F3DFloor *fakeFloor;
 extern fixed_t fakeHeight;

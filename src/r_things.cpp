@@ -2091,10 +2091,16 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 			if(!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERPLANES)) continue;
 			if(!(rover->flags & FF_SOLID) || rover->alpha != 255) continue;
 			if(!fakefloor)
+			{
 				if(!(rover->top.plane->a) && !(rover->top.plane->b))
+				{
 					if(rover->top.plane->Zat0() <= thing->z) fakefloor = rover;
+				}
+			}
 			if(!(rover->bottom.plane->a) && !(rover->bottom.plane->b))
-				if(rover->bottom.plane->Zat0() >= thing->z) fakeceiling = rover;
+			{
+				if(rover->bottom.plane->Zat0() >= thing->z + thing->height) fakeceiling = rover;
+			}
 		}	
 		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling);
 		fakeceiling = NULL;
@@ -2892,9 +2898,13 @@ void R_DrawSprite (vissprite_t *spr)
 		if (!spr->bIsVoxel)
 		{
 			fixed_t h = sclipBottom;
-			if (spr->fakefloor && viewz > spr->fakefloor->top.plane->Zat0())
+			if (spr->fakefloor)
 			{
-				h = spr->fakefloor->bottom.plane->Zat0();
+				fixed_t floorz = spr->fakefloor->top.plane->Zat0();
+				if (viewz > floorz && floorz == sclipBottom )
+				{
+					h = spr->fakefloor->bottom.plane->Zat0();
+				}
 			}
 			h = (centeryfrac - FixedMul(h-viewz, scale)) >> FRACBITS;
 			if (h < botclip)
@@ -2909,9 +2919,14 @@ void R_DrawSprite (vissprite_t *spr)
 		if (!spr->bIsVoxel)
 		{
 			fixed_t h = sclipTop;
-			if (spr->fakeceiling && viewz < spr->fakeceiling->bottom.plane->Zat0())
+
+			if (spr->fakeceiling != NULL)
 			{
-				h = spr->fakeceiling->top.plane->Zat0();
+				fixed_t ceilingz = spr->fakeceiling->bottom.plane->Zat0();
+				if (viewz < ceilingz && ceilingz == sclipTop)
+				{
+					h = spr->fakeceiling->top.plane->Zat0();
+				}
 			}
 			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 			if (h > topclip)

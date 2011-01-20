@@ -232,6 +232,7 @@ struct FLineOpening
 	FTextureID		ceilingpic;
 	FTextureID		floorpic;
 	bool			touchmidtex;
+	bool			abovemidtex;
 };
 
 void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
@@ -348,6 +349,7 @@ struct FCheckPosition
 	FTextureID		ceilingpic;
 	sector_t		*ceilingsector;
 	bool			touchmidtex;
+	bool			abovemidtex;
 	bool			floatok;
 	bool			FromPMove;
 	line_t			*ceilingline;

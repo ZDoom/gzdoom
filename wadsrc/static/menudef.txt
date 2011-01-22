@@ -526,10 +526,10 @@ OptionMenu "MouseOptions"
 {
 	Title "MOUSE OPTIONS"
 	Option "Enable mouse",				"use_mouse", "YesNo"
-	IfOption(Windows)	// GUI mouse not operable in SDL interface right now.
+	Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse", "use_mouse"
+	Option "Show back button",		"m_show_backbutton", "Corners", "use_mouse"
+	IfOption(Windows)	// No cursors on SDL right now.
 	{
-		Option "Enable mouse in menus",	"m_use_mouse", "MenuMouse", "use_mouse"
-		Option "Show back button",		"m_show_backbutton", "Corners", "use_mouse"
 		Option "Cursor",				"vid_cursor", "Cursors"
 	}
 	StaticText 	""

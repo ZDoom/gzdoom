@@ -67,6 +67,7 @@
 #include "r_translate.h"
 #include "a_morph.h"
 #include "colormatcher.h"
+#include "teaminfo.h"
 
 
 //==========================================================================
@@ -1118,6 +1119,17 @@ DEFINE_PROPERTY(activation, N, Actor)
 	// How the thing behaves when activated by death, USESPECIAL or BUMPSPECIAL
 	PROP_INT_PARM(val, 0);
 	defaults->activationtype = val;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(designatedteam, I, Actor)
+{
+	PROP_INT_PARM(val, 0);
+	if(val < 0 || (val >= (signed) Teams.Size() && val != TEAM_NONE))
+		I_Error("Invalid team designation.\n");
+	defaults->DesignatedTeam = val;
 }
 
 //==========================================================================

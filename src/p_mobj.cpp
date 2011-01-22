@@ -300,6 +300,7 @@ void AActor::Serialize (FArchive &arc)
 		<< pushfactor
 		<< Species
 		<< Score
+		<< DesignatedTeam
 		<< lastpush << lastbump
 		<< PainThreshold
 		<< DamageFactor
@@ -775,6 +776,7 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget)
 	flags3 = (flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (other->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
 	flags4 = (flags4 & ~MF4_NOHATEPLAYERS) | (other->flags4 & MF4_NOHATEPLAYERS);
 	FriendPlayer = other->FriendPlayer;
+	DesignatedTeam = other->DesignatedTeam;
 	if (changeTarget && other->target != NULL && !(other->target->flags3 & MF3_NOTARGET))
 	{
 		// LastHeard must be set as well so that A_Look can react to the new target if called
@@ -5296,12 +5298,18 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 bool AActor::IsTeammate (AActor *other)
 {
-	if (!player || !other || !other->player)
+	if (!other)
 		return false;
-	if (!deathmatch)
+	else if (!deathmatch && player && other->player)
 		return true;
-	if (teamplay && other->player->userinfo.team != TEAM_NONE &&
-		player->userinfo.team == other->player->userinfo.team)
+	int myTeam = DesignatedTeam;
+	int otherTeam = other->DesignatedTeam;
+	if (player)
+		myTeam = player->userinfo.team;
+	if (other->player)
+		otherTeam = other->player->userinfo.team;
+	if (teamplay && myTeam != TEAM_NONE &&
+		myTeam == otherTeam)
 	{
 		return true;
 	}
@@ -5353,6 +5361,11 @@ bool AActor::IsFriend (AActor *other)
 {
 	if (flags & other->flags & MF_FRIENDLY)
 	{
+		if (deathmatch && teamplay)
+			return IsTeammate(other) ||
+				(FriendPlayer != 0 && other->FriendPlayer != 0 &&
+					players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo));
+
 		return !deathmatch ||
 			FriendPlayer == other->FriendPlayer ||
 			FriendPlayer == 0 ||
@@ -5378,6 +5391,11 @@ bool AActor::IsHostile (AActor *other)
 	// Both monsters are friendly and belong to the same player if applicable.
 	if (flags & other->flags & MF_FRIENDLY)
 	{
+		if (deathmatch && teamplay)
+			return !IsTeammate(other) &&
+				!(FriendPlayer != 0 && other->FriendPlayer != 0 &&
+					players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo));
+
 		return deathmatch &&
 			FriendPlayer != other->FriendPlayer &&
 			FriendPlayer !=0 &&

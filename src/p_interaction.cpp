@@ -1087,6 +1087,21 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 
+	// [RH] Avoid friendly fire if enabled
+	if (!(flags & DMG_FORCED) && source != NULL &&
+		((player && player != source->player) || !player) &&
+		target->IsTeammate (source))
+	{
+		if (player)
+			FriendlyFire = true;
+		if (damage < TELEFRAG_DAMAGE)
+		{ // Still allow telefragging :-(
+			damage = (int)((float)damage * level.teamdamage);
+			if (damage <= 0)
+				return;
+		}
+	}
+
 	//
 	// player specific
 	//
@@ -1115,17 +1130,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				return;
 			}
 
-			// [RH] Avoid friendly fire if enabled
-			if (source != NULL && player != source->player && target->IsTeammate (source))
-			{
-				FriendlyFire = true;
-				if (damage < TELEFRAG_DAMAGE)
-				{ // Still allow telefragging :-(
-					damage = (int)((float)damage * level.teamdamage);
-					if (damage <= 0)
-						return;
-				}
-			}
 			if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
 			{
 				int newdam = damage;

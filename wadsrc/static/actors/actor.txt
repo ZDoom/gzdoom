@@ -21,6 +21,7 @@ ACTOR Actor native //: Thinker
 	PushFactor 0.25
 	WeaveIndexXY 0
 	WeaveIndexZ 16
+	DesignatedTeam 255
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion

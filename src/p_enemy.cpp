@@ -309,7 +309,7 @@ bool P_CheckMissileRange (AActor *actor)
 {
 	fixed_t dist;
 		
-	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
+	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
 		
 	if (actor->flags & MF_JUSTHIT)
@@ -1151,7 +1151,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	}
 
 	// P_CheckSight is by far the most expensive operation in here so let's do it last.
-	return P_CheckSight(lookee, other, SF_SEEPASTBLOCKEVERYTHING);
+	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
 }
 
 //---------------------------------------------------------------------------

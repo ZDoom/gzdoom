@@ -21,7 +21,7 @@
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
 
-static bool GUICapture;
+bool GUICapture;
 static bool NativeMouse = true;
 
 extern int paused;
@@ -35,6 +35,9 @@ EXTERN_CVAR (Bool, fullscreen)
 
 extern int WaitingForKey, chatmodeon;
 extern constate_e ConsoleState;
+
+extern SDL_Surface *cursorSurface;
+extern SDL_Rect cursorBlit;
 
 static BYTE KeySymToDIK[SDLK_LAST], DownState[SDLK_LAST];
 
@@ -114,6 +117,11 @@ static void I_CheckGUICapture ()
 		GUICapture = wantCapt;
 		if (wantCapt)
 		{
+			int x, y;
+			SDL_GetMouseState (&x, &y);
+			cursorBlit.x = x;
+			cursorBlit.y = y;
+
 			FlushDIKState ();
 			memset (DownState, 0, sizeof(DownState));
 			repeat = !sdl_nokeyrepeat;
@@ -260,15 +268,14 @@ static void I_CheckNativeMouse ()
 	if (wantNative != NativeMouse)
 	{
 		NativeMouse = wantNative;
+		SDL_ShowCursor (wantNative ? cursorSurface == NULL : 0);
 		if (wantNative)
 		{
-			SDL_ShowCursor (1);
 			SDL_WM_GrabInput (SDL_GRAB_OFF);
 			FlushDIKState (KEY_MOUSE1, KEY_MOUSE8);
 		}
 		else
 		{
-			SDL_ShowCursor (0);
 			SDL_WM_GrabInput (SDL_GRAB_ON);
 			CenterMouse ();
 		}
@@ -347,8 +354,8 @@ void MessagePump (const SDL_Event &sev)
 			int x, y;
 			SDL_GetMouseState (&x, &y);
 
-			event.data1 = x;
-			event.data2 = y;
+			cursorBlit.x = event.data1 = x;
+			cursorBlit.y = event.data2 = y;
 			event.type = EV_GUI_Event;
 			if(sev.type == SDL_MOUSEMOTION)
 				event.subtype = EV_GUI_MouseMove;

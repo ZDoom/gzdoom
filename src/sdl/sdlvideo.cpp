@@ -76,6 +76,9 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern IVideo *Video;
+extern SDL_Surface *cursorSurface;
+extern SDL_Rect cursorBlit;
+extern bool GUICapture;
 
 EXTERN_CVAR (Float, Gamma)
 
@@ -404,7 +407,13 @@ void SDLFB::Update ()
 	}
 	
 	SDL_UnlockSurface (Screen);
-	
+
+	if (cursorSurface != NULL && GUICapture)
+	{
+		// SDL requires us to draw a surface to get true color cursors.
+		SDL_BlitSurface(cursorSurface, NULL, Screen, &cursorBlit);
+	}
+
 	SDLFlipCycles.Clock();
 	SDL_Flip (Screen);
 	SDLFlipCycles.Unclock();

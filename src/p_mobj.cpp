@@ -299,9 +299,12 @@ void AActor::Serialize (FArchive &arc)
 		<< BlockingLine
 		<< pushfactor
 		<< Species
-		<< Score
-		<< DesignatedTeam
-		<< lastpush << lastbump
+		<< Score;
+	if (SaveVersion >= 3113)
+	{
+		arc << DesignatedTeam;
+	}
+	arc << lastpush << lastbump
 		<< PainThreshold
 		<< DamageFactor
 		<< WeaveIndexXY << WeaveIndexZ

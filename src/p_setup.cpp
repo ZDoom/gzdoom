@@ -1803,7 +1803,7 @@ void P_SetLineID (line_t *ld)
 	// [RH] Set line id (as appropriate) here
 	// for Doom format maps this must be done in P_TranslateLineDef because
 	// the tag doesn't always go into the first arg.
-	if (level.flags & LEVEL_HEXENFORMAT)	
+	if (level.maptype == MAPTYPE_HEXEN)	
 	{
 		switch (ld->special)
 		{
@@ -3411,6 +3411,7 @@ void P_SetupLevel (char *lumpname, int position)
 		times[i].Reset();
 	}
 
+	level.maptype = MAPTYPE_UNKNOWN;
 	wminfo.partime = 180;
 
 	MapThingsConverted.Clear();
@@ -3491,7 +3492,7 @@ void P_SetupLevel (char *lumpname, int position)
 		if (map->HasBehavior)
 		{
 			P_LoadBehavior (map);
-			level.flags |= LEVEL_HEXENFORMAT;
+			level.maptype = MAPTYPE_HEXEN;
 		}
 		else
 		{
@@ -3514,6 +3515,11 @@ void P_SetupLevel (char *lumpname, int position)
 				}
 			}
 			P_LoadTranslator(translator);
+			level.maptype = MAPTYPE_DOOM;
+		}
+		if (map->isText)
+		{
+			level.maptype = MAPTYPE_UDMF;
 		}
 		CheckCompatibility(map);
 		T_LoadScripts(map);
@@ -3594,6 +3600,7 @@ void P_SetupLevel (char *lumpname, int position)
 	else
 	{
 		ForceNodeBuild = true;
+		level.maptype = MAPTYPE_BUILD;
 	}
 	bool reloop = false;
 

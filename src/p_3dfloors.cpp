@@ -784,14 +784,20 @@ void P_Spawn3DFloors (void)
 			break;
 
 		case Sector_Set3DFloor:
-			if (line->args[1]&8)
+			// The flag high-byte/line id is only needed in Hexen format.
+			// UDMF can set both of these parameters without any restriction of the usable values.
+			// In Doom format the translators can take full integers for the tag and the line ID always is the same as the tag.
+			if (level.maptype == MAPTYPE_HEXEN)	
 			{
-				line->id = line->args[4];
-			}
-			else
-			{
-				line->args[0]+=256*line->args[4];
-				line->args[4]=0;
+				if (line->args[1]&8)
+				{
+					line->id = line->args[4];
+				}
+				else
+				{
+					line->args[0]+=256*line->args[4];
+					line->args[4]=0;
+				}
 			}
 			P_Set3DFloor(line, line->args[1]&~8, line->args[2], line->args[3]);
 			break;

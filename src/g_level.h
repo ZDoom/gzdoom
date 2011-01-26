@@ -162,7 +162,7 @@ enum ELevelFlags
 	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
 	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
 	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
-	LEVEL_HEXENFORMAT			= 0x08000000,	// Level uses the Hexen map format
+	//LEVEL_HEXENFORMAT			= 0x08000000,	// Level uses the Hexen map format
 
 	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
 	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
@@ -252,6 +252,15 @@ struct FOptionalMapinfoDataPtr
 
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 typedef TMap<int, FName> FMusicMap;
+
+enum EMapType
+{
+	MAPTYPE_UNKNOWN = 0,
+	MAPTYPE_DOOM,
+	MAPTYPE_HEXEN,
+	MAPTYPE_BUILD,
+	MAPTYPE_UDMF	// This does not distinguish between namespaces.
+};
 
 struct level_info_t
 {
@@ -380,6 +389,7 @@ struct FLevelLocals
 	char		mapname[256];			// the lump name (E1M1, MAP01, etc)
 	char		nextmap[11];			// go here when using the regular exit
 	char		secretmap[11];			// map to go to when used secret exit
+	EMapType	maptype;
 
 	DWORD		flags;
 	DWORD		flags2;

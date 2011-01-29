@@ -124,7 +124,6 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
-static void CleanupConversationMenu ();
 static void TerminalResponse (const char *str);
 
 static FStrifeDialogueNode *PrevNode;
@@ -845,6 +844,7 @@ public:
 		}
 		else if (mkey == MKEY_Back)
 		{
+			Net_WriteByte (DEM_CONVNULL);
 			Close();
 			return true;
 		}
@@ -1225,12 +1225,14 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	node = StrifeDialogues[nodenum];
 	for (i = 0, reply = node->Children; reply != NULL && i != replynum; ++i, reply = reply->Next)
 	{ }
+	npc = player->ConversationNPC;
 	if (reply == NULL)
 	{
+		// The default reply was selected
+		npc->angle = player->ConversationNPCAngle;
+		npc->flags5 &= ~MF5_INCONVERSATION;
 		return;
 	}
-
-	npc = player->ConversationNPC;
 
 	// Check if you have the requisite items for this choice
 	for (i = 0; i < (int)reply->ItemCheck.Size(); ++i)
@@ -1382,32 +1384,6 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	{
 		I_SetMusicVolume (1.f);
 	}
-}
-
-//============================================================================
-//
-// CleanupConversationMenu
-//
-// Release the resources used to create the most recent conversation menu.
-//
-//============================================================================
-
-void CleanupConversationMenu ()
-{
-}
-
-//============================================================================
-//
-// ConversationMenuEscaped
-//
-// Called when the user presses escape to leave the conversation menu.
-//
-//============================================================================
-
-void ConversationMenuEscaped ()
-{
-	CleanupConversationMenu ();
-	Net_WriteByte (DEM_CONVNULL);
 }
 
 //============================================================================

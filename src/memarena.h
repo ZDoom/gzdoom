@@ -31,6 +31,9 @@
 **
 */
 
+#ifndef __MEMARENA_H
+#define __MEMARENA_H
+
 #include "zstring.h"
 
 // A general purpose arena.
@@ -81,3 +84,6 @@ protected:
 private:
 	void *Alloc(size_t size) { return NULL; }	// No access to FMemArena::Alloc for outsiders.
 };
+
+
+#endif

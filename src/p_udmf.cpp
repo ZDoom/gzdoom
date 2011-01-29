@@ -874,6 +874,10 @@ public:
 				Flag(ld->flags, ML_BLOCKUSE, key); 
 				continue;
 
+			case NAME_blocksight:
+				Flag(ld->flags, ML_BLOCKSIGHT, key); 
+				continue;
+
 			default:
 				break;
 			}

@@ -98,19 +98,13 @@ void DReadThisMenu::Drawer()
 		prevpic = TexMan[gameinfo.infoPages[mScreen-2].GetChars()];
 	}
 
+	screen->Dim(0, 1.0, 0,0, SCREENWIDTH, SCREENHEIGHT);
 	alpha = MIN<fixed_t> (Scale (gametic - mInfoTic, OPAQUE, TICRATE/3), OPAQUE);
 	if (alpha < OPAQUE && prevpic != NULL)
 	{
-		screen->DrawTexture (prevpic, 0, 0,
-			DTA_DestWidth, screen->GetWidth(),
-			DTA_DestHeight, screen->GetHeight(),
-			TAG_DONE);
+		screen->DrawTexture (prevpic, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 	}
-	screen->DrawTexture (tex, 0, 0,
-		DTA_DestWidth, screen->GetWidth(),
-		DTA_DestHeight, screen->GetHeight(),
-		DTA_Alpha, alpha,
-		TAG_DONE);
+	screen->DrawTexture (tex, 0, 0, DTA_Fullscreen, true, DTA_Alpha, alpha,	TAG_DONE);
 
 }
 

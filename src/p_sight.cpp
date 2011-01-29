@@ -256,7 +256,7 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 	}
 
 	// try to early out the check
-	if (!ld->backsector || !(ld->flags & ML_TWOSIDED))
+	if (!ld->backsector || !(ld->flags & ML_TWOSIDED) || (ld->flags & ML_BLOCKSIGHT))
 		return false;	// stop checking
 
 	// [RH] don't see past block everything lines

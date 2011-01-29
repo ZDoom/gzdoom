@@ -1028,8 +1028,8 @@ static void PrintSecretString(const char *string, bool thislevel)
 						break;
 					}
 				}
-				if (foundone) colstr = TEXTCOLOR_YELLOW;
-				else colstr = TEXTCOLOR_RED;
+				if (foundone) colstr = TEXTCOLOR_RED;
+				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
 		FBrokenLines *brok = V_BreakLines(ConFont, screen->GetWidth()*95/100, string);

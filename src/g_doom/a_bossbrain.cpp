@@ -142,6 +142,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			}
 			// [GZ] Calculates when the projectile will have reached destination
 			spit->special2 += level.maptime;
+			spit->flags6 |= MF6_BOSSCUBE;
 		}
 
 		if (!isdefault)

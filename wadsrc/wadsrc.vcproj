@@ -37,7 +37,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &quot;$(InputDir)generated&quot;&#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -59,7 +59,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &quot;$(InputDir)generated&quot;&#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -81,7 +81,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &quot;$(InputDir)generated&quot;&#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -103,7 +103,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &quot;$(InputDir)generated&quot;&#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

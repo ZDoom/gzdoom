@@ -1964,6 +1964,7 @@ DLevelScript::~DLevelScript ()
 {
 	if (localvars != NULL)
 		delete[] localvars;
+	localvars = NULL;
 }
 
 void DLevelScript::Unlink ()
@@ -2542,6 +2543,7 @@ enum
 	APROP_ScaleX        = 29,
 	APROP_ScaleY        = 30,
 	APROP_Dormant		= 31,
+	APROP_Mass			= 32,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -2709,7 +2711,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->Score = value;
 
 	case APROP_NameTag:
-		actor->Tag = FBehavior::StaticLookupString(value);
+		actor->SetTag(FBehavior::StaticLookupString(value));
 		break;
 
 	case APROP_DamageFactor:
@@ -2728,6 +2730,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_ScaleY:
 		actor->scaleY = value;
+		break;
+
+	case APROP_Mass:
+		actor->Mass = value;
 		break;
 
 	default:
@@ -2795,6 +2801,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_WaterLevel:	return actor->waterlevel;
 	case APROP_ScaleX: 		return actor->scaleX;
 	case APROP_ScaleY: 		return actor->scaleY;
+	case APROP_Mass: 		return actor->Mass;
 
 	default:				return 0;
 	}
@@ -2832,6 +2839,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_WaterLevel:
 		case APROP_ScaleX:
 		case APROP_ScaleY:
+		case APROP_Mass:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -3052,6 +3060,7 @@ enum EACSFunctions
 	ACSF_GetPolyobjX,
 	ACSF_GetPolyobjY,
     ACSF_CheckSight,
+	ACSF_SpawnForced,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3522,6 +3531,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
             return 0;
         }
+
+		case ACSF_SpawnForced:
+			return DoSpawn(args[0], args[1], args[2], args[3], args[4], args[5], true);
 
 		default:
 			break;
@@ -6013,18 +6025,17 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
-		case PCD_CHECKWEAPON:
-			if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
-				activator->player->ReadyWeapon == NULL)
-			{
-				STACK(1) = 0;
-			}
-			else
-			{
-				STACK(1) = 0 == stricmp (FBehavior::StaticLookupString (STACK(1)),
-					activator->player->ReadyWeapon->GetClass()->TypeName.GetChars());
-			}
-			break;
+        case PCD_CHECKWEAPON:
+            if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
+                activator->player->ReadyWeapon == NULL)
+            {
+                STACK(1) = 0;
+            }
+            else
+            {
+				STACK(1) = activator->player->ReadyWeapon->GetClass()->TypeName == FName(FBehavior::StaticLookupString (STACK(1)), true);
+            }
+            break;
 
 		case PCD_SETWEAPON:
 			if (activator == NULL || activator->player == NULL)
@@ -6725,9 +6736,18 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	script = num;
 	numlocalvars = code->VarCount;
 	localvars = new SDWORD[code->VarCount];
-	localvars[0] = arg0;
-	localvars[1] = arg1;
-	localvars[2] = arg2;
+	if (code->VarCount > 0)
+	{
+		localvars[0] = arg0;
+		if (code->VarCount > 1)
+		{
+			localvars[1] = arg1;
+			if (code->VarCount > 2)
+			{
+				localvars[2] = arg2;
+			}
+		}
+	}
 	memset (localvars+code->ArgCount, 0, (code->VarCount-code->ArgCount)*sizeof(SDWORD));
 	pc = module->GetScriptAddress (code);
 	activator = who;

@@ -268,6 +268,7 @@ public:
 
 	DIntermissionScreenScroller() {}
 	virtual void Init(FIntermissionAction *desc, bool first);
+	virtual int Responder (event_t *ev);
 	virtual void Drawer ();
 };
 

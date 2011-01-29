@@ -44,6 +44,7 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "teaminfo.h"
 
 #include "gi.h"
 
@@ -308,7 +309,7 @@ bool P_CheckMissileRange (AActor *actor)
 {
 	fixed_t dist;
 		
-	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
+	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
 		
 	if (actor->flags & MF_JUSTHIT)
@@ -1150,7 +1151,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	}
 
 	// P_CheckSight is by far the most expensive operation in here so let's do it last.
-	return P_CheckSight(lookee, other, SF_SEEPASTBLOCKEVERYTHING);
+	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
 }
 
 //---------------------------------------------------------------------------
@@ -1417,9 +1418,7 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 		other = NULL;
 		if (link->flags & MF_FRIENDLY)
 		{
-			if (deathmatch &&
-				lookee->FriendPlayer != 0 && link->FriendPlayer != 0 &&
-				lookee->FriendPlayer != link->FriendPlayer)
+			if (!lookee->IsFriend(link))
 			{
 				// This is somebody else's friend, so go after it
 				other = link;
@@ -1581,7 +1580,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		}
 #endif
 		// [SP] If you don't see any enemies in deathmatch, look for players (but only when friend to a specific player.)
-		if (actor->FriendPlayer == 0) return result;
+		if (actor->FriendPlayer == 0 && (!teamplay || actor->DesignatedTeam == TEAM_NONE)) return result;
 		if (result || !deathmatch) return true;
 
 
@@ -1664,10 +1663,8 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		// We're going to ignore our master, but go after his enemies.
 		if ( actor->flags & MF_FRIENDLY )
 		{
-			if ( actor->FriendPlayer == 0 )
-				continue; // I have no friends, I will ignore players.
-			if ( actor->FriendPlayer == player->mo->FriendPlayer )
-				continue; // This is my master.
+			if ( actor->IsFriend(player->mo) )
+				continue;
 		}
 
 		if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||

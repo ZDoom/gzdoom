@@ -21,6 +21,7 @@ ACTOR Actor native //: Thinker
 	PushFactor 0.25
 	WeaveIndexXY 0
 	WeaveIndexZ 16
+	DesignatedTeam 255
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
@@ -32,6 +33,7 @@ ACTOR Actor native //: Thinker
 	native fixed_t ceilingz;
 	native fixed_t floorz;
 	native int health;
+	native int mass;
 	native angle_t pitch;
 	native int special;
 	native int tid;
@@ -207,6 +209,7 @@ ACTOR Actor native //: Thinker
 	action native A_FadeOut(float reduce = 0.1, bool remove = true);
 	action native A_FadeTo(float target, float amount = 0.1, bool remove = false);
 	action native A_SetScale(float scalex, float scaley = 0);
+	action native A_SetMass(int mass);
 	action native A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
 	action native A_CheckSight(state label);
 	action native A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);

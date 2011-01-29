@@ -507,11 +507,7 @@ bool M_Responder (event_t *ev)
 				// do we want mouse input?
 				if (ev->subtype >= EV_GUI_FirstMouseEvent && ev->subtype <= EV_GUI_LastMouseEvent)
 				{
-					// FIXME: Mouse events in SDL code are mostly useless so mouse is 
-					// disabled until that code is fixed
-					#ifdef _WIN32
 						if (!m_use_mouse)
-					#endif
 							return true;
 				}
 

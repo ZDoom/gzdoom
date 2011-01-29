@@ -299,15 +299,29 @@ void AActor::Serialize (FArchive &arc)
 		<< BlockingLine
 		<< pushfactor
 		<< Species
-		<< Score
-		<< Tag
-		<< lastpush << lastbump
+		<< Score;
+	if (SaveVersion >= 3113)
+	{
+		arc << DesignatedTeam;
+	}
+	arc << lastpush << lastbump
 		<< PainThreshold
 		<< DamageFactor
 		<< WeaveIndexXY << WeaveIndexZ
 		<< PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner
 		<< PoisonDamage << PoisonDuration << PoisonPeriod
 		<< ConversationRoot << Conversation;
+
+	{
+		FString tagstr;
+		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;
+		arc << tagstr;
+		if (arc.IsLoading())
+		{
+			if (tagstr.Len() == 0) Tag = NULL;
+			else Tag = mStringPropertyData.Alloc(tagstr);
+		}
+	}
 
 	if (arc.IsLoading ())
 	{
@@ -765,6 +779,7 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget)
 	flags3 = (flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (other->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
 	flags4 = (flags4 & ~MF4_NOHATEPLAYERS) | (other->flags4 & MF4_NOHATEPLAYERS);
 	FriendPlayer = other->FriendPlayer;
+	DesignatedTeam = other->DesignatedTeam;
 	if (changeTarget && other->target != NULL && !(other->target->flags3 & MF3_NOTARGET))
 	{
 		// LastHeard must be set as well so that A_Look can react to the new target if called
@@ -2735,6 +2750,11 @@ void AActor::Tick ()
 			//Added by MC: Freeze mode.
 			if (bglobal.freeze || level.flags2 & LEVEL2_FROZEN)
 			{
+				// Boss cubes shouldn't be accelerated by timefreeze
+				if (flags6 & MF6_BOSSCUBE)
+				{
+					special2++;
+				}
 				return;
 			}
 		}
@@ -2765,6 +2785,11 @@ void AActor::Tick ()
 
 		if (!(flags5 & MF5_NOTIMEFREEZE))
 		{
+			// Boss cubes shouldn't be accelerated by timefreeze
+			if (flags6 & MF6_BOSSCUBE)
+			{
+				special2++;
+			}
 			//Added by MC: Freeze mode.
 			if (bglobal.freeze && !(player && !player->isbot))
 			{
@@ -5286,12 +5311,18 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 bool AActor::IsTeammate (AActor *other)
 {
-	if (!player || !other || !other->player)
+	if (!other)
 		return false;
-	if (!deathmatch)
+	else if (!deathmatch && player && other->player)
 		return true;
-	if (teamplay && other->player->userinfo.team != TEAM_NONE &&
-		player->userinfo.team == other->player->userinfo.team)
+	int myTeam = DesignatedTeam;
+	int otherTeam = other->DesignatedTeam;
+	if (player)
+		myTeam = player->userinfo.team;
+	if (other->player)
+		otherTeam = other->player->userinfo.team;
+	if (teamplay && myTeam != TEAM_NONE &&
+		myTeam == otherTeam)
 	{
 		return true;
 	}
@@ -5343,6 +5374,11 @@ bool AActor::IsFriend (AActor *other)
 {
 	if (flags & other->flags & MF_FRIENDLY)
 	{
+		if (deathmatch && teamplay)
+			return IsTeammate(other) ||
+				(FriendPlayer != 0 && other->FriendPlayer != 0 &&
+					players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo));
+
 		return !deathmatch ||
 			FriendPlayer == other->FriendPlayer ||
 			FriendPlayer == 0 ||
@@ -5368,6 +5404,11 @@ bool AActor::IsHostile (AActor *other)
 	// Both monsters are friendly and belong to the same player if applicable.
 	if (flags & other->flags & MF_FRIENDLY)
 	{
+		if (deathmatch && teamplay)
+			return !IsTeammate(other) &&
+				!(FriendPlayer != 0 && other->FriendPlayer != 0 &&
+					players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo));
+
 		return deathmatch &&
 			FriendPlayer != other->FriendPlayer &&
 			FriendPlayer !=0 &&
@@ -5521,11 +5562,13 @@ bool AActor::IsSentient() const
 }
 
 
+FSharedStringArena AActor::mStringPropertyData;
+
 const char *AActor::GetTag(const char *def) const
 {
-	if (Tag != NAME_None)
+	if (Tag != NULL)
 	{
-		const char *tag = Tag.GetChars();
+		const char *tag = Tag->GetChars();
 		if (tag[0] == '$')
 		{
 			return GStrings(tag + 1);
@@ -5542,6 +5585,18 @@ const char *AActor::GetTag(const char *def) const
 	else
 	{
 		return GetClass()->TypeName.GetChars();
+	}
+}
+
+void AActor::SetTag(const char *def)
+{
+	if (def == NULL || *def == 0) 
+	{
+		Tag = NULL;
+	}
+	else 
+	{
+		Tag = mStringPropertyData.Alloc(def);
 	}
 }
 

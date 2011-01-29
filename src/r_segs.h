@@ -31,14 +31,8 @@ extern short *openings;
 extern ptrdiff_t lastopening;
 extern size_t maxopenings;
 
-inline ptrdiff_t R_NewOpening (ptrdiff_t len)
-{
-	ptrdiff_t res = lastopening;
-	lastopening += len;
-	return res;
-}
+ptrdiff_t R_NewOpening (ptrdiff_t len);
 
-void R_CheckOpenings (size_t need);
 void R_CheckDrawSegs ();
 
 void R_RenderSegLoop ();

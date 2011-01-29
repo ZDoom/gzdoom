@@ -212,6 +212,12 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
+	fixed_t Zat0 () const
+	{
+		return ic < 0? d:-d;
+	}
+
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{
@@ -348,24 +354,6 @@ enum
 
 struct FDynamicColormap;
 
-struct FLightStack
-{
-	secplane_t Plane;		// Plane above this light (points up)
-	sector_t *Master;		// Sector to get light from (NULL for owner)
-	BITFIELD bBottom:1;		// Light is from the bottom of a block?
-	BITFIELD bFlooder:1;	// Light floods lower lights until another flooder is reached?
-	BITFIELD bOverlaps:1;	// Plane overlaps the next one
-};
-
-struct FExtraLight
-{
-	short Tag;
-	WORD NumLights;
-	WORD NumUsedLights;
-	FLightStack *Lights;	// Lights arranged from top to bottom
-
-	void InsertLight (const secplane_t &plane, line_t *line, int type);
-};
 
 struct FLinkedSector
 {
@@ -616,7 +604,10 @@ struct sector_t
 
 	sector_t *GetHeightSec() const 
 	{
-		return (heightsec && !(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))? heightsec : NULL;
+		return (heightsec &&
+			!(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+			!(this->e && this->e->XFloor.ffloors.Size())
+			)? heightsec : NULL;
 	}
 
 	void ChangeLightLevel(int newval)
@@ -725,10 +716,6 @@ struct sector_t
 	// regular sky.
 	TObjPtr<ASkyViewpoint> FloorSkyBox, CeilingSkyBox;
 
-	// Planes that partition this sector into different light zones.
-	FExtraLight *ExtraLights;
-
-	vertex_t *Triangle[3];	// Three points that can define a plane
 	short						secretsector;		//jff 2/16/98 remembers if sector WAS secret (automap)
 	int							sectornum;			// for comparing sector copies
 
@@ -1072,6 +1059,8 @@ struct vissprite_t
 	lighttable_t	*colormap;
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
+	F3DFloor	*fakefloor;
+	F3DFloor	*fakeceiling;
 	fixed_t			alpha;
 	fixed_t			floorclip;
 	union

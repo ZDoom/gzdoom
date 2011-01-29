@@ -869,7 +869,7 @@ extern FTexture *bottomtexture;
 extern FTexture *midtexture;
 extern bool			rw_mustmarkfloor, rw_mustmarkceiling;
 extern void R_NewWall(bool);
-extern void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el);
+//extern void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el);
 extern int doorclosed;
 extern int viewpitch;
 #include "p_lnspec.h"
@@ -1408,7 +1408,7 @@ void RP_Subsector (subsector_t *sub)
 						   &ceilinglightlevel, false);	// killough 4/11/98
 
 	basecolormap = frontsector->ColorMap;
-	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
+	//R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
 
 	// [RH] set foggy flag
 	foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
@@ -1433,7 +1433,7 @@ void RP_Subsector (subsector_t *sub)
 					) : NULL;*/
 
 	basecolormap = frontsector->ColorMap;
-	R_GetExtraLight (&floorlightlevel, frontsector->floorplane, frontsector->ExtraLights);
+	//R_GetExtraLight (&floorlightlevel, frontsector->floorplane, frontsector->ExtraLights);
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel

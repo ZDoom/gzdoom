@@ -39,6 +39,7 @@ struct drawseg_t
 	fixed_t		yrepeat;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
+	BYTE		bFakeBoundary;		// for fake walls
 	int			shade;
 // Pointers to lists for sprite clipping,
 // all three adjusted so [x1] is first value.
@@ -46,6 +47,10 @@ struct drawseg_t
 	ptrdiff_t	sprbottomclip;		// type short
 	ptrdiff_t	maskedtexturecol;	// type short
 	ptrdiff_t	swall;				// type fixed_t
+	int fake;	// ident fake drawseg, don't draw and clip sprites
+// backups
+	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures
+	float WallUoverZorg, WallUoverZstep, WallInvZorg, WallInvZstep, WallDepthScale, WallDepthOrg;
 };
 
 

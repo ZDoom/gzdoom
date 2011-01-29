@@ -920,6 +920,7 @@ OptionMenu MapColorMenu
 	ColorPicker "1-sided walls",							"am_wallcolor"		
 	ColorPicker "2-sided walls with different floors",		"am_fdwallcolor"		
 	ColorPicker "2-sided walls with different ceilings",	"am_cdwallcolor"		
+	ColorPicker "2-sided walls with 3D floors",				"am_efwallcolor"		
 	ColorPicker "Map grid",									"am_gridcolor"		
 	ColorPicker "Center point",								"am_xhaircolor"		
 	ColorPicker "Not-yet-seen walls",						"am_notseencolor"		

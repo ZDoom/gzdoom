@@ -56,6 +56,11 @@ struct visplane_s
 	angle_t		viewangle;
 	fixed_t		alpha;
 
+	// kg3D - keep track of mirror and skybox owner
+	int CurrentSkybox;
+	int CurrentMirror; // mirror counter, counts all of them
+	int MirrorFlags; // this is not related to CurrentMirror
+
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
 	unsigned short pad;				//		allocated immediately after the
 	unsigned short top[3];			//		visplane.

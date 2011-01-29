@@ -2308,6 +2308,10 @@
 				Name="Render Sources"
 				>
 				<File
+					RelativePath=".\src\r_3dfloors.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\r_bsp.cpp"
 					>
 				</File>
@@ -2359,6 +2363,10 @@
 			<Filter
 				Name="Render Headers"
 				>
+				<File
+					RelativePath=".\src\r_3dfloors.h"
+					>
+				</File>
 				<File
 					RelativePath=".\src\r_blend.h"
 					>
@@ -3625,6 +3633,58 @@
 			</File>
 			<File
 				RelativePath=".\src\sfmt\SFMT.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="FraggleScript"
+			>
+			<File
+				RelativePath=".\src\fragglescript\t_cmd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_fs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_fspic.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_func.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_load.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_oper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_parse.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_prepro.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_script.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_script.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_spec.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\fragglescript\t_variable.cpp"
 				>
 			</File>
 		</Filter>

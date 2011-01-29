@@ -49,6 +49,7 @@
 #include "r_interpolate.h"
 #include "r_bsp.h"
 #include "r_plane.h"
+#include "r_3dfloors.h"
 #include "v_palette.h"
 #include "po_man.h"
 
@@ -1147,24 +1148,47 @@ void R_SetupFrame (AActor *actor)
 	}
 
 	extralight = camera->player ? camera->player->extralight : 0;
+	newblend = 0;
 
 	// killough 3/20/98, 4/4/98: select colormap based on player status
 	// [RH] Can also select a blend
 
-	const sector_t *s = viewsector->GetHeightSec();
-	if (s != NULL)
+	TArray<lightlist_t> &lightlist = viewsector->e->XFloor.lightlist;
+	if (lightlist.Size() > 0)
 	{
-		newblend = viewz < s->floorplane.ZatPoint (viewx, viewy)
-			? s->bottommap
-			: viewz > s->ceilingplane.ZatPoint (viewx, viewy)
-			? s->topmap
-			: s->midmap;
-		if (APART(newblend) == 0 && newblend >= numfakecmaps)
-			newblend = 0;
+		for(unsigned int i=0;i<lightlist.Size();i++)
+		{
+			fixed_t lightbottom;
+			if (i<lightlist.Size()-1) 
+				lightbottom = lightlist[i+1].plane.ZatPoint(viewx, viewy);
+			else 
+				lightbottom = viewsector->floorplane.ZatPoint(viewx, viewy);
+
+			if (lightbottom < viewz)
+			{
+				// 3d floor 'fog' is rendered as a blending value
+				PalEntry blendv = lightlist[i].blend;
+
+				// If no alpha is set, use 50%
+				if (blendv.a==0 && blendv!=0) blendv.a=128;
+				newblend = blendv.d;
+				break;
+			}
+		}
 	}
 	else
 	{
-		newblend = 0;
+		const sector_t *s = viewsector->GetHeightSec();
+		if (s != NULL)
+		{
+			newblend = viewz < s->floorplane.ZatPoint (viewx, viewy)
+				? s->bottommap
+				: viewz > s->ceilingplane.ZatPoint (viewx, viewy)
+				? s->topmap
+				: s->midmap;
+			if (APART(newblend) == 0 && newblend >= numfakecmaps)
+				newblend = 0;
+		}
 	}
 
 	// [RH] Don't override testblend unless entering a sector with a
@@ -1361,6 +1385,8 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
 
+	CurrentMirror++;
+
 	unsigned int mirrorsAtStart = WallMirrors.Size ();
 
 	vertex_t *v1 = ds->curline->v1;
@@ -1416,6 +1442,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	MirrorFlags = (depth + 1) & 1;
 
 	R_RenderBSPNode (nodes + numnodes - 1);
+	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
 	R_DrawPlanes ();
 	R_DrawSkyBoxes ();
@@ -1486,6 +1513,9 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	MaskedCycles.Reset();
 	WallScanCycles.Reset();
 
+	fakeActive = 0; // kg3D - reset fake floor idicator
+	R_3D_ResetClip(); // reset clips (floor/ceiling)
+
 	R_SetupBuffer ();
 	R_SetupFrame (actor);
 
@@ -1540,6 +1570,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	if (r_polymost < 2)
 	{
 		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
+		R_3D_ResetClip(); // reset clips (floor/ceiling)
 	}
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();

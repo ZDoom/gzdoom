@@ -753,7 +753,7 @@ bool DLoadSaveMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	case MKEY_MBYes:
 	{
-		if (Selected != -1)
+		if (Selected != -1 && Selected < SaveGames.Size())
 		{
 			int listindex = SaveGames[0]->bNoDelete? Selected-1 : Selected;
 			remove (SaveGames[Selected]->Filename.GetChars());
@@ -819,7 +819,7 @@ bool DLoadSaveMenu::Responder (event_t *ev)
 	{
 		if (ev->subtype == EV_GUI_KeyDown)
 		{
-			if (Selected != -1)
+			if (Selected != -1 && Selected < SaveGames.Size())
 			{
 				switch (ev->data1)
 				{

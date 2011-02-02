@@ -279,7 +279,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			goto clearfog;
 		}
 	}
-	if(ds->bFakeBoundary && !(ds->bFakeBoundary & 4) || drawmode == DontDraw) goto clearfog;
+	if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || drawmode == DontDraw)
+	{
+		goto clearfog;
+	}
 
 	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
 	MaskedScaleY = ds->yrepeat;
@@ -478,6 +481,7 @@ clearfog:
 	}
 	if (fake3D & FAKE3D_REFRESHCLIP)
 	{
+		assert(ds->bkup >= 0);
 		memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2-ds->x1+1) * 2);
 	}
 	else
@@ -814,7 +818,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				rover->bottom.plane->Zat0() >= sclipTop ||
 				rover->top.plane->Zat0() <= floorheight)
 			{
-				if (i == backsector->e->XFloor.ffloors.Size() - 1)
+				if ((unsigned)i == backsector->e->XFloor.ffloors.Size() - 1)
 				{
 					passed = 1;
 				}
@@ -855,7 +859,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					break;
 				}
 				// nothing
-				if (!fover || j == frontsector->e->XFloor.ffloors.Size())
+				if (!fover || (unsigned)j == frontsector->e->XFloor.ffloors.Size())
 				{
 					break;
 				}
@@ -912,7 +916,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					fover = NULL; // visible
 					break;
 				}
-				if (fover && j != frontsector->e->XFloor.ffloors.Size())
+				if (fover && (unsigned)j != frontsector->e->XFloor.ffloors.Size())
 				{ // not visible
 					break;
 				}

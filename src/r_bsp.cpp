@@ -1181,7 +1181,6 @@ void R_Subsector (subsector_t *sub)
 	else
 	{
 		basecolormap = frontsector->ColorMap;
-		ceilinglightlevel = frontsector->lightlevel;
 	}
 
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
@@ -1212,7 +1211,6 @@ void R_Subsector (subsector_t *sub)
 	else
 	{
 		basecolormap = frontsector->ColorMap;
-		floorlightlevel = frontsector->lightlevel;
 	}
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check

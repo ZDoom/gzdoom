@@ -1798,6 +1798,9 @@ void P_AdjustLine (line_t *ld)
 		ld->bbox[BOXBOTTOM] = v2->y;
 		ld->bbox[BOXTOP] = v1->y;
 	}
+	if (level.flags2 & LEVEL2_CLIPMIDTEX)		ld->flags |= ML_CLIP_MIDTEX;
+	if (level.flags2 & LEVEL2_WRAPMIDTEX)		ld->flags |= ML_WRAP_MIDTEX;
+	if (level.flags2 & LEVEL2_CHECKSWITCHRANGE)	ld->flags |= ML_CHECKSWITCHRANGE;
 }
 
 void P_SetLineID (line_t *ld)
@@ -2049,9 +2052,6 @@ void P_LoadLineDefs (MapData * map)
 
 		P_AdjustLine (ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
-		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
-		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
 	delete[] mldf;
 }
@@ -2133,9 +2133,6 @@ void P_LoadLineDefs2 (MapData * map)
 		P_AdjustLine (ld);
 		P_SetLineID(ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
-		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
-		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 
 		// convert the activation type
 		ld->activation = 1 << GET_SPAC(ld->flags);
@@ -3606,6 +3603,19 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	bool reloop = false;
 
+	// Extra floors require GL nodes.
+	if (!RequireGLNodes)
+	{
+		for (i = 0; i < numlines; ++i)
+		{
+			if (lines[i].special == Sector_Set3DFloor)
+			{
+				RequireGLNodes = true;
+				break;
+			}
+		}
+	}
+
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
@@ -3713,7 +3723,7 @@ void P_SetupLevel (char *lumpname, int position)
 	bool BuildGLNodes;
 	if (ForceNodeBuild)
 	{
-		BuildGLNodes = am_textured || multiplayer || demoplayback || demorecording || genglnodes;
+		BuildGLNodes = RequireGLNodes || multiplayer || demoplayback || demorecording || genglnodes;
 
 		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;

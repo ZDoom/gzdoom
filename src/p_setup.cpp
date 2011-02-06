@@ -1798,9 +1798,6 @@ void P_AdjustLine (line_t *ld)
 		ld->bbox[BOXBOTTOM] = v2->y;
 		ld->bbox[BOXTOP] = v1->y;
 	}
-	if (level.flags2 & LEVEL2_CLIPMIDTEX)		ld->flags |= ML_CLIP_MIDTEX;
-	if (level.flags2 & LEVEL2_WRAPMIDTEX)		ld->flags |= ML_WRAP_MIDTEX;
-	if (level.flags2 & LEVEL2_CHECKSWITCHRANGE)	ld->flags |= ML_CHECKSWITCHRANGE;
 }
 
 void P_SetLineID (line_t *ld)
@@ -2052,6 +2049,9 @@ void P_LoadLineDefs (MapData * map)
 
 		P_AdjustLine (ld);
 		P_SaveLineSpecial (ld);
+		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
 	delete[] mldf;
 }
@@ -2133,6 +2133,9 @@ void P_LoadLineDefs2 (MapData * map)
 		P_AdjustLine (ld);
 		P_SetLineID(ld);
 		P_SaveLineSpecial (ld);
+		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 
 		// convert the activation type
 		ld->activation = 1 << GET_SPAC(ld->flags);

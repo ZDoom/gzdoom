@@ -516,6 +516,8 @@ static visplane_t *new_visplane (unsigned hash)
 
 	check->next = visplanes[hash];
 	visplanes[hash] = check;
+
+	clearbufshort (check->top, viewwidth, 0x7fff);
 	return check;
 }
 
@@ -668,8 +670,6 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->MirrorFlags = MirrorFlags;
 	check->CurrentSkybox = CurrentSkybox;
 
-	clearbufshort (check->top, viewwidth, 0x7fff);
-
 	return check;
 }
 
@@ -758,7 +758,6 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		pl = new_pl;
 		pl->minx = start;
 		pl->maxx = stop;
-		clearbufshort (pl->top, viewwidth, 0x7fff);
 	}
 	return pl;
 }

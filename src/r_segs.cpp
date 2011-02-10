@@ -2499,9 +2499,11 @@ int OWallMost (short *mostbuf, fixed_t z)
 #endif
 	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
 	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
-	ix2--;
-	if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
-	else if (mostbuf[ix2] > viewheight) mostbuf[ix2] = (short)viewheight;
+	if (--ix2 > ix1)
+	{
+		if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
+		else if (mostbuf[ix2] > viewheight) mostbuf[ix2] = (short)viewheight;
+	}
 
 	return bad;
 }
@@ -2657,9 +2659,11 @@ int WallMost (short *mostbuf, const secplane_t &plane)
 
 	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
 	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
-	ix2--;
-	if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
-	else if (mostbuf[ix2] > viewheight) mostbuf[ix2] = (short)viewheight;
+	if (--ix2 > ix1)
+	{
+		if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
+		else if (mostbuf[ix2] > viewheight) mostbuf[ix2] = (short)viewheight;
+	}
 
 	return bad;
 }

@@ -976,7 +976,6 @@ void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max
 {
 	visplane_t pl;
 
-return;
 	pl.next = NULL;
 	pl.height = *xpl->PlaneRef->plane;
 	pl.picnum = *xpl->PlaneRef->texture;

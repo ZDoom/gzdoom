@@ -194,38 +194,43 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 			if (ffloor->model == NULL) continue;
 			if ((ffloor->flags & (FF_EXISTS | FF_RENDERPLANES)) != (FF_EXISTS | FF_RENDERPLANES)) continue;
 			if (ffloor->alpha <= 0 && (ffloor->flags & (FF_TRANSLUCENT | FF_ADDITIVETRANS))) continue;
-
 			// Check top of floor
-			z = ffloor->top.plane->ZatPoint(viewx, viewy);
-			if (viewz > z)
-			{ // Above the top
-				if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
-				{
-					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::floor);
+			if ((ffloor->top.plane->a | ffloor->top.plane->b) == 0)
+			{
+				z = ffloor->top.plane->ZatPoint(viewx, viewy);
+				if (viewz > z)
+				{ // Above the top
+					if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
+					{
+						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::floor);
+					}
 				}
-			}
-			else if (viewz < z)
-			{ // Below the top
-				if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
-				{
-					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::ceiling);
+				else if (viewz < z)
+				{ // Below the top
+					if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
+					{
+						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::ceiling);
+					}
 				}
 			}
 
 			// Check bottom of floor
-			z = ffloor->bottom.plane->ZatPoint(viewx, viewy);
-			if (viewz > z)
-			{ // Above the bottom
-				if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
-				{
-					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::floor);
+			if ((ffloor->bottom.plane->a | ffloor->top.plane->b) == 0)
+			{
+				z = ffloor->bottom.plane->ZatPoint(viewx, viewy);
+				if (viewz > z)
+				{ // Above the bottom
+					if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
+					{
+						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::floor);
+					}
 				}
-			}
-			else if (viewz < z)
-			{ // Below the bottom
-				if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
-				{
-					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::ceiling);
+				else if (viewz < z)
+				{ // Below the bottom
+					if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
+					{
+						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::ceiling);
+					}
 				}
 			}
 		}
@@ -256,6 +261,14 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 
 	xplane->Next = vsub->Planes;
 	vsub->Planes = xplane;
+
+	// If this is the first subsector drawn, that means we're inside of it, so
+	// we need to initialize the near edge, since we can't rely on back-facing
+	// walls to do it for us.
+	if (VisSubsectors.Size() == 1)
+	{
+		clearbufshort(xplane->NearClip, viewwidth, orientation == sector_t::ceiling ? 0 : viewheight);
+	}
 }
 
 //=============================================================================

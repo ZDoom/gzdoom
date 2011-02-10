@@ -684,15 +684,6 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 	if (WallSX1 > WindowRight || WallSX2 < WindowLeft)
 		return;
 
-	if (line->linedef == NULL)
-	{
-		if (R_CheckClipWallSegment (WallSX1, WallSX2))
-		{
-			InSubsector->flags |= SSECF_DRAWN;
-		}
-		return;
-	}
-
 	if (mark_near)
 	{
 		R_3D_MarkPlanes(vsub, MARK_NEAR);
@@ -701,6 +692,15 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 	else if (vsub != NULL)
 	{
 		R_3D_MarkPlanes(vsub, MARK_FAR);
+	}
+
+	if (line->linedef == NULL)
+	{
+		if (R_CheckClipWallSegment (WallSX1, WallSX2))
+		{
+			InSubsector->flags |= SSECF_DRAWN;
+		}
+		return;
 	}
 
 	vertex_t *v1, *v2;

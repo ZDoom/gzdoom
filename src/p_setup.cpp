@@ -3610,16 +3610,13 @@ void P_SetupLevel (char *lumpname, int position)
 	bool reloop = false;
 
 	// Extra floors require GL nodes.
-	if (!RequireGLNodes)
+	for (i = 0; i < numlines; ++i)
 	{
-		for (i = 0; i < numlines; ++i)
+		if (lines[i].special == Sector_Set3DFloor)
 		{
-			if (lines[i].special == Sector_Set3DFloor)
-			{
-				RequireGLNodes = true;
-				Has3DFloors = true;
-				break;
-			}
+			RequireGLNodes = true;
+			Has3DFloors = true;
+			break;
 		}
 	}
 

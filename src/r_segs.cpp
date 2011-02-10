@@ -84,7 +84,6 @@ fixed_t rw_offset_mid;
 fixed_t rw_offset_bottom;
 
 int OWallMost (short *mostbuf, fixed_t z);
-int WallMost (short *mostbuf, const secplane_t &plane);
 void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat);
 void PrepLWall (fixed_t *lwall, fixed_t walxrepeat);
 extern fixed_t WallSZ1, WallSZ2, WallTX1, WallTX2, WallTY1, WallTY2, WallCX1, WallCX2, WallCY1, WallCY2;

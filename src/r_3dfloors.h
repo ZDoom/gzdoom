@@ -46,6 +46,12 @@ enum
 	FAKE3D_16				= 16,	// what is this?
 };
 
+enum EMarkPlaneEdge
+{
+	MARK_NEAR,
+	MARK_FAR
+};
+
 extern int fake3D;
 extern F3DFloor *fakeFloor;
 extern fixed_t fakeHeight;
@@ -65,5 +71,8 @@ void R_3D_NewClip();
 void R_3D_ResetClip();
 void R_3D_EnterSkybox();
 void R_3D_LeaveSkybox();
+
+vissubsector_t *R_3D_EnterSubsector(subsector_t *sub);
+void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge);
 
 #endif

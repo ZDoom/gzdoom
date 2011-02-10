@@ -53,7 +53,6 @@ struct drawseg_t
 	float WallUoverZorg, WallUoverZstep, WallInvZorg, WallInvZstep, WallDepthScale, WallDepthOrg;
 };
 
-
 extern seg_t*		curline;
 extern side_t*		sidedef;
 extern line_t*		linedef;
@@ -73,6 +72,10 @@ extern seg_t*		ActiveWallMirror;
 
 extern TArray<size_t>	WallMirrors;
 
+extern int WallSX1, WallSX2;
+
+extern bool Has3DFloors;
+
 typedef void (*drawfunc_t) (int start, int stop);
 
 EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
@@ -85,6 +88,8 @@ void R_RenderBSPNode (void *node);
 
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
+
+int WallMost (short *mostbuf, const secplane_t &plane);
 
 
 #endif

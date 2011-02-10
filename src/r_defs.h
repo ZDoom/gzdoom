@@ -1210,4 +1210,33 @@ struct FCoverageBuffer
 	unsigned int NumLists;
 };
 
+
+// One extra floor plane, contained within a subsector.
+struct visxplane_t
+{
+	visxplane_t *Next;
+	unsigned short *NearClip;		// Clipping for the near edge of the plane.
+	unsigned short *FarClip;		// Clipping for the far edge of the plane.
+	F3DFloor::planeref *PlaneRef;	// Source plane
+	F3DFloor *FakeFloor;			// Source 3D floor
+	FDynamicColormap *Colormap;		// Colormap for plane
+	short LightLevel;				// Light level
+	short Orientation;				// Is this a floor or a ceiling?
+};
+
+// Holds masked texture information for visible subsectors.
+struct vissubsector_t
+{
+	visxplane_t *Planes;
+	short MinX;						// Left edge, inclusive
+	short MaxX;						// Right edge, exclusive
+	short *uclip;					// Snapshot of ceilingclip at subsector entry
+	short *dclip;					// Snapshot of floorclip at subsector entry
+};
+
+extern TArray<vissubsector_t> VisSubsectors;
+
+visxplane_t *R_NewVisXPlane();
+void R_ClearVisSubsectors();
+
 #endif

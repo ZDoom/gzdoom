@@ -60,6 +60,7 @@
 #include "p_setup.h"
 #include "r_translate.h"
 #include "r_interpolate.h"
+#include "r_bsp.h"
 #include "r_sky.h"
 #include "cmdlib.h"
 #include "g_level.h"
@@ -136,6 +137,7 @@ subsector_t * 	gamesubsectors;
 int 			numgamesubsectors;
 
 bool			hasglnodes;
+bool			has3dfloors;
 
 TArray<FMapThing> MapThingsConverted;
 
@@ -3470,6 +3472,7 @@ void P_SetupLevel (char *lumpname, int position)
 	// find map num
 	level.lumpnum = map->lumpnum;
 	hasglnodes = false;
+	Has3DFloors = false;
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
@@ -3614,6 +3617,7 @@ void P_SetupLevel (char *lumpname, int position)
 			if (lines[i].special == Sector_Set3DFloor)
 			{
 				RequireGLNodes = true;
+				Has3DFloors = true;
 				break;
 			}
 		}

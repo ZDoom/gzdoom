@@ -198,9 +198,11 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 
 	sec->e->XFloor.ffloors.Push(ffloor);
 
+#if 0
 	// kg3D - software renderer only hack
 	// this is really required because of ceilingclip and floorclip
 	if(flags & FF_BOTHPLANES) P_Add3DFloor(sec, sec2, master, FF_EXISTS | FF_THISINSIDE | FF_RENDERPLANES | FF_NOSHADE | FF_SEETHROUGH | FF_SHOOTTHROUGH | (flags & FF_INVERTSECTOR), transluc);
+#endif
 }
 
 //==========================================================================
@@ -667,6 +669,8 @@ lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool unders
 {
 	unsigned   i;
 	TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
+
+	assert(lightlist.Size() > 0);
 
 	fixed_t planeheight=plane->ZatPoint(CenterSpot(sector));
 	if(underside) planeheight--;

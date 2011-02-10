@@ -3087,6 +3087,36 @@ void R_DrawSprite (vissprite_t *spr)
 	spr->colormap = colormap;
 }
 
+static void R_RecurseXPlane(vissubsector_t *vsub, visxplane_t *xplane)
+{
+	if (xplane == NULL)
+	{
+		return;
+	}
+	// Upon entry, draw the ceiling.
+	if (xplane->Orientation == sector_t::ceiling)
+	{
+		R_DrawXPlane(xplane, vsub->uclip, vsub->dclip, vsub->MinX, vsub->MaxX);
+	}
+	R_RecurseXPlane(vsub, xplane->Next);
+	// Upon exit, draw the floor.
+	if (xplane->Orientation == sector_t::floor)
+	{
+		R_DrawXPlane(xplane, vsub->uclip, vsub->dclip, vsub->MinX, vsub->MaxX);
+	}
+}
+
+void R_DrawVisSubsectors()
+{
+	// Render subsector masks, far to near.
+	for (unsigned i = VisSubsectors.Size(); i-- > 0; )
+	{
+		vissubsector_t *vsub = &VisSubsectors[i];
+		// Draw ceilings from top to bottom, then floors from bottom to top.
+		R_RecurseXPlane(vsub, VisSubsectors[i].Planes);
+	}
+}
+
 // kg3D:
 // R_DrawMasked contains sorting
 // original renamed to R_DrawMaskedSingle
@@ -3132,6 +3162,12 @@ void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
 
 void R_DrawMasked (void)
 {
+	if (Has3DFloors)
+	{
+		R_DrawVisSubsectors();
+		return;
+	}
+
 	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
 
 	if (height_top == NULL)

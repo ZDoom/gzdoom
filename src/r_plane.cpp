@@ -507,6 +507,7 @@ static visplane_t *new_visplane (unsigned hash)
 	{
 		check = (visplane_t *)M_Malloc (sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
 		memset(check, 0, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
+		check->top = (unsigned short *)((BYTE *)check + sizeof(*check));
 		check->bottom = &check->top[MAXWIDTH+2];
 	}
 	else if (NULL == (freetail = freetail->next))
@@ -961,6 +962,59 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		dc_texturemid = iscale * (centery-yl-1);
 	}
 	centeryfrac = centerysave;
+}
+
+//==========================================================================
+//
+// R_DrawXPlane
+//
+// Synthesizes a visplane for a visxplane and draws it.
+//
+//==========================================================================
+
+void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max)
+{
+	visplane_t pl;
+
+return;
+	pl.next = NULL;
+	pl.height = *xpl->PlaneRef->plane;
+	pl.picnum = *xpl->PlaneRef->texture;
+	pl.lightlevel = xpl->LightLevel;
+	pl.xoffs = 0;
+	pl.yoffs = 0;
+	pl.minx = min;
+	pl.maxx = max - 1;
+	pl.colormap = xpl->Colormap;
+	pl.xscale = FRACUNIT;
+	pl.yscale = FRACUNIT;
+	pl.angle = 0;
+	pl.sky = 0;
+	pl.skybox = NULL;
+
+	if (xpl->Orientation == sector_t::ceiling)
+	{ // For a ceiling, the near edge is the top, and the far edge is the bottom.
+		pl.bottom = xpl->FarClip;
+		pl.top = xpl->NearClip;
+	}
+	else
+	{ // For a floor, the near edge is the bottom, and the far edge is the top.
+		pl.bottom = xpl->NearClip;
+		pl.top = xpl->FarClip;
+	}
+	for (int i = min; i < max; ++i)
+	{
+		if (pl.bottom[i] > dclip[i])
+		{
+			pl.bottom[i] = dclip[i];
+		}
+		if (pl.top[i] < uclip[i])
+		{
+			pl.top[i] = uclip[i];
+		}
+	}
+
+	R_DrawSinglePlane(&pl, FRACUNIT, false);
 }
 
 //==========================================================================

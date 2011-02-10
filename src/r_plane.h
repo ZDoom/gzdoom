@@ -62,8 +62,7 @@ struct visplane_s
 	int MirrorFlags; // this is not related to CurrentMirror
 
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
-	unsigned short pad;				//		allocated immediately after the
-	unsigned short top[3];			//		visplane.
+	unsigned short *top;			//		allocated immediately after the visplane.
 };
 typedef struct visplane_s visplane_t;
 
@@ -93,6 +92,7 @@ void R_DrawSkyPlane (visplane_t *pl);
 void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked);
 void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
+void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max);
 
 visplane_t *R_FindPlane
 ( const secplane_t &height,

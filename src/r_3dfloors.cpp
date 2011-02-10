@@ -15,6 +15,8 @@
 
 #include "r_3dfloors.h"
 
+static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation);
+
 // external variables
 int fake3D;
 F3DFloor *fakeFloor;
@@ -33,6 +35,8 @@ int height_max = -1;
 TArray<HeightStack> toplist;
 ClipStack *clip_top = NULL;
 ClipStack *clip_cur = NULL;
+
+static FMemArena VisXPlaneArena;
 
 void R_3D_DeleteHeights()
 {
@@ -159,3 +163,160 @@ void R_3D_LeaveSkybox()
 	CurrentSkybox--;
 }
 
+//=============================================================================
+//
+// R_3D_EnterSubsector
+//
+// Creates a new vissubsector_t and decides which extra floor planes should
+// be drawn.
+//
+//=============================================================================
+
+vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
+{
+	vissubsector_t *vsub = &VisSubsectors[VisSubsectors.Reserve(1)];
+	fixed_t z;
+
+	vsub->Planes = NULL;
+	vsub->MinX = SHRT_MAX;
+	vsub->MaxX = SHRT_MIN;
+	vsub->uclip = (short *)VisXPlaneArena.Alloc(sizeof(short) * viewwidth * 2);
+	vsub->dclip = vsub->uclip + viewwidth;
+	memcpy(vsub->uclip, ceilingclip, sizeof(*ceilingclip)*viewwidth);
+	memcpy(vsub->dclip, floorclip, sizeof(*floorclip)*viewwidth);
+
+	if (sub->sector->e != NULL)
+	{
+		for (unsigned i = sub->sector->e->XFloor.ffloors.Size(); i-- > 0; )
+		{
+			F3DFloor *ffloor = sub->sector->e->XFloor.ffloors[i];
+
+			if (ffloor->model == NULL) continue;
+			if ((ffloor->flags & (FF_EXISTS | FF_RENDERPLANES)) != (FF_EXISTS | FF_RENDERPLANES)) continue;
+			if (ffloor->alpha <= 0 && (ffloor->flags & (FF_TRANSLUCENT | FF_ADDITIVETRANS))) continue;
+
+			// Check top of floor
+			z = ffloor->top.plane->ZatPoint(viewx, viewy);
+			if (viewz > z)
+			{ // Above the top
+				if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
+				{
+					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::floor);
+				}
+			}
+			else if (viewz < z)
+			{ // Below the top
+				if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
+				{
+					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::ceiling);
+				}
+			}
+
+			// Check bottom of floor
+			z = ffloor->bottom.plane->ZatPoint(viewx, viewy);
+			if (viewz > z)
+			{ // Above the bottom
+				if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
+				{
+					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::floor);
+				}
+			}
+			else if (viewz < z)
+			{ // Below the bottom
+				if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
+				{
+					AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::ceiling);
+				}
+			}
+		}
+	}
+	return vsub;
+}
+
+//=============================================================================
+//
+// AddVisXPlane
+//
+// Attaches a new visible extra floor plane to a vissubsector.
+//
+//=============================================================================
+
+static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation)
+{
+	visxplane_t *xplane = R_NewVisXPlane();
+	lightlist_t *light;
+
+	xplane->PlaneRef = planeref;
+	xplane->Orientation = orientation;
+	xplane->FakeFloor = ffloor;
+
+	light = P_GetPlaneLight(sec, planeref->plane, orientation == sector_t::ceiling);
+	xplane->Colormap = light->extra_colormap;
+	xplane->LightLevel = r_actualextralight + ((fixedlightlev >= 0) ? fixedlightlev : *light->p_lightlevel);
+
+	xplane->Next = vsub->Planes;
+	vsub->Planes = xplane;
+}
+
+//=============================================================================
+//
+// R_NewVisXPlane
+//
+// Creates a new visxplane_t with enough clipping room for the current
+// viewwidth.
+//
+//=============================================================================
+
+visxplane_t *R_NewVisXPlane()
+{
+	visxplane_t *xplane = (visxplane_t *)VisXPlaneArena.Alloc(sizeof(visxplane_t) +
+		sizeof(short)*viewwidth * 2);
+
+	xplane->Next = NULL;
+	xplane->NearClip = (unsigned short *)((BYTE *)xplane + sizeof(visxplane_t));
+	xplane->FarClip = xplane->NearClip + viewwidth;
+	xplane->PlaneRef = NULL;
+	xplane->LightLevel = 0;
+	xplane->Orientation = -1;
+
+	return xplane;
+}
+
+//=============================================================================
+//
+// R_ClearVisSubsectors
+//
+// Frees all vissubsectors and related data visxplanes.
+//
+//=============================================================================
+
+void R_ClearVisSubsectors()
+{
+	VisSubsectors.Clear();
+	VisXPlaneArena.FreeAll();
+}
+
+//=============================================================================
+//
+// R_3D_MarkPlanes
+//
+// Marks either the near or far edges of any extra planes in the subsector.
+// Uses global variables set up by R_AddLine().
+//
+//=============================================================================
+
+void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge)
+{
+	if (vsub->MinX > WallSX1)
+	{
+		vsub->MinX = WallSX1;
+	}
+	if (vsub->MaxX < WallSX2)
+	{
+		vsub->MaxX = WallSX2;
+	}
+	for (visxplane_t *xplane = vsub->Planes; xplane != NULL; xplane = xplane->Next)
+	{
+		WallMost((short *)(edge == MARK_NEAR ? xplane->NearClip : xplane->FarClip), *xplane->PlaneRef->plane);
+	}
+}

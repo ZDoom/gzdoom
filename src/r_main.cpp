@@ -1524,6 +1524,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	R_ClearDrawSegs ();
 	R_ClearPlanes (true);
 	R_ClearSprites ();
+	R_ClearVisSubsectors ();
 
 	NetUpdate ();
 

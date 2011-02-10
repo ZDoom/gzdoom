@@ -104,6 +104,9 @@ float			WallDepthOrg, WallDepthScale;
 float			WallUoverZorg, WallUoverZstep;
 float			WallInvZorg, WallInvZstep;
 
+bool			Has3DFloors;
+TArray<vissubsector_t> VisSubsectors;
+
 static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
@@ -586,11 +589,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 // and adds any visible pieces to the line list.
 //
 
-void R_AddLine (seg_t *line)
+void R_AddLine (seg_t *line, vissubsector_t *vsub)
 {
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	bool			solid;
 	fixed_t			tx1, tx2, ty1, ty2;
+	bool			mark_near = false;
 
 	curline = line;
 
@@ -604,7 +608,24 @@ void R_AddLine (seg_t *line)
 
 	// Reject lines not facing viewer
 	if (DMulScale32 (ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
-		return;
+	{
+		// If this subsector has extra floor planes, then we need still need to
+		// handle back-facing lines by marking the near edges of those planes.
+		if (vsub == NULL)
+		{
+			return;
+		}
+		// We reverse the orientation of the line and then continue with
+		// the transformations.
+		swapvalues(tx1, tx2);
+		swapvalues(ty1, ty2);
+		mark_near = true;
+		// Make sure it really is facing us now.
+		if (DMulScale32 (ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
+		{
+			return;
+		}
+	}
 
 	WallTX1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
 	WallTX2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
@@ -670,6 +691,16 @@ void R_AddLine (seg_t *line)
 			InSubsector->flags |= SSECF_DRAWN;
 		}
 		return;
+	}
+
+	if (mark_near)
+	{
+		R_3D_MarkPlanes(vsub, MARK_NEAR);
+		return;
+	}
+	else if (vsub != NULL)
+	{
+		R_3D_MarkPlanes(vsub, MARK_FAR);
 	}
 
 	vertex_t *v1, *v2;
@@ -1100,7 +1131,7 @@ void R_FakeDrawLoop(subsector_t *sub)
 	{
 		if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
-			R_AddLine (line);
+			R_AddLine (line, NULL);
 		}
 		line++;
 	}
@@ -1120,6 +1151,7 @@ void R_Subsector (subsector_t *sub)
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
 	bool		 outersubsector;
+	vissubsector_t *vsub = NULL;
 	int	fll, cll;
 
 	// kg3D - fake floor stuff
@@ -1235,7 +1267,12 @@ void R_Subsector (subsector_t *sub)
 					frontsector->FloorSkyBox
 					) : NULL;
 
+	if (Has3DFloors)
+	{
+		vsub = R_3D_EnterSubsector(sub);
+	}
 	// kg3D - fake planes rendering
+#if 0
 	if (frontsector->e && frontsector->e->XFloor.ffloors.Size())
 	{
 		backupfp = floorplane;
@@ -1366,6 +1403,7 @@ void R_Subsector (subsector_t *sub)
 		floorplane = backupfp;
 		ceilingplane = backupcp;
 	}
+#endif
 
 	basecolormap = frontsector->ColorMap;
 	floorlightlevel = fll;
@@ -1396,6 +1434,7 @@ void R_Subsector (subsector_t *sub)
 	{
 		if (!outersubsector || line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
+#if 0
 			// kg3D - fake planes bounding calculation
 			if (line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
 			{
@@ -1434,7 +1473,8 @@ void R_Subsector (subsector_t *sub)
 				floorplane = backupfp;
 				ceilingplane = backupcp;
 			}
-			R_AddLine (line); // now real
+#endif
+			R_AddLine (line, vsub); // now real
 		}
 		line++;
 	}

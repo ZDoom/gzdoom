@@ -29,8 +29,8 @@
 %define mvlineasm1		_mvlineasm1
 %define mvlineasm4		_mvlineasm4
 
-%define R_SetupDrawSlab	_R_SetupDrawSlab
-%define R_DrawSlab		_R_DrawSlab
+%define R_SetupDrawSlab_ASM	_R_SetupDrawSlab_ASM
+%define R_DrawSlab_ASM		_R_DrawSlab_ASM
 %endif
 
 EXTERN ylookup ; near
@@ -79,11 +79,11 @@ lastslabcolormap:
 	
 	SECTION .text
 
-GLOBAL R_SetupDrawSlab
-GLOBAL @R_SetupDrawSlab@4
-R_SetupDrawSlab:
+GLOBAL R_SetupDrawSlab_ASM
+GLOBAL @R_SetupDrawSlab_ASM@4
+R_SetupDrawSlab_ASM:
 	mov ecx, [esp+4]
-@R_SetupDrawSlab@4:
+@R_SetupDrawSlab_ASM@4:
 	cmp [lastslabcolormap], ecx
 	je .done
 	mov [lastslabcolormap], ecx
@@ -591,8 +591,8 @@ align 16
 ;***************************** Voxel Slabs *******************************
 ;*************************************************************************
 
-GLOBAL R_DrawSlab
-R_DrawSlab:
+GLOBAL R_DrawSlab_ASM
+R_DrawSlab_ASM:
 	push ebx
 	push ebp
 	push esi

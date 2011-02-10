@@ -194,6 +194,9 @@ extern "C" void	R_DrawFuzzColumnP_ASM (void);
 extern "C" void	R_DrawSpanP_ASM (void);
 extern "C" void R_DrawSpanMaskedP_ASM (void);
 
+#define R_SetupDrawSlab R_SetupDrawSlab_ASM
+#define R_DrawSlab R_DrawSlab_ASM
+
 #else
 
 void	R_DrawColumnHorizP_C (void);

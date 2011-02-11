@@ -89,7 +89,7 @@ void R_RenderBSPNode (void *node);
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
 
-int WallMost (short *mostbuf, const secplane_t &plane);
+int WallMost (short *mostbuf, const secplane_t &plane, vertex_t *v1, vertex_t *v2);
 
 
 #endif

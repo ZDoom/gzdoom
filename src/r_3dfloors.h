@@ -73,6 +73,6 @@ void R_3D_EnterSkybox();
 void R_3D_LeaveSkybox();
 
 vissubsector_t *R_3D_EnterSubsector(subsector_t *sub);
-void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge);
+void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, vertex_t *v2);
 
 #endif

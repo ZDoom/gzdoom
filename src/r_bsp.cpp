@@ -55,8 +55,6 @@
 #include "r_sky.h"
 #include "po_man.h"
 
-int WallMost (short *mostbuf, const secplane_t &plane);
-
 seg_t*			curline;
 side_t* 		sidedef;
 line_t* 		linedef;
@@ -686,12 +684,12 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 
 	if (mark_near)
 	{
-		R_3D_MarkPlanes(vsub, MARK_NEAR);
+		R_3D_MarkPlanes(vsub, MARK_NEAR, line->v2, line->v1);
 		return;
 	}
 	else if (vsub != NULL)
 	{
-		R_3D_MarkPlanes(vsub, MARK_FAR);
+		R_3D_MarkPlanes(vsub, MARK_FAR, line->v1, line->v2);
 	}
 
 	if (line->linedef == NULL)
@@ -791,12 +789,12 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 		{
 			rw_havehigh = true;
-			WallMost (wallupper, backsector->ceilingplane);
+			WallMost (wallupper, backsector->ceilingplane, line->v1, line->v2);
 		}
 		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 		{
 			rw_havelow = true;
-			WallMost (walllower, backsector->floorplane);
+			WallMost (walllower, backsector->floorplane, line->v1, line->v2);
 		}
 
 		// Closed door.
@@ -898,8 +896,8 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 	}
 	else
 	{
-		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane);
-		rw_floorstat = WallMost (wallbottom, frontsector->floorplane);
+		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane, line->v1, line->v2);
+		rw_floorstat = WallMost (wallbottom, frontsector->floorplane, line->v1, line->v2);
 
 		// [RH] treat off-screen walls as solid
 #if 0	// Maybe later...

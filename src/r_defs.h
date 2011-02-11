@@ -1222,6 +1222,7 @@ struct visxplane_t
 	FDynamicColormap *Colormap;		// Colormap for plane
 	short LightLevel;				// Light level
 	short Orientation;				// Is this a floor or a ceiling?
+	secplane_t Plane;
 };
 
 // Holds masked texture information for visible subsectors.

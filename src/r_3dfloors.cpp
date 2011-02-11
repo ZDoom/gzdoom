@@ -195,7 +195,7 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 			if ((ffloor->flags & (FF_EXISTS | FF_RENDERPLANES)) != (FF_EXISTS | FF_RENDERPLANES)) continue;
 			if (ffloor->alpha <= 0 && (ffloor->flags & (FF_TRANSLUCENT | FF_ADDITIVETRANS))) continue;
 			// Check top of floor
-			if ((ffloor->top.plane->a | ffloor->top.plane->b) == 0)
+//			if ((ffloor->top.plane->a | ffloor->top.plane->b) == 0)
 			{
 				z = ffloor->top.plane->ZatPoint(viewx, viewy);
 				if (viewz > z)
@@ -215,7 +215,7 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 			}
 
 			// Check bottom of floor
-			if ((ffloor->bottom.plane->a | ffloor->top.plane->b) == 0)
+//			if ((ffloor->bottom.plane->a | ffloor->top.plane->b) == 0)
 			{
 				z = ffloor->bottom.plane->ZatPoint(viewx, viewy);
 				if (viewz > z)
@@ -254,6 +254,12 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 	xplane->PlaneRef = planeref;
 	xplane->Orientation = orientation;
 	xplane->FakeFloor = ffloor;
+	xplane->Plane = *planeref->plane;
+	if ((orientation == sector_t::ceiling && xplane->Plane.c > 0) ||
+		(orientation == sector_t::floor && xplane->Plane.c < 0))
+	{
+		xplane->Plane.FlipVert();
+	}
 
 	light = P_GetPlaneLight(sec, planeref->plane, orientation == sector_t::ceiling);
 	xplane->Colormap = light->extra_colormap;
@@ -318,7 +324,7 @@ void R_ClearVisSubsectors()
 //
 //=============================================================================
 
-void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge)
+void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, vertex_t *v2)
 {
 	if (vsub->MinX > WallSX1)
 	{
@@ -330,6 +336,6 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge)
 	}
 	for (visxplane_t *xplane = vsub->Planes; xplane != NULL; xplane = xplane->Next)
 	{
-		WallMost((short *)(edge == MARK_NEAR ? xplane->NearClip : xplane->FarClip), *xplane->PlaneRef->plane);
+		WallMost((short *)(edge == MARK_NEAR ? xplane->NearClip : xplane->FarClip), xplane->Plane, v1, v2);
 	}
 }

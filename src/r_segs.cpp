@@ -1175,7 +1175,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	// kg3D - fake floors instead of zdoom light list
 	for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
 	{
-		int j = WallMost (most3, frontsector->e->XFloor.lightlist[i].plane);
+		int j = WallMost (most3, frontsector->e->XFloor.lightlist[i].plane, curline->v1, curline->v2);
 		if (j != 3)
 		{
 			for (int j = x1; j <= x2; ++j)
@@ -1843,7 +1843,7 @@ void R_NewWall (bool needlights)
 				// wall but nothing to draw for it.
 				// Recalculate walltop so that the wall is clipped by the back sector's
 				// ceiling instead of the front sector's ceiling.
-				WallMost (walltop, backsector->ceilingplane);
+				WallMost (walltop, backsector->ceilingplane, curline->v1, curline->v2);
 			}
 			// Putting sky ceilings on the front and back of a line alters the way unpegged
 			// positioning works.
@@ -2508,7 +2508,7 @@ int OWallMost (short *mostbuf, fixed_t z)
 	return bad;
 }
 
-int WallMost (short *mostbuf, const secplane_t &plane)
+int WallMost (short *mostbuf, const secplane_t &plane, vertex_t *v1, vertex_t *v2)
 {
 	if ((plane.a | plane.b) == 0)
 	{
@@ -2521,25 +2521,25 @@ int WallMost (short *mostbuf, const secplane_t &plane)
 
 	if (MirrorFlags & RF_XFLIP)
 	{
-		x = curline->v2->x;
-		y = curline->v2->y;
+		x = v2->x;
+		y = v2->y;
 		if (WallSX1 == 0 && 0 != (den = WallTX1 - WallTX2 + WallTY1 - WallTY2))
 		{
 			int frac = SafeDivScale30 (WallTY1 + WallTX1, den);
-			x -= MulScale30 (frac, x - curline->v1->x);
-			y -= MulScale30 (frac, y - curline->v1->y);
+			x -= MulScale30 (frac, x - v1->x);
+			y -= MulScale30 (frac, y - v1->y);
 		}
 		z1 = viewz - plane.ZatPoint (x, y);
 
 		if (WallSX2 > WallSX1 + 1)
 		{
-			x = curline->v1->x;
-			y = curline->v1->y;
+			x = v1->x;
+			y = v1->y;
 			if (WallSX2 == viewwidth && 0 != (den = WallTX1 - WallTX2 - WallTY1 + WallTY2))
 			{
 				int frac = SafeDivScale30 (WallTY2 - WallTX2, den);
-				x += MulScale30 (frac, curline->v2->x - x);
-				y += MulScale30 (frac, curline->v2->y - y);
+				x += MulScale30 (frac, v2->x - x);
+				y += MulScale30 (frac, v2->y - y);
 			}
 			z2 = viewz - plane.ZatPoint (x, y);
 		}
@@ -2550,25 +2550,25 @@ int WallMost (short *mostbuf, const secplane_t &plane)
 	}
 	else
 	{
-		x = curline->v1->x;
-		y = curline->v1->y;
+		x = v1->x;
+		y = v1->y;
 		if (WallSX1 == 0 && 0 != (den = WallTX1 - WallTX2 + WallTY1 - WallTY2))
 		{
 			int frac = SafeDivScale30 (WallTY1 + WallTX1, den);
-			x += MulScale30 (frac, curline->v2->x - x);
-			y += MulScale30 (frac, curline->v2->y - y);
+			x += MulScale30 (frac, v2->x - x);
+			y += MulScale30 (frac, v2->y - y);
 		}
 		z1 = viewz - plane.ZatPoint (x, y);
 
 		if (WallSX2 > WallSX1 + 1)
 		{
-			x = curline->v2->x;
-			y = curline->v2->y;
+			x = v2->x;
+			y = v2->y;
 			if (WallSX2 == viewwidth && 0 != (den = WallTX1 - WallTX2 - WallTY1 + WallTY2))
 			{
 				int frac = SafeDivScale30 (WallTY2 - WallTX2, den);
-				x -= MulScale30 (frac, x - curline->v1->x);
-				y -= MulScale30 (frac, y - curline->v1->y);
+				x -= MulScale30 (frac, x - v1->x);
+				y -= MulScale30 (frac, y - v1->y);
 			}
 			z2 = viewz - plane.ZatPoint (x, y);
 		}

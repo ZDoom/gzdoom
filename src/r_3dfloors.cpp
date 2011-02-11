@@ -351,7 +351,7 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, ve
 		out += WallSX1;
 		in = most + WallSX1;
 		uclip += WallSX1;
-		dclip += WallSX2;
+		dclip += WallSX1;
 		for (int i = WallSX2 - WallSX1; i > 0; --i)
 		{
 			*out++ = clamp<short>(*in++, *uclip++, *dclip++);

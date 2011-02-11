@@ -268,13 +268,9 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 	xplane->Next = vsub->Planes;
 	vsub->Planes = xplane;
 
-	// If this is the first subsector drawn, that means we're inside of it, so
-	// we need to initialize the near edge, since we can't rely on back-facing
-	// walls to do it for us.
-	if (VisSubsectors.Size() == 1)
-	{
-		clearbufshort(xplane->NearClip, viewwidth, orientation == sector_t::ceiling ? 0 : viewheight);
-	}
+	// Initialize with current floor/ceilingclip.
+	memcpy(xplane->UClip, ceilingclip, sizeof(short)*viewwidth);
+	memcpy(xplane->DClip, floorclip, sizeof(short)*viewwidth);
 }
 
 //=============================================================================
@@ -292,8 +288,8 @@ visxplane_t *R_NewVisXPlane()
 		sizeof(short)*viewwidth * 2);
 
 	xplane->Next = NULL;
-	xplane->NearClip = (unsigned short *)((BYTE *)xplane + sizeof(visxplane_t));
-	xplane->FarClip = xplane->NearClip + viewwidth;
+	xplane->UClip = (unsigned short *)((BYTE *)xplane + sizeof(visxplane_t));
+	xplane->DClip = xplane->UClip + viewwidth;
 	xplane->PlaneRef = NULL;
 	xplane->LightLevel = 0;
 	xplane->Orientation = -1;
@@ -336,6 +332,29 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, ve
 	}
 	for (visxplane_t *xplane = vsub->Planes; xplane != NULL; xplane = xplane->Next)
 	{
-		WallMost((short *)(edge == MARK_NEAR ? xplane->NearClip : xplane->FarClip), xplane->Plane, v1, v2);
+		short most[MAXWIDTH], *in;
+		unsigned short *out, *uclip, *dclip;
+
+		WallMost(most, xplane->Plane, v1, v2);
+
+		// Clip to existing bounds.
+		uclip = xplane->UClip;
+		dclip = xplane->DClip;
+		if (xplane->Orientation == sector_t::ceiling)
+		{ // For a ceiling, the near edge is the top, and the far edge is the bottom.
+			out = edge == MARK_NEAR ? uclip : dclip;
+		}
+		else
+		{ // For a floor, the near edge is the bottom, and the far edge is the top.
+			out = edge == MARK_NEAR ? dclip : uclip;
+		}
+		out += WallSX1;
+		in = most + WallSX1;
+		uclip += WallSX1;
+		dclip += WallSX2;
+		for (int i = WallSX2 - WallSX1; i > 0; --i)
+		{
+			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
+		}
 	}
 }

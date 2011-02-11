@@ -990,28 +990,8 @@ void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max
 	pl.angle = 0;
 	pl.sky = 0;
 	pl.skybox = NULL;
-
-	if (xpl->Orientation == sector_t::ceiling)
-	{ // For a ceiling, the near edge is the top, and the far edge is the bottom.
-		pl.bottom = xpl->FarClip;
-		pl.top = xpl->NearClip;
-	}
-	else
-	{ // For a floor, the near edge is the bottom, and the far edge is the top.
-		pl.bottom = xpl->NearClip;
-		pl.top = xpl->FarClip;
-	}
-	for (int i = min; i < max; ++i)
-	{
-		if (pl.bottom[i] > dclip[i])
-		{
-			pl.bottom[i] = dclip[i];
-		}
-		if (pl.top[i] < uclip[i])
-		{
-			pl.top[i] = uclip[i];
-		}
-	}
+	pl.top = xpl->UClip;
+	pl.bottom = xpl->DClip;
 
 	R_DrawSinglePlane(&pl, FRACUNIT, false);
 }

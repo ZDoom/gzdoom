@@ -1215,8 +1215,8 @@ struct FCoverageBuffer
 struct visxplane_t
 {
 	visxplane_t *Next;
-	unsigned short *NearClip;		// Clipping for the near edge of the plane.
-	unsigned short *FarClip;		// Clipping for the far edge of the plane.
+	unsigned short *UClip;			// Clipping for the top edge of the plane.
+	unsigned short *DClip;			// Clipping for the bottom edge of the plane.
 	F3DFloor::planeref *PlaneRef;	// Source plane
 	F3DFloor *FakeFloor;			// Source 3D floor
 	FDynamicColormap *Colormap;		// Colormap for plane

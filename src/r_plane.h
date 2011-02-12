@@ -92,7 +92,7 @@ void R_DrawSkyPlane (visplane_t *pl);
 void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked);
 void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
-void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max);
+void R_DrawXPlane(visxplane_t *xpl, int min, int max);
 
 visplane_t *R_FindPlane
 ( const secplane_t &height,

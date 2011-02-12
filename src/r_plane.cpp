@@ -972,7 +972,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 //
 //==========================================================================
 
-void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max)
+void R_DrawXPlane(visxplane_t *xpl, int min, int max)
 {
 	visplane_t pl;
 
@@ -990,8 +990,8 @@ void R_DrawXPlane(visxplane_t *xpl, short *uclip, short *dclip, int min, int max
 	pl.angle = 0;
 	pl.sky = 0;
 	pl.skybox = NULL;
-	pl.top = xpl->UClip;
-	pl.bottom = xpl->DClip;
+	pl.top = (unsigned short *)(openings + xpl->UClip);
+	pl.bottom = (unsigned short *)(openings + xpl->DClip);
 
 	R_DrawSinglePlane(&pl, FRACUNIT, false);
 }

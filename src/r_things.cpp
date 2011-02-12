@@ -3096,13 +3096,13 @@ static void R_RecurseXPlane(vissubsector_t *vsub, visxplane_t *xplane)
 	// Upon entry, draw the ceiling.
 	if (xplane->Orientation == sector_t::ceiling)
 	{
-		R_DrawXPlane(xplane, vsub->uclip, vsub->dclip, vsub->MinX, vsub->MaxX);
+		R_DrawXPlane(xplane, vsub->MinX, vsub->MaxX);
 	}
 	R_RecurseXPlane(vsub, xplane->Next);
 	// Upon exit, draw the floor.
 	if (xplane->Orientation == sector_t::floor)
 	{
-		R_DrawXPlane(xplane, vsub->uclip, vsub->dclip, vsub->MinX, vsub->MaxX);
+		R_DrawXPlane(xplane, vsub->MinX, vsub->MaxX);
 	}
 }
 

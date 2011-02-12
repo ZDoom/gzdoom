@@ -12,6 +12,7 @@
 #include "r_local.h"
 #include "r_bsp.h"
 #include "r_plane.h"
+#include "r_segs.h"
 
 #include "r_3dfloors.h"
 
@@ -180,10 +181,10 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 	vsub->Planes = NULL;
 	vsub->MinX = SHRT_MAX;
 	vsub->MaxX = SHRT_MIN;
-	vsub->uclip = (short *)VisXPlaneArena.Alloc(sizeof(short) * viewwidth * 2);
-	vsub->dclip = vsub->uclip + viewwidth;
-	memcpy(vsub->uclip, ceilingclip, sizeof(*ceilingclip)*viewwidth);
-	memcpy(vsub->dclip, floorclip, sizeof(*floorclip)*viewwidth);
+	vsub->uclip = R_NewOpening(viewwidth);
+	vsub->dclip = R_NewOpening(viewwidth);
+	memcpy(openings + vsub->uclip, ceilingclip, sizeof(*ceilingclip)*viewwidth);
+	memcpy(openings + vsub->dclip, floorclip, sizeof(*floorclip)*viewwidth);
 
 	if (sub->sector->e != NULL)
 	{
@@ -269,8 +270,8 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 	vsub->Planes = xplane;
 
 	// Initialize with current floor/ceilingclip.
-	memcpy(xplane->UClip, ceilingclip, sizeof(short)*viewwidth);
-	memcpy(xplane->DClip, floorclip, sizeof(short)*viewwidth);
+	memcpy(openings + xplane->UClip, ceilingclip, sizeof(short)*viewwidth);
+	memcpy(openings + xplane->DClip, floorclip, sizeof(short)*viewwidth);
 }
 
 //=============================================================================
@@ -284,12 +285,11 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 
 visxplane_t *R_NewVisXPlane()
 {
-	visxplane_t *xplane = (visxplane_t *)VisXPlaneArena.Alloc(sizeof(visxplane_t) +
-		sizeof(short)*viewwidth * 2);
+	visxplane_t *xplane = (visxplane_t *)VisXPlaneArena.Alloc(sizeof(visxplane_t));
 
 	xplane->Next = NULL;
-	xplane->UClip = (unsigned short *)((BYTE *)xplane + sizeof(visxplane_t));
-	xplane->DClip = xplane->UClip + viewwidth;
+	xplane->UClip = R_NewOpening(viewwidth);
+	xplane->DClip = R_NewOpening(viewwidth);
 	xplane->PlaneRef = NULL;
 	xplane->LightLevel = 0;
 	xplane->Orientation = -1;
@@ -333,13 +333,13 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, ve
 	for (visxplane_t *xplane = vsub->Planes; xplane != NULL; xplane = xplane->Next)
 	{
 		short most[MAXWIDTH], *in;
-		unsigned short *out, *uclip, *dclip;
+		short *out, *uclip, *dclip;
 
 		WallMost(most, xplane->Plane, v1, v2);
 
 		// Clip to existing bounds.
-		uclip = xplane->UClip;
-		dclip = xplane->DClip;
+		uclip = openings + xplane->UClip;
+		dclip = openings + xplane->DClip;
 		if (xplane->Orientation == sector_t::ceiling)
 		{ // For a ceiling, the near edge is the top, and the far edge is the bottom.
 			out = edge == MARK_NEAR ? uclip : dclip;

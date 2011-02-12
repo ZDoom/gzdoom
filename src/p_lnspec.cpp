@@ -1943,13 +1943,30 @@ FUNC(LS_Sector_SetFriction)
 	return true;
 }
 
+FUNC(LS_Sector_SetTranslucent)
+// Sector_SetTranslucent (tag, plane, amount, type)
+{
+	if (arg0 != 0)
+	{
+		int secnum = -1;
+
+		while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+		{
+			sectors[secnum].SetAlpha(arg1, Scale(arg2, OPAQUE, 255));
+			sectors[secnum].ChangeFlags(arg1, ~PLANEF_ADDITIVE, arg3? PLANEF_ADDITIVE:0);
+		}
+		return true;
+	}
+	return false;
+}
+
 FUNC(LS_Sector_SetLink)
 // Sector_SetLink (controltag, linktag, floor/ceiling, movetype)
 {
 	if (arg0 != 0)	// control tag == 0 is for static initialization and must not be handled here
 	{
 		int control = P_FindSectorFromTag(arg0, -1);
-		if (control != 0)
+		if (control >= 0)
 		{
 			return P_AddSectorLinks(&sectors[control], arg1, arg2, arg3);
 		}
@@ -3166,7 +3183,7 @@ lnSpecFunc LineSpecials[256] =
 	/*  95 */ LS_FloorAndCeiling_LowerByValue,
 	/*  96 */ LS_FloorAndCeiling_RaiseByValue,
 	/*  97 */ LS_Ceiling_LowerAndCrushDist,
-	/*  98 */ LS_NOP,
+	/*  98 */ LS_Sector_SetTranslucent,
 	/*  99 */ LS_NOP,
 	/* 100 */ LS_NOP,		// Scroll_Texture_Left
 	/* 101 */ LS_NOP,		// Scroll_Texture_Right

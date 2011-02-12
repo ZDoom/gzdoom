@@ -423,6 +423,8 @@ xx(Dropactors)
 xx(NoRespawn)
 xx(Alphafloor)
 xx(Alphaceiling)
+xx(Renderstylefloor)
+xx(Renderstyleceiling)
 
 xx(offsetx_top)
 xx(offsety_top)

@@ -152,7 +152,7 @@ extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
 extern "C" void R_SetTiltedSpanSource_ASM (const BYTE *flat);
 extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 #endif
-void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool masked);
+void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool additive, bool masked);
 
 //==========================================================================
 //
@@ -527,7 +527,7 @@ static visplane_t *new_visplane (unsigned hash)
 // killough 2/28/98: Add offsets
 //==========================================================================
 
-visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, fixed_t alpha,
+visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, fixed_t alpha, bool additive,
 						 fixed_t xoffs, fixed_t yoffs,
 						 fixed_t xscale, fixed_t yscale, angle_t angle,
 						 int sky, ASkyViewpoint *skybox)
@@ -546,6 +546,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		yscale = 0;
 		angle = 0;
 		alpha = 0;
+		additive = false;
 		plane.a = plane.b = plane.d = 0;
 		// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
 		// always necessary, but it is needed if a floor and ceiling sky are in the
@@ -572,6 +573,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		else sky = 0;	// not skyflatnum so it can't be a sky
 		skybox = NULL;
 		alpha = FRACUNIT;
+		additive = false;
 	}
 		
 	// New visplane algorithm uses hash table -- killough
@@ -595,7 +597,8 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 							// headache inducing logic... :(
 							(!(skybox->flags & MF_JUSTATTACKED)) ||
 							(
-								check->alpha == alpha &&
+								check->Alpha == alpha &&
+								check->Additive == additive &&
 								(alpha == 0 ||	// if alpha is > 0 everything needs to be checked
 									(plane == check->height &&
 									 picnum == check->picnum &&
@@ -663,7 +666,8 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->viewy = stacked_viewy;
 	check->viewz = stacked_viewz;
 	check->viewangle = stacked_angle;
-	check->alpha = alpha;
+	check->Alpha = alpha;
+	check->Additive = additive;
 	check->CurrentMirror = CurrentMirror;
 	check->MirrorFlags = MirrorFlags;
 	check->CurrentSkybox = CurrentSkybox;
@@ -751,7 +755,8 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->viewz = pl->viewz;
 		new_pl->viewangle = pl->viewangle;
 		new_pl->sky = pl->sky;
-		new_pl->alpha = pl->alpha;
+		new_pl->Alpha = pl->Alpha;
+		new_pl->Additive = pl->Additive;
 		new_pl->CurrentMirror = pl->CurrentMirror;
 		new_pl->MirrorFlags = pl->MirrorFlags;
 		new_pl->CurrentSkybox = pl->CurrentSkybox;
@@ -993,7 +998,7 @@ void R_DrawPlanes ()
 			// kg3D - draw only real planes now
 			if(pl->sky >= 0) {
 				vpcount++;
-				R_DrawSinglePlane (pl, OPAQUE, false);
+				R_DrawSinglePlane (pl, OPAQUE, false, false);
 			}
 		}
 	}
@@ -1019,7 +1024,7 @@ void R_DrawHeightPlanes(fixed_t height)
 				viewy = pl->viewy;
 				viewangle = pl->viewangle;
 				MirrorFlags = pl->MirrorFlags;
-				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, true);
+				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, false, true);
 			}
 		}
 	}
@@ -1034,7 +1039,7 @@ void R_DrawHeightPlanes(fixed_t height)
 //
 //==========================================================================
 
-void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
+void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
 {
 //	pl->angle = pa<<ANGLETOFINESHIFT;
 
@@ -1059,7 +1064,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 			return;
 		}
 
-		if (!masked)
+		if (!masked && !additive)
 		{ // If we're not supposed to see through this plane, draw it opaque.
 			alpha = OPAQUE;
 		}
@@ -1077,11 +1082,11 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 
 		if (r_drawflat || ((pl->height.a == 0 && pl->height.b == 0) && !tilt))
 		{
-			R_DrawNormalPlane (pl, alpha, masked);
+			R_DrawNormalPlane (pl, alpha, additive, masked);
 		}
 		else
 		{
-			R_DrawTiltedPlane (pl, alpha, masked);
+			R_DrawTiltedPlane (pl, alpha, additive, masked);
 		}
 	}
 	NetUpdate ();
@@ -1151,7 +1156,7 @@ void R_DrawSkyBoxes ()
 
 		if (pl->maxx < pl->minx || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES)
 		{
-			R_DrawSinglePlane (pl, OPAQUE, false);
+			R_DrawSinglePlane (pl, OPAQUE, false, false);
 			*freehead = pl;
 			freehead = &pl->next;
 			continue;
@@ -1270,9 +1275,9 @@ void R_DrawSkyBoxes ()
 		vissprite_p = firstvissprite;
 
 		visplaneStack.Pop (pl);
-		if (pl->alpha > 0)
+		if (pl->Alpha > 0)
 		{
-			R_DrawSinglePlane (pl, pl->alpha, true);
+			R_DrawSinglePlane (pl, pl->Alpha, pl->Additive, true);
 		}
 		*freehead = pl;
 		freehead = &pl->next;
@@ -1438,7 +1443,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 //
 //==========================================================================
 
-void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked)
+void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
 {
 #ifdef X86_ASM
 	if (ds_source != ds_cursource)
@@ -1500,6 +1505,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked)
 	else
 		plane_shade = true;
 
+	// Additive not supported yet because the drawer function doesn't look like it can handle it.
 	if (spanfunc != R_FillSpan)
 	{
 		if (masked)
@@ -1538,7 +1544,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked)
 //
 //==========================================================================
 
-void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
+void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
 {
 	static const float ifloatpow2[16] =
 	{

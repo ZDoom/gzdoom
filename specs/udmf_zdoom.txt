@@ -162,6 +162,10 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                       // relative to the owning sector's light level.
       alphafloor = <float>;           // translucency of floor plane (only has meaning with Sector_SetPortal) Default is 1.0.
       alphaceiling = <float>;         // translucency of ceiling plane (only has meaning with Sector_SetPortal) Default is 1.0.
+      renderstylefloor = <string>;    // floor plane renderstyle (only has meaning with Sector_SetPortal); not implemented yet in software renderer
+									  // can be "translucent" or "add", default is "translucent".
+      renderstyleceiling = <string>;  // ceiling plane renderstyle (only has meaning with Sector_SetPortal); not implemented yet in software renderer
+									  // can be "translucent" or "add", default is "translucent".
       gravity = <float>;              // Sector's gravity. Default is 1.0.
       lightcolor = <integer>;         // Sector's light color as RRGGBB value, default = 0xffffff.
       fadecolor = <integer>;          // Sector's fog color as RRGGBB value, default = 0x000000.
@@ -176,7 +180,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       
       * Note about dropactors
 
-        The spec requires this to be false by default. Currently, however ZDoom assumes this to be true
+      The spec requires this to be false by default. Currently, however, ZDoom assumes this to be true
       for Doom format maps so any map converter converting to the ZDoomTranslated namespace should
       set this flag for each tagged sector.
       
@@ -208,6 +212,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
    181: Plane_Align, arg2
    215: Teleport_Line, arg0
    222: Scroll_Texture_Model, arg0 (arg0 must be preserved)
+   160: Sector_3DFloor, arg4 (both uses as high-byte of tag and line ID are not supported in UDMF and must be remapped)
    
    Some specials also allow setting the extended flags. These must also be
    converted to explicitly setting the flags through the defined map fields.
@@ -290,8 +295,13 @@ Added 'countsecret' actor property.
 Added vertex floor and ceiling height properties
 
 1.16 23.01.2011
+Added alphaceiling and alphafloor sector properties
 Added blocksight linedef flag
 Removed remarks of 8 being the maximum number of player classes/skill levels the menu can handle so the spec now properly lists 16 as limit.
+
+1.17 12.02.2011
+Added renderstyleceiling and renderstylefloor sector properties
+Added Sector_Set3DFloor to list of specials that need to be handled for line ID remapping
 
 ===============================================================================
 EOF

@@ -54,7 +54,8 @@ struct visplane_s
 	float		visibility;
 	fixed_t		viewx, viewy, viewz;
 	angle_t		viewangle;
-	fixed_t		alpha;
+	fixed_t		Alpha;
+	bool		Additive;
 
 	// kg3D - keep track of mirror and skybox owner
 	int CurrentSkybox;
@@ -90,8 +91,8 @@ void R_ClearPlanes (bool fullclear);
 void R_DrawPlanes ();
 void R_DrawSkyBoxes ();
 void R_DrawSkyPlane (visplane_t *pl);
-void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked);
-void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked);
+void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked);
+void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 
 visplane_t *R_FindPlane
@@ -99,6 +100,7 @@ visplane_t *R_FindPlane
   FTextureID	picnum,
   int			lightlevel,
   fixed_t		alpha,
+  bool			additive,
   fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
   fixed_t		yoffs,
   fixed_t		xscale,

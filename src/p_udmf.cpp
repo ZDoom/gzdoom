@@ -1200,6 +1200,24 @@ public:
 					sec->SetAlpha(sector_t::ceiling, CheckFixed(key));
 					continue;
 
+				case NAME_Renderstylefloor:
+				{
+					const char *str = CheckString(key);
+					if (!stricmp(str, "translucent")) sec->ChangeFlags(sector_t::floor, PLANEF_ADDITIVE, 0);
+					else if (!stricmp(str, "add")) sec->ChangeFlags(sector_t::floor, 0, PLANEF_ADDITIVE);
+					else sc.ScriptMessage("Unknown value \"%s\" for 'renderstylefloor'\n", str);
+					continue;
+				}
+
+				case NAME_Renderstyleceiling:
+				{
+					const char *str = CheckString(key);
+					if (!stricmp(str, "translucent")) sec->ChangeFlags(sector_t::ceiling, PLANEF_ADDITIVE, 0);
+					else if (!stricmp(str, "add")) sec->ChangeFlags(sector_t::ceiling, 0, PLANEF_ADDITIVE);
+					else sc.ScriptMessage("Unknown value \"%s\" for 'renderstyleceiling'\n", str);
+					continue;
+				}
+
 				case NAME_Lightfloorabsolute:
 					if (CheckBool(key)) sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 					else sec->ChangeFlags(sector_t::floor, PLANEF_ABSLIGHTING, 0);

@@ -322,7 +322,8 @@ inline FArchive &operator<< (FArchive &arc, secplane_t &plane)
 enum
 {
 	PLANEF_ABSLIGHTING	= 1,	// floor/ceiling light is absolute, not relative
-	PLANEF_BLOCKED		= 2		// can not be moved anymore.
+	PLANEF_BLOCKED		= 2,	// can not be moved anymore.
+	PLANEF_ADDITIVE		= 4,	// rendered additive
 };
 
 // Internal sector flags

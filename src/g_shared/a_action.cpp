@@ -191,7 +191,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	}
 	else if (self->flags3 & MF3_ISMONSTER && self->special)
 	{ // Initiate monster death actions
-		LineSpecials [self->special] (NULL, self, false, self->args[0],
+		P_ExecuteSpecial(self->special, NULL, self, false, self->args[0],
 			self->args[1], self->args[2], self->args[3], self->args[4]);
 		self->special = 0;
 	}

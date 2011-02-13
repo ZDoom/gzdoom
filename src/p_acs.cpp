@@ -761,7 +761,7 @@ void DPlaneWatcher::Tick ()
 	if ((LastD < WatchD && newd >= WatchD) ||
 		(LastD > WatchD && newd <= WatchD))
 	{
-		LineSpecials[Special] (Line, Activator, LineSide, Arg0, Arg1, Arg2, Arg3, Arg4);
+		P_ExecuteSpecial(Special, Line, Activator, LineSide, Arg0, Arg1, Arg2, Arg3, Arg4);
 		Destroy ();
 	}
 
@@ -3760,39 +3760,39 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_LSPEC1:
-			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
 									STACK(1), 0, 0, 0, 0);
 			sp -= 1;
 			break;
 
 		case PCD_LSPEC2:
-			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
 									STACK(2), STACK(1), 0, 0, 0);
 			sp -= 2;
 			break;
 
 		case PCD_LSPEC3:
-			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
 									STACK(3), STACK(2), STACK(1), 0, 0);
 			sp -= 3;
 			break;
 
 		case PCD_LSPEC4:
-			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
 									STACK(4), STACK(3), STACK(2),
 									STACK(1), 0);
 			sp -= 4;
 			break;
 
 		case PCD_LSPEC5:
-			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
 									STACK(5), STACK(4), STACK(3),
 									STACK(2), STACK(1));
 			sp -= 5;
 			break;
 
 		case PCD_LSPEC5RESULT:
-			STACK(5) = LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+			STACK(5) = P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
 									STACK(5), STACK(4), STACK(3),
 									STACK(2), STACK(1));
 			sp -= 4;
@@ -3800,66 +3800,66 @@ int DLevelScript::RunScript ()
 
 		case PCD_LSPEC1DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator, backSide,
+			P_ExecuteSpecial(temp, activationline, activator, backSide,
 								uallong(pc[0]), 0, 0, 0, 0);
 			pc += 1;
 			break;
 
 		case PCD_LSPEC2DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator, backSide,
+			P_ExecuteSpecial(temp, activationline, activator, backSide,
 								uallong(pc[0]), uallong(pc[1]), 0, 0, 0);
 			pc += 2;
 			break;
 
 		case PCD_LSPEC3DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator, backSide,
+			P_ExecuteSpecial(temp, activationline, activator, backSide,
 								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), 0, 0);
 			pc += 3;
 			break;
 
 		case PCD_LSPEC4DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator, backSide,
+			P_ExecuteSpecial(temp, activationline, activator, backSide,
 								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), 0);
 			pc += 4;
 			break;
 
 		case PCD_LSPEC5DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator, backSide,
+			P_ExecuteSpecial(temp, activationline, activator, backSide,
 								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]));
 			pc += 5;
 			break;
 
 		case PCD_LSPEC1DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
+			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
 				((BYTE *)pc)[1], 0, 0, 0, 0);
 			pc = (int *)((BYTE *)pc + 2);
 			break;
 
 		case PCD_LSPEC2DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
+			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], 0, 0, 0);
 			pc = (int *)((BYTE *)pc + 3);
 			break;
 
 		case PCD_LSPEC3DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
+			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3], 0, 0);
 			pc = (int *)((BYTE *)pc + 4);
 			break;
 
 		case PCD_LSPEC4DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
+			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
 				((BYTE *)pc)[4], 0);
 			pc = (int *)((BYTE *)pc + 5);
 			break;
 
 		case PCD_LSPEC5DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
+			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
 				((BYTE *)pc)[4], ((BYTE *)pc)[5]);
 			pc = (int *)((BYTE *)pc + 6);

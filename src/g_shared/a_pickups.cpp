@@ -951,7 +951,7 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 {
 	if (special)
 	{
-		LineSpecials[special] (NULL, toucher, false,
+		P_ExecuteSpecial(special, NULL, toucher, false,
 			args[0], args[1], args[2], args[3], args[4]);
 		special = 0;
 	}

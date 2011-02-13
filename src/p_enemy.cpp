@@ -2295,7 +2295,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			// as the goal.
 			while ( (spec = specit.Next()) )
 			{
-				LineSpecials[spec->special] (NULL, actor, false, spec->args[0],
+				P_ExecuteSpecial(spec->special, NULL, actor, false, spec->args[0],
 					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 			}
 
@@ -3134,7 +3134,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 			}
 			checked = true;
 
-			LineSpecials[sa->Action](NULL, self, false, 
+			P_ExecuteSpecial(sa->Action, NULL, self, false, 
 				sa->Args[0], sa->Args[1], sa->Args[2], sa->Args[3], sa->Args[4]);
 		}
 	}

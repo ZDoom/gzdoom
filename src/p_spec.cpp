@@ -222,8 +222,8 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	lineActivation = line->activation;
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;
-	buttonSuccess = LineSpecials[line->special]
-					(line, mo, side == 1, line->args[0],
+	buttonSuccess = P_ExecuteSpecial(line->special,
+					line, mo, side == 1, line->args[0],
 					line->args[1], line->args[2],
 					line->args[3], line->args[4]);
 

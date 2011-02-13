@@ -3400,3 +3400,27 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 	}
 	return 0;
 }
+
+
+//==========================================================================
+//
+// P_ExecuteSpecial
+//
+//==========================================================================
+
+int P_ExecuteSpecial(int			num,
+					 struct line_t	*line,
+					 class AActor	*activator,
+					 bool			backSide,
+					 int			arg1,
+					 int			arg2,
+					 int			arg3,
+					 int			arg4,
+					 int			arg5)
+{
+	if (num >= 0 && num <= 255)
+	{
+		return LineSpecials[num](line, activator, backSide, arg1, arg2, arg3, arg4, arg5);
+	}
+	return 0;
+}

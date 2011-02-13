@@ -474,7 +474,13 @@ void P_Recalculate3DFloors(sector_t * sector)
 
 			oldlist.Delete(pickindex);
 
-			if (pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) && pick->flags&FF_EXISTS)
+			if (pick->flags & FF_THISINSIDE)
+			{
+				// These have the floor higher than the ceiling and cannot be processed
+				// by the clipping code below.
+				ffloors.Push(pick);
+			}
+			else if (pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) && pick->flags&FF_EXISTS)
 			{
 				clipped=pick;
 				clipped_top=height;

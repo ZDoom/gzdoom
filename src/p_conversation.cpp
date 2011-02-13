@@ -1302,7 +1302,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (reply->ActionSpecial != 0)
 	{
-		takestuff |= !!LineSpecials[reply->ActionSpecial](NULL, player->mo, false,
+		takestuff |= !!P_ExecuteSpecial(reply->ActionSpecial, NULL, player->mo, false,
 			reply->Args[0], reply->Args[1], reply->Args[2], reply->Args[3], reply->Args[4]);
 	}
 

@@ -671,7 +671,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CallSpecial)
 	ACTION_PARAM_INT(arg4, 4);
 	ACTION_PARAM_INT(arg5, 5);
 
-	bool res = !!LineSpecials[special](NULL, self, false, arg1, arg2, arg3, arg4, arg5);
+	bool res = !!P_ExecuteSpecial(special, NULL, self, false, arg1, arg2, arg3, arg4, arg5);
 
 	ACTION_SET_RESULT(res);
 }
@@ -3555,7 +3555,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LineEffect)
 		{
 			oldjunk.tag = tag;								// Sector tag for linedef
 			P_TranslateLineDef(&junk, &oldjunk);			// Turn into native type
-			res = !!LineSpecials[junk.special](NULL, self, false, junk.args[0], 
+			res = !!P_ExecuteSpecial(junk.special, NULL, self, false, junk.args[0], 
 				junk.args[1], junk.args[2], junk.args[3], junk.args[4]); 
 			if (res && !(junk.flags & ML_REPEAT_SPECIAL))	// If only once,
 				self->flags6 |= MF6_LINEDONE;				// no more for this thing

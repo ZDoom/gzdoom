@@ -684,12 +684,12 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 
 	if (mark_near)
 	{
-		R_3D_MarkPlanes(vsub, MARK_NEAR, line->v2, line->v1);
+		R_3D_MarkPlanes(vsub, line, line->v2, line->v1);
 		return;
 	}
 	else if (vsub != NULL)
 	{
-		R_3D_MarkPlanes(vsub, MARK_FAR, line->v1, line->v2);
+		R_3D_MarkPlanes(vsub, line, line->v1, line->v2);
 	}
 
 	if (line->linedef == NULL)

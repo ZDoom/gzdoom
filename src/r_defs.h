@@ -1211,6 +1211,15 @@ struct FCoverageBuffer
 };
 
 
+// One extra floor wall, attached to a visxplane.
+struct visxwall_t
+{
+	visxwall_t *Next;
+	ptrdiff_t UClip;				// Clipping for the top edge of the wall.
+	ptrdiff_t DClip;				// Clipping for the bottom edge of the wall.
+	short x1, x2;					// [Left, Right) of wall.
+};
+
 // One extra floor plane, contained within a subsector.
 struct visxplane_t
 {
@@ -1220,6 +1229,8 @@ struct visxplane_t
 	F3DFloor::planeref *PlaneRef;	// Source plane
 	F3DFloor *FakeFloor;			// Source 3D floor
 	FDynamicColormap *Colormap;		// Colormap for plane
+	visxwall_t *NearWalls;			// Walls from back-facing segs.
+	visxwall_t *FarWalls;			// Walls from front-facing segs.
 	short LightLevel;				// Light level
 	short Orientation;				// Is this a floor or a ceiling?
 	secplane_t Plane;

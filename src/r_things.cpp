@@ -3087,22 +3087,47 @@ void R_DrawSprite (vissprite_t *spr)
 	spr->colormap = colormap;
 }
 
+static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
+{
+	for (; vwall != NULL; vwall = vwall->Next)
+	{
+		short *top = openings + vwall->UClip;
+		short *bot = openings + vwall->DClip;
+		BYTE *destorg = dc_destorg + vwall->x1;
+
+		for (int i = vwall->x2 - vwall->x1; i > 0; --i, ++top, ++bot, ++destorg)
+		{
+			dc_count = *bot - *top;
+			if (dc_count > 0)
+			{
+				dc_dest = ylookup[*top] + destorg;
+				dc_color = 111;
+				R_FillColumnP();
+			}
+		}
+	}
+}
+
 static void R_RecurseXPlane(vissubsector_t *vsub, visxplane_t *xplane)
 {
 	if (xplane == NULL)
 	{
 		return;
 	}
-	// Upon entry, draw the ceiling.
+	// Upon entry, draw ceilings.
 	if (xplane->Orientation == sector_t::ceiling)
 	{
+		R_DrawXWalls(xplane, xplane->FarWalls);
 		R_DrawXPlane(xplane, vsub->MinX, vsub->MaxX);
+		R_DrawXWalls(xplane, xplane->NearWalls);
 	}
 	R_RecurseXPlane(vsub, xplane->Next);
-	// Upon exit, draw the floor.
+	// Upon exit, draw floors.
 	if (xplane->Orientation == sector_t::floor)
 	{
+		R_DrawXWalls(xplane, xplane->FarWalls);
 		R_DrawXPlane(xplane, vsub->MinX, vsub->MaxX);
+		R_DrawXWalls(xplane, xplane->NearWalls);
 	}
 }
 

@@ -290,11 +290,29 @@ visxplane_t *R_NewVisXPlane()
 	xplane->Next = NULL;
 	xplane->UClip = R_NewOpening(viewwidth);
 	xplane->DClip = R_NewOpening(viewwidth);
-	xplane->PlaneRef = NULL;
+	xplane->NearWalls = NULL;
+	xplane->FarWalls = NULL;
 	xplane->LightLevel = 0;
 	xplane->Orientation = -1;
 
 	return xplane;
+}
+
+//=============================================================================
+//
+// R_NewVisXWall
+//
+// Creates a new visxwall_t.
+//
+//=============================================================================
+
+visxwall_t *R_NewVisXWall()
+{
+	visxwall_t *xwall = (visxwall_t *)VisXPlaneArena.Alloc(sizeof(visxwall_t));
+	xwall->Next = NULL;
+	xwall->UClip = INT_MIN;
+	xwall->DClip = INT_MIN;
+	return xwall;
 }
 
 //=============================================================================
@@ -320,8 +338,12 @@ void R_ClearVisSubsectors()
 //
 //=============================================================================
 
-void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, vertex_t *v2)
+void R_3D_MarkPlanes(vissubsector_t *vsub, seg_t *seg, vertex_t *v1, vertex_t *v2)
 {
+	assert((v1 == seg->v1 && v2 == seg->v2) || (v2 == seg->v1 && v1 == seg->v2));
+
+	EMarkPlaneEdge edge = (seg->v1 == v1) ? MARK_FAR : MARK_NEAR;
+
 	if (vsub->MinX > WallSX1)
 	{
 		vsub->MinX = WallSX1;
@@ -355,6 +377,70 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, EMarkPlaneEdge edge, vertex_t *v1, ve
 		for (int i = WallSX2 - WallSX1; i > 0; --i)
 		{
 			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
+		}
+
+		// Should we attach a wall to this edge of the plane?
+		// Note that while planes have enough clipping information for the entire width of the screen,
+		// walls only need enough for the wall they store.
+		int flags = xplane->FakeFloor->flags;
+		bool aboveplane;
+
+		if (!(flags & FF_RENDERSIDES)) continue;						// Nope.
+		if (seg->backsector == NULL) continue;							// Not if there is no back side.
+		if (seg->backsector->tag == seg->frontsector->tag) continue;	// Not if both sides have the same sector tag.
+
+		if (edge == MARK_NEAR)
+		{ // Near edges have the exterior walls.
+			if ((flags & (FF_INVERTPLANES | FF_BOTHPLANES)) == FF_INVERTPLANES) continue;
+
+			// If this is a ceiling plane, the wall is above it. The plane's uclip serves as the wall's dclip.
+			// If this is a floor plane, the wall is below it. The plane's dclip serves as the wall's uclip.
+			aboveplane = xplane->Orientation == sector_t::ceiling;
+		}
+		else // edge == MARK_FAR
+		{ // Far edges have the interior walls.
+			if ((flags & (FF_INVERTPLANES | FF_BOTHPLANES)) == 0) continue;
+
+			// For interior walls, the ceiling/floor roles are reversed.
+			aboveplane = xplane->Orientation == sector_t::floor;
+		}
+
+		// If we get here, there's a wall to be stored.
+		visxwall_t *vwall = R_NewVisXWall();
+		vwall->x1 = WallSX1;
+		vwall->x2 = WallSX2;
+
+		if (aboveplane)
+		{ // The plane's uclip serves as the wall's dclip.
+			vwall->DClip = xplane->UClip + WallSX1;
+			vwall->UClip = R_NewOpening(WallSX2 - WallSX1);
+			out = openings + vwall->UClip;
+			WallMost(most, *xplane->FakeFloor->top.plane, v1, v2);
+		}
+		else
+		{ // The plane's dclip serves as the wall's uclip.
+			vwall->UClip = xplane->DClip + WallSX1;
+			vwall->DClip = R_NewOpening(WallSX2 - WallSX1);
+			out = openings + vwall->DClip;
+			WallMost(most, *xplane->FakeFloor->bottom.plane, v1, v2);
+		}
+		in = most + WallSX1;
+		uclip = openings + vsub->uclip + WallSX1;
+		dclip = openings + vsub->dclip + WallSX1;
+		for (int i = WallSX2 - WallSX1; i > 0; --i)
+		{
+			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
+		}
+
+		if (edge == MARK_NEAR)
+		{
+			vwall->Next = xplane->NearWalls;
+			xplane->NearWalls = vwall;
+		}
+		if (edge == MARK_FAR)
+		{
+			vwall->Next = xplane->FarWalls;
+			xplane->FarWalls = vwall;
 		}
 	}
 }

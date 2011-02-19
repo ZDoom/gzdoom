@@ -1135,10 +1135,10 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	if (lumpnum >= 0)
 	{
 		FWadLump file = Wads.OpenLumpNum (lumpnum); 
-		SDWORD numtex;
+		DWORD numtex;
 
 		file >> numtex;
-		return numtex >= 0 ? numtex : 0;
+		return int(numtex) >= 0 ? numtex : 0;
 	}
 	return 0;
 }

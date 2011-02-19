@@ -231,7 +231,10 @@ void level_info_t::Reset()
 	partime = 0;
 	sucktime = 0;
 	flags = 0;
-	flags2 = gameinfo.gametype == GAME_Hexen? 0 : LEVEL2_LAXMONSTERACTIVATION;
+	if (gameinfo.gametype == GAME_Hexen)
+		flags2 = 0;
+	else
+		flags2 = LEVEL2_LAXMONSTERACTIVATION;
 	Music = "";
 	LevelName = "";
 	strcpy (fadetable, "COLORMAP");
@@ -1213,7 +1216,7 @@ MapFlagHandlers[] =
 	{ "deathslideshow",					MITYPE_SETFLAG2,	0, 0 },
 	{ "strictmonsteractivation",		MITYPE_CLRFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "laxmonsteractivation",			MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
-	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
+	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL, 0 },
 	{ "keepfullinventory",				MITYPE_SETFLAG2,	LEVEL2_KEEPFULLINVENTORY, 0 },
 	{ "monsterfallingdamage",			MITYPE_SETFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ "nomonsterfallingdamage",			MITYPE_CLRFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
@@ -1241,40 +1244,40 @@ MapFlagHandlers[] =
 	{ "noautosavehint",					MITYPE_SETFLAG2,	LEVEL2_NOAUTOSAVEHINT, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
-	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
-	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX},
-	{ "compat_limitpain",				MITYPE_COMPATFLAG, COMPATF_LIMITPAIN},
-	{ "compat_nopassover",				MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ},
-	{ "compat_notossdrops",				MITYPE_COMPATFLAG, COMPATF_NOTOSSDROPS},
-	{ "compat_useblocking", 			MITYPE_COMPATFLAG, COMPATF_USEBLOCKING},
-	{ "compat_nodoorlight",				MITYPE_COMPATFLAG, COMPATF_NODOORLIGHT},
-	{ "compat_ravenscroll",				MITYPE_COMPATFLAG, COMPATF_RAVENSCROLL},
-	{ "compat_soundtarget",				MITYPE_COMPATFLAG, COMPATF_SOUNDTARGET},
-	{ "compat_dehhealth",				MITYPE_COMPATFLAG, COMPATF_DEHHEALTH},
-	{ "compat_trace",					MITYPE_COMPATFLAG, COMPATF_TRACE},
-	{ "compat_dropoff",					MITYPE_COMPATFLAG, COMPATF_DROPOFF},
-	{ "compat_boomscroll",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
-	{ "compat_invisibility",			MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
-	{ "compat_silent_instant_floors",	MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS},
-	{ "compat_sectorsounds",			MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS},
-	{ "compat_missileclip",				MITYPE_COMPATFLAG, COMPATF_MISSILECLIP},
-	{ "compat_crossdropoff",			MITYPE_COMPATFLAG, COMPATF_CROSSDROPOFF},
-	{ "compat_anybossdeath",			MITYPE_COMPATFLAG, COMPATF_ANYBOSSDEATH},
-	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR},
-	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM},
-	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE},
-	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},
-	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
-	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
-	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT},
-	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ},
+	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
+	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
+	{ "compat_limitpain",				MITYPE_COMPATFLAG, COMPATF_LIMITPAIN, 0 },
+	{ "compat_nopassover",				MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
+	{ "compat_notossdrops",				MITYPE_COMPATFLAG, COMPATF_NOTOSSDROPS, 0 },
+	{ "compat_useblocking", 			MITYPE_COMPATFLAG, COMPATF_USEBLOCKING, 0 },
+	{ "compat_nodoorlight",				MITYPE_COMPATFLAG, COMPATF_NODOORLIGHT, 0 },
+	{ "compat_ravenscroll",				MITYPE_COMPATFLAG, COMPATF_RAVENSCROLL, 0 },
+	{ "compat_soundtarget",				MITYPE_COMPATFLAG, COMPATF_SOUNDTARGET, 0 },
+	{ "compat_dehhealth",				MITYPE_COMPATFLAG, COMPATF_DEHHEALTH, 0 },
+	{ "compat_trace",					MITYPE_COMPATFLAG, COMPATF_TRACE, 0 },
+	{ "compat_dropoff",					MITYPE_COMPATFLAG, COMPATF_DROPOFF, 0 },
+	{ "compat_boomscroll",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL, 0 },
+	{ "compat_invisibility",			MITYPE_COMPATFLAG, COMPATF_INVISIBILITY, 0 },
+	{ "compat_silent_instant_floors",	MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS, 0 },
+	{ "compat_sectorsounds",			MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS, 0 },
+	{ "compat_missileclip",				MITYPE_COMPATFLAG, COMPATF_MISSILECLIP, 0 },
+	{ "compat_crossdropoff",			MITYPE_COMPATFLAG, COMPATF_CROSSDROPOFF, 0 },
+	{ "compat_anybossdeath",			MITYPE_COMPATFLAG, COMPATF_ANYBOSSDEATH, 0 },
+	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR, 0 },
+	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM, 0 },
+	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE, 0 },
+	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS, 0 },
+	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS, 0 },
+	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT, 0 },
+	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT, 0 },
+	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ, 0 },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end3_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_intermission_track",			MITYPE_EATNEXT,	0, 0 },
 	{ "cd_title_track",					MITYPE_EATNEXT,	0, 0 },
-	{ NULL, MITYPE_IGNORE, 0}
+	{ NULL, MITYPE_IGNORE, 0, 0}
 };
 
 //==========================================================================

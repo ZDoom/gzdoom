@@ -480,7 +480,7 @@ void R_InitSpriteDefs ()
 		while (hash != -1)
 		{
 			VHasher *vh = &vhashes[hash];
-			if (vh->Name == intname)
+			if (vh->Name == (int)intname)
 			{
 				FVoxel *vox = R_LoadKVX(hash);
 				if (vox == NULL)
@@ -612,7 +612,7 @@ static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
 			spritename = *(int *)sc.String;
 			for (i = 0; i < sprites.Size(); ++i)
 			{
-				if (sprites[i].dwName == spritename)
+				if ((int)sprites[i].dwName == spritename)
 				{
 					break;
 				}
@@ -3943,7 +3943,7 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 		assert(OffscreenColorBuffer == NULL && "The color buffer cannot exist without the coverage buffer");
 		OffscreenCoverageBuffer = new FCoverageBuffer(width);
 	}
-	else if (OffscreenCoverageBuffer->NumLists != width)
+	else if (OffscreenCoverageBuffer->NumLists != (unsigned)width)
 	{
 		delete OffscreenCoverageBuffer;
 		OffscreenCoverageBuffer = new FCoverageBuffer(width);

@@ -841,7 +841,7 @@ void DFrameBuffer::DrawRateStuff ()
 	{
 		DWORD ms = I_FPSTime();
 		DWORD howlong = ms - LastMS;
-		if (howlong >= 0)
+		if ((signed)howlong >= 0)
 		{
 			char fpsbuff[40];
 			int chars;

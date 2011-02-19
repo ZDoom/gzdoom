@@ -575,7 +575,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	if (close_style == 1)
 	{
 		GtkTreeModel *model;
-		GValue value = { 0, };
+		GValue value = { 0, { {0} } };
 		
 		// Find out which IWAD was selected.
 		gtk_tree_selection_get_selected (selection, &model, &iter);

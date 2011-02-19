@@ -93,7 +93,7 @@ static const struct ColorList {
 	{&dred,		80,  0,   0  },
 	{&maroon1,	154, 49,  49 },
 	{&maroon2,	125, 24,  24 },
-	{NULL}
+	{NULL, 0, 0, 0 }
 };
 
 void P_InitEffects ()

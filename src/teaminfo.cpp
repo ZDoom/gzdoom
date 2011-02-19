@@ -245,7 +245,7 @@ void FTeam::ClearTeams ()
 
 bool FTeam::IsValidTeam (unsigned int uiTeam)
 {
-	if (uiTeam < 0 || uiTeam >= Teams.Size ())
+	if (uiTeam >= Teams.Size ())
 		return false;
 
 	return true;

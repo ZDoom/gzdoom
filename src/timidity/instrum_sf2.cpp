@@ -168,14 +168,14 @@ static void ParseShdr(SFFile *sf2, FileReader *f, DWORD chunkid, DWORD chunklen)
 ListHandler INFOHandlers[] =
 {
 	{ ID_ifil, ParseIfil },
-	{ 0 }
+	{ 0, 0 }
 };
 
 ListHandler SdtaHandlers[] =
 {
 	{ ID_smpl, ParseSmpl },
 	{ ID_sm24, ParseSm24 },
-	{ 0 }
+	{ 0, 0 }
 };
 
 ListHandler PdtaHandlers[] =
@@ -189,7 +189,7 @@ ListHandler PdtaHandlers[] =
 	{ ID_imod, ParseMod },
 	{ ID_igen, ParseGen },
 	{ ID_shdr, ParseShdr },
-	{ 0 }
+	{ 0, 0 }
 };
 
 static double timecent_to_sec(SWORD timecent)

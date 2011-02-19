@@ -1239,7 +1239,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 						module = StaticLoadModule (lump);
 					}
 					if (module != NULL) Imports.Push (module);
-					do ; while (parse[++i]);
+					do {;} while (parse[++i]);
 				}
 				++i;
 			}
@@ -1302,7 +1302,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 						{
 							MapVars[varNum] = &lib->MapVarStore[impNum];
 						}
-						do ; while (parse[++j]);
+						do {;} while (parse[++j]);
 						++j;
 					}
 				}
@@ -1331,7 +1331,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 									ModuleName, expectedSize);
 							}
 						}
-						do ; while (*++parse);
+						do {;} while (*++parse);
 						++parse;
 					}
 				}

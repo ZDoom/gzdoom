@@ -2318,7 +2318,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			for (i = 0; i < argn; ++i)
 			{
 				int argval = ReadLong(stream);
-				if (i < countof(arg))
+				if ((unsigned)i < countof(arg))
 				{
 					arg[i] = argval;
 				}
@@ -2337,7 +2337,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			for (i = 0; i < argn; ++i)
 			{
 				int argval = ReadLong(stream);
-				if (i < countof(arg))
+				if ((unsigned)i < countof(arg))
 				{
 					arg[i] = argval;
 				}
@@ -2426,7 +2426,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			{
 				players[player].weapons.Slots[slot].Clear();
 			}
-			for(int i = 0; i < count; ++i)
+			for(i = 0; i < count; ++i)
 			{
 				const PClass *wpn = Net_ReadWeapon(stream);
 				players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);

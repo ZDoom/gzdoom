@@ -766,8 +766,9 @@ static void CreateStartSpot (fixed_t *pos, FMapThing *start)
 	{
 		0, (LittleLong(pos[0])<<12), ((-LittleLong(pos[1]))<<12), 0,// tid, x, y, z
 		short(Scale ((2048-angle)&2047, 360, 2048)), 1,	// angle, type
+		0, 0,							// Skillfilter, Classfilter
 		7|MTF_SINGLE|224,										// flags
-		// special and args are 0
+		0, {NULL}, NULL 			// special is 0, args and Conversation are NULL
 	};
 
 	*start = mt;

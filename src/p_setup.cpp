@@ -3722,7 +3722,8 @@ void P_SetupLevel (char *lumpname, int position)
 		{
 			vertexes, numvertexes,
 			sides, numsides,
-			lines, numlines
+			lines, numlines,
+			0, 0, 0, 0
 		};
 		leveldata.FindMapBounds ();
 		// We need GL nodes if am_textured is on.

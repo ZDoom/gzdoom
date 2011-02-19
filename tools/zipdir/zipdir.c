@@ -1256,7 +1256,7 @@ int compress_lzma(Byte *out, unsigned int *outlen, const Byte *in, unsigned int 
 
 int compress_bzip2(Byte *out, unsigned int *outlen, const Byte *in, unsigned int inlen)
 {
-	if (BZ_OK == BZ2_bzBuffToBuffCompress(out, outlen, in, inlen, 9, 0, 0))
+	if (BZ_OK == BZ2_bzBuffToBuffCompress(out, outlen, (char *)in, inlen, 9, 0, 0))
 	{
 		return 0;
 	}

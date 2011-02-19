@@ -172,7 +172,7 @@ static void CenterMouse ()
 static void PostMouseMove (int x, int y)
 {
 	static int lastx = 0, lasty = 0;
-	event_t ev = { 0 };
+	event_t ev = { 0,0,0,0,0,0,0 };
 	
 	if (m_filter)
 	{
@@ -286,7 +286,7 @@ void MessagePump (const SDL_Event &sev)
 {
 	static int lastx = 0, lasty = 0;
 	int x, y;
-	event_t event = { 0, };
+	event_t event = { 0,0,0,0,0,0,0 };
 	
 	switch (sev.type)
 	{

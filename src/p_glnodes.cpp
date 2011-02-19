@@ -1009,7 +1009,8 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			{
 				vertexes, numvertexes,
 				sides, numsides,
-				lines, numlines
+				lines, numlines,
+				0, 0, 0, 0
 			};
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);

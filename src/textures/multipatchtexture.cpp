@@ -816,7 +816,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		pnames >> numpatches;
 
 		// Check whether the amount of names reported is correct.
-		if (numpatches < 0)
+		if ((signed)numpatches < 0)
 		{
 			Printf("Corrupt PNAMES lump found (negative amount of entries reported)");
 			return;

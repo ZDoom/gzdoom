@@ -268,7 +268,7 @@ static const hexenseq_t HexenSequences[] = {
 	{ NAME_DoorCreak,		{ HexenDoorSeq(3), HexenLastSeq } },
 	{ NAME_DoorMetal2,		{ HexenDoorSeq(9), HexenLastSeq } },
 	{ NAME_Wind,			{ HexenEnvSeq(10), HexenLastSeq } },
-	{ NAME_None }
+	{ NAME_None, {NULL} }
 };
 
 static int SeqTrans[64*3];

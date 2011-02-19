@@ -361,7 +361,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
 
-	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
+	if ((signed)(speech.SpeakerType) >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
 		if (type != NULL)
 		{
@@ -434,7 +434,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
 
-	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
+	if ((signed)speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
 		if (type != NULL)
 		{

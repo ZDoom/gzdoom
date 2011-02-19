@@ -1329,10 +1329,8 @@ void R_Subsector (subsector_t *sub)
 				fake3D = FAKE3D_FAKECEILING;
 				tempsec = *fakeFloor->model;
 				tempsec.ceilingplane = *fakeFloor->bottom.plane;
-				if (!(fakeFloor->flags & FF_THISINSIDE) &&
-					!(fakeFloor->flags & FF_INVERTSECTOR) ||
-					fakeFloor->flags & FF_THISINSIDE &&
-					fakeFloor->flags & FF_INVERTSECTOR)
+				if ((!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR)) ||
+					(fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR))
 				{
 					tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
 				}

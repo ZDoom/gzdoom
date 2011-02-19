@@ -213,6 +213,8 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	sub.sector = NULL;
 	sub.polys = NULL;
 	sub.BSP = NULL;
+	sub.flags = 0;
+	sub.render_sector = NULL;
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{

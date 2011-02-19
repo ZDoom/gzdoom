@@ -242,7 +242,7 @@ const PClass *PClass::FindClass (FName zaname)
 		}
 		else if (lexx == 0)
 		{
-			return cls->Size<0? NULL : cls;
+			return cls;
 		}
 		else
 		{

@@ -1587,10 +1587,6 @@ static void GetCmdLineFiles(TArray<FString> &wadfiles)
 	int i, argc;
 
 	argc = Args->CheckParmList("-file", &args);
-	if ((gameinfo.flags & GI_SHAREWARE) && argc > 0)
-	{
-		I_FatalError ("You cannot -file with the shareware version. Register!");
-	}
 	for (i = 0; i < argc; ++i)
 	{
 		D_AddWildFile(wadfiles, args[i]);
@@ -2044,7 +2040,7 @@ void D_DoomMain (void)
 		GetCmdLineFiles(pwads);
 		FString iwad = CheckGameInfo(pwads);
 
-		// The IWAD selection dialogue dpes not show in fullscreen so if the
+		// The IWAD selection dialogue does not show in fullscreen so if the
 		// restart is initiated without a defined IWAD assume for now that it's not going to change.
 		if (iwad.Len() == 0) iwad = lastIWAD;
 
@@ -2054,6 +2050,11 @@ void D_DoomMain (void)
 		gameinfo.flags = iwad_info->flags;
 		gameinfo.ConfigName = iwad_info->Configname;
 		lastIWAD = iwad;
+
+		if ((gameinfo.flags & GI_SHAREWARE) && pwads.Size() > 0)
+		{
+			I_FatalError ("You cannot -file with the shareware version. Register!");
+		}
 
 		FBaseCVar::DisableCallbacks();
 		GameConfig->DoGameSetup (gameinfo.ConfigName);

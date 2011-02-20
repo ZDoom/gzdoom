@@ -91,5 +91,16 @@ sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
 
 int WallMost (short *mostbuf, const secplane_t &plane, vertex_t *v1, vertex_t *v2);
 
+enum EWallVis
+{
+	WT_Front,		// Wall is front-facing and visible.
+	WT_Back,		// Wall is back-facing and visible.
+	WT_Gone			// Wall is either out of view or parellel to the line of sight.
+};
+
+EWallVis R_TransformWall(FWallTexMapParm *texmap, seg_t *seg, bool allow_back);
+EWallVis R_ProjectWall(FWallTexMapParm *texmap, EWallVis vis, fixed_t too_close_z=32);
+void R_SetFullTMapParms(FWallTexMapParm *texmap);
+void R_SetPartialTMapParms(FWallTexMapParm *texmap, EWallVis vis, seg_t *seg);
 
 #endif

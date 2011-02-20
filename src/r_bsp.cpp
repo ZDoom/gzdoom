@@ -580,6 +580,178 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	return sec;
 }
 
+//
+// R_TransformWall
+//
+// Rotates a seg for rendering.
+//
+EWallVis R_TransformWall(FWallTexMapParm *texmap, seg_t *line, bool allow_back)
+{
+	fixed_t tx1, tx2, ty1, ty2;
+	bool back_side = false;
+
+	tx1 = line->v1->x - viewx;
+	tx2 = line->v2->x - viewx;
+	ty1 = line->v1->y - viewy;
+	ty2 = line->v2->y - viewy;
+
+	// Reject lines not facing viewer
+	if (DMulScale32(ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
+	{
+		// If this subsector has extra floor planes, then we need still need to
+		// handle back-facing lines by marking the near edges of those planes.
+		if (!allow_back)
+		{
+			return WT_Gone;
+		}
+		// We reverse the orientation of the line and then continue with
+		// the transformations.
+		swapvalues(tx1, tx2);
+		swapvalues(ty1, ty2);
+		back_side = true;
+		// Make sure it really is facing us now.
+		if (DMulScale32(ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
+		{
+			return WT_Gone;
+		}
+	}
+
+	texmap->TX1 = DMulScale20(tx1, viewsin, -ty1, viewcos);
+	texmap->TX2 = DMulScale20(tx2, viewsin, -ty2, viewcos);
+
+	texmap->TY1 = DMulScale20(tx1, viewtancos, ty1, viewtansin);
+	texmap->TY2 = DMulScale20(tx2, viewtancos, ty2, viewtansin);
+
+	if (MirrorFlags & RF_XFLIP)
+	{
+		fixed_t t = 256 - texmap->TX1;
+		texmap->TX1 = 256-texmap->TX2;
+		texmap->TX2 = t;
+		swapvalues(texmap->TY1, texmap->TY2);
+	}
+
+	return back_side ? WT_Back : WT_Front;
+}
+
+//
+// R_ProjectWall
+//
+// Projects a pre-rotated wall and clips it to the FOV.
+//
+EWallVis R_ProjectWall(FWallTexMapParm *texmap, EWallVis vis, fixed_t too_close_z)
+{
+	if (texmap->TX1 >= -texmap->TY1)
+	{
+		if (texmap->TX1 > texmap->TY1) return WT_Gone;	// left edge is off the right side
+		if (texmap->TY1 == 0) return WT_Gone;
+		texmap->SX1 = (centerxfrac + Scale(texmap->TX1, centerxfrac, texmap->TY1)) >> FRACBITS;
+		if (texmap->TX1 >= 0) texmap->SX1 = MIN(viewwidth, texmap->SX1+1); // fix for signed divide
+		texmap->SZ1 = texmap->TY1;
+	}
+	else
+	{
+		if (texmap->TX2 < -texmap->TY2) return WT_Gone;	// wall is off the left side
+		fixed_t den = texmap->TX1 - texmap->TX2 - texmap->TY2 + texmap->TY1;	
+		if (den == 0) return WT_Gone;
+		texmap->SX1 = 0;
+		texmap->SZ1 = texmap->TY1 + Scale(texmap->TY2 - texmap->TY1, texmap->TX1 + texmap->TY1, den);
+	}
+
+	if (texmap->SZ1 < too_close_z)
+		return WT_Gone;
+
+	if (texmap->TX2 <= texmap->TY2)
+	{
+		if (texmap->TX2 < -texmap->TY2) return WT_Gone;	// right edge is off the left side
+		if (texmap->TY2 == 0) return WT_Gone;
+		texmap->SX2 = (centerxfrac + Scale(texmap->TX2, centerxfrac, texmap->TY2)) >> FRACBITS;
+		if (texmap->TX2 >= 0) texmap->SX2 = MIN(viewwidth, texmap->SX2+1);	// fix for signed divide
+		texmap->SZ2 = texmap->TY2;
+	}
+	else
+	{
+		if (texmap->TX1 > texmap->TY1) return WT_Gone;	// wall is off the right side
+		fixed_t den = texmap->TY2 - texmap->TY1 - texmap->TX2 + texmap->TX1;
+		if (den == 0) return WT_Gone;
+		texmap->SX2 = viewwidth;
+		texmap->SZ2 = texmap->TY1 + Scale(texmap->TY2 - texmap->TY1, texmap->TX1 - texmap->TY1, den);
+	}
+
+	if (texmap->SZ2 < too_close_z || texmap->SX2 <= texmap->SX1)
+		return WT_Gone;
+
+	if (texmap->SX1 > WindowRight || texmap->SX2 < WindowLeft)
+		return WT_Gone;
+
+	return vis;
+}
+
+//
+// R_SetFUllTMapParms
+//
+// Set texture mapping parameters for a seg that is an entire line.
+//
+
+void R_SetFullTMapParms(FWallTexMapParm *texmap)
+{
+	if (MirrorFlags & RF_XFLIP)
+	{
+		texmap->UoverZorg = (float)texmap->TX2 * WallTMapScale;
+		texmap->UoverZstep = (float)(-texmap->TY2) * 32.f;
+		texmap->InvZorg = (float)(texmap->TX2 - texmap->TX1) * WallTMapScale;
+		texmap->InvZstep = (float)(texmap->TY1 - texmap->TY2) * 32.f;
+	}
+	else
+	{
+		texmap->UoverZorg = (float)texmap->TX1 * WallTMapScale;
+		texmap->UoverZstep = (float)(-texmap->TY1) * 32.f;
+		texmap->InvZorg = (float)(texmap->TX1 - texmap->TX2) * WallTMapScale;
+		texmap->InvZstep = (float)(texmap->TY2 - texmap->TY1) * 32.f;
+	}
+	texmap->DepthScale = texmap->InvZstep * WallTMapScale2;
+	texmap->DepthOrg = -texmap->UoverZstep * WallTMapScale2;
+}
+
+//
+// R_SetPartalTMapParms
+//
+// Set texture mapping parameters for a seg that onyl partially covers a line.
+void R_SetPartialTMapParms(FWallTexMapParm *texmap, EWallVis vis, seg_t *seg)
+{
+	vertex_t *v1, *v2;
+	fixed_t tx1, tx2, ty1, ty2;
+	fixed_t fullx1, fullx2, fully1, fully2;
+
+	v1 = seg->linedef->v1;
+	v2 = seg->linedef->v2;
+	if (seg->linedef->sidedef[vis == WT_Back] != seg->sidedef)
+	{
+		swapvalues(v1, v2);
+	}
+	tx1 = v1->x - viewx;
+	tx2 = v2->x - viewx;
+	ty1 = v1->y - viewy;
+	ty2 = v2->y - viewy;
+
+	fullx1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
+	fullx2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
+	fully1 = DMulScale20 (tx1, viewtancos, ty1, viewtansin);
+	fully2 = DMulScale20 (tx2, viewtancos, ty2, viewtansin);
+
+	if (MirrorFlags & RF_XFLIP)
+	{
+		fullx1 = -fullx1;
+		fullx2 = -fullx2;
+	}
+
+	texmap->UoverZorg = (float)fullx1 * WallTMapScale;
+	texmap->UoverZstep = (float)(-fully1) * 32.f;
+	texmap->InvZorg = (float)(fullx1 - fullx2) * WallTMapScale;
+	texmap->InvZstep = (float)(fully2 - fully1) * 32.f;
+
+	texmap->DepthScale = texmap->InvZstep * WallTMapScale2;
+	texmap->DepthOrg = -texmap->UoverZstep * WallTMapScale2;
+}
 
 //
 // R_AddLine
@@ -591,98 +763,33 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 {
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	bool			solid;
-	fixed_t			tx1, tx2, ty1, ty2;
-	bool			mark_near = false;
+	FWallTexMapParm tmap;
+	EWallVis vis;
 
 	curline = line;
 
 	// [RH] Color if not texturing line
 	dc_color = (((int)(line - segs) * 8) + 4) & 255;
 
-	tx1 = line->v1->x - viewx;
-	tx2 = line->v2->x - viewx;
-	ty1 = line->v1->y - viewy;
-	ty2 = line->v2->y - viewy;
-
-	// Reject lines not facing viewer
-	if (DMulScale32 (ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
+	if (WT_Gone == (vis = R_TransformWall(&tmap, line, vsub != NULL)))
 	{
-		// If this subsector has extra floor planes, then we need still need to
-		// handle back-facing lines by marking the near edges of those planes.
-		if (vsub == NULL)
-		{
-			return;
-		}
-		// We reverse the orientation of the line and then continue with
-		// the transformations.
-		swapvalues(tx1, tx2);
-		swapvalues(ty1, ty2);
-		mark_near = true;
-		// Make sure it really is facing us now.
-		if (DMulScale32 (ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
-		{
-			return;
-		}
-	}
-
-	WallTX1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
-	WallTX2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
-
-	WallTY1 = DMulScale20 (tx1, viewtancos, ty1, viewtansin);
-	WallTY2 = DMulScale20 (tx2, viewtancos, ty2, viewtansin);
-
-	if (MirrorFlags & RF_XFLIP)
-	{
-		int t = 256-WallTX1;
-		WallTX1 = 256-WallTX2;
-		WallTX2 = t;
-		swapvalues (WallTY1, WallTY2);
-	}
-
-	if (WallTX1 >= -WallTY1)
-	{
-		if (WallTX1 > WallTY1) return;	// left edge is off the right side
-		if (WallTY1 == 0) return;
-		WallSX1 = (centerxfrac + Scale (WallTX1, centerxfrac, WallTY1)) >> FRACBITS;
-		if (WallTX1 >= 0) WallSX1 = MIN (viewwidth, WallSX1+1); // fix for signed divide
-		WallSZ1 = WallTY1;
-	}
-	else
-	{
-		if (WallTX2 < -WallTY2) return;	// wall is off the left side
-		fixed_t den = WallTX1 - WallTX2 - WallTY2 + WallTY1;	
-		if (den == 0) return;
-		WallSX1 = 0;
-		WallSZ1 = WallTY1 + Scale (WallTY2 - WallTY1, WallTX1 + WallTY1, den);
-	}
-
-	if (WallSZ1 < 32)
 		return;
-
-	if (WallTX2 <= WallTY2)
-	{
-		if (WallTX2 < -WallTY2) return;	// right edge is off the left side
-		if (WallTY2 == 0) return;
-		WallSX2 = (centerxfrac + Scale (WallTX2, centerxfrac, WallTY2)) >> FRACBITS;
-		if (WallTX2 >= 0) WallSX2 = MIN (viewwidth, WallSX2+1);	// fix for signed divide
-		WallSZ2 = WallTY2;
 	}
-	else
+	if (WT_Gone == (vis = R_ProjectWall(&tmap, vis)))
 	{
-		if (WallTX1 > WallTY1) return;	// wall is off the right side
-		fixed_t den = WallTY2 - WallTY1 - WallTX2 + WallTX1;
-		if (den == 0) return;
-		WallSX2 = viewwidth;
-		WallSZ2 = WallTY1 + Scale (WallTY2 - WallTY1, WallTX1 - WallTY1, den);
+		return;
 	}
 
-	if (WallSZ2 < 32 || WallSX2 <= WallSX1)
-		return;
+	WallTX1 = tmap.TX1;
+	WallTX2 = tmap.TX2;
+	WallTY1 = tmap.TY1;
+	WallTY2 = tmap.TY2;
+	WallSZ1 = tmap.SZ1;
+	WallSZ2 = tmap.SZ2;
+	WallSX1 = tmap.SX1;
+	WallSX2 = tmap.SX2;
 
-	if (WallSX1 > WindowRight || WallSX2 < WindowLeft)
-		return;
-
-	if (mark_near)
+	if (vis == WT_Back)
 	{
 		R_3D_MarkPlanes(vsub, line, line->v2, line->v1);
 		return;
@@ -701,57 +808,21 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 		return;
 	}
 
-	vertex_t *v1, *v2;
-
-	v1 = line->linedef->v1;
-	v2 = line->linedef->v2;
-
-	if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
+	if ((line->linedef->v1 == line->v1 && line->linedef->v2 == line->v2) ||
+		(line->linedef->v2 == line->v1 && line->linedef->v1 == line->v2))
 	{ // The seg is the entire wall.
-		if (MirrorFlags & RF_XFLIP)
-		{
-			WallUoverZorg = (float)WallTX2 * WallTMapScale;
-			WallUoverZstep = (float)(-WallTY2) * 32.f;
-			WallInvZorg = (float)(WallTX2 - WallTX1) * WallTMapScale;
-			WallInvZstep = (float)(WallTY1 - WallTY2) * 32.f;
-		}
-		else
-		{
-			WallUoverZorg = (float)WallTX1 * WallTMapScale;
-			WallUoverZstep = (float)(-WallTY1) * 32.f;
-			WallInvZorg = (float)(WallTX1 - WallTX2) * WallTMapScale;
-			WallInvZstep = (float)(WallTY2 - WallTY1) * 32.f;
-		}
+		R_SetFullTMapParms(&tmap);
 	}
 	else
 	{ // The seg is only part of the wall.
-		if (line->linedef->sidedef[0] != line->sidedef)
-		{
-			swapvalues (v1, v2);
-		}
-		tx1 = v1->x - viewx;
-		tx2 = v2->x - viewx;
-		ty1 = v1->y - viewy;
-		ty2 = v2->y - viewy;
-
-		fixed_t fullx1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
-		fixed_t fullx2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
-		fixed_t fully1 = DMulScale20 (tx1, viewtancos, ty1, viewtansin);
-		fixed_t fully2 = DMulScale20 (tx2, viewtancos, ty2, viewtansin);
-
-		if (MirrorFlags & RF_XFLIP)
-		{
-			fullx1 = -fullx1;
-			fullx2 = -fullx2;
-		}
-
-		WallUoverZorg = (float)fullx1 * WallTMapScale;
-		WallUoverZstep = (float)(-fully1) * 32.f;
-		WallInvZorg = (float)(fullx1 - fullx2) * WallTMapScale;
-		WallInvZstep = (float)(fully2 - fully1) * 32.f;
+		R_SetPartialTMapParms(&tmap, vis, line);
 	}
-	WallDepthScale = WallInvZstep * WallTMapScale2;
-	WallDepthOrg = -WallUoverZstep * WallTMapScale2;
+	WallUoverZorg = tmap.UoverZorg;
+	WallUoverZstep = tmap.UoverZstep;
+	WallInvZorg = tmap.InvZorg;
+	WallInvZstep = tmap.InvZstep;
+	WallDepthOrg = tmap.DepthOrg;
+	WallDepthScale = tmap.DepthScale;
 
 	if (!(fake3D & FAKE3D_FAKEBACK))
 	{

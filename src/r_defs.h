@@ -1210,6 +1210,18 @@ struct FCoverageBuffer
 	unsigned int NumLists;
 };
 
+// Wall texture mapping parameters.
+struct FWallTexMapParm
+{
+	fixed_t TX1, TX2;
+	fixed_t TY1, TY2;
+	fixed_t SZ1, SZ2;
+	short SX1, SX2;
+
+	float UoverZorg, UoverZstep;
+	float InvZorg, InvZstep;
+	float DepthOrg, DepthScale;
+};
 
 // One extra floor wall, attached to a visxplane.
 struct visxwall_t

@@ -2371,8 +2371,7 @@ void R_DrawPlayerSprites ()
 	} else {
 		// This used to use camera->Sector but due to interpolation that can be incorrect
 		// when the interpolated viewpoint is in a different sector than the camera.
-		sec = R_FakeFlat (viewsector, &tempsec, &floorlight,
-			&ceilinglight, false);
+		sec = R_FakeFlat (viewsector, &tempsec, &floorlight, &ceilinglight);
 
 		// [RH] set basecolormap
 		basecolormap = sec->ColorMap;
@@ -3001,13 +3000,13 @@ void R_DrawSprite (vissprite_t *spr)
 		r2 = MIN<int> (ds->x2, x2);
 
 		fixed_t neardepth, fardepth;
-		if (ds->sz1 < ds->sz2)
+		if (ds->tmap.SZ1 < ds->tmap.SZ2)
 		{
-			neardepth = ds->sz1, fardepth = ds->sz2;
+			neardepth = ds->tmap.SZ1, fardepth = ds->tmap.SZ2;
 		}
 		else
 		{
-			neardepth = ds->sz2, fardepth = ds->sz1;
+			neardepth = ds->tmap.SZ2, fardepth = ds->tmap.SZ1;
 		}
 		if (neardepth > spr->depth || (fardepth > spr->depth &&
 			// Check if sprite is in front of draw seg:
@@ -3509,7 +3508,7 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 		{
 			continue;
 		}
-		if (Scale (ds->siz2 - ds->siz1, (x2 + x1)/2 - ds->sx1, ds->sx2 - ds->sx1) + ds->siz1 < vis->idepth)
+		if (Scale (ds->siz2 - ds->siz1, (x2 + x1)/2 - ds->tmap.SX1, ds->tmap.SX2 - ds->tmap.SX1) + ds->siz1 < vis->idepth)
 		{
 			R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
 		}

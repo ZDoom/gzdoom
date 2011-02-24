@@ -1247,8 +1247,8 @@ void R_DrawSkyBoxes ()
 		R_CheckDrawSegs ();
 		ds_p->siz1 = INT_MAX;
 		ds_p->siz2 = INT_MAX;
-		ds_p->sz1 = 0;
-		ds_p->sz2 = 0;
+		ds_p->tmap.SZ1 = 0;
+		ds_p->tmap.SZ2 = 0;
 		ds_p->x1 = pl->minx;
 		ds_p->x2 = pl->maxx;
 		ds_p->silhouette = SIL_BOTH;

@@ -851,9 +851,6 @@ void Polymost_Responder (event_t *ev)
 
 
 
-extern fixed_t WallSZ1, WallSZ2, WallTX1, WallTX2, WallTY1, WallTY2, WallCX1, WallCX2, WallCY1, WallCY2;
-extern int WallSX1, WallSX2;
-extern float WallUoverZorg, WallUoverZstep, WallInvZorg, WallInvZstep, WallDepthScale, WallDepthOrg;
 extern fixed_t	rw_backcz1, rw_backcz2;
 extern fixed_t	rw_backfz1, rw_backfz2;
 extern fixed_t	rw_frontcz1, rw_frontcz2;
@@ -868,7 +865,7 @@ extern FTexture *toptexture;
 extern FTexture *bottomtexture;
 extern FTexture *midtexture;
 extern bool			rw_mustmarkfloor, rw_mustmarkceiling;
-extern void R_NewWall(bool);
+extern void R_NewWall(FWallTexMapParm *, bool);
 //extern void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el);
 extern int doorclosed;
 extern int viewpitch;
@@ -1037,7 +1034,6 @@ void RP_AddLine (seg_t *line)
 {
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	bool			solid;
-	fixed_t			tx1, tx2, ty1, ty2;
 	fixed_t			fcz0, ffz0, fcz1, ffz1, bcz0, bfz0, bcz1, bfz1;
 	double x0, x1, xp0, yp0, xp1, yp1, oxp0, oyp0, nx0, ny0, nx1, ny1, ryp0, ryp1;
 	double cy0, fy0, cy1, fy1, ocy0 = 0, ofy0 = 0, ocy1 = 0, ofy1 = 0;
@@ -1108,6 +1104,8 @@ void RP_AddLine (seg_t *line)
 	fy1 = ghoriz - double(ffz1 - viewz) * ryp1;
 
 /*
+	fixed_t tx1, tx2, ty1, ty2;
+
 	tx1 = line->v1->x - viewx;
 	tx2 = line->v2->x - viewx;
 	ty1 = line->v1->y - viewy;
@@ -1183,6 +1181,7 @@ void RP_AddLine (seg_t *line)
 	v1 = line->linedef->v1;
 	v2 = line->linedef->v2;
 
+#if 0
 	if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
 	{ // The seg is the entire wall.
 		if (MirrorFlags & RF_XFLIP)
@@ -1229,6 +1228,7 @@ void RP_AddLine (seg_t *line)
 	}
 	WallDepthScale = WallInvZstep * WallTMapScale2;
 	WallDepthOrg = -WallUoverZstep * WallTMapScale2;
+#endif
 
 	backsector = line->backsector;
 
@@ -1243,7 +1243,7 @@ void RP_AddLine (seg_t *line)
 	else
 	{
 		// killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-		backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
+		backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);	// FIXME: does not work with underwater window hack
 
 		doorclosed = 0;		// killough 4/16/98
 
@@ -1350,7 +1350,9 @@ void RP_AddLine (seg_t *line)
 	// must be fixed in case the polymost renderer ever gets developed further!
 	rw_offset = line->sidedef->GetTextureXOffset(side_t::mid);
 
+#if 0
 	R_NewWall (false);
+#endif
 	if (rw_markmirror)
 	{
 		WallMirrors.Push (ds_p - drawsegs);
@@ -1404,8 +1406,7 @@ void RP_Subsector (subsector_t *sub)
 	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
-	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
-						   &ceilinglightlevel, false);	// killough 4/11/98
+	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel, &ceilinglightlevel);	// killough 4/11/98
 
 	basecolormap = frontsector->ColorMap;
 	//R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);

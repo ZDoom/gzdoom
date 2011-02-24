@@ -32,11 +32,9 @@ struct drawseg_t
 	fixed_t		light, lightstep;
 	fixed_t		iscale, iscalestep;
 	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
-	short		sx1, sx2;		// left, right of parent seg on screen
-	fixed_t		sz1, sz2;		// z for left, right of parent seg on screen
-	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
-	fixed_t		cx, cy, cdx, cdy;
 	fixed_t		yrepeat;
+	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
+	FWallTexMapParm tmap;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
 	BYTE		bFakeBoundary;		// for fake walls
@@ -50,7 +48,6 @@ struct drawseg_t
 	int fake;	// ident fake drawseg, don't draw and clip sprites
 // backups
 	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures
-	float WallUoverZorg, WallUoverZstep, WallInvZorg, WallInvZstep, WallDepthScale, WallDepthOrg;
 };
 
 extern seg_t*		curline;
@@ -72,8 +69,6 @@ extern seg_t*		ActiveWallMirror;
 
 extern TArray<size_t>	WallMirrors;
 
-extern int WallSX1, WallSX2;
-
 extern bool Has3DFloors;
 
 typedef void (*drawfunc_t) (int start, int stop);
@@ -87,9 +82,12 @@ void R_BuildPolyBSP(subsector_t *sub);
 void R_RenderBSPNode (void *node);
 
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
-sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
+sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec, int *flight, int *clight, bool back=false, int x1=0, int x2=0);
 
-int WallMost (short *mostbuf, const secplane_t &plane, vertex_t *v1, vertex_t *v2);
+int WallMost (short *mostbuf, const FWallTexMapParm *tmap, const secplane_t &plane, vertex_t *v1, vertex_t *v2);
+int OWallMost (short *mostbuf, const FWallTexMapParm *tmap, fixed_t z);
+void PrepWall (fixed_t *swall, fixed_t *lwall, const FWallTexMapParm *tmap, fixed_t walxrepeat);
+void PrepLWall (fixed_t *lwall, const FWallTexMapParm *tmap, fixed_t walxrepeat);
 
 enum EWallVis
 {

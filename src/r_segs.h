@@ -35,6 +35,6 @@ ptrdiff_t R_NewOpening (ptrdiff_t len);
 
 void R_CheckDrawSegs ();
 
-void R_RenderSegLoop ();
+void R_RenderSegLoop (const struct FWallTexMapParm *tmap);
 
 #endif

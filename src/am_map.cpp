@@ -1629,7 +1629,7 @@ void AM_drawSubsectors()
 		}
 		// For lighting and texture determination
 		sector_t *sec = R_FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,
-			&ceilinglight, false);
+			&ceilinglight);
 		// Find texture origin.
 		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,
 							  sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS };

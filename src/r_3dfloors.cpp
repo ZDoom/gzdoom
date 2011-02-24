@@ -338,26 +338,26 @@ void R_ClearVisSubsectors()
 //
 //=============================================================================
 
-void R_3D_MarkPlanes(vissubsector_t *vsub, seg_t *seg, vertex_t *v1, vertex_t *v2)
+void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *seg, vertex_t *v1, vertex_t *v2)
 {
 	assert((v1 == seg->v1 && v2 == seg->v2) || (v2 == seg->v1 && v1 == seg->v2));
 
 	EMarkPlaneEdge edge = (seg->v1 == v1) ? MARK_FAR : MARK_NEAR;
 
-	if (vsub->MinX > WallSX1)
+	if (vsub->MinX > tmap->SX1)
 	{
-		vsub->MinX = WallSX1;
+		vsub->MinX = tmap->SX1;
 	}
-	if (vsub->MaxX < WallSX2)
+	if (vsub->MaxX < tmap->SX2)
 	{
-		vsub->MaxX = WallSX2;
+		vsub->MaxX = tmap->SX2;
 	}
 	for (visxplane_t *xplane = vsub->Planes; xplane != NULL; xplane = xplane->Next)
 	{
 		short most[MAXWIDTH], *in;
 		short *out, *uclip, *dclip;
 
-		WallMost(most, xplane->Plane, v1, v2);
+		WallMost(most, tmap, xplane->Plane, v1, v2);
 
 		// Clip to existing bounds.
 		uclip = openings + xplane->UClip;
@@ -370,11 +370,11 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, seg_t *seg, vertex_t *v1, vertex_t *v
 		{ // For a floor, the near edge is the bottom, and the far edge is the top.
 			out = edge == MARK_NEAR ? dclip : uclip;
 		}
-		out += WallSX1;
-		in = most + WallSX1;
-		uclip += WallSX1;
-		dclip += WallSX1;
-		for (int i = WallSX2 - WallSX1; i > 0; --i)
+		out += tmap->SX1;
+		in = most + tmap->SX1;
+		uclip += tmap->SX1;
+		dclip += tmap->SX1;
+		for (int i = tmap->SX2 - tmap->SX1; i > 0; --i)
 		{
 			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
 		}
@@ -407,27 +407,27 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, seg_t *seg, vertex_t *v1, vertex_t *v
 
 		// If we get here, there's a wall to be stored.
 		visxwall_t *vwall = R_NewVisXWall();
-		vwall->x1 = WallSX1;
-		vwall->x2 = WallSX2;
+		vwall->x1 = tmap->SX1;
+		vwall->x2 = tmap->SX2;
 
 		if (aboveplane)
 		{ // The plane's uclip serves as the wall's dclip.
-			vwall->DClip = xplane->UClip + WallSX1;
-			vwall->UClip = R_NewOpening(WallSX2 - WallSX1);
+			vwall->DClip = xplane->UClip + tmap->SX1;
+			vwall->UClip = R_NewOpening(tmap->SX2 - tmap->SX1);
 			out = openings + vwall->UClip;
-			WallMost(most, *xplane->FakeFloor->top.plane, v1, v2);
+			WallMost(most, tmap, *xplane->FakeFloor->top.plane, v1, v2);
 		}
 		else
 		{ // The plane's dclip serves as the wall's uclip.
-			vwall->UClip = xplane->DClip + WallSX1;
-			vwall->DClip = R_NewOpening(WallSX2 - WallSX1);
+			vwall->UClip = xplane->DClip + tmap->SX1;
+			vwall->DClip = R_NewOpening(tmap->SX2 - tmap->SX1);
 			out = openings + vwall->DClip;
-			WallMost(most, *xplane->FakeFloor->bottom.plane, v1, v2);
+			WallMost(most, tmap, *xplane->FakeFloor->bottom.plane, v1, v2);
 		}
-		in = most + WallSX1;
-		uclip = openings + vsub->uclip + WallSX1;
-		dclip = openings + vsub->dclip + WallSX1;
-		for (int i = WallSX2 - WallSX1; i > 0; --i)
+		in = most + tmap->SX1;
+		uclip = openings + vsub->uclip + tmap->SX1;
+		dclip = openings + vsub->dclip + tmap->SX1;
+		for (int i = tmap->SX2 - tmap->SX1; i > 0; --i)
 		{
 			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
 		}

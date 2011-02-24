@@ -1213,10 +1213,10 @@ struct FCoverageBuffer
 // Wall texture mapping parameters.
 struct FWallTexMapParm
 {
-	fixed_t TX1, TX2;
-	fixed_t TY1, TY2;
-	fixed_t SZ1, SZ2;
-	short SX1, SX2;
+	fixed_t TX1, TX2;				// x,y coords at left of wall in view space
+	fixed_t TY1, TY2;				// x,y coords at right of wall in view space
+	fixed_t SZ1, SZ2;				// depth at left, right of wall in screen space
+	short SX1, SX2;					// x coords at left, right of wall in screen space
 
 	float UoverZorg, UoverZstep;
 	float InvZorg, InvZstep;

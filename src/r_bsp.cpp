@@ -89,19 +89,6 @@ drawseg_t*		ds_p;
 size_t			FirstInterestingDrawseg;
 TArray<size_t>	InterestingDrawsegs;
 
-fixed_t			WallTX1, WallTX2;	// x coords at left, right of wall in view space
-fixed_t			WallTY1, WallTY2;	// y coords at left, right of wall in view space
-
-fixed_t			WallCX1, WallCX2;	// x coords at left, right of wall in camera space
-fixed_t			WallCY1, WallCY2;	// y coords at left, right of wall in camera space
-
-int				WallSX1, WallSX2;	// x coords at left, right of wall in screen space
-fixed_t			WallSZ1, WallSZ2;	// depth at left, right of wall in screen space
-
-float			WallDepthOrg, WallDepthScale;
-float			WallUoverZorg, WallUoverZstep;
-float			WallInvZorg, WallInvZstep;
-
 bool			Has3DFloors;
 TArray<vissubsector_t> VisSubsectors;
 
@@ -120,7 +107,7 @@ static subsector_t *InSubsector;
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
 
-void R_StoreWallRange (int start, int stop);
+void R_StoreWallRange (FWallTexMapParm *, int start, int stop);
 
 //
 // R_ClearDrawSegs
@@ -172,11 +159,13 @@ static cliprange_t		solidsegs[MAXWIDTH/2+2];
 //
 //==========================================================================
 
-bool R_ClipWallSegment (int first, int last, bool solid)
+bool R_ClipWallSegment (FWallTexMapParm *tmap, bool solid)
 {
 	cliprange_t *next, *start;
 	int i, j;
 	bool res = false;
+	int first = tmap->SX1;
+	int last = tmap->SX2;
 
 	// Find the first range that touches the range
 	// (adjacent pixels are touching).
@@ -190,7 +179,7 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 		if (last <= start->first)
 		{
 			// Post is entirely visible (above start).
-			R_StoreWallRange (first, last);
+			R_StoreWallRange (tmap, first, last);
 			if (fake3D & FAKE3D_FAKEMASK)
 			{
 				return true;
@@ -220,7 +209,7 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 		}
 
 		// There is a fragment above *start.
-		R_StoreWallRange (first, start->first);
+		R_StoreWallRange (tmap, first, start->first);
 
 		// Adjust the clip size for solid walls
 		if (solid && !(fake3D & FAKE3D_FAKEMASK))
@@ -237,7 +226,7 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 	while (last >= (next+1)->first)
 	{
 		// There is a fragment between two posts.
-		R_StoreWallRange (next->last, (next+1)->first);
+		R_StoreWallRange (tmap, next->last, (next+1)->first);
 		next++;
 		
 		if (last <= next->last)
@@ -249,7 +238,7 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 	}
 
 	// There is a fragment after *next.
-	R_StoreWallRange (next->last, last);
+	R_StoreWallRange (tmap, next->last, last);
 
 crunch:
 	if (fake3D & FAKE3D_FAKEMASK)
@@ -382,7 +371,7 @@ bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *source, const secplan
 
 sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 					 int *floorlightlevel, int *ceilinglightlevel,
-					 bool back)
+					 bool back, int x1, int x2)
 {
 	// [RH] allow per-plane lighting
 	if (floorlightlevel != NULL)
@@ -477,7 +466,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->x, curline->v2->y))
 			{
 				// Check that the window is actually visible
-				for (int z = WallSX1; z < WallSX2; ++z)
+				for (int z = x1; z < x2; ++z)
 				{
 					if (floorclip[z] > ceilingclip[z])
 					{
@@ -687,7 +676,7 @@ EWallVis R_ProjectWall(FWallTexMapParm *texmap, EWallVis vis, fixed_t too_close_
 }
 
 //
-// R_SetFUllTMapParms
+// R_SetFullTMapParms
 //
 // Set texture mapping parameters for a seg that is an entire line.
 //
@@ -780,28 +769,19 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 		return;
 	}
 
-	WallTX1 = tmap.TX1;
-	WallTX2 = tmap.TX2;
-	WallTY1 = tmap.TY1;
-	WallTY2 = tmap.TY2;
-	WallSZ1 = tmap.SZ1;
-	WallSZ2 = tmap.SZ2;
-	WallSX1 = tmap.SX1;
-	WallSX2 = tmap.SX2;
-
 	if (vis == WT_Back)
 	{
-		R_3D_MarkPlanes(vsub, line, line->v2, line->v1);
+		R_3D_MarkPlanes(vsub, &tmap, line, line->v2, line->v1);
 		return;
 	}
 	else if (vsub != NULL)
 	{
-		R_3D_MarkPlanes(vsub, line, line->v1, line->v2);
+		R_3D_MarkPlanes(vsub, &tmap, line, line->v1, line->v2);
 	}
 
 	if (line->linedef == NULL)
 	{
-		if (R_CheckClipWallSegment (WallSX1, WallSX2))
+		if (R_CheckClipWallSegment (tmap.SX1, tmap.SX2))
 		{
 			InSubsector->flags |= SSECF_DRAWN;
 		}
@@ -817,12 +797,6 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 	{ // The seg is only part of the wall.
 		R_SetPartialTMapParms(&tmap, vis, line);
 	}
-	WallUoverZorg = tmap.UoverZorg;
-	WallUoverZstep = tmap.UoverZstep;
-	WallInvZorg = tmap.InvZorg;
-	WallInvZstep = tmap.InvZstep;
-	WallDepthOrg = tmap.DepthOrg;
-	WallDepthScale = tmap.DepthScale;
 
 	if (!(fake3D & FAKE3D_FAKEBACK))
 	{
@@ -846,7 +820,7 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 		// kg3D - its fake, no transfer_heights
 		if (!(fake3D & FAKE3D_FAKEBACK))
 		{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-			backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
+			backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true, tmap.SX1, tmap.SX2);
 		}
 		doorclosed = 0;		// killough 4/16/98
 
@@ -860,12 +834,12 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 		{
 			rw_havehigh = true;
-			WallMost (wallupper, backsector->ceilingplane, line->v1, line->v2);
+			WallMost (wallupper, &tmap, backsector->ceilingplane, line->v1, line->v2);
 		}
 		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 		{
 			rw_havelow = true;
-			WallMost (walllower, backsector->floorplane, line->v1, line->v2);
+			WallMost (walllower, &tmap, backsector->floorplane, line->v1, line->v2);
 		}
 
 		// Closed door.
@@ -948,7 +922,7 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 			// mark their subsectors as visible for automap texturing.
 			if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
 			{
-				if (R_CheckClipWallSegment(WallSX1, WallSX2))
+				if (R_CheckClipWallSegment(tmap.SX1, tmap.SX2))
 				{
 					InSubsector->flags |= SSECF_DRAWN;
 				}
@@ -962,13 +936,13 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 	if (line->linedef->special == Line_Horizon)
 	{
 		// Be aware: Line_Horizon does not work properly with sloped planes
-		clearbufshort (walltop+WallSX1, WallSX2 - WallSX1, centery);
-		clearbufshort (wallbottom+WallSX1, WallSX2 - WallSX1, centery);
+		clearbufshort (walltop + tmap.SX1, tmap.SX2 - tmap.SX1, centery);
+		clearbufshort (wallbottom + tmap.SX1, tmap.SX2 - tmap.SX1, centery);
 	}
 	else
 	{
-		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane, line->v1, line->v2);
-		rw_floorstat = WallMost (wallbottom, frontsector->floorplane, line->v1, line->v2);
+		rw_ceilstat = WallMost (walltop, &tmap, frontsector->ceilingplane, line->v1, line->v2);
+		rw_floorstat = WallMost (wallbottom, &tmap, frontsector->floorplane, line->v1, line->v2);
 
 		// [RH] treat off-screen walls as solid
 #if 0	// Maybe later...
@@ -988,7 +962,7 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 #endif
 	}
 
-	if (R_ClipWallSegment (WallSX1, WallSX2, solid))
+	if (R_ClipWallSegment (&tmap, solid))
 	{
 		InSubsector->flags |= SSECF_DRAWN;
 	}
@@ -1262,8 +1236,7 @@ void R_Subsector (subsector_t *sub)
 	line = sub->firstline;
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
-	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
-						   &ceilinglightlevel, false);	// killough 4/11/98
+	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel, &ceilinglightlevel);	// killough 4/11/98
 
 	fll = floorlightlevel;
 	cll = ceilinglightlevel;

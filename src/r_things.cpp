@@ -3508,9 +3508,23 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 		{
 			continue;
 		}
-		if (Scale (ds->siz2 - ds->siz1, (x2 + x1)/2 - ds->tmap.SX1, ds->tmap.SX2 - ds->tmap.SX1) + ds->siz1 < vis->idepth)
+		fixed_t neardepth, fardepth;
+		if (ds->tmap.SZ1 < ds->tmap.SZ2)
 		{
-			R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
+			neardepth = ds->tmap.SZ1, fardepth = ds->tmap.SZ2;
+		}
+		else
+		{
+			neardepth = ds->tmap.SZ2, fardepth = ds->tmap.SZ1;
+		}
+		if (neardepth > vis->depth || (fardepth > vis->depth &&
+			// Check if sprite is in front of draw seg:
+			DMulScale32(vis->gy - ds->curline->v1->y, ds->curline->v2->x - ds->curline->v1->x,
+						ds->curline->v1->x - vis->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0))
+		{
+			// seg is behind particle, so draw the mid texture if it has one
+			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
+				R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
 		}
 	}
 }

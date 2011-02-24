@@ -1263,18 +1263,8 @@ void R_Subsector (subsector_t *sub)
 		(frontsector->heightsec && 
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
-		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
-					frontsector->GetTexture(sector_t::ceiling),
-					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
-					frontsector->GetAlpha(sector_t::ceiling),
-					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
-					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
-					frontsector->GetXScale(sector_t::ceiling),
-					frontsector->GetYScale(sector_t::ceiling),
-					frontsector->GetAngle(sector_t::ceiling),
-					frontsector->sky,
-					frontsector->CeilingSkyBox
-					) : NULL;
+		R_FindPlaneFromSector(frontsector, sector_t::ceiling, ceilinglightlevel + r_actualextralight,
+			frontsector->CeilingSkyBox) : NULL;
 
 	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 	{
@@ -1296,18 +1286,8 @@ void R_Subsector (subsector_t *sub)
 		(frontsector->heightsec &&
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
-		R_FindPlane(frontsector->floorplane,
-					frontsector->GetTexture(sector_t::floor),
-					floorlightlevel + r_actualextralight,				// killough 3/16/98
-					frontsector->GetAlpha(sector_t::floor),
-					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
-					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
-					frontsector->GetXScale(sector_t::floor),
-					frontsector->GetYScale(sector_t::floor),
-					frontsector->GetAngle(sector_t::floor),
-					frontsector->sky,
-					frontsector->FloorSkyBox
-					) : NULL;
+		R_FindPlaneFromSector(frontsector, sector_t::floor, floorlightlevel + r_actualextralight,
+			frontsector->FloorSkyBox) : NULL;
 
 	if (Has3DFloors)
 	{
@@ -1360,17 +1340,8 @@ void R_Subsector (subsector_t *sub)
 				}
 
 				ceilingplane = NULL;
-				floorplane = R_FindPlane(frontsector->floorplane,
-					frontsector->GetTexture(sector_t::floor),
-					floorlightlevel + r_actualextralight,				// killough 3/16/98
-					frontsector->GetAlpha(sector_t::floor),
-					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
-					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
-					frontsector->GetXScale(sector_t::floor),
-					frontsector->GetYScale(sector_t::floor),
-					frontsector->GetAngle(sector_t::floor),
-					frontsector->sky,
-					NULL);
+				floorplane = R_FindPlaneFromSector(frontsector, sector_t::floor,
+					floorlightlevel + r_actualextralight, NULL);
 
 				R_FakeDrawLoop(sub);
 				fake3D = 0;
@@ -1424,17 +1395,8 @@ void R_Subsector (subsector_t *sub)
 				tempsec.ceilingplane.ChangeHeight(1);
 
 				floorplane = NULL;
-				ceilingplane = R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
-					frontsector->GetTexture(sector_t::ceiling),
-					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
-					frontsector->GetAlpha(sector_t::ceiling),
-					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
-					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
-					frontsector->GetXScale(sector_t::ceiling),
-					frontsector->GetYScale(sector_t::ceiling),
-					frontsector->GetAngle(sector_t::ceiling),
-					frontsector->sky,
-					NULL);
+				ceilingplane = R_FindPlaneFromSector(frontsector, sector_t::ceiling,
+					ceilinglightlevel + r_actualextralight, NULL);
 
 				R_FakeDrawLoop(sub);
 				fake3D = 0;

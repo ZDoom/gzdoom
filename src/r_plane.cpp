@@ -522,6 +522,32 @@ static visplane_t *new_visplane (unsigned hash)
 	return check;
 }
 
+//==========================================================================
+//
+// R_FindPlaneFromSector
+//
+// Wrapper around R_FindPlane().
+//
+//==========================================================================
+
+visplane_t *R_FindPlaneFromSector(const sector_t *sec, int floorceil, int lightlevel, ASkyViewpoint *skybox)
+{
+	assert(floorceil == sector_t::floor || floorceil == sector_t::ceiling);
+
+	return R_FindPlane(
+		floorceil == sector_t::floor ? sec->floorplane : sec->ceilingplane,
+		sec->GetTexture(floorceil),
+		lightlevel,
+		sec->GetAlpha(floorceil),
+		sec->GetXOffset(floorceil),
+		sec->GetYOffset(floorceil),
+		sec->GetXScale(floorceil),
+		sec->GetYScale(floorceil),
+		sec->GetAngle(floorceil),
+		sec->sky,
+		skybox
+	);
+}
 
 //==========================================================================
 //

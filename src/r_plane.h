@@ -107,6 +107,8 @@ visplane_t *R_FindPlane
   int			sky,
   ASkyViewpoint *skybox);
 
+visplane_t *R_FindPlaneFromSector(const sector_t *sec, int floorceil, int lightlevel, ASkyViewpoint *skybox);
+
 visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);
 
 

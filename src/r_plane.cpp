@@ -1271,8 +1271,6 @@ void R_DrawSkyBoxes ()
 
 		// Create a drawseg to clip sprites to the sky plane
 		R_CheckDrawSegs ();
-		ds_p->siz1 = INT_MAX;
-		ds_p->siz2 = INT_MAX;
 		ds_p->tmap.SZ1 = 0;
 		ds_p->tmap.SZ2 = 0;
 		ds_p->x1 = pl->minx;

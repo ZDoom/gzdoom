@@ -69,6 +69,13 @@ extern fixed_t globaluclip, globaldclip;
 EXTERN_CVAR (Bool, st_scale)
 CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
 
+extern fixed_t rw_offset;
+extern fixed_t rw_light, rw_lightleft, rw_lightstep;
+extern fixed_t swall[MAXWIDTH];
+extern fixed_t lwall[MAXWIDTH];
+extern int wallshade;
+extern FTexture *rw_pic;
+
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -3088,21 +3095,114 @@ void R_DrawSprite (vissprite_t *spr)
 
 static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 {
+	ESPSResult drawmode;
+	side_t *masterside;
+	FTexture *pic;
+	fixed_t lwallscale, ywallscale;
+	F3DFloor *faker = xplane->FakeFloor;
+
+	drawmode = R_SetPatchStyle (LegacyRenderStyles[faker->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
+		Scale(faker->alpha, OPAQUE, 255), 0, 0);
+
+	if (drawmode == DontDraw)
+	{
+		R_FinishSetPatchStyle();
+		return;
+	}
+
+	masterside = faker->master->sidedef[0];
+
+	if ((faker->flags & (FF_UPPERTEXTURE | FF_LOWERTEXTURE)) == 0)
+	{
+		pic = TexMan(masterside->GetTexture(side_t::mid));
+		lwallscale = FixedMul(pic->xScale, masterside->GetTextureXScale(side_t::mid));
+		ywallscale = FixedMul(pic->yScale, masterside->GetTextureYScale(side_t::mid));
+	}
+
 	for (; vwall != NULL; vwall = vwall->Next)
 	{
+		assert(vwall->UClip >= 0);
+		assert(vwall->DClip >= 0);
+
+		side_t *side = vwall->Seg->sidedef;
 		short *top = openings + vwall->UClip;
 		short *bot = openings + vwall->DClip;
-		BYTE *destorg = dc_destorg + vwall->x1;
+		BYTE *destorg = dc_destorg + vwall->TMap.SX1;
+		fixed_t rowoffset;
 
-		for (int i = vwall->x2 - vwall->x1; i > 0; --i, ++top, ++bot, ++destorg)
+		rw_offset = side->GetTextureXOffset(side_t::mid);
+		rowoffset = side->GetTextureYOffset(side_t::mid);
+
+		if (faker->flags & (FF_UPPERTEXTURE | FF_LOWERTEXTURE))
 		{
-			dc_count = *bot - *top;
-			if (dc_count > 0)
+			if (faker->flags & FF_UPPERTEXTURE)
 			{
-				dc_dest = ylookup[*top] + destorg;
-				dc_color = 111;
-				R_FillColumnP();
+				pic = TexMan(side->GetTexture(side_t::top));
+				lwallscale = side->GetTextureXScale(side_t::top);
+				ywallscale = side->GetTextureYScale(side_t::top);
 			}
+			else
+			{
+				pic = TexMan(side->GetTexture(side_t::bottom));
+				lwallscale = side->GetTextureXScale(side_t::bottom);
+				ywallscale = side->GetTextureYScale(side_t::bottom);
+			}
+			lwallscale = FixedMul(lwallscale, pic->xScale);
+			ywallscale = FixedMul(ywallscale, pic->yScale);
+		}
+		else
+		{
+			rw_offset += masterside->GetTextureXOffset(side_t::mid);
+			rowoffset += masterside->GetTextureYOffset(side_t::mid);
+		}
+		if (rowoffset < 0)
+		{
+			rowoffset += pic->GetHeight() << FRACBITS;
+		}
+		dc_texturemid = faker->model->GetPlaneTexZ(sector_t::ceiling);
+		if (pic->bWorldPanning)
+		{
+			dc_texturemid = FixedMul(dc_texturemid - viewz + rowoffset, ywallscale);
+			rw_offset = FixedMul(rw_offset, lwallscale);
+		}
+		else
+		{
+			dc_texturemid = FixedMul(dc_texturemid - viewz, ywallscale) + rowoffset;
+		}
+
+		rw_lightleft = FRACUNIT;
+		rw_lightstep = 0;
+
+		if (fixedlightlev >= 0)
+		{
+			dc_colormap = basecolormap->Maps + fixedlightlev;
+		}
+		else if (fixedcolormap != NULL)
+		{
+			dc_colormap = fixedcolormap;
+		}
+		else
+		{
+			wallshade = LIGHT2SHADE(side->GetLightLevel(foggy, side->sector->lightlevel) + r_actualextralight);
+			GlobVis = r_WallVisibility;
+			rw_lightleft = SafeDivScale12(GlobVis, vwall->TMap.SZ1);
+			rw_lightstep = (SafeDivScale12(GlobVis, vwall->TMap.SZ2) - rw_lightleft) / (vwall->TMap.SX2 - vwall->TMap.SX1);
+			rw_light = rw_lightleft;
+		}
+
+		PrepWall(swall, lwall, &vwall->TMap, side->TexelLength * lwallscale);
+
+		rw_pic = pic;
+		short *uclip = openings + vwall->UClip - vwall->TMap.SX1;
+		short *dclip = openings + vwall->DClip - vwall->TMap.SX1;
+
+		if (colfunc == basecolfunc)
+		{
+			maskwallscan(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale);
+		}
+		else
+		{
+			transmaskwallscan(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale);
 		}
 	}
 }

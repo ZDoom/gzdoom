@@ -769,6 +769,19 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 		return;
 	}
 
+	if (line->linedef != NULL)
+	{
+		if ((line->linedef->v1 == line->v1 && line->linedef->v2 == line->v2) ||
+			(line->linedef->v2 == line->v1 && line->linedef->v1 == line->v2))
+		{ // The seg is the entire wall.
+			R_SetFullTMapParms(&tmap);
+		}
+		else
+		{ // The seg is only part of the wall.
+			R_SetPartialTMapParms(&tmap, vis, line);
+		}
+	}
+
 	if (vis == WT_Back)
 	{
 		R_3D_MarkPlanes(vsub, &tmap, line, line->v2, line->v1);
@@ -786,16 +799,6 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 			InSubsector->flags |= SSECF_DRAWN;
 		}
 		return;
-	}
-
-	if ((line->linedef->v1 == line->v1 && line->linedef->v2 == line->v2) ||
-		(line->linedef->v2 == line->v1 && line->linedef->v1 == line->v2))
-	{ // The seg is the entire wall.
-		R_SetFullTMapParms(&tmap);
-	}
-	else
-	{ // The seg is only part of the wall.
-		R_SetPartialTMapParms(&tmap, vis, line);
 	}
 
 	if (!(fake3D & FAKE3D_FAKEBACK))

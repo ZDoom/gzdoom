@@ -407,8 +407,8 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *s
 
 		// If we get here, there's a wall to be stored.
 		visxwall_t *vwall = R_NewVisXWall();
-		vwall->x1 = tmap->SX1;
-		vwall->x2 = tmap->SX2;
+		vwall->TMap = *tmap;
+		vwall->Seg = seg;
 
 		if (aboveplane)
 		{ // The plane's uclip serves as the wall's dclip.

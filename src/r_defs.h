@@ -1227,9 +1227,10 @@ struct FWallTexMapParm
 struct visxwall_t
 {
 	visxwall_t *Next;
+	seg_t *Seg;						// Seg this wall is from.
 	ptrdiff_t UClip;				// Clipping for the top edge of the wall.
 	ptrdiff_t DClip;				// Clipping for the bottom edge of the wall.
-	short x1, x2;					// [Left, Right) of wall.
+	FWallTexMapParm TMap;
 };
 
 // One extra floor plane, contained within a subsector.

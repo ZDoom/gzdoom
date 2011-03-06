@@ -2126,8 +2126,6 @@ void R_StoreWallRange (FWallTexMapParm *tmap, int start, int stop)
 	rw_light = rw_lightleft + rw_lightstep * (start - tmap->SX1);
 
 	ds_p->tmap = *tmap;
-	ds_p->siz1 = (DWORD)DivScale32 (1, tmap->SZ1) >> 1;
-	ds_p->siz2 = (DWORD)DivScale32 (1, tmap->SZ2) >> 1;
 	ds_p->x1 = rw_x = start;
 	ds_p->x2 = stop - 1;
 	ds_p->curline = curline;

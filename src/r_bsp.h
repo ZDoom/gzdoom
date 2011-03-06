@@ -33,7 +33,6 @@ struct drawseg_t
 	fixed_t		iscale, iscalestep;
 	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
 	fixed_t		yrepeat;
-	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
 	FWallTexMapParm tmap;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;

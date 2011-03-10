@@ -57,8 +57,6 @@ foreach( majver ${MAJOR_VERSIONS} )
 	endforeach( dir ${FMOD_DIR_VERSIONS} )
 endforeach( majver ${MAJOR_VERSIONS} )
 
-message( STATUS "${FMOD_DIR_VERSIONS}" )
-
 if( WIN32 )
 	if( X64 )
 		set( WIN_TYPE Win64 )

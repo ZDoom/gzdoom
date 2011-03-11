@@ -364,6 +364,7 @@ AActor::AActor () throw()
 }
 
 AActor::AActor (const AActor &other) throw()
+	: DThinker()
 {
 	memcpy (&x, &other.x, (BYTE *)&this[1] - (BYTE *)&x);
 }

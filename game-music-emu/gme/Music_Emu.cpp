@@ -24,7 +24,7 @@ int const silence_threshold = 0x10;
 long const fade_block_size = 512;
 int const fade_shift = 8; // fade ends with gain at 1.0 / (1 << fade_shift)
 
-Music_Emu::equalizer_t const Music_Emu::tv_eq = { -8.0, 180 };
+Music_Emu::equalizer_t const Music_Emu::tv_eq = { -8.0, 180, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 void Music_Emu::clear_track_vars()
 {

@@ -552,58 +552,7 @@ class CommandDrawString : public SBarInfoCommand
 			sc.MustGetToken(',');
 			translation = GetTranslation(sc);
 			sc.MustGetToken(',');
-			if(sc.CheckToken(TK_Identifier))
-			{
-				if(sc.Compare("levelname"))
-					strValue = LEVELNAME;
-				else if(sc.Compare("levellump"))
-					strValue = LEVELLUMP;
-				else if(sc.Compare("skillname"))
-					strValue = SKILLNAME;
-				else if(sc.Compare("playerclass"))
-					strValue = PLAYERCLASS;
-				else if(sc.Compare("playername"))
-					strValue = PLAYERNAME;
-				else if(sc.Compare("ammo1tag"))
-					strValue = AMMO1TAG;
-				else if(sc.Compare("ammo2tag"))
-					strValue = AMMO2TAG;
-				else if(sc.Compare("weapontag"))
-					strValue = WEAPONTAG;
-				else if(sc.Compare("inventorytag"))
-					strValue = INVENTORYTAG;
-				else if(sc.Compare("time"))
-					strValue = TIME;
-				else if(sc.Compare("logtext"))
-					strValue = LOGTEXT;
-				else if(sc.Compare("globalvar"))
-				{
-					strValue = GLOBALVAR;
-					sc.MustGetToken(TK_IntConst);
-					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
-						sc.ScriptError("Global variable number out of range: %d", sc.Number);
-					valueArgument = sc.Number;
-				}
-				else if(sc.Compare("globalarray"))
-				{
-					strValue = GLOBALARRAY;
-					sc.MustGetToken(TK_IntConst);
-					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
-						sc.ScriptError("Global variable number out of range: %d", sc.Number);
-					valueArgument = sc.Number;
-				}
-				else
-					sc.ScriptError("Unknown string '%s'.", sc.String);
-			}
-			else
-			{
-				strValue = CONSTANT;
-				sc.MustGetToken(TK_StringConst);
-				if(sc.String[0] == '$')
-					str = GStrings[sc.String+1];
-				else
-					str = sc.String;
-			}
+			ParseStringValue(sc);
 			sc.MustGetToken(',');
 			GetCoordinates(sc, fullScreenOffsets, startX, y);
 			if(sc.CheckToken(',')) //spacing
@@ -658,6 +607,61 @@ class CommandDrawString : public SBarInfoCommand
 			sc.MustGetToken(';');
 
 			RealignString();
+		}
+		void	ParseStringValue(FScanner &sc)
+		{
+			if(sc.CheckToken(TK_Identifier))
+			{
+				if(sc.Compare("levelname"))
+					strValue = LEVELNAME;
+				else if(sc.Compare("levellump"))
+					strValue = LEVELLUMP;
+				else if(sc.Compare("skillname"))
+					strValue = SKILLNAME;
+				else if(sc.Compare("playerclass"))
+					strValue = PLAYERCLASS;
+				else if(sc.Compare("playername"))
+					strValue = PLAYERNAME;
+				else if(sc.Compare("ammo1tag"))
+					strValue = AMMO1TAG;
+				else if(sc.Compare("ammo2tag"))
+					strValue = AMMO2TAG;
+				else if(sc.Compare("weapontag"))
+					strValue = WEAPONTAG;
+				else if(sc.Compare("inventorytag"))
+					strValue = INVENTORYTAG;
+				else if(sc.Compare("time"))
+					strValue = TIME;
+				else if(sc.Compare("logtext"))
+					strValue = LOGTEXT;
+				else if(sc.Compare("globalvar"))
+				{
+					strValue = GLOBALVAR;
+					sc.MustGetToken(TK_IntConst);
+					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+						sc.ScriptError("Global variable number out of range: %d", sc.Number);
+					valueArgument = sc.Number;
+				}
+				else if(sc.Compare("globalarray"))
+				{
+					strValue = GLOBALARRAY;
+					sc.MustGetToken(TK_IntConst);
+					if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+						sc.ScriptError("Global variable number out of range: %d", sc.Number);
+					valueArgument = sc.Number;
+				}
+				else
+					sc.ScriptError("Unknown string '%s'.", sc.String);
+			}
+			else
+			{
+				strValue = CONSTANT;
+				sc.MustGetToken(TK_StringConst);
+				if(sc.String[0] == '$')
+					str = GStrings[sc.String+1];
+				else
+					str = sc.String;
+			}
 		}
 		void	Reset()
 		{
@@ -846,8 +850,9 @@ class CommandDrawNumber : public CommandDrawString
 {
 	public:
 		CommandDrawNumber(SBarInfo *script) : CommandDrawString(script),
-			fillZeros(false), whenNotZero(false), interpolationSpeed(0), drawValue(0),
-			length(3), lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
+			fillZeros(false), whenNotZero(false), dontCap(false),
+			usePrefix(false), interpolationSpeed(0), drawValue(0), length(3),
+			lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
 			highTranslation(CR_UNTRANSLATED), value(CONSTANT),
 			inventoryItem(NULL)
 		{
@@ -980,6 +985,8 @@ class CommandDrawNumber : public CommandDrawString
 					fillZeros = true;
 				else if(sc.Compare("whennotzero"))
 					whenNotZero = true;
+				else if(sc.Compare("dontcap"))
+					dontCap = true;
 				else if(sc.Compare("drawshadow"))
 				{
 					if(sc.CheckToken('('))
@@ -1012,6 +1019,21 @@ class CommandDrawNumber : public CommandDrawString
 						alignment = ALIGN_CENTER;
 					else
 						sc.ScriptError("Unknown alignment '%s'.", sc.String);
+					sc.MustGetToken(')');
+				}
+				else if(sc.Compare("prefix"))
+				{
+					usePrefix = true;
+					sc.MustGetToken('(');
+					ParseStringValue(sc);
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					prefixPadding = sc.String;
+					if(strValue == CommandDrawString::CONSTANT)
+					{
+						usePrefix = false; // Use prefix just determines if we tick the string.
+						prefixPadding = str + prefixPadding;
+					}
 					sc.MustGetToken(')');
 				}
 				else
@@ -1056,6 +1078,12 @@ class CommandDrawNumber : public CommandDrawString
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
+			if(usePrefix)
+			{
+				cache = -1; // Disable the cache since we are using the same variables.
+				CommandDrawString::Tick(block, statusBar, hudChanged);
+			}
+
 			int num = valueArgument;
 			switch(value)
 			{
@@ -1222,25 +1250,28 @@ class CommandDrawNumber : public CommandDrawString
 			else if(highValue != -1 && drawValue >= highValue) //high
 				translation = highTranslation;
 
-			// 10^9 is a largest we can hold in a 32-bit int.  So if we go any larger we have to toss out the positions limit.
-			int maxval = length <= 9 ? (int) ceil(pow(10., length))-1 : INT_MAX;
-			if(!fillZeros || length == 1)
-				drawValue = clamp(drawValue, -maxval, maxval);
-			else //The community wanted negatives to take the last digit, but we can only do this if there is room
-				drawValue = clamp(drawValue, length <= 9 ? (int) -(ceil(pow(10., length-1))-1) : INT_MIN, maxval);
-			str.Format("%d", drawValue);
-			if(fillZeros)
+			bool useFillZeros = fillZeros;
+			if(!dontCap)
 			{
-				if(drawValue < 0) //We don't want the negative just yet
-					str.Format("%d", -drawValue);
-				while(str.Len() < (unsigned int) length)
-				{
-					if(drawValue < 0 && str.Len() == (unsigned int) (length-1))
-						str.Insert(0, "-");
-					else
-						str.Insert(0, "0");
-				}
+				// 10^9 is a largest we can hold in a 32-bit int.  So if we go any larger we have to toss out the positions limit.
+				int maxval = length <= 9 ? (int) ceil(pow(10., length))-1 : INT_MAX;
+				if(!fillZeros || length == 1)
+					drawValue = clamp(drawValue, -maxval, maxval);
+				else //The community wanted negatives to take the last digit, but we can only do this if there is room
+					drawValue = clamp(drawValue, length <= 9 ? (int) -(ceil(pow(10., length-1))-1) : INT_MIN, maxval);
 			}
+			else if(length <= 9)
+			{
+				int limit = (int) ceil(pow(10., length > 1 && drawValue < 0 ? length - 1 : length));
+				if(drawValue >= limit)
+					useFillZeros = true;
+				drawValue = drawValue%limit;
+			}
+
+			if(useFillZeros)
+				str.Format("%s%s%0*d", usePrefix ? str.GetChars() : "", prefixPadding.GetChars(), drawValue < 0 ? length - 1 : length, drawValue);
+			else
+				str.Format("%s%s%d", usePrefix ? str.GetChars() : "", prefixPadding.GetChars(), drawValue);
 
 			RealignString();
 		}
@@ -1278,6 +1309,8 @@ class CommandDrawNumber : public CommandDrawString
 
 		bool				fillZeros;
 		bool				whenNotZero;
+		bool				dontCap;
+		bool				usePrefix;
 
 		int					interpolationSpeed;
 		int					drawValue;
@@ -1290,6 +1323,8 @@ class CommandDrawNumber : public CommandDrawString
 		EColorRange			normalTranslation;
 		ValueType			value;
 		const PClass		*inventoryItem;
+
+		FString				prefixPadding;
 
 		friend class CommandDrawInventoryBar;
 };

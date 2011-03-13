@@ -497,7 +497,7 @@ void Win32Video::AddLetterboxModes ()
 void Win32Video::AddMode (int x, int y, int bits, int y2, int doubling)
 {
 	// Reject modes that do not meet certain criteria.
-	if ((x & 7) != 0 ||
+	if ((x & 1) != 0 ||
 		y > MAXHEIGHT ||
 		x > MAXWIDTH ||
 		y < 200 ||

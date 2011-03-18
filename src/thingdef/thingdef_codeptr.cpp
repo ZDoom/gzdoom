@@ -84,7 +84,6 @@ static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
 static FRandom pr_teleport("A_Teleport");
 
-
 //==========================================================================
 //
 // ACustomInventory :: CallStateChain
@@ -135,6 +134,291 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 		}
 	}
 	return result;
+}
+
+
+
+//==========================================================================
+//
+// Checks whether this actor is a missile
+// Unfortunately this was buggy in older versions of the code and many
+// released DECORATE monsters rely on this bug so it can only be fixed
+// with an optional flag
+//
+//==========================================================================
+inline static bool isMissile(AActor * self, bool precise=true)
+{
+	return self->flags&MF_MISSILE || (precise && self->GetDefault()->flags&MF_MISSILE);
+}
+
+
+//==========================================================================
+//
+// Pointer-based operations
+//
+//==========================================================================
+
+
+enum AAPTR
+{
+	AAPTR_DEFAULT = 0,
+	AAPTR_NULL = 0x1,
+	AAPTR_TARGET = 0x2,
+	AAPTR_MASTER = 0x4,
+	AAPTR_TRACER = 0x8
+};
+
+// [FDARI] Exported logic for guarding against loops in Target (for missiles) and Master (for all) chains.
+// It is called from multiple locations.
+// The code may be in need of optimisation.
+
+void VerifyTargetChain(AActor *self, bool preciseMissileCheck=true)
+{
+	if (!(self && isMissile(self, preciseMissileCheck))) return;
+	AActor *origin = self;
+	AActor *next = origin->target;
+
+	// origin: the most recent actor that has been verified as appearing only once
+	// next: the next actor to be verified; will be "origin" in the next iteration
+
+	while (next && isMissile(next, preciseMissileCheck)) // we only care when there are missiles involved
+	{
+		AActor *compare = self;
+		// every new actor must prove not to be the first actor in the chain, or any subsequent actor
+		// any actor up to and including "origin" has only appeared once
+		do
+		{
+			if (compare == next)
+			{
+				// if any of the actors from self to (inclusive) origin match the next actor,
+				// self has reached/created a loop
+				self->target = NULL;
+				return;
+			}
+			if (compare == origin) break; // when "compare" = origin, we know that the next actor is, and should be "next"
+			compare = compare->target;
+		} while (true); // we're never leaving the loop here
+
+		origin = next;
+		next = next->target;
+	}
+}
+
+void VerifyMasterChain(AActor *self)
+{
+	// See VerifyTargetChain for detailed comments.
+
+	if (!self) return;
+	AActor *origin = self;
+	AActor *next = origin->master;
+	while (next) // We always care (See "VerifyTargetChain")
+	{
+		AActor *compare = self;
+		do
+		{
+			if (compare == next)
+			{
+				self->master = NULL;
+				return;
+			}
+			if (compare == origin) break;
+			compare = compare->master;
+		} while (true); // we're never leaving the loop here
+
+		origin = next;
+		next = next->master;
+	}
+}
+
+enum PTROP
+{
+	PTROP_UNSAFETARGET = 1,
+	PTROP_UNSAFEMASTER = 2,
+	PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER
+};
+
+
+//==========================================================================
+//
+// A_RearrangePointers
+//
+// Allow an actor to change its relationship to other actors by
+// copying pointers freely between TARGET MASTER and TRACER.
+// Can also assign null value, but does not duplicate A_ClearTarget.
+//
+//==========================================================================
+
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RearrangePointers)
+{
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_INT(ptr_target, 0);
+	ACTION_PARAM_INT(ptr_master, 1);
+	ACTION_PARAM_INT(ptr_tracer, 2);
+	ACTION_PARAM_INT(flags, 3);
+
+	// Rearrange pointers internally
+
+	// Fetch all values before modification, so that all fields can get original values
+	AActor
+		*gettarget = self->target,
+		*getmaster = self->master,
+		*gettracer = self->tracer;
+
+	switch (ptr_target) // pick the new target
+	{
+	case AAPTR_MASTER:
+		self->target = getmaster;
+		if (!(PTROP_UNSAFETARGET & flags)) VerifyTargetChain(self);
+		break;
+	case AAPTR_TRACER:
+		self->target = gettracer;
+		if (!(PTROP_UNSAFETARGET & flags)) VerifyTargetChain(self);
+		break;
+	case AAPTR_NULL:
+		self->target = NULL;
+		// THIS IS NOT "A_ClearTarget", so no other targeting info is removed
+		break;
+	}
+
+	// presently permitting non-monsters to set master
+	switch (ptr_master) // pick the new master
+	{
+	case AAPTR_TARGET:
+		self->master = gettarget;
+		if (!(PTROP_UNSAFEMASTER & flags)) VerifyMasterChain(self);
+		break;
+	case AAPTR_TRACER:
+		self->master = gettracer;
+		if (!(PTROP_UNSAFEMASTER & flags)) VerifyMasterChain(self);
+		break;
+	case AAPTR_NULL:
+		self->master = NULL;
+		break;
+	}
+
+	switch (ptr_tracer) // pick the new tracer
+	{
+	case AAPTR_TARGET:
+		self->tracer = gettarget;
+		break; // no verification deemed necessary; the engine never follows a tracer chain(?)
+	case AAPTR_MASTER:
+		self->tracer = getmaster;
+		break; // no verification deemed necessary; the engine never follows a tracer chain(?)
+	case AAPTR_NULL:
+		self->tracer = NULL;
+		break;
+	}
+}
+
+//==========================================================================
+//
+// A_TransferPointer
+//
+// Copy one pointer (MASTER, TARGET or TRACER) from this actor (SELF),
+// or from an this actor's MASTER, TARGET or TRACER.
+//
+// You can copy any one of that actor's pointers
+//
+// Assign the copied pointer to any one pointer in SELF,
+// MASTER, TARGET or TRACER.
+//
+// Any attempt to make an actor point to itself will replace the pointer
+// with a null value.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TransferPointer)
+{
+	ACTION_PARAM_START(5);
+	ACTION_PARAM_INT(ptr_source, 0);
+	ACTION_PARAM_INT(ptr_recepient, 1);
+	ACTION_PARAM_INT(ptr_sourcefield, 2);
+	ACTION_PARAM_INT(ptr_recepientfield, 3);
+	ACTION_PARAM_INT(flags, 4);
+
+	AActor *source, *recepient;
+
+	// Exchange pointers with actors to whom you have pointers (or with yourself, if you must)
+
+	switch (ptr_source) // pick an actor to provide a pointer
+	{
+	case AAPTR_DEFAULT: source = self; break;
+	case AAPTR_TARGET: source = self->target; break;
+	case AAPTR_MASTER: source = self->master; break;
+	case AAPTR_TRACER: source = self->tracer; break;
+	default: return;
+	}
+
+	if (!source) return; // you must pick somebody. MAYBE we should make a null assignment instead of just returning.
+
+	switch (ptr_recepient) // pick an actor to store the provided pointer value
+	{
+	case AAPTR_DEFAULT: recepient = self; break;
+	case AAPTR_TARGET: recepient = self->target; break;
+	case AAPTR_MASTER: recepient = self->master; break;
+	case AAPTR_TRACER: recepient = self->tracer; break;
+	default: return;
+	}
+
+	if (!recepient) return; // you must pick somebody. No way we can even make a null assignment here.
+
+	switch (ptr_sourcefield) // convert source from dataprovider to data
+	{
+	case AAPTR_TARGET: source = source->target; break; // now we don't care where the data comes from anymore
+	case AAPTR_MASTER: source = source->master; break; // so we reassign source; it now holds the data itself
+	case AAPTR_TRACER: source = source->tracer; break;
+	default: source = NULL;
+	}
+
+	if (source == recepient) source = NULL; // The recepient should not acquire a pointer to itself; will write NULL
+
+	if (ptr_recepientfield == AAPTR_DEFAULT) ptr_recepientfield = ptr_sourcefield; // If default: Write to same field as data was read from
+
+	switch (ptr_recepientfield) // assignment and safeguards (optional)
+	{
+	case AAPTR_TARGET:
+		recepient->target = source;
+		if (!(PTROP_UNSAFETARGET & flags)) VerifyTargetChain(recepient);
+		break;
+	case AAPTR_MASTER:
+		recepient->master = source;
+		if (!(PTROP_UNSAFEMASTER & flags)) VerifyMasterChain(recepient);
+		break;
+	case AAPTR_TRACER:
+		recepient->tracer = source;
+		break;
+	}
+}
+
+//==========================================================================
+//
+// A_CopyFriendliness
+//
+// Join forces with one of the actors you are pointing to (MASTER by default)
+//
+// Normal CopyFriendliness reassigns health. This function will not.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopyFriendliness)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(ptr_source, 0);
+	
+	if (self->player) return;
+
+	AActor *source;
+
+	switch (ptr_source)
+	{
+	case AAPTR_TARGET: source = self->target; break;
+	case AAPTR_MASTER: source = self->master; break;
+	case AAPTR_TRACER: source = self->tracer; break;
+	default: return;
+	}
+
+	if (source) self->CopyFriendliness(source, false, false); // Overriding default behaviour: No modification of health
 }
 
 //==========================================================================
@@ -674,19 +958,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CallSpecial)
 	bool res = !!P_ExecuteSpecial(special, NULL, self, false, arg1, arg2, arg3, arg4, arg5);
 
 	ACTION_SET_RESULT(res);
-}
-
-//==========================================================================
-//
-// Checks whether this actor is a missile
-// Unfortunately this was buggy in older versions of the code and many
-// released DECORATE monsters rely on this bug so it can only be fixed
-// with an optional flag
-//
-//==========================================================================
-inline static bool isMissile(AActor * self, bool precise=true)
-{
-	return self->flags&MF_MISSILE || (precise && self->GetDefault()->flags&MF_MISSILE);
 }
 
 //==========================================================================
@@ -1382,9 +1653,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3); // param count up
 	ACTION_PARAM_CLASS(mi, 0);
 	ACTION_PARAM_INT(amount, 1);
+
+	// [FDARI] Modified code: Allow any pointer to be used for receiver
+	ACTION_PARAM_INT(setreceiver, 2);
+
+	switch (setreceiver)
+	{
+	case AAPTR_TARGET:
+		if (receiver->target) { receiver = receiver->target; break; }
+		return;
+	case AAPTR_MASTER:
+		if (receiver->master) { receiver = receiver->master; break; }
+		return;
+	case AAPTR_TRACER:
+		if (receiver->tracer) { receiver = receiver->tracer; break; }
+		return;
+	}
+
+	// FDARI: End of modified code
 
 	bool res=true;
 	if (receiver == NULL) return;
@@ -1413,7 +1702,7 @@ static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 	else res = false;
 	ACTION_SET_RESULT(res);
 
-}	
+}
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
@@ -1438,10 +1727,28 @@ enum
 
 void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4); // param count up
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_INT(amount, 1);
 	ACTION_PARAM_INT(flags, 2);
+
+	// [FDARI] Modified code: Allow any pointer to be used for receiver
+	ACTION_PARAM_INT(setreceiver, 3);
+
+	switch (setreceiver)
+	{
+	case AAPTR_TARGET:
+		if (receiver->target) { receiver = receiver->target; break; }
+		return;
+	case AAPTR_MASTER:
+		if (receiver->master) { receiver = receiver->master; break; }
+		return;
+	case AAPTR_TRACER:
+		if (receiver->tracer) { receiver = receiver->tracer; break; }
+		return;
+	}
+
+	// FDARI: End of modified code
 	
 	if (item == NULL || receiver == NULL) return;
 
@@ -1471,7 +1778,7 @@ void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 		else inv->Amount-=amount;
 	}
 	ACTION_SET_RESULT(res);
-}	
+}
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {

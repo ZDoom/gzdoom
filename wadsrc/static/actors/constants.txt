@@ -197,6 +197,20 @@ Const Int BLOCKF_EVERYTHING = 32;
 Const Int BLOCKF_RAILING = 64;
 Const Int BLOCKF_USE = 128;
 
+// Pointer constants, bitfield-enabled
+
+Const Int AAPTR_DEFAULT = 0;
+Const Int AAPTR_NULL = 1;
+Const Int AAPTR_TARGET = 2;
+Const Int AAPTR_MASTER = 4;
+Const Int AAPTR_TRACER = 8;
+
+// Pointer operation flags
+
+Const Int PTROP_UNSAFETARGET = 1;
+Const Int PTROP_UNSAFEMASTER = 2;
+Const Int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
+
 
 
 // This is only here to provide one global variable for testing.

@@ -133,6 +133,7 @@ extern FPalette GPalette;
 extern "C" {
 extern FDynamicColormap NormalLight;
 }
+extern bool NormalLightHasFixedLights;
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 

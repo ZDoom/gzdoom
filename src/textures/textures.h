@@ -173,7 +173,7 @@ public:
 	BYTE bHasCanvas:1;		// Texture is based off FCanvasTexture
 	BYTE bWarped:2;			// This is a warped texture. Used to avoid multiple warps on one texture
 	BYTE bComplex:1;		// Will be used to mark extended MultipatchTextures that have to be
-							// fully composited before subjected to any kinf of postprocessing instead of
+							// fully composited before subjected to any kind of postprocessing instead of
 							// doing it per patch.
 	BYTE bMultiPatch:1;		// This is a multipatch texture (we really could use real type info for textures...)
 

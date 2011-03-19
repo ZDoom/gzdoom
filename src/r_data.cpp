@@ -50,6 +50,7 @@
 
 static int R_CountTexturesX ();
 static int R_CountLumpTextures (int lumpnum);
+static bool R_CheckForFixedLights(const BYTE *colormaps);
 
 extern void R_DeinitBuildTiles();
 extern int R_CountBuildTiles();
@@ -230,7 +231,56 @@ void R_InitColormaps ()
 		}
 	}
 	NormalLight.Maps = realcolormaps;
+	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps);
 	numfakecmaps = fakecmaps.Size();
+}
+
+//==========================================================================
+//
+// R_CheckForFixedLights
+//
+// Returns true if there are any entries in the colormaps that are the
+// same for every colormap and not the fade color.
+//
+//==========================================================================
+
+static bool R_CheckForFixedLights(const BYTE *colormaps)
+{
+	const BYTE *lastcolormap = colormaps + (NUMCOLORMAPS - 1) * 256;
+	BYTE freq[256];
+	int i, j;
+
+	// Count the frequencies of different colors in the final colormap.
+	// If they occur more than X amount of times, we ignore them as a
+	// potential fixed light.
+
+	memset(freq, 0, sizeof(freq));
+	for (i = 0; i < 256; ++i)
+	{
+		freq[lastcolormap[i]]++;
+	}
+
+	// Now check the colormaps for fixed lights that are uncommon in the
+	// final coloramp.
+	for (i = 255; i >= 0; --i)
+	{
+		BYTE color = lastcolormap[i];
+		if (freq[color] > 10)		// arbitrary number to decide "common" colors
+		{
+			continue;
+		}
+		// It's rare in the final colormap. See if it's the same for all colormaps.
+		for (j = 0; j < NUMCOLORMAPS - 1; ++j)
+		{
+			if (colormaps[j * 256 + i] != color)
+				break;
+		}
+		if (j == NUMCOLORMAPS - 1)
+		{ // It was the same all the way across.
+			return true;
+		}
+	}
+	return false;
 }
 
 //==========================================================================

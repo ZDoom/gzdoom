@@ -2301,6 +2301,14 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 				}
 			}
 		}
+		// If the main colormap has fixed lights, and this sprite is being drawn with that
+		// colormap, disable acceleration so that the lights can remain fixed.
+		if (!noaccel &&
+			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
+			vis->pic->UseBasePalette())
+		{
+			noaccel = true;
+		}
 		VisPSpritesBaseColormap[pspnum] = mybasecolormap;
 	}
 	else

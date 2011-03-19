@@ -3199,8 +3199,7 @@ static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 
 		wallscanfunc = (colfunc == basecolfunc) ? maskwallscan : transmaskwallscan;
 
-		if (fixedcolormap != NULL || fixedlightlev >= 0 ||
-			!(vwall->LightingSector->e && vwall->LightingSector->e->XFloor.lightlist.Size()))
+		if (fixedcolormap != NULL || !(vwall->LightingSector->e && vwall->LightingSector->e->XFloor.lightlist.Size()))
 		{
 			wallscanfunc(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, R_GetColumn);
 		}

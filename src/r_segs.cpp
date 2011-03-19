@@ -995,13 +995,16 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	x = x1;
 	//while ((umost[x] > dmost[x]) && (x <= x2)) x++;
 
+	if (fixedlightlev >= 0)
+	{
+		dc_colormap = basecolormapdata + fixedlightlev;
+	}
+
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
+
 	if (fixed)
 	{
-		palookupoffse[0] = dc_colormap;
-		palookupoffse[1] = dc_colormap;
-		palookupoffse[2] = dc_colormap;
-		palookupoffse[3] = dc_colormap;
+		palookupoffse[3] = palookupoffse[2] = palookupoffse[1] = palookupoffse[0] = dc_colormap;
 	}
 
 	for(; (x <= x2) && (x & 3); ++x)
@@ -1155,7 +1158,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 			up = down;
 			down = (down == most1) ? most2 : most1;
 		}
-		basecolormap = frontsector->e->XFloor.lightlist[i].extra_colormap;
+		basecolormap = lightlist[i].extra_colormap;
 		wallshade = LIGHT2SHADE(seg->sidedef->GetLightLevel(fogginess, *lightlist[i].p_lightlevel) + r_actualextralight);
  	}
 
@@ -1211,13 +1214,16 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 	x = startx = x1;
 	p = x + dc_destorg;
 
+	if (fixedlightlev >= 0)
+	{
+		dc_colormap = basecolormapdata + fixedlightlev;
+	}
+
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
+
 	if (fixed)
 	{
-		palookupoffse[0] = dc_colormap;
-		palookupoffse[1] = dc_colormap;
-		palookupoffse[2] = dc_colormap;
-		palookupoffse[3] = dc_colormap;
+		palookupoffse[3] = palookupoffse[2] = palookupoffse[1] = palookupoffse[0] = dc_colormap;
 	}
 
 	for(; (x <= x2) && ((size_t)p & 3); ++x, ++p)
@@ -1384,13 +1390,16 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	x = startx = x1;
 	p = x + dc_destorg;
 
+	if (fixedlightlev >= 0)
+	{
+		dc_colormap = basecolormapdata + fixedlightlev;
+	}
+
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
+
 	if (fixed)
 	{
-		palookupoffse[0] = dc_colormap;
-		palookupoffse[1] = dc_colormap;
-		palookupoffse[2] = dc_colormap;
-		palookupoffse[3] = dc_colormap;
+		palookupoffse[3] = palookupoffse[2] = palookupoffse[1] = palookupoffse[0] = dc_colormap;
 	}
 
 	for(; (x <= x2) && ((size_t)p & 3); ++x, ++p)
@@ -1630,7 +1639,7 @@ void R_RenderSegLoop (const FWallTexMapParm *tmap)
 			{
 				rw_offset = rw_offset_mid;
 			}
-			if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+			if (fixedcolormap != NULL || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 			{
 				wallscan (x1, x2-1, walltop, wallbottom, swall, lwall, yscale);
 			}
@@ -1669,7 +1678,7 @@ void R_RenderSegLoop (const FWallTexMapParm *tmap)
 				{
 					rw_offset = rw_offset_top;
 				}
-				if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+				if (fixedcolormap != NULL || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 				{
 					wallscan (x1, x2-1, walltop, wallupper, swall, lwall, yscale);
 				}
@@ -1711,7 +1720,7 @@ void R_RenderSegLoop (const FWallTexMapParm *tmap)
 				{
 					rw_offset = rw_offset_bottom;
 				}
-				if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+				if (fixedcolormap != NULL || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 				{
 					wallscan (x1, x2-1, walllower, wallbottom, swall, lwall, yscale);
 				}

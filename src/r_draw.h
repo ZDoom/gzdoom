@@ -276,6 +276,8 @@ bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)());
 // for double-layer skies.
 const BYTE *R_GetColumn (FTexture *tex, int col);
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const FWallTexMapParm *tmap, TArray<lightlist_t> &lightlist, seg_t *seg,
+	void (*wallscanfunc)(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))=wallscan);
 
 // maskwallscan is exactly like wallscan but does not draw anything where the texture is color 0.
 void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);

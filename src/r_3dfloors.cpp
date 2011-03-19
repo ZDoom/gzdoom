@@ -409,6 +409,7 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *s
 		visxwall_t *vwall = R_NewVisXWall();
 		vwall->TMap = *tmap;
 		vwall->Seg = seg;
+		vwall->LightingSector = (edge == MARK_FAR) ? xplane->FakeFloor->model : seg->backsector;
 
 		if (aboveplane)
 		{ // The plane's uclip serves as the wall's dclip.

@@ -3099,6 +3099,7 @@ static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 	side_t *masterside;
 	FTexture *pic;
 	fixed_t lwallscale, ywallscale;
+	void (*wallscanfunc)(int, int, short *, short *, fixed_t *, fixed_t *, fixed_t yrepeat, const BYTE *(*)(FTexture *, int));
 	F3DFloor *faker = xplane->FakeFloor;
 
 	drawmode = R_SetPatchStyle (LegacyRenderStyles[faker->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
@@ -3183,7 +3184,7 @@ static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 		}
 		else
 		{
-			wallshade = LIGHT2SHADE(side->GetLightLevel(foggy, side->sector->lightlevel) + r_actualextralight);
+			wallshade = LIGHT2SHADE(side->GetLightLevel(foggy, vwall->LightingSector->lightlevel) + r_actualextralight);
 			GlobVis = r_WallVisibility;
 			rw_lightleft = SafeDivScale12(GlobVis, vwall->TMap.SZ1);
 			rw_lightstep = (SafeDivScale12(GlobVis, vwall->TMap.SZ2) - rw_lightleft) / (vwall->TMap.SX2 - vwall->TMap.SX1);
@@ -3196,13 +3197,17 @@ static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 		short *uclip = openings + vwall->UClip - vwall->TMap.SX1;
 		short *dclip = openings + vwall->DClip - vwall->TMap.SX1;
 
-		if (colfunc == basecolfunc)
+		wallscanfunc = (colfunc == basecolfunc) ? maskwallscan : transmaskwallscan;
+
+		if (fixedcolormap != NULL || fixedlightlev >= 0 ||
+			!(vwall->LightingSector->e && vwall->LightingSector->e->XFloor.lightlist.Size()))
 		{
-			maskwallscan(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale);
+			wallscanfunc(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, R_GetColumn);
 		}
 		else
 		{
-			transmaskwallscan(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale);
+			wallscan_striped(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, &vwall->TMap,
+				vwall->LightingSector->e->XFloor.lightlist, vwall->Seg, wallscanfunc);
 		}
 	}
 }

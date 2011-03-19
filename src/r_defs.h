@@ -1228,6 +1228,7 @@ struct visxwall_t
 {
 	visxwall_t *Next;
 	seg_t *Seg;						// Seg this wall is from.
+	sector_t *LightingSector;		// Sector for lighting information.
 	ptrdiff_t UClip;				// Clipping for the top edge of the wall.
 	ptrdiff_t DClip;				// Clipping for the bottom edge of the wall.
 	FWallTexMapParm TMap;

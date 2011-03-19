@@ -1125,7 +1125,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	NetUpdate ();
 }
 
-void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const FWallTexMapParm *tmap)
+void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const FWallTexMapParm *tmap, TArray<lightlist_t> &lightlist, seg_t *seg,
+	void (*wallscanfunc)(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x)))
 {
 	FDynamicColormap *startcolormap = basecolormap;
 	int startshade = wallshade;
@@ -1141,25 +1142,24 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	assert(tmap->SX2 > x2);
 
 	// kg3D - fake floors instead of zdoom light list
-	for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
+	for (unsigned int i = 0; i < lightlist.Size(); i++)
 	{
-		int j = WallMost (most3, tmap, frontsector->e->XFloor.lightlist[i].plane, curline->v1, curline->v2);
+		int j = WallMost(most3, tmap, lightlist[i].plane, curline->v1, curline->v2);
 		if (j != 3)
 		{
 			for (int j = x1; j <= x2; ++j)
 			{
-				down[j] = clamp (most3[j], up[j], dwal[j]);
+				down[j] = clamp(most3[j], up[j], dwal[j]);
 			}
-			wallscan (x1, x2, up, down, swal, lwal, yrepeat);
+			wallscanfunc(x1, x2, up, down, swal, lwal, yrepeat, R_GetColumn);
 			up = down;
 			down = (down == most1) ? most2 : most1;
 		}
 		basecolormap = frontsector->e->XFloor.lightlist[i].extra_colormap;
-		wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess,
-			*frontsector->e->XFloor.lightlist[i].p_lightlevel) + r_actualextralight);
+		wallshade = LIGHT2SHADE(seg->sidedef->GetLightLevel(fogginess, *lightlist[i].p_lightlevel) + r_actualextralight);
  	}
 
-	wallscan (x1, x2, up, dwal, swal, lwal, yrepeat);
+	wallscanfunc(x1, x2, up, dwal, swal, lwal, yrepeat, R_GetColumn);
 	basecolormap = startcolormap;
 	wallshade = startshade;
 }
@@ -1636,7 +1636,7 @@ void R_RenderSegLoop (const FWallTexMapParm *tmap)
 			}
 			else
 			{
-				wallscan_striped (x1, x2-1, walltop, wallbottom, swall, lwall, yscale, tmap);
+				wallscan_striped (x1, x2-1, walltop, wallbottom, swall, lwall, yscale, tmap, frontsector->e->XFloor.lightlist, curline);
 			}
 		}
 		clearbufshort (ceilingclip+x1, x2-x1, viewheight);
@@ -1675,7 +1675,7 @@ void R_RenderSegLoop (const FWallTexMapParm *tmap)
 				}
 				else
 				{
-					wallscan_striped (x1, x2-1, walltop, wallupper, swall, lwall, yscale, tmap);
+					wallscan_striped (x1, x2-1, walltop, wallupper, swall, lwall, yscale, tmap, frontsector->e->XFloor.lightlist, curline);
 				}
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
@@ -1717,7 +1717,7 @@ void R_RenderSegLoop (const FWallTexMapParm *tmap)
 				}
 				else
 				{
-					wallscan_striped (x1, x2-1, walllower, wallbottom, swall, lwall, yscale, tmap);
+					wallscan_striped (x1, x2-1, walllower, wallbottom, swall, lwall, yscale, tmap, frontsector->e->XFloor.lightlist, curline);
 				}
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));

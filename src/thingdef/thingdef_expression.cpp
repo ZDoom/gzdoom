@@ -1550,7 +1550,7 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(val, ctx);
 
 
-	if (!ValueType.isNumeric())
+	if (!val->ValueType.isNumeric())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;

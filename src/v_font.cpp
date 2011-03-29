@@ -2037,7 +2037,7 @@ void V_InitFontColors ()
 {
 	TArray<FName> names;
 	int lump, lastlump = 0;
-	TranslationParm tparm = { 0, 0, {NULL}, {NULL} };	// Silence GCC (for real with -Wextra )
+	TranslationParm tparm = { 0, 0, {0}, {0} };	// Silence GCC (for real with -Wextra )
 	TArray<TranslationParm> parms;
 	TArray<TempParmInfo> parminfo;
 	TArray<TempColorInfo> colorinfo;

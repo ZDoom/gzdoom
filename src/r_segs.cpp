@@ -592,7 +592,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 {
 	FTexture *const DONT_DRAW = ((FTexture*)(intptr_t)-1);
 	int i,j;
-	F3DFloor *rover, *fover;
+	F3DFloor *rover, *fover = NULL;
 	int passed, last;
 	fixed_t floorheight;
 	fixed_t ceilingheight;

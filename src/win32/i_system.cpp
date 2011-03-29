@@ -1108,7 +1108,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			work.Format("%s (%s)", WadList[i].Name, filepart);
+			work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
 			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
 			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}

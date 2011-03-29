@@ -1287,7 +1287,7 @@ bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
 			UINT cbSize;
 
 			cbSize = rdi.cbSize = sizeof(rdi);
-			if (MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
+			if ((INT)MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
 			{
 				if(MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) == (LONG)guid->Data1)
 				{

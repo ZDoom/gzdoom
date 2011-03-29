@@ -64,7 +64,7 @@ CCMD (dumpmap)
 	}
 
 	wadinfo_t header = { PWAD_ID, 12, 0 };
-	wadlump_t lumps[12] = { {0, 0, {NULL}} };
+	wadlump_t lumps[12] = { {0, 0, {0}} };
 
 	fseek (file, 12, SEEK_SET);
 	
@@ -95,7 +95,7 @@ CCMD (dumpmap)
 
 static int WriteTHINGS (FILE *file)
 {
-	mapthinghexen_t mt = { 0, 0, 0, 0, 0, 0, 0, 0, {NULL} };
+	mapthinghexen_t mt = { 0, 0, 0, 0, 0, 0, 0, 0, {0} };
 	AActor *mo = players[consoleplayer].mo;
 
 	mt.x = LittleShort(short(mo->x >> FRACBITS));

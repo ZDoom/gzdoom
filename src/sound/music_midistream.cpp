@@ -725,7 +725,7 @@ void MIDIStreamer::Update()
 		CloseHandle(PlayerThread);
 		PlayerThread = NULL;
 		Printf ("MIDI playback failure: ");
-		if (code >= 0 && code < countof(MMErrorCodes))
+		if (code < countof(MMErrorCodes))
 		{
 			Printf("%s\n", MMErrorCodes[code]);
 		}

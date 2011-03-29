@@ -538,7 +538,7 @@ void DObject::SerializeUserVars(FArchive &arc)
 	PSymbolTable *symt;
 	FName varname;
 	DWORD count, j;
-	int *varloc;
+	int *varloc = NULL;
 
 	symt = &GetClass()->Symbols;
 

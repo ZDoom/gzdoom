@@ -1017,7 +1017,7 @@ FRawPS2Controller *FRawPS2Manager::EnumDevices()
 			UINT cbSize;
 
 			cbSize = rdi.cbSize = sizeof(rdi);
-			if (MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
+			if ((INT)MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
 			{
 				// All the PS2 adapters report themselves as joysticks.
 				// (By comparison, the 360 controller reports itself as a gamepad.)

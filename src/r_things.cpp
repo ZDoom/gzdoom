@@ -1695,7 +1695,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	fixed_t 			tx, tx2;
 	fixed_t 			tz;
 
-	fixed_t 			xscale, yscale;
+	fixed_t 			xscale = FRACUNIT, yscale = FRACUNIT;
 	
 	int 				x1;
 	int 				x2;

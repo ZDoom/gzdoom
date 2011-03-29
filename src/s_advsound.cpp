@@ -150,6 +150,7 @@ enum SICommands
 	SI_Rolloff,
 	SI_Volume,
 	SI_MusicAlias,
+	SI_EDFOverride,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -244,6 +245,7 @@ static const char *SICommandStrings[] =
 	"$rolloff",
 	"$volume",
 	"$musicalias",
+	"$edfoverride",
 	NULL
 };
 
@@ -1073,6 +1075,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Registered:
 				// I don't think Hexen even pays attention to the $registered command.
+			case SI_EDFOverride:
 				break;
 
 			case SI_ArchivePath:

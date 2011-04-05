@@ -3125,10 +3125,10 @@ static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 		assert(vwall->UClip >= 0);
 		assert(vwall->DClip >= 0);
 
-		side_t *side = vwall->Seg->sidedef;
+		side_t *side = vwall->VisSeg->Seg->sidedef;
 		short *top = openings + vwall->UClip;
 		short *bot = openings + vwall->DClip;
-		BYTE *destorg = dc_destorg + vwall->TMap.SX1;
+		BYTE *destorg = dc_destorg + vwall->VisSeg->TMap.SX1;
 		fixed_t rowoffset;
 
 		rw_offset = side->GetTextureXOffset(side_t::mid);
@@ -3186,27 +3186,27 @@ static void R_DrawXWalls(visxplane_t *xplane, visxwall_t *vwall)
 		{
 			wallshade = LIGHT2SHADE(side->GetLightLevel(foggy, vwall->LightingSector->lightlevel) + r_actualextralight);
 			GlobVis = r_WallVisibility;
-			rw_lightleft = SafeDivScale12(GlobVis, vwall->TMap.SZ1);
-			rw_lightstep = (SafeDivScale12(GlobVis, vwall->TMap.SZ2) - rw_lightleft) / (vwall->TMap.SX2 - vwall->TMap.SX1);
+			rw_lightleft = SafeDivScale12(GlobVis, vwall->VisSeg->TMap.SZ1);
+			rw_lightstep = (SafeDivScale12(GlobVis, vwall->VisSeg->TMap.SZ2) - rw_lightleft) / (vwall->VisSeg->TMap.SX2 - vwall->VisSeg->TMap.SX1);
 			rw_light = rw_lightleft;
 		}
 
-		PrepWall(swall, lwall, &vwall->TMap, side->TexelLength * lwallscale);
+		PrepWall(swall, lwall, &vwall->VisSeg->TMap, side->TexelLength * lwallscale);
 
 		rw_pic = pic;
-		short *uclip = openings + vwall->UClip - vwall->TMap.SX1;
-		short *dclip = openings + vwall->DClip - vwall->TMap.SX1;
+		short *uclip = openings + vwall->UClip - vwall->VisSeg->TMap.SX1;
+		short *dclip = openings + vwall->DClip - vwall->VisSeg->TMap.SX1;
 
 		wallscanfunc = (colfunc == basecolfunc) ? maskwallscan : transmaskwallscan;
 
 		if (fixedcolormap != NULL || !(vwall->LightingSector->e && vwall->LightingSector->e->XFloor.lightlist.Size()))
 		{
-			wallscanfunc(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, R_GetColumn);
+			wallscanfunc(vwall->VisSeg->TMap.SX1, vwall->VisSeg->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, R_GetColumn);
 		}
 		else
 		{
-			wallscan_striped(vwall->TMap.SX1, vwall->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, &vwall->TMap,
-				vwall->LightingSector->e->XFloor.lightlist, vwall->Seg, wallscanfunc);
+			wallscan_striped(vwall->VisSeg->TMap.SX1, vwall->VisSeg->TMap.SX2 - 1, uclip, dclip, swall, lwall, ywallscale, &vwall->VisSeg->TMap,
+				vwall->LightingSector->e->XFloor.lightlist, vwall->VisSeg->Seg, wallscanfunc);
 		}
 	}
 }

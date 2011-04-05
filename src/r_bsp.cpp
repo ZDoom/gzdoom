@@ -742,31 +742,25 @@ void R_SetPartialTMapParms(FWallTexMapParm *texmap, EWallVis vis, seg_t *seg)
 	texmap->DepthOrg = -texmap->UoverZstep * WallTMapScale2;
 }
 
+//=============================================================================
 //
-// R_AddLine
-// Clips the given segment
-// and adds any visible pieces to the line list.
+// R_PreAddLine
 //
+// Does projection setup for a seg.
+//
+//=============================================================================
 
-void R_AddLine (seg_t *line, vissubsector_t *vsub)
+EWallVis R_PreAddLine(seg_t *line, FWallTexMapParm &tmap, bool allow_back)
 {
-	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
-	bool			solid;
-	FWallTexMapParm tmap;
 	EWallVis vis;
 
-	curline = line;
-
-	// [RH] Color if not texturing line
-	dc_color = (((int)(line - segs) * 8) + 4) & 255;
-
-	if (WT_Gone == (vis = R_TransformWall(&tmap, line, vsub != NULL)))
+	if (WT_Gone == (vis = R_TransformWall(&tmap, line, allow_back)))
 	{
-		return;
+		return vis;
 	}
 	if (WT_Gone == (vis = R_ProjectWall(&tmap, vis)))
 	{
-		return;
+		return vis;
 	}
 
 	if (line->linedef != NULL)
@@ -781,15 +775,37 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 			R_SetPartialTMapParms(&tmap, vis, line);
 		}
 	}
+	return vis;
+}
+
+//=============================================================================
+//
+// R_DoAddLine
+//
+// Clips the given segment and adds any visible pieces to the line list.
+//
+//=============================================================================
+
+void R_DoAddLine(seg_t *line, FWallTexMapParm &tmap, EWallVis vis, vissubsector_t *vsub, visseg_t *vseg)
+{
+	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
+	bool			solid;
+
+	curline = line;
+
+	// [RH] Color if not texturing line
+	dc_color = (((int)(line - segs) * 8) + 4) & 255;
 
 	if (vis == WT_Back)
 	{
-		R_3D_MarkPlanes(vsub, &tmap, line, line->v2, line->v1);
+		assert(vsub != NULL && vseg != NULL);
+		R_3D_MarkPlanes(vsub, vseg, line->v2, line->v1);
 		return;
 	}
 	else if (vsub != NULL)
 	{
-		R_3D_MarkPlanes(vsub, &tmap, line, line->v1, line->v2);
+		assert(vseg != NULL);
+		R_3D_MarkPlanes(vsub, vseg, line->v1, line->v2);
 	}
 
 	if (line->linedef == NULL)
@@ -971,6 +987,96 @@ void R_AddLine (seg_t *line, vissubsector_t *vsub)
 	}
 }
 
+//=============================================================================
+//
+// R_AddLine
+//
+//=============================================================================
+
+void R_AddLine (seg_t *line)
+{
+	FWallTexMapParm tmap;
+	EWallVis vis;
+
+	vis = R_PreAddLine(line, tmap, false);
+	if (vis != WT_Gone)
+	{
+		R_DoAddLine(line, tmap, vis, NULL, NULL);
+	}
+}
+
+//==========================================================================
+//
+// R_AddLineToVSub
+//
+// Adds a seg to a vissubsector. Returns true if it was added, false if not.
+//
+//==========================================================================
+
+bool R_AddLineToVSub(seg_t *line, vissubsector_t *vsub, visseg_t *vseg)
+{
+	EWallVis vis;
+
+	vis = R_PreAddLine(line, vseg->TMap, true);
+	if (vis == WT_Gone)
+	{
+		return false;
+	}
+	vseg->Seg = line;
+	if (vis == WT_Front)
+	{
+		vseg->Next = vsub->FarSegs;
+		vsub->FarSegs = vseg;
+	}
+	else
+	{
+		assert(vis == WT_Back);
+		vseg->Next = vsub->NearSegs;
+		vsub->NearSegs = vseg;
+	}
+	return true;
+}
+
+//=============================================================================
+//
+// R_ExpandVisSubsector
+//
+// "Expands" the vissubsector to be large enough to contain the list of vsegs.
+//
+//=============================================================================
+
+void R_ExpandVisSubsector(vissubsector_t *vsub, visseg_t *vseg)
+{
+	while (vseg != NULL)
+	{
+		if (vsub->MinX > vseg->TMap.SX1)
+		{
+			vsub->MinX = vseg->TMap.SX1;
+		}
+		if (vsub->MaxX < vseg->TMap.SX2)
+		{
+			vsub->MaxX = vseg->TMap.SX2;
+		}
+		vseg = vseg->Next;
+	}
+}
+
+//=============================================================================
+//
+// R_AddVisSegs
+//
+// Renders all vissegs in the list.
+//
+//=============================================================================
+
+void R_AddVisSegs(vissubsector_t *vsub, visseg_t *vseg, EWallVis vis)
+{
+	while (vseg != NULL)
+	{
+		R_DoAddLine(vseg->Seg, vseg->TMap, vis, vsub, vseg);
+		vseg = vseg->Next;
+	}
+}
 
 //
 // R_CheckBBox
@@ -1177,7 +1283,7 @@ void R_FakeDrawLoop(subsector_t *sub)
 	{
 		if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
-			R_AddLine (line, NULL);
+			R_AddLine (line);
 		}
 		line++;
 	}
@@ -1198,6 +1304,7 @@ void R_Subsector (subsector_t *sub)
 	int          ceilinglightlevel;		// killough 4/11/98
 	bool		 outersubsector;
 	vissubsector_t *vsub = NULL;
+	visseg_t *vseg;
 	int	fll, cll;
 
 	// kg3D - fake floor stuff
@@ -1436,6 +1543,7 @@ void R_Subsector (subsector_t *sub)
 
 	count = sub->numlines;
 	line = sub->firstline;
+	vseg = NULL;
 
 	while (count--)
 	{
@@ -1481,9 +1589,42 @@ void R_Subsector (subsector_t *sub)
 				ceilingplane = backupcp;
 			}
 #endif
-			R_AddLine (line, vsub); // now real
+			if (vsub != NULL)
+			{ // Only setup lines now.
+				if (vseg == NULL)
+				{
+					vseg = R_NewVisSeg();
+				}
+
+				if (R_AddLineToVSub(line, vsub, vseg))
+				{ // It was added, so be sure to get a new vseg for the next seg.
+					vseg = NULL;
+				}
+			}
+			else
+			{ // Do all line rendering.
+				R_AddLine(line);
+			}
 		}
 		line++;
+	}
+	if (vsub != NULL)
+	{
+		if (vsub->FarSegs != NULL || vsub->NearSegs != NULL)
+		{
+			// Calculate subsector X extents.
+			R_ExpandVisSubsector(vsub, vsub->FarSegs);
+			R_ExpandVisSubsector(vsub, vsub->NearSegs);
+			R_3D_SetSubsectorUDClip(vsub);
+
+			// Draw the segs.
+			R_AddVisSegs(vsub, vsub->NearSegs, WT_Back);
+			R_AddVisSegs(vsub, vsub->FarSegs, WT_Front);
+		}
+		else
+		{
+			R_3D_DontNeedVisSubsector(vsub);
+		}
 	}
 	if (outersubsector)
 	{

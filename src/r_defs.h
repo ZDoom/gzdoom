@@ -1223,15 +1223,22 @@ struct FWallTexMapParm
 	float DepthOrg, DepthScale;
 };
 
+// One seg from a vissubsector.
+struct visseg_t
+{
+	visseg_t *Next;
+	seg_t *Seg;						// Seg this visseg is from.
+	FWallTexMapParm TMap;			// Texture mapping parameters
+};
+
 // One extra floor wall, attached to a visxplane.
 struct visxwall_t
 {
 	visxwall_t *Next;
-	seg_t *Seg;						// Seg this wall is from.
+	visseg_t *VisSeg;				// Seg this wall is from.
 	sector_t *LightingSector;		// Sector for lighting information.
 	ptrdiff_t UClip;				// Clipping for the top edge of the wall.
 	ptrdiff_t DClip;				// Clipping for the bottom edge of the wall.
-	FWallTexMapParm TMap;
 };
 
 // One extra floor plane, contained within a subsector.
@@ -1254,6 +1261,8 @@ struct visxplane_t
 struct vissubsector_t
 {
 	visxplane_t *Planes;
+	visseg_t *NearSegs;				// Segs facing away from the viewer
+	visseg_t *FarSegs;				// Segs facing toward the viewer
 	short MinX;						// Left edge, inclusive
 	short MaxX;						// Right edge, exclusive
 	ptrdiff_t uclip;				// Snapshot of ceilingclip at subsector entry
@@ -1262,6 +1271,7 @@ struct vissubsector_t
 
 extern TArray<vissubsector_t> VisSubsectors;
 
+visseg_t *R_NewVisSeg();
 visxplane_t *R_NewVisXPlane();
 void R_ClearVisSubsectors();
 

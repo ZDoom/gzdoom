@@ -181,10 +181,10 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 	vsub->Planes = NULL;
 	vsub->MinX = SHRT_MAX;
 	vsub->MaxX = SHRT_MIN;
-	vsub->uclip = R_NewOpening(viewwidth);
-	vsub->dclip = R_NewOpening(viewwidth);
-	memcpy(openings + vsub->uclip, ceilingclip, sizeof(*ceilingclip)*viewwidth);
-	memcpy(openings + vsub->dclip, floorclip, sizeof(*floorclip)*viewwidth);
+	vsub->uclip = -1;
+	vsub->dclip = -1;
+	vsub->FarSegs = NULL;
+	vsub->NearSegs = NULL;
 
 	if (sub->sector->e != NULL)
 	{
@@ -237,6 +237,44 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 		}
 	}
 	return vsub;
+}
+
+//=============================================================================
+//
+// R_3D_DontNeedVisSubsector
+//
+// Frees a vissubsector that was just allocated.
+//
+//=============================================================================
+
+void R_3D_DontNeedVisSubsector(vissubsector_t *vsub)
+{
+	assert(vsub == &VisSubsectors.Last());
+
+	VisSubsectors.Pop();
+}
+
+//=============================================================================
+//
+// R_3D_SetSubsectorUDClip
+//
+// Records the top and bottom clipping arrays for this subsector.
+//
+//=============================================================================
+
+void R_3D_SetSubsectorUDClip(vissubsector_t *vsub)
+{
+	assert(vsub->MinX != SHRT_MAX && vsub->MaxX != SHRT_MIN);
+	assert(vsub->uclip == -1 && vsub->dclip == -1);
+
+	int x = vsub->MinX;
+	int width = vsub->MaxX - x;
+
+	vsub->uclip = R_NewOpening(width);
+	vsub->dclip = R_NewOpening(width);
+
+	memcpy(openings + vsub->uclip, ceilingclip + x, sizeof(*ceilingclip)*width);
+	memcpy(openings + vsub->dclip, floorclip + x, sizeof(*floorclip)*width);
 }
 
 //=============================================================================
@@ -300,6 +338,22 @@ visxplane_t *R_NewVisXPlane()
 
 //=============================================================================
 //
+// R_NewVisSeg
+//
+//=============================================================================
+
+visseg_t *R_NewVisSeg()
+{
+	visseg_t *vseg = (visseg_t *)VisXPlaneArena.Alloc(sizeof(visseg_t));
+
+	vseg->Next = NULL;
+	vseg->Seg = NULL;
+
+	return vseg;
+}
+
+//=============================================================================
+//
 // R_NewVisXWall
 //
 // Creates a new visxwall_t.
@@ -338,20 +392,15 @@ void R_ClearVisSubsectors()
 //
 //=============================================================================
 
-void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *seg, vertex_t *v1, vertex_t *v2)
+void R_3D_MarkPlanes(vissubsector_t *vsub, visseg_t *vseg, vertex_t *v1, vertex_t *v2)
 {
+	seg_t *seg = vseg->Seg;
+	const FWallTexMapParm *tmap = &vseg->TMap;
+
 	assert((v1 == seg->v1 && v2 == seg->v2) || (v2 == seg->v1 && v1 == seg->v2));
 
 	EMarkPlaneEdge edge = (seg->v1 == v1) ? MARK_FAR : MARK_NEAR;
 
-	if (vsub->MinX > tmap->SX1)
-	{
-		vsub->MinX = tmap->SX1;
-	}
-	if (vsub->MaxX < tmap->SX2)
-	{
-		vsub->MaxX = tmap->SX2;
-	}
 	for (visxplane_t *xplane = vsub->Planes; xplane != NULL; xplane = xplane->Next)
 	{
 		short most[MAXWIDTH], *in;
@@ -407,8 +456,7 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *s
 
 		// If we get here, there's a wall to be stored.
 		visxwall_t *vwall = R_NewVisXWall();
-		vwall->TMap = *tmap;
-		vwall->Seg = seg;
+		vwall->VisSeg = vseg;
 		vwall->LightingSector = (edge == MARK_FAR) ? xplane->FakeFloor->model : seg->backsector;
 
 		if (aboveplane)
@@ -426,8 +474,8 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *s
 			WallMost(most, tmap, *xplane->FakeFloor->bottom.plane, v1, v2);
 		}
 		in = most + tmap->SX1;
-		uclip = openings + vsub->uclip + tmap->SX1;
-		dclip = openings + vsub->dclip + tmap->SX1;
+		uclip = openings + vsub->uclip + tmap->SX1 - vsub->MinX;
+		dclip = openings + vsub->dclip + tmap->SX1 - vsub->MinX;
 		for (int i = tmap->SX2 - tmap->SX1; i > 0; --i)
 		{
 			*out++ = clamp<short>(*in++, *uclip++, *dclip++);

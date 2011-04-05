@@ -73,6 +73,8 @@ void R_3D_EnterSkybox();
 void R_3D_LeaveSkybox();
 
 vissubsector_t *R_3D_EnterSubsector(subsector_t *sub);
-void R_3D_MarkPlanes(vissubsector_t *vsub, const FWallTexMapParm *tmap, seg_t *seg, vertex_t *v1, vertex_t *v2);
+void R_3D_DontNeedVisSubsector(vissubsector_t *vsub);
+void R_3D_SetSubsectorUDClip(vissubsector_t *vsub);
+void R_3D_MarkPlanes(vissubsector_t *vsub, visseg_t *vseg, vertex_t *v1, vertex_t *v2);
 
 #endif

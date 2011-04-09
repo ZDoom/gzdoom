@@ -3241,7 +3241,7 @@ void R_DrawVisSubsectors()
 	{
 		vissubsector_t *vsub = &VisSubsectors[i];
 		// Draw ceilings from top to bottom, then floors from bottom to top.
-		R_RecurseXPlane(vsub, VisSubsectors[i].Planes);
+		R_RecurseXPlane(vsub, vsub->Planes);
 	}
 }
 

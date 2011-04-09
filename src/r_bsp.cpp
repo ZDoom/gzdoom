@@ -1401,7 +1401,7 @@ void R_Subsector (subsector_t *sub)
 
 	if (Has3DFloors)
 	{
-		vsub = R_3D_EnterSubsector(sub);
+		vsub = R_NewVisSubsector(sub);
 	}
 	// kg3D - fake planes rendering
 #if 0
@@ -1615,7 +1615,7 @@ void R_Subsector (subsector_t *sub)
 			// Calculate subsector X extents.
 			R_ExpandVisSubsector(vsub, vsub->FarSegs);
 			R_ExpandVisSubsector(vsub, vsub->NearSegs);
-			R_3D_SetSubsectorUDClip(vsub);
+			R_3D_SetupVisSubsector(vsub, sub);
 
 			// Draw the segs.
 			R_AddVisSegs(vsub, vsub->NearSegs, WT_Back);

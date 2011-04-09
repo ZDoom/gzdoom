@@ -16,7 +16,8 @@
 
 #include "r_3dfloors.h"
 
-static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation);
+static visxplane_t *AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation, bool visible);
+static void R_3D_AddVisWalls(F3DFloor *ffloor, visxplane_t *top, fixed_t topz, visxplane_t *bot, fixed_t botz, visseg_t *segs, EMarkPlaneEdge edge);
 
 // external variables
 int fake3D;
@@ -166,17 +167,13 @@ void R_3D_LeaveSkybox()
 
 //=============================================================================
 //
-// R_3D_EnterSubsector
-//
-// Creates a new vissubsector_t and decides which extra floor planes should
-// be drawn.
+// R_NewVisSubsector
 //
 //=============================================================================
 
-vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
+vissubsector_t *R_NewVisSubsector(subsector_t *sub)
 {
 	vissubsector_t *vsub = &VisSubsectors[VisSubsectors.Reserve(1)];
-	fixed_t z;
 
 	vsub->Planes = NULL;
 	vsub->MinX = SHRT_MAX;
@@ -186,56 +183,6 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 	vsub->FarSegs = NULL;
 	vsub->NearSegs = NULL;
 
-	if (sub->sector->e != NULL)
-	{
-		for (unsigned i = sub->sector->e->XFloor.ffloors.Size(); i-- > 0; )
-		{
-			F3DFloor *ffloor = sub->sector->e->XFloor.ffloors[i];
-
-			if (ffloor->model == NULL) continue;
-			if ((ffloor->flags & (FF_EXISTS | FF_RENDERPLANES)) != (FF_EXISTS | FF_RENDERPLANES)) continue;
-			if (ffloor->alpha <= 0 && (ffloor->flags & (FF_TRANSLUCENT | FF_ADDITIVETRANS))) continue;
-			// Check top of floor
-//			if ((ffloor->top.plane->a | ffloor->top.plane->b) == 0)
-			{
-				z = ffloor->top.plane->ZatPoint(viewx, viewy);
-				if (viewz > z)
-				{ // Above the top
-					if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
-					{
-						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::floor);
-					}
-				}
-				else if (viewz < z)
-				{ // Below the top
-					if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
-					{
-						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::ceiling);
-					}
-				}
-			}
-
-			// Check bottom of floor
-//			if ((ffloor->bottom.plane->a | ffloor->top.plane->b) == 0)
-			{
-				z = ffloor->bottom.plane->ZatPoint(viewx, viewy);
-				if (viewz > z)
-				{ // Above the bottom
-					if (ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES))
-					{
-						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::floor);
-					}
-				}
-				else if (viewz < z)
-				{ // Below the bottom
-					if (!(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES))
-					{
-						AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::ceiling);
-					}
-				}
-			}
-		}
-	}
 	return vsub;
 }
 
@@ -249,7 +196,7 @@ vissubsector_t *R_3D_EnterSubsector(subsector_t *sub)
 
 void R_3D_DontNeedVisSubsector(vissubsector_t *vsub)
 {
-	assert(vsub == &VisSubsectors.Last());
+	assert(VisSubsectors.Size() > 0 && vsub == &VisSubsectors.Last());
 
 	VisSubsectors.Pop();
 }
@@ -262,7 +209,7 @@ void R_3D_DontNeedVisSubsector(vissubsector_t *vsub)
 //
 //=============================================================================
 
-void R_3D_SetSubsectorUDClip(vissubsector_t *vsub)
+static void R_3D_SetSubsectorUDClip(vissubsector_t *vsub)
 {
 	assert(vsub->MinX != SHRT_MAX && vsub->MaxX != SHRT_MIN);
 	assert(vsub->uclip == -1 && vsub->dclip == -1);
@@ -277,6 +224,103 @@ void R_3D_SetSubsectorUDClip(vissubsector_t *vsub)
 	memcpy(openings + vsub->dclip, floorclip + x, sizeof(*floorclip)*width);
 }
 
+
+//=============================================================================
+//
+// R_3D_SetupVisSubsector
+//
+// Decides which extra floor planes and walls should be drawn.
+//
+//=============================================================================
+
+void R_3D_SetupVisSubsector(vissubsector_t *vsub, subsector_t *sub)
+{
+	R_3D_SetSubsectorUDClip(vsub);
+
+	if (sub->sector->e != NULL)
+	{
+		for (unsigned i = sub->sector->e->XFloor.ffloors.Size(); i-- > 0; )
+		{
+			F3DFloor *ffloor = sub->sector->e->XFloor.ffloors[i];
+			visxplane_t *top, *bot;
+			bool pvisible, wvisible, visside;
+			fixed_t topz, botz;
+
+			if (ffloor->model == NULL) continue;
+			if (!(ffloor->flags & FF_EXISTS)) continue;
+
+			pvisible = (ffloor->flags & FF_RENDERPLANES) &&
+				!(ffloor->alpha <= 0 && (ffloor->flags & (FF_TRANSLUCENT | FF_ADDITIVETRANS)));
+			wvisible = (ffloor->flags & FF_RENDERSIDES) &&
+				!(ffloor->alpha <= 0 && (ffloor->flags & (FF_TRANSLUCENT | FF_ADDITIVETRANS)));
+
+			if (!pvisible && !wvisible)
+			{ // Skip invisible planes if they have no visible walls attached.
+				continue;
+			}
+
+			top = bot = NULL;
+
+			// Check top of floor
+			topz = ffloor->top.plane->ZatPoint(viewx, viewy);
+			if (viewz > topz)
+			{ // Above the top
+				visside = !(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES);
+				if (wvisible || visside)
+				{
+					top = AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::floor,
+						pvisible & visside);
+				}
+			}
+			else if (viewz < topz)
+			{ // Below the top
+				visside = !!(ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES));
+				if (wvisible || visside)
+				{
+					top = AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::ceiling,
+						pvisible & visside);
+				}
+			}
+			else if (wvisible)
+			{ // Right at eye level
+				top = AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->top, sector_t::floor, false);
+			}
+
+			// Check bottom of floor
+			botz = ffloor->bottom.plane->ZatPoint(viewx, viewy);
+			if (viewz > botz)
+			{ // Above the bottom
+				visside = !!(ffloor->flags & (FF_INVERTPLANES | FF_BOTHPLANES));
+				if (wvisible || visside)
+				{
+					bot = AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::floor,
+						pvisible & visside);
+				}
+			}
+			else if (viewz < botz)
+			{ // Below the bottom
+				visside = !(ffloor->flags & FF_INVERTPLANES) || (ffloor->flags & FF_BOTHPLANES);
+				if (wvisible || visside)
+				{
+					bot = AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::ceiling,
+						pvisible & visside);
+				}
+			}
+			else if (wvisible)
+			{ // Right at eye level
+				bot = AddVisXPlane(vsub, sub->sector, ffloor, &ffloor->bottom, sector_t::ceiling, false);
+			}
+
+			if (wvisible)
+			{
+				assert(top != NULL && bot != NULL);
+				R_3D_AddVisWalls(ffloor, top, topz, bot, botz, vsub->FarSegs, MARK_FAR);
+				R_3D_AddVisWalls(ffloor, top, topz, bot, botz, vsub->NearSegs, MARK_NEAR);
+			}
+		}
+	}
+}
+
 //=============================================================================
 //
 // AddVisXPlane
@@ -285,7 +329,7 @@ void R_3D_SetSubsectorUDClip(vissubsector_t *vsub)
 //
 //=============================================================================
 
-static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation)
+static visxplane_t *AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation, bool visible)
 {
 	visxplane_t *xplane = R_NewVisXPlane();
 	lightlist_t *light;
@@ -294,6 +338,7 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 	xplane->Orientation = orientation;
 	xplane->FakeFloor = ffloor;
 	xplane->Plane = *planeref->plane;
+	xplane->bVisible = visible;
 	if ((orientation == sector_t::ceiling && xplane->Plane.c > 0) ||
 		(orientation == sector_t::floor && xplane->Plane.c < 0))
 	{
@@ -310,6 +355,8 @@ static void AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, 
 	// Initialize with current floor/ceilingclip.
 	memcpy(openings + xplane->UClip, ceilingclip, sizeof(short)*viewwidth);
 	memcpy(openings + xplane->DClip, floorclip, sizeof(short)*viewwidth);
+
+	return xplane;
 }
 
 //=============================================================================
@@ -385,6 +432,86 @@ void R_ClearVisSubsectors()
 
 //=============================================================================
 //
+// R_3D_AddVisWalls
+//
+// Adds all viswalls visible between two visxplanes, for either the far or
+// near end of the subsector.
+//
+//=============================================================================
+
+static void R_3D_AddVisWalls(F3DFloor *ffloor,
+	visxplane_t *top, fixed_t topz,
+	visxplane_t *bot, fixed_t botz,
+	visseg_t *vseg, EMarkPlaneEdge edge)
+{
+	assert(ffloor->flags & FF_RENDERSIDES);
+
+	visxplane_t *attachplane;
+
+	if (edge == MARK_NEAR)		// exterior walls
+	{
+		if ((ffloor->flags & (FF_INVERTSIDES | FF_ALLSIDES)) == FF_INVERTSIDES)
+		{ // Only interior sides are visible for this extra floor.
+			return;
+		}
+		// If we are above the extra floor, we want to attach it to the top plane.
+		// Otherwise, we attatch it to the bottom plane.
+		attachplane = (viewz >= topz) ? top : bot;
+	}
+	else						// interior walls
+	{
+		if ((ffloor->flags & (FF_INVERTSIDES | FF_ALLSIDES)) == 0)
+		{ // Only exterior sides are visible for this extra floor.
+			return;
+		}
+		// If we are below the extra floor, we want to attach it to the top plane.
+		// Otherwise, we attach it to the bottom plane.
+		attachplane = (viewz < topz) ? top : bot;
+	}
+
+	for (; vseg != NULL; vseg = vseg->Next)
+	{
+		seg_t *seg = vseg->Seg;
+
+		// Does this particular seg get a wall attached to it?
+		if (edge == MARK_NEAR && seg->backsector == NULL)
+		{ // Not if there is no back side (and this is an exterior wall).
+			continue;
+		}
+		if (seg->backsector != NULL && seg->backsector->tag == seg->frontsector->tag)
+		{ // Not if both sides have the same sector tag.
+			continue;
+		}
+
+		// Store it.
+		visxwall_t *vwall = R_NewVisXWall();
+		vwall->VisSeg = vseg;
+		vwall->LightingSector = (edge == MARK_FAR) ? ffloor->model : seg->backsector;
+
+		// If below the top plane, its uclip is the front edge and its dclip is the back edge.
+		// If above the top plane, its dclip is the front edge and its uclip is the back edge.
+		vwall->UClip = ((top->Orientation == sector_t::ceiling) ^ (edge == MARK_FAR)) ? top->UClip : top->DClip;
+		vwall->UClip += vseg->TMap.SX1;
+
+		// The bottom plane is the same.
+		vwall->DClip = ((bot->Orientation == sector_t::ceiling) ^ (edge == MARK_FAR)) ? bot->UClip : bot->DClip;
+		vwall->DClip += vseg->TMap.SX1;
+
+		if (edge == MARK_NEAR)
+		{
+			vwall->Next = attachplane->NearWalls;
+			attachplane->NearWalls = vwall;
+		}
+		else
+		{
+			vwall->Next = attachplane->FarWalls;
+			attachplane->FarWalls = vwall;
+		}
+	}
+}
+
+//=============================================================================
+//
 // R_3D_MarkPlanes
 //
 // Marks either the near or far edges of any extra planes in the subsector.
@@ -426,70 +553,6 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, visseg_t *vseg, vertex_t *v1, vertex_
 		for (int i = tmap->SX2 - tmap->SX1; i > 0; --i)
 		{
 			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
-		}
-
-		// Should we attach a wall to this edge of the plane?
-		// Note that while planes have enough clipping information for the entire width of the screen,
-		// walls only need enough for the wall they store.
-		int flags = xplane->FakeFloor->flags;
-		bool aboveplane;
-
-		if (!(flags & FF_RENDERSIDES)) continue;						// Nope.
-		if (seg->backsector == NULL) continue;							// Not if there is no back side.
-		if (seg->backsector->tag == seg->frontsector->tag) continue;	// Not if both sides have the same sector tag.
-
-		if (edge == MARK_NEAR)
-		{ // Near edges have the exterior walls.
-			if ((flags & (FF_INVERTPLANES | FF_BOTHPLANES)) == FF_INVERTPLANES) continue;
-
-			// If this is a ceiling plane, the wall is above it. The plane's uclip serves as the wall's dclip.
-			// If this is a floor plane, the wall is below it. The plane's dclip serves as the wall's uclip.
-			aboveplane = xplane->Orientation == sector_t::ceiling;
-		}
-		else // edge == MARK_FAR
-		{ // Far edges have the interior walls.
-			if ((flags & (FF_INVERTPLANES | FF_BOTHPLANES)) == 0) continue;
-
-			// For interior walls, the ceiling/floor roles are reversed.
-			aboveplane = xplane->Orientation == sector_t::floor;
-		}
-
-		// If we get here, there's a wall to be stored.
-		visxwall_t *vwall = R_NewVisXWall();
-		vwall->VisSeg = vseg;
-		vwall->LightingSector = (edge == MARK_FAR) ? xplane->FakeFloor->model : seg->backsector;
-
-		if (aboveplane)
-		{ // The plane's uclip serves as the wall's dclip.
-			vwall->DClip = xplane->UClip + tmap->SX1;
-			vwall->UClip = R_NewOpening(tmap->SX2 - tmap->SX1);
-			out = openings + vwall->UClip;
-			WallMost(most, tmap, *xplane->FakeFloor->top.plane, v1, v2);
-		}
-		else
-		{ // The plane's dclip serves as the wall's uclip.
-			vwall->UClip = xplane->DClip + tmap->SX1;
-			vwall->DClip = R_NewOpening(tmap->SX2 - tmap->SX1);
-			out = openings + vwall->DClip;
-			WallMost(most, tmap, *xplane->FakeFloor->bottom.plane, v1, v2);
-		}
-		in = most + tmap->SX1;
-		uclip = openings + vsub->uclip + tmap->SX1 - vsub->MinX;
-		dclip = openings + vsub->dclip + tmap->SX1 - vsub->MinX;
-		for (int i = tmap->SX2 - tmap->SX1; i > 0; --i)
-		{
-			*out++ = clamp<short>(*in++, *uclip++, *dclip++);
-		}
-
-		if (edge == MARK_NEAR)
-		{
-			vwall->Next = xplane->NearWalls;
-			xplane->NearWalls = vwall;
-		}
-		if (edge == MARK_FAR)
-		{
-			vwall->Next = xplane->FarWalls;
-			xplane->FarWalls = vwall;
 		}
 	}
 }

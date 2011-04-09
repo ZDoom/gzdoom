@@ -1253,7 +1253,8 @@ struct visxplane_t
 	visxwall_t *NearWalls;			// Walls from back-facing segs.
 	visxwall_t *FarWalls;			// Walls from front-facing segs.
 	short LightLevel;				// Light level
-	short Orientation;				// Is this a floor or a ceiling?
+	BYTE Orientation;				// Is this a floor or a ceiling?
+	BYTE bVisible;					// Should this plane be drawn?
 	secplane_t Plane;
 };
 

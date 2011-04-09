@@ -1002,6 +1002,10 @@ void R_DrawXPlane(visxplane_t *xpl, int min, int max)
 {
 	visplane_t pl;
 
+	if (!xpl->bVisible)
+	{
+		return;
+	}
 	pl.next = NULL;
 	pl.height = xpl->Plane;
 	pl.picnum = *xpl->PlaneRef->texture;

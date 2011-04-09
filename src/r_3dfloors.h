@@ -72,9 +72,9 @@ void R_3D_ResetClip();
 void R_3D_EnterSkybox();
 void R_3D_LeaveSkybox();
 
-vissubsector_t *R_3D_EnterSubsector(subsector_t *sub);
+vissubsector_t *R_NewVisSubsector(subsector_t *sub);
 void R_3D_DontNeedVisSubsector(vissubsector_t *vsub);
-void R_3D_SetSubsectorUDClip(vissubsector_t *vsub);
+void R_3D_SetupVisSubsector(vissubsector_t *vsub, subsector_t *sub);
 void R_3D_MarkPlanes(vissubsector_t *vsub, visseg_t *vseg, vertex_t *v1, vertex_t *v2);
 
 #endif

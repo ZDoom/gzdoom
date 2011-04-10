@@ -1020,8 +1020,8 @@ void R_DrawXPlane(visxplane_t *xpl, int min, int max)
 	pl.angle = 0;
 	pl.sky = 0;
 	pl.skybox = NULL;
-	pl.top = (unsigned short *)(openings + xpl->UClip);
-	pl.bottom = (unsigned short *)(openings + xpl->DClip);
+	pl.top = (unsigned short *)(openings + xpl->UClip - min);
+	pl.bottom = (unsigned short *)(openings + xpl->DClip - min);
 
 	R_DrawSinglePlane(&pl, FRACUNIT, false);
 }

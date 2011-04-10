@@ -17,7 +17,7 @@
 #include "r_3dfloors.h"
 
 static visxplane_t *AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation, bool visible);
-static void R_3D_AddVisWalls(F3DFloor *ffloor, visxplane_t *top, fixed_t topz, visxplane_t *bot, fixed_t botz, visseg_t *segs, EMarkPlaneEdge edge);
+static void R_3D_AddVisWalls(F3DFloor *ffloor, visxplane_t *top, fixed_t topz, visxplane_t *bot, fixed_t botz, visseg_t *segs, EMarkPlaneEdge edge, int minx);
 
 // external variables
 int fake3D;
@@ -314,8 +314,8 @@ void R_3D_SetupVisSubsector(vissubsector_t *vsub, subsector_t *sub)
 			if (wvisible)
 			{
 				assert(top != NULL && bot != NULL);
-				R_3D_AddVisWalls(ffloor, top, topz, bot, botz, vsub->FarSegs, MARK_FAR);
-				R_3D_AddVisWalls(ffloor, top, topz, bot, botz, vsub->NearSegs, MARK_NEAR);
+				R_3D_AddVisWalls(ffloor, top, topz, bot, botz, vsub->FarSegs, MARK_FAR, vsub->MinX);
+				R_3D_AddVisWalls(ffloor, top, topz, bot, botz, vsub->NearSegs, MARK_NEAR, vsub->MinX);
 			}
 		}
 	}
@@ -331,7 +331,8 @@ void R_3D_SetupVisSubsector(vissubsector_t *vsub, subsector_t *sub)
 
 static visxplane_t *AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *ffloor, F3DFloor::planeref *planeref, int orientation, bool visible)
 {
-	visxplane_t *xplane = R_NewVisXPlane();
+	int width = vsub->MaxX - vsub->MinX;
+	visxplane_t *xplane = R_NewVisXPlane(width);
 	lightlist_t *light;
 
 	xplane->PlaneRef = planeref;
@@ -353,8 +354,8 @@ static visxplane_t *AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *
 	vsub->Planes = xplane;
 
 	// Initialize with current floor/ceilingclip.
-	memcpy(openings + xplane->UClip, ceilingclip, sizeof(short)*viewwidth);
-	memcpy(openings + xplane->DClip, floorclip, sizeof(short)*viewwidth);
+	memcpy(openings + xplane->UClip, ceilingclip + vsub->MinX, sizeof(short)*width);
+	memcpy(openings + xplane->DClip, floorclip + vsub->MinX, sizeof(short)*width);
 
 	return xplane;
 }
@@ -368,13 +369,13 @@ static visxplane_t *AddVisXPlane(vissubsector_t *vsub, sector_t *sec, F3DFloor *
 //
 //=============================================================================
 
-visxplane_t *R_NewVisXPlane()
+visxplane_t *R_NewVisXPlane(int width)
 {
 	visxplane_t *xplane = (visxplane_t *)VisXPlaneArena.Alloc(sizeof(visxplane_t));
 
 	xplane->Next = NULL;
-	xplane->UClip = R_NewOpening(viewwidth);
-	xplane->DClip = R_NewOpening(viewwidth);
+	xplane->UClip = R_NewOpening(width);
+	xplane->DClip = R_NewOpening(width);
 	xplane->NearWalls = NULL;
 	xplane->FarWalls = NULL;
 	xplane->LightLevel = 0;
@@ -442,7 +443,7 @@ void R_ClearVisSubsectors()
 static void R_3D_AddVisWalls(F3DFloor *ffloor,
 	visxplane_t *top, fixed_t topz,
 	visxplane_t *bot, fixed_t botz,
-	visseg_t *vseg, EMarkPlaneEdge edge)
+	visseg_t *vseg, EMarkPlaneEdge edge, int minx)
 {
 	assert(ffloor->flags & FF_RENDERSIDES);
 
@@ -491,11 +492,11 @@ static void R_3D_AddVisWalls(F3DFloor *ffloor,
 		// If below the top plane, its uclip is the front edge and its dclip is the back edge.
 		// If above the top plane, its dclip is the front edge and its uclip is the back edge.
 		vwall->UClip = ((top->Orientation == sector_t::ceiling) ^ (edge == MARK_FAR)) ? top->UClip : top->DClip;
-		vwall->UClip += vseg->TMap.SX1;
+		vwall->UClip += vseg->TMap.SX1 - minx;
 
 		// The bottom plane is the same.
 		vwall->DClip = ((bot->Orientation == sector_t::ceiling) ^ (edge == MARK_FAR)) ? bot->UClip : bot->DClip;
-		vwall->DClip += vseg->TMap.SX1;
+		vwall->DClip += vseg->TMap.SX1 - minx;
 
 		if (edge == MARK_NEAR)
 		{
@@ -536,8 +537,8 @@ void R_3D_MarkPlanes(vissubsector_t *vsub, visseg_t *vseg, vertex_t *v1, vertex_
 		WallMost(most, tmap, xplane->Plane, v1, v2);
 
 		// Clip to existing bounds.
-		uclip = openings + xplane->UClip;
-		dclip = openings + xplane->DClip;
+		uclip = openings + xplane->UClip - vsub->MinX;
+		dclip = openings + xplane->DClip - vsub->MinX;
 		if (xplane->Orientation == sector_t::ceiling)
 		{ // For a ceiling, the near edge is the top, and the far edge is the bottom.
 			out = edge == MARK_NEAR ? uclip : dclip;

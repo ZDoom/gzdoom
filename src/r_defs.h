@@ -1273,7 +1273,7 @@ struct vissubsector_t
 extern TArray<vissubsector_t> VisSubsectors;
 
 visseg_t *R_NewVisSeg();
-visxplane_t *R_NewVisXPlane();
+visxplane_t *R_NewVisXPlane(int width);
 void R_ClearVisSubsectors();
 
 #endif

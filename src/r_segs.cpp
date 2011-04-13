@@ -1614,7 +1614,7 @@ void R_RenderSegLoop ()
 	// kg3D - fake planes clipping
 	if (fake3D & FAKE3D_REFRESHCLIP)
 	{
-		if (fake3D & FAKE3D_DOWN2UP)
+		if (fake3D & FAKE3D_CLIPBOTFRONT)
 		{
 			memcpy (fakeFloor->floorclip+x1, wallbottom+x1, (x2-x1)*sizeof(short));
 		}
@@ -1626,7 +1626,7 @@ void R_RenderSegLoop ()
 			}
 			memcpy (fakeFloor->floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}
-		if (fake3D & FAKE3D_16)
+		if (fake3D & FAKE3D_CLIPTOPFRONT)
 		{
 			memcpy (fakeFloor->ceilingclip+x1, walltop+x1, (x2-x1)*sizeof(short));
 		}
@@ -2241,7 +2241,7 @@ void R_StoreWallRange (int start, int stop)
 			}
 		}
 
-		if(!ds_p->fake && backsector->e && backsector->e->XFloor.ffloors.Size()) {
+		if(!ds_p->fake && r_3dfloors && backsector->e && backsector->e->XFloor.ffloors.Size()) {
 			for(i = 0; i < (int)backsector->e->XFloor.ffloors.Size(); i++) {
 				F3DFloor *rover = backsector->e->XFloor.ffloors[i];
 				if(rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
@@ -2250,7 +2250,7 @@ void R_StoreWallRange (int start, int stop)
 				}
 			}
 		}
-		if(!ds_p->fake && frontsector->e && frontsector->e->XFloor.ffloors.Size()) {
+		if(!ds_p->fake && r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size()) {
 			for(i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
 				F3DFloor *rover = frontsector->e->XFloor.ffloors[i];
 				if(rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
@@ -2273,6 +2273,10 @@ void R_StoreWallRange (int start, int stop)
 			int i;
 
 			maskedtexture = true;
+
+			// kg3D - backup for mid and fake walls
+			ds_p->bkup = R_NewOpening(stop - start);
+			memcpy(openings + ds_p->bkup, &ceilingclip[start], sizeof(short)*(stop - start));
 
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
 			if (sidedef->GetTexture(side_t::mid).isValid() || ds_p->bFakeBoundary)
@@ -2369,9 +2373,6 @@ void R_StoreWallRange (int start, int stop)
 	{
 		ds_p->sprtopclip = R_NewOpening (stop - start);
 		memcpy (openings + ds_p->sprtopclip, &ceilingclip[start], sizeof(short)*(stop-start));
-		// kg3D - backup for mid and fake walls
-		ds_p->bkup = R_NewOpening (stop - start);
-		memcpy (openings + ds_p->bkup, &ceilingclip[start], sizeof(short)*(stop-start));
 	}
 
 	if ( ((ds_p->silhouette & SIL_BOTTOM) || maskedtexture) && ds_p->sprbottomclip == -1)

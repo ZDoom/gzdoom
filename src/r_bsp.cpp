@@ -1238,7 +1238,7 @@ void R_Subsector (subsector_t *sub)
 					) : NULL;
 
 	// kg3D - fake planes rendering
-	if (frontsector->e && frontsector->e->XFloor.ffloors.Size())
+	if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
 	{
 		backupfp = floorplane;
 		backupcp = ceilingplane;
@@ -1399,7 +1399,7 @@ void R_Subsector (subsector_t *sub)
 		if (!outersubsector || line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
 			// kg3D - fake planes bounding calculation
-			if (line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
+			if (r_3dfloors && line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
 			{
 				backupfp = floorplane;
 				backupcp = ceilingplane;
@@ -1423,11 +1423,11 @@ void R_Subsector (subsector_t *sub)
 					}
 					if (frontsector->CenterFloor() >= backsector->CenterFloor())
 					{
-						fake3D |= FAKE3D_DOWN2UP;
+						fake3D |= FAKE3D_CLIPBOTFRONT;
 					}
 					if (frontsector->CenterCeiling() <= backsector->CenterCeiling())
 					{
-						fake3D |= FAKE3D_16;
+						fake3D |= FAKE3D_CLIPTOPFRONT;
 					}
 					R_AddLine(line); // fake
 				}
@@ -1455,7 +1455,6 @@ void R_Subsector (subsector_t *sub)
 void R_RenderBSPNode (void *node)
 {
 	if (numnodes == 0)
-	{
 		R_Subsector (subsectors);
 		return;
 	}

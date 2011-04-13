@@ -3410,7 +3410,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->cx = tx;
 	vis->gx = particle->x;
 	vis->gy = particle->y;
-	vis->texturemid = particle->z; // kg3D
+	vis->gz = particle->z; // kg3D
 	vis->gzb = y1;
 	vis->gzt = y2;
 	vis->x1 = x1;

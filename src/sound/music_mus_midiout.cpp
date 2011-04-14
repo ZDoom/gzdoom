@@ -323,8 +323,9 @@ DWORD *MUSSong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 				mid1 = CtrlTranslate[t];
 				mid2 = MusBuffer[MusP++];
 				if (mid1 == 7)
-				{
-					mid2 = VolumeControllerChange(channel, mid2);
+				{ // Clamp volume to 127, since DMX apparently allows 8-bit volumes.
+				  // Fix courtesy of Gez, courtesy of Ben Ryves.
+					mid2 = VolumeControllerChange(channel, MIN(mid2, 0x7F));
 				}
 			}
 			break;

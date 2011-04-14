@@ -44,6 +44,7 @@ enum
 	FAKE3D_CLIPBOTTOM		= 1,	// clip bottom
 	FAKE3D_CLIPTOP			= 2,	// clip top
 	FAKE3D_REFRESHCLIP		= 4,	// refresh clip info
+	FAKE3D_DOWN2UP			= 8,	// rendering from down to up (floors)
 };
 
 extern int fake3D;

@@ -1455,6 +1455,7 @@ void R_Subsector (subsector_t *sub)
 void R_RenderBSPNode (void *node)
 {
 	if (numnodes == 0)
+	{
 		R_Subsector (subsectors);
 		return;
 	}

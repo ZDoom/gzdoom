@@ -757,6 +757,10 @@ AWeapon *FWeaponSlot::PickWeapon(player_t *player, bool checkammo)
 {
 	int i, j;
 
+	if (player->mo == NULL)
+	{
+		return NULL;
+	}
 	// Does this slot even have any weapons?
 	if (Weapons.Size() == 0)
 	{

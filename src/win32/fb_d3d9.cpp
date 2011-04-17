@@ -3,7 +3,7 @@
 ** Code to let ZDoom use Direct3D 9 as a simple framebuffer
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2009 Randy Heit
+** Copyright 1998-2011 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 ** just a means of getting the pixel data to the screen in a more reliable
 ** method on modern hardware by copying the entire frame to a texture,
 ** drawing that to the screen, and presenting.
+**
+** That said, it does implement hardware-accelerated 2D rendering.
 */
 
 // HEADER FILES ------------------------------------------------------------
@@ -1186,6 +1188,7 @@ void D3DFB::Flip()
 {
 	assert(InScene);
 
+	DrawLetterbox();
 	DoWindowedGamma();
 	D3DDevice->EndScene();
 
@@ -1315,7 +1318,6 @@ void D3DFB::Draw3DPart(bool copy3d)
 			FBTexture->UnlockRect (0);
 		}
 	}
-	DrawLetterbox();
 	InScene = true;
 	D3DDevice->BeginScene();
 	D3DDevice->SetRenderState(D3DRS_ANTIALIASEDLINEENABLE, vid_hwaalines);
@@ -1337,7 +1339,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 		}
 	}
 
-	SetTexture (0, FBTexture);
+	SetTexture(0, FBTexture);
 	SetPaletteTexture(PaletteTexture, 256, BorderColor);
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
 	memset(Constant, 0, sizeof(Constant));
@@ -2134,7 +2136,7 @@ D3DFB::PackedTexture *D3DFB::PackingTexture::GetBestFit(int w, int h, int &area)
 // requested dimensions and adding additional boxes to the empty list if
 // needed.
 //
-// The passed box *MUST* be in this packing textures empty list.
+// The passed box *MUST* be in this packing texture's empty list.
 //
 //==========================================================================
 

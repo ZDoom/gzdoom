@@ -2290,7 +2290,7 @@ void D_DoomMain (void)
 				G_LoadGame (file);
 			}
 
-			if (gameaction != ga_loadgame)
+			if (gameaction != ga_loadgame && gameaction != ga_loadgamehidecon)
 			{
 				if (autostart || netgame)
 				{

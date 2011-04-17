@@ -553,7 +553,7 @@ void DLoadSaveMenu::Drawer ()
 	bool didSeeSelected = false;
 
 	// Draw picture area
-	if (gameaction == ga_loadgame || gameaction == ga_savegame)
+	if (gameaction == ga_loadgame || gameaction == ga_loadgamehidecon || gameaction == ga_savegame)
 	{
 		return;
 	}
@@ -1094,11 +1094,7 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 
 	if (mkey == MKEY_Enter)
 	{
-		G_LoadGame (SaveGames[Selected]->Filename.GetChars());
-		if (gamestate == GS_FULLCONSOLE)
-		{
-			gamestate = GS_HIDECONSOLE;
-		}
+		G_LoadGame (SaveGames[Selected]->Filename.GetChars(), true);
 		if (quickSaveSlot == (FSaveGameNode*)1)
 		{
 			quickSaveSlot = SaveGames[Selected];

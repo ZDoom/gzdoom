@@ -1015,6 +1015,7 @@ void G_Ticker ()
 			G_DoNewGame ();
 			break;
 		case ga_loadgame:
+		case ga_loadgamehidecon:
 		case ga_autoloadgame:
 			G_DoLoadGame ();
 			break;
@@ -1631,12 +1632,12 @@ void G_ScreenShot (char *filename)
 // G_InitFromSavegame
 // Can be called by the startup code or the menu task.
 //
-void G_LoadGame (const char* name)
+void G_LoadGame (const char* name, bool hidecon)
 {
 	if (name != NULL)
 	{
 		savename = name;
-		gameaction = ga_loadgame;
+		gameaction = !hidecon ? ga_loadgame : ga_loadgamehidecon;
 	}
 }
 
@@ -1696,11 +1697,13 @@ void G_DoLoadGame ()
 	char sigcheck[20];
 	char *text = NULL;
 	char *map;
+	bool hidecon;
 
 	if (gameaction != ga_autoloadgame)
 	{
 		demoplayback = false;
 	}
+	hidecon = gameaction == ga_loadgamehidecon;
 	gameaction = ga_nothing;
 
 	FILE *stdfile = fopen (savename.GetChars(), "rb");
@@ -1746,13 +1749,19 @@ void G_DoLoadGame ()
 		delete[] engine;
 	}
 
+	SaveVersion = 0;
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
 		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
 		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
 	{
-		Printf ("Savegame is from an incompatible version\n");
 		delete png;
 		fclose (stdfile);
+		Printf ("Savegame is from an incompatible version");
+		if (SaveVersion != 0)
+		{
+			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+		}
+		Printf("\n");
 		return;
 	}
 
@@ -1768,6 +1777,13 @@ void G_DoLoadGame ()
 		Printf ("Savegame is missing the current map\n");
 		fclose (stdfile);
 		return;
+	}
+
+	// Now that it looks like we can load this save, hide the fullscreen console if it was up
+	// when the game was selected from the menu.
+	if (hidecon && gamestate == GS_FULLCONSOLE)
+	{
+		gamestate = GS_HIDECONSOLE;
 	}
 
 	// Read intermission data for hubs

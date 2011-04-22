@@ -330,7 +330,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
-	// P_LineOpening requires the thing's z to be the destination ín order to work.
+	// P_LineOpening requires the thing's z to be the destination ú‹ order to work.
 	fixed_t savedz = thing->z;
 	thing->z = z;
 	while ((ld = it.Next()))
@@ -655,7 +655,8 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 				P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 			}
 			tm.thing->BlockingLine = ld;
-			CheckForPushSpecial (ld, 0, tm.thing);
+			// Calculate line side based on the actor's original position, not the new one.
+			CheckForPushSpecial (ld, P_PointOnLineSide(tm.thing->x, tm.thing->y, ld), tm.thing);
 			return false;
 		}
 	}

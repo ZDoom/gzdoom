@@ -425,6 +425,31 @@ void R_InitTables (void)
 	memcpy (&finesine[FINEANGLES], &finesine[0], sizeof(angle_t)*FINEANGLES/4);
 }
 
+//==========================================================================
+//
+// viewangletox
+//
+// Used solely for construction the xtoviewangle table.
+//
+//==========================================================================
+
+static inline int viewangletox(int i)
+{
+	if (finetangent[i] > FRACUNIT*2)
+	{
+		return -1;
+	}
+	else if (finetangent[i] < -FRACUNIT*2)
+	{
+		return viewwidth+1;
+	}
+	else
+	{
+		int t = FixedMul(finetangent[i], FocalLengthX);
+		t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
+		return clamp(t, -1, viewwidth+1);
+	}
+}
 
 //==========================================================================
 //
@@ -434,8 +459,7 @@ void R_InitTables (void)
 
 void R_InitTextureMapping ()
 {
-	int i;
-	fixed_t slope;
+	int i, x;
 	int fov = FieldOfView;
 
 	// For widescreen displays, increase the FOV so that the middle part of the
@@ -464,24 +488,37 @@ void R_InitTextureMapping ()
 	// This is 1/FocalTangent before the widescreen extension of FOV.
 	viewingrangerecip = DivScale32(1, finetangent[FINEANGLES/4+(FieldOfView/2)]);
 
-	// Now generate xtoviewangle for sky texture mapping.
 	// [RH] Do not generate viewangletox, because texture mapping is no
 	// longer done with trig, so it's not needed.
-	const int t = MIN<int> ((FocalLengthX >> FRACBITS) + centerx, viewwidth);
-	const fixed_t slopestep = hitan / centerx;
+
+	// Now generate xtoviewangle for sky texture mapping.
+	// We do this with a hybrid approach: The center 90 degree span is
+	// constructed as per the original code:
+	//   Scan xtoviewangle to find the smallest view angle that maps to x.
+	//   (viewangletox is sorted in non-increasing order.)
+	//   This reduces the chances of "doubling-up" of texture columns in
+	//   the drawn sky texture.
+	// The remaining arcs are done with tantoangle instead.
+
+	const int t1 = MAX<int>(centerx - (FocalLengthX >> FRACBITS), 0);
+	const int t2 = MIN<int>(centerx + (FocalLengthX >> FRACBITS), viewwidth);
 	const fixed_t dfocus = FocalLengthX >> DBITS;
 
-	for (i = centerx, slope = 0; i <= t; i++, slope += slopestep)
+	for (i = 0, x = t2; x >= t1; --x)
 	{
-		xtoviewangle[i] = (angle_t)-(signed)tantoangle[slope >> DBITS];
+		while(viewangletox(i) > x)
+		{
+			++i;
+		}
+		xtoviewangle[x] = (i << ANGLETOFINESHIFT) - ANGLE_90;
 	}
-	for (; i <= viewwidth; i++)
+	for (x = t2 + 1; x <= viewwidth; ++x)
 	{
-		xtoviewangle[i] = ANG270+tantoangle[dfocus / (i - centerx)];
+		xtoviewangle[x] = ANGLE_270 + tantoangle[dfocus / (x - centerx)];
 	}
-	for (i = 0; i < centerx; i++)
+	for (x = 0; x < t1; ++x)
 	{
-		xtoviewangle[i] = (angle_t)(-(signed)xtoviewangle[viewwidth-i]);
+		xtoviewangle[x] = (angle_t)(-(signed)xtoviewangle[viewwidth - x]);
 	}
 }
 

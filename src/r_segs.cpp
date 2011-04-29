@@ -621,6 +621,10 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
 	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
 
+	// maybe not visible
+	if (sclipBottom >= frontsector->CenterCeiling()) return;
+	if (sclipTop <= frontsector->CenterFloor()) return;
+
 	if (fake3D & FAKE3D_DOWN2UP)
 	{ // bottom to viewz
 		last = 0;
@@ -635,7 +639,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				rover->top.plane->a || rover->top.plane->b ||
 				rover->bottom.plane->a || rover->bottom.plane->b ||
 				rover->top.plane->Zat0() <= sclipBottom ||
-				rover->bottom.plane->Zat0() >= ceilingheight)
+				rover->bottom.plane->Zat0() >= ceilingheight ||
+				rover->top.plane->Zat0() <= floorheight)
 			{
 				if (!i)
 				{
@@ -816,7 +821,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				rover->top.plane->a || rover->top.plane->b ||
 				rover->bottom.plane->a || rover->bottom.plane->b ||
 				rover->bottom.plane->Zat0() >= sclipTop ||
-				rover->top.plane->Zat0() <= floorheight)
+				rover->top.plane->Zat0() <= floorheight ||
+				rover->bottom.plane->Zat0() >= ceilingheight)
 			{
 				if ((unsigned)i == backsector->e->XFloor.ffloors.Size() - 1)
 				{

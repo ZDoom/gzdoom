@@ -106,6 +106,7 @@
 #include "sc_man.h"
 #include "po_man.h"
 #include "resourcefiles/resourcefile.h"
+#include "r_3dfloors.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -913,6 +914,15 @@ void D_ErrorCleanup ()
 		menuactive = MENU_Off;
 	}
 	insave = false;
+	fakeActive = 0;
+	fake3D = 0;
+	while (CurrentSkybox)
+	{
+		R_3D_DeleteHeights();
+		R_3D_LeaveSkybox();
+	}
+	R_3D_ResetClip();
+	R_3D_DeleteHeights();
 }
 
 //==========================================================================

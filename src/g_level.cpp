@@ -1861,10 +1861,12 @@ CCMD(listmaps)
 	for(unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
+		MapData *map = P_OpenMapData(info->mapname);
 
-		if (P_CheckMapData(info->mapname))
+		if (map != NULL)
 		{
-			Printf("%s: '%s'\n", info->mapname, info->LookupLevelName().GetChars());
+			Printf("%s: '%s' (%s)\n", info->mapname, info->LookupLevelName().GetChars(),
+				Wads.GetWadName(Wads.GetLumpFile(map->lumpnum)));
 		}
 	}
 }

@@ -112,6 +112,10 @@ IDirect3DDevice9 *D3Device;
 CVAR (Bool, vid_forceddraw, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR (Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+#if VID_FILE_DEBUG
+FILE *dbg;
+#endif
+
 // CODE --------------------------------------------------------------------
 
 Win32Video::Win32Video (int parm)

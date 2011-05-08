@@ -1363,12 +1363,12 @@ void R_FillSpan (void)
 #ifndef X86_ASM
 static const BYTE *slabcolormap;
 
-extern "C" void R_SetupDrawSlab(const BYTE *colormap)
+extern "C" void R_SetupDrawSlabC(const BYTE *colormap)
 {
 	slabcolormap = colormap;
 }
 
-extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+extern "C" void STACK_ARGS R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
 {
 	int x;
 	const BYTE *colormap = slabcolormap;

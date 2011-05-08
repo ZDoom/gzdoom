@@ -216,6 +216,14 @@ void	R_FillColumnP (void);
 void	R_FillColumnHorizP (void);
 void	R_FillSpan (void);
 
+#ifdef X86_ASM
+#define R_SetupDrawSlab R_SetupDrawSlabA
+#define R_DrawSlab R_DrawSlabA
+#else
+#define R_SetupDrawSlab R_SetupDrawSlabC
+#define R_DrawSlab R_DrawSlabC
+#endif
+
 extern "C" void			   R_SetupDrawSlab(const BYTE *colormap);
 extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 

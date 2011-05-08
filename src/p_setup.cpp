@@ -584,7 +584,9 @@ static void SetTexture (side_t *side, int position, const char *name8, FMissingT
 				{
 					if (lines[i].sidedef[j] == side)
 					{
-						Printf("Unknown %s texture '%s' on %s side of linedef %d\n",
+						Printf(TEXTCOLOR_RED"Unknown %s texture '"
+							TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED
+							"' on %s side of linedef %d\n",
 							positionnames[position], name, sidenames[j], i);
 					}
 				}
@@ -615,7 +617,9 @@ void SetTexture (sector_t *sector, int index, int position, const char *name8, F
 	{
 		if (++track[name].Count <= MISSING_TEXTURE_WARN_LIMIT)
 		{
-			Printf("Unknown %s texture '%s' in sector %d\n",
+			Printf(TEXTCOLOR_RED"Unknown %s texture '"
+				TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED
+				"' in sector %d\n",
 				positionnames[position], name, index);
 		}
 		texture = TexMan.GetDefaultTexture();
@@ -641,7 +645,9 @@ static void SummarizeMissingTextures(const FMissingTextureTracker &missing)
 	{
 		if (pair->Value.Count > MISSING_TEXTURE_WARN_LIMIT)
 		{
-			Printf("Missing texture '%s' is used %d more times\n",
+			Printf(TEXTCOLOR_RED "Missing texture '"
+				TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED
+				"' is used %d more times\n",
 				pair->Key.GetChars(), pair->Value.Count - MISSING_TEXTURE_WARN_LIMIT);
 		}
 	}

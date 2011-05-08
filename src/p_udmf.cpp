@@ -110,9 +110,8 @@ enum
 	// namespace for each game
 };
 
-
-void SetTexture (sector_t *sector, int index, int position, const char *name8);
-void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha);
+void SetTexture (sector_t *sector, int index, int position, const char *name8, FMissingTextureTracker &);
+void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &);
 void P_AdjustLine (line_t *ld);
 void P_FinishLoadingLineDef(line_t *ld, int alpha);
 void SpawnMapThing(int index, FMapThing *mt, int position);
@@ -393,9 +392,11 @@ class UDMFParser : public UDMFParserBase
 	TArray<vertexdata_t> ParsedVertexDatas;
 
 	FDynamicColormap	*fogMap, *normMap;
+	FMissingTextureTracker &missingTex;
 
 public:
-	UDMFParser()
+	UDMFParser(FMissingTextureTracker &missing)
+		: missingTex(missing)
 	{
 		linemap.Clear();
 		fogMap = normMap = NULL;
@@ -1113,11 +1114,11 @@ public:
 				continue;
 
 			case NAME_Texturefloor:
-				SetTexture(sec, index, sector_t::floor, CheckString(key));
+				SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex);
 				continue;
 
 			case NAME_Textureceiling:
-				SetTexture(sec, index, sector_t::ceiling, CheckString(key));
+				SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex);
 				continue;
 
 			case NAME_Lightlevel:
@@ -1427,7 +1428,7 @@ public:
 					lines[line].sidedef[sd] = &sides[side];
 
 					P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
-						lines[line].special, lines[line].args[0], &tempalpha[sd]);
+						lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
 
 					side++;
 				}
@@ -1592,9 +1593,9 @@ public:
 	}
 };
 
-void P_ParseTextMap(MapData *map)
+void P_ParseTextMap(MapData *map, FMissingTextureTracker &missingtex)
 {
-	UDMFParser parse;
+	UDMFParser parse(missingtex);
 
 	parse.ParseTextMap(map);
 }

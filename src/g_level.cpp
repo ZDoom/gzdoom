@@ -1867,6 +1867,7 @@ CCMD(listmaps)
 		{
 			Printf("%s: '%s' (%s)\n", info->mapname, info->LookupLevelName().GetChars(),
 				Wads.GetWadName(Wads.GetLumpFile(map->lumpnum)));
+			delete map;
 		}
 	}
 }

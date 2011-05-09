@@ -121,6 +121,10 @@ const int CPF_PULLIN = 4;
 const int TF_TELEFRAG = 1;
 const int TF_RANDOMDECIDE = 2;
 
+// Flags for A_WolfAttack
+const int WAF_NORANDOM = 1;
+const int WAF_USEPUFF = 2;
+
 // Activation flags
 enum
 {

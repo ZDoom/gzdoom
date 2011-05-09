@@ -3870,3 +3870,123 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LineEffect)
 	}
 	ACTION_SET_RESULT(res);
 }
+
+//==========================================================================
+//
+// A Wolf3D-style attack codepointer
+//
+//==========================================================================
+enum WolfAttackFlags
+{
+	WAF_NORANDOM	= 1,
+	WAF_USEPUFF		= 2,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
+{
+	ACTION_PARAM_START(9);
+	ACTION_PARAM_INT(flags, 0);
+	ACTION_PARAM_SOUND(sound, 1);
+	ACTION_PARAM_FIXED(snipe, 2);
+	ACTION_PARAM_INT(maxdamage, 3);
+	ACTION_PARAM_INT(blocksize, 4);
+	ACTION_PARAM_INT(pointblank, 5);
+	ACTION_PARAM_INT(longrange, 6);
+	ACTION_PARAM_FIXED(runspeed, 7);
+	ACTION_PARAM_CLASS(pufftype, 8);
+
+	if (!self->target)
+		return;
+
+	// Enemy can't see target
+	if (!P_CheckSight(self, self->target))
+		return;
+
+	A_FaceTarget (self);
+
+
+	// Target can dodge if it can see enemy
+	angle_t angle = R_PointToAngle2(self->target->x, self->target->y, self->x, self->y) - self->target->angle;
+	angle >>= 24;
+	bool dodge = (P_CheckSight(self->target, self) && (angle>226 || angle<30));
+
+	// Distance check is simplistic
+	fixed_t dx = abs (self->x - self->target->x);
+	fixed_t dy = abs (self->y - self->target->y);
+	fixed_t dz;
+	fixed_t dist = dx > dy ? dx : dy;
+
+	// Some enemies are more precise
+	dist = FixedMul(dist, snipe);
+
+	// Convert distance into integer number of blocks
+	dist >>= FRACBITS;
+	dist /= blocksize;
+
+	// Now for the speed accuracy thingie
+	fixed_t speed = FixedMul(self->target->velx, self->target->velx)
+				  + FixedMul(self->target->vely, self->target->vely)
+				  + FixedMul(self->target->velz, self->target->velz);
+	int hitchance = speed < runspeed ? 256 : 160;
+
+	// Distance accuracy (factoring dodge)
+	hitchance -= dist * (dodge ? 16 : 8);
+
+	// While we're here, we may as well do something for this:
+	if (self->target->flags & MF_SHADOW)
+	{
+		hitchance >>= 2;
+	}
+
+	// The attack itself
+	if (pr_cabullet() < hitchance)
+	{
+		// Compute position for spawning blood/puff
+		dx = self->target->x;
+		dy = self->target->y;
+		dz = self->target->z + (self->target->height>>1);
+		angle = R_PointToAngle2(dx, dy, self->x, self->y);
+		
+		dx += FixedMul(self->target->radius, finecosine[angle>>ANGLETOFINESHIFT]);
+		dy += FixedMul(self->target->radius, finesine[angle>>ANGLETOFINESHIFT]);
+
+		int damage = flags & WAF_NORANDOM ? maxdamage : (1 + (pr_cabullet() % maxdamage));
+		if (dist >= pointblank)
+			damage >>= 1;
+		if (dist >= longrange)
+			damage >>= 1;
+		FName mod = NAME_None;
+		bool spawnblood = !((self->target->flags & MF_NOBLOOD) 
+			|| (self->target->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)));
+		if (flags & WAF_USEPUFF && pufftype)
+		{
+			AActor * dpuff = GetDefaultByType(pufftype->GetReplacement());
+			mod = dpuff->DamageType;
+
+			if (dpuff->flags2 & MF2_THRUGHOST && self->target->flags3 & MF3_GHOST)
+				damage = 0;
+			
+			if (0 && dpuff->flags3 & MF3_PUFFONACTORS || !spawnblood)
+			{
+				spawnblood = false;
+				P_SpawnPuff(self, pufftype, dx, dy, dz, angle, 0);
+			}
+		}
+		else if (self->target->flags3 & MF3_GHOST)
+			damage >>= 2;
+		if (damage)
+		{
+			P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
+			if (spawnblood)
+			{
+				P_SpawnBlood(dx, dy, dz, angle, damage, self);
+				P_TraceBleed(damage, self->target, R_PointToAngle2(self->x, self->y, dx, dy), 0);
+			}
+		}
+	}
+
+	// And finally, let's play the sound
+	S_Sound (self, CHAN_WEAPON, sound, 1, ATTN_NORM);
+}
+
+

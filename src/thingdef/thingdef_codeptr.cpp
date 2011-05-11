@@ -932,6 +932,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	ACTION_PARAM_INT(force, 0);
 	ACTION_PARAM_FIXED(distance, 1);
 	ACTION_PARAM_BOOL(affectSource, 2);
+	ACTION_PARAM_INT(fullthrustdistance, 3);
 
 	bool sourcenothrust = false;
 
@@ -946,7 +947,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	}
 	int sourceflags2 = self->target != NULL ? self->target->flags2 : 0;
 
-	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false);
+	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, fullthrustdistance);
 	P_CheckSplash(self, distance << FRACBITS);
 
 	if (sourcenothrust)

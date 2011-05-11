@@ -113,6 +113,7 @@ CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Int, r_polymost, 0, 0)
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
+CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -1259,7 +1260,7 @@ void R_SetupFrame (AActor *actor)
 		if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 		{
 			realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-			if (RenderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+			if (RenderTarget == screen && (DFrameBuffer *)screen->Accel2D && r_shadercolormaps)
 			{
 				// Render everything fullbright. The copy to video memory will
 				// apply the special colormap, so it won't be restricted to the
@@ -1649,6 +1650,13 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	WallMirrors.Clear ();
 	interpolator.RestoreInterpolations ();
 	R_SetupBuffer ();
+
+	// If we don't want shadered colormaps, NULL it now so that the
+	// copy to the screen does not use a special colormap shader.
+	if (!r_shadercolormaps)
+	{
+		realfixedcolormap = NULL;
+	}
 }
 
 //==========================================================================

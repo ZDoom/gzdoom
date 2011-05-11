@@ -68,7 +68,7 @@ extern fixed_t globaluclip, globaldclip;
 
 EXTERN_CVAR (Bool, st_scale)
 CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
-
+EXTERN_CVAR(Bool, r_shadercolormaps)
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -2288,7 +2288,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 				// If not, then don't bother trying to identify it for
 				// hardware accelerated drawing.
 				if (vis->colormap < SpecialColormaps[0].Colormap || 
-					vis->colormap >= SpecialColormaps[SpecialColormaps.Size()].Colormap)
+					vis->colormap > SpecialColormaps.Last().Colormap)
 				{
 					noaccel = true;
 				}
@@ -2300,6 +2300,13 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 					noaccel = true;
 				}
 			}
+		}
+		// If we're drawing with a special colormap, but shaders for them are disabled, do
+		// not accelerate.
+		if (!r_shadercolormaps && (vis->colormap >= SpecialColormaps[0].Colormap &&
+			vis->colormap <= SpecialColormaps.Last().Colormap))
+		{
+			noaccel = true;
 		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.

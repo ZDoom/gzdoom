@@ -587,8 +587,9 @@ public:
 		PCD_PRINTBINARY,
 /*350*/	PCD_PRINTHEX,
 		PCD_CALLFUNC,
+		PCD_SAVESTRING,			// [FDARI]
 
-/*351*/	PCODE_COMMAND_COUNT
+/*353*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts

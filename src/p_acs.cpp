@@ -150,6 +150,22 @@ FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 //============================================================================
 //
+// On the fly strings
+//
+//============================================================================
+
+#define LIB_ACSSTRINGS_ONTHEFLY 0x7fff
+#define ACSSTRING_OR_ONTHEFLY (LIB_ACSSTRINGS_ONTHEFLY<<16)
+
+TArray<FString>
+	ACS_StringsOnTheFly,
+	ACS_StringBuilderStack;
+
+#define STRINGBUILDER_START(Builder) if (*Builder.GetChars() || ACS_StringBuilderStack.Size()) { ACS_StringBuilderStack.Push(Builder); Builder = ""; }
+#define STRINGBUILDER_FINISH(Builder) if (!ACS_StringBuilderStack.Pop(Builder)) Builder = "";
+
+//============================================================================
+//
 //
 //
 //============================================================================
@@ -1738,6 +1754,14 @@ BYTE *FBehavior::NextChunk (BYTE *chunk) const
 const char *FBehavior::StaticLookupString (DWORD index)
 {
 	DWORD lib = index >> 16;
+	
+	switch (lib)
+	{
+	case LIB_ACSSTRINGS_ONTHEFLY:
+		index &= 0xffff;
+		return (ACS_StringsOnTheFly.Size() > index) ? ACS_StringsOnTheFly[index].GetChars() : NULL;
+	}
+
 	if (lib >= (DWORD)StaticModules.Size())
 	{
 		return NULL;
@@ -1884,6 +1908,15 @@ void DACSThinker::Tick ()
 		DLevelScript *next = script->next;
 		script->RunScript ();
 		script = next;
+	}
+
+	ACS_StringsOnTheFly.Clear();
+
+	if (ACS_StringBuilderStack.Size())
+	{
+		int size = ACS_StringBuilderStack.Size();
+		ACS_StringBuilderStack.Clear();
+		I_Error("Error: %d garbage entries on ACS string builder stack.", size);
 	}
 }
 
@@ -4971,7 +5004,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_BEGINPRINT:
-			work = "";
+			STRINGBUILDER_START(work);
 			break;
 
 		case PCD_PRINTSTRING:
@@ -5145,6 +5178,7 @@ int DLevelScript::RunScript ()
 			if (pcd == PCD_ENDLOG)
 			{
 				Printf ("%s\n", work.GetChars());
+				STRINGBUILDER_FINISH(work);
 			}
 			else if (pcd != PCD_MOREHUDMESSAGE)
 			{
@@ -5163,6 +5197,7 @@ int DLevelScript::RunScript ()
 				{
 					C_MidPrint (activefont, work);
 				}
+				STRINGBUILDER_FINISH(work);
 			}
 			else
 			{
@@ -5260,6 +5295,7 @@ int DLevelScript::RunScript ()
 					}
 				}
 			}
+			STRINGBUILDER_FINISH(work);
 			sp = optstart-6;
 			break;
 
@@ -6677,6 +6713,23 @@ int DLevelScript::RunScript ()
 				sp -= 1;
 			}	
 			break;
+
+		case PCD_SAVESTRING:
+			// Saves the string
+			{
+				unsigned int str_otf = ACS_StringsOnTheFly.Push(strbin1(work));
+				if (str_otf > 0xffff)
+				{
+					PushToStack(-1);
+				}
+				else
+				{
+					PushToStack((SDWORD)str_otf|ACSSTRING_OR_ONTHEFLY);
+				}
+				STRINGBUILDER_FINISH(work);
+			}		
+			break;
+
  		}
  	}
 
@@ -6995,3 +7048,6 @@ void DACSThinker::DumpScriptStatus ()
 		script = script->next;
 	}
 }
+
+#undef STRINGBUILDER_START
+#undef STRINGBUILDER_FINISH

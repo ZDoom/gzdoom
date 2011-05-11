@@ -933,11 +933,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	ACTION_PARAM_FIXED(distance, 1);
 	ACTION_PARAM_BOOL(affectSource, 2);
 
+	bool sourcenothrust = false;
+
 	if (force <= 0) force = 128;
 	if (distance <= 0) distance = force;
 
+	// Temporarily negate MF2_NODMGTHRUST on the shooter, since it renders this function useless.
+	if (self->target != NULL && self->target->flags2 & MF2_NODMGTHRUST)
+	{
+		sourcenothrust = true;
+		self->target->flags2 &= ~MF2_NODMGTHRUST;
+	}
+	int sourceflags2 = self->target != NULL ? self->target->flags2 : 0;
+
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false);
-	P_CheckSplash(self, distance<<FRACBITS);
+	P_CheckSplash(self, distance << FRACBITS);
+
+	if (sourcenothrust)
+	{
+		self->target->flags2 |= MF2_NODMGTHRUST;
+	}
 }
 
 //==========================================================================

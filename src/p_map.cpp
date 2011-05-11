@@ -4433,7 +4433,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 					if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
 					{
-						if (bombsource == NULL  || !(bombsource->flags2 & MF2_NODMGTHRUST))
+						if (bombsource == NULL || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{
 							thrust = points * 0.5f / (double)thing->Mass;
 							if (bombsource == thing)

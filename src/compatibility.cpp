@@ -120,6 +120,7 @@ static FCompatOption Options[] =
 	{ "hitscan",				COMPATF_HITSCAN, 0 },
 	{ "lightlevel",				COMPATF_LIGHT, 0 },
 	{ "polyobj",				COMPATF_POLYOBJ, 0 },
+	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, 0 },
 	{ NULL, 0, 0 }
 };
 

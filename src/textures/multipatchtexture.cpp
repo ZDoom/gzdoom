@@ -160,6 +160,8 @@ public:
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	int GetSourceLump() { return DefinitionLump; }
+	FTexture *GetRedirect(bool wantwarped);
+	FTexture *GetRawTexture();
 
 protected:
 	BYTE *Pixels;
@@ -185,7 +187,6 @@ protected:
 	bool bTranslucentPatches:1;
 
 	void MakeTexture ();
-	FTexture *GetRedirect(bool wantwarped);
 
 private:
 	void CheckForHacks ();
@@ -766,14 +767,32 @@ void FMultiPatchTexture::CheckForHacks ()
 
 //==========================================================================
 //
-// FMultiPatchTexture :: TexPart :: TexPart
+// FMultiPatchTexture :: GetRedirect
 //
 //==========================================================================
 
 FTexture *FMultiPatchTexture::GetRedirect(bool wantwarped)
 {
-	if (bRedirect) return Parts->Texture;
-	else return this;
+	return bRedirect ? Parts->Texture : this;
+}
+
+//==========================================================================
+//
+// FMultiPatchTexture :: GetRawTexture
+//
+// Doom ignored all compositing of mid-sided textures on two-sided lines.
+// Since these textures had to be single-patch in Doom, that essentially
+// means it ignores their Y offsets.
+//
+// If this texture is composed of only one patch, return that patch.
+// Otherwise, return this texture, since Doom wouldn't have been able to
+// draw it anyway.
+//
+//==========================================================================
+
+FTexture *FMultiPatchTexture::GetRawTexture()
+{
+	return NumParts == 1 ? Parts->Texture : this;
 }
 
 //==========================================================================

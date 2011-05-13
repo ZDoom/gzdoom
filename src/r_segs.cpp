@@ -240,6 +240,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	backsector = curline->backsector;
 
 	tex = TexMan(curline->sidedef->GetTexture(side_t::mid));
+	if (i_compatflags & COMPATF_MASKEDMIDTEX)
+	{
+		tex = tex->GetRawTexture();
+	}
 
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
 	sec = R_FakeFlat (frontsector, &tempsec, NULL, NULL, false);

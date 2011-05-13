@@ -1192,6 +1192,7 @@ OptionMenu "CompatibilityOptions"
 	Option "Use Doom code for hitscan checks",			"compat_HITSCAN", "YesNo"
 	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
+	Option "Ignore Y offsets on masked midtextures",	"compat_MASKEDMIDTEX", "YesNo"
 	
 	Class "CompatibilityMenu"
 }

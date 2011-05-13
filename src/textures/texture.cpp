@@ -547,6 +547,11 @@ FTexture *FTexture::GetRedirect(bool wantwarped)
 	return this;
 }
 
+FTexture *FTexture::GetRawTexture()
+{
+	return this;
+}
+
 void FTexture::SetScaledSize(int fitwidth, int fitheight)
 {
 	xScale = FLOAT2FIXED(float(Width) / fitwidth);

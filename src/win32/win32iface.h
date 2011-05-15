@@ -296,6 +296,7 @@ private:
 			};
 			DWORD Group1;
 		};
+		BYTE Desat;
 		D3DPal *Palette;
 		IDirect3DTexture9 *Texture;
 		WORD NumVerts;		// Number of _unique_ vertices used by this set.
@@ -304,6 +305,7 @@ private:
 
 	enum
 	{
+		PSCONST_Desaturation = 1,
 		PSCONST_PaletteMod = 2,
 		PSCONST_Weights = 6,
 		PSCONST_Gamma = 7,

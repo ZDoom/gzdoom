@@ -3293,8 +3293,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 				quad->Flags |= BQF_Desaturated;
 			}
 			quad->ShaderNum = BQS_InGameColormap;
-			color0 = D3DCOLOR_ARGB(colormap->Desaturate,
-				colormap->Color.r, colormap->Color.g, colormap->Color.b);
+			quad->Desat = colormap->Desaturate;
+			color0 = D3DCOLOR_ARGB(255, colormap->Color.r, colormap->Color.g, colormap->Color.b);
 			double fadelevel = clamp(shade / (NUMCOLORMAPS * 65536.0), 0.0, 1.0);
 			color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
 				DWORD(colormap->Fade.r * fadelevel),
@@ -3532,6 +3532,10 @@ void D3DFB::EndQuadBatch()
 			{
 				break;
 			}
+			if (quad->ShaderNum == BQS_InGameColormap && (quad->Flags & BQF_Desaturated) && quad->Desat != q2->Desat)
+			{
+				break;
+			}
 			indexpos += q2->NumTris * 3;
 			vertpos += q2->NumVerts;
 		}
@@ -3593,6 +3597,10 @@ void D3DFB::EndQuadBatch()
 			select = !!(quad->Flags & BQF_Desaturated);
 			select |= !!(quad->Flags & BQF_InvertSource) << 1;
 			select |= !!(quad->Flags & BQF_Paletted) << 2;
+			if (quad->Flags & BQF_Desaturated)
+			{
+				SetConstant(PSCONST_Desaturation, quad->Desat / 255.f, (255 - quad->Desat) / 255.f, 0, 0);
+			}
 			SetPixelShader(Shaders[SHADER_InGameColormap + select]);
 		}
 
@@ -3704,6 +3712,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 	stencilling = false;
 	quad.Palette = NULL;
 	quad.Flags = 0;
+	quad.Desat = 0;
 
 	switch (style.BlendOp)
 	{
@@ -3812,7 +3821,8 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 				quad.Flags |= BQF_Desaturated;
 			}
 			quad.ShaderNum = BQS_InGameColormap;
-			color0 = D3DCOLOR_ARGB(parms.colormapstyle->Desaturate,
+			quad.Desat = parms.colormapstyle->Desaturate;
+			color0 = D3DCOLOR_ARGB(color1 >> 24,
 				parms.colormapstyle->Color.r,
 				parms.colormapstyle->Color.g,
 				parms.colormapstyle->Color.b);

@@ -177,7 +177,7 @@ include "xlat/defines.i"
 172 = USE,		Light_StrobeDoom (tag, 5, 35)
 173 = USE,		Light_MinNeighbor (tag)
 174 = USE|MONST,	Teleport (0, tag)
-175 = USE,		Door_CloseWaitOpen (tag, F_SLOW, 240)
+175 = USE,		Door_CloseWaitOpen (tag, D_SLOW, 240)
 176 = USE|REP,		Floor_RaiseByTexture (tag, F_SLOW)
 177 = USE|REP,		Floor_LowerToLowestTxTy (tag, F_SLOW)
 178 = USE|REP,		Floor_RaiseByValueTimes8 (tag, F_SLOW, 64)

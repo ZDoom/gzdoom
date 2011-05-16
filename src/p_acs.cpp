@@ -3094,6 +3094,7 @@ enum EACSFunctions
 	ACSF_GetPolyobjY,
     ACSF_CheckSight,
 	ACSF_SpawnForced,
+	ACSF_AnnouncerSound,	// Skulltag
 };
 
 int DLevelScript::SideFromID(int id, int side)

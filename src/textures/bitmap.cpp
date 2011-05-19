@@ -421,7 +421,7 @@ bool FClipRect::Intersect(int ix, int iy, int iw, int ih)
 	}
 	else
 	{
-		ih -= (x-ih);
+		ih -= (y-iy);
 	}
 	if (iw < width) width = iw;
 	if (ih < height) height = ih;

@@ -2519,6 +2519,21 @@ void S_RestartMusic ()
 
 //==========================================================================
 //
+// S_MIDIDeviceChanged
+//
+//==========================================================================
+
+void S_MIDIDeviceChanged()
+{
+	if (mus_playing.handle != NULL && mus_playing.handle->IsMIDI())
+	{
+		mus_playing.handle->Stop();
+		mus_playing.handle->Start(mus_playing.loop, -1, mus_playing.baseorder);
+	}
+}
+
+//==========================================================================
+//
 // S_GetMusic
 //
 //==========================================================================

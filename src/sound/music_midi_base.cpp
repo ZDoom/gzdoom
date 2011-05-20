@@ -43,13 +43,20 @@ static void MIDIDeviceChanged(int newdev)
 	static int oldmididev = INT_MIN;
 
 	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev && currSong != NULL && currSong->IsMIDI())
+	if (oldmididev != newdev)
 	{
-		MusInfo *song = currSong;
-		if (song->m_Status == MusInfo::STATE_Playing)
+		if (currSong != NULL && currSong->IsMIDI())
 		{
-			song->Stop();
-			song->Start(song->m_Looping);
+			MusInfo *song = currSong;
+			if (song->m_Status == MusInfo::STATE_Playing)
+			{
+				song->Stop();
+				song->Start(song->m_Looping);
+			}
+		}
+		else
+		{
+			S_MIDIDeviceChanged();
 		}
 	}
 	oldmididev = newdev;

@@ -313,6 +313,8 @@ bool S_ChangeCDMusic (int track, unsigned int id=0, bool looping=true);
 
 void S_RestartMusic ();
 
+void S_MIDIDeviceChanged();
+
 int S_GetMusic (char **name);
 
 // Stops the music for sure.

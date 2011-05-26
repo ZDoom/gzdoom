@@ -5485,6 +5485,9 @@ int AActor::GibHealth()
 
 void AActor::Crash()
 {
+	// [RC] Weird that this forces the Crash state regardless of flag.
+	if(!(flags6 & MF6_DONTCORPSE))
+	{
 	if (((flags & MF_CORPSE) || (flags6 & MF6_KILLED)) &&
 		!(flags3 & MF3_CRASHED) &&
 		!(flags & MF_ICECORPSE))
@@ -5510,6 +5513,7 @@ void AActor::Crash()
 		// Set MF3_CRASHED regardless of the presence of a crash state
 		// so this code doesn't have to be executed repeatedly.
 		flags3 |= MF3_CRASHED;
+	}
 	}
 }
 

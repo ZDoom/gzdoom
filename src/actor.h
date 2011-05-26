@@ -327,6 +327,7 @@ enum
 	MF6_NOMENU			= 0x00400000,	// Player class should not appear in the class selection menu.
 	MF6_BOSSCUBE		= 0x00800000,	// Actor spawned by A_BrainSpit, flagged for timefreeze reasons.
 	MF6_SEEINVISIBLE	= 0x01000000,	// Monsters can see invisible player.
+	MF6_DONTCORPSE		= 0x02000000,	// [RC] Don't autoset MF_CORPSE upon death and don't force Crash state change.
 
 // --- mobj.renderflags ---
 

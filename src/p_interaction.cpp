@@ -384,7 +384,8 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	{	// [RH] Only monsters get to be corpses.
 		// Objects with a raise state should get the flag as well so they can
 		// be revived by an Arch-Vile. Batman Doom needs this.
-		flags |= MF_CORPSE;
+		// [RC] And disable this if DONTCORPSE is set, of course.
+		if(!(flags6 & MF6_DONTCORPSE)) flags |= MF_CORPSE;
 	}
 	flags6 |= MF6_KILLED;
 

@@ -316,6 +316,7 @@ static FFlagDef WeaponFlags[] =
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
+	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL),
 };
 

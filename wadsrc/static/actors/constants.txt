@@ -19,6 +19,9 @@ const int CBAF_NORANDOM = 2;
 const int CBAF_EXPLICITANGLE = 4;
 const int CBAF_NOPITCH = 8;
 
+// Flags for A_GunFlash
+const int GFF_NOEXTCHANGE = 1;
+
 // Flags for A_FireBullets
 const int FBF_USEAMMO = 1;
 const int FBF_NORANDOM = 2;

@@ -660,10 +660,16 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 // A_GunFlash
 //
+enum GF_Flags
+{
+	GFF_NOEXTCHANGE = 1,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
-	ACTION_PARAM_START(1)
+	ACTION_PARAM_START(2)
 	ACTION_PARAM_STATE(flash, 0);
+	ACTION_PARAM_INT(Flags, 1);
 
 	player_t *player = self->player;
 
@@ -671,7 +677,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 	{
 		return;
 	}
-	player->mo->PlayAttacking2 ();
+	if(!(Flags & GFF_NOEXTCHANGE)) player->mo->PlayAttacking2 ();
 
 	if (flash == NULL)
 	{

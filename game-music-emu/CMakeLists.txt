@@ -7,7 +7,7 @@ if( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 
 if( CMAKE_COMPILER_IS_GNUCXX )
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -Wfloat-equal -Wcast-qual" )
 	if( NOT PROFILE )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer" )
 	endif( NOT PROFILE )

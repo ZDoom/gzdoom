@@ -12,7 +12,7 @@ endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DDEBUGMODE=1" )
 
 if( CMAKE_COMPILER_IS_GNUC )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -Wno-uninitialized" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-pointer-sign -Wno-uninitialized -Wshadow -Wfloat-equal -Wcast-qual" )
 endif( CMAKE_COMPILER_IS_GNUC )
 
 CHECK_FUNCTION_EXISTS( itoa ITOA_EXISTS )

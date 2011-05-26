@@ -1,7 +1,7 @@
 cmake_minimum_required( VERSION 2.4 )
 
 if( CMAKE_COMPILER_IS_GNUC )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fomit-frame-pointer" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wshadow -Wfloat-equal -Wcast-qual -fomit-frame-pointer" )
 endif( CMAKE_COMPILER_IS_GNUC )
 
 set( LZMA_FILES

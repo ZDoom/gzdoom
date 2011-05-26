@@ -5071,7 +5071,8 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	th->velz = (fixed_t)(velocity.Z);
 
 	// invisible target: rotate velocity vector in 2D
-	if (dest->flags & MF_SHADOW)
+	// [RC] Now monsters can aim at invisible player as if they were fully visible.
+	if (dest->flags & MF_SHADOW && !(source->flags6 & MF6_SEEINVISIBLE))
 	{
 		angle_t an = pr_spawnmissile.Random2 () << 20;
 		an >>= ANGLETOFINESHIFT;

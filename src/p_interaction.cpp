@@ -949,7 +949,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			return;
 		}
 		player = target->player;
-		if (player && damage > 1)
+		if (player && damage > 1 && damage < TELEFRAG_DAMAGE)
 		{
 			// Take half damage in trainer mode
 			damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));

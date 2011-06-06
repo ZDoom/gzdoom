@@ -1546,17 +1546,26 @@ void DBaseStatusBar::BlendView (float blend[4])
 					BPART(gameinfo.pickupcolor)/255.f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
-	if (CPlayer->mo->DamageFade.a != 0)
+	PainFlashList * pfl = CPlayer->mo->GetClass()->ActorInfo->PainFlashes;
+	PalEntry painFlash = CPlayer->mo->DamageFade;
+
+	if (pfl)
 	{
-		cnt = DamageToAlpha[MIN (113, CPlayer->damagecount * CPlayer->mo->DamageFade.a / 255)];
+		PalEntry * color = pfl->CheckKey(CPlayer->mo->DamageTypeReceived);
+
+		if (color) painFlash = *color;
+	}
+
+	if (painFlash.a != 0)
+	{
+		cnt = DamageToAlpha[MIN (113, CPlayer->damagecount * painFlash.a / 255)];
 			
 		if (cnt)
 		{
 			if (cnt > 228)
 				cnt = 228;
 
-			APlayerPawn *mo = CPlayer->mo;
-			AddBlend (mo->DamageFade.r / 255.f, mo->DamageFade.g / 255.f, mo->DamageFade.b / 255.f, cnt / 255.f, blend);
+			AddBlend (painFlash.r / 255.f, painFlash.g / 255.f, painFlash.b / 255.f, cnt / 255.f, blend);
 		}
 	}
 

@@ -171,6 +171,7 @@ struct FPlayerColorSet
 
 typedef TMap<FName, fixed_t> DmgFactors;
 typedef TMap<FName, int> PainChanceList;
+typedef TMap<FName, PalEntry> PainFlashList;
 typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
 
 struct FActorInfo
@@ -183,6 +184,7 @@ struct FActorInfo
 	void RegisterIDs ();
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
+	void SetPainFlash(FName type, PalEntry color);
 	void SetColorSet(int index, const FPlayerColorSet *set);
 
 	FState *FindState (int numnames, FName *names, bool exact=false) const;
@@ -206,6 +208,7 @@ struct FActorInfo
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
+	PainFlashList *PainFlashes;
 	FPlayerColorSetMap *ColorSets;
 };
 

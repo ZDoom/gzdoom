@@ -313,6 +313,19 @@ void FActorInfo::SetPainChance(FName type, int chance)
 //
 //==========================================================================
 
+void FActorInfo::SetPainFlash(FName type, PalEntry color)
+{
+	if (PainFlashes == NULL)
+		PainFlashes = new PainFlashList;
+
+	PainFlashes->Insert(type, color);
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FActorInfo::SetColorSet(int index, const FPlayerColorSet *set)
 {
 	if (set != NULL) 

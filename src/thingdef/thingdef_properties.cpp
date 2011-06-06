@@ -2128,18 +2128,31 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, crouchsprite, S, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cf, PlayerPawn)
+DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 {
 	PROP_COLOR_PARM(c, 0);
-	defaults->DamageFade = c;
+
+	PalEntry color = c;
+
 	if (PROP_PARM_COUNT < 3)		// Because colors count as 2 parms
 	{
-		defaults->DamageFade.a = 255;
+		color.a = 255;
+		defaults->DamageFade = color;
+	}
+	else if (PROP_PARM_COUNT < 4)
+	{
+		PROP_FLOAT_PARM(a, 2);
+
+		color.a = BYTE(255 * clamp(a, 0.f, 1.f));
+		defaults->DamageFade = color;
 	}
 	else
 	{
 		PROP_FLOAT_PARM(a, 2);
-		defaults->DamageFade.a = BYTE(255 * clamp(a, 0.f, 1.f));
+		PROP_STRING_PARM(type, 3);
+
+		color.a = BYTE(255 * clamp(a, 0.f, 1.f));
+		info->SetPainFlash(type, color);
 	}
 }
 

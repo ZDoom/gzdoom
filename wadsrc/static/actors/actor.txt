@@ -102,7 +102,7 @@ ACTOR Actor native //: Thinker
 	action native A_BspiAttack();
 	action native A_Hoof();
 	action native A_CyberAttack();
-	action native A_PainAttack(class<Actor> spawntype = "LostSoul");
+	action native A_PainAttack(class<Actor> spawntype = "LostSoul", float angle = 0, int flags = 0, int limit = -1);
 	action native A_DualPainAttack(class<Actor> spawntype = "LostSoul");
 	action native A_PainDie(class<Actor> spawntype = "LostSoul");
 	action native A_KeenDie(int doortag = 666);

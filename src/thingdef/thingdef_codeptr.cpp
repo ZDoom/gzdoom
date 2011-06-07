@@ -67,6 +67,7 @@
 #include "doomstat.h"
 #include "v_palette.h"
 #include "g_shared/a_specialspot.h"
+#include "actorptrselect.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -159,14 +160,13 @@ inline static bool isMissile(AActor * self, bool precise=true)
 //==========================================================================
 
 
-enum AAPTR
-{
-	AAPTR_DEFAULT = 0,
-	AAPTR_NULL = 0x1,
-	AAPTR_TARGET = 0x2,
-	AAPTR_MASTER = 0x4,
-	AAPTR_TRACER = 0x8
+enum PTROP
+ {
+	PTROP_UNSAFETARGET = 1,
+	PTROP_UNSAFEMASTER = 2,
+	PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER
 };
+
 
 // [FDARI] Exported logic for guarding against loops in Target (for missiles) and Master (for all) chains.
 // It is called from multiple locations.
@@ -186,8 +186,8 @@ void VerifyTargetChain(AActor *self, bool preciseMissileCheck=true)
 		AActor *compare = self;
 		// every new actor must prove not to be the first actor in the chain, or any subsequent actor
 		// any actor up to and including "origin" has only appeared once
-		do
-		{
+		for (;;)
+ 		{
 			if (compare == next)
 			{
 				// if any of the actors from self to (inclusive) origin match the next actor,
@@ -197,7 +197,7 @@ void VerifyTargetChain(AActor *self, bool preciseMissileCheck=true)
 			}
 			if (compare == origin) break; // when "compare" = origin, we know that the next actor is, and should be "next"
 			compare = compare->target;
-		} while (true); // we're never leaving the loop here
+		}
 
 		origin = next;
 		next = next->target;
@@ -214,7 +214,7 @@ void VerifyMasterChain(AActor *self)
 	while (next) // We always care (See "VerifyTargetChain")
 	{
 		AActor *compare = self;
-		do
+		for (;;)
 		{
 			if (compare == next)
 			{
@@ -223,20 +223,12 @@ void VerifyMasterChain(AActor *self)
 			}
 			if (compare == origin) break;
 			compare = compare->master;
-		} while (true); // we're never leaving the loop here
+		}
 
 		origin = next;
 		next = next->master;
 	}
 }
-
-enum PTROP
-{
-	PTROP_UNSAFETARGET = 1,
-	PTROP_UNSAFEMASTER = 2,
-	PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER
-};
-
 
 //==========================================================================
 //
@@ -341,35 +333,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TransferPointer)
 
 	// Exchange pointers with actors to whom you have pointers (or with yourself, if you must)
 
-	switch (ptr_source) // pick an actor to provide a pointer
-	{
-	case AAPTR_DEFAULT: source = self; break;
-	case AAPTR_TARGET: source = self->target; break;
-	case AAPTR_MASTER: source = self->master; break;
-	case AAPTR_TRACER: source = self->tracer; break;
-	default: return;
-	}
+	COPY_AAPTR(self, source, ptr_source);
+	COPY_AAPTR_NOT_NULL(self, recepient, ptr_recepient); // pick an actor to store the provided pointer value
 
-	if (!source) return; // you must pick somebody. MAYBE we should make a null assignment instead of just returning.
-
-	switch (ptr_recepient) // pick an actor to store the provided pointer value
-	{
-	case AAPTR_DEFAULT: recepient = self; break;
-	case AAPTR_TARGET: recepient = self->target; break;
-	case AAPTR_MASTER: recepient = self->master; break;
-	case AAPTR_TRACER: recepient = self->tracer; break;
-	default: return;
-	}
-
-	if (!recepient) return; // you must pick somebody. No way we can even make a null assignment here.
-
-	switch (ptr_sourcefield) // convert source from dataprovider to data
-	{
-	case AAPTR_TARGET: source = source->target; break; // now we don't care where the data comes from anymore
-	case AAPTR_MASTER: source = source->master; break; // so we reassign source; it now holds the data itself
-	case AAPTR_TRACER: source = source->tracer; break;
-	default: source = NULL;
-	}
+	// convert source from dataprovider to data
+ 
+	COPY_AAPTR(source, source, ptr_sourcefield);
 
 	if (source == recepient) source = NULL; // The recepient should not acquire a pointer to itself; will write NULL
 
@@ -409,16 +378,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CopyFriendliness)
 	if (self->player) return;
 
 	AActor *source;
-
-	switch (ptr_source)
-	{
-	case AAPTR_TARGET: source = self->target; break;
-	case AAPTR_MASTER: source = self->master; break;
-	case AAPTR_TRACER: source = self->tracer; break;
-	default: return;
-	}
-
-	if (source) self->CopyFriendliness(source, false, false); // Overriding default behaviour: No modification of health
+	COPY_AAPTR_NOT_NULL(self, source, ptr_source);
+	self->CopyFriendliness(source, false, false); // No change in current target or health
 }
 
 //==========================================================================
@@ -812,14 +773,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)
 //==========================================================================
 void DoJumpIfInventory(AActor * owner, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_CLASS(Type, 0);
 	ACTION_PARAM_INT(ItemAmount, 1);
 	ACTION_PARAM_STATE(JumpOffset, 2);
+	ACTION_PARAM_INT(setowner, 3);
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
-	if (!Type || owner == NULL) return;
+	if (!Type) return;
+	COPY_AAPTR_NOT_NULL(owner, owner, setowner); //  returns if owner ends up being NULL
 
 	AInventory *Item = owner->FindInventory(Type);
 
@@ -1669,31 +1632,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(3); // param count up
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_CLASS(mi, 0);
 	ACTION_PARAM_INT(amount, 1);
-
-	// [FDARI] Modified code: Allow any pointer to be used for receiver
 	ACTION_PARAM_INT(setreceiver, 2);
 
-	switch (setreceiver)
-	{
-	case AAPTR_TARGET:
-		if (receiver->target) { receiver = receiver->target; break; }
-		return;
-	case AAPTR_MASTER:
-		if (receiver->master) { receiver = receiver->master; break; }
-		return;
-	case AAPTR_TRACER:
-		if (receiver->tracer) { receiver = receiver->tracer; break; }
-		return;
-	}
-
-	// FDARI: End of modified code
+	COPY_AAPTR_NOT_NULL(receiver, receiver, setreceiver);
 
 	bool res=true;
-	if (receiver == NULL) return;
-
+	
 	if (amount==0) amount=1;
 	if (mi) 
 	{
@@ -1743,30 +1690,14 @@ enum
 
 void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(4); // param count up
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_INT(amount, 1);
 	ACTION_PARAM_INT(flags, 2);
-
-	// [FDARI] Modified code: Allow any pointer to be used for receiver
 	ACTION_PARAM_INT(setreceiver, 3);
-
-	switch (setreceiver)
-	{
-	case AAPTR_TARGET:
-		if (receiver->target) { receiver = receiver->target; break; }
-		return;
-	case AAPTR_MASTER:
-		if (receiver->master) { receiver = receiver->master; break; }
-		return;
-	case AAPTR_TRACER:
-		if (receiver->tracer) { receiver = receiver->tracer; break; }
-		return;
-	}
-
-	// FDARI: End of modified code
 	
-	if (item == NULL || receiver == NULL) return;
+	if (!item) return;
+	COPY_AAPTR_NOT_NULL(receiver, receiver, setreceiver);
 
 	bool res = false;
 
@@ -2917,6 +2848,10 @@ enum JLOS_flags
 	JLOSF_CLOSENOJUMP=16,
 	JLOSF_DEADNOJUMP=32,
 	JLOSF_CHECKMASTER=64,
+	JLOSF_TARGETLOS=128,
+	JLOSF_FLIPFOV=256,
+	JLOSF_ALLYNOJUMP=512,
+	JLOSF_COMBATANTONLY=1024
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
@@ -2929,9 +2864,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	ACTION_PARAM_FIXED(dist_close, 4);
 
 	angle_t an;
-	AActor *target;
+	AActor *target, *viewport;
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+	bool doCheckSight;
 
 	if (!self->player)
 	{
@@ -2952,64 +2889,86 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		}
 
 		if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
-
+		
 		if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0)) return;
 
-		fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
-		distance = P_AproxDistance(distance, target->z - self->z);
-
-		if (dist_max && (distance > dist_max)) return;
-
-		bool doCheckSight = !(flags & JLOSF_NOSIGHT);
-
-		if (dist_close && (distance < dist_close))
-		{
-			if (flags & JLOSF_CLOSENOJUMP)
-				return;
-
-			if (flags & JLOSF_CLOSENOFOV)
-				fov = 0;
-
-			if (flags & JLOSF_CLOSENOSIGHT)
-				doCheckSight = false;
-		}
-
-		if (doCheckSight && !P_CheckSight (self, target, SF_IGNOREVISIBILITY))
-			return;
-
-		if (fov && (fov < ANGLE_MAX))
-		{
-			an = R_PointToAngle2 (self->x,
-								  self->y,
-								  target->x,
-								  target->y)
-				- self->angle;
-
-			if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
-			{
-
-				return; // [KS] Outside of FOV - return
-			}
-
-		}
+		doCheckSight = !(flags & JLOSF_NOSIGHT);
 	}
 	else
 	{
 		// Does the player aim at something that can be shot?
 		P_BulletSlope(self, &target);
-
+		
 		if (!target) return;
 
-		fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
-		distance = P_AproxDistance(distance, target->z - self->z);
-
-		if (dist_max && (distance > dist_max)) return;
-
-		if (dist_close && (distance < dist_close))
+		switch (flags & (JLOSF_TARGETLOS|JLOSF_FLIPFOV))
 		{
-			if (flags & JLOSF_CLOSENOJUMP)
-				return;
+		case JLOSF_TARGETLOS|JLOSF_FLIPFOV:
+			// target makes sight check, player makes fov check; player has verified fov
+			fov = 0;
+			// fall-through
+		case JLOSF_TARGETLOS:
+			doCheckSight = !(flags & JLOSF_NOSIGHT); // The target is responsible for sight check and fov
+			break;
+		default:
+			// player has verified sight and fov
+			fov = 0;
+			// fall-through
+		case JLOSF_FLIPFOV: // Player has verified sight, but target must verify fov
+			doCheckSight = false;
+			break;
 		}
+	}
+
+	// [FDARI] If target is not a combatant, don't jump
+	if ( (flags & JLOSF_COMBATANTONLY) && (!target->player) && !(target->flags3 & MF3_ISMONSTER)) return;
+
+	// [FDARI] If actors share team, don't jump
+	if ((flags & JLOSF_ALLYNOJUMP) && self->IsFriend(target)) return;
+
+	fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
+	distance = P_AproxDistance(distance, target->z - self->z);
+
+	if (dist_max && (distance > dist_max)) return;
+
+	if (dist_close && (distance < dist_close))
+	{
+		if (flags & JLOSF_CLOSENOJUMP)
+			return;
+
+		if (flags & JLOSF_CLOSENOFOV)
+			fov = 0;
+
+		if (flags & JLOSF_CLOSENOSIGHT)
+			doCheckSight = false;
+	}
+
+	if (flags & JLOSF_TARGETLOS) { viewport = target; target = self; }
+	else { viewport = self; }
+
+	if (doCheckSight && !P_CheckSight (viewport, target, SF_IGNOREVISIBILITY))
+		return;
+
+	if (flags & JLOSF_FLIPFOV)
+	{
+		if (viewport == self) { viewport = target; target = self; }
+		else { target = viewport; viewport = self; }
+	}
+
+	if (fov && (fov < ANGLE_MAX))
+	{
+		an = R_PointToAngle2 (viewport->x,
+							  viewport->y,
+							  target->x,
+							  target->y)
+			- viewport->angle;
+
+		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+		{
+
+			return; // [KS] Outside of FOV - return
+		}
+
 	}
 
 	ACTION_JUMP(jump);
@@ -3351,6 +3310,60 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
 	}
 }
+
+//===========================================================================
+//
+// A_CheckFlag
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STRING(flagname, 0);
+	ACTION_PARAM_STATE(jumpto, 1);
+	ACTION_PARAM_INT(checkpointer, 2);
+
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+	AActor *owner;
+
+	COPY_AAPTR_NOT_NULL(self, owner, checkpointer);
+	
+	const char *dot = strchr (flagname, '.');
+	FFlagDef *fd;
+	const PClass *cls = owner->GetClass();
+
+	if (dot != NULL)
+	{
+		FString part1(flagname, dot-flagname);
+		fd = FindFlag (cls, part1, dot+1);
+	}
+	else
+	{
+		fd = FindFlag (cls, flagname, NULL);
+	}
+
+	if (fd != NULL)
+	{
+		if (fd->structoffset == -1)
+		{
+			if (CheckDeprecatedFlags(owner, cls->ActorInfo, fd->flagbit)) {
+				ACTION_JUMP(jumpto);
+			}
+		}
+		else if ( fd->flagbit &  *(DWORD*)(((char*)owner) + fd->structoffset))
+		{
+			ACTION_JUMP(jumpto);
+		}
+	}
+	else
+	{
+		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+	}
+
+}
+
 
 //===========================================================================
 //

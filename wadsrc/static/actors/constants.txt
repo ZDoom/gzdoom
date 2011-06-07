@@ -75,6 +75,10 @@ const int JLOSF_CLOSENOSIGHT = 8;
 const int JLOSF_CLOSENOJUMP = 16;
 const int JLOSF_DEADNOJUMP = 32;
 const int JLOSF_CHECKMASTER = 64;
+const int JLOSF_TARGETLOS = 128;
+const int JLOSF_FLIPFOV = 256;
+const int JLOSF_ALLYNOJUMP = 512;
+const int JLOSF_COMBATANTONLY = 1024;
 
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
@@ -216,6 +220,20 @@ Const Int AAPTR_NULL = 1;
 Const Int AAPTR_TARGET = 2;
 Const Int AAPTR_MASTER = 4;
 Const Int AAPTR_TRACER = 8;
+
+Const Int AAPTR_PLAYER_GETTARGET = 16;
+Const Int AAPTR_PLAYER_GETCONVERSATION = 32;
+
+Const Int AAPTR_PLAYER1 = 64;
+Const Int AAPTR_PLAYER2 = 128;
+Const Int AAPTR_PLAYER3 = 256;
+Const Int AAPTR_PLAYER4 = 512;
+Const Int AAPTR_PLAYER5 = 1024;
+Const Int AAPTR_PLAYER6 = 2048;
+Const Int AAPTR_PLAYER7 = 4096;
+Const Int AAPTR_PLAYER8 = 8192;
+
+Const Int AAPTR_FRIENDPLAYER = 16384;
 
 // Pointer operation flags
 

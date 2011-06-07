@@ -197,7 +197,7 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIfCloser(float distance, state label);
 	action native A_JumpIfTracerCloser(float distance, state label);
 	action native A_JumpIfMasterCloser(float distance, state label);
-	action native A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label);
+	action native A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label, int owner = AAPTR_DEFAULT);
 	action native A_JumpIfArmorType(string Type, state label, int amount = 1);
 	action native A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	action native A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
@@ -219,6 +219,7 @@ ACTOR Actor native //: Thinker
 	action native A_DropInventory(class<Inventory> itemtype);
 	action native A_SetBlend(color color1, float alpha, int tics, color color2 = "");
 	action native A_ChangeFlag(string flagname, bool value);
+	action native A_CheckFlag(string flagname, state label, int check_pointer = AAPTR_DEFAULT);
 	action native A_JumpIf(bool expression, state label);
 	action native A_RemoveMaster();
 	action native A_RemoveChildren(bool removeall = false);
@@ -238,9 +239,9 @@ ACTOR Actor native //: Thinker
 	action native A_Weave(int xspeed, int yspeed, float xdist, float ydist);
 
 	action native A_Recoil(float xyvel);
-	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label);
-	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0);
-	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0);
+	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label, int forward_ptr = AAPTR_DEFAULT);
+	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
+	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
 	action native A_CountdownArg(int argnum, state targstate = "");
 	action native A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);

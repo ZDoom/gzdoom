@@ -1090,6 +1090,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\actorptrselect.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\am_map.h"
 				>
 			</File>

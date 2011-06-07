@@ -26,6 +26,7 @@ struct FFlagDef
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
 void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index);
+bool CheckDeprecatedFlags(AActor *actor, FActorInfo *info, int index);
 const char *GetFlagName(int flagnum, int flagoffset);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))

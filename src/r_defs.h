@@ -611,14 +611,19 @@ struct sector_t
 			)? heightsec : NULL;
 	}
 
+	static inline short ClampLight(int level)
+	{
+		return (short)clamp(level, SHRT_MIN, SHRT_MAX);
+	}
+
 	void ChangeLightLevel(int newval)
 	{
-		lightlevel = (BYTE)clamp(lightlevel + newval, 0, 255);
+		lightlevel = ClampLight(lightlevel + newval);
 	}
 
 	void SetLightLevel(int newval)
 	{
-		lightlevel = (BYTE)clamp(newval, 0, 255);
+		lightlevel = ClampLight(newval);
 	}
 
 	int GetLightLevel() const
@@ -644,17 +649,17 @@ struct sector_t
 	// [RH] give floor and ceiling even more properties
 	FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
 
-	BYTE		lightlevel;
 
 	TObjPtr<AActor> SoundTarget;
-	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 
 	short		special;
 	short		tag;
+	short		lightlevel;
+	short		seqType;		// this sector's sound sequence
+
 	int			nexttag,firsttag;	// killough 1/30/98: improves searches for tags.
 
 	int			sky;
-	short		seqType;		// this sector's sound sequence
 	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
 	fixed_t		soundorg[2];	// origin for any sounds played by the sector
@@ -680,6 +685,7 @@ struct sector_t
 	};
 	TObjPtr<DInterpolation> interpolations[4];
 
+	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
 	SWORD prevsec;		// -1 or number of sector for previous step

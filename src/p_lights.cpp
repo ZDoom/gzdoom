@@ -110,15 +110,15 @@ DFireFlicker::DFireFlicker (sector_t *sector)
 	: DLighting (sector)
 {
 	m_MaxLight = sector->lightlevel;
-	m_MinLight = MIN (sector->FindMinSurroundingLight (sector->lightlevel)+16, 255);
+	m_MinLight = sector_t::ClampLight(sector->FindMinSurroundingLight(sector->lightlevel) + 16);
 	m_Count = 4;
 }
 
 DFireFlicker::DFireFlicker (sector_t *sector, int upper, int lower)
 	: DLighting (sector)
 {
-	m_MaxLight = clamp (upper, 0, 255);
-	m_MinLight = clamp (lower, 0, 255);
+	m_MaxLight = sector_t::ClampLight(upper);
+	m_MinLight = sector_t::ClampLight(lower);
 	m_Count = 4;
 }
 
@@ -260,8 +260,8 @@ DLightFlash::DLightFlash (sector_t *sector, int min, int max)
 	: DLighting (sector)
 {
 	// Use specified light levels.
-	m_MaxLight = clamp (max, 0, 255);
-	m_MinLight = clamp (min, 0, 255);
+	m_MaxLight = sector_t::ClampLight(max);
+	m_MinLight = sector_t::ClampLight(min);
 	m_MaxTime = 64;
 	m_MinTime = 7;
 	m_Count = (pr_lightflash() & m_MaxTime) + 1;
@@ -320,8 +320,8 @@ DStrobe::DStrobe (sector_t *sector, int upper, int lower, int utics, int ltics)
 {
 	m_DarkTime = ltics;
 	m_BrightTime = utics;
-	m_MaxLight = clamp (upper, 0, 255);
-	m_MinLight = clamp (lower, 0, 255);
+	m_MaxLight = sector_t::ClampLight(upper);
+	m_MinLight = sector_t::ClampLight(lower);
 	m_Count = 1;	// Hexen-style is always in sync
 }
 
@@ -513,7 +513,7 @@ void EV_LightTurnOnPartway (int tag, fixed_t frac)
 //
 // [RH] New function to adjust tagged sectors' light levels
 //		by a relative amount. Light levels are clipped to
-//		within the range 0-255 inclusive.
+//		be within range for sector_t::lightlevel.
 //
 //-----------------------------------------------------------------------------
 
@@ -523,8 +523,7 @@ void EV_LightChange (int tag, int value)
 
 	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
 	{
-		int newlight = sectors[secnum].lightlevel + value;
-		sectors[secnum].SetLightLevel(newlight);
+		sectors[secnum].SetLightLevel(sectors[secnum].lightlevel + value);
 	}
 }
 
@@ -651,8 +650,8 @@ void DGlow2::Tick ()
 DGlow2::DGlow2 (sector_t *sector, int start, int end, int tics, bool oneshot)
 	: DLighting (sector)
 {
-	m_Start = clamp (start, 0, 255);
-	m_End = clamp (end, 0, 255);
+	m_Start = sector_t::ClampLight(start);
+	m_End = sector_t::ClampLight(end);
 	m_MaxTics = tics;
 	m_Tics = -1;
 	m_OneShot = oneshot;

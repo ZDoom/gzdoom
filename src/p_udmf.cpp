@@ -1122,7 +1122,7 @@ public:
 				continue;
 
 			case NAME_Lightlevel:
-				sec->lightlevel = (BYTE)clamp<int>(CheckInt(key), 0, 255);
+				sec->lightlevel = sector_t::ClampLight(CheckInt(key));
 				continue;
 
 			case NAME_Special:

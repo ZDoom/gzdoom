@@ -21,7 +21,7 @@ DLightningThinker::DLightningThinker ()
 	LightningFlashCount = 0;
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
-	LightningLightLevels = new BYTE[numsectors + (numsectors+7)/8];
+	LightningLightLevels = new short[numsectors + (numsectors+7)/8];
 	memset (LightningLightLevels, 0, numsectors + (numsectors+7)/8);
 }
 
@@ -36,7 +36,7 @@ DLightningThinker::~DLightningThinker ()
 void DLightningThinker::Serialize (FArchive &arc)
 {
 	int i;
-	BYTE *lights;
+	short *lights;
 
 	Super::Serialize (arc);
 
@@ -48,12 +48,21 @@ void DLightningThinker::Serialize (FArchive &arc)
 		{
 			delete[] LightningLightLevels;
 		}
-		LightningLightLevels = new BYTE[numsectors + (numsectors+7)/8];
+		LightningLightLevels = new short[numsectors + (numsectors+7)/8];
 	}
 	lights = LightningLightLevels;
 	for (i = (numsectors + (numsectors+7)/8); i > 0; ++lights, --i)
 	{
-		arc << *lights;
+		if (SaveVersion < 3223)
+		{
+			BYTE bytelight;
+			arc << bytelight;
+			*lights = bytelight;
+		}
+		else
+		{
+			arc << *lights;
+		}
 	}
 }
 

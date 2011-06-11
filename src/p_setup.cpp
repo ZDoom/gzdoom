@@ -1483,7 +1483,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->ceilingplane.ic = -FRACUNIT;
 		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex);
 		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex);
-		ss->lightlevel = (BYTE)clamp (LittleShort(ms->lightlevel), (short)0, (short)255);
+		ss->lightlevel = LittleShort(ms->lightlevel);
 		if (map->HasBehavior)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special

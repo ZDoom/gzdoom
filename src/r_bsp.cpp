@@ -320,7 +320,7 @@ int GetFloorLight (const sector_t *sec)
 	}
 	else
 	{
-		return clamp (sec->lightlevel + sec->GetPlaneLight(sector_t::floor), 0, 255);
+		return sector_t::ClampLight(sec->lightlevel + sec->GetPlaneLight(sector_t::floor));
 	}
 }
 
@@ -332,7 +332,7 @@ int GetCeilingLight (const sector_t *sec)
 	}
 	else
 	{
-		return clamp (sec->lightlevel + sec->GetPlaneLight(sector_t::ceiling), 0, 255);
+		return sector_t::ClampLight(sec->lightlevel + sec->GetPlaneLight(sector_t::ceiling));
 	}
 }
 

@@ -82,7 +82,7 @@ endif()
 #============================================================================
 
 set(ZLIB_PUBLIC_HDRS
-    ${CMAKE_CURRENT_BINARY_DIR}/zconf.h
+    zconf.h
     zlib.h
 )
 set(ZLIB_PRIVATE_HDRS

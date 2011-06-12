@@ -166,6 +166,19 @@ else( WIN32 )
 				set( NO_GTK ON )
 			endif( GTK2_FOUND )
 		endif( NOT NO_GTK )
+
+		# Check for Xcursor library and header files
+		find_library( XCURSOR_LIB Xcursor )
+		if( XCURSOR_LIB )
+			find_file( XCURSOR_HEADER "X11/Xcursor/Xcursor.h" )
+			if( XCURSOR_HEADER )
+				add_definitions( -DUSE_XCURSOR=1 )
+				message( STATUS "Found Xcursor at ${XCURSOR_LIB}" )
+				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${XCURSOR_LIB} )
+			else( XCURSOR_HEADER )
+				unset( XCURSOR_LIB )
+			endif( XCURSOR_HEADER )
+		endif( XCURSOR_LIB )
 	endif( APPLE )
 	set( NASM_NAMES nasm )
 	
@@ -394,7 +407,7 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_CXX_FLAGS}" )
 	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_CXX_FLAGS}" )
 
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused -Wextra -Wno-missing-field-initializers -Wshadow -Wfloat-equal -Wcast-qual" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused -Wextra -Wno-missing-field-initializers" )
 
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,

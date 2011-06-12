@@ -98,9 +98,13 @@ extern bool				r_dontmaplines;
 // is necessary in order to best reproduce Doom's original lighting.
 #define LIGHT2SHADE(l)			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*FRACUNIT*NUMCOLORMAPS/128))
 
+// MAXLIGHTSCALE from original DOOM, divided by 2.
+#define MAXLIGHTVIS				(24*FRACUNIT)
+
 // Convert a shade and visibility to a clamped colormap index.
 // Result is not fixed point.
-#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-(vis))>>FRACBITS, 0, NUMCOLORMAPS-1))
+// Change R_CalcTiltedLighting() when this changes.
+#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-MIN(MAXLIGHTVIS,(vis)))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
 extern fixed_t			GlobVis;
 

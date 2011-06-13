@@ -4421,6 +4421,10 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 	{
 		puff->SetState (crashstate);
 	}
+	else if ((flags & PF_HITTHINGBLEED) && (crashstate = puff->FindState(NAME_Death, NAME_Extreme, true)) != NULL)
+	{
+		puff->SetState (crashstate);
+	}
 	else if ((flags & PF_MELEERANGE) && puff->MeleeState != NULL)
 	{
 		// handle the hard coded state jump of Doom's bullet puff

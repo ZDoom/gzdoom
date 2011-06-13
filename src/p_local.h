@@ -100,7 +100,8 @@ enum EPuffFlags
 {
 	PF_HITTHING = 1,
 	PF_MELEERANGE = 2,
-	PF_TEMPORARY = 4
+	PF_TEMPORARY = 4,
+	PF_HITTHINGBLEED = 8
 };
 
 AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags = 0);

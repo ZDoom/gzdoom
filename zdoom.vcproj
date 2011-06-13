@@ -473,6 +473,10 @@
 			Filter="c;cpp"
 			>
 			<File
+				RelativePath=".\src\actorptrselect.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\am_map.cpp"
 				>
 			</File>

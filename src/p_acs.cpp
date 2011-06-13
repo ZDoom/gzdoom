@@ -71,6 +71,7 @@
 #include "m_png.h"
 #include "p_setup.h"
 #include "po_man.h"
+#include "actorptrselect.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -3114,6 +3115,7 @@ enum EACSFunctions
     ACSF_CheckSight,
 	ACSF_SpawnForced,
 	ACSF_AnnouncerSound,	// Skulltag
+	ACSF_SetPointer,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3248,8 +3250,29 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			actor = SingleActorFromTID(args[0], activator);
 			return actor != NULL? actor->velz : 0;
 
+		case ACSF_SetPointer:
+			if (activator)
+			{
+				AActor *ptr = SingleActorFromTID(args[1], activator);
+				if (argCount > 2)
+				{
+					ptr = COPY_AAPTR(ptr, args[2]);
+				}
+				if (ptr == activator) ptr = NULL;
+				ASSIGN_AAPTR(activator, args[0], ptr, (argCount > 3) ? args[3] : 0);
+				return ptr != NULL;
+			}
+			return 0;
+
 		case ACSF_SetActivator:
-			activator = SingleActorFromTID(args[0], NULL);
+			if (argCount > 1 && args[1] != AAPTR_DEFAULT) // condition (x != AAPTR_DEFAULT) is essentially condition (x).
+			{
+				activator = COPY_AAPTR(SingleActorFromTID(args[0], activator), args[1]);
+			}
+			else
+			{
+				activator = SingleActorFromTID(args[0], NULL);
+			}
 			return activator != NULL;
 		
 		case ACSF_SetActivatorToTarget:
@@ -3265,16 +3288,16 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				{
 					actor = actor->target;
 				}
-			}
-			if (actor != NULL)
-			{
-				activator = actor;
-				return 1;
+				if (actor != NULL) // [FDARI] moved this (actor != NULL)-branch inside the other, so that it is only tried when it can be true
+				{
+					activator = actor;
+					return 1;
+				}
 			}
 			return 0;
 
 		case ACSF_GetActorViewHeight:
-			actor = SingleActorFromTID(args[0], NULL);
+			actor = SingleActorFromTID(args[0], activator);
 			if (actor != NULL)
 			{
 				if (actor->player != NULL)

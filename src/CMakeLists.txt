@@ -616,6 +616,7 @@ add_executable( zdoom WIN32
 	${SYSTEM_SOURCES}
 	${X86_SOURCES}
 	x86.cpp
+	actorptrselect.cpp
 	am_map.cpp
 	b_bot.cpp
 	b_func.cpp

@@ -715,6 +715,11 @@ public:
 	int SpawnHealth();
 	int GibHealth();
 
+	inline bool isMissile(bool precise=true)
+	{
+		return (flags&MF_MISSILE) || (precise && GetDefault()->flags&MF_MISSILE);
+	}
+
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
 	{
@@ -1045,6 +1050,7 @@ inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
 }
+
 
 void PrintMiscActorInfo(AActor * query);
 

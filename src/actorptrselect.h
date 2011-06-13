@@ -1,13 +1,8 @@
 #pragma once
 
-#include "p_pspr.h"
-
 //==========================================================================
 //
 // Standard pointer acquisition functions
-//
-// Use COPY_AAPTR(pointer_owner, AActor *assigntovariable, AAPTR selector)
-// Use COPY_AAPTR_NOT_NULL to return from a function if the pointer is NULL
 //
 // Possible effective results at run-time
 //   assigntovariable = NULL (or a RETURN statement is issued)
@@ -16,6 +11,7 @@
 //
 //==========================================================================
 
+class AActor;
 
 // Pointer selectors (enum)
 
@@ -55,7 +51,7 @@ enum AAPTR
 };
 
 /*
-	PROCESS_AAPTR
+	COPY_AAPTR
 
 	Result overview in order of priority:
 
@@ -67,52 +63,36 @@ enum AAPTR
 	Only one selector of each type can be used.
 */
 
-#define AAPTR_RESOLVE_PLAYERNUM(playernum) (playeringame[playernum] ? players[playernum].mo : NULL)
+AActor *COPY_AAPTR(AActor *origin, int selector);
 
-static AActor *PROCESS_AAPTR(AActor *origin, int selector)
-{
-	if (origin)
-	{
-		if (origin->player)
-		{
-			switch (selector & AAPTR_PLAYER_SELECTORS)
-			{
-			case AAPTR_PLAYER_GETTARGET:
-				{
-					AActor *gettarget = NULL;
-					P_BulletSlope(origin, &gettarget);
-					return gettarget;
-				}
-			case AAPTR_PLAYER_GETCONVERSATION:
-				return origin->player->ConversationNPC;
-			}
-		}
+// Use COPY_AAPTR_NOT_NULL to return from a function if the pointer is NULL
+#define COPY_AAPTR_NOT_NULL(source, destination, selector) { destination = COPY_AAPTR(source, selector); if (!destination) return; }
 
-		switch (selector & AAPTR_GENERAL_SELECTORS)
-		{
-		case AAPTR_TARGET: return origin->target;
-		case AAPTR_MASTER: return origin->master;
-		case AAPTR_TRACER: return origin->tracer;
-		case AAPTR_FRIENDPLAYER:
-			return origin->FriendPlayer ? AAPTR_RESOLVE_PLAYERNUM(origin->FriendPlayer - 1) : NULL;
-		}
-	}
 
-	switch (selector & AAPTR_STATIC_SELECTORS)
-	{
-		case AAPTR_PLAYER1: return AAPTR_RESOLVE_PLAYERNUM(0);
-		case AAPTR_PLAYER2: return AAPTR_RESOLVE_PLAYERNUM(1);
-		case AAPTR_PLAYER3: return AAPTR_RESOLVE_PLAYERNUM(2);
-		case AAPTR_PLAYER4: return AAPTR_RESOLVE_PLAYERNUM(3);
-		case AAPTR_PLAYER5: return AAPTR_RESOLVE_PLAYERNUM(4);
-		case AAPTR_PLAYER6: return AAPTR_RESOLVE_PLAYERNUM(5);
-		case AAPTR_PLAYER7: return AAPTR_RESOLVE_PLAYERNUM(6);
-		case AAPTR_PLAYER8: return AAPTR_RESOLVE_PLAYERNUM(7);
-		case AAPTR_NULL: return NULL;
-	}
 
-	return origin;
-}
+enum PTROP
+ {
+	PTROP_UNSAFETARGET = 1,
+	PTROP_UNSAFEMASTER = 2,
+	PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER
+};
 
-#define COPY_AAPTR_NOT_NULL(source, destination, selector) { destination = PROCESS_AAPTR(source, selector); if (!destination) return; }
-#define COPY_AAPTR(source, destination, selector) { destination = PROCESS_AAPTR(source, selector); }
+
+// [FDARI] Exported logic for guarding against loops in Target (for missiles) and Master (for all) chains.
+// It is called from multiple locations.
+// The code may be in need of optimisation.
+
+
+//==========================================================================
+//
+// Checks whether this actor is a missile
+// Unfortunately this was buggy in older versions of the code and many
+// released DECORATE monsters rely on this bug so it can only be fixed
+// with an optional flag
+//
+//==========================================================================
+
+void VerifyTargetChain(AActor *self, bool preciseMissileCheck=true);
+void VerifyMasterChain(AActor *self);
+void ASSIGN_AAPTR(AActor *toActor, int toSlot, AActor *ptr, int flags) ;
+

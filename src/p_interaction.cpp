@@ -1373,6 +1373,25 @@ void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	int olddamage = target->PoisonDamageReceived;
 	int oldduration = target->PoisonDurationReceived;
 
+	// Check for invulnerability.
+	if (!(inflictor->flags6 & MF6_POISONALWAYS))
+	{
+		if (target->flags2 & MF2_INVULNERABLE)
+		{ // actor is invulnerable
+			if (target->player == NULL)
+			{
+				if (!(inflictor->flags3 & MF3_FOILINVUL))
+				{
+					return;
+				}
+			}
+			else
+			{
+				return;
+			}
+		}
+	}
+
 	target->Poisoner = source;
 
 	if (inflictor->flags6 & MF6_ADDITIVEPOISONDAMAGE)

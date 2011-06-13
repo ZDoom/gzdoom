@@ -328,6 +328,7 @@ enum
 	MF6_BOSSCUBE		= 0x00800000,	// Actor spawned by A_BrainSpit, flagged for timefreeze reasons.
 	MF6_SEEINVISIBLE	= 0x01000000,	// Monsters can see invisible player.
 	MF6_DONTCORPSE		= 0x02000000,	// [RC] Don't autoset MF_CORPSE upon death and don't force Crash state change.
+	MF6_POISONALWAYS	= 0x04000000,	// Always apply poison, even when target can't take the damage.
 
 // --- mobj.renderflags ---
 

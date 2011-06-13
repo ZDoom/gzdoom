@@ -144,11 +144,6 @@ void	P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 void P_RemoveThing(AActor * actor);
 bool P_Thing_Raise(AActor *thing);
 
-//
-// P_ENEMY
-//
-void	P_NoiseAlert (AActor* target, AActor* emmiter, bool splash);
-
 
 //
 // P_MAPUTL

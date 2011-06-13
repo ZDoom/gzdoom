@@ -18,6 +18,7 @@
 #include "d_event.h"
 #include "c_cvars.h"
 #include "m_random.h"
+#include "p_enemy.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "doomstat.h"

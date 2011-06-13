@@ -115,7 +115,7 @@ void P_RandomChaseDir (AActor *actor);
 // sound blocking lines cut off traversal.
 //----------------------------------------------------------------------------
 
-void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks)
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter, fixed_t maxdist)
 {
 	int 		i;
 	line_t* 	check;
@@ -136,7 +136,8 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	// [RH] Set this in the actors in the sector instead of the sector itself.
 	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
-		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)))
+		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
+			(!maxdist || (P_AproxDistance(actor->x - emitter->x, actor->y - emitter->y) <= maxdist)))
 		{
 			actor->LastHeard = soundtarget;
 		}
@@ -179,11 +180,11 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		if (check->flags & ML_SOUNDBLOCK)
 		{
 			if (!soundblocks)
-				P_RecursiveSound (other, soundtarget, splash, 1);
+				P_RecursiveSound (other, soundtarget, splash, 1, emitter, maxdist);
 		}
 		else
 		{
-			P_RecursiveSound (other, soundtarget, splash, soundblocks);
+			P_RecursiveSound (other, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 	}
 }
@@ -199,7 +200,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 //
 //----------------------------------------------------------------------------
 
-void P_NoiseAlert (AActor *target, AActor *emitter, bool splash)
+void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, fixed_t maxdist)
 {
 	if (emitter == NULL)
 		return;
@@ -208,7 +209,7 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash)
 		return;
 
 	validcount++;
-	P_RecursiveSound (emitter->Sector, target, splash, 0);
+	P_RecursiveSound (emitter->Sector, target, splash, 0, emitter, maxdist);
 }
 
 

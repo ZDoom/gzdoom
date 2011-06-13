@@ -171,7 +171,7 @@ ACTOR Actor native //: Thinker
 	action native A_TurretLook();
 	action native A_KlaxonBlare();
 	action native A_Countdown();
-	action native A_AlertMonsters();
+	action native A_AlertMonsters(float maxdist = 0);
 	action native A_ClearSoundTarget();
 	action native A_FireAssaultGun();
 	action native A_CheckTerrain();

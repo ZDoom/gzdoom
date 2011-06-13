@@ -3374,12 +3374,13 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		shootz += 8*FRACUNIT;
 	}
 
-	hitGhosts = (t1->player != NULL &&
-		t1->player->ReadyWeapon != NULL &&
-		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
-
 	// We need to check the defaults of the replacement here
 	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
+
+	hitGhosts = (t1->player != NULL &&
+		t1->player->ReadyWeapon != NULL &&
+		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST)) ||
+		(puffDefaults && (puffDefaults->flags2 & MF2_THRUGHOST));
 
 	// if the puff uses a non-standard damage type this will override default and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.

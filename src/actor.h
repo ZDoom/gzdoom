@@ -920,6 +920,9 @@ public:
 	FNameNoInit DamageTypeReceived;
 	fixed_t DamageFactor;
 
+	FNameNoInit PainType;
+	FNameNoInit DeathType;
+
 	FState *SpawnState;
 	FState *SeeState;
 	FState *MeleeState;

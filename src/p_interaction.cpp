@@ -641,6 +641,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 
 	FState *diestate = NULL;
+	FName damagetype = (inflictor && inflictor->DeathType != NAME_None) ? inflictor->DeathType : DamageType;
 
 	if (DamageType != NAME_None)
 	{
@@ -1316,7 +1317,7 @@ dopain:
 			else
 			{
 				justhit = true;
-				FState *painstate = target->FindState(NAME_Pain, mod);
+				FState *painstate = target->FindState(NAME_Pain, ((inflictor && inflictor->PainType != NAME_None) ? inflictor->PainType : mod));
 				if (painstate != NULL)
 					target->SetState(painstate);
 				if (mod == NAME_PoisonCloud)
@@ -1569,8 +1570,8 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	}
 	if (!(level.time&63) && playPainSound)
 	{
-		FState * painstate = target->FindState(NAME_Pain, target->DamageType);
-		if (painstate != NULL) target->SetState (painstate);
+		FState * painstate = target->FindState(NAME_Pain,((inflictor && inflictor->PainType != NAME_None) ? inflictor->PainType : target->DamageType));
+			if (painstate != NULL) target->SetState (painstate);
 	}
 /*
 	if((P_Random() < target->info->painchance)

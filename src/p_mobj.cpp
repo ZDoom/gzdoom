@@ -294,8 +294,14 @@ void AActor::Serialize (FArchive &arc)
 		<< maxtargetrange
 		<< meleethreshold
 		<< meleerange
-		<< DamageType
-		<< gravity
+		<< DamageType;
+	if (SaveVersion >= 3237) 
+	{
+		arc
+		<< PainType
+		<< DeathType;
+	}
+	arc	<< gravity
 		<< FastChaseStrafeCount
 		<< master
 		<< smokecounter
@@ -5474,6 +5480,10 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 	{
 		return damage;
 	}
+	
+	if (inflictor && inflictor->DeathType != NAME_None)
+		damagetype = inflictor->DeathType;
+
 	if (damagetype == NAME_Ice)
 	{
 		death = FindState (NAME_Death, NAME_Ice, true);

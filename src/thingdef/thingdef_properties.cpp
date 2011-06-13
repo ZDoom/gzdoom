@@ -1017,6 +1017,26 @@ DEFINE_PROPERTY(damagetype, S, Actor)
 }
 
 //==========================================================================
+
+//==========================================================================
+DEFINE_PROPERTY(paintype, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	if (!stricmp(str, "Normal")) defaults->PainType = NAME_None;
+	else defaults->PainType=str;
+}
+
+//==========================================================================
+
+//==========================================================================
+DEFINE_PROPERTY(deathtype, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	if (!stricmp(str, "Normal")) defaults->DeathType = NAME_None;
+	else defaults->DeathType=str;
+}
+
+//==========================================================================
 //
 //==========================================================================
 DEFINE_PROPERTY(damagefactor, ZF, Actor)

@@ -1368,11 +1368,8 @@ dopain:
 		target->flags |= MF_JUSTHIT;    // fight back!
 }
 
-void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period)
+void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type)
 {
-	int olddamage = target->PoisonDamageReceived;
-	int oldduration = target->PoisonDurationReceived;
-
 	// Check for invulnerability.
 	if (!(inflictor->flags6 & MF6_POISONALWAYS))
 	{
@@ -1393,6 +1390,8 @@ void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 
 	target->Poisoner = source;
+	target->PoisonDamageTypeReceived = type;
+	target->PoisonPeriodReceived = period;
 
 	if (inflictor->flags6 & MF6_ADDITIVEPOISONDAMAGE)
 	{
@@ -1412,7 +1411,6 @@ void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		target->PoisonDurationReceived = duration;
 	}
 
-	target->PoisonPeriodReceived = period;
 }
 
 bool AActor::OkayToSwitchTarget (AActor *other)

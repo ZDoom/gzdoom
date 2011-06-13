@@ -1093,6 +1093,16 @@ DEFINE_PROPERTY(poisondamage, Iii, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(poisondamagetype, S, Actor)
+{
+	PROP_STRING_PARM(poisondamagetype, 0);
+
+	defaults->PoisonDamageType = poisondamagetype;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(fastspeed, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);

@@ -800,6 +800,7 @@ public:
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	SDWORD			Damage;			// For missiles and monster railgun
+	int				projectileKickback;
 	DWORD			flags;
 	DWORD			flags2;			// Heretic flags
 	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable

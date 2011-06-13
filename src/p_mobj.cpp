@@ -227,8 +227,12 @@ void AActor::Serialize (FArchive &arc)
 		<< velz
 		<< tics
 		<< state
-		<< Damage
-		<< flags
+		<< Damage;
+	if (SaveVersion >= 3227)
+	{
+		arc << projectileKickback;
+	}
+	arc	<< flags
 		<< flags2
 		<< flags3
 		<< flags4

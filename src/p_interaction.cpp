@@ -1029,7 +1029,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	{
 		int kickback;
 
-		if (!source || !source->player || !source->player->ReadyWeapon)
+		if (inflictor && inflictor->projectileKickback)
+			kickback = inflictor->projectileKickback;
+		else if (!source || !source->player || !source->player->ReadyWeapon)
 			kickback = gameinfo.defKickback;
 		else
 			kickback = source->player->ReadyWeapon->Kickback;

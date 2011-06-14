@@ -3913,3 +3913,165 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 }
 
 
+//==========================================================================
+//
+// A_Warp
+//
+//==========================================================================
+
+enum WARPF
+{
+	WARPF_ABSOLUTEOFFSET = 0x1,
+	WARPF_ABSOLUTEANGLE = 0x2,
+	WARPF_USECALLERANGLE = 0x4,
+
+	WARPF_NOCHECKPOSITION = 0x8,
+
+	WARPF_INTERPOLATE = 0x10,
+	WARPF_WARPINTERPOLATION = 0x20,
+	WARPF_COPYINTERPOLATION = 0x40,
+
+	WARPF_STOP = 0x80,
+	WARPF_TOFLOOR = 0x100,
+	WARPF_TESTONLY = 0x200
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
+{
+	ACTION_PARAM_START(7);
+
+	ACTION_PARAM_INT(destination_selector, 0);
+	ACTION_PARAM_FIXED(xofs, 1);
+	ACTION_PARAM_FIXED(yofs, 2);
+	ACTION_PARAM_FIXED(zofs, 3);
+	ACTION_PARAM_ANGLE(angle, 4);
+	ACTION_PARAM_INT(flags, 5);
+	ACTION_PARAM_STATE(success_state, 6);
+
+	fixed_t
+
+		oldx,
+		oldy,
+		oldz;
+
+	AActor *reference = COPY_AAPTR(self, destination_selector);
+
+	if (!reference)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	if (!(flags & WARPF_ABSOLUTEANGLE))
+	{
+		angle += (flags & WARPF_USECALLERANGLE) ? self->angle : reference->angle;
+	}
+
+	if (!(flags & WARPF_ABSOLUTEOFFSET))
+	{
+		angle_t fineangle = angle>>ANGLETOFINESHIFT;
+		oldx = xofs;
+
+		// (borrowed from A_SpawnItemEx, assumed workable)
+		// in relative mode negative y values mean 'left' and positive ones mean 'right'
+		// This is the inverse orientation of the absolute mode!
+
+		xofs = FixedMul(oldx, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
+		yofs = FixedMul(oldx, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+	}
+
+	oldx = self->x;
+	oldy = self->y;
+	oldz = self->z;
+
+	if (flags & WARPF_TOFLOOR)
+	{
+		// set correct xy
+
+		self->SetOrigin(
+			reference->x + xofs,
+			reference->y + yofs,
+			reference->z);
+
+		// now the caller's floorz should be appropriate for the assigned xy-position
+		// assigning position again with
+		
+		if (zofs)
+		{
+			// extra unlink, link and environment calculation
+			self->SetOrigin(
+				self->x,
+				self->y,
+				self->floorz + zofs);
+		}
+		else
+		{
+			// if there is no offset, there should be no ill effect from moving down to the
+			// already identified floor
+
+			// A_Teleport does the same thing anyway
+			self->z = self->floorz;
+		}
+	}
+	else
+	{
+		self->SetOrigin(
+			reference->x + xofs,
+			reference->y + yofs,
+			reference->z + zofs);
+	}
+	
+	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(self))
+	{
+		if (flags & WARPF_TESTONLY)
+		{
+			self->SetOrigin(oldx, oldy, oldz);
+		}
+		else
+		{
+			self->angle = angle;
+
+			if (flags & WARPF_STOP)
+			{
+				self->velx = 0;
+				self->vely = 0;
+				self->velz = 0;
+			}
+
+			if (flags & WARPF_WARPINTERPOLATION)
+			{
+				self->PrevX += self->x - oldx;
+				self->PrevY += self->y - oldy;
+				self->PrevZ += self->z - oldz;
+			}
+			else if (flags & WARPF_COPYINTERPOLATION)
+			{
+				self->PrevX = self->x + reference->PrevX - reference->x;
+				self->PrevY = self->y + reference->PrevY - reference->y;
+				self->PrevZ = self->z + reference->PrevZ - reference->z;
+			}
+			else if (! (flags & WARPF_INTERPOLATE))
+			{
+				self->PrevX = self->x;
+				self->PrevY = self->y;
+				self->PrevZ = self->z;
+			}
+		}
+
+		if (success_state)
+		{
+			ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+			// in this case, you have the statejump to help you handle all the success anyway.
+			ACTION_JUMP(success_state);
+			return;
+		}
+
+		ACTION_SET_RESULT(true);
+	}
+	else
+	{
+		self->SetOrigin(oldx, oldy, oldz);
+		ACTION_SET_RESULT(false);
+	}
+
+}

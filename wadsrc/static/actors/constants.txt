@@ -242,6 +242,18 @@ Const Int PTROP_UNSAFEMASTER = 2;
 Const Int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
 
 
+// Flags for A_Warp
+
+Const Int WARPF_ABSOLUTEOFFSET = 0x1;
+Const Int WARPF_ABSOLUTEANGLE = 0x2;
+Const Int WARPF_USECALLERANGLE = 0x4;
+Const Int WARPF_NOCHECKPOSITION = 0x8;
+Const Int WARPF_INTERPOLATE = 0x10;
+Const Int WARPF_WARPINTERPOLATION = 0x20;
+Const Int WARPF_COPYINTERPOLATION = 0x40;
+Const Int WARPF_STOP = 0x80;
+Const Int WARPF_TOFLOOR = 0x100;
+Const Int WARPF_TESTONLY = 0x200;
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

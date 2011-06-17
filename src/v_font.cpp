@@ -1132,8 +1132,9 @@ void FSingleLumpFont::LoadBMF(int lump, const BYTE *data)
 	// BMF palettes are only six bits per component. Fix that.
 	for (i = 0; i < ActiveColors*3; ++i)
 	{
-		raw_palette[i] = (data[17 + i] << 2) | (data[17 + i] >> 4);
+		raw_palette[i+3] = (data[17 + i] << 2) | (data[17 + i] >> 4);
 	}
+	ActiveColors++;
 
 	// Sort the palette by increasing brightness
 	for (i = 0; i < ActiveColors; ++i)

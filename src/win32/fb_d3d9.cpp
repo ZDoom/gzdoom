@@ -1300,7 +1300,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
 		{
-			if (lockrect.Pitch == Pitch)
+			if (lockrect.Pitch == Pitch && Pitch == Width)
 			{
 				memcpy (lockrect.pBits, MemBuffer, Width * Height);
 			}

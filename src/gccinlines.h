@@ -279,12 +279,11 @@ MAKECONSTDivScale(31)
 
 static inline SDWORD DivScale32 (SDWORD a, SDWORD b)
 {
-	SDWORD result, dummy;
+	SDWORD result = 0, dummy;
 
 	asm volatile
-		("xor %%eax,%%eax\n\t"
-		 "idivl %3"
-		:"=&a,a" (result),
+		("idivl %3"
+		:"+a,a" (result),
 		 "=d,d" (dummy)
 		: "d,d" (a),
 		  "r,m" (b)

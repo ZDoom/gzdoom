@@ -21,8 +21,8 @@ DLightningThinker::DLightningThinker ()
 	LightningFlashCount = 0;
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
-	LightningLightLevels = new short[numsectors + (numsectors+7)/8];
-	memset (LightningLightLevels, 0, numsectors + (numsectors+7)/8);
+	LightningLightLevels = new short[numsectors];
+	clearbufshort(LightningLightLevels, numsectors, SHRT_MAX);
 }
 
 DLightningThinker::~DLightningThinker ()
@@ -42,27 +42,23 @@ void DLightningThinker::Serialize (FArchive &arc)
 
 	arc << Stopped << NextLightningFlash << LightningFlashCount;
 
+	if (SaveVersion < 3243)
+	{ // Do nothing with old savegames and just keep whatever the constructor made.
+		return;
+	}
+
 	if (arc.IsLoading ())
 	{
 		if (LightningLightLevels != NULL)
 		{
 			delete[] LightningLightLevels;
 		}
-		LightningLightLevels = new short[numsectors + (numsectors+7)/8];
+		LightningLightLevels = new short[numsectors];
 	}
 	lights = LightningLightLevels;
-	for (i = (numsectors + (numsectors+7)/8); i > 0; ++lights, --i)
+	for (i = numsectors; i > 0; ++lights, --i)
 	{
-		if (SaveVersion < 3223)
-		{
-			BYTE bytelight;
-			arc << bytelight;
-			*lights = bytelight;
-		}
-		else
-		{
-			arc << *lights;
-		}
+		arc << *lights;
 	}
 }
 
@@ -98,8 +94,7 @@ void DLightningThinker::LightningFlash ()
 				// because it might have changed since the lightning flashed.
 				// Instead, change the light if this sector was effected by
 				// the last flash.
-				if (LightningLightLevels[numsectors+(j>>3)] & (1<<(j&7)) &&
-					LightningLightLevels[j] < tempSec->lightlevel-4)
+				if (LightningLightLevels[j] < tempSec->lightlevel-4)
 				{
 					tempSec->ChangeLightLevel(-4);
 				}
@@ -110,12 +105,12 @@ void DLightningThinker::LightningFlash ()
 			tempSec = sectors;
 			for (i = numsectors, j = 0; i > 0; ++j, --i, ++tempSec)
 			{
-				if (LightningLightLevels[numsectors+(j>>3)] & (1<<(j&7)))
+				if (LightningLightLevels[j] != SHRT_MAX)
 				{
 					tempSec->SetLightLevel(LightningLightLevels[j]);
 				}
 			}
-			memset (&LightningLightLevels[numsectors], 0, (numsectors+7)/8);
+			clearbufshort(LightningLightLevels, numsectors, SHRT_MAX);
 			level.flags &= ~LEVEL_SWAPSKIES;
 		}
 		return;
@@ -127,14 +122,13 @@ void DLightningThinker::LightningFlash ()
 	for (i = numsectors, j = 0; i > 0; --i, ++j, ++tempSec)
 	{
 		// allow combination of the lightning sector specials with bit masks
-		int special = (tempSec->special&0xff);
+		int special = tempSec->special & 0xff;
 		if (tempSec->GetTexture(sector_t::ceiling) == skyflatnum
 			|| special == Light_IndoorLightning1
 			|| special == Light_IndoorLightning2
 			|| special == Light_OutdoorLightning)
 		{
 			LightningLightLevels[j] = tempSec->lightlevel;
-			LightningLightLevels[numsectors+(j>>3)] |= 1<<(j&7);
 			if (special == Light_IndoorLightning1)
 			{
 				tempSec->SetLightLevel(MIN<int> (tempSec->lightlevel+64, flashLight));
@@ -148,8 +142,9 @@ void DLightningThinker::LightningFlash ()
 				tempSec->SetLightLevel(flashLight);
 			}
 			if (tempSec->lightlevel < LightningLightLevels[j])
-			{
+			{ // The lightning is darker than this sector already is, so no lightning here.
 				tempSec->SetLightLevel(LightningLightLevels[j]);
+				LightningLightLevels[j] = SHRT_MAX;
 			}
 		}
 	}

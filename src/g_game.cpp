@@ -79,6 +79,7 @@
 #include "d_event.h"
 #include "p_acs.h"
 #include "m_joy.h"
+#include "resources/colormaps.h"
 
 #include <zlib.h>
 

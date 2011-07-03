@@ -40,8 +40,8 @@
 #include "p_lnspec.h"
 #include "w_wad.h"
 #include "sc_man.h"
-#include "v_palette.h"
 #include "g_level.h"
+#include "resources/colormaps.h"
 
 #ifdef _3DFLOORS
 

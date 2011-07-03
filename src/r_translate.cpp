@@ -47,6 +47,7 @@
 #include "doomerrors.h"
 #include "i_system.h"
 #include "w_wad.h"
+#include "resources/colormaps.h"
 
 #include "gi.h"
 #include "stats.h"

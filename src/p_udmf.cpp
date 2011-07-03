@@ -43,6 +43,7 @@
 #include "g_level.h"
 #include "v_palette.h"
 #include "p_udmf.h"
+#include "resources/colormaps.h"
 
 //===========================================================================
 //

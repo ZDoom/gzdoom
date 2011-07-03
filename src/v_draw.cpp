@@ -52,6 +52,7 @@
 #include "templates.h"
 #include "d_net.h"
 #include "colormatcher.h"
+#include "resources/colormaps.h"
 
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings

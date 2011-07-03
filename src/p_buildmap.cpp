@@ -9,7 +9,6 @@
 
 #include "p_local.h"
 #include "m_swap.h"
-#include "v_palette.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "r_sky.h"
@@ -17,6 +16,7 @@
 #include "r_defs.h"
 #include "p_setup.h"
 #include "g_level.h"
+#include "resources/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 

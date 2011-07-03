@@ -79,6 +79,7 @@
 #include "v_palette.h"
 #include "menu/menu.h"
 #include "a_strifeglobal.h"
+#include "resources/colormaps.h"
 
 #include "gi.h"
 

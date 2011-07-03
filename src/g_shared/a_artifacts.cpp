@@ -19,6 +19,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "v_palette.h"
+#include "resources/colormaps.h"
 
 static FRandom pr_torch ("Torch");
 

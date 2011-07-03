@@ -63,6 +63,7 @@
 #include "a_artifacts.h"
 #include "po_man.h"
 #include "a_keys.h"
+#include "resources/colormaps.h"
 
 //=============================================================================
 //

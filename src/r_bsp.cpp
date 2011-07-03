@@ -54,6 +54,7 @@
 #include "v_palette.h"
 #include "r_sky.h"
 #include "po_man.h"
+#include "resources/colormaps.h"
 
 int WallMost (short *mostbuf, const secplane_t &plane);
 

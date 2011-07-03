@@ -69,8 +69,6 @@ struct MiniModeInfo
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

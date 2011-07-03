@@ -48,6 +48,7 @@
 #include "g_level.h"
 #include "po_man.h"
 #include "p_setup.h"
+#include "resources/colormaps.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);

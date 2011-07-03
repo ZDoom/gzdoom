@@ -57,41 +57,9 @@
 #include "x86.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "resources/colormaps.h"
 
-extern "C" {
-FDynamicColormap NormalLight;
-}
-bool NormalLightHasFixedLights;
 FPalette GPalette;
-TArray<FSpecialColormap> SpecialColormaps;
-BYTE DesaturateColormap[31][256];
-
-struct FSpecialColormapParameters
-{
-	float Start[3], End[3];
-};
-
-static FSpecialColormapParameters SpecialColormapParms[] =
-{
-	// Doom invulnerability is an inverted grayscale.
-	// Strife uses it when firing the Sigil
-	{ {    1,    1,   1 }, { 0, 0, 0 } },
-
-	// Heretic invulnerability is a golden shade.
-	{ { 0, 0, 0 }, {  1.5, 0.75,   0 }, },
-
-	// [BC] Build the Doomsphere colormap. It is red!
-	{ { 0, 0, 0 }, {  1.5,    0,   0 } },
-
-	// [BC] Build the Guardsphere colormap. It's a greenish-white kind of thing.
-	{ { 0, 0, 0 }, { 1.25,  1.5,   1 } },
-
-	// Build a blue colormap.
-	{{ 0, 0, 0 },  {    0,    0, 1.5 } },
-};
-
-static void FreeSpecialLights();
-
 FColorMatcher ColorMatcher;
 
 /* Current color blending values */
@@ -377,78 +345,11 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 	return true;
 }
 
-int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2)
-{
-	// Clamp these in range for the hardware shader.
-	r1 = clamp(r1, 0.0f, 2.0f);
-	g1 = clamp(g1, 0.0f, 2.0f);
-	b1 = clamp(b1, 0.0f, 2.0f);
-	r2 = clamp(r2, 0.0f, 2.0f);
-	g2 = clamp(g2, 0.0f, 2.0f);
-	b2 = clamp(b2, 0.0f, 2.0f);
-
-	for(unsigned i=0; i<SpecialColormaps.Size(); i++)
-	{
-		// Avoid precision issues here when trying to find a proper match.
-		if (fabs(SpecialColormaps[i].ColorizeStart[0]- r1) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeStart[1]- g1) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeStart[2]- b1) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeEnd[0]- r2) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeEnd[1]- g2) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeEnd[2]- b2) < FLT_EPSILON)
-		{
-			return i;	// The map already exists
-		}
-	}
-
-	FSpecialColormap *cm = &SpecialColormaps[SpecialColormaps.Reserve(1)];
-
-	cm->ColorizeStart[0] = float(r1);
-	cm->ColorizeStart[1] = float(g1);
-	cm->ColorizeStart[2] = float(b1);
-	cm->ColorizeEnd[0] = float(r2);
-	cm->ColorizeEnd[1] = float(g2);
-	cm->ColorizeEnd[2] = float(b2);
-
-	r2 -= r1;
-	g2 -= g1;
-	b2 -= b1;
-	r1 *= 255;
-	g1 *= 255;
-	b1 *= 255;
-
-	for (int c = 0; c < 256; c++)
-	{
-		double intensity = (GPalette.BaseColors[c].r * 77 +
-							GPalette.BaseColors[c].g * 143 +
-							GPalette.BaseColors[c].b * 37) / 256.0;
-
-		PalEntry pe = PalEntry(	MIN(255, int(r1 + intensity*r2)), 
-								MIN(255, int(g1 + intensity*g2)), 
-								MIN(255, int(b1 + intensity*b2)));
-
-		cm->Colormap[c] = ColorMatcher.Pick(pe);
-	}
-
-	// This table is used by the texture composition code
-	for(int i = 0;i < 256; i++)
-	{
-		cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(r1 + i*r2)), 
-											MIN(255, int(g1 + i*g2)), 
-											MIN(255, int(b1 + i*b2)));
-	}
-	return SpecialColormaps.Size() - 1;
-}
-
 void InitPalette ()
 {
 	BYTE pal[768];
-	int c;
 	bool usingBuild = false;
 	int lump;
-
-	atterm (FreeSpecialLights);
-	FreeSpecialLights();
 
 	if ((lump = Wads.CheckNumForFullName ("palette.dat")) >= 0 && Wads.LumpLength (lump) >= 768)
 	{
@@ -478,37 +379,6 @@ void InitPalette ()
 				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 		}
 	}
-
-	NormalLight.Color = PalEntry (255, 255, 255);
-	NormalLight.Fade = 0;
-	// NormalLight.Maps is set by R_InitColormaps()
-
-	// build default special maps (e.g. invulnerability)
-	SpecialColormaps.Clear();
-
-	for (unsigned i = 0; i < countof(SpecialColormapParms); ++i)
-	{
-		AddSpecialColormap(SpecialColormapParms[i].Start[0], SpecialColormapParms[i].Start[1],
-			SpecialColormapParms[i].Start[2], SpecialColormapParms[i].End[0],
-			SpecialColormapParms[i].End[1], SpecialColormapParms[i].End[2]);
-	}
-	// desaturated colormaps
-	for(int m = 0; m < 31; m++)
-	{
-		BYTE *shade = DesaturateColormap[m];
-		for (c = 0; c < 256; c++)
-		{
-			int intensity = (GPalette.BaseColors[c].r * 77 +
-						GPalette.BaseColors[c].g * 143 +
-						GPalette.BaseColors[c].b * 37) / 256;
-
-			int r = (GPalette.BaseColors[c].r * (31-m) + intensity *m) / 31;
-			int g = (GPalette.BaseColors[c].g * (31-m) + intensity *m) / 31;
-			int b = (GPalette.BaseColors[c].b * (31-m) + intensity *m) / 31;
-			shade[c] = ColorMatcher.Pick(r, g, b);
-		}
-	}
-
 }
 
 extern "C" void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
@@ -735,173 +605,6 @@ void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
 	default:	*r = v; *g = p; *b = q; break;
 	}
 }
-
-/****** Colored Lighting Stuffs ******/
-
-FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturate)
-{
-	FDynamicColormap *colormap;
-
-	// If this colormap has already been created, just return it
-	for (colormap = &NormalLight; colormap != NULL; colormap = colormap->Next)
-	{
-		if (color == colormap->Color &&
-			fade == colormap->Fade &&
-			desaturate == colormap->Desaturate)
-		{
-			return colormap;
-		}
-	}
-
-	// Not found. Create it.
-	colormap = new FDynamicColormap;
-	colormap->Next = NormalLight.Next;
-	colormap->Color = color;
-	colormap->Fade = fade;
-	colormap->Desaturate = desaturate;
-	NormalLight.Next = colormap;
-
-	if (screen->UsesColormap())
-	{
-		colormap->Maps = new BYTE[NUMCOLORMAPS*256];
-		colormap->BuildLights ();
-	}
-	else colormap->Maps = NULL;
-
-	return colormap;
-}
-
-// Free all lights created with GetSpecialLights
-static void FreeSpecialLights()
-{
-	FDynamicColormap *colormap, *next;
-
-	for (colormap = NormalLight.Next; colormap != NULL; colormap = next)
-	{
-		next = colormap->Next;
-		delete[] colormap->Maps;
-		delete colormap;
-	}
-	NormalLight.Next = NULL;
-}
-
-// Builds NUMCOLORMAPS colormaps lit with the specified color
-void FDynamicColormap::BuildLights ()
-{
-	int l, c;
-	int lr, lg, lb, ld, ild;
-	PalEntry colors[256], basecolors[256];
-	BYTE *shade;
-
-	if (Maps == NULL)
-		return;
-
-	// Scale light to the range 0-256, so we can avoid
-	// dividing by 255 in the bottom loop.
-	lr = Color.r*256/255;
-	lg = Color.g*256/255;
-	lb = Color.b*256/255;
-	ld = Desaturate*256/255;
-	if (ld < 0)	// No negative desaturations, please.
-	{
-		ld = -ld;
-	}
-	ild = 256-ld;
-
-	if (ld == 0)
-	{
-		memcpy (basecolors, GPalette.BaseColors, sizeof(basecolors));
-	}
-	else
-	{
-		// Desaturate the palette before lighting it.
-		for (c = 0; c < 256; c++)
-		{
-			int r = GPalette.BaseColors[c].r;
-			int g = GPalette.BaseColors[c].g;
-			int b = GPalette.BaseColors[c].b;
-			int intensity = ((r * 77 + g * 143 + b * 37) >> 8) * ld;
-			basecolors[c].r = (r*ild + intensity) >> 8;
-			basecolors[c].g = (g*ild + intensity) >> 8;
-			basecolors[c].b = (b*ild + intensity) >> 8;
-			basecolors[c].a = 0;
-		}
-	}
-
-	// build normal (but colored) light mappings
-	for (l = 0; l < NUMCOLORMAPS; l++)
-	{
-		DoBlending (basecolors, colors, 256,
-			Fade.r, Fade.g, Fade.b, l * (256 / NUMCOLORMAPS));
-
-		shade = Maps + 256*l;
-		if ((DWORD)Color == MAKERGB(255,255,255))
-		{ // White light, so we can just pick the colors directly
-			for (c = 0; c < 256; c++)
-			{
-				*shade++ = ColorMatcher.Pick (colors[c].r, colors[c].g, colors[c].b);
-			}
-		}
-		else
-		{ // Colored light, so do the (slightly) slower thing
-			for (c = 0; c < 256; c++)
-			{
-				*shade++ = ColorMatcher.Pick (
-					(colors[c].r*lr)>>8,
-					(colors[c].g*lg)>>8,
-					(colors[c].b*lb)>>8);
-			}
-		}
-	}
-}
-
-void FDynamicColormap::ChangeColor (PalEntry lightcolor, int desaturate)
-{
-	if (lightcolor != Color || desaturate != Desaturate)
-	{
-		Color = lightcolor;
-		// [BB] desaturate must be in [0,255]
-		Desaturate = clamp(desaturate, 0, 255);
-		if (Maps) BuildLights ();
-	}
-}
-
-void FDynamicColormap::ChangeFade (PalEntry fadecolor)
-{
-	if (fadecolor != Fade)
-	{
-		Fade = fadecolor;
-		if (Maps) BuildLights ();
-	}
-}
-
-void FDynamicColormap::ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor)
-{
-	if (lightcolor != Color || fadecolor != Fade)
-	{
-		Color = lightcolor;
-		Fade = fadecolor;
-		if (Maps) BuildLights ();
-	}
-}
-
-void FDynamicColormap::RebuildAllLights()
-{
-	if (screen->UsesColormap())
-	{
-		FDynamicColormap *cm;
-
-		for (cm = &NormalLight; cm != NULL; cm = cm->Next)
-		{
-			if (cm->Maps == NULL)
-			{
-				cm->Maps = new BYTE[NUMCOLORMAPS*256];
-				cm->BuildLights ();
-			}
-		}
-	}
-}
-
 
 CCMD (testcolor)
 {

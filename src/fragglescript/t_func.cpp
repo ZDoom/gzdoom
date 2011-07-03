@@ -65,6 +65,7 @@
 #include "g_level.h"
 #include "v_palette.h"
 #include "v_font.h"
+#include "resources/colormaps.h"
 
 static FRandom pr_script("FScript");
 

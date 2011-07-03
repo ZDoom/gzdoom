@@ -52,6 +52,7 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "po_man.h"
+#include "resources/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 

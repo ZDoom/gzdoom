@@ -71,6 +71,7 @@
 #include "doomstat.h"
 #include "v_palette.h"
 #include "w_wad.h"
+#include "resources/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 

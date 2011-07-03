@@ -47,6 +47,7 @@
 #include "bitmap.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "resources/colormaps.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at

@@ -36,6 +36,7 @@
 #include "templates.h"
 #include "r_translate.h"
 #include "v_palette.h"
+#include "resources/colormaps.h"
 
 
 //===========================================================================

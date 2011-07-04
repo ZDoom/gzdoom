@@ -6644,12 +6644,20 @@
 					RelativePath=".\src\resources\colormaps.h"
 					>
 				</File>
+				<File
+					RelativePath=".\src\resources\voxels.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Resource Sources"
 				>
 				<File
 					RelativePath=".\src\resources\colormaps.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\resources\voxels.cpp"
 					>
 				</File>
 			</Filter>

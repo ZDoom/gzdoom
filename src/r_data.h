@@ -138,6 +138,4 @@ void R_PrecacheLevel (void);
 
 int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 
-FVoxel *R_LoadKVX(int lumpnum);
-
 #endif

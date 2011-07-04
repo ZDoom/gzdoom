@@ -60,6 +60,7 @@
 #include "v_palette.h"
 #include "r_translate.h"
 #include "resources/colormaps.h"
+#include "resources/voxels.h"
 
 extern fixed_t globaluclip, globaldclip;
 
@@ -96,9 +97,6 @@ TArray<WORD>	ParticlesInSubsec;
 short			zeroarray[MAXWIDTH];
 short			screenheightarray[MAXWIDTH];
 
-#define MAX_SPRITE_FRAMES	29		// [RH] Macro-ized as in BOOM.
-
-
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 
 CVAR (Bool, r_drawvoxels, true, 0)
@@ -113,9 +111,6 @@ TArray<spritedef_t> sprites;
 TArray<spriteframe_t> SpriteFrames;
 DWORD			NumStdSprites;		// The first x sprites that don't belong to skins.
 
-TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.
-TDeletingArray<FVoxelDef *> VoxelDefs;
-
 int OffscreenBufferWidth, OffscreenBufferHeight;
 BYTE *OffscreenColorBuffer;
 FCoverageBuffer *OffscreenCoverageBuffer;
@@ -127,18 +122,6 @@ struct spriteframewithrotate : public spriteframe_t
 sprtemp[MAX_SPRITE_FRAMES];
 int 			maxframe;
 char*			spritename;
-
-struct VoxelOptions
-{
-	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(0)
-	{}
-
-	int			DroppedSpin;
-	int			PlacedSpin;
-	fixed_t		Scale;
-	angle_t		AngleOffset;
-};
 
 // [RH] skin globals
 FPlayerSkin		*skins;
@@ -487,23 +470,9 @@ void R_InitSpriteDefs ()
 			VHasher *vh = &vhashes[hash];
 			if (vh->Name == (int)intname)
 			{
-				FVoxel *vox = R_LoadKVX(hash);
-				if (vox == NULL)
+				FVoxelDef *voxdef = R_LoadVoxelDef(hash, vh->Spin);
+				if (voxdef != NULL)
 				{
-					Printf("%s is not a valid voxel file\n", Wads.GetLumpFullName(hash));
-				}
-				else
-				{
-					FVoxelDef *voxdef = new FVoxelDef;
-
-					voxdef->Voxel = vox;
-					voxdef->Scale = FRACUNIT;
-					voxdef->DroppedSpin = voxdef->PlacedSpin = vh->Spin;
-					voxdef->AngleOffset = 0;
-
-					Voxels.Push(vox);
-					VoxelDefs.Push(voxdef);
-
 					if (vh->Frame == ' ' || vh->Frame == '\0')
 					{ // voxel applies to every sprite frame
 						for (j = 0; j < MAX_SPRITE_FRAMES; ++j)
@@ -575,249 +544,16 @@ static void R_ExtendSpriteFrames(spritedef_t &spr, int frame)
 
 //==========================================================================
 //
-// VOX_ReadSpriteNames
-//
-// Reads a list of sprite names from a VOXELDEF lump.
-//
-//==========================================================================
-
-static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
-{
-	unsigned int i;
-
-	vsprites.Clear();
-	while (sc.GetString())
-	{
-		// A sprite name list is terminated by an '=' character.
-		if (sc.String[0] == '=')
-		{
-			if (vsprites.Size() == 0)
-			{
-				sc.ScriptMessage("No sprites specified for voxel.\n");
-			}
-			return true;
-		}
-		if (sc.StringLen != 4 && sc.StringLen != 5)
-		{
-			sc.ScriptMessage("Sprite name \"%s\" is wrong size.\n", sc.String);
-		}
-		else if (sc.StringLen == 5 && (sc.String[4] = toupper(sc.String[4]), sc.String[4] < 'A' || sc.String[4] >= 'A' + MAX_SPRITE_FRAMES))
-		{
-			sc.ScriptMessage("Sprite frame %s is invalid.\n", sc.String[4]);
-		}
-		else
-		{
-			int frame = (sc.StringLen == 4) ? 255 : sc.String[4] - 'A';
-			int spritename;
-
-			for (i = 0; i < 4; ++i)
-			{
-				sc.String[i] = toupper(sc.String[i]);
-			}
-			spritename = *(int *)sc.String;
-			for (i = 0; i < sprites.Size(); ++i)
-			{
-				if ((int)sprites[i].dwName == spritename)
-				{
-					break;
-				}
-			}
-			if (i != sprites.Size())
-			{
-				vsprites.Push((frame << 24) | i);
-			}
-		}
-	}
-	if (vsprites.Size() != 0)
-	{
-		sc.ScriptMessage("Unexpected end of file\n");
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// VOX_ReadOptions
-//
-// Reads a list of options from a VOXELDEF lump, terminated with a '}'
-// character. The leading '{' must already be consumed
-//
-//==========================================================================
-
-static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
-{
-	while (sc.GetToken())
-	{
-		if (sc.TokenType == '}')
-		{
-			return;
-		}
-		sc.TokenMustBe(TK_Identifier);
-		if (sc.Compare("scale"))
-		{
-			sc.MustGetToken('=');
-			sc.MustGetToken(TK_FloatConst);
-			opts.Scale = FLOAT2FIXED(sc.Float);
-		}
-		else if (sc.Compare("spin"))
-		{
-			sc.MustGetToken('=');
-			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = opts.PlacedSpin = sc.Number;
-		}
-		else if (sc.Compare("placedspin"))
-		{
-			sc.MustGetToken('=');
-			sc.MustGetToken(TK_IntConst);
-			opts.PlacedSpin = sc.Number;
-		}
-		else if (sc.Compare("droppedspin"))
-		{
-			sc.MustGetToken('=');
-			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = sc.Number;
-		}
-		else if (sc.Compare("angleoffset"))
-		{
-			sc.MustGetToken('=');
-			sc.MustGetAnyToken();
-			if (sc.TokenType == TK_IntConst)
-			{
-				sc.Float = sc.Number;
-			}
-			else
-			{
-				sc.TokenMustBe(TK_FloatConst);
-			}
-			opts.AngleOffset = angle_t(sc.Float * ANGLE_180 / 180.0);
-		}
-		else
-		{
-			sc.ScriptMessage("Unknown voxel option '%s'\n", sc.String);
-			if (sc.CheckToken('='))
-			{
-				sc.MustGetAnyToken();
-			}
-		}
-	}
-	sc.ScriptMessage("Unterminated voxel option block\n");
-}
-
-//==========================================================================
-//
-// VOX_GetVoxel
-//
-// Returns a voxel object for the given lump or NULL if it is not a valid
-// voxel. If the voxel has already been loaded, it will be reused.
-//
-//==========================================================================
-
-static FVoxel *VOX_GetVoxel(int lumpnum)
-{
-	// Is this voxel already loaded? If so, return it.
-	for (unsigned i = 0; i < Voxels.Size(); ++i)
-	{
-		if (Voxels[i]->LumpNum == lumpnum)
-		{
-			return Voxels[i];
-		}
-	}
-	FVoxel *vox = R_LoadKVX(lumpnum);
-	if (vox != NULL)
-	{
-		Voxels.Push(vox);
-	}
-	return vox;
-}
-
-//==========================================================================
-//
 // VOX_AddVoxel
 //
 // Sets a voxel for a single sprite frame.
 //
 //==========================================================================
 
-static void VOX_AddVoxel(int sprnum, int frame, FVoxelDef *def)
+void VOX_AddVoxel(int sprnum, int frame, FVoxelDef *def)
 {
 	R_ExtendSpriteFrames(sprites[sprnum], frame);
 	SpriteFrames[sprites[sprnum].spriteframes + frame].Voxel = def;
-}
-
-//==========================================================================
-//
-// R_InitVoxels
-//
-// Process VOXELDEF lumps for defining voxel options that cannot be
-// condensed neatly into a sprite name format.
-//
-//==========================================================================
-
-void R_InitVoxels()
-{
-	int lump, lastlump = 0;
-	
-	while ((lump = Wads.FindLump("VOXELDEF", &lastlump)) != -1)
-	{
-		FScanner sc(lump);
-		TArray<DWORD> vsprites;
-
-		while (VOX_ReadSpriteNames(sc, vsprites))
-		{
-			FVoxel *voxeldata = NULL;
-			int voxelfile;
-			VoxelOptions opts;
-
-			sc.SetCMode(true);
-			sc.MustGetToken(TK_StringConst);
-			voxelfile = Wads.CheckNumForFullName(sc.String, true, ns_voxels);
-			if (voxelfile < 0)
-			{
-				sc.ScriptMessage("Voxel \"%s\" not found.\n", sc.String);
-			}
-			else
-			{
-				voxeldata = VOX_GetVoxel(voxelfile);
-				if (voxeldata == NULL)
-				{
-					sc.ScriptMessage("\"%s\" is not a valid voxel file.\n", sc.String);
-				}
-			}
-			if (sc.CheckToken('{'))
-			{
-				VOX_ReadOptions(sc, opts);
-			}
-			sc.SetCMode(false);
-			if (voxeldata != NULL && vsprites.Size() != 0)
-			{
-				FVoxelDef *def = new FVoxelDef;
-
-				def->Voxel = voxeldata;
-				def->Scale = opts.Scale;
-				def->DroppedSpin = opts.DroppedSpin;
-				def->PlacedSpin = opts.PlacedSpin;
-				def->AngleOffset = opts.AngleOffset;
-				VoxelDefs.Push(def);
-
-				for (unsigned i = 0; i < vsprites.Size(); ++i)
-				{
-					int sprnum = int(vsprites[i] & 0xFFFFFF);
-					int frame = int(vsprites[i] >> 24);
-					if (frame == 255)
-					{ // Apply voxel to all frames.
-						for (int j = MAX_SPRITE_FRAMES - 1; j >= 0; --j)
-						{
-							VOX_AddVoxel(sprnum, j, def);
-						}
-					}
-					else
-					{ // Apply voxel to only one frame.
-						VOX_AddVoxel(sprnum, frame, def);
-					}
-				}
-			}
-		}
-	}
 }
 
 // [RH]

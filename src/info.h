@@ -240,7 +240,7 @@ private:
 
 extern FDoomEdMap DoomEdMap;
 
-int GetSpriteIndex(const char * spritename);
+int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);
 void AddStateLight(FState *state, const char *lname);
 

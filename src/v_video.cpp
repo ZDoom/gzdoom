@@ -63,6 +63,7 @@
 #include "v_palette.h"
 #include "r_sky.h"
 #include "menu/menu.h"
+#include "resources/voxels.h"
 
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
@@ -1318,7 +1319,6 @@ void DFrameBuffer::RenderView(player_t *player)
 //
 //
 //==========================================================================
-extern TDeletingArray<FVoxel *> Voxels;
 
 void DFrameBuffer::RemapVoxels()
 {

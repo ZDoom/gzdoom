@@ -547,5 +547,6 @@ FPolyObj *PO_GetPolyobj(int polyNum);
 //
 #include "p_spec.h"
 
+bool P_AlignFlat (int linenum, int side, int fc);
 
 #endif	// __P_LOCAL__

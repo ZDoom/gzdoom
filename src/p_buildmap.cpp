@@ -655,11 +655,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		int sidenum = int(intptr_t(lines[linenum].sidedef[1]));
 		if (bsec->floorstat & 64)
 		{ // floor is aligned to first wall
-			R_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
+			P_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
 		}
 		if (bsec->ceilingstat & 64)
 		{ // ceiling is aligned to first wall
-			R_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
+			P_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
 		}
 	}
 	for (i = 0; i < numlines; i++)

@@ -2357,7 +2357,7 @@ FUNC(LS_Line_AlignCeiling)
 		I_Error ("Sector_AlignCeiling: Lineid %d is undefined", arg0);
 	do
 	{
-		ret |= R_AlignFlat (line, !!arg1, 1);
+		ret |= P_AlignFlat (line, !!arg1, 1);
 	} while ( (line = P_FindLineFromID (arg0, line)) >= 0);
 	return ret;
 }
@@ -2372,7 +2372,7 @@ FUNC(LS_Line_AlignFloor)
 		I_Error ("Sector_AlignFloor: Lineid %d is undefined", arg0);
 	do
 	{
-		ret |= R_AlignFlat (line, !!arg1, 0);
+		ret |= P_AlignFlat (line, !!arg1, 0);
 	} while ( (line = P_FindLineFromID (arg0, line)) >= 0);
 	return ret;
 }

@@ -2380,10 +2380,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\r_data.h"
-					>
-				</File>
-				<File
 					RelativePath=".\src\r_defs.h"
 					>
 				</File>

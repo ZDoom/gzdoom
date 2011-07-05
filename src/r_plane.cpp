@@ -1787,35 +1787,3 @@ bool R_PlaneInitData ()
 
 	return true;
 }
-
-//==========================================================================
-//
-// R_AlignFlat
-//
-//==========================================================================
-
-bool R_AlignFlat (int linenum, int side, int fc)
-{
-	line_t *line = lines + linenum;
-	sector_t *sec = side ? line->backsector : line->frontsector;
-
-	if (!sec)
-		return false;
-
-	fixed_t x = line->v1->x;
-	fixed_t y = line->v1->y;
-
-	angle_t angle = R_PointToAngle2 (x, y, line->v2->x, line->v2->y);
-	angle_t norm = (angle-ANGLE_90) >> ANGLETOFINESHIFT;
-
-	fixed_t dist = -DMulScale16 (finecosine[norm], x, finesine[norm], y);
-
-	if (side)
-	{
-		angle = angle + ANGLE_180;
-		dist = -dist;
-	}
-
-	sec->SetBase(fc, dist & ((1<<(FRACBITS+8))-1), 0-angle);
-	return true;
-}

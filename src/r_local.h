@@ -38,6 +38,4 @@
 #include "r_things.h"
 #include "r_draw.h"
 
-bool R_AlignFlat (int linenum, int side, int fc);
-
 #endif // __R_LOCAL_H__

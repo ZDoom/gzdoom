@@ -1405,35 +1405,6 @@ void R_SetupFrame (AActor *actor)
 
 //==========================================================================
 //
-// R_RefreshViewBorder
-//
-// Draws the border around the player view, if needed.
-//
-//==========================================================================
-
-void R_RefreshViewBorder ()
-{
-	if (setblocks < 10)
-	{
-		if (BorderNeedRefresh)
-		{
-			BorderNeedRefresh--;
-			if (BorderTopRefresh)
-			{
-				BorderTopRefresh--;
-			}
-			R_DrawViewBorder();
-		}
-		else if (BorderTopRefresh)
-		{
-			BorderTopRefresh--;
-			R_DrawTopBorder();
-		}
-	}
-}
-
-//==========================================================================
-//
 // R_EnterMirror
 //
 // [RH] Draw the reflection inside a mirror

@@ -2372,10 +2372,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\r_blend.h"
-					>
-				</File>
-				<File
 					RelativePath=".\src\r_bsp.h"
 					>
 				</File>
@@ -6637,6 +6633,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\resources\renderstyle.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\resources\voxels.h"
 					>
 				</File>
@@ -6646,6 +6646,10 @@
 				>
 				<File
 					RelativePath=".\src\resources\colormaps.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\resources\renderstyle.cpp"
 					>
 				</File>
 				<File

@@ -1053,8 +1053,8 @@ void DBaseStatusBar::RefreshBackground () const
 			y = x == ST_X ? ST_Y : ::ST_Y;
 			x2 = !(ratio & 3) || !Scaled ? ST_X+HorizontalResolution :
 				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
-			R_DrawBorder (0, y, x, SCREENHEIGHT);
-			R_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
+			V_DrawBorder (0, y, x, SCREENHEIGHT);
+			V_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
 
 			if (setblocks >= 10)
 			{

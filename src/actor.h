@@ -37,7 +37,7 @@
 
 #include "doomdef.h"
 #include "textures/textures.h"
-#include "r_blend.h"
+#include "resources/renderstyle.h"
 #include "s_sound.h"
 #include "memarena.h"
 

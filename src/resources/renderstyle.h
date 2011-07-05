@@ -148,5 +148,6 @@ inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 class FArchive;
 
 FArchive &operator<< (FArchive &arc, FRenderStyle &style);
+fixed_t GetAlpha(int type, fixed_t alpha);
 
 #endif

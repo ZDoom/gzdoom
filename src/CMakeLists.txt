@@ -905,6 +905,7 @@ add_executable( zdoom WIN32
 	fragglescript/t_cmd.cpp
 	resources/colormaps.cpp
 	resources/voxels.cpp
+	resources/renderstyle.cpp
 	autozend.cpp
 )
 

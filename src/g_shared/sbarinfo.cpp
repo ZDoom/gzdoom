@@ -993,7 +993,7 @@ public:
 			if(script->completeBorder) //Fill the statusbar with the border before we draw.
 			{
 				FTexture *b = TexMan[gameinfo.border->b];
-				R_DrawBorder(viewwindowx, viewwindowy + viewheight + b->GetHeight(), viewwindowx + viewwidth, SCREENHEIGHT);
+				V_DrawBorder(viewwindowx, viewwindowy + viewheight + b->GetHeight(), viewwindowx + viewwidth, SCREENHEIGHT);
 				if(screenblocks == 10)
 					screen->FlatFill(viewwindowx, viewwindowy + viewheight, viewwindowx + viewwidth, viewwindowy + viewheight + b->GetHeight(), b, true);
 			}

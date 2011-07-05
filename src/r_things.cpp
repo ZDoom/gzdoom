@@ -69,8 +69,8 @@ extern fixed_t globaluclip, globaldclip;
 #define BASEYCENTER 	(100)
 
 EXTERN_CVAR (Bool, st_scale)
-CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Int, r_drawfuzz)
 
 //
 // Sprite rotation 0 is facing the viewer,

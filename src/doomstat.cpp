@@ -67,3 +67,5 @@ int NextSkill = -1;
 int SinglePlayerClass[MAXPLAYERS];
 
 bool ToggleFullscreen;
+int BorderTopRefresh;
+

@@ -46,6 +46,8 @@
 #include "doomstat.h"
 #include "v_palette.h"
 #include "gi.h"
+#include "g_level.h"
+#include "st_stuff.h"
 
 #include "i_system.h"
 #include "i_video.h"
@@ -66,6 +68,7 @@ int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 
 // FillSimplePoly uses this
 extern "C" short spanend[MAXHEIGHT];
+extern int setblocks;
 
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
@@ -1385,3 +1388,142 @@ void V_DrawFrame (int left, int top, int width, int height)
 	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
 	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void V_DrawBorder (int x1, int y1, int x2, int y2)
+{
+	FTextureID picnum;
+
+	if (level.info != NULL && level.info->bordertexture[0] != 0)
+	{
+		picnum = TexMan.CheckForTexture (level.info->bordertexture, FTexture::TEX_Flat);
+	}
+	else
+	{
+		picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
+	}
+
+	if (picnum.isValid())
+	{
+		screen->FlatFill (x1, y1, x2, y2, TexMan(picnum));
+	}
+	else
+	{
+		screen->Clear (x1, y1, x2, y2, 0, 0);
+	}
+}
+
+//==========================================================================
+//
+// R_DrawViewBorder
+//
+// Draws the border around the view for different size windows
+//
+//==========================================================================
+
+int BorderNeedRefresh;
+
+
+static void V_DrawViewBorder (void)
+{
+	// [RH] Redraw the status bar if SCREENWIDTH > status bar width.
+	// Will draw borders around itself, too.
+	if (SCREENWIDTH > 320)
+	{
+		SB_state = screen->GetPageCount ();
+	}
+
+	if (viewwidth == SCREENWIDTH)
+	{
+		return;
+	}
+
+	V_DrawBorder (0, 0, SCREENWIDTH, viewwindowy);
+	V_DrawBorder (0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+	V_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
+	V_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, ST_Y);
+
+	V_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
+}
+
+//==========================================================================
+//
+// R_DrawTopBorder
+//
+// Draws the top border around the view for different size windows
+//
+//==========================================================================
+
+static void V_DrawTopBorder ()
+{
+	FTexture *p;
+	int offset;
+
+	if (viewwidth == SCREENWIDTH)
+		return;
+
+	offset = gameinfo.border->offset;
+
+	if (viewwindowy < 34)
+	{
+		V_DrawBorder (0, 0, viewwindowx, 34);
+		V_DrawBorder (viewwindowx, 0, viewwindowx + viewwidth, viewwindowy);
+		V_DrawBorder (viewwindowx + viewwidth, 0, SCREENWIDTH, 34);
+		p = TexMan(gameinfo.border->t);
+		screen->FlatFill(viewwindowx, viewwindowy - p->GetHeight(),
+						 viewwindowx + viewwidth, viewwindowy, p, true);
+
+		p = TexMan(gameinfo.border->l);
+		screen->FlatFill(viewwindowx - p->GetWidth(), viewwindowy,
+						 viewwindowx, 35, p, true);
+		p = TexMan(gameinfo.border->r);
+		screen->FlatFill(viewwindowx + viewwidth, viewwindowy,
+						 viewwindowx + viewwidth + p->GetWidth(), 35, p, true);
+
+		p = TexMan(gameinfo.border->tl);
+		screen->DrawTexture (p, viewwindowx - offset, viewwindowy - offset, TAG_DONE);
+
+		p = TexMan(gameinfo.border->tr);
+		screen->DrawTexture (p, viewwindowx + viewwidth, viewwindowy - offset, TAG_DONE);
+	}
+	else
+	{
+		V_DrawBorder (0, 0, SCREENWIDTH, 34);
+	}
+}
+
+//==========================================================================
+//
+// R_RefreshViewBorder
+//
+// Draws the border around the player view, if needed.
+//
+//==========================================================================
+
+void V_RefreshViewBorder ()
+{
+	if (setblocks < 10)
+	{
+		if (BorderNeedRefresh)
+		{
+			BorderNeedRefresh--;
+			if (BorderTopRefresh)
+			{
+				BorderTopRefresh--;
+			}
+			V_DrawViewBorder();
+		}
+		else if (BorderTopRefresh)
+		{
+			BorderTopRefresh--;
+			V_DrawTopBorder();
+		}
+	}
+}
+

@@ -70,6 +70,7 @@
 #include "d_net.h"
 #include "v_text.h"
 #include "p_lnspec.h"
+#include "v_video.h"
 
 extern FILE *Logfile;
 extern bool insave;

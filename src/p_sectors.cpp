@@ -21,7 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "r_data.h"
 #include "p_spec.h"
 #include "c_cvars.h"
 #include "doomstat.h"

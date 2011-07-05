@@ -85,7 +85,6 @@ The FON2 header is followed by variable length data:
 #include "v_font.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "r_data.h"
 #include "i_system.h"
 #include "gi.h"
 #include "cmdlib.h"

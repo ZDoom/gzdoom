@@ -40,7 +40,6 @@
 #include "d_player.h"
 #include "doomstat.h"
 #include "v_font.h"
-#include "r_data.h"
 #include "p_spec.h"
 
 EXTERN_CVAR(String, secretmessage)

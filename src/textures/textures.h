@@ -392,6 +392,7 @@ public:
 	void UnloadAll ();
 
 	int NumTextures () const { return (int)Textures.Size(); }
+	void PrecacheLevel (void);
 
 	void WriteTexture (FArchive &arc, int picnum);
 	int ReadTexture (FArchive &arc);
@@ -455,6 +456,86 @@ private:
 	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
 	TArray<BYTE *> BuildTileFiles;
+};
+
+// A texture that doesn't really exist
+class FDummyTexture : public FTexture
+{
+public:
+	FDummyTexture ();
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	void SetSize (int width, int height);
+};
+
+// A texture that returns a wiggly version of another texture.
+class FWarpTexture : public FTexture
+{
+public:
+	FWarpTexture (FTexture *source);
+	~FWarpTexture ();
+
+	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	bool CheckModified ();
+
+	float GetSpeed() const { return Speed; }
+	int GetSourceLump() { return SourcePic->GetSourceLump(); }
+	void SetSpeed(float fac) { Speed = fac; }
+	FTexture *GetRedirect(bool wantwarped);
+
+	DWORD GenTime;
+protected:
+	FTexture *SourcePic;
+	BYTE *Pixels;
+	Span **Spans;
+	float Speed;
+
+	virtual void MakeTexture (DWORD time);
+};
+
+// [GRB] Eternity-like warping
+class FWarp2Texture : public FWarpTexture
+{
+public:
+	FWarp2Texture (FTexture *source);
+
+protected:
+	void MakeTexture (DWORD time);
+};
+
+// A texture that can be drawn to.
+class DSimpleCanvas;
+class AActor;
+class FArchive;
+
+class FCanvasTexture : public FTexture
+{
+public:
+	FCanvasTexture (const char *name, int width, int height);
+	~FCanvasTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	bool CheckModified ();
+	void RenderView (AActor *viewpoint, int fov);
+	void NeedUpdate() { bNeedsUpdate=true; }
+
+protected:
+	DSimpleCanvas *Canvas;
+	BYTE *Pixels;
+	Span DummySpans[2];
+	BYTE bNeedsUpdate:1;
+	BYTE bDidUpdate:1;
+	BYTE bFirstUpdate:1;
+
+	void MakeTexture ();
+
+	friend struct FCanvasTextureInfo;
 };
 
 extern FTextureManager TexMan;

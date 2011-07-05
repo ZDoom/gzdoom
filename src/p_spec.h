@@ -27,6 +27,7 @@
 
 #include "dsectoreffect.h"
 #include "doomdata.h"
+#include "r_state.h"
 
 class FScanner;
 struct level_info_t;

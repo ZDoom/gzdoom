@@ -37,6 +37,8 @@
 #include "files.h"
 #include "r_local.h"
 #include "v_palette.h"
+#include "v_video.h"
+#include "textures/textures.h"
 
 extern float LastFOV;
 

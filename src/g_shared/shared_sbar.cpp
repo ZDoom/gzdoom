@@ -51,6 +51,7 @@
 #include "d_net.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "d_player.h"
 
 #include "../version.h"
 

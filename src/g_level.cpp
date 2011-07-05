@@ -42,7 +42,6 @@
 #include "m_random.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
-#include "r_data.h"
 #include "w_wad.h"
 #include "am_map.h"
 #include "c_dispatch.h"

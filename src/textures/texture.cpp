@@ -36,12 +36,15 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
-#include "r_data.h"
 #include "templates.h"
 #include "i_system.h"
 #include "r_translate.h"
 #include "bitmap.h"
 #include "colormatcher.h"
+#include "c_dispatch.h"
+#include "v_video.h"
+#include "m_fixed.h"
+#include "textures/textures.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -596,3 +599,37 @@ const BYTE *FDummyTexture::GetPixels ()
 	return NULL;
 }
 
+//==========================================================================
+//
+// Debug stuff
+//
+//==========================================================================
+
+#ifdef _DEBUG
+// Prints the spans generated for a texture. Only needed for debugging.
+CCMD (printspans)
+{
+	if (argv.argc() != 2)
+		return;
+
+	FTextureID picnum = TexMan.CheckForTexture (argv[1], FTexture::TEX_Any);
+	if (!picnum.Exists())
+	{
+		Printf ("Unknown texture %s\n", argv[1]);
+		return;
+	}
+	FTexture *tex = TexMan[picnum];
+	for (int x = 0; x < tex->GetWidth(); ++x)
+	{
+		const FTexture::Span *spans;
+		Printf ("%4d:", x);
+		tex->GetColumn (x, &spans);
+		while (spans->Length != 0)
+		{
+			Printf (" (%4d,%4d)", spans->TopOffset, spans->TopOffset+spans->Length-1);
+			spans++;
+		}
+		Printf ("\n");
+	}
+}
+#endif

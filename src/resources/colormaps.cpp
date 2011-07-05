@@ -43,7 +43,6 @@
 #include "r_local.h"
 #include "r_sky.h"
 #include "c_dispatch.h"
-#include "r_data.h"
 #include "sc_man.h"
 #include "v_text.h"
 #include "st_start.h"
@@ -53,6 +52,7 @@
 #include "v_palette.h"
 #include "colormatcher.h"
 #include "colormaps.h"
+#include "v_video.h"
 
 static bool R_CheckForFixedLights(const BYTE *colormaps);
 

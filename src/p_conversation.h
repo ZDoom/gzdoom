@@ -3,9 +3,13 @@
 
 #include <tarray.h>
 
+#include "s_sound.h"
+#include "textures/textures.h"
+
 struct FStrifeDialogueReply;
 class FTexture;
 struct FBrokenLines;
+struct PClass;
 
 struct FStrifeDialogueItemCheck
 {

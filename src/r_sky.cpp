@@ -28,7 +28,6 @@
 
 // Needed for FRACUNIT.
 #include "m_fixed.h"
-#include "r_data.h"
 #include "c_cvars.h"
 #include "g_level.h"
 #include "r_sky.h"

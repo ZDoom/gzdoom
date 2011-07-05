@@ -52,6 +52,8 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "po_man.h"
+#include "st_start.h"
+#include "v_font.h"
 #include "resources/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
@@ -810,7 +812,12 @@ void R_Init ()
 {
 	atterm (R_Shutdown);
 
-	R_InitData ();
+	StartScreen->Progress();
+	V_InitFonts();
+	StartScreen->Progress();
+	R_InitColormaps ();
+	StartScreen->Progress();
+
 	R_InitPointToAngle ();
 	R_InitTables ();
 	// viewwidth / viewheight are set by the defaults
@@ -845,7 +852,22 @@ static void R_Shutdown ()
 	R_DeinitParticles();
 	R_DeinitTranslationTables();
 	R_DeinitPlanes();
-	R_DeinitData();
+	R_DeinitColormaps ();
+	FCanvasTextureInfo::EmptyList();
+
+	// Free openings
+	if (openings != NULL)
+	{
+		M_Free (openings);
+		openings = NULL;
+	}
+
+	// Free drawsegs
+	if (drawsegs != NULL)
+	{
+		M_Free (drawsegs);
+		drawsegs = NULL;
+	}
 }
 
 //==========================================================================

@@ -41,6 +41,7 @@
 #include "m_png.h"
 #include "bitmap.h"
 #include "v_palette.h"
+#include "textures/textures.h"
 
 //==========================================================================
 //

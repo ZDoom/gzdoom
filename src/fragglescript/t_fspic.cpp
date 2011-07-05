@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "farchive.h"
 #include "sbar.h"
+#include "v_video.h"
 
 
 

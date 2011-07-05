@@ -28,9 +28,9 @@
 #define NUMCOLORMAPS			32
 
 #include "d_player.h"
-#include "r_data.h"
 #include "r_state.h"
 #include "v_palette.h"
+#include "resources/colormaps.h"
 
 
 //
@@ -213,5 +213,25 @@ extern fixed_t stacked_viewx, stacked_viewy, stacked_viewz;
 extern angle_t stacked_angle;
 
 extern void R_CopyStackedViewParameters();
+
+// This list keeps track of the cameras that draw into canvas textures.
+struct FCanvasTextureInfo
+{
+	FCanvasTextureInfo *Next;
+	TObjPtr<AActor> Viewpoint;
+	FCanvasTexture *Texture;
+	FTextureID PicNum;
+	int FOV;
+
+	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
+	static void UpdateAll ();
+	static void EmptyList ();
+	static void Serialize (FArchive &arc);
+	static void Mark();
+
+private:
+	static FCanvasTextureInfo *List;
+};
+
 
 #endif // __R_MAIN_H__

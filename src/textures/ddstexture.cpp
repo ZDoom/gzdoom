@@ -54,6 +54,8 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "bitmap.h"
+#include "v_video.h"
+#include "textures/textures.h"
 
 // Since we want this to compile under Linux too, we need to define this
 // stuff ourselves instead of including a DirectX header.

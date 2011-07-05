@@ -36,7 +36,6 @@
 #include <ctype.h>
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "w_wad.h"
 #include "i_system.h"
 #include "gi.h"
@@ -47,6 +46,9 @@
 #include "bitmap.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "v_video.h"
+#include "m_fixed.h"
+#include "textures/textures.h"
 #include "resources/colormaps.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a

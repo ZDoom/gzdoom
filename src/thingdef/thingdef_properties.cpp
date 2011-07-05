@@ -68,6 +68,7 @@
 #include "a_morph.h"
 #include "colormatcher.h"
 #include "teaminfo.h"
+#include "v_video.h"
 #include "resources/colormaps.h"
 
 

@@ -24,7 +24,6 @@
 #define __R_PLANE_H__
 
 #include <stddef.h>
-#include "r_data.h"
 
 class ASkyViewpoint;
 

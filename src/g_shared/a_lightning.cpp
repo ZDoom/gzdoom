@@ -1,13 +1,13 @@
 #include "a_lightning.h"
 #include "p_lnspec.h"
 #include "statnums.h"
-#include "r_data.h"
 #include "m_random.h"
 #include "templates.h"
 #include "s_sound.h"
 #include "p_acs.h"
 #include "r_sky.h"
 #include "g_level.h"
+#include "r_state.h"
 
 static FRandom pr_lightning ("Lightning");
 

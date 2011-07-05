@@ -33,7 +33,6 @@
 **
 */
 
-#include "r_data.h"
 #include "p_3dmidtex.h"
 #include "stats.h"
 #include "r_interpolate.h"

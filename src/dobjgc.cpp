@@ -61,7 +61,6 @@
 #include "b_bot.h"
 #include "p_local.h"
 #include "g_game.h"
-#include "r_data.h"
 #include "a_sharedglobal.h"
 #include "sbar.h"
 #include "stats.h"
@@ -72,6 +71,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
+#include "v_video.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"
 

@@ -724,7 +724,6 @@ add_executable( zdoom WIN32
 	po_man.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
-	r_data.cpp
 	r_draw.cpp
 	r_drawt.cpp
 	r_interpolate.cpp

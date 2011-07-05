@@ -46,10 +46,10 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "i_sound.h"
-#include "r_data.h"
 #include "m_random.h"
 #include "d_netinf.h"
 #include "i_system.h"
+#include "d_player.h"
 
 // MACROS ------------------------------------------------------------------
 

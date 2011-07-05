@@ -35,11 +35,12 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "r_jpeg.h"
 #include "w_wad.h"
 #include "v_text.h"
 #include "bitmap.h"
+#include "v_video.h"
+#include "textures/textures.h"
 
 //==========================================================================
 //

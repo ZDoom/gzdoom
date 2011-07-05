@@ -34,7 +34,6 @@
 
 #include "doomtype.h"
 #include "p_local.h"
-#include "r_data.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 

@@ -2324,10 +2324,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\r_data.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\src\r_draw.cpp"
 					>
 				</File>

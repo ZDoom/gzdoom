@@ -40,6 +40,7 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "st_start.h"
+#include "textures/textures.h"
 
 //==========================================================================
 //

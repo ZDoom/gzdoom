@@ -48,6 +48,7 @@
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
+#include "b_bot.h"
 
 FDecalLib DecalLibrary;
 

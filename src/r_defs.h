@@ -1031,15 +1031,6 @@ struct FMiniBSP
 
 
 
-// posts are runs of non masked source pixels
-struct column_t
-{
-	BYTE		topdelta;		// -1 is the last post in a column
-	BYTE		length; 		// length data bytes follows
-};
-
-
-
 //
 // OTHER TYPES
 //

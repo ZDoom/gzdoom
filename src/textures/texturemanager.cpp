@@ -35,8 +35,8 @@
 */
 
 #include "doomtype.h"
+#include "doomstat.h"
 #include "w_wad.h"
-#include "r_data.h"
 #include "templates.h"
 #include "i_system.h"
 #include "r_translate.h"
@@ -47,6 +47,10 @@
 #include "st_start.h"
 #include "cmdlib.h"
 #include "g_level.h"
+#include "m_fixed.h"
+#include "farchive.h"
+#include "v_video.h"
+#include "textures/textures.h"
 
 FTextureManager TexMan;
 
@@ -1142,6 +1146,36 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	}
 	return 0;
 }
+
+//===========================================================================
+//
+// R_PrecacheLevel
+//
+// Preloads all relevant graphics for the level.
+//
+//===========================================================================
+
+void FTextureManager::PrecacheLevel (void)
+{
+	BYTE *hitlist;
+	int cnt = NumTextures();
+
+	if (demoplayback)
+		return;
+
+	hitlist = new BYTE[cnt];
+	memset (hitlist, 0, cnt);
+
+	screen->GetHitlist(hitlist);
+	for (int i = cnt - 1; i >= 0; i--)
+	{
+		screen->PrecacheTexture(ByIndex(i), hitlist[i]);
+	}
+
+	delete[] hitlist;
+}
+
+
 
 
 //==========================================================================

@@ -25,7 +25,6 @@
 
 // Need data structure definitions.
 #include "d_player.h"
-#include "r_data.h"
 
 //
 // Refresh internal data structures,
@@ -129,5 +128,7 @@ extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
 
 extern angle_t			xtoviewangle[MAXWIDTH+1];
 extern int				FieldOfView;
+
+int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 
 #endif // __R_STATE_H__

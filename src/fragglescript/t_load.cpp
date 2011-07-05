@@ -38,7 +38,6 @@
 #include "g_level.h"
 #include "sc_man.h"
 #include "s_sound.h"
-#include "r_data.h"
 #include "r_sky.h"
 #include "t_script.h"
 #include "cmdlib.h"

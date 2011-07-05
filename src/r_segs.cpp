@@ -2047,62 +2047,6 @@ void R_NewWall (bool needlights)
 	}
 }
 
-CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0) self = 1;
-	else if (self > 2) self = 2;
-}
-
-int side_t::GetLightLevel (bool foggy, int baselight, int *pfakecontrast) const
-{
-	if (Flags & WALLF_ABSLIGHTING) 
-	{
-		baselight = Light;
-	}
-
-	if (pfakecontrast != NULL)
-	{
-		*pfakecontrast = 0;
-	}
-
-	if (!foggy) // Don't do relative lighting in foggy sectors
-	{
-		if (!(Flags & WALLF_NOFAKECONTRAST) && r_fakecontrast != 0)
-		{
-			int rel;
-			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
-				linedef->dx != 0)
-			{
-				rel = xs_RoundToInt // OMG LEE KILLOUGH LIVES! :/
-					(
-						level.WallHorizLight
-						+ fabs(atan(double(linedef->dy) / linedef->dx) / 1.57079)
-						* (level.WallVertLight - level.WallHorizLight)
-					);
-			}
-			else
-			{
-				rel = linedef->dx == 0 ? level.WallVertLight : 
-					  linedef->dy == 0 ? level.WallHorizLight : 0;
-			}
-			if (pfakecontrast != NULL)
-			{
-				*pfakecontrast = rel;
-			}
-			else
-			{
-				baselight += rel;
-			}
-		}
-		if (!(Flags & WALLF_ABSLIGHTING))
-		{
-			baselight += this->Light;
-		}
-	}
-	return baselight;
-}
-
-
 
 //
 // R_CheckDrawSegs

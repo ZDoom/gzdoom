@@ -304,6 +304,9 @@ struct secplane_t
 	{
 		return -TMulScale16 (a, v->x, b, v->y, z, c);
 	}
+
+	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
+
 };
 
 inline FArchive &operator<< (FArchive &arc, secplane_t &plane)
@@ -442,6 +445,8 @@ struct sector_t
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
 	void ClosestPoint(fixed_t x, fixed_t y, fixed_t &ox, fixed_t &oy) const;
+	int GetFloorLight () const;
+	int GetCeilingLight () const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 	void StopInterpolation(int position);
@@ -990,6 +995,8 @@ struct subsector_t
 	sector_t	*render_sector;
 	DWORD		numlines;
 	int			flags;
+
+	void BuildPolyBSP();
 };
 
 
@@ -1019,8 +1026,6 @@ struct node_t
 
 struct FMiniBSP
 {
-	FMiniBSP();
-
 	bool bDirty;
 
 	TArray<node_t> Nodes;

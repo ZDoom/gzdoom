@@ -45,7 +45,6 @@
 #include "r_3dfloors.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
-#include "nodebuild.h"
 
 // State.
 #include "doomstat.h"
@@ -111,9 +110,6 @@ int WindowLeft, WindowRight;
 WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
-
-static FNodeBuilder::FLevel PolyNodeLevel;
-static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
 
 static subsector_t *InSubsector;
 
@@ -313,59 +309,6 @@ void R_ClearClipSegs (short left, short right)
 	newend = solidsegs+2;
 }
 
-int GetFloorLight (const sector_t *sec)
-{
-	if (sec->GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
-	{
-		return sec->GetPlaneLight(sector_t::floor);
-	}
-	else
-	{
-		return sector_t::ClampLight(sec->lightlevel + sec->GetPlaneLight(sector_t::floor));
-	}
-}
-
-int GetCeilingLight (const sector_t *sec)
-{
-	if (sec->GetFlags(sector_t::ceiling) & PLANEF_ABSLIGHTING)
-	{
-		return sec->GetPlaneLight(sector_t::ceiling);
-	}
-	else
-	{
-		return sector_t::ClampLight(sec->lightlevel + sec->GetPlaneLight(sector_t::ceiling));
-	}
-}
-
-bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *source, const secplane_t *opp)
-{
-	bool copy = false;
-
-	// If the planes do not have matching slopes, then always copy them
-	// because clipping would require creating new sectors.
-	if (source->a != dest->a || source->b != dest->b || source->c != dest->c)
-	{
-		copy = true;
-	}
-	else if (opp->a != -dest->a || opp->b != -dest->b || opp->c != -dest->c)
-	{
-		if (source->d < dest->d)
-		{
-			copy = true;
-		}
-	}
-	else if (source->d < dest->d && source->d > -opp->d)
-	{
-		copy = true;
-	}
-
-	if (copy)
-	{
-		*dest = *source;
-	}
-
-	return copy;
-}
 
 //
 // killough 3/7/98: Hack floor/ceiling heights for deep water etc.
@@ -387,12 +330,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	// [RH] allow per-plane lighting
 	if (floorlightlevel != NULL)
 	{
-		*floorlightlevel = GetFloorLight (sec);
+		*floorlightlevel = sec->GetFloorLight ();
 	}
 
 	if (ceilinglightlevel != NULL)
 	{
-		*ceilinglightlevel = GetCeilingLight (sec);
+		*ceilinglightlevel = sec->GetCeilingLight ();
 	}
 
 	FakeSide = FAKED_Center;
@@ -412,7 +355,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// Replace floor and ceiling height with control sector's heights.
 		if (diffTex)
 		{
-			if (CopyPlaneIfValid (&tempsec->floorplane, &s->floorplane, &sec->ceilingplane))
+			if (s->floorplane.CopyPlaneIfValid (&tempsec->floorplane, &sec->ceilingplane))
 			{
 				tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 			}
@@ -427,12 +370,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 						if (floorlightlevel != NULL)
 						{
-							*floorlightlevel = GetFloorLight (s);
+							*floorlightlevel = s->GetFloorLight ();
 						}
 
 						if (ceilinglightlevel != NULL)
 						{
-							*ceilinglightlevel = GetCeilingLight (s);
+							*ceilinglightlevel = s->GetCeilingLight ();
 						}
 					}
 					FakeSide = FAKED_BelowFloor;
@@ -450,7 +393,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		{
 			if (diffTex)
 			{
-				if (CopyPlaneIfValid (&tempsec->ceilingplane, &s->ceilingplane, &sec->floorplane))
+				if (s->ceilingplane.CopyPlaneIfValid (&tempsec->ceilingplane, &sec->floorplane))
 				{
 					tempsec->SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
 				}
@@ -528,12 +471,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 				if (floorlightlevel != NULL)
 				{
-					*floorlightlevel = GetFloorLight (s);
+					*floorlightlevel = s->GetFloorLight ();
 				}
 
 				if (ceilinglightlevel != NULL)
 				{
-					*ceilinglightlevel = GetCeilingLight (s);
+					*ceilinglightlevel = s->GetCeilingLight ();
 				}
 			}
 			FakeSide = FAKED_BelowFloor;
@@ -565,12 +508,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 				if (floorlightlevel != NULL)
 				{
-					*floorlightlevel = GetFloorLight (s);
+					*floorlightlevel = s->GetFloorLight ();
 				}
 
 				if (ceilinglightlevel != NULL)
 				{
-					*ceilinglightlevel = GetCeilingLight (s);
+					*ceilinglightlevel = s->GetCeilingLight ();
 				}
 			}
 			FakeSide = FAKED_AboveCeiling;
@@ -1021,62 +964,13 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	return true;
 }
 
-//==========================================================================
-//
-// FMiniBSP Constructor
-//
-//==========================================================================
-
-FMiniBSP::FMiniBSP()
-{
-	bDirty = false;
-}
-
-//==========================================================================
-//
-// P_BuildPolyBSP
-//
-//==========================================================================
-
-void R_BuildPolyBSP(subsector_t *sub)
-{
-	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
-
-	// Set up level information for the node builder.
-	PolyNodeLevel.Sides = sides;
-	PolyNodeLevel.NumSides = numsides;
-	PolyNodeLevel.Lines = lines;
-	PolyNodeLevel.NumLines = numlines;
-
-	// Feed segs to the nodebuilder and build the nodes.
-	PolyNodeBuilder.Clear();
-	PolyNodeBuilder.AddSegs(sub->firstline, sub->numlines);
-	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
-	{
-		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
-	}
-	PolyNodeBuilder.BuildMini(false);
-	if (sub->BSP == NULL)
-	{
-		sub->BSP = new FMiniBSP;
-	}
-	else
-	{
-		sub->BSP->bDirty = false;
-	}
-	PolyNodeBuilder.ExtractMini(sub->BSP);
-	for (unsigned int i = 0; i < sub->BSP->Subsectors.Size(); ++i)
-	{
-		sub->BSP->Subsectors[i].sector = sub->sector;
-	}
-}
 
 void R_Subsector (subsector_t *sub);
 static void R_AddPolyobjs(subsector_t *sub)
 {
 	if (sub->BSP == NULL || sub->BSP->bDirty)
 	{
-		R_BuildPolyBSP(sub);
+		sub->BuildPolyBSP();
 	}
 	if (sub->BSP->Nodes.Size() == 0)
 	{

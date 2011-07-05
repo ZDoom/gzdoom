@@ -25,6 +25,8 @@
 #include "c_cvars.h"
 #include "doomstat.h"
 #include "r_main.h"
+#include "nodebuild.h"
+#include "po_man.h"
 #include "resources/colormaps.h"
 
 
@@ -774,6 +776,61 @@ bool sector_t::PlaneMoving(int pos)
 }
 
 
+int sector_t::GetFloorLight () const
+{
+	if (GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
+	{
+		return GetPlaneLight(floor);
+	}
+	else
+	{
+		return ClampLight(lightlevel + GetPlaneLight(floor));
+	}
+}
+
+int sector_t::GetCeilingLight () const
+{
+	if (GetFlags(ceiling) & PLANEF_ABSLIGHTING)
+	{
+		return GetPlaneLight(ceiling);
+	}
+	else
+	{
+		return ClampLight(lightlevel + GetPlaneLight(ceiling));
+	}
+}
+
+bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
+{
+	bool copy = false;
+
+	// If the planes do not have matching slopes, then always copy them
+	// because clipping would require creating new sectors.
+	if (a != dest->a || b != dest->b || c != dest->c)
+	{
+		copy = true;
+	}
+	else if (opp->a != -dest->a || opp->b != -dest->b || opp->c != -dest->c)
+	{
+		if (d < dest->d)
+		{
+			copy = true;
+		}
+	}
+	else if (d < dest->d && d > -opp->d)
+	{
+		copy = true;
+	}
+
+	if (copy)
+	{
+		*dest = *this;
+	}
+
+	return copy;
+}
+
+
 //==========================================================================
 //
 // P_AlignFlat
@@ -804,4 +861,41 @@ bool P_AlignFlat (int linenum, int side, int fc)
 
 	sec->SetBase(fc, dist & ((1<<(FRACBITS+8))-1), 0-angle);
 	return true;
+}
+
+//==========================================================================
+//
+// P_BuildPolyBSP
+//
+//==========================================================================
+static FNodeBuilder::FLevel PolyNodeLevel;
+static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
+
+void subsector_t::BuildPolyBSP()
+{
+	assert((BSP == NULL || BSP->bDirty) && "BSP computed more than once");
+
+	// Set up level information for the node builder.
+	PolyNodeLevel.Sides = sides;
+	PolyNodeLevel.NumSides = numsides;
+	PolyNodeLevel.Lines = lines;
+	PolyNodeLevel.NumLines = numlines;
+
+	// Feed segs to the nodebuilder and build the nodes.
+	PolyNodeBuilder.Clear();
+	PolyNodeBuilder.AddSegs(firstline, numlines);
+	for (FPolyNode *pn = polys; pn != NULL; pn = pn->pnext)
+	{
+		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
+	}
+	PolyNodeBuilder.BuildMini(false);
+	if (BSP == NULL)
+	{
+		BSP = new FMiniBSP;
+	}
+	PolyNodeBuilder.ExtractMini(BSP);
+	for (unsigned int i = 0; i < BSP->Subsectors.Size(); ++i)
+	{
+		BSP->Subsectors[i].sector = sector;
+	}
 }

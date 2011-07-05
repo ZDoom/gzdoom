@@ -165,6 +165,7 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 {
 	unsigned int i;
 
+	bsp->bDirty = false;
 	bsp->Verts.Resize(Vertices.Size());
 	for (i = 0; i < Vertices.Size(); ++i)
 	{

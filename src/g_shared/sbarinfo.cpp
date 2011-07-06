@@ -43,7 +43,6 @@
 #include "m_random.h"
 #include "d_player.h"
 #include "st_stuff.h"
-#include "r_local.h"
 #include "m_swap.h"
 #include "a_keys.h"
 #include "templates.h"

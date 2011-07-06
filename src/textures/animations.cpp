@@ -35,7 +35,6 @@
 #include "doomtype.h"
 #include "cmdlib.h"
 #include "i_system.h"
-#include "r_local.h"
 #include "r_sky.h"
 #include "m_random.h"
 #include "d_player.h"

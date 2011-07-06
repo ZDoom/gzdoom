@@ -44,7 +44,6 @@
 #include "m_bbox.h"
 #include "w_wad.h"
 
-#include "r_local.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_terrain.h"

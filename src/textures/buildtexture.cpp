@@ -35,12 +35,12 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_local.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "st_start.h"
 #include "textures/textures.h"
+#include "r_data/sprites.h"
 
 //==========================================================================
 //

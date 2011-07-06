@@ -40,7 +40,6 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "doomdef.h"
-#include "r_local.h"
 #include "r_sky.h"
 #include "c_dispatch.h"
 #include "sc_man.h"
@@ -51,6 +50,8 @@
 #include "colormatcher.h"
 #include "colormaps.h"
 #include "v_video.h"
+#include "templates.h"
+#include "r_utility.h"
 
 static bool R_CheckForFixedLights(const BYTE *colormaps);
 

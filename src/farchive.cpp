@@ -55,7 +55,6 @@
 #include "c_dispatch.h"
 #include "d_player.h"
 #include "dobject.h"
-#include "r_local.h"
 
 // These are special tokens found in the data stream of an archive.
 // Whenever a new object is encountered, it gets created using new and

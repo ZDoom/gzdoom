@@ -29,9 +29,6 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "d_player.h"
-#ifndef __R_LOCAL__
-//#include "r_local.h"
-#endif
 
 #include "a_morph.h"
 

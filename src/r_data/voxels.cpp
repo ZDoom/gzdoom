@@ -42,7 +42,6 @@
 #include "m_argv.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "r_local.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -61,6 +60,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
+#include "r_data/sprites.h"
 #include "voxels.h"
 
 void VOX_AddVoxel(int sprnum, int frame, FVoxelDef *def);

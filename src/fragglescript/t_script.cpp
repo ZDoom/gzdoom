@@ -45,7 +45,6 @@
 //
 //
 
-#include "r_local.h"
 #include "t_script.h"
 #include "p_lnspec.h"
 #include "a_keys.h"

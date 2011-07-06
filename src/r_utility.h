@@ -12,6 +12,10 @@
 extern fixed_t			viewx;
 extern fixed_t			viewy;
 
+extern fixed_t			viewtancos;
+extern fixed_t			viewtansin;
+extern fixed_t			FocalTangent;
+
 extern bool				r_NoInterpolate;
 extern int				validcount;
 

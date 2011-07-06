@@ -49,6 +49,8 @@
 #define FX_BLACKFOUNTAIN	0x00060000
 #define FX_WHITEFOUNTAIN	0x00070000
 
+struct subsector_t;
+
 // [RH] Particle details
 struct particle_t
 {

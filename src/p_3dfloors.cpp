@@ -41,7 +41,7 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "g_level.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 #ifdef _3DFLOORS
 

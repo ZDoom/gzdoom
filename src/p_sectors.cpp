@@ -28,7 +28,7 @@
 #include "r_main.h"
 #include "nodebuild.h"
 #include "po_man.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 
 // [RH]

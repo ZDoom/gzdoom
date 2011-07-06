@@ -59,8 +59,8 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_translate.h"
-#include "resources/colormaps.h"
-#include "resources/voxels.h"
+#include "r_data/colormaps.h"
+#include "r_data/voxels.h"
 
 extern fixed_t globaluclip, globaldclip;
 

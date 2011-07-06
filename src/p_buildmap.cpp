@@ -16,7 +16,7 @@
 #include "r_defs.h"
 #include "p_setup.h"
 #include "g_level.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 

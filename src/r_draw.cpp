@@ -38,7 +38,7 @@
 #include "g_level.h"
 #include "r_translate.h"
 #include "v_palette.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 #include "gi.h"
 #include "stats.h"

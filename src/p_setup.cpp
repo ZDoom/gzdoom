@@ -66,7 +66,7 @@
 #include "md5.h"
 #include "compatibility.h"
 #include "po_man.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 #include "fragglescript/t_fs.h"
 

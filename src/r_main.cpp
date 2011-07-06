@@ -54,7 +54,7 @@
 #include "po_man.h"
 #include "st_start.h"
 #include "v_font.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 

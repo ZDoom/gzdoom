@@ -57,7 +57,7 @@
 #include "x86.h"
 #include "colormatcher.h"
 #include "v_palette.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 FPalette GPalette;
 FColorMatcher ColorMatcher;

@@ -6629,15 +6629,15 @@
 				Name="Resource Headers"
 				>
 				<File
-					RelativePath=".\src\resources\colormaps.h"
+					RelativePath=".\src\r_data\colormaps.h"
 					>
 				</File>
 				<File
-					RelativePath=".\src\resources\renderstyle.h"
+					RelativePath=".\src\r_data\renderstyle.h"
 					>
 				</File>
 				<File
-					RelativePath=".\src\resources\voxels.h"
+					RelativePath=".\src\r_data\voxels.h"
 					>
 				</File>
 			</Filter>
@@ -6645,15 +6645,15 @@
 				Name="Resource Sources"
 				>
 				<File
-					RelativePath=".\src\resources\colormaps.cpp"
+					RelativePath=".\src\r_data\colormaps.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\src\resources\renderstyle.cpp"
+					RelativePath=".\src\r_data\renderstyle.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\src\resources\voxels.cpp"
+					RelativePath=".\src\r_data\voxels.cpp"
 					>
 				</File>
 			</Filter>

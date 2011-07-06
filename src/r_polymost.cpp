@@ -82,7 +82,7 @@ Low priority:
 #include "v_palette.h"
 #include "v_font.h"
 #include "v_video.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 EXTERN_CVAR (Int, r_polymost)
 

@@ -69,7 +69,7 @@
 #include "colormatcher.h"
 #include "teaminfo.h"
 #include "v_video.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 
 //==========================================================================

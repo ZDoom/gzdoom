@@ -43,7 +43,7 @@
 #include "v_palette.h"
 #include "p_udmf.h"
 #include "r_state.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 //===========================================================================
 //

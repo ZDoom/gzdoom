@@ -61,7 +61,7 @@
 #include "v_palette.h"
 #include "p_enemy.h"
 #include "gstrings.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -30,7 +30,7 @@
 #include "d_player.h"
 #include "r_state.h"
 #include "v_palette.h"
-#include "resources/colormaps.h"
+#include "r_data/colormaps.h"
 
 
 //

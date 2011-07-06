@@ -6511,7 +6511,7 @@
 			</Filter>
 		</Filter>
 		<Filter
-			Name="Resources"
+			Name="Render Data"
 			>
 			<Filter
 				Name="Textures"
@@ -6625,6 +6625,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\r_data\sprites.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\r_data\voxels.h"
 					>
 				</File>
@@ -6646,6 +6650,10 @@
 				</File>
 				<File
 					RelativePath=".\src\r_data\renderstyle.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\r_data\sprites.cpp"
 					>
 				</File>
 				<File

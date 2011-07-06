@@ -812,6 +812,8 @@ void R_Init ()
 {
 	atterm (R_Shutdown);
 
+	clearbufshort (zeroarray, MAXWIDTH, 0);
+
 	StartScreen->Progress();
 	V_InitFonts();
 	StartScreen->Progress();

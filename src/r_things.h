@@ -23,8 +23,6 @@
 #ifndef __R_THINGS__
 #define __R_THINGS__
 
-#define MAX_SPRITE_FRAMES	29		// [RH] Macro-ized as in BOOM.
-
 // [RH] Particle details
 struct particle_t
 {

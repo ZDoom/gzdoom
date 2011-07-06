@@ -10,7 +10,7 @@
 #include "p_local.h"
 #include "gstrings.h"
 #include "gi.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
 */

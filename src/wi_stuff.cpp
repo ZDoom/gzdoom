@@ -45,7 +45,7 @@
 #include "sc_man.h"
 #include "v_text.h"
 #include "gi.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "templates.h"
 #include "gstrings.h"
 

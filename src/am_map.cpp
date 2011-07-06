@@ -33,7 +33,7 @@
 #include "w_wad.h"
 #include "a_sharedglobal.h"
 #include "statnums.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "d_event.h"
 #include "gi.h"
 #include "r_bsp.h"

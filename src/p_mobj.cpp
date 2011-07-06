@@ -53,7 +53,7 @@
 #include "thingdef/thingdef.h"
 #include "g_game.h"
 #include "teaminfo.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "r_sky.h"
 #include "g_level.h"
 #include "d_event.h"

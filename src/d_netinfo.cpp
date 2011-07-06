@@ -53,7 +53,7 @@
 #include "gi.h"
 #include "m_random.h"
 #include "teaminfo.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "templates.h"
 #include "cmdlib.h"
 

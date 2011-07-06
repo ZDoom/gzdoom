@@ -42,7 +42,7 @@
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_things.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "doomstat.h"
 #include "v_palette.h"
 #include "gi.h"

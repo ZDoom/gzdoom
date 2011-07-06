@@ -66,7 +66,7 @@
 #include "sc_man.h"
 #include "c_bind.h"
 #include "info.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "cmdlib.h"
 #include "m_png.h"
 #include "p_setup.h"

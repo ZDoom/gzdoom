@@ -49,7 +49,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------
 

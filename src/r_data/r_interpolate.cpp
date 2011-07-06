@@ -35,7 +35,7 @@
 
 #include "p_3dmidtex.h"
 #include "stats.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "p_local.h"
 #include "i_system.h"
 #include "po_man.h"

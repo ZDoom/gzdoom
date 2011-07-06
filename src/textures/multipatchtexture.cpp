@@ -42,7 +42,7 @@
 #include "st_start.h"
 #include "sc_man.h"
 #include "templates.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "colormatcher.h"
 #include "v_palette.h"

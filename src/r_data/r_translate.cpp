@@ -37,7 +37,7 @@
 #include "templates.h"
 #include "r_draw.h"
 #include "r_main.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "v_video.h"
 #include "g_game.h"
 #include "colormatcher.h"

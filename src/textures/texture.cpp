@@ -38,7 +38,7 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "i_system.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "colormatcher.h"
 #include "c_dispatch.h"

@@ -29,7 +29,7 @@
 #include "s_sound.h"
 #include "doomstat.h"
 #include "sbar.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "i_sound.h"
 #include "g_level.h"
 

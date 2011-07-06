@@ -67,7 +67,7 @@
 #include "c_dispatch.h"
 #include "p_acs.h"
 #include "s_sndseq.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"

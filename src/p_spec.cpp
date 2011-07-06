@@ -66,7 +66,7 @@
 
 #include "c_console.h"
 
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 void P_SetupPortals();

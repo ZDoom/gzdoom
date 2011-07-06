@@ -37,7 +37,7 @@
 #include "p_spec.h"
 #include "g_level.h"
 #include "s_sndseq.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 
 IMPLEMENT_POINTY_CLASS (DPillar)
 	DECLARE_POINTER(m_Interp_Floor)

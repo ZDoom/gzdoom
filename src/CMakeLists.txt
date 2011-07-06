@@ -726,14 +726,12 @@ add_executable( zdoom WIN32
 	r_bsp.cpp
 	r_draw.cpp
 	r_drawt.cpp
-	r_interpolate.cpp
 	r_main.cpp
 	r_plane.cpp
 	r_polymost.cpp
 	r_segs.cpp
 	r_sky.cpp
 	r_things.cpp
-	r_translate.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp
@@ -906,6 +904,8 @@ add_executable( zdoom WIN32
 	r_data/colormaps.cpp
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp
+	r_data/r_interpolate.cpp
+	r_data/r_translate.cpp
 	autozend.cpp
 )
 

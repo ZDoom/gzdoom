@@ -45,7 +45,7 @@
 #include "actor.h"
 #include "d_player.h"
 #include "r_state.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "c_bind.h"
 #include "g_level.h"
 #include "p_conversation.h"

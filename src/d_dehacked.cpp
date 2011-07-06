@@ -67,7 +67,7 @@
 #include "thingdef/thingdef_exp.h"
 #include "vectors.h"
 #include "dobject.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "sc_man.h"
 #include "i_system.h"
 #include "doomerrors.h"

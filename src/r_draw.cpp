@@ -36,7 +36,7 @@
 #include "a_hexenglobal.h"
 #include "g_game.h"
 #include "g_level.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 

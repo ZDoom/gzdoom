@@ -50,7 +50,7 @@
 
 #include "a_sharedglobal.h"
 #include "p_conversation.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "g_level.h"
 
 #define WATER_SINK_FACTOR		3

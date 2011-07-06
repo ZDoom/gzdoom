@@ -39,7 +39,7 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "i_system.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "sc_man.h"

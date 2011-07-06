@@ -56,7 +56,7 @@
 #include "templates.h"
 #include "sbar.h"
 #include "hardware.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "f_wipe.h"
 #include "m_png.h"
 #include "colormatcher.h"

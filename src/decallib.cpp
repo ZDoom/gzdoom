@@ -44,7 +44,7 @@
 #include "templates.h"
 #include "r_draw.h"
 #include "a_sharedglobal.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"

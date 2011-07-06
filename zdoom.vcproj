@@ -2332,10 +2332,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\r_interpolate.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\src\r_main.cpp"
 					>
 				</File>
@@ -2359,10 +2355,6 @@
 					RelativePath=".\src\r_things.cpp"
 					>
 				</File>
-				<File
-					RelativePath=".\src\r_translate.cpp"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Render Headers"
@@ -2381,14 +2373,6 @@
 				</File>
 				<File
 					RelativePath=".\src\r_draw.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\r_interpolate.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\r_jpeg.h"
 					>
 				</File>
 				<File
@@ -2421,10 +2405,6 @@
 				</File>
 				<File
 					RelativePath=".\src\r_things.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\r_translate.h"
 					>
 				</File>
 			</Filter>
@@ -6633,6 +6613,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\r_data\r_interpolate.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\r_data\r_translate.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\r_data\renderstyle.h"
 					>
 				</File>
@@ -6646,6 +6634,14 @@
 				>
 				<File
 					RelativePath=".\src\r_data\colormaps.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\r_data\r_interpolate.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\r_data\r_translate.cpp"
 					>
 				</File>
 				<File

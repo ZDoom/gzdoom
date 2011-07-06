@@ -91,7 +91,7 @@ The FON2 header is followed by variable length data:
 #include "sc_man.h"
 #include "hu_stuff.h"
 #include "r_draw.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "colormatcher.h"
 #include "v_palette.h"
 

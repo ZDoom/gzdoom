@@ -7,7 +7,7 @@
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "s_sound.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 */

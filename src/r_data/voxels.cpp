@@ -62,7 +62,7 @@
 #include "r_plane.h"
 #include "r_segs.h"
 #include "v_palette.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
 #include "voxels.h"
 

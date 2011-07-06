@@ -2,7 +2,6 @@
 #include "actor.h"
 #include "p_enemy.h"
 #include "a_action.h"
-#include "r_draw.h"
 #include "m_random.h"
 #include "p_local.h"
 #include "a_doomglobal.h"

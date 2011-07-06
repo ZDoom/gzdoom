@@ -252,6 +252,7 @@ extern BYTE identitymap[256];
 extern BYTE *dc_translation;
 
 // [RH] Added for muliresolution support
+void R_InitShadeMaps();
 void R_InitFuzzTable (int fuzzoff);
 
 // [RH] Consolidate column drawer selection

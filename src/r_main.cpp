@@ -827,6 +827,7 @@ void R_Init ()
 	R_SetViewSize (screenblocks);
 	R_InitPlanes ();
 	R_InitTranslationTables ();
+	R_InitShadeMaps();
 	R_InitParticles ();	// [RH] Setup particle engine
 	R_InitColumnDrawers ();
 

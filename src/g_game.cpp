@@ -62,7 +62,6 @@
 #include "s_sound.h"
 #include "gstrings.h"
 #include "r_sky.h"
-#include "r_draw.h"
 #include "g_game.h"
 #include "g_level.h"
 #include "b_bot.h"			//Added by MC:

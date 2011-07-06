@@ -127,6 +127,46 @@ BYTE identitymap[256];
 
 EXTERN_CVAR (Int, r_columnmethod)
 
+
+void R_InitShadeMaps()
+{
+	int i,j;
+	// set up shading tables for shaded columns
+	// 16 colormap sets, progressing from full alpha to minimum visible alpha
+
+	BYTE *table = shadetables;
+
+	// Full alpha
+	for (i = 0; i < 16; ++i)
+	{
+		ShadeFakeColormap[i].Color = ~0u;
+		ShadeFakeColormap[i].Desaturate = ~0u;
+		ShadeFakeColormap[i].Next = NULL;
+		ShadeFakeColormap[i].Maps = table;
+
+		for (j = 0; j < NUMCOLORMAPS; ++j)
+		{
+			int a = (NUMCOLORMAPS - j) * 256 / NUMCOLORMAPS * (16-i);
+			for (int k = 0; k < 256; ++k)
+			{
+				BYTE v = (((k+2) * a) + 256) >> 14;
+				table[k] = MIN<BYTE> (v, 64);
+			}
+			table += 256;
+		}
+	}
+	for (i = 0; i < NUMCOLORMAPS*16*256; ++i)
+	{
+		assert(shadetables[i] <= 64);
+	}
+
+	// Set up a guaranteed identity map
+	for (i = 0; i < 256; ++i)
+	{
+		identitymap[i] = i;
+	}
+}
+
 /************************************/
 /*									*/
 /* Palettized drawers (C versions)	*/

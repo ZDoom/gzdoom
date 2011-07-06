@@ -47,8 +47,6 @@
 #include "v_text.h"
 #include "st_start.h"
 #include "doomstat.h"
-#include "r_bsp.h"
-#include "r_segs.h"
 #include "v_palette.h"
 #include "colormatcher.h"
 #include "colormaps.h"

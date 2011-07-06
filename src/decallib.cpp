@@ -42,7 +42,6 @@
 #include "weightedlist.h"
 #include "statnums.h"
 #include "templates.h"
-#include "r_draw.h"
 #include "a_sharedglobal.h"
 #include "r_data/r_translate.h"
 #include "gi.h"

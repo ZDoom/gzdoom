@@ -54,7 +54,6 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "r_main.h"
-#include "r_draw.h"
 #include "sbar.h"
 #include "s_sound.h"
 #include "s_sndseq.h"

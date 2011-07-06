@@ -41,7 +41,6 @@
 #include "c_console.h"
 #include "v_video.h"
 #include "m_swap.h"
-#include "r_draw.h"
 #include "w_wad.h"
 #include "v_text.h"
 #include "s_sound.h"

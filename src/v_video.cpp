@@ -29,7 +29,6 @@
 #include "x86.h"
 #include "i_video.h"
 #include "r_local.h"
-#include "r_draw.h"
 #include "r_state.h"
 
 #include "doomdef.h"

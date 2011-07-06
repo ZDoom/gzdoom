@@ -47,7 +47,6 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "i_system.h"
-#include "r_draw.h"
 #include "r_state.h"
 #include "sbar.h"
 #include "gi.h"

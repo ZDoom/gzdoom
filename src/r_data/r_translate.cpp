@@ -35,7 +35,6 @@
 #include <stddef.h>
 
 #include "templates.h"
-#include "r_draw.h"
 #include "r_main.h"
 #include "r_data/r_translate.h"
 #include "v_video.h"
@@ -53,6 +52,7 @@
 #include "stats.h"
 
 TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
+
 
 const BYTE IcePalette[16][3] =
 {
@@ -681,7 +681,7 @@ static void PushIdentityTable(int slot)
 
 void R_InitTranslationTables ()
 {
-	int i, j;
+	int i;
 
 	// Each player gets two translations. Doom and Strife don't use the
 	// extra ones, but Heretic and Hexen do. These are set up during
@@ -814,41 +814,6 @@ void R_InitTranslationTables ()
 		int v = (r*77 + g*143 + b*37) >> 12;
 		remap->Remap[i] = IcePaletteRemap[v];
 		remap->Palette[i] = PalEntry(255, IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
-	}
-
-	// set up shading tables for shaded columns
-	// 16 colormap sets, progressing from full alpha to minimum visible alpha
-
-	BYTE *table = shadetables;
-
-	// Full alpha
-	for (i = 0; i < 16; ++i)
-	{
-		ShadeFakeColormap[i].Color = ~0u;
-		ShadeFakeColormap[i].Desaturate = ~0u;
-		ShadeFakeColormap[i].Next = NULL;
-		ShadeFakeColormap[i].Maps = table;
-
-		for (j = 0; j < NUMCOLORMAPS; ++j)
-		{
-			int a = (NUMCOLORMAPS - j) * 256 / NUMCOLORMAPS * (16-i);
-			for (int k = 0; k < 256; ++k)
-			{
-				BYTE v = (((k+2) * a) + 256) >> 14;
-				table[k] = MIN<BYTE> (v, 64);
-			}
-			table += 256;
-		}
-	}
-	for (i = 0; i < NUMCOLORMAPS*16*256; ++i)
-	{
-		assert(shadetables[i] <= 64);
-	}
-
-	// Set up a guaranteed identity map
-	for (i = 0; i < 256; ++i)
-	{
-		identitymap[i] = i;
 	}
 }
 

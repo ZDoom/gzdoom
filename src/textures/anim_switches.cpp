@@ -43,6 +43,8 @@
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "gi.h"
+#include "farchive.h"
+
 
 static int STACK_ARGS SortSwitchDefs (const void *a, const void *b)
 {

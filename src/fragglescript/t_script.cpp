@@ -55,6 +55,7 @@
 #include "i_system.h"
 #include "doomerrors.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 //==========================================================================
 //

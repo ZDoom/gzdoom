@@ -11,6 +11,7 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 #define MAULATORTICS (25*35)
 

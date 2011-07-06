@@ -37,7 +37,6 @@
 #include "actor.h"
 
 #include "dthinker.h"
-#include "farchive.h"
 
 #define MAXWIDTH 2560
 #define MAXHEIGHT 1600
@@ -101,6 +100,7 @@ class FScanner;
 class FBitmap;
 struct FCopyInfo;
 class DInterpolation;
+class FArchive;
 
 enum
 {
@@ -309,16 +309,8 @@ struct secplane_t
 
 };
 
-inline FArchive &operator<< (FArchive &arc, secplane_t &plane)
-{
-	arc << plane.a << plane.b << plane.c << plane.d;
-	//if (plane.c != 0)
-	{	// plane.c should always be non-0. Otherwise, the plane
-		// would be perfectly vertical.
-		plane.ic = DivScale32 (1, plane.c);
-	}
-	return arc;
-}
+FArchive &operator<< (FArchive &arc, secplane_t &plane);
+
 
 #include "p_3dfloors.h"
 // Ceiling/floor flags

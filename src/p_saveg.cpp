@@ -49,12 +49,18 @@
 #include "po_man.h"
 #include "p_setup.h"
 #include "r_data/colormaps.h"
+#include "farchive.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
 static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers ();
 
+inline FArchive &operator<< (FArchive &arc, FLinkedSector &link)
+{
+	arc << link.Sector << link.Type;
+	return arc;
+}
 
 //
 // P_ArchivePlayers

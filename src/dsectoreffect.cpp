@@ -28,6 +28,7 @@
 #include "p_3dmidtex.h"
 #include "r_data/r_interpolate.h"
 #include "statnums.h"
+#include "farchive.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
 

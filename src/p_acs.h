@@ -38,7 +38,6 @@
 #include "dobject.h"
 #include "dthinker.h"
 #include "doomtype.h"
-#include "farchive.h"
 
 #define LOCAL_SIZE				20
 #define NUM_MAPVARS				128
@@ -736,14 +735,6 @@ private:
 
 	friend class DACSThinker;
 };
-
-inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
-{
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DLevelScript::EScriptState)val;
-	return arc;
-}
 
 class DACSThinker : public DThinker
 {

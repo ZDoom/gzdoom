@@ -50,6 +50,7 @@
 #include "d_netinf.h"
 #include "i_system.h"
 #include "d_player.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 

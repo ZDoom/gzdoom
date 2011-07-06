@@ -46,6 +46,7 @@
 #include "w_wad.h"
 #include "tarray.h"
 #include "cmdlib.h"
+#include "farchive.h"
 
 #include "gi.h"
 

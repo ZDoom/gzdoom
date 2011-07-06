@@ -8,6 +8,7 @@
 #include "s_sound.h"
 #include "a_sharedglobal.h"
 #include "statnums.h"
+#include "farchive.h"
 
 static FRandom pr_quake ("Quake");
 

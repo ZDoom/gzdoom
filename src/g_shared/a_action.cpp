@@ -11,6 +11,7 @@
 #include "p_enemy.h"
 #include "statnums.h"
 #include "templates.h"
+#include "farchive.h"
 #include "r_data/r_translate.h"
 
 static FRandom pr_freezedeath ("FreezeDeath");

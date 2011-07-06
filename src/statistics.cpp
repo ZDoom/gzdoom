@@ -70,6 +70,7 @@
 #include "r_sky.h"
 #include "p_lnspec.h"
 #include "m_crc32.h"
+#include "farchive.h"
 
 CVAR(Int, savestatistics, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

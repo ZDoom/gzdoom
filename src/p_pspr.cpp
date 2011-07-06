@@ -27,6 +27,8 @@
 #include "templates.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+#include "farchive.h"
+
 
 // MACROS ------------------------------------------------------------------
 

@@ -14,6 +14,7 @@
 #include "templates.h"
 #include "r_data/r_translate.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 // Include all the other Heretic stuff here to reduce compile time
 #include "a_chicken.cpp"

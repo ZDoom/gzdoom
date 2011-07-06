@@ -66,6 +66,7 @@
 #include "v_palette.h"
 #include "v_font.h"
 #include "r_data/colormaps.h"
+#include "farchive.h"
 
 static FRandom pr_script("FScript");
 

@@ -53,6 +53,7 @@
 #include "v_text.h"
 #include "d_net.h"
 #include "d_main.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -13,6 +13,7 @@
 #include "a_specialspot.h"
 #include "templates.h"
 #include "m_bbox.h"
+#include "farchive.h"
 
 // Include all the other Doom stuff here to reduce compile time
 #include "a_arachnotron.cpp"

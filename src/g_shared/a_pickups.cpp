@@ -18,6 +18,7 @@
 #include "g_level.h"
 #include "g_game.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 static FRandom pr_restore ("RestorePos");
 

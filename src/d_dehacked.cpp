@@ -71,6 +71,7 @@
 #include "i_system.h"
 #include "doomerrors.h"
 #include "p_effect.h"
+#include "farchive.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO

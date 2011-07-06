@@ -39,6 +39,7 @@
 #include "p_local.h"
 #include "i_system.h"
 #include "po_man.h"
+#include "farchive.h"
 
 //==========================================================================
 //

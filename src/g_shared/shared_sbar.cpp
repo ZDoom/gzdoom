@@ -51,6 +51,7 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "d_player.h"
+#include "farchive.h"
 
 #include "../version.h"
 

@@ -79,6 +79,7 @@
 #include "menu/menu.h"
 #include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
+#include "farchive.h"
 
 #include "gi.h"
 

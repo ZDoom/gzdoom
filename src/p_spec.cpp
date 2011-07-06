@@ -60,6 +60,7 @@
 #include "g_level.h"
 #include "v_font.h"
 #include "a_sharedglobal.h"
+#include "farchive.h"
 
 // State.
 #include "r_state.h"
@@ -85,6 +86,14 @@ IMPLEMENT_POINTY_CLASS (DPusher)
  DECLARE_POINTER (m_Source)
 END_POINTERS
 
+inline FArchive &operator<< (FArchive &arc, DScroller::EScrollType &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DScroller::EScrollType)val;
+	return arc;
+}
+
 DScroller::DScroller ()
 {
 }
@@ -107,6 +116,14 @@ void DScroller::Serialize (FArchive &arc)
 
 DPusher::DPusher ()
 {
+}
+
+inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DPusher::EPusher)val;
+	return arc;
 }
 
 void DPusher::Serialize (FArchive &arc)

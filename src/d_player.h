@@ -413,10 +413,7 @@ public:
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
-inline FArchive &operator<< (FArchive &arc, player_t *&p)
-{
-	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
-}
+FArchive &operator<< (FArchive &arc, player_t *&p);
 
 void P_CheckPlayerSprites();
 

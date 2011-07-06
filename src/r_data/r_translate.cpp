@@ -47,6 +47,7 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "r_data/colormaps.h"
+#include "farchive.h"
 
 #include "gi.h"
 #include "stats.h"

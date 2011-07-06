@@ -38,6 +38,7 @@
 #include "statnums.h"
 #include "i_system.h"
 #include "doomerrors.h"
+#include "farchive.h"
 
 
 static cycle_t ThinkCycles;

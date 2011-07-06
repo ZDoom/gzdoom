@@ -33,6 +33,7 @@
 **
 */
 
+#include "doomstat.h"
 #include "p_setup.h"
 #include "p_lnspec.h"
 #include "templates.h"

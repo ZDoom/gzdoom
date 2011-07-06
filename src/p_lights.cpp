@@ -33,6 +33,7 @@
 // State.
 #include "r_state.h"
 #include "statnums.h"
+#include "farchive.h"
 
 static FRandom pr_flicker ("Flicker");
 static FRandom pr_lightflash ("LightFlash");

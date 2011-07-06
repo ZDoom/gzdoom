@@ -29,8 +29,23 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "tables.h"
+#include "farchive.h"
 #include "p_3dmidtex.h"
 #include "r_data/r_interpolate.h"
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DFloor::EFloor)val;
+	return arc;
+}
 
 //==========================================================================
 //
@@ -869,6 +884,14 @@ IMPLEMENT_POINTY_CLASS (DElevator)
 	DECLARE_POINTER(m_Interp_Floor)
 	DECLARE_POINTER(m_Interp_Ceiling)
 END_POINTERS
+
+inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DElevator::EElevator)val;
+	return arc;
+}
 
 DElevator::DElevator ()
 {

@@ -39,6 +39,7 @@
 #include "r_bsp.h"
 #include "p_setup.h"
 #include "c_bind.h"
+#include "farchive.h"
 
 #include "m_cheat.h"
 #include "i_system.h"

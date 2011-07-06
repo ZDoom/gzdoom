@@ -27,6 +27,7 @@
 #include "templates.h"
 #include "c_dispatch.h"
 #include "g_level.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 

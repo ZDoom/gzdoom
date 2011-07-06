@@ -97,14 +97,6 @@ private:
 // (This is so scrolling floors and objects on them can move at same speed.)
 enum { CARRYFACTOR = ((fixed_t)(FRACUNIT*.09375)) };
 
-inline FArchive &operator<< (FArchive &arc, DScroller::EScrollType &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DScroller::EScrollType)val;
-	return arc;
-}
-
 // phares 3/20/98: added new model of Pushers for push/pull effects
 
 class DPusher : public DThinker
@@ -149,14 +141,6 @@ protected:
 };
 
 bool PIT_PushThing (AActor *thing);
-
-inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPusher::EPusher)val;
-	return arc;
-}
 
 // Define values for map objects
 #define MO_TELEPORTMAN			14
@@ -466,21 +450,6 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type,
 void EV_StopPlat (int tag);
 void P_ActivateInStasis (int tag);
 
-inline FArchive &operator<< (FArchive &arc, DPlat::EPlatType &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPlat::EPlatType)val;
-	return arc;
-}
-inline FArchive &operator<< (FArchive &arc, DPlat::EPlatState &state)
-{
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DPlat::EPlatState)val;
-	return arc;
-}
-
 //
 // [RH]
 // P_PILLAR
@@ -519,14 +488,6 @@ protected:
 private:
 	DPillar ();
 };
-
-inline FArchive &operator<< (FArchive &arc, DPillar::EPillar &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPillar::EPillar)val;
-	return arc;
-}
 
 bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
 				  fixed_t height2, int crush, bool hexencrush);
@@ -587,14 +548,6 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int lightTag);
 void P_SpawnDoorCloseIn30 (sector_t *sec);
 void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
-
-inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DDoor::EVlDoor)val;
-	return arc;
-}
 
 class DAnimatedDoor : public DMovingCeiling
 {
@@ -717,13 +670,6 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 bool EV_CeilingCrushStop (int tag);
 void P_ActivateInStasisCeiling (int tag);
 
-inline FArchive &operator<< (FArchive &arc, DCeiling::ECeiling &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DCeiling::ECeiling)val;
-	return arc;
-}
 
 
 //
@@ -824,14 +770,6 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 bool EV_FloorCrushStop (int tag);
 bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed);
 
-inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DFloor::EFloor)val;
-	return arc;
-}
-
 class DElevator : public DMover
 {
 	DECLARE_CLASS (DElevator, DMover)
@@ -872,14 +810,6 @@ private:
 
 bool EV_DoElevator (line_t *line, DElevator::EElevator type, fixed_t speed,
 	fixed_t height, int tag);
-
-inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DElevator::EElevator)val;
-	return arc;
-}
 
 class DWaggleBase : public DMover
 {

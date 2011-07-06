@@ -29,6 +29,7 @@
 #include "po_man.h"
 #include "p_setup.h"
 #include "vectors.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -46,6 +47,16 @@ inline vertex_t *side_t::V2() const
 	return this == linedef->sidedef[0]? linedef->v2 : linedef->v1;
 }
 
+
+FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
+{
+	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
+}
+
+FArchive &operator<< (FArchive &arc, const FPolyObj *&poly)
+{
+	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
+}
 
 inline FArchive &operator<< (FArchive &arc, podoortype_t &type)
 {

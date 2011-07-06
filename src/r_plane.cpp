@@ -68,8 +68,6 @@
 
 static void R_DrawSkyStriped (visplane_t *pl);
 
-EXTERN_CVAR (Bool, r_particles);
-
 planefunction_t 		floorfunc;
 planefunction_t 		ceilingfunc;
 

@@ -51,7 +51,6 @@
 #include "sbarinfo.h"
 #include "gi.h"
 #include "r_data/r_translate.h"
-#include "r_main.h"
 #include "a_weaponpiece.h"
 #include "a_strifeglobal.h"
 #include "g_level.h"

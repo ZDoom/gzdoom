@@ -77,6 +77,7 @@
 #include "d_event.h"
 #include "p_acs.h"
 #include "m_joy.h"
+#include "farchive.h"
 #include "r_data/colormaps.h"
 
 #include <zlib.h>

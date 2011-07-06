@@ -53,7 +53,6 @@
 #include "v_video.h"
 #include "v_text.h"
 #include "w_wad.h"
-#include "r_main.h"
 #include "sbar.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
@@ -64,6 +63,7 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "d_event.h"
+#include "d_player.h"
 
 #include "gi.h"
 

@@ -50,7 +50,7 @@
 #include "tarray.h"
 #include "m_bbox.h"
 #include "c_console.h"
-#include "r_main.h"
+#include "r_state.h"
 
 const int MaxSegs = 64;
 const int SplitCost = 8;

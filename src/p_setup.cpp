@@ -3930,7 +3930,7 @@ void P_SetupLevel (char *lumpname, int position)
 	R_OldBlend = 0xffffffff;
 
 	// [RH] Remove all particles
-	R_ClearParticles ();
+	P_ClearParticles ();
 
 	times[17].Clock();
 	// preload graphics and sounds

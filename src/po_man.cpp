@@ -22,7 +22,6 @@
 #include "tables.h"
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
-#include "r_main.h"
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
 #include "g_level.h"

@@ -47,7 +47,6 @@
 #include "templates.h"
 #include "v_video.h"
 #include "i_system.h"
-#include "r_main.h"		// For lighting constants
 #include "w_wad.h"
 #include "i_video.h"
 #include "c_dispatch.h"

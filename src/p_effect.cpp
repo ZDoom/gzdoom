@@ -36,8 +36,10 @@
 
 #include "doomtype.h"
 #include "doomstat.h"
+#include "i_system.h"
 #include "c_cvars.h"
 #include "actor.h"
+#include "m_argv.h"
 #include "p_effect.h"
 #include "p_local.h"
 #include "g_level.h"
@@ -54,8 +56,16 @@ CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_rail_smartspiral, 0, CVAR_ARCHIVE);
 CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
 CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
+CVAR (Bool, r_particles, true, 0);
 
 #define FADEFROMTTL(a)	(255/(a))
+
+// [RH] particle globals
+WORD			NumParticles;
+WORD			ActiveParticles;
+WORD			InactiveParticles;
+particle_t		*Particles;
+TArray<WORD>	ParticlesInSubsec;
 
 static int grey1, grey2, grey3, grey4, red, green, blue, yellow, black,
 		   red1, green1, blue1, yellow1, purple, purple1, white,
@@ -95,10 +105,114 @@ static const struct ColorList {
 	{NULL, 0, 0, 0 }
 };
 
+inline particle_t *NewParticle (void)
+{
+	particle_t *result = NULL;
+	if (InactiveParticles != NO_PARTICLE)
+	{
+		result = Particles + InactiveParticles;
+		InactiveParticles = result->tnext;
+		result->tnext = ActiveParticles;
+		ActiveParticles = WORD(result - Particles);
+	}
+	return result;
+}
+
+//
+// [RH] Particle functions
+//
+void P_InitParticles ();
+void P_DeinitParticles ();
+
+// [BC] Allow the maximum number of particles to be specified by a cvar (so people
+// with lots of nice hardware can have lots of particles!).
+CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
+{
+	if ( self == 0 )
+		self = 4000;
+	else if ( self < 100 )
+		self = 100;
+
+	if ( gamestate != GS_STARTUP )
+	{
+		P_DeinitParticles( );
+		P_InitParticles( );
+	}
+}
+
+void P_InitParticles ()
+{
+	const char *i;
+
+	if ((i = Args->CheckValue ("-numparticles")))
+		NumParticles = atoi (i);
+	// [BC] Use r_maxparticles now.
+	else
+		NumParticles = r_maxparticles;
+
+	// This should be good, but eh...
+	if ( NumParticles < 100 )
+		NumParticles = 100;
+
+	P_DeinitParticles();
+	Particles = new particle_t[NumParticles];
+	P_ClearParticles ();
+	atterm (P_DeinitParticles);
+}
+
+void P_DeinitParticles()
+{
+	if (Particles != NULL)
+	{
+		delete[] Particles;
+		Particles = NULL;
+	}
+}
+
+void P_ClearParticles ()
+{
+	int i;
+
+	memset (Particles, 0, NumParticles * sizeof(particle_t));
+	ActiveParticles = NO_PARTICLE;
+	InactiveParticles = 0;
+	for (i = 0; i < NumParticles-1; i++)
+		Particles[i].tnext = i + 1;
+	Particles[i].tnext = NO_PARTICLE;
+}
+
+// Group particles by subsectors. Because particles are always
+// in motion, there is little benefit to caching this information
+// from one frame to the next.
+
+void P_FindParticleSubsectors ()
+{
+	if (ParticlesInSubsec.Size() < (size_t)numsubsectors)
+	{
+		ParticlesInSubsec.Reserve (numsubsectors - ParticlesInSubsec.Size());
+	}
+
+	clearbufshort (&ParticlesInSubsec[0], numsubsectors, NO_PARTICLE);
+
+	if (!r_particles)
+	{
+		return;
+	}
+	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
+	{
+		subsector_t *ssec = R_PointInSubsector (Particles[i].x, Particles[i].y);
+		int ssnum = int(ssec-subsectors);
+		Particles[i].subsector = ssec;
+		Particles[i].snext = ParticlesInSubsec[ssnum];
+		ParticlesInSubsec[ssnum] = i;
+	}
+}
+
 void P_InitEffects ()
 {
 	const struct ColorList *color = Colors;
 
+	P_InitParticles();
 	while (color->color)
 	{
 		*(color->color) = ColorMatcher.Pick (color->r, color->g, color->b);

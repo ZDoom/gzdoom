@@ -45,6 +45,7 @@
 #include "r_3dfloors.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
+#include "p_effect.h"
 
 // State.
 #include "doomstat.h"

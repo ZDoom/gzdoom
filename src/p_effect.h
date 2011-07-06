@@ -49,7 +49,31 @@
 #define FX_BLACKFOUNTAIN	0x00060000
 #define FX_WHITEFOUNTAIN	0x00070000
 
-struct particle_t;
+// [RH] Particle details
+struct particle_t
+{
+	fixed_t	x,y,z;
+	fixed_t velx,vely,velz;
+	fixed_t accx,accy,accz;
+	BYTE	ttl;
+	BYTE	trans;
+	BYTE	size;
+	BYTE	fade;
+	int		color;
+	WORD	tnext;
+	WORD	snext;
+	subsector_t * subsector;
+};
+
+extern particle_t *Particles;
+extern TArray<WORD>		ParticlesInSubsec;
+
+const WORD NO_PARTICLE = 0xffff;
+
+void P_ClearParticles ();
+void P_FindParticleSubsectors ();
+
+
 class AActor;
 
 particle_t *JitterParticle (int ttl);

@@ -79,7 +79,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "r_main.h"
+#include "r_utility.h"
 
 #include "stats.h"
 #include "st_start.h"

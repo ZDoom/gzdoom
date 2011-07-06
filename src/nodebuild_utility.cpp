@@ -47,9 +47,9 @@
 #include "nodebuild.h"
 #include "templates.h"
 #include "m_bbox.h"
-#include "r_main.h"
 #include "i_system.h"
 #include "po_man.h"
+#include "r_state.h"
 
 static const int PO_LINE_START = 1;
 static const int PO_LINE_EXPLICIT = 5;

@@ -34,7 +34,6 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
-#include "m_argv.h"
 #include "i_system.h"
 #include "w_wad.h"
 #include "r_local.h"
@@ -53,6 +52,7 @@
 #include "d_net.h"
 #include "colormatcher.h"
 #include "d_netinf.h"
+#include "p_effect.h"
 #include "r_bsp.h"
 #include "r_plane.h"
 #include "r_segs.h"
@@ -115,8 +115,6 @@ FDynamicColormap *VisPSpritesBaseColormap[NUMPSPRITES];
 
 static int		spriteshade;
 
-TArray<WORD>	ParticlesInSubsec;
-
 // constant arrays
 //	used for psprite clipping and initializing clipping
 short			zeroarray[MAXWIDTH];
@@ -133,14 +131,6 @@ CVAR (Bool, r_drawvoxels, true, 0)
 int OffscreenBufferWidth, OffscreenBufferHeight;
 BYTE *OffscreenColorBuffer;
 FCoverageBuffer *OffscreenCoverageBuffer;
-
-// [RH] particle globals
-WORD			NumParticles;
-WORD			ActiveParticles;
-WORD			InactiveParticles;
-particle_t		*Particles;
-
-CVAR (Bool, r_particles, true, 0);
 
 //
 // GAME FUNCTIONS
@@ -1999,94 +1989,6 @@ void R_DrawMasked (void)
 	}
 }
 
-
-//
-// [RH] Particle functions
-//
-
-// [BC] Allow the maximum number of particles to be specified by a cvar (so people
-// with lots of nice hardware can have lots of particles!).
-CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
-{
-	if ( self == 0 )
-		self = 4000;
-	else if ( self < 100 )
-		self = 100;
-
-	if ( gamestate != GS_STARTUP )
-	{
-		R_DeinitParticles( );
-		R_InitParticles( );
-	}
-}
-
-void R_InitParticles ()
-{
-	const char *i;
-
-	if ((i = Args->CheckValue ("-numparticles")))
-		NumParticles = atoi (i);
-	// [BC] Use r_maxparticles now.
-	else
-		NumParticles = r_maxparticles;
-
-	// This should be good, but eh...
-	if ( NumParticles < 100 )
-		NumParticles = 100;
-
-	R_DeinitParticles();
-	Particles = new particle_t[NumParticles];
-	R_ClearParticles ();
-	atterm (R_DeinitParticles);
-}
-
-void R_DeinitParticles()
-{
-	if (Particles != NULL)
-	{
-		delete[] Particles;
-		Particles = NULL;
-	}
-}
-
-void R_ClearParticles ()
-{
-	int i;
-
-	memset (Particles, 0, NumParticles * sizeof(particle_t));
-	ActiveParticles = NO_PARTICLE;
-	InactiveParticles = 0;
-	for (i = 0; i < NumParticles-1; i++)
-		Particles[i].tnext = i + 1;
-	Particles[i].tnext = NO_PARTICLE;
-}
-
-// Group particles by subsectors. Because particles are always
-// in motion, there is little benefit to caching this information
-// from one frame to the next.
-
-void R_FindParticleSubsectors ()
-{
-	if (ParticlesInSubsec.Size() < (size_t)numsubsectors)
-	{
-		ParticlesInSubsec.Reserve (numsubsectors - ParticlesInSubsec.Size());
-	}
-
-	clearbufshort (&ParticlesInSubsec[0], numsubsectors, NO_PARTICLE);
-
-	if (!r_particles)
-	{
-		return;
-	}
-	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
-	{
-		subsector_t *ssec = R_PointInSubsector (Particles[i].x, Particles[i].y);
-		int ssnum = int(ssec-subsectors);
-		Particles[i].subsector = ssec;
-		Particles[i].snext = ParticlesInSubsec[ssnum];
-		ParticlesInSubsec[ssnum] = i;
-	}
-}
 
 void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade, int fakeside)
 {

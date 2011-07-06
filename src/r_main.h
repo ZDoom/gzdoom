@@ -23,12 +23,8 @@
 #ifndef __R_MAIN_H__
 #define __R_MAIN_H__
 
-// Number of diminishing brightness levels.
-// There a 0-31, i.e. 32 LUT in the COLORMAP lump.
-#define NUMCOLORMAPS			32
-
+#include "r_utility.h"
 #include "d_player.h"
-#include "r_state.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 
@@ -49,11 +45,6 @@ extern fixed_t			viewingrangerecip;
 extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;
-extern int				WidescreenRatio;
-
-extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
-extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
-extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
 
 extern float			WallTMapScale;
 extern float			WallTMapScale2;
@@ -74,8 +65,6 @@ extern fixed_t			yaspectmul;
 extern float			iyaspectmulfloat;
 
 extern FDynamicColormap*basecolormap;	// [RH] Colormap for sector currently being drawn
-
-extern int				validcount;
 
 extern int				linecount;
 extern int				loopcount;
@@ -120,10 +109,6 @@ extern float			r_TiltVisibility;
 extern fixed_t			r_SpriteVisibility;
 extern fixed_t			r_SkyVisibility;
 
-extern fixed_t			r_TicFrac;
-extern DWORD			r_FrameTime;
-extern bool				r_NoInterpolate;
-
 extern int				extralight, r_actualextralight;
 extern bool				foggy;
 extern int				fixedlightlev;
@@ -149,33 +134,6 @@ extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
 extern void (STACK_ARGS *hcolfunc_post4) (int sx, int yl, int yh);
 
 
-//
-// Utility functions.
-
-//==========================================================================
-//
-// R_PointOnSide
-//
-// Traverse BSP (sub) tree, check point against partition plane.
-// Returns side 0 (front/on) or 1 (back).
-//
-// [RH] inlined, stripped down, and made more precise
-//
-//==========================================================================
-
-inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
-{
-	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
-}
-
-extern fixed_t			viewx;
-extern fixed_t			viewy;
-
-angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
-inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
-subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
-fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
-
 void R_SetFOV (float fov);
 float R_GetFOV ();
 void R_InitTextureMapping ();
@@ -192,7 +150,6 @@ void R_SetupBuffer ();
 
 void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 
-void R_ResetViewInterpolation ();
 
 // Called by startup code.
 void R_Init (void);
@@ -205,34 +162,12 @@ void R_SetViewSize (int blocks);
 void R_MultiresInit (void);
 
 
-extern void R_FreePastViewers ();
-extern void R_ClearPastViewer (AActor *actor);
-
 extern int stacked_extralight;
 extern float stacked_visibility;
 extern fixed_t stacked_viewx, stacked_viewy, stacked_viewz;
 extern angle_t stacked_angle;
 
 extern void R_CopyStackedViewParameters();
-
-// This list keeps track of the cameras that draw into canvas textures.
-struct FCanvasTextureInfo
-{
-	FCanvasTextureInfo *Next;
-	TObjPtr<AActor> Viewpoint;
-	FCanvasTexture *Texture;
-	FTextureID PicNum;
-	int FOV;
-
-	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
-	static void UpdateAll ();
-	static void EmptyList ();
-	static void Serialize (FArchive &arc);
-	static void Mark();
-
-private:
-	static FCanvasTextureInfo *List;
-};
 
 
 #endif // __R_MAIN_H__

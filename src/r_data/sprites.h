@@ -64,6 +64,7 @@ extern FPlayerSkin	*	skins;		// [RH]
 extern BYTE				OtherGameSkinRemap[256];
 extern PalEntry			OtherGameSkinPalette[256];
 
-
+void R_InitSprites ();
+void R_DeinitSprites ();
 
 #endif

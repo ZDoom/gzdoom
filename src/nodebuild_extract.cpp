@@ -43,7 +43,6 @@
 
 #include "nodebuild.h"
 #include "templates.h"
-#include "r_main.h"
 
 #if 0
 #define D(x) x

@@ -12,7 +12,6 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "r_sky.h"
-#include "r_main.h"
 #include "r_defs.h"
 #include "p_setup.h"
 #include "g_level.h"

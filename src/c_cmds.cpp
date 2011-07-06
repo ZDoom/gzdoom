@@ -61,7 +61,6 @@
 #include "gi.h"
 #include "r_defs.h"
 #include "d_player.h"
-#include "r_main.h"
 #include "templates.h"
 #include "p_local.h"
 #include "r_sky.h"
@@ -661,32 +660,6 @@ CCMD (fov)
 		Net_WriteByte (DEM_MYFOV);
 	}
 	Net_WriteByte (clamp (atoi (argv[1]), 5, 179));
-}
-
-//==========================================================================
-//
-// CCMD r_visibility
-//
-// Controls how quickly light ramps across a 1/z range. Set this, and it
-// sets all the r_*Visibility variables (except r_SkyVisibilily, which is
-// currently unused).
-//
-//==========================================================================
-
-CCMD (r_visibility)
-{
-	if (argv.argc() < 2)
-	{
-		Printf ("Visibility is %g\n", R_GetVisibility());
-	}
-	else if (!netgame)
-	{
-		R_SetVisibility ((float)atof (argv[1]));
-	}
-	else
-	{
-		Printf ("Visibility cannot be changed in net games.\n");
-	}
 }
 
 //==========================================================================

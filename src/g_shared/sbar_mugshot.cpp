@@ -34,13 +34,13 @@
 */
 
 #include "r_defs.h"
-#include "r_main.h"
 #include "m_random.h"
 #include "d_player.h"
 #include "d_event.h"
 #include "sbar.h"
 #include "sbarinfo.h"
 #include "templates.h"
+#include "r_utility.h"
 
 #define ST_RAMPAGEDELAY 		(2*TICRATE)
 #define ST_MUCHPAIN 			20

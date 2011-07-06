@@ -60,50 +60,10 @@ struct vissprite_t
 	visstyle_t		Style;
 };
 
-// [RH] Particle details
-struct particle_t
-{
-	fixed_t	x,y,z;
-	fixed_t velx,vely,velz;
-	fixed_t accx,accy,accz;
-	BYTE	ttl;
-	BYTE	trans;
-	BYTE	size;
-	BYTE	fade;
-	int		color;
-	WORD	tnext;
-	WORD	snext;
-	subsector_t * subsector;
-};
+struct particle_t;
 
-extern WORD	NumParticles;
-extern WORD	ActiveParticles;
-extern WORD	InactiveParticles;
-extern particle_t *Particles;
-
-const WORD NO_PARTICLE = 0xffff;
-
-inline particle_t *NewParticle (void)
-{
-	particle_t *result = NULL;
-	if (InactiveParticles != NO_PARTICLE)
-	{
-		result = Particles + InactiveParticles;
-		InactiveParticles = result->tnext;
-		result->tnext = ActiveParticles;
-		ActiveParticles = WORD(result - Particles);
-	}
-	return result;
-}
-
-void R_InitParticles ();
-void R_DeinitParticles ();
-void R_ClearParticles ();
 void R_DrawParticle (vissprite_t *);
 void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
-void R_FindParticleSubsectors ();
-
-extern TArray<WORD>		ParticlesInSubsec;
 
 extern int MaxVisSprites;
 
@@ -135,8 +95,6 @@ void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), si
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
 void R_AddPSprites ();
 void R_DrawSprites ();
-void R_InitSprites ();
-void R_DeinitSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
 void R_DrawRemainingPlayerSprites ();

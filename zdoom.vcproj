@@ -2407,6 +2407,10 @@
 					RelativePath=".\src\r_things.h"
 					>
 				</File>
+				<File
+					RelativePath=".\src\r_utility.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter

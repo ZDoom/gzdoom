@@ -48,10 +48,11 @@
 #include "v_video.h"
 #include "hu_stuff.h"
 #include "gi.h"
+#include "v_palette.h"
 #include "i_input.h"
 #include "gameconfigfile.h"
 #include "gstrings.h"
-#include "r_main.h"
+#include "r_utility.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
 

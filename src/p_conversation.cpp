@@ -35,7 +35,6 @@
 #include <assert.h>
 
 #include "actor.h"
-#include "r_main.h"
 #include "p_conversation.h"
 #include "w_wad.h"
 #include "cmdlib.h"
@@ -60,6 +59,7 @@
 #include "sbar.h"
 #include "farchive.h"
 #include "p_lnspec.h"
+#include "r_utility.h"
 #include "menu/menu.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.

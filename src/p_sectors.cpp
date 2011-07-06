@@ -24,6 +24,7 @@
 #include "p_spec.h"
 #include "c_cvars.h"
 #include "doomstat.h"
+#include "g_level.h"
 #include "r_main.h"
 #include "nodebuild.h"
 #include "po_man.h"

@@ -774,7 +774,7 @@ fixed_t AInventory::GetSpeedFactor ()
 //
 //===========================================================================
 
-int AInventory::AlterWeaponSprite (vissprite_t *vis)
+int AInventory::AlterWeaponSprite (visstyle_t *vis)
 {
 	if (Inventory != NULL)
 	{

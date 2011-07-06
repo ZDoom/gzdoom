@@ -26,6 +26,14 @@
 #include "tarray.h"
 #include <stddef.h>
 
+enum
+{
+	FAKED_Center,
+	FAKED_BelowFloor,
+	FAKED_AboveCeiling
+};
+
+
 struct drawseg_t
 {
 	seg_t*		curline;

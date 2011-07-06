@@ -54,7 +54,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
-	int AlterWeaponSprite (vissprite_t *vis);
+	int AlterWeaponSprite (visstyle_t *vis);
 };
 
 class APowerStrength : public APowerup
@@ -76,7 +76,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
-	int AlterWeaponSprite (vissprite_t *vis);
+	int AlterWeaponSprite (visstyle_t *vis);
 //	FRenderStyle OwnersNormalStyle;
 //	fixed_t OwnersNormalAlpha;
 };

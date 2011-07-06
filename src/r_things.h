@@ -23,6 +23,43 @@
 #ifndef __R_THINGS__
 #define __R_THINGS__
 
+
+// A vissprite_t is a thing
+//	that will be drawn during a refresh.
+// I.e. a sprite object that is partly visible.
+
+struct vissprite_t
+{
+	short			x1, x2;
+	fixed_t			cx;				// for line side calculation
+	fixed_t			gx, gy, gz;		// origin in world coordinates
+	angle_t			angle;
+	fixed_t			gzb, gzt;		// global bottom / top for silhouette clipping
+	fixed_t			startfrac;		// horizontal position of x1
+	fixed_t			xscale, yscale;
+	fixed_t			xiscale;		// negative if flipped
+	fixed_t			depth;
+	fixed_t			idepth;			// 1/z
+	fixed_t			texturemid;
+	DWORD			FillColor;
+	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
+	sector_t		*sector;		// [RH] sector this sprite is in
+	F3DFloor	*fakefloor;
+	F3DFloor	*fakeceiling;
+	fixed_t			floorclip;
+	union
+	{
+		FTexture	  *pic;
+		struct FVoxel *voxel;
+	};
+	BYTE			bIsVoxel:1;		// [RH] Use voxel instead of pic
+	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
+	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
+	short 			renderflags;
+	DWORD			Translation;	// [RH] for color translation
+	visstyle_t		Style;
+};
+
 // [RH] Particle details
 struct particle_t
 {

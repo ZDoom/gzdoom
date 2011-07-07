@@ -66,6 +66,7 @@
 #include "md5.h"
 #include "compatibility.h"
 #include "po_man.h"
+#include "r_renderer.h"
 #include "r_data/colormaps.h"
 
 #include "fragglescript/t_fs.h"
@@ -3273,6 +3274,7 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	Renderer->CleanLevelData();
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
@@ -3445,7 +3447,8 @@ void P_SetupLevel (char *lumpname, int position)
 	bool buildmap;
 
 	// This is motivated as follows:
-	bool RequireGLNodes = am_textured;
+
+	bool RequireGLNodes = Renderer->RequireGLNodes() || am_textured;
 
 	for (i = 0; i < (int)countof(times); ++i)
 	{
@@ -3756,7 +3759,7 @@ void P_SetupLevel (char *lumpname, int position)
 	bool BuildGLNodes;
 	if (ForceNodeBuild)
 	{
-		BuildGLNodes = am_textured || multiplayer || demoplayback || demorecording || genglnodes;
+		BuildGLNodes = Renderer->RequireGLNodes() || am_textured || multiplayer || demoplayback || demorecording || genglnodes;
 
 		startTime = I_FPSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
@@ -3899,6 +3902,9 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// set up world state
 	P_SpawnSpecials ();
+
+	// This must be done BEFORE the PolyObj Spawn!!!
+	Renderer->PreprocessLevel();
 
 	times[16].Clock();
 	if (reloop) P_LoopSidedefs (false);

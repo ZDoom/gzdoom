@@ -41,6 +41,7 @@
 #include "v_video.h"
 #include "m_swap.h"
 #include "r_defs.h"
+#include "r_utility.h"
 #ifndef NO_SWRENDER
 #include "r_draw.h"
 #include "r_main.h"

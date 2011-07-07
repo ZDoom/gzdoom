@@ -84,13 +84,28 @@ static bool NoInterpolateView;
 
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
+CVAR (Bool, r_drawvoxels, true, 0)
+CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 
 DCanvas			*RenderTarget;		// [RH] canvas to render to
+
+int 			viewwindowx;
+int 			viewwindowy;
 
 fixed_t 		viewx;
 fixed_t 		viewy;
 fixed_t 		viewz;
 int				viewpitch;
+
+extern "C" 
+{
+		int 	viewwidth;
+		int 	viewheight;
+		int		centerx;
+		int		centery;
+		int		centerxwide;
+}
+
 int				otic;
 
 angle_t 		viewangle;
@@ -114,8 +129,14 @@ float			LastFOV;
 int				WidescreenRatio;
 int				setblocks;
 int				extralight;
+bool			setsizeneeded;
+fixed_t			FocalTangent;
 
 unsigned int	R_OldBlend = ~0;
+int 			validcount = 1; 	// increment every time a check is made
+int				FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
+
+FCanvasTextureInfo *FCanvasTextureInfo::List;
 
 
 // CODE --------------------------------------------------------------------
@@ -402,6 +423,31 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	
 	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
 	R_InitSkyMap ();
+
+	centery = viewheight/2;
+	centerx = viewwidth/2;
+	if (WidescreenRatio & 4)
+	{
+		centerxwide = centerx;
+	}
+	else
+	{
+		centerxwide = centerx * BaseRatioSizes[WidescreenRatio][3] / 48;
+	}
+
+
+	int fov = FieldOfView;
+
+	// For widescreen displays, increase the FOV so that the middle part of the
+	// screen that would be visible on a 4:3 display has the requested FOV.
+	if (centerxwide != centerx)
+	{ // centerxwide is what centerx would be if the display was not widescreen
+		fov = int(atan(double(centerx)*tan(double(fov)*M_PI/(FINEANGLES))/double(centerxwide))*(FINEANGLES)/M_PI);
+		if (fov > 170*FINEANGLES/360)
+			fov = 170*FINEANGLES/360;
+	}
+
+	FocalTangent = finetangent[FINEANGLES/4+fov/2];
 	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
@@ -749,7 +795,7 @@ void R_SetupFrame (AActor *actor)
 		player = camera->player;
 	}
 
-	iview->nviewangle = camera->angle + viewangleoffset;
+	iview->nviewangle = camera->angle;
 	if (iview->otic == -1 || r_NoInterpolate)
 	{
 		R_ResetViewInterpolation ();

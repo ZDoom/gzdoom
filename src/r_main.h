@@ -45,15 +45,8 @@ extern fixed_t			InvZtoScale;
 extern float			WallTMapScale;
 extern float			WallTMapScale2;
 
-extern "C" int				viewwidth;
-extern "C" int				viewheight;
 extern int				viewwindowx;
 extern int				viewwindowy;
-
-
-
-extern "C" int			centerx, centerxwide;
-extern "C" int			centery;
 
 extern fixed_t			centerxfrac;
 extern fixed_t			centeryfrac;
@@ -64,8 +57,6 @@ extern FDynamicColormap*basecolormap;	// [RH] Colormap for sector currently bein
 
 extern int				linecount;
 extern int				loopcount;
-
-extern int				r_Yaspect;
 
 extern bool				r_dontmaplines;
 
@@ -132,7 +123,6 @@ extern void (STACK_ARGS *hcolfunc_post4) (int sx, int yl, int yh);
 
 void R_InitTextureMapping ();
 
-void R_SetViewAngle ();
 
 //
 // REFRESH - the actual rendering functions.

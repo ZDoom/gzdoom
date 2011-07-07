@@ -1540,7 +1540,6 @@ static void SendSetup (DWORD playersdetected[MAXNETNODES], BYTE gotsetup[MAXNETN
 // D_CheckNetGame
 // Works out player numbers among the net participants
 //
-extern int viewangleoffset;
 
 void D_CheckNetGame (void)
 {

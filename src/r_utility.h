@@ -16,6 +16,9 @@ extern fixed_t			viewy;
 extern fixed_t			viewz;
 extern int				viewpitch;
 
+extern "C" int			centerx, centerxwide;
+extern "C" int			centery;
+
 extern int				setblocks;
 
 extern fixed_t			viewtancos;
@@ -35,6 +38,7 @@ extern DWORD			r_FrameTime;
 extern int				extralight;
 extern unsigned int		R_OldBlend;
 
+const int				r_Yaspect = 200;	// Why did I make this a variable? It's never set anywhere.
 
 //==========================================================================
 //
@@ -61,6 +65,7 @@ void R_SetViewSize (int blocks);
 void R_SetFOV (float fov);
 float R_GetFOV ();
 void R_SetupFrame (AActor * camera);
+void R_SetViewAngle ();
 
 // Called by startup code.
 void R_Init (void);

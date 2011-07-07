@@ -165,7 +165,6 @@ extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 
-extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -2469,97 +2468,3 @@ void FStartupScreen::NetMessage(char const *,...) {}
 void FStartupScreen::NetDone(void) {}
 bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
 
-//==========================================================================
-//
-// STAT fps
-//
-// Displays statistics about rendering times
-//
-//==========================================================================
-
-//==========================================================================
-//
-// STAT fps
-//
-// Displays statistics about rendering times
-//
-//==========================================================================
-
-ADD_STAT (fps)
-{
-	FString out;
-	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
-		FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
-	return out;
-}
-
-
-static double f_acc, w_acc,p_acc,m_acc;
-static int acc_c;
-
-ADD_STAT (fps_accumulated)
-{
-	f_acc += FrameCycles.TimeMS();
-	w_acc += WallCycles.TimeMS();
-	p_acc += PlaneCycles.TimeMS();
-	m_acc += MaskedCycles.TimeMS();
-	acc_c++;
-	FString out;
-	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
-		f_acc/acc_c, w_acc/acc_c, p_acc/acc_c, m_acc/acc_c, acc_c);
-	Printf(PRINT_LOG, "%s\n", out.GetChars());
-	return out;
-}
-
-//==========================================================================
-//
-// STAT wallcycles
-//
-// Displays the minimum number of cycles spent drawing walls
-//
-//==========================================================================
-
-static double bestwallcycles = HUGE_VAL;
-
-ADD_STAT (wallcycles)
-{
-	FString out;
-	double cycles = WallCycles.Time();
-	if (cycles && cycles < bestwallcycles)
-		bestwallcycles = cycles;
-	out.Format ("%g", bestwallcycles);
-	return out;
-}
-
-//==========================================================================
-//
-// CCMD clearwallcycles
-//
-// Resets the count of minimum wall drawing cycles
-//
-//==========================================================================
-
-CCMD (clearwallcycles)
-{
-	bestwallcycles = HUGE_VAL;
-}
-
-#if 1
-// To use these, also uncomment the clock/unclock in wallscan
-static double bestscancycles = HUGE_VAL;
-
-ADD_STAT (scancycles)
-{
-	FString out;
-	double scancycles = WallScanCycles.Time();
-	if (scancycles && scancycles < bestscancycles)
-		bestscancycles = scancycles;
-	out.Format ("%g", bestscancycles);
-	return out;
-}
-
-CCMD (clearscancycles)
-{
-	bestscancycles = HUGE_VAL;
-}
-#endif

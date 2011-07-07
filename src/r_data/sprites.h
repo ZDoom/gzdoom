@@ -65,6 +65,6 @@ extern BYTE				OtherGameSkinRemap[256];
 extern PalEntry			OtherGameSkinPalette[256];
 
 void R_InitSprites ();
-void R_DeinitSprites ();
+void R_DeinitSpriteData ();
 
 #endif

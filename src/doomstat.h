@@ -124,10 +124,6 @@ extern	"C"	int			halfviewwidth;		// [RH] Half view width, for plane drawing
 
 
 
-// This one is related to the 3-screen display mode.
-// ANG90 = left side, ANG270 = right
-extern	int				viewangleoffset;
-
 // Player taking events. i.e. The local player.
 extern	int				consoleplayer;	
 

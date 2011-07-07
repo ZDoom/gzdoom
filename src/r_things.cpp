@@ -85,8 +85,6 @@ struct FCoverageBuffer
 	unsigned int NumLists;
 };
 
-void R_DeinitSpriteData();
-
 extern fixed_t globaluclip, globaldclip;
 
 
@@ -120,9 +118,8 @@ static int		spriteshade;
 short			zeroarray[MAXWIDTH];
 short			screenheightarray[MAXWIDTH];
 
-CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
-
-CVAR (Bool, r_drawvoxels, true, 0)
+EXTERN_CVAR (Bool, r_drawplayersprites)
+EXTERN_CVAR (Bool, r_drawvoxels)
 
 //
 // INITIALIZATION FUNCTIONS
@@ -149,8 +146,6 @@ static int vsprcount;
 
 void R_DeinitSprites()
 {
-	R_DeinitSpriteData();
-
 	// Free vissprites
 	for (int i = 0; i < MaxVisSprites; ++i)
 	{
@@ -1982,11 +1977,7 @@ void R_DrawMasked (void)
 		R_3D_DeleteHeights();
 		fake3D = 0;
 	}
-	// draw the psprites on top of everything but does not draw on side views
-	if (!viewangleoffset)
-	{
-		R_DrawPlayerSprites ();
-	}
+	R_DrawPlayerSprites ();
 }
 
 

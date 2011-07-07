@@ -61,15 +61,11 @@ extern	int		ST_Y;
 
 BYTE*			viewimage;
 extern "C" {
-int 			viewwidth;
 int				halfviewwidth;
-int 			viewheight;
 int				ylookup[MAXHEIGHT];
 BYTE			*dc_destorg;
 }
 int 			scaledviewwidth;
-int 			viewwindowx;
-int 			viewwindowy;
 
 // [RH] Pointers to the different column drawers.
 //		These get changed depending on the current

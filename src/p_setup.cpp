@@ -4004,7 +4004,7 @@ void P_Init ()
 
 static void P_Shutdown ()
 {
-	R_DeinitSprites ();
+	R_DeinitSpriteData ();
 	P_DeinitKeyMessages ();
 	P_FreeLevelData ();
 	P_FreeExtraLevelData ();

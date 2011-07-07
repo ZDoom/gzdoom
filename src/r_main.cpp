@@ -75,6 +75,7 @@
 void R_SpanInitData ();
 void RP_RenderBSPNode (void *node);
 bool RP_SetupFrame (bool backside);
+void R_DeinitSprites();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -114,12 +115,9 @@ fixed_t			r_SkyVisibility;
 
 fixed_t			GlobVis;
 fixed_t			viewingrangerecip;
-fixed_t			FocalTangent;
 fixed_t			FocalLengthX;
 fixed_t			FocalLengthY;
 float			FocalLengthXfloat;
-int 			viewangleoffset;
-int 			validcount = 1; 	// increment every time a check is made
 FDynamicColormap*basecolormap;		// [RH] colormap currently drawing with
 int				fixedlightlev;
 lighttable_t	*fixedcolormap;
@@ -127,12 +125,6 @@ FSpecialColormap *realfixedcolormap;
 float			WallTMapScale;
 float			WallTMapScale2;
 
-extern "C" {
-int 			centerx;
-int				centery;
-int				centerxwide;
-
-}
 
 bool			bRenderingToCanvas;	// [RH] True if rendering to a special canvas
 fixed_t			globaluclip, globaldclip;
@@ -147,12 +139,10 @@ fixed_t			InvZtoScale;
 int 			linecount;
 int 			loopcount;
 
-int				r_Yaspect = 200;	// Why did I make this a variable? It's never set anywhere.
 
 //
 // precalculated math tables
 //
-int FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
 
 // The xtoviewangleangle[] table maps a screen pixel
 // to the lowest viewangle that maps back to x ranges
@@ -161,9 +151,6 @@ angle_t 		xtoviewangle[MAXWIDTH+1];
 
 bool			foggy;			// [RH] ignore extralight and fullbright?
 int				r_actualextralight;
-
-bool			setsizeneeded;
-
 
 void (*colfunc) (void);
 void (*basecolfunc) (void);
@@ -177,8 +164,6 @@ void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
 void (STACK_ARGS *hcolfunc_post4) (int sx, int yl, int yh);
 
 cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
-
-FCanvasTextureInfo *FCanvasTextureInfo::List;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -221,29 +206,10 @@ static inline int viewangletox(int i)
 void R_InitTextureMapping ()
 {
 	int i, x;
-	int fov = FieldOfView;
-
-	// For widescreen displays, increase the FOV so that the middle part of the
-	// screen that would be visible on a 4:3 display has the requested FOV.
-	if (centerxwide != centerx)
-	{ // centerxwide is what centerx would be if the display was not widescreen
-		fov = int(atan(double(centerx)*tan(double(fov)*M_PI/(FINEANGLES))/double(centerxwide))*(FINEANGLES)/M_PI);
-		if (fov > 170*FINEANGLES/360)
-			fov = 170*FINEANGLES/360;
-	}
-	/*
-	default: break;
-	case 1: fov = MIN (fov * 512/433, 170 * FINEANGLES / 360);	break;	// 16:9
-	case 2: fov = MIN (fov * 512/459, 170 * FINEANGLES / 360);	break;	// 16:10
-	}
-	*/
-
-	const int hitan = finetangent[FINEANGLES/4+fov/2];
 
 	// Calc focallength so FieldOfView fineangles covers viewwidth.
-	FocalTangent = hitan;
-	FocalLengthX = FixedDiv (centerxfrac, hitan);
-	FocalLengthY = Scale (centerxfrac, yaspectmul, hitan);
+	FocalLengthX = FixedDiv (centerxfrac, FocalTangent);
+	FocalLengthY = Scale (centerxfrac, yaspectmul, FocalTangent);
 	FocalLengthXfloat = (float)FocalLengthX / 65536.f;
 
 	// This is 1/FocalTangent before the widescreen extension of FOV.
@@ -396,8 +362,6 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	halfviewwidth = (viewwidth >> 1) - 1;
 
 	lastcenteryfrac = 1<<30;
-	centery = viewheight/2;
-	centerx = viewwidth/2;
 	centerxfrac = centerx<<FRACBITS;
 	centeryfrac = centery<<FRACBITS;
 
@@ -416,12 +380,10 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	if (WidescreenRatio & 4)
 	{
 		virtheight = virtheight * BaseRatioSizes[WidescreenRatio][3] / 48;
-		centerxwide = centerx;
 	}
 	else
 	{
 		virtwidth = virtwidth * BaseRatioSizes[WidescreenRatio][3] / 48;
-		centerxwide = centerx * BaseRatioSizes[WidescreenRatio][3] / 48;
 	}
 
 	baseyaspectmul = Scale(320 << FRACBITS, virtheight2, r_Yaspect * virtwidth2);
@@ -506,6 +468,7 @@ void R_InitRenderer()
 
 static void R_ShutdownRenderer()
 {
+	R_DeinitSprites();
 	R_DeinitPlanes();
 	// Free openings
 	if (openings != NULL)
@@ -954,3 +917,92 @@ void R_MultiresInit ()
 	R_PlaneInitData ();
 }
 
+
+//==========================================================================
+//
+// STAT fps
+//
+// Displays statistics about rendering times
+//
+//==========================================================================
+extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+extern cycle_t FrameCycles;
+
+ADD_STAT (fps)
+{
+	FString out;
+	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
+		FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
+	return out;
+}
+
+
+static double f_acc, w_acc,p_acc,m_acc;
+static int acc_c;
+
+ADD_STAT (fps_accumulated)
+{
+	f_acc += FrameCycles.TimeMS();
+	w_acc += WallCycles.TimeMS();
+	p_acc += PlaneCycles.TimeMS();
+	m_acc += MaskedCycles.TimeMS();
+	acc_c++;
+	FString out;
+	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
+		f_acc/acc_c, w_acc/acc_c, p_acc/acc_c, m_acc/acc_c, acc_c);
+	Printf(PRINT_LOG, "%s\n", out.GetChars());
+	return out;
+}
+
+//==========================================================================
+//
+// STAT wallcycles
+//
+// Displays the minimum number of cycles spent drawing walls
+//
+//==========================================================================
+
+static double bestwallcycles = HUGE_VAL;
+
+ADD_STAT (wallcycles)
+{
+	FString out;
+	double cycles = WallCycles.Time();
+	if (cycles && cycles < bestwallcycles)
+		bestwallcycles = cycles;
+	out.Format ("%g", bestwallcycles);
+	return out;
+}
+
+//==========================================================================
+//
+// CCMD clearwallcycles
+//
+// Resets the count of minimum wall drawing cycles
+//
+//==========================================================================
+
+CCMD (clearwallcycles)
+{
+	bestwallcycles = HUGE_VAL;
+}
+
+#if 1
+// To use these, also uncomment the clock/unclock in wallscan
+static double bestscancycles = HUGE_VAL;
+
+ADD_STAT (scancycles)
+{
+	FString out;
+	double scancycles = WallScanCycles.Time();
+	if (scancycles && scancycles < bestscancycles)
+		bestscancycles = scancycles;
+	out.Format ("%g", bestscancycles);
+	return out;
+}
+
+CCMD (clearscancycles)
+{
+	bestscancycles = HUGE_VAL;
+}
+#endif

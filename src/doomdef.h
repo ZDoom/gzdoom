@@ -296,6 +296,7 @@ enum
 	DF2_NOAUTOAIM			= 1 << 23,	// Players cannot use autoaim.
 	DF2_DONTCHECKAMMO		= 1 << 24,	// Don't Check ammo when switching weapons.
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
+	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 };
 
 // [RH] Compatibility flags.

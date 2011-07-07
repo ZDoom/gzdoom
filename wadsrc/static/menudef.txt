@@ -1107,6 +1107,7 @@ OptionMenu GameplayOptions
 	Option "Chasecam cheat",		"sv_chasecam", "YesNo"
 	Option "Check ammo for weapon switch",	"sv_dontcheckammo", "NoYes"
 	Option "Killing Romero kills all his spawns",	"sv_killbossmonst", "YesNo"
+	Option "Count monsters in end level sectors",	"sv_nocountendmonst", "NoYes"
 
 	StaticText " "
 	StaticText "Deathmatch Settings",1

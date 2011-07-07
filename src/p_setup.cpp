@@ -3928,6 +3928,24 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 	}
 
+	// Don't count monsters in end-of-level sectors if option is on
+	if (dmflags2 & DF2_NOCOUNTENDMONST)
+	{
+		TThinkerIterator<AActor> it;
+		AActor * mo;
+
+		while ((mo=it.Next()))
+		{
+			if (mo->flags & MF_COUNTKILL)
+			{
+				if (mo->Sector->special == dDamage_End)
+				{
+					mo->ClearCounters();
+				}
+			}
+		}
+	}
+
 	T_PreprocessScripts();        // preprocess FraggleScript scripts
 
 	// build subsector connect matrix

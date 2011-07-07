@@ -9,8 +9,14 @@
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
 #define NUMCOLORMAPS			32
 
+extern DCanvas			*RenderTarget;
+
 extern fixed_t			viewx;
 extern fixed_t			viewy;
+extern fixed_t			viewz;
+extern int				viewpitch;
+
+extern int				setblocks;
 
 extern fixed_t			viewtancos;
 extern fixed_t			viewtansin;
@@ -26,6 +32,9 @@ extern int				WidescreenRatio;
 
 extern fixed_t			r_TicFrac;
 extern DWORD			r_FrameTime;
+extern int				extralight;
+extern unsigned int		R_OldBlend;
+
 
 //==========================================================================
 //
@@ -49,6 +58,18 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
 fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_SetViewSize (int blocks);
+void R_SetFOV (float fov);
+float R_GetFOV ();
+void R_SetupFrame (AActor * camera);
+
+// Called by startup code.
+void R_Init (void);
+void R_ExecuteSetViewSize (void);
+
+// Called by M_Responder.
+void R_SetViewSize (int blocks);
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight);
+
 
 extern void R_FreePastViewers ();
 extern void R_ClearPastViewer (AActor *actor);

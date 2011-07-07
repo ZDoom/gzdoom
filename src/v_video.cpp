@@ -28,7 +28,6 @@
 #include "i_system.h"
 #include "x86.h"
 #include "i_video.h"
-#include "r_local.h"
 #include "r_state.h"
 
 #include "doomdef.h"
@@ -61,9 +60,13 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "r_sky.h"
+#include "r_utility.h"
+#include "r_renderer.h"
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 
+
+FRenderer *Renderer;
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -371,17 +374,6 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		}
 		spot += gap;
 	}
-}
-
-//==========================================================================
-//
-// DCanvas :: UsesColormap
-//
-//==========================================================================
-
-bool DCanvas::UsesColormap() const
-{
-	return true;
 }
 
 //==========================================================================
@@ -1274,130 +1266,6 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 	}
 }
 
-//===========================================================================
-//
-// Texture precaching
-//
-//===========================================================================
-
-void DFrameBuffer::PrecacheTexture(FTexture *tex, int cache)
-{
-	if (tex != NULL)
-	{
-		if (cache & 1)
-		{
-			const FTexture::Span *spanp;
-			tex->GetColumn(0, &spanp);
-		}
-		else if (cache != 0)
-		{
-			tex->GetPixels ();
-		}
-		else
-		{
-			tex->Unload ();
-		}
-	}
-}
-
-//===========================================================================
-//
-// Render the view 
-//
-//===========================================================================
-
-void DFrameBuffer::RenderView(player_t *player)
-{
-	R_RenderActorView (player->mo);
-	// [RH] Let cameras draw onto textures that were visible this frame.
-	FCanvasTextureInfo::UpdateAll ();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DFrameBuffer::RemapVoxels()
-{
-	for (unsigned i=0; i<Voxels.Size(); i++)
-	{
-		Voxels[i]->Remap();
-	}
-}
-
-//===========================================================================
-//
-// Render the view to a savegame picture
-//
-//===========================================================================
-
-void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int height)
-{
-	DCanvas *pic = new DSimpleCanvas (width, height);
-	PalEntry palette[256];
-
-	// Take a snapshot of the player's view
-	pic->ObjectFlags |= OF_Fixed;
-	pic->Lock ();
-	R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
-	GetFlashedPalette (palette);
-	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
-	pic->Unlock ();
-	pic->Destroy();
-	pic->ObjectFlags |= OF_YesReallyDelete;
-	delete pic;
-}
-
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-
-void DFrameBuffer::DrawRemainingPlayerSprites()
-{
-	R_DrawRemainingPlayerSprites();
-}
-
-//===========================================================================
-//
-// notify the renderer that an actor has changed state
-//
-//===========================================================================
-
-void DFrameBuffer::StateChanged(AActor *actor)
-{
-}
-
-//===========================================================================
-//
-// notify the renderer that serialization of the curent level is about to start/end
-//
-//===========================================================================
-
-void DFrameBuffer::StartSerialize(FArchive &arc)
-{
-}
-
-void DFrameBuffer::EndSerialize(FArchive &arc)
-{
-}
-
-//===========================================================================
-//
-// Get max. view angle (renderer specific information so it goes here now)
-//
-//===========================================================================
-#define MAX_DN_ANGLE	56		// Max looking down angle
-#define MAX_UP_ANGLE	32		// Max looking up angle
-
-int DFrameBuffer::GetMaxViewPitch(bool down)
-{
-	return down? MAX_DN_ANGLE*ANGLE_1 : -MAX_UP_ANGLE*ANGLE_1;
-}
-
 //==========================================================================
 //
 // DFrameBuffer :: GameRestart
@@ -1532,13 +1400,9 @@ bool V_DoModeSetup (int width, int height, int bits)
 	DisplayHeight = height;
 	DisplayBits = bits;
 
-	R_MultiresInit ();
-
-	RenderTarget = screen;
-	screen->Lock (true);
-	R_SetupBuffer ();
-	screen->Unlock ();
-
+	R_OldBlend = ~0;
+	Renderer->OnModeSet();
+	
 	M_RefreshModesList ();
 
 	return true;
@@ -1703,7 +1567,7 @@ void V_Init2()
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	screen->SetGamma (gamma);
-	screen->RemapVoxels();
+	Renderer->RemapVoxels();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();

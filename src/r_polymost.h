@@ -51,7 +51,5 @@ private:
 
 };
 
-EXTERN_CVAR(Bool, testpolymost)
-
 extern void drawpolymosttest();
 struct event_t; void Polymost_Responder (event_t *ev);

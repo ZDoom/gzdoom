@@ -50,6 +50,7 @@
 #include "m_fixed.h"
 #include "farchive.h"
 #include "v_video.h"
+#include "r_renderer.h"
 #include "textures/textures.h"
 
 FTextureManager TexMan;
@@ -1169,7 +1170,7 @@ void FTextureManager::PrecacheLevel (void)
 	screen->GetHitlist(hitlist);
 	for (int i = cnt - 1; i >= 0; i--)
 	{
-		screen->PrecacheTexture(ByIndex(i), hitlist[i]);
+		Renderer->PrecacheTexture(ByIndex(i), hitlist[i]);
 	}
 
 	delete[] hitlist;

@@ -6,7 +6,7 @@ void R_DeinitColormaps ();
 
 DWORD R_ColormapNumForName(const char *name);	// killough 4/4/98
 void R_SetDefaultColormap (const char *name);	// [RH] change normal fadetable
-DWORD R_BlendForColormap (DWORD map);		// [RH] return calculated blend for a colormap
+DWORD R_BlendForColormap (DWORD map);			// [RH] return calculated blend for a colormap
 extern BYTE *realcolormaps;						// [RH] make the colormaps externally visible
 extern size_t numfakecmaps;
 

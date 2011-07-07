@@ -68,6 +68,7 @@
 #include "m_argv.h"
 #include "r_defs.h"
 #include "v_text.h"
+#include "r_swrenderer.h"
 
 #include "win32iface.h"
 
@@ -709,7 +710,6 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 	retry = 0;
 
 	fb->SetFlash (flashColor, flashAmount);
-
 	return fb;
 }
 

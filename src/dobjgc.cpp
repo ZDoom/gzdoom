@@ -529,6 +529,12 @@ void Barrier(DObject *pointing, DObject *pointed)
 	}
 }
 
+void DelSoftRootHead()
+{
+	if (SoftRoots != NULL) delete SoftRoots;
+	SoftRoots = NULL;
+}
+
 //==========================================================================
 //
 // AddSoftRoot

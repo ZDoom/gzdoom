@@ -53,6 +53,7 @@
 #include "d_net.h"
 #include "gstrings.h"
 #include "farchive.h"
+#include "r_renderer.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -2196,11 +2197,11 @@ void P_PlayerThink (player_t *player)
 				player->mo->pitch -= look;
 				if (look > 0)
 				{ // look up
-					player->mo->pitch = MAX(player->mo->pitch, screen->GetMaxViewPitch(false));
+					player->mo->pitch = MAX(player->mo->pitch, Renderer->GetMaxViewPitch(false));
 				}
 				else
 				{ // look down
-					player->mo->pitch = MIN(player->mo->pitch, screen->GetMaxViewPitch(true));
+					player->mo->pitch = MIN(player->mo->pitch, Renderer->GetMaxViewPitch(true));
 				}
 			}
 		}

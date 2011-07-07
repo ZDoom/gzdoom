@@ -54,6 +54,7 @@ EXTERN_CVAR (Bool, vid_vsync)
 
 class D3DTex;
 class D3DPal;
+struct FSoftwareRenderer;
 
 class Win32Video : public IVideo
 {

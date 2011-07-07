@@ -2344,7 +2344,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\r_sky.cpp"
+					RelativePath=".\src\r_swrenderer.cpp"
 					>
 				</File>
 				<File
@@ -2361,10 +2361,6 @@
 				</File>
 				<File
 					RelativePath=".\src\r_bsp.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\r_defs.h"
 					>
 				</File>
 				<File
@@ -2392,19 +2388,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\r_sky.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\r_state.h"
+					RelativePath=".\src\r_swrenderer.h"
 					>
 				</File>
 				<File
 					RelativePath=".\src\r_things.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\r_utility.h"
 					>
 				</File>
 			</Filter>
@@ -6661,6 +6649,38 @@
 					>
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="Render Interface"
+			>
+			<File
+				RelativePath=".\src\r_defs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\r_renderer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\r_sky.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\r_sky.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\r_state.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\r_utility.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\r_utility.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

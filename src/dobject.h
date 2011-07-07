@@ -314,6 +314,9 @@ namespace GC
 	// is NULLed instead.
 	void Mark(DObject **obj);
 
+	// For cleanup
+	void DelSoftRootHead();
+
 	// Soft-roots an object.
 	void AddSoftRoot(DObject *obj);
 

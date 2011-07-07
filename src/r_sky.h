@@ -33,6 +33,7 @@ extern fixed_t	skytexturemid;
 extern fixed_t	skyiscale;
 extern fixed_t	skyscale;
 extern bool		skystretch;
+extern fixed_t freelookviewheight;
 
 #define SKYSTRETCH_HEIGHT 228
 

@@ -36,10 +36,10 @@
 #include "r_data/r_translate.h"
 #include "d_event.h"
 #include "gi.h"
-#include "r_bsp.h"
 #include "p_setup.h"
 #include "c_bind.h"
 #include "farchive.h"
+#include "r_renderer.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -1634,8 +1634,7 @@ void AM_drawSubsectors()
 			points[j].Y = f_y + (f_h - (pt.y - m_y) * scale / float(1 << 24));
 		}
 		// For lighting and texture determination
-		sector_t *sec = R_FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,
-			&ceilinglight, false);
+		sector_t *sec = Renderer->FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,	&ceilinglight, false);
 		// Find texture origin.
 		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,
 							  sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS };

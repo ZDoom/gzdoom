@@ -78,6 +78,7 @@
 #include "p_acs.h"
 #include "m_joy.h"
 #include "farchive.h"
+#include "r_renderer.h"
 #include "r_data/colormaps.h"
 
 #include <zlib.h>
@@ -2034,7 +2035,7 @@ static void PutSavePic (FILE *file, int width, int height)
 	else
 	{
 		P_CheckPlayerSprites();
-		screen->WriteSavePic(&players[consoleplayer], file, width, height);
+		Renderer->WriteSavePic(&players[consoleplayer], file, width, height);
 	}
 }
 

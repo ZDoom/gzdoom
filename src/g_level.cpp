@@ -80,6 +80,7 @@
 #include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "r_renderer.h"
 
 #include "gi.h"
 
@@ -1349,7 +1350,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
 	int i = level.totaltime;
 	
-	screen->StartSerialize(arc);
+	Renderer->StartSerialize(arc);
 
 	arc << level.flags
 		<< level.flags2
@@ -1468,7 +1469,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 			}
 		}
 	}
-	screen->EndSerialize(arc);
+	Renderer->EndSerialize(arc);
 }
 
 //==========================================================================

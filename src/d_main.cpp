@@ -73,7 +73,7 @@
 #include "st_stuff.h"
 #include "am_map.h"
 #include "p_setup.h"
-#include "r_local.h"
+#include "r_utility.h"
 #include "r_sky.h"
 #include "d_main.h"
 #include "d_dehacked.h"
@@ -87,7 +87,6 @@
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
-#include "r_polymost.h"
 #include "version.h"
 #include "v_text.h"
 #include "st_start.h"
@@ -106,7 +105,11 @@
 #include "sc_man.h"
 #include "po_man.h"
 #include "resourcefiles/resourcefile.h"
-#include "r_3dfloors.h"
+#include "r_renderer.h"
+
+#ifdef USE_POLYMOST
+#include "r_polymost.h"
+#endif
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -184,6 +187,9 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 	}
 }
 
+#ifdef USE_POLYMOST
+CVAR(Bool, testpolymost, false, 0)
+#endif
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 CVAR (Int, snd_drawoutput, 0, 0);
@@ -276,8 +282,10 @@ void D_ProcessEvents (void)
 			continue;				// console ate the event
 		if (M_Responder (ev))
 			continue;				// menu ate the event
-		if (testpolymost)
-			Polymost_Responder (ev);
+		#ifdef USE_POLYMOST
+			if (testpolymost)
+				Polymost_Responder (ev);
+		#endif
 		G_Responder (ev);
 	}
 }
@@ -298,8 +306,11 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && !testpolymost && !paused && menuactive == MENU_Off &&
-		ConsoleState != c_down && ConsoleState != c_falling)
+	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling
+#ifdef USE_POLYMOST
+		&& !testpolymost		
+#endif
+		)
 	{
 		if (Button_Mlook.bDown || freelook)
 		{
@@ -710,6 +721,7 @@ void D_Display ()
 
 	hw2d = false;
 
+#ifdef USE_POLYMOST
 	if (testpolymost)
 	{
 		drawpolymosttest();
@@ -717,6 +729,7 @@ void D_Display ()
 		M_Drawer();
 	}
 	else
+#endif
 	{
 		unsigned int nowtime = I_FPSTime();
 		TexMan.UpdateAnimations(nowtime);
@@ -744,14 +757,14 @@ void D_Display ()
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
 				viewwindowx + viewwidth, viewwindowy + viewheight);
 			P_CheckPlayerSprites();
-			screen->RenderView(&players[consoleplayer]);
+			Renderer->RenderView(&players[consoleplayer]);
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{
 				// Redraw everything every frame when using 2D accel
 				SB_state = screen->GetPageCount();
 				BorderNeedRefresh = screen->GetPageCount();
 			}
-			screen->DrawRemainingPlayerSprites();
+			Renderer->DrawRemainingPlayerSprites();
 			screen->DrawBlendingRect();
 			if (automapactive)
 			{
@@ -915,15 +928,7 @@ void D_ErrorCleanup ()
 		menuactive = MENU_Off;
 	}
 	insave = false;
-	fakeActive = 0;
-	fake3D = 0;
-	while (CurrentSkybox)
-	{
-		R_3D_DeleteHeights();
-		R_3D_LeaveSkybox();
-	}
-	R_3D_ResetClip();
-	R_3D_DeleteHeights();
+	Renderer->ErrorCleanup();
 }
 
 //==========================================================================
@@ -2109,6 +2114,7 @@ void D_DoomMain (void)
 		{
 			Printf ("I_Init: Setting up machine state.\n");
 			I_Init ();
+			I_CreateRenderer();
 		}
 
 		Printf ("V_Init: allocate screen.\n");

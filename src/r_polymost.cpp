@@ -529,7 +529,6 @@ int PolyClipper::DoMost (float x0, float y0, float x1, float y1, pmostcallbackty
 }
 
 #include "d_event.h"
-CVAR(Bool, testpolymost, false, 0)
 static int pmx, pmy;
 static int pt, px0, py0, px1, py1;
 static struct polypt { float x, y; } polypts[80];

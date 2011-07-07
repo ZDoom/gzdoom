@@ -54,7 +54,7 @@ CUSTOM_CVAR (Bool, r_stretchsky, true, CVAR_ARCHIVE)
 	R_InitSkyMap ();
 }
 
-extern fixed_t freelookviewheight;
+fixed_t			freelookviewheight;
 
 //==========================================================================
 //

@@ -63,6 +63,7 @@
 #include "gstrings.h"
 #include "farchive.h"
 #include "r_data/colormaps.h"
+#include "r_renderer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -523,7 +524,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 
 	if (screen != NULL)
 	{
-		screen->StateChanged(this);
+		Renderer->StateChanged(this);
 	}
 	return true;
 }
@@ -3607,7 +3608,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	}
 	if (screen != NULL)
 	{
-		screen->StateChanged(actor);
+		Renderer->StateChanged(actor);
 	}
 	return actor;
 }

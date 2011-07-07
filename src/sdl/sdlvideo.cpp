@@ -11,6 +11,7 @@
 #include "stats.h"
 #include "v_palette.h"
 #include "sdlvideo.h"
+#include "r_swrenderer.h"
 
 #include <SDL.h>
 
@@ -147,6 +148,7 @@ static MiniModeInfo WinModes[] =
 	{ 1600, 900 },	// 16:9
 	{ 1600, 1000 },	// 16:10
 	{ 1600, 1200 },
+	{ 1920, 1080 },
 };
 
 static cycle_t BlitCycles;

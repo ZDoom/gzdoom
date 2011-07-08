@@ -32,7 +32,6 @@
 #include "w_wad.h"
 #include "g_game.h"
 #include "g_level.h"
-#include "r_local.h"
 #include "s_sound.h"
 #include "doomstat.h"
 #include "v_video.h"
@@ -45,8 +44,12 @@
 #include "sc_man.h"
 #include "v_text.h"
 #include "gi.h"
-#include "r_translate.h"
+#include "d_player.h"
+#include "b_bot.h"
+#include "textures/textures.h"
+#include "r_data/r_translate.h"
 #include "templates.h"
+#include "gstrings.h"
 
 // States for the intermission
 typedef enum
@@ -79,7 +82,7 @@ void WI_unloadData ();
 
 // NET GAME STUFF
 #define NG_STATSY				50
-#define NG_STATSX				(32 + star->GetWidth()/2 + 32*!dofrags)
+#define NG_STATSX				(32 + star->GetScaledWidth()/2 + 32*!dofrags)
 
 #define NG_SPACINGX 			64
 
@@ -206,10 +209,39 @@ static bool				noautostartmap;
 //		GRAPHICS
 //
 
+struct FPatchInfo
+{
+	FFont *mFont;
+	FTexture *mPatch;
+	EColorRange mColor;
+
+	void Init(FGIFont &gifont)
+	{
+		if (gifont.color == NAME_Null)
+		{
+			mPatch = TexMan[gifont.fontname];	// "entering"
+			mColor = mPatch == NULL? CR_UNTRANSLATED : CR_UNDEFINED;
+			mFont = NULL;
+		}
+		else
+		{
+			mFont = V_GetFont(gifont.fontname);
+			mColor = V_FindFontColor(gifont.color);
+			mPatch = NULL;
+		}
+		if (mFont == NULL)
+		{
+			mFont = BigFont;
+		}
+	}
+};
+
+static FPatchInfo mapname;
+static FPatchInfo finished;
+static FPatchInfo entering;
+
 static TArray<FTexture *> yah; 		// You Are Here graphic
 static FTexture* 		splat;		// splat
-static FTexture* 		finished;	// "Finished!" graphics
-static FTexture* 		entering;	// "Entering" graphic
 static FTexture* 		sp_secret;	// "secret"
 static FTexture* 		kills;		// "Kills", "Scrt", "Items", "Frags"
 static FTexture* 		secret;
@@ -606,8 +638,8 @@ void WI_drawBackground()
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetScaledWidth();
-			animheight = background->GetScaledHeight();
+			animwidth = background->GetScaledWidthDouble();
+			animheight = background->GetScaledHeightDouble();
 			screen->FillBorder (NULL);
 			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
@@ -697,34 +729,67 @@ static int WI_DrawCharPatch (FFont *font, int charcode, int x, int y, EColorRang
 //
 //====================================================================
 
-int WI_DrawName(int y, const char *levelname)
+int WI_DrawName(int y, FTexture *tex, const char *levelname)
 {
-	int i;
-	size_t l;
-	const char *p;
-	int h = 0;
-	int lumph;
-
-	lumph = BigFont->GetHeight() * CleanYfac;
-
-	p = levelname;
-	if (!p) return 0;
-	l = strlen(p);
-	if (!l) return 0;
-
-	FBrokenLines *lines = V_BreakLines(BigFont, screen->GetWidth() / CleanXfac, p);
-
-	if (lines)
+	// draw <LevelName> 
+	if (tex)
 	{
-		for (i = 0; lines[i].Width >= 0; i++)
-		{
-			screen->DrawText(BigFont, CR_UNTRANSLATED, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, y + h, 
-				lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
-			h += lumph;
-		}
-		V_FreeBrokenLines(lines);
+		screen->DrawTexture(tex, (screen->GetWidth() - tex->GetScaledWidth()*CleanXfac) /2, y, DTA_CleanNoMove, true, TAG_DONE);
+		return y + (tex->GetScaledHeight() + BigFont->GetHeight()/4) * CleanYfac;
 	}
-	return h + lumph/4;
+	else 
+	{
+		int i;
+		size_t l;
+		const char *p;
+		int h = 0;
+		int lumph;
+
+		lumph = mapname.mFont->GetHeight() * CleanYfac;
+
+		p = levelname;
+		if (!p) return 0;
+		l = strlen(p);
+		if (!l) return 0;
+
+		FBrokenLines *lines = V_BreakLines(mapname.mFont, screen->GetWidth() / CleanXfac, p);
+
+		if (lines)
+		{
+			for (i = 0; lines[i].Width >= 0; i++)
+			{
+				screen->DrawText(mapname.mFont, mapname.mColor, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, y + h, 
+					lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
+				h += lumph;
+			}
+			V_FreeBrokenLines(lines);
+		}
+		return y + h + lumph/4;
+	}
+}
+
+//====================================================================
+//
+// Draws a text, either as patch or as string from the string table
+//
+//====================================================================
+
+int WI_DrawPatchText(int y, FPatchInfo *pinfo, const char *stringname)
+{
+	const char *string = GStrings(stringname);
+	int midx = screen->GetWidth() / 2;
+
+	if (pinfo->mPatch != NULL)
+	{
+		screen->DrawTexture(pinfo->mPatch, midx - pinfo->mPatch->GetScaledWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
+		return y + (pinfo->mPatch->GetScaledHeight() * CleanYfac);
+	}
+	else 
+	{
+		screen->DrawText(pinfo->mFont, pinfo->mColor, midx - pinfo->mFont->StringWidth(string)*CleanXfac/2,
+			y, string, DTA_CleanNoMove, true, TAG_DONE);
+		return y + pinfo->mFont->GetHeight() * CleanYfac;
+	}
 }
 
 
@@ -736,41 +801,21 @@ int WI_DrawName(int y, const char *levelname)
 // A level name patch can be specified for all games now, not just Doom.
 //
 //====================================================================
+
 int WI_drawLF ()
 {
 	int y = WI_TITLEY * CleanYfac;
-	int midx = screen->GetWidth() / 2;
 
-	FTexture *tex = wbs->LName0;
+	y = WI_DrawName(y, wbs->LName0, lnametexts[0]);
 	
-	// draw <LevelName> 
-	if (tex)
-	{
-		screen->DrawTexture(tex, midx - tex->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
-		y += (tex->GetHeight() + BigFont->GetHeight()/4) * CleanYfac;
-	}
-	else 
-	{
-		y += WI_DrawName(y, lnametexts[0]);
-	}
-	
+	// Adjustment for different font sizes for map name and 'finished'.
+	y -= ((mapname.mFont->GetHeight() - finished.mFont->GetHeight()) * CleanYfac) / 4;
+
 	// draw "Finished!"
-	FFont *font = gameinfo.gametype & GAME_Raven ? SmallFont : BigFont;
-	if (y < (NG_STATSY - font->GetHeight()*3/4) * CleanYfac)
+	if (y < (NG_STATSY - finished.mFont->GetHeight()*3/4) * CleanYfac)
 	{
-		// don't draw 'finished' if the level name is too high!
-		if (gameinfo.gametype & GAME_DoomChex) 
-		{
-			screen->DrawTexture(finished, midx - finished->GetWidth()*CleanXfac/2, y, DTA_CleanNoMove, true, TAG_DONE);
-			return y + finished->GetHeight() * CleanYfac;
-		}
-		else 
-		{
-			screen->DrawText(font, CR_WHITE,
-				midx - font->StringWidth("finished")*CleanXfac/2, y - 4*CleanYfac, "finished", 
-				DTA_CleanNoMove, true, TAG_DONE);
-			return y + font->GetHeight() * CleanYfac;
-		}
+		// don't draw 'finished' if the level name is too tall
+		y = WI_DrawPatchText(y, &finished, "WI_FINISHED");
 	}
 	return y;
 }
@@ -784,36 +829,14 @@ int WI_drawLF ()
 // A level name patch can be specified for all games now, not just Doom.
 //
 //====================================================================
+
 void WI_drawEL ()
 {
 	int y = WI_TITLEY * CleanYfac;
-	FFont *font = gameinfo.gametype & GAME_Raven ? SmallFont : BigFont;
 
-	// draw "entering"
-	// be careful with the added height so that it works for oversized 'entering' patches!
-	if (gameinfo.gametype & GAME_DoomChex)
-	{
-		screen->DrawTexture(entering, (SCREENWIDTH - entering->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
-		y += (entering->GetHeight() + font->GetHeight()/4) * CleanYfac;
-	}
-	else
-	{
-		screen->DrawText(font, CR_WHITE,
-			(SCREENWIDTH - font->StringWidth("now entering:") * CleanXfac) / 2, y, 
-			"now entering:", DTA_CleanNoMove, true, TAG_DONE);
-		y += font->GetHeight()*5*CleanYfac/4;
-	}
-
-	// draw <LevelName>
-	FTexture *tex = wbs->LName1;
-	if (tex)
-	{
-		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
-	}
-	else
-	{
-		WI_DrawName(y, lnametexts[1]);
-	}
+	y = WI_DrawPatchText(y, &entering, "WI_ENTERING");
+	y += entering.mFont->GetHeight() * CleanYfac / 4;
+	WI_DrawName(y, wbs->LName1, lnametexts[1]);
 }
 
 
@@ -853,10 +876,10 @@ void WI_drawOnLnode( int   n, FTexture * c[] ,int numc)
 		int            bottom;
 
 
-		right = c[i]->GetWidth();
-		bottom = c[i]->GetHeight();
-		left = lnodes[n].x - c[i]->LeftOffset;
-		top = lnodes[n].y - c[i]->TopOffset;
+		right = c[i]->GetScaledWidth();
+		bottom = c[i]->GetScaledHeight();
+		left = lnodes[n].x - c[i]->GetScaledLeftOffset();
+		top = lnodes[n].y - c[i]->GetScaledTopOffset();
 		right += left;
 		bottom += top;
 		
@@ -980,7 +1003,7 @@ void WI_drawTime (int x, int y, int t, bool no_sucks=false)
 	{ // "sucks"
 		if (sucks != NULL)
 		{
-			screen->DrawTexture (sucks, x - sucks->GetWidth(), y - IntermissionFont->GetHeight() - 2,
+			screen->DrawTexture (sucks, x - sucks->GetScaledWidth(), y - IntermissionFont->GetHeight() - 2,
 				DTA_Clean, true, TAG_DONE); 
 		}
 		else
@@ -1905,12 +1928,15 @@ void WI_Ticker(void)
 	}
 }
 
+
 void WI_loadData(void)
 {
+	entering.Init(gameinfo.mStatscreenEnteringFont);
+	finished.Init(gameinfo.mStatscreenFinishedFont);
+	mapname.Init(gameinfo.mStatscreenMapNameFont);
+
 	if (gameinfo.gametype & GAME_DoomChex)
 	{
-		finished = TexMan["WIF"];		// "finished"
-		entering = TexMan["WIENTER"];	// "entering"
 		kills = TexMan["WIOSTK"];		// "kills"
 		secret = TexMan["WIOSTS"];		// "scrt"
 		sp_secret = TexMan["WISCRT2"];	// "secret"

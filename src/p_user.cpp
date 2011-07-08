@@ -30,7 +30,6 @@
 #include "doomstat.h"
 #include "s_sound.h"
 #include "i_system.h"
-#include "r_draw.h"
 #include "gi.h"
 #include "m_random.h"
 #include "p_pspr.h"
@@ -44,7 +43,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sbar.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "c_console.h"
 #include "doomdef.h"
 #include "c_dispatch.h"
@@ -52,6 +51,9 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "d_net.h"
+#include "gstrings.h"
+#include "farchive.h"
+#include "r_renderer.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -95,40 +97,57 @@ bool FPlayerClass::CheckSkin (int skin)
 	return false;
 }
 
+//===========================================================================
+//
+// GetDisplayName
+//
+//===========================================================================
+
+const char *GetPrintableDisplayName(const PClass *cls)
+{ 
+	// Fixme; This needs a decent way to access the string table without creating a mess.
+	const char *name = cls->Meta.GetMetaString(APMETA_DisplayName);
+	return name;
+}
+
+bool ValidatePlayerClass(const PClass *ti, const char *name)
+{
+	if (!ti)
+	{
+		Printf ("Unknown player class '%s'\n", name);
+		return false;
+	}
+	else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
+	{
+		Printf ("Invalid player class '%s'\n", name);
+		return false;
+	}
+	else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
+	{
+		Printf ("Missing displayname for player class '%s'\n", name);
+		return false;
+	}
+	return true;
+}
+
 void SetupPlayerClasses ()
 {
 	FPlayerClass newclass;
 
-	newclass.Flags = 0;
+	PlayerClasses.Clear();
+	for (unsigned i=0; i<gameinfo.PlayerClasses.Size(); i++)
+	{
+		newclass.Flags = 0;
+		newclass.Type = PClass::FindClass(gameinfo.PlayerClasses[i]);
 
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		newclass.Type = PClass::FindClass (NAME_DoomPlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		newclass.Type = PClass::FindClass (NAME_HereticPlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		newclass.Type = PClass::FindClass (NAME_FighterPlayer);
-		PlayerClasses.Push (newclass);
-		newclass.Type = PClass::FindClass (NAME_ClericPlayer);
-		PlayerClasses.Push (newclass);
-		newclass.Type = PClass::FindClass (NAME_MagePlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		newclass.Type = PClass::FindClass (NAME_StrifePlayer);
-		PlayerClasses.Push (newclass);
-	}
-	else if (gameinfo.gametype == GAME_Chex)
-	{
-		newclass.Type = PClass::FindClass (NAME_ChexPlayer);
-		PlayerClasses.Push (newclass);
+		if (ValidatePlayerClass(newclass.Type, gameinfo.PlayerClasses[i]))
+		{
+			if ((GetDefaultByType(newclass.Type)->flags6 & MF6_NOMENU))
+			{
+				newclass.Flags |= PCF_NOMENU;
+			}
+			PlayerClasses.Push (newclass);
+		}
 	}
 }
 
@@ -146,19 +165,7 @@ CCMD (addplayerclass)
 	{
 		const PClass *ti = PClass::FindClass (argv[1]);
 
-		if (!ti)
-		{
-			Printf ("Unknown player class '%s'\n", argv[1]);
-		}
-		else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
-		{
-			Printf ("Invalid player class '%s'\n", argv[1]);
-		}
-		else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
-		{
-			Printf ("Missing displayname for player class '%s'\n", argv[1]);
-		}
-		else
+		if (ValidatePlayerClass(ti, argv[1]))
 		{
 			FPlayerClass newclass;
 
@@ -189,7 +196,8 @@ CCMD (playerclasses)
 {
 	for (unsigned int i = 0; i < PlayerClasses.Size (); i++)
 	{
-		Printf ("% 3d %s\n", i,
+		Printf ("%3d: Class = %s, Name = %s\n", i,
+			PlayerClasses[i].Type->TypeName.GetChars(),
 			PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
 	}
 }
@@ -203,6 +211,11 @@ CCMD (playerclasses)
 #define MAXBOB			0x100000
 
 bool onground;
+
+FArchive &operator<< (FArchive &arc, player_t *&p)
+{
+	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
+}
 
 // The player_t constructor. Since LogText is not a POD, we cannot just
 // memset it all to 0.
@@ -425,11 +438,8 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< InvSel
 		<< MorphWeapon
 		<< DamageFade
-		<< PlayerFlags;
-	if (SaveVersion < 2435)
-	{
-		DamageFade.a = 255;
-	}
+		<< PlayerFlags
+		<< FlechetteType;
 }
 
 //===========================================================================
@@ -1209,9 +1219,9 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 				}
 			}
 		}
-		if (!multiplayer && (level.flags2 & LEVEL2_DEATHSLIDESHOW))
+		if (!multiplayer && level.info->deathsequence != NAME_None)
 		{
-			F_StartSlideshow ();
+			F_StartIntermission(level.info->deathsequence, FSTATE_EndingGame);
 		}
 	}
 }
@@ -2150,9 +2160,13 @@ void P_PlayerThink (player_t *player)
 		P_DeathThink (player);
 		return;
 	}
-	if (player->jumpTics)
+	if (player->jumpTics != 0)
 	{
 		player->jumpTics--;
+		if (onground && player->jumpTics < -18)
+		{
+			player->jumpTics = 0;
+		}
 	}
 	if (player->morphTics && !(player->cheats & CF_PREDICTING))
 	{
@@ -2183,11 +2197,11 @@ void P_PlayerThink (player_t *player)
 				player->mo->pitch -= look;
 				if (look > 0)
 				{ // look up
-					player->mo->pitch = MAX(player->mo->pitch, screen->GetMaxViewPitch(false));
+					player->mo->pitch = MAX(player->mo->pitch, Renderer->GetMaxViewPitch(false));
 				}
 				else
 				{ // look down
-					player->mo->pitch = MIN(player->mo->pitch, screen->GetMaxViewPitch(true));
+					player->mo->pitch = MIN(player->mo->pitch, Renderer->GetMaxViewPitch(true));
 				}
 			}
 		}
@@ -2211,7 +2225,7 @@ void P_PlayerThink (player_t *player)
 		// [RH] check for jump
 		if (cmd->ucmd.buttons & BT_JUMP)
 		{
-			if (player->crouchoffset!=0)
+			if (player->crouchoffset != 0)
 			{
 				// Jumping while crouching will force an un-crouch but not jump
 				player->crouching = 1;
@@ -2225,7 +2239,7 @@ void P_PlayerThink (player_t *player)
 			{
 				player->mo->velz = 3*FRACUNIT;
 			}
-			else if (level.IsJumpingAllowed() && onground && !player->jumpTics)
+			else if (level.IsJumpingAllowed() && onground && player->jumpTics == 0)
 			{
 				fixed_t jumpvelz = player->mo->JumpZ * 35 / TICRATE;
 
@@ -2235,7 +2249,7 @@ void P_PlayerThink (player_t *player)
 				player->mo->velz += jumpvelz;
 				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
-				player->jumpTics = 18*TICRATE/35;
+				player->jumpTics = -1;
 			}
 		}
 
@@ -2544,33 +2558,9 @@ void player_t::Serialize (FArchive &arc)
 		<< poisoncount
 		<< poisoner
 		<< attacker
-		<< extralight;
-	if (SaveVersion < 1858)
-	{
-		int fixedmap;
-		arc << fixedmap;
-		fixedcolormap = NOFIXEDCOLORMAP;
-		fixedlightlevel = -1;
-		if (fixedmap >= NUMCOLORMAPS)
-		{
-			fixedcolormap = fixedmap - NUMCOLORMAPS;
-		}
-		else if (fixedmap > 0)
-		{
-			fixedlightlevel = fixedmap;
-		}
-	}
-	else if (SaveVersion < 1893)
-	{
-		int ll;
-		arc	<< fixedcolormap << ll;
-		fixedlightlevel = ll;
-	}
-	else
-	{
-		arc	<< fixedcolormap << fixedlightlevel;
-	}
-	arc << morphTics
+		<< extralight
+		<< fixedcolormap << fixedlightlevel
+		<< morphTics
 		<< MorphedPlayerClass
 		<< MorphStyle
 		<< MorphExitFlash

@@ -1,3 +1,5 @@
+include "mapinfo/common.txt"
+
 gameinfo
 {
 	titlepage = "TITLEPIC"
@@ -52,6 +54,17 @@ gameinfo
 	menufontcolor_highlight = "YELLOW"
 	menufontcolor_selection = "BRICK"
 	menubackbutton = "M_BACK_D"
+	playerclasses = "DoomPlayer"
+	pausesign = "M_PAUSE"
+	gibfactor = 1
+	cursorpic = "doomcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Cast"
+	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedpatch = "WIF"
+	statscreen_enteringpatch = "WIENTER"
 }
 
 skill baby

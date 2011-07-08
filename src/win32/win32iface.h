@@ -54,6 +54,7 @@ EXTERN_CVAR (Bool, vid_vsync)
 
 class D3DTex;
 class D3DPal;
+struct FSoftwareRenderer;
 
 class Win32Video : public IVideo
 {
@@ -162,6 +163,7 @@ public:
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
 	HRESULT GetHR ();
+	virtual int GetTrueHeight() { return TrueHeight; }
 
 	void Blank ();
 	bool PaintToWindow ();
@@ -265,6 +267,7 @@ public:
 	bool WipeDo(int ticks);
 	void WipeCleanup();
 	HRESULT GetHR ();
+	virtual int GetTrueHeight() { return TrueHeight; }
 
 private:
 	friend class D3DTex;
@@ -294,6 +297,7 @@ private:
 			};
 			DWORD Group1;
 		};
+		BYTE Desat;
 		D3DPal *Palette;
 		IDirect3DTexture9 *Texture;
 		WORD NumVerts;		// Number of _unique_ vertices used by this set.
@@ -302,6 +306,7 @@ private:
 
 	enum
 	{
+		PSCONST_Desaturation = 1,
 		PSCONST_PaletteMod = 2,
 		PSCONST_Weights = 6,
 		PSCONST_Gamma = 7,
@@ -496,7 +501,7 @@ enum
 };
 
 #if 0
-#define STARTLOG		do { if (!dbg) dbg = fopen ("k:/vid.log", "w"); } while(0)
+#define STARTLOG		do { if (!dbg) dbg = fopen ("e:/vid.log", "w"); } while(0)
 #define STOPLOG			do { if (dbg) { fclose (dbg); dbg=NULL; } } while(0)
 #define LOG(x)			do { if (dbg) { fprintf (dbg, x); fflush (dbg); } } while(0)
 #define LOG1(x,y)		do { if (dbg) { fprintf (dbg, x, y); fflush (dbg); } } while(0)
@@ -504,7 +509,8 @@ enum
 #define LOG3(x,y,z,zz)	do { if (dbg) { fprintf (dbg, x, y, z, zz); fflush (dbg); } } while(0)
 #define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
 #define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
-FILE *dbg;
+extern FILE *dbg;
+#define VID_FILE_DEBUG	1
 #elif _DEBUG && 0
 #define STARTLOG
 #define STOPLOG

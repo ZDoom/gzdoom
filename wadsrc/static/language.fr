@@ -1369,7 +1369,7 @@ MNU_PLAYERSETUP		= "REGLAGE DU JOUEUR";
 
 MNU_DELETESG		= "Voulez vous vraiment effacer cette sauvegarde?\n";
 
-MNU_ONLYREGISTERED	= "SEULEMENT DISPONIBLE DANS LA VERSION ENREGISTREE";
+$ifgame(heretic) SWSTRING = "SEULEMENT DISPONIBLE DANS LA VERSION ENREGISTREE";
 
 // Bloodbath announcer
 
@@ -1462,17 +1462,17 @@ CC_FLEMOIDUSBIPEDICUSWITHARMOR = "FLEMOIDUS BIPEDICUS AVEC ARMURE";
 CC_THEFLEMBRANE = "LA FLEMBRANE";
 
 CLOADNET = "vous ne pouvez pas charger lors d'une quete reseau!\n\npressez un bouton.";
-CQSPROMPT = "sauvergarde rapide par dessus la denome quete\n\n'%s'?\n\npressez y or n.";
-CQLOADNET = "vous ne pouvez pas charger rapidement lors d'une quete reseau!!\n\npressez un bouton.";
-CQLPROMPT = "voulez charger rapidement la denome quete\n\n'%s'?\n\npressez y or n.";
+$ifgame(chex) QSPROMPT = "sauvergarde rapide par dessus la denome quete\n\n'%s'?\n\npressez y or n.";
+$ifgame(chex) QLOADNET = "vous ne pouvez pas charger rapidement lors d'une quete reseau!!\n\npressez un bouton.";
+$ifgame(chex) QLPROMPT = "voulez charger rapidement la denome quete\n\n'%s'?\n\npressez y or n.";
 CNEWGAME = "vous ne pouvez pas commencer une nouvelle quete\nlors d'une quete reseau.\n\pressez un bouton.";
 
 CNIGHTMARE = "Atention, ca va etre dur.\nVoulez vous continuer?\n\npressez y or n.";
 
 CSWSTRING = "Ceci est la quete de Chex(R). a la recherche de\n\nfutures niveau at www.chexquest.com.\n\npressez un bouton.";
 
-CNETEND = "vous ne pouvez pas interompre une quete internet!\n\npressez un bouton.";
-CENDGAME = "etes vous sure de vouloir interompre la quete?\n\npressez y or n.";
+$ifgame(chex) NETEND = "vous ne pouvez pas interompre une quete internet!\n\npressez un bouton.";
+$ifgame(chex) ENDGAME = "etes vous sure de vouloir interompre la quete?\n\npressez y or n.";
 
 GOTCHEXARMOR = "Vous avez pris l'armure Chex(R).";
 GOTSUPERCHEXARMOR = "Vous avez pris la super armure Chex(R)!";
@@ -1497,18 +1497,18 @@ GOTLARGEZORCHERRECHARGE = "Vous avez pris une grande recharge zorcheur.";
 GOTLARGEZORCHERPACK = "Vous avez pris un grand paquet zorcheur.";
 GOTZORCHPACK = "Vous avez pris un zorchpak!";
 
-GOTLAZDEVICE = "You avez pris l'ustensil LAZ! woot!";
-GOTRAPIDZORCHER = "You avez pris le Zorcheur Rapide!";
-GOTSUPERBOOTSPORK = "You avez pris le Super Bootspork!";
-GOTZORCHPROPULSOR = "You avez pris le Propulseur Zorch!";
-GOTPHASINGZORCHER = "You avez pris le Zorcheur phasant!";
-GOTSUPERLARGEZORCHER = "You avez pris le mega Zorcheur!";
+GOTLAZDEVICE = "Vous avez pris l'ustensil LAZ! woot!";
+GOTRAPIDZORCHER = "Vous avez pris le Zorcheur Rapide!";
+GOTSUPERBOOTSPORK = "Vous avez pris le Super Bootspork!";
+GOTZORCHPROPULSOR = "Vous avez pris le Propulseur Zorch!";
+GOTPHASINGZORCHER = "Vous avez pris le Zorcheur phasant!";
+GOTSUPERLARGEZORCHER = "Vous avez pris le mega Zorcheur!";
 
-STSTR_CDQDON = "Mode invincible ALLUME";
-STSTR_CDQDOFF = "Mode invincible ETEINT";
-STSTR_CFAADDED = "Zorch Ajoute";
-STSTR_CKFAADDED = "Super Zorch Ajoute";
-STSTR_CCHOPPERS = "... Mangez du Chex(R)!";
+$ifgame(chex) STSTR_DQDON = "Mode invincible ALLUME";
+$ifgame(chex) STSTR_DQDOFF = "Mode invincible ETEINT";
+$ifgame(chex) STSTR_FAADDED = "Zorch Ajoute";
+$ifgame(chex) STSTR_KFAADDED = "Super Zorch Ajoute";
+$ifgame(chex) STSTR_CHOPPERS = "... Mangez du Chex(R)!";
 
 OB_COMMONUS = "%o a ete gelifie par un flemoid.";
 OB_BIPEDICUS = "%o a ete gelifie par un bipedicus.";

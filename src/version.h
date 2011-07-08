@@ -64,7 +64,7 @@
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
 // Otherwise, it should be safe to leave it alone.
-#define DEMOGAMEVERSION 0x213
+#define DEMOGAMEVERSION 0x214
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.
@@ -75,17 +75,21 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 1848
+#define MINSAVEVER 3100
 
 #if SVN_REVISION_NUMBER < MINSAVEVER
-// Never write a savegame with a version lower than what we need
-#define SAVEVER			MINSAVEVER
+// If we don't know the current revision write something very high to ensure that
+// the reesulting executable can read its own savegames but no regular engine can.
+#define SAVEVER			999999
 #define SAVESIG			MakeSaveSig()
 static inline const char *MakeSaveSig()
 {
 	static char foo[] = { 'Z','D','O','O','M','S','A','V','E',
+#if SAVEVER > 99999
+		'0' + (SAVEVER / 100000),
+#endif
 #if SAVEVER > 9999
-		'0' + (SAVEVER / 10000),
+		'0' + ((SAVEVER / 10000) % 10),
 #endif
 #if SAVEVER > 999
 		'0' + ((SAVEVER / 1000) % 10),

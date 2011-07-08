@@ -168,6 +168,8 @@ public:
 	ScriptFunction *GetFunction (int funcnum, FBehavior *&module) const;
 	int GetArrayVal (int arraynum, int index) const;
 	void SetArrayVal (int arraynum, int index, int value);
+	inline bool CopyStringToArray(int arraynum, int index, int maxLength, const char * string);
+
 	int FindFunctionName (const char *funcname) const;
 	int FindMapVarName (const char *varname) const;
 	int FindMapArray (const char *arrayname) const;
@@ -587,8 +589,15 @@ public:
 		PCD_PRINTBINARY,
 /*350*/	PCD_PRINTHEX,
 		PCD_CALLFUNC,
+		PCD_SAVESTRING,			// [FDARI] create string (temporary)
+		PCD_PRINTMAPCHRANGE,	// [FDARI] output range (print part of array)
+		PCD_PRINTWORLDCHRANGE,
+		PCD_PRINTGLOBALCHRANGE,
+		PCD_STRCPYTOMAPCHRANGE,	// [FDARI] input range (copy string to all/part of array)
+		PCD_STRCPYTOWORLDCHRANGE,
+		PCD_STRCPYTOGLOBALCHRANGE,
 
-/*351*/	PCODE_COMMAND_COUNT
+/*359*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
@@ -726,14 +735,6 @@ private:
 
 	friend class DACSThinker;
 };
-
-inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
-{
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DLevelScript::EScriptState)val;
-	return arc;
-}
 
 class DACSThinker : public DThinker
 {

@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 /*
 == InterpolationPoint: node along a camera's path
@@ -350,7 +351,7 @@ void APathFollower::NewNode ()
 
 	while ( (spec = iterator.Next ()) )
 	{
-		LineSpecials[spec->special] (NULL, NULL, false, spec->args[0],
+		P_ExecuteSpecial(spec->special, NULL, NULL, false, spec->args[0],
 			spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 	}
 }

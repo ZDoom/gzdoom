@@ -61,7 +61,7 @@
 #include "g_level.h"
 #include "r_state.h"
 #include "cmdlib.h"
-#include "r_main.h"
+#include "r_utility.h"
 #include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
@@ -73,7 +73,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*));
+extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(char*, char*));
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -156,13 +156,14 @@ static void STACK_ARGS NewFailure ()
 static int DoomSpecificInfo (char *buffer, char *end)
 {
 	const char *arg;
-	int size = end-buffer;
+	int size = end-buffer-2;
 	int i, p;
-
-	SDL_Quit();
 
 	p = 0;
 	p += snprintf (buffer+p, size-p, GAMENAME" version " DOTVERSIONSTR " (" __DATE__ ")\n");
+#ifdef __VERSION__
+	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
+#endif
 	p += snprintf (buffer+p, size-p, "\nCommand line:");
 	for (i = 0; i < Args->NumArgs(); ++i)
 	{
@@ -245,15 +246,18 @@ static void unprotect_rtext()
 }
 #endif
 
+void I_StartupJoysticks();
+void I_ShutdownJoysticks();
+
 int main (int argc, char **argv)
 {
-	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
-		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
-
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-		cc_install_handlers(4, s, "zdoom-crash.log", DoomSpecificInfo);
+		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
 	}
+
+	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
+		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -268,7 +272,7 @@ int main (int argc, char **argv)
 	
 	setlocale (LC_ALL, "C");
 
-	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE) == -1)
+	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
@@ -316,11 +320,13 @@ int main (int argc, char **argv)
 			progdir = "./";
 		}
 
+		I_StartupJoysticks();
 		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();
     }
     catch (class CDoomError &error)
     {
+		I_ShutdownJoysticks();
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());
 		exit (-1);

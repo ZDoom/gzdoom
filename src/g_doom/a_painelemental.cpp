@@ -22,11 +22,18 @@ static const PClass *GetSpawnType(DECLARE_PARAMINFO)
 }
 
 
+enum PA_Flags
+{
+	PAF_NOSKULLATTACK = 1,
+	PAF_AIMFACING = 2,
+	PAF_NOTARGET = 4,
+};
+
 //
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
 //
-void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
+void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int flags = 0, int limit = -1)
 {
 	fixed_t x, y, z;
 	
@@ -50,11 +57,14 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 	}
 
 	// [RH] make this optional
-	if (i_compatflags & COMPATF_LIMITPAIN)
+	if (limit == -1 && (i_compatflags & COMPATF_LIMITPAIN))
+		limit = 21;
+
+	if (limit)
 	{
 		// count total number of skulls currently on the level
 		// if there are already 21 skulls on the level, don't spit another one
-		int count = 21;
+		int count = limit;
 		FThinkerIterator iterator (spawntype);
 		DThinker *othink;
 
@@ -124,9 +134,10 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 	}
 
 	// [RH] Lost souls hate the same things as their pain elementals
-	other->CopyFriendliness (self, true);
+	other->CopyFriendliness (self, !(flags & PAF_NOTARGET));
 
-	A_SkullAttack(other, SKULLSPEED);
+	if (!(flags & PAF_NOSKULLATTACK))
+		A_SkullAttack(other, SKULLSPEED);
 }
 
 
@@ -139,9 +150,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 	if (!self->target)
 		return;
 
-	const PClass *spawntype = GetSpawnType(PUSH_PARAMINFO);
-	A_FaceTarget (self);
-	A_PainShootSkull (self, self->angle, spawntype);
+	ACTION_PARAM_START(4);
+	ACTION_PARAM_CLASS(spawntype, 0);
+	ACTION_PARAM_ANGLE(angle, 1);
+	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_INT(limit, 3);
+
+	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
+
+	if (!(flags & PAF_AIMFACING))
+		A_FaceTarget (self);
+	A_PainShootSkull (self, self->angle+angle, spawntype, flags, limit);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)

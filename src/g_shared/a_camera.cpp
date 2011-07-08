@@ -35,8 +35,8 @@
 #include "actor.h"
 #include "info.h"
 #include "a_sharedglobal.h"
-#include "r_main.h"
 #include "p_local.h"
+#include "farchive.h"
 
 /*
 == SecurityCamera
@@ -143,12 +143,21 @@ void AAimingCamera::PostBeginPlay ()
 	tracer = iterator.Next ();
 	if (tracer == NULL)
 	{
-		Printf ("AimingCamera %d: Can't find thing %d\n", tid, args[3]);
+		//Printf ("AimingCamera %d: Can't find TID %d\n", tid, args[3]);
+	}
+	else
+	{ // Don't try for a new target upon losing this one.
+		args[3] = 0;
 	}
 }
 
 void AAimingCamera::Tick ()
 {
+	if (tracer == NULL && args[3] != 0)
+	{ // Recheck, in case something with this TID was created since the last time.
+		TActorIterator<AActor> iterator (args[3]);
+		tracer = iterator.Next ();
+	}
 	if (tracer != NULL)
 	{
 		angle_t delta;

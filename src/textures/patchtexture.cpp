@@ -35,10 +35,18 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "v_palette.h"
+#include "textures/textures.h"
+
+
+// posts are runs of non masked source pixels
+struct column_t
+{
+	BYTE		topdelta;		// -1 is the last post in a column
+	BYTE		length; 		// length data bytes follows
+};
 
 
 //==========================================================================

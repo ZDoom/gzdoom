@@ -28,8 +28,6 @@
 #include "i_system.h"
 #include "x86.h"
 #include "i_video.h"
-#include "r_local.h"
-#include "r_draw.h"
 #include "r_state.h"
 
 #include "doomdef.h"
@@ -56,14 +54,19 @@
 #include "templates.h"
 #include "sbar.h"
 #include "hardware.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "f_wipe.h"
 #include "m_png.h"
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "r_sky.h"
+#include "r_utility.h"
+#include "r_renderer.h"
 #include "menu/menu.h"
+#include "r_data/voxels.h"
 
+
+FRenderer *Renderer;
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -371,17 +374,6 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		}
 		spot += gap;
 	}
-}
-
-//==========================================================================
-//
-// DCanvas :: UsesColormap
-//
-//==========================================================================
-
-bool DCanvas::UsesColormap() const
-{
-	return true;
 }
 
 //==========================================================================
@@ -841,7 +833,7 @@ void DFrameBuffer::DrawRateStuff ()
 	{
 		DWORD ms = I_FPSTime();
 		DWORD howlong = ms - LastMS;
-		if (howlong >= 0)
+		if ((signed)howlong >= 0)
 		{
 			char fpsbuff[40];
 			int chars;
@@ -1274,114 +1266,14 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 	}
 }
 
-//===========================================================================
+//==========================================================================
 //
-// Texture precaching
+// DFrameBuffer :: GameRestart
 //
-//===========================================================================
+//==========================================================================
 
-void DFrameBuffer::PrecacheTexture(FTexture *tex, int cache)
+void DFrameBuffer::GameRestart()
 {
-	if (tex != NULL)
-	{
-		if (cache & 1)
-		{
-			const FTexture::Span *spanp;
-			tex->GetColumn(0, &spanp);
-		}
-		else if (cache != 0)
-		{
-			tex->GetPixels ();
-		}
-		else
-		{
-			tex->Unload ();
-		}
-	}
-}
-
-//===========================================================================
-//
-// Render the view 
-//
-//===========================================================================
-
-void DFrameBuffer::RenderView(player_t *player)
-{
-	R_RenderActorView (player->mo);
-	// [RH] Let cameras draw onto textures that were visible this frame.
-	FCanvasTextureInfo::UpdateAll ();
-}
-
-//===========================================================================
-//
-// Render the view to a savegame picture
-//
-//===========================================================================
-
-void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int height)
-{
-	DCanvas *pic = new DSimpleCanvas (width, height);
-	PalEntry palette[256];
-
-	// Take a snapshot of the player's view
-	pic->ObjectFlags |= OF_Fixed;
-	pic->Lock ();
-	R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
-	GetFlashedPalette (palette);
-	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
-	pic->Unlock ();
-	pic->Destroy();
-	pic->ObjectFlags |= OF_YesReallyDelete;
-	delete pic;
-}
-
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-
-void DFrameBuffer::DrawRemainingPlayerSprites()
-{
-	R_DrawRemainingPlayerSprites();
-}
-
-//===========================================================================
-//
-// notify the renderer that an actor has changed state
-//
-//===========================================================================
-
-void DFrameBuffer::StateChanged(AActor *actor)
-{
-}
-
-//===========================================================================
-//
-// notify the renderer that serialization of the curent level is about to start/end
-//
-//===========================================================================
-
-void DFrameBuffer::StartSerialize(FArchive &arc)
-{
-}
-
-void DFrameBuffer::EndSerialize(FArchive &arc)
-{
-}
-
-//===========================================================================
-//
-// Get max. view angle (renderer specific information so it goes here now)
-//
-//===========================================================================
-#define MAX_DN_ANGLE	56		// Max looking down angle
-#define MAX_UP_ANGLE	32		// Max looking up angle
-
-int DFrameBuffer::GetMaxViewPitch(bool down)
-{
-	return down? MAX_DN_ANGLE*ANGLE_1 : -MAX_UP_ANGLE*ANGLE_1;
 }
 
 //===========================================================================
@@ -1485,6 +1377,12 @@ bool V_DoModeSetup (int width, int height, int bits)
 		{
 			CleanXfac_1 = MAX(CleanXfac - 1, 1);
 			CleanYfac_1 = MAX(CleanYfac - 1, 1);
+			// On larger screens this is not enough so make sure it's at most 3/4 of the screen's width
+			while (CleanXfac_1 * 320 > screen->GetWidth()*3/4 && CleanXfac_1 > 2)
+			{
+				CleanXfac_1--;
+				CleanYfac_1--;
+			}
 		}
 		CleanWidth_1 = width / CleanXfac_1;
 		CleanHeight_1 = height / CleanYfac_1;
@@ -1502,13 +1400,9 @@ bool V_DoModeSetup (int width, int height, int bits)
 	DisplayHeight = height;
 	DisplayBits = bits;
 
-	R_MultiresInit ();
-
-	RenderTarget = screen;
-	screen->Lock (true);
-	R_SetupBuffer ();
-	screen->Unlock ();
-
+	R_OldBlend = ~0;
+	Renderer->OnModeSet();
+	
 	M_RefreshModesList ();
 
 	return true;
@@ -1599,7 +1493,7 @@ CCMD (vid_setmode)
 // V_Init
 //
 
-void V_Init (void) 
+void V_Init (bool restart) 
 { 
 	const char *i;
 	int width, height, bits;
@@ -1609,40 +1503,43 @@ void V_Init (void)
 	// [RH] Initialize palette management
 	InitPalette ();
 
-	width = height = bits = 0;
-
-	if ( (i = Args->CheckValue ("-width")) )
-		width = atoi (i);
-
-	if ( (i = Args->CheckValue ("-height")) )
-		height = atoi (i);
-
-	if ( (i = Args->CheckValue ("-bits")) )
-		bits = atoi (i);
-
-	if (width == 0)
+	if (!restart)
 	{
-		if (height == 0)
+		width = height = bits = 0;
+
+		if ( (i = Args->CheckValue ("-width")) )
+			width = atoi (i);
+
+		if ( (i = Args->CheckValue ("-height")) )
+			height = atoi (i);
+
+		if ( (i = Args->CheckValue ("-bits")) )
+			bits = atoi (i);
+
+		if (width == 0)
 		{
-			width = vid_defwidth;
-			height = vid_defheight;
+			if (height == 0)
+			{
+				width = vid_defwidth;
+				height = vid_defheight;
+			}
+			else
+			{
+				width = (height * 8) / 6;
+			}
 		}
-		else
+		else if (height == 0)
 		{
-			width = (height * 8) / 6;
+			height = (width * 6) / 8;
 		}
-	}
-	else if (height == 0)
-	{
-		height = (width * 6) / 8;
+
+		if (bits == 0)
+		{
+			bits = vid_defbits;
+		}
+		screen = new DDummyFrameBuffer (width, height);
 	}
 
-	if (bits == 0)
-	{
-		bits = vid_defbits;
-	}
-
-	screen = new DDummyFrameBuffer (width, height);
 
 	BuildTransTable (GPalette.BaseColors);
 }
@@ -1670,6 +1567,7 @@ void V_Init2()
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	screen->SetGamma (gamma);
+	Renderer->RemapVoxels();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();
@@ -1686,10 +1584,7 @@ void V_Shutdown()
 		s->ObjectFlags |= OF_YesReallyDelete;
 		delete s;
 	}
-	while (FFont::FirstFont != NULL)
-	{
-		delete FFont::FirstFont;
-	}
+	V_ClearFonts();
 }
 
 EXTERN_CVAR (Bool, vid_tft)
@@ -1717,43 +1612,61 @@ CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 // 1: 16:9
 // 2: 16:10
 // 4: 5:4
-int CheckRatio (int width, int height)
+int CheckRatio (int width, int height, int *trueratio)
 {
+	int fakeratio = -1;
+	int ratio;
+
 	if ((vid_aspect >=1) && (vid_aspect <=4))
 	{
 		// [SP] User wants to force aspect ratio; let them.
-		return vid_aspect == 3? 0: int(vid_aspect);
+		fakeratio = vid_aspect == 3? 0: int(vid_aspect);
 	}
 	if (vid_nowidescreen)
 	{
 		if (!vid_tft)
 		{
-			return 0;
+			fakeratio = 0;
 		}
-		return (height * 5/4 == width) ? 4 : 0;
+		else
+		{
+			fakeratio = (height * 5/4 == width) ? 4 : 0;
+		}
 	}
 	// If the size is approximately 16:9, consider it so.
 	if (abs (height * 16/9 - width) < 10)
 	{
-		return 1;
+		ratio = 1;
 	}
 	// 16:10 has more variance in the pixel dimensions. Grr.
-	if (abs (height * 16/10 - width) < 60)
+	else if (abs (height * 16/10 - width) < 60)
 	{
 		// 320x200 and 640x400 are always 4:3, not 16:10
 		if ((width == 320 && height == 200) || (width == 640 && height == 400))
 		{
-			return 0;
+			ratio = 0;
 		}
-		return 2;
+		else
+		{
+			ratio = 2;
+		}
 	}
 	// Unless vid_tft is set, 1280x1024 is 4:3, not 5:4.
-	if (height * 5/4 == width && vid_tft)
+	else if (height * 5/4 == width && vid_tft)
 	{
-		return 4;
+		ratio = 4;
 	}
 	// Assume anything else is 4:3.
-	return 0;
+	else
+	{
+		ratio = 0;
+	}
+
+	if (trueratio != NULL)
+	{
+		*trueratio = ratio;
+	}
+	return (fakeratio >= 0) ? fakeratio : ratio;
 }
 
 // First column: Base width (unused)

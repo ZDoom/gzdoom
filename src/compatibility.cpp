@@ -89,6 +89,7 @@ static FCompatOption Options[] =
 	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
 	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
 	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
+	{ "ignoreteleporttags",		0, BCOMPATF_BADTELEPORTERS },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, 0 },
@@ -119,6 +120,7 @@ static FCompatOption Options[] =
 	{ "hitscan",				COMPATF_HITSCAN, 0 },
 	{ "lightlevel",				COMPATF_LIGHT, 0 },
 	{ "polyobj",				COMPATF_POLYOBJ, 0 },
+	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, 0 },
 	{ NULL, 0, 0 }
 };
 
@@ -140,6 +142,9 @@ void ParseCompatibility()
 	FCompatValues flags;
 	int i, x;
 	unsigned int j;
+
+	BCompatMap.Clear();
+	CompatParams.Clear();
 
 	// The contents of this file are not cumulative, as it should not
 	// be present in user-distributed maps.
@@ -260,7 +265,7 @@ void CheckCompatibility(MapData *map)
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
-	if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATSHORTTEX) && !(level.flags & LEVEL_HEXENFORMAT))
+	if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATSHORTTEX) && level.maptype == MAPTYPE_DOOM)
 	{
 		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
@@ -279,7 +284,6 @@ void CheckCompatibility(MapData *map)
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}
-
 	else
 	{
 		map->GetChecksum(md5.Bytes);

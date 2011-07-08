@@ -50,7 +50,7 @@
 #include "tarray.h"
 #include "m_bbox.h"
 #include "c_console.h"
-#include "r_main.h"
+#include "r_state.h"
 
 const int MaxSegs = 64;
 const int SplitCost = 8;
@@ -213,6 +213,8 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	sub.sector = NULL;
 	sub.polys = NULL;
 	sub.BSP = NULL;
+	sub.flags = 0;
+	sub.render_sector = NULL;
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{

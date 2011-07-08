@@ -124,16 +124,16 @@ void SetHUDIcon(PClass *cls, FTextureID tex)
 //---------------------------------------------------------------------------
 static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans=0xc000)
 {
-	float scale1, scale2;
+	double scale1, scale2;
 
 	if (tex)
 	{
 		int texwidth=tex->GetWidth();
 		int texheight=tex->GetHeight();
 
-		if (w<texwidth) scale1=(float)w/texwidth;
+		if (w<texwidth) scale1=(double)w/texwidth;
 		else scale1=1.0f;
-		if (h<texheight) scale2=(float)h/texheight;
+		if (h<texheight) scale2=(double)h/texheight;
 		else scale2=1.0f;
 		if (scale2<scale1) scale1=scale2;
 
@@ -170,11 +170,14 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, int t
 		FTexture *texc = font->GetChar(text[i], &width);
 		if (texc != NULL)
 		{
-			int offset = texc->TopOffset - tex_zero->TopOffset + tex_zero->GetHeight();
+			double offset = texc->GetScaledTopOffsetDouble() 
+				- tex_zero->GetScaledTopOffsetDouble() 
+				+ tex_zero->GetScaledHeightDouble();
+
 			screen->DrawChar(font, color, x, y, text[i],
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-				DTA_LeftOffset, width/2, DTA_TopOffset, offset,
+				DTA_LeftOffset, width/2, DTA_TopOffsetF, offset,
 				/*DTA_CenterBottomOffset, 1,*/ TAG_DONE);
 		}
 		x += zerowidth;
@@ -280,16 +283,42 @@ static void DrawHealth(int health, int x, int y)
 //===========================================================================
 //
 // Draw Armor.
-// very similar to drawhealth.
+// very similar to drawhealth, but adapted to handle Hexen armor too
 //
 //===========================================================================
 
-static void DrawArmor(AInventory * armor, int x, int y)
+static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 {
-	if (armor)
-	{
-		int ap=armor->Amount;
+	int ap = 0;
+	int bestslot = 4;
 
+	if (harmor)
+	{
+		int ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		ac >>= FRACBITS;
+		ap += ac;
+		
+		if (ac)
+		{
+			// Find the part of armor that protects the most
+			bestslot = 0;
+			for (int i = 1; i < 4; ++i)
+			{
+				if (harmor->Slots[i] > harmor->Slots[bestslot])
+				{
+					bestslot = i;
+				}
+			}
+		}
+	}
+
+	if (barmor)
+	{
+		ap += barmor->Amount;
+	}
+
+	if (ap)
+	{
 		// decide on color
 		int fontcolor =
 			ap < hud_armor_red ? CR_RED :
@@ -298,11 +327,23 @@ static void DrawArmor(AInventory * armor, int x, int y)
 			CR_BLUE;
 
 
-		if (ap)
+		// Use the sprite of one of the predefined Hexen armor bonuses.
+		// This is not a very generic approach, but it is not possible
+		// to truly create new types of Hexen armor bonus items anyway.
+		if (harmor && bestslot < 4)
 		{
-			DrawImageToBox(TexMan[armor->Icon], x, y, 31, 17);
-			DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
+			char icon[] = "AR_1A0";
+			switch (bestslot)
+			{
+			case 1: icon[3] = '2'; break;
+			case 2: icon[3] = '3'; break;
+			case 3: icon[3] = '4'; break;
+			default: break;
+			}
+			DrawImageToBox(TexMan.FindTexture(icon, FTexture::TEX_Sprite), x, y, 31, 17);
 		}
+		else if (barmor) DrawImageToBox(TexMan[barmor->Icon], x, y, 31, 17);
+		DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
 	}
 }
 
@@ -766,13 +807,10 @@ static void DrawCoordinates(player_t * CPlayer)
 // draw the overlay
 //
 //---------------------------------------------------------------------------
-void HUD_InitHud();
 
 void DrawHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
-
-	if (HudFont==NULL) HUD_InitHud();
 
 	players[consoleplayer].inventorytics = 0;
 	if (hud_althudscale && SCREENWIDTH>640) 
@@ -815,9 +853,8 @@ void DrawHUD()
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
 		DrawHealth(CPlayer->health, 5, hudheight-45);
-		// Yes, that doesn't work properly for Hexen but frankly, I have no
-		// idea how to make a meaningful value out of Hexen's armor system!
-		DrawArmor(CPlayer->mo->FindInventory(RUNTIME_CLASS(ABasicArmor)), 5, hudheight-20);
+		DrawArmor(CPlayer->mo->FindInventory<ABasicArmor>(), 
+			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
 		DrawWeapons(CPlayer, hudwidth-5, i);
@@ -830,10 +867,9 @@ void DrawHUD()
 	}
 	else
 	{
+		FString mapname;
 		char printstr[256];
 		int seconds;
-		cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-		bool hub = !!(thiscluster->flags&CLUSTER_HUB);
 		int length=8*SmallFont->GetCharWidth('0');
 		int fonth=SmallFont->GetHeight()+1;
 		int bottom=hudheight-1;
@@ -862,8 +898,8 @@ void DrawHUD()
 			}
 		}
 
-		mysnprintf(printstr, countof(printstr), "%s: %s", level.mapname, level.LevelName.GetChars());
-		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, printstr,
+		ST_FormatMapName(mapname);
+		screen->DrawText(SmallFont, hudcolor_titl, 1, hudheight-fonth-1, mapname,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 

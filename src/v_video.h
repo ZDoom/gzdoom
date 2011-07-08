@@ -38,7 +38,7 @@
 
 #include "doomdef.h"
 #include "dobject.h"
-#include "r_blend.h"
+#include "r_data/renderstyle.h"
 #include "c_cvars.h"
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
@@ -193,8 +193,6 @@ public:
 	// Calculate gamma table
 	void CalcGamma (float gamma, BYTE gammalookup[256]);
 
-	// Can be overridden so that the colormaps for sector color/fade won't be built.
-	virtual bool UsesColormap() const;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
@@ -364,24 +362,6 @@ public:
 	// Set the rect defining the area affected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
-	// render 3D view
-	virtual void RenderView(player_t *player);
-
-	// renders view to a savegame picture
-	virtual void WriteSavePic (player_t *player, FILE *file, int width, int height);
-
-	// draws player sprites with hardware acceleration (only useful for software rendering)
-	virtual void DrawRemainingPlayerSprites();
-
-	// notifies the renderer that an actor has changed state.
-	virtual void StateChanged(AActor *actor);
-
-	// notify the renderer that serialization of the curent level is about to start/end
-	virtual void StartSerialize(FArchive &arc);
-	virtual void EndSerialize(FArchive &arc);
-
-	virtual int GetMaxViewPitch(bool down);
-
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
@@ -405,7 +385,9 @@ public:
 
 	// Precaches or unloads a texture
 	virtual void GetHitlist(BYTE *hitlist);
-	virtual void PrecacheTexture(FTexture *tex, int cache);
+
+	// Report a game restart
+	virtual void GameRestart();
 
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);
@@ -413,6 +395,7 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 	virtual int GetPixelDoubling() const { return 0; }
+	virtual int GetTrueHeight() { return GetHeight(); }
 
 	uint32 GetLastFPS() const { return LastCount; }
 
@@ -472,7 +455,7 @@ extern "C" DWORD Col2RGB8_Inverse[65][256];
 //		--111111111111111111111111111111	= 0x3FFFFFFF
 
 // Allocates buffer screens, call before R_Init.
-void V_Init ();
+void V_Init (bool restart);
 
 // Initializes graphics mode for the first time.
 void V_Init2 ();
@@ -492,11 +475,16 @@ FString V_GetColorStringByName (const char *name);
 int V_GetColor (const DWORD *palette, const char *str);
 void V_DrawFrame (int left, int top, int width, int height);
 
+// If the view size is not full screen, draws a border around it.
+void V_DrawBorder (int x1, int y1, int x2, int y2);
+void V_RefreshViewBorder ();
+
+
 #if defined(X86_ASM) || defined(X64_ASM)
 extern "C" void ASM_PatchPitch (void);
 #endif
 
-int CheckRatio (int width, int height);
+int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
 extern const int BaseRatioSizes[5][4];
 

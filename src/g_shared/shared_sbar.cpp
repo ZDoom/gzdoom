@@ -41,7 +41,6 @@
 #include "c_console.h"
 #include "v_video.h"
 #include "m_swap.h"
-#include "r_draw.h"
 #include "w_wad.h"
 #include "v_text.h"
 #include "s_sound.h"
@@ -51,6 +50,8 @@
 #include "d_net.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "d_player.h"
+#include "farchive.h"
 
 #include "../version.h"
 
@@ -95,12 +96,16 @@ CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)
 	}
 }
 
-CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (Bool, crosshairhealth, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (Bool, crosshairscale, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (Bool, crosshairgrow, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
+CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE)
+CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
+CVAR (Bool, crosshairhealth, true, CVAR_ARCHIVE);
+CVAR (Bool, crosshairscale, false, CVAR_ARCHIVE);
+CVAR (Bool, crosshairgrow, false, CVAR_ARCHIVE);
+CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
+{
+	if (self < 0 || self > 2) self = 2;
+}
 
 CVAR (Bool, idmypos, false, 0);
 
@@ -117,6 +122,30 @@ BYTE DBaseStatusBar::DamageToAlpha[114] =
 	217, 218, 219, 220, 221, 221, 222, 223, 224, 225, 226, 227, 228, 229, 229,
 	230, 231, 232, 233, 234, 235, 235, 236, 237
 };
+
+//---------------------------------------------------------------------------
+//
+// Format the map name, include the map label if wanted
+//
+//---------------------------------------------------------------------------
+
+void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
+{
+	cluster_info_t *cluster = FindClusterInfo (level.cluster);
+	bool ishub = (cluster != NULL && (cluster->flags & CLUSTER_HUB));
+
+	if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
+	{
+		mapname << level.mapname << ": ";
+	}
+	mapname << mapnamecolor << level.LevelName;
+}
+
+//---------------------------------------------------------------------------
+//
+// Load crosshair definitions
+//
+//---------------------------------------------------------------------------
 
 void ST_LoadCrosshair(bool alwaysload)
 {
@@ -171,6 +200,23 @@ void ST_LoadCrosshair(bool alwaysload)
 
 //---------------------------------------------------------------------------
 //
+// ST_Clear
+//
+//---------------------------------------------------------------------------
+
+void ST_Clear()
+{
+	if (StatusBar != NULL)
+	{
+		StatusBar->Destroy();
+		StatusBar = NULL;
+	}
+	CrosshairImage = NULL;
+	CrosshairNum = 0;
+}
+
+//---------------------------------------------------------------------------
+//
 // Constructor
 //
 //---------------------------------------------------------------------------
@@ -208,6 +254,7 @@ void DBaseStatusBar::Destroy ()
 		msg->Destroy();
 		msg = next;
 	}
+	Messages = NULL;
 	Super::Destroy();
 }
 
@@ -1006,8 +1053,8 @@ void DBaseStatusBar::RefreshBackground () const
 			y = x == ST_X ? ST_Y : ::ST_Y;
 			x2 = !(ratio & 3) || !Scaled ? ST_X+HorizontalResolution :
 				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
-			R_DrawBorder (0, y, x, SCREENHEIGHT);
-			R_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
+			V_DrawBorder (0, y, x, SCREENHEIGHT);
+			V_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
 
 			if (setblocks >= 10)
 			{
@@ -1270,18 +1317,9 @@ void DBaseStatusBar::Draw (EHudState state)
 				y -= 8;
 			}
 		}
-		cluster_info_t *cluster = FindClusterInfo (level.cluster);
-		if (cluster == NULL || !(cluster->flags & CLUSTER_HUB))
-		{
-			mysnprintf (line, countof(line), "%s: ", level.mapname);
-		}
-		else
-		{
-			*line = 0;
-		}
 		FString mapname;
 
-		mapname.Format("%s%c%c%s", line, TEXTCOLOR_ESCAPE, CR_GREY + 'A', level.LevelName.GetChars());
+		ST_FormatMapName(mapname, TEXTCOLOR_GREY);
 		screen->DrawText (SmallFont, highlight,
 			(SCREENWIDTH - SmallFont->StringWidth (mapname)*CleanXfac)/2, y, mapname,
 			DTA_CleanNoMove, true, TAG_DONE);
@@ -1509,17 +1547,26 @@ void DBaseStatusBar::BlendView (float blend[4])
 					BPART(gameinfo.pickupcolor)/255.f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
-	if (CPlayer->mo->DamageFade.a != 0)
+	PainFlashList * pfl = CPlayer->mo->GetClass()->ActorInfo->PainFlashes;
+	PalEntry painFlash = CPlayer->mo->DamageFade;
+
+	if (pfl)
 	{
-		cnt = DamageToAlpha[MIN (113, CPlayer->damagecount * CPlayer->mo->DamageFade.a / 255)];
+		PalEntry * color = pfl->CheckKey(CPlayer->mo->DamageTypeReceived);
+
+		if (color) painFlash = *color;
+	}
+
+	if (painFlash.a != 0)
+	{
+		cnt = DamageToAlpha[MIN (113, CPlayer->damagecount * painFlash.a / 255)];
 			
 		if (cnt)
 		{
 			if (cnt > 228)
 				cnt = 228;
 
-			APlayerPawn *mo = CPlayer->mo;
-			AddBlend (mo->DamageFade.r / 255.f, mo->DamageFade.g / 255.f, mo->DamageFade.b / 255.f, cnt / 255.f, blend);
+			AddBlend (painFlash.r / 255.f, painFlash.g / 255.f, painFlash.b / 255.f, cnt / 255.f, blend);
 		}
 	}
 

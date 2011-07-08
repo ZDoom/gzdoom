@@ -43,6 +43,7 @@
 #include "sc_man.h"
 #include "c_dispatch.h"
 #include "v_text.h"
+#include "gi.h"
 
 // PassNum identifies which language pass this string is from.
 // PassNum 0 is for DeHacked.
@@ -224,6 +225,18 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 				sc.ScriptError ("Found a string without a language specified.");
 			}
 
+			bool savedskip = skip;
+			if (sc.Compare("$"))
+			{
+				sc.MustGetStringName("ifgame");
+				sc.MustGetStringName("(");
+				sc.MustGetString();
+				skip |= !sc.Compare(GameTypeName());
+				sc.MustGetStringName(")");
+				sc.MustGetString();
+
+			}
+
 			if (skip)
 			{ // We're not interested in this language, so skip the string.
 				sc.MustGetStringName ("=");
@@ -231,7 +244,9 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 				do
 				{
 					sc.MustGetString ();
-				} while (!sc.Compare (";"));
+				} 
+				while (!sc.Compare (";"));
+				skip = savedskip;
 				continue;
 			}
 

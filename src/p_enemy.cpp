@@ -44,6 +44,7 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "teaminfo.h"
 
 #include "gi.h"
 
@@ -114,7 +115,7 @@ void P_RandomChaseDir (AActor *actor);
 // sound blocking lines cut off traversal.
 //----------------------------------------------------------------------------
 
-void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks)
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter, fixed_t maxdist)
 {
 	int 		i;
 	line_t* 	check;
@@ -135,7 +136,8 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	// [RH] Set this in the actors in the sector instead of the sector itself.
 	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
-		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)))
+		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
+			(!maxdist || (P_AproxDistance(actor->x - emitter->x, actor->y - emitter->y) <= maxdist)))
 		{
 			actor->LastHeard = soundtarget;
 		}
@@ -178,11 +180,11 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		if (check->flags & ML_SOUNDBLOCK)
 		{
 			if (!soundblocks)
-				P_RecursiveSound (other, soundtarget, splash, 1);
+				P_RecursiveSound (other, soundtarget, splash, 1, emitter, maxdist);
 		}
 		else
 		{
-			P_RecursiveSound (other, soundtarget, splash, soundblocks);
+			P_RecursiveSound (other, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 	}
 }
@@ -198,7 +200,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 //
 //----------------------------------------------------------------------------
 
-void P_NoiseAlert (AActor *target, AActor *emitter, bool splash)
+void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, fixed_t maxdist)
 {
 	if (emitter == NULL)
 		return;
@@ -207,7 +209,7 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash)
 		return;
 
 	validcount++;
-	P_RecursiveSound (emitter->Sector, target, splash, 0);
+	P_RecursiveSound (emitter->Sector, target, splash, 0, emitter, maxdist);
 }
 
 
@@ -308,7 +310,7 @@ bool P_CheckMissileRange (AActor *actor)
 {
 	fixed_t dist;
 		
-	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
+	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
 		
 	if (actor->flags & MF_JUSTHIT)
@@ -427,20 +429,14 @@ bool P_Move (AActor *actor)
 		return false;
 	}
 
-	// [RH] Instead of yanking non-floating monsters to the ground,
-	// let gravity drop them down, unless they're moving down a step.
+	// [RH] Walking actors that are not on the ground cannot walk. We don't
+	// want to yank them to the ground here as Doom did, since that makes
+	// it difficult ot thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
 		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->z > actor->floorz + actor->MaxStepHeight)
-		{
-			return false;
-		}
-		else
-		{
-			actor->z = actor->floorz;
-		}
+		return false;
 	}
 
 	if ((unsigned)actor->movedir >= 8)
@@ -535,6 +531,26 @@ bool P_Move (AActor *actor)
 		movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
 		actor->velx += FixedMul (deltax, movefactor);
 		actor->vely += FixedMul (deltay, movefactor);
+	}
+
+	// [RH] If a walking monster is no longer on the floor, move it down
+	// to the floor if it is within MaxStepHeight, presuming that it is
+	// actually walking down a step.
+	if (try_ok &&
+		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
+		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+	{
+		if (actor->z <= actor->floorz + actor->MaxStepHeight)
+		{
+			fixed_t savedz = actor->z;
+			actor->z = actor->floorz;
+			// Make sure that there isn't some other actor between us and
+			// the floor we could get stuck in. The old code did not do this.
+			if (!P_TestMobjZ(actor))
+			{
+				actor->z = savedz;
+			}
+		}
 	}
 
 	if (!try_ok)
@@ -1136,7 +1152,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	}
 
 	// P_CheckSight is by far the most expensive operation in here so let's do it last.
-	return P_CheckSight(lookee, other, SF_SEEPASTBLOCKEVERYTHING);
+	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
 }
 
 //---------------------------------------------------------------------------
@@ -1403,9 +1419,7 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 		other = NULL;
 		if (link->flags & MF_FRIENDLY)
 		{
-			if (deathmatch &&
-				lookee->FriendPlayer != 0 && link->FriendPlayer != 0 &&
-				lookee->FriendPlayer != link->FriendPlayer)
+			if (!lookee->IsFriend(link))
 			{
 				// This is somebody else's friend, so go after it
 				other = link;
@@ -1567,7 +1581,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		}
 #endif
 		// [SP] If you don't see any enemies in deathmatch, look for players (but only when friend to a specific player.)
-		if (actor->FriendPlayer == 0) return result;
+		if (actor->FriendPlayer == 0 && (!teamplay || actor->DesignatedTeam == TEAM_NONE)) return result;
 		if (result || !deathmatch) return true;
 
 
@@ -1650,25 +1664,28 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		// We're going to ignore our master, but go after his enemies.
 		if ( actor->flags & MF_FRIENDLY )
 		{
-			if ( actor->FriendPlayer == 0 )
-				continue; // I have no friends, I will ignore players.
-			if ( actor->FriendPlayer == player->mo->FriendPlayer )
-				continue; // This is my master.
+			if ( actor->IsFriend(player->mo) )
+				continue;
 		}
 
-		if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
-			player->mo->flags3 & MF3_GHOST)
+		// [RC] Well, let's let special monsters with this flag active be able to see
+		// the player then, eh?
+		if(!(actor->flags & MF6_SEEINVISIBLE)) 
 		{
-			if ((P_AproxDistance (player->mo->x - actor->x,
-					player->mo->y - actor->y) > 2*MELEERANGE)
-				&& P_AproxDistance (player->mo->velx, player->mo->vely)
-				< 5*FRACUNIT)
-			{ // Player is sneaking - can't detect
-				return false;
-			}
-			if (pr_lookforplayers() < 225)
-			{ // Player isn't sneaking, but still didn't detect
-				return false;
+			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
+				player->mo->flags3 & MF3_GHOST)
+			{
+				if ((P_AproxDistance (player->mo->x - actor->x,
+						player->mo->y - actor->y) > 2*MELEERANGE)
+					&& P_AproxDistance (player->mo->velx, player->mo->vely)
+					< 5*FRACUNIT)
+				{ // Player is sneaking - can't detect
+					return false;
+				}
+				if (pr_lookforplayers() < 225)
+				{ // Player isn't sneaking, but still didn't detect
+					return false;
+				}
 			}
 		}
 		
@@ -2152,10 +2169,13 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 	if (nightmarefast && G_SkillProperty(SKILLP_FastMonsters))
 	{ // Monsters move faster in nightmare mode
-		actor->tics -= actor->tics / 2;
-		if (actor->tics < 3)
+		if (actor->tics > 3)
 		{
-			actor->tics = 3;
+			actor->tics -= actor->tics / 2;
+			if (actor->tics < 3)
+			{
+				actor->tics = 3;
+			}
 		}
 	}
 
@@ -2281,7 +2301,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			// as the goal.
 			while ( (spec = specit.Next()) )
 			{
-				LineSpecials[spec->special] (NULL, actor, false, spec->args[0],
+				P_ExecuteSpecial(spec->special, NULL, actor, false, spec->args[0],
 					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 			}
 
@@ -2500,6 +2520,25 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			if ( abs(corpsehit-> x - viletryx) > maxdist ||
 				 abs(corpsehit-> y - viletryy) > maxdist )
 				continue;			// not actually touching
+#ifdef _3DFLOORS
+			// Let's check if there are floors in between the archvile and its target
+			sector_t *vilesec = self->Sector;
+			sector_t *corpsec = corpsehit->Sector;
+			// We only need to test if at least one of the sectors has a 3D floor.
+			sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec : 
+				(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
+			if (testsec)
+			{
+				fixed_t zdist1, zdist2;
+				if (P_Find3DFloor(testsec, corpsehit->x, corpsehit->y, corpsehit->z, false, true, zdist1)
+					!= P_Find3DFloor(testsec, self->x, self->y, self->z, false, true, zdist2))
+				{
+					// Not on same floor
+					if (vilesec == corpsec || abs(zdist1 - self->z) > self->height)
+							continue;
+				}
+			}
+#endif
 
 			corpsehit->velx = corpsehit->vely = 0;
 			// [RH] Check against real height and radius
@@ -2634,7 +2673,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 	}
 	else // this is the old default A_Chase
 	{
-		A_DoChase (self, false, self->MeleeState, self->MissileState, true, !!(gameinfo.gametype & GAME_Raven), false);
+		A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false);
 	}
 }
 
@@ -2646,7 +2685,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FastChase)
 DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 {
 	if (!P_CheckForResurrection(self, true))
-		A_DoChase (self, false, self->MeleeState, self->MissileState, true, !!(gameinfo.gametype & GAME_Raven), false);
+		A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
@@ -2666,17 +2705,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 // for internal use
 void A_Chase(AActor *self)
 {
-	A_DoChase (self, false, self->MeleeState, self->MissileState, true, !!(gameinfo.gametype & GAME_Raven), false);
+	A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false);
 }
 
 //=============================================================================
 //
 // A_FaceTarget
+// A_FaceMaster
+// A_FaceTracer
 //
 //=============================================================================
-void A_FaceTarget (AActor *self, angle_t max_turn)
+void A_Face (AActor *self, AActor *other, angle_t max_turn)
 {
-	if (!self->target)
+	if (!other)
 		return;
 
 	// [RH] Andy Baker's stealth monsters
@@ -2687,15 +2728,15 @@ void A_FaceTarget (AActor *self, angle_t max_turn)
 
 	self->flags &= ~MF_AMBUSH;
 
-	angle_t target_angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
+	angle_t other_angle = R_PointToAngle2 (self->x, self->y, other->x, other->y);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
-	// It also means that there is no need to check for going past the target.
-	if (max_turn && (max_turn < (angle_t)abs(self->angle - target_angle)))
+	// It also means that there is no need to check for going past the other.
+	if (max_turn && (max_turn < (angle_t)abs(self->angle - other_angle)))
 	{
-		if (self->angle > target_angle)
+		if (self->angle > other_angle)
 		{
-			if (self->angle - target_angle < ANGLE_180)
+			if (self->angle - other_angle < ANGLE_180)
 			{
 				self->angle -= max_turn;
 			}
@@ -2706,7 +2747,7 @@ void A_FaceTarget (AActor *self, angle_t max_turn)
 		}
 		else
 		{
-			if (target_angle - self->angle < ANGLE_180)
+			if (other_angle - self->angle < ANGLE_180)
 			{
 				self->angle += max_turn;
 			}
@@ -2718,14 +2759,29 @@ void A_FaceTarget (AActor *self, angle_t max_turn)
 	}
 	else
 	{
-		self->angle = target_angle;
+		self->angle = other_angle;
 	}
 
 	// This will never work well if the turn angle is limited.
-	if (max_turn == 0 && (self->angle == target_angle) && self->target->flags & MF_SHADOW)
+	if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
     {
 		self->angle += pr_facetarget.Random2() << 21;
     }
+}
+
+void A_FaceTarget (AActor *self, angle_t max_turn)
+{
+	A_Face(self, self->target, max_turn);
+}
+
+void A_FaceMaster (AActor *self, angle_t max_turn)
+{
+	A_Face(self, self->master, max_turn);
+}
+
+void A_FaceTracer (AActor *self, angle_t max_turn)
+{
+	A_Face(self, self->tracer, max_turn);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
@@ -2734,6 +2790,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 	ACTION_PARAM_ANGLE(max_turn, 0);
 
 	A_FaceTarget(self, max_turn);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_ANGLE(max_turn, 0);
+
+	A_FaceMaster(self, max_turn);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_ANGLE(max_turn, 0);
+
+	A_FaceTracer(self, max_turn);
 }
 
 //===========================================================================
@@ -2780,10 +2852,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 									self->target->x - self->target->velx * 3,
 									self->target->y - self->target->vely * 3);
 
-	if (self->target->flags & MF_SHADOW)
-    {
+	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
+	{
 		self->angle += pr_railface.Random2() << 21;
-    }
+	}
 
 	P_RailAttack (self, self->GetMissileDamage (0, 1), 0);
 	self->pitch = saved_pitch;
@@ -3101,7 +3173,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 			}
 			checked = true;
 
-			LineSpecials[sa->Action](NULL, self, false, 
+			P_ExecuteSpecial(sa->Action, NULL, self, false, 
 				sa->Args[0], sa->Args[1], sa->Args[2], sa->Args[3], sa->Args[4]);
 		}
 	}

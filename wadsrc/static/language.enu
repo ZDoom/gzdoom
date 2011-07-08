@@ -737,7 +737,7 @@ OB_MPCROSSBOW = "%o was pegged by %k's ethereal crossbow.";
 OB_MPBLASTER = "%o was blasted a new one by %k's dragon claw.";
 OB_MPSKULLROD = "%o got sent down under by %k's hellstaff.";
 OB_MPPHOENIXROD = "%o was scorched to cinders by %k's phoenix rod.";
-OB_MPMACE = "%o was bounced by $k's firemace.";
+OB_MPMACE = "%o was bounced by %k's firemace.";
 
 OB_MPPSTAFF = "%o got clapped by %k's charged staff.";
 OB_MPPGAUNTLETS = "%o was bled dry by %k's gauntlets.";
@@ -799,7 +799,7 @@ TAG_SHOTGUN = "Shotgun";
 TAG_SUPERSHOTGUN = "Super Shotgun";
 TAG_CHAINGUN = "Chaingun";
 TAG_ROCKETLAUNCHER = "Rocket Launcher";
-TAG_PLASMARIFLE = "Plama Rifle";
+TAG_PLASMARIFLE = "Plasma Rifle";
 TAG_BFG9000 = "BFG 9000";
 
 // Item tags: Heretic weapons
@@ -1328,6 +1328,8 @@ TXT_NEED_SILVERKEY = "You need the Silver Key";
 TXT_NEED_BRASSKEY = "You need the Brass Key";
 TXT_NEED_REDCRYSTAL = "You need the Red Crystal";
 TXT_NEED_BLUECRYSTAL = "You need the Blue Crystal";
+TXT_RETAIL_ONLY = "THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE";
+TXT_DOES_NOT_WORK = "That doesn't seem to work";
 
 // Strife Quest messages
 
@@ -1557,9 +1559,12 @@ MNU_PLAYERSETUP		= "PLAYER SETUP";
 
 MNU_DELETESG		= "Do you really want to delete the savegame\n";
 
-MNU_ONLYREGISTERED	= "ONLY AVAILABLE IN THE REGISTERED VERSION";
+$ifgame(heretic) SWSTRING = "ONLY AVAILABLE IN THE REGISTERED VERSION";
 
 MNU_EPISODE			= "Select Episode";
+
+WI_FINISHED			= "finished";
+WI_ENTERING			= "Now entering:";
 
 // Bloodbath announcer
 
@@ -1626,17 +1631,17 @@ CE3TEXT = "Wonderful Job!";
 CE4TEXT = "Fantastic";
 
 CLOADNET = "you can't do load while in a net quest!\n\npress a key.";
-CQSPROMPT = "quicksave over your quest named\n\n'%s'?\n\npress y or n.";
-CQLOADNET = "you can't quickload during a netquest!\n\npress a key.";
-CQLPROMPT = "do you want to quickload the quest named\n\n'%s'?\n\npress y or n.";
+$ifgame(chex) QSPROMPT = "quicksave over your quest named\n\n'%s'?\n\npress y or n.";
+$ifgame(chex) QLOADNET = "you can't quickload during a netquest!\n\npress a key.";
+$ifgame(chex) QLPROMPT = "do you want to quickload the quest named\n\n'%s'?\n\npress y or n.";
 CNEWGAME = "you can't start a new quest\nwhile in a network quest.\n\npress a key.";
 
 CNIGHTMARE = "Careful, this will be tough.\nDo you wish to continue?\n\npress y or n.";
 
 CSWSTRING = "this is Chex(R) Quest. look for\n\nfuture levels at www.chexquest.com.\n\npress a key.";
 
-CNETEND = "you can't end a netquest!\n\npress a key.";
-CENDGAME = "are you sure you want to end the quest?\n\npress y or n.";
+$ifgame(chex) NETEND = "you can't end a netquest!\n\npress a key.";
+$ifgame(chex) ENDGAME = "are you sure you want to end the quest?\n\npress y or n.";
 
 GOTCHEXARMOR = "Picked up the Chex(R) Armor.";
 GOTSUPERCHEXARMOR = "Picked up the Super Chex(R) Armor!";
@@ -1671,11 +1676,11 @@ GOTLARGEZORCHER = "You got the Large Zorcher!";
 GOTSUPERLARGEZORCHER = "You got the Mega Zorcher!";
 GOTMINIZORCHER = "Picked up a Mini Zorcher.";
 
-STSTR_CDQDON = "Invincible Mode ON";
-STSTR_CDQDOFF = "Invincible Mode OFF";
-STSTR_CFAADDED = "Zorch Added";
-STSTR_CKFAADDED = "Super Zorch Added";
-STSTR_CCHOPPERS = "... Eat Chex(R)!";
+$ifgame(chex) STSTR_DQDON = "Invincible Mode ON";
+$ifgame(chex) STSTR_DQDOFF = "Invincible Mode OFF";
+$ifgame(chex) STSTR_FAADDED = "Zorch Added";
+$ifgame(chex) STSTR_KFAADDED = "Super Zorch Added";
+$ifgame(chex) STSTR_CHOPPERS = "... Eat Chex(R)!";
 
 OB_COMMONUS = "%o was slimed by a flemoid.";
 OB_BIPEDICUS = "%o was slimed by a bipedicus.";

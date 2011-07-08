@@ -2,10 +2,11 @@
 
 #include "info.h"
 #include "gi.h"
-#include "r_data.h"
 #include "a_pickups.h"
 #include "templates.h"
 #include "g_level.h"
+#include "d_player.h"
+#include "farchive.h"
 
 
 IMPLEMENT_CLASS (AArmor)

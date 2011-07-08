@@ -158,6 +158,7 @@ enum EDemoCommand
 	DEM_CONVREPLY,		// 59 Word: Dialogue node, Byte: Reply number
 	DEM_CONVCLOSE,		// 60
 	DEM_CONVNULL,		// 61
+	DEM_RUNSPECIAL,		// 62 Byte: Special number, Byte: Arg count, Ints: Args
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

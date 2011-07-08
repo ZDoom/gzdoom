@@ -37,7 +37,7 @@
 #include "doomstat.h"
 #include "d_protocol.h"
 #include "d_netinf.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "menu/menu.h"
@@ -61,9 +61,7 @@
 #include "p_local.h" 
 #include "s_sound.h"
 #include "gstrings.h"
-#include "r_data.h"
 #include "r_sky.h"
-#include "r_draw.h"
 #include "g_game.h"
 #include "g_level.h"
 #include "b_bot.h"			//Added by MC:
@@ -73,12 +71,15 @@
 #include "gi.h"
 #include "a_keys.h"
 #include "a_artifacts.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_event.h"
 #include "p_acs.h"
 #include "m_joy.h"
+#include "farchive.h"
+#include "r_renderer.h"
+#include "r_data/colormaps.h"
 
 #include <zlib.h>
 
@@ -103,6 +104,9 @@ void	G_DoVictory (void);
 void	G_DoWorldDone (void);
 void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
+
+void STAT_Write(FILE *file);
+void STAT_Read(PNGHandle *png);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
@@ -177,8 +181,6 @@ wbstartstruct_t wminfo; 				// parms for world map / intermission
  
 short			consistancy[MAXPLAYERS][BACKUPTICS];
  
-BYTE*			savebuffer;
- 
  
 #define MAXPLMOVE				(forwardmove[1]) 
  
@@ -237,9 +239,9 @@ CUSTOM_CVAR (Float, turbo, 100.f, 0)
 	{
 		self = 10.f;
 	}
-	else if (self > 256.f)
+	else if (self > 255.f)
 	{
-		self = 256.f;
+		self = 255.f;
 	}
 	else
 	{
@@ -454,6 +456,8 @@ CCMD (drop)
 	}
 }
 
+const PClass *GetFlechetteType(AActor *other);
+
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
 	static const ENamedName bagnames[3] =
@@ -462,22 +466,26 @@ CCMD (useflechette)
 		NAME_ArtiPoisonBag2,
 		NAME_ArtiPoisonBag3
 	};
-	int i, j;
 
 	if (who == NULL)
 		return;
 
-	if (who->IsKindOf (PClass::FindClass (NAME_ClericPlayer)))
-		i = 0;
-	else if (who->IsKindOf (PClass::FindClass (NAME_MagePlayer)))
-		i = 1;
-	else
-		i = 2;
-
-	for (j = 0; j < 3; ++j)
+	const PClass *type = GetFlechetteType(who);
+	if (type != NULL)
 	{
 		AInventory *item;
-		if ( (item = who->FindInventory (bagnames[(i+j)%3])) )
+		if ( (item = who->FindInventory (type) ))
+		{
+			SendItemUse = item;
+			return;
+		}
+	}
+
+	// The default flechette could not be found. Try all 3 types then.
+	for (int j = 0; j < 3; ++j)
+	{
+		AInventory *item;
+		if ( (item = who->FindInventory (bagnames[j])) )
 		{
 			SendItemUse = item;
 			break;
@@ -1008,6 +1016,7 @@ void G_Ticker ()
 			G_DoNewGame ();
 			break;
 		case ga_loadgame:
+		case ga_loadgamehidecon:
 		case ga_autoloadgame:
 			G_DoLoadGame ();
 			break;
@@ -1028,7 +1037,7 @@ void G_Ticker ()
 			G_DoCompleted ();
 			break;
 		case ga_slideshow:
-			F_StartSlideshow ();
+			if (gamestate == GS_LEVEL) F_StartIntermission(level.info->slideshow, FSTATE_InLevel);
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -1624,12 +1633,12 @@ void G_ScreenShot (char *filename)
 // G_InitFromSavegame
 // Can be called by the startup code or the menu task.
 //
-void G_LoadGame (const char* name)
+void G_LoadGame (const char* name, bool hidecon)
 {
 	if (name != NULL)
 	{
 		savename = name;
-		gameaction = ga_loadgame;
+		gameaction = !hidecon ? ga_loadgame : ga_loadgamehidecon;
 	}
 }
 
@@ -1689,11 +1698,13 @@ void G_DoLoadGame ()
 	char sigcheck[20];
 	char *text = NULL;
 	char *map;
+	bool hidecon;
 
 	if (gameaction != ga_autoloadgame)
 	{
 		demoplayback = false;
 	}
+	hidecon = gameaction == ga_loadgamehidecon;
 	gameaction = ga_nothing;
 
 	FILE *stdfile = fopen (savename.GetChars(), "rb");
@@ -1739,13 +1750,19 @@ void G_DoLoadGame ()
 		delete[] engine;
 	}
 
+	SaveVersion = 0;
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
 		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
 		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
 	{
-		Printf ("Savegame is from an incompatible version\n");
 		delete png;
 		fclose (stdfile);
+		Printf ("Savegame is from an incompatible version");
+		if (SaveVersion != 0)
+		{
+			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+		}
+		Printf("\n");
 		return;
 	}
 
@@ -1761,6 +1778,13 @@ void G_DoLoadGame ()
 		Printf ("Savegame is missing the current map\n");
 		fclose (stdfile);
 		return;
+	}
+
+	// Now that it looks like we can load this save, hide the fullscreen console if it was up
+	// when the game was selected from the menu.
+	if (hidecon && gamestate == GS_FULLCONSOLE)
+	{
+		gamestate = GS_HIDECONSOLE;
 	}
 
 	// Read intermission data for hubs
@@ -1791,6 +1815,7 @@ void G_DoLoadGame ()
 	}
 
 	G_ReadSnapshots (png);
+	STAT_Read(png);
 	FRandom::StaticReadRNGState (png);
 	P_ReadACSDefereds (png);
 
@@ -1902,6 +1927,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+static int nextautosave = -1;
 CVAR (Int, disableautosave, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Int, autosavecount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -1922,10 +1948,25 @@ void G_DoAutoSave ()
 	const char *readableTime;
 	int count = autosavecount != 0 ? autosavecount : 1;
 	
-	num.Int = (autosavenum + 1) % count;
+	if (nextautosave == -1) 
+	{
+		nextautosave = (autosavenum + 1) % count;
+	}
+
+	num.Int = nextautosave;
 	autosavenum.ForceSet (num, CVAR_Int);
 
-	file = G_BuildSaveName ("auto", num.Int);
+	file = G_BuildSaveName ("auto", nextautosave);
+
+	if (!(level.flags2 & LEVEL2_NOAUTOSAVEHINT))
+	{
+		nextautosave = (nextautosave + 1) % count;
+	}
+	else
+	{
+		// This flag can only be used once per level
+		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
+	}
 
 	readableTime = myasctime ();
 	strcpy (description, "Autosave ");
@@ -1994,7 +2035,7 @@ static void PutSavePic (FILE *file, int width, int height)
 	else
 	{
 		P_CheckPlayerSprites();
-		screen->WriteSavePic(&players[consoleplayer], file, width, height);
+		Renderer->WriteSavePic(&players[consoleplayer], file, width, height);
 	}
 }
 
@@ -2052,6 +2093,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	}
 
 	G_WriteSnapshots (stdfile);
+	STAT_Write(stdfile);
 	FRandom::StaticWriteRNGState (stdfile);
 	P_WriteACSDefereds (stdfile);
 
@@ -2570,6 +2612,7 @@ bool G_CheckDemoStatus (void)
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 		M_Free (demobuffer);
+		demobuffer = NULL;
 
 		P_SetupWeapons_ntohton();
 		demoplayback = false;

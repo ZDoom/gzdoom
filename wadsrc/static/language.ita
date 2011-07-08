@@ -1070,17 +1070,15 @@ CE3TEXT = "Meraviglioso!";
 CE4TEXT = "Fantastico";
 
 CLOADNET = "non puoi caricare una quest durante una net quest!\n\npress a key.";
-CQSPROMPT = "sovrascrivere il salvataggio\n\n'%s'?\n\npremi y oppure n.";
-CQLOADNET = "non puoi fare un quickload durante una netquest!\n\npremi un tasto.";
-CQLPROMPT = "vuoi fare un quickload della quest\n\n'%s'?\n\npremi y oppure n.";
+$ifgame(chex) QSPROMPT = "sovrascrivere il salvataggio\n\n'%s'?\n\npremi y oppure n.";
+$ifgame(chex) QLOADNET = "non puoi fare un quickload durante una netquest!\n\npremi un tasto.";
+$ifgame(chex) QLPROMPT = "vuoi fare un quickload della quest\n\n'%s'?\n\npremi y oppure n.";
 CNEWGAME = "non puoi iniziare una nuova quest\ndurante una quest in rete.\n\npremi un tasto.";
 
 CNIGHTMARE = "Attento, sara' dura.\nVuoi continuare?\n\npremi y oppure n.";
 
-CSWSTRING = "questa e' Chex(R) Quest. cerca\n\nfuturi livelli su www.chexquest.com.\n\npremi un tasto.";
-
-CNETEND = "non puoi terminare una netquest!\n\npremi un tasto";
-CENDGAME = "sei sicuro di voler terminare la quest?\n\npremi y oppure n.";
+$ifgame(chex) NETEND = "non puoi terminare una netquest!\n\npremi un tasto";
+$ifgame(chex) ENDGAME = "sei sicuro di voler terminare la quest?\n\npremi y oppure n.";
 
 GOTCHEXARMOR = "Raccolta un'Armatura Chex(R).";
 GOTSUPERCHEXARMOR = "Raccolta la Super Armatura Chex(R)!";
@@ -1115,11 +1113,11 @@ GOTLARGEZORCHER = "Hai trovato il zorcher grande!";
 GOTSUPERLARGEZORCHER = "Hai trovato il mega zorcher!";
 GOTMINIZORCHER = "Raccolto un mini zorcher.";
 
-STSTR_CDQDON = "Modalita' invincibile attivata";
-STSTR_CDQDOFF = "Modalita' invincibile disattivata";
-STSTR_CFAADDED = "Zorch aggiunto";
-STSTR_CKFAADDED = "Super Zorch aggiunto";
-STSTR_CCHOPPERS = "... Mangia Chex(R)!";
+$ifgame(chex) STSTR_DQDON = "Modalita' invincibile attivata";
+$ifgame(chex) STSTR_DQDOFF = "Modalita' invincibile disattivata";
+$ifgame(chex) STSTR_FAADDED = "Zorch aggiunto";
+$ifgame(chex) STSTR_KFAADDED = "Super Zorch aggiunto";
+$ifgame(chex) STSTR_CHOPPERS = "... Mangia Chex(R)!";
 
 OB_COMMONUS = "%o e' stato coperto di slime da un flemoid.";
 OB_BIPEDICUS = "%o e' stato coperto di slime da un  bipedicus.";

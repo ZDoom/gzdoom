@@ -35,8 +35,6 @@
 #include <assert.h>
 
 #include "actor.h"
-#include "r_data.h"
-#include "r_main.h"
 #include "p_conversation.h"
 #include "w_wad.h"
 #include "cmdlib.h"
@@ -61,6 +59,7 @@
 #include "sbar.h"
 #include "farchive.h"
 #include "p_lnspec.h"
+#include "r_utility.h"
 #include "menu/menu.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
@@ -124,7 +123,6 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
-static void CleanupConversationMenu ();
 static void TerminalResponse (const char *str);
 
 static FStrifeDialogueNode *PrevNode;
@@ -143,6 +141,11 @@ static FStrifeDialogueNode *PrevNode;
 void SetStrifeType(int convid, const PClass *Class)
 {
 	StrifeTypes[convid] = Class;
+}
+
+void ClearStrifeTypes()
+{
+	StrifeTypes.Clear();
 }
 
 void SetConversation(int convid, const PClass *Class, int dlgindex)
@@ -357,7 +360,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
 
-	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
+	if ((signed)(speech.SpeakerType) >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
 		if (type != NULL)
 		{
@@ -430,7 +433,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	type = GetStrifeType (speech.SpeakerType);
 	node->SpeakerType = type;
 
-	if (speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
+	if ((signed)speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
 	{
 		if (type != NULL)
 		{
@@ -840,6 +843,7 @@ public:
 		}
 		else if (mkey == MKEY_Back)
 		{
+			Net_WriteByte (DEM_CONVNULL);
 			Close();
 			return true;
 		}
@@ -914,7 +918,7 @@ public:
 	{
 		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_Char && ev->data1 >= '0' && ev->data1 <= '9')
 		{ // Activate an item of type numberedmore (dialogue only)
-			mSelection = ev->data1 == '0' ? 10 : ev->data1 - '0';
+			mSelection = ev->data1 == '0' ? 9 : ev->data1 - '1';
 			return MenuEvent(MKEY_Enter, false);
 		}
 		return Super::Responder(ev);
@@ -929,7 +933,7 @@ public:
 	void Drawer()
 	{
 		const char *speakerName;
-		int i, x, y, linesize;
+		int x, y, linesize;
 		int width, fontheight;
 		int labelofs;
 
@@ -973,6 +977,7 @@ public:
 		// Dim the screen behind the dialogue (but only if there is no backdrop).
 		if (!CurNode->Backdrop.isValid())
 		{
+			int i;
 			for (i = 0; mDialogueLines[i].Width >= 0; ++i)
 			{ }
 			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
@@ -995,7 +1000,7 @@ public:
 			y += linesize * 3 / 2;
 		}
 		x = 24 * screen->GetWidth() / 320;
-		for (i = 0; mDialogueLines[i].Width >= 0; ++i)
+		for (int i = 0; mDialogueLines[i].Width >= 0; ++i)
 		{
 			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
@@ -1024,7 +1029,7 @@ public:
 		fontheight = OptionSettings.mLinespacing;
 
 		int response = 0;
-		for (i = 0; i < (int)mResponseLines.Size(); i++, y += fontheight)
+		for (unsigned i = 0; i < mResponseLines.Size(); i++, y += fontheight)
 		{
 			width = SmallFont->StringWidth(mResponseLines[i]);
 			x = 64;
@@ -1219,12 +1224,14 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	node = StrifeDialogues[nodenum];
 	for (i = 0, reply = node->Children; reply != NULL && i != replynum; ++i, reply = reply->Next)
 	{ }
+	npc = player->ConversationNPC;
 	if (reply == NULL)
 	{
+		// The default reply was selected
+		npc->angle = player->ConversationNPCAngle;
+		npc->flags5 &= ~MF5_INCONVERSATION;
 		return;
 	}
-
-	npc = player->ConversationNPC;
 
 	// Check if you have the requisite items for this choice
 	for (i = 0; i < (int)reply->ItemCheck.Size(); ++i)
@@ -1264,11 +1271,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			{
 				AInventory *item = static_cast<AInventory *>(Spawn(reply->GiveType, 0, 0, 0, NO_REPLACE));
 				// Items given here should not count as items!
-				if (item->flags & MF_COUNTITEM)
-				{
-					level.total_items--;
-					item->flags &= ~MF_COUNTITEM;
-				}
+				item->ClearCounters();
 				if (item->GetClass()->TypeName == NAME_FlameThrower)
 				{
 					// The flame thrower gives less ammo when given in a dialog
@@ -1298,7 +1301,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 
 	if (reply->ActionSpecial != 0)
 	{
-		takestuff |= !!LineSpecials[reply->ActionSpecial](NULL, player->mo, false,
+		takestuff |= !!P_ExecuteSpecial(reply->ActionSpecial, NULL, player->mo, false,
 			reply->Args[0], reply->Args[1], reply->Args[2], reply->Args[3], reply->Args[4]);
 	}
 
@@ -1380,32 +1383,6 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	{
 		I_SetMusicVolume (1.f);
 	}
-}
-
-//============================================================================
-//
-// CleanupConversationMenu
-//
-// Release the resources used to create the most recent conversation menu.
-//
-//============================================================================
-
-void CleanupConversationMenu ()
-{
-}
-
-//============================================================================
-//
-// ConversationMenuEscaped
-//
-// Called when the user presses escape to leave the conversation menu.
-//
-//============================================================================
-
-void ConversationMenuEscaped ()
-{
-	CleanupConversationMenu ();
-	Net_WriteByte (DEM_CONVNULL);
 }
 
 //============================================================================

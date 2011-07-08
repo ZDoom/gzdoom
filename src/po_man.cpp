@@ -14,7 +14,6 @@
 
 #include "doomdef.h"
 #include "p_local.h"
-#include "r_local.h"
 #include "i_system.h"
 #include "w_wad.h"
 #include "m_swap.h"
@@ -22,13 +21,13 @@
 #include "tables.h"
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
-#include "r_main.h"
 #include "p_lnspec.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "g_level.h"
 #include "po_man.h"
 #include "p_setup.h"
 #include "vectors.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -46,6 +45,16 @@ inline vertex_t *side_t::V2() const
 	return this == linedef->sidedef[0]? linedef->v2 : linedef->v1;
 }
 
+
+FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
+{
+	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
+}
+
+FArchive &operator<< (FArchive &arc, const FPolyObj *&poly)
+{
+	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
+}
 
 inline FArchive &operator<< (FArchive &arc, podoortype_t &type)
 {

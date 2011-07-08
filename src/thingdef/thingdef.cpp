@@ -46,7 +46,6 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "r_defs.h"
-#include "r_draw.h"
 #include "a_pickups.h"
 #include "s_sound.h"
 #include "cmdlib.h"
@@ -337,6 +336,9 @@ void LoadActors ()
 {
 	int lastlump, lump;
 
+	StateParams.Clear();
+	GlobalSymbols.ReleaseSymbols();
+	DropItemList.Clear();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;

@@ -1212,6 +1212,7 @@ FWadLump::FWadLump ()
 }
 
 FWadLump::FWadLump (const FWadLump &copy)
+: FileReader()
 {
 	// This must be defined isn't called.
 	File = copy.File;

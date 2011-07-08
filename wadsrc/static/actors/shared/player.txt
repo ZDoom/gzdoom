@@ -28,6 +28,7 @@ Actor PlayerPawn : Actor native
 	Player.SoundClass "player"
 	Player.DamageScreenColor "ff 00 00"
 	Player.MugShotMaxHealth 0
+	Player.FlechetteType "ArtiPoisonBag3"
 }
 
 Actor PlayerChunk : PlayerPawn native

@@ -125,8 +125,7 @@ void I_PaintConsole (void);
 void I_PrintStr (const char *cp);
 
 // Set the title string of the startup window
-struct IWADInfo;
-void I_SetIWADInfo (const IWADInfo *title);
+void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
 int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
@@ -137,9 +136,6 @@ bool I_WriteIniFailed ();
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);
 unsigned int I_FPSTime();
-
-// [RH] Title banner to display during startup
-extern const IWADInfo *DoomStartupInfo;
 
 // [RH] Used by the display code to set the normal window procedure
 void I_SetWndProc();

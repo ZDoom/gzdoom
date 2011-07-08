@@ -27,6 +27,7 @@
 #include "templates.h"
 #include "c_dispatch.h"
 #include "g_level.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -268,7 +269,7 @@ static const hexenseq_t HexenSequences[] = {
 	{ NAME_DoorCreak,		{ HexenDoorSeq(3), HexenLastSeq } },
 	{ NAME_DoorMetal2,		{ HexenDoorSeq(9), HexenLastSeq } },
 	{ NAME_Wind,			{ HexenEnvSeq(10), HexenLastSeq } },
-	{ NAME_None }
+	{ NAME_None, {0} }
 };
 
 static int SeqTrans[64*3];
@@ -504,6 +505,24 @@ static void AssignHexenTranslations (void)
 
 //==========================================================================
 //
+// S_ClearSndSeq
+//
+//==========================================================================
+
+void S_ClearSndSeq()
+{
+	for (unsigned int i = 0; i < Sequences.Size(); i++)
+	{
+		if (Sequences[i])
+		{
+			M_Free(Sequences[i]);
+		}
+	}
+	Sequences.Clear();
+}
+
+//==========================================================================
+//
 // S_ParseSndSeq
 //
 //==========================================================================
@@ -523,14 +542,7 @@ void S_ParseSndSeq (int levellump)
 
 	// First free the old SNDSEQ data. This allows us to reload this for each level
 	// and specify a level specific SNDSEQ lump!
-	for (unsigned int i = 0; i < Sequences.Size(); i++)
-	{
-		if (Sequences[i])
-		{
-			M_Free(Sequences[i]);
-		}
-	}
-	Sequences.Clear();
+	S_ClearSndSeq();
 
 	// be gone, compiler warnings
 	stopsound = 0;

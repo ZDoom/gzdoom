@@ -21,28 +21,31 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
+	name = "Knee-Deep in the Dead"
 	key = "k"
 }
 
 episode e2m1
 {
 	picname = "M_EPI2"
+	name = "The Shores of Hell"
 	key = "t"
 }
 
 episode e3m1
 {
 	picname = "M_EPI3"
+	name = "Inferno"
 	key = "i"
 }
 
 episode e4m1
 {
 	picname = "M_EPI4"
+	name = "Thy Flesh Consumed"
 	key = "t"
 	optional
-
-}
+} 
 
 // Registered/Retail Episode 1
 

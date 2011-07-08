@@ -105,12 +105,6 @@ xx(ArtiPoisonBag3)
 // Strife quests
 xx(QuestItem)
 
-// Auto-usable health items
-xx(ArtiHealth)
-xx(ArtiSuperHealth)
-xx(MedicalKit)
-xx(MedPatch)
-
 // Armor
 xx(BasicArmor)
 
@@ -251,6 +245,7 @@ xx(PoisonCloud)	// makes monsters howl.
 // a damage type if you wanted to force an extreme death.
 xx(Extreme)
 xx(MDK)
+xx(Cast) // 'damage type' for the cast call
 
 // Special names for thingdef_exp.cpp
 xx(Random)
@@ -285,6 +280,8 @@ xx(Communicator)
 // Textmap properties
 //xx(X)
 //xx(Y)
+xx(ZFloor)
+xx(ZCeiling)
 xx(Height)
 //xx(Tid)
 //xx(Angle)
@@ -359,6 +356,7 @@ xx(Invisible)
 xx(Friend)
 xx(Strifeally)
 xx(Standing)
+xx(Countsecret)
 
 xx(Blocking)
 xx(Blockmonsters)
@@ -423,6 +421,10 @@ xx(Silent)
 xx(Nofallingdamage)
 xx(Dropactors)
 xx(NoRespawn)
+xx(Alphafloor)
+xx(Alphaceiling)
+xx(Renderstylefloor)
+xx(Renderstyleceiling)
 
 xx(offsetx_top)
 xx(offsety_top)
@@ -443,6 +445,7 @@ xx(smoothlighting)
 xx(blockprojectiles)
 xx(blockuse)
 xx(hidden)
+xx(blocksight)
 
 xx(Renderstyle)
 
@@ -474,6 +477,7 @@ xx(HexenDefaultPlayerclassmenu)
 xx(Skillmenu)
 xx(Startgame)
 xx(StartgameConfirm)
+xx(StartgameConfirmed)
 xx(Loadgamemenu)
 xx(Savegamemenu)
 xx(Readthismenu)
@@ -527,3 +531,14 @@ xx(res_7)
 xx(res_8)
 xx(res_9)
 xx(AlwaysRun)
+
+// end sequences
+xx(Inter_Chess)
+xx(Inter_Strife)
+xx(Inter_Strife_Good)
+xx(Inter_Strife_Sad)
+xx(Inter_Strife_Bad)
+xx(Inter_Strife_Lose)
+xx(Inter_Strife_MAP03)
+xx(Inter_Strife_MAP10)
+xx(Multiplayer)

@@ -40,7 +40,7 @@ ACTOR Inventory native
 	action native A_ReFire(state flash = "");
 	action native A_ClearReFire();
 	action native A_CheckReload();
-	action native A_GunFlash(state flash = "");
+	action native A_GunFlash(state flash = "", int flags = 0);
 	action native A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff", int flags = 0, float range = 0, float spread_xy = 2.8125, float spread_z = 0, float lifesteal = 0);
 	action native A_CheckForReload(int counter, state label, bool dontincrement = false);
 	action native A_ResetReloadCounter();

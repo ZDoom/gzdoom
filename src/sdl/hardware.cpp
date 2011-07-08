@@ -44,6 +44,8 @@
 #include "v_text.h"
 #include "doomstat.h"
 #include "m_argv.h"
+#include "r_renderer.h"
+#include "r_swrenderer.h"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
@@ -79,6 +81,21 @@ void I_InitGraphics ()
 
 	Video->SetWindowedScale (vid_winscale);
 }
+
+static void I_DeleteRenderer()
+{
+	if (Renderer != NULL) delete Renderer;
+}
+
+void I_CreateRenderer()
+{
+	if (Renderer == NULL)
+	{
+		Renderer = new FSoftwareRenderer;
+		atterm(I_DeleteRenderer);
+	}
+}
+
 
 /** Remaining code is common to Win32 and Linux **/
 

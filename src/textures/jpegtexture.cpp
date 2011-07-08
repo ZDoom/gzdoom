@@ -33,13 +33,34 @@
 **
 */
 
+#include <stdio.h>
+extern "C"
+{
+#include <jpeglib.h>
+}
+
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
-#include "r_jpeg.h"
 #include "w_wad.h"
 #include "v_text.h"
 #include "bitmap.h"
+#include "v_video.h"
+#include "textures/textures.h"
+
+
+struct FLumpSourceMgr : public jpeg_source_mgr
+{
+	FileReader *Lump;
+	JOCTET Buffer[4096];
+	bool StartOfFile;
+
+	FLumpSourceMgr (FileReader *lump, j_decompress_ptr cinfo);
+	static void InitSource (j_decompress_ptr cinfo);
+	static boolean FillInputBuffer (j_decompress_ptr cinfo);
+	static void SkipInputData (j_decompress_ptr cinfo, long num_bytes);
+	static void TermSource (j_decompress_ptr cinfo);
+};
+
 
 //==========================================================================
 //

@@ -113,7 +113,6 @@ enum ETeamOptions
 
 FTeam::FTeam ()
 {
-	m_GameFilter = 0;
 	m_iPlayerColor = 0;
 	m_iPlayerCount = 0;
 	m_iScore = 0;
@@ -132,6 +131,7 @@ void FTeam::ParseTeamInfo ()
 {
 	int iLump, iLastLump = 0;
 
+	Teams.Clear();
 	while ((iLump = Wads.FindLump ("TEAMINFO", &iLastLump)) != -1)
 	{
 		FScanner Scan (iLump);
@@ -162,6 +162,7 @@ void FTeam::ParseTeamInfo ()
 void FTeam::ParseTeamDefinition (FScanner &Scan)
 {
 	FTeam Team;
+	int valid = -1;
 	Scan.MustGetString ();
 	Team.m_Name = Scan.String;
 	Scan.MustGetStringName ("{");
@@ -174,23 +175,9 @@ void FTeam::ParseTeamDefinition (FScanner &Scan)
 		{
 		case TEAMINFO_Game:
 			Scan.MustGetString ();
-
-			if (!stricmp (Scan.String, "Doom"))
-				Team.m_GameFilter |= GAME_Doom;
-			else if (!stricmp (Scan.String, "Heretic"))
-				Team.m_GameFilter |= GAME_Heretic;
-			else if (!stricmp (Scan.String, "Hexen"))
-				Team.m_GameFilter |= GAME_Hexen;
-			else if (!stricmp (Scan.String, "Raven"))
-				Team.m_GameFilter |= GAME_Raven;
-			else if (!stricmp (Scan.String, "Strife"))
-				Team.m_GameFilter |= GAME_Strife;
-			else if (!stricmp (Scan.String, "Chex"))
-				Team.m_GameFilter |= GAME_Chex;
-			else if (!stricmp (Scan.String, "Any"))
-				Team.m_GameFilter |= GAME_Any;
-			else
-				Scan.ScriptError ("ParseTeamDefinition: Unknown game type '%s'.\n", Scan.String);
+			if (Scan.Compare("Any")) valid = 1;
+			else if (CheckGame(Scan.String, false)) valid = 1;
+			else if (valid == -1) valid = 0;
 			break;
 
 		case TEAMINFO_PlayerColor:
@@ -236,8 +223,7 @@ void FTeam::ParseTeamDefinition (FScanner &Scan)
 		}
 	}
 
-	if (Team.m_GameFilter == 0 || Team.m_GameFilter & gameinfo.gametype)
-		Teams.Push (Team);
+	if (valid) Teams.Push (Team);
 }
 
 //==========================================================================
@@ -259,7 +245,7 @@ void FTeam::ClearTeams ()
 
 bool FTeam::IsValidTeam (unsigned int uiTeam)
 {
-	if (uiTeam < 0 || uiTeam >= Teams.Size ())
+	if (uiTeam >= Teams.Size ())
 		return false;
 
 	return true;

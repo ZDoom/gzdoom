@@ -36,6 +36,7 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "p_lnspec.h"
+#include "farchive.h"
 
 // arg0 = Visibility*4 for this skybox
 
@@ -69,7 +70,7 @@ void ASkyViewpoint::BeginPlay ()
 void ASkyViewpoint::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bInSkybox << bAlways << Mate << PlaneAlpha;
+	arc << bInSkybox << bAlways << Mate;
 }
 
 void ASkyViewpoint::Destroy ()

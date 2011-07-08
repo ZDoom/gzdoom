@@ -185,6 +185,7 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF5, FASTER, AActor, flags5),
 	DEFINE_FLAG(MF5, FASTMELEE, AActor, flags5),
 	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
+	DEFINE_FLAG(MF5, COUNTSECRET, AActor, flags5),
 	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),
 	DEFINE_FLAG(MF5, BLOODSPLATTER, AActor, flags5),
 	DEFINE_FLAG(MF5, OLDRADIUSDMG, AActor, flags5),
@@ -227,6 +228,11 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF6, ADDITIVEPOISONDAMAGE, AActor, flags6),
 	DEFINE_FLAG(MF6, ADDITIVEPOISONDURATION, AActor, flags6),
 	DEFINE_FLAG(MF6, BLOCKEDBYSOLIDACTORS, AActor, flags6),
+	DEFINE_FLAG(MF6, NOMENU, AActor, flags6),
+	DEFINE_FLAG(MF6, SEEINVISIBLE, AActor, flags6),
+	DEFINE_FLAG(MF6, DONTCORPSE, AActor, flags6),
+	DEFINE_FLAG(MF6, DOHARMSPECIES, AActor, flags6),
+	DEFINE_FLAG(MF6, POISONALWAYS, AActor, flags6),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -277,12 +283,13 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, UNDROPPABLE, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, INVBAR, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, HUBPOWER, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, UNTOSSABLE, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, ADDITIVETIME, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, ALWAYSPICKUP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, FANCYPICKUPSOUND, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, KEEPDEPLETED, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
-	DEFINE_FLAG(IF, ADDITIVETIME, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOATTENPICKUPSOUND, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
 
@@ -313,6 +320,7 @@ static FFlagDef WeaponFlags[] =
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
 	
 	DEFINE_DUMMY_FLAG(NOLMS),
+	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL),
 };
 
@@ -582,6 +590,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of properties
+	if (properties.Size() == 0)
 	{
 		FAutoSegIterator probe(GRegHead, GRegTail);
 
@@ -594,6 +603,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of native action functions
+	if (AFTable.Size() == 0)
 	{
 		FAutoSegIterator probe(ARegHead, ARegTail);
 
@@ -606,6 +616,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of native variables
+	if (variables.Size() == 0)
 	{
 		FAutoSegIterator probe(MRegHead, MRegTail);
 

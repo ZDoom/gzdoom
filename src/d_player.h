@@ -74,6 +74,7 @@ enum
 
 FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
 void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
+const char *GetPrintableDisplayName(const PClass *cls);
 
 class player_t;
 
@@ -136,6 +137,7 @@ public:
 	int			SpawnMask;
 	FNameNoInit	MorphWeapon;
 	fixed_t		AttackZOffset;			// attack height, relative to player center
+	const PClass *FlechetteType;
 
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;
@@ -411,10 +413,7 @@ public:
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];
 
-inline FArchive &operator<< (FArchive &arc, player_t *&p)
-{
-	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
-}
+FArchive &operator<< (FArchive &arc, player_t *&p);
 
 void P_CheckPlayerSprites();
 

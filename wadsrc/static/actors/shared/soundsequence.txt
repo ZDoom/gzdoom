@@ -6,6 +6,11 @@ ACTOR AmbientSound 14065 native
 	+DONTSPLASH
 }
 
+ACTOR AmbientSoundNoGravity : AmbientSound 14067
+{
+	+NOGRAVITY
+}
+
 ACTOR SoundSequenceSlot native
 {
 	+NOSECTOR

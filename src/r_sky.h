@@ -33,10 +33,12 @@ extern fixed_t	skytexturemid;
 extern fixed_t	skyiscale;
 extern fixed_t	skyscale;
 extern bool		skystretch;
+extern fixed_t freelookviewheight;
 
 #define SKYSTRETCH_HEIGHT 228
 
 // Called whenever the sky changes.
 void R_InitSkyMap		();
+void R_UpdateSky (DWORD mstime);
 
 #endif //__R_SKY_H__

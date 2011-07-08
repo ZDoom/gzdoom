@@ -1,4 +1,5 @@
 // MAPINFO for Chex Quest
+include "mapinfo/common.txt"
 
 gameinfo
 {
@@ -52,6 +53,17 @@ gameinfo
 	menufontcolor_highlight = "BLUE"
 	menufontcolor_selection = "GOLD"
 	menubackbutton = "M_BACK_H"
+	playerclasses = "ChexPlayer"
+	pausesign = "M_PAUSE"
+	gibfactor = 1
+	cursorpic = "chexcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Pic1"
+	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedpatch = "WIF"
+	statscreen_enteringpatch = "WIENTER"
 }
 
 skill baby
@@ -109,6 +121,7 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
+	name = "Chex Quest"
 	key = "k"
 }
 

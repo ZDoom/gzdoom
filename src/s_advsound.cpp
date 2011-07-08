@@ -46,10 +46,11 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "i_sound.h"
-#include "r_data.h"
 #include "m_random.h"
 #include "d_netinf.h"
 #include "i_system.h"
+#include "d_player.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -149,6 +150,8 @@ enum SICommands
 	SI_IfStrife,
 	SI_Rolloff,
 	SI_Volume,
+	SI_MusicAlias,
+	SI_EDFOverride,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -183,6 +186,7 @@ struct FSavedPlayerSoundInfo
 };
 
 // This specifies whether Timidity or Windows playback is preferred for a certain song (only useful for Windows.)
+MusicAliasMap MusicAliases;
 MidiDeviceMap MidiDevices;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -241,6 +245,8 @@ static const char *SICommandStrings[] =
 	"$ifstrife",
 	"$rolloff",
 	"$volume",
+	"$musicalias",
+	"$edfoverride",
 	NULL
 };
 
@@ -253,6 +259,7 @@ static bool PlayerClassesIsSorted;
 
 static TArray<FPlayerClassLookup> PlayerClassLookups;
 static TArray<FPlayerSoundHashTable> PlayerSounds;
+
 
 static FString DefPlayerClassName;
 static int DefPlayerClass;
@@ -853,6 +860,8 @@ static void S_ClearSoundData()
 	PlayerSounds.Clear();
 	DefPlayerClass = 0;
 	DefPlayerClassName = "";
+	MusicAliases.Clear();
+	MidiDevices.Clear();
 }
 
 //==========================================================================
@@ -863,10 +872,11 @@ static void S_ClearSoundData()
 // Also registers Blood SFX files and Strife's voices.
 //==========================================================================
 
-void S_ParseSndInfo ()
+void S_ParseSndInfo (bool redefine)
 {
 	int lump;
 
+	if (!redefine) SavedPlayerSounds.Clear();	// clear skin sounds only for initial parsing.
 	atterm (S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 
@@ -1066,6 +1076,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Registered:
 				// I don't think Hexen even pays attention to the $registered command.
+			case SI_EDFOverride:
 				break;
 
 			case SI_ArchivePath:
@@ -1285,6 +1296,32 @@ static void S_AddSNDINFO (int lump)
 				}
 				break;
 
+			case SI_MusicAlias: {
+				sc.MustGetString();
+				int lump = Wads.CheckNumForName(sc.String, ns_music);
+				if (lump >= 0)
+				{
+					// do not set the alias if a later WAD defines its own music of this name
+					int file = Wads.GetLumpFile(lump);
+					int sndifile = Wads.GetLumpFile(sc.LumpNum);
+					if (file > sndifile)
+					{
+						sc.MustGetString();
+						continue;
+					}
+				}
+				FName alias = sc.String;
+				sc.MustGetString();
+				FName mapped = sc.String;
+
+				// only set the alias if the lump it maps to exists.
+				if (mapped == NAME_None || Wads.CheckNumForName(sc.String, ns_music) >= 0)
+				{
+					MusicAliases[alias] = mapped;
+				}
+				}
+				break;
+
 			case SI_MidiDevice: {
 				sc.MustGetString();
 				FName nm = sc.String;
@@ -1295,36 +1332,16 @@ static void S_AddSNDINFO (int lump)
 				else if (sc.Compare("opl")) MidiDevices[nm] = MDEV_OPL;
 				else if (sc.Compare("default")) MidiDevices[nm] = MDEV_DEFAULT;
 				else if (sc.Compare("fluidsynth")) MidiDevices[nm] = MDEV_FLUIDSYNTH;
+				else if (sc.Compare("gus")) MidiDevices[nm] = MDEV_GUS;
 				else sc.ScriptError("Unknown MIDI device %s\n", sc.String);
 				}
 				break;
 
 			case SI_IfDoom: //also Chex
-				if (!(gameinfo.gametype & GAME_DoomChex))
-				{
-					skipToEndIf = true;
-				}
-				break;
-
 			case SI_IfStrife:
-				if (gameinfo.gametype != GAME_Strife)
-				{
-					skipToEndIf = true;
-				}
-				break;
-
 			case SI_IfHeretic:
-				if (gameinfo.gametype != GAME_Heretic)
-				{
-					skipToEndIf = true;
-				}
-				break;
-
 			case SI_IfHexen:
-				if (gameinfo.gametype != GAME_Hexen)
-				{
-					skipToEndIf = true;
-				}
+				skipToEndIf = !CheckGame(sc.String+3, true);
 				break;
 			}
 		}
@@ -2005,37 +2022,7 @@ IMPLEMENT_CLASS (AAmbientSound)
 void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bActive;
-	
-	if (SaveVersion < 1902)
-	{
-		arc << NextCheck;
-		NextCheck += gametic;
-		if (NextCheck < 0) NextCheck = INT_MAX;
-	}
-	else
-	{
-		if (arc.IsStoring())
-		{
-			if (NextCheck != INT_MAX)
-			{
-				int checktime = NextCheck - gametic;
-				arc << checktime;
-			}
-			else
-			{
-				arc << NextCheck;
-			}
-		}
-		else
-		{
-			arc << NextCheck;
-			if (NextCheck != INT_MAX)
-			{
-				NextCheck += gametic;
-			}
-		}
-	}
+	arc << bActive << NextCheck;
 }
 
 //==========================================================================
@@ -2048,7 +2035,7 @@ void AAmbientSound::Tick ()
 {
 	Super::Tick ();
 
-	if (!bActive || gametic < NextCheck)
+	if (!bActive || level.maptime < NextCheck)
 		return;
 
 	FAmbientSound *ambient;
@@ -2176,7 +2163,7 @@ void AAmbientSound::Activate (AActor *activator)
 			amb->periodmin = Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
-		NextCheck = gametic;
+		NextCheck = level.maptime;
 		if (amb->type & (RANDOM|PERIODIC))
 			SetTicker (amb);
 

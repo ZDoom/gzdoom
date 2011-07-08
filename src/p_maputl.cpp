@@ -212,9 +212,9 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	if (actor != NULL && linedef->frontsector != NULL && linedef->backsector != NULL && 
 		linedef->flags & ML_3DMIDTEX)
 	{
-		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open.top, open.bottom);
+		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open.top, open.bottom, &open.abovemidtex);
 	}
-	else open.touchmidtex = false;
+	else open.abovemidtex = open.touchmidtex = false;
 
 	open.range = open.top - open.bottom;
 }
@@ -721,14 +721,11 @@ line_t *FBlockLinesIterator::Next()
 			{
 				line_t *ld = &lines[*list];
 
+				list++;
 				if (ld->validcount != validcount)
 				{
 					ld->validcount = validcount;
 					return ld;
-				}
-				else
-				{
-					list++;
 				}
 			}
 		}

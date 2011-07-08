@@ -109,7 +109,7 @@ RetailOnly		= 121
 193 = WALK|REP,		ACS_ExecuteAlways (0, 0, 193, tag)
  38 = WALK,		Floor_LowerToLowest (tag, F_SLOW)
  39 = WALK|MONST,	Teleport (0, tag)
- 44 = WALK,		Ceiling_LowerAndCrush (tag, C_SLOW, 10)
+ 44 = WALK,		Ceiling_LowerAndCrushDist (tag, C_SLOW, 10)
  52 = WALK|REP,		ACS_ExecuteAlways (0, 0, 52, tag)
  53 = WALK,		Plat_PerpetualRaiseLip (tag, P_SLOW, PLATWAIT, 0)
  54 = WALK,		Plat_Stop (tag)
@@ -145,7 +145,7 @@ RetailOnly		= 121
 
 216 = WALK|REP,		ACS_ExecuteAlways (0, 0, 216, tag)
  90 = WALK|REP,		Door_Raise (tag, D_SLOW, VDOORWAIT)
- 72 = WALK|REP,		Ceiling_LowerAndCrush (tag, C_SLOW, 10)
+ 72 = WALK|REP,		Ceiling_LowerAndCrushDist (tag, C_SLOW, 10)
  73 = WALK|REP,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
  74 = WALK|REP,		Ceiling_CrushStop (tag)
  75 = WALK|REP,		Door_Close (tag, D_SLOW)

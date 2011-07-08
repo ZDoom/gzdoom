@@ -44,6 +44,7 @@
 #include "d_net.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "farchive.h"
 
 static fixed_t DecalWidth, DecalLeft, DecalRight;
 static fixed_t SpreadZ;
@@ -414,7 +415,7 @@ static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ld
 
 static fixed_t Length (fixed_t dx, fixed_t dy)
 {
-	return (fixed_t)sqrtf ((float)dx*(float)dx+(float)dy*(float)dy);
+	return (fixed_t)sqrt ((double)dx*(double)dx+(double)dy*(double)dy);
 }
 
 static side_t *NextWall (const side_t *wall)

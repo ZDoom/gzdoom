@@ -50,7 +50,7 @@
 
 #include "a_sharedglobal.h"
 #include "p_conversation.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "g_level.h"
 
 #define WATER_SINK_FACTOR		3
@@ -148,10 +148,12 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 		tmf.floorz = open.bottom;
 		tmf.floorsector = open.bottomsec;
 		tmf.touchmidtex = open.touchmidtex;
+		tmf.abovemidtex = open.abovemidtex;
 	}
 	else if (open.bottom == tmf.floorz)
 	{
 		tmf.touchmidtex |= open.touchmidtex;
+		tmf.abovemidtex |= open.abovemidtex;
 	}
 
 	if (open.lowfloor < tmf.dropoffz)
@@ -250,6 +252,7 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 	FBoundingBox box(tmf.x, tmf.y, actor->radius);
 
 	tmf.touchmidtex = false;
+	tmf.abovemidtex = false;
 	validcount++;
 
 	FBlockLinesIterator it(box);
@@ -262,7 +265,7 @@ void P_FindFloorCeiling (AActor *actor, bool onlyspawnpos)
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	if (!onlyspawnpos || (tmf.touchmidtex && (tmf.floorz <= actor->z)))
+	if (!onlyspawnpos || (tmf.abovemidtex && (tmf.floorz <= actor->z)))
 	{
 		actor->floorz = tmf.floorz;
 		actor->dropoffz = tmf.dropoffz;
@@ -314,6 +317,8 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmf.x = x;
 	tmf.y = y;
 	tmf.z = z;
+	tmf.touchmidtex = false;
+	tmf.abovemidtex = false;
 	P_GetFloorCeilingZ(tmf, true);
 					
 	spechit.Clear ();
@@ -325,10 +330,14 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
+	// P_LineOpening requires the thing's z to be the destination ín order to work.
+	fixed_t savedz = thing->z;
+	thing->z = z;
 	while ((ld = it.Next()))
 	{
 		PIT_FindFloorCeiling(ld, box, tmf);
 	}
+	thing->z = savedz;
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
@@ -646,7 +655,8 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 				P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 			}
 			tm.thing->BlockingLine = ld;
-			CheckForPushSpecial (ld, 0, tm.thing);
+			// Calculate line side based on the actor's original position, not the new one.
+			CheckForPushSpecial (ld, P_PointOnLineSide(tm.thing->x, tm.thing->y, ld), tm.thing);
 			return false;
 		}
 	}
@@ -731,7 +741,8 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		// so don't mess around with the z-position
 		if (ld->frontsector->floorplane==ld->backsector->floorplane &&
 			ld->frontsector->floorplane==tm.thing->Sector->floorplane &&
-			!ld->frontsector->e->XFloor.ffloors.Size() && !ld->backsector->e->XFloor.ffloors.Size())
+			!ld->frontsector->e->XFloor.ffloors.Size() && !ld->backsector->e->XFloor.ffloors.Size() &&
+			!open.abovemidtex)
 		{
 			open.bottom=INT_MIN;
 		}
@@ -768,11 +779,13 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		tm.floorsector = open.bottomsec;
 		tm.floorpic = open.floorpic;
 		tm.touchmidtex = open.touchmidtex;
+		tm.abovemidtex = open.abovemidtex;
 		tm.thing->BlockingLine = ld;
 	}
 	else if (open.bottom == tm.floorz)
 	{
 		tm.touchmidtex |= open.touchmidtex;
+		tm.abovemidtex |= open.abovemidtex;
 	}
 
 	if (open.lowfloor < tm.dropoffz)
@@ -844,16 +857,23 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 
 	if (tm.FromPMove)
 	{
-		fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
-		fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
-
 		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
-		// takes them further apart.
-		if (newdist > olddist)
+		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
+		if (tm.x == tm.thing->x && tm.y == tm.thing->y)
 		{
-			// ... but not if they did not overlap in z-direction before but would after the move.
-			unblocking = !((tm.thing->x >= thing->x + thing->height && tm.x < thing->x + thing->height) ||
-							(tm.thing->x + tm.thing->height <= thing->x && tm.x + tm.thing->height > thing->x));
+			unblocking = true;
+		}
+		else
+		{
+			fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
+			fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
+
+			if (newdist > olddist)
+			{
+				// ... but not if they did not overlap in z-direction before but would after the move.
+				unblocking = !((tm.thing->z >= thing->z + thing->height && tm.z < thing->z + thing->height) ||
+								(tm.thing->z + tm.thing->height <= thing->z && tm.z + tm.thing->height > thing->z));
+			}
 		}
 	}
 
@@ -1054,7 +1074,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 						// [RH] Don't hurt monsters that hate the same thing as you do
 						return false;
 					}
-					if (thing->GetSpecies() == tm.thing->target->GetSpecies())
+					if (thing->GetSpecies() == tm.thing->target->GetSpecies() && !(thing->flags6 & MF6_DOHARMSPECIES))
 					{
 						// Don't hurt same species or any relative -
 						// but only if the target isn't one's hostile.
@@ -1098,7 +1118,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 					// Do poisoning (if using new style poison)
 					if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
 					{
-						P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod);
+						P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod, tm.thing->PoisonDamageType);
 					}
 
 					damage = tm.thing->GetMissileDamage (3, 2);
@@ -1126,7 +1146,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		// Do poisoning (if using new style poison)
 		if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
 		{
-			P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod);
+			P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod, tm.thing->PoisonDamageType);
 		}
 
 		// Do damage
@@ -1251,6 +1271,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 	tm.ceilingpic = newsec->GetTexture(sector_t::ceiling);
 	tm.ceilingsector = newsec;
 	tm.touchmidtex = false;
+	tm.abovemidtex = false;
 
 	//Added by MC: Fill the tmsector.
 	tm.sector = newsec;
@@ -1380,15 +1401,20 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 	//bool onthing = (thingdropoffz != tmdropoffz);
 	tm.floorz = tm.dropoffz;
 
+	bool good = true;
+
 	while ((ld = it.Next()))
 	{
-		if (!PIT_CheckLine(ld, box, tm))
-			return false;
+		good &= PIT_CheckLine(ld, box, tm);
 	}
-
-	if (tm.ceilingz - tm.floorz < thing->height)
+	if (!good)
+	{
 		return false;
-
+	}
+	if (tm.ceilingz - tm.floorz < thing->height)
+	{
+		return false;
+	}
 	if (tm.touchmidtex)
 	{
 		tm.dropoffz = tm.floorz;
@@ -2857,7 +2883,8 @@ bool aim_t::AimTraverse3DFloors(const divline_t &trace, intercept_t * in)
 	nextsector=NULL;
 	nexttopplane=nextbottomplane=NULL;
 
-    if(li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
+	if (li->backsector == NULL) return true;	// shouldn't really happen but crashed once for me...
+    if (li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
     {
 		int  frontflag;
 		F3DFloor* rover;
@@ -3347,12 +3374,13 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		shootz += 8*FRACUNIT;
 	}
 
-	hitGhosts = (t1->player != NULL &&
-		t1->player->ReadyWeapon != NULL &&
-		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
-
 	// We need to check the defaults of the replacement here
 	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
+
+	hitGhosts = (t1->player != NULL &&
+		t1->player->ReadyWeapon != NULL &&
+		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST)) ||
+		(puffDefaults && (puffDefaults->flags2 & MF2_THRUGHOST));
 
 	// if the puff uses a non-standard damage type this will override default and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
@@ -3457,6 +3485,9 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
+				if (!(trace.Actor->flags & MF_NOBLOOD))
+					flags |= PF_HITTHINGBLEED;
+
 				// We must pass the unreplaced puff type here 
 				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
 			}
@@ -3495,7 +3526,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
 			if (puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 			{
-				P_PoisonMobj(trace.Actor, puff ? puff : t1, t1, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
+				P_PoisonMobj(trace.Actor, puff ? puff : t1, t1, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
 			}
 
 			// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
@@ -3869,7 +3900,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, PF_HITTHING);
 
 		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
-			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod);
+			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
 
 		P_DamageMobj (RailHits[i].HitActor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
 	}
@@ -4298,8 +4329,8 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		return;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance-1);
 
-	float bombdistancefloat = 1.f / (float)(bombdistance - fulldamagedistance);
-	float bombdamagefloat = (float)bombdamage;
+	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
+	double bombdamagefloat = (double)bombdamage;
 
 	FVector3 bombvec(FIXED2FLOAT(bombspot->x), FIXED2FLOAT(bombspot->y), FIXED2FLOAT(bombspot->z));
 
@@ -4318,7 +4349,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 			continue;
 
-		if (!DamageSource && thing == bombsource)
+		if (!DamageSource && (thing == bombsource || thing == bombspot))
 		{ // don't damage the source of the explosion
 			continue;
 		}
@@ -4342,29 +4373,29 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		{
 			// [RH] New code. The bounding box only covers the
 			// height of the thing and not the height of the map.
-			float points;
-			float len;
+			double points;
+			double len;
 			fixed_t dx, dy;
-			float boxradius;
+			double boxradius;
 
 			dx = abs (thing->x - bombspot->x);
 			dy = abs (thing->y - bombspot->y);
-			boxradius = float (thing->radius);
+			boxradius = double (thing->radius);
 
 			// The damage pattern is square, not circular.
-			len = float (dx > dy ? dx : dy);
+			len = double (dx > dy ? dx : dy);
 
 			if (bombspot->z < thing->z || bombspot->z >= thing->z + thing->height)
 			{
-				float dz;
+				double dz;
 
 				if (bombspot->z > thing->z)
 				{
-					dz = float (bombspot->z - thing->z - thing->height);
+					dz = double (bombspot->z - thing->z - thing->height);
 				}
 				else
 				{
-					dz = float (thing->z - bombspot->z);
+					dz = double (thing->z - bombspot->z);
 				}
 				if (len <= boxradius)
 				{
@@ -4373,7 +4404,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 				else
 				{
 					len -= boxradius;
-					len = sqrtf (len*len + dz*dz);
+					len = sqrt (len*len + dz*dz);
 				}
 			}
 			else
@@ -4383,18 +4414,18 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 					len = 0.f;
 			}
 			len /= FRACUNIT;
-			len = clamp<float>(len - (float)fulldamagedistance, 0, len);
+			len = clamp<double>(len - (double)fulldamagedistance, 0, len);
 			points = bombdamagefloat * (1.f - len * bombdistancefloat);
 			if (thing == bombsource)
 			{
 				points = points * splashfactor;
 			}
-			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
+			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(double)FRACUNIT;
 
 			if (points > 0.f && P_CheckSight (thing, bombspot, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
-				float velz;
-				float thrust;
+				double velz;
+				double thrust;
 				int damage = (int)points;
 
 				if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
@@ -4406,14 +4437,14 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 					if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
 					{
-						if (bombsource == NULL  || !(bombsource->flags2 & MF2_NODMGTHRUST))
+						if (bombsource == NULL || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{
-							thrust = points * 0.5f / (float)thing->Mass;
+							thrust = points * 0.5f / (double)thing->Mass;
 							if (bombsource == thing)
 							{
 								thrust *= selfthrustscale;
 							}
-							velz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+							velz = (double)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
 							if (bombsource != thing)
 							{
 								velz *= 0.5f;
@@ -4453,7 +4484,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 			{ // OK to damage; target is in direct path
 				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
 				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
-				damage = (int)((float)damage * splashfactor);
+				damage = (int)((double)damage * splashfactor);
 
 				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
 				if (damage > 0)
@@ -4511,6 +4542,11 @@ bool P_AdjustFloorCeil (AActor *thing, FChangePosition *cpos)
 {
 	int flags2 = thing->flags2 & MF2_PASSMOBJ;
 	FCheckPosition tm;
+
+	if ((thing->flags2 & MF2_PASSMOBJ) && (thing->flags3 & MF3_ISMONSTER))
+	{
+		tm.FromPMove = true;
+	}
 
 	if (cpos->movemidtex)
 	{
@@ -4725,9 +4761,11 @@ int P_PushUp (AActor *thing, FChangePosition *cpos)
 	{
 		AActor *intersect = intersectors[firstintersect];
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
-			(!(intersect->flags3 & MF3_ISMONSTER) &&
-			 intersect->Mass > mymass))
-		{ // Can't push things more massive than ourself
+			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
+			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
+		   )
+		{ 
+			// Can't push bridges or things more massive than ourself
 			return 2;
 		}
 		fixed_t oldz = intersect->z;
@@ -4767,9 +4805,11 @@ int P_PushDown (AActor *thing, FChangePosition *cpos)
 	{
 		AActor *intersect = intersectors[firstintersect];
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
-			(!(intersect->flags3 & MF3_ISMONSTER) &&
-			 intersect->Mass > mymass))
-		{ // Can't push things more massive than ourself
+			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
+			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
+		   )
+		{ 
+			// Can't push bridges or things more massive than ourself
 			return 2;
 		}
 		fixed_t oldz = intersect->z;
@@ -4801,6 +4841,7 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 	P_AdjustFloorCeil (thing, cpos);
 
 	if (oldfloorz == thing->floorz) return;
+	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
 	if (thing->velz == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
@@ -4844,6 +4885,11 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 	if (thing->z <= thing->floorz ||
 		(!(thing->flags & MF_NOGRAVITY) && (thing->flags2 & MF2_FLOATBOB)))
 	{
+		if (thing->flags4 & MF4_ACTLIKEBRIDGE) 
+		{
+			cpos->nofit = true;
+			return; // do not move bridge things
+		}
 		intersectors.Clear ();
 		fixed_t oldz = thing->z;
 		if (!(thing->flags2 & MF2_FLOATBOB))
@@ -4886,6 +4932,11 @@ void PIT_CeilingLower (AActor *thing, FChangePosition *cpos)
 
 	if (thing->z + thing->height > thing->ceilingz)
 	{
+		if (thing->flags4 & MF4_ACTLIKEBRIDGE) 
+		{
+			cpos->nofit = true;
+			return; // do not move bridge things
+		}
 		intersectors.Clear ();
 		fixed_t oldz = thing->z;
 		if (thing->ceilingz - thing->height >= thing->floorz)
@@ -4922,6 +4973,8 @@ void PIT_CeilingLower (AActor *thing, FChangePosition *cpos)
 void PIT_CeilingRaise (AActor *thing, FChangePosition *cpos)
 {
 	bool isgood = P_AdjustFloorCeil (thing, cpos);
+
+	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
 	// For DOOM compatibility, only move things that are inside the floor.
 	// (or something else?) Things marked as hanging from the ceiling will
@@ -5489,7 +5542,7 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 	// Run the special, if any
 	if (thing->special)
 	{
-		res = !! LineSpecials[thing->special] (NULL,
+		res = !! P_ExecuteSpecial(thing->special, NULL,
 			// TriggerActs overrides the level flag, which only concerns thing activated by death
 			(((death && level.flags & LEVEL_ACTOWNSPECIAL && !(thing->activationtype & THINGSPEC_TriggerActs))
 			|| (thing->activationtype & THINGSPEC_ThingActs)) // Who triggers?

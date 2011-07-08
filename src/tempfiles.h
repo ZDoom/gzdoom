@@ -49,7 +49,7 @@ public:
 	FTempFileName (const char *prefix=NULL);
 	~FTempFileName ();
 
-	operator const char * const () { return Name; }
+	operator const char * () { return Name; }
 	const char * GetName () const { return Name; }
 
 private:

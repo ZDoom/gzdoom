@@ -61,6 +61,7 @@ DEFINE_MEMBER_VARIABLE(args, AActor)
 DEFINE_MEMBER_VARIABLE(ceilingz, AActor)
 DEFINE_MEMBER_VARIABLE(floorz, AActor)
 DEFINE_MEMBER_VARIABLE(health, AActor)
+DEFINE_MEMBER_VARIABLE(Mass, AActor)
 DEFINE_MEMBER_VARIABLE(pitch, AActor)
 DEFINE_MEMBER_VARIABLE(special, AActor)
 DEFINE_MEMBER_VARIABLE(special1, AActor)
@@ -77,6 +78,8 @@ DEFINE_MEMBER_VARIABLE(velz, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momx, velx, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
+DEFINE_MEMBER_VARIABLE(scaleX, AActor)
+DEFINE_MEMBER_VARIABLE(scaleY, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
 
@@ -675,6 +678,7 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	if (Operand)
+
 	{
 		Operand = Operand->ResolveAsBoolean(ctx);
 	}
@@ -1546,7 +1550,7 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(val, ctx);
 
 
-	if (!ValueType.isNumeric())
+	if (!val->ValueType.isNumeric())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
@@ -2411,7 +2415,7 @@ ExpVal FxActionSpecialCall::EvalExpression (AActor *self)
 	}
 	ExpVal ret;
 	ret.Type = VAL_Int;
-	ret.Int = LineSpecials[Special](NULL, self, false, v[0], v[1], v[2], v[3], v[4]);
+	ret.Int = P_ExecuteSpecial(Special, NULL, self, false, v[0], v[1], v[2], v[3], v[4]);
 	return ret;
 }
 
@@ -2762,7 +2766,7 @@ FStateExpressions StateParams;
 //
 //==========================================================================
 
-FStateExpressions::~FStateExpressions()
+void FStateExpressions::Clear()
 {
 	for(unsigned i=0; i<Size(); i++)
 	{
@@ -2771,6 +2775,7 @@ FStateExpressions::~FStateExpressions()
 			delete expressions[i].expr;
 		}
 	}
+	expressions.Clear();
 }
 
 //==========================================================================

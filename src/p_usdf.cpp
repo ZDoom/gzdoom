@@ -32,7 +32,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "r_data.h"
 #include "p_setup.h"
 #include "p_lnspec.h"
 #include "templates.h"
@@ -40,6 +39,8 @@
 #include "p_conversation.h"
 #include "p_udmf.h"
 #include "doomerrors.h"
+#include "cmdlib.h"
+#include "actor.h"
 
 #define Zd 1
 #define St 2

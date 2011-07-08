@@ -36,17 +36,20 @@
 #include <ctype.h>
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "w_wad.h"
 #include "i_system.h"
 #include "gi.h"
 #include "st_start.h"
 #include "sc_man.h"
 #include "templates.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "v_video.h"
+#include "m_fixed.h"
+#include "textures/textures.h"
+#include "r_data/colormaps.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -160,6 +163,8 @@ public:
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	int GetSourceLump() { return DefinitionLump; }
+	FTexture *GetRedirect(bool wantwarped);
+	FTexture *GetRawTexture();
 
 protected:
 	BYTE *Pixels;
@@ -185,11 +190,10 @@ protected:
 	bool bTranslucentPatches:1;
 
 	void MakeTexture ();
-	FTexture *GetRedirect(bool wantwarped);
 
 private:
 	void CheckForHacks ();
-	void ParsePatch(FScanner &sc, TexPart & part, bool silent);
+	void ParsePatch(FScanner &sc, TexPart & part, bool silent, int usetype);
 };
 
 //==========================================================================
@@ -766,14 +770,32 @@ void FMultiPatchTexture::CheckForHacks ()
 
 //==========================================================================
 //
-// FMultiPatchTexture :: TexPart :: TexPart
+// FMultiPatchTexture :: GetRedirect
 //
 //==========================================================================
 
 FTexture *FMultiPatchTexture::GetRedirect(bool wantwarped)
 {
-	if (bRedirect) return Parts->Texture;
-	else return this;
+	return bRedirect ? Parts->Texture : this;
+}
+
+//==========================================================================
+//
+// FMultiPatchTexture :: GetRawTexture
+//
+// Doom ignored all compositing of mid-sided textures on two-sided lines.
+// Since these textures had to be single-patch in Doom, that essentially
+// means it ignores their Y offsets.
+//
+// If this texture is composed of only one patch, return that patch.
+// Otherwise, return this texture, since Doom wouldn't have been able to
+// draw it anyway.
+//
+//==========================================================================
+
+FTexture *FMultiPatchTexture::GetRawTexture()
+{
+	return NumParts == 1 ? Parts->Texture : this;
 }
 
 //==========================================================================
@@ -816,7 +838,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		pnames >> numpatches;
 
 		// Check whether the amount of names reported is correct.
-		if (numpatches < 0)
+		if ((signed)numpatches < 0)
 		{
 			Printf("Corrupt PNAMES lump found (negative amount of entries reported)");
 			return;
@@ -970,12 +992,12 @@ void FTextureManager::AddTexturesLumps (int lump1, int lump2, int patcheslump)
 //
 //==========================================================================
 
-void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent)
+void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, int usetype)
 {
 	FString patchname;
 	sc.MustGetString();
 
-	FTextureID texno = TexMan.CheckForTexture(sc.String, TEX_WallPatch);
+	FTextureID texno = TexMan.CheckForTexture(sc.String, usetype);
 	int Mirror = 0;
 
 	if (!texno.isValid())
@@ -996,10 +1018,10 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent)
 		}
 		else if (strlen(sc.String) <= 8 && !strpbrk(sc.String, "./"))
 		{
-			int lumpnum = Wads.CheckNumForName(sc.String, ns_patches);
+			int lumpnum = Wads.CheckNumForName(sc.String, usetype == TEX_MiscPatch? ns_graphics : ns_patches);
 			if (lumpnum >= 0)
 			{
-				part.Texture = FTexture::CreateTexture(lumpnum, TEX_WallPatch);
+				part.Texture = FTexture::CreateTexture(lumpnum, usetype);
 				TexMan.AddTexture(part.Texture);
 			}
 		}
@@ -1200,6 +1222,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 	bMultiPatch = true;
 	sc.SetCMode(true);
 	sc.MustGetString();
+	const char* textureName = NULL;
 	if (sc.Compare("optional"))
 	{
 		bSilent = true;
@@ -1208,11 +1231,11 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 		{
 			// this is not right. Apparently a texture named 'optional' is being defined right now...
 			sc.UnGet();
-			sc.String = "optional";
+			textureName = "optional";
 			bSilent = false;
 		}
 	}
-	uppercopy(Name, sc.String);
+	uppercopy(Name, !textureName ? sc.String : textureName);
 	Name[8] = 0;
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();
@@ -1252,7 +1275,15 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			else if (sc.Compare("Patch"))
 			{
 				TexPart part;
-				ParsePatch(sc, part, bSilent);
+				ParsePatch(sc, part, bSilent, TEX_WallPatch);
+				if (part.Texture != NULL) parts.Push(part);
+				part.Texture = NULL;
+				part.Translation = NULL;
+			}
+			else if (sc.Compare("Graphic"))
+			{
+				TexPart part;
+				ParsePatch(sc, part, bSilent, TEX_MiscPatch);
 				if (part.Texture != NULL) parts.Push(part);
 				part.Texture = NULL;
 				part.Translation = NULL;

@@ -11,6 +11,7 @@
 #include "a_morph.h"
 #include "doomstat.h"
 #include "g_level.h"
+#include "farchive.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 

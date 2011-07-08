@@ -60,18 +60,18 @@
 #include "gi.h"
 #include "c_dispatch.h"
 #include "decallib.h"
-#include "r_draw.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "thingdef/thingdef.h"
 #include "thingdef/thingdef_exp.h"
 #include "vectors.h"
 #include "dobject.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "sc_man.h"
 #include "i_system.h"
 #include "doomerrors.h"
 #include "p_effect.h"
+#include "farchive.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -309,7 +309,7 @@ static const struct {
 	{ "[PARS]",		PatchPars },
 	{ "[CODEPTR]",	PatchCodePtrs },
 	{ "[MUSIC]",	PatchMusic },
-	{ NULL, },
+	{ NULL, NULL },
 };
 
 static int HandleMode (const char *mode, int num);
@@ -1712,7 +1712,7 @@ static int PatchMisc (int dummy)
 		{ "IDKFA Armor",			myoffsetof(struct DehInfo,KFAArmor) },
 		{ "IDKFA Armor Class",		myoffsetof(struct DehInfo,KFAAC) },
 		{ "No Autofreeze",			myoffsetof(struct DehInfo,NoAutofreeze) },
-		{ NULL, }
+		{ NULL, 0 }
 	};
 	int result;
 
@@ -1866,8 +1866,8 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		unsigned int index = PClass::FindClass(NAME_DoomPlayer)->Meta.GetMetaInt (ACMETA_DropItems) - 1;
-		if (index >= 0 && index < DropItemList.Size())
+		int index = PClass::FindClass(NAME_DoomPlayer)->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+		if (index >= 0 && index < (signed)DropItemList.Size())
 		{
 			FDropItem * di = DropItemList[index];
 			while (di != NULL)
@@ -2880,6 +2880,8 @@ void FinishDehPatch ()
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
 	StateMap.Clear();
 	StateMap.ShrinkToFit();
+	TouchedActors.Clear();
+	TouchedActors.ShrinkToFit();
 }
 
 void ModifyDropAmount(AInventory *inv, int dropamount);
@@ -2895,11 +2897,7 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	if (RealPickup != NULL)
 	{
 		// The internally spawned item should never count towards statistics.
-		if (RealPickup->flags & MF_COUNTITEM)
-		{
-			RealPickup->flags &= ~MF_COUNTITEM;
-			level.total_items--;
-		}
+		RealPickup->ClearCounters();
 		if (!(flags & MF_DROPPED))
 		{
 			RealPickup->flags &= ~MF_DROPPED;

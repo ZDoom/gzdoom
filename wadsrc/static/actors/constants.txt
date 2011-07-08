@@ -1,4 +1,9 @@
 
+// Flags for A_PainAttack
+const int PAF_NOSKULLATTACK = 1;
+const int PAF_AIMFACING = 2;
+const int PAF_NOTARGET = 4;
+
 // Flags for A_Saw
 const int SF_NORANDOM = 1;
 const int SF_RANDOMLIGHTMISS = 2;
@@ -18,6 +23,9 @@ const int CBAF_AIMFACING = 1;
 const int CBAF_NORANDOM = 2;
 const int CBAF_EXPLICITANGLE = 4;
 const int CBAF_NOPITCH = 8;
+
+// Flags for A_GunFlash
+const int GFF_NOEXTCHANGE = 1;
 
 // Flags for A_FireBullets
 const int FBF_USEAMMO = 1;
@@ -67,6 +75,10 @@ const int JLOSF_CLOSENOSIGHT = 8;
 const int JLOSF_CLOSENOJUMP = 16;
 const int JLOSF_DEADNOJUMP = 32;
 const int JLOSF_CHECKMASTER = 64;
+const int JLOSF_TARGETLOS = 128;
+const int JLOSF_FLIPFOV = 256;
+const int JLOSF_ALLYNOJUMP = 512;
+const int JLOSF_COMBATANTONLY = 1024;
 
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
@@ -121,6 +133,10 @@ const int CPF_PULLIN = 4;
 const int TF_TELEFRAG = 1;
 const int TF_RANDOMDECIDE = 2;
 
+// Flags for A_WolfAttack
+const int WAF_NORANDOM = 1;
+const int WAF_USEPUFF = 2;
+
 // Activation flags
 enum
 {
@@ -170,6 +186,74 @@ const float ATTN_NORM = 1;
 const float ATTN_IDLE = 1.001;
 const float ATTN_STATIC = 3;
 
+// For SetPlayerProprty action special
+Const Int PROP_FROZEN = 0;
+Const Int PROP_NOTARGET = 1;
+Const Int PROP_INSTANTWEAPONSWITCH = 2;
+Const Int PROP_FLY = 3;
+Const Int PROP_TOTALLYFROZEN = 4;
+Const Int PROP_INVULNERABILITY  = 5; // (Deprecated)
+Const Int PROP_STRENGTH = 6; // (Deprecated)
+Const Int PROP_INVISIBILITY = 7; // (Deprecated)
+Const Int PROP_RADIATIONSUIT = 8; // (Deprecated)
+Const Int PROP_ALLMAP = 9; // (Deprecated)
+Const Int PROP_INFRARED = 10; // (Deprecated)
+Const Int PROP_WEAPONLEVEL2 = 11; // (Deprecated)
+Const Int PROP_FLIGHT = 12; // (Deprecated)
+Const Int PROP_SPEED = 15; // (Deprecated)
+Const Int PROP_BUDDHA = 16;
+
+// Line_SetBlocking
+Const Int BLOCKF_CREATURES = 1;
+Const Int BLOCKF_MONSTERS = 2;
+Const Int BLOCKF_PLAYERS = 4;
+Const Int BLOCKF_FLOATERS = 8;
+Const Int BLOCKF_PROJECTILES = 16;
+Const Int BLOCKF_EVERYTHING = 32;
+Const Int BLOCKF_RAILING = 64;
+Const Int BLOCKF_USE = 128;
+
+// Pointer constants, bitfield-enabled
+
+Const Int AAPTR_DEFAULT = 0;
+Const Int AAPTR_NULL = 1;
+Const Int AAPTR_TARGET = 2;
+Const Int AAPTR_MASTER = 4;
+Const Int AAPTR_TRACER = 8;
+
+Const Int AAPTR_PLAYER_GETTARGET = 16;
+Const Int AAPTR_PLAYER_GETCONVERSATION = 32;
+
+Const Int AAPTR_PLAYER1 = 64;
+Const Int AAPTR_PLAYER2 = 128;
+Const Int AAPTR_PLAYER3 = 256;
+Const Int AAPTR_PLAYER4 = 512;
+Const Int AAPTR_PLAYER5 = 1024;
+Const Int AAPTR_PLAYER6 = 2048;
+Const Int AAPTR_PLAYER7 = 4096;
+Const Int AAPTR_PLAYER8 = 8192;
+
+Const Int AAPTR_FRIENDPLAYER = 16384;
+
+// Pointer operation flags
+
+Const Int PTROP_UNSAFETARGET = 1;
+Const Int PTROP_UNSAFEMASTER = 2;
+Const Int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
+
+
+// Flags for A_Warp
+
+Const Int WARPF_ABSOLUTEOFFSET = 0x1;
+Const Int WARPF_ABSOLUTEANGLE = 0x2;
+Const Int WARPF_USECALLERANGLE = 0x4;
+Const Int WARPF_NOCHECKPOSITION = 0x8;
+Const Int WARPF_INTERPOLATE = 0x10;
+Const Int WARPF_WARPINTERPOLATION = 0x20;
+Const Int WARPF_COPYINTERPOLATION = 0x40;
+Const Int WARPF_STOP = 0x80;
+Const Int WARPF_TOFLOOR = 0x100;
+Const Int WARPF_TESTONLY = 0x200;
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

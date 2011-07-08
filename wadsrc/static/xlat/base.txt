@@ -54,8 +54,8 @@ include "xlat/defines.i"
  52 = WALK,		Exit_Normal (0)
  53 = WALK,		Plat_PerpetualRaiseLip (tag, P_SLOW, PLATWAIT, 0)
  54 = WALK,		Plat_Stop (tag)
- 55 = USE,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
- 56 = WALK,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+ 55 = USE,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
+ 56 = WALK,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
  57 = WALK,		Ceiling_CrushStop (tag)
  58 = WALK,		Floor_RaiseByValue (tag, F_SLOW, 24)
  59 = WALK,		Floor_RaiseByValueTxTy (tag, F_SLOW, 24)
@@ -64,7 +64,7 @@ include "xlat/defines.i"
  62 = USE|REP,		Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
  63 = USE|REP,		Door_Raise (tag, D_SLOW, VDOORWAIT)
  64 = USE|REP,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
- 65 = USE|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+ 65 = USE|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
  66 = USE|REP,		Plat_UpByValueStayTx (tag, P_SLOW/2, 3)
  67 = USE|REP,		Plat_UpByValueStayTx (tag, P_SLOW/2, 4)
  68 = USE|REP,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
@@ -93,7 +93,7 @@ include "xlat/defines.i"
  91 = WALK|REP,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
  92 = WALK|REP,		Floor_RaiseByValue (tag, F_SLOW, 24)
  93 = WALK|REP,		Floor_RaiseByValueTxTy (tag, F_SLOW, 24)
- 94 = WALK|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+ 94 = WALK|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
  95 = WALK|REP,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
  96 = WALK|REP,		Floor_RaiseByTexture (tag, F_SLOW)
  97 = WALK|REP|MONST,	Teleport (0, tag)
@@ -168,7 +168,7 @@ include "xlat/defines.i"
 163 = USE,		Plat_Stop (tag)
 164 = USE,		Ceiling_CrushAndRaiseA (tag, C_NORMAL, C_NORMAL, 10)
 165 = USE,		Ceiling_CrushAndRaiseSilentA (tag, C_SLOW, C_SLOW, 10)
-166 = USE,		FloorAndCeiling_LowerRaise (tag, F_SLOW, C_SLOW)
+166 = USE,		FloorAndCeiling_LowerRaise (tag, F_SLOW, C_SLOW, 1998)
 167 = USE,		Ceiling_LowerAndCrush (tag, C_SLOW, 0, 2)
 168 = USE,		Ceiling_CrushStop (tag)
 169 = USE,		Light_MaxNeighbor (tag)
@@ -177,7 +177,7 @@ include "xlat/defines.i"
 172 = USE,		Light_StrobeDoom (tag, 5, 35)
 173 = USE,		Light_MinNeighbor (tag)
 174 = USE|MONST,	Teleport (0, tag)
-175 = USE,		Door_CloseWaitOpen (tag, F_SLOW, 240)
+175 = USE,		Door_CloseWaitOpen (tag, D_SLOW, 240)
 176 = USE|REP,		Floor_RaiseByTexture (tag, F_SLOW)
 177 = USE|REP,		Floor_LowerToLowestTxTy (tag, F_SLOW)
 178 = USE|REP,		Floor_RaiseByValueTimes8 (tag, F_SLOW, 64)
@@ -188,7 +188,7 @@ include "xlat/defines.i"
 183 = USE|REP,		Ceiling_CrushAndRaiseA (tag, C_NORMAL, C_NORMAL, 10)
 184 = USE|REP,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
 185 = USE|REP,		Ceiling_CrushAndRaiseSilentA (tag, C_SLOW, C_SLOW, 10)
-186 = USE|REP,		FloorAndCeiling_LowerRaise (tag, F_SLOW, C_SLOW)
+186 = USE|REP,		FloorAndCeiling_LowerRaise (tag, F_SLOW, C_SLOW, 1998)
 187 = USE|REP,		Ceiling_LowerAndCrush (tag, C_SLOW, 0, 2)
 188 = USE|REP,		Ceiling_CrushStop (tag)
 189 = USE,		Floor_TransferTrigger (tag)
@@ -275,12 +275,21 @@ include "xlat/defines.i"
 
 /****** MBF linetypes ******/
 
+270 = WALK|REP,		FS_Execute(tag)
 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
 272 = 0,		Static_Init (tag, Init_TransferSky, 1)
 
-/****** Legacy linetype ******/
-
+/****** Legacy linetypes ******/
+273 = WALK|REP,		FS_Execute(tag, 1)
+274 = WALK,		FS_Execute(tag)
+275 = WALK,		FS_Execute(tag, 1)
+276 = USE|REP,		FS_Execute(tag)
+277 = USE,		FS_Execute(tag)
+278 = SHOOT|REP,	FS_Execute(tag)
+279 = SHOOT,		FS_Execute(tag)
 280 = 0,		Transfer_Heights (tag, 12)
+281 = 0,		Sector_Set3DFloor(tag, 1, 0, 255)
+282 = 0,		Static_Init(tag, 1)
 
 // No, I haven't actually looked at these in Legacy. But these look like they
 // should give results equivalent to hardware Legacy rendering.
@@ -289,12 +298,18 @@ include "xlat/defines.i"
 286 = 0,		TranslucentLine (lineid,  48, 0)
 287 = 0,		TranslucentLine (lineid, 128, 1)
 
-281 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick extra floor
-301 = 0,		ExtraFloor_LightOnly (tag, 1)	// thick water
-302 = 0,		ExtraFloor_LightOnly (tag, 1)	// fog
-303 = 0,		ExtraFloor_LightOnly (tag, 0)	// light
-304 = 0,		ExtraFloor_LightOnly (tag, 1)	// opaque water
-305 = 0,		ExtraFloor_LightOnly (tag, 1)	// light block
+288 = 0,    		TranslucentLine(lineid, 255, 0)
+289 = 0,     		Sector_Set3DFloor(tag, 1, 1, 255)
+
+300 = 0,     		Sector_Set3DFloor(tag, 1, 1, 127)
+301 = 0,     		Sector_Set3DFloor(tag, 2, 2, 127)
+302 = 0,     		Sector_Set3DFloor(tag, 3, 6, 127)
+303 = 0,     		Sector_Set3DFloor(tag, 3)
+304 = 0,     		Sector_Set3DFloor(tag, 2, 2, 255)
+305 = 0,     		Sector_Set3DFloor(tag, 3, 2)
+306 = 0,     		Sector_Set3DFloor(tag, 1)
+
+332 = 0,		Sector_Set3DFloor(tag, 4)
 
 /****** ZDoom linetypes ******/
 
@@ -327,20 +342,20 @@ include "xlat/defines.i"
 
 /****** EDGE linetypes ******/
 
-400 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick
-401 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick, side_upper
-402 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick, side_lower
-403 = 0,		ExtraFloor_LightOnly (tag, 2)	// opaque liquid, flooder
-404 = 0,		ExtraFloor_LightOnly (tag, 2)	// 80% liquid, flooder
-405 = 0,		ExtraFloor_LightOnly (tag, 2)	// 60% liquid, flooder
-406 = 0,		ExtraFloor_LightOnly (tag, 2)	// 40% liquid, flooder
-407 = 0,		ExtraFloor_LightOnly (tag, 2)	// 20% liquid, flooder
-408 = 0,		ExtraFloor_LightOnly (tag, 0)	// light
-413 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin opaque floor
-414 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 80% floor
-415 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 60% floor
-416 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 40% floor
-417 = 0,		ExtraFloor_LightOnly (tag, 0)	// thin 20% floor
+400 = 0,     Sector_Set3DFloor(tag, 1, 0, 255)
+401 = 0,     Sector_Set3DFloor(tag, 1, 16, 255)
+402 = 0,     Sector_Set3DFloor(tag, 1, 32, 255)
+403 = 0,     Sector_Set3DFloor(tag, 2, 2, 255)
+404 = 0,     Sector_Set3DFloor(tag, 2, 2, 204)
+405 = 0,     Sector_Set3DFloor(tag, 2, 2, 153)
+406 = 0,     Sector_Set3DFloor(tag, 2, 2, 102)
+407 = 0,     Sector_Set3DFloor(tag, 2, 2, 51)
+408 = 0,     Sector_Set3DFloor(tag, 2, 2)
+413 = 0,     Sector_Set3DFloor(tag, 1, 8, 255)
+414 = 0,     Sector_Set3DFloor(tag, 1, 8, 204)
+415 = 0,     Sector_Set3DFloor(tag, 1, 8, 153)
+416 = 0,     Sector_Set3DFloor(tag, 1, 8, 102)
+417 = 0,     Sector_Set3DFloor(tag, 1, 8, 51)
 
 409 = 0,		TranslucentLine (lineid, 204)	// 80% translucent
 410 = 0,		TranslucentLine (lineid, 153)	// 60% translucent

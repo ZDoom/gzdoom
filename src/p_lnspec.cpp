@@ -52,10 +52,11 @@
 #include "m_random.h"
 #include "p_conversation.h"
 #include "a_strifeglobal.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "p_3dmidtex.h"
 #include "d_net.h"
 #include "d_event.h"
+#include "r_data/colormaps.h"
 
 #define FUNC(a) static int a (line_t *ln, AActor *it, bool backSide, \
 	int arg0, int arg1, int arg2, int arg3, int arg4)
@@ -547,6 +548,12 @@ FUNC(LS_Ceiling_LowerAndCrush)
 	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), 0, arg2, 0, 0, CRUSHTYPE(arg3));
 }
 
+FUNC(LS_Ceiling_LowerAndCrushDist)
+// Ceiling_LowerAndCrush (tag, speed, crush, dist, crushtype)
+{
+	return EV_DoCeiling (DCeiling::ceilLowerAndCrushDist, ln, arg0, SPEED(arg1), SPEED(arg1), arg3*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg4));
+}
+
 FUNC(LS_Ceiling_CrushStop)
 // Ceiling_CrushStop (tag)
 {
@@ -889,8 +896,7 @@ FUNC(LS_Teleport_EndGame)
 {
 	if (!backSide && CheckIfExitIsGood (it, NULL))
 	{
-		G_SetForEndGame (level.nextmap);
-		G_ExitLevel (0, false);
+		G_ChangeLevel(NULL, 0, 0);
 		return true;
 	}
 	return false;
@@ -1210,22 +1216,36 @@ FUNC(LS_Thing_Remove)
 }
 
 FUNC(LS_Thing_Destroy)
-// Thing_Destroy (tid, extreme)
+// Thing_Destroy (tid, extreme, tag)
 {
-	if (arg0 == 0)
+	AActor *actor;
+
+	if (arg0 == 0 && arg2 == 0)
 	{
 		P_Massacre ();
+	}
+	else if (arg0 == 0)
+	{
+		TThinkerIterator<AActor> iterator;
+		
+		actor = iterator.Next ();
+		while (actor)
+		{
+			AActor *temp = iterator.Next ();
+			if (actor->flags & MF_SHOOTABLE && actor->Sector->tag == arg2)
+				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
+			actor = temp;
+		}
 	}
 	else
 	{
 		FActorIterator iterator (arg0);
-		AActor *actor;
 
 		actor = iterator.Next ();
 		while (actor)
 		{
 			AActor *temp = iterator.Next ();
-			if (actor->flags & MF_SHOOTABLE)
+			if (actor->flags & MF_SHOOTABLE && (arg2 == 0 || actor->Sector->tag == arg2))
 				P_DamageMobj (actor, NULL, it, arg1 ? TELEFRAG_DAMAGE : actor->health, NAME_None);
 			actor = temp;
 		}
@@ -1664,10 +1684,18 @@ FUNC(LS_FloorAndCeiling_RaiseByValue)
 }
 
 FUNC(LS_FloorAndCeiling_LowerRaise)
-// FloorAndCeiling_LowerRaise (tag, fspeed, cspeed)
+// FloorAndCeiling_LowerRaise (tag, fspeed, cspeed, boomemu)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0, false) |
-		   EV_DoFloor     (DFloor::floorLowerToLowest, ln, arg0, SPEED(arg1), 0, 0, 0, false);
+	bool res = EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0, false);
+	// The switch based Boom equivalents of FloorandCeiling_LowerRaise do incorrect checks
+	// which cause the floor only to move when the ceiling fails to do so.
+	// To avoid problems with maps that have incorrect args this only uses a 
+	// more or less unintuitive value for the fourth arg to trigger Boom's broken behavior
+	if (arg3 != 1998 || !res)	// (1998 for the year in which Boom was released... :P)
+	{
+		res |= EV_DoFloor (DFloor::floorLowerToLowest, ln, arg0, SPEED(arg1), 0, 0, 0, false);
+	}
+	return res;
 }
 
 FUNC(LS_Elevator_MoveToFloor)
@@ -1878,7 +1906,7 @@ void AdjustPusher (int tag, int magnitude, int angle, DPusher::EPusher type)
 		unsigned int i;
 		for (i = 0; i < numcollected; i++)
 		{
-			if (Collection[i].RefNum == sectors[secnum].tag)
+			if (Collection[i].RefNum == sectors[secnum].sectornum)
 				break;
 		}
 		if (i == numcollected)
@@ -1916,13 +1944,30 @@ FUNC(LS_Sector_SetFriction)
 	return true;
 }
 
+FUNC(LS_Sector_SetTranslucent)
+// Sector_SetTranslucent (tag, plane, amount, type)
+{
+	if (arg0 != 0)
+	{
+		int secnum = -1;
+
+		while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+		{
+			sectors[secnum].SetAlpha(arg1, Scale(arg2, OPAQUE, 255));
+			sectors[secnum].ChangeFlags(arg1, ~PLANEF_ADDITIVE, arg3? PLANEF_ADDITIVE:0);
+		}
+		return true;
+	}
+	return false;
+}
+
 FUNC(LS_Sector_SetLink)
 // Sector_SetLink (controltag, linktag, floor/ceiling, movetype)
 {
 	if (arg0 != 0)	// control tag == 0 is for static initialization and must not be handled here
 	{
 		int control = P_FindSectorFromTag(arg0, -1);
-		if (control != 0)
+		if (control >= 0)
 		{
 			return P_AddSectorLinks(&sectors[control], arg1, arg2, arg3);
 		}
@@ -2312,7 +2357,7 @@ FUNC(LS_Line_AlignCeiling)
 		I_Error ("Sector_AlignCeiling: Lineid %d is undefined", arg0);
 	do
 	{
-		ret |= R_AlignFlat (line, !!arg1, 1);
+		ret |= P_AlignFlat (line, !!arg1, 1);
 	} while ( (line = P_FindLineFromID (arg0, line)) >= 0);
 	return ret;
 }
@@ -2327,7 +2372,7 @@ FUNC(LS_Line_AlignFloor)
 		I_Error ("Sector_AlignFloor: Lineid %d is undefined", arg0);
 	do
 	{
-		ret |= R_AlignFlat (line, !!arg1, 0);
+		ret |= P_AlignFlat (line, !!arg1, 0);
 	} while ( (line = P_FindLineFromID (arg0, line)) >= 0);
 	return ret;
 }
@@ -2446,6 +2491,7 @@ FUNC(LS_Line_SetBlocking)
 		ML_BLOCKEVERYTHING,
 		ML_RAILING,
 		ML_BLOCKUSE,
+		ML_BLOCKSIGHT,
 		-1
 	};
 
@@ -2771,6 +2817,7 @@ FUNC(LS_Autosave)
 {
 	if (gameaction != ga_savegame)
 	{
+		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
 		Net_WriteByte (DEM_CHECKAUTOSAVE);
 	}
 	return true;
@@ -3136,8 +3183,8 @@ lnSpecFunc LineSpecials[256] =
 	/*  94 */ LS_Pillar_BuildAndCrush,
 	/*  95 */ LS_FloorAndCeiling_LowerByValue,
 	/*  96 */ LS_FloorAndCeiling_RaiseByValue,
-	/*  97 */ LS_NOP,
-	/*  98 */ LS_NOP,
+	/*  97 */ LS_Ceiling_LowerAndCrushDist,
+	/*  98 */ LS_Sector_SetTranslucent,
 	/*  99 */ LS_NOP,
 	/* 100 */ LS_NOP,		// Scroll_Texture_Left
 	/* 101 */ LS_NOP,		// Scroll_Texture_Right
@@ -3351,6 +3398,30 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 		{
 			max = mid - 1;
 		}
+	}
+	return 0;
+}
+
+
+//==========================================================================
+//
+// P_ExecuteSpecial
+//
+//==========================================================================
+
+int P_ExecuteSpecial(int			num,
+					 struct line_t	*line,
+					 class AActor	*activator,
+					 bool			backSide,
+					 int			arg1,
+					 int			arg2,
+					 int			arg3,
+					 int			arg4,
+					 int			arg5)
+{
+	if (num >= 0 && num <= 255)
+	{
+		return LineSpecials[num](line, activator, backSide, arg1, arg2, arg3, arg4, arg5);
 	}
 	return 0;
 }

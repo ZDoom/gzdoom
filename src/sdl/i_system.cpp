@@ -60,6 +60,9 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "templates.h"
+#include "v_palette.h"
+#include "textures.h"
+#include "bitmap.h"
 
 #include "stats.h"
 #include "hardware.h"
@@ -414,7 +417,7 @@ void STACK_ARGS I_Error (const char *error, ...)
     throw CRecoverableError (errortext);
 }
 
-void I_SetIWADInfo (const IWADInfo *info)
+void I_SetIWADInfo ()
 {
 }
 
@@ -511,7 +514,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		gtk_list_store_append (store, &iter);
 		gtk_list_store_set (store, &iter,
 			0, filepart,
-			1, IWADInfos[wads[i].Type].Name,
+			1, wads[i].Name.GetChars(),
 			2, i,
 			-1);
 		if (i == defaultiwad)
@@ -572,7 +575,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	if (close_style == 1)
 	{
 		GtkTreeModel *model;
-		GValue value = { 0, };
+		GValue value = { 0, { {0} } };
 		
 		// Find out which IWAD was selected.
 		gtk_tree_selection_get_selected (selection, &model, &iter);
@@ -608,6 +611,57 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		return defaultiwad;
 	}
 
+#if !defined(__APPLE__)
+	const char *str;
+	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	{
+		FString cmd("kdialog --title \""GAMESIG" "DOTVERSIONSTR": Select an IWAD to use\""
+		            " --menu \"ZDoom found more than one IWAD\n"
+		            "Select from the list below to determine which one to use:\"");
+
+		for(i = 0; i < numwads; ++i)
+		{
+			const char *filepart = strrchr(wads[i].Path, '/');
+			if(filepart == NULL)
+				filepart = wads[i].Path;
+			else
+				filepart++;
+			// Menu entries are specified in "tag" "item" pairs, where when a
+			// particular item is selected (and the Okay button clicked), its
+			// corresponding tag is printed to stdout for identification.
+			cmd.AppendFormat(" \"%d\" \"%s (%s)\"", i, wads[i].Name.GetChars(), filepart);
+		}
+
+		if(defaultiwad >= 0 && defaultiwad < numwads)
+		{
+			const char *filepart = strrchr(wads[defaultiwad].Path, '/');
+			if(filepart == NULL)
+				filepart = wads[defaultiwad].Path;
+			else
+				filepart++;
+			cmd.AppendFormat(" --default \"%s (%s)\"", wads[defaultiwad].Name.GetChars(), filepart);
+		}
+
+		FILE *f = popen(cmd, "r");
+		if(f != NULL)
+		{
+			char gotstr[16];
+
+			if(fgets(gotstr, sizeof(gotstr), f) == NULL ||
+			   sscanf(gotstr, "%d", &i) != 1)
+				i = -1;
+
+			// Exit status = 1 means the selection was canceled (either by
+			// Cancel/Esc or the X button), not that there was an error running
+			// the program. In that case, nothing was printed so fgets will
+			// have failed. Other values can indicate an error running the app,
+			// so fall back to whatever else can be used.
+			int status = pclose(f);
+			if(WIFEXITED(status) && (WEXITSTATUS(status) == 0 || WEXITSTATUS(status) == 1))
+				return i;
+		}
+	}
+#endif
 #ifndef NO_GTK
 	if (GtkAvailable)
 	{
@@ -625,7 +679,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 			filepart = wads[i].Path;
 		else
 			filepart++;
-		printf ("%d. %s (%s)\n", i+1, IWADInfos[wads[i].Type].Name, filepart);
+		printf ("%d. %s (%s)\n", i+1, wads[i].Name.GetChars(), filepart);
 	}
 	printf ("Which one? ");
 	scanf ("%d", &i);
@@ -779,7 +833,39 @@ unsigned int I_MakeRNGSeed()
 	return seed;
 }
 
+SDL_Surface *cursorSurface = NULL;
+SDL_Rect cursorBlit = {0, 0, 32, 32};
 bool I_SetCursor(FTexture *cursorpic)
 {
-	return false;
+	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
+	{
+		// Must be no larger than 32x32.
+		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+		{
+			return false;
+		}
+
+		if (cursorSurface == NULL)
+			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
+
+		SDL_ShowCursor(0);
+		SDL_LockSurface(cursorSurface);
+		BYTE buffer[32*32*4];
+		memset(buffer, 0, 32*32*4);
+		FBitmap bmp(buffer, 32*4, 32, 32);
+		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+		memcpy(cursorSurface->pixels, bmp.GetPixels(), 32*32*4);
+		SDL_UnlockSurface(cursorSurface);
+	}
+	else
+	{
+		SDL_ShowCursor(1);
+
+		if (cursorSurface != NULL)
+		{
+			SDL_FreeSurface(cursorSurface);
+			cursorSurface = NULL;
+		}
+	}
+	return true;
 }

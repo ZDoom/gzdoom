@@ -53,8 +53,8 @@ IMPLEMENT_CLASS(DListMenu)
 DListMenu::DListMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DMenu(parent)
 {
-	mDesc = desc;
-	mFocusControl = NULL;
+	mDesc = NULL;
+	if (desc != NULL) Init(parent, desc);
 }
 
 //=============================================================================
@@ -68,6 +68,31 @@ void DListMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	mParentMenu = parent;
 	GC::WriteBarrier(this, parent);
 	mDesc = desc;
+	if (desc->mCenter)
+	{
+		int center = 160;
+		for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+		{
+			int xpos = mDesc->mItems[i]->GetX();
+			int width = mDesc->mItems[i]->GetWidth();
+			int curx = mDesc->mSelectOfsX;
+
+			if (width > 0 && mDesc->mItems[i]->Selectable())
+			{
+				int left = 160 - (width - curx) / 2 - curx;
+				if (left < center) center = left;
+			}
+		}
+		for(unsigned i=0;i<mDesc->mItems.Size(); i++)
+		{
+			int width = mDesc->mItems[i]->GetWidth();
+
+			if (width > 0)
+			{
+				mDesc->mItems[i]->SetX(center);
+			}
+		}
+	}
 }
 
 //=============================================================================
@@ -193,7 +218,7 @@ bool DListMenu::MouseEvent(int type, int x, int y)
 			{
 				if (mDesc->mItems[i]->CheckCoordinate(x, y))
 				{
-					if (i != mDesc->mSelectedItem)
+					if ((int)i != mDesc->mSelectedItem)
 					{
 						//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 					}
@@ -233,7 +258,7 @@ void DListMenu::Drawer ()
 {
 	for(unsigned i=0;i<mDesc->mItems.Size(); i++)
 	{
-		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer(mDesc->mSelectedItem == i);
+		if (mDesc->mItems[i]->mEnabled) mDesc->mItems[i]->Drawer(mDesc->mSelectedItem == (int)i);
 	}
 	if (mDesc->mSelectedItem >= 0 && mDesc->mSelectedItem < (int)mDesc->mItems.Size())
 		mDesc->mItems[mDesc->mSelectedItem]->DrawSelector(mDesc->mSelectOfsX, mDesc->mSelectOfsY, mDesc->mSelector);
@@ -332,6 +357,11 @@ bool FListMenuItem::MouseEvent(int type, int x, int y)
 bool FListMenuItem::CheckHotkey(int c) 
 { 
 	return false; 
+}
+
+int FListMenuItem::GetWidth() 
+{ 
+	return 0; 
 }
 
 
@@ -492,6 +522,18 @@ void FListMenuItemText::Drawer(bool selected)
 	}
 }
 
+int FListMenuItemText::GetWidth() 
+{ 
+	const char *text = mText;
+	if (text != NULL)
+	{
+		if (*text == '$') text = GStrings(text+1);
+		return mFont->StringWidth(text); 
+	}
+	return 1;
+}
+
+
 //=============================================================================
 //
 // patch item
@@ -509,3 +551,9 @@ void FListMenuItemPatch::Drawer(bool selected)
 {
 	screen->DrawTexture (TexMan(mTexture), mXpos, mYpos, DTA_Clean, true, TAG_DONE);
 }
+
+int FListMenuItemPatch::GetWidth() 
+{ 
+	return TexMan[mTexture]->GetScaledWidth(); 
+}
+

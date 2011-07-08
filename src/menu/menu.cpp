@@ -48,10 +48,11 @@
 #include "v_video.h"
 #include "hu_stuff.h"
 #include "gi.h"
+#include "v_palette.h"
 #include "i_input.h"
 #include "gameconfigfile.h"
 #include "gstrings.h"
-#include "r_main.h"
+#include "r_utility.h"
 #include "menu/menu.h"
 #include "textures/textures.h"
 
@@ -70,7 +71,6 @@ CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 DMenu *DMenu::CurrentMenu;
 int DMenu::MenuTime;
 
-FListMenuDescriptor *MainMenu;
 FGameStartup GameStartupInfo;
 EMenuState		menuactive;
 bool			M_DemoNoPlay;
@@ -79,6 +79,7 @@ int				MenuButtonTickers[NUM_MKEYS];
 bool			MenuButtonOrigin[NUM_MKEYS];
 int				BackbuttonTime;
 fixed_t			BackbuttonAlpha;
+static bool		MenuEnabled = true;
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -211,7 +212,8 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 		{
 			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
 			if (m_show_backbutton&2) y -= screen->GetHeight() - tex->GetScaledHeight() * CleanYfac;
-			mBackbuttonSelected = (x >= 0 && x < tex->GetScaledWidth() * CleanXfac && y < tex->GetScaledHeight() * CleanYfac);
+			mBackbuttonSelected = ( x >= 0 && x < tex->GetScaledWidth() * CleanXfac && 
+									y >= 0 && y < tex->GetScaledHeight() * CleanYfac);
 			if (mBackbuttonSelected && type == MOUSE_Release)
 			{
 				if (m_use_mouse == 2) mBackbuttonSelected = false;
@@ -349,7 +351,8 @@ void M_SetMenu(FName menu, int param)
 		GameStartupInfo.Skill = -1;
 		GameStartupInfo.Episode = -1;
 		GameStartupInfo.PlayerClass = 
-			param == -1? "Random" : PlayerClasses[param].Type->Meta.GetMetaString (APMETA_DisplayName);
+			param == -1000? NULL :
+			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type);
 		break;
 
 	case NAME_Skillmenu:
@@ -358,14 +361,7 @@ void M_SetMenu(FName menu, int param)
 		if ((gameinfo.flags & GI_SHAREWARE) && param > 0)
 		{
 			// Only Doom and Heretic have multi-episode shareware versions.
-			if (gameinfo.gametype == GAME_Doom)
-			{
-				M_StartMessage(GStrings("SWSTRING"), 1);
-			}
-			else
-			{
-				M_StartMessage(GStrings("MNU_ONLYREGISTERED"), 1);
-			}
+			M_StartMessage(GStrings("SWSTRING"), 1);
 			return;
 		}
 
@@ -380,14 +376,15 @@ void M_SetMenu(FName menu, int param)
 
 		const char *msg = AllSkills[param].MustConfirmText;
 		if (*msg==0) msg = GStrings("NIGHTMARE");
-		M_StartMessage (msg, 0, NAME_Startgame);
+		M_StartMessage (msg, 0, NAME_StartgameConfirmed);
 		return;
 	}
 
 	case NAME_Startgame:
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
 		// Now we can finally start the game. Ugh...
-		if (GameStartupInfo.Skill == -1) GameStartupInfo.Skill = param;
+		GameStartupInfo.Skill = param;
+	case NAME_StartgameConfirmed:
 
 		G_DeferedInitNew (&GameStartupInfo);
 		if (gamestate == GS_FULLCONSOLE)
@@ -511,11 +508,7 @@ bool M_Responder (event_t *ev)
 				// do we want mouse input?
 				if (ev->subtype >= EV_GUI_FirstMouseEvent && ev->subtype <= EV_GUI_LastMouseEvent)
 				{
-					// FIXME: Mouse events in SDL code are mostly useless so mouse is 
-					// disabled until that code is fixed
-					#ifdef _WIN32
 						if (!m_use_mouse)
-					#endif
 							return true;
 				}
 
@@ -547,7 +540,7 @@ bool M_Responder (event_t *ev)
 				}
 			}
 		}
-		else if (ev->type == EV_KeyDown || ev->type == EV_KeyUp)
+		else if (menuactive != MENU_WaitKey && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 		{
 			keyup = ev->type == EV_KeyUp;
 
@@ -630,7 +623,7 @@ bool M_Responder (event_t *ev)
 		}
 		return DMenu::CurrentMenu->Responder(ev) || !keyup;
 	}
-	else
+	else if (MenuEnabled)
 	{
 		if (ev->type == EV_KeyDown)
 		{
@@ -671,29 +664,30 @@ void M_Ticker (void)
 {
 	DMenu::MenuTime++;
 	if (DMenu::CurrentMenu != NULL && menuactive != MENU_Off) 
+	{
 		DMenu::CurrentMenu->Ticker();
 
-	for (int i = 0; i < NUM_MKEYS; ++i)
-	{
-		if (MenuButtons[i].bDown)
+		for (int i = 0; i < NUM_MKEYS; ++i)
 		{
-			if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
+			if (MenuButtons[i].bDown)
 			{
-				MenuButtonTickers[i] = KEY_REPEAT_RATE;
-				DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+				if (MenuButtonTickers[i] > 0 &&	--MenuButtonTickers[i] <= 0)
+				{
+					MenuButtonTickers[i] = KEY_REPEAT_RATE;
+					DMenu::CurrentMenu->MenuEvent(i, MenuButtonOrigin[i]);
+				}
 			}
 		}
-	}
-
-	if (BackbuttonTime > 0)
-	{
-		if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
-		BackbuttonTime--;
-	}
-	else
-	{
-		if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
-		if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
+		if (BackbuttonTime > 0)
+		{
+			if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
+			BackbuttonTime--;
+		}
+		else
+		{
+			if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
+			if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
+		}
 	}
 }
 
@@ -754,6 +748,18 @@ void M_Init (void)
 {
 	M_ParseMenuDefs();
 	M_CreateMenus();
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void M_EnableMenu (bool on) 
+{
+	MenuEnabled = on;
 }
 
 
@@ -950,6 +956,6 @@ CCMD(reset2defaults)
 CCMD(reset2saved)
 {
 	GameConfig->DoGlobalSetup ();
-	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
+	GameConfig->DoGameSetup (gameinfo.ConfigName);
 	R_SetViewSize (screenblocks);
 }

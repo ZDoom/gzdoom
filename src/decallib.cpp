@@ -42,12 +42,13 @@
 #include "weightedlist.h"
 #include "statnums.h"
 #include "templates.h"
-#include "r_draw.h"
 #include "a_sharedglobal.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
+#include "b_bot.h"
+#include "farchive.h"
 
 FDecalLib DecalLibrary;
 
@@ -346,6 +347,16 @@ void FDecalLib::ReadAllDecals ()
 {
 	int lump, lastlump = 0;
 	unsigned int i;
+
+	for(unsigned i=0;i<Animators.Size(); i++)
+	{
+		delete Animators[i];
+	}
+	Animators.Clear();
+	FDecalCombinerAnim::AnimatorList.Clear();
+	DecalTranslations.Clear();
+
+	DecalLibrary.Clear();
 
 	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
 	{

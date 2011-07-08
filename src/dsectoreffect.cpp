@@ -26,8 +26,9 @@
 #include "gi.h"
 #include "p_local.h"
 #include "p_3dmidtex.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "statnums.h"
+#include "farchive.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
 

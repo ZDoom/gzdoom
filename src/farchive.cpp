@@ -55,7 +55,6 @@
 #include "c_dispatch.h"
 #include "d_player.h"
 #include "dobject.h"
-#include "r_local.h"
 
 // These are special tokens found in the data stream of an archive.
 // Whenever a new object is encountered, it gets created using new and
@@ -1538,4 +1537,29 @@ FArchive &operator<< (FArchive &arc, const PClass * &info)
 		arc.UserReadClass (info);
 	}
 	return arc;
+}
+
+FArchive &operator<< (FArchive &arc, sector_t *&sec)
+{
+	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
+}
+
+FArchive &operator<< (FArchive &arc, const sector_t *&sec)
+{
+	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
+}
+
+FArchive &operator<< (FArchive &arc, line_t *&line)
+{
+	return arc.SerializePointer (lines, (BYTE **)&line, sizeof(*lines));
+}
+
+FArchive &operator<< (FArchive &arc, vertex_t *&vert)
+{
+	return arc.SerializePointer (vertexes, (BYTE **)&vert, sizeof(*vertexes));
+}
+
+FArchive &operator<< (FArchive &arc, side_t *&side)
+{
+	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
 }

@@ -124,7 +124,7 @@ inline unsigned __int64 rdtsc()
 	return 0;
 }
 #else
-inline volatile unsigned long long rdtsc()
+inline unsigned long long rdtsc()
 {
 #ifndef __amd64__
 	if (CPU.bRDTSC)

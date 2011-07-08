@@ -35,10 +35,9 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_local.h"
 #include "v_palette.h"
-
-extern float LastFOV;
+#include "v_video.h"
+#include "textures/textures.h"
 
 FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 {
@@ -60,6 +59,7 @@ FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 	bDidUpdate = false;
 	bHasCanvas = true;
 	bFirstUpdate = true;
+	bPixelsAllocated = false;
 }
 
 FCanvasTexture::~FCanvasTexture ()
@@ -110,10 +110,12 @@ void FCanvasTexture::MakeTexture ()
 	if (Width != Height || Width != Canvas->GetPitch())
 	{
 		Pixels = new BYTE[Width*Height];
+		bPixelsAllocated = true;
 	}
 	else
 	{
 		Pixels = Canvas->GetBuffer();
+		bPixelsAllocated = false;
 	}
 	// Draw a special "unrendered" initial texture into the buffer.
 	memset (Pixels, 0, Width*Height/2);
@@ -122,13 +124,15 @@ void FCanvasTexture::MakeTexture ()
 
 void FCanvasTexture::Unload ()
 {
+	if (bPixelsAllocated)
+	{
+		if (Pixels != NULL) delete [] Pixels;
+		bPixelsAllocated = false;
+		Pixels = NULL;
+	}
+
 	if (Canvas != NULL)
 	{
-		if (Pixels != NULL && Pixels != Canvas->GetBuffer())
-		{
-			delete[] Pixels;
-		}
-		Pixels = NULL;
 		GC::DelSoftRoot(Canvas);
 		Canvas->Destroy();
 		Canvas = NULL;
@@ -143,28 +147,5 @@ bool FCanvasTexture::CheckModified ()
 		return true;
 	}
 	return false;
-}
-
-void FCanvasTexture::RenderView (AActor *viewpoint, int fov)
-{
-	if (Canvas == NULL)
-	{
-		MakeTexture ();
-	}
-	float savedfov = LastFOV;
-	R_SetFOV ((float)fov);
-	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, Width, Height, bFirstUpdate);
-	R_SetFOV (savedfov);
-	if (Pixels == Canvas->GetBuffer())
-	{
-		FlipSquareBlockRemap (Pixels, Width, Height, GPalette.Remap);
-	}
-	else
-	{
-		FlipNonSquareBlockRemap (Pixels, Canvas->GetBuffer(), Width, Height, Canvas->GetPitch(), GPalette.Remap);
-	}
-	bNeedsUpdate = false;
-	bDidUpdate = true;
-	bFirstUpdate = false;
 }
 

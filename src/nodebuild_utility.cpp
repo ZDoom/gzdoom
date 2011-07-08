@@ -47,9 +47,9 @@
 #include "nodebuild.h"
 #include "templates.h"
 #include "m_bbox.h"
-#include "r_main.h"
 #include "i_system.h"
 #include "po_man.h"
+#include "r_state.h"
 
 static const int PO_LINE_START = 1;
 static const int PO_LINE_EXPLICIT = 5;
@@ -417,7 +417,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 				// Scan right for the seg closest to the polyobject's center after it
 				// gets moved to its start spot.
 				fixed_t closestdist = FIXED_MAX;
-				DWORD closestseg = 0;
+				unsigned int closestseg = UINT_MAX;
 
 				P(Printf ("start %d,%d -- center %d, %d\n", spot->x>>16, spot->y>>16, center.x>>16, center.y>>16));
 
@@ -452,7 +452,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 						}
 					}
 				}
-				if (closestseg >= 0)
+				if (closestseg != UINT_MAX)
 				{
 					loop = MarkLoop (closestseg, loop);
 					P(Printf ("Found polyobj in sector %d (loop %d)\n", Segs[closestseg].frontsector,

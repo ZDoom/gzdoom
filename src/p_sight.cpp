@@ -102,6 +102,11 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 //
 // crosses a two sided line
 //
+
+	// ignore self referencing sectors if COMPAT_TRACE is on
+	if ((i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector) 
+		return true;
+
 	fixed_t trX=trace.x + FixedMul (trace.dx, in->frac);
 	fixed_t trY=trace.y + FixedMul (trace.dy, in->frac);
 	P_LineOpening (open, NULL, li, trX, trY);
@@ -251,7 +256,7 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 	}
 
 	// try to early out the check
-	if (!ld->backsector || !(ld->flags & ML_TWOSIDED))
+	if (!ld->backsector || !(ld->flags & ML_TWOSIDED) || (ld->flags & ML_BLOCKSIGHT))
 		return false;	// stop checking
 
 	// [RH] don't see past block everything lines

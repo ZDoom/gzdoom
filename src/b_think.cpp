@@ -14,7 +14,6 @@
 #include "b_bot.h"
 #include "g_game.h"
 #include "m_random.h"
-#include "r_main.h"
 #include "stats.h"
 #include "a_pickups.h"
 #include "statnums.h"

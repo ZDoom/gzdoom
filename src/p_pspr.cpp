@@ -18,6 +18,7 @@
 #include "d_event.h"
 #include "c_cvars.h"
 #include "m_random.h"
+#include "p_enemy.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "doomstat.h"
@@ -26,6 +27,8 @@
 #include "templates.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+#include "farchive.h"
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -660,10 +663,16 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 // A_GunFlash
 //
+enum GF_Flags
+{
+	GFF_NOEXTCHANGE = 1,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
-	ACTION_PARAM_START(1)
+	ACTION_PARAM_START(2)
 	ACTION_PARAM_STATE(flash, 0);
+	ACTION_PARAM_INT(Flags, 1);
 
 	player_t *player = self->player;
 
@@ -671,7 +680,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 	{
 		return;
 	}
-	player->mo->PlayAttacking2 ();
+	if(!(Flags & GFF_NOEXTCHANGE)) player->mo->PlayAttacking2 ();
 
 	if (flash == NULL)
 	{
@@ -861,15 +870,7 @@ void P_MovePsprites (player_t *player)
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)
 {
-	arc << def.state << def.tics << def.sx << def.sy;
-	if (SaveVersion >= 2295)
-	{
-		arc << def.sprite << def.frame;
-	}
-	else
-	{
-		def.sprite = def.state->sprite;
-		def.frame = def.state->Frame;
-	}
+	arc << def.state << def.tics << def.sx << def.sy
+		<< def.sprite << def.frame;
 	return arc;
 }

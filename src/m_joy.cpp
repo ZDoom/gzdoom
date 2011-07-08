@@ -261,7 +261,7 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, in
 	int changed = oldbuttons ^ newbuttons;
 	if (changed != 0)
 	{
-		event_t ev = { 0 };
+		event_t ev = { 0, 0, 0, 0, 0, 0, 0 };
 		int mask = 1;
 		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
 		{
@@ -280,7 +280,7 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 	int changed = oldbuttons ^ newbuttons;
 	if (changed != 0)
 	{
-		event_t ev = { 0 };
+		event_t ev = { 0, 0, 0, 0, 0, 0, 0 };
 		int mask = 1;
 		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
 		{

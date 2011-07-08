@@ -52,6 +52,8 @@
 
 #include "optionmenuitems.h"
 
+void ClearSaveGames();
+
 MenuDescriptorList MenuDescriptors;
 static FListMenuDescriptor DefaultListMenuSettings;	// contains common settings for all list menus
 static FOptionMenuDescriptor DefaultOptionMenuSettings;	// contains common settings for all Option menus
@@ -85,7 +87,11 @@ static void DeinitMenus()
 			pair->Value = NULL;
 		}
 	}
+	MenuDescriptors.Clear();
+	OptionValues.Clear();
 	DMenu::CurrentMenu = NULL;
+	DefaultListMenuSettings.mItems.Clear();
+	ClearSaveGames();
 }
 
 //=============================================================================
@@ -114,20 +120,16 @@ static void SkipSubBlock(FScanner &sc)
 
 static bool CheckSkipGameBlock(FScanner &sc)
 {
-	int filter = 0;
+	bool filter = false;
 	sc.MustGetStringName("(");
 	do
 	{
 		sc.MustGetString();
-		if (sc.Compare("Doom")) filter |= GAME_Doom;
-		if (sc.Compare("Heretic")) filter |= GAME_Heretic;
-		if (sc.Compare("Hexen")) filter |= GAME_Hexen;
-		if (sc.Compare("Strife")) filter |= GAME_Strife;
-		if (sc.Compare("Chex")) filter |= GAME_Chex;
+		filter |= CheckGame(sc.String, false);
 	}
 	while (sc.CheckString(","));
 	sc.MustGetStringName(")");
-	if (!(gameinfo.gametype & filter))
+	if (!filter)
 	{
 		SkipSubBlock(sc);
 		return true;
@@ -149,6 +151,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	{
 		sc.MustGetString();
 		if (sc.Compare("ReadThis")) filter |= gameinfo.drawreadthis;
+		else if (sc.Compare("Swapmenu")) filter |= gameinfo.swapmenu;
 		else if (sc.Compare("Windows"))
 		{
 			#ifdef _WIN32
@@ -173,7 +176,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 	if (!filter)
 	{
 		SkipSubBlock(sc);
-		return true;
+		return !sc.CheckString("else");
 	}
 	return false;
 }
@@ -190,7 +193,11 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("ifgame"))
+		if (sc.Compare("else"))
+		{
+			SkipSubBlock(sc);
+		}
+		else if (sc.Compare("ifgame"))
 		{
 			if (!CheckSkipGameBlock(sc))
 			{
@@ -239,6 +246,10 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetNumber();
 			desc->mYpos = sc.Number;
+		}
+		else if (sc.Compare("Centermenu"))
+		{
+			desc->mCenter = true;
 		}
 		else if (sc.Compare("MouseWindow"))
 		{
@@ -465,6 +476,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mRedirect = NULL;
 	desc->mWLeft = 0;
 	desc->mWRight = 0;
+	desc->mCenter = false;
 
 	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != NULL && *pOld != NULL) delete *pOld;
@@ -751,13 +763,13 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 			sc.MustGetStringName(",");
 			sc.MustGetFloat();
 			double step = sc.Float;
-			bool showvalue = true;
+			int showvalue = 1;
 			if (sc.CheckString(","))
 			{
 				sc.MustGetNumber();
-				showvalue = !!sc.Number;
+				showvalue = sc.Number;
 			}
-			FOptionMenuItem *it = new FOptionMenuSliderCVar(text, action, min, max, step, showvalue? 1:-1);
+			FOptionMenuItem *it = new FOptionMenuSliderCVar(text, action, min, max, step, showvalue);
 			desc->mItems.Push(it);
 		}
 		else if (sc.Compare("screenresolution"))
@@ -821,8 +833,11 @@ void M_ParseMenuDefs()
 	OptionSettings.mFontColorHeader = V_FindFontColor(gameinfo.mFontColorHeader);
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
+	DefaultListMenuSettings.Reset();
+	DefaultOptionMenuSettings.Reset();
 
 	atterm(	DeinitMenus);
+	DeinitMenus();
 	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
@@ -837,6 +852,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("DEFAULTLISTMENU"))
 			{
 				ParseListMenuBody(sc, &DefaultListMenuSettings);
+				if (DefaultListMenuSettings.mItems.Size() > 0)
+				{
+					I_FatalError("You cannot add menu items to the menu default settings.");
+				}
 			}
 			else if (sc.Compare("OPTIONVALUE"))
 			{
@@ -857,6 +876,10 @@ void M_ParseMenuDefs()
 			else if (sc.Compare("DEFAULTOPTIONMENU"))
 			{
 				ParseOptionMenuBody(sc, &DefaultOptionMenuSettings);
+				if (DefaultOptionMenuSettings.mItems.Size() > 0)
+				{
+					I_FatalError("You cannot add menu items to the menu default settings.");
+				}
 			}
 			else
 			{
@@ -997,7 +1020,7 @@ static void BuildPlayerclassMenu()
 			{
 				if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 				{
-					const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+					const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 					if (pname != NULL)
 					{
 						numclassitems++;
@@ -1008,7 +1031,15 @@ static void BuildPlayerclassMenu()
 			// center the menu on the screen if the top space is larger than the bottom space
 			int totalheight = posy + (numclassitems+1) * ld->mLinespacing - topy;
 
-			if (totalheight <= 190 || numclassitems == 1)
+			if (numclassitems <= 1)
+			{
+				// create a dummy item that auto-chooses the default class.
+				FListMenuItemText *it = new FListMenuItemText(0, 0, 0, 'p', "player", 
+					ld->mFont,ld->mFontColor, NAME_Episodemenu, -1000);
+				ld->mAutoselect = ld->mItems.Push(it);
+				success = true;
+			}
+			else if (totalheight <= 190)
 			{
 				int newtop = (200 - totalheight + topy) / 2;
 				int topdelta = newtop - topy;
@@ -1026,7 +1057,7 @@ static void BuildPlayerclassMenu()
 				{
 					if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 					{
-						const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+						const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 						if (pname != NULL)
 						{
 							FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
@@ -1045,17 +1076,13 @@ static void BuildPlayerclassMenu()
 				}
 				if (n == 0)
 				{
-					const char *pname = PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+					const char *pname = GetPrintableDisplayName(PlayerClasses[0].Type);
 					if (pname != NULL)
 					{
 						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
 							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
 						ld->mItems.Push(it);
 					}
-				}
-				if (n < 2)
-				{
-					ld->mAutoselect = ld->mSelectedItem;
 				}
 				success = true;
 			}
@@ -1084,7 +1111,7 @@ static void BuildPlayerclassMenu()
 		{
 			if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 			{
-				const char *pname = PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+				const char *pname = GetPrintableDisplayName(PlayerClasses[i].Type);
 				if (pname != NULL)
 				{
 					FOptionMenuItemSubmenu *it = new FOptionMenuItemSubmenu(pname, "Episodemenu", i);
@@ -1218,10 +1245,11 @@ void M_CreateMenus()
 // THe skill menu must be refeshed each time it starts up
 //
 //=============================================================================
+extern int restart;
 
 void M_StartupSkillMenu(FGameStartup *gs)
 {
-	static bool done = false;
+	static int done = -1;
 	bool success = false;
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Skillmenu);
 	if (desc != NULL)
@@ -1231,16 +1259,6 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			FListMenuDescriptor *ld = static_cast<FListMenuDescriptor*>(*desc);
 			int x = ld->mXpos;
 			int y = ld->mYpos;
-			if (gameinfo.gametype == GAME_Hexen)
-			{
-				// THere really needs to be a better way to do this... :(
-				if (gs->PlayerClass != NULL)
-				{
-					if (!stricmp(gs->PlayerClass, "fighter")) x = 120;
-					else if (!stricmp(gs->PlayerClass, "cleric")) x = 116;
-					else if (!stricmp(gs->PlayerClass, "mage")) x = 112;
-				}
-			}
 
 			// Delete previous contents
 			for(unsigned i=0; i<ld->mItems.Size(); i++)
@@ -1257,9 +1275,9 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				}
 			}
 
-			if (!done)
+			if (done != restart)
 			{
-				done = true;
+				done = restart;
 				int defskill = DefaultSkill;
 				if ((unsigned int)defskill >= AllSkills.Size())
 				{
@@ -1334,7 +1352,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			}
 			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
 			{
-				ld->mAutoselect = firstitem + MIN(2u, AllEpisodes.Size()-1);
+				ld->mAutoselect = firstitem + MIN(2u, AllSkills.Size()-1);
 			}
 			else
 			{

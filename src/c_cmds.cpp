@@ -61,13 +61,15 @@
 #include "gi.h"
 #include "r_defs.h"
 #include "d_player.h"
-#include "r_main.h"
 #include "templates.h"
 #include "p_local.h"
 #include "r_sky.h"
 #include "p_setup.h"
 #include "cmdlib.h"
 #include "d_net.h"
+#include "v_text.h"
+#include "p_lnspec.h"
+#include "v_video.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -451,7 +453,7 @@ CCMD (puke)
 
 	if (argc < 2 || argc > 5)
 	{
-		Printf (" puke <script> [arg1] [arg2] [arg3]\n");
+		Printf ("Usage: puke <script> [arg1] [arg2] [arg3]\n");
 	}
 	else
 	{
@@ -483,6 +485,52 @@ CCMD (puke)
 		for (i = 0; i < argn; ++i)
 		{
 			Net_WriteLong (arg[i]);
+		}
+	}
+}
+
+CCMD (special)
+{
+	int argc = argv.argc();
+
+	if (argc < 2 || argc > 7)
+	{
+		Printf("Usage: special <special-name> [arg1] [arg2] [arg3] [arg4] [arg5]\n");
+	}
+	else
+	{
+		int specnum;
+
+		if (argv[1][0] >= '0' && argv[1][0] <= '9')
+		{
+			specnum = atoi(argv[1]);
+			if (specnum < 0 || specnum > 255)
+			{
+				Printf("Bad special number\n");
+				return;
+			}
+		}
+		else
+		{
+			int min_args;
+			specnum = P_FindLineSpecial(argv[1], &min_args);
+			if (specnum == 0 || min_args < 0)
+			{
+				Printf("Unknown special\n");
+				return;
+			}
+			if (argc < 2 + min_args)
+			{
+				Printf("%s needs at least %d argument%s\n", argv[1], min_args, min_args == 1 ? "" : "s");
+				return;
+			}
+		}
+		Net_WriteByte(DEM_RUNSPECIAL);
+		Net_WriteByte(specnum);
+		Net_WriteByte(argc - 2);
+		for (int i = 2; i < argc; ++i)
+		{
+			Net_WriteLong(atoi(argv[i]));
 		}
 	}
 }
@@ -612,32 +660,6 @@ CCMD (fov)
 		Net_WriteByte (DEM_MYFOV);
 	}
 	Net_WriteByte (clamp (atoi (argv[1]), 5, 179));
-}
-
-//==========================================================================
-//
-// CCMD r_visibility
-//
-// Controls how quickly light ramps across a 1/z range. Set this, and it
-// sets all the r_*Visibility variables (except r_SkyVisibilily, which is
-// currently unused).
-//
-//==========================================================================
-
-CCMD (r_visibility)
-{
-	if (argv.argc() < 2)
-	{
-		Printf ("Visibility is %g\n", R_GetVisibility());
-	}
-	else if (!netgame)
-	{
-		R_SetVisibility ((float)atof (argv[1]));
-	}
-	else
-	{
-		Printf ("Visibility cannot be changed in net games.\n");
-	}
 }
 
 //==========================================================================
@@ -929,6 +951,7 @@ CCMD(nextsecret)
 //
 //
 //-----------------------------------------------------------------------------
+
 CCMD(currentpos)
 {
 	AActor *mo = players[consoleplayer].mo;
@@ -936,4 +959,121 @@ CCMD(currentpos)
 		FIXED2FLOAT(mo->x), FIXED2FLOAT(mo->y), FIXED2FLOAT(mo->z), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
 }
 
+//-----------------------------------------------------------------------------
+//
+// Print secret info (submitted by Karl Murks)
+//
+//-----------------------------------------------------------------------------
 
+static void PrintSecretString(const char *string, bool thislevel)
+{
+	const char *colstr = thislevel? TEXTCOLOR_YELLOW : TEXTCOLOR_CYAN;
+	if (string != NULL)
+	{
+		if (*string == '$')
+		{
+			if (string[1] == 'S' || string[1] == 's')
+			{
+				long secnum = strtol(string+2, (char**)&string, 10);
+				if (*string == ';') string++;
+				if (thislevel && secnum >= 0 && secnum < numsectors)
+				{
+					if (sectors[secnum].secretsector)
+					{
+						if ((sectors[secnum].special & SECRET_MASK)) colstr = TEXTCOLOR_RED;
+						else colstr = TEXTCOLOR_GREEN;
+					}
+					else colstr = TEXTCOLOR_ORANGE;
+				}
+			}
+			else if (string[1] == 'T' || string[1] == 't')
+			{
+				long tid = strtol(string+2, (char**)&string, 10);
+				if (*string == ';') string++;
+				FActorIterator it(tid);
+				AActor *actor;
+				bool foundone = false;
+				if (thislevel)
+				{
+					while ((actor = it.Next()))
+					{
+						if (!actor->IsKindOf(PClass::FindClass("SecretTrigger"))) continue;
+						foundone = true;
+						break;
+					}
+				}
+				if (foundone) colstr = TEXTCOLOR_RED;
+				else colstr = TEXTCOLOR_GREEN;
+			}
+		}
+		FBrokenLines *brok = V_BreakLines(ConFont, screen->GetWidth()*95/100, string);
+
+		for (int k = 0; brok[k].Width >= 0; k++)
+		{
+			Printf("%s%s\n", colstr, brok[k].Text.GetChars());
+		}
+		V_FreeBrokenLines(brok);
+	}
+}
+
+//============================================================================
+//
+// Print secret hints
+//
+//============================================================================
+
+CCMD(secret)
+{
+	const char *mapname = argv.argc() < 2? level.mapname : argv[1];
+	bool thislevel = !stricmp(mapname, level.mapname);
+	bool foundsome = false;
+
+	int lumpno=Wads.CheckNumForName("SECRETS");
+	if (lumpno < 0) return;
+
+	FWadLump lump = Wads.OpenLumpNum(lumpno);
+	FString maphdr;
+	maphdr.Format("[%s]", mapname);
+
+	FString linebuild;
+	char readbuffer[1024];
+	bool inlevel = false;
+
+	while (lump.Gets(readbuffer, 1024))
+	{
+		if (!inlevel)
+		{
+			if (readbuffer[0] == '[')
+			{
+				inlevel = !strnicmp(readbuffer, maphdr, maphdr.Len());
+				if (!foundsome)
+				{
+					FString levelname;
+					level_info_t *info = FindLevelInfo(mapname);
+					levelname.Format("%s - %s\n", mapname, info->LevelName.GetChars());
+					size_t llen = levelname.Len() - 1;
+					for(size_t ii=0; ii<llen; ii++) levelname += '-';
+					Printf(TEXTCOLOR_YELLOW"%s\n", levelname.GetChars());
+					foundsome = true;
+				}
+			}
+			continue;
+		}
+		else
+		{
+			if (readbuffer[0] != '[')
+			{
+				linebuild += readbuffer;
+				if (linebuild.Len() < 1023 || linebuild[1022] == '\n')
+				{
+					// line complete so print it.
+					linebuild.Substitute("\r", "");
+					linebuild.StripRight(" \t\n");
+					PrintSecretString(linebuild, thislevel);
+					linebuild = "";
+				}
+			}
+			else inlevel = false;
+		}
+	}
+}

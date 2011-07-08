@@ -33,7 +33,7 @@
 **
 */
 
-#include "r_data.h"
+#include "doomstat.h"
 #include "p_setup.h"
 #include "p_lnspec.h"
 #include "templates.h"
@@ -43,6 +43,8 @@
 #include "g_level.h"
 #include "v_palette.h"
 #include "p_udmf.h"
+#include "r_state.h"
+#include "r_data/colormaps.h"
 
 //===========================================================================
 //
@@ -110,9 +112,8 @@ enum
 	// namespace for each game
 };
 
-
-void SetTexture (sector_t *sector, int index, int position, const char *name8);
-void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha);
+void SetTexture (sector_t *sector, int index, int position, const char *name8, FMissingTextureTracker &);
+void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &);
 void P_AdjustLine (line_t *ld);
 void P_FinishLoadingLineDef(line_t *ld, int alpha);
 void SpawnMapThing(int index, FMapThing *mt, int position);
@@ -390,11 +391,14 @@ class UDMFParser : public UDMFParserBase
 	TArray<mapsidedef_t> ParsedSideTextures;
 	TArray<sector_t> ParsedSectors;
 	TArray<vertex_t> ParsedVertices;
+	TArray<vertexdata_t> ParsedVertexDatas;
 
 	FDynamicColormap	*fogMap, *normMap;
+	FMissingTextureTracker &missingTex;
 
 public:
-	UDMFParser()
+	UDMFParser(FMissingTextureTracker &missing)
+		: missingTex(missing)
 	{
 		linemap.Clear();
 		fogMap = normMap = NULL;
@@ -597,6 +601,11 @@ public:
 			case NAME_Standing:
 				CHECK_N(St | Zd | Zdt | Va)
 				Flag(th->flags, MTF_STANDSTILL, key); 
+				break;
+
+			case NAME_Countsecret:
+				CHECK_N(Zd | Zdt | Va)
+				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
 			default:
@@ -868,6 +877,10 @@ public:
 				Flag(ld->flags, ML_BLOCKUSE, key); 
 				continue;
 
+			case NAME_blocksight:
+				Flag(ld->flags, ML_BLOCKSIGHT, key); 
+				continue;
+
 			default:
 				break;
 			}
@@ -1069,6 +1082,8 @@ public:
 		sec->SetYScale(sector_t::floor, FRACUNIT);
 		sec->SetXScale(sector_t::ceiling, FRACUNIT);
 		sec->SetYScale(sector_t::ceiling, FRACUNIT);
+		sec->SetAlpha(sector_t::floor, FRACUNIT);
+		sec->SetAlpha(sector_t::ceiling, FRACUNIT);
 		sec->thinglist = NULL;
 		sec->touching_thinglist = NULL;		// phares 3/14/98
 		sec->seqType = (level.flags & LEVEL_SNDSEQTOTALCTRL) ? 0 : -1;
@@ -1101,15 +1116,15 @@ public:
 				continue;
 
 			case NAME_Texturefloor:
-				SetTexture(sec, index, sector_t::floor, CheckString(key));
+				SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex);
 				continue;
 
 			case NAME_Textureceiling:
-				SetTexture(sec, index, sector_t::ceiling, CheckString(key));
+				SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex);
 				continue;
 
 			case NAME_Lightlevel:
-				sec->lightlevel = (BYTE)clamp<int>(CheckInt(key), 0, 255);
+				sec->lightlevel = sector_t::ClampLight(CheckInt(key));
 				continue;
 
 			case NAME_Special:
@@ -1179,6 +1194,32 @@ public:
 				case NAME_Lightceiling:
 					sec->SetPlaneLight(sector_t::ceiling, CheckInt(key));
 					continue;
+
+				case NAME_Alphafloor:
+					sec->SetAlpha(sector_t::floor, CheckFixed(key));
+					continue;
+
+				case NAME_Alphaceiling:
+					sec->SetAlpha(sector_t::ceiling, CheckFixed(key));
+					continue;
+
+				case NAME_Renderstylefloor:
+				{
+					const char *str = CheckString(key);
+					if (!stricmp(str, "translucent")) sec->ChangeFlags(sector_t::floor, PLANEF_ADDITIVE, 0);
+					else if (!stricmp(str, "add")) sec->ChangeFlags(sector_t::floor, 0, PLANEF_ADDITIVE);
+					else sc.ScriptMessage("Unknown value \"%s\" for 'renderstylefloor'\n", str);
+					continue;
+				}
+
+				case NAME_Renderstyleceiling:
+				{
+					const char *str = CheckString(key);
+					if (!stricmp(str, "translucent")) sec->ChangeFlags(sector_t::ceiling, PLANEF_ADDITIVE, 0);
+					else if (!stricmp(str, "add")) sec->ChangeFlags(sector_t::ceiling, 0, PLANEF_ADDITIVE);
+					else sc.ScriptMessage("Unknown value \"%s\" for 'renderstyleceiling'\n", str);
+					continue;
+				}
 
 				case NAME_Lightfloorabsolute:
 					if (CheckBool(key)) sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
@@ -1288,9 +1329,10 @@ public:
 	//
 	//===========================================================================
 
-	void ParseVertex(vertex_t *vt)
+	void ParseVertex(vertex_t *vt, vertexdata_t *vd)
 	{
 		vt->x = vt->y = 0;
+		vd->zCeiling = vd->zFloor = vd->flags = 0;
 		sc.MustGetStringName("{");
 		while (!sc.CheckString("}"))
 		{
@@ -1305,9 +1347,21 @@ public:
 			case NAME_X:
 				vt->x = FLOAT2FIXED(strtod(value, NULL));
 				break;
+
 			case NAME_Y:
 				vt->y = FLOAT2FIXED(strtod(value, NULL));
 				break;
+
+			case NAME_ZCeiling:
+				vd->zCeiling = FLOAT2FIXED(strtod(value, NULL));
+				vd->flags |= VERTEXFLAG_ZCeilingEnabled;
+				break;
+
+			case NAME_ZFloor:
+				vd->zFloor = FLOAT2FIXED(strtod(value, NULL));
+				vd->flags |= VERTEXFLAG_ZFloorEnabled;
+				break;
+
 			default:
 				break;
 			}
@@ -1376,7 +1430,7 @@ public:
 					lines[line].sidedef[sd] = &sides[side];
 
 					P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
-						lines[line].special, lines[line].args[0], &tempalpha[sd]);
+						lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
 
 					side++;
 				}
@@ -1444,7 +1498,7 @@ public:
 				floordrop = true;
 				break;
 			default:
-				Printf("Unknown namespace %s. Using defaults for %s\n", sc.String, GameNames[gameinfo.gametype]);
+				Printf("Unknown namespace %s. Using defaults for %s\n", sc.String, GameTypeName());
 				switch (gameinfo.gametype)
 				{
 				default:			// Shh, GCC
@@ -1505,8 +1559,10 @@ public:
 			else if (sc.Compare("vertex"))
 			{
 				vertex_t vt;
-				ParseVertex(&vt);
+				vertexdata_t vd;
+				ParseVertex(&vt, &vd);
 				ParsedVertices.Push(vt);
+				ParsedVertexDatas.Push(vd);
 			}
 			else
 			{
@@ -1518,6 +1574,11 @@ public:
 		numvertexes = ParsedVertices.Size();
 		vertexes = new vertex_t[numvertexes];
 		memcpy(vertexes, &ParsedVertices[0], numvertexes * sizeof(*vertexes));
+
+		// Create the real vertex datas
+		numvertexdatas = ParsedVertexDatas.Size();
+		vertexdatas = new vertexdata_t[numvertexdatas];
+		memcpy(vertexdatas, &ParsedVertexDatas[0], numvertexdatas * sizeof(*vertexdatas));
 
 		// Create the real sectors
 		numsectors = ParsedSectors.Size();
@@ -1534,9 +1595,9 @@ public:
 	}
 };
 
-void P_ParseTextMap(MapData *map)
+void P_ParseTextMap(MapData *map, FMissingTextureTracker &missingtex)
 {
-	UDMFParser parse;
+	UDMFParser parse(missingtex);
 
 	parse.ParseTextMap(map);
 }

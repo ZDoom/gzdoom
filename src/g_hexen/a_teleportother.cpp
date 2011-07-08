@@ -134,7 +134,7 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 			if (target->flags3 & MF3_ISMONSTER && target->special)
 			{
 				target->RemoveFromHash ();
-				LineSpecials[target->special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
+				P_ExecuteSpecial(target->special, NULL, level.flags & LEVEL_ACTOWNSPECIAL
 					? target : (AActor *)(this->target), false, target->args[0], target->args[1],
 					target->args[2], target->args[3], target->args[4]);
 				target->special = 0;

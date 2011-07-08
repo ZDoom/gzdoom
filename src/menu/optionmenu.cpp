@@ -66,47 +66,6 @@ void M_DrawConText (int color, int x, int y, const char *str)
 		TAG_DONE);
 }
 
-//=============================================================================
-//
-// Draw a slider. Set fracdigits negative to not display the current value numerically.
-//
-//=============================================================================
-
-void M_DrawSlider (int x, int y, double min, double max, double cur,int fracdigits)
-{
-	double range;
-
-	range = max - min;
-	double ccur = clamp(cur, min, max) - min;
-
-	if (CleanXfac > CleanXfac_1 || CleanXfac_1 * 320 < screen->GetWidth())
-	{
-		M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-		M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");
-
-		if (fracdigits >= 0)
-		{
-			char textbuf[16];
-			mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
-			screen->DrawText(SmallFont, CR_DARKGRAY, x + (12*8 + 4) * CleanXfac_1, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
-		}
-	}
-	else
-	{
-		// On 320x200 we need a shorter slider
-		M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x12");
-		M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), y, "\x13");
-
-		if (fracdigits >= 0)
-		{
-			char textbuf[16];
-			mysnprintf(textbuf, countof(textbuf), "%.*f", fracdigits, cur);
-			screen->DrawText(SmallFont, CR_DARKGRAY, x + (7*8 + 4) * CleanXfac_1, y, textbuf, DTA_CleanNoMove_1, true, TAG_DONE);
-		}
-	}
-}
-
-
 
 IMPLEMENT_CLASS(DOptionMenu)
 
@@ -137,18 +96,30 @@ void DOptionMenu::Init(DMenu *parent, FOptionMenuDescriptor *desc)
 	mParentMenu = parent;
 	GC::WriteBarrier(this, parent);
 	mDesc = desc;
-	if (mDesc != NULL && mDesc->mSelectedItem < 0)
+	if (mDesc != NULL && mDesc->mSelectedItem == -1) mDesc->mSelectedItem = FirstSelectable();
+
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+int DOptionMenu::FirstSelectable()
+{
+	if (mDesc != NULL)
 	{
 		// Go down to the first selectable item
 		int i = -1;
-		mDesc->mSelectedItem = -1;
 		do
 		{
 			i++;
 		}
-		while (!mDesc->mItems[i]->Selectable() && i < (int)mDesc->mItems.Size());
-		if (i>=0) mDesc->mSelectedItem = i;
+		while (i < (int)mDesc->mItems.Size() && !mDesc->mItems[i]->Selectable());
+		if (i>=0 && i < (int)mDesc->mItems.Size()) return i;
 	}
+	return -1;
 }
 
 //=============================================================================
@@ -179,18 +150,24 @@ bool DOptionMenu::Responder (event_t *ev)
 	{
 		if (ev->subtype == EV_GUI_WheelUp)
 		{
-			if (mDesc->mScrollPos > 0)
-			{
-				mDesc->mScrollPos--;
-			}
+			int scrollamt = MIN(2, mDesc->mScrollPos);
+			mDesc->mScrollPos -= scrollamt;
 			return true;
 		}
 		else if (ev->subtype == EV_GUI_WheelDown)
 		{
 			if (CanScrollDown)
 			{
-				mDesc->mScrollPos++;
-				VisBottom++;
+				if (VisBottom < (int)(mDesc->mItems.Size()-2))
+				{
+					mDesc->mScrollPos += 2;
+					VisBottom += 2;
+				}
+				else
+				{
+					mDesc->mScrollPos++;
+					VisBottom++;
+				}
 			}
 			return true;
 		}
@@ -211,6 +188,11 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 	switch (mkey)
 	{
 	case MKEY_Up:
+		if (mDesc->mSelectedItem == -1)
+		{
+			mDesc->mSelectedItem = FirstSelectable();
+			break;
+		}
 		do
 		{
 			--mDesc->mSelectedItem;
@@ -249,6 +231,11 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 		break;
 
 	case MKEY_Down:
+		if (mDesc->mSelectedItem == -1)
+		{
+			mDesc->mSelectedItem = FirstSelectable();
+			break;
+		}
 		do
 		{
 			++mDesc->mSelectedItem;
@@ -260,8 +247,17 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			}
 			if (mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) 
 			{
-				mDesc->mSelectedItem = 0;
-				mDesc->mScrollPos = 0;
+				if (startedAt == -1)
+				{
+					mDesc->mSelectedItem = -1;
+					mDesc->mScrollPos = -1;
+					break;
+				}
+				else
+				{
+					mDesc->mSelectedItem = 0;
+					mDesc->mScrollPos = 0;
+				}
 			}
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
@@ -275,10 +271,13 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			{
 				mDesc->mScrollPos = 0;
 			}
-			mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos + 1;
-			while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+			if (mDesc->mSelectedItem != -1)
 			{
-				++mDesc->mSelectedItem;
+				mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos + 1;
+				while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+				{
+					++mDesc->mSelectedItem;
+				}
 			}
 		}
 		break;
@@ -292,10 +291,13 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			{
 				mDesc->mScrollPos = mDesc->mItems.Size() - mDesc->mScrollTop - pagesize;
 			}
-			mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos;
-			while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+			if (mDesc->mSelectedItem != -1)
 			{
-				++mDesc->mSelectedItem;
+				mDesc->mSelectedItem = mDesc->mScrollTop + mDesc->mScrollPos;
+				while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable())
+				{
+					++mDesc->mSelectedItem;
+				}
 			}
 		}
 		break;
@@ -427,13 +429,14 @@ void DOptionMenu::Drawer ()
 	for (i = 0; i < mDesc->mItems.Size() && y <= lastrow; i++, y += fontheight)
 	{
 		// Don't scroll the uppermost items
-		if (i == mDesc->mScrollTop)
+		if ((int)i == mDesc->mScrollTop)
 		{
 			i += mDesc->mScrollPos;
 			if (i >= mDesc->mItems.Size()) break;	// skipped beyond end of menu 
 		}
-		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent, mDesc->mSelectedItem == i);
-		if (cur_indent >= 0 && mDesc->mSelectedItem == i && mDesc->mItems[i]->Selectable())
+		bool isSelected = mDesc->mSelectedItem == (int)i;
+		int cur_indent = mDesc->mItems[i]->Draw(mDesc, y, indent, isSelected);
+		if (cur_indent >= 0 && isSelected && mDesc->mItems[i]->Selectable())
 		{
 			if (((DMenu::MenuTime%8) < 6) || DMenu::CurrentMenu != this)
 			{

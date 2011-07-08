@@ -12,6 +12,7 @@
 #include "cmdlib.h"
 #include "teaminfo.h"
 #include "d_net.h"
+#include "farchive.h"
 
 CVAR (Int, bot_next_color, 11, 0)
 CVAR (Bool, bot_observer, false, 0)
@@ -105,11 +106,6 @@ FArchive &operator<< (FArchive &arc, botskill_t &skill)
 // This is intentionally not in the weapon definition anymore.
 void InitBotStuff()
 {
-	static bool done = false;
-	
-	if (done) return;
-	done = true;
-
 	static struct BotInit
 	{
 		const char *type;

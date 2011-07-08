@@ -48,7 +48,6 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "b_bot.h"
 #include "g_game.h"
 #include "m_random.h"
-#include "r_things.h"
 #include "doomstat.h"
 #include "cmdlib.h"
 #include "sc_man.h"
@@ -62,8 +61,6 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "d_netinf.h"
 
 static FRandom pr_botspawn ("BotSpawn");
-
-void InitBotStuff();
 
 //Externs
 FCajunMaster bglobal;
@@ -321,7 +318,6 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 
 	waitingforspawn[playernumber] = true;
 
-	InitBotStuff();
 	Net_WriteByte (DEM_ADDBOT);
 	Net_WriteByte (playernumber);
 	{

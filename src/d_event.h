@@ -62,6 +62,7 @@ typedef enum
 	ga_newgame,
 	ga_newgame2,
 	ga_loadgame,
+	ga_loadgamehidecon,
 	ga_autoloadgame,
 	ga_savegame,
 	ga_autosave,

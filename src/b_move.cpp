@@ -12,7 +12,6 @@
 #include "g_game.h"
 #include "d_ticcmd.h"
 #include "m_random.h"
-#include "r_main.h"
 #include "i_system.h"
 #include "p_lnspec.h"
 #include "gi.h"

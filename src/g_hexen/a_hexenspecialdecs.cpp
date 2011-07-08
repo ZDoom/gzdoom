@@ -332,7 +332,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BellReset1)
 	self->height <<= 2;
 	if (self->special)
 	{ // Initiate death action
-		LineSpecials[self->special] (NULL, NULL, false, self->args[0],
+		P_ExecuteSpecial(self->special, NULL, NULL, false, self->args[0],
 			self->args[1], self->args[2], self->args[3], self->args[4]);
 		self->special = 0;
 	}

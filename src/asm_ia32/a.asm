@@ -28,6 +28,9 @@
 %define setupmvlineasm		_setupmvlineasm
 %define mvlineasm1		_mvlineasm1
 %define mvlineasm4		_mvlineasm4
+
+%define R_SetupDrawSlabA _R_SetupDrawSlabA
+%define R_DrawSlabA		 _R_DrawSlabA
 %endif
 
 EXTERN ylookup ; near
@@ -44,9 +47,6 @@ EXTERN dc_dest
 EXTERN dc_source
 EXTERN dc_texturefrac
 
-mvlineasm4_counter:
-	dd 0
-
 	SECTION .text
 
 ALIGN 16
@@ -59,7 +59,44 @@ setvlinebpl_:
 	mov [fixchain2ma+2], eax
 	mov [fixchain2mb+2], eax
 	selfmod fixchain1a, fixchain2mb+6
+
+setdrawslabbpl:
+	mov dword [voxbpl1+2], eax
+	mov dword [voxbpl2+2], eax
+	mov dword [voxbpl3+2], eax
+	mov dword [voxbpl4+2], eax
+	mov dword [voxbpl5+2], eax
+	mov dword [voxbpl6+2], eax
+	mov dword [voxbpl7+2], eax
+	mov dword [voxbpl8+2], eax
+	selfmod voxbpl1, voxpl8+6
 	ret
+
+	SECTION .data
+	
+lastslabcolormap:
+	dd 4
+	
+	SECTION .text
+
+GLOBAL R_SetupDrawSlabA
+GLOBAL @R_SetupDrawSlabA@4
+R_SetupDrawSlabA:
+	mov ecx, [esp+4]
+@R_SetupDrawSlabA@4:
+	cmp [lastslabcolormap], ecx
+	je .done
+	mov [lastslabcolormap], ecx
+	mov dword [voxpal1+2], ecx
+	mov dword [voxpal2+2], ecx
+	mov dword [voxpal3+2], ecx
+	mov dword [voxpal4+2], ecx
+	mov dword [voxpal5+2], ecx
+	mov dword [voxpal6+2], ecx
+	mov dword [voxpal7+2], ecx
+	mov dword [voxpal8+2], ecx
+.done ret
+
 
 ; pass it log2(texheight)
 
@@ -546,6 +583,226 @@ mvcase1:	mov [edi], bl
 		jmp beginmvlineasm4
 ALIGN 16
 mvcase0:	jmp beginmvlineasm4
+
+align 16
+
+
+;*************************************************************************
+;***************************** Voxel Slabs *******************************
+;*************************************************************************
+
+GLOBAL R_DrawSlabA
+R_DrawSlabA:
+	push ebx
+	push ebp
+	push esi
+	push edi
+	
+	mov eax, [esp+5*4+0]
+	mov ebx, [esp+5*4+4]
+	mov ecx, [esp+5*4+8]
+	mov edx, [esp+5*4+12]
+	mov esi, [esp+5*4+16]
+	mov edi, [esp+5*4+20]
+	
+	cmp eax, 2
+	je voxbegdraw2
+	ja voxskip2
+	xor eax, eax
+voxbegdraw1:
+	mov ebp, ebx
+	shr ebp, 16
+	add ebx, edx
+	dec ecx
+	mov al, byte [esi+ebp]
+voxpal1: mov al, byte [eax+88888888h]
+	mov byte [edi], al
+voxbpl1: lea edi, [edi+88888888h]
+	jnz voxbegdraw1
+	jmp voxskipslab5
+
+voxbegdraw2:
+	mov ebp, ebx
+	shr ebp, 16
+	add ebx, edx
+	xor eax, eax
+	dec ecx
+	mov al, byte [esi+ebp]
+voxpal2: mov al, byte [eax+88888888h]
+	mov ah, al
+	mov word [edi], ax
+voxbpl2: lea edi, [edi+88888888h]
+	jnz voxbegdraw2
+	jmp voxskipslab5
+
+voxskip2:
+	cmp eax, 4
+	jne voxskip4
+	xor eax, eax
+voxbegdraw4:
+	mov ebp, ebx
+	add ebx, edx
+	shr ebp, 16
+	xor eax, eax
+	mov al, byte [esi+ebp]
+voxpal3: mov al, byte [eax+88888888h]
+	mov ah, al
+	shl eax, 8
+	mov al, ah
+	shl eax, 8
+	mov al, ah
+	mov dword [edi], eax
+voxbpl3: add edi, 88888888h
+	dec ecx
+	jnz voxbegdraw4
+	jmp voxskipslab5
+
+voxskip4:
+	add eax, edi
+
+	test edi, 1
+	jz voxskipslab1
+	cmp edi, eax
+	je voxskipslab1
+
+	push eax
+	push ebx
+	push ecx
+	push edi
+voxbegslab1:
+	mov ebp, ebx
+	add ebx, edx
+	shr ebp, 16
+	xor eax, eax
+	mov al, byte [esi+ebp]
+voxpal4: mov al, byte [eax+88888888h]
+	mov byte [edi], al
+voxbpl4: add edi, 88888888h
+	dec ecx
+	jnz voxbegslab1
+	pop edi
+	pop ecx
+	pop ebx
+	pop eax
+	inc edi
+
+voxskipslab1:
+	push eax
+	test edi, 2
+	jz voxskipslab2
+	dec eax
+	cmp edi, eax
+	jge voxskipslab2
+
+	push ebx
+	push ecx
+	push edi
+voxbegslab2:
+	mov ebp, ebx
+	add ebx, edx
+	shr ebp, 16
+	xor eax, eax
+	mov al, byte [esi+ebp]
+voxpal5: mov al, byte [eax+88888888h]
+	mov ah, al
+	mov word [edi], ax
+voxbpl5: add edi, 88888888h
+	dec ecx
+	jnz voxbegslab2
+	pop edi
+	pop ecx
+	pop ebx
+	add edi, 2
+
+voxskipslab2:
+	mov eax, [esp]
+
+	sub eax, 3
+	cmp edi, eax
+	jge voxskipslab3
+
+voxprebegslab3:
+	push ebx
+	push ecx
+	push edi
+voxbegslab3:
+	mov ebp, ebx
+	add ebx, edx
+	shr ebp, 16
+	xor eax, eax
+	mov al, byte [esi+ebp]
+voxpal6: mov al, byte [eax+88888888h]
+	mov ah, al
+	shl eax, 8
+	mov al, ah
+	shl eax, 8
+	mov al, ah
+	mov dword [edi], eax
+voxbpl6: add edi, 88888888h
+	dec ecx
+	jnz voxbegslab3
+	pop edi
+	pop ecx
+	pop ebx
+	add edi, 4
+
+	mov eax, [esp]
+
+	sub eax, 3
+	cmp edi, eax
+	jl voxprebegslab3
+
+voxskipslab3:
+	mov eax, [esp]
+
+	dec eax
+	cmp edi, eax
+	jge voxskipslab4
+
+	push ebx
+	push ecx
+	push edi
+voxbegslab4:
+	mov ebp, ebx
+	add ebx, edx
+	shr ebp, 16
+	xor eax, eax
+	mov al, byte [esi+ebp]
+voxpal7: mov al, byte [eax+88888888h]
+	mov ah, al
+	mov word [edi], ax
+voxbpl7: add edi, 88888888h
+	dec ecx
+	jnz voxbegslab4
+	pop edi
+	pop ecx
+	pop ebx
+	add edi, 2
+
+voxskipslab4:
+	pop eax
+
+	cmp edi, eax
+	je voxskipslab5
+
+voxbegslab5:
+	mov ebp, ebx
+	add ebx, edx
+	shr ebp, 16
+	xor eax, eax
+	mov al, byte [esi+ebp]
+voxpal8: mov al, byte [eax+88888888h]
+	mov byte [edi], al
+voxbpl8: add edi, 88888888h
+	dec ecx
+	jnz voxbegslab5
+
+voxskipslab5:
+	pop edi
+	pop esi
+	pop ebp
+	pop ebx
+	ret
 
 align 16
 

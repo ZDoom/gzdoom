@@ -37,8 +37,9 @@
 
 #include "doomdef.h"
 #include "textures/textures.h"
-#include "r_blend.h"
+#include "r_data/renderstyle.h"
 #include "s_sound.h"
+#include "memarena.h"
 
 struct subsector_t;
 //
@@ -269,7 +270,7 @@ enum
 	MF5_FASTMELEE		= 0x00000002,	// has a faster melee attack when DF_FAST_MONSTERS or nightmare is on.
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	/*					= 0x00000008,	*/
-	/*					= 0x00000010,	*/
+	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret
 	MF5_AVOIDINGDROPOFF = 0x00000020,	// Used to move monsters away from dropoffs
 	MF5_NODAMAGE		= 0x00000040,	// Actor can be shot and reacts to being shot but takes no damage
 	MF5_CHASEGOAL		= 0x00000080,	// Walks to goal instead of target if a valid goal is set.
@@ -289,7 +290,7 @@ enum
 	MF5_NOINTERACTION	= 0x00200000,	// Thing is completely excluded from any gameplay related checks
 	MF5_NOTIMEFREEZE	= 0x00400000,	// Actor is not affected by time freezer
 	MF5_PUFFGETSOWNER	= 0x00800000,	// [BB] Sets the owner of the puff to the player who fired it
-	MF5_SPECIALFIREDAMAGE=0x01000000,	// Special treatment of PhoenixFX1 turned into a flag to removr
+	MF5_SPECIALFIREDAMAGE=0x01000000,	// Special treatment of PhoenixFX1 turned into a flag to remove
 										// dependence of main engine code of specific actor types.
 	MF5_SUMMONEDMONSTER	= 0x02000000,	// To mark the friendly Minotaur. Hopefully to be generalized later.
 	MF5_NOVERTICALMELEERANGE=0x04000000,// Does not check vertical distance for melee range
@@ -323,6 +324,12 @@ enum
 	MF6_BLOCKEDBYSOLIDACTORS = 0x00080000, // Blocked by solid actors, even if not solid itself
 	MF6_ADDITIVEPOISONDAMAGE	= 0x00100000,
 	MF6_ADDITIVEPOISONDURATION	= 0x00200000,
+	MF6_NOMENU			= 0x00400000,	// Player class should not appear in the class selection menu.
+	MF6_BOSSCUBE		= 0x00800000,	// Actor spawned by A_BrainSpit, flagged for timefreeze reasons.
+	MF6_SEEINVISIBLE	= 0x01000000,	// Monsters can see invisible player.
+	MF6_DONTCORPSE		= 0x02000000,	// [RC] Don't autoset MF_CORPSE upon death and don't force Crash state change.
+	MF6_POISONALWAYS	= 0x04000000,	// Always apply poison, even when target can't take the damage.
+	MF6_DOHARMSPECIES	= 0x08000000,	// Do hurt one's own species with projectiles.
 
 // --- mobj.renderflags ---
 
@@ -528,7 +535,12 @@ struct FDropItem
 class FDropItemPtrArray : public TArray<FDropItem *>
 {
 public:
-	~FDropItemPtrArray();
+	~FDropItemPtrArray()
+	{
+		Clear();
+	}
+
+	void Clear();
 };
 
 extern FDropItemPtrArray DropItemList;
@@ -675,7 +687,7 @@ public:
 	void ConversationAnimation (int animnum);
 
 	// Make this actor hate the same things as another actor
-	void CopyFriendliness (AActor *other, bool changeTarget);
+	void CopyFriendliness (AActor *other, bool changeTarget, bool resetHealth=true);
 
 	// Moves the other actor's inventory to this one
 	void ObtainInventory (AActor *other);
@@ -703,6 +715,12 @@ public:
 
 	// Return starting health adjusted by skill level
 	int SpawnHealth();
+	int GibHealth();
+
+	inline bool isMissile(bool precise=true)
+	{
+		return (flags&MF_MISSILE) || (precise && GetDefault()->flags&MF_MISSILE);
+	}
 
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
@@ -753,6 +771,7 @@ public:
 	fixed_t GetGravity() const;
 	bool IsSentient() const;
 	const char *GetTag(const char *def = NULL) const;
+	void SetTag(const char *def);
 
 
 // info for drawing
@@ -788,6 +807,7 @@ public:
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	SDWORD			Damage;			// For missiles and monster railgun
+	int				projectileKickback;
 	DWORD			flags;
 	DWORD			flags2;			// Heretic flags
 	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
@@ -832,7 +852,7 @@ public:
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
 	WORD			BounceFlags;	// which bouncing type?
-	WORD			SpawnFlags;
+	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
 	fixed_t			meleerange;		// specifies how far a melee attack reaches.
 	fixed_t			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
 									// but instead tries to come closer for a melee attack.
@@ -848,16 +868,19 @@ public:
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
 	int				lastbump;		// Last time the actor was bumped, used to control BUMPSPECIAL
 	int				Score;			// manipulated by score items, ACS or DECORATE. The engine doesn't use this itself for anything.
-	FNameNoInit		Tag;			// Strife's tag name. FIXME: should be case sensitive!
+	FString *		Tag;			// Strife's tag name.
+	int				DesignatedTeam;	// Allow for friendly fire cacluations to be done on non-players.
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
 	line_t			*BlockingLine;	// Line that blocked the last move
 
 	int PoisonDamage; // Damage received per tic from poison.
+	FNameNoInit PoisonDamageType; // Damage type dealt by poison.
 	int PoisonDuration; // Duration left for receiving poison damage.
 	int PoisonPeriod; // How often poison damage is applied. (Every X tics.)
 
 	int PoisonDamageReceived; // Damage received per tic from poison.
+	FNameNoInit PoisonDamageTypeReceived; // Damage type received by poison.
 	int PoisonDurationReceived; // Duration left for receiving poison damage.
 	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
 	TObjPtr<AActor> Poisoner; // Last source of received poison damage.
@@ -894,7 +917,11 @@ public:
 	SWORD PainChance;
 	int PainThreshold;
 	FNameNoInit DamageType;
+	FNameNoInit DamageTypeReceived;
 	fixed_t DamageFactor;
+
+	FNameNoInit PainType;
+	FNameNoInit DeathType;
 
 	FState *SpawnState;
 	FState *SeeState;
@@ -920,6 +947,7 @@ public:
 private:
 	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
+	static FSharedStringArena mStringPropertyData;
 
 	friend class FActorIterator;
 
@@ -937,6 +965,7 @@ public:
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
 	void SetIdle();
+	void ClearCounters();
 
 	FState *FindState (FName label) const
 	{
@@ -1028,6 +1057,7 @@ inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
 }
+
 
 void PrintMiscActorInfo(AActor * query);
 

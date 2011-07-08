@@ -27,6 +27,7 @@
 
 #include "dsectoreffect.h"
 #include "doomdata.h"
+#include "r_state.h"
 
 class FScanner;
 struct level_info_t;
@@ -96,14 +97,6 @@ private:
 // (This is so scrolling floors and objects on them can move at same speed.)
 enum { CARRYFACTOR = ((fixed_t)(FRACUNIT*.09375)) };
 
-inline FArchive &operator<< (FArchive &arc, DScroller::EScrollType &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DScroller::EScrollType)val;
-	return arc;
-}
-
 // phares 3/20/98: added new model of Pushers for push/pull effects
 
 class DPusher : public DThinker
@@ -122,13 +115,7 @@ public:
 	DPusher ();
 	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
 	void Serialize (FArchive &arc);
-	int CheckForSectorMatch (EPusher type, int tag)
-	{
-		if (m_Type == type && sectors[m_Affectee].tag == tag)
-			return m_Affectee;
-		else
-			return -1;
-	}
+	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
 	{
 		angle_t ang = ((angle_t)(angle<<24)) >> ANGLETOFINESHIFT;
@@ -155,14 +142,6 @@ protected:
 
 bool PIT_PushThing (AActor *thing);
 
-inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPusher::EPusher)val;
-	return arc;
-}
-
 // Define values for map objects
 #define MO_TELEPORTMAN			14
 
@@ -186,6 +165,8 @@ void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
 
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
+
+void P_GiveSecret(AActor *actor, bool printmessage, bool playsound);
 
 //
 // getSide()
@@ -400,9 +381,6 @@ void	EV_StartLightFading (int tag, int value, int tics);
 bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
 bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno);
 
-void	P_InitSwitchList ();
-void	P_ProcessSwitchDef (FScanner &sc);
-
 //
 // P_PLATS
 //
@@ -472,21 +450,6 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type,
 void EV_StopPlat (int tag);
 void P_ActivateInStasis (int tag);
 
-inline FArchive &operator<< (FArchive &arc, DPlat::EPlatType &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPlat::EPlatType)val;
-	return arc;
-}
-inline FArchive &operator<< (FArchive &arc, DPlat::EPlatState &state)
-{
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DPlat::EPlatState)val;
-	return arc;
-}
-
 //
 // [RH]
 // P_PILLAR
@@ -525,14 +488,6 @@ protected:
 private:
 	DPillar ();
 };
-
-inline FArchive &operator<< (FArchive &arc, DPillar::EPillar &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DPillar::EPillar)val;
-	return arc;
-}
 
 bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
 				  fixed_t height2, int crush, bool hexencrush);
@@ -594,31 +549,12 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 void P_SpawnDoorCloseIn30 (sector_t *sec);
 void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
 
-inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DDoor::EVlDoor)val;
-	return arc;
-}
-
-struct FDoorAnimation
-{
-	FTextureID BaseTexture;
-	FTextureID *TextureFrames;
-	int NumTextureFrames;
-	FName OpenSound;
-	FName CloseSound;
-};
-
-void P_ParseAnimatedDoor (FScanner &sc);
-
 class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)
 public:
 	DAnimatedDoor (sector_t *sector);
-	DAnimatedDoor (sector_t *sector, line_t *line, int speed, int delay);
+	DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -627,7 +563,7 @@ public:
 protected:
 	line_t *m_Line1, *m_Line2;
 	int m_Frame;
-	int m_WhichDoorIndex;
+	FDoorAnimation *m_DoorAnim;
 	int m_Timer;
 	fixed_t m_BotDist;
 	int m_Status;
@@ -668,6 +604,7 @@ public:
 		ceilRaiseInstant,
 		ceilCrushAndRaise,
 		ceilLowerAndCrush,
+		ceilLowerAndCrushDist,
 		ceilCrushRaiseAndStay,
 		ceilRaiseToNearest,
 		ceilLowerToLowest,
@@ -694,6 +631,10 @@ public:
 	void Serialize (FArchive &arc);
 	void Tick ();
 
+	static DCeiling *Create(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag,
+						fixed_t speed, fixed_t speed2, fixed_t height,
+						int crush, int silent, int change, bool hexencrush);
+
 protected:
 	ECeiling	m_Type;
 	fixed_t 	m_BottomHeight;
@@ -719,9 +660,6 @@ protected:
 private:
 	DCeiling ();
 
-	friend bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
-		int tag, fixed_t speed, fixed_t speed2, fixed_t height,
-		int crush, int silent, int change, bool hexencrush);
 	friend bool EV_CeilingCrushStop (int tag);
 	friend void P_ActivateInStasisCeiling (int tag);
 };
@@ -732,13 +670,6 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 bool EV_CeilingCrushStop (int tag);
 void P_ActivateInStasisCeiling (int tag);
 
-inline FArchive &operator<< (FArchive &arc, DCeiling::ECeiling &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DCeiling::ECeiling)val;
-	return arc;
-}
 
 
 //
@@ -839,14 +770,6 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 bool EV_FloorCrushStop (int tag);
 bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed);
 
-inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DFloor::EFloor)val;
-	return arc;
-}
-
 class DElevator : public DMover
 {
 	DECLARE_CLASS (DElevator, DMover)
@@ -887,14 +810,6 @@ private:
 
 bool EV_DoElevator (line_t *line, DElevator::EElevator type, fixed_t speed,
 	fixed_t height, int tag);
-
-inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (DElevator::EElevator)val;
-	return arc;
-}
 
 class DWaggleBase : public DMover
 {

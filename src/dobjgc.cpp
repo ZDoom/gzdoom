@@ -61,18 +61,19 @@
 #include "b_bot.h"
 #include "p_local.h"
 #include "g_game.h"
-#include "r_data.h"
 #include "a_sharedglobal.h"
 #include "sbar.h"
 #include "stats.h"
 #include "c_dispatch.h"
 #include "p_acs.h"
 #include "s_sndseq.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
+#include "v_video.h"
 #include "menu/menu.h"
+#include "intermission/intermission.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -300,6 +301,7 @@ static void MarkRoot()
 	Mark(screen);
 	Mark(StatusBar);
 	Mark(DMenu::CurrentMenu);
+	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
@@ -525,6 +527,12 @@ void Barrier(DObject *pointing, DObject *pointed)
 	{
 		pointing->MakeWhite();
 	}
+}
+
+void DelSoftRootHead()
+{
+	if (SoftRoots != NULL) delete SoftRoots;
+	SoftRoots = NULL;
 }
 
 //==========================================================================

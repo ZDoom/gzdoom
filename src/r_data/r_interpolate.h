@@ -1,6 +1,7 @@
 #ifndef R_INTERPOLATE_H
 #define R_INTERPOLATE_H
 
+#include "dobject.h"
 //==========================================================================
 //
 //

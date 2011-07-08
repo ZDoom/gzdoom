@@ -25,6 +25,9 @@
 struct event_t;
 class FArchive;
 
+
+void AM_StaticInit();
+
 // Called by main loop.
 bool AM_Responder (event_t* ev, bool last);
 

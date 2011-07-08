@@ -861,7 +861,6 @@ bool FStateDefinitions::AddStates(FState *state, const char *framechars)
 
 int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 {
-	static int c=0;
 	int count = StateArray.Size();
 
 	if (count > 0)

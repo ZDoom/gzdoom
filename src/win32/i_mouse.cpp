@@ -114,10 +114,10 @@ extern HWND Window;
 extern LPDIRECTINPUT8 g_pdi;
 extern LPDIRECTINPUT g_pdi3;
 extern bool GUICapture;
+extern int BlockMouseMove; 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static bool NativeMouse;
 static EMouseMode MouseMode = MM_None;
 static FMouse *(*MouseFactory[])() =
 {
@@ -129,6 +129,7 @@ static FMouse *(*MouseFactory[])() =
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 FMouse *Mouse;
+bool NativeMouse;
 
 bool CursorState;
 
@@ -283,6 +284,7 @@ void I_CheckNativeMouse(bool preferNative)
 			NativeMouse = want_native;
 			if (want_native)
 			{
+				BlockMouseMove = 3;
 				Mouse->Ungrab();
 			}
 			else

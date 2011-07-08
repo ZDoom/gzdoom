@@ -39,6 +39,7 @@
 #include "v_video.h"
 #include "cmdlib.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 EXTERN_CVAR (Int, con_scaletext)
 

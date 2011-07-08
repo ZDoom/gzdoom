@@ -461,7 +461,7 @@ bool DDrawFB::CreateSurfacesComplex ()
 {
 	DDSURFACEDESC ddsd = { sizeof(ddsd), };
 	HRESULT hr;
-	int tries = 2;
+	int tries = 0;
 
 	LOG ("creating surfaces using a complex primary\n");
 
@@ -801,9 +801,13 @@ bool DDrawFB::Lock ()
 
 bool DDrawFB::Lock (bool useSimpleCanvas)
 {
+	static int lock_num;
 	bool wasLost;
 
 //	LOG2 ("  Lock (%d) <%d>\n", buffered, LockCount);
+
+	LOG3("Lock %5x <%d> %d\n", (AppActive << 16) | (SessionState << 12) | (MustBuffer << 8) |
+		(useSimpleCanvas << 4) | (int)UseBlitter, LockCount, lock_num++);
 
 	if (LockCount++ > 0)
 	{
@@ -812,14 +816,15 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 
 	wasLost = false;
 
-	if (NeedResRecreate)
+	if (NeedResRecreate && LockCount == 1)
 	{
+		LOG("Recreating resources\n");
 		NeedResRecreate = false;
 		ReleaseResources ();
 		CreateResources ();
+		// ReleaseResources sets LockCount to 0.
+		LockCount = 1;
 	}
-
-	LOG5 ("Lock %d %d %d %d %d\n", AppActive, SessionState, MustBuffer, useSimpleCanvas, UseBlitter);
 
 	if (!AppActive || SessionState || MustBuffer || useSimpleCanvas || !UseBlitter)
 	{
@@ -859,6 +864,7 @@ void DDrawFB::Unlock ()
 
 	if (LockCount == 0)
 	{
+		LOG("Unlock called when already unlocked\n");
 		return;
 	}
 
@@ -895,6 +901,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		lockingLocker = true;
 		if (LockingSurf == NULL)
 		{
+			LOG("LockingSurf lost\n");
 			if (!CreateResources ())
 			{
 				if (LastHR != DDERR_UNSUPPORTEDMODE)

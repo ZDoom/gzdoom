@@ -252,7 +252,7 @@ void CT_Drawer (void)
 		}
 
 		// draw the prompt, text, and cursor
-		ChatQueue[len] = gameinfo.gametype & GAME_DoomChex ? '_' : '[';
+		ChatQueue[len] = SmallFont->GetCursor();
 		ChatQueue[len+1] = '\0';
 		if (con_scaletext < 2)
 		{

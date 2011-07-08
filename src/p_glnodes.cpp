@@ -851,6 +851,48 @@ static int FindGLNodesInFile(FileReader * f, const char * label)
 
 bool P_LoadGLNodes(MapData * map)
 {
+
+	if (map->MapLumps[ML_GLZNODES].Size != 0)
+	{
+		const int idcheck = MAKE_ID('Z','G','L','N');
+		const int idcheck2 = MAKE_ID('Z','G','L','2');
+		const int idcheck3 = MAKE_ID('X','G','L','N');
+		const int idcheck4 = MAKE_ID('X','G','L','2');
+		int id;
+
+		map->Seek(ML_GLZNODES);
+		map->file->Read (&id, 4);
+		if (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4)
+		{
+			try
+			{
+				subsectors = NULL;
+				segs = NULL;
+				nodes = NULL;
+				P_LoadZNodes (*map->file, id);
+				return true;
+			}
+			catch (CRecoverableError &)
+			{
+				if (subsectors != NULL)
+				{
+					delete[] subsectors;
+					subsectors = NULL;
+				}
+				if (segs != NULL)
+				{
+					delete[] segs;
+					segs = NULL;
+				}
+				if (nodes != NULL)
+				{
+					delete[] nodes;
+					nodes = NULL;
+				}
+			}
+		}
+	}
+
 	if (!CheckCachedNodes(map))
 	{
 		wadlump_t gwalumps[4];
@@ -967,7 +1009,8 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			{
 				vertexes, numvertexes,
 				sides, numsides,
-				lines, numlines
+				lines, numlines,
+				0, 0, 0, 0
 			};
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
@@ -1035,7 +1078,7 @@ static FString GetCachePath()
 	FSRef folder;
 
 	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		noErr == FSRefMakePath(&folder, (UInt8*)path.GetChars(), PATH_MAX))
 	{
 		path = pathstr;
 	}
@@ -1181,6 +1224,7 @@ static void CreateCachedNodes(MapData *map)
 	FILE *f = fopen(path, "wb");
 	fwrite(compressed, 1, outlen+offset, f);
 	fclose(f);
+	delete [] compressed;
 }
 
 

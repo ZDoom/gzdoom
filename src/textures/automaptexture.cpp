@@ -37,8 +37,8 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "w_wad.h"
+#include "textures/textures.h"
 
 //==========================================================================
 //

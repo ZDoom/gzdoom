@@ -117,6 +117,7 @@ public:
 
 	static void EnableNoSet ();		// enable the honoring of CVAR_NOSET
 	static void EnableCallbacks ();
+	static void DisableCallbacks ();
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
 	static void ListVars (const char *filter, bool plain);

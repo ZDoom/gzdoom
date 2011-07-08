@@ -1,6 +1,7 @@
 #include "a_sharedglobal.h"
 #include "g_level.h"
 #include "d_player.h"
+#include "farchive.h"
 
 IMPLEMENT_POINTY_CLASS (DFlashFader)
  DECLARE_POINTER (ForWho)

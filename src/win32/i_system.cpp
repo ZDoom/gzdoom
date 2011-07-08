@@ -83,8 +83,8 @@
 #include "doomstat.h"
 #include "v_palette.h"
 #include "stats.h"
-#include "r_data.h"
 #include "textures/bitmap.h"
+#include "textures/textures.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -131,6 +131,7 @@ extern HANDLE StdOut;
 extern bool FancyStdOut;
 extern HINSTANCE g_hInst;
 extern FILE *Logfile;
+extern bool NativeMouse;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -142,8 +143,6 @@ UINT TimerEventID;
 UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
 uint32 LanguageIDs[4];
-
-const IWADInfo *DoomStartupInfo;
 
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
@@ -835,20 +834,6 @@ void STACK_ARGS I_Error(const char *error, ...)
 
 //==========================================================================
 //
-// I_SetIWADInfo
-//
-//==========================================================================
-
-void I_SetIWADInfo(const IWADInfo *info)
-{
-	DoomStartupInfo = info;
-
-	// Make the startup banner show itself
-	LayoutMainWindow(Window, NULL);
-}
-
-//==========================================================================
-//
 // ToEditControl
 //
 // Converts string to Unicode and inserts it into the control.
@@ -1123,7 +1108,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			work.Format("%s (%s)", IWADInfos[WadList[i].Type].Name, filepart);
+			work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
 			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
 			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}
@@ -1202,29 +1187,51 @@ bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
-	// Must be no larger than 32x32.
-	if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
 	{
-		return false;
-	}
+		// Must be no larger than 32x32.
+		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+		{
+			return false;
+		}
 
-	cursor = CreateAlphaCursor(cursorpic);
-	if (cursor == NULL)
-	{
-		cursor = CreateCompatibleCursor(cursorpic);
+		cursor = CreateAlphaCursor(cursorpic);
+		if (cursor == NULL)
+		{
+			cursor = CreateCompatibleCursor(cursorpic);
+		}
+		if (cursor == NULL)
+		{
+			return false;
+		}
+		// Replace the existing cursor with the new one.
+		DestroyCustomCursor();
+		CustomCursor = cursor;
+		atterm(DestroyCustomCursor);
 	}
-	if (cursor == NULL)
+	else
 	{
-		return false;
+		DestroyCustomCursor();
+		cursor = LoadCursor(NULL, IDC_ARROW);
 	}
-	// Replace the existing cursor with the new one.
-	if (CustomCursor != NULL)
-	{
-		DestroyCursor(CustomCursor);
-	}
-	CustomCursor = cursor;
-	atterm(DestroyCustomCursor);
 	SetClassLongPtr(Window, GCLP_HCURSOR, (LONG_PTR)cursor);
+	if (NativeMouse)
+	{
+		POINT pt;
+		RECT client;
+
+		// If the mouse pointer is within the window's client rect, set it now.
+		if (GetCursorPos(&pt) && GetClientRect(Window, &client) &&
+			ClientToScreen(Window, (LPPOINT)&client.left) &&
+			ClientToScreen(Window, (LPPOINT)&client.right))
+		{
+			if (pt.x >= client.left && pt.x < client.right &&
+				pt.y >= client.top && pt.y < client.bottom)
+			{
+				SetCursor(cursor);
+			}
+		}
+	}
 	return true;
 }
 

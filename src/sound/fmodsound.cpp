@@ -341,7 +341,7 @@ public:
 		Channel->setSpeakerMix(1, 1, 1, 1, 1, 1, 1, 1);
 		Channel->setVolume(volume);
 		// Ensure reverb is disabled.
-		FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, };
+		FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		if (FMOD_OK == Channel->getReverbProperties(&reverb))
 		{
 			reverb.Room = -10000;
@@ -1668,7 +1668,7 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 		}
 		if (flags & SNDF_NOREVERB)
 		{
-			FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, };
+			FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			if (FMOD_OK == chan->getReverbProperties(&reverb))
 			{
 				reverb.Room = -10000;
@@ -1788,7 +1788,7 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		}
 		if (flags & SNDF_NOREVERB)
 		{
-			FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, };
+			FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			if (FMOD_OK == chan->getReverbProperties(&reverb))
 			{
 				reverb.Room = -10000;
@@ -2318,7 +2318,7 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
+SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
@@ -2374,7 +2374,9 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 
 	if (loopstart >= 0)
 	{
-		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, numsamples - 1, FMOD_TIMEUNIT_PCM);
+		if (loopend == -1)
+			loopend = numsamples - 1;
+		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, loopend, FMOD_TIMEUNIT_PCM);
 	}
 
 	retval.data = sample;
@@ -2555,7 +2557,7 @@ void FMODSoundRenderer::DrawWaveDebug(int mode)
 	// 16 pixels of padding between each window.
 	window_size = (screen->GetWidth() - 16) / numoutchans - 16;
 
-	float *wavearray = (float*)alloca(window_size*sizeof(float));
+	float *wavearray = (float*)alloca(MAX(SPECTRUM_SIZE,window_size)*sizeof(float));
 
 	y = 16;
 	y = DrawChannelGroupOutput(SfxGroup, wavearray, window_size, window_height, y, mode);

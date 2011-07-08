@@ -41,17 +41,16 @@
 #include "c_bind.h"
 #include "c_dispatch.h"
 #include "gameconfigfile.h"
+#include "w_wad.h"
 
 TArray<FKeySection> KeySections;
+extern TArray<FString> KeyConfWeapons;
 
 static void LoadKeys (const char *modname, bool dbl)
 {
 	char section[64];
 
-	if (GameNames[gameinfo.gametype] == NULL)
-		return;
-
-	mysnprintf (section, countof(section), "%s.%s%sBindings", GameNames[gameinfo.gametype], modname,
+	mysnprintf (section, countof(section), "%s.%s%sBindings", gameinfo.ConfigName.GetChars(), modname,
 		dbl ? ".Double" : ".");
 
 	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
@@ -80,9 +79,9 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, siz
 {
 	for (unsigned i=0; i<KeySections.Size(); i++)
 	{
-		mysnprintf (subsection, sublen, "%s.Bindings", KeySections[i].mSection);
+		mysnprintf (subsection, sublen, "%s.Bindings", KeySections[i].mSection.GetChars());
 		DoSaveKeys (config, section, &KeySections[i], false);
-		mysnprintf (subsection, sublen, "%s.DoubleBindings", KeySections[i].mSection);
+		mysnprintf (subsection, sublen, "%s.DoubleBindings", KeySections[i].mSection.GetChars());
 		DoSaveKeys (config, section, &KeySections[i], true);
 	}
 }
@@ -105,7 +104,7 @@ CCMD (addkeysection)
 
 		for (unsigned i = 0; i < KeySections.Size(); i++)
 		{
-			if (KeySections[i].mTitle.CompareNoCase(argv[2] == 0))
+			if (KeySections[i].mTitle.CompareNoCase(argv[2]) == 0)
 			{
 				CurrentKeySection = i;
 				return;
@@ -142,5 +141,81 @@ CCMD (addmenukey)
 		act->mTitle = argv[1];
 		act->mAction = argv[2];
 	}
+}
+
+//==========================================================================
+//
+// D_LoadWadSettings
+//
+// Parses any loaded KEYCONF lumps. These are restricted console scripts
+// that can only execute the alias, defaultbind, addkeysection,
+// addmenukey, weaponsection, and addslotdefault commands.
+//
+//==========================================================================
+
+void D_LoadWadSettings ()
+{
+	char cmd[4096];
+	int lump, lastlump = 0;
+
+	ParsingKeyConf = true;
+	KeySections.Clear();
+	KeyConfWeapons.Clear();
+
+	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
+	{
+		FMemLump data = Wads.ReadLump (lump);
+		const char *eof = (char *)data.GetMem() + Wads.LumpLength (lump);
+		const char *conf = (char *)data.GetMem();
+
+		while (conf < eof)
+		{
+			size_t i;
+
+			// Fetch a line to execute
+			for (i = 0; conf + i < eof && conf[i] != '\n'; ++i)
+			{
+				cmd[i] = conf[i];
+			}
+			cmd[i] = 0;
+			conf += i;
+			if (*conf == '\n')
+			{
+				conf++;
+			}
+
+			// Comments begin with //
+			char *stop = cmd + i - 1;
+			char *comment = cmd;
+			int inQuote = 0;
+
+			if (*stop == '\r')
+				*stop-- = 0;
+
+			while (comment < stop)
+			{
+				if (*comment == '\"')
+				{
+					inQuote ^= 1;
+				}
+				else if (!inQuote && *comment == '/' && *(comment + 1) == '/')
+				{
+					break;
+				}
+				comment++;
+			}
+			if (comment == cmd)
+			{ // Comment at line beginning
+				continue;
+			}
+			else if (comment < stop)
+			{ // Comment in middle of line
+				*comment = 0;
+			}
+
+			AddCommandString (cmd);
+		}
+	}
+	ParsingKeyConf = false;
 }
 

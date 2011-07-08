@@ -199,5 +199,14 @@ extern lnSpecFunc LineSpecials[256];
 
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);
 bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death=false);
+int P_ExecuteSpecial(int			num,
+					 struct line_t	*line,
+					 class AActor	*activator,
+					 bool			backSide,
+					 int			arg1,
+					 int			arg2,
+					 int			arg3,
+					 int			arg4,
+					 int			arg5);
 
 #endif //__P_LNSPEC_H__

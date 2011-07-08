@@ -30,6 +30,7 @@ ACTOR MagePlayer : PlayerPawn
 	Player.WeaponSlot 2, MWeapFrost
 	Player.WeaponSlot 3, MWeapLightning
 	Player.WeaponSlot 4, MWeapBloodscourge
+	Player.FlechetteType "ArtiPoisonBag2"
 	
 	Player.ColorRange 146, 163
 	Player.Colorset		0, "Blue",			146, 163,    161

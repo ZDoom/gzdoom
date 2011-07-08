@@ -158,6 +158,7 @@ LPDIRECTINPUT			g_pdi3;
 
 BOOL AppActive = TRUE;
 int SessionState = 0;
+int BlockMouseMove; 
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -319,12 +320,14 @@ bool GUIWndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESU
 		else if (message == WM_MOUSEMOVE)
 		{
 			ev.subtype = EV_GUI_MouseMove;
+			if (BlockMouseMove > 0) return true;
 		}
 
 		{
 			int shift = screen? screen->GetPixelDoubling() : 0;
 			ev.data1 = LOWORD(lParam) >> shift; 
 			ev.data2 = HIWORD(lParam) >> shift; 
+			if (screen) ev.data2 -= (screen->GetTrueHeight() - screen->GetHeight())/2;
 		}
 
 		if (wParam & MK_SHIFT)				ev.data3 |= GKM_SHIFT;
@@ -806,6 +809,7 @@ void I_GetEvent ()
 //
 void I_StartTic ()
 {
+	BlockMouseMove--;
 	ResetButtonTriggers ();
 	I_CheckGUICapture ();
 	I_CheckNativeMouse (false);

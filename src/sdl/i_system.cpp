@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <semaphore.h>
 #ifndef NO_GTK
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -124,10 +125,7 @@ static DWORD BaseTime;
 static int TicFrozen;
 
 // Signal based timer.
-static struct timespec SignalTimeOut = { 0, 1000000/TICRATE };
-#ifdef HAVE_SIGTIMEDWAIT
-static sigset_t SignalWaitSet;
-#endif
+static sem_t timerWait;
 static int tics;
 static DWORD sig_start, sig_next;
 
@@ -175,11 +173,6 @@ int I_GetTimePolled (bool saveMS)
 
 int I_GetTimeSignaled (bool saveMS)
 {
-	if (TicFrozen != 0)
-	{
-		return TicFrozen;
-	}
-
 	if (saveMS)
 	{
 		TicStart = sig_start;
@@ -203,15 +196,10 @@ int I_WaitForTicSignaled (int prevtic)
 {
 	assert (TicFrozen == 0);
 
-#ifdef HAVE_SIGTIMEDWAIT
-	while(sigtimedwait(&SignalWaitSet, NULL, &SignalTimeOut) == -1 && errno == EINTR)
-		;
-#else
-	while(nanosleep(&SignalTimeOut, NULL) == -1 && errno == EINTR)
-		;
-#endif
+	while(tics <= prevtic)
+		while(sem_wait(&timerWait) != 0);
 
-	return I_GetTimePolled(false);
+	return tics;
 }
 
 void I_FreezeTimeSelect (bool frozen)
@@ -258,6 +246,7 @@ void I_HandleAlarm (int sig)
 		tics++;
 	sig_start = SDL_GetTicks();
 	sig_next = Scale((Scale (sig_start, TICRATE, 1000) + 1), 1000, TICRATE);
+	sem_post(&timerWait);
 }
 
 //
@@ -267,41 +256,23 @@ void I_HandleAlarm (int sig)
 //
 void I_SelectTimer()
 {
-	struct sigaction act;
+	sem_init(&timerWait, 0, 0);
+	signal(SIGALRM, I_HandleAlarm);
+
 	struct itimerval itv;
-
-	sigfillset (&act.sa_mask);
-	act.sa_flags = 0;
-	// [BL] This doesn't seem to be executed consistantly, I'm guessing the
-	//      sleep functions are taking over the signal. So for now, lets just
-	//      attach WaitForTic to signals in order to reduce CPU usage.
-	//act.sa_handler = I_HandleAlarm;
-	act.sa_handler = SIG_IGN;
-
-	sigaction (SIGALRM, &act, NULL);
-
 	itv.it_interval.tv_sec = itv.it_value.tv_sec = 0;
 	itv.it_interval.tv_usec = itv.it_value.tv_usec = 1000000/TICRATE;
 
-	// [BL] See above.
-	I_GetTime = I_GetTimePolled;
-	I_FreezeTime = I_FreezeTimePolled;
-
 	if (setitimer(ITIMER_REAL, &itv, NULL) != 0)
 	{
-		//I_GetTime = I_GetTimePolled;
-		//I_FreezeTime = I_FreezeTimePolled;
+		I_GetTime = I_GetTimePolled;
+		I_FreezeTime = I_FreezeTimePolled;
 		I_WaitForTic = I_WaitForTicPolled;
 	}
 	else
 	{
-#ifdef HAVE_SIGTIMEDWAIT
-		sigemptyset(&SignalWaitSet);
-		sigaddset(&SignalWaitSet, SIGALRM);
-#endif
-
-		//I_GetTime = I_GetTimeSignaled;
-		//I_FreezeTime = I_FreezeTimeSignaled;
+		I_GetTime = I_GetTimeSignaled;
+		I_FreezeTime = I_FreezeTimeSignaled;
 		I_WaitForTic = I_WaitForTicSignaled;
 	}
 }

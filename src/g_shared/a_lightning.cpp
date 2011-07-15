@@ -44,26 +44,6 @@ void DLightningThinker::Serialize (FArchive &arc)
 
 	arc << Stopped << NextLightningFlash << LightningFlashCount;
 
-	if (SaveVersion < 3243)
-	{ 
-		// Do nothing with old savegames and just keep whatever the constructor made
-		// but read the obsolete data from the savegame 
-		for (i = (numsectors + (numsectors+7)/8); i > 0; --i)
-		{
-			if (SaveVersion < 3223)
-			{
-				BYTE bytelight;
-				arc << bytelight;
-			}
-			else
-			{
-				short shortlight;
-				arc << shortlight;
-			}
-		}
-		return;
-	}
-
 	if (arc.IsLoading ())
 	{
 		if (LightningLightLevels != NULL)

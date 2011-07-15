@@ -912,6 +912,7 @@ void D_Display ()
 
 void D_ErrorCleanup ()
 {
+	savegamerestore = false;
 	screen->Unlock ();
 	bglobal.RemoveAllBots (true);
 	D_QuitNetGame ();

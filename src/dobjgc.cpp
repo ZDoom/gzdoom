@@ -242,8 +242,10 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 				// be in a thinker list, then I need to add write barriers for every time a
 				// thinker pointer is changed. This seems easier and perfectly reasonable, since
 				// a live thinker that isn't on a thinker list isn't much of a thinker.
-				assert(!curr->IsKindOf(RUNTIME_CLASS(DThinker)) || (curr->ObjectFlags & OF_Sentinel));
-				assert(!curr->IsKindOf(RUNTIME_CLASS(DInterpolation)));
+
+				// However, this can happen during deletion of the thinker list while cleaning up
+				// from a savegame error so we can't assume that any thinker that gets here is an error.
+
 				curr->Destroy();
 			}
 			curr->ObjectFlags |= OF_Cleanup;

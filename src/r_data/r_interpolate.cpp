@@ -406,12 +406,10 @@ void DSectorPlaneInterpolation::Destroy()
 {
 	if (ceiling) 
 	{
-		assert(sector->interpolations[sector_t::CeilingMove] == this);
 		sector->interpolations[sector_t::CeilingMove] = NULL;
 	}
 	else 
 	{
-		assert(sector->interpolations[sector_t::FloorMove] == this);
 		sector->interpolations[sector_t::FloorMove] = NULL;
 	}
 
@@ -570,12 +568,10 @@ void DSectorScrollInterpolation::Destroy()
 {
 	if (ceiling) 
 	{
-		assert(sector->interpolations[sector_t::CeilingScroll] == this);
 		sector->interpolations[sector_t::CeilingScroll] = NULL;
 	}
 	else 
 	{
-		assert(sector->interpolations[sector_t::FloorScroll] == this);
 		sector->interpolations[sector_t::FloorScroll] = NULL;
 	}
 	Super::Destroy();
@@ -661,7 +657,6 @@ DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
 
 void DWallScrollInterpolation::Destroy()
 {
-	assert(side->textures[part].interpolation == this);
 	side->textures[part].interpolation = NULL;
 	Super::Destroy();
 }
@@ -746,7 +741,6 @@ DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
 
 void DPolyobjInterpolation::Destroy()
 {
-	assert(poly->interpolation == this);
 	poly->interpolation = NULL;
 	Super::Destroy();
 }

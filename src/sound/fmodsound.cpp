@@ -75,6 +75,10 @@ extern HWND Window;
 
 #define SPECTRUM_SIZE				256
 
+#if FMOD_VERSION < 0x43400
+#define FMOD_OPENSTATE_PLAYING FMOD_OPENSTATE_STREAMING
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 struct FEnumList
@@ -157,7 +161,9 @@ static const FEnumList OutputNames[] =
 	{ "Windows Multimedia",		FMOD_OUTPUTTYPE_WINMM },
 	{ "WinMM",					FMOD_OUTPUTTYPE_WINMM },
 	{ "WaveOut",				FMOD_OUTPUTTYPE_WINMM },
+#if FMOD_VERSION < 0x43400
 	{ "OpenAL",					FMOD_OUTPUTTYPE_OPENAL },
+#endif
 	{ "WASAPI",					FMOD_OUTPUTTYPE_WASAPI },
 	{ "ASIO",					FMOD_OUTPUTTYPE_ASIO },
 
@@ -165,6 +171,9 @@ static const FEnumList OutputNames[] =
 	{ "OSS",					FMOD_OUTPUTTYPE_OSS },
 	{ "ALSA",					FMOD_OUTPUTTYPE_ALSA },
 	{ "ESD",					FMOD_OUTPUTTYPE_ESD },
+#if FMOD_VERSION >= 0x43400
+	{ "PulseAudio",				FMOD_OUTPUTTYPE_PULSEAUDIO },
+#endif
 	{ "SDL",					666 },
 
 	// Mac
@@ -388,12 +397,17 @@ public:
 		bool is;
 		FMOD_OPENSTATE openstate = FMOD_OPENSTATE_MAX;
 		bool starving;
+		bool diskbusy;
 
 		if (Stream == NULL)
 		{
 			return true;
 		}
+#if FMOD_VERSION < 0x43400
 		if (FMOD_OK != Stream->getOpenState(&openstate, NULL, &starving))
+#else
+		if (FMOD_OK != Stream->getOpenState(&openstate, NULL, &starving, &diskbusy))
+#endif
 		{
 			openstate = FMOD_OPENSTATE_ERROR;
 		}
@@ -436,7 +450,7 @@ public:
 			Owner->Sys->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
 			return result != FMOD_OK;
 		}
-		if (JustStarted && openstate == FMOD_OPENSTATE_STREAMING)
+		if (JustStarted && openstate == FMOD_OPENSTATE_PLAYING)
 		{
 			JustStarted = false;
 		}
@@ -480,14 +494,19 @@ public:
 		unsigned int percentbuffered;
 		unsigned int position;
 		bool starving;
+		bool diskbusy;
 		float volume;
 		float frequency;
 		bool paused;
 		bool isplaying;
 
+#if FMOD_VERSION < 0x43400
 		if (FMOD_OK == Stream->getOpenState(&openstate, &percentbuffered, &starving))
+#else
+		if (FMOD_OK == Stream->getOpenState(&openstate, &percentbuffered, &starving, &diskbusy))
+#endif
 		{
-			stats = (openstate <= FMOD_OPENSTATE_STREAMING ? OpenStateNames[openstate] : "Unknown state");
+			stats = (openstate <= FMOD_OPENSTATE_PLAYING ? OpenStateNames[openstate] : "Unknown state");
 			stats.AppendFormat(",%3d%% buffered, %s", percentbuffered, starving ? "Starving" : "Well-fed");
 		}
 		if (Channel == NULL)

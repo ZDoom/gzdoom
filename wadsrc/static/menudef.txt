@@ -1266,6 +1266,7 @@ OptionString SoundOutputsUnix
 	"ALSA",			"ALSA"
 	"SDL",			"SDL"
 	"ESD",			"ESD"
+	"PulseAudio",	"PulseAudio"
 	"No sound",		"No sound"
 }
 

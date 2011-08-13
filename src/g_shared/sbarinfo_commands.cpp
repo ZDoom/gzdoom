@@ -890,6 +890,10 @@ class CommandDrawNumber : public CommandDrawString
 					value = AMMO1;
 				else if(sc.Compare("ammo2"))
 					value = AMMO2;
+				else if(sc.Compare("ammo1capacity"))
+					value = AMMO1CAPACITY;
+				else if(sc.Compare("ammo2capacity"))
+					value = AMMO2CAPACITY;
 				else if(sc.Compare("score"))
 					value = SCORE;
 				else if(sc.Compare("ammo")) //request the next string to be an ammo type
@@ -1124,6 +1128,24 @@ class CommandDrawNumber : public CommandDrawString
 						num = 0;
 					break;
 				}
+				case AMMO1CAPACITY:
+					if(statusBar->ammo1 == NULL) //no ammo, do not draw
+					{
+						str = "";
+						return;
+					}
+					else
+						num = statusBar->ammo1->MaxAmount;
+					break;
+				case AMMO2CAPACITY:
+					if(statusBar->ammo2 == NULL) //no ammo, do not draw
+					{
+						str = "";
+						return;
+					}
+					else
+						num = statusBar->ammo2->MaxAmount;
+					break;
 				case AMMOCAPACITY:
 				{
 					AInventory* item = statusBar->CPlayer->mo->FindInventory(inventoryItem);
@@ -1283,6 +1305,8 @@ class CommandDrawNumber : public CommandDrawString
 			AMMO1,
 			AMMO2,
 			AMMO,
+			AMMO1CAPACITY,
+			AMMO2CAPACITY,
 			AMMOCAPACITY,
 			FRAGS,
 			INVENTORY,

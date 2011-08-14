@@ -529,8 +529,9 @@ void R_Init ()
 	StartScreen->Progress();
 	V_InitFonts();
 	StartScreen->Progress();
-	R_InitColormaps ();
-	StartScreen->Progress();
+	// Colormap init moved back to InitPalette()
+	//R_InitColormaps ();
+	//StartScreen->Progress();
 
 	R_InitPointToAngle ();
 	R_InitTables ();

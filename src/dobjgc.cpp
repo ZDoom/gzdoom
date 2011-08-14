@@ -533,7 +533,12 @@ void Barrier(DObject *pointing, DObject *pointed)
 
 void DelSoftRootHead()
 {
-	if (SoftRoots != NULL) delete SoftRoots;
+	if (SoftRoots != NULL)
+	{
+		// Don't let the destructor print a warning message
+		SoftRoots->ObjectFlags |= OF_YesReallyDelete;
+		delete SoftRoots;
+	}
 	SoftRoots = NULL;
 }
 

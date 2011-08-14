@@ -378,6 +378,10 @@ void InitPalette ()
 				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 		}
 	}
+
+	// Colormaps have to be initialized before actors are loaded,
+	// otherwise Powerup.Colormap will not work.
+	R_InitColormaps ();
 }
 
 extern "C" void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);

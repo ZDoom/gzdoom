@@ -791,6 +791,13 @@ OptionMenu "AltHUDOptions"
 //
 //-------------------------------------------------------------------------------------------
 
+OptionValue Autosave
+{
+	0,	"Always"
+	1,	"Scripts Only"
+	2,	"Never"
+}
+
 OptionMenu "MiscOptions"
 {
 	Title "Miscellaneous Options"
@@ -803,7 +810,7 @@ OptionMenu "MiscOptions"
 	Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
 	StaticText " "
 	Option "Enable cheats from all games",			"allcheats", "OnOff"
-	Option "Enable autosaves",						"disableautosave", "OffOn"
+	Option "Enable autosaves",						"disableautosave", "Autosave"
 	Slider "Number of autosaves",					"autosavecount", 1, 32, 1, 0
 	StaticText " "
 	Option "Cache nodes",							"gl_cachenodes", "OnOff"

@@ -257,7 +257,7 @@ endif( FMOD_LIBRARY )
 
 # Search for FluidSynth
 
-include( ../FindFluidSynth.cmake )
+find_package( FluidSynth )
 
 # Search for NASM
 

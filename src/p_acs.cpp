@@ -2399,7 +2399,7 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 void DLevelScript::DoFadeTo (int r, int g, int b, int a, fixed_t time)
 {
-	DoFadeRange (0, 0, 0, -1, r, g, b, a, time);
+	DoFadeRange (0, 0, 0, -1, clamp(r, 0, 255), clamp(g, 0, 255), clamp(b, 0, 255), clamp(a, 0, FRACUNIT), time);
 }
 
 void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,

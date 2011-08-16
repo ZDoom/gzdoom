@@ -13,6 +13,8 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif( CMAKE_COMPILER_IS_GNUCXX )
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
+
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )

@@ -811,7 +811,7 @@ OptionMenu "MiscOptions"
 	StaticText " "
 	Option "Enable cheats from all games",			"allcheats", "OnOff"
 	Option "Enable autosaves",						"disableautosave", "Autosave"
-	Slider "Number of autosaves",					"autosavecount", 1, 32, 1, 0
+	Slider "Number of autosaves",					"autosavecount", 1, 20, 1, 0
 	StaticText " "
 	Option "Cache nodes",							"gl_cachenodes", "OnOff"
 	Slider "Time threshold for node caching",		"gl_cachetime", 0.0, 2.0, 0.1

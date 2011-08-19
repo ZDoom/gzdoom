@@ -396,7 +396,7 @@ void M_SetMenu(FName menu, int param)
 		return;
 
 	case NAME_Savegamemenu:
-		if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
+		if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer) || gamestate != GS_LEVEL)
 		{
 			// cannot save outside the game.
 			M_StartMessage (GStrings("SAVEDEAD"), 1);

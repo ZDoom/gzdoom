@@ -553,7 +553,9 @@ void FListMenuItemPatch::Drawer(bool selected)
 }
 
 int FListMenuItemPatch::GetWidth() 
-{ 
-	return TexMan[mTexture]->GetScaledWidth(); 
+{
+	return mTexture.isValid() 
+		? TexMan[mTexture]->GetScaledWidth() 
+		: 0;
 }
 

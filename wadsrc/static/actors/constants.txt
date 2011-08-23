@@ -61,6 +61,7 @@ const int LOF_NOSOUNDCHECK = 2;
 const int LOF_DONTCHASEGOAL = 4;
 const int LOF_NOSEESOUND = 8;
 const int LOF_FULLVOLSEESOUND = 16;
+const int LOF_NOJUMP = 32;
 
 // Flags for A_Respawn
 const int RSF_FOG = 1;

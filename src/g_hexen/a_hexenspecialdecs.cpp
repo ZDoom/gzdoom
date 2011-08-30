@@ -61,9 +61,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 	for(i = (pr_pottery()&3)+3; i; i--)
 	{
 		mo = Spawn ("PotteryBit", self->x, self->y, self->z, ALLOW_REPLACE);
-		mo->SetState (mo->SpawnState + (pr_pottery()%5));
 		if (mo)
 		{
+			mo->SetState (mo->SpawnState + (pr_pottery()%5));
 			mo->velz = ((pr_pottery()&7)+5)*(3*FRACUNIT/4);
 			mo->velx = (pr_pottery.Random2())<<(FRACBITS-6);
 			mo->vely = (pr_pottery.Random2())<<(FRACBITS-6);

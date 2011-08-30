@@ -120,10 +120,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 
 		// Boss cubes should move freely to their destination so it's
 		// probably best to disable all collision detection for them.
-		if (spit->flags & MF_NOCLIP) spit->flags5 |= MF5_NOINTERACTION;
 
 		if (spit != NULL)
 		{
+			if (spit->flags & MF_NOCLIP) spit->flags5 |= MF5_NOINTERACTION;
 			spit->target = targ;
 			spit->master = self;
 			// [RH] Do this correctly for any trajectory. Doom would divide by 0

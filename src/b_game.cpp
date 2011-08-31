@@ -474,6 +474,7 @@ static void appendinfo (char *&front, const char *back)
 	{
 		size_t newlen = strlen (back) + 2;
 		newstr = new char[newlen];
+		newstr[0] = 0;
 	}
 	strcat (newstr, "\\");
 	strcat (newstr, back);

@@ -316,7 +316,7 @@ bool FScriptLoader::ParseInfo(MapData * map)
 	}
 
 
-	delete lump;
+	delete[] lump;
 	return HasScripts;
 }
 

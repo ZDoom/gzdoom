@@ -1234,7 +1234,7 @@ static bool CheckCachedNodes(MapData *map)
 	BYTE md5[16];
 	BYTE md5map[16];
 	DWORD numlin;
-	DWORD *verts;
+	DWORD *verts = NULL;
 
 	FString path = CreateCacheName(map, false);
 	FILE *f = fopen(path, "rb");
@@ -1298,6 +1298,10 @@ static bool CheckCachedNodes(MapData *map)
 	return true;
 
 errorout:
+	if (verts != NULL)
+	{
+		delete[] verts;
+	}
 	fclose(f);
 	return false;
 }

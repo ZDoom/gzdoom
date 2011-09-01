@@ -3098,7 +3098,6 @@ static void P_GroupLines (bool buildmap)
 		// set the soundorg to the middle of the bounding box
 		sector->soundorg[0] = bbox.Right()/2 + bbox.Left()/2;
 		sector->soundorg[1] = bbox.Top()/2 + bbox.Bottom()/2;
-		sector->soundorg[2] = sector->floorplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 	}
 	delete[] linesDoneInEachSector;
 	times[3].Unclock();

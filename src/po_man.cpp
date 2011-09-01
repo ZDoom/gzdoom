@@ -445,7 +445,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 			Printf ("EV_RotatePoly: Invalid polyobj num: %d\n", polyNum);
 			break;
 		}
-		if (poly && poly->specialdata && !overRide)
+		if (poly->specialdata && !overRide)
 		{ // mirroring poly is already in motion
 			break;
 		}
@@ -555,8 +555,8 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 	while ( (mirror = poly->GetMirror()) )
 	{
 		poly = PO_GetPolyobj(mirror);
-		if (poly && poly->specialdata && !overRide)
-		{ // mirroring poly is already in motion
+		if (poly == NULL || (poly->specialdata != NULL && !overRide))
+		{ // mirroring poly does not exist or is already in motion
 			break;
 		}
 		pe = new DMovePoly (mirror);
@@ -655,8 +655,8 @@ bool EV_MovePolyTo(line_t *line, int polyNum, int speed, fixed_t targx, fixed_t 
 	while ( (mirror = poly->GetMirror()) )
 	{
 		poly = PO_GetPolyobj(mirror);
-		if (poly && poly->specialdata && !overRide)
-		{ // mirroring poly is already in motion
+		if (poly == NULL || (poly->specialdata != NULL && !overRide))
+		{ // mirroring poly does not exist or is already in motion
 			break;
 		}
 		// reverse the direction
@@ -841,8 +841,8 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 	while ( (mirror = poly->GetMirror()) )
 	{
 		poly = PO_GetPolyobj (mirror);
-		if (poly && poly->specialdata)
-		{ // mirroring poly is already in motion
+		if (poly == NULL || poly->specialdata != NULL)
+		{ // mirroring poly does not exist or is already in motion
 			break;
 		}
 		pd = new DPolyDoor (mirror, type);

@@ -763,6 +763,8 @@ public:
 		return bloodcls;
 	}
 
+	bool IsVisibleToPlayer() const;
+
 	// Calculate amount of missile damage
 	virtual int GetMissileDamage(int mask, int add);
 
@@ -814,6 +816,13 @@ public:
 	DWORD			flags4;			// [RH] Even more flags!
 	DWORD			flags5;			// OMG! We need another one.
 	DWORD			flags6;			// Shit! Where did all the flags go?
+
+	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
+	DWORD			VisibleToTeam;
+
+	// [BB] If NAME_None, all players can see the actor, else only players whose playerclass name is VisibleToPlayerClass can see it.
+	FNameNoInit		VisibleToPlayerClass;
+
 	int				special1;		// Special info
 	int				special2;		// Special info
 	int 			health;

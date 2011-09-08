@@ -495,7 +495,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// Don't waste time projecting sprites that are definitely not visible.
 	if (thing == NULL ||
 		(thing->renderflags & RF_INVISIBLE) ||
-		!thing->RenderStyle.IsVisible(thing->alpha))
+		!thing->RenderStyle.IsVisible(thing->alpha) ||
+		!thing->IsVisibleToPlayer())
 	{
 		return;
 	}

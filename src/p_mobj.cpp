@@ -310,6 +310,7 @@ void AActor::Serialize (FArchive &arc)
 		<< smokecounter
 		<< BlockingMobj
 		<< BlockingLine
+		<< VisibleToTeam // [BB]
 		<< pushfactor
 		<< Species
 		<< Score;
@@ -869,6 +870,34 @@ bool AActor::CheckLocalView (int playernum) const
 		return true;
 	}
 	return false;
+}
+
+//============================================================================
+//
+// AActor :: IsVisibleToPlayer
+//
+// Returns true if this actor should be seen by the console player.
+//
+//============================================================================
+
+bool AActor::IsVisibleToPlayer() const
+{
+	// [BB] Safety check. This should never be NULL. Nevertheless, we return true to leave the default ZDoom behavior unaltered.
+	if ( players[consoleplayer].camera == NULL )
+		return true;
+ 
+	if ( VisibleToTeam != 0 && teamplay &&
+		VisibleToTeam-1 != players[consoleplayer].userinfo.team )
+		return false;
+
+	const player_t* pPlayer = players[consoleplayer].camera->player;
+
+	if ( ( VisibleToPlayerClass != NAME_None )
+		&& pPlayer && pPlayer->mo && ( VisibleToPlayerClass != pPlayer->mo->GetClass()->TypeName ) )
+		return false;
+
+	// [BB] Passed all checks.
+	return true;
 }
 
 //============================================================================

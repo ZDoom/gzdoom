@@ -1185,6 +1185,22 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 			{
 				AInventory *item;
 
+				// kgDROP - start - modified copy from a_action.cpp
+				FDropItem *di = weap->GetDropItems();
+
+				if (di != NULL)
+				{
+					while (di != NULL)
+					{
+						if (di->Name != NAME_None)
+						{
+							const PClass *ti = PClass::FindClass(di->Name);
+							if (ti) P_DropItem (player->mo, ti, di->amount, di->probability);
+						}
+						di = di->Next;
+					}
+				} else
+				// kgDROP - end
 				if (weap->SpawnState != NULL &&
 					weap->SpawnState != ::GetDefault<AActor>()->SpawnState)
 				{

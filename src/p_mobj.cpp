@@ -892,9 +892,21 @@ bool AActor::IsVisibleToPlayer() const
 
 	const player_t* pPlayer = players[consoleplayer].camera->player;
 
-	if ( ( VisibleToPlayerClass != NAME_None )
-		&& pPlayer && pPlayer->mo && ( VisibleToPlayerClass != pPlayer->mo->GetClass()->TypeName ) )
-		return false;
+	if(pPlayer && pPlayer->mo && GetClass()->ActorInfo->VisibleToPlayerClass.Size() > 0)
+	{
+		bool visible = false;
+		for(unsigned int i = 0;i < GetClass()->ActorInfo->VisibleToPlayerClass.Size();++i)
+		{
+			const PClass *cls = GetClass()->ActorInfo->VisibleToPlayerClass[i];
+			if(cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
+			{
+				visible = true;
+				break;
+			}
+		}
+		if(!visible)
+			return false;
+	}
 
 	// [BB] Passed all checks.
 	return true;

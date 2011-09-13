@@ -1248,7 +1248,7 @@ DEFINE_PROPERTY(visibletoteam, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(visibletoplayerclass, S_s, Actor)
 {
-	for(unsigned int i = 0;i < PROP_PARM_COUNT;++i)
+	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		info->VisibleToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));

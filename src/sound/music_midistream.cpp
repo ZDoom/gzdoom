@@ -339,6 +339,10 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	if (MIDI->Preprocess(this, looping))
 	{
 		StartPlayback();
+		if (MIDI == NULL)
+		{ // The MIDI file had no content and has been automatically closed.
+			return;
+		}
 	}
 
 	if (0 != MIDI->Resume())

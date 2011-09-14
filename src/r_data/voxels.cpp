@@ -417,8 +417,6 @@ void FVoxel::Remap()
 
 static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
 {
-	unsigned int i;
-
 	vsprites.Clear();
 	while (sc.GetString())
 	{
@@ -442,8 +440,7 @@ static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
 		else
 		{
 			int frame = (sc.StringLen == 4) ? 255 : sc.String[4] - 'A';
-
-			i = GetSpriteIndex(sc.String, false);
+			int i = GetSpriteIndex(sc.String, false);
 			if (i != -1)
 			{
 				vsprites.Push((frame << 24) | i);

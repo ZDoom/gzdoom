@@ -3888,7 +3888,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			if (dpuff->flags2 & MF2_THRUGHOST && self->target->flags3 & MF3_GHOST)
 				damage = 0;
 			
-			if (0 && dpuff->flags3 & MF3_PUFFONACTORS || !spawnblood)
+			if ((0 && dpuff->flags3 & MF3_PUFFONACTORS) || !spawnblood)
 			{
 				spawnblood = false;
 				P_SpawnPuff(self, pufftype, dx, dy, dz, angle, 0);

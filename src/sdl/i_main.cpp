@@ -81,6 +81,10 @@ extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(c
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+#ifdef USE_XCURSOR
+extern bool UseXCursor;
+#endif
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifndef NO_GTK
@@ -256,7 +260,7 @@ int main (int argc, char **argv)
 		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
 	}
 
-	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
+	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n",
 		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
 
 	seteuid (getuid ());
@@ -278,6 +282,19 @@ int main (int argc, char **argv)
 		return -1;
 	}
 	atterm (SDL_Quit);
+
+	{
+		char viddriver[80];
+
+		if (SDL_VideoDriverName(viddriver, sizeof(viddriver)) != NULL)
+		{
+			printf("Using video driver %s\n", viddriver);
+#ifdef USE_XCURSOR
+			UseXCursor = (strcmp(viddriver, "x11") == 0);
+#endif
+		}
+		printf("\n");
+	}
 
 	SDL_WM_SetCaption (GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")", NULL);
 	

@@ -73,8 +73,9 @@ struct FTraceResults
 	BYTE Side;
 	BYTE Tier;
 	ETraceResult HitType;
-	sector_t *CrossedWater;
-	F3DFloor * ffloor;
+	sector_t *CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
+	F3DFloor *Crossed3DWater;	// For 3D floor-based deep water
+	F3DFloor *ffloor;
 };
 
 enum

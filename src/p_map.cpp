@@ -64,7 +64,7 @@ CVAR (Int, sv_smartaim, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj);
 static void SpawnShootDecal (AActor *t1, const FTraceResults &trace);
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
-							 fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz);
+							 fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz, bool ffloor = false);
 
 static FRandom pr_tracebleed ("TraceBleed");
 static FRandom pr_checkthing ("CheckThing");
@@ -3555,7 +3555,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				*victim = trace.Actor;
 			}
 		}
-		if (trace.CrossedWater)
+		if (trace.Crossed3DWater || trace.CrossedWater)
 		{
 
 			if (puff == NULL)
@@ -3563,7 +3563,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 				killPuff = true;
 			}
-			SpawnDeepSplash (t1, trace, puff, vx, vy, vz, shootz);
+			SpawnDeepSplash (t1, trace, puff, vx, vy, vz, shootz, trace.Crossed3DWater != NULL);
 		}
 	}
 	if (killPuff && puff != NULL)
@@ -3925,11 +3925,11 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 			P_HitWater (thepuff, trace.Sector);
 		}
 	}
-	if (trace.CrossedWater)
+	if (trace.Crossed3DWater || trace.CrossedWater)
 	{
 		if (thepuff != NULL)
 		{
-			SpawnDeepSplash (source, trace, thepuff, vx, vy, vz, shootz);
+			SpawnDeepSplash (source, trace, thepuff, vx, vy, vz, shootz, trace.Crossed3DWater != NULL);
 		}
 	}
 	thepuff->Destroy ();
@@ -5469,13 +5469,16 @@ void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 //==========================================================================
 
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
-	fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz)
+	fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz, bool ffloor)
 {
-	if (!trace.CrossedWater->heightsec) return;
-	
-	fixed_t num, den, hitdist;
-	const secplane_t *plane = &trace.CrossedWater->heightsec->floorplane;
+	const secplane_t *plane; 
+	if (ffloor && trace.Crossed3DWater)
+		plane = trace.Crossed3DWater->top.plane;
+	else if (trace.CrossedWater && trace.CrossedWater->heightsec)
+		plane = &trace.CrossedWater->heightsec->floorplane;
+	else return;
 
+	fixed_t num, den, hitdist;
 	den = TMulScale16 (plane->a, vx, plane->b, vy, plane->c, vz);
 	if (den != 0)
 	{

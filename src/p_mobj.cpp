@@ -4737,7 +4737,16 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	if (y == FIXED_MIN) y = thing->y;
 	if (z == FIXED_MIN) z = thing->z;
 	// don't splash above the object
-	if (checkabove && z > thing->z + (thing->height >> 1)) return false;
+	if (checkabove)
+	{
+		fixed_t compare_z = thing->z + (thing->height >> 1);
+		// Missiles are typically small and fast, so they might
+		// end up submerged by the move that calls P_HitWater.
+		if (thing->flags & MF_MISSILE)
+			compare_z -= thing->velz;
+		if (z > compare_z) 
+			return false;
+	}
 
 #if 0 // needs some rethinking before activation
 

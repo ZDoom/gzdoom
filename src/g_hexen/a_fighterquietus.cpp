@@ -18,43 +18,6 @@ static FRandom pr_fswordflame ("FSwordFlame");
 
 //==========================================================================
 
-class AFighterWeaponPiece : public AWeaponPiece
-{
-	DECLARE_CLASS (AFighterWeaponPiece, AWeaponPiece)
-protected:
-	bool TryPickup (AActor *&toucher);
-};
-
-IMPLEMENT_CLASS (AFighterWeaponPiece)
-
-bool AFighterWeaponPiece::TryPickup (AActor *&toucher)
-{
-	if (!toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
-		!toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{
-		return Super::TryPickup(toucher);
-	}
-	else
-	{ // Wrong class, but try to pick up for ammo
-		if (ShouldStay())
-		{
-			// Can't pick up weapons for other classes in coop netplay
-			return false;
-		}
-
-		AWeapon * Defaults=(AWeapon*)GetDefaultByType(WeaponClass);
-
-		bool gaveSome = !!(toucher->GiveAmmo (Defaults->AmmoType1, Defaults->AmmoGive1) +
-						   toucher->GiveAmmo (Defaults->AmmoType2, Defaults->AmmoGive2));
-
-		if (gaveSome)
-		{
-			GoAwayAndDie ();
-		}
-		return gaveSome;
-	}
-}
-
 //============================================================================
 //
 // A_DropQuietusPieces

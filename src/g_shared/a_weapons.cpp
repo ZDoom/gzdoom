@@ -72,6 +72,30 @@ void AWeapon::Serialize (FArchive &arc)
 //
 //===========================================================================
 
+bool AWeapon::TryPickupRestricted (AActor *&toucher)
+{
+	// Wrong class, but try to pick up for ammo
+	if (ShouldStay())
+	{ // Can't pick up weapons for other classes in coop netplay
+		return false;
+	}
+
+	bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
+	gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
+	if (gaveSome)
+	{
+		GoAwayAndDie ();
+	}
+	return gaveSome;
+}
+
+
+//===========================================================================
+//
+// AWeapon :: TryPickup
+//
+//===========================================================================
+
 bool AWeapon::TryPickup (AActor *&toucher)
 {
 	FState * ReadyState = FindState(NAME_Ready);

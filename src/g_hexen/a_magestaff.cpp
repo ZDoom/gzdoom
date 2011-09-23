@@ -23,44 +23,6 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *);
 static divline_t BlockCheckLine;
 
 //==========================================================================
-
-class AMageWeaponPiece : public AWeaponPiece
-{
-	DECLARE_CLASS (AMageWeaponPiece, AWeaponPiece)
-protected:
-	bool TryPickup (AActor *&toucher);
-};
-
-IMPLEMENT_CLASS (AMageWeaponPiece)
-
-bool AMageWeaponPiece::TryPickup (AActor *&toucher)
-{
-	if (!toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
-		!toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)))
-	{
-		return Super::TryPickup(toucher);
-	}
-	else
-	{ // Wrong class, but try to pick up for ammo
-		if (ShouldStay())
-		{
-			// Can't pick up weapons for other classes in coop netplay
-			return false;
-		}
-
-		AWeapon * Defaults=(AWeapon*)GetDefaultByType(WeaponClass);
-
-		bool gaveSome = !!(toucher->GiveAmmo (Defaults->AmmoType1, Defaults->AmmoGive1) +
-						   toucher->GiveAmmo (Defaults->AmmoType2, Defaults->AmmoGive2));
-
-		if (gaveSome)
-		{
-			GoAwayAndDie ();
-		}
-		return gaveSome;
-	}
-}
-
 // The Mages's Staff (Bloodscourge) -----------------------------------------
 
 class AMWeapBloodscourge : public AMageWeapon

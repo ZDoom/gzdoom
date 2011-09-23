@@ -146,6 +146,11 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 		info = ti->ActorInfo;
 	}
 
+	// Copy class lists from parent
+	info->ForbiddenToPlayerClass = parent->ActorInfo->ForbiddenToPlayerClass;
+	info->RestrictedToPlayerClass = parent->ActorInfo->RestrictedToPlayerClass;
+	info->VisibleToPlayerClass = parent->ActorInfo->VisibleToPlayerClass;
+
 	if (parent->ActorInfo->DamageFactors != NULL)
 	{
 		// copy damage factors from parent

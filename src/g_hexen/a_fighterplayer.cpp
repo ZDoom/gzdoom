@@ -11,86 +11,9 @@
 #include "thingdef/thingdef.h"
 */
 
-// Fighter Weapon Base Class ------------------------------------------------
-
 IMPLEMENT_CLASS (AFighterWeapon)
 IMPLEMENT_CLASS (AClericWeapon)
 IMPLEMENT_CLASS (AMageWeapon)
-
-bool AFighterWeapon::TryPickup (AActor *&toucher)
-{
-	// The Doom and Hexen players are not excluded from pickup in case
-	// somebody wants to use these weapons with either of those games.
-	if (toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) ||
-		toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{ // Wrong class, but try to pick up for mana
-		if (ShouldStay())
-		{ // Can't pick up weapons for other classes in coop netplay
-			return false;
-		}
-
-		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
-		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
-		if (gaveSome)
-		{
-			GoAwayAndDie ();
-		}
-		return gaveSome;
-	}
-	return Super::TryPickup (toucher);
-}
-
-// Cleric Weapon Base Class -------------------------------------------------
-
-bool AClericWeapon::TryPickup (AActor *&toucher)
-{
-	// The Doom and Hexen players are not excluded from pickup in case
-	// somebody wants to use these weapons with either of those games.
-	if (toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)) ||
-		toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{ // Wrong class, but try to pick up for mana
-		if (ShouldStay())
-		{ // Can't pick up weapons for other classes in coop netplay
-			return false;
-		}
-
-		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
-		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
-		if (gaveSome)
-		{
-			GoAwayAndDie ();
-		}
-		return gaveSome;
-	}
-	return Super::TryPickup (toucher);
-}
-
-// Mage Weapon Base Class ---------------------------------------------------
-
-bool AMageWeapon::TryPickup (AActor *&toucher)
-{
-	// The Doom and Hexen players are not excluded from pickup in case
-	// somebody wants to use these weapons with either of those games.
-	if (toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)) ||
-		toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
-	{ // Wrong class, but try to pick up for mana
-		if (ShouldStay())
-		{ // Can't pick up weapons for other classes in coop netplay
-			return false;
-		}
-
-		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
-		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
-		if (gaveSome)
-		{
-			GoAwayAndDie ();
-		}
-		return gaveSome;
-	}
-	return Super::TryPickup (toucher);
-}
-
-
 
 static FRandom pr_fpatk ("FPunchAttack");
 

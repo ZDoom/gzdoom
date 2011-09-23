@@ -1248,10 +1248,12 @@ DEFINE_PROPERTY(visibletoteam, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(visibletoplayerclass, S_s, Actor)
 {
+	info->VisibleToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
-		info->VisibleToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
+		if (*n != 0)
+			info->VisibleToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
 	}
 }
 
@@ -1260,6 +1262,34 @@ DEFINE_PROPERTY(visibletoplayerclass, S_s, Actor)
 // Special inventory properties
 //
 //==========================================================================
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(restrictedto, S_s, Inventory)
+{
+	info->RestrictedToPlayerClass.Clear();
+	for(int i = 0;i < PROP_PARM_COUNT;++i)
+	{
+		PROP_STRING_PARM(n, i);
+		if (*n != 0)
+			info->RestrictedToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(forbiddento, S_s, Inventory)
+{
+	info->ForbiddenToPlayerClass.Clear();
+	for(int i = 0;i < PROP_PARM_COUNT;++i)
+	{
+		PROP_STRING_PARM(n, i);
+		if (*n != 0)
+			info->ForbiddenToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
+	}
+}
 
 //==========================================================================
 //

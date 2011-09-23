@@ -1266,13 +1266,29 @@ bool AInventory::TryPickup (AActor *&toucher)
 
 //===========================================================================
 //
-// AInventory :: TryPickup
+// AInventory :: TryPickupRestricted
+//
+//===========================================================================
+
+bool AInventory::TryPickupRestricted (AActor *&toucher)
+{
+	return false;
+}
+
+//===========================================================================
+//
+// AInventory :: CallTryPickup
 //
 //===========================================================================
 
 bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 {
-	bool res = TryPickup(toucher);
+	bool res;
+	if (CanPickup(toucher))
+		res = TryPickup(toucher);
+	else
+		res = TryPickupRestricted(toucher);	// let an item decide for itself how it will handle this
+
 
 	// Morph items can change the toucher so we need an option to return this info.
 	if (toucher_return != NULL) *toucher_return = toucher;
@@ -1287,6 +1303,40 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 	return res;
 }
 
+
+//===========================================================================
+//
+// AInventory :: CanPickup
+//
+//===========================================================================
+
+bool AInventory::CanPickup (AActor *toucher)
+{
+	if (!toucher)
+		return false;
+
+	FActorInfo *ai = GetClass()->ActorInfo;
+	// Is the item restricted to certain player classes?
+	if (ai->RestrictedToPlayerClass.Size() != 0)
+	{
+		for (unsigned i = 0; i < ai->RestrictedToPlayerClass.Size(); ++i)
+		{
+			if (toucher->IsKindOf(ai->RestrictedToPlayerClass[i]))
+				return true;
+		}
+		return false;
+	}
+	// Or is it forbidden to certain other classes?
+	else
+	{
+		for (unsigned i = 0; i < ai->ForbiddenToPlayerClass.Size(); ++i)
+		{
+			if (toucher->IsKindOf(ai->ForbiddenToPlayerClass[i]))
+				return false;
+		}
+	}
+	return true;
+}
 
 //===========================================================================
 //

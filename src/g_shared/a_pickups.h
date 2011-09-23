@@ -198,6 +198,8 @@ public:
 
 protected:
 	virtual bool TryPickup (AActor *&toucher);
+	virtual bool TryPickupRestricted (AActor *&toucher);
+	bool CanPickup(AActor * toucher);
 	void GiveQuest(AActor * toucher);
 
 private:
@@ -277,6 +279,7 @@ public:
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool TryPickup (AActor *&toucher);
+	virtual bool TryPickupRestricted (AActor *&toucher);
 	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
 	virtual bool Use (bool pickup);
 	virtual void Destroy();

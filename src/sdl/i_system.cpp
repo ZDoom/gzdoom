@@ -855,15 +855,15 @@ struct SDL_PrivateVideoData
 struct SDL_VideoDevice
 {
 	const char *name;
-	int (*functions)()[9];
+	int (*functions[9])();
 	SDL_VideoInfo info;
 	SDL_PixelFormat *displayformatalphapixel;
-	int (*morefuncs)()[9];
+	int (*morefuncs[9])();
 	Uint16 *gamma;
-	int (*somefuncs)()[9];
+	int (*somefuncs[9])();
 	unsigned int texture;				// Only here if SDL was compiled with OpenGL support. Ack!
 	int is_32bit;
-	int (*itsafuncs)()[13];
+	int (*itsafuncs[13])();
 	SDL_Surface *surfaces[3];
 	SDL_Palette *physpal;
 	SDL_Color *gammacols;
@@ -874,7 +874,7 @@ struct SDL_VideoDevice
 	SDL_PrivateVideoData *hidden;	// Why did they have to bury this so far in?
 };
 
-extern SDL_VideDevice *current_video;
+extern SDL_VideoDevice *current_video;
 #define SDL_Display (current_video->hidden->X11_Display)
 
 SDL_Cursor *CreateColorCursor(FTexture *cursorpic)

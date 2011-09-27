@@ -1046,18 +1046,18 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			{
 				// Check if this portal needs to be copied to other sectors
 				// This must be done here to ensure that it gets done only after the portal is set up
-				if (lines[i].special == Sector_SetPortal &&
-					lines[i].args[1] == 1 &&
-					lines[i].args[2] == plane &&
-					lines[i].args[3] == sectortag)
+				if (lines[j].special == Sector_SetPortal &&
+					lines[j].args[1] == 1 &&
+					lines[j].args[2] == plane &&
+					lines[j].args[3] == sectortag)
 				{
-					if (lines[i].args[0] == 0)
+					if (lines[j].args[0] == 0)
 					{
-						SetPortal(lines[i].frontsector, plane, reference, alpha);
+						SetPortal(lines[j].frontsector, plane, reference, alpha);
 					}
 					else
 					{
-						for (int s=-1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
+						for (int s=-1; (s = P_FindSectorFromTag(lines[j].args[0],s)) >= 0;)
 						{
 							SetPortal(&sectors[s], plane, reference, alpha);
 						}

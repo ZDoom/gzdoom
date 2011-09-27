@@ -1254,11 +1254,13 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			{
 				sc.MustGetFloat();
 				xScale = FLOAT2FIXED(sc.Float);
+				if (xScale == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name);
 			}
 			else if (sc.Compare("YScale"))
 			{
 				sc.MustGetFloat();
 				yScale = FLOAT2FIXED(sc.Float);
+				if (yScale == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name);
 			}
 			else if (sc.Compare("WorldPanning"))
 			{

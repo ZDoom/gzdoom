@@ -1670,6 +1670,7 @@ void AM_drawSubsectors()
 			// (Make the comparison in floating point to avoid overflows and improve performance.)
 			double secx;
 			double secy;
+			double seczb, seczt;
 			double cmpz = FIXED2DBL(viewz);
 
 			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
@@ -1683,6 +1684,8 @@ void AM_drawSubsectors()
 				secx = FIXED2DBL(sec->soundorg[0]);
 				secy = FIXED2DBL(sec->soundorg[1]);
 			}
+			seczb = floorplane->ZatPoint(secx, secy);
+			seczt = sec->ceilingplane.ZatPoint(secx, secy);
 			
 			for (unsigned int i = 0; i < sec->e->XFloor.ffloors.Size(); ++i)
 			{
@@ -1690,7 +1693,13 @@ void AM_drawSubsectors()
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (rover->flags & FF_FOG) continue;
 				if (rover->alpha == 0) continue;
-				if (rover->top.plane->ZatPoint(secx, secy) < cmpz)
+				double roverz = rover->top.plane->ZatPoint(secx, secy);
+				// Ignore 3D floors that are above or below the sector itself:
+				// they are hidden. Since 3D floors are sorted top to bottom,
+				// if we get below the sector floor, we can stop.
+				if (roverz > seczt) continue;
+				if (roverz < seczb) break;
+				if (roverz < cmpz)
 				{
 					maptex = *(rover->top.texture);
 					floorplane = rover->top.plane;

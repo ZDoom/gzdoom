@@ -272,11 +272,12 @@ DFloor::DFloor (sector_t *sec)
 //
 // HANDLE FLOOR TYPES
 // [RH] Added tag, speed, height, crush, change params.
+// This functions starts too many different things.
 //
 //==========================================================================
 
 bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
-				 fixed_t speed, fixed_t height, int crush, int change, bool hexencrush)
+				 fixed_t speed, fixed_t height, int crush, int change, bool hexencrush, bool hereticlower)
 {
 	int 		secnum;
 	bool 		rtn;
@@ -332,7 +333,7 @@ manual_floor:
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			// [RH] DOOM's turboLower type did this. I've just extended it
 			//		to be applicable to all LowerToHighest types.
-			if (floor->m_FloorDestDist != sec->floorplane.d)
+			if (hereticlower || floor->m_FloorDestDist != sec->floorplane.d)
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight+height);
 			break;
 

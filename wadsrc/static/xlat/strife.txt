@@ -278,7 +278,7 @@ RetailOnly		= 121
 235 = USE,		ACS_ExecuteWithResult (0, 235, tag)
 
 // Buttons
- 11 = USE|REP,		Exit_Normal (0)
+ 11 = USE|REP,		ACS_ExecuteWithResult (0, 52, tag)
  42 = USE|REP,		Door_Close (tag, D_SLOW)
  43 = USE|REP,		Ceiling_LowerToFloor (tag, C_SLOW)
  45 = USE|REP,		Floor_LowerToHighest (tag, F_SLOW, 128)

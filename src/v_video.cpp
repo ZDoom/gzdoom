@@ -1539,7 +1539,14 @@ void V_Init (bool restart)
 		}
 		screen = new DDummyFrameBuffer (width, height);
 	}
-
+	// Update screen palette when restarting
+	else
+	{
+		PalEntry *palette = screen->GetPalette ();
+		for (int i = 0; i < 256; ++i)
+			*palette++ = GPalette.BaseColors[i];
+		screen->UpdatePalette();
+	}
 
 	BuildTransTable (GPalette.BaseColors);
 }

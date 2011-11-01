@@ -36,7 +36,7 @@ DEFINE_SPECIAL(ClearForceField, 34, 1, 1, 1)    // [RH] Remove Strife's forcefie
 DEFINE_SPECIAL(Floor_RaiseByValueTimes8, 35, 3, 3, 3)
 DEFINE_SPECIAL(Floor_LowerByValueTimes8, 36, 3, 3, 3)
 DEFINE_SPECIAL(Floor_MoveToValue, 37, 3, 4, 4)
-DEFINE_SPECIAL(Ceiling_Waggle, 38, 5, 5, 4) // [RH] Complement of Floor_Waggle
+DEFINE_SPECIAL(Ceiling_Waggle, 38, 5, 5, 5) // [RH] Complement of Floor_Waggle
 DEFINE_SPECIAL(Teleport_ZombieChanger, 39, 2, 2, 2) // [RH] Needed for Strife
 DEFINE_SPECIAL(Ceiling_LowerByValue, 40, 3, 3, 3)
 DEFINE_SPECIAL(Ceiling_RaiseByValue, 41, 3, 3, 3)

@@ -1871,6 +1871,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						goto explode;
 					}
 
+
 					// Reflect the missile along angle
 					mo->angle = angle;
 					angle >>= ANGLETOFINESHIFT;
@@ -3949,6 +3950,10 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		else
 		{
 			spawn_angle = ANG45 * (mthing->angle / 45);
+		}
+		if (i_compatflags2 & COMPATF2_BADANGLES)
+		{
+			spawn_angle += 1 << ANGLETOFINESHIFT;
 		}
 	}
 

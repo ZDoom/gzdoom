@@ -254,8 +254,8 @@ void level_info_t::Reset()
 	aircontrol = 0.f;
 	WarpTrans = 0;
 	airsupply = 20;
-	compatflags = 0;
-	compatmask = 0;
+	compatflags = compatflags2 = 0;
+	compatmask = compatmask2 = 0;
 	Translator = "";
 	RedirectType = 0;
 	RedirectMap[0] = 0;
@@ -1272,6 +1272,7 @@ MapFlagHandlers[] =
 	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT, 0 },
 	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ, 0 },
 	{ "compat_maskedmidtex",			MITYPE_COMPATFLAG, COMPATF_MASKEDMIDTEX, 0 },
+	{ "compat_badangles",				MITYPE_COMPATFLAG, 0, COMPATF2_BADANGLES },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
@@ -1353,9 +1354,18 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 					if (sc.CheckNumber()) set = sc.Number;
 				}
 
-				if (set) info.compatflags |= handler->data1;
-				else info.compatflags &= ~handler->data1;
+				if (set)
+				{
+					info.compatflags |= handler->data1;
+					info.compatflags2 |= handler->data2;
+				}
+				else
+				{
+					info.compatflags &= ~handler->data1;
+					info.compatflags2 &= ~handler->data2;
+				}
 				info.compatmask |= handler->data1;
+				info.compatmask2 |= handler->data2;
 			}
 			break;
 

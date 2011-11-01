@@ -322,6 +322,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	angle_t angle = 0;
 	fixed_t s = 0, c = 0;
 	fixed_t velx = 0, vely = 0;
+	angle_t badangle = 0;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -367,7 +368,11 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	{
 		z = ONFLOORZ;
 	}
-	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation, haltVelocity))
+	if ((i_compatflags2 & COMPATF2_BADANGLES) && (thing->player != NULL))
+	{
+		badangle = 1 << ANGLETOFINESHIFT;
+	}
+	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle + badangle, fog, sourceFog, keepOrientation, haltVelocity))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!fog && line && keepOrientation)

@@ -141,3 +141,10 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 {
 	ignoreteleporttags
 }
+
+8FF30D57F6CE64F085A6567EC302842A // Enjay's test map for this flag
+9D7893D09FEE55C31B73C670DF850962 // Memento Mori II, map12
+{
+	badangles
+}
+

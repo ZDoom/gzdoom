@@ -584,7 +584,7 @@ public:
 		Super::Drawer();
 
 		char text[64];
-		mysnprintf(text, 64, "compatflags = %d", *compatflags);
+		mysnprintf(text, 64, "compatflags = %d  compatflags2 = %d", *compatflags, *compatflags2);
 		screen->DrawText (SmallFont, OptionSettings.mFontColorValue,
 			(screen->GetWidth() - SmallFont->StringWidth (text) * CleanXfac_1) / 2, 0, text,
 			DTA_CleanNoMove_1, true, TAG_DONE);

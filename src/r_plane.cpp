@@ -1080,7 +1080,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	}
 	else
 	{ // regular flat
-		FTexture *tex = TexMan(pl->picnum);
+		FTexture *tex = TexMan(pl->picnum, true);
 
 		if (tex->UseType == FTexture::TEX_Null)
 		{
@@ -1368,9 +1368,9 @@ void R_DrawSkyPlane (visplane_t *pl)
 		if (!(pl->sky & PL_SKYFLAT))
 		{	// use sky1
 		sky1:
-			frontskytex = TexMan(sky1tex);
+			frontskytex = TexMan(sky1tex, true);
 			if (level.flags & LEVEL_DOUBLESKY)
-				backskytex = TexMan(sky2tex);
+				backskytex = TexMan(sky2tex, true);
 			else
 				backskytex = NULL;
 			skyflip = 0;
@@ -1381,7 +1381,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 		}
 		else if (pl->sky == PL_SKYFLAT)
 		{	// use sky2
-			frontskytex = TexMan(sky2tex);
+			frontskytex = TexMan(sky2tex, true);
 			backskytex = NULL;
 			frontcyl = sky2cyl;
 			skyflip = 0;
@@ -1407,7 +1407,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 				pos = side_t::top;
 			}
 
-			frontskytex = TexMan(s->GetTexture(pos));
+			frontskytex = TexMan(s->GetTexture(pos), true);
 			if (frontskytex == NULL || frontskytex->UseType == FTexture::TEX_Null)
 			{ // [RH] The blank texture: Use normal sky instead.
 				goto sky1;

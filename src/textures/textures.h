@@ -332,15 +332,20 @@ public:
 	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
 	// Get texture with translation
-	FTexture *operator() (FTextureID texnum)
+	FTexture *operator() (FTextureID texnum, bool withpalcheck=false)
 	{
 		if ((size_t)texnum.texnum >= Textures.Size()) return NULL;
-		return Textures[Translation[texnum.texnum]].Texture;
+		int picnum = Translation[texnum.texnum];
+		if (withpalcheck)
+		{
+			picnum = PalCheck(picnum).GetIndex();
+		}
+		return Textures[picnum].Texture;
 	}
 	FTexture *operator() (const char *texname)
 	{
 		FTextureID texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
-		if (texnum.texnum==-1) return NULL;
+		if (texnum.texnum == -1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
 	}
 
@@ -349,6 +354,8 @@ public:
 		if (unsigned(i) >= Textures.Size()) return NULL;
 		return Textures[Translation[i]].Texture;
 	}
+
+	FTextureID PalCheck(FTextureID tex);
 
 	enum
 	{
@@ -434,6 +441,8 @@ private:
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
 	void ParseAnimatedDoor(FScanner &sc);
 
+	void InitPalettedVersions();
+
 	// Switches
 
 	void InitSwitchList ();
@@ -452,6 +461,7 @@ private:
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;
 	TArray<int> FirstTextureForFile;
+	TMap<int,int> PalettedVersions;		// maps from normal -> paletted version
 
 	TArray<FAnimDef *> mAnimations;
 	TArray<FSwitchDef *> mSwitchDefs;
@@ -529,6 +539,7 @@ public:
 	void MakeTexture ();
 
 protected:
+
 	DSimpleCanvas *Canvas;
 	BYTE *Pixels;
 	Span DummySpans[2];

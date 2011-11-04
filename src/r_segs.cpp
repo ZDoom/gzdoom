@@ -240,7 +240,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	frontsector = curline->frontsector;
 	backsector = curline->backsector;
 
-	tex = TexMan(curline->sidedef->GetTexture(side_t::mid));
+	tex = TexMan(curline->sidedef->GetTexture(side_t::mid), true);
 	if (i_compatflags & COMPATF_MASKEDMIDTEX)
 	{
 		tex = tex->GetRawTexture();
@@ -705,15 +705,15 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				}
 				else if(fover->flags & FF_UPPERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
 				}
 				else if(fover->flags & FF_LOWERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
 				}
 				else
 				{
-					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
+					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
 				}
 			} 
 			else if (frontsector->e->XFloor.ffloors.Size()) 
@@ -764,15 +764,15 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				fover = NULL;
 				if (rover->flags & FF_UPPERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
 				}
 				else if(rover->flags & FF_LOWERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
 				}
 				else
 				{
-					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 				}
 			}
 			// correct colors now
@@ -881,15 +881,15 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				}
 				else if (fover->flags & FF_UPPERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
 				}
 				else if (fover->flags & FF_LOWERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
 				}
 				else
 				{
-					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid));
+					rw_pic = TexMan(fover->master->sidedef[0]->GetTexture(side_t::mid), true);
 				}
 			}
 			else if (frontsector->e->XFloor.ffloors.Size())
@@ -937,15 +937,15 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 				fover = NULL;
 				if (rover->flags & FF_UPPERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::top), true);
 				}
 				else if (rover->flags & FF_LOWERTEXTURE)
 				{
-					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom));
+					rw_pic = TexMan(curline->sidedef->GetTexture(side_t::bottom), true);
 				}
 				else
 				{
-					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid));
+					rw_pic = TexMan(rover->master->sidedef[0]->GetTexture(side_t::mid), true);
 				}
 			}
 			// correct colors now
@@ -1799,7 +1799,7 @@ void R_NewWall (bool needlights)
 			// [RH] Horizon lines do not need to be textured
 			if (linedef->special != Line_Horizon)
 			{
-				midtexture = TexMan(sidedef->GetTexture(side_t::mid));
+				midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
 				rw_offset_mid = sidedef->GetTextureXOffset(side_t::mid);
 				rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 				rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
@@ -1943,7 +1943,7 @@ void R_NewWall (bool needlights)
 
 		if (rw_havehigh)
 		{ // top texture
-			toptexture = TexMan(sidedef->GetTexture(side_t::top));
+			toptexture = TexMan(sidedef->GetTexture(side_t::top), true);
 
 			rw_offset_top = sidedef->GetTextureXOffset(side_t::top);
 			rowoffset = sidedef->GetTextureYOffset(side_t::top);
@@ -1973,7 +1973,7 @@ void R_NewWall (bool needlights)
 		}
 		if (rw_havelow)
 		{ // bottom texture
-			bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom));
+			bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom), true);
 
 			rw_offset_bottom = sidedef->GetTextureXOffset(side_t::bottom);
 			rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
@@ -2016,7 +2016,7 @@ void R_NewWall (bool needlights)
 			markceiling = false;
 	}
 
-	FTexture *midtex = TexMan(sidedef->GetTexture(side_t::mid));
+	FTexture *midtex = TexMan(sidedef->GetTexture(side_t::mid), true);
 
 	segtextured = midtex != NULL || toptexture != NULL || bottomtexture != NULL;
 
@@ -2218,7 +2218,7 @@ void R_StoreWallRange (int start, int stop)
 		if(!ds_p->fake)
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
-		if ((TexMan(sidedef->GetTexture(side_t::mid))->UseType != FTexture::TEX_Null || ds_p->bFakeBoundary || IsFogBoundary (frontsector, backsector)) &&
+		if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || ds_p->bFakeBoundary || IsFogBoundary (frontsector, backsector)) &&
 			(rw_ceilstat != 12 || !sidedef->GetTexture(side_t::top).isValid()) &&
 			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
@@ -2244,7 +2244,7 @@ void R_StoreWallRange (int start, int stop)
 
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (fixed_t *)(openings + ds_p->swall);
-				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid));
+				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
 				fixed_t yrepeat = FixedMul(pic->yScale, sidedef->GetTextureYScale(side_t::mid));
 				fixed_t xoffset = sidedef->GetTextureXOffset(side_t::mid);
 
@@ -2550,6 +2550,7 @@ int WallMost (short *mostbuf, const secplane_t &plane)
 	{
 		clearbufshort (&mostbuf[ix1], ix2-ix1, viewheight);
 		return bad;
+
 	}
 
 	if (bad&3)
@@ -2759,7 +2760,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	xscale = decal->ScaleX;
 	yscale = decal->ScaleY;
 
-	WallSpriteTile = TexMan(decal->PicNum);
+	WallSpriteTile = TexMan(decal->PicNum, true);
 	flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
 
 	if (WallSpriteTile == NULL || WallSpriteTile->UseType == FTexture::TEX_Null)

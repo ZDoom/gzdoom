@@ -283,7 +283,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 	bool 		rtn;
 	sector_t*	sec;
 	DFloor*		floor;
-	bool		manual = false;
+	//bool		manual = false; tag == 0 and manual == true constitutes the same evidence [fdari]
 	fixed_t		ceilingheight;
 	fixed_t		newheight;
 	vertex_t	*spot, *spot2;
@@ -296,12 +296,12 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		if (!line || !(sec = line->backsector))
 			return rtn;
 		secnum = (int)(sec-sectors);
-		manual = true;
+		//manual = true;
 		goto manual_floor;
 	}
 
 	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	while (tag && (secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
 	{
 		sec = &sectors[secnum];
 
@@ -309,11 +309,14 @@ manual_floor:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		if (sec->PlaneMoving(sector_t::floor))
 		{
-			if (manual)
-				continue;
-			else
-				return false;
+			// There was a test for 0/non-0 here, supposed to prevent 0-tags from executing "continue" and searching for unrelated sectors
+			// Unfortunately, the condition had been reversed, so that searches for tag-0 would continue,
+			// while numbered tags would abort (return false, even if some floors have been successfully triggered)
+
+			// All occurences of the condition (faulty or not) have been replaced by a looping condition: Looping only occurs if we're looking for a non-0 tag.
+			continue;
 		}
+		
 		
 		// new floor thinker
 		rtn = true;
@@ -525,8 +528,6 @@ manual_floor:
 				floor->SetFloorChangeType (line->frontsector, change);
 			}
 		}
-		if (manual)
-			return rtn;
 	}
 	return rtn;
 }
@@ -806,7 +807,7 @@ bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
 	DFloor*				floor;
 	vertex_t*			spot;
 	fixed_t				height;
-	bool				manual = false;
+	// bool				manual = false; Instead of breaking when manual is true, fail to (re)enter loop when tag is false (0).
 		
 	secnum = -1;
 	rtn = false;
@@ -815,18 +816,18 @@ bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
 	{
 		if (!line || !(s1 = line->backsector))
 			return rtn;
-		manual = true;
+		//manual = true;
 		goto manual_donut;
 	}
 
-	while ((secnum = P_FindSectorFromTag(tag,secnum)) >= 0)
+	while (tag && (secnum = P_FindSectorFromTag(tag,secnum)) >= 0)
 	{
 		s1 = &sectors[secnum];					// s1 is pillar's sector
 
 manual_donut:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		if (s1->PlaneMoving(sector_t::floor))
-			continue;
+			continue; // safe now, because we check that tag is non-0 in the looping condition [fdari]
 						
 		rtn = true;
 		s2 = getNextSector (s1->lines[0], s1);	// s2 is pool's sector
@@ -870,7 +871,6 @@ manual_donut:
 			floor->StartFloorSound ();
 			break;
 		}
-		if (manual) break;
 	}
 	return rtn;
 }
@@ -1034,7 +1034,6 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 	fixed_t		floorheight, ceilingheight;
 	fixed_t		newheight;
 	vertex_t*	spot;
-	bool		manual = false;
 
 	if (!line && (elevtype == DElevator::elevateCurrent))
 		return false;
@@ -1046,19 +1045,18 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 	{
 		if (!line || !(sec = line->backsector))
 			return rtn;
-		manual = true;
 		goto manual_elevator;
 	}
 
 
 	// act on all sectors with the same tag as the triggering linedef
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	while (tag && (secnum = P_FindSectorFromTag (tag, secnum)) >= 0) // never loop for a non-0 tag (condition moved to beginning of loop) [FDARI]
 	{
 		sec = &sectors[secnum];
 manual_elevator:
 		// If either floor or ceiling is already activated, skip it
 		if (sec->PlaneMoving(sector_t::floor) || sec->ceilingdata) //jff 2/22/98
-			continue;
+			continue; // the loop used to break at the end if tag were 0, but would miss that step if "continue" occured [FDARI]
 
 		// create and initialize new elevator thinker
 		rtn = true;
@@ -1116,7 +1114,6 @@ manual_elevator:
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->soundorg[0], sec->soundorg[1], ceilingheight - height);
 			break;
 		}
-		if (manual) break;
 	}
 	return rtn;
 }
@@ -1379,7 +1376,7 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 	sector_t *sector;
 	DWaggleBase *waggle;
 	bool retCode;
-	bool manual = false;
+	//bool manual = false;
 
 	retCode = false;
 	sectorIndex = -1;
@@ -1388,12 +1385,12 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 	{
 		if (!line || !(sector = line->backsector))
 			return retCode;
-		manual = true;
+		//manual = true;
 		goto manual_waggle;
 	}
 
 
-	while ((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+	while (tag && (sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
 	{
 		sector = &sectors[sectorIndex];
 manual_waggle:
@@ -1421,7 +1418,6 @@ manual_waggle:
 			/(TICRATE+((3*TICRATE)*height)/255);
 		waggle->m_Ticker = timer ? timer*TICRATE : -1;
 		waggle->m_State = WGLSTATE_EXPAND;
-		if (manual) break;
 	}
 	return retCode;
 }

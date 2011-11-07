@@ -672,7 +672,7 @@ AWeapon *APlayerPawn::BestWeapon (const PClass *ammotype)
 	int bestOrder = INT_MAX;
 	AInventory *item;
 	AWeapon *weap;
-	bool tomed = NULL != FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	bool tomed = NULL != FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 
 	// Find the best weapon the player has.
 	for (item = Inventory; item != NULL; item = item->Inventory)

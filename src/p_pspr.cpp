@@ -155,7 +155,7 @@ void P_BringUpWeapon (player_t *player)
 	if (weapon != NULL &&
 		weapon->SisterWeapon &&
 		weapon->SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2)))
+		player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true))
 	{
 		weapon = weapon->SisterWeapon;
 	}

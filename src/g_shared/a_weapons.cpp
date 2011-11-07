@@ -126,7 +126,7 @@ bool AWeapon::Use (bool pickup)
 	// weapon, if one exists.
 	if (SisterWeapon != NULL &&
 		SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		Owner->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2)))
+		Owner->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true))
 	{
 		useweap = SisterWeapon;
 	}

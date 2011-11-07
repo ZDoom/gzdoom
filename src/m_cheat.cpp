@@ -181,7 +181,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_POWER:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 			if (item != NULL)
 			{
 				item->Destroy ();

@@ -235,7 +235,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	player->MorphStyle = 0;
 	player->MorphExitFlash = NULL;
 	player->viewheight = mo->ViewHeight;
-	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 	if (level2 != NULL)
 	{
 		level2->Destroy ();
@@ -273,6 +273,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 			if ((unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
 				(size_t)player->userinfo.skin < numskins)
 			{
+
 				skinindex = player->userinfo.skin;
 			}
 			else if (PlayerClasses.Size () > 1)

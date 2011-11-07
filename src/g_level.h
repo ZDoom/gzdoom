@@ -401,6 +401,7 @@ struct FLevelLocals
 	int			musicorder;
 	int			cdtrack;
 	unsigned int cdid;
+	int			nextmusic;				// For MUSINFO purposes
 	char		skypic1[9];
 	char		skypic2[9];
 

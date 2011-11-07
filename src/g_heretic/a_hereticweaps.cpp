@@ -657,7 +657,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			angle = 0;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget);
+				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget, 0, ALF_NOFRIENDS, NULL, self->target);
 				if (linetarget && self->target != linetarget)
 				{
 					self->tracer = linetarget;
@@ -1277,6 +1277,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	AActor *mo;
 	angle_t angle;
 	fixed_t x, y, z;
+
 	fixed_t slope;
 	FSoundID soundid;
 	player_t *player;

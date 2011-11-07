@@ -330,7 +330,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
-	// P_LineOpening requires the thing's z to be the destination ín order to work.
+	// P_LineOpening requires the thing's z to be the destination ú‹ order to work.
 	fixed_t savedz = thing->z;
 	thing->z = z;
 	while ((ld = it.Next()))
@@ -2848,6 +2848,7 @@ struct aim_t
 	fixed_t			attackrange;
 	fixed_t			shootz;			// Height if not aiming up or down
 	AActor*			shootthing;
+	AActor*			friender;		// actor to check friendliness again
 
 	fixed_t			toppitch, bottompitch;
 	AActor *		linetarget;
@@ -3147,11 +3148,15 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 			}
 		}
 
-		if (sv_smartaim != 0 && !(flags & ALF_FORCENOSMART))
+		if ((flags & ALF_NOFRIENDS) && th->IsFriend(friender))
+		{
+			continue;
+		}
+		else if (sv_smartaim != 0 && !(flags & ALF_FORCENOSMART))
 		{
 			// try to be a little smarter about what to aim at!
-			// In particular avoid autoaiming at friends amd barrels.
-			if (th->IsFriend(shootthing))
+			// In particular avoid autoaiming at friends and barrels.
+			if (th->IsFriend(friender))
 			{
 				if (sv_smartaim < 2)
 				{
@@ -3160,7 +3165,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 					pitch_friend = thingpitch;
 				}
 			}
-			else if (!(th->flags3&MF3_ISMONSTER) && th->player == NULL)
+			else if (!(th->flags3 & MF3_ISMONSTER) && th->player == NULL)
 			{
 				if (sv_smartaim < 3)
 				{
@@ -3192,7 +3197,7 @@ void aim_t::AimTraverse (fixed_t startx, fixed_t starty, fixed_t endx, fixed_t e
 //============================================================================
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange, 
-						 int flags, AActor *target)
+						 int flags, AActor *target, AActor *friender)
 {
 	fixed_t x2;
 	fixed_t y2;
@@ -3201,6 +3206,7 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 	angle >>= ANGLETOFINESHIFT;
 	aim.flags = flags;
 	aim.shootthing = t1;
+	aim.friender = (friender == NULL) ? t1 : friender;
 
 	x2 = t1->x + (distance>>FRACBITS)*finecosine[angle];
 	y2 = t1->y + (distance>>FRACBITS)*finesine[angle];

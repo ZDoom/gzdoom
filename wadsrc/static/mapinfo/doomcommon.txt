@@ -42,7 +42,7 @@ gameinfo
 	defaultdropstyle = 1
 	endoom = "ENDOOM"
 	player5start = 4001
-	pickupcolor = "d6 ba 45"
+	pickupcolor = "d7 ba 45"
 	quitmessages = "$QUITMSG", "$QUITMSG1", "$QUITMSG2", "$QUITMSG3", "$QUITMSG4", "$QUITMSG5", "$QUITMSG6", "$QUITMSG7",
 				   "$QUITMSG8", "$QUITMSG9", "$QUITMSG10", "$QUITMSG11", "$QUITMSG12", "$QUITMSG13", "$QUITMSG14"
 				   

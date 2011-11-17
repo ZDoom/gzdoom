@@ -40,7 +40,7 @@ gameinfo
 	defaultrespawntime = 12
 	defaultdropstyle = 1
 	player5start = 9100
-	pickupcolor = "d6 ba 45"
+	pickupcolor = "d7 ba 45"
 	quitmessages = "$*RAVENQUITMSG"
 	menufontcolor_title = "UNTRANSLATED"
 	menufontcolor_label = "RED"

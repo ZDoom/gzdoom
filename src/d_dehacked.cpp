@@ -691,8 +691,11 @@ void SetDehParams(FState * state, int codepointer)
 		if (value2) StateParams.Set(ParamIndex+1, new FxConstant(SoundMap[value2-1], *pos));	// hit sound
 		break;
 	case MBF_PlaySound:
-		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));			// soundid
-		StateParams.Set(ParamIndex+4, new FxConstant((value2?ATTN_NONE:ATTN_NORM), *pos));	// attenuation
+		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));				// soundid
+		StateParams.Set(ParamIndex+1, new FxConstant(CHAN_BODY, *pos));							// channel
+		StateParams.Set(ParamIndex+2, new FxConstant(1.0, *pos));								// volume
+		StateParams.Set(ParamIndex+3, new FxConstant(false, *pos));								// looping
+		StateParams.Set(ParamIndex+4, new FxConstant((value2 ? ATTN_NONE : ATTN_NORM), *pos));	// attenuation
 		break;
 	case MBF_RandomJump:
 		StateParams.Set(ParamIndex+0, new FxConstant(2, *pos));					// count

@@ -97,7 +97,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer=false);
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false);
+bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false, bool usecurspeed=false);
 
 enum EPuffFlags
 {

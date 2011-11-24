@@ -1468,16 +1468,18 @@ bool AActor::CanSeek(AActor *target) const
 //
 //----------------------------------------------------------------------------
 
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise)
+bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise, bool usecurspeed)
 {
 	int dir;
 	int dist;
 	angle_t delta;
 	angle_t angle;
 	AActor *target;
+	fixed_t speed;
 
+	speed = !usecurspeed ? actor->Speed : xs_CRoundToInt(TVector3<double>(actor->velx, actor->vely, actor->velz).Length());
 	target = actor->tracer;
-	if (target == NULL || actor->Speed == 0 || !actor->CanSeek(target))
+	if (target == NULL || speed == 0 || !actor->CanSeek(target))
 	{
 		return false;
 	}
@@ -1507,8 +1509,8 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	
 	if (!precise)
 	{
-		actor->velx = FixedMul (actor->Speed, finecosine[angle]);
-		actor->vely = FixedMul (actor->Speed, finesine[angle]);
+		actor->velx = FixedMul (speed, finecosine[angle]);
+		actor->vely = FixedMul (speed, finesine[angle]);
 
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{
@@ -1516,7 +1518,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 				target->z + target->height < actor->z)
 			{ // Need to seek vertically
 				dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
-				dist = dist / actor->Speed;
+				dist = dist / speed;
 				if (dist < 1)
 				{
 					dist = 1;
@@ -1541,8 +1543,8 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 			pitch >>= ANGLETOFINESHIFT;
 		}
 
-		fixed_t xyscale = FixedMul(actor->Speed, finecosine[pitch]);
-		actor->velz = FixedMul(actor->Speed, finesine[pitch]);
+		fixed_t xyscale = FixedMul(speed, finecosine[pitch]);
+		actor->velz = FixedMul(speed, finesine[pitch]);
 		actor->velx = FixedMul(xyscale, finecosine[angle]);
 		actor->vely = FixedMul(xyscale, finesine[angle]);
 	}
@@ -1870,6 +1872,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					{
 						goto explode;
 					}
+
 
 
 					// Reflect the missile along angle
@@ -2467,6 +2470,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 
 	z = mo->z;
+
 
 	// inherit attributes from deceased one
 	mo->SpawnPoint[0] = mobj->SpawnPoint[0];

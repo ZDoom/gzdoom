@@ -21,6 +21,7 @@
 #include "tables.h"
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
+#include "p_3dmidtex.h"
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
 #include "g_level.h"
@@ -1291,6 +1292,22 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 					checker.Push (mobj);
 					if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
 					{
+						fixed_t top = -INT_MAX, bottom = INT_MAX;
+						bool above;
+						// [TN] Check wether this actor gets blocked by the line.
+						if(!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
+							&& !(ld->flags & ML_BLOCK_PLAYERS && mobj->player) 
+							&& !(ld->flags & ML_BLOCKMONSTERS && mobj->flags3 & MF3_ISMONSTER)
+							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
+							&& (!(ld->flags & ML_3DMIDTEX) ||
+								(!P_LineOpening_3dMidtex(mobj, ld, bottom, top, &above) &&
+									(mobj->z + mobj->height < bottom)
+								) || (above && mobj->z > mobj->floorz))
+							)
+						{
+							continue;
+						}
+
 						FBoundingBox box(mobj->x, mobj->y, mobj->radius);
 
 						if (box.Right() <= ld->bbox[BOXLEFT]

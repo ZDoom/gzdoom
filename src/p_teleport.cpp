@@ -110,6 +110,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	sector_t *destsect;
 	bool resetpitch = false;
 	fixed_t floorheight, ceilingheight;
+	fixed_t missilespeed;
 
 	oldx = thing->x;
 	oldy = thing->y;
@@ -122,6 +123,10 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		player = NULL;
 	floorheight = destsect->floorplane.ZatPoint (x, y);
 	ceilingheight = destsect->ceilingplane.ZatPoint (x, y);
+	if (thing->flags & MF_MISSILE)
+	{ // We don't measure z velocity, because it doesn't change.
+		missilespeed = xs_CRoundToInt(TVector2<double>(thing->velx, thing->vely).Length());
+	}
 	if (z == ONFLOORZ)
 	{
 		if (player)
@@ -206,8 +211,8 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (thing->flags & MF_MISSILE)
 	{
 		angle >>= ANGLETOFINESHIFT;
-		thing->velx = FixedMul (thing->Speed, finecosine[angle]);
-		thing->vely = FixedMul (thing->Speed, finesine[angle]);
+		thing->velx = FixedMul (missilespeed, finecosine[angle]);
+		thing->vely = FixedMul (missilespeed, finesine[angle]);
 	}
 	// [BC] && bHaltVelocity.
 	else if (!keepOrientation && bHaltVelocity) // no fog doesn't alter the player's momentum

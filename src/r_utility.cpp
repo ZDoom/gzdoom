@@ -601,11 +601,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch + delta <= viewpitch)
 			{
-				viewpitch = Renderer->GetMaxViewPitch(true);
+				viewpitch = player->MaxPitch;
 			}
 			else
 			{
-				viewpitch = MIN(viewpitch + delta, Renderer->GetMaxViewPitch(true));
+				viewpitch = MIN(viewpitch + delta, player->MaxPitch);
 			}
 		}
 		else if (delta < 0)
@@ -613,11 +613,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch + delta >= viewpitch)
 			{
-				viewpitch = Renderer->GetMaxViewPitch(false);
+				viewpitch = player->MinPitch;
 			}
 			else
 			{
-				viewpitch = MAX(viewpitch + delta, Renderer->GetMaxViewPitch(false));
+				viewpitch = MAX(viewpitch + delta, player->MinPitch);
 			}
 		}
 	}

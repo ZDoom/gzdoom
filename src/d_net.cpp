@@ -2450,6 +2450,11 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		}
 		break;
 
+	case DEM_SETPITCHLIMIT:
+		players[player].MinPitch = ReadByte(stream) * -ANGLE_1;		// up
+		players[player].MaxPitch = ReadByte(stream) *  ANGLE_1;		// down
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2570,6 +2575,9 @@ void Net_SkipCommand (int type, BYTE **stream)
 			skip = 2 + ((*stream)[1] >> 7);
 			break;
 
+		case DEM_SETPITCHLIMIT:
+			skip = 2;
+			break;
 
 		default:
 			return;

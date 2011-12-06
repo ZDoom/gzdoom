@@ -159,6 +159,7 @@ enum EDemoCommand
 	DEM_CONVCLOSE,		// 60
 	DEM_CONVNULL,		// 61
 	DEM_RUNSPECIAL,		// 62 Byte: Special number, Byte: Arg count, Ints: Args
+	DEM_SETPITCHLIMIT,	// 63 Byte: Up limit, Byte: Down limit (in degrees)
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

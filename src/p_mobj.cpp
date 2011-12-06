@@ -2783,6 +2783,7 @@ void AActor::Tick ()
 	static const BYTE HereticScrollDirs[4] = { 6, 9, 1, 4 };
 	static const BYTE HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
+
 	AActor *onmo;
 	int i;
 
@@ -4027,6 +4028,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
 	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
+	p->MinPitch = p->MaxPitch = 0;	// will be filled in by PostBeginPlay()/netcode
 
 	p->velx = p->vely = 0;		// killough 10/98: initialize bobbing to 0.
 

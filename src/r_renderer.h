@@ -49,7 +49,7 @@ struct FRenderer
 	virtual void StartSerialize(FArchive &arc) {}
 	virtual void EndSerialize(FArchive &arc) {}
 
-	virtual int GetMaxViewPitch(bool down) = 0;
+	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 
 	virtual void OnModeSet () {}
 	virtual void ErrorCleanup () {}

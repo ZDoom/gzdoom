@@ -282,6 +282,7 @@ public:
 
 	bool		centering;
 	BYTE		turnticks;
+
 	bool		attackdown;
 	bool		usedown;
 	DWORD		oldbuttons;
@@ -342,9 +343,9 @@ public:
 
 
 	TObjPtr<AActor>		enemy;		// The dead meat.
-	TObjPtr<AActor>		missile;	// A threathing missile that got to be avoided.
-	TObjPtr<AActor>		mate;		// Friend (used for grouping in templay or coop.
-	TObjPtr<AActor>		last_mate;	// If bots mate dissapeared (not if died) that mate is
+	TObjPtr<AActor>		missile;	// A threatening missile that needs to be avoided.
+	TObjPtr<AActor>		mate;		// Friend (used for grouping in teamplay or coop).
+	TObjPtr<AActor>		last_mate;	// If bots mate disappeared (not if died) that mate is
 							// pointed to by this. Allows bot to roam to it if
 							// necessary.
 
@@ -379,6 +380,9 @@ public:
 	float		BlendA;
 
 	FString		LogText;	// [RH] Log for Strife
+
+	int			MinPitch;	// Viewpitch limits (negative is up, positive is down)
+	int			MaxPitch;
 
 	SBYTE	crouching;
 	SBYTE	crouchdir;

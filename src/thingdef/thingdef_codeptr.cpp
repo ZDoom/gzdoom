@@ -3416,10 +3416,34 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 //
 //===========================================================================
 
+enum
+{
+	SPF_FORCECLAMP = 1,	// players always clamp
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_ANGLE(pitch, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	if (self->player != NULL || (flags & SPF_FORCECLAMP))
+	{ // clamp the pitch we set
+		int min, max;
+
+		if (self->player != NULL)
+		{
+			min = self->player->MinPitch;
+			max = self->player->MaxPitch;
+		}
+		else
+		{
+			min = -ANGLE_90 + (1 << ANGLETOFINESHIFT);
+			max = ANGLE_90 - (1 << ANGLETOFINESHIFT);
+		}
+		pitch = clamp<int>(pitch, min, max);
+	}
+
 	self->pitch = pitch;
 }
 

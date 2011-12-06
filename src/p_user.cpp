@@ -522,6 +522,14 @@ void APlayerPawn::PostBeginPlay()
 		P_FindFloorCeiling(this, true);
 		z = floorz;
 	}
+	else if (player - players == consoleplayer)
+	{
+		// Ask the local player's renderer what pitch restrictions
+		// should be imposed and let everybody know.
+		Net_WriteByte(DEM_SETPITCHLIMIT);
+		Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
+		Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
+	}
 }
 
 //===========================================================================
@@ -2213,11 +2221,11 @@ void P_PlayerThink (player_t *player)
 				player->mo->pitch -= look;
 				if (look > 0)
 				{ // look up
-					player->mo->pitch = MAX(player->mo->pitch, Renderer->GetMaxViewPitch(false));
+					player->mo->pitch = MAX(player->mo->pitch, player->MinPitch);
 				}
 				else
 				{ // look down
-					player->mo->pitch = MIN(player->mo->pitch, Renderer->GetMaxViewPitch(true));
+					player->mo->pitch = MIN(player->mo->pitch, player->MaxPitch);
 				}
 			}
 		}

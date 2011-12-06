@@ -2534,7 +2534,7 @@ void G_DoPlayDemo (void)
 
 	if (ReadLong (&demo_p) != FORM_ID)
 	{
-		const char *eek = "Cannot play non-ZDoom demos.\n(They would go out of sync badly.)\n";
+		const char *eek = "Cannot play non-ZDoom demos.\n";
 
 		C_ForgetCVars();
 		M_Free(demobuffer);

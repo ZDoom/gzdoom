@@ -855,9 +855,9 @@ FUNC( LS_Teleport_NoStop )
 }
 
 FUNC(LS_Teleport_NoFog)
-// Teleport_NoFog (tid, useang, sectortag)
+// Teleport_NoFog (tid, useang, sectortag, keepheight)
 {
-	return EV_Teleport (arg0, arg2, ln, backSide, it, false, false, !arg1);
+	return EV_Teleport (arg0, arg2, ln, backSide, it, false, false, !arg1, true, !!arg3);
 }
 
 FUNC(LS_Teleport_ZombieChanger)

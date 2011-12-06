@@ -42,6 +42,15 @@
 #include "m_swap.h"
 #include "sbar.h"
 
+
+#if defined (__APPLE__)
+
+mach_timebase_info_data_t cycle_t::s_info;
+bool cycle_t::s_initialized;
+
+#endif // __APPLE__
+
+
 FStat *FStat::FirstStat;
 
 FStat::FStat (const char *name)

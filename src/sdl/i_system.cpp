@@ -39,6 +39,7 @@
 #endif
 
 #ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach_init.h>
 #include <mach/semaphore.h>
 #include <mach/task.h>
@@ -393,9 +394,25 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		int index;
 		va_list argptr;
 		va_start (argptr, error);
-		index = vsprintf (errortext, error, argptr);
+		index = vsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
 		va_end (argptr);
 
+#ifdef __APPLE__
+		// Close window or exit fullscreen and release mouse capture
+		SDL_Quit();
+		
+		const CFStringRef errorString = CFStringCreateWithCStringNoCopy( kCFAllocatorDefault, 
+			errortext, kCFStringEncodingASCII, kCFAllocatorNull );
+		if ( NULL != errorString )
+		{
+			CFOptionFlags dummy;
+		
+			CFUserNotificationDisplayAlert( 0, kCFUserNotificationStopAlertLevel, NULL, NULL, NULL, 
+				CFSTR( "Error" ), errorString, CFSTR( "Exit" ), NULL, NULL, &dummy );
+			CFRelease( errorString );
+		}
+#endif // __APPLE__		
+		
 		// Record error to log (if logging)
 		if (Logfile)
 		{

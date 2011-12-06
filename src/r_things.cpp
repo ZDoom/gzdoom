@@ -2112,7 +2112,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->x1 = x1;
 	vis->x2 = x2;
 	vis->Translation = 0;
-	vis->startfrac = particle->color;
+	vis->startfrac = 255 & (particle->color >>24);
 	vis->pic = NULL;
 	vis->bIsVoxel = false;
 	vis->renderflags = particle->trans;

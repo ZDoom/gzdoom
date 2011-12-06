@@ -5017,7 +5017,7 @@ bool P_CheckMissileSpawn (AActor* th)
 		bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
 
 		// killough 3/15/98: no dropoff (really = don't care for missiles)
-		if (!(P_TryMove (th, th->x, th->y, false, NULL, tm)))
+		if (!(P_TryMove (th, th->x, th->y, false, NULL, tm, true)))
 		{
 			// [RH] Don't explode ripping missiles that spawn inside something
 			if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))

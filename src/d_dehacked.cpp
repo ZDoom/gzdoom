@@ -1090,6 +1090,15 @@ static int PatchThing (int thingy)
 						value[0] &= ~MF_TRANSLUCENT; // clean the slot
 						vchanged[2] = true; value[2] |= 2; // let the TRANSLUCxx code below handle it
 					}
+					if ((info->flags & MF_MISSILE) && (info->flags2 & MF2_NOTELEPORT)
+						&& !(value[0] & MF_MISSILE))
+					{
+						// ZDoom gives missiles flags that did not exist in Doom: MF2_NOTELEPORT, 
+						// MF2_IMPACT, and MF2_PCROSS. The NOTELEPORT one can be a problem since 
+						// some projectile actors (those new to Doom II) were not excluded from 
+						// triggering line effects and can teleport when the missile flag is removed.
+						info->flags2 &= ~MF2_NOTELEPORT;
+					}
 					info->flags = value[0];
 				}
 				if (vchanged[1])

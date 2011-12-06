@@ -1452,6 +1452,8 @@ public:
 		char *buffer = new char[map->Size(ML_TEXTMAP)];
 
 		isTranslated = true;
+		isExtended = false;
+		floordrop = false;
 
 		map->Read(ML_TEXTMAP, buffer);
 		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), buffer, map->Size(ML_TEXTMAP));
@@ -1569,6 +1571,12 @@ public:
 				Skip();
 			}
 		}
+
+		// Catch bogus maps here rather than during nodebuilding
+		if (ParsedVertices.Size() == 0)	I_Error("Map has no vertices.\n");
+		if (ParsedSectors.Size() == 0)	I_Error("Map has no sectors. \n");
+		if (ParsedLines.Size() == 0)	I_Error("Map has no linedefs.\n");
+		if (ParsedSides.Size() == 0)	I_Error("Map has no sidedefs.\n");
 
 		// Create the real vertices
 		numvertexes = ParsedVertices.Size();

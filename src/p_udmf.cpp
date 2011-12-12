@@ -880,6 +880,11 @@ public:
 			case NAME_blocksight:
 				Flag(ld->flags, ML_BLOCKSIGHT, key); 
 				continue;
+			
+			// [Dusk] lock number
+			case NAME_Locknumber:
+				ld->locknumber = CheckInt(key);
+				continue;
 
 			default:
 				break;

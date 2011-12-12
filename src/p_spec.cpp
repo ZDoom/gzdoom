@@ -60,6 +60,7 @@
 #include "v_font.h"
 #include "a_sharedglobal.h"
 #include "farchive.h"
+#include "a_keys.h"
 
 // State.
 #include "r_state.h"
@@ -235,6 +236,8 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{
 		return false;
 	}
+	int remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
+	if (line->locknumber > 0 && !P_CheckKeys (mo, line->locknumber, remote)) return false;
 	lineActivation = line->activation;
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;

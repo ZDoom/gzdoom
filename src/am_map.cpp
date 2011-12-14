@@ -1728,15 +1728,19 @@ void AM_drawSubsectors()
 		}
 
 		// Draw the polygon.
-		screen->FillSimplePoly(TexMan(maptex),
-			&points[0], points.Size(),
-			originx, originy,
-			scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
-			scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
-			rotation,
-			colormap,
-			floorlight
-			);
+		FTexture *pic = TexMan(maptex);
+		if (pic != NULL && pic->UseType != FTexture::TEX_Null)
+		{
+			screen->FillSimplePoly(TexMan(maptex),
+				&points[0], points.Size(),
+				originx, originy,
+				scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
+				scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
+				rotation,
+				colormap,
+				floorlight
+				);
+		}
 	}
 }
 

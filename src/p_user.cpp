@@ -410,6 +410,26 @@ int player_t::GetSpawnClass()
 
 //===========================================================================
 //
+// player_t :: SendPitchLimits
+//
+// Ask the local player's renderer what pitch restrictions should be imposed
+// and let everybody know. Only sends data for the consoleplayer, since the
+// local player is the only one our data is valid for.
+//
+//===========================================================================
+
+void player_t::SendPitchLimits() const
+{
+	if (this - players == consoleplayer)
+	{
+		Net_WriteByte(DEM_SETPITCHLIMIT);
+		Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
+		Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
+	}
+}
+
+//===========================================================================
+//
 // APlayerPawn
 //
 //===========================================================================
@@ -522,13 +542,9 @@ void APlayerPawn::PostBeginPlay()
 		P_FindFloorCeiling(this, true);
 		z = floorz;
 	}
-	else if (player - players == consoleplayer)
+	else
 	{
-		// Ask the local player's renderer what pitch restrictions
-		// should be imposed and let everybody know.
-		Net_WriteByte(DEM_SETPITCHLIMIT);
-		Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
-		Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
+		player->SendPitchLimits();
 	}
 }
 
@@ -2504,6 +2520,7 @@ extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnod
 void P_UnPredictPlayer ()
 {
 	player_t *player = &players[consoleplayer];
+
 
 	if (player->cheats & CF_PREDICTING)
 	{

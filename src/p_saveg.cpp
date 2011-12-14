@@ -112,6 +112,8 @@ void P_SerializePlayers (FArchive &arc, bool skipload)
 		{
 			SpawnExtraPlayers ();
 		}
+		// Redo pitch limits, since the spawned player has them at 0.
+		players[consoleplayer].SendPitchLimits();
 	}
 }
 

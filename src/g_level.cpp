@@ -666,6 +666,7 @@ void G_DoCompleted (void)
 		{
 
 
+
 			level_info_t *nextinfo = FindLevelInfo (nextlevel);
 			wminfo.next = nextinfo->mapname;
 			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->pname, FTexture::TEX_MiscPatch)];
@@ -1148,6 +1149,7 @@ void G_FinishTravel ()
 			pawn->LinkToWorld ();
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
+			pawn->player->SendPitchLimits();
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{

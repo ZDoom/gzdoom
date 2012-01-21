@@ -208,7 +208,7 @@ bool P_CheckForGLNodes()
 	int missing = CheckForMissingSegs();
 	if (missing > 0)
 	{
-		Printf("%d missing segs counted\nThe BSP needs to be rebuilt", missing);
+		Printf("%d missing segs counted\nThe BSP needs to be rebuilt.\n", missing);
 	}
 	return missing == 0;
 }
@@ -718,7 +718,7 @@ static bool DoLoadGLNodes(FileReader * f, wadlump_t * lumps)
 	int missing = CheckForMissingSegs();
 	if (missing > 0)
 	{
-		Printf("%d missing segs counted in GL nodes.\nThe BSP has to be rebuilt", missing);
+		Printf("%d missing segs counted in GL nodes.\nThe BSP has to be rebuilt.\n", missing);
 	}
 	return missing == 0;
 }

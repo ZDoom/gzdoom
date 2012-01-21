@@ -3676,6 +3676,9 @@ int DLevelScript::RunScript ()
 	FRemapTable *translation = 0;
 	int resultValue = 1;
 
+	// Hexen truncates all special arguments to bytes.
+	const int specialargmask = (level.flags2 & LEVEL2_HEXENHACK) ? 255 : ~0;
+
 	switch (state)
 	{
 	case SCRIPT_Delayed:
@@ -3845,78 +3848,100 @@ int DLevelScript::RunScript ()
 
 		case PCD_LSPEC1:
 			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
-									STACK(1), 0, 0, 0, 0);
+									STACK(1) & specialargmask, 0, 0, 0, 0);
 			sp -= 1;
 			break;
 
 		case PCD_LSPEC2:
 			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
-									STACK(2), STACK(1), 0, 0, 0);
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask, 0, 0, 0);
 			sp -= 2;
 			break;
 
 		case PCD_LSPEC3:
 			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
-									STACK(3), STACK(2), STACK(1), 0, 0);
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask, 0, 0);
 			sp -= 3;
 			break;
 
 		case PCD_LSPEC4:
 			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
-									STACK(4), STACK(3), STACK(2),
-									STACK(1), 0);
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask, 0);
 			sp -= 4;
 			break;
 
 		case PCD_LSPEC5:
 			P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
-									STACK(5), STACK(4), STACK(3),
-									STACK(2), STACK(1));
+									STACK(5) & specialargmask,
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask);
 			sp -= 5;
 			break;
 
 		case PCD_LSPEC5RESULT:
 			STACK(5) = P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
-									STACK(5), STACK(4), STACK(3),
-									STACK(2), STACK(1));
+									STACK(5) & specialargmask,
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask);
 			sp -= 4;
 			break;
 
 		case PCD_LSPEC1DIRECT:
 			temp = NEXTBYTE;
 			P_ExecuteSpecial(temp, activationline, activator, backSide,
-								uallong(pc[0]), 0, 0, 0, 0);
+								uallong(pc[0]) & specialargmask ,0, 0, 0, 0);
 			pc += 1;
 			break;
 
 		case PCD_LSPEC2DIRECT:
 			temp = NEXTBYTE;
 			P_ExecuteSpecial(temp, activationline, activator, backSide,
-								uallong(pc[0]), uallong(pc[1]), 0, 0, 0);
+								uallong(pc[0]) & specialargmask,
+								uallong(pc[1]) & specialargmask, 0, 0, 0);
 			pc += 2;
 			break;
 
 		case PCD_LSPEC3DIRECT:
 			temp = NEXTBYTE;
 			P_ExecuteSpecial(temp, activationline, activator, backSide,
-								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), 0, 0);
+								uallong(pc[0]) & specialargmask,
+								uallong(pc[1]) & specialargmask,
+								uallong(pc[2]) & specialargmask, 0, 0);
 			pc += 3;
 			break;
 
 		case PCD_LSPEC4DIRECT:
 			temp = NEXTBYTE;
 			P_ExecuteSpecial(temp, activationline, activator, backSide,
-								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), 0);
+								uallong(pc[0]) & specialargmask,
+								uallong(pc[1]) & specialargmask,
+								uallong(pc[2]) & specialargmask,
+								uallong(pc[3]) & specialargmask, 0);
 			pc += 4;
 			break;
 
 		case PCD_LSPEC5DIRECT:
 			temp = NEXTBYTE;
 			P_ExecuteSpecial(temp, activationline, activator, backSide,
-								uallong(pc[0]), uallong(pc[1]), uallong(pc[2]), uallong(pc[3]), uallong(pc[4]));
+								uallong(pc[0]) & specialargmask,
+								uallong(pc[1]) & specialargmask,
+								uallong(pc[2]) & specialargmask,
+								uallong(pc[3]) & specialargmask,
+								uallong(pc[4]) & specialargmask);
 			pc += 5;
 			break;
 
+		// Parameters for PCD_LSPEC?DIRECTB are by definition bytes so never need and-ing.
 		case PCD_LSPEC1DIRECTB:
 			P_ExecuteSpecial(((BYTE *)pc)[0], activationline, activator, backSide,
 				((BYTE *)pc)[1], 0, 0, 0, 0);

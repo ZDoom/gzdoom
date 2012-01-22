@@ -67,7 +67,14 @@ FLineFlagTrans LineFlagTranslations[16];
 struct SpecialArgs
 {
 	int addflags;
+	int argcount;
 	int args[5];
+};
+
+struct SpecialArg
+{
+	int arg;
+	bool bIsTag;
 };
 
 struct ListFilter

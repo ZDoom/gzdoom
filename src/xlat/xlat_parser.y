@@ -99,228 +99,71 @@ linetype_declaration ::= exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
 	Printf ("%s, line %d: %s is undefined\n", context->SourceFile, context->SourceLine, S.sym);
 }
 
+%type special_arg {SpecialArg}
+
+special_arg(Z) ::= exp(A).
+{
+	Z.arg = A;
+	Z.bIsTag = false;
+}
+special_arg(Z) ::= TAG.
+{
+	Z.arg = 0;
+	Z.bIsTag = true;
+}
+special_arg(Z) ::= TAG PLUS exp(A).
+{
+	Z.arg = A;
+	Z.bIsTag = true;
+}
+special_arg(Z) ::= TAG MINUS exp(A).
+{
+	Z.arg = -A;
+	Z.bIsTag = true;
+}
+
+%type multi_special_arg {SpecialArgs}
+
+multi_special_arg(Z) ::= special_arg(A).
+{
+	Z.addflags = A.bIsTag << LINETRANS_TAGSHIFT;
+	Z.argcount = 1;
+	Z.args[0] = A.arg;
+	Z.args[1] = 0;
+	Z.args[2] = 0;
+	Z.args[3] = 0;
+	Z.args[4] = 0;
+}
+multi_special_arg(Z) ::= multi_special_arg(A) COMMA special_arg(B).
+{
+	Z = A;
+	if (Z.argcount < LINETRANS_MAXARGS)
+	{
+		Z.addflags |= B.bIsTag << (LINETRANS_TAGSHIFT + Z.argcount);
+		Z.args[Z.argcount] = B.arg;
+		Z.argcount++;
+	}
+	else if (Z.argcount++ == LINETRANS_MAXARGS)
+	{
+		context->PrintError("Line special has too many arguments\n");
+	}
+}
+
 %type special_args {SpecialArgs}
 
 special_args(Z) ::= . /* empty */
 {
 	Z.addflags = 0;
+	Z.argcount = 0;
 	Z.args[0] = 0;
 	Z.args[1] = 0;
 	Z.args[2] = 0;
 	Z.args[3] = 0;
 	Z.args[4] = 0;
 }
-special_args(Z) ::= TAG.
+special_args(Z) ::= multi_special_arg(A).
 {
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B) COMMA exp(C).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B) COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B) COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= TAG COMMA TAG.
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA TAG COMMA exp(C).
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA TAG COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA TAG COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA TAG COMMA exp(C).
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA TAG COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA TAG COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT3;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA TAG COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HASTAGAT3;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA TAG COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT3;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT4;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA TAG COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT4;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA exp(D) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT5;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
+	Z = A;
 }
 
 //==========================================================================
@@ -463,7 +306,7 @@ list_val(A) ::= exp(B) COLON exp(C).
 maxlinespecial_def ::= MAXLINESPECIAL EQUALS exp(mx) SEMICOLON.
 {
 	// Just kill all specials higher than the max.
-	// If the translator wants to redefine some later, just let it.s
+	// If the translator wants to redefine some later, just let it.
 	SimpleLineTranslations.Resize(mx+1);
 }
 

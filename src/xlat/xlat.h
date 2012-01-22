@@ -6,14 +6,8 @@
 
 enum
 {
-	LINETRANS_HASTAGAT1	= (1<<6),		// (tag, x, x, x, x)
-	LINETRANS_HASTAGAT2	= (2<<6),		// (x, tag, x, x, x)
-	LINETRANS_HASTAGAT3	= (3<<6),		// (x, x, tag, x, x)
-	LINETRANS_HASTAGAT4	= (4<<6),		// (x, x, x, tag, x)
-	LINETRANS_HASTAGAT5	= (5<<6),		// (x, x, x, x, tag)
-
-	LINETRANS_HAS2TAGS	= (7<<6),		// (tag, tag, x, x, x)
-	LINETRANS_TAGMASK	= (7<<6)
+	LINETRANS_TAGSHIFT	= 24,
+	LINETRANS_MAXARGS	= 5
 };
 
 struct FLineTrans

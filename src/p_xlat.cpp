@@ -118,11 +118,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	if (linetrans != NULL && linetrans->special != 0)
 	{
 		ld->special = linetrans->special;
-		ld->args[0] = linetrans->args[0];
-		ld->args[1] = linetrans->args[1];
-		ld->args[2] = linetrans->args[2];
-		ld->args[3] = linetrans->args[3];
-		ld->args[4] = linetrans->args[4];
 
 		ld->flags = flags | ((linetrans->flags & 0x1f) << 9);
 		if (linetrans->flags & 0x20) ld->flags |= ML_FIRSTSIDEONLY;
@@ -134,30 +129,17 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		{
 			ld->activation = SPAC_UseThrough;
 		}
-		switch (linetrans->flags & LINETRANS_TAGMASK)
+		// Set special arguments.
+		for (int t = 0; t < LINETRANS_MAXARGS; ++t)
 		{
-		case LINETRANS_HAS2TAGS:	// First two arguments are tags
-			ld->args[1] = tag;
-		case LINETRANS_HASTAGAT1:	// First argument is a tag
-			ld->args[0] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT2:	// Second argument is a tag
-			ld->args[1] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT3:	// Third argument is a tag
-			ld->args[2] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT4:	// Fourth argument is a tag
-			ld->args[3] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT5:	// Fifth argument is a tag
-			ld->args[4] = tag;
-			break;
+			ld->args[t] = linetrans->args[t];
+			// Arguments that are tags have the tag's value added to them.
+			if (linetrans->flags & (1 << (LINETRANS_TAGSHIFT+t)))
+			{
+				ld->args[t] += tag;
+			}
 		}
+
 		if ((ld->flags & ML_SECRET) && ld->activation & (SPAC_Use|SPAC_UseThrough))
 		{
 			ld->flags &= ~ML_MONSTERSCANACTIVATE;

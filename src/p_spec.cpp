@@ -603,7 +603,7 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
 		if (actor->CheckLocalView (consoleplayer))
 		{
 			if (printmessage) C_MidPrint (SmallFont, secretmessage);
-			if (playsound) S_Sound (CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
+			if (playsound) S_Sound (CHAN_AUTO | CHAN_UI, "misc/secret", 1, ATTN_NORM);
 		}
 	}
 	level.found_secrets++;

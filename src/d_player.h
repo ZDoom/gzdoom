@@ -426,6 +426,8 @@ void P_CheckPlayerSprites();
 
 #define CROUCHSPEED (FRACUNIT/12)
 
+bool P_IsPlayerTotallyFrozen(const player_t *player);
+
 // [GRB] Custom player classes
 enum
 {

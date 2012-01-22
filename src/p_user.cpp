@@ -2126,9 +2126,7 @@ void P_PlayerThink (player_t *player)
 		player->mo->flags &= ~MF_JUSTATTACKED;
 	}
 
-	bool totallyfrozen = (player->cheats & CF_TOTALLYFROZEN || gamestate == GS_TITLELEVEL ||
-		(( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
-		);
+	bool totallyfrozen = P_IsPlayerTotallyFrozen(player);
 
 	// [RH] Being totally frozen zeros out most input parameters.
 	if (totallyfrozen)
@@ -2723,3 +2721,10 @@ void P_EnumPlayerColorSets(FName classname, TArray<int> *out)
 	}
 }
 
+bool P_IsPlayerTotallyFrozen(const player_t *player)
+{
+	return
+		gamestate == GS_TITLELEVEL ||
+		player->cheats & CF_TOTALLYFROZEN ||
+		((level.flags2 & LEVEL2_FROZEN) && !(player->cheats & CF_TIMEFREEZE));
+}

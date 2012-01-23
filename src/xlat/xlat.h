@@ -4,10 +4,24 @@
 #include "doomtype.h"
 #include "tarray.h"
 
+enum ELineTransTagOp
+{
+	TAGOP_None,
+	TAGOP_Add,
+	TAGOP_Mul,
+	TAGOP_Div,
+	TAGOP_And,
+	TAGOP_Or,
+	TAGOP_Xor,
+
+	TAGOP_NUMBITS = 3,
+	TAGOP_MASK = (1 << TAGOP_NUMBITS) - 1
+};
+
 enum
 {
-	LINETRANS_TAGSHIFT	= 24,
-	LINETRANS_MAXARGS	= 5
+	LINETRANS_MAXARGS	= 5,
+	LINETRANS_TAGSHIFT	= 30 - LINETRANS_MAXARGS * TAGOP_NUMBITS,
 };
 
 struct FLineTrans

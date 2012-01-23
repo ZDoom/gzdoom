@@ -27,7 +27,7 @@ external_declaration ::= NOP.
 %left XOR.
 %left AND.
 %left MINUS PLUS.
-%left MULTIPLY DIVIDE.
+%left MULTIPLY DIVIDE MODULUS.
 %left NEG.
 
 %type exp {int}
@@ -35,7 +35,7 @@ exp(A) ::= NUM(B).					{ A = B.val; }
 exp(A) ::= exp(B) PLUS exp(C).		{ A = B + C; }
 exp(A) ::= exp(B) MINUS exp(C).		{ A = B - C; }
 exp(A) ::= exp(B) MULTIPLY exp(C).	{ A = B * C; }
-exp(A) ::= exp(B) DIVIDE exp(C).	{ if (C != 0) A = B / C; else context->PrintError("Division by Zero"); }
+exp(A) ::= exp(B) DIVIDE exp(C).	{ if (C != 0) A = B / C; else context->PrintError("Division by zero"); }
 exp(A) ::= exp(B) OR exp(C).		{ A = B | C; }
 exp(A) ::= exp(B) AND exp(C).		{ A = B & C; }
 exp(A) ::= exp(B) XOR exp(C).		{ A = B ^ C; }
@@ -104,29 +104,59 @@ linetype_declaration ::= exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
 special_arg(Z) ::= exp(A).
 {
 	Z.arg = A;
-	Z.bIsTag = false;
+	Z.tagop = TAGOP_None;
 }
 special_arg(Z) ::= TAG.
 {
 	Z.arg = 0;
-	Z.bIsTag = true;
+	Z.tagop = TAGOP_Add;
 }
 special_arg(Z) ::= TAG PLUS exp(A).
 {
 	Z.arg = A;
-	Z.bIsTag = true;
+	Z.tagop = TAGOP_Add;
 }
 special_arg(Z) ::= TAG MINUS exp(A).
 {
 	Z.arg = -A;
-	Z.bIsTag = true;
+	Z.tagop = TAGOP_Add;
 }
+special_arg(Z) ::= TAG MULTIPLY exp(A).
+{
+	Z.arg = A;
+	Z.tagop = TAGOP_Mul;
+}
+special_arg(Z) ::= TAG DIVIDE exp(A).
+{
+	Z.arg = A;
+	Z.tagop = TAGOP_Div;
+	if (A == 0)
+	{
+		context->PrintError("Division by zero");
+	}
+}
+special_arg(Z) ::= TAG OR exp(A).
+{
+	Z.arg = A;
+	Z.tagop = TAGOP_Or;
+}
+special_arg(Z) ::= TAG AND exp(A).
+{
+	Z.arg = A;
+	Z.tagop = TAGOP_And;
+}
+special_arg(Z) ::= TAG XOR exp(A).
+{
+	Z.arg = A;
+	Z.tagop = TAGOP_Xor;
+}
+
 
 %type multi_special_arg {SpecialArgs}
 
 multi_special_arg(Z) ::= special_arg(A).
 {
-	Z.addflags = A.bIsTag << LINETRANS_TAGSHIFT;
+	Z.addflags = A.tagop << LINETRANS_TAGSHIFT;
 	Z.argcount = 1;
 	Z.args[0] = A.arg;
 	Z.args[1] = 0;
@@ -139,7 +169,7 @@ multi_special_arg(Z) ::= multi_special_arg(A) COMMA special_arg(B).
 	Z = A;
 	if (Z.argcount < LINETRANS_MAXARGS)
 	{
-		Z.addflags |= B.bIsTag << (LINETRANS_TAGSHIFT + Z.argcount);
+		Z.addflags |= B.tagop << (LINETRANS_TAGSHIFT + Z.argcount * TAGOP_NUMBITS);
 		Z.args[Z.argcount] = B.arg;
 		Z.argcount++;
 	}

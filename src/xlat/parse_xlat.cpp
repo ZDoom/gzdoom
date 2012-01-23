@@ -74,7 +74,7 @@ struct SpecialArgs
 struct SpecialArg
 {
 	int arg;
-	bool bIsTag;
+	ELineTransTagOp tagop;
 };
 
 struct ListFilter

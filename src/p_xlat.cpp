@@ -133,10 +133,17 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		for (int t = 0; t < LINETRANS_MAXARGS; ++t)
 		{
 			ld->args[t] = linetrans->args[t];
-			// Arguments that are tags have the tag's value added to them.
-			if (linetrans->flags & (1 << (LINETRANS_TAGSHIFT+t)))
+			// Apply tag modifications, if needed.
+			int tagop = (linetrans->flags >> (LINETRANS_TAGSHIFT + t*TAGOP_NUMBITS)) & TAGOP_MASK;
+			switch (tagop)
 			{
-				ld->args[t] += tag;
+			case TAGOP_None:	default:				break;
+			case TAGOP_Add:		ld->args[t] += tag;		break;
+			case TAGOP_Mul:		ld->args[t] *= tag;		break;
+			case TAGOP_Div:		ld->args[t] /= tag;		break;
+			case TAGOP_And:		ld->args[t] &= tag;		break;
+			case TAGOP_Or:		ld->args[t] |= tag;		break;
+			case TAGOP_Xor:		ld->args[t] ^= tag;		break;
 			}
 		}
 

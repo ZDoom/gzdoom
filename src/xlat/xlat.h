@@ -4,18 +4,13 @@
 #include "doomtype.h"
 #include "tarray.h"
 
-enum ELineTransTagOp
+enum ELineTransArgOp
 {
-	TAGOP_None,
-	TAGOP_Add,
-	TAGOP_Mul,
-	TAGOP_Div,
-	TAGOP_Mod,
-	TAGOP_And,
-	TAGOP_Or,
-	TAGOP_Xor,
+	ARGOP_Const,
+	ARGOP_Tag,
+	ARGOP_Expr,
 
-	TAGOP_NUMBITS = 3,
+	TAGOP_NUMBITS = 2,
 	TAGOP_MASK = (1 << TAGOP_NUMBITS) - 1
 };
 
@@ -23,6 +18,23 @@ enum
 {
 	LINETRANS_MAXARGS	= 5,
 	LINETRANS_TAGSHIFT	= 30 - LINETRANS_MAXARGS * TAGOP_NUMBITS,
+};
+
+enum
+{
+	XEXP_Const,
+	XEXP_Tag,
+	XEXP_Add,
+	XEXP_Sub,
+	XEXP_Mul,
+	XEXP_Div,
+	XEXP_Mod,
+	XEXP_And,
+	XEXP_Or,
+	XEXP_Xor,
+	XEXP_Neg,
+
+	XEXP_COUNT
 };
 
 struct FLineTrans
@@ -95,12 +107,21 @@ struct FLineFlagTrans
 	bool ismask;
 };
 
+struct FXlatExprState
+{
+	int linetype;
+	int tag;
+	bool bIsConstant;
+};
+
 
 extern TAutoGrowArray<FLineTrans> SimpleLineTranslations;
+extern TArray<int> XlatExpressions;
 extern FBoomTranslator Boomish[MAX_BOOMISH];
 extern int NumBoomish;
 extern TAutoGrowArray<FSectorTrans> SectorTranslations;
 extern TArray<FSectorMask> SectorMasks;
 extern FLineFlagTrans LineFlagTranslations[16];
+extern const int* (*XlatExprEval[XEXP_COUNT])(int *dest, const int *xnode, FXlatExprState *state);
 
 #endif

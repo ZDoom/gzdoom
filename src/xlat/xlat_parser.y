@@ -89,84 +89,85 @@ single_enum ::= SYM(A) EQUALS exp(B).
 //
 //==========================================================================
 
-linetype_declaration ::= exp(linetype) EQUALS exp(flags) COMMA exp(special) LPAREN special_args(arg) RPAREN.
+%type linetype_exp {int}
+linetype_exp(Z) ::= exp(A).
+{
+	Z = static_cast<XlatParseContext *>(context)->DefiningLineType = A;
+}
+
+linetype_declaration ::= linetype_exp(linetype) EQUALS exp(flags) COMMA exp(special) LPAREN special_args(arg) RPAREN.
 {
 	SimpleLineTranslations.SetVal(linetype, 
 		FLineTrans(special&0xffff, flags+arg.addflags, arg.args[0], arg.args[1], arg.args[2], arg.args[3], arg.args[4]));
+	static_cast<XlatParseContext *>(context)->DefiningLineType = -1;
 }
 
-linetype_declaration ::= exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
+linetype_declaration ::= linetype_exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
 {
 	Printf ("%s, line %d: %s is undefined\n", context->SourceFile, context->SourceLine, S.sym);
+	static_cast<XlatParseContext *>(context)->DefiningLineType = -1;
 }
+
+%type exp_with_tag {int}
+exp_with_tag(A) ::= NUM(B).		{ XlatExpressions.Push(B.val); A = XlatExpressions.Push(XEXP_Const); }
+exp_with_tag(A) ::= TAG.									{ A = XlatExpressions.Push(XEXP_Tag); }
+exp_with_tag(A) ::= exp_with_tag PLUS exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Add); }
+exp_with_tag(A) ::= exp_with_tag MINUS exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Sub); }
+exp_with_tag(A) ::= exp_with_tag MULTIPLY exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Mul); }
+exp_with_tag(A) ::= exp_with_tag DIVIDE exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Div); }
+exp_with_tag(A) ::= exp_with_tag MODULUS exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Mod); }
+exp_with_tag(A) ::= exp_with_tag OR exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Or);  }
+exp_with_tag(A) ::= exp_with_tag AND exp_with_tag.			{ A = XlatExpressions.Push(XEXP_And); }
+exp_with_tag(A) ::= exp_with_tag XOR exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Xor); }
+exp_with_tag(A) ::= MINUS exp_with_tag. [NEG]				{ A = XlatExpressions.Push(XEXP_Neg); }
+exp_with_tag(A) ::= LPAREN exp_with_tag(B) RPAREN.			{ A = B; }
+
 
 %type special_arg {SpecialArg}
 
-special_arg(Z) ::= exp(A).
+special_arg(Z) ::= exp_with_tag(A).
 {
-	Z.arg = A;
-	Z.tagop = TAGOP_None;
-}
-special_arg(Z) ::= TAG.
-{
-	Z.arg = 0;
-	Z.tagop = TAGOP_Add;
-}
-special_arg(Z) ::= TAG PLUS exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_Add;
-}
-special_arg(Z) ::= TAG MINUS exp(A).
-{
-	Z.arg = -A;
-	Z.tagop = TAGOP_Add;
-}
-special_arg(Z) ::= TAG MULTIPLY exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_Mul;
-}
-special_arg(Z) ::= TAG DIVIDE exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_Div;
-	if (A == 0)
-	{
-		context->PrintError("Division by zero");
+	if (XlatExpressions[A] == XEXP_Tag)
+	{ // Store tags directly
+		Z.arg = 0;
+		Z.argop = ARGOP_Tag;
+		XlatExpressions.Delete(A);
+	}
+	else
+	{ // Try and evaluate it. If it's a constant, store it and erase the
+	  // expression. Otherwise, store the index to the expression. We make
+	  // no attempt to simplify non-constant expressions.
+		FXlatExprState state;
+		int val;
+		const int *endpt;
+		int *xnode;
+		
+		state.linetype = static_cast<XlatParseContext *>(context)->DefiningLineType;
+		state.tag = 0;
+		state.bIsConstant = true;
+		xnode = &XlatExpressions[A];
+		endpt = XlatExprEval[*xnode](&val, xnode, &state);
+		if (state.bIsConstant)
+		{
+			Z.arg = val;
+			Z.argop = ARGOP_Const;
+			endpt++;
+			assert(endpt >= &XlatExpressions[0]);
+			XlatExpressions.Resize((unsigned)(endpt - &XlatExpressions[0]));
+		}
+		else
+		{
+			Z.arg = A;
+			Z.argop = ARGOP_Expr;
+		}
 	}
 }
-special_arg(Z) ::= TAG MODULUS exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_Mod;
-	if (A == 0)
-	{
-		context->PrintError("Division by zero");
-	}
-}
-special_arg(Z) ::= TAG OR exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_Or;
-}
-special_arg(Z) ::= TAG AND exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_And;
-}
-special_arg(Z) ::= TAG XOR exp(A).
-{
-	Z.arg = A;
-	Z.tagop = TAGOP_Xor;
-}
-
 
 %type multi_special_arg {SpecialArgs}
 
 multi_special_arg(Z) ::= special_arg(A).
 {
-	Z.addflags = A.tagop << LINETRANS_TAGSHIFT;
+	Z.addflags = A.argop << LINETRANS_TAGSHIFT;
 	Z.argcount = 1;
 	Z.args[0] = A.arg;
 	Z.args[1] = 0;
@@ -179,7 +180,7 @@ multi_special_arg(Z) ::= multi_special_arg(A) COMMA special_arg(B).
 	Z = A;
 	if (Z.argcount < LINETRANS_MAXARGS)
 	{
-		Z.addflags |= B.tagop << (LINETRANS_TAGSHIFT + Z.argcount * TAGOP_NUMBITS);
+		Z.addflags |= B.argop << (LINETRANS_TAGSHIFT + Z.argcount * TAGOP_NUMBITS);
 		Z.args[Z.argcount] = B.arg;
 		Z.argcount++;
 	}

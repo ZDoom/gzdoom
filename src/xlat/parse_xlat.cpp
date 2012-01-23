@@ -57,6 +57,7 @@ DEFINE_TOKEN_TRANS(XLAT_)
 
 static FString LastTranslator;
 TAutoGrowArray<FLineTrans> SimpleLineTranslations;
+TArray<int> XlatExpressions;
 FBoomTranslator Boomish[MAX_BOOMISH];
 int NumBoomish;
 TAutoGrowArray<FSectorTrans> SectorTranslations;
@@ -74,7 +75,7 @@ struct SpecialArgs
 struct SpecialArg
 {
 	int arg;
-	ELineTransTagOp tagop;
+	ELineTransArgOp argop;
 };
 
 struct ListFilter
@@ -108,6 +109,7 @@ struct XlatParseContext : public FParseContext
 	XlatParseContext(void *parser, ParseFunc parse, int *tt)
 		: FParseContext(parser, parse, tt)
 	{
+		DefiningLineType = -1;
 	}
 
 	//==========================================================================
@@ -152,6 +154,8 @@ struct XlatParseContext : public FParseContext
 		}
 		return false;
 	}
+
+	int DefiningLineType;
 };
 
 #include "xlat_parser.c"
@@ -166,6 +170,7 @@ struct XlatParseContext : public FParseContext
 void P_ClearTranslator()
 {
 	SimpleLineTranslations.Clear();
+	XlatExpressions.Clear();
 	NumBoomish = 0;
 	SectorTranslations.Clear();
 	SectorMasks.Clear();

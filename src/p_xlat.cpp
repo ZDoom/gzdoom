@@ -137,13 +137,14 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			int tagop = (linetrans->flags >> (LINETRANS_TAGSHIFT + t*TAGOP_NUMBITS)) & TAGOP_MASK;
 			switch (tagop)
 			{
-			case TAGOP_None:	default:				break;
-			case TAGOP_Add:		ld->args[t] += tag;		break;
-			case TAGOP_Mul:		ld->args[t] *= tag;		break;
-			case TAGOP_Div:		ld->args[t] /= tag;		break;
-			case TAGOP_And:		ld->args[t] &= tag;		break;
-			case TAGOP_Or:		ld->args[t] |= tag;		break;
-			case TAGOP_Xor:		ld->args[t] ^= tag;		break;
+			case TAGOP_None:	default:							break;
+			case TAGOP_Add:		ld->args[t] += tag;					break;
+			case TAGOP_Mul:		ld->args[t] *= tag;					break;
+			case TAGOP_Div:		ld->args[t] = tag / ld->args[t];	break;
+			case TAGOP_Mod:		ld->args[t] = tag % ld->args[t];	break;
+			case TAGOP_And:		ld->args[t] &= tag;					break;
+			case TAGOP_Or:		ld->args[t] |= tag;					break;
+			case TAGOP_Xor:		ld->args[t] ^= tag;					break;
 			}
 		}
 

@@ -10,6 +10,7 @@ enum ELineTransTagOp
 	TAGOP_Add,
 	TAGOP_Mul,
 	TAGOP_Div,
+	TAGOP_Mod,
 	TAGOP_And,
 	TAGOP_Or,
 	TAGOP_Xor,

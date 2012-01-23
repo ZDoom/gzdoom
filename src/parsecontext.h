@@ -47,6 +47,7 @@ enum
 	 PLUS     ,
 	 MULTIPLY ,
 	 DIVIDE   ,
+	 MODULUS  ,
 	 NUM      ,
 	 FLOATVAL ,
 	 LPAREN   ,
@@ -78,6 +79,7 @@ enum
 	prefix##PLUS, \
 	prefix##MULTIPLY, \
 	prefix##DIVIDE, \
+	prefix##MODULUS, \
 	prefix##NUM, \
 	prefix##FLOATVAL, \
 	prefix##LPAREN, \

@@ -36,6 +36,7 @@ exp(A) ::= exp(B) PLUS exp(C).		{ A = B + C; }
 exp(A) ::= exp(B) MINUS exp(C).		{ A = B - C; }
 exp(A) ::= exp(B) MULTIPLY exp(C).	{ A = B * C; }
 exp(A) ::= exp(B) DIVIDE exp(C).	{ if (C != 0) A = B / C; else context->PrintError("Division by zero"); }
+exp(A) ::= exp(B) MODULUS exp(C).	{ if (C != 0) A = B % C; else context->PrintError("Division by zero"); }
 exp(A) ::= exp(B) OR exp(C).		{ A = B | C; }
 exp(A) ::= exp(B) AND exp(C).		{ A = B & C; }
 exp(A) ::= exp(B) XOR exp(C).		{ A = B ^ C; }
@@ -130,6 +131,15 @@ special_arg(Z) ::= TAG DIVIDE exp(A).
 {
 	Z.arg = A;
 	Z.tagop = TAGOP_Div;
+	if (A == 0)
+	{
+		context->PrintError("Division by zero");
+	}
+}
+special_arg(Z) ::= TAG MODULUS exp(A).
+{
+	Z.arg = A;
+	Z.tagop = TAGOP_Mod;
 	if (A == 0)
 	{
 		context->PrintError("Division by zero");

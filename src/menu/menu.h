@@ -671,6 +671,7 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_ParseMenuDefs();
 void M_StartupSkillMenu(FGameStartup *gs);
+int M_GetDefaultSkill();
 void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
 void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);

@@ -1235,7 +1235,7 @@ void M_CreateMenus()
 
 //=============================================================================
 //
-// THe skill menu must be refeshed each time it starts up
+// The skill menu must be refeshed each time it starts up
 //
 //=============================================================================
 extern int restart;
@@ -1345,7 +1345,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 			}
 			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
 			{
-				ld->mAutoselect = firstitem + MIN(2u, AllSkills.Size()-1);
+				ld->mAutoselect = firstitem + M_GetDefaultSkill();
 			}
 			else
 			{
@@ -1400,12 +1400,23 @@ fail:
 		if (!done)
 		{
 			done = true;
-			int defskill = DefaultSkill;
-			if ((unsigned int)defskill >= AllSkills.Size())
-			{
-				defskill = (AllSkills.Size() - 1) / 2;
-			}
-			od->mSelectedItem = defskill;
+			od->mSelectedItem = M_GetDefaultSkill();
 		}
 	}
+}
+
+//=============================================================================
+//
+// Returns the default skill level.
+//
+//=============================================================================
+
+int M_GetDefaultSkill()
+{
+	int defskill = DefaultSkill;
+	if ((unsigned int)defskill >= AllSkills.Size())
+	{
+		defskill = (AllSkills.Size() - 1) / 2;
+	}
+	return defskill;
 }

@@ -1320,8 +1320,8 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				FSkillInfo &skill = AllSkills[i];
 				FListMenuItem *li;
 				// Using a different name for skills that must be confirmed makes handling this easier.
-				FName action = skill.MustConfirm? NAME_StartgameConfirm : NAME_Startgame;
-
+				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
+					NAME_StartgameConfirm : NAME_Startgame;
 				FString *pItemText = NULL;
 				if (gs->PlayerClass != NULL)
 				{
@@ -1388,7 +1388,8 @@ fail:
 		FSkillInfo &skill = AllSkills[i];
 		FOptionMenuItem *li;
 		// Using a different name for skills that must be confirmed makes handling this easier.
-		const char *action = skill.MustConfirm? "StartgameConfirm" : "Startgame";
+		const char *action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
+			"StartgameConfirm" : "Startgame";
 
 		FString *pItemText = NULL;
 		if (gs->PlayerClass != NULL)

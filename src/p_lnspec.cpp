@@ -616,6 +616,12 @@ FUNC(LS_Ceiling_CrushAndRaiseA)
 	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 0, 0, CRUSHTYPE(arg4));
 }
 
+FUNC(LS_Ceiling_CrushAndRaiseDist)
+// Ceiling_CrushAndRaiseDist (tag, dist, speed, damage, crushtype)
+{
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaiseDist, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 0, 0, CRUSHTYPE(arg4));
+}
+
 FUNC(LS_Ceiling_CrushAndRaiseSilentA)
 // Ceiling_CrushAndRaiseSilentA (tag, dnspeed, upspeed, damage, crushtype)
 {
@@ -3248,13 +3254,13 @@ lnSpecFunc LineSpecials[256] =
 	/* 159 */ LS_NOP,		// Sector_SetPlaneReflection in GZDoom
 	/* 160 */ LS_NOP,		// Sector_Set3DFloor in GZDoom and Vavoom
 	/* 161 */ LS_NOP,		// Sector_SetContents in GZDoom and Vavoom
-	/* 162 */ LS_NOP,
-	/* 163 */ LS_NOP,
-	/* 164 */ LS_NOP,
-	/* 165 */ LS_NOP,
-	/* 166 */ LS_NOP,
-	/* 167 */ LS_NOP,
-	/* 168 */ LS_NOP,
+	/* 162 */ LS_NOP,		// Reserved Doom64 branch
+	/* 163 */ LS_NOP,		// Reserved Doom64 branch
+	/* 164 */ LS_NOP,		// Reserved Doom64 branch
+	/* 165 */ LS_NOP,		// Reserved Doom64 branch
+	/* 166 */ LS_NOP,		// Reserved Doom64 branch
+	/* 167 */ LS_NOP,		// Reserved Doom64 branch
+	/* 168 */ LS_Ceiling_CrushAndRaiseDist,
 	/* 169 */ LS_Generic_Crusher2,
 	/* 170 */ LS_Sector_SetCeilingScale2,
 	/* 171 */ LS_Sector_SetFloorScale2,

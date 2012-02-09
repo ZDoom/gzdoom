@@ -48,7 +48,7 @@ include "xlat/defines.i"
  46 = SHOOT|REP|MONST,	Door_Open (tag, D_SLOW)
  47 = SHOOT,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
  48 = 0,		Scroll_Texture_Left (SCROLL_UNIT)
- 49 = USE,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
+ 49 = USE,		Ceiling_CrushAndRaiseDist (tag, 8, C_SLOW, 10)
  50 = USE,		Door_Close (tag, D_SLOW)
  51 = USE,		Exit_Secret (0)
  52 = WALK,		Exit_Normal (0)

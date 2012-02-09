@@ -146,6 +146,7 @@ DEFINE_SPECIAL(Sector_Set3DFloor, 160, -1, -1, 5)
 DEFINE_SPECIAL(Sector_SetContents, 161, -1, -1, 3)
 
 // [RH] Begin new specials for ZDoom
+DEFINE_SPECIAL(Ceiling_CrushAndRaiseDist, 168, 3, 5, 5)
 DEFINE_SPECIAL(Generic_Crusher2, 169, 5, 5, 5)
 DEFINE_SPECIAL(Sector_SetCeilingScale2, 170, 3, 3, 3)
 DEFINE_SPECIAL(Sector_SetFloorScale2, 171, 3, 3, 3)

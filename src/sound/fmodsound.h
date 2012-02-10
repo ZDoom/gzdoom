@@ -81,6 +81,7 @@ private:
 
 	bool ReconnectSFXReverbUnit();
 	void InitCreateSoundExInfo(FMOD_CREATESOUNDEXINFO *exinfo) const;
+	FMOD_RESULT SetSystemReverbProperties(const REVERB_PROPERTIES *props);
 
 	bool Init ();
 	void Shutdown ();
@@ -96,6 +97,10 @@ private:
 	int DrawChannelGroupSpectrum(FMOD::ChannelGroup *group, float *wavearray, int width, int height, int y, bool skip);
 	int DrawSystemSpectrum(float *wavearray, int width, int height, int y, bool skip);
 	void DrawSpectrum(float *spectrumarray, int x, int y, int width, int height);
+
+	typedef char spk[4];
+	static const spk SpeakerNames4[4], SpeakerNamesMore[8];
+	void DrawSpeakerLabels(const spk *labels, int y, int width, int count);
 
 	FMOD::System *Sys;
 	FMOD::ChannelGroup *SfxGroup, *PausableSfx;

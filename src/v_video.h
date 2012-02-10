@@ -214,7 +214,11 @@ public:
 	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
 	// 2D Text drawing
-	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...);
+	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, ...);
+#ifndef DrawText	// See WinUser.h for the definition of DrawText as a macro
+	void STACK_ARGS DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, ...);
+#endif
+	void DrawTextV (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, va_list tags);
 	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, ...);
 
 	struct DrawParms

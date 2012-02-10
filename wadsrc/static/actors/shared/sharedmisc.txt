@@ -68,7 +68,7 @@ ACTOR MapSpotGravity : MapSpot 9013
 	-NOGRAVITY
 }
 
-// Point Pushers ---------------------------------------------------
+// Point Pushers -----------------------------------------------------------
 
 ACTOR PointPusher 5001
 {
@@ -110,7 +110,7 @@ ACTOR Gibs : RealGibs 24
 	ClearFlags
 }
 
-// Needed for loading Build maps ---------------------------------------
+// Needed for loading Build maps -------------------------------------------
 
 ACTOR CustomSprite 9988 native
 {
@@ -124,7 +124,7 @@ ACTOR CustomSprite 9988 native
 	}
 }
 
-// SwitchableDecoration: Activate and Deactivate change state ---------------
+// SwitchableDecoration: Activate and Deactivate change state --------------
 
 ACTOR SwitchableDecoration native
 {
@@ -135,7 +135,7 @@ ACTOR SwitchingDecoration : SwitchableDecoration native
 {
 }
 
-// Random spawner -----------------------------------------------------------
+// Random spawner ----------------------------------------------------------
 
 ACTOR RandomSpawner native
 {
@@ -145,14 +145,14 @@ ACTOR RandomSpawner native
 	+THRUACTORS
 }
 
-// Fast projectiles -----------------------------------------------------------
+// Fast projectiles --------------------------------------------------------
 
 ACTOR FastProjectile native
 {
 	Projectile
 }
 
-// Sector flag setter -----------------------------------------------------------
+// Sector flag setter ------------------------------------------------------
 
 ACTOR SectorFlagSetter 9041 native
 {
@@ -160,4 +160,17 @@ ACTOR SectorFlagSetter 9041 native
 	+NOGRAVITY
 	+DONTSPLASH
 	RenderStyle None
+}
+
+// Marker for sounds -------------------------------------------------------
+
+ACTOR SpeakerIcon : Unknown
+{
+	States
+	{
+	Spawn:
+		SPKR A -1 BRIGHT
+		Stop
+	}
+	Scale 0.125
 }

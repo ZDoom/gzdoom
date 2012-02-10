@@ -78,11 +78,11 @@ void STACK_ARGS DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, B
 //
 // Write a string using the given font
 //
-void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...)
+void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag1, va_list taglist)
 {
-	va_list tags;
-	DWORD tag;
 	INTBOOL boolval;
+	va_list tags;
+	uint32 tag;
 
 	int			maxstrlen = INT_MAX;
 	int 		w, maxwidth;
@@ -117,8 +117,12 @@ void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, c
  	maxwidth = Width;
 	scalex = scaley = 1;
 
-	va_start (tags, string);
-	tag = va_arg (tags, DWORD);
+#ifndef NO_VA_COPY
+	va_copy(tags, taglist);
+#else
+	tags = taglist;
+#endif
+	tag = tag1;
 
 	while (tag != TAG_DONE)
 	{
@@ -203,7 +207,7 @@ void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, c
 			height = va_arg (tags, int);
 			break;
 		}
-		tag = va_arg (tags, DWORD);
+		tag = va_arg (tags, uint32);
 	}
 
 	height *= scaley;
@@ -233,8 +237,12 @@ void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, c
 
 		if (NULL != (pic = font->GetChar (c, &w)))
 		{
-			va_list taglist;
-			va_start (taglist, string);
+#ifndef NO_VA_COPY
+			va_copy(tags, taglist);
+#else
+			tags = taglist;
+#endif
+			tag = tag1;
 			if (forcedwidth)
 			{
 				w = forcedwidth;
@@ -242,18 +250,33 @@ void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, c
 					DTA_Translation, range,
 					DTA_DestWidth, forcedwidth,
 					DTA_DestHeight, height,
-					TAG_MORE, &taglist);
+					TAG_MORE, &tags);
 			}
 			else
 			{
 				DrawTexture (pic, cx, cy,
 					DTA_Translation, range,
-					TAG_MORE, &taglist);
+					TAG_MORE, &tags);
 			}
-			va_end (taglist);
+			va_end (tags);
 		}
 		cx += (w + kerning) * scalex;
 	}
+}
+
+void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, ...)
+{
+	va_list tags;
+	va_start(tags, tag);
+	DrawTextV(font, normalcolor, x, y, string, tag, tags);
+}
+
+// A synonym so that this can still be used in files that #include Windows headers
+void STACK_ARGS DCanvas::DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, ...)
+{
+	va_list tags;
+	va_start(tags, tag);
+	DrawTextV(font, normalcolor, x, y, string, tag, tags);
 }
 
 //

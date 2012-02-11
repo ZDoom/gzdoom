@@ -78,7 +78,7 @@ void STACK_ARGS DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, B
 //
 // Write a string using the given font
 //
-void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag1, va_list taglist)
+void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *string, va_list taglist)
 {
 	INTBOOL boolval;
 	va_list tags;
@@ -122,7 +122,7 @@ void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *
 #else
 	tags = taglist;
 #endif
-	tag = tag1;
+	tag = va_arg(tags, uint32);
 
 	while (tag != TAG_DONE)
 	{
@@ -209,6 +209,7 @@ void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *
 		}
 		tag = va_arg (tags, uint32);
 	}
+	va_end(tags);
 
 	height *= scaley;
 		
@@ -242,7 +243,6 @@ void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *
 #else
 			tags = taglist;
 #endif
-			tag = tag1;
 			if (forcedwidth)
 			{
 				w = forcedwidth;
@@ -262,21 +262,22 @@ void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *
 		}
 		cx += (w + kerning) * scalex;
 	}
+	va_end(taglist);
 }
 
-void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, ...)
+void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...)
 {
 	va_list tags;
-	va_start(tags, tag);
-	DrawTextV(font, normalcolor, x, y, string, tag, tags);
+	va_start(tags, string);
+	DrawTextV(font, normalcolor, x, y, string, tags);
 }
 
 // A synonym so that this can still be used in files that #include Windows headers
-void STACK_ARGS DCanvas::DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, uint32 tag, ...)
+void STACK_ARGS DCanvas::DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, ...)
 {
 	va_list tags;
-	va_start(tags, tag);
-	DrawTextV(font, normalcolor, x, y, string, tag, tags);
+	va_start(tags, string);
+	DrawTextV(font, normalcolor, x, y, string, tags);
 }
 
 //

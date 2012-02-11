@@ -829,6 +829,7 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	bool dclick;
 	int dclickspot;
 	BYTE dclickmask;
+	unsigned int nowtime;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
 		return false;
@@ -841,10 +842,11 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	dclick = false;
 
 	// This used level.time which didn't work outside a level.
-	if (DClickTime[ev->data1] > I_MSTime() && ev->type == EV_KeyDown)
+	nowtime = I_MSTime();
+	if (doublebinds != NULL && DClickTime[ev->data1] > nowtime && ev->type == EV_KeyDown)
 	{
 		// Key pressed for a double click
-		if (doublebinds != NULL) binding = doublebinds->GetBinding(ev->data1);
+		binding = doublebinds->GetBinding(ev->data1);
 		DClicked[dclickspot] |= dclickmask;
 		dclick = true;
 	}
@@ -853,11 +855,11 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 		if (ev->type == EV_KeyDown)
 		{ // Key pressed for a normal press
 			binding = binds->GetBinding(ev->data1);
-			DClickTime[ev->data1] = I_MSTime() + 571;
+			DClickTime[ev->data1] = nowtime + 571;
 		}
-		else if (DClicked[dclickspot] & dclickmask)
+		else if (doublebinds != NULL && DClicked[dclickspot] & dclickmask)
 		{ // Key released from a double click
-			if (doublebinds != NULL) binding = doublebinds->GetBinding(ev->data1);
+			binding = doublebinds->GetBinding(ev->data1);
 			DClicked[dclickspot] &= ~dclickmask;
 			DClickTime[ev->data1] = 0;
 			dclick = true;

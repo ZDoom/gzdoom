@@ -1295,7 +1295,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						fixed_t top = -INT_MAX, bottom = INT_MAX;
 						bool above;
 						// [TN] Check wether this actor gets blocked by the line.
-						if(!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
+						if (ld->backsector != NULL &&
+							!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
 							&& !(ld->flags & ML_BLOCK_PLAYERS && mobj->player) 
 							&& !(ld->flags & ML_BLOCKMONSTERS && mobj->flags3 & MF3_ISMONSTER)
 							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))

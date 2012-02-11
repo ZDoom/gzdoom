@@ -1529,11 +1529,11 @@ void FBehavior::LoadScriptsDirectory ()
 		}
 	}
 
-	// Load script var counts
+	// Load script var counts. (Only recorded for scripts that use more than LOCAL_SIZE variables.)
 	scripts.b = FindChunk (MAKE_ID('S','V','C','T'));
 	if (scripts.dw != NULL)
 	{
-		max = scripts.dw[1];
+		max = scripts.dw[1] / 4;
 		scripts.dw += 2;
 		for (i = max; i > 0; --i, scripts.w += 2)
 		{
@@ -6999,6 +6999,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 		new DACSThinker;
 
 	script = num;
+	assert(code->VarCount >= code->ArgCount);
 	numlocalvars = code->VarCount;
 	localvars = new SDWORD[code->VarCount];
 	if (code->VarCount > 0)

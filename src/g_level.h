@@ -545,7 +545,8 @@ enum ESkillProperty
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
 	SKILLP_NoPain,
-	SKILLP_ArmorFactor
+	SKILLP_ArmorFactor,
+	SKILLP_EasyKey,
 };
 int G_SkillProperty(ESkillProperty prop);
 const char * G_SkillName();
@@ -564,6 +565,7 @@ struct FSkillInfo
 	bool AutoUseHealth;
 
 	bool EasyBossBrain;
+	bool EasyKey;
 	int RespawnCounter;
 	int RespawnLimit;
 	fixed_t Aggressiveness;

@@ -75,6 +75,7 @@ skill baby
 	EasyBossBrain
 	SpawnFilter = Baby
 	Name = "$MNU_WETNURSE"
+	EasyKey
 }
 
 skill easy

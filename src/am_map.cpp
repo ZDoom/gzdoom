@@ -308,6 +308,7 @@ struct islope_t
 static TArray<mline_t> MapArrow;
 static TArray<mline_t> CheatMapArrow;
 static TArray<mline_t> CheatKey;
+static TArray<mline_t> EasyKey;
 
 #define R (MAPUNIT)
 // [RH] Avoid lots of warnings without compiler-specific #pragmas
@@ -536,10 +537,12 @@ void AM_StaticInit()
 	MapArrow.Clear();
 	CheatMapArrow.Clear();
 	CheatKey.Clear();
+	EasyKey.Clear();
 
 	if (gameinfo.mMapArrow.IsNotEmpty()) AM_ParseArrow(MapArrow, gameinfo.mMapArrow);
 	if (gameinfo.mCheatMapArrow.IsNotEmpty()) AM_ParseArrow(CheatMapArrow, gameinfo.mCheatMapArrow);
 	AM_ParseArrow(CheatKey, "maparrows/key.txt");
+	AM_ParseArrow(EasyKey, "maparrows/ravenkey.txt");
 	if (MapArrow.Size() == 0) I_FatalError("No automap arrow defined");
 
 	char namebuf[9];
@@ -2261,6 +2264,49 @@ void AM_drawPlayers ()
 //
 //=============================================================================
 
+void AM_drawKeys ()
+{
+	AMColor color;
+	mpoint_t p;
+	angle_t	 angle;
+
+	TThinkerIterator<AKey> it;
+	AKey *key;
+
+	while ((key = it.Next()) != NULL)
+	{
+		p.x = key->x >> FRACTOMAPBITS;
+		p.y = key->y >> FRACTOMAPBITS;
+		angle = key->angle;
+
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+		{
+			AM_rotatePoint (&p.x, &p.y);
+			angle += ANG90 - players[consoleplayer].camera->angle;
+		}
+
+		color = ThingColor;
+		if (key->flags & MF_SPECIAL)
+		{
+			// Find the key's own color.
+			// Only works correctly if single-key locks have lower numbers than any-key locks.
+			// That is the case for all default keys, however.
+			int P_GetMapColorForKey (AInventory * key);
+			int c = P_GetMapColorForKey(key);
+
+			if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
+			else color = ThingColor_CountItem;
+			AM_drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0, color, p.x, p.y);
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void AM_drawThings ()
 {
 	AMColor color;
@@ -2299,7 +2345,12 @@ void AM_drawThings ()
 				// That is the case for all default keys, however.
 				if (t->IsKindOf(RUNTIME_CLASS(AKey)))
 				{
-					if (am_showkeys)
+					if (G_SkillProperty(SKILLP_EasyKey))
+					{
+						// Already drawn by AM_drawKeys(), so don't draw again
+						color.Index = -1;
+					}
+					else if (am_showkeys)
 					{
 						int P_GetMapColorForKey (AInventory * key);
 						int c = P_GetMapColorForKey(static_cast<AKey *>(t));
@@ -2521,6 +2572,8 @@ void AM_Drawer ()
 
 	AM_drawWalls(allmap);
 	AM_drawPlayers();
+	if (G_SkillProperty(SKILLP_EasyKey))
+		AM_drawKeys();
 	if (am_cheat >= 2 || allthings)
 		AM_drawThings();
 

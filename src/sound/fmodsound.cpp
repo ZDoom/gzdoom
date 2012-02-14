@@ -1725,8 +1725,6 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 //
 //==========================================================================
 
-CVAR(Float, snd_3dspread, 180, 0)
-
 FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, 
 	FRolloffInfo *rolloff, float distscale,
 	int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
@@ -1811,7 +1809,6 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		if (mode & FMOD_3D)
 		{
 			chan->set3DAttributes((FMOD_VECTOR *)&pos[0], (FMOD_VECTOR *)&vel[0]);
-			chan->set3DSpread(snd_3dspread);
 		}
 		if (!HandleChannelDelay(chan, reuse_chan, flags & (SNDF_ABSTIME | SNDF_LOOP), freq))
 		{

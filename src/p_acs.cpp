@@ -1544,6 +1544,27 @@ void FBehavior::LoadScriptsDirectory ()
 			}
 		}
 	}
+
+	// Load script names (if any)
+	scripts.b = FindChunk(MAKE_ID('S','N','A','M'));
+	if (scripts.dw != NULL)
+	{
+		for (i = 0; i < NumScripts; ++i)
+		{
+			// ACC stores script names as an index into the SNAM chunk, with the first index as
+			// -1 and counting down from there. We convert this from an index into SNAM into
+			// a negative index into the global name table.
+			if (Scripts[i].Number < 0)
+			{
+				const char *str = (const char *)(scripts.b + 8 + scripts.dw[3 + (-Scripts[i].Number - 1)]);
+				FName name(str);
+				Scripts[i].Number = -name;
+			}
+		}
+		// We need to resort scripts, because the new numbers for named scripts likely
+		// do not match the order they were originally in.
+		qsort (Scripts, NumScripts, sizeof(ScriptPtr), SortScripts);
+	}
 }
 
 int STACK_ARGS FBehavior::SortScripts (const void *a, const void *b)
@@ -1621,8 +1642,8 @@ bool FBehavior::IsGood ()
 
 const ScriptPtr *FBehavior::FindScript (int script) const
 {
-	const ScriptPtr *ptr = BinarySearch<ScriptPtr, WORD>
-		((ScriptPtr *)Scripts, NumScripts, &ScriptPtr::Number, (WORD)script);
+	const ScriptPtr *ptr = BinarySearch<ScriptPtr, int>
+		((ScriptPtr *)Scripts, NumScripts, &ScriptPtr::Number, script);
 
 	// If the preceding script has the same number, return it instead.
 	// See the note by the script sorting above for why.
@@ -1859,6 +1880,50 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 	}
 }
 
+//==========================================================================
+//
+// SerializeScriptNumber
+//
+// Serializes a script number. If it's negative, it's really a name, so
+// that will get serialized after it.
+//
+//==========================================================================
+
+static void SerializeScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
+{
+	if (SaveVersion < 3359)
+	{
+		if (was2byte)
+		{
+			WORD oldver;
+			arc << oldver;
+			scriptnum = oldver;
+		}
+		else
+		{
+			arc << scriptnum;
+		}
+	}
+	else
+	{
+		arc << scriptnum;
+		// If the script number is negative, then it's really a name.
+		// So read/store the name after it.
+		if (scriptnum < 0)
+		{
+			if (arc.IsStoring())
+			{
+				arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
+			}
+			else
+			{
+				const char *nam = arc.ReadName();
+				scriptnum = -FName(nam);
+			}
+		}
+	}
+}
+
 //---- The ACS Interpreter ----//
 
 IMPLEMENT_POINTY_CLASS (DACSThinker)
@@ -1880,8 +1945,7 @@ DACSThinker::DACSThinker ()
 		ActiveThinker = this;
 		Scripts = NULL;
 		LastScript = NULL;
-		for (int i = 0; i < 1000; i++)
-			RunningScripts[i] = NULL;
+		RunningScripts.Clear();
 	}
 }
 
@@ -1893,27 +1957,34 @@ DACSThinker::~DACSThinker ()
 
 void DACSThinker::Serialize (FArchive &arc)
 {
+	int scriptnum;
+
 	Super::Serialize (arc);
 	arc << Scripts << LastScript;
 	if (arc.IsStoring ())
 	{
-		WORD i;
-		for (i = 0; i < 1000; i++)
+		ScriptMap::Iterator it(RunningScripts);
+		ScriptMap::Pair *pair;
+
+		while (it.NextPair(pair))
 		{
-			if (RunningScripts[i])
-				arc << RunningScripts[i] << i;
+			assert(pair->Value != NULL);
+			arc << pair->Value;
+			scriptnum = pair->Key;
+			SerializeScriptNumber(arc, scriptnum, true);
 		}
 		DLevelScript *nilptr = NULL;
 		arc << nilptr;
 	}
-	else
+	else // Loading
 	{
-		WORD scriptnum;
 		DLevelScript *script = NULL;
+		RunningScripts.Clear();
+
 		arc << script;
 		while (script)
 		{
-			arc << scriptnum;
+			SerializeScriptNumber(arc, scriptnum, true);
 			RunningScripts[scriptnum] = script;
 			arc << script;
 		}
@@ -1975,8 +2046,9 @@ void DLevelScript::Serialize (FArchive &arc)
 	DWORD i;
 
 	Super::Serialize (arc);
-	arc << next << prev
-		<< script;
+	arc << next << prev;
+
+	SerializeScriptNumber(arc, script, false);
 
 	arc	<< state
 		<< statedata
@@ -3713,13 +3785,13 @@ int DLevelScript::RunScript ()
 
 	case SCRIPT_ScriptWaitPre:
 		// Wait for a script to start running, then enter state scriptwait
-		if (controller->RunningScripts[statedata])
+		if (controller->RunningScripts.CheckKey(statedata) != NULL)
 			state = SCRIPT_ScriptWait;
 		break;
 
 	case SCRIPT_ScriptWait:
 		// Wait for a script to stop running, then enter state running
-		if (controller->RunningScripts[statedata])
+		if (controller->RunningScripts.CheckKey(statedata) != NULL)
 			return resultValue;
 
 		state = SCRIPT_Running;
@@ -5016,7 +5088,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_SCRIPTWAIT:
 			statedata = STACK(1);
-			if (controller->RunningScripts[statedata])
+			if (controller->RunningScripts.CheckKey(statedata) != NULL)
 				state = SCRIPT_ScriptWait;
 			else
 				state = SCRIPT_ScriptWaitPre;
@@ -6960,8 +7032,12 @@ int DLevelScript::RunScript ()
 	if (state == SCRIPT_PleaseRemove)
 	{
 		Unlink ();
-		if (controller->RunningScripts[script] == this)
-			controller->RunningScripts[script] = NULL;
+		DLevelScript **running;
+		if ((running = controller->RunningScripts.CheckKey(script)) != NULL &&
+			*running == this)
+		{
+			controller->RunningScripts.Remove(script);
+		}
 	}
 	else
 	{
@@ -6977,13 +7053,14 @@ static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, cons
 	bool backSide, int arg0, int arg1, int arg2, int always)
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DLevelScript **running;
 
-	if (controller && !always && controller->RunningScripts[num])
+	if (controller && !always && (running = controller->RunningScripts.CheckKey(num)) != NULL)
 	{
-		if (controller->RunningScripts[num]->GetState () == DLevelScript::SCRIPT_Suspended)
+		if ((*running)->GetState() == DLevelScript::SCRIPT_Suspended)
 		{
-			controller->RunningScripts[num]->SetState (DLevelScript::SCRIPT_Running);
-			return controller->RunningScripts[num];
+			(*running)->SetState(DLevelScript::SCRIPT_Running);
+			return *running;
 		}
 		return NULL;
 	}
@@ -7044,9 +7121,12 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 static void SetScriptState (int script, DLevelScript::EScriptState state)
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
+	DLevelScript **running;
 
-	if (controller != NULL && controller->RunningScripts[script])
-		controller->RunningScripts[script]->SetState (state);
+	if (controller != NULL && (running = controller->RunningScripts.CheckKey(script)) != NULL)
+	{
+		(*running)->SetState (state);
+	}
 }
 
 void P_DoDeferedScripts ()

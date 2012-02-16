@@ -19,7 +19,7 @@ struct FRenderer
 		Renderer = this;
 	}
 
-	~FRenderer()
+	virtual ~FRenderer()
 	{
 		Renderer = NULL;
 	}

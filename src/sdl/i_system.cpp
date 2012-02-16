@@ -39,7 +39,6 @@
 #endif
 
 #ifdef __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach_init.h>
 #include <mach/semaphore.h>
 #include <mach/task.h>
@@ -382,6 +381,10 @@ void I_Quit (void)
 extern FILE *Logfile;
 bool gameisdead;
 
+#ifdef __APPLE__
+void Mac_I_FatalError(const char* errortext);
+#endif
+
 void STACK_ARGS I_FatalError (const char *error, ...)
 {
     static bool alreadyThrown = false;
@@ -398,19 +401,7 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		va_end (argptr);
 
 #ifdef __APPLE__
-		// Close window or exit fullscreen and release mouse capture
-		SDL_Quit();
-		
-		const CFStringRef errorString = CFStringCreateWithCStringNoCopy( kCFAllocatorDefault, 
-			errortext, kCFStringEncodingASCII, kCFAllocatorNull );
-		if ( NULL != errorString )
-		{
-			CFOptionFlags dummy;
-		
-			CFUserNotificationDisplayAlert( 0, kCFUserNotificationStopAlertLevel, NULL, NULL, NULL, 
-				CFSTR( "Error" ), errorString, CFSTR( "Exit" ), NULL, NULL, &dummy );
-			CFRelease( errorString );
-		}
+		Mac_I_FatalError(errortext);
 #endif // __APPLE__		
 		
 		// Record error to log (if logging)

@@ -4099,3 +4099,112 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	}
 
 }
+
+//==========================================================================
+//
+// ACS_Named* stuff
+//
+// These are exactly like their un-named line special equivalents, except
+// they take strings instead of integers to indicate which script to run.
+// Some of these probably aren't very useful, but they are included for
+// the sake of completeness.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteWithResult)
+{
+	ACTION_PARAM_START(4);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(arg1, 2);
+	ACTION_PARAM_INT(arg2, 3);
+	ACTION_PARAM_INT(arg3, 4);
+
+	bool res = !!P_ExecuteSpecial(ACS_ExecuteWithResult, NULL, self, false, -scriptname, arg1, arg2, arg3, 0);
+
+	ACTION_SET_RESULT(res);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecute)
+{
+	ACTION_PARAM_START(5);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(mapnum, 1);
+	ACTION_PARAM_INT(arg1, 2);
+	ACTION_PARAM_INT(arg2, 3);
+	ACTION_PARAM_INT(arg3, 4);
+
+	bool res = !!P_ExecuteSpecial(ACS_Execute, NULL, self, false, -scriptname, mapnum, arg1, arg2, arg3);
+
+	ACTION_SET_RESULT(res);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteAlways)
+{
+	ACTION_PARAM_START(5);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(mapnum, 1);
+	ACTION_PARAM_INT(arg1, 2);
+	ACTION_PARAM_INT(arg2, 3);
+	ACTION_PARAM_INT(arg3, 4);
+
+	bool res = !!P_ExecuteSpecial(ACS_ExecuteAlways, NULL, self, false, -scriptname, mapnum, arg1, arg2, arg3);
+
+	ACTION_SET_RESULT(res);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedLockedExecute)
+{
+	ACTION_PARAM_START(5);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(mapnum, 1);
+	ACTION_PARAM_INT(arg1, 2);
+	ACTION_PARAM_INT(arg2, 3);
+	ACTION_PARAM_INT(lock, 4);
+
+	bool res = !!P_ExecuteSpecial(ACS_LockedExecute, NULL, self, false, -scriptname, mapnum, arg1, arg2, lock);
+
+	ACTION_SET_RESULT(res);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedLockedExecuteDoor)
+{
+	ACTION_PARAM_START(5);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(mapnum, 1);
+	ACTION_PARAM_INT(arg1, 2);
+	ACTION_PARAM_INT(arg2, 3);
+	ACTION_PARAM_INT(lock, 4);
+
+	bool res = !!P_ExecuteSpecial(ACS_LockedExecuteDoor, NULL, self, false, -scriptname, mapnum, arg1, arg2, lock);
+
+	ACTION_SET_RESULT(res);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedSuspend)
+{
+	ACTION_PARAM_START(2);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(mapnum, 1);
+
+	bool res = !!P_ExecuteSpecial(ACS_Suspend, NULL, self, false, -scriptname, mapnum, 0, 0, 0);
+
+	ACTION_SET_RESULT(res);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
+{
+	ACTION_PARAM_START(2);
+
+	ACTION_PARAM_NAME(scriptname, 0);
+	ACTION_PARAM_INT(mapnum, 1);
+
+	bool res = !!P_ExecuteSpecial(ACS_Terminate, NULL, self, false, -scriptname, mapnum, 0, 0, 0);
+
+	ACTION_SET_RESULT(res);
+}

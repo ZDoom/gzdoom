@@ -3,7 +3,7 @@
 ** General BEHAVIOR management and ACS execution environment
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2008 Randy Heit
+** Copyright 1998-2012 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -3198,6 +3198,13 @@ enum EACSFunctions
 	ACSF_SpawnForced,
 	ACSF_AnnouncerSound,	// Skulltag
 	ACSF_SetPointer,
+	ACSF_ACS_NamedExecute,
+	ACSF_ACS_NamedSuspend,
+	ACSF_ACS_NamedTerminate,
+	ACSF_ACS_NamedLockedExecute,
+	ACSF_ACS_NamedLockedExecuteDoor,
+	ACSF_ACS_NamedExecuteWithResult,
+	ACSF_ACS_NamedExecuteAlways,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3690,6 +3697,25 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_SpawnForced:
 			return DoSpawn(args[0], args[1], args[2], args[3], args[4], args[5], true);
+
+		case ACSF_ACS_NamedExecute:
+		case ACSF_ACS_NamedSuspend:
+		case ACSF_ACS_NamedTerminate:
+		case ACSF_ACS_NamedLockedExecute:
+		case ACSF_ACS_NamedLockedExecuteDoor:
+		case ACSF_ACS_NamedExecuteWithResult:
+		case ACSF_ACS_NamedExecuteAlways:
+			{
+				int scriptnum = -FName(FBehavior::StaticLookupString(args[0]));
+				int arg1 = argCount > 1 ? args[1] : 0;
+				int arg2 = argCount > 2 ? args[2] : 0;
+				int arg3 = argCount > 3 ? args[3] : 0;
+				int arg4 = argCount > 4 ? args[4] : 0;
+				return P_ExecuteSpecial(NamedACSToNormalACS[funcIndex - ACSF_ACS_NamedExecute],
+					activationline, activator, backSide,
+					scriptnum, arg1, arg2, arg3, arg4);
+			}
+			break;
 
 		default:
 			break;
@@ -7283,8 +7309,9 @@ FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
 			BYTE type;
 			arc << more;
 			type = (BYTE)defer->type;
-			arc << type << defer->script << defer->playernum
-				<< defer->arg0 << defer->arg1 << defer->arg2;
+			arc << type;
+			SerializeScriptNumber(arc, defer->script, false);
+			arc << defer->playernum << defer->arg0 << defer->arg1 << defer->arg2;
 			defer = defer->next;
 		}
 		more = 0;
@@ -7300,8 +7327,8 @@ FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
 			*defer = new acsdefered_t;
 			arc << more;
 			(*defer)->type = (acsdefered_t::EType)more;
-			arc << (*defer)->script << (*defer)->playernum
-				<< (*defer)->arg0 << (*defer)->arg1 << (*defer)->arg2;
+			SerializeScriptNumber(arc, (*defer)->script, false);
+			arc << (*defer)->playernum << (*defer)->arg0 << (*defer)->arg1 << (*defer)->arg2;
 			defer = &((*defer)->next);
 			arc << more;
 		}

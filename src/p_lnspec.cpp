@@ -69,6 +69,19 @@
 
 static FRandom pr_glass ("GlassBreak");
 
+// There are aliases for the ACS specials that take names instead of numbers.
+// This table maps them onto the real number-based specials.
+BYTE NamedACSToNormalACS[7] =
+{
+	ACS_Execute,
+	ACS_Suspend,
+	ACS_Terminate,
+	ACS_LockedExecute,
+	ACS_LockedExecuteDoor,
+	ACS_ExecuteWithResult,
+	ACS_ExecuteAlways,
+};
+
 FName MODtoDamageType (int mod)
 {
 	switch (mod)

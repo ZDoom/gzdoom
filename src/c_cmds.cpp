@@ -489,6 +489,44 @@ CCMD (puke)
 	}
 }
 
+CCMD (pukename)
+{
+	int argc = argv.argc();
+
+	if (argc < 2 || argc > 6)
+	{
+		Printf ("Usage: pukename \"<script>\" [\"always\"] [arg1] [arg2] [arg3]\n");
+	}
+	else
+	{
+		bool always = false;
+		int argstart = 2;
+		int arg[3] = { 0, 0, 0 };
+		int argn = 0, i;
+		
+		if (argc > 2)
+		{
+			if (stricmp(argv[2], "always") == 0)
+			{
+				always = true;
+				argstart = 3;
+			}
+			argn = MIN(argc - argstart, 3);
+			for (i = 0; i < argn; ++i)
+			{
+				arg[i] = atoi(argv[argstart + i]);
+			}
+		}
+		Net_WriteByte(DEM_RUNNAMEDSCRIPT);
+		Net_WriteString(argv[1]);
+		Net_WriteByte(argn | (always << 7));
+		for (i = 0; i < argn; ++i)
+		{
+			Net_WriteLong(arg[i]);
+		}
+	}
+}
+
 CCMD (special)
 {
 	int argc = argv.argc();

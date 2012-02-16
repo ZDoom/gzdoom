@@ -161,6 +161,7 @@ enum EDemoCommand
 	DEM_RUNSPECIAL,		// 62 Byte: Special number, Byte: Arg count, Ints: Args
 	DEM_SETPITCHLIMIT,	// 63 Byte: Up limit, Byte: Down limit (in degrees)
 	DEM_ADVANCEINTER,	// 64 Advance intermission screen state
+	DEM_RUNNAMEDSCRIPT,	// 65 String: Script name, Byte: Arg count + Always flag; each arg is a 4-byte int
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

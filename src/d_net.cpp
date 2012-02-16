@@ -122,6 +122,7 @@ void G_BuildTiccmd (ticcmd_t *cmd);
 void D_DoAdvanceDemo (void);
 
 static void SendSetup (DWORD playersdetected[MAXNETNODES], BYTE gotsetup[MAXNETNODES], int len);
+static void RunScript(BYTE **stream, APlayerPawn *pawn, int snum, int argn, bool always);
 
 int		reboundpacket;
 BYTE	reboundstore[MAX_MSGLEN];
@@ -2315,18 +2316,17 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		{
 			int snum = ReadWord (stream);
 			int argn = ReadByte (stream);
-			int arg[3] = { 0, 0, 0 };
-			
-			for (i = 0; i < argn; ++i)
-			{
-				int argval = ReadLong(stream);
-				if ((unsigned)i < countof(arg))
-				{
-					arg[i] = argval;
-				}
-			}
-			P_StartScript (players[player].mo, NULL, snum, level.mapname, false,
-				arg[0], arg[1], arg[2], type == DEM_RUNSCRIPT2, false, true);
+
+			RunScript(stream, players[player].mo, snum, argn, type == DEM_RUNSCRIPT2);
+		}
+		break;
+
+	case DEM_RUNNAMEDSCRIPT:
+		{
+			char *sname = ReadString(stream);
+			int argn = ReadByte(stream);
+
+			RunScript(stream, players[player].mo, -FName(sname), argn & 127, !!(argn & 128));
 		}
 		break;
 
@@ -2471,6 +2471,24 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		delete[] s;
 }
 
+// Used by DEM_RUNSCRIPT, DEM_RUNSCRIPT2, and DEM_RUNNAMEDSCRIPT
+static void RunScript(BYTE **stream, APlayerPawn *pawn, int snum, int argn, bool always)
+{
+	int arg[3] = { 0, 0, 0 };
+	int i;
+	
+	for (i = 0; i < argn; ++i)
+	{
+		int argval = ReadLong(stream);
+		if ((unsigned)i < countof(arg))
+		{
+			arg[i] = argval;
+		}
+	}
+	P_StartScript (pawn, NULL, snum, level.mapname, false,
+		arg[0], arg[1], arg[2], always, false, true);
+}
+
 void Net_SkipCommand (int type, BYTE **stream)
 {
 	BYTE t;
@@ -2557,6 +2575,11 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_RUNSCRIPT:
 		case DEM_RUNSCRIPT2:
 			skip = 3 + *(*stream + 2) * 4;
+			break;
+
+		case DEM_RUNNAMEDSCRIPT:
+			skip = strlen((char *)(*stream)) + 2;
+			skip += ((*(*stream + skip - 1)) & 127) * 4;
 			break;
 
 		case DEM_RUNSPECIAL:

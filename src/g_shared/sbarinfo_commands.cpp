@@ -2637,6 +2637,7 @@ class CommandDrawBar : public SBarInfoCommand
 		public:
 			AdditionalData() : useMaximumConstant(false)
 			{
+				inventoryItem = NULL;
 			}
 
 			bool	useMaximumConstant;

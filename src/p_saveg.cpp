@@ -50,6 +50,8 @@
 #include "p_setup.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "p_lnspec.h"
+#include "p_acs.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
@@ -393,8 +395,17 @@ void P_SerializeWorld (FArchive &arc)
 			<< li->activation
 			<< li->special
 			<< li->Alpha
-			<< li->id
-			<< li->args[0] << li->args[1] << li->args[2] << li->args[3] << li->args[4];
+			<< li->id;
+		if ((li->special >= ACS_Execute && li->special <= ACS_LockedExecuteDoor) ||
+			li->special == ACS_ExecuteAlways)
+		{
+			P_SerializeACSScriptNumber(arc, li->args[0], false);
+		}
+		else
+		{
+			arc << li->args[0];
+		}
+		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
 		for (j = 0; j < 2; j++)
 		{

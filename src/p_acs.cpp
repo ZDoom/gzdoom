@@ -1882,14 +1882,14 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 //==========================================================================
 //
-// SerializeScriptNumber
+// P_SerializeACSScriptNumber
 //
 // Serializes a script number. If it's negative, it's really a name, so
 // that will get serialized after it.
 //
 //==========================================================================
 
-static void SerializeScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
+void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 {
 	if (SaveVersion < 3359)
 	{
@@ -1971,7 +1971,7 @@ void DACSThinker::Serialize (FArchive &arc)
 			assert(pair->Value != NULL);
 			arc << pair->Value;
 			scriptnum = pair->Key;
-			SerializeScriptNumber(arc, scriptnum, true);
+			P_SerializeACSScriptNumber(arc, scriptnum, true);
 		}
 		DLevelScript *nilptr = NULL;
 		arc << nilptr;
@@ -1984,7 +1984,7 @@ void DACSThinker::Serialize (FArchive &arc)
 		arc << script;
 		while (script)
 		{
-			SerializeScriptNumber(arc, scriptnum, true);
+			P_SerializeACSScriptNumber(arc, scriptnum, true);
 			RunningScripts[scriptnum] = script;
 			arc << script;
 		}
@@ -2048,7 +2048,7 @@ void DLevelScript::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << next << prev;
 
-	SerializeScriptNumber(arc, script, false);
+	P_SerializeACSScriptNumber(arc, script, false);
 
 	arc	<< state
 		<< statedata
@@ -5750,12 +5750,21 @@ int DLevelScript::RunScript ()
 		case PCD_SETLINESPECIAL:
 			{
 				int linenum = -1;
+				int specnum = STACK(6);
+				int arg0 = STACK(5);
 
-				while ((linenum = P_FindLineFromID (STACK(7), linenum)) >= 0) {
+				// Convert named ACS "specials" into real specials.
+				if (specnum >= -ACSF_ACS_NamedExecuteAlways && specnum <= -ACSF_ACS_NamedExecute)
+				{
+					specnum = NamedACSToNormalACS[-specnum - ACSF_ACS_NamedExecute];
+					arg0 = -FName(FBehavior::StaticLookupString(arg0));
+				}
+
+				while ((linenum = P_FindLineFromID (STACK(7), linenum)) >= 0)
+				{
 					line_t *line = &lines[linenum];
-
-					line->special = STACK(6);
-					line->args[0] = STACK(5);
+					line->special = specnum;
+					line->args[0] = arg0;
 					line->args[1] = STACK(4);
 					line->args[2] = STACK(3);
 					line->args[3] = STACK(2);
@@ -7310,7 +7319,7 @@ FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
 			arc << more;
 			type = (BYTE)defer->type;
 			arc << type;
-			SerializeScriptNumber(arc, defer->script, false);
+			P_SerializeACSScriptNumber(arc, defer->script, false);
 			arc << defer->playernum << defer->arg0 << defer->arg1 << defer->arg2;
 			defer = defer->next;
 		}
@@ -7327,7 +7336,7 @@ FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
 			*defer = new acsdefered_t;
 			arc << more;
 			(*defer)->type = (acsdefered_t::EType)more;
-			SerializeScriptNumber(arc, (*defer)->script, false);
+			P_SerializeACSScriptNumber(arc, (*defer)->script, false);
 			arc << (*defer)->playernum << (*defer)->arg0 << (*defer)->arg1 << (*defer)->arg2;
 			defer = &((*defer)->next);
 			arc << more;

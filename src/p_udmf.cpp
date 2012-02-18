@@ -651,6 +651,7 @@ public:
 	{
 		bool passuse = false;
 		bool strifetrans = false;
+		FString arg0str;
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
@@ -704,6 +705,11 @@ public:
 			case NAME_Arg3:
 			case NAME_Arg4:
 				ld->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+				continue;
+
+			case NAME_Arg0Str:
+				CHECK_N(Zd);
+				arg0str = CheckString(key);
 				continue;
 
 			case NAME_Blocking:
@@ -919,6 +925,10 @@ public:
 		{
 			ld->sidedef[0] = (side_t*)(intptr_t)(1);
 			Printf("Line %d has no first side.\n", index);
+		}
+		if (arg0str.IsNotEmpty() && P_IsACSSpecial(ld->special))
+		{
+			ld->args[0] = -FName(arg0str);
 		}
 	}
 

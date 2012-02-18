@@ -396,8 +396,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< li->special
 			<< li->Alpha
 			<< li->id;
-		if ((li->special >= ACS_Execute && li->special <= ACS_LockedExecuteDoor) ||
-			li->special == ACS_ExecuteAlways)
+		if (P_IsACSSpecial(li->special))
 		{
 			P_SerializeACSScriptNumber(arc, li->args[0], false);
 		}

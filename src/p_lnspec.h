@@ -198,6 +198,11 @@ typedef int (*lnSpecFunc)(struct line_t	*line,
 extern lnSpecFunc LineSpecials[256];
 
 extern BYTE NamedACSToNormalACS[7];
+static inline bool P_IsACSSpecial(int specnum)
+{
+	return (specnum >= ACS_Execute && specnum <= ACS_LockedExecuteDoor) ||
+			specnum == ACS_ExecuteAlways;
+}
 
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);
 bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death=false);

@@ -4763,11 +4763,20 @@ int P_PushUp (AActor *thing, FChangePosition *cpos)
 	{
 		return 1;
 	}
+	// [GZ] Skip thing intersect test for THRUACTORS things.
+	if (thing->flags2 & MF2_THRUACTORS)
+		return 0;
 	P_FindAboveIntersectors (thing);
 	lastintersect = intersectors.Size ();
 	for (; firstintersect < lastintersect; firstintersect++)
 	{
 		AActor *intersect = intersectors[firstintersect];
+		// [GZ] Skip this iteration for THRUSPECIES things
+		// Should there be MF2_THRUGHOST / MF3_GHOST checks there too for consistency?
+		// Or would that risk breaking established behavior? THRUGHOST, like MTHRUSPECIES,
+		// is normally for projectiles which would have exploded by now anyway...
+		if (thing->flags6 & MF6_THRUSPECIES && thing->GetSpecies() == intersect->GetSpecies())
+			continue;
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)

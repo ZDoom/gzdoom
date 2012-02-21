@@ -270,6 +270,8 @@ xx(MomX)
 xx(MomY)
 xx(MomZ)
 xx(Abs)
+xx(ACS_NamedExecuteWithResult)
+xx(CallACS)
 
 // Various actor names which are used internally
 xx(MapSpot)

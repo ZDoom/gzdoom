@@ -346,7 +346,7 @@ int GetUDMFInt(int type, int index, const char *key)
 			FUDMFKey *pKey = pKeys->Find(key);
 			if (pKey != NULL)
 			{
-				return FLOAT2FIXED(pKey->IntVal);
+				return pKey->IntVal;
 			}
 		}
 	}
@@ -414,14 +414,14 @@ public:
 			{
 				switch (sc.TokenType)
 				{
-				case TK_Int:
+				case TK_IntConst:
 					keyarray[i] = sc.Number;
 					break;
-				case TK_Float:
+				case TK_FloatConst:
 					keyarray[i] = sc.Float;
 					break;
 				default:
-				case TK_String:
+				case TK_StringConst:
 					keyarray[i] = parsedString;
 					break;
 				case TK_True:
@@ -438,14 +438,14 @@ public:
 		ukey.Key = key;
 		switch (sc.TokenType)
 		{
-		case TK_Int:
+		case TK_IntConst:
 			ukey = sc.Number;
 			break;
-		case TK_Float:
+		case TK_FloatConst:
 			ukey = sc.Float;
 			break;
 		default:
-		case TK_String:
+		case TK_StringConst:
 			ukey = parsedString;
 			break;
 		case TK_True:

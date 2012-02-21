@@ -119,7 +119,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		 */
 
 		// When looking straight ahead, it uses a z velocity of 4 while the xy velocity
-		// is as set by the projectile. To accomodate this with a proper trajectory, we
+		// is as set by the projectile. To accommodate this with a proper trajectory, we
 		// aim the projectile ~20 degrees higher than we're looking at and increase the
 		// speed we fire at accordingly.
 		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
@@ -137,6 +137,72 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		mo->tics -= pr_poisonbag()&3;
 		P_CheckMissileSpawn(mo);
 		return true;
+	}
+	return false;
+}
+
+// Poison Bag 4 (Generic Giver) ----------------------------------------------
+
+class AArtiPoisonBagGiver : public AArtiPoisonBag
+{
+	DECLARE_CLASS (AArtiPoisonBagGiver, AArtiPoisonBag)
+public:
+	bool Use (bool pickup);
+};
+
+IMPLEMENT_CLASS (AArtiPoisonBagGiver)
+
+bool AArtiPoisonBagGiver::Use (bool pickup)
+{
+	const PClass *MissileType = PClass::FindClass((ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	if (MissileType != NULL)
+	{
+		AActor *mo = Spawn (MissileType, Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
+		if (mo != NULL)
+		{
+			if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+			{
+				AInventory *inv = static_cast<AInventory *>(mo);
+				if (inv->CallTryPickup(Owner))
+					return true;
+			}
+			mo->Destroy();	// Destroy if not inventory or couldn't be picked up
+		}
+	}
+	return false;
+}
+
+// Poison Bag 5 (Generic Thrower) ----------------------------------------------
+
+class AArtiPoisonBagShooter : public AArtiPoisonBag
+{
+	DECLARE_CLASS (AArtiPoisonBagShooter, AArtiPoisonBag)
+public:
+	bool Use (bool pickup);
+};
+
+IMPLEMENT_CLASS (AArtiPoisonBagShooter)
+
+bool AArtiPoisonBagShooter::Use (bool pickup)
+{
+	const PClass *MissileType = PClass::FindClass((ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	if (MissileType != NULL)
+	{
+		AActor *mo = P_SpawnPlayerMissile(Owner, MissileType);
+		if (mo != NULL)
+		{
+			// automatic handling of seeker missiles
+			if (mo->flags2 & MF2_SEEKERMISSILE)
+			{
+				mo->tracer = Owner->target;
+			}
+			// set the health value so that the missile works properly
+			if (mo->flags4 & MF4_SPECTRAL)
+			{
+				mo->health = -2;
+			}
+			return true;
+		}
 	}
 	return false;
 }

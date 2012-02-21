@@ -52,6 +52,7 @@
 #include "w_wad.h"
 #include "s_sound.h"
 #include "m_argv.h"
+#include "d_main.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -276,15 +277,18 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 
 	if (!Args->CheckParm("-nostartup"))
 	{
-		if (gameinfo.gametype == GAME_Hexen)
+		if (DoomStartupInfo.Type == FStartupInfo::HexenStartup ||
+			(gameinfo.gametype == GAME_Hexen && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FHexenStartupScreen(max_progress, hr);
 		}
-		else if (gameinfo.gametype == GAME_Heretic)
+		else if (DoomStartupInfo.Type == FStartupInfo::HereticStartup ||
+			(gameinfo.gametype == GAME_Heretic && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FHereticStartupScreen(max_progress, hr);
 		}
-		else if (gameinfo.gametype == GAME_Strife)
+		else if (DoomStartupInfo.Type == FStartupInfo::StrifeStartup ||
+			(gameinfo.gametype == GAME_Strife && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FStrifeStartupScreen(max_progress, hr);
 		}
@@ -684,8 +688,14 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
-	S_ChangeMusic ("orb", true, true);
-
+	if (DoomStartupInfo.Song.IsNotEmpty())
+	{
+		S_ChangeMusic(DoomStartupInfo.Song.GetChars(), true, true);
+	}
+	else
+	{
+		S_ChangeMusic ("orb", true, true);
+	}
 	hr = S_OK;
 }
 

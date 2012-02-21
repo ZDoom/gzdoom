@@ -1701,6 +1701,25 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetString();
 			DoomStartupInfo.BkColor = V_GetColor(NULL, sc.String);
 		}
+		else if (!nextKey.CompareNoCase("STARTUPTYPE"))
+		{
+			sc.MustGetString();
+			FString sttype = sc.String;
+			if (!sttype.CompareNoCase("DOOM"))
+				DoomStartupInfo.Type = FStartupInfo::DoomStartup;
+			else if (!sttype.CompareNoCase("HERETIC"))
+				DoomStartupInfo.Type = FStartupInfo::HereticStartup;
+			else if (!sttype.CompareNoCase("HEXEN"))
+				DoomStartupInfo.Type = FStartupInfo::HexenStartup;
+			else if (!sttype.CompareNoCase("STRIFE"))
+				DoomStartupInfo.Type = FStartupInfo::StrifeStartup;
+			else DoomStartupInfo.Type = FStartupInfo::DefaultStartup;
+		}
+		else if (!nextKey.CompareNoCase("STARTUPSONG"))
+		{
+			sc.MustGetString();
+			DoomStartupInfo.Song = sc.String;
+		}
 	}
 	return iwad;
 }

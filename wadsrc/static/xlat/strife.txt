@@ -278,7 +278,7 @@ RetailOnly		= 121
 235 = USE,		ACS_ExecuteWithResult (0, 235, tag)
 
 // Buttons
- 11 = USE|REP,		ACS_ExecuteWithResult (0, 52, tag)
+ 11 = USE|REP,		ACS_ExecuteWithResult (0, 11, tag)
  42 = USE|REP,		Door_Close (tag, D_SLOW)
  43 = USE|REP,		Ceiling_LowerToFloor (tag, C_SLOW)
  45 = USE|REP,		Floor_LowerToHighest (tag, F_SLOW, 128)
@@ -319,7 +319,7 @@ RetailOnly		= 121
 155 = USE|REP,		Plat_UpNearestWaitDownStay (tag, P_NORMAL, PLATWAIT)
 177 = USE|REP,		ACS_LockedExecute (0, 0, 177, tag, 9)
 207 = USE|REP,		Door_Animated (tag, 4, 3*35)
-214 = USE|REP,		ACS_ExecuteWithResult (0, 214, tag)
+214 = USE|REP,		Plat_DownWaitUpStayLip (tag, 8, 1050, 0, 1)
 229 = USE|REP,		ACS_ExecuteWithResult (0, 229, tag)
 233 = USE|REP,		ACS_ExecuteWithResult (0, 233, tag)
 234 = USE|REP,		ACS_ExecuteWithResult (0, 234, tag)

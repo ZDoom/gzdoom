@@ -1,5 +1,5 @@
 /*
-** music_midi_midiout.cpp
+** music_hmi_midiout.cpp
 ** Code to let ZDoom play HMI MIDI music through the MIDI streaming API.
 **
 **---------------------------------------------------------------------------
@@ -54,7 +54,7 @@
 	}
 
 // In song header
-#define HMI_DIVISION_OFFSET			0xD2
+#define HMI_DIVISION_OFFSET			0xD4
 #define HMI_TRACK_COUNT_OFFSET		0xE4
 #define HMI_TRACK_DIR_PTR_OFFSET	0xE8
 
@@ -202,7 +202,10 @@ void HMISong::SetupForHMI(int len)
 	}
 
 	// The division is the number of pulses per quarter note (PPQN).
-	Division = GetShort(MusHeader + HMI_DIVISION_OFFSET);
+	// HMI files have two values here, a full value and a quarter value. Some games, 
+	// notably Quarantines, have identical values for some reason, so it's safer to
+	// use the quarter value and multiply it by four than to trust the full value.
+	Division = GetShort(MusHeader + HMI_DIVISION_OFFSET) << 2;
 	InitialTempo = 4000000;
 
 	Tracks = new TrackInfo[NumTracks + 1];

@@ -134,14 +134,16 @@ XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 	{
 		return;
 	}
+	// The division is the number of pulses per quarter note (PPQN).
+	// It is set by a specific MIDI event, but just in case these aren't used,
+	// set a default value. Specs indicate it should be 120.
+	Division = 120;
 	Songs = new TrackInfo[NumSongs];
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
 	FindXMIDforms(MusHeader, len, Songs);
 	CurrSong = Songs;
 	DPrintf("XMI song count: %d\n", NumSongs);
-
-	// The division is the number of pulses per quarter note (PPQN).
-	Division = 60;
+	DPrintf("Divisions: %d\n", Division);
 }
 
 //==========================================================================
@@ -198,6 +200,8 @@ int XMISong::FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const
 		// IFF chunks are padded to even byte boundaries to avoid
 		// unaligned reads on 68k processors.
 		p += 8 + chunklen + (chunklen & 1);
+		// Avoid crashes from corrupt chunks which indicate a negative size.
+		if (chunklen < 0) p = len;
 	}
 	return count;
 }
@@ -230,6 +234,37 @@ void XMISong::FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const
 			break;
 		}
 		p += 8 + chunklen + (chunklen & 1);
+	}
+}
+
+//==========================================================================
+//
+// XMISong :: ScanForTempo
+//
+// Look through events chunk to find one that sets the tempo.
+//
+//==========================================================================
+
+void XMISong::ScanForTempo(const TrackInfo *song)
+{
+	const BYTE *chunk = song->EventChunk;
+
+	for (size_t q = 0; q < song->EventLen - 3; )
+	{
+		int r = q;
+		int evmark = chunk[r];
+		int evtype = chunk[r + 1];
+		int evlen  = chunk[r + 2];
+		//  Is it a tempo event? If so, length should be 3.
+		if (evmark == MIDI_META && evtype == MIDI_META_TEMPO && evlen == 3)
+		{
+			// Tempo is given in microseconds per quarter notes, so for a base of
+			// 120 per second, we have to divide by a million a multiply by 120 to
+			// get the PPQN. This is simplified by 40 to manipulate smaller values.
+			Tempo = (chunk[r + 3] << 16) | (chunk[r + 4] << 8) | chunk[r + 5];
+			Division = Tempo * 3 / 25000;
+		}
+		q += 3 + evlen;
 	}
 }
 
@@ -304,7 +339,7 @@ bool XMISong::CheckDone()
 //
 // XMISong :: MakeEvents
 //
-// Copies MIDI events from the SMF and puts them into a MIDI stream
+// Copies MIDI events from the XMI and puts them into a MIDI stream
 // buffer. Returns the new position in the buffer.
 //
 //==========================================================================
@@ -542,6 +577,7 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay)
 					events[1] = 0;
 					events[2] = (MEVT_TEMPO << 24) | Tempo;
 					events += 3;
+					Division = Tempo * 3 / 25000;
 					break;
 				}
 				track->EventP += len;

@@ -7375,7 +7375,14 @@ void DACSThinker::DumpScriptStatus ()
 
 	while (script != NULL)
 	{
-		Printf ("%d: %s\n", script->script, stateNames[script->state]);
+		if (script->script < 0)
+		{
+			Printf("\"%s\": %s\n", FName(ENamedName(-script->script)).GetChars(), stateNames[script->state]);
+		}
+		else
+		{
+			Printf("%d: %s\n", script->script, stateNames[script->state]);
+		}
 		script = script->next;
 	}
 }

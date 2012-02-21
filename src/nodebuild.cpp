@@ -65,8 +65,8 @@ const int AAPreference = 16;
 FNodeBuilder::FNodeBuilder(FLevel &level)
 : Level(level), GLNodes(false), SegsStuffed(0)
 {
-
 	VertexMap = NULL;
+	OldVertexTable = NULL;
 }
 
 FNodeBuilder::FNodeBuilder (FLevel &level,
@@ -84,9 +84,13 @@ FNodeBuilder::FNodeBuilder (FLevel &level,
 
 FNodeBuilder::~FNodeBuilder()
 {
-	if (VertexMap != 0)
+	if (VertexMap != NULL)
 	{
 		delete VertexMap;
+	}
+	if (OldVertexTable != NULL)
+	{
+		delete OldVertexTable;
 	}
 }
 

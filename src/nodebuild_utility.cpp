@@ -75,7 +75,7 @@ angle_t FNodeBuilder::PointToAngle (fixed_t x, fixed_t y)
 
 void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 {
-	int *map = (int *)alloca (max*sizeof(int));
+	int *map = new int[max];
 	int i;
 	FPrivVert newvert;
 
@@ -102,6 +102,17 @@ void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 		Level.Lines[i].v1 = (vertex_t *)(size_t)map[v1];
 		Level.Lines[i].v2 = (vertex_t *)(size_t)map[v2];
 	}
+	OldVertexTable = map;
+}
+
+// Retrieves the original vertex -> current vertex table.
+// Doing so prevents the node builder from freeing it.
+
+const int *FNodeBuilder::GetOldVertexTable()
+{
+	int *table = OldVertexTable;
+	OldVertexTable = NULL;
+	return table;
 }
 
 // For every sidedef in the map, create a corresponding seg.

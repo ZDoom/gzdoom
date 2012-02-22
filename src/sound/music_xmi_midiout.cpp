@@ -634,6 +634,7 @@ void XMISong::ProcessInitialMetaEvents ()
 					(track->EventChunk[track->EventP+1]<<8)  |
 					(track->EventChunk[track->EventP+2])
 				);
+				Division = Tempo * 3 / 25000;
 				break;
 			}
 		}

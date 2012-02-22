@@ -1062,14 +1062,14 @@ void MIDIStreamer::Precache()
 //
 //==========================================================================
 
-void MIDIStreamer::CreateSMF(TArray<BYTE> &file)
+void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 {
 	DWORD delay = 0;
 	BYTE running_status = 0;
 
 	// Always create songs aimed at GM devices.
 	CheckCaps(MOD_MIDIPORT);
-	LoopLimit = EXPORT_LOOP_LIMIT;
+	LoopLimit = looplimit <= 0 ? EXPORT_LOOP_LIMIT : looplimit;
 	DoRestart();
 	Tempo = InitialTempo;
 

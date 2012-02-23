@@ -637,7 +637,6 @@ protected:
 
 	int FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const;
 	void FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const;
-	void ScanForTempo(const TrackInfo *song);
 	bool SetMIDISubsong(int subsong);
 	void DoInitialSetup();
 	void DoRestart();

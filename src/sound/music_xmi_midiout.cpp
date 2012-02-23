@@ -134,16 +134,22 @@ XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 	{
 		return;
 	}
-	// The division is the number of pulses per quarter note (PPQN).
-	// It is set by a specific MIDI event, but just in case these aren't used,
-	// set a default value. Specs indicate it should be 120.
-	Division = 120;
+
+	// XMIDI files are played with a constant 120 Hz clock rate. While the
+	// song may contain tempo events, these are vestigial remnants from the
+	// original MIDI file that were not removed by the converter and should
+	// be ignored.
+	//
+	// We can use any combination of Division and Tempo values that work out
+	// to be 120 Hz.
+	Division = 60;
+	InitialTempo = 500000;
+
 	Songs = new TrackInfo[NumSongs];
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
 	FindXMIDforms(MusHeader, len, Songs);
 	CurrSong = Songs;
 	DPrintf("XMI song count: %d\n", NumSongs);
-	DPrintf("Divisions: %d\n", Division);
 }
 
 //==========================================================================
@@ -234,37 +240,6 @@ void XMISong::FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const
 			break;
 		}
 		p += 8 + chunklen + (chunklen & 1);
-	}
-}
-
-//==========================================================================
-//
-// XMISong :: ScanForTempo
-//
-// Look through events chunk to find one that sets the tempo.
-//
-//==========================================================================
-
-void XMISong::ScanForTempo(const TrackInfo *song)
-{
-	const BYTE *chunk = song->EventChunk;
-
-	for (size_t q = 0; q < song->EventLen - 3; )
-	{
-		int r = q;
-		int evmark = chunk[r];
-		int evtype = chunk[r + 1];
-		int evlen  = chunk[r + 2];
-		//  Is it a tempo event? If so, length should be 3.
-		if (evmark == MIDI_META && evtype == MIDI_META_TEMPO && evlen == 3)
-		{
-			// Tempo is given in microseconds per quarter notes, so for a base of
-			// 120 per second, we have to divide by a million a multiply by 120 to
-			// get the PPQN. This is simplified by 40 to manipulate smaller values.
-			Tempo = (chunk[r + 3] << 16) | (chunk[r + 4] << 8) | chunk[r + 5];
-			Division = Tempo * 3 / 25000;
-		}
-		q += 3 + evlen;
 	}
 }
 
@@ -562,23 +537,9 @@ DWORD *XMISong::SendCommand (DWORD *events, EventSource due, DWORD delay)
 
 			if (track->EventP + len <= track->EventLen)
 			{
-				switch (event)
+				if (event == MIDI_META_EOT)
 				{
-				case MIDI_META_EOT:
 					track->Finished = true;
-					break;
-
-				case MIDI_META_TEMPO:
-					Tempo =
-						(track->EventChunk[track->EventP+0]<<16) |
-						(track->EventChunk[track->EventP+1]<<8)  |
-						(track->EventChunk[track->EventP+2]);
-					events[0] = delay;
-					events[1] = 0;
-					events[2] = (MEVT_TEMPO << 24) | Tempo;
-					events += 3;
-					Division = Tempo * 3 / 25000;
-					break;
 				}
 				track->EventP += len;
 				if (track->EventP == track->EventLen)
@@ -615,28 +576,14 @@ void XMISong::ProcessInitialMetaEvents ()
 
 	while (!track->Finished &&
 			track->EventP < track->EventLen - 3 &&
-			track->EventChunk[track->EventP] == 0xFF)
+			track->EventChunk[track->EventP] == MIDI_META)
 	{
 		event = track->EventChunk[track->EventP+1];
 		track->EventP += 2;
 		len = track->ReadVarLen();
-		if (track->EventP + len <= track->EventLen)
+		if (track->EventP + len <= track->EventLen && event == MIDI_META_EOT)
 		{
-			switch (event)
-			{
-			case MIDI_META_EOT:
-				track->Finished = true;
-				break;
-
-			case MIDI_META_TEMPO:
-				SetTempo(
-					(track->EventChunk[track->EventP+0]<<16) |
-					(track->EventChunk[track->EventP+1]<<8)  |
-					(track->EventChunk[track->EventP+2])
-				);
-				Division = Tempo * 3 / 25000;
-				break;
-			}
+			track->Finished = true;
 		}
 		track->EventP += len;
 	}

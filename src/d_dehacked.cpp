@@ -1194,15 +1194,21 @@ static int PatchThing (int thingy)
 			PushTouchedActor(const_cast<PClass *>(type));
 		}
 
-		// Make MF3_ISMONSTER match MF_COUNTKILL
+		// If MF_COUNTKILL is set, make sure the other standard monster flags are
+		// set, too. And vice versa.
 		if (info->flags & MF_COUNTKILL)
 		{
+			info->flags2 |= MF2_PUSHWALL | MF2_MCROSS | MF2_PASSMOBJ;
 			info->flags3 |= MF3_ISMONSTER;
 		}
 		else
 		{
+			info->flags2 &= ~(MF2_PUSHWALL | MF2_MCROSS);
 			info->flags3 &= ~MF3_ISMONSTER;
 		}
+		// Everything that's altered here gets the CANUSEWALLS flag, just in case
+		// it calls P_Move().
+		info->flags4 |= MF4_CANUSEWALLS;
 		if (patchedStates)
 		{
 			statedef.InstallStates(type->ActorInfo, info);

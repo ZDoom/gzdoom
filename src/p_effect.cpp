@@ -208,6 +208,28 @@ void P_FindParticleSubsectors ()
 	}
 }
 
+static TMap<int, int> ColorSaver;
+
+static uint32 ParticleColor(int rgb)
+{
+	int *val;
+	int stuff;
+
+	val = ColorSaver.CheckKey(rgb);
+	if (val != NULL)
+	{
+		return *val;
+	}
+	stuff = rgb | (ColorMatcher.Pick(RPART(rgb), GPART(rgb), BPART(rgb)) << 24);
+	ColorSaver[rgb] = stuff;
+	return stuff;
+}
+
+static uint32 ParticleColor(int r, int g, int b)
+{
+	return ParticleColor(MAKERGB(r, g, b));
+}
+
 void P_InitEffects ()
 {
 	const struct ColorList *color = Colors;
@@ -215,15 +237,13 @@ void P_InitEffects ()
 	P_InitParticles();
 	while (color->color)
 	{
-		*(color->color) = (MAKERGB(color->r, color->g, color->b)
-			| (ColorMatcher.Pick (color->r, color->g, color->b) << 24));
+		*(color->color) = ParticleColor(color->r, color->g, color->b);
 		color++;
 	}
 
 	int kind = gameinfo.defaultbloodparticlecolor;
-	int kind3 = MAKERGB(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
-	blood1 = kind  | (ColorMatcher.Pick(RPART(kind), GPART(kind), BPART(kind)) << 24);
-	blood2 = kind3 | (ColorMatcher.Pick(RPART(kind3), GPART(kind3), BPART(kind3)) << 24);
+	blood1 = ParticleColor(kind);
+	blood2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 }
 
 
@@ -522,9 +542,8 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 		color2 = grey1;
 		break;
 	default:	// colorized blood
-		color1 = kind | (ColorMatcher.Pick(RPART(kind), GPART(kind), BPART(kind)) << 24);
-		color2 = MAKERGB((kind)>>1, GPART(kind)>>1, BPART(kind)>>1)
-			| (ColorMatcher.Pick(RPART(kind)>>1, GPART(kind)>>1, BPART(kind)>>1) << 24);
+		color1 = ParticleColor(kind);
+		color2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 		break;
 	}
 
@@ -649,7 +668,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 		FVector3 spiral_step = step * r_rail_spiralsparsity;
 		int spiral_steps = steps * r_rail_spiralsparsity;
 		
-		color1 = color1 == 0 ? -1 : color1 | (ColorMatcher.Pick(RPART(color1), GPART(color1), BPART(color1)) <<24);
+		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = start;
 		deg = FAngle(270);
 		for (i = spiral_steps; i; i--)
@@ -702,7 +721,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 		FVector3 trail_step = step * r_rail_trailsparsity;
 		int trail_steps = steps * r_rail_trailsparsity;
 
-		color2 = color2 == 0 ? -1 : color2 | (ColorMatcher.Pick(RPART(color2), GPART(color2), BPART(color2)) <<24);
+		color2 = color2 == 0 ? -1 : ParticleColor(color2);
 		FVector3 diff(0, 0, 0);
 
 		pos = start;

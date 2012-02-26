@@ -97,7 +97,7 @@ struct ScriptPtr3
 // The intermediate ZDoom version
 struct ScriptPtr1
 {
-	WORD Number;
+	SWORD Number;
 	WORD Type;
 	DWORD Address;
 	DWORD ArgCount;

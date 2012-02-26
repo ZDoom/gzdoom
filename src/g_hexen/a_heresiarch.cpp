@@ -88,7 +88,7 @@ void AHeresiarch::Die (AActor *source, AActor *inflictor)
 
 	if (script != 0)
 	{
-		P_StartScript (this, NULL, script, level.mapname, 0, 0, 0, 0, 0, false);
+		P_StartScript (this, NULL, script, level.mapname, NULL, 0, 0);
 	}
 }
 

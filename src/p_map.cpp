@@ -4281,8 +4281,8 @@ bool P_UsePuzzleItem (AActor *PuzzleItemUser, int PuzzleItemType)
 			{ // Item type doesn't match
 				return false;
 			}
-			P_StartScript (PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, 0,
-				in->d.line->args[2], in->d.line->args[3], in->d.line->args[4], true, false);
+			int args[3] = { in->d.line->args[2], in->d.line->args[3], in->d.line->args[4] };
+			P_StartScript (PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, args, 3, ACS_ALWAYS);
 			in->d.line->special = 0;
 			return true;
 		}
@@ -4296,8 +4296,8 @@ bool P_UsePuzzleItem (AActor *PuzzleItemUser, int PuzzleItemType)
 		{ // Item type doesn't match
 			continue;
 		}
-		P_StartScript (PuzzleItemUser, NULL, mobj->args[1], NULL, 0,
-			mobj->args[2], mobj->args[3], mobj->args[4], true, false);
+		int args[3] = { mobj->args[2], mobj->args[3], mobj->args[4] };
+		P_StartScript (PuzzleItemUser, NULL, mobj->args[1], NULL, args, 3, ACS_ALWAYS);
 		mobj->special = 0;
 		return true;
 	}

@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 			P_Teleport (self, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
 		}
 
-		P_StartScript (self, NULL, 249, NULL, 0, 0, 0, 0, 0, false);
+		P_StartScript (self, NULL, 249, NULL, NULL, 0, 0);
 		self->special2 = 1;	// Don't run again
 
 		return;
@@ -160,7 +160,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxBonePop)
 		if (mo) KSpiritInit (mo, self);
 	}
 
-	P_StartScript (self, NULL, 255, NULL, 0, 0, 0, 0, false, false);		// Death script
+	P_StartScript (self, NULL, 255, NULL, NULL, 0, 0);		// Death script
 }
 
 //============================================================================
@@ -270,8 +270,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 		numcommands = 4;
 	}
 
-	P_StartScript (self, NULL, 250+(pr_koraxcommand()%numcommands),
-		NULL, 0, 0, 0, 0, false, false);
+	P_StartScript (self, NULL, 250+(pr_koraxcommand()%numcommands), NULL, NULL, 0, 0);
 }
 
 //============================================================================

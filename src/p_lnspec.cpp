@@ -1617,24 +1617,46 @@ FUNC(LS_ACS_Execute)
 // ACS_Execute (script, map, s_arg1, s_arg2, s_arg3)
 {
 	level_info_t *info;
+	const char *mapname = NULL;
+	int args[3] = { arg2, arg3, arg4 };
+	int flags = (backSide ? ACS_BACKSIDE : 0);
 
 	if (arg1 == 0)
-		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, false, false);
-	else if ((info = FindLevelByNum (arg1)) )
-		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, false, false);
-	else return false;
+	{
+		mapname = level.mapname;
+	}
+	else if ((info = FindLevelByNum(arg1)) != NULL)
+	{
+		mapname = info->mapname;
+	}
+	else
+	{
+		return false;
+	}
+	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_ExecuteAlways)
 // ACS_ExecuteAlways (script, map, s_arg1, s_arg2, s_arg3)
 {
 	level_info_t *info;
+	const char *mapname = NULL;
+	int args[3] = { arg2, arg3, arg4 };
+	int flags = (backSide ? ACS_BACKSIDE : 0) | ACS_ALWAYS;
 
 	if (arg1 == 0)
-		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, true, false);
-	else if ((info = FindLevelByNum (arg1)) )
-		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, true, false);
-	else return false;
+	{
+		mapname = level.mapname;
+	}
+	else if ((info = FindLevelByNum(arg1)) != NULL)
+	{
+		mapname = info->mapname;
+	}
+	else
+	{
+		return false;
+	}
+	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_LockedExecute)
@@ -1656,12 +1678,15 @@ FUNC(LS_ACS_LockedExecuteDoor)
 }
 
 FUNC(LS_ACS_ExecuteWithResult)
-// ACS_ExecuteWithResult (script, s_arg1, s_arg2, s_arg3)
+// ACS_ExecuteWithResult (script, s_arg1, s_arg2, s_arg3, s_arg4)
 {
 	// This is like ACS_ExecuteAlways, except the script is always run on
 	// the current map, and the return value is whatever the script sets
 	// with SetResultValue.
-	return P_StartScript (it, ln, arg0, level.mapname, backSide, arg1, arg2, arg3, true, true);
+	int args[4] = { arg1, arg2, arg3, arg4 };
+	int flags = (backSide ? ACS_BACKSIDE : 0) | ACS_ALWAYS | ACS_WANTRESULT;
+
+	return P_StartScript (it, ln, arg0, level.mapname, args, 4, flags);
 }
 
 FUNC(LS_ACS_Suspend)

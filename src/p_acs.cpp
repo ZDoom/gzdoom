@@ -124,7 +124,8 @@ struct CallReturn
 };
 
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	bool lineSide, int arg0, int arg1, int arg2, int always);
+	const int *args, int argcount, int flags);
+
 
 struct FBehavior::ArrayInfo
 {
@@ -1855,7 +1856,7 @@ void FBehavior::StartTypedScripts (WORD type, AActor *activator, bool always, in
 		if (ptr->Type == type)
 		{
 			DLevelScript *runningScript = P_GetScriptGoing (activator, NULL, ptr->Number,
-				ptr, this, 0, arg1, 0, 0, always);
+				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0);
 			if (runNow)
 			{
 				runningScript->RunScript ();
@@ -7095,12 +7096,12 @@ int DLevelScript::RunScript ()
 #undef PushtoStack
 
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	bool backSide, int arg0, int arg1, int arg2, int always)
+	const int *args, int argcount, int flags)
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 	DLevelScript **running;
 
-	if (controller && !always && (running = controller->RunningScripts.CheckKey(num)) != NULL)
+	if (controller && !(flags & ACS_ALWAYS) && (running = controller->RunningScripts.CheckKey(num)) != NULL)
 	{
 		if ((*running)->GetState() == DLevelScript::SCRIPT_Suspended)
 		{
@@ -7110,11 +7111,11 @@ static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, cons
 		return NULL;
 	}
 
-	return new DLevelScript (who, where, num, code, module, backSide, arg0, arg1, arg2, always);
+	return new DLevelScript (who, where, num, code, module, args, argcount, flags);
 }
 
 DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-							bool backside, int arg0, int arg1, int arg2, int always)
+	const int *args, int argcount, int flags)
 	: activeBehavior (module)
 {
 	if (DACSThinker::ActiveThinker == NULL)
@@ -7124,23 +7125,15 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	assert(code->VarCount >= code->ArgCount);
 	numlocalvars = code->VarCount;
 	localvars = new SDWORD[code->VarCount];
-	if (code->VarCount > 0)
+	memset(localvars, 0, code->VarCount * sizeof(SDWORD));
+	for (int i = 0; i < MIN<int>(argcount, code->ArgCount); ++i)
 	{
-		localvars[0] = arg0;
-		if (code->VarCount > 1)
-		{
-			localvars[1] = arg1;
-			if (code->VarCount > 2)
-			{
-				localvars[2] = arg2;
-			}
-		}
+		localvars[i] = args[i];
 	}
-	memset (localvars+code->ArgCount, 0, (code->VarCount-code->ArgCount)*sizeof(SDWORD));
-	pc = module->GetScriptAddress (code);
+	pc = module->GetScriptAddress(code);
 	activator = who;
 	activationline = where;
-	backSide = backside;
+	backSide = flags & ACS_BACKSIDE;
 	activefont = SmallFont;
 	hudwidth = hudheight = 0;
 	state = SCRIPT_Running;
@@ -7150,17 +7143,17 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	// set in an editor. If an open script sets them, it looks dumb if a second
 	// goes by while they're in their default state.
 
-	if (!always)
+	if (!(flags & ACS_ALWAYS))
 		DACSThinker::ActiveThinker->RunningScripts[num] = this;
 
-	Link ();
+	Link();
 
 	if (level.flags2 & LEVEL2_HEXENHACK)
 	{
 		PutLast();
 	}
 
-	DPrintf ("Script %d started.\n", num);
+	DPrintf("Script %d started.\n", num);
 }
 
 static void SetScriptState (int script, DLevelScript::EScriptState state)
@@ -7196,8 +7189,8 @@ void P_DoDeferedScripts ()
 					playeringame[def->playernum] ? players[def->playernum].mo : NULL,
 					NULL, def->script,
 					scriptdata, module,
-					0, def->arg0, def->arg1, def->arg2,
-					def->type == acsdefered_t::defexealways);
+					def->args, 3,
+					def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0);
 			}
 			else
 			{
@@ -7207,12 +7200,12 @@ void P_DoDeferedScripts ()
 
 		case acsdefered_t::defsuspend:
 			SetScriptState (def->script, DLevelScript::SCRIPT_Suspended);
-			DPrintf ("Defered suspend of script %d\n", def->script);
+			DPrintf ("Deferred suspend of script %d\n", def->script);
 			break;
 
 		case acsdefered_t::defterminate:
 			SetScriptState (def->script, DLevelScript::SCRIPT_PleaseRemove);
-			DPrintf ("Defered terminate of script %d\n", def->script);
+			DPrintf ("Deferred terminate of script %d\n", def->script);
 			break;
 		}
 		delete def;
@@ -7221,18 +7214,24 @@ void P_DoDeferedScripts ()
 	level.info->defered = NULL;
 }
 
-static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, int arg0, int arg1, int arg2, AActor *who)
+static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, const int *args, int argcount, AActor *who)
 {
 	if (i)
 	{
 		acsdefered_t *def = new acsdefered_t;
+		int j;
 
 		def->next = i->defered;
 		def->type = type;
 		def->script = script;
-		def->arg0 = arg0;
-		def->arg1 = arg1;
-		def->arg2 = arg2;
+		for (j = 0; j < countof(def->args) && j < argcount; ++j)
+		{
+			def->args[j] = args[j];
+		}
+		while (j < countof(def->args))
+		{
+			def->args[j++] = 0;
+		}
 		if (who != NULL && who->player != NULL)
 		{
 			def->playernum = int(who->player - players);
@@ -7242,14 +7241,13 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, i
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("Script %d on map %s defered\n", script, i->mapname);
+		DPrintf ("Script %d on map %s deferred\n", script, i->mapname);
 	}
 }
 
 EXTERN_CVAR (Bool, sv_cheats)
 
-int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
-					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net)
+int P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
 	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
 	{
@@ -7258,24 +7256,29 @@ int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backS
 
 		if ((scriptdata = FBehavior::StaticFindScript (script, module)) != NULL)
 		{
-			if (net && netgame && !sv_cheats)
+			if ((flags & ACS_NET) && netgame && !sv_cheats)
 			{
 				// If playing multiplayer and cheats are disallowed, check to
 				// make sure only net scripts are run.
 				if (!(scriptdata->Flags & SCRIPTF_Net))
 				{
-					Printf (PRINT_BOLD, "%s tried to puke script %d (%d, %d, %d)\n",
-						who->player->userinfo.netname, script, arg0, arg1, arg2);
+					Printf(PRINT_BOLD, "%s tried to puke script %d (\n",
+						who->player->userinfo.netname, script);
+					for (int i = 0; i < argcount; ++i)
+					{
+						Printf(PRINT_BOLD, "%d%s", args[i], i == argcount-1 ? "" : ", ");
+					}
+					Printf(PRINT_BOLD, ")\n");
 					return false;
 				}
 			}
 			DLevelScript *runningScript = P_GetScriptGoing (who, where, script,
-				scriptdata, module, backSide, arg0, arg1, arg2, always);
+				scriptdata, module, args, argcount, flags);
 			if (runningScript != NULL)
 			{
-				if (wantResultCode)
+				if (flags & ACS_WANTRESULT)
 				{
-					return runningScript->RunScript ();
+					return runningScript->RunScript();
 				}
 				return true;
 			}
@@ -7283,17 +7286,17 @@ int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backS
 		}
 		else
 		{
-			if (!net || (who && who->player == &players[consoleplayer]))
+			if (!(flags & ACS_NET) || (who && who->player == &players[consoleplayer]))
 			{
-				Printf ("P_StartScript: Unknown script %d\n", script);
+				Printf("P_StartScript: Unknown script %d\n", script);
 			}
 		}
 	}
 	else
 	{
 		addDefered (FindLevelInfo (map),
-					always ? acsdefered_t::defexealways : acsdefered_t::defexecute,
-					script, arg0, arg1, arg2, who);
+					(flags & ACS_ALWAYS) ? acsdefered_t::defexealways : acsdefered_t::defexecute,
+					script, args, argcount, who);
 		return true;
 	}
 	return false;
@@ -7302,7 +7305,7 @@ int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backS
 void P_SuspendScript (int script, char *map)
 {
 	if (strnicmp (level.mapname, map, 8))
-		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, 0, 0, 0, NULL);
+		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_Suspended);
 }
@@ -7310,7 +7313,7 @@ void P_SuspendScript (int script, char *map)
 void P_TerminateScript (int script, char *map)
 {
 	if (strnicmp (level.mapname, map, 8))
-		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, 0, 0, 0, NULL);
+		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_PleaseRemove);
 }
@@ -7330,7 +7333,7 @@ FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
 			type = (BYTE)defer->type;
 			arc << type;
 			P_SerializeACSScriptNumber(arc, defer->script, false);
-			arc << defer->playernum << defer->arg0 << defer->arg1 << defer->arg2;
+			arc << defer->playernum << defer->args[0] << defer->args[1] << defer->args[2];
 			defer = defer->next;
 		}
 		more = 0;
@@ -7347,7 +7350,7 @@ FArchive &operator<< (FArchive &arc, acsdefered_t *&defertop)
 			arc << more;
 			(*defer)->type = (acsdefered_t::EType)more;
 			P_SerializeACSScriptNumber(arc, (*defer)->script, false);
-			arc << (*defer)->playernum << (*defer)->arg0 << (*defer)->arg1 << (*defer)->arg2;
+			arc << (*defer)->playernum << (*defer)->args[0] << (*defer)->args[1] << (*defer)->args[2];
 			defer = &((*defer)->next);
 			arc << more;
 		}

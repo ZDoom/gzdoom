@@ -466,6 +466,8 @@ public:
 
 	void ParseThing(FMapThing *th)
 	{
+		FString arg0str;
+
 		memset(th, 0, sizeof(*th));
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -514,6 +516,11 @@ public:
 			case NAME_Arg4:
 				CHECK_N(Hx | Zd | Zdt | Va)
 				th->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+				break;
+
+			case NAME_Arg0Str:
+				CHECK_N(Zd);
+				arg0str = CheckString(key);
 				break;
 
 			case NAME_Skill1:
@@ -615,6 +622,10 @@ public:
 				}
 				break;
 			}
+		}
+		if (arg0str.IsNotEmpty() && P_IsACSSpecial(th->special))
+		{
+			th->args[0] = -FName(arg0str);
 		}
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.

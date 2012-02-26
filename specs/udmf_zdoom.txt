@@ -199,6 +199,12 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       conversation = <int>		// Assigns a conversation dialogue to this thing.
                                 // Parameter is the conversation ID, 0 meaning none.
       countsecret = <bool>;     // Picking up this actor counts as a secret.
+      arg0str = <string>;       // Alternate string-based version of arg0
+
+      * Note about arg0str
+
+      For things with ACS specials (80-86 and 226), if arg0str is present and non-null, it
+      will be used as the name of the script to execute, and arg0 will be ignored.
    }
 
 
@@ -315,6 +321,9 @@ Standardized whitespace.
 
 1.19 24.02.2012
 Added back locknumber property.
+
+1.20 25.02.2012
+Added arg0str thing property.
 
 ===============================================================================
 EOF

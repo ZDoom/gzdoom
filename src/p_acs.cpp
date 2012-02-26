@@ -5776,6 +5776,16 @@ int DLevelScript::RunScript ()
 
 		case PCD_SETTHINGSPECIAL:
 			{
+				int specnum = STACK(6);
+				int arg0 = STACK(5);
+
+				// Convert named ACS "specials" into real specials.
+				if (specnum >= -ACSF_ACS_NamedExecuteAlways && specnum <= -ACSF_ACS_NamedExecute)
+				{
+					specnum = NamedACSToNormalACS[-specnum - ACSF_ACS_NamedExecute];
+					arg0 = -FName(FBehavior::StaticLookupString(arg0));
+				}
+
 				if (STACK(7) != 0)
 				{
 					FActorIterator iterator (STACK(7));
@@ -5783,8 +5793,8 @@ int DLevelScript::RunScript ()
 
 					while ( (actor = iterator.Next ()) )
 					{
-						actor->special = STACK(6);
-						actor->args[0] = STACK(5);
+						actor->special = specnum;
+						actor->args[0] = arg0;
 						actor->args[1] = STACK(4);
 						actor->args[2] = STACK(3);
 						actor->args[3] = STACK(2);
@@ -5793,8 +5803,8 @@ int DLevelScript::RunScript ()
 				}
 				else if (activator != NULL)
 				{
-					activator->special = STACK(6);
-					activator->args[0] = STACK(5);
+					activator->special = specnum;
+					activator->args[0] = arg0;
 					activator->args[1] = STACK(4);
 					activator->args[2] = STACK(3);
 					activator->args[3] = STACK(2);

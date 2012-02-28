@@ -727,7 +727,6 @@ public:
 
 	DConversationMenu(FStrifeDialogueNode *CurNode) 
 	{
-		menuactive = MENU_OnNoPause;
 		mCurNode = CurNode;
 		mDialogueLines = NULL;
 		mShowGold = false;
@@ -1171,6 +1170,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		M_StartControlPanel (false);
 		M_ActivateMenu(cmenu);
 		ConversationPauseTic = gametic + 20;
+		menuactive = MENU_OnNoPause;
 	}
 }
 

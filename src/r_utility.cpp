@@ -1032,6 +1032,7 @@ void FCanvasTextureInfo::EmptyList ()
 	for (probe = List; probe != NULL; probe = next)
 	{
 		next = probe->Next;
+		probe->Texture->Unload();
 		delete probe;
 	}
 	List = NULL;

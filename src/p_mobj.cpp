@@ -3691,8 +3691,15 @@ AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allow
 void AActor::LevelSpawned ()
 {
 	if (tics > 0 && !(flags4 & MF4_SYNCHRONIZED))
+	{
 		tics = 1 + (pr_spawnmapthing() % tics);
-	flags &= ~MF_DROPPED;		// [RH] clear MF_DROPPED flag
+	}
+	// [RH] Clear MF_DROPPED flag if the default version doesn't have it set.
+	// (AInventory::BeginPlay() makes all inventory items spawn with it set.)
+	if (!(GetDefault()->flags & MF_DROPPED))
+	{
+		flags &= ~MF_DROPPED;
+	}
 	HandleSpawnFlags ();
 }
 

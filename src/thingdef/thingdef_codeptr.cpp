@@ -648,11 +648,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTracerCloser)
 {
-	// Is there really any reason to limit this to seeker missiles?
-	if (self->flags2 & MF2_SEEKERMISSILE)
-	{
-		DoJumpIfCloser(self->tracer, PUSH_PARAMINFO);
-	}
+	DoJumpIfCloser(self->tracer, PUSH_PARAMINFO);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)

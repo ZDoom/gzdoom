@@ -1148,8 +1148,8 @@ static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fixed_
 	fixed_t tr_x = *x;
 	fixed_t tr_y = *y;
 
-	*x = DMulScale16 (tr_x, finecosine[an], -tr_y, finesine[an])+startSpotX;
-	*y = DMulScale16 (tr_x, finesine[an], tr_y, finecosine[an])+startSpotY;
+	*x = (DMulScale16 (tr_x, finecosine[an], -tr_y, finesine[an]) & 0xFFFFFE00) + startSpotX;
+	*y = (DMulScale16 (tr_x, finesine[an], tr_y, finecosine[an]) & 0xFFFFFE00) + startSpotY;
 }
 
 //==========================================================================

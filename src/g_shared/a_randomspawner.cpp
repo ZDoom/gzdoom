@@ -102,6 +102,7 @@ class ARandomSpawner : public AActor
 	{
 		AActor * newmobj = NULL;
 		bool boss = false;
+		Super::PostBeginPlay();
 		if (Species == NAME_None) { Destroy(); return; }
 		const PClass * cls = PClass::FindClass(Species);
 		if (this->flags & MF_MISSILE && target && target->target) // Attempting to spawn a missile.

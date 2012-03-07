@@ -531,7 +531,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	if (screen != NULL)
+	if (Renderer != NULL)
 	{
 		Renderer->StateChanged(this);
 	}
@@ -3661,10 +3661,6 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		level.total_secrets++;
 	}
-	if (screen != NULL)
-	{
-		Renderer->StateChanged(actor);
-	}
 	return actor;
 }
 
@@ -3757,6 +3753,10 @@ void AActor::BeginPlay ()
 
 void AActor::PostBeginPlay ()
 {
+	if (Renderer != NULL)
+	{
+		Renderer->StateChanged(this);
+	}
 	PrevAngle = angle;
 }
 

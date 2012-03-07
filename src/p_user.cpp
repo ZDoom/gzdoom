@@ -532,6 +532,7 @@ void APlayerPawn::Tick()
 
 void APlayerPawn::PostBeginPlay()
 {
+	Super::PostBeginPlay();
 	SetupWeaponSlots();
 
 	// Voodoo dolls: restore original floorz/ceilingz logic

@@ -2297,6 +2297,7 @@ void AMusicChanger::PostBeginPlay()
 {
 	// The music changer should consider itself activated if the player
 	// spawns in its sector as well as if it enters the sector during a P_TryMove.
+	Super::PostBeginPlay();
 	if (players[consoleplayer].mo && players[consoleplayer].mo->Sector == this->Sector)
 	{
 		TriggerAction(players[consoleplayer].mo, SECSPAC_Enter);

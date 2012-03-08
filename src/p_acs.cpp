@@ -169,6 +169,31 @@ TArray<FString>
 
 //============================================================================
 //
+// ScriptPresentation
+//
+// Returns a presentable version of the script number.
+//
+//============================================================================
+
+static FString ScriptPresentation(int script)
+{
+	FString out = "script ";
+
+	if (script < 0)
+	{
+		FName scrname = FName(ENamedName(-script));
+		if (scrname.IsValidName())
+		{
+			out << '"' << scrname.GetChars() << '"';
+			return out;
+		}
+	}
+	out.AppendFormat("%d", script);
+	return out;
+}
+
+//============================================================================
+//
 //
 //
 //============================================================================
@@ -1501,7 +1526,8 @@ void FBehavior::LoadScriptsDirectory ()
 			{
 				if (Scripts[i].Number == Scripts[i+1].Number)
 				{
-					Printf("Script %d appears more than once.\n", Scripts[i].Number);
+					Printf("%s appears more than once.\n",
+						ScriptPresentation(Scripts[i].Number).GetChars());
 					// Make the closed version the first one.
 					if (Scripts[i+1].Type == SCRIPT_Closed)
 					{
@@ -1839,7 +1865,25 @@ const char *FBehavior::LookupString (DWORD index) const
 
 void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
 {
-	DPrintf("Starting all scripts of type %d\n", type);
+	static const char *const TypeNames[] =
+	{
+		"Closed",
+		"Open",
+		"Respawn",
+		"Death",
+		"Enter",
+		"Pickup",
+		"BlueReturn",
+		"RedReturn",
+		"WhiteReturn",
+		"Unknown", "Unknown", "Unknown",
+		"Lightning",
+		"Unloading",
+		"Disconnect",
+		"Return"
+	};
+	DPrintf("Starting all scripts of type %d (%s)\n", type,
+		type < countof(TypeNames) ? TypeNames[type] : TypeNames[SCRIPT_Lightning - 1]);
 	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
 		StaticModules[i]->StartTypedScripts (type, activator, always, arg1, runNow);
@@ -3845,7 +3889,7 @@ int DLevelScript::RunScript ()
 	{
 		if (++runaway > 500000)
 		{
-			Printf ("Runaway script %d terminated\n", script);
+			Printf ("Runaway %s terminated\n", ScriptPresentation(script).GetChars());
 			state = SCRIPT_PleaseRemove;
 			break;
 		}
@@ -3866,10 +3910,10 @@ int DLevelScript::RunScript ()
 		switch (pcd)
 		{
 		default:
-			Printf ("Unknown P-Code %d in script %d\n", pcd, script);
+			Printf ("Unknown P-Code %d in %s\n", pcd, ScriptPresentation(script).GetChars());
 			// fall through
 		case PCD_TERMINATE:
-			DPrintf ("Script %d finished\n", script);
+			DPrintf ("%s finished\n", ScriptPresentation(script).GetChars());
 			state = SCRIPT_PleaseRemove;
 			break;
 
@@ -4098,13 +4142,13 @@ int DLevelScript::RunScript ()
 				func = activeBehavior->GetFunction (funcnum, module);
 				if (func == NULL)
 				{
-					Printf ("Function %d in script %d out of range\n", funcnum, script);
+					Printf ("Function %d in %s out of range\n", funcnum, ScriptPresentation(script).GetChars());
 					state = SCRIPT_PleaseRemove;
 					break;
 				}
 				if (sp + func->LocalCount + 64 > STACK_SIZE)
 				{ // 64 is the margin for the function's working space
-					Printf ("Out of stack space in script %d\n", script);
+					Printf ("Out of stack space in %s\n", ScriptPresentation(script).GetChars());
 					state = SCRIPT_PleaseRemove;
 					break;
 				}
@@ -7068,12 +7112,12 @@ int DLevelScript::RunScript ()
 
 	if (state == SCRIPT_DivideBy0)
 	{
-		Printf ("Divide by zero in script %d\n", script);
+		Printf ("Divide by zero in %s\n", ScriptPresentation(script).GetChars());
 		state = SCRIPT_PleaseRemove;
 	}
 	else if (state == SCRIPT_ModulusBy0)
 	{
-		Printf ("Modulus by zero in script %d\n", script);
+		Printf ("Modulus by zero in %s\n", ScriptPresentation(script).GetChars());
 		state = SCRIPT_PleaseRemove;
 	}
 	if (state == SCRIPT_PleaseRemove)
@@ -7154,7 +7198,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 		PutLast();
 	}
 
-	DPrintf("Script %d started.\n", num);
+	DPrintf("%s started.\n", ScriptPresentation(num).GetChars());
 }
 
 static void SetScriptState (int script, DLevelScript::EScriptState state)
@@ -7195,18 +7239,18 @@ void P_DoDeferedScripts ()
 			}
 			else
 			{
-				Printf ("P_DoDeferredScripts: Unknown script %d\n", def->script);
+				Printf ("P_DoDeferredScripts: Unknown %s\n", ScriptPresentation(def->script).GetChars());
 			}
 			break;
 
 		case acsdefered_t::defsuspend:
 			SetScriptState (def->script, DLevelScript::SCRIPT_Suspended);
-			DPrintf ("Deferred suspend of script %d\n", def->script);
+			DPrintf ("Deferred suspend of %s\n", ScriptPresentation(def->script).GetChars());
 			break;
 
 		case acsdefered_t::defterminate:
 			SetScriptState (def->script, DLevelScript::SCRIPT_PleaseRemove);
-			DPrintf ("Deferred terminate of script %d\n", def->script);
+			DPrintf ("Deferred terminate of %s\n", ScriptPresentation(def->script).GetChars());
 			break;
 		}
 		delete def;
@@ -7242,7 +7286,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("Script %d on map %s deferred\n", script, i->mapname);
+		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->mapname);
 	}
 }
 
@@ -7263,8 +7307,8 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 				// make sure only net scripts are run.
 				if (!(scriptdata->Flags & SCRIPTF_Net))
 				{
-					Printf(PRINT_BOLD, "%s tried to puke script %d (\n",
-						who->player->userinfo.netname, script);
+					Printf(PRINT_BOLD, "%s tried to puke %s (\n",
+						who->player->userinfo.netname, ScriptPresentation(script).GetChars());
 					for (int i = 0; i < argcount; ++i)
 					{
 						Printf(PRINT_BOLD, "%d%s", args[i], i == argcount-1 ? "" : ", ");
@@ -7289,7 +7333,7 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 		{
 			if (!(flags & ACS_NET) || (who && who->player == &players[consoleplayer]))
 			{
-				Printf("P_StartScript: Unknown script %d\n", script);
+				Printf("P_StartScript: Unknown %s\n", ScriptPresentation(script).GetChars());
 			}
 		}
 	}
@@ -7389,14 +7433,7 @@ void DACSThinker::DumpScriptStatus ()
 
 	while (script != NULL)
 	{
-		if (script->script < 0)
-		{
-			Printf("\"%s\": %s\n", FName(ENamedName(-script->script)).GetChars(), stateNames[script->state]);
-		}
-		else
-		{
-			Printf("%d: %s\n", script->script, stateNames[script->state]);
-		}
+		Printf("%s: %s\n", ScriptPresentation(script->script).GetChars(), stateNames[script->state]);
 		script = script->next;
 	}
 }

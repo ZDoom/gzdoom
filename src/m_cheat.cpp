@@ -768,7 +768,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 					!type->IsDescendantOf (RUNTIME_CLASS(APowerup)) &&
 					!type->IsDescendantOf (RUNTIME_CLASS(AArmor)))
 				{
-					GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					// Do not give replaced items unless using "give everything"
+					if (giveall == ALL_YESYES || type->GetReplacement() == type)
+					{
+						GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					}
 				}
 			}
 		}
@@ -786,7 +790,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AInventory *def = (AInventory*)GetDefaultByType (type);
 				if (def->Icon.isValid())
 				{
-					GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					// Do not give replaced items unless using "give everything"
+					if (giveall == ALL_YESYES || type->GetReplacement() == type)
+					{
+						GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					}
 				}
 			}
 		}

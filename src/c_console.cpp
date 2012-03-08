@@ -768,7 +768,7 @@ void AddToConsole (int printlevel, const char *text)
 						// The line start is outside the buffer. 
 						// Make space for the newly inserted stuff.
 						size_t movesize = work-linestart;
-						memmove(work + movesize, work, strlen(work));
+						memmove(work + movesize, work, strlen(work)+1);
 						work_p += movesize;
 						linestart = work;
 					}

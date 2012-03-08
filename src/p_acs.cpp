@@ -1128,6 +1128,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	{
 		StringTable = LittleLong(((DWORD *)Data)[1]);
 		StringTable += LittleLong(((DWORD *)(Data + StringTable))[0]) * 12 + 4;
+		UnescapeStringTable(Data + StringTable, false);
 	}
 	else
 	{
@@ -1136,6 +1137,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		if (strings != NULL)
 		{
 			StringTable = DWORD(strings - Data + 8);
+			UnescapeStringTable(strings, true);
 		}
 		else
 		{
@@ -1263,6 +1265,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 			}
 		}
 
+		// Load required libraries.
 		if (NULL != (chunk = (DWORD *)FindChunk (MAKE_ID('L','O','A','D'))))
 		{
 			const char *const parse = (char *)&chunk[2];
@@ -1322,7 +1325,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 										ModuleName, func->ArgCount);
 									Format = ACS_Unknown;
 								}
-								// The next two properties do not effect code compatibility, so it is
+								// The next two properties do not affect code compatibility, so it is
 								// okay for them to be different in the imported module than they are
 								// in this one, as long as we make sure to use the real values.
 								func->LocalCount = realfunc->LocalCount;
@@ -1577,6 +1580,7 @@ void FBehavior::LoadScriptsDirectory ()
 	scripts.b = FindChunk(MAKE_ID('S','N','A','M'));
 	if (scripts.dw != NULL)
 	{
+		UnescapeStringTable(scripts.b, false);
 		for (i = 0; i < NumScripts; ++i)
 		{
 			// ACC stores script names as an index into the SNAM chunk, with the first index as
@@ -1602,15 +1606,23 @@ int STACK_ARGS FBehavior::SortScripts (const void *a, const void *b)
 	return ptr1->Number - ptr2->Number;
 }
 
+//============================================================================
+//
+// FBehavior :: UnencryptStrings
+//
+// Descrambles strings in a STRE chunk to transform it into a STRL chunk.
+//
+//============================================================================
+
 void FBehavior::UnencryptStrings ()
 {
 	DWORD *prevchunk = NULL;
 	DWORD *chunk = (DWORD *)FindChunk(MAKE_ID('S','T','R','E'));
 	while (chunk != NULL)
 	{
-		for (DWORD strnum = 0; strnum < chunk[3]; ++strnum)
+		for (DWORD strnum = 0; strnum < LittleLong(chunk[3]); ++strnum)
 		{
-			int ofs = chunk[5+strnum];
+			int ofs = LittleLong(chunk[5+strnum]);
 			BYTE *data = (BYTE *)chunk + ofs + 8, last;
 			int p = (BYTE)(ofs*157135);
 			int i = 0;
@@ -1629,6 +1641,49 @@ void FBehavior::UnencryptStrings ()
 		*prevchunk = MAKE_ID('S','T','R','L');
 	}
 }
+
+//============================================================================
+//
+// FBehavior :: UnescapeStringTable
+//
+// Processes escape sequences for every string in a string table.
+//
+//============================================================================
+
+void FBehavior::UnescapeStringTable(BYTE *chunkstart, bool has_padding)
+{
+	assert(chunkstart != NULL);
+
+	DWORD *chunk = (DWORD *)chunkstart;
+	chunk += 2;
+
+	if (!has_padding)
+	{
+		chunk[0] = LittleLong(chunk[0]);
+		for (DWORD strnum = 0; strnum < chunk[0]; ++strnum)
+		{
+			int ofs = LittleLong(chunk[1 + strnum]);	// Byte swap offset, if needed.
+			chunk[1 + strnum] = ofs;
+			strbin((char *)chunk + ofs);
+		}
+	}
+	else
+	{
+		chunk[1] = LittleLong(chunk[1]);
+		for (DWORD strnum = 0; strnum < chunk[1]; ++strnum)
+		{
+			int ofs = LittleLong(chunk[3 + strnum]);	// Byte swap offset, if needed.
+			chunk[3 + strnum] = ofs;
+			strbin((char *)chunk + ofs);
+		}
+	}
+}
+
+//============================================================================
+//
+// FBehavior :: IsGood
+//
+//============================================================================
 
 bool FBehavior::IsGood ()
 {
@@ -1741,9 +1796,9 @@ int FBehavior::FindStringInChunk (DWORD *names, const char *varname) const
 	{
 		DWORD i;
 
-		for (i = 0; i < names[2]; ++i)
+		for (i = 0; i < LittleLong(names[2]); ++i)
 		{
-			if (stricmp (varname, (char *)(names + 2) + names[3+i]) == 0)
+			if (stricmp (varname, (char *)(names + 2) + LittleLong(names[3+i])) == 0)
 			{
 				return (int)i;
 			}
@@ -1851,7 +1906,7 @@ const char *FBehavior::LookupString (DWORD index) const
 
 		if (index >= list[0])
 			return NULL;	// Out of range for this list;
-		return (const char *)(Data + LittleLong(list[1+index]));
+		return (const char *)(Data + list[1+index]);
 	}
 	else
 	{
@@ -5454,7 +5509,6 @@ int DLevelScript::RunScript ()
 		case PCD_ENDPRINTBOLD:
 		case PCD_MOREHUDMESSAGE:
 		case PCD_ENDLOG:
-			work = strbin1 (work);
 			if (pcd == PCD_ENDLOG)
 			{
 				Printf ("%s\n", work.GetChars());
@@ -7016,7 +7070,7 @@ int DLevelScript::RunScript ()
 		case PCD_SAVESTRING:
 			// Saves the string
 			{
-				unsigned int str_otf = ACS_StringsOnTheFly.Push(strbin1(work));
+				unsigned int str_otf = ACS_StringsOnTheFly.Push(work);
 				if (str_otf > 0xffff)
 				{
 					PushToStack(-1);

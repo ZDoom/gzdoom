@@ -220,6 +220,7 @@ private:
 
 	static int STACK_ARGS SortScripts (const void *a, const void *b);
 	void UnencryptStrings ();
+	void UnescapeStringTable(BYTE *chunkstart, bool haspadding);
 	int FindStringInChunk (DWORD *chunk, const char *varname) const;
 	const char *LookupString (DWORD index) const;
 

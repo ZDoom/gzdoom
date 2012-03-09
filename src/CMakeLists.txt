@@ -403,17 +403,17 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	if( NOT PROFILE )
 		set( REL_CXX_FLAGS "${REL_CXX_FLAGS} -fomit-frame-pointer" )
 	endif( NOT PROFILE )
-	set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${REL_CXX_FLAGS}" )
-	set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_CXX_FLAGS}" )
-	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_CXX_FLAGS}" )
+	set( CMAKE_CXX_FLAGS_RELEASE "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}" )
+	set( CMAKE_CXX_FLAGS_MINSIZEREL "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
+	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused -Wextra -Wno-missing-field-initializers" )
+	set( CMAKE_CXX_FLAGS "-Wall -Wno-unused -Wextra -Wno-missing-field-initializers ${CMAKE_CXX_FLAGS}" )
 
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
 	# which is a royal pain. The previous version I had been using was fine with them.
 	if( WIN32 )
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas -Wno-comment -Wno-format" )
+		set( CMAKE_CXX_FLAGS "-Wno-unknown-pragmas -Wno-comment -Wno-format ${CMAKE_CXX_FLAGS}" )
 	endif( WIN32 )
 
 	if( NOT NO_STRIP )

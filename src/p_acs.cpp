@@ -670,7 +670,22 @@ static bool DoUseInv (AActor *actor, const PClass *info)
 	AInventory *item = actor->FindInventory (info);
 	if (item != NULL)
 	{
-		return actor->UseInventory(item);
+		if (actor->player == NULL)
+		{
+			return actor->UseInventory(item);
+		}
+		else
+		{
+			int cheats;
+			bool res;
+
+			// Bypass CF_TOTALLYFROZEN
+			cheats = actor->player->cheats;
+			actor->player->cheats &= ~CF_TOTALLYFROZEN;
+			res = actor->UseInventory(item);
+			actor->player->cheats |= (cheats & CF_TOTALLYFROZEN);
+			return res;
+		}
 	}
 	return false;
 }

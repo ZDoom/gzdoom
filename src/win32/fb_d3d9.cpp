@@ -2981,6 +2981,16 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 		x1 -= (parms.texwidth - parms.windowright) * xscale;
 		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
 	}
+	parms.bilinear = false;
+
+	D3DCOLOR color0, color1;
+	BufferedTris *quad = &QuadExtra[QuadBatchPos];
+
+	if (!SetStyle(tex, parms, color0, color1, *quad))
+	{
+		return;
+	}
+
 #if 0
 	float vscale = 1.f / tex->Box->Owner->Height / yscale;
 	if (y0 < parms.uclip)
@@ -3023,16 +3033,6 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}
 #endif
-	parms.bilinear = false;
-
-	D3DCOLOR color0, color1;
-	BufferedTris *quad = &QuadExtra[QuadBatchPos];
-
-	if (!SetStyle(tex, parms, color0, color1, *quad))
-	{
-		return;
-	}
-
 	quad->Texture = tex->Box->Owner->Tex;
 	if (parms.bilinear)
 	{
@@ -3548,6 +3548,7 @@ void D3DFB::EndQuadBatch()
 		}
 		else if ((quad->Flags & BQF_Paletted) == BQF_CustomPalette)
 		{
+			assert(quad->Palette != NULL);
 			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
 		}
 #if 0

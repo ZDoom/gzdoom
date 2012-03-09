@@ -61,7 +61,7 @@
 CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR (Int, sv_smartaim, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
-static void CheckForPushSpecial (line_t *line, int side, AActor *mobj);
+static void CheckForPushSpecial (line_t *line, int side, AActor *mobj, bool windowcheck);
 static void SpawnShootDecal (AActor *t1, const FTraceResults &trace);
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
 							 fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz, bool ffloor = false);
@@ -625,7 +625,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 			P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
 		tm.thing->BlockingLine = ld;
-		CheckForPushSpecial (ld, 0, tm.thing);
+		CheckForPushSpecial (ld, 0, tm.thing, false);
 		return false;
 	}
 
@@ -656,7 +656,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 			}
 			tm.thing->BlockingLine = ld;
 			// Calculate line side based on the actor's original position, not the new one.
-			CheckForPushSpecial (ld, P_PointOnLineSide(tm.thing->x, tm.thing->y, ld), tm.thing);
+			CheckForPushSpecial (ld, P_PointOnLineSide(tm.thing->x, tm.thing->y, ld), tm.thing, false);
 			return false;
 		}
 	}
@@ -1611,10 +1611,23 @@ void P_FakeZMovement (AActor *mo)
 //
 //===========================================================================
 
-static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
+static void CheckForPushSpecial (line_t *line, int side, AActor *mobj, bool windowcheck)
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
+		if (windowcheck && line->backsector != NULL)
+		{ // Make sure this line actually blocks us and is not a window
+		  // or similar construct we are standing inside of.
+			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(mobj->x, mobj->y);
+			fixed_t fzb = line->frontsector->floorplane.ZatPoint(mobj->x, mobj->y);
+			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(mobj->x, mobj->y);
+			fixed_t bzb = line->backsector->floorplane.ZatPoint(mobj->x, mobj->y);
+			if (fzt >= mobj->z + mobj->height && bzt >= mobj->z + mobj->height &&
+				fzb <= mobj->z && bzb <= mobj->z)
+			{
+				return;
+			}
+		}
 		if (mobj->flags2 & MF2_PUSHWALL)
 		{
 			P_ActivateLine (line, mobj, side, SPAC_Push);
@@ -2003,7 +2016,7 @@ pushline:
 			// see which lines were pushed
 			ld = spechit[--numSpecHitTemp];
 			side = P_PointOnLineSide (thing->x, thing->y, ld);
-			CheckForPushSpecial (ld, side, thing);
+			CheckForPushSpecial (ld, side, thing, true);
 		}
 	}
 	return false;

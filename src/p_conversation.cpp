@@ -218,27 +218,6 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 
 //============================================================================
 //
-// P_FreeStrifeConversations
-//
-//============================================================================
-
-void P_FreeStrifeConversations ()
-{
-	FStrifeDialogueNode *node;
-
-	while (StrifeDialogues.Pop (node))
-	{
-		delete node;
-	}
-
-	DialogueRoots.Clear();
-	ClassRoots.Clear();
-
-	PrevNode = NULL;
-}
-
-//============================================================================
-//
 // LoadScriptFile
 //
 // Loads a SCRIPTxx file and converts it into a more useful internal format.
@@ -1064,6 +1043,31 @@ public:
 IMPLEMENT_ABSTRACT_CLASS(DConversationMenu)
 int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
 
+
+//============================================================================
+//
+// P_FreeStrifeConversations
+//
+//============================================================================
+
+void P_FreeStrifeConversations ()
+{
+	FStrifeDialogueNode *node;
+
+	while (StrifeDialogues.Pop (node))
+	{
+		delete node;
+	}
+
+	DialogueRoots.Clear();
+	ClassRoots.Clear();
+
+	PrevNode = NULL;
+	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	{
+		DMenu::CurrentMenu->Close();
+	}
+}
 
 //============================================================================
 //

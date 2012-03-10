@@ -1119,6 +1119,7 @@ menu/dismiss		dsswish		// Dismiss a prompt message
 menu/choose		dsrifl		// Choose a menu item
 menu/clear		dsmtalht	// Close top menu
 
+misc/startupdone	dspsdtha
 misc/teleport		dstelept
 misc/swish		dsswish
 misc/meathit		dsmeatht

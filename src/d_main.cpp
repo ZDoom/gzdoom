@@ -2166,8 +2166,14 @@ void D_DoomMain (void)
 		S_Init ();
 
 		Printf ("ST_Init: Init startup screen.\n");
-		if (!restart) StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
-		else StartScreen = new FStartupScreen(0);
+		if (!restart)
+		{
+			StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+		}
+		else
+		{
+			StartScreen = new FStartupScreen(0);
+		}
 
 		ParseCompatibility();
 
@@ -2314,6 +2320,7 @@ void D_DoomMain (void)
 
 			delete StartScreen;
 			StartScreen = NULL;
+			S_Sound (CHAN_BODY, "misc/startupdone", 1, ATTN_NONE);
 
 			if (Args->CheckParm("-norun"))
 			{

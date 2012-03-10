@@ -887,7 +887,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	{
 		for (i = 0; i < table->NumEntries; ++i)
 		{
-			table->Remap[i] = GPalette.Remap[i];
+			table->Remap[i] = i;
 		}
 		memcpy(table->Palette, GPalette.BaseColors, sizeof(*table->Palette) * table->NumEntries);
 	}

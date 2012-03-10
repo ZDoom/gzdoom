@@ -258,9 +258,14 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 			{
 				newmobj->CopyFriendliness (eye, false);
 			}
-			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true, NULL))
-				newmobj->SetState (newmobj->SeeState);
+			// Make it act as if it was around when the player first made noise
+			// (if the player has made noise).
+			newmobj->LastHeard = newmobj->Sector->SoundTarget;
 
+			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true, NULL))
+			{
+				newmobj->SetState (newmobj->SeeState);
+			}
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 			{
 				// telefrag anything in this spot

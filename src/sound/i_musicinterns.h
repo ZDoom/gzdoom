@@ -432,6 +432,8 @@ protected:
 
 	void OutputVolume (DWORD volume);
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
+	int FillStopBuffer(int buffer_num);
+	DWORD *WriteStopNotes(DWORD *events);
 	int ServiceEvent();
 	int VolumeControllerChange(int channel, int volume);
 	int ClampLoopCount(int loopcount);

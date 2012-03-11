@@ -485,7 +485,7 @@ void MIDIStreamer::Resume()
 
 void MIDIStreamer::Stop()
 {
-	EndQueued = 2;
+	EndQueued = 4;
 #ifdef _WIN32
 	if (PlayerThread != NULL)
 	{
@@ -653,7 +653,7 @@ void MIDIStreamer::Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, D
 {
 	MIDIStreamer *self = (MIDIStreamer *)userdata;
 
-	if (self->EndQueued > 1)
+	if (self->EndQueued >= 4)
 	{
 		return;
 	}
@@ -813,7 +813,7 @@ int MIDIStreamer::ServiceEvent()
 {
 	int res;
 
-	if (EndQueued == 1)
+	if (EndQueued == 2)
 	{
 		return 0;
 	}
@@ -822,7 +822,18 @@ int MIDIStreamer::ServiceEvent()
 		return res;
 	}
 fill:
-	res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
+	if (EndQueued == 1)
+	{
+		res = FillStopBuffer(BufferNum);
+		if ((res & 3) != SONG_ERROR)
+		{
+			EndQueued = 2;
+		}
+	}
+	else
+	{
+		res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
+	}
 	switch (res & 3)
 	{
 	case SONG_MORE:
@@ -925,17 +936,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		if (Restarting)
 		{
 			Restarting = false;
-			// Stop all notes in case any were left hanging.
-			for (i = 0; i < 16; ++i)
-			{
-				events[0] = 0;				// dwDeltaTime
-				events[1] = 0;				// dwStreamID
-				events[2] = MIDI_CTRLCHANGE | i | (123 << 8);	// All notes off
-				events[3] = 0;
-				events[4] = 0;
-				events[5] = MIDI_CTRLCHANGE | i | (121 << 8);	// Reset controllers
-				events += 6;
-			}
+			events = WriteStopNotes(events);	// Stop all notes in case any were left hanging.
 			DoRestart();
 		}
 		events = MakeEvents(events, max_event_p, max_time);
@@ -949,6 +950,62 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		return SONG_ERROR | (i << 2);
 	}
 	return SONG_MORE;
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: FillStopBuffer
+//
+// Fills a MIDI buffer with events to stop all channels.
+//
+//==========================================================================
+
+int MIDIStreamer::FillStopBuffer(int buffer_num)
+{
+	DWORD *events = Events[buffer_num], *max_event_p;
+	int i;
+
+	events = WriteStopNotes(events);
+
+	// wait some tics, just so that this buffer takes some time
+	events[0] = 500;
+	events[1] = 0;
+	events[2] = MEVT_NOP << 24;
+	events += 3;
+
+	memset(&Buffer[buffer_num], 0, sizeof(MIDIHDR));
+	Buffer[buffer_num].lpData = (LPSTR)Events[buffer_num];
+	Buffer[buffer_num].dwBufferLength = DWORD((LPSTR)events - Buffer[buffer_num].lpData);
+	Buffer[buffer_num].dwBytesRecorded = Buffer[buffer_num].dwBufferLength;
+	if (0 != (i = MIDI->PrepareHeader(&Buffer[buffer_num])))
+	{
+		return SONG_ERROR | (i << 2);
+	}
+	return SONG_MORE;
+}
+
+//==========================================================================
+//
+// MIDIStreamer :: WriteStopNotes
+//
+// Generates MIDI events to stop all notes and reset controllers on
+// every channel.
+//
+//==========================================================================
+
+DWORD *MIDIStreamer::WriteStopNotes(DWORD *events)
+{
+	for (int i = 0; i < 16; ++i)
+	{
+		events[0] = 0;				// dwDeltaTime
+		events[1] = 0;				// dwStreamID
+		events[2] = MIDI_CTRLCHANGE | i | (123 << 8);	// All notes off
+		events[3] = 0;
+		events[4] = 0;
+		events[5] = MIDI_CTRLCHANGE | i | (121 << 8);	// Reset controllers
+		events += 6;
+	}
+	return events;
 }
 
 //==========================================================================

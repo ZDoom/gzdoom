@@ -1178,7 +1178,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		if (strings != NULL)
 		{
 			StringTable = DWORD(strings - Data + 8);
-			UnescapeStringTable(strings, true);
+			UnescapeStringTable(strings + 8, true);
 		}
 		else
 		{
@@ -1621,7 +1621,7 @@ void FBehavior::LoadScriptsDirectory ()
 	scripts.b = FindChunk(MAKE_ID('S','N','A','M'));
 	if (scripts.dw != NULL)
 	{
-		UnescapeStringTable(scripts.b, false);
+		UnescapeStringTable(scripts.b + 8, false);
 		for (i = 0; i < NumScripts; ++i)
 		{
 			// ACC stores script names as an index into the SNAM chunk, with the first index as
@@ -1696,7 +1696,6 @@ void FBehavior::UnescapeStringTable(BYTE *chunkstart, bool has_padding)
 	assert(chunkstart != NULL);
 
 	DWORD *chunk = (DWORD *)chunkstart;
-	chunk += 2;
 
 	if (!has_padding)
 	{

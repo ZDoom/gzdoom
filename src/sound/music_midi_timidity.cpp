@@ -145,7 +145,7 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 	CommandLine.UnlockBuffer();
 
 	// Write MIDI song to temporary file
-	song->CreateSMF(midi);
+	song->CreateSMF(midi, looping ? 0 : 1);
 
 	f = fopen(DiskName, "wb");
 	if (f == NULL)

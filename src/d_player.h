@@ -330,8 +330,6 @@ public:
 
 	int			air_finished;			// [RH] Time when you start drowning
 
-	WORD		accuracy, stamina;		// [RH] Strife stats
-
 	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
 
 	//Added by MC:

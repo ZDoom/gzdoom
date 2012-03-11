@@ -1270,10 +1270,10 @@ class CommandDrawNumber : public CommandDrawString
 						num = statusBar->CPlayer->mo->InvSel->Amount;
 					break;
 				case ACCURACY:
-					num = statusBar->CPlayer->accuracy;
+					num = statusBar->CPlayer->mo->accuracy;
 					break;
 				case STAMINA:
-					num = statusBar->CPlayer->stamina;
+					num = statusBar->CPlayer->mo->stamina;
 					break;
 				case KEYS:
 					num = 0;
@@ -2455,7 +2455,7 @@ class CommandDrawBar : public SBarInfoCommand
 							max = 0;
 					}
 					else //default to the class's health
-						max = statusBar->CPlayer->mo->GetMaxHealth() + statusBar->CPlayer->stamina;
+						max = statusBar->CPlayer->mo->GetMaxHealth() + statusBar->CPlayer->mo->stamina;
 					break;
 				case ARMOR:
 					value = statusBar->armor != NULL ? statusBar->armor->Amount : 0;
@@ -2970,7 +2970,7 @@ class CommandDrawGem : public SBarInfoCommand
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
 			goalValue = armor ? statusBar->armor->Amount : statusBar->CPlayer->mo->health;
-			int max = armor ? 100 : statusBar->CPlayer->mo->GetMaxHealth() + statusBar->CPlayer->stamina;
+			int max = armor ? 100 : statusBar->CPlayer->mo->GetMaxHealth() + statusBar->CPlayer->mo->stamina;
 			if(max != 0 && goalValue > 0)
 			{
 				goalValue = (goalValue*100)/max;

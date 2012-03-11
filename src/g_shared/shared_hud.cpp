@@ -230,9 +230,9 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 	
 	if (hud_showstats)
 	{
-		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->accuracy);
+		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->mo->accuracy);
 		DrawStatLine(x, y, "Ac:", tempstr);
-		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->stamina);
+		mysnprintf(tempstr, countof(tempstr), "%i ", CPlayer->mo->stamina);
 		DrawStatLine(x, y, "St:", tempstr);
 	}
 	

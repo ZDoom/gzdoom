@@ -326,18 +326,9 @@ void P_SerializeWorld (FArchive &arc)
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
 	{
 		arc << sec->floorplane
-			<< sec->ceilingplane;
-		if (SaveVersion < 3223)
-		{
-			BYTE bytelight;
-			arc << bytelight;
-			sec->lightlevel = bytelight;
-		}
-		else
-		{
-			arc << sec->lightlevel;
-		}
-		arc << sec->special
+			<< sec->ceilingplane
+			<< sec->lightlevel
+			<< sec->special
 			<< sec->tag
 			<< sec->soundtraversed
 			<< sec->seqType

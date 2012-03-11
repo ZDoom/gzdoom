@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 	int			power;
 	AActor *linetarget;
 
-	power = MIN(10, self->player->stamina / 10);
+	power = MIN(10, self->player->mo->stamina / 10);
 	damage = (pr_jabdagger() % (power + 8)) * (power + 2);
 
 	if (self->FindInventory<APowerStrength>())
@@ -237,7 +237,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 	if (ti) 
 	{
 		savedangle = self->angle;
-		self->angle += pr_electric.Random2 () << (18 - self->player->accuracy * 5 / 100);
+		self->angle += pr_electric.Random2 () << (18 - self->player->mo->accuracy * 5 / 100);
 		self->player->mo->PlayAttacking2 ();
 		P_SpawnPlayerMissile (self, ti);
 		self->angle = savedangle;
@@ -263,7 +263,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 
 	if (mo->player != NULL && !accurate)
 	{
-		angle += pr_sgunshot.Random2() << (20 - mo->player->accuracy * 5 / 100);
+		angle += pr_sgunshot.Random2() << (20 - mo->player->mo->accuracy * 5 / 100);
 	}
 
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, NAME_StrifePuff);
@@ -324,7 +324,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 	}
 
 	savedangle = self->angle;
-	self->angle += pr_minimissile.Random2() << (19 - player->accuracy * 5 / 100);
+	self->angle += pr_minimissile.Random2() << (19 - player->mo->accuracy * 5 / 100);
 	player->mo->PlayAttacking2 ();
 	P_SpawnPlayerMissile (self, PClass::FindClass("MiniMissile"));
 	self->angle = savedangle;

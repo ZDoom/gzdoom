@@ -188,7 +188,7 @@ bool P_GiveBody (AActor *actor, int num)
 	num = clamp(num, -65536, 65536);	// prevent overflows for bad values
 	if (player != NULL)
 	{
-		max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->stamina;
+		max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->mo->stamina;
 		// [MH] First step in predictable generic morph effects
  		if (player->morphTics)
  		{
@@ -196,7 +196,7 @@ bool P_GiveBody (AActor *actor, int num)
 			{
 				if (!(player->MorphStyle & MORPH_ADDSTAMINA))
 				{
-					max -= player->stamina;
+					max -= player->mo->stamina;
 				}
 			}
 			else // old health behaviour
@@ -204,7 +204,7 @@ bool P_GiveBody (AActor *actor, int num)
 				max = MAXMORPHHEALTH;
 				if (player->MorphStyle & MORPH_ADDSTAMINA)
 				{
-					max += player->stamina;
+					max += player->mo->stamina;
 				}
 			}
  		}
@@ -1483,7 +1483,7 @@ bool AHealth::TryPickup (AActor *&other)
 		PrevHealth = other->player->health;
 		if (max == 0)
 		{
-			max = static_cast<APlayerPawn*>(other)->GetMaxHealth() + player->stamina;
+			max = static_cast<APlayerPawn*>(other)->GetMaxHealth() + player->mo->stamina;
 			// [MH] First step in predictable generic morph effects
  			if (player->morphTics)
  			{
@@ -1491,7 +1491,7 @@ bool AHealth::TryPickup (AActor *&other)
 				{
 					if (!(player->MorphStyle & MORPH_ADDSTAMINA))
 					{
-						max -= player->stamina;
+						max -= player->mo->stamina;
 					}
 				}
 				else // old health behaviour
@@ -1499,7 +1499,7 @@ bool AHealth::TryPickup (AActor *&other)
 					max = MAXMORPHHEALTH;
 					if (player->MorphStyle & MORPH_ADDSTAMINA)
 					{
-						max += player->stamina;
+						max += player->mo->stamina;
 					}
 				}
 			}

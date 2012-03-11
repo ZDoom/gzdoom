@@ -269,8 +269,6 @@ player_t::player_t()
   respawn_time(0),
   camera(0),
   air_finished(0),
-  accuracy(0),
-  stamina(0),
   savedyaw(0),
   savedpitch(0),
   angle(0),
@@ -2616,7 +2614,6 @@ void player_t::Serialize (FArchive &arc)
 		<< BlendG
 		<< BlendB
 		<< BlendA
-		<< accuracy << stamina
 		<< LogText
 		<< ConversationNPC
 		<< ConversationPC

@@ -82,6 +82,8 @@ DEFINE_MEMBER_VARIABLE(scaleX, AActor)
 DEFINE_MEMBER_VARIABLE(scaleY, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
+DEFINE_MEMBER_VARIABLE(accuracy, AActor)
+DEFINE_MEMBER_VARIABLE(stamina, AActor)
 
 //==========================================================================
 //

@@ -2032,35 +2032,19 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 {
-	if (SaveVersion < 3359)
+	arc << scriptnum;
+	// If the script number is negative, then it's really a name.
+	// So read/store the name after it.
+	if (scriptnum < 0)
 	{
-		if (was2byte)
+		if (arc.IsStoring())
 		{
-			WORD oldver;
-			arc << oldver;
-			scriptnum = oldver;
+			arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
 		}
 		else
 		{
-			arc << scriptnum;
-		}
-	}
-	else
-	{
-		arc << scriptnum;
-		// If the script number is negative, then it's really a name.
-		// So read/store the name after it.
-		if (scriptnum < 0)
-		{
-			if (arc.IsStoring())
-			{
-				arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
-			}
-			else
-			{
-				const char *nam = arc.ReadName();
-				scriptnum = -FName(nam);
-			}
+			const char *nam = arc.ReadName();
+			scriptnum = -FName(nam);
 		}
 	}
 }
@@ -2819,6 +2803,8 @@ enum
 	APROP_ScaleY        = 30,
 	APROP_Dormant		= 31,
 	APROP_Mass			= 32,
+	APROP_Accuracy      = 33,
+	APROP_Stamina       = 34,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3012,6 +2998,14 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->Mass = value;
 		break;
 
+	case APROP_Accuracy:
+		actor->accuracy = value;
+		break;
+
+	case APROP_Stamina:
+		actor->stamina = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3078,6 +3072,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_ScaleX: 		return actor->scaleX;
 	case APROP_ScaleY: 		return actor->scaleY;
 	case APROP_Mass: 		return actor->Mass;
+	case APROP_Accuracy:    return actor->accuracy;
+	case APROP_Stamina:     return actor->stamina;
 
 	default:				return 0;
 	}
@@ -3116,6 +3112,8 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_ScaleX:
 		case APROP_ScaleY:
 		case APROP_Mass:
+		case APROP_Accuracy:
+		case APROP_Stamina:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

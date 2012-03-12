@@ -962,7 +962,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 
 int MIDIStreamer::FillStopBuffer(int buffer_num)
 {
-	DWORD *events = Events[buffer_num], *max_event_p;
+	DWORD *events = Events[buffer_num];
 	int i;
 
 	events = WriteStopNotes(events);

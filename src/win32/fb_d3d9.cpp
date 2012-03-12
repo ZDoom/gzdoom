@@ -2981,15 +2981,6 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 		x1 -= (parms.texwidth - parms.windowright) * xscale;
 		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
 	}
-	parms.bilinear = false;
-
-	D3DCOLOR color0, color1;
-	BufferedTris *quad = &QuadExtra[QuadBatchPos];
-
-	if (!SetStyle(tex, parms, color0, color1, *quad))
-	{
-		return;
-	}
 
 #if 0
 	float vscale = 1.f / tex->Box->Owner->Height / yscale;
@@ -3033,6 +3024,16 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}
 #endif
+	parms.bilinear = false;
+
+	D3DCOLOR color0, color1;
+	BufferedTris *quad = &QuadExtra[QuadBatchPos];
+
+	if (!SetStyle(tex, parms, color0, color1, *quad))
+	{
+		goto done;
+	}
+
 	quad->Texture = tex->Box->Owner->Tex;
 	if (parms.bilinear)
 	{
@@ -3109,7 +3110,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	QuadBatchPos++;
 	VertexPos += 4;
 	IndexPos += 6;
-
+done:
 	if (scissoring)
 	{
 		EndQuadBatch();

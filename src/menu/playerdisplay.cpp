@@ -558,6 +558,7 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 				DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, scaleX),
 				DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, scaleY),
 				DTA_Translation, trans,
+				DTA_FlipX, sprframe->Flip & (1 << mRotation),
 				TAG_DONE);
 		}
 	}

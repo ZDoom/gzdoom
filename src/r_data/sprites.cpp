@@ -439,6 +439,7 @@ static void R_ExtendSpriteFrames(spritedef_t &spr, int frame)
 	// Initialize all new frames to 0.
 	memset(&SpriteFrames[newstart], 0, sizeof(spriteframe_t)*(frame - spr.numframes));
 	spr.numframes = frame;
+	spr.spriteframes = newstart;
 }
 
 //==========================================================================

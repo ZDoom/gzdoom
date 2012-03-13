@@ -2032,19 +2032,35 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 {
-	arc << scriptnum;
-	// If the script number is negative, then it's really a name.
-	// So read/store the name after it.
-	if (scriptnum < 0)
+	if (SaveVersion < 3359)
 	{
-		if (arc.IsStoring())
+		if (was2byte)
 		{
-			arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
+			WORD oldver;
+			arc << oldver;
+			scriptnum = oldver;
 		}
 		else
 		{
-			const char *nam = arc.ReadName();
-			scriptnum = -FName(nam);
+			arc << scriptnum;
+		}
+	}
+	else
+	{
+		arc << scriptnum;
+		// If the script number is negative, then it's really a name.
+		// So read/store the name after it.
+		if (scriptnum < 0)
+		{
+			if (arc.IsStoring())
+			{
+				arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
+			}
+			else
+			{
+				const char *nam = arc.ReadName();
+				scriptnum = -FName(nam);
+			}
 		}
 	}
 }

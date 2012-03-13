@@ -230,9 +230,12 @@ void AActor::Serialize (FArchive &arc)
 		<< velz
 		<< tics
 		<< state
-		<< Damage
-		<< projectileKickback
-		<< flags
+		<< Damage;
+	if (SaveVersion >= 3227)
+	{
+		arc << projectileKickback;
+	}
+	arc	<< flags
 		<< flags2
 		<< flags3
 		<< flags4
@@ -266,10 +269,12 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << args[0];
 	}
-	arc << args[1] << args[2] << args[3] << args[4]
-		<< accuracy
-		<< stamina
-		<< goal
+	arc << args[1] << args[2] << args[3] << args[4];
+	if (SaveVersion >= 3427)
+	{
+		arc << accuracy << stamina;
+	}
+	arc << goal
 		<< waterlevel
 		<< MinMissileChance
 		<< SpawnFlags
@@ -304,10 +309,14 @@ void AActor::Serialize (FArchive &arc)
 		<< maxtargetrange
 		<< meleethreshold
 		<< meleerange
-		<< DamageType
+		<< DamageType;
+	if (SaveVersion >= 3237) 
+	{
+		arc
 		<< PainType
-		<< DeathType
-		<< gravity
+		<< DeathType;
+	}
+	arc	<< gravity
 		<< FastChaseStrafeCount
 		<< master
 		<< smokecounter
@@ -316,16 +325,22 @@ void AActor::Serialize (FArchive &arc)
 		<< VisibleToTeam // [BB]
 		<< pushfactor
 		<< Species
-		<< Score
-		<< DesignatedTeam
-		<< lastpush << lastbump
+		<< Score;
+	if (SaveVersion >= 3113)
+	{
+		arc << DesignatedTeam;
+	}
+	arc << lastpush << lastbump
 		<< PainThreshold
 		<< DamageFactor
 		<< WeaveIndexXY << WeaveIndexZ
 		<< PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner
-		<< PoisonDamage << PoisonDuration << PoisonPeriod
-		<< PoisonDamageType << PoisonDamageTypeReceived
-		<< ConversationRoot << Conversation;
+		<< PoisonDamage << PoisonDuration << PoisonPeriod;
+	if (SaveVersion >= 3235)
+	{
+		arc << PoisonDamageType << PoisonDamageTypeReceived;
+	}
+	arc << ConversationRoot << Conversation;
 
 	{
 		FString tagstr;

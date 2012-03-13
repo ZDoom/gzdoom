@@ -2613,8 +2613,18 @@ void player_t::Serialize (FArchive &arc)
 		<< BlendR
 		<< BlendG
 		<< BlendB
-		<< BlendA
-		<< LogText
+		<< BlendA;
+	if (SaveVersion < 3427)
+	{
+		WORD oldaccuracy, oldstamina;
+		arc << oldaccuracy << oldstamina;
+		if (mo != NULL)
+		{
+			mo->accuracy = oldaccuracy;
+			mo->stamina = oldstamina;
+		}
+	}
+	arc << LogText
 		<< ConversationNPC
 		<< ConversationPC
 		<< ConversationNPCAngle

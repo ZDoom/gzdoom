@@ -1367,8 +1367,12 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.aircontrol
 		<< level.teamdamage
 		<< level.maptime
-		<< i
-		<< level.nextmusic;
+		<< i;
+
+	if (SaveVersion >= 3313)
+	{
+		arc << level.nextmusic;
+	}
 
 	// Hub transitions must keep the current total time
 	if (!hubLoad)

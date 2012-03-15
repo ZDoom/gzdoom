@@ -146,11 +146,16 @@ bool AWeapon::Use (bool pickup)
 
 void AWeapon::Destroy()
 {
-	if (SisterWeapon != NULL)
+	AWeapon *sister = SisterWeapon;
+
+	if (sister != NULL)
 	{
 		// avoid recursion
-		SisterWeapon->SisterWeapon = NULL;
-		SisterWeapon->Destroy();
+		sister->SisterWeapon = NULL;
+		if (sister != this)
+		{ // In case we are our own sister, don't crash.
+			sister->Destroy();
+		}
 	}
 	Super::Destroy();
 }

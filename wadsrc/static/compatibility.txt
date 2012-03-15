@@ -148,3 +148,11 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 {
 	badangles
 }
+
+E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citidel, map54
+{
+	// This map has two gear boxes which are flagged for player cross
+	// activation instead of the proper player uses activation.
+	setactivation 963 2
+	setactivation 943 2
+}

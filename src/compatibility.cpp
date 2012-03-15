@@ -74,7 +74,8 @@ enum
 	CP_END,
 	CP_CLEARFLAGS,
 	CP_SETFLAGS,
-	CP_SETSPECIAL
+	CP_SETSPECIAL,
+	CP_SETACTIVATION
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -239,6 +240,15 @@ void ParseCompatibility()
 					CompatParams.Push(sc.Number);
 				}
 			}
+			else if (sc.Compare("setactivation"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETACTIVATION);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
 			else 
 			{
 				sc.UnGet();
@@ -386,6 +396,16 @@ void SetCompatibilityParams()
 						}
 					}
 					i+=8;
+					break;
+				}
+				case CP_SETACTIVATION:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->activation = CompatParams[i+2];
+					}
+					i += 3;
 					break;
 				}
 			}

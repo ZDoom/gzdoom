@@ -5293,8 +5293,11 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CLEARLINESPECIAL:
-			if (activationline)
+			if (activationline != NULL)
+			{
 				activationline->special = 0;
+				DPrintf("Cleared line special on line %d\n", activationline - lines);
+			}
 			break;
 
 		case PCD_CASEGOTO:
@@ -5931,6 +5934,8 @@ int DLevelScript::RunScript ()
 					line->args[2] = STACK(3);
 					line->args[3] = STACK(2);
 					line->args[4] = STACK(1);
+					DPrintf("Set special on line %d (id %d) to %d(%d,%d,%d,%d,%d)\n",
+						linenum, STACK(7), specnum, arg0, STACK(4), STACK(3), STACK(2), STACK(1));
 				}
 				sp -= 7;
 			}

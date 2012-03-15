@@ -122,7 +122,14 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		ld->flags = flags | ((linetrans->flags & 0x1f) << 9);
 		if (linetrans->flags & 0x20) ld->flags |= ML_FIRSTSIDEONLY;
 		ld->activation = 1 << GET_SPAC(ld->flags);
-		if (ld->activation == SPAC_AnyCross) ld->activation = SPAC_Impact|SPAC_PCross;	// this is really PTouch
+		if (ld->activation == SPAC_AnyCross)
+		{ // this is really PTouch
+			ld->activation = SPAC_Impact|SPAC_PCross;
+		}
+		else if (ld->activation == SPAC_Impact)
+		{ // In non-UMDF maps, Impact implies PCross
+			ld->activation = SPAC_Impact | SPAC_PCross;
+		}
 		ld->flags &= ~ML_SPAC_MASK;
 
 		if (passthrough && ld->activation == SPAC_Use)

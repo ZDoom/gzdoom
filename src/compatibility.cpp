@@ -75,6 +75,7 @@ enum
 	CP_CLEARFLAGS,
 	CP_SETFLAGS,
 	CP_SETSPECIAL,
+	CP_CLEARSPECIAL,
 	CP_SETACTIVATION
 };
 
@@ -240,6 +241,13 @@ void ParseCompatibility()
 					CompatParams.Push(sc.Number);
 				}
 			}
+			else if (sc.Compare("clearlinespecial"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_CLEARSPECIAL);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
 			else if (sc.Compare("setactivation"))
 			{
 				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
@@ -278,6 +286,7 @@ void CheckCompatibility(MapData *map)
 {
 	FMD5Holder md5;
 	FCompatValues *flags;
+	bool onlyparams = true;
 
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
@@ -306,42 +315,50 @@ void CheckCompatibility(MapData *map)
 	}
 	else
 	{
-		map->GetChecksum(md5.Bytes);
+		onlyparams = false;
+	}
 
-		flags = BCompatMap.CheckKey(md5);
+	map->GetChecksum(md5.Bytes);
 
-		if (developer)
+	flags = BCompatMap.CheckKey(md5);
+
+	if (developer)
+	{
+		Printf("MD5 = ");
+		for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
 		{
-			Printf("MD5 = ");
-			for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
-			{
-				Printf("%02X", md5.Bytes[j]);
-			}
-			if (flags != NULL)
-			{
-				Printf(", cflags = %08x, cflags2 = %08x, bflags = %08x\n",
-					flags->CompatFlags[SLOT_COMPAT], flags->CompatFlags[SLOT_COMPAT2], flags->CompatFlags[SLOT_BCOMPAT]);
-			}
-			else
-			{
-				Printf("\n");
-			}
+			Printf("%02X", md5.Bytes[j]);
 		}
-
 		if (flags != NULL)
+		{
+			Printf(", cflags = %08x, cflags2 = %08x, bflags = %08x\n",
+				flags->CompatFlags[SLOT_COMPAT], flags->CompatFlags[SLOT_COMPAT2], flags->CompatFlags[SLOT_BCOMPAT]);
+		}
+		else
+		{
+			Printf("\n");
+		}
+	}
+
+	if (flags != NULL)
+	{
+		if (!onlyparams)
 		{
 			ii_compatflags = flags->CompatFlags[SLOT_COMPAT];
 			ii_compatflags2 = flags->CompatFlags[SLOT_COMPAT2];
 			ib_compatflags = flags->CompatFlags[SLOT_BCOMPAT];
-			ii_compatparams = flags->ExtCommandIndex;
 		}
-		else
+		ii_compatparams = flags->ExtCommandIndex;
+	}
+	else
+	{
+		if (!onlyparams)
 		{
 			ii_compatflags = 0;
 			ii_compatflags2 = 0;
 			ib_compatflags = 0;
-			ii_compatparams = -1;
 		}
+		ii_compatparams = -1;
 	}
 	// Reset i_compatflags
 	compatflags.Callback();
@@ -396,6 +413,17 @@ void SetCompatibilityParams()
 						}
 					}
 					i+=8;
+					break;
+				}
+				case CP_CLEARSPECIAL:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->special = 0;
+						memset(line->args, 0, sizeof(line->args));
+					}
+					i += 2;
 					break;
 				}
 				case CP_SETACTIVATION:

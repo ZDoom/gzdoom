@@ -2874,10 +2874,20 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	switch (property)
 	{
 	case APROP_Health:
+		// Don't alter the health of dead things.
+		if (actor->health <= 0 || (actor->player != NULL && actor->player->playerstate == PST_DEAD))
+		{
+			break;
+		}
 		actor->health = value;
 		if (actor->player != NULL)
 		{
 			actor->player->health = value;
+		}
+		// If the health is set to a non-positive value, properly kill the actor.
+		if (value <= 0)
+		{
+			actor->Die(activator, activator);
 		}
 		break;
 

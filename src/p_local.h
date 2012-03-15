@@ -484,7 +484,7 @@ extern FBlockNode**		blocklinks; 	// for thing chains
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0);
 void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type);
-bool P_GiveBody (AActor *actor, int num);
+bool P_GiveBody (AActor *actor, int num, int max=0);
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 

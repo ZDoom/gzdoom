@@ -1169,7 +1169,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	{
 		StringTable = LittleLong(((DWORD *)Data)[1]);
 		StringTable += LittleLong(((DWORD *)(Data + StringTable))[0]) * 12 + 4;
-		UnescapeStringTable(Data + StringTable, false);
+		UnescapeStringTable(Data + StringTable, Data, false);
 	}
 	else
 	{
@@ -1178,7 +1178,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		if (strings != NULL)
 		{
 			StringTable = DWORD(strings - Data + 8);
-			UnescapeStringTable(strings + 8, true);
+			UnescapeStringTable(strings + 8, NULL, true);
 		}
 		else
 		{
@@ -1621,7 +1621,7 @@ void FBehavior::LoadScriptsDirectory ()
 	scripts.b = FindChunk(MAKE_ID('S','N','A','M'));
 	if (scripts.dw != NULL)
 	{
-		UnescapeStringTable(scripts.b + 8, false);
+		UnescapeStringTable(scripts.b + 8, NULL, false);
 		for (i = 0; i < NumScripts; ++i)
 		{
 			// ACC stores script names as an index into the SNAM chunk, with the first index as
@@ -1688,15 +1688,23 @@ void FBehavior::UnencryptStrings ()
 // FBehavior :: UnescapeStringTable
 //
 // Processes escape sequences for every string in a string table.
+// Chunkstart points to the string table. Datastart points to the base address
+// for offsets in the string table; if NULL, it will use chunkstart. If
+// has_padding is true, then this is a STRL chunk with four bytes of padding
+// on either side of the string count.
 //
 //============================================================================
 
-void FBehavior::UnescapeStringTable(BYTE *chunkstart, bool has_padding)
+void FBehavior::UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool has_padding)
 {
 	assert(chunkstart != NULL);
 
 	DWORD *chunk = (DWORD *)chunkstart;
 
+	if (datastart == NULL)
+	{
+		datastart = chunkstart;
+	}
 	if (!has_padding)
 	{
 		chunk[0] = LittleLong(chunk[0]);
@@ -1704,7 +1712,7 @@ void FBehavior::UnescapeStringTable(BYTE *chunkstart, bool has_padding)
 		{
 			int ofs = LittleLong(chunk[1 + strnum]);	// Byte swap offset, if needed.
 			chunk[1 + strnum] = ofs;
-			strbin((char *)chunk + ofs);
+			strbin((char *)datastart + ofs);
 		}
 	}
 	else
@@ -1714,7 +1722,7 @@ void FBehavior::UnescapeStringTable(BYTE *chunkstart, bool has_padding)
 		{
 			int ofs = LittleLong(chunk[3 + strnum]);	// Byte swap offset, if needed.
 			chunk[3 + strnum] = ofs;
-			strbin((char *)chunk + ofs);
+			strbin((char *)datastart + ofs);
 		}
 	}
 }

@@ -160,6 +160,12 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 // Standard pre-defined skin colors
 struct FPlayerColorSet
 {
+	struct ExtraRange
+	{
+		BYTE RangeStart, RangeEnd;	// colors to remap
+		BYTE FirstColor, LastColor;	// colors to map to
+	};
+
 	FName Name;			// Name of this color
 
 	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
@@ -167,6 +173,8 @@ struct FPlayerColorSet
 
 	BYTE RepresentativeColor;		// A palette entry representative of this translation,
 									// for map arrows and status bar backgrounds and such
+	BYTE NumExtraRanges;
+	ExtraRange Extra[6];
 };
 
 typedef TMap<FName, fixed_t> DmgFactors;

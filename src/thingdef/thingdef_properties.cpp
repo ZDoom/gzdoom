@@ -2065,7 +2065,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIII, PlayerPawn)
+DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIIIiiiiiiiiiiiiiiiiiiiiiiii, PlayerPawn)
 {
 	PROP_INT_PARM(setnum, 0);
 	PROP_STRING_PARM(setname, 1);
@@ -2079,6 +2079,34 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIII, PlayerPawn)
 	color.FirstColor = rangestart;
 	color.LastColor = rangeend;
 	color.RepresentativeColor = representative_color;
+	color.NumExtraRanges = 0;
+
+	if (PROP_PARM_COUNT > 5)
+	{
+		int count = PROP_PARM_COUNT - 5;
+		int start = 5;
+
+		while (count >= 4)
+		{
+			PROP_INT_PARM(range_start, start+0);
+			PROP_INT_PARM(range_end, start+1);
+			PROP_INT_PARM(first_color, start+2);
+			PROP_INT_PARM(last_color, start+3);
+			int extra = color.NumExtraRanges++;
+			assert (extra < countof(color.Extra));
+
+			color.Extra[extra].RangeStart = range_start;
+			color.Extra[extra].RangeEnd = range_end;
+			color.Extra[extra].FirstColor = first_color;
+			color.Extra[extra].LastColor = last_color;
+			count -= 4;
+			start += 4;
+		}
+		if (count != 0)
+		{
+			bag.ScriptPosition.Message(MSG_WARNING, "Extra ranges require 4 parameters each.\n");
+		}
+	}
 
 	if (setnum < 0)
 	{
@@ -2104,6 +2132,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 	color.Name = setname;
 	color.Lump = Wads.CheckNumForName(rangefile);
 	color.RepresentativeColor = representative_color;
+	color.NumExtraRanges = 0;
+
 	if (setnum < 0)
 	{
 		bag.ScriptPosition.Message(MSG_WARNING, "Color set number must not be negative.\n");

@@ -858,6 +858,30 @@ static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 }
 
 //----------------------------------------------------------------------------
+
+static bool SetRange(FRemapTable *table, int start, int end, int first, int last)
+{
+	bool identity = true;
+	if (start == end)
+	{
+		table->Remap[start] = (first + last) / 2;
+	}
+	else
+	{
+		int palrange = last - first;
+		for (int i = start; i <= end; ++i)
+		{
+			int pi = first + palrange * (i - start) / (end - start);
+			table->Remap[i] = GPalette.Remap[pi];
+			identity &= (pi == i);
+			table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
+			table->Palette[i].a = 255;
+		}
+	}
+	return identity;
+}
+
+//----------------------------------------------------------------------------
 //
 //
 //
@@ -921,20 +945,12 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		// Use the pre-defined range instead of a custom one.
 		if (colorset->Lump < 0)
 		{
-			int first = colorset->FirstColor;
-			if (start == end)
+			identity &= SetRange(table, start, end, colorset->FirstColor, colorset->LastColor);
+			for (i = 0; i < colorset->NumExtraRanges; ++i)
 			{
-				table->Remap[i] = (first + colorset->LastColor) / 2;
-			}
-			else
-			{
-				int palrange = colorset->LastColor - first;
-				for (i = start; i <= end; ++i)
-				{
-					int pi = first + palrange * (i - start) / (end - start);
-					table->Remap[i] = GPalette.Remap[pi];
-					if (pi != i) identity = false;
-				}
+				identity &= SetRange(table,
+					colorset->Extra[i].RangeStart, colorset->Extra[i].RangeEnd,
+					colorset->Extra[i].FirstColor, colorset->Extra[i].LastColor);
 			}
 		}
 		else
@@ -944,13 +960,10 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			for (i = start; i <= end; ++i)
 			{
 				table->Remap[i] = GPalette.Remap[trans[i]];
-				if (trans[i] != i) identity = false;
+				identity &= (trans[i] == i);
+				table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
+				table->Palette[i].a = 255;
 			}
-		}
-		for (i = start; i <= end; ++i)
-		{
-			table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
-			table->Palette[i].a = 255;
 		}
 		// If the colorset created an identity translation mark it as inactive
 		table->Inactive = identity;

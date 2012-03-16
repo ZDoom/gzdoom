@@ -783,7 +783,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 {
 	ACTION_PARAM_START(3);
 	ACTION_PARAM_INT(force, 0);
-	ACTION_PARAM_FIXED(distance, 1);
+	ACTION_PARAM_INT(distance, 1);
 	ACTION_PARAM_BOOL(affectSource, 2);
 	ACTION_PARAM_INT(fullthrustdistance, 3);
 

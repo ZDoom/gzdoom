@@ -159,8 +159,9 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citidel, map54
 
 2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
 {
-	// This line is erroneously flagged as a door that monsters can operate.
-	// If they do, they block you off from half the map. Since the attached
-	// sector isn't a door, remove the special.
-	clearlinespecial 1069
+	// This line is erroneously specified as Door_Raise that monsters
+	// can operate. If they do, they block you off from half the map. Change
+	// this into a one-shot Door_Open so that it won't close.
+	setlinespecial 1069 Door_Open 0 16 0 0 0
+	clearlineflags 1069 0x200
 }

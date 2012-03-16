@@ -2779,7 +2779,7 @@ bool FSlide::BounceWall (AActor *mo)
 	if (mo->bouncecount>0 && --mo->bouncecount==0)
 	{
 		if (mo->flags & MF_MISSILE)
-			P_ExplodeMissile(mo, NULL, NULL);
+			P_ExplodeMissile(mo, line, NULL);
 		else
 			mo->Die(NULL, NULL);
 		return true;

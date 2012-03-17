@@ -326,21 +326,25 @@ size_t player_t::FixPointers (const DObject *old, DObject *rep)
 {
 	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
 	size_t changed = 0;
-	if (mo == old)				mo = replacement, changed++;
-	if (poisoner == old)		poisoner = replacement, changed++;
-	if (attacker == old)		attacker = replacement, changed++;
-	if (camera == old)			camera = replacement, changed++;
-	if (dest == old)			dest = replacement, changed++;
-	if (prev == old)			prev = replacement, changed++;
-	if (enemy == old)			enemy = replacement, changed++;
-	if (missile == old)			missile = replacement, changed++;
-	if (mate == old)			mate = replacement, changed++;
-	if (last_mate == old)		last_mate = replacement, changed++;
-	if (ReadyWeapon == old)		ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (PendingWeapon == old)	PendingWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (PremorphWeapon == old)	PremorphWeapon = static_cast<AWeapon *>(rep), changed++;
-	if (ConversationNPC == old)	ConversationNPC = replacement, changed++;
-	if (ConversationPC == old)	ConversationPC = replacement, changed++;
+
+	// The construct *& is used in several of these to avoid the read barriers
+	// that would turn the pointer we want to check to NULL if the old object
+	// is pending deletion.
+	if (mo == old)					mo = replacement, changed++;
+	if (*&poisoner == old)			poisoner = replacement, changed++;
+	if (*&attacker == old)			attacker = replacement, changed++;
+	if (*&camera == old)			camera = replacement, changed++;
+	if (*&dest == old)				dest = replacement, changed++;
+	if (*&prev == old)				prev = replacement, changed++;
+	if (*&enemy == old)				enemy = replacement, changed++;
+	if (*&missile == old)			missile = replacement, changed++;
+	if (*&mate == old)				mate = replacement, changed++;
+	if (*&last_mate == old)			last_mate = replacement, changed++;
+	if (ReadyWeapon == old)			ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
+	if (PendingWeapon == old)		PendingWeapon = static_cast<AWeapon *>(rep), changed++;
+	if (*&PremorphWeapon == old)	PremorphWeapon = static_cast<AWeapon *>(rep), changed++;
+	if (*&ConversationNPC == old)	ConversationNPC = replacement, changed++;
+	if (*&ConversationPC == old)	ConversationPC = replacement, changed++;
 	return changed;
 }
 

@@ -2253,7 +2253,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 
 	for (int i = 0; i < MAXPLAYERS; i++) 
 	{
-		if (playeringame[i] && P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY)) return;
+		if (playeringame[i])
+		{
+			// Always check sight from each player.
+			if (P_CheckSight(players[i].mo, self, SF_IGNOREVISIBILITY))
+			{
+				return;
+			}
+			// If a player is viewing from a non-player, then check that too.
+			if (players[i].camera != NULL && players[i].camera->player == NULL &&
+				P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY))
+			{
+				return;
+			}
+		}
 	}
 
 	ACTION_JUMP(jump);
@@ -2266,6 +2279,42 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 // Useful for maps with many multi-actor special effects.
 //
 //===========================================================================
+static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
+{
+	if (camera == NULL)
+	{
+		return false;
+	}
+	// Check distance first, since it's cheaper than checking sight.
+	double dx = self->x - camera->x;
+	double dy = self->y - camera->y;
+	double dz;
+	fixed_t eyez = (camera->z + camera->height - (camera->height>>2));	// same eye height as P_CheckSight
+	if (eyez > self->z + self->height)
+	{
+		dz = self->z + self->height - eyez;
+	}
+	else if (eyez < self->z)
+	{
+		dz = self->z - eyez;
+	}
+	else
+	{
+		dz = 0;
+	}
+	if ((dx*dx) + (dy*dy) + (dz*dz) <= range)
+	{ // Within range
+		return true;
+	}
+
+	// Now check LOS.
+	if (P_CheckSight(camera, self, SF_IGNOREVISIBILITY))
+	{ // Visible
+		return true;
+	}
+	return false;
+}
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 {
 	ACTION_PARAM_START(2);
@@ -2279,33 +2328,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 	{
 		if (playeringame[i])
 		{
-			AActor *camera = players[i].camera;
-
-			// Check distance first, since it's cheaper than checking sight.
-			double dx = self->x - camera->x;
-			double dy = self->y - camera->y;
-			double dz;
-			fixed_t eyez = (camera->z + camera->height - (camera->height>>2));	// same eye height as P_CheckSight
-			if (eyez > self->z + self->height)
+			// Always check from each player.
+			if (DoCheckSightOrRange(self, players[i].mo, range))
 			{
-				dz = self->z + self->height - eyez;
-			}
-			else if (eyez < self->z)
-			{
-				dz = self->z - eyez;
-			}
-			else
-			{
-				dz = 0;
-			}
-			if ((dx*dx) + (dy*dy) + (dz*dz) <= range)
-			{ // Within range
 				return;
 			}
-
-			// Now check LOS.
-			if (P_CheckSight(camera, self, SF_IGNOREVISIBILITY))
-			{ // Visible
+			// If a player is viewing from a non-player, check that too.
+			if (players[i].camera != NULL && players[i].camera->player == NULL &&
+				DoCheckSightOrRange(self, players[i].camera, range))
+			{
 				return;
 			}
 		}

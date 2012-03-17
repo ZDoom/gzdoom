@@ -4051,9 +4051,12 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 
 	p->velx = p->vely = 0;		// killough 10/98: initialize bobbing to 0.
 
-	if (players[consoleplayer].camera == oldactor)
+	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
-		players[consoleplayer].camera = mobj;
+		if (playeringame[ii] && players[ii].camera == oldactor)
+		{
+			players[ii].camera = oldactor;
+		}
 	}
 
 	// [RH] Allow chasecam for demo watching

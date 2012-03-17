@@ -831,7 +831,12 @@ static void ChangeSpy (bool forward)
 	// If not viewing through a player, return your eyes to your own head.
 	if (players[consoleplayer].camera->player == NULL)
 	{
-		players[consoleplayer].camera = players[consoleplayer].mo;
+		// When watching demos, you will just have to wait until your player
+		// has done this for you, since it could desync otherwise.
+		if (!demoplayback)
+		{
+			Net_WriteByte(DEM_REVERTCAMERA);
+		}
 		return;
 	}
 

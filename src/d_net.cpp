@@ -592,13 +592,16 @@ void PlayerIsGone (int netnode, int netconsole)
 		Printf ("%s left the game\n", players[netconsole].userinfo.netname);
 	}
 
-	// [RH] Revert to your own view if spying through the player who left
-	if (players[consoleplayer].camera == players[netconsole].mo)
+	// [RH] Revert each player to their own view if spying through the player who left
+	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
-		players[consoleplayer].camera = players[consoleplayer].mo;
-		if (StatusBar != NULL)
+		if (playeringame[ii] && players[ii].camera == players[netconsole].mo)
 		{
-			StatusBar->AttachToPlayer (&players[consoleplayer]);
+			players[ii].camera = players[ii].mo;
+			if (ii == consoleplayer && StatusBar != NULL)
+			{
+				StatusBar->AttachToPlayer (&players[ii]);
+			}
 		}
 	}
 
@@ -2458,6 +2461,10 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_ADVANCEINTER:
 		F_AdvanceIntermission();
+		break;
+
+	case DEM_REVERTCAMERA:
+		players[player].camera = players[player].mo;
 		break;
 
 	default:

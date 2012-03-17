@@ -920,10 +920,13 @@ void G_DoLoadLevel (int position, bool autosave)
 	level.starttime = gametic;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
-	if (players[consoleplayer].camera == NULL ||
-		players[consoleplayer].camera->player != NULL)
-	{ // If we are viewing through a player, make sure it is us.
-        players[consoleplayer].camera = players[consoleplayer].mo;
+	// For each player, if they are viewing through a player, make sure it is themselves.
+	for (int ii = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[ii] && (players[ii].camera == NULL || players[ii].camera->player != NULL))
+		{
+			players[ii].camera = players[ii].mo;
+		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
@@ -1143,6 +1146,7 @@ void G_FinishTravel ()
 			pawn->target = NULL;
 			pawn->lastenemy = NULL;
 			pawn->player->mo = pawn;
+			pawn->player->camera = pawn;
 			DObject::StaticPointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();
 			pawndup->Destroy ();

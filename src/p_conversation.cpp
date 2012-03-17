@@ -720,7 +720,7 @@ public:
 			toSay = GStrings[dlgtext];
 			if (toSay == NULL)
 			{
-				toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
+				toSay = GStrings["TXT_GOAWAY"];	// Ok, it's lame - but it doesn't look like an error to the player. ;)
 			}
 		}
 		else

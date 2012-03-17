@@ -1481,7 +1481,8 @@ TXT_RANDOM_PGUARD_10 = "If there is any honor inside that pathetic shell of a bo
 TXT_RANDOMGOODBYE_1 = "Bye!";
 TXT_RANDOMGOODBYE_2 = "Thanks, bye!";
 TXT_RANDOMGOODBYE_3 = "See you later!";
-TXT_HAVEENOUGH = "You seem to have enough!";
+TXT_HAVEENOUGH		= "You seem to have enough!";
+TXT_GOAWAY			= "Go away!";
 
 // Skills:
 

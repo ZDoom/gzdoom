@@ -330,6 +330,7 @@ enum
 	MF6_DONTCORPSE		= 0x02000000,	// [RC] Don't autoset MF_CORPSE upon death and don't force Crash state change.
 	MF6_POISONALWAYS	= 0x04000000,	// Always apply poison, even when target can't take the damage.
 	MF6_DOHARMSPECIES	= 0x08000000,	// Do hurt one's own species with projectiles.
+	MF6_INTRYMOVE		= 0x10000000,	// Executing P_TryMove
 
 // --- mobj.renderflags ---
 
@@ -775,6 +776,8 @@ public:
 	const char *GetTag(const char *def = NULL) const;
 	void SetTag(const char *def);
 
+	// Triggers SECSPAC_Exit/SECSPAC_Enter and related events if oldsec != current sector
+	void CheckSectorTransition(sector_t *oldsec);
 
 // info for drawing
 // NOTE: The first member variable *must* be x.

@@ -3364,6 +3364,42 @@ void AActor::Tick ()
 
 //==========================================================================
 //
+// AActor :: CheckSectorTransition
+//
+// Fire off some sector triggers if the actor has changed sectors.
+//
+//==========================================================================
+
+void AActor::CheckSectorTransition(sector_t *oldsec)
+{
+	if (oldsec != Sector)
+	{
+		if (oldsec->SecActTarget != NULL)
+		{
+			oldsec->SecActTarget->TriggerAction(this, SECSPAC_Exit);
+		}
+		if (Sector->SecActTarget != NULL)
+		{
+			int act = SECSPAC_Enter;
+			if (z <= Sector->floorplane.ZatPoint(x, y))
+			{
+				act |= SECSPAC_HitFloor;
+			}
+			if (z + height >= Sector->ceilingplane.ZatPoint(x, y))
+			{
+				act |= SECSPAC_HitCeiling;
+			}
+			if (Sector->heightsec != NULL && z == Sector->heightsec->floorplane.ZatPoint(x, y))
+			{
+				act |= SECSPAC_HitFakeFloor;
+			}
+			Sector->SecActTarget->TriggerAction(this, act);
+		}
+	}
+}
+
+//==========================================================================
+//
 // AActor::UpdateWaterLevel
 //
 // Returns true if actor should splash

@@ -78,6 +78,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
+	morphed->Score = actor->Score;
 	p->PremorphWeapon = p->ReadyWeapon;
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	morphed->player = p;
@@ -225,6 +226,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->flags  = (mo->flags & ~(MF_SHADOW|MF_NOGRAVITY)) | (pmo->flags & (MF_SHADOW|MF_NOGRAVITY));
 	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
+	mo->Score = pmo->Score;
 
 	const PClass *exit_flash = player->MorphExitFlash;
 	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
@@ -261,7 +263,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	// taking events, reset up the face, if any;
 	// this is only needed for old-skool skins
 	// and for the original DOOM status bar.
-	if ((player == &players[consoleplayer]))
+	if (player == &players[consoleplayer])
 	{
 		const char *face = pmo->GetClass()->Meta.GetMetaString (APMETA_Face);
 		if (face != NULL && strcmp(face, "None") != 0)
@@ -371,6 +373,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	morphed->UnmorphedMe = actor;
 	morphed->alpha = actor->alpha;
 	morphed->RenderStyle = actor->RenderStyle;
+	morphed->Score = actor->Score;
 
 	morphed->UnmorphTime = level.time + ((duration) ? duration : MORPHTICS) + pr_morphmonst();
 	morphed->MorphStyle = style;
@@ -440,6 +443,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->velz = beast->velz;
 	actor->tid = beast->tid;
 	actor->special = beast->special;
+	actor->Score = beast->Score;
 	memcpy (actor->args, beast->args, sizeof(actor->args));
 	actor->AddToHash ();
 	beast->UnmorphedMe = NULL;

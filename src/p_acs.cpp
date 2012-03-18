@@ -3175,6 +3175,64 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 	return (!stricmp(string, FBehavior::StaticLookupString(value)));
 }
 
+bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, bool floor)
+{
+	AActor *actor = SingleActorFromTID(tid, activator);
+	if (actor == NULL)
+	{
+		return 0;
+	}
+	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string));
+	if (tex == NULL)
+	{ // If the texture we want to check against doesn't exist, then
+	  // they're obviously not the same.
+		return 0;
+	}
+	int i, numff;
+	FTextureID secpic;
+	sector_t *sec = actor->Sector;
+	numff = sec->e->XFloor.ffloors.Size();
+
+	if (floor)
+	{
+		// Looking through planes from top to bottom
+		for (i = 0; i < numff; ++i)
+		{
+			F3DFloor *ff = sec->e->XFloor.ffloors[i];
+			
+			if (actor->z >= ff->top.plane->ZatPoint(actor->x, actor->y))
+			{ // This floor is beneath our feet.
+				secpic = *ff->top.texture;
+				break;
+			}
+		}
+		if (i == numff)
+		{ // Use sector's floor
+			secpic = sec->GetTexture(sector_t::floor);
+		}
+	}
+	else
+	{
+		fixed_t z = actor->z + actor->height;
+		// Looking through planes from bottom to top
+		for (i = numff-1; i >= 0; --i)
+		{
+			F3DFloor *ff = sec->e->XFloor.ffloors[i];
+
+			if (z <= ff->bottom.plane->ZatPoint(actor->x, actor->y))
+			{ // This floor is above our eyes.
+				secpic = *ff->bottom.texture;
+				break;
+			}
+		}
+		if (i < 0)
+		{ // Use sector's ceiling
+			secpic = sec->GetTexture(sector_t::ceiling);
+		}
+	}
+	return tex == TexMan[secpic];
+}
+
 enum
 {
 	// These are the original inputs sent by the player.
@@ -6966,30 +7024,14 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKACTORCEILINGTEXTURE:
-		{
-			AActor *actor = SingleActorFromTID(STACK(2), activator);
-			if (actor != NULL)
-			{
-				FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(STACK(1)));
-				STACK(2) = (tex == TexMan[actor->Sector->GetTexture(sector_t::ceiling)]);
-			}
-			else STACK(2)=0;
+			STACK(2) = DoCheckActorTexture(STACK(2), activator, STACK(1), false);
 			sp--;
 			break;
-		}
 
 		case PCD_CHECKACTORFLOORTEXTURE:
-		{
-			AActor *actor = SingleActorFromTID(STACK(2), activator);
-			if (actor != NULL)
-			{
-				FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(STACK(1)));
-				STACK(2) = (tex == TexMan[actor->Sector->GetTexture(sector_t::floor)]);
-			}
-			else STACK(2)=0;
+			STACK(2) = DoCheckActorTexture(STACK(2), activator, STACK(1), true);
 			sp--;
 			break;
-		}
 
 		case PCD_GETACTORLIGHTLEVEL:
 		{

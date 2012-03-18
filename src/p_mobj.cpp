@@ -4055,7 +4055,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	{
 		if (playeringame[ii] && players[ii].camera == oldactor)
 		{
-			players[ii].camera = oldactor;
+			players[ii].camera = mobj;
 		}
 	}
 

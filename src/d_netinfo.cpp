@@ -598,8 +598,8 @@ void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 					 ,
 					 D_EscapeUserInfo(info->netname).GetChars(),
 					 (double)info->aimdist / (float)ANGLE_1,
-					 info->colorset,
 					 RPART(info->color), GPART(info->color), BPART(info->color),
+					 info->colorset,
 					 D_EscapeUserInfo(skins[info->skin].name).GetChars(),
 					 info->team,
 					 info->gender == GENDER_FEMALE ? "female" :

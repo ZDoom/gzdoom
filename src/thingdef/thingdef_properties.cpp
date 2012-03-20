@@ -2093,7 +2093,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIIIiiiiiiiiiiiiiiiiiiiiiiii, Pl
 			PROP_INT_PARM(first_color, start+2);
 			PROP_INT_PARM(last_color, start+3);
 			int extra = color.NumExtraRanges++;
-			assert (extra < countof(color.Extra));
+			assert (extra < (int)countof(color.Extra));
 
 			color.Extra[extra].RangeStart = range_start;
 			color.Extra[extra].RangeEnd = range_end;

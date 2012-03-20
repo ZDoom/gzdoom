@@ -348,6 +348,23 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	BYTE *spot;
 	int x, y;
 
+	if (x1 >= Width || y1 >= Height)
+	{
+		return;
+	}
+	if (x1 + w > Width)
+	{
+		w = Width - x1;
+	}
+	if (y1 + h > Height)
+	{
+		h = Height - y1;
+	}
+	if (w <= 0 || h <= 0)
+	{
+		return;
+	}
+
 	{
 		int amount;
 

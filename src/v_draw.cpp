@@ -1086,6 +1086,15 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 	assert(left < right);
 	assert(top < bottom);
 
+	if (left >= Width || right <= 0 || top >= Height || bottom <= 0)
+	{
+		return;
+	}
+	left = MAX(0,left);
+	right = MIN(Width,right);
+	top = MAX(0,top);
+	bottom = MIN(Height,bottom);
+
 	if (palcolor < 0)
 	{
 		if (APART(color) != 255)

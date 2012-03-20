@@ -3184,7 +3184,7 @@ void P_LoadReject (MapData * map, bool junk)
 		qwords *= 8;
 		for (i = 0; i < rejectsize; ++i)
 		{
-			if (rejectmatrix[qwords+rejectsize] != 0)
+			if (rejectmatrix[qwords + i] != 0)
 				return;
 		}
 

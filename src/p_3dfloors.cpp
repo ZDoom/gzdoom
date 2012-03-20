@@ -361,7 +361,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->z == rover->top.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->floorz == rover->top.plane->ZatPoint(mo->x, mo->y)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -391,7 +391,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->z+mo->height == rover->bottom.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->ceilingz == rover->bottom.plane->ZatPoint(mo->x, mo->y)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;

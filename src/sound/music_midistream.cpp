@@ -518,7 +518,11 @@ void MIDIStreamer::Stop()
 
 bool MIDIStreamer::IsPlaying()
 {
-	if (EndQueued != 0 && EndQueued < 4)
+	if (m_Status != STATE_Stopped && MIDI == NULL || (EndQueued != 0 && EndQueued < 4))
+	{
+		Stop();
+	}
+	if (m_Status != STATE_Stopped && !MIDI->IsOpen())
 	{
 		Stop();
 	}

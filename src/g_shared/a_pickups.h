@@ -76,7 +76,7 @@ struct FWeaponSlots
 	void SetFromPlayer(const PClass *type);
 	void StandardSetup(const PClass *type);
 	void LocalSetup(const PClass *type);
-	void SendDifferences(const FWeaponSlots &other);
+	void SendDifferences(int playernum, const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
 

@@ -1264,7 +1264,7 @@ void FWeaponSlots::LocalSetup(const PClass *type)
 //
 //===========================================================================
 
-void FWeaponSlots::SendDifferences(const FWeaponSlots &other)
+void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 {
 	int i, j;
 
@@ -1285,7 +1285,15 @@ void FWeaponSlots::SendDifferences(const FWeaponSlots &other)
 			}
 		}
 		// The slots differ. Send mine.
-		Net_WriteByte(DEM_SETSLOT);
+		if (playernum == consoleplayer)
+		{
+			Net_WriteByte(DEM_SETSLOT);
+		}
+		else
+		{
+			Net_WriteByte(DEM_SETSLOTPNUM);
+			Net_WriteByte(playernum);
+		}
 		Net_WriteByte(i);
 		Net_WriteByte(Slots[i].Size());
 		for (j = 0; j < Slots[i].Size(); ++j)

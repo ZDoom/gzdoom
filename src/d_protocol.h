@@ -163,6 +163,7 @@ enum EDemoCommand
 	DEM_ADVANCEINTER,	// 64 Advance intermission screen state
 	DEM_RUNNAMEDSCRIPT,	// 65 String: Script name, Byte: Arg count + Always flag; each arg is a 4-byte int
 	DEM_REVERTCAMERA,	// 66
+	DEM_SETSLOTPNUM,	// 67 Byte: player number, the rest is the same as DEM_SETSLOT
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

@@ -2423,17 +2423,27 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		break;
 
 	case DEM_SETSLOT:
+	case DEM_SETSLOTPNUM:
 		{
+			int pnum;
+			if (type == DEM_SETSLOTPNUM)
+			{
+				pnum = ReadByte(stream);
+			}
+			else
+			{
+				pnum = player;
+			}
 			unsigned int slot = ReadByte(stream);
 			int count = ReadByte(stream);
 			if (slot < NUM_WEAPON_SLOTS)
 			{
-				players[player].weapons.Slots[slot].Clear();
+				players[pnum].weapons.Slots[slot].Clear();
 			}
 			for(i = 0; i < count; ++i)
 			{
 				const PClass *wpn = Net_ReadWeapon(stream);
-				players[player].weapons.AddSlot(slot, wpn, player == consoleplayer);
+				players[pnum].weapons.AddSlot(slot, wpn, pnum == consoleplayer);
 			}
 		}
 		break;
@@ -2595,9 +2605,10 @@ void Net_SkipCommand (int type, BYTE **stream)
 			break;
 
 		case DEM_SETSLOT:
+		case DEM_SETSLOTPNUM:
 			{
-				skip = 2;
-				for(int numweapons = (*stream)[1]; numweapons > 0; numweapons--)
+				skip = 2 + (type == DEM_SETSLOTPNUM);
+				for(int numweapons = (*stream)[skip-1]; numweapons > 0; numweapons--)
 				{
 					skip += 1 + ((*stream)[skip] >> 7);
 				}

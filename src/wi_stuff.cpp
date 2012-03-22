@@ -719,6 +719,41 @@ static int WI_DrawCharPatch (FFont *font, int charcode, int x, int y, EColorRang
 	return x - width;
 }
 
+//====================================================================
+//
+// CheckRealHeight
+//
+// Checks the posts in a texture and returns the lowest row (plus one)
+// of the texture that is actually used.
+//
+//====================================================================
+
+int CheckRealHeight(FTexture *tex)
+{
+	const FTexture::Span *span;
+	int maxy = 0, miny = tex->GetHeight();
+
+	for (int i = 0; i < tex->GetWidth(); ++i)
+	{
+		tex->GetColumn(i, &span);
+		while (span->Length != 0)
+		{
+			if (span->TopOffset < miny)
+			{
+				miny = span->TopOffset;
+			}
+			if (span->TopOffset + span->Length > maxy)
+			{
+				maxy = span->TopOffset + span->Length;
+			}
+			span++;
+		}
+	}
+	// Scale maxy before returning it
+	maxy = (maxy << 17) / tex->yScale;
+	maxy = (maxy >> 1) + (maxy & 1);
+	return maxy;
+}
 
 //====================================================================
 //
@@ -735,7 +770,13 @@ int WI_DrawName(int y, FTexture *tex, const char *levelname)
 	if (tex)
 	{
 		screen->DrawTexture(tex, (screen->GetWidth() - tex->GetScaledWidth()*CleanXfac) /2, y, DTA_CleanNoMove, true, TAG_DONE);
-		return y + (tex->GetScaledHeight() + BigFont->GetHeight()/4) * CleanYfac;
+		int h = tex->GetScaledHeight();
+		if (h > 50)
+		{ // Fix for Deus Vult II and similar wads that decide to make these hugely tall
+		  // patches with vast amounts of empty space at the bottom.
+			h = CheckRealHeight(tex);
+		}
+		return y + (h + BigFont->GetHeight()/4) * CleanYfac;
 	}
 	else 
 	{

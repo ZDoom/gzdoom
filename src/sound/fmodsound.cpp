@@ -979,6 +979,12 @@ bool FMODSoundRenderer::Init()
 				continue;
 			}
 		}
+		else if (result == FMOD_ERR_NET_SOCKET_ERROR && (initflags & FMOD_INIT_ENABLE_PROFILE))
+		{
+			Printf(TEXTCOLOR_RED"  Could not create socket. Retrying without profiling.\n");
+			initflags &= ~FMOD_INIT_ENABLE_PROFILE;
+			continue;
+		}
 #ifdef _WIN32
 		else if (result == FMOD_ERR_OUTPUT_INIT)
 		{

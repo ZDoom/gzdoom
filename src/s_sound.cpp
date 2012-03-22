@@ -2379,6 +2379,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				mus_playing.baseorder = order;
 			}
 		}
+		else if (!mus_playing.handle->IsPlaying())
+		{
+			mus_playing.handle->Play(looping, order);
+		}
 		return true;
 	}
 

@@ -260,6 +260,7 @@ ACTOR Actor native //: Thinker
 	action native A_QueueCorpse();
 	action native A_DeQueueCorpse();
 	action native A_LookEx(int flags = 0, float minseedist = 0, float maxseedist = 0, float maxheardist = 0, float fov = 0, state label = "");
+	action native A_ClearLastHeard();
 	action native A_ClearTarget();
 	action native A_JumpIfTargetInLOS (state label, float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
 	action native A_JumpIfInTargetLOS (state label, float fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);

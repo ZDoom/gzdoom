@@ -1264,8 +1264,8 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		P_UndoPlayerMorph (p, p, 0, true);
 	}
 
-	// Resets player health to default
-	if (flags & CHANGELEVEL_RESETHEALTH)
+	// Resets player health to default if not dead.
+	if ((flags & CHANGELEVEL_RESETHEALTH) && p->playerstate != PST_DEAD)
 	{
 		p->health = p->mo->health = p->mo->SpawnHealth();
 	}

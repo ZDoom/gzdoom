@@ -851,7 +851,6 @@ static int FindGLNodesInFile(FileReader * f, const char * label)
 
 bool P_LoadGLNodes(MapData * map)
 {
-
 	if (map->MapLumps[ML_GLZNODES].Size != 0)
 	{
 		const int idcheck = MAKE_ID('Z','G','L','N');

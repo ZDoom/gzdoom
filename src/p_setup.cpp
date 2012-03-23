@@ -974,6 +974,11 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	unsigned int i;
 
 	data >> orgVerts >> newVerts;
+	if (orgVerts > (DWORD)numvertexes)
+	{ // These nodes are based on a map with more vertex data than we have.
+	  // We can't use them.
+		throw CRecoverableError("Incorrect number of vertexes in nodes.\n");
+	}
 	if (orgVerts + newVerts == (DWORD)numvertexes)
 	{
 		newvertarray = vertexes;
@@ -1026,10 +1031,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	// segs used by subsectors.
 	if (numSegs != currSeg)
 	{
-		Printf ("Incorrect number of segs in nodes.\n");
-		delete[] subsectors;
-		ForceNodeBuild = true;
-		return;
+		throw CRecoverableError("Incorrect number of segs in nodes.\n");
 	}
 
 	numsegs = numSegs;
@@ -3754,7 +3756,7 @@ void P_SetupLevel (char *lumpname, int position)
 		{
 			if (P_LoadGLNodes(map)) 
 			{
-				ForceNodeBuild=false;
+				ForceNodeBuild = false;
 				reloop = true;
 			}
 		}

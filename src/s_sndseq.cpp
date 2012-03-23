@@ -839,10 +839,7 @@ static bool TwiddleSeqNum (int &sequence, seqtype_t type)
 		}
 	}
 
-	if (sequence == -1 || Sequences[sequence] == NULL)
-		return false;
-	else
-		return true;
+	return ((size_t)sequence < Sequences.Size() && Sequences[sequence] != NULL);
 }
 
 DSeqNode *SN_StartSequence (AActor *actor, int sequence, seqtype_t type, int modenum, bool nostop)
@@ -892,7 +889,7 @@ DSeqNode *SN_StartSequence (FPolyObj *poly, int sequence, seqtype_t type, int mo
 
 DSeqNode *SN_StartSequence (AActor *actor, const char *seqname, int modenum)
 {
-	int seqnum = FindSequence (seqname);
+	int seqnum = FindSequence(seqname);
 	if (seqnum >= 0)
 	{
 		return SN_StartSequence (actor, seqnum, SEQ_NOTRANS, modenum);
@@ -902,7 +899,7 @@ DSeqNode *SN_StartSequence (AActor *actor, const char *seqname, int modenum)
 
 DSeqNode *SN_StartSequence (AActor *actor, FName seqname, int modenum)
 {
-	int seqnum = FindSequence (seqname);
+	int seqnum = FindSequence(seqname);
 	if (seqnum >= 0)
 	{
 		return SN_StartSequence (actor, seqnum, SEQ_NOTRANS, modenum);
@@ -912,7 +909,7 @@ DSeqNode *SN_StartSequence (AActor *actor, FName seqname, int modenum)
 
 DSeqNode *SN_StartSequence (sector_t *sec, int chan, const char *seqname, int modenum)
 {
-	int seqnum = FindSequence (seqname);
+	int seqnum = FindSequence(seqname);
 	if (seqnum >= 0)
 	{
 		return SN_StartSequence (sec, chan, seqnum, SEQ_NOTRANS, modenum);
@@ -922,7 +919,7 @@ DSeqNode *SN_StartSequence (sector_t *sec, int chan, const char *seqname, int mo
 
 DSeqNode *SN_StartSequence (sector_t *sec, int chan, FName seqname, int modenum)
 {
-	int seqnum = FindSequence (seqname);
+	int seqnum = FindSequence(seqname);
 	if (seqnum >= 0)
 	{
 		return SN_StartSequence (sec, chan, seqnum, SEQ_NOTRANS, modenum);
@@ -932,7 +929,7 @@ DSeqNode *SN_StartSequence (sector_t *sec, int chan, FName seqname, int modenum)
 
 DSeqNode *SN_StartSequence (FPolyObj *poly, const char *seqname, int modenum)
 {
-	int seqnum = FindSequence (seqname);
+	int seqnum = FindSequence(seqname);
 	if (seqnum >= 0)
 	{
 		return SN_StartSequence (poly, seqnum, SEQ_NOTRANS, modenum);
@@ -942,20 +939,18 @@ DSeqNode *SN_StartSequence (FPolyObj *poly, const char *seqname, int modenum)
 
 static int FindSequence (const char *searchname)
 {
-	FName seqname (searchname, true);
+	FName seqname(searchname, true);
 
 	if (seqname != NAME_None)
 	{
-		return FindSequence (seqname);
+		return FindSequence(seqname);
 	}
 	return -1;
 }
 
 static int FindSequence (FName seqname)
 {
-	int i;
-
-	for (i = Sequences.Size(); i-- > 0; )
+	for (int i = Sequences.Size(); i-- > 0; )
 	{
 		if (Sequences[i] != NULL && seqname == Sequences[i]->SeqName)
 		{
@@ -1216,7 +1211,7 @@ void DSeqNode::Tick ()
 			{ // Completely transfer control to the choice matching m_ModeNum.
 			  // If no match is found, then just advance to the next command
 			  // in this sequence, which should be SS_CMD_END.
-				int numchoices = GetData(*m_SequencePtr++);
+ 				int numchoices = GetData(*m_SequencePtr++);
 				int i;
 
 				for (i = 0; i < numchoices; ++i)
@@ -1349,6 +1344,93 @@ void DSeqNode::ChangeData (int seqOffset, int delayTics, float volume, FSoundID 
 	m_Volume = volume;
 	m_SequencePtr += seqOffset;
 	m_CurrentSoundID = currentSoundID;
+}
+
+//==========================================================================
+//
+// FindMode
+//
+// Finds the sequence this sequence and mode combination selects.
+//
+//==========================================================================
+
+static int FindMode(int seqnum, int mode)
+{
+	if (seqnum <= 0)
+	{ // Sequence does not exist.
+		return seqnum;
+	}
+	FSoundSequence *seq = Sequences[seqnum];
+	if (GetCommand(seq->Script[0]) != SS_CMD_SELECT)
+	{ // This sequence doesn't select any others.
+		return seqnum;
+	}
+	// Search for the desired mode amongst the selections
+	int nummodes = GetData(seq->Script[0]);
+	for (int i = 0; i < nummodes; ++i)
+	{
+		if (seq->Script[1 + i*2] == mode)
+		{
+			return FindSequence(ENamedName(seq->Script[1 + i*2 + 1]));
+		}
+	}
+	// The mode isn't selected, which means it stays on this sequence.
+	return seqnum;
+}
+
+//==========================================================================
+//
+// FindModeDeep
+//
+// Finds the final sequence this sequence and mode combination selects.
+//
+//==========================================================================
+
+static int FindModeDeep(int seqnum, int mode)
+{
+	int newseqnum = FindMode(seqnum, mode);
+
+	while (newseqnum != seqnum)
+	{
+		seqnum = newseqnum;
+		newseqnum = FindMode(seqnum, mode);
+	}
+	return seqnum;
+}
+
+//==========================================================================
+//
+// SN_AreModesSame
+//
+// Returns true if mode1 and mode2 represent the same sequence.
+//
+//==========================================================================
+
+bool SN_AreModesSame(int seqnum, seqtype_t type, int mode1, int mode2)
+{
+	if (mode1 == mode2)
+	{ // Obviously they're the same.
+		return true;
+	}
+	if (TwiddleSeqNum(seqnum, type))
+	{
+		int mode1seq = FindModeDeep(seqnum, mode1);
+		int mode2seq = FindModeDeep(seqnum, mode2);
+		return mode1seq == mode2seq;
+	}
+	// The sequence doesn't exist, so that makes both modes equally nonexistant.
+	return true;
+}
+
+bool SN_AreModesSame(const char *name, int mode1, int mode2)
+{
+	int seqnum = FindSequence(name);
+	if (seqnum >= 0)
+	{
+		return SN_AreModesSame(seqnum, SEQ_NOTRANS, mode1, mode2);
+	}
+	// The sequence doesn't exist, so that makes both modes equally nonexistant.
+	return true;
 }
 
 //==========================================================================

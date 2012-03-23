@@ -531,7 +531,7 @@ protected:
 
 	int			m_LightTag;
 
-	void DoorSound (bool raise) const;
+	void DoorSound (bool raise, class DSeqNode *curseq=NULL) const;
 
 	friend bool	EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 						   int tag, int speed, int delay, int lock,

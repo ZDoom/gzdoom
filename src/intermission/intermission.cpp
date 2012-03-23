@@ -765,8 +765,12 @@ bool DIntermissionController::Responder (event_t *ev)
 		{
 			const char *cmd = Bindings.GetBind (ev->data1);
 
-			if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
+			if (cmd != NULL &&
+				(!stricmp(cmd, "toggleconsole") ||
+				 !stricmp(cmd, "screenshot")))
+			{
 				return false;
+			}
 		}
 
 		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing

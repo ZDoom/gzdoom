@@ -281,6 +281,9 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	{
 		dst->userinfo = uibackup;
 	}
+	// Validate the skin
+	dst->userinfo.skin = R_FindSkin(skins[dst->userinfo.skin].name, dst->CurrentPlayerClass);
+
 	// Make sure the player pawn points to the proper player struct.
 	if (dst->mo != NULL)
 	{

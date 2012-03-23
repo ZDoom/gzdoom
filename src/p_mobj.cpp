@@ -1572,7 +1572,6 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 // Returns the actor's old floorz.
 //
 #define STOPSPEED			0x1000
-#define FRICTION			0xe800
 #define CARRYSTOPSPEED		(STOPSPEED*32/3)
 
 fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly) 

@@ -1000,8 +1000,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			DmgFactors *df = target->GetClass()->ActorInfo->DamageFactors;
 			if (df != NULL)
 			{
-				fixed_t *pdf = df->CheckKey(mod);
-				if (pdf== NULL && mod != NAME_None) pdf = df->CheckKey(NAME_None);
+				fixed_t *pdf = df->CheckFactor(mod);
 				if (pdf != NULL)
 				{
 					damage = FixedMul(damage, *pdf);

@@ -177,7 +177,10 @@ struct FPlayerColorSet
 	ExtraRange Extra[6];
 };
 
-typedef TMap<FName, fixed_t> DmgFactors;
+struct DmgFactors : public TMap<FName, fixed_t>
+{
+	fixed_t *CheckFactor(FName type);
+};
 typedef TMap<FName, int> PainChanceList;
 typedef TMap<FName, PalEntry> PainFlashList;
 typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;

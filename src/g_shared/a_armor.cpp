@@ -171,13 +171,13 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 	if ((damage > 0) && (ArmorType != NAME_None)) // BasicArmor is not going to have any damage factor, so skip it.
 	{
 		// This code is taken and adapted from APowerProtection::ModifyDamage().
-		// The differences include not checking for the NAME_None key (doesn't seem appropriate here), 
-		// not using a default value, and of course the way the damage factor info is obtained.
+		// The differences include not using a default value, and of course the way
+		// the damage factor info is obtained.
 		const fixed_t *pdf = NULL;
 		DmgFactors *df = PClass::FindClass(ArmorType)->ActorInfo->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckKey(damageType);
+			pdf = df->CheckFactor(damageType);
 			if (pdf != NULL)
 			{
 				damage = newdamage = FixedMul(damage, *pdf);

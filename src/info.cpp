@@ -346,6 +346,25 @@ void FActorInfo::SetColorSet(int index, const FPlayerColorSet *set)
 
 //==========================================================================
 //
+// DmgFactors :: CheckFactor
+//
+// Checks for the existance of a certain damage type. If that type does not
+// exist, the damage factor for type 'None' will be returned, if present.
+//
+//==========================================================================
+
+fixed_t *DmgFactors::CheckFactor(FName type)
+{
+	fixed_t *pdf = CheckKey(type);
+	if (pdf == NULL && type != NAME_None)
+	{
+		pdf = CheckKey(NAME_None);
+	}
+	return pdf;
+}
+
+//==========================================================================
+//
 //
 //==========================================================================
 

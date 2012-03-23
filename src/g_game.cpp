@@ -1503,17 +1503,30 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	else
 		spot = SelectRandomDeathmatchSpot (playernum, selections);
 
-	if (!spot)
-	{ // no good spot, so the player will probably get stuck
+	if (spot == NULL)
+	{ // No good spot, so the player will probably get stuck.
+	  // We were probably using select farthest above, and all
+	  // the spots were taken.
 		spot = &playerstarts[playernum];
+		if (spot == NULL || spot->type == 0)
+		{ // This map doesn't have enough coop spots for this player
+		  // to use one.
+			spot = SelectRandomDeathmatchSpot(playernum, selections);
+			if (spot == NULL)
+			{ // We have a player 1 start, right?
+				spot = &playerstarts[0];
+				if (spot == NULL)
+				{ // Fine, whatever.
+					spot = &deathmatchstarts[0];
+				}
+			}
+		}
 	}
-	else
-	{
-		if (playernum < 4)
-			spot->type = playernum+1;
-		else 
-			spot->type = playernum + gameinfo.player5start - 4;
-	}
+
+	if (playernum < 4)
+		spot->type = playernum+1;
+	else 
+		spot->type = playernum + gameinfo.player5start - 4;
 
 	AActor *mo = P_SpawnPlayer (spot);
 	if (mo != NULL) P_PlayerStartStomp(mo);

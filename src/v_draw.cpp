@@ -1181,6 +1181,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
+	scalex /= FIXED2FLOAT(tex->xScale);
+	scaley /= FIXED2FLOAT(tex->yScale);
+
 	cosrot = cos(rot);
 	sinrot = sin(rot);
 

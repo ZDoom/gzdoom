@@ -311,6 +311,8 @@ public:
 	int			damagecount, bonuscount;// for screen flashing
 	int			hazardcount;			// for delayed Strife damage
 	int			poisoncount;			// screen flash for poison damage
+	FName		poisontype;				// type of poison damage to apply
+	FName		poisonpaintype;			// type of Pain state to enter for poison damage
 	TObjPtr<AActor>		poisoner;		// NULL for non-player actors
 	TObjPtr<AActor>		attacker;		// who did damage (NULL for floors)
 	int			extralight;				// so gun flashes light up areas

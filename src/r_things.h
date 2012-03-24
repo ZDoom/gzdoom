@@ -44,8 +44,8 @@ struct vissprite_t
 	DWORD			FillColor;
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
-	F3DFloor	*fakefloor;
-	F3DFloor	*fakeceiling;
+	F3DFloor		*fakefloor;
+	F3DFloor		*fakeceiling;
 	fixed_t			floorclip;
 	union
 	{
@@ -55,6 +55,7 @@ struct vissprite_t
 	BYTE			bIsVoxel:1;		// [RH] Use voxel instead of pic
 	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
+	BYTE			ColormapNum;	// Which colormap is rendered (needed for shaded drawer)
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
 	visstyle_t		Style;

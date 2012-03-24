@@ -327,6 +327,13 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.alpha, vis->Translation, vis->FillColor);
 
+	if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
+	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
+	  // it is the brightest one. We need to get back to the proper light level for
+	  // this sprite.
+		dc_colormap += vis->ColormapNum << COLORMAPSHIFT;
+	}
+
 	if (mode != DontDraw)
 	{
 		if (mode == DoDraw0)
@@ -768,6 +775,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->Style.alpha = thing->alpha;
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
+	vis->ColormapNum = 0;
 
 	if (voxel != NULL)
 	{
@@ -832,8 +840,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else
 		{ // diminished light
-			vis->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (
-				(fixed_t)DivScale12 (r_SpriteVisibility, MAX(tz, MINZ)), spriteshade) << COLORMAPSHIFT);
+			vis->ColormapNum = GETPALOOKUP(
+				(fixed_t)DivScale12 (r_SpriteVisibility, MAX(tz, MINZ)), spriteshade);
+			vis->Style.colormap = mybasecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
 		}
 	}
 }
@@ -990,6 +999,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vis->yscale = DivScale16(pspriteyscale, tex->yScale);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
+	vis->ColormapNum = 0;
 
 	if (flip)
 	{
@@ -2118,6 +2128,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;
+	vis->ColormapNum = 0;
 
 	if (fixedlightlev >= 0)
 	{
@@ -2131,8 +2142,8 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	{
 		// Using MulScale15 instead of 16 makes particles slightly more visible
 		// than regular sprites.
-		vis->Style.colormap = map + (GETPALOOKUP (MulScale15 (tiz, r_SpriteVisibility),
-			shade) << COLORMAPSHIFT);
+		vis->ColormapNum = GETPALOOKUP(MulScale15 (tiz, r_SpriteVisibility), shade);
+		vis->Style.colormap = map + (vis->ColormapNum << COLORMAPSHIFT);
 	}
 }
 

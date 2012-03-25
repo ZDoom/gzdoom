@@ -2329,6 +2329,15 @@ void D_DoomMain (void)
 
 			V_Init2();
 
+			v = Args->CheckValue ("-loadgame");
+			if (v)
+			{
+				FString file(v);
+				FixPathSeperator (file);
+				DefaultExtension (file, ".zds");
+				G_LoadGame (file);
+			}
+
 			v = Args->CheckValue("-playdemo");
 			if (v != NULL)
 			{
@@ -2342,15 +2351,6 @@ void D_DoomMain (void)
 			{
 				G_TimeDemo (v);
 				D_DoomLoop ();	// never returns
-			}
-				
-			v = Args->CheckValue ("-loadgame");
-			if (v)
-			{
-				FString file(v);
-				FixPathSeperator (file);
-				DefaultExtension (file, ".zds");
-				G_LoadGame (file);
 			}
 
 			if (gameaction != ga_loadgame && gameaction != ga_loadgamehidecon)

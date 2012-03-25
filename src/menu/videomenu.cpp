@@ -83,15 +83,15 @@ int OldWidth, OldHeight, OldBits;
 static FIntCVar DummyDepthCvar (NULL, 0, 0);
 static BYTE BitTranslate[32];
 
-CUSTOM_CVAR (Int, menu_screenratios, 0, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 {
-	if (self < 0 || self > 4)
+	if (self < -1 || self > 4)
 	{
-		self = 3;
+		self = -1;
 	}
 	else if (self == 4 && !vid_tft)
 	{
-		self = 3;
+		self = 0;
 	}
 	else
 	{
@@ -213,7 +213,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	bool letterbox=false;
 	int  ratiomatch;
 
-	if (menu_screenratios >= 0 && menu_screenratios <= 4 && menu_screenratios != 3)
+	if (menu_screenratios >= 0 && menu_screenratios <= 4)
 	{
 		ratiomatch = menu_screenratios;
 	}

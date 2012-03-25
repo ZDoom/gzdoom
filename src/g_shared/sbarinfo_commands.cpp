@@ -1732,6 +1732,8 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 				ratio = ASPECTRATIO_16_9;
 			else if(sc.Compare("16:10"))
 				ratio = ASPECTRATIO_16_10;
+			else if(sc.Compare("17:10"))
+				ratio = ASPECTRATIO_17_10;
 			else if(sc.Compare("5:4"))
 				ratio = ASPECTRATIO_5_4;
 			else
@@ -1750,6 +1752,7 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 			ASPECTRATIO_4_3 = 0,
 			ASPECTRATIO_16_9 = 1,
 			ASPECTRATIO_16_10 = 2,
+			ASPECTRATIO_17_10 = 3,
 			ASPECTRATIO_5_4 = 4
 		};
 

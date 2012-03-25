@@ -340,10 +340,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 
 	_x = self->SpawnPoint[0];
 	_y = self->SpawnPoint[1];
-	sec = P_PointInSector (_x, _y);
 
-	self->SetOrigin (_x, _y, sec->floorplane.ZatPoint (_x, _y));
-	P_CheckPosition (self, _x, _y);
+	self->UnlinkFromWorld();
+	self->x = _x;
+	self->y = _y;
+	self->LinkToWorld(true);
+	sec = self->Sector;
+	self->z =
+	self->dropoffz =
+	self->floorz = sec->floorplane.ZatPoint(_x, _y);
+	self->ceilingz = sec->ceilingplane.ZatPoint(_x, _y);
+	P_FindFloorCeiling(self, true);
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
@@ -370,7 +377,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
 		}
 	}
-	self->SetOrigin (self->x, self->y, self->z);
 }
 
 int AInventory::StaticLastMessageTic;

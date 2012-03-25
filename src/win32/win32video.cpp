@@ -449,8 +449,6 @@ void Win32Video::AddLowResModes()
 {
 	ModeInfo *mode, *nextmode;
 
-	AddMode(1024,600, 8, 600, 0);
-
 	for (mode = m_Modes; mode != NULL; mode = nextmode)
 	{
 		nextmode = mode->next;

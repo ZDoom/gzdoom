@@ -175,19 +175,19 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 #endif
 
 	// check for overflows and clip if necessary
-	SQWORD xd= (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
+	SQWORD xd = (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
 
 	if (xd>SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist=FixedDiv(FIXED_MAX-x,vx);
+		maxDist = inf.MaxDist = FixedDiv(FIXED_MAX - x, vx);
 	}
 	else if (xd<-SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist=FixedDiv(FIXED_MIN-x,vx);
+		maxDist = inf.MaxDist = FixedDiv(FIXED_MIN - x, vx);
 	}
 
 
-	SQWORD yd= (SQWORD)y + ( ( SQWORD(vy) * SQWORD(maxDist) )>>16);
+	SQWORD yd = (SQWORD)y + ( ( SQWORD(vy) * SQWORD(maxDist) )>>16);
 
 	if (yd>SQWORD(32767)*FRACUNIT)
 	{
@@ -246,7 +246,7 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 
 bool FTraceInfo::TraceTraverse (int ptflags)
 {
-	FPathTraverse it(StartX, StartY, StartX + FixedMul (Vx, MaxDist), StartY + FixedMul (Vy, MaxDist), ptflags);
+	FPathTraverse it(StartX, StartY, FixedMul (Vx, MaxDist), FixedMul (Vy, MaxDist), ptflags | PT_DELTA);
 	intercept_t *in;
 
 	while ((in = it.Next()))

@@ -1165,10 +1165,9 @@ intercept_t *FPathTraverse::Next()
 
 FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
 {
-	fixed_t 	xt1;
-	fixed_t 	yt1;
-	fixed_t 	xt2;
-	fixed_t 	yt2;
+	fixed_t 	xt1, xt2;
+	fixed_t 	yt1, yt2;
+	long long	_x1, _x2, _y1, _y2;
 	
 	fixed_t 	xstep;
 	fixed_t 	ystep;
@@ -1197,18 +1196,42 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 
 	trace.x = x1;
 	trace.y = y1;
-	trace.dx = x2 - x1;
-	trace.dy = y2 - y1;
+	if (flags & PT_DELTA)
+	{
+		trace.dx = x2;
+		trace.dy = y2;
+	}
+	else
+	{
+		trace.dx = x2 - x1;
+		trace.dy = y2 - y1;
+	}
 
+	_x1 = (long long)x1 - bmaporgx;
+	_y1 = (long long)y1 - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
-	xt1 = GetSafeBlockX(x1);
-	yt1 = GetSafeBlockY(y1);
+	xt1 = int(_x1 >> MAPBLOCKSHIFT);
+	yt1 = int(_y1 >> MAPBLOCKSHIFT);
 
-	x2 -= bmaporgx;
-	y2 -= bmaporgy;
-	xt2 = GetSafeBlockX(x2);
-	yt2 = GetSafeBlockY(y2);
+	if (flags & PT_DELTA)
+	{
+		_x2 = _x1 + x2;
+		_y2 = _y1 + y2;
+		xt2 = int(_x2 >> MAPBLOCKSHIFT);
+		yt2 = int(_y2 >> MAPBLOCKSHIFT);
+		x2 = (int)_x2;
+		y2 = (int)_y2;
+	}
+	else
+	{
+		_x2 = (long long)x2 - bmaporgx;
+		_y2 = (long long)y2 - bmaporgy;
+		x2 -= bmaporgx;
+		y2 -= bmaporgy;
+		xt2 = int(_x2 >> MAPBLOCKSHIFT);
+		yt2 = int(_y2 >> MAPBLOCKSHIFT);
+	}
 
 	if (xt2 > xt1)
 	{
@@ -1228,7 +1251,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		partialx = FRACUNIT;
 		ystep = 256*FRACUNIT;
 	}	
-	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
+	yintercept = int(_y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
 
 		
 	if (yt2 > yt1)
@@ -1249,7 +1272,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		partialy = FRACUNIT;
 		xstep = 256*FRACUNIT;
 	}	
-	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
+	xintercept = int(_x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
 
 	// [RH] Fix for traces that pass only through blockmap corners. In that case,
 	// xintercept and yintercept can both be set ahead of mapx and mapy, so the

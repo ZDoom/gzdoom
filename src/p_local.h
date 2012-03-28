@@ -347,6 +347,7 @@ public:
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
 #define PT_COMPATIBLE	4
+#define PT_DELTA		8		// x2,y2 is passed as a delta, not as an endpoint
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);

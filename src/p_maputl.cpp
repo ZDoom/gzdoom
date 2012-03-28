@@ -362,10 +362,10 @@ void AActor::LinkToWorld (sector_t *sec)
 	// link into blockmap (inert things don't need to be in the blockmap)
 	if ( !(flags & MF_NOBLOCKMAP) )
 	{
-		int x1 = (x - radius - bmaporgx)>>MAPBLOCKSHIFT;
-		int x2 = (x + radius - bmaporgx)>>MAPBLOCKSHIFT;
-		int y1 = (y - radius - bmaporgy)>>MAPBLOCKSHIFT;
-		int y2 = (y + radius - bmaporgy)>>MAPBLOCKSHIFT;
+		int x1 = GetSafeBlockX(x - radius - bmaporgx);
+		int x2 = GetSafeBlockX(x + radius - bmaporgx);
+		int y1 = GetSafeBlockY(y - radius - bmaporgy);
+		int y2 = GetSafeBlockY(y + radius - bmaporgy);
 
 		if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
 		{ // thing is off the map
@@ -491,8 +491,8 @@ sector_t *AActor::LinkToWorldForMapThing ()
 		// one-sided line might go into a subsector behind the line, so
 		// the line would not be included as one of its subsector's segs.
 
-		int blockx = (x - bmaporgx) >> MAPBLOCKSHIFT;
-		int blocky = (y - bmaporgy) >> MAPBLOCKSHIFT;
+		int blockx = GetSafeBlockX(x - bmaporgx);
+		int blocky = GetSafeBlockY(y - bmaporgy);
 
 		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
 			(unsigned int)blocky < (unsigned int)bmapheight)
@@ -637,10 +637,10 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
 {
 	validcount++;
-	maxy = (box.Top() - bmaporgy) >> MAPBLOCKSHIFT;
-	miny = (box.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
-	maxx = (box.Right() - bmaporgx) >> MAPBLOCKSHIFT;
-	minx = (box.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	maxy = GetSafeBlockY(box.Top() - bmaporgy);
+	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
+	maxx = GetSafeBlockX(box.Right() - bmaporgx);
+	minx = GetSafeBlockX(box.Left() - bmaporgx);
 	Reset();
 }
 
@@ -772,10 +772,10 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 FBlockThingsIterator::FBlockThingsIterator(const FBoundingBox &box)
 : DynHash(0)
 {
-	maxy = (box.Top() - bmaporgy) >> MAPBLOCKSHIFT;
-	miny = (box.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
-	maxx = (box.Right() - bmaporgx) >> MAPBLOCKSHIFT;
-	minx = (box.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	maxy = GetSafeBlockY(box.Top() - bmaporgy);
+	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
+	maxx = GetSafeBlockX(box.Right() - bmaporgx);
+	minx = GetSafeBlockX(box.Left() - bmaporgx);
 	ClearHash();
 	Reset();
 }
@@ -1202,13 +1202,13 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
-	xt1 = x1>>MAPBLOCKSHIFT;
-	yt1 = y1>>MAPBLOCKSHIFT;
+	xt1 = GetSafeBlockX(x1);
+	yt1 = GetSafeBlockY(y1);
 
 	x2 -= bmaporgx;
 	y2 -= bmaporgy;
-	xt2 = x2>>MAPBLOCKSHIFT;
-	yt2 = y2>>MAPBLOCKSHIFT;
+	xt2 = GetSafeBlockX(x2);
+	yt2 = GetSafeBlockY(y2);
 
 	if (xt2 > xt1)
 	{
@@ -1381,8 +1381,8 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int count;
 	AActor *target;
 
-	startX = (mo->x-bmaporgx)>>MAPBLOCKSHIFT;
-	startY = (mo->y-bmaporgy)>>MAPBLOCKSHIFT;
+	startX = GetSafeBlockX(mo->x-bmaporgx);
+	startY = GetSafeBlockY(mo->y-bmaporgy);
 	validcount++;
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)

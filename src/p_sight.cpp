@@ -484,13 +484,13 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
-	xt1 = x1>>MAPBLOCKSHIFT;
-	yt1 = y1>>MAPBLOCKSHIFT;
+	xt1 = GetSafeBlockX(x1);
+	yt1 = GetSafeBlockY(y1);
 
 	x2 -= bmaporgx;
 	y2 -= bmaporgy;
-	xt2 = x2>>MAPBLOCKSHIFT;
-	yt2 = y2>>MAPBLOCKSHIFT;
+	xt2 = GetSafeBlockX(x2);
+	yt2 = GetSafeBlockY(y2);
 
 // points should never be out of bounds, but check once instead of
 // each block

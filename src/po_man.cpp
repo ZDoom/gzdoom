@@ -1159,10 +1159,10 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 
 	ld = sd->linedef;
 
-	top = (ld->bbox[BOXTOP]-bmaporgy) >> MAPBLOCKSHIFT;
-	bottom = (ld->bbox[BOXBOTTOM]-bmaporgy) >> MAPBLOCKSHIFT;
-	left = (ld->bbox[BOXLEFT]-bmaporgx) >> MAPBLOCKSHIFT;
-	right = (ld->bbox[BOXRIGHT]-bmaporgx) >> MAPBLOCKSHIFT;
+	top = GetSafeBlockY(ld->bbox[BOXTOP]-bmaporgy);
+	bottom = GetSafeBlockY(ld->bbox[BOXBOTTOM]-bmaporgy);
+	left = GetSafeBlockX(ld->bbox[BOXLEFT]-bmaporgx);
+	right = GetSafeBlockX(ld->bbox[BOXRIGHT]-bmaporgx);
 
 	blocked = false;
 	checker.Clear();
@@ -1268,10 +1268,10 @@ void FPolyObj::LinkPolyobj ()
 		vt = Sidedefs[i]->linedef->v2;
 		Bounds.AddToBox(vt->x, vt->y);
 	}
-	bbox[BOXRIGHT] = (Bounds.Right() - bmaporgx) >> MAPBLOCKSHIFT;
-	bbox[BOXLEFT] = (Bounds.Left() - bmaporgx) >> MAPBLOCKSHIFT;
-	bbox[BOXTOP] = (Bounds.Top() - bmaporgy) >> MAPBLOCKSHIFT;
-	bbox[BOXBOTTOM] = (Bounds.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
+	bbox[BOXRIGHT] = GetSafeBlockX(Bounds.Right() - bmaporgx);
+	bbox[BOXLEFT] = GetSafeBlockX(Bounds.Left() - bmaporgx);
+	bbox[BOXTOP] = GetSafeBlockY(Bounds.Top() - bmaporgy);
+	bbox[BOXBOTTOM] = GetSafeBlockY(Bounds.Bottom() - bmaporgy);
 	// add the polyobj to each blockmap section
 	for(int j = bbox[BOXBOTTOM]*bmapwidth; j <= bbox[BOXTOP]*bmapwidth;
 		j += bmapwidth)

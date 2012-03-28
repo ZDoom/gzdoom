@@ -46,6 +46,31 @@
 #define MAPBMASK		(MAPBLOCKSIZE-1)
 #define MAPBTOFRAC		(MAPBLOCKSHIFT-FRACBITS)
 
+// Inspired by Maes
+extern int bmapnegx;
+extern int bmapnegy;
+
+inline int GetSafeBlockX(int blockx)
+{
+	blockx >>= MAPBLOCKSHIFT;
+	return (blockx <= bmapnegx) ? blockx & 0x1FF : blockx;
+}
+inline int GetSafeBlockX(long long blockx)
+{
+	blockx >>= MAPBLOCKSHIFT;
+	return int((blockx <= bmapnegx) ? blockx & 0x1FF : blockx);
+}
+
+inline int GetSafeBlockY(int blocky)
+{
+	blocky >>= MAPBLOCKSHIFT;
+	return (blocky <= bmapnegy) ? blocky & 0x1FF: blocky;
+}
+inline int GetSafeBlockY(long long blocky)
+{
+	blocky >>= MAPBLOCKSHIFT;
+	return int((blocky <= bmapnegy) ? blocky & 0x1FF: blocky);
+}
 
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger,

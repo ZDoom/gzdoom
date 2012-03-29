@@ -1788,6 +1788,15 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				{
 					goto pushline;
 				}
+				if (thing->flags & MF_MISSILE)
+				{
+					thing->z = tm.floorz;
+					// If moving down, cancel vertical component of the velocity
+					if (thing->velz < 0)
+					{
+						thing->velz = 0;
+					}
+				}
 			}
 		}
 

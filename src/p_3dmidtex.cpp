@@ -256,23 +256,28 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 //
 //============================================================================
 
-bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, fixed_t &opentop, fixed_t &openbottom, bool *above)
+bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &open)
 {
 	fixed_t tt, tb;
 
-	*above = false;
+	open.abovemidtex = false;
 	if (P_GetMidTexturePosition(linedef, 0, &tt, &tb))
 	{
 		if (thing->z + (thing->height/2) < (tt + tb)/2)
 		{
-			if(tb < opentop) opentop = tb;
+			if (tb < open.top)
+			{
+				open.top = tb;
+				open.ceilingpic = linedef->sidedef[0]->GetTexture(side_t::mid);
+			}
 		}
 		else
 		{
-			if(tt > openbottom) 
+			if (tt > open.bottom) 
 			{
-				openbottom = tt;
-				*above = true;
+				open.bottom = tt;
+				open.abovemidtex = true;
+				open.floorpic = linedef->sidedef[0]->GetTexture(side_t::mid);
 			}
 			// returns true if it touches the midtexture
 			return (abs(thing->z - tt) <= thing->MaxStepHeight);

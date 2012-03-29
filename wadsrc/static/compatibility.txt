@@ -96,6 +96,7 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 2499CF9A9351BE9BC4E9C66FC9F291A7 // Requiem map23
 3CA5493FEFF2E27BFD4181E6C4A3C2BF // The Waterfront map01
 CBDFEFAC579A62DE8F1B48CA4A09D381 // gather2.wad map05 and darkside.wad map01
+C7A2FAFB0AFB2632C50AD625CDB50E51 // Reverie map18
 {
 	corpsegibs
 	vileghosts
@@ -149,7 +150,7 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 	badangles
 }
 
-E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citidel, map54
+E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 {
 	// This map has two gear boxes which are flagged for player cross
 	// activation instead of the proper player uses activation.
@@ -164,4 +165,9 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citidel, map54
 	// this into a one-shot Door_Open so that it won't close.
 	setlinespecial 1069 Door_Open 0 16 0 0 0
 	clearlineflags 1069 0x200
+}
+
+3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01
+{
+	clearlinespecial 66
 }

@@ -3354,8 +3354,8 @@ void AActor::Tick ()
 		if (level.time & 31)
 			return;
 
-//		if (pr_nightmarerespawn() > 4)
-//			return;
+		if (pr_nightmarerespawn() > 4)
+			return;
 
 		P_NightmareRespawn (this);
 	}

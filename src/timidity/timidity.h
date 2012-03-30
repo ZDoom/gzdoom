@@ -623,6 +623,7 @@ timidity.h
 */
 struct DLS_Data;
 int LoadConfig(const char *filename);
+int LoadDMXGUS();
 extern int LoadConfig();
 extern void FreeAll();
 

@@ -139,6 +139,21 @@ const int TF_RANDOMDECIDE = 2;
 const int WAF_NORANDOM = 1;
 const int WAF_USEPUFF = 2;
 
+// Flags for A_RadiusGive
+enum
+{
+	RGF_GIVESELF	=   1,
+	RGF_PLAYERS		=   2,
+	RGF_MONSTERS	=   4,
+	RGF_OBJECTS		=   8,
+	RGF_VOODOO		=  16,
+	RGF_CORPSES		=  32,
+	RGF_NOTARGET	=  64,
+	RGF_NOTRACER	= 128,
+	RGF_NOMASTER	= 256,
+	RGF_CUBE		= 512,
+};
+
 // Activation flags
 enum
 {

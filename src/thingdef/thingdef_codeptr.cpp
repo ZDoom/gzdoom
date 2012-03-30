@@ -67,6 +67,7 @@
 #include "v_palette.h"
 #include "g_shared/a_specialspot.h"
 #include "actorptrselect.h"
+#include "m_bbox.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -4235,3 +4236,153 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
 
 	ACTION_SET_RESULT(res);
 }
+
+
+//==========================================================================
+//
+// A_RadiusGive
+//
+// Uses code roughly similar to A_Explode (but without all the compatibility
+// baggage and damage computation code to give an item to all eligible mobjs
+// in range.
+//
+//==========================================================================
+enum RadiusGiveFlags
+{
+	RGF_GIVESELF	=   1,
+	RGF_PLAYERS		=   2,
+	RGF_MONSTERS	=   4,
+	RGF_OBJECTS		=   8,
+	RGF_VOODOO		=  16,
+	RGF_CORPSES		=  32,
+	RGF_MASK		=  63,
+	RGF_NOTARGET	=  64,
+	RGF_NOTRACER	= 128,
+	RGF_NOMASTER	= 256,
+	RGF_CUBE		= 512,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
+{
+	ACTION_PARAM_START(7);
+	ACTION_PARAM_CLASS(item, 0);
+	ACTION_PARAM_FIXED(distance, 1);
+	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_INT(amount, 3);
+
+	// We need a valid item, valid targets, and a valid range
+	if (item == NULL || (flags & RGF_MASK) == 0 || distance <= 0)
+	{
+		return;
+	}
+	if (amount == 0)
+	{
+		amount = 1;
+	}
+	FBlockThingsIterator it(FBoundingBox(self->x, self->y, distance));
+	double distsquared = double(distance) * double(distance);
+
+	AActor *thing;
+	while ((thing = it.Next()))
+	{
+		// Don't give to inventory items
+		if (thing->flags & MF_SPECIAL)
+		{
+			continue;
+		}
+		// Avoid giving to self unless requested
+		if (thing == self && !(flags & RGF_GIVESELF))
+		{
+			continue;
+		}
+		// Avoiding special pointers if requested
+		if (((thing == self->target) && (flags & RGF_NOTARGET)) ||
+			((thing == self->tracer) && (flags & RGF_NOTRACER)) ||
+			((thing == self->master) && (flags & RGF_NOMASTER)))
+		{
+			continue;
+		}
+		// Don't give to dead thing unless requested
+		if (thing->flags & MF_CORPSE)
+		{
+			if (!(flags & RGF_CORPSES))
+			{
+				continue;
+			}
+		}
+		else if (thing->health <= 0 || thing->flags6 & MF6_KILLED)
+		{
+			continue;
+		}
+		// Players, monsters, and other shootable objects
+		if (thing->player)
+		{
+			if ((thing->player->mo == thing) && !(flags & RGF_PLAYERS))
+			{
+				continue;
+			}
+			if ((thing->player->mo != thing) && !(flags & RGF_VOODOO))
+			{
+				continue;
+			}
+		}
+		else if (thing->flags3 & MF3_ISMONSTER)
+		{
+			if (!(flags & RGF_MONSTERS))
+			{
+				continue;
+			}
+		}
+		else if (thing->flags & MF_SHOOTABLE || thing->flags6 & MF6_VULNERABLE)
+		{
+			if (!(flags & RGF_OBJECTS))
+			{
+				continue;
+			}
+		}
+		else
+		{
+			continue;
+		}
+
+		if (flags & RGF_CUBE)
+		{ // check if inside a cube
+			if (abs(thing->x - self->x) > distance ||
+				abs(thing->y - self->y) > distance ||
+				abs((thing->z + thing->height/2) - (self->z + self->height/2)) > distance)
+			{
+				continue;
+			}
+		}
+		else
+		{ // check if inside a sphere
+			TVector3<double> tpos(thing->x, thing->y, thing->z + thing->height/2);
+			TVector3<double> spos(self->x, self->y, self->z + self->height/2);
+			if ((tpos - spos).LengthSquared() > distsquared)
+			{
+				continue;
+			}
+		}
+		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
+
+		if (P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
+		{ // OK to give; target is in direct path
+			AInventory *gift = static_cast<AInventory *>(Spawn (item, 0, 0, 0, NO_REPLACE));
+			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
+			{
+				gift->Amount *= amount;
+			}
+			else
+			{
+				gift->Amount = amount;
+			}
+			gift->flags |= MF_DROPPED;
+			gift->ClearCounters();
+			if (!gift->CallTryPickup (thing))
+			{
+				gift->Destroy ();
+			}
+		}
+	}
+}
+

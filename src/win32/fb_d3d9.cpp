@@ -2969,6 +2969,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	float v1 = tex->Box->Bottom;
 	double uscale = 1.f / tex->Box->Owner->Width;
 	bool scissoring = false;
+	FBVERTEX *vert;
+	float yoffs;
 
 	if (parms.flipX)
 	{
@@ -3042,7 +3044,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	quad->NumTris = 2;
 	quad->NumVerts = 4;
 
-	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
+	yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 
 #if 0
 	// Coordinates are truncated to integers, because that's effectively
@@ -3059,7 +3061,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	y1 = y1 - yoffs;
 #endif
 
-	FBVERTEX *vert = &VertexData[VertexPos];
+	vert = &VertexData[VertexPos];
 
 	// Fill the vertex buffer.
 	vert[0].x = float(x0);

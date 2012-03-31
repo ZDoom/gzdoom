@@ -747,6 +747,7 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 				if (infotype == INFO_Color)
 				{
 					info->color = V_GetColorFromString (NULL, value);
+					info->colorset = -1;
 				}
 				else
 				{

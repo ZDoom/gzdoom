@@ -5,7 +5,7 @@ IWad
 	Name = "Harmony"
 	Game = "Doom"
 	Config = "Harmony"
-	Mapinfo = "mapinfo/doom2.txt"
+	Mapinfo = "mapinfo/hacxharm.txt"
 	MustContain = "MAP01", "0HAWK01", "0CARA3", "0NOSE1"
 	BannerColors = "6e b4 d6", "45 4f 7e"
 }
@@ -15,7 +15,7 @@ IWad
 	Name = "Hacx: Twitch'n Kill"
 	Game = "Doom"
 	Config = "Hacx"
-	Mapinfo = "mapinfo/doom2.txt"
+	Mapinfo = "mapinfo/hacxharm.txt"
 	MustContain = "MAP01", "HACX-R"
 	BannerColors = "00 00 a8", "a8 a8 a8"
 }

@@ -28,6 +28,7 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "farchive.h"
+#include "d_player.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -60,6 +61,30 @@ static FRandom pr_gunshot ("GunShot");
 
 //---------------------------------------------------------------------------
 //
+// PROC P_NewPspriteTick
+//
+//---------------------------------------------------------------------------
+
+void P_NewPspriteTick()
+{
+	// This function should be called after the beginning of a tick, before any possible
+	// prprite-event, or near the end, after any possible psprite event.
+	// Because data is reset for every tick (which it must be) this has no impact on savegames.
+	for (int i = 0; i<MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+		{
+			pspdef_t *pspdef = players[i].psprites;
+			for (int j = 0;j < NUMPSPRITES; j++)
+			{
+				pspdef[j].processPending = true;
+			}
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC P_SetPsprite
 //
 //---------------------------------------------------------------------------
@@ -74,6 +99,8 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 	}
 
 	psp = &player->psprites[position];
+	psp->processPending = false; // Do not subsequently perform periodic processing within the same tick.
+
 	do
 	{
 		if (state == NULL)
@@ -837,7 +864,7 @@ void P_MovePsprites (player_t *player)
 		psp = &player->psprites[0];
 		for (i = 0; i < NUMPSPRITES; i++, psp++)
 		{
-			if ((state = psp->state) != NULL) // a null state means not active
+			if ((state = psp->state) != NULL && psp->processPending) // a null state means not active
 			{
 				// drop tic count and possibly change state
 				if (psp->tics != -1)	// a -1 tic count never changes

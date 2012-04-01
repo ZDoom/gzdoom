@@ -3785,7 +3785,18 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdis
 		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
 		newX += FixedMul (finecosine[angle], dist);
 		newY += FixedMul (finesine[angle], dist);
-		P_TryMove (self, newX, newY, true);
+		if (!(self->flags5 & MF5_NOINTERACTION))
+		{
+			P_TryMove (self, newX, newY, true);
+		}
+		else
+		{
+			self->UnlinkFromWorld ();
+			self->flags |= MF_NOBLOCKMAP;
+			self->x = newX;
+			self->y = newY;
+			self->LinkToWorld ();
+		}
 		self->WeaveIndexXY = weaveXY;
 	}
 

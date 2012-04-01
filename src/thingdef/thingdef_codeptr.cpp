@@ -2887,7 +2887,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
-
 			return; // [KS] Outside of FOV - return
 		}
 
@@ -2957,23 +2956,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 			doCheckSight = false;
 	}
 
-	if (doCheckSight && !P_CheckSight (target, self, SF_IGNOREVISIBILITY))
-		return;
-
 	if (fov && (fov < ANGLE_MAX))
 	{
-		an = R_PointToAngle2 (self->x,
-							  self->y,
-							  target->x,
-							  target->y)
-			- self->angle;
+		an = R_PointToAngle2 (target->x,
+							  target->y,
+							  self->x,
+							  self->y)
+			- target->angle;
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
 			return; // [KS] Outside of FOV - return
 		}
-
 	}
+
+	if (doCheckSight && !P_CheckSight (target, self, SF_IGNOREVISIBILITY))
+		return;
 
 	ACTION_JUMP(jump);
 }

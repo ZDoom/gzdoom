@@ -1224,7 +1224,6 @@ void M_CreateMenus()
 	BuildPlayerclassMenu();
 	InitCrosshairsList();
 	InitKeySections();
-	UpdateJoystickMenu(NULL);
 
 	FOptionValues **opt = OptionValues.CheckKey(NAME_Mididevices);
 	if (opt != NULL) 

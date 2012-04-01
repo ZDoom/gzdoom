@@ -2589,6 +2589,10 @@ void G_DoPlayDemo (void)
 		{
 			G_InitNew (mapname, false);
 		}
+		else if (numsectors == 0)
+		{
+			I_Error("Cannot play demo without its savegame\n");
+		}
 		C_HideConsole ();
 		demonew = false;
 		precache = true;
@@ -2652,8 +2656,10 @@ bool G_CheckDemoStatus (void)
 			playeringame[i] = 0;
 		consoleplayer = 0;
 		players[0].camera = NULL;
-		StatusBar->AttachToPlayer (&players[0]);
-
+		if (StatusBar != NULL)
+		{
+			StatusBar->AttachToPlayer (&players[0]);
+		}
 		if (singledemo || timingdemo)
 		{
 			if (timingdemo)

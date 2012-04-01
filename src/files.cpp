@@ -145,15 +145,15 @@ long FileReader::Read (void *buffer, long len)
 
 char *FileReader::Gets(char *strbuf, int len)
 {
-	if (len <= 0 || FilePos >= Length) return NULL;
+	if (len <= 0 || FilePos >= StartPos + Length) return NULL;
 	char *p = fgets(strbuf, len, File);
 	if (p != NULL)
 	{
 		int old = FilePos;
-		FilePos = ftell(File) - StartPos;
-		if (FilePos > Length)
+		FilePos = ftell(File);
+		if (FilePos - StartPos > Length)
 		{
-			strbuf[Length-old] = 0;
+			strbuf[Length - old + StartPos] = 0;
 		}
 	}
 	return p;

@@ -1224,9 +1224,17 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		// Unselect powered up weapons if the unpowered counterpart is pending
 		p->ReadyWeapon=p->PendingWeapon;
 	}
-	p->mo->flags &= ~MF_SHADOW; 		// cancel invisibility
-	p->mo->RenderStyle = STYLE_Normal;
-	p->mo->alpha = FRACUNIT;
+	// reset invisibility to default
+	if (p->mo->GetDefault()->flags & MF_SHADOW)
+	{
+		p->mo->flags |= MF_SHADOW;
+	}
+	else
+	{
+		p->mo->flags &= ~MF_SHADOW;
+	}
+	p->mo->RenderStyle = p->mo->GetDefault()->RenderStyle;
+	p->mo->alpha = p->mo->GetDefault()->alpha;
 	p->extralight = 0;					// cancel gun flashes
 	p->fixedcolormap = NOFIXEDCOLORMAP;	// cancel ir goggles
 	p->fixedlightlevel = -1;

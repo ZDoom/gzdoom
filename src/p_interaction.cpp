@@ -1092,7 +1092,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 	// [RH] Avoid friendly fire if enabled
 	if (!(flags & DMG_FORCED) && source != NULL &&
-		((player && player != source->player) || !player) &&
+		((player && player != source->player) || (!player && target != source)) &&
 		target->IsTeammate (source))
 	{
 		if (player)

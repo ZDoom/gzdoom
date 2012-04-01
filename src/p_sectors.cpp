@@ -930,9 +930,9 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-int side_t::GetLightLevel (bool foggy, int baselight, int *pfakecontrast) const
+int side_t::GetLightLevel (bool foggy, int baselight, bool noabsolute, int *pfakecontrast) const
 {
-	if (Flags & WALLF_ABSLIGHTING) 
+	if (!noabsolute && (Flags & WALLF_ABSLIGHTING))
 	{
 		baselight = Light;
 	}

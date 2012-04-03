@@ -593,7 +593,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	{
 		viewangle = iview->nviewangle + (LocalViewAngle & 0xFFFF0000);
 
-		fixed_t delta = -(signed)(LocalViewPitch & 0xFFFF0000);
+		fixed_t delta = player->centering ? 0 : -(signed)(LocalViewPitch & 0xFFFF0000);
 
 		viewpitch = iview->nviewpitch;
 		if (delta > 0)

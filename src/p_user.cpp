@@ -2241,9 +2241,9 @@ void P_PlayerThink (player_t *player)
 		{
 			if (look == -32768 << 16)
 			{ // center view
-				player->mo->pitch = 0;
+				player->centering = true;
 			}
-			else
+			else if (!player->centering)
 			{
 				player->mo->pitch -= look;
 				if (look > 0)
@@ -2254,6 +2254,22 @@ void P_PlayerThink (player_t *player)
 				{ // look down
 					player->mo->pitch = MIN(player->mo->pitch, player->MaxPitch);
 				}
+			}
+		}
+	}
+	if (player->centering)
+	{
+		if (abs(player->mo->pitch) > 2*ANGLE_1)
+		{
+			player->mo->pitch = FixedMul(player->mo->pitch, FRACUNIT*2/3);
+		}
+		else
+		{
+			player->mo->pitch = 0;
+			player->centering = false;
+			if (player - players == consoleplayer)
+			{
+				LocalViewPitch = 0;
 			}
 		}
 	}

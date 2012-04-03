@@ -38,8 +38,7 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 {
-	if ((dmflags2 & DF2_BARRELS_RESPAWN) &&
-		(deathmatch || alwaysapplydmflags))
+	if (dmflags2 & DF2_BARRELS_RESPAWN)
 	{
 		self->height = self->GetDefault()->height;
 		self->renderflags |= RF_INVISIBLE;

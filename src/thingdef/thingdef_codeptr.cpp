@@ -2625,6 +2625,8 @@ static void CheckStopped(AActor *self)
 //
 //===========================================================================
 
+extern void AF_A_RestoreSpecialPosition(DECLARE_PARAMINFO);
+
 enum RS_Flags
 {
 	RSF_FOG=1,
@@ -2637,24 +2639,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(flags, 0);
 
-	fixed_t x = self->SpawnPoint[0];
-	fixed_t y = self->SpawnPoint[1];
 	bool oktorespawn = false;
-	sector_t *sec;
 
 	self->flags |= MF_SOLID;
-	sec = P_PointInSector (x, y);
 	self->height = self->GetDefault()->height;
+	CALL_ACTION(A_RestoreSpecialPosition, self);
 
 	if (flags & RSF_TELEFRAG)
 	{
 		// [KS] DIE DIE DIE DIE erm *ahem* =)
-		if (P_TeleportMove (self, x, y, sec->floorplane.ZatPoint (x, y), true)) oktorespawn = true;
+		oktorespawn = P_TeleportMove(self, self->x, self->y, self->z, true);
 	}
 	else
 	{
-		self->SetOrigin (x, y, sec->floorplane.ZatPoint (x, y));
-		if (P_TestMobjLocation (self)) oktorespawn = true;
+		oktorespawn = P_TestMobjLocation(self);
 	}
 
 	if (oktorespawn)
@@ -2687,9 +2685,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 
 		if (flags & RSF_FOG)
 		{
-			Spawn<ATeleportFog> (x, y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+			Spawn<ATeleportFog> (self->x, self->y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
-		if (self->CountsAsKill()) level.total_monsters++;
+		if (self->CountsAsKill())
+		{
+			level.total_monsters++;
+		}
 	}
 	else
 	{

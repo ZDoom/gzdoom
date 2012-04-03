@@ -49,4 +49,3 @@ DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 		self->Destroy ();
 	}
 }
-

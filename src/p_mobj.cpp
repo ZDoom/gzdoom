@@ -2482,7 +2482,6 @@ void P_NightmareRespawn (AActor *mobj)
 
 	z = mo->z;
 
-
 	// inherit attributes from deceased one
 	mo->SpawnPoint[0] = mobj->SpawnPoint[0];
 	mo->SpawnPoint[1] = mobj->SpawnPoint[1];

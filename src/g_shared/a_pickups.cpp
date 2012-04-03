@@ -377,6 +377,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
 		}
 	}
+	// Redo floor/ceiling check, now with 3D floors
+	P_FindFloorCeiling(self);
 }
 
 int AInventory::StaticLastMessageTic;

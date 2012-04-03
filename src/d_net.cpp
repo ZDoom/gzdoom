@@ -2066,6 +2066,10 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		{
 			players[player].mo->pitch = 0;
 		}
+		if (player == consoleplayer)
+		{
+			LocalViewPitch = 0;
+		}
 		break;
 
 	case DEM_INVUSEALL:

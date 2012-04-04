@@ -3114,6 +3114,35 @@ static void P_GroupLines (bool buildmap)
 		// set the soundorg to the middle of the bounding box
 		sector->soundorg[0] = bbox.Right()/2 + bbox.Left()/2;
 		sector->soundorg[1] = bbox.Top()/2 + bbox.Bottom()/2;
+
+		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
+		if (sector->linecount == 3)
+		{
+			vertex_t *Triangle[2];
+			Triangle[0] = sector->lines[0]->v1;
+			Triangle[1] = sector->lines[0]->v2;
+			if (sector->linecount > 1)
+			{
+				fixed_t dx = Triangle[1]->x - Triangle[0]->x;
+				fixed_t dy = Triangle[1]->y - Triangle[0]->y;
+				// Find another point in the sector that does not lie
+				// on the same line as the first two points.
+				for (j = 0; j < 2; ++j)
+				{
+					vertex_t *v;
+
+					v = (j == 1) ? sector->lines[1]->v1 : sector->lines[1]->v2;
+					if (DMulScale32 (v->y - Triangle[0]->y, dx,
+									Triangle[0]->x - v->x, dy) != 0)
+					{
+						sector->soundorg[0] = Triangle[0]->x / 3 + Triangle[1]->x / 3 + v->x / 3;
+						sector->soundorg[1] = Triangle[0]->y / 3 + Triangle[1]->y / 3 + v->y / 3;
+						break;
+					}
+				}
+			}
+		}
+
 	}
 	delete[] linesDoneInEachSector;
 	times[3].Unclock();

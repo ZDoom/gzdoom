@@ -2649,10 +2649,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	{
 		// [KS] DIE DIE DIE DIE erm *ahem* =)
 		oktorespawn = P_TeleportMove(self, self->x, self->y, self->z, true);
+		if (oktorespawn)
+		{ // Need to do this over again, since P_TeleportMove() will redo
+		  // it with the proper point-on-side calculation.
+			self->UnlinkFromWorld();
+			self->LinkToWorld(true);
+			sector_t *sec = self->Sector;
+			self->dropoffz =
+			self->floorz = sec->floorplane.ZatPoint(self->x, self->y);
+			self->ceilingz = sec->ceilingplane.ZatPoint(self->x, self->y);
+			P_FindFloorCeiling(self, true);
+		}
 	}
 	else
 	{
-		oktorespawn = P_TestMobjLocation(self);
+		oktorespawn = P_CheckPosition(self, self->x, self->z, true);
 	}
 
 	if (oktorespawn)

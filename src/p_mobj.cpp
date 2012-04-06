@@ -2467,12 +2467,23 @@ void P_NightmareRespawn (AActor *mobj)
 	mo = AActor::StaticSpawn(RUNTIME_TYPE(mobj), x, y, z, NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
+	{
 		mo->z += mobj->SpawnPoint[2];
+		if (mo->z < mo->floorz)
+		{ // Do not respawn monsters in the floor, even if that's where they
+		  // started. The initial P_ZMovement() call would have put them on
+		  // the floor right away, but we need them on the floor now so we
+		  // can use P_CheckPosition() properly.
+			mo->z = mo->floorz;
+		}
+	}
 	else if (z == ONCEILINGZ)
+	{
 		mo->z -= mobj->SpawnPoint[2];
+	}
 
 	// something is occupying its position?
-	if (!P_TestMobjLocation (mo))
+	if (!P_CheckPosition(mo, mo->x, mo->y, true))
 	{
 		//[GrafZahl] MF_COUNTKILL still needs to be checked here.
 		mo->ClearCounters();
@@ -2481,7 +2492,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 
 	// If there are 3D floors, we need to find floor/ceiling again.
-	P_FindFloorCeiling(mo);
+	P_FindFloorCeiling(mo, true);
 
 	z = mo->z;
 

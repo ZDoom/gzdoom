@@ -1322,6 +1322,9 @@ bool AInventory::TryPickupRestricted (AActor *&toucher)
 
 bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 {
+	// unmorphed versions of a currently morphed actor cannot pick up anything. 
+	if (toucher->flags & MF_UNMORPHED) return false;
+
 	bool res;
 	if (CanPickup(toucher))
 		res = TryPickup(toucher);

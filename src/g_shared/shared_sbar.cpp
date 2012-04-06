@@ -1358,11 +1358,6 @@ void DBaseStatusBar::Draw (EHudState state)
 			}
 		}
 	}
-
-	if (noisedebug)
-	{
-		S_NoiseDebug ();
-	}
 }
 
 
@@ -1467,6 +1462,11 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 
 	DrawConsistancy ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();
+
+	if (noisedebug)
+	{
+		S_NoiseDebug ();
+	}
 }
 
 //---------------------------------------------------------------------------

@@ -562,7 +562,6 @@ DamageTypeDefinition *DamageTypeDefinition::Get(FName const type)
 
 bool DamageTypeDefinition::IgnoreArmor(FName const type)
 { 
-	if (type == NAME_Drowning) return true; 
 	DamageTypeDefinition *dtd = Get(type);
 	if (dtd) return dtd->NoArmor;
 	return false;
@@ -609,18 +608,21 @@ int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName const type, Dm
 	
 	{
 		fixed_t const *pdf  = factors->CheckKey(NAME_None);
+		DamageTypeDefinition *dtd = Get(type);
 		// Here we are looking for modifications to untyped damage
 		// If the calling actor defines untyped damage factor, that is contained in "pdf".
 		if (pdf) // normal damage available
 		{
-			DamageTypeDefinition *dtd = Get(type);
-
 			if (dtd)
 			{
 				if (dtd->ReplaceFactor) return FixedMul(damage, dtd->DefaultFactor); // use default instead of untyped factor
 				return FixedMul(damage, FixedMul(*pdf, dtd->DefaultFactor)); // use default as modification of untyped factor
 			}
 			return FixedMul(damage, *pdf); // there was no default, so actor default is used
+		}
+		else if (dtd)
+		{
+			return FixedMul(damage, dtd->DefaultFactor); // implicit untyped factor 1.0 does not need to be applied/replaced explicitly
 		}
 	}
 	return damage;

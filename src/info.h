@@ -201,7 +201,7 @@ public:
 	void Apply(FName const type);
 	void Clear()
 	{
-		DefaultFactor = (fixed_t)1;
+		DefaultFactor = FRACUNIT;
 		ReplaceFactor = false;
 		NoArmor = false;
 	}

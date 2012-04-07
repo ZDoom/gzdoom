@@ -1202,7 +1202,7 @@ static void ParseDamageDefinition(FScanner &sc)
 		if (sc.Compare("FACTOR"))
 		{
 			sc.MustGetFloat();
-			dtd.DefaultFactor = (fixed_t)sc.Float;
+			dtd.DefaultFactor = FLOAT2FIXED(sc.Float);
 			if (!dtd.DefaultFactor) dtd.ReplaceFactor = true; // Multiply by 0 yields 0: FixedMul(damage, FixedMul(factor, 0)) is more wasteful than FixedMul(factor, 0)
 		}
 		else if (sc.Compare("REPLACEFACTOR"))

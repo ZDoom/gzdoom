@@ -29,6 +29,7 @@
 #include "actors/shared/sectoraction.txt"
 #include "actors/shared/action.txt"
 #include "actors/shared/dog.txt"
+#include "actors/shared/damagetypes.txt"
 
 #include "actors/doom/doomplayer.txt"
 #include "actors/doom/possessed.txt"

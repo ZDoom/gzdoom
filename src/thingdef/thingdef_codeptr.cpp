@@ -729,7 +729,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 {
-	ACTION_PARAM_START(7);
+	ACTION_PARAM_START(8);
 	ACTION_PARAM_INT(damage, 0);
 	ACTION_PARAM_INT(distance, 1);
 	ACTION_PARAM_BOOL(hurtSource, 2);
@@ -737,6 +737,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	ACTION_PARAM_INT(fulldmgdistance, 4);
 	ACTION_PARAM_INT(nails, 5);
 	ACTION_PARAM_INT(naildamage, 6);
+	ACTION_PARAM_CLASS(pufftype, 7);
 
 	if (damage < 0)	// get parameters from metadata
 	{
@@ -761,7 +762,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
 			P_LineAttack (self, ang, MISSILERANGE, 0,
 				//P_AimLineAttack (self, ang, MISSILERANGE), 
-				naildamage, NAME_None, NAME_BulletPuff);
+				naildamage, NAME_None, pufftype);
 		}
 	}
 

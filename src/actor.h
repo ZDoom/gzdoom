@@ -331,6 +331,7 @@ enum
 	MF6_POISONALWAYS	= 0x04000000,	// Always apply poison, even when target can't take the damage.
 	MF6_DOHARMSPECIES	= 0x08000000,	// Do hurt one's own species with projectiles.
 	MF6_INTRYMOVE		= 0x10000000,	// Executing P_TryMove
+	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 
 // --- mobj.renderflags ---
 

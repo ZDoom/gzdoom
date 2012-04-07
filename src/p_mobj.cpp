@@ -5873,6 +5873,7 @@ void PrintMiscActorInfo(AActor * query)
 			(query->special ? LineSpecialsInfo[query->special]->name : "None"),
 			query->args[0], query->args[1], query->args[2], query->args[3], 
 			query->args[4],	query->special1, query->special2);
+		Printf("\nTID is %d", query->tid);
 		Printf("\nIts coordinates are x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
 			FIXED2FLOAT(query->x), FIXED2FLOAT(query->y), FIXED2FLOAT(query->z),
 			FIXED2FLOAT(query->floorz), FIXED2FLOAT(query->ceilingz));

@@ -230,6 +230,7 @@ struct DehInfo
 	BYTE ExplosionStyle;
 	fixed_t ExplosionAlpha;
 	int NoAutofreeze;
+	int BFGCells;
 };
 extern DehInfo deh;
 EXTERN_CVAR (Int, infighting)

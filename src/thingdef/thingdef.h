@@ -368,6 +368,7 @@ struct StateCallData
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
 #define DECLARE_ACTION(name) void AF_##name(AActor *self, AActor *stateowner, FState *, int, StateCallData *);
+#define DECLARE_ACTION_PARAMS(name) void AFP_##name(AActor *self, AActor *stateowner, FState *, int, StateCallData *);
 
 // This distinction is here so that CALL_ACTION produces errors when trying to
 // access a function that requires parameters.

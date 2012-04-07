@@ -299,8 +299,8 @@ public:
 		AltFire,
 		EitherFire
 	};
-	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false);
-	bool DepleteAmmo (bool altFire, bool checkEnough=true);
+	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false, int ammocount = -1);
+	bool DepleteAmmo (bool altFire, bool checkEnough=true, int ammouse = -1);
 
 protected:
 	AAmmo *AddAmmo (AActor *other, const PClass *ammotype, int amount);
@@ -326,6 +326,8 @@ enum
 	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickback
 	WIF_NOAUTOAIM =			0x00004000, // this weapon never uses autoaim (useful for ballistic projectiles)
 	WIF_MELEEWEAPON =		0x00008000,	// melee weapon. Used by bots and monster AI.
+	WIF_DEHAMMO	=			0x00010000,	// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
+										// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
 
 	WIF_CHEATNOTWEAPON	=	0x08000000,	// Give cheat considers this not a weapon (used by Sigil)
 

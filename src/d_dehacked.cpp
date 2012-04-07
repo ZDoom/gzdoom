@@ -162,6 +162,41 @@ struct CodePointerAlias
 };
 static TArray<CodePointerAlias> MBFCodePointers;
 
+struct AmmoPerAttack
+{
+	actionf_p func;
+	int ammocount;
+};
+
+DECLARE_ACTION(A_Punch)
+DECLARE_ACTION(A_FirePistol)
+DECLARE_ACTION(A_FireShotgun)
+DECLARE_ACTION(A_FireShotgun2)
+DECLARE_ACTION(A_FireCGun)
+DECLARE_ACTION(A_FireMissile)
+DECLARE_ACTION_PARAMS(A_Saw)
+DECLARE_ACTION(A_FirePlasma)
+DECLARE_ACTION(A_FireBFG)
+DECLARE_ACTION(A_FireOldBFG)
+DECLARE_ACTION(A_FireRailgun)
+
+// Default ammo use of the various weapon attacks
+static AmmoPerAttack AmmoPerAttacks[] = {
+	{ AF_A_Punch, 0},
+	{ AF_A_FirePistol, 1},
+	{ AF_A_FireShotgun, 1}, 
+	{ AF_A_FireShotgun2, 2},
+	{ AF_A_FireCGun, 1},
+	{ AF_A_FireMissile, 1},
+	{ AFP_A_Saw, 0},
+	{ AF_A_FirePlasma, 1},
+	{ AF_A_FireBFG, -1},	// uses deh.BFGCells
+	{ AF_A_FireOldBFG, 1},
+	{ AF_A_FireRailgun, 1},
+	{ NULL, 0}
+};
+
+
 // Miscellaneous info that used to be constant
 DehInfo deh =
 {
@@ -183,6 +218,7 @@ DehInfo deh =
 	255,	// Rocket explosion style, 255=use cvar
 	FRACUNIT*2/3,		// Rocket explosion alpha
 	false,	// .NoAutofreeze
+	40,		// BFG cells per shot
 };
 
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
@@ -1589,6 +1625,7 @@ static int PatchWeapon (int weapNum)
 		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
 			info->AmmoUse1 = val;
+			info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
 		}
 		else if (stricmp (Line1, "Min ammo") == 0)
 		{
@@ -1742,7 +1779,7 @@ static int PatchMisc (int dummy)
 		{
 			if (stricmp (Line1, "BFG Cells/Shot") == 0)
 			{
-				((AWeapon*)GetDefaultByName ("BFG9000"))->AmmoUse1 = atoi (Line2);
+				deh.BFGCells = atoi (Line2);
 			}
 			else if (stricmp (Line1, "Rocket Explosion Style") == 0)
 			{
@@ -2500,8 +2537,6 @@ static void UnloadDehSupp ()
 		BitNames.ShrinkToFit();
 		StyleNames.Clear();
 		StyleNames.ShrinkToFit();
-		WeaponNames.Clear();
-		WeaponNames.ShrinkToFit();
 		AmmoNames.Clear();
 		AmmoNames.ShrinkToFit();
 
@@ -2794,6 +2829,7 @@ static bool LoadDehSupp ()
 			}
 			else if (sc.Compare("WeaponNames"))
 			{
+				WeaponNames.Clear();	// This won't be cleared by UnloadDEHSupp so we need to do it here explicitly
 				sc.MustGetStringName("{");
 				while (!sc.CheckString("}"))
 				{
@@ -2900,6 +2936,55 @@ void FinishDehPatch ()
 	StateMap.ShrinkToFit();
 	TouchedActors.Clear();
 	TouchedActors.ShrinkToFit();
+
+	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
+	// ammo consumption work as intended.
+
+	for(unsigned i = 0; i < WeaponNames.Size(); i++)
+	{
+		AWeapon *weap = (AWeapon*)GetDefaultByType(WeaponNames[i]);
+		bool found = false;
+		if (weap->flags6 & MF6_INTRYMOVE)
+		{
+			// Weapon sets an explicit amount of ammo to use so we won't need any special processing here
+			weap->flags6 &= ~MF6_INTRYMOVE;
+		}
+		else
+		{
+			weap->WeaponFlags |= WIF_DEHAMMO;
+			weap->AmmoUse1 = 0;
+			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
+			// and set its default ammo use as the weapon's AmmoUse1.
+
+			TMap<FState*, bool> StateVisited;
+
+			FState *state = WeaponNames[i]->ActorInfo->FindState(NAME_Fire);
+			while (state != NULL)
+			{
+				bool *check = StateVisited.CheckKey(state);
+				if (check != NULL && *check)
+				{
+					break;	// State has already been checked so we reached a loop
+				}
+				StateVisited[state] = true;
+				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
+				{
+					if (state->ActionFunc == AmmoPerAttacks[j].func)
+					{
+						found = true;
+						int use = AmmoPerAttacks[j].ammocount;
+						if (use < 0) use = deh.BFGCells;
+						weap->AmmoUse1 = use;
+						break;
+					}
+				}
+				if (found) break;
+				state = state->GetNextState();
+			}
+		}
+	}
+	WeaponNames.Clear();
+	WeaponNames.ShrinkToFit();
 }
 
 void ModifyDropAmount(AInventory *inv, int dropamount);

@@ -436,6 +436,8 @@ OptionMenu "CustomizeControls"
 	StaticText 	"Controls", 1
 	Control 	"Fire",					"+attack"
 	Control 	"Secondary Fire",		"+altattack"
+	Control 	"Weapon Reload",			"+reload"
+	Control 	"Weapon Zoom",				"+zoom"
 	Control 	"Use / Open",			"+use"
 	Control 	"Move forward",			"+forward"
 	Control 	"Move backward",		"+back"

@@ -653,6 +653,28 @@ FState *AWeapon::GetAltAtkState (bool hold)
 	return state;
 }
 
+//===========================================================================
+//
+// AWeapon :: GetRelState
+//
+//===========================================================================
+
+FState *AWeapon::GetRelState ()
+{
+	return FindState(NAME_Reload);
+}
+
+//===========================================================================
+//
+// AWeapon :: GetZoomState
+//
+//===========================================================================
+
+FState *AWeapon::GetZoomState ()
+{
+	return FindState(NAME_Zoom);
+}
+
 /* Weapon giver ***********************************************************/
 
 class AWeaponGiver : public AWeapon

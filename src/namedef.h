@@ -198,6 +198,8 @@ xx(AltFire)
 xx(AltHold)
 xx(Flash)
 xx(AltFlash)
+xx(Reload)
+xx(Zoom)
 
 // State names used by ASwitchableDecoration
 xx(Active)

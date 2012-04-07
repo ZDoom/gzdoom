@@ -205,6 +205,8 @@ typedef enum
 	CF_WEAPONREADYALT	= 1 << 25,		// Weapon can fire its secondary attack
 	CF_WEAPONSWITCHOK	= 1 << 26,		// It is okay to switch away from this weapon
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
+	CF_WEAPONRELOADOK   = 1 << 28,      // [XA] Okay to reload this weapon.
+	CF_WEAPONZOOMOK     = 1 << 29,      // [XA] Okay to use weapon zoom function.
 } cheat_t;
 
 #define WPIECE1		1

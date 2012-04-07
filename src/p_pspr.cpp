@@ -95,7 +95,7 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 	if (position == ps_weapon && !nofunction)
 	{ // A_WeaponReady will re-set these as needed
-		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK);
+		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK | CF_WEAPONRELOADOK | CF_WEAPONZOOMOK);
 	}
 
 	psp = &player->psprites[position];
@@ -284,6 +284,66 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 
 //---------------------------------------------------------------------------
 //
+// PROC P_ReloadWeapon
+//
+//---------------------------------------------------------------------------
+
+void P_ReloadWeapon (player_t *player, FState *state)
+{
+	AWeapon *weapon;
+	if (!player->isbot && bot_observer)
+	{
+		return;
+	}
+
+	weapon = player->ReadyWeapon;
+	if (weapon == NULL)
+	{
+		return;
+	}
+
+	if (state == NULL)
+	{
+		state = weapon->GetRelState();
+	}
+	// [XA] don't change state if still null, so if the modder sets 
+	// WRF_RELOAD to true but forgets to define the Reload state, the weapon
+	// won't disappear. ;)
+	if (state != NULL)
+		P_SetPsprite (player, ps_weapon, state);
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_ZoomWeapon
+//
+//---------------------------------------------------------------------------
+
+void P_ZoomWeapon (player_t *player, FState *state)
+{
+	AWeapon *weapon;
+	if (!player->isbot && bot_observer)
+	{
+		return;
+	}
+
+	weapon = player->ReadyWeapon;
+	if (weapon == NULL)
+	{
+		return;
+	}
+
+	if (state == NULL)
+	{
+		state = weapon->GetZoomState();
+	}
+	// [XA] don't change state if still null. Same reasons as above.
+	if (state != NULL)
+		P_SetPsprite (player, ps_weapon, state);
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC P_DropWeapon
 //
 // The player died, so put the weapon away.
@@ -368,6 +428,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 //
 // Readies a weapon for firing or bobbing with its three ancillary functions,
 // DoReadyWeaponToSwitch(), DoReadyWeaponToFire() and DoReadyWeaponToBob().
+// [XA] Added DoReadyWeaponToReload() and DoReadyWeaponToZoom()
 //
 //============================================================================
 
@@ -421,12 +482,32 @@ void DoReadyWeaponToBob (AActor * self)
 	}
 }
 
+void DoReadyWeaponToReload (AActor * self)
+{
+	// Prepare for reload action.
+	player_t *player;
+	if (self && (player = self->player))
+		player->cheats |= CF_WEAPONRELOADOK;
+	return;
+}
+
+void DoReadyWeaponToZoom (AActor * self)
+{
+	// Prepare for reload action.
+	player_t *player;
+	if (self && (player = self->player))
+		player->cheats |= CF_WEAPONZOOMOK;
+	return;
+}
+
 // This function replaces calls to A_WeaponReady in other codepointers.
 void DoReadyWeapon(AActor * self)
 {
 	DoReadyWeaponToBob(self);
 	DoReadyWeaponToFire(self);
 	DoReadyWeaponToSwitch(self);
+	DoReadyWeaponToReload(self);
+	DoReadyWeaponToZoom(self);
 }
 
 enum EWRF_Options
@@ -436,6 +517,8 @@ enum EWRF_Options
 	WRF_NoSwitch = 2,
 	WRF_NoPrimary = 4,
 	WRF_NoSecondary = 8,
+	WRF_AllowReload = 16,
+	WRF_AllowZoom = 32,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
@@ -447,6 +530,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 	if ((paramflags & WRF_NoFire) != WRF_NoFire)	DoReadyWeaponToFire(self, 
 		(!(paramflags & WRF_NoPrimary)), (!(paramflags & WRF_NoSecondary)));
 	if (!(paramflags & WRF_NoBob))	DoReadyWeaponToBob(self);
+	if ((paramflags & WRF_AllowReload))	DoReadyWeaponToReload(self);
+	if ((paramflags & WRF_AllowZoom))	DoReadyWeaponToZoom(self);
 }
 
 //---------------------------------------------------------------------------
@@ -517,6 +602,50 @@ void P_CheckWeaponSwitch (player_t *player)
 	{
 		// morphed classes cannot change weapons so don't even try again.
 		player->PendingWeapon = WP_NOCHANGE;
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponReload
+//
+// The player can reload the weapon.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponReload (player_t *player)
+{
+	AWeapon *weapon = player->ReadyWeapon;
+
+	if (weapon == NULL)
+		return;
+
+	// Check for reload.
+	if ((player->cheats & CF_WEAPONRELOADOK) && (player->cmd.ucmd.buttons & BT_RELOAD))
+	{
+		P_ReloadWeapon (player, NULL);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponZoom
+//
+// The player can use the weapon's zoom function.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponZoom (player_t *player)
+{
+	AWeapon *weapon = player->ReadyWeapon;
+
+	if (weapon == NULL)
+		return;
+
+	// Check for zoom.
+	if ((player->cheats & CF_WEAPONZOOMOK) && (player->cmd.ucmd.buttons & BT_ZOOM))
+	{
+		P_ZoomWeapon (player, NULL);
 	}
 }
 
@@ -891,6 +1020,14 @@ void P_MovePsprites (player_t *player)
 		if (player->cheats & (CF_WEAPONREADY | CF_WEAPONREADYALT))
 		{
 			P_CheckWeaponFire (player);
+		}
+		if (player->cheats & CF_WEAPONRELOADOK)
+		{
+			P_CheckWeaponReload (player);
+		}
+		if (player->cheats & CF_WEAPONZOOMOK)
+		{
+			P_CheckWeaponZoom (player);
 		}
 	}
 }

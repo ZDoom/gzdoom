@@ -37,6 +37,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include <new>
 
 #if !defined(_WIN32)

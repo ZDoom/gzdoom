@@ -3844,8 +3844,7 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 //
 //
 //==========================================================================
-
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce, angle_t angleoffset, angle_t pitchoffset)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, bool fullbright, int duration, float sparsity, float drift, const PClass *spawnclass)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3888,8 +3887,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	int flags;
 
-	AActor *puffDefaults = puffclass == NULL? 
-							NULL : GetDefaultByType (puffclass->GetReplacement());
+	AActor *puffDefaults = puffclass == NULL ? NULL : GetDefaultByType (puffclass->GetReplacement());
 
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
 	else flags = TRACE_PCross|TRACE_Impact;
@@ -3897,13 +3895,13 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	if (pierce)
 	{
 		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
-			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
+			distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
 			flags, ProcessRailHit);
 	}
 	else
 	{
 		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
-			8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
+			distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
 			flags, ProcessNoPierceRailHit);
 	}
 
@@ -3928,7 +3926,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			spawnpuff = puffclass != NULL;
+			spawnpuff = (puffclass != NULL);
 		}
 		else
 		{
@@ -3977,7 +3975,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	end.X = FIXED2FLOAT(trace.X);
 	end.Y = FIXED2FLOAT(trace.Y);
 	end.Z = FIXED2FLOAT(trace.Z);
-	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, silent);
+	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, silent, spawnclass, source->angle + angleoffset, fullbright, duration, sparsity, drift);
 }
 
 //==========================================================================

@@ -1372,6 +1372,7 @@ enum
 	RAF_SILENT = 1,
 	RAF_NOPIERCE = 2,
 	RAF_EXPLICITANGLE = 4,
+	RAF_FULLBRIGHT = 8
 };
 
 //==========================================================================
@@ -1381,7 +1382,7 @@ enum
 //==========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 {
-	ACTION_PARAM_START(10);
+	ACTION_PARAM_START(15);
 	ACTION_PARAM_INT(Damage, 0);
 	ACTION_PARAM_INT(Spawnofs_XY, 1);
 	ACTION_PARAM_BOOL(UseAmmo, 2);
@@ -1392,6 +1393,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	ACTION_PARAM_CLASS(PuffType, 7);
 	ACTION_PARAM_ANGLE(Spread_XY, 8);
 	ACTION_PARAM_ANGLE(Spread_Z, 9);
+	ACTION_PARAM_FIXED(Range, 10);
+	ACTION_PARAM_INT(Duration, 11);
+	ACTION_PARAM_FLOAT(Sparsity, 12);
+	ACTION_PARAM_FLOAT(DriftSpeed, 13);
+	ACTION_PARAM_CLASS(SpawnClass, 14);
+	
+	if(Range==0) Range=8192*FRACUNIT;
+	if(Duration==0) Duration=35;
+	if(Sparsity==0) Sparsity=1.0;
 
 	if (!self->player) return;
 
@@ -1417,7 +1427,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 		slope = pr_crailgun.Random2() * (Spread_Z / 255);
 	}
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)), angle, slope);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)), angle, slope, Range, (Flags & RAF_FULLBRIGHT), Duration, Sparsity, DriftSpeed, SpawnClass);
 }
 
 //==========================================================================
@@ -1435,7 +1445,7 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 {
-	ACTION_PARAM_START(10);
+	ACTION_PARAM_START(15);
 	ACTION_PARAM_INT(Damage, 0);
 	ACTION_PARAM_INT(Spawnofs_XY, 1);
 	ACTION_PARAM_COLOR(Color1, 2);
@@ -1446,6 +1456,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	ACTION_PARAM_CLASS(PuffType, 7);
 	ACTION_PARAM_ANGLE(Spread_XY, 8);
 	ACTION_PARAM_ANGLE(Spread_Z, 9);
+	ACTION_PARAM_FIXED(Range, 10);
+	ACTION_PARAM_INT(Duration, 11);
+	ACTION_PARAM_FLOAT(Sparsity, 12);
+	ACTION_PARAM_FLOAT(DriftSpeed, 13);
+	ACTION_PARAM_CLASS(SpawnClass, 14);
+
+	if(Range==0) Range=8192*FRACUNIT;
+	if(Duration==0) Duration=35;
+	if(Sparsity==0) Sparsity=1.0;
 
 	AActor *linetarget;
 
@@ -1526,7 +1545,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		slopeoffset = pr_crailgun.Random2() * (Spread_Z / 255);
 	}
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)), angleoffset, slopeoffset);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, (Flags & RAF_SILENT), PuffType, (!(Flags & RAF_NOPIERCE)), angleoffset, slopeoffset, Range, (Flags & RAF_FULLBRIGHT), Duration, Sparsity, DriftSpeed, SpawnClass);
 
 	self->x = saved_x;
 	self->y = saved_y;

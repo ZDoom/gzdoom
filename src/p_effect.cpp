@@ -310,11 +310,16 @@ void P_RunEffects ()
 }
 
 //
-// AddParticle
+// JitterParticle
 //
 // Creates a particle with "jitter"
 //
 particle_t *JitterParticle (int ttl)
+{
+	return JitterParticle (ttl, 1.0);
+}
+// [XA] Added "drift speed" multiplier setting for enhanced railgun stuffs.
+particle_t *JitterParticle (int ttl, float drift)
 {
 	particle_t *particle = NewParticle ();
 
@@ -324,10 +329,10 @@ particle_t *JitterParticle (int ttl)
 
 		// Set initial velocities
 		for (i = 3; i; i--, val++)
-			*val = (FRACUNIT/4096) * (M_Random () - 128);
+			*val = (int)((FRACUNIT/4096) * (M_Random () - 128) * drift);
 		// Set initial accelerations
 		for (i = 3; i; i--, val++)
-			*val = (FRACUNIT/16384) * (M_Random () - 128);
+			*val = (int)((FRACUNIT/16384) * (M_Random () - 128) * drift);
 
 		particle->trans = 255;	// fully opaque
 		particle->ttl = ttl;
@@ -580,7 +585,7 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, bool silent)
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, bool silent, const PClass *spawnclass, angle_t angle, bool fullbright, int duration, float sparsity, float drift)
 {
 	double length, lengthsquared;
 	int steps, i;
@@ -663,10 +668,10 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	step = dir * 3;
 
 	// Create the outer spiral.
-	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0)
+	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0 && (spawnclass == NULL))
 	{
-		FVector3 spiral_step = step * r_rail_spiralsparsity;
-		int spiral_steps = steps * r_rail_spiralsparsity;
+		FVector3 spiral_step = step * r_rail_spiralsparsity * sparsity;
+		int spiral_steps = (int)(steps * r_rail_spiralsparsity / sparsity);
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = start;
@@ -680,14 +685,16 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 				return;
 
 			p->trans = 255;
-			p->ttl = 35;
-			p->fade = FADEFROMTTL(35);
+			p->ttl = duration;
+			p->fade = FADEFROMTTL(duration);
 			p->size = 3;
+			if(fullbright)
+				p->bright = true;
 
 			tempvec = FMatrix3x3(dir, deg) * extend;
-			p->velx = FLOAT2FIXED(tempvec.X)>>4;
-			p->vely = FLOAT2FIXED(tempvec.Y)>>4;
-			p->velz = FLOAT2FIXED(tempvec.Z)>>4;
+			p->velx = FLOAT2FIXED(tempvec.X * drift)>>4;
+			p->vely = FLOAT2FIXED(tempvec.Y * drift)>>4;
+			p->velz = FLOAT2FIXED(tempvec.Z * drift)>>4;
 			tempvec += pos;
 			p->x = FLOAT2FIXED(tempvec.X);
 			p->y = FLOAT2FIXED(tempvec.Y);
@@ -768,6 +775,21 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			{
 				p->color = color2;
 			}
+		}
+	}
+	// create actors
+	if(spawnclass != NULL) {
+		if(sparsity < 1) sparsity = 32;
+
+		FVector3 trail_step = (step / 3) * sparsity;
+		int trail_steps = (int)((steps * 3) / sparsity);
+
+		pos = start;
+		for (i = trail_steps; i; i--)
+		{
+			AActor *thing = Spawn (spawnclass, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), ALLOW_REPLACE);
+			if(thing) thing->angle = angle;
+			pos += trail_step;
 		}
 	}
 }

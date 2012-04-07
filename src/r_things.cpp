@@ -2138,6 +2138,9 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	{
 		vis->Style.colormap = fixedcolormap;
 	}
+	else if(particle->bright) {
+		vis->Style.colormap = map;
+	}
 	else
 	{
 		// Using MulScale15 instead of 16 makes particles slightly more visible

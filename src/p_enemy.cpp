@@ -2726,7 +2726,7 @@ void A_Chase(AActor *self)
 // A_FaceTracer
 //
 //=============================================================================
-void A_Face (AActor *self, AActor *other, angle_t max_turn)
+void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 {
 	if (!other)
 		return;
@@ -2773,6 +2773,50 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn)
 		self->angle = other_angle;
 	}
 
+	// [DH] Now set pitch. In order to maintain compatibility, this can be
+	// disabled and is so by default.
+	if (max_pitch <= ANGLE_180)
+	{
+		// [DH] Don't need to do proper fixed->double conversion, since the
+		// result is only used in a ratio.
+		double dist_x = self->target->x - self->x;
+		double dist_y = self->target->y - self->y;
+		double dist_z = self->target->z - self->z;
+		double dist = sqrt(dist_x*dist_x + dist_y*dist_y + dist_z*dist_z);
+
+		angle_t other_pitch = rad2bam(asin(dist_z / dist));
+
+		if (max_pitch && (max_pitch < (angle_t)abs(self->pitch - other_pitch)))
+		{
+			if (self->pitch > other_pitch)
+			{
+				if (self->pitch - other_pitch < ANGLE_180)
+				{
+					self->pitch -= max_pitch;
+				}
+				else
+				{
+					self->pitch += max_pitch;
+				}
+			}
+			else
+			{
+				if (other_pitch - self->pitch < ANGLE_180)
+				{
+					self->pitch += max_pitch;
+				}
+				else
+				{
+					self->pitch -= max_pitch;
+				}
+			}
+		}
+		else
+		{
+			self->pitch = other_pitch;
+		}
+	}
+
 	// This will never work well if the turn angle is limited.
 	if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
     {
@@ -2780,43 +2824,46 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn)
     }
 }
 
-void A_FaceTarget (AActor *self, angle_t max_turn)
+void A_FaceTarget (AActor *self, angle_t max_turn, angle_t max_pitch)
 {
-	A_Face(self, self->target, max_turn);
+	A_Face(self, self->target, max_turn, max_pitch);
 }
 
-void A_FaceMaster (AActor *self, angle_t max_turn)
+void A_FaceMaster (AActor *self, angle_t max_turn, angle_t max_pitch)
 {
-	A_Face(self, self->master, max_turn);
+	A_Face(self, self->master, max_turn, max_pitch);
 }
 
-void A_FaceTracer (AActor *self, angle_t max_turn)
+void A_FaceTracer (AActor *self, angle_t max_turn, angle_t max_pitch)
 {
-	A_Face(self, self->tracer, max_turn);
+	A_Face(self, self->tracer, max_turn, max_pitch);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_ANGLE(max_turn, 0);
+	ACTION_PARAM_ANGLE(max_pitch, 1);
 
-	A_FaceTarget(self, max_turn);
+	A_FaceTarget(self, max_turn, max_pitch);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_ANGLE(max_turn, 0);
+	ACTION_PARAM_ANGLE(max_pitch, 1);
 
-	A_FaceMaster(self, max_turn);
+	A_FaceMaster(self, max_turn, max_pitch);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_ANGLE(max_turn, 0);
+	ACTION_PARAM_ANGLE(max_pitch, 1);
 
-	A_FaceTracer(self, max_turn);
+	A_FaceTracer(self, max_turn, max_pitch);
 }
 
 //===========================================================================

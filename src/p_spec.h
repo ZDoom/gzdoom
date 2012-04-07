@@ -95,7 +95,7 @@ private:
 
 // Factor to scale scrolling effect into mobj-carrying properties = 3/32.
 // (This is so scrolling floors and objects on them can move at same speed.)
-enum { CARRYFACTOR = ((fixed_t)(FRACUNIT*.09375)) };
+enum { CARRYFACTOR = (3*FRACUNIT >> 5) };
 
 // phares 3/20/98: added new model of Pushers for push/pull effects
 

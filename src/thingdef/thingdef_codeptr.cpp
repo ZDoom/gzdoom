@@ -840,6 +840,12 @@ enum CM_Flags
 	CMF_AIMMODE = 3,
 	CMF_TRACKOWNER = 4,
 	CMF_CHECKTARGETDEAD = 8,
+
+	CMF_ABSOLUTEPITCH = 16,
+	CMF_OFFSETPITCH = 32,
+	CMF_SAVEPITCH = 64,
+
+	CMF_ABSOLUTEANGLE = 128
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
@@ -888,22 +894,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				self->x+=x;
 				self->y+=y;
 				missile = P_SpawnMissileAngleZSpeed(self, self->z+SpawnHeight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
-				self->x-=x;
+ 				self->x-=x;
 				self->y-=y;
 
-				// It is not necessary to use the correct angle here.
-				// The only important thing is that the horizontal velocity is correct.
-				// Therefore use 0 as the missile's angle and simplify the calculations accordingly.
-				// The actual velocity vector is set below.
-				if (missile)
-				{
-					fixed_t vx = finecosine[pitch>>ANGLETOFINESHIFT];
-					fixed_t vz = finesine[pitch>>ANGLETOFINESHIFT];
-
-					missile->velx = FixedMul (vx, missile->Speed);
-					missile->vely = 0;
-					missile->velz = FixedMul (vz, missile->Speed);
-				}
+				flags |= CMF_ABSOLUTEPITCH;
 
 				break;
 			}
@@ -913,11 +907,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				// Use the actual velocity instead of the missile's Speed property
 				// so that this can handle missiles with a high vertical velocity 
 				// component properly.
-				FVector3 velocity (missile->velx, missile->vely, 0);
 
-				fixed_t missilespeed = (fixed_t)velocity.Length();
+				fixed_t missilespeed;
 
-				missile->angle += Angle;
+				if ( (CMF_ABSOLUTEPITCH|CMF_OFFSETPITCH) & flags)
+				{
+					if (CMF_OFFSETPITCH & flags)
+					{
+							FVector2 velocity (missile->velx, missile->vely);
+							pitch += R_PointToAngle2(0,0, (fixed_t)velocity.Length(), missile->velz);
+					}
+					ang = pitch >> ANGLETOFINESHIFT;
+					missilespeed = FixedMul(finecosine[ang], missile->Speed);
+					missile->velz = FixedMul(finesine[ang], missile->Speed);
+				}
+				else
+				{
+					FVector2 velocity (missile->velx, missile->vely);
+					missilespeed = (fixed_t)velocity.Length();
+				}
+
+				if (CMF_SAVEPITCH & flags)
+				{
+					missile->pitch = pitch;
+					// In aimmode 0 and 1 without absolutepitch or offsetpitch, the pitch parameter
+					// contains the unapplied parameter. In that case, it is set as pitch without
+					// otherwise affecting the spawned actor.
+				}
+
+				missile->angle = (CMF_ABSOLUTEANGLE & flags) ? Angle : missile->angle + Angle ;
+
 				ang = missile->angle >> ANGLETOFINESHIFT;
 				missile->velx = FixedMul (missilespeed, finecosine[ang]);
 				missile->vely = FixedMul (missilespeed, finesine[ang]);

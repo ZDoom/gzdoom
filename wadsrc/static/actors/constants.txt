@@ -17,6 +17,10 @@ const int CMF_AIMOFFSET = 1;
 const int CMF_AIMDIRECTION = 2;
 const int CMF_TRACKOWNER = 4;
 const int CMF_CHECKTARGETDEAD = 8;
+const int CMF_ABSOLUTEPITCH = 16;
+const int CMF_OFFSETPITCH = 32;
+const int CMF_SAVEPITCH = 64;
+const int CMF_ABSOLUTEANGLE = 128;
 
 // Flags for A_CustomBulletAttack
 const int CBAF_AIMFACING = 1;

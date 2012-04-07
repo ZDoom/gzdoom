@@ -44,6 +44,8 @@
 #include "dobject.h"
 #include "doomdef.h"
 
+#include "m_fixed.h"
+
 struct Baggage;
 class FScanner;
 struct FActorInfo;
@@ -184,6 +186,31 @@ struct DmgFactors : public TMap<FName, fixed_t>
 typedef TMap<FName, int> PainChanceList;
 typedef TMap<FName, PalEntry> PainFlashList;
 typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
+
+
+
+struct DamageTypeDefinition
+{
+public:
+	DamageTypeDefinition() { Clear(); }
+
+	fixed_t DefaultFactor;
+	bool ReplaceFactor;
+	bool NoArmor;
+
+	void Apply(FName const type);
+	void Clear()
+	{
+		DefaultFactor = (fixed_t)1;
+		ReplaceFactor = false;
+		NoArmor = false;
+	}
+
+	static DamageTypeDefinition *Get(FName const type);
+	static bool IgnoreArmor(FName const type);
+	static int ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors);
+};
+
 
 struct FActorInfo
 {

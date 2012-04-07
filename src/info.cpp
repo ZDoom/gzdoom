@@ -55,7 +55,6 @@ extern void LoadActors ();
 extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
-
 //==========================================================================
 //
 //
@@ -544,4 +543,85 @@ CCMD (summonmbf)
 CCMD (summonfoe)
 {
 	SummonActor (DEM_SUMMONFOE, DEM_SUMMONFOE2, argv);
+}
+
+
+// Damage type defaults / global settings
+
+TMap<FName, DamageTypeDefinition> GlobalDamageDefinitions;
+
+void DamageTypeDefinition::Apply(FName const type) 
+{ 
+	GlobalDamageDefinitions[type] = *this; 
+}
+
+DamageTypeDefinition *DamageTypeDefinition::Get(FName const type) 
+{ 
+	return GlobalDamageDefinitions.CheckKey(type); 
+}
+
+bool DamageTypeDefinition::IgnoreArmor(FName const type)
+{ 
+	if (type == NAME_Drowning) return true; 
+	DamageTypeDefinition *dtd = Get(type);
+	if (dtd) return dtd->NoArmor;
+	return false;
+}
+
+//==========================================================================
+//
+// DamageTypeDefinition :: ApplyMobjDamageFactor
+//
+// Calculates mobj damage based on original damage, defined damage factors
+// and damage type.
+//
+// If the specific damage type is not defined, the damage factor for
+// type 'None' will be used (with 1.0 as a default value).
+//
+// Globally declared damage types may override or multiply the damage
+// factor when 'None' is used as a fallback in this function.
+//
+//==========================================================================
+
+int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors)
+{
+	if (factors)
+	{
+		// If the actor has named damage factors, look for a specific factor
+		fixed_t const *pdf = factors->CheckKey(type);
+		if (pdf) return FixedMul(damage, *pdf); // type specific damage type
+		
+		// If this was nonspecific damage, don't fall back to nonspecific search
+		if (type == NAME_None) return damage;
+	}
+	
+	// If this was nonspecific damage, don't fall back to nonspecific search
+	else if (type == NAME_None) 
+	{ 
+		return damage; 
+	}
+	else
+	{
+		// Normal is unsupplied / 1.0, so there's no difference between modifying and overriding
+		DamageTypeDefinition *dtd = Get(type);
+		return dtd ? FixedMul(damage, dtd->DefaultFactor) : damage;
+	}
+	
+	{
+		fixed_t const *pdf  = factors->CheckKey(NAME_None);
+		// Here we are looking for modifications to untyped damage
+		// If the calling actor defines untyped damage factor, that is contained in "pdf".
+		if (pdf) // normal damage available
+		{
+			DamageTypeDefinition *dtd = Get(type);
+
+			if (dtd)
+			{
+				if (dtd->ReplaceFactor) return FixedMul(damage, dtd->DefaultFactor); // use default instead of untyped factor
+				return FixedMul(damage, FixedMul(*pdf, dtd->DefaultFactor)); // use default as modification of untyped factor
+			}
+			return FixedMul(damage, *pdf); // there was no default, so actor default is used
+		}
+	}
+	return damage;
 }

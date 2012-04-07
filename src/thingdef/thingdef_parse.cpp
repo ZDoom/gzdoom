@@ -1179,7 +1179,50 @@ static void ParseActor(FScanner &sc)
 	sc.SetCMode (false);
 }
 
+//==========================================================================
+//
+// Reads a damage definition
+//
+//==========================================================================
 
+static void ParseDamageDefinition(FScanner &sc)
+{
+	sc.SetCMode (true); // This may be 100% irrelevant for such a simple syntax, but I don't know
+
+	// Get DamageType
+
+	sc.MustGetString();
+	FName damageType = sc.String;
+
+	DamageTypeDefinition dtd;
+
+	sc.MustGetToken('{');
+	while (sc.MustGetAnyToken(), sc.TokenType != '}')
+	{
+		if (sc.Compare("FACTOR"))
+		{
+			sc.MustGetFloat();
+			dtd.DefaultFactor = (fixed_t)sc.Float;
+			if (!dtd.DefaultFactor) dtd.ReplaceFactor = true; // Multiply by 0 yields 0: FixedMul(damage, FixedMul(factor, 0)) is more wasteful than FixedMul(factor, 0)
+		}
+		else if (sc.Compare("REPLACEFACTOR"))
+		{
+			dtd.ReplaceFactor = true;
+		}
+		else if (sc.Compare("NOARMOR"))
+		{
+			dtd.NoArmor = true;
+		}
+		else
+		{
+			sc.ScriptError("Unexpected data (%s) in damagetype definition.", sc.String);
+		}
+	}
+
+	dtd.Apply(damageType);
+
+	sc.SetCMode (false); // (set to true earlier in function)
+}
 
 //==========================================================================
 //
@@ -1261,6 +1304,11 @@ void ParseDecorate (FScanner &sc)
 			else if (sc.Compare("PROJECTILE"))
 			{
 				ParseOldDecoration (sc, DEF_Projectile);
+				break;
+			}
+			else if (sc.Compare("DAMAGETYPE"))
+			{
+				ParseDamageDefinition(sc);
 				break;
 			}
 		default:

@@ -2784,31 +2784,19 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		double dist_z = self->target->z - self->z;
 		double dist = sqrt(dist_x*dist_x + dist_y*dist_y + dist_z*dist_z);
 
-		angle_t other_pitch = rad2bam(asin(dist_z / dist));
+		int other_pitch = (int)rad2bam(asin(dist_z / dist));
 
-		if (max_pitch && (max_pitch < (angle_t)abs(self->pitch - other_pitch)))
+		if (max_pitch != 0)
 		{
 			if (self->pitch > other_pitch)
 			{
-				if (self->pitch - other_pitch < ANGLE_180)
-				{
-					self->pitch -= max_pitch;
-				}
-				else
-				{
-					self->pitch += max_pitch;
-				}
+				max_pitch = MIN(max_pitch, unsigned(self->pitch - other_pitch));
+				self->pitch -= max_pitch;
 			}
 			else
 			{
-				if (other_pitch - self->pitch < ANGLE_180)
-				{
-					self->pitch += max_pitch;
-				}
-				else
-				{
-					self->pitch -= max_pitch;
-				}
+				max_pitch = MIN(max_pitch, unsigned(other_pitch - self->pitch));
+				self->pitch += max_pitch;
 			}
 		}
 		else

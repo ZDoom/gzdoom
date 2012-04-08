@@ -135,72 +135,84 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 //
 // Sets opentop and openbottom to the window
 // through a two sided line.
-// OPTIMIZE: keep this precalculated
 //
 //==========================================================================
 
 void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, 
-					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy)
+					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool only3d)
 {
-	sector_t *front, *back;
-	fixed_t fc, ff, bc, bf;
-
-	if (linedef->sidedef[1] == NULL)
+	if (!only3d)
 	{
-		// single sided line
-		open.range = 0;
-		return;
-	}
+		sector_t *front, *back;
+		fixed_t fc, ff, bc, bf;
 
-	front = linedef->frontsector;
-	back = linedef->backsector;
+		if (linedef->sidedef[1] == NULL)
+		{
+			// single sided line
+			open.range = 0;
+			return;
+		}
 
-	fc = front->ceilingplane.ZatPoint (x, y);
-	ff = front->floorplane.ZatPoint (x, y);
-	bc = back->ceilingplane.ZatPoint (x, y);
-	bf = back->floorplane.ZatPoint (x, y);
+		front = linedef->frontsector;
+		back = linedef->backsector;
 
-	/*Printf ("]]]]]] %d %d\n", ff, bf);*/
+		fc = front->ceilingplane.ZatPoint (x, y);
+		ff = front->floorplane.ZatPoint (x, y);
+		bc = back->ceilingplane.ZatPoint (x, y);
+		bf = back->floorplane.ZatPoint (x, y);
 
-	open.topsec = fc < bc? front : back;
-	open.ceilingpic = open.topsec->GetTexture(sector_t::ceiling);
-	open.top = fc < bc ? fc : bc;
+		/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 
-	bool usefront;
+		open.topsec = fc < bc? front : back;
+		open.ceilingpic = open.topsec->GetTexture(sector_t::ceiling);
+		open.top = fc < bc ? fc : bc;
 
-	// [RH] fudge a bit for actors that are moving across lines
-	// bordering a slope/non-slope that meet on the floor. Note
-	// that imprecisions in the plane equation mean there is a
-	// good chance that even if a slope and non-slope look like
-	// they line up, they won't be perfectly aligned.
-	if (refx == FIXED_MIN ||
-		abs (ff-bf) > 256)
-	{
-		usefront = (ff > bf);
-	}
-	else
-	{
-		if ((front->floorplane.a | front->floorplane.b) == 0)
-			usefront = true;
-		else if ((back->floorplane.a | front->floorplane.b) == 0)
-			usefront = false;
+		bool usefront;
+
+		// [RH] fudge a bit for actors that are moving across lines
+		// bordering a slope/non-slope that meet on the floor. Note
+		// that imprecisions in the plane equation mean there is a
+		// good chance that even if a slope and non-slope look like
+		// they line up, they won't be perfectly aligned.
+		if (refx == FIXED_MIN ||
+			abs (ff-bf) > 256)
+		{
+			usefront = (ff > bf);
+		}
 		else
-			usefront = !P_PointOnLineSide (refx, refy, linedef);
-	}
+		{
+			if ((front->floorplane.a | front->floorplane.b) == 0)
+				usefront = true;
+			else if ((back->floorplane.a | front->floorplane.b) == 0)
+				usefront = false;
+			else
+				usefront = !P_PointOnLineSide (refx, refy, linedef);
+		}
 
-	if (usefront)
-	{
-		open.bottom = ff;
-		open.bottomsec = front;
-		open.floorpic = front->GetTexture(sector_t::floor);
-		open.lowfloor = bf;
+		if (usefront)
+		{
+			open.bottom = ff;
+			open.bottomsec = front;
+			open.floorpic = front->GetTexture(sector_t::floor);
+			open.lowfloor = bf;
+		}
+		else
+		{
+			open.bottom = bf;
+			open.bottomsec = back;
+			open.floorpic = back->GetTexture(sector_t::floor);
+			open.lowfloor = ff;
+		}
 	}
 	else
-	{
-		open.bottom = bf;
-		open.bottomsec = back;
-		open.floorpic = back->GetTexture(sector_t::floor);
-		open.lowfloor = ff;
+	{ // Dummy stuff to have some sort of opening for the 3D checks to modify
+		open.topsec = NULL;
+		open.ceilingpic.SetInvalid();
+		open.top = FIXED_MAX;
+		open.bottomsec = NULL;
+		open.floorpic.SetInvalid();
+		open.bottom = FIXED_MIN;
+		open.lowfloor = FIXED_MAX;
 	}
 
 	// Check 3D floors

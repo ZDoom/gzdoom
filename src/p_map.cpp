@@ -83,9 +83,11 @@ msecnode_t* sector_list = NULL;		// phares 3/16/98
 //
 // PIT_FindFloorCeiling
 //
+// only3d set means to only check against 3D floors and midtexes.
+//
 //==========================================================================
 
-static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPosition &tmf)
+static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPosition &tmf, bool only3d)
 {
 	if (box.Right() <= ld->bbox[BOXLEFT]
 		|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -113,28 +115,28 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
 		 && ld->backsector->e->XFloor.ffloors.Size()==0 && ld->frontsector->e->XFloor.ffloors.Size()==0)
 	{
-		P_LineOpening (open, tmf.thing, ld, sx=tmf.x, sy=tmf.y, tmf.x, tmf.y);
+		P_LineOpening (open, tmf.thing, ld, sx=tmf.x, sy=tmf.y, tmf.x, tmf.y, only3d);
 	}
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 	  // that to calculate openings
-		float dx = (float)ld->dx;
-		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(tmf.x - ld->v1->x) * dx +
-				 			   (float)(tmf.y - ld->v1->y) * dy) /
+		double dx = ld->dx;
+		double dy = ld->dy;
+		fixed_t r = xs_CRoundToInt(((double)(tmf.x - ld->v1->x) * dx +
+				 			   (double)(tmf.y - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
 		if (r <= 0)
 		{
-			P_LineOpening (open, tmf.thing, ld, sx=ld->v1->x, sy=ld->v1->y, tmf.x, tmf.y);
+			P_LineOpening (open, tmf.thing, ld, sx=ld->v1->x, sy=ld->v1->y, tmf.x, tmf.y, only3d);
 		}
 		else if (r >= (1<<24))
 		{
-			P_LineOpening (open, tmf.thing, ld, sx=ld->v2->x, sy=ld->v2->y, tmf.thing->x, tmf.thing->y);
+			P_LineOpening (open, tmf.thing, ld, sx=ld->v2->x, sy=ld->v2->y, tmf.thing->x, tmf.thing->y, only3d);
 		}
 		else
 		{
 			P_LineOpening (open, tmf.thing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
-				sy=ld->v1->y + MulScale24 (r, ld->dy), tmf.x, tmf.y);
+				sy=ld->v1->y + MulScale24 (r, ld->dy), tmf.x, tmf.y, only3d);
 		}
 	}
 
@@ -264,7 +266,7 @@ void P_FindFloorCeiling (AActor *actor, int flags)
 
 	while ((ld = it.Next()))
 	{
-		PIT_FindFloorCeiling(ld, box, tmf);
+		PIT_FindFloorCeiling(ld, box, tmf, !!(flags & FFCF_ONLY3DFLOORS));
 	}
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
@@ -340,7 +342,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	thing->z = z;
 	while ((ld = it.Next()))
 	{
-		PIT_FindFloorCeiling(ld, box, tmf);
+		PIT_FindFloorCeiling(ld, box, tmf, false);
 	}
 	thing->z = savedz;
 

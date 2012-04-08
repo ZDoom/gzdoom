@@ -2487,7 +2487,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 
 	// If there are 3D floors, we need to find floor/ceiling again.
-	P_FindFloorCeiling(mo, FFCF_SAMESECTOR);
+	P_FindFloorCeiling(mo, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS);
 
 	if (z == ONFLOORZ)
 	{
@@ -2529,6 +2529,8 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->Translation = mobj->Translation;
 
 	mo->skillrespawncount = mobj->skillrespawncount;
+
+	mo->PrevZ = z;		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
 	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z, ALLOW_REPLACE);

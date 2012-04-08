@@ -335,7 +335,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
-	// P_LineOpening requires the thing's z to be the destination ú‹ order to work.
+	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	fixed_t savedz = thing->z;
 	thing->z = z;
 	while ((ld = it.Next()))

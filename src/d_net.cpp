@@ -2497,7 +2497,7 @@ static void RunScript(BYTE **stream, APlayerPawn *pawn, int snum, int argn, int 
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn, NULL, snum, level.mapname, arg, MIN<int>(countof(arg), argn), ACS_NET);
+	P_StartScript(pawn, NULL, snum, level.mapname, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, BYTE **stream)

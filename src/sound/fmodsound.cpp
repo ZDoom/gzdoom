@@ -1772,17 +1772,6 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		((FMOD::Sound *)sfx.data)->setDefaults(def_freq, def_vol, def_pan, def_priority);
 	}
 
-	// Reduce volume of stereo sounds, because each channel will be summed together
-	// and is likely to be very similar, resulting in an amplitude twice what it
-	// would have been had it been mixed to mono.
-	if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getFormat(NULL, NULL, &numchans, NULL))
-	{
-		if (numchans > 1)
-		{
-			vol *= 0.5f;
-		}
-	}
-
 	if (FMOD_OK == result)
 	{
 		result = chan->getMode(&mode);
@@ -1807,6 +1796,19 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		chan->setMode(mode);
 		chan->setChannelGroup((flags & SNDF_NOPAUSE) ? SfxGroup : PausableSfx);
 
+		if (mode & FMOD_3D)
+		{
+			// Reduce volume of stereo sounds, because each channel will be summed together
+			// and is likely to be very similar, resulting in an amplitude twice what it
+			// would have been had it been mixed to mono.
+			if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getFormat(NULL, NULL, &numchans, NULL))
+			{
+				if (numchans > 1)
+				{
+					vol *= 0.5f;
+				}
+			}
+		}
 		if (freq != 0)
 		{
 			chan->setFrequency(freq);

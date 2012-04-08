@@ -151,8 +151,7 @@ void P_InitParticles ()
 		NumParticles = r_maxparticles;
 
 	// This should be good, but eh...
-	if ( NumParticles < 100 )
-		NumParticles = 100;
+	NumParticles = clamp(NumParticles, 100, 65535);
 
 	P_DeinitParticles();
 	Particles = new particle_t[NumParticles];
@@ -688,8 +687,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			p->ttl = duration;
 			p->fade = FADEFROMTTL(duration);
 			p->size = 3;
-			if(fullbright)
-				p->bright = true;
+			p->bright = fullbright;
 
 			tempvec = FMatrix3x3(dir, deg) * extend;
 			p->velx = FLOAT2FIXED(tempvec.X * drift)>>4;
@@ -759,6 +757,8 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			if (color1 != -1)
 				p->accz -= FRACUNIT/4096;
 			pos += trail_step;
+
+			p->bright = fullbright;
 
 			if (color2 == -1)
 			{

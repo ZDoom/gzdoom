@@ -59,13 +59,13 @@ struct particle_t
 	fixed_t accx,accy,accz;
 	BYTE	ttl;
 	BYTE	trans;
-	BYTE	size;
+	BYTE	size:7;
+	BYTE	bright:1;
 	BYTE	fade;
 	int		color;
 	WORD	tnext;
 	WORD	snext;
 	subsector_t * subsector;
-	bool    bright;
 };
 
 extern particle_t *Particles;

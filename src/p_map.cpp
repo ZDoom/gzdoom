@@ -488,6 +488,7 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 {
 	int friction = ORIG_FRICTION;
 	int movefactor = ORIG_FRICTION_FACTOR;
+	fixed_t newfriction;
 	const msecnode_t *m;
 	const sector_t *sec;
 
@@ -498,8 +499,8 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	else if ((!(mo->flags & MF_NOGRAVITY) && mo->waterlevel > 1) ||
 		(mo->waterlevel == 1 && mo->z > mo->floorz + 6*FRACUNIT))
 	{
-		friction = secfriction (mo->Sector);
-		movefactor = secmovefac (mo->Sector) >> 1;
+		friction = secfriction(mo->Sector);
+		movefactor = secmovefac(mo->Sector) >> 1;
 	}
 	else if (var_friction && !(mo->flags & (MF_NOCLIP|MF_NOGRAVITY)))
 	{	// When the object is straddling sectors with the same
@@ -512,16 +513,16 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 
 #ifdef _3DFLOORS
 			// 3D floors must be checked, too
-			for(unsigned i=0;i<sec->e->XFloor.ffloors.Size();i++)
+			for (unsigned i = 0; i < sec->e->XFloor.ffloors.Size(); i++)
 			{
-				F3DFloor * rover=sec->e->XFloor.ffloors[i];
-				if (!(rover->flags&FF_EXISTS)) continue;
-				if(!(rover->flags & FF_SOLID)) continue;
+				F3DFloor *rover = sec->e->XFloor.ffloors[i];
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if (!(rover->flags & FF_SOLID)) continue;
 
 				// Player must be on top of the floor to be affected...
-				if(mo->z != rover->top.plane->ZatPoint(mo->x,mo->y)) continue;
-				fixed_t newfriction=secfriction(rover->model);
-				if (newfriction<friction)
+				if (mo->z != rover->top.plane->ZatPoint(mo->x,mo->y)) continue;
+				newfriction = secfriction(rover->model);
+				if (newfriction < friction || friction == ORIG_FRICTION)
 				{
 					friction = newfriction;
 					movefactor = secmovefac(rover->model);
@@ -534,13 +535,14 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 			{
 				continue;
 			}
-			if ((secfriction(sec) < friction || friction == ORIG_FRICTION) &&
-				(mo->z <= sec->floorplane.ZatPoint (mo->x, mo->y) ||
+			newfriction = secfriction(sec);
+			if ((newfriction < friction || friction == ORIG_FRICTION) &&
+				(mo->z <= sec->floorplane.ZatPoint(mo->x, mo->y) ||
 				(sec->GetHeightSec() != NULL &&
-				 mo->z <= sec->heightsec->floorplane.ZatPoint (mo->x, mo->y))))
+				 mo->z <= sec->heightsec->floorplane.ZatPoint(mo->x, mo->y))))
 			{
-				friction = secfriction (sec);
-				movefactor = secmovefac (sec);
+				friction = newfriction;
+				movefactor = secmovefac(sec);
 			}
 		}
 	}

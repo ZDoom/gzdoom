@@ -151,7 +151,7 @@ void P_InitParticles ()
 		NumParticles = r_maxparticles;
 
 	// This should be good, but eh...
-	NumParticles = clamp(NumParticles, 100, 65535);
+	NumParticles = clamp<WORD>(NumParticles, 100, 65535);
 
 	P_DeinitParticles();
 	Particles = new particle_t[NumParticles];

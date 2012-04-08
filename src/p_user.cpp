@@ -542,7 +542,7 @@ void APlayerPawn::PostBeginPlay()
 	{
 		dropoffz = floorz = Sector->floorplane.ZatPoint(x, y);
 		ceilingz = Sector->ceilingplane.ZatPoint(x, y);
-		P_FindFloorCeiling(this, true);
+		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 		z = floorz;
 	}
 	else

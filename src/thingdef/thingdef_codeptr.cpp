@@ -2697,7 +2697,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 			self->dropoffz =
 			self->floorz = sec->floorplane.ZatPoint(self->x, self->y);
 			self->ceilingz = sec->ceilingplane.ZatPoint(self->x, self->y);
-			P_FindFloorCeiling(self, true);
+			P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS);
 		}
 	}
 	else

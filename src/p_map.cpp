@@ -324,7 +324,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmf.z = z;
 	tmf.touchmidtex = false;
 	tmf.abovemidtex = false;
-	P_GetFloorCeilingZ(tmf, FFCF_ONLYSPAWNPOS);
+	P_GetFloorCeilingZ(tmf, 0);
 					
 	spechit.Clear ();
 

@@ -413,7 +413,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		}
 	}
 
-	if (iwadparm == NULL || wads[0].Path.IsEmpty())
+	if (iwadparm == NULL || wads[0].Path.IsEmpty() || mIWads[wads[0].Type].Required.IsNotEmpty())
 	{
 		if (GameConfig->SetSection ("IWADSearch.Directories"))
 		{

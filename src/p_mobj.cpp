@@ -2487,7 +2487,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 
 	// If there are 3D floors, we need to find floor/ceiling again.
-	P_FindFloorCeiling(mo, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS);
+	P_FindFloorCeiling(mo, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DMIDTEXRESTRICT);
 
 	if (z == ONFLOORZ)
 	{

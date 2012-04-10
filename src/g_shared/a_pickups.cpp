@@ -391,7 +391,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	  // initial spawn.
 		self->z = self->floorz;
 	}
-	if (self->z + self->height > self->ceilingz)
+	if ((self->flags & MF_SOLID) && (self->z + self->height > self->ceilingz))
 	{ // Do the same for the ceiling.
 		self->z = self->ceilingz - self->height;
 	}

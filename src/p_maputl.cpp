@@ -139,9 +139,9 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 //==========================================================================
 
 void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, 
-					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool only3d)
+					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, int flags)
 {
-	if (!only3d)
+	if (!(flags & FFCF_ONLY3DFLOORS))
 	{
 		sector_t *front, *back;
 		fixed_t fc, ff, bc, bf;
@@ -224,7 +224,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	if (actor != NULL && linedef->frontsector != NULL && linedef->backsector != NULL && 
 		linedef->flags & ML_3DMIDTEX)
 	{
-		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open);
+		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open, !!(flags & FFCF_3DMIDTEXRESTRICT));
 	}
 	else
 	{

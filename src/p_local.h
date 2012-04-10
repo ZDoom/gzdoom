@@ -259,7 +259,7 @@ struct FLineOpening
 	bool			abovemidtex;
 };
 
-void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0, bool only3d=false);
+void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0, int flags=0);
 
 class FBoundingBox;
 struct polyblock_t;
@@ -438,6 +438,7 @@ enum
 	FFCF_ONLYSPAWNPOS = 1,
 	FFCF_SAMESECTOR = 2,
 	FFCF_ONLY3DFLOORS = 4,	// includes 3D midtexes
+	FFCF_3DMIDTEXRESTRICT = 8,	// ignore 3D midtex's whose floorz are above thing's z
 };
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 

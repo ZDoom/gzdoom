@@ -177,7 +177,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	sector_t *sec;
 	if (!(flags & FFCF_ONLYSPAWNPOS))
 	{
-		sec = !(flags & FFCF_SAMESECTOR) ? P_PointInSector (tmf.x, tmf.y) : sec = tmf.thing->Sector;
+		sec = !(flags & FFCF_SAMESECTOR) ? P_PointInSector (tmf.x, tmf.y) : tmf.thing->Sector;
 		tmf.floorsector = sec;
 		tmf.ceilingsector = sec;
 
@@ -3657,6 +3657,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	const char *bloodType = "BloodSplat";
 	int count;
 	int noise;
+
 
 	if ((actor->flags & MF_NOBLOOD) ||
 		(actor->flags5 & MF5_NOBLOODDECALS) ||

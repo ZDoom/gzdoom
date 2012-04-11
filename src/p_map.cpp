@@ -3930,6 +3930,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	{
 		fixed_t x, y, z;
 		bool spawnpuff;
+		int puffflags = PF_HITTHING;
 
 		x = x1 + FixedMul (RailHits[i].Distance, vx);
 		y = y1 + FixedMul (RailHits[i].Distance, vy);
@@ -3943,11 +3944,12 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		else
 		{
 			spawnpuff = (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF);
+			puffflags |= PF_HITTHINGBLEED; // [XA] Allow for puffs to jump to XDeath state.
 			P_SpawnBlood (x, y, z, (source->angle + angleoffset) - ANG180, damage, RailHits[i].HitActor);
 			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
 		}
-		if (spawnpuff) P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, PF_HITTHING);
-
+		if (spawnpuff)
+			P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);
 		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
 

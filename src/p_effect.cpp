@@ -721,7 +721,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	}
 
 	// Create the inner trail.
-	if (color2 != -1 && r_rail_trailsparsity > 0)
+	if (color2 != -1 && r_rail_trailsparsity > 0 && spawnclass == NULL)
 	{
 		FVector3 trail_step = step * r_rail_trailsparsity;
 		int trail_steps = steps * r_rail_trailsparsity;

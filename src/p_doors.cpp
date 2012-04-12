@@ -412,7 +412,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 //============================================================================
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-				int tag, int speed, int delay, int lock, int lightTag)
+				int tag, int speed, int delay, int lock, int lightTag, bool boomgen)
 {
 	bool		rtn = false;
 	int 		secnum;
@@ -440,6 +440,9 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		// if door already has a thinker, use it
 		if (sec->PlaneMoving(sector_t::ceiling))
 		{
+			// Boom used remote door logic for generalized doors, even if they are manual
+			if (boomgen)
+				return false;
 			if (sec->ceilingdata->IsKindOf (RUNTIME_CLASS(DDoor)))
 			{
 				DDoor *door = barrier_cast<DDoor *>(sec->ceilingdata);
@@ -485,7 +488,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
 		{
 			sec = &sectors[secnum];
-			// if the ceiling already moving, don't start the door action
+			// if the ceiling is already moving, don't start the door action
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 

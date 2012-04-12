@@ -252,8 +252,9 @@ FUNC(LS_Generic_Door)
 {
 	int tag, lightTag;
 	DDoor::EVlDoor type;
+	bool boomgen = false;
 
-	switch (arg2 & 127)
+	switch (arg2 & 63)
 	{
 		case 0: type = DDoor::doorRaise;			break;
 		case 1: type = DDoor::doorOpen;				break;
@@ -261,6 +262,8 @@ FUNC(LS_Generic_Door)
 		case 3: type = DDoor::doorClose;			break;
 		default: return false;
 	}
+	// Boom doesn't allow manual generalized doors to be activated while they move
+	if (arg2 & 64) boomgen = true;
 	if (arg2 & 128)
 	{
 		// New for 2.0.58: Finally support BOOM's local door light effect
@@ -272,7 +275,7 @@ FUNC(LS_Generic_Door)
 		tag = arg0;
 		lightTag = 0;
 	}
-	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), arg4, lightTag);
+	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), arg4, lightTag, boomgen);
 }
 
 FUNC(LS_Floor_LowerByValue)

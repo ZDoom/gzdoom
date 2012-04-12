@@ -739,6 +739,11 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range) const
 
 int FFont::GetCharCode(int code, bool needpic) const
 {
+	if (code < 0 && code >= -128)
+	{
+		// regular chars turn negative when the 8th bit is set.
+		code &= 255;
+	}
 	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
 	{
 		return code;

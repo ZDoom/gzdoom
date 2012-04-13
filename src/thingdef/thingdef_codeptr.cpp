@@ -1401,7 +1401,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	ACTION_PARAM_CLASS(SpawnClass, 14);
 	
 	if(Range==0) Range=8192*FRACUNIT;
-	if(Duration==0) Duration=35;
 	if(Sparsity==0) Sparsity=1.0;
 
 	if (!self->player) return;
@@ -1464,7 +1463,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	ACTION_PARAM_CLASS(SpawnClass, 14);
 
 	if(Range==0) Range=8192*FRACUNIT;
-	if(Duration==0) Duration=35;
 	if(Sparsity==0) Sparsity=1.0;
 
 	AActor *linetarget;

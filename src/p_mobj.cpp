@@ -4098,9 +4098,12 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
     mobj->id = playernum;
 
 	// [RH] Set player sprite based on skin
-	mobj->sprite = skins[p->userinfo.skin].sprite;
-	mobj->scaleX = skins[p->userinfo.skin].ScaleX;
-	mobj->scaleY = skins[p->userinfo.skin].ScaleY;
+	if (!(mobj->flags4 & MF4_NOSKIN))
+	{
+		mobj->sprite = skins[p->userinfo.skin].sprite;
+		mobj->scaleX = skins[p->userinfo.skin].ScaleX;
+		mobj->scaleY = skins[p->userinfo.skin].ScaleY;
+	}
 
 	p->DesiredFOV = p->FOV = 90.f;
 	p->camera = p->mo;

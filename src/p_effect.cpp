@@ -728,7 +728,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	if (color2 != -1 && r_rail_trailsparsity > 0 && spawnclass == NULL)
 	{
 		FVector3 trail_step = step * r_rail_trailsparsity * sparsity;
-		int trail_steps = steps * r_rail_trailsparsity / sparsity;
+		int trail_steps = xs_FloorToInt(steps * r_rail_trailsparsity / sparsity);
 
 		color2 = color2 == 0 ? -1 : ParticleColor(color2);
 		FVector3 diff(0, 0, 0);

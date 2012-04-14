@@ -960,6 +960,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 const char *APlayerPawn::GetSoundClass ()
 {
 	if (player != NULL &&
+		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
 		(unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
 		(size_t)player->userinfo.skin < numskins)
 	{

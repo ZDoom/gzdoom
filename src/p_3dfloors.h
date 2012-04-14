@@ -137,7 +137,7 @@ void P_Spawn3DFloors( void );
 struct FLineOpening;
 
 void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy);
+							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict);
 
 secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z);
 int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz);
@@ -170,7 +170,7 @@ inline void P_Spawn3DFloors( void ) {}
 struct FLineOpening;
 
 inline void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy) {}
+							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict) {}
 
 //secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z){return sector->floorplane;}
 

@@ -438,7 +438,7 @@ enum
 	FFCF_ONLYSPAWNPOS = 1,
 	FFCF_SAMESECTOR = 2,
 	FFCF_ONLY3DFLOORS = 4,	// includes 3D midtexes
-	FFCF_3DMIDTEXRESTRICT = 8,	// ignore 3D midtex's whose floorz are above thing's z
+	FFCF_3DRESTRICT = 8,	// ignore 3D midtexes and floors whose floorz are above thing's z
 };
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 

@@ -919,7 +919,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 							pitch += R_PointToAngle2(0,0, (fixed_t)velocity.Length(), missile->velz);
 					}
 					ang = pitch >> ANGLETOFINESHIFT;
-					missilespeed = FixedMul(finecosine[ang], missile->Speed);
+					missilespeed = abs(FixedMul(finecosine[ang], missile->Speed));
 					missile->velz = FixedMul(finesine[ang], missile->Speed);
 				}
 				else

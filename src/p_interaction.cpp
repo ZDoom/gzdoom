@@ -984,7 +984,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			int olddam = damage;
 			source->Inventory->ModifyDamage(olddam, mod, damage, false);
 			if (olddam != damage && damage <= 0)
+			{ // Still allow FORCEPAIN
+				if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+					goto dopain;
 				return;
+			}
 		}
 		// Handle passive damage modifiers (e.g. PowerProtection)
 		if (target->Inventory != NULL)
@@ -992,17 +996,26 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			int olddam = damage;
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
 			if (olddam != damage && damage <= 0)
+			{ // Still allow FORCEPAIN
+				if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+					goto dopain;
 				return;
+			}
 		}
 
 		if (!(flags & DMG_NO_FACTOR))
 		{
 			damage = FixedMul(damage, target->DamageFactor);
-			if (damage < 0)
-				return;
-			damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, mod, target->GetClass()->ActorInfo->DamageFactors);
+			if (damage >= 0)
+			{
+				damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, mod, target->GetClass()->ActorInfo->DamageFactors);
+			}
 			if (damage <= 0)
+			{ // Still allow FORCEPAIN
+				if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+					goto dopain;
 				return;
+			}
 		}
 
 		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);

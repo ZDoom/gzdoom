@@ -3945,8 +3945,11 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		{
 			spawnpuff = (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF);
 			puffflags |= PF_HITTHINGBLEED; // [XA] Allow for puffs to jump to XDeath state.
-			P_SpawnBlood (x, y, z, (source->angle + angleoffset) - ANG180, damage, RailHits[i].HitActor);
-			P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
+			if(!(puffDefaults->flags3 & MF3_BLOODLESSIMPACT)) 
+			{
+				P_SpawnBlood (x, y, z, (source->angle + angleoffset) - ANG180, damage, RailHits[i].HitActor);
+				P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
+			}
 		}
 		if (spawnpuff)
 			P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);

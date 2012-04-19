@@ -1401,9 +1401,9 @@ FPathTraverse::~FPathTraverse()
 //		distance is in MAPBLOCKUNITS
 //===========================================================================
 
-AActor *P_RoughMonsterSearch (AActor *mo, int distance)
+AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable)
 {
-	return P_BlockmapSearch (mo, distance, RoughBlockCheck);
+	return P_BlockmapSearch (mo, distance, RoughBlockCheck, (void *)onlyseekable);
 }
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
@@ -1501,14 +1501,19 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 //
 //===========================================================================
 
-static AActor *RoughBlockCheck (AActor *mo, int index, void *)
+static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 {
+	bool onlyseekable = param != NULL;
 	FBlockNode *link;
 
 	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
 		if (link->Me != mo)
 		{
+			if (onlyseekable && !mo->CanSeek(link->Me))
+			{
+				continue;
+			}
 			if (mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;

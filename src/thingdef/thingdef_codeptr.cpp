@@ -501,9 +501,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SeekerMissile)
 
 	if ((flags & SMF_LOOK) && (self->tracer == 0) && (pr_seekermissile()<chance))
 	{
-		self->tracer = P_RoughMonsterSearch (self, distance);
+		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
-	P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1, !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED));
+	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1, !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
+	{
+		if (flags & SMF_LOOK)
+		{ // This monster is no longer seekable, so let us look for another one next time.
+			self->tracer = NULL;
+		}
+	}
 }
 
 //==========================================================================

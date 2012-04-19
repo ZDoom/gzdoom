@@ -167,7 +167,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffTrack)
 {
 	if ((self->tracer == 0) && (pr_mstafftrack()<50))
 	{
-		self->tracer = P_RoughMonsterSearch (self, 10);
+		self->tracer = P_RoughMonsterSearch (self, 10, true);
 	}
 	P_SeekerMissile (self, ANGLE_1*2, ANGLE_1*10);
 }

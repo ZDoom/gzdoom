@@ -335,7 +335,7 @@ static void CHolyFindTarget (AActor *actor)
 {
 	AActor *target;
 
-	if ( (target = P_RoughMonsterSearch (actor, 6)) )
+	if ( (target = P_RoughMonsterSearch (actor, 6, true)) )
 	{
 		actor->tracer = target;
 		actor->flags |= MF_NOCLIP|MF_SKULLFLY;

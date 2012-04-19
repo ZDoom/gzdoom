@@ -985,8 +985,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			source->Inventory->ModifyDamage(olddam, mod, damage, false);
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN
-				if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
+					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				{
 					goto dopain;
+				}
 				return;
 			}
 		}
@@ -997,8 +1000,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN
-				if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
+					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				{
 					goto dopain;
+				}
 				return;
 			}
 		}
@@ -1012,8 +1018,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			}
 			if (damage <= 0)
 			{ // Still allow FORCEPAIN
-				if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
+				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
+					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				{
 					goto dopain;
+				}
 				return;
 			}
 		}
@@ -1146,8 +1155,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				if (damage <= 0)
 				{
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
-					if (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN))
-						goto dopain;
+				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
+					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				{
+					goto dopain;
+				}
 					return;
 				}
 			}

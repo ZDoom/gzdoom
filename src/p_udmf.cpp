@@ -1438,8 +1438,9 @@ public:
 		numsides = sidecount;
 		lines = new line_t[numlines];
 		sides = new side_t[numsides];
+		int line, side;
 
-		for(int line = 0, side = 0; line < numlines; line++)
+		for(line = 0, side = 0; line < numlines; line++)
 		{
 			short tempalpha[2] = { SHRT_MIN, SHRT_MIN };
 
@@ -1450,20 +1451,33 @@ public:
 				if (lines[line].sidedef[sd] != NULL)
 				{
 					int mapside = int(intptr_t(lines[line].sidedef[sd]))-1;
-					sides[side] = ParsedSides[mapside];
-					sides[side].linedef = &lines[line];
-					sides[side].sector = &sectors[intptr_t(sides[side].sector)];
-					lines[line].sidedef[sd] = &sides[side];
+					if (mapside < sidecount)
+					{
+						sides[side] = ParsedSides[mapside];
+						sides[side].linedef = &lines[line];
+						sides[side].sector = &sectors[intptr_t(sides[side].sector)];
+						lines[line].sidedef[sd] = &sides[side];
 
-					P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
-						lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
+						P_ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
+							lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
 
-					side++;
+						side++;
+					}
+					else
+					{
+						lines[line].sidedef[sd] = NULL;
+					}
 				}
 			}
 
 			P_AdjustLine(&lines[line]);
 			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
+		}
+		assert(side <= numsides);
+		if (side < numsides)
+		{
+			Printf("Map had %d invalid side references\n", numsides - side);
+			numsides = side;
 		}
 	}
 

@@ -1884,8 +1884,6 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						goto explode;
 					}
 
-
-
 					// Reflect the missile along angle
 					mo->angle = angle;
 					angle >>= ANGLETOFINESHIFT;

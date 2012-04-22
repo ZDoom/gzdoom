@@ -746,7 +746,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if (voxelspin != 0)
 		{
 			double ang = double(I_FPSTime()) * voxelspin / 1000;
-			vis->angle += angle_t(ang * (4294967296.f / 360));
+			vis->angle -= angle_t(ang * (4294967296.f / 360));
 		}
 
 		// These are irrelevant for voxels.

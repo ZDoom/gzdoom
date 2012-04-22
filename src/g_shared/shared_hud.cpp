@@ -594,25 +594,12 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 //
 //---------------------------------------------------------------------------
 
-static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
+FTextureID GetWeaponIcon(AWeapon *weapon)	// This function is also used by SBARINFO
 {
-	int trans;
-	FTextureID picnum;
-
-	// Powered up weapons and inherited sister weapons are not displayed.
-	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
-	if (weapon->SisterWeapon && weapon->IsKindOf(RUNTIME_TYPE(weapon->SisterWeapon))) return;
-
-	trans=0x6666;
-	if (CPlayer->ReadyWeapon)
-	{
-		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans=0xd999;
-	}
-
+	FTextureID AltIcon = GetHUDIcon(weapon->GetClass());
 	FState * state=NULL, *ReadyState;
 	
-	FTextureID AltIcon = GetHUDIcon(weapon->GetClass());
-	picnum = !AltIcon.isNull()? AltIcon : weapon->Icon;
+	FTextureID picnum = !AltIcon.isNull()? AltIcon : weapon->Icon;
 
 	if (picnum.isNull())
 	{
@@ -625,7 +612,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 		{
 			state = ReadyState;
 		}
-		if (state &&  (unsigned)state->sprite < (unsigned)sprites.Size ())
+		if (state && (unsigned)state->sprite < (unsigned)sprites.Size ())
 		{
 			spritedef_t * sprdef = &sprites[state->sprite];
 			spriteframe_t * sprframe = &SpriteFrames[sprdef->spriteframes + state->GetFrame()];
@@ -633,6 +620,25 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 			picnum = sprframe->Texture[0];
 		}
 	}
+	return picnum;
+}
+
+
+static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
+{
+	int trans;
+
+	// Powered up weapons and inherited sister weapons are not displayed.
+	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
+	if (weapon->SisterWeapon && weapon->IsKindOf(RUNTIME_TYPE(weapon->SisterWeapon))) return;
+
+	trans=0x6666;
+	if (CPlayer->ReadyWeapon)
+	{
+		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans=0xd999;
+	}
+
+	FTextureID picnum = GetWeaponIcon(weapon);
 
 	if (picnum.isValid())
 	{

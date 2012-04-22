@@ -41,6 +41,7 @@
 //      classes.
 ////////////////////////////////////////////////////////////////////////////////
 
+
 class CommandDrawImage : public SBarInfoCommand
 {
 	public:
@@ -169,8 +170,17 @@ class CommandDrawImage : public SBarInfoCommand
 			else if(type == WEAPONICON)
 			{
 				AWeapon *weapon = statusBar->CPlayer->ReadyWeapon;
-				if(weapon != NULL && weapon->Icon.isValid())
+				if(weapon != NULL)
 				{
+					FTextureID icon;
+					if (weapon->Icon.isValid())
+					{
+						icon = weapon->Icon;
+					}
+					else
+					{
+						icon = GetWeaponIcon(weapon);
+					}
 					texture = TexMan[weapon->Icon];
 				}
 			}

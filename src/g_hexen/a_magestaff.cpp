@@ -36,7 +36,21 @@ public:
 	}
 	PalEntry GetBlend ()
 	{
-		return PalEntry (MStaffCount * 128 / 3, 151, 110, 0);
+		if (paletteflash & PF_HEXENWEAPONS)
+		{
+			if (MStaffCount == 3)
+				return PalEntry(128, 100, 73, 0);
+			else if (MStaffCount == 2)
+				return PalEntry(128, 125, 92, 0);
+			else if (MStaffCount == 1)
+				return PalEntry(128, 150, 110, 0);
+			else
+				return PalEntry(0, 0, 0, 0);
+		}
+		else
+		{
+			return PalEntry (MStaffCount * 128 / 3, 151, 110, 0);
+		}
 	}
 	BYTE MStaffCount;
 };

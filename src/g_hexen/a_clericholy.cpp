@@ -38,7 +38,21 @@ public:
 	}
 	PalEntry GetBlend ()
 	{
-		return PalEntry (CHolyCount * 128 / 3, 131, 131, 131);
+		if (paletteflash & PF_HEXENWEAPONS)
+		{
+			if (CHolyCount == 3)
+				return PalEntry(128, 70, 70, 70);
+			else if (CHolyCount == 2)
+				return PalEntry(128, 100, 100, 100);
+			else if (CHolyCount == 1)
+				return PalEntry(128, 130, 130, 130);
+			else
+				return PalEntry(0, 0, 0, 0);
+		}
+		else
+		{
+			return PalEntry (CHolyCount * 128 / 3, 131, 131, 131);
+		}
 	}
 	BYTE CHolyCount;
 };

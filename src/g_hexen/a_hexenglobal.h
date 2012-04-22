@@ -3,6 +3,13 @@
 
 #include "d_player.h"
 
+EXTERN_CVAR (Int, paletteflash)
+enum PaletteFlashFlags
+{
+	PF_HEXENWEAPONS		= 1,
+	PF_SPECIALDAMAGE	= 2,
+};
+
 class AHolySpirit : public AActor
 {
 	DECLARE_CLASS (AHolySpirit, AActor)

@@ -52,6 +52,7 @@
 #include "v_palette.h"
 #include "d_player.h"
 #include "farchive.h"
+#include "a_hexenglobal.h"
 
 #include "../version.h"
 
@@ -85,6 +86,8 @@ static int CrosshairNum;
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
 float BaseBlendA;
+
+CVAR (Int, paletteflash, 0, CVAR_ARCHIVE)
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)
@@ -1530,7 +1533,7 @@ void DBaseStatusBar::BlendView (float blend[4])
 
 	AddBlend (BaseBlendR / 255.f, BaseBlendG / 255.f, BaseBlendB / 255.f, BaseBlendA, blend);
 
-	// [RH] All powerups can effect the screen blending now
+	// [RH] All powerups can affect the screen blending now
 	for (AInventory *item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 	{
 		PalEntry color = item->GetBlend ();
@@ -1566,7 +1569,7 @@ void DBaseStatusBar::BlendView (float blend[4])
 			if (cnt > 228)
 				cnt = 228;
 
-			AddBlend (painFlash.r / 255.f, painFlash.g / 255.f, painFlash.b / 255.f, cnt / 255.f, blend);
+				AddBlend (painFlash.r / 255.f, painFlash.g / 255.f, painFlash.b / 255.f, cnt / 255.f, blend);
 		}
 	}
 
@@ -1574,11 +1577,21 @@ void DBaseStatusBar::BlendView (float blend[4])
 	// exact numbers to use here, so I've had to guess by looking at how they
 	// affect the white color in Hexen's palette and picking an alpha value
 	// that seems reasonable.
+	// [Gez] The exact values could be obtained by looking how they affect
+	// each color channel in Hexen's palette.
 
 	if (CPlayer->poisoncount)
 	{
 		cnt = MIN (CPlayer->poisoncount, 64);
-		AddBlend (0.04f, 0.2571f, 0.f, cnt/93.2571428571f, blend);
+		if (paletteflash & PF_SPECIALDAMAGE)
+		{
+			AddBlend(44/255.f, 92/255.f, 36/255.f, ((cnt + 7) >> 3) * 0.1f, blend);
+		}
+		else
+		{
+			AddBlend (0.04f, 0.2571f, 0.f, cnt/93.2571428571f, blend);
+		}
+
 	}
 	if (CPlayer->hazardcount > 16*TICRATE || (CPlayer->hazardcount & 8))
 	{
@@ -1586,7 +1599,14 @@ void DBaseStatusBar::BlendView (float blend[4])
 	}
 	if (CPlayer->mo->DamageType == NAME_Ice)
 	{
-		AddBlend (0.25f, 0.25f, 0.853f, 0.4f, blend);
+		if (paletteflash & PF_SPECIALDAMAGE)
+		{
+			AddBlend(0.f, 0.f, 224/255.f, 0.5f, blend);
+		}
+		else
+		{
+			AddBlend (0.25f, 0.25f, 0.853f, 0.4f, blend);
+		}		
 	}
 
 	if (screen->Accel2D || (CPlayer->camera != NULL && menuactive == MENU_Off && ConsoleState == c_up))

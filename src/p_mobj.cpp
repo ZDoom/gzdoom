@@ -4665,7 +4665,10 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 			{
 				th->SetState (state);
 			}
-			else damage += 2;
+			else if (gameinfo.gametype == GAME_Strife)	// this modification is Strife-specific.
+			{
+				damage += 2;
+			}
 		}
 
 		// Moved out of the blood actor so that replacing blood is easier

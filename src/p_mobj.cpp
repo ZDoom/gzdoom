@@ -4679,10 +4679,11 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 			{
 				advance = 2;
 			}
+			FActorInfo *ai = th->GetClass()->ActorInfo;
 			for (; advance > 0; --advance)
 			{
 				// [RH] Do not set to a state we do not own.
-				if (th->SpawnState + advance < th->GetClass()->ActorInfo->OwnedStates + NumOwnedStates)
+				if (th->SpawnState + advance < ai->OwnedStates + ai->NumOwnedStates)
 				{
 					th->SetState(th->SpawnState + advance);
 					break;

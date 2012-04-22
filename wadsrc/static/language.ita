@@ -621,6 +621,7 @@ OB_SPLASH = "%o si e' trovato nel posto sbagliato.";
 OB_R_SPLASH = "%o avrebbe dovuto allontanarsi.";
 OB_ROCKET = "%o avrebbe dovuto allontanarsi.";
 OB_KILLEDSELF = "%o ha ucciso se stesso.";
+OB_VOODOO = "%o e' stato ucciso dalla potenza del voodoo.";
 
 OB_STEALTHBABY = "a %o sembrava di aver visto un arachnotron.";
 OB_STEALTHVILE = "a %o sembrava di aver visto un Arch-Vile.";

@@ -274,6 +274,7 @@ xx(MomZ)
 xx(Abs)
 xx(ACS_NamedExecuteWithResult)
 xx(CallACS)
+xx(Sqrt)
 
 // Various actor names which are used internally
 xx(MapSpot)

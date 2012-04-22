@@ -710,16 +710,40 @@ public:
 
 class FxGlobalFunctionCall : public FxExpression
 {
+public:
+	typedef FxExpression *(*Creator)(FName, FArgumentList *, const FScriptPosition &);
+	struct CreatorAdder
+	{
+		CreatorAdder(FName methodname, Creator creator)
+		{
+			FxGlobalFunctionCall::AddCreator(methodname, creator);
+		}
+	};
+
+	static void AddCreator(FName methodname, Creator creator);
+	static FxExpression *StaticCreate(FName methodname, FArgumentList *args, const FScriptPosition &pos);
+
+protected:
 	FName Name;
 	FArgumentList *ArgList;
 
-public:
-
 	FxGlobalFunctionCall(FName fname, FArgumentList *args, const FScriptPosition &pos);
 	~FxGlobalFunctionCall();
-	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression (AActor *self);
+
+	FxExpression *ResolveArgs(FCompileContext &, unsigned min, unsigned max, bool numeric);
 };
+
+#define GLOBALFUNCTION_DEFINE(CLASS) \
+FxGlobalFunctionCall_##CLASS(FName methodname, FArgumentList *args, const FScriptPosition &pos) \
+: FxGlobalFunctionCall(methodname, args, pos) {} \
+static FxExpression *StaticCreate(FName methodname, FArgumentList *args, const FScriptPosition &pos) \
+	{return new FxGlobalFunctionCall_##CLASS(methodname, args, pos);}
+
+#define GLOBALFUNCTION_ADDER(CLASS) GLOBALFUNCTION_ADDER_NAMED(CLASS, CLASS)
+
+#define GLOBALFUNCTION_ADDER_NAMED(CLASS,NAME) \
+static FxGlobalFunctionCall::CreatorAdder FxGlobalFunctionCall_##NAME##Adder \
+(NAME_##NAME, FxGlobalFunctionCall_##CLASS::StaticCreate)
 
 
 //==========================================================================

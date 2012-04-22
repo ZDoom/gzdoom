@@ -2279,22 +2279,6 @@ FxFunctionCall::~FxFunctionCall()
 
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
-	// There's currently only 2 global functions.
-	// This will have to change later!
-	if (MethodName == NAME_Sin || MethodName == NAME_Cos)
-	{
-		if (Self != NULL)
-		{
-			ScriptPosition.Message(MSG_ERROR, "Global variables cannot have a self pointer");
-			delete this;
-			return NULL;
-		}
-		FxExpression *x = new FxGlobalFunctionCall(MethodName, ArgList, ScriptPosition);
-		ArgList = NULL;
-		delete this;
-		return x->Resolve(ctx);
-	}
-
 	int min, max, special;
 	if (MethodName == NAME_ACS_NamedExecuteWithResult || MethodName == NAME_CallACS)
 	{
@@ -2324,6 +2308,19 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			return NULL;
 		}
 		FxExpression *x = new FxActionSpecialCall(Self, special, ArgList, ScriptPosition);
+		ArgList = NULL;
+		delete this;
+		return x->Resolve(ctx);
+	}
+	else
+	{
+		if (Self != NULL)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Global variables cannot have a self pointer");
+			delete this;
+			return NULL;
+		}
+		FxExpression *x = FxGlobalFunctionCall::StaticCreate(MethodName, ArgList, ScriptPosition);
 		ArgList = NULL;
 		delete this;
 		return x->Resolve(ctx);
@@ -2472,60 +2469,6 @@ FxGlobalFunctionCall::FxGlobalFunctionCall(FName fname, FArgumentList *args, con
 FxGlobalFunctionCall::~FxGlobalFunctionCall()
 {
 	SAFE_DELETE(ArgList);
-}
-
-//==========================================================================
-//
-// // so far just a quick hack to handle sin and cos
-//
-//==========================================================================
-
-FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
-{
-	CHECKRESOLVED();
-
-	if (ArgList == NULL || ArgList->Size() != 1)
-	{
-		ScriptPosition.Message(MSG_ERROR, "%s only has one parameter", Name.GetChars());
-		delete this;
-		return NULL;
-	}
-
-	(*ArgList)[0] = (*ArgList)[0]->Resolve(ctx);
-	if ((*ArgList)[0] == NULL)
-	{
-		delete this;
-		return NULL;
-	}
-
-	if (!(*ArgList)[0]->ValueType.isNumeric())
-	{
-		ScriptPosition.Message(MSG_ERROR, "numeric value expected for parameter");
-		delete this;
-		return NULL;
-	}
-	ValueType = VAL_Float;
-	return this;
-}
-
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-ExpVal FxGlobalFunctionCall::EvalExpression (AActor *self)
-{
-	double v = (*ArgList)[0]->EvalExpression(self).GetFloat();
-	ExpVal ret;
-	ret.Type = VAL_Float;
-
-	// shall we use the CRT's sin and cos functions?
-	angle_t angle = angle_t(v * ANGLE_90/90.);
-	if (Name == NAME_Sin) ret.Float = FIXED2FLOAT (finesine[angle>>ANGLETOFINESHIFT]);
-	else ret.Float = FIXED2FLOAT (finecosine[angle>>ANGLETOFINESHIFT]);
-	return ret;
 }
 
 

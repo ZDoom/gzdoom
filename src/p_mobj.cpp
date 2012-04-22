@@ -4668,15 +4668,25 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 					FState *state = th->FindState(NAME_Spray);
 					if (state != NULL) th->SetState (state);
 				}
-				else damage+=2;
+				else damage += 2;
 			}
+			int advance = 0;
 			if (damage <= 12 && damage >= 9)
 			{
-				th->SetState (th->SpawnState + 1);
+				advance = 1;
 			}
 			else if (damage < 9)
 			{
-				th->SetState (th->SpawnState + 2);
+				advance = 2;
+			}
+			for (; advance > 0; --advance)
+			{
+				// [RH] Do not set to a state we do not own.
+				if (th->SpawnState + advance < th->GetClass()->ActorInfo->OwnedStates + NumOwnedStates)
+				{
+					th->SetState(th->SpawnState + advance);
+					break;
+				}
 			}
 		}
 	}

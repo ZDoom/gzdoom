@@ -620,7 +620,7 @@ OB_R_SPLASH = "%o should have stood back.";
 OB_ROCKET = "%o should have stood back.";
 OB_KILLEDSELF = "%o killed %hself.";
 
-OB_VOODOO = "%o was kill by the power of voodoo.";
+OB_VOODOO = "%o was killed by the power of voodoo.";
 OB_STEALTHBABY = "%o thought %g saw an arachnotron.";
 OB_STEALTHVILE = "%o thought %g saw an archvile.";
 OB_STEALTHBARON = "%o thought %g saw a Baron of Hell.";

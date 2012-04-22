@@ -4657,19 +4657,20 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		{
 			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
-		
+
+		FState *state = th->FindState(NAME_Spray);
+		if (state != NULL)
+		{
+			if (damage > 13)
+			{
+				th->SetState (state);
+			}
+			else damage += 2;
+		}
+
 		// Moved out of the blood actor so that replacing blood is easier
 		if (gameinfo.gametype & GAME_DoomStrifeChex)
 		{
-			if (gameinfo.gametype == GAME_Strife)
-			{
-				if (damage > 13)
-				{
-					FState *state = th->FindState(NAME_Spray);
-					if (state != NULL) th->SetState (state);
-				}
-				else damage += 2;
-			}
 			int advance = 0;
 			if (damage <= 12 && damage >= 9)
 			{
@@ -4679,18 +4680,30 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 			{
 				advance = 2;
 			}
-			FActorInfo *ai = th->GetClass()->ActorInfo;
-			for (; advance > 0; --advance)
+
+			PClass *cls = th->GetClass();
+
+			while (cls != RUNTIME_CLASS(AActor))
 			{
-				// [RH] Do not set to a state we do not own.
-				if (th->SpawnState + advance < ai->OwnedStates + ai->NumOwnedStates)
+				FActorInfo *ai = cls->ActorInfo;
+				if (ai->OwnsState(th->SpawnState))
 				{
-					th->SetState(th->SpawnState + advance);
-					break;
+					for (; advance > 0; --advance)
+					{
+						// [RH] Do not set to a state we do not own.
+						if (ai->OwnsState(th->SpawnState + advance))
+						{
+							th->SetState(th->SpawnState + advance);
+							goto statedone;
+						}
+					}
 				}
+				cls = cls->ParentClass;
 			}
 		}
 	}
+
+statedone:
 
 	if (bloodtype >= 1)
 		P_DrawSplash2 (40, x, y, z, dir, 2, bloodcolor);

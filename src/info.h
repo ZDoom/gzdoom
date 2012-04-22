@@ -232,6 +232,11 @@ struct FActorInfo
 		return FindState(1, &name);
 	}
 
+	bool OwnsState(const FState *state)
+	{
+		return state >= OwnedStates && state < OwnedStates + NumOwnedStates;
+	}
+
 	FActorInfo *GetReplacement (bool lookskill=true);
 	FActorInfo *GetReplacee (bool lookskill=true);
 

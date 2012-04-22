@@ -4657,23 +4657,20 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		{
 			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
-
-		FState *state = th->FindState(NAME_Spray);
-		if (state != NULL)
-		{
-			if (damage > 13)
-			{
-				th->SetState (state);
-			}
-			else if (gameinfo.gametype == GAME_Strife)	// this modification is Strife-specific.
-			{
-				damage += 2;
-			}
-		}
-
+		
 		// Moved out of the blood actor so that replacing blood is easier
 		if (gameinfo.gametype & GAME_DoomStrifeChex)
 		{
+			FState *state = th->FindState(NAME_Spray);
+			if (gameinfo.gametype == GAME_Strife)
+			{
+				if (damage > 13)
+				{
+					FState *state = th->FindState(NAME_Spray);
+					if (state != NULL) th->SetState (state);
+				}
+				else damage += 2;
+			}
 			int advance = 0;
 			if (damage <= 12 && damage >= 9)
 			{
@@ -4694,7 +4691,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 					for (; advance > 0; --advance)
 					{
 						// [RH] Do not set to a state we do not own.
-						if (ai->OwnsState(th->SpawnState + advance))
+						if (!ai->OwnsState(th->SpawnState + advance))
 						{
 							th->SetState(th->SpawnState + advance);
 							goto statedone;

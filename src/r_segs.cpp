@@ -56,6 +56,8 @@
 #define WALLYREPEAT 8
 
 
+CVAR(Bool, r_np2, true, 0)
+
 //CVAR (Int, ty, 8, 0)
 //CVAR (Int, tx, 8, 0)
 
@@ -1215,6 +1217,64 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	wallshade = startshade;
 }
 
+static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat)
+{
+	if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+	{
+		wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+	}
+	else
+	{
+		wallscan_striped(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+	}
+}
+
+//=============================================================================
+//
+// wallscan_np2
+//
+// This is a wrapper around wallscan that helps it tile textures whose heights
+// are not powers of 2. It divides the wall into texture-sized strips and calls
+// wallscan for each of those. Since only one repetition of the texture fits
+// in each strip, wallscan will not tile.
+//
+//=============================================================================
+
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, fixed_t top, fixed_t bot)
+{
+	short *up = uwal;
+
+	if (r_np2)
+	{
+		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
+		short *down;
+		fixed_t texheight = rw_pic->GetHeight() << FRACBITS;
+		fixed_t scaledtexheight = FixedDiv(texheight, yrepeat);
+		fixed_t partition = top - (top - FixedDiv(dc_texturemid, yrepeat) - viewz) % scaledtexheight;
+
+		down = most1;
+
+		dc_texturemid = FixedMul(partition - viewz, yrepeat) + texheight;
+		while (partition > bot)
+		{
+			int j = OWallMost(most3, partition - viewz);
+			if (j != 3)
+			{
+				for (int j = x1; j <= x2; ++j)
+				{
+					down[j] = clamp (most3[j], up[j], dwal[j]);
+				}
+				call_wallscan(x1, x2, up, down, swal, lwal, yrepeat);
+				up = down;
+				down = (down == most1) ? most2 : most1;
+			}
+			partition -= scaledtexheight;
+			dc_texturemid -= texheight;
+ 		}
+	}
+	call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat);
+}
+
 inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
@@ -1681,13 +1741,13 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = rw_offset_mid;
 			}
-			if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+			if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 			{
-				wallscan (x1, x2-1, walltop, wallbottom, swall, lwall, yscale);
+				wallscan_np2(x1, x2-1, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2));
 			}
 			else
 			{
-				wallscan_striped (x1, x2-1, walltop, wallbottom, swall, lwall, yscale);
+				call_wallscan(x1, x2-1, walltop, wallbottom, swall, lwall, yscale);
 			}
 		}
 		clearbufshort (ceilingclip+x1, x2-x1, viewheight);
@@ -1720,13 +1780,13 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = rw_offset_top;
 				}
-				if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 				{
-					wallscan (x1, x2-1, walltop, wallupper, swall, lwall, yscale);
+					wallscan_np2(x1, x2-1, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2));
 				}
 				else
 				{
-					wallscan_striped (x1, x2-1, walltop, wallupper, swall, lwall, yscale);
+					call_wallscan(x1, x2-1, walltop, wallupper, swall, lwall, yscale);
 				}
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
@@ -1762,13 +1822,13 @@ void R_RenderSegLoop ()
 				{
 					rw_offset = rw_offset_bottom;
 				}
-				if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 				{
-					wallscan (x1, x2-1, walllower, wallbottom, swall, lwall, yscale);
+					wallscan_np2(x1, x2-1, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2));
 				}
 				else
 				{
-					wallscan_striped (x1, x2-1, walllower, wallbottom, swall, lwall, yscale);
+					call_wallscan(x1, x2-1, walllower, wallbottom, swall, lwall, yscale);
 				}
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));

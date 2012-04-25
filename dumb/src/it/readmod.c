@@ -767,6 +767,7 @@ DUH *DUMBEXPORT dumb_read_mod_quick(DUMBFILE *f, int rstrict)
 	sigdata = it_mod_load_sigdata(f, rstrict);
 
 	if (!sigdata)
+		return NULL;
 
 	{
 		const char *tag[2][2];

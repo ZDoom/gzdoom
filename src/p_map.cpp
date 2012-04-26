@@ -2854,7 +2854,7 @@ bool P_BounceWall (AActor *mo)
 //==========================================================================
 
 extern FRandom pr_bounce;
-bool P_BounceActor (AActor *mo, AActor * BlockingMobj)
+bool P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop)
 {
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)
 		|| ((mo->flags & MF_MISSILE) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
@@ -2862,17 +2862,57 @@ bool P_BounceActor (AActor *mo, AActor * BlockingMobj)
 		))
 	{
 		if (mo->bouncecount > 0 && --mo->bouncecount == 0) return false;
-		
-		fixed_t speed;
-		angle_t angle = R_PointToAngle2 (BlockingMobj->x,
-		BlockingMobj->y, mo->x, mo->y) + ANGLE_1*((pr_bounce()%16)-8);
-		speed = P_AproxDistance (mo->velx, mo->vely);
-		speed = FixedMul (speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
-		mo->angle = angle;
-		angle >>= ANGLETOFINESHIFT;
-		mo->velx = FixedMul (speed, finecosine[angle]);
-		mo->vely = FixedMul (speed, finesine[angle]);
-		mo->PlayBounceSound(true);
+
+		if (!ontop)
+		{
+			fixed_t speed;
+			angle_t angle = R_PointToAngle2 (BlockingMobj->x,
+				BlockingMobj->y, mo->x, mo->y) + ANGLE_1*((pr_bounce()%16)-8);
+			speed = P_AproxDistance (mo->velx, mo->vely);
+			speed = FixedMul (speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
+			mo->angle = angle;
+			angle >>= ANGLETOFINESHIFT;
+			mo->velx = FixedMul (speed, finecosine[angle]);
+			mo->vely = FixedMul (speed, finesine[angle]);
+			mo->PlayBounceSound(true);
+		}
+		else
+		{
+			fixed_t dot = mo->velz;
+
+			if (mo->BounceFlags & (BOUNCE_HereticType | BOUNCE_MBF))
+			{
+				mo->velz -= MulScale15 (FRACUNIT, dot);
+				if (!(mo->BounceFlags & BOUNCE_MBF)) // Heretic projectiles die, MBF projectiles don't.
+				{
+					mo->flags |= MF_INBOUNCE;
+					mo->SetState(mo->FindState(NAME_Death));
+					mo->flags &= ~MF_INBOUNCE;
+					return false;
+				}
+				else
+				{
+					mo->velz = FixedMul(mo->velz, mo->bouncefactor);
+				}
+			}
+			else // Don't run through this for MBF-style bounces
+			{
+				// The reflected velocity keeps only about 70% of its original speed
+				mo->velz = FixedMul(mo->velz - MulScale15(FRACUNIT, dot), mo->bouncefactor);
+			}
+
+			mo->PlayBounceSound(true);
+			if (mo->BounceFlags & BOUNCE_MBF) // Bring it to rest below a certain speed
+			{
+				if (abs(mo->velz) < (fixed_t)(mo->Mass * mo->GetGravity() / 64))
+					mo->velz = 0;
+			}
+			else if (mo->BounceFlags & BOUNCE_AutoOff)
+			{
+				if (!(mo->flags & MF_NOGRAVITY) && (mo->velz < 3*FRACUNIT))
+					mo->BounceFlags &= ~BOUNCE_TypeMask;
+			}
+		}
 		return true;
 	}
 	return false;

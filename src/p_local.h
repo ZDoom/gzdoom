@@ -417,8 +417,8 @@ bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
-bool	P_BounceActor (AActor *mo, AActor * BlockingMobj);
-bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
+bool	P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop);
+bool	P_CheckSight (const AActor *t1, const AActor *t2, int flags=0);
 
 enum ESightFlags
 {

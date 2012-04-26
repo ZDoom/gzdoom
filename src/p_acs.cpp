@@ -1589,7 +1589,7 @@ void FBehavior::LoadScriptsDirectory ()
 	scripts.b = FindChunk (MAKE_ID('S','F','L','G'));
 	if (scripts.dw != NULL)
 	{
-		max = scripts.dw[1];
+		max = scripts.dw[1] / 4;
 		scripts.dw += 2;
 		for (i = max; i > 0; --i, scripts.w += 2)
 		{

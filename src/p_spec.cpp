@@ -585,6 +585,77 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	}
 }
 
+//============================================================================
+//
+// P_SectorDamage
+//
+//============================================================================
+
+static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type, const PClass *protectClass, int flags)
+{
+	if (!(actor->flags & MF_SHOOTABLE))
+		return;
+
+	if (!(flags & DAMAGE_NONPLAYERS) && actor->player == NULL)
+		return;
+
+	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
+		return;
+
+	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor->x, actor->y) && !actor->waterlevel)
+		return;
+
+	if (protectClass != NULL)
+	{
+		if (actor->FindInventory(protectClass, !!(flags & DAMAGE_SUBCLASSES_PROTECT)))
+			return;
+	}
+
+	P_DamageMobj (actor, NULL, NULL, amount, type);
+}
+
+void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags)
+{
+	int secnum = -1;
+
+	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	{
+		AActor *actor, *next;
+		sector_t *sec = &sectors[secnum];
+
+		// Do for actors in this sector.
+		for (actor = sec->thinglist; actor != NULL; actor = next)
+		{
+			next = actor->snext;
+			DoSectorDamage(actor, sec, amount, type, protectClass, flags);
+		}
+		// If this is a 3D floor control sector, also do for anything in/on
+		// those 3D floors.
+		for (unsigned i = 0; i < sec->e->XFloor.attached.Size(); ++i)
+		{
+			sector_t *sec2 = sec->e->XFloor.attached[i];
+
+			for (actor = sec2->thinglist; actor != NULL; actor = next)
+			{
+				next = actor->snext;
+				// Only affect actors touching the 3D floor
+				if (actor->z + actor->height > sec->floorplane.ZatPoint(actor->x, actor->y))
+				{
+					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
+					// damaged (so, anything touching it or above it). Other 3D floors between
+					// the actor and this one will not stop this effect.
+					if ((flags & DAMAGE_IN_AIR) || actor->z <= sec->ceilingplane.ZatPoint(actor->x, actor->y))
+					{
+						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
+						// only works with the real sector's floor. We did the appropriate height checks
+						// for 3D floors already.
+						DoSectorDamage(actor, NULL, amount, type, protectClass, flags | DAMAGE_IN_AIR);
+					}
+				}
+			}
+		}
+	}
+}
 
 //============================================================================
 //

@@ -145,6 +145,12 @@ bool PIT_PushThing (AActor *thing);
 // Define values for map objects
 #define MO_TELEPORTMAN			14
 
+// Flags for P_SectorDamage
+#define DAMAGE_PLAYERS				1
+#define DAMAGE_NONPLAYERS			2
+#define DAMAGE_IN_AIR				4
+#define DAMAGE_SUBCLASSES_PROTECT	8
+
 
 // [RH] If a deathmatch game, checks to see if noexit is enabled.
 //		If so, it kills the player and returns false. Otherwise,
@@ -163,7 +169,7 @@ bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
-
+void	P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags);
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
 
 void P_GiveSecret(AActor *actor, bool printmessage, bool playsound);

@@ -97,13 +97,6 @@ FRandom pr_acs ("ACS");
 #define NOT_FLOOR			8
 #define NOT_CEILING			16
 
-// Flags for SectorDamage
-
-#define DAMAGE_PLAYERS				1
-#define DAMAGE_NONPLAYERS			2
-#define DAMAGE_IN_AIR				4
-#define DAMAGE_SUBCLASSES_PROTECT	8
-
 struct CallReturn
 {
 	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard, FString &str)
@@ -6970,53 +6963,7 @@ int DLevelScript::RunScript ()
 				int flags = STACK(1);
 				sp -= 5;
 
-				int secnum = -1;
-
-				while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
-				{
-					AActor *actor, *next;
-					sector_t *sec = &sectors[secnum];
-
-					for (actor = sec->thinglist; actor != NULL; actor = next)
-					{
-						next = actor->snext;
-
-						if (!(actor->flags & MF_SHOOTABLE))
-							continue;
-
-						if (!(flags & DAMAGE_NONPLAYERS) && actor->player == NULL)
-							continue;
-
-						if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
-							continue;
-
-						if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint (actor->x, actor->y) && !actor->waterlevel)
-							continue;
-
-						if (protectClass != NULL)
-						{
-							if (!(flags & DAMAGE_SUBCLASSES_PROTECT))
-							{
-								if (actor->FindInventory (protectClass))
-									continue;
-							}
-							else
-							{
-								AInventory *item;
-
-								for (item = actor->Inventory; item != NULL; item = item->Inventory)
-								{
-									if (item->IsKindOf (protectClass))
-										break;
-								}
-								if (item != NULL)
-									continue;
-							}
-						}
-
-						P_DamageMobj (actor, NULL, NULL, amount, type);
-					}
-				}
+				P_SectorDamage(tag, amount, type, protectClass, flags);
 			}
 			break;
 

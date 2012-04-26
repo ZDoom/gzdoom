@@ -951,6 +951,11 @@ DEFINE_PROPERTY(bouncetype, S, Actor)
 	}
 	defaults->BounceFlags &= ~(BOUNCE_TypeMask | BOUNCE_UseSeeSound);
 	defaults->BounceFlags |= flags[match];
+	if (defaults->BounceFlags & (BOUNCE_Actors | BOUNCE_AllActors))
+	{
+		// PASSMOBJ is irrelevant for normal missiles, but not for bouncers.
+		defaults->flags2 |= MF2_PASSMOBJ;
+	}
 }
 
 //==========================================================================

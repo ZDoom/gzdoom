@@ -3305,9 +3305,17 @@ void AActor::Tick ()
 						} 
 						z = onmo->z + onmo->height;
 					}
-					flags2 |= MF2_ONMOBJ;
-					velz = 0;
-					Crash();
+					if (velz != 0 && (flags & MF_MISSILE) && (BounceFlags & BOUNCE_Actors))
+					{
+						secplane_t plane = { 0, 0, FRACUNIT, -z, FRACUNIT };
+						FloorBounceMissile(plane);
+					}
+					else
+					{
+						flags2 |= MF2_ONMOBJ;
+						velz = 0;
+						Crash();
+					}
 				}
 			}
 			else

@@ -247,6 +247,7 @@ player_t::player_t()
   ReadyWeapon(0),
   PendingWeapon(0),
   cheats(0),
+  timefreezer(0),
   refire(0),
   inconsistant(0),
   killcount(0),
@@ -674,7 +675,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 	{ // You can't use items if you're totally frozen
 		return false;
 	}
-	if (( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+	if ((level.flags2 & LEVEL2_FROZEN) && (player == NULL || player->timefreezer == 0))
 	{
 		// Time frozen
 		return false;
@@ -2685,6 +2686,15 @@ void player_t::Serialize (FArchive &arc)
 		poisonpaintype = poisoner->PainType != NAME_None ? poisoner->PainType : poisoner->DamageType;
 	}
 
+	if (SaveVersion >= 3599)
+	{
+		arc << timefreezer;
+	}
+	else
+	{
+		cheats &= ~(1 << 15);	// make sure old CF_TIMEFREEZE bit is cleared
+	}
+
 	if (isbot)
 	{
 		arc	<< angle
@@ -2775,5 +2785,5 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 	return
 		gamestate == GS_TITLELEVEL ||
 		player->cheats & CF_TOTALLYFROZEN ||
-		((level.flags2 & LEVEL2_FROZEN) && !(player->cheats & CF_TIMEFREEZE));
+		((level.flags2 & LEVEL2_FROZEN) && player->timefreezer == 0);
 }

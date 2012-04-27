@@ -192,7 +192,6 @@ typedef enum
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_WEAPONREADY		= 1 << 14,		// [RH] Weapon is in the ready state and can fire its primary attack
-	CF_TIMEFREEZE		= 1 << 15,		// Player has an active time freezer
 	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
 	CF_REGENERATION		= 1 << 17,		// Player owns a regeneration artifact
 	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
@@ -307,6 +306,7 @@ public:
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
 
 	int			cheats;					// bit flags
+	int			timefreezer;			// Player has an active time freezer
 	short		refire;					// refired shots are less accurate
 	short		inconsistant;
 	int			killcount, itemcount, secretcount;		// for intermission

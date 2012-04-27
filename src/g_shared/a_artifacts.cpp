@@ -1356,28 +1356,29 @@ IMPLEMENT_CLASS( APowerTimeFreezer)
 //
 //===========================================================================
 
-void APowerTimeFreezer::InitEffect( )
+void APowerTimeFreezer::InitEffect()
 {
-	int	ulIdx;
+	int freezemask;
 
 	Super::InitEffect();
 
-	if (Owner== NULL || Owner->player == NULL)
+	if (Owner == NULL || Owner->player == NULL)
 		return;
 
 	// When this powerup is in effect, pause the music.
-	S_PauseSound( false, false );
+	S_PauseSound(false, false);
 
 	// Give the player and his teammates the power to move when time is frozen.
-	Owner->player->cheats |= CF_TIMEFREEZE;
-	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
+	freezemask = 1 << (Owner->player - players);
+	Owner->player->timefreezer |= freezemask;
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if ( playeringame[ulIdx] &&
-			 players[ulIdx].mo != NULL &&
-			 players[ulIdx].mo->IsTeammate( Owner )
+		if (playeringame[i] &&
+			players[i].mo != NULL &&
+			players[i].mo->IsTeammate(Owner)
 		   )
 		{
-			players[ulIdx].cheats |= CF_TIMEFREEZE;
+			players[i].timefreezer |= freezemask;
 		}
 	}
 
@@ -1405,7 +1406,7 @@ void APowerTimeFreezer::InitEffect( )
 //
 //===========================================================================
 
-void APowerTimeFreezer::DoEffect( )
+void APowerTimeFreezer::DoEffect()
 {
 	Super::DoEffect();
 	// [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
@@ -1433,41 +1434,45 @@ void APowerTimeFreezer::DoEffect( )
 //
 //===========================================================================
 
-void APowerTimeFreezer::EndEffect( )
+void APowerTimeFreezer::EndEffect()
 {
-	int	ulIdx;
+	int	i;
 
 	Super::EndEffect();
 
-	// Allow other actors to move about freely once again.
-	level.flags2 &= ~LEVEL2_FROZEN;
-
-	// Also, turn the music back on.
-	S_ResumeSound( false );
-
-	// Nothing more to do if there's no owner.
-	if (( Owner == NULL ) || ( Owner->player == NULL ))
+	// If there is an owner, remove the timefreeze flag corresponding to
+	// her from all players.
+	if (Owner != NULL && Owner->player != NULL)
 	{
-		return;
+		int freezemask = ~(1 << (Owner->player - players));
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			players[i].timefreezer &= freezemask;
+		}
 	}
 
-	// Take away the time freeze power, and his teammates.
-	Owner->player->cheats &= ~CF_TIMEFREEZE;
-	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
+	// Are there any players who still have timefreezer bits set?
+	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		if ( playeringame[ulIdx] &&
-			 players[ulIdx].mo != NULL &&
-			 players[ulIdx].mo->IsTeammate( Owner )
-		   )
+		if (playeringame[i] && players[i].timefreezer != 0)
 		{
-			players[ulIdx].cheats &= ~CF_TIMEFREEZE;
+			break;
 		}
+	}
+
+	if (i == MAXPLAYERS)
+	{
+		// No, so allow other actors to move about freely once again.
+		level.flags2 &= ~LEVEL2_FROZEN;
+
+		// Also, turn the music back on.
+		S_ResumeSound(false);
 	}
 }
 
 // Damage powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerDamage)
+IMPLEMENT_CLASS(APowerDamage)
 
 //===========================================================================
 //

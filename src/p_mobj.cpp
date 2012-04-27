@@ -2905,7 +2905,7 @@ void AActor::Tick ()
 			}
 
 			// Apply freeze mode.
-			if (( level.flags2 & LEVEL2_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+			if ((level.flags2 & LEVEL2_FROZEN) && (player == NULL || player->timefreezer == 0))
 			{
 				return;
 			}

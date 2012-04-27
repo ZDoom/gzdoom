@@ -802,6 +802,31 @@ int sector_t::GetCeilingLight () const
 	}
 }
 
+sector_t *sector_t::GetHeightSec() const 
+{
+	if (heightsec == NULL)
+	{
+		return NULL;
+	}
+	if (heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
+	{
+		return NULL;
+	}
+	if (e && e->XFloor.ffloors.Size())
+	{
+		// If any of these fake floors render their planes, ignore heightsec.
+		for (unsigned i = e->XFloor.ffloors.Size(); i-- > 0; )
+		{
+			if ((e->XFloor.ffloors[i]->flags & (FF_EXISTS | FF_RENDERPLANES)) == (FF_EXISTS | FF_RENDERPLANES))
+			{
+				return NULL;
+			}
+		}
+	}
+	return heightsec;
+}
+
+
 bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
 {
 	bool copy = false;

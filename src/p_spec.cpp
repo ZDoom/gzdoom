@@ -288,7 +288,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 
 bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 {
-	int lineActivation = line->activation;
+ 	int lineActivation = line->activation;
 
 	if (line->flags & ML_FIRSTSIDEONLY && side == 1)
 	{

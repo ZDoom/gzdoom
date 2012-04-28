@@ -181,7 +181,7 @@ class CommandDrawImage : public SBarInfoCommand
 					{
 						icon = GetWeaponIcon(weapon);
 					}
-					texture = TexMan[weapon->Icon];
+					texture = TexMan[icon];
 				}
 			}
 			else if(type == SIGIL)

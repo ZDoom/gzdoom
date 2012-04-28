@@ -98,6 +98,7 @@ public:
 			info.Name.Format("Axis %d", i);
 			info.DeadZone = 0.0f;
 			info.Multiplier = 1.0f;
+			info.Value = 0.0;
 			if(i >= 5)
 				info.GameAxis = JOYAXIS_None;
 			else
@@ -118,7 +119,16 @@ public:
 		for (int i = 0; i < GetNumAxes(); ++i)
 		{
 			if(Axes[i].GameAxis != JOYAXIS_None)
-				axes[Axes[i].GameAxis] -= float(((double)SDL_JoystickGetAxis(Device, i)/32768.0) * Multiplier * Axes[i].Multiplier);
+				axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+		}
+	}
+
+	void ProcessInput()
+	{
+		for (int i = 0; i < GetNumAxes(); ++i)
+		{
+			Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32768.0;
+			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, NULL);
 		}
 	}
 
@@ -129,6 +139,7 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		EJoyAxis GameAxis;
+		double Value;
 	};
 	static const EJoyAxis DefaultAxes[5];
 
@@ -173,6 +184,12 @@ public:
 			sticks.Push(Joysticks[i]);
 		}
 	}
+
+	void ProcessInput() const
+	{
+		for(unsigned int i = 0;i < Joysticks.Size();++i)
+			Joysticks[i]->ProcessInput();
+	}
 protected:
 	TArray<SDLInputJoystick *> Joysticks;
 };
@@ -204,6 +221,12 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 	{
 		JoystickManager->AddAxes(axes);
 	}
+}
+
+void I_ProcessJoysticks()
+{
+	if (use_joystick)
+		JoystickManager->ProcessInput();
 }
 
 IJoystickConfig *I_UpdateDeviceList()

@@ -2550,7 +2550,6 @@ void P_UnPredictPlayer ()
 {
 	player_t *player = &players[consoleplayer];
 
-
 	if (player->cheats & CF_PREDICTING)
 	{
 		AActor *act = player->mo;

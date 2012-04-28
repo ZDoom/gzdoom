@@ -913,7 +913,6 @@ void R_SetupFrame (AActor *actor)
 
 	Renderer->SetupFrame(player);
 
-	P_UnPredictPlayer ();
 	validcount++;
 
 	if (RenderTarget == screen && r_clearbuffer != 0)

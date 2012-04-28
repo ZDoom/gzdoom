@@ -221,6 +221,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	int			i;
 	sector_t	tempsec;		// killough 4/13/98
 	fixed_t		texheight, textop, texheightscale;
+	bool		notrelevant = false;
 
 	const sector_t *sec;
 
@@ -360,10 +361,12 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		if ((fake3D & FAKE3D_CLIPBOTTOM) && textop <= sclipBottom - viewz)
 		{
+			notrelevant = true;
 			goto clearfog;
 		}
 		if ((fake3D & FAKE3D_CLIPTOP) && textop - texheight >= sclipTop - viewz)
 		{
+			notrelevant = true;
 			goto clearfog;
 		}
 
@@ -483,14 +486,17 @@ clearfog:
 	{
 		R_RenderFakeWallRange(ds, x1, x2);
 	}
-	if (fake3D & FAKE3D_REFRESHCLIP)
+	if (!notrelevant)
 	{
-		assert(ds->bkup >= 0);
-		memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2-ds->x1+1) * 2);
-	}
-	else
-	{
-		clearbufshort(openings + ds->sprtopclip - ds->x1 + x1, x2-x1+1, viewheight);
+		if (fake3D & FAKE3D_REFRESHCLIP)
+		{
+			assert(ds->bkup >= 0);
+			memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2-ds->x1+1) * 2);
+		}
+		else
+		{
+			clearbufshort(openings + ds->sprtopclip - ds->x1 + x1, x2-x1+1, viewheight);
+		}
 	}
 	return;
 }

@@ -96,8 +96,9 @@ EXTERN_CVAR (Int, paletteflash)
 enum PaletteFlashFlags
 {
 	PF_HEXENWEAPONS		= 1,
-	PF_SPECIALDAMAGE	= 2,
-	PF_HAZARD			= 4,
+	PF_POISON			= 2,
+	PF_ICE				= 4,
+	PF_HAZARD			= 8,
 };
 
 class player_t;

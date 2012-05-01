@@ -153,7 +153,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 	if (CPlayer->poisoncount)
 	{
 		cnt = MIN (CPlayer->poisoncount, 64);
-		if (paletteflash & PF_SPECIALDAMAGE)
+		if (paletteflash & PF_POISON)
 		{
 			V_AddBlend(44/255.f, 92/255.f, 36/255.f, ((cnt + 7) >> 3) * 0.1f, blend);
 		}
@@ -182,7 +182,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 
 	if (CPlayer->mo->DamageType == NAME_Ice)
 	{
-		if (paletteflash & PF_SPECIALDAMAGE)
+		if (paletteflash & PF_ICE)
 		{
 			V_AddBlend(0.f, 0.f, 224/255.f, 0.5f, blend);
 		}

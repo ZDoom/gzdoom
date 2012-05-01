@@ -88,9 +88,10 @@ int BaseBlendR, BaseBlendG, BaseBlendB;
 float BaseBlendA;
 
 CVAR (Int, paletteflash, 0, CVAR_ARCHIVE)
-CVAR (Flag, pf_hexenweaps, paletteflash, PF_HEXENWEAPONS)
-CVAR (Flag, pf_specialdamage, paletteflash, PF_SPECIALDAMAGE)
-CVAR (Flag, pf_hazard, paletteflash, PF_HAZARD)
+CVAR (Flag, pf_hexenweaps,	paletteflash, PF_HEXENWEAPONS)
+CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
+CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
+CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)

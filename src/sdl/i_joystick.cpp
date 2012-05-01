@@ -170,45 +170,21 @@ public:
 			AxisInfo &y = Axes[NumAxes + i*2 + 1];
 
 			buttonstate = SDL_JoystickGetHat(Device, i);
-			switch(buttonstate)
-			{
-				case SDL_HAT_LEFTUP:
-					x.Value = -1.0;
-					y.Value = -1.0;
-					break;
-				case SDL_HAT_LEFT:
-					x.Value = -1.0;
-					y.Value = 0.0;
-					break;
-				case SDL_HAT_LEFTDOWN:
-					x.Value = -1.0;
-					y.Value = 1.0;
-					break;
-				case SDL_HAT_RIGHTUP:
-					x.Value = 1.0;
-					y.Value = -1.0;
-					break;
-				case SDL_HAT_RIGHT:
-					x.Value = 1.0;
-					y.Value = 0.0;
-					break;
-				case SDL_HAT_RIGHTDOWN:
-					x.Value = 1.0;
-					y.Value = 1.0;
-					break;
-				case SDL_HAT_UP:
-					x.Value = 0.0;
-					y.Value = -1.0;
-					break;
-				case SDL_HAT_DOWN:
-					x.Value = 0.0;
-					y.Value = 1.0;
-					break;
-				default:
-					x.Value = 0.0;
-					y.Value = 0.0;
-					break;
-			}
+
+			// If we're going to assume that we can pass SDL's value into
+			// Joy_GenerateButtonEvents then we might as well assume the format here.
+			if(buttonstate & 0x1) // Up
+				y.Value = -1.0;
+			else if(buttonstate & 0x4) // Down
+				y.Value = 1.0;
+			else
+				y.Value = 0.0;
+			if(buttonstate & 0x2) // Left
+				x.Value = 1.0;
+			else if(buttonstate & 0x8) // Right
+				x.Value = -1.0;
+			else
+				x.Value = 0.0;
 
 			if(i < 4)
 			{

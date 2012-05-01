@@ -322,7 +322,7 @@ void DCanvas::Dim (PalEntry color)
 	if (color.a != 0)
 	{
 		float dim[4] = { color.r/255.f, color.g/255.f, color.b/255.f, color.a/255.f };
-		DBaseStatusBar::AddBlend (dimmer.r/255.f, dimmer.g/255.f, dimmer.b/255.f, amount, dim);
+		V_AddBlend (dimmer.r/255.f, dimmer.g/255.f, dimmer.b/255.f, amount, dim);
 		dimmer = PalEntry (BYTE(dim[0]*255), BYTE(dim[1]*255), BYTE(dim[2]*255));
 		amount = dim[3];
 	}

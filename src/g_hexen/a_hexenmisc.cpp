@@ -18,6 +18,7 @@
 #include "m_bbox.h"
 #include "ravenshared.h"
 #include "farchive.h"
+#include "v_palette.h"
 
 // Include all the Hexen stuff here to reduce compile time
 #include "a_bats.cpp"

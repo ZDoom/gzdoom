@@ -2247,14 +2247,23 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (!player->centering)
 			{
+				fixed_t oldpitch = player->mo->pitch;
 				player->mo->pitch -= look;
 				if (look > 0)
 				{ // look up
 					player->mo->pitch = MAX(player->mo->pitch, player->MinPitch);
+					if (player->mo->pitch > oldpitch)
+					{
+						player->mo->pitch = player->MinPitch;
+					}
 				}
 				else
 				{ // look down
 					player->mo->pitch = MIN(player->mo->pitch, player->MaxPitch);
+					if (player->mo->pitch < oldpitch)
+					{
+						player->mo->pitch = player->MaxPitch;
+					}
 				}
 			}
 		}

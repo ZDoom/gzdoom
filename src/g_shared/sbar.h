@@ -366,8 +366,6 @@ private:
 	void DrawMessages (int bottom);
 	void DrawConsistancy () const;
 
-	static BYTE DamageToAlpha[114];
-
 	TObjPtr<DHUDMessage> Messages;
 	bool ShowLog;
 };

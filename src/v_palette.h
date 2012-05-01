@@ -35,6 +35,7 @@
 #define __V_PALETTE_H__
 
 #include "doomtype.h"
+#include "c_cvars.h"
 
 #define MAKERGB(r,g,b)		DWORD(((r)<<16)|((g)<<8)|(b))
 #define MAKEARGB(a,r,g,b)	DWORD(((a)<<24)|((r)<<16)|((g)<<8)|(b))
@@ -89,6 +90,20 @@ void V_SetBlend (int blendr, int blendg, int blendb, int blenda);
 // same as the old. This function will perform the blending
 // even if the blend hasn't changed.
 void V_ForceBlend (int blendr, int blendg, int blendb, int blenda);
+
+
+EXTERN_CVAR (Int, paletteflash)
+enum PaletteFlashFlags
+{
+	PF_HEXENWEAPONS		= 1,
+	PF_SPECIALDAMAGE	= 2,
+	PF_HAZARD			= 4,
+};
+
+class player_t;
+
+void V_AddBlend (float r, float g, float b, float a, float v_blend[4]);
+void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int maxpainblend);
 
 
 // Colorspace conversion RGB <-> HSV

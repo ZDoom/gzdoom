@@ -1033,6 +1033,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\v_blend.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\v_collection.cpp"
 				>
 			</File>

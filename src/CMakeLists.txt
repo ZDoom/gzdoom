@@ -741,6 +741,7 @@ add_executable( zdoom WIN32
 	tables.cpp
 	teaminfo.cpp
 	tempfiles.cpp
+	v_blend.cpp
 	v_collection.cpp
 	v_draw.cpp
 	v_font.cpp

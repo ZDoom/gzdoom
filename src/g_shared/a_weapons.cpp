@@ -1192,6 +1192,7 @@ void FWeaponSlots::AddExtraWeapons()
 			(cls->ActorInfo->GameFilter == GAME_Any || (cls->ActorInfo->GameFilter & gameinfo.gametype)) &&
 			cls->ActorInfo->Replacement == NULL &&	// Replaced weapons don't get slotted.
 			cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)) &&
+			!(static_cast<AWeapon*>(GetDefaultByType(cls))->WeaponFlags & WIF_POWERED_UP) &&
 			!LocateWeapon(cls, NULL, NULL)			// Don't duplicate it if it's already present.
 			)
 		{

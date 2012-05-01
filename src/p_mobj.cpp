@@ -1491,7 +1491,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 
 	speed = !usecurspeed ? actor->Speed : xs_CRoundToInt(TVector3<double>(actor->velx, actor->vely, actor->velz).Length());
 	target = actor->tracer;
-	if (target == NULL || speed == 0 || !actor->CanSeek(target))
+	if (target == NULL || !actor->CanSeek(target))
 	{
 		return false;
 	}
@@ -1499,6 +1499,10 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	{ // Target died
 		actor->tracer = NULL;
 		return false;
+	}
+	if (speed == 0)
+	{ // Technically, we're not seeking since our speed is 0, but the target *is* seekable.
+		return true;
 	}
 	dir = P_FaceMobj (actor, target, &delta);
 	if (delta > thresh)
@@ -1560,7 +1564,6 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 		actor->velx = FixedMul(xyscale, finecosine[angle]);
 		actor->vely = FixedMul(xyscale, finesine[angle]);
 	}
-
 
 	return true;
 }

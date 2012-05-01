@@ -612,6 +612,11 @@ void PlayerIsGone (int netnode, int netconsole)
 		P_DisconnectEffect (players[netconsole].mo);
 		players[netconsole].mo->player = NULL;
 		players[netconsole].mo->Destroy ();
+		if (!(players[netconsole].mo->ObjectFlags & OF_EuthanizeMe))
+		{ // We just destroyed a morphed player, so now the original player
+		  // has taken their place. Destroy that one too.
+			players[netconsole].mo->Destroy();
+		}
 		players[netconsole].mo = NULL;
 		players[netconsole].camera = NULL;
 	}

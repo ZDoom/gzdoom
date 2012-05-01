@@ -558,6 +558,10 @@ bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
 
 void AWeapon::PostMorphWeapon ()
 {
+	if (Owner == NULL)
+	{
+		return;
+	}
 	Owner->player->PendingWeapon = WP_NOCHANGE;
 	Owner->player->ReadyWeapon = this;
 	Owner->player->psprites[ps_weapon].sy = WEAPONBOTTOM;

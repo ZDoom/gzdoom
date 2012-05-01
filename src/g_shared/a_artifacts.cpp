@@ -1843,24 +1843,26 @@ void APowerMorph::EndEffect( )
 	}
 
 	// Unmorph if possible
-	int savedMorphTics = Player->morphTics;
-	P_UndoPlayerMorph (Player, Player);
-
-	// Abort if unmorph failed; in that case,
-	// set the usual retry timer and return.
-	if (Player->morphTics)
+	if (!bNoCallUndoMorph)
 	{
-		// Transfer retry timeout
-		// to the powerup's timer.
-		EffectTics = Player->morphTics;
-		// Reload negative morph tics;
-		// use actual value; it may
-		// be in use for animation.
-		Player->morphTics = savedMorphTics;
-		// Try again some time later
-		return;
-	}
+		int savedMorphTics = Player->morphTics;
+		P_UndoPlayerMorph (Player, Player);
 
+		// Abort if unmorph failed; in that case,
+		// set the usual retry timer and return.
+		if (Player != NULL && Player->morphTics)
+		{
+			// Transfer retry timeout
+			// to the powerup's timer.
+			EffectTics = Player->morphTics;
+			// Reload negative morph tics;
+			// use actual value; it may
+			// be in use for animation.
+			Player->morphTics = savedMorphTics;
+			// Try again some time later
+			return;
+		}
+	}
 	// Unmorph suceeded
 	Player = NULL;
 }

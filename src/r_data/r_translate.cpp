@@ -864,7 +864,11 @@ static bool SetRange(FRemapTable *table, int start, int end, int first, int last
 	bool identity = true;
 	if (start == end)
 	{
-		table->Remap[start] = (first + last) / 2;
+		int pi = (first + last) / 2;
+		table->Remap[start] = GPalette.Remap[pi];
+		identity &= (pi == start);
+		table->Palette[start] = GPalette.BaseColors[table->Remap[start]];
+		table->Palette[start].a = 255;
 	}
 	else
 	{

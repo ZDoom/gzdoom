@@ -262,6 +262,9 @@ public:
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
+	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)
+	fixed_t BobSpeed;						// [XA] Bobbing speed. Defines how quickly a weapon bobs.
+	fixed_t BobRangeX, BobRangeY;			// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
 
 	// In-inventory instance variables
 	TObjPtr<AAmmo> Ammo1, Ammo2;
@@ -303,6 +306,16 @@ public:
 	};
 	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false, int ammocount = -1);
 	bool DepleteAmmo (bool altFire, bool checkEnough=true, int ammouse = -1);
+
+	enum
+	{
+		BobNormal,
+		BobInverse,
+		BobAlpha,
+		BobInverseAlpha,
+		BobSmooth,
+		BobInverseSmooth
+	};
 
 protected:
 	AAmmo *AddAmmo (AActor *other, const PClass *ammotype, int amount);

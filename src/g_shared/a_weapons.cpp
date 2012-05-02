@@ -59,8 +59,11 @@ void AWeapon::Serialize (FArchive &arc)
 		<< MoveCombatDist
 		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
 		<< bAltFire
-		<< ReloadCounter
-		<< FOVScale
+		<< ReloadCounter;		
+		if (SaveVersion >= 3615) {
+			arc << BobStyle << BobSpeed << BobRangeX << BobRangeY;
+		}
+	arc << FOVScale
 		<< Crosshair;
 }
 

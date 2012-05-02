@@ -1762,6 +1762,52 @@ DEFINE_CLASS_PROPERTY(yadjust, F, Weapon)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
+{
+	static const char *names[] = { "Normal", "Inverse", "Alpha", "InverseAlpha", "Smooth", "InverseSmooth", NULL };
+	static const int flags[] = { AWeapon::BobNormal,
+		AWeapon::BobInverse, AWeapon::BobAlpha, AWeapon::BobInverseAlpha,
+		AWeapon::BobSmooth, AWeapon::BobInverseSmooth, };
+	PROP_STRING_PARM(id, 0);
+	int match = MatchString(id, names);
+	if (match < 0)
+	{
+		I_Error("Unknown bobstyle %s", id);
+		match = 0;
+	}
+	defaults->BobStyle |= flags[match];
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(bobspeed, F, Weapon)
+{
+	PROP_FIXED_PARM(i, 0);
+	defaults->BobSpeed = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(bobrangex, F, Weapon)
+{
+	PROP_FIXED_PARM(i, 0);
+	defaults->BobRangeX = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(bobrangey, F, Weapon)
+{
+	PROP_FIXED_PARM(i, 0);
+	defaults->BobRangeY = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 {
 	PROP_INT_PARM(i, 0);

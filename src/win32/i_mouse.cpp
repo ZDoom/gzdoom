@@ -267,12 +267,19 @@ void I_CheckNativeMouse(bool preferNative)
 	}
 	else
 	{
-		want_native =
-			(GetForegroundWindow() != Window) ||
-			preferNative ||
-			!use_mouse ||
-				((!m_use_mouse || menuactive != MENU_WaitKey) &&
+		if ((GetForegroundWindow() != Window) || preferNative || !use_mouse)
+		{
+			want_native = true;
+		}
+		else if (menuactive == MENU_WaitKey)
+		{
+			want_native = false;
+		}
+		else
+		{
+			want_native = ((!m_use_mouse || menuactive != MENU_WaitKey) &&
 				(!CaptureMode_InGame() || GUICapture ||	paused || demoplayback));
+		}
 	}
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);

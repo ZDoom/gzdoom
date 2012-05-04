@@ -1208,6 +1208,11 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	p = &players[player];
 
+	if (p->morphTics != 0)
+	{ // Undo morph
+		P_UndoPlayerMorph (p, p, 0, true);
+	}
+
 	// Strip all current powers, unless moving in a hub and the power is okay to keep.
 	item = p->mo->Inventory;
 	while (item != NULL)
@@ -1274,11 +1279,6 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 				item->Amount = item->InterHubAmount;
 			}
 		}
-	}
-
-	if (p->morphTics)
-	{ // Undo morph
-		P_UndoPlayerMorph (p, p, 0, true);
 	}
 
 	// Resets player health to default if not dead.

@@ -1220,7 +1220,8 @@ OptionMenu "CompatibilityOptions"
 	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
 	Option "Ignore Y offsets on masked midtextures",	"compat_MASKEDMIDTEX", "YesNo"
-	Option "Cannot travel straight NSEW",			"compat_badangles", "YesNo"
+	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
+	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
 	
 	Class "CompatibilityMenu"
 }

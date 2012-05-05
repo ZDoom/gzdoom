@@ -131,6 +131,7 @@ static FCompatOption Options[] =
 	{ "polyobj",				COMPATF_POLYOBJ, SLOT_COMPAT },
 	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, SLOT_COMPAT },
 	{ "badangles",				COMPATF2_BADANGLES, SLOT_COMPAT2 },
+	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };

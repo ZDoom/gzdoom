@@ -171,3 +171,8 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 {
 	clearlinespecial 66
 }
+
+8FA29398776146189396AA1AC6BB9E13 // Roger Ritenour's Phobos map03
+{
+	floormove
+}

@@ -461,7 +461,11 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int am
 	count1 = (Ammo1 != NULL) ? Ammo1->Amount : 0;
 	count2 = (Ammo2 != NULL) ? Ammo2->Amount : 0;
 
-	if (ammocount >= 0 && (WeaponFlags & WIF_DEHAMMO))
+	if ((WeaponFlags & WIF_DEHAMMO) && (Ammo1 == NULL))
+	{
+		lAmmoUse1 = 0;
+	}
+	else if (ammocount >= 0 && (WeaponFlags & WIF_DEHAMMO))
 	{
 		lAmmoUse1 = ammocount;
 	}

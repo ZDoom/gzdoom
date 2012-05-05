@@ -1333,7 +1333,7 @@ public:
 		}
 	}
 
-	void DrawString(FFont *font, const char* str, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false, int shadowX=2, int shadowY=2) const
+	void DrawString(FFont *font, const char* cstring, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false, int shadowX=2, int shadowY=2) const
 	{
 		x += spacing;
 		double ax = *x;
@@ -1341,6 +1341,10 @@ public:
 
 		double xScale = 1.0;
 		double yScale = 1.0;
+
+		const BYTE* str = (const BYTE*) cstring;
+		const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
+		FRemapTable *remap = font->GetColorTranslation(translation);
 
 		if(fullScreenOffsets)
 		{
@@ -1362,6 +1366,14 @@ public:
 				str++;
 				continue;
 			}
+			else if(*str == TEXTCOLOR_ESCAPE)
+			{
+				EColorRange newColor = V_ParseFontColor(++str, translation, boldTranslation);
+				if(newColor != CR_UNDEFINED)
+					remap = font->GetColorTranslation(newColor);
+				continue;
+			}
+
 			int width;
 			if(script->spacingCharacter == '\0') //No monospace?
 				width = font->GetCharWidth((unsigned char) *str);
@@ -1444,7 +1456,7 @@ public:
 			screen->DrawTexture(character, rx, ry,
 				DTA_DestWidthF, rw,
 				DTA_DestHeightF, rh,
-				DTA_Translation, font->GetColorTranslation(translation),
+				DTA_Translation, remap,
 				DTA_Alpha, alpha,
 				TAG_DONE);
 			if(script->spacingCharacter == '\0')

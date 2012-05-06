@@ -600,18 +600,20 @@ int strbin (char *str)
 				case 'x':
 				case 'X':
 					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
+					for (i = 0; i < 2; i++)
+					{
 						p++;
+						if (*p >= '0' && *p <= '9')
+							c = (c << 4) + *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c = (c << 4) + 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c = (c << 4) + 10 + *p-'A';
+						else
+						{
+							p--;
+							break;
+						}
 					}
 					*str++ = c;
 					break;
@@ -698,18 +700,20 @@ FString strbin1 (const char *start)
 				case 'x':
 				case 'X':
 					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
+					for (i = 0; i < 2; i++)
+					{
 						p++;
+						if (*p >= '0' && *p <= '9')
+							c = (c << 4) + *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c = (c << 4) + 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c = (c << 4) + 10 + *p-'A';
+						else
+						{
+							p--;
+							break;
+						}
 					}
 					result << c;
 					break;

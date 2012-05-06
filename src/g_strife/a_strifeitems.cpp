@@ -177,7 +177,7 @@ IMPLEMENT_CLASS (ARaiseAlarm)
 bool ARaiseAlarm::TryPickup (AActor *&toucher)
 {
 	P_NoiseAlert (toucher, toucher);
-	// A_WakeOracleSpectre (dword312F4);
+	CALL_ACTION(A_WakeOracleSpectre, toucher);
 	GoAwayAndDie ();
 	return true;
 }

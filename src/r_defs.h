@@ -38,8 +38,8 @@
 
 #include "dthinker.h"
 
-#define MAXWIDTH 2560
-#define MAXHEIGHT 1600
+#define MAXWIDTH 2880
+#define MAXHEIGHT 1800
 
 const WORD NO_INDEX = 0xffffu;
 const DWORD NO_SIDE = 0xffffffffu;

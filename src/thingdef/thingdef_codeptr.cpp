@@ -4208,9 +4208,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteWithResult)
 	ACTION_PARAM_START(4);
 
 	ACTION_PARAM_NAME(scriptname, 0);
-	ACTION_PARAM_INT(arg1, 2);
-	ACTION_PARAM_INT(arg2, 3);
-	ACTION_PARAM_INT(arg3, 4);
+	ACTION_PARAM_INT(arg1, 1;
+	ACTION_PARAM_INT(arg2, 2);
+	ACTION_PARAM_INT(arg3, 3);
 
 	bool res = !!P_ExecuteSpecial(ACS_ExecuteWithResult, NULL, self, false, -scriptname, arg1, arg2, arg3, 0);
 

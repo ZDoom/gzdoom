@@ -901,6 +901,8 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		}
 		else if (sfx->bRandomHeader)
 		{
+			// Random sounds attenuate based on the original (random) sound as well as the chosen one.
+			attenuation *= sfx->Attenuation;
 			sound_id = FSoundID(S_PickReplacement (sound_id));
 			if (near_limit < 0) 
 			{
@@ -927,6 +929,9 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		}
 		sfx = &S_sfx[sound_id];
 	}
+
+	// Attenuate the attenuation based on the sound.
+	attenuation *= sfx->Attenuation;
 
 	// The passed rolloff overrides any sound-specific rolloff.
 	if (forcedrolloff != NULL && forcedrolloff->MinDistance != 0)

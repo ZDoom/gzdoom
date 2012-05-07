@@ -152,6 +152,7 @@ enum SICommands
 	SI_Volume,
 	SI_MusicAlias,
 	SI_EDFOverride,
+	SI_Attenuation,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -247,6 +248,7 @@ static const char *SICommandStrings[] =
 	"$volume",
 	"$musicalias",
 	"$edfoverride",
+	"$attenuation",
 	NULL
 };
 
@@ -501,6 +503,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.next = 0;
 	newsfx.index = 0;
 	newsfx.Volume = 1;
+	newsfx.Attenuation = 1;
 	newsfx.PitchMask = CurrentPitchMask;
 	newsfx.NearLimit = 2;
 	newsfx.LimitRange = 256*256;
@@ -1201,6 +1204,17 @@ static void S_AddSNDINFO (int lump)
 				sfx = S_FindSoundTentative(sc.String);
 				sc.MustGetFloat();
 				S_sfx[sfx].Volume = (float)sc.Float;
+				}
+				break;
+
+			case SI_Attenuation: {
+				// $attenuation <logical name> <attenuation>
+				int sfx;
+
+				sc.MustGetString();
+				sfx = S_FindSoundTentative(sc.String);
+				sc.MustGetFloat();
+				S_sfx[sfx].Attenuation = (float)sc.Float;
 				}
 				break;
 

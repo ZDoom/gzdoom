@@ -442,7 +442,7 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 //
 //============================================================================
 
-static void CHolyWeave (AActor *actor)
+void CHolyWeave (AActor *actor, FRandom &pr_random)
 {
 	fixed_t newX, newY;
 	int weaveXY, weaveZ;
@@ -455,14 +455,14 @@ static void CHolyWeave (AActor *actor)
 		FloatBobOffsets[weaveXY]<<2);
 	newY = actor->y-FixedMul(finesine[angle],
 		FloatBobOffsets[weaveXY]<<2);
-	weaveXY = (weaveXY+(pr_holyweave()%5))&63;
+	weaveXY = (weaveXY+(pr_random()%5))&63;
 	newX += FixedMul(finecosine[angle], 
 		FloatBobOffsets[weaveXY]<<2);
 	newY += FixedMul(finesine[angle], 
 		FloatBobOffsets[weaveXY]<<2);
 	P_TryMove(actor, newX, newY, true);
 	actor->z -= FloatBobOffsets[weaveZ]<<1;
-	weaveZ = (weaveZ+(pr_holyweave()%5))&63;
+	weaveZ = (weaveZ+(pr_random()%5))&63;
 	actor->z += FloatBobOffsets[weaveZ]<<1;	
 	actor->special2 = weaveZ+(weaveXY<<16);
 }
@@ -494,7 +494,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 			self->args[0] = 5+(pr_holyseek()/20);
 		}
 	}
-	CHolyWeave (self);
+	CHolyWeave (self, pr_holyweave);
 }
 
 //============================================================================

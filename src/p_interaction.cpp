@@ -518,53 +518,56 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			}
 
 			// [RH] Multikills
-			source->player->multicount++;
-			if (source->player->lastkilltime > 0)
+			if (player != source->player)
 			{
-				if (source->player->lastkilltime < level.time - 3*TICRATE)
+				source->player->multicount++;
+				if (source->player->lastkilltime > 0)
 				{
-					source->player->multicount = 1;
-				}
-
-				if (deathmatch &&
-					source->CheckLocalView (consoleplayer) &&
-					cl_showmultikills)
-				{
-					const char *multimsg;
-
-					switch (source->player->multicount)
+					if (source->player->lastkilltime < level.time - 3*TICRATE)
 					{
-					case 1:
-						multimsg = NULL;
-						break;
-					case 2:
-						multimsg = GStrings("MULTI2");
-						break;
-					case 3:
-						multimsg = GStrings("MULTI3");
-						break;
-					case 4:
-						multimsg = GStrings("MULTI4");
-						break;
-					default:
-						multimsg = GStrings("MULTI5");
-						break;
+						source->player->multicount = 1;
 					}
-					if (multimsg != NULL)
-					{
-						char buff[256];
 
-						if (!AnnounceMultikill (source))
+					if (deathmatch &&
+						source->CheckLocalView (consoleplayer) &&
+						cl_showmultikills)
+					{
+						const char *multimsg;
+
+						switch (source->player->multicount)
 						{
-							SexMessage (multimsg, buff, player->userinfo.gender,
-								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
-								1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));
+						case 1:
+							multimsg = NULL;
+							break;
+						case 2:
+							multimsg = GStrings("MULTI2");
+							break;
+						case 3:
+							multimsg = GStrings("MULTI3");
+							break;
+						case 4:
+							multimsg = GStrings("MULTI4");
+							break;
+						default:
+							multimsg = GStrings("MULTI5");
+							break;
+						}
+						if (multimsg != NULL)
+						{
+							char buff[256];
+
+							if (!AnnounceMultikill (source))
+							{
+								SexMessage (multimsg, buff, player->userinfo.gender,
+									player->userinfo.netname, source->player->userinfo.netname);
+								StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
+									1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));
+							}
 						}
 					}
 				}
+				source->player->lastkilltime = level.time;
 			}
-			source->player->lastkilltime = level.time;
 
 			// [RH] Implement fraglimit
 			if (deathmatch && fraglimit &&

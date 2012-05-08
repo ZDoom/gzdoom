@@ -1156,6 +1156,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 	int left, right, top, bottom;
 	line_t *ld;
 	bool blocked;
+	bool performBlockingThrust;
 
 	ld = sd->linedef;
 
@@ -1196,8 +1197,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 					if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
 					{
 						FLineOpening open;
-						open.top = -INT_MAX;
-						open.bottom = INT_MAX;
+						open.top = INT_MAX;
+						open.bottom = -INT_MAX;
 						// [TN] Check wether this actor gets blocked by the line.
 						if (ld->backsector != NULL &&
 							!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
@@ -1206,11 +1207,18 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
 							&& (!(ld->flags & ML_3DMIDTEX) ||
 								(!P_LineOpening_3dMidtex(mobj, ld, open) &&
-									(mobj->z + mobj->height < open.bottom)
+									(mobj->z + mobj->height < open.top)
 								) || (open.abovemidtex && mobj->z > mobj->floorz))
 							)
 						{
-							continue;
+							// [BL] We can't just continue here since we must
+							// determine if the line's backsector is going to
+							// be blocked.
+							performBlockingThrust = false;
+						}
+						else
+						{
+							performBlockingThrust = true;
 						}
 
 						FBoundingBox box(mobj->x, mobj->y, mobj->radius);
@@ -1236,9 +1244,23 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							{
 								continue;
 							}
+							// [BL] See if we hit below the floor/ceiling of the poly.
+							else if(!performBlockingThrust && (
+									mobj->z < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj->x, mobj->y) ||
+									mobj->z + mobj->height > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj->x, mobj->y)
+								))
+							{
+								performBlockingThrust = true;
+							}
 						}
-						ThrustMobj (mobj, sd);
-						blocked = true;
+
+						if(performBlockingThrust)
+						{
+							ThrustMobj (mobj, sd);
+							blocked = true;
+						}
+						else
+							continue;
 					}
 				}
 			}

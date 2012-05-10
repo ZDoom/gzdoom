@@ -106,6 +106,7 @@
 #include "po_man.h"
 #include "resourcefiles/resourcefile.h"
 #include "r_renderer.h"
+#include "p_local.h"
 
 #ifdef USE_POLYMOST
 #include "r_polymost.h"
@@ -773,7 +774,9 @@ void D_Display ()
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
 				viewwindowx + viewwidth, viewwindowy + viewheight);
 			P_CheckPlayerSprites();
+			P_PredictPlayer(&players[consoleplayer]);
 			Renderer->RenderView(&players[consoleplayer]);
+			P_UnPredictPlayer();
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{
 				// Redraw everything every frame when using 2D accel

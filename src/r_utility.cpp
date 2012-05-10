@@ -744,10 +744,6 @@ void R_SetupFrame (AActor *actor)
 		{
 			camera = player->camera = player->mo;
 		}
-		if (camera == actor)
-		{
-			P_PredictPlayer (player);
-		}
 	}
 	else
 	{

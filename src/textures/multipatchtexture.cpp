@@ -573,12 +573,37 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 		// rotated multipatch parts cannot be composited directly
 		bool rotatedmulti = Parts[i].Rotate != 0 && Parts[i].Texture->bMultiPatch;
 
+		memset (&info, 0, sizeof (info));
+		info.alpha = Parts[i].Alpha;
+		info.invalpha = FRACUNIT - info.alpha;
+		info.op = ECopyOp(Parts[i].op);
+		PalEntry b = Parts[i].Blend;
+		if (b.a == 0 && b != BLEND_NONE)
+		{
+			info.blend = EBlend(b.d);
+		}
+		else if (b.a != 0)
+		{
+			if (b.a == 255)
+			{
+				info.blendcolor[0] = b.r * FRACUNIT / 255;
+				info.blendcolor[1] = b.g * FRACUNIT / 255;
+				info.blendcolor[2] = b.b * FRACUNIT / 255;
+				info.blend = BLEND_MODULATE;
+			}
+			else
+			{
+				info.blendcolor[3] = b.a * FRACUNIT / 255;
+				info.blendcolor[0] = b.r * (FRACUNIT-info.blendcolor[3]);
+				info.blendcolor[1] = b.g * (FRACUNIT-info.blendcolor[3]);
+				info.blendcolor[2] = b.b * (FRACUNIT-info.blendcolor[3]);
+
+				info.blend = BLEND_OVERLAY;
+			}
+		}
+
 		if ((!Parts[i].Texture->bComplex || inf == NULL) && !rotatedmulti)
 		{
-			memset (&info, 0, sizeof (info));
-			info.alpha = Parts[i].Alpha;
-			info.invalpha = FRACUNIT - info.alpha;
-			info.op = ECopyOp(Parts[i].op);
 			if (Parts[i].Translation != NULL)
 			{
 				// Using a translation forces downconversion to the base palette
@@ -586,30 +611,6 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			}
 			else
 			{
-				PalEntry b = Parts[i].Blend;
-				if (b.a == 0 && b != BLEND_NONE)
-				{
-					info.blend = EBlend(b.d);
-				}
-				else if (b.a != 0)
-				{
-					if (b.a == 255)
-					{
-						info.blendcolor[0] = b.r * FRACUNIT / 255;
-						info.blendcolor[1] = b.g * FRACUNIT / 255;
-						info.blendcolor[2] = b.b * FRACUNIT / 255;
-						info.blend = BLEND_MODULATE;
-					}
-					else
-					{
-						info.blendcolor[3] = b.a * FRACUNIT / 255;
-						info.blendcolor[0] = b.r * (FRACUNIT-info.blendcolor[3]);
-						info.blendcolor[1] = b.g * (FRACUNIT-info.blendcolor[3]);
-						info.blendcolor[2] = b.b * (FRACUNIT-info.blendcolor[3]);
-
-						info.blend = BLEND_OVERLAY;
-					}
-				}
 				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
 			}
 		}
@@ -625,7 +626,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 				bmp1.Zero();
 				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
 				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
-					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, inf);
+					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, &info);
 			}
 		}
 

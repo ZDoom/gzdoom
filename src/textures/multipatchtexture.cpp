@@ -573,7 +573,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 		// rotated multipatch parts cannot be composited directly
 		bool rotatedmulti = Parts[i].Rotate != 0 && Parts[i].Texture->bMultiPatch;
 
-		memset (&info, 0, sizeof (info));
+		memset (&info, 0, sizeof(info));
 		info.alpha = Parts[i].Alpha;
 		info.invalpha = FRACUNIT - info.alpha;
 		info.op = ECopyOp(Parts[i].op);
@@ -597,12 +597,11 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 				info.blendcolor[0] = b.r * (FRACUNIT-info.blendcolor[3]);
 				info.blendcolor[1] = b.g * (FRACUNIT-info.blendcolor[3]);
 				info.blendcolor[2] = b.b * (FRACUNIT-info.blendcolor[3]);
-
 				info.blend = BLEND_OVERLAY;
 			}
 		}
 
-		if ((!Parts[i].Texture->bComplex || inf == NULL) && !rotatedmulti)
+		if (!Parts[i].Texture->bComplex && !rotatedmulti)
 		{
 			if (Parts[i].Translation != NULL)
 			{

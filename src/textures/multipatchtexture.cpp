@@ -552,9 +552,26 @@ void FMultiPatchTexture::MakeTexture ()
 int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	int retv = -1;
-	FCopyInfo info;
 
-	// When compositing a multipatch texture with multipatch parts
+	if (bRedirect)
+	{ // Redirect straight to the real texture's routine.
+		return Parts[0].Texture->CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	}
+
+	if (rotate != 0 || (inf != NULL && inf->op != OP_OVERWRITE && inf->op != OP_COPY))
+	{ // We are doing some sort of fancy stuff to the destination bitmap, so composite to
+	  // a temporary bitmap, and copy that.
+		FBitmap tbmp;
+		if (tbmp.Create(Width, Height))
+		{
+			retv = MAX(retv, CopyTrueColorPixels(&tbmp, 0, 0, 0));
+			bmp->CopyPixelDataRGB(x, y, tbmp.GetPixels(), Width, Height,
+				4, tbmp.GetPitch(), rotate, CF_BGRA, inf);
+		}
+		return retv;
+	}
+
+	// When compositing a multipatch texture with multipatch parts,
 	// drawing must be restricted to the actual area which is covered by this texture.
 	FClipRect saved_cr = bmp->GetClipRect();
 	bmp->IntersectClipRect(x, y, Width, Height);
@@ -567,11 +584,9 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 	for(int i = 0; i < NumParts; i++)
 	{
 		int ret = -1;
-		
-		if (Parts[i].Texture->bHasCanvas) continue;	// cannot use camera textures as patch.
+		FCopyInfo info;
 
-		// rotated multipatch parts cannot be composited directly
-		bool rotatedmulti = Parts[i].Rotate != 0 && Parts[i].Texture->bMultiPatch;
+		if (Parts[i].Texture->bHasCanvas) continue;	// cannot use camera textures as patch.
 
 		memset (&info, 0, sizeof(info));
 		info.alpha = Parts[i].Alpha;
@@ -601,32 +616,13 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			}
 		}
 
-		if (!Parts[i].Texture->bComplex && !rotatedmulti)
-		{
-			if (Parts[i].Translation != NULL)
-			{
-				// Using a translation forces downconversion to the base palette
-				ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation, &info);
-			}
-			else
-			{
-				ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
-			}
+		if (Parts[i].Translation != NULL)
+		{ // Using a translation forces downconversion to the base palette
+			ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation, &info);
 		}
 		else
 		{
-			// If the patch is a texture with some kind of processing involved
-			// and being drawn with additional processing
-			// the copying must be done in 2 steps: First create a complete image of the patch
-			// including all processing and then copy from that intermediate image to the destination
-			FBitmap bmp1;
-			if (bmp1.Create(Parts[i].Texture->GetWidth(), Parts[i].Texture->GetHeight()))
-			{
-				bmp1.Zero();
-				Parts[i].Texture->CopyTrueColorPixels(&bmp1, 0, 0);
-				bmp->CopyPixelDataRGB(x+Parts[i].OriginX, y+Parts[i].OriginY, bmp1.GetPixels(), 
-					bmp1.GetWidth(), bmp1.GetHeight(), 4, bmp1.GetPitch(), Parts[i].Rotate, CF_BGRA, &info);
-			}
+			ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, &info);
 		}
 
 		if (ret > retv) retv = ret;

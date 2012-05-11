@@ -1180,7 +1180,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 			}
 			else if (sc.Compare("style"))
 			{
-				static const char *styles[] = {"copy", "translucent", "add", "subtract", "reversesubtract", "modulate", "copyalpha", NULL };
+				static const char *styles[] = {"copy", "translucent", "add", "subtract", "reversesubtract", "modulate", "copyalpha", "copynewalpha", NULL };
 				sc.MustGetString();
 				part.op = sc.MustMatchString(styles);
 				bComplex |= (part.op != OP_COPY);

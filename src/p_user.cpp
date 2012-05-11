@@ -2446,15 +2446,6 @@ void P_PlayerThink (player_t *player)
 			P_PoisonDamage (player, player->poisoner, 1, true);
 		}
 
-		// [BC] Apply regeneration.
-		if (( level.time & 31 ) == 0 && ( player->cheats & CF_REGENERATION ) && ( player->health ))
-		{
-			if ( P_GiveBody( player->mo, 5 ))
-			{
-				S_Sound(player->mo, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
-			}
-		}
-
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
@@ -2701,6 +2692,10 @@ void player_t::Serialize (FArchive &arc)
 	else
 	{
 		cheats &= ~(1 << 15);	// make sure old CF_TIMEFREEZE bit is cleared
+	}
+	if (SaveVersion < 3640)
+	{
+		cheats &= ~(1 << 17);	// make sure old CF_REGENERATION bit is cleared
 	}
 
 	if (isbot)

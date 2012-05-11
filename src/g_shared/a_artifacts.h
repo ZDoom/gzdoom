@@ -214,8 +214,7 @@ class APowerRegeneration : public APowerup
 {
 	DECLARE_CLASS( APowerRegeneration, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	void DoEffect();
 };
 
 class APowerHighJump : public APowerup

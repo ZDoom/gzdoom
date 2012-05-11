@@ -193,7 +193,6 @@ typedef enum
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_WEAPONREADY		= 1 << 14,		// [RH] Weapon is in the ready state and can fire its primary attack
 	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
-	CF_REGENERATION		= 1 << 17,		// Player owns a regeneration artifact
 	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
 	CF_REFLECTION		= 1 << 19,
 	CF_PROSPERITY		= 1 << 20,

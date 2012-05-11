@@ -319,6 +319,7 @@ enum ECopyOp
 	OP_MODULATE,
 	OP_COPYALPHA,
 	OP_COPYNEWALPHA,
+	OP_OVERLAY,
 	OP_OVERWRITE
 };
 
@@ -356,6 +357,13 @@ struct bCopyAlpha
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+	static __forceinline bool ProcessAlpha0() { return false; }
+};
+
+struct bOverlay
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = MAX(s,d); }
 	static __forceinline bool ProcessAlpha0() { return false; }
 };
 

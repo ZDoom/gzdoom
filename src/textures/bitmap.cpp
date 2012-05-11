@@ -206,6 +206,7 @@ static const CopyFunc copyfuncs[][9]={
 	COPY_FUNCS(bModulate),
 	COPY_FUNCS(bCopyAlpha),
 	COPY_FUNCS(bCopyNewAlpha),
+	COPY_FUNCS(bOverlay),
 	COPY_FUNCS(bOverwrite)
 };
 #undef COPY_FUNCS
@@ -422,6 +423,7 @@ static const CopyPalettedFunc copypalettedfuncs[]=
 	iCopyPaletted<cBGRA, bModulate>,
 	iCopyPaletted<cBGRA, bCopyAlpha>,
 	iCopyPaletted<cBGRA, bCopyNewAlpha>,
+	iCopyPaletted<cBGRA, bOverlay>,
 	iCopyPaletted<cBGRA, bOverwrite>
 };
 

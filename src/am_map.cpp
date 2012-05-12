@@ -337,8 +337,6 @@ static mline_t square_guy[] = {
 
 #undef R
 
-
-
 EXTERN_CVAR (Bool, sv_cheats)
 CUSTOM_CVAR (Int, am_cheat, 0, 0)
 {
@@ -352,15 +350,28 @@ CUSTOM_CVAR (Int, am_cheat, 0, 0)
 static int 	grid = 0;
 
 bool		automapactive = false;
+bool		minimapactive = false;
+bool		stickyminimap = false;
 
 // location of window on screen
 static int	f_x;
 static int	f_y;
+static int	f_x_mini;
+static int	f_y_mini;
 
 // size of window on screen
 static int	f_w;
 static int	f_h;
+static int	f_w_mini;
+static int	f_h_mini;
 static int	f_p;				// [RH] # of bytes from start of a line to start of next
+
+static float	f_x_mini_input;
+static float	f_y_mini_input;
+static float	f_w_mini_input;
+static float	f_h_mini_input;
+static float	hudwidth_mini_input;
+static float	hudheight_mini_input;
 
 static int	amclock;
 
@@ -1079,6 +1090,7 @@ void AM_LevelInit ()
 void AM_Stop ()
 {
 	automapactive = false;
+	minimapactive = false;
 	stopped = true;
 	BorderNeedRefresh = screen->GetPageCount ();
 	viewactive = true;
@@ -1148,7 +1160,7 @@ void AM_NewResolution()
 	f_h = ST_Y;
 	AM_activateNewScale();
 }
-
+\
 
 //=============================================================================
 //
@@ -1159,6 +1171,17 @@ void AM_NewResolution()
 CCMD (togglemap)
 {
 	gameaction = ga_togglemap;
+}
+
+CCMD (enableminimap)
+{
+	if (argv.argc() >= 4)
+	{
+		AM_PositionMap ((float)atof(argv[1]), (float)atof(argv[2]), (float)atof(argv[3]), (float)atof(argv[4]), 320.0, 200.0, 0);
+		minimapactive = true;
+	}
+	else
+		Printf ("enableminimap [x origin] [y origin] [width] [height] : toggle the custom mini-map on and off\n");
 }
 
 //=============================================================================
@@ -1180,12 +1203,30 @@ void AM_ToggleMap ()
 	if (!automapactive)
 	{
 		AM_Start ();
-		viewactive = (am_overlay != 0.f);
+		viewactive = (am_overlay != 0.f) || minimapactive || stickyminimap;
 	}
 	else
 	{
-		if (am_overlay==1 && viewactive)
+		if (am_overlay==1 && viewactive && !minimapactive)
 		{
+			viewactive = false;
+			SB_state = screen->GetPageCount ();
+		}
+		else if (am_overlay==1 && !viewactive && f_w_mini && f_h_mini)
+		{
+			viewactive = true;
+			minimapactive = true;
+			SB_state = screen->GetPageCount ();
+		}
+		else if (!minimapactive && f_w_mini && f_h_mini && !viewactive)
+		{
+			viewactive = true;
+			minimapactive = true;
+			SB_state = screen->GetPageCount ();
+		}
+		else if (stickyminimap)
+		{
+			minimapactive = false;
 			viewactive = false;
 			SB_state = screen->GetPageCount ();
 		}
@@ -1194,6 +1235,174 @@ void AM_ToggleMap ()
 			AM_Stop ();
 		}
 	}
+}
+
+void AM_RefreshMiniMap()
+{
+	AM_PositionMap (f_x_mini_input, f_y_mini_input, f_w_mini_input, f_h_mini_input, hudwidth_mini_input, hudheight_mini_input, stickyminimap);
+}
+
+void AM_PositionMap (float x, float y, float Width, float Height, float hudwidth, float hudheight, int sticky)
+{
+	int bottom = ST_Y;
+	float HUDWidth, HUDHeight;
+	float Left, Top;
+	float drawx, drawy;
+	bool CenterX;
+
+	int screen_width = screen->GetWidth ();
+	int screen_height = ST_Y;
+
+	f_x_mini_input = x;
+	f_y_mini_input = y;
+	f_w_mini_input = Width;
+	f_h_mini_input = Height;
+	hudwidth_mini_input = hudwidth;
+	hudheight_mini_input = hudheight;
+
+	if (hudwidth == 0 || hudheight == 0)
+	{
+		// for y range [-1.0, 0.0]: Positions top edge of box
+		// for y range [0.0, 1.0]: Positions center of box
+		// for x range [-1.0, 0.0]: Positions left edge of box
+		// for x range [0.0, 1.0]: Positions center of box
+		HUDWidth = HUDHeight = 0;
+		if (fabs (x) > 2.f)
+		{
+			CenterX = true;
+			Left = 0.5f;
+		}
+		else
+		{
+			Left = x < -1.f ? x + 1.f : x > 1.f ? x - 1.f : x;
+			if (fabs(x) > 1.f)
+			{
+				CenterX = true;
+			}
+			else
+			{
+				CenterX = false;
+			}
+		}
+	}
+	else
+	{ // HUD size is specified, so coordinates are in pixels, but you can add
+	  // some fractions to affect positioning:
+	  // For y: .1 = positions top edge of box
+	  //		.2 = positions bottom edge of box
+	  // For x: .1 = positions left edge of box
+	  //        .2 = positions right edge of box
+		Top = y;
+		HUDWidth = hudwidth;
+		HUDHeight = hudheight;
+		
+		float intpart;
+		int fracpart = (int)(fabsf (modff (x, &intpart)) * 10.f + 0.5f);
+		if (fracpart & 4)
+		{
+			CenterX = true;
+		}
+		else
+		{
+			CenterX = false;
+		}
+		if (x > 0)
+		{
+			Left = intpart + (float)(fracpart & 3) / 10.f;
+		}
+		else
+		{
+			Left = intpart - (float)(fracpart & 3) / 10.f;
+		}
+	}
+	Top = y;
+
+	if (HUDWidth == 0)
+	{
+		if (Left > 0.f)
+		{ // Position center
+			drawx = (float)(screen_width - Width) * Left;
+		}
+		else
+		{ // Position edge
+			drawx = (float)screen_width * -Left;
+		}
+		if (Top > 0.f)
+		{ // Position center
+			drawy = (float)(bottom - Height) * Top;
+		}
+		else
+		{ // Position edge
+			drawy = (float)bottom * -Top;
+		}
+	}
+	else
+	{
+		float intpart;
+		int fracpart;
+
+		fracpart = (int)(fabsf (modff (Left, &intpart)) * 10.f + 0.5f);
+		drawx = intpart;
+		switch (fracpart & 3)
+		{
+		case 0: // Position center
+			drawx -= Width / 2;
+			break;
+
+		case 2: // Position right
+			drawx -= Width;
+			break;
+		}
+
+		fracpart = (int)(fabsf (modff (Top, &intpart)) * 10.f + 0.5f);
+		drawy = intpart;
+		switch (fracpart & 3)
+		{
+		case 0: // Position center
+			drawy -= Height / 2;
+			break;
+
+		case 2: // Position bottom
+			drawy -= Height;
+			break;
+		}
+	}
+
+	if (CenterX)
+	{
+		drawx += Width / 2;
+	}
+
+	if (HUDHeight < 0)
+	{
+		// A negative height means the HUD size covers the status bar
+		hudheight = -HUDHeight;
+	}
+	else
+	{
+		// A positive height means the HUD size does not cover the status bar
+		hudheight = (float) Scale ((SDWORD)HUDHeight, screen_height, bottom);
+	}
+
+	drawx = CenterX ? x - Width / 2 : drawx;
+
+	if (hudheight && hudwidth)
+	{
+		drawx = viewwidth * (drawx / hudwidth);
+		Width = Width * (viewwidth / hudwidth);
+		drawy = viewheight * (drawy / hudheight);
+		Height = Height * (viewheight / hudheight);
+	}
+
+	f_x = f_x_mini = (int)drawx;
+	f_y = f_y_mini = (int)drawy;
+	f_w = f_w_mini = (int)Width;
+	f_h = f_h_mini = (int)Height;
+
+	stickyminimap = (sticky > 0) ? true : false;
+
+	automapactive = true;
+	minimapactive = true;
 }
 
 //=============================================================================
@@ -1354,9 +1563,9 @@ void AM_Ticker ()
 
 void AM_clearFB (const AMColor &color)
 {
-	if (!mapback.isValid() || !am_drawmapback)
+	if (!mapback.isValid() || !am_drawmapback || minimapactive)
 	{
-		screen->Clear (0, 0, f_w, f_h, color.Index, color.RGB);
+		screen->Clear (f_x, f_y, f_x + f_w, f_y + f_h, color.Index, color.RGB);
 	}
 	else
 	{
@@ -2538,12 +2747,15 @@ void AM_Drawer ()
 	if (!automapactive)
 		return;
 
+	if (minimapactive && (SB_state != 0 || BorderNeedRefresh))
+		AM_RefreshMiniMap();
+
 	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory(RUNTIME_CLASS(APowerScanner), true) != NULL;
 
-	AM_initColors (viewactive);
+	AM_initColors (viewactive && !minimapactive);
 
-	if (!viewactive)
+	if (!viewactive && !minimapactive)
 	{
 		// [RH] Set f_? here now to handle automap overlaying
 		// and view size adjustments.
@@ -2552,6 +2764,15 @@ void AM_Drawer ()
 		f_h = ST_Y;
 		f_p = screen->GetPitch ();
 
+		AM_clearFB(Background);
+	}
+	else if (minimapactive)
+	{
+		f_x = viewwindowx + f_x_mini;
+		f_y = viewwindowy + f_y_mini;
+		f_w = (f_x_mini + f_w_mini > viewwidth) ? viewwidth - f_x_mini : f_w_mini;
+		f_h = (f_y_mini + f_h_mini > viewheight) ? viewheight - f_y_mini : f_h_mini;
+		f_p = screen->GetPitch ();
 		AM_clearFB(Background);
 	}
 	else 

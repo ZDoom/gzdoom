@@ -73,6 +73,7 @@
 #include "po_man.h"
 #include "actorptrselect.h"
 #include "farchive.h"
+#include "am_map.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -3431,6 +3432,7 @@ enum EACSFunctions
 	ACSF_ACS_NamedLockedExecuteDoor,
 	ACSF_ACS_NamedExecuteWithResult,
 	ACSF_ACS_NamedExecuteAlways,
+	ACSF_DrawMap,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -3942,7 +3944,17 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 					scriptnum, arg1, arg2, arg3, arg4);
 			}
 			break;
+		case ACSF_DrawMap:
+			{
+				float arg0 = argCount > 0 ? FIXED2FLOAT(args[0]) : 0;
+				float arg1 = argCount > 1 ? FIXED2FLOAT(args[1]) : 0;
+				float arg2 = argCount > 2 ? FIXED2FLOAT(args[2]) : viewwidth;
+				float arg3 = argCount > 3 ? FIXED2FLOAT(args[3]) : viewheight;
+				int arg4 = argCount > 4 ? args[4] : 0;
 
+				AM_PositionMap (arg0, arg1, arg2, arg3, (float)hudwidth, (float)hudheight, arg4);
+			}
+			break;
 		default:
 			break;
 	}

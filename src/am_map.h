@@ -44,6 +44,8 @@ void AM_Stop (void);
 
 void AM_NewResolution ();
 void AM_ToggleMap ();
+void AM_RefreshMiniMap ();
+void AM_PositionMap (float x, float y, float Width, float Height, float hudwidth, float hudheight, int sticky);
 void AM_LevelInit ();
 void AM_SerializeMarkers(FArchive &arc);
 

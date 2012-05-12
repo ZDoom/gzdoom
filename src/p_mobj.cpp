@@ -5874,7 +5874,7 @@ int StoreDropItemChain(FDropItem *chain)
 	return DropItemList.Push (chain) + 1;
 }
 
-void PrintMiscActorInfo(AActor * query)
+void PrintMiscActorInfo(AActor *query)
 {
 	if (query)
 	{
@@ -5891,7 +5891,7 @@ void PrintMiscActorInfo(AActor * query)
 		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
 
-		Printf("%s has the following flags:\n\tflags: %x", query->GetTag(), query->flags);
+		Printf("%s @ %p has the following flags:\n\tflags: %x", query->GetTag(), query, query->flags);
 		for (flagi = 0; flagi < 31; flagi++)
 			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
 		Printf("\n\tflags2: %x", query->flags2);

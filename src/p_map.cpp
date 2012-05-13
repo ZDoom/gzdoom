@@ -3478,7 +3478,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 	// if the puff uses a non-standard damage type this will override default and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
-	if ((damageType == NAME_None || damageType == NAME_Melee) && puffDefaults->DamageType != NAME_None)
+	if ((damageType == NAME_None || damageType == NAME_Melee || damageType == NAME_Hitscan) && puffDefaults->DamageType != NAME_None)
 	{
 		damageType = puffDefaults->DamageType;
 	}

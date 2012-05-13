@@ -2162,9 +2162,9 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
 			delta = (mo->target->z + (mo->height>>1)) - mo->z;
 			if (delta < 0 && dist < -(delta*3))
-				mo->z -= mo->FloatSpeed, mo->velz = 0;
+				mo->z -= mo->FloatSpeed;
 			else if (delta > 0 && dist < (delta*3))
-				mo->z += mo->FloatSpeed, mo->velz = 0;
+				mo->z += mo->FloatSpeed;
 		}
 	}
 	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->z > mo->floorz))

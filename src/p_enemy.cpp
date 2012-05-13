@@ -431,7 +431,7 @@ bool P_Move (AActor *actor)
 
 	// [RH] Walking actors that are not on the ground cannot walk. We don't
 	// want to yank them to the ground here as Doom did, since that makes
-	// it difficult ot thrust them vertically in a reasonable manner.
+	// it difficult to thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
 		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))

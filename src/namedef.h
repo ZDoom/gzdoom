@@ -242,6 +242,7 @@ xx(Massacre)	// For death by a cheater!
 //(Melee)		already defined above, so don't define it again
 xx(InstantDeath)	// Strife "instant death"
 xx(PoisonCloud)	// makes monsters howl.
+xx(Hitscan)		// for normal guns and the like
 
 // Special death name for getting killed excessively. Could be used as
 // a damage type if you wanted to force an extreme death.

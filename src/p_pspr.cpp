@@ -943,7 +943,7 @@ void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, pufftype);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Light0)

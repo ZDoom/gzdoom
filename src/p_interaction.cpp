@@ -284,7 +284,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 				{
 					message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
 				}
-				if (message == NULL && attacker->player->ReadyWeapon != NULL)
+				if (message == NULL && (mod == NAME_Melee || mod == NAME_Hitscan) && attacker->player->ReadyWeapon != NULL)
 				{
 					message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
 				}
@@ -298,6 +298,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 					if (messagename != NULL)
 						message = GStrings(messagename);
 				}
+				if (message == NULL)
+				{
+					message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+				}
 			}
 		}
 	}
@@ -305,7 +309,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 
 	if (message != NULL && message[0] == '$') 
 	{
-		message=GStrings[message+1];
+		message = GStrings[message+1];
 	}
 
 	if (message == NULL)

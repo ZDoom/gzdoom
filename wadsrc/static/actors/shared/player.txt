@@ -29,6 +29,7 @@ Actor PlayerPawn : Actor native
 	Player.DamageScreenColor "ff 00 00"
 	Player.MugShotMaxHealth 0
 	Player.FlechetteType "ArtiPoisonBag3"
+	Obituary "$OB_MPDEFAULT"
 }
 
 Actor PlayerChunk : PlayerPawn native

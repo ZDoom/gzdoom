@@ -779,6 +779,7 @@ OB_MPSIGIL = "%o bowed down to the sheer power of %k's Sigil.";
 OB_MONTELEFRAG = "%o was telefragged.";
 
 OB_DEFAULT = "%o died.";
+OB_MPDEFAULT = "%o was killed by %k.";
 OB_FRIENDLY1 = "%k mows down a teammate.";
 OB_FRIENDLY2 = "%k checks %p glasses.";
 OB_FRIENDLY3 = "%k gets a frag for the other team.";

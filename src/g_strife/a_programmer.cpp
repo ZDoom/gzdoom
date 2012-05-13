@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 	{
 		spot->threshold = 25;
 		spot->target = self;
-		spot->health = -2;
+		spot->FriendPlayer = 0;
 		spot->tracer = self->target;
 	}
 }

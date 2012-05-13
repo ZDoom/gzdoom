@@ -5295,6 +5295,18 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 	th->angle = R_PointToAngle2 (0, 0, th->velx, th->vely);
 
+	if (th->flags4 & MF4_SPECTRAL)
+	{
+		if (owner->player != NULL)
+		{
+			th->FriendPlayer = int(owner->player - players) + 1;
+		}
+		else
+		{
+			th->FriendPlayer = 0;
+		}
+	}
+
 	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
 }
 
@@ -5319,6 +5331,19 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 		dist = 1;
 
 	th->velz = (dest->z - source->z) / dist;
+
+	if (th->flags4 & MF4_SPECTRAL)
+	{
+		if (owner->player != NULL)
+		{
+			th->FriendPlayer = int(owner->player - players) + 1;
+		}
+		else
+		{
+			th->FriendPlayer = 0;
+		}
+	}
+
 	P_CheckMissileSpawn(th);
 	return th;
 }
@@ -5401,6 +5426,19 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	mo->velx = FixedMul (speed, finecosine[angle]);
 	mo->vely = FixedMul (speed, finesine[angle]);
 	mo->velz = velz;
+
+	if (mo->flags4 & MF4_SPECTRAL)
+	{
+		if (owner->player != NULL)
+		{
+			mo->FriendPlayer = int(owner->player - players) + 1;
+		}
+		else
+		{
+			mo->FriendPlayer = 0;
+		}
+	}
+
 	return (!checkspawn || P_CheckMissileSpawn(mo)) ? mo : NULL;
 }
 
@@ -5512,8 +5550,16 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	MissileActor->velz = (fixed_t)vec.Z;
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
-		MissileActor->health = -1;
-
+	{
+		if (source->player != NULL)
+		{
+			MissileActor->FriendPlayer = int(source->player - players) + 1;
+		}
+		else
+		{
+			MissileActor->FriendPlayer = 0;
+		}
+	}
 	if (P_CheckMissileSpawn (MissileActor))
 	{
 		return MissileActor;

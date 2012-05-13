@@ -196,11 +196,6 @@ bool AArtiPoisonBagShooter::Use (bool pickup)
 			{
 				mo->tracer = Owner->target;
 			}
-			// set the health value so that the missile works properly
-			if (mo->flags4 & MF4_SPECTRAL)
-			{
-				mo->health = -2;
-			}
 			return true;
 		}
 	}

@@ -530,15 +530,15 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
 	{
 		if (source->flags & MF_MISSILE && source->flags4 & MF4_SPECTRAL)
 		{
-			other->health = source->health;
+			other->FriendPlayer = source->FriendPlayer;
 		}
 		else if (target->player != NULL)
 		{
-			other->health = -1;
+			other->FriendPlayer = int(target->player - players) + 1;
 		}
 		else
 		{
-			other->health = -2;
+			other->FriendPlayer = 0;
 		}
 	}
 
@@ -925,7 +925,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	}
 	if (spot != NULL)
 	{
-		spot->health = -1;
+		spot->FriendPlayer = int(player-players)+1;
 		spot->target = self;
 	}
 }

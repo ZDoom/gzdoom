@@ -981,12 +981,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{
 				if (player != NULL)
 				{
-					if (!deathmatch && inflictor->health == -1)
+					if (!deathmatch && inflictor->FriendPlayer > 0)
 						return;
 				}
 				else if (target->flags4 & MF4_SPECTRAL)
 				{
-					if (inflictor->health == -2 && !target->IsHostile(inflictor))
+					if (inflictor->FriendPlayer == 0 && !target->IsHostile(inflictor))
 						return;
 				}
 			}

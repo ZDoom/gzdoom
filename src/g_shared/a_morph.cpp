@@ -580,7 +580,7 @@ void AMorphedMonster::Destroy ()
 	Super::Destroy ();
 }
 
-void AMorphedMonster::Die (AActor *source, AActor *inflictor)
+void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
 	// Dead things don't unmorph
 //	flags3 |= MF3_STAYMORPHED;
@@ -588,11 +588,11 @@ void AMorphedMonster::Die (AActor *source, AActor *inflictor)
 	// But they can now, so that line above has been
 	// moved into P_MorphedDeath() and is now set by
 	// that function if and only if it is needed.
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{
 		UnmorphedMe->health = health;
-		UnmorphedMe->Die (source, inflictor);
+		UnmorphedMe->Die (source, inflictor, dmgflags);
 	}
 }
 

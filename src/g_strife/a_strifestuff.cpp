@@ -524,14 +524,14 @@ class APowerCoupling : public AActor
 {
 	DECLARE_CLASS (APowerCoupling, AActor)
 public:
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
 IMPLEMENT_CLASS (APowerCoupling)
 
-void APowerCoupling::Die (AActor *source, AActor *inflictor)
+void APowerCoupling::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	int i;
 

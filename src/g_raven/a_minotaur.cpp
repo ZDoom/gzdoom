@@ -83,9 +83,9 @@ void AMinotaurFriend::Serialize (FArchive &arc)
 	arc << StartTime;
 }
 
-void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
+void AMinotaurFriend::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	if (tracer && tracer->health > 0 && tracer->player)
 	{

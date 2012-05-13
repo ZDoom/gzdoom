@@ -531,6 +531,7 @@ enum EDmgFlags
 	DMG_THRUSTLESS = 4,
 	DMG_FORCED = 8,
 	DMG_NO_FACTOR = 16,
+	DMG_PLAYERATTACK = 32,
 };
 
 

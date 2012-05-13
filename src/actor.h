@@ -599,7 +599,7 @@ public:
 	virtual void Tick ();
 
 	// Called when actor dies
-	virtual void Die (AActor *source, AActor *inflictor);
+	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0);
 
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately

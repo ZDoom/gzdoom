@@ -1205,15 +1205,15 @@ void APlayerPawn::ActivateMorphWeapon ()
 //
 //===========================================================================
 
-void APlayerPawn::Die (AActor *source, AActor *inflictor)
+void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	if (player != NULL && player->mo == this) player->bonuscount = 0;
 
 	if (player != NULL && player->mo != this)
 	{ // Make the real player die, too
-		player->mo->Die (source, inflictor);
+		player->mo->Die (source, inflictor, dmgflags);
 	}
 	else
 	{

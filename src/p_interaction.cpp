@@ -176,7 +176,7 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 // [RH]
 // ClientObituary: Show a message when a player dies
 //
-void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
+void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgflags)
 {
 	FName mod;
 	const char *message;
@@ -284,7 +284,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 				{
 					message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
 				}
-				if (message == NULL && (mod == NAME_Melee || mod == NAME_Hitscan) && attacker->player->ReadyWeapon != NULL)
+				if (message == NULL && (dmgflags & DMG_PLAYERATTACK) && attacker->player->ReadyWeapon != NULL)
 				{
 					message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
 				}
@@ -328,7 +328,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 //
 EXTERN_CVAR (Int, fraglimit)
 
-void AActor::Die (AActor *source, AActor *inflictor)
+void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
 	// Handle possible unmorph on death
 	bool wasgibbed = (health < GibHealth());
@@ -348,7 +348,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)
 				}
 			}
-			realthis->Die(source, inflictor);
+			realthis->Die(source, inflictor, dmgflags);
 		}
 		return;
 	}
@@ -592,7 +592,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	if (player)
 	{
 		// [RH] Death messages
-		ClientObituary (this, inflictor, source);
+		ClientObituary (this, inflictor, source, dmgflags);
 
 		// Death script execution, care of Skull Tag
 		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this, true);
@@ -1290,7 +1290,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				source = source->tracer;
 			}
 		}
-		target->Die (source, inflictor);
+		target->Die (source, inflictor, flags);
 		return;
 	}
 

@@ -170,7 +170,7 @@ class AMorphedMonster : public AActor
 public:
 	void Tick ();
 	void Serialize (FArchive &arc);
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void Destroy ();
 
 	TObjPtr<AActor> UnmorphedMe;

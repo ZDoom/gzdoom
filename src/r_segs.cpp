@@ -213,6 +213,25 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	spryscale += rw_scalestep;
 }
 
+// Clip a midtexture to the floor and ceiling of the sector in front of it.
+void ClipMidtex(int x1, int x2)
+{
+	short most[MAXWIDTH];
+
+	WallMost(most, curline->frontsector->ceilingplane);
+	for (int i = x1; i <= x2; ++i)
+	{
+		if (wallupper[i] < most[i])
+			wallupper[i] = most[i];
+	}
+	WallMost(most, curline->frontsector->floorplane);
+	for (int i = x1; i <= x2; ++i)
+	{
+		if (walllower[i] > most[i])
+			walllower[i] = most[i];
+	}
+}
+
 void R_RenderFakeWallRange(drawseg_t *ds, int x1, int x2);
 
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
@@ -402,6 +421,18 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			if (walllower[i] > mfloorclip[i])
 				walllower[i] = mfloorclip[i];
 		}
+
+		if (CurrentSkybox)
+		{ // Midtex clipping doesn't work properly with skyboxes, since you're normally below the floor
+		  // or above the ceiling, so the appropriate end won't be clipped automatically when adding
+		  // this drawseg.
+			if ((curline->linedef->flags & ML_CLIP_MIDTEX) ||
+				(curline->sidedef->Flags & WALLF_CLIP_MIDTEX))
+			{
+				ClipMidtex(x1, x2);
+			}
+		}
+
 		mfloorclip = walllower;
 		mceilingclip = wallupper;
 
@@ -453,6 +484,17 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		WallSZ2 = ds->sz2;
 		WallSX1 = ds->sx1;
 		WallSX2 = ds->sx2;
+
+		if (CurrentSkybox)
+		{ // Midtex clipping doesn't work properly with skyboxes, since you're normally below the floor
+		  // or above the ceiling, so the appropriate end won't be clipped automatically when adding
+		  // this drawseg.
+			if ((curline->linedef->flags & ML_CLIP_MIDTEX) ||
+				(curline->sidedef->Flags & WALLF_CLIP_MIDTEX))
+			{
+				ClipMidtex(x1, x2);
+			}
+		}
 
 		if (fake3D & FAKE3D_CLIPTOP)
 		{

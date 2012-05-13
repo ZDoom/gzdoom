@@ -879,6 +879,12 @@ void P_AutoUseStrifeHealth (player_t *player)
 ==================
 */
 
+static inline bool MustForcePain(AActor *target, AActor *inflictor)
+{
+	return (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
+		(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS));
+}
+
 
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags)
 {
@@ -998,8 +1004,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			source->Inventory->ModifyDamage(olddam, mod, damage, false);
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN
-				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
-					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				if (MustForcePain(target, inflictor))
 				{
 					goto dopain;
 				}
@@ -1013,8 +1018,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN
-				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
-					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				if (MustForcePain(target, inflictor))
 				{
 					goto dopain;
 				}
@@ -1031,8 +1035,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			}
 			if (damage <= 0)
 			{ // Still allow FORCEPAIN
-				if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
-					(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+				if (MustForcePain(target, inflictor))
 				{
 					goto dopain;
 				}

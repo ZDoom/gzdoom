@@ -409,6 +409,8 @@ FName EvalExpressionName (DWORD x, AActor *self);
 	fixed_t var = EvalExpressionFix(ParameterIndex+i, self);
 #define ACTION_PARAM_FLOAT(var,i) \
 	float var = float(EvalExpressionF(ParameterIndex+i, self));
+#define ACTION_PARAM_DOUBLE(var,i) \
+	double var = EvalExpressionF(ParameterIndex+i, self);
 #define ACTION_PARAM_CLASS(var,i) \
 	const PClass *var = EvalExpressionClass(ParameterIndex+i, self);
 #define ACTION_PARAM_STATE(var,i) \

@@ -1127,7 +1127,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	else
 	{
 		mindist = maxdist = 0;
-		fov = allaround? 0 : ANGLE_180;
+		fov = allaround ? 0 : ANGLE_180;
 	}
 
 	fixed_t dist = P_AproxDistance (other->x - lookee->x, other->y - lookee->y);
@@ -1832,12 +1832,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 	ACTION_PARAM_FIXED(minseedist, 1);
 	ACTION_PARAM_FIXED(maxseedist, 2);
 	ACTION_PARAM_FIXED(maxheardist, 3);
-	ACTION_PARAM_ANGLE(fov, 4);
+	ACTION_PARAM_DOUBLE(fov_f, 4);
 	ACTION_PARAM_STATE(seestate, 5);
 
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;
-	FLookExParams params = {fov, minseedist, maxseedist, maxheardist, flags, seestate };
+	angle_t fov = (fov_f == 0) ? 180 : angle_t(fov_f * ANGLE_90 / 90);
+	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
 	if (self->flags5 & MF5_INCONVERSATION)
 		return;

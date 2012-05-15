@@ -323,22 +323,17 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gzio.c"
+				RelativePath=".\infback.c"
+				>
+			</File>
+			<File
+				RelativePath=".\inffast.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4996"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4996"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -346,25 +341,8 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4996"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4996"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\infback.c"
-				>
-			</File>
-			<File
-				RelativePath=".\inffast.c"
-				>
 			</File>
 			<File
 				RelativePath=".\inflate.c"

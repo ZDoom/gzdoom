@@ -3,6 +3,8 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 project(zlib C)
 
+set(VERSION "1.2.7")
+
 if(NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build a shared library form of zlib" OFF)
 endif()
@@ -58,6 +60,7 @@ if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 #if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -88,7 +91,7 @@ set(ZLIB_PUBLIC_HDRS
 set(ZLIB_PRIVATE_HDRS
     crc32.h
     deflate.h
-#   gzguts.h
+    gzguts.h
     inffast.h
     inffixed.h
     inflate.h

@@ -1311,7 +1311,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 	
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
-		!G_SkillProperty(SKILLP_NoPain) && !(target->flags & MF_SKULLFLY))
+		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
 	{
 		pc = target->GetClass()->ActorInfo->PainChances;
 		painchance = target->PainChance;

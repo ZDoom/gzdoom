@@ -98,8 +98,8 @@ FRemapTable *TranslationToTable(int translation);
 void R_InitTranslationTables (void);
 void R_DeinitTranslationTables();
 
-// [RH] Actually create a player's translation table.
-void R_BuildPlayerTranslation (int player);
+void R_BuildPlayerTranslation (int player);		// [RH] Actually create a player's translation table.
+void R_GetPlayerTranslation (int color, const struct FPlayerColorSet *colorset, class FPlayerSkin *skin, struct FRemapTable *table);
 
 extern const BYTE IcePalette[16][3];
 

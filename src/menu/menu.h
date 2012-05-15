@@ -346,6 +346,7 @@ class FListMenuItemPlayerDisplay : public FListMenuItem
 	void SetPlayerClass(int classnum, bool force = false);
 	bool UpdatePlayerClass();
 	void UpdateRandomClass();
+	void UpdateTranslation();
 
 public:
 

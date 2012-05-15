@@ -1117,4 +1117,3 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 
 	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL);
 }
-

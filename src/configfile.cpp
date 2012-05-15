@@ -53,6 +53,7 @@ FConfigFile::FConfigFile ()
 	LastSectionPtr = &Sections;
 	CurrentEntry = NULL;
 	PathName = "";
+	OkayToWrite = true;
 }
 
 //====================================================================
@@ -70,6 +71,7 @@ FConfigFile::FConfigFile (const char *pathname,
 	CurrentEntry = NULL;
 	ChangePathName (pathname);
 	LoadConfigFile (nosechandler, userdata);
+	OkayToWrite = true;
 }
 
 //====================================================================
@@ -85,6 +87,7 @@ FConfigFile::FConfigFile (const FConfigFile &other)
 	CurrentEntry = NULL;
 	ChangePathName (other.PathName);
 	*this = other;
+	OkayToWrite = other.OkayToWrite;
 }
 
 //====================================================================
@@ -695,6 +698,12 @@ char *FConfigFile::ReadLine (char *string, int n, void *file) const
 
 bool FConfigFile::WriteConfigFile () const
 {
+	if (!OkayToWrite)
+	{ // Pretend it was written anyway so that the user doesn't get
+	  // any "config not written" notifications.
+		return true;
+	}
+
 	FILE *file = fopen (PathName, "w");
 	FConfigSection *section;
 	FConfigEntry *entry;

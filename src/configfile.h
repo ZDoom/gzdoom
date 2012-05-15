@@ -79,6 +79,8 @@ protected:
 	virtual char *ReadLine (char *string, int n, void *file) const;
 	bool ReadConfig (void *file);
 
+	bool OkayToWrite;
+
 private:
 	struct FConfigEntry
 	{

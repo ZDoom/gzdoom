@@ -1047,7 +1047,11 @@ void cht_Suicide (player_t *plyr)
 	{
 		plyr->mo->flags |= MF_SHOOTABLE;
 		plyr->mo->flags2 &= ~MF2_INVULNERABLE;
+		//Store the players current damage factor, to restore it later.
+		fixed_t plyrdmgfact = plyr->mo->DamageFactor;
+		plyr->mo->DamageFactor = 65536;
 		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, TELEFRAG_DAMAGE, NAME_Suicide);
+		plyr->mo->DamageFactor = plyrdmgfact;
 		if (plyr->mo->health <= 0) plyr->mo->flags &= ~MF_SHOOTABLE;
 	}
 }

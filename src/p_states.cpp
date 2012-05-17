@@ -523,6 +523,7 @@ void FStateDefinitions::MakeStateDefines(const PClass *cls)
 {
 	StateArray.Clear();
 	laststate = NULL;
+	laststatebeforelabel = NULL;
 	lastlabel = -1;
 
 	if (cls != NULL && cls->ActorInfo != NULL && cls->ActorInfo->StateList != NULL)
@@ -744,11 +745,18 @@ bool FStateDefinitions::SetGotoLabel(const char *string)
 	{ // Following a state definition: Modify it.
 		laststate->NextState = (FState*)copystring(string);	
 		laststate->DefineFlags = SDF_LABEL;
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	else if (lastlabel >= 0)
 	{ // Following a label: Retarget it.
 		RetargetStates (lastlabel+1, string);
+		if (laststatebeforelabel != NULL)
+		{
+			laststatebeforelabel->NextState = (FState*)copystring(string);	
+			laststatebeforelabel->DefineFlags = SDF_LABEL;
+			laststatebeforelabel = NULL;
+		}
 		return true;
 	}
 	return false;
@@ -767,11 +775,17 @@ bool FStateDefinitions::SetStop()
 	if (laststate != NULL)
 	{
 		laststate->DefineFlags = SDF_STOP;
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	else if (lastlabel >=0)
 	{
 		RetargetStates (lastlabel+1, NULL);
+		if (laststatebeforelabel != NULL)
+		{
+			laststatebeforelabel->DefineFlags = SDF_STOP;
+			laststatebeforelabel = NULL;
+		}
 		return true;
 	}
 	return false;
@@ -790,6 +804,7 @@ bool FStateDefinitions::SetWait()
 	if (laststate != NULL)
 	{
 		laststate->DefineFlags = SDF_WAIT;
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	return false;
@@ -809,6 +824,7 @@ bool FStateDefinitions::SetLoop()
 	{
 		laststate->DefineFlags = SDF_INDEX;
 		laststate->NextState = (FState*)(lastlabel+1);
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	return false;
@@ -849,6 +865,7 @@ bool FStateDefinitions::AddStates(FState *state, const char *framechars)
 		StateArray.Push(*state);
 	}
 	laststate = &StateArray[StateArray.Size() - 1];
+	laststatebeforelabel = laststate;
 	return !error;
 }
 

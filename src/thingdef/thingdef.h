@@ -65,6 +65,7 @@ class FStateDefinitions
 {
 	TArray<FStateDefine> StateLabels;
 	FState *laststate;
+	FState *laststatebeforelabel;
 	intptr_t lastlabel;
 	TArray<FState> StateArray;
 
@@ -84,6 +85,7 @@ public:
 	FStateDefinitions()
 	{
 		laststate = NULL;
+		laststatebeforelabel = NULL;
 		lastlabel = -1;
 	}
 

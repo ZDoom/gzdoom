@@ -5253,8 +5253,8 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	P_PlaySpawnSound(th, source);
 
 	// record missile's originator
-	if (owner)	th->target = owner;
-	else		th->target = source;
+	if (owner == NULL) owner = source;
+	th->target = owner;
 
 	float speed = (float)(th->Speed);
 
@@ -5420,7 +5420,8 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	mo = Spawn (type, source->x, source->y, z, ALLOW_REPLACE);
 
 	P_PlaySpawnSound(mo, source);
-	mo->target = owner != NULL ? owner : source; // Originator
+	if (owner == NULL) owner = source;
+	mo->target = owner;
 	mo->angle = angle;
 	angle >>= ANGLETOFINESHIFT;
 	mo->velx = FixedMul (speed, finecosine[angle]);

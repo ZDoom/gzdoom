@@ -1008,7 +1008,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 			}
 			else
 			{
-				part.Texture = FTexture::CreateTexture("", lumpnum, TEX_WallPatch);
+				part.Texture = FTexture::CreateTexture("", lumpnum, usetype);
 				TexMan.AddTexture(part.Texture);
 			}
 		}

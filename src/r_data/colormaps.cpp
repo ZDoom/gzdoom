@@ -396,8 +396,12 @@ void R_SetDefaultColormap (const char *name)
 		BYTE unremap[256];
 		BYTE remap[256];
 
+		lump = Wads.CheckNumForName (name, ns_colormaps);
+		if (lump == -1)
+			lump = Wads.CheckNumForName (name, ns_global);
+
 		// [RH] If using BUILD's palette, generate the colormap
-		if (Wads.CheckNumForFullName("palette.dat") >= 0 || Wads.CheckNumForFullName("blood.pal") >= 0)
+		if (lump == -1 || Wads.CheckNumForFullName("palette.dat") >= 0 || Wads.CheckNumForFullName("blood.pal") >= 0)
 		{
 			Printf ("Make colormap\n");
 			FDynamicColormap foo;
@@ -411,9 +415,6 @@ void R_SetDefaultColormap (const char *name)
 		}
 		else
 		{
-			lump = Wads.CheckNumForName (name, ns_colormaps);
-			if (lump == -1)
-				lump = Wads.CheckNumForName (name, ns_global);
 			FWadLump lumpr = Wads.OpenLumpNum (lump);
 
 			// [RH] The colormap may not have been designed for the specific

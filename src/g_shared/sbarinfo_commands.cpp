@@ -1748,13 +1748,19 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 				ratio = ASPECTRATIO_5_4;
 			else
 				sc.ScriptError("Unkown aspect ratio: %s", sc.String);
+
+			// Make this ratio known and map to itself
+			// In the future, should another aspect ratio get added, you'd want
+			// to also make any wider ratio remap to this one if suitable.
+			ratioMap[ratio] = ratio;
+
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(CheckRatio(screen->GetWidth(), screen->GetHeight()) == ratio, block, statusBar);
+			SetTruth(ratioMap[CheckRatio(screen->GetWidth(), screen->GetHeight())] == ratio, block, statusBar);
 		}
 	protected:
 		enum Ratio
@@ -1765,9 +1771,14 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 			ASPECTRATIO_17_10 = 3,
 			ASPECTRATIO_5_4 = 4
 		};
+		// Since the number of aspect ratios may change at any time, we should
+		// track what aspect ratios the statusbar supports and use the widest
+		// or tallest available ratio.
+		static Ratio	ratioMap[5];
 
-		Ratio	ratio;
+		Ratio			ratio;
 };
+CommandAspectRatio::Ratio CommandAspectRatio::ratioMap[5] = {ASPECTRATIO_4_3,ASPECTRATIO_16_9,ASPECTRATIO_16_10,ASPECTRATIO_16_10,ASPECTRATIO_5_4};
 
 ////////////////////////////////////////////////////////////////////////////////
 

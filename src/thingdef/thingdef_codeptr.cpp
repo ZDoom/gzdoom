@@ -4015,7 +4015,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
 			if (spawnblood)
 			{
-				P_SpawnBlood(dx, dy, dz, angle, damage, self);
+				P_SpawnBlood(dx, dy, dz, angle, damage, self->target);
 				P_TraceBleed(damage, self->target, R_PointToAngle2(self->x, self->y, dx, dy), 0);
 			}
 		}

@@ -672,6 +672,7 @@ bool DHUDMessageTypeOnFadeOut::Tick ()
 					CurrLine++;
 					if (CurrLine >= NumLines)
 					{
+						Tics = 0;
 						State = 1;
 					}
 					else

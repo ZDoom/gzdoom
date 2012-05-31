@@ -1461,9 +1461,29 @@ void P_SpawnSpecials (void)
 // This is the main scrolling code
 // killough 3/7/98
 
+// [RH] Compensate for rotated sector textures by rotating the scrolling
+// in the opposite direction.
+static void RotationComp(const sector_t *sec, int which, fixed_t dx, fixed_t dy, fixed_t &tdx, fixed_t &tdy)
+{
+	angle_t an = sec->GetAngle(which);
+	if (an == 0)
+	{
+		tdx = dx;
+		tdy = dy;
+	}
+	else
+	{
+		an = an >> ANGLETOFINESHIFT;
+		fixed_t ca = -finecosine[an];
+		fixed_t sa = -finesine[an];
+		tdx = DMulScale16(dx, ca, -dy, sa);
+		tdy = DMulScale16(dy, ca,  dx, sa);
+	}
+}
+
 void DScroller::Tick ()
 {
-	fixed_t dx = m_dx, dy = m_dy;
+	fixed_t dx = m_dx, dy = m_dy, tdx, tdy;
 
 	if (m_Control != -1)
 	{	// compute scroll amounts based on a sector's height changes
@@ -1507,13 +1527,15 @@ void DScroller::Tick ()
 			break;
 
 		case sc_floor:						// killough 3/7/98: Scroll floor texture
-			sectors[m_Affectee].AddXOffset(sector_t::floor, dx);
-			sectors[m_Affectee].AddYOffset(sector_t::floor, dy);
+			RotationComp(&sectors[m_Affectee], sector_t::floor, dx, dy, tdx, tdy);
+			sectors[m_Affectee].AddXOffset(sector_t::floor, tdx);
+			sectors[m_Affectee].AddYOffset(sector_t::floor, tdy);
 			break;
 
 		case sc_ceiling:					// killough 3/7/98: Scroll ceiling texture
-			sectors[m_Affectee].AddXOffset(sector_t::ceiling, dx);
-			sectors[m_Affectee].AddYOffset(sector_t::ceiling, dy);
+			RotationComp(&sectors[m_Affectee], sector_t::ceiling, dx, dy, tdx, tdy);
+			sectors[m_Affectee].AddXOffset(sector_t::ceiling, tdx);
+			sectors[m_Affectee].AddYOffset(sector_t::ceiling, tdy);
 			break;
 
 		// [RH] Don't actually carry anything here. That happens later.

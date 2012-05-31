@@ -2117,7 +2117,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{
 		fixed_t startvelz = mo->velz;
 
-		if (!mo->waterlevel || mo->flags & MF_CORPSE || (mo->player &&
+		if (mo->waterlevel == 0 || (mo->player &&
 			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
 		{
 			// [RH] Double gravity only if running off a ledge. Coming down from
@@ -2131,18 +2131,40 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				mo->velz -= grav;
 			}
 		}
-		if (mo->waterlevel > 1)
+		if (mo->waterlevel > 1 || (mo->waterlevel == 1 && mo->player == NULL))
 		{
-			fixed_t sinkspeed = mo->flags & MF_CORPSE ? -WATER_SINK_SPEED/3 : -WATER_SINK_SPEED;
+			fixed_t sinkspeed;
 
-			if (mo->velz < sinkspeed)
-			{
-				mo->velz = (startvelz < sinkspeed) ? startvelz : sinkspeed;
+			if ((mo->flags & MF_SPECIAL) && !(mo->flags3 & MF3_ISMONSTER))
+			{ // Pickup items don't sink if placed and drop slowly if dropped
+				sinkspeed = (mo->flags & MF_DROPPED) ? -WATER_SINK_SPEED / 8 : 0;
 			}
 			else
 			{
-				mo->velz = startvelz + ((mo->velz - startvelz) >>
-					(mo->waterlevel == 1 ? WATER_SINK_SMALL_FACTOR : WATER_SINK_FACTOR));
+				sinkspeed = -WATER_SINK_SPEED;
+
+				// If it's not a player, scale sinkspeed by its mass, with
+				// 100 being equivalent to a player.
+				if (mo->player == NULL)
+				{
+					sinkspeed = Scale(sinkspeed, clamp(mo->Mass, 1, 4000), 100);
+				}
+			}
+			if (mo->velz < sinkspeed)
+			{ // Dropping too fast, so slow down toward sinkspeed.
+				mo->velz -= MAX(sinkspeed*2, -FRACUNIT*8);
+				if (mo->velz > sinkspeed)
+				{
+					mo->velz = sinkspeed;
+				}
+			}
+			else if (mo->velz > sinkspeed)
+			{ // Dropping too slow/going up, so trend toward sinkspeed.
+				mo->velz = startvelz + MAX(sinkspeed/3, -FRACUNIT*8);
+				if (mo->velz < sinkspeed)
+				{
+					mo->velz = sinkspeed;
+				}
 			}
 		}
 	}

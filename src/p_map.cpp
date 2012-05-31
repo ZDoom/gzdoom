@@ -1649,9 +1649,27 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj, bool wind
 			if (fzt >= mobj->z + mobj->height && bzt >= mobj->z + mobj->height &&
 				fzb <= mobj->z && bzb <= mobj->z)
 			{
+				// we must also check if some 3D floor in the backsector may be blocking
+				#ifdef _3DFLOORS
+					for(unsigned int i=0;i<line->backsector->e->XFloor.ffloors.Size();i++)
+					{
+						F3DFloor* rover = line->backsector->e->XFloor.ffloors[i];
+
+						if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+						fixed_t ff_bottom = rover->bottom.plane->ZatPoint(mobj->x, mobj->y);
+						fixed_t ff_top = rover->top.plane->ZatPoint(mobj->x, mobj->y);
+
+						if (ff_bottom < mobj->z + mobj->height && ff_top > mobj->z)
+						{
+							goto isblocking;
+						}
+					}
+				#endif
 				return;
 			}
 		}
+isblocking:
 		if (mobj->flags2 & MF2_PUSHWALL)
 		{
 			P_ActivateLine (line, mobj, side, SPAC_Push);

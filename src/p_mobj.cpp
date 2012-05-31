@@ -788,6 +788,74 @@ bool AActor::GiveAmmo (const PClass *type, int amount)
 
 //============================================================================
 //
+// AActor :: ClearInventory
+//
+// Clears the inventory of a single actor.
+//
+//============================================================================
+
+void AActor::ClearInventory()
+{
+	// In case destroying an inventory item causes another to be destroyed
+	// (e.g. Weapons destroy their sisters), keep track of the pointer to
+	// the next inventory item rather than the next inventory item itself.
+	// For example, if a weapon is immediately followed by its sister, the
+	// next weapon we had tracked would be to the sister, so it is now
+	// invalid and we won't be able to find the complete inventory by
+	// following it.
+	//
+	// When we destroy an item, we leave invp alone, since the destruction
+	// process will leave it pointing to the next item we want to check. If
+	// we don't destroy an item, then we move invp to point to its Inventory
+	// pointer.
+	//
+	// It should be safe to assume that an item being destroyed will only
+	// destroy items further down in the chain, because if it was going to
+	// destroy something we already processed, we've already destroyed it,
+	// so it won't have anything to destroy.
+
+	AInventory **invp = &Inventory;
+
+	while (*invp != NULL)
+	{
+		AInventory *inv = *invp;
+		if (!(inv->ItemFlags & IF_UNDROPPABLE))
+		{
+			// For the sake of undroppable weapons, never remove ammo once
+			// it has been acquired; just set its amount to 0.
+			if (inv->IsKindOf(RUNTIME_CLASS(AAmmo)))
+			{
+				AAmmo *ammo = static_cast<AAmmo*>(inv);
+				ammo->Amount = 0;
+				invp = &inv->Inventory;
+			}
+			else
+			{
+				inv->Destroy ();
+			}
+		}
+		else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
+		{
+			AHexenArmor *harmor = static_cast<AHexenArmor *> (inv);
+			harmor->Slots[3] = harmor->Slots[2] = harmor->Slots[1] = harmor->Slots[0] = 0;
+			invp = &inv->Inventory;
+		}
+		else
+		{
+			invp = &inv->Inventory;
+		}
+	}
+	if (player != NULL)
+	{
+		player->ReadyWeapon = NULL;
+		player->PendingWeapon = WP_NOCHANGE;
+		player->psprites[ps_weapon].state = NULL;
+		player->psprites[ps_flash].state = NULL;
+	}
+}
+
+//============================================================================
+//
 // AActor :: CopyFriendliness
 //
 // Makes this actor hate (or like) the same things another actor does.

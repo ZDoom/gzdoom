@@ -658,6 +658,9 @@ public:
 	// Tosses an item out of the inventory.
 	virtual AInventory *DropInventory (AInventory *item);
 
+	// Removes all items from the inventory.
+	void ClearInventory();
+
 	// Returns true if this view is considered "local" for the player.
 	bool CheckLocalView (int playernum) const;
 

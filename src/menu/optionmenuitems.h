@@ -134,7 +134,7 @@ class FOptionMenuItemOptionBase : public FOptionMenuItem
 {
 protected:
 	// action is a CVAR
-	FOptionValues *mValues;
+	FName mValues;	// Entry in OptionValues table
 	FBaseCVar *mGrayCheck;
 	int mCenter;
 public:
@@ -147,15 +147,7 @@ public:
 	FOptionMenuItemOptionBase(const char *label, const char *menu, const char *values, const char *graycheck, int center)
 		: FOptionMenuItem(label, menu)
 	{
-		FOptionValues **opt = OptionValues.CheckKey(values);
-		if (opt != NULL) 
-		{
-			mValues = *opt;
-		}
-		else
-		{
-			mValues = NULL;
-		}
+		mValues = values;
 		mGrayCheck = (FBoolCVar*)FindCVar(graycheck, NULL);
 		mCenter = center;
 	}
@@ -165,11 +157,11 @@ public:
 		if (i == OP_VALUES) 
 		{
 			FOptionValues **opt = OptionValues.CheckKey(newtext);
-			if (opt != NULL) 
+			mValues = newtext;
+			if (opt != NULL && *opt != NULL) 
 			{
-				mValues = *opt;
 				int s = GetSelection();
-				if (s >= (int)mValues->mValues.Size()) s = 0;
+				if (s >= (int)(*opt)->mValues.Size()) s = 0;
 				SetSelection(s);	// readjust the CVAR if its value is outside the range now
 				return true;
 			}
@@ -197,13 +189,14 @@ public:
 		int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
 		const char *text;
 		int Selection = GetSelection();
-		if (Selection < 0)
+		FOptionValues **opt = OptionValues.CheckKey(mValues);
+		if (Selection < 0 || opt == NULL || *opt == NULL)
 		{
 			text = "Unknown";
 		}
 		else
 		{
-			text = mValues->mValues[Selection].Text;
+			text = (*opt)->mValues[Selection].Text;
 		}
 		screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
 			text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
@@ -213,17 +206,18 @@ public:
 	//=============================================================================
 	bool MenuEvent (int mkey, bool fromcontroller)
 	{
-		if (mValues->mValues.Size() > 0)
+		FOptionValues **opt = OptionValues.CheckKey(mValues);
+		if (opt != NULL && *opt != NULL && (*opt)->mValues.Size() > 0)
 		{
 			int Selection = GetSelection();
 			if (mkey == MKEY_Left)
 			{
 				if (Selection == -1) Selection = 0;
-				else if (--Selection < 0) Selection = mValues->mValues.Size()-1;
+				else if (--Selection < 0) Selection = (*opt)->mValues.Size()-1;
 			}
 			else if (mkey == MKEY_Right || mkey == MKEY_Enter)
 			{
-				if (++Selection >= (int)mValues->mValues.Size()) Selection = 0;
+				if (++Selection >= (int)(*opt)->mValues.Size()) Selection = 0;
 			}
 			else
 			{
@@ -263,14 +257,15 @@ public:
 	int GetSelection()
 	{
 		int Selection = -1;
-		if (mValues != NULL && mCVar != NULL && mValues->mValues.Size() > 0)
+		FOptionValues **opt = OptionValues.CheckKey(mValues);
+		if (opt != NULL && *opt != NULL && mCVar != NULL && (*opt)->mValues.Size() > 0)
 		{
-			if (mValues->mValues[0].TextValue.IsEmpty())
+			if ((*opt)->mValues[0].TextValue.IsEmpty())
 			{
 				UCVarValue cv = mCVar->GetGenericRep(CVAR_Float);
-				for(unsigned i=0;i<mValues->mValues.Size(); i++)
-				{
-					if (fabs(cv.Float - mValues->mValues[i].Value) < FLT_EPSILON)
+				for(unsigned i = 0; i < (*opt)->mValues.Size(); i++)
+				{ 
+					if (fabs(cv.Float - (*opt)->mValues[i].Value) < FLT_EPSILON)
 					{
 						Selection = i;
 						break;
@@ -280,9 +275,9 @@ public:
 			else
 			{
 				UCVarValue cv = mCVar->GetGenericRep(CVAR_String);
-				for(unsigned i=0;i<mValues->mValues.Size(); i++)
+				for(unsigned i = 0; i < (*opt)->mValues.Size(); i++)
 				{
-					if (mValues->mValues[i].TextValue.CompareNoCase(cv.String) == 0)
+					if ((*opt)->mValues[i].TextValue.CompareNoCase(cv.String) == 0)
 					{
 						Selection = i;
 						break;
@@ -296,18 +291,19 @@ public:
 	void SetSelection(int Selection)
 	{
 		UCVarValue value;
-		if (mValues != NULL && mCVar != NULL && mValues->mValues.Size() > 0)
+		FOptionValues **opt = OptionValues.CheckKey(mValues);
+		if (opt != NULL && *opt != NULL && mCVar != NULL && (*opt)->mValues.Size() > 0)
 		{
-			if (mValues->mValues[0].TextValue.IsEmpty())
+			if ((*opt)->mValues[0].TextValue.IsEmpty())
 			{
-				value.Float = (float)mValues->mValues[Selection].Value;
+				value.Float = (float)(*opt)->mValues[Selection].Value;
 				mCVar->SetGenericRep (value, CVAR_Float);
 			}
 			else
 			{
-				value.String = mValues->mValues[Selection].TextValue.LockBuffer();
+				value.String = (*opt)->mValues[Selection].TextValue.LockBuffer();
 				mCVar->SetGenericRep (value, CVAR_String);
-				mValues->mValues[Selection].TextValue.UnlockBuffer();
+				(*opt)->mValues[Selection].TextValue.UnlockBuffer();
 			}
 		}
 	}

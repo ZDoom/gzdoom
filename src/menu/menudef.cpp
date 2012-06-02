@@ -509,7 +509,7 @@ static void ParseOptionValue(FScanner &sc)
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != NULL && *pOld != NULL) 
 	{
-		sc.ScriptError("Redefinition of option value set '%s'", optname.GetChars());
+		delete *pOld;
 	}
 	OptionValues[optname] = val;
 }
@@ -542,7 +542,7 @@ static void ParseOptionString(FScanner &sc)
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != NULL && *pOld != NULL) 
 	{
-		sc.ScriptError("Redefinition of option value set '%s'", optname.GetChars());
+		delete *pOld;
 	}
 	OptionValues[optname] = val;
 }

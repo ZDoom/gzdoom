@@ -169,12 +169,16 @@ public:
 	int GetSelection()
 	{
 		double f = SELECTED_JOYSTICK->GetAxisMap(mAxis);
-		// Map from joystick axis to menu selection.
-		for(unsigned i=0;i<mValues->mValues.Size(); i++)
+		FOptionValues **opt = OptionValues.CheckKey(mValues);
+		if (opt != NULL && *opt != NULL)
 		{
-			if (fabs(f - mValues->mValues[i].Value) < FLT_EPSILON)
+			// Map from joystick axis to menu selection.
+			for(unsigned i = 0; i < (*opt)->mValues.Size(); i++)
 			{
-				return i;
+				if (fabs(f - (*opt)->mValues[i].Value) < FLT_EPSILON)
+				{
+					return i;
+				}
 			}
 		}
 		return -1;
@@ -182,14 +186,15 @@ public:
 
 	void SetSelection(int selection)
 	{
+		FOptionValues **opt = OptionValues.CheckKey(mValues);
 		// Map from menu selection to joystick axis.
-		if ((unsigned)selection >= mValues->mValues.Size())
+		if (opt == NULL || *opt == NULL || (unsigned)selection >= (*opt)->mValues.Size())
 		{
 			selection = JOYAXIS_None;
 		}
 		else
 		{
-			selection = (int)mValues->mValues[selection].Value;
+			selection = (int)(*opt)->mValues[selection].Value;
 		}
 		SELECTED_JOYSTICK->SetAxisMap(mAxis, (EJoyAxis)selection);
 	}

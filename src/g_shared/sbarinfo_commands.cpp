@@ -561,7 +561,8 @@ class CommandDrawString : public SBarInfoCommand
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
-			sc.MustGetToken(TK_Identifier);
+			if(!sc.CheckToken(TK_StringConst))
+				sc.MustGetToken(TK_Identifier);
 			font = V_GetFont(sc.String);
 			if(font == NULL)
 			{
@@ -891,7 +892,8 @@ class CommandDrawNumber : public CommandDrawString
 			sc.MustGetToken(TK_IntConst);
 			length = sc.Number;
 			sc.MustGetToken(',');
-			sc.MustGetToken(TK_Identifier);
+			if(!sc.CheckToken(TK_StringConst))
+				sc.MustGetToken(TK_Identifier);
 			font = V_GetFont(sc.String);
 			if(font == NULL)
 			{
@@ -1519,33 +1521,40 @@ class CommandDrawSelectedInventory : public SBarInfoCommandFlowControl, private 
 			value = SELECTEDINVENTORY;
 			while(true) //go until we get a font (non-flag)
 			{
-				sc.MustGetToken(TK_Identifier);
-				if(sc.Compare("alternateonempty"))
-					alternateOnEmpty = true;
-				else if(sc.Compare("artiflash"))
-					artiflash = true;
-				else if(sc.Compare("alwaysshowcounter"))
-					alwaysShowCounter = true;
-				else if(sc.Compare("itemflash"))
-					itemflash = true;
-				else if(sc.Compare("center"))
-					offset = CENTER;
-				else if(sc.Compare("centerbottom"))
-					offset = static_cast<Offset> (HMIDDLE|BOTTOM);
-				else if(sc.Compare("drawshadow"))
+				if(!sc.CheckToken(TK_StringConst))
+					sc.MustGetToken(TK_Identifier);
+				bool isFont = sc.TokenType != TK_Identifier;
+				if(sc.TokenType == TK_Identifier)
 				{
-					if(sc.CheckToken('('))
+					if(sc.Compare("alternateonempty"))
+						alternateOnEmpty = true;
+					else if(sc.Compare("artiflash"))
+						artiflash = true;
+					else if(sc.Compare("alwaysshowcounter"))
+						alwaysShowCounter = true;
+					else if(sc.Compare("itemflash"))
+						itemflash = true;
+					else if(sc.Compare("center"))
+						offset = CENTER;
+					else if(sc.Compare("centerbottom"))
+						offset = static_cast<Offset> (HMIDDLE|BOTTOM);
+					else if(sc.Compare("drawshadow"))
 					{
-						sc.MustGetToken(TK_IntConst);
-						shadowX = sc.Number;
-						sc.MustGetToken(',');
-						sc.MustGetToken(TK_IntConst);
-						shadowY = sc.Number;
-						sc.MustGetToken(')');
+						if(sc.CheckToken('('))
+						{
+							sc.MustGetToken(TK_IntConst);
+							shadowX = sc.Number;
+							sc.MustGetToken(',');
+							sc.MustGetToken(TK_IntConst);
+							shadowY = sc.Number;
+							sc.MustGetToken(')');
+						}
+						shadow = true;
 					}
-					shadow = true;
+					else
+						isFont = true;
 				}
-				else
+				if(isFont)
 				{
 					font = V_GetFont(sc.String);
 					if(font == NULL)
@@ -2070,7 +2079,8 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			sc.MustGetToken(TK_IntConst);
 			size = sc.Number;
 			sc.MustGetToken(',');
-			sc.MustGetToken(TK_Identifier);
+			if(!sc.CheckToken(TK_StringConst))
+				sc.MustGetToken(TK_Identifier);
 			font = V_GetFont(sc.String);
 			if(font == NULL)
 			{

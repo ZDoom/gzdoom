@@ -164,13 +164,15 @@ CVAR(Bool, debuganimated, false, 0)
 void FTextureManager::InitAnimated (void)
 {
 	const BITFIELD texflags = TEXMAN_Overridable;
-		// I think better not! This is only for old ANIMATED definition that
+		// I think better not! This is only for old ANIMATED definitions that
 		// don't know about ZDoom's more flexible texture system.
 		// | FTextureManager::TEXMAN_TryAny;
 
-	if (Wads.CheckNumForName ("ANIMATED") != -1)
+	int lumpnum = Wads.CheckNumForName ("ANIMATED");
+	if (lumpnum != -1)
 	{
-		FMemLump animatedlump = Wads.ReadLump ("ANIMATED");
+		FMemLump animatedlump = Wads.ReadLump (lumpnum);
+		int animatedlen = Wads.LumpLength(lumpnum);
 		const char *animdefs = (const char *)animatedlump.GetMem();
 		const char *anim_p;
 		FTextureID pic1, pic2;
@@ -182,6 +184,11 @@ void FTextureManager::InitAnimated (void)
 
 		for (anim_p = animdefs; *anim_p != -1; anim_p += 23)
 		{
+			// make sure the current chunk of data is inside the lump boundaries.
+			if (anim_p + 22 >= animdefs + animatedlen)
+			{
+				I_Error("Tried to read past end of ANIMATED lump.");
+			}
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?

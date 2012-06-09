@@ -532,13 +532,9 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
 		{
 			other->FriendPlayer = source->FriendPlayer;
 		}
-		else if (target->player != NULL)
-		{
-			other->FriendPlayer = int(target->player - players) + 1;
-		}
 		else
 		{
-			other->FriendPlayer = 0;
+			other->SetFriendPlayer(target->player);
 		}
 	}
 
@@ -925,7 +921,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	}
 	if (spot != NULL)
 	{
-		spot->FriendPlayer = int(player-players)+1;
+		spot->SetFriendPlayer(player);
 		spot->target = self;
 	}
 }

@@ -2656,7 +2656,7 @@ int DoSetMaster (AActor *self, AActor *master)
                 self->master = NULL;
                 level.total_monsters -= self->CountsAsKill();
                 self->flags|=MF_FRIENDLY;
-                self->FriendPlayer = int(master->player-players+1);
+                self->SetFriendPlayer(master->player);
 
                 AActor * attacker=master->player->attacker;
                 if (attacker)

@@ -5387,14 +5387,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 	if (th->flags4 & MF4_SPECTRAL)
 	{
-		if (owner->player != NULL)
-		{
-			th->FriendPlayer = int(owner->player - players) + 1;
-		}
-		else
-		{
-			th->FriendPlayer = 0;
-		}
+		th->SetFriendPlayer(owner->player);
 	}
 
 	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
@@ -5424,14 +5417,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 
 	if (th->flags4 & MF4_SPECTRAL)
 	{
-		if (owner->player != NULL)
-		{
-			th->FriendPlayer = int(owner->player - players) + 1;
-		}
-		else
-		{
-			th->FriendPlayer = 0;
-		}
+		th->SetFriendPlayer(owner->player);
 	}
 
 	P_CheckMissileSpawn(th);
@@ -5520,14 +5506,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 
 	if (mo->flags4 & MF4_SPECTRAL)
 	{
-		if (owner->player != NULL)
-		{
-			mo->FriendPlayer = int(owner->player - players) + 1;
-		}
-		else
-		{
-			mo->FriendPlayer = 0;
-		}
+		mo->SetFriendPlayer(owner->player);
 	}
 
 	return (!checkspawn || P_CheckMissileSpawn(mo)) ? mo : NULL;
@@ -5642,14 +5621,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
 	{
-		if (source->player != NULL)
-		{
-			MissileActor->FriendPlayer = int(source->player - players) + 1;
-		}
-		else
-		{
-			MissileActor->FriendPlayer = 0;
-		}
+		MissileActor->SetFriendPlayer(source->player);
 	}
 	if (P_CheckMissileSpawn (MissileActor))
 	{

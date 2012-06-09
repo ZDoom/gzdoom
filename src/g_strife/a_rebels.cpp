@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 		{
 			rebel->Translation = owner->Translation;
 		}
-		rebel->FriendPlayer = owner->player != NULL ? BYTE(owner->player - players + 1) : 0;
+		rebel->SetFriendPlayer(owner->player);
 		// Set the rebel's target to whatever last hurt the player, so long as it's not
 		// one of the player's other rebels.
 		if (owner->target != NULL && !rebel->IsFriend (owner->target))

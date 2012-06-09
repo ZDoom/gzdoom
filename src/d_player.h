@@ -424,6 +424,18 @@ FArchive &operator<< (FArchive &arc, player_t *&p);
 
 void P_CheckPlayerSprites();
 
+inline void AActor::SetFriendPlayer(player_t *player)
+{
+	if (player == NULL)
+	{
+		FriendPlayer = 0;
+	}
+	else
+	{
+		FriendPlayer = int(player - players) + 1;
+	}
+}
+
 
 #define CROUCHSPEED (FRACUNIT/12)
 

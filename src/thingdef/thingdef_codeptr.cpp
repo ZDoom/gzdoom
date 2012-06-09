@@ -963,11 +963,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 					missile->tracer=self->target;
 				}
 				// we must redo the spectral check here because the owner is set after spawning so the FriendPlayer value may be wrong
-				if (missile->flags4&MF4_SPECTRAL)
+				if (missile->flags4 & MF4_SPECTRAL)
 				{
-					if (missile->target != NULL && missile->target->player != NULL)
+					if (missile->target != NULL)
 					{
-						missile->FriendPlayer = int(missile->target->player - players) + 1;
+						missile->SetFriendPlayer(missile->target->player);
 					}
 					else
 					{
@@ -1737,8 +1737,8 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 				else if (originator->player)
 				{
 					// A player always spawns a monster friendly to him
-					mo->flags|=MF_FRIENDLY;
-					mo->FriendPlayer = int(originator->player-players+1);
+					mo->flags |= MF_FRIENDLY;
+					mo->SetFriendPlayer(originator->player);
 
 					AActor * attacker=originator->player->attacker;
 					if (attacker)

@@ -2489,7 +2489,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		if (snd_musicvolume <= 0)
 		{
 			mus_playing.loop = looping;
-			mus_playing.name = "";
+			mus_playing.name = musicname;
 			mus_playing.baseorder = order;
 			LastSong = musicname;
 			return true;

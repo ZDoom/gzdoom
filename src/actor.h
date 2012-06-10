@@ -402,7 +402,7 @@ enum EBounceFlags
 	BOUNCE_Ceilings = 1<<2,		// bounces off of ceilings
 	BOUNCE_Actors = 1<<3,		// bounces off of some actors
 	BOUNCE_AllActors = 1<<4,	// bounces off of all actors (requires BOUNCE_Actors to be set, too)
-	BOUNCE_AutoOff = 1<<5,		// when bouncing off a floor, if the new Z velocity is below 3.0, disable further bouncing
+	BOUNCE_AutoOff = 1<<5,		// when bouncing off a sector plane, if the new Z velocity is below 3.0, disable further bouncing
 	BOUNCE_HereticType = 1<<6,	// goes into Death state when bouncing on floors or ceilings
 
 	BOUNCE_UseSeeSound = 1<<7,	// compatibility fallback. This will only be set by
@@ -414,6 +414,7 @@ enum EBounceFlags
 	// MBF bouncing is a bit different from other modes as Killough coded many special behavioral cases
 	// for them that are not present in ZDoom, so it is necessary to identify it properly.
 	BOUNCE_MBF = 1<<12,			// This in itself is not a valid mode, but replaces MBF's MF_BOUNCE flag.
+	BOUNCE_AutoOffFloorOnly = 1<<13,		// like BOUNCE_AutoOff, but only on floors
 
 	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 

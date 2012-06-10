@@ -1822,7 +1822,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				{
 					goto pushline;
 				}
-	            if (thing->flags6 & MF6_STEPMISSILE)
+				if (thing->flags6 & MF6_STEPMISSILE)
 				{
 					thing->z = tm.floorz;
 					// If moving down, cancel vertical component of the velocity
@@ -2925,7 +2925,7 @@ bool P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop)
 				if (abs(mo->velz) < (fixed_t)(mo->Mass * mo->GetGravity() / 64))
 					mo->velz = 0;
 			}
-			else if (mo->BounceFlags & BOUNCE_AutoOff)
+			else if (mo->BounceFlags & (BOUNCE_AutoOff|BOUNCE_AutoOffFloorOnly))
 			{
 				if (!(mo->flags & MF_NOGRAVITY) && (mo->velz < 3*FRACUNIT))
 					mo->BounceFlags &= ~BOUNCE_TypeMask;

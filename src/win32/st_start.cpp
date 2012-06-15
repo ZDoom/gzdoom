@@ -246,7 +246,7 @@ static const RGBQUAD TextModePalette[16] =
 	{ MD, MD,  0, 0 },		// 3 cyan
 	{  0,  0, MD, 0 },		// 4 red
 	{ MD,  0, MD, 0 },		// 5 magenta
-	{  0, MD, MD, 0 },		// 6 brown
+	{  0, LO, MD, 0 },		// 6 brown
 	{ MD, MD, MD, 0 },		// 7 light gray
 
 	{ LO, LO, LO, 0 },		// 8 dark gray

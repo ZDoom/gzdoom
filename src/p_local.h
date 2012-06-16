@@ -474,7 +474,7 @@ void	P_AimCamera (AActor *t1, fixed_t &x, fixed_t &y, fixed_t &z, sector_t *&sec
 
 // [RH] Means of death
 void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
-						FName damageType, bool hurtSelf, bool dodamage=true, int fulldamagedistance=0);
+						FName damageType, bool hurtSelf, bool dodamage=true, int fulldamagedistance=0, bool noimpactdamage=false);
 
 void	P_DelSector_List();
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98

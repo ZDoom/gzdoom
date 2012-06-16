@@ -776,6 +776,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	}
 }
 
+enum
+{
+	RTF_AFFECTSOURCE = 1,
+	RTF_NOIMPACTDAMAGE = 2,
+};
+
 //==========================================================================
 //
 // A_RadiusThrust
@@ -787,8 +793,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	ACTION_PARAM_START(3);
 	ACTION_PARAM_INT(force, 0);
 	ACTION_PARAM_INT(distance, 1);
-	ACTION_PARAM_BOOL(affectSource, 2);
+	ACTION_PARAM_INT(thrustFlags, 2);
 	ACTION_PARAM_INT(fullthrustdistance, 3);
+
+	bool affectSource = !!(thrustFlags & RTF_AFFECTSOURCE);
+	bool noimpactdamage = !!(thrustFlags & RTF_NOIMPACTDAMAGE);
 
 	bool sourcenothrust = false;
 
@@ -803,7 +812,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	}
 	int sourceflags2 = self->target != NULL ? self->target->flags2 : 0;
 
-	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, fullthrustdistance);
+	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, fullthrustdistance, noimpactdamage);
 	P_CheckSplash(self, distance << FRACBITS);
 
 	if (sourcenothrust)

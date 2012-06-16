@@ -402,14 +402,11 @@ void FCompressedFile::Explode ()
 			uLong newlen;
 
 			newlen = expandsize;
-			_heapchk();
 			r = uncompress (expand, &newlen, m_Buffer + 8, cprlen);
 			if (r != Z_OK || newlen != expandsize)
 			{
-				_heapchk();
 				M_Free (expand);
-				_heapchk();
-				I_Error ("Could not decompress buffer: %s", M_ZLibError(r));
+				I_Error ("Could not decompress buffer: %s", M_ZLibError(r).GetChars());
 			}
 		}
 		else

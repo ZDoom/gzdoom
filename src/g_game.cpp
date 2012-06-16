@@ -2513,7 +2513,7 @@ bool G_ProcessIFFDemo (char *mapname)
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
-			Printf ("Could not decompress demo! %s\n", M_ZLibError(r));
+			Printf ("Could not decompress demo! %s\n", M_ZLibError(r).GetChars());
 			delete[] uncompressed;
 			return true;
 		}

@@ -303,7 +303,7 @@ void PacketGet (void)
 //			Printf("recv %d/%lu\n", c, msgsize + 1);
 			if (err != Z_OK)
 			{
-				Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err));
+				Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
 				// Pretend no packet
 				doomcom.remotenode = -1;
 				return;

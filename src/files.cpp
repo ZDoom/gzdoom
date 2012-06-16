@@ -224,7 +224,7 @@ FileReaderZ::FileReaderZ (FileReader &file, bool zip)
 
 	if (err != Z_OK)
 	{
-		I_Error ("FileReaderZ: inflateInit failed: %s\n", M_ZLibError(err));
+		I_Error ("FileReaderZ: inflateInit failed: %s\n", M_ZLibError(err).GetChars());
 	}
 }
 

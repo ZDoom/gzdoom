@@ -1757,6 +1757,21 @@ void G_ReadSnapshots (PNGHandle *png)
 	png->File->ResetFilePtr();
 }
 
+//==========================================================================
+
+CCMD(listsnapshots)
+{
+	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		FCompressedMemFile *snapshot = wadlevelinfos[i].snapshot;
+		if (snapshot != NULL)
+		{
+			unsigned int comp, uncomp;
+			snapshot->GetSizes(comp, uncomp);
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].mapname, comp, uncomp);
+		}
+	}
+}
 
 //==========================================================================
 //

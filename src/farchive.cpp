@@ -575,6 +575,20 @@ bool FCompressedMemFile::IsOpen () const
 	return !!m_Buffer;
 }
 
+void FCompressedMemFile::GetSizes(unsigned int &compressed, unsigned int &uncompressed) const
+{
+	if (m_ImplodedBuffer != NULL)
+	{
+		compressed = BigLong(*(unsigned int *)m_ImplodedBuffer);
+		uncompressed = BigLong(*(unsigned int *)(m_ImplodedBuffer + 4));
+	}
+	else
+	{
+		compressed = 0;
+		uncompressed = m_BufferSize;
+	}
+}
+
 FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id)
 	: FCompressedFile (file, EWriting, true, false), m_ChunkID (id)
 {

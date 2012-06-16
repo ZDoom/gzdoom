@@ -36,6 +36,7 @@
 #include "files.h"
 #include "i_system.h"
 #include "templates.h"
+#include "m_misc.h"
 
 //==========================================================================
 //
@@ -223,7 +224,7 @@ FileReaderZ::FileReaderZ (FileReader &file, bool zip)
 
 	if (err != Z_OK)
 	{
-		I_Error ("FileReaderZ: inflateInit failed: %d\n", err);
+		I_Error ("FileReaderZ: inflateInit failed: %s\n", M_ZLibError(err));
 	}
 }
 

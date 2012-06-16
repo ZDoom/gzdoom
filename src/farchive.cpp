@@ -54,6 +54,7 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "d_player.h"
+#include "m_misc.h"
 #include "dobject.h"
 
 // These are special tokens found in the data stream of an archive.
@@ -408,7 +409,7 @@ void FCompressedFile::Explode ()
 				_heapchk();
 				M_Free (expand);
 				_heapchk();
-				I_Error ("Could not decompress cfile");
+				I_Error ("Could not decompress buffer: %s", M_ZLibError(r));
 			}
 		}
 		else

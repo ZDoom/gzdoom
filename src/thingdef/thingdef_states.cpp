@@ -247,6 +247,11 @@ do_stop:
 					state.Fullbright = true;
 					continue;
 				}
+				if (sc.Compare("FAST")) 
+				{
+					state.Fast = true;
+					continue;
+				}
 				if (sc.Compare("OFFSET"))
 				{
 					// specify a weapon offset
@@ -274,7 +279,7 @@ do_stop:
 					continue;
 				}
 
-				// Make the action name lowercase to satisfy the gperf hashers
+				// Make the action name lowercase
 				strlwr (sc.String);
 
 				if (DoActionSpecials(sc, state, bag))

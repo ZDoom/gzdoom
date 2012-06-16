@@ -434,26 +434,17 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 // AActor::GetTics
 //
 // Get the actual duration of the next state
-// This is a more generalized attempt to make the Demon faster in
-// nightmare mode. Actually changing the states' durations has to
-// be considered highly problematic.
+// We are using a state flag now to indicate a state that should be
+// accelerated in Fast mode.
 //
 //==========================================================================
 
 int AActor::GetTics(FState * newstate)
 {
 	int tics = newstate->GetTics();
-	
-	if (isFast())
+	if (isFast() && newstate->Fast)
 	{
-		if (flags5 & MF5_FASTER)
-		{
-			if (InStateSequence(newstate, SeeState)) return tics - (tics>>1);
-		}
-		if (flags5 & MF5_FASTMELEE)
-		{
-			if (InStateSequence(newstate, MeleeState)) return tics - (tics>>1);
-		}
+		return tics - (tics>>1);
 	}
 	return tics;
 }

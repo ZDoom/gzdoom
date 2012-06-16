@@ -65,11 +65,12 @@ struct FState
 	SWORD		Tics;
 	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
 	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
-	BYTE		Frame:6;
-	BYTE		Fullbright:1;	// State is fullbright
-	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
+	BYTE		Frame;
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	short		Light;
+	BYTE		Fullbright:1;	// State is fullbright
+	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
+	BYTE		Fast:1;
 	FState		*NextState;
 	actionf_p	ActionFunc;
 	int			ParameterIndex;

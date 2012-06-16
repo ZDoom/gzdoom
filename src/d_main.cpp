@@ -2056,6 +2056,21 @@ static void CheckCmdLine()
 
 //==========================================================================
 //
+// FinalGC
+//
+// If this doesn't free everything, the debug CRT will let us know.
+//
+//==========================================================================
+
+static void FinalGC()
+{
+	Args = NULL;
+	GC::FullGC();
+	GC::DelSoftRootHead();	// the soft root head will not be collected by a GC so we have to do it explicitly
+}
+
+//==========================================================================
+//
 // D_DoomMain
 //
 //==========================================================================
@@ -2072,6 +2087,7 @@ void D_DoomMain (void)
 
 	D_DoomInit();
 	PClass::StaticInit ();
+	atterm(FinalGC);
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.

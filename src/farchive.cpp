@@ -401,10 +401,13 @@ void FCompressedFile::Explode ()
 			uLong newlen;
 
 			newlen = expandsize;
+			_heapchk();
 			r = uncompress (expand, &newlen, m_Buffer + 8, cprlen);
 			if (r != Z_OK || newlen != expandsize)
 			{
+				_heapchk();
 				M_Free (expand);
+				_heapchk();
 				I_Error ("Could not decompress cfile");
 			}
 		}
@@ -497,7 +500,18 @@ bool FCompressedMemFile::Reopen ()
 		m_Mode = EReading;
 		m_Buffer = m_ImplodedBuffer;
 		m_SourceFromMem = true;
-		Explode ();
+		try
+		{
+			Explode ();
+		}
+		catch(...)
+		{
+			// If we just leave things as they are, m_Buffer and m_ImplodedBuffer
+			// both point to the same memory block and both will try to free it.
+			m_Buffer = NULL;
+			m_SourceFromMem = false;
+			throw;
+		}
 		m_SourceFromMem = false;
 		return true;
 	}

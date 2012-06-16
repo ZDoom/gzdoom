@@ -253,21 +253,6 @@ static void UnWTS (void)
 
 //==========================================================================
 //
-// FinalGC
-//
-// If this doesn't free everything, the debug CRT will let us know.
-//
-//==========================================================================
-
-static void FinalGC()
-{
-	Args = NULL;
-	GC::FullGC();
-	GC::DelSoftRootHead();	// the soft root head will not be collected by a GC so we have to do it explicitly
-}
-
-//==========================================================================
-//
 // LayoutErrorPane
 //
 // Lays out the error pane to the desired width, returning the required
@@ -828,7 +813,6 @@ void DoMain (HINSTANCE hInstance)
 #endif
 
 		Args = new DArgs(__argc, __argv);
-		atterm(FinalGC);
 
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we

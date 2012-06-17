@@ -112,7 +112,7 @@ bool AHolySpirit::Slam (AActor *thing)
 
 bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
 {
-	if (strength == BLAST_FULLSTRENGTH && tracer == source)
+	if (tracer == source)
 	{
 		tracer = target;
 		target = source;

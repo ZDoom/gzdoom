@@ -656,7 +656,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		{
 			if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
 				return;
-			if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
+			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
 				return;
 		}
 	}
@@ -1665,7 +1665,7 @@ void R_DrawSprite (vissprite_t *spr)
 				hzb = MAX(hzb, hz);
 			}
 		}
-		if (spr->FakeFlatStat != FAKED_BelowFloor)
+		if (spr->FakeFlatStat != FAKED_BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 		{
 			fixed_t hz = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
 			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;

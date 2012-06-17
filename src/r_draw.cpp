@@ -2238,7 +2238,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 	}
 	else if (style == LegacyRenderStyles[STYLE_Shaded])
 	{
-		// Shaded drawer only gets 16 levels because it saves memory.
+		// Shaded drawer only gets 16 levels of alpha because it saves memory.
 		if ((alpha >>= 12) == 0)
 			return DontDraw;
 		colfunc = R_DrawShadedColumn;

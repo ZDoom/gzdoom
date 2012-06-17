@@ -441,7 +441,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, NAME_BulletPuff);
+					  NAME_Hitscan, NAME_BulletPuff);
 	}
 	self->special1 = level.maptime;
 }

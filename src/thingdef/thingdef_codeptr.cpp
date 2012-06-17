@@ -531,7 +531,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 		int angle = bangle + (pr_cabullet.Random2() << 20);
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
-			NAME_None, NAME_BulletPuff);
+			NAME_Hitscan, NAME_BulletPuff);
     }
 }
 
@@ -763,7 +763,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
 			P_LineAttack (self, ang, MISSILERANGE, 0,
 				//P_AimLineAttack (self, ang, MISSILERANGE), 
-				naildamage, NAME_None, pufftype);
+				naildamage, NAME_Hitscan, pufftype);
 		}
 	}
 
@@ -1055,7 +1055,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			if (!(Flags & CBAF_NORANDOM))
 				damage *= ((pr_cabullet()%3)+1);
 
-			P_LineAttack(self, angle, Range, slope, damage, NAME_None, pufftype);
+			P_LineAttack(self, angle, Range, slope, damage, NAME_Hitscan, pufftype);
 		}
     }
 }

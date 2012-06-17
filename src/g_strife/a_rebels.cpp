@@ -32,7 +32,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
-		3*(pr_shootgun() % 5 + 1), NAME_None, NAME_StrifePuff);
+		3*(pr_shootgun() % 5 + 1), NAME_Hitscan, NAME_StrifePuff);
 }
 
 // Teleporter Beacon --------------------------------------------------------

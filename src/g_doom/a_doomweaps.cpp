@@ -278,7 +278,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  pitch + (pr_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, NAME_BulletPuff);
+					  NAME_Hitscan, NAME_BulletPuff);
 	}
 }
 

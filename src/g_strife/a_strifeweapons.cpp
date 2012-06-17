@@ -266,7 +266,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 		angle += pr_sgunshot.Random2() << (20 - mo->player->mo->accuracy * 5 / 100);
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, NAME_StrifePuff);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, NAME_StrifePuff);
 }
 
 //============================================================================
@@ -432,7 +432,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 		// it should use a different puff. ZDoom's default range is longer
 		// than this, so let's not handicap it by being too faithful to the
 		// original.
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, NAME_MaulerPuff);
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, NAME_MaulerPuff);
 	}
 }
 

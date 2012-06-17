@@ -3747,7 +3747,7 @@ void FParser::SF_LineAttack()
 		angle = (intvalue(t_argv[1]) * (ANG45 / 45));
 		slope = P_AimLineAttack(mo, angle, MISSILERANGE);
 
-		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_None, NAME_BulletPuff);
+		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_Hitscan, NAME_BulletPuff);
 	}
 }
 

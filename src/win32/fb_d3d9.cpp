@@ -3170,12 +3170,12 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 	quad->Group1 = 0;
 	if (tex->GetTexFormat() == D3DFMT_L8 && !tex->IsGray)
 	{
-		quad->Flags = BQF_WrapUV | BQF_GamePalette | BQF_DisableAlphaTest;
+		quad->Flags = BQF_WrapUV | BQF_GamePalette; // | BQF_DisableAlphaTest;
 		quad->ShaderNum = BQS_PalTex;
 	}
 	else
 	{
-		quad->Flags = BQF_WrapUV | BQF_DisableAlphaTest;
+		quad->Flags = BQF_WrapUV; // | BQF_DisableAlphaTest;
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = NULL;

@@ -1251,7 +1251,7 @@ DEFINE_PROPERTY(visibletoteam, I, Actor)
 //==========================================================================
 // [BB]
 //==========================================================================
-DEFINE_PROPERTY(visibletoplayerclass, S_s, Actor)
+DEFINE_PROPERTY(visibletoplayerclass, Ssssssssssssssssssss, Actor)
 {
 	info->VisibleToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
@@ -1289,7 +1289,7 @@ DEFINE_PROPERTY(stamina, I, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(restrictedto, S_s, Inventory)
+DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 {
 	info->RestrictedToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
@@ -1303,7 +1303,7 @@ DEFINE_CLASS_PROPERTY(restrictedto, S_s, Inventory)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_CLASS_PROPERTY(forbiddento, S_s, Inventory)
+DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 {
 	info->ForbiddenToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)

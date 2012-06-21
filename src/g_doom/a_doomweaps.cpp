@@ -151,7 +151,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 			return;
 	}
 
-	P_LineAttack (self, angle, Range, slope, damage, NAME_Melee, pufftype);
+	P_LineAttack (self, angle, Range, slope, damage, NAME_Melee, pufftype, false, &linetarget);
 
 	if (!linetarget)
 	{

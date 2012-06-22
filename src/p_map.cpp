@@ -3925,7 +3925,7 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 //
 //
 //==========================================================================
-void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent, const PClass *puffclass, bool pierce, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, bool fullbright, int duration, float sparsity, float drift, const PClass *spawnclass)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, int railflags, const PClass *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, float sparsity, float drift, const PClass *spawnclass)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3948,13 +3948,16 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	shootz = source->z - source->floorclip + (source->height >> 1);
 
-	if (source->player != NULL)
+	if (!(railflags & RAF_CENTERZ))
 	{
-		shootz += FixedMul (source->player->mo->AttackZOffset, source->player->crouchfactor);
-	}
-	else
-	{
-		shootz += 8*FRACUNIT;
+		if (source->player != NULL)
+		{
+			shootz += FixedMul (source->player->mo->AttackZOffset, source->player->crouchfactor);
+		}
+		else
+		{
+			shootz += 8*FRACUNIT;
+		}
 	}
 
 	angle = ((source->angle + angleoffset) - ANG90) >> ANGLETOFINESHIFT;
@@ -3973,18 +3976,9 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
 	else flags = TRACE_PCross|TRACE_Impact;
 
-	if (pierce)
-	{
-		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
-			distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-			flags, ProcessRailHit);
-	}
-	else
-	{
-		Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
-			distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-			flags, ProcessNoPierceRailHit);
-	}
+	Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
+		distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
+		flags, (railflags & RAF_NOPIERCE) ? ProcessNoPierceRailHit : ProcessRailHit);
 
 	// Hurt anything the trace hit
 	unsigned int i;
@@ -4061,7 +4055,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	end.X = FIXED2FLOAT(trace.X);
 	end.Y = FIXED2FLOAT(trace.Y);
 	end.Z = FIXED2FLOAT(trace.Z);
-	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, silent, spawnclass, source->angle + angleoffset, fullbright, duration, sparsity, drift);
+	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift);
 }
 
 //==========================================================================

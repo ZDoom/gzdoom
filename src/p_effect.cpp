@@ -586,21 +586,23 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, bool silent, const PClass *spawnclass, angle_t angle, bool fullbright, int duration, float sparsity, float drift)
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, int flags, const PClass *spawnclass, angle_t angle, int duration, float sparsity, float drift)
 {
 	double length, lengthsquared;
 	int steps, i;
 	FAngle deg;
 	FVector3 step, dir, pos, extend;
+	bool fullbright;
 
 	dir = end - start;
 	lengthsquared = dir | dir;
 	length = sqrt(lengthsquared);
-	steps = int(length / 3);
+	steps = xs_FloorToInt(length / 3);
+	fullbright = !!(flags & RAF_FULLBRIGHT);
 
 	if (steps)
 	{
-		if (!silent)
+		if (!(flags & RAF_SILENT))
 		{
 			FSoundID sound;
 			

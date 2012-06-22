@@ -1953,11 +1953,11 @@ void R_NewWall (bool needlights)
 				yrepeat = FixedMul(midtexture->yScale, rw_midtexturescaley);
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_midtexturemid = frontsector->GetPlaneTexZ(sector_t::floor) + (midtexture->GetHeight() << FRACBITS);
+					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
 				}
 				else
 				{ // top of texture at top
-					rw_midtexturemid = frontsector->GetPlaneTexZ(sector_t::ceiling);
+					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat);
 					if (rowoffset < 0 && midtexture != NULL)
 					{
 						rowoffset += midtexture->GetHeight() << FRACBITS;
@@ -1965,13 +1965,13 @@ void R_NewWall (bool needlights)
 				}
 				if (midtexture->bWorldPanning)
 				{
-					rw_midtexturemid = MulScale16(rw_midtexturemid - viewz + rowoffset, yrepeat);
+					rw_midtexturemid = MulScale16(rowoffset, yrepeat);
 				}
 				else
 				{
 					// rowoffset is added outside the multiply so that it positions the texture
 					// by texels instead of world units.
-					rw_midtexturemid = MulScale16(rw_midtexturemid - viewz, yrepeat) + rowoffset;
+					rw_midtexturemid += rowoffset;
 				}
 			}
 		}

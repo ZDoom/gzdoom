@@ -2245,8 +2245,11 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	dasprx =  dasprx >> 12;
 	daspry = -daspry >> 12;
 	dasprz = -dasprz >> 8;
-	daxscale >>= 10;
-	dayscale >>= 10;
+
+	// Shift the scales from 16 bits of fractional precision to 6.
+	// Also do some magic voodoo scaling to make them the right size.
+	daxscale = daxscale / (0xD000 >> 6);
+	dayscale = dayscale / (0xD000 >> 6);
 
 	cosang = viewcos >> 2;
 	sinang = -viewsin >> 2;

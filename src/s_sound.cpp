@@ -2755,6 +2755,7 @@ CCMD (stopmus)
 		PlayList = NULL;
 	}
 	S_StopMusic (false);
+	LastSong = "";	// forget the last played song so that it won't get restarted if some volume changes occur
 }
 
 //==========================================================================

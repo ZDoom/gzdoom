@@ -2526,7 +2526,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 									}
 								}
 							}
-							xxl += xxr;
+							xxl = xxr;
 						}
 					}
 				}

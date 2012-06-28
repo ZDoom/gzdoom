@@ -2317,7 +2317,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 		ggyinc[i] = y; y += gyinc;
 	}
 
-	syoff = DivScale21(globalposz - dasprz, dazscale) + (mip->PivotZ << 7);
+	syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE900)) + (mip->PivotZ << 7);
 	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 	for (cnt = 0; cnt < 8; cnt++)

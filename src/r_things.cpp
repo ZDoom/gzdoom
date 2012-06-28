@@ -611,7 +611,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	tx2 = tx >> 4;
 
 	// too far off the side?
-	if ((abs(tx) >> 6) > abs(tz))
+	// if it's a voxel, it can be further off the side
+	if ((voxel == NULL && (abs(tx) >> 6) > abs(tz)) ||
+		(voxel != NULL && (abs(tx) >> 7) > abs(tz)))
 	{
 		return;
 	}
@@ -2231,10 +2233,11 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	fixed_t cosang, sinang, sprcosang, sprsinang;
 	int backx, backy, gxinc, gyinc;
 	int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, dazscale;
-	int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yplc, yinc=0;
+	int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yinc=0;
 	int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
 	kvxslab_t *voxptr, *voxend;
 	FVoxelMipLevel *mip;
+	int z1a[64], z2a[64], yplc[64];
 
 	const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
 	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
@@ -2395,7 +2398,6 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				rx = MulScale32((nx + nxoff) >> 3, distrecip(ny+y2)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
-				rx -= lx;
 
 				fixed_t l1 = distrecip(ny-yoff);
 				fixed_t l2 = distrecip(ny+yoff);
@@ -2443,43 +2445,88 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 						z2 = MulScale32(l1, j + (zleng << 15)) + centery;
 					}
 
+					if (z2 <= z1) continue;
+
 					if (zleng == 1)
 					{
-						yplc = 0; yinc = 0;
-						if (z1 < daumost[lx]) z1 = daumost[lx];
+						yinc = 0;
 					}
 					else
 					{
 						if (z2-z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
-						else if (z2 > z1) yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
-						if (z1 < daumost[lx]) { yplc = yinc*(daumost[lx]-z1); z1 = daumost[lx]; } else yplc = 0;
+						else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 					}
-					if (z2 > dadmost[lx]) z2 = dadmost[lx];
-					z2 -= z1; if (z2 <= 0) continue;
-
-					if (!(flags & DVF_OFFSCREEN))
+					// [RH] Clip each column separately, not just by the first one.
+					for (int stripwidth = MIN<int>(countof(z1a), rx - lx);
+						lx < rx;
+						(lx += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lx))
 					{
-						// Draw directly to the screen.
-						R_DrawSlab(rx, yplc, z2, yinc, col, ylookup[z1] + lx + dc_destorg);
-					}
-					else
-					{
-						// Record the area covered and possibly draw to an offscreen buffer.
-						dc_yl = z1;
-						dc_yh = z1 + z2 - 1;
-						dc_count = z2;
-						dc_iscale = yinc;
-						for (int x = 0; x < rx; ++x)
+						// Calculate top and bottom pixels locations
+						for (int xxx = 0; xxx < stripwidth; ++xxx)
 						{
-							OffscreenCoverageBuffer->InsertSpan(lx + x, z1, z1 + z2);
-							if (!(flags & DVF_SPANSONLY))
+							if (zleng == 1)
 							{
-								dc_x = lx + x;
-								rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
-								dc_source = col;
-								dc_texturefrac = yplc;
-								hcolfunc_pre();
+								yplc[xxx] = 0;
+								z1a[xxx] = MAX<int>(z1, daumost[lx + xxx]);
 							}
+							else
+							{
+								if (z1 < daumost[lx + xxx])
+								{
+									yplc[xxx] = yinc * (daumost[lx + xxx] - z1);
+									z1a[xxx] = daumost[lx + xxx];
+								}
+								else
+								{
+									yplc[xxx] = 0;
+									z1a[xxx] = z1;
+								}
+							}
+							z2a[xxx] = MIN<int>(z2, dadmost[lx + xxx]);
+						}
+						// Find top and bottom pixels that match and draw them as one strip
+						for (int xxl = 0, xxr; xxl < stripwidth; )
+						{
+							if (z1a[xxl] >= z2a[xxl])
+							{ // No column here
+								xxl++;
+								continue;
+							}
+							int z1 = z1a[xxl];
+							int z2 = z2a[xxl];
+							// How many columns share the same extents?
+							for (xxr = xxl + 1; xxr < stripwidth; ++xxr)
+							{
+								if (z1a[xxr] != z1 || z2a[xxr] != z2)
+									break;
+							}
+
+							if (!(flags & DVF_OFFSCREEN))
+							{
+								// Draw directly to the screen.
+								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, ylookup[z1] + lx + xxl + dc_destorg);
+							}
+							else
+							{
+								// Record the area covered and possibly draw to an offscreen buffer.
+								dc_yl = z1;
+								dc_yh = z2 - 1;
+								dc_count = z2 - z1;
+								dc_iscale = yinc;
+								for (int x = xxl; x < xxr; ++x)
+								{
+									OffscreenCoverageBuffer->InsertSpan(lx + x, z1, z1 + z2);
+									if (!(flags & DVF_SPANSONLY))
+									{
+										dc_x = lx + x;
+										rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
+										dc_source = col;
+										dc_texturefrac = yplc[xxl];
+										hcolfunc_pre();
+									}
+								}
+							}
+							xxl += xxr;
 						}
 					}
 				}

@@ -158,12 +158,12 @@ class APoisonBolt : public AActor
 {
 	DECLARE_CLASS (APoisonBolt, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (APoisonBolt)
 
-int APoisonBolt::DoSpecialDamage (AActor *target, int damage)
+int APoisonBolt::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->flags & MF_NOBLOOD)
 	{
@@ -551,18 +551,18 @@ class APhosphorousFire : public AActor
 {
 	DECLARE_CLASS (APhosphorousFire, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (APhosphorousFire)
 
-int APhosphorousFire::DoSpecialDamage (AActor *target, int damage)
+int APhosphorousFire::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->flags & MF_NOBLOOD)
 	{
 		return damage / 2;
 	}
-	return Super::DoSpecialDamage (target, damage);
+	return Super::DoSpecialDamage (target, damage, damagetype);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BurnArea)

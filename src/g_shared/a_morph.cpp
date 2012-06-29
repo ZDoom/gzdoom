@@ -535,7 +535,7 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 
 IMPLEMENT_CLASS(AMorphProjectile)
 
-int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
+int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	const PClass *morph_flash = PClass::FindClass (MorphFlash);
 	const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);

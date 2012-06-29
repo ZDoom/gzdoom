@@ -42,7 +42,7 @@ class ATelOtherFX1 : public AActor
 {
 	DECLARE_CLASS (ATelOtherFX1, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (ATelOtherFX1)
@@ -115,7 +115,7 @@ bool AArtiTeleportOther::Use (bool pickup)
 //
 //===========================================================================
 
-int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
+int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if ((target->flags3 & MF3_ISMONSTER || target->player != NULL) &&
 		!(target->flags2 & MF2_BOSS) &&

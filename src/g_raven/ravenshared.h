@@ -7,7 +7,7 @@ class AMinotaur : public AActor
 {
 	DECLARE_CLASS (AMinotaur, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 
 public:
 	bool Slam (AActor *);

@@ -56,9 +56,9 @@ bool AMinotaur::Slam (AActor *thing)
 	return Super::Slam (thing);
 }
 
-int AMinotaur::DoSpecialDamage (AActor *target, int damage)
+int AMinotaur::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
-	damage = Super::DoSpecialDamage (target, damage);
+	damage = Super::DoSpecialDamage (target, damage, damagetype);
 	if ((damage != -1) && (flags & MF_SKULLFLY))
 	{ // Slam only when in charge mode
 		P_MinotaurSlam (this, target);

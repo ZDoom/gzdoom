@@ -156,7 +156,7 @@ class AMorphProjectile : public AActor
 {
 	DECLARE_CLASS (AMorphProjectile, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	void Serialize (FArchive &arc);
 
 	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;

@@ -604,7 +604,7 @@ public:
 
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately
-	virtual int DoSpecialDamage (AActor *target, int damage);
+	virtual int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 
 	// Like DoSpecialDamage, but called on the actor receiving the damage.
 	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);

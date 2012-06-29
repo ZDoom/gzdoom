@@ -2217,12 +2217,6 @@ void R_DrawParticle (vissprite_t *vis)
 	} while (--ycount);
 }
 
-static fixed_t distrecip(fixed_t y)
-{
-	y >>= 3;
-	return y == 0 ? 0 : SafeDivScale32(centerxwide, y);
-}
-
 extern fixed_t baseyaspectmul;
 
 void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
@@ -2244,6 +2238,8 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	const fixed_t globalposx =  viewx >> 12;
 	const fixed_t globalposy = -viewy >> 12;
 	const fixed_t globalposz = -viewz >> 8;
+	const double centerxwide_f = centerxwide;
+	const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
 
 	dasprx =  dasprx >> 12;
 	daspry = -daspry >> 12;
@@ -2251,8 +2247,8 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 
 	// Shift the scales from 16 bits of fractional precision to 6.
 	// Also do some magic voodoo scaling to make them the right size.
-	daxscale = daxscale / (0xC400 >> 6);
-	dayscale = dayscale / (0xC400 >> 6);
+	daxscale = daxscale / (0xC000 >> 6);
+	dayscale = dayscale / (0xC000 >> 6);
 
 	cosang = viewcos >> 2;
 	sinang = -viewsin >> 2;
@@ -2317,7 +2313,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 		ggyinc[i] = y; y += gyinc;
 	}
 
-	syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE900)) + (mip->PivotZ << 7);
+	syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (mip->PivotZ << 7);
 	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 	for (cnt = 0; cnt < 8; cnt++)
@@ -2393,14 +2389,14 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
 				if (voxptr >= voxend) continue;
 
-				lx = MulScale32(nx >> 3, distrecip(ny+y1)) + centerx;
+				lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + centerx;
 				if (lx < 0) lx = 0;
-				rx = MulScale32((nx + nxoff) >> 3, distrecip(ny+y2)) + centerx;
+				rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
 
-				fixed_t l1 = distrecip(ny-yoff);
-				fixed_t l2 = distrecip(ny+yoff);
+				fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
+				fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));
 				for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
 				{
 					const BYTE *col = voxptr->col;

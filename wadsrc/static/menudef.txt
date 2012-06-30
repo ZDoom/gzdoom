@@ -754,6 +754,7 @@ OptionMenu "HUDOptions"
 	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
 	Option "Nametag color",				"nametagcolor", "TextColors", "displaynametags"
 	Option "Stretch status bar",		"st_scale", "OnOff"
+	Option "Stretch Fullscreen HUD",	"hud_scale", "OnOff"
 	Option "Use old ouch mug shot formula",	"st_oldouch", "OnOff"
 	StaticText " "
 	Option "Hexen weapon flashes",		"pf_hexenweaps",	"ZDoomHexen"
@@ -774,11 +775,19 @@ OptionValue "AMCoordinates"
 	1, "Map"
 }
 
+OptionValue "AltHUDScale"
+{
+	0, "Off"
+	1, "Scale to 640x400"
+	2, "Pixel double"
+}
+
 OptionMenu "AltHUDOptions"
 {
 	Title "Alternative HUD"
 	//Indent 220
 	Option "Enable alternative HUD",				"hud_althud", "OnOff"
+	Option "Stretch alternative HUD",				"hud_althudscale", "AltHUDScale"
 	Option "Show secret count",						"hud_showsecrets", "OnOff"
 	Option "Show monster count",					"hud_showmonsters", "OnOff"
 	Option "Show item count",						"hud_showitems", "OnOff"

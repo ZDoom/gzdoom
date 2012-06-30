@@ -1566,18 +1566,20 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		// Take half damage in trainer mode
 		damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
 	}
+	// Handle passive damage modifiers (e.g. PowerProtection)
+	if (target->Inventory != NULL)
+	{
+		target->Inventory->ModifyDamage(damage, player->poisontype, damage, true);
+	}
 	// Modify with damage factors
+	damage = FixedMul(damage, target->DamageFactor);
 	if (damage > 0)
 	{
-		damage = FixedMul(damage, target->DamageFactor);
-		if (damage > 0)
-		{
-			damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, player->poisontype, target->GetClass()->ActorInfo->DamageFactors);
-		}
-		if (damage <= 0)
-		{ // Damage was reduced to 0, so don't bother further.
-			return;
-		}
+		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, player->poisontype, target->GetClass()->ActorInfo->DamageFactors);
+	}
+	if (damage <= 0)
+	{ // Damage was reduced to 0, so don't bother further.
+		return;
 	}
 	if (damage >= player->health
 		&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)

@@ -343,6 +343,11 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 			{
 				damage = (int)((float)damage * level.teamdamage);
 			}
+			// Handle passive damage modifiers (e.g. PowerProtection)
+			if (victim->Inventory != NULL)
+			{
+				victim->Inventory->ModifyDamage(damage, damagetype, damage, true);
+			}
 			// Modify with damage factors
 			damage = FixedMul(damage, victim->DamageFactor);
 			if (damage > 0)

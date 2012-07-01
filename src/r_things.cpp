@@ -2453,9 +2453,9 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 						else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 					}
 					// [RH] Clip each column separately, not just by the first one.
-					for (int stripwidth = MIN<int>(countof(z1a), rx - lx);
-						lx < rx;
-						(lx += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lx))
+					for (int stripwidth = MIN<int>(countof(z1a), rx - lx), lxt = lx;
+						lxt < rx;
+						(lxt += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lxt))
 					{
 						// Calculate top and bottom pixels locations
 						for (int xxx = 0; xxx < stripwidth; ++xxx)
@@ -2463,14 +2463,14 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 							if (zleng == 1)
 							{
 								yplc[xxx] = 0;
-								z1a[xxx] = MAX<int>(z1, daumost[lx + xxx]);
+								z1a[xxx] = MAX<int>(z1, daumost[lxt + xxx]);
 							}
 							else
 							{
-								if (z1 < daumost[lx + xxx])
+								if (z1 < daumost[lxt + xxx])
 								{
-									yplc[xxx] = yinc * (daumost[lx + xxx] - z1);
-									z1a[xxx] = daumost[lx + xxx];
+									yplc[xxx] = yinc * (daumost[lxt + xxx] - z1);
+									z1a[xxx] = daumost[lxt + xxx];
 								}
 								else
 								{
@@ -2478,7 +2478,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 									z1a[xxx] = z1;
 								}
 							}
-							z2a[xxx] = MIN<int>(z2, dadmost[lx + xxx]);
+							z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
 						}
 						// Find top and bottom pixels that match and draw them as one strip
 						for (int xxl = 0, xxr; xxl < stripwidth; )
@@ -2500,7 +2500,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 							if (!(flags & DVF_OFFSCREEN))
 							{
 								// Draw directly to the screen.
-								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, ylookup[z1] + lx + xxl + dc_destorg);
+								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, ylookup[z1] + lxt + xxl + dc_destorg);
 							}
 							else
 							{
@@ -2511,10 +2511,10 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 								dc_iscale = yinc;
 								for (int x = xxl; x < xxr; ++x)
 								{
-									OffscreenCoverageBuffer->InsertSpan(lx + x, z1, z1 + z2);
+									OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z1 + z2);
 									if (!(flags & DVF_SPANSONLY))
 									{
-										dc_x = lx + x;
+										dc_x = lxt + x;
 										rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
 										dc_source = col;
 										dc_texturefrac = yplc[xxl];

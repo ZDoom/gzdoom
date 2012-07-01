@@ -1521,7 +1521,7 @@ void P_CheckPlayerSprites()
 				{
 					mo->sprite = mo->SpawnState->sprite;
 				}
-				else if (mo->sprite == skins[player->userinfo.skin].crouchsprite)
+				else if (mo->sprite != 0 && mo->sprite == skins[player->userinfo.skin].crouchsprite)
 				{
 					mo->sprite = skins[player->userinfo.skin].sprite;
 				}

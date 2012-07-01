@@ -1488,7 +1488,6 @@ void P_CheckPlayerSprites()
 			// Set the crouch sprite
 			if (player->crouchfactor < FRACUNIT*3/4)
 			{
-
 				if (mo->sprite == mo->SpawnState->sprite || mo->sprite == mo->crouchsprite) 
 				{
 					crouchspriteno = mo->crouchsprite;
@@ -1517,13 +1516,16 @@ void P_CheckPlayerSprites()
 			}
 			else	// Set the normal sprite
 			{
-				if (mo->sprite == mo->crouchsprite)
+				if (mo->sprite != 0)
 				{
-					mo->sprite = mo->SpawnState->sprite;
-				}
-				else if (mo->sprite != 0 && mo->sprite == skins[player->userinfo.skin].crouchsprite)
-				{
-					mo->sprite = skins[player->userinfo.skin].sprite;
+					if (mo->sprite == mo->crouchsprite)
+					{
+						mo->sprite = mo->SpawnState->sprite;
+					}
+					else if (mo->sprite != 0 && mo->sprite == skins[player->userinfo.skin].crouchsprite)
+					{
+						mo->sprite = skins[player->userinfo.skin].sprite;
+					}
 				}
 				mo->scaleY = defscaleY;
 			}

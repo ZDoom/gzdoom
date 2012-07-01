@@ -14,6 +14,8 @@
 #include "g_level.h"
 */
 
+EXTERN_CVAR(Bool, sv_unlimited_pickup)
+
 static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");
 static FRandom pr_poisoncloudd ("PoisonCloudDamage");
@@ -239,10 +241,10 @@ bool AArtiPoisonBag::HandlePickup (AInventory *item)
 
 	if (GetClass() == GetFlechetteType(Owner))
 	{
-		if (Amount < MaxAmount)
+		if (Amount < MaxAmount || sv_unlimited_pickup)
 		{
 			Amount += item->Amount;
-			if (Amount > MaxAmount)
+			if (Amount > MaxAmount && !sv_unlimited_pickup)
 			{
 				Amount = MaxAmount;
 			}

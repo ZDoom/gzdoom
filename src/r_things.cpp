@@ -2511,7 +2511,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 								dc_iscale = yinc;
 								for (int x = xxl; x < xxr; ++x)
 								{
-									OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z1 + z2);
+									OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z2);
 									if (!(flags & DVF_SPANSONLY))
 									{
 										dc_x = lxt + x;

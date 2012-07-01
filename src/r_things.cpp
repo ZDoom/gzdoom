@@ -2610,7 +2610,7 @@ void FCoverageBuffer::InsertSpan(int listnum, int start, int stop)
 			{ // The existing span completely covers this one.	//     +++++
 				return;
 			}
-			// Extend the existing span with the new one.		// ======
+extend:		// Extend the existing span with the new one.		// ======
 			span = *span_p;										//     +++++++
 			span->Stop = stop;									// (or)  +++++
 
@@ -2638,6 +2638,11 @@ void FCoverageBuffer::InsertSpan(int listnum, int start, int stop)
 		{ // The new span extends the existing span from		//    ++++
 		  // the beginning.										// (or) ++++
 			(*span_p)->Start = start;
+			if ((*span_p)->Stop < stop)
+			{ // The new span also extends the existing span	//     ======
+			  // at the bottom									// ++++++++++++++
+				goto extend;
+			}
 			goto check;
 		}
 		else													//         ======

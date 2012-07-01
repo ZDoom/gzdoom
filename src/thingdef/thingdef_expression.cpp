@@ -1698,6 +1698,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 		min = mi;
 		max = ma;
 	}
+	ValueType = VAL_Float;
 }
 
 //==========================================================================

@@ -4243,17 +4243,37 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_PUSHFUNCTION:
+		{
+			int funcnum = NEXTBYTE;
+			PushToStack(funcnum | activeBehavior->GetLibraryID());
+			break;
+		}
 		case PCD_CALL:
 		case PCD_CALLDISCARD:
+		case PCD_CALLSTACK:
 			{
 				int funcnum;
 				int i;
 				ScriptFunction *func;
-				FBehavior *module = activeBehavior;
+				FBehavior *module;
 				SDWORD *mylocals;
 
-				funcnum = NEXTBYTE;
+				if(pcd == PCD_CALLSTACK)
+				{
+					funcnum = STACK(1);
+					module = FBehavior::StaticGetModule(funcnum>>16);
+					--sp;
+
+					funcnum &= 0xFFFF; // Clear out tag
+				}
+				else
+				{
+					module = activeBehavior;
+					funcnum = NEXTBYTE;
+				}
 				func = activeBehavior->GetFunction (funcnum, module);
+
 				if (func == NULL)
 				{
 					Printf ("Function %d in %s out of range\n", funcnum, ScriptPresentation(script).GetChars());

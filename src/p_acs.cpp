@@ -4272,7 +4272,7 @@ int DLevelScript::RunScript ()
 					module = activeBehavior;
 					funcnum = NEXTBYTE;
 				}
-				func = activeBehavior->GetFunction (funcnum, module);
+				func = module->GetFunction (funcnum, module);
 
 				if (func == NULL)
 				{

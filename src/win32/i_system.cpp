@@ -1187,7 +1187,8 @@ bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
-	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
+	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null &&
+		(screen == NULL || !screen->Is8BitMode()))
 	{
 		// Must be no larger than 32x32.
 		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)

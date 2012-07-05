@@ -786,6 +786,25 @@ void DDrawFB::RebuildColorTable ()
 	}
 }
 
+bool DDrawFB::Is8BitMode()
+{
+	if (Windowed)
+	{
+		return Write8bit;
+	}
+	DDPIXELFORMAT fmt = { sizeof(fmt), };
+	HRESULT hr;
+
+	hr = PrimarySurf->GetPixelFormat(&fmt);
+	if (SUCCEEDED(hr))
+	{
+		return !!(fmt.dwFlags & DDPF_PALETTEINDEXED8);
+	}
+	// Can't get the primary surface's pixel format, so assume
+	// vid_displaybits is accurate.
+	return vid_displaybits == 8;
+}
+
 bool DDrawFB::IsValid ()
 {
 	return PrimarySurf != NULL;

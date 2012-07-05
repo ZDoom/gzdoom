@@ -164,6 +164,7 @@ public:
 	void NewRefreshRate();
 	HRESULT GetHR ();
 	virtual int GetTrueHeight() { return TrueHeight; }
+	bool Is8BitMode();
 
 	void Blank ();
 	bool PaintToWindow ();
@@ -269,6 +270,7 @@ public:
 	void WipeCleanup();
 	HRESULT GetHR ();
 	virtual int GetTrueHeight() { return TrueHeight; }
+	bool Is8BitMode() { return false; }
 
 private:
 	friend class D3DTex;

@@ -100,6 +100,7 @@ public:
 #ifdef _WIN32
 	void PaletteChanged() {}
 	int QueryNewPalette() { return 0; }
+	bool Is8BitMode() { return false; }
 #endif
 
 	float Gamma;

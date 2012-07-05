@@ -143,6 +143,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
 	NeedResRecreate = false;
+	PaletteChangeExpected = false;
 	MustBuffer = false;
 	BufferingNow = false;
 	WasBuffering = false;
@@ -461,7 +462,7 @@ bool DDrawFB::CreateSurfacesComplex ()
 {
 	DDSURFACEDESC ddsd = { sizeof(ddsd), };
 	HRESULT hr;
-	int tries = 0;
+	int tries = 2;
 
 	LOG ("creating surfaces using a complex primary\n");
 
@@ -717,7 +718,7 @@ void DDrawFB::PaletteChanged ()
 	// they are obviously jerks, and we need to restore our own palette.
 	if (!Windowed)
 	{
-		if (Palette != NULL)
+		if (!PaletteChangeExpected && Palette != NULL)
 		{
 			// It is not enough to set NeedPalUpdate to true. Some palette
 			// entries might now be reserved for system usage, and nothing
@@ -729,6 +730,7 @@ void DDrawFB::PaletteChanged ()
 			// somebody tries to lock it.
 			NeedResRecreate = true;
 		}
+		PaletteChangeExpected = false;
 	}
 	else
 	{
@@ -1197,6 +1199,7 @@ void DDrawFB::Update ()
 
 	if (pchanged && AppActive && !SessionState)
 	{
+		PaletteChangeExpected = true;
 		Palette->SetEntries (0, 0, 256, PalEntries);
 	}
 }

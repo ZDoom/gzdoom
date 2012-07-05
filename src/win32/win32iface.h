@@ -208,6 +208,7 @@ private:
 	bool NeedGammaUpdate;
 	bool NeedPalUpdate;
 	bool NeedResRecreate;
+	bool PaletteChangeExpected;
 	bool MustBuffer;		// The screen is not 8-bit, or there is no backbuffer
 	bool BufferingNow;		// Most recent Lock was buffered
 	bool WasBuffering;		// Second most recent Lock was buffered

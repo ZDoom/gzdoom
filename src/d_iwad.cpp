@@ -326,7 +326,7 @@ int FIWadManager::CheckIWAD (const char *doomwaddir, WadStuff *wads)
 	int numfound;
 
 	numfound = 0;
-
+return 0;
 	slash = (doomwaddir[0] && doomwaddir[strlen (doomwaddir)-1] != '/') ? "/" : "";
 
 	// Search for a pre-defined IWAD

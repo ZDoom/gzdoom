@@ -80,6 +80,7 @@ protected:
 	bool ReadConfig (void *file);
 
 	bool OkayToWrite;
+	bool FileExisted;
 
 private:
 	struct FConfigEntry

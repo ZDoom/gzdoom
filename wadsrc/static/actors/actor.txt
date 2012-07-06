@@ -302,7 +302,7 @@ ACTOR Actor native //: Thinker
 	action native ACS_NamedTerminate(string script, int mapnum=0);
 	action native ACS_NamedLockedExecute(string script, int mapnum=0, int arg1=0, int arg2=0, int lock=0);
 	action native ACS_NamedLockedExecuteDoor(string script, int mapnum=0, int arg1=0, int arg2=0, int lock=0);
-	action native ACS_NamedExecuteWithResult(string script, int arg1=0, int arg2=0, int arg3=0);
+	action native ACS_NamedExecuteWithResult(string script, int arg1=0, int arg2=0, int arg3=0, int arg4=0);
 	action native ACS_NamedExecuteAlways(string script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
 
 	States

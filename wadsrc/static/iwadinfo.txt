@@ -12,6 +12,16 @@ IWad
 
 IWad
 {
+	Name = "Hacx 2.0"
+	Game = "Doom"
+	Config = "Hacx"
+	Mapinfo = "mapinfo/hacxharm.txt"
+	MustContain = "MAP01", "HACX-E"
+	BannerColors = "ff ff ff", "00 88 22"
+}
+
+IWad
+{
 	Name = "Hacx: Twitch'n Kill"
 	Game = "Doom"
 	Config = "Hacx"
@@ -316,4 +326,5 @@ Names
 	"action2.wad"
 	"harm1.wad"
 	"hacx.wad"
+	"hacx2.wad"
 }

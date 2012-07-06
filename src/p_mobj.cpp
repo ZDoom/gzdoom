@@ -2168,10 +2168,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		mo->player->deltaviewheight = mo->player->GetDeltaViewHeight();
 	}
 
-	if (!(mo->flags2 & MF2_FLOATBOB))
-	{
-		mo->z += mo->velz;
-	}
+	mo->z += mo->velz;
 
 //
 // apply gravity
@@ -2250,11 +2247,6 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				}
 			}
 		}
-	}
-
-	if (mo->flags2 & MF2_FLOATBOB)
-	{
-		mo->z += mo->velz;
 	}
 
 //
@@ -3368,14 +3360,7 @@ void AActor::Tick ()
 			}
 
 		}
-		if (flags2 & MF2_FLOATBOB)
-		{ // Floating item bobbing motion
-			z += FloatBobDiffs[(FloatBobPhase + level.maptime) & 63];
-		}
-		if (velz || BlockingMobj ||
-			(z != floorz && (!(flags2 & MF2_FLOATBOB) ||
-			(z - FloatBobOffsets[(FloatBobPhase + level.maptime) & 63] != floorz)
-			)))
+		if (velz || BlockingMobj || z != floorz)
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
@@ -3808,11 +3793,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 		actor->SpawnPoint[2] = (actor->z - actor->floorz);
 	}
 
-	if (actor->flags2 & MF2_FLOATBOB)
-	{ // Prime the bobber
-		actor->FloatBobPhase = rng();
-		actor->z += FloatBobOffsets[(actor->FloatBobPhase + level.maptime - 1) & 63];
-	}
+	actor->FloatBobPhase = rng();	// Don't make everything bob in sync
 	if (actor->flags2 & MF2_FLOORCLIP)
 	{
 		actor->AdjustFloorClip ();
@@ -4967,7 +4948,7 @@ int P_GetThingFloorType (AActor *thing)
 
 bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool checkabove, bool alert)
 {
-	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
+	if (thing->flags3 & MF3_DONTSPLASH)
 		return false;
 
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))
@@ -5128,7 +5109,7 @@ bool P_HitFloor (AActor *thing)
 		return false;
 	}
 
-	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
+	if (thing->flags3 & MF3_DONTSPLASH)
 		return false;
 
 	// don't splash if landing on the edge above water/lava/etc....

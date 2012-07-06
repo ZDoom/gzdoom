@@ -61,6 +61,7 @@
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
 #include "r_data/voxels.h"
+#include "p_local.h"
 
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 
@@ -512,6 +513,12 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	fx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
 	fy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
 	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ);
+
+	// [RH] Make floatbobbing a renderer-only effect.
+	if (thing->flags2 & MF2_FLOATBOB)
+	{
+		fz += finesine[(Scale(thing->FloatBobPhase + level.maptime, FINEANGLES, 64) + r_TicFrac * ((FINEANGLES/64) / 1000)) & FINEMASK] * 8;
+	}
 
 	// transform the origin point
 	tr_x = fx - viewx;

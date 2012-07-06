@@ -379,10 +379,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	else
 	{
 		self->z = self->SpawnPoint[2] + self->floorz;
-		if (self->flags2 & MF2_FLOATBOB)
-		{
-			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
-		}
 	}
 	// Redo floor/ceiling check, in case of 3D floors
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);

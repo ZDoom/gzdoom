@@ -1471,12 +1471,7 @@ bool P_TestMobjLocation (AActor *mobj)
 	if (P_CheckPosition(mobj, mobj->x, mobj->y))
 	{ // XY is ok, now check Z
 		mobj->flags = flags;
-		fixed_t z = mobj->z;
-		if (mobj->flags2 & MF2_FLOATBOB)
-		{
-			z -= FloatBobOffsets[(mobj->FloatBobPhase + level.maptime - 1) & 63];
-		}
-		if ((z < mobj->floorz) || (z + mobj->height > mobj->ceilingz))
+		if ((mobj->z < mobj->floorz) || (mobj->z + mobj->height > mobj->ceilingz))
 		{ // Bad Z
 			return false;
 		}
@@ -4975,15 +4970,7 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 	{
 		fixed_t oldz = thing->z;
 
-		// If float bob, always stay the same approximate distance above
-		// the floor; otherwise only move things standing on the floor,
-		// and only do it if the drop is slow enough.
-		if (thing->flags2 & MF2_FLOATBOB)
-		{
-			thing->z = thing->z - oldfloorz + thing->floorz;
-			P_CheckFakeFloorTriggers (thing, oldz);
-		}
-		else if ((thing->flags & MF_NOGRAVITY) || (thing->flags5 & MF5_MOVEWITHSECTOR) ||
+		if ((thing->flags & MF_NOGRAVITY) || (thing->flags5 & MF5_MOVEWITHSECTOR) ||
 			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9*FRACUNIT)
 			 && thing->z - thing->floorz <= cpos->moveamt))
 		{
@@ -5008,8 +4995,7 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 	if (oldfloorz == thing->floorz) return;
 
 	// Move things intersecting the floor up
-	if (thing->z <= thing->floorz ||
-		(!(thing->flags & MF_NOGRAVITY) && (thing->flags2 & MF2_FLOATBOB)))
+	if (thing->z <= thing->floorz)
 	{
 		if (thing->flags4 & MF4_ACTLIKEBRIDGE) 
 		{
@@ -5018,14 +5004,7 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 		}
 		intersectors.Clear ();
 		fixed_t oldz = thing->z;
-		if (!(thing->flags2 & MF2_FLOATBOB))
-		{
-			thing->z = thing->floorz;
-		}
-		else
-		{
-			thing->z = thing->z - oldfloorz + thing->floorz;
-		}
+		thing->z = thing->floorz;
 		switch (P_PushUp (thing, cpos))
 		{
 		default:

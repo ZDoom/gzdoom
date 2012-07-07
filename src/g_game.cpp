@@ -1521,12 +1521,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 		}
 	}
 
-	if (playernum < 4)
-		spot->type = playernum+1;
-	else 
-		spot->type = playernum + gameinfo.player5start - 4;
-
-	AActor *mo = P_SpawnPlayer (spot);
+	AActor *mo = P_SpawnPlayer(spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
@@ -1599,7 +1594,7 @@ void G_DoReborn (int playernum, bool freshbot)
 
 		if (G_CheckSpot (playernum, &playerstarts[playernum]) )
 		{
-			AActor *mo = P_SpawnPlayer (&playerstarts[playernum]);
+			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 		else
@@ -1609,27 +1604,13 @@ void G_DoReborn (int playernum, bool freshbot)
 			{
 				if (G_CheckSpot (playernum, &playerstarts[i]) )
 				{
-					int oldtype = playerstarts[i].type;
-
-					// fake as other player
-					// [RH] These numbers should be common across all games. Or better yet, not
-					// used at all outside P_SpawnMapThing().
-					if (playernum < 4)
-					{
-						playerstarts[i].type = playernum + 1;
-					}
-					else
-					{
-						playerstarts[i].type = playernum + gameinfo.player5start - 4;
-					}
-					AActor *mo = P_SpawnPlayer (&playerstarts[i]);
+					AActor *mo = P_SpawnPlayer(&playerstarts[i], playernum);
 					if (mo != NULL) P_PlayerStartStomp(mo);
-					playerstarts[i].type = oldtype; 			// restore 
 					return;
 				}
 				// he's going to be inside something.  Too bad.
 			}
-			AActor *mo = P_SpawnPlayer (&playerstarts[playernum]);
+			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 	}

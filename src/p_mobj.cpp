@@ -4074,29 +4074,16 @@ EXTERN_CVAR (Bool, chasedemo)
 
 extern bool demonew;
 
-APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
+APlayerPawn *P_SpawnPlayer (FMapThing *mthing, int playernum, bool tempplayer)
 {
-	int		  playernum;
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
 	BYTE	  state;
 	fixed_t spawn_x, spawn_y, spawn_z;
 	angle_t spawn_angle;
 
-	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
-	//		To make things simpler, figure out which player is being
-	//		spawned here.
-	if (mthing->type <= 4)
-	{
-		playernum = mthing->type - 1;
-	}
-	else
-	{
-		playernum = mthing->type - gameinfo.player5start + 4;
-	}
-
 	// not playing?
-	if (playernum >= MAXPLAYERS || !playeringame[playernum])
+	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !playeringame[playernum])
 		return NULL;
 
 	p = &players[playernum];
@@ -4495,7 +4482,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		// save spots for respawning in network games
 		playerstarts[pnum] = *mthing;
 		if (!deathmatch)
-			return P_SpawnPlayer (mthing);
+			return P_SpawnPlayer(&playerstarts[pnum], pnum);
 
 		return NULL;
 	}

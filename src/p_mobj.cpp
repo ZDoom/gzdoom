@@ -3392,6 +3392,20 @@ void AActor::Tick ()
 						} 
 						z = onmo->z + onmo->height;
 					}
+					// Check for MF6_BUMPSPECIAL
+					// By default, only players can activate things by bumping into them
+					// We trigger specials as long as we are on top of it and not just when
+					// we land on it. This could be considered as gravity making us continually
+					// bump into it, but it also avoids having to worry about walking on to
+					// something without dropping and not triggering anything.
+					if ((onmo->flags6 & MF6_BUMPSPECIAL) && ((player != NULL)
+						|| ((onmo->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
+						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
+						) && (level.maptime > onmo->lastbump)) // Leave the bumper enough time to go away
+					{
+						if (P_ActivateThingSpecial(onmo, this))
+							onmo->lastbump = level.maptime + TICRATE;
+					}
 					if (velz != 0 && (BounceFlags & BOUNCE_Actors))
 					{
 						P_BounceActor(this, onmo, true);

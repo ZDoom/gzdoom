@@ -1208,6 +1208,7 @@ MapFlagHandlers[] =
 	{ "nofallingdamage",				MITYPE_SCFLAGS,	0, ~(LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX) },
 	{ "noallies",						MITYPE_SETFLAG,	LEVEL_NOALLIES, 0 },
 	{ "filterstarts",					MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
+	{ "useplayerstartz",				MITYPE_SETFLAG, LEVEL_USEPLAYERSTARTZ, 0 },
 	{ "activateowndeathspecials",		MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ "killeractivatesdeathspecials",	MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ "missilesactivateimpactlines",	MITYPE_SETFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },

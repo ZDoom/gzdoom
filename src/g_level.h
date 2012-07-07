@@ -162,7 +162,7 @@ enum ELevelFlags
 	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
 	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
 	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
-	//LEVEL_HEXENFORMAT			= 0x08000000,	// Level uses the Hexen map format
+	LEVEL_USEPLAYERSTARTZ		= 0x08000000,	// Use the Z position of player starts
 
 	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
 	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base

@@ -4080,7 +4080,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
 	BYTE	  state;
-	fixed_t spawn_x, spawn_y;
+	fixed_t spawn_x, spawn_y, spawn_z;
 	angle_t spawn_angle;
 
 	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
@@ -4160,8 +4160,24 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		}
 	}
 
+	if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
+		spawn_z = ONCEILINGZ;
+	else if (GetDefaultByType(p->cls)->flags2 & MF2_SPAWNFLOAT)
+		spawn_z = FLOATRANDZ;
+	else
+		spawn_z = ONFLOORZ;
+
 	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, spawn_x, spawn_y, ONFLOORZ, NO_REPLACE));
+		(Spawn (p->cls, spawn_x, spawn_y, spawn_z, NO_REPLACE));
+
+	if (level.flags & LEVEL_USEPLAYERSTARTZ)
+	{
+		if (spawn_z == ONFLOORZ)
+			mobj->z += mthing->z;
+		else if (spawn_z == ONCEILINGZ)
+			mobj->z -= mthing->z;
+		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	}
 
 	mobj->FriendPlayer = playernum + 1;	// [RH] players are their own friends
 	oldactor = p->mo;

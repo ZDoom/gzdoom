@@ -217,10 +217,10 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 	buttons_changed = ucmd->buttons ^ basis->buttons;
 	if (buttons_changed != 0)
 	{
-		BYTE bytes[4] = {  ucmd->buttons        & 0x7F,
-						  (ucmd->buttons >> 7)  & 0x7F,
-						  (ucmd->buttons >> 14) & 0x7F,
-						  (ucmd->buttons >> 21) & 0xFF };
+		BYTE bytes[4] = {  BYTE(ucmd->buttons        & 0x7F),
+						  BYTE((ucmd->buttons >> 7)  & 0x7F),
+						  BYTE((ucmd->buttons >> 14) & 0x7F),
+						  BYTE((ucmd->buttons >> 21) & 0xFF) };
 
 		flags |= UCMDF_BUTTONS;
 

@@ -2104,7 +2104,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	if (level.time != 0 || level.maptime != 0)
 	{
-		DWORD time[2] = { BigLong(TICRATE), BigLong(level.time) };
+		DWORD time[2] = { DWORD(BigLong(TICRATE)), DWORD(BigLong(level.time)) };
 		M_AppendPNGChunk (stdfile, MAKE_ID('p','t','I','c'), (BYTE *)&time, 8);
 	}
 

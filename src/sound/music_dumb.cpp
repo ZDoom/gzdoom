@@ -532,7 +532,7 @@ DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FILE *f
 		if (fread(mem + lenhave, 1, lenfull - lenhave, file) != (size_t)(lenfull - lenhave))
 		{
 			delete[] mem;
-			return false;
+			return NULL;
 		}
 		filestate->ptr = mem;
 	}

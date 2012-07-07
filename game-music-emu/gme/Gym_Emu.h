@@ -34,7 +34,7 @@ public:
 	
 public:
 	// deprecated
-	Music_Emu::load;
+	using Music_Emu::load;
 	blargg_err_t load( header_t const& h, Data_Reader& in ) // use Remaining_Reader
 			{ return load_remaining_( &h, sizeof h, in ); }
 	enum { gym_rate = 60 }; 

@@ -19,6 +19,7 @@
 #include "ravenshared.h"
 #include "farchive.h"
 #include "v_palette.h"
+#include "g_game.h"
 
 // Include all the Hexen stuff here to reduce compile time
 #include "a_bats.cpp"

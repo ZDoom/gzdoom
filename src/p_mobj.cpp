@@ -4481,9 +4481,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 		// save spots for respawning in network games
 		playerstarts[pnum] = *mthing;
-		if (!deathmatch)
+		AllPlayerStarts.Push(*mthing);
+		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
+		{
 			return P_SpawnPlayer(&playerstarts[pnum], pnum);
-
+		}
 		return NULL;
 	}
 

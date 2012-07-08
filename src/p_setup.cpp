@@ -184,6 +184,7 @@ bool		ForceNodeBuild;
 // Maintain single and multi player starting spots.
 TArray<FMapThing> deathmatchstarts (16);
 FMapThing		playerstarts[MAXPLAYERS];
+TArray<FMapThing> AllPlayerStarts;
 
 static void P_AllocateSideDefs (int count);
 
@@ -3910,7 +3911,9 @@ void P_SetupLevel (char *lumpname, int position)
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
 
-	deathmatchstarts.Clear ();
+	deathmatchstarts.Clear();
+	AllPlayerStarts.Clear();
+	memset(playerstarts, 0, sizeof(playerstarts));
 
 	if (!buildmap)
 	{
@@ -3974,6 +3977,19 @@ void P_SetupLevel (char *lumpname, int position)
 			{
 				players[i].mo = NULL;
 				G_DeathMatchSpawnPlayer (i);
+			}
+		}
+	}
+	// the same, but for random single/coop player starts
+	else if (level.flags2 & LEVEL2_RANDOMPLAYERSTARTS)
+	{
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i])
+			{
+				players[i].mo = NULL;
+				FMapThing *mthing = G_PickPlayerStart(i);
+				P_SpawnPlayer(mthing, i);
 			}
 		}
 	}

@@ -405,6 +405,7 @@ extern TArray<FMapThing> deathmatchstarts;
 
 // Player spawn spots.
 extern	FMapThing		playerstarts[MAXPLAYERS];
+extern TArray<FMapThing> AllPlayerStarts;
 
 
 #endif					// __DOOMDATA__

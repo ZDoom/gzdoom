@@ -87,6 +87,7 @@
 
 
 static FRandom pr_dmspawn ("DMSpawn");
+static FRandom pr_pspawn ("PlayerSpawn");
 
 const int SAVEPICWIDTH = 216;
 const int SAVEPICHEIGHT = 162;
@@ -1505,8 +1506,8 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	{ // No good spot, so the player will probably get stuck.
 	  // We were probably using select farthest above, and all
 	  // the spots were taken.
-		spot = &playerstarts[playernum];
-		if (spot == NULL || spot->type == 0)
+		spot = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
+		if (!G_CheckSpot(playernum, spot))
 		{ // This map doesn't have enough coop spots for this player
 		  // to use one.
 			spot = SelectRandomDeathmatchSpot(playernum, selections);
@@ -1520,9 +1521,39 @@ void G_DeathMatchSpawnPlayer (int playernum)
 			}
 		}
 	}
-
 	AActor *mo = P_SpawnPlayer(spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
+}
+
+//
+// G_PickPlayerStart
+//
+FMapThing *G_PickPlayerStart(int playernum, int flags)
+{
+	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM))
+	{
+		if (!(flags & PPS_NOBLOCKINGCHECK))
+		{
+			TArray<FMapThing *> good_starts;
+			unsigned int i;
+
+			// Find all unblocked player starts.
+			for (i = 0; i < AllPlayerStarts.Size(); ++i)
+			{
+				if (G_CheckSpot(playernum, &AllPlayerStarts[i]))
+				{
+					good_starts.Push(&AllPlayerStarts[i]);
+				}
+			}
+			if (good_starts.Size() > 0)
+			{ // Pick an open spot at random.
+				return good_starts[pr_pspawn(good_starts.Size())];
+			}
+	}
+		// Pick a spot at random, whether it's open or not.
+		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
+	}
+	return &playerstarts[playernum];
 }
 
 //
@@ -1576,8 +1607,6 @@ void G_DoReborn (int playernum, bool freshbot)
 	else
 	{
 		// respawn at the start
-		int i;
-
 		// first disassociate the corpse
 		if (players[playernum].mo)
 		{
@@ -1585,32 +1614,23 @@ void G_DoReborn (int playernum, bool freshbot)
 			players[playernum].mo->player = NULL;
 		}
 
-		// spawn at random spot if in death match
+		// spawn at random spot if in deathmatch
 		if (deathmatch)
 		{
 			G_DeathMatchSpawnPlayer (playernum);
 			return;
 		}
 
-		if (G_CheckSpot (playernum, &playerstarts[playernum]) )
+		if (!(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
+			G_CheckSpot (playernum, &playerstarts[playernum]))
 		{
 			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 		else
-		{
-			// try to spawn at one of the other players' spots
-			for (i = 0; i < MAXPLAYERS; i++)
-			{
-				if (G_CheckSpot (playernum, &playerstarts[i]) )
-				{
-					AActor *mo = P_SpawnPlayer(&playerstarts[i], playernum);
-					if (mo != NULL) P_PlayerStartStomp(mo);
-					return;
-				}
-				// he's going to be inside something.  Too bad.
-			}
-			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
+		{ // try to spawn at any random player's spot
+			FMapThing *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
+			AActor *mo = P_SpawnPlayer(start, playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 	}
@@ -1621,8 +1641,6 @@ void G_ScreenShot (char *filename)
 	shotfile = filename;
 	gameaction = ga_screenshot;
 }
-
-
 
 
 

@@ -1333,9 +1333,10 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 	bool res;
 	if (CanPickup(toucher))
 		res = TryPickup(toucher);
-	else
+	else if (!(ItemFlags & IF_RESTRICTABSOLUTELY))
 		res = TryPickupRestricted(toucher);	// let an item decide for itself how it will handle this
-
+	else
+		return false;
 
 	// Morph items can change the toucher so we need an option to return this info.
 	if (toucher_return != NULL) *toucher_return = toucher;

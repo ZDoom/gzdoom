@@ -131,6 +131,7 @@ enum
 	IF_INITEFFECTFAILED	= 1<<16,	// CreateCopy tried to activate a powerup and activation failed (can happen with PowerMorph)
 	IF_NOATTENPICKUPSOUND = 1<<17,	// Play pickup sound with ATTN_NONE
 	IF_PERSISTENTPOWER	= 1<<18,	// Powerup is kept when travelling between levels
+	IF_RESTRICTABSOLUTELY = 1<<19,	// RestrictedTo and ForbiddenTo do not allow pickup in any form by other classes
 };
 
 
@@ -343,7 +344,6 @@ enum
 	WIF_MELEEWEAPON =		0x00008000,	// melee weapon. Used by bots and monster AI.
 	WIF_DEHAMMO	=			0x00010000,	// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
 										// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
-
 	WIF_CHEATNOTWEAPON	=	0x08000000,	// Give cheat considers this not a weapon (used by Sigil)
 
 	// Flags used only by bot AI:

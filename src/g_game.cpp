@@ -1375,7 +1375,7 @@ void G_PlayerReborn (int player)
 // because something is occupying it 
 //
 
-bool G_CheckSpot (int playernum, FMapThing *mthing)
+bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 {
 	fixed_t x;
 	fixed_t y;
@@ -1424,7 +1424,7 @@ bool G_CheckSpot (int playernum, FMapThing *mthing)
 //
 
 // [RH] Returns the distance of the closest player to the given mapthing
-static fixed_t PlayersRangeFromSpot (FMapThing *spot)
+static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 {
 	fixed_t closest = INT_MAX;
 	fixed_t distance;
@@ -1446,10 +1446,10 @@ static fixed_t PlayersRangeFromSpot (FMapThing *spot)
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.
-static FMapThing *SelectFarthestDeathmatchSpot (size_t selections)
+static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 {
 	fixed_t bestdistance = 0;
-	FMapThing *bestspot = NULL;
+	FPlayerStart *bestspot = NULL;
 	unsigned int i;
 
 	for (i = 0; i < selections; i++)
@@ -1467,7 +1467,7 @@ static FMapThing *SelectFarthestDeathmatchSpot (size_t selections)
 }
 
 // [RH] Select a deathmatch spawn spot at random (original mechanism)
-static FMapThing *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
+static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
 {
 	unsigned int i, j;
 
@@ -1487,7 +1487,7 @@ static FMapThing *SelectRandomDeathmatchSpot (int playernum, unsigned int select
 void G_DeathMatchSpawnPlayer (int playernum)
 {
 	unsigned int selections;
-	FMapThing *spot;
+	FPlayerStart *spot;
 
 	selections = deathmatchstarts.Size ();
 	// [RH] We can get by with just 1 deathmatch start
@@ -1528,13 +1528,13 @@ void G_DeathMatchSpawnPlayer (int playernum)
 //
 // G_PickPlayerStart
 //
-FMapThing *G_PickPlayerStart(int playernum, int flags)
+FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 {
 	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM))
 	{
 		if (!(flags & PPS_NOBLOCKINGCHECK))
 		{
-			TArray<FMapThing *> good_starts;
+			TArray<FPlayerStart *> good_starts;
 			unsigned int i;
 
 			// Find all unblocked player starts.
@@ -1629,7 +1629,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 		else
 		{ // try to spawn at any random player's spot
-			FMapThing *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
+			FPlayerStart *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
 			AActor *mo = P_SpawnPlayer(start, playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}

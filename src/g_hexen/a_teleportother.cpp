@@ -158,7 +158,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 	fixed_t destX,destY;
 	angle_t destAngle;
 
-	FMapThing *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
+	FPlayerStart *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
 	destX = start->x;
 	destY = start->y;
 	destAngle = ANG45 * (start->angle/45);

@@ -38,7 +38,7 @@ bool AArtiTeleport::Use (bool pickup)
 	}
 	else
 	{
-		FMapThing *start = G_PickPlayerStart(int(Owner->player - players));
+		FPlayerStart *start = G_PickPlayerStart(int(Owner->player - players));
 		destX = start->x;
 		destY = start->y;
 		destAngle = ANG45 * (start->angle/45);

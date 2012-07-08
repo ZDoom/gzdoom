@@ -182,9 +182,9 @@ BYTE*			rejectmatrix;
 bool		ForceNodeBuild;
 
 // Maintain single and multi player starting spots.
-TArray<FMapThing> deathmatchstarts (16);
-FMapThing		playerstarts[MAXPLAYERS];
-TArray<FMapThing> AllPlayerStarts;
+TArray<FPlayerStart> deathmatchstarts (16);
+FPlayerStart		playerstarts[MAXPLAYERS];
+TArray<FPlayerStart> AllPlayerStarts;
 
 static void P_AllocateSideDefs (int count);
 
@@ -3988,7 +3988,7 @@ void P_SetupLevel (char *lumpname, int position)
 			if (playeringame[i])
 			{
 				players[i].mo = NULL;
-				FMapThing *mthing = G_PickPlayerStart(i);
+				FPlayerStart *mthing = G_PickPlayerStart(i);
 				P_SpawnPlayer(mthing, i);
 			}
 		}

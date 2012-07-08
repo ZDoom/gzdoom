@@ -4074,7 +4074,7 @@ EXTERN_CVAR (Bool, chasedemo)
 
 extern bool demonew;
 
-APlayerPawn *P_SpawnPlayer (FMapThing *mthing, int playernum, bool tempplayer)
+APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer)
 {
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
@@ -4356,7 +4356,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// count deathmatch start positions
 	if (mthing->type == 11)
 	{
-		deathmatchstarts.Push (*mthing);
+		FPlayerStart start(mthing);
+		deathmatchstarts.Push(start);
 		return NULL;
 	}
 
@@ -4480,11 +4481,12 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			return NULL;
 
 		// save spots for respawning in network games
-		playerstarts[pnum] = *mthing;
-		AllPlayerStarts.Push(*mthing);
+		FPlayerStart start(mthing);
+		playerstarts[pnum] = start;
+		AllPlayerStarts.Push(start);
 		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
 		{
-			return P_SpawnPlayer(&playerstarts[pnum], pnum);
+			return P_SpawnPlayer(&start, pnum);
 		}
 		return NULL;
 	}

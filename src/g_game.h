@@ -32,7 +32,7 @@ struct PNGHandle;
 //
 void G_DeathMatchSpawnPlayer (int playernum);
 
-struct FMapThing *G_PickPlayerStart (int playernum, int flags = 0);
+struct FPlayerStart *G_PickPlayerStart (int playernum, int flags = 0);
 enum
 {
 	PPS_FORCERANDOM			= 1,

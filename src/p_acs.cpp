@@ -5311,6 +5311,11 @@ scriptwait:
 			pc++;
 			goto scriptwait;
 
+		case PCD_SCRIPTWAITNAMED:
+			statedata = -FName(FBehavior::StaticLookupString(STACK(1)));
+			sp--;
+			goto scriptwait;
+
 		case PCD_CLEARLINESPECIAL:
 			if (activationline != NULL)
 			{

@@ -174,7 +174,7 @@ void KSpiritInit (AActor *spirit, AActor *korax)
 	spirit->health = KORAX_SPIRIT_LIFETIME;
 
 	spirit->tracer = korax;						// Swarm around korax
-	spirit->special2 = 32+(pr_kspiritinit()&7);	// Float bob index
+	spirit->special2 = FINEANGLES/2 + pr_kspiritinit(8 << BOBTOFINESHIFT);	// Float bob index
 	spirit->args[0] = 10; 						// initial turn value
 	spirit->args[1] = 0; 						// initial look angle
 

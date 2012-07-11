@@ -422,8 +422,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 	
 	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, true);
 	bobIndex = self->special2;
-	self->z += FloatBobOffsets[bobIndex]>>4;
-	self->special2 = (bobIndex+1)&63;
+	self->z += finesine[bobIndex << BOBTOFINESHIFT] >> 1;
+	self->special2 = (bobIndex + 1) & 63;
 }
 
 //===========================================================================

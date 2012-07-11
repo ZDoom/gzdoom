@@ -144,17 +144,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 		switch (j)
 		{ // float bob index
 			case 0:
-				mo->special2 = pr_holyatk2()&7; // upper-left
+				mo->special2 = pr_holyatk2(8 << BOBTOFINESHIFT); // upper-left
 				break;
 			case 1:
-				mo->special2 = 32+(pr_holyatk2()&7); // upper-right
+				mo->special2 = FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT); // upper-right
 				break;
 			case 2:
-				mo->special2 = (32+(pr_holyatk2()&7))<<16; // lower-left
+				mo->special2 = (FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT)) << 16; // lower-left
 				break;
 			case 3:
-				i = pr_holyatk2();
-				mo->special2 = ((32+(i&7))<<16)+32+(pr_holyatk2()&7);
+				i = pr_holyatk2(8 << BOBTOFINESHIFT);
+				mo->special2 = ((FINEANGLES/2 + i) << 16) + FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT);
 				break;
 		}
 		mo->z = self->z;
@@ -448,23 +448,19 @@ void CHolyWeave (AActor *actor, FRandom &pr_random)
 	int weaveXY, weaveZ;
 	int angle;
 
-	weaveXY = actor->special2>>16;
-	weaveZ = actor->special2&0xFFFF;
-	angle = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
-	newX = actor->x-FixedMul(finecosine[angle], 
-		FloatBobOffsets[weaveXY]<<2);
-	newY = actor->y-FixedMul(finesine[angle],
-		FloatBobOffsets[weaveXY]<<2);
-	weaveXY = (weaveXY+(pr_random()%5))&63;
-	newX += FixedMul(finecosine[angle], 
-		FloatBobOffsets[weaveXY]<<2);
-	newY += FixedMul(finesine[angle], 
-		FloatBobOffsets[weaveXY]<<2);
+	weaveXY = actor->special2 >> 16;
+	weaveZ = actor->special2 & FINEMASK;
+	angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
+	newX = actor->x - FixedMul(finecosine[angle], finesine[weaveXY] * 32);
+	newY = actor->y - FixedMul(finesine[angle], finesine[weaveXY] * 32);
+	weaveXY = (weaveXY + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
+	newX += FixedMul(finecosine[angle], finesine[weaveXY] * 32);
+	newY += FixedMul(finesine[angle], finesine[weaveXY] * 32);
 	P_TryMove(actor, newX, newY, true);
-	actor->z -= FloatBobOffsets[weaveZ]<<1;
-	weaveZ = (weaveZ+(pr_random()%5))&63;
-	actor->z += FloatBobOffsets[weaveZ]<<1;	
-	actor->special2 = weaveZ+(weaveXY<<16);
+	actor->z -= finesine[weaveZ] * 16;
+	weaveZ = (weaveZ + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
+	actor->z += finesine[weaveZ] * 16;
+	actor->special2 = weaveZ + (weaveXY << 16);
 }
 
 //============================================================================

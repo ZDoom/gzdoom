@@ -5297,20 +5297,19 @@ int DLevelScript::RunScript ()
 
 		case PCD_SCRIPTWAIT:
 			statedata = STACK(1);
+			sp--;
+scriptwait:
 			if (controller->RunningScripts.CheckKey(statedata) != NULL)
 				state = SCRIPT_ScriptWait;
 			else
 				state = SCRIPT_ScriptWaitPre;
-			sp--;
 			PutLast ();
 			break;
 
 		case PCD_SCRIPTWAITDIRECT:
-			state = SCRIPT_ScriptWait;
 			statedata = uallong(pc[0]);
 			pc++;
-			PutLast ();
-			break;
+			goto scriptwait;
 
 		case PCD_CLEARLINESPECIAL:
 			if (activationline != NULL)

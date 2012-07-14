@@ -257,7 +257,7 @@ DObject::DObject (PClass *inClass)
 
 DObject::~DObject ()
 {
-	if (!(ObjectFlags & OF_Cleanup))
+	if (!(ObjectFlags & OF_Cleanup) && !PClass::bShutdown)
 	{
 		DObject **probe;
 		PClass *type = GetClass();

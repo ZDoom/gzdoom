@@ -3363,6 +3363,10 @@ enum EACSFunctions
 	ACSF_ACS_NamedLockedExecuteDoor,
 	ACSF_ACS_NamedExecuteWithResult,
 	ACSF_ACS_NamedExecuteAlways,
+
+	// ZDaemon
+	ACSF_GetTeamScore = 19620,
+	ACSF_SetTeamScore,
 };
 
 int DLevelScript::SideFromID(int id, int side)

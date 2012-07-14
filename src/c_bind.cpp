@@ -124,7 +124,7 @@ static const FBinding DefBindings[] =
 	{ "pad_start", "pause" },
 	{ "pad_back", "menu_main" },
 	{ "lthumb", "crouch" },
-	{ NULL }
+	{ NULL, NULL }
 };
 
 static const FBinding DefRavenBindings[] =
@@ -135,13 +135,13 @@ static const FBinding DefRavenBindings[] =
 	{ "pgdn", "+lookup" },
 	{ "del", "+lookdown" },
 	{ "end", "centerview" },
-	{ NULL }
+	{ NULL, NULL }
 };
 
 static const FBinding DefHereticBindings[] =
 {
 	{ "backspace", "use ArtiTomeOfPower" },
-	{ NULL }
+	{ NULL, NULL }
 };
 
 static const FBinding DefHexenBindings[] =
@@ -156,7 +156,7 @@ static const FBinding DefHexenBindings[] =
 	{ "6", "use ArtiPork" },
 	{ "5", "use ArtiInvulnerability2" },
 	{ "scroll", "+showscores" },
-	{ NULL }
+	{ NULL, NULL }
 };
 
 static const FBinding DefStrifeBindings[] =
@@ -167,7 +167,7 @@ static const FBinding DefStrifeBindings[] =
 	{ "z", "showpop 3" },
 	{ "k", "showpop 2" },
 	{ "q", "invquery" },
-	{ NULL }
+	{ NULL, NULL }
 	// not done
 	// h - use health
 };
@@ -190,7 +190,7 @@ static const FBinding DefAutomapBindings[] =
 	{ "kp+", "+am_zoomin" },
 	{ "mwheelup", "am_zoom 1.2" },
 	{ "mwheeldown", "am_zoom -1.2" },
-	{ NULL }
+	{ NULL, NULL }
 };
 
 
@@ -583,7 +583,7 @@ void FKeyBindings::ArchiveBindings(FConfigFile *f, const char *matchcmd)
 //
 //=============================================================================
 
-int FKeyBindings::GetKeysForCommand (char *cmd, int *first, int *second)
+int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 {
 	int c, i;
 
@@ -609,7 +609,7 @@ int FKeyBindings::GetKeysForCommand (char *cmd, int *first, int *second)
 //
 //=============================================================================
 
-void FKeyBindings::UnbindACommand (char *str)
+void FKeyBindings::UnbindACommand (const char *str)
 {
 	int i;
 
@@ -829,6 +829,7 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	bool dclick;
 	int dclickspot;
 	BYTE dclickmask;
+	unsigned int nowtime;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
 		return false;
@@ -841,10 +842,11 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	dclick = false;
 
 	// This used level.time which didn't work outside a level.
-	if (DClickTime[ev->data1] > I_MSTime() && ev->type == EV_KeyDown)
+	nowtime = I_MSTime();
+	if (doublebinds != NULL && DClickTime[ev->data1] > nowtime && ev->type == EV_KeyDown)
 	{
 		// Key pressed for a double click
-		if (doublebinds != NULL) binding = doublebinds->GetBinding(ev->data1);
+		binding = doublebinds->GetBinding(ev->data1);
 		DClicked[dclickspot] |= dclickmask;
 		dclick = true;
 	}
@@ -853,11 +855,11 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 		if (ev->type == EV_KeyDown)
 		{ // Key pressed for a normal press
 			binding = binds->GetBinding(ev->data1);
-			DClickTime[ev->data1] = I_MSTime() + 571;
+			DClickTime[ev->data1] = nowtime + 571;
 		}
-		else if (DClicked[dclickspot] & dclickmask)
+		else if (doublebinds != NULL && DClicked[dclickspot] & dclickmask)
 		{ // Key released from a double click
-			if (doublebinds != NULL) binding = doublebinds->GetBinding(ev->data1);
+			binding = doublebinds->GetBinding(ev->data1);
 			DClicked[dclickspot] &= ~dclickmask;
 			DClickTime[ev->data1] = 0;
 			dclick = true;

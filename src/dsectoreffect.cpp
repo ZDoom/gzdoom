@@ -26,8 +26,9 @@
 #include "gi.h"
 #include "p_local.h"
 #include "p_3dmidtex.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "statnums.h"
+#include "farchive.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
 
@@ -222,7 +223,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 			//destheight = (dest < m_Sector->ceilingheight) ? dest : m_Sector->ceilingheight;
 			if ((m_Sector->ceilingplane.a | m_Sector->ceilingplane.b |
 				 m_Sector->floorplane.a | m_Sector->floorplane.b) == 0 &&
-				-dest > m_Sector->ceilingplane.d)
+				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > m_Sector->ceilingplane.d))
 			{
 				dest = -m_Sector->ceilingplane.d;
 			}
@@ -291,7 +292,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 			//destheight = (dest > m_Sector->floorheight) ? dest : m_Sector->floorheight;
 			if ((m_Sector->ceilingplane.a | m_Sector->ceilingplane.b |
 				 m_Sector->floorplane.a | m_Sector->floorplane.b) == 0 &&
-				dest < -m_Sector->floorplane.d)
+				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -m_Sector->floorplane.d))
 			{
 				dest = -m_Sector->floorplane.d;
 			}

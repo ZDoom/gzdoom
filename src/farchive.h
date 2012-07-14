@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include "dobject.h"
+#include "r_state.h"
 
 class FFile
 {
@@ -123,6 +124,7 @@ public:
 	bool Reopen ();	// Re-opens imploded file for reading only
 	void Close ();
 	bool IsOpen () const;
+	void GetSizes(unsigned int &one, unsigned int &two) const;
 
 	void Serialize (FArchive &arc);
 
@@ -283,7 +285,11 @@ template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
 }
 
 struct FStrifeDialogueNode;
+struct FSwitchDef;
+struct FDoorAnimation;
 template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node);
+template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &sw);
+template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &da);
 
 
 
@@ -305,5 +311,18 @@ inline FArchive &operator<< (FArchive &arc, TArray<T,TT> &self)
 	}
 	return arc;
 }
+
+struct sector_t;
+struct line_t;
+struct vertex_t;
+struct side_t;
+
+FArchive &operator<< (FArchive &arc, sector_t *&sec);
+FArchive &operator<< (FArchive &arc, const sector_t *&sec);
+FArchive &operator<< (FArchive &arc, line_t *&line);
+FArchive &operator<< (FArchive &arc, vertex_t *&vert);
+FArchive &operator<< (FArchive &arc, side_t *&side);
+
+
 
 #endif //__FARCHIVE_H__

@@ -1,0 +1,330 @@
+// Must be sorted in identification order (easiest to recognize first!)
+
+IWad
+{
+	Name = "Harmony"
+	Game = "Doom"
+	Config = "Harmony"
+	Mapinfo = "mapinfo/hacxharm.txt"
+	MustContain = "MAP01", "0HAWK01", "0CARA3", "0NOSE1"
+	BannerColors = "6e b4 d6", "45 4f 7e"
+}
+
+IWad
+{
+	Name = "Hacx 2.0"
+	Game = "Doom"
+	Config = "Hacx"
+	Mapinfo = "mapinfo/hacxharm.txt"
+	MustContain = "MAP01", "HACX-E"
+	BannerColors = "ff ff ff", "00 88 22"
+}
+
+IWad
+{
+	Name = "Hacx: Twitch'n Kill"
+	Game = "Doom"
+	Config = "Hacx"
+	Mapinfo = "mapinfo/hacxharm.txt"
+	MustContain = "MAP01", "HACX-R"
+	BannerColors = "00 00 a8", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "Action Doom 2: Urban Brawl"
+	Game = "Doom"
+	Config = "UrbanBrawl"
+	Mapinfo = "mapinfo/urbanbrawl.txt"
+	MustContain = "MAP01", "AD2LIB"
+	BannerColors = "a8 a8 00", "a8 00 00"
+}
+
+IWad
+{
+	Name = "Chex(R) Quest 3"
+	Autoname = "Chex3"
+	Game = "Chex"
+	Config = "Chex"
+	Mapinfo = "mapinfo/chex.txt"
+	Compatibility = "NoTextcolor"
+	MustContain = "E1M1", "CYCLA1", "FLMBA1", "MAPINFO"
+	BannerColors = "ff ff 00", "00 c0 00"
+}
+
+IWad
+{
+	Name = "Chex(R) Quest"
+	Autoname = "Chex1"
+	Game = "Chex"
+	Config = "Chex"
+	Mapinfo = "mapinfo/chex.txt"
+	MustContain = "E1M1", "E4M1", "W94_1", "POSSH0M0"
+	BannerColors = "ff ff 00", "00 c0 00"
+}
+
+IWad
+{
+	Name = "Strife: Quest for the Sigil"
+	Game = "Strife"
+	Config = "Strife"
+	Mapinfo = "mapinfo/strife.txt"
+	MustContain = "MAP01", "MAP33", "ENDSTRF"
+	BannerColors = "d0 ad 99", "00 6b 65"
+	Load = "voices.wad"
+}
+
+IWad
+{
+	Name = "Strife: Teaser (New Version)"
+	Game = "Strife"
+	Config = "Strife"
+	Mapinfo = "mapinfo/strife.txt"
+	Compatibility = "Shareware", "Teaser2"
+	MustContain = "MAP33", "ENDSTRF", "INVCURS"
+	BannerColors = "d0 ad 99", "00 6b 65"
+}
+
+IWad
+{
+	Name = "Strife: Teaser (Old Version)"
+	Game = "Strife"
+	Config = "Strife"
+	Mapinfo = "mapinfo/strife.txt"
+	Compatibility = "Shareware"
+	MustContain = "MAP33", "ENDSTRF"
+	BannerColors = "d0 ad 99", "00 6b 65"
+}
+
+IWad
+{
+	Name = "Hexen: Beyond Heretic"
+	Game = "Hexen"
+	Config = "Hexen"
+	Mapinfo = "mapinfo/hexen.txt"
+	Compatibility = "Poly1"
+	MustContain = "TITLE", "MAP01", "MAP40", "WINNOWR"
+	BannerColors = "f0 f0 f0", "6b 3c 18"
+}
+	
+IWad
+{
+	Name = "Hexen: Deathkings of the Dark Citadel"
+	Autoname = "HexenDK"
+	Game = "Hexen"
+	Config = "Hexen"
+	Mapinfo = "mapinfo/hexen.txt"
+	Compatibility = "Poly1", "Poly2"
+	MustContain = "TITLE", "MAP60", "CLUS1MSG"
+	BannerColors = "f0 f0 f0", "6b 3c 18"
+	Required = "Hexen: Beyond Heretic"
+}
+
+IWad
+{
+	Name = "Hexen: Demo Version"
+	Game = "Hexen"
+	Config = "Hexen"
+	Mapinfo = "mapinfo/hexen.txt"
+	Compatibility = "Shareware"
+	MustContain = "TITLE", "MAP01", "WINNOWR"
+	BannerColors = "f0 f0 f0", "6b 3c 18"
+}
+	
+IWad
+{
+	Name = "Blasphemer"
+	Autoname = "Blasphemer"
+	Game = "Heretic"
+	Config = "Heretic"
+	Mapinfo = "mapinfo/heretic.txt"
+	MustContain = "E1M1", "E2M1", "TITLE", "BLASPHEM"
+	BannerColors = "73 00 00", "00 00 00"
+}
+
+IWad
+{
+	Name = "Heretic: Shadow of the Serpent Riders"
+	Autoname = "Heretic1"
+	Game = "Heretic"
+	Config = "Heretic"
+	Mapinfo = "mapinfo/heretic.txt"
+	Compatibility = "Extended"
+	MustContain = "E1M1", "E2M1", "TITLE", "MUS_E1M1", "EXTENDED"
+	BannerColors = "fc fc 00", "a8 00 00"
+}
+
+IWad
+{
+	Name = "Heretic"
+	Autoname = "Heretic1"
+	Game = "Heretic"
+	Config = "Heretic"
+	Mapinfo = "mapinfo/heretic.txt"
+	MustContain = "E1M1", "E2M1", "TITLE", "MUS_E1M1"
+	BannerColors = "fc fc 00", "a8 00 00"
+}
+
+IWad
+{
+	Name = "Heretic Shareware"
+	Game = "Heretic"
+	Config = "Heretic"
+	Mapinfo = "mapinfo/hereticsw.txt"
+	Compatibility = "Shareware"
+	MustContain = "E1M1", "TITLE", "MUS_E1M1"
+	BannerColors = "fc fc 00", "a8 00 00"
+}
+
+IWad
+{
+	Name = "FreeDM"
+	Autoname = "FreeDM"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "MAP01", "FREEDM"
+	BannerColors = "32 54 43", "c6 dc d1"
+}
+
+IWad
+{
+	Name = "Freedoom"
+	Autoname = "Freedoom"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "MAP01", "FREEDOOM"
+	BannerColors = "32 54 43", "c6 dc d1"
+}
+
+IWad
+{
+	Name = "Ultimate Freedoom"
+	Autoname = "Freedoom1"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom1.txt"
+	MustContain = "E1M1", "E2M1", "E3M1", "FREEDOOM"
+	BannerColors = "32 54 43", "c6 dc d1"
+}
+	
+IWad
+{
+	Name = "Freedoom 'Demo'"
+	Autoname = "Freedoom1"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom1.txt"
+	MustContain = "E1M1", "FREEDOOM"
+	BannerColors = "32 54 43", "c6 dc d1"
+}
+	
+IWad
+{
+	Name = "The Ultimate DOOM"
+	Autoname = "Doom1"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/ultdoom.txt"
+	Compatibility = "Shorttex"
+	MustContain = "E1M1","E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
+		          "E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
+		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1", "E4M2"
+	BannerColors = "54 54 54", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "DOOM Registered"
+	Autoname = "Doom1"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom1.txt"
+	Compatibility = "Shorttex"
+	MustContain = "E1M1","E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
+		          "E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
+		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1"
+	BannerColors = "54 54 54", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "DOOM Shareware"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom1.txt"
+	Compatibility = "Shareware", "Shorttex"
+	MustContain = "E1M1"
+	BannerColors = "54 54 54", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "Final Doom: TNT - Evilution"
+	Autoname = "TNT"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/tnt.txt"
+	Compatibility = "Shorttex", "Stairs"
+	MustContain = "MAP01", "REDTNT2"
+	BannerColors = "a8 00 00", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "Final Doom: Plutonia Experiment"
+	Autoname = "Plutonia"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/plutonia.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01", "CAMO1"
+	BannerColors = "a8 00 00", "a8 a8 a8"
+}
+
+// Doom 2 must be last to be checked becaude MAP01 is its only requirement
+IWad
+{
+	Name = "DOOM 2: Hell on Earth"
+	Autoname = "Doom2"
+	Game = "Doom"
+	Config = "Doom"
+	Mapinfo = "mapinfo/doom2.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01"
+	BannerColors = "a8 00 00", "a8 a8 a8"
+}
+	
+
+
+Names
+{	
+	"doom2f.wad"
+	"doom2.wad"
+	"plutonia.wad"
+	"tnt.wad"
+	"doomu.wad"
+	"doom.wad"
+	"doom1.wad"
+	"heretic.wad"
+	"heretic1.wad"
+	"hexen.wad"
+	"hexdd.wad"
+	"hexendemo.wad"
+	"hexdemo.wad"
+	"strife1.wad"
+	"strife0.wad"
+	"freedoom.wad"
+	"freedoom1.wad"
+	"freedoomu.wad"
+	"freedm.wad"
+	"blasphem.wad"
+	"blasphemer.wad"
+	"chex.wad"
+	"chex3.wad"
+	"action2.wad"
+	"harm1.wad"
+	"hacx.wad"
+	"hacx2.wad"
+}

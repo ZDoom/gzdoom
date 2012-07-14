@@ -85,14 +85,14 @@ The FON2 header is followed by variable length data:
 #include "v_font.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "r_data.h"
 #include "i_system.h"
 #include "gi.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "hu_stuff.h"
-#include "r_draw.h"
-#include "r_translate.h"
+#include "farchive.h"
+#include "textures/textures.h"
+#include "r_data/r_translate.h"
 #include "colormatcher.h"
 #include "v_palette.h"
 
@@ -345,6 +345,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	Name = copystring (name);
 	Next = FirstFont;
 	FirstFont = this;
+	Cursor = '_';
 
 	maxyoffs = 0;
 
@@ -738,6 +739,11 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range) const
 
 int FFont::GetCharCode(int code, bool needpic) const
 {
+	if (code < 0 && code >= -128)
+	{
+		// regular chars turn negative when the 8th bit is set.
+		code &= 255;
+	}
 	if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
 	{
 		return code;
@@ -1131,8 +1137,9 @@ void FSingleLumpFont::LoadBMF(int lump, const BYTE *data)
 	// BMF palettes are only six bits per component. Fix that.
 	for (i = 0; i < ActiveColors*3; ++i)
 	{
-		raw_palette[i] = (data[17 + i] << 2) | (data[17 + i] >> 4);
+		raw_palette[i+3] = (data[17 + i] << 2) | (data[17 + i] >> 4);
 	}
+	ActiveColors++;
 
 	// Sort the palette by increasing brightness
 	for (i = 0; i < ActiveColors; ++i)
@@ -1892,6 +1899,7 @@ void V_InitCustomFonts()
 	int start;
 	int first;
 	int count;
+	char cursor = '_';
 
 	while ((llump = Wads.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
@@ -1938,6 +1946,11 @@ void V_InitCustomFonts()
 					count = sc.Number;
 					format = 1;
 				}
+				else if (sc.Compare ("CURSOR"))
+				{
+					sc.MustGetString();
+					cursor = sc.String[0];
+				}
 				else if (sc.Compare ("NOTRANSLATION"))
 				{
 					if (format == 1) goto wrong;
@@ -1981,7 +1994,8 @@ void V_InitCustomFonts()
 			}
 			if (format == 1)
 			{
-				new FFont (namebuffer, templatebuf, first, count, start);
+				FFont *fnt = new FFont (namebuffer, templatebuf, first, count, start);
+				fnt->SetCursor(cursor);
 			}
 			else if (format == 2)
 			{
@@ -2003,7 +2017,8 @@ void V_InitCustomFonts()
 				}
 				if (count > 0)
 				{
-					new FSpecialFont (namebuffer, first, count, &lumplist[first], notranslate);
+					FFont *fnt = new FSpecialFont (namebuffer, first, count, &lumplist[first], notranslate);
+					fnt->SetCursor(cursor);
 				}
 			}
 			else goto wrong;
@@ -2028,7 +2043,7 @@ void V_InitFontColors ()
 {
 	TArray<FName> names;
 	int lump, lastlump = 0;
-	TranslationParm tparm = { 0 };	// Silence GCC
+	TranslationParm tparm = { 0, 0, {0}, {0} };	// Silence GCC (for real with -Wextra )
 	TArray<TranslationParm> parms;
 	TArray<TempParmInfo> parminfo;
 	TArray<TempColorInfo> colorinfo;
@@ -2041,8 +2056,22 @@ void V_InitFontColors ()
 
 	info.Index = -1;
 
+	TranslationParms[0].Clear();
+	TranslationParms[1].Clear();
+	TranslationLookup.Clear();
+	TranslationColors.Clear();
+
 	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
+		if (gameinfo.flags & GI_NOTEXTCOLOR)
+		{
+			// Chex3 contains a bad TEXTCOLO lump, probably to force all text to be green.
+			// This renders the Gray, Gold, Red and Yellow color range inoperable, some of
+			// which are used by the menu. So we have no choice but to skip this lump so that
+			// all colors work properly.
+			// The text colors should be the end user's choice anyway.
+			if (Wads.GetLumpFile(lump) == 1) continue;
+		}
 		FScanner sc(lump);
 		while (sc.GetString())
 		{
@@ -2368,6 +2397,7 @@ void V_InitFonts()
 		else if (Wads.CheckNumForName ("FONTA_S") >= 0)
 		{
 			SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+			SmallFont->SetCursor('[');
 		}
 		else
 		{
@@ -2415,4 +2445,14 @@ void V_InitFonts()
 			IntermissionFont = BigFont;
 		}
 	}
+}
+
+void V_ClearFonts()
+{
+	while (FFont::FirstFont != NULL)
+	{
+		delete FFont::FirstFont;
+	}
+	FFont::FirstFont = NULL;
+	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = NULL;
 }

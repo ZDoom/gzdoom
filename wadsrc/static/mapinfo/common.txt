@@ -1,0 +1,308 @@
+
+Intermission Inter_Titlescreen
+{
+	GotoTitle
+	{
+	}
+}
+
+
+Intermission Inter_Pic1
+{
+	Image
+	{
+		Background = "@1"	// index into finalepic FadeIn gameinfo block
+	}
+}
+
+Intermission Inter_Pic2
+{
+	Image
+	{
+		Background = "@2"
+	}
+}
+
+Intermission Inter_Pic3
+{
+	Image
+	{
+		Background = "@3"
+	}
+}
+
+Intermission Inter_Bunny
+{
+	Scroller
+	{
+		ScrollDirection = Left
+		Background = "PFUB1"
+		Background2 = "PFUB2"
+		Music = "$MUSIC_BUNNY"
+		InitialDelay = -230
+		Scrolltime = -640
+		Time = -1130
+	}
+	Link = TheEnd
+}
+
+Intermission TheEnd
+{
+	// no backgrounds are set here so this will reuse the previous one.
+	Image
+	{
+		Draw = "END0", 108, 68
+		Time = -50
+	}
+	Image
+	{
+		Draw = "END1", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END2", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END3", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END4", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END5", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+	Image
+	{
+		Draw = "END6", 108, 68
+		Time = -5
+		Sound = "weapons/pistol"
+	}
+}
+
+Intermission Inter_Underwater
+{
+	Image
+	{
+		Background = "E2END", 0, "E2PAL"
+	}
+	GotoTitle
+	{
+	}
+}
+
+Intermission Inter_Demonscroll
+{
+	Scroller
+	{
+		ScrollDirection = Up
+		Background = "FINAL1"
+		Background2 = "FINAL2"
+		InitialDelay = 2
+		Scrolltime = -600
+	}
+}
+
+Intermission Inter_BuyStrife
+{
+	Scroller
+	{
+		ScrollDirection = Left
+		Background = "CREDIT"
+		Background2 = "VELLOGO"
+		InitialDelay = -230
+		Scrolltime = -640
+	}
+}
+
+Intermission Inter_Cast
+{
+	Image
+	{
+		// This is only here to initialize the background and the music
+		Background = "$bgcastcall"
+		Time = -1
+		Music = "$MUSIC_EVIL"
+	}
+	Link = Doom2Cast
+}
+
+Intermission Doom2Cast
+{
+	Cast
+	{
+		CastClass = "Zombieman"
+		CastName = "$CC_ZOMBIE"
+		AttackSound = "Missile", 1, "grunt/attack"
+	}
+	Cast
+	{
+		CastClass = "ShotgunGuy"
+		CastName = "$CC_SHOTGUN"
+		AttackSound = "Missile", 1, "shotguy/attack"
+	}
+	Cast
+	{
+		CastClass = "ChaingunGuy"
+		CastName = "$CC_HEAVY"
+		AttackSound = "Missile", 1, "chainguy/attack"
+		AttackSound = "Missile", 2, "chainguy/attack"
+		AttackSound = "Missile", 3, "chainguy/attack"
+	}
+	Cast
+	{
+		CastClass = "DoomImp"
+		CastName = "$CC_IMP"
+		AttackSound = "Missile", 2, "imp/attack"
+	}
+	Cast
+	{
+		CastClass = "Demon"
+		CastName = "$CC_DEMON"
+		AttackSound = "Melee", 1, "demon/melee"
+	}
+	Cast
+	{
+		CastClass = "LostSoul"
+		CastName = "$CC_LOST"
+		AttackSound = "Missile", 1, "skull/melee"
+	}
+	Cast
+	{
+		CastClass = "Cacodemon"
+		CastName = "$CC_CACO"
+		AttackSound = "Missile", 1, "caco/attack"
+	}
+	Cast
+	{
+		CastClass = "HellKnight"
+		CastName = "$CC_HELL"
+		AttackSound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		CastClass = "BaronOfHell"
+		CastName = "$CC_BARON"
+		AttackSound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		CastClass = "Arachnotron"
+		CastName = "$CC_ARACH"
+		AttackSound = "Missile", 1, "baby/attack"
+	}
+	Cast
+	{
+		CastClass = "PainElemental"
+		CastName = "$CC_PAIN"
+		AttackSound = "Missile", 2, "skull/melee"
+	}
+	Cast
+	{
+		CastClass = "Revenant"
+		CastName = "$CC_REVEN"
+		AttackSound = "Missile", 1, "skeleton/attack"
+		AttackSound = "Melee", 1, "skeleton/swing"
+		AttackSound = "Melee", 3, "skeleton/melee"
+	}
+	Cast
+	{
+		CastClass = "Fatso"
+		CastName = "$CC_MANCU"
+		AttackSound = "Missile", 1, "fatso/attack"
+		AttackSound = "Missile", 4, "fatso/attack"
+		AttackSound = "Missile", 7, "fatso/attack"
+	}
+	Cast
+	{
+		CastClass = "Archvile"
+		CastName = "$CC_ARCH"
+		AttackSound = "Missile", 1, "vile/start"
+	}
+	Cast
+	{
+		CastClass = "SpiderMastermind"
+		CastName = "$CC_SPIDER"
+		AttackSound = "Missile", 1, "spider/attack"
+		AttackSound = "Missile", 2, "spider/attack"
+	}
+	Cast
+	{
+		CastClass = "Cyberdemon"
+		CastName = "$CC_CYBER"
+		AttackSound = "Missile", 1, "weapons/rocklf"
+		AttackSound = "Missile", 3, "weapons/rocklf"
+		AttackSound = "Missile", 5, "weapons/rocklf"
+	}
+	Cast
+	{
+		CastClass = "DoomPlayer"
+		CastName = "$CC_HERO"
+		AttackSound = "Missile", 0, "weapons/sshotf"
+	}
+	Link = Doom2Cast	// restart cast call
+}
+
+Intermission Inter_Chess
+{
+	Fader
+	{
+		Music = "Hall"
+		Background = "FINALE1"
+		Time = 2
+		FadeType = FadeIn
+	}
+	TextScreen
+	{
+		Background = "FINALE1"
+		TextSpeed = 3
+		TextLump = "win1msg"
+		Time = -250
+	}
+	TextScreen
+	{
+		Music = "Orb"
+		Background = "FINALE2"
+		TextSpeed = 3
+		TextLump = "win2msg"
+		Time = -250
+	}
+	Fader
+	{
+		Background = "FINALE2"
+		Time = 2
+		FadeType = FadeOut
+	}
+	Fader
+	{
+		Music = "Chess"
+		Background = "FINALE3"
+		DrawConditional = "Multiplayer", "CHESSALL", 20, 0
+		DrawConditional = "ClericPlayer", "CHESSC", 60, 0
+		DrawConditional = "MagePlayer", "CHESSM", 60, 0
+		Time = 2
+		FadeType = FadeIn
+	}
+	TextScreen
+	{
+		Background = "FINALE3"
+		DrawConditional = "Multiplayer", "CHESSALL", 20, 0
+		DrawConditional = "ClericPlayer", "CHESSC", 60, 0
+		DrawConditional = "MagePlayer", "CHESSM", 60, 0
+		TextSpeed = 3
+		TextLump = "win3msg"
+		Position = 5, 135
+	}
+}

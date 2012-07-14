@@ -43,7 +43,6 @@
 
 #include "nodebuild.h"
 #include "templates.h"
-#include "r_main.h"
 
 #if 0
 #define D(x) x
@@ -165,6 +164,7 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 {
 	unsigned int i;
 
+	bsp->bDirty = false;
 	bsp->Verts.Resize(Vertices.Size());
 	for (i = 0; i < Vertices.Size(); ++i)
 	{

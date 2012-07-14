@@ -105,15 +105,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 			{
 				// If this is a monster, subtract it from the total monster
 				// count, because it already added to it during spawning.
-				if (mobj->CountsAsKill())
-				{
-					level.total_monsters--;
-				}
-				// Same, for items
-				if (mobj->flags & MF_COUNTITEM)
-				{
-					level.total_items--;
-				}
+				mobj->ClearCounters();
 				mobj->Destroy ();
 			}
 		}
@@ -352,15 +344,7 @@ nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 					{
 						// If this is a monster, subtract it from the total monster
 						// count, because it already added to it during spawning.
-						if (mobj->CountsAsKill())
-						{
-							level.total_monsters--;
-						}
-						// Same, for items
-						if (mobj->flags & MF_COUNTITEM)
-						{
-							level.total_items--;
-						}
+						mobj->ClearCounters();
 						mobj->Destroy ();
 					}
 					else
@@ -418,8 +402,7 @@ void P_RemoveThing(AActor * actor)
 	if (actor->player == NULL || actor != actor->player->mo)
 	{
 		// be friendly to the level statistics. ;)
-		if (actor->CountsAsKill() && actor->health > 0) level.total_monsters--;
-		if (actor->flags&MF_COUNTITEM) level.total_items--;
+		actor->ClearCounters();
 		actor->Destroy ();
 	}
 }

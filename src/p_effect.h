@@ -49,10 +49,38 @@
 #define FX_BLACKFOUNTAIN	0x00060000
 #define FX_WHITEFOUNTAIN	0x00070000
 
-struct particle_t;
+struct subsector_t;
+
+// [RH] Particle details
+struct particle_t
+{
+	fixed_t	x,y,z;
+	fixed_t velx,vely,velz;
+	fixed_t accx,accy,accz;
+	BYTE	ttl;
+	BYTE	trans;
+	BYTE	size:7;
+	BYTE	bright:1;
+	BYTE	fade;
+	int		color;
+	WORD	tnext;
+	WORD	snext;
+	subsector_t * subsector;
+};
+
+extern particle_t *Particles;
+extern TArray<WORD>		ParticlesInSubsec;
+
+const WORD NO_PARTICLE = 0xffff;
+
+void P_ClearParticles ();
+void P_FindParticleSubsectors ();
+
+
 class AActor;
 
 particle_t *JitterParticle (int ttl);
+particle_t *JitterParticle (int ttl, double drift);
 
 void P_ThinkParticles (void);
 void P_InitEffects (void);
@@ -60,7 +88,7 @@ void P_RunEffects (void);
 
 void P_RunEffect (AActor *actor, int effects);
 
-void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff = 0, bool silent = false);
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, double maxdiff = 0, int flags = 0, PClassActor *spawnclass = NULL, angle_t angle = 0, int duration = 35, double sparsity = 1.0, double drift = 1.0);
 void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind);
 void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);

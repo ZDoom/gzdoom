@@ -550,7 +550,7 @@ exists:	if (p != NULL)
 
 //==========================================================================
 //
-// strbin1	-- In-place version
+// strbin	-- In-place version
 //
 // [RH] Replaces the escape sequences in a string with actual escaped characters.
 // This operation is done in-place. The result is the new length of the string.
@@ -600,18 +600,20 @@ int strbin (char *str)
 				case 'x':
 				case 'X':
 					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
+					for (i = 0; i < 2; i++)
+					{
 						p++;
+						if (*p >= '0' && *p <= '9')
+							c = (c << 4) + *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c = (c << 4) + 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c = (c << 4) + 10 + *p-'A';
+						else
+						{
+							p--;
+							break;
+						}
 					}
 					*str++ = c;
 					break;
@@ -650,7 +652,7 @@ int strbin (char *str)
 // strbin1	-- String-creating version
 //
 // [RH] Replaces the escape sequences in a string with actual escaped characters.
-// This operation is done in-place.
+// The result is a new string.
 //
 //==========================================================================
 
@@ -698,18 +700,20 @@ FString strbin1 (const char *start)
 				case 'x':
 				case 'X':
 					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
+					for (i = 0; i < 2; i++)
+					{
 						p++;
+						if (*p >= '0' && *p <= '9')
+							c = (c << 4) + *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c = (c << 4) + 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c = (c << 4) + 10 + *p-'A';
+						else
+						{
+							p--;
+							break;
+						}
 					}
 					result << c;
 					break;
@@ -1004,7 +1008,8 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 
 void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 {
-	const char **argv[] = {dirpath, NULL };
+	char * const argv[] = {new char[strlen(dirpath)+1], NULL };
+	memcpy(argv[0], dirpath, strlen(dirpath)+1);
 	FTS *fts;
 	FTSENT *ent;
 
@@ -1012,6 +1017,7 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 	if (fts == NULL)
 	{
 		I_Error("Failed to start directory traversal: %s\n", strerror(errno));
+		delete[] argv[0];
 		return;
 	}
 	while ((ent = fts_read(fts)) != NULL)
@@ -1037,5 +1043,6 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 		}
 	}
 	fts_close(fts);
+	delete[] argv[0];
 }
 #endif

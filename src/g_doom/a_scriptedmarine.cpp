@@ -2,12 +2,11 @@
 #include "actor.h"
 #include "p_enemy.h"
 #include "a_action.h"
-#include "r_draw.h"
 #include "m_random.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "s_sound.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 */
@@ -376,7 +375,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, PClassActor *pufftype)
 		angle += pr_m_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, NAME_None, pufftype);
+	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
 //============================================================================
@@ -472,7 +471,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, NAME_BulletPuff);
+					  NAME_Hitscan, NAME_BulletPuff);
 	}
 	self->special1 = level.maptime;
 	return 0;
@@ -641,7 +640,7 @@ void AScriptedMarine::SetWeapon (EMarineWeapon type)
 	}
 }
 
-void AScriptedMarine::SetSprite (const PClass *source)
+void AScriptedMarine::SetSprite (PClassActor *source)
 {
 	if (source == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite

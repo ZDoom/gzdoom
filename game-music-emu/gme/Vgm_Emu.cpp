@@ -36,7 +36,7 @@ Vgm_Emu::Vgm_Emu()
 	
 	set_silence_lookahead( 1 ); // tracks should already be trimmed
 	
-	static equalizer_t const eq = { -14.0, 80 };
+	static equalizer_t const eq = { -14.0, 80, 0, 0, 0, 0, 0, 0, 0, 0 };
 	set_equalizer( eq );
 }
 

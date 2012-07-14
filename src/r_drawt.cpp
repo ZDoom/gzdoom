@@ -52,9 +52,13 @@
 // dc_temp is the buffer R_DrawColumnHoriz writes into.
 // dc_tspans points into it.
 // dc_ctspan points into dc_tspans.
-// But what is horizspan, and what is its relation with dc_ctspan?
+// horizspan also points into dc_tspans.
 
-BYTE dc_temp[MAXHEIGHT*4];
+// dc_ctspan is advanced while drawing into dc_temp.
+// horizspan is advanced up to dc_ctspan when drawing from dc_temp to the screen.
+
+BYTE dc_tempbuff[MAXHEIGHT*4];
+BYTE *dc_temp;
 unsigned int dc_tspans[4][MAXHEIGHT];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
@@ -998,10 +1002,11 @@ void rt_draw4cols (int sx)
 
 // Before each pass through a rendering loop that uses these routines,
 // call this function to set up the span pointers.
-void rt_initcols (void)
+void rt_initcols (BYTE *buff)
 {
 	int y;
 
+	dc_temp = buff == NULL ? dc_tempbuff : buff;
 	for (y = 3; y >= 0; y--)
 		horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
 }
@@ -1035,26 +1040,18 @@ void R_DrawColumnHorizP_C (void)
 		const BYTE *source = dc_source;
 
 		if (count & 1) {
-			*dest = source[frac>>FRACBITS];
-			dest += 4;
-			frac += fracstep;
+			*dest = source[frac>>FRACBITS]; dest += 4; frac += fracstep;
 		}
 		if (count & 2) {
-			dest[0] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[4] = source[frac>>FRACBITS];
-			frac += fracstep;
+			dest[0] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[4] = source[frac>>FRACBITS]; frac += fracstep;
 			dest += 8;
 		}
 		if (count & 4) {
-			dest[0] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[4] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[8] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[12] = source[frac>>FRACBITS];
-			frac += fracstep;
+			dest[0] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[4] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[8] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[12]= source[frac>>FRACBITS]; frac += fracstep;
 			dest += 16;
 		}
 		count >>= 3;
@@ -1062,22 +1059,14 @@ void R_DrawColumnHorizP_C (void)
 
 		do
 		{
-			dest[0] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[4] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[8] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[12] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[16] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[20] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[24] = source[frac>>FRACBITS];
-			frac += fracstep;
-			dest[28] = source[frac>>FRACBITS];
-			frac += fracstep;
+			dest[0] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[4] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[8] = source[frac>>FRACBITS]; frac += fracstep;
+			dest[12]= source[frac>>FRACBITS]; frac += fracstep;
+			dest[16]= source[frac>>FRACBITS]; frac += fracstep;
+			dest[20]= source[frac>>FRACBITS]; frac += fracstep;
+			dest[24]= source[frac>>FRACBITS]; frac += fracstep;
+			dest[28]= source[frac>>FRACBITS]; frac += fracstep;
 			dest += 32;
 		} while (--count);
 	}
@@ -1110,8 +1099,7 @@ void R_FillColumnHorizP (void)
 	if (!(count >>= 1))
 		return;
 	do {
-		dest[0] = color;
-		dest[4] = color;
+		dest[0] = color; dest[4] = color;
 		dest += 8;
 	} while (--count);
 }

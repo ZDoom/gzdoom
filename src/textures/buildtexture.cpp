@@ -35,13 +35,12 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_local.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "st_start.h"
-
-static TArray<BYTE *> BuildTileFiles;
+#include "textures/textures.h"
+#include "r_data/sprites.h"
 
 //==========================================================================
 //
@@ -158,7 +157,7 @@ const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_ou
 //
 //===========================================================================
 
-void AddTiles (void *tiles)
+void FTextureManager::AddTiles (void *tiles)
 {
 //	int numtiles = LittleLong(((DWORD *)tiles)[1]);	// This value is not reliable
 	int tilestart = LittleLong(((DWORD *)tiles)[2]);
@@ -183,7 +182,7 @@ void AddTiles (void *tiles)
 		if (width <= 0 || height <= 0) continue;
 
 		tex = new FBuildTexture (i, tiledata, width, height, xoffs, yoffs);
-		texnum = TexMan.AddTexture (tex);
+		texnum = AddTexture (tex);
 		while (size > 0)
 		{
 			*tiledata = 255 - *tiledata;
@@ -207,7 +206,7 @@ void AddTiles (void *tiles)
 			speed = (anm >> 24) & 15;
 			speed = MAX (1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
 
-			R_AddSimpleAnim (texnum, picanm[pic] & 63, type, speed);
+			AddSimpleAnim (texnum, picanm[pic] & 63, type, speed);
 		}
 
 		// Blood's rotation types:
@@ -236,6 +235,7 @@ void AddTiles (void *tiles)
 			rot.Texture[8] =
 			rot.Texture[9] = texnum.GetIndex() + 4;
 			rot.Flip = 0x00FC;
+			rot.Voxel = NULL;
 			tex->Rotations = SpriteFrames.Push (rot);
 		}
 		else if (rotType == 2)
@@ -249,6 +249,7 @@ void AddTiles (void *tiles)
 				rot.Texture[17-j*2] = texnum.GetIndex() + j;
 			}
 			rot.Flip = 0;
+			rot.Voxel = NULL;
 			tex->Rotations = SpriteFrames.Push (rot);
 		}
 	}
@@ -262,7 +263,7 @@ void AddTiles (void *tiles)
 //
 //===========================================================================
 
-static int CountTiles (void *tiles)
+int FTextureManager::CountTiles (void *tiles)
 {
 	int version = LittleLong(*(DWORD *)tiles);
 	if (version != 1)
@@ -285,7 +286,7 @@ static int CountTiles (void *tiles)
 //
 //===========================================================================
 
-int R_CountBuildTiles ()
+int FTextureManager::CountBuildTiles ()
 {
 	int numartfiles = 0;
 	char artfile[] = "tilesXXX.art";
@@ -373,25 +374,10 @@ int R_CountBuildTiles ()
 //
 //===========================================================================
 
-void R_InitBuildTiles ()
+void FTextureManager::InitBuildTiles ()
 {
 	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
 	{
 		AddTiles (BuildTileFiles[i]);
 	}
-}
-
-//===========================================================================
-//
-// R_DeinitBuildTiles
-//
-//===========================================================================
-
-void R_DeinitBuildTiles ()
-{
-	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
-	{
-		delete[] BuildTileFiles[i];
-	}
-	BuildTileFiles.Clear();
 }

@@ -46,6 +46,7 @@
 #define GI_COMPATSTAIRS			0x00000020	// same for stairbuilding
 #define GI_COMPATPOLY1			0x00000040	// Hexen's MAP36 needs old polyobject drawing
 #define GI_COMPATPOLY2			0x00000080	// so does HEXDD's MAP47
+#define GI_NOTEXTCOLOR			0x00000100	// Chex Quest 3 would have everything green
 
 #include "gametype.h"
 
@@ -65,19 +66,29 @@ struct gameborder_t
 	char br[8];
 };
 
+struct FGIFont
+{
+	FName fontname;
+	FName color;
+};
+
 struct gameinfo_t
 {
 	int flags;
 	EGameType gametype;
+	FString ConfigName;
 
 	char titlePage[9];
 	bool drawreadthis;
 	bool noloopfinalemusic;
 	bool intermissioncounter;
+	bool nightmarefast;
+	bool swapmenu;
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;
 	TArray<FName> DefaultWeaponSlots[10];
+	TArray<FName> PlayerClasses;
 
 	FString titleMusic;
 	float titleTime;
@@ -90,6 +101,7 @@ struct gameinfo_t
 	char SkyFlatName[9];
 	char ArmorIcon1[9];
 	char ArmorIcon2[9];
+	char PauseSign[9];
 	char Endoom[9];
 	fixed_t Armor2Percent;
 	FString quitSound;
@@ -102,6 +114,7 @@ struct gameinfo_t
 	FString backpacktype;
 	FString statusbar;
 	FString intermissionMusic;
+	FString CursorPic;
 	DWORD dimcolor;
 	float dimamount;
 	int definventorymaxamount;
@@ -109,11 +122,40 @@ struct gameinfo_t
 	int defaultdropstyle;
 	int player5start;
 	DWORD pickupcolor;
+	TArray<FString> quitmessages;
+	FName mTitleColor;
+	FName mFontColor;
+	FName mFontColorValue;
+	FName mFontColorMore;
+	FName mFontColorHeader;
+	FName mFontColorHighlight;
+	FName mFontColorSelection;
+	char mBackButton[9];
+	fixed_t gibfactor;
+	int TextScreenX;
+	int TextScreenY;
+	FName DefaultEndSequence;
+	FString mMapArrow, mCheatMapArrow;
+	FGIFont mStatscreenMapNameFont;
+	FGIFont mStatscreenFinishedFont;
+	FGIFont mStatscreenEnteringFont;
 
 	const char *GetFinalePage(unsigned int num) const;
 };
 
 
 extern gameinfo_t gameinfo;
+
+inline const char *GameTypeName()
+{
+	return GameNames[gameinfo.gametype];
+}
+
+inline bool CheckGame(const char *string, bool chexisdoom)
+{
+	int test = gameinfo.gametype;
+	if (test == GAME_Chex && chexisdoom) test = GAME_Doom;
+	return !stricmp(string, GameNames[test]);
+}
 
 #endif //__GI_H__

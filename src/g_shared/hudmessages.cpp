@@ -39,6 +39,7 @@
 #include "v_video.h"
 #include "cmdlib.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 EXTERN_CVAR (Int, con_scaletext)
 
@@ -657,21 +658,46 @@ bool DHUDMessageTypeOnFadeOut::Tick ()
 	{
 		if (State == 3)
 		{
-			LineVisible = (int)(Tics / TypeOnTime);
-			while (LineVisible > LineLen && State == 3)
+			int step = Tics == 0 ? 0 : int(Tics / TypeOnTime) - int((Tics - 1) / TypeOnTime);
+			int linevis = LineVisible;
+			int linedrawcount = linevis;
+			FString text = Lines[CurrLine].Text;
+			// Advance LineVisible by 'step' *visible* characters
+			while (step > 0 && State == 3)
 			{
-				LineVisible -= LineLen;
-				Tics = (int)(LineVisible * TypeOnTime);
-				CurrLine++;
-				if (CurrLine >= NumLines)
+				if (linevis > LineLen)
 				{
-					State = 1;
+					linevis = 0;
+					linedrawcount = 0;
+					CurrLine++;
+					if (CurrLine >= NumLines)
+					{
+						Tics = 0;
+						State = 1;
+					}
+					else
+					{
+						text = Lines[CurrLine].Text;
+						LineLen = (int)text.Len();
+					}
 				}
-				else
+				if (State == 3 && --step >= 0)
 				{
-					LineLen = (int)Lines[CurrLine].Text.Len();
+					linedrawcount++;
+					if (text[linevis++] == TEXTCOLOR_ESCAPE)
+					{
+						if (text[linevis] == '[')
+						{ // named color
+							while (text[linevis] != ']' && text[linevis] != '\0')
+							{
+								linevis++;
+							}
+						}
+						linevis += 2;
+					}
 				}
 			}
+			LineVisible = linevis;
 		}
 		return false;
 	}

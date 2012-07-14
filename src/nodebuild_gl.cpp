@@ -39,7 +39,6 @@
 
 #include "doomtype.h"
 #include "nodebuild.h"
-#include "r_main.h"
 
 static inline void STACK_ARGS Warn (const char *format, ...)
 {

@@ -44,16 +44,25 @@
 #include "s_sndseq.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "g_level.h"
 #include "po_man.h"
 #include "p_setup.h"
+#include "r_data/colormaps.h"
+#include "farchive.h"
+#include "p_lnspec.h"
+#include "p_acs.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
 static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers ();
 
+inline FArchive &operator<< (FArchive &arc, FLinkedSector &link)
+{
+	arc << link.Sector << link.Type;
+	return arc;
+}
 
 //
 // P_ArchivePlayers
@@ -105,6 +114,8 @@ void P_SerializePlayers (FArchive &arc, bool skipload)
 		{
 			SpawnExtraPlayers ();
 		}
+		// Redo pitch limits, since the spawned player has them at 0.
+		players[consoleplayer].SendPitchLimits();
 	}
 }
 
@@ -270,6 +281,9 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	{
 		dst->userinfo = uibackup;
 	}
+	// Validate the skin
+	dst->userinfo.skin = R_FindSkin(skins[dst->userinfo.skin].name, dst->CurrentPlayerClass);
+
 	// Make sure the player pawn points to the proper player struct.
 	if (dst->mo != NULL)
 	{
@@ -296,7 +310,7 @@ static void SpawnExtraPlayers ()
 		if (playeringame[i] && players[i].mo == NULL)
 		{
 			players[i].playerstate = PST_ENTER;
-			P_SpawnPlayer (&playerstarts[i]);
+			P_SpawnPlayer(&playerstarts[i], i);
 		}
 	}
 }
@@ -315,9 +329,18 @@ void P_SerializeWorld (FArchive &arc)
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
 	{
 		arc << sec->floorplane
-			<< sec->ceilingplane
-			<< sec->lightlevel
-			<< sec->special
+			<< sec->ceilingplane;
+		if (SaveVersion < 3223)
+		{
+			BYTE bytelight;
+			arc << bytelight;
+			sec->lightlevel = bytelight;
+		}
+		else
+		{
+			arc << sec->lightlevel;
+		}
+		arc << sec->special
 			<< sec->tag
 			<< sec->soundtraversed
 			<< sec->seqType
@@ -347,16 +370,8 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->interpolations[0]
 			<< sec->interpolations[1]
 			<< sec->interpolations[2]
-			<< sec->interpolations[3];
-
-		if (SaveVersion < 2492)
-		{
-			sec->SeqName = NAME_None;
-		}
-		else
-		{
-			arc << sec->SeqName;
-		}
+			<< sec->interpolations[3]
+			<< sec->SeqName;
 
 		sec->e->Serialize(arc);
 		if (arc.IsStoring ())
@@ -383,8 +398,16 @@ void P_SerializeWorld (FArchive &arc)
 			<< li->activation
 			<< li->special
 			<< li->Alpha
-			<< li->id
-			<< li->args[0] << li->args[1] << li->args[2] << li->args[3] << li->args[4];
+			<< li->id;
+		if (P_IsACSSpecial(li->special))
+		{
+			P_SerializeACSScriptNumber(arc, li->args[0], false);
+		}
+		else
+		{
+			arc << li->args[0];
+		}
+		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
 		for (j = 0; j < 2; j++)
 		{
@@ -444,7 +467,7 @@ FArchive &operator<< (FArchive &arc, sector_t::splane &p)
 {
 	arc << p.xform.xoffs << p.xform.yoffs << p.xform.xscale << p.xform.yscale 
 		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle
-		<< p.Flags << p.Light << p.Texture << p.TexZ;
+		<< p.Flags << p.Light << p.Texture << p.TexZ << p.alpha;
 	return arc;
 }
 
@@ -590,7 +613,7 @@ void P_SerializeSubsectors(FArchive &arc)
 				by = 0;
 				for(int j=0;j<8;j++)
 				{
-					if ((subsectors[i+j].flags & SSECF_DRAWN) && i+j<numsubsectors)
+					if (i+j<numsubsectors && (subsectors[i+j].flags & SSECF_DRAWN))
 					{
 						by |= (1<<j);
 					}
@@ -606,15 +629,6 @@ void P_SerializeSubsectors(FArchive &arc)
 	}
 	else
 	{
-		if (SaveVersion < 2609)
-		{
-			if (hasglnodes)
-			{
-				RecalculateDrawnSubsectors();
-			}
-			return;
-		}
-
 		arc << num_verts << num_subs << num_nodes;
 		if (num_verts != numvertexes ||
 			num_subs != numsubsectors ||

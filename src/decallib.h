@@ -37,7 +37,7 @@
 #include <string.h>
 
 #include "doomtype.h"
-#include "r_blend.h"
+#include "r_data/renderstyle.h"
 #include "textures/textures.h"
 
 class FScanner;

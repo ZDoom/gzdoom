@@ -35,10 +35,18 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "v_palette.h"
+#include "textures/textures.h"
+
+
+// posts are runs of non masked source pixels
+struct column_t
+{
+	BYTE		topdelta;		// -1 is the last post in a column
+	BYTE		length; 		// length data bytes follows
+};
 
 
 //==========================================================================
@@ -86,7 +94,7 @@ static bool CheckIfPatch(FileReader & file)
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);
 	
-	if (height > 0 && height < 2048 && width > 0 && width <= 2048 && width < file.GetLength()/4)
+	if (height > 0 && height <= 2048 && width > 0 && width <= 2048 && width < file.GetLength()/4)
 	{
 		// The dimensions seem like they might be valid for a patch, so
 		// check the column directory for extra security. At least one

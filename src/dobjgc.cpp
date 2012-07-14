@@ -61,18 +61,20 @@
 #include "b_bot.h"
 #include "p_local.h"
 #include "g_game.h"
-#include "r_data.h"
 #include "a_sharedglobal.h"
 #include "sbar.h"
 #include "stats.h"
 #include "c_dispatch.h"
 #include "p_acs.h"
 #include "s_sndseq.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
 #include "autosegs.h"
+#include "v_video.h"
+#include "menu/menu.h"
+#include "intermission/intermission.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -242,8 +244,10 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 				// be in a thinker list, then I need to add write barriers for every time a
 				// thinker pointer is changed. This seems easier and perfectly reasonable, since
 				// a live thinker that isn't on a thinker list isn't much of a thinker.
-				assert(FinalGC || !curr->IsKindOf(RUNTIME_CLASS(DThinker)) || (curr->ObjectFlags & OF_Sentinel));
-				assert(FinalGC || !curr->IsKindOf(RUNTIME_CLASS(DInterpolation)));
+
+				// However, this can happen during deletion of the thinker list while cleaning up
+				// from a savegame error so we can't assume that any thinker that gets here is an error.
+
 				curr->Destroy();
 			}
 			curr->ObjectFlags |= OF_Cleanup;
@@ -316,6 +320,8 @@ static void MarkRoot()
 	Mark(Args);
 	Mark(screen);
 	Mark(StatusBar);
+	Mark(DMenu::CurrentMenu);
+	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
@@ -554,6 +560,17 @@ void Barrier(DObject *pointing, DObject *pointed)
 	{
 		pointing->MakeWhite();
 	}
+}
+
+void DelSoftRootHead()
+{
+	if (SoftRoots != NULL)
+	{
+		// Don't let the destructor print a warning message
+		SoftRoots->ObjectFlags |= OF_YesReallyDelete;
+		delete SoftRoots;
+	}
+	SoftRoots = NULL;
 }
 
 //==========================================================================

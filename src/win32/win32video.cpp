@@ -68,6 +68,7 @@
 #include "m_argv.h"
 #include "r_defs.h"
 #include "v_text.h"
+#include "r_swrenderer.h"
 
 #include "win32iface.h"
 
@@ -111,6 +112,10 @@ IDirect3DDevice9 *D3Device;
 
 CVAR (Bool, vid_forceddraw, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR (Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+#if VID_FILE_DEBUG
+FILE *dbg;
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -497,7 +502,7 @@ void Win32Video::AddLetterboxModes ()
 void Win32Video::AddMode (int x, int y, int bits, int y2, int doubling)
 {
 	// Reject modes that do not meet certain criteria.
-	if ((x & 7) != 0 ||
+	if ((x & 1) != 0 ||
 		y > MAXHEIGHT ||
 		x > MAXWIDTH ||
 		y < 200 ||
@@ -705,7 +710,6 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 	retry = 0;
 
 	fb->SetFlash (flashColor, flashAmount);
-
 	return fb;
 }
 

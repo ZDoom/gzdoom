@@ -47,6 +47,7 @@
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
+#include "farchive.h"
 
 ClassReg DObject::RegistrationInfo =
 {
@@ -320,8 +321,9 @@ size_t DObject::PropagateMark()
 			GC::Mark((DObject **)((BYTE *)this + *offsets));
 			offsets++;
 		}
+		return info->Size;
 	}
-	return info->Size;
+	return 0;
 }
 
 size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
@@ -409,12 +411,7 @@ void DObject::SerializeUserVars(FArchive &arc)
 	PSymbolTable *symt;
 	FName varname;
 	DWORD count, j;
-	int *varloc;
-
-	if (SaveVersion < 1933)
-	{
-		return;
-	}
+	int *varloc = NULL;
 
 	symt = &GetClass()->Symbols;
 

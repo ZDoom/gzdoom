@@ -30,10 +30,26 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "gi.h"
+#include "farchive.h"
 
 static FRandom pr_doplat ("DoPlat");
 
 IMPLEMENT_CLASS (DPlat)
+
+inline FArchive &operator<< (FArchive &arc, DPlat::EPlatType &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DPlat::EPlatType)val;
+	return arc;
+}
+inline FArchive &operator<< (FArchive &arc, DPlat::EPlatState &state)
+{
+	BYTE val = (BYTE)state;
+	arc << val;
+	state = (DPlat::EPlatState)val;
+	return arc;
+}
 
 DPlat::DPlat ()
 {

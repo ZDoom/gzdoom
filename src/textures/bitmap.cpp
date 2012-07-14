@@ -34,8 +34,9 @@
 
 #include "bitmap.h"
 #include "templates.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "v_palette.h"
+#include "r_data/colormaps.h"
 
 
 //===========================================================================
@@ -184,96 +185,31 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 
 typedef void (*CopyFunc)(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *inf);
 
+#define COPY_FUNCS(op) \
+	{ \
+		iCopyColors<cRGB, cBGRA, op>, \
+		iCopyColors<cRGBA, cBGRA, op>, \
+		iCopyColors<cIA, cBGRA, op>, \
+		iCopyColors<cCMYK, cBGRA, op>, \
+		iCopyColors<cBGR, cBGRA, op>, \
+		iCopyColors<cBGRA, cBGRA, op>, \
+		iCopyColors<cI16, cBGRA, op>, \
+		iCopyColors<cRGB555, cBGRA, op>, \
+		iCopyColors<cPalEntry, cBGRA, op> \
+	}
 static const CopyFunc copyfuncs[][9]={
-	{
-		iCopyColors<cRGB, cBGRA, bCopy>,
-		iCopyColors<cRGBA, cBGRA, bCopy>,
-		iCopyColors<cIA, cBGRA, bCopy>,
-		iCopyColors<cCMYK, cBGRA, bCopy>,
-		iCopyColors<cBGR, cBGRA, bCopy>,
-		iCopyColors<cBGRA, cBGRA, bCopy>,
-		iCopyColors<cI16, cBGRA, bCopy>,
-		iCopyColors<cRGB555, cBGRA, bCopy>,
-		iCopyColors<cPalEntry, cBGRA, bCopy>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bBlend>,
-		iCopyColors<cRGBA, cBGRA, bBlend>,
-		iCopyColors<cIA, cBGRA, bBlend>,
-		iCopyColors<cCMYK, cBGRA, bBlend>,
-		iCopyColors<cBGR, cBGRA, bBlend>,
-		iCopyColors<cBGRA, cBGRA, bBlend>,
-		iCopyColors<cI16, cBGRA, bBlend>,
-		iCopyColors<cRGB555, cBGRA, bBlend>,
-		iCopyColors<cPalEntry, cBGRA, bBlend>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bAdd>,
-		iCopyColors<cRGBA, cBGRA, bAdd>,
-		iCopyColors<cIA, cBGRA, bAdd>,
-		iCopyColors<cCMYK, cBGRA, bAdd>,
-		iCopyColors<cBGR, cBGRA, bAdd>,
-		iCopyColors<cBGRA, cBGRA, bAdd>,
-		iCopyColors<cI16, cBGRA, bAdd>,
-		iCopyColors<cRGB555, cBGRA, bAdd>,
-		iCopyColors<cPalEntry, cBGRA, bAdd>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bSubtract>,
-		iCopyColors<cRGBA, cBGRA, bSubtract>,
-		iCopyColors<cIA, cBGRA, bSubtract>,
-		iCopyColors<cCMYK, cBGRA, bSubtract>,
-		iCopyColors<cBGR, cBGRA, bSubtract>,
-		iCopyColors<cBGRA, cBGRA, bSubtract>,
-		iCopyColors<cI16, cBGRA, bSubtract>,
-		iCopyColors<cRGB555, cBGRA, bSubtract>,
-		iCopyColors<cPalEntry, cBGRA, bSubtract>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bReverseSubtract>,
-		iCopyColors<cRGBA, cBGRA, bReverseSubtract>,
-		iCopyColors<cIA, cBGRA, bReverseSubtract>,
-		iCopyColors<cCMYK, cBGRA, bReverseSubtract>,
-		iCopyColors<cBGR, cBGRA, bReverseSubtract>,
-		iCopyColors<cBGRA, cBGRA, bReverseSubtract>,
-		iCopyColors<cI16, cBGRA, bReverseSubtract>,
-		iCopyColors<cRGB555, cBGRA, bReverseSubtract>,
-		iCopyColors<cPalEntry, cBGRA, bReverseSubtract>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bModulate>,
-		iCopyColors<cRGBA, cBGRA, bModulate>,
-		iCopyColors<cIA, cBGRA, bModulate>,
-		iCopyColors<cCMYK, cBGRA, bModulate>,
-		iCopyColors<cBGR, cBGRA, bModulate>,
-		iCopyColors<cBGRA, cBGRA, bModulate>,
-		iCopyColors<cI16, cBGRA, bModulate>,
-		iCopyColors<cRGB555, cBGRA, bModulate>,
-		iCopyColors<cPalEntry, cBGRA, bModulate>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bCopyAlpha>,
-		iCopyColors<cRGBA, cBGRA, bCopyAlpha>,
-		iCopyColors<cIA, cBGRA, bCopyAlpha>,
-		iCopyColors<cCMYK, cBGRA, bCopyAlpha>,
-		iCopyColors<cBGR, cBGRA, bCopyAlpha>,
-		iCopyColors<cBGRA, cBGRA, bCopyAlpha>,
-		iCopyColors<cI16, cBGRA, bCopyAlpha>,
-		iCopyColors<cRGB555, cBGRA, bCopyAlpha>,
-		iCopyColors<cPalEntry, cBGRA, bCopyAlpha>
-	},
-	{
-		iCopyColors<cRGB, cBGRA, bOverwrite>,
-		iCopyColors<cRGBA, cBGRA, bOverwrite>,
-		iCopyColors<cIA, cBGRA, bOverwrite>,
-		iCopyColors<cCMYK, cBGRA, bOverwrite>,
-		iCopyColors<cBGR, cBGRA, bOverwrite>,
-		iCopyColors<cBGRA, cBGRA, bOverwrite>,
-		iCopyColors<cI16, cBGRA, bOverwrite>,
-		iCopyColors<cRGB555, cBGRA, bOverwrite>,
-		iCopyColors<cPalEntry, cBGRA, bOverwrite>
-	},
+	COPY_FUNCS(bCopy),
+	COPY_FUNCS(bBlend),
+	COPY_FUNCS(bAdd),
+	COPY_FUNCS(bSubtract),
+	COPY_FUNCS(bReverseSubtract),
+	COPY_FUNCS(bModulate),
+	COPY_FUNCS(bCopyAlpha),
+	COPY_FUNCS(bCopyNewAlpha),
+	COPY_FUNCS(bOverlay),
+	COPY_FUNCS(bOverwrite)
 };
+#undef COPY_FUNCS
 
 //===========================================================================
 //
@@ -421,7 +357,7 @@ bool FClipRect::Intersect(int ix, int iy, int iw, int ih)
 	}
 	else
 	{
-		ih -= (x-ih);
+		ih -= (y-iy);
 	}
 	if (iw < width) width = iw;
 	if (ih < height) height = ih;
@@ -486,6 +422,8 @@ static const CopyPalettedFunc copypalettedfuncs[]=
 	iCopyPaletted<cBGRA, bReverseSubtract>,
 	iCopyPaletted<cBGRA, bModulate>,
 	iCopyPaletted<cBGRA, bCopyAlpha>,
+	iCopyPaletted<cBGRA, bCopyNewAlpha>,
+	iCopyPaletted<cBGRA, bOverlay>,
 	iCopyPaletted<cBGRA, bOverwrite>
 };
 

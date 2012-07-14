@@ -143,6 +143,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
 	NeedResRecreate = false;
+	PaletteChangeExpected = false;
 	MustBuffer = false;
 	BufferingNow = false;
 	WasBuffering = false;
@@ -717,7 +718,7 @@ void DDrawFB::PaletteChanged ()
 	// they are obviously jerks, and we need to restore our own palette.
 	if (!Windowed)
 	{
-		if (Palette != NULL)
+		if (!PaletteChangeExpected && Palette != NULL)
 		{
 			// It is not enough to set NeedPalUpdate to true. Some palette
 			// entries might now be reserved for system usage, and nothing
@@ -729,6 +730,7 @@ void DDrawFB::PaletteChanged ()
 			// somebody tries to lock it.
 			NeedResRecreate = true;
 		}
+		PaletteChangeExpected = false;
 	}
 	else
 	{
@@ -784,6 +786,25 @@ void DDrawFB::RebuildColorTable ()
 	}
 }
 
+bool DDrawFB::Is8BitMode()
+{
+	if (Windowed)
+	{
+		return Write8bit;
+	}
+	DDPIXELFORMAT fmt = { sizeof(fmt), };
+	HRESULT hr;
+
+	hr = PrimarySurf->GetPixelFormat(&fmt);
+	if (SUCCEEDED(hr))
+	{
+		return !!(fmt.dwFlags & DDPF_PALETTEINDEXED8);
+	}
+	// Can't get the primary surface's pixel format, so assume
+	// vid_displaybits is accurate.
+	return vid_displaybits == 8;
+}
+
 bool DDrawFB::IsValid ()
 {
 	return PrimarySurf != NULL;
@@ -801,9 +822,13 @@ bool DDrawFB::Lock ()
 
 bool DDrawFB::Lock (bool useSimpleCanvas)
 {
+	static int lock_num;
 	bool wasLost;
 
 //	LOG2 ("  Lock (%d) <%d>\n", buffered, LockCount);
+
+	LOG3("Lock %5x <%d> %d\n", (AppActive << 16) | (SessionState << 12) | (MustBuffer << 8) |
+		(useSimpleCanvas << 4) | (int)UseBlitter, LockCount, lock_num++);
 
 	if (LockCount++ > 0)
 	{
@@ -812,14 +837,15 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 
 	wasLost = false;
 
-	if (NeedResRecreate)
+	if (NeedResRecreate && LockCount == 1)
 	{
+		LOG("Recreating resources\n");
 		NeedResRecreate = false;
 		ReleaseResources ();
 		CreateResources ();
+		// ReleaseResources sets LockCount to 0.
+		LockCount = 1;
 	}
-
-	LOG5 ("Lock %d %d %d %d %d\n", AppActive, SessionState, MustBuffer, useSimpleCanvas, UseBlitter);
 
 	if (!AppActive || SessionState || MustBuffer || useSimpleCanvas || !UseBlitter)
 	{
@@ -859,6 +885,7 @@ void DDrawFB::Unlock ()
 
 	if (LockCount == 0)
 	{
+		LOG("Unlock called when already unlocked\n");
 		return;
 	}
 
@@ -895,6 +922,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		lockingLocker = true;
 		if (LockingSurf == NULL)
 		{
+			LOG("LockingSurf lost\n");
 			if (!CreateResources ())
 			{
 				if (LastHR != DDERR_UNSUPPORTEDMODE)
@@ -1190,6 +1218,7 @@ void DDrawFB::Update ()
 
 	if (pchanged && AppActive && !SessionState)
 	{
+		PaletteChangeExpected = true;
 		Palette->SetEntries (0, 0, 256, PalEntries);
 	}
 }

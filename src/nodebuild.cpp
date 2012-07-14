@@ -50,7 +50,7 @@
 #include "tarray.h"
 #include "m_bbox.h"
 #include "c_console.h"
-#include "r_main.h"
+#include "r_state.h"
 
 const int MaxSegs = 64;
 const int SplitCost = 8;
@@ -65,8 +65,8 @@ const int AAPreference = 16;
 FNodeBuilder::FNodeBuilder(FLevel &level)
 : Level(level), GLNodes(false), SegsStuffed(0)
 {
-
 	VertexMap = NULL;
+	OldVertexTable = NULL;
 }
 
 FNodeBuilder::FNodeBuilder (FLevel &level,
@@ -84,9 +84,13 @@ FNodeBuilder::FNodeBuilder (FLevel &level,
 
 FNodeBuilder::~FNodeBuilder()
 {
-	if (VertexMap != 0)
+	if (VertexMap != NULL)
 	{
 		delete VertexMap;
+	}
+	if (OldVertexTable != NULL)
+	{
+		delete OldVertexTable;
 	}
 }
 
@@ -213,6 +217,8 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	sub.sector = NULL;
 	sub.polys = NULL;
 	sub.BSP = NULL;
+	sub.flags = 0;
+	sub.render_sector = NULL;
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{

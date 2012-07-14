@@ -18,6 +18,7 @@
 #include "templates.h"
 #include "d_event.h"
 #include "v_font.h"
+#include "farchive.h"
 
 // Include all the other Strife stuff here to reduce compile time
 #include "a_acolyte.cpp"
@@ -177,7 +178,7 @@
 	117 Blood
 	118 TeleportFog
 	119 ItemFog
-	120 --- Doomednum is 14, which makes it a teleport destination. Don't know why it's in the mobjinfo table.
+	120 teleport destination
 	121 KlaxonWarningLight
 	122 CeilingTurret
 	123 Piston
@@ -538,14 +539,14 @@ class APowerCoupling : public AActor
 {
 	DECLARE_CLASS (APowerCoupling, AActor)
 public:
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
 IMPLEMENT_CLASS (APowerCoupling)
 
-void APowerCoupling::Die (AActor *source, AActor *inflictor)
+void APowerCoupling::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	int i;
 

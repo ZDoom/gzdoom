@@ -63,6 +63,10 @@ extern HWND Window;
 #include "cmdlib.h"
 #include "s_sound.h"
 
+#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43800
+#error You are trying to compile with an unsupported version of FMOD.
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 // killough 2/21/98: optionally use varying pitched sounds
@@ -74,6 +78,10 @@ extern HWND Window;
 #define MAX_CHANNELS				256
 
 #define SPECTRUM_SIZE				256
+
+#if FMOD_VERSION < 0x43400
+#define FMOD_OPENSTATE_PLAYING FMOD_OPENSTATE_STREAMING
+#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -157,7 +165,9 @@ static const FEnumList OutputNames[] =
 	{ "Windows Multimedia",		FMOD_OUTPUTTYPE_WINMM },
 	{ "WinMM",					FMOD_OUTPUTTYPE_WINMM },
 	{ "WaveOut",				FMOD_OUTPUTTYPE_WINMM },
+#if FMOD_VERSION < 0x43400
 	{ "OpenAL",					FMOD_OUTPUTTYPE_OPENAL },
+#endif
 	{ "WASAPI",					FMOD_OUTPUTTYPE_WASAPI },
 	{ "ASIO",					FMOD_OUTPUTTYPE_ASIO },
 
@@ -165,11 +175,14 @@ static const FEnumList OutputNames[] =
 	{ "OSS",					FMOD_OUTPUTTYPE_OSS },
 	{ "ALSA",					FMOD_OUTPUTTYPE_ALSA },
 	{ "ESD",					FMOD_OUTPUTTYPE_ESD },
+#if FMOD_VERSION >= 0x43400
+	{ "PulseAudio",				FMOD_OUTPUTTYPE_PULSEAUDIO },
+	{ "Pulse",					FMOD_OUTPUTTYPE_PULSEAUDIO },
+#endif
 	{ "SDL",					666 },
 
 	// Mac
 #if FMOD_VERSION < 0x43000
-	// Sound Manager support was removed sometime in the 4.29 line.
 	{ "Sound Manager",			FMOD_OUTPUTTYPE_SOUNDMANAGER },
 #endif
 	{ "Core Audio",				FMOD_OUTPUTTYPE_COREAUDIO },
@@ -228,6 +241,9 @@ static const char *OpenStateNames[] =
 	"Seeking",
 	"Streaming"
 };
+
+const FMODSoundRenderer::spk FMODSoundRenderer::SpeakerNames4[4] = { "L", "R", "BL", "BR" };
+const FMODSoundRenderer::spk FMODSoundRenderer::SpeakerNamesMore[8] = { "L", "R", "C", "LFE", "BL", "BR", "SL", "SR" };
 
 // CODE --------------------------------------------------------------------
 
@@ -388,12 +404,19 @@ public:
 		bool is;
 		FMOD_OPENSTATE openstate = FMOD_OPENSTATE_MAX;
 		bool starving;
+#if FMOD_VERSION >= 0x43400
+		bool diskbusy;
+#endif
 
 		if (Stream == NULL)
 		{
 			return true;
 		}
+#if FMOD_VERSION < 0x43400
 		if (FMOD_OK != Stream->getOpenState(&openstate, NULL, &starving))
+#else
+		if (FMOD_OK != Stream->getOpenState(&openstate, NULL, &starving, &diskbusy))
+#endif
 		{
 			openstate = FMOD_OPENSTATE_ERROR;
 		}
@@ -436,7 +459,7 @@ public:
 			Owner->Sys->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
 			return result != FMOD_OK;
 		}
-		if (JustStarted && openstate == FMOD_OPENSTATE_STREAMING)
+		if (JustStarted && openstate == FMOD_OPENSTATE_PLAYING)
 		{
 			JustStarted = false;
 		}
@@ -480,14 +503,21 @@ public:
 		unsigned int percentbuffered;
 		unsigned int position;
 		bool starving;
+#if FMOD_VERSION >= 0x43400
+		bool diskbusy;
+#endif
 		float volume;
 		float frequency;
 		bool paused;
 		bool isplaying;
 
+#if FMOD_VERSION < 0x43400
 		if (FMOD_OK == Stream->getOpenState(&openstate, &percentbuffered, &starving))
+#else
+		if (FMOD_OK == Stream->getOpenState(&openstate, &percentbuffered, &starving, &diskbusy))
+#endif
 		{
-			stats = (openstate <= FMOD_OPENSTATE_STREAMING ? OpenStateNames[openstate] : "Unknown state");
+			stats = (openstate <= FMOD_OPENSTATE_PLAYING ? OpenStateNames[openstate] : "Unknown state");
 			stats.AppendFormat(",%3d%% buffered, %s", percentbuffered, starving ? "Starving" : "Well-fed");
 		}
 		if (Channel == NULL)
@@ -681,7 +711,11 @@ bool FMODSoundRenderer::Init()
 	}
 
 	const char *wrongver = NULL;
+#if FMOD_VERSION >= 0x43800
+	if (version < 0x43800)
+#else
 	if (version < 0x42000)
+#endif
 	{
 		wrongver = "an old";
 	}
@@ -819,7 +853,14 @@ bool FMODSoundRenderer::Init()
 		result = Sys->setDriver(driver);
 	}
 	result = Sys->getDriver(&driver);
+#if FMOD_VERSION >= 0x43700
+	// We were built with an FMOD that only returns the control panel frequency
+	result = Sys->getDriverCaps(driver, &Driver_Caps, &Driver_MinFrequency, &speakermode);
+	Driver_MaxFrequency = Driver_MinFrequency;
+#else
+	// We were built with an FMOD that returns a frequency range
 	result = Sys->getDriverCaps(driver, &Driver_Caps, &Driver_MinFrequency, &Driver_MaxFrequency, &speakermode);
+#endif
 	if (result != FMOD_OK)
 	{
 		Printf(TEXTCOLOR_BLUE"Could not ascertain driver capabilities. Some things may be weird. (Error %d)\n", result);
@@ -848,7 +889,9 @@ bool FMODSoundRenderer::Init()
 	format = eval >= 0 ? FMOD_SOUND_FORMAT(eval) : FMOD_SOUND_FORMAT_PCM16;
 	eval = Enum_NumForName(ResamplerNames, snd_resampler);
 	resampler = eval >= 0 ? FMOD_DSP_RESAMPLER(eval) : FMOD_DSP_RESAMPLER_LINEAR;
-	samplerate = clamp<int>(snd_samplerate, Driver_MinFrequency, Driver_MaxFrequency);
+	// These represented the frequency limits for hardware channels, which we never used anyway.
+//	samplerate = clamp<int>(snd_samplerate, Driver_MinFrequency, Driver_MaxFrequency);
+	samplerate = snd_samplerate;
 	if (samplerate == 0 || snd_samplerate == 0)
 	{ // Creative's ASIO drivers report the only supported frequency as 0!
 		if (FMOD_OK != Sys->getSoftwareFormat(&samplerate, NULL, NULL, NULL, NULL, NULL))
@@ -899,7 +942,12 @@ bool FMODSoundRenderer::Init()
 	initflags = FMOD_INIT_NORMAL;
 	if (snd_hrtf)
 	{
+		// These flags are the same thing, just with different names.
+#ifdef FMOD_INIT_SOFTWARE_HRTF
 		initflags |= FMOD_INIT_SOFTWARE_HRTF;
+#else
+		initflags |= FMOD_INIT_HRTF_LOWPASS;
+#endif
 	}
 	if (snd_profile)
 	{
@@ -930,6 +978,12 @@ bool FMODSoundRenderer::Init()
 				Printf(TEXTCOLOR_RED"  Buffer creation failed. Retrying with PCM-16 output.\n");
 				continue;
 			}
+		}
+		else if (result == FMOD_ERR_NET_SOCKET_ERROR && (initflags & FMOD_INIT_ENABLE_PROFILE))
+		{
+			Printf(TEXTCOLOR_RED"  Could not create socket. Retrying without profiling.\n");
+			initflags &= ~FMOD_INIT_ENABLE_PROFILE;
+			continue;
 		}
 #ifdef _WIN32
 		else if (result == FMOD_ERR_OUTPUT_INIT)
@@ -984,6 +1038,7 @@ bool FMODSoundRenderer::Init()
 	}
 
 	// Create DSP units for underwater effect
+#if FMOD_VERSION < 0x43701
 	result = Sys->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &WaterLP);
 	if (result != FMOD_OK)
 	{
@@ -997,6 +1052,9 @@ bool FMODSoundRenderer::Init()
 			Printf(TEXTCOLOR_BLUE"  Could not create underwater reverb unit. (Error %d)\n", result);
 		}
 	}
+#else
+	result = FMOD_ERR_UNSUPPORTED;
+#endif
 
 	// Connect underwater DSP unit between PausableSFX and SFX groups, while
 	// retaining the connection established by SfxGroup->addGroup().
@@ -1043,6 +1101,7 @@ bool FMODSoundRenderer::Init()
 				WaterLP->setActive(false);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_RESONANCE, 2);
+#if FMOD_VERSION < 0x43701
 				if (WaterReverb != NULL)
 				{
 					FMOD::DSPConnection *dry;
@@ -1067,6 +1126,7 @@ bool FMODSoundRenderer::Init()
 					}
 				}
 				else
+#endif
 				{
 					result = sfx_head->addInput(WaterLP, NULL);
 				}
@@ -1186,7 +1246,6 @@ void FMODSoundRenderer::PrintStatus()
 	int driver;
 	int samplerate;
 	int numoutputchannels;
-	int num2d, num3d, total;
 	unsigned int bufferlength;
 	int numbuffers;
 
@@ -1209,12 +1268,6 @@ void FMODSoundRenderer::PrintStatus()
 		}
 		Printf ("Driver: "TEXTCOLOR_GREEN"%d"TEXTCOLOR_NORMAL" ("TEXTCOLOR_ORANGE"%s"TEXTCOLOR_NORMAL")\n", driver, name);
 		DumpDriverCaps(Driver_Caps, Driver_MinFrequency, Driver_MaxFrequency);
-	}
-	if (FMOD_OK == Sys->getHardwareChannels(&num2d, &num3d, &total))
-	{
-		Printf (TEXTCOLOR_YELLOW "Hardware 2D channels: "TEXTCOLOR_GREEN"%d\n", num2d);
-		Printf (TEXTCOLOR_YELLOW "Hardware 3D channels: "TEXTCOLOR_GREEN"%d\n", num3d);
-		Printf (TEXTCOLOR_YELLOW "Total hardware channels: "TEXTCOLOR_GREEN"%d\n", total);
 	}
 	if (FMOD_OK == Sys->getSoftwareFormat(&samplerate, &format, &numoutputchannels, NULL, &resampler, NULL))
 	{
@@ -1250,15 +1303,6 @@ void FMODSoundRenderer::DumpDriverCaps(FMOD_CAPS caps, int minfrequency, int max
 	if (caps & FMOD_CAPS_OUTPUT_FORMAT_PCM32)		Printf(TEXTCOLOR_OLIVE "   PCM-32");
 	if (caps & FMOD_CAPS_OUTPUT_FORMAT_PCMFLOAT)	Printf(TEXTCOLOR_OLIVE "   PCM-Float");
 	if (caps & (FMOD_CAPS_OUTPUT_FORMAT_PCM8 | FMOD_CAPS_OUTPUT_FORMAT_PCM16 | FMOD_CAPS_OUTPUT_FORMAT_PCM24 | FMOD_CAPS_OUTPUT_FORMAT_PCM32 | FMOD_CAPS_OUTPUT_FORMAT_PCMFLOAT))
-	{
-		Printf("\n");
-	}
-	if (caps & FMOD_CAPS_REVERB_EAX2)				Printf(TEXTCOLOR_OLIVE "   EAX2");
-	if (caps & FMOD_CAPS_REVERB_EAX3)				Printf(TEXTCOLOR_OLIVE "   EAX3");
-	if (caps & FMOD_CAPS_REVERB_EAX4)				Printf(TEXTCOLOR_OLIVE "   EAX4");
-	if (caps & FMOD_CAPS_REVERB_EAX5)				Printf(TEXTCOLOR_OLIVE "   EAX5");
-	if (caps & FMOD_CAPS_REVERB_I3DL2)				Printf(TEXTCOLOR_OLIVE "   I3DL2");
-	if (caps & (FMOD_CAPS_REVERB_EAX2 | FMOD_CAPS_REVERB_EAX3 | FMOD_CAPS_REVERB_EAX4 | FMOD_CAPS_REVERB_EAX5 | FMOD_CAPS_REVERB_I3DL2))
 	{
 		Printf("\n");
 	}
@@ -1687,8 +1731,6 @@ FISoundChannel *FMODSoundRenderer::StartSound(SoundHandle sfx, float vol, int pi
 //
 //==========================================================================
 
-CVAR(Float, snd_3dspread, 180, 0)
-
 FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, 
 	FRolloffInfo *rolloff, float distscale,
 	int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
@@ -1730,17 +1772,6 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		((FMOD::Sound *)sfx.data)->setDefaults(def_freq, def_vol, def_pan, def_priority);
 	}
 
-	// Reduce volume of stereo sounds, because each channel will be summed together
-	// and is likely to be very similar, resulting in an amplitude twice what it
-	// would have been had it been mixed to mono.
-	if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getFormat(NULL, NULL, &numchans, NULL))
-	{
-		if (numchans > 1)
-		{
-			vol *= 0.5f;
-		}
-	}
-
 	if (FMOD_OK == result)
 	{
 		result = chan->getMode(&mode);
@@ -1765,6 +1796,19 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		chan->setMode(mode);
 		chan->setChannelGroup((flags & SNDF_NOPAUSE) ? SfxGroup : PausableSfx);
 
+		if (mode & FMOD_3D)
+		{
+			// Reduce volume of stereo sounds, because each channel will be summed together
+			// and is likely to be very similar, resulting in an amplitude twice what it
+			// would have been had it been mixed to mono.
+			if (FMOD_OK == ((FMOD::Sound *)sfx.data)->getFormat(NULL, NULL, &numchans, NULL))
+			{
+				if (numchans > 1)
+				{
+					vol *= 0.5f;
+				}
+			}
+		}
 		if (freq != 0)
 		{
 			chan->setFrequency(freq);
@@ -1773,7 +1817,6 @@ FISoundChannel *FMODSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *
 		if (mode & FMOD_3D)
 		{
 			chan->set3DAttributes((FMOD_VECTOR *)&pos[0], (FMOD_VECTOR *)&vel[0]);
-			chan->set3DSpread(snd_3dspread);
 		}
 		if (!HandleChannelDelay(chan, reuse_chan, flags & (SNDF_ABSTIME | SNDF_LOOP), freq))
 		{
@@ -2157,7 +2200,7 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 	{
 		DPrintf ("Reverb Environment %s\n", env->Name);
 		const_cast<ReverbContainer*>(env)->Modified = false;
-		Sys->setReverbProperties((FMOD_REVERB_PROPERTIES *)(&env->Properties));
+		SetSystemReverbProperties(&env->Properties);
 		PrevEnvironment = env;
 
 		if (!SfxReverbHooked)
@@ -2316,7 +2359,7 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
+SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
@@ -2372,7 +2415,9 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 
 	if (loopstart >= 0)
 	{
-		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, numsamples - 1, FMOD_TIMEUNIT_PCM);
+		if (loopend == -1)
+			loopend = numsamples - 1;
+		sample->setLoopPoints(loopstart, FMOD_TIMEUNIT_PCM, loopend, FMOD_TIMEUNIT_PCM);
 	}
 
 	retval.data = sample;
@@ -2542,23 +2587,60 @@ void FMODSoundRenderer::DrawWaveDebug(int mode)
 	const int window_height = 100;
 	int window_size;
 	int numoutchans;
-	int y;
+	int y, yy;
+	const spk *labels;
+	int labelcount;
 
 	if (FMOD_OK != Sys->getSoftwareFormat(NULL, NULL, &numoutchans, NULL, NULL, NULL))
 	{
 		return;
 	}
 
+	// Decide on which set of labels to use.
+	labels = (numoutchans == 4) ? SpeakerNames4 : SpeakerNamesMore;
+	labelcount = MIN<int>(numoutchans, countof(SpeakerNamesMore));
+
 	// Scale all the channel windows so one group fits completely on one row, with
 	// 16 pixels of padding between each window.
 	window_size = (screen->GetWidth() - 16) / numoutchans - 16;
 
-	float *wavearray = (float*)alloca(window_size*sizeof(float));
-
+	float *wavearray = (float*)alloca(MAX(SPECTRUM_SIZE,window_size)*sizeof(float));
 	y = 16;
-	y = DrawChannelGroupOutput(SfxGroup, wavearray, window_size, window_height, y, mode);
-	y = DrawChannelGroupOutput(MusicGroup, wavearray, window_size, window_height, y, mode >> 2);
-	y = DrawSystemOutput(wavearray, window_size, window_height, y, mode >> 4);
+
+	yy = DrawChannelGroupOutput(SfxGroup, wavearray, window_size, window_height, y, mode);
+	if (y != yy)
+	{
+		DrawSpeakerLabels(labels, yy-14, window_size, labelcount);
+	}
+	y = DrawChannelGroupOutput(MusicGroup, wavearray, window_size, window_height, yy, mode >> 2);
+	if (y != yy)
+	{
+		DrawSpeakerLabels(labels, y-14, window_size, labelcount);
+	}
+	yy = DrawSystemOutput(wavearray, window_size, window_height, y, mode >> 4);
+	if (y != yy)
+	{
+		DrawSpeakerLabels(labels, yy-14, window_size, labelcount);
+	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawSpeakerLabels
+//
+//==========================================================================
+
+void FMODSoundRenderer::DrawSpeakerLabels(const spk *labels, int y, int width, int count)
+{
+	if (labels == NULL)
+	{
+		return;
+	}
+	for (int i = 0, x = 16; i < count; ++i)
+	{
+		screen->DrawText(SmallFont, CR_LIGHTBLUE, x, y, labels[i], TAG_DONE);
+		x += width + 16;
+	}
 }
 
 //==========================================================================
@@ -2691,7 +2773,7 @@ void FMODSoundRenderer::DrawWave(float *wavearray, int x, int y, int width, int 
 
 	// Draw a box around the oscilloscope.
 	screen->DrawLine(x - 1, y - 1, x + width, y - 1, -1, MAKEARGB(160, 0, 40, 200));
-	screen->DrawLine(x + width + 1, y - 1, x + width, y + height, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x + width, y - 1, x + width, y + height, -1, MAKEARGB(160, 0, 40, 200));
 	screen->DrawLine(x + width, y + height, x - 1, y + height, -1, MAKEARGB(160, 0, 40, 200));
 	screen->DrawLine(x - 1, y + height, x - 1, y - 1, -1, MAKEARGB(160, 0, 40, 200));
 
@@ -2798,7 +2880,7 @@ void FMODSoundRenderer::DrawSpectrum(float *spectrumarray, int x, int y, int wid
 
 	// Draw a border and dark background for the spectrum.
 	screen->DrawLine(x - 1, y - 1, x + width, y - 1, -1, MAKEARGB(160, 0, 40, 200));
-	screen->DrawLine(x + width + 1, y - 1, x + width, y + height, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x + width, y - 1, x + width, y + height, -1, MAKEARGB(160, 0, 40, 200));
 	screen->DrawLine(x + width, y + height, x - 1, y + height, -1, MAKEARGB(160, 0, 40, 200));
 	screen->DrawLine(x - 1, y + height, x - 1, y - 1, -1, MAKEARGB(160, 0, 40, 200));
 	screen->Dim(MAKERGB(0,0,0), 0.3f, x, y, width, height);
@@ -2887,17 +2969,60 @@ short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizeby
 
 void FMODSoundRenderer::InitCreateSoundExInfo(FMOD_CREATESOUNDEXINFO *exinfo) const
 {
-#if FMOD_VERSION >= 0x42600
-	if (ActiveFMODVersion < 0x42600)
-	{
-		// This parameter was added for 4.26.00, and trying to pass it to older
-		// DLLs will fail.
-		exinfo->cbsize = myoffsetof(FMOD_CREATESOUNDEXINFO, ignoresetfilesystem);
-	}
-	else
+	memset(exinfo, 0, sizeof(*exinfo));
+#if FMOD_VERSION >= 0x42600 && FMOD_VERSION < 0x43800
+    if (ActiveFMODVersion < 0x42600)
+    {
+        // This parameter was added for 4.26.00, and trying to pass it to older
+        // DLLs will fail.
+        exinfo->cbsize = myoffsetof(FMOD_CREATESOUNDEXINFO, ignoresetfilesystem);
+    }
+    else
 #endif
-	{
-		exinfo->cbsize = sizeof(*exinfo);
-	}
-	memset((BYTE *)exinfo + sizeof(exinfo->cbsize), 0, exinfo->cbsize - sizeof(exinfo->cbsize));
+    {
+        exinfo->cbsize = sizeof(*exinfo);
+    }
 }
+
+//==========================================================================
+//
+// FMODSoundRenderer :: SetSystemReverbProperties
+//
+// Set the global reverb properties.
+//
+//==========================================================================
+
+FMOD_RESULT FMODSoundRenderer::SetSystemReverbProperties(const REVERB_PROPERTIES *props)
+{
+#if FMOD_VERSION < 0x43800
+	return Sys->setReverbProperties((const FMOD_REVERB_PROPERTIES *)props);
+#else
+	// The reverb format changed when hardware mixing support was dropped, because
+	// all EAX-only properties were removed from the structure.
+	FMOD_REVERB_PROPERTIES fr;
+
+	fr.Instance = props->Instance;
+	fr.Environment = props->Environment;
+	fr.EnvDiffusion = props->EnvDiffusion;
+	fr.Room = props->Room;
+	fr.RoomHF = props->RoomHF;
+	fr.RoomLF = props->RoomLF;
+	fr.DecayTime = props->DecayTime;
+	fr.DecayHFRatio = props->DecayHFRatio;
+	fr.DecayLFRatio = props->DecayLFRatio;
+	fr.Reflections = props->Reflections;
+	fr.ReflectionsDelay = props->ReflectionsDelay;
+	fr.Reverb = props->Reverb;
+	fr.ReverbDelay = props->ReverbDelay;
+	fr.ModulationTime = props->ModulationTime;
+	fr.ModulationDepth = props->ModulationDepth;
+	fr.HFReference = props->HFReference;
+	fr.LFReference = props->LFReference;
+	fr.Diffusion = props->Diffusion;
+	fr.Density = props->Density;
+	fr.Flags = props->Flags;
+
+	return Sys->setReverbProperties(&fr);
+#endif
+}
+

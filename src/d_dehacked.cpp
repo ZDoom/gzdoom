@@ -60,18 +60,18 @@
 #include "gi.h"
 #include "c_dispatch.h"
 #include "decallib.h"
-#include "r_draw.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "thingdef/thingdef.h"
 #include "thingdef/thingdef_exp.h"
 #include "vectors.h"
 #include "dobject.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "sc_man.h"
 #include "i_system.h"
 #include "doomerrors.h"
 #include "p_effect.h"
+#include "farchive.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -162,6 +162,41 @@ struct CodePointerAlias
 };
 static TArray<CodePointerAlias> MBFCodePointers;
 
+struct AmmoPerAttack
+{
+	VMFunction *func;
+	int ammocount;
+};
+
+DECLARE_ACTION(A_Punch)
+DECLARE_ACTION(A_FirePistol)
+DECLARE_ACTION(A_FireShotgun)
+DECLARE_ACTION(A_FireShotgun2)
+DECLARE_ACTION(A_FireCGun)
+DECLARE_ACTION(A_FireMissile)
+DECLARE_ACTION(A_Saw)
+DECLARE_ACTION(A_FirePlasma)
+DECLARE_ACTION(A_FireBFG)
+DECLARE_ACTION(A_FireOldBFG)
+DECLARE_ACTION(A_FireRailgun)
+
+// Default ammo use of the various weapon attacks
+static AmmoPerAttack AmmoPerAttacks[] = {
+	{ A_Punch_VMPtr, 0},
+	{ A_FirePistol_VMPtr, 1},
+	{ A_FireShotgun_VMPtr, 1}, 
+	{ A_FireShotgun2_VMPtr, 2},
+	{ A_FireCGun_VMPtr, 1},
+	{ A_FireMissile_VMPtr, 1},
+	{ A_Saw_VMPtr, 0},
+	{ A_FirePlasma_VMPtr, 1},
+	{ A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
+	{ A_FireOldBFG_VMPtr, 1},
+	{ A_FireRailgun_VMPtr, 1},
+	{ NULL, 0}
+};
+
+
 // Miscellaneous info that used to be constant
 DehInfo deh =
 {
@@ -183,6 +218,7 @@ DehInfo deh =
 	255,	// Rocket explosion style, 255=use cvar
 	FRACUNIT*2/3,		// Rocket explosion alpha
 	false,	// .NoAutofreeze
+	40,		// BFG cells per shot
 };
 
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
@@ -309,7 +345,7 @@ static const struct {
 	{ "[PARS]",		PatchPars },
 	{ "[CODEPTR]",	PatchCodePtrs },
 	{ "[MUSIC]",	PatchMusic },
-	{ NULL, },
+	{ NULL, NULL },
 };
 
 static int HandleMode (const char *mode, int num);
@@ -691,8 +727,11 @@ void SetDehParams(FState * state, int codepointer)
 		if (value2) StateParams.Set(ParamIndex+1, new FxConstant(SoundMap[value2-1], *pos));	// hit sound
 		break;
 	case MBF_PlaySound:
-		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));			// soundid
-		StateParams.Set(ParamIndex+4, new FxConstant((value2?ATTN_NONE:ATTN_NORM), *pos));	// attenuation
+		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));				// soundid
+		StateParams.Set(ParamIndex+1, new FxConstant(CHAN_BODY, *pos));							// channel
+		StateParams.Set(ParamIndex+2, new FxConstant(1.0, *pos));								// volume
+		StateParams.Set(ParamIndex+3, new FxConstant(false, *pos));								// looping
+		StateParams.Set(ParamIndex+4, new FxConstant((value2 ? ATTN_NONE : ATTN_NORM), *pos));	// attenuation
 		break;
 	case MBF_RandomJump:
 		StateParams.Set(ParamIndex+0, new FxConstant(2, *pos));					// count
@@ -1088,6 +1127,15 @@ static int PatchThing (int thingy)
 						value[0] &= ~MF_TRANSLUCENT; // clean the slot
 						vchanged[2] = true; value[2] |= 2; // let the TRANSLUCxx code below handle it
 					}
+					if ((info->flags & MF_MISSILE) && (info->flags2 & MF2_NOTELEPORT)
+						&& !(value[0] & MF_MISSILE))
+					{
+						// ZDoom gives missiles flags that did not exist in Doom: MF2_NOTELEPORT, 
+						// MF2_IMPACT, and MF2_PCROSS. The NOTELEPORT one can be a problem since 
+						// some projectile actors (those new to Doom II) were not excluded from 
+						// triggering line effects and can teleport when the missile flag is removed.
+						info->flags2 &= ~MF2_NOTELEPORT;
+					}
 					info->flags = value[0];
 				}
 				if (vchanged[1])
@@ -1183,15 +1231,24 @@ static int PatchThing (int thingy)
 			PushTouchedActor(const_cast<PClassActor *>(type));
 		}
 
-		// Make MF3_ISMONSTER match MF_COUNTKILL
-		if (info->flags & MF_COUNTKILL)
+		// If MF_COUNTKILL is set, make sure the other standard monster flags are
+		// set, too. And vice versa.
+		if (thingy != 1) // don't mess with the player's flags
 		{
-			info->flags3 |= MF3_ISMONSTER;
+			if (info->flags & MF_COUNTKILL)
+			{
+				info->flags2 |= MF2_PUSHWALL | MF2_MCROSS | MF2_PASSMOBJ;
+				info->flags3 |= MF3_ISMONSTER;
+			}
+			else
+			{
+				info->flags2 &= ~(MF2_PUSHWALL | MF2_MCROSS);
+				info->flags3 &= ~MF3_ISMONSTER;
+			}
 		}
-		else
-		{
-			info->flags3 &= ~MF3_ISMONSTER;
-		}
+		// Everything that's altered here gets the CANUSEWALLS flag, just in case
+		// it calls P_Move().
+		info->flags4 |= MF4_CANUSEWALLS;
 		if (patchedStates)
 		{
 			statedef.InstallStates(type, info);
@@ -1406,7 +1463,7 @@ static int PatchSprite (int sprNum)
 
 static int PatchAmmo (int ammoNum)
 {
-	const PClass *ammoType = NULL;
+	PClassAmmo *ammoType = NULL;
 	AAmmo *defaultAmmo = NULL;
 	int result;
 	int oldclip;
@@ -1572,6 +1629,7 @@ static int PatchWeapon (int weapNum)
 		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
 			info->AmmoUse1 = val;
+			info->flags6 |= MF6_INTRYMOVE;	// flag the weapon for postprocessing (reuse a flag that can't be set by external means)
 		}
 		else if (stricmp (Line1, "Min ammo") == 0)
 		{
@@ -1713,7 +1771,7 @@ static int PatchMisc (int dummy)
 		{ "IDKFA Armor",			myoffsetof(struct DehInfo,KFAArmor) },
 		{ "IDKFA Armor Class",		myoffsetof(struct DehInfo,KFAAC) },
 		{ "No Autofreeze",			myoffsetof(struct DehInfo,NoAutofreeze) },
-		{ NULL, }
+		{ NULL, 0 }
 	};
 	int result;
 
@@ -1725,7 +1783,7 @@ static int PatchMisc (int dummy)
 		{
 			if (stricmp (Line1, "BFG Cells/Shot") == 0)
 			{
-				((AWeapon*)GetDefaultByName ("BFG9000"))->AmmoUse1 = atoi (Line2);
+				deh.BFGCells = atoi (Line2);
 			}
 			else if (stricmp (Line1, "Rocket Explosion Style") == 0)
 			{
@@ -2479,8 +2537,6 @@ static void UnloadDehSupp ()
 		BitNames.ShrinkToFit();
 		StyleNames.Clear();
 		StyleNames.ShrinkToFit();
-		WeaponNames.Clear();
-		WeaponNames.ShrinkToFit();
 		AmmoNames.Clear();
 		AmmoNames.ShrinkToFit();
 
@@ -2774,6 +2830,7 @@ static bool LoadDehSupp ()
 			}
 			else if (sc.Compare("WeaponNames"))
 			{
+				WeaponNames.Clear();	// This won't be cleared by UnloadDEHSupp so we need to do it here explicitly
 				sc.MustGetStringName("{");
 				while (!sc.CheckString("}"))
 				{
@@ -2877,6 +2934,57 @@ void FinishDehPatch ()
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
 	StateMap.Clear();
 	StateMap.ShrinkToFit();
+	TouchedActors.Clear();
+	TouchedActors.ShrinkToFit();
+
+	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
+	// ammo consumption work as intended.
+
+	for(unsigned i = 0; i < WeaponNames.Size(); i++)
+	{
+		AWeapon *weap = (AWeapon*)GetDefaultByType(WeaponNames[i]);
+		bool found = false;
+		if (weap->flags6 & MF6_INTRYMOVE)
+		{
+			// Weapon sets an explicit amount of ammo to use so we won't need any special processing here
+			weap->flags6 &= ~MF6_INTRYMOVE;
+		}
+		else
+		{
+			weap->WeaponFlags |= WIF_DEHAMMO;
+			weap->AmmoUse1 = 0;
+			// to allow proper checks in CheckAmmo we have to find the first attack pointer in the Fire sequence
+			// and set its default ammo use as the weapon's AmmoUse1.
+
+			TMap<FState*, bool> StateVisited;
+
+			FState *state = WeaponNames[i]->FindState(NAME_Fire);
+			while (state != NULL)
+			{
+				bool *check = StateVisited.CheckKey(state);
+				if (check != NULL && *check)
+				{
+					break;	// State has already been checked so we reached a loop
+				}
+				StateVisited[state] = true;
+				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
+				{
+					if (state->ActionFunc == AmmoPerAttacks[j].func)
+					{
+						found = true;
+						int use = AmmoPerAttacks[j].ammocount;
+						if (use < 0) use = deh.BFGCells;
+						weap->AmmoUse1 = use;
+						break;
+					}
+				}
+				if (found) break;
+				state = state->GetNextState();
+			}
+		}
+	}
+	WeaponNames.Clear();
+	WeaponNames.ShrinkToFit();
 }
 
 void ModifyDropAmount(AInventory *inv, int dropamount);
@@ -2892,11 +3000,7 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	if (RealPickup != NULL)
 	{
 		// The internally spawned item should never count towards statistics.
-		if (RealPickup->flags & MF_COUNTITEM)
-		{
-			RealPickup->flags &= ~MF_COUNTITEM;
-			level.total_items--;
-		}
+		RealPickup->ClearCounters();
 		if (!(flags & MF_DROPPED))
 		{
 			RealPickup->flags &= ~MF_DROPPED;

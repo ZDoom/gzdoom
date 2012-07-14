@@ -60,6 +60,7 @@ DEFINE_MEMBER_VARIABLE(args, AActor)
 DEFINE_MEMBER_VARIABLE(ceilingz, AActor)
 DEFINE_MEMBER_VARIABLE(floorz, AActor)
 DEFINE_MEMBER_VARIABLE(health, AActor)
+DEFINE_MEMBER_VARIABLE(Mass, AActor)
 DEFINE_MEMBER_VARIABLE(pitch, AActor)
 DEFINE_MEMBER_VARIABLE(special, AActor)
 DEFINE_MEMBER_VARIABLE(special1, AActor)
@@ -76,8 +77,12 @@ DEFINE_MEMBER_VARIABLE(velz, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momx, velx, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
+DEFINE_MEMBER_VARIABLE(scaleX, AActor)
+DEFINE_MEMBER_VARIABLE(scaleY, AActor)
 DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
+DEFINE_MEMBER_VARIABLE(accuracy, AActor)
+DEFINE_MEMBER_VARIABLE(stamina, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
@@ -963,6 +968,7 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	if (Operand)
+
 	{
 		Operand = Operand->ResolveAsBoolean(ctx);
 	}
@@ -1474,7 +1480,7 @@ FxCompareRel::FxCompareRel(int o, FxExpression *l, FxExpression *r)
 FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, true)) return false;
+	if (!ResolveLR(ctx, true)) return NULL;
 
 	if (!ValueType.isNumeric())
 	{
@@ -1616,7 +1622,7 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
-	if (!ResolveLR(ctx, true)) return false;
+	if (!ResolveLR(ctx, true)) return NULL;
 
 	if (!left || !right)
 	{
@@ -1756,7 +1762,7 @@ FxBinaryInt::FxBinaryInt(int o, FxExpression *l, FxExpression *r)
 FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
-	if (!ResolveLR(ctx, false)) return false;
+	if (!ResolveLR(ctx, false)) return NULL;
 
 	if (ctx.lax && ValueType == VAL_Float)
 	{
@@ -2299,7 +2305,7 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(val, ctx);
 
 
-	if (!ValueType.isNumeric())
+	if (!val->ValueType.isNumeric())
 	{
 		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
 		delete this;
@@ -2523,6 +2529,7 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 		min = new FxParameter(new FxFloatCast(mi));
 		max = new FxParameter(new FxFloatCast(ma));
 	}
+	ValueType = VAL_Float;
 }
 
 //==========================================================================
@@ -3308,13 +3315,13 @@ FxFunctionCall::~FxFunctionCall()
 
 FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
-	// There's currently only 2 global functions.
-	// This will have to change later!
-	if (MethodName == NAME_Sin || MethodName == NAME_Cos)
+	// There's currently only 3 global functions.
+	// If this changes later, it won't be here!
+	if (MethodName == NAME_Sin || MethodName == NAME_Cos || MethodName == NAME_Sqrt)
 	{
 		if (Self != NULL)
 		{
-			ScriptPosition.Message(MSG_ERROR, "Global variables cannot have a self pointer");
+			ScriptPosition.Message(MSG_ERROR, "Global functions cannot have a self pointer");
 			delete this;
 			return NULL;
 		}
@@ -3324,9 +3331,18 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		return x->Resolve(ctx);
 	}
 
-	int min, max;
-	int special = P_FindLineSpecial(MethodName.GetChars(), &min, &max);
-	if (special > 0 && min >= 0)
+	int min, max, special;
+	if (MethodName == NAME_ACS_NamedExecuteWithResult || MethodName == NAME_CallACS)
+	{
+		special = -ACS_ExecuteWithResult;
+		min = 1;
+		max = 5;
+	}
+	else
+	{
+		special = P_FindLineSpecial(MethodName.GetChars(), &min, &max);
+	}
+	if (special != 0 && min >= 0)
 	{
 		int paramcount = ArgList? ArgList->Size() : 0;
 		if (paramcount < min)
@@ -3357,7 +3373,10 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 //==========================================================================
 //
+// FxActionSpecialCall
 //
+// If special is negative, then the first argument will be treated as a
+// name for ACS_NamedExecuteWithResult.
 //
 //==========================================================================
 
@@ -3398,7 +3417,15 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 		{
 			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
 			if ((*ArgList)[i] == NULL) failed = true;
-			if ((*ArgList)[i]->ValueType != VAL_Int)
+			if (Special < 0 && i == 0)
+			{
+				if ((*ArgList)[i]->ValueType != VAL_Name)
+				{
+					ScriptPosition.Message(MSG_ERROR, "Name expected for parameter %d", i);
+					failed = true;
+				}
+			}
+			else if ((*ArgList)[i]->ValueType != VAL_Int)
 			{
 				if (ctx.lax && ((*ArgList)[i]->ValueType == VAL_Float))
 				{
@@ -3431,6 +3458,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 ExpVal FxActionSpecialCall::EvalExpression (AActor *self)
 {
 	int v[5] = {0,0,0,0,0};
+	int special = Special;
 
 	if (Self != NULL)
 	{
@@ -3441,12 +3469,20 @@ ExpVal FxActionSpecialCall::EvalExpression (AActor *self)
 	{
 		for(unsigned i = 0; i < ArgList->Size(); i++)
 		{
-			v[i] = (*ArgList)[i]->EvalExpression(self).GetInt();
+			if (special < 0)
+			{
+				special = -special;
+				v[i] = -(*ArgList)[i]->EvalExpression(self).GetName();
+			}
+			else
+			{
+				v[i] = (*ArgList)[i]->EvalExpression(self).GetInt();
+			}
 		}
 	}
 	ExpVal ret;
 	ret.Type = VAL_Int;
-	ret.Int = LineSpecials[Special](NULL, self, false, v[0], v[1], v[2], v[3], v[4]);
+	ret.Int = P_ExecuteSpecial(special, NULL, self, false, v[0], v[1], v[2], v[3], v[4]);
 	return ret;
 }
 
@@ -3537,12 +3573,6 @@ FxGlobalFunctionCall::~FxGlobalFunctionCall()
 	SAFE_DELETE(ArgList);
 }
 
-//==========================================================================
-//
-// // so far just a quick hack to handle sin and cos
-//
-//==========================================================================
-
 FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
@@ -3570,8 +3600,15 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 	if ((*ArgList)[0]->isConstant())
 	{
 		double v = (*ArgList)[0]->EvalExpression(NULL).GetFloat();
-		v *= M_PI / 180.0;		// convert from degrees to radians
-		v = (Name == NAME_Sin) ? sin(v) : cos(v);
+		if (Name == NAME_Sqrt)
+		{
+			v = sqrt(v);
+		}
+		else
+		{
+			v *= M_PI / 180.0;		// convert from degrees to radians
+			v = (Name == NAME_Sin) ? sin(v) : cos(v);
+		}
 		FxExpression *x = new FxConstant(v, ScriptPosition);
 		delete this;
 		return x;
@@ -3584,10 +3621,8 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 	return this;
 }
 
-
 //==========================================================================
 //
-// 
 //
 //==========================================================================
 
@@ -3597,10 +3632,15 @@ ExpVal FxGlobalFunctionCall::EvalExpression (AActor *self)
 	ExpVal ret;
 	ret.Type = VAL_Float;
 
-	// shall we use the CRT's sin and cos functions?
-	angle_t angle = angle_t(v * ANGLE_90/90.);
-	if (Name == NAME_Sin) ret.Float = FIXED2FLOAT (finesine[angle>>ANGLETOFINESHIFT]);
-	else ret.Float = FIXED2FLOAT (finecosine[angle>>ANGLETOFINESHIFT]);
+	if (Name == NAME_Sqrt)
+	{
+		ret.Float = sqrt(v);
+	}
+	else
+	{
+		v *= M_PI / 180.0;		// convert from degrees to radians
+		ret.Float = (Name == NAME_Sin) ? sin(v) : cos(v);
+	}
 	return ret;
 }
 
@@ -3610,13 +3650,14 @@ ExpEmit FxGlobalFunctionCall::Emit(VMFunctionBuilder *build)
 	assert(!v.Konst && v.RegType == REGT_FLOAT);
 
 	build->Emit(OP_MULF_RK, v.RegNum, v.RegNum, build->GetConstantFloat(M_PI / 180.0));
-	build->Emit(OP_FLOP, v.RegNum, v.RegNum, (Name == NAME_Sin) ? FLOP_SIN : FLOP_COS);
+	build->Emit(OP_FLOP, v.RegNum, v.RegNum,
+		(Name == NAME_Sqrt) ?	FLOP_SQRT :
+		(Name == NAME_Sin) ?	FLOP_SIN :
+								FLOP_COS);
 	return v;
 }
 
 //==========================================================================
-//
-//
 //
 //==========================================================================
 
@@ -3988,7 +4029,7 @@ FStateExpressions StateParams;
 //
 //==========================================================================
 
-FStateExpressions::~FStateExpressions()
+void FStateExpressions::Clear()
 {
 	for(unsigned i=0; i<Size(); i++)
 	{
@@ -3997,6 +4038,7 @@ FStateExpressions::~FStateExpressions()
 			delete expressions[i].expr;
 		}
 	}
+	expressions.Clear();
 }
 
 //==========================================================================

@@ -1,0 +1,73 @@
+// Note: These textures use 'graphic' instead of patch because the patches must not be placed in the TEX_WallPatch namespace.
+
+Graphic optional P_FWALK1, 112, 136
+{
+	Graphic "M_FBOX", 0, 0
+	Graphic "M_FWALK1", 24, 12 { useoffsets }
+}
+
+Graphic optional P_FWALK2, 112, 136
+{
+	Graphic "M_FBOX", 0, 0
+	Graphic "M_FWALK2", 24, 12 { useoffsets }
+}
+
+Graphic optional P_FWALK3, 112, 136
+{
+	Graphic "M_FBOX", 0, 0
+	Graphic "M_FWALK3", 24, 12 { useoffsets }
+}
+
+Graphic optional P_FWALK4, 112, 136
+{
+	Graphic "M_FBOX", 0, 0
+	Graphic "M_FWALK4", 24, 12 { useoffsets }
+}
+
+Graphic optional P_CWALK1, 112, 136
+{
+	Graphic "M_CBOX", 0, 0
+	Graphic "M_CWALK1", 24, 12 { useoffsets }
+}
+
+Graphic optional P_CWALK2, 112, 136
+{
+	Graphic "M_CBOX", 0, 0
+	Graphic "M_CWALK2", 24, 12 { useoffsets }
+}
+
+Graphic optional P_CWALK3, 112, 136
+{
+	Graphic "M_CBOX", 0, 0
+	Graphic "M_CWALK3", 24, 12 { useoffsets }
+}
+
+Graphic optional P_CWALK4, 112, 136
+{
+	Graphic "M_CBOX", 0, 0
+	Graphic "M_CWALK4", 24, 12 { useoffsets }
+}
+
+Graphic optional P_MWALK1, 112, 136
+{
+	Graphic "M_MBOX", 0, 0
+	Graphic "M_MWALK1", 24, 12 { useoffsets }
+}
+
+Graphic optional P_MWALK2, 112, 136
+{
+	Graphic "M_MBOX", 0, 0
+	Graphic "M_MWALK2", 24, 12 { useoffsets }
+}
+
+Graphic optional P_MWALK3, 112, 136
+{
+	Graphic "M_MBOX", 0, 0
+	Graphic "M_MWALK3", 24, 12 { useoffsets }
+}
+
+Graphic optional P_MWALK4, 112, 136
+{
+	Graphic "M_MBOX", 0, 0
+	Graphic "M_MWALK4", 24, 12 { useoffsets }
+}

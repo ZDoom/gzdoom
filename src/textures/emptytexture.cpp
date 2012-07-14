@@ -36,8 +36,8 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "r_data.h"
 #include "w_wad.h"
+#include "textures/textures.h"
 
 //==========================================================================
 //
@@ -71,10 +71,10 @@ protected:
 FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	char check[8];
-	if (file.GetLength() != 8) return false;
+	if (file.GetLength() != 8) return NULL;
 	file.Seek(0, SEEK_SET);
-	if (file.Read(check, 8) != 8) return false;
-	if (memcmp(check, "\0\0\0\0\0\0\0\0", 8)) return false;
+	if (file.Read(check, 8) != 8) return NULL;
+	if (memcmp(check, "\0\0\0\0\0\0\0\0", 8)) return NULL;
 
 	return new FEmptyTexture(lumpnum);
 }

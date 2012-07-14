@@ -117,6 +117,7 @@ public:
 
 	static void EnableNoSet ();		// enable the honoring of CVAR_NOSET
 	static void EnableCallbacks ();
+	static void DisableCallbacks ();
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
 	static void ListVars (const char *filter, bool plain);
@@ -335,6 +336,30 @@ public:
 		{ UCVarValue val; val.Bool = !!flag; SetGenericRep (val, CVAR_Bool); return val.Bool; }
 	inline operator int () const { return (ValueVar & BitVal); }
 	inline int operator *() const { return (ValueVar & BitVal); }
+
+protected:
+	virtual void DoSet (UCVarValue value, ECVarType type);
+
+	FIntCVar &ValueVar;
+	uint32 BitVal;
+	int BitNum;
+};
+
+class FMaskCVar : public FBaseCVar
+{
+public:
+	FMaskCVar (const char *name, FIntCVar &realvar, uint32 bitval);
+
+	virtual ECVarType GetRealType () const;
+
+	virtual UCVarValue GetGenericRep (ECVarType type) const;
+	virtual UCVarValue GetFavoriteRep (ECVarType *type) const;
+	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
+	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
+	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+
+	inline operator int () const { return (ValueVar & BitVal) >> BitNum; }
+	inline int operator *() const { return (ValueVar & BitVal) >> BitNum; }
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);

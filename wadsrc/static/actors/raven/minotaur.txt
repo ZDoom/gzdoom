@@ -122,6 +122,8 @@ ACTOR MinotaurFriend : Minotaur native
 		MNTR A 15 A_SetTranslucent(0.66, 0)
 		MNTR A 3 A_SetTranslucent(1, 0)
 		Goto Super::Spawn
+	Idle:
+		Goto Super::Spawn
 	Death:
 		Goto FadeOut
 	}

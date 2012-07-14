@@ -11,6 +11,7 @@
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 #define MAULATORTICS (25*35)
 
@@ -55,9 +56,9 @@ bool AMinotaur::Slam (AActor *thing)
 	return Super::Slam (thing);
 }
 
-int AMinotaur::DoSpecialDamage (AActor *target, int damage)
+int AMinotaur::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
-	damage = Super::DoSpecialDamage (target, damage);
+	damage = Super::DoSpecialDamage (target, damage, damagetype);
 	if ((damage != -1) && (flags & MF_SKULLFLY))
 	{ // Slam only when in charge mode
 		P_MinotaurSlam (this, target);
@@ -82,9 +83,9 @@ void AMinotaurFriend::Serialize (FArchive &arc)
 	arc << StartTime;
 }
 
-void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
+void AMinotaurFriend::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	if (tracer && tracer->health > 0 && tracer->player)
 	{

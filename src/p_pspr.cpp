@@ -18,6 +18,7 @@
 #include "d_event.h"
 #include "c_cvars.h"
 #include "m_random.h"
+#include "p_enemy.h"
 #include "p_local.h"
 #include "s_sound.h"
 #include "doomstat.h"
@@ -26,6 +27,9 @@
 #include "templates.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+#include "farchive.h"
+#include "d_player.h"
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,6 +61,30 @@ static FRandom pr_gunshot ("GunShot");
 
 //---------------------------------------------------------------------------
 //
+// PROC P_NewPspriteTick
+//
+//---------------------------------------------------------------------------
+
+void P_NewPspriteTick()
+{
+	// This function should be called after the beginning of a tick, before any possible
+	// prprite-event, or near the end, after any possible psprite event.
+	// Because data is reset for every tick (which it must be) this has no impact on savegames.
+	for (int i = 0; i<MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+		{
+			pspdef_t *pspdef = players[i].psprites;
+			for (int j = 0;j < NUMPSPRITES; j++)
+			{
+				pspdef[j].processPending = true;
+			}
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC P_SetPsprite
 //
 //---------------------------------------------------------------------------
@@ -67,10 +95,12 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 	if (position == ps_weapon && !nofunction)
 	{ // A_WeaponReady will re-set these as needed
-		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK);
+		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK | CF_WEAPONRELOADOK | CF_WEAPONZOOMOK);
 	}
 
 	psp = &player->psprites[position];
+	psp->processPending = false; // Do not subsequently perform periodic processing within the same tick.
+
 	do
 	{
 		if (state == NULL)
@@ -152,7 +182,7 @@ void P_BringUpWeapon (player_t *player)
 	if (weapon != NULL &&
 		weapon->SisterWeapon &&
 		weapon->SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2)))
+		player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true))
 	{
 		weapon = weapon->SisterWeapon;
 	}
@@ -254,6 +284,66 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 
 //---------------------------------------------------------------------------
 //
+// PROC P_ReloadWeapon
+//
+//---------------------------------------------------------------------------
+
+void P_ReloadWeapon (player_t *player, FState *state)
+{
+	AWeapon *weapon;
+	if (!player->isbot && bot_observer)
+	{
+		return;
+	}
+
+	weapon = player->ReadyWeapon;
+	if (weapon == NULL)
+	{
+		return;
+	}
+
+	if (state == NULL)
+	{
+		state = weapon->GetRelState();
+	}
+	// [XA] don't change state if still null, so if the modder sets 
+	// WRF_RELOAD to true but forgets to define the Reload state, the weapon
+	// won't disappear. ;)
+	if (state != NULL)
+		P_SetPsprite (player, ps_weapon, state);
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_ZoomWeapon
+//
+//---------------------------------------------------------------------------
+
+void P_ZoomWeapon (player_t *player, FState *state)
+{
+	AWeapon *weapon;
+	if (!player->isbot && bot_observer)
+	{
+		return;
+	}
+
+	weapon = player->ReadyWeapon;
+	if (weapon == NULL)
+	{
+		return;
+	}
+
+	if (state == NULL)
+	{
+		state = weapon->GetZoomState();
+	}
+	// [XA] don't change state if still null. Same reasons as above.
+	if (state != NULL)
+		P_SetPsprite (player, ps_weapon, state);
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC P_DropWeapon
 //
 // The player died, so put the weapon away.
@@ -276,6 +366,8 @@ void P_DropWeapon (player_t *player)
 // tic and not just when A_WeaponReady is called. Not all weapons execute
 // A_WeaponReady every tic, and it looks bad if they don't bob smoothly.
 //
+// [XA] Added new bob styles and exposed bob properties. Thanks, Ryan Cordell!
+//
 //============================================================================
 
 void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
@@ -293,8 +385,14 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 		return;
 	}
 
+	// [XA] Get the current weapon's bob properties.
+	int bobstyle = weapon->BobStyle;
+	int bobspeed = (weapon->BobSpeed * 128) >> 16;
+	fixed_t rangex = weapon->BobRangeX;
+	fixed_t rangey = weapon->BobRangeY;
+
 	// Bob the weapon based on movement speed.
-	int angle = (128*35/TICRATE*level.time)&FINEMASK;
+	int angle = (bobspeed*35/TICRATE*level.time)&FINEMASK;
 
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
@@ -322,8 +420,39 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
 	if (curbob != 0)
 	{
-		*x = FixedMul(player->bob, finecosine[angle]);
-		*y = FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+		fixed_t bobx = FixedMul(player->bob, rangex);
+		fixed_t boby = FixedMul(player->bob, rangey);
+		switch (bobstyle)
+		{
+		case AWeapon::BobNormal:
+			*x = FixedMul(bobx, finecosine[angle]);
+			*y = FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			break;
+			
+		case AWeapon::BobInverse:
+			*x = FixedMul(bobx, finecosine[angle]);
+			*y = boby - FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			break;
+			
+		case AWeapon::BobAlpha:
+			*x = FixedMul(bobx, finesine[angle]);
+			*y = FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			break;
+			
+		case AWeapon::BobInverseAlpha:
+			*x = FixedMul(bobx, finesine[angle]);
+			*y = boby - FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			break;
+			
+		case AWeapon::BobSmooth:
+			*x = FixedMul(bobx, finecosine[angle]);
+			*y = (boby - FixedMul(boby, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+			break;
+
+		case AWeapon::BobInverseSmooth:
+			*x = FixedMul(bobx, finecosine[angle]);
+			*y = (FixedMul(boby, finecosine[angle*2 & (FINEANGLES-1)]) + boby) / 2;
+		}
 	}
 	else
 	{
@@ -338,6 +467,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 //
 // Readies a weapon for firing or bobbing with its three ancillary functions,
 // DoReadyWeaponToSwitch(), DoReadyWeaponToFire() and DoReadyWeaponToBob().
+// [XA] Added DoReadyWeaponToReload() and DoReadyWeaponToZoom()
 //
 //============================================================================
 
@@ -391,12 +521,32 @@ void DoReadyWeaponToBob (AActor * self)
 	}
 }
 
+void DoReadyWeaponToReload (AActor * self)
+{
+	// Prepare for reload action.
+	player_t *player;
+	if (self && (player = self->player))
+		player->cheats |= CF_WEAPONRELOADOK;
+	return;
+}
+
+void DoReadyWeaponToZoom (AActor * self)
+{
+	// Prepare for reload action.
+	player_t *player;
+	if (self && (player = self->player))
+		player->cheats |= CF_WEAPONZOOMOK;
+	return;
+}
+
 // This function replaces calls to A_WeaponReady in other codepointers.
 void DoReadyWeapon(AActor * self)
 {
 	DoReadyWeaponToBob(self);
 	DoReadyWeaponToFire(self);
 	DoReadyWeaponToSwitch(self);
+	DoReadyWeaponToReload(self);
+	DoReadyWeaponToZoom(self);
 }
 
 enum EWRF_Options
@@ -406,6 +556,8 @@ enum EWRF_Options
 	WRF_NoSwitch = 2,
 	WRF_NoPrimary = 4,
 	WRF_NoSecondary = 8,
+	WRF_AllowReload = 16,
+	WRF_AllowZoom = 32,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
@@ -419,6 +571,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 		DoReadyWeaponToFire(self, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
 	if (!(flags & WRF_NoBob))
 		DoReadyWeaponToBob(self);
+	if ((flags & WRF_AllowReload))
+		DoReadyWeaponToReload(self);
+	if ((flags & WRF_AllowZoom))
+		DoReadyWeaponToZoom(self);
 	return 0;
 }
 
@@ -490,6 +646,50 @@ void P_CheckWeaponSwitch (player_t *player)
 	{
 		// morphed classes cannot change weapons so don't even try again.
 		player->PendingWeapon = WP_NOCHANGE;
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponReload
+//
+// The player can reload the weapon.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponReload (player_t *player)
+{
+	AWeapon *weapon = player->ReadyWeapon;
+
+	if (weapon == NULL)
+		return;
+
+	// Check for reload.
+	if ((player->cheats & CF_WEAPONRELOADOK) && (player->cmd.ucmd.buttons & BT_RELOAD))
+	{
+		P_ReloadWeapon (player, NULL);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponZoom
+//
+// The player can use the weapon's zoom function.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponZoom (player_t *player)
+{
+	AWeapon *weapon = player->ReadyWeapon;
+
+	if (weapon == NULL)
+		return;
+
+	// Check for zoom.
+	if ((player->cheats & CF_WEAPONZOOMOK) && (player->cmd.ucmd.buttons & BT_ZOOM))
+	{
+		P_ZoomWeapon (player, NULL);
 	}
 }
 
@@ -674,10 +874,16 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 // A_GunFlash
 //
+enum GF_Flags
+{
+	GFF_NOEXTCHANGE = 1,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE_OPT(flash)	{ flash = NULL; }
+	PARAM_INT_OPT  (flags)	{ flags = 0; }
 
 	player_t *player = self->player;
 
@@ -685,8 +891,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 	{
 		return 0;
 	}
-	player->mo->PlayAttacking2 ();
-
+	if (!(flags & GFF_NOEXTCHANGE))
+	{
+		player->mo->PlayAttacking2 ();
+	}
 	if (flash == NULL)
 	{
 		if (player->ReadyWeapon->bAltFire)
@@ -760,7 +968,7 @@ void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch)
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, pufftype);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Light0)
@@ -859,7 +1067,7 @@ void P_MovePsprites (player_t *player)
 		psp = &player->psprites[0];
 		for (i = 0; i < NUMPSPRITES; i++, psp++)
 		{
-			if ((state = psp->state) != NULL) // a null state means not active
+			if ((state = psp->state) != NULL && psp->processPending) // a null state means not active
 			{
 				// drop tic count and possibly change state
 				if (psp->tics != -1)	// a -1 tic count never changes
@@ -887,20 +1095,20 @@ void P_MovePsprites (player_t *player)
 		{
 			P_CheckWeaponFire (player);
 		}
+		if (player->cheats & CF_WEAPONRELOADOK)
+		{
+			P_CheckWeaponReload (player);
+		}
+		if (player->cheats & CF_WEAPONZOOMOK)
+		{
+			P_CheckWeaponZoom (player);
+		}
 	}
 }
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)
 {
-	arc << def.state << def.tics << def.sx << def.sy;
-	if (SaveVersion >= 2295)
-	{
-		arc << def.sprite << def.frame;
-	}
-	else
-	{
-		def.sprite = def.state->sprite;
-		def.frame = def.state->Frame;
-	}
+	arc << def.state << def.tics << def.sx << def.sy
+		<< def.sprite << def.frame;
 	return arc;
 }

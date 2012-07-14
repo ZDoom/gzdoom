@@ -64,7 +64,6 @@ private:
 	void ClearTeams ();
 
 	FString		m_Name;
-	BYTE		m_GameFilter;
 	int			m_iPlayerColor;
 	FString		m_TextColor;
 	FString		m_Logo;

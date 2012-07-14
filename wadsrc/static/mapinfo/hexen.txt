@@ -1,4 +1,5 @@
 // A bare-bones MAPINFO for Hexen.
+include "mapinfo/common.txt"
 
 // Most of the MAPINFO is still in hexen.wad.
 
@@ -39,7 +40,28 @@ gameinfo
 	defaultrespawntime = 12
 	defaultdropstyle = 1
 	player5start = 9100
-	pickupcolor = "d6 ba 45"
+	pickupcolor = "d7 ba 45"
+	quitmessages = "$*RAVENQUITMSG"
+	menufontcolor_title = "UNTRANSLATED"
+	menufontcolor_label = "RED"
+	menufontcolor_value = "UNTRANSLATED"
+	menufontcolor_action = "UNTRANSLATED"
+	menufontcolor_header = "GOLD"
+	menufontcolor_highlight = "YELLOW"
+	menufontcolor_selection = "BRICK"
+	menubackbutton = "M_BACK_X"
+	PlayerClasses = "FighterPlayer", "ClericPlayer", "MagePlayer"
+	nightmarefast = true
+	pausesign = "PAUSED"
+	gibfactor = 0.5
+	cursorpic = "hexncurs"
+	textscreenx = 10
+	textscreeny = 5
+	defaultendsequence = "Inter_Chess"
+	maparrow = "maparrows/dagger.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedfont = "SmallFont"
+	statscreen_enteringfont = "SmallFont"
 }
 
 skill baby
@@ -103,7 +125,7 @@ skill nightmare
 clearepisodes
 episode "&wt@01"
 {
-	name = "Hexen"
+	name = "Hexen - Beyond Heretic"
 	key = "h"
 }
 

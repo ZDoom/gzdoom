@@ -61,7 +61,7 @@
 #include "g_level.h"
 #include "r_state.h"
 #include "cmdlib.h"
-#include "r_main.h"
+#include "r_utility.h"
 #include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
@@ -73,13 +73,17 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*));
+extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(char*, char*));
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+#ifdef USE_XCURSOR
+extern bool UseXCursor;
+#endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -134,21 +138,6 @@ void STACK_ARGS call_terms ()
 	}
 }
 
-//==========================================================================
-//
-// FinalGC
-//
-// Collect garbage one last time before exiting.
-//
-//==========================================================================
-
-static void FinalGC()
-{
-	GC::FinalGC = true;
-	Args = NULL;
-	GC::FullGC();
-}
-
 static void STACK_ARGS NewFailure ()
 {
     I_FatalError ("Failed to allocate memory from system heap");
@@ -157,13 +146,14 @@ static void STACK_ARGS NewFailure ()
 static int DoomSpecificInfo (char *buffer, char *end)
 {
 	const char *arg;
-	int size = end-buffer;
+	int size = end-buffer-2;
 	int i, p;
-
-	SDL_Quit();
 
 	p = 0;
 	p += snprintf (buffer+p, size-p, GAMENAME" version " DOTVERSIONSTR " (" __DATE__ ")\n");
+#ifdef __VERSION__
+	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
+#endif
 	p += snprintf (buffer+p, size-p, "\nCommand line:");
 	for (i = 0; i < Args->NumArgs(); ++i)
 	{
@@ -246,15 +236,20 @@ static void unprotect_rtext()
 }
 #endif
 
+void I_StartupJoysticks();
+void I_ShutdownJoysticks();
+
 int main (int argc, char **argv)
 {
-	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
-		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
-
+#if !defined (__APPLE__)
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-		cc_install_handlers(4, s, "zdoom-crash.log", DoomSpecificInfo);
+		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
 	}
+#endif // !__APPLE__
+
+	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n",
+		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -269,19 +264,51 @@ int main (int argc, char **argv)
 	
 	setlocale (LC_ALL, "C");
 
-	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE) == -1)
+	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
 	}
 	atterm (SDL_Quit);
 
+	{
+		char viddriver[80];
+
+		if (SDL_VideoDriverName(viddriver, sizeof(viddriver)) != NULL)
+		{
+			printf("Using video driver %s\n", viddriver);
+#ifdef USE_XCURSOR
+			UseXCursor = (strcmp(viddriver, "x11") == 0);
+#endif
+		}
+		printf("\n");
+	}
+
 	SDL_WM_SetCaption (GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")", NULL);
+
+#ifdef __APPLE__
+	
+	const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo();
+	if ( NULL != videoInfo )
+	{
+		EXTERN_CVAR(  Int, vid_defwidth  )
+		EXTERN_CVAR(  Int, vid_defheight )
+		EXTERN_CVAR(  Int, vid_defbits   )
+		EXTERN_CVAR( Bool, vid_vsync     )
+		EXTERN_CVAR( Bool, fullscreen    )
+		
+		vid_defwidth  = videoInfo->current_w;
+		vid_defheight = videoInfo->current_h;
+		vid_defbits   = videoInfo->vfmt->BitsPerPixel;
+		vid_vsync     = True;
+		fullscreen    = True;
+	}
+	
+#endif // __APPLE__
 	
     try
     {
 		Args = new DArgs(argc, argv);
-		atterm(FinalGC);
 
 		/*
 		  killough 1/98:
@@ -317,11 +344,13 @@ int main (int argc, char **argv)
 			progdir = "./";
 		}
 
+		I_StartupJoysticks();
 		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();
     }
     catch (class CDoomError &error)
     {
+		I_ShutdownJoysticks();
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());
 		exit (-1);

@@ -77,7 +77,7 @@ static gameborder_t StrifeBorder =
 
 // Custom GAMEINFO ------------------------------------------------------------
 
-const char* GameInfoBoarders[] =
+const char* GameInfoBorders[] =
 {
 	"DoomBorder",
 	"HereticBorder",
@@ -103,12 +103,11 @@ const char* GameInfoBoarders[] =
 		do \
 		{ \
 			sc.MustGetToken(TK_StringConst); \
-			if(strlen(sc.String) > length) \
+			if(length > 0 && strlen(sc.String) > length) \
 			{ \
 				sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
 			} \
-			FName val = sc.String; \
-			gameinfo.key.Push(val); \
+			gameinfo.key[gameinfo.key.Reserve(1)] = sc.String; \
 		} \
 		while (sc.CheckToken(',')); \
 	}
@@ -164,6 +163,28 @@ const char* GameInfoBoarders[] =
 		} \
 	}
 
+#define GAMEINFOKEY_FONT(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		gameinfo.key.fontname = sc.String; \
+		if (sc.CheckToken(',')) { \
+			sc.MustGetToken(TK_StringConst); \
+			gameinfo.key.color = sc.String; \
+		} else { \
+			gameinfo.key.color = NAME_None; \
+		} \
+	}
+
+#define GAMEINFOKEY_PATCH(key, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		gameinfo.key.fontname = sc.String; \
+		gameinfo.key.color = NAME_Null; \
+	}
+
+
 void FMapInfoParser::ParseGameInfo()
 {
 	sc.MustGetToken('{');
@@ -198,7 +219,7 @@ void FMapInfoParser::ParseGameInfo()
 		{
 			if(sc.CheckToken(TK_Identifier))
 			{
-				switch(sc.MustMatchString(GameInfoBoarders))
+				switch(sc.MustMatchString(GameInfoBorders))
 				{
 					default:
 						gameinfo.border = &DoomBorder;
@@ -248,9 +269,21 @@ void FMapInfoParser::ParseGameInfo()
 				gameinfo.ArmorIcon2[8] = 0;
 			}
 		}
+		else if(nextKey.CompareNoCase("maparrow") == 0)
+		{
+			sc.MustGetToken(TK_StringConst);
+			gameinfo.mMapArrow = sc.String;
+			if (sc.CheckToken(','))
+			{
+				sc.MustGetToken(TK_StringConst);
+				gameinfo.mCheatMapArrow = sc.String;
+			}
+			else gameinfo.mCheatMapArrow = "";
+		}
 		// Insert valid keys here.
 		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
 		GAMEINFOKEY_STRINGARRAY(creditPages, "creditPage", 8)
+		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0)
 		GAMEINFOKEY_STRING(titleMusic, "titleMusic")
 		GAMEINFOKEY_FLOAT(titleTime, "titleTime")
 		GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")
@@ -260,9 +293,11 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_CSTRING(finaleFlat, "finaleFlat", 8)
 		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8)
 		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8)
+		GAMEINFOKEY_CSTRING(PauseSign, "pausesign", 8)
 		GAMEINFOKEY_STRING(quitSound, "quitSound")
 		GAMEINFOKEY_CSTRING(borderFlat, "borderFlat", 8)
 		GAMEINFOKEY_FIXED(telefogheight, "telefogheight")
+		GAMEINFOKEY_FIXED(gibfactor, "gibfactor")
 		GAMEINFOKEY_INT(defKickback, "defKickback")
 		GAMEINFOKEY_CSTRING(SkyFlatName, "SkyFlatName", 8)
 		GAMEINFOKEY_STRING(translator, "translator")
@@ -272,9 +307,12 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRING(backpacktype, "backpacktype")
 		GAMEINFOKEY_STRING(statusbar, "statusbar")
 		GAMEINFOKEY_STRING(intermissionMusic, "intermissionMusic")
+		GAMEINFOKEY_STRING(CursorPic, "CursorPic")
 		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
 		GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
+		GAMEINFOKEY_BOOL(swapmenu, "swapmenu")
 		GAMEINFOKEY_BOOL(intermissioncounter, "intermissioncounter")
+		GAMEINFOKEY_BOOL(nightmarefast, "nightmarefast")
 		GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
 		GAMEINFOKEY_FLOAT(dimamount, "dimamount")
 		GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
@@ -283,6 +321,24 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
 		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
 		GAMEINFOKEY_INT(player5start, "player5start")
+		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0)
+		GAMEINFOKEY_STRING(mTitleColor, "menufontcolor_title")
+		GAMEINFOKEY_STRING(mFontColor, "menufontcolor_label")
+		GAMEINFOKEY_STRING(mFontColorValue, "menufontcolor_value")
+		GAMEINFOKEY_STRING(mFontColorMore, "menufontcolor_action")
+		GAMEINFOKEY_STRING(mFontColorHeader, "menufontcolor_header")
+		GAMEINFOKEY_STRING(mFontColorHighlight, "menufontcolor_highlight")
+		GAMEINFOKEY_STRING(mFontColorSelection, "menufontcolor_selection")
+		GAMEINFOKEY_CSTRING(mBackButton, "menubackbutton", 8)
+		GAMEINFOKEY_INT(TextScreenX, "textscreenx")
+		GAMEINFOKEY_INT(TextScreenY, "textscreeny")
+		GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")
+		GAMEINFOKEY_FONT(mStatscreenMapNameFont, "statscreen_mapnamefont")
+		GAMEINFOKEY_FONT(mStatscreenFinishedFont, "statscreen_finishedfont")
+		GAMEINFOKEY_FONT(mStatscreenEnteringFont, "statscreen_enteringfont")
+		GAMEINFOKEY_PATCH(mStatscreenFinishedFont, "statscreen_finishedpatch")
+		GAMEINFOKEY_PATCH(mStatscreenEnteringFont, "statscreen_enteringpatch")
+
 		else
 		{
 			// ignore unkown keys.

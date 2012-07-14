@@ -15,21 +15,27 @@ class AFighterWeapon : public AWeapon
 {
 	DECLARE_CLASS (AFighterWeapon, AWeapon);
 public:
-	bool TryPickup (AActor *&toucher);
 };
 
 class AClericWeapon : public AWeapon
 {
 	DECLARE_CLASS (AClericWeapon, AWeapon);
 public:
-	bool TryPickup (AActor *&toucher);
 };
 
 class AMageWeapon : public AWeapon
 {
 	DECLARE_CLASS (AMageWeapon, AWeapon);
 public:
-	bool TryPickup (AActor *&toucher);
+};
+
+class AArtiPoisonBag : public AInventory
+{
+	DECLARE_CLASS (AArtiPoisonBag, AInventory)
+public:
+	bool HandlePickup (AInventory *item);
+	AInventory *CreateCopy (AActor *other);
+	void BeginPlay ();
 };
 
 #endif //__A_HEXENGLOBAL_H__

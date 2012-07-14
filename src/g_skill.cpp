@@ -66,6 +66,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.FastMonsters = false;
 	skill.DisableCheats = false;
 	skill.EasyBossBrain = false;
+	skill.EasyKey = false;
 	skill.AutoUseHealth = false;
 	skill.RespawnCounter = 0;
 	skill.RespawnLimit = 0;
@@ -124,6 +125,10 @@ void FMapInfoParser::ParseSkill ()
 		else if (sc.Compare ("easybossbrain"))
 		{
 			skill.EasyBossBrain = true;
+		}
+		else if (sc.Compare ("easykey"))
+		{
+			skill.EasyKey = true;
 		}
 		else if (sc.Compare("autousehealth"))
 		{
@@ -351,6 +356,9 @@ int G_SkillProperty(ESkillProperty prop)
 		case SKILLP_EasyBossBrain:
 			return AllSkills[gameskill].EasyBossBrain;
 
+		case SKILLP_EasyKey:
+			return AllSkills[gameskill].EasyKey;
+
 		case SKILLP_SpawnFilter:
 			return AllSkills[gameskill].SpawnFilter;
 
@@ -428,6 +436,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	DisableCheats = other.DisableCheats;
 	AutoUseHealth = other.AutoUseHealth;
 	EasyBossBrain = other.EasyBossBrain;
+	EasyKey = other.EasyKey;
 	RespawnCounter= other.RespawnCounter;
 	RespawnLimit= other.RespawnLimit;
 	Aggressiveness= other.Aggressiveness;

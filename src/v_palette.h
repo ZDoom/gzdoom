@@ -35,6 +35,7 @@
 #define __V_PALETTE_H__
 
 #include "doomtype.h"
+#include "c_cvars.h"
 
 #define MAKERGB(r,g,b)		DWORD(((r)<<16)|((g)<<8)|(b))
 #define MAKEARGB(a,r,g,b)	DWORD(((a)<<24)|((r)<<16)|((g)<<8)|(b))
@@ -64,79 +65,13 @@ struct FPalette
 	void MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, int numcolors) const;
 };
 
-struct FDynamicColormap
-{
-	void ChangeFade (PalEntry fadecolor);
-	void ChangeColor (PalEntry lightcolor, int desaturate);
-	void ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor);
-	void BuildLights ();
-	static void RebuildAllLights();
-
-	BYTE *Maps;
-	PalEntry Color;
-	PalEntry Fade;
-	int Desaturate;
-	FDynamicColormap *Next;
-};
-
-// For hardware-accelerated weapon sprites in colored sectors
-struct FColormapStyle
-{
-	PalEntry Color;
-	PalEntry Fade;
-	int Desaturate;
-	float FadeLevel;
-};
-
-enum
-{
-	NOFIXEDCOLORMAP = -1,
-	INVERSECOLORMAP,	// the inverse map is used explicitly in a few places.
-};
-
-
-struct FSpecialColormap
-{
-	float ColorizeStart[3];
-	float ColorizeEnd[3];
-	BYTE Colormap[256];
-	PalEntry GrayscaleToColor[256];
-};
-
-extern TArray<FSpecialColormap> SpecialColormaps;
-
-// some utility functions to store special colormaps in powerup blends
-#define SPECIALCOLORMAP_MASK 0x00b60000
-
-inline int MakeSpecialColormap(int index)
-{
-	assert(index >= 0 && index < 65536);
-	return index | SPECIALCOLORMAP_MASK;
-}
-
-inline bool IsSpecialColormap(int map)
-{
-	return (map & 0xFFFF0000) == SPECIALCOLORMAP_MASK;
-}
-
-inline int GetSpecialColormap(int blend)
-{
-	return IsSpecialColormap(blend) ? blend & 0xFFFF : NOFIXEDCOLORMAP;
-}
-
-int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2);
-
-
-
-extern BYTE DesaturateColormap[31][256];
 extern FPalette GPalette;
-extern "C" {
-extern FDynamicColormap NormalLight;
-}
+
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 
 int BestColor (const uint32 *pal, int r, int g, int b, int first=1, int num=255);
+void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void InitPalette ();
 
@@ -157,10 +92,23 @@ void V_SetBlend (int blendr, int blendg, int blendb, int blenda);
 void V_ForceBlend (int blendr, int blendg, int blendb, int blenda);
 
 
+EXTERN_CVAR (Int, paletteflash)
+enum PaletteFlashFlags
+{
+	PF_HEXENWEAPONS		= 1,
+	PF_POISON			= 2,
+	PF_ICE				= 4,
+	PF_HAZARD			= 8,
+};
+
+class player_t;
+
+void V_AddBlend (float r, float g, float b, float a, float v_blend[4]);
+void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int maxpainblend);
+
+
 // Colorspace conversion RGB <-> HSV
 void RGBtoHSV (float r, float g, float b, float *h, float *s, float *v);
 void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v);
-
-FDynamicColormap *GetSpecialLights (PalEntry lightcolor, PalEntry fadecolor, int desaturate);
 
 #endif //__V_PALETTE_H__

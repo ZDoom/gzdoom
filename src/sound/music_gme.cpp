@@ -349,6 +349,7 @@ bool GMESong::Read(SoundStream *stream, void *buff, int len, void *userdata)
 		else
 		{
 			memset(buff, 0, len);
+			song->CritSec.Leave();
 			return false;
 		}
 	}

@@ -38,7 +38,6 @@
 #include "g_level.h"
 #include "sc_man.h"
 #include "w_wad.h"
-#include "m_menu.h"
 #include "cmdlib.h"
 #include "v_video.h"
 #include "p_lnspec.h"
@@ -54,14 +53,13 @@
 #include "version.h"
 #include "v_text.h"
 
-int FindEndSequence (int type, const char *picname);
-
-
 TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
 
 level_info_t TheDefaultLevelInfo;
 static cluster_info_t TheDefaultClusterInfo;
+
+TArray<FEpisode> AllEpisodes;
 
 //==========================================================================
 //
@@ -233,7 +231,10 @@ void level_info_t::Reset()
 	partime = 0;
 	sucktime = 0;
 	flags = 0;
-	flags2 = gameinfo.gametype == GAME_Hexen? 0 : LEVEL2_LAXMONSTERACTIVATION;
+	if (gameinfo.gametype == GAME_Hexen)
+		flags2 = 0;
+	else
+		flags2 = LEVEL2_LAXMONSTERACTIVATION;
 	Music = "";
 	LevelName = "";
 	strcpy (fadetable, "COLORMAP");
@@ -253,8 +254,8 @@ void level_info_t::Reset()
 	aircontrol = 0.f;
 	WarpTrans = 0;
 	airsupply = 20;
-	compatflags = 0;
-	compatmask = 0;
+	compatflags = compatflags2 = 0;
+	compatmask = compatmask2 = 0;
 	Translator = "";
 	RedirectType = 0;
 	RedirectMap[0] = 0;
@@ -756,9 +757,6 @@ void FMapInfoParser::ParseCluster()
 
 void FMapInfoParser::ParseNextMap(char *mapname)
 {
-	EndSequence newSeq;
-	bool useseq = false;
-
 	if (sc.CheckNumber())
 	{
 		if (HexenHack)
@@ -772,163 +770,14 @@ void FMapInfoParser::ParseNextMap(char *mapname)
 	}
 	else
 	{
-
+		*mapname = 0;
 		sc.MustGetString();
-		if (sc.Compare("endgame"))
+		strncpy (mapname, sc.String, 8);
+		mapname[8] = 0;
+		FName seq = CheckEndSequence();
+		if (seq != NAME_None)
 		{
-			if (!sc.CheckString("{"))
-			{
-				// Make Demon Eclipse work again
-				sc.UnGet();
-				goto standard_endgame;
-			}
-			newSeq.Advanced = true;
-			newSeq.EndType = END_Pic1;
-			newSeq.PlayTheEnd = false;
-			newSeq.MusicLooping = true;
-			while (!sc.CheckString("}"))
-			{
-				sc.MustGetString();
-				if (sc.Compare("pic"))
-				{
-					ParseAssign();
-					sc.MustGetString();
-					newSeq.EndType = END_Pic;
-					newSeq.PicName = sc.String;
-				}
-				else if (sc.Compare("hscroll"))
-				{
-					ParseAssign();
-					newSeq.EndType = END_Bunny;
-					sc.MustGetString();
-					newSeq.PicName = sc.String;
-					ParseComma();
-					sc.MustGetString();
-					newSeq.PicName2 = sc.String;
-					if (CheckNumber())
-						newSeq.PlayTheEnd = !!sc.Number;
-				}
-				else if (sc.Compare("vscroll"))
-				{
-					ParseAssign();
-					newSeq.EndType = END_Demon;
-					sc.MustGetString();
-					newSeq.PicName = sc.String;
-					ParseComma();
-					sc.MustGetString();
-					newSeq.PicName2 = sc.String;
-				}
-				else if (sc.Compare("cast"))
-				{
-					newSeq.EndType = END_Cast;
-				}
-				else if (sc.Compare("music"))
-				{
-					ParseAssign();
-					sc.MustGetString();
-					newSeq.Music = sc.String;
-					if (CheckNumber())
-					{
-						newSeq.MusicLooping = !!sc.Number;
-					}
-				}
-				else
-				{
-					if (format_type == FMT_New)
-					{
-						// Unknown
-						sc.ScriptMessage("Unknown property '%s' found in endgame definition\n", sc.String);
-						SkipToNext();
-					}
-					else
-					{
-						sc.ScriptError("Unknown property '%s' found in endgame definition\n", sc.String);
-					}
-
-				}
-			}
-			useseq = true;
-		}
-		else if (strnicmp (sc.String, "EndGame", 7) == 0)
-		{
-			int type;
-			switch (sc.String[7])
-			{
-			case '1':	type = END_Pic1;		break;
-			case '2':	type = END_Pic2;		break;
-			case '3':	type = END_Bunny;		break;
-			case 'C':	type = END_Cast;		break;
-			case 'W':	type = END_Underwater;	break;
-			case 'S':	type = END_Strife;		break;
-		standard_endgame:
-			default:	type = END_Pic3;		break;
-			}
-			newSeq.EndType = type;
-			useseq = true;
-		}
-		else if (sc.Compare("endpic"))
-		{
-			ParseComma();
-			sc.MustGetString ();
-			newSeq.EndType = END_Pic;
-			newSeq.PicName = sc.String;
-			useseq = true;
-		}
-		else if (sc.Compare("endbunny"))
-		{
-			newSeq.EndType = END_Bunny;
-			useseq = true;
-		}
-		else if (sc.Compare("endcast"))
-		{
-			newSeq.EndType = END_Cast;
-			useseq = true;
-		}
-		else if (sc.Compare("enddemon"))
-		{
-			newSeq.EndType = END_Demon;
-			useseq = true;
-		}
-		else if (sc.Compare("endchess"))
-		{
-			newSeq.EndType = END_Chess;
-			useseq = true;
-		}
-		else if (sc.Compare("endunderwater"))
-		{
-			newSeq.EndType = END_Underwater;
-			useseq = true;
-		}
-		else if (sc.Compare("endbuystrife"))
-		{
-			newSeq.EndType = END_BuyStrife;
-			useseq = true;
-		}
-		else if (sc.Compare("endtitle"))
-		{
-			newSeq.EndType = END_TitleScreen;
-			useseq = true;
-		}
-		else
-		{
-			strncpy (mapname, sc.String, 8);
-			mapname[8] = 0;
-		}
-		if (useseq)
-		{
-			int seqnum = -1;
-
-			if (!newSeq.Advanced)
-			{
-				seqnum = FindEndSequence (newSeq.EndType, newSeq.PicName);
-			}
-
-			if (seqnum == -1)
-			{
-				seqnum = (int)EndSequences.Push (newSeq);
-			}
-			// mapname can point to nextmap and secretmap which are both 12 characters long
-			mysnprintf(mapname, 11, "enDSeQ%04x", (WORD)seqnum);
+			mysnprintf(mapname, 11, "enDSeQ%04x", int(seq));
 		}
 	}
 }
@@ -1228,6 +1077,20 @@ DEFINE_MAP_OPTION(translator, true)
 	info->Translator = parse.sc.String;
 }
 
+DEFINE_MAP_OPTION(deathsequence, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->deathsequence = parse.sc.String;
+}
+
+DEFINE_MAP_OPTION(slideshow, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->slideshow = parse.sc.String;
+}
+
 DEFINE_MAP_OPTION(bordertexture, true)
 {
 	parse.ParseAssign();
@@ -1345,15 +1208,17 @@ MapFlagHandlers[] =
 	{ "nofallingdamage",				MITYPE_SCFLAGS,	0, ~(LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX) },
 	{ "noallies",						MITYPE_SETFLAG,	LEVEL_NOALLIES, 0 },
 	{ "filterstarts",					MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
+	{ "useplayerstartz",				MITYPE_SETFLAG, LEVEL_USEPLAYERSTARTZ, 0 },
+	{ "randomplayerstarts",				MITYPE_SETFLAG2, LEVEL2_RANDOMPLAYERSTARTS, 0 },
 	{ "activateowndeathspecials",		MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ "killeractivatesdeathspecials",	MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ "missilesactivateimpactlines",	MITYPE_SETFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ "missileshootersactivetimpactlines",MITYPE_CLRFLAG2,	LEVEL2_MISSILESACTIVATEIMPACT, 0 },
 	{ "noinventorybar",					MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
-	{ "deathslideshow",					MITYPE_SETFLAG2,	LEVEL2_DEATHSLIDESHOW, 0 },
+	{ "deathslideshow",					MITYPE_IGNORE,		0, 0 },
 	{ "strictmonsteractivation",		MITYPE_CLRFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "laxmonsteractivation",			MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
-	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
+	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL, 0 },
 	{ "keepfullinventory",				MITYPE_SETFLAG2,	LEVEL2_KEEPFULLINVENTORY, 0 },
 	{ "monsterfallingdamage",			MITYPE_SETFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ "nomonsterfallingdamage",			MITYPE_CLRFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
@@ -1376,42 +1241,48 @@ MapFlagHandlers[] =
 	{ "no_grinding_polyobj",			MITYPE_CLRFLAG2,	LEVEL2_POLYGRIND, 0 },
 	{ "resetinventory",					MITYPE_SETFLAG2,	LEVEL2_RESETINVENTORY, 0 },
 	{ "resethealth",					MITYPE_SETFLAG2,	LEVEL2_RESETHEALTH, 0 },
+	{ "endofgame",						MITYPE_SETFLAG2,	LEVEL2_ENDGAME, 0 },
+	{ "nostatistics",					MITYPE_SETFLAG2,	LEVEL2_NOSTATISTICS, 0 },
+	{ "noautosavehint",					MITYPE_SETFLAG2,	LEVEL2_NOAUTOSAVEHINT, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
-	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
-	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX},
-	{ "compat_limitpain",				MITYPE_COMPATFLAG, COMPATF_LIMITPAIN},
-	{ "compat_nopassover",				MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ},
-	{ "compat_notossdrops",				MITYPE_COMPATFLAG, COMPATF_NOTOSSDROPS},
-	{ "compat_useblocking", 			MITYPE_COMPATFLAG, COMPATF_USEBLOCKING},
-	{ "compat_nodoorlight",				MITYPE_COMPATFLAG, COMPATF_NODOORLIGHT},
-	{ "compat_ravenscroll",				MITYPE_COMPATFLAG, COMPATF_RAVENSCROLL},
-	{ "compat_soundtarget",				MITYPE_COMPATFLAG, COMPATF_SOUNDTARGET},
-	{ "compat_dehhealth",				MITYPE_COMPATFLAG, COMPATF_DEHHEALTH},
-	{ "compat_trace",					MITYPE_COMPATFLAG, COMPATF_TRACE},
-	{ "compat_dropoff",					MITYPE_COMPATFLAG, COMPATF_DROPOFF},
-	{ "compat_boomscroll",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
-	{ "compat_invisibility",			MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
-	{ "compat_silent_instant_floors",	MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS},
-	{ "compat_sectorsounds",			MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS},
-	{ "compat_missileclip",				MITYPE_COMPATFLAG, COMPATF_MISSILECLIP},
-	{ "compat_crossdropoff",			MITYPE_COMPATFLAG, COMPATF_CROSSDROPOFF},
-	{ "compat_anybossdeath",			MITYPE_COMPATFLAG, COMPATF_ANYBOSSDEATH},
-	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR},
-	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM},
-	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE},
-	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS},
-	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS},
-	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT},
-	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT},
-	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ},
+	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
+	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
+	{ "compat_limitpain",				MITYPE_COMPATFLAG, COMPATF_LIMITPAIN, 0 },
+	{ "compat_nopassover",				MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
+	{ "compat_notossdrops",				MITYPE_COMPATFLAG, COMPATF_NOTOSSDROPS, 0 },
+	{ "compat_useblocking", 			MITYPE_COMPATFLAG, COMPATF_USEBLOCKING, 0 },
+	{ "compat_nodoorlight",				MITYPE_COMPATFLAG, COMPATF_NODOORLIGHT, 0 },
+	{ "compat_ravenscroll",				MITYPE_COMPATFLAG, COMPATF_RAVENSCROLL, 0 },
+	{ "compat_soundtarget",				MITYPE_COMPATFLAG, COMPATF_SOUNDTARGET, 0 },
+	{ "compat_dehhealth",				MITYPE_COMPATFLAG, COMPATF_DEHHEALTH, 0 },
+	{ "compat_trace",					MITYPE_COMPATFLAG, COMPATF_TRACE, 0 },
+	{ "compat_dropoff",					MITYPE_COMPATFLAG, COMPATF_DROPOFF, 0 },
+	{ "compat_boomscroll",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL, 0 },
+	{ "compat_invisibility",			MITYPE_COMPATFLAG, COMPATF_INVISIBILITY, 0 },
+	{ "compat_silent_instant_floors",	MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS, 0 },
+	{ "compat_sectorsounds",			MITYPE_COMPATFLAG, COMPATF_SECTORSOUNDS, 0 },
+	{ "compat_missileclip",				MITYPE_COMPATFLAG, COMPATF_MISSILECLIP, 0 },
+	{ "compat_crossdropoff",			MITYPE_COMPATFLAG, COMPATF_CROSSDROPOFF, 0 },
+	{ "compat_anybossdeath",			MITYPE_COMPATFLAG, COMPATF_ANYBOSSDEATH, 0 },
+	{ "compat_minotaur",				MITYPE_COMPATFLAG, COMPATF_MINOTAUR, 0 },
+	{ "compat_mushroom",				MITYPE_COMPATFLAG, COMPATF_MUSHROOM, 0 },
+	{ "compat_mbfmonstermove",			MITYPE_COMPATFLAG, COMPATF_MBFMONSTERMOVE, 0 },
+	{ "compat_corpsegibs",				MITYPE_COMPATFLAG, COMPATF_CORPSEGIBS, 0 },
+	{ "compat_noblockfriends",			MITYPE_COMPATFLAG, COMPATF_NOBLOCKFRIENDS, 0 },
+	{ "compat_spritesort",				MITYPE_COMPATFLAG, COMPATF_SPRITESORT, 0 },
+	{ "compat_light",					MITYPE_COMPATFLAG, COMPATF_LIGHT, 0 },
+	{ "compat_polyobj",					MITYPE_COMPATFLAG, COMPATF_POLYOBJ, 0 },
+	{ "compat_maskedmidtex",			MITYPE_COMPATFLAG, COMPATF_MASKEDMIDTEX, 0 },
+	{ "compat_badangles",				MITYPE_COMPATFLAG, 0, COMPATF2_BADANGLES },
+	{ "compat_floormove",				MITYPE_COMPATFLAG, 0, COMPATF2_FLOORMOVE },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end3_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_intermission_track",			MITYPE_EATNEXT,	0, 0 },
 	{ "cd_title_track",					MITYPE_EATNEXT,	0, 0 },
-	{ NULL, MITYPE_IGNORE, 0}
+	{ NULL, MITYPE_IGNORE, 0, 0}
 };
 
 //==========================================================================
@@ -1486,9 +1357,18 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 					if (sc.CheckNumber()) set = sc.Number;
 				}
 
-				if (set) info.compatflags |= handler->data1;
-				else info.compatflags &= ~handler->data1;
+				if (set)
+				{
+					info.compatflags |= handler->data1;
+					info.compatflags2 |= handler->data2;
+				}
+				else
+				{
+					info.compatflags &= ~handler->data1;
+					info.compatflags2 &= ~handler->data2;
+				}
 				info.compatmask |= handler->data1;
+				info.compatmask2 |= handler->data2;
 			}
 			break;
 
@@ -1655,10 +1535,10 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 void FMapInfoParser::ParseEpisodeInfo ()
 {
-	int i;
+	unsigned int i;
 	char map[9];
-	char *pic = NULL;
-	bool picisgfx = false;	// Shut up, GCC!!!!
+	FString pic;
+	FString name;
 	bool remove = false;
 	char key = 0;
 	bool noskill = false;
@@ -1697,15 +1577,13 @@ void FMapInfoParser::ParseEpisodeInfo ()
 		{
 			ParseAssign();
 			sc.MustGetString ();
-			ReplaceString (&pic, sc.String);
-			picisgfx = false;
+			name = sc.String;
 		}
 		else if (sc.Compare ("picname"))
 		{
 			ParseAssign();
 			sc.MustGetString ();
-			ReplaceString (&pic, sc.String);
-			picisgfx = true;
+			pic = sc.String;
 		}
 		else if (sc.Compare ("remove"))
 		{
@@ -1751,9 +1629,9 @@ void FMapInfoParser::ParseEpisodeInfo ()
 	}
 
 
-	for (i = 0; i < EpiDef.numitems; ++i)
+	for (i = 0; i < AllEpisodes.Size(); i++)
 	{
-		if (strncmp (EpisodeMaps[i], map, 8) == 0)
+		if (AllEpisodes[i].mEpisodeMap.CompareNoCase(map) == 0)
 		{
 			break;
 		}
@@ -1762,50 +1640,23 @@ void FMapInfoParser::ParseEpisodeInfo ()
 	if (remove)
 	{
 		// If the remove property is given for an episode, remove it.
-		if (i < EpiDef.numitems)
-		{
-			if (i+1 < EpiDef.numitems)
-			{
-				memmove (&EpisodeMaps[i], &EpisodeMaps[i+1],
-					sizeof(EpisodeMaps[0])*(EpiDef.numitems - i - 1));
-				memmove (&EpisodeMenu[i], &EpisodeMenu[i+1],
-					sizeof(EpisodeMenu[0])*(EpiDef.numitems - i - 1));
-				memmove (&EpisodeNoSkill[i], &EpisodeNoSkill[i+1], 
-					sizeof(EpisodeNoSkill[0])*(EpiDef.numitems - i - 1));
-			}
-			EpiDef.numitems--;
-		}
+		AllEpisodes.Delete(i);
 	}
 	else
 	{
-		if (pic == NULL)
+		// Only allocate a new entry if this doesn't replace an existing episode.
+		if (i >= AllEpisodes.Size())
 		{
-			pic = copystring (map);
-			picisgfx = false;
+			i = AllEpisodes.Reserve(1);
 		}
 
-		if (i == EpiDef.numitems)
-		{
-			if (EpiDef.numitems == MAX_EPISODES)
-			{
-				i = EpiDef.numitems - 1;
-			}
-			else
-			{
-				i = EpiDef.numitems++;
-			}
-		}
-		else
-		{
-			delete[] const_cast<char *>(EpisodeMenu[i].name);
-		}
+		FEpisode *epi = &AllEpisodes[i];
 
-		EpisodeMenu[i].name = pic;
-		EpisodeMenu[i].alphaKey = tolower(key);
-		EpisodeMenu[i].fulltext = !picisgfx;
-		EpisodeNoSkill[i] = noskill;
-		strncpy (EpisodeMaps[i], map, 8);
-		EpisodeMaps[i][8] = 0;
+		epi->mEpisodeMap = map;
+		epi->mEpisodeName = name;
+		epi->mPicName = pic;
+		epi->mShortcut = tolower(key);
+		epi->mNoSkill = noskill;
 	}
 }
 
@@ -1818,12 +1669,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 void ClearEpisodes()
 {
-	for (int i = 0; i < EpiDef.numitems; ++i)
-	{
-		delete[] const_cast<char *>(EpisodeMenu[i].name);
-		EpisodeMenu[i].name = NULL;
-	}
-	EpiDef.numitems = 0;
+	AllEpisodes.Clear();
 }
 
 //==========================================================================
@@ -1945,6 +1791,18 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 				sc.ScriptError("gameinfo definitions not supported with old MAPINFO syntax");
 			}
 		}
+		else if (sc.Compare("intermission"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseIntermission();
+			}
+			else
+			{
+				sc.ScriptError("intermission definitions not supported with old MAPINFO syntax");
+			}
+		}
 		else
 		{
 			sc.ScriptError("%s: Unknown top level keyword", sc.String);
@@ -1952,6 +1810,25 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 	}
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DeinitIntermissions();
+
+static void ClearMapinfo()
+{
+	wadclusterinfos.Clear();
+	wadlevelinfos.Clear();
+	ClearEpisodes();
+	AllSkills.Clear();
+	DefaultSkill = -1;
+	DeinitIntermissions();
+	level.info = NULL;
+}
 
 //==========================================================================
 //
@@ -1966,7 +1843,8 @@ void G_ParseMapInfo (const char *basemapinfo)
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
 
-	atterm(ClearEpisodes);
+	ClearMapinfo();
+	atterm(ClearMapinfo);
 
 	// Parse the default MAPINFO for the current game. This lump *MUST* come from zdoom.pk3.
 	if (basemapinfo != NULL)
@@ -2002,9 +1880,8 @@ void G_ParseMapInfo (const char *basemapinfo)
 		level_info_t defaultinfo;
 		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
 	}
-	EndSequences.ShrinkToFit ();
 
-	if (EpiDef.numitems == 0)
+	if (AllEpisodes.Size() == 0)
 	{
 		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
 	}

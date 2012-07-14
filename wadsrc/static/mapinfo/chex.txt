@@ -1,4 +1,5 @@
 // MAPINFO for Chex Quest
+include "mapinfo/common.txt"
 
 gameinfo
 {
@@ -42,7 +43,27 @@ gameinfo
 	endoom = "ENDOOM"
 	player5start = 4001
 	drawreadthis = true
-	pickupcolor = "d6 ba 45"
+	pickupcolor = "d7 ba 45"
+	quitmessages = "$QUITMSG", "$QUITMSG23", "$QUITMSG24", "$QUITMSG25", "$QUITMSG26", "$QUITMSG27", "$QUITMSG28", "$QUITMSG29"
+	menufontcolor_title = "GREEN"
+	menufontcolor_label = "UNTRANSLATED"
+	menufontcolor_value = "GRAY"
+	menufontcolor_action = "GRAY"
+	menufontcolor_header = "YELLOW"
+	menufontcolor_highlight = "BLUE"
+	menufontcolor_selection = "GOLD"
+	menubackbutton = "M_BACK_H"
+	playerclasses = "ChexPlayer"
+	pausesign = "M_PAUSE"
+	gibfactor = 1
+	cursorpic = "chexcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Pic1"
+	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedpatch = "WIF"
+	statscreen_enteringpatch = "WIENTER"
 }
 
 skill baby
@@ -100,6 +121,7 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
+	name = "Chex Quest"
 	key = "k"
 }
 

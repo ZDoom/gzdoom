@@ -81,6 +81,7 @@ CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_pitched, false, CVAR_ARCHIVE)
 
 SoundRenderer *GSnd;
+bool nosound;
 bool nosfx;
 
 void I_CloseSound ();
@@ -124,7 +125,7 @@ public:
 		SoundHandle retval = { NULL };
 		return retval;
 	}
-	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
+	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 	{
 		SoundHandle retval = { NULL };
 		return retval;
@@ -235,7 +236,7 @@ public:
 void I_InitSound ()
 {
 	/* Get command line options: */
-	bool nosound = !!Args->CheckParm ("-nosound");
+	nosound = !!Args->CheckParm ("-nosound");
 	nosfx = !!Args->CheckParm ("-nosfx");
 
 	if (nosound)
@@ -344,3 +345,158 @@ FString SoundStream::GetStats()
 {
 	return "No stream stats available.";
 }
+
+//==========================================================================
+//
+// SoundRenderer :: LoadSoundVoc
+//
+//==========================================================================
+
+SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
+{
+	BYTE * data = NULL;
+	int len, frequency, channels, bits, loopstart, loopend;
+	len = frequency = channels = bits = 0;
+	loopstart = loopend = -1;
+	do if (length > 26)
+	{
+		// First pass to parse data and validate the file
+		if (strncmp ((const char *)sfxdata, "Creative Voice File", 19))
+			break;
+		int i = 26, blocktype = 0, blocksize = 0, codec = -1;
+		bool noextra = true, okay = true;
+		while (i < length)
+		{
+			// Read block header
+			blocktype = sfxdata[i];
+			if (blocktype == 0)
+				break;
+			blocksize = sfxdata[i+1] + (sfxdata[i+2]<<8) + (sfxdata[i+3]<<16);
+			i += 4;
+			if (i + blocksize > length)
+			{
+				okay = false;
+				break;
+			}
+
+			// Read block data
+			switch (blocktype)
+			{
+			case 1: // Sound data
+				if (noextra && (codec == -1 || codec == sfxdata[i+1]))
+				{
+					frequency = 1000000/(256 - sfxdata[i]);
+					channels = 1;
+					codec = sfxdata[i+1];
+					if (codec == 0)
+						bits = 8;
+					else if (codec == 4)
+						bits = -16;
+					else okay = false;
+					len += blocksize - 2;
+				}
+				break;
+			case 2: // Sound data continuation
+				if (codec == -1)
+					okay = false;
+				len += blocksize;
+				break;
+			case 3: // Silence
+				if (frequency == 1000000/(256 - sfxdata[i+2]))
+				{
+					int silength = 1 + sfxdata[i] + (sfxdata[i+1]<<8);
+					if (codec == 0) // 8-bit unsigned PCM
+						len += silength;
+					else if (codec == 4) // 16-bit signed PCM
+						len += silength<<1;
+					else okay = false;
+				} else okay = false;
+				break;
+			case 4: // Mark (ignored)
+			case 5: // Text (ignored)
+				break;
+			case 6: // Repeat start
+				loopstart = len;
+				break;
+			case 7: // Repeat end
+				loopend = len;
+				if (loopend < loopstart)
+					okay = false;
+				break;
+			case 8: // Extra info
+				noextra = false;
+				if (codec == -1)
+				{
+					codec = sfxdata[i+2];
+					channels = 1+sfxdata[i+3];
+					frequency = 256000000/(channels * (65536 - (sfxdata[i]+(sfxdata[i+1]<<8))));
+				} else okay = false;
+				break;
+			case 9: // Sound data in new format
+				if (codec == -1)
+				{
+					frequency = sfxdata[i] + (sfxdata[i+1]<<8) + (sfxdata[i+2]<<16) + (sfxdata[i+3]<<24);
+					bits = sfxdata[i+4];
+					channels = sfxdata[i+5];
+					codec = sfxdata[i+6] + (sfxdata[i+7]<<8);
+					if (codec == 0)
+						bits = 8;
+					else if (codec == 4)
+						bits = -16;
+					else okay = false;
+					len += blocksize - 12;
+				} else okay = false;
+				break;
+			default: // Unknown block type
+				okay = false;
+				DPrintf ("Unknown VOC block type %i\n", blocktype);
+				break;
+			}
+			// Move to next block
+			i += blocksize;
+		}
+
+		// Second pass to write the data
+		if (okay)
+		{
+			data = new BYTE[len];
+			i = 26;
+			int j = 0;
+			while (i < length)
+			{
+				// Read block header again
+				blocktype = sfxdata[i];
+				if (blocktype == 0) break;
+				blocksize = sfxdata[i+1] + (sfxdata[i+2]<<8) + (sfxdata[i+3]<<16);
+				i += 4;
+				switch (blocktype)
+				{
+				case 1: memcpy(data+j, sfxdata+i+2,  blocksize-2 ); j += blocksize-2;	break;
+				case 2: memcpy(data+j, sfxdata+i,    blocksize   ); j += blocksize;		break;
+				case 9: memcpy(data+j, sfxdata+i+12, blocksize-12); j += blocksize-12;	break;
+				case 3:
+					{
+						int silength = 1 + sfxdata[i] + (sfxdata[i+1]<<8);
+						if (bits == 8)
+						{
+							memset(data+j, 128, silength);
+							j += silength;
+						}
+						else if (bits == -16)
+						{
+							memset(data+j, 0, silength<<1);
+							j += silength<<1;
+						}
+					}
+					break;
+				default: break;
+				}
+			}
+		}
+
+	} while (false);
+	SoundHandle retval = LoadSoundRaw(data, len, frequency, channels, bits, loopstart, loopend);
+	if (data) delete[] data;
+	return retval;
+}
+

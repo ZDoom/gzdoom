@@ -2,6 +2,7 @@
 #define __P_ENEMY_H__
 
 #include "thingdef/thingdef.h"
+#include "tables.h"
 
 struct sector_t;
 class AActor;
@@ -46,9 +47,9 @@ struct FLookExParams
 };
 
 void P_DaggerAlert (AActor *target, AActor *emitter);
-void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks);
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter=NULL, fixed_t maxdist=0);
 bool P_HitFriend (AActor *self);
-void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);
+void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false, fixed_t maxdist=0);
 bool P_CheckMeleeRange2 (AActor *actor);
 bool P_Move (AActor *actor);
 bool P_TryWalk (AActor *actor);
@@ -71,7 +72,7 @@ DECLARE_ACTION(A_FreezeDeathChunks)
 void A_BossDeath(AActor *self);
 
 void A_Chase(VMFrameStack *stack, AActor *self);
-void A_FaceTarget (AActor *actor, angle_t max_turn = 0);
+void A_FaceTarget (AActor *actor, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270);
 
 bool A_RaiseMobj (AActor *, fixed_t speed);
 bool A_SinkMobj (AActor *, fixed_t speed);

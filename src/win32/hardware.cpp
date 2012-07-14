@@ -46,6 +46,8 @@
 #include "v_text.h"
 #include "doomstat.h"
 #include "m_argv.h"
+#include "version.h"
+#include "r_swrenderer.h"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
@@ -102,6 +104,20 @@ void I_InitGraphics ()
 	atterm (I_ShutdownGraphics);
 
 	Video->SetWindowedScale (vid_winscale);
+}
+
+static void I_DeleteRenderer()
+{
+	if (Renderer != NULL) delete Renderer;
+}
+
+void I_CreateRenderer()
+{
+	if (Renderer == NULL)
+	{
+		Renderer = new FSoftwareRenderer;
+		atterm(I_DeleteRenderer);
+	}
 }
 
 /** Remaining code is common to Win32 and Linux **/
@@ -322,7 +338,7 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (vid_listmodes)
 {
-	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
+	static const char *ratios[5] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4" };
 	int width, height, bits;
 	bool letterbox;
 

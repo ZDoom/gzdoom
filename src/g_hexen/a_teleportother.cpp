@@ -42,7 +42,7 @@ class ATelOtherFX1 : public AActor
 {
 	DECLARE_CLASS (ATelOtherFX1, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (ATelOtherFX1)
@@ -126,7 +126,7 @@ bool AArtiTeleportOther::Use (bool pickup)
 //
 //===========================================================================
 
-int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
+int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if ((target->flags3 & MF3_ISMONSTER || target->player != NULL) &&
 		!(target->flags2 & MF2_BOSS) &&
@@ -145,7 +145,7 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 			if (target->flags3 & MF3_ISMONSTER && target->special)
 			{
 				target->RemoveFromHash ();
-				LineSpecials[target->special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
+				P_ExecuteSpecial(target->special, NULL, level.flags & LEVEL_ACTOWNSPECIAL
 					? target : (AActor *)(this->target), false, target->args[0], target->args[1],
 					target->args[2], target->args[3], target->args[4]);
 				target->special = 0;
@@ -166,19 +166,13 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 
 void P_TeleportToPlayerStarts (AActor *victim)
 {
-	int i,selections=0;
 	fixed_t destX,destY;
 	angle_t destAngle;
 
-	for (i = 0; i < MAXPLAYERS;i++)
-	{
-	    if (!playeringame[i]) continue;
-		selections++;
-	}
-	i = pr_telestarts() % selections;
-	destX = playerstarts[i].x;
-	destY = playerstarts[i].y;
-	destAngle = ANG45 * (playerstarts[i].angle/45);
+	FPlayerStart *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
+	destX = start->x;
+	destY = start->y;
+	destAngle = ANG45 * (start->angle/45);
 	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
 }
 

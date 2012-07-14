@@ -11,6 +11,7 @@
 #include "a_morph.h"
 #include "doomstat.h"
 #include "g_level.h"
+#include "farchive.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -77,6 +78,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
+	morphed->Score = actor->Score;
 	p->PremorphWeapon = p->ReadyWeapon;
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	morphed->player = p;
@@ -200,6 +202,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		next = item->Inventory;
 		if (item->IsKindOf(RUNTIME_CLASS(APowerMorph)))
 		{
+			static_cast<APowerMorph *>(item)->SetNoCallUndoMorph();
 			item->Destroy();
 		}
 	}
@@ -224,6 +227,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->flags  = (mo->flags & ~(MF_SHADOW|MF_NOGRAVITY)) | (pmo->flags & (MF_SHADOW|MF_NOGRAVITY));
 	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
+	mo->Score = pmo->Score;
 
 	PClassActor *exit_flash = player->MorphExitFlash;
 	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
@@ -234,7 +238,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	player->MorphStyle = 0;
 	player->MorphExitFlash = NULL;
 	player->viewheight = mo->ViewHeight;
-	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 	if (level2 != NULL)
 	{
 		level2->Destroy ();
@@ -260,7 +264,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	// taking events, reset up the face, if any;
 	// this is only needed for old-skool skins
 	// and for the original DOOM status bar.
-	if ((player == &players[consoleplayer]))
+	if (player == &players[consoleplayer])
 	{
 		FString face = pmo->GetClass()->Face;
 		if (face.IsNotEmpty() && strcmp(face, "None") != 0)
@@ -272,6 +276,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 			if ((unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
 				(size_t)player->userinfo.skin < numskins)
 			{
+
 				skinindex = player->userinfo.skin;
 			}
 			else if (PlayerClasses.Size () > 1)
@@ -369,6 +374,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 	morphed->UnmorphedMe = actor;
 	morphed->alpha = actor->alpha;
 	morphed->RenderStyle = actor->RenderStyle;
+	morphed->Score = actor->Score;
 
 	morphed->UnmorphTime = level.time + ((duration) ? duration : MORPHTICS) + pr_morphmonst();
 	morphed->MorphStyle = style;
@@ -438,6 +444,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->velz = beast->velz;
 	actor->tid = beast->tid;
 	actor->special = beast->special;
+	actor->Score = beast->Score;
 	memcpy (actor->args, beast->args, sizeof(actor->args));
 	actor->AddToHash ();
 	beast->UnmorphedMe = NULL;
@@ -528,7 +535,7 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 
 IMPLEMENT_CLASS(AMorphProjectile)
 
-int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
+int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	PClassActor *morph_flash = PClass::FindActor(MorphFlash);
 	PClassActor *unmorph_flash = PClass::FindActor(UnMorphFlash);
@@ -573,7 +580,7 @@ void AMorphedMonster::Destroy ()
 	Super::Destroy ();
 }
 
-void AMorphedMonster::Die (AActor *source, AActor *inflictor)
+void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
 	// Dead things don't unmorph
 //	flags3 |= MF3_STAYMORPHED;
@@ -581,11 +588,11 @@ void AMorphedMonster::Die (AActor *source, AActor *inflictor)
 	// But they can now, so that line above has been
 	// moved into P_MorphedDeath() and is now set by
 	// that function if and only if it is needed.
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{
 		UnmorphedMe->health = health;
-		UnmorphedMe->Die (source, inflictor);
+		UnmorphedMe->Die (source, inflictor, dmgflags);
 	}
 }
 

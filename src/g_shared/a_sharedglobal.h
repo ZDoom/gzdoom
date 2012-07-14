@@ -97,7 +97,6 @@ public:
 	bool bInSkybox;
 	bool bAlways;
 	TObjPtr<ASkyViewpoint> Mate;
-	fixed_t PlaneAlpha;
 };
 
 class AStackPoint : public ASkyViewpoint
@@ -157,7 +156,7 @@ class AMorphProjectile : public AActor
 {
 	DECLARE_CLASS (AMorphProjectile, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	void Serialize (FArchive &arc);
 
 	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;
@@ -171,7 +170,7 @@ class AMorphedMonster : public AActor
 public:
 	void Tick ();
 	void Serialize (FArchive &arc);
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void Destroy ();
 
 	TObjPtr<AActor> UnmorphedMe;

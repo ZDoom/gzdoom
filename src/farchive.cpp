@@ -54,8 +54,8 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "d_player.h"
+#include "m_misc.h"
 #include "dobject.h"
-#include "r_local.h"
 
 // These are special tokens found in the data stream of an archive.
 // Whenever a new object is encountered, it gets created using new and
@@ -406,7 +406,7 @@ void FCompressedFile::Explode ()
 			if (r != Z_OK || newlen != expandsize)
 			{
 				M_Free (expand);
-				I_Error ("Could not decompress cfile");
+				I_Error ("Could not decompress buffer: %s", M_ZLibError(r).GetChars());
 			}
 		}
 		else
@@ -498,7 +498,18 @@ bool FCompressedMemFile::Reopen ()
 		m_Mode = EReading;
 		m_Buffer = m_ImplodedBuffer;
 		m_SourceFromMem = true;
-		Explode ();
+		try
+		{
+			Explode ();
+		}
+		catch(...)
+		{
+			// If we just leave things as they are, m_Buffer and m_ImplodedBuffer
+			// both point to the same memory block and both will try to free it.
+			m_Buffer = NULL;
+			m_SourceFromMem = false;
+			throw;
+		}
 		m_SourceFromMem = false;
 		return true;
 	}
@@ -559,6 +570,20 @@ void FCompressedMemFile::Serialize (FArchive &arc)
 bool FCompressedMemFile::IsOpen () const
 {
 	return !!m_Buffer;
+}
+
+void FCompressedMemFile::GetSizes(unsigned int &compressed, unsigned int &uncompressed) const
+{
+	if (m_ImplodedBuffer != NULL)
+	{
+		compressed = BigLong(*(unsigned int *)m_ImplodedBuffer);
+		uncompressed = BigLong(*(unsigned int *)(m_ImplodedBuffer + 4));
+	}
+	else
+	{
+		compressed = 0;
+		uncompressed = m_BufferSize;
+	}
 }
 
 FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id)
@@ -1479,4 +1504,29 @@ FArchive &operator<< (FArchive &arc, PClass *&info)
 		arc.UserReadClass (info);
 	}
 	return arc;
+}
+
+FArchive &operator<< (FArchive &arc, sector_t *&sec)
+{
+	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
+}
+
+FArchive &operator<< (FArchive &arc, const sector_t *&sec)
+{
+	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
+}
+
+FArchive &operator<< (FArchive &arc, line_t *&line)
+{
+	return arc.SerializePointer (lines, (BYTE **)&line, sizeof(*lines));
+}
+
+FArchive &operator<< (FArchive &arc, vertex_t *&vert)
+{
+	return arc.SerializePointer (vertexes, (BYTE **)&vert, sizeof(*vertexes));
+}
+
+FArchive &operator<< (FArchive &arc, side_t *&side)
+{
+	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
 }

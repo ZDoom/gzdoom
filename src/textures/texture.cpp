@@ -36,12 +36,15 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
-#include "r_data.h"
 #include "templates.h"
 #include "i_system.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "bitmap.h"
 #include "colormatcher.h"
+#include "c_dispatch.h"
+#include "v_video.h"
+#include "m_fixed.h"
+#include "textures/textures.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -498,7 +501,7 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 
 	case TEX_RGB:
 	{
-		FCopyInfo inf = {OP_OVERWRITE, };
+		FCopyInfo inf = {OP_OVERWRITE, BLEND_NONE, {0}, 0, 0};
 		FBitmap bmp(buff, pitch, pitch/4, height);
 		CopyTrueColorPixels(&bmp, 0, 0, 0, &inf); 
 		break;
@@ -547,6 +550,11 @@ FTexture *FTexture::GetRedirect(bool wantwarped)
 	return this;
 }
 
+FTexture *FTexture::GetRawTexture()
+{
+	return this;
+}
+
 void FTexture::SetScaledSize(int fitwidth, int fitheight)
 {
 	xScale = FLOAT2FIXED(float(Width) / fitwidth);
@@ -591,3 +599,37 @@ const BYTE *FDummyTexture::GetPixels ()
 	return NULL;
 }
 
+//==========================================================================
+//
+// Debug stuff
+//
+//==========================================================================
+
+#ifdef _DEBUG
+// Prints the spans generated for a texture. Only needed for debugging.
+CCMD (printspans)
+{
+	if (argv.argc() != 2)
+		return;
+
+	FTextureID picnum = TexMan.CheckForTexture (argv[1], FTexture::TEX_Any);
+	if (!picnum.Exists())
+	{
+		Printf ("Unknown texture %s\n", argv[1]);
+		return;
+	}
+	FTexture *tex = TexMan[picnum];
+	for (int x = 0; x < tex->GetWidth(); ++x)
+	{
+		const FTexture::Span *spans;
+		Printf ("%4d:", x);
+		tex->GetColumn (x, &spans);
+		while (spans->Length != 0)
+		{
+			Printf (" (%4d,%4d)", spans->TopOffset, spans->TopOffset+spans->Length-1);
+			spans++;
+		}
+		Printf ("\n");
+	}
+}
+#endif

@@ -130,10 +130,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 
 		// Boss cubes should move freely to their destination so it's
 		// probably best to disable all collision detection for them.
-		if (spit->flags & MF_NOCLIP) spit->flags5 |= MF5_NOINTERACTION;
 
 		if (spit != NULL)
 		{
+			if (spit->flags & MF_NOCLIP) spit->flags5 |= MF5_NOINTERACTION;
 			spit->target = targ;
 			spit->master = self;
 			// [RH] Do this correctly for any trajectory. Doom would divide by 0
@@ -152,6 +152,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			}
 			// [GZ] Calculates when the projectile will have reached destination
 			spit->special2 += level.maptime;
+			spit->flags6 |= MF6_BOSSCUBE;
 		}
 
 		if (!isdefault)
@@ -268,9 +269,14 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 			{
 				newmobj->CopyFriendliness (eye, false);
 			}
-			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true, NULL))
-				newmobj->SetState (newmobj->SeeState);
+			// Make it act as if it was around when the player first made noise
+			// (if the player has made noise).
+			newmobj->LastHeard = newmobj->Sector->SoundTarget;
 
+			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true, NULL))
+			{
+				newmobj->SetState (newmobj->SeeState);
+			}
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 			{
 				// telefrag anything in this spot

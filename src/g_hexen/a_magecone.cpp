@@ -29,12 +29,12 @@ class AFrostMissile : public AActor
 {
 	DECLARE_CLASS (AFrostMissile, AActor)
 public:
-	int DoSpecialDamage (AActor *victim, int damage);
+	int DoSpecialDamage (AActor *victim, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (AFrostMissile)
 
-int AFrostMissile::DoSpecialDamage (AActor *victim, int damage)
+int AFrostMissile::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {
 	if (special2 > 0)
 	{

@@ -52,6 +52,8 @@ class FScanner;
 #define GCC_YSEG __attribute__((section(SECTION_YREG)))
 #endif
 
+struct FIntermissionDescriptor;
+struct FIntermissionAction;
 
 struct FMapInfoParser
 {
@@ -96,6 +98,11 @@ struct FMapInfoParser
 	bool CheckFloat();
 	void SkipToNext();
 	void CheckEndOfFile(const char *block);
+
+	void ParseIntermissionAction(FIntermissionDescriptor *Desc);
+	void ParseIntermission();
+	FName CheckEndSequence();
+	FName ParseEndGame();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \
@@ -127,7 +134,7 @@ enum ELevelFlags
 
 	LEVEL_SPECLOWERFLOOR		= 0x00000100,
 	LEVEL_SPECOPENDOOR			= 0x00000200,
-	LEVEL_SPECLOWERFLOORTOHIGHEST= 0x00000300,
+	LEVEL_SPECLOWERFLOORTOHIGHEST=0x00000300,
 	LEVEL_SPECACTIONSMASK		= 0x00000300,
 
 	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
@@ -153,7 +160,7 @@ enum ELevelFlags
 	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
 	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
 	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
-	LEVEL_HEXENFORMAT			= 0x08000000,	// Level uses the Hexen map format
+	LEVEL_USEPLAYERSTARTZ		= 0x08000000,	// Use the Z position of player starts
 
 	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
 	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
@@ -161,13 +168,13 @@ enum ELevelFlags
 	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
 
 	// The flags QWORD is now split into 2 DWORDs 
-	LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
+	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
 	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
 
 	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
 	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
 
-	LEVEL2_MISSILESACTIVATEIMPACT = 0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
 	LEVEL2_FROZEN				= 0x00000020,	// Game is frozen by a TimeFreezer
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
@@ -200,6 +207,10 @@ enum ELevelFlags
 	LEVEL2_POLYGRIND			= 0x02000000,	// Polyobjects grind corpses to gibs.
 	LEVEL2_RESETINVENTORY		= 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
 	LEVEL2_RESETHEALTH			= 0x08000000,	// Resets player health when starting this level (unless in a hub)
+
+	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
+	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
+	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
 };
 
 
@@ -240,13 +251,22 @@ struct FOptionalMapinfoDataPtr
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 typedef TMap<int, FName> FMusicMap;
 
+enum EMapType
+{
+	MAPTYPE_UNKNOWN = 0,
+	MAPTYPE_DOOM,
+	MAPTYPE_HEXEN,
+	MAPTYPE_BUILD,
+	MAPTYPE_UDMF	// This does not distinguish between namespaces.
+};
+
 struct level_info_t
 {
 	int			levelnum;
 	
 	char		mapname[9];
 	char		pname[9];
-	char		nextmap[11];	// The endsequence string is 10 chars so we need more space here
+	char		nextmap[11];
 	char		secretmap[11];
 	char		skypic1[9];
 	char		skypic2[9];
@@ -277,10 +297,13 @@ struct level_info_t
 	float		aircontrol;
 	int			WarpTrans;
 	int			airsupply;
-	DWORD		compatflags;
-	DWORD		compatmask;
+	DWORD		compatflags, compatflags2;
+	DWORD		compatmask, compatmask2;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
 	int			DefaultEnvironment;	// Default sound environment for the map.
+	FName		Intermission;
+	FName		deathsequence;
+	FName		slideshow;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
@@ -364,6 +387,7 @@ struct FLevelLocals
 	char		mapname[256];			// the lump name (E1M1, MAP01, etc)
 	char		nextmap[11];			// go here when using the regular exit
 	char		secretmap[11];			// map to go to when used secret exit
+	EMapType	maptype;
 
 	DWORD		flags;
 	DWORD		flags2;
@@ -375,6 +399,7 @@ struct FLevelLocals
 	int			musicorder;
 	int			cdtrack;
 	unsigned int cdid;
+	int			nextmusic;				// For MUSINFO purposes
 	char		skypic1[9];
 	char		skypic2[9];
 
@@ -410,36 +435,6 @@ struct FLevelLocals
 	bool		IsFreelookAllowed() const;
 };
 
-enum EndTypes
-{
-	END_Pic,
-	END_Pic1,
-	END_Pic2,
-	END_Pic3,
-	END_Bunny,
-	END_Cast,
-	END_Demon,
-	END_Underwater,
-	END_Chess,
-	END_Strife,
-	END_BuyStrife,
-	END_TitleScreen
-};
-
-struct EndSequence
-{
-	BYTE EndType;
-	bool Advanced;
-	bool MusicLooping;
-	bool PlayTheEnd;
-	FString PicName;
-	FString PicName2;
-	FString Music;
-
-	EndSequence();
-};
-
-extern TArray<EndSequence> EndSequences;
 
 struct cluster_info_t
 {
@@ -484,6 +479,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel);
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void G_DeferedInitNew (const char *mapname, int skill = -1);
+struct FGameStartup;
+void G_DeferedInitNew (FGameStartup *gs);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);
@@ -501,8 +498,6 @@ enum
 };
 
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
-
-void G_SetForEndGame (char *nextmap);
 
 void G_StartTravel ();
 void G_FinishTravel ();
@@ -529,6 +524,7 @@ void G_UnSnapshotLevel (bool keepPlayers);
 struct PNGHandle;
 void G_ReadSnapshots (PNGHandle *png);
 void G_WriteSnapshots (FILE *file);
+void G_ClearHubInfo();
 
 enum ESkillProperty
 {
@@ -547,7 +543,8 @@ enum ESkillProperty
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
 	SKILLP_NoPain,
-	SKILLP_ArmorFactor
+	SKILLP_ArmorFactor,
+	SKILLP_EasyKey,
 };
 int G_SkillProperty(ESkillProperty prop);
 const char * G_SkillName();
@@ -564,7 +561,9 @@ struct FSkillInfo
 	bool FastMonsters;
 	bool DisableCheats;
 	bool AutoUseHealth;
+
 	bool EasyBossBrain;
+	bool EasyKey;
 	int RespawnCounter;
 	int RespawnLimit;
 	fixed_t Aggressiveness;
@@ -601,6 +600,16 @@ struct FSkillInfo
 extern TArray<FSkillInfo> AllSkills;
 extern int DefaultSkill;
 
+struct FEpisode
+{
+	FString mEpisodeName;
+	FString mEpisodeMap;
+	FString mPicName;
+	char mShortcut;
+	bool mNoSkill;
+};
+
+extern TArray<FEpisode> AllEpisodes;
 
 
 #endif //__G_LEVEL_H__

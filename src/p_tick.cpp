@@ -29,7 +29,7 @@
 #include "s_sound.h"
 #include "doomstat.h"
 #include "sbar.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "i_sound.h"
 #include "g_level.h"
 
@@ -84,6 +84,8 @@ void P_Ticker (void)
 	if (paused || P_CheckTickerPaused())
 		return;
 
+	P_NewPspriteTick();
+
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 	if ((level.time & 3) == 0)
 	{
@@ -99,7 +101,7 @@ void P_Ticker (void)
 	// off the music.
 	for (i = 0; i < MAXPLAYERS; i++ )
 	{
-		if (playeringame[i] && players[i].cheats & CF_TIMEFREEZE)
+		if (playeringame[i] && players[i].timefreezer != 0)
 			break;
 	}
 

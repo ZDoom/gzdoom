@@ -3,7 +3,7 @@
 ** ACS script stuff
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2008 Randy Heit
+** Copyright 1998-2012 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -72,22 +72,23 @@ extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 void P_ReadACSVars(PNGHandle *);
 void P_WriteACSVars(FILE*);
 void P_ClearACSVars(bool);
+void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte);
 
 // The in-memory version
 struct ScriptPtr
 {
-	WORD Number;
+	int Number;
+	DWORD Address;
 	BYTE Type;
 	BYTE ArgCount;
 	WORD VarCount;
 	WORD Flags;
-	DWORD Address;
 };
 
 // The present ZDoom version
 struct ScriptPtr3
 {
-	WORD Number;
+	SWORD Number;
 	BYTE Type;
 	BYTE ArgCount;
 	DWORD Address;
@@ -96,7 +97,7 @@ struct ScriptPtr3
 // The intermediate ZDoom version
 struct ScriptPtr1
 {
-	WORD Number;
+	SWORD Number;
 	WORD Type;
 	DWORD Address;
 	DWORD ArgCount;
@@ -168,6 +169,8 @@ public:
 	ScriptFunction *GetFunction (int funcnum, FBehavior *&module) const;
 	int GetArrayVal (int arraynum, int index) const;
 	void SetArrayVal (int arraynum, int index, int value);
+	inline bool CopyStringToArray(int arraynum, int index, int maxLength, const char * string);
+
 	int FindFunctionName (const char *funcname) const;
 	int FindMapVarName (const char *varname) const;
 	int FindMapArray (const char *arrayname) const;
@@ -217,6 +220,7 @@ private:
 
 	static int STACK_ARGS SortScripts (const void *a, const void *b);
 	void UnencryptStrings ();
+	void UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool haspadding);
 	int FindStringInChunk (DWORD *chunk, const char *varname) const;
 	const char *LookupString (DWORD index) const;
 
@@ -587,8 +591,17 @@ public:
 		PCD_PRINTBINARY,
 /*350*/	PCD_PRINTHEX,
 		PCD_CALLFUNC,
+		PCD_SAVESTRING,			// [FDARI] create string (temporary)
+		PCD_PRINTMAPCHRANGE,	// [FDARI] output range (print part of array)
+		PCD_PRINTWORLDCHRANGE,
+		PCD_PRINTGLOBALCHRANGE,
+		PCD_STRCPYTOMAPCHRANGE,	// [FDARI] input range (copy string to all/part of array)
+		PCD_STRCPYTOWORLDCHRANGE,
+		PCD_STRCPYTOGLOBALCHRANGE,
+		PCD_PUSHFUNCTION,
+/*360*/	PCD_CALLSTACK,
 
-/*351*/	PCODE_COMMAND_COUNT
+/*361*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
@@ -668,7 +681,7 @@ public:
 	};
 
 	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-		bool backSide, int arg0, int arg1, int arg2, int always);
+		const int *args, int argcount, int flags);
 	~DLevelScript ();
 
 	void Serialize (FArchive &arc);
@@ -703,6 +716,7 @@ protected:
 	static void SetLineTexture (int lineid, int side, int position, int name);
 	static void ReplaceTextures (int fromname, int toname, int flags);
 	static int DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle, bool force);
+	static bool DoCheckActorTexture(int tid, AActor *activator, int string, bool floor);
 	int DoSpawnSpot (int type, int spot, int tid, int angle, bool forced);
 	int DoSpawnSpotFacing (int type, int spot, int tid, bool forced);
 	int DoClassifyActor (int tid);
@@ -727,14 +741,6 @@ private:
 	friend class DACSThinker;
 };
 
-inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
-{
-	BYTE val = (BYTE)state;
-	arc << val;
-	state = (DLevelScript::EScriptState)val;
-	return arc;
-}
-
 class DACSThinker : public DThinker
 {
 	DECLARE_CLASS (DACSThinker, DThinker)
@@ -746,7 +752,8 @@ public:
 	void Serialize (FArchive &arc);
 	void Tick ();
 
-	DLevelScript *RunningScripts[1000];	// Array of all synchronous scripts
+	typedef TMap<int, DLevelScript *> ScriptMap;
+	ScriptMap RunningScripts;	// Array of all synchronous scripts
 	static TObjPtr<DACSThinker> ActiveThinker;
 
 	void DumpScriptStatus();
@@ -772,7 +779,7 @@ struct acsdefered_t
 		defterminate
 	} type;
 	int script;
-	int arg0, arg1, arg2;
+	int args[3];
 	int playernum;
 };
 

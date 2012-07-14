@@ -10,7 +10,7 @@
 #include "p_local.h"
 #include "gstrings.h"
 #include "gi.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
 */
@@ -133,7 +133,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "GoldWandPuff1");
+	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 	return 0;
 }
@@ -174,7 +174,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "GoldWandPuff2");
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff2");
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -354,12 +354,12 @@ class AMaceFX4 : public AActor
 {
 	DECLARE_CLASS (AMaceFX4, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (AMaceFX4)
 
-int AMaceFX4::DoSpecialDamage (AActor *target, int damage)
+int AMaceFX4::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if ((target->flags2 & MF2_BOSS) || (target->flags3 & MF3_DONTSQUASH) || target->IsTeammate (this->target))
 	{ // Don't allow cheap boss kills and don't instagib teammates
@@ -486,8 +486,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 	self->velx = FixedMul(7*FRACUNIT, finecosine[angle]);
 	self->vely = FixedMul(7*FRACUNIT, finesine[angle]);
 #else
-	double velscale = sqrtf ((float)self->velx * (float)self->velx +
-							 (float)self->vely * (float)self->vely);
+	double velscale = sqrt ((double)self->velx * (double)self->velx +
+							 (double)self->vely * (double)self->vely);
 	velscale = 458752 / velscale;
 	self->velx = (int)(self->velx * velscale);
 	self->vely = (int)(self->vely * velscale);
@@ -693,7 +693,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			angle = 0;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget);
+				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget, 0, ALF_NOFRIENDS, NULL, self->target);
 				if (linetarget && self->target != linetarget)
 				{
 					self->tracer = linetarget;
@@ -740,10 +740,10 @@ class ABlasterFX1 : public AFastProjectile
 	DECLARE_CLASS(ABlasterFX1, AFastProjectile)
 public:
 	void Effect ();
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
+int ABlasterFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass ("Ironlich")))
 	{ // Less damage to Ironlich bosses
@@ -773,12 +773,12 @@ class ARipper : public AActor
 {
 	DECLARE_CLASS (ARipper, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS(ARipper)
 
-int ARipper::DoSpecialDamage (AActor *target, int damage)
+int ARipper::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass ("Ironlich")))
 	{ // Less damage to Ironlich bosses
@@ -823,7 +823,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 	{
 		angle += pr_fb1.Random2() << 18;
 	}
-	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "BlasterPuff");
+	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "BlasterPuff");
 	S_Sound (self, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 	return 0;
 }
@@ -865,12 +865,12 @@ class AHornRodFX2 : public AActor
 {
 	DECLARE_CLASS (AHornRodFX2, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (AHornRodFX2)
 
-int AHornRodFX2::DoSpecialDamage (AActor *target, int damage)
+int AHornRodFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
@@ -886,12 +886,12 @@ class ARainPillar : public AActor
 {
 	DECLARE_CLASS (ARainPillar, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (ARainPillar)
 
-int ARainPillar::DoSpecialDamage (AActor *target, int damage)
+int ARainPillar::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->flags2 & MF2_BOSS)
 	{ // Decrease damage for bosses
@@ -1099,6 +1099,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	x = self->x + ((pr_storm()&127) - 64) * FRACUNIT;
 	y = self->y + ((pr_storm()&127) - 64) * FRACUNIT;
 	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ, ALLOW_REPLACE);
+#ifdef _3DFLOORS
+	// We used bouncecount to store the 3D floor index in A_HideInCeiling
+	if (!mo) return 0;
+	fixed_t newz;
+	if (self->bouncecount >= 0 
+		&& (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
+		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(x, y);// - 40 * FRACUNIT;
+	else
+		newz = self->Sector->ceilingplane.ZatPoint(x, y);
+	int moceiling = P_Find3DFloor(NULL, x, y, newz, false, false, newz);
+	if (moceiling >= 0)
+		mo->z = newz - mo->height;
+#endif
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_PlayersExtra,self->special2) : 0;
 	mo->target = self->target;
@@ -1144,6 +1157,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 {
 	PARAM_ACTION_PROLOGUE;
 
+#ifdef _3DFLOORS
+	// We use bouncecount to store the 3D floor index
+	fixed_t foo;
+	for (unsigned int i=0; i< self->Sector->e->XFloor.ffloors.Size(); i++)
+	{
+		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
+		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+		 
+		if ((foo = rover->bottom.plane->ZatPoint(self->x, self->y)) >= (self->z + self->height))
+		{
+			self->z = foo + 4*FRACUNIT;
+			self->bouncecount = i;
+			return 0;
+		}
+	}
+	self->bouncecount = -1;
+#endif
 	self->z = self->ceilingz + 4*FRACUNIT;
 	return 0;
 }
@@ -1185,13 +1215,13 @@ class APhoenixFX1 : public AActor
 {
 	DECLARE_CLASS (APhoenixFX1, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 
 IMPLEMENT_CLASS (APhoenixFX1)
 
-int APhoenixFX1::DoSpecialDamage (AActor *target, int damage)
+int APhoenixFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
@@ -1207,12 +1237,12 @@ class APhoenixFX2 : public AActor
 {
 	DECLARE_CLASS (APhoenixFX2, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (APhoenixFX2)
 
-int APhoenixFX2::DoSpecialDamage (AActor *target, int damage)
+int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->player && pr_pfx2 () < 128)
 	{ // Freeze player for a bit
@@ -1319,6 +1349,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	AActor *mo;
 	angle_t angle;
 	fixed_t x, y, z;
+
 	fixed_t slope;
 	FSoundID soundid;
 	player_t *player;

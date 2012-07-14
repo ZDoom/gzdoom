@@ -6,7 +6,6 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-#include "f_finale.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
 #include "doomstat.h"
@@ -115,7 +114,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 	{
 		spot->threshold = 25;
 		spot->target = self;
-		spot->health = -2;
+		spot->FriendPlayer = 0;
 		spot->tracer = self->target;
 	}
 	return 0;

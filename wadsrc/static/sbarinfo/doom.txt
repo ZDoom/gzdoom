@@ -79,15 +79,15 @@ statusbar normal // Standard Doom Status bar
 	drawswitchableimage keyslot 3 && 6, "nullimage", "STKEYS1", "STKEYS4", "STKEYS7", 239, 181;
 	drawswitchableimage keyslot 1 && 4, "nullimage", "STKEYS2", "STKEYS5", "STKEYS8", 239, 191;
 
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo Clip, 288, 173;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo Shell, 288, 179;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo RocketAmmo, 288, 185;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo Cell, 288, 191;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(Clip), 288, 173;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(Shell), 288, 179;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(RocketAmmo), 288, 185;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammo(Cell), 288, 191;
 
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity Clip, 314, 173;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity Shell, 314, 179;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity RocketAmmo, 314, 185;
-	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity Cell, 314, 191;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(Clip), 314, 173;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(Shell), 314, 179;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(RocketAmmo), 314, 185;
+	drawnumber 3, INDEXFONT_DOOM, untranslated, ammocapacity(Cell), 314, 191;
 	gamemode deathmatch, teamgame
 	{
 		drawnumber 2, HUDFONT_DOOM, untranslated, frags, 138, 171;

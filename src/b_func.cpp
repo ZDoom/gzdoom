@@ -15,7 +15,6 @@
 #include "g_game.h"
 #include "m_random.h"
 #include "r_sky.h"
-#include "r_main.h"
 #include "st_stuff.h"
 #include "stats.h"
 #include "i_system.h"

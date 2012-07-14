@@ -48,7 +48,7 @@ enum
 static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 
 // Class to convert the IWAD data into a form that Cocoa can use.
-@interface IWADTableData : NSObject
+@interface IWADTableData : NSObject// <NSTableViewDataSource>
 {
 	NSMutableArray *data;
 }
@@ -81,8 +81,8 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 			filename = wads[i].Path;
 		else
 			filename++;
-		[record setObject:[NSString stringWithCString:filename] forKey:[NSString stringWithCString:tableHeaders[COLUMN_IWAD]]];
-		[record setObject:[NSString stringWithCString:IWADInfos[wads[i].Type].Name] forKey:[NSString stringWithCString:tableHeaders[COLUMN_GAME]]];
+		[record setObject:[NSString stringWithUTF8String:filename] forKey:[NSString stringWithUTF8String:tableHeaders[COLUMN_IWAD]]];
+		[record setObject:[NSString stringWithUTF8String:wads[i].Name] forKey:[NSString stringWithUTF8String:tableHeaders[COLUMN_GAME]]];
 		[data addObject:record];
 		[record release];
 	}
@@ -144,7 +144,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 // little more automated.
 - (void)makeLabel:(NSTextField *)label:(const char*) str
 {
-	[label setStringValue:[NSString stringWithCString:str]];
+	[label setStringValue:[NSString stringWithUTF8String:str]];
 	[label setBezeled:NO];
 	[label setDrawsBackground:NO];
 	[label setEditable:NO];
@@ -156,7 +156,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	cancelled = false;
 
 	app = [NSApplication sharedApplication];
-	id windowTitle = [NSString stringWithCString:GAMESIG " " DOTVERSIONSTR ": Select an IWAD to use"];
+	id windowTitle = [NSString stringWithUTF8String:GAMESIG " " DOTVERSIONSTR ": Select an IWAD to use"];
 
 	NSRect frame = NSMakeRect(0, 0, 440, 450);
 	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];
@@ -174,7 +174,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	IWADTableData *tableData = [[IWADTableData alloc] init:wads:numwads];
 	for(int i = 0;i < NUM_COLUMNS;i++)
 	{
-		NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:[NSString stringWithCString:tableHeaders[i]]];
+		NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:[NSString stringWithUTF8String:tableHeaders[i]]];
 		[[column headerCell] setStringValue:[column identifier]];
 		if(i == 0)
 			[column setMaxWidth:110];
@@ -211,7 +211,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	[[window contentView] addSubview:dontAsk];*/
 
 	okButton = [[NSButton alloc] initWithFrame:NSMakeRect(236, 12, 96, 32)];
-	[okButton setTitle:[NSString stringWithCString:"OK"]];
+	[okButton setTitle:[NSString stringWithUTF8String:"OK"]];
 	[okButton setBezelStyle:NSRoundedBezelStyle];
 	[okButton setAction:@selector(buttonPressed:)];
 	[okButton setTarget:self];
@@ -219,7 +219,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	[[window contentView] addSubview:okButton];
 
 	cancelButton = [[NSButton alloc] initWithFrame:NSMakeRect(332, 12, 96, 32)];
-	[cancelButton setTitle:[NSString stringWithCString:"Cancel"]];
+	[cancelButton setTitle:[NSString stringWithUTF8String:"Cancel"]];
 	[cancelButton setBezelStyle:NSRoundedBezelStyle];
 	[cancelButton setAction:@selector(buttonPressed:)];
 	[cancelButton setTarget:self];

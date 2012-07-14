@@ -62,6 +62,8 @@ typedef enum
 	ga_newgame,
 	ga_newgame2,
 	ga_loadgame,
+	ga_loadgamehidecon,
+	ga_loadgameplaydemo,
 	ga_autoloadgame,
 	ga_savegame,
 	ga_autosave,
@@ -88,8 +90,8 @@ typedef enum
     BT_CROUCH		= 1<<3,
 	BT_TURN180		= 1<<4,
 	BT_ALTATTACK	= 1<<5,	// Press your other "Fire".
-	BT_RELOAD		= 1<<6,	// Not connected to anything at the moment.
-	BT_ZOOM			= 1<<7,	// Neither is this.
+	BT_RELOAD		= 1<<6,	// [XA] Reload key. Causes state jump in A_WeaponReady.
+	BT_ZOOM			= 1<<7,	// [XA] Zoom key. Ditto.
 
 	// The rest are all ignored by the play simulation and are for scripts.
 	BT_SPEED		= 1<<8,

@@ -24,8 +24,9 @@
 #define __R_STATE_H__
 
 // Need data structure definitions.
-#include "d_player.h"
-#include "r_data.h"
+#include "doomtype.h"
+#include "r_defs.h"
+#include "r_data/sprites.h"
 
 //
 // Refresh internal data structures,
@@ -35,18 +36,6 @@
 extern "C" int			viewwidth;
 extern "C" int			viewheight;
 
-// Sprite....
-extern int				firstspritelump;
-extern int				lastspritelump;
-extern int				numspritelumps;
-
-extern size_t			numskins;	// [RH]
-extern FPlayerSkin	*	skins;		// [RH]
-
-extern BYTE				OtherGameSkinRemap[256];
-extern PalEntry			OtherGameSkinPalette[256];
-
-
 //
 // Lookup tables for map data.
 //
@@ -55,6 +44,8 @@ extern DWORD NumStdSprites;
 
 extern int				numvertexes;
 extern vertex_t*		vertexes;
+extern int				numvertexdatas;
+extern vertexdata_t*		vertexdatas;
 
 extern int				numsegs;
 extern seg_t*			segs;
@@ -84,41 +75,6 @@ extern subsector_t * 	gamesubsectors;
 extern int 				numgamesubsectors;
 
 
-extern FExtraLight*		ExtraLights;
-extern FLightStack*		LightStacks;
-
-inline FArchive &operator<< (FArchive &arc, sector_t *&sec)
-{
-	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
-}
-
-inline FArchive &operator<< (FArchive &arc, const sector_t *&sec)
-{
-	return arc.SerializePointer (sectors, (BYTE **)&sec, sizeof(*sectors));
-}
-
-inline FArchive &operator<< (FArchive &arc, line_t *&line)
-{
-	return arc.SerializePointer (lines, (BYTE **)&line, sizeof(*lines));
-}
-
-inline FArchive &operator<< (FArchive &arc, vertex_t *&vert)
-{
-	return arc.SerializePointer (vertexes, (BYTE **)&vert, sizeof(*vertexes));
-}
-
-inline FArchive &operator<< (FArchive &arc, side_t *&side)
-{
-	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
-}
-
-inline FArchive &operator<< (FArchive &arc, FLinkedSector &link)
-{
-	arc << link.Sector << link.Type;
-	return arc;
-}
-
-
 //
 // POV data.
 //
@@ -130,5 +86,7 @@ extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
 
 extern angle_t			xtoviewangle[MAXWIDTH+1];
 extern int				FieldOfView;
+
+int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 
 #endif // __R_STATE_H__

@@ -6,6 +6,7 @@ sampler1D Gamma2 : register(s3);
 sampler1D Gamma3 : register(s4);
 #endif
 
+float4 Desaturation : register(c1);	// { Desat, 1 - Desat }
 float4 PaletteMod : register(c2);
 float4 Weights : register(c6);		// RGB->Gray weighting { 77/256.0, 143/256.0, 37/256.0, 1 }
 float4 Gamma : register(c7);
@@ -70,15 +71,16 @@ float4 SpecialColormap(float2 tex_coord : TEXCOORD0, float4 start : COLOR0, floa
 	float4 range = end - start;
 	// We can't store values greater than 1.0 in a color register, so we multiply
 	// the final result by 2 and expect the caller to divide the start and end by 2.
-	color.rgb = 2 * (start + Grayscale(color) * range);
+	color.rgb = 2 * (start + Grayscale(color) * range).rgb;
 	// Duplicate alpha semantics of NormalColor.
 	color.a = start.a + color.a * end.a;
 	return color;
 }
 
 // In-game colormap effect: fade to a particular color and multiply by another, with 
-// optional desaturation of the original color. Desaturation is packed into color.a.
+// optional desaturation of the original color. Desaturation is stored in c1.
 // Fade level is packed int fade.a. Fade.rgb has been premultiplied by alpha.
+// Overall alpha is in color.a.
 float4 InGameColormap(float2 tex_coord : TEXCOORD0, float4 color : COLOR0, float4 fade : COLOR1) : COLOR
 {
 	float4 rgb = SampleTexture(tex_coord);
@@ -86,17 +88,16 @@ float4 InGameColormap(float2 tex_coord : TEXCOORD0, float4 color : COLOR0, float
 	// Desaturate
 #if DESAT
 	float3 intensity;
-	float invdesat;
-	intensity.rgb = Grayscale(rgb) * color.a;
-	invdesat = Weights.w - color.a;
-	rgb.rgb = intensity + rgb * invdesat;
+	intensity.rgb = Grayscale(rgb) * Desaturation.x;
+	rgb.rgb = intensity.rgb + rgb.rgb * Desaturation.y;
 #endif
 
 	// Fade
 	rgb.rgb = rgb.rgb * fade.aaa + fade.rgb;
 
-	// Shade
-	rgb.rgb = rgb.rgb * color.rgb;
+	// Shade and Alpha
+	rgb = rgb * color;
+
 	return rgb;
 }
 

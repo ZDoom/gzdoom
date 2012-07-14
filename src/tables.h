@@ -60,7 +60,7 @@ extern	fixed_t 		finesine[5*FINEANGLES/4];
 // (encapsulated in a struct so that we can still use array accesses).
 struct cosine_inline
 {
-	fixed_t operator[] (unsigned int x)
+	fixed_t operator[] (unsigned int x) const
 	{
 		return finesine[x+FINEANGLES/4];
 	}
@@ -108,6 +108,10 @@ extern angle_t			tantoangle[SLOPERANGE+1];
 inline double bam2rad(angle_t ang)
 {
 	return double(ang >> 1) * (PI / ANGLE_90);
+}
+inline angle_t rad2bam(double ang)
+{
+	return angle_t(ang * (double(1<<30) / PI)) << 1;
 }
 
 #endif // __TABLES_H__

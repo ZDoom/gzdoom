@@ -55,6 +55,7 @@ DArgs::DArgs()
 //===========================================================================
 
 DArgs::DArgs(const DArgs &other)
+: DObject()
 {
 	Argv = other.Argv;
 }
@@ -228,6 +229,26 @@ FString DArgs::TakeValue(const char *check)
 		}
 	}
 	return out;
+}
+
+//===========================================================================
+//
+// DArgs :: RemoveArg
+//
+//===========================================================================
+
+void DArgs::RemoveArgs(const char *check)
+{
+	int i = CheckParm(check);
+
+	if (i > 0 && i < (int)Argv.Size() - 1)
+	{
+		do 
+		{
+			RemoveArg(i);
+		}
+		while (Argv[i][0] != '+' && Argv[i][0] != '-' && i < (int)Argv.Size() - 1);
+	}
 }
 
 //===========================================================================

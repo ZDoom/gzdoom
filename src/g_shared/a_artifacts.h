@@ -54,7 +54,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
-	int AlterWeaponSprite (vissprite_t *vis);
+	int AlterWeaponSprite (visstyle_t *vis);
 };
 
 class APowerStrength : public APowerup
@@ -76,7 +76,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
-	int AlterWeaponSprite (vissprite_t *vis);
+	int AlterWeaponSprite (visstyle_t *vis);
 //	FRenderStyle OwnersNormalStyle;
 //	fixed_t OwnersNormalAlpha;
 };
@@ -214,8 +214,7 @@ class APowerRegeneration : public APowerup
 {
 	DECLARE_CLASS( APowerRegeneration, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	void DoEffect();
 };
 
 class APowerHighJump : public APowerup
@@ -247,6 +246,7 @@ class APowerMorph : public APowerup
 	DECLARE_CLASS( APowerMorph, APowerup )
 public:
 	void Serialize (FArchive &arc);
+	void SetNoCallUndoMorph() { bNoCallUndoMorph = true; }
 
 	FNameNoInit	PlayerClass, MorphFlash, UnMorphFlash;
 	int MorphStyle;
@@ -256,6 +256,7 @@ protected:
 	void EndEffect ();
 	// Variables
 	player_t *Player;
+	bool bNoCallUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 };
 
 #endif //__A_ARTIFACTS_H__

@@ -21,7 +21,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "win32iface.h"
-#include "m_menu.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "cmdlib.h"
@@ -236,8 +235,6 @@ protected:
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void UpdateJoystickMenu();
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -246,7 +243,6 @@ static void MapAxis(FIntCVar &var, int num);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern menu_t JoystickMenu;
 extern LPDIRECTINPUT8 g_pdi;
 extern HWND Window;
 
@@ -1291,7 +1287,7 @@ bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
 			UINT cbSize;
 
 			cbSize = rdi.cbSize = sizeof(rdi);
-			if (MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
+			if ((INT)MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
 			{
 				if(MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) == (LONG)guid->Data1)
 				{

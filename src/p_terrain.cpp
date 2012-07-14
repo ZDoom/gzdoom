@@ -242,6 +242,8 @@ void P_InitTerrainTypes ()
 	int lump;
 	int size;
 
+	Splashes.Clear();
+	Terrains.Clear();
 	size = (TexMan.NumTextures()+1);
 	TerrainTypes.Resize(size);
 	TerrainTypes.Clear();
@@ -332,31 +334,10 @@ static void ParseOuter (FScanner &sc)
 				break;
 
 			case OUT_IFDOOM:
-				if (!(gameinfo.gametype & GAME_DoomChex))
-				{
-					ifskip = true;
-				}
-				break;
-
 			case OUT_IFHERETIC:
-				if (gameinfo.gametype != GAME_Heretic)
-				{
-					ifskip = true;
-				}
-				break;
-
 			case OUT_IFHEXEN:
-				if (gameinfo.gametype != GAME_Hexen)
-				{
-					ifskip = true;
-				}
-				break;
-
 			case OUT_IFSTRIFE:
-				if (gameinfo.gametype != GAME_Strife)
-				{
-					ifskip = true;
-				}
+				ifskip = !CheckGame(sc.String+2, true);
 				break;
 
 			case OUT_ENDIF:

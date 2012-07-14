@@ -40,7 +40,7 @@
 #include "a_keys.h"
 #include "templates.h"
 #include "c_console.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "g_level.h"
 #include "d_net.h"
 #include "d_dehacked.h"
@@ -83,20 +83,10 @@ void cht_DoCheat (player_t *player, int cheat)
 		// fall through to CHT_GOD
 	case CHT_GOD:
 		player->cheats ^= CF_GODMODE;
-		if (gameinfo.gametype != GAME_Chex)
-		{
-			if (player->cheats & CF_GODMODE)
-				msg = GStrings("STSTR_DQDON");
-			else
-				msg = GStrings("STSTR_DQDOFF");
-		}
+		if (player->cheats & CF_GODMODE)
+			msg = GStrings("STSTR_DQDON");
 		else
-		{
-			if (player->cheats & CF_GODMODE)
-				msg = GStrings("STSTR_CDQDON");
-			else
-				msg = GStrings("STSTR_CDQDOFF");
-		}
+			msg = GStrings("STSTR_DQDOFF");
 		SB_state = screen->GetPageCount ();
 		break;
 
@@ -180,7 +170,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			{
 				player->mo->GiveInventoryType (type);
 			}
-			msg  = GStrings(gameinfo.gametype != GAME_Chex ? "STSTR_CHOPPERS" : "STSTR_CCHOPPERS");
+			msg = GStrings("STSTR_CHOPPERS");
 		}
 		// [RH] The original cheat also set powers[pw_invulnerability] to true.
 		// Since this is a timer and not a boolean, it effectively turned off
@@ -191,7 +181,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_POWER:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 			if (item != NULL)
 			{
 				item->Destroy ();
@@ -211,10 +201,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "ammo");
 		cht_Give (player, "keys");
 		cht_Give (player, "armor");
-		if(gameinfo.gametype != GAME_Chex)
-			msg = GStrings("STSTR_KFAADDED");
-		else
-			msg = GStrings("STSTR_CKFAADDED");
+		msg = GStrings("STSTR_KFAADDED");
 		break;
 
 	case CHT_IDFA:
@@ -222,10 +209,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "weapons");
 		cht_Give (player, "ammo");
 		cht_Give (player, "armor");
-		if(gameinfo.gametype != GAME_Chex)
-			msg = GStrings("STSTR_FAADDED");
-		else
-			msg = GStrings("STSTR_CFAADDED");
+		msg = GStrings("STSTR_FAADDED");
 		break;
 
 	case CHT_BEHOLDV:
@@ -587,11 +571,7 @@ void GiveSpawner (player_t *player, PClassInventory *type, int amount)
 				item->Amount = MIN (amount, item->MaxAmount);
 			}
 		}
-		if(item->flags & MF_COUNTITEM) // Given items shouldn't count against the map's total,
-		{								// since they aren't added to the player's total.
-			level.total_items--;
-			item->flags &= ~MF_COUNTITEM;
-		} 
+		item->ClearCounters();
 		if (!item->CallTryPickup (player->mo))
 		{
 			item->Destroy ();
@@ -788,7 +768,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 					!type->IsDescendantOf (RUNTIME_CLASS(APowerup)) &&
 					!type->IsDescendantOf (RUNTIME_CLASS(AArmor)))
 				{
-					GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
+					// Do not give replaced items unless using "give everything"
+					if (giveall == ALL_YESYES || type->GetReplacement() == type)
+					{
+						GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
+					}
 				}
 			}
 		}
@@ -806,7 +790,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AInventory *def = (AInventory*)GetDefaultByType (type);
 				if (def->Icon.isValid())
 				{
-					GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
+					// Do not give replaced items unless using "give everything"
+					if (giveall == ALL_YESYES || type->GetReplacement() == type)
+					{
+						GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
+					}
 				}
 			}
 		}
@@ -1060,7 +1048,11 @@ void cht_Suicide (player_t *plyr)
 	{
 		plyr->mo->flags |= MF_SHOOTABLE;
 		plyr->mo->flags2 &= ~MF2_INVULNERABLE;
+		//Store the players current damage factor, to restore it later.
+		fixed_t plyrdmgfact = plyr->mo->DamageFactor;
+		plyr->mo->DamageFactor = 65536;
 		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, TELEFRAG_DAMAGE, NAME_Suicide);
+		plyr->mo->DamageFactor = plyrdmgfact;
 		if (plyr->mo->health <= 0)
 		{
 			plyr->mo->flags &= ~MF_SHOOTABLE;

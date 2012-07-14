@@ -14,6 +14,8 @@
 #include "g_level.h"
 */
 
+EXTERN_CVAR(Bool, sv_unlimited_pickup)
+
 static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");
 static FRandom pr_poisoncloudd ("PoisonCloudDamage");
@@ -21,15 +23,6 @@ static FRandom pr_poisoncloudd ("PoisonCloudDamage");
 DECLARE_ACTION(A_CheckThrowBomb)
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
-
-class AArtiPoisonBag : public AInventory
-{
-	DECLARE_CLASS (AArtiPoisonBag, AInventory)
-public:
-	bool HandlePickup (AInventory *item);
-	AInventory *CreateCopy (AActor *other);
-	void BeginPlay ();
-};
 
 IMPLEMENT_CLASS (AArtiPoisonBag)
 
@@ -119,7 +112,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		 */
 
 		// When looking straight ahead, it uses a z velocity of 4 while the xy velocity
-		// is as set by the projectile. To accomodate this with a proper trajectory, we
+		// is as set by the projectile. To accommodate this with a proper trajectory, we
 		// aim the projectile ~20 degrees higher than we're looking at and increase the
 		// speed we fire at accordingly.
 		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
@@ -141,6 +134,88 @@ bool AArtiPoisonBag3::Use (bool pickup)
 	return false;
 }
 
+// Poison Bag 4 (Generic Giver) ----------------------------------------------
+
+class AArtiPoisonBagGiver : public AArtiPoisonBag
+{
+	DECLARE_CLASS (AArtiPoisonBagGiver, AArtiPoisonBag)
+public:
+	bool Use (bool pickup);
+};
+
+IMPLEMENT_CLASS (AArtiPoisonBagGiver)
+
+bool AArtiPoisonBagGiver::Use (bool pickup)
+{
+	PClassActor *missiletype = PClass::FindActor(this->GetClass()->MissileName);
+	if (missiletype != NULL)
+	{
+		AActor *mo = Spawn (missiletype, Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
+		if (mo != NULL)
+		{
+			if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+			{
+				AInventory *inv = static_cast<AInventory *>(mo);
+				if (inv->CallTryPickup(Owner))
+					return true;
+			}
+			mo->Destroy();	// Destroy if not inventory or couldn't be picked up
+		}
+	}
+	return false;
+}
+
+// Poison Bag 5 (Generic Thrower) ----------------------------------------------
+
+class AArtiPoisonBagShooter : public AArtiPoisonBag
+{
+	DECLARE_CLASS (AArtiPoisonBagShooter, AArtiPoisonBag)
+public:
+	bool Use (bool pickup);
+};
+
+IMPLEMENT_CLASS (AArtiPoisonBagShooter)
+
+bool AArtiPoisonBagShooter::Use (bool pickup)
+{
+	PClassActor *missiletype = PClass::FindActor(this->GetClass()->MissileName);
+	if (missiletype != NULL)
+	{
+		AActor *mo = P_SpawnPlayerMissile(Owner, missiletype);
+		if (mo != NULL)
+		{
+			// automatic handling of seeker missiles
+			if (mo->flags2 & MF2_SEEKERMISSILE)
+			{
+				mo->tracer = Owner->target;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+//============================================================================
+//
+// GetFlechetteType
+//
+//============================================================================
+
+PClassActor *GetFlechetteType(AActor *other)
+{
+	PClassActor *spawntype = NULL;
+	if (other->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+	{
+		spawntype = static_cast<APlayerPawn*>(other)->FlechetteType;
+	}
+	if (spawntype == NULL)
+	{
+		// default fallback if nothing valid defined.
+		spawntype = RUNTIME_CLASS(AArtiPoisonBag3);
+	}
+	return spawntype;
+}
+
 //============================================================================
 //
 // AArtiPoisonBag :: HandlePickup
@@ -155,26 +230,12 @@ bool AArtiPoisonBag::HandlePickup (AInventory *item)
 		return Super::HandlePickup (item);
 	}
 
-	bool matched;
-
-	if (Owner->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
+	if (GetClass() == GetFlechetteType(Owner))
 	{
-		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag1));
-	}
-	else if (Owner->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{
-		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag2));
-	}
-	else
-	{
-		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag3));
-	}
-	if (matched)
-	{
-		if (Amount < MaxAmount)
+		if (Amount < MaxAmount || sv_unlimited_pickup)
 		{
 			Amount += item->Amount;
-			if (Amount > MaxAmount)
+			if (Amount > MaxAmount && !sv_unlimited_pickup)
 			{
 				Amount = MaxAmount;
 			}
@@ -204,20 +265,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	}
 
 	AInventory *copy;
-	PClassActor *spawntype;
-
-	if (other->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
-	{
-		spawntype = RUNTIME_CLASS(AArtiPoisonBag1);
-	}
-	else if (other->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
-	{
-		spawntype = RUNTIME_CLASS(AArtiPoisonBag2);
-	}
-	else
-	{
-		spawntype = RUNTIME_CLASS(AArtiPoisonBag3);
-	}
+	PClassActor *spawntype = GetFlechetteType(other);
 	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0, NO_REPLACE));
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
@@ -251,7 +299,7 @@ class APoisonCloud : public AActor
 {
 	DECLARE_CLASS (APoisonCloud, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	void BeginPlay ();
 };
 
@@ -264,7 +312,7 @@ void APoisonCloud::BeginPlay ()
 	special2 = 0;
 }
 
-int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
+int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {
 	if (victim->player)
 	{
@@ -287,12 +335,23 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 			{
 				damage = (int)((float)damage * level.teamdamage);
 			}
+			// Handle passive damage modifiers (e.g. PowerProtection)
+			if (victim->Inventory != NULL)
+			{
+				victim->Inventory->ModifyDamage(damage, damagetype, damage, true);
+			}
+			// Modify with damage factors
+			damage = FixedMul(damage, victim->DamageFactor);
+			if (damage > 0)
+			{
+				damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, victim->GetClass()->DamageFactors);
+			}
 			if (damage > 0)
 			{
 				P_PoisonDamage (victim->player, this,
 					15+(pr_poisoncloudd()&15), false); // Don't play painsound
 
-				// If successful, play the posion sound.
+				// If successful, play the poison sound.
 				if (P_PoisonPlayer (victim->player, this, this->target, 50))
 					S_Sound (victim, CHAN_VOICE, "*poison", 1, ATTN_NORM);
 			}

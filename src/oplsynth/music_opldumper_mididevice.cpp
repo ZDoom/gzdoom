@@ -235,13 +235,13 @@ void DiskWriterIO::OPLwriteReg(int which, uint reg, uchar data)
 	{
 		if (reg != 0 && reg != 2 && (reg != 255 || data != 255))
 		{
-			BYTE cmd[2] = { data, reg };
+			BYTE cmd[2] = { data, BYTE(reg) };
 			fwrite(cmd, 1, 2, File);
 		}
 	}
 	else
 	{
-		BYTE cmd[3] = { 4, reg, data };
+		BYTE cmd[3] = { 4, BYTE(reg), data };
 		fwrite (cmd + (reg > 4), 1, 3 - (reg > 4), File);
 	}
 }
@@ -261,7 +261,7 @@ void DiskWriterIO :: SetChip(int chipnum)
 		CurChip = chipnum;
 		if (Format == FMT_RDOS)
 		{
-			BYTE switcher[2] = { chipnum + 1, 2 };
+			BYTE switcher[2] = { BYTE(chipnum + 1), 2 };
 			fwrite(switcher, 1, 2, File);
 		}
 		else
@@ -309,7 +309,7 @@ void DiskWriterIO::SetClockRate(double samples_per_tick)
 		}
 		else
 		{ // Change the clock rate in the middle of the song.
-			BYTE clock_change[4] = { 0, 2, clock_word & 255, clock_word >> 8 };
+			BYTE clock_change[4] = { 0, 2, BYTE(clock_word & 255), BYTE(clock_word >> 8) };
 			fwrite(clock_change, 1, 4, File);
 		}
 	}

@@ -40,6 +40,7 @@
 #include "doomtype.h"
 #include "m_alloc.h"
 #include "memarena.h"
+#include "c_dispatch.h"
 #include "zstring.h"
 
 #define BLOCK_SIZE			(10*1024)
@@ -175,18 +176,33 @@ void FMemArena::FreeBlockChain(Block *&top)
 
 FMemArena::Block *FMemArena::AddBlock(size_t size)
 {
+	Block *mem, **last;
 	size += sizeof(Block);		// Account for header size
-	if (size < BLOCK_SIZE)
+
+	// Search for a free block to use
+	for (last = &FreeBlocks, mem = FreeBlocks; mem != NULL; last = &mem->NextBlock, mem = mem->NextBlock)
 	{
-		size = BLOCK_SIZE;
+		if ((BYTE *)mem->Limit - (BYTE *)mem >= (ptrdiff_t)size)
+		{
+			*last = mem->NextBlock;
+			break;
+		}
 	}
-	else
-	{ // Stick some free space at the end so we can use this block for
-	  // other things.
-		size += BLOCK_SIZE/2;
+	if (mem == NULL)
+	{
+		// Allocate a new block
+		if (size < BLOCK_SIZE)
+		{
+			size = BLOCK_SIZE;
+		}
+		else
+		{ // Stick some free space at the end so we can use this block for
+		  // other things.
+			size += BLOCK_SIZE/2;
+		}
+		mem = (Block *)M_Malloc(size);
+		mem->Limit = (BYTE *)mem + size;
 	}
-	Block *mem = (Block *)M_Malloc(size);
-	mem->Limit = mem + size;
 	mem->Reset();
 	mem->NextBlock = TopBlock;
 	TopBlock = mem;
@@ -357,4 +373,5 @@ void FSharedStringArena::FreeAll()
 		FreeBlocks = block;
 	}
 	memset(Buckets, 0, sizeof(Buckets));
+	TopBlock = NULL;
 }

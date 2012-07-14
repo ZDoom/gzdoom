@@ -23,47 +23,30 @@
 #ifndef __R_MAIN_H__
 #define __R_MAIN_H__
 
-// Number of diminishing brightness levels.
-// There a 0-31, i.e. 32 LUT in the COLORMAP lump.
-#define NUMCOLORMAPS			32
-
+#include "r_utility.h"
 #include "d_player.h"
-#include "r_data.h"
-#include "r_state.h"
 #include "v_palette.h"
+#include "r_data/colormaps.h"
 
+
+typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 
 //
 // POV related.
 //
-extern DCanvas			*RenderTarget;
 extern bool				bRenderingToCanvas;
 extern fixed_t			viewcos;
 extern fixed_t			viewsin;
-extern fixed_t			viewtancos;
-extern fixed_t			viewtansin;
-extern fixed_t			FocalTangent;
+extern fixed_t			viewingrangerecip;
 extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;
-extern int				WidescreenRatio;
-
-extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
-extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
-extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
 
 extern float			WallTMapScale;
 extern float			WallTMapScale2;
 
-extern "C" int				viewwidth;
-extern "C" int				viewheight;
 extern int				viewwindowx;
 extern int				viewwindowy;
-
-
-
-extern "C" int			centerx;
-extern "C" int			centery;
 
 extern fixed_t			centerxfrac;
 extern fixed_t			centeryfrac;
@@ -72,12 +55,8 @@ extern float			iyaspectmulfloat;
 
 extern FDynamicColormap*basecolormap;	// [RH] Colormap for sector currently being drawn
 
-extern int				validcount;
-
 extern int				linecount;
 extern int				loopcount;
-
-extern int				r_Yaspect;
 
 extern bool				r_dontmaplines;
 
@@ -95,11 +74,15 @@ extern bool				r_dontmaplines;
 // Convert a light level into an unbounded colormap index (shade). Result is
 // fixed point. Why the +12? I wish I knew, but experimentation indicates it
 // is necessary in order to best reproduce Doom's original lighting.
-#define LIGHT2SHADE(l)			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*FRACUNIT*NUMCOLORMAPS/128))
+#define LIGHT2SHADE(l)			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
+
+// MAXLIGHTSCALE from original DOOM, divided by 2.
+#define MAXLIGHTVIS				(24*FRACUNIT)
 
 // Convert a shade and visibility to a clamped colormap index.
 // Result is not fixed point.
-#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-(vis))>>FRACBITS, 0, NUMCOLORMAPS-1))
+// Change R_CalcTiltedLighting() when this changes.
+#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-MIN(MAXLIGHTVIS,(vis)))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
 extern fixed_t			GlobVis;
 
@@ -113,11 +96,7 @@ extern float			r_TiltVisibility;
 extern fixed_t			r_SpriteVisibility;
 extern fixed_t			r_SkyVisibility;
 
-extern fixed_t			r_TicFrac;
-extern DWORD			r_FrameTime;
-extern bool				r_NoInterpolate;
-
-extern int				extralight, r_actualextralight;
+extern int				r_actualextralight;
 extern bool				foggy;
 extern int				fixedlightlev;
 extern lighttable_t*	fixedcolormap;
@@ -142,38 +121,8 @@ extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
 extern void (STACK_ARGS *hcolfunc_post4) (int sx, int yl, int yh);
 
 
-//
-// Utility functions.
-
-//==========================================================================
-//
-// R_PointOnSide
-//
-// Traverse BSP (sub) tree, check point against partition plane.
-// Returns side 0 (front/on) or 1 (back).
-//
-// [RH] inlined, stripped down, and made more precise
-//
-//==========================================================================
-
-inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
-{
-	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
-}
-
-extern fixed_t			viewx;
-extern fixed_t			viewy;
-
-angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
-inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
-subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
-fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
-
-void R_SetFOV (float fov);
-float R_GetFOV ();
 void R_InitTextureMapping ();
 
-void R_SetViewAngle ();
 
 //
 // REFRESH - the actual rendering functions.
@@ -181,27 +130,13 @@ void R_SetViewAngle ();
 
 // Called by G_Drawer.
 void R_RenderActorView (AActor *actor, bool dontmaplines = false);
-void R_RefreshViewBorder ();
 void R_SetupBuffer ();
 
 void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 
-void R_ResetViewInterpolation ();
-
-// Called by startup code.
-int R_GuesstimateNumTextures ();
-void R_Init (void);
-void R_ExecuteSetViewSize (void);
-
-// Called by M_Responder.
-void R_SetViewSize (int blocks);
-
 // [RH] Initialize multires stuff for renderer
 void R_MultiresInit (void);
 
-
-extern void R_FreePastViewers ();
-extern void R_ClearPastViewer (AActor *actor);
 
 extern int stacked_extralight;
 extern float stacked_visibility;
@@ -209,5 +144,6 @@ extern fixed_t stacked_viewx, stacked_viewy, stacked_viewz;
 extern angle_t stacked_angle;
 
 extern void R_CopyStackedViewParameters();
+
 
 #endif // __R_MAIN_H__

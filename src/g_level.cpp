@@ -42,7 +42,6 @@
 #include "m_random.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
-#include "r_data.h"
 #include "w_wad.h"
 #include "am_map.h"
 #include "c_dispatch.h"
@@ -51,7 +50,7 @@
 #include "p_local.h"
 #include "r_sky.h"
 #include "c_console.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "gstrings.h"
 #include "v_video.h"
 #include "st_stuff.h"
@@ -68,37 +67,33 @@
 #include "m_png.h"
 #include "m_random.h"
 #include "version.h"
-#include "m_menu.h"
 #include "statnums.h"
 #include "sbarinfo.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "p_lnspec.h"
-#include "r_interpolate.h"
+#include "r_data/r_interpolate.h"
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_netinf.h"
 #include "v_palette.h"
+#include "menu/menu.h"
+#include "a_strifeglobal.h"
+#include "r_data/colormaps.h"
+#include "farchive.h"
+#include "r_renderer.h"
 
 #include "gi.h"
 
 #include "g_hub.h"
 
+void STAT_StartNewGame(const char *lev);
+void STAT_ChangeLevel(const char *newl);
 
-#ifndef STAT
-#define STAT_NEW(map)
-#define STAT_END(newl)
-#define STAT_READ(png)
-#define STAT_WRITE(f)
-#else
-void STAT_NEW(const char *lev);
-void STAT_END(const char *newl);
-void STAT_READ(PNGHandle *png);
-void STAT_WRITE(FILE *f);
-#endif
 
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
+EXTERN_CVAR (String, playerclass)
 
 #define SNAP_ID			MAKE_ID('s','n','A','p')
 #define DSNP_ID			MAKE_ID('d','s','N','p')
@@ -107,21 +102,10 @@ EXTERN_CVAR (Int, disableautosave)
 #define RCLS_ID			MAKE_ID('r','c','L','s')
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
-static void SetEndSequence (char *nextmap, int type);
 void G_VerifySkill();
 
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
-
-TArray<EndSequence> EndSequences;
-
-EndSequence::EndSequence()
-{
-	EndType = END_Pic;
-	Advanced = false;
-	MusicLooping = false;
-	PlayTheEnd = false;
-}
 
 extern level_info_t TheDefaultLevelInfo;
 extern bool timingdemo;
@@ -137,79 +121,11 @@ bool savegamerestore;
 
 extern int mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
-extern const AInventory *SendItemUse, *SendItemDrop;
 
 void *statcopy;					// for statistics driver
 
 FLevelLocals level;			// info about current level
 
-//==========================================================================
-//
-//
-//==========================================================================
-
-int FindEndSequence (int type, const char *picname)
-{
-	unsigned int i, num;
-
-	num = EndSequences.Size ();
-	for (i = 0; i < num; i++)
-	{
-		if (EndSequences[i].EndType == type && !EndSequences[i].Advanced &&
-			(type != END_Pic || stricmp (EndSequences[i].PicName, picname) == 0))
-		{
-			return (int)i;
-		}
-	}
-	return -1;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-static void SetEndSequence (char *nextmap, int type)
-{
-	int seqnum;
-
-	seqnum = FindEndSequence (type, NULL);
-	if (seqnum == -1)
-	{
-		EndSequence newseq;
-		newseq.EndType = type;
-		seqnum = (int)EndSequences.Push (newseq);
-	}
-	mysnprintf(nextmap, 11, "enDSeQ%04x", (WORD)seqnum);
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void G_SetForEndGame (char *nextmap)
-{
-	if (!strncmp(nextmap, "enDSeQ",6)) return;	// If there is already an end sequence please leave it alone!!!
-
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		SetEndSequence (nextmap, gameinfo.flags & GI_SHAREWARE ? END_BuyStrife : END_Strife);
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		SetEndSequence (nextmap, END_Chess);
-	}
-	else if (gameinfo.gametype == GAME_Doom && (gameinfo.flags & GI_MAPxx))
-	{
-		SetEndSequence (nextmap, END_Cast);
-	}
-	else
-	{ // The ExMx games actually have different ends based on the episode,
-	  // but I want to keep this simple.
-		SetEndSequence (nextmap, END_Pic1);
-	}
-}
 
 //==========================================================================
 //
@@ -226,6 +142,15 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 {
 	d_mapname = mapname;
 	d_skill = newskill;
+	CheckWarpTransMap (d_mapname, true);
+	gameaction = ga_newgame2;
+}
+
+void G_DeferedInitNew (FGameStartup *gs)
+{
+	if (gs->PlayerClass != NULL) playerclass = gs->PlayerClass;
+	d_mapname = AllEpisodes[gs->Episode].mEpisodeMap;
+	d_skill = gs->Skill;
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 }
@@ -385,6 +310,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
+	G_ClearHubInfo();
 	if (!savegamerestore)
 	{
 		G_ClearSnapshots ();
@@ -492,7 +418,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		for (i = 0; i < MAXPLAYERS; i++)
 			players[i].playerstate = PST_ENTER;	// [BC]
 
-		STAT_NEW(mapname);
+		STAT_StartNewGame(mapname);
 	}
 
 	usergame = !bTitleLevel;		// will be set false if a demo
@@ -540,7 +466,6 @@ static bool		unloading;
 //
 //==========================================================================
 
-
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
@@ -551,7 +476,20 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		return;
 	}
 
-	if (strncmp(levelname, "enDSeQ", 6) != 0)
+	if (levelname == NULL || *levelname == 0)
+	{
+		// end the game
+		levelname = NULL;
+		if (!strncmp(level.nextmap, "enDSeQ",6))
+		{
+			levelname = level.nextmap;	// If there is already an end sequence please leave it alone!
+		}
+		else 
+		{
+			nextlevel.Format("enDSeQ%04x", int(gameinfo.DefaultEndSequence));
+		}
+	}
+	else if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
 		nextinfo = FindLevelInfo (levelname);
 		if (nextinfo != NULL)
@@ -565,7 +503,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		}
 	}
 
-	nextlevel = levelname;
+	if (levelname != NULL) nextlevel = levelname;
 
 	if (nextSkill != -1)
 		NextSkill = nextSkill;
@@ -604,7 +542,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
 	unloading = false;
 
-	STAT_END(nextlevel);
+	STAT_ChangeLevel(nextlevel);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
@@ -726,6 +664,9 @@ void G_DoCompleted (void)
 		}
 		else
 		{
+
+
+
 			level_info_t *nextinfo = FindLevelInfo (nextlevel);
 			wminfo.next = nextinfo->mapname;
 			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->pname, FTexture::TEX_MiscPatch)];
@@ -806,12 +747,7 @@ void G_DoCompleted (void)
 		{ // Reset world variables for the new hub.
 			P_ClearACSVars(false);
 		}
-		// With hub statistics the time should be per hub.
-		// Additionally there is a global time counter now so nothing is missed by changing it
-		//else if (mode == FINISH_NoHub)
-		{ // Reset time to zero if not entering/staying in a hub.
-			level.time = 0;
-		}
+		level.time = 0;
 		level.maptime = 0;
 	}
 
@@ -940,6 +876,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		level.flags2 &= ~LEVEL2_NOMONSTERS;
 	}
 
+	level.maptime = 0;
 	P_SetupLevel (level.mapname, position);
 
 	AM_LevelInit();
@@ -981,13 +918,15 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.starttime = gametic;
-	level.maptime = 0;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
-	if (players[consoleplayer].camera == NULL ||
-		players[consoleplayer].camera->player != NULL)
-	{ // If we are viewing through a player, make sure it is us.
-        players[consoleplayer].camera = players[consoleplayer].mo;
+	// For each player, if they are viewing through a player, make sure it is themselves.
+	for (int ii = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[ii] && (players[ii].camera == NULL || players[ii].camera->player != NULL))
+		{
+			players[ii].camera = players[ii].mo;
+		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
@@ -1025,13 +964,28 @@ void G_WorldDone (void)
 
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
+		FName endsequence = ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16));
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewherw.
+		if (endsequence == NAME_Inter_Strife)
+		{
+			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
+				players[0].mo->FindInventory (QuestItemClasses[27]))
+			{
+				endsequence = NAME_Inter_Strife_Good;
+			}
+			else
+			{
+				endsequence = NAME_Inter_Strife_Sad;
+			}
+		}
+
 		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
 			thiscluster->FinaleFlat, thiscluster->ExitText,
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
 			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-			true, strtol(nextlevel.GetChars()+6, NULL, 16));
+			true, endsequence);
 	}
 	else
 	{
@@ -1167,8 +1121,8 @@ void G_FinishTravel ()
 
 			// The player being spawned here is a short lived dummy and
 			// must not start any ENTER script or big problems will happen.
-			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], true);
-			if (!changeflags & CHANGELEVEL_KEEPFACING)
+			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], int(pawn->player - players), true);
+			if (!(changeflags & CHANGELEVEL_KEEPFACING))
 			{
 				pawn->angle = pawndup->angle;
 				pawn->pitch = pawndup->pitch;
@@ -1192,12 +1146,14 @@ void G_FinishTravel ()
 			pawn->target = NULL;
 			pawn->lastenemy = NULL;
 			pawn->player->mo = pawn;
+			pawn->player->camera = pawn;
 			DObject::StaticPointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();
 			pawndup->Destroy ();
 			pawn->LinkToWorld ();
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
+			pawn->player->SendPitchLimits();
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{
@@ -1305,6 +1261,7 @@ void G_InitLevelLocals ()
 	level.skypic2[8] = 0;
 
 	compatflags.Callback();
+	compatflags2.Callback();
 
 	NormalLight.ChangeFade (level.fadeto);
 
@@ -1402,7 +1359,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
 	int i = level.totaltime;
 	
-	screen->StartSerialize(arc);
+	Renderer->StartSerialize(arc);
 
 	arc << level.flags
 		<< level.flags2
@@ -1415,6 +1372,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.teamdamage
 		<< level.maptime
 		<< i;
+
+	if (SaveVersion >= 3313)
+	{
+		arc << level.nextmusic;
+	}
 
 	// Hub transitions must keep the current total time
 	if (!hubLoad)
@@ -1521,7 +1483,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 			}
 		}
 	}
-	screen->EndSerialize(arc);
+	Renderer->EndSerialize(arc);
 }
 
 //==========================================================================
@@ -1642,7 +1604,6 @@ void G_WriteSnapshots (FILE *file)
 {
 	unsigned int i;
 
-	STAT_WRITE(file);
 	for (i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		if (wadlevelinfos[i].snapshot)
@@ -1793,10 +1754,24 @@ void G_ReadSnapshots (PNGHandle *png)
 			arc << pnum;
 		}
 	}
-	STAT_READ(png);
 	png->File->ResetFilePtr();
 }
 
+//==========================================================================
+
+CCMD(listsnapshots)
+{
+	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		FCompressedMemFile *snapshot = wadlevelinfos[i].snapshot;
+		if (snapshot != NULL)
+		{
+			unsigned int comp, uncomp;
+			snapshot->GetSizes(comp, uncomp);
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].mapname, comp, uncomp);
+		}
+	}
+}
 
 //==========================================================================
 //
@@ -1917,10 +1892,13 @@ CCMD(listmaps)
 	for(unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
+		MapData *map = P_OpenMapData(info->mapname);
 
-		if (P_CheckMapData(info->mapname))
+		if (map != NULL)
 		{
-			Printf("%s: '%s'\n", info->mapname, info->LookupLevelName().GetChars());
+			Printf("%s: '%s' (%s)\n", info->mapname, info->LookupLevelName().GetChars(),
+				Wads.GetWadName(Wads.GetLumpFile(map->lumpnum)));
+			delete map;
 		}
 	}
 }

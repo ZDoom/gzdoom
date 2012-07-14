@@ -162,7 +162,7 @@ struct SFModList
 
 enum
 {
-	SFMod_One = 0,			// Psuedo-controller that always has the value 1
+	SFMod_One = 0,			// Pseudo-controller that always has the value 1
 	SFMod_NoteVelocity = 2,
 	SFMod_KeyNumber = 3,
 	SFMod_PolyPressure = 10,

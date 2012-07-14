@@ -11,7 +11,8 @@
 #include "p_enemy.h"
 #include "statnums.h"
 #include "templates.h"
-#include "r_translate.h"
+#include "farchive.h"
+#include "r_data/r_translate.h"
 
 static FRandom pr_freezedeath ("FreezeDeath");
 static FRandom pr_icesettics ("IceSetTics");
@@ -212,7 +213,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	}
 	else if (self->flags3 & MF3_ISMONSTER && self->special)
 	{ // Initiate monster death actions
-		LineSpecials [self->special] (NULL, self, false, self->args[0],
+		P_ExecuteSpecial(self->special, NULL, self, false, self->args[0],
 			self->args[1], self->args[2], self->args[3], self->args[4]);
 		self->special = 0;
 	}
@@ -294,9 +295,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			self->x + (((pr_freeze()-128)*self->radius)>>7), 
 			self->y + (((pr_freeze()-128)*self->radius)>>7), 
 			self->z + (pr_freeze()*self->height/255), ALLOW_REPLACE);
-		mo->SetState (mo->SpawnState + (pr_freeze()%3));
 		if (mo)
 		{
+				mo->SetState (mo->SpawnState + (pr_freeze()%3));
 			mo->velz = FixedDiv(mo->z - self->z, self->height)<<2;
 			mo->velx = pr_freeze.Random2 () << (FRACBITS-7);
 			mo->vely = pr_freeze.Random2 () << (FRACBITS-7);
@@ -309,24 +310,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	{ // attach the player's view to a chunk of ice
 		AActor *head = Spawn("IceChunkHead", self->x, self->y, 
 													self->z + self->player->mo->ViewHeight, ALLOW_REPLACE);
-		head->velz = FixedDiv(head->z - self->z, self->height)<<2;
-		head->velx = pr_freeze.Random2 () << (FRACBITS-7);
-		head->vely = pr_freeze.Random2 () << (FRACBITS-7);
-		head->health = self->health;
-		head->angle = self->angle;
-		if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+		if (head != NULL)
 		{
-			head->player = self->player;
-			head->player->mo = static_cast<APlayerPawn*>(head);
-			self->player = NULL;
-			head->ObtainInventory (self);
-		}
-		head->pitch = 0;
-		head->RenderStyle = self->RenderStyle;
-		head->alpha = self->alpha;
-		if (head->player->camera == self)
-		{
-			head->player->camera = head;
+			head->velz = FixedDiv(head->z - self->z, self->height)<<2;
+			head->velx = pr_freeze.Random2 () << (FRACBITS-7);
+			head->vely = pr_freeze.Random2 () << (FRACBITS-7);
+			head->health = self->health;
+			head->angle = self->angle;
+			if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
+			{
+				head->player = self->player;
+				head->player->mo = static_cast<APlayerPawn*>(head);
+				self->player = NULL;
+				head->ObtainInventory (self);
+			}
+			head->pitch = 0;
+			head->RenderStyle = self->RenderStyle;
+			head->alpha = self->alpha;
+			if (head->player->camera == self)
+			{
+				head->player->camera = head;
+			}
 		}
 	}
 

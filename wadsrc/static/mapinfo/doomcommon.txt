@@ -1,3 +1,5 @@
+include "mapinfo/common.txt"
+
 gameinfo
 {
 	titlepage = "TITLEPIC"
@@ -40,7 +42,29 @@ gameinfo
 	defaultdropstyle = 1
 	endoom = "ENDOOM"
 	player5start = 4001
-	pickupcolor = "d6 ba 45"
+	pickupcolor = "d7 ba 45"
+	quitmessages = "$QUITMSG", "$QUITMSG1", "$QUITMSG2", "$QUITMSG3", "$QUITMSG4", "$QUITMSG5", "$QUITMSG6", "$QUITMSG7",
+				   "$QUITMSG8", "$QUITMSG9", "$QUITMSG10", "$QUITMSG11", "$QUITMSG12", "$QUITMSG13", "$QUITMSG14"
+				   
+	menufontcolor_title = "RED"
+	menufontcolor_label = "UNTRANSLATED"
+	menufontcolor_value = "GRAY"
+	menufontcolor_action = "GRAY"
+	menufontcolor_header = "GOLD"
+	menufontcolor_highlight = "YELLOW"
+	menufontcolor_selection = "BRICK"
+	menubackbutton = "M_BACK_D"
+	playerclasses = "DoomPlayer"
+	pausesign = "M_PAUSE"
+	gibfactor = 1
+	cursorpic = "doomcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Cast"
+	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedpatch = "WIF"
+	statscreen_enteringpatch = "WIENTER"
 }
 
 skill baby

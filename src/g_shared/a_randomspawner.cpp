@@ -100,8 +100,11 @@ class ARandomSpawner : public AActor
 	// necessary to them -- such as their source and destination.
 	void PostBeginPlay()
 	{
+		Super::PostBeginPlay();
+
 		AActor *newmobj = NULL;
 		bool boss = false;
+
 		if (Species == NAME_None)
 		{
 			Destroy();

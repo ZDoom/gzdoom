@@ -44,8 +44,8 @@ statusbar fullscreen, fullscreenoffsets
 			drawimage "MANABRT2", -17, -15;
 		else
 			drawimage "MANADIM2", -17, -15;
-		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, ammo Mana1, drawshadow(1, 1), -21, -30, 1;
-		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, ammo Mana2, drawshadow(1, 1), -21, -15, 1;
+		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, ammo(Mana1), drawshadow(1, 1), -21, -30, 1;
+		drawnumber 2147483647, HUDFONT_RAVEN, untranslated, ammo(Mana2), drawshadow(1, 1), -21, -15, 1;
 	}
 }
 
@@ -59,7 +59,7 @@ statusbar Normal
 	gamemode deathmatch, teamgame
 	{
 		drawimage "KILLS", 38, 163;
-		drawnumber 3, HUDFONT_RAVEN, untranslated, frags, 58, 163, 1;
+		drawnumber 3, HUDFONT_RAVEN, untranslated, frags, 65, 176, 1;
 	}
 	else
 	{
@@ -73,25 +73,25 @@ statusbar Normal
 		weaponammo Mana1
 		{
 			drawimage "MANABRT1", 77, 164;
-			drawbar "MANAVL1", "nullimage", ammo Mana1, vertical, 94, 164, 1;
+			drawbar "MANAVL1", "nullimage", ammo(Mana1), vertical, 94, 164, 1;
 		}
 		else
 		{
 			drawimage "MANADIM1", 77, 164;
-			drawbar "MANAVL1D", "nullimage", ammo Mana1, vertical, 94, 164, 1;
+			drawbar "MANAVL1D", "nullimage", ammo(Mana1), vertical, 94, 164, 1;
 		}
 		weaponammo Mana2
 		{
 			drawimage "MANABRT2", 110, 164;
-			drawbar "MANAVL2", "nullimage", ammo Mana2, vertical, 102, 164, 1;
+			drawbar "MANAVL2", "nullimage", ammo(Mana2), vertical, 102, 164, 1;
 		}
 		else
 		{
 			drawimage "MANADIM2", 110, 164;
-			drawbar "MANAVL2D", "nullimage", ammo Mana2, vertical, 102, 164, 1;
+			drawbar "MANAVL2D", "nullimage", ammo(Mana2), vertical, 102, 164, 1;
 		}
-		drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo Mana1, 91, 181;
-		drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo Mana2, 123, 181;
+		drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo(Mana1), 91, 181;
+		drawnumber 3, INDEXFONT_RAVEN, untranslated, ammo(Mana2), 123, 181;
 	}
 	else //Weapon doesn't use ammo draw an alternative
 	{
@@ -114,29 +114,26 @@ statusbar Normal
 	drawimage "ARMCLS", 255, 178;
 	drawnumber 2, HUDFONT_RAVEN, untranslated, armorclass, 275, 176, 1;
 
-	playerclass Cleric
+	playertype ClericPlayer
 	{
 		drawimage "WPSLOT1", 190, 162;
-		hasweaponpiece CWeapWraithverge, 1
+		ininventory CWeapWraithverge
 		{
-			drawimage "WPIECEC1", 190, 162;
+			drawimage "WPFULL1", 190, 162;
 		}
-		hasweaponpiece CWeapWraithverge, 2
+		else
 		{
-			drawimage "WPIECEC2", 212, 162;
-		}
-		hasweaponpiece CWeapWraithverge, 3
-		{
-			drawimage "WPIECEC3", 225, 162;
-		}
-		hasweaponpiece CWeapWraithverge, 1
-		{
+			hasweaponpiece CWeapWraithverge, 1
+			{
+				drawimage "WPIECEC1", 190, 162;
+			}
 			hasweaponpiece CWeapWraithverge, 2
 			{
-				hasweaponpiece CWeapWraithverge, 3
-				{
-					drawimage "WPFULL1", 190, 162;
-				}
+				drawimage "WPIECEC2", 212, 162;
+			}
+			hasweaponpiece CWeapWraithverge, 3
+			{
+				drawimage "WPIECEC3", 225, 162;
 			}
 		}
 
@@ -145,29 +142,26 @@ statusbar Normal
 		else
 			drawgem translatable, interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
 	}
-	else playerclass Mage
+	else playertype MagePlayer
 	{
 		drawimage "WPSLOT2", 190, 162;
-		hasweaponpiece MWeapBloodscourge, 1
+		ininventory MWeapBloodscourge
 		{
-			drawimage "WPIECEM1", 190, 162;
+			drawimage "WPFULL2", 190, 162;
 		}
-		hasweaponpiece MWeapBloodscourge, 2
+		else
 		{
-			drawimage "WPIECEM2", 205, 162;
-		}
-		hasweaponpiece MWeapBloodscourge, 3
-		{
-			drawimage "WPIECEM3", 224, 162;
-		}
-		hasweaponpiece MWeapBloodscourge, 1
-		{
+			hasweaponpiece MWeapBloodscourge, 1
+			{
+				drawimage "WPIECEM1", 190, 162;
+			}
 			hasweaponpiece MWeapBloodscourge, 2
 			{
-				hasweaponpiece MWeapBloodscourge, 3
-				{
-					drawimage "WPFULL2", 190, 162;
-				}
+				drawimage "WPIECEM2", 205, 162;
+			}
+			hasweaponpiece MWeapBloodscourge, 3
+			{
+				drawimage "WPIECEM3", 224, 162;
 			}
 		}
 
@@ -179,26 +173,23 @@ statusbar Normal
 	else
 	{
 		drawimage "WPSLOT0", 190, 162;
-		hasweaponpiece FWeapQuietus, 1
+		ininventory FWeapQuietus
 		{
-			drawimage "WPIECEF1", 190, 162;
+			drawimage "WPFULL0", 190, 162;
 		}
-		hasweaponpiece FWeapQuietus, 2
+		else
 		{
-			drawimage "WPIECEF2", 225, 162;
-		}
-		hasweaponpiece FWeapQuietus, 3
-		{
-			drawimage "WPIECEF3", 234, 162;
-		}
-		hasweaponpiece FWeapQuietus, 1
-		{
+			hasweaponpiece FWeapQuietus, 1
+			{
+				drawimage "WPIECEF1", 190, 162;
+			}
 			hasweaponpiece FWeapQuietus, 2
 			{
-				hasweaponpiece FWeapQuietus, 3
-				{
-					drawimage "WPFULL0", 190, 162;
-				}
+				drawimage "WPIECEF2", 225, 162;
+			}
+			hasweaponpiece FWeapQuietus, 3
+			{
+				drawimage "WPIECEF3", 234, 162;
 			}
 		}
 
@@ -216,27 +207,27 @@ statusbar Automap
 	drawimage "H2BAR", 0, 135;
 	drawimage "KEYBAR", 38, 162;
 	drawkeybar 5, horizontal, 20, 46, 164;
-	drawimage hexenarmor armor, "ARMSLOT1", 150, 164;
-	drawimage hexenarmor shield, "ARMSLOT2", 181, 164;
-	drawimage hexenarmor helm, "ARMSLOT3", 212, 164;
-	drawimage hexenarmor amulet, "ARMSLOT4", 243, 164;
+	drawimage hexenarmor(armor, "ARMSLOT1"), 150, 164;
+	drawimage hexenarmor(shield, "ARMSLOT2"), 181, 164;
+	drawimage hexenarmor(helm, "ARMSLOT3"), 212, 164;
+	drawimage hexenarmor(amulet, "ARMSLOT4"), 243, 164;
 
 	// Also draw the life gem here
-	playerclass Fighter
+	playertype FighterPlayer
 	{
 		gamemode singleplayer
 			drawgem interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
 		else
 			drawgem translatable, interpolate(6), "CHAIN", "LIFEGMF2", -23, 49, 15, 30, 193;
 	}
-	else playerclass Cleric
+	else playertype ClericPlayer
 	{
 		gamemode singleplayer
 			drawgem interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
 		else
 			drawgem translatable, interpolate(6), "CHAIN2", "LIFEGMC2", -23, 49, 15, 30, 193;
 	}
-	else playerclass Mage
+	else playertype MagePlayer
 	{
 		gamemode singleplayer
 			drawgem interpolate(6), "CHAIN3", "LIFEGMM2", -23, 49, 15, 30, 193;

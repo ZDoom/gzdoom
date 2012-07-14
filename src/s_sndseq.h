@@ -26,6 +26,7 @@ public:
 	void Tick ();
 	void ChangeData (int seqOffset, int delayTics, float volume, FSoundID currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);
+	int GetModeNum() const { return m_ModeNum; }
 	FName GetSequenceName() const;
 	static void StaticMarkHead() { GC::Mark(SequenceListHead); }
 
@@ -89,6 +90,8 @@ DSeqNode *SN_CheckSequence (sector_t *sector, int chan);
 void SN_StopSequence (AActor *mobj);
 void SN_StopSequence (sector_t *sector, int chan);
 void SN_StopSequence (FPolyObj *poly);
+bool SN_AreModesSame(int sequence, seqtype_t type, int mode1, int mode2);
+bool SN_AreModesSame(const char *name, int mode1, int mode2);
 void SN_UpdateActiveSequences (void);
 ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr);
 void SN_DoStop (void *);

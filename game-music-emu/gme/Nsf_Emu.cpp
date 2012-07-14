@@ -31,8 +31,8 @@ int const fme7_flag  = 0x20;
 
 long const clock_divisor = 12;
 
-Nsf_Emu::equalizer_t const Nsf_Emu::nes_eq     = {  -1.0, 80 };
-Nsf_Emu::equalizer_t const Nsf_Emu::famicom_eq = { -15.0, 80 };
+Nsf_Emu::equalizer_t const Nsf_Emu::nes_eq     = {  -1.0, 80, 0, 0, 0, 0, 0, 0, 0, 0 };
+Nsf_Emu::equalizer_t const Nsf_Emu::famicom_eq = { -15.0, 80, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 int Nsf_Emu::pcm_read( void* emu, nes_addr_t addr )
 {

@@ -19,6 +19,8 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "v_palette.h"
+#include "farchive.h"
+#include "r_data/colormaps.h"
 
 static FRandom pr_torch ("Torch");
 
@@ -35,8 +37,6 @@ static FRandom pr_torch ("Torch");
 #define MAULATORTICS (25*TICRATE)
 #define	TIMEFREEZE_TICS	( 12 * TICRATE )
 */
-
-EXTERN_CVAR (Bool, r_drawfuzz);
 
 IMPLEMENT_CLASS (APowerup)
 
@@ -465,7 +465,7 @@ void APowerInvulnerable::EndEffect ()
 //
 //===========================================================================
 
-int APowerInvulnerable::AlterWeaponSprite (vissprite_t *vis)
+int APowerInvulnerable::AlterWeaponSprite (visstyle_t *vis)
 {
 	int changed = Inventory == NULL ? false : Inventory->AlterWeaponSprite(vis);
 	if (Owner != NULL)
@@ -656,7 +656,7 @@ void APowerInvisibility::EndEffect ()
 //
 //===========================================================================
 
-int APowerInvisibility::AlterWeaponSprite (vissprite_t *vis)
+int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 {
 	int changed = Inventory == NULL ? false : Inventory->AlterWeaponSprite(vis);
 	// Blink if the powerup is wearing off
@@ -1301,8 +1301,8 @@ void APowerTargeter::PositionAccuracy ()
 
 	if (player != NULL)
 	{
-		player->psprites[ps_targetleft].sx = (160-3)*FRACUNIT - ((100 - player->accuracy) << FRACBITS);
-		player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->accuracy) << FRACBITS);
+		player->psprites[ps_targetleft].sx = (160-3)*FRACUNIT - ((100 - player->mo->accuracy) << FRACBITS);
+		player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->mo->accuracy) << FRACBITS);
 	}
 }
 
@@ -1356,28 +1356,29 @@ IMPLEMENT_CLASS( APowerTimeFreezer)
 //
 //===========================================================================
 
-void APowerTimeFreezer::InitEffect( )
+void APowerTimeFreezer::InitEffect()
 {
-	int	ulIdx;
+	int freezemask;
 
 	Super::InitEffect();
 
-	if (Owner== NULL || Owner->player == NULL)
+	if (Owner == NULL || Owner->player == NULL)
 		return;
 
 	// When this powerup is in effect, pause the music.
-	S_PauseSound( false, false );
+	S_PauseSound(false, false);
 
 	// Give the player and his teammates the power to move when time is frozen.
-	Owner->player->cheats |= CF_TIMEFREEZE;
-	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
+	freezemask = 1 << (Owner->player - players);
+	Owner->player->timefreezer |= freezemask;
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if ( playeringame[ulIdx] &&
-			 players[ulIdx].mo != NULL &&
-			 players[ulIdx].mo->IsTeammate( Owner )
+		if (playeringame[i] &&
+			players[i].mo != NULL &&
+			players[i].mo->IsTeammate(Owner)
 		   )
 		{
-			players[ulIdx].cheats |= CF_TIMEFREEZE;
+			players[i].timefreezer |= freezemask;
 		}
 	}
 
@@ -1405,7 +1406,7 @@ void APowerTimeFreezer::InitEffect( )
 //
 //===========================================================================
 
-void APowerTimeFreezer::DoEffect( )
+void APowerTimeFreezer::DoEffect()
 {
 	Super::DoEffect();
 	// [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
@@ -1433,41 +1434,45 @@ void APowerTimeFreezer::DoEffect( )
 //
 //===========================================================================
 
-void APowerTimeFreezer::EndEffect( )
+void APowerTimeFreezer::EndEffect()
 {
-	int	ulIdx;
+	int	i;
 
 	Super::EndEffect();
 
-	// Allow other actors to move about freely once again.
-	level.flags2 &= ~LEVEL2_FROZEN;
-
-	// Also, turn the music back on.
-	S_ResumeSound( false );
-
-	// Nothing more to do if there's no owner.
-	if (( Owner == NULL ) || ( Owner->player == NULL ))
+	// If there is an owner, remove the timefreeze flag corresponding to
+	// her from all players.
+	if (Owner != NULL && Owner->player != NULL)
 	{
-		return;
+		int freezemask = ~(1 << (Owner->player - players));
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			players[i].timefreezer &= freezemask;
+		}
 	}
 
-	// Take away the time freeze power, and his teammates.
-	Owner->player->cheats &= ~CF_TIMEFREEZE;
-	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
+	// Are there any players who still have timefreezer bits set?
+	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		if ( playeringame[ulIdx] &&
-			 players[ulIdx].mo != NULL &&
-			 players[ulIdx].mo->IsTeammate( Owner )
-		   )
+		if (playeringame[i] && players[i].timefreezer != 0)
 		{
-			players[ulIdx].cheats &= ~CF_TIMEFREEZE;
+			break;
 		}
+	}
+
+	if (i == MAXPLAYERS)
+	{
+		// No, so allow other actors to move about freely once again.
+		level.flags2 &= ~LEVEL2_FROZEN;
+
+		// Also, turn the music back on.
+		S_ResumeSound(false);
 	}
 }
 
 // Damage powerup ------------------------------------------------------
 
-IMPLEMENT_CLASS( APowerDamage)
+IMPLEMENT_CLASS(APowerDamage)
 
 //===========================================================================
 //
@@ -1511,8 +1516,7 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckKey(damageType);
-			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
+			pdf = df->CheckFactor(damageType);
 		}
 		else
 		{
@@ -1592,8 +1596,7 @@ void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckKey(damageType);
-			if (pdf == NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
+			pdf = df->CheckFactor(damageType);
 		}
 		else pdf = &def;
 
@@ -1655,35 +1658,18 @@ IMPLEMENT_CLASS(APowerRegeneration)
 
 //===========================================================================
 //
-// ARuneRegeneration :: InitEffect
+// APowerRegeneration :: DoEffect
 //
 //===========================================================================
 
-void APowerRegeneration::InitEffect( )
+void APowerRegeneration::DoEffect()
 {
-	Super::InitEffect();
-
-	if (Owner== NULL || Owner->player == NULL)
-		return;
-
-	// Give the player the power to regnerate lost life.
-	Owner->player->cheats |= CF_REGENERATION;
-}
-
-//===========================================================================
-//
-// ARuneRegeneration :: EndEffect
-//
-//===========================================================================
-
-void APowerRegeneration::EndEffect( )
-{
-	Super::EndEffect();
-	// Nothing to do if there's no owner.
-	if (Owner != NULL && Owner->player != NULL)
+	if (Owner != NULL && Owner->health > 0 && (level.time & 31) == 0)
 	{
-		// Take away the regeneration power.
-		Owner->player->cheats &= ~CF_REGENERATION;
+		if (P_GiveBody(Owner, 5))
+		{
+			S_Sound(Owner, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
+		}
 	}
 }
 
@@ -1840,24 +1826,26 @@ void APowerMorph::EndEffect( )
 	}
 
 	// Unmorph if possible
-	int savedMorphTics = Player->morphTics;
-	P_UndoPlayerMorph (Player, Player);
-
-	// Abort if unmorph failed; in that case,
-	// set the usual retry timer and return.
-	if (Player->morphTics)
+	if (!bNoCallUndoMorph)
 	{
-		// Transfer retry timeout
-		// to the powerup's timer.
-		EffectTics = Player->morphTics;
-		// Reload negative morph tics;
-		// use actual value; it may
-		// be in use for animation.
-		Player->morphTics = savedMorphTics;
-		// Try again some time later
-		return;
-	}
+		int savedMorphTics = Player->morphTics;
+		P_UndoPlayerMorph (Player, Player);
 
+		// Abort if unmorph failed; in that case,
+		// set the usual retry timer and return.
+		if (Player != NULL && Player->morphTics)
+		{
+			// Transfer retry timeout
+			// to the powerup's timer.
+			EffectTics = Player->morphTics;
+			// Reload negative morph tics;
+			// use actual value; it may
+			// be in use for animation.
+			Player->morphTics = savedMorphTics;
+			// Try again some time later
+			return;
+		}
+	}
 	// Unmorph suceeded
 	Player = NULL;
 }

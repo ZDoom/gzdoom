@@ -21,11 +21,15 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "r_data.h"
 #include "p_spec.h"
 #include "c_cvars.h"
 #include "doomstat.h"
-#include "v_palette.h"
+#include "g_level.h"
+#include "nodebuild.h"
+#include "po_man.h"
+#include "farchive.h"
+#include "r_utility.h"
+#include "r_data/colormaps.h"
 
 
 // [RH]
@@ -690,12 +694,14 @@ void sector_t::SetColor(int r, int g, int b, int desat)
 {
 	PalEntry color = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (color, ColorMap->Fade, desat);
+	P_RecalculateAttachedLights(this);
 }
 
 void sector_t::SetFade(int r, int g, int b)
 {
 	PalEntry fade = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
+	P_RecalculateAttachedLights(this);
 }
 
 //===========================================================================
@@ -770,3 +776,231 @@ bool sector_t::PlaneMoving(int pos)
 	else
 		return (ceilingdata != NULL || (planes[ceiling].Flags & PLANEF_BLOCKED));
 }
+
+
+int sector_t::GetFloorLight () const
+{
+	if (GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
+	{
+		return GetPlaneLight(floor);
+	}
+	else
+	{
+		return ClampLight(lightlevel + GetPlaneLight(floor));
+	}
+}
+
+int sector_t::GetCeilingLight () const
+{
+	if (GetFlags(ceiling) & PLANEF_ABSLIGHTING)
+	{
+		return GetPlaneLight(ceiling);
+	}
+	else
+	{
+		return ClampLight(lightlevel + GetPlaneLight(ceiling));
+	}
+}
+
+sector_t *sector_t::GetHeightSec() const 
+{
+	if (heightsec == NULL)
+	{
+		return NULL;
+	}
+	if (heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
+	{
+		return NULL;
+	}
+	if (e && e->XFloor.ffloors.Size())
+	{
+		// If any of these fake floors render their planes, ignore heightsec.
+		for (unsigned i = e->XFloor.ffloors.Size(); i-- > 0; )
+		{
+			if ((e->XFloor.ffloors[i]->flags & (FF_EXISTS | FF_RENDERPLANES)) == (FF_EXISTS | FF_RENDERPLANES))
+			{
+				return NULL;
+			}
+		}
+	}
+	return heightsec;
+}
+
+
+bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
+{
+	bool copy = false;
+
+	// If the planes do not have matching slopes, then always copy them
+	// because clipping would require creating new sectors.
+	if (a != dest->a || b != dest->b || c != dest->c)
+	{
+		copy = true;
+	}
+	else if (opp->a != -dest->a || opp->b != -dest->b || opp->c != -dest->c)
+	{
+		if (d < dest->d)
+		{
+			copy = true;
+		}
+	}
+	else if (d < dest->d && d > -opp->d)
+	{
+		copy = true;
+	}
+
+	if (copy)
+	{
+		*dest = *this;
+	}
+
+	return copy;
+}
+
+FArchive &operator<< (FArchive &arc, secplane_t &plane)
+{
+	arc << plane.a << plane.b << plane.c << plane.d;
+	//if (plane.c != 0)
+	{	// plane.c should always be non-0. Otherwise, the plane
+		// would be perfectly vertical.
+		plane.ic = DivScale32 (1, plane.c);
+	}
+	return arc;
+}
+
+//==========================================================================
+//
+// P_AlignFlat
+//
+//==========================================================================
+
+bool P_AlignFlat (int linenum, int side, int fc)
+{
+	line_t *line = lines + linenum;
+	sector_t *sec = side ? line->backsector : line->frontsector;
+
+	if (!sec)
+		return false;
+
+	fixed_t x = line->v1->x;
+	fixed_t y = line->v1->y;
+
+	angle_t angle = R_PointToAngle2 (x, y, line->v2->x, line->v2->y);
+	angle_t norm = (angle-ANGLE_90) >> ANGLETOFINESHIFT;
+
+	fixed_t dist = -DMulScale16 (finecosine[norm], x, finesine[norm], y);
+
+	if (side)
+	{
+		angle = angle + ANGLE_180;
+		dist = -dist;
+	}
+
+	sec->SetBase(fc, dist & ((1<<(FRACBITS+8))-1), 0-angle);
+	return true;
+}
+
+//==========================================================================
+//
+// P_BuildPolyBSP
+//
+//==========================================================================
+static FNodeBuilder::FLevel PolyNodeLevel;
+static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
+
+void subsector_t::BuildPolyBSP()
+{
+	assert((BSP == NULL || BSP->bDirty) && "BSP computed more than once");
+
+	// Set up level information for the node builder.
+	PolyNodeLevel.Sides = sides;
+	PolyNodeLevel.NumSides = numsides;
+	PolyNodeLevel.Lines = lines;
+	PolyNodeLevel.NumLines = numlines;
+
+	// Feed segs to the nodebuilder and build the nodes.
+	PolyNodeBuilder.Clear();
+	PolyNodeBuilder.AddSegs(firstline, numlines);
+	for (FPolyNode *pn = polys; pn != NULL; pn = pn->pnext)
+	{
+		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
+	}
+	PolyNodeBuilder.BuildMini(false);
+	if (BSP == NULL)
+	{
+		BSP = new FMiniBSP;
+	}
+	PolyNodeBuilder.ExtractMini(BSP);
+	for (unsigned int i = 0; i < BSP->Subsectors.Size(); ++i)
+	{
+		BSP->Subsectors[i].sector = sector;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 1;
+	else if (self > 2) self = 2;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int side_t::GetLightLevel (bool foggy, int baselight, bool noabsolute, int *pfakecontrast) const
+{
+	if (!noabsolute && (Flags & WALLF_ABSLIGHTING))
+	{
+		baselight = Light;
+	}
+
+	if (pfakecontrast != NULL)
+	{
+		*pfakecontrast = 0;
+	}
+
+	if (!foggy) // Don't do relative lighting in foggy sectors
+	{
+		if (!(Flags & WALLF_NOFAKECONTRAST) && r_fakecontrast != 0)
+		{
+			int rel;
+			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
+				linedef->dx != 0)
+			{
+				rel = xs_RoundToInt // OMG LEE KILLOUGH LIVES! :/
+					(
+						level.WallHorizLight
+						+ fabs(atan(double(linedef->dy) / linedef->dx) / 1.57079)
+						* (level.WallVertLight - level.WallHorizLight)
+					);
+			}
+			else
+			{
+				rel = linedef->dx == 0 ? level.WallVertLight : 
+					  linedef->dy == 0 ? level.WallHorizLight : 0;
+			}
+			if (pfakecontrast != NULL)
+			{
+				*pfakecontrast = rel;
+			}
+			else
+			{
+				baselight += rel;
+			}
+		}
+		if (!(Flags & WALLF_ABSLIGHTING))
+		{
+			baselight += this->Light;
+		}
+	}
+	return baselight;
+}
+

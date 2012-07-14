@@ -33,12 +33,13 @@
 #include "w_wad.h"
 #include "a_sharedglobal.h"
 #include "statnums.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "d_event.h"
 #include "gi.h"
-#include "r_bsp.h"
 #include "p_setup.h"
 #include "c_bind.h"
+#include "farchive.h"
+#include "r_renderer.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -63,6 +64,13 @@
 #include "a_artifacts.h"
 #include "po_man.h"
 #include "a_keys.h"
+#include "r_data/colormaps.h"
+
+//=============================================================================
+//
+// Automap colors
+//
+//=============================================================================
 
 struct AMColor
 {
@@ -83,9 +91,9 @@ struct AMColor
 };
 
 static AMColor Background, YourColor, WallColor, TSWallColor,
-		   FDWallColor, CDWallColor, ThingColor,
+		   FDWallColor, CDWallColor, EFWallColor, ThingColor,
 		   ThingColor_Item, ThingColor_CountItem, ThingColor_Monster, ThingColor_Friend,
-		   SecretWallColor, GridColor, XHairColor,
+		   SpecialWallColor, SecretWallColor, GridColor, XHairColor,
 		   NotSeenColor,
 		   LockedColor,
 		   AlmostBackground,
@@ -118,6 +126,12 @@ static BYTE RavenPaletteVals[11*3] =
 	 103,  59,  31,  236, 236, 236,    0,   0,   0,
 	   0,   0,   0,    0,   0,   0,
 };
+
+//=============================================================================
+//
+// globals
+//
+//=============================================================================
 
 #define MAPBITS 12
 #define MapDiv SafeDivScale12
@@ -155,9 +169,11 @@ CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
 CVAR (Color, am_yourcolor,			0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_wallcolor,			0x2c1808,	CVAR_ARCHIVE);
 CVAR (Color, am_secretwallcolor,	0x000000,	CVAR_ARCHIVE);
+CVAR (Color, am_specialwallcolor,	0xffffff,	CVAR_ARCHIVE);
 CVAR (Color, am_tswallcolor,		0x888888,	CVAR_ARCHIVE);
 CVAR (Color, am_fdwallcolor,		0x887058,	CVAR_ARCHIVE);
 CVAR (Color, am_cdwallcolor,		0x4c3820,	CVAR_ARCHIVE);
+CVAR (Color, am_efwallcolor,		0x665555,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor,			0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_gridcolor,			0x8b5a2b,	CVAR_ARCHIVE);
 CVAR (Color, am_xhaircolor,			0x808080,	CVAR_ARCHIVE);
@@ -165,6 +181,7 @@ CVAR (Color, am_notseencolor,		0x6c6c6c,	CVAR_ARCHIVE);
 CVAR (Color, am_lockedcolor,		0x007800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovyourcolor,		0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_ovwallcolor,		0x00ff00,	CVAR_ARCHIVE);
+CVAR (Color, am_ovspecialwallcolor,	0xffffff,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovotherwallscolor,	0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovunseencolor,		0x00226e,	CVAR_ARCHIVE);
@@ -176,6 +193,7 @@ CVAR (Color, am_ovsecretsectorcolor,0x00ffff,	CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_monster,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_item,		0xfcfcfc,	CVAR_ARCHIVE);
@@ -287,72 +305,29 @@ struct islope_t
 //  A line drawing of the player pointing right,
 //   starting from the middle.
 //
-#define R ((8*PLAYERRADIUS)/7)
-mline_t player_arrow[] = {
-	{ { -R+R/8, 0 }, { R, 0 } }, // -----
-	{ { R, 0 }, { R-R/2, R/4 } },  // ----->
-	{ { R, 0 }, { R-R/2, -R/4 } },
-	{ { -R+R/8, 0 }, { -R-R/8, R/4 } }, // >---->
-	{ { -R+R/8, 0 }, { -R-R/8, -R/4 } },
-	{ { -R+3*R/8, 0 }, { -R+R/8, R/4 } }, // >>--->
-	{ { -R+3*R/8, 0 }, { -R+R/8, -R/4 } }
-};
-#define NUMPLYRLINES (sizeof(player_arrow)/sizeof(mline_t))
-
-mline_t player_arrow_raven[] = {
-	{ { -R+R/4, 0 }, { 0, 0} }, // center line.
-	{ { -R+R/4, R/8 }, { R, 0} }, // blade
-	{ { -R+R/4, -R/8 }, { R, 0 } },
-	{ { -R+R/4, -R/4 }, { -R+R/4, R/4 } }, // crosspiece
-	{ { -R+R/8, -R/4 }, { -R+R/8, R/4 } },
-	{ { -R+R/8, -R/4 }, { -R+R/4, -R/4} }, //crosspiece connectors
-	{ { -R+R/8, R/4 }, { -R+R/4, R/4} },
-	{ { -R-R/4, R/8 }, { -R-R/4, -R/8 } }, //pommel
-	{ { -R-R/4, R/8 }, { -R+R/8, R/8 } },
-	{ { -R-R/4, -R/8}, { -R+R/8, -R/8 } }
-};
-#define NUMPLYRLINES_RAVEN (sizeof(player_arrow_raven)/sizeof(mline_t))
-
-mline_t cheat_player_arrow[] = {
-	{ { -R+R/8, 0 }, { R, 0 } }, // -----
-	{ { R, 0 }, { R-R/2, R/6 } },  // ----->
-	{ { R, 0 }, { R-R/2, -R/6 } },
-	{ { -R+R/8, 0 }, { -R-R/8, R/6 } }, // >----->
-	{ { -R+R/8, 0 }, { -R-R/8, -R/6 } },
-	{ { -R+3*R/8, 0 }, { -R+R/8, R/6 } }, // >>----->
-	{ { -R+3*R/8, 0 }, { -R+R/8, -R/6 } },
-	{ { -R/2, 0 }, { -R/2, -R/6 } }, // >>-d--->
-	{ { -R/2, -R/6 }, { -R/2+R/6, -R/6 } },
-	{ { -R/2+R/6, -R/6 }, { -R/2+R/6, R/4 } },
-	{ { -R/6, 0 }, { -R/6, -R/6 } }, // >>-dd-->
-	{ { -R/6, -R/6 }, { 0, -R/6 } },
-	{ { 0, -R/6 }, { 0, R/4 } },
-	{ { R/6, R/4 }, { R/6, -R/7 } }, // >>-ddt->
-	{ { R/6, -R/7 }, { R/6+R/32, -R/7-R/32 } },
-	{ { R/6+R/32, -R/7-R/32 }, { R/6+R/10, -R/7 } }
-};
-#define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
-
-#undef R
+static TArray<mline_t> MapArrow;
+static TArray<mline_t> CheatMapArrow;
+static TArray<mline_t> CheatKey;
+static TArray<mline_t> EasyKey;
 
 #define R (MAPUNIT)
 // [RH] Avoid lots of warnings without compiler-specific #pragmas
 #define L(a,b,c,d) { {(fixed_t)((a)*R),(fixed_t)((b)*R)}, {(fixed_t)((c)*R),(fixed_t)((d)*R)} }
-mline_t triangle_guy[] = {
+static mline_t triangle_guy[] = {
 	L (-.867,-.5, .867,-.5),
 	L (.867,-.5, 0,1),
 	L (0,1, -.867,-.5)
 };
 #define NUMTRIANGLEGUYLINES (sizeof(triangle_guy)/sizeof(mline_t))
 
-mline_t thintriangle_guy[] = {
+static mline_t thintriangle_guy[] = {
 	L (-.5,-.7, 1,0),
 	L (1,0, -.5,.7),
 	L (-.5,.7, -.5,-.7)
 };
 #define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
 
-mline_t square_guy[] = {
+static mline_t square_guy[] = {
 	L (0,1,1,0),
 	L (1,0,0,-1),
 	L (0,-1,-1,0),
@@ -360,26 +335,6 @@ mline_t square_guy[] = {
 };
 #define NUMSQUAREGUYLINES (sizeof(square_guy)/sizeof(mline_t))
 
-#undef R
-#define R (MAPUNIT)
-
-mline_t key_guy[] = {
-	L (-2, 0, -1.7, -0.5),
-	L (-1.7, -0.5, -1.5, -0.7),
-	L (-1.5, -0.7, -0.8, -0.5),
-	L (-0.8, -0.5, -0.6, 0),
-	L (-0.6, 0, -0.8, 0.5),
-	L (-1.5, 0.7, -0.8, 0.5),
-	L (-1.7, 0.5, -1.5, 0.7),
-	L (-2, 0, -1.7, 0.5),
-	L (-0.6, 0, 2, 0),
-	L (1.7, 0, 1.7, -1),
-	L (1.5, 0, 1.5, -1),
-	L (1.3, 0, 1.3, -1)
-};
-#define NUMKEYGUYLINES (sizeof(key_guy)/sizeof(mline_t))
-
-#undef L
 #undef R
 
 
@@ -395,8 +350,6 @@ CUSTOM_CVAR (Int, am_cheat, 0, 0)
 }
 
 static int 	grid = 0;
-
-static int 	leveljuststarted = 1; 	// kluge until AM_LevelInit() is called
 
 bool		automapactive = false;
 
@@ -449,8 +402,6 @@ static FTextureID marknums[10]; // numbers used for marking by the automap
 static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
 static int markpointnum = 0; // next point to be assigned
 
-static int followplayer = 1; // specifies whether to follow the player around
-
 static FTextureID mapback;	// the automap background
 static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
 static fixed_t mapxstart=0; //x-value for the bitmap.
@@ -476,11 +427,14 @@ void AM_restoreScaleAndLoc ();
 void AM_minOutWindowScale ();
 
 
+CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
+
+
 CCMD(am_togglefollow)
 {
-	followplayer = !followplayer;
+	am_followplayer = !am_followplayer;
 	f_oldloc.x = FIXED_MAX;
-	Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
+	Printf ("%s\n", GStrings(am_followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
 }
 
 CCMD(am_togglegrid)
@@ -545,6 +499,78 @@ void AM_getIslope (mline_t *ml, islope_t *is)
 }
 */
 
+
+void AM_ParseArrow(TArray<mline_t> &Arrow, const char *lumpname)
+{
+	const int R = ((8*PLAYERRADIUS)/7);
+	FScanner sc;
+	int lump = Wads.CheckNumForFullName(lumpname, true);
+	if (lump >= 0)
+	{
+		sc.OpenLumpNum(lump);
+		sc.SetCMode(true);
+		while (sc.GetToken())
+		{
+			mline_t line;
+			sc.TokenMustBe('(');
+			sc.MustGetFloat();
+			line.a.x = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(',');
+			sc.MustGetFloat();
+			line.a.y = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(')');
+			sc.MustGetToken(',');
+			sc.MustGetToken('(');
+			sc.MustGetFloat();
+			line.b.x = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(',');
+			sc.MustGetFloat();
+			line.b.y = xs_RoundToInt(sc.Float*R);
+			sc.MustGetToken(')');
+			Arrow.Push(line);
+		}
+	}
+}
+
+void AM_StaticInit()
+{
+	MapArrow.Clear();
+	CheatMapArrow.Clear();
+	CheatKey.Clear();
+	EasyKey.Clear();
+
+	if (gameinfo.mMapArrow.IsNotEmpty()) AM_ParseArrow(MapArrow, gameinfo.mMapArrow);
+	if (gameinfo.mCheatMapArrow.IsNotEmpty()) AM_ParseArrow(CheatMapArrow, gameinfo.mCheatMapArrow);
+	AM_ParseArrow(CheatKey, "maparrows/key.txt");
+	AM_ParseArrow(EasyKey, "maparrows/ravenkey.txt");
+	if (MapArrow.Size() == 0) I_FatalError("No automap arrow defined");
+
+	char namebuf[9];
+
+	for (int i = 0; i < 10; i++)
+	{
+		mysnprintf (namebuf, countof(namebuf), "AMMNUM%d", i);
+		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
+	}
+	markpointnum = 0;
+	mapback.SetInvalid();
+
+	static DWORD *lastpal = NULL;
+	//static int lastback = -1;
+	DWORD *palette;
+	
+	palette = (DWORD *)GPalette.BaseColors;
+
+	int i, j;
+
+	for (i = j = 0; i < 11; i++, j += 3)
+	{
+		DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
+		StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
+		RavenColors[i].FromRGB(RavenPaletteVals[j], RavenPaletteVals[j+1], RavenPaletteVals[j+2]);
+	}
+}
+
 //=============================================================================
 //
 // called by the coordinate drawer
@@ -599,7 +625,7 @@ void AM_restoreScaleAndLoc ()
 {
 	m_w = old_m_w;
 	m_h = old_m_h;
-	if (!followplayer)
+	if (!am_followplayer)
 	{
 		m_x = old_m_x;
 		m_y = old_m_y;
@@ -796,7 +822,7 @@ void AM_changeWindowLoc ()
 {
 	if (0 != (m_paninc.x | m_paninc.y))
 	{
-		followplayer = 0;
+		am_followplayer = false;
 		f_oldloc.x = FIXED_MAX;
 	}
 
@@ -868,18 +894,6 @@ void AM_initVariables ()
 	old_m_h = m_h;
 }
 
-/*
-static void GetComponents (int color, DWORD *palette, float &r, float &g, float &b)
-{
-	if (palette)
-		color = palette[color];
-
-	r = (float)RPART(color);
-	g = (float)GPART(color);
-	b = (float)BPART(color);
-}
-*/
-
 //=============================================================================
 //
 //
@@ -888,28 +902,11 @@ static void GetComponents (int color, DWORD *palette, float &r, float &g, float 
 
 static void AM_initColors (bool overlayed)
 {
-	static DWORD *lastpal = NULL;
-	//static int lastback = -1;
-	DWORD *palette;
-	
-	palette = (DWORD *)GPalette.BaseColors;
-
-	if (lastpal != palette)
-	{
-		int i, j;
-
-		for (i = j = 0; i < 11; i++, j += 3)
-		{
-			DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
-			StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
-			RavenColors[i].FromRGB(RavenPaletteVals[j], RavenPaletteVals[j+1], RavenPaletteVals[j+2]);
-		}
-	}
-
 	if (overlayed)
 	{
 		YourColor.FromCVar (am_ovyourcolor);
 		WallColor.FromCVar (am_ovwallcolor);
+		SpecialWallColor.FromCVar(am_ovspecialwallcolor);
 		SecretWallColor = WallColor;
 		SecretSectorColor.FromCVar (am_ovsecretsectorcolor);
 		ThingColor_Item.FromCVar (am_ovthingcolor_item);
@@ -918,7 +915,7 @@ static void AM_initColors (bool overlayed)
 		ThingColor_Monster.FromCVar (am_ovthingcolor_monster);
 		ThingColor.FromCVar (am_ovthingcolor);
 		LockedColor.FromCVar (am_ovotherwallscolor);
-		FDWallColor = CDWallColor = LockedColor;
+		EFWallColor = FDWallColor = CDWallColor = LockedColor;
 		TSWallColor.FromCVar (am_ovunseencolor);
 		NotSeenColor = TSWallColor;
 		InterTeleportColor.FromCVar (am_ovtelecolor);
@@ -932,10 +929,12 @@ static void AM_initColors (bool overlayed)
 			Background.FromCVar (am_backcolor);
 			YourColor.FromCVar (am_yourcolor);
 			SecretWallColor.FromCVar (am_secretwallcolor);
+			SpecialWallColor.FromCVar (am_specialwallcolor);
 			WallColor.FromCVar (am_wallcolor);
 			TSWallColor.FromCVar (am_tswallcolor);
 			FDWallColor.FromCVar (am_fdwallcolor);
 			CDWallColor.FromCVar (am_cdwallcolor);
+			EFWallColor.FromCVar (am_efwallcolor);
 			ThingColor_Item.FromCVar (am_thingcolor_item);
 			ThingColor_CountItem.FromCVar (am_thingcolor_citem);
 			ThingColor_Friend.FromCVar (am_thingcolor_friend);
@@ -973,9 +972,10 @@ static void AM_initColors (bool overlayed)
 			AlmostBackground = DoomColors[2];
 			SecretSectorColor = 		
 				SecretWallColor =
+				SpecialWallColor =
 				WallColor = DoomColors[3];
 			TSWallColor = DoomColors[4];
-			FDWallColor = DoomColors[5];
+			EFWallColor = FDWallColor = DoomColors[5];
 			LockedColor =
 				CDWallColor = DoomColors[6];
 			ThingColor_Item = 
@@ -994,9 +994,10 @@ static void AM_initColors (bool overlayed)
 			AlmostBackground = DoomColors[2];
 			SecretSectorColor = 		
 				SecretWallColor =
+				SpecialWallColor =
 				WallColor = StrifeColors[3];
 			TSWallColor = StrifeColors[4];
-			FDWallColor = StrifeColors[5];
+			EFWallColor = FDWallColor = StrifeColors[5];
 			LockedColor =
 				CDWallColor = StrifeColors[6];
 			ThingColor_Item = StrifeColors[10];
@@ -1015,9 +1016,10 @@ static void AM_initColors (bool overlayed)
 			AlmostBackground = DoomColors[2];
 			SecretSectorColor = 		
 				SecretWallColor =
+				SpecialWallColor =
 				WallColor = RavenColors[3];
 			TSWallColor = RavenColors[4];
-			FDWallColor = RavenColors[5];
+			EFWallColor = FDWallColor = RavenColors[5];
 			LockedColor =
 				CDWallColor = RavenColors[6];
 			ThingColor = 
@@ -1030,30 +1032,6 @@ static void AM_initColors (bool overlayed)
 			break;
 
 	}
-
-	lastpal = palette;
-}
-
-//=============================================================================
-//
-// 
-//
-//=============================================================================
-
-void AM_loadPics ()
-{
-	int i;
-	char namebuf[9];
-
-	for (i = 0; i < 10; i++)
-	{
-		mysnprintf (namebuf, countof(namebuf), "AMMNUM%d", i);
-		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
-	}
-
-	const char *autopage = level.info->mapbg[0] == 0? "AUTOPAGE" : (const char*)&level.info->mapbg[0];
-
-	mapback = TexMan.CheckForTexture(autopage, FTexture::TEX_MiscPatch);
 }
 
 //=============================================================================
@@ -1078,7 +1056,8 @@ bool AM_clearMarks ()
 
 void AM_LevelInit ()
 {
-	leveljuststarted = 0;
+	const char *autopage = level.info->mapbg[0] == 0? "AUTOPAGE" : (const char*)&level.info->mapbg[0];
+	mapback = TexMan.CheckForTexture(autopage, FTexture::TEX_MiscPatch);
 
 	AM_clearMarks();
 
@@ -1116,7 +1095,6 @@ void AM_Start ()
 	if (!stopped) AM_Stop();
 	stopped = false;
 	AM_initVariables();
-	AM_loadPics();
 }
 
 
@@ -1228,7 +1206,7 @@ bool AM_Responder (event_t *ev, bool last)
 {
 	if (automapactive && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 	{
-		if (followplayer)
+		if (am_followplayer)
 		{
 			// check for am_pan* and ignore in follow mode
 			const char *defbind = AutomapBindings.GetBind(ev->data1);
@@ -1274,6 +1252,10 @@ void AM_changeWindowScale ()
 	else if (Button_AM_ZoomOut.bDown)
 	{
 		mtof_zoommul = int(M_ZOOMOUT);
+	}
+	else
+	{
+		mtof_zoommul = MAPUNIT;
 	}
 	am_zoomdir = 0;
 
@@ -1341,7 +1323,7 @@ void AM_Ticker ()
 
 	amclock++;
 
-	if (followplayer)
+	if (am_followplayer)
 	{
 		AM_doFollowPlayer();
 	}
@@ -1484,28 +1466,28 @@ bool AM_clipMline (mline_t *ml, fline_t *fl)
 		{
 			dy = fl->a.y - fl->b.y;
 			dx = fl->b.x - fl->a.x;
-			tmp.x = fl->a.x + (dx*(fl->a.y))/dy;
+			tmp.x = fl->a.x + Scale(dx, fl->a.y, dy);
 			tmp.y = 0;
 		}
 		else if (outside & BOTTOM)
 		{
 			dy = fl->a.y - fl->b.y;
 			dx = fl->b.x - fl->a.x;
-			tmp.x = fl->a.x + (dx*(fl->a.y-f_h))/dy;
+			tmp.x = fl->a.x + Scale(dx, fl->a.y - f_h, dy);
 			tmp.y = f_h-1;
 		}
 		else if (outside & RIGHT)
 		{
 			dy = fl->b.y - fl->a.y;
 			dx = fl->b.x - fl->a.x;
-			tmp.y = fl->a.y + (dy*(f_w-1 - fl->a.x))/dx;
+			tmp.y = fl->a.y + Scale(dy, f_w-1 - fl->a.x, dx);
 			tmp.x = f_w-1;
 		}
 		else if (outside & LEFT)
 		{
 			dy = fl->b.y - fl->a.y;
 			dx = fl->b.x - fl->a.x;
-			tmp.y = fl->a.y + (dy*(-fl->a.x))/dx;
+			tmp.y = fl->a.y + Scale(dy, -fl->a.x, dx);
 			tmp.x = 0;
 		}
 
@@ -1561,7 +1543,7 @@ void AM_drawGrid (const AMColor &color)
 
 	// [RH] Calculate a minimum for how long the grid lines should be so that
 	// they cover the screen at any rotation.
-	minlen = (fixed_t)sqrtf ((float)m_w*(float)m_w + (float)m_h*(float)m_h);
+	minlen = (fixed_t)sqrt ((double)m_w*(double)m_w + (double)m_h*(double)m_h);
 	extx = (minlen - m_w) / 2;
 	exty = (minlen - m_h) / 2;
 
@@ -1655,8 +1637,7 @@ void AM_drawSubsectors()
 			points[j].Y = f_y + (f_h - (pt.y - m_y) * scale / float(1 << 24));
 		}
 		// For lighting and texture determination
-		sector_t *sec = R_FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,
-			&ceilinglight, false);
+		sector_t *sec = Renderer->FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,	&ceilinglight, false);
 		// Find texture origin.
 		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,
 							  sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS };
@@ -1676,6 +1657,65 @@ void AM_drawSubsectors()
 		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 		// Coloring for the polygon
 		colormap = sec->ColorMap;
+
+		FTextureID maptex = sec->GetTexture(sector_t::floor);
+
+#ifdef _3DFLOORS
+
+		if (sec->e->XFloor.ffloors.Size())
+		{
+			secplane_t *floorplane = &sec->floorplane;
+
+			// Look for the highest floor below the camera viewpoint.
+			// Check the center of the subsector's sector. Do not check each
+			// subsector separately because that might result in different planes for
+			// different subsectors of the same sector which is not wanted here.
+			// (Make the comparison in floating point to avoid overflows and improve performance.)
+			double secx;
+			double secy;
+			double seczb, seczt;
+			double cmpz = FIXED2DBL(viewz);
+
+			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
+			{
+				// For the actual camera sector use the current viewpoint as reference.
+				secx = FIXED2DBL(viewx);
+				secy = FIXED2DBL(viewy);
+			}
+			else
+			{
+				secx = FIXED2DBL(sec->soundorg[0]);
+				secy = FIXED2DBL(sec->soundorg[1]);
+			}
+			seczb = floorplane->ZatPoint(secx, secy);
+			seczt = sec->ceilingplane.ZatPoint(secx, secy);
+			
+			for (unsigned int i = 0; i < sec->e->XFloor.ffloors.Size(); ++i)
+			{
+				F3DFloor *rover = sec->e->XFloor.ffloors[i];
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if (rover->flags & FF_FOG) continue;
+				if (rover->alpha == 0) continue;
+				double roverz = rover->top.plane->ZatPoint(secx, secy);
+				// Ignore 3D floors that are above or below the sector itself:
+				// they are hidden. Since 3D floors are sorted top to bottom,
+				// if we get below the sector floor, we can stop.
+				if (roverz > seczt) continue;
+				if (roverz < seczb) break;
+				if (roverz < cmpz)
+				{
+					maptex = *(rover->top.texture);
+					floorplane = rover->top.plane;
+					break;
+				}
+			}
+
+			lightlist_t *light = P_GetPlaneLight(sec, floorplane, false);
+			floorlight = *light->p_lightlevel;
+			colormap = light->extra_colormap;
+		}
+#endif
+
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.
 		if (!(subsectors[i].flags & SSECF_DRAWN))
@@ -1691,16 +1731,19 @@ void AM_drawSubsectors()
 		}
 
 		// Draw the polygon.
-		screen->FillSimplePoly(
-			TexMan(sec->GetTexture(sector_t::floor)),
-			&points[0], points.Size(),
-			originx, originy,
-			scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
-			scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
-			rotation,
-			colormap,
-			floorlight
-			);
+		FTexture *pic = TexMan(maptex);
+		if (pic != NULL && pic->UseType != FTexture::TEX_Null)
+		{
+			screen->FillSimplePoly(TexMan(maptex),
+				&points[0], points.Size(),
+				originx, originy,
+				scale / (FIXED2FLOAT(sec->GetXScale(sector_t::floor)) * float(1 << MAPBITS)),
+				scale / (FIXED2FLOAT(sec->GetYScale(sector_t::floor)) * float(1 << MAPBITS)),
+				rotation,
+				colormap,
+				floorlight
+				);
+		}
 	}
 }
 
@@ -1806,6 +1849,69 @@ void AM_showSS()
 	}
 }
 
+#ifdef _3DFLOORS
+
+//=============================================================================
+//
+// Determines if a 3D floor boundary should be drawn
+//
+//=============================================================================
+
+bool AM_Check3DFloors(line_t *line)
+{
+	TArray<F3DFloor*> &ff_front = line->frontsector->e->XFloor.ffloors;
+	TArray<F3DFloor*> &ff_back = line->backsector->e->XFloor.ffloors;
+
+	// No 3D floors so there's no boundary
+	if (ff_back.Size() == 0 && ff_front.Size() == 0) return false;
+
+	int realfrontcount = 0;
+	int realbackcount = 0;
+
+	for(unsigned i=0;i<ff_front.Size();i++)
+	{
+		F3DFloor *rover = ff_front[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		if (rover->alpha == 0) continue;
+		realfrontcount++;
+	}
+
+	for(unsigned i=0;i<ff_back.Size();i++)
+	{
+		F3DFloor *rover = ff_back[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		if (rover->alpha == 0) continue;
+		realbackcount++;
+	}
+	// if the amount of 3D floors does not match there is a boundary
+	if (realfrontcount != realbackcount) return true;
+
+	for(unsigned i=0;i<ff_front.Size();i++)
+	{
+		F3DFloor *rover = ff_front[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		if (rover->alpha == 0) continue;
+
+		bool found = false;
+		for(unsigned j=0;j<ff_back.Size();j++)
+		{
+			F3DFloor *rover2 = ff_back[j];
+			if (!(rover2->flags & FF_EXISTS)) continue;
+			if (rover2->alpha == 0) continue;
+			if (rover->model == rover2->model && rover->flags == rover2->flags) 
+			{
+				found = true;
+				break;
+			}
+		}
+		// At least one 3D floor in the front sector didn't have a match in the back sector so there is a boundary.
+		if (!found) return true;
+	}
+	// All 3D floors could be matched so let's not draw a boundary.
+	return false;
+}
+#endif
+
 //=============================================================================
 //
 // Determines visible lines, draws them.
@@ -1817,6 +1923,7 @@ void AM_drawWalls (bool allmap)
 {
 	int i;
 	static mline_t l;
+	int lock, color;
 
 	for (i = 0; i < numlines; i++)
 	{
@@ -1852,8 +1959,16 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline(&l, SecretWallColor);
 			    else
 					AM_drawMline(&l, WallColor);
-			}
-			else if ((lines[i].special == Teleport ||
+			} else if (lines[i].locknumber > 0) { // [Dusk] specials w/ locknumbers
+				lock = lines[i].locknumber;
+				color = P_GetMapColorForLock(lock);
+				
+				AMColor c;
+				if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
+				else c = LockedColor;
+				
+				AM_drawMline (&l, c);
+			} else if ((lines[i].special == Teleport ||
 				lines[i].special == Teleport_NoFog ||
 				lines[i].special == Teleport_ZombieChanger ||
 				lines[i].special == Teleport_Line) &&
@@ -1873,17 +1988,18 @@ void AM_drawWalls (bool allmap)
 			else if (lines[i].special == Door_LockedRaise ||
 					 lines[i].special == ACS_LockedExecute ||
 					 lines[i].special == ACS_LockedExecuteDoor ||
-					 (lines[i].special == Generic_Door && lines[i].args[4] !=0 ))
+					 (lines[i].special == Door_Animated && lines[i].args[3] != 0) ||
+					 (lines[i].special == Generic_Door && lines[i].args[4] != 0))
 			{
 				if (am_colorset == 0 || am_colorset == 3)	// Raven games show door colors
 				{
 					int P_GetMapColorForLock(int lock);
-					int lock;
 
-					if (lines[i].special==Door_LockedRaise) lock=lines[i].args[3];
+					if (lines[i].special==Door_LockedRaise || lines[i].special==Door_Animated)
+						lock=lines[i].args[3];
 					else lock=lines[i].args[4];
 
-					int color = P_GetMapColorForLock(lock);
+					color = P_GetMapColorForLock(lock);
 
 					AMColor c;
 
@@ -1896,6 +2012,17 @@ void AM_drawWalls (bool allmap)
 				{
 					AM_drawMline (&l, LockedColor);  // locked special
 				}
+			}
+			else if (am_showtriggerlines && am_colorset == 0 && lines[i].special != 0
+				&& lines[i].special != Door_Open
+				&& lines[i].special != Door_Close
+				&& lines[i].special != Door_CloseWaitOpen
+				&& lines[i].special != Door_Raise
+				&& lines[i].special != Door_Animated
+				&& lines[i].special != Generic_Door
+				&& (lines[i].activation & SPAC_PlayerActivate))
+			{
+				AM_drawMline(&l, SpecialWallColor);	// wall with special non-door action the player can do
 			}
 			else if (lines[i].backsector == NULL)
 			{
@@ -1911,6 +2038,12 @@ void AM_drawWalls (bool allmap)
 			{
 				AM_drawMline(&l, CDWallColor); // ceiling level change
 			}
+#ifdef _3DFLOORS
+			else if (AM_Check3DFloors(&lines[i]))
+			{
+				AM_drawMline(&l, EFWallColor); // Extra floor border
+			}
+#endif
 			else if (am_cheat != 0)
 			{
 				AM_drawMline(&l, TSWallColor);
@@ -2059,20 +2192,15 @@ void AM_drawPlayers ()
 			angle = players[consoleplayer].camera->angle;
 		}
 		
-		if (gameinfo.gametype & GAME_Raven)
+		if (am_cheat != 0 && CheatMapArrow.Size() > 0)
 		{
-			arrow = player_arrow_raven;
-			numarrowlines = NUMPLYRLINES_RAVEN;
-		}
-		else if (am_cheat != 0)
-		{
-			arrow = cheat_player_arrow;
-			numarrowlines =  NUMCHEATPLYRLINES;
+			arrow = &CheatMapArrow[0];
+			numarrowlines = CheatMapArrow.Size();
 		}
 		else
 		{
-			arrow = player_arrow;
-			numarrowlines = NUMPLYRLINES;
+			arrow = &MapArrow[0];
+			numarrowlines = MapArrow.Size();
 		}
 		AM_drawLineCharacter(arrow, numarrowlines, 0, angle, YourColor, pt.x, pt.y);
 		return;
@@ -2125,11 +2253,52 @@ void AM_drawPlayers ()
 				angle -= players[consoleplayer].camera->angle - ANG90;
 			}
 
-			AM_drawLineCharacter
-				(player_arrow, NUMPLYRLINES, 0, angle,
-				color, pt.x, pt.y);
+			AM_drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
 		}
     }
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void AM_drawKeys ()
+{
+	AMColor color;
+	mpoint_t p;
+	angle_t	 angle;
+
+	TThinkerIterator<AKey> it;
+	AKey *key;
+
+	while ((key = it.Next()) != NULL)
+	{
+		p.x = key->x >> FRACTOMAPBITS;
+		p.y = key->y >> FRACTOMAPBITS;
+		angle = key->angle;
+
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+		{
+			AM_rotatePoint (&p.x, &p.y);
+			angle += ANG90 - players[consoleplayer].camera->angle;
+		}
+
+		color = ThingColor;
+		if (key->flags & MF_SPECIAL)
+		{
+			// Find the key's own color.
+			// Only works correctly if single-key locks have lower numbers than any-key locks.
+			// That is the case for all default keys, however.
+			int P_GetMapColorForKey (AInventory * key);
+			int c = P_GetMapColorForKey(key);
+
+			if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
+			else color = ThingColor_CountItem;
+			AM_drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0, color, p.x, p.y);
+		}
+	}
 }
 
 //=============================================================================
@@ -2176,14 +2345,19 @@ void AM_drawThings ()
 				// That is the case for all default keys, however.
 				if (t->IsKindOf(RUNTIME_CLASS(AKey)))
 				{
-					if (am_showkeys)
+					if (G_SkillProperty(SKILLP_EasyKey))
+					{
+						// Already drawn by AM_drawKeys(), so don't draw again
+						color.Index = -1;
+					}
+					else if (am_showkeys)
 					{
 						int P_GetMapColorForKey (AInventory * key);
 						int c = P_GetMapColorForKey(static_cast<AKey *>(t));
 
 						if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 						else color = ThingColor_CountItem;
-						AM_drawLineCharacter(key_guy, NUMKEYGUYLINES, 16<<MAPBITS, 0, color, p.x, p.y);
+						AM_drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0, color, p.x, p.y);
 						color.Index = -1;
 					}
 					else
@@ -2398,6 +2572,8 @@ void AM_Drawer ()
 
 	AM_drawWalls(allmap);
 	AM_drawPlayers();
+	if (G_SkillProperty(SKILLP_EasyKey))
+		AM_drawKeys();
 	if (am_cheat >= 2 || allthings)
 		AM_drawThings();
 

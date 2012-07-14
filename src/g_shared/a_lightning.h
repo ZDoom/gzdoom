@@ -24,7 +24,7 @@ protected:
 	int NextLightningFlash;
 	int LightningFlashCount;
 	bool Stopped;
-	BYTE *LightningLightLevels;
+	short *LightningLightLevels;
 };
 
 void P_StartLightning ();

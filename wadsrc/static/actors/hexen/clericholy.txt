@@ -1,10 +1,11 @@
 
 // Cleric Weapon Piece ------------------------------------------------------
 
-ACTOR ClericWeaponPiece : WeaponPiece native
+ACTOR ClericWeaponPiece : WeaponPiece
 {
 	Inventory.PickupSound "misc/w_pkup"
 	Inventory.PickupMessage "$TXT_WRAITHVERGE_PIECE"
+	Inventory.ForbiddenTo FighterPlayer, MagePlayer
 	WeaponPiece.Weapon CWeapWraithverge
 	+FLOATBOB
 }

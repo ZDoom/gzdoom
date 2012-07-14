@@ -36,7 +36,6 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "doomdata.h"
-#include "r_data.h"
 #include "m_swap.h"
 #include "p_spec.h"
 #include "p_local.h"
@@ -119,46 +118,55 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	if (linetrans != NULL && linetrans->special != 0)
 	{
 		ld->special = linetrans->special;
-		ld->args[0] = linetrans->args[0];
-		ld->args[1] = linetrans->args[1];
-		ld->args[2] = linetrans->args[2];
-		ld->args[3] = linetrans->args[3];
-		ld->args[4] = linetrans->args[4];
 
 		ld->flags = flags | ((linetrans->flags & 0x1f) << 9);
 		if (linetrans->flags & 0x20) ld->flags |= ML_FIRSTSIDEONLY;
 		ld->activation = 1 << GET_SPAC(ld->flags);
-		if (ld->activation == SPAC_AnyCross) ld->activation = SPAC_Impact|SPAC_PCross;	// this is really PTouch
+		if (ld->activation == SPAC_AnyCross)
+		{ // this is really PTouch
+			ld->activation = SPAC_Impact|SPAC_PCross;
+		}
+		else if (ld->activation == SPAC_Impact)
+		{ // In non-UMDF maps, Impact implies PCross
+			ld->activation = SPAC_Impact | SPAC_PCross;
+		}
 		ld->flags &= ~ML_SPAC_MASK;
 
 		if (passthrough && ld->activation == SPAC_Use)
 		{
 			ld->activation = SPAC_UseThrough;
 		}
-		switch (linetrans->flags & LINETRANS_TAGMASK)
+		// Set special arguments.
+		FXlatExprState state;
+		state.tag = tag;
+		state.linetype = special;
+		for (int t = 0; t < LINETRANS_MAXARGS; ++t)
 		{
-		case LINETRANS_HAS2TAGS:	// First two arguments are tags
-			ld->args[1] = tag;
-		case LINETRANS_HASTAGAT1:	// First argument is a tag
-			ld->args[0] = tag;
-			break;
+			int arg = linetrans->args[t];
+			int argop = (linetrans->flags >> (LINETRANS_TAGSHIFT + t*TAGOP_NUMBITS)) & TAGOP_MASK;
 
-		case LINETRANS_HASTAGAT2:	// Second argument is a tag
-			ld->args[1] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT3:	// Third argument is a tag
-			ld->args[2] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT4:	// Fourth argument is a tag
-			ld->args[3] = tag;
-			break;
-
-		case LINETRANS_HASTAGAT5:	// Fifth argument is a tag
-			ld->args[4] = tag;
-			break;
+			switch (argop)
+			{
+			case ARGOP_Const:
+				ld->args[t] = arg;
+				break;
+			case ARGOP_Tag:
+				ld->args[t] = tag;
+				break;
+			case ARGOP_Expr:
+				{
+					int *xnode = &XlatExpressions[arg];
+					state.bIsConstant = true;
+					XlatExprEval[*xnode](&ld->args[t], xnode, &state);
+				}
+				break;
+			default:
+				assert(0);
+				ld->args[t] = 0;
+				break;
+			}
 		}
+
 		if ((ld->flags & ML_SECRET) && ld->activation & (SPAC_Use|SPAC_UseThrough))
 		{
 			ld->flags &= ~ML_MONSTERSCANACTIVATE;
@@ -360,3 +368,132 @@ int P_TranslateSectorSpecial (int special)
 	return special | mask;
 }
 
+static const int *Expr_Const(int *dest, const int *xnode, FXlatExprState *state)
+{
+	*dest = xnode[-1];
+	return xnode - 2;
+}
+
+static const int *Expr_Tag(int *dest, const int *xnode, FXlatExprState *state)
+{
+	*dest = state->tag;
+	state->bIsConstant = false;
+	return xnode - 1;
+}
+
+static const int *Expr_Add(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	*dest = op1 + op2;
+	return xnode;
+}
+
+static const int *Expr_Sub(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	*dest = op1 - op2;
+	return xnode;
+}
+
+static const int *Expr_Mul(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	*dest = op1 * op2;
+	return xnode;
+}
+
+static void Div0Check(int &op1, int &op2, const FXlatExprState *state)
+{
+	if (op2 == 0)
+	{
+		Printf("Xlat: Division by 0 for line type %d\n", state->linetype);
+		// Set some safe values
+		op1 = 0;
+		op2 = 1;
+	}
+}
+
+static const int *Expr_Div(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	Div0Check(op1, op2, state);
+	*dest = op1 / op2;
+	return xnode;
+}
+
+static const int *Expr_Mod(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	Div0Check(op1, op2, state);
+	*dest = op1 % op2;
+	return xnode;
+}
+
+static const int *Expr_And(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	*dest = op1 & op2;
+	return xnode;
+}
+
+static const int *Expr_Or(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	*dest = op1 | op2;
+	return xnode;
+}
+
+static const int *Expr_Xor(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op1, op2;
+
+	xnode = XlatExprEval[xnode[-1]](&op2, xnode-1, state);
+	xnode = XlatExprEval[xnode[0]](&op1, xnode, state);
+	*dest = op1 ^ op2;
+	return xnode;
+}
+
+static const int *Expr_Neg(int *dest, const int *xnode, FXlatExprState *state)
+{
+	int op;
+
+	xnode = XlatExprEval[xnode[-1]](&op, xnode-1, state);
+	*dest = -op;
+	return xnode;
+}
+
+const int* (*XlatExprEval[XEXP_COUNT])(int *dest, const int *xnode, FXlatExprState *state) =
+{
+	Expr_Const,
+	Expr_Tag,
+	Expr_Add,
+	Expr_Sub,
+	Expr_Mul,
+	Expr_Div,
+	Expr_Mod,
+	Expr_And,
+	Expr_Or,
+	Expr_Xor,
+	Expr_Neg
+};

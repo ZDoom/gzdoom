@@ -240,7 +240,7 @@ void FScanner::PrepareScript ()
 	{
 		// If the last character in the buffer is a null character, change
 		// it to a newline. Otherwise, append a newline to the end.
-		if (ScriptBuffer[ScriptBuffer.Len() - 1] == '\0')
+		if (ScriptBuffer.Len() > 0 && ScriptBuffer[ScriptBuffer.Len() - 1] == '\0')
 		{
 			ScriptBuffer.LockBuffer()[ScriptBuffer.Len() - 1] = '\n';
 			ScriptBuffer.UnlockBuffer();
@@ -636,7 +636,7 @@ bool FScanner::GetNumber ()
 				ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", String);
 			}
 		}
-		Float = (float)Number;
+		Float = Number;
 		return true;
 	}
 	else
@@ -692,7 +692,7 @@ bool FScanner::CheckNumber ()
 				return false;
 			}
 		}
-		Float = (float)Number;
+		Float = Number;
 		return true;
 	}
 	else
@@ -749,7 +749,7 @@ bool FScanner::GetFloat ()
 	CheckOpen ();
 	if (GetString())
 	{
-		Float = (float)strtod (String, &stopper);
+		Float = strtod (String, &stopper);
 		if (*stopper != 0)
 		{
 			ScriptError ("SC_GetFloat: Bad numeric constant \"%s\".", String);

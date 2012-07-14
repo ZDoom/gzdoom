@@ -142,4 +142,11 @@ extern sidei_t *sidetemp;
 extern bool hasglnodes;
 extern struct glsegextra_t *glsegextras;
 
+struct FMissingCount
+{
+	FMissingCount() : Count(0) {}
+	int Count;
+};
+typedef TMap<FString,FMissingCount> FMissingTextureTracker;
+
 #endif

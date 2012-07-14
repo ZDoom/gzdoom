@@ -23,7 +23,7 @@
 #ifndef __R_DRAW__
 #define __R_DRAW__
 
-#include "r_data.h"
+#include "r_defs.h"
 
 extern "C" int			ylookup[MAXHEIGHT];
 
@@ -53,7 +53,7 @@ extern "C" BYTE*		palookupoffse[4];
 extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
-extern "C" BYTE			dc_temp[MAXHEIGHT*4];
+extern "C" BYTE			*dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
@@ -178,7 +178,7 @@ extern void (STACK_ARGS *rt_map4cols)(int sx, int yl, int yh);
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
-void rt_initcols (void);
+void rt_initcols (BYTE *buffer=NULL);
 
 void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
@@ -216,6 +216,17 @@ void	R_FillColumnP (void);
 void	R_FillColumnHorizP (void);
 void	R_FillSpan (void);
 
+#ifdef X86_ASM
+#define R_SetupDrawSlab R_SetupDrawSlabA
+#define R_DrawSlab R_DrawSlabA
+#else
+#define R_SetupDrawSlab R_SetupDrawSlabC
+#define R_DrawSlab R_DrawSlabC
+#endif
+
+extern "C" void			   R_SetupDrawSlab(const BYTE *colormap);
+extern "C" void STACK_ARGS R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+
 extern "C" int				ds_y;
 extern "C" int				ds_x1;
 extern "C" int				ds_x2;
@@ -240,13 +251,8 @@ extern FDynamicColormap ShadeFakeColormap[16];
 extern BYTE identitymap[256];
 extern BYTE *dc_translation;
 
-
-// If the view size is not full screen, draws a border around it.
-void R_DrawViewBorder (void);
-void R_DrawTopBorder (void);
-void R_DrawBorder (int x1, int y1, int x2, int y2);
-
 // [RH] Added for muliresolution support
+void R_InitShadeMaps();
 void R_InitFuzzTable (int fuzzoff);
 
 // [RH] Consolidate column drawer selection

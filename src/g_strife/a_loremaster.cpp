@@ -14,12 +14,12 @@ class ALoreShot : public AActor
 {
 	DECLARE_CLASS (ALoreShot, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (ALoreShot)
 
-int ALoreShot::DoSpecialDamage (AActor *target, int damage)
+int ALoreShot::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	FVector3 thrust;
 	

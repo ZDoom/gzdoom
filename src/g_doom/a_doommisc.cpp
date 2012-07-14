@@ -13,6 +13,7 @@
 #include "a_specialspot.h"
 #include "templates.h"
 #include "m_bbox.h"
+#include "farchive.h"
 
 // Include all the other Doom stuff here to reduce compile time
 #include "a_arachnotron.cpp"
@@ -39,8 +40,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if ((dmflags2 & DF2_BARRELS_RESPAWN) &&
-		(deathmatch || alwaysapplydmflags))
+	if (dmflags2 & DF2_BARRELS_RESPAWN)
 	{
 		self->height = self->GetDefault()->height;
 		self->renderflags |= RF_INVISIBLE;
@@ -52,4 +52,3 @@ DEFINE_ACTION_FUNCTION(AActor, A_BarrelDestroy)
 	}
 	return 0;
 }
-

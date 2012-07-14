@@ -28,6 +28,7 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 6DA6FCBA8089161BDEC6A1D3F6C8D60F // Eternal Doom MAP25
 {
 	stairs
+	maskedmidtex
 }
 
 10E1E2B36302D31AC4AE68C84B5DC457 // Eternal Doom MAP28
@@ -53,6 +54,7 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 }
 
 2FE901F659A16E58D7BCD7C30021C238 // AV map15
+74AF92E96FE10D039D31C1F6526D7D7C // Real World map11
 {
 	trace
 }
@@ -93,6 +95,8 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 65A53A09A09525AE42EA210BF879CD37 // Plutonia 2 map32
 2499CF9A9351BE9BC4E9C66FC9F291A7 // Requiem map23
 3CA5493FEFF2E27BFD4181E6C4A3C2BF // The Waterfront map01
+CBDFEFAC579A62DE8F1B48CA4A09D381 // gather2.wad map05 and darkside.wad map01
+C7A2FAFB0AFB2632C50AD625CDB50E51 // Reverie map18
 {
 	corpsegibs
 	vileghosts
@@ -135,3 +139,40 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
 }
 
+1D9E43988940CCD3555724E15DD8B1AB // Happy Time Circus map01 has bad teleporters
+{
+	ignoreteleporttags
+}
+
+8FF30D57F6CE64F085A6567EC302842A // Enjay's test map for this flag
+9D7893D09FEE55C31B73C670DF850962 // Memento Mori II, map12
+{
+	badangles
+}
+
+E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
+{
+	// This map has two gear boxes which are flagged for player cross
+	// activation instead of the proper player uses activation.
+	setactivation 963 2
+	setactivation 943 2
+}
+
+2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
+{
+	// This line is erroneously specified as Door_Raise that monsters
+	// can operate. If they do, they block you off from half the map. Change
+	// this into a one-shot Door_Open so that it won't close.
+	setlinespecial 1069 Door_Open 0 16 0 0 0
+	clearlineflags 1069 0x200
+}
+
+3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01
+{
+	clearlinespecial 66
+}
+
+8FA29398776146189396AA1AC6BB9E13 // Roger Ritenour's Phobos map03
+{
+	floormove
+}

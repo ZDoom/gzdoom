@@ -337,7 +337,7 @@ void      GMEAPI gme_set_equalizer  ( Music_Emu* me, gme_equalizer_t const* eq )
 
 void GMEAPI gme_equalizer( Music_Emu const* me, gme_equalizer_t* out )
 {
-	gme_equalizer_t e = { };
+	gme_equalizer_t e = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	e.treble = me->equalizer().treble;
 	e.bass   = me->equalizer().bass;
 	*out = e;

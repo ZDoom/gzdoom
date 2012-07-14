@@ -92,16 +92,6 @@ private:
 };
 extern FPolyObj *polyobjs;		// list of all poly-objects on the level
 
-inline FArchive &operator<< (FArchive &arc, FPolyObj *&poly)
-{
-	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
-}
-
-inline FArchive &operator<< (FArchive &arc, const FPolyObj *&poly)
-{
-	return arc.SerializePointer (polyobjs, (BYTE **)&poly, sizeof(FPolyObj));
-}
-
 struct polyblock_t
 {
 	FPolyObj *polyobj;
@@ -111,6 +101,8 @@ struct polyblock_t
 
 
 void PO_LinkToSubsectors();
+FArchive &operator<< (FArchive &arc, FPolyObj *&poly);
+FArchive &operator<< (FArchive &arc, const FPolyObj *&poly);
 
 
 #endif

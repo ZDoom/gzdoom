@@ -1,4 +1,5 @@
 // MAPINFO for Heretic (Shareware and Retail)
+include "mapinfo/common.txt"
 
 gameinfo
 {
@@ -41,7 +42,28 @@ gameinfo
 	defaultdropstyle = 1
 	endoom = "ENDTEXT"
 	player5start = 4001
-	pickupcolor = "d6 ba 45"
+	pickupcolor = "d7 ba 45"
+	quitmessages = "$*RAVENQUITMSG"
+	menufontcolor_title = "UNTRANSLATED"
+	menufontcolor_label = "GREEN"
+	menufontcolor_value = "UNTRANSLATED"
+	menufontcolor_action = "UNTRANSLATED"
+	menufontcolor_header = "GOLD"
+	menufontcolor_highlight = "YELLOW"
+	menufontcolor_selection = "DARKGREEN"
+	menubackbutton = "M_BACK_H"
+	playerclasses = "HereticPlayer"
+	nightmarefast = true
+	pausesign = "PAUSED"
+	gibfactor = 0.5
+	cursorpic = "herecurs"
+	textscreenx = 20
+	textscreeny = 5
+	defaultendsequence = "Inter_Pic1"
+	maparrow = "maparrows/dagger.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedfont = "SmallFont"
+	statscreen_enteringfont = "SmallFont"
 }
 
 skill baby
@@ -53,6 +75,7 @@ skill baby
 	EasyBossBrain
 	SpawnFilter = Baby
 	Name = "$MNU_WETNURSE"
+	EasyKey
 }
 
 skill easy

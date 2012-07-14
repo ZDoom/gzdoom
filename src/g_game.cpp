@@ -37,10 +37,10 @@
 #include "doomstat.h"
 #include "d_protocol.h"
 #include "d_netinf.h"
-#include "f_finale.h"
+#include "intermission/intermission.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "m_menu.h"
+#include "menu/menu.h"
 #include "m_random.h"
 #include "m_crc32.h"
 #include "i_system.h"
@@ -61,9 +61,7 @@
 #include "p_local.h" 
 #include "s_sound.h"
 #include "gstrings.h"
-#include "r_data.h"
 #include "r_sky.h"
-#include "r_draw.h"
 #include "g_game.h"
 #include "g_level.h"
 #include "b_bot.h"			//Added by MC:
@@ -73,12 +71,15 @@
 #include "gi.h"
 #include "a_keys.h"
 #include "a_artifacts.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_event.h"
 #include "p_acs.h"
 #include "m_joy.h"
+#include "farchive.h"
+#include "r_renderer.h"
+#include "r_data/colormaps.h"
 
 #include <zlib.h>
 
@@ -86,6 +87,7 @@
 
 
 static FRandom pr_dmspawn ("DMSpawn");
+static FRandom pr_pspawn ("PlayerSpawn");
 
 const int SAVEPICWIDTH = 216;
 const int SAVEPICHEIGHT = 162;
@@ -103,6 +105,9 @@ void	G_DoVictory (void);
 void	G_DoWorldDone (void);
 void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
+
+void STAT_Write(FILE *file);
+void STAT_Read(PNGHandle *png);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
@@ -127,6 +132,8 @@ CUSTOM_CVAR (Int, displaynametags, 0, CVAR_ARCHIVE)
 		self = 0;
 	}
 }
+
+CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
 
 
 gameaction_t	gameaction;
@@ -174,8 +181,6 @@ bool 			precache = true;		// if true, load all graphics at start
 wbstartstruct_t wminfo; 				// parms for world map / intermission 
  
 short			consistancy[MAXPLAYERS][BACKUPTICS];
- 
-BYTE*			savebuffer;
  
  
 #define MAXPLMOVE				(forwardmove[1]) 
@@ -235,9 +240,9 @@ CUSTOM_CVAR (Float, turbo, 100.f, 0)
 	{
 		self = 10.f;
 	}
-	else if (self > 256.f)
+	else if (self > 255.f)
 	{
-		self = 256.f;
+		self = 255.f;
 	}
 	else
 	{
@@ -326,7 +331,7 @@ CCMD (weapnext)
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
 		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
-			1.5f, 0.90f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
 }
 
@@ -337,7 +342,7 @@ CCMD (weapprev)
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
 		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
-			1.5f, 0.90f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
 }
 
@@ -368,7 +373,7 @@ CCMD (invnext)
 		}
 		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
 			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
-			1.5f, 0.80f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -398,7 +403,7 @@ CCMD (invprev)
 		}
 		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
 			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
-			1.5f, 0.80f, 0, 0, CR_GOLD, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
+			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
 }
@@ -455,6 +460,8 @@ CCMD (drop)
 	}
 }
 
+PClassActor *GetFlechetteType(AActor *other);
+
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
 	static const ENamedName bagnames[3] =
@@ -463,22 +470,26 @@ CCMD (useflechette)
 		NAME_ArtiPoisonBag2,
 		NAME_ArtiPoisonBag3
 	};
-	int i, j;
 
 	if (who == NULL)
 		return;
 
-	if (who->IsKindOf (PClass::FindClass (NAME_ClericPlayer)))
-		i = 0;
-	else if (who->IsKindOf (PClass::FindClass (NAME_MagePlayer)))
-		i = 1;
-	else
-		i = 2;
-
-	for (j = 0; j < 3; ++j)
+	PClassActor *type = GetFlechetteType(who);
+	if (type != NULL)
 	{
 		AInventory *item;
-		if ( (item = who->FindInventory (bagnames[(i+j)%3])) )
+		if ( (item = who->FindInventory (type) ))
+		{
+			SendItemUse = item;
+			return;
+		}
+	}
+
+	// The default flechette could not be found. Try all 3 types then.
+	for (int j = 0; j < 3; ++j)
+	{
+		AInventory *item;
+		if ( (item = who->FindInventory (bagnames[j])) )
 		{
 			SendItemUse = item;
 			break;
@@ -573,9 +584,15 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	}
 
 	if (Button_LookUp.bDown)
+	{
 		G_AddViewPitch (lookspeed[speed]);
+		LocalKeyboardTurner = true;
+	}
 	if (Button_LookDown.bDown)
+	{
 		G_AddViewPitch (-lookspeed[speed]);
+		LocalKeyboardTurner = true;
+	}
 
 	if (Button_MoveUp.bDown)
 		fly += flyspeed[speed];
@@ -824,7 +841,12 @@ static void ChangeSpy (bool forward)
 	// If not viewing through a player, return your eyes to your own head.
 	if (players[consoleplayer].camera->player == NULL)
 	{
-		players[consoleplayer].camera = players[consoleplayer].mo;
+		// When watching demos, you will just have to wait until your player
+		// has done this for you, since it could desync otherwise.
+		if (!demoplayback)
+		{
+			Net_WriteByte(DEM_REVERTCAMERA);
+		}
 		return;
 	}
 
@@ -900,7 +922,8 @@ bool G_Responder (event_t *ev)
 				stricmp (cmd, "bumpgamma") &&
 				stricmp (cmd, "screenshot")))
 			{
-				M_StartControlPanel (true, true);
+				M_StartControlPanel(true);
+				M_SetMenu(NAME_Mainmenu, -1);
 				return true;
 			}
 			else
@@ -1008,6 +1031,7 @@ void G_Ticker ()
 			G_DoNewGame ();
 			break;
 		case ga_loadgame:
+		case ga_loadgamehidecon:
 		case ga_autoloadgame:
 			G_DoLoadGame ();
 			break;
@@ -1021,6 +1045,9 @@ void G_Ticker ()
 			G_DoAutoSave ();
 			gameaction = ga_nothing;
 			break;
+		case ga_loadgameplaydemo:
+			G_DoLoadGame ();
+			// fallthrough
 		case ga_playdemo:
 			G_DoPlayDemo ();
 			break;
@@ -1028,7 +1055,7 @@ void G_Ticker ()
 			G_DoCompleted ();
 			break;
 		case ga_slideshow:
-			F_StartSlideshow ();
+			if (gamestate == GS_LEVEL) F_StartIntermission(level.info->slideshow, FSTATE_InLevel);
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -1185,6 +1212,11 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	p = &players[player];
 
+	if (p->morphTics != 0)
+	{ // Undo morph
+		P_UndoPlayerMorph (p, p, 0, true);
+	}
+
 	// Strip all current powers, unless moving in a hub and the power is okay to keep.
 	item = p->mo->Inventory;
 	while (item != NULL)
@@ -1207,9 +1239,17 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		// Unselect powered up weapons if the unpowered counterpart is pending
 		p->ReadyWeapon=p->PendingWeapon;
 	}
-	p->mo->flags &= ~MF_SHADOW; 		// cancel invisibility
-	p->mo->RenderStyle = STYLE_Normal;
-	p->mo->alpha = FRACUNIT;
+	// reset invisibility to default
+	if (p->mo->GetDefault()->flags & MF_SHADOW)
+	{
+		p->mo->flags |= MF_SHADOW;
+	}
+	else
+	{
+		p->mo->flags &= ~MF_SHADOW;
+	}
+	p->mo->RenderStyle = p->mo->GetDefault()->RenderStyle;
+	p->mo->alpha = p->mo->GetDefault()->alpha;
 	p->extralight = 0;					// cancel gun flashes
 	p->fixedcolormap = NOFIXEDCOLORMAP;	// cancel ir goggles
 	p->fixedlightlevel = -1;
@@ -1245,13 +1285,8 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		}
 	}
 
-	if (p->morphTics)
-	{ // Undo morph
-		P_UndoPlayerMorph (p, p, 0, true);
-	}
-
-	// Resets player health to default
-	if (flags & CHANGELEVEL_RESETHEALTH)
+	// Resets player health to default if not dead.
+	if ((flags & CHANGELEVEL_RESETHEALTH) && p->playerstate != PST_DEAD)
 	{
 		p->health = p->mo->health = p->mo->SpawnHealth();
 	}
@@ -1259,26 +1294,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 	// Clears the entire inventory and gives back the defaults for starting a game
 	if (flags & CHANGELEVEL_RESETINVENTORY)
 	{
-		AInventory *inv = p->mo->Inventory;
-
-		while (inv != NULL)
-		{
-			AInventory *next = inv->Inventory;
-			if (!(inv->ItemFlags & IF_UNDROPPABLE))
-			{
-				inv->Destroy ();
-			}
-			else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
-			{
-				AHexenArmor *harmor = static_cast<AHexenArmor *> (inv);
-				harmor->Slots[3] = harmor->Slots[2] = harmor->Slots[1] = harmor->Slots[0] = 0;
-			}
-			inv = next;
-		}
-		p->ReadyWeapon = NULL;
-		p->PendingWeapon = WP_NOCHANGE;
-		p->psprites[ps_weapon].state = NULL;
-		p->psprites[ps_flash].state = NULL;
+		p->mo->ClearInventory();
 		p->mo->GiveDefaultInventory();
 	}
 }
@@ -1362,7 +1378,7 @@ void G_PlayerReborn (int player)
 // because something is occupying it 
 //
 
-bool G_CheckSpot (int playernum, FMapThing *mthing)
+bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 {
 	fixed_t x;
 	fixed_t y;
@@ -1411,7 +1427,7 @@ bool G_CheckSpot (int playernum, FMapThing *mthing)
 //
 
 // [RH] Returns the distance of the closest player to the given mapthing
-static fixed_t PlayersRangeFromSpot (FMapThing *spot)
+static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 {
 	fixed_t closest = INT_MAX;
 	fixed_t distance;
@@ -1433,10 +1449,10 @@ static fixed_t PlayersRangeFromSpot (FMapThing *spot)
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.
-static FMapThing *SelectFarthestDeathmatchSpot (size_t selections)
+static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 {
 	fixed_t bestdistance = 0;
-	FMapThing *bestspot = NULL;
+	FPlayerStart *bestspot = NULL;
 	unsigned int i;
 
 	for (i = 0; i < selections; i++)
@@ -1454,7 +1470,7 @@ static FMapThing *SelectFarthestDeathmatchSpot (size_t selections)
 }
 
 // [RH] Select a deathmatch spawn spot at random (original mechanism)
-static FMapThing *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
+static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
 {
 	unsigned int i, j;
 
@@ -1474,7 +1490,7 @@ static FMapThing *SelectRandomDeathmatchSpot (int playernum, unsigned int select
 void G_DeathMatchSpawnPlayer (int playernum)
 {
 	unsigned int selections;
-	FMapThing *spot;
+	FPlayerStart *spot;
 
 	selections = deathmatchstarts.Size ();
 	// [RH] We can get by with just 1 deathmatch start
@@ -1489,20 +1505,58 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	else
 		spot = SelectRandomDeathmatchSpot (playernum, selections);
 
-	if (!spot)
-	{ // no good spot, so the player will probably get stuck
-		spot = &playerstarts[playernum];
+	if (spot == NULL)
+	{ // No good spot, so the player will probably get stuck.
+	  // We were probably using select farthest above, and all
+	  // the spots were taken.
+		spot = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
+		if (!G_CheckSpot(playernum, spot))
+		{ // This map doesn't have enough coop spots for this player
+		  // to use one.
+			spot = SelectRandomDeathmatchSpot(playernum, selections);
+			if (spot == NULL)
+			{ // We have a player 1 start, right?
+				spot = &playerstarts[0];
+				if (spot == NULL)
+				{ // Fine, whatever.
+					spot = &deathmatchstarts[0];
+				}
+			}
+		}
 	}
-	else
-	{
-		if (playernum < 4)
-			spot->type = playernum+1;
-		else 
-			spot->type = playernum + gameinfo.player5start - 4;
-	}
-
-	AActor *mo = P_SpawnPlayer (spot);
+	AActor *mo = P_SpawnPlayer(spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
+}
+
+//
+// G_PickPlayerStart
+//
+FPlayerStart *G_PickPlayerStart(int playernum, int flags)
+{
+	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM))
+	{
+		if (!(flags & PPS_NOBLOCKINGCHECK))
+		{
+			TArray<FPlayerStart *> good_starts;
+			unsigned int i;
+
+			// Find all unblocked player starts.
+			for (i = 0; i < AllPlayerStarts.Size(); ++i)
+			{
+				if (G_CheckSpot(playernum, &AllPlayerStarts[i]))
+				{
+					good_starts.Push(&AllPlayerStarts[i]);
+				}
+			}
+			if (good_starts.Size() > 0)
+			{ // Pick an open spot at random.
+				return good_starts[pr_pspawn(good_starts.Size())];
+			}
+	}
+		// Pick a spot at random, whether it's open or not.
+		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
+	}
+	return &playerstarts[playernum];
 }
 
 //
@@ -1556,8 +1610,6 @@ void G_DoReborn (int playernum, bool freshbot)
 	else
 	{
 		// respawn at the start
-		int i;
-
 		// first disassociate the corpse
 		if (players[playernum].mo)
 		{
@@ -1565,46 +1617,23 @@ void G_DoReborn (int playernum, bool freshbot)
 			players[playernum].mo->player = NULL;
 		}
 
-		// spawn at random spot if in death match
+		// spawn at random spot if in deathmatch
 		if (deathmatch)
 		{
 			G_DeathMatchSpawnPlayer (playernum);
 			return;
 		}
 
-		if (G_CheckSpot (playernum, &playerstarts[playernum]) )
+		if (!(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
+			G_CheckSpot (playernum, &playerstarts[playernum]))
 		{
-			AActor *mo = P_SpawnPlayer (&playerstarts[playernum]);
+			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 		else
-		{
-			// try to spawn at one of the other players' spots
-			for (i = 0; i < MAXPLAYERS; i++)
-			{
-				if (G_CheckSpot (playernum, &playerstarts[i]) )
-				{
-					int oldtype = playerstarts[i].type;
-
-					// fake as other player
-					// [RH] These numbers should be common across all games. Or better yet, not
-					// used at all outside P_SpawnMapThing().
-					if (playernum < 4)
-					{
-						playerstarts[i].type = playernum + 1;
-					}
-					else
-					{
-						playerstarts[i].type = playernum + gameinfo.player5start - 4;
-					}
-					AActor *mo = P_SpawnPlayer (&playerstarts[i]);
-					if (mo != NULL) P_PlayerStartStomp(mo);
-					playerstarts[i].type = oldtype; 			// restore 
-					return;
-				}
-				// he's going to be inside something.  Too bad.
-			}
-			AActor *mo = P_SpawnPlayer (&playerstarts[playernum]);
+		{ // try to spawn at any random player's spot
+			FPlayerStart *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
+			AActor *mo = P_SpawnPlayer(start, playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 	}
@@ -1618,18 +1647,16 @@ void G_ScreenShot (char *filename)
 
 
 
-
-
 //
 // G_InitFromSavegame
 // Can be called by the startup code or the menu task.
 //
-void G_LoadGame (const char* name)
+void G_LoadGame (const char* name, bool hidecon)
 {
 	if (name != NULL)
 	{
 		savename = name;
-		gameaction = ga_loadgame;
+		gameaction = !hidecon ? ga_loadgame : ga_loadgamehidecon;
 	}
 }
 
@@ -1689,11 +1716,13 @@ void G_DoLoadGame ()
 	char sigcheck[20];
 	char *text = NULL;
 	char *map;
+	bool hidecon;
 
 	if (gameaction != ga_autoloadgame)
 	{
 		demoplayback = false;
 	}
+	hidecon = gameaction == ga_loadgamehidecon;
 	gameaction = ga_nothing;
 
 	FILE *stdfile = fopen (savename.GetChars(), "rb");
@@ -1739,13 +1768,19 @@ void G_DoLoadGame ()
 		delete[] engine;
 	}
 
+	SaveVersion = 0;
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
 		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
 		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
 	{
-		Printf ("Savegame is from an incompatible version\n");
 		delete png;
 		fclose (stdfile);
+		Printf ("Savegame is from an incompatible version");
+		if (SaveVersion != 0)
+		{
+			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+		}
+		Printf("\n");
 		return;
 	}
 
@@ -1761,6 +1796,13 @@ void G_DoLoadGame ()
 		Printf ("Savegame is missing the current map\n");
 		fclose (stdfile);
 		return;
+	}
+
+	// Now that it looks like we can load this save, hide the fullscreen console if it was up
+	// when the game was selected from the menu.
+	if (hidecon && gamestate == GS_FULLCONSOLE)
+	{
+		gamestate = GS_HIDECONSOLE;
 	}
 
 	// Read intermission data for hubs
@@ -1791,6 +1833,7 @@ void G_DoLoadGame ()
 	}
 
 	G_ReadSnapshots (png);
+	STAT_Read(png);
 	FRandom::StaticReadRNGState (png);
 	P_ReadACSDefereds (png);
 
@@ -1902,6 +1945,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+static int nextautosave = -1;
 CVAR (Int, disableautosave, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Int, autosavecount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -1922,10 +1966,25 @@ void G_DoAutoSave ()
 	const char *readableTime;
 	int count = autosavecount != 0 ? autosavecount : 1;
 	
-	num.Int = (autosavenum + 1) % count;
+	if (nextautosave == -1) 
+	{
+		nextautosave = (autosavenum + 1) % count;
+	}
+
+	num.Int = nextautosave;
 	autosavenum.ForceSet (num, CVAR_Int);
 
-	file = G_BuildSaveName ("auto", num.Int);
+	file = G_BuildSaveName ("auto", nextautosave);
+
+	if (!(level.flags2 & LEVEL2_NOAUTOSAVEHINT))
+	{
+		nextautosave = (nextautosave + 1) % count;
+	}
+	else
+	{
+		// This flag can only be used once per level
+		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
+	}
 
 	readableTime = myasctime ();
 	strcpy (description, "Autosave ");
@@ -1994,7 +2053,7 @@ static void PutSavePic (FILE *file, int width, int height)
 	else
 	{
 		P_CheckPlayerSprites();
-		screen->WriteSavePic(&players[consoleplayer], file, width, height);
+		Renderer->WriteSavePic(&players[consoleplayer], file, width, height);
 	}
 }
 
@@ -2047,11 +2106,12 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	if (level.time != 0 || level.maptime != 0)
 	{
-		DWORD time[2] = { BigLong(TICRATE), BigLong(level.time) };
+		DWORD time[2] = { DWORD(BigLong(TICRATE)), DWORD(BigLong(level.time)) };
 		M_AppendPNGChunk (stdfile, MAKE_ID('p','t','I','c'), (BYTE *)&time, 8);
 	}
 
 	G_WriteSnapshots (stdfile);
+	STAT_Write(stdfile);
 	FRandom::StaticWriteRNGState (stdfile);
 	P_WriteACSDefereds (stdfile);
 
@@ -2306,7 +2366,7 @@ FString defdemoname;
 void G_DeferedPlayDemo (const char *name)
 {
 	defdemoname = name;
-	gameaction = ga_playdemo;
+	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
 CCMD (playdemo)
@@ -2389,7 +2449,11 @@ bool G_ProcessIFFDemo (char *mapname)
 			mapname[8] = 0;
 			demo_p += 8;
 			rngseed = ReadLong (&demo_p);
-			FRandom::StaticClearRandom ();
+			// Only reset the RNG if this demo is not in conjunction with a savegame.
+			if (mapname[0] != 0)
+			{
+				FRandom::StaticClearRandom ();
+			}
 			consoleplayer = *demo_p++;
 			break;
 
@@ -2451,7 +2515,7 @@ bool G_ProcessIFFDemo (char *mapname)
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
-			Printf ("Could not decompress demo!\n");
+			Printf ("Could not decompress demo! %s\n", M_ZLibError(r).GetChars());
 			delete[] uncompressed;
 			return true;
 		}
@@ -2492,7 +2556,7 @@ void G_DoPlayDemo (void)
 
 	if (ReadLong (&demo_p) != FORM_ID)
 	{
-		const char *eek = "Cannot play non-ZDoom demos.\n(They would go out of sync badly.)\n";
+		const char *eek = "Cannot play non-ZDoom demos.\n";
 
 		C_ForgetCVars();
 		M_Free(demobuffer);
@@ -2518,7 +2582,14 @@ void G_DoPlayDemo (void)
 		// don't spend a lot of time in loadlevel 
 		precache = false;
 		demonew = true;
-		G_InitNew (mapname, false);
+		if (mapname[0] != 0)
+		{
+			G_InitNew (mapname, false);
+		}
+		else if (numsectors == 0)
+		{
+			I_Error("Cannot play demo without its savegame\n");
+		}
 		C_HideConsole ();
 		demonew = false;
 		precache = true;
@@ -2539,7 +2610,7 @@ void G_TimeDemo (const char* name)
 	singletics = true;
 
 	defdemoname = name;
-	gameaction = ga_playdemo;
+	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
 
@@ -2570,6 +2641,7 @@ bool G_CheckDemoStatus (void)
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 		M_Free (demobuffer);
+		demobuffer = NULL;
 
 		P_SetupWeapons_ntohton();
 		demoplayback = false;
@@ -2581,8 +2653,10 @@ bool G_CheckDemoStatus (void)
 			playeringame[i] = 0;
 		consoleplayer = 0;
 		players[0].camera = NULL;
-		StatusBar->AttachToPlayer (&players[0]);
-
+		if (StatusBar != NULL)
+		{
+			StatusBar->AttachToPlayer (&players[0]);
+		}
 		if (singledemo || timingdemo)
 		{
 			if (timingdemo)

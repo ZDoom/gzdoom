@@ -46,7 +46,6 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "r_defs.h"
-#include "r_draw.h"
 #include "a_pickups.h"
 #include "s_sound.h"
 #include "cmdlib.h"
@@ -142,6 +141,11 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 	create:
 		ti = static_cast<PClassActor *>(parent->CreateDerivedClass (typeName, parent->Size));
 	}
+
+	// Copy class lists from parent
+	ti->ForbiddenToPlayerClass = parent->ForbiddenToPlayerClass;
+	ti->RestrictedToPlayerClass = parent->RestrictedToPlayerClass;
+	ti->VisibleToPlayerClass = parent->VisibleToPlayerClass;
 
 	if (parent->DamageFactors != NULL)
 	{
@@ -371,6 +375,8 @@ void LoadActors ()
 	cycle_t timer;
 
 	timer.Reset(); timer.Clock();
+	StateParams.Clear();
+	GlobalSymbols.ReleaseSymbols();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;

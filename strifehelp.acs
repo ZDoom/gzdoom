@@ -133,6 +133,17 @@ script << 0 >> (int type, int tag)
 		}
 		break;
 		
+	case 11:
+		if (tag == 0)
+		{
+			Exit_Normal (0);
+		}
+		else
+		{
+			Teleport_NewMap (tag, 0, FALSE);
+		}
+		break;
+
 	case 52:
 		tag /= 100;
 		if (tag == 0)

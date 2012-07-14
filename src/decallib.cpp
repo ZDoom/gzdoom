@@ -42,12 +42,13 @@
 #include "weightedlist.h"
 #include "statnums.h"
 #include "templates.h"
-#include "r_draw.h"
 #include "a_sharedglobal.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
+#include "b_bot.h"
+#include "farchive.h"
 
 FDecalLib DecalLibrary;
 
@@ -347,6 +348,16 @@ void FDecalLib::ReadAllDecals ()
 	int lump, lastlump = 0;
 	unsigned int i;
 
+	for(unsigned i=0;i<Animators.Size(); i++)
+	{
+		delete Animators[i];
+	}
+	Animators.Clear();
+	FDecalCombinerAnim::AnimatorList.Clear();
+	DecalTranslations.Clear();
+
+	DecalLibrary.Clear();
+
 	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
@@ -591,14 +602,14 @@ void FDecalLib::ParseDecalGroup (FScanner &sc)
 
 void FDecalLib::ParseGenerator (FScanner &sc)
 {
-	const PClass *type;
+	PClassActor *type;
 	FDecalBase *decal;
 	AActor *actor;
 
 	// Get name of generator (actor)
 	sc.MustGetString ();
-	type = PClass::FindClass (sc.String);
-	if (type == NULL || !type->IsKindOf(RUNTIME_CLASS(PClassActor)))
+	type = PClass::FindActor(sc.String);
+	if (type == NULL)
 	{
 		sc.ScriptError ("%s is not an actor.", sc.String);
 	}
@@ -1110,16 +1121,19 @@ FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (DWORD start
 const FDecalTemplate *FDecalGroup::GetDecal () const
 {
 	const FDecalBase *decal = Choices.PickEntry ();
-	const FDecalBase *remember;
+	const FDecalBase *remember = decal;
 
 	// Repeatedly GetDecal() until the result is constant, since
 	// the choice might be another FDecalGroup.
-	do
+	if (decal != NULL)
 	{
-		remember = decal;
-		decal = decal->GetDecal ();
-	} while (decal != remember);
-	return static_cast<const FDecalTemplate *>(decal);
+		do
+		{
+			remember = decal;
+			decal = decal->GetDecal ();
+		} while (decal != NULL && decal != remember);
+	}
+	return static_cast<const FDecalTemplate *>(remember);
 }
 
 FDecalAnimator::FDecalAnimator (const char *name)

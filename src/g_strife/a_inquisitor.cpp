@@ -61,7 +61,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 
 	A_FaceTarget (self);
 
-	self->z += 32*FRACBITS;
+	self->z += 32*FRACUNIT;
 	self->angle -= ANGLE_45/32;
 	proj = P_SpawnMissileZAimed (self, self->z, self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
@@ -74,7 +74,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 	{
 		proj->velz += 16*FRACUNIT;
 	}
-	self->z -= 32*FRACBITS;
+	self->z -= 32*FRACUNIT;
 	return 0;
 }
 

@@ -92,7 +92,8 @@ public:
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
 	virtual SoundHandle LoadSound(BYTE *sfxdata, int length) = 0;
-	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart) = 0;
+	SoundHandle LoadSoundVoc(BYTE *sfxdata, int length);
+	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1) = 0;
 	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory
 	virtual unsigned int GetMSLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency
 	virtual unsigned int GetSampleLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency
@@ -144,6 +145,7 @@ public:
 
 extern SoundRenderer *GSnd;
 extern bool nosfx;
+extern bool nosound;
 
 void I_InitSound ();
 void I_ShutdownSound ();

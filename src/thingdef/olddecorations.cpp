@@ -40,7 +40,6 @@
 #include "tarray.h"
 #include "templates.h"
 #include "r_defs.h"
-#include "r_draw.h"
 #include "a_pickups.h"
 #include "s_sound.h"
 #include "cmdlib.h"
@@ -49,7 +48,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
-#include "r_translate.h"
+#include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------
 
@@ -79,7 +78,7 @@ public:
 
 	bool TryPickup (AActor *&toucher)
 	{
-		INTBOOL success = LineSpecials[special] (NULL, toucher, false,
+		INTBOOL success = P_ExecuteSpecial(special, NULL, toucher, false,
 			args[0], args[1], args[2], args[3], args[4]);
 
 		if (success)

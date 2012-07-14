@@ -16,7 +16,9 @@
 #include "a_specialspot.h"
 #include "thingdef/thingdef.h"
 #include "g_level.h"
+#include "g_game.h"
 #include "doomstat.h"
+#include "farchive.h"
 
 static FRandom pr_restore ("RestorePos");
 
@@ -119,7 +121,14 @@ bool AAmmo::HandlePickup (AInventory *item)
 			}
 			int oldamount = Amount;
 
-			Amount += receiving;
+			if (Amount > 0 && Amount + receiving < 0)
+			{
+				Amount = 0x7fffffff;
+			}
+			else
+			{
+				Amount += receiving;
+			}
 			if (Amount > MaxAmount && !sv_unlimited_pickup)
 			{
 				Amount = MaxAmount;
@@ -212,33 +221,43 @@ AInventory *AAmmo::CreateTossable()
 //
 //---------------------------------------------------------------------------
 
-bool P_GiveBody (AActor *actor, int num)
+bool P_GiveBody (AActor *actor, int num, int max)
 {
-	int max;
+	if (actor->health <= 0 || (actor->player != NULL && actor->player->playerstate == PST_DEAD))
+	{ // Do not heal dead things.
+		return false;
+	}
+
 	player_t *player = actor->player;
 
+	num = clamp(num, -65536, 65536);	// prevent overflows for bad values
 	if (player != NULL)
 	{
-		max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->stamina;
-		// [MH] First step in predictable generic morph effects
- 		if (player->morphTics)
- 		{
-			if (player->MorphStyle & MORPH_FULLHEALTH)
-			{
-				if (!(player->MorphStyle & MORPH_ADDSTAMINA))
+		// Max is 0 by default, preserving default behavior for P_GiveBody()
+		// calls while supporting AHealth.
+		if (max <= 0)
+		{
+			max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->mo->stamina;
+			// [MH] First step in predictable generic morph effects
+ 			if (player->morphTics)
+ 			{
+				if (player->MorphStyle & MORPH_FULLHEALTH)
 				{
-					max -= player->stamina;
+					if (!(player->MorphStyle & MORPH_ADDSTAMINA))
+					{
+						max -= player->mo->stamina;
+					}
 				}
-			}
-			else // old health behaviour
-			{
-				max = MAXMORPHHEALTH;
-				if (player->MorphStyle & MORPH_ADDSTAMINA)
+				else // old health behaviour
 				{
-					max += player->stamina;
+					max = MAXMORPHHEALTH;
+					if (player->MorphStyle & MORPH_ADDSTAMINA)
+					{
+						max += player->mo->stamina;
+					}
 				}
-			}
- 		}
+ 			}
+		}
 		// [RH] For Strife: A negative body sets you up with a percentage
 		// of your full health.
 		if (num < 0)
@@ -267,6 +286,8 @@ bool P_GiveBody (AActor *actor, int num)
 	}
 	else
 	{
+		// Parameter value for max is ignored on monsters, preserving original
+		// behaviour on AHealth as well as on existing calls to P_GiveBody().
 		max = actor->SpawnHealth();
 		if (num < 0)
 		{
@@ -371,10 +392,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 
 	_x = self->SpawnPoint[0];
 	_y = self->SpawnPoint[1];
-	sec = P_PointInSector (_x, _y);
 
-	self->SetOrigin (_x, _y, sec->floorplane.ZatPoint (_x, _y));
-	P_CheckPosition (self, _x, _y);
+	self->UnlinkFromWorld();
+	self->x = _x;
+	self->y = _y;
+	self->LinkToWorld(true);
+	sec = self->Sector;
+	self->z =
+	self->dropoffz =
+	self->floorz = sec->floorplane.ZatPoint(_x, _y);
+	self->ceilingz = sec->ceilingplane.ZatPoint(_x, _y);
+	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS);
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
@@ -396,12 +424,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	else
 	{
 		self->z = self->SpawnPoint[2] + self->floorz;
-		if (self->flags2 & MF2_FLOATBOB)
-		{
-			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];
-		}
 	}
-	self->SetOrigin (self->x, self->y, self->z);
+	// Redo floor/ceiling check, in case of 3D floors
+	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	if (self->z < self->floorz)
+	{ // Do not reappear under the floor, even if that's where we were for the
+	  // initial spawn.
+		self->z = self->floorz;
+	}
+	if ((self->flags & MF_SOLID) && (self->z + self->height > self->ceilingz))
+	{ // Do the same for the ceiling.
+		self->z = self->ceilingz - self->height;
+	}
+	// Do not interpolate from the position the actor was at when it was
+	// picked up, in case that is different from where it is now.
+	self->PrevX = self->x;
+	self->PrevY = self->y;
+	self->PrevZ = self->z;
 	return 0;
 }
 
@@ -562,7 +601,15 @@ bool AInventory::HandlePickup (AInventory *item)
 	{
 		if (Amount < MaxAmount || sv_unlimited_pickup)
 		{
-			Amount += item->Amount;
+			if (Amount > 0 && Amount + item->Amount < 0)
+			{
+				Amount = 0x7fffffff;
+			}
+			else
+			{
+				Amount += item->Amount;
+			}
+		
 			if (Amount > MaxAmount && !sv_unlimited_pickup)
 			{
 				Amount = MaxAmount;
@@ -673,7 +720,7 @@ AInventory *AInventory::CreateTossable ()
 	{
 		return NULL;
 	}
-	if ((ItemFlags & IF_UNDROPPABLE) || Owner == NULL || Amount <= 0)
+	if ((ItemFlags & (IF_UNDROPPABLE|IF_UNTOSSABLE)) || Owner == NULL || Amount <= 0)
 	{
 		return NULL;
 	}
@@ -690,10 +737,10 @@ AInventory *AInventory::CreateTossable ()
 	{
 		copy->MaxAmount = MaxAmount;
 		copy->Amount = 1;
+		copy->DropTime = 30;
+		copy->flags &= ~(MF_SPECIAL|MF_SOLID);
 		Amount--;
 	}
-	copy->DropTime = 30;
-	copy->flags &= ~(MF_SPECIAL|MF_SOLID);
 	return copy;
 }
 
@@ -818,7 +865,7 @@ fixed_t AInventory::GetSpeedFactor ()
 //
 //===========================================================================
 
-int AInventory::AlterWeaponSprite (vissprite_t *vis)
+int AInventory::AlterWeaponSprite (visstyle_t *vis)
 {
 	if (Inventory != NULL)
 	{
@@ -970,6 +1017,11 @@ void AInventory::Touch (AActor *toucher)
 		level.found_items++;
 	}
 
+	if (flags5 & MF5_COUNTSECRET)
+	{
+		P_GiveSecret(toucher, true, true);
+	}
+
 	//Added by MC: Check if item taken was the roam destination of any bot
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
@@ -990,7 +1042,7 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 {
 	if (special)
 	{
-		LineSpecials[special] (NULL, toucher, false,
+		P_ExecuteSpecial(special, NULL, toucher, false,
 			args[0], args[1], args[2], args[3], args[4]);
 		special = 0;
 	}
@@ -1074,6 +1126,10 @@ void AInventory::Destroy ()
 	}
 	Inventory = NULL;
 	Super::Destroy ();
+
+	// Although contrived it can theoretically happen that these variables still got a pointer to this item
+	if (SendItemUse == this) SendItemUse = NULL;
+	if (SendItemDrop == this) SendItemDrop = NULL;
 }
 
 //===========================================================================
@@ -1300,13 +1356,33 @@ bool AInventory::TryPickup (AActor *&toucher)
 
 //===========================================================================
 //
-// AInventory :: TryPickup
+// AInventory :: TryPickupRestricted
+//
+//===========================================================================
+
+bool AInventory::TryPickupRestricted (AActor *&toucher)
+{
+	return false;
+}
+
+//===========================================================================
+//
+// AInventory :: CallTryPickup
 //
 //===========================================================================
 
 bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 {
-	bool res = TryPickup(toucher);
+	// unmorphed versions of a currently morphed actor cannot pick up anything. 
+	if (toucher->flags & MF_UNMORPHED) return false;
+
+	bool res;
+	if (CanPickup(toucher))
+		res = TryPickup(toucher);
+	else if (!(ItemFlags & IF_RESTRICTABSOLUTELY))
+		res = TryPickupRestricted(toucher);	// let an item decide for itself how it will handle this
+	else
+		return false;
 
 	// Morph items can change the toucher so we need an option to return this info.
 	if (toucher_return != NULL) *toucher_return = toucher;
@@ -1321,6 +1397,40 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 	return res;
 }
 
+
+//===========================================================================
+//
+// AInventory :: CanPickup
+//
+//===========================================================================
+
+bool AInventory::CanPickup (AActor *toucher)
+{
+	if (!toucher)
+		return false;
+
+	PClassActor *ai = GetClass();
+	// Is the item restricted to certain player classes?
+	if (ai->RestrictedToPlayerClass.Size() != 0)
+	{
+		for (unsigned i = 0; i < ai->RestrictedToPlayerClass.Size(); ++i)
+		{
+			if (toucher->IsKindOf(ai->RestrictedToPlayerClass[i]))
+				return true;
+		}
+		return false;
+	}
+	// Or is it forbidden to certain other classes?
+	else
+	{
+		for (unsigned i = 0; i < ai->ForbiddenToPlayerClass.Size(); ++i)
+		{
+			if (toucher->IsKindOf(ai->ForbiddenToPlayerClass[i]))
+				return false;
+		}
+	}
+	return true;
+}
 
 //===========================================================================
 //
@@ -1488,58 +1598,16 @@ const char *AHealth::PickupMessage ()
 
 bool AHealth::TryPickup (AActor *&other)
 {
-	player_t *player = other->player;
-	int max = MaxAmount;
-	
-	if (player != NULL)
+	PrevHealth = other->player != NULL ? other->player->health : other->health;
+
+	// P_GiveBody adds one new feature, applied only if it is possible to pick up negative health:
+	// Negative values are treated as positive percentages, ie Amount -100 means 100% health, ignoring max amount.
+	if (P_GiveBody(other, Amount, MaxAmount))
 	{
-		PrevHealth = other->player->health;
-		if (max == 0)
-		{
-			max = static_cast<APlayerPawn*>(other)->GetMaxHealth() + player->stamina;
-			// [MH] First step in predictable generic morph effects
- 			if (player->morphTics)
- 			{
-				if (player->MorphStyle & MORPH_FULLHEALTH)
-				{
-					if (!(player->MorphStyle & MORPH_ADDSTAMINA))
-					{
-						max -= player->stamina;
-					}
-				}
-				else // old health behaviour
-				{
-					max = MAXMORPHHEALTH;
-					if (player->MorphStyle & MORPH_ADDSTAMINA)
-					{
-						max += player->stamina;
-					}
-				}
-			}
-		}
-		if (player->health >= max)
-		{
-			return false;
-		}
-		player->health += Amount;
-		if (player->health > max)
-		{
-			player->health = max;
-		}
-		player->mo->health = player->health;
+		GoAwayAndDie();
+		return true;
 	}
-	else
-	{
-		PrevHealth = INT_MAX;
-		if (P_GiveBody(other, Amount))
-		{
-			GoAwayAndDie ();
-			return true;
-		}
-		return false;
-	}
-	GoAwayAndDie ();
-	return true;
+	return false;
 }
 
 IMPLEMENT_CLASS (AHealthPickup)

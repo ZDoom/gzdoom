@@ -26,6 +26,7 @@ struct FFlagDef
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
 void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
+bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index);
 const char *GetFlagName(int flagnum, int flagoffset);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
@@ -64,6 +65,7 @@ class FStateDefinitions
 {
 	TArray<FStateDefine> StateLabels;
 	FState *laststate;
+	FState *laststatebeforelabel;
 	intptr_t lastlabel;
 	TArray<FState> StateArray;
 
@@ -83,6 +85,7 @@ public:
 	FStateDefinitions()
 	{
 		laststate = NULL;
+		laststatebeforelabel = NULL;
 		lastlabel = -1;
 	}
 
@@ -134,7 +137,8 @@ class FStateExpressions
 	TArray<FStateExpression> expressions;
 
 public:
-	~FStateExpressions();
+	~FStateExpressions() { Clear(); }
+	void Clear();
 	int Add(FxExpression *x, PClassActor *o, bool c);
 	int Reserve(int num, PClassActor *cls);
 	void Set(int num, FxExpression *x, bool cloned = false);
@@ -400,6 +404,8 @@ FName EvalExpressionName (DWORD x, AActor *self);
 	fixed_t var = EvalExpressionFix(ParameterIndex+i, self);
 #define ACTION_PARAM_FLOAT(var,i) \
 	float var = float(EvalExpressionF(ParameterIndex+i, self));
+#define ACTION_PARAM_DOUBLE(var,i) \
+	double var = EvalExpressionF(ParameterIndex+i, self);
 #define ACTION_PARAM_CLASS(var,i) \
 	const PClass *var = EvalExpressionClass(ParameterIndex+i, self);
 #define ACTION_PARAM_STATE(var,i) \

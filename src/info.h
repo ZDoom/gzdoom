@@ -46,6 +46,8 @@
 #include "vm.h"
 #include "s_sound.h"
 
+#include "m_fixed.h"
+
 struct Baggage;
 class FScanner;
 struct FActorInfo;
@@ -65,11 +67,12 @@ struct FState
 	SWORD		Tics;
 	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
 	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
-	BYTE		Frame:6;
-	BYTE		Fullbright:1;	// State is fullbright
-	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
+	BYTE		Frame;
 	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
 	short		Light;
+	BYTE		Fullbright:1;	// State is fullbright
+	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
+	BYTE		Fast:1;
 	FState		*NextState;
 	VMFunction	*ActionFunc;
 
@@ -135,9 +138,37 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 
-typedef TMap<FName, fixed_t> DmgFactors;
+struct DmgFactors : public TMap<FName, fixed_t>
+{
+	fixed_t *CheckFactor(FName type);
+};
 typedef TMap<FName, int> PainChanceList;
+typedef TMap<FName, PalEntry> PainFlashList;
+
+struct DamageTypeDefinition
+{
+public:
+	DamageTypeDefinition() { Clear(); }
+
+	fixed_t DefaultFactor;
+	bool ReplaceFactor;
+	bool NoArmor;
+
+	void Apply(FName const type);
+	void Clear()
+	{
+		DefaultFactor = FRACUNIT;
+		ReplaceFactor = false;
+		NoArmor = false;
+	}
+
+	static DamageTypeDefinition *Get(FName const type);
+	static bool IgnoreArmor(FName const type);
+	static int ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors);
+};
+
 class DDropItem;
+class PClassPlayerPawn;
 
 class PClassActor : public PClass
 {
@@ -159,12 +190,18 @@ public:
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
 	void InitializeNativeDefaults();
+	void SetPainFlash(FName type, PalEntry color);
 
 	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
 	FState *FindState(FName name) const
 	{
 		return FindState(1, &name);
+	}
+
+	bool OwnsState(const FState *state)
+	{
+		return state >= OwnedStates && state < OwnedStates + NumOwnedStates;
 	}
 
 	PClassActor *GetReplacement(bool lookskill=true);
@@ -180,6 +217,12 @@ public:
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
+	PainFlashList *PainFlashes;
+
+	TArray<PClassPlayerPawn *> VisibleToPlayerClass;
+	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
+	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
+
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
 	fixed_t DeathHeight;	// Height on normal death
@@ -245,7 +288,7 @@ private:
 
 extern FDoomEdMap DoomEdMap;
 
-int GetSpriteIndex(const char * spritename);
+int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);
 void AddStateLight(FState *state, const char *lname);
 

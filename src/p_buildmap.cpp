@@ -9,14 +9,13 @@
 
 #include "p_local.h"
 #include "m_swap.h"
-#include "v_palette.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "r_sky.h"
-#include "r_main.h"
 #include "r_defs.h"
 #include "p_setup.h"
 #include "g_level.h"
+#include "r_data/colormaps.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -655,11 +654,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		int sidenum = int(intptr_t(lines[linenum].sidedef[1]));
 		if (bsec->floorstat & 64)
 		{ // floor is aligned to first wall
-			R_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
+			P_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
 		}
 		if (bsec->ceilingstat & 64)
 		{ // ceiling is aligned to first wall
-			R_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
+			P_AlignFlat (linenum, sidenum == bsec->wallptr, 0);
 		}
 	}
 	for (i = 0; i < numlines; i++)
@@ -766,8 +765,9 @@ static void CreateStartSpot (fixed_t *pos, FMapThing *start)
 	{
 		0, (LittleLong(pos[0])<<12), ((-LittleLong(pos[1]))<<12), 0,// tid, x, y, z
 		short(Scale ((2048-angle)&2047, 360, 2048)), 1,	// angle, type
-		7|MTF_SINGLE|224,										// flags
-		// special and args are 0
+		0, 0,							// Skillfilter, Classfilter
+		7|MTF_SINGLE|224,				// flags
+		0, {0}, 0 						// special is 0, args and Conversation are 0
 	};
 
 	*start = mt;

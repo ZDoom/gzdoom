@@ -302,6 +302,9 @@ namespace GC
 	// Marks an array of objects.
 	void MarkArray(DObject **objs, size_t count);
 
+	// For cleanup
+	void DelSoftRootHead();
+
 	// Soft-roots an object.
 	void AddSoftRoot(DObject *obj);
 

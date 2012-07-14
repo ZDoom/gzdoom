@@ -57,6 +57,7 @@ DEFINE_TOKEN_TRANS(XLAT_)
 
 static FString LastTranslator;
 TAutoGrowArray<FLineTrans> SimpleLineTranslations;
+TArray<int> XlatExpressions;
 FBoomTranslator Boomish[MAX_BOOMISH];
 int NumBoomish;
 TAutoGrowArray<FSectorTrans> SectorTranslations;
@@ -67,7 +68,14 @@ FLineFlagTrans LineFlagTranslations[16];
 struct SpecialArgs
 {
 	int addflags;
+	int argcount;
 	int args[5];
+};
+
+struct SpecialArg
+{
+	int arg;
+	ELineTransArgOp argop;
 };
 
 struct ListFilter
@@ -101,6 +109,7 @@ struct XlatParseContext : public FParseContext
 	XlatParseContext(void *parser, ParseFunc parse, int *tt)
 		: FParseContext(parser, parse, tt)
 	{
+		DefiningLineType = -1;
 	}
 
 	//==========================================================================
@@ -145,6 +154,8 @@ struct XlatParseContext : public FParseContext
 		}
 		return false;
 	}
+
+	int DefiningLineType;
 };
 
 #include "xlat_parser.c"
@@ -156,16 +167,24 @@ struct XlatParseContext : public FParseContext
 //
 //==========================================================================
 
+void P_ClearTranslator()
+{
+	SimpleLineTranslations.Clear();
+	XlatExpressions.Clear();
+	NumBoomish = 0;
+	SectorTranslations.Clear();
+	SectorMasks.Clear();
+	memset(LineFlagTranslations, 0, sizeof(LineFlagTranslations));
+	LastTranslator = "";
+}
+
 void P_LoadTranslator(const char *lumpname)
 {
 	// Only read the lump if it differs from the previous one.
 	if (LastTranslator.CompareNoCase(lumpname))
 	{
 		// Clear the old data before parsing the lump.
-		SimpleLineTranslations.Clear();
-		NumBoomish = 0;
-		SectorTranslations.Clear();
-		SectorMasks.Clear();
+		P_ClearTranslator();
 
 		void *pParser = XlatParseAlloc(malloc);
 
@@ -179,3 +198,5 @@ void P_LoadTranslator(const char *lumpname)
 		LastTranslator = lumpname;
 	}
 }
+
+

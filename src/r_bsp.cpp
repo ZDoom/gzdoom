@@ -42,9 +42,10 @@
 #include "r_plane.h"
 #include "r_draw.h"
 #include "r_things.h"
+#include "r_3dfloors.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
-#include "nodebuild.h"
+#include "p_effect.h"
 
 // State.
 #include "doomstat.h"
@@ -53,6 +54,7 @@
 #include "v_palette.h"
 #include "r_sky.h"
 #include "po_man.h"
+#include "r_data/colormaps.h"
 
 int WallMost (short *mostbuf, const secplane_t &plane);
 
@@ -109,9 +111,6 @@ int WindowLeft, WindowRight;
 WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
-
-static FNodeBuilder::FLevel PolyNodeLevel;
-static FNodeBuilder PolyNodeBuilder(PolyNodeLevel);
 
 static subsector_t *InSubsector;
 
@@ -189,6 +188,10 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 		{
 			// Post is entirely visible (above start).
 			R_StoreWallRange (first, last);
+			if (fake3D & FAKE3D_FAKEMASK)
+			{
+				return true;
+			}
 
 			// Insert a new clippost for solid walls.
 			if (solid)
@@ -217,7 +220,7 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 		R_StoreWallRange (first, start->first);
 
 		// Adjust the clip size for solid walls
-		if (solid)
+		if (solid && !(fake3D & FAKE3D_FAKEMASK))
 		{
 			start->first = first;
 		}
@@ -246,6 +249,10 @@ bool R_ClipWallSegment (int first, int last, bool solid)
 	R_StoreWallRange (next->last, last);
 
 crunch:
+	if (fake3D & FAKE3D_FAKEMASK)
+	{
+		return true;
+	}
 	if (solid)
 	{
 		// Adjust the clip size.
@@ -303,59 +310,6 @@ void R_ClearClipSegs (short left, short right)
 	newend = solidsegs+2;
 }
 
-int GetFloorLight (const sector_t *sec)
-{
-	if (sec->GetFlags(sector_t::floor) & PLANEF_ABSLIGHTING)
-	{
-		return sec->GetPlaneLight(sector_t::floor);
-	}
-	else
-	{
-		return clamp (sec->lightlevel + sec->GetPlaneLight(sector_t::floor), 0, 255);
-	}
-}
-
-int GetCeilingLight (const sector_t *sec)
-{
-	if (sec->GetFlags(sector_t::ceiling) & PLANEF_ABSLIGHTING)
-	{
-		return sec->GetPlaneLight(sector_t::ceiling);
-	}
-	else
-	{
-		return clamp (sec->lightlevel + sec->GetPlaneLight(sector_t::ceiling), 0, 255);
-	}
-}
-
-bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *source, const secplane_t *opp)
-{
-	bool copy = false;
-
-	// If the planes do not have matching slopes, then always copy them
-	// because clipping would require creating new sectors.
-	if (source->a != dest->a || source->b != dest->b || source->c != dest->c)
-	{
-		copy = true;
-	}
-	else if (opp->a != -dest->a || opp->b != -dest->b || opp->c != -dest->c)
-	{
-		if (source->d < dest->d)
-		{
-			copy = true;
-		}
-	}
-	else if (source->d < dest->d && source->d > -opp->d)
-	{
-		copy = true;
-	}
-
-	if (copy)
-	{
-		*dest = *source;
-	}
-
-	return copy;
-}
 
 //
 // killough 3/7/98: Hack floor/ceiling heights for deep water etc.
@@ -377,12 +331,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	// [RH] allow per-plane lighting
 	if (floorlightlevel != NULL)
 	{
-		*floorlightlevel = GetFloorLight (sec);
+		*floorlightlevel = sec->GetFloorLight ();
 	}
 
 	if (ceilinglightlevel != NULL)
 	{
-		*ceilinglightlevel = GetCeilingLight (sec);
+		*ceilinglightlevel = sec->GetCeilingLight ();
 	}
 
 	FakeSide = FAKED_Center;
@@ -402,7 +356,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// Replace floor and ceiling height with control sector's heights.
 		if (diffTex)
 		{
-			if (CopyPlaneIfValid (&tempsec->floorplane, &s->floorplane, &sec->ceilingplane))
+			if (s->floorplane.CopyPlaneIfValid (&tempsec->floorplane, &sec->ceilingplane))
 			{
 				tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 			}
@@ -417,12 +371,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 						if (floorlightlevel != NULL)
 						{
-							*floorlightlevel = GetFloorLight (s);
+							*floorlightlevel = s->GetFloorLight ();
 						}
 
 						if (ceilinglightlevel != NULL)
 						{
-							*ceilinglightlevel = GetCeilingLight (s);
+							*ceilinglightlevel = s->GetCeilingLight ();
 						}
 					}
 					FakeSide = FAKED_BelowFloor;
@@ -440,7 +394,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		{
 			if (diffTex)
 			{
-				if (CopyPlaneIfValid (&tempsec->ceilingplane, &s->ceilingplane, &sec->floorplane))
+				if (s->ceilingplane.CopyPlaneIfValid (&tempsec->ceilingplane, &sec->floorplane))
 				{
 					tempsec->SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
 				}
@@ -518,12 +472,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 				if (floorlightlevel != NULL)
 				{
-					*floorlightlevel = GetFloorLight (s);
+					*floorlightlevel = s->GetFloorLight ();
 				}
 
 				if (ceilinglightlevel != NULL)
 				{
-					*ceilinglightlevel = GetCeilingLight (s);
+					*ceilinglightlevel = s->GetCeilingLight ();
 				}
 			}
 			FakeSide = FAKED_BelowFloor;
@@ -555,12 +509,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 				if (floorlightlevel != NULL)
 				{
-					*floorlightlevel = GetFloorLight (s);
+					*floorlightlevel = s->GetFloorLight ();
 				}
 
 				if (ceilinglightlevel != NULL)
 				{
-					*ceilinglightlevel = GetCeilingLight (s);
+					*ceilinglightlevel = s->GetCeilingLight ();
 				}
 			}
 			FakeSide = FAKED_AboveCeiling;
@@ -715,8 +669,10 @@ void R_AddLine (seg_t *line)
 	WallDepthScale = WallInvZstep * WallTMapScale2;
 	WallDepthOrg = -WallUoverZstep * WallTMapScale2;
 
-	backsector = line->backsector;
-
+	if (!(fake3D & FAKE3D_FAKEBACK))
+	{
+		backsector = line->backsector;
+	}
 	rw_frontcz1 = frontsector->ceilingplane.ZatPoint (line->v1->x, line->v1->y);
 	rw_frontfz1 = frontsector->floorplane.ZatPoint (line->v1->x, line->v1->y);
 	rw_frontcz2 = frontsector->ceilingplane.ZatPoint (line->v2->x, line->v2->y);
@@ -732,9 +688,11 @@ void R_AddLine (seg_t *line)
 	}
 	else
 	{
-		// killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
-		backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
-
+		// kg3D - its fake, no transfer_heights
+		if (!(fake3D & FAKE3D_FAKEBACK))
+		{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
+			backsector = R_FakeFlat (backsector, &tempsec, NULL, NULL, true);
+		}
 		doorclosed = 0;		// killough 4/16/98
 
 		rw_backcz1 = backsector->ceilingplane.ZatPoint (line->v1->x, line->v1->y);
@@ -817,6 +775,10 @@ void R_AddLine (seg_t *line)
 			// [RH] and rotation
 			|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
 			|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
+
+			// kg3D - and fake lights
+			|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
+			|| (backsector->e && backsector->e->XFloor.lightlist.Size())
 			)
 		{
 			solid = false;
@@ -1003,121 +965,13 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	return true;
 }
 
-void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
-{
-	FDynamicColormap *floodcolormap;
-	int floodlight;
-	bool flooding;
-	vertex_t **triangle;
-	int i, j;
-	fixed_t diff;
-
-	if (el == NULL)
-	{
-		return;
-	}
-
-	triangle = frontsector->Triangle;
-	flooding = false;
-	floodcolormap = basecolormap;
-	floodlight = *light;
-
-	for (i = 0; i < el->NumUsedLights; ++i)
-	{
-		for (j = 0; j < 3; ++j)
-		{
-			diff = plane.ZatPoint (triangle[j]) - el->Lights[i].Plane.ZatPoint (triangle[j]);
-			if (diff != 0)
-			{
-				break;
-			}
-		}
-		if (diff >= 0)
-		{
-			break;
-		}
-
-		if (!flooding || el->Lights[i].bFlooder)
-		{
-			if (el->Lights[i].Master == NULL)
-			{
-				basecolormap = floodcolormap;
-				*light = floodlight;
-			}
-			else
-			{
-				basecolormap = el->Lights[i].Master->ColorMap;
-				*light = el->Lights[i].Master->lightlevel;
-				if (el->Lights[i].bFlooder)
-				{
-					flooding = true;
-					floodcolormap = basecolormap;
-					floodlight = *light;
-				}
-			}
-		}
-	}
-}
-
-
-
-
-//==========================================================================
-//
-// FMiniBSP Constructor
-//
-//==========================================================================
-
-FMiniBSP::FMiniBSP()
-{
-	bDirty = false;
-}
-
-//==========================================================================
-//
-// P_BuildPolyBSP
-//
-//==========================================================================
-
-void R_BuildPolyBSP(subsector_t *sub)
-{
-	assert((sub->BSP == NULL || sub->BSP->bDirty) && "BSP computed more than once");
-
-	// Set up level information for the node builder.
-	PolyNodeLevel.Sides = sides;
-	PolyNodeLevel.NumSides = numsides;
-	PolyNodeLevel.Lines = lines;
-	PolyNodeLevel.NumLines = numlines;
-
-	// Feed segs to the nodebuilder and build the nodes.
-	PolyNodeBuilder.Clear();
-	PolyNodeBuilder.AddSegs(sub->firstline, sub->numlines);
-	for (FPolyNode *pn = sub->polys; pn != NULL; pn = pn->pnext)
-	{
-		PolyNodeBuilder.AddPolySegs(&pn->segs[0], (int)pn->segs.Size());
-	}
-	PolyNodeBuilder.BuildMini(false);
-	if (sub->BSP == NULL)
-	{
-		sub->BSP = new FMiniBSP;
-	}
-	else
-	{
-		sub->BSP->bDirty = false;
-	}
-	PolyNodeBuilder.ExtractMini(sub->BSP);
-	for (unsigned int i = 0; i < sub->BSP->Subsectors.Size(); ++i)
-	{
-		sub->BSP->Subsectors[i].sector = sub->sector;
-	}
-}
 
 void R_Subsector (subsector_t *sub);
 static void R_AddPolyobjs(subsector_t *sub)
 {
 	if (sub->BSP == NULL || sub->BSP->bDirty)
 	{
-		R_BuildPolyBSP(sub);
+		sub->BuildPolyBSP();
 	}
 	if (sub->BSP->Nodes.Size() == 0)
 	{
@@ -1129,6 +983,24 @@ static void R_AddPolyobjs(subsector_t *sub)
 	}
 }
 
+// kg3D - add fake segs, never rendered
+void R_FakeDrawLoop(subsector_t *sub)
+{
+	int 		 count;
+	seg_t*		 line;
+
+	count = sub->numlines;
+	line = sub->firstline;
+
+	while (count--)
+	{
+		if ((line->sidedef) && !(line->sidedef->Flags & WALLF_POLYOBJ))
+		{
+			R_AddLine (line);
+		}
+		line++;
+	}
+}
 
 //
 // R_Subsector
@@ -1144,6 +1016,13 @@ void R_Subsector (subsector_t *sub)
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
 	bool		 outersubsector;
+	int	fll, cll, position;
+
+	// kg3D - fake floor stuff
+	visplane_t *backupfp;
+	visplane_t *backupcp;
+	//secplane_t templane;
+	lightlist_t *light;
 
 	if (InSubsector != NULL)
 	{ // InSubsector is not NULL. This means we are rendering from a mini-BSP.
@@ -1181,13 +1060,25 @@ void R_Subsector (subsector_t *sub)
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
 						   &ceilinglightlevel, false);	// killough 4/11/98
 
-	basecolormap = frontsector->ColorMap;
-	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
+	fll = floorlightlevel;
+	cll = ceilinglightlevel;
 
 	// [RH] set foggy flag
 	foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 	r_actualextralight = foggy ? 0 : extralight << 4;
-	basecolormap = frontsector->ColorMap;
+
+	// kg3D - fake lights
+	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+	{
+		light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
+		basecolormap = light->extra_colormap;
+		ceilinglightlevel = *light->p_lightlevel;
+	}
+	else
+	{
+		basecolormap = frontsector->ColorMap;
+	}
+
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
@@ -1197,6 +1088,8 @@ void R_Subsector (subsector_t *sub)
 		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 					frontsector->GetTexture(sector_t::ceiling),
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
+					frontsector->GetAlpha(sector_t::ceiling),
+					!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
 					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetXScale(sector_t::ceiling),
@@ -1206,8 +1099,16 @@ void R_Subsector (subsector_t *sub)
 					frontsector->CeilingSkyBox
 					) : NULL;
 
-	basecolormap = frontsector->ColorMap;
-	R_GetExtraLight (&floorlightlevel, frontsector->floorplane, frontsector->ExtraLights);
+	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+	{
+		light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
+		basecolormap = light->extra_colormap;
+		floorlightlevel = *light->p_lightlevel;
+	}
+	else
+	{
+		basecolormap = frontsector->ColorMap;
+	}
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
@@ -1221,6 +1122,8 @@ void R_Subsector (subsector_t *sub)
 		R_FindPlane(frontsector->floorplane,
 					frontsector->GetTexture(sector_t::floor),
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
+					frontsector->GetAlpha(sector_t::floor),
+					!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
 					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetXScale(sector_t::floor),
@@ -1229,6 +1132,146 @@ void R_Subsector (subsector_t *sub)
 					frontsector->sky,
 					frontsector->FloorSkyBox
 					) : NULL;
+
+	// kg3D - fake planes rendering
+	if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
+	{
+		backupfp = floorplane;
+		backupcp = ceilingplane;
+		// first check all floors
+		for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
+		{
+			fakeFloor = frontsector->e->XFloor.ffloors[i];
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!fakeFloor->model) continue;
+			if (fakeFloor->bottom.plane->a || fakeFloor->bottom.plane->b) continue;
+			if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES)))
+			{
+				R_3D_AddHeight(fakeFloor->top.plane, frontsector);
+			}
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->alpha == 0) continue;
+			if (fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
+			fakeAlpha = MIN(Scale(fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+			if (fakeFloor->validcount != validcount)
+			{
+				fakeFloor->validcount = validcount;
+				R_3D_NewClip();
+			}
+			fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->soundorg[0], frontsector->soundorg[0]);
+			if (fakeHeight < viewz &&
+				fakeHeight > frontsector->floorplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]))
+			{
+				fake3D = FAKE3D_FAKEFLOOR;
+				tempsec = *fakeFloor->model;
+				tempsec.floorplane = *fakeFloor->top.plane;
+				tempsec.ceilingplane = *fakeFloor->bottom.plane;
+				if (!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR))
+				{
+					tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
+					position = sector_t::ceiling;
+				} else position = sector_t::floor;
+				frontsector = &tempsec;
+
+				if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+				{
+					light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
+					basecolormap = light->extra_colormap;
+					floorlightlevel = *light->p_lightlevel;
+				}
+
+				ceilingplane = NULL;
+				floorplane = R_FindPlane(frontsector->floorplane,
+					frontsector->GetTexture(sector_t::floor),
+					floorlightlevel + r_actualextralight,				// killough 3/16/98
+					frontsector->GetAlpha(sector_t::floor),
+					!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
+					frontsector->GetXOffset(position),		// killough 3/7/98
+					frontsector->GetYOffset(position),		// killough 3/7/98
+					frontsector->GetXScale(position),
+					frontsector->GetYScale(position),
+					frontsector->GetAngle(position),
+					frontsector->sky,
+					NULL);
+
+				R_FakeDrawLoop(sub);
+				fake3D = 0;
+				frontsector = sub->sector;
+			}
+		}
+		// and now ceilings
+		for (unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++)
+		{
+			fakeFloor = frontsector->e->XFloor.ffloors[i];
+			if (!(fakeFloor->flags & FF_EXISTS)) continue;
+			if (!fakeFloor->model) continue;
+			if (fakeFloor->top.plane->a || fakeFloor->top.plane->b) continue;
+			if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES)))
+			{
+				R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
+			}
+			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->alpha == 0) continue;
+			if (!(fakeFloor->flags & FF_THISINSIDE) && (fakeFloor->flags & (FF_SWIMMABLE|FF_INVERTSECTOR)) == (FF_SWIMMABLE|FF_INVERTSECTOR)) continue;
+			fakeAlpha = MIN(Scale(fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+
+			if (fakeFloor->validcount != validcount)
+			{
+				fakeFloor->validcount = validcount;
+				R_3D_NewClip();
+			}
+			fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]);
+			if (fakeHeight > viewz &&
+				fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->soundorg[0], frontsector->soundorg[1]))
+			{
+				fake3D = FAKE3D_FAKECEILING;
+				tempsec = *fakeFloor->model;
+				tempsec.floorplane = *fakeFloor->top.plane;
+				tempsec.ceilingplane = *fakeFloor->bottom.plane;
+				if ((!(fakeFloor->flags & FF_THISINSIDE) && !(fakeFloor->flags & FF_INVERTSECTOR)) ||
+					(fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR))
+				{
+					tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
+					position = sector_t::floor;
+				} else position = sector_t::ceiling;
+				frontsector = &tempsec;
+
+				tempsec.ceilingplane.ChangeHeight(-1);
+				if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
+				{
+					light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
+					basecolormap = light->extra_colormap;
+					ceilinglightlevel = *light->p_lightlevel;
+				}
+				tempsec.ceilingplane.ChangeHeight(1);
+
+				floorplane = NULL;
+				ceilingplane = R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+					frontsector->GetTexture(sector_t::ceiling),
+					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
+					frontsector->GetAlpha(sector_t::ceiling),
+					!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
+					frontsector->GetXOffset(position),		// killough 3/7/98
+					frontsector->GetYOffset(position),		// killough 3/7/98
+					frontsector->GetXScale(position),
+					frontsector->GetYScale(position),
+					frontsector->GetAngle(position),
+					frontsector->sky,
+					NULL);
+
+				R_FakeDrawLoop(sub);
+				fake3D = 0;
+				frontsector = sub->sector;
+			}
+		}
+		fakeFloor = NULL;
+		floorplane = backupfp;
+		ceilingplane = backupcp;
+	}
+
+	basecolormap = frontsector->ColorMap;
+	floorlightlevel = fll;
+	ceilinglightlevel = cll;
 
 	// killough 9/18/98: Fix underwater slowdown, by passing real sector 
 	// instead of fake one. Improve sprite lighting by basing sprite
@@ -1248,11 +1291,52 @@ void R_Subsector (subsector_t *sub)
 		}
 	}
 
+	count = sub->numlines;
+	line = sub->firstline;
+
 	while (count--)
 	{
 		if (!outersubsector || line->sidedef == NULL || !(line->sidedef->Flags & WALLF_POLYOBJ))
 		{
-			R_AddLine (line);
+			// kg3D - fake planes bounding calculation
+			if (r_3dfloors && line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
+			{
+				backupfp = floorplane;
+				backupcp = ceilingplane;
+				floorplane = NULL;
+				ceilingplane = NULL;
+				for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
+				{
+					fakeFloor = line->backsector->e->XFloor.ffloors[i];
+					if (!(fakeFloor->flags & FF_EXISTS)) continue;
+					if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+					if (!fakeFloor->model) continue;
+					fake3D = FAKE3D_FAKEBACK;
+					tempsec = *fakeFloor->model;
+					tempsec.floorplane = *fakeFloor->top.plane;
+					tempsec.ceilingplane = *fakeFloor->bottom.plane;
+					backsector = &tempsec;
+					if (fakeFloor->validcount != validcount)
+					{
+						fakeFloor->validcount = validcount;
+						R_3D_NewClip();
+					}
+					if (frontsector->CenterFloor() >= backsector->CenterFloor())
+					{
+						fake3D |= FAKE3D_CLIPBOTFRONT;
+					}
+					if (frontsector->CenterCeiling() <= backsector->CenterCeiling())
+					{
+						fake3D |= FAKE3D_CLIPTOPFRONT;
+					}
+					R_AddLine(line); // fake
+				}
+				fakeFloor = NULL;
+				fake3D = 0;
+				floorplane = backupfp;
+				ceilingplane = backupcp;
+			}
+			R_AddLine (line); // now real
 		}
 		line++;
 	}

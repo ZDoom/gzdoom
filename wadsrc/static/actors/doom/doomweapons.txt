@@ -587,6 +587,7 @@ ACTOR BFGExtra
 	+NOGRAVITY
 	RenderStyle Add
 	Alpha 0.75
+	DamageType "BFGSplash"
 	States
 	{
 	Spawn:

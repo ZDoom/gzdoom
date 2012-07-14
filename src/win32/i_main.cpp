@@ -79,7 +79,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "r_main.h"
+#include "r_utility.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -253,21 +253,6 @@ static void UnWTS (void)
 
 //==========================================================================
 //
-// FinalGC
-//
-// If this doesn't free everything, the debug CRT will let us know.
-//
-//==========================================================================
-
-static void FinalGC()
-{
-	GC::FinalGC = true;
-	Args = NULL;
-	GC::FullGC();
-}
-
-//==========================================================================
-//
 // LayoutErrorPane
 //
 // Lays out the error pane to the desired width, returning the required
@@ -356,7 +341,7 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 	w = rect.right;
 	h = rect.bottom;
 
-	if (DoomStartupInfo != NULL && GameTitleWindow != NULL)
+	if (DoomStartupInfo.Name.IsNotEmpty() && GameTitleWindow != NULL)
 	{
 		bannerheight = GameTitleFontHeight + 5;
 		MoveWindow (GameTitleWindow, 0, 0, w, bannerheight, TRUE);
@@ -398,6 +383,19 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 		MoveWindow (ConWindow, leftside, bannerheight, w - leftside,
 			h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
 	}
+}
+
+
+//==========================================================================
+//
+// I_SetIWADInfo
+//
+//==========================================================================
+
+void I_SetIWADInfo()
+{
+	// Make the startup banner show itself
+	LayoutMainWindow(Window, NULL);
 }
 
 //==========================================================================
@@ -502,7 +500,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DRAWITEM:
 		// Draw title banner.
-		if (wParam == IDC_STATIC_TITLE && DoomStartupInfo != NULL)
+		if (wParam == IDC_STATIC_TITLE && DoomStartupInfo.Name.IsNotEmpty())
 		{
 			const PalEntry *c;
 
@@ -512,7 +510,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Draw the background.
 			rect = drawitem->rcItem;
 			rect.bottom -= 1;
-			c = (const PalEntry *)&DoomStartupInfo->BkColor;
+			c = (const PalEntry *)&DoomStartupInfo.BkColor;
 			hbr = CreateSolidBrush (RGB(c->r,c->g,c->b));
 			FillRect (drawitem->hDC, &drawitem->rcItem, hbr);
 			DeleteObject (hbr);
@@ -520,14 +518,14 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Calculate width of the title string.
 			SetTextAlign (drawitem->hDC, TA_TOP);
 			oldfont = SelectObject (drawitem->hDC, GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT));
-			titlelen = (int)strlen (DoomStartupInfo->Name);
-			GetTextExtentPoint32 (drawitem->hDC, DoomStartupInfo->Name, titlelen, &size);
+			titlelen = (int)DoomStartupInfo.Name.Len();
+			GetTextExtentPoint32 (drawitem->hDC, DoomStartupInfo.Name, titlelen, &size);
 
 			// Draw the title.
-			c = (const PalEntry *)&DoomStartupInfo->FgColor;
+			c = (const PalEntry *)&DoomStartupInfo.FgColor;
 			SetTextColor (drawitem->hDC, RGB(c->r,c->g,c->b));
 			SetBkMode (drawitem->hDC, TRANSPARENT);
-			TextOut (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, DoomStartupInfo->Name, titlelen);
+			TextOut (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, DoomStartupInfo.Name, titlelen);
 			SelectObject (drawitem->hDC, oldfont);
 			return TRUE;
 		}
@@ -815,7 +813,6 @@ void DoMain (HINSTANCE hInstance)
 #endif
 
 		Args = new DArgs(__argc, __argv);
-		atterm(FinalGC);
 
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we
@@ -1288,7 +1285,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	_CrtSetDbgFlag (_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 
 	// Use this to break at a specific allocation number.
-	//_crtBreakAlloc = 30055;
+	//_crtBreakAlloc = 77624;
 #endif
 
 	DoMain (hInstance);

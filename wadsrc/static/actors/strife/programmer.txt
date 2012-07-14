@@ -76,7 +76,7 @@ ACTOR Programmer 71
 		PRGR S 6 Bright
 		PRGR TUVW 5 Bright
 		PRGR X 32 Bright
-		PRGR Y -1 Bright A_ProgrammerDeath
+		PRGR X -1 Bright A_ProgrammerDeath
 		Stop
 	}
 }

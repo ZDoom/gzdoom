@@ -32,7 +32,6 @@ void A_SpectralMissile (AActor *self, const char *missilename)
 		if (missile != NULL)
 		{
 			missile->tracer = self->target;
-			missile->health = -2;
 			P_CheckMissileSpawn(missile);
 		}
 	}

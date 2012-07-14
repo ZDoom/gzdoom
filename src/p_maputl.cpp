@@ -135,86 +135,101 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 //
 // Sets opentop and openbottom to the window
 // through a two sided line.
-// OPTIMIZE: keep this precalculated
 //
 //==========================================================================
 
 void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, 
-					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy)
+					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, int flags)
 {
-	sector_t *front, *back;
-	fixed_t fc, ff, bc, bf;
-
-	if (linedef->sidedef[1] == NULL)
+	if (!(flags & FFCF_ONLY3DFLOORS))
 	{
-		// single sided line
-		open.range = 0;
-		return;
-	}
+		sector_t *front, *back;
+		fixed_t fc, ff, bc, bf;
 
-	front = linedef->frontsector;
-	back = linedef->backsector;
+		if (linedef->sidedef[1] == NULL)
+		{
+			// single sided line
+			open.range = 0;
+			return;
+		}
 
-	fc = front->ceilingplane.ZatPoint (x, y);
-	ff = front->floorplane.ZatPoint (x, y);
-	bc = back->ceilingplane.ZatPoint (x, y);
-	bf = back->floorplane.ZatPoint (x, y);
+		front = linedef->frontsector;
+		back = linedef->backsector;
 
-	/*Printf ("]]]]]] %d %d\n", ff, bf);*/
+		fc = front->ceilingplane.ZatPoint (x, y);
+		ff = front->floorplane.ZatPoint (x, y);
+		bc = back->ceilingplane.ZatPoint (x, y);
+		bf = back->floorplane.ZatPoint (x, y);
 
-	open.topsec = fc < bc? front : back;
-	open.ceilingpic = open.topsec->GetTexture(sector_t::ceiling);
-	open.top = fc < bc ? fc : bc;
+		/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 
-	bool usefront;
+		open.topsec = fc < bc? front : back;
+		open.ceilingpic = open.topsec->GetTexture(sector_t::ceiling);
+		open.top = fc < bc ? fc : bc;
 
-	// [RH] fudge a bit for actors that are moving across lines
-	// bordering a slope/non-slope that meet on the floor. Note
-	// that imprecisions in the plane equation mean there is a
-	// good chance that even if a slope and non-slope look like
-	// they line up, they won't be perfectly aligned.
-	if (refx == FIXED_MIN ||
-		abs (ff-bf) > 256)
-	{
-		usefront = (ff > bf);
-	}
-	else
-	{
-		if ((front->floorplane.a | front->floorplane.b) == 0)
-			usefront = true;
-		else if ((back->floorplane.a | front->floorplane.b) == 0)
-			usefront = false;
+		bool usefront;
+
+		// [RH] fudge a bit for actors that are moving across lines
+		// bordering a slope/non-slope that meet on the floor. Note
+		// that imprecisions in the plane equation mean there is a
+		// good chance that even if a slope and non-slope look like
+		// they line up, they won't be perfectly aligned.
+		if (refx == FIXED_MIN ||
+			abs (ff-bf) > 256)
+		{
+			usefront = (ff > bf);
+		}
 		else
-			usefront = !P_PointOnLineSide (refx, refy, linedef);
-	}
+		{
+			if ((front->floorplane.a | front->floorplane.b) == 0)
+				usefront = true;
+			else if ((back->floorplane.a | front->floorplane.b) == 0)
+				usefront = false;
+			else
+				usefront = !P_PointOnLineSide (refx, refy, linedef);
+		}
 
-	if (usefront)
-	{
-		open.bottom = ff;
-		open.bottomsec = front;
-		open.floorpic = front->GetTexture(sector_t::floor);
-		open.lowfloor = bf;
+		if (usefront)
+		{
+			open.bottom = ff;
+			open.bottomsec = front;
+			open.floorpic = front->GetTexture(sector_t::floor);
+			open.lowfloor = bf;
+		}
+		else
+		{
+			open.bottom = bf;
+			open.bottomsec = back;
+			open.floorpic = back->GetTexture(sector_t::floor);
+			open.lowfloor = ff;
+		}
 	}
 	else
-	{
-		open.bottom = bf;
-		open.bottomsec = back;
-		open.floorpic = back->GetTexture(sector_t::floor);
-		open.lowfloor = ff;
+	{ // Dummy stuff to have some sort of opening for the 3D checks to modify
+		open.topsec = NULL;
+		open.ceilingpic.SetInvalid();
+		open.top = FIXED_MAX;
+		open.bottomsec = NULL;
+		open.floorpic.SetInvalid();
+		open.bottom = FIXED_MIN;
+		open.lowfloor = FIXED_MAX;
 	}
 
 	// Check 3D floors
 	if (actor != NULL)
 	{
-		P_LineOpening_XFloors(open, actor, linedef, x, y, refx, refy);
+		P_LineOpening_XFloors(open, actor, linedef, x, y, refx, refy, !!(flags & FFCF_3DRESTRICT));
 	}
 
 	if (actor != NULL && linedef->frontsector != NULL && linedef->backsector != NULL && 
 		linedef->flags & ML_3DMIDTEX)
 	{
-		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open.top, open.bottom);
+		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open, !!(flags & FFCF_3DRESTRICT));
 	}
-	else open.touchmidtex = false;
+	else
+	{
+		open.abovemidtex = open.touchmidtex = false;
+	}
 
 	open.range = open.top - open.bottom;
 }
@@ -246,26 +261,30 @@ void AActor::UnlinkFromWorld ()
 		// pointers, allows head node pointers to be treated like everything else
 		AActor **prev = sprev;
 		AActor  *next = snext;
-		if ((*prev = next))  // unlink from sector list
-			next->sprev = prev;
-		snext = NULL;
-		sprev = (AActor **)(size_t)0xBeefCafe;	// Woo! Bug-catching value!
 
-		// phares 3/14/98
-		//
-		// Save the sector list pointed to by touching_sectorlist.
-		// In P_SetThingPosition, we'll keep any nodes that represent
-		// sectors the Thing still touches. We'll add new ones then, and
-		// delete any nodes for sectors the Thing has vacated. Then we'll
-		// put it back into touching_sectorlist. It's done this way to
-		// avoid a lot of deleting/creating for nodes, when most of the
-		// time you just get back what you deleted anyway.
-		//
-		// If this Thing is being removed entirely, then the calling
-		// routine will clear out the nodes in sector_list.
+		if (prev != NULL)	// prev will be NULL if this actor gets deleted due to cleaning up from a broken savegame
+		{
+			if ((*prev = next))  // unlink from sector list
+				next->sprev = prev;
+			snext = NULL;
+			sprev = (AActor **)(size_t)0xBeefCafe;	// Woo! Bug-catching value!
 
-		sector_list = touching_sectorlist;
-		touching_sectorlist = NULL; //to be restored by P_SetThingPosition
+			// phares 3/14/98
+			//
+			// Save the sector list pointed to by touching_sectorlist.
+			// In P_SetThingPosition, we'll keep any nodes that represent
+			// sectors the Thing still touches. We'll add new ones then, and
+			// delete any nodes for sectors the Thing has vacated. Then we'll
+			// put it back into touching_sectorlist. It's done this way to
+			// avoid a lot of deleting/creating for nodes, when most of the
+			// time you just get back what you deleted anyway.
+			//
+			// If this Thing is being removed entirely, then the calling
+			// routine will clear out the nodes in sector_list.
+
+			sector_list = touching_sectorlist;
+			touching_sectorlist = NULL; //to be restored by P_SetThingPosition
+		}
 	}
 		
 	if (!(flags & MF_NOBLOCKMAP))
@@ -358,10 +377,10 @@ void AActor::LinkToWorld (sector_t *sec)
 	// link into blockmap (inert things don't need to be in the blockmap)
 	if ( !(flags & MF_NOBLOCKMAP) )
 	{
-		int x1 = (x - radius - bmaporgx)>>MAPBLOCKSHIFT;
-		int x2 = (x + radius - bmaporgx)>>MAPBLOCKSHIFT;
-		int y1 = (y - radius - bmaporgy)>>MAPBLOCKSHIFT;
-		int y2 = (y + radius - bmaporgy)>>MAPBLOCKSHIFT;
+		int x1 = GetSafeBlockX(x - radius - bmaporgx);
+		int x2 = GetSafeBlockX(x + radius - bmaporgx);
+		int y1 = GetSafeBlockY(y - radius - bmaporgy);
+		int y2 = GetSafeBlockY(y + radius - bmaporgy);
 
 		if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
 		{ // thing is off the map
@@ -487,8 +506,8 @@ sector_t *AActor::LinkToWorldForMapThing ()
 		// one-sided line might go into a subsector behind the line, so
 		// the line would not be included as one of its subsector's segs.
 
-		int blockx = (x - bmaporgx) >> MAPBLOCKSHIFT;
-		int blocky = (y - bmaporgy) >> MAPBLOCKSHIFT;
+		int blockx = GetSafeBlockX(x - bmaporgx);
+		int blocky = GetSafeBlockY(y - bmaporgy);
 
 		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
 			(unsigned int)blocky < (unsigned int)bmapheight)
@@ -571,7 +590,7 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz)
 	LinkToWorld ();
 	floorz = Sector->floorplane.ZatPoint (ix, iy);
 	ceilingz = Sector->ceilingplane.ZatPoint (ix, iy);
-	P_FindFloorCeiling(this, true);
+	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 }
 
 FBlockNode *FBlockNode::FreeBlocks = NULL;
@@ -633,10 +652,10 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
 {
 	validcount++;
-	maxy = (box.Top() - bmaporgy) >> MAPBLOCKSHIFT;
-	miny = (box.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
-	maxx = (box.Right() - bmaporgx) >> MAPBLOCKSHIFT;
-	minx = (box.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	maxy = GetSafeBlockY(box.Top() - bmaporgy);
+	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
+	maxx = GetSafeBlockX(box.Right() - bmaporgx);
+	minx = GetSafeBlockX(box.Left() - bmaporgx);
 	Reset();
 }
 
@@ -721,14 +740,11 @@ line_t *FBlockLinesIterator::Next()
 			{
 				line_t *ld = &lines[*list];
 
+				list++;
 				if (ld->validcount != validcount)
 				{
 					ld->validcount = validcount;
 					return ld;
-				}
-				else
-				{
-					list++;
 				}
 			}
 		}
@@ -771,10 +787,10 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 FBlockThingsIterator::FBlockThingsIterator(const FBoundingBox &box)
 : DynHash(0)
 {
-	maxy = (box.Top() - bmaporgy) >> MAPBLOCKSHIFT;
-	miny = (box.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
-	maxx = (box.Right() - bmaporgx) >> MAPBLOCKSHIFT;
-	minx = (box.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	maxy = GetSafeBlockY(box.Top() - bmaporgy);
+	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
+	maxx = GetSafeBlockX(box.Right() - bmaporgx);
+	minx = GetSafeBlockX(box.Left() - bmaporgx);
 	ClearHash();
 	Reset();
 }
@@ -1164,10 +1180,9 @@ intercept_t *FPathTraverse::Next()
 
 FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
 {
-	fixed_t 	xt1;
-	fixed_t 	yt1;
-	fixed_t 	xt2;
-	fixed_t 	yt2;
+	fixed_t 	xt1, xt2;
+	fixed_t 	yt1, yt2;
+	long long	_x1, _x2, _y1, _y2;
 	
 	fixed_t 	xstep;
 	fixed_t 	ystep;
@@ -1196,18 +1211,42 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 
 	trace.x = x1;
 	trace.y = y1;
-	trace.dx = x2 - x1;
-	trace.dy = y2 - y1;
+	if (flags & PT_DELTA)
+	{
+		trace.dx = x2;
+		trace.dy = y2;
+	}
+	else
+	{
+		trace.dx = x2 - x1;
+		trace.dy = y2 - y1;
+	}
 
+	_x1 = (long long)x1 - bmaporgx;
+	_y1 = (long long)y1 - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
-	xt1 = x1>>MAPBLOCKSHIFT;
-	yt1 = y1>>MAPBLOCKSHIFT;
+	xt1 = int(_x1 >> MAPBLOCKSHIFT);
+	yt1 = int(_y1 >> MAPBLOCKSHIFT);
 
-	x2 -= bmaporgx;
-	y2 -= bmaporgy;
-	xt2 = x2>>MAPBLOCKSHIFT;
-	yt2 = y2>>MAPBLOCKSHIFT;
+	if (flags & PT_DELTA)
+	{
+		_x2 = _x1 + x2;
+		_y2 = _y1 + y2;
+		xt2 = int(_x2 >> MAPBLOCKSHIFT);
+		yt2 = int(_y2 >> MAPBLOCKSHIFT);
+		x2 = (int)_x2;
+		y2 = (int)_y2;
+	}
+	else
+	{
+		_x2 = (long long)x2 - bmaporgx;
+		_y2 = (long long)y2 - bmaporgy;
+		x2 -= bmaporgx;
+		y2 -= bmaporgy;
+		xt2 = int(_x2 >> MAPBLOCKSHIFT);
+		yt2 = int(_y2 >> MAPBLOCKSHIFT);
+	}
 
 	if (xt2 > xt1)
 	{
@@ -1227,7 +1266,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		partialx = FRACUNIT;
 		ystep = 256*FRACUNIT;
 	}	
-	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
+	yintercept = int(_y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
 
 		
 	if (yt2 > yt1)
@@ -1248,7 +1287,7 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 		partialy = FRACUNIT;
 		xstep = 256*FRACUNIT;
 	}	
-	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
+	xintercept = int(_x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
 
 	// [RH] Fix for traces that pass only through blockmap corners. In that case,
 	// xintercept and yintercept can both be set ahead of mapx and mapy, so the
@@ -1362,9 +1401,9 @@ FPathTraverse::~FPathTraverse()
 //		distance is in MAPBLOCKUNITS
 //===========================================================================
 
-AActor *P_RoughMonsterSearch (AActor *mo, int distance)
+AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable)
 {
-	return P_BlockmapSearch (mo, distance, RoughBlockCheck);
+	return P_BlockmapSearch (mo, distance, RoughBlockCheck, (void *)onlyseekable);
 }
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params)
@@ -1380,8 +1419,8 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int count;
 	AActor *target;
 
-	startX = (mo->x-bmaporgx)>>MAPBLOCKSHIFT;
-	startY = (mo->y-bmaporgy)>>MAPBLOCKSHIFT;
+	startX = GetSafeBlockX(mo->x-bmaporgx);
+	startY = GetSafeBlockY(mo->y-bmaporgy);
 	validcount++;
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
@@ -1462,14 +1501,19 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 //
 //===========================================================================
 
-static AActor *RoughBlockCheck (AActor *mo, int index, void *)
+static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 {
+	bool onlyseekable = param != NULL;
 	FBlockNode *link;
 
 	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
 		if (link->Me != mo)
 		{
+			if (onlyseekable && !mo->CanSeek(link->Me))
+			{
+				continue;
+			}
 			if (mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;

@@ -174,4 +174,46 @@ inline int BigLong (int x)
 
 #endif // __BIG_ENDIAN__
 #endif // __APPLE__
+
+
+// Data accessors, since some data is highly likely to be unaligned.
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
+inline int GetShort(const unsigned char *foo)
+{
+	return *(const short *)foo;
+}
+inline int GetInt(const unsigned char *foo)
+{
+	return *(const int *)foo;
+}
+inline int GetBigInt(const unsigned char *foo)
+{
+	return BigLong(GetInt(foo));
+}
+#else
+inline int GetShort(const unsigned char *foo)
+{
+	return short(foo[0] | (foo[1] << 8));
+}
+inline int GetInt(const unsigned char *foo)
+{
+	return int(foo[0] | (foo[1] << 8) | (foo[2] << 16) | (foo[3] << 24));
+}
+inline int GetBigInt(const unsigned char *foo)
+{
+	return int((foo[0] << 24) | (foo[1] << 16) | (foo[2] << 8) | foo[3]);
+}
+#endif
+#ifdef __BIG_ENDIAN__
+inline int GetNativeInt(const unsigned char *foo)
+{
+	return GetBigInt(foo);
+}
+#else
+inline int GetNativeInt(const unsigned char *foo)
+{
+	return GetInt(foo);
+}
+#endif
+
 #endif // __M_SWAP_H__

@@ -38,7 +38,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL)
+		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO))
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
 				return 0;
@@ -83,7 +83,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 		AWeapon *weapon = self->player->ReadyWeapon;
 		if (weapon != NULL)
 		{
-			if (!weapon->DepleteAmmo (weapon->bAltFire))
+			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 				return 0;
 
 			P_SetPsprite (self->player, ps_flash, weapon->FindState(NAME_Flash));
@@ -158,16 +158,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	angle = self->angle + (pr_saw.Random2() * (spread_xy / 255));
 	slope = P_AimLineAttack (self, angle, range, &linetarget) + (pr_saw.Random2() * (spread_z / 255));
 
-	P_LineAttack (self, angle, range,
-				  slope, damage,
-				  NAME_None, pufftype);
-
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!linetarget && (flags & SF_NOUSEAMMOMISS)))
+	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!linetarget && (flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO))
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
+
+	P_LineAttack (self, angle, range, slope, damage, NAME_Melee, pufftype, false, &linetarget);
 
 	if (!linetarget)
 	{
@@ -243,7 +241,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
@@ -279,7 +277,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
 			return 0;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
@@ -304,7 +302,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  pitch + (pr_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, NAME_BulletPuff);
+					  NAME_Hitscan, NAME_BulletPuff);
 	}
 	return 0;
 }
@@ -392,7 +390,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
 		
 		S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
@@ -436,7 +434,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
 	}
 	P_SpawnPlayerMissile (self, PClass::FindActor("Rocket"));
@@ -491,7 +489,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
 
 		FState *flash = weapon->FindState(NAME_Flash);
@@ -521,7 +519,7 @@ static void FireRailgun(AActor *self, int RailOffset)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 
 		FState *flash = weapon->FindState(NAME_Flash);
@@ -582,7 +580,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, deh.BFGCells))
 			return 0;
 	}
 
@@ -640,7 +638,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 			damage += (pr_bfgspray() & 7) + 1;
 
 		thingToHit = linetarget;
-		P_DamageMobj (thingToHit, self->target, self->target, damage, NAME_BFGSplash);
+		P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash));
 		P_TraceBleed (damage, thingToHit, self->target);
 	}
 	return 0;
@@ -681,7 +679,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
 	}
 	self->player->extralight = 2;

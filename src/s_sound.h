@@ -41,7 +41,6 @@ struct sfxinfo_t
 	int 		lumpnum;				// lump number of sfx
 
 	unsigned int next, index;			// [RH] For hashing
-//	unsigned int frequency;				// [RH] Preferred playback rate
 	float		Volume;
 
 	BYTE		PitchMask;
@@ -65,6 +64,7 @@ struct sfxinfo_t
 	enum { NO_LINK = 0xffffffff };
 
 	FRolloffInfo	Rolloff;
+	float		Attenuation;			// Multiplies the attenuation passed to S_Sound.
 };
 
 // Rolloff types
@@ -313,6 +313,8 @@ bool S_ChangeCDMusic (int track, unsigned int id=0, bool looping=true);
 
 void S_RestartMusic ();
 
+void S_MIDIDeviceChanged();
+
 int S_GetMusic (char **name);
 
 // Stops the music for sure.
@@ -331,7 +333,7 @@ void S_UpdateSounds (AActor *listener);
 void S_RestoreEvictedChannels();
 
 // [RH] S_sfx "maintenance" routines
-void S_ParseSndInfo ();
+void S_ParseSndInfo (bool redefine);
 void S_ParseReverbDef ();
 void S_UnloadReverbDef ();
 
@@ -379,10 +381,13 @@ enum EMidiDevice
 	MDEV_FMOD = 2,
 	MDEV_TIMIDITY = 3,
 	MDEV_FLUIDSYNTH = 4,
+	MDEV_GUS = 5,
 };
 
+typedef TMap<FName, FName> MusicAliasMap;
 typedef TMap<FName, int> MidiDeviceMap;
 
+extern MusicAliasMap MusicAliases;
 extern MidiDeviceMap MidiDevices;
 
 #endif

@@ -85,8 +85,6 @@ CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Bool, longsavemessages);
 
-extern void FreeKeySections();
-
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
 //
@@ -377,9 +375,9 @@ bool M_SaveDefaults (const char *filename)
 		GameConfig->ChangePathName (filename);
 	}
 	GameConfig->ArchiveGlobalData ();
-	if (GameNames[gameinfo.gametype] != NULL)
+	if (gameinfo.ConfigName.IsNotEmpty())
 	{
-		GameConfig->ArchiveGameData (GameNames[gameinfo.gametype]);
+		GameConfig->ArchiveGameData (gameinfo.ConfigName);
 	}
 	success = GameConfig->WriteConfigFile ();
 	if (filename != NULL)
@@ -420,7 +418,6 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
-	atterm (FreeKeySections);
 	atterm (M_SaveDefaultsFinal);
 }
 
@@ -622,7 +619,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 	for (i = 0; i <= 9999; i++)
 	{
-		const char *gamename = GameNames[gameinfo.gametype];
+		const char *gamename = gameinfo.ConfigName;
 
 		time_t now;
 		tm *tm;
@@ -782,4 +779,34 @@ CCMD (screenshot)
 		G_ScreenShot (NULL);
 	else
 		G_ScreenShot (argv[1]);
+}
+
+//
+// M_ZlibError
+//
+FString M_ZLibError(int zerr)
+{
+	if (zerr >= 0)
+	{
+		return "OK";
+	}
+	else if (zerr < -6)
+	{
+		FString out;
+		out.Format("%d", zerr);
+		return out;
+	}
+	else
+	{
+		static const char *errs[6] =
+		{
+			"Errno",
+			"Stream Error",
+			"Data Error",
+			"Memory Error",
+			"Buffer Error",
+			"Version Error"
+		};
+		return errs[-zerr - 1];
+	}
 }

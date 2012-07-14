@@ -70,6 +70,7 @@ struct pspdef_t
 	fixed_t 	sy;
 	int			sprite;
 	int			frame;
+	bool		processPending; // true: waiting for periodic processing on this tick
 };
 
 class FArchive;
@@ -80,6 +81,7 @@ class player_t;
 class AActor;
 struct FState;
 
+void P_NewPspriteTick();
 void P_SetPsprite (player_t *player, int position, FState *state, bool nofunction=false);
 void P_CalcSwing (player_t *player);
 void P_BringUpWeapon (player_t *player);

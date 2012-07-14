@@ -19,12 +19,12 @@ class AWhirlwind : public AActor
 {
 	DECLARE_CLASS (AWhirlwind, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS(AWhirlwind)
 
-int AWhirlwind::DoSpecialDamage (AActor *target, int damage)
+int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	int randVal;
 

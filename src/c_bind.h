@@ -57,8 +57,8 @@ public:
 	void SetBinds(const FBinding *binds);
 	bool DoKey(event_t *ev);
 	void ArchiveBindings(FConfigFile *F, const char *matchcmd = NULL);
-	int  GetKeysForCommand (char *cmd, int *first, int *second);
-	void UnbindACommand (char *str);
+	int  GetKeysForCommand (const char *cmd, int *first, int *second);
+	void UnbindACommand (const char *str);
 	void UnbindAll ();
 	void UnbindKey(const char *key);
 	void DoBind (const char *key, const char *bind);
@@ -85,6 +85,7 @@ public:
 extern FKeyBindings Bindings;
 extern FKeyBindings DoubleBindings;
 extern FKeyBindings AutomapBindings;
+extern FKeyBindings MenuBindings;
 
 
 bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds);
@@ -94,5 +95,19 @@ void C_SetDefaultBindings ();
 void C_UnbindAll ();
 
 extern const char *KeyNames[];
+
+struct FKeyAction
+{
+	FString mTitle;
+	FString mAction;
+};
+
+struct FKeySection
+{
+	FString mTitle;
+	FString mSection;
+	TArray<FKeyAction> mActions;
+};
+extern TArray<FKeySection> KeySections;
 
 #endif //__C_BINDINGS_H__

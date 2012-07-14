@@ -60,5 +60,6 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, BYTE *buttons);
 void I_GetAxes(float axes[NUM_JOYAXIS]);
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
 IJoystickConfig *I_UpdateDeviceList();
+extern void UpdateJoystickMenu(IJoystickConfig *);
 
 #endif

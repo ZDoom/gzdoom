@@ -12,6 +12,7 @@ class FConfigFile;
 class AWeapon;
 class PClassWeapon;
 class PClassPlayerPawn;
+struct visstyle_t;
 
 class FWeaponSlot
 {
@@ -77,7 +78,7 @@ struct FWeaponSlots
 	void SetFromPlayer(PClassPlayerPawn *type);
 	void StandardSetup(PClassPlayerPawn *type);
 	void LocalSetup(PClassActor *type);
-	void SendDifferences(const FWeaponSlots &other);
+	void SendDifferences(int playernum, const FWeaponSlots &other);
 	int RestoreSlots (FConfigFile *config, const char *section);
 	void PrintSettings();
 
@@ -107,10 +108,10 @@ enum
 	IF_PICKUPGOOD		= 1<<2,		// HandlePickup wants normal pickup FX to happen
 	IF_QUIET			= 1<<3,		// Don't give feedback when picking up
 	IF_AUTOACTIVATE		= 1<<4,		// Automatically activate item on pickup
-	IF_UNDROPPABLE		= 1<<5,		// The player cannot manually drop the item
+	IF_UNDROPPABLE		= 1<<5,		// Item cannot be removed unless done explicitly with RemoveInventory
 	IF_INVBAR			= 1<<6,		// Item appears in the inventory bar
 	IF_HUBPOWER			= 1<<7,		// Powerup is kept when moving in a hub
-//	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
+	IF_UNTOSSABLE		= 1<<8,		// The player cannot manually drop the item
 	IF_ADDITIVETIME		= 1<<9,		// when picked up while another item is active, time is added instead of replaced.
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
@@ -121,9 +122,9 @@ enum
 	IF_INITEFFECTFAILED	= 1<<16,	// CreateCopy tried to activate a powerup and activation failed (can happen with PowerMorph)
 	IF_NOATTENPICKUPSOUND = 1<<17,	// Play pickup sound with ATTN_NONE
 	IF_PERSISTENTPOWER	= 1<<18,	// Powerup is kept when travelling between levels
+	IF_RESTRICTABSOLUTELY = 1<<19,	// RestrictedTo and ForbiddenTo do not allow pickup in any form by other classes
 };
 
-struct vissprite_t;
 
 class PClassInventory : public PClassActor
 {
@@ -196,12 +197,14 @@ public:
 	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
 	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive);
 	virtual fixed_t GetSpeedFactor();
-	virtual int AlterWeaponSprite (vissprite_t *vis);
+	virtual int AlterWeaponSprite (visstyle_t *vis);
 
 	virtual PalEntry GetBlend ();
 
 protected:
 	virtual bool TryPickup (AActor *&toucher);
+	virtual bool TryPickupRestricted (AActor *&toucher);
+	bool CanPickup(AActor * toucher);
 	void GiveQuest(AActor * toucher);
 
 private:
@@ -280,6 +283,9 @@ public:
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
+	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)
+	fixed_t BobSpeed;						// [XA] Bobbing speed. Defines how quickly a weapon bobs.
+	fixed_t BobRangeX, BobRangeY;			// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
 
 	// In-inventory instance variables
 	TObjPtr<AAmmo> Ammo1, Ammo2;
@@ -297,6 +303,7 @@ public:
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool TryPickup (AActor *&toucher);
+	virtual bool TryPickupRestricted (AActor *&toucher);
 	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
 	virtual bool Use (bool pickup);
 	virtual void Destroy();
@@ -306,6 +313,8 @@ public:
 	virtual FState *GetReadyState ();
 	virtual FState *GetAtkState (bool hold);
 	virtual FState *GetAltAtkState (bool hold);
+	virtual FState *GetRelState ();
+	virtual FState *GetZoomState ();
 
 	virtual void PostMorphWeapon ();
 	virtual void EndPowerup ();
@@ -316,8 +325,18 @@ public:
 		AltFire,
 		EitherFire
 	};
-	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false);
-	bool DepleteAmmo (bool altFire, bool checkEnough=true);
+	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false, int ammocount = -1);
+	bool DepleteAmmo (bool altFire, bool checkEnough=true, int ammouse = -1);
+
+	enum
+	{
+		BobNormal,
+		BobInverse,
+		BobAlpha,
+		BobInverseAlpha,
+		BobSmooth,
+		BobInverseSmooth
+	};
 
 protected:
 	AAmmo *AddAmmo (AActor *other, PClassActor *ammotype, int amount);
@@ -343,7 +362,8 @@ enum
 	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickback
 	WIF_NOAUTOAIM =			0x00004000, // this weapon never uses autoaim (useful for ballistic projectiles)
 	WIF_MELEEWEAPON =		0x00008000,	// melee weapon. Used by bots and monster AI.
-
+	WIF_DEHAMMO	=			0x00010000,	// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
+										// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
 	WIF_CHEATNOTWEAPON	=	0x08000000,	// Give cheat considers this not a weapon (used by Sigil)
 
 	// Flags used only by bot AI:

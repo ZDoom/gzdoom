@@ -2420,8 +2420,8 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 		RESOLVE(min, ctx);
 		RESOLVE(max, ctx);
 		ABORT(min && max);
-		assert(min->ValueType == VAL_Int);
-		assert(max->ValueType == VAL_Int);
+		assert(min->ValueType == ValueType.Type);
+		assert(max->ValueType == ValueType.Type);
 	}
 	return this;
 };

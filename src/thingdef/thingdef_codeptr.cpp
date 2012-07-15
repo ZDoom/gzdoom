@@ -2704,7 +2704,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->x, self->z, true);
+		oktorespawn = P_CheckPosition(self, self->x, self->y, true);
 	}
 
 	if (oktorespawn)

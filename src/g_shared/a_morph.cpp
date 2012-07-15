@@ -47,6 +47,13 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	}
 	if (p->morphTics)
 	{ // Player is already a beast
+		if ((p->mo->GetClass() == spawntype)
+			&& (p->mo->PlayerFlags & PPF_CANSUPERMORPH)
+			&& (p->morphTics < (((duration) ? duration : MORPHTICS) - TICRATE))
+			&& (p->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true) == NULL))
+		{ // Make a super chicken
+			p->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
+		}
 		return false;
 	}
 	if (p->health <= 0)

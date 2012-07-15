@@ -66,6 +66,7 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 
 71C2E6D9CFA3D8750C6A9599FB2453BD // Hacx map03: There are some switches behind 
 96368EB950E33AF62EA6423434E3CEF7 // HacX map17: shootable covers in these levels
+BA530202AF0BA0C6CBAE6A0C7076FB72 // Requiem map04
 {
 	useblocking
 }
@@ -176,3 +177,10 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 {
 	floormove
 }
+
+// There is a special at the beginning of the level which relies on the Pain Elemental's lost soul limit.
+811A0C97777A198BC9B2BB558CB46E6A // Hell Revealed map19
+{
+	limitpain
+}
+

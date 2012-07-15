@@ -1158,7 +1158,10 @@ void AM_NewResolution()
 
 CCMD (togglemap)
 {
-	gameaction = ga_togglemap;
+	if (gameaction == ga_nothing)
+	{
+		gameaction = ga_togglemap;
+	}
 }
 
 //=============================================================================

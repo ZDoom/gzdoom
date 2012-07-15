@@ -100,7 +100,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 	bool result = false;
 	int counter = 0;
 
-	StateCall.Item = this;
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
@@ -2618,6 +2617,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 // A_CheckCeiling
 // [GZ] Totally copied on A_CheckFloor, jumps if actor touches ceiling
 //
+
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 {
@@ -4192,6 +4192,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 //==========================================================================
 //
 // ACS_Named* stuff
+
 //
 // These are exactly like their un-named line special equivalents, except
 // they take strings instead of integers to indicate which script to run.

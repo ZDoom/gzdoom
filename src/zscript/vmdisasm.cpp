@@ -44,6 +44,8 @@
 #define I24		MODE_ABCJOINT
 #define I8		MODE_AIMMZ | MODE_BUNUSED | MODE_CUNUSED
 #define __BCP	MODE_AUNUSED | MODE_BCJOINT | MODE_BCPARAM
+#define RPI8	MODE_AP | MODE_BIMMZ | MODE_CUNUSED
+#define KPI8	MODE_AKP | MODE_BIMMZ | MODE_CUNUSED
 #define RPI8I8	MODE_AP | MODE_BIMMZ | MODE_CIMMZ
 #define KPI8I8	MODE_AKP | MODE_BIMMZ | MODE_CIMMZ
 #define I8BCP	MODE_AIMMZ | MODE_BCJOINT | MODE_BCPARAM
@@ -215,9 +217,14 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			break;
 
 		case OP_CALL_K:
+		case OP_TAIL_K:
 			callfunc = (VMFunction *)func->KonstA[code[i].a].o;
 			callname = callfunc->Name != NAME_None ? callfunc->Name : "[anonfunc]";
-			col = printf_wrapper(out, "%.23s,%d,%d", callname, code[i].b, code[i].c);
+			col = printf_wrapper(out, "%.23s,%d", callname, code[i].b);
+			if (code[i].op == OP_CALL_K)
+			{
+				printf_wrapper(out, ",%d", code[i].c);
+			}
 			break;
 
 		case OP_RET:
@@ -316,13 +323,17 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 		{
 			printf_wrapper(out, "%d\n", code[i].i24);
 		}
-		else if (code[i].op == OP_CALL_K)
-		{
-			printf_wrapper(out, "%d,%d,%d   [%p]\n", code[i].a, code[i].b, code[i].c, callfunc);
-		}
 		else
 		{
-			printf_wrapper(out, "%d,%d,%d\n", code[i].a, code[i].b, code[i].c);
+			printf_wrapper(out, "%d,%d,%d", code[i].a, code[i].b, code[i].c);
+			if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
+			{
+				printf_wrapper(out, "   [%p]\n", callfunc);
+			}
+			else
+			{
+				printf_wrapper(out, "\n");
+			}
 		}
 	}
 }

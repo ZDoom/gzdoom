@@ -300,8 +300,7 @@ static void FinishThingdef()
 				p->Emit(&buildit);
 				delete p;
 			}
-			buildit.Emit(OP_CALL_K, buildit.GetConstantAddress(tcall->Function, ATAG_OBJECT), NAP + j, 0);
-			buildit.Emit(OP_RET, 0, REGT_NIL, 0);
+			buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(tcall->Function, ATAG_OBJECT), NAP + j, 0);
 			VMScriptFunction *sfunc = buildit.MakeFunction();
 			sfunc->NumArgs = NAP;
 			func = sfunc;

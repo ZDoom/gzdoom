@@ -430,7 +430,7 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 	{
 		ParamChange(1);
 	}
-	else if (opcode == OP_CALL || opcode == OP_CALL_K)
+	else if (opcode == OP_CALL || opcode == OP_CALL_K || opcode == OP_TAIL || opcode == OP_TAIL_K)
 	{
 		ParamChange(-opb);
 	}

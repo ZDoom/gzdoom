@@ -539,6 +539,43 @@ begin:
 			pc += C;			// Skip RESULTs
 		}
 		NEXTOP;
+	OP(TAIL_K):
+		ASSERTKA(a);
+		assert(konstatag[a] == ATAG_OBJECT);
+		ptr = konsta[a].o;
+		goto Do_TAILCALL;
+	OP(TAIL):
+		ASSERTA(a);
+		ptr = reg.a[a];
+	Do_TAILCALL:
+		assert(B <= f->NumParam);
+		assert(C <= MAX_RETURNS);
+		{
+			VMFunction *call = (VMFunction *)ptr;
+
+			if (call->Native)
+			{
+				return static_cast<VMNativeFunction *>(call)->NativeCall(stack, reg.param + f->NumParam - B, B, ret, numret);
+			}
+			else
+			{ // FIXME: Not a true tail call
+				VMScriptFunction *script = static_cast<VMScriptFunction *>(call);
+				VMFrame *newf = stack->AllocFrame(script);
+				VMFillParams(reg.param + f->NumParam - B, newf, B);
+				try
+				{
+					numret = Exec(stack, script->Code, ret, numret);
+				}
+				catch(...)
+				{
+					stack->PopFrame();
+					throw;
+				}
+				stack->PopFrame();
+				return numret;
+			}
+		}
+		NEXTOP;
 	OP(RET):
 		if (B == REGT_NIL)
 		{ // No return values

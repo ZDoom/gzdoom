@@ -246,8 +246,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithChase)
 	PARAM_ACTION_PROLOGUE;
 
 	int weaveindex = self->special1;
-	self->z += FloatBobOffsets[weaveindex];
-	self->special1 = (weaveindex+2)&63;
+	self->z += finesine[weaveindex << BOBTOFINESHIFT] * 8;
+	self->special1 = (weaveindex + 2) & 63;
 //	if (self->floorclip > 0)
 //	{
 //		P_SetMobjState(self, S_WRAITH_RAISE2);

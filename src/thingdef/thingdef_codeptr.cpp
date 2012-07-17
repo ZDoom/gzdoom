@@ -100,7 +100,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 	bool result = false;
 	int counter = 0;
 
-	StateCall.Item = this;
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
@@ -2790,6 +2789,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 // A_CheckCeiling
 // [GZ] Totally copied from A_CheckFloor, jumps if actor touches ceiling
 //
+
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 {
@@ -2878,7 +2878,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->x, self->z, true);
+		oktorespawn = P_CheckPosition(self, self->x, self->y, true);
 	}
 
 	if (oktorespawn)
@@ -4078,11 +4078,11 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdis
 
 	if (xydist != 0 && xyspeed != 0)
 	{
-		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
+		dist = MulScale13(finesine[weaveXY << BOBTOFINESHIFT], xydist);
 		newX = self->x - FixedMul (finecosine[angle], dist);
 		newY = self->y - FixedMul (finesine[angle], dist);
 		weaveXY = (weaveXY + xyspeed) & 63;
-		dist = FixedMul(FloatBobOffsets[weaveXY], xydist);
+		dist = MulScale13(finesine[weaveXY << BOBTOFINESHIFT], xydist);
 		newX += FixedMul (finecosine[angle], dist);
 		newY += FixedMul (finesine[angle], dist);
 		if (!(self->flags5 & MF5_NOINTERACTION))
@@ -4099,12 +4099,11 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdis
 		}
 		self->WeaveIndexXY = weaveXY;
 	}
-
 	if (zdist != 0 && zspeed != 0)
 	{
-		self->z -= FixedMul(FloatBobOffsets[weaveZ], zdist);
+		self->z -= MulScale13(finesine[weaveZ << BOBTOFINESHIFT], zdist);
 		weaveZ = (weaveZ + zspeed) & 63;
-		self->z += FixedMul(FloatBobOffsets[weaveZ], zdist);
+		self->z += MulScale13(finesine[weaveZ << BOBTOFINESHIFT], zdist);
 		self->WeaveIndexZ = weaveZ;
 	}
 }
@@ -4441,6 +4440,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 //==========================================================================
 //
 // ACS_Named* stuff
+
 //
 // These are exactly like their un-named line special equivalents, except
 // they take strings instead of integers to indicate which script to run.

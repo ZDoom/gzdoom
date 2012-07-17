@@ -175,9 +175,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->z -= FloatBobOffsets[self->special2] >> 1;
+	self->z -= finesine[self->special2 << BOBTOFINESHIFT] * 4;
 	self->special2 = (self->special2 + 4) & 63;
-	self->z += FloatBobOffsets[self->special2] >> 1;
+	self->z += finesine[self->special2 << BOBTOFINESHIFT] * 4;
 	return 0;
 }
 

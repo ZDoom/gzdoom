@@ -44,13 +44,14 @@
 #endif
 
 
-		
+#define FINEANGLEBITS	13
 #define FINEANGLES		8192
 #define FINEMASK		(FINEANGLES-1)
 
-
 // 0x100000000 to 0x2000
 #define ANGLETOFINESHIFT		19
+
+#define BOBTOFINESHIFT			(FINEANGLEBITS - 6)
 
 // Effective size is 10240.
 extern	fixed_t 		finesine[5*FINEANGLES/4];

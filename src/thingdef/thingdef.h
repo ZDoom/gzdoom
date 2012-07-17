@@ -350,14 +350,6 @@ int MatchString (const char *in, const char **strings);
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 	
-
-
-struct StateCallData
-{
-	FState *State;
-	bool Result;
-};
-
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
 #define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
@@ -378,7 +370,7 @@ struct StateCallData
 //#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
 #define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
-		VMValue params[5] = { self, self, VMValue(NULL, ATAG_STATE), VMValue(NULL, ATAG_GENERIC) }; \
+		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATE) }; \
 		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
 	}
 
@@ -421,10 +413,10 @@ FName EvalExpressionName (DWORD x, AActor *self);
 	angle_t var = angle_t(EvalExpressionF(ParameterIndex+i, self)*ANGLE_90/90.f);
 #endif
 
-#define ACTION_SET_RESULT(v) if (statecall != NULL) statecall->Result = v;
+#define ACTION_SET_RESULT(v) do { if (numret > 0) { assert(ret != NULL); ret->SetInt(v); numret = 1; } } while(0)
 
 // Checks to see what called the current action function
 #define ACTION_CALL_FROM_ACTOR() (callingstate == self->state)
-#define ACTION_CALL_FROM_WEAPON() (self->player && callingstate != self->state && statecall == NULL)
-#define ACTION_CALL_FROM_INVENTORY() (statecall != NULL)
+#define ACTION_CALL_FROM_WEAPON() (self->player && callingstate != self->state && !(stateowner->flags5 & MF5_INSTATECALL))
+#define ACTION_CALL_FROM_INVENTORY() (!(stateowner->flags5 & MF5_INSTATECALL))
 #endif

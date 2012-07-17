@@ -94,46 +94,59 @@ static FRandom pr_teleport("A_Teleport");
 //
 //==========================================================================
 
-bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
+bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 {
-	StateCallData StateCall;
-	bool result = false;
+	INTBOOL result = false;
 	int counter = 0;
+	int retval, numret;
+	VMReturn ret;
+	ret.IntAt(&retval);
+	VMValue params[3] = { actor, this, 0 };
 
-	while (State != NULL)
+	this->flags5 |= MF5_INSTATECALL;
+	FState *savedstate = this->state;
+
+	while (state != NULL)
 	{
-		// Assume success. The code pointer will set this to false if necessary
-		StateCall.State = State;
-		StateCall.Result = true;
-		if (State->CallAction(actor, this, &StateCall))
-		{
-			// collect all the results. Even one successful call signifies overall success.
-			result |= StateCall.Result;
-		}
+		this->state = state;
 
+		if (state->ActionFunc != NULL)
+		{
+			VMFrameStack stack;
+
+			params[2] = VMValue(state, ATAG_STATE);
+			retval = true;	// assume success
+			numret = stack.Call(state->ActionFunc, params, countof(params), &ret, 1);
+			// As long as even one state succeeds, the whole chain succeeds unless aborted below.
+			result |= retval;
+		}
 
 		// Since there are no delays it is a good idea to check for infinite loops here!
 		counter++;
 		if (counter >= 10000)	break;
 
-		if (StateCall.State == State) 
+		if (this->state == state) 
 		{
-			// Abort immediately if the state jumps to itself!
-			if (State == State->GetNextState()) 
-			{
-				return false;
+			FState *next = state->GetNextState();
+
+			if (state == next) 
+			{ // Abort immediately if the state jumps to itself!
+				result = false;
+				break;
 			}
 			
 			// If both variables are still the same there was no jump
 			// so we must advance to the next state.
-			State = State->GetNextState();
+			state = next;
 		}
 		else 
 		{
-			State = StateCall.State;
+			state = this->state;
 		}
 	}
-	return result;
+	this->flags5 &= ~MF5_INSTATECALL;
+	this->state = savedstate;
+	return !!result;
 }
 
 //==========================================================================
@@ -579,13 +592,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 // Do the state jump
 //
 //==========================================================================
-static void DoJump(AActor *self, FState *callingstate, FState *jumpto, StateCallData *statecall)
+static void DoJump(AActor *self, AActor *stateowner, FState *callingstate, FState *jumpto)
 {
 	if (jumpto == NULL) return;
 
-	if (statecall != NULL)
+	if (stateowner->flags5 & MF5_INSTATECALL)
 	{
-		statecall->State = jumpto;
+		stateowner->state = jumpto;
 	}
 	else if (self->player != NULL && callingstate == self->player->psprites[ps_weapon].state)
 	{
@@ -600,15 +613,14 @@ static void DoJump(AActor *self, FState *callingstate, FState *jumpto, StateCall
 		self->SetState(jumpto);
 	}
 	else
-	{
-		// something went very wrong. This should never happen.
+	{ // something went very wrong. This should never happen.
 		assert(false);
 	}
 }
 
 // This is just to avoid having to directly reference the internally defined
 // CallingState and statecall parameters in the code below.
-#define ACTION_JUMP(offset) DoJump(self, callingstate, offset, statecall)
+#define ACTION_JUMP(offset) DoJump(self, stateowner, callingstate, offset)
 
 //==========================================================================
 //
@@ -629,7 +641,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 		ACTION_JUMP(jumpto);
 	}
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
-	return 0;
+	return numret;
 }
 
 //==========================================================================
@@ -648,7 +660,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 		ACTION_JUMP(jump);
 	}
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
-	return 0;
+	return numret;
 }
 
 //==========================================================================
@@ -656,7 +668,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 // State jump function
 //
 //==========================================================================
-void DoJumpIfCloser(AActor *target, VM_ARGS)
+static int DoJumpIfCloser(AActor *target, VM_ARGS)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_FIXED	(dist);
@@ -673,6 +685,7 @@ void DoJumpIfCloser(AActor *target, VM_ARGS)
 	{
 		ACTION_JUMP(jump);
 	}
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
@@ -690,22 +703,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfCloser)
 		// Does the player aim at something that can be shot?
 		P_BulletSlope(self, &target);
 	}
-	DoJumpIfCloser(target, VM_ARGS_NAMES);
-	return 0;
+	return DoJumpIfCloser(target, VM_ARGS_NAMES);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTracerCloser)
 {
 	PARAM_ACTION_PROLOGUE;
-	DoJumpIfCloser(self->tracer, VM_ARGS_NAMES);
-	return 0;
+	return DoJumpIfCloser(self->tracer, VM_ARGS_NAMES);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)
 {
 	PARAM_ACTION_PROLOGUE;
-	DoJumpIfCloser(self->master, VM_ARGS_NAMES);
-	return 0;
+	return DoJumpIfCloser(self->master, VM_ARGS_NAMES);
 }
 
 //==========================================================================
@@ -713,7 +723,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)
 // State jump function
 //
 //==========================================================================
-int DoJumpIfInventory(AActor *owner, AActor *self, StateCallData *statecall, FState *callingstate, VMValue *param, int numparam)
+int DoJumpIfInventory(AActor *owner, AActor *self, AActor *stateowner, FState *callingstate, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	int paramnum = NAP-1;
 	PARAM_CLASS		(itemtype, AInventory);
@@ -725,12 +735,12 @@ int DoJumpIfInventory(AActor *owner, AActor *self, StateCallData *statecall, FSt
 
 	if (itemtype == NULL)
 	{
-		return 0;
+		return numret;
 	}
 	owner = COPY_AAPTR(owner, setowner);
 	if (owner == NULL)
 	{
-		return 0;
+		return numret;
 	}
 
 	AInventory *item = owner->FindInventory(itemtype);
@@ -747,19 +757,19 @@ int DoJumpIfInventory(AActor *owner, AActor *self, StateCallData *statecall, FSt
 			ACTION_JUMP(label);
 		}
 	}
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoJumpIfInventory(self, self, statecall, callingstate, param, numparam);
+	return DoJumpIfInventory(self, self, stateowner, callingstate, param, numparam, ret, numret);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoJumpIfInventory(self->target, self, statecall, callingstate, param, numparam);
+	return DoJumpIfInventory(self->target, self, stateowner, callingstate, param, numparam, ret, numret);
 }
 
 //==========================================================================
@@ -780,7 +790,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 
 	if (armor && armor->ArmorType == type && armor->Amount >= amount)
 		ACTION_JUMP(label);
-	return 0;
+	return numret;
 }
 
 //==========================================================================
@@ -906,7 +916,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CallSpecial)
 	bool res = !!P_ExecuteSpecial(special, NULL, self, false, arg1, arg2, arg3, arg4, arg5);
 
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 //==========================================================================
@@ -1229,13 +1239,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfNoAmmo)
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 	if (!ACTION_CALL_FROM_WEAPON())
-		return 0;
+		return numret;
 
 	if (!self->player->ReadyWeapon->CheckAmmo(self->player->ReadyWeapon->bAltFire, false, true))
 	{
 		ACTION_JUMP(jump);
 	}
-	return 0;
+	return numret;
 }
 
 
@@ -1659,7 +1669,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 //
 //===========================================================================
 
-static int DoGiveInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
+static int DoGiveInventory(AActor *receiver, VM_ARGS)
 {
 	int paramnum = NAP-1;
 	PARAM_CLASS		(mi, AInventory);
@@ -1668,8 +1678,9 @@ static int DoGiveInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
 
 	receiver = COPY_AAPTR(receiver, setreceiver);
 	if (receiver == NULL)
-	{
-		return 0;
+	{ // If there's nothing to receive it, it's obviously a fail, right?
+		ACTION_SET_RESULT(false);
+		return numret;
 	}
 
 	bool res = true;
@@ -1706,19 +1717,19 @@ static int DoGiveInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
 		res = false;
 	}
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoGiveInventory(self, statecall, VM_ARGS_NAMES);
+	return DoGiveInventory(self, VM_ARGS_NAMES);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoGiveInventory(self->target, statecall, VM_ARGS_NAMES);
+	return DoGiveInventory(self->target, VM_ARGS_NAMES);
 }
 
 //===========================================================================
@@ -1732,7 +1743,7 @@ enum
 	TIF_NOTAKEINFINITE = 1,
 };
 
-int DoTakeInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
+int DoTakeInventory(AActor *receiver, VM_ARGS)
 {
 	int paramnum = NAP-1;
 	PARAM_CLASS		(itemtype, AInventory);
@@ -1742,12 +1753,14 @@ int DoTakeInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
 	
 	if (itemtype == NULL)
 	{
-		return 0;
+		ACTION_SET_RESULT(true);
+		return numret;
 	}
 	receiver = COPY_AAPTR(receiver, setreceiver);
 	if (receiver == NULL)
 	{
-		return 0;
+		ACTION_SET_RESULT(false);
+		return numret;
 	}
 
 	bool res = false;
@@ -1779,19 +1792,19 @@ int DoTakeInventory(AActor *receiver, StateCallData *statecall, VM_ARGS)
 		}
 	}
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoTakeInventory(self, statecall, VM_ARGS_NAMES);
+	return DoTakeInventory(self, VM_ARGS_NAMES);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoTakeInventory(self->target, statecall, VM_ARGS_NAMES);
+	return DoTakeInventory(self->target, VM_ARGS_NAMES);
 }	
 
 //===========================================================================
@@ -1908,12 +1921,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	if (missile == NULL)
 	{
 		ACTION_SET_RESULT(false);
-		return 0;
+		return numret;
 	}
 
+	ACTION_SET_RESULT(true);
 	// Don't spawn monsters if this actor has been massacred
 	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
-		return 0;
+	{
+		return numret;
+	}
 
 	if (distance == 0) 
 	{
@@ -1927,9 +1943,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 		AWeapon *weapon = self->player->ReadyWeapon;
 
 		if (weapon == NULL)
-			return 0;
+			return numret;
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
-			return 0;
+			return numret;
 	}
 
 	AActor *mo = Spawn(missile, 
@@ -1940,7 +1956,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	bool res = InitSpawnedItem(self, mo, flags);
 	ACTION_SET_RESULT(res);	// for an inventory item's use state
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -1967,15 +1983,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	if (missile == NULL) 
 	{
 		ACTION_SET_RESULT(false);
-		return 0;
+		return numret;
 	}
 
+	ACTION_SET_RESULT(true);
 	if (chance > 0 && pr_spawnitemex() < chance)
-		return 0;
+		return numret;
 
 	// Don't spawn monsters if this actor has been massacred
 	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
-		return 0;
+		return numret;
 
 	fixed_t x, y;
 
@@ -2019,7 +2036,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		if (flags & SIXF_TRANSFERAMBUSHFLAG)
 			mo->flags = (mo->flags & ~MF_AMBUSH) | (self->flags & MF_AMBUSH);
 	}
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2038,8 +2055,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	PARAM_FIXED_OPT	(zvel)			{ zvel = 0; }
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
 
+	ACTION_SET_RESULT(true);
 	if (missile == NULL)
-		return 0;
+		return numret;
 
 	if (ACTION_CALL_FROM_WEAPON())
 	{
@@ -2047,9 +2065,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 		AWeapon *weapon = self->player->ReadyWeapon;
 
 		if (weapon == NULL)
-			return 0;
+			return numret;
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
-			return 0;
+			return numret;
 	}
 
 	AActor *bo;
@@ -2093,7 +2111,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	{
 		ACTION_SET_RESULT(false);
 	}
-	return 0;
+	return numret;
 }
 
 
@@ -2128,7 +2146,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SelectWeapon)
 	if (cls == NULL || self->player == NULL) 
 	{
 		ACTION_SET_RESULT(false);
-		return 0;
+		return numret;
 	}
 
 	AWeapon *weaponitem = static_cast<AWeapon*>(self->FindInventory(cls));
@@ -2139,12 +2157,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SelectWeapon)
 		{
 			self->player->PendingWeapon = weaponitem;
 		}
+		ACTION_SET_RESULT(true);
 	}
 	else
 	{
 		ACTION_SET_RESULT(false);
 	}
-	return 0;
+	return numret;
 }
 
 
@@ -2181,7 +2200,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 		con_midtime = saved;
 	}
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2212,7 +2231,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
 	C_MidPrintBold(font != NULL ? font : SmallFont, formatted.GetChars());
 	con_midtime = saved;
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2227,7 +2246,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 	PARAM_STRING(text);
 	Printf("%s\n", text);
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2242,7 +2261,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogInt)
 	PARAM_INT(num);
 	Printf("%d\n", num);
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2453,19 +2472,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 			// Always check sight from each player.
 			if (P_CheckSight(players[i].mo, self, SF_IGNOREVISIBILITY))
 			{
-				return 0;
+				return numret;
 			}
 			// If a player is viewing from a non-player, then check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
 				P_CheckSight(players[i].camera, self, SF_IGNOREVISIBILITY))
 			{
-				return 0;
+				return numret;
 			}
 		}
 	}
 
 	ACTION_JUMP(jump);
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2527,18 +2546,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 			// Always check from each player.
 			if (DoCheckSightOrRange(self, players[i].mo, range))
 			{
-				return 0;
+				return numret;
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
 				DoCheckSightOrRange(self, players[i].camera, range))
 			{
-				return 0;
+				return numret;
 			}
 		}
 	}
 	ACTION_JUMP(jump);
-	return 0;
+	return numret;
 }
 
 
@@ -2605,7 +2624,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 	if (condition)
 		ACTION_JUMP(jump);
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2781,7 +2800,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 	{
 		ACTION_JUMP(jump);
 	}
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2801,7 +2820,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 	{
 		ACTION_JUMP(jump);
 	}
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -2945,7 +2964,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
 	{
 		ACTION_JUMP(jump);
 	}
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -3045,11 +3064,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		}
 
 		if (target == NULL)
-			return 0; // [KS] Let's not call P_CheckSight unnecessarily in this case.
+			return numret; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 		
 		if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0))
 		{
-			return 0;
+			return numret;
 		}
 
 		doCheckSight = !(flags & JLOSF_NOSIGHT);
@@ -3059,7 +3078,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		// Does the player aim at something that can be shot?
 		P_BulletSlope(self, &target);
 		
-		if (!target) return 0;
+		if (!target) return numret;
 
 		switch (flags & (JLOSF_TARGETLOS|JLOSF_FLIPFOV))
 		{
@@ -3082,22 +3101,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	// [FDARI] If target is not a combatant, don't jump
 	if ( (flags & JLOSF_COMBATANTONLY) && (!target->player) && !(target->flags3 & MF3_ISMONSTER))
-		return 0;
+		return numret;
 
 	// [FDARI] If actors share team, don't jump
 	if ((flags & JLOSF_ALLYNOJUMP) && self->IsFriend(target))
-		return 0;
+		return numret;
 
 	fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
 	distance = P_AproxDistance(distance, target->z - self->z);
 
 	if (dist_max && (distance > dist_max))
-		return 0;
+		return numret;
 
 	if (dist_close && (distance < dist_close))
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
-			return 0;
+			return numret;
 
 		if (flags & JLOSF_CLOSENOFOV)
 			fov = 0;
@@ -3110,7 +3129,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	else { viewport = self; }
 
 	if (doCheckSight && !P_CheckSight (viewport, target, SF_IGNOREVISIBILITY))
-		return 0;
+		return numret;
 
 	if (flags & JLOSF_FLIPFOV)
 	{
@@ -3128,13 +3147,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
-			return 0; // [KS] Outside of FOV - return
+			return numret; // [KS] Outside of FOV - return
 		}
 
 	}
 
 	ACTION_JUMP(jump);
-	return 0;
+	return numret;
 }
 
 
@@ -3177,12 +3196,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if (target == NULL)
 	{ // [KS] Let's not call P_CheckSight unnecessarily in this case.
-		return 0;
+		return numret;
 	}
 
 	if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0))
 	{
-		return 0;
+		return numret;
 	}
 
 	fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
@@ -3190,7 +3209,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if (dist_max && (distance > dist_max))
 	{
-		return 0;
+		return numret;
 	}
 
 	bool doCheckSight = !(flags & JLOSF_NOSIGHT);
@@ -3198,7 +3217,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 	if (dist_close && (distance < dist_close))
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
-			return 0;
+			return numret;
 
 		if (flags & JLOSF_CLOSENOFOV)
 			fov = 0;
@@ -3217,14 +3236,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
-			return 0; // [KS] Outside of FOV - return
+			return numret; // [KS] Outside of FOV - return
 		}
 	}
 	if (doCheckSight && !P_CheckSight (target, self, SF_IGNOREVISIBILITY))
-		return 0;
+		return numret;
 
 	ACTION_JUMP(jump);
-	return 0;
+	return numret;
 }
 
 
@@ -3510,7 +3529,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 	AActor *owner = COPY_AAPTR(self, checkpointer);
 	if (owner == NULL)
 	{
-		return 0;
+		return numret;
 	}
 
 	long dot = flagname.IndexOf('.');
@@ -3545,7 +3564,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 	{
 		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
 	}
-	return 0;
+	return numret;
 }
 
 
@@ -3686,7 +3705,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 	A_FaceTarget(self);
 
 	if (pr_monsterrefire() < prob)
-		return 0;
+		return numret;
 
 	if (self->target == NULL
 		|| P_HitFriend (self)
@@ -3695,7 +3714,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 	{
 		ACTION_JUMP(jump);
 	}
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -3956,6 +3975,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	PARAM_FIXED_OPT		(mindist)					{ mindist = 128 << FRACBITS; }
 	PARAM_FIXED_OPT		(maxdist)					{ maxdist = 128 << FRACBITS; }
 
+	ACTION_SET_RESULT(true);
+
 	// Randomly choose not to teleport like A_Srcr2Decide.
 	if (flags & TF_RANDOMDECIDE)
 	{
@@ -3973,7 +3994,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 
 		if (pr_teleport() >= chance[chanceindex])
 		{
-			return 0;
+			return numret;
 		}
 	}
 
@@ -3984,14 +4005,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		// If still nothing, then return.
 		if (teleport_state == NULL)
 		{
-			return 0;
+			return numret;
 		}
 	}
 
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL)
 	{
-		return 0;
+		return numret;
 	}
 
 	if (target_type == NULL)
@@ -4002,7 +4023,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	AActor *spot = state->GetSpotWithMinMaxDistance(target_type, self->x, self->y, mindist, maxdist);
 	if (spot == NULL)
 	{
-		return 0;
+		return numret;
 	}
 
 	fixed_t prevX = self->x;
@@ -4023,7 +4044,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		self->angle = spot->angle;
 		self->velx = self->vely = self->velz = 0;
 	}
-	return 0;
+	return numret;
 }
 
 //===========================================================================
@@ -4153,7 +4174,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LineEffect)
 		}
 	}
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 //==========================================================================
@@ -4320,7 +4341,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	if (!reference)
 	{
 		ACTION_SET_RESULT(false);
-		return 0;
+		return numret;
 	}
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
@@ -4424,7 +4445,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 			ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 			// in this case, you have the statejump to help you handle all the success anyway.
 			ACTION_JUMP(success_state);
-			return 0;
+			return numret;
 		}
 
 		ACTION_SET_RESULT(true);
@@ -4434,7 +4455,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		self->SetOrigin(oldx, oldy, oldz);
 		ACTION_SET_RESULT(false);
 	}
-	return 0;
+	return numret;
 }
 
 //==========================================================================
@@ -4458,10 +4479,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteWithResult)
 	PARAM_INT_OPT	(arg3)				{ arg3 = 0; }
 	PARAM_INT_OPT	(arg4)				{ arg4 = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_ExecuteWithResult, NULL, self, false, -scriptname, arg1, arg2, arg3, arg4);
-
+	int res = P_ExecuteSpecial(ACS_ExecuteWithResult, NULL, self, false, -scriptname, arg1, arg2, arg3, arg4);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecute)
@@ -4473,10 +4493,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecute)
 	PARAM_INT_OPT	(arg2)				{ arg2 = 0; }
 	PARAM_INT_OPT	(arg3)				{ arg3 = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_Execute, NULL, self, false, -scriptname, mapnum, arg1, arg2, arg3);
-
+	int res = P_ExecuteSpecial(ACS_Execute, NULL, self, false, -scriptname, mapnum, arg1, arg2, arg3);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteAlways)
@@ -4488,10 +4507,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteAlways)
 	PARAM_INT_OPT	(arg2)				{ arg2 = 0; }
 	PARAM_INT_OPT	(arg3)				{ arg3 = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_ExecuteAlways, NULL, self, false, -scriptname, mapnum, arg1, arg2, arg3);
-
+	int res = P_ExecuteSpecial(ACS_ExecuteAlways, NULL, self, false, -scriptname, mapnum, arg1, arg2, arg3);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedLockedExecute)
@@ -4503,10 +4521,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedLockedExecute)
 	PARAM_INT_OPT	(arg2)				{ arg2 = 0; }
 	PARAM_INT_OPT	(lock)				{ lock = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_LockedExecute, NULL, self, false, -scriptname, mapnum, arg1, arg2, lock);
-
+	int res = P_ExecuteSpecial(ACS_LockedExecute, NULL, self, false, -scriptname, mapnum, arg1, arg2, lock);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedLockedExecuteDoor)
@@ -4518,10 +4535,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedLockedExecuteDoor)
 	PARAM_INT_OPT	(arg2)				{ arg2 = 0; }
 	PARAM_INT_OPT	(lock)				{ lock = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_LockedExecuteDoor, NULL, self, false, -scriptname, mapnum, arg1, arg2, lock);
-
+	int res = P_ExecuteSpecial(ACS_LockedExecuteDoor, NULL, self, false, -scriptname, mapnum, arg1, arg2, lock);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedSuspend)
@@ -4530,10 +4546,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedSuspend)
 	PARAM_NAME		(scriptname);
 	PARAM_INT_OPT	(mapnum)			{ mapnum = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_Suspend, NULL, self, false, -scriptname, mapnum, 0, 0, 0);
-
+	int res = P_ExecuteSpecial(ACS_Suspend, NULL, self, false, -scriptname, mapnum, 0, 0, 0);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
@@ -4542,10 +4557,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
 	PARAM_NAME		(scriptname);
 	PARAM_INT_OPT	(mapnum)			{ mapnum = 0; }
 
-	bool res = !!P_ExecuteSpecial(ACS_Terminate, NULL, self, false, -scriptname, mapnum, 0, 0, 0);
-
+	int res = P_ExecuteSpecial(ACS_Terminate, NULL, self, false, -scriptname, mapnum, 0, 0, 0);
 	ACTION_SET_RESULT(res);
-	return 0;
+	return numret;
 }
 
 

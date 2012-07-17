@@ -286,13 +286,12 @@ static void FinishThingdef()
 			}
 			VMFunctionBuilder buildit;
 			// Allocate registers used to pass parameters in.
-			// self, stateowner, state, statecalldata (all are pointers)
-			buildit.Registers[REGT_POINTER].Get(4);
+			// self, stateowner, state (all are pointers)
+			buildit.Registers[REGT_POINTER].Get(3);
 			// Emit code to pass the standard action function parameters.
 			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 0);
 			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 1);
 			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 2);
-			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 3);
 			// Emit code for action parameters.
 			for (j = 0; j < tcall->Parameters.Size(); ++j)
 			{

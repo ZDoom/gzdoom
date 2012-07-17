@@ -223,7 +223,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			col = printf_wrapper(out, "%.23s,%d", callname, code[i].b);
 			if (code[i].op == OP_CALL_K)
 			{
-				printf_wrapper(out, ",%d", code[i].c);
+				col += printf_wrapper(out, ",%d", code[i].c);
 			}
 			break;
 
@@ -328,7 +328,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			printf_wrapper(out, "%d,%d,%d", code[i].a, code[i].b, code[i].c);
 			if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
 			{
-				printf_wrapper(out, "   [%p]\n", callfunc);
+				printf_wrapper(out, "  [%p]\n", callfunc);
 			}
 			else
 			{

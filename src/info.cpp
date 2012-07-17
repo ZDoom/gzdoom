@@ -57,13 +57,12 @@ extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
 
-bool FState::CallAction(AActor *self, AActor *stateowner, StateCallData *statecall)
+bool FState::CallAction(AActor *self, AActor *stateowner)
 {
 	if (ActionFunc != NULL)
 	{
-		//ActionFunc(self, stateowner, this, ParameterIndex-1, statecall);
 		VMFrameStack stack;
-		VMValue params[4] = { self, stateowner, VMValue(this, ATAG_STATE), statecall };
+		VMValue params[3] = { self, stateowner, VMValue(this, ATAG_STATE) };
 		stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
 		return true;
 	}

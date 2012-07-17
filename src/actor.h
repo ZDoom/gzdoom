@@ -268,7 +268,7 @@ enum
 	
 // --- mobj.flags5 ---
 
-	/*					= 0x00000001,	*/
+	MF5_INSTATECALL		= 0x00000001,	// This actor is being run through CallStateChain
 	/*					= 0x00000002,	*/
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	/*					= 0x00000008,	*/

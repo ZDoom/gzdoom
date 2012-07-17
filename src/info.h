@@ -109,7 +109,7 @@ struct FState
 		Frame = frame - 'A';
 	}
 	void SetAction(VMFunction *func) { ActionFunc = func; }
-	bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL);
+	bool CallAction(AActor *self, AActor *stateowner);
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 };
@@ -294,19 +294,17 @@ void AddStateLight(FState *state, const char *lname);
 
 // Standard parameters for all action functons
 //   self         - Actor this action is to operate on (player if a weapon)
-//   stateowner   - Actor this action really belongs to (may be a weapon)
+//   stateowner   - Actor this action really belongs to (may be an item)
 //   callingstate - State this action was called from
-//   statecall    - CustomInventory stuff
 #define PARAM_ACTION_PROLOGUE_TYPE(type) \
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT	 (self, type); \
 	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
 	PARAM_STATE_OPT  (callingstate) { callingstate = NULL; } \
-	PARAM_POINTER_OPT(statecall, StateCallData) { statecall = NULL; }
 
 #define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
 
 // Number of action paramaters
-#define NAP 4
+#define NAP 3
 
 #endif	// __INFO_H__

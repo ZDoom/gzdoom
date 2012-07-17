@@ -550,3 +550,10 @@ xx(Inter_Strife_Lose)
 xx(Inter_Strife_MAP03)
 xx(Inter_Strife_MAP10)
 xx(Multiplayer)
+
+// Decorate compatibility functions
+xx(DecoRandom)
+xx(DecoFRandom)
+xx(DecoCallLineSpecial)
+xx(DecoNameToClass)
+xx(DecoFindMultiNameState)

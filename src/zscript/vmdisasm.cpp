@@ -173,6 +173,8 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 
 void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func)
 {
+	VMFunction *callfunc;
+	const char *callname;
 	const char *name;
 	int col;
 	int mode;
@@ -210,6 +212,12 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 
 		case OP_PARAMI:
 			col = printf_wrapper(out, "%d", code[i].i24);
+			break;
+
+		case OP_CALL_K:
+			callfunc = (VMFunction *)func->KonstA[code[i].a].o;
+			callname = callfunc->Name != NAME_None ? callfunc->Name : "[anonfunc]";
+			col = printf_wrapper(out, "%.23s,%d,%d", callname, code[i].b, code[i].c);
 			break;
 
 		case OP_RET:
@@ -307,6 +315,10 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 		if (code[i].op == OP_JMP || code[i].op == OP_TRY || code[i].op == OP_PARAMI)
 		{
 			printf_wrapper(out, "%d\n", code[i].i24);
+		}
+		else if (code[i].op == OP_CALL_K)
+		{
+			printf_wrapper(out, "%d,%d,%d   [%p]\n", code[i].a, code[i].b, code[i].c, callfunc);
 		}
 		else
 		{

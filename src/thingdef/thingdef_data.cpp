@@ -613,7 +613,7 @@ void InitThingdef()
 		{
 			AFuncDesc *afunc = (AFuncDesc *)*probe;
 			assert(afunc->VMPointer != NULL);
-			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function);
+			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->Name);
 			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();

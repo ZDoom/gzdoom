@@ -264,6 +264,7 @@ static void FinishThingdef()
 {
 	int errorcount = StateParams.ResolveAll();
 	unsigned i, j;
+	int codesize = 0;
 
 	FILE *dump = fopen("disasm.txt", "w");
 	for (i = 0; i < StateTempCalls.Size(); ++i)
@@ -316,6 +317,7 @@ static void FinishThingdef()
 			VMDumpConstants(dump, sfunc);
 			fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
 			VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+			codesize += sfunc->CodeSize;
 #endif
 		}
 		for (int k = 0; k < tcall->NumStates; ++k)
@@ -323,6 +325,9 @@ static void FinishThingdef()
 			tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
 		}
 	}
+#if 1
+	fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
+#endif
 	fclose(dump);
 
 	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)

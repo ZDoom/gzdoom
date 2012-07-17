@@ -6,9 +6,10 @@ IMPLEMENT_ABSTRACT_CLASS(VMFunction)
 IMPLEMENT_CLASS(VMScriptFunction)
 IMPLEMENT_CLASS(VMNativeFunction)
 
-VMScriptFunction::VMScriptFunction()
+VMScriptFunction::VMScriptFunction(FName name)
 {
 	Native = false;
+	Name = name;
 	Code = NULL;
 	KonstD = NULL;
 	KonstF = NULL;

@@ -2487,11 +2487,11 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	// Find the DecoRandom function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoRandom", false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoRandom, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoRandom");
-		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoRandom);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom, NAME_DecoRandom);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
@@ -2593,11 +2593,11 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	// Find the DecoFRandom function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoFRandom", false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoFRandom, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoFRandom");
-		VMNativeFunction *calldec = new VMNativeFunction(DecoFRandom);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoFRandom);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoFRandom, NAME_DecoFRandom);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
@@ -2683,11 +2683,11 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 	// Find the DecoRandom function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoRandom", false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoRandom, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoRandom");
-		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoRandom);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom, NAME_DecoRandom);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
@@ -3530,11 +3530,11 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	// Find the DecoCallLineSpecial function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoCallLineSpecial", false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoCallLineSpecial, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoCallLineSpecial");
-		VMNativeFunction *calldec = new VMNativeFunction(DecoCallLineSpecial);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoCallLineSpecial);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoCallLineSpecial, NAME_DecoCallLineSpecial);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
@@ -3795,11 +3795,11 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 	// Find the DecoNameToClass function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoNameToClass", false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoNameToClass, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoNameToClass");
-		VMNativeFunction *calldec = new VMNativeFunction(DecoNameToClass);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoNameToClass);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoNameToClass, NAME_DecoNameToClass);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
@@ -3995,11 +3995,11 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	// Find the DecoFindMultiNameState function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol("DecoFindMultiNameState", false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoNameToClass, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction("DecoFindMultiNameState");
-		VMNativeFunction *calldec = new VMNativeFunction(DecoFindMultiNameState);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoNameToClass);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoFindMultiNameState, NAME_DecoNameToClass);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);

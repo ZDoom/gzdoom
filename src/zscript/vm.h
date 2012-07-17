@@ -149,6 +149,10 @@ class VMFunction : public DObject
 	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);
 public:
 	bool Native;
+	FName Name;
+
+	VMFunction() : Native(false), Name(NAME_None) {}
+	VMFunction(FName name) : Native(false), Name(name) {}
 };
 
 enum EVMOpMode
@@ -712,7 +716,7 @@ struct VMRegisters
 
 struct VMException : public DObject
 {
-	DECLARE_CLASS(VMFunction, DObject);
+	DECLARE_CLASS(VMException, DObject);
 };
 
 union FVoidObj
@@ -725,7 +729,7 @@ class VMScriptFunction : public VMFunction
 {
 	DECLARE_CLASS(VMScriptFunction, VMFunction);
 public:
-	VMScriptFunction();
+	VMScriptFunction(FName name=NAME_None);
 	~VMScriptFunction();
 	size_t PropagateMark();
 	void Alloc(int numops, int numkonstd, int numkonstf, int numkonsts, int numkonsta);
@@ -788,6 +792,7 @@ public:
 
 	VMNativeFunction() : NativeCall(NULL) { Native = true; }
 	VMNativeFunction(NativeCallType call) : NativeCall(call) { Native = true; }
+	VMNativeFunction(NativeCallType call, FName name) : VMFunction(name), NativeCall(call) { Native = true; }
 
 	// Return value is the number of results.
 	NativeCallType NativeCall;

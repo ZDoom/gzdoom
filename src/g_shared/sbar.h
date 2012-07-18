@@ -343,6 +343,7 @@ public:
 	bool Scaled;
 	bool Centering;
 	bool FixedOrigin;
+	bool CompleteBorder;
 	fixed_t CrosshairSize;
 	fixed_t Displacement;
 

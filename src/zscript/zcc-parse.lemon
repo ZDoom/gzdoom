@@ -69,14 +69,16 @@
 %type opt_func_body {ZCC_CompoundStmt *}
 %type function_body {ZCC_CompoundStmt *}
 
-main ::= translation_unit. { stat->sc.ScriptMessage("Parse complete\n"); }
+main ::= translation_unit(A). { stat->TopNode = A; stat->sc.ScriptMessage("Parse complete\n"); }
 
-translation_unit ::= .
-translation_unit ::= translation_unit external_declaration.
-translation_unit ::= translation_unit EOF.
-translation_unit ::= error.
+%type translation_unit {ZCC_TreeNode *}
+translation_unit(X) ::= .												{ X = NULL; }
+translation_unit(X) ::= translation_unit(A) external_declaration(B).	{ SAFE_APPEND(A,B); X = A; }
+translation_unit(X) ::= translation_unit(A) EOF.						{ X = A; }
+translation_unit(X) ::= error.											{ X = NULL; }
 
-external_declaration ::= class_definition.
+%type external_declaration {ZCC_TreeNode *}
+external_declaration(X) ::= class_definition(A).						{ X = A; }
 
 /* Optional bits. */
 opt_semicolon ::= .
@@ -317,7 +319,6 @@ state_line(X) ::= NWS(A) NWS(B) expr state_opts(C) state_action(D).
 {
 	NEW_AST_NODE(StateLine, line);
 	const char *sprite = FName(A.Name()).GetChars();
-	memset(line, 0, sizeof(*line));
 	if (strlen(sprite) != 4)
 	{
 		Printf("Sprite name '%s' must be four characters", sprite);
@@ -650,7 +651,7 @@ func_params(X) ::= VOID.					{ X = NULL; }
 func_params(X) ::= func_param_list(A).		{ X = A; }
 
 func_param_list(X) ::= func_param(A).		{ X = A; }
-func_param_list(X) ::= func_param(A) COMMA func_param_list(B).	{ X = A; A->AppendSibling(B); }
+func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; A->AppendSibling(B); }
 
 func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
 {
@@ -1194,7 +1195,8 @@ iteration_statement(X) ::= FOR LPAREN for_init(IN) SEMICOLON opt_expr(EX) SEMICO
 	iter->LoopBumper = DO;
 	iter->CheckAt = ZCC_IterationStmt::Start;
 	// The initialization expression appears outside the loop
-	IN->AppendSibling(iter);
+	// for_init may be NULL if there is no initialization.
+	SAFE_APPEND(IN, iter);
 	// And the whole thing gets wrapped inside a compound statement in case the loop
 	// initializer defined any variables.
 	NEW_AST_NODE(CompoundStmt, wrap);

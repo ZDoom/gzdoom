@@ -229,6 +229,15 @@ static void DoParse(const char *filename)
 		fclose(f);
 	}
 #endif
+	FString ast = ZCC_PrintAST(state.TopNode);
+	FString astfile = ExtractFileBase(filename, false);
+	astfile << ".ast";
+	f = fopen(astfile, "w");
+	if (f != NULL)
+	{
+		fputs(ast.GetChars(), f);
+		fclose(f);
+	}
 }
 
 CCMD(parse)

@@ -7,6 +7,7 @@ struct ZCCParseState
 	FScanner &sc;
 	FSharedStringArena Strings;
 	FMemArena SyntaxArena;
+	struct ZCC_TreeNode *TopNode;
 };
 
 union ZCCToken
@@ -206,7 +207,7 @@ struct ZCC_TreeNode
 		}
 
 		// The new sibling node should only be in a list with itself.
-		assert(sibling->SiblingNext == sibling && sibling->SiblingNext == sibling);
+		assert(sibling->SiblingNext == sibling && sibling->SiblingPrev == sibling);
 
 		// Check integrity of our sibling list.
 		assert(SiblingPrev->SiblingNext == this);

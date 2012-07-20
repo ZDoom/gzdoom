@@ -141,7 +141,7 @@ static void PrintEnum(FString &out, ZCC_TreeNode *node)
 static void PrintEnumNode(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_EnumNode *enode = (ZCC_EnumNode *)node;
-	out.AppendFormat("(enum-node '%s' ", FName(enode->ElemName));
+	out.AppendFormat("(enum-node '%s' ", FName(enode->ElemName).GetChars());
 	PrintNodes(out, enode->ElemValue, ')');
 }
 

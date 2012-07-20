@@ -548,6 +548,8 @@ begin:
 		ASSERTA(a);
 		ptr = reg.a[a];
 	Do_TAILCALL:
+		// Whereas the CALL instruction uses its third operand to specify how many return values
+		// it expects, TAIL ignores its third operand and uses whatever was passed to this Exec call.
 		assert(B <= f->NumParam);
 		assert(C <= MAX_RETURNS);
 		{

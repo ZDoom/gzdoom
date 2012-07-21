@@ -120,15 +120,8 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 					BPART(gameinfo.pickupcolor)/255.f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
-	PainFlashList * pfl = CPlayer->mo->GetClass()->ActorInfo->PainFlashes;
 	PalEntry painFlash = CPlayer->mo->DamageFade;
-
-	if (pfl)
-	{
-		PalEntry * color = pfl->CheckKey(CPlayer->mo->DamageTypeReceived);
-
-		if (color) painFlash = *color;
-	}
+	CPlayer->mo->GetClass()->ActorInfo->GetPainFlash(CPlayer->mo->DamageTypeReceived, &painFlash);
 
 	if (painFlash.a != 0)
 	{

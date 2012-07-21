@@ -224,6 +224,7 @@ struct FActorInfo
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
 	void SetPainFlash(FName type, PalEntry color);
+	bool GetPainFlash(FName type, PalEntry *color) const;
 	void SetColorSet(int index, const FPlayerColorSet *set);
 
 	FState *FindState (int numnames, FName *names, bool exact=false) const;

@@ -423,6 +423,10 @@ static void R_ExtendSpriteFrames(spritedef_t &spr, int frame)
 	  // at all, so we can tack the new frames directly on to the end
 	  // of the SpriteFrames array.
 		newstart = SpriteFrames.Reserve(frame - spr.numframes);
+		if (spr.numframes == 0)
+		{
+			spr.spriteframes = WORD(newstart);
+		}
 	}
 	else
 	{ // We need to allocate space for all the sprite's frames and copy
@@ -439,7 +443,6 @@ static void R_ExtendSpriteFrames(spritedef_t &spr, int frame)
 	// Initialize all new frames to 0.
 	memset(&SpriteFrames[newstart], 0, sizeof(spriteframe_t)*(frame - spr.numframes));
 	spr.numframes = frame;
-	spr.spriteframes = newstart;
 }
 
 //==========================================================================

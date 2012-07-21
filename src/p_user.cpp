@@ -2699,6 +2699,14 @@ void player_t::Serialize (FArchive &arc)
 	{
 		cheats &= ~(1 << 17);	// make sure old CF_REGENERATION bit is cleared
 	}
+	if (SaveVersion >= 3780)
+	{
+		arc << settings_controller;
+	}
+	else
+	{
+		settings_controller = (this - players == Net_Arbitrator);
+	}
 
 	if (isbot)
 	{

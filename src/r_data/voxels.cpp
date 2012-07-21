@@ -71,7 +71,7 @@ TDeletingArray<FVoxelDef *> VoxelDefs;
 struct VoxelOptions
 {
 	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(0)
+	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(ANGLE_90)
 	{}
 
 	int			DroppedSpin;
@@ -332,7 +332,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 		voxdef->Voxel = vox;
 		voxdef->Scale = FRACUNIT;
 		voxdef->DroppedSpin = voxdef->PlacedSpin = spin;
-		voxdef->AngleOffset = 0;
+		voxdef->AngleOffset = ANGLE_90;
 
 		Voxels.Push(vox);
 		VoxelDefs.Push(voxdef);
@@ -508,7 +508,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			{
 				sc.TokenMustBe(TK_FloatConst);
 			}
-			opts.AngleOffset = angle_t(sc.Float * ANGLE_180 / 180.0);
+			opts.AngleOffset = ANGLE_90 + angle_t(sc.Float * ANGLE_180 / 180.0);
 		}
 		else
 		{

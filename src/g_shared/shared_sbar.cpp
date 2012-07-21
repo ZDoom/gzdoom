@@ -70,7 +70,6 @@ EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
-EXTERN_CVAR (Bool, hud_scale)
 EXTERN_CVAR (Int, con_scaletext)
 
 DBaseStatusBar *StatusBar;

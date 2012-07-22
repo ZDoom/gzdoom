@@ -993,6 +993,7 @@ public:
 
 	void ScreenSizeChanged()
 	{
+		Super::ScreenSizeChanged();
 		V_CalcCleanFacs(script->resW, script->resH, SCREENWIDTH, SCREENHEIGHT, &script->cleanX, &script->cleanY);
 	}
 

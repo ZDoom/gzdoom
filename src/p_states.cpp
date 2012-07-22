@@ -884,7 +884,6 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 	{
 		FState *realstates = new FState[count];
 		int i;
-		int currange;
 
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
 		actor->OwnedStates = realstates;
@@ -892,12 +891,15 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 
 		// adjust the state pointers
 		// In the case new states are added these must be adjusted, too!
-		FixStatePointers (actor, StateLabels);
+		FixStatePointers(actor, StateLabels);
 
-		for(i = currange = 0; i < count; i++)
+		// Fix state pointers that are gotos
+		ResolveGotoLabels(actor, defaults, StateLabels);
+
+		for (i = 0; i < count; i++)
 		{
 			// resolve labels and jumps
-			switch(realstates[i].DefineFlags)
+			switch (realstates[i].DefineFlags)
 			{
 			case SDF_STOP:	// stop
 				realstates[i].NextState = NULL;
@@ -916,14 +918,16 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 				break;
 
 			case SDF_LABEL:
-				realstates[i].NextState = ResolveGotoLabel (defaults, actor->Class, (char *)realstates[i].NextState);
+				realstates[i].NextState = ResolveGotoLabel(defaults, actor->Class, (char *)realstates[i].NextState);
 				break;
 			}
 		}
 	}
-
-	// Fix state pointers that are gotos
-	ResolveGotoLabels (actor, defaults, StateLabels);
+	else
+	{
+		// Fix state pointers that are gotos
+		ResolveGotoLabels(actor, defaults, StateLabels);
+	}
 
 	return count;
 }

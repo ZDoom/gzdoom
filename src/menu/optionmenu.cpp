@@ -58,8 +58,6 @@
 
 void M_DrawConText (int color, int x, int y, const char *str)
 {
-	int len = (int)strlen(str);
-
 	screen->DrawText (ConFont, color, x, y, str,
 		DTA_CellX, 8 * CleanXfac_1,
 		DTA_CellY, 8 * CleanYfac_1,
@@ -440,7 +438,7 @@ void DOptionMenu::Drawer ()
 		{
 			if (((DMenu::MenuTime%8) < 6) || DMenu::CurrentMenu != this)
 			{
-				M_DrawConText(OptionSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
+				M_DrawConText(OptionSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y+fontheight-9*CleanYfac_1, "\xd");
 			}
 		}
 	}

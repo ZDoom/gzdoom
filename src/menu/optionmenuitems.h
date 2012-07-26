@@ -407,11 +407,11 @@ public:
 		C_NameKeys (description, Key1, Key2);
 		if (description[0])
 		{
-			M_DrawConText(CR_WHITE, indent + CURSORSPACE, y-1+OptionSettings.mLabelOffset, description);
+			M_DrawConText(CR_WHITE, indent + CURSORSPACE, y + (OptionSettings.mLinespacing-8)*CleanYfac_1, description);
 		}
 		else
 		{
-			screen->DrawText(SmallFont, CR_BLACK, indent + CURSORSPACE, y + OptionSettings.mLabelOffset, "---",
+			screen->DrawText(SmallFont, CR_BLACK, indent + CURSORSPACE, y + (OptionSettings.mLinespacing-8)*CleanYfac_1, "---",
 				DTA_CleanNoMove_1, true, TAG_DONE);
 		}
 		return indent;
@@ -569,12 +569,13 @@ public:
 	//
 	//=============================================================================
 
-	void DrawSlider (int x, int y, double min, double max, double cur,int fracdigits, int indent)
+	void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
 	{
 		char textbuf[16];
 		double range;
 		int maxlen = 0;
 		int right = x + (12*8 + 4) * CleanXfac_1;
+		int cy = y + (OptionSettings.mLinespacing-8)*CleanYfac_1;
 
 		range = max - min;
 		double ccur = clamp(cur, min, max) - min;
@@ -589,14 +590,14 @@ public:
 
 		if (!mSliderShort)
 		{
-			M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-			M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), y, "\x13");
+			M_DrawConText(CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
+			M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), cy, "\x13");
 		}
 		else
 		{
 			// On 320x200 we need a shorter slider
-			M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x12");
-			M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), y, "\x13");
+			M_DrawConText(CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x12");
+			M_DrawConText(CR_ORANGE, x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), cy, "\x13");
 			right -= 5*8*CleanXfac_1;
 		}
 
@@ -613,7 +614,7 @@ public:
 	{
 		drawLabel(indent, y, selected? OptionSettings.mFontColorSelection : OptionSettings.mFontColor);
 		mDrawX = indent + CURSORSPACE;
-		DrawSlider (mDrawX, y + OptionSettings.mLabelOffset, mMin, mMax, GetValue(), mShowValue, indent);
+		DrawSlider (mDrawX, y, mMin, mMax, GetValue(), mShowValue, indent);
 		return indent;
 	}
 
@@ -777,8 +778,8 @@ public:
 		if (mCVar != NULL)
 		{
 			int box_x = indent + CURSORSPACE;
-			int box_y = y + OptionSettings.mLabelOffset * CleanYfac_1 / 2;
-			screen->Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + (SmallFont->GetHeight() - 1) * CleanYfac_1,
+			int box_y = y + CleanYfac_1;
+			screen->Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + OptionSettings.mLinespacing*CleanYfac_1,
 				-1, (uint32)*mCVar | 0xff000000);
 		}
 		return indent;

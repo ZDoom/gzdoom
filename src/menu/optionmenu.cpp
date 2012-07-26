@@ -398,8 +398,6 @@ void DOptionMenu::Drawer ()
 		}
 	}
 	mDesc->mDrawTop = y;
-	//int labelofs = OptionSettings.mLabelOffset * CleanXfac_1;
-	//int cursorspace = 14 * CleanXfac_1;
 	int fontheight = OptionSettings.mLinespacing * CleanYfac_1;
 	y *= CleanYfac_1;
 
@@ -449,11 +447,11 @@ void DOptionMenu::Drawer ()
 
 	if (CanScrollUp)
 	{
-		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, ytop + OptionSettings.mLabelOffset, "\x1a");
+		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, ytop, "\x1a");
 	}
 	if (CanScrollDown)
 	{
-		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1 + OptionSettings.mLabelOffset, "\x1b");
+		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1, "\x1b");
 	}
 	Super::Drawer();
 }

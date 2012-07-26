@@ -214,7 +214,7 @@ void DMessageBoxMenu::Drawer ()
 			{
 				screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
 					(150 - 160) * CleanXfac + screen->GetWidth() / 2,
-					(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
+					(y + (fontheight + 1) * messageSelection - 100 + fontheight/2 - 5) * CleanYfac + screen->GetHeight() / 2,
 					"\xd",
 					DTA_CellX, 8 * CleanXfac,
 					DTA_CellY, 8 * CleanYfac,

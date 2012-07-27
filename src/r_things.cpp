@@ -517,7 +517,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
-		fz += finesine[(Scale(thing->FloatBobPhase + level.maptime, FINEANGLES, 64) + r_TicFrac * ((FINEANGLES/64) / 1000)) & FINEMASK] * 8;
+		fz += finesine[MulScale22(((thing->FloatBobPhase + level.maptime) << FRACBITS) + r_TicFrac, FINEANGLES) & FINEMASK] * 8;
 	}
 
 	// transform the origin point

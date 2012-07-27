@@ -30,9 +30,7 @@
 #include "dthinker.h"
 
 
-// States are tied to finite states are
-//	tied to animation frames.
-// Needs precompiled tables/data structures.
+// States are tied to finite states are tied to animation frames.
 #include "info.h"
 
 #include "doomdef.h"
@@ -40,6 +38,7 @@
 #include "r_data/renderstyle.h"
 #include "s_sound.h"
 #include "memarena.h"
+#include "g_level.h"
 
 struct subsector_t;
 //
@@ -715,7 +714,16 @@ public:
 
 	// What species am I?
 	virtual FName GetSpecies();
-	
+
+	fixed_t GetBobOffset(fixed_t ticfrac=0) const
+	{
+		 if (!(flags2 & MF2_FLOATBOB))
+		 {
+			 return 0;
+		 }
+		 return finesine[MulScale22(((FloatBobPhase + level.maptime) << FRACBITS) + ticfrac, FINEANGLES) & FINEMASK] * 8;
+	}
+
 	// Enter the crash state
 	void Crash();
 

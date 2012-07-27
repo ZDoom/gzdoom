@@ -512,13 +512,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// [RH] Interpolate the sprite's position to make it look smooth
 	fx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
 	fy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
-	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ);
-
-	// [RH] Make floatbobbing a renderer-only effect.
-	if (thing->flags2 & MF2_FLOATBOB)
-	{
-		fz += finesine[MulScale22(((thing->FloatBobPhase + level.maptime) << FRACBITS) + r_TicFrac, FINEANGLES) & FINEMASK] * 8;
-	}
+	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ) + thing->GetBobOffset(r_TicFrac);
 
 	// transform the origin point
 	tr_x = fx - viewx;

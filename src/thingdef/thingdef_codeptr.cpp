@@ -100,7 +100,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 	bool result = false;
 	int counter = 0;
 
-	StateCall.Item = this;
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
@@ -2618,6 +2617,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 // A_CheckCeiling
 // [GZ] Totally copied on A_CheckFloor, jumps if actor touches ceiling
 //
+
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 {
@@ -2704,7 +2704,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->x, self->z, true);
+		oktorespawn = P_CheckPosition(self, self->x, self->y, true);
 	}
 
 	if (oktorespawn)
@@ -4193,6 +4193,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 //==========================================================================
 //
 // ACS_Named* stuff
+
 //
 // These are exactly like their un-named line special equivalents, except
 // they take strings instead of integers to indicate which script to run.
@@ -4203,14 +4204,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedExecuteWithResult)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 
 	ACTION_PARAM_NAME(scriptname, 0);
 	ACTION_PARAM_INT(arg1, 1);
 	ACTION_PARAM_INT(arg2, 2);
 	ACTION_PARAM_INT(arg3, 3);
+	ACTION_PARAM_INT(arg4, 4);
 
-	bool res = !!P_ExecuteSpecial(ACS_ExecuteWithResult, NULL, self, false, -scriptname, arg1, arg2, arg3, 0);
+	bool res = !!P_ExecuteSpecial(ACS_ExecuteWithResult, NULL, self, false, -scriptname, arg1, arg2, arg3, arg4);
 
 	ACTION_SET_RESULT(res);
 }

@@ -214,7 +214,7 @@ void DMessageBoxMenu::Drawer ()
 			{
 				screen->DrawText(ConFont, OptionSettings.mFontColorSelection,
 					(150 - 160) * CleanXfac + screen->GetWidth() / 2,
-					(y + (fontheight + 1) * messageSelection - 100) * CleanYfac + screen->GetHeight() / 2,
+					(y + (fontheight + 1) * messageSelection - 100 + fontheight/2 - 5) * CleanYfac + screen->GetHeight() / 2,
 					"\xd",
 					DTA_CellX, 8 * CleanXfac,
 					DTA_CellY, 8 * CleanYfac,
@@ -466,19 +466,7 @@ IMPLEMENT_CLASS(DEndGameMenu)
 
 DEndGameMenu::DEndGameMenu(bool playsound)
 {
-	int messageindex = gametic % gameinfo.quitmessages.Size();
-	FString EndString = gameinfo.quitmessages[messageindex];
-
-	if (netgame)
-	{
-		EndString = GStrings("NETEND");
-		return;
-	}
-
-	EndString = GStrings("ENDGAME");
-
-
-	Init(NULL, EndString, 0, playsound);
+	Init(NULL, GStrings(netgame ? "NETEND" : "ENDGAME"), 0, playsound);
 }
 
 //=============================================================================
@@ -492,7 +480,10 @@ void DEndGameMenu::HandleResult(bool res)
 	if (res)
 	{
 		M_ClearMenus ();
-		D_StartTitle ();
+		if (!netgame)
+		{
+			D_StartTitle ();
+		}
 	}
 	else
 	{

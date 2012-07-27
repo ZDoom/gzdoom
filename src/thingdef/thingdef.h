@@ -363,7 +363,6 @@ int MatchString (const char *in, const char **strings);
 struct StateCallData
 {
 	FState *State;
-	AActor *Item;
 	bool Result;
 };
 

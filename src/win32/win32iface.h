@@ -164,6 +164,7 @@ public:
 	void NewRefreshRate();
 	HRESULT GetHR ();
 	virtual int GetTrueHeight() { return TrueHeight; }
+	bool Is8BitMode();
 
 	void Blank ();
 	bool PaintToWindow ();
@@ -208,6 +209,7 @@ private:
 	bool NeedGammaUpdate;
 	bool NeedPalUpdate;
 	bool NeedResRecreate;
+	bool PaletteChangeExpected;
 	bool MustBuffer;		// The screen is not 8-bit, or there is no backbuffer
 	bool BufferingNow;		// Most recent Lock was buffered
 	bool WasBuffering;		// Second most recent Lock was buffered
@@ -268,6 +270,7 @@ public:
 	void WipeCleanup();
 	HRESULT GetHR ();
 	virtual int GetTrueHeight() { return TrueHeight; }
+	bool Is8BitMode() { return false; }
 
 private:
 	friend class D3DTex;

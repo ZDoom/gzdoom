@@ -400,11 +400,25 @@ enum EMapThingFlags
 	STF_ALTSHADOW		= 0x0200,
 };
 
+// A simplified mapthing for player starts
+struct FPlayerStart
+{
+	fixed_t x, y, z;
+	short angle, type;
+
+	FPlayerStart() { }
+	FPlayerStart(const FMapThing *mthing)
+	: x(mthing->x), y(mthing->y), z(mthing->z),
+	  angle(mthing->angle),
+	  type(mthing->type)
+	{ }
+};
 // Player spawn spots for deathmatch.
-extern TArray<FMapThing> deathmatchstarts;
+extern TArray<FPlayerStart> deathmatchstarts;
 
 // Player spawn spots.
-extern	FMapThing		playerstarts[MAXPLAYERS];
+extern FPlayerStart playerstarts[MAXPLAYERS];
+extern TArray<FPlayerStart> AllPlayerStarts;
 
 
 #endif					// __DOOMDATA__

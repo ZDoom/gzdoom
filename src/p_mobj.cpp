@@ -3407,6 +3407,20 @@ void AActor::Tick ()
 						} 
 						z = onmo->z + onmo->height;
 					}
+					// Check for MF6_BUMPSPECIAL
+					// By default, only players can activate things by bumping into them
+					// We trigger specials as long as we are on top of it and not just when
+					// we land on it. This could be considered as gravity making us continually
+					// bump into it, but it also avoids having to worry about walking on to
+					// something without dropping and not triggering anything.
+					if ((onmo->flags6 & MF6_BUMPSPECIAL) && ((player != NULL)
+						|| ((onmo->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
+						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
+						) && (level.maptime > onmo->lastbump)) // Leave the bumper enough time to go away
+					{
+						if (P_ActivateThingSpecial(onmo, this))
+							onmo->lastbump = level.maptime + TICRATE;
+					}
 					if (velz != 0 && (BounceFlags & BOUNCE_Actors))
 					{
 						P_BounceActor(this, onmo, true);
@@ -4079,29 +4093,16 @@ EXTERN_CVAR (Bool, chasedemo)
 
 extern bool demonew;
 
-APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
+APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer)
 {
-	int		  playernum;
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
 	BYTE	  state;
-	fixed_t spawn_x, spawn_y;
+	fixed_t spawn_x, spawn_y, spawn_z;
 	angle_t spawn_angle;
 
-	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
-	//		To make things simpler, figure out which player is being
-	//		spawned here.
-	if (mthing->type <= 4)
-	{
-		playernum = mthing->type - 1;
-	}
-	else
-	{
-		playernum = mthing->type - gameinfo.player5start + 4;
-	}
-
 	// not playing?
-	if (playernum >= MAXPLAYERS || !playeringame[playernum])
+	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !playeringame[playernum])
 		return NULL;
 
 	p = &players[playernum];
@@ -4165,8 +4166,24 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		}
 	}
 
+	if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
+		spawn_z = ONCEILINGZ;
+	else if (GetDefaultByType(p->cls)->flags2 & MF2_SPAWNFLOAT)
+		spawn_z = FLOATRANDZ;
+	else
+		spawn_z = ONFLOORZ;
+
 	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, spawn_x, spawn_y, ONFLOORZ, NO_REPLACE));
+		(Spawn (p->cls, spawn_x, spawn_y, spawn_z, NO_REPLACE));
+
+	if (level.flags & LEVEL_USEPLAYERSTARTZ)
+	{
+		if (spawn_z == ONFLOORZ)
+			mobj->z += mthing->z;
+		else if (spawn_z == ONCEILINGZ)
+			mobj->z -= mthing->z;
+		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	}
 
 	mobj->FriendPlayer = playernum + 1;	// [RH] players are their own friends
 	oldactor = p->mo;
@@ -4358,7 +4375,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// count deathmatch start positions
 	if (mthing->type == 11)
 	{
-		deathmatchstarts.Push (*mthing);
+		FPlayerStart start(mthing);
+		deathmatchstarts.Push(start);
 		return NULL;
 	}
 
@@ -4482,10 +4500,13 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			return NULL;
 
 		// save spots for respawning in network games
-		playerstarts[pnum] = *mthing;
-		if (!deathmatch)
-			return P_SpawnPlayer (mthing);
-
+		FPlayerStart start(mthing);
+		playerstarts[pnum] = start;
+		AllPlayerStarts.Push(start);
+		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
+		{
+			return P_SpawnPlayer(&start, pnum);
+		}
 		return NULL;
 	}
 

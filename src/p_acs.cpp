@@ -3363,6 +3363,10 @@ enum EACSFunctions
 	ACSF_ACS_NamedLockedExecuteDoor,
 	ACSF_ACS_NamedExecuteWithResult,
 	ACSF_ACS_NamedExecuteAlways,
+
+	// ZDaemon
+	ACSF_GetTeamScore = 19620,
+	ACSF_SetTeamScore,
 };
 
 int DLevelScript::SideFromID(int id, int side)
@@ -4243,17 +4247,37 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_PUSHFUNCTION:
+		{
+			int funcnum = NEXTBYTE;
+			PushToStack(funcnum | activeBehavior->GetLibraryID());
+			break;
+		}
 		case PCD_CALL:
 		case PCD_CALLDISCARD:
+		case PCD_CALLSTACK:
 			{
 				int funcnum;
 				int i;
 				ScriptFunction *func;
-				FBehavior *module = activeBehavior;
+				FBehavior *module;
 				SDWORD *mylocals;
 
-				funcnum = NEXTBYTE;
-				func = activeBehavior->GetFunction (funcnum, module);
+				if(pcd == PCD_CALLSTACK)
+				{
+					funcnum = STACK(1);
+					module = FBehavior::StaticGetModule(funcnum>>16);
+					--sp;
+
+					funcnum &= 0xFFFF; // Clear out tag
+				}
+				else
+				{
+					module = activeBehavior;
+					funcnum = NEXTBYTE;
+				}
+				func = module->GetFunction (funcnum, module);
+
 				if (func == NULL)
 				{
 					Printf ("Function %d in %s out of range\n", funcnum, ScriptPresentation(script).GetChars());
@@ -5277,20 +5301,24 @@ int DLevelScript::RunScript ()
 
 		case PCD_SCRIPTWAIT:
 			statedata = STACK(1);
+			sp--;
+scriptwait:
 			if (controller->RunningScripts.CheckKey(statedata) != NULL)
 				state = SCRIPT_ScriptWait;
 			else
 				state = SCRIPT_ScriptWaitPre;
-			sp--;
 			PutLast ();
 			break;
 
 		case PCD_SCRIPTWAITDIRECT:
-			state = SCRIPT_ScriptWait;
 			statedata = uallong(pc[0]);
 			pc++;
-			PutLast ();
-			break;
+			goto scriptwait;
+
+		case PCD_SCRIPTWAITNAMED:
+			statedata = -FName(FBehavior::StaticLookupString(STACK(1)));
+			sp--;
+			goto scriptwait;
 
 		case PCD_CLEARLINESPECIAL:
 			if (activationline != NULL)

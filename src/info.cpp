@@ -329,6 +329,32 @@ void FActorInfo::SetPainFlash(FName type, PalEntry color)
 //
 //==========================================================================
 
+bool FActorInfo::GetPainFlash(FName type, PalEntry *color) const
+{
+	const FActorInfo *info = this;
+
+	while (info != NULL)
+	{
+		if (info->PainFlashes != NULL)
+		{
+			PalEntry *flash = info->PainFlashes->CheckKey(type);
+			if (flash != NULL)
+			{
+				*color = *flash;
+				return true;
+			}
+		}
+		// Try parent class
+		info = info->Class->ParentClass->ActorInfo;
+	}
+	return false;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 void FActorInfo::SetColorSet(int index, const FPlayerColorSet *set)
 {
 	if (set != NULL) 

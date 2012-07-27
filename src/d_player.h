@@ -159,6 +159,7 @@ class APlayerChunk : public APlayerPawn
 enum
 {
 	PPF_NOTHRUSTWHENINVUL = 1,	// Attacks do not thrust the player if they are invulnerable.
+	PPF_CANSUPERMORPH = 2,		// Being remorphed into this class can give you a Tome of Power
 };
 
 //

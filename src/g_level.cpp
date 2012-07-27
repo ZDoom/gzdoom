@@ -1121,7 +1121,7 @@ void G_FinishTravel ()
 
 			// The player being spawned here is a short lived dummy and
 			// must not start any ENTER script or big problems will happen.
-			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], true);
+			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], int(pawn->player - players), true);
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
 			{
 				pawn->angle = pawndup->angle;

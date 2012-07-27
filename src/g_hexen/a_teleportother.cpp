@@ -155,19 +155,13 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 void P_TeleportToPlayerStarts (AActor *victim)
 {
-	int i,selections=0;
 	fixed_t destX,destY;
 	angle_t destAngle;
 
-	for (i = 0; i < MAXPLAYERS;i++)
-	{
-	    if (!playeringame[i]) continue;
-		selections++;
-	}
-	i = pr_telestarts() % selections;
-	destX = playerstarts[i].x;
-	destY = playerstarts[i].y;
-	destAngle = ANG45 * (playerstarts[i].angle/45);
+	FPlayerStart *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
+	destX = start->x;
+	destY = start->y;
+	destAngle = ANG45 * (start->angle/45);
 	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
 }
 

@@ -7,6 +7,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "doomstat.h"
+#include "g_game.h"
 
 static FRandom pr_tele ("TeleportSelf");
 
@@ -37,9 +38,10 @@ bool AArtiTeleport::Use (bool pickup)
 	}
 	else
 	{
-		destX = playerstarts[Owner->player - players].x;
-		destY = playerstarts[Owner->player - players].y;
-		destAngle = ANG45 * (playerstarts[Owner->player - players].angle/45);
+		FPlayerStart *start = G_PickPlayerStart(int(Owner->player - players));
+		destX = start->x;
+		destY = start->y;
+		destAngle = ANG45 * (start->angle/45);
 	}
 	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, true, true, false);
 	bool canlaugh = true;

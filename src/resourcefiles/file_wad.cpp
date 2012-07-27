@@ -154,7 +154,7 @@ inline bool FWadFile::IsMarker(int lump, const char *marker)
 struct Marker
 {
 	int markertype;
-	int index;
+	unsigned int index;
 };
 
 void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, bool flathack)
@@ -168,13 +168,13 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	{
 		if (IsMarker(i, startmarker))
 		{
-			Marker m = {0, i };
+			Marker m = { 0, i };
 			markers.Push(m);
 			numstartmarkers++;
 		}
 		else if (IsMarker(i, endmarker))
 		{
-			Marker m = {1, i };
+			Marker m = { 1, i };
 			markers.Push(m);
 			numendmarkers++;
 		}
@@ -191,8 +191,8 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		{
 			// We have found no F_START but one or more F_END markers.
 			// mark all lumps before the last F_END marker as potential flats.
-			int end = markers[markers.Size()-1].index;
-			for(int i = 0; i < end; i++)
+			unsigned int end = markers[markers.Size()-1].index;
+			for(unsigned int i = 0; i < end; i++)
 			{
 				if (Lumps[i].LumpSize == 4096)
 				{

@@ -70,7 +70,6 @@ EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
-EXTERN_CVAR (Bool, hud_scale)
 EXTERN_CVAR (Int, con_scaletext)
 
 DBaseStatusBar *StatusBar;
@@ -216,6 +215,7 @@ void ST_Clear()
 
 DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 {
+	CompleteBorder = false;
 	Centering = false;
 	FixedOrigin = false;
 	CrosshairSize = FRACUNIT;
@@ -1037,27 +1037,46 @@ void DBaseStatusBar::RefreshBackground () const
 {
 	int x, x2, y, ratio;
 
-	if (SCREENWIDTH > 320)
+	ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
+	x = (!(ratio & 3) || !Scaled) ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
+	y = x == ST_X && x > 0 ? ST_Y : ::ST_Y;
+
+	if(!CompleteBorder)
 	{
-		ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
-		x = (!(ratio & 3) || !Scaled) ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
-		if (x > 0)
+		if(y < SCREENHEIGHT)
 		{
-			y = x == ST_X ? ST_Y : ::ST_Y;
+			V_DrawBorder (x+1, y, SCREENWIDTH, y+1);
+			V_DrawBorder (x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+		}
+	}
+	else
+	{
+		x = SCREENWIDTH;
+	}
+
+	if (x > 0)
+	{
+		if(!CompleteBorder)
+		{
 			x2 = !(ratio & 3) || !Scaled ? ST_X+HorizontalResolution :
 				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
-			V_DrawBorder (0, y, x, SCREENHEIGHT);
-			V_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
+		}
+		else
+		{
+			x2 = SCREENWIDTH;
+		}
 
-			if (setblocks >= 10)
-			{
-				const gameborder_t *border = gameinfo.border;
-				FTexture *p;
+		V_DrawBorder (0, y, x+1, SCREENHEIGHT);
+		V_DrawBorder (x2-1, y, SCREENWIDTH, SCREENHEIGHT);
 
-				p = TexMan[border->b];
-				screen->FlatFill(0, y, x, y + p->GetHeight(), p, true);
-				screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetHeight(), p, true);
-			}
+		if (setblocks >= 10)
+		{
+			const gameborder_t *border = gameinfo.border;
+			FTexture *p;
+
+			p = TexMan[border->b];
+			screen->FlatFill(0, y, x, y + p->GetHeight(), p, true);
+			screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetHeight(), p, true);
 		}
 	}
 }

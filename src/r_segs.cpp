@@ -1965,7 +1965,7 @@ void R_NewWall (bool needlights)
 				}
 				if (midtexture->bWorldPanning)
 				{
-					rw_midtexturemid = MulScale16(rowoffset, yrepeat);
+					rw_midtexturemid += MulScale16(rowoffset, yrepeat);
 				}
 				else
 				{

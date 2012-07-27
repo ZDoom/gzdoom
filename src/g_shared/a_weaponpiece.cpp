@@ -33,8 +33,7 @@ bool AWeaponPiece::TryPickupRestricted (AActor *&toucher)
 {
 	// Wrong class, but try to pick up for ammo
 	if (ShouldStay())
-	{
-		// Can't pick up weapons for other classes in coop netplay
+	{ // Can't pick up weapons for other classes in coop netplay
 		return false;
 	}
 

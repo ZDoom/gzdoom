@@ -32,6 +32,13 @@ struct PNGHandle;
 //
 void G_DeathMatchSpawnPlayer (int playernum);
 
+struct FPlayerStart *G_PickPlayerStart (int playernum, int flags = 0);
+enum
+{
+	PPS_FORCERANDOM			= 1,
+	PPS_NOBLOCKINGCHECK		= 2,
+};
+
 void G_DeferedPlayDemo (const char* demo);
 
 // Can be called by the startup code or M_Responder,

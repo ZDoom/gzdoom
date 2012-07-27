@@ -384,19 +384,19 @@ PNGHandle *M_VerifyPNG (FILE *file)
 
 	if (fread (&data, 1, 8, file) != 8)
 	{
-		return false;
+		return NULL;
 	}
 	if (data[0] != MAKE_ID(137,'P','N','G') || data[1] != MAKE_ID(13,10,26,10))
 	{ // Does not have PNG signature
-		return false;
+		return NULL;
 	}
 	if (fread (&data, 1, 8, file) != 8)
 	{
-		return false;
+		return NULL;
 	}
 	if (data[1] != MAKE_ID('I','H','D','R'))
 	{ // IHDR must be the first chunk
-		return false;
+		return NULL;
 	}
 
 	// It looks like a PNG so far, so start creating a PNGHandle for it
@@ -451,7 +451,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 	}
 
 	delete png;
-	return false;
+	return NULL;
 }
 
 //==========================================================================

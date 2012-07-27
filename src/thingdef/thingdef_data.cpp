@@ -296,6 +296,7 @@ static FFlagDef InventoryFlags[] =
 	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, NOATTENPICKUPSOUND, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, PERSISTENTPOWER, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, RESTRICTABSOLUTELY, AInventory, ItemFlags),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
 	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
@@ -332,6 +333,7 @@ static FFlagDef PlayerPawnFlags[] =
 {
 	// PlayerPawn flags
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
+	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
 };
 
 static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =

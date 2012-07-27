@@ -465,7 +465,7 @@ void FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usety
 void FTextureManager::ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
 {
 	FTextureID framenum;
-	DWORD min, max;
+	DWORD min = 1, max = 1;
 
 	framenum = ParseFramenum (sc, picnum, usetype, missing);
 	ParseTime (sc, min, max);
@@ -536,6 +536,7 @@ void FTextureManager::ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 	}
 	else
 	{
+		min = max = 1;
 		sc.ScriptError ("Must specify a duration for animation frame");
 	}
 }

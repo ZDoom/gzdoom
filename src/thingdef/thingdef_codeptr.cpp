@@ -1806,7 +1806,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	AActor * mo = Spawn( missile, 
 					self->x + FixedMul(distance, finecosine[self->angle>>ANGLETOFINESHIFT]), 
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
-					self->z - self->floorclip + zheight, ALLOW_REPLACE);
+					self->z - self->floorclip + self->GetBobOffset() + zheight, ALLOW_REPLACE);
 
 	int flags = (transfer_translation? SIXF_TRANSFERTRANSLATION:0) + (useammo? SIXF_SETMASTER:0);
 	bool res = InitSpawnedItem(self, mo, flags);
@@ -1875,7 +1875,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		xvel = newxvel;
 	}
 
-	AActor * mo = Spawn(missile, x, y, self->z - self->floorclip + zofs, ALLOW_REPLACE);
+	AActor * mo = Spawn(missile, x, y, self->z - self->floorclip + self->GetBobOffset() + zofs, ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	ACTION_SET_RESULT(res);	// for an inventory item's use state
 	if (mo)

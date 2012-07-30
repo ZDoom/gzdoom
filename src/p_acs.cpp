@@ -6345,10 +6345,17 @@ scriptwait:
 		case PCD_GETACTORZ:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : (&actor->x)[pcd - PCD_GETACTORX];
-				if (pcd == PCD_GETACTORZ)
+				if (actor == NULL)
 				{
-					pcd += actor->GetBobOffset();
+					STACK(1) = 0;
+				}
+				else if (pcd == PCD_GETACTORZ)
+				{
+					STACK(1) = actor->z + actor->GetBobOffset();
+				}
+				else
+				{
+					STACK(1) =  (&actor->x)[pcd - PCD_GETACTORX];
 				}
 			}
 			break;

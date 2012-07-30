@@ -340,9 +340,41 @@ FString GetUserFile (const char *file)
 	struct stat info;
 
 	path = NicePath("~/" GAME_DIR "/");
+
 	if (stat (path, &info) == -1)
 	{
-		if (mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+		struct stat extrainfo;
+
+		// Sanity check for ~/.config
+		FString configPath = NicePath("~/.config/");
+		if (stat (configPath, &extrainfo) == -1)
+		{
+			if (mkdir (configPath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+			{
+				I_FatalError ("Failed to create ~/.config directory:\n%s", strerror(errno));
+			}
+		}
+		else if (!S_ISDIR(extrainfo.st_mode))
+		{
+			I_FatalError ("~/.config must be a directory");
+		}
+
+		// This can be removed after a release or two
+		// Transfer the old zdoom directory to the new location
+		bool moved = false;
+		FString oldpath = NicePath("~/.zdoom/");
+		if (stat (oldpath, &extrainfo) != -1)
+		{
+			if (rename(oldpath, path) == -1)
+			{
+				I_Error ("Failed to move old zdoom directory (%s) to new location (%s).",
+					oldpath.GetChars(), path.GetChars());
+			}
+			else
+				moved = true;
+		}
+
+		if (!moved && mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 		{
 			I_FatalError ("Failed to create %s directory:\n%s",
 				path.GetChars(), strerror (errno));
@@ -682,7 +714,7 @@ void M_ScreenShot (const char *filename)
 			if (dirlen == 0)
 			{
 #ifdef unix
-				autoname = "~/.zdoom/screenshots/";
+				autoname = "~/" GAME_DIR "/screenshots/";
 #elif defined(__APPLE__)
 				char cpath[PATH_MAX];
 				FSRef folder;

@@ -37,6 +37,7 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "c_cvars.h"
+#include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
 #include "stats.h"
 #include "a_hexenglobal.h"
@@ -107,6 +108,7 @@ static FRandom pr_missiledamage ("MissileDamage");
  FRandom pr_slam ("SkullSlam");
 static FRandom pr_multiclasschoice ("MultiClassChoice");
 static FRandom pr_rockettrail("RocketTrail");
+static FRandom pr_uniquetid("UniqueTID");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -2612,10 +2614,7 @@ AActor *AActor::TIDHash[128];
 
 void AActor::ClearTIDHashes ()
 {
-	int i;
-
-	for (i = 0; i < 128; i++)
-		TIDHash[i] = NULL;
+	memset(TIDHash, NULL, sizeof(TIDHash));
 }
 
 //
@@ -2664,6 +2663,92 @@ void AActor::RemoveFromHash ()
 		inext = NULL;
 	}
 	tid = 0;
+}
+
+//==========================================================================
+//
+// P_IsTIDUsed
+//
+// Returns true if there is at least one actor with the specified TID
+// (dead or alive).
+//
+//==========================================================================
+
+bool P_IsTIDUsed(int tid)
+{
+	AActor *probe = AActor::TIDHash[tid & 127];
+	while (probe != NULL)
+	{
+		if (probe->tid == tid)
+		{
+			return true;
+		}
+		probe = probe->inext;
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// P_FindUniqueTID
+//
+// Returns an unused TID. If start_tid is 0, then a random TID will be
+// chosen. Otherwise, it will perform a linear search starting from
+// start_tid. If limit is non-0, then it will not check more than <limit>
+// number of TIDs. Returns 0 if no suitable TID was found.
+//
+//==========================================================================
+
+int P_FindUniqueTID(int start_tid, int limit)
+{
+	int tid;
+
+	if (start_tid != 0)
+	{ // Do a linear search.
+		limit = start_tid + limit - 1;
+		if (limit < start_tid)
+		{ // If it overflowed, clamp to INT_MAX
+			limit = INT_MAX;
+		}
+		for (tid = start_tid; tid <= limit; ++tid)
+		{
+			if (tid != 0 && !P_IsTIDUsed(tid))
+			{
+				return tid;
+			}
+		}
+		// Nothing free found.
+		return 0;
+	}
+	// Do a random search. To try and be a bit more performant, this
+	// actually does several linear searches. In the case of *very*
+	// dense TID usage, this could potentially perform worse than doing
+	// a complete linear scan starting at 1. However, you would need
+	// to use an absolutely ridiculous number of actors before this
+	// becomes a real concern.
+	if (limit == 0)
+	{
+		limit = INT_MAX;
+	}
+	for (int i = 0; i < limit; i += 5)
+	{
+		// Use a positive starting TID.
+		tid = pr_uniquetid.GenRand32() & INT_MAX;
+		tid = P_FindUniqueTID(tid == 0 ? 1 : tid, 5);
+		if (tid != 0)
+		{
+			return tid;
+		}
+	}
+	// Nothing free found.
+	return 0;
+}
+
+CCMD(utid)
+{
+	Printf("%d\n",
+		P_FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
+		argv.argc() > 2 ? atoi(argv[2]) : 0));
 }
 
 //==========================================================================

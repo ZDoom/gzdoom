@@ -976,6 +976,7 @@ private:
 	static FSharedStringArena mStringPropertyData;
 
 	friend class FActorIterator;
+	friend bool P_IsTIDUsed(int tid);
 
 	sector_t *LinkToWorldForMapThing ();
 
@@ -1069,6 +1070,9 @@ public:
 		return actor;
 	}
 };
+
+bool P_IsTIDUsed(int tid);
+int P_FindUniqueTID(int start_tid, int limit);
 
 inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {

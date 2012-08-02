@@ -389,10 +389,6 @@ void Win32Video::DumpAdapters()
 		{
 			*p = '\0';
 		}
-		// Get monitor info from GDI for more details. Windows 95 apparently does not have
-		// the GetMonitorInfo function. I will leave this like this for now instead of using
-		// GetProcAddress to see if it's still worth worrying about Windows 95 support.
-		// (e.g. Will anybody complain that they can't run ZDoom anymore?)
 		HMONITOR hm = D3D->GetAdapterMonitor(i);
 		MONITORINFOEX mi;
 		mi.cbSize = sizeof(mi);

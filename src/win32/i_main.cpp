@@ -1224,14 +1224,14 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 
 	InitCommonControls ();			// Load some needed controls and be pretty under XP
 
+	// We need to load riched20.dll so that we can create the control.
 	if (NULL == LoadLibrary ("riched20.dll"))
 	{
-		// Technically, it isn't really Internet Explorer that is needed, but this
-		// is an example of a specific program that will provide riched20.dll.
-		// But considering how much extra stuff needs to be installed to make Windows 95
-		// useable with pretty much any recent software, the chances are high that
-		// the user already has riched20.dll installed.
-		I_FatalError ("Sorry, you need to install Internet Explorer 3 or higher to play ZDoom on Windows 95.");
+		// This should only happen on basic Windows 95 installations, but since we
+		// don't support Windows 95, we have no obligation to provide assistance in
+		// getting it installed.
+		MessageBoxA(NULL, "Could not load riched20.dll", "ZDoom Error", MB_OK | MB_ICONSTOP);
+		exit(0);
 	}
 
 #if !defined(__GNUC__) && defined(_DEBUG)

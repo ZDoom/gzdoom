@@ -608,10 +608,11 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 			}
 			else
 			{
-				info.blendcolor[3] = b.a * FRACUNIT / 255;
-				info.blendcolor[0] = b.r * (FRACUNIT-info.blendcolor[3]);
-				info.blendcolor[1] = b.g * (FRACUNIT-info.blendcolor[3]);
-				info.blendcolor[2] = b.b * (FRACUNIT-info.blendcolor[3]);
+				fixed_t blendalpha = b.a * FRACUNIT / 255;
+				info.blendcolor[0] = b.r * blendalpha;
+				info.blendcolor[1] = b.g * blendalpha;
+				info.blendcolor[2] = b.b * blendalpha;
+				info.blendcolor[3] = FRACUNIT - blendalpha;
 				info.blend = BLEND_OVERLAY;
 			}
 		}

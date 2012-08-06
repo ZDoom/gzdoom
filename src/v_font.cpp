@@ -1304,7 +1304,7 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	identity[0] = 0;
 	palette += 3;	// Skip the transparent color
 
-	for (i = 1; i <= ActiveColors; ++i, palette += 3)
+	for (i = 1; i < ActiveColors; ++i, palette += 3)
 	{
 		int r = palette[0];
 		int g = palette[1];
@@ -1331,7 +1331,7 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	{
 		diver = 1.0 / 255.0;
 	}
-	for (i = 1; i <= ActiveColors; ++i)
+	for (i = 1; i < ActiveColors; ++i)
 	{
 		luminosity[i] = (luminosity[i] - minlum) * diver;
 	}

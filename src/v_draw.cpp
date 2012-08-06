@@ -837,10 +837,10 @@ void DCanvas::FillBorder (FTexture *img)
 	}
 	else
 	{
-		Clear (0, 0, Width, bordtop, 0, 0);										// Top
-		Clear (0, bordtop, bordleft, Height - bordbottom, 0, 0);				// Left
-		Clear (Width - bordright, bordtop, Width, Height - bordbottom, 0, 0);	// Right
-		Clear (0, Height - bordbottom, Width, Height, 0, 0);					// Bottom
+		Clear (0, 0, Width, bordtop, GPalette.BlackIndex, 0);									// Top
+		Clear (0, bordtop, bordleft, Height - bordbottom, GPalette.BlackIndex, 0);				// Left
+		Clear (Width - bordright, bordtop, Width, Height - bordbottom, GPalette.BlackIndex, 0);	// Right
+		Clear (0, Height - bordbottom, Width, Height, GPalette.BlackIndex, 0);					// Bottom
 	}
 }
 

@@ -859,7 +859,7 @@ void DFrameBuffer::DrawRateStuff ()
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
 			rate_x = Width - chars * 8;
-			Clear (rate_x, 0, Width, 8, 0, 0);
+			Clear (rate_x, 0, Width, 8, GPalette.BlackIndex, 0);
 			DrawText (ConFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0], TAG_DONE);
 
 			DWORD thisSec = ms/1000;

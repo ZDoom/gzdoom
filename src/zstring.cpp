@@ -773,7 +773,7 @@ void FString::Insert (size_t index, const char *instr, size_t instrlen)
 		AllocBuffer (mylen + instrlen);
 		StrCopy (Chars, old->Chars(), index);
 		StrCopy (Chars + index, instr, instrlen);
-		StrCopy (Chars + index + instrlen, Chars + index, mylen - index + 1);
+		StrCopy (Chars + index + instrlen, old->Chars() + index, mylen - index + 1);
 		old->Release();
 	}
 }

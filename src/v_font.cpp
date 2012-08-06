@@ -1861,7 +1861,7 @@ void FFontChar2::MakeTexture ()
 
 FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump) : FFont(lump)
 {
-	int i, j;
+	int i;
 	FTexture **charlumps;
 	int maxyoffs;
 	FTexture *pic;

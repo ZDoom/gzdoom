@@ -339,7 +339,7 @@ FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
 //
 //==========================================================================
 
-FFont::FFont (const char *name, const char *nametemplate, int first, int count, int start, int fdlump)
+FFont::FFont (const char *name, const char *nametemplate, int first, int count, int start, int fdlump, int spacewidth)
 {
 	int i;
 	FTextureID lump;
@@ -422,7 +422,11 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		}
 	}
 
-	if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].Pic != NULL)
+	if (spacewidth != -1)
+	{
+		SpaceWidth = spacewidth;
+	}
+	else if ('N'-first >= 0 && 'N'-first < count && Chars['N' - first].Pic != NULL)
 	{
 		SpaceWidth = (Chars['N' - first].XMove + 1) / 2;
 	}
@@ -2056,6 +2060,7 @@ void V_InitCustomFonts()
 	int start;
 	int first;
 	int count;
+	int spacewidth;
 	char cursor = '_';
 
 	while ((llump = Wads.FindLump ("FONTDEFS", &lastlump)) != -1)
@@ -2070,6 +2075,7 @@ void V_InitCustomFonts()
 			start = 33;
 			first = 33;
 			count = 223;
+			spacewidth = -1;
 
 			sc.MustGetStringName ("{");
 			while (!sc.CheckString ("}"))
@@ -2107,6 +2113,13 @@ void V_InitCustomFonts()
 				{
 					sc.MustGetString();
 					cursor = sc.String[0];
+				}
+				else if (sc.Compare ("SPACEWIDTH"))
+				{
+					if (format == 2) goto wrong;
+					sc.MustGetNumber();
+					spacewidth = sc.Number;
+					format = 1;
 				}
 				else if (sc.Compare ("NOTRANSLATION"))
 				{
@@ -2151,7 +2164,7 @@ void V_InitCustomFonts()
 			}
 			if (format == 1)
 			{
-				FFont *fnt = new FFont (namebuffer, templatebuf, first, count, start, llump);
+				FFont *fnt = new FFont (namebuffer, templatebuf, first, count, start, llump, spacewidth);
 				fnt->SetCursor(cursor);
 			}
 			else if (format == 2)

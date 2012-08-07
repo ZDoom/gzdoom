@@ -76,7 +76,7 @@ extern int NumTextColors;
 class FFont
 {
 public:
-	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump);
+	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int *const width) const;

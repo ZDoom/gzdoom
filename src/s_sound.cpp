@@ -1764,7 +1764,7 @@ void S_SetSoundPaused (int state)
 			S_ResumeSound(true);
 			if (GSnd != NULL)
 			{
-				GSnd->SetInactive(false);
+				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
 			}
 			if (!netgame
 #ifdef _DEBUG
@@ -1783,7 +1783,9 @@ void S_SetSoundPaused (int state)
 			S_PauseSound(false, true);
 			if (GSnd !=  NULL)
 			{
-				GSnd->SetInactive(true);
+				GSnd->SetInactive(gamestate == GS_LEVEL ?
+					SoundRenderer::INACTIVE_Complete :
+					SoundRenderer::INACTIVE_Mute);
 			}
 			if (!netgame
 #ifdef _DEBUG

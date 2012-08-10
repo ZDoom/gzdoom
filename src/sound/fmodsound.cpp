@@ -672,6 +672,7 @@ bool FMODSoundRenderer::Init()
 	PrevEnvironment = DefaultEnvironments[0];
 	DSPClock.AsOne = 0;
 	ChannelGroupTargetUnit = NULL;
+	ChannelGroupTargetUnitOutput = NULL;
 	SfxReverbHooked = false;
 	SfxReverbPlaceholder = NULL;
 	OutputPlugin = 0;
@@ -1154,6 +1155,15 @@ bool FMODSoundRenderer::Init()
 			if (result != FMOD_OK)
 			{
 				ChannelGroupTargetUnit = NULL;
+			}
+			else
+			{
+				FMOD::DSP *dontcare;
+				result = ChannelGroupTargetUnit->getOutput(0, &dontcare, &ChannelGroupTargetUnitOutput);
+				if (result != FMOD_OK)
+				{
+					ChannelGroupTargetUnitOutput = NULL;
+				}
 			}
 		}
 	}
@@ -2123,11 +2133,33 @@ void FMODSoundRenderer::SetSfxPaused(bool paused, int slot)
 //
 //==========================================================================
 
-void FMODSoundRenderer::SetInactive(bool inactive)
+void FMODSoundRenderer::SetInactive(SoundRenderer::EInactiveState inactive)
 {
+	float mix;
+	bool active;
+
+	if (inactive == INACTIVE_Active)
+	{
+		mix = 1;
+		active = true;
+	}
+	else if (inactive == INACTIVE_Complete)
+	{
+		mix = 1;
+		active = false;
+	}
+	else // inactive == INACTIVE_Mute
+	{
+		mix = 0;
+		active = true;
+	}
+	if (ChannelGroupTargetUnitOutput != NULL)
+	{
+		ChannelGroupTargetUnitOutput->setMix(mix);
+	}
 	if (ChannelGroupTargetUnit != NULL)
 	{
-		ChannelGroupTargetUnit->setActive(!inactive);
+		ChannelGroupTargetUnit->setActive(active);
 	}
 }
 

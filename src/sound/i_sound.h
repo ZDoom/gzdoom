@@ -126,7 +126,13 @@ public:
 	virtual void SetSfxPaused (bool paused, int slot) = 0;
 
 	// Pauses or resumes *every* channel, including environmental reverb.
-	virtual void SetInactive(bool inactive) = 0;
+	enum EInactiveState
+	{
+		INACTIVE_Active,		// sound is active
+		INACTIVE_Complete,		// sound is completely paused
+		INACTIVE_Mute			// sound is only muted
+	};
+	virtual void SetInactive(EInactiveState inactive) = 0;
 
 	// Updates the volume, separation, and pitch of a sound channel.
 	virtual void UpdateSoundParams3D (SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel) = 0;

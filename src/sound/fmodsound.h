@@ -49,7 +49,7 @@ public:
 	void SetSfxPaused (bool paused, int slot);
 
 	// Pauses or resumes *every* channel, including environmental reverb.
-	void SetInactive (bool inactive);
+	void SetInactive (EInactiveState inactive);
 
 	// Updates the position of a sound channel.
 	void UpdateSoundParams3D (SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel);
@@ -107,6 +107,7 @@ private:
 	FMOD::ChannelGroup *MusicGroup;
 	FMOD::DSP *WaterLP, *WaterReverb;
 	FMOD::DSPConnection *SfxConnection;
+	FMOD::DSPConnection *ChannelGroupTargetUnitOutput;
 	FMOD::DSP *ChannelGroupTargetUnit;
 	FMOD::DSP *SfxReverbPlaceholder;
 	bool SfxReverbHooked;

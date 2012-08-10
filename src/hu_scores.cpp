@@ -60,7 +60,7 @@
 
 static void HU_DoDrawScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawTimeRemaining (int y);
-static void HU_DrawPlayer (player_t *, bool, int, int, int, int, int, int, int);
+static void HU_DrawPlayer (player_t *, bool, int, int, int, int, int, int, int, int);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -178,10 +178,11 @@ void HU_DrawScores (player_t *player)
 //
 //==========================================================================
 
-void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth)
+void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight)
 {
 	maxnamewidth = SmallFont->StringWidth("Name");
 	maxscorewidth = 0;
+	maxiconheight = 0;
 
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
@@ -195,10 +196,17 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth)
 			if (players[i].mo->ScoreIcon.isValid())
 			{
 				FTexture *pic = TexMan[players[i].mo->ScoreIcon];
-				width = pic->GetWidth() - pic->GetScaledLeftOffset() + 2;
+				width = pic->GetScaledWidth() - pic->GetScaledLeftOffset() + 2;
 				if (width > maxscorewidth)
 				{
 					maxscorewidth = width;
+				}
+				// The icon's top offset does not count toward its height, because
+				// zdoom.pk3's standard Hexen class icons are designed that way.
+				int height = pic->GetScaledHeight() - pic->GetScaledTopOffset();
+				if (height > maxiconheight)
+				{
+					maxiconheight = height;
 				}
 			}
 		}
@@ -214,11 +222,11 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth)
 static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
 {
 	int color;
-	int height = SmallFont->GetHeight() * CleanYfac;
+	int height, lineheight;
 	unsigned int i;
-	int maxnamewidth, maxscorewidth;
+	int maxnamewidth, maxscorewidth, maxiconheight;
 	int numTeams = 0;
-	int x, y, bottom;
+	int x, y, ypadding, bottom;
 	int col2, col3, col4;
 	
 	if (deathmatch)
@@ -233,7 +241,10 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		color = sb_cooperative_headingcolor;
 	}
 
-	HU_GetPlayerWidths(maxnamewidth, maxscorewidth);
+	HU_GetPlayerWidths(maxnamewidth, maxscorewidth, maxiconheight);
+	height = SmallFont->GetHeight() * CleanYfac;
+	lineheight = MAX(height, maxiconheight * CleanYfac);
+	ypadding = (lineheight - height + 1) / 2;
 
 	bottom = gamestate != GS_INTERMISSION ? ST_Y : SCREENHEIGHT;
 	y = MAX(48*CleanYfac, (bottom - MAXPLAYERS * (height + CleanYfac + 1)) / 2);
@@ -320,8 +331,8 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	{
 		if (playeringame[sortedplayers[i] - players])
 		{
-			HU_DrawPlayer (sortedplayers[i], player==sortedplayers[i], x, col2, col3, col4, maxnamewidth, y, height);
-			y += height + CleanYfac;
+			HU_DrawPlayer (sortedplayers[i], player==sortedplayers[i], x, col2, col3, col4, maxnamewidth, y, ypadding, lineheight);
+			y += lineheight + CleanYfac;
 		}
 	}
 }
@@ -365,7 +376,7 @@ static void HU_DrawTimeRemaining (int y)
 //
 //==========================================================================
 
-static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2, int col3, int col4, int maxnamewidth, int y, int height)
+static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2, int col3, int col4, int maxnamewidth, int y, int ypadding, int height)
 {
 	int color;
 	char str[80];
@@ -386,7 +397,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	HU_DrawColorBar(col1, y, height, (int)(player - players));
 	mysnprintf (str, countof(str), "%d", deathmatch ? player->fragcount : player->killcount);
 
-	screen->DrawText (SmallFont, color, col2, y, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
+	screen->DrawText (SmallFont, color, col2, y + ypadding, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	if (player->mo->ScoreIcon.isValid())
@@ -397,13 +408,13 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 			TAG_DONE);
 	}
 
-	screen->DrawText (SmallFont, color, col4, y, player->userinfo.netname,
+	screen->DrawText (SmallFont, color, col4, y + ypadding, player->userinfo.netname,
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	if (teamplay && Teams[player->userinfo.team].GetLogo ().IsNotEmpty ())
 	{
 		FTexture *pic = TexMan[Teams[player->userinfo.team].GetLogo ().GetChars ()];
-		screen->DrawTexture (pic, col1 - (pic->GetWidth() + 2) * CleanXfac, y,
+		screen->DrawTexture (pic, col1 - (pic->GetScaledWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 }

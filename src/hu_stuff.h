@@ -46,7 +46,7 @@ extern int chatmodeon;
 // [RH] Draw deathmatch scores
 
 void HU_DrawScores (player_t *me);
-void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth);
+void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight);
 void HU_DrawColorBar(int x, int y, int height, int playernum);
 int HU_GetRowColor(player_t *player, bool hightlight);
 

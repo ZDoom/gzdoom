@@ -99,7 +99,7 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 	}
 }
 
-CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	FOptionMenuDescriptor *opt = GetVideoModeMenu();
 	if (opt != NULL)
@@ -316,6 +316,7 @@ void M_InitVideoModesMenu ()
 	size_t currval = 0;
 
 	M_RefreshModesList();
+	vid_tft.Callback();
 
 	for (unsigned int i = 1; i <= 32 && currval < countof(BitTranslate); i++)
 	{

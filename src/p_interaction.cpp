@@ -86,7 +86,9 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 {
 	fixed_t delta = special->z - toucher->z;
 
-	if (delta > toucher->height || delta < -32*FRACUNIT)
+	// The pickup is at or above the toucher's feet OR
+	// The pickup is below the toucher.
+	if (delta > toucher->height || delta < MIN(-32*FRACUNIT, -special->height))
 	{ // out of reach
 		return;
 	}

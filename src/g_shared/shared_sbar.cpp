@@ -391,6 +391,12 @@ void DBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id, int layer)
 		old->Destroy();
 	}
 
+	// Merge unknown layers into the default layer.
+	if ((size_t)layer >= countof(Messages))
+	{
+		layer = HUDMSGLayer_Default;
+	}
+
 	prev = &Messages[layer];
 
 	// The ID serves as a priority, where lower numbers appear in front of

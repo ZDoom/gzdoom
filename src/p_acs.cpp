@@ -5721,6 +5721,10 @@ scriptwait:
 						break;
 					}
 					msg->SetVisibility((type & HUDMSG_VISIBILITY_MASK) >> HUDMSG_VISIBILITY_SHIFT);
+					if (type & HUDMSG_ADDBLEND)
+					{
+						msg->SetRenderStyle(STYLE_Add);
+					}
 					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0,
 						(type & HUDMSG_LAYER_MASK) >> HUDMSG_LAYER_SHIFT);
 					if (type & HUDMSG_LOG)

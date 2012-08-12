@@ -77,6 +77,14 @@ public:
 	{
 		VisibilityFlags = vis;
 	}
+	void SetRenderStyle(ERenderStyle style)
+	{
+		Style = style;
+	}
+	void SetAlpha(fixed_t alpha)
+	{
+		Alpha = alpha;
+	}
 
 protected:
 	FBrokenLines *Lines;
@@ -90,6 +98,8 @@ protected:
 	int HUDWidth, HUDHeight;
 	EColorRange TextColor;
 	FFont *Font;
+	FRenderStyle Style;
+	fixed_t Alpha;
 
 	DHUDMessage () : SourceText(NULL) {}
 

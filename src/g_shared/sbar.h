@@ -66,12 +66,17 @@ public:
 
 	virtual void Serialize (FArchive &arc);
 
-	void Draw (int bottom);
+	void Draw (int bottom, int visibility);
 	virtual void ResetText (const char *text);
 	virtual void DrawSetup ();
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();	// Returns true to indicate time for removal
 	virtual void ScreenSizeChanged ();
+
+	void SetVisibility(int vis)
+	{
+		VisibilityFlags = vis;
+	}
 
 protected:
 	FBrokenLines *Lines;
@@ -81,6 +86,7 @@ protected:
 	int HoldTics;
 	int Tics;
 	int State;
+	int VisibilityFlags;
 	int HUDWidth, HUDHeight;
 	EColorRange TextColor;
 	FFont *Font;
@@ -93,6 +99,14 @@ private:
 	char *SourceText;
 
 	friend class DBaseStatusBar;
+};
+
+// HUD message visibility flags
+enum
+{
+	HUDMSG_NotWith3DView		= 1,
+	HUDMSG_NotWithFullMap		= 2,
+	HUDMSG_NotWithOverlayMap	= 4,
 };
 
 // HUD Message; appear instantly, then fade out type ------------------------
@@ -242,6 +256,16 @@ int FindMugShotStateIndex(FName state);
 class FTexture;
 class AAmmo;
 
+enum
+{
+	HUDMSGLayer_OverHUD,
+	HUDMSGLayer_UnderHUD,
+	HUDMSGLayer_OverMap,
+
+	NUM_HUDMSGLAYERS,
+	HUDMSGLayer_Default = HUDMSGLayer_OverHUD,
+};
+
 class DBaseStatusBar : public DObject
 {
 	DECLARE_CLASS (DBaseStatusBar, DObject)
@@ -281,11 +305,10 @@ public:
 
 	void SetScaled (bool scale, bool force=false);
 
-	void AttachMessage (DHUDMessage *msg, uint32 id=0);
+	void AttachMessage (DHUDMessage *msg, uint32 id=0, int layer=HUDMSGLayer_Default);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);
 	DHUDMessage *DetachMessage (uint32 id);
 	void DetachAllMessages ();
-	bool CheckMessage (DHUDMessage *msg);
 	void ShowPlayerName ();
 	fixed_t GetDisplacement () { return Displacement; }
 	int GetPlayer ();
@@ -296,6 +319,7 @@ public:
 
 	virtual void Tick ();
 	virtual void Draw (EHudState state);
+			void DrawBottomStuff (EHudState state);
 			void DrawTopStuff (EHudState state);
 	virtual void FlashItem (const PClass *itemtype);
 	virtual void AttachToPlayer (player_t *player);
@@ -364,10 +388,10 @@ public:
 private:
 	DBaseStatusBar() {}
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
-	void DrawMessages (int bottom);
+	void DrawMessages (int layer, int bottom);
 	void DrawConsistancy () const;
 
-	TObjPtr<DHUDMessage> Messages;
+	TObjPtr<DHUDMessage> Messages[NUM_HUDMSGLAYERS];
 	bool ShowLog;
 };
 

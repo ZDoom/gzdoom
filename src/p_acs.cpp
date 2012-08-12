@@ -86,9 +86,22 @@ FRandom pr_acs ("ACS");
 #define STACK_SIZE 4096
 
 #define CLAMPCOLOR(c)		(EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c))
-#define HUDMSG_LOG			(0x80000000)
-#define HUDMSG_COLORSTRING	(0x40000000)
 #define LANGREGIONMASK		MAKE_ID(0,0,0xff,0xff)
+
+// HUD message flags
+#define HUDMSG_LOG					(0x80000000)
+#define HUDMSG_COLORSTRING			(0x40000000)
+#define HUDMSG_ADDBLEND				(0x20000000)
+
+// HUD message layers; these are not flags
+#define HUDMSG_LAYER_SHIFT			12
+#define HUDMSG_LAYER_MASK			(0x0000F000)
+// See HUDMSGLayer enumerations in sbar.h
+
+// HUD message visibility flags
+#define HUDMSG_VISIBILITY_SHIFT		16
+#define HUDMSG_VISIBILITY_MASK		(0x00070000)
+// See HUDMSG visibility enumerations in sbar.h
 
 // Flags for ReplaceTextures
 #define NOT_BOTTOM			1
@@ -5681,7 +5694,7 @@ scriptwait:
 						color = CLAMPCOLOR(Stack[optstart-4]);
 					}
 
-					switch (type & 0xFFFF)
+					switch (type & 0xFF)
 					{
 					default:	// normal
 						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
@@ -5707,7 +5720,9 @@ scriptwait:
 						}
 						break;
 					}
-					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0);
+					msg->SetVisibility((type & HUDMSG_VISIBILITY_MASK) >> HUDMSG_VISIBILITY_SHIFT);
+					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0,
+						(type & HUDMSG_LAYER_MASK) >> HUDMSG_LAYER_SHIFT);
 					if (type & HUDMSG_LOG)
 					{
 						static const char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"

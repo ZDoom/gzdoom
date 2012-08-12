@@ -140,6 +140,7 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 	State = 0;
 	SourceText = copystring (text);
 	Font = font;
+	VisibilityFlags = 0;
 	ResetText (SourceText);
 }
 
@@ -183,6 +184,14 @@ void DHUDMessage::Serialize (FArchive &arc)
 	{
 		Lines = NULL;
 		ResetText (SourceText);
+	}
+	if (SaveVersion < 3821)
+	{
+		VisibilityFlags = 0;
+	}
+	else
+	{
+		arc << VisibilityFlags;
 	}
 }
 
@@ -262,7 +271,7 @@ bool DHUDMessage::Tick ()
 //
 //============================================================================
 
-void DHUDMessage::Draw (int bottom)
+void DHUDMessage::Draw (int bottom, int visibility)
 {
 	int xscale, yscale;
 	int x, y;
@@ -270,6 +279,12 @@ void DHUDMessage::Draw (int bottom)
 	int i;
 	bool clean = false;
 	int hudheight;
+
+	// If any of the visibility flags match, do NOT draw this message.
+	if (VisibilityFlags & visibility)
+	{
+		return;
+	}
 
 	DrawSetup ();
 

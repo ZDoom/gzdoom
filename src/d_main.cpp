@@ -804,17 +804,21 @@ void D_Display ()
 
 			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 			{
+				StatusBar->DrawBottomStuff (HUD_None);
 				if (DrawFSHUD || automapactive) DrawHUD();
 				StatusBar->DrawTopStuff (HUD_None);
 			}
 			else 
 			if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
 			{
-				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
-				StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);
+				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
+				StatusBar->DrawBottomStuff (state);
+				StatusBar->Draw (state);
+				StatusBar->DrawTopStuff (state);
 			}
 			else
 			{
+				StatusBar->DrawBottomStuff (HUD_StatusBar);
 				StatusBar->Draw (HUD_StatusBar);
 				StatusBar->DrawTopStuff (HUD_StatusBar);
 			}

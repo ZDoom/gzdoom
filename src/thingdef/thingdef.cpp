@@ -180,7 +180,7 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 //
 //==========================================================================
 
-void SetReplacement(FActorInfo *info, FName replaceName)
+void SetReplacement(FScanner &sc, FActorInfo *info, FName replaceName)
 {
 	// Check for "replaces"
 	if (replaceName != NAME_None)
@@ -190,11 +190,13 @@ void SetReplacement(FActorInfo *info, FName replaceName)
 
 		if (replacee == NULL)
 		{
-			I_Error ("Replaced type '%s' not found in %s", replaceName.GetChars(), info->Class->TypeName.GetChars());
+			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->Class->TypeName.GetChars());
+			return;
 		}
 		else if (replacee->ActorInfo == NULL)
 		{
-			I_Error ("Replaced type '%s' is not an actor in %s", replaceName.GetChars(), info->Class->TypeName.GetChars());
+			sc.ScriptMessage("Replaced type '%s' for %s is not an actor", replaceName.GetChars(), info->Class->TypeName.GetChars());
+			return;
 		}
 		if (replacee != NULL)
 		{

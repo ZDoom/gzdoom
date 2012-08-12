@@ -1108,7 +1108,7 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 		info->DoomEdNum = DoomEdNum > 0? DoomEdNum : -1;
 		info->Class->Meta.SetMetaString (ACMETA_Lump, Wads.GetLumpFullPath(sc.LumpNum));
 
-		SetReplacement(info, replaceName);
+		SetReplacement(sc, info, replaceName);
 
 		ResetBaggage (bag, info->Class->ParentClass);
 		bag->Info = info;

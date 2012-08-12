@@ -1185,7 +1185,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->GetTexture(sector_t::floor),
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->GetAlpha(sector_t::floor),
-					!!(fakeFloor->flags && FF_ADDITIVETRANS),
+					!!(fakeFloor->flags & FF_ADDITIVETRANS),
 					frontsector->GetXOffset(position),		// killough 3/7/98
 					frontsector->GetYOffset(position),		// killough 3/7/98
 					frontsector->GetXScale(position),
@@ -1250,7 +1250,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->GetTexture(sector_t::ceiling),
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->GetAlpha(sector_t::ceiling),
-					!!(fakeFloor->flags && FF_ADDITIVETRANS),
+					!!(fakeFloor->flags & FF_ADDITIVETRANS),
 					frontsector->GetXOffset(position),		// killough 3/7/98
 					frontsector->GetYOffset(position),		// killough 3/7/98
 					frontsector->GetXScale(position),

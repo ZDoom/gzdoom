@@ -1159,6 +1159,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	}
 	mo->velx = mo->vely = mo->velz = 0;
 	mo->effects = 0;		// [RH]
+	mo->flags &= ~MF_SHOOTABLE;
 	
 	FState *nextstate=NULL;
 	

@@ -130,6 +130,8 @@ public:
 
 	// [GRB] Player class properties
 	fixed_t		JumpZ;
+	fixed_t		GruntSpeed;
+	fixed_t		FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	fixed_t		ViewHeight;
 	fixed_t		ForwardMove1, ForwardMove2;
 	fixed_t		SideMove1, SideMove2;

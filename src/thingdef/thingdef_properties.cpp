@@ -2240,6 +2240,26 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, jumpz, F, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->GruntSpeed = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, FallingScreamSpeed, FF, PlayerPawn)
+{
+	PROP_FIXED_PARM(minz, 0);
+	PROP_FIXED_PARM(maxz, 0);
+	defaults->FallingScreamMinSpeed = minz;
+	defaults->FallingScreamMaxSpeed = maxz;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 {
 	PROP_INT_PARM(type, 0);

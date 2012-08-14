@@ -21,6 +21,8 @@ Actor PlayerPawn : Actor native
 	+NOBLOCKMONST
 	Player.AttackZOffset 8
 	Player.JumpZ 8
+	Player.GruntSpeed 12
+	Player.FallingScreamSpeed 35,40
 	Player.ViewHeight 41
 	Player.ForwardMove 1,1
 	Player.SideMove 1,1

@@ -463,6 +463,16 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< DamageFade
 		<< PlayerFlags
 		<< FlechetteType;
+	if (SaveVersion < 3829)
+	{
+		GruntSpeed = 12*FRACUNIT;
+		FallingScreamMinSpeed = 35*FRACUNIT;
+		FallingScreamMaxSpeed = 40*FRACUNIT;
+	}
+	else
+	{
+		arc << GruntSpeed << FallingScreamMinSpeed << FallingScreamMaxSpeed;
+	}
 }
 
 //===========================================================================
@@ -2383,8 +2393,8 @@ void P_PlayerThink (player_t *player)
 			P_PlayerInSpecialSector (player);
 		}
 		P_PlayerOnSpecialFlat (player, P_GetThingFloorType (player->mo));
-		if (player->mo->velz <= -35*FRACUNIT &&
-			player->mo->velz >= -40*FRACUNIT && !player->morphTics &&
+		if (player->mo->velz <= -player->mo->FallingScreamMinSpeed &&
+			player->mo->velz >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
 			player->mo->waterlevel == 0)
 		{
 			int id = S_FindSkinnedSound (player->mo, "*falling");

@@ -2476,7 +2476,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->velz < (fixed_t)(800.f /*level.gravity * mo->Sector->gravity*/ * -983.04f) && mo->health > 0)
+		if (mo->health > 0 && mo->velz < -mo->player->mo->GruntSpeed)
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;

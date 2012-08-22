@@ -100,6 +100,7 @@ public:
 	void AddSound (int player_sound_id, int sfx_id);
 	int LookupSound (int player_sound_id);
 	FPlayerSoundHashTable &operator= (const FPlayerSoundHashTable &other);
+	void MarkUsed();
 
 protected:
 	struct Entry
@@ -828,6 +829,25 @@ int FPlayerSoundHashTable::LookupSound (int player_sound_id)
 	{ }
 
 	return entry != NULL ? entry->SfxID : 0;
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable :: Mark
+//
+// Marks all sounds defined for this class/gender as used.
+//
+//==========================================================================
+
+void FPlayerSoundHashTable::MarkUsed()
+{
+	for (size_t i = 0; i < NUM_BUCKETS; ++i)
+	{
+		for (Entry *probe = Buckets[i]; probe != NULL; probe = probe->Next)
+		{
+			S_sfx[probe->SfxID].bUsed = true;
+		}
+	}
 }
 
 //==========================================================================
@@ -1910,6 +1930,31 @@ bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time)
 void sfxinfo_t::MarkUsed()
 {
 	bUsed = true;
+}
+
+//==========================================================================
+//
+// S_MarkPlayerSounds
+//
+// Marks all sounds from a particular player class for precaching.
+//
+//==========================================================================
+
+void S_MarkPlayerSounds (const char *playerclass)
+{
+	int classidx = S_FindPlayerClass(playerclass);
+	if (classidx < 0)
+	{
+		classidx = DefPlayerClass;
+	}
+	for (int g = 0; g < 3; ++g)
+	{
+		int listidx = PlayerClassLookups[classidx].ListIndex[0];
+		if (listidx != 0xffff)
+		{
+			PlayerSounds[listidx].MarkUsed();
+		}
+	}
 }
 
 //==========================================================================

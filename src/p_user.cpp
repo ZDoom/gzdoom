@@ -477,6 +477,18 @@ void APlayerPawn::Serialize (FArchive &arc)
 
 //===========================================================================
 //
+// APlayerPawn :: MarkPrecacheSounds
+//
+//===========================================================================
+
+void APlayerPawn::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	S_MarkPlayerSounds(GetSoundClass());
+}
+
+//===========================================================================
+//
 // APlayerPawn :: BeginPlay
 //
 //===========================================================================
@@ -968,7 +980,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 //
 //===========================================================================
 
-const char *APlayerPawn::GetSoundClass ()
+const char *APlayerPawn::GetSoundClass() const
 {
 	if (player != NULL &&
 		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&

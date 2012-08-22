@@ -69,6 +69,19 @@ void AWeapon::Serialize (FArchive &arc)
 
 //===========================================================================
 //
+// AWeapon :: MarkPrecacheSounds
+//
+//===========================================================================
+
+void AWeapon::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	UpSound.MarkUsed();
+	ReadySound.MarkUsed();
+}
+
+//===========================================================================
+//
 // AWeapon :: TryPickup
 //
 // If you can't see the weapon when it's active, then you can't pick it up.

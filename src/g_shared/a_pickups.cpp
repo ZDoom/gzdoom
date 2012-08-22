@@ -461,6 +461,18 @@ void AInventory::Serialize (FArchive &arc)
 
 //===========================================================================
 //
+// AInventory :: MarkPrecacheSounds
+//
+//===========================================================================
+
+void AInventory::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	PickupSound.MarkUsed();
+}
+
+//===========================================================================
+//
 // AInventory :: SpecialDropAction
 //
 // Called by P_DropItem. Return true to prevent the standard drop tossing.

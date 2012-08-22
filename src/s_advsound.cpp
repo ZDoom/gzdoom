@@ -123,7 +123,7 @@ struct FAmbientSound
 	int			periodmax;	// max # of tics for random ambients
 	float		volume;		// relative volume of sound
 	float		attenuation;
-	FString		sound;		// Logical name of sound to play
+	FSoundID	sound;		// Sound to play
 };
 TMap<int, FAmbientSound> Ambients;
 
@@ -1004,10 +1004,10 @@ static void S_AddSNDINFO (int lump)
 				ambient->periodmax = 0;
 				ambient->volume = 0;
 				ambient->attenuation = 0;
-				ambient->sound = "";
+				ambient->sound = 0;
 
 				sc.MustGetString ();
-				ambient->sound = sc.String;
+				ambient->sound = FSoundID(S_FindSoundTentative(sc.String));
 				ambient->attenuation = 0;
 
 				sc.MustGetString ();
@@ -2125,7 +2125,7 @@ void AAmbientSound::Tick ()
 		loop = CHAN_LOOP;
 	}
 
-	if (ambient->sound.IsNotEmpty())
+	if (ambient->sound != 0)
 	{
 		// The second argument scales the ambient sound's volume.
 		// 0 and 100 are normal volume. The maximum volume level

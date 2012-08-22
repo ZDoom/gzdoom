@@ -276,6 +276,7 @@ static FFlagDef ActorFlags[]=
 	DEFINE_DUMMY_FLAG(NONETID),				// netcode-based
 	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),	// netcode-based
 	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY),	    // netcode-based
+	DEFINE_DUMMY_FLAG(SERVERSIDEONLY),		// netcode-based
 	DEFINE_DUMMY_FLAG(EXPLODEONDEATH),	    // seems useless
 };
 

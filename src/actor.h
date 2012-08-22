@@ -583,15 +583,14 @@ public:
 	bool AdjustReflectionAngle (AActor *thing, angle_t &angle);
 
 	// Returns true if this actor is within melee range of its target
-	bool CheckMeleeRange ();
+	bool CheckMeleeRange();
 
-	// BeginPlay: Called just after the actor is created
-	virtual void BeginPlay ();
-	virtual void PostBeginPlay ();
-	// LevelSpawned: Called after BeginPlay if this actor was spawned by the world
-	virtual void LevelSpawned ();
-	// Translates SpawnFlags into in-game flags.
-	virtual void HandleSpawnFlags ();
+	virtual void BeginPlay();			// Called immediately after the actor is created
+	virtual void PostBeginPlay();		// Called immediately before the actor's first tick
+	virtual void LevelSpawned();		// Called after BeginPlay if this actor was spawned by the world
+	virtual void HandleSpawnFlags();	// Translates SpawnFlags into in-game flags.
+
+	virtual void MarkPrecacheSounds() const;	// Marks sounds used by this actor for precaching.
 
 	virtual void Activate (AActor *activator);
 	virtual void Deactivate (AActor *activator);

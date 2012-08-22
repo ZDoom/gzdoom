@@ -3993,6 +3993,19 @@ void AActor::PostBeginPlay ()
 	PrevAngle = angle;
 }
 
+void AActor::MarkPrecacheSounds() const
+{
+	SeeSound.MarkUsed();
+	AttackSound.MarkUsed();
+	PainSound.MarkUsed();
+	DeathSound.MarkUsed();
+	ActiveSound.MarkUsed();
+	UseSound.MarkUsed();
+	BounceSound.MarkUsed();
+	WallBounceSound.MarkUsed();
+	CrushPainSound.MarkUsed();
+}
+
 bool AActor::isFast()
 {
 	if (flags5&MF5_ALWAYSFAST) return true;

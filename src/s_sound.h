@@ -65,6 +65,8 @@ struct sfxinfo_t
 
 	FRolloffInfo	Rolloff;
 	float		Attenuation;			// Multiplies the attenuation passed to S_Sound.
+
+	void		MarkUsed();				// Marks this sound as used.
 };
 
 // Rolloff types
@@ -131,6 +133,10 @@ public:
 	operator const char *() const
 	{
 		return ID ? S_sfx[ID].name.GetChars() : NULL;
+	}
+	void MarkUsed() const
+	{
+		S_sfx[ID].MarkUsed();
 	}
 private:
 	int ID;

@@ -480,17 +480,12 @@ void S_PrecacheLevel ()
 		// Precache all sounds known to be used by the currently spawned actors.
 		while ( (actor = iterator.Next()) != NULL )
 		{
-			S_sfx[actor->SeeSound].bUsed = true;
-			S_sfx[actor->AttackSound].bUsed = true;
-			S_sfx[actor->PainSound].bUsed = true;
-			S_sfx[actor->DeathSound].bUsed = true;
-			S_sfx[actor->ActiveSound].bUsed = true;
-			S_sfx[actor->UseSound].bUsed = true;
+			actor->MarkPrecacheSounds();
 		}
 		// Precache all extra sounds requested by this map.
 		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
 		{
-			S_sfx[level.info->PrecacheSounds[i]].bUsed = true;
+			level.info->PrecacheSounds[i].MarkUsed();
 		}
 
 		for (i = 1; i < S_sfx.Size(); ++i)

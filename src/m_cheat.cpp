@@ -106,6 +106,20 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_NCOFF");
 		break;
 
+	case CHT_NOCLIP2:
+		player->cheats ^= CF_NOCLIP2;
+		if (player->cheats & CF_NOCLIP2)
+		{
+			player->cheats |= CF_NOCLIP;
+			msg = GStrings("STSTR_NC2ON");
+		}
+		else
+		{
+			player->cheats &= ~CF_NOCLIP;
+			msg = GStrings("STSTR_NCOFF");
+		}
+		break;
+
 	case CHT_NOVELOCITY:
 		player->cheats ^= CF_NOVELOCITY;
 		if (player->cheats & CF_NOVELOCITY)

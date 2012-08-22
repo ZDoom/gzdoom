@@ -175,6 +175,15 @@ CCMD (noclip)
 	Net_WriteByte (CHT_NOCLIP);
 }
 
+CCMD (noclip2)
+{
+	if (CheckCheatmode())
+		return;
+
+	Net_WriteByte (DEM_GENERICCHEAT);
+	Net_WriteByte (CHT_NOCLIP2);
+}
+
 CCMD (powerup)
 {
 	if (CheckCheatmode ())

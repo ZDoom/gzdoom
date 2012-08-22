@@ -501,7 +501,11 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	const msecnode_t *m;
 	const sector_t *sec;
 
-	if (mo->flags2 & MF2_FLY && mo->flags & MF_NOGRAVITY)
+	if (mo->IsNoClip2())
+	{
+		// The default values are fine for noclip2 mode
+	}
+	else if (mo->flags2 & MF2_FLY && mo->flags & MF_NOGRAVITY)
 	{
 		friction = FRICTION_FLY;
 	}
@@ -1298,7 +1302,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, b
 	
 #ifdef _3DFLOORS
 	//Check 3D floors
-	if(newsec->e->XFloor.ffloors.Size())
+	if (!thing->IsNoClip2() && newsec->e->XFloor.ffloors.Size())
 	{
 		F3DFloor*  rover;
 		fixed_t    delta1;
@@ -1605,7 +1609,7 @@ void P_FakeZMovement (AActor *mo)
 				mo->z += mo->FloatSpeed;
 		}
 	}
-	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->z > mo->floorz))
+	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->z > mo->floorz) && !mo->IsNoClip2())
 	{
 		mo->z += finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8;
 	}

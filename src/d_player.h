@@ -208,6 +208,7 @@ typedef enum
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_WEAPONRELOADOK   = 1 << 28,      // [XA] Okay to reload this weapon.
 	CF_WEAPONZOOMOK     = 1 << 29,      // [XA] Okay to use weapon zoom function.
+	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;
 
 #define WPIECE1		1
@@ -439,6 +440,14 @@ inline void AActor::SetFriendPlayer(player_t *player)
 	}
 }
 
+inline bool AActor::IsNoClip2() const
+{
+	if (player != NULL && player->mo == this)
+	{
+		return (player->cheats & CF_NOCLIP2) != 0;
+	}
+	return false;
+}
 
 #define CROUCHSPEED (FRACUNIT/12)
 

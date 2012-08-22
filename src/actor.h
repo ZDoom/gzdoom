@@ -712,6 +712,8 @@ public:
 	// Do I hate the other actor?
 	bool IsHostile (AActor *other);
 
+	inline bool IsNoClip2() const;
+
 	// What species am I?
 	virtual FName GetSpecies();
 

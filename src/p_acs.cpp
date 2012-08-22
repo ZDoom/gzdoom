@@ -6934,7 +6934,8 @@ scriptwait:
 			}
 			else
 			{
-				userinfo_t *userinfo = &players[STACK(2)].userinfo;
+				player_t *pl = &players[STACK(2)];
+				userinfo_t *userinfo = &pl->userinfo;
 				switch (STACK(1))
 				{
 				case PLAYERINFO_TEAM:			STACK(2) = userinfo->team; break;
@@ -6945,6 +6946,8 @@ scriptwait:
 				case PLAYERINFO_MOVEBOB:		STACK(2) = userinfo->MoveBob; break;
 				case PLAYERINFO_STILLBOB:		STACK(2) = userinfo->StillBob; break;
 				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->PlayerClass; break;
+				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
+				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;
 				default:						STACK(2) = 0; break;
 				}
 			}

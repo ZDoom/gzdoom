@@ -2072,6 +2072,7 @@ class AAmbientSound : public AActor
 public:
 	void Serialize (FArchive &arc);
 
+	void MarkPrecacheSounds () const;
 	void BeginPlay ();
 	void Tick ();
 	void Activate (AActor *activator);
@@ -2096,6 +2097,22 @@ void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bActive << NextCheck;
+}
+
+//==========================================================================
+//
+// AmbientSound :: MarkPrecacheSounds
+//
+//==========================================================================
+
+void AAmbientSound::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	FAmbientSound *ambient = Ambients.CheckKey(args[0]);
+	if (ambient != NULL)
+	{
+		ambient->sound.MarkUsed();
+	}
 }
 
 //==========================================================================

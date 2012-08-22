@@ -793,6 +793,16 @@ STARTUP3 = "";
 STARTUP4 = "";
 STARTUP5 = "";
 
+// Scoreboard text
+SCORE_ITEMS = "ITEMS";
+SCORE_BONUS = "BONUS";
+SCORE_COLOR = "COLOR";
+SCORE_SECRET = "SECRET";
+SCORE_NAME = "NAME";
+SCORE_KILLS = "KILLS";
+SCORE_FRAGS = "FRAGS";
+SCORE_MISSED = "MISSED";
+SCORE_TOTAL = "TOTAL";
 
 // Item tags: Doom weapons
 TAG_FIST = "Brass Knuckles";

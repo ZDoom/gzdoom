@@ -1595,7 +1595,7 @@ void WI_drawNetgameStats ()
 	int bonus_len, secret_len;
 	int missed_kills, missed_items, missed_secrets;
 	EColorRange color;
-	const char *bonus_label;
+	const char *text_bonus, *text_color, *text_secret, *text_kills;
 
 	// draw animated background
 	WI_drawBackground(); 
@@ -1608,12 +1608,16 @@ void WI_drawNetgameStats ()
 	ypadding = (lineheight - height + 1) / 2;
 	y += 16*CleanYfac;
 
-	bonus_label = (gameinfo.gametype & GAME_Raven) ? "BONUS" : "ITEMS";
-	icon_x = (SmallFont->StringWidth("COLOR") + 8) * CleanXfac;
+	text_bonus = GStrings((gameinfo.gametype & GAME_Raven) ? "SCORE_BONUS" : "SCORE_ITEMS");
+	text_color = GStrings("SCORE_COLOR");
+	text_secret = GStrings("SCORE_SECRET");
+	text_kills = GStrings("SCORE_KILLS");
+
+	icon_x = (SmallFont->StringWidth(text_color) + 8) * CleanXfac;
 	name_x = icon_x + maxscorewidth * CleanXfac;
-	kills_x = name_x + (maxnamewidth + SmallFont->StringWidth("XXXXX") + 8) * CleanXfac;
-	bonus_x = kills_x + ((bonus_len = SmallFont->StringWidth(bonus_label)) + 8) * CleanXfac;
-	secret_x = bonus_x + ((secret_len = SmallFont->StringWidth("SECRET")) + 8) * CleanXfac;
+	kills_x = name_x + (maxnamewidth + MAX(SmallFont->StringWidth("XXXXX"), SmallFont->StringWidth(text_kills)) + 8) * CleanXfac;
+	bonus_x = kills_x + ((bonus_len = SmallFont->StringWidth(text_bonus)) + 8) * CleanXfac;
+	secret_x = bonus_x + ((secret_len = SmallFont->StringWidth(text_secret)) + 8) * CleanXfac;
 
 	x = (SCREENWIDTH - secret_x) >> 1;
 	icon_x += x;
@@ -1624,11 +1628,11 @@ void WI_drawNetgameStats ()
 
 	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
 
-	screen->DrawText(SmallFont, color, x, y, "COLOR", DTA_CleanNoMove, true, TAG_DONE);
-	screen->DrawText(SmallFont, color, name_x, y, "NAME", DTA_CleanNoMove, true, TAG_DONE);
-	screen->DrawText(SmallFont, color, kills_x - SmallFont->StringWidth("KILLS")*CleanXfac, y, "KILLS", DTA_CleanNoMove, true, TAG_DONE);
-	screen->DrawText(SmallFont, color, bonus_x - bonus_len*CleanXfac, y, bonus_label, DTA_CleanNoMove, true, TAG_DONE);
-	screen->DrawText(SmallFont, color, secret_x - secret_len*CleanXfac, y, "SECRET", DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, x, y, text_color, DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, name_x, y, GStrings("SCORE_NAME"), DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, kills_x - SmallFont->StringWidth(text_kills)*CleanXfac, y, text_kills, DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, bonus_x - bonus_len*CleanXfac, y, text_bonus, DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, secret_x - secret_len*CleanXfac, y, text_secret, DTA_CleanNoMove, true, TAG_DONE);
 	y += height + 6 * CleanYfac;
 
 	missed_kills = wbs->maxkills;
@@ -1669,7 +1673,7 @@ void WI_drawNetgameStats ()
 
 	// Draw "MISSED" line
 	y += 5 * CleanYfac;
-	screen->DrawText(SmallFont, CR_DARKGRAY, name_x, y, "MISSED", DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, CR_DARKGRAY, name_x, y, GStrings("SCORE_MISSED"), DTA_CleanNoMove, true, TAG_DONE);
 	WI_drawPercent(SmallFont, kills_x, y, missed_kills, wbs->maxkills, false, CR_DARKGRAY);
 	if (ng_state >= 4)
 	{
@@ -1683,7 +1687,7 @@ void WI_drawNetgameStats ()
 	// Draw "TOTAL" line
 	y += height + 5 * CleanYfac;
 	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
-	screen->DrawText(SmallFont, color, name_x, y, "TOTAL", DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, name_x, y, GStrings("SCORE_TOTAL"), DTA_CleanNoMove, true, TAG_DONE);
 	WI_drawNum(SmallFont, kills_x, y, wbs->maxkills, 0, false, color);
 	if (ng_state >= 4)
 	{

@@ -47,6 +47,7 @@
 #include "v_palette.h"
 #include "d_player.h"
 #include "hu_stuff.h"
+#include "gstrings.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -310,18 +311,22 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		y += (BigFont->GetHeight() + 8) * CleanYfac;
 	}
 
-	col2 = (SmallFont->StringWidth("Color") + 8) * CleanXfac;
-	col3 = col2 + (SmallFont->StringWidth("Frags") + 8) * CleanXfac;
+	const char *text_color = GStrings("SCORE_COLOR"),
+		*text_frags = GStrings(deathmatch ? "SCORE_FRAGS" : "SCORE_KILLS"),
+		*text_name = GStrings("SCORE_NAME");
+
+	col2 = (SmallFont->StringWidth(text_color) + 8) * CleanXfac;
+	col3 = col2 + (SmallFont->StringWidth(text_frags) + 8) * CleanXfac;
 	col4 = col3 + maxscorewidth * CleanXfac;
 	x = (SCREENWIDTH >> 1) - ((maxnamewidth * CleanXfac + col4) >> 1);
 
-	screen->DrawText (SmallFont, color, x, y, "Color",
+	screen->DrawText (SmallFont, color, x, y, text_color,
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	screen->DrawText (SmallFont, color, x + col2, y, deathmatch ? "Frags" : "Kills",
+	screen->DrawText (SmallFont, color, x + col2, y, text_frags,
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	screen->DrawText (SmallFont, color, x + col4, y, "Name",
+	screen->DrawText (SmallFont, color, x + col4, y, text_name,
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	y += height + 6 * CleanYfac;

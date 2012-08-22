@@ -36,8 +36,8 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-//#include "autosegs.h"
 #include "sc_man.h"
+#include "s_sound.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -326,6 +326,8 @@ struct level_info_t
 	FMusicMap	MusicMap;
 
 	TArray<FSpecialAction> specialactions;
+
+	TArray<FSoundID> PrecacheSounds;
 
 	level_info_t() 
 	{ 

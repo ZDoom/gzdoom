@@ -477,7 +477,8 @@ void S_PrecacheLevel ()
 		AActor *actor;
 		TThinkerIterator<AActor> iterator;
 
-		while ( (actor = iterator.Next ()) != NULL )
+		// Precache all sounds known to be used by the currently spawned actors.
+		while ( (actor = iterator.Next()) != NULL )
 		{
 			S_sfx[actor->SeeSound].bUsed = true;
 			S_sfx[actor->AttackSound].bUsed = true;
@@ -485,6 +486,11 @@ void S_PrecacheLevel ()
 			S_sfx[actor->DeathSound].bUsed = true;
 			S_sfx[actor->ActiveSound].bUsed = true;
 			S_sfx[actor->UseSound].bUsed = true;
+		}
+		// Precache all extra sounds requested by this map.
+		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
+		{
+			S_sfx[level.info->PrecacheSounds[i]].bUsed = true;
 		}
 
 		for (i = 1; i < S_sfx.Size(); ++i)

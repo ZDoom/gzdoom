@@ -56,6 +56,7 @@
 #include "colormatcher.h"
 #include "thingdef_exp.h"
 #include "version.h"
+#include "templates.h"
 
 //==========================================================================
 //***
@@ -237,8 +238,30 @@ do_stop:
 			sc.MustGetString();
 			statestring = sc.String;
 
-			sc.MustGetNumber();
-			state.Tics = clamp<int>(sc.Number, -1, 32767);
+			if (sc.CheckString("RANDOM"))
+			{
+				int min, max;
+
+				sc.MustGetStringName("(");
+				sc.MustGetNumber();
+				min = clamp<int>(sc.Number, -1, SHRT_MAX);
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				max = clamp<int>(sc.Number, -1, SHRT_MAX);
+				sc.MustGetStringName(")");
+				if (min > max)
+				{
+					swapvalues(min, max);
+				}
+				state.Tics = min;
+				state.TicRange = max - min;
+			}
+			else
+			{
+				sc.MustGetNumber();
+				state.Tics = clamp<int>(sc.Number, -1, SHRT_MAX);
+				state.TicRange = 0;
+			}
 
 			while (sc.GetString() && !sc.Crossed)
 			{

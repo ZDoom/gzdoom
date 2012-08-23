@@ -1353,7 +1353,7 @@ static int PatchFrame (int frameNum)
 
 		if (keylen == 8 && stricmp (Line1, "Duration") == 0)
 		{
-			tics = clamp (val, -1, 65534);
+			tics = clamp (val, -1, SHRT_MAX);
 		}
 		else if (keylen == 9 && stricmp (Line1, "Unknown 1") == 0)
 		{

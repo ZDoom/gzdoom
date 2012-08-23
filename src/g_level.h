@@ -213,6 +213,7 @@ enum ELevelFlags
 	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
 	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
 	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
+	LEVEL2_FORGETSTATE			= 0x80000000,	// forget this map's state in a hub
 };
 
 

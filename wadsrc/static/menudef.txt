@@ -651,7 +651,7 @@ OptionMenu "VideoOptions"
 	Submenu "Scoreboard Options", 		"ScoreboardOptions"
 	StaticText " "
 	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0, 0
-	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
+	Slider "Brightness",				"Gamma", 0.75, 3.0, 0.05, 2
 	Option "Vertical Sync",				"vid_vsync", "OnOff"
 	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
 

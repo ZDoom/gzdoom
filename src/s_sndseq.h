@@ -71,10 +71,10 @@ void SN_StopAllSequences (void);
 
 struct FSoundSequence
 {
-	FName	SeqName;
-	FName	Slot;
-	int		StopSound;
-	SDWORD	Script[1];	// + more until end of sequence script
+	FName	 SeqName;
+	FName	 Slot;
+	FSoundID StopSound;
+	SDWORD	 Script[1];	// + more until end of sequence script
 };
 
 void S_ParseSndSeq (int levellump);
@@ -98,6 +98,7 @@ void SN_DoStop (void *);
 void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
 	float volume, int currentSoundID);
 FName SN_GetSequenceSlot (int sequence, seqtype_t type);
+void SN_MarkPrecacheSounds (int sequence, seqtype_t type);
 bool SN_IsMakingLoopingSound (sector_t *sector);
 
 #endif //__S_SNDSEQ_H__

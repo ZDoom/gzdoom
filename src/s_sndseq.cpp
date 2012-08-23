@@ -760,7 +760,7 @@ static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, c
 	Sequences[curseq] = (FSoundSequence *)M_Malloc (sizeof(FSoundSequence) + sizeof(DWORD)*ScriptTemp.Size());
 	Sequences[curseq]->SeqName = seqname;
 	Sequences[curseq]->Slot = slot;
-	Sequences[curseq]->StopSound = stopsound;
+	Sequences[curseq]->StopSound = FSoundID(stopsound);
 	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(DWORD)*ScriptTemp.Size());
 	Sequences[curseq]->Script[ScriptTemp.Size()] = MakeCommand(SS_CMD_END, 0);
 }
@@ -1309,6 +1309,32 @@ FName SN_GetSequenceSlot (int sequence, seqtype_t type)
 		return Sequences[sequence]->Slot;
 	}
 	return NAME_None;
+}
+
+//==========================================================================
+//
+// SN_MarkPrecacheSounds
+//
+// Marks all sounds played by this sequence for precaching.
+//
+//==========================================================================
+
+void SN_MarkPrecacheSounds(int sequence, seqtype_t type)
+{
+	if (TwiddleSeqNum(sequence, type))
+	{
+		FSoundSequence *seq = Sequences[sequence];
+
+		seq->StopSound.MarkUsed();
+		for (int i = 0; GetCommand(seq->Script[i]) != SS_CMD_END; ++i)
+		{
+			int cmd = GetCommand(seq->Script[i]);
+			if (cmd == SS_CMD_PLAY || cmd == SS_CMD_PLAYREPEAT || cmd == SS_CMD_PLAYLOOP)
+			{
+				FSoundID(GetData(seq->Script[i])).MarkUsed();
+			}
+		}
+	}
 }
 
 //==========================================================================

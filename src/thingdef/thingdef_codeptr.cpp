@@ -4449,3 +4449,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	}
 }
 
+
+//==========================================================================
+//
+// A_SetTics
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(tics_to_set, 0);
+
+	self->tics = tics_to_set;
+}

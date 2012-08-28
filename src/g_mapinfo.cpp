@@ -61,6 +61,8 @@ static cluster_info_t TheDefaultClusterInfo;
 
 TArray<FEpisode> AllEpisodes;
 
+extern TMap<int, FString> HexenMusic;
+
 //==========================================================================
 //
 //
@@ -918,8 +920,6 @@ DEFINE_MAP_OPTION(music, true)
 {
 	parse.ParseAssign();
 	parse.ParseMusic(info->Music, info->musicorder);
-	// Flag the level so that the $MAP command doesn't override this.
-	info->flags2 |= LEVEL2_MUSICDEFINED;
 }
 
 DEFINE_MAP_OPTION(intermusic, true)
@@ -1538,6 +1538,14 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 	// to teleport to maps with standard names without needing a levelnum.
 	levelinfo->levelnum = GetDefaultLevelNum(levelinfo->mapname);
 
+	// Does this map have a song defined via SNDINFO's $map command?
+	// Set that as this map's default music if it does.
+	FString *song;
+	if ((song = HexenMusic.CheckKey(levelinfo->levelnum)) != NULL)
+	{
+		levelinfo->Music = *song;
+	}
+
 	return levelinfo;
 }
 
@@ -1831,7 +1839,6 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		}
 	}
 }
-
 
 //==========================================================================
 //

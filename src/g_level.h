@@ -181,7 +181,7 @@ enum ELevelFlags
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
-	LEVEL2_MUSICDEFINED			= 0x00000080,	// a marker to disable the $map command in SNDINFO for this map
+	/*							= 0x00000080,	*/
 	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
 	LEVEL2_CLIPMIDTEX			= 0x00000200,
 	LEVEL2_WRAPMIDTEX			= 0x00000400,

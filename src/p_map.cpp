@@ -942,8 +942,11 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
 		) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
 	{
-		if (P_ActivateThingSpecial(thing, tm.thing))
-			thing->lastbump = level.maptime + TICRATE;
+		if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
+		{
+			if (P_ActivateThingSpecial(thing, tm.thing))
+				thing->lastbump = level.maptime + TICRATE;
+		}
 	}
 
 	// Check for skulls slamming into things

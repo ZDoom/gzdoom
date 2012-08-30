@@ -326,7 +326,6 @@ void S_InitData ()
 	LastLocalSndInfo = LastLocalSndSeq = "";
 	S_ParseSndInfo (false);
 	S_ParseSndSeq (-1);
-	S_ParseMusInfo();
 }
 
 //==========================================================================

@@ -2218,6 +2218,9 @@ void D_DoomMain (void)
 		G_ParseMapInfo (iwad_info->MapInfo);
 		ReadStatistics();
 
+		// MUSINFO must be parsed after MAPINFO
+		S_ParseMusInfo();
+
 		Printf ("Texman.Init: Init texture manager.\n");
 		TexMan.Init();
 		C_InitConback();

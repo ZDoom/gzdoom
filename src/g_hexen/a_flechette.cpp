@@ -420,7 +420,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 {
 	int bobIndex;
 	
-	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, true);
+	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, RADF_HURTSOURCE);
 	bobIndex = self->special2;
 	self->z += finesine[bobIndex << BOBTOFINESHIFT] >> 1;
 	self->special2 = (bobIndex + 1) & 63;

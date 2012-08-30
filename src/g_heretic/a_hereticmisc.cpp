@@ -198,7 +198,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 		self->z += 28*FRACUNIT;
 		//self->velz = 3*FRACUNIT;
 	}
-	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, true);
+	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, RADF_HURTSOURCE);
 	for (i = 0; i < 4; i++)
 	{
 		tiny = Spawn("VolcanoTBlast", self->x, self->y, self->z, ALLOW_REPLACE);

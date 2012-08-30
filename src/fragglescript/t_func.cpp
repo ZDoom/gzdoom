@@ -3367,7 +3367,7 @@ void FParser::SF_RadiusAttack()
 
 		if (spot && source)
 		{
-			P_RadiusAttack(spot, source, damage, damage, NAME_None, true);
+			P_RadiusAttack(spot, source, damage, damage, NAME_None, RADF_HURTSOURCE);
 		}
 	}
 }

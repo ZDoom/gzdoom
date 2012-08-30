@@ -136,7 +136,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 						 target->y - FixedMul (24*FRACUNIT, finesine[an]),
 						 target->z);
 		
-		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, false);
+		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, 0);
 	}
 	target->velz = Scale(thrust, 1000, target->Mass);
 }

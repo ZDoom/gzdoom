@@ -727,12 +727,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 //
 //==========================================================================
 
+enum
+{
+	XF_HURTSOURCE = 1,
+	XF_NOTMISSILE = 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 {
 	ACTION_PARAM_START(8);
 	ACTION_PARAM_INT(damage, 0);
 	ACTION_PARAM_INT(distance, 1);
-	ACTION_PARAM_BOOL(hurtSource, 2);
+	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_BOOL(alert, 3);
 	ACTION_PARAM_INT(fulldmgdistance, 4);
 	ACTION_PARAM_INT(nails, 5);
@@ -743,7 +749,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	{
 		damage = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionDamage, 128);
 		distance = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionRadius, damage);
-		hurtSource = !self->GetClass()->Meta.GetMetaInt (ACMETA_DontHurtShooter);
+		flags = !self->GetClass()->Meta.GetMetaInt (ACMETA_DontHurtShooter);
 		alert = false;
 	}
 	else
@@ -766,7 +772,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource, true, fulldmgdistance);
+	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
 	P_CheckSplash(self, distance<<FRACBITS);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
@@ -775,28 +781,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	}
 }
 
-enum
-{
-	RTF_AFFECTSOURCE = 1,
-	RTF_NOIMPACTDAMAGE = 2,
-};
-
 //==========================================================================
 //
 // A_RadiusThrust
 //
 //==========================================================================
 
+enum
+{
+	RTF_AFFECTSOURCE = 1,
+	RTF_NOIMPACTDAMAGE = 2,
+	RTF_NOTMISSILE = 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 {
 	ACTION_PARAM_START(3);
 	ACTION_PARAM_INT(force, 0);
 	ACTION_PARAM_INT(distance, 1);
-	ACTION_PARAM_INT(thrustFlags, 2);
+	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_INT(fullthrustdistance, 3);
-
-	bool affectSource = !!(thrustFlags & RTF_AFFECTSOURCE);
-	bool noimpactdamage = !!(thrustFlags & RTF_NOIMPACTDAMAGE);
 
 	bool sourcenothrust = false;
 
@@ -804,14 +808,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	if (distance <= 0) distance = force;
 
 	// Temporarily negate MF2_NODMGTHRUST on the shooter, since it renders this function useless.
-	if (self->target != NULL && self->target->flags2 & MF2_NODMGTHRUST)
+	if (!(flags & RTF_NOTMISSILE) && self->target != NULL && self->target->flags2 & MF2_NODMGTHRUST)
 	{
 		sourcenothrust = true;
 		self->target->flags2 &= ~MF2_NODMGTHRUST;
 	}
 	int sourceflags2 = self->target != NULL ? self->target->flags2 : 0;
 
-	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, fullthrustdistance, noimpactdamage);
+	P_RadiusAttack (self, self->target, force, distance, self->DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
 	P_CheckSplash(self, distance << FRACBITS);
 
 	if (sourcenothrust)

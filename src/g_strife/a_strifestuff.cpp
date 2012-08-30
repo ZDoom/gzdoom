@@ -683,7 +683,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
 	AActor *drop = Spawn("FireDroplet", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	drop->velz = -FRACUNIT;
-	P_RadiusAttack (self, self, 64, 64, NAME_Fire, false);
+	P_RadiusAttack (self, self, 64, 64, NAME_Fire, 0);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)

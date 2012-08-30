@@ -3161,7 +3161,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 DEFINE_ACTION_FUNCTION(AActor, A_Detonate)
 {
 	int damage = self->GetMissileDamage (0, 1);
-	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, true);
+	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, RADF_HURTSOURCE);
 	P_CheckSplash(self, damage<<FRACBITS);
 }
 

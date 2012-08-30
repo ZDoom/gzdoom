@@ -45,6 +45,7 @@
 #include "d_net.h"
 #include "d_dehacked.h"
 #include "gi.h"
+#include "farchive.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -1055,18 +1056,53 @@ void cht_Take (player_t *player, const char *name, int amount)
 	return;
 }
 
+class DSuicider : public DThinker
+{
+	DECLARE_CLASS(DSuicider, DThinker)
+	HAS_OBJECT_POINTERS;
+public:
+	TObjPtr<APlayerPawn> Pawn;
+
+	void Tick()
+	{
+		Pawn->flags |= MF_SHOOTABLE;
+		Pawn->flags2 &= ~MF2_INVULNERABLE;
+		// Store the player's current damage factor, to restore it later.
+		fixed_t plyrdmgfact = Pawn->DamageFactor;
+		Pawn->DamageFactor = 65536;
+		P_DamageMobj (Pawn, Pawn, Pawn, TELEFRAG_DAMAGE, NAME_Suicide);
+		Pawn->DamageFactor = plyrdmgfact;
+		if (Pawn->health <= 0)
+		{
+			Pawn->flags &= ~MF_SHOOTABLE;
+		}
+		Destroy();
+	}
+	// You'll probably never be able to catch this in a save game, but
+	// just in case, add a proper serializer.
+	void Serialize(FArchive &arc)
+	{ 
+		Super::Serialize(arc);
+		arc << Pawn;
+	}
+};
+
+IMPLEMENT_POINTY_CLASS(DSuicider)
+ DECLARE_POINTER(Pawn)
+END_POINTERS
+
 void cht_Suicide (player_t *plyr)
 {
+	// If this cheat was initiated by the suicide ccmd, and this is a single
+	// player game, the CHT_SUICIDE will be processed before the tic is run,
+	// so the console has not gone up yet. Use a temporary thinker to delay
+	// the suicide until the game ticks so that death noises can be heard on
+	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		plyr->mo->flags |= MF_SHOOTABLE;
-		plyr->mo->flags2 &= ~MF2_INVULNERABLE;
-		//Store the players current damage factor, to restore it later.
-		fixed_t plyrdmgfact = plyr->mo->DamageFactor;
-		plyr->mo->DamageFactor = 65536;
-		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, TELEFRAG_DAMAGE, NAME_Suicide);
-		plyr->mo->DamageFactor = plyrdmgfact;
-		if (plyr->mo->health <= 0) plyr->mo->flags &= ~MF_SHOOTABLE;
+		DSuicider *suicide = new DSuicider;
+		suicide->Pawn = plyr->mo;
+		GC::WriteBarrier(suicide, suicide->Pawn);
 	}
 }
 

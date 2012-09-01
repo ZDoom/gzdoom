@@ -4839,13 +4839,16 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		// Moved out of the blood actor so that replacing blood is easier
 		if (gameinfo.gametype & GAME_DoomStrifeChex)
 		{
-			FState *state = th->FindState(NAME_Spray);
 			if (gameinfo.gametype == GAME_Strife)
 			{
 				if (damage > 13)
 				{
 					FState *state = th->FindState(NAME_Spray);
-					if (state != NULL) th->SetState (state);
+					if (state != NULL)
+					{
+						th->SetState (state);
+						goto statedone;
+					}
 				}
 				else damage += 2;
 			}

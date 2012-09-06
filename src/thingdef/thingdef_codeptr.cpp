@@ -612,6 +612,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 // State jump function
 //
 //==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetOutsideMeleeRange)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_STATE(jump, 0);
+
+	if (!self->CheckMeleeRange())
+	{
+		ACTION_JUMP(jump);
+	}
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+}
+
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_STATE(jump, 0);
+
+	if (self->CheckMeleeRange())
+	{
+		ACTION_JUMP(jump);
+	}
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+}
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
 void DoJumpIfCloser(AActor *target, DECLARE_PARAMINFO)
 {
 	ACTION_PARAM_START(2);

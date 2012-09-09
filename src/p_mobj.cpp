@@ -6106,25 +6106,25 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n\tflags6: %x", query->flags6);
 		for (flagi = 0; flagi < 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-		Printf("\nIts bounce style and factors are %x and f:%f, w:%f; its bounce flags are:\n\tflagsb: %x", 
+		Printf("\nBounce style: %x\nBounce factors: f:%f, w:%f\nBounce flags: %x", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
 			FIXED2FLOAT(query->wallbouncefactor), query->BounceFlags);
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
-		Printf("\nIts render style is %i:%s with alpha %f and the following render flags:\n\tflagsr: %x", 
+		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 
 			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
 			FIXED2FLOAT(query->alpha), query->renderflags);
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
-		Printf("\nIts thing special and arguments are %s(%i, %i, %i, %i, %i), and its specials are %i and %i.",
+		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",
 			(query->special ? LineSpecialsInfo[query->special]->name : "None"),
 			query->args[0], query->args[1], query->args[2], query->args[3], 
 			query->args[4],	query->special1, query->special2);
-		Printf("\nTID is %d", query->tid);
-		Printf("\nIts coordinates are x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
+		Printf("\nTID: %d", query->tid);
+		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
 			FIXED2FLOAT(query->x), FIXED2FLOAT(query->y), FIXED2FLOAT(query->z),
 			FIXED2FLOAT(query->floorz), FIXED2FLOAT(query->ceilingz));
-		Printf("\nIts speed is %f and velocity is x:%f, y:%f, z:%f, combined:%f.\n",
+		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			FIXED2FLOAT(query->Speed), FIXED2FLOAT(query->velx), FIXED2FLOAT(query->vely), FIXED2FLOAT(query->velz),
 			sqrt(pow(FIXED2FLOAT(query->velx), 2) + pow(FIXED2FLOAT(query->vely), 2) + pow(FIXED2FLOAT(query->velz), 2)));
 	}

@@ -519,8 +519,8 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
-	else
-		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
+	else if (cheat != CHT_CHASECAM)
+		Printf ("%s cheats: %s\n", player->userinfo.netname, msg);
 }
 
 const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickundo)

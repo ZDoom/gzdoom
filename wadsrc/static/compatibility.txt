@@ -269,3 +269,12 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	setactivation 3651 16
 	setactivation 3654 16
 }
+
+// Community Chest 3
+F481922F4881F74760F3C0437FD5EDD0 // map03
+{
+	// I have no idea how this conveyor belt setup manages to work under Boom.
+	// Set the sector the voodoo doll ends up standing on when sectors tagged
+	// 1 are raised so that the voodoo doll will be carried.
+	setlinespecial 3559 Sector_CopyScroller 17 6 0 0 0
+}

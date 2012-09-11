@@ -758,7 +758,7 @@ decal SnakeScorch21
 
 decal SnakeScorch22
 {
-	pic CBALSCR1
+	pic CBALSCR2
 	shade "00 00 00"
 	x-scale 0.7
 	y-scale 0.7

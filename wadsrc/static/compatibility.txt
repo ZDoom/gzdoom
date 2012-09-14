@@ -278,3 +278,9 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	// 1 are raised so that the voodoo doll will be carried.
 	setlinespecial 3559 Sector_CopyScroller 17 6 0 0 0
 }
+
+7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
+{
+	clearlinespecial 1107
+	clearlinespecial 1108
+}

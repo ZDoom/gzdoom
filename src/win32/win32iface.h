@@ -52,6 +52,8 @@
 
 EXTERN_CVAR (Bool, vid_vsync)
 
+extern HANDLE FPSLimitEvent;
+
 class D3DTex;
 class D3DPal;
 struct FSoftwareRenderer;

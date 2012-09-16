@@ -60,6 +60,7 @@
 #include "p_lnspec.h"
 #include "v_video.h"
 #include "p_spec.h"
+#include "hardware.h"
 #include "intermission/intermission.h"
 
 EXTERN_CVAR (Int, disableautosave)
@@ -135,7 +136,18 @@ static int	oldentertics;
 
 extern	bool	 advancedemo;
 
-CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	// Do not use the separate FPS limit timer if we are limiting FPS with this.
+	if (self)
+	{
+		I_SetFPSLimit(0);
+	}
+	else
+	{
+		I_SetFPSLimit(-1);
+	}
+}
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial

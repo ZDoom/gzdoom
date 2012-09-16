@@ -1201,6 +1201,10 @@ void DDrawFB::Update ()
 	LockCount = 0;
 	UpdatePending = false;
 
+	if (FPSLimitEvent != NULL)
+	{
+		WaitForSingleObject(FPSLimitEvent, 1000);
+	}
 	if (!Windowed && AppActive && !SessionState /*&& !UseBlitter && !MustBuffer*/)
 	{
 		HRESULT hr = PrimarySurf->Flip (NULL, FlipFlags);

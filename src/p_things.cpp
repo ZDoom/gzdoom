@@ -137,6 +137,10 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 		source->PrevX = x;
 		source->PrevY = y;
 		source->PrevZ = z;
+		if (source == players[consoleplayer].camera)
+		{
+			R_ResetViewInterpolation();
+		}
 		return true;
 	}
 	else

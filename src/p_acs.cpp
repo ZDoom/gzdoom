@@ -92,6 +92,7 @@ FRandom pr_acs ("ACS");
 #define HUDMSG_LOG					(0x80000000)
 #define HUDMSG_COLORSTRING			(0x40000000)
 #define HUDMSG_ADDBLEND				(0x20000000)
+#define HUDMSG_ALPHA				(0x10000000)
 
 // HUD message layers; these are not flags
 #define HUDMSG_LAYER_SHIFT			12
@@ -5723,7 +5724,10 @@ scriptwait:
 						break;
 					}
 					msg->SetVisibility((type & HUDMSG_VISIBILITY_MASK) >> HUDMSG_VISIBILITY_SHIFT);
-					msg->SetAlpha(alpha);
+					if (type & HUDMSG_ALPHA)
+					{
+						msg->SetAlpha(alpha);
+					}
 					if (type & HUDMSG_ADDBLEND)
 					{
 						msg->SetRenderStyle(STYLE_Add);

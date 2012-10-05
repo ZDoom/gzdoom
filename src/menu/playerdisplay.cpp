@@ -591,8 +591,8 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 			if (mTranslate) trans = translationtables[TRANSLATION_Players](MAXPLAYERS);
 			screen->DrawTexture (tex,
 				x + 36*CleanXfac, y + 71*CleanYfac,
-				DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, scaleX),
-				DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, scaleY),
+				DTA_DestWidth, MulScale16 (tex->GetScaledWidth() * CleanXfac, scaleX),
+				DTA_DestHeight, MulScale16 (tex->GetScaledHeight() * CleanYfac, scaleY),
 				DTA_Translation, trans,
 				DTA_FlipX, sprframe->Flip & (1 << mRotation),
 				TAG_DONE);

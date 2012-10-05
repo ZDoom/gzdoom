@@ -2153,6 +2153,14 @@ void tmvline4_revsubclamp ()
 
 const BYTE *R_GetColumn (FTexture *tex, int col)
 {
+	int width;
+
+	// If the texture's width isn't a power of 2, then we need to make it a
+	// positive offset for proper clamping.
+	if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
+	{
+		col = width + (col % width);
+	}
 	return tex->GetColumn (col, NULL);
 }
 

@@ -6560,6 +6560,14 @@ scriptwait:
 			translation = NULL;
 			break;
 
+		case PCD_SQRT:
+			STACK(1) = xs_FloorToInt(sqrt(double(STACK(1))));
+			break;
+
+		case PCD_FIXEDSQRT:
+			STACK(1) = FLOAT2FIXED(sqrt(FIXED2DBL(STACK(1))));
+			break;
+
 		case PCD_SIN:
 			STACK(1) = finesine[angle_t(STACK(1)<<16)>>ANGLETOFINESHIFT];
 			break;
@@ -6570,6 +6578,11 @@ scriptwait:
 
 		case PCD_VECTORANGLE:
 			STACK(2) = R_PointToAngle2 (0, 0, STACK(2), STACK(1)) >> 16;
+			sp--;
+			break;
+
+		case PCD_VECTORLENGTH:
+			STACK(2) = FLOAT2FIXED(TVector2<double>(FIXED2DBL(STACK(2)), FIXED2DBL(STACK(1))).Length());
 			sp--;
 			break;
 

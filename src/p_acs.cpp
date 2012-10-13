@@ -3377,6 +3377,9 @@ enum EACSFunctions
 	ACSF_ACS_NamedExecuteAlways,
 	ACSF_UniqueTID,
 	ACSF_IsTIDUsed,
+	ACSF_Sqrt,
+	ACSF_FixedSqrt,
+	ACSF_VectorLength,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,
@@ -3900,6 +3903,15 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_IsTIDUsed:
 			return P_IsTIDUsed(args[0]);
 			break;
+
+		case ACSF_Sqrt:
+			return xs_FloorToInt(sqrt(double(args[0])));
+
+		case ACSF_FixedSqrt:
+			return FLOAT2FIXED(sqrt(FIXED2DBL(args[0])));
+
+		case ACSF_VectorLength:
+			return FLOAT2FIXED(TVector2<double>(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
 
 		default:
 			break;
@@ -6560,14 +6572,6 @@ scriptwait:
 			translation = NULL;
 			break;
 
-		case PCD_SQRT:
-			STACK(1) = xs_FloorToInt(sqrt(double(STACK(1))));
-			break;
-
-		case PCD_FIXEDSQRT:
-			STACK(1) = FLOAT2FIXED(sqrt(FIXED2DBL(STACK(1))));
-			break;
-
 		case PCD_SIN:
 			STACK(1) = finesine[angle_t(STACK(1)<<16)>>ANGLETOFINESHIFT];
 			break;
@@ -6578,11 +6582,6 @@ scriptwait:
 
 		case PCD_VECTORANGLE:
 			STACK(2) = R_PointToAngle2 (0, 0, STACK(2), STACK(1)) >> 16;
-			sp--;
-			break;
-
-		case PCD_VECTORLENGTH:
-			STACK(2) = FLOAT2FIXED(TVector2<double>(FIXED2DBL(STACK(2)), FIXED2DBL(STACK(1))).Length());
 			sp--;
 			break;
 

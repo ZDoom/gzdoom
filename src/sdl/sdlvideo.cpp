@@ -80,6 +80,7 @@ extern SDL_Rect cursorBlit;
 extern bool GUICapture;
 
 EXTERN_CVAR (Float, Gamma)
+EXTERN_CVAR (Int, vid_maxfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -373,6 +374,11 @@ void SDLFB::Update ()
 	}
 
 	DrawRateStuff ();
+
+	if(vid_maxfps)
+	{
+		SEMAPHORE_WAIT(FPSLimitSemaphore)
+	}
 
 	Buffer = NULL;
 	LockCount = 0;

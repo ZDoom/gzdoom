@@ -38,14 +38,6 @@
 #include <gdk/gdkkeysyms.h>
 #endif
 
-#ifdef __APPLE__
-#include <mach/mach_init.h>
-#include <mach/semaphore.h>
-#include <mach/task.h>
-#else
-#include <semaphore.h>
-#endif
-
 #include "doomerrors.h"
 #include <math.h>
 
@@ -144,11 +136,7 @@ static DWORD BaseTime;
 static int TicFrozen;
 
 // Signal based timer.
-#ifdef __APPLE__
-static semaphore_t timerWait;
-#else
-static sem_t timerWait;
-#endif
+static Semaphore timerWait;
 static int tics;
 static DWORD sig_start, sig_next;
 
@@ -221,12 +209,7 @@ int I_WaitForTicSignaled (int prevtic)
 
 	while(tics <= prevtic)
 	{
-#ifdef __APPLE__
-		while(semaphore_wait(timerWait) != KERN_SUCCESS)
-			;
-#else
-		while(sem_wait(&timerWait) != 0);
-#endif
+		SEMAPHORE_WAIT(timerWait)
 	}
 
 	return tics;
@@ -276,11 +259,7 @@ void I_HandleAlarm (int sig)
 		tics++;
 	sig_start = SDL_GetTicks();
 	sig_next = Scale((Scale (sig_start, TICRATE, 1000) + 1), 1000, TICRATE);
-#ifdef __APPLE__
-	semaphore_signal(timerWait);
-#else
-	sem_post(&timerWait);
-#endif
+	SEMAPHORE_SIGNAL(timerWait)
 }
 
 //
@@ -290,11 +269,7 @@ void I_HandleAlarm (int sig)
 //
 void I_SelectTimer()
 {
-#ifdef __APPLE__
-	semaphore_create(mach_task_self(), &timerWait, 0, 0);
-#else
-	sem_init(&timerWait, 0, 0);
-#endif
+	SEMAPHORE_INIT(timerWait, 0, 0)
 	signal(SIGALRM, I_HandleAlarm);
 
 	struct itimerval itv;

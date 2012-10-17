@@ -42,6 +42,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "v_text.h"
+#include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -471,7 +472,21 @@ int FluidSynthMIDIDevice::LoadPatchSets(const char *patches)
 	count = 0;
 	while (tok != NULL)
 	{
-		if (FLUID_FAILED != fluid_synth_sfload(FluidSynth, tok, count == 0))
+		FString path;
+#ifdef _WIN32
+		// If the path does not contain any path separators, automatically
+		// prepend $PROGDIR to the path.
+		if (strcspn(tok, ":/\\") == strlen(tok))
+		{
+			path << "$PROGDIR/" << tok;
+			path = NicePath(path);
+		}
+		else
+#endif
+		{
+			path = NicePath(tok);
+		}
+		if (FLUID_FAILED != fluid_synth_sfload(FluidSynth, path, count == 0))
 		{
 			DPrintf("Loaded patch set %s.\n", tok);
 			count++;

@@ -37,6 +37,7 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "c_cvars.h"
+#include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
 #include "stats.h"
 #include "a_hexenglobal.h"
@@ -107,6 +108,7 @@ static FRandom pr_missiledamage ("MissileDamage");
  FRandom pr_slam ("SkullSlam");
 static FRandom pr_multiclasschoice ("MultiClassChoice");
 static FRandom pr_rockettrail("RocketTrail");
+static FRandom pr_uniquetid("UniqueTID");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1158,6 +1160,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	}
 	mo->velx = mo->vely = mo->velz = 0;
 	mo->effects = 0;		// [RH]
+	mo->flags &= ~MF_SHOOTABLE;
 	
 	FState *nextstate=NULL;
 	
@@ -1983,7 +1986,9 @@ explode:
 	}
 
 	if (mo->z > mo->floorz && !(mo->flags2 & MF2_ONMOBJ) &&
-		(!(mo->flags2 & MF2_FLY) || !(mo->flags & MF_NOGRAVITY)) && !mo->waterlevel)
+		!mo->IsNoClip2() &&
+		(!(mo->flags2 & MF2_FLY) || !(mo->flags & MF_NOGRAVITY)) &&
+		!mo->waterlevel)
 	{ // [RH] Friction when falling is available for larger aircontrols
 		if (player != NULL && level.airfriction != FRACUNIT)
 		{
@@ -2226,7 +2231,10 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	}
 	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->z > mo->floorz))
 	{
-		mo->z += finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8;
+		if (!mo->IsNoClip2())
+		{
+			mo->z += finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8;
+		}
 		mo->velz = FixedMul (mo->velz, FRICTION_FLY);
 	}
 	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY))
@@ -2474,7 +2482,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->velz < (fixed_t)(800.f /*level.gravity * mo->Sector->gravity*/ * -983.04f) && mo->health > 0)
+		if (mo->health > 0 && mo->velz < -mo->player->mo->GruntSpeed)
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;
@@ -2613,10 +2621,7 @@ AActor *AActor::TIDHash[128];
 
 void AActor::ClearTIDHashes ()
 {
-	int i;
-
-	for (i = 0; i < 128; i++)
-		TIDHash[i] = NULL;
+	memset(TIDHash, NULL, sizeof(TIDHash));
 }
 
 //
@@ -2665,6 +2670,92 @@ void AActor::RemoveFromHash ()
 		inext = NULL;
 	}
 	tid = 0;
+}
+
+//==========================================================================
+//
+// P_IsTIDUsed
+//
+// Returns true if there is at least one actor with the specified TID
+// (dead or alive).
+//
+//==========================================================================
+
+bool P_IsTIDUsed(int tid)
+{
+	AActor *probe = AActor::TIDHash[tid & 127];
+	while (probe != NULL)
+	{
+		if (probe->tid == tid)
+		{
+			return true;
+		}
+		probe = probe->inext;
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// P_FindUniqueTID
+//
+// Returns an unused TID. If start_tid is 0, then a random TID will be
+// chosen. Otherwise, it will perform a linear search starting from
+// start_tid. If limit is non-0, then it will not check more than <limit>
+// number of TIDs. Returns 0 if no suitable TID was found.
+//
+//==========================================================================
+
+int P_FindUniqueTID(int start_tid, int limit)
+{
+	int tid;
+
+	if (start_tid != 0)
+	{ // Do a linear search.
+		limit = start_tid + limit - 1;
+		if (limit < start_tid)
+		{ // If it overflowed, clamp to INT_MAX
+			limit = INT_MAX;
+		}
+		for (tid = start_tid; tid <= limit; ++tid)
+		{
+			if (tid != 0 && !P_IsTIDUsed(tid))
+			{
+				return tid;
+			}
+		}
+		// Nothing free found.
+		return 0;
+	}
+	// Do a random search. To try and be a bit more performant, this
+	// actually does several linear searches. In the case of *very*
+	// dense TID usage, this could potentially perform worse than doing
+	// a complete linear scan starting at 1. However, you would need
+	// to use an absolutely ridiculous number of actors before this
+	// becomes a real concern.
+	if (limit == 0)
+	{
+		limit = INT_MAX;
+	}
+	for (int i = 0; i < limit; i += 5)
+	{
+		// Use a positive starting TID.
+		tid = pr_uniquetid.GenRand32() & INT_MAX;
+		tid = P_FindUniqueTID(tid == 0 ? 1 : tid, 5);
+		if (tid != 0)
+		{
+			return tid;
+		}
+	}
+	// Nothing free found.
+	return 0;
+}
+
+CCMD(utid)
+{
+	Printf("%d\n",
+		P_FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
+		argv.argc() > 2 ? atoi(argv[2]) : 0));
 }
 
 //==========================================================================
@@ -3363,8 +3454,11 @@ void AActor::Tick ()
 						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
 						) && (level.maptime > onmo->lastbump)) // Leave the bumper enough time to go away
 					{
-						if (P_ActivateThingSpecial(onmo, this))
-							onmo->lastbump = level.maptime + TICRATE;
+						if (player == NULL || !(player->cheats & CF_PREDICTING))
+						{
+							if (P_ActivateThingSpecial(onmo, this))
+								onmo->lastbump = level.maptime + TICRATE;
+						}
 					}
 					if (velz != 0 && (BounceFlags & BOUNCE_Actors))
 					{
@@ -3900,6 +3994,19 @@ void AActor::PostBeginPlay ()
 		Renderer->StateChanged(this);
 	}
 	PrevAngle = angle;
+}
+
+void AActor::MarkPrecacheSounds() const
+{
+	SeeSound.MarkUsed();
+	AttackSound.MarkUsed();
+	PainSound.MarkUsed();
+	DeathSound.MarkUsed();
+	ActiveSound.MarkUsed();
+	UseSound.MarkUsed();
+	BounceSound.MarkUsed();
+	WallBounceSound.MarkUsed();
+	CrushPainSound.MarkUsed();
 }
 
 bool AActor::isFast()
@@ -4734,13 +4841,16 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		// Moved out of the blood actor so that replacing blood is easier
 		if (gameinfo.gametype & GAME_DoomStrifeChex)
 		{
-			FState *state = th->FindState(NAME_Spray);
 			if (gameinfo.gametype == GAME_Strife)
 			{
 				if (damage > 13)
 				{
 					FState *state = th->FindState(NAME_Spray);
-					if (state != NULL) th->SetState (state);
+					if (state != NULL)
+					{
+						th->SetState (state);
+						goto statedone;
+					}
 				}
 				else damage += 2;
 			}
@@ -4758,14 +4868,15 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 
 			while (cls != RUNTIME_CLASS(AActor))
 			{
+				int checked_advance = advance;
 				if (cls->OwnsState(th->SpawnState))
 				{
-					for (; advance > 0; --advance)
+					for (; checked_advance > 0; --checked_advance)
 					{
 						// [RH] Do not set to a state we do not own.
-						if (!cls->OwnsState(th->SpawnState + advance))
+						if (cls->OwnsState(th->SpawnState + checked_advance))
 						{
-							th->SetState(th->SpawnState + advance);
+							th->SetState(th->SpawnState + checked_advance);
 							goto statedone;
 						}
 					}
@@ -5295,7 +5406,7 @@ static fixed_t GetDefaultSpeed(PClassActor *type)
 
 AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor *owner)
 {
-	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT,
+	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT + source->GetBobOffset(),
 		source, dest, type, true, owner);
 }
 
@@ -5417,7 +5528,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type,
 	angle_t angle, fixed_t velz)
 {
-	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
+	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT + source->GetBobOffset(),
 		type, angle, velz, GetDefaultSpeed (type));
 }
 
@@ -5460,7 +5571,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassAct
 AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type,
 	angle_t angle, fixed_t velz, fixed_t speed)
 {
-	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
+	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT + source->GetBobOffset(),
 		type, angle, velz, speed);
 }
 
@@ -5985,25 +6096,25 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n\tflags6: %x", query->flags6);
 		for (flagi = 0; flagi < 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-		Printf("\nIts bounce style and factors are %x and f:%f, w:%f; its bounce flags are:\n\tflagsb: %x", 
+		Printf("\nBounce style: %x\nBounce factors: f:%f, w:%f\nBounce flags: %x", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
 			FIXED2FLOAT(query->wallbouncefactor), query->BounceFlags);
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
-		Printf("\nIts render style is %i:%s with alpha %f and the following render flags:\n\tflagsr: %x", 
+		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 
 			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
 			FIXED2FLOAT(query->alpha), query->renderflags);
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
-		Printf("\nIts thing special and arguments are %s(%i, %i, %i, %i, %i), and its specials are %i and %i.",
+		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",
 			(query->special ? LineSpecialsInfo[query->special]->name : "None"),
 			query->args[0], query->args[1], query->args[2], query->args[3], 
 			query->args[4],	query->special1, query->special2);
-		Printf("\nTID is %d", query->tid);
-		Printf("\nIts coordinates are x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
+		Printf("\nTID: %d", query->tid);
+		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
 			FIXED2FLOAT(query->x), FIXED2FLOAT(query->y), FIXED2FLOAT(query->z),
 			FIXED2FLOAT(query->floorz), FIXED2FLOAT(query->ceilingz));
-		Printf("\nIts speed is %f and velocity is x:%f, y:%f, z:%f, combined:%f.\n",
+		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			FIXED2FLOAT(query->Speed), FIXED2FLOAT(query->velx), FIXED2FLOAT(query->vely), FIXED2FLOAT(query->velz),
 			sqrt(pow(FIXED2FLOAT(query->velx), 2) + pow(FIXED2FLOAT(query->vely), 2) + pow(FIXED2FLOAT(query->velz), 2)));
 	}

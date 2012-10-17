@@ -507,6 +507,18 @@ void AInventory::Serialize (FArchive &arc)
 
 //===========================================================================
 //
+// AInventory :: MarkPrecacheSounds
+//
+//===========================================================================
+
+void AInventory::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	PickupSound.MarkUsed();
+}
+
+//===========================================================================
+//
 // AInventory :: SpecialDropAction
 //
 // Called by P_DropItem. Return true to prevent the standard drop tossing.
@@ -532,6 +544,7 @@ bool AInventory::SpecialDropAction (AActor *dropper)
 bool AInventory::ShouldRespawn ()
 {
 	if ((ItemFlags & IF_BIGPOWERUP) && !(dmflags & DF_RESPAWN_SUPER)) return false;
+	if (ItemFlags & IF_NEVERRESPAWN) return false;
 	return !!(dmflags & DF_ITEMS_RESPAWN);
 }
 

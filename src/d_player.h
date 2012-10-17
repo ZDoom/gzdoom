@@ -65,7 +65,9 @@ struct FPlayerColorSet
 	BYTE NumExtraRanges;
 	ExtraRange Extra[6];
 };
+
 typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
+typedef TMap<FName, PalEntry> PainFlashList;
 
 class PClassPlayerPawn : public PClassActor
 {
@@ -76,6 +78,8 @@ public:
 	PClassPlayerPawn();
 	void EnumColorSets(TArray<int> *out);
 	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
+	void SetPainFlash(FName type, PalEntry color);
+	bool GetPainFlash(FName type, PalEntry *color) const;
 
 	FString DisplayName;	// Display name (used in menus, etc.)
 	FString SoundClass;		// Sound class
@@ -88,6 +92,7 @@ public:
 	BYTE ColorRangeStart;	// Skin color range
 	BYTE ColorRangeEnd;
 	FPlayerColorSetMap ColorSets;
+	PainFlashList PainFlashes;
 };
 FString GetPrintableDisplayName(PClassPlayerPawn *cls);
 
@@ -105,6 +110,7 @@ public:
 	virtual void AddInventory (AInventory *item);
 	virtual void RemoveInventory (AInventory *item);
 	virtual bool UseInventory (AInventory *item);
+	virtual void MarkPrecacheSounds () const;
 
 	virtual void PlayIdle ();
 	virtual void PlayRunning ();
@@ -122,7 +128,7 @@ public:
 	void GiveDefaultInventory ();
 	void PlayAttacking ();
 	void PlayAttacking2 ();
-	const char *GetSoundClass ();
+	const char *GetSoundClass () const;
 
 	enum EInvulState
 	{
@@ -145,6 +151,8 @@ public:
 
 	// [GRB] Player class properties
 	fixed_t		JumpZ;
+	fixed_t		GruntSpeed;
+	fixed_t		FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	fixed_t		ViewHeight;
 	fixed_t		ForwardMove1, ForwardMove2;
 	fixed_t		SideMove1, SideMove2;
@@ -221,6 +229,7 @@ typedef enum
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_WEAPONRELOADOK   = 1 << 28,      // [XA] Okay to reload this weapon.
 	CF_WEAPONZOOMOK     = 1 << 29,      // [XA] Okay to use weapon zoom function.
+	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;
 
 #define WPIECE1		1
@@ -452,6 +461,14 @@ inline void AActor::SetFriendPlayer(player_t *player)
 	}
 }
 
+inline bool AActor::IsNoClip2() const
+{
+	if (player != NULL && player->mo == this)
+	{
+		return (player->cheats & CF_NOCLIP2) != 0;
+	}
+	return false;
+}
 
 #define CROUCHSPEED (FRACUNIT/12)
 

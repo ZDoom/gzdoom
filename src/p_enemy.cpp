@@ -1670,7 +1670,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 		// [RC] Well, let's let special monsters with this flag active be able to see
 		// the player then, eh?
-		if(!(actor->flags & MF6_SEEINVISIBLE)) 
+		if(!(actor->flags6 & MF6_SEEINVISIBLE)) 
 		{
 			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
@@ -3210,7 +3210,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Detonate)
 {
 	PARAM_ACTION_PROLOGUE;
 	int damage = self->GetMissileDamage(0, 1);
-	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, true);
+	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, RADF_HURTSOURCE);
 	P_CheckSplash(self, damage<<FRACBITS);
 	return 0;
 }

@@ -199,7 +199,7 @@ public:
 	}
 
 	// Pauses or resumes *every* channel, including environmental reverb.
-	void SetInactive(bool inactive)
+	void SetInactive(SoundRenderer::EInactiveState inactive)
 	{
 	}
 

@@ -501,7 +501,11 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	const msecnode_t *m;
 	const sector_t *sec;
 
-	if (mo->flags2 & MF2_FLY && mo->flags & MF_NOGRAVITY)
+	if (mo->IsNoClip2())
+	{
+		// The default values are fine for noclip2 mode
+	}
+	else if (mo->flags2 & MF2_FLY && mo->flags & MF_NOGRAVITY)
 	{
 		friction = FRICTION_FLY;
 	}
@@ -938,8 +942,11 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
 		) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
 	{
-		if (P_ActivateThingSpecial(thing, tm.thing))
-			thing->lastbump = level.maptime + TICRATE;
+		if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
+		{
+			if (P_ActivateThingSpecial(thing, tm.thing))
+				thing->lastbump = level.maptime + TICRATE;
+		}
 	}
 
 	// Check for skulls slamming into things
@@ -1298,7 +1305,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, b
 	
 #ifdef _3DFLOORS
 	//Check 3D floors
-	if(newsec->e->XFloor.ffloors.Size())
+	if (!thing->IsNoClip2() && newsec->e->XFloor.ffloors.Size())
 	{
 		F3DFloor*  rover;
 		fixed_t    delta1;
@@ -1605,7 +1612,7 @@ void P_FakeZMovement (AActor *mo)
 				mo->z += mo->FloatSpeed;
 		}
 	}
-	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->z > mo->floorz))
+	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->z > mo->floorz) && !mo->IsNoClip2())
 	{
 		mo->z += finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8;
 	}
@@ -4440,7 +4447,7 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 //==========================================================================
 
 void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
-	bool DamageSource, bool bombdodamage, int fulldamagedistance, bool noimpactdamage)
+	int flags, int fulldamagedistance)
 {
 	if (bombdistance <= 0)
 		return;
@@ -4454,6 +4461,11 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 	FBlockThingsIterator it(FBoundingBox(bombspot->x, bombspot->y, bombdistance<<FRACBITS));
 	AActor *thing;
 
+	if (flags & RADF_SOURCEISSPOT)
+	{ // The source is actually the same as the spot, even if that wasn't what we receized.
+		bombsource = bombspot;
+	}
+
 	while ((thing = it.Next()))
 	{
 		// Vulnerable actors can be damaged by radius attacks even if not shootable
@@ -4466,7 +4478,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 			continue;
 
-		if (!DamageSource && (thing == bombsource || thing == bombspot))
+		if (!(flags & RADF_HURTSOURCE) && (thing == bombsource || thing == bombspot))
 		{ // don't damage the source of the explosion
 			continue;
 		}
@@ -4486,7 +4498,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 		// them far too "active." BossBrains also use the old code
 		// because some user levels require they have a height of 16,
 		// which can make them near impossible to hit with the new code.
-		if (!bombdodamage || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
+		if ((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
 		{
 			// [RH] New code. The bounding box only covers the
 			// height of the thing and not the height of the map.
@@ -4545,14 +4557,17 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 				double thrust;
 				int damage = (int)points;
 
-				if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-				else if (thing->player == NULL && !noimpactdamage) thing->flags2 |= MF2_BLASTED;
+				if (!(flags & RADF_NODAMAGE))
+					P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+				else if (thing->player == NULL && !(flags & RADF_NOIMPACTDAMAGE))
+					thing->flags2 |= MF2_BLASTED;
 
 				if (!(thing->flags & MF_ICECORPSE))
 				{
-					if (bombdodamage && !(bombspot->flags3 & MF3_BLOODLESSIMPACT)) P_TraceBleed (damage, thing, bombspot);
+					if (!(flags & RADF_NODAMAGE) && !(bombspot->flags3 & MF3_BLOODLESSIMPACT))
+						P_TraceBleed (damage, thing, bombspot);
 
-					if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
+					if (!(flags & RADF_NODAMAGE) || !(bombspot->flags2 & MF2_NODMGTHRUST))
 					{
 						if (bombsource == NULL || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{
@@ -4573,7 +4588,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 							angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
 							thing->velx += fixed_t (finecosine[ang] * thrust);
 							thing->vely += fixed_t (finesine[ang] * thrust);
-							if (bombdodamage)
+							if (!(flags & RADF_NODAMAGE))
 								thing->velz += (fixed_t)velz;	// this really doesn't work well
 						}
 					}

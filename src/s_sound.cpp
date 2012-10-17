@@ -326,7 +326,6 @@ void S_InitData ()
 	LastLocalSndInfo = LastLocalSndSeq = "";
 	S_ParseSndInfo (false);
 	S_ParseSndSeq (-1);
-	S_ParseMusInfo();
 }
 
 //==========================================================================
@@ -477,14 +476,15 @@ void S_PrecacheLevel ()
 		AActor *actor;
 		TThinkerIterator<AActor> iterator;
 
-		while ( (actor = iterator.Next ()) != NULL )
+		// Precache all sounds known to be used by the currently spawned actors.
+		while ( (actor = iterator.Next()) != NULL )
 		{
-			S_sfx[actor->SeeSound].bUsed = true;
-			S_sfx[actor->AttackSound].bUsed = true;
-			S_sfx[actor->PainSound].bUsed = true;
-			S_sfx[actor->DeathSound].bUsed = true;
-			S_sfx[actor->ActiveSound].bUsed = true;
-			S_sfx[actor->UseSound].bUsed = true;
+			actor->MarkPrecacheSounds();
+		}
+		// Precache all extra sounds requested by this map.
+		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
+		{
+			level.info->PrecacheSounds[i].MarkUsed();
 		}
 
 		for (i = 1; i < S_sfx.Size(); ++i)
@@ -1764,7 +1764,7 @@ void S_SetSoundPaused (int state)
 			S_ResumeSound(true);
 			if (GSnd != NULL)
 			{
-				GSnd->SetInactive(false);
+				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
 			}
 			if (!netgame
 #ifdef _DEBUG
@@ -1783,7 +1783,9 @@ void S_SetSoundPaused (int state)
 			S_PauseSound(false, true);
 			if (GSnd !=  NULL)
 			{
-				GSnd->SetInactive(true);
+				GSnd->SetInactive(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL ?
+					SoundRenderer::INACTIVE_Complete :
+					SoundRenderer::INACTIVE_Mute);
 			}
 			if (!netgame
 #ifdef _DEBUG

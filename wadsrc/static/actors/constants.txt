@@ -124,9 +124,14 @@ const int MSF_Standard = 0;
 const int MSF_Classic = 1;
 const int MSF_DontHurt = 2;
 
+// Flags for A_Explode
+const int XF_HURTSOURCE = 1;
+const int XF_NOTMISSILE = 4;
+
 // Flags for A_RadiusThrust
 const int RTF_AFFECTSOURCE = 1;
 const int RTF_NOIMPACTDAMAGE = 2;
+const int RTF_NOTMISSILE = 4;
 
 // Flags for A_Blast
 const int BF_USEAMMO = 1;

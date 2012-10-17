@@ -672,6 +672,7 @@ bool FMODSoundRenderer::Init()
 	PrevEnvironment = DefaultEnvironments[0];
 	DSPClock.AsOne = 0;
 	ChannelGroupTargetUnit = NULL;
+	ChannelGroupTargetUnitOutput = NULL;
 	SfxReverbHooked = false;
 	SfxReverbPlaceholder = NULL;
 	OutputPlugin = 0;
@@ -1155,6 +1156,15 @@ bool FMODSoundRenderer::Init()
 			{
 				ChannelGroupTargetUnit = NULL;
 			}
+			else
+			{
+				FMOD::DSP *dontcare;
+				result = ChannelGroupTargetUnit->getOutput(0, &dontcare, &ChannelGroupTargetUnitOutput);
+				if (result != FMOD_OK)
+				{
+					ChannelGroupTargetUnitOutput = NULL;
+				}
+			}
 		}
 	}
 
@@ -1598,6 +1608,7 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 	FMOD::Sound *stream;
 	FMOD_RESULT result;
 	bool url;
+	FString patches;
 
 	InitCreateSoundExInfo(&exinfo);
 	mode = FMOD_SOFTWARE | FMOD_2D | FMOD_CREATESTREAM;
@@ -1614,7 +1625,20 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 	exinfo.fileoffset = offset;
 	if ((*snd_midipatchset)[0] != '\0')
 	{
-		exinfo.dlsname = snd_midipatchset;
+#ifdef _WIN32
+		// If the path does not contain any path separators, automatically
+		// prepend $PROGDIR to the path.
+		if (strcspn(snd_midipatchset, ":/\\") == strlen(snd_midipatchset))
+		{
+			patches << "$PROGDIR/" << snd_midipatchset;
+			patches = NicePath(patches);
+		}
+		else
+#endif
+		{
+			patches = NicePath(snd_midipatchset);
+		}
+		exinfo.dlsname = patches;
 	}
 
 	url = (offset == 0 && length == 0 && strstr(filename_or_data, "://") > filename_or_data);
@@ -2109,11 +2133,33 @@ void FMODSoundRenderer::SetSfxPaused(bool paused, int slot)
 //
 //==========================================================================
 
-void FMODSoundRenderer::SetInactive(bool inactive)
+void FMODSoundRenderer::SetInactive(SoundRenderer::EInactiveState inactive)
 {
+	float mix;
+	bool active;
+
+	if (inactive == INACTIVE_Active)
+	{
+		mix = 1;
+		active = true;
+	}
+	else if (inactive == INACTIVE_Complete)
+	{
+		mix = 1;
+		active = false;
+	}
+	else // inactive == INACTIVE_Mute
+	{
+		mix = 0;
+		active = true;
+	}
+	if (ChannelGroupTargetUnitOutput != NULL)
+	{
+		ChannelGroupTargetUnitOutput->setMix(mix);
+	}
 	if (ChannelGroupTargetUnit != NULL)
 	{
-		ChannelGroupTargetUnit->setActive(!inactive);
+		ChannelGroupTargetUnit->setActive(active);
 	}
 }
 

@@ -596,7 +596,6 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		else sky = 0;	// not skyflatnum so it can't be a sky
 		skybox = NULL;
 		alpha = FRACUNIT;
-		additive = false;
 	}
 		
 	// New visplane algorithm uses hash table -- killough
@@ -1047,7 +1046,7 @@ void R_DrawHeightPlanes(fixed_t height)
 				viewy = pl->viewy;
 				viewangle = pl->viewangle;
 				MirrorFlags = pl->MirrorFlags;
-				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, false, true);
+				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 			}
 		}
 	}
@@ -1528,16 +1527,24 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	else
 		plane_shade = true;
 
-	// Additive not supported yet because the drawer function doesn't look like it can handle it.
 	if (spanfunc != R_FillSpan)
 	{
 		if (masked)
 		{
-			if (alpha < OPAQUE)
+			if (alpha < OPAQUE || additive)
 			{
-				spanfunc = R_DrawSpanMaskedTranslucent;
-				dc_srcblend = Col2RGB8[alpha>>10];
-				dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				if (!additive)
+				{
+					spanfunc = R_DrawSpanMaskedTranslucent;
+					dc_srcblend = Col2RGB8[alpha>>10];
+					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				}
+				else
+				{
+					spanfunc = R_DrawSpanMaskedAddClamp;
+					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
+					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+				}
 			}
 			else
 			{
@@ -1546,11 +1553,20 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		}
 		else
 		{
-			if (alpha < OPAQUE)
+			if (alpha < OPAQUE || additive)
 			{
-				spanfunc = R_DrawSpanTranslucent;
-				dc_srcblend = Col2RGB8[alpha>>10];
-				dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				if (!additive)
+				{
+					spanfunc = R_DrawSpanTranslucent;
+					dc_srcblend = Col2RGB8[alpha>>10];
+					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				}
+				else
+				{
+					spanfunc = R_DrawSpanAddClamp;
+					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
+					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+				}
 			}
 			else
 			{

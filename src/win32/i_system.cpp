@@ -607,8 +607,8 @@ void I_DetectOS(void)
 
 	if (OSPlatform == os_unknown)
 	{
-		Printf ("(Assuming Windows 95)\n");
-		OSPlatform = os_Win95;
+		Printf ("(Assuming Windows 2000)\n");
+		OSPlatform = os_Win2k;
 	}
 }
 

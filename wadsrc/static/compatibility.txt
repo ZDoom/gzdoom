@@ -184,3 +184,103 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	limitpain
 }
 
+// Daedalus: Fix SPAC_Push lines that aren't on lines you can actually push
+3ABB618A475BCBC531B457BAA6E4E70A // map04
+{
+	// forcefields
+	// the lines we're setting are already set for repeatable SPAC_Push
+	clearlinespecial 90
+	setlinespecial 3749 ACS_Execute 23 0 1 0 0
+	clearlinespecial 94
+	setlinespecial 3766 ACS_Execute 23 0 2 0 0
+	clearlinespecial 92
+	setlinespecial 3777 ACS_Execute 23 0 3 0 0
+	clearlinespecial 98
+	setlinespecial 3784 ACS_Execute 23 0 4 0 0
+}
+795FDE3CC1C97140F326D0152B3FCE2A // map24
+{
+	// doors
+	clearlinespecial 1512
+	setlinespecial 1505 Door_Raise 213 50 100 0 0
+	setlineflags 1505 0x200		// repeatable
+	setactivation 1505 16		// SPAC_Push
+	clearlinespecial 1514
+	setlinespecial 1508 Door_Raise 213 50 100 0 0
+	setlineflags 1508 0x200
+	setactivation 1508 16
+	
+	clearlinespecial 1525
+	setlinespecial 1522 Door_Raise 214 50 100 0 0
+	setlineflags 1522 0x200
+	setactivation 1522 16
+	clearlinespecial 1530
+	setlinespecial 1527 Door_Raise 214 50 100 0 0
+	setlineflags 1527 0x200
+	setactivation 1527 16
+	
+	clearlinespecial 5277
+	setlinespecial 5209 Door_Raise 24 20 255 0 0
+	setlineflags 5209 0x200
+	setactivation 5209 16
+	clearlinespecial 5714
+	setlinespecial 5267 Door_Raise 24 20 255 0 0
+	setlineflags 5267 0x200
+	setactivation 5267 16
+	
+	clearlinespecial 5715
+	setlinespecial 5229 Door_Raise 24 20 255 0 0
+	setlineflags 5229 0x200
+	setactivation 5229 16
+	clearlinespecial 5345
+	setlinespecial 5232 Door_Raise 24 20 255 0 0
+	setlineflags 5232 0x200
+	setactivation 5232 16
+	
+	// consoles?
+	clearlinespecial 3639
+	setlinespecial 3633 ACS_Execute 14 0 0 0 0
+	setlinespecial 3635 ACS_Execute 14 0 0 0 0
+	setlineflags 3633 0x200
+	setlineflags 3635 0x200
+	setactivation 3633 16
+	setactivation 3635 16
+
+	clearlinespecial 3647
+	setlinespecial 3644 ACS_Execute 14 0 0 0 0
+	setlinespecial 3641 ACS_Execute 14 0 0 0 0
+	setlineflags 3644 0x200
+	setlineflags 3641 0x200
+	setactivation 3644 16
+	setactivation 3641 16
+	
+	clearlinespecial 3659
+	clearlinespecial 3657
+	setlinespecial 3653 ACS_Execute 13 0 0 0 0
+	setlinespecial 3655 ACS_Execute 13 0 0 0 0
+	setlinespecial 3651 ACS_Execute 13 0 0 0 0
+	setlinespecial 3654 ACS_Execute 13 0 0 0 0
+	setlineflags 3653 0x200
+	setlineflags 3655 0x200
+	setlineflags 3651 0x200
+	setlineflags 3654 0x200
+	setactivation 3653 16
+	setactivation 3655 16
+	setactivation 3651 16
+	setactivation 3654 16
+}
+
+// Community Chest 3
+F481922F4881F74760F3C0437FD5EDD0 // map03
+{
+	// I have no idea how this conveyor belt setup manages to work under Boom.
+	// Set the sector the voodoo doll ends up standing on when sectors tagged
+	// 1 are raised so that the voodoo doll will be carried.
+	setlinespecial 3559 Sector_CopyScroller 17 6 0 0 0
+}
+
+7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
+{
+	clearlinespecial 1107
+	clearlinespecial 1108
+}

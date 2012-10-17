@@ -123,6 +123,7 @@ enum
 	IF_NOATTENPICKUPSOUND = 1<<17,	// Play pickup sound with ATTN_NONE
 	IF_PERSISTENTPOWER	= 1<<18,	// Powerup is kept when travelling between levels
 	IF_RESTRICTABSOLUTELY = 1<<19,	// RestrictedTo and ForbiddenTo do not allow pickup in any form by other classes
+	IF_NEVERRESPAWN		= 1<<20,	// Never, ever respawns
 };
 
 
@@ -147,6 +148,7 @@ public:
 	virtual void Touch (AActor *toucher);
 	virtual void Serialize (FArchive &arc);
 
+	virtual void MarkPrecacheSounds() const;
 	virtual void BeginPlay ();
 	virtual void Destroy ();
 	virtual void Tick ();
@@ -296,6 +298,7 @@ public:
 
 	bool bAltFire;	// Set when this weapon's alternate fire is used.
 
+	virtual void MarkPrecacheSounds() const;
 	virtual void Serialize (FArchive &arc);
 	virtual bool ShouldStay ();
 	virtual void AttachToOwner (AActor *other);

@@ -280,6 +280,7 @@ STSTR_KFAADDED = "Very Happy Ammo Added";
 STSTR_FAADDED = "Ammo (no keys) Added";
 STSTR_NCON = "No Clipping Mode ON";
 STSTR_NCOFF = "No Clipping Mode OFF";
+STSTR_NC2ON = "No Clipping Mode 2 ON";
 STSTR_BEHOLD = "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp";
 STSTR_BEHOLDX = "Power-up Toggled";
 STSTR_CHOPPERS = "... doesn't suck - GM";
@@ -792,6 +793,16 @@ STARTUP3 = "";
 STARTUP4 = "";
 STARTUP5 = "";
 
+// Scoreboard text
+SCORE_ITEMS = "ITEMS";
+SCORE_BONUS = "BONUS";
+SCORE_COLOR = "COLOR";
+SCORE_SECRET = "SECRET";
+SCORE_NAME = "NAME";
+SCORE_KILLS = "KILLS";
+SCORE_FRAGS = "FRAGS";
+SCORE_MISSED = "MISSED";
+SCORE_TOTAL = "TOTAL";
 
 // Item tags: Doom weapons
 TAG_FIST = "Brass Knuckles";

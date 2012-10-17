@@ -87,6 +87,19 @@ void AWeapon::Serialize (FArchive &arc)
 
 //===========================================================================
 //
+// AWeapon :: MarkPrecacheSounds
+//
+//===========================================================================
+
+void AWeapon::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	UpSound.MarkUsed();
+	ReadySound.MarkUsed();
+}
+
+//===========================================================================
+//
 // AWeapon :: TryPickup
 //
 // If you can't see the weapon when it's active, then you can't pick it up.
@@ -732,6 +745,7 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 				if (weap != NULL)
 				{
 					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
+					weap->flags = (weap->flags & ~MF_DROPPED) | (this->flags & MF_DROPPED);
 					if (AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
 					if (AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
 					weap->BecomeItem();
@@ -741,7 +755,11 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 
 			weap = barrier_cast<AWeapon*>(master);
 			bool res = weap->CallTryPickup(toucher);
-			if (res) GoAwayAndDie();
+			if (res)
+			{
+				GoAwayAndDie();
+				master = NULL;
+			}
 			return res;
 		}
 	}

@@ -944,7 +944,13 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 		if (Restarting)
 		{
 			Restarting = false;
-			events = WriteStopNotes(events);	// Stop all notes in case any were left hanging.
+			// Reset the tempo to the inital value.
+			events[0] = 0;									// dwDeltaTime
+			events[1] = 0;									// dwStreamID
+			events[2] = (MEVT_TEMPO << 24) | InitialTempo;	// dwEvent
+			events += 3;
+			// Stop all notes in case any were left hanging.
+			events = WriteStopNotes(events);
 			DoRestart();
 		}
 		events = MakeEvents(events, max_event_p, max_time);
@@ -1130,7 +1136,7 @@ void MIDIStreamer::Precache()
 void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 {
 	DWORD delay = 0;
-	BYTE running_status = 0;
+	BYTE running_status = 255;
 
 	// Always create songs aimed at GM devices.
 	CheckCaps(MOD_MIDIPORT);
@@ -1163,6 +1169,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 				file.Push(BYTE(tempo >> 16));
 				file.Push(BYTE(tempo >> 8));
 				file.Push(BYTE(tempo));
+				running_status = 255;
 			}
 			else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
 			{
@@ -1176,6 +1183,7 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 					file.Push(MIDI_SYSEX);
 					WriteVarLen(file, len);
 					memcpy(&file[file.Reserve(len - 1)], bytes, len);
+					running_status = 255;
 				}
 			}
 			else if (MEVT_EVENTTYPE(event[2]) == 0)

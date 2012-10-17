@@ -355,9 +355,9 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	else if (domissile && MissileType != NULL)
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->z += MissileHeight - 32*FRACUNIT;
+		self->z += MissileHeight + self->GetBobOffset() - 32*FRACUNIT;
 		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, MissileType, false);
-		self->z -= MissileHeight - 32*FRACUNIT;
+		self->z -= MissileHeight + self->GetBobOffset() - 32*FRACUNIT;
 
 		if (missile)
 		{
@@ -668,6 +668,42 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 // State jump function
 //
 //==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetOutsideMeleeRange)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE(jump);
+
+	if (!self->CheckMeleeRange())
+	{
+		ACTION_JUMP(jump);
+	}
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+	return numret;
+}
+
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE(jump);
+
+	if (self->CheckMeleeRange())
+	{
+		ACTION_JUMP(jump);
+	}
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+	return numret;
+}
+
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
 static int DoJumpIfCloser(AActor *target, VM_ARGS)
 {
 	PARAM_ACTION_PROLOGUE;
@@ -799,12 +835,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 //
 //==========================================================================
 
+enum
+{
+	XF_HURTSOURCE = 1,
+	XF_NOTMISSILE = 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(damage)		   { damage = -1; }
 	PARAM_INT_OPT	(distance)		   { distance = -1; }
-	PARAM_BOOL_OPT	(hurtSource)	   { hurtSource = true; }
+	PARAM_INT_OPT	(flags)			   { flags = XF_HURTSOURCE; }
 	PARAM_BOOL_OPT	(alert)			   { alert = false; }
 	PARAM_INT_OPT	(fulldmgdistance)  { fulldmgdistance = 0; }
 	PARAM_INT_OPT	(nails)			   { nails = 0; }
@@ -815,11 +857,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	{
 		damage = self->GetClass()->ExplosionDamage;
 		distance = self->GetClass()->ExplosionRadius;
-		if (distance < 0)
-		{
-			distance = damage;
-		}
-		hurtSource = !self->GetClass()->DontHurtShooter;
+		flags = !self->GetClass()->DontHurtShooter;
 		alert = false;
 	}
 	else
@@ -842,7 +880,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		}
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource, true, fulldmgdistance);
+	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
 	P_CheckSplash(self, distance<<FRACBITS);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
@@ -852,28 +890,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	return 0;
 }
 
-enum
-{
-	RTF_AFFECTSOURCE = 1,
-	RTF_NOIMPACTDAMAGE = 2,
-};
-
 //==========================================================================
 //
 // A_RadiusThrust
 //
 //==========================================================================
 
+enum
+{
+	RTF_AFFECTSOURCE = 1,
+	RTF_NOIMPACTDAMAGE = 2,
+	RTF_NOTMISSILE = 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(force)					{ force = 128; }
 	PARAM_INT_OPT	(distance)				{ distance = -1; }
-	PARAM_INT_OPT	(thrustFlags)			{ thrustFlags = RTF_AFFECTSOURCE; }
+	PARAM_INT_OPT	(flags)					{ flags = RTF_AFFECTSOURCE; }
 	PARAM_INT_OPT	(fullthrustdistance)	{ fullthrustdistance = 0; }
-
-	bool affectSource = !!(thrustFlags & RTF_AFFECTSOURCE);
-	bool noimpactdamage = !!(thrustFlags & RTF_NOIMPACTDAMAGE);
 
 	bool sourcenothrust = false;
 
@@ -881,14 +917,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	if (distance <= 0) distance = force;
 
 	// Temporarily negate MF2_NODMGTHRUST on the shooter, since it renders this function useless.
-	if (self->target != NULL && self->target->flags2 & MF2_NODMGTHRUST)
+	if (!(flags & RTF_NOTMISSILE) && self->target != NULL && self->target->flags2 & MF2_NODMGTHRUST)
 	{
 		sourcenothrust = true;
 		self->target->flags2 &= ~MF2_NODMGTHRUST;
 	}
 	int sourceflags2 = self->target != NULL ? self->target->flags2 : 0;
 
-	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, fullthrustdistance, noimpactdamage);
+	P_RadiusAttack (self, self->target, force, distance, self->DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
 	P_CheckSplash(self, distance << FRACBITS);
 
 	if (sourcenothrust)
@@ -959,7 +995,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 			angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
 			fixed_t x = spawnofs_xy * finecosine[ang];
 			fixed_t y = spawnofs_xy * finesine[ang];
-			fixed_t z = spawnheight - 32*FRACUNIT + (self->player? self->player->crouchoffset : 0);
+			fixed_t z = spawnheight + self->GetBobOffset() - 32*FRACUNIT + (self->player? self->player->crouchoffset : 0);
 
 			switch (aimmode)
 			{
@@ -976,14 +1012,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				break;
 
 			case 1:
-				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z+spawnheight, self, self->target, ti, false);
+				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z + self->GetBobOffset() + spawnheight, self, self->target, ti, false);
 				break;
 
 			case 2:
 				self->x += x;
 				self->y += y;
-				missile = P_SpawnMissileAngleZSpeed(self, self->z+spawnheight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
-				self->x -= x;
+				missile = P_SpawnMissileAngleZSpeed(self, self->z + self->GetBobOffset() + spawnheight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
+ 				self->x -= x;
 				self->y -= y;
 
 				flags |= CMF_ABSOLUTEPITCH;
@@ -1210,9 +1246,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 	else if (ti) 
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->z += spawnheight - 32*FRACUNIT;
-		AActor *missile = P_SpawnMissileXYZ(self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
-		self->z -= spawnheight - 32*FRACUNIT;
+		self->z += spawnheight + self->GetBobOffset() - 32*FRACUNIT;
+		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
+		self->z -= spawnheight + self->GetBobOffset() - 32*FRACUNIT;
 
 		if (missile)
 		{
@@ -1951,7 +1987,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	AActor *mo = Spawn(missile, 
 					self->x + FixedMul(distance, finecosine[self->angle>>ANGLETOFINESHIFT]), 
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
-					self->z - self->floorclip + zheight, ALLOW_REPLACE);
+					self->z - self->floorclip + self->GetBobOffset() + zheight, ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	bool res = InitSpawnedItem(self, mo, flags);
@@ -2024,7 +2060,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		xvel = newxvel;
 	}
 
-	AActor *mo = Spawn(missile, x, y, self->z - self->floorclip + zofs, ALLOW_REPLACE);
+	AActor * mo = Spawn(missile, x, y, self->z - self->floorclip + self->GetBobOffset() + zofs, ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	ACTION_SET_RESULT(res);	// for an inventory item's use state
 	if (mo)
@@ -2073,7 +2109,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	AActor *bo;
 
 	bo = Spawn(missile, self->x, self->y, 
-			self->z - self->floorclip + zheight + 35*FRACUNIT + (self->player ? self->player->crouchoffset : 0),
+			self->z - self->floorclip + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0),
 			ALLOW_REPLACE);
 	if (bo)
 	{
@@ -2435,7 +2471,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 	{
 		mo = Spawn(debris, self->x+((pr_spawndebris()-128)<<12),
 			self->y+((pr_spawndebris()-128)<<12), 
-			self->z+(pr_spawndebris()*self->height/256), ALLOW_REPLACE);
+			self->z+(pr_spawndebris()*self->height/256+self->GetBobOffset()), ALLOW_REPLACE);
 		if (mo && transfer_translation)
 		{
 			mo->Translation = self->Translation;
@@ -2760,7 +2796,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 		mo = Spawn(chunk,
 			self->x + (((pr_burst()-128)*self->radius)>>7),
 			self->y + (((pr_burst()-128)*self->radius)>>7),
-			self->z + (pr_burst()*self->height/255), ALLOW_REPLACE);
+			self->z + (pr_burst()*self->height/255 + self->GetBobOffset()), ALLOW_REPLACE);
 
 		if (mo)
 		{
@@ -4712,3 +4748,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	return 0;
 }
 
+
+//==========================================================================
+//
+// A_SetTics
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(tics_to_set);
+
+	self->tics = tics_to_set;
+	return 0;
+}

@@ -1124,7 +1124,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
 		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
 
-		SetReplacement(info, replaceName);
+		SetReplacement(sc, info, replaceName);
 
 		ResetBaggage (bag, info == RUNTIME_CLASS(AActor) ? NULL : static_cast<PClassActor *>(info->ParentClass));
 		bag->Info = info;

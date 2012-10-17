@@ -86,9 +86,23 @@ FRandom pr_acs ("ACS");
 #define STACK_SIZE 4096
 
 #define CLAMPCOLOR(c)		(EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c))
-#define HUDMSG_LOG			(0x80000000)
-#define HUDMSG_COLORSTRING	(0x40000000)
 #define LANGREGIONMASK		MAKE_ID(0,0,0xff,0xff)
+
+// HUD message flags
+#define HUDMSG_LOG					(0x80000000)
+#define HUDMSG_COLORSTRING			(0x40000000)
+#define HUDMSG_ADDBLEND				(0x20000000)
+#define HUDMSG_ALPHA				(0x10000000)
+
+// HUD message layers; these are not flags
+#define HUDMSG_LAYER_SHIFT			12
+#define HUDMSG_LAYER_MASK			(0x0000F000)
+// See HUDMSGLayer enumerations in sbar.h
+
+// HUD message visibility flags
+#define HUDMSG_VISIBILITY_SHIFT		16
+#define HUDMSG_VISIBILITY_MASK		(0x00070000)
+// See HUDMSG visibility enumerations in sbar.h
 
 // Flags for ReplaceTextures
 #define NOT_BOTTOM			1
@@ -99,13 +113,12 @@ FRandom pr_acs ("ACS");
 
 struct CallReturn
 {
-	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard, FString &str)
+	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard)
 		: ReturnFunction(func),
 		  ReturnModule(module),
 		  ReturnLocals(locals),
 		  ReturnAddress(pc),
-		  bDiscardResult(discard),
-		  StringBuilder(str)
+		  bDiscardResult(discard)
 	{}
 
 	ScriptFunction *ReturnFunction;
@@ -113,7 +126,6 @@ struct CallReturn
 	SDWORD *ReturnLocals;
 	int ReturnAddress;
 	int bDiscardResult;
-	FString StringBuilder;
 };
 
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
@@ -157,8 +169,8 @@ TArray<FString>
 	ACS_StringsOnTheFly,
 	ACS_StringBuilderStack;
 
-#define STRINGBUILDER_START(Builder) if (*Builder.GetChars() || ACS_StringBuilderStack.Size()) { ACS_StringBuilderStack.Push(Builder); Builder = ""; }
-#define STRINGBUILDER_FINISH(Builder) if (!ACS_StringBuilderStack.Pop(Builder)) Builder = "";
+#define STRINGBUILDER_START(Builder) if (Builder.IsNotEmpty() || ACS_StringBuilderStack.Size()) { ACS_StringBuilderStack.Push(Builder); Builder = ""; }
+#define STRINGBUILDER_FINISH(Builder) if (!ACS_StringBuilderStack.Pop(Builder)) { Builder = ""; }
 
 //============================================================================
 //
@@ -3362,6 +3374,11 @@ enum EACSFunctions
 	ACSF_ACS_NamedLockedExecuteDoor,
 	ACSF_ACS_NamedExecuteWithResult,
 	ACSF_ACS_NamedExecuteAlways,
+	ACSF_UniqueTID,
+	ACSF_IsTIDUsed,
+	ACSF_Sqrt,
+	ACSF_FixedSqrt,
+	ACSF_VectorLength,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,
@@ -3874,6 +3891,23 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			}
 			break;
 
+		case ACSF_UniqueTID:
+			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, argCount > 1 ? args[1] : 0);
+			break;
+
+		case ACSF_IsTIDUsed:
+			return P_IsTIDUsed(args[0]);
+			break;
+
+		case ACSF_Sqrt:
+			return xs_FloorToInt(sqrt(double(args[0])));
+
+		case ACSF_FixedSqrt:
+			return FLOAT2FIXED(sqrt(FIXED2DBL(args[0])));
+
+		case ACSF_VectorLength:
+			return FLOAT2FIXED(TVector2<double>(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
+
 		default:
 			break;
 	}
@@ -4295,7 +4329,7 @@ int DLevelScript::RunScript ()
 				}
 				sp += i;
 				::new(&Stack[sp]) CallReturn(activeBehavior->PC2Ofs(pc), activeFunction,
-					activeBehavior, mylocals, pcd == PCD_CALLDISCARD, work);
+					activeBehavior, mylocals, pcd == PCD_CALLDISCARD);
 				sp += (sizeof(CallReturn) + sizeof(int) - 1) / sizeof(int);
 				pc = module->Ofs2PC (func->Address);
 				activeFunction = func;
@@ -4334,7 +4368,6 @@ int DLevelScript::RunScript ()
 				{
 					Stack[sp++] = value;
 				}
-				work = ret->StringBuilder;
 				ret->~CallReturn();
 			}
 			break;
@@ -5655,6 +5688,7 @@ scriptwait:
 					float x = FIXED2FLOAT(Stack[optstart-3]);
 					float y = FIXED2FLOAT(Stack[optstart-2]);
 					float holdTime = FIXED2FLOAT(Stack[optstart-1]);
+					fixed_t alpha;
 					DHUDMessage *msg;
 
 					if (type & HUDMSG_COLORSTRING)
@@ -5666,14 +5700,16 @@ scriptwait:
 						color = CLAMPCOLOR(Stack[optstart-4]);
 					}
 
-					switch (type & 0xFFFF)
+					switch (type & 0xFF)
 					{
 					default:	// normal
+						alpha = (optstart < sp) ? Stack[optstart] : FRACUNIT;
 						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							alpha = (optstart < sp-1) ? Stack[optstart+1] : FRACUNIT;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
@@ -5681,6 +5717,7 @@ scriptwait:
 						{
 							float typeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
 							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
@@ -5688,11 +5725,22 @@ scriptwait:
 						{
 							float inTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}
-					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0);
+					msg->SetVisibility((type & HUDMSG_VISIBILITY_MASK) >> HUDMSG_VISIBILITY_SHIFT);
+					if (type & HUDMSG_ALPHA)
+					{
+						msg->SetAlpha(alpha);
+					}
+					if (type & HUDMSG_ADDBLEND)
+					{
+						msg->SetRenderStyle(STYLE_Add);
+					}
+					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0,
+						(type & HUDMSG_LAYER_MASK) >> HUDMSG_LAYER_SHIFT);
 					if (type & HUDMSG_LOG)
 					{
 						static const char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
@@ -6340,7 +6388,18 @@ scriptwait:
 		case PCD_GETACTORZ:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : (&actor->x)[pcd - PCD_GETACTORX];
+				if (actor == NULL)
+				{
+					STACK(1) = 0;
+				}
+				else if (pcd == PCD_GETACTORZ)
+				{
+					STACK(1) = actor->z + actor->GetBobOffset();
+				}
+				else
+				{
+					STACK(1) =  (&actor->x)[pcd - PCD_GETACTORX];
+				}
 			}
 			break;
 
@@ -6479,6 +6538,25 @@ scriptwait:
 
 				if (translation != NULL)
 					translation->AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
+			}
+			break;
+
+		case PCD_TRANSLATIONRANGE3:
+			{ // translation using desaturation
+				int start = STACK(8);
+				int end = STACK(7);
+				fixed_t r1 = STACK(6);
+				fixed_t g1 = STACK(5);
+				fixed_t b1 = STACK(4);
+				fixed_t r2 = STACK(3);
+				fixed_t g2 = STACK(2);
+				fixed_t b2 = STACK(1);
+				sp -= 8;
+
+				if (translation != NULL)
+					translation->AddDesaturation(start, end,
+						FIXED2DBL(r1), FIXED2DBL(g1), FIXED2DBL(b1),
+						FIXED2DBL(r2), FIXED2DBL(g2), FIXED2DBL(b2));
 			}
 			break;
 
@@ -6886,7 +6964,8 @@ scriptwait:
 			}
 			else
 			{
-				userinfo_t *userinfo = &players[STACK(2)].userinfo;
+				player_t *pl = &players[STACK(2)];
+				userinfo_t *userinfo = &pl->userinfo;
 				switch (STACK(1))
 				{
 				case PLAYERINFO_TEAM:			STACK(2) = userinfo->team; break;
@@ -6897,6 +6976,8 @@ scriptwait:
 				case PLAYERINFO_MOVEBOB:		STACK(2) = userinfo->MoveBob; break;
 				case PLAYERINFO_STILLBOB:		STACK(2) = userinfo->StillBob; break;
 				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->PlayerClass; break;
+				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
+				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;
 				default:						STACK(2) = 0; break;
 				}
 			}
@@ -7519,6 +7600,3 @@ void DACSThinker::DumpScriptStatus ()
 		script = script->next;
 	}
 }
-
-#undef STRINGBUILDER_START
-#undef STRINGBUILDER_FINISH

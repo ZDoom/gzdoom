@@ -56,6 +56,7 @@ extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
+FRandom FState::pr_statetics;
 
 bool FState::CallAction(AActor *self, AActor *stateowner)
 {
@@ -503,19 +504,6 @@ void PClassActor::SetPainChance(FName type, int chance)
 	{
 		PainChances->Remove(type);
 	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void PClassActor::SetPainFlash(FName type, PalEntry color)
-{
-	if (PainFlashes == NULL)
-		PainFlashes = new PainFlashList;
-
-	PainFlashes->Insert(type, color);
 }
 
 //==========================================================================

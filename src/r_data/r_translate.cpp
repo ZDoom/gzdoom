@@ -403,14 +403,22 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b1, float r2, float g2, float b2)
+void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2)
 {
-	r1 = clamp(r1, 0.0f, 2.0f);
-	g1 = clamp(g1, 0.0f, 2.0f);
-	b1 = clamp(b1, 0.0f, 2.0f);
-	r2 = clamp(r2, 0.0f, 2.0f);
-	g2 = clamp(g2, 0.0f, 2.0f);
-	b2 = clamp(b2, 0.0f, 2.0f);
+	r1 = clamp(r1, 0.0, 2.0);
+	g1 = clamp(g1, 0.0, 2.0);
+	b1 = clamp(b1, 0.0, 2.0);
+	r2 = clamp(r2, 0.0, 2.0);
+	g2 = clamp(g2, 0.0, 2.0);
+	b2 = clamp(b2, 0.0, 2.0);
+
+	if (start > end)
+	{
+		swapvalues(start, end);
+		swapvalues(r1, r2);
+		swapvalues(g1, g2);
+		swapvalues(b1, b2);
+	}
 
 	r2 -= r1;
 	g2 -= g1;
@@ -419,7 +427,7 @@ void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b
 	g1 *= 255;
 	b1 *= 255;
 
-	for(int c = start; c < end; c++)
+	for(int c = start; c <= end; c++)
 	{
 		double intensity = (GPalette.BaseColors[c].r * 77 +
 							GPalette.BaseColors[c].g * 143 +
@@ -443,7 +451,7 @@ void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddToTranslation(const char * range)
+void FRemapTable::AddToTranslation(const char *range)
 {
 	int start,end;
 	bool desaturated = false;
@@ -515,39 +523,39 @@ void FRemapTable::AddToTranslation(const char * range)
 		else if (sc.TokenType == '%')
 		{
 			// translation using RGB values
-			float r1,g1,b1,r2,g2,b2;
+			double r1,g1,b1,r2,g2,b2;
 
 			sc.MustGetToken('[');
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			r1 = float(sc.Float);
+			r1 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			g1 = float(sc.Float);
+			g1 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			b1 = float(sc.Float);
+			b1 = sc.Float;
 			sc.MustGetToken(']');
 			sc.MustGetToken(':');
 			sc.MustGetToken('[');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			r2 = float(sc.Float);
+			r2 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			g2 = float(sc.Float);
+			g2 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			b2 = float(sc.Float);
+			b2 = sc.Float;
 			sc.MustGetToken(']');
 
 			AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);

@@ -926,7 +926,6 @@ public:
 		const char *speakerName;
 		int x, y, linesize;
 		int width, fontheight;
-		int labelofs;
 
 		player_t *cp = &players[consoleplayer];
 
@@ -1015,8 +1014,6 @@ public:
 		}
 
 		y = mYpos;
-		labelofs = OptionSettings.mLabelOffset;
-		y -= labelofs;
 		fontheight = OptionSettings.mLinespacing;
 
 		int response = 0;
@@ -1041,7 +1038,7 @@ public:
 					int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
 
 					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
-					int yy = (y-1+labelofs - 100) * CleanYfac + screen->GetHeight() / 2;
+					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
 					screen->DrawText (ConFont, color, x, yy, "\xd",
 						DTA_CellX, 8 * CleanXfac,
 						DTA_CellY, 8 * CleanYfac,

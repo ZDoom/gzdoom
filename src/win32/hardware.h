@@ -62,6 +62,9 @@ void I_CreateRenderer();
 void I_SaveWindowedPos ();
 void I_RestoreWindowedPos ();
 
+void I_SetFPSLimit(int limit);
+
+
 extern IVideo *Video;
 
 #endif	// __HARDWARE_H__

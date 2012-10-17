@@ -177,6 +177,10 @@ void I_ClosestResolution (int *width, int *height, int bits)
 	}
 }	
 
+void I_SetFPSLimit(int limit)
+{
+}
+
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
 CUSTOM_CVAR (Bool, fullscreen, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

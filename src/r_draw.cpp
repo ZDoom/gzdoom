@@ -79,6 +79,8 @@ void (*R_DrawSpan)(void);
 void (*R_DrawSpanMasked)(void);
 void (*R_DrawSpanTranslucent)(void);
 void (*R_DrawSpanMaskedTranslucent)(void);
+void (*R_DrawSpanAddClamp)(void);
+void (*R_DrawSpanMaskedAddClamp)(void);
 void (STACK_ARGS *rt_map4cols)(int,int,int);
 
 //
@@ -1324,6 +1326,152 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 	}
 }
 
+void R_DrawSpanAddClampP_C (void)
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	BYTE*				dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
+			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+			DWORD b = a;
+
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest++ = RGB32k[0][0][a & (a>>15)];
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+			DWORD b = a;
+
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest++ = RGB32k[0][0][a & (a>>15)];
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
+void R_DrawSpanMaskedAddClampP_C (void)
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	BYTE*				dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			BYTE texdata;
+
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k[0][0][a & (a>>15)];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			BYTE texdata;
+		
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k[0][0][a & (a>>15)];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
 // [RH] Just fill a span with a color
 void R_FillSpan (void)
 {
@@ -2005,6 +2153,14 @@ void tmvline4_revsubclamp ()
 
 const BYTE *R_GetColumn (FTexture *tex, int col)
 {
+	int width;
+
+	// If the texture's width isn't a power of 2, then we need to make it a
+	// positive offset for proper clamping.
+	if (col < 0 && (width = tex->GetWidth()) != (1 << tex->WidthBits))
+	{
+		col = width + (col % width);
+	}
 	return tex->GetColumn (col, NULL);
 }
 
@@ -2040,6 +2196,8 @@ void R_InitColumnDrawers ()
 #endif
 	R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_C;
 	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_C;
+	R_DrawSpanAddClamp			= R_DrawSpanAddClampP_C;
+	R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_C;
 }
 
 // [RH] Choose column drawers in a single place

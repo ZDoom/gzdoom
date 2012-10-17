@@ -1208,6 +1208,11 @@ void D3DFB::Flip()
 			BlockSurface[BlockNum]->UnlockRect();
 		}
 	}
+	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
+	if (FPSLimitEvent != NULL)
+	{
+		WaitForSingleObject(FPSLimitEvent, 1000);
+	}
 	D3DDevice->Present(NULL, NULL, NULL, NULL);
 	InScene = false;
 

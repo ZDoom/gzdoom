@@ -100,6 +100,7 @@ public:
 	void AddSound (int player_sound_id, int sfx_id);
 	int LookupSound (int player_sound_id);
 	FPlayerSoundHashTable &operator= (const FPlayerSoundHashTable &other);
+	void MarkUsed();
 
 protected:
 	struct Entry
@@ -122,7 +123,7 @@ struct FAmbientSound
 	int			periodmax;	// max # of tics for random ambients
 	float		volume;		// relative volume of sound
 	float		attenuation;
-	FString		sound;		// Logical name of sound to play
+	FSoundID	sound;		// Sound to play
 };
 TMap<int, FAmbientSound> Ambients;
 
@@ -219,6 +220,7 @@ extern int sfx_empty;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 TArray<sfxinfo_t> S_sfx (128);
+TMap<int, FString> HexenMusic;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -832,6 +834,25 @@ int FPlayerSoundHashTable::LookupSound (int player_sound_id)
 
 //==========================================================================
 //
+// FPlayerSoundHashTable :: Mark
+//
+// Marks all sounds defined for this class/gender as used.
+//
+//==========================================================================
+
+void FPlayerSoundHashTable::MarkUsed()
+{
+	for (size_t i = 0; i < NUM_BUCKETS; ++i)
+	{
+		for (Entry *probe = Buckets[i]; probe != NULL; probe = probe->Next)
+		{
+			S_sfx[probe->SfxID].bUsed = true;
+		}
+	}
+}
+
+//==========================================================================
+//
 // S_ClearSoundData
 //
 // clears all sound tables
@@ -866,6 +887,7 @@ static void S_ClearSoundData()
 	DefPlayerClassName = "";
 	MusicAliases.Clear();
 	MidiDevices.Clear();
+	HexenMusic.Clear();
 }
 
 //==========================================================================
@@ -984,10 +1006,10 @@ static void S_AddSNDINFO (int lump)
 				ambient->periodmax = 0;
 				ambient->volume = 0;
 				ambient->attenuation = 0;
-				ambient->sound = "";
+				ambient->sound = 0;
 
 				sc.MustGetString ();
-				ambient->sound = sc.String;
+				ambient->sound = FSoundID(S_FindSoundTentative(sc.String));
 				ambient->attenuation = 0;
 
 				sc.MustGetString ();
@@ -1064,16 +1086,14 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_Map: {
 				// Hexen-style $MAP command
-				level_info_t *info;
-				char temp[16];
+				int mapnum;
 
-				sc.MustGetNumber ();
-				mysnprintf (temp, countof(temp), "MAP%02d", sc.Number);
-				info = FindLevelInfo (temp);
-				sc.MustGetString ();
-				if (info->mapname[0] && (!(info->flags2 & LEVEL2_MUSICDEFINED)))
+				sc.MustGetNumber();
+				mapnum = sc.Number;
+				sc.MustGetString();
+				if (mapnum != 0)
 				{
-					info->Music = sc.String;
+					HexenMusic[mapnum] = sc.String;
 				}
 				}
 				break;
@@ -1901,6 +1921,44 @@ bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time)
 
 //==========================================================================
 //
+// sfxinfo_t :: MarkUsed
+//
+// Marks this sound for precaching.
+//
+//==========================================================================
+
+void sfxinfo_t::MarkUsed()
+{
+	bUsed = true;
+}
+
+//==========================================================================
+//
+// S_MarkPlayerSounds
+//
+// Marks all sounds from a particular player class for precaching.
+//
+//==========================================================================
+
+void S_MarkPlayerSounds (const char *playerclass)
+{
+	int classidx = S_FindPlayerClass(playerclass);
+	if (classidx < 0)
+	{
+		classidx = DefPlayerClass;
+	}
+	for (int g = 0; g < 3; ++g)
+	{
+		int listidx = PlayerClassLookups[classidx].ListIndex[0];
+		if (listidx != 0xffff)
+		{
+			PlayerSounds[listidx].MarkUsed();
+		}
+	}
+}
+
+//==========================================================================
+//
 // CCMD soundlist
 //
 //==========================================================================
@@ -2014,6 +2072,7 @@ class AAmbientSound : public AActor
 public:
 	void Serialize (FArchive &arc);
 
+	void MarkPrecacheSounds () const;
 	void BeginPlay ();
 	void Tick ();
 	void Activate (AActor *activator);
@@ -2038,6 +2097,22 @@ void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bActive << NextCheck;
+}
+
+//==========================================================================
+//
+// AmbientSound :: MarkPrecacheSounds
+//
+//==========================================================================
+
+void AAmbientSound::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	FAmbientSound *ambient = Ambients.CheckKey(args[0]);
+	if (ambient != NULL)
+	{
+		ambient->sound.MarkUsed();
+	}
 }
 
 //==========================================================================
@@ -2067,7 +2142,7 @@ void AAmbientSound::Tick ()
 		loop = CHAN_LOOP;
 	}
 
-	if (ambient->sound.IsNotEmpty())
+	if (ambient->sound != 0)
 	{
 		// The second argument scales the ambient sound's volume.
 		// 0 and 100 are normal volume. The maximum volume level

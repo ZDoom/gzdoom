@@ -342,7 +342,7 @@ void T_LoadScripts(MapData *map)
 	// the default translator is being used.
 	// Custom translators will not be patched.
 	if ((gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Heretic) && level.info->Translator.IsEmpty() &&
-		level.maptype == MAPTYPE_DOOM && SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
+		level.maptype == MAPTYPE_DOOM && SimpleLineTranslations.Size() > 272 && SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
 	{
 		FLineTrans t = SimpleLineTranslations[270];
 		SimpleLineTranslations[270] = SimpleLineTranslations[272];

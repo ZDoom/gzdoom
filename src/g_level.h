@@ -36,8 +36,8 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-//#include "autosegs.h"
 #include "sc_man.h"
+#include "s_sound.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -179,7 +179,7 @@ enum ELevelFlags
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
-	LEVEL2_MUSICDEFINED			= 0x00000080,	// a marker to disable the $map command in SNDINFO for this map
+	/*							= 0x00000080,	*/
 	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
 	LEVEL2_CLIPMIDTEX			= 0x00000200,
 	LEVEL2_WRAPMIDTEX			= 0x00000400,
@@ -211,6 +211,7 @@ enum ELevelFlags
 	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
 	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
 	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
+	LEVEL2_FORGETSTATE			= 0x80000000,	// forget this map's state in a hub
 };
 
 
@@ -324,6 +325,8 @@ struct level_info_t
 	FMusicMap	MusicMap;
 
 	TArray<FSpecialAction> specialactions;
+
+	TArray<FSoundID> PrecacheSounds;
 
 	level_info_t() 
 	{ 

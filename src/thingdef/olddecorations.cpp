@@ -197,6 +197,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	if (type->NumOwnedStates == 1)
 	{
 		type->OwnedStates->Tics = -1;
+		type->OwnedStates->TicRange = 0;
 		type->OwnedStates->Misc1 = 0;
 	}
 	else
@@ -224,6 +225,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			else
 			{
 				type->OwnedStates[i].Tics = -1;
+				type->OwnedStates[i].TicRange = 0;
 				type->OwnedStates[i].Misc1 = 0;
 			}
 
@@ -274,6 +276,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			else
 			{
 				type->OwnedStates[i].Tics = -1;
+				type->OwnedStates[i].TicRange = 0;
 				type->OwnedStates[i].Misc1 = 0;
 			}
 
@@ -308,12 +311,14 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 			}
 			type->OwnedStates[i].NextState = &type->OwnedStates[type->NumOwnedStates-1];
 			type->OwnedStates[i].Tics = 5;
+			type->OwnedStates[i].TicRange = 0;
 			type->OwnedStates[i].Misc1 = 0;
 			type->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeath")->Function);
 
 			i = type->NumOwnedStates - 1;
 			type->OwnedStates[i].NextState = &type->OwnedStates[i];
 			type->OwnedStates[i].Tics = 1;
+			type->OwnedStates[i].TicRange = 0;
 			type->OwnedStates[i].Misc1 = 0;
 			type->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeathChunks")->Function);
 			bag.statedef.SetStateLabel("Ice", &type->OwnedStates[extra.IceDeathStart]);
@@ -672,6 +677,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScann
 		}
 
 		state.Tics = rate;
+		state.TicRange = 0;
 
 		while (*token)
 		{

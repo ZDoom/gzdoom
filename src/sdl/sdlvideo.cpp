@@ -375,10 +375,12 @@ void SDLFB::Update ()
 
 	DrawRateStuff ();
 
+#ifndef __APPLE__
 	if(vid_maxfps)
 	{
 		SEMAPHORE_WAIT(FPSLimitSemaphore)
 	}
+#endif
 
 	Buffer = NULL;
 	LockCount = 0;

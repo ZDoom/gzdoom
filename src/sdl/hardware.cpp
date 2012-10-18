@@ -194,6 +194,7 @@ void I_ClosestResolution (int *width, int *height, int bits)
 EXTERN_CVAR(Int, vid_maxfps);
 EXTERN_CVAR(Bool, cl_capfps);
 
+#ifndef __APPLE__
 Semaphore FPSLimitSemaphore;
 
 static void FPSLimitNotify(sigval val)
@@ -245,6 +246,13 @@ void I_SetFPSLimit(int limit)
 		DPrintf("FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
 	}
 }
+#else
+// So Apple doesn't support POSIX timers and I can't find a good substitute short of
+// having Objective-C Cocoa events or something like that.
+void I_SetFPSLimit(int limit)
+{
+}
+#endif
 
 CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {

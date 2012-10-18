@@ -46,7 +46,7 @@ typedef semaphore_t Semaphore;
 #define SEMAPHORE_WAIT(sem) \
 	while(semaphore_wait(sem) != KERN_SUCCESS){}
 #define SEMAPHORE_SIGNAL(sem) \
-	semaphore_signal(sem)
+	semaphore_signal(sem);
 #define SEMAPHORE_INIT(sem, shared, value) \
 	semaphore_create(mach_task_self(), &sem, shared, value);
 #else

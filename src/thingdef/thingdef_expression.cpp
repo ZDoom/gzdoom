@@ -1566,7 +1566,7 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 		{ OP_LT_RR, OP_LTF_RR, 0 },	// <
 		{ OP_LE_RR, OP_LEF_RR, 1 },	// >
 		{ OP_LT_RR, OP_LTF_RR, 1 },	// >=
-		{ OP_LE_RR, OP_LE_RR, 0 }	// <=
+		{ OP_LE_RR, OP_LEF_RR, 0 }	// <=
 	};
 	int instr, check, index;
 
@@ -1591,7 +1591,7 @@ ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 	{
 		op1.Free(build);
 	}
-	ExpEmit to(build, op1.RegType);
+	ExpEmit to(build, REGT_INT);
 
 	// See FxUnaryNotBoolean for comments, since it's the same thing.
 	build->Emit(OP_LI, to.RegNum, 0, 0);

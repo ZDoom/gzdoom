@@ -2280,7 +2280,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STRING(text);
-	Printf("%s\n", text);
+	Printf("%s\n", text.GetChars());
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 	return numret;
 }
@@ -2737,7 +2737,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 	PARAM_INT(argnum);
 	PARAM_STATE_OPT(state)	{ state = self->FindState(NAME_Death); }
 
-	if (argnum > 0 && argnum < countof(self->args))
+	if (argnum > 0 && argnum < (int)countof(self->args))
 	{
 		if (!self->args[argnum]--)
 		{
@@ -3542,7 +3542,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 	}
 	else
 	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+		Printf("Unknown flag '%s' in '%s'\n", flagname.GetChars(), cls->TypeName.GetChars());
 	}
 	return 0;
 }
@@ -3598,7 +3598,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 	}
 	else
 	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+		Printf("Unknown flag '%s' in '%s'\n", flagname.GetChars(), cls->TypeName.GetChars());
 	}
 	return numret;
 }
@@ -4092,7 +4092,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(angle);
+	PARAM_ANGLE_OPT(angle) { angle = 0; }
 	self->angle += angle;
 	return 0;
 }

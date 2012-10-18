@@ -446,7 +446,7 @@ size_t VMFunctionBuilder::Emit(int opcode, int opa, VM_SHALF opbc)
 {
 	assert(opcode >= 0 && opcode < NUM_OPS);
 	assert(opa >= 0 && opa <= 255);
-	assert(opbc >= -32768 && opbc <= 32767);
+	//assert(opbc >= -32768 && opbc <= 32767);	always true due to parameter's width
 	VMOP op;
 	op.op = opcode;
 	op.a = opa;

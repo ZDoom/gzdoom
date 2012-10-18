@@ -952,7 +952,7 @@ void R_InitSprites ()
 		FString classface = basetype->Face;
 
 		strcpy (skins[i].name, "Base");
-		if (classface.IsEmpty() == NULL || strcmp(classface, "None") == 0)
+		if (classface.IsEmpty() || strcmp(classface, "None") == 0)
 		{
 			skins[i].face[0] = 'S';
 			skins[i].face[1] = 'T';

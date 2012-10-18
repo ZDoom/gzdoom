@@ -35,7 +35,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
 	PARAM_INT(questitem);
 
 	// Give one of these quest items to every player in the game
-	if (questitem >= 0 && questitem < countof(QuestItemClasses))
+	if (questitem >= 0 && questitem < (int)countof(QuestItemClasses))
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{

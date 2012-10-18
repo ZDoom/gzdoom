@@ -2621,7 +2621,7 @@ AActor *AActor::TIDHash[128];
 
 void AActor::ClearTIDHashes ()
 {
-	memset(TIDHash, NULL, sizeof(TIDHash));
+	memset(TIDHash, 0, sizeof(TIDHash));
 }
 
 //

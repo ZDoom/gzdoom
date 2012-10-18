@@ -1273,7 +1273,7 @@ bool AInventory::DoRespawn ()
 void AInventory::GiveQuest (AActor *toucher)
 {
 	int quest = GetClass()->GiveQuest;
-	if (quest > 0 && quest <= countof(QuestItemClasses))
+	if (quest > 0 && quest <= (int)countof(QuestItemClasses))
 	{
 		toucher->GiveInventoryType (QuestItemClasses[quest-1]);
 	}

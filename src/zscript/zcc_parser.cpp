@@ -168,7 +168,8 @@ static void DoParse(const char *filename)
 	failed = false;
 #ifdef _DEBUG
 	FILE *f = fopen("trace.txt", "w");
-	ZCCParseTrace(f, "");
+	char prompt = '\0';
+	ZCCParseTrace(f, &prompt);
 #endif
 	ZCCParseState state(sc);
 
@@ -232,12 +233,14 @@ static void DoParse(const char *filename)
 	FString ast = ZCC_PrintAST(state.TopNode);
 	FString astfile = ExtractFileBase(filename, false);
 	astfile << ".ast";
+#ifdef _DEBUG
 	f = fopen(astfile, "w");
 	if (f != NULL)
 	{
 		fputs(ast.GetChars(), f);
 		fclose(f);
 	}
+#endif
 }
 
 CCMD(parse)
@@ -255,7 +258,7 @@ static FString ZCCTokenName(int terminal)
 		return "end of file";
 	}
 	int sc_token;
-	if (terminal > 0 && terminal < countof(BackTokenMap))
+	if (terminal > 0 && terminal < (int)countof(BackTokenMap))
 	{
 		sc_token = BackTokenMap[terminal];
 		if (sc_token == 0)

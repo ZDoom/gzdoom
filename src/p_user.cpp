@@ -420,7 +420,7 @@ IMPLEMENT_CLASS(PClassPlayerPawn)
 
 PClassPlayerPawn::PClassPlayerPawn()
 {
-	for (int i = 0; i < countof(HexenArmor); ++i)
+	for (size_t i = 0; i < countof(HexenArmor); ++i)
 	{
 		HexenArmor[i] = 0;
 	}
@@ -433,7 +433,7 @@ void PClassPlayerPawn::Derive(PClass *newclass)
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	Super::Derive(newclass);
 	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
-	int i;
+	size_t i;
 
 	newp->DisplayName = DisplayName;
 	newp->SoundClass = SoundClass;

@@ -566,11 +566,6 @@ else( NO_ASM )
 		ADD_ASM_FILE( asm_ia32 tmap2 )
 		ADD_ASM_FILE( asm_ia32 tmap3 )
 	endif( X64 )
-	if( WIN32 )
-		if( NOT X64 )
-			ADD_ASM_FILE( win32 wrappers )
-		endif( NOT X64 )
-	endif( WIN32 )
 endif( NO_ASM )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
@@ -880,7 +875,6 @@ add_executable( zdoom WIN32
 	thingdef/thingdef_data.cpp
 	thingdef/thingdef_exp.cpp
 	thingdef/thingdef_expression.cpp
-	thingdef/thingdef_function.cpp
 	thingdef/thingdef_parse.cpp
 	thingdef/thingdef_properties.cpp
 	thingdef/thingdef_states.cpp
@@ -910,6 +904,7 @@ add_executable( zdoom WIN32
 	r_data/renderstyle.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_translate.cpp
+	zscript/ast.cpp
 	zscript/vmbuilder.cpp
 	zscript/vmdisasm.cpp
 	zscript/vmexec.cpp

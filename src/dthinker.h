@@ -121,10 +121,10 @@ public:
 template <class T> class TThinkerIterator : public FThinkerIterator
 {
 public:
-	TThinkerIterator (int statnum=MAX_STATNUM+1) : FThinkerIterator (RUNTIME_CLASS(T), statnum)
+	TThinkerIterator (int statnum=MAX_STATNUM+1) : FThinkerIterator (RUNTIME_TEMPLATE_CLASS(T), statnum)
 	{
 	}
-	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_CLASS(T), statnum, prev)
+	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_TEMPLATE_CLASS(T), statnum, prev)
 	{
 	}
 	TThinkerIterator (const PClass *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(subclass, statnum)

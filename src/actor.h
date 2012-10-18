@@ -500,7 +500,7 @@ inline AActor *GetDefaultByType (const PClass *type)
 template<class T>
 inline T *GetDefault ()
 {
-	return (T *)(RUNTIME_CLASS(T)->Defaults);
+	return (T *)(RUNTIME_CLASS_CASTLESS(T)->Defaults);
 }
 
 struct line_t;
@@ -634,7 +634,7 @@ public:
 	AInventory *FindInventory (FName type);
 	template<class T> T *FindInventory ()
 	{
-		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
+		return static_cast<T *> (FindInventory (RUNTIME_TEMPLATE_CLASS(T)));
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
@@ -1018,7 +1018,7 @@ public:
 		do
 		{
 			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
+		} while (actor && !actor->IsKindOf (RUNTIME_TEMPLATE_CLASS(T)));
 		return static_cast<T *>(actor);
 	}
 };
@@ -1055,7 +1055,7 @@ AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allow
 template<class T>
 inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), x, y, z, allowreplacement));
 }
 
 

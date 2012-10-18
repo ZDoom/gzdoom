@@ -831,7 +831,7 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 {
 	assert(ValueType.Type == Operand->ValueType.Type);
 	ExpEmit from = Operand->Emit(build);
-	assert(from.Konst != 0);
+	assert(from.Konst == 0);
 	// Do it in-place.
 	if (ValueType == VAL_Int)
 	{
@@ -929,7 +929,7 @@ ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 	assert(ValueType.Type == Operand->ValueType.Type);
 	assert(ValueType == VAL_Int);
 	ExpEmit from = Operand->Emit(build);
-	assert(from.Konst != 0);
+	assert(from.Konst == 0);
 	// Do it in-place.
 	build->Emit(OP_NOT, from.RegNum, from.RegNum, 0);
 	return from;
@@ -3507,23 +3507,32 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 	assert(Self == NULL);
 	unsigned i = 0;
 
-	build->Emit(OP_PARAMI, Special);				// pass special number
+	build->Emit(OP_PARAMI, abs(Special));			// pass special number
 	build->Emit(OP_PARAM, 0, REGT_POINTER, 0);		// pass self
 	if (ArgList != NULL)
 	{
 		for (; i < ArgList->Size(); ++i)
 		{
 			FxExpression *argex = (*ArgList)[i];
-			assert(argex->ValueType == VAL_Int);
-			if (argex->isConstant())
+			if (Special < 0 && i == 0)
 			{
-				EmitConstantInt(build, argex->EvalExpression(NULL).GetInt());
+				assert(argex->ValueType == VAL_Name);
+				assert(argex->isConstant());
+				EmitConstantInt(build, -argex->EvalExpression(NULL).GetName());
 			}
 			else
 			{
-				ExpEmit arg(argex->Emit(build));
-				build->Emit(OP_PARAM, 0, arg.RegType, arg.RegNum);
-				arg.Free(build);
+				assert(argex->ValueType == VAL_Int);
+				if (argex->isConstant())
+				{
+					EmitConstantInt(build, argex->EvalExpression(NULL).GetInt());
+				}
+				else
+				{
+					ExpEmit arg(argex->Emit(build));
+					build->Emit(OP_PARAM, 0, arg.RegType, arg.RegNum);
+					arg.Free(build);
+				}
 			}
 		}
 	}
@@ -3995,11 +4004,11 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	// Find the DecoFindMultiNameState function. If not found, create it and install it
 	// in Actor.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoNameToClass, false);
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoFindMultiNameState, false);
 	if (sym == NULL)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoNameToClass);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoFindMultiNameState, NAME_DecoNameToClass);
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoFindMultiNameState);
+		VMNativeFunction *calldec = new VMNativeFunction(DecoFindMultiNameState, NAME_DecoFindMultiNameState);
 		symfunc->Function = calldec;
 		sym = symfunc;
 		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);

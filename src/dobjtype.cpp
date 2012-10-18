@@ -103,7 +103,7 @@ void DumpTypeTable()
 			if (len > max)
 				max = len;
 		}
-		if (len < countof(lens))
+		if (len < (int)countof(lens))
 		{
 			lens[len]++;
 		}
@@ -114,7 +114,7 @@ void DumpTypeTable()
 	Printf("Max bucket size: %d\n", max);
 	Printf("Avg bucket size: %.2f\n", double(all) / used);
 	int j,k;
-	for (k = k = countof(lens)-1; k > 0; --k)
+	for (k = countof(lens)-1; k > 0; --k)
 		if (lens[k])
 			break;
 	for (j = 0; j <= k; ++j)
@@ -224,8 +224,8 @@ bool PType::IsMatch(intptr_t id1, intptr_t id2) const
 
 void PType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
-	id1 = NULL;
-	id2 = NULL;
+	id1 = 0;
+	id2 = 0;
 }
 
 //==========================================================================
@@ -486,7 +486,7 @@ PPointer::PPointer(PType *pointsat)
 
 bool PPointer::IsMatch(intptr_t id1, intptr_t id2) const
 {
-	assert(id2 == NULL);
+	assert(id2 == 0);
 	PType *pointat = (PType *)id1;
 
 	return pointat == PointedType;
@@ -733,7 +733,7 @@ PDynArray::PDynArray(PType *etype)
 
 bool PDynArray::IsMatch(intptr_t id1, intptr_t id2) const
 {
-	assert(id2 == NULL);
+	assert(id2 == 0);
 	const PType *elemtype = (const PType *)id1;
 
 	return elemtype == ElementType;

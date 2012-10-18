@@ -1264,7 +1264,7 @@ begin:
 			c = 0;
 		}
 		reg.a[a] = (VM_UBYTE *)reg.a[B] + c;
-		reg.atag[a] = c == 0 ? reg.atag[B] : ATAG_GENERIC;
+		reg.atag[a] = c == 0 ? reg.atag[B] : (int)ATAG_GENERIC;
 		NEXTOP;
 	OP(ADDA_RK):
 		ASSERTA(a); ASSERTA(B); ASSERTKD(C);

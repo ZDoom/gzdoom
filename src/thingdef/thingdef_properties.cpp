@@ -88,7 +88,7 @@ static PClassActor *FindClassTentative(const char *name, PClass *ancestor)
 	assert(cls != NULL);	// cls can not be NULL here
 	if (!cls->IsDescendantOf(ancestor))
 	{
-		I_Error("%s does not inherit from %s\n", name, ancestor);
+		I_Error("%s does not inherit from %s\n", name, ancestor->TypeName.GetChars());
 	}
 	return static_cast<PClassActor *>(cls);
 }

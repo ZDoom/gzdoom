@@ -272,7 +272,7 @@ inline FArchive &operator<< (FArchive &arc, PalEntry &p)
 template<class T>
 inline FArchive &operator<< (FArchive &arc, T* &object)
 {
-	return arc.SerializeObject ((DObject*&)object, RUNTIME_CLASS(T));
+	return arc.SerializeObject ((DObject*&)object, RUNTIME_TEMPLATE_CLASS(T));
 }
 
 FArchive &operator<< (FArchive &arc, PClass * &info);

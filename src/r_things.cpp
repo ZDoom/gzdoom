@@ -326,6 +326,11 @@ void R_DrawVisSprite (vissprite_t *vis)
 	fixed_t			xiscale;
 	ESPSResult		mode;
 
+	if (vis->xscale == 0 || vis->yscale == 0)
+	{ // scaled to 0; can't see
+		return;
+	}
+
 	dc_colormap = vis->Style.colormap;
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.alpha, vis->Translation, vis->FillColor);

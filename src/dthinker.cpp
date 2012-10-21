@@ -43,6 +43,7 @@
 
 static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
+extern cycle_t ActionCycles;
 extern int BotWTG;
 
 IMPLEMENT_CLASS (DThinker)
@@ -409,6 +410,7 @@ void DThinker::RunThinkers ()
 
 	ThinkCycles.Reset();
 	BotSupportCycles.Reset();
+	ActionCycles.Reset();
 	BotWTG = 0;
 
 	ThinkCycles.Clock();
@@ -575,6 +577,6 @@ DThinker *FThinkerIterator::Next ()
 ADD_STAT (think)
 {
 	FString out;
-	out.Format ("Think time = %04.1f ms", ThinkCycles.TimeMS());
+	out.Format ("Think time = %04.1f ms, Action = %04.1f ms", ThinkCycles.TimeMS(), ActionCycles.TimeMS());
 	return out;
 }

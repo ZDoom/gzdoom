@@ -50,6 +50,7 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "g_level.h"
+#include "stats.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -58,13 +59,17 @@ extern void ClearStrifeTypes();
 TArray<PClassActor *> PClassActor::AllActorClasses;
 FRandom FState::pr_statetics;
 
+cycle_t ActionCycles;
+
 bool FState::CallAction(AActor *self, AActor *stateowner)
 {
 	if (ActionFunc != NULL)
 	{
-		VMFrameStack stack;
+		ActionCycles.Clock();
+		static VMFrameStack stack;
 		VMValue params[3] = { self, stateowner, VMValue(this, ATAG_STATE) };
 		stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
+		ActionCycles.Unclock();
 		return true;
 	}
 	else

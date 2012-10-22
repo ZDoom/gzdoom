@@ -45,6 +45,7 @@
 #include "p_udmf.h"
 #include "r_state.h"
 #include "r_data/colormaps.h"
+#include "w_wad.h"
 
 //===========================================================================
 //

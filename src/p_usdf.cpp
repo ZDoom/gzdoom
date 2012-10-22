@@ -41,6 +41,7 @@
 #include "doomerrors.h"
 #include "cmdlib.h"
 #include "actor.h"
+#include "w_wad.h"
 
 #define Zd 1
 #define St 2

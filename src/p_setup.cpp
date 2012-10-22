@@ -251,6 +251,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 MapData *P_OpenMapData(const char * mapname)
 {
 	MapData * map = new MapData;
+	FileReader * wadReader = NULL;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
 	
 	if (externalfile)
@@ -261,8 +262,8 @@ MapData *P_OpenMapData(const char * mapname)
 			delete map;
 			return NULL;
 		}
-		map->file = new FileReader(mapname);
-		map->CloseOnDestruct = true;
+		map->resource = FResourceFile::OpenResourceFile(mapname, NULL, true);
+		wadReader = map->resource->GetReader();
 	}
 	else
 	{
@@ -284,18 +285,13 @@ MapData *P_OpenMapData(const char * mapname)
 			int lumpfile = Wads.GetLumpFile(lump_name);
 			int nextfile = Wads.GetLumpFile(lump_name+1);
 
-			map->file = Wads.GetFileReader(lumpfile);
-			map->CloseOnDestruct = false;
 			map->lumpnum = lump_name;
 
 			if (lumpfile != nextfile)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].FilePos = 0;
-				map->MapLumps[0].Size = Wads.LumpLength(lump_name);
-				map->file = Wads.ReopenLumpNum(lump_name);
-				map->CloseOnDestruct = true;
+				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -306,15 +302,12 @@ MapData *P_OpenMapData(const char * mapname)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
-			map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+			map->MapLumps[0].Reader = Wads.ReopenLumpNum(lump_name);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
-				map->file = Wads.ReopenLumpNum(lump_name);
-				map->CloseOnDestruct = true;
-				map->MapLumps[0].FilePos = 0;
+				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -332,22 +325,20 @@ MapData *P_OpenMapData(const char * mapname)
 					// Since levels must be stored in WADs they can't really have full
 					// names and for any valid level lump this always returns the short name.
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
-					index = GetMapIndex(mapname, index, lumpname, i != 1 || map->MapLumps[0].Size == 0);
+					index = GetMapIndex(mapname, index, lumpname, i != 1 || Wads.LumpLength(lump_name + i) == 0);
 					if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
 					// The next lump is not part of this map anymore
 					if (index < 0) break;
 
-					map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
-					map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
 			else
 			{
 				map->isText = true;
-				map->MapLumps[1].FilePos = Wads.GetLumpOffset(lump_name + 1);
-				map->MapLumps[1].Size = Wads.LumpLength(lump_name + 1);
+				map->MapLumps[1].Reader = Wads.ReopenLumpNum(lump_name + 1);
 				for(int i = 2;; i++)
 				{
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
@@ -383,8 +374,7 @@ MapData *P_OpenMapData(const char * mapname)
 						break;
 					}
 					else continue;
-					map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
-					map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -402,42 +392,35 @@ MapData *P_OpenMapData(const char * mapname)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			map->file = Wads.ReopenLumpNum(lump_wad);
-			map->CloseOnDestruct = true;
+			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), Wads.ReopenLumpNum(lump_wad), true);
+			wadReader = map->resource->GetReader();
 		}
 	}
 	DWORD id;
 
-	map->file->Read(&id, sizeof(id));
+	// Although we're using the resource system, we still want to be sure we're
+	// reading from a wad file.
+	wadReader->Seek(0, SEEK_SET);
+	wadReader->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
 	{
 		char maplabel[9]="";
 		int index=0;
-		DWORD dirofs, numentries;
 
-		(*map->file) >> numentries >> dirofs;
+		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
 
-		map->file->Seek(dirofs, SEEK_SET);
-		(*map->file) >> map->MapLumps[0].FilePos >> map->MapLumps[0].Size;
-		map->file->Read(map->MapLumps[0].Name, 8);
-
-		for(DWORD i = 1; i < numentries; i++)
+		for(DWORD i = 1; i < map->resource->LumpCount(); i++)
 		{
-			DWORD offset, size;
-			char lumpname[8];
+			const char* lumpname = map->resource->GetLump(i)->Name;
 
-			(*map->file) >> offset >> size;
-			map->file->Read(lumpname, 8);
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
 				map->isText = true;
-				map->MapLumps[1].FilePos = offset;
-				map->MapLumps[1].Size = size;
 				for(int i = 2;; i++)
 				{
-					(*map->file) >> offset >> size;
-					long v = map->file->Read(lumpname, 8);
+					lumpname = map->resource->GetLump(i)->Name;
+					long v = strlen(lumpname);
 					if (v < 8)
 					{
 						I_Error("Invalid map definition for %s", mapname);
@@ -469,8 +452,7 @@ MapData *P_OpenMapData(const char * mapname)
 						return map;
 					}
 					else continue;
-					map->MapLumps[index].FilePos = offset;
-					map->MapLumps[index].Size = size;
+					map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -489,15 +471,14 @@ MapData *P_OpenMapData(const char * mapname)
 				maplabel[8]=0;
 			}
 
-			map->MapLumps[index].FilePos = offset;
-			map->MapLumps[index].Size = size;
+			map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
 			strncpy(map->MapLumps[index].Name, lumpname, 8);
 		}
 	}
 	else
 	{
 		// This is a Build map and not subject to WAD consistency checks.
-		map->MapLumps[0].Size = map->file->GetLength();
+		//map->MapLumps[0].Size = wadReader->GetLength();
 		if (!P_IsBuildMap(map))
 		{
 			delete map;
@@ -532,29 +513,29 @@ void MapData::GetChecksum(BYTE cksum[16])
 	{
 		if (isText)
 		{
-			file->Seek(MapLumps[ML_TEXTMAP].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_TEXTMAP].Size);
+			Seek(ML_TEXTMAP);
+			md5.Update(file, Size(ML_TEXTMAP));
 		}
 		else
 		{
-			if (MapLumps[ML_LABEL].Size != 0)
+			if (Size(ML_LABEL) != 0)
 			{
-				file->Seek(MapLumps[ML_LABEL].FilePos, SEEK_SET);
-				md5.Update(file, MapLumps[ML_LABEL].Size);
+				Seek(ML_LABEL);
+				md5.Update(file, Size(ML_LABEL));
 			}
-			file->Seek(MapLumps[ML_THINGS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_THINGS].Size);
-			file->Seek(MapLumps[ML_LINEDEFS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_LINEDEFS].Size);
-			file->Seek(MapLumps[ML_SIDEDEFS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_SIDEDEFS].Size);
-			file->Seek(MapLumps[ML_SECTORS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_SECTORS].Size);
+			Seek(ML_THINGS);
+			md5.Update(file, Size(ML_THINGS));
+			Seek(ML_LINEDEFS);
+			md5.Update(file, Size(ML_LINEDEFS));
+			Seek(ML_SIDEDEFS);
+			md5.Update(file, Size(ML_SIDEDEFS));
+			Seek(ML_SECTORS);
+			md5.Update(file, Size(ML_SECTORS));
 		}
 		if (HasBehavior)
 		{
-			file->Seek(MapLumps[ML_BEHAVIOR].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_BEHAVIOR].Size);
+			Seek(ML_BEHAVIOR);
+			md5.Update(file, Size(ML_BEHAVIOR));
 		}
 	}
 	md5.Final(cksum);
@@ -834,7 +815,7 @@ void P_LoadVertexes (MapData * map)
 
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
-	numvertexes = map->MapLumps[ML_VERTEXES].Size / sizeof(mapvertex_t);
+	numvertexes = map->Size(ML_VERTEXES) / sizeof(mapvertex_t);
 	numvertexdatas = 0;
 
 	if (numvertexes == 0)
@@ -1199,7 +1180,7 @@ void P_LoadSegs (MapData * map)
 	int dis;			// phares 10/4/98
 	int dx,dy;			// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
-	int lumplen = map->MapLumps[ML_SEGS].Size;
+	int lumplen = map->Size(ML_SEGS);
 
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
 
@@ -1382,7 +1363,7 @@ void P_LoadSubsectors (MapData * map)
 	int i;
 	DWORD maxseg = map->Size(ML_SEGS) / sizeof(segtype);
 
-	numsubsectors = map->MapLumps[ML_SSECTORS].Size / sizeof(subsectortype);
+	numsubsectors = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
 	if (numsubsectors == 0 || maxseg == 0 )
 	{
@@ -1746,7 +1727,7 @@ void P_LoadThings (MapData * map)
 
 void P_LoadThings2 (MapData * map)
 {
-	int	lumplen = map->MapLumps[ML_THINGS].Size;
+	int	lumplen = map->Size(ML_THINGS);
 	int numthings = lumplen / sizeof(mapthinghexen_t);
 
 	char *mtp;
@@ -3561,13 +3542,13 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
-	if (map->MapLumps[0].Size > 0)
+	if (map->Size(0) > 0)
 	{
-		BYTE *mapdata = new BYTE[map->MapLumps[0].Size];
+		BYTE *mapdata = new BYTE[map->Size(0)];
 		map->Seek(0);
-		map->file->Read(mapdata, map->MapLumps[0].Size);
+		map->file->Read(mapdata, map->Size(0));
 		times[0].Clock();
-		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
+		buildmap = P_LoadBuildMap (mapdata, map->Size(0), &buildthings, &numbuildthings);
 		times[0].Unclock();
 		delete[] mapdata;
 	}
@@ -3704,14 +3685,14 @@ void P_SetupLevel (char *lumpname, int position)
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
 
-		if (map->MapLumps[ML_ZNODES].Size != 0)
+		if (map->Size(ML_ZNODES) != 0)
 		{
 			// Test normal nodes first
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
 		}
-		else if (map->MapLumps[ML_GLZNODES].Size != 0)
+		else if (map->Size(ML_GLZNODES) != 0)
 		{
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');

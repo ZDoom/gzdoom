@@ -50,6 +50,7 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "r_state.h"
+#include "w_wad.h"
 
 // MACROS ------------------------------------------------------------------
 

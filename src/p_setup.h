@@ -23,42 +23,50 @@
 #ifndef __P_SETUP__
 #define __P_SETUP__
 
-#include "w_wad.h"
+#include "resourcefiles/resourcefile.h"
 #include "doomdata.h"
 
 
 struct MapData
 {
-	wadlump_t MapLumps[ML_MAX];
+	struct
+	{
+		char Name[8];
+		FileReader *Reader;
+	} MapLumps[ML_MAX];
 	bool HasBehavior;
-	bool CloseOnDestruct;
 	bool Encrypted;
 	bool isText;
 	int lumpnum;
 	FileReader * file;
+	FResourceFile * resource;
 	
 	MapData()
 	{
 		memset(MapLumps, 0, sizeof(MapLumps));
 		file = NULL;
+		resource = NULL;
 		lumpnum = -1;
 		HasBehavior = false;
-		CloseOnDestruct = true;
 		Encrypted = false;
 		isText = false;
 	}
 	
 	~MapData()
 	{
-		if (CloseOnDestruct && file != NULL) delete file;
-		file = NULL;
+		for (unsigned int i = 0;i < ML_MAX;++i)
+			delete MapLumps[i].Reader;
+
+		delete resource;
+		resource = NULL;
 	}
 
 	void Seek(unsigned int lumpindex)
 	{
 		if (lumpindex<countof(MapLumps))
 		{
-			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
+			file = MapLumps[lumpindex].Reader;
+			file->Seek(0, SEEK_SET);
 		}
 	}
 
@@ -66,17 +74,17 @@ struct MapData
 	{
 		if (lumpindex<countof(MapLumps))
 		{
-			if (size == -1) size = MapLumps[lumpindex].Size;
-			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
+			if (size == -1) size = MapLumps[lumpindex].Reader->GetLength();
+			Seek(lumpindex);
 			file->Read(buffer, size);
 		}
 	}
 
 	DWORD Size(unsigned int lumpindex)
 	{
-		if (lumpindex<countof(MapLumps))
+		if (lumpindex<countof(MapLumps) && MapLumps[lumpindex].Reader)
 		{
-			return MapLumps[lumpindex].Size;
+			return MapLumps[lumpindex].Reader->GetLength();
 		}
 		return 0;
 	}

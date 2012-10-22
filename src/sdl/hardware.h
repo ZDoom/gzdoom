@@ -53,7 +53,13 @@ typedef semaphore_t Semaphore;
 #include <semaphore.h>
 typedef sem_t Semaphore;
 #define SEMAPHORE_WAIT(sem) \
-	while(sem_wait(&sem) != 0);
+	do { \
+		while(sem_wait(&sem) != 0); \
+		int semValue; \
+		sem_getvalue(&sem, &semValue); \
+		if(semValue < 1) \
+			break; \
+	} while(true);
 #define SEMAPHORE_SIGNAL(sem) \
 	sem_post(&sem);
 #define SEMAPHORE_INIT(sem, shared, value) \

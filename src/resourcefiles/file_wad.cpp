@@ -336,7 +336,7 @@ bool FWadFile::Open(bool quiet)
 	InfoTableOfs = LittleLong(header.InfoTableOfs);
 
 	// Check to see if the little endian interpretation is valid
-	// This should detect most big endian wads
+	// This should be sufficient to detect big endian wads.
 	if (InfoTableOfs + NumLumps*sizeof(wadlump_t) > (unsigned)wadSize)
 	{
 		NumLumps = BigLong(header.NumLumps);
@@ -344,53 +344,28 @@ bool FWadFile::Open(bool quiet)
 		isBigEndian = true;
 	}
 
-	// Read the directory. If we're still assuming little endian and the lump
-	// is out of range then we switch to big endian mode and try again.
-	do
+	wadlump_t *fileinfo = new wadlump_t[NumLumps];
+	Reader->Seek (InfoTableOfs, SEEK_SET);
+	Reader->Read (fileinfo, NumLumps * sizeof(wadlump_t));
+
+	Lumps = new FWadFileLump[NumLumps];
+
+	for(DWORD i = 0; i < NumLumps; i++)
 	{
-		wadlump_t *fileinfo = new wadlump_t[NumLumps];
-		Reader->Seek (InfoTableOfs, SEEK_SET);
-		Reader->Read (fileinfo, NumLumps * sizeof(wadlump_t));
+		uppercopy (Lumps[i].Name, fileinfo[i].Name);
+		Lumps[i].Name[8] = 0;
+		Lumps[i].Compressed = Lumps[i].Name[0] & 0x80;
+		Lumps[i].Name[0] &= ~0x80;
 
-		Lumps = new FWadFileLump[NumLumps];
-
-		bool valid = true;
-		for(DWORD i = 0; i < NumLumps; i++)
-		{
-			uppercopy (Lumps[i].Name, fileinfo[i].Name);
-			Lumps[i].Name[8] = 0;
-			Lumps[i].Compressed = Lumps[i].Name[0] & 0x80;
-			Lumps[i].Name[0] &= ~0x80;
-
-			Lumps[i].Owner = this;
-			Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
-			Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
-			if(Lumps[i].Position > wadSize || Lumps[i].Position + Lumps[i].LumpSize > wadSize)
-			{
-				valid = false;
-				break;
-			}
-			Lumps[i].Namespace = ns_global;
-			Lumps[i].Flags = 0;
-			Lumps[i].FullName = NULL;
-		}
-
-		delete[] fileinfo;
-		if(!valid)
-		{
-			if(isBigEndian)
-				return false;
-
-			delete[] Lumps;
-			NumLumps = BigLong(header.NumLumps);
-			InfoTableOfs = BigLong(header.InfoTableOfs);
-			isBigEndian = true;
-			continue;
-		}
-
-		break;
+		Lumps[i].Owner = this;
+		Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
+		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
+		Lumps[i].Namespace = ns_global;
+		Lumps[i].Flags = 0;
+		Lumps[i].FullName = NULL;
 	}
-	while(true);
+
+	delete[] fileinfo;
 
 	if (!quiet)
 	{

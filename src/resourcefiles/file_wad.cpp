@@ -354,7 +354,7 @@ bool FWadFile::Open(bool quiet)
 	{
 		uppercopy (Lumps[i].Name, fileinfo[i].Name);
 		Lumps[i].Name[8] = 0;
-		Lumps[i].Compressed = Lumps[i].Name[0] & 0x80;
+		Lumps[i].Compressed = (Lumps[i].Name[0] & 0x80) == 0x80;
 		Lumps[i].Name[0] &= ~0x80;
 
 		Lumps[i].Owner = this;

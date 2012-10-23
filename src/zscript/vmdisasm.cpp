@@ -209,7 +209,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 		{
 		case OP_JMP:
 		case OP_TRY:
-			col = printf_wrapper(out, "%08x", i + 4 + (code[i].i24 << 2));
+			col = printf_wrapper(out, "%08x", (i + 1 + code[i].i24) << 2);
 			break;
 
 		case OP_PARAMI:

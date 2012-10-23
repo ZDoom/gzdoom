@@ -482,7 +482,16 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		{
 			// Check whether the called action function resulted in destroying the actor
 			if (ObjectFlags & OF_EuthanizeMe)
+			{
 				return false;
+			}
+			if (ObjectFlags & OF_StateChanged)
+			{ // The action was an A_Jump-style function that wants to change the next state.
+				ObjectFlags &= ~OF_StateChanged;
+				newstate = state;
+				tics = 0;		 // make sure we loop and set the new state properly
+				continue;
+			}
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);

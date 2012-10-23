@@ -610,7 +610,15 @@ static void DoJump(AActor *self, AActor *stateowner, FState *callingstate, FStat
 	}
 	else if (callingstate == self->state)
 	{
-		self->SetState(jumpto);
+		// Rather than using self->SetState(jumpto) to set the state,
+		// set the state directly. Since this function is only called by
+		// action functions, which are only called by SetState(), we
+		// know that somewhere above us in the stack, a SetState()
+		// call is waiting for us to return. We use the flag OF_StateChanged
+		// to cause it to bypass the normal next state mechanism and use
+		// the one we set here instead.
+		self->state = jumpto;
+		self->ObjectFlags |= OF_StateChanged;
 	}
 	else
 	{ // something went very wrong. This should never happen.

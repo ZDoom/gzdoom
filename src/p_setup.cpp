@@ -417,15 +417,12 @@ MapData *P_OpenMapData(const char * mapname)
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
 				map->isText = true;
+				map->MapLumps[ML_TEXTMAP].Reader = map->resource->GetLump(i)->NewReader();
+				strncpy(map->MapLumps[ML_TEXTMAP].Name, lumpname, 8);
 				for(int i = 2;; i++)
 				{
 					lumpname = map->resource->GetLump(i)->Name;
-					long v = strlen(lumpname);
-					if (v < 8)
-					{
-						I_Error("Invalid map definition for %s", mapname);
-					}
-					else if (!strnicmp(lumpname, "ZNODES",8))
+					if (!strnicmp(lumpname, "ZNODES",8))
 					{
 						index = ML_GLZNODES;
 					}

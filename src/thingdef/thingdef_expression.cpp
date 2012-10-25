@@ -1719,6 +1719,8 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 	}
 	assert(!op1.Konst);
 
+	ExpEmit to(build, op1.RegType);
+
 	instr = op1.RegType == REGT_INT ? OP_EQ_R :
 			op1.RegType == REGT_FLOAT ? OP_EQF_R :
 			OP_EQA_R;
@@ -1731,7 +1733,6 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 	{
 		instr += 1;
 	}
-	ExpEmit to(build, op1.RegType);
 
 	// See FxUnaryNotBoolean for comments, since it's the same thing.
 	build->Emit(OP_LI, to.RegNum, 0, 0);

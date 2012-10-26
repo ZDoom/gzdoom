@@ -365,6 +365,10 @@ static void MarkRoot()
 	}
 	// Mark types
 	TypeTable.Mark();
+	for (unsigned int i = 0; i < PClass::AllClasses.Size(); ++i)
+	{
+		Mark(PClass::AllClasses[i]);
+	}
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);

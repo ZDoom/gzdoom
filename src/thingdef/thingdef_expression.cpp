@@ -3964,7 +3964,6 @@ static int DoFindState(VMFrameStack *stack, VMValue *param, int numparam, VMRetu
 	}
 	ret->SetPointer(state, ATAG_STATE);
 	return 1;
-
 }
 
 // Find a state with any number of dots in its name.

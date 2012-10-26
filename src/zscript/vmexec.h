@@ -718,7 +718,7 @@ begin:
 		reg.d[a] = reg.d[B] << reg.d[C];
 		NEXTOP;
 	OP(SLL_RI):
-		ASSERTD(a); ASSERTD(B); assert(0 <= C && C <= 31);
+		ASSERTD(a); ASSERTD(B); assert(C <= 31);
 		reg.d[a] = reg.d[B] << C;
 		NEXTOP;
 	OP(SLL_KR):
@@ -731,7 +731,7 @@ begin:
 		reg.d[a] = (unsigned)reg.d[B] >> reg.d[C];
 		NEXTOP;
 	OP(SRL_RI):
-		ASSERTD(a); ASSERTD(B); assert(0 <= C && C <= 31);
+		ASSERTD(a); ASSERTD(B); assert(C <= 31);
 		reg.d[a] = (unsigned)reg.d[B] >> C;
 		NEXTOP;
 	OP(SRL_KR):
@@ -744,7 +744,7 @@ begin:
 		reg.d[a] = reg.d[B] >> reg.d[C];
 		NEXTOP;
 	OP(SRA_RI):
-		ASSERTD(a); ASSERTD(B); assert(0 <= C && C <= 31);
+		ASSERTD(a); ASSERTD(B); assert(C <= 31);
 		reg.d[a] = reg.d[B] >> C;
 		NEXTOP;
 	OP(SRA_KR):

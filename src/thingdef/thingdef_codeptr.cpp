@@ -989,7 +989,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	PARAM_INT_OPT	(spawnofs_xy) { spawnofs_xy = 0; }
 	PARAM_ANGLE_OPT	(angle)		  { angle = 0; }
 	PARAM_INT_OPT	(flags)		  { flags = 0; }
-	PARAM_INT_OPT	(pitch)		  { pitch = 0; }
+	PARAM_ANGLE_OPT	(pitch)		  { pitch = 0; }
 
 	int aimmode = flags & CMF_AIMMODE;
 

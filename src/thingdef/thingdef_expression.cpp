@@ -1742,7 +1742,7 @@ ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 	}
 	assert(!op1.Konst);
 
-	ExpEmit to(build, op1.RegType);
+	ExpEmit to(build, REGT_INT);
 
 	instr = op1.RegType == REGT_INT ? OP_EQ_R :
 			op1.RegType == REGT_FLOAT ? OP_EQF_R :

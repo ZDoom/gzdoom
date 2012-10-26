@@ -99,6 +99,29 @@ void ExpEmit::Free(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FindDecorateBuiltinFunction
+//
+// Returns the symbol for a decorate utility function. If not found, create
+// it and install it in Actor.
+//
+//==========================================================================
+
+static PSymbol *FindDecorateBuiltinFunction(FName funcname, VMNativeFunction::NativeCallType func)
+{
+	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(funcname, false);
+	if (sym == NULL)
+	{
+		PSymbolVMFunction *symfunc = new PSymbolVMFunction(funcname);
+		VMNativeFunction *calldec = new VMNativeFunction(func, funcname);
+		symfunc->Function = calldec;
+		sym = symfunc;
+		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+	}
+	return sym;
+}
+
+//==========================================================================
+//
 // EvalExpression
 // [GRB] Evaluates previously stored expression
 //
@@ -2485,18 +2508,10 @@ int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret,
 
 ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 {
-	// Find the DecoRandom function. If not found, create it and install it
-	// in Actor.
+	// Call DecoRandom to generate a random number.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoRandom, false);
-	if (sym == NULL)
-	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoRandom);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom, NAME_DecoRandom);
-		symfunc->Function = calldec;
-		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
-	}
+	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoRandom, DecoRandom);
+
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
@@ -2591,18 +2606,10 @@ int DecoFRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret
 
 ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 {
-	// Find the DecoFRandom function. If not found, create it and install it
-	// in Actor.
+	// Call the DecoFRandom function to generate a floating point random number..
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoFRandom, false);
-	if (sym == NULL)
-	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoFRandom);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoFRandom, NAME_DecoFRandom);
-		symfunc->Function = calldec;
-		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
-	}
+	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoFRandom, DecoFRandom);
+
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
@@ -2681,18 +2688,10 @@ ExpVal FxRandom2::EvalExpression (AActor *self)
 
 ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 {
-	// Find the DecoRandom function. If not found, create it and install it
-	// in Actor.
+	// Call the DecoRandom function to generate the random number.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoRandom, false);
-	if (sym == NULL)
-	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoRandom);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoRandom, NAME_DecoRandom);
-		symfunc->Function = calldec;
-		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
-	}
+	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoRandom, DecoRandom);
+
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
@@ -3537,18 +3536,10 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 			}
 		}
 	}
-	// Find the DecoCallLineSpecial function. If not found, create it and install it
-	// in Actor.
+	// Call the DecoCallLineSpecial function to perform the desired special.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoCallLineSpecial, false);
-	if (sym == NULL)
-	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoCallLineSpecial);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoCallLineSpecial, NAME_DecoCallLineSpecial);
-		symfunc->Function = calldec;
-		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
-	}
+	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoCallLineSpecial, DecoCallLineSpecial);
+
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
@@ -3802,18 +3793,10 @@ ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, clsname.RegType, clsname.RegNum);
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(const_cast<PClass *>(desttype), ATAG_OBJECT));
 
-	// Find the DecoNameToClass function. If not found, create it and install it
-	// in Actor.
+	// Call the DecoNameToClass function to convert from 'name' to class.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoNameToClass, false);
-	if (sym == NULL)
-	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoNameToClass);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoNameToClass, NAME_DecoNameToClass);
-		symfunc->Function = calldec;
-		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
-	}
+	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoNameToClass, DecoNameToClass);
+
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
@@ -3964,18 +3947,8 @@ ExpVal FxMultiNameState::EvalExpression (AActor *self)
 	return ret;
 }
 
-int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+static int DoFindState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, FName *names, int numnames)
 {
-	assert(numparam > 1);
-	assert(numret == 1);
-	assert(ret->RegType == REGT_POINTER);
-
-	FName *names = (FName *)alloca((numparam - 1) * sizeof(FName));
-	for (int i = 1; i < numparam; ++i)
-	{
-		PARAM_NAME_AT(i, zaname);
-		names[i - 1] = zaname;
-	}
 	PARAM_OBJECT_AT(0, self, AActor);
 	FState *state = self->GetClass()->FindState(numparam - 1, names);
 	if (state == NULL)
@@ -3991,6 +3964,34 @@ int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VM
 	}
 	ret->SetPointer(state, ATAG_STATE);
 	return 1;
+
+}
+
+// Find a state with any number of dots in its name.
+int DecoFindMultiNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam > 1);
+	assert(numret == 1);
+	assert(ret->RegType == REGT_POINTER);
+
+	FName *names = (FName *)alloca((numparam - 1) * sizeof(FName));
+	for (int i = 1; i < numparam; ++i)
+	{
+		PARAM_NAME_AT(i, zaname);
+		names[i - 1] = zaname;
+	}
+	return DoFindState(stack, param, numparam, ret, names, numparam - 1);
+}
+
+// Find a state without any dots in its name.
+int DecoFindSingleNameState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
+{
+	assert(numparam == 2);
+	assert(numret == 1);
+	assert(ret->RegType == REGT_POINTER);
+
+	PARAM_NAME_AT(1, zaname);
+	return DoFindState(stack, param, numparam, ret, &zaname, 1);
 }
 
 ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
@@ -4002,18 +4003,20 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 		EmitConstantInt(build, names[i]);
 	}
 
-	// Find the DecoFindMultiNameState function. If not found, create it and install it
-	// in Actor.
+	// For one name, use the DecoFindSingleNameState function. For more than
+	// one name, use the DecoFindMultiNameState function.
 	VMFunction *callfunc;
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(NAME_DecoFindMultiNameState, false);
-	if (sym == NULL)
+	PSymbol *sym;
+	
+	if (names.Size() == 1)
 	{
-		PSymbolVMFunction *symfunc = new PSymbolVMFunction(NAME_DecoFindMultiNameState);
-		VMNativeFunction *calldec = new VMNativeFunction(DecoFindMultiNameState, NAME_DecoFindMultiNameState);
-		symfunc->Function = calldec;
-		sym = symfunc;
-		RUNTIME_CLASS(AActor)->Symbols.AddSymbol(sym);
+		sym = FindDecorateBuiltinFunction(NAME_DecoFindSingleNameState, DecoFindSingleNameState);
 	}
+	else
+	{
+		sym = FindDecorateBuiltinFunction(NAME_DecoFindMultiNameState, DecoFindMultiNameState);
+	}
+
 	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
 	assert(((PSymbolVMFunction *)sym)->Function != NULL);
 	callfunc = ((PSymbolVMFunction *)sym)->Function;

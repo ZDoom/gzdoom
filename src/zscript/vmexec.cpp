@@ -131,8 +131,8 @@ void VMSelectEngine(EVMEngine engine)
 #ifdef NDEBUG
 		VMExec = VMExec_Unchecked::Exec;
 #else
-		VMExec = VMExec_Checked::Exec;
 #endif
+		VMExec = VMExec_Checked::Exec;
 		break;
 	case VMEngine_Unchecked:
 		VMExec = VMExec_Unchecked::Exec;

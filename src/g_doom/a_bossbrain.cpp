@@ -107,7 +107,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_CLASS(spawntype, AActor);
+	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
 
 	DSpotState *state = DSpotState::GetSpotState();
 	AActor *targ;

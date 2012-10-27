@@ -27,7 +27,7 @@ IMPLEMENT_CLASS(PClassInventory)
 PClassInventory::PClassInventory()
 {
 	GiveQuest = 0;
-	AltHUDIcon.SetInvalid();
+	AltHUDIcon.SetNull();
 }
 
 void PClassInventory::Derive(PClass *newclass)

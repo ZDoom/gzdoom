@@ -1180,6 +1180,7 @@ void PClass::InsertIntoHash ()
 	{ // This type has already been inserted
 	  // ... but there is no need whatsoever to make it a fatal error!
 		Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
+		TypeTable.ReplaceType(this, found, bucket);
 	}
 	else
 	{
@@ -1469,6 +1470,31 @@ PType *FTypeTable::FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, si
 		}
 	}
 	return NULL;
+}
+
+//==========================================================================
+//
+// FTypeTable :: ReplaceType
+//
+// Replaces an existing type in the table with a new version of the same
+// type. For use when redefining actors in DECORATE. Does nothing if the
+// old version is not in the table.
+//
+//==========================================================================
+
+void FTypeTable::ReplaceType(PType *newtype, PType *oldtype, size_t bucket)
+{
+	for (PType **type_p = &TypeHash[bucket]; *type_p != NULL; type_p = &(*type_p)->HashNext)
+	{
+		PType *type = *type_p;
+		if (type == oldtype)
+		{
+			newtype->HashNext = type->HashNext;
+			type->HashNext = NULL;
+			*type_p = newtype;
+			break;
+		}
+	}
 }
 
 //==========================================================================

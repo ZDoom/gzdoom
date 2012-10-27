@@ -561,6 +561,7 @@ struct FTypeTable
 	PType *TypeHash[HASH_SIZE];
 
 	PType *FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
+	void ReplaceType(PType *newtype, PType *oldtype, size_t bucket);
 	void AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t parm2, size_t bucket);
 	void AddType(PType *type);
 	void Mark();

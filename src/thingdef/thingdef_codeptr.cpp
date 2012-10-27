@@ -868,10 +868,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 		flags = !self->GetClass()->DontHurtShooter;
 		alert = false;
 	}
-	else
-	{
-		if (distance <= 0) distance = damage;
-	}
+	if (distance <= 0) distance = damage;
+
 	// NailBomb effect, from SMMU but not from its source code: instead it was implemented and
 	// generalized from the documentation at http://www.doomworld.com/eternity/engine/codeptrs.html
 

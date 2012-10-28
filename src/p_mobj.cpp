@@ -3410,7 +3410,8 @@ void AActor::Tick ()
 		// won't hurt anything. Don't do this if damage is 0! That way, you can
 		// still have missiles that go straight up and down through actors without
 		// damaging anything.
-		if ((flags & MF_MISSILE) && (velx|vely) == 0 && Damage != 0)
+		// (for backwards compatibility this must check for lack of damage function, not for zero damage!)
+		if ((flags & MF_MISSILE) && (velx|vely) == 0 && Damage != NULL)
 		{
 			velx = 1;
 		}

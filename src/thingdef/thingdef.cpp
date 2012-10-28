@@ -446,11 +446,19 @@ void LoadActors ()
 
 VMScriptFunction *CreateDamageFunction(int dmg)
 {
-	VMFunctionBuilder build;
-	build.Registers[REGT_POINTER].Get(1);		// The self pointer
-	build.EmitRetInt(0, false, dmg);
-	build.EmitRetInt(1, true, 0);
-	VMScriptFunction *sfunc = build.MakeFunction();
-	sfunc->NumArgs = 1;
-	return sfunc;
+	if (dmg == 0)
+	{
+		// For zero damage, do not create a function so that the special collision detection case still works as before.
+		return NULL;
+	}
+	else
+	{
+		VMFunctionBuilder build;
+		build.Registers[REGT_POINTER].Get(1);		// The self pointer
+		build.EmitRetInt(0, false, dmg);
+		build.EmitRetInt(1, true, 0);
+		VMScriptFunction *sfunc = build.MakeFunction();
+		sfunc->NumArgs = 1;
+		return sfunc;
+	}
 }

@@ -81,6 +81,7 @@ xx(TAIL,	tail,	RPI8),		// Call+Ret in a single instruction
 xx(TAIL_K,	tail,	KPI8),
 xx(RESULT,	result,	__BCP),		// Result should go in register encoded in BC (in caller, after CALL)
 xx(RET,		ret,	I8BCP),		// Copy value from register encoded in BC to return value A, possibly returning
+xx(RETI,	reti,	I8I16),		// Copy immediate from BC to return value A, possibly returning
 xx(TRY,		try,	I24),		// When an exception is thrown, start searching for a handler at pc + ABC
 xx(UNTRY,	untry,	I8),		// Pop A entries off the exception stack
 xx(THROW,	throw,	THROW),		// A == 0: Throw exception object pB

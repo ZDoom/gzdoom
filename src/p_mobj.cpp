@@ -136,6 +136,7 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (LastHeard)
  DECLARE_POINTER (master)
  DECLARE_POINTER (Poisoner)
+ DECLARE_POINTER (Damage)
 END_POINTERS
 
 AActor::~AActor ()
@@ -2778,21 +2779,34 @@ CCMD(utid)
 
 int AActor::GetMissileDamage (int mask, int add)
 {
-	if ((Damage & 0xC0000000) == 0x40000000)
-	{
-		return EvalExpressionI (Damage & 0x3FFFFFFF, this);
-	}
-	if (Damage == 0)
+	if (Damage == NULL)
 	{
 		return 0;
 	}
+	VMFrameStack stack;
+	VMValue param = this;
+	VMReturn results[2];
+
+	int amount, calculated = false;
+
+	results[0].IntAt(&amount);
+	results[1].IntAt(&calculated);
+
+	if (stack.Call(Damage, &param, 1, results, 2) < 1)
+	{ // No results
+		return 0;
+	}
+	if (calculated)
+	{
+		return amount;
+	}
 	else if (mask == 0)
 	{
-		return add * Damage;
+		return add * amount;
 	}
 	else
 	{
-		return ((pr_missiledamage() & mask) + add) * Damage;
+		return ((pr_missiledamage() & mask) + add) * amount;
 	}
 }
 

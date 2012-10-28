@@ -37,6 +37,7 @@ public:
 	size_t Emit(int opcode, int opa, VM_SHALF opbc);
 	size_t Emit(int opcode, int opabc);
 	size_t EmitLoadInt(int regnum, int value);
+	size_t EmitRetInt(int retnum, bool final, int value);
 
 	void Backpatch(size_t addr, size_t target);
 	void BackpatchToHere(size_t addr);

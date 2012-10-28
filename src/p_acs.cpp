@@ -2832,7 +2832,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Damage:
-		actor->Damage = value;
+		actor->Damage = CreateDamageFunction(value);
 		break;
 
 	case APROP_Alpha:
@@ -2994,7 +2994,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	{
 	case APROP_Health:		return actor->health;
 	case APROP_Speed:		return actor->Speed;
-	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
+	case APROP_Damage:		return actor->GetMissileDamage(0,1);
 	case APROP_DamageFactor:return actor->DamageFactor;
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)

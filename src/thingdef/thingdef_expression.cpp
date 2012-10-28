@@ -79,7 +79,7 @@ DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
 DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
 DEFINE_MEMBER_VARIABLE(scaleX, AActor)
 DEFINE_MEMBER_VARIABLE(scaleY, AActor)
-DEFINE_MEMBER_VARIABLE(Damage, AActor)
+//DEFINE_MEMBER_VARIABLE(Damage, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
 DEFINE_MEMBER_VARIABLE(accuracy, AActor)
 DEFINE_MEMBER_VARIABLE(stamina, AActor)
@@ -119,89 +119,6 @@ static PSymbol *FindDecorateBuiltinFunction(FName funcname, VMNativeFunction::Na
 	}
 	return sym;
 }
-
-//==========================================================================
-//
-// EvalExpression
-// [GRB] Evaluates previously stored expression
-//
-//==========================================================================
-
-
-int EvalExpressionI (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetInt();
-}
-
-int EvalExpressionCol (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetColor();
-}
-
-FSoundID EvalExpressionSnd (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetSoundID();
-}
-
-double EvalExpressionF (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetFloat();
-}
-
-fixed_t EvalExpressionFix (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	ExpVal val = x->EvalExpression (self);
-
-	switch (val.Type)
-	{
-	default:
-		return 0;
-	case VAL_Int:
-		return val.Int << FRACBITS;
-	case VAL_Float:
-		return fixed_t(val.Float*FRACUNIT);
-	}
-}
-
-FName EvalExpressionName (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetName();
-}
-
-const PClass * EvalExpressionClass (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetClass();
-}
-
-FState *EvalExpressionState (DWORD xi, AActor *self)
-{
-	FxExpression *x = StateParams.Get(xi);
-	if (x == NULL) return 0;
-
-	return x->EvalExpression (self).GetState();
-}
-
 
 //==========================================================================
 //
@@ -4025,6 +3942,64 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	return dest;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxDamageValue::FxDamageValue(FxExpression *v, bool calc)
+: FxExpression(v->ScriptPosition)
+{
+	val = v;
+	ValueType = VAL_Unknown;
+	Calculated = calc;
+	MyFunction = NULL;
+
+	if (!calc)
+	{
+		assert(v->isConstant() && "Non-calculated damage must be constant");
+	}
+}
+
+FxDamageValue::~FxDamageValue()
+{
+	SAFE_DELETE(val);
+
+}
+
+FxExpression *FxDamageValue::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(val, ctx)
+
+	if (!val->ValueType.isNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+	return this;
+}
+
+// This is a highly-specialized "expression" type that emits a complete function.
+ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
+{
+	if (val->isConstant())
+	{
+		build->EmitRetInt(0, false, val->EvalExpression(NULL).Int);
+	}
+	else
+	{
+		ExpEmit emitval = val->Emit(build);
+		assert(emitval.RegType == REGT_INT);
+		build->Emit(OP_RET, 0, REGT_INT | (emitval.Konst ? REGT_KONST : 0), emitval.RegNum);
+	}
+	build->Emit(OP_RETI, 1, 0x8000 | (int)Calculated);
+
+	return ExpEmit();
+}
+
 
 //==========================================================================
 //
@@ -4088,38 +4063,6 @@ int FStateExpressions::Reserve(int num, PClassActor *cls)
 		exp[i].cloned = false;
 	}
 	return idx;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FStateExpressions::Set(int num, FxExpression *x, bool cloned)
-{
-	if (num >= 0 && num < int(Size()))
-	{
-		assert(expressions[num].expr == NULL || expressions[num].cloned);
-		expressions[num].expr = x;
-		expressions[num].cloned = cloned;
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FStateExpressions::Copy(int dest, int src, int cnt)
-{
-	for(int i=0; i<cnt; i++)
-	{
-		// For now set only a reference because these expressions may change when being resolved
-		expressions[dest+i].expr = (FxExpression*)intptr_t(src+i);
-		expressions[dest+i].cloned = true;
-	}
 }
 
 //==========================================================================

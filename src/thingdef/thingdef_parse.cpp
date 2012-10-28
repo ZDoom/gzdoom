@@ -669,16 +669,26 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 			switch ((*p) & 223)
 			{
 			case 'X':	// Expression in parentheses or number.
-				
-				if (sc.CheckString ("("))
 				{
-					FxExpression *x = ParseExpression(sc, bag.Info);
-					conv.i = 0x40000000 | StateParams.Add(x, bag.Info, false);
+					FxExpression *x = NULL;
+
+					if (sc.CheckString ("("))
+					{
+						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)), true);
+						sc.MustGetStringName(")");
+					}
+					else
+					{
+						sc.MustGetNumber();
+						if (sc.Number != 0)
+						{
+							x = new FxDamageValue(new FxConstant(sc.Number, bag.ScriptPosition), false);
+						}
+					}
+					conv.exp = x;
 					params.Push(conv);
-					sc.MustGetStringName(")");
-					break;
 				}
-				// fall through
+				break;
 
 			case 'I':
 				sc.MustGetNumber();

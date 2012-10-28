@@ -302,6 +302,9 @@ size_t PClassActor::PropagateMark()
 			GC::Mark(OwnedStates[i].ActionFunc);
 		}
 	}
+	// Mark damage function
+	GC::Mark(((AActor *)Defaults)->Damage);
+
 //	marked += ActorInfo->NumOwnedStates * sizeof(FState);
 	return Super::PropagateMark();
 }

@@ -593,6 +593,18 @@ begin:
 			return a < numret ? a + 1 : numret;
 		}
 		NEXTOP;
+	OP(RETI):
+		assert(ret != NULL || numret == 0);
+		if (a < numret)
+		{
+			// Shifting by 17 to wipe out the final bit
+			ret[a].SetInt(((pc[-1].i16) << 17) >> 17);
+		}
+		if (pc[-1].i16 & 0x8000)
+		{
+			return a < numret ? a + 1 : numret;
+		}
+		NEXTOP;
 	OP(RESULT):
 		// This instruction is just a placeholder to indicate where a return
 		// value should be stored. It does nothing on its own and should not

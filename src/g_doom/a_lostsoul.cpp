@@ -65,7 +65,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BetaSkullAttack)
 		return 0;
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget(self);
-	damage = (pr_oldsoul()%8+1)*self->Damage;
+	damage = (pr_oldsoul()%8+1)*self->GetMissileDamage(0,1);
 	P_DamageMobj(self->target, self, self, damage, NAME_None);
 	return 0;
 }

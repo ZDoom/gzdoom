@@ -495,7 +495,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
 			sc.MustGetNumber ();
-			defaults->Damage = sc.Number;
+			defaults->Damage = CreateDamageFunction(sc.Number);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DamageType"))
 		{

@@ -492,6 +492,27 @@ size_t VMFunctionBuilder::EmitLoadInt(int regnum, int value)
 
 //==========================================================================
 //
+// VMFunctionBuilder :: EmitRetInt
+//
+// Returns an integer, using either an immediate value or a constant
+// register, as appropriate.
+//
+//==========================================================================
+
+size_t VMFunctionBuilder::EmitRetInt(int retnum, bool final, int value)
+{
+	if (value >= -16384 && value <= 16383)
+	{
+		return Emit(OP_RETI, retnum, value | (final << 15));
+	}
+	else
+	{
+		return Emit(OP_RETI, retnum, REGT_INT | REGT_KONST | (final ? REGT_FINAL : 0), GetConstantInt(value));
+	}
+}
+
+//==========================================================================
+//
 // VMFunctionBuilder :: Backpatch
 //
 // Store a JMP instruction at <loc> that points at <target>.

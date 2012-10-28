@@ -43,6 +43,7 @@
 #define RII16	MODE_AI | MODE_BCJOINT | MODE_BCIMMS
 #define I24		MODE_ABCJOINT
 #define I8		MODE_AIMMZ | MODE_BUNUSED | MODE_CUNUSED
+#define I8I16	MODE_AIMMZ | MODE_BCIMMZ
 #define __BCP	MODE_AUNUSED | MODE_BCJOINT | MODE_BCPARAM
 #define RPI8	MODE_AP | MODE_BIMMZ | MODE_CUNUSED
 #define KPI8	MODE_AKP | MODE_BIMMZ | MODE_CUNUSED
@@ -242,6 +243,22 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 					{
 						col += printf_wrapper(out, " [final]");
 					}
+				}
+			}
+			break;
+
+		case OP_RETI:
+			if (a == 0 && code[i].i16 & 0x8000)
+			{
+				col = printf_wrapper(out, "%d", (code[i].i16 << 17) >> 17);
+			}
+			else
+			{
+				col = print_reg(out, 0, a, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
+				col += print_reg(out, col, (code[i].i16 << 17) >> 17, MODE_IMMS, 16, func);
+				if (code[i].i16 & 0x8000)
+				{
+					col += printf_wrapper(out, " [final]");
 				}
 			}
 			break;

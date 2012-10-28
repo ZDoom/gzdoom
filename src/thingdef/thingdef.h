@@ -141,8 +141,8 @@ public:
 	void Clear();
 	int Add(FxExpression *x, PClassActor *o, bool c);
 	int Reserve(int num, PClassActor *cls);
-	void Set(int num, FxExpression *x, bool cloned = false);
-	void Copy(int dest, int src, int cnt);
+//	void Set(int num, FxExpression *x, bool cloned = false);
+//	void Copy(int dest, int src, int cnt);
 	int ResolveAll();
 	FxExpression *Get(int no);
 	unsigned int Size() { return expressions.Size(); }
@@ -183,6 +183,14 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 	bag->StateSet = false;
 	bag->statedef.MakeStateDefines(stateclass);
 }
+
+//==========================================================================
+//
+// Damage function creation
+//
+//==========================================================================
+
+VMScriptFunction *CreateDamageFunction(int dmg);
 
 //==========================================================================
 //
@@ -270,6 +278,7 @@ union FPropParam
 	int i;
 	float f;
 	const char *s;
+	FxExpression *exp;
 };
 
 typedef void (*PropHandler)(AActor *defaults, PClassActor *info, Baggage &bag, FPropParam *params);
@@ -328,6 +337,9 @@ int MatchString (const char *in, const char **strings);
 #define PROP_STRING_PARM(var, no) \
 	const char *var = params[(no)+1].s;
 
+#define PROP_EXP_PARM(var, no) \
+	FxExpression *var = params[(no)+1].exp;
+
 #define PROP_INT_PARM(var, no) \
 	int var = params[(no)+1].i;
 
@@ -374,44 +386,6 @@ int MatchString (const char *in, const char **strings);
 		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
 	}
 
-
-int EvalExpressionI (DWORD x, AActor *self);
-int EvalExpressionCol (DWORD x, AActor *self);
-FSoundID EvalExpressionSnd (DWORD x, AActor *self);
-double EvalExpressionF (DWORD x, AActor *self);
-fixed_t EvalExpressionFix (DWORD x, AActor *self);
-FState *EvalExpressionState (DWORD x, AActor *self);
-const PClass *EvalExpressionClass (DWORD x, AActor *self);
-FName EvalExpressionName (DWORD x, AActor *self);
-
-#if 0
-#define ACTION_PARAM_START(count)
-
-#define ACTION_PARAM_INT(var, i) \
-	int var = EvalExpressionI(ParameterIndex+i, self);
-#define ACTION_PARAM_BOOL(var,i) \
-	bool var = !!EvalExpressionI(ParameterIndex+i, self);
-#define ACTION_PARAM_FIXED(var,i) \
-	fixed_t var = EvalExpressionFix(ParameterIndex+i, self);
-#define ACTION_PARAM_FLOAT(var,i) \
-	float var = float(EvalExpressionF(ParameterIndex+i, self));
-#define ACTION_PARAM_DOUBLE(var,i) \
-	double var = EvalExpressionF(ParameterIndex+i, self);
-#define ACTION_PARAM_CLASS(var,i) \
-	const PClass *var = EvalExpressionClass(ParameterIndex+i, self);
-#define ACTION_PARAM_STATE(var,i) \
-	FState *var = EvalExpressionState(ParameterIndex+i, stateowner);
-#define ACTION_PARAM_COLOR(var,i) \
-	PalEntry var = EvalExpressionCol(ParameterIndex+i, self);
-#define ACTION_PARAM_SOUND(var,i) \
-	FSoundID var = EvalExpressionSnd(ParameterIndex+i, self);
-#define ACTION_PARAM_STRING(var,i) \
-	const char *var = EvalExpressionName(ParameterIndex+i, self);
-#define ACTION_PARAM_NAME(var,i) \
-	FName var = EvalExpressionName(ParameterIndex+i, self);
-#define ACTION_PARAM_ANGLE(var,i) \
-	angle_t var = angle_t(EvalExpressionF(ParameterIndex+i, self)*ANGLE_90/90.f);
-#endif
 
 #define ACTION_SET_RESULT(v) do { if (numret > 0) { assert(ret != NULL); ret->SetInt(v); numret = 1; } } while(0)
 

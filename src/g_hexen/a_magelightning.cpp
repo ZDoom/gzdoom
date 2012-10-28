@@ -356,7 +356,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 	{
 		mo->SetState (mo->FindState (NAME_Death));
 		mo->velz = 40*FRACUNIT;
-		mo->Damage = 0;
+		mo->Damage = NULL;
 	}
 	return 0;
 }

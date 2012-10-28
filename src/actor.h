@@ -797,7 +797,7 @@ public:
 	fixed_t			velx, vely, velz;	// velocity
 	SDWORD			tics;				// state tic counter
 	FState			*state;
-	SDWORD			Damage;			// For missiles and monster railgun
+	VMFunction		*Damage;			// For missiles and monster railgun
 	int				projectileKickback;
 	DWORD			flags;
 	DWORD			flags2;			// Heretic flags

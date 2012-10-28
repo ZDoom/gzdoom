@@ -47,7 +47,7 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 				boom->SetState (state);
 		}
 		boom->effects = 0;
-		boom->Damage = 0;	// disables collision detection which is not wanted here
+		boom->Damage = NULL;	// disables collision detection which is not wanted here
 		boom->tics -= pr_brainscream() & 7;
 		if (boom->tics < 1)
 			boom->tics = 1;

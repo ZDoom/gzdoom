@@ -261,6 +261,17 @@ void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
 //
 //==========================================================================
 
+static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
+{
+	const char *marks = "=======================================================";
+	fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+	fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
+		sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
+	VMDumpConstants(dump, sfunc);
+	fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
+	VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+}
+
 static void FinishThingdef()
 {
 	int errorcount = StateParams.ResolveAll();
@@ -305,17 +316,10 @@ static void FinishThingdef()
 			sfunc->NumArgs = NAP;
 			func = sfunc;
 #if 1
-			const char *marks = "=======================================================";
 			char label[64];
 			int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
-				tcall->ActorClass->TypeName.GetChars(),
-				tcall->FirstState, tcall->NumStates);
-			fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
-			fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
-				sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
-			VMDumpConstants(dump, sfunc);
-			fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
-			VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+				tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
+			DumpFunction(dump, sfunc, label, labellen);
 			codesize += sfunc->CodeSize;
 #endif
 		}
@@ -324,10 +328,6 @@ static void FinishThingdef()
 			tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
 		}
 	}
-#if 1
-	fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
-#endif
-	fclose(dump);
 
 	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
@@ -348,7 +348,42 @@ static void FinishThingdef()
 			errorcount++;
 			continue;
 		}
+
+		if (def->Damage != NULL)
+		{
+			VMScriptFunction *sfunc;
+			FxDamageValue *dmg = (FxDamageValue *)def->Damage;
+			sfunc = dmg->GetFunction();
+			if (sfunc == NULL)
+			{
+				FCompileContext ctx(ti, true);
+				dmg->Resolve(ctx);
+				VMFunctionBuilder buildit;
+				buildit.Registers[REGT_POINTER].Get(1);		// The self pointer
+				dmg->Emit(&buildit);
+				sfunc = buildit.MakeFunction();
+				sfunc->NumArgs = 1;
+				// Save this function in case this damage value was reused
+				// (which happens quite easily with inheritance).
+				dmg->SetFunction(sfunc);
+			}
+			def->Damage = sfunc;
+#if 1
+			if (sfunc != NULL)
+			{
+				char label[64];
+				int labellen = mysnprintf(label, countof(label), "Function %s.Damage",
+					ti->TypeName.GetChars());
+				DumpFunction(dump, sfunc, label, labellen);
+				codesize += sfunc->CodeSize;
+			}
+#endif
+		}
 	}
+#if 1
+	fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
+#endif
+	fclose(dump);
 	if (errorcount > 0)
 	{
 		I_Error("%d errors during actor postprocessing", errorcount);
@@ -399,3 +434,23 @@ void LoadActors ()
 	// Base time: ~52 ms
 }
 
+
+//==========================================================================
+//
+// CreateDamageFunction
+//
+// Creates a damage function suitable for a constant, non-expressioned
+// value.
+//
+//==========================================================================
+
+VMScriptFunction *CreateDamageFunction(int dmg)
+{
+	VMFunctionBuilder build;
+	build.Registers[REGT_POINTER].Get(1);		// The self pointer
+	build.EmitRetInt(0, false, dmg);
+	build.EmitRetInt(1, true, 0);
+	VMScriptFunction *sfunc = build.MakeFunction();
+	sfunc->NumArgs = 1;
+	return sfunc;
+}

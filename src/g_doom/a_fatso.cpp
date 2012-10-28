@@ -144,7 +144,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 
 	if (n == 0)
 	{
-		n = self->Damage; // GetMissileDamage (0, 1);
+		n = self->GetMissileDamage(0, 1);
 	}
 	if (spawntype == NULL)
 	{

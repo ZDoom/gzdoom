@@ -904,6 +904,28 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxDamageValue : public FxExpression
+{
+	FxExpression *val;
+	bool Calculated;
+	VMScriptFunction *MyFunction;
+
+public:
+
+	FxDamageValue(FxExpression *v, bool calc);
+	~FxDamageValue();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+	VMScriptFunction *GetFunction() const { return MyFunction; }
+	void SetFunction(VMScriptFunction *func) { MyFunction = func; }
+};
 
 
 FxExpression *ParseExpression (FScanner &sc, PClassActor *cls);

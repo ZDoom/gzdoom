@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				fire->velx = baseFire->velx;
 				fire->vely = baseFire->vely;
 				fire->velz = baseFire->velz;
-				fire->Damage = 0;
+				fire->Damage = NULL;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire);
 			}

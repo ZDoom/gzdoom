@@ -449,7 +449,7 @@ DEFINE_PROPERTY(painthreshold, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(damage, X, Actor)
 {
-	PROP_INT_PARM(id, 0);
+	PROP_EXP_PARM(id, 0);
 
 	// Damage can either be a single number, in which case it is subject
 	// to the original damage calculation rules. Or, it can be an expression
@@ -457,7 +457,9 @@ DEFINE_PROPERTY(damage, X, Actor)
 	// compatibility reasons, expressions must be enclosed within
 	// parentheses.
 
-	defaults->Damage = id;
+	// Store this expression here for now. It will be converted to a function
+	// later once all actors have been processed.
+	defaults->Damage = (VMFunction *)id;
 }
 
 //==========================================================================

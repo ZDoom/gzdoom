@@ -3995,7 +3995,7 @@ ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
 		assert(emitval.RegType == REGT_INT);
 		build->Emit(OP_RET, 0, REGT_INT | (emitval.Konst ? REGT_KONST : 0), emitval.RegNum);
 	}
-	build->Emit(OP_RETI, 1, 0x8000 | (int)Calculated);
+	build->Emit(OP_RETI, 1 | RET_FINAL, Calculated);
 
 	return ExpEmit();
 }

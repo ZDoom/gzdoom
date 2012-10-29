@@ -501,13 +501,14 @@ size_t VMFunctionBuilder::EmitLoadInt(int regnum, int value)
 
 size_t VMFunctionBuilder::EmitRetInt(int retnum, bool final, int value)
 {
-	if (value >= -16384 && value <= 16383)
+	assert(retnum >= 0 && retnum <= 127);
+	if (value >= -32768 && value <= 32767)
 	{
-		return Emit(OP_RETI, retnum, value | (final << 15));
+		return Emit(OP_RETI, retnum | (final << 7), value);
 	}
 	else
 	{
-		return Emit(OP_RETI, retnum, REGT_INT | REGT_KONST | (final ? REGT_FINAL : 0), GetConstantInt(value));
+		return Emit(OP_RET, retnum | (final << 7), REGT_INT | REGT_KONST, GetConstantInt(value));
 	}
 }
 

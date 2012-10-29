@@ -119,11 +119,13 @@ enum
 
 	REGT_KONST		= 4,
 	REGT_MULTIREG	= 8,	// (e.g. a vector)
-	REGT_FINAL		= 16,	// used with RET: this is the final return value
 	REGT_ADDROF		= 32,	// used with PARAM: pass address of this register
 
 	REGT_NIL		= 255	// parameter was omitted
 };
+
+#define RET_FINAL	(0x80)	// Used with RET and RETI in the destination slot: this is the final return value
+
 
 // Tags for address registers
 enum

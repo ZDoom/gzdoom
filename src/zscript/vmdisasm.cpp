@@ -231,15 +231,15 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 		case OP_RET:
 			if (code[i].b != REGT_NIL)
 			{
-				if ((code[i].b & REGT_FINAL) && a == 0)
+				if (a == RET_FINAL)
 				{
 					col = print_reg(out, 0, code[i].i16u, MODE_PARAM, 16, func);
 				}
 				else
 				{
-					col = print_reg(out, 0, a, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
+					col = print_reg(out, 0, a & ~RET_FINAL, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
 					col += print_reg(out, col, code[i].i16u, MODE_PARAM, 16, func);
-					if (code[i].b & REGT_FINAL)
+					if (a & RET_FINAL)
 					{
 						col += printf_wrapper(out, " [final]");
 					}
@@ -248,15 +248,15 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			break;
 
 		case OP_RETI:
-			if (a == 0 && code[i].i16 & 0x8000)
+			if (a == RET_FINAL)
 			{
-				col = printf_wrapper(out, "%d", (code[i].i16 << 17) >> 17);
+				col = printf_wrapper(out, "%d", code[i].i16);
 			}
 			else
 			{
-				col = print_reg(out, 0, a, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
-				col += print_reg(out, col, (code[i].i16 << 17) >> 17, MODE_IMMS, 16, func);
-				if (code[i].i16 & 0x8000)
+				col = print_reg(out, 0, a & ~RET_FINAL, (mode & MODE_ATYPE) >> MODE_ASHIFT, 24, func);
+				col += print_reg(out, col, code[i].i16, MODE_IMMS, 16, func);
+				if (a & RET_FINAL)
 				{
 					col += printf_wrapper(out, " [final]");
 				}

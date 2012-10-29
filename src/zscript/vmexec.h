@@ -584,25 +584,30 @@ begin:
 			return 0;
 		}
 		assert(ret != NULL || numret == 0);
-		if (a < numret)
 		{
-			SetReturn(reg, f, &ret[a], B, C);
-		}
-		if (B & REGT_FINAL)
-		{
-			return a < numret ? a + 1 : numret;
+			int retnum = a & ~RET_FINAL;
+			if (retnum < numret)
+			{
+				SetReturn(reg, f, &ret[retnum], B, C);
+			}
+			if (a & RET_FINAL)
+			{
+				return retnum < numret ? retnum + 1 : numret;
+			}
 		}
 		NEXTOP;
 	OP(RETI):
 		assert(ret != NULL || numret == 0);
-		if (a < numret)
 		{
-			// Shifting by 17 to wipe out the final bit
-			ret[a].SetInt(((pc[-1].i16) << 17) >> 17);
-		}
-		if (pc[-1].i16 & 0x8000)
-		{
-			return a < numret ? a + 1 : numret;
+			int retnum = a & ~RET_FINAL;
+			if (retnum < numret)
+			{
+				ret[retnum].SetInt(BCs);
+			}
+			if (a & RET_FINAL)
+			{
+				return retnum < numret ? retnum + 1 : numret;
+			}
 		}
 		NEXTOP;
 	OP(RESULT):
@@ -1490,7 +1495,7 @@ static void SetReturn(const VMRegisters &reg, VMFrame *frame, VMReturn *ret, VM_
 	VMScriptFunction *func = static_cast<VMScriptFunction *>(frame->Func);
 
 	assert(func != NULL && !func->Native);
-	assert((regtype & ~(REGT_KONST | REGT_FINAL)) == ret->RegType);
+	assert((regtype & ~REGT_KONST) == ret->RegType);
 
 	switch (regtype & REGT_TYPE)
 	{

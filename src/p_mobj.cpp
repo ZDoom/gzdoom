@@ -145,6 +145,79 @@ AActor::~AActor ()
 	// Use Destroy() instead.
 }
 
+//==========================================================================
+//
+// CalcDamageValue
+//
+// Given a script function, returns an integer to represent it in a
+// savegame. This encoding is compatible with previous incarnations
+// where damage was an integer.
+//
+//             0 : use null function
+//    0x40000000 : use default function
+// anything else : use function that returns this number
+//
+//==========================================================================
+
+static int CalcDamageValue(VMFunction *func)
+{
+	if (func == NULL)
+	{
+		return 0;
+	}
+	VMScriptFunction *sfunc = dyn_cast<VMScriptFunction>(func);
+	if (sfunc == NULL)
+	{
+		return 0x40000000;
+	}
+	VMOP *op = sfunc->Code;
+	// If the function was created by CreateDamageFunction(), extract
+	// the value used to create it and return that. Otherwise, return
+	// indicating to use the default function.
+	if (op->op == OP_RETI && op->a == 0)
+	{
+		return op->i16;
+	}
+	if (op->op == OP_RET && op->a == 0 && op->b == (REGT_INT | REGT_KONST))
+	{
+		return sfunc->KonstD[op->c];
+	}
+	return 0x40000000;
+}
+
+//==========================================================================
+//
+// UncalcDamageValue
+//
+// Given a damage integer, returns a script function for it.
+//
+//==========================================================================
+
+static VMFunction *UncalcDamageValue(int dmg, VMFunction *def)
+{
+	if (dmg == 0)
+	{
+		return NULL;
+	}
+	if ((dmg & 0xC0000000) == 0x40000000)
+	{
+		return def;
+	}
+	// Does the default version return this? If so, use it. Otherwise,
+	// create a new function.
+	if (CalcDamageValue(def) == dmg)
+	{
+		return def;
+	}
+	return CreateDamageFunction(dmg);
+}
+
+//==========================================================================
+//
+// AActor :: Serialize
+//
+//==========================================================================
+
 void AActor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
@@ -191,8 +264,19 @@ void AActor::Serialize (FArchive &arc)
 		<< vely
 		<< velz
 		<< tics
-		<< state
-		<< Damage;
+		<< state;
+	if (arc.IsStoring())
+	{
+		int dmg;
+		dmg = CalcDamageValue(Damage);
+		arc << dmg;
+	}
+	else
+	{
+		int dmg;
+		arc << dmg;
+		Damage = UncalcDamageValue(dmg, GetDefault()->Damage);
+	}
 	if (SaveVersion >= 3227)
 	{
 		arc << projectileKickback;

@@ -1024,13 +1024,28 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 
 FArchive &FArchive::SerializeObject (DObject *&object, PClass *type)
 {
-	if (IsStoring ())
-	{
-		return WriteObject (object);
+	if (!type->IsDescendantOf(RUNTIME_CLASS(PClass)))
+	{ // a regular object
+		if (IsStoring())
+		{
+			return WriteObject(object);
+		}
+		else
+		{
+			return ReadObject(object, type);
+		}
 	}
 	else
-	{
-		return ReadObject (object, type);
+	{ // a class object
+		if (IsStoring())
+		{
+			UserWriteClass((PClass *)object);
+		}
+		else
+		{
+			UserReadClass(object);
+		}
+		return *this;
 	}
 }
 
@@ -1491,19 +1506,6 @@ void FArchive::UserReadClass (PClass *&type)
 		I_Error ("Unknown class type %d in archive.\n", newclass);
 		break;
 	}
-}
-
-FArchive &operator<< (FArchive &arc, PClass *&info)
-{
-	if (arc.IsStoring ())
-	{
-		arc.UserWriteClass (info);
-	}
-	else
-	{
-		arc.UserReadClass (info);
-	}
-	return arc;
 }
 
 FArchive &operator<< (FArchive &arc, sector_t *&sec)

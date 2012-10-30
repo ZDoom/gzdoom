@@ -137,7 +137,7 @@ void SetupPlayerClasses ()
 	PlayerClasses.Clear();
 	for (unsigned i = 0; i < gameinfo.PlayerClasses.Size(); i++)
 	{
-		PClassActor *cls = PClass::FindActor(gameinfo.PlayerClasses[i]);;
+		PClassActor *cls = PClass::FindActor(gameinfo.PlayerClasses[i]);
 		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i]))
 		{
 			newclass.Flags = 0;

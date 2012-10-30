@@ -164,7 +164,7 @@ static TArray<CodePointerAlias> MBFCodePointers;
 
 struct AmmoPerAttack
 {
-	VMFunction *func;
+	VMNativeFunction **func;
 	int ammocount;
 };
 
@@ -182,17 +182,17 @@ DECLARE_ACTION(A_FireRailgun)
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
-	{ A_Punch_VMPtr, 0},
-	{ A_FirePistol_VMPtr, 1},
-	{ A_FireShotgun_VMPtr, 1}, 
-	{ A_FireShotgun2_VMPtr, 2},
-	{ A_FireCGun_VMPtr, 1},
-	{ A_FireMissile_VMPtr, 1},
-	{ A_Saw_VMPtr, 0},
-	{ A_FirePlasma_VMPtr, 1},
-	{ A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
-	{ A_FireOldBFG_VMPtr, 1},
-	{ A_FireRailgun_VMPtr, 1},
+	{ &A_Punch_VMPtr, 0},
+	{ &A_FirePistol_VMPtr, 1},
+	{ &A_FireShotgun_VMPtr, 1}, 
+	{ &A_FireShotgun2_VMPtr, 2},
+	{ &A_FireCGun_VMPtr, 1},
+	{ &A_FireMissile_VMPtr, 1},
+	{ &A_Saw_VMPtr, 0},
+	{ &A_FirePlasma_VMPtr, 1},
+	{ &A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
+	{ &A_FireOldBFG_VMPtr, 1},
+	{ &A_FireRailgun_VMPtr, 1},
 	{ NULL, 0}
 };
 
@@ -2481,25 +2481,6 @@ static inline bool CompareLabel (const char *want, const BYTE *have)
 	return *(DWORD *)want == *(DWORD *)have;
 }
 
-static inline short GetWord (const BYTE *in)
-{
-	return (in[0] << 8) | (in[1]);
-}
-
-static short *GetWordSpace (void *in, size_t size)
-{
-	short *ptr;
-	size_t i;
-
-	ptr = (short *)in;
-
-	for (i = 0; i < size; i++)
-	{
-		ptr[i] = GetWord ((BYTE *)in + i*2);
-	}
-	return ptr;
-}
-
 static int DehUseCount;
 
 static void UnloadDehSupp ()
@@ -2969,7 +2950,7 @@ void FinishDehPatch ()
 				StateVisited[state] = true;
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
 				{
-					if (state->ActionFunc == AmmoPerAttacks[j].func)
+					if (state->ActionFunc == *AmmoPerAttacks[j].func)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;

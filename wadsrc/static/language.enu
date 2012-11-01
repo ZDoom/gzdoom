@@ -190,6 +190,19 @@ HUSTR_29 = "level 29: the living end";
 HUSTR_30 = "level 30: icon of sin";
 HUSTR_31 = "level 31: wolfenstein";
 HUSTR_32 = "level 32: grosse";
+HUSTR_31B = "level 31: idkfa";
+HUSTR_32B = "level 32: keen";
+HUSTR_33 = "level 33: betray";
+
+NHUSTR_1 = "level 1: the earth base";
+NHUSTR_2 = "level 2: the pain labs";
+NHUSTR_3 = "level 3: canyon of the dead";
+NHUSTR_4 = "level 4: hell mountain";
+NHUSTR_5 = "level 5: vivisection";
+NHUSTR_6 = "level 6: inferno of blood";
+NHUSTR_7 = "level 7: baron's banquet";
+NHUSTR_8 = "level 8: tomb of malevolence";
+NHUSTR_9 = "level 9: march of the demons";
 
 PHUSTR_1 = "level 1: congo";
 PHUSTR_2 = "level 2: well of souls";
@@ -539,6 +552,26 @@ T6TEXT =
 	"\n"
 	"As you step off the transport, you hear\n"
 	"the stomp of a cyberdemon's iron shoe.";
+
+NERVETEXT =
+	"TROUBLE WAS BREWING AGAIN IN YOUR FAVORITE\n"
+	"VACATION SPOT... HELL. SOME CYBERDEMON\n"
+	"PUNK THOUGHT HE COULD TURN HELL INTO A\n"
+	"PERSONAL AMUSEMENT PARK, AND MAKE EARTH\n"
+	"THE TICKET BOOTH.\n"
+	"\n"
+	"WELL THAT HALF-ROBOT FREAK SHOW DIDN'T\n"
+	"KNOW WHO WAS COMING TO THE FAIR. THERE'S\n"
+	"NOTHING LIKE A SHOOTING GALLERY FULL OF\n"
+	"HELLSPAWN TO GET THE BLOOD PUMPING...\n"
+	"\n"
+	"NOW THE WALLS OF THE DEMON'S LABYRINTH\n"
+	"ECHO WITH THE SOUND OF HIS METALLIC LIMBS\n"
+	"HITTING THE FLOOR. HIS DEATH MOAN GURGLES\n"
+	"OUT THROUGH THE MESS YOU LEFT OF HIS FACE.\n"
+	"\n"
+	"THIS RIDE IS CLOSED.\n";
+
 
 // Cast list (must appear in this order)
 CC_ZOMBIE = "ZOMBIEMAN";

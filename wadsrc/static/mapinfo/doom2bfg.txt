@@ -1,0 +1,67 @@
+// MAPINFO for Doom 2: BFG Edition
+include "mapinfo/doom2.txt"
+
+gameinfo
+{
+	titlepage = "INTERPIC"
+}
+
+clearepisodes
+episode map01
+{
+	name = "Hell On Earth"
+	picname = "M_EPI1"
+	key = "h"
+}
+
+episode level01
+{
+	name = "No Rest for the Living"
+	picname = "M_EPI2"
+	key = "n"
+	optional
+}
+
+map MAP02 lookup "HUSTR_2"
+{
+	titlepatch = "CWILV01"
+	next = "MAP03"
+	secretnext = "MAP33"
+	sky1 = "SKY1"
+	cluster = 5
+	par = 90
+	music = "$MUSIC_STALKS"
+}
+
+map MAP33 lookup "HUSTR_33"
+{
+	titlepatch = "CWILV32"
+	next = "MAP03"
+	secretnext = "MAP03"
+	sky1 = "SKY3"
+	cluster = 5
+	music = "$MUSIC_READ_M"
+}
+
+// Wolfenstein 3D censorship
+map MAP31 lookup "HUSTR_31B"
+{
+	titlepatch = "CWILV30"
+	next = "MAP16"
+	secretnext = "MAP32"
+	sky1 = "SKY3"
+	cluster = 9
+	par = 120
+	music = "$MUSIC_EVIL"
+}
+
+map MAP32 lookup "HUSTR_32B"
+{
+	titlepatch = "CWILV31"
+	next = "MAP16"
+	secretnext = "MAP16"
+	sky1 = "SKY3"
+	cluster = 10
+	par = 30
+	music = "$MUSIC_ULTIMA"
+}

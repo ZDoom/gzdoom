@@ -55,6 +55,7 @@
 #include "gi.h"
 #include "doomerrors.h"
 #include "resourcefiles/resourcefile.h"
+#include "md5.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -180,6 +181,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 	{
 		I_FatalError ("W_InitMultipleFiles: no files found");
 	}
+	RenameNerve();
 	RenameSprites();
 
 	// [RH] Set up hash table
@@ -805,6 +807,69 @@ void FWadCollection::RenameSprites ()
 				{
 					LumpInfo[i].lump->dwName = MAKE_ID('B', 'L', 'U', 'D');
 				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// RenameNerve
+//
+// Renames map headers and map name pictures in nerve.wad so as to load it
+// alongside Doom II and offer both episodes without causing conflicts.
+// MD5 checksum for NERVE.WAD: 967d5ae23daf45196212ae1b605da3b0
+//
+//==========================================================================
+void FWadCollection::RenameNerve ()
+{
+	if (gameinfo.gametype != GAME_Doom)
+		return;
+
+	bool found = false;
+	BYTE cksum[16];
+	BYTE nerve[16] = { 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
+		0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 };
+	size_t nervesize = 3819855; // NERVE.WAD's file size
+	int w = IWAD_FILENUM;
+	while (++w < GetNumWads())
+	{
+		FileReader *fr = GetFileReader(w);
+		if (fr->GetLength() != nervesize)
+		{
+			// Skip MD5 computation when there is a
+			// cheaper way to know this is not the file
+			continue;
+		}
+		fr->Seek(0, SEEK_SET);
+		MD5Context md5;
+		md5.Update(fr, fr->GetLength());
+		md5.Final(cksum);
+		if (memcmp(nerve, cksum, 16) == 0)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+		return;
+
+	for (DWORD i = 0; i < LumpInfo.Size(); i++)
+	{
+		// Only rename the maps from NERVE.WAD
+		if (LumpInfo[i].wadnum == w)
+		{
+			if (LumpInfo[i].lump->dwName == MAKE_ID('C', 'W', 'I', 'L'))
+			{
+				LumpInfo[i].lump->Name[0] = 'N';
+			}
+			else if (LumpInfo[i].lump->dwName == MAKE_ID('M', 'A', 'P', '0'))
+			{
+				LumpInfo[i].lump->Name[6] = LumpInfo[i].lump->Name[4];
+				LumpInfo[i].lump->Name[5] = '0';
+				LumpInfo[i].lump->Name[4] = 'L';
+				LumpInfo[i].lump->dwName = MAKE_ID('L', 'E', 'V', 'E');
 			}
 		}
 	}

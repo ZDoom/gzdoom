@@ -437,6 +437,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 			static const char *const steam_dirs[] =
 			{
 				"doom 2/base",
+				"DOOM 3 BFG Edition/base/wads",
 				"final doom/base",
 				"heretic shadow of the serpent riders/base",
 				"hexen/base",

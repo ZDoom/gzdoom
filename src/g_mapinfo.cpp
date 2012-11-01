@@ -305,6 +305,10 @@ FString level_info_t::LookupLevelName()
 			{
 				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(mapname + 3));
 			}
+			else if (mapname[0] == 'L' && mapname[1] == 'E' && mapname[2] == 'V' && mapname[3] == 'E' && mapname[4] == 'L')
+			{
+				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(mapname + 5));
+			}
 			thename = strstr (lookedup, checkstring);
 			if (thename == NULL)
 			{

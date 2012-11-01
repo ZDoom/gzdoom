@@ -270,7 +270,14 @@ void I_HandleAlarm (int sig)
 void I_SelectTimer()
 {
 	SEMAPHORE_INIT(timerWait, 0, 0)
+#ifndef __sun
 	signal(SIGALRM, I_HandleAlarm);
+#else
+	struct sigaction alrmaction;
+	sigaction(SIGALRM, NULL, &alrmaction);
+	alrmaction.sa_handler = I_HandleAlarm;
+	sigaction(SIGALRM, &alrmaction, NULL);
+#endif
 
 	struct itimerval itv;
 	itv.it_interval.tv_sec = itv.it_value.tv_sec = 0;

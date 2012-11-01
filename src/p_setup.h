@@ -29,7 +29,7 @@
 
 struct MapData
 {
-	struct
+	struct MapLump
 	{
 		char Name[8];
 		FileReader *Reader;

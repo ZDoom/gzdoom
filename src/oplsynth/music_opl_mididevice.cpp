@@ -64,6 +64,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+CVAR(Bool, opl_stereo, true, CVAR_ARCHIVE);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -74,6 +76,7 @@
 
 OPLMIDIDevice::OPLMIDIDevice()
 {
+	IsStereo = opl_stereo;
 	FWadLump data = Wads.OpenLumpName("GENMIDI");
 	OPLloadBank(data);
 	SampleRate = (int)OPL_SAMPLE_RATE;
@@ -89,11 +92,11 @@ OPLMIDIDevice::OPLMIDIDevice()
 
 int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	if (io == NULL || io->OPLinit(TwoChips + 1))
+	if (io == NULL || io->OPLinit(TwoChips + 1, IsStereo))
 	{
 		return 1;
 	}
-	int ret = OpenStream(14, SoundStream::Mono, callback, userdata);
+	int ret = OpenStream(14, IsStereo ? 0 : SoundStream::Mono, callback, userdata);
 	if (ret == 0)
 	{
 		OPLstopMusic();

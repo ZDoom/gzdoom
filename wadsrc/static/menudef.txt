@@ -1409,6 +1409,7 @@ OptionMenu AdvSoundOptions
 	StaticText " "
 	StaticText "OPL Synthesis",	1
 	Option "Only emulate one OPL chip", "opl_onechip", "OnOff"
+	Option "Support MIDI stero panning", "opl_stereo", "OnOff"
 	StaticText " "
 	StaticText "GUS Emulation",	1
 	Slider "MIDI voices",	"midi_voices", 16, 256, 4, 0

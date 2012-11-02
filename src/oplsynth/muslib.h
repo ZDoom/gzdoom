@@ -177,7 +177,7 @@ struct OPLio {
 	void	OPLshutup(void);
 	void	OPLwriteInitState();
 
-	virtual int		OPLinit(uint numchips);
+	virtual int		OPLinit(uint numchips, bool stereo=false);
 	virtual void	OPLdeinit(void);
 	virtual void	OPLwriteReg(int which, uint reg, uchar data);
 	virtual void	SetClockRate(double samples_per_tick);
@@ -192,7 +192,7 @@ struct DiskWriterIO : public OPLio
 	DiskWriterIO(const char *filename);
 	~DiskWriterIO();
 
-	int OPLinit(uint numchips);
+	int OPLinit(uint numchips, bool notused=false);
 	void OPLdeinit();
 	void OPLwriteReg(int which, uint reg, uchar data);
 	void SetClockRate(double samples_per_tick);

@@ -252,6 +252,12 @@ void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 		else bits = 0x30;			// both
 
 		OPLwriteValue(0xC0, channel, instr->feedback | bits);
+
+		// Set real panning if we're using emulated chips.
+		if (chips[0] != NULL)
+		{
+			YM3812SetPanning(chips[channel/9], channel%9, pan+64);
+		}
 	}
 }
 
@@ -298,13 +304,14 @@ void OPLio::OPLshutup(void)
 /*
 * Initialize hardware upon startup
 */
-int OPLio::OPLinit(uint numchips)
+int OPLio::OPLinit(uint numchips, bool stereo)
 {
 	assert(numchips >= 1 && numchips <= 2);
 	chips[0] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
 	chips[1] = NULL;
 	if (chips[0] != NULL)
 	{
+		YM3812SetStereo(chips[0], stereo);
 		if (numchips > 1)
 		{
 			chips[1] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
@@ -313,6 +320,10 @@ int OPLio::OPLinit(uint numchips)
 				YM3812Shutdown(chips[0]);
 				chips[0] = NULL;
 				return -1;
+			}
+			else
+			{
+				YM3812SetStereo(chips[1], stereo);
 			}
 		}
 	}

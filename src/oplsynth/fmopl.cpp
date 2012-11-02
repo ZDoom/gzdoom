@@ -115,6 +115,8 @@ Revision History:
 #define INLINE			__inline
 #endif
 
+#define CENTER_PANNING_POWER	0.70710678118	/* [RH] volume at center for EQP */
+#define HALF_PI					(PI/2)
 
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH			16  /* 16.16 fixed point (EG timing)              */
@@ -246,6 +248,8 @@ typedef struct{
 	UINT32  fc;			/* Freq. Increment base			*/
 	UINT32  ksl_base;	/* KeyScaleLevel Base step		*/
 	UINT8   kcode;		/* key code (for key scaling)	*/
+	float	LeftVol;	/* volumes for stereo panning	*/
+	float	RightVol;
 } OPL_CH;
 
 /* OPL state */
@@ -297,6 +301,7 @@ typedef struct fm_opl_f {
 	int rate;						/* sampling rate (Hz)			*/
 	double freqbase;				/* frequency base				*/
 	double TimerBase;				/* Timer base time (==sampling time)*/
+	bool IsStereo;					/* Write stereo output			*/
 } FM_OPL;
 
 
@@ -876,7 +881,7 @@ INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm, unsign
 #define volume_calc(OP) ((OP)->TLL + ((UINT32)(OP)->volume) + (LFO_AM & (OP)->AMmask))
 
 /* calculate output */
-INLINE void OPL_CALC_CH( OPL_CH *CH, float *buffer )
+INLINE float OPL_CALC_CH( OPL_CH *CH )
 {
 	OPL_SLOT *SLOT;
 	unsigned int env;
@@ -905,8 +910,9 @@ INLINE void OPL_CALC_CH( OPL_CH *CH, float *buffer )
 	{
 		output += op_calc(SLOT->Cnt, env, phase_modulation, SLOT->wavetable);
 		/* [RH] Convert to floating point. */
-		*buffer += float(output) / 10240;
+		return float(output) / 10240;
 	}
+	return 0;
 }
 
 /*
@@ -1282,6 +1288,13 @@ static void OPL_initalize(FM_OPL *OPL)
 	OPL->eg_timer_overflow = UINT32(( 1 ) * (1<<EG_SH));
 	/*logerror("OPLinit eg_timer_add=%8x eg_timer_overflow=%8x\n", OPL->eg_timer_add, OPL->eg_timer_overflow);*/
 
+	// [RH] Support full MIDI panning. (But default to mono and center panning.)
+	OPL->IsStereo = false;
+	for (int i = 0; i < 9; ++i)
+	{
+		OPL->P_CH[i].LeftVol = (float)CENTER_PANNING_POWER;
+		OPL->P_CH[i].RightVol = (float)CENTER_PANNING_POWER;
+	}
 }
 
 INLINE void FM_KEYON(OPL_SLOT *SLOT, UINT32 key_set)
@@ -1897,6 +1910,28 @@ void YM3812SetUpdateHandler(void *chip,OPL_UPDATEHANDLER UpdateHandler,int param
 	OPLSetUpdateHandler(YM3812, UpdateHandler, param);
 }
 
+/* [RH] Full support for MIDI panning */
+void YM3812SetStereo(void *chip, bool stereo)
+{
+	if (chip != NULL)
+	{
+		FM_OPL *YM3812 = (FM_OPL *)chip;
+		YM3812->IsStereo = stereo;
+	}
+}
+
+void YM3812SetPanning(void *chip, int c, int pan)
+{
+	if (chip != NULL)
+	{
+		FM_OPL *YM3812 = (FM_OPL *)chip;
+		// This is the MIDI-recommended pan formula. 0 and 1 are
+		// both hard left so that 64 can be perfectly center.
+		double level = (pan <= 1) ? 0 : (pan - 1) / 126.0;
+		YM3812->P_CH[c].LeftVol = (float)cos(HALF_PI * level);
+		YM3812->P_CH[c].RightVol = (float)sin(HALF_PI * level);
+	}
+}
 
 /*
 ** Generate samples for one of the YM3812's
@@ -1969,7 +2004,16 @@ static bool CalcVoice (FM_OPL *OPL, int voice, float *buffer, int length)
 		advance_lfo(OPL);
 
 		output = 0;
-		OPL_CALC_CH(CH, buffer + i);
+		float sample = OPL_CALC_CH(CH);
+		if (!OPL->IsStereo)
+		{
+			buffer[i] += sample;
+		}
+		else
+		{
+			buffer[i*2] += sample * CH->LeftVol;
+			buffer[i*2+1] += sample * CH->RightVol;
+		}
 
 		advance(OPL, voice, voice);
 	}
@@ -1987,7 +2031,18 @@ static bool CalcRhythm (FM_OPL *OPL, float *buffer, int length)
 		output = 0;
 		OPL_CALC_RH(&OPL->P_CH[0], OPL->noise_rng & 1);
 		/* [RH] Convert to floating point. */
-		buffer[i] += float(output) / 10240;
+		float sample = float(output) / 10240;
+		if (!OPL->IsStereo)
+		{
+			buffer[i] += sample;
+		}
+		else
+		{
+			// [RH] Always use center panning for rhythm.
+			// The MIDI player doesn't use the rhythm section anyway.
+			buffer[i*2] += sample * CENTER_PANNING_POWER;
+			buffer[i*2+1] += sample * CENTER_PANNING_POWER;
+		}
 
 		advance(OPL, 6, 8);
 		advance_noise(OPL);

@@ -21,6 +21,7 @@ protected:
 	bool TwoChips;
 	bool Looping;
 	double LastOffset;
+	bool IsStereo;
 
 	FCriticalSection ChipAccess;
 };

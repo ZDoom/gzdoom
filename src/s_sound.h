@@ -57,6 +57,7 @@ struct sfxinfo_t
 	WORD		bUsed:1;
 	WORD		bSingular:1;
 	WORD		bTentative:1;
+	WORD		bPlayerSilent:1;		// This player sound is intentionally silent.
 
 	int			LoopStart;				// -1 means no specific loop defined
 

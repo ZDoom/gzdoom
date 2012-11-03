@@ -519,6 +519,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.bUsed = false;
 	newsfx.bSingular = false;
 	newsfx.bTentative = false;
+	newsfx.bPlayerSilent = false;
 	newsfx.link = sfxinfo_t::NO_LINK;
 	newsfx.Rolloff.RolloffType = ROLLOFF_Doom;
 	newsfx.Rolloff.MinDistance = 0;
@@ -1110,10 +1111,14 @@ static void S_AddSNDINFO (int lump)
 			case SI_PlayerSound: {
 				// $playersound <player class> <gender> <logical name> <lump name>
 				FString pclass;
-				int gender, refid;
+				int gender, refid, sfxnum;
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
-				S_AddPlayerSound (pclass, gender, refid, sc.String);
+				sfxnum = S_AddPlayerSound (pclass, gender, refid, sc.String);
+				if (0 == stricmp(sc.String, "dsempty"))
+				{
+					S_sfx[sfxnum].bPlayerSilent = true;
+				}
 				}
 				break;
 
@@ -1665,7 +1670,9 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	// If we're not done parsing SNDINFO yet, assume that the target sound is valid
 	if (PlayerClassesIsSorted &&
 		(sndnum == 0 ||
-		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) && S_sfx[sndnum].link == sfxinfo_t::NO_LINK)))
+		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) &&
+		 S_sfx[sndnum].link == sfxinfo_t::NO_LINK &&
+		 !S_sfx[sndnum].bPlayerSilent)))
 	{ // This sound is unavailable.
 		if (ingender != 0)
 		{ // Try "male"

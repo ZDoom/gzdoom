@@ -2427,7 +2427,20 @@ void R_StoreWallRange (int start, int stop)
 			}
 			ds_p->light = rw_light;
 			ds_p->lightstep = rw_lightstep;
-			ds_p->shade = wallshade;
+
+			// Masked midtextures should get the light level from the sector they reference,
+			// not from the current subsector, which is what the current wallshade value
+			// comes from. We make an exeption for polyobjects, however, since their "home"
+			// sector should be whichever one they move into.
+			if (curline->sidedef->Flags & WALLF_POLYOBJ)
+			{
+				ds_p->shade = wallshade;
+			}
+			else
+			{
+				ds_p->shade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, curline->frontsector->lightlevel)
+					+ r_actualextralight);
+			}
 
 			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1)
 			{

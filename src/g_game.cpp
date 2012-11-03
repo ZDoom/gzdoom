@@ -161,7 +161,7 @@ int 			consoleplayer;			// player taking events
 int 			gametic;
 
 CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-char			demoname[256];
+FString			demoname;
 bool 			demorecording;
 bool 			demoplayback;
 bool 			netdemo;
@@ -2271,7 +2271,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 void G_RecordDemo (const char* name)
 {
 	usergame = false;
-	strcpy (demoname, name);
+	demoname = name;
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
 	maxdemosize = 0x20000;
@@ -2710,11 +2710,18 @@ bool G_CheckDemoStatus (void)
 		formlen = demobuffer + 4;
 		WriteLong (int(demo_p - demobuffer - 8), &formlen);
 
-		M_WriteFile (demoname, demobuffer, int(demo_p - demobuffer)); 
+		bool saved = M_WriteFile (demoname, demobuffer, int(demo_p - demobuffer)); 
 		M_Free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;
-		Printf ("Demo %s recorded\n", demoname); 
+		if (saved)
+		{
+			Printf ("Demo %s recorded\n", demoname.GetChars()); 
+		}
+		else
+		{
+			Printf ("Demo %s could not be saved\n", demoname.GetChars());
+		}
 	}
 
 	return false; 

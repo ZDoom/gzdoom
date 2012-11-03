@@ -1053,6 +1053,10 @@ public:
 				Flag(sd->Flags, WALLF_ABSLIGHTING, key);
 				continue;
 
+			case NAME_lightfog:
+				Flag(sd->Flags, WALLF_LIGHT_FOG, key);
+				continue;
+
 			case NAME_nofakecontrast:
 				Flag(sd->Flags, WALLF_NOFAKECONTRAST, key);
 				continue;

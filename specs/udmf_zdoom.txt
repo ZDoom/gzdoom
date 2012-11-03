@@ -141,6 +141,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       light = <integer>;        // This side's light level. Default is 0.
       lightabsolute = <bool>;   // true = 'light' is an absolute value. Default is 
                                 // relative to the owning sector's light level.
+      lightfog = <bool>;        // true = This side's relative lighting is used even in
+                                // foggy sectors. Default is to disable relative
+                                // lighting in foggy sectors.
       nofakecontrast = <bool>;  // Disables use of fake contrast on this sidedef.
       smoothlighting = <bool>;  // Use smooth fake contrast.
       clipmidtex = <bool>;      // Side's mid textures are clipped to floor and ceiling.

@@ -1960,11 +1960,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			int spacing = 0;
-			if(!vertical)
-				spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
-			else
-				spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
+			int spacing = GetCounterSpacing(statusBar);
 		
 			int bgalpha = block->Alpha();
 			if(translucent)
@@ -2107,16 +2103,36 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			}
 			sc.MustGetToken(';');
 		}
+		int GetCounterSpacing(const DSBarInfo *statusBar) const
+		{
+			FTexture *box = (style != STYLE_Strife)
+				? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]
+				: statusBar->Images[statusBar->invBarOffset + imgCURSOR];
+			if (box == NULL)
+			{ // Don't crash without a graphic.
+				return 32;
+			}
+			else
+			{
+				int spacing;
+				if (!vertical)
+				{
+					spacing = box->GetScaledWidth();
+				}
+				else
+				{
+					spacing = box->GetScaledHeight();
+				}
+				return spacing + ((style != STYLE_Strife) ? 1 : -1);
+			}
+		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
 			// Make the counters if need be.
 			if(counters == NULL)
 			{
-				int spacing = 0;
-				if(!vertical)
-					spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
-				else
-					spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
+				int spacing = GetCounterSpacing(statusBar);
+
 				counters = new CommandDrawNumber*[size];
 		
 				for(unsigned int i = 0;i < size;i++)

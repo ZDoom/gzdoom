@@ -828,13 +828,17 @@ void FWadCollection::RenameNerve ()
 
 	bool found = false;
 	BYTE cksum[16];
-	BYTE nerve[16] = { 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
+	static const BYTE nerve[16] = { 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
 		0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 };
 	size_t nervesize = 3819855; // NERVE.WAD's file size
 	int w = IWAD_FILENUM;
 	while (++w < GetNumWads())
 	{
 		FileReader *fr = GetFileReader(w);
+		if (fr == NULL)
+		{
+			continue;
+		}
 		if (fr->GetLength() != nervesize)
 		{
 			// Skip MD5 computation when there is a
@@ -855,22 +859,20 @@ void FWadCollection::RenameNerve ()
 	if (!found)
 		return;
 
-	for (DWORD i = 0; i < LumpInfo.Size(); i++)
+	for (int i = GetFirstLump(w); i <= GetLastLump(w); i++)
 	{
 		// Only rename the maps from NERVE.WAD
-		if (LumpInfo[i].wadnum == w)
+		assert(LumpInfo[i].wadnum == w);
+		if (LumpInfo[i].lump->dwName == MAKE_ID('C', 'W', 'I', 'L'))
 		{
-			if (LumpInfo[i].lump->dwName == MAKE_ID('C', 'W', 'I', 'L'))
-			{
-				LumpInfo[i].lump->Name[0] = 'N';
-			}
-			else if (LumpInfo[i].lump->dwName == MAKE_ID('M', 'A', 'P', '0'))
-			{
-				LumpInfo[i].lump->Name[6] = LumpInfo[i].lump->Name[4];
-				LumpInfo[i].lump->Name[5] = '0';
-				LumpInfo[i].lump->Name[4] = 'L';
-				LumpInfo[i].lump->dwName = MAKE_ID('L', 'E', 'V', 'E');
-			}
+			LumpInfo[i].lump->Name[0] = 'N';
+		}
+		else if (LumpInfo[i].lump->dwName == MAKE_ID('M', 'A', 'P', '0'))
+		{
+			LumpInfo[i].lump->Name[6] = LumpInfo[i].lump->Name[4];
+			LumpInfo[i].lump->Name[5] = '0';
+			LumpInfo[i].lump->Name[4] = 'L';
+			LumpInfo[i].lump->dwName = MAKE_ID('L', 'E', 'V', 'E');
 		}
 	}
 }

@@ -6019,42 +6019,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\src\g_strife\a_macil.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
 					RelativePath=".\src\g_strife\a_oracle.cpp"
 					>
 					<FileConfiguration

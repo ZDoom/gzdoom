@@ -1077,12 +1077,19 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 
 
 /* generic table initialize */
-static int init_tables(void)
+static void init_tables(void)
 {
 	signed int i,x;
 	signed int n;
 	double o,m;
 
+	/* We only need to do this once. */
+	static bool did_init = false;
+
+	if (did_init)
+	{
+		return;
+	}
 
 	for (x=0; x<TL_RES_LEN; x++)
 	{
@@ -1157,7 +1164,7 @@ static int init_tables(void)
 			sin_tab[3*SIN_LEN+i] = sin_tab[i & (SIN_MASK>>2)];
 	}
 
-	return 1;
+	did_init = true;
 }
 
 static void OPL_initalize(FM_OPL *OPL)
@@ -1512,30 +1519,6 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 	}
 }
 
-/* lock/unlock for common table */
-static int OPL_LockTable(void)
-{
-	num_lock++;
-	if(num_lock>1) return 0;
-
-	/* first time */
-
-	/* allocate total level table (128kb space) */
-	if( !init_tables() )
-	{
-		num_lock--;
-		return -1;
-	}
-
-	return 0;
-}
-
-static void OPL_UnLockTable(void)
-{
-	if(num_lock) num_lock--;
-	if(num_lock) return;
-}
-
 static void OPLResetChip(FM_OPL *OPL)
 {
 	int c,s;
@@ -1579,7 +1562,7 @@ public:
 	/* Create one of virtual YM3812 */
 	YM3812(bool stereo)
 	{
-		if (OPL_LockTable() == -1) return;
+		init_tables();
 
 		/* clear */
 		memset(&Chip, 0, sizeof(Chip));
@@ -1590,12 +1573,6 @@ public:
 		Chip.IsStereo = stereo;
 
 		Reset();
-	}
-
-	/* Destroy one of virtual YM3812 */
-	~YM3812()
-	{
-		OPL_UnLockTable();
 	}
 
 	/* YM3812 I/O interface */

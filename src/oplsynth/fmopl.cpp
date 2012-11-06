@@ -247,14 +247,6 @@ typedef struct fm_opl_f {
 	int		T[2];					/* timer counters				*/
 	UINT8	st[2];					/* timer enable					*/
 
-	/* external event callback handlers */
-	OPL_TIMERHANDLER  TimerHandler;	/* TIMER handler				*/
-	int TimerParam;					/* TIMER parameter				*/
-	OPL_IRQHANDLER    IRQHandler;	/* IRQ handler					*/
-	int IRQParam;					/* IRQ parameter				*/
-	OPL_UPDATEHANDLER UpdateHandler;/* stream update handler		*/
-	int UpdateParam;				/* stream update parameter		*/
-
 	UINT8 address;					/* address register				*/
 	UINT8 status;					/* status flag					*/
 	UINT8 statusmask;				/* status mask					*/
@@ -596,8 +588,6 @@ INLINE void OPL_STATUS_SET(FM_OPL *OPL,int flag)
 		if(OPL->status & OPL->statusmask)
 		{	/* IRQ on */
 			OPL->status |= 0x80;
-			/* callback user interrupt handler (IRQ is OFF to ON) */
-			if(OPL->IRQHandler) (OPL->IRQHandler)(OPL->IRQParam,1);
 		}
 	}
 }
@@ -612,8 +602,6 @@ INLINE void OPL_STATUS_RESET(FM_OPL *OPL,int flag)
 		if (!(OPL->status & OPL->statusmask) )
 		{
 			OPL->status &= 0x7f;
-			/* callback user interrupt handler (IRQ is ON to OFF) */
-			if(OPL->IRQHandler) (OPL->IRQHandler)(OPL->IRQParam,0);
 		}
 	}
 }
@@ -1357,14 +1345,12 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				{
 					double interval = st2 ? (double)OPL->T[1]*OPL_TIMERBASE : 0.0;
 					OPL->st[1] = st2;
-					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+1,interval);
 				}
 				/* timer 1 */
 				if(OPL->st[0] != st1)
 				{
 					double interval = st1 ? (double)OPL->T[0]*OPL_TIMERBASE : 0.0;
 					OPL->st[0] = st1;
-					if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+0,interval);
 				}
 			}
 			break;
@@ -1614,24 +1600,6 @@ static void OPLDestroy(FM_OPL *OPL)
 	free(OPL);
 }
 
-/* Optional handlers */
-
-static void OPLSetTimerHandler(FM_OPL *OPL,OPL_TIMERHANDLER TimerHandler,int channelOffset)
-{
-	OPL->TimerHandler   = TimerHandler;
-	OPL->TimerParam = channelOffset;
-}
-static void OPLSetIRQHandler(FM_OPL *OPL,OPL_IRQHANDLER IRQHandler,int param)
-{
-	OPL->IRQHandler     = IRQHandler;
-	OPL->IRQParam = param;
-}
-static void OPLSetUpdateHandler(FM_OPL *OPL,OPL_UPDATEHANDLER UpdateHandler,int param)
-{
-	OPL->UpdateHandler = UpdateHandler;
-	OPL->UpdateParam = param;
-}
-
 /* YM3812 I/O interface */
 static int OPLWrite(FM_OPL *OPL,int a,int v)
 {
@@ -1641,7 +1609,6 @@ static int OPLWrite(FM_OPL *OPL,int a,int v)
 	}
 	else
 	{	/* data port */
-		if(OPL->UpdateHandler) OPL->UpdateHandler(OPL->UpdateParam,0);
 		OPLWriteReg(OPL,OPL->address,v);
 	}
 	return OPL->status>>7;
@@ -1669,30 +1636,6 @@ INLINE void CSMKeyControll(OPL_CH *CH)
 
 	FM_KEYOFF(&CH->SLOT[SLOT1], ~4);
 	FM_KEYOFF(&CH->SLOT[SLOT2], ~4);
-}
-
-
-static int OPLTimerOver(FM_OPL *OPL,int c)
-{
-	if( c )
-	{	/* Timer B */
-		OPL_STATUS_SET(OPL,0x20);
-	}
-	else
-	{	/* Timer A */
-		OPL_STATUS_SET(OPL,0x40);
-		/* CSM mode key,TL controll */
-		if( OPL->mode & 0x80 )
-		{	/* CSM mode total level latch and auto key on */
-			int ch;
-			if(OPL->UpdateHandler) OPL->UpdateHandler(OPL->UpdateParam,0);
-			for(ch=0; ch<9; ch++)
-				CSMKeyControll( &OPL->P_CH[ch] );
-		}
-	}
-	/* reload timer */
-	if (OPL->TimerHandler) (OPL->TimerHandler)(OPL->TimerParam+c,(double)OPL->T[c]*OPL_TIMERBASE);
-	return OPL->status>>7;
 }
 
 
@@ -1729,27 +1672,6 @@ unsigned char YM3812Read(void *chip, int a)
 	FM_OPL *YM3812 = (FM_OPL *)chip;
 	/* YM3812 always returns bit2 and bit1 in HIGH state */
 	return OPLRead(YM3812, a) | 0x06 ;
-}
-int YM3812TimerOver(void *chip, int c)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	return OPLTimerOver(YM3812, c);
-}
-
-void YM3812SetTimerHandler(void *chip, OPL_TIMERHANDLER TimerHandler, int channelOffset)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	OPLSetTimerHandler(YM3812, TimerHandler, channelOffset);
-}
-void YM3812SetIRQHandler(void *chip,OPL_IRQHANDLER IRQHandler,int param)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	OPLSetIRQHandler(YM3812, IRQHandler, param);
-}
-void YM3812SetUpdateHandler(void *chip,OPL_UPDATEHANDLER UpdateHandler,int param)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	OPLSetUpdateHandler(YM3812, UpdateHandler, param);
 }
 
 /* [RH] Full support for MIDI panning */

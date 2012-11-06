@@ -30,14 +30,9 @@ void YM3812Shutdown(void *chip);
 void YM3812ResetChip(void *chip);
 int  YM3812Write(void *chip, int a, int v);
 unsigned char YM3812Read(void *chip, int a);
-int  YM3812TimerOver(void *chip, int c);
 void YM3812UpdateOne(void *chip, float *buffer, int length);
 void YM3812SetStereo(void *chip, bool stereo);
 void YM3812SetPanning(void *chip, int c, int pan);
-
-void YM3812SetTimerHandler(void *chip, OPL_TIMERHANDLER TimerHandler, int channelOffset);
-void YM3812SetIRQHandler(void *chip, OPL_IRQHANDLER IRQHandler, int param);
-void YM3812SetUpdateHandler(void *chip, OPL_UPDATEHANDLER UpdateHandler, int param);
 
 FString YM3812GetVoiceString(void *chip);
 

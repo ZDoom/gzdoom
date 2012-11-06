@@ -1,10 +1,19 @@
 #include "i_musicinterns.h"
+#include "oplsynth/muslib.h"
 
 static bool OPL_Active;
 
-CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (OPL_Active && currSong != NULL)
+	if (*self <= 0)
+	{
+		self = 1;
+	}
+	else if (*self > MAXOPL2CHIPS)
+	{
+		self = MAXOPL2CHIPS;
+	}
+	else if (OPL_Active && currSong != NULL)
 	{
 		static_cast<OPLMUSSong *>(currSong)->ResetChips ();
 	}

@@ -60,6 +60,8 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+EXTERN_CVAR(Int, opl_numchips)
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -92,7 +94,7 @@ OPLMIDIDevice::OPLMIDIDevice()
 
 int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	if (io == NULL || 0 == io->OPLinit(TwoChips + 1, IsStereo))
+	if (io == NULL || 0 == (NumChips = io->OPLinit(opl_numchips, IsStereo)))
 	{
 		return 1;
 	}

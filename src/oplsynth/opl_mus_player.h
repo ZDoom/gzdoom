@@ -18,7 +18,7 @@ protected:
 
 	double NextTickIn;
 	double SamplesPerTick;
-	bool TwoChips;
+	int NumChips;
 	bool Looping;
 	double LastOffset;
 	bool IsStereo;

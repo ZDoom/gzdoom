@@ -1408,7 +1408,7 @@ OptionMenu AdvSoundOptions
 	Option "Buffer count",			"snd_buffercount", "BufferCounts"
 	StaticText " "
 	StaticText "OPL Synthesis",	1
-	Option "Only emulate one OPL chip", "opl_onechip", "OnOff"
+	Slider "Number of emulated OPL chips", "opl_numchips", 1, 8, 1, 0
 	Option "Support MIDI stero panning", "opl_stereo", "OnOff"
 	StaticText " "
 	StaticText "GUS Emulation",	1

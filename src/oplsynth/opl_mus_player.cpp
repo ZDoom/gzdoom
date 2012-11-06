@@ -40,7 +40,7 @@ void OPLmusicBlock::ResetChips ()
 	TwoChips = !opl_onechip;
 	ChipAccess.Enter();
 	io->OPLdeinit ();
-	io->OPLinit (TwoChips + 1, IsStereo);
+	TwoChips = io->OPLinit(TwoChips + 1, IsStereo) == 2;
 	ChipAccess.Leave();
 }
 
@@ -77,7 +77,7 @@ fail:		delete[] scoredata;
 		memcpy(scoredata, &musiccache[0], len);
 	}
 
-	if (io->OPLinit (TwoChips + 1))
+	if (0 == io->OPLinit (TwoChips + 1))
 	{
 		goto fail;
 	}
@@ -236,11 +236,14 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 		double ticky = NextTickIn;
 		int tick_in = int(NextTickIn);
 		int samplesleft = MIN(numsamples, tick_in);
+		size_t i;
 
 		if (samplesleft > 0)
 		{
-			YM3812UpdateOne (io->chips[0], samples1, samplesleft);
-			YM3812UpdateOne (io->chips[1], samples1, samplesleft);
+			for (i = 0; i < io->NumChips; ++i)
+			{
+				io->chips[i]->Update(samples1, samplesleft);
+			}
 			OffsetSamples(samples1, samplesleft << int(IsStereo));
 			assert(NextTickIn == ticky);
 			NextTickIn -= samplesleft;
@@ -259,8 +262,10 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 				{
 					if (numsamples > 0)
 					{
-						YM3812UpdateOne (io->chips[0], samples1, numsamples);
-						YM3812UpdateOne (io->chips[1], samples1, numsamples);
+						for (i = 0; i < io->NumChips; ++i)
+						{
+							io->chips[i]->Update(samples1, samplesleft);
+						}
 						OffsetSamples(samples1, numsamples << int(IsStereo));
 					}
 					res = false;

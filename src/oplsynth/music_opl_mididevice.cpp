@@ -92,7 +92,7 @@ OPLMIDIDevice::OPLMIDIDevice()
 
 int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	if (io == NULL || io->OPLinit(TwoChips + 1, IsStereo))
+	if (io == NULL || 0 == io->OPLinit(TwoChips + 1, IsStereo))
 	{
 		return 1;
 	}

@@ -183,8 +183,9 @@ struct OPLio {
 	virtual void	SetClockRate(double samples_per_tick);
 	virtual void	WriteDelay(int ticks);
 
+	class OPLEmul *chips[2];
 	uint OPLchannels;
-	void *chips[2];
+	uint NumChips;
 };
 
 struct DiskWriterIO : public OPLio

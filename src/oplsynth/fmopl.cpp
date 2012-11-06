@@ -102,6 +102,17 @@ Revision History:
 //#include "driver.h"		/* use M.A.M.E. */
 #include "fmopl.h"
 
+/* compiler dependence */
+#ifndef OSD_CPU_H
+#define OSD_CPU_H
+typedef unsigned char	UINT8;   /* unsigned  8bit */
+typedef unsigned short	UINT16;  /* unsigned 16bit */
+typedef unsigned int	UINT32;  /* unsigned 32bit */
+typedef signed char		INT8;    /* signed  8bit   */
+typedef signed short	INT16;   /* signed 16bit   */
+typedef signed int		INT32;   /* signed 32bit   */
+#endif
+
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
@@ -1343,13 +1354,11 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				/* timer 2 */
 				if(OPL->st[1] != st2)
 				{
-					double interval = st2 ? (double)OPL->T[1]*OPL_TIMERBASE : 0.0;
 					OPL->st[1] = st2;
 				}
 				/* timer 1 */
 				if(OPL->st[0] != st1)
 				{
-					double interval = st1 ? (double)OPL->T[0]*OPL_TIMERBASE : 0.0;
 					OPL->st[0] = st1;
 				}
 			}
@@ -1560,194 +1569,140 @@ static void OPLResetChip(FM_OPL *OPL)
 	}
 }
 
-/* Create one of virtual YM3812 */
-/* 'clock' is chip clock in Hz  */
-/* 'rate'  is sampling rate  */
-static FM_OPL *OPLCreate()
+
+class YM3812 : public OPLEmul
 {
-	char *ptr;
-	FM_OPL *OPL;
-	int state_size;
+private:
+	FM_OPL Chip;
 
-	if (OPL_LockTable() ==-1) return NULL;
-
-	/* calculate OPL state size */
-	state_size  = sizeof(FM_OPL);
-
-	/* allocate memory block */
-	ptr = (char *)malloc(state_size);
-
-	if (ptr==NULL)
-		return NULL;
-
-	/* clear */
-	memset(ptr,0,state_size);
-
-	OPL  = (FM_OPL *)ptr;
-
-	ptr += sizeof(FM_OPL);
-
-	/* init global tables */
-	OPL_initalize(OPL);
-
-	return OPL;
-}
-
-/* Destroy one of virtual YM3812 */
-static void OPLDestroy(FM_OPL *OPL)
-{
-	OPL_UnLockTable();
-	free(OPL);
-}
-
-/* YM3812 I/O interface */
-static int OPLWrite(FM_OPL *OPL,int a,int v)
-{
-	if( !(a&1) )
-	{	/* address port */
-		OPL->address = v & 0xff;
-	}
-	else
-	{	/* data port */
-		OPLWriteReg(OPL,OPL->address,v);
-	}
-	return OPL->status>>7;
-}
-
-static unsigned char OPLRead(FM_OPL *OPL,int a)
-{
-	if( !(a&1) )
+public:
+	/* Create one of virtual YM3812 */
+	YM3812(bool stereo)
 	{
-		/* status port */
-		/* OPL and OPL2 */
-		return OPL->status & (OPL->statusmask|0x80);
+		if (OPL_LockTable() == -1) return;
+
+		/* clear */
+		memset(&Chip, 0, sizeof(Chip));
+
+		/* init global tables */
+		OPL_initalize(&Chip);
+
+		Chip.IsStereo = true;
+
+		Reset();
 	}
 
-	return 0xff;
-}
-
-/* CSM Key Controll */
-INLINE void CSMKeyControll(OPL_CH *CH)
-{
-	FM_KEYON (&CH->SLOT[SLOT1], 4);
-	FM_KEYON (&CH->SLOT[SLOT2], 4);
-
-	/* The key off should happen exactly one sample later - not implemented correctly yet */
-
-	FM_KEYOFF(&CH->SLOT[SLOT1], ~4);
-	FM_KEYOFF(&CH->SLOT[SLOT2], ~4);
-}
-
-
-void *YM3812Init()
-{
-	/* emulator create */
-	FM_OPL *YM3812 = OPLCreate();
-	if (YM3812)
-		YM3812ResetChip(YM3812);
-	return YM3812;
-}
-
-void YM3812Shutdown(void *chip)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-
-	/* emulator shutdown */
-	OPLDestroy(YM3812);
-}
-void YM3812ResetChip(void *chip)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	OPLResetChip(YM3812);
-}
-
-int YM3812Write(void *chip, int a, int v)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	return OPLWrite(YM3812, a, v);
-}
-
-unsigned char YM3812Read(void *chip, int a)
-{
-	FM_OPL *YM3812 = (FM_OPL *)chip;
-	/* YM3812 always returns bit2 and bit1 in HIGH state */
-	return OPLRead(YM3812, a) | 0x06 ;
-}
-
-/* [RH] Full support for MIDI panning */
-void YM3812SetStereo(void *chip, bool stereo)
-{
-	if (chip != NULL)
+	/* Destroy one of virtual YM3812 */
+	~YM3812()
 	{
-		FM_OPL *YM3812 = (FM_OPL *)chip;
-		YM3812->IsStereo = stereo;
+		OPL_UnLockTable();
 	}
-}
 
-void YM3812SetPanning(void *chip, int c, int pan)
-{
-	if (chip != NULL)
+	/* YM3812 I/O interface */
+	int Write(int a, int v)
 	{
-		FM_OPL *YM3812 = (FM_OPL *)chip;
+		if( !(a&1) )
+		{	/* address port */
+			Chip.address = v & 0xff;
+		}
+		else
+		{	/* data port */
+			OPLWriteReg(&Chip, Chip.address, v);
+		}
+		return Chip.status>>7;
+	}
+
+	void Reset()
+	{
+		OPLResetChip(&Chip);
+	}
+
+	/* [RH] Full support for MIDI panning */
+	void SetPanning(int c, int pan)
+	{
 		// This is the MIDI-recommended pan formula. 0 and 1 are
 		// both hard left so that 64 can be perfectly center.
 		double level = (pan <= 1) ? 0 : (pan - 1) / 126.0;
-		YM3812->P_CH[c].LeftVol = (float)cos(HALF_PI * level);
-		YM3812->P_CH[c].RightVol = (float)sin(HALF_PI * level);
-	}
-}
-
-/*
-** Generate samples for one of the YM3812's
-**
-** 'which' is the virtual YM3812 number
-** '*buffer' is the output buffer pointer
-** 'length' is the number of samples that should be generated
-*/
-void YM3812UpdateOne(void *chip, float *buffer, int length)
-{
-	FM_OPL		*OPL = (FM_OPL *)chip;
-	int i;
-
-	if (OPL == NULL)
-	{
-		return;
+		Chip.P_CH[c].LeftVol = (float)cos(HALF_PI * level);
+		Chip.P_CH[c].RightVol = (float)sin(HALF_PI * level);
 	}
 
-	UINT8		rhythm = OPL->rhythm&0x20;
 
-	UINT32 lfo_am_cnt_bak = OPL->lfo_am_cnt;
-	UINT32 eg_timer_bak = OPL->eg_timer;
-	UINT32 eg_cnt_bak = OPL->eg_cnt;
-
-	UINT32 lfo_am_cnt_out = lfo_am_cnt_bak;
-	UINT32 eg_timer_out = eg_timer_bak;
-	UINT32 eg_cnt_out = eg_cnt_bak;
-
-	for (i = 0; i <= (rhythm ? 5 : 8); ++i)
+	/*
+	** Generate samples for one of the YM3812's
+	**
+	** '*buffer' is the output buffer pointer
+	** 'length' is the number of samples that should be generated
+	*/
+	void Update(float *buffer, int length)
 	{
-		OPL->lfo_am_cnt = lfo_am_cnt_bak;
-		OPL->eg_timer = eg_timer_bak;
-		OPL->eg_cnt = eg_cnt_bak;
-		if (CalcVoice (OPL, i, buffer, length))
+		int i;
+
+		UINT8		rhythm = Chip.rhythm&0x20;
+
+		UINT32 lfo_am_cnt_bak = Chip.lfo_am_cnt;
+		UINT32 eg_timer_bak = Chip.eg_timer;
+		UINT32 eg_cnt_bak = Chip.eg_cnt;
+
+		UINT32 lfo_am_cnt_out = lfo_am_cnt_bak;
+		UINT32 eg_timer_out = eg_timer_bak;
+		UINT32 eg_cnt_out = eg_cnt_bak;
+
+		for (i = 0; i <= (rhythm ? 5 : 8); ++i)
 		{
-			lfo_am_cnt_out = OPL->lfo_am_cnt;
-			eg_timer_out = OPL->eg_timer;
-			eg_cnt_out = OPL->eg_cnt;
+			Chip.lfo_am_cnt = lfo_am_cnt_bak;
+			Chip.eg_timer = eg_timer_bak;
+			Chip.eg_cnt = eg_cnt_bak;
+			if (CalcVoice (&Chip, i, buffer, length))
+			{
+				lfo_am_cnt_out = Chip.lfo_am_cnt;
+				eg_timer_out = Chip.eg_timer;
+				eg_cnt_out = Chip.eg_cnt;
+			}
+		}
+
+		Chip.lfo_am_cnt = lfo_am_cnt_out;
+		Chip.eg_timer = eg_timer_out;
+		Chip.eg_cnt = eg_cnt_out;
+
+		if (rhythm)		/* Rhythm part */
+		{
+			Chip.lfo_am_cnt = lfo_am_cnt_bak;
+			Chip.eg_timer = eg_timer_bak;
+			Chip.eg_cnt = eg_cnt_bak;
+			CalcRhythm (&Chip, buffer, length);
 		}
 	}
 
-	OPL->lfo_am_cnt = lfo_am_cnt_out;
-	OPL->eg_timer = eg_timer_out;
-	OPL->eg_cnt = eg_cnt_out;
-
-	if (rhythm)		/* Rhythm part */
+	FString GetVoiceString(void *chip)
 	{
-		OPL->lfo_am_cnt = lfo_am_cnt_bak;
-		OPL->eg_timer = eg_timer_bak;
-		OPL->eg_cnt = eg_cnt_bak;
-		CalcRhythm (OPL, buffer, length);
+		FM_OPL *OPL = (FM_OPL *)chip;
+		char out[9*3];
+
+		for (int i = 0; i <= 8; ++i)
+		{
+			int color;
+
+			if (OPL != NULL && (OPL->P_CH[i].SLOT[0].state != EG_OFF || OPL->P_CH[i].SLOT[1].state != EG_OFF))
+			{
+				color = 'D';	// Green means in use
+			}
+			else
+			{
+				color = 'A';	// Brick means free
+			}
+			out[i*3+0] = '\x1c';
+			out[i*3+1] = color;
+			out[i*3+2] = '*';
+		}
+		return FString (out, 9*3);
 	}
+};
+
+OPLEmul *YM3812Init(bool stereo)
+{
+	/* emulator create */
+	return new YM3812(stereo);
 }
 
 // [RH] Render a whole voice at once. If nothing else, it lets us avoid
@@ -1812,28 +1767,4 @@ static bool CalcRhythm (FM_OPL *OPL, float *buffer, int length)
 		advance_noise(OPL);
 	}
 	return true;
-}
-
-FString YM3812GetVoiceString(void *chip)
-{
-	FM_OPL *OPL = (FM_OPL *)chip;
-	char out[9*3];
-
-	for (int i = 0; i <= 8; ++i)
-	{
-		int color;
-
-		if (OPL != NULL && (OPL->P_CH[i].SLOT[0].state != EG_OFF || OPL->P_CH[i].SLOT[1].state != EG_OFF))
-		{
-			color = 'D';	// Green means in use
-		}
-		else
-		{
-			color = 'A';	// Brick means free
-		}
-		out[i*3+0] = '\x1c';
-		out[i*3+1] = color;
-		out[i*3+2] = '*';
-	}
-	return FString (out, 9*3);
 }

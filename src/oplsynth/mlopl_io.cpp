@@ -58,8 +58,8 @@ void OPLio::WriteDelay(int ticks)
 
 void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 {
-	YM3812Write (chips[which], 0, reg);
-	YM3812Write (chips[which], 1, data);
+	chips[which]->Write(0, reg);
+	chips[which]->Write(1, data);
 }
 
 /*
@@ -256,7 +256,7 @@ void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 		// Set real panning if we're using emulated chips.
 		if (chips[0] != NULL)
 		{
-			YM3812SetPanning(chips[channel/9], channel%9, pan+64);
+			chips[channel/9]->SetPanning(channel%9, pan+64);
 		}
 	}
 }
@@ -307,33 +307,22 @@ void OPLio::OPLshutup(void)
 int OPLio::OPLinit(uint numchips, bool stereo)
 {
 	assert(numchips >= 1 && numchips <= 2);
-	chips[0] = YM3812Init();
-	chips[1] = NULL;
-	if (chips[0] != NULL)
+	uint i;
+	memset(chips, 0, sizeof(chips));
+	for (i = 0; i < numchips; ++i)
 	{
-		YM3812SetStereo(chips[0], stereo);
-		if (numchips > 1)
+		OPLEmul *chip = YM3812Init(stereo);
+
+		if (chip == NULL)
 		{
-			chips[1] = YM3812Init();
-			if (chips[1] == NULL)
-			{
-				YM3812Shutdown(chips[0]);
-				chips[0] = NULL;
-				return -1;
-			}
-			else
-			{
-				YM3812SetStereo(chips[1], stereo);
-			}
+			break;
 		}
+		chips[i] = chip;
 	}
-	else
-	{
-		return -1;
-	}
-	OPLchannels = OPL2CHANNELS * numchips;
+	NumChips = i;
+	OPLchannels = OPL2CHANNELS * i;
 	OPLwriteInitState();
-	return 0;
+	return i;
 }
 
 void OPLio::OPLwriteInitState()
@@ -352,8 +341,12 @@ void OPLio::OPLwriteInitState()
 */
 void OPLio::OPLdeinit(void)
 {
-	YM3812Shutdown (chips[0]);
-	chips[0] = NULL;
-	YM3812Shutdown (chips[1]);
-	chips[1] = NULL;
+	for (size_t i = 0; i < countof(chips); ++i)
+	{
+		if (chips[i] != NULL)
+		{
+			delete chips[i];
+			chips[i] = NULL;
+		}
+	}
 }

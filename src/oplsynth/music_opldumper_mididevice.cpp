@@ -155,7 +155,7 @@ int DiskWriterIO::OPLinit(uint numchips, bool dontcare)
 	if (File == NULL)
 	{
 		Printf("Could not open %s for writing.\n", Filename.GetChars());
-		return -1;
+		return 0;
 	}
 
 	if (Format == FMT_RDOS)
@@ -189,7 +189,7 @@ int DiskWriterIO::OPLinit(uint numchips, bool dontcare)
 	CurChip = 0;
 	OPLchannels = OPL2CHANNELS * numchips;
 	OPLwriteInitState();
-	return 0;
+	return 1;
 }
 
 //==========================================================================

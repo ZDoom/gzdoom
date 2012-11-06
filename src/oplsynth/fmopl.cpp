@@ -154,36 +154,6 @@ Revision History:
 #define EG_REL			1
 #define EG_OFF			0
 
-/* save output as raw 16-bit sample */
-
-/*#define SAVE_SAMPLE*/
-
-#ifdef SAVE_SAMPLE
-static FILE *sample[1];
-	#if 1	/*save to MONO file */
-		#define SAVE_ALL_CHANNELS \
-		{	signed int pom = lt; \
-			fputc((unsigned short)pom&0xff,sample[0]); \
-			fputc(((unsigned short)pom>>8)&0xff,sample[0]); \
-		}
-	#else	/*save to STEREO file */
-		#define SAVE_ALL_CHANNELS \
-		{	signed int pom = lt; \
-			fputc((unsigned short)pom&0xff,sample[0]); \
-			fputc(((unsigned short)pom>>8)&0xff,sample[0]); \
-			pom = rt; \
-			fputc((unsigned short)pom&0xff,sample[0]); \
-			fputc(((unsigned short)pom>>8)&0xff,sample[0]); \
-		}
-	#endif
-#endif
-
-/* #define LOG_CYM_FILE */
-#ifdef LOG_CYM_FILE
-	FILE * cymfile = NULL;
-#endif
-
-
 
 #define OPL_TYPE_WAVESEL   0x01  /* waveform select		*/
 #define OPL_TYPE_ADPCM     0x02  /* DELTA-T ADPCM unit	*/
@@ -1215,18 +1185,11 @@ static int init_tables(void)
 	/*logerror("FMOPL.C: ENV_QUIET= %08x (dec*8=%i)\n", ENV_QUIET, ENV_QUIET*8 );*/
 
 
-#ifdef SAVE_SAMPLE
-	sample[0]=fopen("sampsum.pcm","wb");
-#endif
-
 	return 1;
 }
 
 static void OPLCloseTable( void )
 {
-#ifdef SAVE_SAMPLE
-	fclose(sample[0]);
-#endif
 }
 
 
@@ -1427,19 +1390,9 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 	int slot;
 	int block_fnum;
 
-
 	/* adjust bus to 8 bits */
 	r &= 0xff;
 	v &= 0xff;
-
-#ifdef LOG_CYM_FILE
-	if ((cymfile) && (r!=0) )
-	{
-		fputc( (unsigned char)r, cymfile );
-		fputc( (unsigned char)v, cymfile );
-	}
-#endif
-
 
 	switch(r&0xe0)
 	{
@@ -1637,16 +1590,6 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 	}
 }
 
-#ifdef LOG_CYM_FILE
-static void cymfile_callback (int n)
-{
-	if (cymfile)
-	{
-		fputc( (unsigned char)0, cymfile );
-	}
-}
-#endif
-
 /* lock/unlock for common table */
 static int OPL_LockTable(void)
 {
@@ -1662,14 +1605,6 @@ static int OPL_LockTable(void)
 		return -1;
 	}
 
-#ifdef LOG_CYM_FILE
-	cymfile = fopen("3812_.cym","wb");
-	if (cymfile)
-		timer_pulse ( TIME_IN_HZ(110), 0, cymfile_callback); /*110 Hz pulse timer*/
-	else
-		logerror("Could not create file 3812_.cym\n");
-#endif
-
 	return 0;
 }
 
@@ -1681,12 +1616,6 @@ static void OPL_UnLockTable(void)
 	/* last time */
 
 	OPLCloseTable();
-
-#ifdef LOG_CYM_FILE
-	fclose (cymfile);
-	cymfile = NULL;
-#endif
-
 }
 
 static void OPLResetChip(FM_OPL *OPL)
@@ -1847,12 +1776,6 @@ static int OPLTimerOver(FM_OPL *OPL,int c)
 	return OPL->status>>7;
 }
 
-
-#define MAX_OPL_CHIPS 2
-
-
-static FM_OPL *OPL_YM3812[MAX_OPL_CHIPS];	/* array of pointers to the YM3812's */
-static int YM3812NumChips = 0;				/* number of chips */
 
 void *YM3812Init(int clock, int rate)
 {

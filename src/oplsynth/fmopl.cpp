@@ -1587,7 +1587,7 @@ public:
 		/* init global tables */
 		OPL_initalize(&Chip);
 
-		Chip.IsStereo = true;
+		Chip.IsStereo = stereo;
 
 		Reset();
 	}

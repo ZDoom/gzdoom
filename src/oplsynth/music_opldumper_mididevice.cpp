@@ -189,7 +189,7 @@ int DiskWriterIO::OPLinit(uint numchips, bool dontcare)
 	CurChip = 0;
 	OPLchannels = OPL2CHANNELS * numchips;
 	OPLwriteInitState();
-	return 1;
+	return numchips;
 }
 
 //==========================================================================

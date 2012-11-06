@@ -25,7 +25,7 @@ typedef void (*OPL_PORTHANDLER_W)(int param,unsigned char data);
 typedef unsigned char (*OPL_PORTHANDLER_R)(int param);
 
 
-void *YM3812Init(int clock, int rate);
+void *YM3812Init();
 void YM3812Shutdown(void *chip);
 void YM3812ResetChip(void *chip);
 int  YM3812Write(void *chip, int a, int v);

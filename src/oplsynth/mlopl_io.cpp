@@ -307,14 +307,14 @@ void OPLio::OPLshutup(void)
 int OPLio::OPLinit(uint numchips, bool stereo)
 {
 	assert(numchips >= 1 && numchips <= 2);
-	chips[0] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
+	chips[0] = YM3812Init();
 	chips[1] = NULL;
 	if (chips[0] != NULL)
 	{
 		YM3812SetStereo(chips[0], stereo);
 		if (numchips > 1)
 		{
-			chips[1] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
+			chips[1] = YM3812Init();
 			if (chips[1] == NULL)
 			{
 				YM3812Shutdown(chips[0]);

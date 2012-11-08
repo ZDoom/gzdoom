@@ -100,7 +100,7 @@ Revision History:
 #include <stdarg.h>
 #include <math.h>
 //#include "driver.h"		/* use M.A.M.E. */
-#include "fmopl.h"
+#include "opl.h"
 
 /* compiler dependence */
 #ifndef OSD_CPU_H
@@ -1576,17 +1576,9 @@ public:
 	}
 
 	/* YM3812 I/O interface */
-	int Write(int a, int v)
+	void WriteReg(int reg, int v)
 	{
-		if( !(a&1) )
-		{	/* address port */
-			Chip.address = v & 0xff;
-		}
-		else
-		{	/* data port */
-			OPLWriteReg(&Chip, Chip.address, v);
-		}
-		return Chip.status>>7;
+		OPLWriteReg(&Chip, reg & 0xff, v);
 	}
 
 	void Reset()
@@ -1676,7 +1668,7 @@ public:
 	}
 };
 
-OPLEmul *YM3812Init(bool stereo)
+OPLEmul *YM3812Create(bool stereo)
 {
 	/* emulator create */
 	return new YM3812(stereo);

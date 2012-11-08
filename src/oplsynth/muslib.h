@@ -176,9 +176,9 @@ struct OPLio {
 	void	OPLwritePan(uint channel, struct OPL2instrument *instr, int pan);
 	void	OPLwriteInstrument(uint channel, struct OPL2instrument *instr);
 	void	OPLshutup(void);
-	void	OPLwriteInitState();
+	void	OPLwriteInitState(bool initopl3);
 
-	virtual int		OPLinit(uint numchips, bool stereo=false);
+	virtual int		OPLinit(uint numchips, bool stereo=false, bool initopl3=false);
 	virtual void	OPLdeinit(void);
 	virtual void	OPLwriteReg(int which, uint reg, uchar data);
 	virtual void	SetClockRate(double samples_per_tick);
@@ -187,6 +187,7 @@ struct OPLio {
 	class OPLEmul *chips[MAXOPL2CHIPS];
 	uint OPLchannels;
 	uint NumChips;
+	bool IsOPL3;
 };
 
 struct DiskWriterIO : public OPLio

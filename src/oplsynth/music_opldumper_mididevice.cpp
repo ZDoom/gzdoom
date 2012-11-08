@@ -39,7 +39,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "w_wad.h"
-#include "fmopl.h"
+#include "opl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -188,7 +188,7 @@ int DiskWriterIO::OPLinit(uint numchips, bool dontcare)
 	CurIntTime = 0;
 	CurChip = 0;
 	OPLchannels = OPL2CHANNELS * numchips;
-	OPLwriteInitState();
+	OPLwriteInitState(false);
 	return numchips;
 }
 

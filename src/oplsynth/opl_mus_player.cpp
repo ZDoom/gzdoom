@@ -7,7 +7,7 @@
 
 #include "opl_mus_player.h"
 #include "doomtype.h"
-#include "fmopl.h"
+#include "opl.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "c_cvars.h"
@@ -25,7 +25,7 @@ OPLmusicBlock::OPLmusicBlock()
 	LastOffset = 0;
 	NumChips = MIN(*opl_numchips, 2);
 	Looping = false;
-	IsStereo = false;
+	FullPan = false;
 	io = NULL;
 	io = new OPLio;
 }
@@ -39,7 +39,7 @@ void OPLmusicBlock::ResetChips ()
 {
 	ChipAccess.Enter();
 	io->OPLdeinit ();
-	NumChips = io->OPLinit(MIN(*opl_numchips, 2), IsStereo);
+	NumChips = io->OPLinit(MIN(*opl_numchips, 2), FullPan);
 	ChipAccess.Leave();
 }
 
@@ -223,7 +223,8 @@ void OPLmusicFile::Restart ()
 bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 {
 	float *samples1 = (float *)buff;
-	int numsamples = numbytes / (sizeof(float) << int(IsStereo));
+	int stereoshift = (int)(FullPan | io->IsOPL3);
+	int numsamples = numbytes / (sizeof(float) << stereoshift);
 	bool prevEnded = false;
 	bool res = true;
 
@@ -243,12 +244,12 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			{
 				io->chips[i]->Update(samples1, samplesleft);
 			}
-			OffsetSamples(samples1, samplesleft << int(IsStereo));
+			OffsetSamples(samples1, samplesleft << stereoshift);
 			assert(NextTickIn == ticky);
 			NextTickIn -= samplesleft;
 			assert (NextTickIn >= 0);
 			numsamples -= samplesleft;
-			samples1 += samplesleft << int(IsStereo);
+			samples1 += samplesleft << stereoshift;
 		}
 		
 		if (NextTickIn < 1)
@@ -265,7 +266,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 						{
 							io->chips[i]->Update(samples1, samplesleft);
 						}
-						OffsetSamples(samples1, numsamples << int(IsStereo));
+						OffsetSamples(samples1, numsamples << stereoshift);
 					}
 					res = false;
 					break;

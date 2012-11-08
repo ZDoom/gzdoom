@@ -1400,6 +1400,12 @@ OptionValue GusMemory
 	4, "1024K"
 }
 
+OptionValue OplCores
+{
+	0, "MAME"
+	1, "DOSBox"
+}
+
 OptionMenu AdvSoundOptions
 {
 	Title "ADVANCED SOUND OPTIONS"
@@ -1409,7 +1415,8 @@ OptionMenu AdvSoundOptions
 	StaticText " "
 	StaticText "OPL Synthesis",	1
 	Slider "Number of emulated OPL chips", "opl_numchips", 1, 8, 1, 0
-	Option "Support MIDI stero panning", "opl_stereo", "OnOff"
+	Option "Full MIDI stereo panning", "opl_fullpan", "OnOff"
+	Option "OPL Emulator Core", "opl_core", "OplCores"
 	StaticText " "
 	StaticText "GUS Emulation",	1
 	Slider "MIDI voices",	"midi_voices", 16, 256, 4, 0

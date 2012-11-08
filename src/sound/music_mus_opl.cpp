@@ -19,6 +19,8 @@ CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
+CVAR(Int, opl_core, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 OPLMUSSong::OPLMUSSong (FILE *file, BYTE *musiccache, int len)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
@@ -26,7 +28,7 @@ OPLMUSSong::OPLMUSSong (FILE *file, BYTE *musiccache, int len)
 	Music = new OPLmusicFile (file, musiccache, len);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
-		SoundStream::Mono | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
+		(opl_core != 1 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create music stream.\n");

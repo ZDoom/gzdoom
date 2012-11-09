@@ -46,8 +46,8 @@
 #include "templates.h"
 #include "g_level.h"
 
-// List of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-const PClass *SpawnableThings[MAX_SPAWNABLES];
+// Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
+TMap<int, const PClass *> SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
@@ -494,23 +494,43 @@ const PClass *P_GetSpawnableType(int spawnnum)
 			return PClass::FindClass(spawnname);
 		}
 	}
-	else if (spawnnum < countof(SpawnableThings))
+	else
 	{ // A numbered arg from a Hexen or UDMF map
-		return SpawnableThings[spawnnum];
+		const PClass **type = SpawnableThings.CheckKey(spawnnum);
+		if (type != NULL)
+		{
+			return *type;
+		}
 	}
 	return NULL;
 }
 
+typedef TMap<int, const PClass *>::Pair SpawnablePair;
+
+static int STACK_ARGS SpawnableSort(const void *a, const void *b)
+{
+	return (*((SpawnablePair **)a))->Key - (*((SpawnablePair **)b))->Key;
+}
+
 CCMD (dumpspawnables)
 {
-	int i;
+	TMapIterator<int, const PClass *> it(SpawnableThings);
+	SpawnablePair *pair, **allpairs;
+	int i = 0;
 
-	for (i = 0; i < MAX_SPAWNABLES; i++)
+	// Sort into numerical order, since their arrangement in the map can
+	// be in an unspecified order.
+	allpairs = new TMap<int, const PClass *>::Pair *[SpawnableThings.CountUsed()];
+	while (it.NextPair(pair))
 	{
-		if (SpawnableThings[i] != NULL)
-		{
-			Printf ("%d %s\n", i, SpawnableThings[i]->TypeName.GetChars());
-		}
+		allpairs[i++] = pair;
 	}
+	qsort(allpairs, i, sizeof(*allpairs), SpawnableSort);
+	for (int j = 0; j < i; ++j)
+	{
+		pair = allpairs[j];
+		Printf ("%d %s\n", pair->Key, pair->Value->TypeName.GetChars());
+	}
+	delete[] allpairs;
 }
 

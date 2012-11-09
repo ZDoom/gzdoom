@@ -155,8 +155,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 //
 // [RH] P_THINGS
 //
-#define MAX_SPAWNABLES	(256)
-extern const PClass *SpawnableThings[MAX_SPAWNABLES];
+extern TMap<int, const PClass *> SpawnableThings;
 
 bool	P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, angle_t angle,

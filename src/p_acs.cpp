@@ -2283,13 +2283,9 @@ int DLevelScript::ThingCount (int type, int stringid, int tid, int tag)
 	int count = 0;
 	bool replacemented = false;
 
-	if (type >= MAX_SPAWNABLES)
+	if (type > 0)
 	{
-		return 0;
-	}
-	else if (type > 0)
-	{
-		kind = SpawnableThings[type];
+		kind = P_GetSpawnableType(type);
 		if (kind == NULL)
 			return 0;
 	}

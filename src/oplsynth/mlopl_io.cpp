@@ -68,7 +68,10 @@ void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 		reg |= (which & 1) << 8;
 		which >>= 1;
 	}
-	chips[which]->WriteReg(reg, data);
+	if (chips[which] != NULL)
+	{
+		chips[which]->WriteReg(reg, data);
+	}
 }
 
 /*

@@ -411,10 +411,7 @@ int OPLmusicFile::PlayTick ()
 				break;
 
 			default:	// It's something to stuff into the OPL chip
-				if (WhichChip < NumChips)
-				{
-					io->OPLwriteReg(WhichChip, reg, data);
-				}
+				io->OPLwriteReg(WhichChip, reg, data);
 				break;
 			}
 		}
@@ -454,10 +451,7 @@ int OPLmusicFile::PlayTick ()
 			{
 				data = *score++;
 			}
-			if (WhichChip < NumChips)
-			{
-				io->OPLwriteReg(WhichChip, reg, data);
-			}
+			io->OPLwriteReg(WhichChip, reg, data);
 		}
 		break;
 
@@ -485,7 +479,7 @@ int OPLmusicFile::PlayTick ()
 				{
 					return (data + 1) << 8;
 				}
-				else if (code < to_reg_size && which < NumChips)
+				else if (code < to_reg_size)
 				{
 					io->OPLwriteReg(which, to_reg[code], data);
 				}

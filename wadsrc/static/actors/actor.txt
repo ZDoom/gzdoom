@@ -56,6 +56,8 @@ ACTOR Actor native //: Thinker
 	native int score;
 	native int accuracy;
 	native int stamina;
+	native fixed_t height;
+	native fixed_t radius;
 
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);

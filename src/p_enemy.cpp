@@ -540,7 +540,7 @@ bool P_Move (AActor *actor)
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
 		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (0 && actor->z <= actor->floorz + actor->MaxStepHeight)
+		if (actor->z <= actor->floorz + actor->MaxStepHeight)
 		{
 			fixed_t savedz = actor->z;
 			actor->z = actor->floorz;

@@ -70,13 +70,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 		}
 	}
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
-	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])
-	{ // Spawn an item
+	// Spawn an item?
+	const PClass *type = P_GetSpawnableType(self->args[0]);
+	if (type != NULL)
+	{
 		if (!((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
-		|| !(GetDefaultByType (SpawnableThings[self->args[0]])->flags3 & MF3_ISMONSTER))
+		|| !(GetDefaultByType (type)->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
-			Spawn (SpawnableThings[self->args[0]],
-				self->x, self->y, self->z, ALLOW_REPLACE);
+			Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
 		}
 	}
 }
@@ -288,13 +289,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 			mo->vely = pr_soaexplode.Random2()<<(FRACBITS-6);
 		}
 	}
-	if (self->args[0]>=0 && self->args[0]<=255 && SpawnableThings[self->args[0]])
-	{ // Spawn an item
+	// Spawn an item?
+	const PClass *type = P_GetSpawnableType(self->args[0]);
+	if (type != NULL)
+	{
 		if (!((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
-		|| !(GetDefaultByType (SpawnableThings[self->args[0]])->flags3 & MF3_ISMONSTER))
+		|| !(GetDefaultByType (type)->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
-			Spawn (SpawnableThings[self->args[0]],
-				self->x, self->y, self->z, ALLOW_REPLACE);
+			Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
 		}
 	}
 	S_Sound (self, CHAN_BODY, self->DeathSound, 1, ATTN_NORM);

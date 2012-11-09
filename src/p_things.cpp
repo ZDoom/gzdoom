@@ -58,10 +58,9 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
 
-	if (type >= MAX_SPAWNABLES)
-		return false;
+	kind = P_GetSpawnableType(type);
 
-	if ( (kind = SpawnableThings[type]) == NULL)
+	if (kind == NULL)
 		return false;
 
 	// Handle decorate replacements.
@@ -182,18 +181,16 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 	if (type_name == NULL)
 	{
-		if (type >= MAX_SPAWNABLES)
-			return false;
-
-		if ((kind = SpawnableThings[type]) == NULL)
-			return false;
+		kind = P_GetSpawnableType(type);
 	}
 	else
 	{
-		if ((kind = PClass::FindClass(type_name)) == NULL || kind->ActorInfo == NULL)
-			return false;
+		kind = PClass::FindClass(type_name);
 	}
-
+	if (kind == NULL || kind->ActorInfo == NULL)
+	{
+		return false;
+	}
 
 	// Handle decorate replacements.
 	kind = kind->GetReplacement();
@@ -487,6 +484,22 @@ void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 	}
 }
 
+const PClass *P_GetSpawnableType(int spawnnum)
+{
+	if (spawnnum < 0)
+	{ // A named arg from a UDMF map
+		FName spawnname = FName(ENamedName(-spawnnum));
+		if (spawnname.IsValidName())
+		{
+			return PClass::FindClass(spawnname);
+		}
+	}
+	else if (spawnnum < countof(SpawnableThings))
+	{ // A numbered arg from a Hexen or UDMF map
+		return SpawnableThings[spawnnum];
+	}
+	return NULL;
+}
 
 CCMD (dumpspawnables)
 {

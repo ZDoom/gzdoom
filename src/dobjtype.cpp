@@ -357,8 +357,8 @@ unsigned int PClass::Extend(unsigned int extension)
 }
 
 // Like FindClass but creates a placeholder if no class
-// is found. CreateDerivedClass will automatcally fill in
-// the placeholder when the actual class is defined.
+// is found. CreateDerivedClass will automatically fill
+// in the placeholder when the actual class is defined.
 const PClass *PClass::FindClassTentative (FName name)
 {
 	if (name == NAME_None)

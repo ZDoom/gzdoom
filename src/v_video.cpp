@@ -491,7 +491,7 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 		else
 		{
 normal:
-			// Treat it as a space-delemited hexadecimal string
+			// Treat it as a space-delimited hexadecimal string
 			for (i = 0; i < 3; ++i)
 			{
 				// Skip leading whitespace

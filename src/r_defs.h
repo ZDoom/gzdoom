@@ -904,7 +904,7 @@ struct line_t
 	slopetype_t	slopetype;	// To aid move clipping.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
-	int		locknumber;	// [Dusk] lock number for special
+	int			locknumber;	// [Dusk] lock number for special
 };
 
 // phares 3/14/98

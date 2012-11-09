@@ -46,7 +46,6 @@ typedef SBYTE		Bit8s;
 
 #include "opl.h"
 
-#define HALF_PI (PI*0.5)
 #define CENTER_PANNING_POWER	0.70710678118f
 
 static Bit16s wavtable[WAVEPREC*3];	// wave form table
@@ -1425,7 +1424,7 @@ void DBOPL::Update(float* sndptr, int numsamples) {
 	}
 }
 
-void DBOPL::SetPanning(int c, int pan)
+void DBOPL::SetPanning(int c, float left, float right)
 {
 	if (FullPan)
 	{
@@ -1433,11 +1432,8 @@ void DBOPL::SetPanning(int c, int pan)
 		{
 			c += 9;
 		}
-		// This is the MIDI-recommended pan formula. 0 and 1 are
-		// both hard left so that 64 can be perfectly center.
-		double level = (pan <= 1) ? 0 : (pan - 1) / 126.0;
-		op[c].left_pan = (float)cos(HALF_PI * level);
-		op[c].right_pan = (float)sin(HALF_PI * level);
+		op[c].left_pan = left;
+		op[c].right_pan = right;
 	}
 }
 

@@ -127,7 +127,6 @@ typedef signed int		INT32;   /* signed 32bit   */
 #endif
 
 #define CENTER_PANNING_POWER	0.70710678118	/* [RH] volume at center for EQP */
-#define HALF_PI					(PI/2)
 
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH			16  /* 16.16 fixed point (EG timing)              */
@@ -1587,13 +1586,10 @@ public:
 	}
 
 	/* [RH] Full support for MIDI panning */
-	void SetPanning(int c, int pan)
+	void SetPanning(int c, float left, float right)
 	{
-		// This is the MIDI-recommended pan formula. 0 and 1 are
-		// both hard left so that 64 can be perfectly center.
-		double level = (pan <= 1) ? 0 : (pan - 1) / 126.0;
-		Chip.P_CH[c].LeftVol = (float)cos(HALF_PI * level);
-		Chip.P_CH[c].RightVol = (float)sin(HALF_PI * level);
+		Chip.P_CH[c].LeftVol = left;
+		Chip.P_CH[c].RightVol = right;
 	}
 
 

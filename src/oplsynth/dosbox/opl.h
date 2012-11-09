@@ -223,7 +223,7 @@ public:
 	void Reset();
 	void Update(float* sndptr, int numsamples);
 	void WriteReg(int idx, int val);
-	void SetPanning(int c, int pan);
+	void SetPanning(int c, float left, float right);
 
 	DBOPL(bool stereo);
 };

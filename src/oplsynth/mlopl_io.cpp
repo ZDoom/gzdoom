@@ -45,6 +45,8 @@
 #include "opl.h"
 #include "c_cvars.h"
 
+#define HALF_PI (PI*0.5)
+
 EXTERN_CVAR(Int, opl_core)
 
 OPLio::~OPLio()
@@ -260,7 +262,13 @@ void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 		int which = channel / chanper;
 		if (chips[which] != NULL)
 		{
-			chips[which]->SetPanning(channel % chanper, pan + 64);
+			// This is the MIDI-recommended pan formula. 0 and 1 are
+			// both hard left so that 64 can be perfectly center.
+			// (Note that the 'pan' passed to this function is the
+			// MIDI pan position, subtracted by 64.)
+			double level = (pan <= -63) ? 0 : (pan + 64 - 1) / 126.0;
+			chips[which]->SetPanning(channel % chanper,
+				(float)cos(HALF_PI * level), (float)sin(HALF_PI * level));
 		}
 	}
 }

@@ -73,7 +73,6 @@ ACTOR PigPlayer : PlayerPawn native
 	Player.SoundClass "Pig"
 	Player.DisplayName "Pig"
 	Player.MorphWeapon "Snout"
-	-PICKUP
 	States
 	{
 	Spawn:

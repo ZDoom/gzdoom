@@ -85,22 +85,42 @@ public:
 	{
 		Alpha = alpha;
 	}
+	void SetNoWrap(bool nowrap)
+	{
+		NoWrap = nowrap;
+		ResetText(SourceText);
+	}
+	void SetClipRect(int x, int y, int width, int height)
+	{
+		ClipX = x;
+		ClipY = y;
+		ClipWidth = width;
+		ClipHeight = height;
+	}
+	void SetWrapWidth(int wrap)
+	{
+		WrapWidth = wrap;
+		ResetText(SourceText);
+	}
 
 protected:
 	FBrokenLines *Lines;
 	int Width, Height, NumLines;
 	float Left, Top;
-	bool CenterX;
+	bool CenterX, NoWrap;
 	int HoldTics;
 	int Tics;
 	int State;
 	int VisibilityFlags;
 	int HUDWidth, HUDHeight;
+	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
+	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
 	EColorRange TextColor;
 	FFont *Font;
 	FRenderStyle Style;
 	fixed_t Alpha;
 
+	void CalcClipCoords(int hudheight);
 	DHUDMessage () : SourceText(NULL) {}
 
 private:

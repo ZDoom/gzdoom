@@ -131,6 +131,9 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 			Left = intpart - (float)(fracpart & 3) / 10.f;
 		}
 	}
+	NoWrap = false;
+	ClipX = ClipY = ClipWidth = ClipHeight = 0;
+	WrapWidth = 0;
 	Top = y;
 	Next = NULL;
 	Lines = NULL;
@@ -182,6 +185,17 @@ void DHUDMessage::Serialize (FArchive &arc)
 		<< Tics << State << TextColor
 		<< SBarID << SourceText << Font << Next
 		<< HUDWidth << HUDHeight;
+	if (SaveVersion >= 3960)
+	{
+		 arc << NoWrap;
+		 arc << ClipX << ClipY << ClipWidth << ClipHeight;
+		 arc << WrapWidth;
+	}
+	else
+	{
+		NoWrap = false;
+		ClipX = ClipY = ClipWidth = ClipHeight = WrapWidth = 0;
+	}
 	if (arc.IsLoading ())
 	{
 		Lines = NULL;
@@ -222,6 +236,37 @@ void DHUDMessage::ScreenSizeChanged ()
 
 //============================================================================
 //
+// DHUDMessage :: CalcClipCoords
+//
+// Take the clip rectangle in HUD coordinates (set via SetHudSize in ACS)
+// and convert them to screen coordinates.
+//
+//============================================================================
+
+void DHUDMessage::CalcClipCoords(int hudheight)
+{
+	int x = ClipX, y = ClipY, w = ClipWidth, h = ClipHeight;
+
+	if ((x | y | w | h) == 0)
+	{ // No clipping rectangle set; use the full screen.
+		ClipLeft = 0;
+		ClipTop = 0;
+		ClipRight = screen->GetWidth();
+		ClipBot = screen->GetHeight();
+	}
+	else
+	{
+		screen->VirtualToRealCoordsInt(x, y, w, h,
+			HUDWidth, hudheight, false, true);
+		ClipLeft = x;
+		ClipTop = y;
+		ClipRight = x + w;
+		ClipBot = y + h;
+	}
+}
+
+//============================================================================
+//
 // DHUDMessage :: ResetText
 //
 //============================================================================
@@ -232,11 +277,11 @@ void DHUDMessage::ResetText (const char *text)
 
 	if (HUDWidth != 0)
 	{
-		width = HUDWidth;
+		width = ClipWidth == 0 ? HUDWidth : ClipWidth;
 	}
 	else
 	{
-		width = con_scaletext >=2 ? SCREENWIDTH/2 : (con_scaletext ? SCREENWIDTH / CleanXfac : SCREENWIDTH); 
+		width = con_scaletext >= 2 ? SCREENWIDTH/2 : (con_scaletext ? SCREENWIDTH / CleanXfac : SCREENWIDTH); 
 	}
 
 	if (Lines != NULL)
@@ -244,7 +289,7 @@ void DHUDMessage::ResetText (const char *text)
 		V_FreeBrokenLines (Lines);
 	}
 
-	Lines = V_BreakLines (Font, width, (BYTE *)text);
+	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (BYTE *)text);
 
 	NumLines = 0;
 	Width = 0;
@@ -377,15 +422,14 @@ void DHUDMessage::Draw (int bottom, int visibility)
 	ystep = Font->GetHeight() * yscale;
 
 	if (HUDHeight < 0)
-	{
-		// A negative height means the HUD size covers the status bar
+	{ // A negative height means the HUD size covers the status bar
 		hudheight = -HUDHeight;
 	}
 	else
-	{
-		// A positive height means the HUD size does not cover the status bar
+	{ // A positive height means the HUD size does not cover the status bar
 		hudheight = Scale (HUDHeight, screen_height, bottom);
 	}
+	CalcClipCoords(hudheight);
 
 	for (i = 0; i < NumLines; i++)
 	{
@@ -441,6 +485,10 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 		screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 			DTA_VirtualWidth, HUDWidth,
 			DTA_VirtualHeight, hudheight,
+			DTA_ClipLeft, ClipLeft,
+			DTA_ClipRight, ClipRight,
+			DTA_ClipTop, ClipTop,
+			DTA_ClipBottom, ClipBot,
 			DTA_Alpha, Alpha,
 			DTA_RenderStyle, Style,
 			TAG_DONE);
@@ -541,6 +589,10 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, HUDWidth,
 				DTA_VirtualHeight, hudheight,
+				DTA_ClipLeft, ClipLeft,
+				DTA_ClipRight, ClipRight,
+				DTA_ClipTop, ClipTop,
+				DTA_ClipBottom, ClipBot,
 				DTA_Alpha, trans,
 				DTA_RenderStyle, Style,
 				TAG_DONE);
@@ -638,6 +690,10 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, HUDWidth,
 				DTA_VirtualHeight, hudheight,
+				DTA_ClipLeft, ClipLeft,
+				DTA_ClipRight, ClipRight,
+				DTA_ClipTop, ClipTop,
+				DTA_ClipBottom, ClipBot,
 				DTA_Alpha, trans,
 				DTA_RenderStyle, Style,
 				TAG_DONE);
@@ -814,6 +870,10 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_VirtualWidth, HUDWidth,
 					DTA_VirtualHeight, hudheight,
+					DTA_ClipLeft, ClipLeft,
+					DTA_ClipRight, ClipRight,
+					DTA_ClipTop, ClipTop,
+					DTA_ClipBottom, ClipBot,
 					DTA_Alpha, Alpha,
 					DTA_TextLen, LineVisible,
 					DTA_RenderStyle, Style,

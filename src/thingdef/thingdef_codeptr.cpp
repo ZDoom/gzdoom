@@ -2299,15 +2299,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
 	{
 		mo = Spawn(debris, self->x+((pr_spawndebris()-128)<<12),
-			self->y+((pr_spawndebris()-128)<<12), 
-			self->z+(pr_spawndebris()*self->height/256+self->GetBobOffset()), ALLOW_REPLACE);
-		if (mo && transfer_translation)
+			self->y + ((pr_spawndebris()-128)<<12), 
+			self->z + (pr_spawndebris()*self->height/256+self->GetBobOffset()), ALLOW_REPLACE);
+		if (mo)
 		{
-			mo->Translation = self->Translation;
-		}
-		if (mo && i < mo->GetClass()->ActorInfo->NumOwnedStates)
-		{
-			mo->SetState (mo->GetClass()->ActorInfo->OwnedStates + i);
+			if (transfer_translation)
+			{
+				mo->Translation = self->Translation;
+			}
+			if (i < mo->GetClass()->ActorInfo->NumOwnedStates)
+			{
+				mo->SetState(mo->GetClass()->ActorInfo->OwnedStates + i);
+			}
 			mo->velz = FixedMul(mult_v, ((pr_spawndebris()&7)+5)*FRACUNIT);
 			mo->velx = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
 			mo->vely = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));

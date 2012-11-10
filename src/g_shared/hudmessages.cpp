@@ -277,7 +277,7 @@ void DHUDMessage::ResetText (const char *text)
 
 	if (HUDWidth != 0)
 	{
-		width = ClipWidth == 0 ? HUDWidth : ClipWidth;
+		width = WrapWidth == 0 ? HUDWidth : WrapWidth;
 	}
 	else
 	{

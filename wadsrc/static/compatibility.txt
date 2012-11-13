@@ -284,3 +284,20 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	clearlinespecial 1107
 	clearlinespecial 1108
 }
+
+D41D8CD98F00B204E9800998ECF8427E // Khorus, map08
+{
+	// This map uses a voodoo conveyor with slanted walls to shunt the
+	// voodoo doll into side areas. For some reason, this voodoo doll
+	// is unable to slide on them, because the slide calculation gets
+	// them slightly inside the walls and thinks they are stuck. I could
+	// not reproduce this with the real player, which is what has me
+	// stumped. So, help them out be attaching some ThrustThing specials
+	// to the walls.
+	setlinespecial 443 ThrustThing 96 4 0 0 0
+	setlineflags 443 0x200		// repeatable
+	setactivation 443 16		// SPAC_Push
+	setlinespecial 455 ThrustThing 96 4 0 0 0
+	setlineflags 455 0x200		// repeatable
+	setactivation 455 16		// SPAC_Push
+}

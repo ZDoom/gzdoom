@@ -813,6 +813,7 @@ add_executable( zdoom WIN32
 	oplsynth/music_opl_mididevice.cpp
 	oplsynth/opl_mus_player.cpp
 	oplsynth/dosbox/opl.cpp
+	oplsynth/OPL3.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp

@@ -2619,6 +2619,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\oplsynth\OPL3.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\oplsynth\opl_mus_player.cpp"
 					>
 				</File>
@@ -2632,34 +2636,6 @@
 					<File
 						RelativePath=".\src\oplsynth\dosbox\opl.cpp"
 						>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|x64"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|x64"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-							/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath=".\src\oplsynth\dosbox\opl.h"

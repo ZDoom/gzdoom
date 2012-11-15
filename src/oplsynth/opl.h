@@ -20,5 +20,6 @@ public:
 
 OPLEmul *YM3812Create(bool stereo);
 OPLEmul *DBOPLCreate(bool stereo);
+OPLEmul *JavaOPLCreate(bool stereo);
 
 #endif

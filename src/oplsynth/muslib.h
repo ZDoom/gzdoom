@@ -294,7 +294,6 @@ enum MUSctrl {
     ctrlPoly,
 };
 
-#define OPL_SAMPLE_RATE			49716.0
 #define ADLIB_CLOCK_MUL			24.0
 
 #endif // __MUSLIB_H_

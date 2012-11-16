@@ -49,10 +49,23 @@
 #include "doomtype.h"
 #include "opl.h"
 #include "m_random.h"
+#include "xs_Float.h"
 
 static FRandom pr_opl3;
 
+#define VOLUME_MUL		0.25
+
 class Operator;
+
+static inline double StripIntPart(double num)
+{
+#if 0
+	double dontcare;
+	return modf(num, &dontcare);
+#else
+	return num - xs_RoundToInt(num);
+#endif
+}
 
 //
 // Channels
@@ -64,7 +77,7 @@ class Channel
 protected:
 	double feedback[2];
 	
-	int fnuml, fnumh, kon, block, cha, chb, chc, chd, fb, cnt;     
+	int fnuml, fnumh, kon, block, fb, cha, chb, cnt;     
 
 	// Factor to convert between normalized amplitude to normalized
 	// radians. The amplitude maximum is equivalent to 8*Pi radians.
@@ -72,20 +85,20 @@ protected:
 
 public:
 	int channelBaseAddress;
+
+	double leftPan, rightPan;
 	
 	Channel (int baseAddress);
 	void update_2_KON1_BLOCK3_FNUMH2(class OPL3 *OPL3);
 	void update_FNUML8(class OPL3 *OPL3);
 	void update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(class OPL3 *OPL3);
 	void updateChannel(class OPL3 *OPL3);
-	virtual void getChannelOutput(class OPL3 *OPL3, double output[4]) = 0;
+	void updatePan(class OPL3 *OPL3);
+	virtual double getChannelOutput(class OPL3 *OPL3) = 0;
 
 	virtual void keyOn() = 0;
 	virtual void keyOff() = 0;
 	virtual void updateOperators(class OPL3 *OPL3) = 0;
-
-protected:
-	void getInFourChannels(class OPL3 *OPL3, double channelOutput, double output[4]);
 };
 
 
@@ -95,7 +108,7 @@ public:
 	Operator *op1, *op2;
 	
 	Channel2op (int baseAddress, Operator *o1, Operator *o2);
-	void getChannelOutput(class OPL3 *OPL3, double output[4]);
+	double getChannelOutput(class OPL3 *OPL3);
 	
 	void keyOn();
 	void keyOff();
@@ -109,7 +122,7 @@ public:
 	Operator *op1, *op2, *op3, *op4;
 
 	Channel4op (int baseAddress, Operator *o1, Operator *o2, Operator *o3, Operator *o4);
-	void getChannelOutput(class OPL3 *OPL3, double output[4]);
+	double getChannelOutput(class OPL3 *OPL3);
 	
 	void keyOn();
 	void keyOff();
@@ -121,7 +134,7 @@ class DisabledChannel : public Channel
 {
 public:
 	DisabledChannel() : Channel(0) { }
-	void getChannelOutput(class OPL3 *OPL3, double output[4]) { return getInFourChannels(OPL3, 0, output); }    
+	double getChannelOutput(class OPL3 *OPL3) { return 0; }    
 	void keyOn() { }
 	void keyOff() { }
 	void updateOperators(class OPL3 *OPL3) { }
@@ -234,7 +247,7 @@ public:
 	RhythmChannel(int baseAddress, Operator *o1, Operator *o2)
 	: Channel2op(baseAddress, o1, o2)
 	{ }
-	void getChannelOutput(class OPL3 *OPL3, double output[4]);
+	double getChannelOutput(class OPL3 *OPL3);
 
 	// Rhythm channels are always running, 
 	// only the envelope is activated by the user.
@@ -296,7 +309,7 @@ class BassDrumChannel : public Channel2op {
 
 public:
 	BassDrumChannel();
-	void getChannelOutput(class OPL3 *OPL3, double output[4]);
+	double getChannelOutput(class OPL3 *OPL3);
 	
 	// Key ON and OFF are unused in rhythm channels.
 	void keyOn() { }
@@ -319,12 +332,10 @@ public:
 		 _7_NEW1_Offset = 0x105, 
 		 _2_CONNECTIONSEL6_Offset = 0x104;        
 
-	#define sampleRate (49700.0)
-
 	// The OPL3 tremolo repetition rate is 3.7 Hz.  
 	#define tremoloFrequency (3.7)
 
-	static const int tremoloTableLength = (int)(sampleRate/tremoloFrequency);
+	static const int tremoloTableLength = (int)(OPL_SAMPLE_RATE/tremoloFrequency);
 	static const int vibratoTableLength = 8192;
 
 	OPL3Data::OPL3Data()
@@ -340,7 +351,7 @@ public:
 	double tremoloTable[2][tremoloTableLength];
 
 	static double calculateIncrement(double begin, double end, double period) {
-		return (end-begin)/sampleRate * (1/period);
+		return (end-begin)/OPL_SAMPLE_RATE * (1/period);
 	}
 
 private:
@@ -391,10 +402,25 @@ struct OperatorData
 	
 	//OPL3 has eight waveforms:
 	double waveforms[8][waveLength];
-	
+
+#define MIN_DB				(-120.0)
+#define DB_TABLE_RES		(4.0)
+#define DB_TABLE_SIZE		(int)(-MIN_DB * DB_TABLE_RES)
+
+	double dbpow[DB_TABLE_SIZE];
+
+#define ATTACK_MIN			(-5.0)
+#define ATTACK_MAX			(8.0)
+#define ATTACK_RES			(0.03125)
+#define ATTACK_TABLE_SIZE	(int)((ATTACK_MAX - ATTACK_MIN) / ATTACK_RES)
+
+	double attackTable[ATTACK_TABLE_SIZE];
+
 	OperatorData()
 	{
 		loadWaveforms();
+		loaddBPowTable();
+		loadAttackTable();
 	}
 	
 	static double log2(double x) {
@@ -402,6 +428,8 @@ struct OperatorData
 	}
 private:
 	void loadWaveforms();
+	void loaddBPowTable();
+	void loadAttackTable();
 };
 const float OperatorData::multTable[16] = {0.5,1,2,3,4,5,6,7,8,9,10,10,12,12,15,15};
 
@@ -466,7 +494,7 @@ namespace EnvelopeGeneratorData
 		{0.00,0.00}, {0.00,0.00}, {0.00,0.00}, {0.00,0.00}
 	};
 
-	// These decay and release periods in miliseconds were taken from the YMF278B manual. 
+	// These decay and release periods in milliseconds were taken from the YMF278B manual. 
 	// The rate index range from 0 to 63, with different data for 
 	// 0%-100% and for 10%-90%: 
 	static const double decayAndReleaseTimeValuesTable[64][2] = {
@@ -534,7 +562,7 @@ public:
 	// with each frame being four 16-bit samples,
 	// corresponding to the OPL3 four output channels CHA...CHD.
 public:
-	void read(double output[4]);
+	//void read(float output[2]);
 	void write(int array, int address, int data);
 
 	OPL3();
@@ -550,6 +578,7 @@ private:
 	void update_DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1();
 	void update_7_NEW1();
 	void setEnabledChannels();
+	void updateChannelPans();
 	void update_2_CONNECTIONSEL6();
 	void set4opConnections();
 	void setRhythmMode();
@@ -568,29 +597,30 @@ OperatorData *OPL3::OperatorData;
 OPL3Data *OPL3::OPL3Data;
 int OPL3::InstanceCount;
 
-void OPL3::read(double output[4]) {
-    double channelOutput[4];
+void OPL3::Update(float *output, int numsamples) {
+	while (numsamples--) {
+		// If _new = 0, use OPL2 mode with 9 channels. If _new = 1, use OPL3 18 channels;
+		for(int array=0; array < (_new + 1); array++)
+			for(int channelNumber=0; channelNumber < 9; channelNumber++) {
+				// Reads output from each OPL3 channel, and accumulates it in the output buffer:
+				Channel *channel = channels[array][channelNumber];
+				if (channel != &disabledChannel)
+				{
+					double channelOutput = channel->getChannelOutput(this);
+					output[0] += float(channelOutput * channel->leftPan);
+					output[1] += float(channelOutput * channel->rightPan);
+				}
+			}
 
-    for(int outputChannelNumber=0; outputChannelNumber<4; outputChannelNumber++) 
-        output[outputChannelNumber] = 0;
-
-    // If _new = 0, use OPL2 mode with 9 channels. If _new = 1, use OPL3 18 channels;
-    for(int array=0; array < (_new + 1); array++)
-    for(int channelNumber=0; channelNumber < 9; channelNumber++) {
-        // Reads output from each OPL3 channel, and accumulates it in the output buffer:
-        channels[array][channelNumber]->getChannelOutput(this, channelOutput);
-        for(int outputChannelNumber=0; outputChannelNumber<4; outputChannelNumber++)
-            output[outputChannelNumber] += channelOutput[outputChannelNumber];
-    }
-
-    // Advances the OPL3-wide vibrato index, which is used by 
-    // PhaseGenerator.getPhase() in each Operator.
-    vibratoIndex++;
-	if(vibratoIndex >= OPL3Data::vibratoTableLength) vibratoIndex = 0;
-    // Advances the OPL3-wide tremolo index, which is used by 
-    // EnvelopeGenerator.getEnvelope() in each Operator.
-    tremoloIndex++;
-	if(tremoloIndex >= OPL3Data::tremoloTableLength) tremoloIndex = 0;         
+		// Advances the OPL3-wide vibrato index, which is used by 
+		// PhaseGenerator.getPhase() in each Operator.
+		vibratoIndex = (vibratoIndex + 1) & (OPL3Data::vibratoTableLength - 1);
+		// Advances the OPL3-wide tremolo index, which is used by 
+		// EnvelopeGenerator.getEnvelope() in each Operator.
+		tremoloIndex++;
+		if(tremoloIndex >= OPL3Data::tremoloTableLength) tremoloIndex = 0;
+		output += 2;
+	}
 }
 
 void OPL3::write(int array, int address, int data) {
@@ -854,6 +884,7 @@ void OPL3::update_7_NEW1() {
     _new = (_7_new1 & 0x01);
     if(_new==1) setEnabledChannels();
     set4opConnections();
+	updateChannelPans();
 }
 
 void OPL3::setEnabledChannels() {
@@ -862,7 +893,17 @@ void OPL3::setEnabledChannels() {
             int baseAddress = channels[array][i]->channelBaseAddress;
 			registers[baseAddress+ChannelData::CHD1_CHC1_CHB1_CHA1_FB3_CNT1_Offset] |= 0xF0;
             channels[array][i]->update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(this);
-        }        
+        }
+}
+
+void OPL3::updateChannelPans() {
+    for(int array=0; array<2; array++)
+        for(int i=0; i<9; i++) {
+            int baseAddress = channels[array][i]->channelBaseAddress;
+			registers[baseAddress+ChannelData::CHD1_CHC1_CHB1_CHA1_FB3_CNT1_Offset] |= 0xF0;
+            channels[array][i]->updatePan(this);
+        }
+
 }
 
 void OPL3::update_2_CONNECTIONSEL6() {
@@ -915,10 +956,22 @@ void OPL3::setRhythmMode() {
     for(int i=6; i<=8; i++) channels[0][i]->updateChannel(this);
 }
 
+static double EnvelopeFromDB(double db)
+{
+#if 0
+	return pow(10.0, db/10);
+#else
+	if (db < MIN_DB)
+		return 0;
+	return OPL3::OperatorData->dbpow[xs_FloorToInt(-db * DB_TABLE_RES)];
+#endif
+}
+
 Channel::Channel (int baseAddress) {
 	channelBaseAddress = baseAddress;
-	fnuml = fnumh = kon = block = cha = chb = chc = chd = fb = cnt = 0;
+	fnuml = fnumh = kon = block = fb = cnt = 0;
 	feedback[0] = feedback[1] = 0;
+	leftPan = rightPan = 1;
 }
 
 void Channel::update_2_KON1_BLOCK3_FNUMH2(OPL3 *OPL3) {
@@ -949,30 +1002,33 @@ void Channel::update_FNUML8(OPL3 *OPL3) {
 
 void Channel::update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(OPL3 *OPL3) {
 	int chd1_chc1_chb1_cha1_fb3_cnt1 = OPL3->registers[channelBaseAddress+ChannelData::CHD1_CHC1_CHB1_CHA1_FB3_CNT1_Offset];
-	chd   = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x80) >> 7;
-	chc   = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x40) >> 6;
+//	chd   = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x80) >> 7;
+//	chc   = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x40) >> 6;
 	chb   = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x20) >> 5;
 	cha   = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x10) >> 4;
 	fb    = (chd1_chc1_chb1_cha1_fb3_cnt1 & 0x0E) >> 1;
 	cnt   = chd1_chc1_chb1_cha1_fb3_cnt1 & 0x01;
+	updatePan(OPL3);
 	updateOperators(OPL3);
+}
+
+void Channel::updatePan(OPL3 *OPL3) {
+	if (OPL3->_new == 0)
+	{
+		leftPan = VOLUME_MUL;
+		rightPan = VOLUME_MUL;
+	}
+	else
+	{
+		leftPan = cha * VOLUME_MUL;
+		rightPan = chb * VOLUME_MUL;
+	}
 }
 
 void Channel::updateChannel(OPL3 *OPL3) {
 	update_2_KON1_BLOCK3_FNUMH2(OPL3);
 	update_FNUML8(OPL3);
 	update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(OPL3);
-}
-
-void Channel::getInFourChannels(OPL3 *OPL3, double channelOutput, double output[4]) {
-	if( OPL3->_new==0) 
-		output[0] = output[1] = output[2] = output[3] = channelOutput;    
-	else {
-		output[0] = (cha==1) ? channelOutput : 0;
-		output[1] = (chb==1) ? channelOutput : 0;
-		output[2] = (chc==1) ? channelOutput : 0;
-		output[3] = (chd==1) ? channelOutput : 0;
-	}
 }
 
 Channel2op::Channel2op (int baseAddress, Operator *o1, Operator *o2)
@@ -982,18 +1038,17 @@ Channel2op::Channel2op (int baseAddress, Operator *o1, Operator *o2)
 	op2 = o2;
 }
 
-void Channel2op::getChannelOutput(OPL3 *OPL3, double output[4]) {
+double Channel2op::getChannelOutput(OPL3 *OPL3) {
 	double channelOutput = 0, op1Output = 0, op2Output = 0;
 	// The feedback uses the last two outputs from
 	// the first operator, instead of just the last one. 
 	double feedbackOutput = (feedback[0] + feedback[1]) / 2;
-	double dontcare;
 	
 	switch(cnt) {
 		// CNT = 0, the operators are in series, with the first in feedback.
 		case 0:
 			if(op2->envelopeGenerator.stage==EnvelopeGenerator::OFF) 
-				return getInFourChannels(OPL3, 0, output);
+				return 0;
 			op1Output = op1->getOperatorOutput(OPL3, feedbackOutput);
 			channelOutput = op2->getOperatorOutput(OPL3, op1Output*toPhase);
 			break;
@@ -1001,15 +1056,15 @@ void Channel2op::getChannelOutput(OPL3 *OPL3, double output[4]) {
 		case 1:
 			if(op1->envelopeGenerator.stage==EnvelopeGenerator::OFF && 
 				op2->envelopeGenerator.stage==EnvelopeGenerator::OFF) 
-					return getInFourChannels(OPL3, 0, output);
+					return 0;
 			op1Output = op1->getOperatorOutput(OPL3, feedbackOutput);
 			op2Output = op2->getOperatorOutput(OPL3, Operator::noModulator);
 			channelOutput = (op1Output + op2Output) / 2;
 	}
 	
 	feedback[0] = feedback[1];
-	feedback[1] = modf(op1Output * ChannelData::feedback[fb], &dontcare);
-	getInFourChannels(OPL3, channelOutput, output);
+	feedback[1] = StripIntPart(op1Output * ChannelData::feedback[fb]);
+	return channelOutput;
 }
 
 void Channel2op::keyOn() {
@@ -1040,10 +1095,9 @@ Channel4op::Channel4op (int baseAddress, Operator *o1, Operator *o2, Operator *o
 	op4 = o4;
 }
 
-void Channel4op::getChannelOutput(OPL3 *OPL3, double output[4]) {
+double Channel4op::getChannelOutput(OPL3 *OPL3) {
 	double channelOutput = 0, 
 		   op1Output = 0, op2Output = 0, op3Output = 0, op4Output = 0;
-	double dontcare;
 	
 	int secondChannelBaseAddress = channelBaseAddress+3;
 	int secondCnt = OPL3->registers[secondChannelBaseAddress+ChannelData::CHD1_CHC1_CHB1_CHA1_FB3_CNT1_Offset] & 0x1;
@@ -1054,7 +1108,7 @@ void Channel4op::getChannelOutput(OPL3 *OPL3, double output[4]) {
 	switch(cnt4op) {
 		case 0:
 			if(op4->envelopeGenerator.stage==EnvelopeGenerator::OFF) 
-				return getInFourChannels(OPL3, 0, output);
+				return 0;
 			
 			op1Output = op1->getOperatorOutput(OPL3, feedbackOutput);
 			op2Output = op2->getOperatorOutput(OPL3, op1Output*toPhase);
@@ -1065,7 +1119,7 @@ void Channel4op::getChannelOutput(OPL3 *OPL3, double output[4]) {
 		case 1:
 			if(op2->envelopeGenerator.stage==EnvelopeGenerator::OFF && 
 				op4->envelopeGenerator.stage==EnvelopeGenerator::OFF) 
-				   return getInFourChannels(OPL3, 0, output);
+				   return 0;
 			
 			op1Output = op1->getOperatorOutput(OPL3, feedbackOutput);
 			op2Output = op2->getOperatorOutput(OPL3, op1Output*toPhase);
@@ -1078,7 +1132,7 @@ void Channel4op::getChannelOutput(OPL3 *OPL3, double output[4]) {
 		case 2:
 			if(op1->envelopeGenerator.stage==EnvelopeGenerator::OFF && 
 				op4->envelopeGenerator.stage==EnvelopeGenerator::OFF) 
-				   return getInFourChannels(OPL3, 0, output);
+				   return 0;
 
 			op1Output = op1->getOperatorOutput(OPL3, feedbackOutput);
 			
@@ -1092,7 +1146,7 @@ void Channel4op::getChannelOutput(OPL3 *OPL3, double output[4]) {
 			if(op1->envelopeGenerator.stage==EnvelopeGenerator::OFF && 
 				op3->envelopeGenerator.stage==EnvelopeGenerator::OFF && 
 				op4->envelopeGenerator.stage==EnvelopeGenerator::OFF) 
-				   return getInFourChannels(OPL3, 0, output);
+				   return 0;
 			
 			op1Output = op1->getOperatorOutput(OPL3, feedbackOutput);
 			
@@ -1105,9 +1159,9 @@ void Channel4op::getChannelOutput(OPL3 *OPL3, double output[4]) {
 	}
 	
 	feedback[0] = feedback[1];
-	feedback[1] = modf(op1Output * ChannelData::feedback[fb], &dontcare);
+	feedback[1] = StripIntPart(op1Output * ChannelData::feedback[fb]);
 
-	getInFourChannels(OPL3, channelOutput, output);
+	return channelOutput;
 }
 
 void Channel4op::keyOn() {
@@ -1216,7 +1270,7 @@ double Operator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	if(envelopeGenerator.stage == EnvelopeGenerator::OFF) return 0;
 	
 	double envelopeInDB = envelopeGenerator.getEnvelope(OPL3, egt, am);
-	envelope = pow(10, envelopeInDB/10.0);
+	envelope = EnvelopeFromDB(envelopeInDB);
 	
 	// If it is in OPL2 mode, use first four waveforms only:
 	ws &= ((OPL3->_new<<2) + 3); 
@@ -1229,14 +1283,7 @@ double Operator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 }
 
 double Operator::getOutput(double modulator, double outputPhase, double *waveform) {
-	double dontcare;
-	outputPhase = modf(outputPhase + modulator, &dontcare);
-	if(outputPhase<0) {
-		outputPhase++;
-		// If the double could not afford to be less than 1:
-		outputPhase = modf(outputPhase, &dontcare);
-	}
-	int sampleIndex = (int) (outputPhase * OperatorData::waveLength);
+	int sampleIndex = xs_FloorToInt((outputPhase + modulator) * OperatorData::waveLength) & (OperatorData::waveLength - 1);
 	return waveform[sampleIndex] * envelope;
 }    
 
@@ -1323,9 +1370,9 @@ void EnvelopeGenerator::setActualAttackRate(int attackRate, int ksr, int keyScal
 	// and 'period10to90' seconds between 10% and 90% of the curve total level.
 	actualAttackRate = calculateActualRate(attackRate, ksr, keyScaleNumber);
 	double period0to100inSeconds = EnvelopeGeneratorData::attackTimeValuesTable[actualAttackRate][0]/1000.0;
-	int period0to100inSamples = (int)(period0to100inSeconds*sampleRate);       
+	int period0to100inSamples = (int)(period0to100inSeconds*OPL_SAMPLE_RATE);       
 	double period10to90inSeconds = EnvelopeGeneratorData::attackTimeValuesTable[actualAttackRate][1]/1000.0;
-	int period10to90inSamples = (int)(period10to90inSeconds*sampleRate);
+	int period10to90inSamples = (int)(period10to90inSeconds*OPL_SAMPLE_RATE);
 	// The x increment is dictated by the period between 10% and 90%:
 	xAttackIncrement = OPL3Data::calculateIncrement(percentageToX(0.1), percentageToX(0.9), period10to90inSeconds);
 	// Discover how many samples are still from the top.
@@ -1389,7 +1436,17 @@ double EnvelopeGenerator::getEnvelope(OPL3 *OPL3, int egt, int am) {
 			// we´ll work with the next to maximum in the envelope resolution.
 			if(envelope<-envelopeResolution && xAttackIncrement != -EnvelopeGeneratorData::INFINITY) {
 				// The attack is exponential.
+#if 0
 				envelope = -pow(2.0,x);
+#else
+				int index = xs_FloorToInt((x - ATTACK_MIN) / ATTACK_RES);
+				if (index < 0)
+					envelope = OPL3::OperatorData->attackTable[0];
+				else if (index >= ATTACK_TABLE_SIZE)
+					envelope = OPL3::OperatorData->attackTable[ATTACK_TABLE_SIZE-1];
+				else
+					envelope = OPL3::OperatorData->attackTable[index];
+#endif
 				x += xAttackIncrement;
 				break;
 			}
@@ -1478,30 +1535,29 @@ PhaseGenerator::PhaseGenerator() {
 
 void PhaseGenerator::setFrequency(int f_number, int block, int mult) {
 	// This frequency formula is derived from the following equation:
-	// f_number = baseFrequency * pow(2,19) / sampleRate / pow(2,block-1);        
+	// f_number = baseFrequency * pow(2,19) / OPL_SAMPLE_RATE / pow(2,block-1);        
 	double baseFrequency = 
-		f_number * pow(2.0, block-1) * sampleRate / pow(2.0,19);
+		f_number * pow(2.0, block-1) * OPL_SAMPLE_RATE / pow(2.0,19);
 	double operatorFrequency = baseFrequency*OperatorData::multTable[mult];
 	
 	// phase goes from 0 to 1 at 
 	// period = (1/frequency) seconds ->
-	// Samples in each period is (1/frequency)*sampleRate =
-	// = sampleRate/frequency ->
+	// Samples in each period is (1/frequency)*OPL_SAMPLE_RATE =
+	// = OPL_SAMPLE_RATE/frequency ->
 	// So the increment in each sample, to go from 0 to 1, is:
 	// increment = (1-0) / samples in the period -> 
-	// increment = 1 / (OPL3Data.sampleRate/operatorFrequency) ->
-	phaseIncrement = operatorFrequency/sampleRate;
+	// increment = 1 / (OPL_SAMPLE_RATE/operatorFrequency) ->
+	phaseIncrement = operatorFrequency/OPL_SAMPLE_RATE;
 }
 
 double PhaseGenerator::getPhase(OPL3 *OPL3, int vib) {
 	if(vib==1) 
-		// phaseIncrement = (operatorFrequency * vibrato) / sampleRate
+		// phaseIncrement = (operatorFrequency * vibrato) / OPL_SAMPLE_RATE
 		phase += phaseIncrement*OPL3::OPL3Data->vibratoTable[OPL3->dvb][OPL3->vibratoIndex];
 	else 
-		// phaseIncrement = operatorFrequency / sampleRate
+		// phaseIncrement = operatorFrequency / OPL_SAMPLE_RATE
 		phase += phaseIncrement;
-	double dontcare;
-	phase = modf(phase, &dontcare);
+	// Originally clamped phase to [0,1), but that's not needed
 	return phase;
 }
 
@@ -1509,7 +1565,7 @@ void PhaseGenerator::keyOn() {
 	phase = 0;
 }
 
-void RhythmChannel::getChannelOutput(OPL3 *OPL3, double output[4]) { 
+double RhythmChannel::getChannelOutput(OPL3 *OPL3) { 
 	double channelOutput = 0, op1Output = 0, op2Output = 0;
 	
 	// Note that, different from the common channel,
@@ -1520,7 +1576,7 @@ void RhythmChannel::getChannelOutput(OPL3 *OPL3, double output[4]) {
 	op2Output = op2->getOperatorOutput(OPL3, Operator::noModulator);        
 	channelOutput = (op1Output + op2Output) / 2;
 	
-	getInFourChannels(OPL3, channelOutput, output);
+	return channelOutput;
 };
 
 TopCymbalOperator::TopCymbalOperator(int baseAddress)
@@ -1534,7 +1590,7 @@ TopCymbalOperator::TopCymbalOperator()
 double TopCymbalOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	double highHatOperatorPhase = 
 		OPL3->highHatOperator.phase * OperatorData::multTable[OPL3->highHatOperator.mult];
-	// The Top Cymbal operator uses his own phase together with the High Hat phase.
+	// The Top Cymbal operator uses its own phase together with the High Hat phase.
 	return getOperatorOutput(OPL3, modulator, highHatOperatorPhase);
 }
 
@@ -1544,7 +1600,7 @@ double TopCymbalOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 // now with the TopCymbalOperator phase as the externalPhase.
 double TopCymbalOperator::getOperatorOutput(OPL3 *OPL3, double modulator, double externalPhase) {
 	double envelopeInDB = envelopeGenerator.getEnvelope(OPL3, egt, am);
-	envelope = pow(10.0, envelopeInDB/10.0);
+	envelope = EnvelopeFromDB(envelopeInDB);
 	
 	phase = phaseGenerator.getPhase(OPL3, vib);
 	
@@ -1552,11 +1608,10 @@ double TopCymbalOperator::getOperatorOutput(OPL3 *OPL3, double modulator, double
 	double *waveform = OPL3::OperatorData->waveforms[waveIndex];
 	
 	// Empirically tested multiplied phase for the Top Cymbal:
-	double dontcare;
-	double carrierPhase = modf(8 * phase, &dontcare);
+	double carrierPhase = 8 * phase;
 	double modulatorPhase = externalPhase;
 	double modulatorOutput = getOutput(Operator::noModulator, modulatorPhase, waveform);
-	double carrierOutput = getOutput(modulatorOutput,carrierPhase, waveform);
+	double carrierOutput = getOutput(modulatorOutput, carrierPhase, waveform);
 	
 	int cycles = 4;
 	double chopped = (carrierPhase * cycles) /* %cycles */;
@@ -1589,7 +1644,7 @@ double SnareDrumOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	if(envelopeGenerator.stage == EnvelopeGenerator::OFF) return 0;
 	
 	double envelopeInDB = envelopeGenerator.getEnvelope(OPL3, egt, am);
-	envelope = pow(10.0, envelopeInDB/10.0);
+	envelope = EnvelopeFromDB(envelopeInDB);
 	
 	// If it is in OPL2 mode, use first four waveforms only:
 	int waveIndex = ws & ((OPL3->_new<<2) + 3); 
@@ -1615,10 +1670,10 @@ BassDrumChannel::BassDrumChannel()
   my_op1(op1BaseAddress), my_op2(op2BaseAddress)
 { }
 
-void BassDrumChannel::getChannelOutput(OPL3 *OPL3, double output[4]) {
+double BassDrumChannel::getChannelOutput(OPL3 *OPL3) {
 	// Bass Drum ignores first operator, when it is in series.
 	if(cnt == 1) op1->ar=0;
-	return Channel2op::getChannelOutput(OPL3, output);
+	return Channel2op::getChannelOutput(OPL3);
 }
 
 void OPL3Data::loadVibratoTable() {
@@ -1685,7 +1740,7 @@ void OPL3Data::loadTremoloTable()
 		calculateIncrement(tremoloDepth[1],0,1/(2*tremoloFrequency))
 	};
 	
-	int tremoloTableLength = (int)(sampleRate/tremoloFrequency);
+	int tremoloTableLength = (int)(OPL_SAMPLE_RATE/tremoloFrequency);
 	
 	// This is undocumented. The tremolo starts at the maximum attenuation,
 	// instead of at 0 dB:
@@ -1752,6 +1807,22 @@ void OperatorData::loadWaveforms() {
 	}
 }
 
+void OperatorData::loaddBPowTable()
+{
+	for (int i = 0; i < DB_TABLE_SIZE; ++i)
+	{
+		dbpow[i] = pow(10.0, -(i / DB_TABLE_RES) / 10.0);
+	}
+}
+
+void OperatorData::loadAttackTable()
+{
+	for (int i = 0; i < ATTACK_TABLE_SIZE; ++i)
+	{
+		attackTable[i] = -pow(2.0, ATTACK_MIN + i * ATTACK_RES);
+	}
+}
+
 void OPL3::Reset()
 {
 }
@@ -1759,18 +1830,6 @@ void OPL3::Reset()
 void OPL3::WriteReg(int reg, int v)
 {
 	write(reg >> 8, reg & 0xFF, v);
-}
-
-void OPL3::Update(float *buffer, int length)
-{
-	double output[4];
-
-	for (int i = 0; i < length; ++i)
-	{
-		read(output);
-		buffer[i*2  ] += float(output[0] * 0.25f);
-		buffer[i*2+1] += float(output[1] * 0.25f);
-	}
 }
 
 void OPL3::SetPanning(int c, float left, float right)

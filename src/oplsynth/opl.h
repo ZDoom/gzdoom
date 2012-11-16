@@ -22,4 +22,6 @@ OPLEmul *YM3812Create(bool stereo);
 OPLEmul *DBOPLCreate(bool stereo);
 OPLEmul *JavaOPLCreate(bool stereo);
 
+#define OPL_SAMPLE_RATE			49716.0
+
 #endif

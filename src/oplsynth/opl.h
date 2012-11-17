@@ -23,5 +23,7 @@ OPLEmul *DBOPLCreate(bool stereo);
 OPLEmul *JavaOPLCreate(bool stereo);
 
 #define OPL_SAMPLE_RATE			49716.0
+#define CENTER_PANNING_POWER	0.70710678118	/* [RH] volume at center for EQP */
+
 
 #endif

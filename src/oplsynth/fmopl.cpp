@@ -126,8 +126,6 @@ typedef signed int		INT32;   /* signed 32bit   */
 #define INLINE			__inline
 #endif
 
-#define CENTER_PANNING_POWER	0.70710678118	/* [RH] volume at center for EQP */
-
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH			16  /* 16.16 fixed point (EG timing)              */
 #define LFO_SH			24  /*  8.24 fixed point (LFO calculations)       */

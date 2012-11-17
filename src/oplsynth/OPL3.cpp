@@ -53,7 +53,7 @@
 
 static FRandom pr_opl3;
 
-#define VOLUME_MUL		0.25
+#define VOLUME_MUL		0.3333
 
 class Operator;
 
@@ -88,7 +88,7 @@ public:
 
 	double leftPan, rightPan;
 	
-	Channel (int baseAddress);
+	Channel (int baseAddress, double startvol);
 	void update_2_KON1_BLOCK3_FNUMH2(class OPL3 *OPL3);
 	void update_FNUML8(class OPL3 *OPL3);
 	void update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(class OPL3 *OPL3);
@@ -107,7 +107,7 @@ class Channel2op : public Channel
 public:
 	Operator *op1, *op2;
 	
-	Channel2op (int baseAddress, Operator *o1, Operator *o2);
+	Channel2op (int baseAddress, double startvol, Operator *o1, Operator *o2);
 	double getChannelOutput(class OPL3 *OPL3);
 	
 	void keyOn();
@@ -121,7 +121,7 @@ class Channel4op : public Channel
 public:
 	Operator *op1, *op2, *op3, *op4;
 
-	Channel4op (int baseAddress, Operator *o1, Operator *o2, Operator *o3, Operator *o4);
+	Channel4op (int baseAddress, double startvol, Operator *o1, Operator *o2, Operator *o3, Operator *o4);
 	double getChannelOutput(class OPL3 *OPL3);
 	
 	void keyOn();
@@ -133,7 +133,7 @@ public:
 class DisabledChannel : public Channel
 {
 public:
-	DisabledChannel() : Channel(0) { }
+	DisabledChannel() : Channel(0, 0) { }
 	double getChannelOutput(class OPL3 *OPL3) { return 0; }    
 	void keyOn() { }
 	void keyOff() { }
@@ -244,8 +244,8 @@ protected:
 class RhythmChannel : public Channel2op
 {
 public:
-	RhythmChannel(int baseAddress, Operator *o1, Operator *o2)
-	: Channel2op(baseAddress, o1, o2)
+	RhythmChannel(int baseAddress, double startvol, Operator *o1, Operator *o2)
+	: Channel2op(baseAddress, startvol, o1, o2)
 	{ }
 	double getChannelOutput(class OPL3 *OPL3);
 
@@ -258,16 +258,16 @@ public:
 class HighHatSnareDrumChannel : public RhythmChannel {
 	static const int highHatSnareDrumChannelBaseAddress = 7;
 public:
-	HighHatSnareDrumChannel(Operator *o1, Operator *o2)
-	: RhythmChannel(highHatSnareDrumChannelBaseAddress, o1, o2)
+	HighHatSnareDrumChannel(double startvol, Operator *o1, Operator *o2)
+	: RhythmChannel(highHatSnareDrumChannelBaseAddress, startvol, o1, o2)
 	{ }
 };
 
 class TomTomTopCymbalChannel : public RhythmChannel {
 	static const int tomTomTopCymbalChannelBaseAddress = 8;    
 public:
-	TomTomTopCymbalChannel(Operator *o1, Operator *o2)
-	: RhythmChannel(tomTomTopCymbalChannelBaseAddress, o1, o2)
+	TomTomTopCymbalChannel(double startvol, Operator *o1, Operator *o2)
+	: RhythmChannel(tomTomTopCymbalChannelBaseAddress, startvol, o1, o2)
 	{ }
 };
  
@@ -308,7 +308,7 @@ class BassDrumChannel : public Channel2op {
 	Operator my_op1, my_op2;
 
 public:
-	BassDrumChannel();
+	BassDrumChannel(double startvol);
 	double getChannelOutput(class OPL3 *OPL3);
 	
 	// Key ON and OFF are unused in rhythm channels.
@@ -552,6 +552,8 @@ public:
 			
 	int nts, dam, dvb, ryt, bd, sd, tom, tc, hh, _new, connectionsel;
 	int vibratoIndex, tremoloIndex;
+
+	bool FullPan;
 	
 	static OperatorData *OperatorData;
 	static OPL3Data *OPL3Data;
@@ -565,7 +567,7 @@ public:
 	//void read(float output[2]);
 	void write(int array, int address, int data);
 
-	OPL3();
+	OPL3(bool fullpan);
 	~OPL3();
 	
 private:
@@ -708,10 +710,12 @@ void OPL3::write(int array, int address, int data) {
     }
 }
 
-OPL3::OPL3()
-: highHatSnareDrumChannel(&highHatOperator, &snareDrumOperator),
-  tomTomTopCymbalChannel(&tomTomOperator, &topCymbalOperator)
+OPL3::OPL3(bool fullpan)
+: bassDrumChannel(fullpan ? CENTER_PANNING_POWER : 1),
+  highHatSnareDrumChannel(fullpan ? CENTER_PANNING_POWER : 1, &highHatOperator, &snareDrumOperator),
+  tomTomTopCymbalChannel(fullpan ? CENTER_PANNING_POWER : 1, &tomTomOperator, &topCymbalOperator)
 {
+	FullPan = fullpan;
     nts = dam = dvb = ryt = bd = sd = tom = tc = hh = _new = connectionsel = 0;
     vibratoIndex = tremoloIndex = 0; 
 
@@ -784,27 +788,28 @@ void OPL3::initChannels2op() {
     // The YMF262 has 18 2-op channels.
     // Each 2-op channel can be at a serial or parallel operator configuration:
     memset(channels2op, 0, sizeof(channels2op));
-    
+	double startvol = FullPan ? CENTER_PANNING_POWER : 1;
     for(int array=0; array<2; array++)
         for(int channelNumber=0; channelNumber<3; channelNumber++) {
             int baseAddress = (array<<8) | channelNumber;
             // Channels 1, 2, 3 -> Operator offsets 0x0,0x3; 0x1,0x4; 0x2,0x5
-            channels2op[array][channelNumber]   = new Channel2op(baseAddress, operators[array][channelNumber], operators[array][channelNumber+0x3]);
+            channels2op[array][channelNumber]   = new Channel2op(baseAddress, startvol, operators[array][channelNumber], operators[array][channelNumber+0x3]);
             // Channels 4, 5, 6 -> Operator offsets 0x8,0xB; 0x9,0xC; 0xA,0xD
-            channels2op[array][channelNumber+3] = new Channel2op(baseAddress+3, operators[array][channelNumber+0x8], operators[array][channelNumber+0xB]);
+            channels2op[array][channelNumber+3] = new Channel2op(baseAddress+3, startvol, operators[array][channelNumber+0x8], operators[array][channelNumber+0xB]);
             // Channels 7, 8, 9 -> Operators 0x10,0x13; 0x11,0x14; 0x12,0x15
-            channels2op[array][channelNumber+6] = new Channel2op(baseAddress+6, operators[array][channelNumber+0x10], operators[array][channelNumber+0x13]);
+            channels2op[array][channelNumber+6] = new Channel2op(baseAddress+6, startvol, operators[array][channelNumber+0x10], operators[array][channelNumber+0x13]);
         }   
 }
 
 void OPL3::initChannels4op() {
     // The YMF262 has 3 4-op channels in each array:
 	memset(channels4op, 0, sizeof(channels4op));
+	double startvol = FullPan ? CENTER_PANNING_POWER : 1;
     for(int array=0; array<2; array++)
         for(int channelNumber=0; channelNumber<3; channelNumber++) {
             int baseAddress = (array<<8) | channelNumber;
             // Channels 1, 2, 3 -> Operators 0x0,0x3,0x8,0xB; 0x1,0x4,0x9,0xC; 0x2,0x5,0xA,0xD;
-            channels4op[array][channelNumber]   = new Channel4op(baseAddress, operators[array][channelNumber], operators[array][channelNumber+0x3], operators[array][channelNumber+0x8], operators[array][channelNumber+0xB]);
+            channels4op[array][channelNumber]   = new Channel4op(baseAddress, startvol, operators[array][channelNumber], operators[array][channelNumber+0x3], operators[array][channelNumber+0x8], operators[array][channelNumber+0xB]);
         }   
 }
 
@@ -967,11 +972,11 @@ static double EnvelopeFromDB(double db)
 #endif
 }
 
-Channel::Channel (int baseAddress) {
+Channel::Channel (int baseAddress, double startvol) {
 	channelBaseAddress = baseAddress;
 	fnuml = fnumh = kon = block = fb = cnt = 0;
 	feedback[0] = feedback[1] = 0;
-	leftPan = rightPan = 1;
+	leftPan = rightPan = startvol;
 }
 
 void Channel::update_2_KON1_BLOCK3_FNUMH2(OPL3 *OPL3) {
@@ -1013,15 +1018,18 @@ void Channel::update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(OPL3 *OPL3) {
 }
 
 void Channel::updatePan(OPL3 *OPL3) {
-	if (OPL3->_new == 0)
+	if (!OPL3->FullPan)
 	{
-		leftPan = VOLUME_MUL;
-		rightPan = VOLUME_MUL;
-	}
-	else
-	{
-		leftPan = cha * VOLUME_MUL;
-		rightPan = chb * VOLUME_MUL;
+		if (OPL3->_new == 0)
+		{
+			leftPan = VOLUME_MUL;
+			rightPan = VOLUME_MUL;
+		}
+		else
+		{
+			leftPan = cha * VOLUME_MUL;
+			rightPan = chb * VOLUME_MUL;
+		}
 	}
 }
 
@@ -1031,8 +1039,8 @@ void Channel::updateChannel(OPL3 *OPL3) {
 	update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(OPL3);
 }
 
-Channel2op::Channel2op (int baseAddress, Operator *o1, Operator *o2)
-: Channel(baseAddress)
+Channel2op::Channel2op (int baseAddress, double startvol, Operator *o1, Operator *o2)
+: Channel(baseAddress, startvol)
 {
 	op1 = o1;
 	op2 = o2;
@@ -1086,8 +1094,8 @@ void Channel2op::updateOperators(OPL3 *OPL3) {
 	op2->updateOperator(OPL3, keyScaleNumber, f_number, block);
 }
 
-Channel4op::Channel4op (int baseAddress, Operator *o1, Operator *o2, Operator *o3, Operator *o4)
-: Channel(baseAddress)
+Channel4op::Channel4op (int baseAddress, double startvol, Operator *o1, Operator *o2, Operator *o3, Operator *o4)
+: Channel(baseAddress, startvol)
 {
 	op1 = o1;
 	op2 = o2;
@@ -1665,8 +1673,8 @@ double SnareDrumOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	return operatorOutput*2;
 }
 
-BassDrumChannel::BassDrumChannel()
-: Channel2op(bassDrumChannelBaseAddress, &my_op1, &my_op2),
+BassDrumChannel::BassDrumChannel(double startvol)
+: Channel2op(bassDrumChannelBaseAddress, startvol, &my_op1, &my_op2),
   my_op1(op1BaseAddress), my_op2(op2BaseAddress)
 { }
 
@@ -1834,9 +1842,24 @@ void OPL3::WriteReg(int reg, int v)
 
 void OPL3::SetPanning(int c, float left, float right)
 {
+	if (FullPan)
+	{
+		Channel *channel;
+
+		if (c < 9)
+		{
+			channel = channels[0][c];
+		}
+		else
+		{
+			channel = channels[1][c - 9];
+		}
+		channel->leftPan = left;
+		channel->rightPan = right;
+	}
 }
 
 OPLEmul *JavaOPLCreate(bool stereo)
 {
-	return new OPL3;
+	return new OPL3(stereo);
 }

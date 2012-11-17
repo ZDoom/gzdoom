@@ -46,8 +46,6 @@ typedef SBYTE		Bit8s;
 
 #include "opl.h"
 
-#define CENTER_PANNING_POWER	0.70710678118f
-
 static Bit16s wavtable[WAVEPREC*3];	// wave form table
 
 // key scale levels
@@ -506,7 +504,7 @@ void DBOPL::Reset() {
 #if defined(OPLTYPE_IS_OPL3)
 		op[i].is_4op = false;
 		op[i].is_4op_attached = false;
-		op[i].right_pan = op[i].left_pan = FullPan ? CENTER_PANNING_POWER : 1;
+		op[i].right_pan = op[i].left_pan = FullPan ? (float)CENTER_PANNING_POWER : 1;
 #endif
 	}
 

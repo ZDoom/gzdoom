@@ -1402,8 +1402,9 @@ OptionValue GusMemory
 
 OptionValue OplCores
 {
-	0, "MAME"
-	1, "DOSBox"
+	0, "MAME OPL2"
+	1, "DOSBox OPL3"
+	2, "Java OPL3"
 }
 
 OptionMenu AdvSoundOptions

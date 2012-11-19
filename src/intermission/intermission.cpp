@@ -328,15 +328,42 @@ void DIntermissionScreenText::Drawer ()
 		size_t count;
 		int c;
 		const FRemapTable *range;
-
-		// draw some of the text onto the screen
-		int rowheight = SmallFont->GetHeight () + (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1);
-		bool scale = (CleanXfac != 1 || CleanYfac != 1);
-
-		int cx = mTextX;
-		int cy = mTextY;
 		const char *ch = mText;
 
+		// Count number of rows in this text. Since it does not word-wrap, we just count
+		// line feed characters.
+		int numrows;
+
+		for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
+		{
+			numrows += (ch[c] == '\n');
+		}
+
+		int rowheight = SmallFont->GetHeight() * CleanYfac;
+		int rowpadding = (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1) * CleanYfac;
+
+		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
+		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		int startx = cx;
+
+		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
+		while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		{
+			rowpadding--;
+		}
+		// If it's still off the bottom, try to center it vertically.
+		if (cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		{
+			cy = (screen->GetHeight() - (numrows * (rowheight + rowpadding) - rowpadding)) / 2;
+			// If it's off the top now, you're screwed. It's too tall to fit.
+			if (cy < 0)
+			{
+				cy = 0;
+			}
+		}
+		rowheight += rowpadding;
+
+		// draw some of the text onto the screen
 		count = (mTicker - mTextDelay) / mTextSpeed;
 		range = SmallFont->GetColorTranslation (mTextColor);
 
@@ -347,33 +374,23 @@ void DIntermissionScreenText::Drawer ()
 				break;
 			if (c == '\n')
 			{
-				cx = mTextX;
+				cx = startx;
 				cy += rowheight;
 				continue;
 			}
 
 			pic = SmallFont->GetChar (c, &w);
-			if (cx+w > SCREENWIDTH)
+			w *= CleanXfac;
+			if (cx + w > SCREENWIDTH)
 				continue;
 			if (pic != NULL)
 			{
-				if (scale)
-				{
-					screen->DrawTexture (pic,
-						cx,// + 320 / 2,
-						cy,// + 200 / 2,
-						DTA_Translation, range,
-						DTA_Clean, true,
-						TAG_DONE);
-				}
-				else
-				{
-					screen->DrawTexture (pic,
-						cx,// + 320 / 2,
-						cy,// + 200 / 2,
-						DTA_Translation, range,
-						TAG_DONE);
-				}
+				screen->DrawTexture (pic,
+					cx,
+					cy,
+					DTA_Translation, range,
+					DTA_CleanNoMove, true,
+					TAG_DONE);
 			}
 			cx += w;
 		}

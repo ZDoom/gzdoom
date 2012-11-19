@@ -302,7 +302,7 @@ MapData *P_OpenMapData(const char * mapname)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].Reader = Wads.ReopenLumpNum(lump_name);
+			map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 
 			if (map->Encrypted)

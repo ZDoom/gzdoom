@@ -285,7 +285,7 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	clearlinespecial 1108
 }
 
-D41D8CD98F00B204E9800998ECF8427E // Khorus, map08
+5B862477519B21B30059A466F2FF6460 // Khorus, map08
 {
 	// This map uses a voodoo conveyor with slanted walls to shunt the
 	// voodoo doll into side areas. For some reason, this voodoo doll

@@ -150,7 +150,6 @@ public:
 class EnvelopeGenerator
 {
 public:
-	//static const double *INFINITY = NULL;    
 	enum Stage {ATTACK,DECAY,SUSTAIN,RELEASE,OFF};
 	Stage stage;    
 	int actualAttackRate, actualDecayRate, actualReleaseRate;        
@@ -322,7 +321,7 @@ public:
 //
 
 
-struct OPL3Data
+struct OPL3DataStruct
 {
 public:
 	// OPL3-wide registers offsets:
@@ -338,7 +337,7 @@ public:
 	static const int tremoloTableLength = (int)(OPL_SAMPLE_RATE/tremoloFrequency);
 	static const int vibratoTableLength = 8192;
 
-	OPL3Data::OPL3Data()
+	OPL3DataStruct()
 	{
 		loadVibratoTable();
 		loadTremoloTable();
@@ -384,7 +383,7 @@ const float ChannelData::feedback[8] = {0,1/32.f,1/16.f,1/8.f,1/4.f,1/2.f,1,2};
 //
 
 
-struct OperatorData
+struct OperatorDataStruct
 {
 	static const int
 		AM1_VIB1_EGT1_KSR1_MULT4_Offset = 0x20,
@@ -416,7 +415,7 @@ struct OperatorData
 
 	double attackTable[ATTACK_TABLE_SIZE];
 
-	OperatorData()
+	OperatorDataStruct()
 	{
 		loadWaveforms();
 		loaddBPowTable();
@@ -431,9 +430,9 @@ private:
 	void loaddBPowTable();
 	void loadAttackTable();
 };
-const float OperatorData::multTable[16] = {0.5,1,2,3,4,5,6,7,8,9,10,10,12,12,15,15};
+const float OperatorDataStruct::multTable[16] = {0.5,1,2,3,4,5,6,7,8,9,10,10,12,12,15,15};
 
-const float OperatorData::ksl3dBtable[16][8] = {
+const float OperatorDataStruct::ksl3dBtable[16][8] = {
 	{0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,-3,-6,-9},
 	{0,0,0,0,-3,-6,-9,-12},
@@ -462,7 +461,7 @@ const float OperatorData::ksl3dBtable[16][8] = {
 
 namespace EnvelopeGeneratorData
 {
-	static const double INFINITY = std::numeric_limits<double>::infinity();
+	static const double MUGEN = std::numeric_limits<double>::infinity();
 	// This table is indexed by the value of Operator.ksr 
 	// and the value of ChannelRegister.keyScaleNumber.
 	static const int rateOffset[2][16] = {
@@ -473,7 +472,7 @@ namespace EnvelopeGeneratorData
 	// The attack actual rates range from 0 to 63, with different data for 
 	// 0%-100% and for 10%-90%: 
 	static const double attackTimeValuesTable[64][2] = {
-		{INFINITY,INFINITY},    {INFINITY,INFINITY},    {INFINITY,INFINITY},    {INFINITY,INFINITY},
+		{MUGEN,MUGEN},    {MUGEN,MUGEN},    {MUGEN,MUGEN},    {MUGEN,MUGEN},
 		{2826.24,1482.75}, {2252.80,1155.07}, {1884.16,991.23}, {1597.44,868.35},
 		{1413.12,741.38}, {1126.40,577.54}, {942.08,495.62}, {798.72,434.18},
 		{706.56,370.69}, {563.20,288.77}, {471.04,247.81}, {399.36,217.09},
@@ -498,7 +497,7 @@ namespace EnvelopeGeneratorData
 	// The rate index range from 0 to 63, with different data for 
 	// 0%-100% and for 10%-90%: 
 	static const double decayAndReleaseTimeValuesTable[64][2] = {
-		{INFINITY,INFINITY},    {INFINITY,INFINITY},    {INFINITY,INFINITY},    {INFINITY,INFINITY},
+		{MUGEN,MUGEN},    {MUGEN,MUGEN},    {MUGEN,MUGEN},    {MUGEN,MUGEN},
 		{39280.64,8212.48}, {31416.32,6574.08}, {26173.44,5509.12}, {22446.08,4730.88},
 		{19640.32,4106.24}, {15708.16,3287.04}, {13086.72,2754.56}, {11223.04,2365.44},
 		{9820.16,2053.12}, {7854.08,1643.52}, {6543.36,1377.28}, {5611.52,1182.72},
@@ -555,8 +554,8 @@ public:
 
 	bool FullPan;
 	
-	static OperatorData *OperatorData;
-	static OPL3Data *OPL3Data;
+	static OperatorDataStruct *OperatorData;
+	static OPL3DataStruct *OPL3Data;
 
 	// The methods read() and write() are the only 
 	// ones needed by the user to interface with the emulator.
@@ -595,8 +594,8 @@ public:
 	void SetPanning(int c, float left, float right);
 };
 
-OperatorData *OPL3::OperatorData;
-OPL3Data *OPL3::OPL3Data;
+OperatorDataStruct *OPL3::OperatorData;
+OPL3DataStruct *OPL3::OPL3Data;
 int OPL3::InstanceCount;
 
 void OPL3::Update(float *output, int numsamples) {
@@ -616,11 +615,11 @@ void OPL3::Update(float *output, int numsamples) {
 
 		// Advances the OPL3-wide vibrato index, which is used by 
 		// PhaseGenerator.getPhase() in each Operator.
-		vibratoIndex = (vibratoIndex + 1) & (OPL3Data::vibratoTableLength - 1);
+		vibratoIndex = (vibratoIndex + 1) & (OPL3DataStruct::vibratoTableLength - 1);
 		// Advances the OPL3-wide tremolo index, which is used by 
 		// EnvelopeGenerator.getEnvelope() in each Operator.
 		tremoloIndex++;
-		if(tremoloIndex >= OPL3Data::tremoloTableLength) tremoloIndex = 0;
+		if(tremoloIndex >= OPL3DataStruct::tremoloTableLength) tremoloIndex = 0;
 		output += 2;
 	}
 }
@@ -711,9 +710,9 @@ void OPL3::write(int array, int address, int data) {
 }
 
 OPL3::OPL3(bool fullpan)
-: bassDrumChannel(fullpan ? CENTER_PANNING_POWER : 1),
-  highHatSnareDrumChannel(fullpan ? CENTER_PANNING_POWER : 1, &highHatOperator, &snareDrumOperator),
-  tomTomTopCymbalChannel(fullpan ? CENTER_PANNING_POWER : 1, &tomTomOperator, &topCymbalOperator)
+: tomTomTopCymbalChannel(fullpan ? CENTER_PANNING_POWER : 1, &tomTomOperator, &topCymbalOperator),
+  bassDrumChannel(fullpan ? CENTER_PANNING_POWER : 1),
+  highHatSnareDrumChannel(fullpan ? CENTER_PANNING_POWER : 1, &highHatOperator, &snareDrumOperator)
 {
 	FullPan = fullpan;
     nts = dam = dvb = ryt = bd = sd = tom = tc = hh = _new = connectionsel = 0;
@@ -721,8 +720,8 @@ OPL3::OPL3(bool fullpan)
 
 	if (InstanceCount++ == 0)
 	{
-		OPL3Data = new struct OPL3Data;
-		OperatorData = new struct OperatorData;
+		OPL3Data = new struct OPL3DataStruct;
+		OperatorData = new struct OperatorDataStruct;
 	}
 
     initOperators();
@@ -762,6 +761,7 @@ OPL3::~OPL3()
 		OperatorData = NULL;
 	}
 }
+
 
 void OPL3::initOperators() {
     int baseAddress;
@@ -825,7 +825,7 @@ void OPL3::initChannels() {
 }
 
 void OPL3::update_1_NTS1_6() {
-	int _1_nts1_6 = registers[OPL3Data::_1_NTS1_6_Offset];
+	int _1_nts1_6 = registers[OPL3DataStruct::_1_NTS1_6_Offset];
     // Note Selection. This register is used in Channel.updateOperators() implementations,
     // to calculate the channel´s Key Scale Number.
     // The value of the actual envelope rate follows the value of
@@ -834,7 +834,7 @@ void OPL3::update_1_NTS1_6() {
 }
 
 void OPL3::update_DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1() {
-	int dam1_dvb1_ryt1_bd1_sd1_tom1_tc1_hh1 = registers[OPL3Data::DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1_Offset];
+	int dam1_dvb1_ryt1_bd1_sd1_tom1_tc1_hh1 = registers[OPL3DataStruct::DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1_Offset];
     // Depth of amplitude. This register is used in EnvelopeGenerator.getEnvelope();
     dam = (dam1_dvb1_ryt1_bd1_sd1_tom1_tc1_hh1 & 0x80) >> 7;
     
@@ -883,7 +883,7 @@ void OPL3::update_DAM1_DVB1_RYT1_BD1_SD1_TOM1_TC1_HH1() {
 }
 
 void OPL3::update_7_NEW1() {
-	int _7_new1 = registers[OPL3Data::_7_NEW1_Offset];
+	int _7_new1 = registers[OPL3DataStruct::_7_NEW1_Offset];
     // OPL2/OPL3 mode selection. This register is used in 
     // OPL3.read(), OPL3.write() and Operator.getOperatorOutput();
     _new = (_7_new1 & 0x01);
@@ -913,7 +913,7 @@ void OPL3::updateChannelPans() {
 
 void OPL3::update_2_CONNECTIONSEL6() {
     // This method is called only if _new is set.
-	int _2_connectionsel6 = registers[OPL3Data::_2_CONNECTIONSEL6_Offset];
+	int _2_connectionsel6 = registers[OPL3DataStruct::_2_CONNECTIONSEL6_Offset];
     // 2-op/4-op channel selection. This register is used here to configure the OPL3.channels[] array.
     connectionsel = (_2_connectionsel6 & 0x3F);
     set4opConnections();
@@ -1209,7 +1209,7 @@ Operator::Operator(int baseAddress) {
 
 void Operator::update_AM1_VIB1_EGT1_KSR1_MULT4(OPL3 *OPL3) {
 	
-	int am1_vib1_egt1_ksr1_mult4 = OPL3->registers[operatorBaseAddress+OperatorData::AM1_VIB1_EGT1_KSR1_MULT4_Offset];
+	int am1_vib1_egt1_ksr1_mult4 = OPL3->registers[operatorBaseAddress+OperatorDataStruct::AM1_VIB1_EGT1_KSR1_MULT4_Offset];
 	
 	// Amplitude Modulation. This register is used int EnvelopeGenerator.getEnvelope();
 	am  = (am1_vib1_egt1_ksr1_mult4 & 0x80) >> 7;
@@ -1232,7 +1232,7 @@ void Operator::update_AM1_VIB1_EGT1_KSR1_MULT4(OPL3 *OPL3) {
 
 void Operator::update_KSL2_TL6(OPL3 *OPL3) {
 	
-	int ksl2_tl6 = OPL3->registers[operatorBaseAddress+OperatorData::KSL2_TL6_Offset];
+	int ksl2_tl6 = OPL3->registers[operatorBaseAddress+OperatorDataStruct::KSL2_TL6_Offset];
 	
 	// Key Scale Level. Sets the attenuation in accordance with the octave.
 	ksl = (ksl2_tl6 & 0xC0) >> 6;
@@ -1245,7 +1245,7 @@ void Operator::update_KSL2_TL6(OPL3 *OPL3) {
 
 void Operator::update_AR4_DR4(OPL3 *OPL3) {
 	
-	int ar4_dr4 = OPL3->registers[operatorBaseAddress+OperatorData::AR4_DR4_Offset];
+	int ar4_dr4 = OPL3->registers[operatorBaseAddress+OperatorDataStruct::AR4_DR4_Offset];
 	
 	// Attack Rate.
 	ar = (ar4_dr4 & 0xF0) >> 4;
@@ -1258,7 +1258,7 @@ void Operator::update_AR4_DR4(OPL3 *OPL3) {
 
 void Operator::update_SL4_RR4(OPL3 *OPL3) {     
 	
-	int sl4_rr4 = OPL3->registers[operatorBaseAddress+OperatorData::SL4_RR4_Offset];
+	int sl4_rr4 = OPL3->registers[operatorBaseAddress+OperatorDataStruct::SL4_RR4_Offset];
 	
 	// Sustain Level.
 	sl = (sl4_rr4 & 0xF0) >> 4;
@@ -1270,7 +1270,7 @@ void Operator::update_SL4_RR4(OPL3 *OPL3) {
 }
 
 void Operator::update_5_WS3(OPL3 *OPL3) {     
-	int _5_ws3 = OPL3->registers[operatorBaseAddress+OperatorData::_5_WS3_Offset];
+	int _5_ws3 = OPL3->registers[operatorBaseAddress+OperatorDataStruct::_5_WS3_Offset];
 	ws =  _5_ws3 & 0x07;
 }
 
@@ -1291,7 +1291,7 @@ double Operator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 }
 
 double Operator::getOutput(double modulator, double outputPhase, double *waveform) {
-	int sampleIndex = xs_FloorToInt((outputPhase + modulator) * OperatorData::waveLength) & (OperatorData::waveLength - 1);
+	int sampleIndex = xs_FloorToInt((outputPhase + modulator) * OperatorDataStruct::waveLength) & (OperatorDataStruct::waveLength - 1);
 	return waveform[sampleIndex] * envelope;
 }    
 
@@ -1356,15 +1356,15 @@ void EnvelopeGenerator::setAtennuation(int f_number, int block, int ksl) {
 			break;
 		case 1:
 			// ~3 dB/Octave
-			attenuation = OperatorData::ksl3dBtable[hi4bits][block];
+			attenuation = OperatorDataStruct::ksl3dBtable[hi4bits][block];
 			break;
 		case 2:
 			// ~1.5 dB/Octave
-			attenuation = OperatorData::ksl3dBtable[hi4bits][block]/2;
+			attenuation = OperatorDataStruct::ksl3dBtable[hi4bits][block]/2;
 			break;
 		case 3:
 			// ~6 dB/Octave
-			attenuation = OperatorData::ksl3dBtable[hi4bits][block]*2;
+			attenuation = OperatorDataStruct::ksl3dBtable[hi4bits][block]*2;
 	}
 }
 
@@ -1382,7 +1382,7 @@ void EnvelopeGenerator::setActualAttackRate(int attackRate, int ksr, int keyScal
 	double period10to90inSeconds = EnvelopeGeneratorData::attackTimeValuesTable[actualAttackRate][1]/1000.0;
 	int period10to90inSamples = (int)(period10to90inSeconds*OPL_SAMPLE_RATE);
 	// The x increment is dictated by the period between 10% and 90%:
-	xAttackIncrement = OPL3Data::calculateIncrement(percentageToX(0.1), percentageToX(0.9), period10to90inSeconds);
+	xAttackIncrement = OPL3DataStruct::calculateIncrement(percentageToX(0.1), percentageToX(0.9), period10to90inSeconds);
 	// Discover how many samples are still from the top.
 	// It cannot reach 0 dB, since x is a logarithmic parameter and would be
 	// negative infinity. So we will use -0.1875 dB as the resolution
@@ -1403,13 +1403,13 @@ void EnvelopeGenerator::setActualDecayRate(int decayRate, int ksr, int keyScaleN
 	double period10to90inSeconds = EnvelopeGeneratorData::decayAndReleaseTimeValuesTable[actualDecayRate][1]/1000.0;
 	// Differently from the attack curve, the decay/release curve is linear.        
 	// The dB increment is dictated by the period between 10% and 90%:
-	dBdecayIncrement = OPL3Data::calculateIncrement(percentageToDB(0.1), percentageToDB(0.9), period10to90inSeconds);
+	dBdecayIncrement = OPL3DataStruct::calculateIncrement(percentageToDB(0.1), percentageToDB(0.9), period10to90inSeconds);
 }
 
 void EnvelopeGenerator::setActualReleaseRate(int releaseRate, int ksr, int keyScaleNumber) {
 	actualReleaseRate =  calculateActualRate(releaseRate, ksr, keyScaleNumber);
 	double period10to90inSeconds = EnvelopeGeneratorData::decayAndReleaseTimeValuesTable[actualReleaseRate][1]/1000.0;
-	dBreleaseIncrement = OPL3Data::calculateIncrement(percentageToDB(0.1), percentageToDB(0.9), period10to90inSeconds);
+	dBreleaseIncrement = OPL3DataStruct::calculateIncrement(percentageToDB(0.1), percentageToDB(0.9), period10to90inSeconds);
 } 
 
 int EnvelopeGenerator::calculateActualRate(int rate, int ksr, int keyScaleNumber) {
@@ -1442,7 +1442,7 @@ double EnvelopeGenerator::getEnvelope(OPL3 *OPL3, int egt, int am) {
 		case ATTACK:
 			// Since the attack is exponential, it will never reach 0 dB, so
 			// we´ll work with the next to maximum in the envelope resolution.
-			if(envelope<-envelopeResolution && xAttackIncrement != -EnvelopeGeneratorData::INFINITY) {
+			if(envelope<-envelopeResolution && xAttackIncrement != -EnvelopeGeneratorData::MUGEN) {
 				// The attack is exponential.
 #if 0
 				envelope = -pow(2.0,x);
@@ -1493,6 +1493,8 @@ double EnvelopeGenerator::getEnvelope(OPL3 *OPL3, int egt, int am) {
 			if(envelope > envelopeMinimum) 
 				envelope -= dBreleaseIncrement;
 			else stage = OFF;
+		case OFF:
+			break;
 	}
 	
 	// Ongoing original envelope
@@ -1516,7 +1518,7 @@ void EnvelopeGenerator::keyOn() {
 	// envelope = - (2 ^ x); ->
 	// 2 ^ x = -envelope ->
 	// x = log2(-envelope); ->
-	double xCurrent = OperatorData::log2(-envelope);
+	double xCurrent = OperatorDataStruct::log2(-envelope);
 	x = xCurrent < xMinimumInAttack ? xCurrent : xMinimumInAttack;
 	stage = ATTACK;
 }
@@ -1526,7 +1528,7 @@ void EnvelopeGenerator::keyOff() {
 }
 
 double EnvelopeGenerator::dBtoX(double dB) {
-	return OperatorData::log2(-dB);
+	return OperatorDataStruct::log2(-dB);
 }
 
 double EnvelopeGenerator::percentageToDB(double percentage) {
@@ -1546,7 +1548,7 @@ void PhaseGenerator::setFrequency(int f_number, int block, int mult) {
 	// f_number = baseFrequency * pow(2,19) / OPL_SAMPLE_RATE / pow(2,block-1);        
 	double baseFrequency = 
 		f_number * pow(2.0, block-1) * OPL_SAMPLE_RATE / pow(2.0,19);
-	double operatorFrequency = baseFrequency*OperatorData::multTable[mult];
+	double operatorFrequency = baseFrequency*OperatorDataStruct::multTable[mult];
 	
 	// phase goes from 0 to 1 at 
 	// period = (1/frequency) seconds ->
@@ -1597,7 +1599,7 @@ TopCymbalOperator::TopCymbalOperator()
 
 double TopCymbalOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	double highHatOperatorPhase = 
-		OPL3->highHatOperator.phase * OperatorData::multTable[OPL3->highHatOperator.mult];
+		OPL3->highHatOperator.phase * OperatorDataStruct::multTable[OPL3->highHatOperator.mult];
 	// The Top Cymbal operator uses its own phase together with the High Hat phase.
 	return getOperatorOutput(OPL3, modulator, highHatOperatorPhase);
 }
@@ -1635,7 +1637,7 @@ HighHatOperator::HighHatOperator()
 
 double HighHatOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	double topCymbalOperatorPhase = 
-		OPL3->topCymbalOperator.phase * OperatorData::multTable[OPL3->topCymbalOperator.mult];
+		OPL3->topCymbalOperator.phase * OperatorDataStruct::multTable[OPL3->topCymbalOperator.mult];
 	// The sound output from the High Hat resembles the one from
 	// Top Cymbal, so we use the parent method and modify its output
 	// accordingly afterwards.
@@ -1684,7 +1686,7 @@ double BassDrumChannel::getChannelOutput(OPL3 *OPL3) {
 	return Channel2op::getChannelOutput(OPL3);
 }
 
-void OPL3Data::loadVibratoTable() {
+void OPL3DataStruct::loadVibratoTable() {
 
 	// According to the YMF262 datasheet, the OPL3 vibrato repetition rate is 6.1 Hz.
 	// According to the YMF278B manual, it is 6.0 Hz. 
@@ -1732,7 +1734,7 @@ void OPL3Data::loadVibratoTable() {
 	
 }
 
-void OPL3Data::loadTremoloTable()
+void OPL3DataStruct::loadTremoloTable()
 {
 	// The tremolo depth is -1 dB when DAM = 0, and -4.8 dB when DAM = 1.
 	static const double tremoloDepth[] = {-1, -4.8};
@@ -1769,7 +1771,7 @@ void OPL3Data::loadTremoloTable()
 	}
 }
 
-void OperatorData::loadWaveforms() {
+void OperatorDataStruct::loadWaveforms() {
 	int i;
 	// 1st waveform: sinusoid.
 	double theta = 0, thetaIncrement = 2*M_PI / 1024;
@@ -1815,7 +1817,7 @@ void OperatorData::loadWaveforms() {
 	}
 }
 
-void OperatorData::loaddBPowTable()
+void OperatorDataStruct::loaddBPowTable()
 {
 	for (int i = 0; i < DB_TABLE_SIZE; ++i)
 	{
@@ -1823,7 +1825,7 @@ void OperatorData::loaddBPowTable()
 	}
 }
 
-void OperatorData::loadAttackTable()
+void OperatorDataStruct::loadAttackTable()
 {
 	for (int i = 0; i < ATTACK_TABLE_SIZE; ++i)
 	{

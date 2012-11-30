@@ -51,11 +51,16 @@
 #include "farchive.h"
 #include "v_video.h"
 #include "r_renderer.h"
+#include "r_sky.h"
 #include "textures/textures.h"
 
 FTextureManager TexMan;
 
-CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE)
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE)
+{
+	// This is in case the sky texture has been substituted.
+	R_InitSkyMap ();
+}
 
 //==========================================================================
 //
@@ -1026,13 +1031,13 @@ void FTextureManager::InitPalettedVersions()
 			FTextureID pic1 = CheckForTexture(sc.String, FTexture::TEX_Any);
 			if (!pic1.isValid())
 			{
-				sc.ScriptMessage("Unknown texture %s to replace");
+				sc.ScriptMessage("Unknown texture %s to replace", sc.String);
 			}
 			sc.MustGetString();
 			FTextureID pic2 = CheckForTexture(sc.String, FTexture::TEX_Any);
 			if (!pic2.isValid())
 			{
-				sc.ScriptMessage("Unknown texture %s to use as replacement");
+				sc.ScriptMessage("Unknown texture %s to use as replacement", sc.String);
 			}
 			if (pic1.isValid() && pic2.isValid())
 			{

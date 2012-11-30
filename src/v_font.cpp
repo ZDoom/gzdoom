@@ -1073,7 +1073,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	FontHeight = data[4] + data[5]*256;
 	FirstChar = data[6];
 	LastChar = data[7];
-	ActiveColors = data[10];
+	ActiveColors = data[10]+1;
 	PatchRemap = NULL;
 	RescalePalette = data[9] == 0;
 	
@@ -1125,9 +1125,9 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		SpaceWidth = totalwidth * 2 / (3 * count);
 	}
 
-	memcpy(PaletteData, palette, (ActiveColors+1)*3);
+	memcpy(PaletteData, palette, ActiveColors*3);
 
-	data_p = palette + (ActiveColors+1)*3;
+	data_p = palette + ActiveColors*3;
 
 	for (i = 0; i < count; ++i)
 	{

@@ -1614,6 +1614,7 @@ void AM_drawSubsectors()
 	fixed_t scalex, scaley;
 	double originx, originy;
 	FDynamicColormap *colormap;
+	mpoint_t originpt;
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
@@ -1642,11 +1643,9 @@ void AM_drawSubsectors()
 		// For lighting and texture determination
 		sector_t *sec = Renderer->FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,	&ceilinglight, false);
 		// Find texture origin.
-		mpoint_t originpt = { -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS,
-							  sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS };
+		originpt.x = -sec->GetXOffset(sector_t::floor) >> FRACTOMAPBITS;
+		originpt.y = sec->GetYOffset(sector_t::floor) >> FRACTOMAPBITS;
 		rotation = 0 - sec->GetAngle(sector_t::floor);
-		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
-		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 		// Coloring for the polygon
 		colormap = sec->ColorMap;
 
@@ -1690,6 +1689,7 @@ void AM_drawSubsectors()
 				F3DFloor *rover = sec->e->XFloor.ffloors[i];
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (rover->flags & FF_FOG) continue;
+				if (!(rover->flags & FF_RENDERPLANES)) continue;
 				if (rover->alpha == 0) continue;
 				double roverz = rover->top.plane->ZatPoint(secx, secy);
 				// Ignore 3D floors that are above or below the sector itself:
@@ -1701,9 +1701,13 @@ void AM_drawSubsectors()
 				{
 					maptex = *(rover->top.texture);
 					floorplane = rover->top.plane;
-					rotation = 0 - rover->top.model->GetAngle(sector_t::ceiling);
-					scalex = rover->top.model->GetXScale(sector_t::ceiling);
-					scaley = rover->top.model->GetYScale(sector_t::ceiling);
+					sector_t *model = rover->top.model;
+					int selector = (rover->flags & FF_INVERTPLANES) ? sector_t::floor : sector_t::ceiling;
+					rotation = 0 - model->GetAngle(selector);
+					scalex = model->GetXScale(selector);
+					scaley = model->GetYScale(selector);
+					originpt.x = -model->GetXOffset(selector) >> FRACTOMAPBITS;
+					originpt.y = model->GetYOffset(selector) >> FRACTOMAPBITS;
 					break;
 				}
 			}
@@ -1713,6 +1717,8 @@ void AM_drawSubsectors()
 			colormap = light->extra_colormap;
 		}
 #endif
+		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
+		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 		// Apply the floor's rotation to the texture origin.
 		if (rotation != 0)
 		{

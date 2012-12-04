@@ -1295,37 +1295,67 @@ static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swa
 
 void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, fixed_t top, fixed_t bot, bool mask)
 {
-	short *up = uwal;
-
-	if (r_np2)
+	if (!r_np2)
+	{
+		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, mask);
+	}
+	else
 	{
 		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
-		short *down;
+		short *up, *down;
 		fixed_t texheight = rw_pic->GetHeight() << FRACBITS;
 		fixed_t scaledtexheight = FixedDiv(texheight, yrepeat);
-		fixed_t partition = top - (top - FixedDiv(dc_texturemid, yrepeat) - viewz) % scaledtexheight;
+		fixed_t partition;
 
-		down = most1;
-
-		dc_texturemid = FixedMul(partition - viewz, yrepeat) + texheight;
-		while (partition > bot)
-		{
-			int j = OWallMost(most3, partition - viewz);
-			if (j != 3)
+		if (yrepeat >= 0)
+		{ // normal orientation: draw strips from top to bottom
+			partition = top - (top - FixedDiv(dc_texturemid, yrepeat) - viewz) % scaledtexheight;
+			up = uwal;
+			down = most1;
+			dc_texturemid = FixedMul(partition - viewz, yrepeat) + texheight;
+			while (partition > bot)
 			{
-				for (int j = x1; j <= x2; ++j)
+				int j = OWallMost(most3, partition - viewz);
+				if (j != 3)
 				{
-					down[j] = clamp (most3[j], up[j], dwal[j]);
+					for (int j = x1; j <= x2; ++j)
+					{
+						down[j] = clamp(most3[j], up[j], dwal[j]);
+					}
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+					up = down;
+					down = (down == most1) ? most2 : most1;
 				}
-				call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
-				up = down;
-				down = (down == most1) ? most2 : most1;
-			}
-			partition -= scaledtexheight;
-			dc_texturemid -= texheight;
- 		}
+				partition -= scaledtexheight;
+				dc_texturemid -= texheight;
+ 			}
+			call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
+		}
+		else
+		{ // upside down: draw strips from bottom to top
+			partition = bot - (bot - FixedDiv(dc_texturemid, yrepeat) - viewz) % scaledtexheight;
+			up = most1;
+			down = dwal;
+			dc_texturemid = FixedMul(partition - viewz, yrepeat) + texheight;
+			while (partition < top)
+			{
+				int j = OWallMost(most3, partition - viewz);
+				if (j != 12)
+				{
+					for (int j = x1; j <= x2; ++j)
+					{
+						up[j] = clamp(most3[j], uwal[j], down[j]);
+					}
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+					down = up;
+					up = (up == most1) ? most2 : most1;
+				}
+				partition -= scaledtexheight;
+				dc_texturemid -= texheight;
+ 			}
+			call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
+		}
 	}
-	call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
 }
 
 static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat)

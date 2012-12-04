@@ -1850,6 +1850,10 @@ void R_RenderSegLoop ()
 			{
 				rw_offset = rw_offset_mid;
 			}
+			if (xscale < 0)
+			{
+				rw_offset = -rw_offset;
+			}
 			if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 			{
 				wallscan_np2(x1, x2-1, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
@@ -1888,6 +1892,10 @@ void R_RenderSegLoop ()
 				else
 				{
 					rw_offset = rw_offset_top;
+				}
+				if (xscale < 0)
+				{
+					rw_offset = -rw_offset;
 				}
 				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 				{
@@ -1930,6 +1938,10 @@ void R_RenderSegLoop ()
 				else
 				{
 					rw_offset = rw_offset_bottom;
+				}
+				if (xscale < 0)
+				{
+					rw_offset = -rw_offset;
 				}
 				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 				{

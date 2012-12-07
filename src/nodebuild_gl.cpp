@@ -83,6 +83,8 @@ double FNodeBuilder::AddIntersection (const node_t &node, int vertex)
 // seg information will be messed up in the generated tree.
 void FNodeBuilder::FixSplitSharers (const node_t &node)
 {
+	D(Printf(PRINT_LOG, "events:\n"));
+	D(Events.PrintTree());
 	for (unsigned int i = 0; i < SplitSharers.Size(); ++i)
 	{
 		DWORD seg = SplitSharers[i].Seg;
@@ -94,6 +96,18 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 		{ // Should not happen
 			continue;
 		}
+
+		// Use the CRT's printf so the formatting matches ZDBSP's
+		D(char buff[200]);
+		D(sprintf(buff, "Considering events on seg %d(%d[%d,%d]->%d[%d,%d]) [%g:%g]\n", seg,
+			Segs[seg].v1,
+			Vertices[Segs[seg].v1].x>>16,
+			Vertices[Segs[seg].v1].y>>16,
+			Segs[seg].v2,
+			Vertices[Segs[seg].v2].x>>16,
+			Vertices[Segs[seg].v2].y>>16,
+			SplitSharers[i].Distance, event->Distance));
+		D(Printf(PRINT_LOG, "%s", buff));
 
 		if (SplitSharers[i].Forward)
 		{

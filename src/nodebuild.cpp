@@ -243,12 +243,16 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 		D(Printf (PRINT_LOG, "Output subsector %d:\n", Subsectors.Size()));
 		for (unsigned int i = firstline; i < SegList.Size(); ++i)
 		{
-			D(Printf (PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)\n", SegList[i].SegPtr - &Segs[0],
+			D(Printf (PRINT_LOG, "  Seg %5d%c%d(%5d,%5d)-%d(%5d,%5d)  [%08x,%08x]-[%08x,%08x]\n", SegList[i].SegPtr - &Segs[0],
 				SegList[i].SegPtr->linedef == -1 ? '+' : ' ',
+				SegList[i].SegPtr->v1,
 				Vertices[SegList[i].SegPtr->v1].x>>16,
 				Vertices[SegList[i].SegPtr->v1].y>>16,
+				SegList[i].SegPtr->v2,
 				Vertices[SegList[i].SegPtr->v2].x>>16,
-				Vertices[SegList[i].SegPtr->v2].y>>16));
+				Vertices[SegList[i].SegPtr->v2].y>>16,
+				Vertices[SegList[i].SegPtr->v1].x, Vertices[SegList[i].SegPtr->v1].y,
+				Vertices[SegList[i].SegPtr->v2].x, Vertices[SegList[i].SegPtr->v2].y));
 			SegList[i].SegNum = DWORD(SegList[i].SegPtr - &Segs[0]);
 		}
 		Subsectors.Push (sub);
@@ -330,7 +334,8 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg)
 
 	do
 	{
-		D(Printf (PRINT_LOG, " - seg %d(%d,%d)-(%d,%d) line %d front %d back %d\n", seg,
+		D(Printf (PRINT_LOG, " - seg %d%c(%d,%d)-(%d,%d) line %d front %d back %d\n", seg,
+			Segs[seg].linedef == -1 ? '+' : ' ',
 			Vertices[Segs[seg].v1].x>>16, Vertices[Segs[seg].v1].y>>16,
 			Vertices[Segs[seg].v2].x>>16, Vertices[Segs[seg].v2].y>>16,
 			Segs[seg].linedef,

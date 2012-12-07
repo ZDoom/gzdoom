@@ -853,15 +853,18 @@ bool P_LoadGLNodes(MapData * map)
 {
 	if (map->MapLumps[ML_GLZNODES].Reader && map->MapLumps[ML_GLZNODES].Reader->GetLength() != 0)
 	{
-		const int idcheck = MAKE_ID('Z','G','L','N');
-		const int idcheck2 = MAKE_ID('Z','G','L','2');
-		const int idcheck3 = MAKE_ID('X','G','L','N');
-		const int idcheck4 = MAKE_ID('X','G','L','2');
+		const int idcheck1a = MAKE_ID('Z','G','L','N');
+		const int idcheck2a = MAKE_ID('Z','G','L','2');
+		const int idcheck3a = MAKE_ID('Z','G','L','3');
+		const int idcheck1b = MAKE_ID('X','G','L','N');
+		const int idcheck2b = MAKE_ID('X','G','L','2');
+		const int idcheck3b = MAKE_ID('X','G','L','3');
 		int id;
 
 		map->Seek(ML_GLZNODES);
 		map->file->Read (&id, 4);
-		if (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4)
+		if (id == idcheck1a || id == idcheck2a || id == idcheck3a ||
+			id == idcheck1b || id == idcheck2b || id == idcheck3b)
 		{
 			try
 			{

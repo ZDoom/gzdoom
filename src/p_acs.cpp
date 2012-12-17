@@ -1242,6 +1242,34 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 					}
 				}
 			}
+
+			// [BL] Newer version of ASTR for structure aware compilers although we only have one array per chunk
+			chunk = (DWORD *)FindChunk (MAKE_ID('A','T','A','G'));
+			while (chunk != NULL)
+			{
+				const BYTE* chunkData = (const BYTE*)(chunk + 2);
+				// First byte is version, it should be 0
+				if(*chunkData++ == 0)
+				{
+					int arraynum = MapVarStore[LittleLong(*(const DWORD*)(chunkData))];
+					chunkData += 4;
+					if ((unsigned)arraynum < (unsigned)NumArrays)
+					{
+						SDWORD *elems = ArrayStore[arraynum].Elements;
+						// Ending zeros may be left out.
+						for (int j = MIN(chunk[1]-5, ArrayStore[arraynum].ArraySize); j > 0; --j, ++elems, ++chunkData)
+						{
+							// For ATAG, a value of 0 = Integer, 1 = String, 2 = FunctionPtr
+							// Our implementation uses the same tags for both String and FunctionPtr
+							if(*chunkData)
+								*elems |= LibraryID;
+						}
+						i += 4+ArrayStore[arraynum].ArraySize;
+					}
+				}
+
+				chunk = (DWORD *)NextChunk ((BYTE *)chunk);
+			}
 		}
 
 		// Load required libraries.
@@ -5381,7 +5409,7 @@ scriptwait:
 			if (activationline != NULL)
 			{
 				activationline->special = 0;
-				DPrintf("Cleared line special on line %d\n", activationline - lines);
+				DPrintf("Cleared line special on line %d\n", (int)(activationline - lines));
 			}
 			break;
 

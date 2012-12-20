@@ -165,6 +165,7 @@ public:
 	void StartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow);
 	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
 	int *Ofs2PC (DWORD ofs) const {	return (int *)(Data + ofs); }
+	int *Jump2PC (DWORD jumpPoint) const { return Ofs2PC(JumpPoints[jumpPoint]); }
 	ACSFormat GetFormat() const { return Format; }
 	ScriptFunction *GetFunction (int funcnum, FBehavior *&module) const;
 	int GetArrayVal (int arraynum, int index) const;
@@ -213,6 +214,7 @@ private:
 	TArray<FBehavior *> Imports;
 	DWORD LibraryID;
 	char ModuleName[9];
+	TArray<int> JumpPoints;
 
 	static TArray<FBehavior *> StaticModules;
 
@@ -602,6 +604,7 @@ public:
 /*360*/	PCD_CALLSTACK,			// from Eternity
 		PCD_SCRIPTWAITNAMED,
 		PCD_TRANSLATIONRANGE3,
+		PCD_GOTOSTACK,
 
 /*363*/	PCODE_COMMAND_COUNT
 	};

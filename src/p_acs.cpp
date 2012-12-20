@@ -1144,6 +1144,14 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 			Functions += 8;
 		}
 
+		// Load JUMP points
+		chunk = (DWORD *)FindChunk (MAKE_ID('J','U','M','P'));
+		if (chunk != NULL)
+		{
+			for (i = 0;i < (int)LittleLong(chunk[1]);i += 4)
+				JumpPoints.Push(LittleLong(chunk[2 + i/4]));
+		}
+
 		// Initialize this object's map variables
 		memset (MapVarStore, 0, sizeof(MapVarStore));
 		chunk = (DWORD *)FindChunk (MAKE_ID('M','I','N','I'));
@@ -5186,6 +5194,11 @@ int DLevelScript::RunScript ()
 
 		case PCD_GOTO:
 			pc = activeBehavior->Ofs2PC (LittleLong(*pc));
+			break;
+
+		case PCD_GOTOSTACK:
+			pc = activeBehavior->Jump2PC (STACK(1));
+			sp--;
 			break;
 
 		case PCD_IFGOTO:

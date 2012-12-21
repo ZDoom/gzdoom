@@ -373,6 +373,8 @@ protected:
 	int (STACK_ARGS *fluid_settings_setint)(fluid_settings_t *, const char *, int);
 	int (STACK_ARGS *fluid_settings_getstr)(fluid_settings_t *, const char *, char **);
 	int (STACK_ARGS *fluid_settings_getint)(fluid_settings_t *, const char *, int *);
+	void (STACK_ARGS *fluid_synth_set_reverb_on)(fluid_synth_t *, int);
+	void (STACK_ARGS *fluid_synth_set_chorus_on)(fluid_synth_t *, int);
 	int (STACK_ARGS *fluid_synth_set_interp_method)(fluid_synth_t *, int, int);
 	int (STACK_ARGS *fluid_synth_set_polyphony)(fluid_synth_t *, int);
 	int (STACK_ARGS *fluid_synth_get_polyphony)(fluid_synth_t *);

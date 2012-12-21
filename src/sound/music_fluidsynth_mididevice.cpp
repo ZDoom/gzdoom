@@ -544,7 +544,16 @@ void FluidSynthMIDIDevice::FluidSettingInt(const char *setting, int value)
 	}
 	else if (0 == fluid_settings_setint(FluidSettings, setting, value))
 	{
-		Printf("Faild to set %s to %d.\n", setting, value);
+		Printf("Failed to set %s to %d.\n", setting, value);
+	}
+	// fluid_settings_setint succeeded; update these settings in the running synth, too
+	else if (strcmp(setting, "synth.reverb.active") == 0)
+	{
+		fluid_synth_set_reverb_on(FluidSynth, value);
+	}
+	else if (strcmp(setting, "synth.chorus.active") == 0)
+	{
+		fluid_synth_set_chorus_on(FluidSynth, value);
 	}
 }
 
@@ -648,6 +657,8 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
 		{ (void **)&fluid_settings_setint,				"fluid_settings_setint" },
 		{ (void **)&fluid_settings_getstr,				"fluid_settings_getstr" },
 		{ (void **)&fluid_settings_getint,				"fluid_settings_getint" },
+		{ (void **)&fluid_synth_set_reverb_on,			"fluid_synth_set_reverb_on" },
+		{ (void **)&fluid_synth_set_chorus_on,			"fluid_synth_set_chorus_on" },
 		{ (void **)&fluid_synth_set_interp_method,		"fluid_synth_set_interp_method" },
 		{ (void **)&fluid_synth_set_polyphony,			"fluid_synth_set_polyphony" },
 		{ (void **)&fluid_synth_get_polyphony,			"fluid_synth_get_polyphony" },

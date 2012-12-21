@@ -107,13 +107,13 @@ CUSTOM_CVAR(Float, fluid_gain, 0.5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Bool, fluid_reverb, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (currSong != NULL)
-		currSong->FluidSettingStr("synth.reverb.active", self ? "yes" : "no");
+		currSong->FluidSettingInt("synth.reverb.active", self);
 }
 
 CUSTOM_CVAR(Bool, fluid_chorus, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (currSong != NULL)
-		currSong->FluidSettingStr("synth.chorus.active", self ? "yes" : "no");
+		currSong->FluidSettingInt("synth.chorus.active", self);
 }
 
 CUSTOM_CVAR(Int, fluid_voices, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -278,8 +278,8 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 	}
 	fluid_settings_setnum(FluidSettings, "synth.sample-rate", SampleRate);
 	fluid_settings_setnum(FluidSettings, "synth.gain", fluid_gain);
-	fluid_settings_setstr(FluidSettings, "synth.reverb.active", fluid_reverb ? "yes" : "no");
-	fluid_settings_setstr(FluidSettings, "synth.chorus.active", fluid_chorus ? "yes" : "no");
+	fluid_settings_setint(FluidSettings, "synth.reverb.active", fluid_reverb);
+	fluid_settings_setint(FluidSettings, "synth.chorus.active", fluid_chorus);
 	fluid_settings_setint(FluidSettings, "synth.polyphony", fluid_voices);
 	fluid_settings_setint(FluidSettings, "synth.cpu-cores", fluid_threads);
 	FluidSynth = new_fluid_synth(FluidSettings);
@@ -542,7 +542,7 @@ void FluidSynthMIDIDevice::FluidSettingInt(const char *setting, int value)
 		fluid_synth_set_chorus(FluidSynth, fluid_chorus_voices, fluid_chorus_level,
 			fluid_chorus_speed, fluid_chorus_depth, fluid_chorus_type);
 	}
-	else if (FLUID_OK != fluid_settings_setint(FluidSettings, setting, value))
+	else if (0 == fluid_settings_setint(FluidSettings, setting, value))
 	{
 		Printf("Faild to set %s to %d.\n", setting, value);
 	}
@@ -560,7 +560,7 @@ void FluidSynthMIDIDevice::FluidSettingNum(const char *setting, double value)
 {
 	if (FluidSettings != NULL)
 	{
-		if (!fluid_settings_setnum(FluidSettings, setting, value))
+		if (0 == fluid_settings_setnum(FluidSettings, setting, value))
 		{
 			Printf("Failed to set %s to %g.\n", setting, value);
 		}
@@ -579,7 +579,7 @@ void FluidSynthMIDIDevice::FluidSettingStr(const char *setting, const char *valu
 {
 	if (FluidSettings != NULL)
 	{
-		if (!fluid_settings_setstr(FluidSettings, setting, value))
+		if (0 == fluid_settings_setstr(FluidSettings, setting, value))
 		{
 			Printf("Failed to set %s to %s.\n", setting, value);
 		}

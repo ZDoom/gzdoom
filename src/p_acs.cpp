@@ -175,6 +175,27 @@ TArray<FString>
 
 //============================================================================
 //
+// uallong
+//
+// Read a possibly unaligned four-byte little endian integer from memory.
+//
+//============================================================================
+
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__)
+inline int uallong(const int &foo)
+{
+	return foo;
+}
+#else
+inline int uallong(const int &foo)
+{
+	const unsigned char *bar = (const unsigned char *)&foo;
+	return bar[0] | (bar[1] << 8) | (bar[2] << 16) | (bar[3] << 24);
+}
+#endif
+
+//============================================================================
+//
 // ScriptPresentation
 //
 // Returns a presentable version of the script number.
@@ -1259,7 +1280,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 				// First byte is version, it should be 0
 				if(*chunkData++ == 0)
 				{
-					int arraynum = MapVarStore[LittleLong(*(const DWORD*)(chunkData))];
+					int arraynum = MapVarStore[uallong(*(const int*)(chunkData))];
 					chunkData += 4;
 					if ((unsigned)arraynum < (unsigned)NumArrays)
 					{
@@ -4009,20 +4030,6 @@ inline int getshort (int *&pc)
 	pc = (int *)((BYTE *)pc+2);
 	return res;
 }
-
-// Read a possibly unaligned four-byte little endian integer.
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
-inline int uallong(int &foo)
-{
-	return foo;
-}
-#else
-inline int uallong(int &foo)
-{
-	unsigned char *bar = (unsigned char *)&foo;
-	return bar[0] | (bar[1] << 8) | (bar[2] << 16) | (bar[3] << 24);
-}
-#endif
 
 int DLevelScript::RunScript ()
 {

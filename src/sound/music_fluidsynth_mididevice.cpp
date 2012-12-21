@@ -158,7 +158,7 @@ CUSTOM_CVAR(Int, fluid_threads, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 256;
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_roomsize, FLUID_REVERB_DEFAULT_ROOMSIZE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_roomsize, 0.61f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -168,7 +168,7 @@ CUSTOM_CVAR(Float, fluid_reverb_roomsize, FLUID_REVERB_DEFAULT_ROOMSIZE, CVAR_AR
 		currSong->FluidSettingInt("z.reverb-changed", 0);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_damping, FLUID_REVERB_DEFAULT_DAMP, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_damping, 0.23f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -178,7 +178,7 @@ CUSTOM_CVAR(Float, fluid_reverb_damping, FLUID_REVERB_DEFAULT_DAMP, CVAR_ARCHIVE
 		currSong->FluidSettingInt("z.reverb-changed", 0);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_width, FLUID_REVERB_DEFAULT_WIDTH, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_width, 0.76f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -188,7 +188,7 @@ CUSTOM_CVAR(Float, fluid_reverb_width, FLUID_REVERB_DEFAULT_WIDTH, CVAR_ARCHIVE|
 		currSong->FluidSettingInt("z.reverb-changed", 0);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_level, FLUID_REVERB_DEFAULT_LEVEL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_level, 0.57f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -198,7 +198,7 @@ CUSTOM_CVAR(Float, fluid_reverb_level, FLUID_REVERB_DEFAULT_LEVEL, CVAR_ARCHIVE|
 		currSong->FluidSettingInt("z.reverb-changed", 0);
 }
 
-CUSTOM_CVAR(Int, fluid_chorus_voices, FLUID_CHORUS_DEFAULT_N, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_chorus_voices, 3, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -208,7 +208,7 @@ CUSTOM_CVAR(Int, fluid_chorus_voices, FLUID_CHORUS_DEFAULT_N, CVAR_ARCHIVE|CVAR_
 		currSong->FluidSettingInt("z.chorus-changed", 0);
 }
 
-CUSTOM_CVAR(Float, fluid_chorus_level, FLUID_CHORUS_DEFAULT_LEVEL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_chorus_level, 1.2f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -218,7 +218,7 @@ CUSTOM_CVAR(Float, fluid_chorus_level, FLUID_CHORUS_DEFAULT_LEVEL, CVAR_ARCHIVE|
 		currSong->FluidSettingInt("z.chorus-changed", 0);
 }
 
-CUSTOM_CVAR(Float, fluid_chorus_speed, FLUID_CHORUS_DEFAULT_SPEED, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_chorus_speed, 0.3f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0.29f)
 		self = 0.29f;
@@ -229,7 +229,7 @@ CUSTOM_CVAR(Float, fluid_chorus_speed, FLUID_CHORUS_DEFAULT_SPEED, CVAR_ARCHIVE|
 }
 
 // depth is in ms and actual maximum depends on the sample rate
-CUSTOM_CVAR(Float, fluid_chorus_depth, FLUID_CHORUS_DEFAULT_DEPTH, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_chorus_depth, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;

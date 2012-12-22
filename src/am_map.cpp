@@ -1723,8 +1723,6 @@ void AM_drawSubsectors()
 			continue;
 		}
 
-		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
-		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 		// Apply the floor's rotation to the texture origin.
 		if (rotation != 0)
 		{
@@ -1736,6 +1734,8 @@ void AM_drawSubsectors()
 			rotation += ANG90 - players[consoleplayer].camera->angle;
 			AM_rotatePoint(&originpt.x, &originpt.y);
 		}
+		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
+		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.

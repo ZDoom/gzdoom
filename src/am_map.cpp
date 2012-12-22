@@ -40,6 +40,7 @@
 #include "c_bind.h"
 #include "farchive.h"
 #include "r_renderer.h"
+#include "r_sky.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -1717,6 +1718,11 @@ void AM_drawSubsectors()
 			colormap = light->extra_colormap;
 		}
 #endif
+		if (maptex == skyflatnum)
+		{
+			continue;
+		}
+
 		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
 		originy = f_y + (f_h - (originpt.y - m_y) * scale / float(1 << 24));
 		// Apply the floor's rotation to the texture origin.

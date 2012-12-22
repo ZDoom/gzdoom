@@ -790,6 +790,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show monster count",					"hud_showmonsters", "OnOff"
 	Option "Show item count",						"hud_showitems", "OnOff"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
+	Option "Show berserk",							"hud_berserk_health", "OnOff"
 	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "Yellow ammo display below %",			"hud_ammo_yellow", 0, 100, 1, 0
 	Slider "Red health display below",				"hud_health_red", 0, 100, 1, 0

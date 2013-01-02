@@ -83,8 +83,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (6);
-		P_DamageMobj (target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, target, self);
+		int newdam = P_DamageMobj (target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, target, self);
 		return;
 	}
 	dist = P_AproxDistance (self->x-target->x, self->y-target->y)

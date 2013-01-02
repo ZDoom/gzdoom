@@ -907,8 +907,8 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	{
 		if (bHurtOnTouch || !P_CheckMove (actor, actor->x + thrustX, actor->y + thrustY))
 		{
-			P_DamageMobj (actor, NULL, NULL, crush, NAME_Crush);
-			P_TraceBleed (crush, actor);
+			int newdam = P_DamageMobj (actor, NULL, NULL, crush, NAME_Crush);
+			P_TraceBleed (newdam > 0 ? newdam : crush, actor);
 		}
 	}
 	if (level.flags2 & LEVEL2_POLYGRIND) actor->Grind(false); // crush corpses that get caught in a polyobject's way

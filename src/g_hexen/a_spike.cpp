@@ -154,8 +154,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 		if (thing == self)
 			continue;	// don't clip against self
 
-		P_DamageMobj (thing, self, self, 10001, NAME_Crush);
-		P_TraceBleed (10001, thing);
+		int newdam = P_DamageMobj (thing, self, self, 10001, NAME_Crush);
+		P_TraceBleed (newdam > 0 ? newdam : 10001, thing);
 		self->args[1] = 1;	// Mark thrust thing as bloody
 	}
 }

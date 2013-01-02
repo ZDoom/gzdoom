@@ -87,8 +87,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ProgrammerMelee)
 	S_Sound (self, CHAN_WEAPON, "programmer/clank", 1, ATTN_NORM);
 
 	damage = ((pr_prog() % 10) + 1) * 6;
-	P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-	P_TraceBleed (damage, self->target, self);
+	int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+	P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 }
 
 //============================================================================

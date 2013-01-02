@@ -59,8 +59,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_StalkerAttack)
 		{
 			int damage = (pr_stalker() & 7) * 2 + 2;
 
-			P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-			P_TraceBleed (damage, self->target, self);
+			int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+			P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		}
 	}
 }

@@ -47,8 +47,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = pr_knightatk.HitDice (3);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		S_Sound (self, CHAN_BODY, "hknight/melee", 1, ATTN_NORM);
 		return;
 	}

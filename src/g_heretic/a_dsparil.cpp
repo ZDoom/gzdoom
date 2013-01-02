@@ -70,8 +70,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = pr_scrc1atk.HitDice (8);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
 
@@ -203,8 +203,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 	if (self->CheckMeleeRange())
 	{
 		int damage = pr_s2a.HitDice (20);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
 	chance = self->health < self->SpawnHealth()/2 ? 96 : 48;

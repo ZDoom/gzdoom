@@ -589,18 +589,22 @@ void DIntermissionScreenCast::Drawer ()
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
-		int castsprite;
+		int castsprite = caststate->sprite;
 
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
 			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
 			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
 			skins != NULL)
 		{
-			castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
-		}
-		else
-		{
-			castsprite = caststate->sprite;
+			// Only use the skin sprite if this class has not been removed from the
+			// PlayerClasses list.
+			for (unsigned i = 0; i < PlayerClasses.Size(); ++i)
+			{
+				if (PlayerClasses[i].Type == mClass)
+				{
+					castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+				}
+			}
 		}
 
 		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];

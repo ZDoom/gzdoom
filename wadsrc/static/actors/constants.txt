@@ -84,6 +84,7 @@ const int JLOSF_TARGETLOS = 128;
 const int JLOSF_FLIPFOV = 256;
 const int JLOSF_ALLYNOJUMP = 512;
 const int JLOSF_COMBATANTONLY = 1024;
+const int JLOSF_NOAUTOAIM = 2048;
 
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;

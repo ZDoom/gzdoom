@@ -2866,7 +2866,8 @@ enum JLOS_flags
 	JLOSF_TARGETLOS=128,
 	JLOSF_FLIPFOV=256,
 	JLOSF_ALLYNOJUMP=512,
-	JLOSF_COMBATANTONLY=1024
+	JLOSF_COMBATANTONLY=1024,
+	JLOSF_NOAUTOAIM=2048,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
@@ -2912,7 +2913,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_BulletSlope(self, &target);
+		P_AimLineAttack(self, self->angle, MISSILERANGE, &target, (flags & JLOSF_NOAUTOAIM) ? ANGLE_1/2 : 0);
 		
 		if (!target) return;
 

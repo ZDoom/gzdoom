@@ -775,7 +775,6 @@ void D_Display ()
 			}
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
 				viewwindowx + viewwidth, viewwindowy + viewheight);
-			P_CheckPlayerSprites();
 			P_PredictPlayer(&players[consoleplayer]);
 			Renderer->RenderView(&players[consoleplayer]);
 			P_UnPredictPlayer();

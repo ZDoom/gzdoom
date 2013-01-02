@@ -523,6 +523,14 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	tex = NULL;
 	voxel = NULL;
 
+	unsigned spritenum = thing->sprite;
+	fixed_t spritescaleX = thing->scaleX;
+	fixed_t spritescaleY = thing->scaleY;
+	if (thing->player != NULL)
+	{
+		P_CheckPlayerSprite(thing, spritenum, spritescaleX, spritescaleY);
+	}
+
 	if (thing->picnum.isValid())
 	{
 		picnum = thing->picnum;
@@ -557,13 +565,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		// decide which texture to use for the sprite
 #ifdef RANGECHECK
-		if ((unsigned)thing->sprite >= (unsigned)sprites.Size ())
+		if (spritenum >= (unsigned)sprites.Size ())
 		{
-			DPrintf ("R_ProjectSprite: invalid sprite number %i\n", thing->sprite);
+			DPrintf ("R_ProjectSprite: invalid sprite number %u\n", spritenum);
 			return;
 		}
 #endif
-		spritedef_t *sprdef = &sprites[thing->sprite];
+		spritedef_t *sprdef = &sprites[spritenum];
 		if (thing->frame >= sprdef->numframes)
 		{
 			// If there are no frames at all for this sprite, don't draw it.
@@ -624,13 +632,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		// [RH] Added scaling
 		int scaled_to = tex->GetScaledTopOffset();
 		int scaled_bo = scaled_to - tex->GetScaledHeight();
-		gzt = fz + thing->scaleY * scaled_to;
-		gzb = fz + thing->scaleY * scaled_bo;
+		gzt = fz + spritescaleY * scaled_to;
+		gzb = fz + spritescaleY * scaled_bo;
 	}
 	else
 	{
-		xscale = FixedMul(thing->scaleX, voxel->Scale);
-		yscale = FixedMul(thing->scaleY, voxel->Scale);
+		xscale = FixedMul(spritescaleX, voxel->Scale);
+		yscale = FixedMul(spritescaleY, voxel->Scale);
 		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - thing->floorclip;
 		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
@@ -682,7 +690,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 
 		// calculate edges of the shape
-		const fixed_t thingxscalemul = DivScale16(thing->scaleX, tex->xScale);
+		const fixed_t thingxscalemul = DivScale16(spritescaleX, tex->xScale);
 
 		tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 		x1 = centerx + MulScale32 (tx, xscale);
@@ -698,11 +706,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
-		xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
+		xscale = FixedDiv(FixedMul(spritescaleX, xscale), tex->xScale);
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 		x2--;
 
-		fixed_t yscale = SafeDivScale16(thing->scaleY, tex->yScale);
+		fixed_t yscale = SafeDivScale16(spritescaleY, tex->yScale);
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();

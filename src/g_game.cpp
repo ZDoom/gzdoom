@@ -2049,7 +2049,6 @@ static void PutSavePic (FILE *file, int width, int height)
 	}
 	else
 	{
-		P_CheckPlayerSprites();
 		Renderer->WriteSavePic(&players[consoleplayer], file, width, height);
 	}
 }

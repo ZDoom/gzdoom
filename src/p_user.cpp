@@ -1491,14 +1491,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 void P_CheckPlayerSprite(AActor *actor, unsigned &spritenum, fixed_t &scalex, fixed_t &scaley)
 {
 	player_t *player = actor->player;
-	fixed_t defscaleY = actor->GetDefault()->scaleY;
-	fixed_t defscaleX = actor->GetDefault()->scaleX;
 	int crouchspriteno;
 
 	if (player->userinfo.skin != 0 && !(actor->flags4 & MF4_NOSKIN))
 	{
-		defscaleY = skins[player->userinfo.skin].ScaleY;
-		defscaleX = skins[player->userinfo.skin].ScaleX;
+		// Convert from default scale to skin scale.
+		fixed_t defscaleY = actor->GetDefault()->scaleY;
+		fixed_t defscaleX = actor->GetDefault()->scaleX;
+		scaley = Scale(scaley, skins[player->userinfo.skin].ScaleY, defscaleY);
+		scalex = Scale(scalex, skins[player->userinfo.skin].ScaleX, defscaleX);
 	}
 
 	// Set the crouch sprite?
@@ -1523,15 +1524,11 @@ void P_CheckPlayerSprite(AActor *actor, unsigned &spritenum, fixed_t &scalex, fi
 		{
 			spritenum = crouchspriteno;
 		}
-		else if (player->playerstate != PST_DEAD)
+		else if (player->playerstate != PST_DEAD && player->crouchfactor < FRACUNIT*3/4)
 		{
-			if (player->crouchfactor < FRACUNIT*3/4)
-				defscaleY /= 2;
+			scaley /= 2;
 		}
 	}
-	// Scale the sprite by the actor, skin, and crouch values
-	scalex = FixedMul(scalex, defscaleX);
-	scaley = FixedMul(scaley, defscaleY);
 }
 
 /*

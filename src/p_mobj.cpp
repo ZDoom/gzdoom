@@ -328,8 +328,6 @@ void AActor::Serialize (FArchive &arc)
 				state->sprite == GetDefaultByType (player->cls)->SpawnState->sprite)
 			{ // Give player back the skin
 				sprite = skins[player->userinfo.skin].sprite;
-				scaleX = skins[player->userinfo.skin].ScaleX;
-				scaleY = skins[player->userinfo.skin].ScaleY;
 			}
 			if (Speed == 0)
 			{
@@ -4272,8 +4270,6 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 	if (!(mobj->flags4 & MF4_NOSKIN))
 	{
 		mobj->sprite = skins[p->userinfo.skin].sprite;
-		mobj->scaleX = skins[p->userinfo.skin].ScaleX;
-		mobj->scaleY = skins[p->userinfo.skin].ScaleY;
 	}
 
 	p->DesiredFOV = p->FOV = 90.f;

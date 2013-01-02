@@ -770,8 +770,6 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 						GetDefaultByType (players[i].cls)->SpawnState->sprite)
 					{ // Only change the sprite if the player is using a standard one
 						players[i].mo->sprite = skins[info->skin].sprite;
-						players[i].mo->scaleX = skins[info->skin].ScaleX;
-						players[i].mo->scaleY = skins[info->skin].ScaleY;
 					}
 				}
 				// Rebuild translation in case the new skin uses a different range

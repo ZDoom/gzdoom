@@ -882,6 +882,10 @@ void G_DoLoadLevel (int position, bool autosave)
 	{
 		level.flags2 &= ~LEVEL2_NOMONSTERS;
 	}
+	if (changeflags & CHANGELEVEL_PRERAISEWEAPON)
+	{
+		level.flags2 |= LEVEL2_PRERAISEWEAPON;
+	}
 
 	level.maptime = 0;
 	P_SetupLevel (level.mapname, position);

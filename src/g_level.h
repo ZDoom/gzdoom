@@ -500,6 +500,7 @@ enum
 	CHANGELEVEL_CHANGESKILL = 8,
 	CHANGELEVEL_NOINTERMISSION = 16,
 	CHANGELEVEL_RESETHEALTH = 32,
+	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);

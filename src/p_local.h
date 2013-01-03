@@ -93,7 +93,7 @@ inline int GetSafeBlockY(long long blocky)
 //
 // P_PSPR
 //
-void P_SetupPsprites (player_t* curplayer);
+void P_SetupPsprites (player_t* curplayer, bool startweaponup);
 void P_MovePsprites (player_t* curplayer);
 void P_DropWeapon (player_t* player);
 
@@ -114,7 +114,10 @@ void	P_UnPredictPlayer ();
 #define ONCEILINGZ		FIXED_MAX
 #define FLOATRANDZ		(FIXED_MAX-1)
 
-APlayerPawn *P_SpawnPlayer (struct FPlayerStart *mthing, int playernum, bool tempplayer=false);
+#define SPF_TEMPPLAYER		1	// spawning a short-lived dummy player
+#define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
+
+APlayerPawn *P_SpawnPlayer (struct FPlayerStart *mthing, int playernum, int flags=0);
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);

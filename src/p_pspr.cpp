@@ -989,7 +989,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
 //
 //------------------------------------------------------------------------
 
-void P_SetupPsprites(player_t *player)
+void P_SetupPsprites(player_t *player, bool startweaponup)
 {
 	int i;
 
@@ -999,7 +999,7 @@ void P_SetupPsprites(player_t *player)
 		player->psprites[i].state = NULL;
 	}
 	// Spawn the ready weapon
-	player->PendingWeapon = player->ReadyWeapon;
+	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : WP_NOCHANGE;
 	P_BringUpWeapon (player);
 }
 

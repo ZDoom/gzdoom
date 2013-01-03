@@ -181,7 +181,7 @@ enum ELevelFlags
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
-	/*							= 0x00000080,	*/
+	LEVEL2_PRERAISEWEAPON		= 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
 	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
 	LEVEL2_CLIPMIDTEX			= 0x00000200,
 	LEVEL2_WRAPMIDTEX			= 0x00000400,

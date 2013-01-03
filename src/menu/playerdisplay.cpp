@@ -563,7 +563,7 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 
 	V_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
 
-	spriteframe_t *sprframe;
+	spriteframe_t *sprframe = NULL;
 	fixed_t scaleX, scaleY;
 
 	if (mPlayerState != NULL)

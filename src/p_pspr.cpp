@@ -95,7 +95,7 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 	if (position == ps_weapon && !nofunction)
 	{ // A_WeaponReady will re-set these as needed
-		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK | CF_WEAPONRELOADOK | CF_WEAPONZOOMOK);
+		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONRELOADOK | CF_WEAPONZOOMOK);
 	}
 
 	psp = &player->psprites[position];
@@ -565,12 +565,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(paramflags, 0);
 
-	if (!(paramflags & WRF_NoSwitch))	DoReadyWeaponToSwitch(self);
-	if ((paramflags & WRF_NoFire) != WRF_NoFire)	DoReadyWeaponToFire(self, 
-		(!(paramflags & WRF_NoPrimary)), (!(paramflags & WRF_NoSecondary)));
-	if (!(paramflags & WRF_NoBob))	DoReadyWeaponToBob(self);
-	if ((paramflags & WRF_AllowReload))	DoReadyWeaponToReload(self);
-	if ((paramflags & WRF_AllowZoom))	DoReadyWeaponToZoom(self);
+	if (!(paramflags & WRF_NoSwitch))
+	{
+		DoReadyWeaponToSwitch(self);
+	}
+	else if (self->player != NULL)
+	{
+		self->player->cheats &= ~CF_WEAPONSWITCHOK;
+	}
+	if ((paramflags & WRF_NoFire) != WRF_NoFire)
+	{
+		DoReadyWeaponToFire(self, !(paramflags & WRF_NoPrimary), !(paramflags & WRF_NoSecondary));
+	}
+	if (!(paramflags & WRF_NoBob))
+	{
+		DoReadyWeaponToBob(self);
+	}
+	if ((paramflags & WRF_AllowReload))
+	{
+		DoReadyWeaponToReload(self);
+	}
+	if ((paramflags & WRF_AllowZoom))
+	{
+		DoReadyWeaponToZoom(self);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -631,15 +649,20 @@ void P_CheckWeaponSwitch (player_t *player)
 	if (!player || !(weapon = player->ReadyWeapon))
 		return;
 
-	// Put the weapon away if the player has a pending weapon or has died.
-	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
-	{
+	if (player->health <= 0)
+	{ // Dead, so put the weapon away.
+		P_SetPsprite(player, ps_weapon, weapon->GetDownState());
+	}
+	else if (!(player->cheats & CF_WEAPONSWITCHOK))
+	{ // Weapon changing has been disabled.
+		player->PendingWeapon = WP_NOCHANGE;
+	}
+	else if (player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE)
+	{ // Put the weapon away if the player has a pending weapon 
 		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
-		return;
 	}
 	else if (player->morphTics != 0)
-	{
-		// morphed classes cannot change weapons so don't even try again.
+	{ // Morphed classes cannot change weapons, so don't even try again.
 		player->PendingWeapon = WP_NOCHANGE;
 	}
 }
@@ -1052,10 +1075,7 @@ void P_MovePsprites (player_t *player)
 		}
 		player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
 		player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
-		if (player->cheats & CF_WEAPONSWITCHOK)
-		{
-			P_CheckWeaponSwitch (player);
-		}
+		P_CheckWeaponSwitch (player);
 		if (player->cheats & (CF_WEAPONREADY | CF_WEAPONREADYALT))
 		{
 			P_CheckWeaponFire (player);

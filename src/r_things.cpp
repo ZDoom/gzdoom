@@ -523,7 +523,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	tex = NULL;
 	voxel = NULL;
 
-	unsigned spritenum = thing->sprite;
+	int spritenum = thing->sprite;
 	fixed_t spritescaleX = thing->scaleX;
 	fixed_t spritescaleY = thing->scaleY;
 	if (thing->player != NULL)
@@ -565,7 +565,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		// decide which texture to use for the sprite
 #ifdef RANGECHECK
-		if (spritenum >= (unsigned)sprites.Size ())
+		if (spritenum >= (signed)sprites.Size () || spritenum < 0)
 		{
 			DPrintf ("R_ProjectSprite: invalid sprite number %u\n", spritenum);
 			return;

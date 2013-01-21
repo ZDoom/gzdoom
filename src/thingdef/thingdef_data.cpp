@@ -428,7 +428,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 //
 //==========================================================================
 
-const char *GetFlagName(int flagnum, int flagoffset)
+const char *GetFlagName(unsigned int flagnum, int flagoffset)
 {
 	for(unsigned i = 0; i < countof(ActorFlags); i++)
 	{

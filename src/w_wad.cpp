@@ -839,7 +839,7 @@ void FWadCollection::RenameNerve ()
 		{
 			continue;
 		}
-		if (fr->GetLength() != nervesize)
+		if (fr->GetLength() != (long)nervesize)
 		{
 			// Skip MD5 computation when there is a
 			// cheaper way to know this is not the file

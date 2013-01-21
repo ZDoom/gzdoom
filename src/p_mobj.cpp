@@ -2618,7 +2618,7 @@ AActor *AActor::TIDHash[128];
 
 void AActor::ClearTIDHashes ()
 {
-	memset(TIDHash, NULL, sizeof(TIDHash));
+	memset(TIDHash, 0, sizeof(TIDHash));
 }
 
 //
@@ -6083,22 +6083,22 @@ void PrintMiscActorInfo(AActor *query)
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
 
 		Printf("%s @ %p has the following flags:\n\tflags: %x", query->GetTag(), query, query->flags);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
 		Printf("\n\tflags2: %x", query->flags2);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
 		Printf("\n\tflags3: %x", query->flags3);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
 		Printf("\n\tflags4: %x", query->flags4);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
 		Printf("\n\tflags5: %x", query->flags5);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
 		Printf("\n\tflags6: %x", query->flags6);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
 		Printf("\nBounce style: %x\nBounce factors: f:%f, w:%f\nBounce flags: %x", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 

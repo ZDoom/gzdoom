@@ -89,6 +89,7 @@ public:
 	double leftPan, rightPan;
 	
 	Channel (int baseAddress, double startvol);
+	virtual ~Channel() {}
 	void update_2_KON1_BLOCK3_FNUMH2(class OPL3 *OPL3);
 	void update_FNUML8(class OPL3 *OPL3);
 	void update_CHD1_CHC1_CHB1_CHA1_FB3_CNT1(class OPL3 *OPL3);

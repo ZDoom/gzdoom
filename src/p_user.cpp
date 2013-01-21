@@ -1488,7 +1488,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 //
 //===========================================================================
 
-void P_CheckPlayerSprite(AActor *actor, unsigned &spritenum, fixed_t &scalex, fixed_t &scaley)
+void P_CheckPlayerSprite(AActor *actor, int &spritenum, fixed_t &scalex, fixed_t &scaley)
 {
 	player_t *player = actor->player;
 	int crouchspriteno;

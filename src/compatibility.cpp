@@ -59,7 +59,7 @@
 struct FCompatOption
 {
 	const char *Name;
-	int CompatFlags;
+	DWORD CompatFlags;
 	int WhichSlot;
 };
 

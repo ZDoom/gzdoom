@@ -1040,37 +1040,41 @@ public:
 		//prepare ammo counts
 		GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
 		armor = CPlayer->mo->FindInventory<ABasicArmor>();
-		if(hud != lastHud)
-		{
-			script->huds[hud]->Tick(NULL, this, true);
 
-			// Restore scaling if need be.
-			if(scalingWasForced)
+		if(state != HUD_AltHud)
+		{
+			if(hud != lastHud)
 			{
-				scalingWasForced = false;
-				SetScaled(false);
-				setsizeneeded = true;
+				script->huds[hud]->Tick(NULL, this, true);
+
+				// Restore scaling if need be.
+				if(scalingWasForced)
+				{
+					scalingWasForced = false;
+					SetScaled(false);
+					setsizeneeded = true;
+				}
 			}
-		}
 
-		if(currentPopup != POP_None && !script->huds[hud]->FullScreenOffsets())
-			script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), FRACUNIT);
-		else
-			script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
-		lastHud = hud;
-
-		// Handle inventory bar drawing
-		if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR) && (state == HUD_StatusBar || state == HUD_Fullscreen))
-		{
-			SBarInfoMainBlock *inventoryBar = state == HUD_StatusBar ? script->huds[STBAR_INVENTORY] : script->huds[STBAR_INVENTORYFULLSCREEN];
-			if(inventoryBar != lastInventoryBar)
-				inventoryBar->Tick(NULL, this, true);
-	
-			// No overlay?  Lets cancel it.
-			if(inventoryBar->NumCommands() == 0)
-				CPlayer->inventorytics = 0;
+			if(currentPopup != POP_None && !script->huds[hud]->FullScreenOffsets())
+				script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), FRACUNIT);
 			else
-				inventoryBar->DrawAux(NULL, this, 0, 0, FRACUNIT);
+				script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
+			lastHud = hud;
+
+			// Handle inventory bar drawing
+			if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR) && (state == HUD_StatusBar || state == HUD_Fullscreen))
+			{
+				SBarInfoMainBlock *inventoryBar = state == HUD_StatusBar ? script->huds[STBAR_INVENTORY] : script->huds[STBAR_INVENTORYFULLSCREEN];
+				if(inventoryBar != lastInventoryBar)
+					inventoryBar->Tick(NULL, this, true);
+		
+				// No overlay?  Lets cancel it.
+				if(inventoryBar->NumCommands() == 0)
+					CPlayer->inventorytics = 0;
+				else
+					inventoryBar->DrawAux(NULL, this, 0, 0, FRACUNIT);
+			}
 		}
 
 		// Handle popups

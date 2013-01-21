@@ -222,18 +222,27 @@ public:
 	{
 		DBaseStatusBar::Draw (state);
 
-		if (state == HUD_Fullscreen)
-		{
-			SB_state = screen->GetPageCount ();
-			DrawFullScreenStuff ();
-		}
-		else if (state == HUD_StatusBar)
+		if (state == HUD_StatusBar)
 		{
 			if (SB_state != 0)
 			{
 				SB_state--;
 			}
 			DrawMainBar ();
+		}
+		else
+		{
+			if (state == HUD_Fullscreen)
+			{
+				SB_state = screen->GetPageCount ();
+				DrawFullScreenStuff ();
+			}
+
+			// Draw pop screen (log, keys, and status)
+			if (CurrentPop != POP_None && PopHeight < 0)
+			{
+				DrawPopScreen (screen->GetHeight());
+			}
 		}
 	}
 
@@ -279,7 +288,7 @@ public:
 	bool MustDrawLog(EHudState state)
 	{
 		// Tell the base class to draw the log if the pop screen won't be displayed.
-		return (state == HUD_None);
+		return false;
 	}
 
 private:
@@ -553,12 +562,6 @@ private:
 					DrINumberOuter (item->Amount, -89 + i*35, -10, true, 7);
 				}
 			}
-		}
-
-		// Draw pop screen (log, keys, and status)
-		if (CurrentPop != POP_None && PopHeight < 0)
-		{
-			DrawPopScreen (screen->GetHeight());
 		}
 	}
 

@@ -803,9 +803,10 @@ void D_Display ()
 
 			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 			{
-				StatusBar->DrawBottomStuff (HUD_None);
+				StatusBar->DrawBottomStuff (HUD_AltHud);
 				if (DrawFSHUD || automapactive) DrawHUD();
-				StatusBar->DrawTopStuff (HUD_None);
+				StatusBar->Draw (HUD_AltHud);
+				StatusBar->DrawTopStuff (HUD_AltHud);
 			}
 			else 
 			if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)

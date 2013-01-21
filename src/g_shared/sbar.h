@@ -48,7 +48,9 @@ enum EHudState
 {
 	HUD_StatusBar,
 	HUD_Fullscreen,
-	HUD_None
+	HUD_None,
+
+	HUD_AltHud // Used for passing through popups to the alt hud
 };
 
 class AWeapon;

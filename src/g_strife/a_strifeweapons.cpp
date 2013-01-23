@@ -53,7 +53,7 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 	emitter->flags4 |= MF4_INCOMBAT;
 
 	emitter->target = target;
-	FState * painstate = emitter->FindState(NAME_Pain);
+	FState *painstate = emitter->FindState(NAME_Pain, NAME_Dagger);
 	if (painstate != NULL)
 	{
 		emitter->SetState (painstate);

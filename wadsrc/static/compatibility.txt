@@ -301,3 +301,32 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	setlineflags 455 0x200		// repeatable
 	setactivation 455 16		// SPAC_Push
 }
+
+6DC9F6CCEAE7A91AEC48EBE506F22BC4 // Void
+{
+	// Slightly squash the pillars in the starting room with "stimpacks"
+	// floating on them so that they can be obtained.
+	sectorflooroffset 62 -8
+	setwallyscale 286 front bot 1.090909
+	setwallyscale 287 front bot 1.090909
+	setwallyscale 288 front bot 1.090909
+	setwallyscale 289 front bot 1.090909
+	
+	sectorflooroffset 63 -8
+	setwallyscale 290 front bot 1.090909
+	setwallyscale 291 front bot 1.090909
+	setwallyscale 292 front bot 1.090909
+	setwallyscale 293 front bot 1.090909
+	
+	sectorflooroffset 118 -8
+	setwallyscale 710 front bot 1.090909
+	setwallyscale 711 front bot 1.090909
+	setwallyscale 712 front bot 1.090909
+	setwallyscale 713 front bot 1.090909
+	
+	sectorflooroffset 119 -8
+	setwallyscale 714 front bot 1.090909
+	setwallyscale 715 front bot 1.090909
+	setwallyscale 716 front bot 1.090909
+	setwallyscale 717 front bot 1.090909
+}

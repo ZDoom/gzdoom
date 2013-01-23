@@ -1227,6 +1227,10 @@ void DBaseStatusBar::DrawMessages (int layer, int bottom)
 
 void DBaseStatusBar::Draw (EHudState state)
 {
+	// HUD_AltHud state is for popups only
+	if (state == HUD_AltHud)
+		return;
+
 	char line[64+10];
 
 	if ((SB_state != 0 || BorderNeedRefresh) && state == HUD_StatusBar)

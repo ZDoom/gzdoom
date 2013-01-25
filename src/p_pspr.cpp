@@ -633,7 +633,7 @@ void P_CheckWeaponSwitch (player_t *player)
 	// Put the weapon away if the player has a pending weapon or has died.
 	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
 	{
-		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
+		P_DropWeapon(player);
 		return;
 	}
 	else if (player->morphTics != 0)
@@ -829,7 +829,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 	}
 	if (player->PendingWeapon != WP_NOCHANGE)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetDownState());
+		P_DropWeapon(player);
 		return;
 	}
 	psp = &player->psprites[ps_weapon];

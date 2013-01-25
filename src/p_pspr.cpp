@@ -566,9 +566,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 	ACTION_PARAM_INT(paramflags, 0);
 
 	if (!(paramflags & WRF_NoSwitch))	DoReadyWeaponToSwitch(self);
-	if ((paramflags & WRF_NoFire) != WRF_NoFire)	DoReadyWeaponToFire(self, 
-		(!(paramflags & WRF_NoPrimary)), (!(paramflags & WRF_NoSecondary)));
-	if (!(paramflags & WRF_NoBob))	DoReadyWeaponToBob(self);
+	if (!(paramflags & WRF_NoFire))		DoReadyWeaponToFire(self, !(paramflags & WRF_NoPrimary), !(paramflags & WRF_NoSecondary));
+	if (!(paramflags & WRF_NoBob))		DoReadyWeaponToBob(self);
 	if ((paramflags & WRF_AllowReload))	DoReadyWeaponToReload(self);
 	if ((paramflags & WRF_AllowZoom))	DoReadyWeaponToZoom(self);
 }

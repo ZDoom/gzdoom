@@ -599,7 +599,7 @@ void P_CheckWeaponFire (player_t *player)
 			return;
 		}
 	}
-	else if ((player->WeaponStat & WF_WEAPONREADYALT) && (player->cmd.ucmd.buttons & BT_ALTATTACK))
+	else if ((player->WeaponState & WF_WEAPONREADYALT) && (player->cmd.ucmd.buttons & BT_ALTATTACK))
 	{
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{

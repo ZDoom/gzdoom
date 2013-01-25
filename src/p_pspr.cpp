@@ -95,7 +95,7 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 	if (position == ps_weapon && !nofunction)
 	{ // A_WeaponReady will re-set these as needed
-		player->cheats &= ~(CF_WEAPONREADY | CF_WEAPONREADYALT | CF_WEAPONBOBBING | CF_WEAPONSWITCHOK | CF_WEAPONRELOADOK | CF_WEAPONZOOMOK);
+		player->WeaponState &= ~(WF_WEAPONREADY | WF_WEAPONREADYALT | WF_WEAPONBOBBING | WF_WEAPONSWITCHOK | WF_WEAPONRELOADOK | WF_WEAPONZOOMOK);
 	}
 
 	psp = &player->psprites[position];
@@ -397,7 +397,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
 	// shooting it when it's at the peak of its swing.
-	bobtarget = (player->cheats & CF_WEAPONBOBBING) ? player->bob : 0;
+	bobtarget = (player->cheats & WF_WEAPONBOBBING) ? player->bob : 0;
 	if (curbob != bobtarget)
 	{
 		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
@@ -476,7 +476,7 @@ void DoReadyWeaponToSwitch (AActor * self)
 	// Prepare for switching action.
 	player_t *player;
 	if (self && (player = self->player))
-		player->cheats |= CF_WEAPONSWITCHOK;
+		player->cheats |= WF_WEAPONSWITCHOK;
 }
 
 void DoReadyWeaponToFire (AActor * self, bool prim, bool alt)
@@ -506,7 +506,7 @@ void DoReadyWeaponToFire (AActor * self, bool prim, bool alt)
 	}
 
 	// Prepare for firing action.
-	player->cheats |= ((prim ? CF_WEAPONREADY : 0) | (alt ? CF_WEAPONREADYALT : 0));
+	player->cheats |= ((prim ? WF_WEAPONREADY : 0) | (alt ? WF_WEAPONREADYALT : 0));
 	return;
 }
 
@@ -515,7 +515,7 @@ void DoReadyWeaponToBob (AActor * self)
 	if (self && self->player && self->player->ReadyWeapon)
 	{
 		// Prepare for bobbing action.
-		self->player->cheats |= CF_WEAPONBOBBING;
+		self->player->cheats |= WF_WEAPONBOBBING;
 		self->player->psprites[ps_weapon].sx = 0;
 		self->player->psprites[ps_weapon].sy = WEAPONTOP;
 	}
@@ -526,7 +526,7 @@ void DoReadyWeaponToReload (AActor * self)
 	// Prepare for reload action.
 	player_t *player;
 	if (self && (player = self->player))
-		player->cheats |= CF_WEAPONRELOADOK;
+		player->cheats |= WF_WEAPONRELOADOK;
 	return;
 }
 
@@ -535,7 +535,7 @@ void DoReadyWeaponToZoom (AActor * self)
 	// Prepare for reload action.
 	player_t *player;
 	if (self && (player = self->player))
-		player->cheats |= CF_WEAPONZOOMOK;
+		player->cheats |= WF_WEAPONZOOMOK;
 	return;
 }
 
@@ -591,7 +591,7 @@ void P_CheckWeaponFire (player_t *player)
 		return;
 
 	// Check for fire. Some weapons do not auto fire.
-	if ((player->cheats & CF_WEAPONREADY) && (player->cmd.ucmd.buttons & BT_ATTACK))
+	if ((player->cheats & WF_WEAPONREADY) && (player->cmd.ucmd.buttons & BT_ATTACK))
 	{
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
@@ -600,7 +600,7 @@ void P_CheckWeaponFire (player_t *player)
 			return;
 		}
 	}
-	else if ((player->cheats & CF_WEAPONREADYALT) && (player->cmd.ucmd.buttons & BT_ALTATTACK))
+	else if ((player->cheats & WF_WEAPONREADYALT) && (player->cmd.ucmd.buttons & BT_ALTATTACK))
 	{
 		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
@@ -660,7 +660,7 @@ void P_CheckWeaponReload (player_t *player)
 		return;
 
 	// Check for reload.
-	if ((player->cheats & CF_WEAPONRELOADOK) && (player->cmd.ucmd.buttons & BT_RELOAD))
+	if ((player->cheats & WF_WEAPONRELOADOK) && (player->cmd.ucmd.buttons & BT_RELOAD))
 	{
 		P_ReloadWeapon (player, NULL);
 	}
@@ -682,7 +682,7 @@ void P_CheckWeaponZoom (player_t *player)
 		return;
 
 	// Check for zoom.
-	if ((player->cheats & CF_WEAPONZOOMOK) && (player->cmd.ucmd.buttons & BT_ZOOM))
+	if ((player->cheats & WF_WEAPONZOOMOK) && (player->cmd.ucmd.buttons & BT_ZOOM))
 	{
 		P_ZoomWeapon (player, NULL);
 	}
@@ -1050,19 +1050,19 @@ void P_MovePsprites (player_t *player)
 		}
 		player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
 		player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
-		if (player->cheats & CF_WEAPONSWITCHOK)
+		if (player->cheats & WF_WEAPONSWITCHOK)
 		{
 			P_CheckWeaponSwitch (player);
 		}
-		if (player->cheats & (CF_WEAPONREADY | CF_WEAPONREADYALT))
+		if (player->cheats & (WF_WEAPONREADY | WF_WEAPONREADYALT))
 		{
 			P_CheckWeaponFire (player);
 		}
-		if (player->cheats & CF_WEAPONRELOADOK)
+		if (player->cheats & WF_WEAPONRELOADOK)
 		{
 			P_CheckWeaponReload (player);
 		}
-		if (player->cheats & CF_WEAPONZOOMOK)
+		if (player->cheats & WF_WEAPONZOOMOK)
 		{
 			P_CheckWeaponZoom (player);
 		}

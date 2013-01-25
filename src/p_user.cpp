@@ -247,6 +247,7 @@ player_t::player_t()
   ReadyWeapon(0),
   PendingWeapon(0),
   cheats(0),
+  WeaponState(0),
   timefreezer(0),
   refire(0),
   inconsistant(0),
@@ -2669,6 +2670,16 @@ void player_t::Serialize (FArchive &arc)
 			mo->accuracy = oldaccuracy;
 			mo->stamina = oldstamina;
 		}
+	}
+	if (SaveVersion < 4041)
+	{
+		// Move weapon state flags from cheats and into WeaponState.
+		WeaponState = ((cheats >> 14) & 1) | ((cheats & (0x37 << 24)) >> (24 - 1));
+		cheats &= ~((1 << 14) | (0x37 << 24));
+	}
+	else
+	{
+		arc << WeaponState;
 	}
 	arc << LogText
 		<< ConversationNPC

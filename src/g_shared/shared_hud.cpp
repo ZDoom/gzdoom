@@ -899,18 +899,18 @@ void DrawHUD()
 
 		if (am_showtime)
 		{
-			seconds = level.time /TICRATE;
-			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
-			bottom -= fonth;
-
-			// Single level time for hubs
 			if (level.clusterflags&CLUSTER_HUB)
 			{
-				seconds= level.maptime /TICRATE;
+				seconds = level.time /TICRATE;
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
+				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
+				bottom -= fonth;
 			}
+
+			// Single level time for hubs
+			seconds= level.maptime /TICRATE;
+			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
+			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
 		}
 
 		ST_FormatMapName(mapname);

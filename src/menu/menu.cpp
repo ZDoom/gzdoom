@@ -409,7 +409,7 @@ void M_SetMenu(FName menu, int param)
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != NULL)
 	{
-		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame)
+		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
 		{
 			M_StartMessage((*desc)->mNetgameMessage, 1);
 			return;

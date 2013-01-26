@@ -1135,7 +1135,7 @@ static void BuildPlayerclassMenu()
 		od->mScrollTop = 0;
 		od->mIndent = 160;
 		od->mDontDim = false;
-		od->mNetgameMessage = "$NETGAME";
+		od->mNetgameMessage = "$NEWGAME";
 
 		for (unsigned i = 0; i < PlayerClasses.Size (); i++)
 		{

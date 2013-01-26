@@ -79,16 +79,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 	// New dmflag: Kill all boss spawned monsters before ending the level.
 	if (dmflags2 & DF2_KILLBOSSMONST)
 	{
-		TThinkerIterator<AActor> it;
-		AActor *mo;
-		while ((mo = it.Next()))
+		int count;	// Repeat until we have no more boss-spawned monsters.
+		do			// (e.g. Pain Elementals can spawn more to kill upon death.)
 		{
-			if (mo->flags4 & MF4_BOSSSPAWNED)
+			TThinkerIterator<AActor> it;
+			AActor *mo;
+			count = 0;
+			while ((mo = it.Next()))
 			{
-				P_DamageMobj(mo, self, self, mo->health, NAME_None, 
-					DMG_NO_ARMOR|DMG_FORCED|DMG_THRUSTLESS|DMG_NO_FACTOR);
+				if (mo->health > 0 && mo->flags4 & MF4_BOSSSPAWNED)
+				{
+					P_DamageMobj(mo, self, self, mo->health, NAME_None, 
+						DMG_NO_ARMOR|DMG_FORCED|DMG_THRUSTLESS|DMG_NO_FACTOR);
+					count++;
+				}
 			}
-		}
+		} while (count != 0);
 	}
 
 	G_ExitLevel (0, false);

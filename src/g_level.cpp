@@ -114,7 +114,6 @@ extern bool timingdemo;
 int starttime;
 
 
-extern bool netdemo;
 extern FString BackupSaveName;
 
 bool savegamerestore;
@@ -230,7 +229,6 @@ void G_NewInit ()
 	G_ClearSnapshots ();
 	SB_state = screen->GetPageCount ();
 	netgame = false;
-	netdemo = false;
 	multiplayer = false;
 	if (demoplayback)
 	{

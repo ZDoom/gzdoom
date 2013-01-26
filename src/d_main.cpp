@@ -158,7 +158,6 @@ EXTERN_CVAR (Bool, sv_unlimited_pickup)
 
 extern int testingmode;
 extern bool setmodeneeded;
-extern bool netdemo;
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 EXTERN_CVAR (Bool, st_scale)
 extern bool gameisdead;

@@ -779,7 +779,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 		return;
 	}
 	psp = &player->psprites[ps_weapon];
-	if (player->morphTics || player->WeaponState & CF_INSTANTWEAPSWITCH)
+	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
 	{
 		psp->sy = WEAPONBOTTOM;
 	}

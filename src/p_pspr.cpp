@@ -552,10 +552,10 @@ void DoReadyWeapon(AActor * self)
 enum EWRF_Options
 {
 	WRF_NoBob = 1,
-	WRF_NoFire = 12,
 	WRF_NoSwitch = 2,
 	WRF_NoPrimary = 4,
 	WRF_NoSecondary = 8,
+	WRF_NoFire = WRF_NoPrimary + WRF_NoSecondary,
 	WRF_AllowReload = 16,
 	WRF_AllowZoom = 32,
 };
@@ -565,11 +565,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(paramflags, 0);
 
-	if (!(paramflags & WRF_NoSwitch))	DoReadyWeaponToSwitch(self);
-	if (!(paramflags & WRF_NoFire))		DoReadyWeaponToFire(self, !(paramflags & WRF_NoPrimary), !(paramflags & WRF_NoSecondary));
-	if (!(paramflags & WRF_NoBob))		DoReadyWeaponToBob(self);
-	if ((paramflags & WRF_AllowReload))	DoReadyWeaponToReload(self);
-	if ((paramflags & WRF_AllowZoom))	DoReadyWeaponToZoom(self);
+	if (!(paramflags & WRF_NoSwitch))				DoReadyWeaponToSwitch(self);
+	if ((paramflags & WRF_NoFire) != WRF_NoFire)	DoReadyWeaponToFire(self, !(paramflags & WRF_NoPrimary), !(paramflags & WRF_NoSecondary));
+	if (!(paramflags & WRF_NoBob))					DoReadyWeaponToBob(self);
+	if ((paramflags & WRF_AllowReload))				DoReadyWeaponToReload(self);
+	if ((paramflags & WRF_AllowZoom))				DoReadyWeaponToZoom(self);
 }
 
 //---------------------------------------------------------------------------

@@ -2330,7 +2330,8 @@ class CommandDrawBar : public SBarInfoCommand
 	public:
 		CommandDrawBar(SBarInfo *script) : SBarInfoCommand(script),
 			border(0), horizontal(false), reverse(false), foreground(-1),
-			background(-1), type(HEALTH), interpolationSpeed(0), drawValue(0)
+			background(-1), type(HEALTH), interpolationSpeed(0), drawValue(0),
+			pixel(-1)
 		{
 		}
 
@@ -2649,7 +2650,14 @@ class CommandDrawBar : public SBarInfoCommand
 				value = 0;
 			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1))
 			{
-				if(value < drawValue)
+				// [BL] Since we used a percentage (in order to get the most fluid animation)
+				//      we need to establish a cut off point so the last pixel won't hang as the animation slows
+				if(pixel == -1 && statusBar->Images[foreground])
+					pixel = MAX(1, FRACUNIT/statusBar->Images[foreground]->GetWidth());
+
+				if(abs(drawValue - value) < pixel)
+					drawValue = value;
+				else if(value < drawValue)
 					drawValue -= clamp<fixed_t>((drawValue - value) >> 2, 1, FixedDiv(interpolationSpeed<<FRACBITS, FRACUNIT*100));
 				else if(drawValue < value)
 					drawValue += clamp<fixed_t>((value - drawValue) >> 2, 1, FixedDiv(interpolationSpeed<<FRACBITS, FRACUNIT*100));
@@ -2727,6 +2735,7 @@ class CommandDrawBar : public SBarInfoCommand
 
 		int					interpolationSpeed;
 		fixed_t				drawValue;
+		fixed_t				pixel;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

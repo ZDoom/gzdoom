@@ -1292,10 +1292,10 @@ public:
 			// Check for clipping
 			if(cx != 0 || cy != 0 || cr != 0 || cb != 0)
 			{
-				rcx = cx == 0 ? 0 : rx+(((double) cx/FRACUNIT)*xScale) - texture->GetScaledLeftOffsetDouble();
-				rcy = cy == 0 ? 0 : ry+(((double) cy/FRACUNIT)*yScale) - texture->GetScaledTopOffsetDouble();
-				rcr = cr == 0 ? INT_MAX : rx+w-(((double) cr/FRACUNIT)*xScale) - texture->GetScaledLeftOffsetDouble();
-				rcb = cb == 0 ? INT_MAX : ry+h-(((double) cb/FRACUNIT)*yScale) - texture->GetScaledTopOffsetDouble();
+				rcx = cx == 0 ? 0 : rx+((((double) cx/FRACUNIT) - texture->GetScaledLeftOffsetDouble())*xScale);
+				rcy = cy == 0 ? 0 : ry+((((double) cy/FRACUNIT) - texture->GetScaledTopOffsetDouble())*yScale);
+				rcr = cr == 0 ? INT_MAX : rx+w-((((double) cr/FRACUNIT) + texture->GetScaledLeftOffsetDouble())*xScale);
+				rcb = cb == 0 ? INT_MAX : ry+h-((((double) cb/FRACUNIT) + texture->GetScaledTopOffsetDouble())*yScale);
 			}
 
 			if(clearDontDraw)

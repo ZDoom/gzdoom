@@ -114,12 +114,13 @@ FRandom pr_acs ("ACS");
 
 struct CallReturn
 {
-	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard)
+	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard, unsigned int runaway)
 		: ReturnFunction(func),
 		  ReturnModule(module),
 		  ReturnLocals(locals),
 		  ReturnAddress(pc),
-		  bDiscardResult(discard)
+		  bDiscardResult(discard),
+		  EntryInstrCount(runaway)
 	{}
 
 	ScriptFunction *ReturnFunction;
@@ -127,6 +128,7 @@ struct CallReturn
 	SDWORD *ReturnLocals;
 	int ReturnAddress;
 	int bDiscardResult;
+	unsigned int EntryInstrCount;
 };
 
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
@@ -1028,7 +1030,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	LumpNum = lumpnum;
 	memset (MapVarStore, 0, sizeof(MapVarStore));
 	ModuleName[0] = 0;
-
+	FunctionProfileData = NULL;
 
 	// Now that everything is set up, record this module as being among the loaded modules.
 	// We need to do this before resolving any imports, because an import might (indirectly)
@@ -1163,6 +1165,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		{
 			NumFunctions = LittleLong(((DWORD *)Functions)[1]) / 8;
 			Functions += 8;
+			FunctionProfileData = new ACSProfileInfo[NumFunctions];
 		}
 
 		// Load JUMP points
@@ -1449,6 +1452,11 @@ FBehavior::~FBehavior ()
 		}
 		delete[] ArrayStore;
 		ArrayStore = NULL;
+	}
+	if (FunctionProfileData != NULL)
+	{
+		delete[] FunctionProfileData;
+		FunctionProfileData = NULL;
 	}
 	if (Data != NULL)
 	{
@@ -2235,6 +2243,14 @@ void DLevelScript::Serialize (FArchive &arc)
 	else
 	{
 		ClipRectLeft = ClipRectTop = ClipRectWidth = ClipRectHeight = WrapWidth = 0;
+	}
+	if (SaveVersion >= 4058)
+	{
+		arc << InModuleScriptNumber;
+	}
+	else
+	{ // Don't worry about locating profiling info for old saves.
+		InModuleScriptNumber = -1;
 	}
 }
 
@@ -4097,7 +4113,7 @@ int DLevelScript::RunScript ()
 	int sp = 0;
 	int *pc = this->pc;
 	ACSFormat fmt = activeBehavior->GetFormat();
-	int runaway = 0;	// used to prevent infinite loops
+	unsigned int runaway = 0;	// used to prevent infinite loops
 	int pcd;
 	FString work;
 	const char *lookup;
@@ -4401,7 +4417,7 @@ int DLevelScript::RunScript ()
 				}
 				sp += i;
 				::new(&Stack[sp]) CallReturn(activeBehavior->PC2Ofs(pc), activeFunction,
-					activeBehavior, mylocals, pcd == PCD_CALLDISCARD);
+					activeBehavior, mylocals, pcd == PCD_CALLDISCARD, runaway);
 				sp += (sizeof(CallReturn) + sizeof(int) - 1) / sizeof(int);
 				pc = module->Ofs2PC (func->Address);
 				activeFunction = func;
@@ -4430,6 +4446,7 @@ int DLevelScript::RunScript ()
 				}
 				sp -= sizeof(CallReturn)/sizeof(int);
 				retsp = &Stack[sp];
+				activeBehavior->GetFunctionProfileData(activeFunction)->AddRun(runaway - ret->EntryInstrCount);
 				sp = int(locals - Stack);
 				pc = ret->ReturnModule->Ofs2PC(ret->ReturnAddress);
 				activeFunction = ret->ReturnFunction;
@@ -7359,6 +7376,11 @@ scriptwait:
  		}
  	}
 
+	if (runaway != 0 && InModuleScriptNumber >= 0)
+	{
+		activeBehavior->GetScriptPtr(InModuleScriptNumber)->ProfileData.AddRun(runaway);
+	}
+
 	if (state == SCRIPT_DivideBy0)
 	{
 		Printf ("Divide by zero in %s\n", ScriptPresentation(script).GetChars());
@@ -7425,6 +7447,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 		localvars[i] = args[i];
 	}
 	pc = module->GetScriptAddress(code);
+	InModuleScriptNumber = module->GetScriptIndex(code);
 	activator = who;
 	activationline = where;
 	backSide = flags & ACS_BACKSIDE;
@@ -7687,4 +7710,164 @@ void DACSThinker::DumpScriptStatus ()
 		Printf("%s: %s\n", ScriptPresentation(script->script).GetChars(), stateNames[script->state]);
 		script = script->next;
 	}
+}
+
+// Profiling support --------------------------------------------------------
+
+ACSProfileInfo::ACSProfileInfo()
+{
+	TotalInstr = 0;
+	NumRuns = 0;
+	MinInstrPerRun = UINT_MAX;
+	MaxInstrPerRun = 0;
+}
+
+void ACSProfileInfo::AddRun(unsigned int num_instr)
+{
+	TotalInstr += num_instr;
+	NumRuns++;
+	if (num_instr < MinInstrPerRun)
+	{
+		MinInstrPerRun = num_instr;
+	}
+	if (num_instr > MaxInstrPerRun)
+	{
+		MaxInstrPerRun = num_instr;
+	}
+}
+
+void ArrangeScriptProfiles(TArray<ProfileCollector> &profiles)
+{
+	for (unsigned int mod_num = 0; mod_num < FBehavior::StaticModules.Size(); ++mod_num)
+	{
+		FBehavior *module = FBehavior::StaticModules[mod_num];
+		ProfileCollector prof;
+		prof.Module = module;
+		for (int i = 0; i < module->NumScripts; ++i)
+		{
+			prof.Index = i;
+			prof.ProfileData = &module->Scripts[i].ProfileData;
+			profiles.Push(prof);
+		}
+	}
+}
+
+void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles)
+{
+	for (unsigned int mod_num = 0; mod_num < FBehavior::StaticModules.Size(); ++mod_num)
+	{
+		FBehavior *module = FBehavior::StaticModules[mod_num];
+		ProfileCollector prof;
+		prof.Module = module;
+		for (int i = 0; i < module->NumFunctions; ++i)
+		{
+			prof.Index = i;
+			prof.ProfileData = module->FunctionProfileData + i;
+			profiles.Push(prof);
+		}
+	}
+}
+
+static int STACK_ARGS sort_by_total_instr(const void *a_, const void *b_)
+{
+	const ProfileCollector *a = (const ProfileCollector *)a_;
+	const ProfileCollector *b = (const ProfileCollector *)b_;
+
+	assert(a != NULL && a->ProfileData != NULL);
+	assert(b != NULL && b->ProfileData != NULL);
+	return (int)(b->ProfileData->TotalInstr - a->ProfileData->TotalInstr);
+}
+
+static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit, bool functions)
+{
+	static const char *const typelabels[2] = { "script", "function" };
+
+	if (profiles.Size() == 0)
+	{
+		return;
+	}
+
+	unsigned int limit;
+	char modname[13];
+	char scriptname[21];
+
+	qsort(&profiles[0], profiles.Size(), sizeof(ProfileCollector), sort_by_total_instr);
+
+	if (ilimit > 0)
+	{
+		Printf(TEXTCOLOR_ORANGE "Top %ld %ss:\n", ilimit, typelabels[functions]);
+		limit = (unsigned int)ilimit;
+	}
+	else
+	{
+		Printf(TEXTCOLOR_ORANGE "All %ss:\n", typelabels[functions]);
+		limit = UINT_MAX;
+	}
+
+	Printf(TEXTCOLOR_YELLOW "Module       %-20s      Total NumRuns     Min     Max     Avg\n", typelabels[functions]);
+	Printf(TEXTCOLOR_YELLOW "------------ -------------------- ---------- ------- ------- ------- -------\n");
+	for (unsigned int i = 0; i < limit && i < profiles.Size(); ++i)
+	{
+		ProfileCollector *prof = &profiles[i];
+		if (prof->ProfileData->NumRuns == 0)
+		{ // Don't list ones that haven't run.
+			continue;
+		}
+
+		// Module name
+		mysnprintf(modname, sizeof(modname), prof->Module->GetModuleName());
+#if 0
+		if (prof->Module == FBehavior::StaticGetModule(0))
+		{
+			mysnprintf(modname, sizeof(modname), "<Map Script>");
+		}
+		else
+		{
+			mysnprintf(modname, sizeof(modname), Wads.GetLumpFullName(prof->Module->GetLumpNum()));
+		}
+#endif
+		// Script/function name
+		if (functions)
+		{
+			DWORD *fnames = (DWORD *)prof->Module->FindChunk(MAKE_ID('F','N','A','M'));
+			if (prof->Index >= 0 && prof->Index < (int)LittleLong(fnames[2]))
+			{
+				mysnprintf(scriptname, sizeof(scriptname), "%s",
+					(char *)(fnames + 2) + LittleLong(fnames[3+prof->Index]));
+			}
+			else
+			{
+				mysnprintf(scriptname, sizeof(scriptname), "Function %d", prof->Index);
+			}
+		}
+		else
+		{
+			mysnprintf(scriptname, sizeof(scriptname), "%s",
+				ScriptPresentation(prof->Module->GetScriptPtr(prof->Index)->Number).GetChars() + 7);
+		}
+		Printf("%-12s %-20s%11llu%8u%8u%8u%8u\n",
+			modname, scriptname,
+			prof->ProfileData->TotalInstr,
+			prof->ProfileData->NumRuns,
+			prof->ProfileData->MinInstrPerRun,
+			prof->ProfileData->MaxInstrPerRun,
+			prof->ProfileData->TotalInstr / prof->ProfileData->NumRuns);
+	}
+}
+
+CCMD(acsprofile)
+{
+	TArray<ProfileCollector> ScriptProfiles, FuncProfiles;
+	long limit = 10;
+
+	ArrangeScriptProfiles(ScriptProfiles);
+	ArrangeFunctionProfiles(FuncProfiles);
+
+	if (argv.argc() > 1)
+	{
+		limit = strtol(argv[1], NULL, 0);
+	}
+
+	ShowProfileData(ScriptProfiles, limit, false);
+	ShowProfileData(FuncProfiles, limit, true);
 }

@@ -7761,9 +7761,13 @@ void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles)
 		prof.Module = module;
 		for (int i = 0; i < module->NumFunctions; ++i)
 		{
-			prof.Index = i;
-			prof.ProfileData = module->FunctionProfileData + i;
-			profiles.Push(prof);
+			ScriptFunction *func = (ScriptFunction *)module->Functions + i;
+			if (func->ImportNum == 0)
+			{
+				prof.Index = i;
+				prof.ProfileData = module->FunctionProfileData + i;
+				profiles.Push(prof);
+			}
 		}
 	}
 }

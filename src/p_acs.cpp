@@ -7716,6 +7716,11 @@ void DACSThinker::DumpScriptStatus ()
 
 ACSProfileInfo::ACSProfileInfo()
 {
+	Reset();
+}
+
+void ACSProfileInfo::Reset()
+{
 	TotalInstr = 0;
 	NumRuns = 0;
 	MinInstrPerRun = UINT_MAX;
@@ -7772,6 +7777,14 @@ void ArrangeFunctionProfiles(TArray<ProfileCollector> &profiles)
 	}
 }
 
+void ClearProfiles(TArray<ProfileCollector> &profiles)
+{
+	for (unsigned int i = 0; i < profiles.Size(); ++i)
+	{
+		profiles[i].ProfileData->Reset();
+	}
+}
+
 static int STACK_ARGS sort_by_total_instr(const void *a_, const void *b_)
 {
 	const ProfileCollector *a = (const ProfileCollector *)a_;
@@ -7782,7 +7795,42 @@ static int STACK_ARGS sort_by_total_instr(const void *a_, const void *b_)
 	return (int)(b->ProfileData->TotalInstr - a->ProfileData->TotalInstr);
 }
 
-static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit, bool functions)
+static int STACK_ARGS sort_by_min(const void *a_, const void *b_)
+{
+	const ProfileCollector *a = (const ProfileCollector *)a_;
+	const ProfileCollector *b = (const ProfileCollector *)b_;
+
+	return b->ProfileData->MinInstrPerRun - a->ProfileData->MinInstrPerRun;
+}
+
+static int STACK_ARGS sort_by_max(const void *a_, const void *b_)
+{
+	const ProfileCollector *a = (const ProfileCollector *)a_;
+	const ProfileCollector *b = (const ProfileCollector *)b_;
+
+	return b->ProfileData->MaxInstrPerRun - a->ProfileData->MaxInstrPerRun;
+}
+
+static int STACK_ARGS sort_by_avg(const void *a_, const void *b_)
+{
+	const ProfileCollector *a = (const ProfileCollector *)a_;
+	const ProfileCollector *b = (const ProfileCollector *)b_;
+
+	int a_avg = a->ProfileData->NumRuns == 0 ? 0 : int(a->ProfileData->TotalInstr / a->ProfileData->NumRuns);
+	int b_avg = b->ProfileData->NumRuns == 0 ? 0 : int(b->ProfileData->TotalInstr / b->ProfileData->NumRuns);
+	return b_avg - a_avg;
+}
+
+static int STACK_ARGS sort_by_runs(const void *a_, const void *b_)
+{
+	const ProfileCollector *a = (const ProfileCollector *)a_;
+	const ProfileCollector *b = (const ProfileCollector *)b_;
+
+	return b->ProfileData->NumRuns - a->ProfileData->NumRuns;
+}
+
+static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit,
+	int (STACK_ARGS *sorter)(const void *, const void *), bool functions)
 {
 	static const char *const typelabels[2] = { "script", "function" };
 
@@ -7795,7 +7843,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit, boo
 	char modname[13];
 	char scriptname[21];
 
-	qsort(&profiles[0], profiles.Size(), sizeof(ProfileCollector), sort_by_total_instr);
+	qsort(&profiles[0], profiles.Size(), sizeof(ProfileCollector), sorter);
 
 	if (ilimit > 0)
 	{
@@ -7808,7 +7856,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit, boo
 		limit = UINT_MAX;
 	}
 
-	Printf(TEXTCOLOR_YELLOW "Module       %-20s      Total NumRuns     Min     Max     Avg\n", typelabels[functions]);
+	Printf(TEXTCOLOR_YELLOW "Module       %-20s      Total    Runs     Avg     Min     Max\n", typelabels[functions]);
 	Printf(TEXTCOLOR_YELLOW "------------ -------------------- ---------- ------- ------- ------- -------\n");
 	for (unsigned int i = 0; i < limit && i < profiles.Size(); ++i)
 	{
@@ -7820,16 +7868,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit, boo
 
 		// Module name
 		mysnprintf(modname, sizeof(modname), prof->Module->GetModuleName());
-#if 0
-		if (prof->Module == FBehavior::StaticGetModule(0))
-		{
-			mysnprintf(modname, sizeof(modname), "<Map Script>");
-		}
-		else
-		{
-			mysnprintf(modname, sizeof(modname), Wads.GetLumpFullName(prof->Module->GetLumpNum()));
-		}
-#endif
+
 		// Script/function name
 		if (functions)
 		{
@@ -7853,25 +7892,80 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit, boo
 			modname, scriptname,
 			prof->ProfileData->TotalInstr,
 			prof->ProfileData->NumRuns,
+			unsigned(prof->ProfileData->TotalInstr / prof->ProfileData->NumRuns),
 			prof->ProfileData->MinInstrPerRun,
-			prof->ProfileData->MaxInstrPerRun,
-			prof->ProfileData->TotalInstr / prof->ProfileData->NumRuns);
+			prof->ProfileData->MaxInstrPerRun
+			);
 	}
 }
 
 CCMD(acsprofile)
 {
+	static int (STACK_ARGS *sort_funcs[])(const void*, const void *) =
+	{
+		sort_by_total_instr,
+		sort_by_min,
+		sort_by_max,
+		sort_by_avg,
+		sort_by_runs
+	};
+	static const char *sort_names[] = { "total", "min", "max", "avg", "runs" };
+	static const BYTE sort_match_len[] = {   1,     2,     2,     1,      1 };
+
 	TArray<ProfileCollector> ScriptProfiles, FuncProfiles;
 	long limit = 10;
+	int (STACK_ARGS *sorter)(const void *, const void *) = sort_by_total_instr;
+
+	assert(countof(sort_names) == countof(sort_match_len));
 
 	ArrangeScriptProfiles(ScriptProfiles);
 	ArrangeFunctionProfiles(FuncProfiles);
 
 	if (argv.argc() > 1)
 	{
-		limit = strtol(argv[1], NULL, 0);
+		// `acsprofile clear` will zero all profiling information collected so far.
+		if (stricmp(argv[1], "clear") == 0)
+		{
+			ClearProfiles(ScriptProfiles);
+			ClearProfiles(FuncProfiles);
+			return;
+		}
+		for (int i = 1; i < argv.argc(); ++i)
+		{
+			// If it's a number, set the display limit.
+			char *endptr;
+			long num = strtol(argv[i], &endptr, 0);
+			if (endptr != argv[i])
+			{
+				limit = num;
+				continue;
+			}
+			// If it's a name, set the sort method. We accept partial matches for
+			// options that are shorter than the sort name.
+			size_t optlen = strlen(argv[i]);
+			int j;
+			for (j = 0; j < countof(sort_names); ++j)
+			{
+				if (optlen < sort_match_len[j] || optlen > strlen(sort_names[j]))
+				{ // Too short or long to match.
+					continue;
+				}
+				if (strnicmp(argv[i], sort_names[j], optlen) == 0)
+				{
+					sorter = sort_funcs[j];
+					break;
+				}
+			}
+			if (j == countof(sort_names))
+			{
+				Printf("Unknown option '%s'\n", argv[i]);
+				Printf("acsprofile clear : Reset profiling information\n");
+				Printf("acsprofile [total|min|max|avg|runs] [<limit>]\n");
+				return;
+			}
+		}
 	}
 
-	ShowProfileData(ScriptProfiles, limit, false);
-	ShowProfileData(FuncProfiles, limit, true);
+	ShowProfileData(ScriptProfiles, limit, sorter, false);
+	ShowProfileData(FuncProfiles, limit, sorter, true);
 }

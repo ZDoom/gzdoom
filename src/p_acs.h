@@ -83,6 +83,7 @@ struct ACSProfileInfo
 
 	ACSProfileInfo();
 	void AddRun(unsigned int num_instr);
+	void Reset();
 };
 
 struct ProfileCollector

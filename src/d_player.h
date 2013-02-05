@@ -212,6 +212,7 @@ enum
 	WF_WEAPONBOBBING	= 1 << 1,		// [HW] Bob weapon while the player is moving
 	WF_WEAPONREADYALT	= 1 << 2,		// Weapon can fire its secondary attack
 	WF_WEAPONSWITCHOK	= 1 << 3,		// It is okay to switch away from this weapon
+	WF_DISABLESWITCH	= 1 << 4,		// Disable weapon switching completely
 	WF_WEAPONRELOADOK	= 1 << 5,		// [XA] Okay to reload this weapon.
 	WF_WEAPONZOOMOK		= 1 << 6,		// [XA] Okay to use weapon zoom function.
 };	

@@ -111,9 +111,6 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 
 	other = Spawn (spawntype, x, y, z, ALLOW_REPLACE);
 
-	// Transfer boss-spawned flag
-	other->flags4 |= self->flags4 & MF4_BOSSSPAWNED;
-
 	// Check to see if the new Lost Soul's z value is above the
 	// ceiling of its new sector, or below the floor. If so, kill it.
 

@@ -5063,7 +5063,7 @@ static sigrenderer_t *it_start_sigrenderer(DUH *duh, sigdata_t *vsigdata, int n_
 		}
 	}
 
-	while (pos >= sigrenderer->time_left) {
+	while (pos > 0 && pos >= sigrenderer->time_left) {
 		render(sigrenderer, 0, 1.0f, 0, sigrenderer->time_left, NULL);
 
 		pos -= sigrenderer->time_left;

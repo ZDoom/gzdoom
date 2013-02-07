@@ -274,6 +274,10 @@ static void dup_channel(IT_CHANNEL *dst, IT_CHANNEL *src)
 	dst->xm_lastX1 = src->xm_lastX1;
 	dst->xm_lastX2 = src->xm_lastX2;
 
+	dst->inv_loop_delay = src->inv_loop_delay;
+	dst->inv_loop_speed = src->inv_loop_speed;
+	dst->inv_loop_offset = src->inv_loop_offset;
+
 	dst->playing = dup_playing(src->playing, dst, src);
 
 
@@ -1045,6 +1049,33 @@ static void update_smooth_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 }
 
 
+static const unsigned char pt_tab_invloop[16] =
+{
+	0x00, 0x05, 0x06, 0x07, 0x08, 0x0A, 0x0B, 0x0D,
+	0x0F, 0x13, 0x16, 0x1A, 0x20, 0x2B, 0x40, 0x80
+};
+
+static void update_invert_loop(IT_CHANNEL *channel, IT_SAMPLE *sample)
+{
+	channel->inv_loop_delay += pt_tab_invloop[channel->inv_loop_speed];
+	if (channel->inv_loop_delay >= 0x80)
+	{
+		channel->inv_loop_delay = 0;
+
+		if (sample && ((sample->flags & (IT_SAMPLE_EXISTS | IT_SAMPLE_LOOP)) == (IT_SAMPLE_EXISTS | IT_SAMPLE_LOOP)) && !(sample->flags & (IT_SAMPLE_STEREO | IT_SAMPLE_16BIT)))
+		{
+			if (sample->loop_end - sample->loop_start >= 4)
+			{
+				channel->inv_loop_offset++;
+				if (channel->inv_loop_offset >= (sample->loop_end - sample->loop_start)) channel->inv_loop_offset = 0;
+
+				((char *)sample->data)[sample->loop_start + channel->inv_loop_offset] ^= 0xFF;
+			}
+		}
+	}
+}
+
+
 
 static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 {
@@ -1139,6 +1170,8 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 		channel->arpeggio &= 0xFFF;
 
 		update_retrig(sigrenderer, channel);
+
+		if (channel->inv_loop_speed) update_invert_loop(channel, playing ? playing->sample : NULL);
 
 		if (playing) {
 			playing->slide += channel->portamento;
@@ -2538,7 +2571,10 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							}
 							break;
 						case IT_S_SET_MIDI_MACRO:
-							channel->SFmacro = effectvalue & 15;
+							if ((sigdata->flags & (IT_WAS_AN_XM | IT_WAS_A_MOD)) == (IT_WAS_AN_XM | IT_WAS_A_MOD)) {
+								channel->inv_loop_speed = effectvalue & 15;
+								update_invert_loop(channel, channel->playing ? channel->playing->sample : NULL);
+							} else channel->SFmacro = effectvalue & 15;
 							break;
 					}
 				}
@@ -2937,6 +2973,7 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 	if (entry->mask & IT_ENTRY_INSTRUMENT) {
 		int oldsample = channel->sample;
 		int oldvolume = channel->volume;
+		channel->inv_loop_offset = 0;
 		channel->instrument = entry->instrument;
 		instrument_to_sample(sigdata, channel);
 		if (channel->playing &&
@@ -4907,6 +4944,9 @@ static DUMB_IT_SIGRENDERER *init_sigrenderer(DUMB_IT_SIGDATA *sigdata, int n_cha
 		channel->xm_lastEB = 0;
 		channel->xm_lastX1 = 0;
 		channel->xm_lastX2 = 0;
+		channel->inv_loop_delay = 0;
+		channel->inv_loop_speed = 0;
+		channel->inv_loop_offset = 0;
 		channel->playing = NULL;
 #ifdef BIT_ARRAY_BULLSHIT
 		channel->played_patjump = NULL;

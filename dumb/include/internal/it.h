@@ -643,6 +643,10 @@ struct IT_CHANNEL
 	unsigned char xm_lastX1;
 	unsigned char xm_lastX2;
 
+	unsigned char inv_loop_delay;
+	unsigned char inv_loop_speed;
+	int inv_loop_offset;
+
 	IT_PLAYING *playing;
 
 #ifdef BIT_ARRAY_BULLSHIT
@@ -802,6 +806,7 @@ extern DUH_SIGTYPE_DESC _dumb_sigtype_it;
 #define XM_E_NOTE_CUT              0xC
 #define XM_E_NOTE_DELAY            0xD
 #define XM_E_PATTERN_DELAY         0xE
+#define XM_E_SET_MIDI_MACRO        0xF
 
 #define XM_X_EXTRAFINE_PORTA_UP    1
 #define XM_X_EXTRAFINE_PORTA_DOWN  2

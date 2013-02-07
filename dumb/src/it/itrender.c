@@ -1211,6 +1211,8 @@ static int update_pattern_variables(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *
 									if (!channel->played_patjump)
 										channel->played_patjump = bit_array_create(256);
 									else {
+										if ( channel->played_patjump_order != 0xFFFE && channel->played_patjump_order != sigrenderer->order )
+											bit_array_merge(sigrenderer->played, channel->played_patjump, channel->played_patjump_order * 256);
 										//if (channel->played_patjump_order != sigrenderer->order)
 											bit_array_reset(channel->played_patjump);
 									}
@@ -1225,13 +1227,13 @@ static int update_pattern_variables(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *
 											int n;
 											bit_array_destroy(channel->played_patjump);
 											channel->played_patjump = bit_array_create(256);
-											for (n = 0; n < 256; n++)
+											for (n = channel->pat_loop_row; n <= sigrenderer->row; n++)
 												bit_array_clear(sigrenderer->played, sigrenderer->order * 256 + n);
 											channel->played_patjump_order = sigrenderer->order;
 										} else if (channel->played_patjump_order == sigrenderer->order) {
 											bit_array_set(channel->played_patjump, sigrenderer->row);
 											bit_array_mask(sigrenderer->played, channel->played_patjump, channel->played_patjump_order * 256);
-											bit_array_reset(channel->played_patjump);
+											//bit_array_reset(channel->played_patjump);
 										}
 #endif
 										channel->pat_loop_count = v;
@@ -1258,7 +1260,7 @@ static int update_pattern_variables(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *
 										if (channel->played_patjump_order == sigrenderer->order) {
 											bit_array_set(channel->played_patjump, sigrenderer->row);
 											bit_array_mask(sigrenderer->played, channel->played_patjump, channel->played_patjump_order * 256);
-											bit_array_reset(channel->played_patjump);
+											//bit_array_reset(channel->played_patjump);
 										}
 #endif
 										sigrenderer->breakrow = channel->pat_loop_row;

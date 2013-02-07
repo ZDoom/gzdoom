@@ -1292,8 +1292,8 @@ static int update_pattern_variables(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *
 										- If we jump, then effect a loop using an old E60, and then the pattern ends, the next pattern starts on the row corresponding to the E60.
 										- Theory: breakrow is not cleared when it's a pattern loop effect!
 										*/
-										//if (sigrenderer->processrow < 0xFFFE) // I have no idea if this is correct or not - FT2 is so weird :(
-										//	sigrenderer->breakrow = channel->pat_loop_row; /* emulate bug in FT2 */
+										if ((sigrenderer->processrow | 0xC00) < 0xFFFE) // I have no idea if this is correct or not - FT2 is so weird :(
+											sigrenderer->breakrow = channel->pat_loop_row; /* emulate bug in FT2 */
 									} else
 										channel->pat_loop_row = sigrenderer->processrow + 1;
 #ifdef BIT_ARRAY_BULLSHIT
@@ -3832,8 +3832,10 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 					sigrenderer->processrow = sigrenderer->breakrow;
 					sigrenderer->breakrow = 0;
 					for (n = 0; n < DUMB_IT_N_CHANNELS; n++) sigrenderer->channel[n].pat_loop_end_row = 0;
-				} else
+				} else {
 					sigrenderer->processrow = sigrenderer->breakrow;
+					sigrenderer->breakrow = 0; // XXX lolwut
+				}
 
 				if (sigrenderer->processorder == 0xFFFF)
 					sigrenderer->processorder = sigrenderer->order - 1;

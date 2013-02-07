@@ -1385,6 +1385,10 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	y = mthing->y;
 	z = mthing->z;
 
+	if (!(level.flags & LEVEL_USEPLAYERSTARTZ))
+	{
+		z = 0;
+	}
 	z += P_PointInSector (x, y)->floorplane.ZatPoint (x, y);
 
 	if (!players[playernum].mo)

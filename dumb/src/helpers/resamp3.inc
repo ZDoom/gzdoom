@@ -124,13 +124,12 @@ int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VO
 						todo_clocks_set = todo_clocks;
 						if ( todo_clocks_set > 256 * 65536 ) todo_clocks_set = 256 * 65536;
 						todo_clocks -= todo_clocks_set;
-						todo = ( todo_clocks_set - resampler->last_clock + inv_dt - 1 ) / inv_dt;
-						if ( todo < 0 ) todo = 0;
-						LOOP4(todo,
+						while ( resampler->last_clock < todo_clocks_set )
+						{
 							POKE_ALIAS(2);
 							pos--;
 							x -= SRC_CHANNELS;
-						);
+						}
 						todo = todo_clocks_set >> 16;
 						MIX_ALIAS( todo );
 					}
@@ -229,13 +228,12 @@ int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VO
 						todo_clocks_set = todo_clocks;
 						if ( todo_clocks_set > 256 * 65536 ) todo_clocks_set = 256 * 65536;
 						todo_clocks -= todo_clocks_set;
-						todo = ( todo_clocks_set - resampler->last_clock + inv_dt - 1 ) / inv_dt;
-						if ( todo < 0 ) todo = 0;
-						LOOP4(todo,
+						while ( resampler->last_clock < todo_clocks_set )
+						{
 							POKE_ALIAS(-2);
 							pos++;
 							x += SRC_CHANNELS;
-						);
+						}
 						todo = todo_clocks_set >> 16;
 						MIX_ALIAS( todo );
 					}

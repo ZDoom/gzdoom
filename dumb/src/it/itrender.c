@@ -4863,7 +4863,7 @@ static DUMB_IT_SIGRENDERER *init_sigrenderer(DUMB_IT_SIGDATA *sigdata, int n_cha
 		channel->channelvolume = sigdata->channel_volume[i];
 		channel->instrument = 0;
 		channel->sample = 0;
-		channel->note = 0;
+		channel->note = IT_NOTE_OFF;
 		channel->SFmacro = 0;
 		channel->filter_cutoff = 127;
 		channel->filter_resonance = 0;

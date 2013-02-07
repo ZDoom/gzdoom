@@ -117,9 +117,9 @@ int dumb_resampling_quality = DUMB_RQ_CUBIC;
  */
 #define LOOP4(iterator, CONTENT) \
 { \
-	while (iterator) { \
+	while ( (iterator)-- ) \
+	{ \
 		CONTENT; \
-		(iterator)--; \
 	} \
 }
 #endif

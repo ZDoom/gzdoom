@@ -308,7 +308,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 //
 //------------------------------------------------------------------------------------
 
-void P_SetSafeFlash(AWeapon * weapon, player_t * player, FState * flashstate, int index)
+void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
 {
 
 	const PClass * cls = weapon->GetClass();
@@ -337,9 +337,13 @@ void P_SetSafeFlash(AWeapon * weapon, player_t * player, FState * flashstate, in
 	}
 	// if we get here the state doesn't seem to belong to any class in the inheritance chain
 	// This can happen with Dehacked if the flash states are remapped. 
-	// The only way to check this would be to go through all Dehacked modifiable actors and
-	// find the correct one.
-	// For now let's assume that it will work.
+	// The only way to check this would be to go through all Dehacked modifiable actors, convert
+	// their states into a single flat array and find the correct one.
+	// Rather than that, just check to make sure it belongs to something.
+	if (FState::StaticFindStateOwner(flashstate + index) == NULL)
+	{ // Invalid state. With no index offset, it should at least be valid.
+		index = 0;
+	}
 	P_SetPsprite (player, ps_flash, flashstate + index);
 }
 

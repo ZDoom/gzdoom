@@ -36,6 +36,7 @@ add_library( dumb
     src/core/rendsig.c
     src/core/unload.c
     src/helpers/barray.c
+    src/helpers/blip_buf.c
     src/helpers/clickrem.c
     src/helpers/memfile.c
     src/helpers/resample.c

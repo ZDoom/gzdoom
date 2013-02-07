@@ -878,6 +878,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\helpers\blip_buf.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\helpers\clickrem.c"
 					>
 					<FileConfiguration
@@ -1960,6 +1964,10 @@
 			<Filter
 				Name="internal"
 				>
+				<File
+					RelativePath="..\..\include\internal\blip_buf.h"
+					>
+				</File>
 				<File
 					RelativePath="..\..\include\internal\dumb.h"
 					>

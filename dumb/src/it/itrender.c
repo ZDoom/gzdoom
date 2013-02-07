@@ -29,21 +29,51 @@
 #define END_RAMPING
 #define RAMP_DOWN
 
-static IT_PLAYING *alloc_playing(DUMB_IT_SIGRENDERER *itsr)
+static IT_PLAYING *new_playing(DUMB_IT_SIGRENDERER *itsr)
 {
+	IT_PLAYING *r;
+
 	if (itsr->free_playing != NULL)
 	{
-		IT_PLAYING *pl = itsr->free_playing;
-		itsr->free_playing = pl->next;
-		return pl;
+		r = itsr->free_playing;
+		itsr->free_playing = r->next;
+		blip_clear(r->resampler.blip_buffer[0]);
+		blip_clear(r->resampler.blip_buffer[1]);
+		return r;
 	}
-	return (IT_PLAYING *)malloc(sizeof(IT_PLAYING));
+	r = (IT_PLAYING *)malloc(sizeof(IT_PLAYING));
+	if (r)
+	{
+		r->resampler.blip_buffer[0] = blip_new( 256 );
+		if ( !r->resampler.blip_buffer[0] )
+		{
+			free( r );
+			return NULL;
+		}
+		r->resampler.blip_buffer[1] = blip_new( 256 );
+		if ( !r->resampler.blip_buffer[1] )
+		{
+			free( r->resampler.blip_buffer[0] );
+			free( r );
+			return NULL;
+		}
+		blip_set_rates(r->resampler.blip_buffer[0], 65536, 1);
+		blip_set_rates(r->resampler.blip_buffer[1], 65536, 1);
+	}
+	return r;
 }
 
 static void free_playing(DUMB_IT_SIGRENDERER *itsr, IT_PLAYING *playing)
 {
 	playing->next = itsr->free_playing;
 	itsr->free_playing = playing;
+}
+
+static void free_playing_orig(IT_PLAYING * r)
+{
+	blip_delete( r->resampler.blip_buffer[1] );
+	blip_delete( r->resampler.blip_buffer[0] );
+	free( r );
 }
 
 static IT_PLAYING *dup_playing(IT_PLAYING *src, IT_CHANNEL *dstchannel, IT_CHANNEL *srcchannel)
@@ -135,6 +165,19 @@ static IT_PLAYING *dup_playing(IT_PLAYING *src, IT_CHANNEL *dstchannel, IT_CHANN
 
 	dst->resampler = src->resampler;
 	dst->resampler.pickup_data = dst;
+	dst->resampler.blip_buffer[0] = blip_dup( dst->resampler.blip_buffer[0] );
+	if ( !dst->resampler.blip_buffer[0] )
+	{
+		free( dst );
+		return NULL;
+	}
+	dst->resampler.blip_buffer[1] = blip_dup( dst->resampler.blip_buffer[1] );
+	if ( !dst->resampler.blip_buffer[1] )
+	{
+		blip_delete( dst->resampler.blip_buffer[0] );
+		free( dst );
+		return NULL;
+	}
 	dst->time_lost = src->time_lost;
 
 	//dst->output = src->output;
@@ -1582,7 +1625,7 @@ static void it_retrigger_note(DUMB_IT_SIGRENDERER *sigrenderer, IT_CHANNEL *chan
 	if (channel->playing)
 		free_playing(sigrenderer, channel->playing);
 
-	channel->playing = alloc_playing(sigrenderer);
+	channel->playing = new_playing(sigrenderer);
 
 	if (!channel->playing)
 		return;
@@ -2889,9 +2932,7 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 {
 	DUMB_IT_SIGDATA *sigdata = sigrenderer->sigdata;
 	IT_CHANNEL *channel = &sigrenderer->channel[(int)entry->channel];
-	IT_PLAYING playing;
-
-	playing.sample = 0;
+	IT_PLAYING * playing = NULL;
 
 	if (entry->mask & IT_ENTRY_INSTRUMENT) {
 		int oldsample = channel->sample;
@@ -2901,7 +2942,8 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 		if (channel->playing &&
 			!((entry->mask & IT_ENTRY_NOTE) && entry->note >= 120) &&
 			!((entry->mask & IT_ENTRY_EFFECT) && entry->effect == IT_XM_KEY_OFF && entry->effectvalue == 0)) {
-			playing = *channel->playing;
+			playing = dup_playing(channel->playing, channel, channel);
+			if (!playing) return;
 			if (!(sigdata->flags & IT_WAS_A_MOD)) {
 				/* Retrigger vol/pan envelopes if enabled, and cancel fadeout.
 				 * Also reset vol/pan to that of _original_ instrument.
@@ -2934,12 +2976,11 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 							channel->playing = NULL;
 						}
 					} else {
-						if (!channel->playing) {
-							channel->playing = alloc_playing(sigrenderer);
-							if (!channel->playing) return;
+						if (channel->playing) {
+							free_playing(sigrenderer, channel->playing);
 						}
-						*channel->playing = playing;
-						playing.sample = (IT_SAMPLE *)-1;
+						channel->playing = playing;
+						playing = NULL;
 						channel->playing->declick_stage = 0;
 						channel->playing->declick_volume = 1.f / 256.f;
 #else
@@ -2985,7 +3026,11 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 			if (channel->playing) {
 #ifdef RAMP_DOWN
 				int i;
-				if (playing.sample) *channel->playing = playing;
+				if (playing) {
+					free_playing(sigrenderer, channel->playing);
+					channel->playing = playing;
+					playing = NULL;
+				}
 				for (i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++) {
 					if (!sigrenderer->playing[i]) {
 						channel->playing->declick_stage = 2;
@@ -3003,6 +3048,7 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 				channel->playing = NULL;
 #endif
 			}
+			if (playing) free_playing(sigrenderer, playing);
 			return;
 		} else if (channel->playing && (entry->mask & IT_ENTRY_VOLPAN) && ((entry->volpan>>4) == 0xF)) {
 			/* Don't retrigger note; portamento in the volume column. */
@@ -3015,20 +3061,26 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 			channel->destnote = IT_NOTE_OFF;
 
 			if (!channel->playing) {
-				channel->playing = alloc_playing(sigrenderer);
-				if (!channel->playing)
+				channel->playing = new_playing(sigrenderer);
+				if (!channel->playing) {
+					if (playing) free_playing(sigrenderer, playing);
 					return;
+				}
 				// Adding the following seems to do the trick for the case where a piece starts with an instrument alone and then some notes alone.
 				retrigger_xm_envelopes(channel->playing);
 			}
 #ifdef RAMP_DOWN
-			else if (playing.sample != (IT_SAMPLE *)-1) {
+			else if (playing) {
 				/* volume rampy stuff! move note to NNA */
 				int i;
-				IT_PLAYING * ptemp = alloc_playing(sigrenderer);
-				if (!ptemp) return;
-				if (playing.sample) *ptemp = playing;
-				else *ptemp = *channel->playing;
+				IT_PLAYING * ptemp;
+				if (playing->sample) ptemp = playing;
+				else ptemp = channel->playing;
+				if (!ptemp) {
+					if (playing) free_playing(sigrenderer, playing);
+					return;
+				}
+				playing = NULL;
 				for (i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++) {
 					if (!sigrenderer->playing[i]) {
 						ptemp->declick_stage = 2;
@@ -3189,6 +3241,8 @@ static void process_xm_note_data(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *ent
 				break;
 		}
 	}
+
+	if (playing) free_playing(sigrenderer, playing);
 }
 
 
@@ -5165,7 +5219,7 @@ void _dumb_it_end_sigrenderer(sigrenderer_t *vsigrenderer)
 
 		for (i = 0; i < DUMB_IT_N_CHANNELS; i++) {
 			if (sigrenderer->channel[i].playing)
-				free(sigrenderer->channel[i].playing);
+				free_playing_orig(sigrenderer->channel[i].playing);
 #ifdef BIT_ARRAY_BULLSHIT
 			bit_array_destroy(sigrenderer->channel[i].played_patjump);
 #endif
@@ -5173,12 +5227,12 @@ void _dumb_it_end_sigrenderer(sigrenderer_t *vsigrenderer)
 
 		for (i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++)
 			if (sigrenderer->playing[i])
-				free(sigrenderer->playing[i]);
+				free_playing_orig(sigrenderer->playing[i]);
 
 		for (playing = sigrenderer->free_playing; playing != NULL; playing = next)
 		{
 			next = playing->next;
-			free(playing);
+			free_playing_orig(playing);
 		}
 
 		dumb_destroy_click_remover_array(sigrenderer->n_channels, sigrenderer->click_remover);

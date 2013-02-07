@@ -662,6 +662,8 @@ typedef struct DUMB_VOLUME_RAMP_INFO DUMB_VOLUME_RAMP_INFO;
 
 typedef void (*DUMB_RESAMPLE_PICKUP)(DUMB_RESAMPLER *resampler, void *data);
 
+#include "internal/blip_buf.h"
+
 struct DUMB_RESAMPLER
 {
 	void *src;
@@ -679,6 +681,9 @@ struct DUMB_RESAMPLER
 		signed char x8[3*2];
 	} x;
 	int overshot;
+	int last_clock;
+	int last_amp[2];
+	blip_t* blip_buffer[2];
 };
 
 struct DUMB_VOLUME_RAMP_INFO

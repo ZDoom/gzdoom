@@ -95,7 +95,8 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 #define SET_VOLUME_VARIABLES SET_MONO_DEST_VOLUME_VARIABLES
 #define RETURN_VOLUME_VARIABLES RETURN_MONO_DEST_VOLUME_VARIABLES
 #define VOLUMES_ARE_ZERO MONO_DEST_VOLUMES_ARE_ZERO
-#define MIX_ALIAS(op, upd, offset) MONO_DEST_MIX_ALIAS(op, upd, offset)
+#define MIX_ALIAS(count) MONO_DEST_MIX_ALIAS(count)
+#define PEEK_ALIAS MONO_DEST_PEEK_ALIAS
 #define MIX_LINEAR(op, upd, o0, o1) MONO_DEST_MIX_LINEAR(op, upd, o0, o1)
 #define MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3) MONO_DEST_MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3)
 #define MIX_ZEROS(op) *dst++ op 0
@@ -137,7 +138,8 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 	if ( volume_right ) volume_right->volume = (float)rvolr / 16777216.0f; \
 }
 #define VOLUMES_ARE_ZERO (lvol == 0 && lvolt == 0 && rvol == 0 && rvolt == 0)
-#define MIX_ALIAS(op, upd, offset) STEREO_DEST_MIX_ALIAS(op, upd, offset)
+#define MIX_ALIAS(count) STEREO_DEST_MIX_ALIAS(count)
+#define PEEK_ALIAS STEREO_DEST_PEEK_ALIAS
 #define MIX_LINEAR(op, upd, o0, o1) STEREO_DEST_MIX_LINEAR(op, upd, o0, o1)
 #define MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3) STEREO_DEST_MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3)
 #define MIX_ZEROS(op) { *dst++ op 0; *dst++ op 0; }
@@ -157,6 +159,9 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 #undef MONO_DEST_VOLUME_ZEROS
 #undef MONO_DEST_VOLUME_VARIABLES
 #undef MONO_DEST_VOLUME_PARAMETERS
+#undef STEREO_DEST_PEEK_ALIAS
+#undef MONO_DEST_PEEK_ALIAS
+#undef POKE_ALIAS
 #undef COPYSRC2
 #undef COPYSRC
 #undef DIVIDE_BY_SRC_CHANNELS

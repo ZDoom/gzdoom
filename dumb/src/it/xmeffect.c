@@ -167,6 +167,7 @@ if (log) printf(" - %2d %02X", effect, value);
 		case XM_SET_GLOBAL_VOLUME:
 			effect = IT_SET_GLOBAL_VOLUME;
 			value *= 2;
+			if (value > 128) value = 128;
 			break;
 
 		case XM_KEY_OFF:

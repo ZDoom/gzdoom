@@ -330,3 +330,8 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	setwallyscale 716 front bot 1.090909
 	setwallyscale 717 front bot 1.090909
 }
+
+65A1EB4C87386F290816660A52932FF1 // Master Levels, garrison.wad
+{
+	rebuildnodes
+}

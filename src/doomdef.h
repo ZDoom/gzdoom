@@ -348,6 +348,7 @@ enum
 	BCOMPATF_VILEGHOSTS			= 1 << 2,	// Monsters' radius and height aren't restored properly when resurrected.
 	BCOMPATF_BADTELEPORTERS		= 1 << 3,	// Ignore tags on Teleport specials
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
+	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild
 };
 
 // phares 3/20/98:

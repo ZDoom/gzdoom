@@ -3607,6 +3607,10 @@ void P_SetupLevel (char *lumpname, int position)
 			level.maptype = MAPTYPE_UDMF;
 		}
 		CheckCompatibility(map);
+		if (ib_compatflags & BCOMPATF_REBUILDNODES)
+		{
+			ForceNodeBuild = true;
+		}
 		T_LoadScripts(map);
 
 		if (!map->HasBehavior || map->isText)

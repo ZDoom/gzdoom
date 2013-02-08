@@ -134,10 +134,6 @@ static int it_stm_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 				entry->effectvalue = buffer[ pos + 3 ];
 				if ( entry->instrument && entry->instrument < 32 )
 					entry->mask |= IT_ENTRY_INSTRUMENT;
-				if ( note == 0xFC || note == 0xFE ) {
-					entry->mask |= IT_ENTRY_NOTE;
-					entry->note = IT_NOTE_CUT;
-				}
 				if ( note < 251 ) {
 					entry->mask |= IT_ENTRY_NOTE;
 					entry->note = ( note >> 4 ) * 12 + ( note & 0x0F );
@@ -362,8 +358,15 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f, int * version)
 		}
 	}
 
-	dumbfile_skip( f, o - dumbfile_pos( f ) );
-	if ( dumbfile_getnc( (char*)data_block, p - o, f ) != p - o ) {
+	q = o - dumbfile_pos( f );
+	p -= o;
+	o = 0;
+	if ( q >= 0 ) dumbfile_skip( f, q );
+	else {
+		o = -q;
+		memset ( data_block, 0, o );
+	}
+	if ( dumbfile_getnc( (char*)data_block + o, p - o, f ) != p - o ) {
 		free( data_block );
 		_dumb_it_unload_sigdata( sigdata );
 		return NULL;

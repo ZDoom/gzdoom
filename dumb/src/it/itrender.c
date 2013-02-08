@@ -1586,7 +1586,8 @@ static void it_note_off(IT_PLAYING *playing)
 static void xm_note_off(DUMB_IT_SIGDATA *sigdata, IT_CHANNEL *channel)
 {
 	if (channel->playing) {
-		if (!(sigdata->instrument[channel->instrument-1].volume_envelope.flags & IT_ENVELOPE_ON))
+		if (!channel->instrument || channel->instrument > sigdata->n_instruments ||
+			!(sigdata->instrument[channel->instrument-1].volume_envelope.flags & IT_ENVELOPE_ON))
 			//if (!(entry->mask & IT_ENTRY_INSTRUMENT))
 			// dunno what that was there for ...
 				channel->volume = 0;

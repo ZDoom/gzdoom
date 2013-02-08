@@ -400,6 +400,13 @@ static int limit_xm_resize(void *f, long n)
 	return 0;
 }
 
+static int limit_xm_skip_end(void *f, long n)
+{
+	DUMBFILE *df = f;
+	LIMITED_XM *lx = df->file;
+	return dumbfile_skip( lx->remaining, n );
+}
+
 static int limit_xm_skip(void *f, long n)
 {
 	LIMITED_XM *lx = f;
@@ -476,6 +483,8 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 	unsigned short vol_points[24];
 	unsigned short pan_points[24];
 	int i, type;
+	const unsigned long max_size = 4 + 22 + 1 + 2 + 4 + 96 + 48 + 48 + 1 * 14 + 2 + 2;
+	unsigned long skip_end = 0;
 
 	/* Header size. Tends to be more than the actual size of the structure.
 	 * So unread bytes must be skipped before reading the first sample
@@ -486,7 +495,12 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 
 	size = dumbfile_igetl(f);
 
-	if ( size == 0 ) size = 4 + 22 + 1 + 2 + 4 + 96 + 48 + 48 + 1 * 14 + 2 + 2;
+	if ( size == 0 ) size = max_size;
+	else if ( size > max_size )
+	{
+		skip_end = size - max_size;
+		size = max_size;
+	}
 
 	if ( limit_xm_resize( f, size - 4 ) < 0 ) return -1;
 
@@ -504,7 +518,7 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 	if (extra->n_samples) {
 		/* sample header size */
 		i = dumbfile_igetl(f);
-		if (!i) i = 0x28;
+		if (!i || i > 0x28) i = 0x28;
 		extra->sample_header_size = i;
 
 		/* sample map */
@@ -592,6 +606,9 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 			instrument->map_sample[i] = 0;
 
 	if (size > bytes_read && dumbfile_skip(f, size - bytes_read))
+		return -1;
+
+	if (skip_end && limit_xm_skip_end(f, skip_end))
 		return -1;
 
 	instrument->new_note_action = NNA_NOTE_CUT;

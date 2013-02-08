@@ -1120,10 +1120,11 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 		}
 
 		if (channel->volslide) {
+			int clip = (sigrenderer->sigdata->flags & IT_WAS_AN_S3M) ? 63 : 64;
 			channel->volume += channel->volslide;
-			if (channel->volume > 64) {
+			if (channel->volume > clip) {
 				if (channel->volslide >= 0)
-					channel->volume = 64;
+					channel->volume = clip;
 				else
 					channel->volume = 0;
 			}
@@ -1286,8 +1287,14 @@ static int update_pattern_variables(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *
 			case IT_S:
 				{
 					unsigned char effectvalue = entry->effectvalue;
-					if (effectvalue == 0)
-						effectvalue = channel->lastS;
+					if (sigrenderer->sigdata->flags & IT_WAS_AN_S3M) {
+						if (effectvalue == 0)
+							effectvalue = channel->lastDKL;
+						channel->lastDKL = effectvalue;
+					} else {
+						if (effectvalue == 0)
+							effectvalue = channel->lastS;
+					}
 					channel->lastS = effectvalue;
 					switch (effectvalue >> 4) {
 						case IT_S_PATTERN_LOOP:
@@ -2043,24 +2050,43 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							v = channel->lastDKL;
 						channel->lastDKL = v;
 					}
-					if ((v & 0x0F) == 0) { /* Dx0 */
-						channel->volslide = v >> 4;
-						if (channel->volslide == 15 && !(sigdata->flags & IT_WAS_AN_XM)) {
-							channel->volume += 15;
-							if (channel->volume > 64) channel->volume = 64;
+					if (!(sigdata->flags & IT_WAS_AN_XM)) {
+						int clip = (sigdata->flags & IT_WAS_AN_S3M) ? 63 : 64;
+						if ((v & 0x0F) == 0x0F) {
+							if (!(v & 0xF0)) {
+								channel->volslide = -15;
+								channel->volume -= 15;
+								if (channel->volume > clip) channel->volume = 0;
+							} else {
+								channel->volume += v >> 4;
+								if (channel->volume > clip) channel->volume = clip;
+							}
+						} else if ((v & 0xF0) == 0xF0) {
+							if (!(v & 0x0F)) {
+								channel->volslide = 15;
+								channel->volume += 15;
+								if (channel->volume > clip) channel->volume = clip;
+							} else {
+								channel->volume -= v & 15;
+								if (channel->volume > clip) channel->volume = 0;
+							}
+						} else if (!(v & 0x0F)) {
+							channel->volslide = v >> 4;
+						} else {
+							channel->volslide = -(v & 15);
 						}
-					} else if ((v & 0xF0) == 0) { /* D0x */
-						channel->volslide = -v;
-						if (channel->volslide == -15 && !(sigdata->flags & IT_WAS_AN_XM)) {
-							channel->volume -= 15;
+					} else {
+						if ((v & 0x0F) == 0) { /* Dx0 */
+							channel->volslide = v >> 4;
+						} else if ((v & 0xF0) == 0) { /* D0x */
+							channel->volslide = -v;
+						} else if ((v & 0x0F) == 0x0F) { /* DxF */
+							channel->volume += v >> 4;
+							if (channel->volume > 64) channel->volume = 64;
+						} else if ((v & 0xF0) == 0xF0) { /* DFx */
+							channel->volume -= v & 15;
 							if (channel->volume > 64) channel->volume = 0;
 						}
-					} else if ((v & 0x0F) == 0x0F) { /* DxF */
-						channel->volume += v >> 4;
-						if (channel->volume > 64) channel->volume = 64;
-					} else if ((v & 0xF0) == 0xF0) { /* DFx */
-						channel->volume -= v & 15;
-						if (channel->volume > 64) channel->volume = 0;
 					}
 				}
 				break;
@@ -2098,6 +2124,10 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							else
 								channel->xm_lastX2 = v & 15;
 						}
+					} else if (sigdata->flags & IT_WAS_AN_S3M) {
+						if (v == 0)
+							v = channel->lastDKL;
+						channel->lastDKL = v;
 					} else {
 						if (v == 0)
 							v = channel->lastEF;
@@ -2129,6 +2159,10 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							else
 								channel->xm_lastX1 = v & 15;
 						}
+					} else if (sigdata->flags & IT_WAS_AN_S3M) {
+						if (v == 0)
+							v = channel->lastDKL;
+						channel->lastDKL = v;
 					} else {
 						if (v == 0)
 							v = channel->lastEF;
@@ -2202,13 +2236,20 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 			case IT_TREMOR:
 				{
 					unsigned char v = entry->effectvalue;
-					if (v == 0)
-						v = channel->lastI;
+					if (v == 0) {
+						if (sigdata->flags & IT_WAS_AN_S3M)
+							v = channel->lastDKL;
+						else
+							v = channel->lastI;
+					}
 					else if (!(sigdata->flags & IT_OLD_EFFECTS)) {
 						if (v & 0xF0) v -= 0x10;
 						if (v & 0x0F) v -= 0x01;
 					}
-					channel->lastI = v;
+					if (sigdata->flags & IT_WAS_AN_S3M)
+						channel->lastDKL = v;
+					else
+						channel->lastI = v;
 					channel->tremor_time |= 128;
 				}
 				update_tremor(channel);
@@ -2220,9 +2261,15 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 					 * and we use lastJ for portamento down instead.
 					 */
 					if (!(sigdata->flags & IT_WAS_AN_XM)) {
-						if (v == 0)
-							v = channel->lastJ;
-						channel->lastJ = v;
+						if (sigdata->flags & IT_WAS_AN_S3M) {
+							if (v == 0)
+								v = channel->lastDKL;
+							channel->lastDKL = v;
+						} else {
+							if (v == 0)
+								v = channel->lastJ;
+							channel->lastJ = v;
+						}
 					}
 					channel->arpeggio = ((v & 0xF0) << 4) | (v & 0x0F);
 					channel->arpeggio_shift = 16;
@@ -2361,11 +2408,16 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 					if (sigdata->flags & IT_WAS_AN_XM) {
 						if ((v & 0x0F) == 0) v |= channel->lastQ & 0x0F;
 						if ((v & 0xF0) == 0) v |= channel->lastQ & 0xF0;
+						channel->lastQ = v;
+					} else if (sigdata->flags & IT_WAS_AN_S3M) {
+						if (v == 0)
+							v = channel->lastDKL;
+						channel->lastDKL = v;
 					} else {
 						if (v == 0)
 							v = channel->lastQ;
+						channel->lastQ = v;
 					}
-					channel->lastQ = v;
 					if ((v & 0x0F) == 0) v |= 0x01;
 					channel->retrig = v;
 					if (entry->mask & IT_ENTRY_NOTE) {
@@ -2390,14 +2442,24 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 				break;
 			case IT_TREMOLO:
 				{
-					unsigned char speed = entry->effectvalue >> 4;
-					unsigned char depth = entry->effectvalue & 15;
-					if (speed == 0)
-						speed = channel->lastRspeed;
-					channel->lastRspeed = speed;
-					if (depth == 0)
-						depth = channel->lastRdepth;
-					channel->lastRdepth = depth;
+					unsigned char speed, depth;
+					if (sigdata->flags & IT_WAS_AN_S3M) {
+						unsigned char v = entry->effectvalue;
+						if (v == 0)
+							v = channel->lastDKL;
+						channel->lastDKL = v;
+						speed = v >> 4;
+						depth = v & 15;
+					} else {
+						speed = entry->effectvalue >> 4;
+						depth = entry->effectvalue & 15;
+						if (speed == 0)
+							speed = channel->lastRspeed;
+						channel->lastRspeed = speed;
+						if (depth == 0)
+							depth = channel->lastRdepth;
+						channel->lastRdepth = depth;
+					}
 					if (channel->playing) {
 						channel->playing->tremolo_speed = speed;
 						channel->playing->tremolo_depth = depth;

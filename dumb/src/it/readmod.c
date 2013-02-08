@@ -648,7 +648,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 	sigdata->n_patterns = -1;
 
-	if ( !( rstrict & 2 ) )
+	if ( ( rstrict & 2 ) )
 	{
 		long total_sample_size;
 		long remain;
@@ -674,7 +674,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	}
 	else
 	{
-		for (i = 0; i < sigdata->n_orders; i++)
+		for (i = 0; i < 128; i++)
 		{
 			if (sigdata->order[i] > sigdata->n_patterns)
 				sigdata->n_patterns = sigdata->order[i];

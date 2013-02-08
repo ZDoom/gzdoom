@@ -230,6 +230,8 @@ static IFF_CHUNKED *dumbfile_read_okt(DUMBFILE *f)
 		chunk->type = bytes_read;
 		chunk->size = dumbfile_mgetl( f );
 
+		if ( dumbfile_error( f ) ) break;
+
 		chunk->data = (unsigned char *) malloc( chunk->size );
 		if ( !chunk->data )
 		{
@@ -241,12 +243,23 @@ static IFF_CHUNKED *dumbfile_read_okt(DUMBFILE *f)
 		bytes_read = dumbfile_getnc( ( char * ) chunk->data, chunk->size, f );
 		if ( bytes_read < (long)chunk->size )
 		{
-			free( mod->chunks );
-			free( mod );
-			return NULL;
+			if ( bytes_read <= 0 ) {
+				free( chunk->data );
+				break;
+			} else {
+				chunk->size = bytes_read;
+				mod->chunk_count++;
+				break;
+			}
 		}
 
 		mod->chunk_count++;
+	}
+
+	if ( !mod->chunk_count ) {
+		if ( mod->chunks ) free(mod->chunks);
+		free(mod);
+		mod = NULL;
 	}
 
 	return mod;
@@ -483,6 +496,9 @@ static DUMB_IT_SIGDATA *it_okt_load_sigdata(DUMBFILE *f, int restrict)
 			}
 			j++;
 		}
+	}
+	for (; i < sigdata->n_samples; i++) {
+		sigdata->sample[i].flags = 0;
 	}
 
 	chunk = get_chunk_by_type(mod, DUMB_ID('C','M','O','D'), 0);

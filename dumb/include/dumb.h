@@ -233,7 +233,6 @@ int32 DUMBEXPORT duh_get_length(DUH *duh);
 
 const char *DUMBEXPORT duh_get_tag(DUH *duh, const char *key);
 
-
 /* Signal Rendering Functions */
 
 typedef struct DUH_SIGRENDERER DUH_SIGRENDERER;
@@ -609,6 +608,8 @@ sigdata_t *DUMBEXPORT duh_get_raw_sigdata(DUH *duh, int sig, int32 type);
 
 DUH_SIGRENDERER *DUMBEXPORT duh_encapsulate_raw_sigrenderer(sigrenderer_t *vsigrenderer, DUH_SIGTYPE_DESC *desc, int n_channels, int32 pos);
 sigrenderer_t *DUMBEXPORT duh_get_raw_sigrenderer(DUH_SIGRENDERER *sigrenderer, int32 type);
+
+int DUMBEXPORT duh_add_signal(DUH *duh, DUH_SIGTYPE_DESC *desc, sigdata_t *sigdata);
 
 
 /* Standard Signal Types */

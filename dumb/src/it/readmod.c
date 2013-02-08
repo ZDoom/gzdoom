@@ -464,7 +464,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	int n_channels;
 	int i;
 	uint32 fft = 0;
-	DUMBFILE *rem;
+	DUMBFILE *rem = NULL;
 
 	f = dumbfile_buffer_mod(f, &fft);
 	if (!f)
@@ -674,7 +674,6 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	}
 	else
 	{
-		sigdata->n_patterns = 0;
 		for (i = 0; i < sigdata->n_orders; i++)
 		{
 			if (sigdata->order[i] > sigdata->n_patterns)

@@ -354,7 +354,7 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f, int * version)
 
 	for ( n = 0, q = o / 16; n < sigdata->n_samples; ++n ) {
 		if ( sample_offset[ n ] ) {
-			sample_offset[ n ] -= q;
+			sample_offset[ n ] = (unsigned short)(sample_offset[ n ] - q);
 		}
 	}
 

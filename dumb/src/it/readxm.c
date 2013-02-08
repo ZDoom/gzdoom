@@ -400,14 +400,14 @@ static int limit_xm_resize(void *f, long n)
 	return 0;
 }
 
-static int limit_xm_skip_end(void *f, long n)
+static int limit_xm_skip_end(void *f, int32 n)
 {
 	DUMBFILE *df = f;
 	LIMITED_XM *lx = df->file;
 	return dumbfile_skip( lx->remaining, n );
 }
 
-static int limit_xm_skip(void *f, long n)
+static int limit_xm_skip(void *f, int32 n)
 {
 	LIMITED_XM *lx = f;
 	lx->ptr += n;
@@ -427,7 +427,7 @@ static int limit_xm_getc(void *f)
 
 
 
-static long limit_xm_getnc(char *ptr, long n, void *f)
+static long limit_xm_getnc(char *ptr, int32 n, void *f)
 {
 	LIMITED_XM *lx = f;
 	int left;

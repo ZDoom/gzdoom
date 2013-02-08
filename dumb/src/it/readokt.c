@@ -497,7 +497,7 @@ static DUMB_IT_SIGDATA *it_okt_load_sigdata(DUMBFILE *f, int restrict)
 			j++;
 		}
 	}
-	for (; i < sigdata->n_samples; i++) {
+	for (; i < (unsigned)sigdata->n_samples; i++) {
 		sigdata->sample[i].flags = 0;
 	}
 

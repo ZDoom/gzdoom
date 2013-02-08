@@ -1262,58 +1262,50 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 				}
 			}
 
-			for (j = -1; j < DUMB_IT_N_NNA_CHANNELS; j++) {
-				if (j >= 0) {
-					playing = sigrenderer->playing[j];
-					if (!playing || playing->channel != channel) continue;
+			if (sigrenderer->sigdata->flags & IT_LINEAR_SLIDES) {
+				if (channel->toneporta && channel->destnote < 120) {
+					int currpitch = ((playing->note - 60) << 8) + playing->slide;
+					int destpitch = (channel->destnote - 60) << 8;
+					if (currpitch > destpitch) {
+						currpitch -= channel->toneporta;
+						if (currpitch < destpitch) {
+							currpitch = destpitch;
+							channel->destnote = IT_NOTE_OFF;
+						}
+					} else if (currpitch < destpitch) {
+						currpitch += channel->toneporta;
+						if (currpitch > destpitch) {
+							currpitch = destpitch;
+							channel->destnote = IT_NOTE_OFF;
+						}
+					}
+					playing->slide = currpitch - ((playing->note - 60) << 8);
 				}
-				if (playing) {
-					if (sigrenderer->sigdata->flags & IT_LINEAR_SLIDES) {
-						if (channel->toneporta && channel->destnote < 120) {
-							int currpitch = ((playing->note - 60) << 8) + playing->slide;
-							int destpitch = (channel->destnote - 60) << 8;
-							if (currpitch > destpitch) {
-								currpitch -= channel->toneporta;
-								if (currpitch < destpitch) {
-									currpitch = destpitch;
-									channel->destnote = IT_NOTE_OFF;
-								}
-							} else if (currpitch < destpitch) {
-								currpitch += channel->toneporta;
-								if (currpitch > destpitch) {
-									currpitch = destpitch;
-									channel->destnote = IT_NOTE_OFF;
-								}
-							}
-							playing->slide = currpitch - ((playing->note - 60) << 8);
+			} else {
+				if (channel->toneporta && channel->destnote < 120) {
+					float amiga_multiplier = playing->sample->C5_speed * (1.0f / AMIGA_DIVISOR);
+
+					float deltanote = (float)pow(DUMB_SEMITONE_BASE, 60 - playing->note);
+					/* deltanote is 1.0 for C-5, 0.5 for C-6, etc. */
+
+					float deltaslid = deltanote - playing->slide * amiga_multiplier;
+
+					float destdelta = (float)pow(DUMB_SEMITONE_BASE, 60 - channel->destnote);
+					if (deltaslid < destdelta) {
+						playing->slide -= channel->toneporta;
+						deltaslid = deltanote - playing->slide * amiga_multiplier;
+						if (deltaslid > destdelta) {
+							playing->note = channel->destnote;
+							playing->slide = 0;
+							channel->destnote = IT_NOTE_OFF;
 						}
 					} else {
-						if (channel->toneporta && channel->destnote < 120) {
-							float amiga_multiplier = playing->sample->C5_speed * (1.0f / AMIGA_DIVISOR);
-
-							float deltanote = (float)pow(DUMB_SEMITONE_BASE, 60 - playing->note);
-							/* deltanote is 1.0 for C-5, 0.5 for C-6, etc. */
-
-							float deltaslid = deltanote - playing->slide * amiga_multiplier;
-
-							float destdelta = (float)pow(DUMB_SEMITONE_BASE, 60 - channel->destnote);
-							if (deltaslid < destdelta) {
-								playing->slide -= channel->toneporta;
-								deltaslid = deltanote - playing->slide * amiga_multiplier;
-								if (deltaslid > destdelta) {
-									playing->note = channel->destnote;
-									playing->slide = 0;
-									channel->destnote = IT_NOTE_OFF;
-								}
-							} else {
-								playing->slide += channel->toneporta;
-								deltaslid = deltanote - playing->slide * amiga_multiplier;
-								if (deltaslid < destdelta) {
-									playing->note = channel->destnote;
-									playing->slide = 0;
-									channel->destnote = IT_NOTE_OFF;
-								}
-							}
+						playing->slide += channel->toneporta;
+						deltaslid = deltanote - playing->slide * amiga_multiplier;
+						if (deltaslid < destdelta) {
+							playing->note = channel->destnote;
+							playing->slide = 0;
+							channel->destnote = IT_NOTE_OFF;
 						}
 					}
 				}

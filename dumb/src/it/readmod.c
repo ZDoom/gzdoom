@@ -647,7 +647,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 			}
 		}
 		if (remain > total_sample_size) {
-			sigdata->n_patterns = ( remain - total_sample_size ) / ( 256 * sigdata->n_pchannels );
+			sigdata->n_patterns = ( remain - total_sample_size + 4 ) / ( 256 * sigdata->n_pchannels );
 			if (fft == DUMB_ID('M',0,0,0) || fft == DUMB_ID('8',0,0,0)) {
 				remain -= sigdata->n_patterns * 256 * sigdata->n_pchannels;
 				if (dumbfile_skip(f, remain - total_sample_size)) {

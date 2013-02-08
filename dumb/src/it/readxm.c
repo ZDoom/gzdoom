@@ -517,8 +517,10 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 
 	if (extra->n_samples) {
 		/* sample header size */
-		i = dumbfile_igetl(f);
-		if (!i || i > 0x28) i = 0x28;
+		/*i = dumbfile_igetl(f);
+		if (!i || i > 0x28) i = 0x28;*/
+		dumbfile_skip(f, 4);
+		i = 0x28;
 		extra->sample_header_size = i;
 
 		/* sample map */

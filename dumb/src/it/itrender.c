@@ -2266,11 +2266,11 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							playing = sigrenderer->playing[i];
 							if (!playing || playing->channel != channel) continue;
 						}
-						if (channel->playing) {
+                        if (playing) {
 							if ((v & 0xF0) == 0xF0)
-								channel->playing->slide += (v & 15) << 4;
+                                playing->slide += (v & 15) << 4;
 							else if ((v & 0xF0) == 0xE0)
-								channel->playing->slide += (v & 15) << 2;
+                                playing->slide += (v & 15) << 2;
 							else if (i < 0 && sigdata->flags & IT_WAS_A_669)
 								channel->portamento += v << 3;
 							else if (i < 0)
@@ -2593,7 +2593,7 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 					}
 				}
 				break;
-			case IT_S:
+            case IT_S:
 				{
 					/* channel->lastS was set in update_pattern_variables(). */
 					unsigned char effectvalue = channel->lastS;

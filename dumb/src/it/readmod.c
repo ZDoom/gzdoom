@@ -631,7 +631,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 	/* Work out how many patterns there are. */
 	sigdata->n_patterns = -1;
-	for (i = 0; i < 128; i++)
+	for (i = 0; i < sigdata->n_orders; i++)
 		if (sigdata->n_patterns < sigdata->order[i])
 			sigdata->n_patterns = sigdata->order[i];
 	sigdata->n_patterns++;

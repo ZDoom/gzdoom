@@ -1619,7 +1619,7 @@ static void it_retrigger_note(DUMB_IT_SIGRENDERER *sigrenderer, IT_CHANNEL *chan
 			for (i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++) {
 				IT_PLAYING * playing = sigrenderer->playing[i];
 				if (playing && playing->channel == channel && playing->instrument->dup_check_type) {
-					int match = 0;
+					int match = 1;
 					switch (playing->instrument->dup_check_type)
 					{
 					case DCT_NOTE:

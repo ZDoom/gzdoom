@@ -54,7 +54,7 @@ sigdata->flags & IT_COMPATIBLE_GXX
  * handle ambiguities in the format specification. The correct code in each
  * case will be determined most likely by experimentation.
  */
-#define STEREO_SAMPLES_COUNT_AS_TWO
+//#define STEREO_SAMPLES_COUNT_AS_TWO
 #define INVALID_ORDERS_END_SONG
 #define INVALID_NOTES_CAUSE_NOTE_CUT
 #define SUSTAIN_LOOP_OVERRIDES_NORMAL_LOOP
@@ -898,5 +898,7 @@ int _dumb_it_fix_invalid_orders(DUMB_IT_SIGDATA *sigdata);
 void _dumb_it_ptm_convert_effect(int effect, int value, IT_ENTRY *entry);
 
 int32 _dumb_it_read_sample_data_adpcm4(IT_SAMPLE *sample, DUMBFILE *f);
+
+void _dumb_it_interleave_stereo_sample(IT_SAMPLE *sample);
 
 #endif /* INTERNAL_IT_H */

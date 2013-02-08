@@ -684,15 +684,36 @@ static int32 it_read_sample_data(int cmwt, IT_SAMPLE *sample, unsigned char conv
 		else
 			decompress8(f, sample->data, datasize, ((cmwt >= 0x215) && (convert & 4)));
  	} else if (sample->flags & IT_SAMPLE_16BIT) {
- 		if (convert & 2)
+		if (sample->flags & IT_SAMPLE_STEREO) {
+			if (convert & 2) {
+				for (n = 0; n < datasize; n += 2)
+					((short *)sample->data)[n] = dumbfile_mgetw(f);
+				for (n = 1; n < datasize; n += 2)
+					((short *)sample->data)[n] = dumbfile_mgetw(f);
+			} else {
+				for (n = 0; n < datasize; n += 2)
+					((short *)sample->data)[n] = dumbfile_igetw(f);
+				for (n = 1; n < datasize; n += 2)
+					((short *)sample->data)[n] = dumbfile_igetw(f);
+			}
+		} else {
+ 			if (convert & 2)
+				for (n = 0; n < datasize; n++)
+					((short *)sample->data)[n] = dumbfile_mgetw(f);
+			else
+				for (n = 0; n < datasize; n++)
+					((short *)sample->data)[n] = dumbfile_igetw(f);
+		}
+ 	} else {
+		if (sample->flags & IT_SAMPLE_STEREO) {
+			for (n = 0; n < datasize; n += 2)
+				((signed char *)sample->data)[n] = dumbfile_getc(f);
+			for (n = 1; n < datasize; n += 2)
+				((signed char *)sample->data)[n] = dumbfile_getc(f);
+		} else
 			for (n = 0; n < datasize; n++)
-				((short *)sample->data)[n] = dumbfile_mgetw(f);
- 		else
-			for (n = 0; n < datasize; n++)
-				((short *)sample->data)[n] = dumbfile_igetw(f);
- 	} else
-		for (n = 0; n < datasize; n++)
-			((signed char *)sample->data)[n] = dumbfile_getc(f);
+				((signed char *)sample->data)[n] = dumbfile_getc(f);
+	}
 
 	if (dumbfile_error(f))
 		return -1;

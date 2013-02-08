@@ -1618,7 +1618,7 @@ static void it_retrigger_note(DUMB_IT_SIGRENDERER *sigrenderer, IT_CHANNEL *chan
 			nna = channel->playing->instrument->new_note_action;
 #endif
 
-		if ((sigdata->flags & IT_USE_INSTRUMENTS) && (channel->playing->enabled_envelopes) && channel->playing->instnum == channel->instrument) {
+		if (!(channel->playing->flags & IT_PLAYING_DEAD) && (sigdata->flags & IT_USE_INSTRUMENTS) && (channel->playing->enabled_envelopes) && channel->playing->instnum == channel->instrument) {
 			IT_PLAYING * playing = channel->playing;
 			IT_INSTRUMENT * inst = &sigdata->instrument[channel->instrument-1];
 			if ((playing->enabled_envelopes & IT_ENV_VOLUME) && (inst->volume_envelope.flags & IT_ENVELOPE_CARRY)) {
@@ -1739,7 +1739,8 @@ static void it_retrigger_note(DUMB_IT_SIGRENDERER *sigrenderer, IT_CHANNEL *chan
 	if (!flags && sigdata->flags & IT_USE_INSTRUMENTS) {
 		for (i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++) {
 			IT_PLAYING * playing = sigrenderer->playing[i];
-			if (playing && (playing->enabled_envelopes) && playing->instnum == channel->instrument) {
+			if (!playing || playing->channel != channel) continue;
+			if (playing->enabled_envelopes && playing->instnum == channel->instrument) {
 				IT_INSTRUMENT * inst = &sigdata->instrument[channel->instrument-1];
 				if ((playing->enabled_envelopes & IT_ENV_VOLUME) && (inst->volume_envelope.flags & IT_ENVELOPE_CARRY)) {
 					flags |= 1;

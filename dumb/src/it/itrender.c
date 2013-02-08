@@ -1974,6 +1974,13 @@ static void xm_envelope_calculate_value(IT_ENVELOPE *envelope, IT_PLAYING_ENVELO
 
 extern const char xm_convert_vibrato[];
 
+const char mod_convert_vibrato[] = {
+	IT_VIBRATO_SINE,
+	IT_VIBRATO_RAMP_UP, /* this will be inverted by IT_OLD_EFFECTS */
+	IT_VIBRATO_XM_SQUARE,
+	IT_VIBRATO_XM_SQUARE
+};
+
 /* Returns 1 if a callback caused termination of playback. */
 static int process_effects(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *entry, int ignore_cxx)
 {
@@ -2219,7 +2226,7 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 						if (depth == 0)
 							depth = channel->lastHdepth;
 						else {
-							if (sigdata->flags & IT_OLD_EFFECTS)
+							if (sigdata->flags & IT_OLD_EFFECTS && !(sigdata->flags & IT_WAS_A_MOD))
 								depth <<= 3;
 							else
 								depth <<= 2;
@@ -2491,7 +2498,8 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 						case IT_S_SET_VIBRATO_WAVEFORM:
 							{
 								int waveform = effectvalue & 3;
-								if (sigdata->flags & IT_WAS_AN_XM) waveform = xm_convert_vibrato[waveform];
+								if (sigdata->flags & IT_WAS_A_MOD) waveform = mod_convert_vibrato[waveform];
+								else if (sigdata->flags & IT_WAS_AN_XM) waveform = xm_convert_vibrato[waveform];
 								channel->vibrato_waveform = waveform;
 								if (channel->playing) {
 									channel->playing->vibrato_waveform = waveform;
@@ -2503,7 +2511,8 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 						case IT_S_SET_TREMOLO_WAVEFORM:
 							{
 								int waveform = effectvalue & 3;
-								if (sigdata->flags & IT_WAS_AN_XM) waveform = xm_convert_vibrato[waveform];
+								if (sigdata->flags & IT_WAS_A_MOD) waveform = mod_convert_vibrato[waveform];
+								else if (sigdata->flags & IT_WAS_AN_XM) waveform = xm_convert_vibrato[waveform];
 								channel->tremolo_waveform = waveform;
 								if (channel->playing) {
 									channel->playing->tremolo_waveform = waveform;
@@ -4287,13 +4296,13 @@ static float calculate_volume(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *play
 			vol = (rand() % 129) - 64;
 			break;
 		case 4:
-			vol = it_xm_squarewave[playing->vibrato_time];
+			vol = it_xm_squarewave[playing->tremolo_time];
 			break;
 		case 5:
-			vol = it_xm_ramp[playing->vibrato_time];
+			vol = it_xm_ramp[playing->tremolo_time];
 			break;
 		case 6:
-			vol = it_xm_ramp[255-playing->vibrato_time];
+			vol = it_xm_ramp[255-((sigrenderer->sigdata->flags & IT_WAS_A_MOD)?playing->vibrato_time:playing->tremolo_time)];
 			break;
 		}
 		vol *= playing->tremolo_depth;

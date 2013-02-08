@@ -1484,7 +1484,7 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
     if ( !dumbfile_error( f ) && n < 10 )
     {
         unsigned int mptx_id = dumbfile_igetl( f );
-        while ( mptx_id != DUMB_ID('M','P','T','S') )
+        while ( !dumbfile_error( f ) && mptx_id != DUMB_ID('M','P','T','S') )
         {
             unsigned int size = dumbfile_igetw( f );
             switch (mptx_id)

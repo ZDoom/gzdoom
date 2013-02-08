@@ -61,6 +61,8 @@ add_library( dumb
     src/it/loadmod2.c
     src/it/loadmtm.c
     src/it/loadmtm2.c
+    src/it/loadokt.c
+    src/it/loadokt2.c
     src/it/loadoldpsm.c
     src/it/loadoldpsm2.c
     src/it/loadpsm.c
@@ -84,6 +86,8 @@ add_library( dumb
     src/it/readmod.c
     src/it/readmod2.c
     src/it/readmtm.c
+    src/it/readokt.c
+    src/it/readokt2.c
     src/it/readoldpsm.c
     src/it/readpsm.c
     src/it/readptm.c

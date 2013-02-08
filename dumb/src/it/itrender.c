@@ -218,6 +218,7 @@ static void dup_channel(IT_CHANNEL *dst, IT_CHANNEL *src)
 	dst->new_note_action = src->new_note_action;
 
 	dst->arpeggio = src->arpeggio;
+	dst->arpeggio_shift = src->arpeggio_shift;
 	dst->retrig = src->retrig;
 	dst->xm_retrig = src->xm_retrig;
 	dst->retrig_tick = src->retrig_tick;
@@ -235,6 +236,7 @@ static void dup_channel(IT_CHANNEL *dst, IT_CHANNEL *src)
 	dst->last_toneslide_tick = src->last_toneslide_tick;
 	dst->ptm_toneslide = src->ptm_toneslide;
 	dst->ptm_last_toneslide = src->ptm_last_toneslide;
+	dst->okt_toneslide = src->okt_toneslide;
 	dst->destnote = src->destnote;
 
 	dst->glissando = src->glissando;
@@ -807,6 +809,7 @@ static void reset_channel_effects(IT_CHANNEL *channel)
 	channel->panslide = 0;
 	channel->channelvolslide = 0;
 	channel->arpeggio = 0;
+	channel->arpeggio_shift = 0;
 	channel->retrig = 0;
 	if (channel->xm_retrig) {
 		channel->xm_retrig = 0;
@@ -822,6 +825,7 @@ static void reset_channel_effects(IT_CHANNEL *channel)
 		channel->ptm_last_toneslide = 0;
 	channel->ptm_toneslide = 0;
 	channel->toneslide_tick = 0;
+	channel->okt_toneslide = 0;
 	if (channel->playing) {
 		channel->playing->vibrato_n = 0;
 		channel->playing->tremolo_speed = 0;
@@ -1166,8 +1170,7 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 
 		update_tremor(channel);
 
-		channel->arpeggio = (channel->arpeggio << 4) | (channel->arpeggio >> 8);
-		channel->arpeggio &= 0xFFF;
+		if (channel->arpeggio_shift) channel->arpeggio = (channel->arpeggio << 8) | (channel->arpeggio >> channel->arpeggio_shift);
 
 		update_retrig(sigrenderer, channel);
 
@@ -1176,7 +1179,15 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 		if (playing) {
 			playing->slide += channel->portamento;
 
-			if (channel->ptm_toneslide) {
+			if (channel->okt_toneslide) {
+				if (channel->okt_toneslide--) {
+					playing->note += channel->toneslide;
+					if (playing->note >= 120) {
+						if (channel->toneslide < 0) playing->note = 0;
+						else playing->note = 119;
+					}
+				}
+			} else if (channel->ptm_toneslide) {
 				if (--channel->toneslide_tick == 0) {
 					channel->toneslide_tick = channel->ptm_toneslide;
 					playing->note += channel->toneslide;
@@ -2213,7 +2224,8 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							v = channel->lastJ;
 						channel->lastJ = v;
 					}
-					channel->arpeggio = v;
+					channel->arpeggio = ((v & 0xF0) << 4) | (v & 0x0F);
+					channel->arpeggio_shift = 16;
 				}
 				break;
 			case IT_SET_CHANNEL_VOLUME:
@@ -2785,6 +2797,63 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 					channel->toneslide = -(entry->effectvalue & 15);
 					channel->ptm_toneslide = (entry->effectvalue & 0xF0) >> 4;
 					channel->toneslide_tick += channel->ptm_toneslide;
+				}
+				break;
+
+			case IT_OKT_NOTE_SLIDE_DOWN:
+			case IT_OKT_NOTE_SLIDE_DOWN_ROW:
+				channel->toneslide = -entry->effectvalue;
+				channel->okt_toneslide = (entry->effect == IT_OKT_NOTE_SLIDE_DOWN) ? 255 : 1;
+				break;
+
+			case IT_OKT_NOTE_SLIDE_UP:
+			case IT_OKT_NOTE_SLIDE_UP_ROW:
+				channel->toneslide = entry->effectvalue;
+				channel->okt_toneslide = (entry->effect == IT_OKT_NOTE_SLIDE_UP) ? 255 : 1;
+				break;
+
+			case IT_OKT_ARPEGGIO_3:
+			case IT_OKT_ARPEGGIO_4:
+			case IT_OKT_ARPEGGIO_5:
+				{
+					unsigned char low  = -(entry->effectvalue >> 4);
+					unsigned char high = entry->effectvalue & 0x0F;
+
+					switch (entry->effect)
+					{
+					case IT_OKT_ARPEGGIO_3:
+						channel->arpeggio = (low << 16) | high;
+						channel->arpeggio_shift = 16;
+						break;
+
+					case IT_OKT_ARPEGGIO_4:
+						channel->arpeggio = (high << 16) | low;
+						channel->arpeggio_shift = 24;
+						break;
+
+					case IT_OKT_ARPEGGIO_5:
+						channel->arpeggio = (high << 16) | (high << 8);
+						channel->arpeggio_shift = 16;
+						break;
+					}
+				}
+				break;
+
+			case IT_OKT_VOLUME_SLIDE_DOWN:
+				if ( entry->effectvalue <= 16 ) channel->volslide = -entry->effectvalue;
+				else
+				{
+					channel->volume -= entry->effectvalue - 16;
+					if (channel->volume > 64) channel->volume = 0;
+				}
+				break;
+
+			case IT_OKT_VOLUME_SLIDE_UP:
+				if ( entry->effectvalue <= 16 ) channel->volslide = entry->effectvalue;
+				else
+				{
+					channel->volume += entry->effectvalue - 16;
+					if (channel->volume > 64) channel->volume = 64;
 				}
 				break;
 		}
@@ -3806,7 +3875,7 @@ static void process_all_playing(DUMB_IT_SIGRENDERER *sigrenderer)
 					if ( channel->arpeggio > 0xFF )
 						playing->delta = playing->sample->C5_speed * (1.f / 65536.f);
 				}
-				else*/ playing->delta *= (float)pow(DUMB_SEMITONE_BASE, channel->arpeggio >> 8);/*
+				else*/ playing->delta *= (float)pow(DUMB_SEMITONE_BASE, (signed char)(channel->arpeggio >> channel->arpeggio_shift));/*
 			}*/
 
 			playing->filter_cutoff = channel->filter_cutoff;
@@ -3941,6 +4010,14 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 							sigrenderer->processorder = -1;
 							continue;
 						}
+						if (sigdata->flags & IT_WAS_AN_OKT) {
+							/* Reset some things */
+							sigrenderer->speed = sigdata->speed;
+							sigrenderer->tempo = sigdata->tempo;
+							for (n = 0; n < DUMB_IT_N_CHANNELS; n++) {
+								xm_note_off(sigdata, &sigrenderer->channel[n]);
+							}
+						}
 					}
 
 					n = sigdata->order[sigrenderer->processorder];
@@ -4038,7 +4115,9 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 						return 1;
 			}
 
-			if (!(sigdata->flags & IT_OLD_EFFECTS))
+			if (sigdata->flags & IT_WAS_AN_OKT)
+				update_effects(sigrenderer);
+			else if (!(sigdata->flags & IT_OLD_EFFECTS))
 				update_smooth_effects(sigrenderer);
 		} else {
 			{
@@ -4915,6 +4994,7 @@ static DUMB_IT_SIGRENDERER *init_sigrenderer(DUMB_IT_SIGDATA *sigdata, int n_cha
 		channel->toneslide = 0;
 		channel->ptm_toneslide = 0;
 		channel->ptm_last_toneslide = 0;
+		channel->okt_toneslide = 0;
 		channel->midi_state = 0;
 		channel->lastvolslide = 0;
 		channel->lastDKL = 0;

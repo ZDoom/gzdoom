@@ -117,6 +117,14 @@ XM_INSTRUMENT_EXTRA;
 
 
 
+/* Trims off trailing white space, usually added by the tracker on file creation
+ */
+static void trim_whitespace(char *ptr, size_t size)
+{
+	char *p = ptr + size - 1;
+	while (p >= ptr && *p <= 0x20) *p-- = '\0';
+}
+
 /* Frees the original block if it can't resize it or if size is 0, and acts
  * as malloc if ptr is NULL.
  */
@@ -506,6 +514,7 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 
 	dumbfile_getnc(instrument->name, 22, f);
 	instrument->name[22] = 0;
+	trim_whitespace(instrument->name, 22);
 	instrument->filename[0] = 0;
 	dumbfile_skip(f, 1);  /* Instrument type. Should be 0, but seems random. */
 	extra->n_samples = dumbfile_igetw(f);
@@ -665,6 +674,7 @@ static int it_xm_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
 
 	dumbfile_getnc(sample->name, 22, f);
 	sample->name[22] = 0;
+	trim_whitespace(sample->name, 22);
 
 	sample->filename[0] = 0;
 
@@ -919,6 +929,7 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 		return NULL;
 	}
 	sigdata->name[20] = 0;
+	trim_whitespace(sigdata->name, 20);
 
 	if (dumbfile_getc(f) != 0x1A) {
 		TRACE("XM error: 0x1A not found\n");

@@ -567,7 +567,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	}
 
 	// moo
-	if ( rstrict && sigdata->n_samples == 15 )
+	if ( ( rstrict & 1 ) && sigdata->n_samples == 15 )
 	{
 		free(sigdata);
 		dumbfile_close(f);
@@ -648,6 +648,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 	sigdata->n_patterns = -1;
 
+	if ( !( rstrict & 2 ) )
 	{
 		long total_sample_size;
 		long remain;
@@ -671,11 +672,21 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 			}
 		}
 	}
+	else
+	{
+		sigdata->n_patterns = 0;
+		for (i = 0; i < sigdata->n_orders; i++)
+		{
+			if (sigdata->order[i] > sigdata->n_patterns)
+				sigdata->n_patterns = sigdata->order[i];
+		}
+		sigdata->n_patterns++;
+	}
 
 	if ( sigdata->n_patterns <= 0 ) {
 		_dumb_it_unload_sigdata(sigdata);
 		dumbfile_close(f);
-		dumbfile_close(rem);
+		if (rem) dumbfile_close(rem);
 		return NULL;
 	}
 
@@ -689,7 +700,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	if (!sigdata->pattern) {
 		_dumb_it_unload_sigdata(sigdata);
 		dumbfile_close(f);
-		dumbfile_close(rem);
+		if (rem) dumbfile_close(rem);
 		return NULL;
 	}
 	for (i = 0; i < sigdata->n_patterns; i++)
@@ -701,7 +712,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		if (!buffer) {
 			_dumb_it_unload_sigdata(sigdata);
 			dumbfile_close(f);
-			dumbfile_close(rem);
+			if (rem) dumbfile_close(rem);
 			return NULL;
 		}
 		for (i = 0; i < sigdata->n_patterns; i++) {
@@ -709,7 +720,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 				free(buffer);
 				_dumb_it_unload_sigdata(sigdata);
 				dumbfile_close(f);
-				dumbfile_close(rem);
+				if (rem) dumbfile_close(rem);
 				return NULL;
 			}
 		}
@@ -721,7 +732,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		if (it_mod_read_sample_data(&sigdata->sample[i], f, fft)) {
 			_dumb_it_unload_sigdata(sigdata);
 			dumbfile_close(f);
-			dumbfile_close(rem);
+			if (rem) dumbfile_close(rem);
 			return NULL;
 		}
 	}
@@ -745,7 +756,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	}*/
 
 	dumbfile_close(f); /* Destroy the BUFFERED_MOD DUMBFILE we were using. */
-	dumbfile_close(rem); /* And the BUFFERED_MOD DUMBFILE used to pre-read the signature. */
+	if (rem) dumbfile_close(rem); /* And the BUFFERED_MOD DUMBFILE used to pre-read the signature. */
 	/* The DUMBFILE originally passed to our function is intact. */
 
 	/* Now let's initialise the remaining variables, and we're done! */

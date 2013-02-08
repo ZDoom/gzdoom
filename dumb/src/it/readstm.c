@@ -192,7 +192,7 @@ static int it_stm_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 
 
 
-static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f /*, int * version*/)
+static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f, int * version)
 {
 	DUMB_IT_SIGDATA *sigdata;
 
@@ -227,8 +227,7 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f /*, int * version*/)
 		return NULL;
 	}
 
-	/* *version = dumbfile_mgetw(f); */
-	dumbfile_skip( f, 2 );
+	*version = dumbfile_mgetw(f);
 
 	sigdata->song_message = NULL;
 	sigdata->order = NULL;
@@ -247,7 +246,7 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f /*, int * version*/)
 	sigdata->pan_separation = 128;
 
 	/** WARNING: which ones? */
-	sigdata->flags = IT_OLD_EFFECTS | IT_COMPATIBLE_GXX | IT_WAS_AN_S3M;
+	sigdata->flags = IT_OLD_EFFECTS | IT_COMPATIBLE_GXX | IT_WAS_AN_S3M | IT_STEREO;
 
 	sigdata->speed = dumbfile_getc(f) >> 4;
 	if ( sigdata->speed < 1 ) sigdata->speed = 1;
@@ -300,7 +299,8 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f /*, int * version*/)
 	}
 
 	/* Orders, byte each, length = sigdata->n_orders (should be even) */
-	dumbfile_getnc( sigdata->order, 128, f );
+	dumbfile_getnc( sigdata->order, *version >= 0x200 ? 128 : 64, f );
+	if (*version < 0x200) memset( sigdata->order + 64, 0xFF, 64 );
 	sigdata->restart_position = 0;
 
 	for ( n = 127; n >= 0; --n ) {
@@ -344,42 +344,45 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f /*, int * version*/)
 	return sigdata;
 }
 
-/*static char hexdigit(int in)
-{
-	if (in < 10) return in + '0';
-	else return in + 'A' - 10;
-}*/
-
 DUH *DUMBEXPORT dumb_read_stm_quick(DUMBFILE *f)
 {
 	sigdata_t *sigdata;
-	/*int ver;*/
+	int ver;
 
 	DUH_SIGTYPE_DESC *descptr = &_dumb_sigtype_it;
 
-	sigdata = it_stm_load_sigdata(f /*, &ver*/);
+	sigdata = it_stm_load_sigdata(f , &ver);
 
 	if (!sigdata)
 		return NULL;
 
 	{
-		/*char version[16];*/
+		char version[16];
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
 		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
 		tag[1][0] = "FORMAT";
-		tag[1][1] = "STM";
-		/*version[0] = 'S';
+		version[0] = 'S';
 		version[1] = 'T';
 		version[2] = 'M';
 		version[3] = ' ';
 		version[4] = 'v';
-		version[5] = hexdigit((ver >> 8) & 15);
+		version[5] = '0' + ((ver >> 8) & 15);
 		version[6] = '.';
-		version[7] = hexdigit((ver >> 4) & 15);
-		version[8] = hexdigit(ver & 15);
-		version[9] = 0;
-		tag[1][1] = (const char *) &version;*/
+		if ((ver & 255) > 99)
+		{
+			version[7] = '0' + ((ver & 255) / 100 );
+			version[8] = '0' + (((ver & 255) / 10) % 10);
+			version[9] = '0' + ((ver & 255) % 10);
+			version[10] = 0;
+		}
+		else
+		{
+			version[7] = '0' + ((ver & 255) / 10);
+			version[8] = '0' + ((ver & 255) % 10);
+			version[9] = 0;
+		}
+		tag[1][1] = (const char *) &version;
 		return make_duh(-1, 2, (const char *const (*)[2])tag, 1, &descptr, &sigdata);
 	}
 }

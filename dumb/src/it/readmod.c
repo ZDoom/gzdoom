@@ -393,10 +393,12 @@ static DUMBFILE *dumbfile_buffer_mod(DUMBFILE *f, uint32 *fft)
 	return dumbfile_open_ex(bm, &buffer_mod_dfs);
 }
 
-static DUMBFILE *dumbfile_buffer_mod_2(DUMBFILE *f, int32 *remain)
+static DUMBFILE *dumbfile_buffer_mod_2(DUMBFILE *f, int n_samples, IT_SAMPLE *sample, int32 *total_sample_size, int32 *remain)
 {
 	int32 read;
+	int sample_number;
 	BUFFERED_MOD *bm = malloc(sizeof(*bm));
+	unsigned char *ptr;
 	if (!bm) return NULL;
 
 	bm->buffered = malloc(32768);
@@ -430,6 +432,21 @@ static DUMBFILE *dumbfile_buffer_mod_2(DUMBFILE *f, int32 *remain)
 
 	if (*remain) {
 		bm->ptr = 0;
+		ptr = bm->buffered + *remain;
+		sample_number = n_samples - 1;
+		*total_sample_size = 0;
+		while (ptr > bm->buffered && sample_number >= 0) {
+			if (sample[sample_number].flags & IT_SAMPLE_EXISTS) {
+				ptr -= (sample[sample_number].length + 1) / 2 + 5 + 16;
+				if (ptr >= bm->buffered && !memcmp(ptr, "ADPCM", 5)) { /* BAH */
+					*total_sample_size += (sample[sample_number].length + 1) / 2 + 5 + 16;
+				} else {
+					*total_sample_size += sample[sample_number].length;
+					ptr -= sample[sample_number].length - ((sample[sample_number].length + 1) / 2 + 5 + 16);
+				}
+			}
+			sample_number--;
+		}
 	} else {
 		free(bm->buffered);
 		bm->buffered = NULL;
@@ -635,16 +652,11 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		long total_sample_size;
 		long remain;
 		rem = f;
-		f = dumbfile_buffer_mod_2(rem, &remain);
+		f = dumbfile_buffer_mod_2(rem, sigdata->n_samples, sigdata->sample, &total_sample_size, &remain);
 		if (!f) {
 			_dumb_it_unload_sigdata(sigdata);
 			dumbfile_close(rem);
 			return NULL;
-		}
-		for (total_sample_size = 0, i = 0; i < sigdata->n_samples; i++) {
-			if (sigdata->sample[i].flags & IT_SAMPLE_EXISTS) {
-				total_sample_size += sigdata->sample[i].length;
-			}
 		}
 		if (remain > total_sample_size) {
 			sigdata->n_patterns = ( remain - total_sample_size + 4 ) / ( 256 * sigdata->n_pchannels );

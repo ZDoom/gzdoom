@@ -1350,9 +1350,11 @@ DUH *DUMBEXPORT dumb_read_it_quick(DUMBFILE *f)
 		return NULL;
 
 	{
-		const char *tag[1][2];
+		const char *tag[2][2];
 		tag[0][0] = "TITLE";
 		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
-		return make_duh(-1, 1, (const char *const (*)[2])tag, 1, &descptr, &sigdata);
+		tag[1][0] = "FORMAT";
+		tag[1][1] = "IT";
+		return make_duh(-1, 2, (const char *const (*)[2])tag, 1, &descptr, &sigdata);
 	}
 }

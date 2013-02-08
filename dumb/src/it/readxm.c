@@ -338,7 +338,7 @@ static int it_xm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels, 
 
 static int it_xm_make_envelope(IT_ENVELOPE *envelope, const unsigned short *data, int y_offset)
 {
-	int i, pos;
+    int i, pos, val;
 
 	if (envelope->n_nodes > 12) {
 		/* XXX
@@ -355,12 +355,13 @@ static int it_xm_make_envelope(IT_ENVELOPE *envelope, const unsigned short *data
 	pos = 0;
 	for (i = 0; i < envelope->n_nodes; i++) {
 		envelope->node_t[i] = data[pos++];
-		if (data[pos] > 64) {
-			TRACE("XM error: out-of-range envelope node (node_y[%d]=%d)\n", i, data[pos]);
-			envelope->n_nodes = 0;
-			return -1;
+        val = data[pos++];
+        if (val > 64) {
+            TRACE("XM error: out-of-range envelope node (node_y[%d]=%d)\n", i, val);
+            /* FT2 seems to simply clip the value */
+            val = 64;
 		}
-		envelope->node_y[i] = (signed char)(data[pos++] + y_offset);
+        envelope->node_y[i] = (signed char)(val + y_offset);
 	}
 
 	return 0;

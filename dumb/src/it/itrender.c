@@ -1032,6 +1032,15 @@ static void update_retrig(DUMB_IT_SIGRENDERER *sigrenderer, IT_CHANNEL *channel)
 }
 
 
+static void update_smooth_effects_playing(IT_PLAYING *playing)
+{
+	playing->vibrato_time += playing->vibrato_n *
+		(playing->vibrato_speed << 2);
+	playing->tremolo_time += playing->tremolo_speed << 2;
+	playing->panbrello_time += playing->panbrello_speed;
+	if (playing->panbrello_waveform == 3)
+		playing->panbrello_random = (rand() % 129) - 64;
+}
 
 static void update_smooth_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 {
@@ -1042,12 +1051,15 @@ static void update_smooth_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 		IT_PLAYING *playing = channel->playing;
 
 		if (playing) {
-			playing->vibrato_time += playing->vibrato_n *
-			                         (playing->vibrato_speed << 2);
-			playing->tremolo_time += playing->tremolo_speed << 2;
-			playing->panbrello_time += playing->panbrello_speed;
-			if (playing->panbrello_waveform == 3)
-				playing->panbrello_random = (rand() % 129) - 64;
+			update_smooth_effects_playing(playing);
+		}
+	}
+
+	for (i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+		IT_PLAYING *playing = sigrenderer->playing[i];
+
+		if (playing) {
+			update_smooth_effects_playing(playing);
 		}
 	}
 }
@@ -1083,7 +1095,7 @@ static void update_invert_loop(IT_CHANNEL *channel, IT_SAMPLE *sample)
 
 static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 {
-	int i;
+	int i, j;
 
 	if (sigrenderer->globalvolslide) {
 		sigrenderer->globalvolume += sigrenderer->globalvolslide;
@@ -1167,6 +1179,10 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 			}
 			if (channel->playing)
 				channel->playing->channel_volume = channel->channelvolume;
+			for (j = 0; j < DUMB_IT_N_NNA_CHANNELS; j++) {
+				if (sigrenderer->playing[j] && sigrenderer->playing[j]->channel == channel)
+					sigrenderer->playing[j]->channel_volume = channel->channelvolume;
+			}
 		}
 
 		update_tremor(channel);
@@ -1177,80 +1193,127 @@ static void update_effects(DUMB_IT_SIGRENDERER *sigrenderer)
 
 		if (channel->inv_loop_speed) update_invert_loop(channel, playing ? playing->sample : NULL);
 
-		if (playing) {
-			playing->slide += channel->portamento;
+		for (j = 0; j < DUMB_IT_N_NNA_CHANNELS; j++) {
+			if (sigrenderer->playing[j] && sigrenderer->playing[j]->channel == channel) break;
+		}
+
+		if (playing || j < DUMB_IT_N_NNA_CHANNELS) {
+			if (playing) playing->slide += channel->portamento;
+			for (j = 0; j < DUMB_IT_N_NNA_CHANNELS; j++) {
+				if (sigrenderer->playing[j] && sigrenderer->playing[j]->channel == channel)
+					sigrenderer->playing[j]->slide += channel->portamento;
+			}
 
 			if (channel->okt_toneslide) {
 				if (channel->okt_toneslide--) {
-					playing->note += channel->toneslide;
-					if (playing->note >= 120) {
-						if (channel->toneslide < 0) playing->note = 0;
-						else playing->note = 119;
+					if (playing) {
+						playing->note += channel->toneslide;
+						if (playing->note >= 120) {
+							if (channel->toneslide < 0) playing->note = 0;
+							else playing->note = 119;
+						}
+					}
+					for (j = 0; j < DUMB_IT_N_NNA_CHANNELS; j++) {
+						if (sigrenderer->playing[j] && sigrenderer->playing[j]->channel == channel) {
+							IT_PLAYING *playing = sigrenderer->playing[j];
+							playing->note += channel->toneslide;
+							if (playing->note >= 120) {
+								if (channel->toneslide < 0) playing->note = 0;
+								else playing->note = 119;
+							}
+						}
 					}
 				}
 			} else if (channel->ptm_toneslide) {
 				if (--channel->toneslide_tick == 0) {
 					channel->toneslide_tick = channel->ptm_toneslide;
-					playing->note += channel->toneslide;
-					if (playing->note >= 120) {
-						if (channel->toneslide < 0) playing->note = 0;
-						else playing->note = 119;
-					}
-					channel->note = channel->truenote = playing->note;
-					if (channel->toneslide_retrig) {
-						it_playing_reset_resamplers(playing, 0);
+					if (playing) {
+						playing->note += channel->toneslide;
+						if (playing->note >= 120) {
+							if (channel->toneslide < 0) playing->note = 0;
+							else playing->note = 119;
+						}
+						channel->note = channel->truenote = playing->note;
+						if (channel->toneslide_retrig) {
+							it_playing_reset_resamplers(playing, 0);
 #ifdef END_RAMPING
-						playing->declick_stage = 0;
-						playing->declick_volume = 1.f / 256.f;
+							playing->declick_stage = 0;
+							playing->declick_volume = 1.f / 256.f;
 #endif
+						}
+					}
+					for (j = 0; j < DUMB_IT_N_NNA_CHANNELS; j++) {
+						if (sigrenderer->playing[j] && sigrenderer->playing[j]->channel == channel) {
+							IT_PLAYING *playing = sigrenderer->playing[j];
+							playing->note += channel->toneslide;
+							if (playing->note >= 120) {
+								if (channel->toneslide < 0) playing->note = 0;
+								else playing->note = 119;
+							}
+							if (channel->toneslide_retrig) {
+								it_playing_reset_resamplers(playing, 0);
+#ifdef END_RAMPING
+								playing->declick_stage = 0;
+								playing->declick_volume = 1.f / 256.f;
+#endif
+							}
+						}
 					}
 				}
 			}
 
-			if (sigrenderer->sigdata->flags & IT_LINEAR_SLIDES) {
-				if (channel->toneporta && channel->destnote < 120) {
-					int currpitch = ((playing->note - 60) << 8) + playing->slide;
-					int destpitch = (channel->destnote - 60) << 8;
-					if (currpitch > destpitch) {
-						currpitch -= channel->toneporta;
-						if (currpitch < destpitch) {
-							currpitch = destpitch;
-							channel->destnote = IT_NOTE_OFF;
-						}
-					} else if (currpitch < destpitch) {
-						currpitch += channel->toneporta;
-						if (currpitch > destpitch) {
-							currpitch = destpitch;
-							channel->destnote = IT_NOTE_OFF;
-						}
-					}
-					playing->slide = currpitch - ((playing->note - 60) << 8);
+			for (j = -1; j < DUMB_IT_N_NNA_CHANNELS; j++) {
+				if (j >= 0) {
+					playing = sigrenderer->playing[j];
+					if (!playing || playing->channel != channel) continue;
 				}
-			} else {
-				if (channel->toneporta && channel->destnote < 120) {
-					float amiga_multiplier = playing->sample->C5_speed * (1.0f / AMIGA_DIVISOR);
-
-					float deltanote = (float)pow(DUMB_SEMITONE_BASE, 60 - playing->note);
-					/* deltanote is 1.0 for C-5, 0.5 for C-6, etc. */
-
-					float deltaslid = deltanote - playing->slide * amiga_multiplier;
-
-					float destdelta = (float)pow(DUMB_SEMITONE_BASE, 60 - channel->destnote);
-					if (deltaslid < destdelta) {
-						playing->slide -= channel->toneporta;
-						deltaslid = deltanote - playing->slide * amiga_multiplier;
-						if (deltaslid > destdelta) {
-							playing->note = channel->destnote;
-							playing->slide = 0;
-							channel->destnote = IT_NOTE_OFF;
+				if (playing) {
+					if (sigrenderer->sigdata->flags & IT_LINEAR_SLIDES) {
+						if (channel->toneporta && channel->destnote < 120) {
+							int currpitch = ((playing->note - 60) << 8) + playing->slide;
+							int destpitch = (channel->destnote - 60) << 8;
+							if (currpitch > destpitch) {
+								currpitch -= channel->toneporta;
+								if (currpitch < destpitch) {
+									currpitch = destpitch;
+									channel->destnote = IT_NOTE_OFF;
+								}
+							} else if (currpitch < destpitch) {
+								currpitch += channel->toneporta;
+								if (currpitch > destpitch) {
+									currpitch = destpitch;
+									channel->destnote = IT_NOTE_OFF;
+								}
+							}
+							playing->slide = currpitch - ((playing->note - 60) << 8);
 						}
 					} else {
-						playing->slide += channel->toneporta;
-						deltaslid = deltanote - playing->slide * amiga_multiplier;
-						if (deltaslid < destdelta) {
-							playing->note = channel->destnote;
-							playing->slide = 0;
-							channel->destnote = IT_NOTE_OFF;
+						if (channel->toneporta && channel->destnote < 120) {
+							float amiga_multiplier = playing->sample->C5_speed * (1.0f / AMIGA_DIVISOR);
+
+							float deltanote = (float)pow(DUMB_SEMITONE_BASE, 60 - playing->note);
+							/* deltanote is 1.0 for C-5, 0.5 for C-6, etc. */
+
+							float deltaslid = deltanote - playing->slide * amiga_multiplier;
+
+							float destdelta = (float)pow(DUMB_SEMITONE_BASE, 60 - channel->destnote);
+							if (deltaslid < destdelta) {
+								playing->slide -= channel->toneporta;
+								deltaslid = deltanote - playing->slide * amiga_multiplier;
+								if (deltaslid > destdelta) {
+									playing->note = channel->destnote;
+									playing->slide = 0;
+									channel->destnote = IT_NOTE_OFF;
+								}
+							} else {
+								playing->slide += channel->toneporta;
+								deltaslid = deltanote - playing->slide * amiga_multiplier;
+								if (deltaslid < destdelta) {
+									playing->note = channel->destnote;
+									playing->slide = 0;
+									channel->destnote = IT_NOTE_OFF;
+								}
+							}
 						}
 					}
 				}
@@ -1985,6 +2048,8 @@ const char mod_convert_vibrato[] = {
 static int process_effects(DUMB_IT_SIGRENDERER *sigrenderer, IT_ENTRY *entry, int ignore_cxx)
 {
 	DUMB_IT_SIGDATA *sigdata = sigrenderer->sigdata;
+	IT_PLAYING *playing;
+	int i;
 
 	IT_CHANNEL *channel = &sigrenderer->channel[(int)entry->channel];
 
@@ -2041,10 +2106,17 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 				break;
 
 			case IT_VOLSLIDE_VIBRATO:
-				if (channel->playing) {
-					channel->playing->vibrato_speed = channel->lastHspeed;
-					channel->playing->vibrato_depth = channel->lastHdepth;
-					channel->playing->vibrato_n++;
+				for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+					if (i < 0) playing = channel->playing;
+					else {
+						playing = sigrenderer->playing[i];
+						if (!playing || playing->channel != channel) continue;
+					}
+					if (playing) {
+						playing->vibrato_speed = channel->lastHspeed;
+						playing->vibrato_depth = channel->lastHdepth;
+						playing->vibrato_n++;
+					}
 				}
 				/* Fall through and process volume slide. */
 			case IT_VOLUME_SLIDE:
@@ -2140,15 +2212,22 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							v = channel->lastEF;
 						channel->lastEF = v;
 					}
-					if (channel->playing) {
-						if ((v & 0xF0) == 0xF0)
-							channel->playing->slide -= (v & 15) << 4;
-						else if ((v & 0xF0) == 0xE0)
-							channel->playing->slide -= (v & 15) << 2;
-						else if (sigdata->flags & IT_WAS_A_669)
-							channel->portamento -= v << 3;
-						else
-							channel->portamento -= v << 4;
+					for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+						if (i < 0) playing = channel->playing;
+						else {
+							playing = sigrenderer->playing[i];
+							if (!playing || playing->channel != channel) continue;
+						}
+						if (playing) {
+							if ((v & 0xF0) == 0xF0)
+								playing->slide -= (v & 15) << 4;
+							else if ((v & 0xF0) == 0xE0)
+								playing->slide -= (v & 15) << 2;
+							else if (i < 0 && sigdata->flags & IT_WAS_A_669)
+								channel->portamento -= v << 3;
+							else if (i < 0)
+								channel->portamento -= v << 4;
+						}
 					}
 				}
 				break;
@@ -2175,15 +2254,22 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							v = channel->lastEF;
 						channel->lastEF = v;
 					}
-					if (channel->playing) {
-						if ((v & 0xF0) == 0xF0)
-							channel->playing->slide += (v & 15) << 4;
-						else if ((v & 0xF0) == 0xE0)
-							channel->playing->slide += (v & 15) << 2;
-						else if (sigdata->flags & IT_WAS_A_669)
-							channel->portamento += v << 3;
-						else
-							channel->portamento += v << 4;
+					for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+						if (i < 0) playing = channel->playing;
+						else {
+							playing = sigrenderer->playing[i];
+							if (!playing || playing->channel != channel) continue;
+						}
+						if (channel->playing) {
+							if ((v & 0xF0) == 0xF0)
+								channel->playing->slide += (v & 15) << 4;
+							else if ((v & 0xF0) == 0xE0)
+								channel->playing->slide += (v & 15) << 2;
+							else if (i < 0 && sigdata->flags & IT_WAS_A_669)
+								channel->portamento += v << 3;
+							else if (i < 0)
+								channel->portamento += v << 4;
+						}
 					}
 				}
 				break;
@@ -2232,10 +2318,17 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 								depth <<= 2;
 							channel->lastHdepth = depth;
 						}
-						if (channel->playing) {
-							channel->playing->vibrato_speed = speed;
-							channel->playing->vibrato_depth = depth;
-							channel->playing->vibrato_n++;
+						for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+							if (i < 0) playing = channel->playing;
+							else {
+								playing = sigrenderer->playing[i];
+								if (!playing || playing->channel != channel) continue;
+							}
+							if (playing) {
+								playing->vibrato_speed = speed;
+								playing->vibrato_depth = depth;
+								playing->vibrato_n++;
+							}
 						}
 					}
 				}
@@ -2291,8 +2384,15 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 				else
 					channel->channelvolume = 64;
 #endif
-				if (channel->playing)
-					channel->playing->channel_volume = channel->channelvolume;
+				for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+					if (i < 0) playing = channel->playing;
+					else {
+						playing = sigrenderer->playing[i];
+						if (!playing || playing->channel != channel) continue;
+					}
+					if (playing)
+						playing->channel_volume = channel->channelvolume;
+				}
 				break;
 			case IT_CHANNEL_VOLUME_SLIDE:
 				{
@@ -2313,8 +2413,15 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							if (channel->channelvolume > 64) channel->channelvolume = 0;
 						} else
 							break;
-						if (channel->playing)
-							channel->playing->channel_volume = channel->channelvolume;
+						for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+							if (i < 0) playing = channel->playing;
+							else {
+								playing = sigrenderer->playing[i];
+								if (!playing || playing->channel != channel) continue;
+							}
+							if (playing)
+								playing->channel_volume = channel->channelvolume;
+						}
 					}
 				}
 				break;
@@ -2467,9 +2574,16 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							depth = channel->lastRdepth;
 						channel->lastRdepth = depth;
 					}
-					if (channel->playing) {
-						channel->playing->tremolo_speed = speed;
-						channel->playing->tremolo_depth = depth;
+					for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+						if (i < 0) playing = channel->playing;
+						else {
+							playing = sigrenderer->playing[i];
+							if (!playing || playing->channel != channel) continue;
+						}
+						if (playing) {
+							playing->tremolo_speed = speed;
+							playing->tremolo_depth = depth;
+						}
 					}
 				}
 				break;
@@ -2690,10 +2804,17 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 							depth <<= 1;
 						channel->lastHdepth = depth;
 					}
-					if (channel->playing) {
-						channel->playing->vibrato_speed = speed;
-						channel->playing->vibrato_depth = depth;
-						channel->playing->vibrato_n++;
+					for (i = -1; i < DUMB_IT_N_NNA_CHANNELS; i++) {
+						if (i < 0) playing = channel->playing;
+						else {
+							playing = sigrenderer->playing[i];
+							if (!playing || playing->channel != channel) continue;
+						}
+						if (playing) {
+							playing->vibrato_speed = speed;
+							playing->vibrato_depth = depth;
+							playing->vibrato_n++;
+						}
 					}
 				}
 				break;
@@ -3580,7 +3701,7 @@ static int it_envelope_end(IT_PLAYING *playing, IT_ENVELOPE *envelope, IT_PLAYIN
 /* Returns 1 when fading should be initiated for a volume envelope. */
 static int update_it_envelope(IT_PLAYING *playing, IT_ENVELOPE *envelope, IT_PLAYING_ENVELOPE *pe, int flags)
 {
-	if (!(playing->enabled_envelopes & flags))
+	if (!(playing->enabled_envelopes & flags) || !envelope->n_nodes)
 		return 0;
 
 	ASSERT(envelope->n_nodes > 0);
@@ -4323,7 +4444,7 @@ static float calculate_volume(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *play
 		volume *= 1.0f / ((64 << 5) * 64.0f * 64.0f * 128.0f * 128.0f);
 
 		if (volume && playing->instrument) {
-			if (playing->enabled_envelopes & IT_ENV_VOLUME) {
+			if (playing->enabled_envelopes & IT_ENV_VOLUME && playing->env_instrument->volume_envelope.n_nodes) {
 				volume *= envelope_get_y(&playing->env_instrument->volume_envelope, &playing->volume_envelope);
 				volume *= 1.0f / (64 << IT_ENVELOPE_SHIFT);
 			}

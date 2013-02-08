@@ -91,7 +91,7 @@ static DUMBFILE_SYSTEM mem_dfs = {
 
 static int it_seek(dumbfile_mem_status * s, int32 offset)
 {
-	if ( offset > s->size )
+	if ( (unsigned)offset > s->size )
 		return -1;
 
 	s->offset = offset;

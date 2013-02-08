@@ -31,18 +31,71 @@
 //#define INVESTIGATE_OLD_INSTRUMENTS
 
 
-
-static int it_seek(DUMBFILE *f, int32 offset)
+typedef struct tdumbfile_mem_status
 {
-	int32 pos = dumbfile_pos(f);
+	const unsigned char * ptr;
+	unsigned offset, size;
+} dumbfile_mem_status;
 
-	if (pos > offset)
+static int dumbfile_mem_skip(void * f, int32 n)
+{
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
+	s->offset += n;
+	if (s->offset > s->size)
+	{
+		s->offset = s->size;
+		return 1;
+	}
+
+	return 0;
+}
+
+
+
+static int dumbfile_mem_getc(void * f)
+{
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
+	if (s->offset < s->size)
+	{
+		return *(s->ptr + s->offset++);
+	}
+	return -1;
+}
+
+
+
+static int32 dumbfile_mem_getnc(char * ptr, int32 n, void * f)
+{
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
+	int32 max = s->size - s->offset;
+	if (max > n) max = n;
+	if (max)
+	{
+		memcpy(ptr, s->ptr + s->offset, max);
+		s->offset += max;
+	}
+	return max;
+}
+
+
+
+static DUMBFILE_SYSTEM mem_dfs = {
+	NULL, // open
+	&dumbfile_mem_skip,
+	&dumbfile_mem_getc,
+	&dumbfile_mem_getnc,
+	NULL // close
+};
+
+
+
+static int it_seek(dumbfile_mem_status * s, int32 offset)
+{
+	if ( offset > s->size )
 		return -1;
 
-	if (pos < offset)
-		if (dumbfile_skip(f, offset - pos))
-			return -1;
-
+	s->offset = offset;
+ 
 	return 0;
 }
 
@@ -631,7 +684,7 @@ int32 _dumb_it_read_sample_data_adpcm4(IT_SAMPLE *sample, DUMBFILE *f)
 	signed char * ptr, * end;
 	signed char compression_table[16];
 	if (dumbfile_getnc(compression_table, 16, f) != 16)
-		return -1;
+        return -1;
 	ptr = (signed char *) sample->data;
 	delta = 0;
 
@@ -957,13 +1010,58 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 
 	unsigned char *buffer;
 
+    unsigned char *file_buffer = NULL;
+    unsigned int file_size = 0;
+    int block_size;
+
+    dumbfile_mem_status memdata;
+
+    do
+    {
+        void * temp = realloc( file_buffer, file_size + 32768 );
+        if ( !temp )
+        {
+            if ( file_buffer ) free( file_buffer );
+            return NULL;
+        }
+        file_buffer = temp;
+        block_size = dumbfile_getnc( file_buffer + file_size, 32768, f );
+        if ( block_size < 0 )
+        {
+            free( file_buffer );
+            return NULL;
+        }
+        file_size += block_size;
+    }
+    while ( block_size == 32768 );
+
+    memdata.ptr = file_buffer;
+    memdata.offset = 0;
+    memdata.size = file_size;
+
+    f = dumbfile_open_ex(&memdata, &mem_dfs);
+
+    if ( !f )
+    {
+        free( file_buffer );
+        return NULL;
+    }
+
 	if (dumbfile_mgetl(f) != IT_SIGNATURE)
+    {
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
+    }
 
 	sigdata = malloc(sizeof(*sigdata));
 
 	if (!sigdata)
+    {
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
+    }
 
 	sigdata->song_message = NULL;
 	sigdata->order = NULL;
@@ -1012,12 +1110,16 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 	// XXX sample count
 	if (dumbfile_error(f) || sigdata->n_orders <= 0 || sigdata->n_instruments > 256 || sigdata->n_samples > 4000 || sigdata->n_patterns > 256) {
 		_dumb_it_unload_sigdata(sigdata);
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
 	}
 
 	sigdata->order = malloc(sigdata->n_orders);
 	if (!sigdata->order) {
 		_dumb_it_unload_sigdata(sigdata);
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
 	}
 
@@ -1025,6 +1127,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		sigdata->instrument = malloc(sigdata->n_instruments * sizeof(*sigdata->instrument));
 		if (!sigdata->instrument) {
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 		}
 	}
@@ -1033,6 +1137,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		sigdata->sample = malloc(sigdata->n_samples * sizeof(*sigdata->sample));
 		if (!sigdata->sample) {
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 		}
 		for (n = 0; n < sigdata->n_samples; n++)
@@ -1043,6 +1149,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		sigdata->pattern = malloc(sigdata->n_patterns * sizeof(*sigdata->pattern));
 		if (!sigdata->pattern) {
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 		}
 		for (n = 0; n < sigdata->n_patterns; n++)
@@ -1055,6 +1163,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 	component = malloc(769 * sizeof(*component));
 	if (!component) {
 		_dumb_it_unload_sigdata(sigdata);
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
 	}
 
@@ -1099,6 +1209,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 	if (dumbfile_error(f)) {
 		free(component);
 		_dumb_it_unload_sigdata(sigdata);
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
 	}
 
@@ -1119,6 +1231,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		if (!sigdata->midi) {
 			free(component);
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 			// Should we be happy with this outcome in some situations?
 		}
@@ -1127,6 +1241,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		if (dumbfile_error(f) || dumbfile_skip(f, 8*i)) {
 			free(component);
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 		}
 		/* Read embedded MIDI configuration */
@@ -1134,6 +1250,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		if (dumbfile_skip(f, 32*9)) {
 			free(component);
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 		}
 		for (i = 0; i < 16; i++) {
@@ -1142,6 +1260,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 			if (dumbfile_getnc(mididata, 32, f) < 32) {
 				free(component);
 				_dumb_it_unload_sigdata(sigdata);
+                dumbfile_close(f);
+                free(file_buffer);
 				return NULL;
 			}
 			sigdata->midi->SFmacroz[i] = 0;
@@ -1197,12 +1317,14 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 
 	sigdata->flags &= IT_REAL_FLAGS;
 
-	qsort(component, n_components, sizeof(IT_COMPONENT), &it_component_compare);
+    qsort(component, n_components, sizeof(IT_COMPONENT), &it_component_compare);
 
 	buffer = malloc(65536);
 	if (!buffer) {
 		free(component);
 		_dumb_it_unload_sigdata(sigdata);
+        dumbfile_close(f);
+        free(file_buffer);
 		return NULL;
 	}
 
@@ -1231,10 +1353,12 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 			continue;
 		}
 
-		if (it_seek(f, component[n].offset)) {
+        if (it_seek(&memdata, component[n].offset)) {
 			free(buffer);
 			free(component);
 			_dumb_it_unload_sigdata(sigdata);
+            dumbfile_close(f);
+            free(file_buffer);
 			return NULL;
 		}
 
@@ -1250,6 +1374,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 						free(buffer);
 						free(component);
 						_dumb_it_unload_sigdata(sigdata);
+                        dumbfile_close(f);
+                        free(file_buffer);
 						return NULL;
 					}
 					sigdata->song_message[message_length] = 0;
@@ -1266,6 +1392,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 					free(buffer);
 					free(component);
 					_dumb_it_unload_sigdata(sigdata);
+                    dumbfile_close(f);
+                    free(file_buffer);
 					return NULL;
 				}
 				break;
@@ -1275,6 +1403,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 					free(buffer);
 					free(component);
 					_dumb_it_unload_sigdata(sigdata);
+                    dumbfile_close(f);
+                    free(file_buffer);
 					return NULL;
 				}
 				break;
@@ -1284,6 +1414,8 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 					free(buffer);
 					free(component);
 					_dumb_it_unload_sigdata(sigdata);
+                    dumbfile_close(f);
+                    free(file_buffer);
 					return NULL;
 				}
 
@@ -1310,10 +1442,12 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 		m = component[n].sampfirst;
 
 		while (m >= 0) {
-			if (it_seek(f, component[m].offset)) {
+            if (it_seek(&memdata, component[m].offset)) {
 				free(buffer);
 				free(component);
 				_dumb_it_unload_sigdata(sigdata);
+                dumbfile_close(f);
+                free(file_buffer);
 				return NULL;
 			}
 
@@ -1321,15 +1455,78 @@ static sigdata_t *it_load_sigdata(DUMBFILE *f)
 				free(buffer);
 				free(component);
 				_dumb_it_unload_sigdata(sigdata);
+                dumbfile_close(f);
+                free(file_buffer);
 				return NULL;
 			}
 
 			m = component[m].sampnext;
 		}
-	}
+    }
 
-	free(buffer);
+    for ( n = 0; n < 10; n++ )
+    {
+        if ( dumbfile_getc( f ) == 'X' )
+        {
+            if ( dumbfile_getc( f ) == 'T' )
+            {
+                if ( dumbfile_getc( f ) == 'P' )
+                {
+                    if ( dumbfile_getc( f ) == 'M' )
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if ( !dumbfile_error( f ) && n < 10 )
+    {
+        unsigned int mptx_id = dumbfile_igetl( f );
+        while ( mptx_id != DUMB_ID('M','P','T','S') )
+        {
+            unsigned int size = dumbfile_igetw( f );
+            switch (mptx_id)
+            {
+            /* TODO: Add instrument extension readers */
+
+            default:
+                dumbfile_skip(f, size * sigdata->n_instruments);
+                break;
+            }
+
+            mptx_id = dumbfile_igetl( f );
+        }
+
+        mptx_id = dumbfile_igetl( f );
+        while ( memdata.offset < file_size )
+        {
+            unsigned int size = dumbfile_igetw( f );
+            switch (mptx_id)
+            {
+            /* TODO: Add more song extension readers */
+
+            case DUMB_ID('D','T','.','.'):
+                if ( size == 2 )
+                    sigdata->tempo = dumbfile_igetw( f );
+                else if ( size == 4 )
+                    sigdata->tempo = dumbfile_igetl( f );
+                break;
+
+            default:
+                dumbfile_skip(f, size);
+                break;
+            }
+            mptx_id = dumbfile_igetl( f );
+        }
+    }
+
+    free(buffer);
 	free(component);
+
+    dumbfile_close(f);
+    free(file_buffer);
 
 	_dumb_it_fix_invalid_orders(sigdata);
 

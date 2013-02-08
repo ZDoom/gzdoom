@@ -2075,7 +2075,18 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 					/*if (entry->effectvalue == 255)
 						if (sigrenderer->callbacks->xm_speed_zero && (*sigrenderer->callbacks->xm_speed_zero)(sigrenderer->callbacks->xm_speed_zero_data))
 							return 1;*/
-					sigrenderer->tick = sigrenderer->speed = entry->effectvalue;
+                    if (sigdata->flags & IT_WAS_AN_STM)
+                    {
+                        int n = entry->effectvalue;
+                        if (n >= 32)
+                        {
+                            sigrenderer->tick = sigrenderer->speed = n;
+                        }
+                    }
+                    else
+                    {
+                        sigrenderer->tick = sigrenderer->speed = entry->effectvalue;
+                    }
 				}
 				else if ((sigdata->flags & (IT_WAS_AN_XM|IT_WAS_A_MOD)) == IT_WAS_AN_XM) {
 #ifdef BIT_ARRAY_BULLSHIT
@@ -4323,9 +4334,12 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 			update_effects(sigrenderer);
 		}
 	} else {
-		speed0:
-		update_effects(sigrenderer);
-		update_tick_counts(sigrenderer);
+        if ( !(sigdata->flags & IT_WAS_AN_STM) || !(sigrenderer->tick & 15))
+        {
+            speed0:
+            update_effects(sigrenderer);
+            update_tick_counts(sigrenderer);
+        }
 	}
 
 	if (sigrenderer->globalvolume == 0) {
@@ -4348,7 +4362,12 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 	process_all_playing(sigrenderer);
 
 	{
-		LONG_LONG t = sigrenderer->sub_time_left + ((LONG_LONG)TICK_TIME_DIVIDEND << 16) / sigrenderer->tempo;
+        LONG_LONG t = ((LONG_LONG)TICK_TIME_DIVIDEND << 16) / sigrenderer->tempo;
+        if ( sigrenderer->sigdata->flags & IT_WAS_AN_STM )
+        {
+            t /= 16;
+        }
+        t += sigrenderer->sub_time_left;
 		sigrenderer->time_left += (int)(t >> 16);
 		sigrenderer->sub_time_left = (int)t & 65535;
 	}

@@ -412,6 +412,8 @@ struct IT_PATTERN
 
 #define IT_WAS_AN_OKT     2048
 
+#define IT_WAS_AN_STM     4096
+
 #define IT_ORDER_END  255
 #define IT_ORDER_SKIP 254
 

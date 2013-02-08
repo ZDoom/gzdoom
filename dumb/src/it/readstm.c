@@ -142,9 +142,9 @@ static int it_stm_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 					entry->mask |= IT_ENTRY_VOLPAN;
 				entry->mask |= IT_ENTRY_EFFECT;
 				switch ( entry->effect ) {
-					case IT_SET_SPEED:
-						entry->effectvalue >>= 4;
-						break;
+                    case IT_SET_SPEED:
+                    /* taken care of in the renderer */
+                        break;
 
 					case IT_BREAK_TO_ROW:
 						entry->effectvalue -= (entry->effectvalue >> 4) * 6;
@@ -236,16 +236,17 @@ static DUMB_IT_SIGDATA *it_stm_load_sigdata(DUMBFILE *f, int * version)
 	sigdata->n_samples = 31;
 	sigdata->n_pchannels = 4;
 
-	sigdata->tempo = 125;
-	sigdata->mixing_volume = 48;
+    sigdata->tempo = 125;
+    sigdata->mixing_volume = 48;
 	sigdata->pan_separation = 128;
 
 	/** WARNING: which ones? */
-	sigdata->flags = IT_OLD_EFFECTS | IT_COMPATIBLE_GXX | IT_WAS_AN_S3M | IT_STEREO;
+    sigdata->flags = IT_OLD_EFFECTS | IT_COMPATIBLE_GXX | IT_WAS_AN_S3M | IT_WAS_AN_STM | IT_STEREO;
 
-	sigdata->speed = dumbfile_getc(f) >> 4;
-	if ( sigdata->speed < 1 ) sigdata->speed = 1;
-	sigdata->n_patterns = dumbfile_getc(f);
+    n = dumbfile_getc(f);
+    if ( n < 32 ) n = 32;
+    sigdata->speed = n;
+    sigdata->n_patterns = dumbfile_getc(f);
 	sigdata->global_volume = dumbfile_getc(f) << 1;
 	if ( sigdata->global_volume > 128 ) sigdata->global_volume = 128;
 	

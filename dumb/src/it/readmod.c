@@ -629,12 +629,43 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	if (sigdata->n_samples == 31)
 		dumbfile_skip(f, 4);
 
-	/* Work out how many patterns there are. */
 	sigdata->n_patterns = -1;
-	for (i = 0; i < sigdata->n_orders; i++)
-		if (sigdata->n_patterns < sigdata->order[i])
-			sigdata->n_patterns = sigdata->order[i];
-	sigdata->n_patterns++;
+
+	{
+		long total_sample_size;
+		long remain;
+		rem = f;
+		f = dumbfile_buffer_mod_2(rem, &remain);
+		if (!f) {
+			_dumb_it_unload_sigdata(sigdata);
+			dumbfile_close(rem);
+			return NULL;
+		}
+		for (total_sample_size = 0, i = 0; i < sigdata->n_samples; i++) {
+			if (sigdata->sample[i].flags & IT_SAMPLE_EXISTS) {
+				total_sample_size += sigdata->sample[i].length;
+			}
+		}
+		if (remain > total_sample_size) {
+			sigdata->n_patterns = ( remain - total_sample_size ) / ( 256 * sigdata->n_pchannels );
+			if (fft == DUMB_ID('M',0,0,0) || fft == DUMB_ID('8',0,0,0)) {
+				remain -= sigdata->n_patterns * 256 * sigdata->n_pchannels;
+				if (dumbfile_skip(f, remain - total_sample_size)) {
+					_dumb_it_unload_sigdata(sigdata);
+					dumbfile_close(f);
+					dumbfile_close(rem);
+					return NULL;
+				}
+			}
+		}
+	}
+
+	if ( sigdata->n_patterns <= 0 ) {
+		_dumb_it_unload_sigdata(sigdata);
+		dumbfile_close(f);
+		dumbfile_close(rem);
+		return NULL;
+	}
 
 	/* May as well try to save a tiny bit of memory. */
 	if (sigdata->n_orders < 128) {
@@ -646,6 +677,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	if (!sigdata->pattern) {
 		_dumb_it_unload_sigdata(sigdata);
 		dumbfile_close(f);
+		dumbfile_close(rem);
 		return NULL;
 	}
 	for (i = 0; i < sigdata->n_patterns; i++)
@@ -653,10 +685,11 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 	/* Read in the patterns */
 	{
-		unsigned char *buffer = malloc(256 * n_channels); /* 64 rows * 4 bytes */
+		unsigned char *buffer = malloc(256 * sigdata->n_pchannels); /* 64 rows * 4 bytes */
 		if (!buffer) {
 			_dumb_it_unload_sigdata(sigdata);
 			dumbfile_close(f);
+			dumbfile_close(rem);
 			return NULL;
 		}
 		for (i = 0; i < sigdata->n_patterns; i++) {
@@ -664,38 +697,11 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 				free(buffer);
 				_dumb_it_unload_sigdata(sigdata);
 				dumbfile_close(f);
-				return NULL;
-			}
-		}
-		free(buffer);
-	}
-
-	rem = NULL;
-
-	/* uggly */
-	if (fft == DUMB_ID('M',0,0,0) || fft == DUMB_ID('8',0,0,0)) {
-		int32 skip;
-		int32 remain;
-		rem = f;
-		f = dumbfile_buffer_mod_2(rem, &remain);
-		if (!f) {
-			_dumb_it_unload_sigdata(sigdata);
-			dumbfile_close(rem);
-			return NULL;
-		}
-		for (skip = 0, i = 0; i < sigdata->n_samples; i++) {
-			if (sigdata->sample[i].flags & IT_SAMPLE_EXISTS) {
-				skip += sigdata->sample[i].length;
-			}
-		}
-		if (remain - skip) {
-			if (dumbfile_skip(f, remain - skip)) {
-				_dumb_it_unload_sigdata(sigdata);
-				dumbfile_close(f);
 				dumbfile_close(rem);
 				return NULL;
 			}
 		}
+		free(buffer);
 	}
 
 	/* And finally, the sample data */
@@ -703,7 +709,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		if (it_mod_read_sample_data(&sigdata->sample[i], f, fft)) {
 			_dumb_it_unload_sigdata(sigdata);
 			dumbfile_close(f);
-			if (rem) dumbfile_close(rem);
+			dumbfile_close(rem);
 			return NULL;
 		}
 	}
@@ -727,8 +733,8 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	}*/
 
 	dumbfile_close(f); /* Destroy the BUFFERED_MOD DUMBFILE we were using. */
+	dumbfile_close(rem); /* And the BUFFERED_MOD DUMBFILE used to pre-read the signature. */
 	/* The DUMBFILE originally passed to our function is intact. */
-	if (rem) dumbfile_close(rem);
 
 	/* Now let's initialise the remaining variables, and we're done! */
 	sigdata->flags = IT_WAS_AN_XM | IT_WAS_A_MOD | IT_OLD_EFFECTS | IT_COMPATIBLE_GXX | IT_STEREO;

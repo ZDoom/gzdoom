@@ -20,6 +20,7 @@
 // IT_STEREO... :o
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "dumb.h"
 #include "internal/it.h"

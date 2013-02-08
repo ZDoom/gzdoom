@@ -306,6 +306,8 @@ static int it_read_envelope(IT_ENVELOPE *envelope, DUMBFILE *f)
 	envelope->loop_end = dumbfile_getc(f);
 	envelope->sus_loop_start = dumbfile_getc(f);
 	envelope->sus_loop_end = dumbfile_getc(f);
+	if (envelope->n_nodes > 25)
+		envelope->n_nodes = 25;
 	for (n = 0; n < envelope->n_nodes; n++) {
 		envelope->node_y[n] = dumbfile_getc(f);
 		envelope->node_t[n] = dumbfile_igetw(f);

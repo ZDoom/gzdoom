@@ -905,6 +905,15 @@ static void it_pickup_stop_at_end(DUMB_RESAMPLER *resampler, void *data)
 
 
 
+static void it_pickup_stop_after_reverse(DUMB_RESAMPLER *resampler, void *data)
+{
+    (void)data;
+
+    resampler->dir = 0;
+}
+
+
+
 static void it_playing_update_resamplers(IT_PLAYING *playing)
 {
 	if ((playing->sample->flags & IT_SAMPLE_SUS_LOOP) && !(playing->flags & IT_PLAYING_SUSTAINOFF)) {
@@ -925,8 +934,13 @@ static void it_playing_update_resamplers(IT_PLAYING *playing)
 			playing->resampler.pickup = &it_pickup_pingpong_loop;
 		else
 			playing->resampler.pickup = &it_pickup_loop;
-	} else {
-		if (playing->sample->flags & IT_SAMPLE_SUS_LOOP)
+    } else if (playing->flags & IT_PLAYING_REVERSE) {
+        playing->resampler.start = 0;
+        playing->resampler.end = playing->sample->length;
+        playing->resampler.dir = -1;
+        playing->resampler.pickup = &it_pickup_stop_after_reverse;
+    } else {
+        if (playing->sample->flags & IT_SAMPLE_SUS_LOOP)
 			playing->resampler.start = playing->sample->sus_loop_start;
 		else
 			playing->resampler.start = 0;
@@ -2753,7 +2767,13 @@ Yxy             This uses a table 4 times larger (hence 4 times slower) than
 								channel->playing->panbrello_depth = 0;
 							break;
 						case IT_S_SET_SURROUND_SOUND:
-							if ((effectvalue & 15) == 1) {
+                            if ((effectvalue & 15) == 15) {
+                                if (channel->playing && channel->playing->sample &&
+                                    !(channel->playing->sample->flags & (IT_SAMPLE_LOOP | IT_SAMPLE_SUS_LOOP))) {
+                                    channel->playing->flags |= IT_PLAYING_REVERSE;
+                                    it_playing_reset_resamplers( channel->playing, channel->playing->sample->length - 1 );
+                                }
+                            } else if ((effectvalue & 15) == 1) {
 								channel->pan = IT_SURROUND;
 								channel->truepan = channel->pan << IT_ENVELOPE_SHIFT;
 							}

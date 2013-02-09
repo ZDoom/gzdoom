@@ -147,6 +147,7 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 
 8FF30D57F6CE64F085A6567EC302842A // Enjay's test map for this flag
 9D7893D09FEE55C31B73C670DF850962 // Memento Mori II, map12
+91E173901E6F3800B81AB646976247CD // Claustrophobia 1024, map01
 {
 	badangles
 }
@@ -335,3 +336,4 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 {
 	rebuildnodes
 }
+

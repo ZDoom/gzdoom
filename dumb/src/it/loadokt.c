@@ -26,7 +26,7 @@
  * pointer to the DUH struct. When you have finished with it, you must
  * pass the pointer to unload_duh() so that the memory can be freed.
  */
-DUH *dumb_load_okt_quick(const char *filename)
+DUH *DUMBEXPORT dumb_load_okt_quick(const char *filename)
 {
 	DUH *duh;
 	DUMBFILE *f = dumbfile_open(filename);

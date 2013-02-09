@@ -21,7 +21,7 @@
 
 
 
-DUH *dumb_load_okt(const char *filename)
+DUH *DUMBEXPORT dumb_load_okt(const char *filename)
 {
 	DUH *duh = dumb_load_okt_quick(filename);
 	dumb_it_do_initial_runthrough(duh);

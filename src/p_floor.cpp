@@ -380,13 +380,13 @@ manual_floor:
 		case DFloor::floorRaiseToLowestCeiling:
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
-			if (floortype == DFloor::floorRaiseAndCrush)
+			if (floortype == DFloor::floorRaiseAndCrushDoom)
 				newheight -= 8 * FRACUNIT;
 			ceilingheight = sec->FindLowestCeilingPoint (&spot2);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			if (sec->floorplane.ZatPointDist (spot2, floor->m_FloorDestDist) > ceilingheight)
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (spot2,
-					floortype == DFloor::floorRaiseAndCrush ? ceilingheight - 8*FRACUNIT : ceilingheight);
+					floortype == DFloor::floorRaiseAndCrushDoom ? ceilingheight - 8*FRACUNIT : ceilingheight);
 			break;
 
 		case DFloor::floorRaiseToHighest:

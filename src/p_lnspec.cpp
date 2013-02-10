@@ -3297,10 +3297,10 @@ lnSpecFunc LineSpecials[256] =
 	/* 155 */ LS_NOP,
 	/* 156 */ LS_NOP,
 	/* 157 */ LS_NOP,		// SetGlobalFogParameter // in GZDoom
-	/* 158 */ LS_NOP,		// FS_Execute in GZDoom
+	/* 158 */ LS_NOP,		// FS_Execute
 	/* 159 */ LS_NOP,		// Sector_SetPlaneReflection in GZDoom
-	/* 160 */ LS_NOP,		// Sector_Set3DFloor in GZDoom and Vavoom
-	/* 161 */ LS_NOP,		// Sector_SetContents in GZDoom and Vavoom
+	/* 160 */ LS_NOP,		// Sector_Set3DFloor
+	/* 161 */ LS_NOP,		// Sector_SetContents
 	/* 162 */ LS_NOP,		// Reserved Doom64 branch
 	/* 163 */ LS_NOP,		// Reserved Doom64 branch
 	/* 164 */ LS_NOP,		// Reserved Doom64 branch

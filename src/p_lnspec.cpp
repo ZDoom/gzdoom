@@ -326,6 +326,12 @@ FUNC(LS_Floor_RaiseAndCrush)
 	return EV_DoFloor (DFloor::floorRaiseAndCrush, ln, arg0, SPEED(arg1), 0, arg2, 0, CRUSHTYPE(arg3));
 }
 
+FUNC(LS_Floor_RaiseAndCrushDoom)
+// Floor_RaiseAndCrushDoom (tag, speed, crush, crushmode)
+{
+	return EV_DoFloor (DFloor::floorRaiseAndCrushDoom, ln, arg0, SPEED(arg1), 0, arg2, 0, CRUSHTYPE(arg3));
+}
+
 FUNC(LS_Floor_RaiseByValueTimes8)
 // FLoor_RaiseByValueTimes8 (tag, speed, height)
 {
@@ -3232,7 +3238,7 @@ lnSpecFunc LineSpecials[256] =
 	/*  96 */ LS_FloorAndCeiling_RaiseByValue,
 	/*  97 */ LS_Ceiling_LowerAndCrushDist,
 	/*  98 */ LS_Sector_SetTranslucent,
-	/*  99 */ LS_NOP,
+	/*  99 */ LS_Floor_RaiseAndCrushDoom,
 	/* 100 */ LS_NOP,		// Scroll_Texture_Left
 	/* 101 */ LS_NOP,		// Scroll_Texture_Right
 	/* 102 */ LS_NOP,		// Scroll_Texture_Up

@@ -697,6 +697,7 @@ public:
 		floorRaiseToHighest,
 		floorRaiseToNearest,
 		floorRaiseAndCrush,
+		floorRaiseAndCrushDoom,
 		floorCrushStop,
 		floorLowerInstant,
 		floorRaiseInstant,

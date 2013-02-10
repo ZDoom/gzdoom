@@ -97,7 +97,7 @@ DEFINE_SPECIAL(FloorAndCeiling_LowerByValue, 95, 3, 3, 3)
 DEFINE_SPECIAL(FloorAndCeiling_RaiseByValue, 96, 3, 3, 3)
 DEFINE_SPECIAL(Ceiling_LowerAndCrushDist, 97, 3, 5, 5)
 DEFINE_SPECIAL(Sector_SetTranslucent, 98, 3, 4, 4)
-
+DEFINE_SPECIAL(Floor_RaiseAndCrushDoom, 99, 3, 4, 4)
 DEFINE_SPECIAL(Scroll_Texture_Left, 100, -1, -1, 2)
 DEFINE_SPECIAL(Scroll_Texture_Right, 101, -1, -1, 2)
 DEFINE_SPECIAL(Scroll_Texture_Up, 102, -1, -1, 2)

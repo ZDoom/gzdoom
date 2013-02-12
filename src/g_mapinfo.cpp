@@ -82,7 +82,7 @@ static int FindWadLevelInfo (const char *name)
 //
 //==========================================================================
 
-level_info_t *FindLevelInfo (const char *mapname)
+level_info_t *FindLevelInfo (const char *mapname, bool allowdefault)
 {
 	int i;
 
@@ -90,7 +90,7 @@ level_info_t *FindLevelInfo (const char *mapname)
 	{
 		return &wadlevelinfos[i];
 	}
-	else
+	else if (allowdefault)
 	{
 		if (TheDefaultLevelInfo.LevelName.IsEmpty())
 		{
@@ -100,6 +100,7 @@ level_info_t *FindLevelInfo (const char *mapname)
 		}
 		return &TheDefaultLevelInfo;
 	}
+	return NULL;
 }
 
 //==========================================================================

@@ -2569,8 +2569,13 @@ void P_UnPredictPlayer ()
 	if (player->cheats & CF_PREDICTING)
 	{
 		AActor *act = player->mo;
+		AActor *savedcamera = player->camera;
 
 		*player = PredictionPlayerBackup;
+
+		// Restore the camera instead of using the backup's copy, because spynext/prev
+		// could cause it to change during prediction.
+		player->camera = savedcamera;
 
 		act->UnlinkFromWorld ();
 		memcpy (&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));

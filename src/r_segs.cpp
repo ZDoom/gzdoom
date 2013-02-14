@@ -378,12 +378,12 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			goto clearfog;
 		}
 
-		if ((fake3D & FAKE3D_CLIPBOTTOM) && textop <= sclipBottom - viewz)
+		if ((fake3D & FAKE3D_CLIPBOTTOM) && textop < sclipBottom - viewz)
 		{
 			notrelevant = true;
 			goto clearfog;
 		}
-		if ((fake3D & FAKE3D_CLIPTOP) && textop - texheight >= sclipTop - viewz)
+		if ((fake3D & FAKE3D_CLIPTOP) && textop - texheight > sclipTop - viewz)
 		{
 			notrelevant = true;
 			goto clearfog;

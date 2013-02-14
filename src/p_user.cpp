@@ -1579,8 +1579,16 @@ void P_ForwardThrust (player_t *player, angle_t angle, fixed_t move)
 // reduced at a regular rate, even on ice (where the player coasts).
 //
 
-void P_Bob (player_t *player, angle_t angle, fixed_t move)
+void P_Bob (player_t *player, angle_t angle, fixed_t move, bool forward)
 {
+	if (forward
+		&& (player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
+		&& player->mo->pitch != 0)
+	{
+		angle_t pitch = (angle_t)player->mo->pitch >> ANGLETOFINESHIFT;
+		move = FixedMul (move, finecosine[pitch]);
+	}
+
 	angle >>= ANGLETOFINESHIFT;
 
 	player->velx += FixedMul(move, finecosine[angle]);
@@ -1773,8 +1781,8 @@ void P_MovePlayer (player_t *player)
 		fm = FixedMul (fm, player->mo->Speed);
 		sm = FixedMul (sm, player->mo->Speed);
 
-		// When crouching speed and bobbing have to be reduced
-		if (player->morphTics==0 && player->crouchfactor != FRACUNIT)
+		// When crouching, speed and bobbing have to be reduced
+		if (player->morphTics == 0 && player->crouchfactor != FRACUNIT)
 		{
 			fm = FixedMul(fm, player->crouchfactor);
 			sm = FixedMul(sm, player->crouchfactor);
@@ -1786,12 +1794,12 @@ void P_MovePlayer (player_t *player)
 
 		if (forwardmove)
 		{
-			P_Bob (player, mo->angle, (cmd->ucmd.forwardmove * bobfactor) >> 8);
+			P_Bob (player, mo->angle, (cmd->ucmd.forwardmove * bobfactor) >> 8, true);
 			P_ForwardThrust (player, mo->angle, forwardmove);
 		}
 		if (sidemove)
 		{
-			P_Bob (player, mo->angle-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8);
+			P_Bob (player, mo->angle-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8, false);
 			P_SideThrust (player, mo->angle, sidemove);
 		}
 

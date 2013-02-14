@@ -901,7 +901,7 @@ bool P_LoadGLNodes(MapData * map)
 		char path[256];
 		int li;
 		int lumpfile = Wads.GetLumpFile(map->lumpnum);
-		bool mapinwad = map->file == Wads.GetFileReader(lumpfile);
+		bool mapinwad = map->InWad;
 		FileReader * fr = map->file;
 		FResourceFile * f_gwa = NULL;
 

@@ -37,6 +37,7 @@ struct MapData
 	bool HasBehavior;
 	bool Encrypted;
 	bool isText;
+	bool InWad;
 	int lumpnum;
 	FileReader * file;
 	FResourceFile * resource;
@@ -50,6 +51,7 @@ struct MapData
 		HasBehavior = false;
 		Encrypted = false;
 		isText = false;
+		InWad = false;
 	}
 	
 	~MapData()

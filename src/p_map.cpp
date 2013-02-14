@@ -2516,10 +2516,17 @@ void FSlide::SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 	{
 		newx = FixedMul (tryx, bestslidefrac);
 		newy = FixedMul (tryy, bestslidefrac);
-		
+
+		// [BL] We need to abandon this function if we end up going through a teleporter
+		const fixed_t startvelx = mo->velx;
+		const fixed_t startvely = mo->vely;
+
 		// killough 3/15/98: Allow objects to drop off ledges
 		if (!P_TryMove (mo, mo->x+newx, mo->y+newy, true))
 			goto stairstep;
+
+		if (mo->velx != startvelx || mo->vely != startvely)
+			return;
 	}
 
 	// Now continue along the wall.

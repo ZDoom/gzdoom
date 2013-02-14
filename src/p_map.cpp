@@ -905,13 +905,17 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 	// you can use a scrolling floor to move scenery items underneath a bridge.
 	if ((tm.thing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
-		if (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
-		{ // Some things prefer not to overlap each other, if possible
-			return unblocking;
-		}
-		if ((tm.thing->z >= topz) || (tm.thing->z + tm.thing->height <= thing->z))
+		if (!(tm.thing->flags & MF_MISSILE) ||
+			!(tm.thing->flags2 & MF2_RIP) ||
+			(thing->flags5 & MF5_DONTRIP) ||
+			(tm.thing->flags6 & MF6_NOBOSSRIP) && (thing->flags2 & MF2_BOSS))
 		{
-			return true;
+			if (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
+			{ // Some things prefer not to overlap each other, if possible
+				return unblocking;
+			}
+			if ((tm.thing->z >= topz) || (tm.thing->z + tm.thing->height <= thing->z))
+				return true;
 		}
 	}
 
@@ -2878,7 +2882,7 @@ extern FRandom pr_bounce;
 bool P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop)
 {
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)
-		|| ((mo->flags & MF_MISSILE) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+		|| ((mo->flags & MF_MISSILE) && (!(mo->flags2 & MF2_RIP) || (BlockingMobj->flags5 & MF5_DONTRIP) || ((mo->flags6 & MF6_NOBOSSRIP) && (BlockingMobj->flags2 & MF2_BOSS))) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
 		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))
 		))
 	{

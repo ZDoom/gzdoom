@@ -6100,9 +6100,9 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n\tflags6: %x", query->flags6);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-		Printf("\nBounce style: %x\nBounce factors: f:%f, w:%f\nBounce flags: %x", 
+		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
-			FIXED2FLOAT(query->wallbouncefactor), query->BounceFlags);
+			FIXED2FLOAT(query->wallbouncefactor));
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 

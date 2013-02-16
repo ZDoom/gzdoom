@@ -439,7 +439,7 @@ struct TVector3
 	// Vector subtraction
 	TVector3 &operator-= (const TVector3 &other)
 	{
-		X -= other.X, Y -= other.Y, Z - other.Z;
+		X -= other.X, Y -= other.Y, Z -= other.Z;
 		return *this;
 	}
 
@@ -485,7 +485,7 @@ struct TVector3
 	{
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
 	}
-
+F
 	// Vector length
 	double Length() const
 	{
@@ -1166,7 +1166,7 @@ struct TRotator
 	// Vector subtraction
 	TRotator &operator-= (const TRotator &other)
 	{
-		Pitch -= other.Pitch, Yaw -= other.Yaw, Roll - other.Roll;
+		Pitch -= other.Pitch, Yaw -= other.Yaw, Roll -= other.Roll;
 		return *this;
 	}
 

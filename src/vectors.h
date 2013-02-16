@@ -485,7 +485,7 @@ struct TVector3
 	{
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
 	}
-F
+
 	// Vector length
 	double Length() const
 	{

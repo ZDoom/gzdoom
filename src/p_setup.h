@@ -159,4 +159,14 @@ struct FMissingCount
 };
 typedef TMap<FString,FMissingCount> FMissingTextureTracker;
 
+// Record of user data for UDMF maps
+struct FMapThingUserData
+{
+	FName Property;
+	int Value;
+};
+extern TMap<unsigned,unsigned> MapThingsUserDataIndex;	// from mapthing idx -> user data idx
+extern TArray<FMapThingUserData> MapThingsUserData;
+
+
 #endif

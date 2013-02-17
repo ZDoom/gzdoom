@@ -627,9 +627,12 @@ public:
 				break;
 
 			default:
-				if (!strnicmp("user_", key.GetChars(), 5))
-				{
-					// Custom user key - handle later
+				if (0 == strnicmp("user_", key.GetChars(), 5))
+				{ // Custom user key - Sets an actor's user variable directly
+					FMapThingUserData ud;
+					ud.Property = key;
+					ud.Value = CheckInt(key);
+					MapThingsUserData.Push(ud);
 				}
 				break;
 			}
@@ -1603,8 +1606,18 @@ public:
 			if (sc.Compare("thing"))
 			{
 				FMapThing th;
+				unsigned userdatastart = MapThingsUserData.Size();
 				ParseThing(&th);
 				MapThingsConverted.Push(th);
+				if (userdatastart < MapThingsUserData.Size())
+				{ // User data added
+					MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
+					// Mark end of the user data for this map thing
+					FMapThingUserData ud;
+					ud.Property = NAME_None;
+					ud.Value = 0;
+					MapThingsUserData.Push(ud);
+				}
 			}
 			else if (sc.Compare("linedef"))
 			{

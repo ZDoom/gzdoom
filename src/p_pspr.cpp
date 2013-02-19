@@ -997,7 +997,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
 
 	if (self->player != NULL)
 	{
-		self->player->extralight = clamp<int>(light, 0, 20);
+		self->player->extralight = clamp<int>(light, -20, 20);
 	}
 }
 

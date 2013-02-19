@@ -1164,6 +1164,7 @@ IMPLEMENT_CLASS (APowerSpeed)
 
 void APowerSpeed::Serialize(FArchive &arc)
 {
+	Super::Serialize (arc);
 	if (SaveVersion < 4146)
 	{
 		SpeedFlags = 0;

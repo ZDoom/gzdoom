@@ -1098,7 +1098,7 @@ static void BuildPlayerclassMenu()
 						}
 					}
 				}
-				if (n > 1)
+				if (n > 1 && !gameinfo.norandomplayerclass)
 				{
 					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, 'r',
 						"$MNU_RANDOM", ld->mFont,ld->mFontColor, NAME_Episodemenu, -1);

@@ -606,13 +606,16 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 		}
 		else
 		{
-			li->SetString(0, "Random");
+			// [XA] Remove the "Random" option if the relevant gameinfo flag is set.
+			if(!gameinfo.norandomplayerclass)
+				li->SetString(0, "Random");
 			for(unsigned i=0; i< PlayerClasses.Size(); i++)
 			{
 				const char *cls = GetPrintableDisplayName(PlayerClasses[i].Type);
-				li->SetString(i+1, cls);
+				li->SetString(gameinfo.norandomplayerclass ? i : i+1, cls);
 			}
-			li->SetValue(0, players[consoleplayer].userinfo.PlayerClass + 1);
+			int pclass = players[consoleplayer].userinfo.PlayerClass;
+			li->SetValue(0, gameinfo.norandomplayerclass && pclass >= 0 ? pclass : pclass + 1);
 		}
 	}
 
@@ -907,10 +910,10 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 
 	if (li->GetValue(0, &sel))
 	{
-		players[consoleplayer].userinfo.PlayerClass = sel-1;
+		players[consoleplayer].userinfo.PlayerClass = gameinfo.norandomplayerclass ? sel : sel-1;
 		PickPlayerClass();
 
-		cvar_set ("playerclass", sel == 0 ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
+		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
 
 		UpdateSkins();
 		UpdateColorsets();

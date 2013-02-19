@@ -1158,14 +1158,34 @@ IMPLEMENT_CLASS (APowerSpeed)
 
 //===========================================================================
 //
+// APowerSpeed :: Serialize
+//
+//===========================================================================
+
+void APowerSpeed::Serialize(FArchive &arc)
+{
+	if (SaveVersion < 4146)
+	{
+		SpeedFlags = 0;
+	}
+	else
+	{
+		arc << SpeedFlags;
+	}
+}
+
+//===========================================================================
+//
 // APowerSpeed :: GetSpeedFactor
 //
 //===========================================================================
 
 fixed_t APowerSpeed ::GetSpeedFactor ()
 {
-	if (Inventory != NULL) return FixedMul(Speed, Inventory->GetSpeedFactor());
-	else return Speed;
+	if (Inventory != NULL)
+		return FixedMul(Speed, Inventory->GetSpeedFactor());
+	else
+		return Speed;
 }
 
 //===========================================================================
@@ -1184,12 +1204,22 @@ void APowerSpeed::DoEffect ()
 	if (Owner->player->cheats & CF_PREDICTING)
 		return;
 
+	if (SpeedFlags & PSF_NOTRAIL)
+		return;
+
 	if (level.time & 1)
 		return;
 
-	// check if another speed item is present to avoid multiple drawing of the speed trail.
-	if (Inventory != NULL && Inventory->GetSpeedFactor() > FRACUNIT)
-		return;
+	// Check if another speed item is present to avoid multiple drawing of the speed trail.
+	// Only the last PowerSpeed without PSF_NOTRAIL set will actually draw the trail.
+	for (AInventory *item = Inventory; item != NULL; item = item->Inventory)
+	{
+		if (item->IsKindOf(RUNTIME_CLASS(APowerSpeed)) &&
+			!(static_cast<APowerSpeed *>(item)->SpeedFlags & PSF_NOTRAIL))
+		{
+			return;
+		}
+	}
 
 	if (P_AproxDistance (Owner->velx, Owner->vely) <= 12*FRACUNIT)
 		return;

@@ -338,12 +338,19 @@ static FFlagDef PlayerPawnFlags[] =
 	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
 };
 
+static FFlagDef PowerSpeedFlags[] =
+{
+	// PowerSpeed flags
+	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
+};
+
 static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
 	{ RUNTIME_CLASS(AActor), 		ActorFlags,		countof(ActorFlags) },
 	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	countof(InventoryFlags) },
 	{ RUNTIME_CLASS(AWeapon), 		WeaponFlags,	countof(WeaponFlags) },
 	{ RUNTIME_CLASS(APlayerPawn),	PlayerPawnFlags,countof(PlayerPawnFlags) },
+	{ RUNTIME_CLASS(APowerSpeed),	PowerSpeedFlags,countof(PowerSpeedFlags) },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 

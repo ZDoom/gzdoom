@@ -226,7 +226,7 @@ ACTOR PowerWeaponLevel2 : Powerup native
 	Inventory.Icon "SPINBK0"
 }
 
-ACTOR PowerSpeed: Powerup native
+ACTOR PowerSpeed : Powerup native
 {
 	Powerup.Duration -45
 	Speed 1.5

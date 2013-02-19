@@ -366,7 +366,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 {
 	AMorphedMonster *morphed;
 
-	if (actor->player || spawntype == NULL ||
+	if (actor == NULL || actor->player || spawntype == NULL ||
 		actor->flags3 & MF3_DONTMORPH ||
 		!(actor->flags3 & MF3_ISMONSTER) ||
 		!spawntype->IsDescendantOf (RUNTIME_CLASS(AMorphedMonster)))

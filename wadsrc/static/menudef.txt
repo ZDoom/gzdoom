@@ -780,6 +780,20 @@ OptionValue "AltHUDScale"
 	2, "Pixel double"
 }
 
+OptionValue "AltHUDTime"
+{
+	0, "Off"
+	1, "Level, milliseconds"
+	2, "Level, seconds"
+	3, "Level"
+	4, "Hub, seconds"
+	5, "Hub"
+	6, "Total, seconds"
+	7, "Total"
+	8, "System, seconds"
+	9, "System"
+}
+
 OptionMenu "AltHUDOptions"
 {
 	Title "Alternative HUD"
@@ -791,6 +805,8 @@ OptionMenu "AltHUDOptions"
 	Option "Show item count",						"hud_showitems", "OnOff"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
 	Option "Show berserk",							"hud_berserk_health", "OnOff"
+	Option "Show time",								"hud_showtime", "AltHUDTime"
+	Option "Time color",							"hud_timecolor", "TextColors"
 	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "Yellow ammo display below %",			"hud_ammo_yellow", 0, 100, 1, 0
 	Slider "Red health display below",				"hud_health_red", 0, 100, 1, 0

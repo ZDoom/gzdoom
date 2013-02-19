@@ -49,6 +49,8 @@
 #include "doomstat.h"
 #include "g_level.h"
 
+#include <time.h>
+
 
 #define HUMETA_AltIcon 0x10f000
 
@@ -68,6 +70,8 @@ CVAR (Bool,  hud_showmonsters,	true,CVAR_ARCHIVE);		// Show monster stats on HUD
 CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
+CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
+CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 
 CVAR (Int, hud_ammo_red, 25, CVAR_ARCHIVE)					// ammo percent less than which status is red    
 CVAR (Int, hud_ammo_yellow, 50, CVAR_ARCHIVE)				// ammo percent less is yellow more green        
@@ -816,6 +820,84 @@ static void DrawCoordinates(player_t * CPlayer)
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 }
 
+//---------------------------------------------------------------------------
+//
+// Draw in-game time
+//
+// Check AltHUDTime option value in wadsrc/static/menudef.txt
+// for meaning of all display modes
+//
+//---------------------------------------------------------------------------
+
+static void DrawTime()
+{
+	if (hud_showtime <= 0 || hud_showtime > 9)
+	{
+		return;
+	}
+
+	int hours   = 0;
+	int minutes = 0;
+	int seconds = 0;
+
+	if (hud_showtime < 8)
+	{
+		const int timeTicks =
+			hud_showtime < 4
+				? level.maptime
+				: (hud_showtime < 6
+					? level.time
+					: level.totaltime);
+		const int timeSeconds = timeTicks / TICRATE;
+
+		hours   =  timeSeconds / 3600;
+		minutes = (timeSeconds % 3600) / 60;
+		seconds =  timeSeconds % 60;
+	}
+	else
+	{
+		time_t now;
+		time(&now);
+
+		struct tm* timeinfo = localtime(&now);
+
+		if (NULL != timeinfo)
+		{
+			hours   = timeinfo->tm_hour;
+			minutes = timeinfo->tm_min;
+			seconds = timeinfo->tm_sec;
+		}
+	}
+
+	const bool showMillis  = 1 == hud_showtime;
+	const bool showSeconds = showMillis || (0 == hud_showtime % 2);
+
+	char timeString[sizeof "HH:MM:SS.MMM"];
+
+	if (showMillis)
+	{
+		const int millis  = (level.time % TICRATE) * (1000 / TICRATE);
+
+		mysnprintf(timeString, sizeof(timeString), "%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+	}
+	else if (showSeconds)
+	{
+		mysnprintf(timeString, sizeof(timeString), "%02i:%02i:%02i", hours, minutes, seconds);
+	}
+	else
+	{
+		mysnprintf(timeString, sizeof(timeString), "%02i:%02i", hours, minutes);
+	}
+
+	const int characterCount = static_cast<int>( sizeof "HH:MM" - 1
+		+ (showSeconds ? sizeof ":SS"  - 1 : 0)
+		+ (showMillis  ? sizeof ".MMM" - 1 : 0) );
+	const int width  = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
+	const int height = SmallFont->GetHeight();
+
+	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, FRACUNIT);
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -879,6 +961,8 @@ void DrawHUD()
 			StatusBar->DrawCrosshair();
 		}
 		if (idmypos) DrawCoordinates(CPlayer);
+
+		DrawTime();
 	}
 	else
 	{

@@ -31,6 +31,7 @@ class ARandomSpawner : public AActor
 		FDropItem *di;   // di will be our drop item list iterator
 		FDropItem *drop; // while drop stays as the reference point.
 		int n=0;
+		bool nomonsters = (dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS);
 
 		Super::BeginPlay();
 		drop = di = GetDropItems();
@@ -40,10 +41,18 @@ class ARandomSpawner : public AActor
 			{
 				if (di->Name != NAME_None)
 				{
-					if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
-					n += di->amount; // this is how we can weight the list.
+					if (!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER))
+					{
+						if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
+						n += di->amount; // this is how we can weight the list.
+					}
 					di = di->Next;
 				}
+			}
+			if (n == 0)
+			{ // Nothing left to spawn. They must have all been monsters, and monsters are disabled.
+				Destroy();
+				return;
 			}
 			// Then we reset the iterator to the start position...
 			di = drop;
@@ -54,15 +63,22 @@ class ARandomSpawner : public AActor
 			{
 				if (di->Name != NAME_None)
 				{
-					n -= di->amount;
-					if ((di->Next != NULL) && (n > -1)) di = di->Next; else n = -1;
+					if (!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER))
+					{
+						n -= di->amount;
+						if ((di->Next != NULL) && (n > -1))
+							di = di->Next;
+						else
+							n = -1;
+					}
 				}
 			}
 			// So now we can spawn the dropped item.
 			if (bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
 			{
 				Spawn("Unknown", x, y, z, NO_REPLACE);		// Show that there's a problem.
-				Destroy(); return;
+				Destroy();
+				return;
 			}
 			else if (pr_randomspawn() <= di->probability)	// prob 255 = always spawn, prob 0 = never spawn.
 			{
@@ -167,8 +183,10 @@ class ARandomSpawner : public AActor
 			if (rep && ((rep->flags4 & MF4_BOSSDEATH) || (rep->flags2 & MF2_BOSS)))
 				boss = true;
 		}
-		if (boss) this->tracer = newmobj;
-		else Destroy();	// "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
+		if (boss)
+			this->tracer = newmobj;
+		else	// "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
+			Destroy();
 	}
 
 	void Tick()	// This function is needed for handling boss replacers

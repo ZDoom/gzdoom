@@ -550,9 +550,14 @@ bool P_Move (AActor *actor)
 			{
 				actor->z = savedz;
 			}
-			else if (actor->floorsector->SecActTarget != NULL)
+			else
 			{ // The monster just hit the floor, so trigger any actions.
-				actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
+				if (actor->floorsector->SecActTarget != NULL &&
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->x, actor->y))
+				{
+					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
+				}
+				P_CheckFor3DFloorHit(actor);
 			}
 		}
 	}

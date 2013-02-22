@@ -7856,7 +7856,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit,
 		}
 
 		// Module name
-		mysnprintf(modname, sizeof(modname), prof->Module->GetModuleName());
+		mysnprintf(modname, sizeof(modname), "%s", prof->Module->GetModuleName());
 
 		// Script/function name
 		if (functions)
@@ -7932,7 +7932,7 @@ CCMD(acsprofile)
 			// If it's a name, set the sort method. We accept partial matches for
 			// options that are shorter than the sort name.
 			size_t optlen = strlen(argv[i]);
-			int j;
+			unsigned int j;
 			for (j = 0; j < countof(sort_names); ++j)
 			{
 				if (optlen < sort_match_len[j] || optlen > strlen(sort_names[j]))

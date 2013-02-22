@@ -170,8 +170,11 @@ void P_BringUpWeapon (player_t *player)
 
 	if (player->PendingWeapon == WP_NOCHANGE)
 	{
-		player->psprites[ps_weapon].sy = WEAPONTOP;
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+		if (player->ReadyWeapon != NULL)
+		{
+			player->psprites[ps_weapon].sy = WEAPONTOP;
+			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+		}
 		return;
 	}
 

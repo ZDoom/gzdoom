@@ -1107,7 +1107,6 @@ void APowerWeaponLevel2::EndEffect ()
 	Super::EndEffect();
 	if (player != NULL)
 	{
-
 		if (player->ReadyWeapon != NULL &&
 			player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP)
 		{

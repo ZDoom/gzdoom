@@ -215,6 +215,7 @@ enum
 	WF_DISABLESWITCH	= 1 << 4,		// Disable weapon switching completely
 	WF_WEAPONRELOADOK	= 1 << 5,		// [XA] Okay to reload this weapon.
 	WF_WEAPONZOOMOK		= 1 << 6,		// [XA] Okay to use weapon zoom function.
+	WF_REFIRESWITCHOK	= 1 << 7,		// Mirror WF_WEAPONSWITCHOK for A_ReFire
 };	
 
 #define WPIECE1		1

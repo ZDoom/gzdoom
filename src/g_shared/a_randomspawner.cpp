@@ -59,22 +59,24 @@ class ARandomSpawner : public AActor
 			// Take a random number...
 			n = pr_randomspawn(n);
 			// And iterate in the array up to the random number chosen.
-			while (n > -1)
+			while (n > -1 && di != NULL)
 			{
-				if (di->Name != NAME_None)
+				if (di->Name != NAME_None &&
+					(!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER)))
 				{
-					if (!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER))
-					{
-						n -= di->amount;
-						if ((di->Next != NULL) && (n > -1))
-							di = di->Next;
-						else
-							n = -1;
-					}
+					n -= di->amount;
+					if ((di->Next != NULL) && (n > -1))
+						di = di->Next;
+					else
+						n = -1;
+				}
+				else
+				{
+					di = di->Next;
 				}
 			}
 			// So now we can spawn the dropped item.
-			if (bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+			if (di == NULL || bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
 			{
 				Spawn("Unknown", x, y, z, NO_REPLACE);		// Show that there's a problem.
 				Destroy();

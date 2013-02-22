@@ -7327,7 +7327,12 @@ scriptwait:
 				{
 					case PCD_STRCPYTOMAPCHRANGE:
 						{
-							Stack[sp-6] = activeBehavior->CopyStringToArray(STACK(5), index, capacity, lookup);
+							int a = STACK(5);
+							if (a < NUM_MAPVARS && a > 0 &&
+								activeBehavior->MapVars[a])
+							{
+								Stack[sp-6] = activeBehavior->CopyStringToArray(*(activeBehavior->MapVars[a]), index, capacity, lookup);
+							}
 						}
 						break;
 					case PCD_STRCPYTOWORLDCHRANGE:

@@ -74,6 +74,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	}
 
 	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
+	EndAllPowerupEffects(actor->Inventory);
 	DObject::StaticPointerSubstitution (actor, morphed);
 	if ((actor->tid != 0) && (style & MORPH_NEWTIDBEHAVIOUR))
 	{
@@ -144,6 +145,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 		}
 		item = next;
 	}
+	InitAllPowerupEffects(morphed->Inventory);
 	morphed->ActivateMorphWeapon ();
 	if (p->camera == actor)
 	{
@@ -201,10 +203,8 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 	pmo->player = NULL;
 
-	mo->ObtainInventory (pmo);
-	DObject::StaticPointerSubstitution (pmo, mo);
 	// Remove the morph power if the morph is being undone prematurely.
-	for (AInventory *item = mo->Inventory, *next = NULL; item != NULL; item = next)
+	for (AInventory *item = pmo->Inventory, *next = NULL; item != NULL; item = next)
 	{
 		next = item->Inventory;
 		if (item->IsKindOf(RUNTIME_CLASS(APowerMorph)))
@@ -213,6 +213,9 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 			item->Destroy();
 		}
 	}
+	EndAllPowerupEffects(pmo->Inventory);
+	mo->ObtainInventory (pmo);
+	DObject::StaticPointerSubstitution (pmo, mo);
 	if ((pmo->tid != 0) && (player->MorphStyle & MORPH_NEWTIDBEHAVIOUR))
 	{
 		mo->tid = pmo->tid;
@@ -235,6 +238,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 	mo->Score = pmo->Score;
+	InitAllPowerupEffects(mo->Inventory);
 
 	const PClass *exit_flash = player->MorphExitFlash;
 	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
@@ -536,6 +540,46 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 
 	// Not a morphed player or monster
 	return false;
+}
+
+//===========================================================================
+//
+// EndAllPowerupEffects
+//
+// Calls EndEffect() on every Powerup in the inventory list.
+//
+//===========================================================================
+
+void EndAllPowerupEffects(AInventory *item)
+{
+	while (item != NULL)
+	{
+		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
+		{
+			static_cast<APowerup *>(item)->EndEffect();
+		}
+		item = item->Inventory;
+	}
+}
+
+//===========================================================================
+//
+// InitAllPowerupEffects
+//
+// Calls InitEffect() on every Powerup in the inventory list.
+//
+//===========================================================================
+
+void InitAllPowerupEffects(AInventory *item)
+{
+	while (item != NULL)
+	{
+		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
+		{
+			static_cast<APowerup *>(item)->InitEffect();
+		}
+		item = item->Inventory;
+	}
 }
 
 // Base class for morphing projectiles --------------------------------------

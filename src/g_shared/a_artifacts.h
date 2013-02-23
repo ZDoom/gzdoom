@@ -30,6 +30,9 @@ protected:
 	virtual void InitEffect ();
 	virtual void DoEffect ();
 	virtual void EndEffect ();
+
+	friend void EndAllPowerupEffects(AInventory *item);
+	friend void InitAllPowerupEffects(AInventory *item);
 };
 
 // An artifact is an item that gives the player a powerup when activated.

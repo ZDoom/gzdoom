@@ -1335,7 +1335,7 @@ void R_DrawSkyBoxes ()
 ADD_STAT(skyboxes)
 {
 	FString out;
-	out.Format (out, "%d skybox planes", numskyboxes);
+	out.Format ("%d skybox planes", numskyboxes);
 	return out;
 }
 

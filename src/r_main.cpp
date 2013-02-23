@@ -762,7 +762,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	MaskedCycles.Reset();
 	WallScanCycles.Reset();
 
-	fakeActive = 0; // kg3D - reset fake floor idicator
+	fakeActive = 0; // kg3D - reset fake floor indicator
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
 	R_SetupBuffer ();

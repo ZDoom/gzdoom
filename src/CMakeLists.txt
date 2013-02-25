@@ -485,8 +485,10 @@ endif( BACKPATCH )
 
 # Update svnrevision.h
 
+get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )
+
 add_custom_target( revision_check ALL
-	COMMAND ${CMAKE_BINARY_DIR}/tools/updaterevision/updaterevision . src/svnrevision.h
+	COMMAND ${UPDATEREVISION_EXE} . src/svnrevision.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
@@ -568,14 +570,17 @@ else( NO_ASM )
 	endif( X64 )
 endif( NO_ASM )
 
+get_target_property( LEMON_EXE lemon LOCATION )
+get_target_property( RE2C_EXE re2c LOCATION )
+
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .
-	COMMAND ${CMAKE_BINARY_DIR}/tools/lemon/lemon xlat_parser.y
+	COMMAND ${LEMON_EXE} xlat_parser.y
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND ${CMAKE_BINARY_DIR}/tools/re2c/re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
+	COMMAND ${RE2C_EXE} --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
@@ -598,7 +603,37 @@ elseif( FLUIDSYNTH_FOUND )
 	add_definitions( -DHAVE_FLUIDSYNTH )
 endif( DYN_FLUIDSYNTH )
 
+# Project files should be aware of the header files. We can GLOB these since
+# there's generally a new cpp for every header so this file will get changed
+if( WIN32 )
+	set( EXTRA_HEADER_DIRS win32/*.h )
+else( WIN32 )
+	set( EXTRA_HEADER_DIRS sdl/*.h )
+endif( WIN32 )
+file( GLOB HEADER_FILES
+	${EXTRA_HEADER_DIRS}
+	fragglescript/*.h
+	g_doom/*.h
+	g_heretic/*.h
+	g_hexen/*.h
+	g_raven/*.h
+	g_shared/*.h
+	g_strife/*.h
+	intermission/*.h
+	menu/*.h
+	oplsynth/*.h
+	r_data/*.h
+	resourcefiles/*.h
+	sfmt/*.h
+	sound/*.h
+	textures/*.h
+	thingdef/*.h
+	xlat/*.h
+	*.h
+)
+
 add_executable( zdoom WIN32
+	${HEADER_FILES}
 	autostart.cpp
 	${ASM_SOURCES}
 	${SYSTEM_SOURCES}

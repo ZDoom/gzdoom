@@ -223,6 +223,9 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 
 		*s = clamp(ts + *s * 0.15f - 0.075f, 0.f, 1.f);
 		*v = clamp(tv + *v * 0.5f - 0.25f, 0.f, 1.f);
+
+		// Make sure not to pass back any colorset in teamplay.
+		colorset = NULL;
 	}
 	if (set != NULL)
 	{

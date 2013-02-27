@@ -927,7 +927,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
 	// For each player, if they are viewing through a player, make sure it is themselves.
-	for (int ii = 0; i < MAXPLAYERS; ++i)
+	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
 		if (playeringame[ii] && (players[ii].camera == NULL || players[ii].camera->player != NULL))
 		{

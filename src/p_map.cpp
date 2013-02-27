@@ -3467,7 +3467,7 @@ static bool CheckForSpectral (FTraceResults &res)
 //==========================================================================
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack, AActor **victim)
+				   int pitch, int damage, FName damageType, const PClass *pufftype, int flags, AActor **victim)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -3476,8 +3476,10 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	bool hitGhosts;
 	bool killPuff = false;
 	AActor *puff = NULL;
-	int flags = ismeleeattack? PF_MELEERANGE : 0;
 	int pflag = 0;
+	int puffFlags = (flags & LAF_ISMELEEATTACK)? PF_MELEERANGE : 0;
+	if (flags & LAF_NORANDOMPUFFZ)
+		puffFlags |= PF_NORANDOMZ;
 
 	if (victim != NULL)
 	{
@@ -3539,7 +3541,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		}
 		if (puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
-			puff = P_SpawnPuff (t1, pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2, flags);
+			puff = P_SpawnPuff (t1, pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2, puffFlags);
 		}
 		else
 		{
@@ -3558,7 +3560,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				fixed_t closer = trace.Distance - 4*FRACUNIT;
 				puff = P_SpawnPuff (t1, pufftype, t1->x + FixedMul (vx, closer),
 					t1->y + FixedMul (vy, closer),
-					shootz + FixedMul (vz, closer), angle - ANG90, 0, flags);
+					shootz + FixedMul (vz, closer), angle - ANG90, 0, puffFlags);
 			}
 
 			// [RH] Spawn a decal
@@ -3619,10 +3621,10 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
 				if (!(trace.Actor->flags & MF_NOBLOOD))
-					flags |= PF_HITTHINGBLEED;
+					puffFlags |= PF_HITTHINGBLEED;
 
 				// We must pass the unreplaced puff type here 
-				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
+				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags|PF_HITTHING);
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -3648,7 +3650,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				{ 
 					// Since the puff is the damage inflictor we need it here 
 					// regardless of whether it is displayed or not.
-					puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
+					puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags|PF_HITTHING|PF_TEMPORARY);
 					killPuff = true;
 				}
 				newdam = P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags);
@@ -3694,7 +3696,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 			if (puff == NULL)
 			{ // Spawn puff just to get a mass for the splash
-				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
+				puff = P_SpawnPuff (t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags|PF_HITTHING|PF_TEMPORARY);
 				killPuff = true;
 			}
 			SpawnDeepSplash (t1, trace, puff, vx, vy, vz, shootz, trace.Crossed3DWater != NULL);
@@ -3709,7 +3711,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 }
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack, AActor **victim)
+				   int pitch, int damage, FName damageType, FName pufftype, int flags, AActor **victim)
 {
 	const PClass * type = PClass::FindClass(pufftype);
 	if (victim != NULL)
@@ -3722,7 +3724,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	}
 	else
 	{
-		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, ismeleeattack, victim);
+		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim);
 	}
 	return NULL;
 }
@@ -4009,6 +4011,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		fixed_t x, y, z;
 		bool spawnpuff;
 		bool bleed = false;
+
 		int puffflags = PF_HITTHING;
 
 		x = x1 + FixedMul (RailHits[i].Distance, vx);

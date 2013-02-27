@@ -128,7 +128,8 @@ enum EPuffFlags
 	PF_HITTHING = 1,
 	PF_MELEERANGE = 2,
 	PF_TEMPORARY = 4,
-	PF_HITTHINGBLEED = 8
+	PF_HITTHINGBLEED = 8,
+	PF_NORANDOMZ = 16
 };
 
 AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags = 0);
@@ -453,8 +454,14 @@ enum	// P_AimLineAttack flags
 	ALF_NOFRIENDS = 16,
 };
 
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false, AActor **victim = NULL);
-AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false, AActor **victim = NULL);
+enum	// P_LineAttack flags
+{
+	LAF_ISMELEEATTACK = 1,
+	LAF_NORANDOMPUFFZ = 2
+};
+
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, int flags = 0, AActor **victim = NULL);
+AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, int flags = 0, AActor **victim = NULL);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version

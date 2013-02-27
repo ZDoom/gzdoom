@@ -4738,8 +4738,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
 {
 	AActor *puff;
-
-	z += pr_spawnpuff.Random2 () << 10;
+	
+	if (!(flags & PF_NORANDOMZ))
+		z += pr_spawnpuff.Random2 () << 10;
 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;

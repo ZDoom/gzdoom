@@ -2245,7 +2245,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				paused = player + 1;
 				S_PauseSound (false, false);
 			}
-			BorderNeedRefresh = screen->GetPageCount ();
+			V_SetBorderNeedRefresh();
 		}
 		break;
 

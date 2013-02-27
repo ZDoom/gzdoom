@@ -460,7 +460,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 void R_ExecuteSetViewSize ()
 {
 	setsizeneeded = false;
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 
 	R_SetWindow (setblocks, SCREENWIDTH, SCREENHEIGHT, ST_Y);
 

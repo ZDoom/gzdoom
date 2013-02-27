@@ -1605,7 +1605,7 @@ void V_Init2()
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 	setsizeneeded = true;
 }
 

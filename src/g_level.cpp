@@ -227,7 +227,7 @@ void G_NewInit ()
 	int i;
 
 	G_ClearSnapshots ();
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 	netgame = false;
 	multiplayer = false;
 	if (demoplayback)
@@ -424,7 +424,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	demoplayback = false;
 	automapactive = false;
 	viewactive = true;
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 
 	//Added by MC: Initialize bots.
 	if (!deathmatch)

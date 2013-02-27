@@ -168,7 +168,7 @@ void HU_DrawScores (player_t *player)
 
 	HU_DoDrawScores (player, sortedplayers);
 
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 }
 
 //==========================================================================

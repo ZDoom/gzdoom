@@ -55,6 +55,8 @@ enum EHudState
 
 class AWeapon;
 
+void ST_SetNeedRefresh();
+
 // HUD Message base object --------------------------------------------------
 
 class DHUDMessage : public DObject

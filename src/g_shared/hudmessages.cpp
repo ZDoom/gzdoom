@@ -163,7 +163,7 @@ DHUDMessage::~DHUDMessage ()
 		Lines = NULL;
 		if (screen != NULL)
 		{
-			BorderNeedRefresh = screen->GetPageCount ();
+			V_SetBorderNeedRefresh();
 		}
 	}
 	if (SourceText != NULL)
@@ -597,7 +597,7 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 				DTA_RenderStyle, Style,
 				TAG_DONE);
 		}
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 	}
 }
 
@@ -698,7 +698,7 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 				DTA_RenderStyle, Style,
 				TAG_DONE);
 		}
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 	}
 	else
 	{

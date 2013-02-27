@@ -1134,7 +1134,7 @@ void C_DrawConsole (bool hw2d)
 		(viewwindowx || viewwindowy) &&
 		viewactive)
 	{
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 	}
 
 	oldbottom = ConBottom;
@@ -1224,8 +1224,8 @@ void C_DrawConsole (bool hw2d)
 			{
 				screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
 					player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
-				SB_state = screen->GetPageCount ();
-				BorderNeedRefresh = screen->GetPageCount ();
+				ST_SetNeedRefresh();
+				V_SetBorderNeedRefresh();
 			}
 		}
 	}

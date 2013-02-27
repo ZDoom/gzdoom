@@ -697,21 +697,21 @@ void D_Display ()
 
 	if (screen->Lock (false))
 	{
-		SB_state = screen->GetPageCount ();
-		BorderNeedRefresh = screen->GetPageCount ();
+		ST_SetNeedRefresh();
+		V_SetBorderNeedRefresh();
 	}
 
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)
 	{
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 		NoWipe--;
 		wipe = false;
 		wipegamestate = gamestate;
 	}
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 		switch (wipegamestate)
 		{
 		default:
@@ -780,8 +780,8 @@ void D_Display ()
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{
 				// Redraw everything every frame when using 2D accel
-				SB_state = screen->GetPageCount();
-				BorderNeedRefresh = screen->GetPageCount();
+				ST_SetNeedRefresh();
+				V_SetBorderNeedRefresh();
 			}
 			Renderer->DrawRemainingPlayerSprites();
 			screen->DrawBlendingRect();
@@ -1278,7 +1278,7 @@ void D_DoAdvanceDemo (void)
 		Advisory = NULL;
 		if (!M_DemoNoPlay)
 		{
-			BorderNeedRefresh = screen->GetPageCount ();
+			V_SetBorderNeedRefresh();
 			democount++;
 			mysnprintf (demoname + 4, countof(demoname) - 4, "%d", democount);
 			if (Wads.CheckNumForName (demoname) < 0)

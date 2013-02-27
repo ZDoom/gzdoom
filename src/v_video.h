@@ -485,6 +485,7 @@ void V_DrawFrame (int left, int top, int width, int height);
 void V_DrawBorder (int x1, int y1, int x2, int y2);
 void V_RefreshViewBorder ();
 
+void V_SetBorderNeedRefresh();
 
 #if defined(X86_ASM) || defined(X64_ASM)
 extern "C" void ASM_PatchPitch (void);

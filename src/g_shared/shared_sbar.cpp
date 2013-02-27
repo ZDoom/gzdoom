@@ -211,6 +211,17 @@ void ST_Clear()
 
 //---------------------------------------------------------------------------
 //
+// ST_SetNeedRefresh
+//
+//---------------------------------------------------------------------------
+
+void ST_SetNeedRefresh()
+{
+	SB_state = (StatusBar == NULL || screen == NULL) ? 0 : screen->GetPageCount();
+}
+
+//---------------------------------------------------------------------------
+//
 // Constructor
 //
 //---------------------------------------------------------------------------
@@ -297,7 +308,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		Displacement = 0;
 	}
 	::ST_X = ST_X;
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 //---------------------------------------------------------------------------
@@ -309,7 +320,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 void DBaseStatusBar::AttachToPlayer (player_t *player)
 {
 	CPlayer = player;
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 //---------------------------------------------------------------------------
@@ -331,7 +342,7 @@ int DBaseStatusBar::GetPlayer ()
 
 void DBaseStatusBar::MultiplayerChanged ()
 {
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 //---------------------------------------------------------------------------
@@ -441,7 +452,7 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DHUDMessage *msg)
 			// Redraw the status bar in case it was covered
 			if (screen != NULL)
 			{
-				SB_state = screen->GetPageCount();
+				ST_SetNeedRefresh();
 			}
 			return probe;
 		}
@@ -468,7 +479,7 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DWORD id)
 			// Redraw the status bar in case it was covered
 			if (screen != NULL)
 			{
-				SB_state = screen->GetPageCount();
+				ST_SetNeedRefresh();
 			}
 			return probe;
 		}
@@ -1281,7 +1292,7 @@ void DBaseStatusBar::Draw (EHudState state)
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
 				TAG_DONE);
-			BorderNeedRefresh = screen->GetPageCount();
+			V_SetBorderNeedRefresh();
 		}
 	}
 
@@ -1641,7 +1652,7 @@ void DBaseStatusBar::Serialize (FArchive &arc)
 void DBaseStatusBar::ScreenSizeChanged ()
 {
 	st_scale.Callback ();
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 
 	for (unsigned int i = 0; i < countof(Messages); ++i)
 	{

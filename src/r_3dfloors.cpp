@@ -140,7 +140,6 @@ void R_3D_EnterSkybox()
 	height_top = NULL;
 	height_cur = NULL;
 	height_max = -1;
-	fakeActive = 0;
 
 	CurrentSkybox++;
 }
@@ -158,7 +157,6 @@ void R_3D_LeaveSkybox()
 	height_top = current.height_top;
 	height_cur = current.height_cur;
 	height_max = current.height_max;
-	fakeActive = height_top != NULL;
 
 	CurrentSkybox--;
 }

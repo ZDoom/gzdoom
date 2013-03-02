@@ -492,13 +492,39 @@ void R_ClearPlanes (bool fullclear)
 {
 	int i, max;
 
-	// kg3D - we can't just clear planes if there are fake planes
-	if(!fullclear && fakeActive) return;
-
-	max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
-	for (i = 0; i <= max; i++)	// new code -- killough
-		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
-			freehead = &(*freehead)->next;
+	// Don't clear fake planes if not doing a full clear.
+	if (!fullclear)
+	{
+		for (i = 0; i <= MAXVISPLANES-1; i++)	// new code -- killough
+		{
+			for (visplane_t **probe = &visplanes[i]; *probe != NULL; )
+			{
+				if ((*probe)->sky < 0)
+				{ // fake: move past it
+					probe = &(*probe)->next;
+				}
+				else
+				{ // not fake: move to freelist
+					visplane_t *vis = *probe;
+					*freehead = vis;
+					*probe = vis->next;
+					vis->next = NULL;
+					freehead = &vis->next;
+				}
+			}
+		}
+	}
+	else
+	{
+		max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
+		for (i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
+		{
+			for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
+			{
+				freehead = &(*freehead)->next;
+			}
+		}
+	}
 
 	if (fullclear)
 	{
@@ -597,7 +623,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		skybox = NULL;
 		alpha = FRACUNIT;
 	}
-		
+
 	// New visplane algorithm uses hash table -- killough
 	hash = isskybox ? MAXVISPLANES : visplane_hash (picnum.GetIndex(), lightlevel, height);
 

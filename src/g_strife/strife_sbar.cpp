@@ -445,6 +445,7 @@ private:
 		}
 
 		// Inventory
+		CPlayer->inventorytics = 0;
 		CPlayer->mo->InvFirst = ValidateInvFirst (6);
 		for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 6; item = item->NextInv(), ++i)
 		{

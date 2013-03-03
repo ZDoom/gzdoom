@@ -414,7 +414,7 @@ CCMD (invuseall)
 
 CCMD (invuse)
 {
-	if (players[consoleplayer].inventorytics == 0 || gameinfo.gametype == GAME_Strife)
+	if (players[consoleplayer].inventorytics == 0)
 	{
 		if (players[consoleplayer].mo) SendItemUse = players[consoleplayer].mo->InvSel;
 	}

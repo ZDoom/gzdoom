@@ -989,3 +989,7 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 		set_source_files_properties( x86.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 	endif( SSE_MATTERS )
 endif( CMAKE_COMPILER_IS_GNUCXX )
+
+if( MSVC )
+	set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+endif( MSVC )

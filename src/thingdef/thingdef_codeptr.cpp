@@ -1041,6 +1041,7 @@ enum CBA_Flags
 	CBAF_NORANDOM = 2,
 	CBAF_EXPLICITANGLE = 4,
 	CBAF_NOPITCH = 8,
+	CBAF_NORANDOMPUFFZ = 16,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
@@ -1059,6 +1060,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	int i;
 	int bangle;
 	int bslope = 0;
+	int laflags = (Flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 	if (self->target || (Flags & CBAF_AIMFACING))
 	{
@@ -1091,7 +1093,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			if (!(Flags & CBAF_NORANDOM))
 				damage *= ((pr_cabullet()%3)+1);
 
-			P_LineAttack(self, angle, Range, slope, damage, NAME_Hitscan, pufftype);
+			P_LineAttack(self, angle, Range, slope, damage, NAME_Hitscan, pufftype, laflags);
 		}
     }
 }
@@ -1206,6 +1208,7 @@ enum FB_Flags
 	FBF_EXPLICITANGLE = 4,
 	FBF_NOPITCH = 8,
 	FBF_NOFLASH = 16,
+	FBF_NORANDOMPUFFZ = 32,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
@@ -1227,6 +1230,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	int i;
 	int bangle;
 	int bslope = 0;
+	int laflags = (Flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 	if ((Flags & FBF_USEAMMO) && weapon)
 	{
@@ -1251,7 +1255,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 		if (!(Flags & FBF_NORANDOM))
 			damage *= ((pr_cwbullet()%3)+1);
 
-		P_LineAttack(self, bangle, Range, bslope, damage, NAME_Hitscan, PuffType);
+		P_LineAttack(self, bangle, Range, bslope, damage, NAME_Hitscan, PuffType, laflags);
 	}
 	else 
 	{
@@ -1277,7 +1281,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			if (!(Flags & FBF_NORANDOM))
 				damage *= ((pr_cwbullet()%3)+1);
 
-			P_LineAttack(self, angle, Range, slope, damage, NAME_Hitscan, PuffType);
+			P_LineAttack(self, angle, Range, slope, damage, NAME_Hitscan, PuffType, laflags);
 		}
 	}
 }
@@ -1358,6 +1362,7 @@ enum
 	CPF_USEAMMO = 1,
 	CPF_DAGGER = 2,
 	CPF_PULLIN = 4,
+	CPF_NORANDOMPUFFZ = 8,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
@@ -1393,8 +1398,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	}
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
+	int puffFlags = LAF_ISMELEEATTACK | (flags & CPF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
-	P_LineAttack (self, angle, Range, pitch, Damage, NAME_Melee, PuffType, true, &linetarget);
+	P_LineAttack (self, angle, Range, pitch, Damage, NAME_Melee, PuffType, puffFlags, &linetarget);
 
 	// turn to face target
 	if (linetarget)

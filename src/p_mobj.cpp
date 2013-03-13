@@ -5628,7 +5628,9 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (source && source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
-		pitch = source->pitch; linetarget = NULL;
+		an = angle;
+		pitch = source->pitch;
+		linetarget = NULL;
 	}
 	else // see which target is to be aimed at
 	{
@@ -5646,14 +5648,14 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 				break;
 			}
 		} while (linetarget == NULL && --i >= 0);
-	}
 
-	if (linetarget == NULL)
-	{
-		an = angle;
-		if (nofreeaim || !level.IsFreelookAllowed())
+		if (linetarget == NULL)
 		{
-			pitch = 0;
+			an = angle;
+			if (nofreeaim || !level.IsFreelookAllowed())
+			{
+				pitch = 0;
+			}
 		}
 	}
 	if (pLineTarget) *pLineTarget = linetarget;

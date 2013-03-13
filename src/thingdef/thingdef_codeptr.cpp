@@ -68,6 +68,7 @@
 #include "g_shared/a_specialspot.h"
 #include "actorptrselect.h"
 #include "m_bbox.h"
+#include "r_data/r_translate.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -1729,6 +1730,7 @@ enum SIX_Flags
 	SIXF_TRANSFERAMBUSHFLAG=256,
 	SIXF_TRANSFERPITCH=512,
 	SIXF_TRANSFERPOINTERS=1024,
+	SIXF_USEBLOODCOLOR=2048,
 };
 
 
@@ -1738,9 +1740,18 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		AActor * originator = self;
 
-		if ((flags & SIXF_TRANSFERTRANSLATION) && !(mo->flags2 & MF2_DONTTRANSLATE))
+		if (!(mo->flags2 & MF2_DONTTRANSLATE))
 		{
-			mo->Translation = self->Translation;
+			if (flags & SIXF_TRANSFERTRANSLATION)
+			{
+				mo->Translation = self->Translation;
+			}
+			else if (flags & SIXF_USEBLOODCOLOR)
+			{
+				// [XA] Use the spawning actor's BloodColor to translate the newly-spawned object.
+				PalEntry bloodcolor = self->GetBloodColor();
+				mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+			}
 		}
 		if (flags & SIXF_TRANSFERPOINTERS)
 		{

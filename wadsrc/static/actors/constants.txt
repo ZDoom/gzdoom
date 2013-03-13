@@ -53,6 +53,7 @@ const int SXF_CLIENTSIDE=128;	// only used by Skulltag
 const int SXF_TRANSFERAMBUSHFLAG=256;
 const int SXF_TRANSFERPITCH=512;
 const int SXF_TRANSFERPOINTERS=1024;
+const int SXF_USEBLOODCOLOR=2048;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;

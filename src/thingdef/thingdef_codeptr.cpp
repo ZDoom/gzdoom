@@ -4510,3 +4510,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 
 	self->tics = tics_to_set;
 }
+
+//==========================================================================
+//
+// A_SetDamageType
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDamageType)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_NAME(damagetype, 0);
+
+	self->DamageType = damagetype;
+}

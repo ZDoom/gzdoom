@@ -1274,52 +1274,56 @@ static int STACK_ARGS sortcvars (const void *a, const void *b)
 
 void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter)
 {
-	FBaseCVar *cvar = CVars;
-	while (cvar)
+	// Accumulate all cvars that match the filter flags.
+	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 	{
 		if (cvar->Flags & filter)
-			cvars.Push (cvar);
-		cvar = cvar->m_Next;
+			cvars.Push(cvar);
 	}
-	if (cvars.Size () > 0)
+	// Now sort them, so they're in a deterministic order and not whatever
+	// order the linker put them in.
+	if (cvars.Size() > 0)
 	{
-		cvars.ShrinkToFit ();
-		qsort (&cvars[0], cvars.Size(), sizeof(FBaseCVar *), sortcvars);
+		qsort(&cvars[0], cvars.Size(), sizeof(FBaseCVar *), sortcvars);
 	}
 }
 
 void C_WriteCVars (BYTE **demo_p, DWORD filter, bool compact)
 {
-	FBaseCVar *cvar = CVars;
-	BYTE *ptr = *demo_p;
+	FString dump = C_GetMassCVarString(filter, compact);
+	size_t dumplen = dump.Len() + 1;	// include terminating \0
+	memcpy(*demo_p, dump.GetChars(), dumplen);
+	*demo_p += dumplen;
+}
+
+FString C_GetMassCVarString (DWORD filter, bool compact)
+{
+	FBaseCVar *cvar;
+	FString dump;
 
 	if (compact)
 	{
 		TArray<FBaseCVar *> cvars;
-		ptr += sprintf ((char *)ptr, "\\\\%ux", filter);
-		FilterCompactCVars (cvars, filter);
+		dump.AppendFormat("\\\\%ux", filter);
+		FilterCompactCVars(cvars, filter);
 		while (cvars.Pop (cvar))
 		{
-			UCVarValue val = cvar->GetGenericRep (CVAR_String);
-			ptr += sprintf ((char *)ptr, "\\%s", val.String);
+			UCVarValue val = cvar->GetGenericRep(CVAR_String);
+			dump << '\\' << val.String;
 		}
 	}
 	else
 	{
-		cvar = CVars;
-		while (cvar)
+		for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 		{
 			if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_NOSAVE))
 			{
-				UCVarValue val = cvar->GetGenericRep (CVAR_String);
-				ptr += sprintf ((char *)ptr, "\\%s\\%s",
-					cvar->GetName (), val.String);
+				UCVarValue val = cvar->GetGenericRep(CVAR_String);
+				dump << '\\' << cvar->GetName() << '\\' << val.String;
 			}
-			cvar = cvar->m_Next;
 		}
 	}
-
-	*demo_p = ptr + 1;
+	return dump;
 }
 
 void C_ReadCVars (BYTE **demo_p)

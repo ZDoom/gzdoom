@@ -2096,11 +2096,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	G_WriteHubInfo(stdfile);
 
 	{
-		BYTE vars[4096], *vars_p;
-		vars_p = vars;
-		C_WriteCVars (&vars_p, CVAR_SERVERINFO);
-		*vars_p = 0;
-		M_AppendPNGText (stdfile, "Important CVARs", (char *)vars);
+		FString vars = C_GetMassCVarString(CVAR_SERVERINFO);
+		M_AppendPNGText (stdfile, "Important CVARs", vars.GetChars());
 	}
 
 	if (level.time != 0 || level.maptime != 0)

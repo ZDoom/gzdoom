@@ -150,7 +150,7 @@ private:
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
 
-	friend void C_WriteCVars (BYTE **demo_p, uint32 filter, bool compact);
+	friend FString C_GetMassCVarString (uint32 filter, bool compact);
 	friend void C_ReadCVars (BYTE **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
@@ -161,6 +161,10 @@ private:
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
 	friend void C_DeinitConsole();
 };
+
+// Returns a string with all cvars whose flags match filter. In compact mode,
+// the cvar names are omitted to save space.
+FString C_GetMassCVarString (uint32 filter, bool compact=false);
 
 // Writes all cvars that could effect demo sync to *demo_p. These are
 // cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.

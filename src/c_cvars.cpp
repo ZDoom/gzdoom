@@ -1390,58 +1390,42 @@ void C_ReadCVars (BYTE **demo_p)
 	*demo_p += strlen (*((char **)demo_p)) + 1;
 }
 
-static struct backup_s
+struct FCVarBackup
 {
-	char *name, *string;
-} CVarBackups[MAX_DEMOCVARS];
-
-static int numbackedup = 0;
+	FString Name, String;
+};
+static TArray<FCVarBackup> CVarBackups;
 
 void C_BackupCVars (void)
 {
-	struct backup_s *backup = CVarBackups;
-	FBaseCVar *cvar = CVars;
+	assert(CVarBackups.Size() == 0);
+	CVarBackups.Clear();
 
-	while (cvar)
+	FCVarBackup backup;
+
+	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 	{
-		if ((cvar->Flags & (CVAR_SERVERINFO|CVAR_DEMOSAVE))
-			&& !(cvar->Flags & CVAR_LATCH))
+		if ((cvar->Flags & (CVAR_SERVERINFO|CVAR_DEMOSAVE)) && !(cvar->Flags & CVAR_LATCH))
 		{
-			if (backup == &CVarBackups[MAX_DEMOCVARS])
-				I_Error ("C_BackupDemoCVars: Too many cvars to save (%d)", MAX_DEMOCVARS);
-			backup->name = copystring (cvar->GetName());
-			backup->string = copystring (cvar->GetGenericRep (CVAR_String).String);
-			backup++;
+			backup.Name = cvar->GetName();
+			backup.String = cvar->GetGenericRep(CVAR_String).String;
+			CVarBackups.Push(backup);
 		}
-		cvar = cvar->m_Next;
 	}
-	numbackedup = int(backup - CVarBackups);
 }
 
 void C_RestoreCVars (void)
 {
-	struct backup_s *backup = CVarBackups;
-	int i;
-
-	for (i = numbackedup; i; i--, backup++)
+	for (unsigned int i = 0; i < CVarBackups.Size(); ++i)
 	{
-		cvar_set (backup->name, backup->string);
+		cvar_set(CVarBackups[i].Name, CVarBackups[i].String);
 	}
 	C_ForgetCVars();
 }
 
 void C_ForgetCVars (void)
 {
-	struct backup_s *backup = CVarBackups;
-	int i;
-
-	for (i = numbackedup; i; i--, backup++)
-	{
-		delete[] backup->name;
-		delete[] backup->string;
-		backup->name = backup->string = NULL;
-	}
-	numbackedup = 0;
+	CVarBackups.Clear();
 }
 
 FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev)

@@ -184,14 +184,16 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (sourceFog)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		Spawn<ATeleportFog> (oldx, oldy, oldz + fogDelta, ALLOW_REPLACE);
+		AActor *fog = Spawn<ATeleportFog> (oldx, oldy, oldz + fogDelta, ALLOW_REPLACE);
+		fog->target = thing;
 	}
 	if (useFog)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 		an = angle >> ANGLETOFINESHIFT;
-		Spawn<ATeleportFog> (x + 20*finecosine[an],
+		AActor *fog = Spawn<ATeleportFog> (x + 20*finecosine[an],
 			y + 20*finesine[an], thing->z + fogDelta, ALLOW_REPLACE);
+		fog->target = thing;
 		if (thing->player)
 		{
 			// [RH] Zoom player's field of vision

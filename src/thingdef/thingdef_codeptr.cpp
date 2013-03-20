@@ -1716,102 +1716,127 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 // Common code for A_SpawnItem and A_SpawnItemEx
 //
 //===========================================================================
+
 enum SIX_Flags
 {
-	SIXF_TRANSFERTRANSLATION=1,
-	SIXF_ABSOLUTEPOSITION=2,
-	SIXF_ABSOLUTEANGLE=4,
-	SIXF_ABSOLUTEVELOCITY=8,
-	SIXF_SETMASTER=16,
-	SIXF_NOCHECKPOSITION=32,
-	SIXF_TELEFRAG=64,
-	// 128 is used by Skulltag!
-	SIXF_TRANSFERAMBUSHFLAG=256,
-	SIXF_TRANSFERPITCH=512,
-	SIXF_TRANSFERPOINTERS=1024,
-	SIXF_USEBLOODCOLOR=2048,
+	SIXF_TRANSFERTRANSLATION	= 1 << 0,
+	SIXF_ABSOLUTEPOSITION		= 1 << 1,
+	SIXF_ABSOLUTEANGLE			= 1 << 2,
+	SIXF_ABSOLUTEVELOCITY		= 1 << 3,
+	SIXF_SETMASTER				= 1 << 4,
+	SIXF_NOCHECKPOSITION		= 1 << 5,
+	SIXF_TELEFRAG				= 1 << 6,
+	SIXF_CLIENTSIDE				= 1 << 7,	// only used by Skulldronum
+	SIXF_TRANSFERAMBUSHFLAG		= 1 << 8,
+	SIXF_TRANSFERPITCH			= 1 << 9,
+	SIXF_TRANSFERPOINTERS		= 1 << 10,
+	SIXF_USEBLOODCOLOR			= 1 << 11,
+	SIXF_CLEARCALLERTID			= 1 << 12,
+	SIXF_MULTIPLYSPEED			= 1 << 13,
+	SIXF_TRANSFERSCALE			= 1 << 14,
 };
-
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 {
-	if (mo)
+	if (mo == NULL)
 	{
-		AActor * originator = self;
+		return false;
+	}
+	AActor *originator = self;
 
-		if (!(mo->flags2 & MF2_DONTTRANSLATE))
+	if (!(mo->flags2 & MF2_DONTTRANSLATE))
+	{
+		if (flags & SIXF_TRANSFERTRANSLATION)
 		{
-			if (flags & SIXF_TRANSFERTRANSLATION)
-			{
-				mo->Translation = self->Translation;
-			}
-			else if (flags & SIXF_USEBLOODCOLOR)
-			{
-				// [XA] Use the spawning actor's BloodColor to translate the newly-spawned object.
-				PalEntry bloodcolor = self->GetBloodColor();
-				mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
-			}
+			mo->Translation = self->Translation;
 		}
-		if (flags & SIXF_TRANSFERPOINTERS)
+		else if (flags & SIXF_USEBLOODCOLOR)
 		{
-			mo->target = self->target;
-			mo->master = self->master; // This will be overridden later if SIXF_SETMASTER is set
-			mo->tracer = self->tracer;
+			// [XA] Use the spawning actor's BloodColor to translate the newly-spawned object.
+			PalEntry bloodcolor = self->GetBloodColor();
+			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
+	}
+	if (flags & SIXF_TRANSFERPOINTERS)
+	{
+		mo->target = self->target;
+		mo->master = self->master; // This will be overridden later if SIXF_SETMASTER is set
+		mo->tracer = self->tracer;
+	}
 
-		mo->angle=self->angle;
-		if (flags & SIXF_TRANSFERPITCH) mo->pitch = self->pitch;
-		while (originator && originator->isMissile()) originator = originator->target;
+	mo->angle = self->angle;
+	if (flags & SIXF_TRANSFERPITCH)
+	{
+		mo->pitch = self->pitch;
+	}
+	while (originator && originator->isMissile())
+	{
+		originator = originator->target;
+	}
 
-		if (flags & SIXF_TELEFRAG) 
+	if (flags & SIXF_TELEFRAG) 
+	{
+		P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
+		// This is needed to ensure consistent behavior.
+		// Otherwise it will only spawn if nothing gets telefragged
+		flags |= SIXF_NOCHECKPOSITION;	
+	}
+	if (mo->flags3 & MF3_ISMONSTER)
+	{
+		if (!(flags & SIXF_NOCHECKPOSITION) && !P_TestMobjLocation(mo))
 		{
-			P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
-			// This is needed to ensure consistent behavior.
-			// Otherwise it will only spawn if nothing gets telefragged
-			flags |= SIXF_NOCHECKPOSITION;	
+			// The monster is blocked so don't spawn it at all!
+			mo->ClearCounters();
+			mo->Destroy();
+			return false;
 		}
-		if (mo->flags3&MF3_ISMONSTER)
+		else if (originator)
 		{
-			if (!(flags&SIXF_NOCHECKPOSITION) && !P_TestMobjLocation(mo))
+			if (originator->flags3 & MF3_ISMONSTER)
 			{
-				// The monster is blocked so don't spawn it at all!
-				mo->ClearCounters();
-				mo->Destroy();
-				return false;
+				// If this is a monster transfer all friendliness information
+				mo->CopyFriendliness(originator, true);
+				if (flags & SIXF_SETMASTER) mo->master = originator;	// don't let it attack you (optional)!
 			}
-			else if (originator)
+			else if (originator->player)
 			{
-				if (originator->flags3&MF3_ISMONSTER)
+				// A player always spawns a monster friendly to him
+				mo->flags |= MF_FRIENDLY;
+				mo->SetFriendPlayer(originator->player);
+
+				AActor * attacker=originator->player->attacker;
+				if (attacker)
 				{
-					// If this is a monster transfer all friendliness information
-					mo->CopyFriendliness(originator, true);
-					if (flags&SIXF_SETMASTER) mo->master = originator;	// don't let it attack you (optional)!
-				}
-				else if (originator->player)
-				{
-					// A player always spawns a monster friendly to him
-					mo->flags |= MF_FRIENDLY;
-					mo->SetFriendPlayer(originator->player);
-
-					AActor * attacker=originator->player->attacker;
-					if (attacker)
+					if (!(attacker->flags&MF_FRIENDLY) || 
+						(deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=mo->FriendPlayer))
 					{
-						if (!(attacker->flags&MF_FRIENDLY) || 
-							(deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=mo->FriendPlayer))
-						{
-							// Target the monster which last attacked the player
-							mo->LastHeard = mo->target = attacker;
-						}
+						// Target the monster which last attacked the player
+						mo->LastHeard = mo->target = attacker;
 					}
 				}
 			}
 		}
-		else if (!(flags & SIXF_TRANSFERPOINTERS))
-		{
-			// If this is a missile or something else set the target to the originator
-			mo->target=originator? originator : self;
-		}
 	}
+	else if (!(flags & SIXF_TRANSFERPOINTERS))
+	{
+		// If this is a missile or something else set the target to the originator
+		mo->target = originator ? originator : self;
+	}
+	if (flags & SIXF_TRANSFERSCALE)
+	{
+		mo->scaleX = self->scaleX;
+		mo->scaleY = self->scaleY;
+	}
+	if (flags & SIXF_TRANSFERAMBUSHFLAG)
+	{
+		mo->flags = (mo->flags & ~MF_AMBUSH) | (self->flags & MF_AMBUSH);
+	}
+	if (flags & SIXF_CLEARCALLERTID)
+	{
+		self->RemoveFromHash();
+		self->tid = 0;
+	}
+
 	return true;
 }
 
@@ -1861,7 +1886,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
 					self->z - self->floorclip + self->GetBobOffset() + zheight, ALLOW_REPLACE);
 
-	int flags = (transfer_translation? SIXF_TRANSFERTRANSLATION:0) + (useammo? SIXF_SETMASTER:0);
+	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	bool res = InitSpawnedItem(self, mo, flags);
 	ACTION_SET_RESULT(res);	// for an inventory item's use state
 }
@@ -1875,7 +1900,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 {
-	ACTION_PARAM_START(10);
+	ACTION_PARAM_START(11);
 	ACTION_PARAM_CLASS(missile, 0);
 	ACTION_PARAM_FIXED(xofs, 1);
 	ACTION_PARAM_FIXED(yofs, 2);
@@ -1886,6 +1911,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	ACTION_PARAM_ANGLE(Angle, 7);
 	ACTION_PARAM_INT(flags, 8);
 	ACTION_PARAM_INT(chance, 9);
+	ACTION_PARAM_INT(tid, 10);
 
 	if (!missile) 
 	{
@@ -1928,17 +1954,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		xvel = newxvel;
 	}
 
-	AActor * mo = Spawn(missile, x, y, self->z - self->floorclip + self->GetBobOffset() + zofs, ALLOW_REPLACE);
+	AActor *mo = Spawn(missile, x, y, self->z - self->floorclip + self->GetBobOffset() + zofs, ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	ACTION_SET_RESULT(res);	// for an inventory item's use state
-	if (mo)
+	if (res)
 	{
-		mo->velx = xvel;
-		mo->vely = yvel;
-		mo->velz = zvel;
+		if (tid != 0)
+		{
+			assert(mo->tid == 0);
+			mo->tid = tid;
+			mo->AddToHash();
+		}
+		if (flags & SIXF_MULTIPLYSPEED)
+		{
+			mo->velx = FixedMul(xvel, mo->Speed);
+			mo->vely = FixedMul(yvel, mo->Speed);
+			mo->velz = FixedMul(zvel, mo->Speed);
+		}
+		else
+		{
+			mo->velx = xvel;
+			mo->vely = yvel;
+			mo->velz = zvel;
+		}
 		mo->angle = Angle;
-		if (flags & SIXF_TRANSFERAMBUSHFLAG)
-			mo->flags = (mo->flags&~MF_AMBUSH) | (self->flags & MF_AMBUSH);
 	}
 }
 

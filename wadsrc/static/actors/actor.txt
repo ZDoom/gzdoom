@@ -210,7 +210,7 @@ ACTOR Actor native //: Thinker
 	action native A_GiveInventory(class<Inventory> itemtype, int amount = 0, int giveto = AAPTR_DEFAULT);
 	action native A_TakeInventory(class<Inventory> itemtype, int amount = 0, int flags = 0, int giveto = AAPTR_DEFAULT);
 	action native A_SpawnItem(class<Actor> itemtype = "Unknown", float distance = 0, float zheight = 0, bool useammo = true, bool transfer_translation = false);
-	action native A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xvel = 0, float yvel = 0, float zvel = 0, float angle = 0, int flags = 0, int failchance = 0);
+	action native A_SpawnItemEx(class<Actor> itemtype, float xofs = 0, float yofs = 0, float zofs = 0, float xvel = 0, float yvel = 0, float zvel = 0, float angle = 0, int flags = 0, int failchance = 0, int tid=0);
 	action native A_Print(string whattoprint, float time = 0, string fontname = "");
 	action native A_PrintBold(string whattoprint, float time = 0, string fontname = "");
 	action native A_Log(string whattoprint);

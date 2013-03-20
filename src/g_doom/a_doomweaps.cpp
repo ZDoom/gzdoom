@@ -467,7 +467,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 //
 // [RH] A_FireRailgun
 //
-static void FireRailgun(AActor *self, int RailOffset)
+static void FireRailgun(AActor *self, int offset_xy)
 {
 	int damage;
 	player_t *player;
@@ -492,7 +492,7 @@ static void FireRailgun(AActor *self, int RailOffset)
 
 	damage = deathmatch ? 100 : 150;
 
-	P_RailAttack (self, damage, RailOffset);
+	P_RailAttack (self, damage, offset_xy);
 }
 
 

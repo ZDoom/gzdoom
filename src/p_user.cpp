@@ -2103,7 +2103,7 @@ void P_PlayerThink (player_t *player)
 		player->ReadyWeapon != NULL &&			// No adjustment if no weapon.
 		player->ReadyWeapon->FOVScale != 0)		// No adjustment if the adjustment is zero.
 	{
-		// A negative scale is used top prevent G_AddViewAngle/G_AddViewPitch
+		// A negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
 		// from scaling with the FOV scale.
 		desired *= fabs(player->ReadyWeapon->FOVScale);
 	}
@@ -2373,7 +2373,7 @@ void P_PlayerThink (player_t *player)
 			}
 			if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY) || (player->cheats & CF_NOCLIP2))
 			{
-				player->mo->velz = cmd->ucmd.upmove << 9;
+				player->mo->velz = FixedMul(player->mo->Speed, cmd->ucmd.upmove << 9);
 				if (player->mo->waterlevel < 2 && !(player->mo->flags & MF_NOGRAVITY))
 				{
 					player->mo->flags2 |= MF2_FLY;

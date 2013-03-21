@@ -5277,10 +5277,11 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 
 		// Keep halving the advance vector until we get something less than maxdist
 		// units away, since we still want to spawn the missile inside the shooter.
-		while (TVector2<double>(advance).LengthSquared() >= maxsquared)
+		do
 		{
 			advance *= 0.5f;
 		}
+		while (TVector2<double>(advance).LengthSquared() >= maxsquared);
 		th->x += FLOAT2FIXED(advance.X);
 		th->y += FLOAT2FIXED(advance.Y);
 		th->z += FLOAT2FIXED(advance.Z);

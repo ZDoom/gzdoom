@@ -76,6 +76,7 @@ struct FPolyObj
 	bool RotatePolyobj (angle_t angle);
 	void ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, side_t **side) const;
 	void LinkPolyobj ();
+	void RecalcActorFloorCeil(FBoundingBox bounds) const;
 	void CreateSubsectorLinks();
 	void ClearSubsectorLinks();
 	void CalcCenter();

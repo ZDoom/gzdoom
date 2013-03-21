@@ -986,6 +986,7 @@ void FPolyObj::CalcCenter()
 
 bool FPolyObj::MovePolyobj (int x, int y, bool force)
 {
+	FBoundingBox oldbounds = Bounds;
 	UnLinkPolyobj ();
 	DoMovePolyobj (x, y);
 
@@ -1013,6 +1014,7 @@ bool FPolyObj::MovePolyobj (int x, int y, bool force)
 	CenterSpot.y += y;
 	LinkPolyobj ();
 	ClearSubsectorLinks();
+	RecalcActorFloorCeil(Bounds | oldbounds);
 	return true;
 }
 
@@ -1065,6 +1067,7 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 {
 	int an;
 	bool blocked;
+	FBoundingBox oldbounds = Bounds;
 
 	an = (this->angle+angle)>>ANGLETOFINESHIFT;
 
@@ -1103,6 +1106,7 @@ bool FPolyObj::RotatePolyobj (angle_t angle)
 	this->angle += angle;
 	LinkPolyobj();
 	ClearSubsectorLinks();
+	RecalcActorFloorCeil(Bounds | oldbounds);
 	return true;
 }
 
@@ -1335,6 +1339,26 @@ void FPolyObj::LinkPolyobj ()
 			}
 			// else, don't link the polyobj, since it's off the map
 		}
+	}
+}
+
+//===========================================================================
+//
+// FPolyObj :: RecalcActorFloorCeil
+//
+// For each actor within the bounding box, recalculate its floorz, ceilingz,
+// and related values.
+//
+//===========================================================================
+
+void FPolyObj::RecalcActorFloorCeil(FBoundingBox bounds) const
+{
+	FBlockThingsIterator it(bounds);
+	AActor *actor;
+
+	while ((actor = it.Next()) != NULL)
+	{
+		P_FindFloorCeiling(actor);
 	}
 }
 

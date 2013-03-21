@@ -538,7 +538,7 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
 		}
 	}
 
-	if (P_CheckMissileSpawn (other))
+	if (P_CheckMissileSpawn (other, source->radius))
 	{
 		angle_t pitch = P_AimLineAttack (source, source->angle, 1024*FRACUNIT);
 		other->velz = FixedMul (-finesine[pitch>>ANGLETOFINESHIFT], other->Speed);

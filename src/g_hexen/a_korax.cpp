@@ -502,5 +502,5 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 		dist = 1;
 	}
 	th->velz = (dest->z-z+(30*FRACUNIT))/dist;
-	return (P_CheckMissileSpawn(th) ? th : NULL);
+	return (P_CheckMissileSpawn(th, source->radius) ? th : NULL);
 }

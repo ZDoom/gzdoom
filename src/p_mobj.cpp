@@ -5258,10 +5258,8 @@ void P_CheckSplash(AActor *self, fixed_t distance)
 //
 //---------------------------------------------------------------------------
 
-bool P_CheckMissileSpawn (AActor* th)
+bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 {
-	int shift, count = 1;
-
 	// [RH] Don't decrement tics if they are already less than 1
 	if ((th->flags4 & MF4_RANDOMIZE) && th->tics > 0)
 	{
@@ -5270,76 +5268,66 @@ bool P_CheckMissileSpawn (AActor* th)
 			th->tics = 1;
 	}
 
-	// move a little forward so an angle can be computed if it immediately explodes
-	if (th->Speed >= 100*FRACUNIT)
-	{ // Ultra-fast ripper spawning missile
-		shift = 3;
-	}
-	else
-	{ // Normal missile
-		shift = 1;
-	}
-
-	if (th->radius > 0)
+	if (maxdist > 0)
 	{
-		while ( ((th->velx >> shift) > th->radius) || ((th->vely >> shift) > th->radius))
+		// move a little forward so an angle can be computed if it immediately explodes
+		TVector3<double> advance(FIXED2DBL(th->velx), FIXED2DBL(th->vely), FIXED2DBL(th->velz));
+		double maxsquared = FIXED2DBL(maxdist);
+		maxsquared *= maxsquared;
+
+		// Keep halving the advance vector until we get something less than maxdist
+		// units away, since we still want to spawn the missile inside the shooter.
+		while (TVector2<double>(advance).LengthSquared() >= maxsquared)
 		{
-			// we need to take smaller steps but to produce the same end result
-			// we have to do more of them.
-			shift++;
-			count<<=1;
+			advance *= 0.5f;
 		}
+		th->x += FLOAT2FIXED(advance.X);
+		th->y += FLOAT2FIXED(advance.Y);
+		th->z += FLOAT2FIXED(advance.Z);
 	}
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
 
-	for(int i=0; i<count; i++)
+	// killough 8/12/98: for non-missile objects (e.g. grenades)
+	// 
+	// [GZ] MBF excludes non-missile objects from the P_TryMove test
+	// and subsequent potential P_ExplodeMissile call. That is because
+	// in MBF, a projectile is not an actor with the MF_MISSILE flag
+	// but an actor with either or both the MF_MISSILE and MF_BOUNCES
+	// flags, and a grenade is identified by not having MF_MISSILE.
+	// Killough wanted grenades not to explode directly when spawned,
+	// therefore they can be fired safely even when humping a wall as
+	// they will then just drop on the floor at their shooter's feet.
+	//
+	// However, ZDoom does allow non-missiles to be shot as well, so
+	// Killough's check for non-missiles is inadequate here. So let's
+	// replace it by a check for non-missile and MBF bounce type.
+	// This should allow MBF behavior where relevant without altering
+	// established ZDoom behavior for crazy stuff like a cacodemon cannon.
+	bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
+
+	// killough 3/15/98: no dropoff (really = don't care for missiles)
+	if (!(P_TryMove (th, th->x, th->y, false, NULL, tm, true)))
 	{
-		th->x += th->velx >> shift;
-		th->y += th->vely >> shift;
-		th->z += th->velz >> shift;
-
-		// killough 8/12/98: for non-missile objects (e.g. grenades)
-		// 
-		// [GZ] MBF excludes non-missile objects from the P_TryMove test
-		// and subsequent potential P_ExplodeMissile call. That is because
-		// in MBF, a projectile is not an actor with the MF_MISSILE flag
-		// but an actor with either or both the MF_MISSILE and MF_BOUNCES
-		// flags, and a grenade is identified by not having MF_MISSILE.
-		// Killough wanted grenades not to explode directly when spawned,
-		// therefore they can be fired safely even when humping a wall as
-		// they will then just drop on the floor at their shooter's feet.
-		//
-		// However, ZDoom does allow non-missiles to be shot as well, so
-		// Killough's check for non-missiles is inadequate here. So let's
-		// replace it by a check for non-missile and MBF bounce type.
-		// This should allow MBF behavior where relevant without altering
-		// established ZDoom behavior for crazy stuff like a cacodemon cannon.
-		bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
-
-		// killough 3/15/98: no dropoff (really = don't care for missiles)
-		if (!(P_TryMove (th, th->x, th->y, false, NULL, tm, true)))
+		// [RH] Don't explode ripping missiles that spawn inside something
+		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
 		{
-			// [RH] Don't explode ripping missiles that spawn inside something
-			if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
+			// If this is a monster spawned by A_CustomMissile subtract it from the counter.
+			th->ClearCounters();
+			// [RH] Don't explode missiles that spawn on top of horizon lines
+			if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)
 			{
-				// If this is a monster spawned by A_CustomMissile subtract it from the counter.
-				th->ClearCounters();
-				// [RH] Don't explode missiles that spawn on top of horizon lines
-				if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)
-				{
-					th->Destroy ();
-				}
-				else if (MBFGrenade && th->BlockingLine != NULL													)
-				{
-					P_BounceWall(th);
-				}
-				else
-				{
-					P_ExplodeMissile (th, NULL, th->BlockingMobj);
-				}
-				return false;
+				th->Destroy ();
 			}
+			else if (MBFGrenade && th->BlockingLine != NULL)
+			{
+				P_BounceWall(th);
+			}
+			else
+			{
+				P_ExplodeMissile (th, NULL, th->BlockingMobj);
+			}
+			return false;
 		}
 	}
 	return true;
@@ -5473,7 +5461,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		th->SetFriendPlayer(owner->player);
 	}
 
-	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
+	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
 }
 
 AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type)
@@ -5503,7 +5491,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 		th->SetFriendPlayer(owner->player);
 	}
 
-	P_CheckMissileSpawn(th);
+	P_CheckMissileSpawn(th, source->radius);
 	return th;
 }
 
@@ -5592,7 +5580,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 		mo->SetFriendPlayer(owner->player);
 	}
 
-	return (!checkspawn || P_CheckMissileSpawn(mo)) ? mo : NULL;
+	return (!checkspawn || P_CheckMissileSpawn(mo, source->radius)) ? mo : NULL;
 }
 
 /*
@@ -5711,7 +5699,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		MissileActor->SetFriendPlayer(source->player);
 	}
-	if (P_CheckMissileSpawn (MissileActor))
+	if (P_CheckMissileSpawn (MissileActor, source->radius))
 	{
 		return MissileActor;
 	}

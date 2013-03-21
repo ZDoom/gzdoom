@@ -4256,7 +4256,7 @@ void FParser::SF_SpawnShot2(void)
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
 			P_ThrustMobj(mo, mo->angle = source->angle, mo->Speed);
-			if (!P_CheckMissileSpawn(mo)) mo = NULL;
+			if (!P_CheckMissileSpawn(mo, source->radius)) mo = NULL;
 		}
 		t_return.value.mobj = mo;
 	}

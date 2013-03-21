@@ -333,7 +333,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 			{
 				missile->tracer=self->target;
 			}
-			P_CheckMissileSpawn(missile);
+			P_CheckMissileSpawn(missile, self->radius);
 		}
 	}
 }
@@ -1019,7 +1019,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 						missile->FriendPlayer = 0;
 					}
 				}
-				P_CheckMissileSpawn(missile);
+				P_CheckMissileSpawn(missile, self->radius);
 			}
 		}
 	}
@@ -1170,7 +1170,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 			{
 				missile->tracer=self->target;
 			}
-			P_CheckMissileSpawn(missile);
+			P_CheckMissileSpawn(missile, self->radius);
 		}
 	}
 }
@@ -2045,8 +2045,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 		bo->vely = xy_vely + z_vely + (self->vely >> 1);
 		bo->velz = xy_velz + z_velz;
 
-		bo->target= self;
-		P_CheckMissileSpawn (bo);
+		bo->target = self;
+		P_CheckMissileSpawn (bo, self->radius);
 	} 
 	else ACTION_SET_RESULT(false);
 }

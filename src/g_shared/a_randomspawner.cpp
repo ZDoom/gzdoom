@@ -173,7 +173,7 @@ class ARandomSpawner : public AActor
 				newmobj->z += SpawnPoint[2];
 			}
 			if (newmobj->flags & MF_MISSILE)
-				P_CheckMissileSpawn(newmobj);
+				P_CheckMissileSpawn(newmobj, 0);
 			// Bouncecount is used to count how many recursions we're in.
 			if (newmobj->IsKindOf(PClass::FindClass("RandomSpawner")))
 				newmobj->bouncecount = ++bouncecount;

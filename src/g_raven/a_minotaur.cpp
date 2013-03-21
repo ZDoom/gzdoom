@@ -375,7 +375,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 	mo = Spawn("MinotaurFX3", x, y, self->floorz, ALLOW_REPLACE);
 	mo->target = self->target;
 	mo->velx = 1; // Force block checking
-	P_CheckMissileSpawn (mo);
+	P_CheckMissileSpawn (mo, self->radius);
 }
 
 //---------------------------------------------------------------------------

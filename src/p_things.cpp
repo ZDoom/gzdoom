@@ -336,7 +336,7 @@ nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 					}
 					if (mobj->flags & MF_MISSILE)
 					{
-						if (P_CheckMissileSpawn (mobj))
+						if (P_CheckMissileSpawn (mobj, source->radius))
 						{
 							rtn = true;
 						}

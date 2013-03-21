@@ -29,7 +29,7 @@ void A_SpectralMissile (AActor *self, const char *missilename)
 		if (missile != NULL)
 		{
 			missile->tracer = self->target;
-			P_CheckMissileSpawn(missile);
+			P_CheckMissileSpawn(missile, self->radius);
 		}
 	}
 }

@@ -395,7 +395,7 @@ void FireMacePL1B (AActor *actor)
 	ball->velx = (actor->velx>>1) + FixedMul(ball->Speed, finecosine[angle]);
 	ball->vely = (actor->vely>>1) + FixedMul(ball->Speed, finesine[angle]);
 	S_Sound (ball, CHAN_BODY, "weapons/maceshoot", 1, ATTN_NORM);
-	P_CheckMissileSpawn (ball);
+	P_CheckMissileSpawn (ball, actor->radius);
 }
 
 //----------------------------------------------------------------------------
@@ -538,7 +538,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 		tiny->velx = (self->velx>>1) + FixedMul(self->velz-FRACUNIT, finecosine[angle]);
 		tiny->vely = (self->vely>>1) + FixedMul(self->velz-FRACUNIT, finesine[angle]);
 		tiny->velz = self->velz;
-		P_CheckMissileSpawn (tiny);
+		P_CheckMissileSpawn (tiny, self->radius);
 
 		tiny = Spawn("MaceFX3", self->x, self->y, self->z, ALLOW_REPLACE);
 		angle = self->angle-ANG90;
@@ -548,7 +548,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 		tiny->velx = (self->velx>>1) + FixedMul(self->velz-FRACUNIT, finecosine[angle]);
 		tiny->vely = (self->vely>>1) + FixedMul(self->velz-FRACUNIT, finesine[angle]);
 		tiny->velz = self->velz;
-		P_CheckMissileSpawn (tiny);
+		P_CheckMissileSpawn (tiny, self->radius);
 	}
 	else
 	{ // Explode
@@ -809,7 +809,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 		angle >>= ANGLETOFINESHIFT;
 		ripper->velx = FixedMul (ripper->Speed, finecosine[angle]);
 		ripper->vely = FixedMul (ripper->Speed, finesine[angle]);
-		P_CheckMissileSpawn (ripper);
+		P_CheckMissileSpawn (ripper, self->radius);
 	}
 }
 
@@ -1064,7 +1064,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	mo->velx = 1; // Force collision detection
 	mo->velz = -mo->Speed;
 	mo->special2 = self->special2; // Transfer player number
-	P_CheckMissileSpawn (mo);
+	P_CheckMissileSpawn (mo, self->radius);
 	if (self->special1 != -1 && !S_IsActorPlayingSomething (self, CHAN_BODY, -1))
 	{
 		S_Sound (self, CHAN_BODY|CHAN_LOOP, self->special1, 1, ATTN_NORM);
@@ -1314,7 +1314,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	{
 		S_Sound (self, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
 	}	
-	P_CheckMissileSpawn (mo);
+	P_CheckMissileSpawn (mo, self->radius);
 }
 
 //----------------------------------------------------------------------------

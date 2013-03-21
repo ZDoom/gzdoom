@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 				trail->velx = missile->velx;
 				trail->vely = missile->vely;
 				trail->velz = missile->velz;
-				P_CheckMissileSpawn (trail);
+				P_CheckMissileSpawn (trail, self->radius);
 			}
 		}
 		missile->z += missile->velz >> 2;

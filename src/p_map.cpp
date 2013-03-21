@@ -1075,19 +1075,18 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 					//     friendliness and hate status.
 					if (tm.thing->target->flags & MF_SHOOTABLE)
 					{
-						if (!(thing->flags3 & MF3_ISMONSTER))
+						// Question: Should monsters be allowed to shoot barrels in this mode?
+						// The old code does not.
+						if (thing->flags3 & MF3_ISMONSTER)
 						{
-							return false;	// Question: Should monsters be allowed to shoot barrels in this mode?
-											// The old code does not.
-						}
-
-						// Monsters that are clearly hostile can always hurt each other
-						if (!thing->IsHostile (tm.thing->target))
-						{
-							// The same if the shooter hates the target
-							if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
+							// Monsters that are clearly hostile can always hurt each other
+							if (!thing->IsHostile (tm.thing->target))
 							{
-								return false;
+								// The same if the shooter hates the target
+								if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
+								{
+									return false;
+								}
 							}
 						}
 					}

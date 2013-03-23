@@ -69,6 +69,7 @@
 #include "actorptrselect.h"
 #include "m_bbox.h"
 #include "r_data/r_translate.h"
+#include "p_trace.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -2906,6 +2907,283 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 	self->target = NULL;
 	self->LastHeard = NULL;
 	self->lastenemy = NULL;
+}
+
+//==========================================================================
+//
+// A_CheckLOF (state jump, int flags = CRF_AIM_VERT|CRF_AIM_HOR,
+//    fixed range = 0, angle angle = 0, angle pitch = 0, 
+//    fixed offsetheight = 32, fixed offsetwidth = 0,
+//	  int ptr_target = AAPTR_DEFAULT (target) )
+//
+//==========================================================================
+
+enum CLOF_flags
+{
+	CLOFF_NOAIM_VERT = 0x1,
+	CLOFF_NOAIM_HORZ = 0x2,
+
+	CLOFF_JUMPENEMY = 0x4,
+	CLOFF_JUMPFRIEND = 0x8,
+	CLOFF_JUMPOBJECT = 0x10,
+	CLOFF_JUMPNONHOSTILE = 0x20,
+
+	CLOFF_SKIPENEMY = 0x40,
+	CLOFF_SKIPFRIEND = 0x80,
+	CLOFF_SKIPOBJECT = 0x100,
+	CLOFF_SKIPNONHOSTILE = 0x200,
+
+	CLOFF_MUSTBESHOOTABLE = 0x400,
+
+	CLOFF_SKIPTARGET = 0x800,
+	CLOFF_ALLOWNULL = 0x1000,
+	CLOFF_CHECKPARTIAL = 0x2000,
+
+	CLOFF_MUSTBEGHOST = 0x4000,
+	CLOFF_IGNOREGHOST = 0x8000,
+	
+	CLOFF_MUSTBESOLID = 0x10000,
+	CLOFF_BEYONDTARGET = 0x20000,
+
+	CLOFF_FROMBASE = 0x40000,
+	CLOFF_MUL_HEIGHT = 0x80000,
+	CLOFF_MUL_WIDTH = 0x100000
+};
+
+struct LOFData
+{
+	AActor *Self;
+	AActor *Target;
+	int Flags;
+};
+
+ETraceStatus CheckLOFTraceFunc(FTraceResults &trace, void *userdata)
+{
+	LOFData *data = (LOFData *)userdata;
+	int flags = data->Flags;
+
+	if (trace.HitType != TRACE_HitActor)
+	{
+		return TRACE_Stop;
+	}
+	if (trace.Actor == data->Target)
+	{
+		if (flags & CLOFF_SKIPTARGET)
+		{
+			if (flags & CLOFF_BEYONDTARGET)
+			{
+				return TRACE_Skip;
+			}
+			return TRACE_Abort;
+		}
+		return TRACE_Stop;
+	}
+	if (flags & CLOFF_MUSTBESHOOTABLE)
+	{ // all shootability checks go here
+		if (!(trace.Actor->flags & MF_SHOOTABLE))
+		{
+			return TRACE_Skip;
+		}
+		if (trace.Actor->flags2 & MF2_NONSHOOTABLE)
+		{
+			return TRACE_Skip;
+		}
+	}
+	if ((flags & CLOFF_MUSTBESOLID) && !(trace.Actor->flags & MF_SOLID))
+	{
+		return TRACE_Skip;
+	}
+	if (flags & CLOFF_MUSTBEGHOST)
+	{
+		if (!(trace.Actor->flags3 & MF3_GHOST))
+		{
+			return TRACE_Skip;
+		}
+	}
+	else if (flags & CLOFF_IGNOREGHOST)
+	{
+		if (trace.Actor->flags3 & MF3_GHOST)
+		{
+			return TRACE_Skip;
+		}
+	}
+	if (
+			((flags & CLOFF_JUMPENEMY) && data->Self->IsHostile(trace.Actor)) ||
+			((flags & CLOFF_JUMPFRIEND) && data->Self->IsFriend(trace.Actor)) ||
+			((flags & CLOFF_JUMPOBJECT) && !(trace.Actor->flags3 & MF3_ISMONSTER)) ||
+			((flags & CLOFF_JUMPNONHOSTILE) && (trace.Actor->flags3 & MF3_ISMONSTER) && !data->Self->IsHostile(trace.Actor))
+		)
+	{
+		return TRACE_Stop;
+	}
+	if (
+			((flags & CLOFF_SKIPENEMY) && data->Self->IsHostile(trace.Actor)) ||
+			((flags & CLOFF_SKIPFRIEND) && data->Self->IsFriend(trace.Actor)) ||
+			((flags & CLOFF_SKIPOBJECT) && !(trace.Actor->flags3 & MF3_ISMONSTER)) ||
+			((flags & CLOFF_SKIPNONHOSTILE) && (trace.Actor->flags3 & MF3_ISMONSTER) && !data->Self->IsHostile(trace.Actor))
+		)
+	{
+		return TRACE_Skip;
+	}
+	return TRACE_Abort;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
+{
+	// Check line of fire
+
+	/*
+		Not accounted for / I don't know how it works: FLOORCLIP
+	*/
+
+	AActor *target;
+	fixed_t
+		x1, y1, z1,
+		vx, vy, vz;
+
+	ACTION_PARAM_START(9);
+	
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_FIXED(range, 2);
+	ACTION_PARAM_FIXED(minrange, 3);
+	{
+		ACTION_PARAM_ANGLE(angle, 4);
+		ACTION_PARAM_ANGLE(pitch, 5);
+		ACTION_PARAM_FIXED(offsetheight, 6);
+		ACTION_PARAM_FIXED(offsetwidth, 7);
+		ACTION_PARAM_INT(ptr_target, 8);
+
+		ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+		
+		target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
+
+		if (flags & CLOFF_MUL_HEIGHT)
+		{
+			if (self->player != NULL)
+			{
+				// Synced with hitscan: self->player->mo->height is strangely conscientious about getting the right actor for player
+				offsetheight = FixedMul(offsetheight, FixedMul (self->player->mo->height, self->player->crouchfactor));
+			}
+			else
+			{
+				offsetheight = FixedMul(offsetheight, self->height);
+			}
+		}
+		if (flags & CLOFF_MUL_WIDTH)
+		{
+			offsetwidth = FixedMul(self->radius, offsetwidth);
+		}
+		
+		x1 = self->x;
+		y1 = self->y;
+		z1 = self->z + offsetheight - self->floorclip;
+
+		if (!(flags & CLOFF_FROMBASE))
+		{ // default to hitscan origin
+
+			// Synced with hitscan: self->height is strangely NON-conscientious about getting the right actor for player
+			z1 += (self->height >> 1);
+			if (self->player != NULL)
+			{
+				z1 += FixedMul (self->player->mo->AttackZOffset, self->player->crouchfactor);
+			}
+			else
+			{
+				z1 += 8*FRACUNIT;
+			}
+		}
+
+		if (target)
+		{
+			FVector2 xyvec(target->x - x1, target->y - y1);
+			fixed_t distance = P_AproxDistance((fixed_t)xyvec.Length(), target->z - z1);
+
+			if (range && !(flags & CLOFF_CHECKPARTIAL))
+			{
+				if (distance > range) return;
+			}
+
+			{
+				angle_t ang;
+
+				if (flags & CLOFF_NOAIM_HORZ)
+				{
+					ang = self->angle;
+				}
+				else ang = R_PointToAngle2 (x1, y1, target->x, target->y);
+				
+				angle += ang;
+				
+				ang >>= ANGLETOFINESHIFT;
+				x1 += FixedMul(offsetwidth, finesine[ang]);
+				y1 -= FixedMul(offsetwidth, finecosine[ang]);
+			}
+
+			if (flags & CLOFF_NOAIM_VERT)
+			{
+				pitch += self->pitch;
+			}
+			else pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + target->height / 2);
+		}
+		else if (flags & CLOFF_ALLOWNULL)
+		{
+			angle += self->angle;
+			pitch += self->pitch;
+
+			angle_t ang = self->angle >> ANGLETOFINESHIFT;
+			x1 += FixedMul(offsetwidth, finesine[ang]);
+			y1 -= FixedMul(offsetwidth, finecosine[ang]);
+		}
+		else return;
+
+		angle >>= ANGLETOFINESHIFT;
+		pitch = (0-pitch)>>ANGLETOFINESHIFT;
+
+		vx = FixedMul (finecosine[pitch], finecosine[angle]);
+		vy = FixedMul (finecosine[pitch], finesine[angle]);
+		vz = -finesine[pitch];
+	}
+
+	/* Variable set:
+
+		jump, flags, target
+		x1,y1,z1 (trace point of origin)
+		vx,vy,vz (trace unit vector)
+		range
+	*/
+
+	sector_t *sec = P_PointInSector(x1, y1);
+
+	if (range == 0)
+	{
+		range = (self->player != NULL) ? PLAYERMISSILERANGE : MISSILERANGE;
+	}
+
+	FTraceResults trace;
+	LOFData lof_data;
+
+	lof_data.Self = self;
+	lof_data.Target = target;
+	lof_data.Flags = flags;
+
+	Trace(x1, y1, z1, sec, vx, vy, vz, range, 0xFFFFFFFF, ML_BLOCKEVERYTHING, self, trace, 0,
+		CheckLOFTraceFunc, &lof_data);
+
+	if (trace.HitType == TRACE_HitActor)
+	{
+		if (minrange > 0)
+		{
+			double dx = trace.Actor->x - x1,
+				   dy = trace.Actor->y - y1,
+				   dz = trace.Actor->z + trace.Actor->height/2 - z1;
+			if (dx*dx+ dy*dy+ dz*dz < (double)minrange*(double)minrange)
+			{
+				return;
+			}
+		}
+		ACTION_JUMP(jump);
+	}
 }
 
 //==========================================================================

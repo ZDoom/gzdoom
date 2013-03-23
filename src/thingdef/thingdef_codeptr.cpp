@@ -1736,6 +1736,8 @@ enum SIX_Flags
 	SIXF_CLEARCALLERTID			= 1 << 12,
 	SIXF_MULTIPLYSPEED			= 1 << 13,
 	SIXF_TRANSFERSCALE			= 1 << 14,
+	SIXF_TRANSFERSPECIAL		= 1 << 15,
+	SIXF_CLEARCALLERSPECIAL		= 1 << 16,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1837,6 +1839,16 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		self->RemoveFromHash();
 		self->tid = 0;
+	}
+	if (flags & SIXF_TRANSFERSPECIAL)
+	{
+		mo->special = self->special;
+		memcpy(mo->args, self->args, sizeof(self->args));
+	}
+	if (flags & SIXF_CLEARCALLERSPECIAL)
+	{
+		self->special = 0;
+		memset(self->args, 0, sizeof(self->args));
 	}
 
 	return true;

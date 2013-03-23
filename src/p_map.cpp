@@ -3882,10 +3882,15 @@ struct SRailHit
 	AActor *HitActor;
 	fixed_t Distance;
 };
-static TArray<SRailHit> RailHits (16);
+struct RailData
+{
+	TArray<SRailHit> RailHits;
+	bool StopAtOne;
+};
 
 static ETraceStatus ProcessRailHit (FTraceResults &res, void *userdata)
 {
+	RailData *data = (RailData *)userdata;
 	if (res.HitType != TRACE_HitActor)
 	{
 		return TRACE_Stop;
@@ -3901,37 +3906,9 @@ static ETraceStatus ProcessRailHit (FTraceResults &res, void *userdata)
 	SRailHit newhit;
 	newhit.HitActor = res.Actor;
 	newhit.Distance = res.Distance - 10*FRACUNIT;	// put blood in front
-	RailHits.Push (newhit);
+	data->RailHits.Push (newhit);
 
-	return TRACE_Continue;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-static ETraceStatus ProcessNoPierceRailHit (FTraceResults &res, void *userdata)
-{
-	if (res.HitType != TRACE_HitActor)
-	{
-		return TRACE_Stop;
-	}
-
-	// Invulnerable things completely block the shot
-	if (res.Actor->flags2 & MF2_INVULNERABLE)
-	{
-		return TRACE_Stop;
-	}
-
-	// Only process the first hit
-	SRailHit newhit;
-	newhit.HitActor = res.Actor;
-	newhit.Distance = res.Distance - 10*FRACUNIT;	// put blood in front
-	RailHits.Push (newhit);
-
-	return TRACE_Stop;
+	return data->StopAtOne ? TRACE_Stop : TRACE_Continue;
 }
 
 //==========================================================================
@@ -3978,7 +3955,9 @@ void P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z, 
 	x1 += offset_xy * finecosine[angle];
 	y1 += offset_xy * finesine[angle];
 
-	RailHits.Clear ();
+	RailData rail_data;
+
+	rail_data.StopAtOne = !!(railflags & RAF_NOPIERCE);
 	start.X = FIXED2FLOAT(x1);
 	start.Y = FIXED2FLOAT(y1);
 	start.Z = FIXED2FLOAT(shootz);
@@ -3992,7 +3971,7 @@ void P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z, 
 
 	Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 		distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-		flags, (railflags & RAF_NOPIERCE) ? ProcessNoPierceRailHit : ProcessRailHit);
+		flags, ProcessRailHit, &rail_data);
 
 	// Hurt anything the trace hit
 	unsigned int i;
@@ -4003,20 +3982,22 @@ void P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z, 
 	
 	if (puffclass != NULL) thepuff = Spawn (puffclass, source->x, source->y, source->z, ALLOW_REPLACE);
 
-	for (i = 0; i < RailHits.Size (); i++)
+	for (i = 0; i < rail_data.RailHits.Size (); i++)
 	{
 		fixed_t x, y, z;
 		bool spawnpuff;
 		bool bleed = false;
 
 		int puffflags = PF_HITTHING;
+		AActor *hitactor = rail_data.RailHits[i].HitActor;
+		fixed_t hitdist = rail_data.RailHits[i].Distance;
 
-		x = x1 + FixedMul (RailHits[i].Distance, vx);
-		y = y1 + FixedMul (RailHits[i].Distance, vy);
-		z = shootz + FixedMul (RailHits[i].Distance, vz);
+		x = x1 + FixedMul(hitdist, vx);
+		y = y1 + FixedMul(hitdist, vy);
+		z = shootz + FixedMul(hitdist, vz);
 
-		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
-			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
+		if ((hitactor->flags & MF_NOBLOOD) ||
+			(hitactor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
 			spawnpuff = (puffclass != NULL);
 		}
@@ -4024,21 +4005,24 @@ void P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z, 
 		{
 			spawnpuff = (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF);
 			puffflags |= PF_HITTHINGBLEED; // [XA] Allow for puffs to jump to XDeath state.
-			if(!(puffDefaults->flags3 & MF3_BLOODLESSIMPACT)) 
+			if (!(puffDefaults->flags3 & MF3_BLOODLESSIMPACT)) 
 			{
 				bleed = true;
 			}
 		}
 		if (spawnpuff)
-			P_SpawnPuff (source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);
+		{
+			P_SpawnPuff(source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);
+		}
 		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
-			P_PoisonMobj(RailHits[i].HitActor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
-
-		int newdam = P_DamageMobj (RailHits[i].HitActor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
+		{
+			P_PoisonMobj(hitactor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
+		}
+		int newdam = P_DamageMobj(hitactor, thepuff? thepuff:source, source, damage, damagetype, DMG_INFLICTOR_IS_PUFF);
 		if (bleed)
 		{
-			P_SpawnBlood (x, y, z, (source->angle + angleoffset) - ANG180, newdam > 0 ? newdam : damage, RailHits[i].HitActor);
-			P_TraceBleed (newdam > 0 ? newdam : damage, x, y, z, RailHits[i].HitActor, source->angle, pitch);
+			P_SpawnBlood(x, y, z, (source->angle + angleoffset) - ANG180, newdam > 0 ? newdam : damage, hitactor);
+			P_TraceBleed(newdam > 0 ? newdam : damage, x, y, z, hitactor, source->angle, pitch);
 		}
 	}
 

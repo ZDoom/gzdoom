@@ -3423,38 +3423,36 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **p
 //
 //==========================================================================
 
-static bool CheckForGhost (FTraceResults &res)
+static ETraceStatus CheckForGhost (FTraceResults &res, void *userdata)
 {
 	if (res.HitType != TRACE_HitActor)
 	{
-		return false;
+		return TRACE_Stop;
 	}
 
 	// check for physical attacks on a ghost
 	if (res.Actor->flags3 & MF3_GHOST || res.Actor->flags4 & MF4_SPECTRAL)
 	{
-		res.HitType = TRACE_HitNone;
-		return true;
+		return TRACE_Skip;
 	}
 
-	return false;
+	return TRACE_Stop;
 }
 
-static bool CheckForSpectral (FTraceResults &res)
+static ETraceStatus CheckForSpectral (FTraceResults &res, void *userdata)
 {
 	if (res.HitType != TRACE_HitActor)
 	{
-		return false;
+		return TRACE_Stop;
 	}
 
 	// check for physical attacks on spectrals
 	if (res.Actor->flags4 & MF4_SPECTRAL)
 	{
-		res.HitType = TRACE_HitNone;
-		return true;
+		return TRACE_Skip;
 	}
 
-	return false;
+	return TRACE_Stop;
 }
 
 //==========================================================================
@@ -3886,17 +3884,17 @@ struct SRailHit
 };
 static TArray<SRailHit> RailHits (16);
 
-static bool ProcessRailHit (FTraceResults &res)
+static ETraceStatus ProcessRailHit (FTraceResults &res, void *userdata)
 {
 	if (res.HitType != TRACE_HitActor)
 	{
-		return false;
+		return TRACE_Stop;
 	}
 
 	// Invulnerable things completely block the shot
 	if (res.Actor->flags2 & MF2_INVULNERABLE)
 	{
-		return false;
+		return TRACE_Stop;
 	}
 
 	// Save this thing for damaging later, and continue the trace
@@ -3905,7 +3903,7 @@ static bool ProcessRailHit (FTraceResults &res)
 	newhit.Distance = res.Distance - 10*FRACUNIT;	// put blood in front
 	RailHits.Push (newhit);
 
-	return true;
+	return TRACE_Continue;
 }
 
 //==========================================================================
@@ -3914,17 +3912,17 @@ static bool ProcessRailHit (FTraceResults &res)
 //
 //==========================================================================
 
-static bool ProcessNoPierceRailHit (FTraceResults &res)
+static ETraceStatus ProcessNoPierceRailHit (FTraceResults &res, void *userdata)
 {
 	if (res.HitType != TRACE_HitActor)
 	{
-		return false;
+		return TRACE_Stop;
 	}
 
 	// Invulnerable things completely block the shot
 	if (res.Actor->flags2 & MF2_INVULNERABLE)
 	{
-		return false;
+		return TRACE_Stop;
 	}
 
 	// Only process the first hit
@@ -3933,7 +3931,7 @@ static bool ProcessNoPierceRailHit (FTraceResults &res)
 	newhit.Distance = res.Distance - 10*FRACUNIT;	// put blood in front
 	RailHits.Push (newhit);
 
-	return false;
+	return TRACE_Stop;
 }
 
 //==========================================================================

@@ -85,10 +85,20 @@ enum
 	TRACE_Impact		= 4,	// Trigger SPAC_IMPACT lines
 };
 
+// return values from callback
+enum ETraceStatus
+{
+	TRACE_Stop,			// stop the trace, returning this hit
+	TRACE_Continue,		// continue the trace, returning this hit if there are none further along
+	TRACE_Skip,			// continue the trace; do not return this hit
+	TRACE_Abort,		// stop the trace, returning no hits
+};
+
 bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 			fixed_t vx, fixed_t vy, fixed_t vz, fixed_t maxDist,
 			DWORD ActorMask, DWORD WallMask, AActor *ignore,
 			FTraceResults &res,
-			DWORD traceFlags=0, bool (*callback)(FTraceResults &res)=NULL);
+			DWORD traceFlags=0,
+			ETraceStatus (*callback)(FTraceResults &res, void *)=NULL, void *callbackdata=NULL);
 
 #endif //__P_TRACE_H__

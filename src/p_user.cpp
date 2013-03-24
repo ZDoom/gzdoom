@@ -766,6 +766,12 @@ AWeapon *APlayerPawn::BestWeapon (const PClass *ammotype)
 			!weap->CheckAmmo (AWeapon::PrimaryFire, false))
 			continue;
 
+		// Don't select if if there isn't enough ammo as determined by the weapon's author.
+		if (weap->MinSelAmmo1 > 0 && (weap->Ammo1 == NULL || weap->Ammo1->Amount < weap->MinSelAmmo1))
+			continue;
+		if (weap->MinSelAmmo2 > 0 && (weap->Ammo2 == NULL || weap->Ammo2->Amount < weap->MinSelAmmo2))
+			continue;
+
 		// This weapon is usable!
 		bestOrder = weap->SelectionOrder;
 		bestMatch = weap;

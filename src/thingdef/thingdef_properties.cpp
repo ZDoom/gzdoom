@@ -1742,6 +1742,24 @@ DEFINE_CLASS_PROPERTY(selectionorder, I, Weapon)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY(minselectionammo1, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->MinSelAmmo1 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(minselectionammo2, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->MinSelAmmo2 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY(sisterweapon, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);

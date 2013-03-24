@@ -264,6 +264,7 @@ public:
 	const PClass *ProjectileType;			// Projectile used by primary attack
 	const PClass *AltProjectileType;		// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
+	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
 	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)

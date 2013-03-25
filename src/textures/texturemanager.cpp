@@ -176,7 +176,8 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 			{
 				// All NULL textures should actually return 0
 				if (tex->UseType == FTexture::TEX_FirstDefined && !(flags & TEXMAN_ReturnFirst)) return 0;
-				return FTextureID(tex->UseType==FTexture::TEX_Null? 0 : i);
+				if (tex->UseType == FTexture::TEX_SkinGraphic && !(flags & TEXMAN_AllowSkins)) return 0;
+				return FTextureID(tex->UseType==FTexture::TEX_Null ? 0 : i);
 			}
 			else if ((flags & TEXMAN_Overridable) && tex->UseType == FTexture::TEX_Override)
 			{
@@ -831,6 +832,7 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 
 	for (int i= firsttx; i <= lasttx; i++)
 	{
+		bool skin = false;
 		char name[9];
 		Wads.GetLumpName(name, i);
 		name[8]=0;
@@ -869,11 +871,17 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 			// Don't bother looking this lump if something later overrides it.
 			if (Wads.CheckNumForName(name, ns_graphics) != i) continue;
 		}
+		else if (ns >= ns_firstskin)
+		{
+			// Don't bother looking this lump if something later overrides it.
+			if (Wads.CheckNumForName(name, ns) != i) continue;
+			skin = true;
+		}
 		else continue;
 
 		// Try to create a texture from this lump and add it.
 		// Unfortunately we have to look at everything that comes through here...
-		FTexture *out = FTexture::CreateTexture(i, FTexture::TEX_MiscPatch);
+		FTexture *out = FTexture::CreateTexture(i, skin ? FTexture::TEX_SkinGraphic : FTexture::TEX_MiscPatch);
 
 		if (out != NULL) 
 		{
@@ -922,7 +930,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 	static int texturetypes[] = {
 		FTexture::TEX_Sprite, FTexture::TEX_Null, FTexture::TEX_FirstDefined, 
 		FTexture::TEX_WallPatch, FTexture::TEX_Wall, FTexture::TEX_Flat, 
-		FTexture::TEX_Override, FTexture::TEX_MiscPatch 
+		FTexture::TEX_Override, FTexture::TEX_MiscPatch, FTexture::TEX_SkinGraphic
 	};
 
 	for(unsigned int i=0;i<countof(texturetypes);i++)

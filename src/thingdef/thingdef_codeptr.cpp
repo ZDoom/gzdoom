@@ -2920,34 +2920,37 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 
 enum CLOF_flags
 {
-	CLOFF_NOAIM_VERT = 0x1,
-	CLOFF_NOAIM_HORZ = 0x2,
+	CLOFF_NOAIM_VERT =			0x1,
+	CLOFF_NOAIM_HORZ =			0x2,
 
-	CLOFF_JUMPENEMY = 0x4,
-	CLOFF_JUMPFRIEND = 0x8,
-	CLOFF_JUMPOBJECT = 0x10,
-	CLOFF_JUMPNONHOSTILE = 0x20,
+	CLOFF_JUMPENEMY =			0x4,
+	CLOFF_JUMPFRIEND =			0x8,
+	CLOFF_JUMPOBJECT =			0x10,
+	CLOFF_JUMPNONHOSTILE =		0x20,
 
-	CLOFF_SKIPENEMY = 0x40,
-	CLOFF_SKIPFRIEND = 0x80,
-	CLOFF_SKIPOBJECT = 0x100,
-	CLOFF_SKIPNONHOSTILE = 0x200,
+	CLOFF_SKIPENEMY =			0x40,
+	CLOFF_SKIPFRIEND =			0x80,
+	CLOFF_SKIPOBJECT =			0x100,
+	CLOFF_SKIPNONHOSTILE =		0x200,
 
-	CLOFF_MUSTBESHOOTABLE = 0x400,
+	CLOFF_MUSTBESHOOTABLE =		0x400,
 
-	CLOFF_SKIPTARGET = 0x800,
-	CLOFF_ALLOWNULL = 0x1000,
-	CLOFF_CHECKPARTIAL = 0x2000,
+	CLOFF_SKIPTARGET =			0x800,
+	CLOFF_ALLOWNULL =			0x1000,
+	CLOFF_CHECKPARTIAL =		0x2000,
 
-	CLOFF_MUSTBEGHOST = 0x4000,
-	CLOFF_IGNOREGHOST = 0x8000,
+	CLOFF_MUSTBEGHOST =			0x4000,
+	CLOFF_IGNOREGHOST =			0x8000,
 	
-	CLOFF_MUSTBESOLID = 0x10000,
-	CLOFF_BEYONDTARGET = 0x20000,
+	CLOFF_MUSTBESOLID =			0x10000,
+	CLOFF_BEYONDTARGET =		0x20000,
 
-	CLOFF_FROMBASE = 0x40000,
-	CLOFF_MUL_HEIGHT = 0x80000,
-	CLOFF_MUL_WIDTH = 0x100000
+	CLOFF_FROMBASE =			0x40000,
+	CLOFF_MUL_HEIGHT =			0x80000,
+	CLOFF_MUL_WIDTH =			0x100000,
+
+	CLOFF_JUMP_ON_MISS =		0x200000,
+	CLOFF_AIM_VERT_NOOFFSET =	0x400000,
 };
 
 struct LOFData
@@ -2955,6 +2958,7 @@ struct LOFData
 	AActor *Self;
 	AActor *Target;
 	int Flags;
+	bool BadActor;
 };
 
 ETraceStatus CheckLOFTraceFunc(FTraceResults &trace, void *userdata)
@@ -3025,6 +3029,7 @@ ETraceStatus CheckLOFTraceFunc(FTraceResults &trace, void *userdata)
 	{
 		return TRACE_Skip;
 	}
+	data->BadActor = true;
 	return TRACE_Abort;
 }
 
@@ -3124,7 +3129,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			{
 				pitch += self->pitch;
 			}
-			else pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + target->height / 2);
+			else if (flags & CLOFF_AIM_VERT_NOOFFSET)
+			{
+				pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + offsetheight + target->height / 2);
+			}
+			else
+			{
+				pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + target->height / 2);
+			}
 		}
 		else if (flags & CLOFF_ALLOWNULL)
 		{
@@ -3166,21 +3178,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	lof_data.Self = self;
 	lof_data.Target = target;
 	lof_data.Flags = flags;
+	lof_data.BadActor = false;
 
 	Trace(x1, y1, z1, sec, vx, vy, vz, range, 0xFFFFFFFF, ML_BLOCKEVERYTHING, self, trace, 0,
 		CheckLOFTraceFunc, &lof_data);
 
-	if (trace.HitType == TRACE_HitActor)
+	if (trace.HitType == TRACE_HitActor ||
+		((flags & CLOFF_JUMP_ON_MISS) && !lof_data.BadActor && trace.HitType != TRACE_HitNone))
 	{
-		if (minrange > 0)
+		if (minrange > 0 && trace.Distance < minrange)
 		{
-			double dx = trace.Actor->x - x1,
-				   dy = trace.Actor->y - y1,
-				   dz = trace.Actor->z + trace.Actor->height/2 - z1;
-			if (dx*dx+ dy*dy+ dz*dz < (double)minrange*(double)minrange)
-			{
-				return;
-			}
+			return;
 		}
 		ACTION_JUMP(jump);
 	}

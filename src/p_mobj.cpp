@@ -3054,37 +3054,36 @@ void AActor::Tick ()
 		}
 
 
-		if (cl_rockettrails & 2)
+		if (effects & FX_ROCKET) 
 		{
-			if (effects & FX_ROCKET) 
+			if (++smokecounter == 4)
 			{
-				if (++smokecounter==4)
+				// add some smoke behind the rocket 
+				smokecounter = 0;
+				AActor *th = Spawn("RocketSmokeTrail", x-velx, y-vely, z-velz, ALLOW_REPLACE);
+				if (th)
 				{
-					// add some smoke behind the rocket 
-					smokecounter = 0;
-					AActor * th = Spawn("RocketSmokeTrail", x-velx, y-vely, z-velz, ALLOW_REPLACE);
-					if (th)
-					{
-						th->tics -= pr_rockettrail()&3;
-						if (th->tics < 1) th->tics = 1;
-					}
+					th->tics -= pr_rockettrail()&3;
+					if (th->tics < 1) th->tics = 1;
+					if (!(cl_rockettrails & 2)) th->renderflags |= RF_INVISIBLE;
 				}
 			}
-			else if (effects & FX_GRENADE) 
+		}
+		else if (effects & FX_GRENADE) 
+		{
+			if (++smokecounter == 8)
 			{
-				if (++smokecounter==8)
+				smokecounter = 0;
+				angle_t moveangle = R_PointToAngle2(0,0,velx,vely);
+				AActor * th = Spawn("GrenadeSmokeTrail", 
+					x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
+					y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
+					z - (height>>3) * (velz>>16) + (2*height)/3, ALLOW_REPLACE);
+				if (th)
 				{
-					smokecounter = 0;
-					angle_t moveangle = R_PointToAngle2(0,0,velx,vely);
-					AActor * th = Spawn("GrenadeSmokeTrail", 
-						x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
-						y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
-						z - (height>>3) * (velz>>16) + (2*height)/3, ALLOW_REPLACE);
-					if (th)
-					{
-						th->tics -= pr_rockettrail()&3;
-						if (th->tics < 1) th->tics = 1;
-					}
+					th->tics -= pr_rockettrail()&3;
+					if (th->tics < 1) th->tics = 1;
+					if (!(cl_rockettrails & 2)) th->renderflags |= RF_INVISIBLE;
 				}
 			}
 		}

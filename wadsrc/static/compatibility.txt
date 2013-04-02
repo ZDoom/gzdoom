@@ -141,6 +141,9 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 }
 
 1D9E43988940CCD3555724E15DD8B1AB // Happy Time Circus map01 has bad teleporters
+040F83028FFA74456E335ED300BE2C33 // MAP17 (TownInfection.wad)
+156FA31F5FF72A87BF345B68029D3051 // MAP02 (nprject5.wad)
+AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
 {
 	ignoreteleporttags
 }

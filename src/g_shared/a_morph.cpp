@@ -428,7 +428,8 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 
 	if (beast->UnmorphTime == 0 || 
 		beast->UnmorphedMe == NULL ||
-		beast->flags3 & MF3_STAYMORPHED)
+		beast->flags3 & MF3_STAYMORPHED ||
+		beast->UnmorphedMe->flags3 & MF3_STAYMORPHED)
 	{
 		return false;
 	}

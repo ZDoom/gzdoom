@@ -394,8 +394,8 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	morphed->MorphStyle = style;
 	morphed->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
 	morphed->FlagsSave = actor->flags & ~MF_JUSTHIT;
-	//morphed->special = actor->special;
-	//memcpy (morphed->args, actor->args, sizeof(actor->args));
+	morphed->special = actor->special;
+	memcpy (morphed->args, actor->args, sizeof(actor->args));
 	morphed->CopyFriendliness (actor, true);
 	morphed->flags |= actor->flags & MF_SHADOW;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
@@ -405,6 +405,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	}
 	morphed->AddToHash ();
 	actor->RemoveFromHash ();
+	actor->special = 0;
 	actor->tid = 0;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;

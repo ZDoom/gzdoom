@@ -938,6 +938,8 @@ void AInventory::Touch (AActor *toucher)
 		toucher = toucher->player->mo;
 	}
 
+	bool localview = toucher->CheckLocalView(consoleplayer);
+
 	if (!CallTryPickup (toucher, &toucher)) return;
 
 	// This is the only situation when a pickup flash should ever play.
@@ -950,7 +952,7 @@ void AInventory::Touch (AActor *toucher)
 	{
 		const char * message = PickupMessage ();
 
-		if (message != NULL && *message != 0 && toucher->CheckLocalView (consoleplayer)
+		if (message != NULL && *message != 0 && localview
 			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
 		{
 			StaticLastMessageTic = gametic;

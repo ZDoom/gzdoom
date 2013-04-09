@@ -2338,10 +2338,9 @@ void P_PlayerThink (player_t *player)
 				// Jumping while crouching will force an un-crouch but not jump
 				player->crouching = 1;
 			}
-			else
-			if (player->mo->waterlevel >= 2)
+			else if (player->mo->waterlevel >= 2)
 			{
-				player->mo->velz = 4*FRACUNIT;
+				player->mo->velz = FixedMul(4*FRACUNIT, player->mo->Speed);
 			}
 			else if (player->mo->flags & MF_NOGRAVITY)
 			{

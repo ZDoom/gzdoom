@@ -2792,7 +2792,16 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		// result is only used in a ratio.
 		double dist_x = self->target->x - self->x;
 		double dist_y = self->target->y - self->y;
-		double dist_z = self->target->z - self->z;
+		// Positioning ala missile spawning, 32 units above foot level
+		fixed_t source_z = self->z + 32*FRACUNIT + self->GetBobOffset();
+		fixed_t target_z = self->target->z + 32*FRACUNIT + self->target->GetBobOffset();
+		// If the target z is above the target's head, reposition to the middle of
+		// its body.
+		if (target_z >= self->target->z + self->target->height)
+		{
+			target_z = self->target->z + self->target->height / 2;
+		}
+		double dist_z = target_z - source_z;
 		double dist = sqrt(dist_x*dist_x + dist_y*dist_y + dist_z*dist_z);
 
 		int other_pitch = (int)rad2bam(asin(dist_z / dist));

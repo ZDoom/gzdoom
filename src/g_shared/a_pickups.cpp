@@ -517,6 +517,33 @@ void AInventory::BeginPlay ()
 
 //===========================================================================
 //
+// AInventory :: Grind
+//
+//===========================================================================
+
+bool AInventory::Grind(bool items)
+{
+	// Does this grind request even care about items?
+	if (!items)
+	{
+		return false;
+	}
+	// Dropped items are normally destroyed by crushers. Set the DONTGIB flag,
+	// and they'll act like corpses with it set and be immune to crushers.
+	if (flags & MF_DROPPED)
+	{
+		if (!(flags3 & MF3_DONTGIB))
+		{
+			Destroy();
+		}
+		return false;
+	}
+	// Non-dropped items call the super method for compatibility.
+	return Super::Grind(items);
+}
+
+//===========================================================================
+//
 // AInventory :: DoEffect
 //
 // Handles any effect an item might apply to its owner

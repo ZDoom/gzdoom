@@ -700,7 +700,7 @@ public:
 	virtual bool Massacre ();
 
 	// Transforms the actor into a finely-ground paste
-	bool Grind(bool items);
+	virtual bool Grind(bool items);
 
 	// Is the other actor on my team?
 	bool IsTeammate (AActor *other);

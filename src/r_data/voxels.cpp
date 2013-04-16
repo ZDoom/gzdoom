@@ -296,6 +296,14 @@ FVoxel *R_LoadKVX(int lumpnum)
 	}
 	voxel->NumMips = mip;
 
+	// Fix pivot data for submips, since some tools seem to like to just center these.
+	for (i = 1; i < mip; ++i)
+	{
+		voxel->Mips[i].PivotX = voxel->Mips[0].PivotX >> i;
+		voxel->Mips[i].PivotY = voxel->Mips[0].PivotY >> i;
+		voxel->Mips[i].PivotZ = voxel->Mips[0].PivotZ >> i;
+	}
+
 	for (i = 0; i < mip; ++i)
 	{
 		if (!CopyVoxelSlabs((kvxslab_t *)voxel->Mips[i].SlabData, slabs[i], voxel->Mips[i].OffsetX[voxel->Mips[i].SizeX]))

@@ -142,6 +142,7 @@ Actor HealthPickup : Inventory native
 
 Actor Key : Inventory native
 {
+	+DONTGIB		// Don't disappear due to a crusher
 	+INVENTORY.INTERHUBSTRIP
 	Inventory.PickupSound "misc/k_pkup"
 }

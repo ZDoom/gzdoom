@@ -424,13 +424,18 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	{
 		R_CheckOffscreenBuffer(RenderTarget->GetWidth(), RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
 	}
+	if (spr->bInMirror)
+	{
+		flags |= DVF_MIRRORED;
+	}
 
 	// Render the voxel, either directly to the screen or offscreen.
-	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
+	R_DrawVoxel(spr->vx, spr->vy, spr->vz, spr->vang, spr->gx, spr->gy, spr->gz, spr->angle,
+		spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
-	if (flags != 0)
+	if ((flags & ~DVF_MIRRORED) != 0)
 	{
 		for (int x = 0; x < viewwidth; ++x)
 		{
@@ -760,10 +765,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->angle -= angle_t(ang * (4294967296.f / 360));
 		}
 
-		// These are irrelevant for voxels.
-		vis->texturemid = 0x1CEDBEEF;
-		vis->startfrac	= 0x1CEDBEEF;
-		vis->xiscale	= 0x1CEDBEEF;
+		vis->vx = viewx;
+		vis->vy = viewy;
+		vis->vz = viewz;
+		vis->vang = viewangle;
 	}
 
 	// killough 3/27/98: save sector for special clipping later
@@ -787,6 +792,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
 	vis->ColormapNum = 0;
+	vis->bInMirror = MirrorFlags & RF_XFLIP;
 
 	if (voxel != NULL)
 	{
@@ -1897,6 +1903,16 @@ void R_DrawSprite (vissprite_t *spr)
 				return;
 			}
 		}
+		// Add everything outside the left and right edges to the clipping array
+		// for R_DrawVisVoxel().
+		if (x1 > 0)
+		{
+			clearbufshort(cliptop, x1, viewheight);
+		}
+		if (x2 < viewwidth - 1)
+		{
+			clearbufshort(cliptop + x2 + 1, viewwidth - x2 - 1, viewheight);
+		}
 		int minvoxely = spr->gzt <= hzt ? 0 : (spr->gzt - hzt) / spr->yscale;
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
 		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
@@ -2228,7 +2244,8 @@ void R_DrawParticle (vissprite_t *vis)
 
 extern fixed_t baseyaspectmul;
 
-void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+void R_DrawVoxel(fixed_t globalposx, fixed_t globalposy, fixed_t globalposz, angle_t viewang,
+	fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
@@ -2244,11 +2261,13 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 
 	const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
 	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
-	const fixed_t globalposx =  viewx >> 12;
-	const fixed_t globalposy = -viewy >> 12;
-	const fixed_t globalposz = -viewz >> 8;
 	const double centerxwide_f = centerxwide;
 	const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
+
+	// Convert to Build's coordinate system.
+	globalposx =  globalposx >> 12;
+	globalposy = -globalposy >> 12;
+	globalposz = -globalposz >> 8;
 
 	dasprx =  dasprx >> 12;
 	daspry = -daspry >> 12;
@@ -2259,20 +2278,19 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	daxscale = daxscale / (0xC000 >> 6);
 	dayscale = dayscale / (0xC000 >> 6);
 
-	cosang = viewcos >> 2;
-	sinang = -viewsin >> 2;
+	cosang = finecosine[viewang >> ANGLETOFINESHIFT] >> 2;
+	sinang = -finesine[viewang >> ANGLETOFINESHIFT] >> 2;
 	sprcosang = finecosine[dasprang >> ANGLETOFINESHIFT] >> 2;
 	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
 
 	R_SetupDrawSlab(colormap);
 
 	// Select mip level
-	i = abs(DMulScale8(dasprx - globalposx, viewcos, daspry - globalposy, -viewsin));
+	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
 	i = DivScale6(i, MIN(daxscale, dayscale));
 	j = FocalLengthX >> 3;
-	for (k = 0; k < voxobj->NumMips; ++k)
+	for (k = 0; i >= j && k < voxobj->NumMips; ++k)
 	{
-		if (i < j) { break; }
 		i >>= 1;
 	}
 	if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
@@ -2403,6 +2421,13 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
+
+				if (flags & DVF_MIRRORED)
+				{
+					int t = viewwidth - lx;
+					lx = viewwidth - rx;
+					rx = t;
+				}
 
 				fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
 				fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));

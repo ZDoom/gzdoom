@@ -35,25 +35,36 @@ struct vissprite_t
 	fixed_t			gx, gy, gz;		// origin in world coordinates
 	angle_t			angle;
 	fixed_t			gzb, gzt;		// global bottom / top for silhouette clipping
-	fixed_t			startfrac;		// horizontal position of x1
 	fixed_t			xscale, yscale;
-	fixed_t			xiscale;		// negative if flipped
 	fixed_t			depth;
 	fixed_t			idepth;			// 1/z
-	fixed_t			texturemid;
 	DWORD			FillColor;
+	fixed_t			floorclip;
+	union
+	{
+		// Used by regular sprites
+		struct
+		{
+			FTexture *pic;
+			fixed_t	texturemid;
+			fixed_t	startfrac;		// horizontal position of x1
+			fixed_t	xiscale;		// negative if flipped
+		};
+		// Used by voxels
+		struct
+		{
+			struct FVoxel *voxel;
+			fixed_t vx, vy, vz;		// view origin
+			angle_t vang;			// view angle
+		};
+	};
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
 	F3DFloor		*fakefloor;
 	F3DFloor		*fakeceiling;
-	fixed_t			floorclip;
-	union
-	{
-		FTexture	  *pic;
-		struct FVoxel *voxel;
-	};
 	BYTE			bIsVoxel:1;		// [RH] Use voxel instead of pic
 	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
+	BYTE			bInMirror:1;	// [RH] Sprite is "inside" a mirror
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
 	BYTE			ColormapNum;	// Which colormap is rendered (needed for shaded drawer)
 	short 			renderflags;
@@ -102,9 +113,10 @@ void R_DrawRemainingPlayerSprites ();
 
 void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 
-enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2 };
+enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
-void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+void R_DrawVoxel(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t viewangle,
+	fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
 

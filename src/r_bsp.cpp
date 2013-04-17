@@ -346,7 +346,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	{
 		sector_t *heightsec = viewsector->heightsec;
 		bool underwater = r_fakingunderwater ||
-			(heightsec && viewz <= heightsec->floorplane.ZatPoint (viewx, viewy));
+			(heightsec && heightsec->floorplane.PointOnSide(viewx, viewy, viewz) <= 0);
 		bool doorunderwater = false;
 		int diffTex = (s->MoreFlags & SECF_CLIPFAKEPLANES);
 
@@ -405,9 +405,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			}
 		}
 
-//		fixed_t refflorz = s->floorplane.ZatPoint (viewx, viewy);
 		fixed_t refceilz = s->ceilingplane.ZatPoint (viewx, viewy);
-//		fixed_t orgflorz = sec->floorplane.ZatPoint (viewx, viewy);
 		fixed_t orgceilz = sec->ceilingplane.ZatPoint (viewx, viewy);
 
 #if 1
@@ -482,7 +480,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			}
 			FakeSide = FAKED_BelowFloor;
 		}
-		else if (heightsec && viewz >= heightsec->ceilingplane.ZatPoint (viewx, viewy) &&
+		else if (heightsec && heightsec->ceilingplane.PointOnSide(viewx, viewy, viewz) <= 0 &&
 				 orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
 		{	// Above-ceiling hack
 			tempsec->ceilingplane		= s->ceilingplane;
@@ -1084,7 +1082,7 @@ void R_Subsector (subsector_t *sub)
 		basecolormap = frontsector->ColorMap;
 	}
 
-	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
+	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
 		(frontsector->heightsec && 
@@ -1123,7 +1121,7 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
-	floorplane = frontsector->floorplane.ZatPoint (viewx, viewy) < viewz || // killough 3/7/98
+	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 		(frontsector->FloorSkyBox != NULL && frontsector->FloorSkyBox->bAlways) ||
 		(frontsector->heightsec &&

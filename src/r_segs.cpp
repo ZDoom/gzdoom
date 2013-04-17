@@ -2242,10 +2242,10 @@ void R_NewWall (bool needlights)
 	// killough 3/7/98: add deep water check
 	if (frontsector->GetHeightSec() == NULL)
 	{
-		if (frontsector->floorplane.ZatPoint (viewx, viewy) >= viewz)       // above view plane
+		if (frontsector->floorplane.PointOnSide(viewx, viewy, viewz) <= 0)	// above view plane
 			markfloor = false;
-		if (frontsector->ceilingplane.ZatPoint (viewx, viewy) <= viewz &&
-			frontsector->GetTexture(sector_t::ceiling) != skyflatnum)   // below view plane
+		if (frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) <= 0 &&
+			frontsector->GetTexture(sector_t::ceiling) != skyflatnum)		// below view plane
 			markceiling = false;
 	}
 
@@ -2394,13 +2394,13 @@ void R_StoreWallRange (int start, int stop)
 		ds_p->silhouette = 0;
 
 		if (rw_frontfz1 > rw_backfz1 || rw_frontfz2 > rw_backfz2 ||
-			backsector->floorplane.ZatPoint (viewx, viewy) > viewz)
+			backsector->floorplane.PointOnSide(viewx, viewy, viewz) < 0)
 		{
 			ds_p->silhouette = SIL_BOTTOM;
 		}
 
 		if (rw_frontcz1 < rw_backcz1 || rw_frontcz2 < rw_backcz2 ||
-			backsector->ceilingplane.ZatPoint (viewx, viewy) < viewz)
+			backsector->ceilingplane.PointOnSide(viewx, viewy, viewz) < 0)
 		{
 			ds_p->silhouette |= SIL_TOP;
 		}

@@ -1697,7 +1697,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		plane_sz[0] = -plane_sz[0];
 	}
 
-	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (float)(abs(pl->height.ZatPoint (viewx, viewy) - viewz));
+	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(FIXED2DBL(viewx), FIXED2DBL(viewy)) - FIXED2DBL(viewz))) / 65536.0;
 
 	if (pl->height.c > 0)
 		planelightfloat = -planelightfloat;

@@ -212,10 +212,16 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	// Returns < 0 : behind; == 0 : on; > 0 : in front
+	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
+	{
+		return TMulScale16(a,x, b,y, c,z) + d;
+	}
+
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
 	fixed_t Zat0 () const
 	{
-		return ic < 0? d:-d;
+		return ic < 0 ? d : -d;
 	}
 
 	// Returns the value of z at (x,y)

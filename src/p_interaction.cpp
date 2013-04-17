@@ -348,7 +348,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				int realgibhealth = realthis->GibHealth();
 				if (realthis->health >= realgibhealth)
 				{
-					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)
+					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)l
 				}
 			}
 			realthis->Die(source, inflictor, dmgflags);

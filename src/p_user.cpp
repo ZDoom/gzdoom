@@ -2204,7 +2204,8 @@ void P_PlayerThink (player_t *player)
 	{
 		player->cmd.ucmd.buttons &= ~BT_CROUCH;
 	}
-	if (player->morphTics == 0 && player->health > 0 && level.IsCrouchingAllowed())
+	if ((player->morphTics == 0 || player->mo->PlayerFlags & PPF_CROUCHABLEMORPH)
+		&& player->health > 0 && level.IsCrouchingAllowed())
 	{
 		if (!totallyfrozen)
 		{
@@ -2212,11 +2213,11 @@ void P_PlayerThink (player_t *player)
 		
 			if (crouchdir == 0)
 			{
-				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH)? -1 : 1;
+				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH) ? -1 : 1;
 			}
 			else if (player->cmd.ucmd.buttons & BT_CROUCH)
 			{
-				player->crouching=0;
+				player->crouching = 0;
 			}
 			if (crouchdir == 1 && player->crouchfactor < FRACUNIT &&
 				player->mo->z + player->mo->height < player->mo->ceilingz)

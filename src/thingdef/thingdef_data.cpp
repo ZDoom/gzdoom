@@ -336,6 +336,7 @@ static FFlagDef PlayerPawnFlags[] =
 	// PlayerPawn flags
 	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
 	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
+	DEFINE_FLAG(PPF, CROUCHABLEMORPH, APlayerPawn, PlayerFlags),
 };
 
 static FFlagDef PowerSpeedFlags[] =

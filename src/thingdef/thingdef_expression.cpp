@@ -86,6 +86,7 @@ DEFINE_MEMBER_VARIABLE(accuracy, AActor)
 DEFINE_MEMBER_VARIABLE(stamina, AActor)
 DEFINE_MEMBER_VARIABLE(height, AActor)
 DEFINE_MEMBER_VARIABLE(radius, AActor)
+DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
 
 
 //==========================================================================

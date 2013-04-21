@@ -307,6 +307,7 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
+	Mark(level.DefaultSkybox);
 	// Mark dead bodies.
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{

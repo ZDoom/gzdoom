@@ -77,6 +77,7 @@
 #include "d_netinf.h"
 #include "v_palette.h"
 #include "menu/menu.h"
+#include "a_sharedglobal.h"
 #include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
@@ -1272,6 +1273,7 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeFade (level.fadeto);
 
 	level.DefaultEnvironment = info->DefaultEnvironment;
+	level.DefaultSkybox = NULL;
 }
 
 //==========================================================================
@@ -1434,6 +1436,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializePolyobjs (arc);
 	P_SerializeSubsectors(arc);
 	StatusBar->Serialize (arc);
+
+	if (SaveVersion >= 4222)
+	{ // This must be done *after* thinkers are serialized.
+		arc << level.DefaultSkybox;
+	}
 
 	arc << level.total_monsters << level.total_items << level.total_secrets;
 

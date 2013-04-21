@@ -426,6 +426,8 @@ struct FLevelLocals
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
+	TObjPtr<class ASkyViewpoint> DefaultSkybox;
+
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls

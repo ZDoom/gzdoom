@@ -1015,6 +1015,7 @@ void R_Subsector (subsector_t *sub)
 	int          ceilinglightlevel;		// killough 4/11/98
 	bool		 outersubsector;
 	int	fll, cll, position;
+	ASkyViewpoint *skybox;
 
 	// kg3D - fake floor stuff
 	visplane_t *backupfp;
@@ -1082,9 +1083,10 @@ void R_Subsector (subsector_t *sub)
 		basecolormap = frontsector->ColorMap;
 	}
 
+	skybox = frontsector->CeilingSkyBox != NULL ? frontsector->CeilingSkyBox : level.DefaultSkybox;
 	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
-		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
+		(skybox != NULL && skybox->bAlways) ||
 		(frontsector->heightsec && 
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
@@ -1099,7 +1101,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->GetYScale(sector_t::ceiling),
 					frontsector->GetAngle(sector_t::ceiling),
 					frontsector->sky,
-					frontsector->CeilingSkyBox
+					skybox
 					) : NULL;
 
 	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -1121,9 +1123,10 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
+	skybox = frontsector->FloorSkyBox != NULL ? frontsector->FloorSkyBox : level.DefaultSkybox;
 	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
-		(frontsector->FloorSkyBox != NULL && frontsector->FloorSkyBox->bAlways) ||
+		(skybox != NULL && skybox->bAlways) ||
 		(frontsector->heightsec &&
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
@@ -1138,7 +1141,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->GetYScale(sector_t::floor),
 					frontsector->GetAngle(sector_t::floor),
 					frontsector->sky,
-					frontsector->FloorSkyBox
+					skybox
 					) : NULL;
 
 	// kg3D - fake planes rendering

@@ -2242,10 +2242,18 @@ void R_NewWall (bool needlights)
 	// killough 3/7/98: add deep water check
 	if (frontsector->GetHeightSec() == NULL)
 	{
-		if (frontsector->floorplane.PointOnSide(viewx, viewy, viewz) <= 0)	// above view plane
+		int planeside;
+
+		planeside = frontsector->floorplane.PointOnSide(viewx, viewy, viewz);
+		if (frontsector->floorplane.c < 0)	// 3D floors have the floor backwards
+			planeside = -planeside;
+		if (planeside <= 0)		// above view plane
 			markfloor = false;
-		if (frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) <= 0 &&
-			frontsector->GetTexture(sector_t::ceiling) != skyflatnum)		// below view plane
+
+		planeside = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz);
+		if (frontsector->ceilingplane.c > 0)	// 3D floors have the ceiling backwards
+			planeside = -planeside;
+		if (planeside <= 0)		// below view plane
 			markceiling = false;
 	}
 

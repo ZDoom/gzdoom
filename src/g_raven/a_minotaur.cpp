@@ -558,7 +558,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 	if (!self1->target || (self1->target->health <= 0) ||
 		!(self1->target->flags&MF_SHOOTABLE))
 	{ // look for a new target
-		self1->SetState (self1->FindState ("Spawn"));
+		self1->SetIdle();
 		return;
 	}
 

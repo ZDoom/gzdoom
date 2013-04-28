@@ -539,7 +539,7 @@ void APlayerPawn::BeginPlay ()
 
 void APlayerPawn::Tick()
 {
-	if (player != NULL && player->mo == this && player->morphTics == 0 && player->playerstate != PST_DEAD)
+	if (player != NULL && player->mo == this && player->CanCrouch() && player->playerstate != PST_DEAD)
 	{
 		height = FixedMul(GetDefault()->height, player->crouchfactor);
 	}
@@ -1788,7 +1788,7 @@ void P_MovePlayer (player_t *player)
 		sm = FixedMul (sm, player->mo->Speed);
 
 		// When crouching, speed and bobbing have to be reduced
-		if (player->morphTics == 0 && player->crouchfactor != FRACUNIT)
+		if (player->CanCrouch() && player->crouchfactor != FRACUNIT)
 		{
 			fm = FixedMul(fm, player->crouchfactor);
 			sm = FixedMul(sm, player->crouchfactor);
@@ -2204,8 +2204,7 @@ void P_PlayerThink (player_t *player)
 	{
 		player->cmd.ucmd.buttons &= ~BT_CROUCH;
 	}
-	if ((player->morphTics == 0 || player->mo->PlayerFlags & PPF_CROUCHABLEMORPH)
-		&& player->health > 0 && level.IsCrouchingAllowed())
+	if (player->CanCrouch() && player->health > 0 && level.IsCrouchingAllowed())
 	{
 		if (!totallyfrozen)
 		{

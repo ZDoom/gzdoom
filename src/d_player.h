@@ -426,6 +426,11 @@ public:
 		crouching = 0;
 		crouchviewdelta = 0;
 	}
+	
+	bool CanCrouch() const
+	{
+		return morphTics == 0 || mo->PlayerFlags & PPF_CROUCHABLEMORPH;
+	}
 
 	int GetSpawnClass();
 };

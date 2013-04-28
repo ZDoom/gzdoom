@@ -3504,7 +3504,7 @@ void AActor::Tick ()
 		int newtics;
 		do
 		{
-			newtics = --tics;
+			newtics = tics--;
 
 			// [RH] Use tics <= 0 instead of == 0 so that spawnstates
 			// of 0 tics work as expected.
@@ -3520,7 +3520,7 @@ void AActor::Tick ()
 					return; 		// freed itself
 			}
 		}
-		while (newtics < 0);
+		while (newtics == 0);
 	}
 	else
 	{

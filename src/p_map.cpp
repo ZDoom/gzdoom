@@ -3886,6 +3886,7 @@ struct RailData
 {
 	TArray<SRailHit> RailHits;
 	bool StopAtOne;
+	bool StopAtInvul;
 };
 
 static ETraceStatus ProcessRailHit (FTraceResults &res, void *userdata)
@@ -3897,7 +3898,7 @@ static ETraceStatus ProcessRailHit (FTraceResults &res, void *userdata)
 	}
 
 	// Invulnerable things completely block the shot
-	if (res.Actor->flags2 & MF2_INVULNERABLE)
+	if (data->StopAtInvul && res.Actor->flags2 & MF2_INVULNERABLE)
 	{
 		return TRACE_Stop;
 	}
@@ -3964,10 +3965,11 @@ void P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z, 
 
 	int flags;
 
-	AActor *puffDefaults = puffclass == NULL ? NULL : GetDefaultByType (puffclass->GetReplacement());
+	assert(puffclass != NULL);		// Because we set it to a default above
+	AActor *puffDefaults = GetDefaultByType (puffclass->GetReplacement());
 
-	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) flags = 0;
-	else flags = TRACE_PCross|TRACE_Impact;
+	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0 : TRACE_PCross|TRACE_Impact;
+	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
 
 	Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 		distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,

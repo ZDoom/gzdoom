@@ -3498,22 +3498,29 @@ void AActor::Tick ()
 	// cycle through states, calling action functions at transitions
 	if (tics != -1)
 	{
-		tics--;
-				
 		// you can cycle through multiple states in a tic
-		// [RH] Use <= 0 instead of == 0 so that spawnstates
-		// of 0 tics work as expected.
-		if (tics <= 0)
+		// [BL] If we reach here with a 0 duration state, we
+		// have created an extra tic, so account for it.
+		int newtics;
+		do
 		{
-			assert (state != NULL);
-			if (state == NULL)
+			newtics = --tics;
+
+			// [RH] Use tics <= 0 instead of == 0 so that spawnstates
+			// of 0 tics work as expected.
+			if (tics <= 0)
 			{
-				Destroy();
-				return;
+				assert (state != NULL);
+				if (state == NULL)
+				{
+					Destroy();
+					return;
+				}
+				if (!SetState (state->GetNextState()))
+					return; 		// freed itself
 			}
-			if (!SetState (state->GetNextState()))
-				return; 		// freed itself
 		}
+		while (newtics < 0);
 	}
 	else
 	{

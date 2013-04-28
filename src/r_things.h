@@ -38,6 +38,7 @@ struct vissprite_t
 	fixed_t			xscale, yscale;
 	fixed_t			depth;
 	fixed_t			idepth;			// 1/z
+	fixed_t			deltax, deltay;
 	DWORD			FillColor;
 	fixed_t			floorclip;
 	union

@@ -139,6 +139,7 @@ vissprite_t		**firstvissprite;
 vissprite_t		**vissprite_p;
 vissprite_t		**lastvissprite;
 int 			newvissprite;
+bool			DrewAVoxel;
 
 static vissprite_t **spritesorter;
 static int spritesortersize = 0;
@@ -186,6 +187,7 @@ void R_DeinitSprites()
 void R_ClearSprites (void)
 {
 	vissprite_p = firstvissprite;
+	DrewAVoxel = false;
 }
 
 
@@ -782,6 +784,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->gz = fz;
 	vis->gzb = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
+	vis->deltax = fx - viewx;
+	vis->deltay = fy - viewy;
 	vis->renderflags = thing->renderflags;
 	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->Style.RenderStyle = thing->RenderStyle;
@@ -798,6 +802,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		vis->voxel = voxel->Voxel;
 		vis->bIsVoxel = true;
+		DrewAVoxel = true;
 	}
 	else
 	{
@@ -1330,9 +1335,20 @@ void R_DrawRemainingPlayerSprites()
 //		gain compared to the old function.
 //
 // Sort vissprites by depth, far to near
+
+// This is the standard version, which does a simple test based on depth.
 static bool sv_compare(vissprite_t *a, vissprite_t *b)
 {
 	return a->idepth > b->idepth;
+}
+
+// This is an alternate version, for when one or more voxel is in view.
+// It does a 2D distance test based on whichever one is furthest from
+// the viewpoint.
+static bool sv_compare2d(vissprite_t *a, vissprite_t *b)
+{
+	return TVector2<double>(a->deltax, a->deltay).LengthSquared() <
+		   TVector2<double>(b->deltax, b->deltay).LengthSquared();
 }
 
 #if 0
@@ -1965,7 +1981,7 @@ void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
 
 void R_DrawMasked (void)
 {
-	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
+	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
 
 	if (height_top == NULL)
 	{ // kg3D - no visible 3D floors, normal rendering

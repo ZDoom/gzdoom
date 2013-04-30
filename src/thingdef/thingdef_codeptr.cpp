@@ -2608,11 +2608,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
-	while ( (mo = it.Next()) )
+	if (self->master != NULL)
 	{
-		if (mo->master == self->master && mo != self)
+		while ( (mo = it.Next()) )
 		{
-			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
+			if (mo->master == self->master && mo != self)
+			{
+				P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
+			}
 		}
 	}
 }
@@ -3501,18 +3504,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 
-	while ( (mo = it.Next()) )
+	if (self->master != NULL)
 	{
-		if (mo->master == self->master && mo != self)
+		while ( (mo = it.Next()) )
 		{
-			if (amount > 0)
+			if (mo->master == self->master && mo != self)
 			{
-				P_DamageMobj(mo, self, self, amount, DamageType, DMG_NO_ARMOR);
-			}
-			else if (amount < 0)
-			{
-				amount = -amount;
-				P_GiveBody(mo, amount);
+				if (amount > 0)
+				{
+					P_DamageMobj(mo, self, self, amount, DamageType, DMG_NO_ARMOR);
+				}
+				else if (amount < 0)
+				{
+					amount = -amount;
+					P_GiveBody(mo, amount);
+				}
 			}
 		}
 	}

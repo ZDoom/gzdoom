@@ -3780,11 +3780,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_BOOL(removeall,0);
 
-	while ((mo = it.Next()) != NULL)
+	if (self->master != NULL)
 	{
-		if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
+		while ((mo = it.Next()) != NULL)
 		{
-			P_RemoveThing(mo);
+			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
+			{
+				P_RemoveThing(mo);
+			}
 		}
 	}
 }
@@ -3831,11 +3834,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
-	while ((mo = it.Next()) != NULL)
+	if (self->master != NULL)
 	{
-		if (mo->master == self->master && mo != self)
+		while ((mo = it.Next()) != NULL)
 		{
-			P_Thing_Raise(mo);
+			if (mo->master == self->master && mo != self)
+			{
+				P_Thing_Raise(mo);
+			}
 		}
 	}
 }

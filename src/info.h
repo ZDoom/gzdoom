@@ -75,6 +75,7 @@ struct FState
 	BYTE		Fullbright:1;	// State is fullbright
 	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
 	BYTE		Fast:1;
+	BYTE		NoDelay:1;		// Spawn states executes its action normally
 	int			ParameterIndex;
 
 	inline int GetFrame() const
@@ -108,6 +109,10 @@ struct FState
 	inline FState *GetNextState() const
 	{
 		return NextState;
+	}
+	inline bool GetNoDelay() const
+	{
+		return NoDelay;
 	}
 	inline void SetFrame(BYTE frame)
 	{

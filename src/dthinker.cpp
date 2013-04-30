@@ -448,7 +448,7 @@ int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 		NextToThink = node->NextThinker;
 		if (node->ObjectFlags & OF_JustSpawned)
 		{
-			node->ObjectFlags &= ~OF_JustSpawned;
+			// Leave OF_JustSpawn set until after Tick() so the ticker can check it.
 			if (dest != NULL)
 			{ // Move thinker from this list to the destination list
 				node->Remove();
@@ -463,7 +463,8 @@ int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 
 		if (!(node->ObjectFlags & OF_EuthanizeMe))
 		{ // Only tick thinkers not scheduled for destruction
-			node->Tick ();
+			node->Tick();
+			node->ObjectFlags &= ~OF_JustSpawned;
 			GC::CheckGC();
 		}
 		node = NextToThink;

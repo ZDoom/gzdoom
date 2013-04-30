@@ -91,6 +91,7 @@ public:
 
 	void SetStateLabel (const char * statename, FState * state, BYTE defflags = SDF_STATE);
 	void AddStateLabel (const char * statename);
+	int GetStateLabelIndex (FName statename);
 	void InstallStates(FActorInfo *info, AActor *defaults);
 	int FinishStates (FActorInfo *actor, AActor *defaults);
 

@@ -275,6 +275,18 @@ do_stop:
 					state.Fast = true;
 					continue;
 				}
+				if (sc.Compare("NODELAY"))
+				{
+					if (bag.statedef.GetStateLabelIndex(NAME_Spawn) == bag.statedef.GetStateCount())
+					{
+						state.NoDelay = true;
+					}
+					else
+					{
+						sc.ScriptMessage("NODELAY may only be used immediately after Spawn:");
+					}
+					continue;
+				}
 				if (sc.Compare("OFFSET"))
 				{
 					// specify a weapon offset
@@ -338,8 +350,7 @@ do_stop:
 						int paramindex = PrepareStateParameters(&state, numparams, bag.Info->Class);
 						int paramstart = paramindex;
 						bool varargs = params[numparams - 1] == '+';
-						int varargcount=0;
-
+						int varargcount = 0;
 
 						if (varargs)
 						{

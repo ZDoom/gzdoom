@@ -3023,14 +3023,14 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	{
 		// Half ammo when dropped by bad guys.
 		inv->Amount = inv->GetClass()->Meta.GetMetaInt (AIMETA_DropAmount, MAX(1, FixedMul(inv->Amount, dropammofactor)));
-		inv->ItemFlags|=flagmask;
+		inv->ItemFlags |= flagmask;
 	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
 		// The same goes for ammo from a weapon.
 		static_cast<AWeapon *>(inv)->AmmoGive1 = FixedMul(static_cast<AWeapon *>(inv)->AmmoGive1, dropammofactor);
 		static_cast<AWeapon *>(inv)->AmmoGive2 = FixedMul(static_cast<AWeapon *>(inv)->AmmoGive2, dropammofactor);
-		inv->ItemFlags|=flagmask;
+		inv->ItemFlags |= flagmask;
 	}			
 	else if (inv->IsKindOf (RUNTIME_CLASS(ADehackedPickup)))
 	{

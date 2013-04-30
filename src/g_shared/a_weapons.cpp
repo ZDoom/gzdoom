@@ -730,10 +730,41 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 				master = weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
 				if (weap != NULL)
 				{
+					fixed_t dropammofactor;
 					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
 					weap->flags = (weap->flags & ~MF_DROPPED) | (this->flags & MF_DROPPED);
-					if (AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
-					if (AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
+
+					// If we're not overriding the ammo given amounts, then apply dropped
+					// item modifications if needed.
+					if (weap->flags & MF_DROPPED)
+					{
+						dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
+						if (dropammofactor < 0)
+						{
+							dropammofactor = FRACUNIT/2;
+						}
+					}
+					else
+					{
+						dropammofactor = FRACUNIT;
+					}
+
+					if (AmmoGive1 < 0)
+					{
+						weap->AmmoGive1 = FixedMul(weap->AmmoGive1, dropammofactor);
+					}
+					else
+					{
+						weap->AmmoGive1 = AmmoGive1;
+					}
+					if (AmmoGive2 < 0)
+					{
+						weap->AmmoGive2 = FixedMul(weap->AmmoGive2, dropammofactor);
+					}
+					else
+					{
+						weap->AmmoGive2 = AmmoGive2;
+					}
 					weap->BecomeItem();
 				}
 				else return false;

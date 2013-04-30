@@ -250,10 +250,10 @@ ACTOR Demon2 : Demon1 8080
 	XDeath:
 		DEM2 H 6
 		DEM2 I 0 A_SpawnItemEx("Demon2Chunk1", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle+90), frandom[DemonChunks](1,4.984375)*sin(Angle+90), 8, 90, ChunkFlags)
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk2", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 90, ChunkFlags)
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk3", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 90, ChunkFlags)
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk4", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 90, ChunkFlags)
-		DEM2 I 6 A_SpawnItemEx("Demon2Chunk5", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 90, ChunkFlags)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk2", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk3", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk4", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags)
+		DEM2 I 6 A_SpawnItemEx("Demon2Chunk5", 0,0,45, frandom[DemonChunks](1,4.984375)*cos(Angle-90), frandom[DemonChunks](1,4.984375)*sin(Angle-90), 8, 270, ChunkFlags)
 		Goto Death+2	
 	}
 }

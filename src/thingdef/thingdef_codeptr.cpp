@@ -3755,13 +3755,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveMaster)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
 {
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo;
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_BOOL(removeall,0);
 
-	while ( (mo = it.Next()) )
+	while ((mo = it.Next()) != NULL)
 	{
-		if ( ( mo->master == self ) && ( ( mo->health <= 0 ) || removeall) )
+		if (mo->master == self && (mo->health <= 0 || removeall))
 		{
 			P_RemoveThing(mo);
 		}
@@ -3776,13 +3776,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 {
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo;
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_BOOL(removeall,0);
 
-	while ( (mo = it.Next()) )
+	while ((mo = it.Next()) != NULL)
 	{
-		if ( ( mo->master == self->master ) && ( mo != self ) && ( ( mo->health <= 0 ) || removeall) )
+		if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
 		{
 			P_RemoveThing(mo);
 		}
@@ -3810,11 +3810,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 {
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo;
 
-	while ((mo = it.Next()))
+	while ((mo = it.Next()) != NULL)
 	{
-		if ( mo->master == self )
+		if (mo->master == self)
 		{
 			P_Thing_Raise(mo);
 		}
@@ -3829,11 +3829,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 {
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo;
 
-	while ( (mo = it.Next()) )
+	while ((mo = it.Next()) != NULL)
 	{
-		if ( ( mo->master == self->master ) && ( mo != self ) )
+		if (mo->master == self->master && mo != self)
 		{
 			P_Thing_Raise(mo);
 		}

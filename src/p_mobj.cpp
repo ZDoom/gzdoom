@@ -3507,7 +3507,8 @@ void AActor::Tick ()
 		// Spawn state, explicitly set the current state so that it calls its
 		// action and chains 0-tic states.
 		int starttics = tics;
-		SetState(state);
+		if (!SetState(state))
+			return;				// freed itself
 		// If the initial state had a duration of 0 tics, let the next state run
 		// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
 		if (starttics > 0 && tics >= 0)

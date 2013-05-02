@@ -705,15 +705,16 @@ FState *AWeapon::GetZoomState ()
 
 /* Weapon giver ***********************************************************/
 
-class AWeaponGiver : public AWeapon
-{
-	DECLARE_CLASS(AWeaponGiver, AWeapon)
-
-public:
-	bool TryPickup(AActor *&toucher);
-};
-
 IMPLEMENT_CLASS(AWeaponGiver)
+
+void AWeaponGiver::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	if (SaveVersion >= 4246)
+	{
+		arc << DropAmmoFactor;
+	}
+}
 
 bool AWeaponGiver::TryPickup(AActor *&toucher)
 {
@@ -734,36 +735,15 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
 					weap->flags = (weap->flags & ~MF_DROPPED) | (this->flags & MF_DROPPED);
 
-					// If we're not overriding the ammo given amounts, then apply dropped
-					// item modifications if needed.
-					if (weap->flags & MF_DROPPED)
-					{
-						dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
-						if (dropammofactor < 0)
-						{
-							dropammofactor = FRACUNIT/2;
-						}
-					}
-					else
-					{
-						dropammofactor = FRACUNIT;
-					}
+					// If our ammo gives are non-negative, transfer them to the real weapon.
+					if (AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
+					if (AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
 
-					if (AmmoGive1 < 0)
+					// If DropAmmoFactor is non-negative, modify the given ammo amounts.
+					if (DropAmmoFactor > 0)
 					{
-						weap->AmmoGive1 = FixedMul(weap->AmmoGive1, dropammofactor);
-					}
-					else
-					{
-						weap->AmmoGive1 = AmmoGive1;
-					}
-					if (AmmoGive2 < 0)
-					{
-						weap->AmmoGive2 = FixedMul(weap->AmmoGive2, dropammofactor);
-					}
-					else
-					{
-						weap->AmmoGive2 = AmmoGive2;
+						weap->AmmoGive1 = FixedMul(weap->AmmoGive1, DropAmmoFactor);
+						weap->AmmoGive2 = FixedMul(weap->AmmoGive2, DropAmmoFactor);
 					}
 					weap->BecomeItem();
 				}

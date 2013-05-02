@@ -3025,6 +3025,11 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		inv->Amount = inv->GetClass()->Meta.GetMetaInt (AIMETA_DropAmount, MAX(1, FixedMul(inv->Amount, dropammofactor)));
 		inv->ItemFlags |= flagmask;
 	}
+	else if (inv->IsKindOf (RUNTIME_CLASS(AWeaponGiver)))
+	{
+		static_cast<AWeaponGiver *>(inv)->DropAmmoFactor = dropammofactor;
+		inv->ItemFlags |= flagmask;
+	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
 		// The same goes for ammo from a weapon.

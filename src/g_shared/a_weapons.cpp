@@ -731,7 +731,6 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 				master = weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
 				if (weap != NULL)
 				{
-					fixed_t dropammofactor;
 					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
 					weap->flags = (weap->flags & ~MF_DROPPED) | (this->flags & MF_DROPPED);
 

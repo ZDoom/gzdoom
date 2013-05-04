@@ -181,6 +181,13 @@ xx(Idle)
 xx(GenericFreezeDeath)
 xx(GenericCrush)
 
+// Bounce state names
+xx(Bounce)
+xx(Wall)
+xx(Floor)
+xx(Ceiling)
+xx(Creature)
+
 // Compatible death names for the decorate parser.
 xx(XDeath)
 xx(Burn)

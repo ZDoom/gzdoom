@@ -1383,6 +1383,22 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 
 	PlayBounceSound(true);
+
+	// Set bounce state
+	if (BounceFlags & BOUNCE_UseBounceState)
+	{
+		FName names[2];
+		FState *bouncestate;
+
+		names[0] = NAME_Bounce;
+		names[1] = plane.c < 0 ? NAME_Ceiling : NAME_Floor;
+		bouncestate = FindState(2, names);
+		if (bouncestate != NULL)
+		{
+			SetState(bouncestate);
+		}
+	}
+
 	if (BounceFlags & BOUNCE_MBF) // Bring it to rest below a certain speed
 	{
 		if (abs(velz) < (fixed_t)(Mass * GetGravity() / 64))

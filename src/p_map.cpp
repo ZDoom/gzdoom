@@ -2869,6 +2869,14 @@ bool FSlide::BounceWall (AActor *mo)
 	}
 	mo->velx = FixedMul(movelen, finecosine[deltaangle]);
 	mo->vely = FixedMul(movelen, finesine[deltaangle]);
+	if (mo->BounceFlags & BOUNCE_UseBounceState)
+	{
+		FState *bouncestate = mo->FindState(NAME_Bounce, NAME_Wall);
+		if (bouncestate != NULL)
+		{
+			mo->SetState(bouncestate);
+		}
+	}
 	return true;
 }
 
@@ -2906,6 +2914,22 @@ bool P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop)
 			mo->velx = FixedMul (speed, finecosine[angle]);
 			mo->vely = FixedMul (speed, finesine[angle]);
 			mo->PlayBounceSound(true);
+			if (mo->BounceFlags & BOUNCE_UseBounceState)
+			{
+				FName names[] = { NAME_Bounce, NAME_Actor, NAME_Creature };
+				FState *bouncestate;
+				int count = 2;
+				
+				if ((BlockingMobj->flags & MF_SHOOTABLE) && !(BlockingMobj->flags & MF_NOBLOOD))
+				{
+					count = 3;
+				}
+				bouncestate = mo->FindState(count, names);
+				if (bouncestate != NULL)
+				{
+					mo->SetState(bouncestate);
+				}
+			}
 		}
 		else
 		{

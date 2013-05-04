@@ -2250,11 +2250,14 @@ void R_NewWall (bool needlights)
 		if (planeside <= 0)		// above view plane
 			markfloor = false;
 
-		planeside = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz);
-		if (frontsector->ceilingplane.c > 0)	// 3D floors have the ceiling backwards
-			planeside = -planeside;
-		if (planeside <= 0)		// below view plane
-			markceiling = false;
+		if (frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
+		{
+			planeside = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz);
+			if (frontsector->ceilingplane.c > 0)	// 3D floors have the ceiling backwards
+				planeside = -planeside;
+			if (planeside <= 0)		// below view plane
+				markceiling = false;
+		}
 	}
 
 	FTexture *midtex = TexMan(sidedef->GetTexture(side_t::mid), true);

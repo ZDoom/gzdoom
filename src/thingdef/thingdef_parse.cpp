@@ -441,15 +441,7 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 		}
 		else
 		{
-			DWORD * flagvar = (DWORD*) ((char*)defaults + fd->structoffset);
-			if (mod == '+')
-			{
-				*flagvar |= fd->flagbit;
-			}
-			else
-			{
-				*flagvar &= ~fd->flagbit;
-			}
+			ModActorFlag(defaults, fd, mod == '+');
 		}
 	}
 	else

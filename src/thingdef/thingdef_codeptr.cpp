@@ -3629,14 +3629,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 			bool linkchange = flagp == &self->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
 
 			if (linkchange) self->UnlinkFromWorld();
-			if (expression)
-			{
-				*flagp |= fd->flagbit;
-			}
-			else
-			{
-				*flagp &= ~fd->flagbit;
-			}
+			ModActorFlag(self, fd, expression);
 			if (linkchange) self->LinkToWorld();
 		}
 		kill_after = self->CountsAsKill();
@@ -3721,13 +3714,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 
 	if (fd != NULL)
 	{
-		if (fd->structoffset == -1)
-		{
-			if (CheckDeprecatedFlags(owner, cls->ActorInfo, fd->flagbit)) {
-				ACTION_JUMP(jumpto);
-			}
-		}
-		else if ( fd->flagbit &  *(DWORD*)(((char*)owner) + fd->structoffset))
+		if (CheckActorFlag(owner, fd))
 		{
 			ACTION_JUMP(jumpto);
 		}

@@ -95,6 +95,91 @@ static const PClass *FindClassTentative(const char *name, const char *ancestor)
 	return cls;
 }
 
+//==========================================================================
+//
+// Sets or clears a flag, taking field width into account.
+//
+//==========================================================================
+void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
+{
+	// Little-Endian machines only need one case, because all field sizes
+	// start at the same address. (Unless the machine has unaligned access
+	// exceptions, in which case you'll need multiple cases for it too.)
+#ifdef __BIG_ENDIAN__
+	if (fd->fieldsize == 4)
+#endif
+	{
+		DWORD *flagvar = (DWORD *)((char *)actor + fd->structoffset);
+		if (set)
+		{
+			*flagvar |= fd->flagbit;
+		}
+		else
+		{
+			*flagvar &= ~fd->flagbit;
+		}
+	}
+#ifdef __BIG_ENDIAN__
+	else if (fd->fieldsize == 2)
+	{
+		WORD *flagvar = (WORD *)((char *)actor + fd->structoffset);
+		if (set)
+		{
+			*flagvar |= fd->flagbit;
+		}
+		else
+		{
+			*flagvar &= ~fd->flagbit;
+		}
+	}
+	else
+	{
+		assert(fd->fieldsize == 1);
+		BYTE *flagvar = (BYTE *)((char *)actor + fd->structoffset);
+		if (set)
+		{
+			*flagvar |= fd->flagbit;
+		}
+		else
+		{
+			*flagvar &= ~fd->flagbit;
+		}
+	}
+#endif
+}
+
+//==========================================================================
+//
+// Returns whether an actor flag is true or not.
+//
+//==========================================================================
+
+INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
+{
+	if (fd->structoffset == -1)
+	{
+		return CheckDeprecatedFlags(owner, owner->GetClass()->ActorInfo, fd->flagbit);
+	}
+	else
+#ifdef __BIG_ENDIAN__
+	if (fd->fieldsize == 4)
+#endif
+	{
+		return fd->flagbit & *(DWORD *)(((char*)owner) + fd->structoffset);
+	}
+#ifdef __BID_ENDIAN__
+	else if (fd->fieldsize == 2)
+	{
+		return fd->flagbit & *(WORD *)(((char*)owner) + fd->structoffset);
+	}
+	else
+	{
+		assert(fd->fieldsize == 1);
+		return fd->flagbit & *(BYTE *)(((char*)owner) + fd->structoffset);
+	}
+#endif
+}
+
 //===========================================================================
 //
 // HandleDeprecatedFlags
@@ -170,7 +255,7 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 //
 //===========================================================================
 
-bool CheckDeprecatedFlags(AActor *actor, FActorInfo *info, int index)
+bool CheckDeprecatedFlags(const AActor *actor, FActorInfo *info, int index)
 {
 	// A deprecated flag is false if
 	// a) it hasn't been added here
@@ -211,11 +296,11 @@ bool CheckDeprecatedFlags(AActor *actor, FActorInfo *info, int index)
 		return (actor->BounceFlags & (BOUNCE_TypeMask|BOUNCE_UseSeeSound)) == BOUNCE_DoomCompat;
 
 	case DEPF_PICKUPFLASH:
-		return static_cast<AInventory*>(actor)->PickupFlash == PClass::FindClass("PickupFlash");
+		return static_cast<const AInventory*>(actor)->PickupFlash == PClass::FindClass("PickupFlash");
 		// A pure name lookup may or may not be more efficient, but I know no static identifier for PickupFlash.
 
 	case DEPF_INTERHUBSTRIP:
-		return !(static_cast<AInventory*>(actor)->InterHubAmount);
+		return !(static_cast<const AInventory*>(actor)->InterHubAmount);
 	}
 
 	return false; // Any entirely unknown flag is not set

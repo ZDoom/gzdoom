@@ -406,9 +406,9 @@ void FListMenuItemPlayerDisplay::UpdateRandomClass()
 
 void FListMenuItemPlayerDisplay::UpdateTranslation()
 {
-	int PlayerColor = players[consoleplayer].userinfo.color;
-	int	PlayerSkin = players[consoleplayer].userinfo.skin;
-	int PlayerColorset = players[consoleplayer].userinfo.colorset;
+	int PlayerColor = players[consoleplayer].userinfo.GetColor();
+	int	PlayerSkin = players[consoleplayer].userinfo.GetSkin();
+	int PlayerColorset = players[consoleplayer].userinfo.GetColorSet();
 
 	if (mPlayerClass != NULL)
 	{

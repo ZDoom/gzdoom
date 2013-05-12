@@ -192,7 +192,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (self->player == NULL || self->player->mo != self || !show_obituaries)
 		return;
 
-	gender = self->player->userinfo.gender;
+	gender = self->player->userinfo.GetGender();
 
 	// Treat voodoo dolls as unknown deaths
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
@@ -274,7 +274,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 			attacker->player->fragcount -= 2;
 			attacker->player->frags[attacker->player - players]++;
 			self = attacker;
-			gender = self->player->userinfo.gender;
+			gender = self->player->userinfo.GetGender();
 			mysnprintf (gendermessage, countof(gendermessage), "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
 			message = GStrings(gendermessage);
 		}
@@ -321,7 +321,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	}
 
 	SexMessage (message, gendermessage, gender,
-		self->player->userinfo.netname, attacker->player->userinfo.netname);
+		self->player->userinfo.GetName(), attacker->player->userinfo.GetName());
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }
 
@@ -457,8 +457,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				if (deathmatch && player->spreecount >= 5 && cl_showsprees)
 				{
 					SexMessage (GStrings("SPREEKILLSELF"), buff,
-						player->userinfo.gender, player->userinfo.netname,
-						player->userinfo.netname);
+						player->userinfo.GetGender(), player->userinfo.GetName(),
+						player->userinfo.GetName());
 					StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 				}
@@ -505,8 +505,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 					{
 						if (!AnnounceSpreeLoss (this))
 						{
-							SexMessage (GStrings("SPREEOVER"), buff, player->userinfo.gender,
-								player->userinfo.netname, source->player->userinfo.netname);
+							SexMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetGender(),
+								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
@@ -515,8 +515,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 					{
 						if (!AnnounceSpree (source))
 						{
-							SexMessage (spreemsg, buff, player->userinfo.gender,
-								player->userinfo.netname, source->player->userinfo.netname);
+							SexMessage (spreemsg, buff, player->userinfo.GetGender(),
+								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
@@ -565,8 +565,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 							if (!AnnounceMultikill (source))
 							{
-								SexMessage (multimsg, buff, player->userinfo.gender,
-									player->userinfo.netname, source->player->userinfo.netname);
+								SexMessage (multimsg, buff, player->userinfo.GetGender(),
+									player->userinfo.GetName(), source->player->userinfo.GetName());
 								StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
 									1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));
 							}

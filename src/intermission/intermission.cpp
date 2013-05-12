@@ -602,7 +602,7 @@ void DIntermissionScreenCast::Drawer ()
 			{
 				if (PlayerClasses[i].Type == mClass)
 				{
-					castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+					castsprite = skins[players[consoleplayer].userinfo.GetSkin()].sprite;
 				}
 			}
 		}

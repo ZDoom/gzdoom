@@ -1101,7 +1101,7 @@ void R_BuildPlayerTranslation (int player)
 	D_GetPlayerColor (player, &h, &s, &v, &colorset);
 
 	R_CreatePlayerTranslation (h, s, v, colorset,
-		&skins[players[player].userinfo.skin],
+		&skins[players[player].userinfo.GetSkin()],
 		translationtables[TRANSLATION_Players][player],
 		translationtables[TRANSLATION_PlayersExtra][player]);
 }

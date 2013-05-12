@@ -522,7 +522,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
 	else if (cheat != CHT_CHASECAM)
-		Printf ("%s cheats: %s\n", player->userinfo.netname, msg);
+		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
 }
 
 const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickundo)
@@ -603,7 +603,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	const PClass *type;
 
 	if (player != &players[consoleplayer])
-		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
+		Printf ("%s is a cheater: give %s\n", player->userinfo.GetName(), name);
 
 	if (player->mo == NULL || player->health <= 0)
 	{

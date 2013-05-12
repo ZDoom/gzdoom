@@ -177,7 +177,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 	}
 	if (deathmatch)
 	{
-		Printf ("%s exited the level.\n", self->player->userinfo.netname);
+		Printf ("%s exited the level.\n", self->player->userinfo.GetName());
 	}
 	return true;
 }

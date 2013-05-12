@@ -314,7 +314,7 @@ void AWeapon::AttachToOwner (AActor *other)
 	SisterWeapon = AddWeapon (SisterWeaponType);
 	if (Owner->player != NULL)
 	{
-		if (!Owner->player->userinfo.neverswitch && !(WeaponFlags & WIF_NO_AUTO_SWITCH))
+		if (!Owner->player->userinfo.GetNeverSwitch() && !(WeaponFlags & WIF_NO_AUTO_SWITCH))
 		{
 			Owner->player->PendingWeapon = this;
 		}

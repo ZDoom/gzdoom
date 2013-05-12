@@ -559,3 +559,11 @@ xx(Inter_Strife_Lose)
 xx(Inter_Strife_MAP03)
 xx(Inter_Strife_MAP10)
 xx(Multiplayer)
+
+// more stuff
+xx(ColorSet)
+xx(NeverSwitchOnPickup)
+xx(MoveBob)
+xx(StillBob)
+xx(PlayerClass)
+xx(AutoAim)

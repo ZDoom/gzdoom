@@ -505,7 +505,7 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 	}
 	if (CurrentState != NULL)
 	{
-		const char *skin_face = player->morphTics ? player->MorphedPlayerClass->Meta.GetMetaString(APMETA_Face) : skins[player->userinfo.skin].face;
+		const char *skin_face = player->morphTics ? player->MorphedPlayerClass->Meta.GetMetaString(APMETA_Face) : skins[player->userinfo.GetSkin()].face;
 		return CurrentState->GetCurrentFrameTexture(default_face, skin_face, level, angle);
 	}
 	return NULL;

@@ -240,14 +240,15 @@ void G_NewInit ()
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
 		player_t *p = &players[i];
-		userinfo_t saved_ui = players[i].userinfo;
+		userinfo_t saved_ui;
+		saved_ui.TransferFrom(players[i].userinfo);
 		int chasecam = p->cheats & CF_CHASECAM;
 		p->~player_t();
 		::new(p) player_t;
 		players[i].cheats |= chasecam;
 		players[i].playerstate = PST_DEAD;
 		playeringame[i] = 0;
-		players[i].userinfo = saved_ui;
+		players[i].userinfo.TransferFrom(saved_ui);
 	}
 	BackupSaveName = "";
 	consoleplayer = 0;
@@ -287,7 +288,7 @@ static void InitPlayerClasses ()
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
+			SinglePlayerClass[i] = players[i].userinfo.GetPlayerClassNum();
 			if (SinglePlayerClass[i] < 0 || !playeringame[i])
 			{
 				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();

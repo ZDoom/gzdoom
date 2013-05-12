@@ -470,6 +470,37 @@ public:
 
 	//=======================================================================
 	//
+	// TransferFrom
+	//
+	// Moves the contents from one TMap to another, leaving the TMap moved
+	// from empty.
+	//
+	//=======================================================================
+
+	void TransferFrom(TMap &o)
+	{
+		// Clear all our nodes.
+		NumUsed = 0;
+		ClearNodeVector();
+
+		// Copy all of o's nodes.
+		Nodes = o.Nodes;
+		LastFree = o.LastFree;
+		Size = o.Size;
+		NumUsed = o.NumUsed;
+
+		// Tell o it doesn't have any nodes.
+		o.Nodes = NULL;
+		o.Size = 0;
+		o.LastFree = NULL;
+		o.NumUsed = 0;
+
+		// Leave o functional with one empty node.
+		o.SetNodeVector(1);
+	}
+
+	//=======================================================================
+	//
 	// Clear
 	//
 	// Empties out the table and resizes it with room for count entries.

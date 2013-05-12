@@ -140,7 +140,7 @@ void FCajunMaster::Main (int buf)
 	//Check if player should go observer. Or un observe
 	if (bot_observer && !observer && !netgame)
 	{
-		Printf ("%s is now observer\n", players[consoleplayer].userinfo.netname);
+		Printf ("%s is now observer\n", players[consoleplayer].userinfo.GetName());
 		observer = true;
 		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY|MF_FRIENDLY;
@@ -149,7 +149,7 @@ void FCajunMaster::Main (int buf)
 	}
 	else if (!bot_observer && observer && !netgame) //Go back
 	{
-		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.netname);
+		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.GetName());
 		observer = false;
 		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY;
@@ -218,7 +218,7 @@ void FCajunMaster::End ()
 		{
 			if (deathmatch)
 			{
-				getspawned.Push(players[i].userinfo.netname);
+				getspawned.Push(players[i].userinfo.GetName());
 			}
 			CleanBotstuff (&players[i]);
 		}
@@ -353,7 +353,7 @@ void FCajunMaster::DoAddBot (int bnum, char *info)
 	if (!deathmatch && playerstarts[bnum].type == 0)
 	{
 		Printf ("%s tried to join, but there was no player %d start\n",
-			players[bnum].userinfo.netname, bnum+1);
+			players[bnum].userinfo.GetName(), bnum+1);
 		ClearPlayer (bnum, false);	// Make the bot inactive again
 		if (botnum > 0)
 		{
@@ -370,9 +370,9 @@ void FCajunMaster::DoAddBot (int bnum, char *info)
 		botingame[bnum] = true;
 
 		if (teamplay)
-			Printf ("%s joined the %s team\n", players[bnum].userinfo.netname,Teams[players[bnum].userinfo.team].GetName ());
+			Printf ("%s joined the %s team\n", players[bnum].userinfo.GetName(), Teams[players[bnum].userinfo.GetTeam()].GetName());
 		else
-			Printf ("%s joined the game\n", players[bnum].userinfo.netname);
+			Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
 
 		G_DoReborn (bnum, true);
 		if (StatusBar != NULL)

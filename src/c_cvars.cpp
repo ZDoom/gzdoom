@@ -1477,6 +1477,29 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 	return var;
 }
 
+//===========================================================================
+//
+// C_CreateCVar
+//
+// Create a new cvar with the specified name and type. It should not already
+// exist.
+//
+//===========================================================================
+
+FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, DWORD flags)
+{
+	assert(FindCVar(var_name, NULL) == NULL);
+	switch (var_type)
+	{
+	case CVAR_Bool:		return new FBoolCVar(var_name, 0, flags);
+	case CVAR_Int:		return new FIntCVar(var_name, 0, flags);
+	case CVAR_Float:	return new FFloatCVar(var_name, 0, flags);
+	case CVAR_String:	return new FStringCVar(var_name, NULL, flags);
+	case CVAR_Color:	return new FColorCVar(var_name, 0, flags);
+	default:			return NULL;
+	}
+}
+
 void UnlatchCVars (void)
 {
 	FLatchedValue var;

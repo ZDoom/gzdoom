@@ -96,6 +96,7 @@ public:
 
 	inline const char *GetName () const { return Name; }
 	inline uint32 GetFlags () const { return Flags; }
+	inline FBaseCVar *GetNext() const { return m_Next; }
 
 	void CmdSet (const char *newval);
 	void ForceSet (UCVarValue value, ECVarType type);
@@ -180,6 +181,9 @@ void C_BackupCVars (void);
 // Finds a named cvar
 FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 FBaseCVar *FindCVarSub (const char *var_name, int namelen);
+
+// Create a new cvar with the specified name and type
+FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, DWORD flags);
 
 // Called from G_InitNew()
 void UnlatchCVars (void);
@@ -425,5 +429,6 @@ void C_ForgetCVars (void);
 
 #define EXTERN_CVAR(type,name) extern F##type##CVar name;
 
+extern FBaseCVar *CVars;
 
 #endif //__C_CVARS_H__

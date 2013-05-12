@@ -819,7 +819,7 @@ AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 
 void APlayerPawn::CheckWeaponSwitch(const PClass *ammotype)
 {
-	if (!player->userinfo.neverswitch &&
+	if (!player->userinfo.GetNeverSwitch() &&
 		player->PendingWeapon == WP_NOCHANGE && 
 		(player->ReadyWeapon == NULL ||
 		 (player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
@@ -991,10 +991,10 @@ const char *APlayerPawn::GetSoundClass() const
 {
 	if (player != NULL &&
 		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
-		(unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
-		(size_t)player->userinfo.skin < numskins)
+		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
+		(size_t)player->userinfo.GetSkin() < numskins)
 	{
-		return skins[player->userinfo.skin].name;
+		return skins[player->userinfo.GetSkin()].name;
 	}
 
 	// [GRB]
@@ -1500,13 +1500,13 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, fixed_t &scalex, fixed_t
 	player_t *player = actor->player;
 	int crouchspriteno;
 
-	if (player->userinfo.skin != 0 && !(actor->flags4 & MF4_NOSKIN))
+	if (player->userinfo.GetSkin() != 0 && !(actor->flags4 & MF4_NOSKIN))
 	{
 		// Convert from default scale to skin scale.
 		fixed_t defscaleY = actor->GetDefault()->scaleY;
 		fixed_t defscaleX = actor->GetDefault()->scaleX;
-		scaley = Scale(scaley, skins[player->userinfo.skin].ScaleY, defscaleY);
-		scalex = Scale(scalex, skins[player->userinfo.skin].ScaleX, defscaleX);
+		scaley = Scale(scaley, skins[player->userinfo.GetSkin()].ScaleY, defscaleY);
+		scalex = Scale(scalex, skins[player->userinfo.GetSkin()].ScaleX, defscaleX);
 	}
 
 	// Set the crouch sprite?
@@ -1517,10 +1517,10 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, fixed_t &scalex, fixed_t
 			crouchspriteno = player->mo->crouchsprite;
 		}
 		else if (!(actor->flags4 & MF4_NOSKIN) &&
-				(spritenum == skins[player->userinfo.skin].sprite ||
-				 spritenum == skins[player->userinfo.skin].crouchsprite))
+				(spritenum == skins[player->userinfo.GetSkin()].sprite ||
+				 spritenum == skins[player->userinfo.GetSkin()].crouchsprite))
 		{
-			crouchspriteno = skins[player->userinfo.skin].crouchsprite;
+			crouchspriteno = skins[player->userinfo.GetSkin()].crouchsprite;
 		}
 		else
 		{ // no sprite -> squash the existing one
@@ -1644,7 +1644,7 @@ void P_CalcHeight (player_t *player)
 		}
 		else
 		{
-			player->bob = FixedMul (player->bob, player->userinfo.MoveBob);
+			player->bob = FixedMul (player->bob, player->userinfo.GetMoveBob());
 
 			if (player->bob > MAXBOB)
 				player->bob = MAXBOB;
@@ -1668,7 +1668,7 @@ void P_CalcHeight (player_t *player)
 		if (player->health > 0)
 		{
 			angle = DivScale13 (level.time, 120*TICRATE/35) & FINEMASK;
-			bob = FixedMul (player->userinfo.StillBob, finesine[angle]);
+			bob = FixedMul (player->userinfo.GetStillBob(), finesine[angle]);
 		}
 		else
 		{

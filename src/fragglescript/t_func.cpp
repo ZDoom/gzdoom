@@ -774,7 +774,7 @@ void FParser::SF_PlayerName(void)
 	if(plnum !=-1)
 	{
 		t_return.type = svt_string;
-		t_return.string = players[plnum].userinfo.netname;
+		t_return.string = players[plnum].userinfo.GetName();
 	}
 	else
 	{

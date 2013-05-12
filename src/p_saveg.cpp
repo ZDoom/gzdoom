@@ -91,7 +91,7 @@ void P_SerializePlayers (FArchive &arc, bool skipload)
 		{
 			if (playeringame[i])
 			{
-				arc.WriteString (players[i].userinfo.netname);
+				arc.WriteString (players[i].userinfo.GetName());
 				players[i].Serialize (arc);
 			}
 		}
@@ -185,7 +185,7 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 		{
 			for (j = 0; j < MAXPLAYERS; ++j)
 			{
-				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.netname, nametemp[i]) == 0)
+				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.GetName(), nametemp[i]) == 0)
 				{ // Found a match, so copy our temp player to the real player
 					Printf ("Found player %d (%s) at %d\n", i, nametemp[i], j);
 					CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
@@ -206,7 +206,7 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 				{
 					if (playerUsed[j] == 0)
 					{
-						Printf ("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.netname);
+						Printf ("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.GetName());
 						CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
 						playerUsed[j] = 1;
 						tempPlayerUsed[i] = 1;
@@ -282,7 +282,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 		dst->userinfo = uibackup;
 	}
 	// Validate the skin
-	dst->userinfo.skin = R_FindSkin(skins[dst->userinfo.skin].name, dst->CurrentPlayerClass);
+	dst->userinfo.SkinNumChanged(R_FindSkin(skins[dst->userinfo.GetSkin()].name, dst->CurrentPlayerClass));
 
 	// Make sure the player pawn points to the proper player struct.
 	if (dst->mo != NULL)

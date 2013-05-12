@@ -1127,7 +1127,7 @@ void G_Ticker ()
 			if (cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
 				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
 			{
-				Printf ("%s is turbo!\n", players[i].userinfo.netname);
+				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
 			}
 
 			if (netgame && !players[i].isbot && !demoplayback && (gametic%ticdup) == 0)
@@ -1312,7 +1312,7 @@ void G_PlayerReborn (int player)
 	int			chasecam;
 	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
-	botskill_t  b_skill;//Added by MC:
+	botskill_t  b_skill;	//Added by MC:
 	APlayerPawn *actor;
 	const PClass *cls;
 	FString		log;
@@ -1326,7 +1326,7 @@ void G_PlayerReborn (int player)
 	secretcount = p->secretcount;
 	currclass = p->CurrentPlayerClass;
     b_skill = p->skill;    //Added by MC:
-	memcpy (&userinfo, &p->userinfo, sizeof(userinfo));
+	userinfo.TransferFrom(p->userinfo);
 	actor = p->mo;
 	cls = p->cls;
 	log = p->LogText;
@@ -1342,7 +1342,7 @@ void G_PlayerReborn (int player)
 	p->itemcount = itemcount;
 	p->secretcount = secretcount;
 	p->CurrentPlayerClass = currclass;
-	memcpy (&p->userinfo, &userinfo, sizeof(userinfo));
+	p->userinfo.TransferFrom(userinfo);
 	p->mo = actor;
 	p->cls = cls;
 	p->LogText = log;

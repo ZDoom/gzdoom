@@ -1655,7 +1655,7 @@ void WI_drawNetgameStats ()
 			FTexture *pic = TexMan[player->mo->ScoreIcon];
 			screen->DrawTexture(pic, icon_x, y, DTA_CleanNoMove, true, TAG_DONE);
 		}
-		screen->DrawText(SmallFont, color, name_x, y + ypadding, player->userinfo.netname, DTA_CleanNoMove, true, TAG_DONE);
+		screen->DrawText(SmallFont, color, name_x, y + ypadding, player->userinfo.GetName(), DTA_CleanNoMove, true, TAG_DONE);
 		WI_drawPercent(SmallFont, kills_x, y + ypadding, cnt_kills[i], wbs->maxkills, false, color);
 		missed_kills -= cnt_kills[i];
 		if (ng_state >= 4)

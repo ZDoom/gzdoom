@@ -5634,7 +5634,11 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	AActor *defaultobject = GetDefaultByType(type);
 	int vrange = nofreeaim ? ANGLE_1*35 : 0;
 
-	if (source && source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
+	if (source == NULL)
+	{
+		return NULL;
+	}
+	if (source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
 		an = angle;

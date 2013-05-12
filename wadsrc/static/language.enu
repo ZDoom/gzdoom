@@ -998,7 +998,7 @@ TAG_SECURITYKEY = "Security Key";
 TAG_COREKEY = "Core Key";	// "New_Key1" in the Teaser
 TAG_MAULERKEY = "Mauler Key";	// "New_Key2" in the Teaser
 TAG_FACTORYKEY = "Factory Key";	// "New_Key3" in the Teaser
-TAG_MINEKEY = "Mine_Key";	// "New_Key4" in the Teaser
+TAG_MINEKEY = "Mine Key";	// "New_Key4" in the Teaser
 TAG_NEWKEY5 = "New Key5";
 TAG_ORACLEPASS = "Oracle Pass";
 

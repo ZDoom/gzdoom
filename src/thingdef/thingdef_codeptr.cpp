@@ -1409,7 +1409,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 		if (LifeSteal)
 			P_GiveBody (self, (Damage * LifeSteal) >> FRACBITS);
 
-		S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+		if (weapon != NULL)
+		{
+			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+		}
 
 		self->angle = R_PointToAngle2 (self->x,
 										self->y,

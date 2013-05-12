@@ -1062,11 +1062,12 @@ bool AActor::Grind(bool items)
 				gib->alpha = alpha;
 				gib->height = 0;
 				gib->radius = 0;
+
+				PalEntry bloodcolor = GetBloodColor();
+				if (bloodcolor != 0)
+					gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 			}
 			S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
-
-			PalEntry bloodcolor = GetBloodColor();
-			if (bloodcolor!=0) gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
 		if (flags & MF_ICECORPSE)
 		{

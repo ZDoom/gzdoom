@@ -1834,11 +1834,14 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 					// If moving down, cancel vertical component of the velocity
 					if (thing->velz < 0)
 					{
-						thing->velz = 0;
 						// If it's a bouncer, let it bounce off its new floor, too.
 						if (thing->BounceFlags & BOUNCE_Floors)
 						{
 							thing->FloorBounceMissile (tm.floorsector->floorplane);
+						}
+						else
+						{
+							thing->velz = 0;
 						}
 					}
 				}

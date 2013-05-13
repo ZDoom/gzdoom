@@ -1246,7 +1246,7 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 		if (right->ValueType != VAL_Int)
 		{
 			right = new FxIntCast(right);
-			right = left->Resolve(ctx);
+			right = right->Resolve(ctx);
 		}
 		if (left == NULL || right == NULL)
 		{

@@ -1247,7 +1247,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
-	S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+	if (weapon != NULL)
+	{
+		S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+	}
 
 	if ((NumberOfBullets==1 && !player->refire) || NumberOfBullets==0)
 	{

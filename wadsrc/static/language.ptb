@@ -1,6 +1,6 @@
 /* PortuguÍs Brasileiro. Feito por Patryck Padilha de Oliveira */
-/* N„o estÅEtotalmente completo */
-/* Doom estÅEtraduzido 100% */
+/* N„o est· totalmente completo */
+/* Doom est· traduzido 100% */
 /* Chex(R) Quest traduzido 100% */
 /* Heretic 75% traduzido (algumas telas ainda faltam) */
 /* Hexen ainda n„o traduzido */
@@ -22,7 +22,7 @@ QUITMSG = "deseja mesmo sair?";
 TXT_YES = "Sim";
 TXT_NO = "Nao";
 
-// Mensagens de sa˙Åa DooM 1
+// Mensagens de saÌda DooM 1
 QUITMSG1 = "por favor, nao saia, \nprecisamos mata-los...";
 QUITMSG2 = "vamo nessa, isso ja esta\nficando insuportavel!";
 QUITMSG3 = "eu nao sairia se fosse voce.\nWindows e muito mais chato.";
@@ -31,7 +31,7 @@ QUITMSG5 = "nao va, eu acho que vi algo\nse mexendo naquele canto!";
 QUITMSG6 = "sabe, na proxima vez,\nvoce ja era.";
 QUITMSG7 = "va em frente, saia.\nveja se me preocupo.";
 
-// Mensagens de sa˙Åa DooM II
+// Mensagens de saÌda DooM II
 QUITMSG8 = " >sair \n >pedindo permissao para sair\n(tem certeza??)";
 QUITMSG9 = "nao va agora, um \num buraco negro lhe espera\n na saida!";
 QUITMSG10 = "saia daqui e volte\npara seus programas chatos.";
@@ -40,7 +40,7 @@ QUITMSG12 = "OK, pode ir.\nmas pode esquecer sua pontuacao!";
 QUITMSG13 = "va. \nquando voltar, estarei lhe esperando\ncom meu BFG.";
 QUITMSG14 = "tens sorte por nao\nlhe dar um premio por pensar\n em sair.";
 
-// Mensagens de sa˙Åa Strife
+// Mensagens de saÌda Strife
 QUITMSG15 = "aonde pensa que vai?!\n e quanto a nos?";
 QUITMSG16 = "interrompendo carnificina....\n tem certeza disso?";
 QUITMSG17 = "mas voce e a nossa\n unica esperanca!";
@@ -50,7 +50,7 @@ QUITMSG20 = "OK! tchau para voce tambem!";
 QUITMSG21 = "pode ir.\nmas sabemos seu esconderijo...";
 QUITMSG22 = "hein? pode repetir?\nvoce deseja sair?";
 
-// Mensagens de sa˙Åa Chex
+// Mensagens de saÌda Chex
 QUITMSG23 = "Nao saia agora, precisamos\nacabar com eles!";
 QUITMSG24 = "Nao desista --- porque\neles nunca desistirao!";
 QUITMSG25 = "Nao va.\nPrecisamos de sua ajuda!";
@@ -131,7 +131,7 @@ BETA_BONUS2 = "Voce pegou um skullchest.";
 BETA_BONUS3 = "Voce pegou um cetro maligno.";
 BETA_BONUS4 = "Voce pegou uma biblia nao sagrada.";
 
-// N˙ìeis (preferi deixar original por compatibilidade)
+// NÌveis (preferi deixar original por compatibilidade)
 HUSTR_E1M1 = "E1M1: Hangar";
 HUSTR_E1M2 = "E1M2: Nuclear Plant";
 HUSTR_E1M3 = "E1M3: Toxin Refinery";
@@ -452,7 +452,7 @@ P1TEXT =
 P2TEXT =
 	"Nem o labirinto mortal do Arch-Vile pode\n"
 	"para-lo, e agora voce tem o prototipo do\n"
-	"Acelerador, o qual estÅEcom pouca energia\n"
+	"Acelerador, o qual est· com pouca energia\n"
 	"e logo se desativara permanentemente.\n"
 	"\n"
 	"Voce e bom nesse tipo de coisa.";
@@ -738,7 +738,7 @@ OB_STRIDICUS = "%o foi eslameado por um stridicus.";
 OB_LARVA = "%o foi eslameado por uma larva.";
 OB_QUADRUMPUS = "%o foi eslameado por um quadrumpus.";
 OB_MAXIMUS = "%o foi derrotado por um Maximus.";
-// Existe um "You defeated a maximus" que eu n„o pude traduzir, se alguÈm souber qual a linha que traduz me diga no fÛrum onde vocÅEo baixou
+// Existe um "You defeated a maximus" que eu n„o pude traduzir, se alguÈm souber qual a linha que traduz me diga no fÛrum onde vocÍ o baixou
 _MAXIMUS = "00";
 OB_FLEMMINE = "%o foi eslameado por um Flem mine.";
 OB_SNOTFOLUS = "%o foi derrotado pelo Lord Snotfolus.";
@@ -1382,7 +1382,7 @@ TXT_STRIFEMAP = "Voce pegou o mapa.";
 TXT_BELDINSRING = "Voce pegou o anel.";
 TXT_OFFERINGCHALICE = "Voce pegou o calice de oferenda.";
 TXT_EAR = "Voce pegou a orelha.";
-TXT_BROKENCOUPLING = "VocÅEpegou o acoplador de energia quebrado.";
+TXT_BROKENCOUPLING = "VocÍ pegou o acoplador de energia quebrado.";
 TXT_SHADOWARMOR = "Voce pegou a armadura das sombras.";
 TXT_ENVSUIT = "Voce pegou a roupa anti-radiacao.";
 TXT_GUARDUNIFORM = "Voce pegou o uniforme - Guarda.";

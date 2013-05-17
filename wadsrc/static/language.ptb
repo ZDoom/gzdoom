@@ -11,34 +11,34 @@
 /* Versão 0.97 - 07/12/2012 */
 /* No final das traduções, tentarei adicionar os outros jogos suportados pelo ZDoom */
 
-[ptb]
+[ptb pt br]
 
 D_DEVSTR = "Modo de desenvolvimento ATIVADO.\n";
 D_CDROM = "Rodando do CD/DVD-ROM: zdoom.ini em c:\\zdoomdat\n";
 PRESSKEY = "aperte qualquer tecla.";
-PRESSYN = "escolha Sim ou Nao";
+PRESSYN = "escolha Sim ou Não";
 
 QUITMSG = "deseja mesmo sair?";
 TXT_YES = "Sim";
-TXT_NO = "Nao";
+TXT_NO = "Não";
 
 // Mensagens de saída DooM 1
-QUITMSG1 = "por favor, nao saia, \nprecisamos mata-los...";
-QUITMSG2 = "vamo nessa, isso ja esta\nficando insuportavel!";
-QUITMSG3 = "eu nao sairia se fosse voce.\nWindows e muito mais chato.";
-QUITMSG4 = "entao voce gosta mais do windows\ndo que de mim, certo?";
-QUITMSG5 = "nao va, eu acho que vi algo\nse mexendo naquele canto!";
-QUITMSG6 = "sabe, na proxima vez,\nvoce ja era.";
-QUITMSG7 = "va em frente, saia.\nveja se me preocupo.";
+QUITMSG1 = "por favor, não saia, \nprecisamos matá-los...";
+QUITMSG2 = "vamo nessa, isso já está\nficando insuportável!";
+QUITMSG3 = "eu não sairia se fosse você.\nWindows é muito mais chato.";
+QUITMSG4 = "então você gosta mais do windows\ndo que de mim, certo?";
+QUITMSG5 = "nao vá, eu acho que vi algo\nse mexendo naquele canto!";
+QUITMSG6 = "sabe, na próxima vez,\nvocê já era.";
+QUITMSG7 = "vá em frente, saia.\nveja se me preocupo.";
 
 // Mensagens de saída DooM II
-QUITMSG8 = " >sair \n >pedindo permissao para sair\n(tem certeza??)";
-QUITMSG9 = "nao va agora, um \num buraco negro lhe espera\n na saida!";
+QUITMSG8 = " >sair \n >pedindo permissão para sair\n(tem certeza??)";
+QUITMSG9 = "nao vá agora, um \nburaco negro lhe espera\n na saida!";
 QUITMSG10 = "saia daqui e volte\npara seus programas chatos.";
-QUITMSG11 = "se fosse seu chefe, \nvoce estaria demitido!";
-QUITMSG12 = "OK, pode ir.\nmas pode esquecer sua pontuacao!";
-QUITMSG13 = "va. \nquando voltar, estarei lhe esperando\ncom meu BFG.";
-QUITMSG14 = "tens sorte por nao\nlhe dar um premio por pensar\n em sair.";
+QUITMSG11 = "se fosse seu chefe, \nvocê estaria demitido!";
+QUITMSG12 = "OK, pode ir.\nmas pode esquecer sua pontuação!";
+QUITMSG13 = "vá. \nquando voltar, estarei lhe esperando\ncom meu BFG.";
+QUITMSG14 = "você tem sorte por não\nlhe dar um prêmio por pensar\n em sair.";
 
 // Mensagens de saída Strife
 QUITMSG15 = "aonde pensa que vai?!\n e quanto a nos?";
@@ -59,55 +59,55 @@ QUITMSG27 = "Nao va.\nPrecisamos de sua ajuda!";
 QUITMSG28 = "Nao nos abandone!!!";
 QUITMSG29 = "O verdadeiro Chex(R) Warrior\n nunca desistiria!";
 
-LOADNET = "impossivel carregar, porque \n esta em partida online!\naperte uma tecla.";
-QLOADNET = "impossivel carregar, porque esta online!\n\naperte uma tecla.";
+LOADNET = "impossível carregar, porque \n está em partida online!\naperte uma tecla.";
+QLOADNET = "impossível carregar, porque está online!\n\naperte uma tecla.";
 QSAVESPOT = "escolha um slot antes de fazer isso de novo.\n\naperte uma tecla.";
-SAVEDEAD = "precisa estar jogando para faze-lo.\n\naperte uma tecla.";
+SAVEDEAD = "precisa estar jogando para fazê-lo.\n\naperte uma tecla.";
 QSPROMPT = "deseja mesmo salvar aqui?\n\n'%s'\n";
 QLPROMPT = "deseja carregar esse jogo?\n\n'%s'\n";
-NEWGAME = "impossivel iniciar um novo jogo\nenquanto se esta online.\n\naperte uma tecla.";
+NEWGAME = "impossivel iniciar um novo jogo\nenquanto se está online.\n\naperte uma tecla.";
 NIGHTMARE = "tem certeza? nem eu mesmo me\nsujeito a jogar nesse modo.\n";
-SWSTRING = "essa e a versao shareware de doom.\nque contem somente o primeiro episodio.\npara continuar, compre a trilogia.\n\naperte uma tecla.";
-MSGOFF = "Messagens DESATIVADO";
-MSGON = "Messagens ATIVADO";
-NETEND = "nao pode desligar esse jogo!\n\naperte uma tecla.";
+SWSTRING = "essa e a versao shareware de doom.\nque contem somente o primeiro episódio.\npara continuar, compre a trilogia.\n\naperte uma tecla.";
+MSGOFF = "Mensagens DESATIVADO";
+MSGON = "Mensagens ATIVADO";
+NETEND = "nâo pode desligar esse jogo!\n\naperte uma tecla.";
 ENDGAME = "tem certeza que deseja fechar esse jogo?\n";
 DOSY = "tem certeza disso?";
 EMPTYSTRING = "V A Z I O";
 GOTARMOR = "Colete equipado.";
 GOTMEGA = "Armadura equipada.";
-GOTHTHBONUS = "Pegou bonus de vida";
-GOTARMBONUS = "Pegou bonus de protecao (colete)";
+GOTHTHBONUS = "Pegou bônus de vida";
+GOTARMBONUS = "Pegou bônus de proteção (colete)";
 GOTSTIM = "Pegou um kit de primeiros socorros\npequeno.";
 GOTMEDINEED = "Pegou um kit de primeiros socorros\n na HORA CERTA!!";
 GOTMEDIKIT = "Pegou um kit de primeiros socorros\ngrande.";
 GOTSUPER = "Supercarga!";
 GOTBLUECARD = "Achou a credencial azul.";
 GOTYELWCARD = "Achou a credencial amarela.";
-GOTREDCARD = "Achou a credencial vermelha equipada.";
-GOTBLUESKUL = "Achou o cranio azul.";
-GOTYELWSKUL = "Achou o cranio amarelo.";
-GOTREDSKUL = "Achou o cranio vermelho.";
-GOTINVUL = "Sou invencivel (30 sec)!";
-GOTBERSERK = "Pilulas de força (30 sec)!";
+GOTREDCARD = "Achou a credencial vermelha.";
+GOTBLUESKUL = "Achou o crânio azul.";
+GOTYELWSKUL = "Achou o crânio amarelo.";
+GOTREDSKUL = "Achou o crânio vermelho.";
+GOTINVUL = "Invencibilidade (30 sec)!";
+GOTBERSERK = "Pílulas de força (30 sec)!";
 GOTINVIS = "Invisibilidade (30 sec)";
-GOTSUIT = "Roupa anti-radiacao (1 min)";
-GOTMAP = "Mapa do nivel";
-GOTVISOR = "Oculos de visao noturna (1 min)";
+GOTSUIT = "Roupa anti-radiação (1 min)";
+GOTMAP = "Mapa do nível";
+GOTVISOR = "Óculos de visão noturna (1 min)";
 GOTMSPHERE = "Megaesfera!";
 GOTCLIP = "Pegou um clipe.";
-GOTCLIPBOX = "Caixa de municao equipada.";
+GOTCLIPBOX = "Caixa de munição equipada.";
 GOTROCKET = "Foguete equipado.";
 GOTROCKBOX = "Caixa de foguetes equipada.";
 GOTCELL = "Pack de energia(pequeno) equipada.";
 GOTCELLBOX = "Pack de energia(grande) equipada.";
 GOTSHELLS = "Cartuchos de espingarda coletada.";
 GOTSHELLBOX = "Caixa de cartuchos de espingarda coletada.";
-GOTBACKPACK = "Mochila CHEIA de municao coletada!";
+GOTBACKPACK = "Mochila CHEIA de munição coletada!";
 GOTBFG9000 = "BFG9000 equipado. Uau!";
 GOTCHAINGUN = "Metralhadora equipada!";
 GOTCHAINSAW = "A motoserra, enfim!";
-GOTLAUNCHER = "Lanca-foguetes equipada!";
+GOTLAUNCHER = "Lança-foguetes equipada!";
 GOTPLASMA = "Metralhadora de plasma equipada!";
 GOTSHOTGUN = "Espingarda equipada!";
 GOTSHOTGUN2 = "Espingarda de cano duplo equipada!";
@@ -120,11 +120,11 @@ PD_YELLOWK = "Precisa de credencial amarela para ativar esta porta";
 PD_BLUECO = "Precisa de credencial azul para ativar este objeto";
 PD_REDCO = "Precisa de credencial vermelha para ativar este objeto";
 PD_YELLOWCO = "Precisa de credencial amarela para ativar este objeto";
-PD_BLUESO = "Precisa de cranio azul para ativar este objeto";
-PD_REDSO = "Precisa de cranio vermelho para ativar este objeto";
-PD_YELLOWSO = "Precisa de cranio amarelo para ativar este objeto";
+PD_BLUESO = "Precisa de crânio azul para ativar este objeto";
+PD_REDSO = "Precisa de crânio vermelho para ativar este objeto";
+PD_YELLOWSO = "Precisa de crânio amarelo para ativar este objeto";
 GGSAVED = "Jogo salvo.";
-HUSTR_MSGU = "[Mensagem nao enviada]";
+HUSTR_MSGU = "[Mensagem não enviada]";
 PICKUP_PISTOL_DROPPED = "Pistola equipada.";
 BETA_BONUS1 = "Voce pegou uma adaga demoniaca.";
 BETA_BONUS2 = "Voce pegou um skullchest.";
@@ -268,11 +268,11 @@ THUSTR_30 = "nivel 30: last call";
 THUSTR_31 = "nivel 31: pharaoh";
 THUSTR_32 = "nivel 32: caribbean";
 
-HUSTR_TALKTOSELF1 = "Voce pensa...";
-HUSTR_TALKTOSELF2 = "Tem alguem ai?";
-HUSTR_TALKTOSELF3 = "Nao tem ninguem que possa responder";
-HUSTR_TALKTOSELF4 = "Voce esta ficando louco...";
-HUSTR_TALKTOSELF5 = "Eu juro que vi alguem...";
+HUSTR_TALKTOSELF1 = "Você pensa...";
+HUSTR_TALKTOSELF2 = "Tem alguém aí?";
+HUSTR_TALKTOSELF3 = "Não tem ninguém que possa responder";
+HUSTR_TALKTOSELF4 = "Você está ficando louco...";
+HUSTR_TALKTOSELF5 = "Eu juro que vi alguém...";
 HUSTR_MESSAGESENT = "[Mensagem enviada]";
 
 AMSTR_FOLLOWON = "Siga-me ATIVADO";
@@ -291,152 +291,152 @@ STSTR_KFAADDED = "O Pacote completo... Trapaceiro!";
 STSTR_FAADDED = "Precisa de mais municao?";
 STSTR_NCON = "No Clip ATIVADO";
 STSTR_NCOFF = "No Clip DESATIVADO";
-STSTR_BEHOLD = "Escolha um poder:\nForca-s; invulnerabilidade-v; invisibilidade-i\nantiradiacao-r; mapa-a; oculos-l";
+STSTR_BEHOLD = "Escolha um poder:\nForça-s; invulnerabilidade-v; invisibilidade-i\nanti-radiação-r; mapa-a; óculos-l";
 STSTR_BEHOLDX = "Power-up ATIVADO";
 STSTR_CHOPPERS = "... nao enche.";
 STSTR_CLEV = "Pulando para...\n";
 TXT_BUDDHAON = "Modo Buddha ATIVADO";
 TXT_BUDDHAOFF = "Modo Buddha DESATIVADO";
-TXT_DEFAULTPICKUPMSG = "Voce pegou um objeto";
+TXT_DEFAULTPICKUPMSG = "Você pegou um objeto";
 
 E1TEXT =
-	"Apos todo o esforco limpando \n"
-	"a base da lua, voce deveria ganhar um premio, \n"
-	"nao deveria? Hein? Cade o maravilhoso \n"
+	"Apos todo o esforço limpando \n"
+	"a base da lua, voce deveria ganhar um prêmio, \n"
+	"não deveria? Hein? Cadê o maravilhoso \n"
 	"presente: voltar para casa? \n"
-	"Parece que este pesadelo so esta comecando. \n"
+	"Parece que este pesadelo só está começando. \n"
 	"\n"
-	"Cheira como carne podre, mas e a base Deimos, \n"
+	"Cheira como carne podre, mas é a base Deimos, \n"
 	"eu acho. Parece que estou preso no meio do \n"
 	"Inferno... \n"
 	"\n"
-	"O unico jeito de sair e passando dentro. \n"
+	"O único jeito de sair é passando dentro. \n"
 	"\n"
-	"Para continuar, escolha o prox. episodio, \n"
-	"The Shores of Hell e, na sequencia, \n"
+	"Para continuar, escolha o prox. episódio, \n"
+	"The Shores of Hell e, na sequência, \n"
 	"Inferno!\n";
 E2TEXT =
-	"Voce conseguiu! O gigante cyber-\n"
+	"Você conseguiu! O gigante cyber-\n"
 	"demon que comandava a base lunar\n"
 	"Deimos foi morto, e voce foi o\n"
 	"triunfante nessa batalha... E agora?\n"
-	"Voce olha pelo parapeito da base e\n"
-	"entao ve a assustadora verdade.\n"
+	"Você olha pelo parapeito da base e\n"
+	"entao vê a assustadora verdade.\n"
 	"\n"
-	"A base esta flutuando em cima do\n"
+	"A base está flutuando em cima do\n"
 	"que parece um portal para o inferno!\n"
-	"Voce nunca ouviu falar de alguem que\n"
-	"escapou de la, mas aqueles que voce\n"
+	"Você nunca ouviu falar de alguém que\n"
+	"escapou de lá, mas aqueles que você\n"
 	"matou se arrependem de ter lhe conhe-\n"
-	"cido. Voce toma folego e comeca sua jor-\n"
-	"nada no ultimo episodio de DooM! \n"
+	"cido. Você toma fôlego e comeca sua jor-\n"
+	"nada no ultimo episódio de DooM! \n"
 	"                       Inferno\n"
 	"\n"
 	" ";
 E3TEXT =
-	"O inigualavel spiderdemon que esque-\n"
-	"matizou a invasao na lua causou tanta\n"
-	"destruicao e morte que foi enfim derro-\n"
+	"O inigualável spiderdemon que esque-\n"
+	"matizou a invasão na lua causou tanta\n"
+	"destruição e morte que foi enfim derro-\n"
 	"tado.\n"
 	"\n"
-	"Uma passagem secreta abre e voce entra.\n"
-	"Voce mostrou que inferno nenhum pode\n"
-	"conte-lo, pelo menos agora acabou.\n"
-	"Agora esta na hora de voltar para a Terra,\n"
+	"Uma passagem secreta abre e você entra.\n"
+	"Você mostrou que inferno nenhum pode\n"
+	"contê-lo, pelo menos agora acabou.\n"
+	"Agora está na hora de voltar para a Terra,\n"
 	"para enfim descansar.\n"
 	"Lar doce lar.\n"
 	"\n"
-	"Voce imagina o que aconteceu nesse\n"
+	"Você imagina o que aconteceu nesse\n"
 	"meio tempo enquanto voce batalhava\n"
 	"contra o mal. Espero que nenhum daque-\n"
-	"les monstros nao tenham vindo junto com\n"
-	"voce naquela passagem ...";
+	"les monstros tenham vindo junto com\n"
+	"você naquela passagem ...";
 E4TEXT =
 	"O spider mastermind deve ter sido \n"
-	"mandado junto com sua legiao de monstros\n"
+	"mandado junto com sua legião de monstros\n"
 	"para os confins do inferno depois dessa\n"
-	"batalha. sorte sua que voce se manteve\n"
+	"batalha. sorte sua que você se manteve\n"
 	"vivo para fazer de tudo para limpar\n"
 	"esse mundo de sofrimento de uma forma que\n"
-	"so um heroi poderia fazer diante de tanto mal.\n"
+	"só um herói poderia fazer diante de tanto mal.\n"
 	"\n"
-	"alias, alguem teria que pagar pelo que\n"
-	"aconteceu com daisy, seu coelho de estimacao.\n"
+	"aliás, alguem teria que pagar pelo que\n"
+	"aconteceu com daisy, seu coelho de estimação.\n"
 	"\n"
-	"Mas agora, voce ve o que aconteceu no\n"
+	"Mas agora, voce vê o que aconteceu no\n"
 	"planeta enquanto estava fora: dor e sangue\n"
-	"trazido pelos demonios que estao a solta nas\n"
-	"cidades. agora e hora de acabar com isso!\n"
-	"voce recarrega sua pistola e continua seu arduo\n"
+	"trazido pelos demônios que estão a solta nas\n"
+	"cidades. agora é hora de acabar com isso!\n"
+	"você recarrega sua pistola e continua seu árduo\n"
 	"trabalho: acabar com esses monstros!";
 C1TEXT =
-	"VOCE FOI FUNDO DENTRO DO PORTO\n"
-	"ESTELAR, MAS ALGO ESTA ERRADO. OS\n"
+	"VOCÊ FOI FUNDO DENTRO DO PORTO\n"
+	"ESTELAR, MAS ALGO ESTÁ ERRADO. OS\n"
 	"MONSTROS TROUXERAM SUA REALIDADE\n"
 	"COM ELES, E A TECNOLOGIA AQUI CONTIDA\n"
-	"ESTA SENDO MODIFICADA COM SUA PRESENCA.\n"
+	"ESTÁ SENDO MODIFICADA COM SUA PRESENÇA.\n"
 	"\n"
-	"ADIANTE, VOCE VE UM POSTO DE GUARDA,\n"
-	"UMA ZONA FORTIFICADA. SE VOCE PASSAR ALI,\n"
-	"PODERA ENTRAR DENTRO DO CORACAO DA\n"
+	"ADIANTE, VOCÊ VÊ UM POSTO DE GUARDA,\n"
+	"UMA ZONA FORTIFICADA. SE VOCÊ PASSAR ALI,\n"
+	"PODERÁ ENTRAR DENTRO DO CORAÇÃO DA\n"
 	"BASE ESTELAR E DESATIVAR O DISPOSITIVO\n"
-	"QUE MANTEM O QUE SOBROU DA POPULACAO\n"
-	"DA TERRA REFEM.";
+	"QUE MANTÊM O QUE SOBROU DA POPULAÇÃO\n"
+	"DA TERRA REFÉM.";
 C2TEXT =
-	"VOCE CONSEGUIU! APOS ESSA VITORIA VOCE SALVA\n"
-	"A RACA HUMANA DA DIZIMACAO, FAZENDO COM QUE\n"
-	"ELES EVACUASSEM A TERRA DE VEZ. AGORA VOCE\n"
-	"E O UNICO HUMANO NA FACE DA TERRA.\n"
-	"MUTACOES CANIBAIS, ALIENS CARNIVOROS\n"
-	"E MAUS ESPIRITOS SAO SEUS VIZINHOS.\n"
-	"VOCE SENTA E ESPERA PELA MORTE, FELIZ\n"
-	"POR TER SALVADO A POPULACAO.\n"
+	"VOCÊ CONSEGUIU! APÓS ESSA VITÓRIA VOCÊ SALVA\n"
+	"A RAÇA HUMANA DA DIZIMACAO, FAZENDO COM QUE\n"
+	"ELES EVACUASSEM A TERRA DE VEZ. AGORA VOCÊ\n"
+	"É O ÚNICO HUMANO NA FACE DA TERRA.\n"
+	"MUTAÇÕES CANIBAIS, ALIENS CARNÍVOROS\n"
+	"E MAUS ESPÍRITOS SÃO SEUS VIZINHOS.\n"
+	"VOCÊ SENTA E ESPERA PELA MORTE, FELIZ\n"
+	"POR TER SALVADO A POPULAÇÃO.\n"
 	"\n"
-	"MAS ELES MANDAM UMA MENSAGEM DO ESPACO:\n"
-	"\"SENSORES LOCALIZARAM O FOCO DA INVASAO\n"
-	"SE VOCE FOR LA, PODERA BLOQUEAR SUA ENTRADA.\n"
-	"A BASE ALIEN FICA NO CORACAO DE SUA CIDADE\n"
-	"NATAL, NAO MUITO LONGE DO PORTO ESTELAR.\" \n"
-	"LENTAMENTE E SENTINDO MUITA DOR, VOCE SE\n"
+	"MAS ELES MANDAM UMA MENSAGEM DO ESPAÇO:\n"
+	"\"SENSORES LOCALIZARAM O FOCO DA INVASÃO\n"
+	"SE VOCÊ FOR LÁ, PODERÁ BLOQUEAR SUA ENTRADA.\n"
+	"A BASE ALIEN FICA NO CORAÇÃO DE SUA CIDADE\n"
+	"NATAL, NÃO MUITO LONGE DO PORTO ESTELAR.\" \n"
+	"LENTAMENTE E SENTINDO MUITA DOR, VOCÊ SE\n"
 	"LEVANTA E DECIDE CONTINUAR A LIMPEZA.\n";
 C3TEXT =
-	"VOCE CONSEGUE CHEGAR NO CORACAO DA CIDADE,\n"
-	"CERCADA PELOS CADAVERES DE SEUS INIMIGOS.\n"
-	"VOCE NAO VE NENHUM JEITO DE DESTRUIR A ENTRADA\n"
+	"VOCÊ CONSEGUE CHEGAR NO CORAÇÃO DA CIDADE,\n"
+	"CERCADA PELOS CADÁVERES DE SEUS INIMIGOS.\n"
+	"VOCÊ NAO VÊ NENHUM JEITO DE DESTRUIR A ENTRADA\n"
 	"POR ESTE LADO, ENTAO VOCE CERRA OS DENTES\n"
-	"E MERGULHA ATRAVES DELA.\n"
+	"E MERGULHA ATRAVÉS DA PASSAGEM.\n"
 	"\n"
-	"DEVE HAVER UM JEITO DE FECHA-LA DO OUTRO LADO.\n"
-	"PRA QUE SE PREOCUPAR SE TEREI QUE ATRAVESSAR O\n"
-	"INFERNO PARA FECHA-LA?";
+	"DEVE HAVER UM JEITO DE FECHÁ-LA DO OUTRO LADO.\n"
+	"PRA QUÊ SE PREOCUPAR SE TEREI QUE ATRAVESSAR O\n"
+	"INFERNO PARA FECHÁ-LA?";
 C4TEXT =
-	"A HORRENDA VISTA DO MAIOR DEMONIO QUE\n"
-	"VOCE JA VIU DESMORONA NA SUA FRENTE\n"
+	"A HORRENDA VISTA DO MAIOR DEMÔNIO QUE\n"
+	"VOCÊ JÁ VIU DESMORONA NA SUA FRENTE\n"
 	"DEPOIS DE VOCE LANCAR ALGUNS FOGUETES\n"
-	"DENTRO DE SEU CEREBRO EXPOSTO. ELE\n"
+	"DENTRO DE SEU CÉREBRO EXPOSTO. ELE\n"
 	"MURCHA E MORRE, SEUS MEMBROS ESTAO\n"
 	"DEVASTANDO MILHAS E MILHAS DA\n"
-	"SUPERFICIE DO INFERNO.\n"
+	"SUPERFÍCIE DO INFERNO.\n"
 	"\n"
-	"VOCE CONSEGUIU. A INVASAO ACABOU.\n"
-	"A TERRA ESTA SALVA. O INFERNO DESTRUIDO.\n"
-	"VOCE IMAGINA PARA ONDE OS MAUS IRAO\n"
-	"QUANDO MORREREM AGORA. VOCE SECA O\n"
-	"SUOR DE SUA TESTA E COMECA A LONGA\n"
+	"VOCÊ CONSEGUIU. A INVASÃO ACABOU.\n"
+	"A TERRA ESTÁ SALVA. O INFERNO DESTRUIDO.\n"
+	"VOCÊ IMAGINA PARA ONDE OS MAUS IRÃO\n"
+	"QUANDO MORREREM AGORA. VOCÊ SECA O\n"
+	"SUOR DE SUA TESTA E COMEÇA A LONGA\n"
 	"JORNADA DE VOLTA PRA CASA. E PENSA EM\n"
 	"RECONSTRUIR A TERRA PARA SER MAIS\n"
 	"DIVERTIDA DO QUE ANTES.\n";
 C5TEXT =
-	"MEUS PARABENS, VOCE ACHOU O NIVEL SECRETO!\n"
-	"PARECE TER SIDO CONSTRUIDO POR HUNANOS,\n"
-	"EM VEZ DE DEMONIOS. VOCE IMAGINA O QUE\n"
+	"MEUS PARABÉNS, VOCÊ ACHOU O NÍVEL SECRETO!\n"
+	"PARECE TER SIDO CONSTRUÍDO POR HUNANOS,\n"
+	"EM VEZ DE DEMÔNIOS. VOCÊ IMAGINA O QUE\n"
 	"DEVE HABITAR OS CORREDORES DESTE LUGAR.\n";
 C6TEXT =
-	"MEUS PARABENS, DE NOVO! VOCE ACHOU\n"
-	"OUTRO NIVEL SECRETO. QUERO VER PASSAR\n"
+	"MEUS PARABÉNS, DE NOVO! VOCÊ ACHOU\n"
+	"OUTRO NÍVEL SECRETO. QUERO VER PASSAR\n"
 	"ESSE AGORA!\n";
 
-// Plutonia and TNT intermission screens (ainda não traduzido)
+// Plutonia and TNT intermission screens (50% ainda não traduzido)
 P1TEXT =
 	"Voce vangloria sua vitoria em cima da carcaca\n"
 	"do Guardiao. Apos mata-lo, voce arranca o \n"
@@ -571,9 +571,9 @@ CC_HERO = "OUR HERO";
 PD_BLUEC = "Precisa de uma credencial azul para abrir a porta";
 PD_REDC = "Precisa de uma credencial vermelha para abrir a porta";
 PD_YELLOWC = "Precisa de uma credencial amarela para abrir a porta";
-PD_BLUES = "Precisa de um cranio azul para abrir a porta";
-PD_REDS = "Precisa de um cranio vermelho para abrir a porta";
-PD_YELLOWS = "Precisa de um cranio amarelo para abrir a porta";
+PD_BLUES = "Precisa de um crânio azul para abrir a porta";
+PD_REDS = "Precisa de um crânio vermelho para abrir a porta";
+PD_YELLOWS = "Precisa de um crânio amarelo para abrir a porta";
 PD_ANY = "Qualquer chave abre a porta";
 PD_ANYOBJ = "Qualquer chave ativa este objeto";
 PD_ALL3 = "Precisa das 3 chaves para abrir a porta";
@@ -596,23 +596,23 @@ bgflat31 = "RROCK19";
 bgcastcall = "BOSSBACK";
 
 // Mensagens de fim de partida online
-TXT_FRAGLIMIT = "Pontuacao atingida.";
+TXT_FRAGLIMIT = "Pontuação atingida.";
 TXT_TIMELIMIT = "Tempo atingido.";
 
 // Mensagens de pontos cumulativos
-SPREEKILLSELF = "%o estava indo bem ate se matar!";
-SPREEOVER = "A matanca de %o foi interrompida por %k";
-SPREE5 = "%k esta indo bem!";
+SPREEKILLSELF = "%o estava indo bem até se matar!";
+SPREEOVER = "A matança de %o foi interrompida por %k";
+SPREE5 = "%k está indo bem!";
 SPREE10 = "%k continua indo bem!";
-SPREE15 = "%k esta dominando!";
-SPREE20 = "%k nao se cansa por nada!";
+SPREE15 = "%k está dominando!";
+SPREE20 = "%k não se cansa por nada!";
 SPREE25 = "%k parece profissional!";
 
 // Mensagens de COMBO
 MULTI2 = "COMBO 2X!";
 MULTI3 = "COMBO 3X!";
 MULTI4 = "COMBO 4X!";
-MULTI5 = "Santa Mae do Ceu!!!";
+MULTI5 = "Santa Mãe do Céu!!!";
 
 // Obituario
 // Primeiro suicidios, depois as mortes
@@ -620,7 +620,7 @@ OB_SUICIDE = "%o suicidou-se.";
 OB_FALLING = "%o caiu.";
 OB_CRUSH = "%o foi esmagado.";
 OB_EXIT = "%o tentou sair.";
-OB_WATER = "%o nao sabe nadar.";
+OB_WATER = "%o não sabe nadar.";
 OB_SLIME = "%o se entoxicou.";
 OB_LAVA = "%o derreteu.";
 OB_BARREL = "%o explodiu.";
@@ -635,7 +635,7 @@ OB_STEALTHVILE = "%o achou que viu um archvile.";
 OB_STEALTHBARON = "%o achou que viu um Baron of Hell.";
 OB_STEALTHCACO = "%o achou que viu um cacodemon.";
 OB_STEALTHCHAINGUY = "%o achou que viu um chaingunner.";
-OB_STEALTHDEMON = "%o achou que viu um a demon.";
+OB_STEALTHDEMON = "%o achou que viu um demon.";
 OB_STEALTHKNIGHT = "%o achou que viu um Hell Knight.";
 OB_STEALTHIMP = "%o achou que viu um imp.";
 OB_STEALTHFATSO = "%o achou que viu um mancubus.";
@@ -739,17 +739,16 @@ OB_LARVA = "%o foi eslameado por uma larva.";
 OB_QUADRUMPUS = "%o foi eslameado por um quadrumpus.";
 OB_MAXIMUS = "%o foi derrotado por um Maximus.";
 // Existe um "You defeated a maximus" que eu não pude traduzir, se alguém souber qual a linha que traduz me diga no fórum onde você o baixou
-_MAXIMUS = "00";
 OB_FLEMMINE = "%o foi eslameado por um Flem mine.";
 OB_SNOTFOLUS = "%o foi derrotado pelo Lord Snotfolus.";
 
-OB_MPFIST = "%k fez justica com as proprias maos, na cara de %o.";
+OB_MPFIST = "%k fez justiça com as próprias mãos, na cara de %o.";
 OB_MPCHAINSAW = "%k usou o poder da motoserra para abrir %o.";
 OB_MPPISTOL = "%o foi morto pela pistola de %k.";
 OB_MPSHOTGUN = "%o foi morto pela espingarda de %k.";
 OB_MPSSHOTGUN = "%o foi morto pela espingarda de cano duplo de %k.";
 OB_MPCHAINGUN = "%o foi massacrado pela metralhadora de %k.";
-OB_MPROCKET = "%o nao viu o foguete de %k.";
+OB_MPROCKET = "%o não viu o foguete de %k.";
 OB_MPR_SPLASH = "%o quase escapou do foguete de %k. Quase...";
 OB_MPPLASMARIFLE = "%o foi torrado pelo rifle de plasma de %k.";
 OB_MPBFG_BOOM = "%o foi pego pelo BFG de %k.";
@@ -807,27 +806,19 @@ OB_MONTELEFRAG = "%o foi "telefragged" por um monstro.";
 
 OB_DEFAULT = "%o morreu.";
 OB_MPDEFAULT = "%o foi morto por %k.";
-OB_FRIENDLY1 = "%k e cego.";
+OB_FRIENDLY1 = "%k é cego.";
 OB_FRIENDLY2 = "%k pensa que sabe o que faz.";
 OB_FRIENDLY3 = "%k errou o tiro.";
 OB_FRIENDLY4 = "%k perde outro ponto.";
 
-SAVEGAMENAME = "zdoomsv";
-STARTUP1 = "";
-STARTUP2 = "";
-STARTUP3 = "";
-STARTUP4 = "";
-STARTUP5 = "";
-
-
 // Item tags: Doom weapons
-FIST ="Soco Ingles";
+TAG_FIST ="Soco Ingles";
 TAG_CHAINSAW = "Motoserra";
 TAG_PISTOL = "Pistola";
 TAG_SHOTGUN = "Espingarda";
 TAG_SUPERSHOTGUN = "Espingarda de cano duplo";
 TAG_CHAINGUN = "Metralhadora";
-TAG_ROCKETLAUNCHER = "Lanca-foguetes";
+TAG_ROCKETLAUNCHER = "Lança-foguetes";
 TAG_PLASMARIFLE = "Rifle de Plasma";
 TAG_BFG9000 = "O BFG 9000";
 

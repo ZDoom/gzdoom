@@ -806,6 +806,7 @@ OB_MPMINIMISSILELAUNCHER = "%o gulped down %k's missile.";
 OB_MPSTRIFEGRENADE = "%o was inverted by %k's H-E grenade."; 
 OB_MPPHOSPHOROUSGRENADE = "%o took a flame bath in %k's phosphorous pyre."; 
 OB_MPFLAMETHROWER = "%o was barbecued by %k."; 
+OP_MPMAULER1 = "%o was zapped by %k.";
 OB_MPMAULER = "%o was viciously vaporized by %k."; 
 OB_MPSIGIL = "%o bowed down to the sheer power of %k's Sigil.";
 

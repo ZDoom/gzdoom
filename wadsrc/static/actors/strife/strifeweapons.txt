@@ -534,7 +534,6 @@ ACTOR Mauler2 : Mauler
 	Weapon.AmmoGive1 0
 	Weapon.AmmoType1 "EnergyPod"
 	Weapon.SisterWeapon "Mauler"
-	Obituary "$OB_MPMAULER2"
 	Tag "$TAG_MAULER2"
 
 	action native A_FireMauler2Pre ();

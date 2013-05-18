@@ -398,7 +398,6 @@ void D_SetupUserInfo ()
 		{
 			FBaseCVar **newcvar;
 			FName cvarname(cvar->GetName());
-			ECVarType type;
 
 			switch (cvarname.GetIndex())
 			{
@@ -900,7 +899,7 @@ void D_ReadUserInfoStrings (int pnum, BYTE **stream, bool update)
 
 void ReadCompatibleUserInfo(FArchive &arc, userinfo_t &info)
 {
-	char netname[MAXPLAYERNAME];
+	char netname[MAXPLAYERNAME + 1];
 	BYTE team;
 	int aimdist, color, colorset, skin, gender;
 	bool neverswitch;
@@ -914,7 +913,7 @@ void ReadCompatibleUserInfo(FArchive &arc, userinfo_t &info)
 
 	*static_cast<FStringCVar *>(info[NAME_Name]) = netname;
 	*static_cast<FIntCVar *>(info[NAME_Team]) = team;
-	*static_cast<FFloatCVar *>(info[NAME_AutoAim]) = (float)aimdist / ANGLE_1;
+	*static_cast<FFloatCVar *>(info[NAME_Autoaim]) = (float)aimdist / ANGLE_1;
 	*static_cast<FIntCVar *>(info[NAME_Skin]) = skin;
 	*static_cast<FIntCVar *>(info[NAME_Gender]) = gender;
 	*static_cast<FBoolCVar *>(info[NAME_NeverSwitchOnPickup]) = neverswitch;

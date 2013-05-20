@@ -4071,24 +4071,21 @@ void P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z, 
 		}
 
 	}
-	if (trace.HitType == TRACE_HitFloor &&
-		trace.CrossedWater == NULL &&
-		trace.Sector->heightsec == NULL)
+	if(thepuff != NULL)
 	{
-		if (thepuff != NULL)
+		if (trace.HitType == TRACE_HitFloor &&
+			trace.CrossedWater == NULL &&
+			trace.Sector->heightsec == NULL)
 		{
 			thepuff->SetOrigin(trace.X, trace.Y, trace.Z);
 			P_HitWater (thepuff, trace.Sector);
 		}
-	}
-	if (trace.Crossed3DWater || trace.CrossedWater)
-	{
-		if (thepuff != NULL)
+		if (trace.Crossed3DWater || trace.CrossedWater)
 		{
 			SpawnDeepSplash (source, trace, thepuff, vx, vy, vz, shootz, trace.Crossed3DWater != NULL);
 		}
+		thepuff->Destroy ();
 	}
-	thepuff->Destroy ();
 
 	// Draw the slug's trail.
 	end.X = FIXED2FLOAT(trace.X);

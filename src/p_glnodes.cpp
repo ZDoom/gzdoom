@@ -794,17 +794,20 @@ static int FindGLNodesInWAD(int labellump)
 // FindGLNodesInWAD
 //
 // Looks for GL nodes in the same WAD as the level itself
-// When this function returns the file pointer points to
-// the directory entry of the GL_VERTS lump
+// Function returns the lump number within the file. Returns -1 if the input
+// resource file is NULL.
 //
 //===========================================================================
 
-static int FindGLNodesInFile(FileReader * f, const char * label)
+static int FindGLNodesInFile(FResourceFile * f, const char * label)
 {
+	// No file open?  Probably shouldn't happen but assume no GL nodes
+	if(!f)
+		return -1;
+
 	FString glheader;
 	bool mustcheck=false;
-	DWORD id, dirofs, numentries;
-	DWORD offset, size;
+	DWORD numentries = f->LumpCount();
 	char lumpname[9];
 
 	glheader.Format("GL_%.8s", label);
@@ -814,25 +817,17 @@ static int FindGLNodesInFile(FileReader * f, const char * label)
 		mustcheck=true;
 	}
 
-	f->Seek(0, SEEK_SET);
-	(*f) >> id >> numentries >> dirofs;
-
-	if ((id == IWAD_ID || id == PWAD_ID) && numentries > 4)
+	if (numentries > 4)
 	{
-		f->Seek(dirofs, SEEK_SET);
 		for(DWORD i=0;i<numentries-4;i++)
 		{
-			(*f) >> offset >> size;
-			f->Read(lumpname, 8);
-			if (!strnicmp(lumpname, glheader, 8))
+			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
 			{
 				if (mustcheck)
 				{
 					char check[16]={0};
-					int filepos = f->Tell();
-					f->Seek(offset, SEEK_SET);
-					f->Read(check, 16);
-					f->Seek(filepos, SEEK_SET);
+					FileReader *fr = f->GetLump(i)->GetReader();
+					fr->Read(check, 16);
 					if (MatchHeader(label, check)) return i;
 				}
 				else return i;
@@ -902,8 +897,7 @@ bool P_LoadGLNodes(MapData * map)
 		int li;
 		int lumpfile = Wads.GetLumpFile(map->lumpnum);
 		bool mapinwad = map->InWad;
-		FileReader * fr = map->file;
-		FResourceFile * f_gwa = NULL;
+		FResourceFile * f_gwa = map->resource;
 
 		const char * name = Wads.GetWadFullName(lumpfile);
 
@@ -933,15 +927,13 @@ bool P_LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path, NULL, true);
 					if (f_gwa==NULL) return false;
 
-					fr = f_gwa->GetReader();
-
 					strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(map->lumpnum), 8);
 				}
 			}
 		}
 
 		bool result = false;
-		li = FindGLNodesInFile(fr, map->MapLumps[0].Name);
+		li = FindGLNodesInFile(f_gwa, map->MapLumps[0].Name);
 		if (li!=-1)
 		{
 			static const char check[][9]={"GL_VERT","GL_SEGS","GL_SSECT","GL_NODES"};
@@ -959,11 +951,8 @@ bool P_LoadGLNodes(MapData * map)
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}
 
-		if (f_gwa)
-		{
-			delete fr;
+		if (f_gwa != map->resource)
 			delete f_gwa;
-		}
 		for(unsigned int i = 0;i < 4;++i)
 			delete gwalumps[i];
 		return result;

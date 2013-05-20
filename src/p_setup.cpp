@@ -305,6 +305,7 @@ MapData *P_OpenMapData(const char * mapname)
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
 			map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
+			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 			map->InWad = true;
 
@@ -412,6 +413,7 @@ MapData *P_OpenMapData(const char * mapname)
 		int index=0;
 
 		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
+		strncpy(map->MapLumps[0].Name, map->resource->GetLump(0)->Name, 8);
 
 		for(DWORD i = 1; i < map->resource->LumpCount(); i++)
 		{

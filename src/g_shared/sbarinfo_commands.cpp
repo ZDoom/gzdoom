@@ -3374,7 +3374,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_DRAWSTRING: return new CommandDrawString(script);
 			case SBARINFO_DRAWNUMBER: return new CommandDrawNumber(script);
 			case SBARINFO_DRAWMUGSHOT: return new CommandDrawMugShot(script);
-			case SBARINFO_DRAWSELECTEDINVENTORY: return reinterpret_cast<CommandDrawImage *> (new CommandDrawSelectedInventory(script));
+			case SBARINFO_DRAWSELECTEDINVENTORY: return static_cast<SBarInfoCommandFlowControl *> (new CommandDrawSelectedInventory(script));
 			case SBARINFO_DRAWSHADER: return new CommandDrawShader(script);
 			case SBARINFO_DRAWINVENTORYBAR: return new CommandDrawInventoryBar(script);
 			case SBARINFO_DRAWKEYBAR: return new CommandDrawKeyBar(script);

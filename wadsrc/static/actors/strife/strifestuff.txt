@@ -510,7 +510,7 @@ ACTOR WaterDropOnFloor 103
 	Game Strife
 	+NOBLOCKMAP
 	ConversationID 224, -1, -1
-	ActiveSound "world/waterdrips"
+	ActiveSound "world/waterdrip"
 	States
 	{
 	Spawn:

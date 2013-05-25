@@ -86,6 +86,7 @@ FGameConfigFile::FGameConfigFile ()
 
 	OkayToWrite = false;	// Do not allow saving of the config before DoGameSetup()
 	bMigrating = false;
+	bModSetup = false;
 	pathname = GetConfigPath (true);
 	ChangePathName (pathname);
 	LoadConfigFile (MigrateStub, NULL);
@@ -376,8 +377,8 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		SetRavenDefaults (gameinfo.gametype == GAME_Hexen);
 	}
 
-	// The NetServerInfo section will be read when it's determined that
-	// a netgame is being played.
+	// The NetServerInfo section will be read and override anything loaded
+	// here when it's determined that a netgame is being played.
 	strncpy (subsection, "LocalServerInfo", sublen);
 	if (SetSection (section))
 	{
@@ -445,6 +446,24 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	OkayToWrite = true;
 }
 
+// Like DoGameSetup(), but for mod-specific cvars.
+// Called after CVARINFO has been parsed.
+void FGameConfigFile::DoModSetup(const char *gamename)
+{
+	mysnprintf(section, countof(section), "%s.Player.Mod", gamename);
+	if (SetSection(section))
+	{
+		ReadCVars(CVAR_MODARCHIVE|CVAR_USERINFO|CVAR_NOSEND);
+	}
+	mysnprintf(section, countof(section), "%s.LocalServerInfo.Mod", gamename);
+	if (SetSection (section))
+	{
+		ReadCVars (CVAR_MODARCHIVE|CVAR_SERVERINFO|CVAR_NOSEND);
+	}
+	// Signal that these sections should be rewritten when saving the config.
+	bModSetup = true;
+}
+
 void FGameConfigFile::ReadNetVars ()
 {
 	strncpy (subsection, "NetServerInfo", sublen);
@@ -452,21 +471,35 @@ void FGameConfigFile::ReadNetVars ()
 	{
 		ReadCVars (0);
 	}
+	if (bModSetup)
+	{
+		mysnprintf(subsection, sublen, "NetServerInfo.Mod");
+		if (SetSection(section))
+		{
+			ReadCVars(CVAR_MODARCHIVE|CVAR_SERVERINFO|CVAR_NOSEND);
+		}
+	}
 }
 
+// Read cvars from a cvar section of the ini. Flags are the flags to give
+// to newly-created cvars that were not already defined.
 void FGameConfigFile::ReadCVars (DWORD flags)
 {
 	const char *key, *value;
 	FBaseCVar *cvar;
 	UCVarValue val;
 
+	if (!(flags & CVAR_MODARCHIVE))
+	{
+		flags |= CVAR_ARCHIVE|CVAR_UNSETTABLE;
+	}
+	flags |= CVAR_AUTO;
 	while (NextInSection (key, value))
 	{
 		cvar = FindCVar (key, NULL);
 		if (cvar == NULL)
 		{
-			cvar = new FStringCVar (key, NULL,
-				CVAR_AUTO|CVAR_UNSETTABLE|CVAR_ARCHIVE|flags);
+			cvar = new FStringCVar (key, NULL, flags);
 		}
 		val.String = const_cast<char *>(value);
 		cvar->SetGenericRep (val, CVAR_String);
@@ -485,18 +518,35 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	ClearCurrentSection ();
 	C_ArchiveCVars (this, CVAR_ARCHIVE|CVAR_USERINFO);
 
+	if (bModSetup)
+	{
+		strncpy (subsection + 6, ".Mod", sublen - 6);
+		SetSection (section, true);
+		ClearCurrentSection ();
+		C_ArchiveCVars (this, CVAR_MODARCHIVE|CVAR_AUTO|CVAR_USERINFO);
+	}
+
 	strncpy (subsection, "ConsoleVariables", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveCVars (this, CVAR_ARCHIVE);
 
-	strncpy (subsection, netgame ? "NetServerInfo" : "LocalServerInfo", sublen);
+	// Do not overwrite the serverinfo section if playing a netgame, and
+	// this machine was not the initial host.
 	if (!netgame || consoleplayer == 0)
-	{ // Do not overwrite this section if playing a netgame, and
-	  // this machine was not the initial host.
+	{
+		strncpy (subsection, netgame ? "NetServerInfo" : "LocalServerInfo", sublen);
 		SetSection (section, true);
 		ClearCurrentSection ();
 		C_ArchiveCVars (this, CVAR_ARCHIVE|CVAR_SERVERINFO);
+
+		if (bModSetup)
+		{
+			strncpy (subsection, netgame ? "NetServerInfo.Mod" : "LocalServerInfo.Mod", sublen);
+			SetSection (section, true);
+			ClearCurrentSection ();
+			C_ArchiveCVars (this, CVAR_MODARCHIVE|CVAR_AUTO|CVAR_SERVERINFO);
+		}
 	}
 
 	strncpy (subsection, "UnknownConsoleVariables", sublen);

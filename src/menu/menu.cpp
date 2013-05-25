@@ -957,5 +957,6 @@ CCMD(reset2saved)
 {
 	GameConfig->DoGlobalSetup ();
 	GameConfig->DoGameSetup (gameinfo.ConfigName);
+	GameConfig->DoModSetup (gameinfo.ConfigName);
 	R_SetViewSize (screenblocks);
 }

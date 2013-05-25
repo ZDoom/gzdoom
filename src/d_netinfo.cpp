@@ -92,22 +92,6 @@ enum
 
 const char *GenderNames[3] = { "male", "female", "other" };
 
-static const char *UserInfoStrings[] =
-{
-	"name",
-	"autoaim",
-	"color",
-	"skin",
-	"team",
-	"gender",
-	"neverswitchonpickup",
-	"movebob",
-	"stillbob",
-	"playerclass",
-	"colorset",
-	NULL
-};
-
 // Replace \ with %/ and % with %%
 FString D_EscapeUserInfo (const char *str)
 {
@@ -394,7 +378,7 @@ void D_SetupUserInfo ()
 
 	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->GetNext())
 	{
-		if (cvar->GetFlags() & CVAR_USERINFO)
+		if ((cvar->GetFlags() & (CVAR_USERINFO|CVAR_NOSEND)) == CVAR_USERINFO)
 		{
 			FBaseCVar **newcvar;
 			FName cvarname(cvar->GetName());
@@ -432,7 +416,7 @@ void userinfo_t::Reset()
 	// Create userinfo vars for this player, initialized to their defaults.
 	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->GetNext())
 	{
-		if (cvar->GetFlags() & CVAR_USERINFO)
+		if ((cvar->GetFlags() & (CVAR_USERINFO|CVAR_NOSEND)) == CVAR_USERINFO)
 		{
 			ECVarType type;
 			FName cvarname(cvar->GetName());

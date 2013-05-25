@@ -135,7 +135,7 @@ FBaseCVar::~FBaseCVar ()
 void FBaseCVar::ForceSet (UCVarValue value, ECVarType type)
 {
 	DoSet (value, type);
-	if (Flags & CVAR_USERINFO)
+	if ((Flags & CVAR_USERINFO) && !(Flags & CVAR_NOSEND))
 		D_UserInfoChanged (this);
 	if (m_UseCallback)
 		Callback ();
@@ -849,9 +849,7 @@ UCVarValue FStringCVar::GetFavoriteRepDefault (ECVarType *type) const
 
 void FStringCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 {
-	if (DefaultValue)
-		delete[] DefaultValue;
-	DefaultValue = ToString (value, type);
+	ReplaceString(&DefaultValue, ToString(value, type));
 	if (Flags & CVAR_ISDEFAULT)
 	{
 		SetGenericRep (value, type);
@@ -1277,7 +1275,7 @@ void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter)
 	// Accumulate all cvars that match the filter flags.
 	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 	{
-		if (cvar->Flags & filter)
+		if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_NOSEND))
 			cvars.Push(cvar);
 	}
 	// Now sort them, so they're in a deterministic order and not whatever
@@ -1316,7 +1314,7 @@ FString C_GetMassCVarString (DWORD filter, bool compact)
 	{
 		for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 		{
-			if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_NOSAVE))
+			if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE|CVAR_NOSEND)))
 			{
 				UCVarValue val = cvar->GetGenericRep(CVAR_String);
 				dump << '\\' << cvar->GetName() << '\\' << val.String;
@@ -1489,6 +1487,7 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, DWORD flags)
 {
 	assert(FindCVar(var_name, NULL) == NULL);
+	flags |= CVAR_AUTO;
 	switch (var_type)
 	{
 	case CVAR_Bool:		return new FBoolCVar(var_name, 0, flags);
@@ -1540,7 +1539,7 @@ void C_ArchiveCVars (FConfigFile *f, uint32 filter)
 	while (cvar)
 	{
 		if ((cvar->Flags &
-			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
+			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MODARCHIVE|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
 			== filter)
 		{
 			UCVarValue val;
@@ -1671,14 +1670,16 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 			else
 			{
 				++count;
-				Printf ("%c%c%c %s : :%s\n",
-					flags & CVAR_ARCHIVE ? 'A' : ' ',
+				Printf ("%c%c%c%c %s = %s\n",
+					flags & CVAR_ARCHIVE ? 'A' :
+						flags & CVAR_MODARCHIVE ? 'M' : ' ',
 					flags & CVAR_USERINFO ? 'U' :
-				flags & CVAR_SERVERINFO ? 'S' :
-				flags & CVAR_AUTO ? 'C' : ' ',
+						flags & CVAR_SERVERINFO ? 'S' :
+						flags & CVAR_AUTO ? 'C' : ' ',
 					flags & CVAR_NOSET ? '-' :
-				flags & CVAR_LATCH ? 'L' :
-				flags & CVAR_UNSETTABLE ? '*' : ' ',
+						flags & CVAR_LATCH ? 'L' :
+						flags & CVAR_UNSETTABLE ? '*' : ' ',
+					flags & CVAR_NOSEND ? 'X' : ' ',
 					var->GetName(),
 					var->GetGenericRep (CVAR_String).String);
 			}

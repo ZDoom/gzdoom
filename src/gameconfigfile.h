@@ -47,6 +47,7 @@ public:
 
 	void DoGlobalSetup ();
 	void DoGameSetup (const char *gamename);
+	void DoModSetup (const char *gamename);
 	void ArchiveGlobalData ();
 	void ArchiveGameData (const char *gamename);
 	void AddAutoexec (DArgs *list, const char *gamename);
@@ -65,6 +66,7 @@ private:
 	void ReadCVars (DWORD flags);
 
 	bool bMigrating;
+	bool bModSetup;
 
 	char section[64];
 	char *subsection;

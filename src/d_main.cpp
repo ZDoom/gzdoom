@@ -1360,6 +1360,136 @@ CCMD (endgame)
 
 //==========================================================================
 //
+// ParseCVarInfo
+//
+//==========================================================================
+
+void ParseCVarInfo()
+{
+	int lump, lastlump = 0;
+	bool addedcvars = false;
+
+	while ((lump = Wads.FindLump("CVARINFO", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		sc.SetCMode(true);
+
+		while (sc.GetToken())
+		{
+			FString cvarname;
+			char *cvardefault = NULL;
+			ECVarType cvartype = CVAR_Dummy;
+			int cvarflags = CVAR_MODARCHIVE;
+			FBaseCVar *cvar;
+
+			// Check for flag tokens.
+			while (sc.TokenType == TK_Identifier)
+			{
+				if (stricmp(sc.String, "server") == 0)
+				{
+					cvarflags |= CVAR_SERVERINFO;
+				}
+				else if (stricmp(sc.String, "user") == 0)
+				{
+					cvarflags |= CVAR_USERINFO;
+				}
+				else if (stricmp(sc.String, "noarchive") == 0)
+				{
+					cvarflags &= ~CVAR_MODARCHIVE;
+				}
+				else
+				{
+					sc.ScriptError("Unknown cvar attribute '%s'", sc.String);
+				}
+				sc.MustGetAnyToken();
+			}
+			// Do some sanity checks.
+			if ((cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO)) == 0 ||
+				(cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO)) == (CVAR_SERVERINFO|CVAR_USERINFO))
+			{
+				sc.ScriptError("One of 'server' or 'user' must be specified");
+			}
+			// The next token must be the cvar type.
+			if (sc.TokenType == TK_Bool)
+			{
+				cvartype = CVAR_Bool;
+			}
+			else if (sc.TokenType == TK_Int)
+			{
+				cvartype = CVAR_Int;
+			}
+			else if (sc.TokenType == TK_Float)
+			{
+				cvartype = CVAR_Float;
+			}
+			else if (sc.TokenType == TK_Color)
+			{
+				cvartype = CVAR_Color;
+			}
+			else if (sc.TokenType == TK_String)
+			{
+				cvartype = CVAR_String;
+			}
+			else
+			{
+				sc.ScriptError("Bad cvar type '%s'", sc.String);
+			}
+			// The next token must be the cvar name.
+			sc.MustGetToken(TK_Identifier);
+			if (FindCVar(sc.String, NULL) != NULL)
+			{
+				sc.ScriptError("cvar '%s' already exists", sc.String);
+			}
+			cvarname = sc.String;
+			// A default value is optional and signalled by a '=' token.
+			if (sc.CheckToken('='))
+			{
+				switch (cvartype)
+				{
+				case CVAR_Bool:
+					if (!sc.CheckToken(TK_True) && !sc.CheckToken(TK_False))
+					{
+						sc.ScriptError("Expected true or false");
+					}
+					cvardefault = sc.String;
+					break;
+				case CVAR_Int:
+					sc.MustGetNumber();
+					cvardefault = sc.String;
+					break;
+				case CVAR_Float:
+					sc.MustGetFloat();
+					cvardefault = sc.String;
+					break;
+				default:
+					sc.MustGetString();
+					cvardefault = sc.String;
+					break;
+				}
+			}
+			// Now create the cvar.
+			cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+			if (cvardefault != NULL)
+			{
+				UCVarValue val;
+				val.String = cvardefault;
+				cvar->SetGenericRepDefault(val, CVAR_String);
+			}
+			// To be like C and ACS, require a semicolon after everything.
+			sc.MustGetToken(';');
+			addedcvars = true;
+		}
+	}
+	// Only load mod cvars from the config if we defined some, so we don't
+	// clutter up the cvar space when not playing mods with custom cvars.
+	if (addedcvars)
+	{
+		GameConfig->DoModSetup (gameinfo.ConfigName);
+	}
+}
+
+//==========================================================================
+//
 // D_AddFile
 //
 //==========================================================================
@@ -2164,7 +2294,10 @@ void D_DoomMain (void)
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
-		
+
+		// Now that wads are loaded, define mod-specific cvars.
+		ParseCVarInfo();
+
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);
 

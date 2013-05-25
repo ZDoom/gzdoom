@@ -365,7 +365,7 @@ ACTOR PillarAlienPower 227
 	States
 	{
 	Spawn:
-		APOW A -1 A_LoopActiveSound
+		APOW A 4 A_LoopActiveSound
 		Stop
 	}
 }

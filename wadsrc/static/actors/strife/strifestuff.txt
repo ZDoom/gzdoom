@@ -366,7 +366,7 @@ ACTOR PillarAlienPower 227
 	{
 	Spawn:
 		APOW A 4 A_LoopActiveSound
-		Stop
+		Loop
 	}
 }
 

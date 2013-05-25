@@ -808,7 +808,6 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 	FString glheader;
 	bool mustcheck=false;
 	DWORD numentries = f->LumpCount();
-	char lumpname[9];
 
 	glheader.Format("GL_%.8s", label);
 	if (glheader.Len()>8)

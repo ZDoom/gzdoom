@@ -108,6 +108,8 @@ int 			resendcount[MAXNETNODES];
 
 unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
+unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
+bool			hadlate;
 
 int 			nodeforplayer[MAXPLAYERS];
 int				playerfornode[MAXNETNODES];
@@ -311,6 +313,8 @@ void Net_ClearBuffers ()
 	oldentertics = entertic;
 	gametic = 0;
 	maketic = 0;
+
+	lastglobalrecvtime = 0;
 }
 
 //
@@ -700,6 +704,8 @@ void GetPackets (void)
 			}
 			continue;			// extra setup packet
 		}
+
+		lastglobalrecvtime = I_GetTime (false); //Update the last time a packet was recieved
 						
 		netnode = doomcom.remotenode;
 		netconsole = playerfornode[netnode] & ~PL_DRONE;
@@ -1820,6 +1826,33 @@ void TryRunTics (void)
 		if (lowtic < gametic)
 			I_Error ("TryRunTics: lowtic < gametic");
 
+		// [Ed850] Check to see the last time a packet was recieved.
+		// If it's longer then 3 seconds, a node has likely stalled. Check which one and re-request its last packet.
+		if(I_GetTime(false) - lastglobalrecvtime >= TICRATE*3)
+		{
+			int latenode = 0; // Node 0 is the local player, and should always be the highest
+			lastglobalrecvtime = I_GetTime(false); //Bump the count
+
+			if(NetMode == NET_PeerToPeer || consoleplayer == Net_Arbitrator)
+			{
+				for (i = 0; i < doomcom.numnodes; i++)
+					if (nodeingame[i] && nettics[i] < nettics[latenode])
+						latenode = i;
+			}
+			else if (nodeingame[nodeforplayer[Net_Arbitrator]] && 
+				nettics[nodeforplayer[Net_Arbitrator]] < nettics[0])
+			{	// Likely a packet server game. Only check the packet host.
+				latenode = Net_Arbitrator;
+			}
+
+			if (debugfile)
+				fprintf (debugfile, "lost tics from %i (%i to %i)\n",
+						 latenode, nettics[latenode], gametic);
+
+			if(latenode != 0) // Send resend request to late node (if not yourself... somehow). Also mark the node as waiting to display it in the hud.
+				remoteresend[latenode] = players[playerfornode[latenode]].waiting = hadlate = true;
+		}
+
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime (false) - entertic >= TICRATE/3)
 		{
@@ -1827,6 +1860,13 @@ void TryRunTics (void)
 			M_Ticker ();
 			return;
 		}
+	}
+
+	if (hadlate)
+	{
+		hadlate = false;
+		for (i = 0; i < MAXPLAYERS; i++)
+			players[i].waiting = false;
 	}
 
 	// run the count tics

@@ -404,6 +404,7 @@ public:
 	int			timefreezer;			// Player has an active time freezer
 	short		refire;					// refired shots are less accurate
 	short		inconsistant;
+	bool		waiting;
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
 	int			hazardcount;			// for delayed Strife damage

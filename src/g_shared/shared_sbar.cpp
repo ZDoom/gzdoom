@@ -1511,6 +1511,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
 	DrawConsistancy ();
+	DrawWaiting ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();
 
 	if (noisedebug)
@@ -1608,6 +1609,39 @@ void DBaseStatusBar::DrawConsistancy () const
 		screen->DrawText (SmallFont, CR_GREEN, 
 			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
 			0, conbuff, DTA_CleanNoMove, true, TAG_DONE);
+		BorderTopRefresh = screen->GetPageCount ();
+	}
+}
+
+void DBaseStatusBar::DrawWaiting () const
+{
+	int i;
+	char conbuff[64], *buff_p;
+
+	if (!netgame)
+		return;
+
+	buff_p = NULL;
+	for (i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i] && players[i].waiting)
+		{
+			if (buff_p == NULL)
+			{
+				strcpy (conbuff, "Waiting for:");
+				buff_p = conbuff + 12;
+			}
+			*buff_p++ = ' ';
+			*buff_p++ = '1' + i;
+			*buff_p = 0;
+		}
+	}
+
+	if (buff_p != NULL)
+	{
+		screen->DrawText (SmallFont, CR_ORANGE, 
+			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
+			SmallFont->GetHeight()*CleanYfac, conbuff, DTA_CleanNoMove, true, TAG_DONE);
 		BorderTopRefresh = screen->GetPageCount ();
 	}
 }

@@ -1533,28 +1533,9 @@ void C_SetCVarsToDefaults (void)
 	}
 }
 
-void C_ArchiveCVars (FConfigFile *f, int type)
+void C_ArchiveCVars (FConfigFile *f, uint32 filter)
 {
-	// type 0: Game-specific cvars
-	// type 1: Global cvars
-	// type 2: Unknown cvars
-	// type 3: Unknown global cvars
-	// type 4: User info cvars
-	// type 5: Server info cvars
-	static const DWORD filters[6] =
-	{
-		CVAR_ARCHIVE,
-		CVAR_ARCHIVE|CVAR_GLOBALCONFIG,
-		CVAR_ARCHIVE|CVAR_AUTO,
-		CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_AUTO,
-		CVAR_ARCHIVE|CVAR_USERINFO,
-		CVAR_ARCHIVE|CVAR_SERVERINFO
-	};
-
 	FBaseCVar *cvar = CVars;
-	DWORD filter;
-
-	filter = filters[type];
 
 	while (cvar)
 	{

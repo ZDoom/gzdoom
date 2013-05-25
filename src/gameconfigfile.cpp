@@ -453,12 +453,12 @@ void FGameConfigFile::DoModSetup(const char *gamename)
 	mysnprintf(section, countof(section), "%s.Player.Mod", gamename);
 	if (SetSection(section))
 	{
-		ReadCVars(CVAR_MODARCHIVE|CVAR_USERINFO|CVAR_NOSEND);
+		ReadCVars(CVAR_MOD|CVAR_USERINFO|CVAR_IGNORE);
 	}
 	mysnprintf(section, countof(section), "%s.LocalServerInfo.Mod", gamename);
 	if (SetSection (section))
 	{
-		ReadCVars (CVAR_MODARCHIVE|CVAR_SERVERINFO|CVAR_NOSEND);
+		ReadCVars (CVAR_MOD|CVAR_SERVERINFO|CVAR_IGNORE);
 	}
 	// Signal that these sections should be rewritten when saving the config.
 	bModSetup = true;
@@ -476,7 +476,7 @@ void FGameConfigFile::ReadNetVars ()
 		mysnprintf(subsection, sublen, "NetServerInfo.Mod");
 		if (SetSection(section))
 		{
-			ReadCVars(CVAR_MODARCHIVE|CVAR_SERVERINFO|CVAR_NOSEND);
+			ReadCVars(CVAR_MOD|CVAR_SERVERINFO|CVAR_IGNORE);
 		}
 	}
 }
@@ -489,11 +489,7 @@ void FGameConfigFile::ReadCVars (DWORD flags)
 	FBaseCVar *cvar;
 	UCVarValue val;
 
-	if (!(flags & CVAR_MODARCHIVE))
-	{
-		flags |= CVAR_ARCHIVE|CVAR_UNSETTABLE;
-	}
-	flags |= CVAR_AUTO;
+	flags |= CVAR_ARCHIVE|CVAR_UNSETTABLE|CVAR_AUTO;
 	while (NextInSection (key, value))
 	{
 		cvar = FindCVar (key, NULL);
@@ -523,7 +519,7 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 		strncpy (subsection + 6, ".Mod", sublen - 6);
 		SetSection (section, true);
 		ClearCurrentSection ();
-		C_ArchiveCVars (this, CVAR_MODARCHIVE|CVAR_AUTO|CVAR_USERINFO);
+		C_ArchiveCVars (this, CVAR_MOD|CVAR_ARCHIVE|CVAR_AUTO|CVAR_USERINFO);
 	}
 
 	strncpy (subsection, "ConsoleVariables", sublen);
@@ -545,7 +541,7 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 			strncpy (subsection, netgame ? "NetServerInfo.Mod" : "LocalServerInfo.Mod", sublen);
 			SetSection (section, true);
 			ClearCurrentSection ();
-			C_ArchiveCVars (this, CVAR_MODARCHIVE|CVAR_AUTO|CVAR_SERVERINFO);
+			C_ArchiveCVars (this, CVAR_MOD|CVAR_ARCHIVE|CVAR_AUTO|CVAR_SERVERINFO);
 		}
 	}
 

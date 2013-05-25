@@ -1379,7 +1379,7 @@ void ParseCVarInfo()
 			FString cvarname;
 			char *cvardefault = NULL;
 			ECVarType cvartype = CVAR_Dummy;
-			int cvarflags = CVAR_MODARCHIVE;
+			int cvarflags = CVAR_MOD|CVAR_ARCHIVE;
 			FBaseCVar *cvar;
 
 			// Check for flag tokens.
@@ -1395,7 +1395,7 @@ void ParseCVarInfo()
 				}
 				else if (stricmp(sc.String, "noarchive") == 0)
 				{
-					cvarflags &= ~CVAR_MODARCHIVE;
+					cvarflags &= ~CVAR_ARCHIVE;
 				}
 				else
 				{

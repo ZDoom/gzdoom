@@ -6886,7 +6886,7 @@ scriptwait:
 			{
 				FBaseCVar *cvar = FindCVar (FBehavior::StaticLookupString (STACK(1)), NULL);
 				// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return 0.
-				if (cvar == NULL || (cvar->GetFlags() & CVAR_NOSEND))
+				if (cvar == NULL || (cvar->GetFlags() & CVAR_IGNORE))
 				{
 					STACK(1) = 0;
 				}

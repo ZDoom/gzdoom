@@ -61,8 +61,8 @@ enum
 	CVAR_GLOBALCONFIG	= 1024,	// cvar is saved to global config section
 	CVAR_VIDEOCONFIG	= 2048, // cvar is saved to video config section (not implemented)
 	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame
-	CVAR_MODARCHIVE		= 8192,	// cvar will be saved to a mod-specific section of the ini
-	CVAR_NOSEND			= 16384,// do not send cvar across the network (dummy mod cvar)
+	CVAR_MOD			= 8192,	// cvar was defined by a mod
+	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
 };
 
 union UCVarValue

@@ -101,7 +101,7 @@ public:
 	inline FBaseCVar *GetNext() const { return m_Next; }
 
 	void CmdSet (const char *newval);
-	void ForceSet (UCVarValue value, ECVarType type);
+	void ForceSet (UCVarValue value, ECVarType type, bool nouserinfosend=false);
 	void SetGenericRep (UCVarValue value, ECVarType type);
 	void ResetToDefault ();
 	void SetArchiveBit () { Flags |= CVAR_ARCHIVE; }

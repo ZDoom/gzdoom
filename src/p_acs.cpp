@@ -3474,6 +3474,9 @@ enum EACSFunctions
 	ACSF_VectorLength,
 	ACSF_SetHUDClipRect,
 	ACSF_SetHUDWrapWidth,
+	ACSF_SetCVar,
+	ACSF_GetUserCVar,
+	ACSF_SetUserCVar,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -3571,6 +3574,145 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 		return ((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index];
 	}
 	return 0;
+}
+
+// Converts fixed- to floating-point as required.
+static void DoSetCVar(FBaseCVar *cvar, int value, bool force=false)
+{
+	UCVarValue val;
+	ECVarType type;
+
+	// For serverinfo variables, only the arbitrator should set it.
+	// The actual change to this cvar will not show up until it's
+	// been replicated to all peers.
+	if ((cvar->GetFlags() & CVAR_SERVERINFO) && consoleplayer != Net_Arbitrator)
+	{
+		return;
+	}
+	if (cvar->GetRealType() == CVAR_Float)
+	{
+		val.Float = FIXED2FLOAT(value);
+		type = CVAR_Float;
+	}
+	else
+	{
+		val.Int = value;
+		type = CVAR_Int;
+	}
+	if (force)
+	{
+		cvar->ForceSet(val, type, true);
+	}
+	else
+	{
+		cvar->SetGenericRep(val, type);
+	}
+}
+
+// Converts floating- to fixed-point as required.
+static int DoGetCVar(FBaseCVar *cvar)
+{
+	UCVarValue val;
+
+	if (cvar->GetRealType() == CVAR_Float)
+	{
+		val = cvar->GetGenericRep(CVAR_Float);
+		return FLOAT2FIXED(val.Float);
+	}
+	else
+	{
+		val = cvar->GetGenericRep(CVAR_Int);
+		return val.Int;
+	}
+}
+
+static int GetUserCVar(int playernum, const char *cvarname)
+{
+	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
+	{
+		return 0;
+	}
+	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
+	FBaseCVar *cvar;
+	if (cvar_p == NULL || (cvar = *cvar_p) == NULL || (cvar->GetFlags() & CVAR_IGNORE))
+	{
+		return 0;
+	}
+	return DoGetCVar(cvar);
+}
+
+static int GetCVar(AActor *activator, const char *cvarname)
+{
+	FBaseCVar *cvar = FindCVar(cvarname, NULL);
+	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return 0.
+	if (cvar == NULL || (cvar->GetFlags() & CVAR_IGNORE))
+	{
+		return 0;
+	}
+	else
+	{
+		// For userinfo cvars, redirect to GetUserCVar
+		if (cvar->GetFlags() & CVAR_USERINFO)
+		{
+			if (activator == NULL || activator->player == NULL)
+			{
+				return 0;
+			}
+			return GetUserCVar(int(activator->player - players), cvarname);
+		}
+		return DoGetCVar(cvar);
+	}
+}
+
+static int SetUserCVar(int playernum, const char *cvarname, int value)
+{
+	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
+	{
+		return 0;
+	}
+	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
+	FBaseCVar *cvar;
+	// Only mod-created cvars may be set.
+	if (cvar_p == NULL || (cvar = *cvar_p) == NULL || (cvar->GetFlags() & CVAR_IGNORE) || !(cvar->GetFlags() & CVAR_MOD))
+	{
+		return 0;
+	}
+	DoSetCVar(cvar, value);
+
+	// If we are this player, then also reflect this change in the local version of this cvar.
+	if (playernum == consoleplayer)
+	{
+		FBaseCVar *cvar = FindCVar(cvarname, NULL);
+		// If we can find it in the userinfo, then we should also be able to find it in the normal cvar list,
+		// but check just to be safe.
+		if (cvar != NULL)
+		{
+			DoSetCVar(cvar, value, true);
+		}
+	}
+
+	return 1;
+}
+
+static int SetCVar(AActor *activator, const char *cvarname, int value)
+{
+	FBaseCVar *cvar = FindCVar(cvarname, NULL);
+	// Only mod-created cvars may be set.
+	if (cvar == NULL || (cvar->GetFlags() & (CVAR_IGNORE|CVAR_NOSET)) || !(cvar->GetFlags() & CVAR_MOD))
+	{
+		return 0;
+	}
+	// For userinfo cvars, redirect to SetUserCVar
+	if (cvar->GetFlags() & CVAR_USERINFO)
+	{
+		if (activator == NULL || activator->player == NULL)
+		{
+			return 0;
+		}
+		return SetUserCVar(int(activator->player - players), cvarname, value);
+	}
+	DoSetCVar(cvar, value);
+	return 1;
 }
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
@@ -4015,6 +4157,27 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_SetHUDWrapWidth:
 			WrapWidth = argCount > 0 ? args[0] : 0;
+			break;
+
+		case ACSF_GetUserCVar:
+			if (argCount == 2)
+			{
+				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]));
+			}
+			break;
+
+		case ACSF_SetUserCVar:
+			if (argCount == 3)
+			{
+				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2]);
+			}
+			break;
+
+		case ACSF_SetCVar:
+			if (argCount == 2)
+			{
+				return SetCVar(activator, FBehavior::StaticLookupString(args[0]), args[1]);
+			}
 			break;
 
 		default:
@@ -6883,19 +7046,7 @@ scriptwait:
 			break;
 
 		case PCD_GETCVAR:
-			{
-				FBaseCVar *cvar = FindCVar (FBehavior::StaticLookupString (STACK(1)), NULL);
-				// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return 0.
-				if (cvar == NULL || (cvar->GetFlags() & CVAR_IGNORE))
-				{
-					STACK(1) = 0;
-				}
-				else
-				{
-					UCVarValue val = cvar->GetGenericRep (CVAR_Int);
-					STACK(1) = val.Int;
-				}
-			}
+			STACK(1) = GetCVar(activator, FBehavior::StaticLookupString(STACK(1)));
 			break;
 
 		case PCD_SETHUDSIZE:

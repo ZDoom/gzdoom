@@ -132,10 +132,10 @@ FBaseCVar::~FBaseCVar ()
 	}
 }
 
-void FBaseCVar::ForceSet (UCVarValue value, ECVarType type)
+void FBaseCVar::ForceSet (UCVarValue value, ECVarType type, bool nouserinfosend)
 {
 	DoSet (value, type);
-	if ((Flags & CVAR_USERINFO) && !(Flags & CVAR_IGNORE))
+	if ((Flags & CVAR_USERINFO) && !nouserinfosend && !(Flags & CVAR_IGNORE))
 		D_UserInfoChanged (this);
 	if (m_UseCallback)
 		Callback ();

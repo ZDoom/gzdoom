@@ -295,7 +295,7 @@ static int stripaccent(int code)
 		return 'D' + (code & 0x20);
 	if (acode == 0xD1)						// N with tilde
 		return 'N' + (code & 0x20);
-	if (acode >= 0xD2 && acode <= 0xD6 ||	// O with accents
+	if ((acode >= 0xD2 && acode <= 0xD6) ||	// O with accents
 		acode == 0xD8)						// O with stroke
 		return 'O' + (code & 0x20);
 	if (acode >= 0xD9 && acode <= 0xDC)		// U with accents

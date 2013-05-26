@@ -3646,7 +3646,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			hitz = shootz + FixedMul (vz, dist);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
-			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
+			if ((puffDefaults != NULL && puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
@@ -3658,7 +3658,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
-			if (puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
+			if (puffDefaults != NULL && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 			{
 				P_PoisonMobj(trace.Actor, puff ? puff : t1, t1, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
 			}
@@ -3666,7 +3666,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
 			// Note: The puff may not yet be spawned here so we must check the class defaults, not the actor.
 			int newdam = damage;
-			if (damage || (puffDefaults->flags6 & MF6_FORCEPAIN))
+			if (damage || (puffDefaults != NULL && puffDefaults->flags6 & MF6_FORCEPAIN))
 			{
 				int dmgflags = DMG_INFLICTOR_IS_PUFF | pflag;
 				// Allow MF5_PIERCEARMOR on a weapon as well.
@@ -3685,7 +3685,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				}
 				newdam = P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags);
 			}
-			if (!(puffDefaults->flags3&MF3_BLOODLESSIMPACT))
+			if (!(puffDefaults != NULL && puffDefaults->flags3&MF3_BLOODLESSIMPACT))
 			{
 				if (!bloodsplatter && !axeBlood &&
 					!(trace.Actor->flags & MF_NOBLOOD) &&

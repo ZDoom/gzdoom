@@ -283,9 +283,6 @@ public:
 protected:
 	WORD Width, Height, WidthMask;
 	static BYTE GrayMap[256];
-	static BYTE GrayMap4bit[16];
-	static BYTE GrayMap2bit[4];
-	static BYTE GrayMap1bit[2];
 	FNativeTexture *Native;
 
 	FTexture (const char *name = NULL, int lumpnum = -1);

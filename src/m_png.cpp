@@ -103,7 +103,7 @@ static inline void MakeChunk (void *where, DWORD type, size_t len);
 static inline void StuffPalette (const PalEntry *from, BYTE *to);
 static bool WriteIDAT (FILE *file, const BYTE *data, int len);
 static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev, int bpp);
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout);
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -604,7 +604,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 				in = prev;
 				if (bitdepth < 8)
 				{
-					UnpackPixels (passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2]);
+					UnpackPixels (passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2], colortype == 0);
 					in = adam7buff[2];
 				}
 				// Distribute pixels into the output buffer
@@ -688,7 +688,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 		passpitch = pitch << interlace;
 		for (curr = buffer + pitch * interlace; curr <= prev; curr += passpitch)
 		{
-			UnpackPixels (width, bytesPerRowIn, bitdepth, curr, curr);
+			UnpackPixels (width, bytesPerRowIn, bitdepth, curr, curr, colortype == 0);
 		}
 	}
 	return true;
@@ -1155,7 +1155,7 @@ void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
 //
 //==========================================================================
 
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout)
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale)
 {
 	const BYTE *in;
 	BYTE *out;
@@ -1241,5 +1241,27 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *
 			out[1] = pack & 15;
 		}
 		break;
+	}
+
+	// Expand gray scale to 8bpp
+	if(grayscale)
+	{
+		out = rowout + width;
+		while(--out >= rowout)
+		{
+			switch(bitdepth)
+			{
+				case 1:
+					*out *= 0xFF;
+					break;
+				case 2:
+					*out |= (*out<<2)|(*out<<4)|(*out<<6);
+					break;
+				case 4:
+					*out |= (*out<<4);
+					break;
+				default: break;
+			}
+		}
 	}
 }

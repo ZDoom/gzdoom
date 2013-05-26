@@ -297,17 +297,33 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	case 0:		// Grayscale
 		if (!bAlphaTexture)
 		{
+			BYTE *GrayMapSrc;
+			switch(BitDepth)
+			{
+				default:
+					GrayMapSrc = GrayMap;
+					break;
+				case 4:
+					GrayMapSrc = GrayMap4bit;
+					break;
+				case 2:
+					GrayMapSrc = GrayMap2bit;
+					break;
+				case 1:
+					GrayMapSrc = GrayMap1bit;
+					break;
+			}
 			if (colortype == 0 && havetRNS && trans[0] != 0)
 			{
 				bMasked = true;
-				PaletteSize = 256;
-				PaletteMap = new BYTE[256];
-				memcpy (PaletteMap, GrayMap, 256);
+				PaletteSize = 1<<BitDepth;
+				PaletteMap = new BYTE[PaletteSize];
+				memcpy (PaletteMap, GrayMapSrc, 256);
 				PaletteMap[trans[0]] = 0;
 			}
 			else
 			{
-				PaletteMap = GrayMap;
+				PaletteMap = GrayMapSrc;
 			}
 		}
 		break;

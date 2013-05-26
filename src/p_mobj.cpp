@@ -911,7 +911,7 @@ bool AActor::IsVisibleToPlayer() const
 		return true;
  
 	if (VisibleToTeam != 0 && teamplay &&
-		VisibleToTeam-1 != players[consoleplayer].userinfo.GetTeam())
+		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam())
 		return false;
 
 	const player_t* pPlayer = players[consoleplayer].camera->player;

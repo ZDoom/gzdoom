@@ -56,13 +56,29 @@ struct TexCreateInfo
 };
 
 BYTE FTexture::GrayMap[256];
+BYTE FTexture::GrayMap4bit[16];
+BYTE FTexture::GrayMap2bit[4];
+BYTE FTexture::GrayMap1bit[2];
 
 void FTexture::InitGrayMap()
 {
 	for (int i = 0; i < 256; ++i)
 	{
 		GrayMap[i] = ColorMatcher.Pick (i, i, i);
+		if(i < 16)
+		{
+			const int i4 = i|(i<<4);
+			GrayMap4bit[i] = ColorMatcher.Pick (i4, i4, i4);
+		}
+		if(i < 4)
+		{
+			const int i2 = i|(i<<2)|(i<<4)|(i<<6);
+			GrayMap4bit[i] = ColorMatcher.Pick (i2, i2, i2);
+		}
 	}
+
+	GrayMap1bit[0] = ColorMatcher.Pick (0, 0, 0);
+	GrayMap1bit[1] = ColorMatcher.Pick (255, 255, 255);
 }
 
 FTexture *IMGZTexture_TryCreate(FileReader &, int lumpnum);

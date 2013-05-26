@@ -645,6 +645,7 @@ int FFont::SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *reverse
 	qsort (reverse+1, j-1, 1, compare);
 
 	*luminosity = new double[j];
+	(*luminosity)[0] = 0.0; // [BL] Prevent uninitalized memory
 	max = 0.0;
 	min = 100000000.0;
 	for (i = 1; i < j; i++)

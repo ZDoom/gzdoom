@@ -70,7 +70,7 @@ union UCVarValue
 	bool Bool;
 	int Int;
 	float Float;
-	char *String;
+	const char *String;
 	const GUID *pGUID;
 };
 
@@ -132,7 +132,7 @@ protected:
 	static bool ToBool (UCVarValue value, ECVarType type);
 	static int ToInt (UCVarValue value, ECVarType type);
 	static float ToFloat (UCVarValue value, ECVarType type);
-	static char *ToString (UCVarValue value, ECVarType type);
+	static const char *ToString (UCVarValue value, ECVarType type);
 	static const GUID *ToGUID (UCVarValue value, ECVarType type);
 	static UCVarValue FromBool (bool value, ECVarType type);
 	static UCVarValue FromInt (int value, ECVarType type);

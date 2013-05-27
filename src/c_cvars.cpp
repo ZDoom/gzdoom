@@ -266,7 +266,7 @@ static GUID cGUID;
 static char truestr[] = "true";
 static char falsestr[] = "false";
 
-char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
+const char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 {
 	switch (type)
 	{

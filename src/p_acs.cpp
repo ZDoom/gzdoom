@@ -3477,6 +3477,8 @@ enum EACSFunctions
 	ACSF_SetCVar,
 	ACSF_GetUserCVar,
 	ACSF_SetUserCVar,
+	ACSF_SetCVarString,
+	ACSF_SetUserCVarString,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -3577,7 +3579,7 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 }
 
 // Converts fixed- to floating-point as required.
-static void DoSetCVar(FBaseCVar *cvar, int value, bool force=false)
+static void DoSetCVar(FBaseCVar *cvar, int value, bool is_string, bool force=false)
 {
 	UCVarValue val;
 	ECVarType type;
@@ -3589,7 +3591,12 @@ static void DoSetCVar(FBaseCVar *cvar, int value, bool force=false)
 	{
 		return;
 	}
-	if (cvar->GetRealType() == CVAR_Float)
+	if (is_string)
+	{
+		val.String = FBehavior::StaticLookupString(value);
+		type = CVAR_String;
+	}
+	else if (cvar->GetRealType() == CVAR_Float)
 	{
 		val.Float = FIXED2FLOAT(value);
 		type = CVAR_Float;
@@ -3664,7 +3671,7 @@ static int GetCVar(AActor *activator, const char *cvarname)
 	}
 }
 
-static int SetUserCVar(int playernum, const char *cvarname, int value)
+static int SetUserCVar(int playernum, const char *cvarname, int value, bool is_string)
 {
 	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
 	{
@@ -3677,7 +3684,7 @@ static int SetUserCVar(int playernum, const char *cvarname, int value)
 	{
 		return 0;
 	}
-	DoSetCVar(cvar, value);
+	DoSetCVar(cvar, value, is_string);
 
 	// If we are this player, then also reflect this change in the local version of this cvar.
 	if (playernum == consoleplayer)
@@ -3687,14 +3694,14 @@ static int SetUserCVar(int playernum, const char *cvarname, int value)
 		// but check just to be safe.
 		if (cvar != NULL)
 		{
-			DoSetCVar(cvar, value, true);
+			DoSetCVar(cvar, value, is_string, true);
 		}
 	}
 
 	return 1;
 }
 
-static int SetCVar(AActor *activator, const char *cvarname, int value)
+static int SetCVar(AActor *activator, const char *cvarname, int value, bool is_string)
 {
 	FBaseCVar *cvar = FindCVar(cvarname, NULL);
 	// Only mod-created cvars may be set.
@@ -3709,9 +3716,9 @@ static int SetCVar(AActor *activator, const char *cvarname, int value)
 		{
 			return 0;
 		}
-		return SetUserCVar(int(activator->player - players), cvarname, value);
+		return SetUserCVar(int(activator->player - players), cvarname, value, is_string);
 	}
-	DoSetCVar(cvar, value);
+	DoSetCVar(cvar, value, is_string);
 	return 1;
 }
 
@@ -4169,14 +4176,28 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_SetUserCVar:
 			if (argCount == 3)
 			{
-				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2]);
+				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2], false);
+			}
+			break;
+
+		case ACSF_SetUserCVarString:
+			if (argCount == 3)
+			{
+				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2], true);
 			}
 			break;
 
 		case ACSF_SetCVar:
 			if (argCount == 2)
 			{
-				return SetCVar(activator, FBehavior::StaticLookupString(args[0]), args[1]);
+				return SetCVar(activator, FBehavior::StaticLookupString(args[0]), args[1], false);
+			}
+			break;
+
+		case ACSF_SetCVarString:
+			if (argCount == 2)
+			{
+				return SetCVar(activator, FBehavior::StaticLookupString(args[0]), args[1], true);
 			}
 			break;
 

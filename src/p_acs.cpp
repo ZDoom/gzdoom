@@ -168,9 +168,22 @@ FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 #define LIB_ACSSTRINGS_ONTHEFLY 0x7fff
 #define ACSSTRING_OR_ONTHEFLY (LIB_ACSSTRINGS_ONTHEFLY<<16)
 
-TArray<FString>
-	ACS_StringsOnTheFly,
-	ACS_StringBuilderStack;
+class OnTheFlyArray : public TArray<FString>
+{
+public:
+	// Returns a valid string identifier for this tick, or
+	// -1 if we ran out of room.
+	int Push(FString &str)
+	{
+		if (Size() >= 0x10000)
+		{
+			return -1;
+		}
+		return (int)TArray<FString>::Push(str) | ACSSTRING_OR_ONTHEFLY;
+	}
+}
+ACS_StringsOnTheFly;
+TArray<FString> ACS_StringBuilderStack;
 
 #define STRINGBUILDER_START(Builder) if (Builder.IsNotEmpty() || ACS_StringBuilderStack.Size()) { ACS_StringBuilderStack.Push(Builder); Builder = ""; }
 #define STRINGBUILDER_FINISH(Builder) if (!ACS_StringBuilderStack.Pop(Builder)) { Builder = ""; }
@@ -3477,7 +3490,9 @@ enum EACSFunctions
 	ACSF_SetCVar,
 	ACSF_GetUserCVar,
 	ACSF_SetUserCVar,
+	ACSF_GetCVarString,
 	ACSF_SetCVarString,
+	ACSF_GetUserCVarString,
 	ACSF_SetUserCVarString,
 
 	// ZDaemon
@@ -3617,11 +3632,16 @@ static void DoSetCVar(FBaseCVar *cvar, int value, bool is_string, bool force=fal
 }
 
 // Converts floating- to fixed-point as required.
-static int DoGetCVar(FBaseCVar *cvar)
+static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 {
 	UCVarValue val;
 
-	if (cvar->GetRealType() == CVAR_Float)
+	if (is_string)
+	{
+		val = cvar->GetGenericRep(CVAR_String);
+		return ACS_StringsOnTheFly.Push(FString(val.String));
+	}
+	else if (cvar->GetRealType() == CVAR_Float)
 	{
 		val = cvar->GetGenericRep(CVAR_Float);
 		return FLOAT2FIXED(val.Float);
@@ -3633,7 +3653,7 @@ static int DoGetCVar(FBaseCVar *cvar)
 	}
 }
 
-static int GetUserCVar(int playernum, const char *cvarname)
+static int GetUserCVar(int playernum, const char *cvarname, bool is_string)
 {
 	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
 	{
@@ -3645,10 +3665,10 @@ static int GetUserCVar(int playernum, const char *cvarname)
 	{
 		return 0;
 	}
-	return DoGetCVar(cvar);
+	return DoGetCVar(cvar, is_string);
 }
 
-static int GetCVar(AActor *activator, const char *cvarname)
+static int GetCVar(AActor *activator, const char *cvarname, bool is_string)
 {
 	FBaseCVar *cvar = FindCVar(cvarname, NULL);
 	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return 0.
@@ -3665,9 +3685,9 @@ static int GetCVar(AActor *activator, const char *cvarname)
 			{
 				return 0;
 			}
-			return GetUserCVar(int(activator->player - players), cvarname);
+			return GetUserCVar(int(activator->player - players), cvarname, is_string);
 		}
-		return DoGetCVar(cvar);
+		return DoGetCVar(cvar, is_string);
 	}
 }
 
@@ -4166,24 +4186,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			WrapWidth = argCount > 0 ? args[0] : 0;
 			break;
 
-		case ACSF_GetUserCVar:
-			if (argCount == 2)
+		case ACSF_GetCVarString:
+			if (argCount == 1)
 			{
-				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]));
-			}
-			break;
-
-		case ACSF_SetUserCVar:
-			if (argCount == 3)
-			{
-				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2], false);
-			}
-			break;
-
-		case ACSF_SetUserCVarString:
-			if (argCount == 3)
-			{
-				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2], true);
+				return GetCVar(activator, FBehavior::StaticLookupString(args[0]), true);
 			}
 			break;
 
@@ -4198,6 +4204,34 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			if (argCount == 2)
 			{
 				return SetCVar(activator, FBehavior::StaticLookupString(args[0]), args[1], true);
+			}
+			break;
+
+		case ACSF_GetUserCVar:
+			if (argCount == 2)
+			{
+				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), false);
+			}
+			break;
+
+		case ACSF_GetUserCVarString:
+			if (argCount == 2)
+			{
+				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), true);
+			}
+			break;
+
+		case ACSF_SetUserCVar:
+			if (argCount == 3)
+			{
+				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2], false);
+			}
+			break;
+
+		case ACSF_SetUserCVarString:
+			if (argCount == 3)
+			{
+				return SetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), args[2], true);
 			}
 			break;
 
@@ -7067,7 +7101,7 @@ scriptwait:
 			break;
 
 		case PCD_GETCVAR:
-			STACK(1) = GetCVar(activator, FBehavior::StaticLookupString(STACK(1)));
+			STACK(1) = GetCVar(activator, FBehavior::StaticLookupString(STACK(1)), false);
 			break;
 
 		case PCD_SETHUDSIZE:
@@ -7451,15 +7485,7 @@ scriptwait:
 		case PCD_SAVESTRING:
 			// Saves the string
 			{
-				unsigned int str_otf = ACS_StringsOnTheFly.Push(work);
-				if (str_otf > 0xffff)
-				{
-					PushToStack(-1);
-				}
-				else
-				{
-					PushToStack((SDWORD)str_otf|ACSSTRING_OR_ONTHEFLY);
-				}
+				PushToStack(ACS_StringsOnTheFly.Push(work));
 				STRINGBUILDER_FINISH(work);
 			}		
 			break;

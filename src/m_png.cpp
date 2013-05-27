@@ -1162,6 +1162,8 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *
 	BYTE pack;
 	int lastbyte;
 
+	assert(bitdepth == 1 || bitdepth == 2 || bitdepth == 4);
+
 	out = rowout + width;
 	in = rowin + bytesPerRow;
 
@@ -1243,25 +1245,42 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *
 		break;
 	}
 
-	// Expand gray scale to 8bpp
-	if(grayscale)
+	// Expand grayscale to 8bpp
+	if (grayscale)
 	{
-		out = rowout + width;
-		while(--out >= rowout)
+		// Put the 2-bit lookup table on the stack, since it's probably already
+		// in a cache line.
+		union
 		{
-			switch(bitdepth)
+			uint32 bits2l;
+			BYTE bits2[4];
+		};
+
+		out = rowout + width;
+		switch (bitdepth)
+		{
+		case 1:
+			while (--out >= rowout)
 			{
-				case 1:
-					*out *= 0xFF;
-					break;
-				case 2:
-					*out |= (*out<<2)|(*out<<4)|(*out<<6);
-					break;
-				case 4:
-					*out |= (*out<<4);
-					break;
-				default: break;
+				// 1 becomes -1 (0xFF), and 0 remains untouched.
+				*out = 0 - *out;
 			}
+			break;
+
+		case 2:
+			bits2l = MAKE_ID(0x00,0x55,0xAA,0xFF);
+			while (--out >= rowout)
+			{
+				*out = bits2[*out];
+			}
+			break;
+
+		case 4:
+			while (--out >= rowout)
+			{
+				*out |= (*out << 4);
+			}
+			break;
 		}
 	}
 }

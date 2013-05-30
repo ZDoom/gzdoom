@@ -198,6 +198,9 @@ void G_ClearSnapshots (void)
 	{
 		wadlevelinfos[i].ClearSnapshot();
 	}
+	// Since strings are only locked when snapshotting a level, unlock them
+	// all now, since we got rid of all the snapshots that cared about them.
+	GlobalACSStrings.UnlockAll();
 }
 
 //==========================================================================

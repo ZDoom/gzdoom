@@ -12,7 +12,6 @@
 #include "thingdef/thingdef.h"
 */
 
- FRandom pr_lost ("LostMissileRange");
  FRandom pr_oldsoul ("BetaLostSoul");
 
 //

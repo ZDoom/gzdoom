@@ -16,6 +16,7 @@ ACTOR Actor native //: Thinker
 	WallBounceFactor 0.75
 	BounceCount -1
 	FloatSpeed 4
+	FloatBobPhase -1	// randomly initialize by default
 	Gravity 1
 	DamageFactor 1.0
 	PushFactor 0.25

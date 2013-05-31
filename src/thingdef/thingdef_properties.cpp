@@ -627,7 +627,7 @@ DEFINE_PROPERTY(scale, F, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(floatbobphase, F, Actor)
+DEFINE_PROPERTY(floatbobphase, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
 	if (id < -1 || id >= 64) I_Error ("FloatBobPhase must be in range [-1,63]");

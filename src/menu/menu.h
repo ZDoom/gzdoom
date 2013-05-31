@@ -393,8 +393,9 @@ class FListMenuItemText : public FListMenuItemSelectable
 	const char *mText;
 	FFont *mFont;
 	EColorRange mColor;
+	EColorRange mColorSelected;
 public:
-	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
+	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, EColorRange color2, FName child, int param = 0);
 	~FListMenuItemText();
 	void Drawer(bool selected);
 	int GetWidth();

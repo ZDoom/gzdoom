@@ -42,6 +42,7 @@ struct FVoxel
 	FVoxel();
 	~FVoxel();
 	void Remap();
+	void RemovePalette();
 };
 
 struct FVoxelDef

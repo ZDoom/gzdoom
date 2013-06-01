@@ -71,13 +71,14 @@ TDeletingArray<FVoxelDef *> VoxelDefs;
 struct VoxelOptions
 {
 	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(ANGLE_90)
+	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(ANGLE_90), OverridePalette(false)
 	{}
 
 	int			DroppedSpin;
 	int			PlacedSpin;
 	fixed_t		Scale;
 	angle_t		AngleOffset;
+	bool		OverridePalette;
 };
 
 //==========================================================================
@@ -408,6 +409,20 @@ void FVoxel::Remap()
 		{
 			RemapVoxelSlabs((kvxslab_t *)Mips[i].SlabData, Mips[i].OffsetX[Mips[i].SizeX], remap);
 		}
+		RemovePalette();
+	}
+}
+
+//==========================================================================
+//
+// Delete the voxel's built-in palette
+//
+//==========================================================================
+
+void FVoxel::RemovePalette()
+{
+	if (Palette != NULL)
+	{
 		delete [] Palette;
 		Palette = NULL;
 	}
@@ -518,6 +533,10 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			}
 			opts.AngleOffset = ANGLE_90 + angle_t(sc.Float * ANGLE_180 / 180.0);
 		}
+		else if (sc.Compare("overridepalette"))
+		{
+			opts.OverridePalette = true;
+		}
 		else
 		{
 			sc.ScriptMessage("Unknown voxel option '%s'\n", sc.String);
@@ -603,6 +622,10 @@ void R_InitVoxels()
 			sc.SetCMode(false);
 			if (voxeldata != NULL && vsprites.Size() != 0)
 			{
+				if (opts.OverridePalette)
+				{
+					voxeldata->RemovePalette();
+				}
 				FVoxelDef *def = new FVoxelDef;
 
 				def->Voxel = voxeldata;

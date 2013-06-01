@@ -1592,6 +1592,29 @@ void S_RelinkSound (AActor *from, AActor *to)
 	}
 }
 
+
+//==========================================================================
+//
+// S_ChangeSoundVolume
+//
+//==========================================================================
+
+bool S_ChangeSoundVolume(AActor *actor, int channel, float volume)
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == SOURCE_Actor &&
+			chan->Actor == actor &&
+			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+		{
+			GSnd->ChannelVolume(chan, volume);
+			chan->Volume = volume;
+			return true;
+		}
+	}
+	return false;
+}
+
 //==========================================================================
 //
 // S_GetSoundPlayingInfo
@@ -2135,7 +2158,6 @@ void S_StopChannel(FSoundChan *chan)
 		S_ReturnChannel(chan);
 	}
 }
-
 
 //==========================================================================
 //

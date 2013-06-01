@@ -2055,6 +2055,20 @@ void FMODSoundRenderer::StopChannel(FISoundChannel *chan)
 
 //==========================================================================
 //
+// FMODSoundRenderer :: ChannelVolume
+//
+//==========================================================================
+
+void FMODSoundRenderer::ChannelVolume(FISoundChannel *chan, float volume)
+{
+	if (chan != NULL && chan->SysChannel != NULL)
+	{
+		((FMOD::Channel *)chan->SysChannel)->setVolume(volume);
+	}
+}
+
+//==========================================================================
+//
 // FMODSoundRenderer :: GetPosition
 //
 // Returns position of sound on this channel, in samples.

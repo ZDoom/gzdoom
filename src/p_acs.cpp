@@ -4134,6 +4134,7 @@ enum EACSFunctions
 	ACSF_StrMid,
 	ACSF_GetActorClass,
 	ACSF_GetWeapon,
+	ACSF_SoundVolume,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4959,6 +4960,29 @@ doplaysound:			if (!looping)
 					while ((spot = it.Next()) != NULL)
 					{
 						S_StopSound(spot, chan);
+					}
+				}
+			}
+			break;
+
+		case ACSF_SoundVolume:
+			// SoundVolume(int tid, int channel, fixed volume)
+			{
+				int chan = args[1];
+				float volume = FIXED2FLOAT(args[2]);
+
+				if (args[0] == 0)
+				{
+					S_ChangeSoundVolume(activator, chan, volume);
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *spot;
+
+					while ((spot = it.Next()) != NULL)
+					{
+						S_ChangeSoundVolume(spot, chan, volume);
 					}
 				}
 			}

@@ -2649,7 +2649,12 @@ void V_InitFonts()
 	}
 	if (!(BigFont = FFont::FindFont("BigFont")))
 	{
-		if (gameinfo.gametype & GAME_DoomChex)
+		int lump = Wads.CheckNumForName("BIGFONT");
+		if (lump >= 0)
+		{
+			BigFont = new FSingleLumpFont("BigFont", lump);
+		}
+		else if (gameinfo.gametype & GAME_DoomChex)
 		{
 			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
 		}
@@ -2659,7 +2664,15 @@ void V_InitFonts()
 		}
 		else
 		{
-			BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			lump = Wads.CheckNumForName("HBIGFONT");
+			if (lump >= 0)
+			{
+				BigFont = new FSingleLumpFont("BigFont", lump);
+			}
+			else
+			{
+				BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			}
 		}
 	}
 	if (!(ConFont = FFont::FindFont("ConsoleFont")))

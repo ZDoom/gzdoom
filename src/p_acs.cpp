@@ -4132,6 +4132,8 @@ enum EACSFunctions
 	ACSF_StrLeft,
 	ACSF_StrRight,
 	ACSF_StrMid,
+	ACSF_GetActorClass,
+	ACSF_GetWeapon,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4653,6 +4655,12 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return a == NULL ? false : a->GetClass()->TypeName == FName(FBehavior::StaticLookupString(args[1]));
 		}
 
+		case ACSF_GetActorClass:
+		{
+			AActor *a = SingleActorFromTID(args[0], activator);
+			return GlobalACSStrings.AddString(a == NULL ? "None" : a->GetClass()->TypeName.GetChars());
+		}
+
 		case ACSF_SoundSequenceOnActor:
 			{
 				const char *seqname = FBehavior::StaticLookupString(args[1]);
@@ -5024,6 +5032,17 @@ doplaysound:			if (!looping)
 				return GlobalACSStrings.AddString(FString(oldstr + pos, newlen));
 			}
 			break;
+
+		case ACSF_GetWeapon:
+            if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
+                activator->player->ReadyWeapon == NULL)
+            {
+                return GlobalACSStrings.AddString("None");
+            }
+            else
+            {
+				return GlobalACSStrings.AddString(activator->player->ReadyWeapon->GetClass()->TypeName.GetChars());
+            }
 
 		default:
 			break;

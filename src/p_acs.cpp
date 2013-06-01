@@ -3479,6 +3479,7 @@ enum
 	APROP_Height		= 35,
 	APROP_Radius		= 36,
 	APROP_ReactionTime  = 37,
+	APROP_MeleeRange	= 38,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3765,6 +3766,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Height:		return actor->height;
 	case APROP_Radius:		return actor->radius;
 	case APROP_ReactionTime:return actor->reactiontime;
+	case APROP_MeleeRange:	return actor->meleerange;
 
 	default:				return 0;
 	}
@@ -3808,6 +3810,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Height:
 		case APROP_Radius:
 		case APROP_ReactionTime:
+		case APROP_MeleeRange:
 			return (GetActorProperty(tid, property) == value);
 
 		// Boolean values need to compare to a binary version of value

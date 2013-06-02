@@ -1881,7 +1881,11 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 				for (DWORD i = 0; i < chunk[1]/4; ++i)
 				{
 //					MapVarStore[chunk[i+2]] |= LibraryID;
-					MapVarStore[chunk[i+2]] = GlobalACSStrings.AddString(LookupString(MapVarStore[chunk[i+2]]));
+					const char *str = LookupString(MapVarStore[chunk[i+2]]);
+					if (str != NULL)
+					{
+						MapVarStore[chunk[i+2]] = GlobalACSStrings.AddString(str);
+					}
 				}
 			}
 
@@ -1897,7 +1901,11 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 						for (int j = ArrayStore[arraynum].ArraySize; j > 0; --j, ++elems)
 						{
 //							*elems |= LibraryID;
-							*elems = GlobalACSStrings.AddString(LookupString(*elems));
+							const char *str = LookupString(*elems);
+							if (str != NULL)
+							{
+								*elems = GlobalACSStrings.AddString(str);
+							}
 						}
 					}
 				}
@@ -1927,7 +1935,11 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 							}
 							else if (*chunkData == 1)
 							{
-								*elems = GlobalACSStrings.AddString(LookupString(*elems));
+								const char *str = LookupString(*elems);
+								if (str != NULL)
+								{
+									*elems = GlobalACSStrings.AddString(str);
+								}
 							}
 						}
 						i += 4+ArrayStore[arraynum].ArraySize;

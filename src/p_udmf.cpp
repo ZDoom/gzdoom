@@ -1542,6 +1542,7 @@ public:
 				isTranslated = false;
 				break;
 			case NAME_ZDoomTranslated:
+				level.flags2 |= LEVEL2_DUMMYSWITCHES;
 				namespace_bits = Zdt;
 				break;
 			case NAME_Vavoom:

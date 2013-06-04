@@ -4947,7 +4947,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				int	damage			= args[3];
 				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
-				fixed_t	range		= argCount > 6 && args[6]? args[6] : 0x7FFFFFFF;
+				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
 
 				if (args[0] == 0)
 				{

@@ -481,21 +481,27 @@ void ACSStringPool::PurgeStrings()
 	// Clear the hash buckets. We'll rebuild them as we decide what strings
 	// to keep and which to toss.
 	memset(PoolBuckets, 0xFF, sizeof(PoolBuckets));
+	size_t usedcount = 0, freedcount = 0;
 	for (unsigned int i = 0; i < Pool.Size(); ++i)
 	{
 		PoolEntry *entry = &Pool[i];
 		if (entry->Next != FREE_ENTRY)
 		{
 			if (entry->LockCount == 0)
-			{ // Mark this entry as free.
+			{
+				freedcount++;
+				// Mark this entry as free.
 				entry->Next = FREE_ENTRY;
 				if (i < FirstFreeEntry)
 				{
 					FirstFreeEntry = i;
 				}
+				// And free the string.
+				entry->Str = "";
 			}
 			else
 			{
+				usedcount++;
 				// Rehash this entry.
 				unsigned int h = entry->Hash % NUM_BUCKETS;
 				entry->Next = PoolBuckets[h];
@@ -543,14 +549,15 @@ int ACSStringPool::FindString(const char *str, size_t len, unsigned int h, unsig
 
 int ACSStringPool::InsertString(FString &str, unsigned int h, unsigned int bucketnum, const SDWORD *stack, int stackdepth)
 {
-	if (Pool.Size() >= STRPOOL_LIBRARYID)
-	{
-		return -1;
-	}
 	unsigned int index = FirstFreeEntry;
 	if (index >= MIN_GC_SIZE && index == Pool.Max())
 	{ // We will need to grow the array. Try a garbage collection first.
 		P_CollectACSGlobalStrings(stack, stackdepth);
+		index = FirstFreeEntry;
+	}
+	if (FirstFreeEntry >= STRPOOL_LIBRARYID_OR)
+	{ // If we go any higher, we'll collide with the library ID marker.
+		return -1;
 	}
 	if (index == Pool.Size())
 	{ // There were no free entries; make a new one.

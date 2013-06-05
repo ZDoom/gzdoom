@@ -73,6 +73,7 @@
 #include "po_man.h"
 #include "actorptrselect.h"
 #include "farchive.h"
+#include "decallib.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -110,6 +111,10 @@ FRandom pr_acs ("ACS");
 #define NOT_TOP				4
 #define NOT_FLOOR			8
 #define NOT_CEILING			16
+
+// SpawnDecal flags
+#define SDF_ABSANGLE		1
+#define SDF_PERMANENT		2
 
 struct CallReturn
 {
@@ -4192,6 +4197,7 @@ enum EACSFunctions
 	ACSF_GetWeapon,
 	ACSF_SoundVolume,
 	ACSF_PlayActorSound,
+	ACSF_SpawnDecal,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4438,6 +4444,17 @@ static int SetCVar(AActor *activator, const char *cvarname, int value, bool is_s
 	}
 	DoSetCVar(cvar, value, is_string);
 	return 1;
+}
+
+static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, angle_t angle, fixed_t zofs, fixed_t distance)
+{
+	if (!(flags & SDF_ABSANGLE))
+	{
+		angle += actor->angle;
+	}
+	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->x, actor->y,
+		actor->z + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
+		angle, distance, !!(flags & SDF_PERMANENT));
 }
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const SDWORD *stack, int stackdepth)
@@ -5140,6 +5157,41 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
             {
 				return GlobalACSStrings.AddString(activator->player->ReadyWeapon->GetClass()->TypeName.GetChars(), stack, stackdepth);
             }
+
+		case ACSF_SpawnDecal:
+			// int SpawnDecal(int tid, str decalname, int flags, fixed angle, int zoffset, int distance)
+			// Returns number of decals spawned (not including spreading)
+			{
+				int count = 0;
+				const FDecalTemplate *tpl = DecalLibrary.GetDecalByName(FBehavior::StaticLookupString(args[1]));
+				if (tpl != NULL)
+				{
+					int flags = (argCount > 2) ? args[2] : 0;
+					angle_t angle = (argCount > 3) ? (args[3] << FRACBITS) : 0;
+					fixed_t zoffset = (argCount > 4) ? (args[4] << FRACBITS) : 0;
+					fixed_t distance = (argCount > 5) ? (args[5] << FRACBITS) : 64*FRACUNIT;
+
+					if (args[0] == 0)
+					{
+						if (activator != NULL)
+						{
+							count += DoSpawnDecal(activator, tpl, flags, angle, zoffset, distance);
+						}
+					}
+					else
+					{
+						FActorIterator it(args[0]);
+						AActor *actor;
+
+						while ((actor = it.Next()) != NULL)
+						{
+							count += DoSpawnDecal(actor, tpl, flags, angle, zoffset, distance);
+						}
+					}
+				}
+				return count;
+			}
+			break;
 
 		default:
 			break;

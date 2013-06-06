@@ -4198,6 +4198,7 @@ enum EACSFunctions
 	ACSF_SoundVolume,
 	ACSF_PlayActorSound,
 	ACSF_SpawnDecal,
+	ACSF_CheckFont,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -5192,6 +5193,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return count;
 			}
 			break;
+
+		case ACSF_CheckFont:
+			// bool CheckFont(str fontname)
+			return V_GetFont(FBehavior::StaticLookupString(args[0])) != NULL;
 
 		default:
 			break;

@@ -382,23 +382,23 @@ void DRotatePoly::Tick ()
 	FPolyObj *poly = PO_GetPolyobj (m_PolyObj);
 	if (poly == NULL) return;
 
+	// Don't let non-perpetual polyobjs overshoot their targets.
+	if (m_Dist != -1 && (unsigned int)m_Dist < (unsigned int)abs(m_Speed))
+	{
+		m_Speed = m_Speed < 0 ? -m_Dist : m_Dist;
+	}
+
 	if (poly->RotatePolyobj (m_Speed))
 	{
-		unsigned int absSpeed = abs (m_Speed);
-
 		if (m_Dist == -1)
 		{ // perpetual polyobj
 			return;
 		}
-		m_Dist -= absSpeed;
+		m_Dist -= abs(m_Speed);
 		if (m_Dist == 0)
 		{
 			SN_StopSequence (poly);
 			Destroy ();
-		}
-		else if ((unsigned int)m_Dist < absSpeed)
-		{
-			m_Speed = m_Dist * (m_Speed < 0 ? -1 : 1);
 		}
 	}
 }
@@ -446,7 +446,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 		{
 			pe->m_Dist = ANGLE_MAX-1;
 		}
-		pe->m_Speed = (speed*direction*(ANGLE_90/64))>>3;
+		pe->m_Speed = speed*direction*(ANGLE_90/(64<<3));
 		SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 		direction = -direction;	// Reverse the direction
 	}

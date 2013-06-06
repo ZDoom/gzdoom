@@ -1441,7 +1441,8 @@ void APowerTimeFreezer::DoEffect()
 	Super::DoEffect();
 	// [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
 	// will get thrown off.
-	if (level.time & 1)
+	// [ED850] Don't change it if the player is predicted either.
+	if (level.time & 1 || (Owner != NULL && Owner->player != NULL && Owner->player->cheats & CF_PREDICTING))
 	{
 		return;
 	}

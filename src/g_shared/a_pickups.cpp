@@ -563,6 +563,33 @@ void AInventory::BeginPlay ()
 
 //===========================================================================
 //
+// AInventory :: Grind
+//
+//===========================================================================
+
+bool AInventory::Grind(bool items)
+{
+	// Does this grind request even care about items?
+	if (!items)
+	{
+		return false;
+	}
+	// Dropped items are normally destroyed by crushers. Set the DONTGIB flag,
+	// and they'll act like corpses with it set and be immune to crushers.
+	if (flags & MF_DROPPED)
+	{
+		if (!(flags3 & MF3_DONTGIB))
+		{
+			Destroy();
+		}
+		return false;
+	}
+	// Non-dropped items call the super method for compatibility.
+	return Super::Grind(items);
+}
+
+//===========================================================================
+//
 // AInventory :: DoEffect
 //
 // Handles any effect an item might apply to its owner
@@ -984,6 +1011,8 @@ void AInventory::Touch (AActor *toucher)
 		toucher = toucher->player->mo;
 	}
 
+	bool localview = toucher->CheckLocalView(consoleplayer);
+
 	if (!CallTryPickup (toucher, &toucher)) return;
 
 	// This is the only situation when a pickup flash should ever play.
@@ -996,7 +1025,7 @@ void AInventory::Touch (AActor *toucher)
 	{
 		const char * message = PickupMessage ();
 
-		if (message != NULL && *message != 0 && toucher->CheckLocalView (consoleplayer)
+		if (message != NULL && *message != 0 && localview
 			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
 		{
 			StaticLastMessageTic = gametic;
@@ -1010,7 +1039,10 @@ void AInventory::Touch (AActor *toucher)
 		if (toucher->player != NULL)
 		{
 			PlayPickupSound (toucher->player->mo);
-			toucher->player->bonuscount = BONUSADD;
+			if (!(ItemFlags & IF_NOSCREENFLASH))
+			{
+				toucher->player->bonuscount = BONUSADD;
+			}
 		}
 		else
 		{

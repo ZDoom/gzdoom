@@ -108,6 +108,8 @@ int 			resendcount[MAXNETNODES];
 
 unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
+unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
+bool			hadlate;
 
 int 			nodeforplayer[MAXPLAYERS];
 int				playerfornode[MAXNETNODES];
@@ -311,6 +313,8 @@ void Net_ClearBuffers ()
 	oldentertics = entertic;
 	gametic = 0;
 	maketic = 0;
+
+	lastglobalrecvtime = 0;
 }
 
 //
@@ -596,12 +600,12 @@ void PlayerIsGone (int netnode, int netconsole)
 	if (deathmatch)
 	{
 		Printf ("%s left the game with %d frags\n",
-					players[netconsole].userinfo.netname,
-					players[netconsole].fragcount);
+			players[netconsole].userinfo.GetName(),
+			players[netconsole].fragcount);
 	}
 	else
 	{
-		Printf ("%s left the game\n", players[netconsole].userinfo.netname);
+		Printf ("%s left the game\n", players[netconsole].userinfo.GetName());
 	}
 
 	// [RH] Revert each player to their own view if spying through the player who left
@@ -646,7 +650,7 @@ void PlayerIsGone (int netnode, int netconsole)
 			{
 				Net_Arbitrator = i;
 				players[i].settings_controller = true;
-				Printf ("%s is the new arbitrator\n", players[i].userinfo.netname);
+				Printf ("%s is the new arbitrator\n", players[i].userinfo.GetName());
 				break;
 			}
 		}
@@ -700,6 +704,8 @@ void GetPackets (void)
 			}
 			continue;			// extra setup packet
 		}
+
+		lastglobalrecvtime = I_GetTime (false); //Update the last time a packet was recieved
 						
 		netnode = doomcom.remotenode;
 		netconsole = playerfornode[netnode] & ~PL_DRONE;
@@ -1361,7 +1367,7 @@ bool DoArbitrate (void *userdata)
 				data->playersdetected[0] |= 1 << netbuffer[1];
 
 				StartScreen->NetMessage ("Found %s (node %d, player %d)",
-						players[netbuffer[1]].userinfo.netname,
+						players[netbuffer[1]].userinfo.GetName(),
 						node, netbuffer[1]+1);
 			}
 		}
@@ -1820,6 +1826,33 @@ void TryRunTics (void)
 		if (lowtic < gametic)
 			I_Error ("TryRunTics: lowtic < gametic");
 
+		// [Ed850] Check to see the last time a packet was recieved.
+		// If it's longer then 3 seconds, a node has likely stalled. Check which one and re-request its last packet.
+		if(I_GetTime(false) - lastglobalrecvtime >= TICRATE*3)
+		{
+			int latenode = 0; // Node 0 is the local player, and should always be the highest
+			lastglobalrecvtime = I_GetTime(false); //Bump the count
+
+			if(NetMode == NET_PeerToPeer || consoleplayer == Net_Arbitrator)
+			{
+				for (i = 0; i < doomcom.numnodes; i++)
+					if (nodeingame[i] && nettics[i] < nettics[latenode])
+						latenode = i;
+			}
+			else if (nodeingame[nodeforplayer[Net_Arbitrator]] && 
+				nettics[nodeforplayer[Net_Arbitrator]] < nettics[0])
+			{	// Likely a packet server game. Only check the packet host.
+				latenode = Net_Arbitrator;
+			}
+
+			if (debugfile)
+				fprintf (debugfile, "lost tics from %i (%i to %i)\n",
+						 latenode, nettics[latenode], gametic);
+
+			if(latenode != 0) // Send resend request to late node (if not yourself... somehow). Also mark the node as waiting to display it in the hud.
+				remoteresend[latenode] = players[playerfornode[latenode]].waiting = hadlate = true;
+		}
+
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime (false) - entertic >= TICRATE/3)
 		{
@@ -1827,6 +1860,13 @@ void TryRunTics (void)
 			M_Ticker ();
 			return;
 		}
+	}
+
+	if (hadlate)
+	{
+		hadlate = false;
+		for (i = 0; i < MAXPLAYERS; i++)
+			players[i].waiting = false;
 	}
 
 	// run the count tics
@@ -1968,12 +2008,12 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	{
 	case DEM_SAY:
 		{
-			const char *name = players[player].userinfo.netname;
+			const char *name = players[player].userinfo.GetName();
 			BYTE who = ReadByte (stream);
 
 			s = ReadString (stream);
 			CleanseString (s);
-			if (((who & 1) == 0) || players[player].userinfo.team == TEAM_NONE)
+			if (((who & 1) == 0) || players[player].userinfo.GetTeam() == TEAM_NONE)
 			{ // Said to everyone
 				if (who & 2)
 				{
@@ -1985,7 +2025,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				}
 				S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
 			}
-			else if (players[player].userinfo.team == players[consoleplayer].userinfo.team)
+			else if (players[player].userinfo.GetTeam() == players[consoleplayer].userinfo.GetTeam())
 			{ // Said only to members of the player's team
 				if (who & 2)
 				{
@@ -2245,7 +2285,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 				paused = player + 1;
 				S_PauseSound (false, false);
 			}
-			BorderNeedRefresh = screen->GetPageCount ();
+			V_SetBorderNeedRefresh();
 		}
 		break;
 
@@ -2392,7 +2432,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			players[playernum].settings_controller = true;
 
 			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
-				Printf ("%s has been added to the controller list.\n", players[playernum].userinfo.netname);
+				Printf ("%s has been added to the controller list.\n", players[playernum].userinfo.GetName());
 		}
 		break;
 
@@ -2402,7 +2442,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			players[playernum].settings_controller = false;
 
 			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
-				Printf ("%s has been removed from the controller list.\n", players[playernum].userinfo.netname);
+				Printf ("%s has been removed from the controller list.\n", players[playernum].userinfo.GetName());
 		}
 		break;
 
@@ -2653,7 +2693,7 @@ CCMD (pings)
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],
-					players[i].userinfo.netname);
+					players[i].userinfo.GetName());
 }
 
 //==========================================================================
@@ -2675,13 +2715,13 @@ static void Network_Controller (int playernum, bool add)
 
 	if (players[playernum].settings_controller && add)
 	{
-		Printf ("%s is already on the setting controller list.\n", players[playernum].userinfo.netname);
+		Printf ("%s is already on the setting controller list.\n", players[playernum].userinfo.GetName());
 		return;
 	}
 
 	if (!players[playernum].settings_controller && !add)
 	{
-		Printf ("%s is not on the setting controller list.\n", players[playernum].userinfo.netname);
+		Printf ("%s is not on the setting controller list.\n", players[playernum].userinfo.GetName());
 		return;
 	}
 
@@ -2780,7 +2820,7 @@ CCMD (net_listcontrollers)
 
 		if (players[i].settings_controller)
 		{
-			Printf ("- %s\n", players[i].userinfo.netname);
+			Printf ("- %s\n", players[i].userinfo.GetName());
 		}
 	}
 }

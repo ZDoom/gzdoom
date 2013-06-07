@@ -124,6 +124,7 @@ enum
 	IF_PERSISTENTPOWER	= 1<<18,	// Powerup is kept when travelling between levels
 	IF_RESTRICTABSOLUTELY = 1<<19,	// RestrictedTo and ForbiddenTo do not allow pickup in any form by other classes
 	IF_NEVERRESPAWN		= 1<<20,	// Never, ever respawns
+	IF_NOSCREENFLASH	= 1<<21,	// No pickup flash on the player's screen
 };
 
 
@@ -160,6 +161,7 @@ public:
 	virtual bool SpecialDropAction (AActor *dropper);
 	virtual bool DrawPowerup (int x, int y);
 	virtual void DoEffect ();
+	virtual bool Grind(bool items);
 
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);
@@ -283,6 +285,7 @@ public:
 	PClassActor *ProjectileType;			// Projectile used by primary attack
 	PClassActor *AltProjectileType;			// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
+	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
 	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)
@@ -376,7 +379,17 @@ enum
 	WIF_BOT_BFG =			1<<28,		// this is a BFG
 };
 
-#define S_LIGHTDONE 0
+class AWeaponGiver : public AWeapon
+{
+	DECLARE_CLASS(AWeaponGiver, AWeapon)
+
+public:
+	bool TryPickup(AActor *&toucher);
+	void Serialize(FArchive &arc);
+
+	fixed_t DropAmmoFactor;
+};
+
 
 // Health is some item that gives the player health when picked up.
 class PClassHealth : public PClassInventory

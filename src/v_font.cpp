@@ -244,31 +244,68 @@ int NumTextColors;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const BYTE myislower[256] =
-{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0
-};
-
 static TArray<TranslationParm> TranslationParms[2];
 static TArray<TranslationMap> TranslationLookup;
 static TArray<PalEntry> TranslationColors;
 
 // CODE --------------------------------------------------------------------
+
+static bool myislower(int code)
+{
+	if (code >= 'a' && code <= 'z')
+		return true;
+	if (code != 0xF7 && code != 0xFF && (code & 0xE0) == 0xE0)
+		return true;
+	return false;
+}
+
+// Returns a character without an accent mark.
+// FIXME: Only valid for CP-1252; we should go Unicode at some point.
+
+static int stripaccent(int code)
+{
+	if (code < 0x8a)
+		return code;
+	if (code == 0x8a)	// Latin capital letter S with caron
+		return 'S';
+	if (code == 0x8e)	// Latin capital letter Z with caron
+		return 'Z';
+	if (code == 0x9a)	// Latin small letter S with caron
+		return 's';
+	if (code == 0x9e)	// Latin small letter Z with caron
+		return 'z';
+	if (code == 0x9f)	// Latin capital letter Y with diaeresis
+		return 'Y';
+	if (code == 0xff)	// Latin small letter Y with diaeresis
+		return 'y';
+	// Every other accented character has the high two bits set.
+	if ((code & 0xC0) == 0)
+		return code;
+	// Make lowercase characters uppercase so there are half as many tests.
+	int acode = code & 0xDF;
+	if (acode >= 0xC0 && acode <= 0xC5)		// A with accents
+		return 'A' + (code & 0x20);
+	if (acode == 0xC7)						// Cedilla
+		return 'C' + (acode & 0x20);
+	if (acode >= 0xC8 && acode <= 0xCB)		// E with accents
+		return 'E' + (code & 0x20);
+	if (acode >= 0xCC && acode <= 0xCF)		// I with accents
+		return 'I' + (code & 0x20);
+	if (acode == 0xD0)						// Eth
+		return 'D' + (code & 0x20);
+	if (acode == 0xD1)						// N with tilde
+		return 'N' + (code & 0x20);
+	if ((acode >= 0xD2 && acode <= 0xD6) ||	// O with accents
+		acode == 0xD8)						// O with stroke
+		return 'O' + (code & 0x20);
+	if (acode >= 0xD9 && acode <= 0xDC)		// U with accents
+		return 'U' + (code & 0x20);
+	if (acode == 0xDD)						// Y with accute
+		return 'Y' + (code & 0x20);
+	if (acode == 0xDE)						// Thorn
+		return 'P' + (code & 0x20);			// well, it sort of looks like a 'P'
+	return code;
+}
 
 FFont *V_GetFont(const char *name)
 {
@@ -608,6 +645,7 @@ int FFont::SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *reverse
 	qsort (reverse+1, j-1, 1, compare);
 
 	*luminosity = new double[j];
+	(*luminosity)[0] = 0.0; // [BL] Prevent uninitalized memory
 	max = 0.0;
 	min = 100000000.0;
 	for (i = 1; i < j; i++)
@@ -760,9 +798,20 @@ int FFont::GetCharCode(int code, bool needpic) const
 	{
 		return code;
 	}
-	if (myislower[code])
+	// Try converting lowercase characters to uppercase.
+	if (myislower(code))
 	{
 		code -= 32;
+		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
+		{
+			return code;
+		}
+	}
+	// Try stripping accents from accented characters.
+	int newcode = stripaccent(code);
+	if (newcode != code)
+	{
+		code = newcode;
 		if (code >= FirstChar && code <= LastChar && (!needpic || Chars[code - FirstChar].Pic != NULL))
 		{
 			return code;
@@ -908,6 +957,7 @@ FFont::FFont (int lump)
 	Chars = NULL;
 	PatchRemap = NULL;
 	Name = NULL;
+	Cursor = '_';
 }
 
 //==========================================================================
@@ -1073,7 +1123,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	FontHeight = data[4] + data[5]*256;
 	FirstChar = data[6];
 	LastChar = data[7];
-	ActiveColors = data[10];
+	ActiveColors = data[10]+1;
 	PatchRemap = NULL;
 	RescalePalette = data[9] == 0;
 	
@@ -1125,9 +1175,9 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		SpaceWidth = totalwidth * 2 / (3 * count);
 	}
 
-	memcpy(PaletteData, palette, (ActiveColors+1)*3);
+	memcpy(PaletteData, palette, ActiveColors*3);
 
-	data_p = palette + (ActiveColors+1)*3;
+	data_p = palette + ActiveColors*3;
 
 	for (i = 0; i < count; ++i)
 	{
@@ -2014,8 +2064,8 @@ void FSpecialFont::LoadTranslations()
 // FFont :: FixXMoves
 //
 // If a font has gaps in its characters, set the missing characters'
-// XMoves to either SpaceWidth or the uppercase variant's XMove. Missing
-// XMoves must be initialized with INT_MIN beforehand.
+// XMoves to either SpaceWidth or the unaccented or uppercase variant's
+// XMove. Missing XMoves must be initialized with INT_MIN beforehand.
 //
 //==========================================================================
 
@@ -2025,12 +2075,24 @@ void FFont::FixXMoves()
 	{
 		if (Chars[i].XMove == INT_MIN)
 		{
-			if (myislower[i + FirstChar])
+			// Try an uppercase character.
+			if (myislower(i + FirstChar))
 			{
 				int upper = i - 32;
 				if (upper >= 0)
 				{
 					Chars[i].XMove = Chars[upper].XMove;
+					continue;
+				}
+			}
+			// Try an unnaccented character.
+			int noaccent = stripaccent(i + FirstChar);
+			if (noaccent != i + FirstChar)
+			{
+				noaccent -= FirstChar;
+				if (noaccent >= 0)
+				{
+					Chars[i].XMove = Chars[noaccent].XMove;
 					continue;
 				}
 			}
@@ -2587,7 +2649,12 @@ void V_InitFonts()
 	}
 	if (!(BigFont = FFont::FindFont("BigFont")))
 	{
-		if (gameinfo.gametype & GAME_DoomChex)
+		int lump = Wads.CheckNumForName("BIGFONT");
+		if (lump >= 0)
+		{
+			BigFont = new FSingleLumpFont("BigFont", lump);
+		}
+		else if (gameinfo.gametype & GAME_DoomChex)
 		{
 			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
 		}
@@ -2597,7 +2664,15 @@ void V_InitFonts()
 		}
 		else
 		{
-			BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			lump = Wads.CheckNumForName("HBIGFONT");
+			if (lump >= 0)
+			{
+				BigFont = new FSingleLumpFont("BigFont", lump);
+			}
+			else
+			{
+				BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			}
 		}
 	}
 	if (!(ConFont = FFont::FindFont("ConsoleFont")))

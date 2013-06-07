@@ -48,10 +48,14 @@ enum EHudState
 {
 	HUD_StatusBar,
 	HUD_Fullscreen,
-	HUD_None
+	HUD_None,
+
+	HUD_AltHud // Used for passing through popups to the alt hud
 };
 
 class AWeapon;
+
+void ST_SetNeedRefresh();
 
 // HUD Message base object --------------------------------------------------
 
@@ -85,22 +89,42 @@ public:
 	{
 		Alpha = alpha;
 	}
+	void SetNoWrap(bool nowrap)
+	{
+		NoWrap = nowrap;
+		ResetText(SourceText);
+	}
+	void SetClipRect(int x, int y, int width, int height)
+	{
+		ClipX = x;
+		ClipY = y;
+		ClipWidth = width;
+		ClipHeight = height;
+	}
+	void SetWrapWidth(int wrap)
+	{
+		WrapWidth = wrap;
+		ResetText(SourceText);
+	}
 
 protected:
 	FBrokenLines *Lines;
 	int Width, Height, NumLines;
 	float Left, Top;
-	bool CenterX;
+	bool CenterX, NoWrap;
 	int HoldTics;
 	int Tics;
 	int State;
 	int VisibilityFlags;
 	int HUDWidth, HUDHeight;
+	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
+	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
 	EColorRange TextColor;
 	FFont *Font;
 	FRenderStyle Style;
 	fixed_t Alpha;
 
+	void CalcClipCoords(int hudheight);
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
@@ -400,6 +424,7 @@ private:
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
 	void DrawMessages (int layer, int bottom);
 	void DrawConsistancy () const;
+	void DrawWaiting () const;
 
 	TObjPtr<DHUDMessage> Messages[NUM_HUDMSGLAYERS];
 	bool ShowLog;

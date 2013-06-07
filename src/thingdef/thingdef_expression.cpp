@@ -83,6 +83,10 @@ DEFINE_MEMBER_VARIABLE(scaleY, AActor)
 DEFINE_MEMBER_VARIABLE(Score, AActor)
 DEFINE_MEMBER_VARIABLE(accuracy, AActor)
 DEFINE_MEMBER_VARIABLE(stamina, AActor)
+DEFINE_MEMBER_VARIABLE(height, AActor)
+DEFINE_MEMBER_VARIABLE(radius, AActor)
+DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
+DEFINE_MEMBER_VARIABLE(meleerange, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
@@ -1716,7 +1720,7 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 		if (right->ValueType != VAL_Int)
 		{
 			right = new FxIntCast(right);
-			right = left->Resolve(ctx);
+			right = right->Resolve(ctx);
 		}
 		if (left == NULL || right == NULL)
 		{
@@ -3620,9 +3624,9 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 		FName clsname = basex->EvalExpression(NULL).GetName();
 		const PClass *cls = NULL;
 
-		if (clsname != NAME_None || !ctx.isconst)
+		if (clsname != NAME_None)
 		{
-			cls= PClass::FindClass(clsname);
+			cls = PClass::FindClass(clsname);
 			if (cls == NULL)
 			{
 				if (!ctx.lax)

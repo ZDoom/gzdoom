@@ -441,7 +441,8 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 				"heretic shadow of the serpent riders/base",
 				"hexen/base",
 				"hexen deathkings of the dark citadel/base",
-				"ultimate doom/base"
+				"ultimate doom/base",
+				"DOOM 3 BFG Edition/base/wads"
 			};
 			steam_path += "/SteamApps/common/";
 			for (i = 0; i < countof(steam_dirs); ++i)

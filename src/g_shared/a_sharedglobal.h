@@ -9,7 +9,8 @@ struct vertex_t;
 struct side_t;
 struct F3DFloor;
 
-extern void P_SpawnDirt (AActor *actor, fixed_t radius);
+void P_SpawnDirt (AActor *actor, fixed_t radius);
+class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t tracedist, bool permanent);
 
 class DBaseDecal : public DThinker
 {

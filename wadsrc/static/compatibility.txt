@@ -141,12 +141,16 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 }
 
 1D9E43988940CCD3555724E15DD8B1AB // Happy Time Circus map01 has bad teleporters
+040F83028FFA74456E335ED300BE2C33 // MAP17 (TownInfection.wad)
+156FA31F5FF72A87BF345B68029D3051 // MAP02 (nprject5.wad)
+AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
 {
 	ignoreteleporttags
 }
 
 8FF30D57F6CE64F085A6567EC302842A // Enjay's test map for this flag
 9D7893D09FEE55C31B73C670DF850962 // Memento Mori II, map12
+91E173901E6F3800B81AB646976247CD // Claustrophobia 1024, map01
 {
 	badangles
 }
@@ -284,3 +288,55 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	clearlinespecial 1107
 	clearlinespecial 1108
 }
+
+5B862477519B21B30059A466F2FF6460 // Khorus, map08
+{
+	// This map uses a voodoo conveyor with slanted walls to shunt the
+	// voodoo doll into side areas. For some reason, this voodoo doll
+	// is unable to slide on them, because the slide calculation gets
+	// them slightly inside the walls and thinks they are stuck. I could
+	// not reproduce this with the real player, which is what has me
+	// stumped. So, help them out be attaching some ThrustThing specials
+	// to the walls.
+	setlinespecial 443 ThrustThing 96 4 0 0 0
+	setlineflags 443 0x200		// repeatable
+	setactivation 443 16		// SPAC_Push
+	setlinespecial 455 ThrustThing 96 4 0 0 0
+	setlineflags 455 0x200		// repeatable
+	setactivation 455 16		// SPAC_Push
+}
+
+6DC9F6CCEAE7A91AEC48EBE506F22BC4 // Void
+{
+	// Slightly squash the pillars in the starting room with "stimpacks"
+	// floating on them so that they can be obtained.
+	sectorflooroffset 62 -8
+	setwallyscale 286 front bot 1.090909
+	setwallyscale 287 front bot 1.090909
+	setwallyscale 288 front bot 1.090909
+	setwallyscale 289 front bot 1.090909
+	
+	sectorflooroffset 63 -8
+	setwallyscale 290 front bot 1.090909
+	setwallyscale 291 front bot 1.090909
+	setwallyscale 292 front bot 1.090909
+	setwallyscale 293 front bot 1.090909
+	
+	sectorflooroffset 118 -8
+	setwallyscale 710 front bot 1.090909
+	setwallyscale 711 front bot 1.090909
+	setwallyscale 712 front bot 1.090909
+	setwallyscale 713 front bot 1.090909
+	
+	sectorflooroffset 119 -8
+	setwallyscale 714 front bot 1.090909
+	setwallyscale 715 front bot 1.090909
+	setwallyscale 716 front bot 1.090909
+	setwallyscale 717 front bot 1.090909
+}
+
+65A1EB4C87386F290816660A52932FF1 // Master Levels, garrison.wad
+{
+	rebuildnodes
+}
+

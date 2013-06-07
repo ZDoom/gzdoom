@@ -367,9 +367,13 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 	}
 	// if we get here the state doesn't seem to belong to any class in the inheritance chain
 	// This can happen with Dehacked if the flash states are remapped. 
-	// The only way to check this would be to go through all Dehacked modifiable actors and
-	// find the correct one.
-	// For now let's assume that it will work.
+	// The only way to check this would be to go through all Dehacked modifiable actors, convert
+	// their states into a single flat array and find the correct one.
+	// Rather than that, just check to make sure it belongs to something.
+	if (FState::StaticFindStateOwner(flashstate + index) == NULL)
+	{ // Invalid state. With no index offset, it should at least be valid.
+		index = 0;
+	}
 	P_SetPsprite (player, ps_flash, flashstate + index);
 }
 
@@ -506,7 +510,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 //
 // [RH] A_FireRailgun
 //
-static void FireRailgun(AActor *self, int RailOffset)
+static void FireRailgun(AActor *self, int offset_xy)
 {
 	int damage;
 	player_t *player;
@@ -531,7 +535,7 @@ static void FireRailgun(AActor *self, int RailOffset)
 
 	damage = deathmatch ? 100 : 150;
 
-	P_RailAttack (self, damage, RailOffset);
+	P_RailAttack (self, damage, offset_xy);
 }
 
 
@@ -638,8 +642,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 			damage += (pr_bfgspray() & 7) + 1;
 
 		thingToHit = linetarget;
-		P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash));
-		P_TraceBleed (damage, thingToHit, self->target);
+		int newdam = P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash));
+		P_TraceBleed (newdam > 0 ? newdam : damage, thingToHit, self->target);
 	}
 	return 0;
 }

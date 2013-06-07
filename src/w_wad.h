@@ -227,7 +227,8 @@ protected:
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
 
 private:
-	void RenameSprites ();
+	void RenameSprites();
+	void RenameNerve();
 	void DeleteAll();
 };
 

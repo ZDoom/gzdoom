@@ -109,6 +109,91 @@ static APlayerPawn::MetaClass *FindClassTentativePlayerPawn(const char *name)
 	return static_cast<APlayerPawn::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APlayerPawn)));
 }
 
+//==========================================================================
+//
+// Sets or clears a flag, taking field width into account.
+//
+//==========================================================================
+void ModActorFlag(AActor *actor, FFlagDef *fd, bool set)
+{
+	// Little-Endian machines only need one case, because all field sizes
+	// start at the same address. (Unless the machine has unaligned access
+	// exceptions, in which case you'll need multiple cases for it too.)
+#ifdef __BIG_ENDIAN__
+	if (fd->fieldsize == 4)
+#endif
+	{
+		DWORD *flagvar = (DWORD *)((char *)actor + fd->structoffset);
+		if (set)
+		{
+			*flagvar |= fd->flagbit;
+		}
+		else
+		{
+			*flagvar &= ~fd->flagbit;
+		}
+	}
+#ifdef __BIG_ENDIAN__
+	else if (fd->fieldsize == 2)
+	{
+		WORD *flagvar = (WORD *)((char *)actor + fd->structoffset);
+		if (set)
+		{
+			*flagvar |= fd->flagbit;
+		}
+		else
+		{
+			*flagvar &= ~fd->flagbit;
+		}
+	}
+	else
+	{
+		assert(fd->fieldsize == 1);
+		BYTE *flagvar = (BYTE *)((char *)actor + fd->structoffset);
+		if (set)
+		{
+			*flagvar |= fd->flagbit;
+		}
+		else
+		{
+			*flagvar &= ~fd->flagbit;
+		}
+	}
+#endif
+}
+
+//==========================================================================
+//
+// Returns whether an actor flag is true or not.
+//
+//==========================================================================
+
+INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
+{
+	if (fd->structoffset == -1)
+	{
+		return CheckDeprecatedFlags(owner, owner->GetClass(), fd->flagbit);
+	}
+	else
+#ifdef __BIG_ENDIAN__
+	if (fd->fieldsize == 4)
+#endif
+	{
+		return fd->flagbit & *(DWORD *)(((char*)owner) + fd->structoffset);
+	}
+#ifdef __BID_ENDIAN__
+	else if (fd->fieldsize == 2)
+	{
+		return fd->flagbit & *(WORD *)(((char*)owner) + fd->structoffset);
+	}
+	else
+	{
+		assert(fd->fieldsize == 1);
+		return fd->flagbit & *(BYTE *)(((char*)owner) + fd->structoffset);
+	}
+#endif
+}
+
 //===========================================================================
 //
 // HandleDeprecatedFlags
@@ -184,7 +269,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 //
 //===========================================================================
 
-bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
+bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 {
 	// A deprecated flag is false if
 	// a) it hasn't been added here
@@ -225,11 +310,11 @@ bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 		return (actor->BounceFlags & (BOUNCE_TypeMask|BOUNCE_UseSeeSound)) == BOUNCE_DoomCompat;
 
 	case DEPF_PICKUPFLASH:
-		return static_cast<AInventory*>(actor)->PickupFlash == PClass::FindClass("PickupFlash");
+		return static_cast<const AInventory*>(actor)->PickupFlash == PClass::FindClass("PickupFlash");
 		// A pure name lookup may or may not be more efficient, but I know no static identifier for PickupFlash.
 
 	case DEPF_INTERHUBSTRIP:
-		return !(static_cast<AInventory*>(actor)->InterHubAmount);
+		return !(static_cast<const AInventory*>(actor)->InterHubAmount);
 	}
 
 	return false; // Any entirely unknown flag is not set
@@ -551,6 +636,16 @@ DEFINE_PROPERTY(scale, F, Actor)
 {
 	PROP_FIXED_PARM(id, 0);
 	defaults->scaleX = defaults->scaleY = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(floatbobphase, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < -1 || id >= 64) I_Error ("FloatBobPhase must be in range [-1,63]");
+	defaults->FloatBobPhase = id;
 }
 
 //==========================================================================
@@ -1777,6 +1872,24 @@ DEFINE_CLASS_PROPERTY(selectionorder, I, Weapon)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY(minselectionammo1, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->MinSelAmmo1 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(minselectionammo2, I, Weapon)
+{
+	PROP_INT_PARM(i, 0);
+	defaults->MinSelAmmo2 = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY(sisterweapon, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
@@ -1807,7 +1920,7 @@ DEFINE_CLASS_PROPERTY(yadjust, F, Weapon)
 DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 {
 	static const char *names[] = { "Normal", "Inverse", "Alpha", "InverseAlpha", "Smooth", "InverseSmooth", NULL };
-	static const int flags[] = { AWeapon::BobNormal,
+	static const int styles[] = { AWeapon::BobNormal,
 		AWeapon::BobInverse, AWeapon::BobAlpha, AWeapon::BobInverseAlpha,
 		AWeapon::BobSmooth, AWeapon::BobInverseSmooth, };
 	PROP_STRING_PARM(id, 0);
@@ -1817,7 +1930,7 @@ DEFINE_CLASS_PROPERTY(bobstyle, S, Weapon)
 		I_Error("Unknown bobstyle %s", id);
 		match = 0;
 	}
-	defaults->BobStyle |= flags[match];
+	defaults->BobStyle = styles[match];
 }
 
 //==========================================================================

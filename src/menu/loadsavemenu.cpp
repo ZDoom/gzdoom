@@ -961,7 +961,7 @@ void DSaveMenu::DoSave (FSaveGameNode *node)
 		G_SaveGame (filename, savegamestring);
 	}
 	M_ClearMenus();
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 }
 
 //=============================================================================
@@ -1100,7 +1100,7 @@ bool DLoadMenu::MenuEvent (int mkey, bool fromcontroller)
 			quickSaveSlot = SaveGames[Selected];
 		}
 		M_ClearMenus();
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 		LastAccessed = Selected;
 		return true;
 	}

@@ -6,7 +6,7 @@ ACTOR ExplosiveBarrel 2035
 	SpawnID 125
 	Health 20
 	Radius 10
-	Height 34
+	Height 42
 	+SOLID
 	+SHOOTABLE
 	+NOBLOOD

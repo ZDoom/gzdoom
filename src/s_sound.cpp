@@ -268,7 +268,7 @@ void S_NoiseDebug (void)
 		}
 		chan = (FSoundChan *)((size_t)chan->PrevChan - myoffsetof(FSoundChan, NextChan));
 	}
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 }
 
 static FString LastLocalSndInfo;
@@ -446,8 +446,9 @@ void S_Start ()
 	// start new music for the level
 	MusicPaused = false;
 
-	// [RH] This is a lot simpler now.
-	if (!savegamerestore)
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!savegamerestore && (level.info == NULL || level.info->snapshot == NULL || !level.info->isValid()))
 	{
 		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
 			S_ChangeMusic (level.Music, level.musicorder);
@@ -1591,6 +1592,29 @@ void S_RelinkSound (AActor *from, AActor *to)
 	}
 }
 
+
+//==========================================================================
+//
+// S_ChangeSoundVolume
+//
+//==========================================================================
+
+bool S_ChangeSoundVolume(AActor *actor, int channel, float volume)
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == SOURCE_Actor &&
+			chan->Actor == actor &&
+			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+		{
+			GSnd->ChannelVolume(chan, volume);
+			chan->Volume = volume;
+			return true;
+		}
+	}
+	return false;
+}
+
 //==========================================================================
 //
 // S_GetSoundPlayingInfo
@@ -2134,7 +2158,6 @@ void S_StopChannel(FSoundChan *chan)
 		S_ReturnChannel(chan);
 	}
 }
-
 
 //==========================================================================
 //

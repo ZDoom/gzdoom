@@ -2603,10 +2603,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\src\oplsynth\fmopl.h"
-					>
-				</File>
-				<File
 					RelativePath=".\src\oplsynth\mlopl.cpp"
 					>
 				</File>
@@ -2619,6 +2615,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\oplsynth\opl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\OPL3.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\oplsynth\opl_mus_player.cpp"
 					>
 				</File>
@@ -2626,6 +2630,18 @@
 					RelativePath=".\src\oplsynth\opl_mus_player.h"
 					>
 				</File>
+				<Filter
+					Name="DOSBox"
+					>
+					<File
+						RelativePath=".\src\oplsynth\dosbox\opl.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\src\oplsynth\dosbox\opl.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Timidity"
@@ -6112,42 +6128,6 @@
 				</File>
 				<File
 					RelativePath=".\src\g_strife\a_loremaster.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\src\g_strife\a_macil.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"

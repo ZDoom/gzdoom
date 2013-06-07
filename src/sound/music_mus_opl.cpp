@@ -1,14 +1,26 @@
 #include "i_musicinterns.h"
+#include "oplsynth/muslib.h"
+#include "oplsynth/opl.h"
 
 static bool OPL_Active;
 
-CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (OPL_Active && currSong != NULL)
+	if (*self <= 0)
+	{
+		self = 1;
+	}
+	else if (*self > MAXOPL2CHIPS)
+	{
+		self = MAXOPL2CHIPS;
+	}
+	else if (OPL_Active && currSong != NULL)
 	{
 		static_cast<OPLMUSSong *>(currSong)->ResetChips ();
 	}
 }
+
+CVAR(Int, opl_core, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 OPLMUSSong::OPLMUSSong (FILE *file, BYTE *musiccache, int len)
 {
@@ -17,7 +29,7 @@ OPLMUSSong::OPLMUSSong (FILE *file, BYTE *musiccache, int len)
 	Music = new OPLmusicFile (file, musiccache, len);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
-		SoundStream::Mono | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
+		(opl_core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create music stream.\n");

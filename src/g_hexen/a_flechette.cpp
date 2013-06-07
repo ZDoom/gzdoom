@@ -128,7 +128,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
-		P_CheckMissileSpawn(mo);
+		P_CheckMissileSpawn(mo, Owner->radius);
 		return true;
 	}
 	return false;

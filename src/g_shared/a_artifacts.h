@@ -30,6 +30,9 @@ protected:
 	virtual void InitEffect ();
 	virtual void DoEffect ();
 	virtual void EndEffect ();
+
+	friend void EndAllPowerupEffects(AInventory *item);
+	friend void InitAllPowerupEffects(AInventory *item);
 };
 
 // An artifact is an item that gives the player a powerup when activated.
@@ -143,8 +146,13 @@ class APowerSpeed : public APowerup
 	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
 	void DoEffect ();
+	void Serialize(FArchive &arc);
 	fixed_t GetSpeedFactor();
+public:
+	int SpeedFlags;
 };
+
+#define PSF_NOTRAIL		1
 
 class APowerMinotaur : public APowerup
 {

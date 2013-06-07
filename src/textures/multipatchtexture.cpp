@@ -558,7 +558,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 		return Parts[0].Texture->CopyTrueColorPixels(bmp, x, y, rotate, inf);
 	}
 
-	if (rotate != 0 || (inf != NULL && inf->op != OP_OVERWRITE && inf->op != OP_COPY))
+	if (rotate != 0 || (inf != NULL && ((inf->op != OP_OVERWRITE && inf->op != OP_COPY) || inf->blend != BLEND_NONE)))
 	{ // We are doing some sort of fancy stuff to the destination bitmap, so composite to
 	  // a temporary bitmap, and copy that.
 		FBitmap tbmp;

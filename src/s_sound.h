@@ -57,6 +57,7 @@ struct sfxinfo_t
 	WORD		bUsed:1;
 	WORD		bSingular:1;
 	WORD		bTentative:1;
+	WORD		bPlayerSilent:1;		// This player sound is intentionally silent.
 
 	int			LoopStart;				// -1 means no specific loop defined
 
@@ -301,6 +302,9 @@ bool S_GetSoundPlayingInfo (const sector_t *sector, int sound_id);
 bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id);
 
 bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
+
+// Change a playing sound's volume
+bool S_ChangeSoundVolume(AActor *actor, int channel, float volume);
 
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);

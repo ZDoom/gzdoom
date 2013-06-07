@@ -992,7 +992,7 @@ void PrintDLS(DLS_Data *data)
 		}
 		printf("\n");
 	}
-	if ( data->waveList ) {
+	if ( data->waveList && data->ptbl ) {
 		DWORD i;
 		printf("Waves:\n");
 		for ( i = 0; i < data->ptbl->cCues; ++i ) {

@@ -142,6 +142,8 @@ int 			numgamesubsectors;
 bool			hasglnodes;
 
 TArray<FMapThing> MapThingsConverted;
+TMap<unsigned,unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
+TArray<FMapThingUserData> MapThingsUserData;
 
 int sidecount;
 sidei_t *sidetemp;
@@ -251,6 +253,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 MapData *P_OpenMapData(const char * mapname)
 {
 	MapData * map = new MapData;
+	FileReader * wadReader = NULL;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
 	
 	if (externalfile)
@@ -261,8 +264,8 @@ MapData *P_OpenMapData(const char * mapname)
 			delete map;
 			return NULL;
 		}
-		map->file = new FileReader(mapname);
-		map->CloseOnDestruct = true;
+		map->resource = FResourceFile::OpenResourceFile(mapname, NULL, true);
+		wadReader = map->resource->GetReader();
 	}
 	else
 	{
@@ -284,18 +287,13 @@ MapData *P_OpenMapData(const char * mapname)
 			int lumpfile = Wads.GetLumpFile(lump_name);
 			int nextfile = Wads.GetLumpFile(lump_name+1);
 
-			map->file = Wads.GetFileReader(lumpfile);
-			map->CloseOnDestruct = false;
 			map->lumpnum = lump_name;
 
 			if (lumpfile != nextfile)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].FilePos = 0;
-				map->MapLumps[0].Size = Wads.LumpLength(lump_name);
-				map->file = Wads.ReopenLumpNum(lump_name);
-				map->CloseOnDestruct = true;
+				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -306,15 +304,14 @@ MapData *P_OpenMapData(const char * mapname)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
-			map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+			map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
+			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);
+			map->InWad = true;
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
-				map->file = Wads.ReopenLumpNum(lump_name);
-				map->CloseOnDestruct = true;
-				map->MapLumps[0].FilePos = 0;
+				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -332,22 +329,20 @@ MapData *P_OpenMapData(const char * mapname)
 					// Since levels must be stored in WADs they can't really have full
 					// names and for any valid level lump this always returns the short name.
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
-					index = GetMapIndex(mapname, index, lumpname, i != 1 || map->MapLumps[0].Size == 0);
+					index = GetMapIndex(mapname, index, lumpname, i != 1 || Wads.LumpLength(lump_name + i) == 0);
 					if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
 					// The next lump is not part of this map anymore
 					if (index < 0) break;
 
-					map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
-					map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
 			else
 			{
 				map->isText = true;
-				map->MapLumps[1].FilePos = Wads.GetLumpOffset(lump_name + 1);
-				map->MapLumps[1].Size = Wads.LumpLength(lump_name + 1);
+				map->MapLumps[1].Reader = Wads.ReopenLumpNum(lump_name + 1);
 				for(int i = 2;; i++)
 				{
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
@@ -383,8 +378,7 @@ MapData *P_OpenMapData(const char * mapname)
 						break;
 					}
 					else continue;
-					map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
-					map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -402,47 +396,38 @@ MapData *P_OpenMapData(const char * mapname)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			map->file = Wads.ReopenLumpNum(lump_wad);
-			map->CloseOnDestruct = true;
+			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), Wads.ReopenLumpNum(lump_wad), true);
+			wadReader = map->resource->GetReader();
 		}
 	}
 	DWORD id;
 
-	map->file->Read(&id, sizeof(id));
+	// Although we're using the resource system, we still want to be sure we're
+	// reading from a wad file.
+	wadReader->Seek(0, SEEK_SET);
+	wadReader->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
 	{
 		char maplabel[9]="";
 		int index=0;
-		DWORD dirofs, numentries;
 
-		(*map->file) >> numentries >> dirofs;
+		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
+		strncpy(map->MapLumps[0].Name, map->resource->GetLump(0)->Name, 8);
 
-		map->file->Seek(dirofs, SEEK_SET);
-		(*map->file) >> map->MapLumps[0].FilePos >> map->MapLumps[0].Size;
-		map->file->Read(map->MapLumps[0].Name, 8);
-
-		for(DWORD i = 1; i < numentries; i++)
+		for(DWORD i = 1; i < map->resource->LumpCount(); i++)
 		{
-			DWORD offset, size;
-			char lumpname[8];
+			const char* lumpname = map->resource->GetLump(i)->Name;
 
-			(*map->file) >> offset >> size;
-			map->file->Read(lumpname, 8);
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
 				map->isText = true;
-				map->MapLumps[1].FilePos = offset;
-				map->MapLumps[1].Size = size;
+				map->MapLumps[ML_TEXTMAP].Reader = map->resource->GetLump(i)->NewReader();
+				strncpy(map->MapLumps[ML_TEXTMAP].Name, lumpname, 8);
 				for(int i = 2;; i++)
 				{
-					(*map->file) >> offset >> size;
-					long v = map->file->Read(lumpname, 8);
-					if (v < 8)
-					{
-						I_Error("Invalid map definition for %s", mapname);
-					}
-					else if (!strnicmp(lumpname, "ZNODES",8))
+					lumpname = map->resource->GetLump(i)->Name;
+					if (!strnicmp(lumpname, "ZNODES",8))
 					{
 						index = ML_GLZNODES;
 					}
@@ -469,8 +454,7 @@ MapData *P_OpenMapData(const char * mapname)
 						return map;
 					}
 					else continue;
-					map->MapLumps[index].FilePos = offset;
-					map->MapLumps[index].Size = size;
+					map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -489,15 +473,14 @@ MapData *P_OpenMapData(const char * mapname)
 				maplabel[8]=0;
 			}
 
-			map->MapLumps[index].FilePos = offset;
-			map->MapLumps[index].Size = size;
+			map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
 			strncpy(map->MapLumps[index].Name, lumpname, 8);
 		}
 	}
 	else
 	{
 		// This is a Build map and not subject to WAD consistency checks.
-		map->MapLumps[0].Size = map->file->GetLength();
+		//map->MapLumps[0].Size = wadReader->GetLength();
 		if (!P_IsBuildMap(map))
 		{
 			delete map;
@@ -532,29 +515,29 @@ void MapData::GetChecksum(BYTE cksum[16])
 	{
 		if (isText)
 		{
-			file->Seek(MapLumps[ML_TEXTMAP].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_TEXTMAP].Size);
+			Seek(ML_TEXTMAP);
+			md5.Update(file, Size(ML_TEXTMAP));
 		}
 		else
 		{
-			if (MapLumps[ML_LABEL].Size != 0)
+			if (Size(ML_LABEL) != 0)
 			{
-				file->Seek(MapLumps[ML_LABEL].FilePos, SEEK_SET);
-				md5.Update(file, MapLumps[ML_LABEL].Size);
+				Seek(ML_LABEL);
+				md5.Update(file, Size(ML_LABEL));
 			}
-			file->Seek(MapLumps[ML_THINGS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_THINGS].Size);
-			file->Seek(MapLumps[ML_LINEDEFS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_LINEDEFS].Size);
-			file->Seek(MapLumps[ML_SIDEDEFS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_SIDEDEFS].Size);
-			file->Seek(MapLumps[ML_SECTORS].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_SECTORS].Size);
+			Seek(ML_THINGS);
+			md5.Update(file, Size(ML_THINGS));
+			Seek(ML_LINEDEFS);
+			md5.Update(file, Size(ML_LINEDEFS));
+			Seek(ML_SIDEDEFS);
+			md5.Update(file, Size(ML_SIDEDEFS));
+			Seek(ML_SECTORS);
+			md5.Update(file, Size(ML_SECTORS));
 		}
 		if (HasBehavior)
 		{
-			file->Seek(MapLumps[ML_BEHAVIOR].FilePos, SEEK_SET);
-			md5.Update(file, MapLumps[ML_BEHAVIOR].Size);
+			Seek(ML_BEHAVIOR);
+			md5.Update(file, Size(ML_BEHAVIOR));
 		}
 	}
 	md5.Final(cksum);
@@ -834,7 +817,7 @@ void P_LoadVertexes (MapData * map)
 
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
-	numvertexes = map->MapLumps[ML_VERTEXES].Size / sizeof(mapvertex_t);
+	numvertexes = map->Size(ML_VERTEXES) / sizeof(mapvertex_t);
 	numvertexdatas = 0;
 
 	if (numvertexes == 0)
@@ -914,7 +897,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 			BYTE side;
 
 			data >> v1 >> partner;
-			if (type == 2)
+			if (type >= 2)
 			{
 				data >> line;
 			}
@@ -1067,13 +1050,20 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 
 	for (i = 0; i < numNodes; ++i)
 	{
-		SWORD x, y, dx, dy;
+		if (glnodes < 3)
+		{
+			SWORD x, y, dx, dy;
 
-		data >> x >> y >> dx >> dy;
-		nodes[i].x = x << FRACBITS;
-		nodes[i].y = y << FRACBITS;
-		nodes[i].dx = dx << FRACBITS;
-		nodes[i].dy = dy << FRACBITS;
+			data >> x >> y >> dx >> dy;
+			nodes[i].x = x << FRACBITS;
+			nodes[i].y = y << FRACBITS;
+			nodes[i].dx = dx << FRACBITS;
+			nodes[i].dy = dy << FRACBITS;
+		}
+		else
+		{
+			data >> nodes[i].x >> nodes[i].y >> nodes[i].dx >> nodes[i].dy;
+		}
 		for (int j = 0; j < 2; ++j)
 		{
 			for (int k = 0; k < 4; ++k)
@@ -1122,6 +1112,11 @@ void P_LoadZNodes (FileReader &dalump, DWORD id)
 		compressed = true;
 		break;
 
+	case MAKE_ID('Z','G','L','3'):
+		type = 3;
+		compressed = true;
+		break;
+
 	case MAKE_ID('X','N','O','D'):
 		type = 0;
 		compressed = false;
@@ -1134,6 +1129,11 @@ void P_LoadZNodes (FileReader &dalump, DWORD id)
 
 	case MAKE_ID('X','G','L','2'):
 		type = 2;
+		compressed = false;
+		break;
+
+	case MAKE_ID('X','G','L','3'):
+		type = 3;
 		compressed = false;
 		break;
 
@@ -1199,7 +1199,7 @@ void P_LoadSegs (MapData * map)
 	int dis;			// phares 10/4/98
 	int dx,dy;			// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
-	int lumplen = map->MapLumps[ML_SEGS].Size;
+	int lumplen = map->Size(ML_SEGS);
 
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
 
@@ -1382,7 +1382,7 @@ void P_LoadSubsectors (MapData * map)
 	int i;
 	DWORD maxseg = map->Size(ML_SEGS) / sizeof(segtype);
 
-	numsubsectors = map->MapLumps[ML_SSECTORS].Size / sizeof(subsectortype);
+	numsubsectors = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 
 	if (numsubsectors == 0 || maxseg == 0 )
 	{
@@ -1641,7 +1641,7 @@ void P_LoadNodes (MapData * map)
 //===========================================================================
 CVAR(Bool, dumpspawnedthings, false, 0)
 
-void SpawnMapThing(int index, FMapThing *mt, int position)
+AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 {
 	AActor *spawned = P_SpawnMapThing(mt, position);
 	if (dumpspawnedthings)
@@ -1651,6 +1651,39 @@ void SpawnMapThing(int index, FMapThing *mt, int position)
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
 	T_AddSpawnedThing(spawned);
+	return spawned;
+}
+
+//===========================================================================
+//
+// SetMapThingUserData
+//
+//===========================================================================
+
+static void SetMapThingUserData(AActor *actor, unsigned udi)
+{
+	if (actor == NULL)
+	{
+		return;
+	}
+	while (MapThingsUserData[udi].Property != NAME_None)
+	{
+		FName varname = MapThingsUserData[udi].Property;
+		int value = MapThingsUserData[udi].Value;
+		PSymbolVariable *var = dyn_cast<PSymbolVariable>(actor->GetClass()->Symbols.FindSymbol(varname, true));
+
+		udi++;
+
+		if (var == NULL || var->bUserVar || var->ValueType.Type != VAL_Int)
+		{
+			DPrintf("%s is not a user variable in class %s\n", varname.GetChars(),
+				actor->GetClass()->TypeName.GetChars());
+		}
+		else
+		{ // Set the value of the specified user variable.
+			*(int *)(reinterpret_cast<BYTE *>(actor) + var->offset) = value;
+		}
+	}
 }
 
 //===========================================================================
@@ -1689,7 +1722,7 @@ void P_LoadThings (MapData * map)
 	for (int i=0 ; i < numthings; i++, mt++)
 	{
 		// [RH] At this point, monsters unique to Doom II were weeded out
-		//		if the IWAD wasn't for Doom II. R_SpawnMapThing() can now
+		//		if the IWAD wasn't for Doom II. P_SpawnMapThing() can now
 		//		handle these and more cases better, so we just pass it
 		//		everything and let it decide what to do with them.
 
@@ -1746,7 +1779,7 @@ void P_LoadThings (MapData * map)
 
 void P_LoadThings2 (MapData * map)
 {
-	int	lumplen = map->MapLumps[ML_THINGS].Size;
+	int	lumplen = map->Size(ML_THINGS);
 	int numthings = lumplen / sizeof(mapthinghexen_t);
 
 	char *mtp;
@@ -1784,7 +1817,12 @@ void P_SpawnThings (int position)
 
 	for (int i=0; i < numthings; i++)
 	{
-		SpawnMapThing (i, &MapThingsConverted[i], position);
+		AActor *actor = SpawnMapThing (i, &MapThingsConverted[i], position);
+		unsigned *udi = MapThingsUserDataIndex.CheckKey((unsigned)i);
+		if (udi != NULL)
+		{
+			SetMapThingUserData(actor, *udi);
+		}
 	}
 	for(int i=0; i<MAXPLAYERS; i++)
 	{
@@ -3505,6 +3543,8 @@ void P_SetupLevel (char *lumpname, int position)
 	wminfo.partime = 180;
 
 	MapThingsConverted.Clear();
+	MapThingsUserDataIndex.Clear();
+	MapThingsUserData.Clear();
 	linemap.Clear();
 	FCanvasTextureInfo::EmptyList ();
 	R_FreePastViewers ();
@@ -3561,13 +3601,13 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
-	if (map->MapLumps[0].Size > 0)
+	if (map->Size(0) > 0)
 	{
-		BYTE *mapdata = new BYTE[map->MapLumps[0].Size];
+		BYTE *mapdata = new BYTE[map->Size(0)];
 		map->Seek(0);
-		map->file->Read(mapdata, map->MapLumps[0].Size);
+		map->file->Read(mapdata, map->Size(0));
 		times[0].Clock();
-		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
+		buildmap = P_LoadBuildMap (mapdata, map->Size(0), &buildthings, &numbuildthings);
 		times[0].Unclock();
 		delete[] mapdata;
 	}
@@ -3612,6 +3652,10 @@ void P_SetupLevel (char *lumpname, int position)
 			level.maptype = MAPTYPE_UDMF;
 		}
 		CheckCompatibility(map);
+		if (ib_compatflags & BCOMPATF_REBUILDNODES)
+		{
+			ForceNodeBuild = true;
+		}
 		T_LoadScripts(map);
 
 		if (!map->HasBehavior || map->isText)
@@ -3702,26 +3746,28 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
-		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0;
+		DWORD id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
 
-		if (map->MapLumps[ML_ZNODES].Size != 0)
+		if (map->Size(ML_ZNODES) != 0)
 		{
 			// Test normal nodes first
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
 		}
-		else if (map->MapLumps[ML_GLZNODES].Size != 0)
+		else if (map->Size(ML_GLZNODES) != 0)
 		{
 			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
-			idcheck3 = MAKE_ID('X','G','L','N');
-			idcheck4 = MAKE_ID('X','G','L','2');
+			idcheck3 = MAKE_ID('Z','G','L','3');
+			idcheck4 = MAKE_ID('X','G','L','N');
+			idcheck5 = MAKE_ID('X','G','L','2');
+			idcheck6 = MAKE_ID('X','G','L','3');
 		}
 
 		map->file->Read (&id, 4);
-		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4))
+		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
 		{
 			try
 			{
@@ -3989,7 +4035,7 @@ void P_SetupLevel (char *lumpname, int position)
 			{
 				players[i].mo = NULL;
 				FPlayerStart *mthing = G_PickPlayerStart(i);
-				P_SpawnPlayer(mthing, i);
+				P_SpawnPlayer(mthing, i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}
 	}
@@ -4069,6 +4115,8 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 	}
 	MapThingsConverted.Clear();
+	MapThingsUserDataIndex.Clear();
+	MapThingsUserData.Clear();
 
 	if (glsegextras != NULL)
 	{

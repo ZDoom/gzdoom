@@ -755,6 +755,48 @@ CCMD (spray)
 	Net_WriteString (argv[1]);
 }
 
+DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t tracedist, bool permanent)
+{
+	if (tpl == NULL || (tpl = tpl->GetDecal()) == NULL)
+	{
+		return NULL;
+	}
+
+	FTraceResults trace;
+	DBaseDecal *decal;
+	side_t *wall;
+
+	angle >>= ANGLETOFINESHIFT;
+
+	Trace(x, y, z, sec,
+		finecosine[angle], finesine[angle], 0,
+		tracedist, 0, 0, NULL, trace, TRACE_NoSky);
+
+	if (trace.HitType == TRACE_HitWall)
+	{
+		if (permanent)
+		{
+			decal = new DBaseDecal(trace.Z);
+			wall = trace.Line->sidedef[trace.Side];
+			decal->StickToWall(wall, trace.X, trace.Y, trace.ffloor);
+			tpl->ApplyToDecal(decal, wall);
+			// Spread decal to nearby walls if it does not all fit on this one
+			if (cl_spreaddecals)
+			{
+				decal->Spread(tpl, wall, trace.X, trace.Y, trace.Z, trace.ffloor);
+			}
+			return decal;
+		}
+		else
+		{
+			return DImpactDecal::StaticCreate(tpl,
+				trace.X, trace.Y, trace.Z,
+				trace.Line->sidedef[trace.Side], NULL);
+		}
+	}
+	return NULL;
+}
+
 class ADecal : public AActor
 {
 	DECLARE_CLASS (ADecal, AActor);
@@ -767,9 +809,6 @@ IMPLEMENT_CLASS (ADecal)
 void ADecal::BeginPlay ()
 {
 	const FDecalTemplate *tpl;
-	FTraceResults trace;
-	DBaseDecal *decal;
-	side_t *wall;
 
 	Super::BeginPlay ();
 
@@ -781,31 +820,13 @@ void ADecal::BeginPlay ()
 		if (!tpl->PicNum.Exists())
 		{
 			Printf("Decal actor at (%d,%d) does not have a valid texture\n", x>>FRACBITS, y>>FRACBITS);
-			
 		}
 		else
 		{
 			// Look for a wall within 64 units behind the actor. If none can be
 			// found, then no decal is created, and this actor is destroyed
 			// without effectively doing anything.
-			Trace (x, y, z, Sector,
-				finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
-				finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
-				64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
-
-			if (trace.HitType == TRACE_HitWall)
-			{
-				decal = new DBaseDecal (this);
-				wall = trace.Line->sidedef[trace.Side];
-				decal->StickToWall (wall, trace.X, trace.Y, trace.ffloor);
-				tpl->ApplyToDecal (decal, wall);
-				// Spread decal to nearby walls if it does not all fit on this one
-				if (cl_spreaddecals)
-				{
-					decal->Spread (tpl, wall, trace.X, trace.Y, z, trace.ffloor);
-				}
-			}
-			else
+			if (NULL == ShootDecal(tpl, this, Sector, x, y, z, angle + ANGLE_180, 64*FRACUNIT, true))
 			{
 				DPrintf ("Could not find a wall to stick decal to at (%d,%d)\n", x>>FRACBITS, y>>FRACBITS);
 			}

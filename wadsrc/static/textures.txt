@@ -71,3 +71,9 @@ Graphic optional P_MWALK4, 112, 136
 	Graphic "M_MBOX", 0, 0
 	Graphic "M_MWALK4", 24, 12 { useoffsets }
 }
+
+Graphic optional STBAR, 320, 32
+{
+   Graphic "STMBARL", 0, 0
+   Graphic "STMBARR", 104, 0
+}

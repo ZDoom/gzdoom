@@ -327,7 +327,7 @@ CCMD (hxvisit)
 
 CCMD (changemap)
 {
-	if (who == NULL)
+	if (who == NULL || !usergame)
 	{
 		Printf ("Use the map command when not in a game.\n");
 		return;

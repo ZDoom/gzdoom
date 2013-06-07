@@ -42,6 +42,7 @@
 #include "cmdlib.h"
 #include "actor.h"
 #include "a_pickups.h"
+#include "w_wad.h"
 
 #define Zd 1
 #define St 2

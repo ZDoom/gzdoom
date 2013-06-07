@@ -416,6 +416,7 @@ enum EBounceFlags
 	// for them that are not present in ZDoom, so it is necessary to identify it properly.
 	BOUNCE_MBF = 1<<12,			// This in itself is not a valid mode, but replaces MBF's MF_BOUNCE flag.
 	BOUNCE_AutoOffFloorOnly = 1<<13,		// like BOUNCE_AutoOff, but only on floors
+	BOUNCE_UseBounceState = 1<<14,	// Use Bounce[.*] states
 
 	BOUNCE_TypeMask = BOUNCE_Walls | BOUNCE_Floors | BOUNCE_Ceilings | BOUNCE_Actors | BOUNCE_AutoOff | BOUNCE_HereticType | BOUNCE_MBF,
 
@@ -666,7 +667,7 @@ public:
 	virtual bool Massacre ();
 
 	// Transforms the actor into a finely-ground paste
-	bool Grind(bool items);
+	virtual bool Grind(bool items);
 
 	// Is the other actor on my team?
 	bool IsTeammate (AActor *other);
@@ -974,6 +975,11 @@ public:
 	{
 		FName names[] = { label, sublabel };
 		return GetClass()->FindState(2, names, exact);
+	}
+
+	FState *FindState(int numnames, FName *names, bool exact = false) const
+	{
+		return GetClass()->FindState(numnames, names, exact);
 	}
 
 	bool HasSpecialDeathStates () const;

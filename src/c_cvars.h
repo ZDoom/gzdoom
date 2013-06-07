@@ -61,6 +61,8 @@ enum
 	CVAR_GLOBALCONFIG	= 1024,	// cvar is saved to global config section
 	CVAR_VIDEOCONFIG	= 2048, // cvar is saved to video config section (not implemented)
 	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame
+	CVAR_MOD			= 8192,	// cvar was defined by a mod
+	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
 };
 
 union UCVarValue
@@ -68,7 +70,7 @@ union UCVarValue
 	bool Bool;
 	int Int;
 	float Float;
-	char *String;
+	const char *String;
 	const GUID *pGUID;
 };
 
@@ -96,9 +98,10 @@ public:
 
 	inline const char *GetName () const { return Name; }
 	inline uint32 GetFlags () const { return Flags; }
+	inline FBaseCVar *GetNext() const { return m_Next; }
 
 	void CmdSet (const char *newval);
-	void ForceSet (UCVarValue value, ECVarType type);
+	void ForceSet (UCVarValue value, ECVarType type, bool nouserinfosend=false);
 	void SetGenericRep (UCVarValue value, ECVarType type);
 	void ResetToDefault ();
 	void SetArchiveBit () { Flags |= CVAR_ARCHIVE; }
@@ -129,7 +132,7 @@ protected:
 	static bool ToBool (UCVarValue value, ECVarType type);
 	static int ToInt (UCVarValue value, ECVarType type);
 	static float ToFloat (UCVarValue value, ECVarType type);
-	static char *ToString (UCVarValue value, ECVarType type);
+	static const char *ToString (UCVarValue value, ECVarType type);
 	static const GUID *ToGUID (UCVarValue value, ECVarType type);
 	static UCVarValue FromBool (bool value, ECVarType type);
 	static UCVarValue FromInt (int value, ECVarType type);
@@ -150,17 +153,21 @@ private:
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
 
-	friend void C_WriteCVars (BYTE **demo_p, uint32 filter, bool compact);
+	friend FString C_GetMassCVarString (uint32 filter, bool compact);
 	friend void C_ReadCVars (BYTE **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 	friend FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 	friend void UnlatchCVars (void);
-	friend void C_ArchiveCVars (FConfigFile *f, int type);
+	friend void C_ArchiveCVars (FConfigFile *f, uint32 filter);
 	friend void C_SetCVarsToDefaults (void);
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
 	friend void C_DeinitConsole();
 };
+
+// Returns a string with all cvars whose flags match filter. In compact mode,
+// the cvar names are omitted to save space.
+FString C_GetMassCVarString (uint32 filter, bool compact=false);
 
 // Writes all cvars that could effect demo sync to *demo_p. These are
 // cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
@@ -177,11 +184,14 @@ void C_BackupCVars (void);
 FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 
+// Create a new cvar with the specified name and type
+FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, DWORD flags);
+
 // Called from G_InitNew()
 void UnlatchCVars (void);
 
 // archive cvars to FILE f
-void C_ArchiveCVars (FConfigFile *f, int type);
+void C_ArchiveCVars (FConfigFile *f, uint32 filter);
 
 // initialize cvars to default values after they are created
 void C_SetCVarsToDefaults (void);
@@ -404,10 +414,6 @@ inline FBaseCVar *cvar_forceset (const char *var_name, const BYTE *value) { retu
 
 
 
-// Maximum number of cvars that can be saved across a demo. If you need
-// to save more, bump this up.
-#define MAX_DEMOCVARS 32
-
 // Restore demo cvars. Called after demo playback to restore all cvars
 // that might possibly have been changed during the course of demo playback.
 void C_RestoreCVars (void);
@@ -425,5 +431,6 @@ void C_ForgetCVars (void);
 
 #define EXTERN_CVAR(type,name) extern F##type##CVar name;
 
+extern FBaseCVar *CVars;
 
 #endif //__C_CVARS_H__

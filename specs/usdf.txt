@@ -1,5 +1,5 @@
 ===============================================================================
-Universal Strife Dialog Format Specification v2.0 - 08/20/10
+Universal Strife Dialog Format Specification v2.1 - 01/06/13
 
 Written by Braden "Blzut3" Obrzut - admin@maniacsvault.net
 
@@ -11,13 +11,21 @@ Graf Zahl
 Quasar
 et al.
 
-    Copyright (c) 2010 Braden Obrzut.
+    Copyright (c) 2013 Braden Obrzut.
     Permission is granted to copy, distribute and/or modify this document
     under the terms of the GNU Free Documentation License, Version 1.2
     or any later version published by the Free Software Foundation;
     with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 ===============================================================================
+
+=======================================
+Changes in v2.1
+=======================================
+
+* Pages are specified as starting as being indexed from 1 instead of 0. While
+  this technically renders the spec incompatible, all known implementations
+  used this convention as it was inline with the binary format.
 
 =======================================
 I. Grammar / Syntax
@@ -77,7 +85,7 @@ conversation // Starts a dialog.
     actor = <integer>; // mobj for this conversation's actor.  If previously 
                        // used, this will override the previous conversation.
 
-    page // Starts a new page.  Pages are automatically numbered starting at 0.
+    page // Starts a new page.  Pages are automatically numbered starting at 1.
     {
         name   = <string>;  // Name that goes in the upper left hand corner
         panel  = <string>;  // Name of lump to render as the background.

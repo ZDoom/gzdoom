@@ -19,15 +19,18 @@ class FScanner;
 
 struct FFlagDef
 {
-	int flagbit;
+	unsigned int flagbit;
 	const char *name;
 	int structoffset;
+	int fieldsize;
 };
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
 void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
-bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index);
-const char *GetFlagName(int flagnum, int flagoffset);
+bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index);
+const char *GetFlagName(unsigned int flagnum, int flagoffset);
+void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
+INTBOOL CheckActorFlag(const AActor *actor, FFlagDef *fd);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
 
@@ -91,6 +94,7 @@ public:
 
 	void SetStateLabel(const char *statename, FState *state, BYTE defflags = SDF_STATE);
 	void AddStateLabel(const char *statename);
+	int GetStateLabelIndex (FName statename);
 	void InstallStates(PClassActor *info, AActor *defaults);
 	int FinishStates(PClassActor *actor, AActor *defaults);
 

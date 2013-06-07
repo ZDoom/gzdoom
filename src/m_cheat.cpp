@@ -88,7 +88,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_DQDON");
 		else
 			msg = GStrings("STSTR_DQDOFF");
-		SB_state = screen->GetPageCount ();
+		ST_SetNeedRefresh();
 		break;
 
 	case CHT_BUDDHA:
@@ -310,8 +310,10 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->flags3 = player->mo->GetDefault()->flags3;
 				player->mo->flags4 = player->mo->GetDefault()->flags4;
 				player->mo->flags5 = player->mo->GetDefault()->flags5;
+				player->mo->flags6 = player->mo->GetDefault()->flags6;
 				player->mo->renderflags &= ~RF_INVISIBLE;
 				player->mo->height = player->mo->GetDefault()->height;
+				player->mo->radius = player->mo->GetDefault()->radius;
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 				player->mo->SetState (player->mo->SpawnState);
@@ -520,7 +522,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
 	else if (cheat != CHT_CHASECAM)
-		Printf ("%s cheats: %s\n", player->userinfo.netname, msg);
+		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
 }
 
 const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quickundo)
@@ -601,7 +603,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	PClassActor *type;
 
 	if (player != &players[consoleplayer])
-		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
+		Printf ("%s is a cheater: give %s\n", player->userinfo.GetName(), name);
 
 	if (player->mo == NULL || player->health <= 0)
 	{

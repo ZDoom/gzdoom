@@ -495,12 +495,13 @@ bool FListMenuItemSelectable::MouseEvent(int type, int x, int y)
 //
 //=============================================================================
 
-FListMenuItemText::FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param)
+FListMenuItemText::FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, EColorRange color2, FName child, int param)
 : FListMenuItemSelectable(x, y, height, child, param)
 {
 	mText = ncopystring(text);
 	mFont = font;
 	mColor = color;
+	mColorSelected = color2;
 	mHotkey = hotkey;
 }
 
@@ -518,7 +519,7 @@ void FListMenuItemText::Drawer(bool selected)
 	if (text != NULL)
 	{
 		if (*text == '$') text = GStrings(text+1);
-		screen->DrawText(mFont, mColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
+		screen->DrawText(mFont, selected ? mColorSelected : mColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 	}
 }
 

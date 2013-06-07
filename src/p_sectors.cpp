@@ -996,10 +996,10 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool noabsolute, int *pfak
 				baselight += rel;
 			}
 		}
-		if (!(Flags & WALLF_ABSLIGHTING))
-		{
-			baselight += this->Light;
-		}
+	}
+	if (!(Flags & WALLF_ABSLIGHTING) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
+	{
+		baselight += this->Light;
 	}
 	return baselight;
 }

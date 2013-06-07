@@ -233,7 +233,6 @@ int32 DUMBEXPORT duh_get_length(DUH *duh);
 
 const char *DUMBEXPORT duh_get_tag(DUH *duh, const char *key);
 
-
 /* Signal Rendering Functions */
 
 typedef struct DUH_SIGRENDERER DUH_SIGRENDERER;
@@ -396,6 +395,8 @@ void DUMBEXPORT dumb_it_set_global_volume_zero_callback(DUMB_IT_SIGRENDERER *sig
 int DUMBCALLBACK dumb_it_callback_terminate(void *data);
 int DUMBCALLBACK dumb_it_callback_midi_block(void *data, int channel, unsigned char midi_byte);
 
+/* dumb_*_mod*: restrict |= 1-Don't read 15 sample files / 2-Use old pattern counting method */
+
 DUH *DUMBEXPORT dumb_load_it(const char *filename);
 DUH *DUMBEXPORT dumb_load_xm(const char *filename);
 DUH *DUMBEXPORT dumb_load_s3m(const char *filename);
@@ -408,6 +409,7 @@ DUH *DUMBEXPORT dumb_load_old_psm(const char * filename);
 DUH *DUMBEXPORT dumb_load_mtm(const char *filename);
 DUH *DUMBEXPORT dumb_load_riff(const char *filename);
 DUH *DUMBEXPORT dumb_load_asy(const char *filename);
+DUH *DUMBEXPORT dumb_load_okt(const char *filename);
 
 DUH *DUMBEXPORT dumb_read_it(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_xm(DUMBFILE *f);
@@ -421,6 +423,7 @@ DUH *DUMBEXPORT dumb_read_old_psm(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_mtm(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_riff(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_asy(DUMBFILE *f);
+DUH *DUMBEXPORT dumb_read_okt(DUMBFILE *f);
 
 DUH *DUMBEXPORT dumb_load_it_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_xm_quick(const char *filename);
@@ -434,6 +437,7 @@ DUH *DUMBEXPORT dumb_load_old_psm_quick(const char * filename);
 DUH *DUMBEXPORT dumb_load_mtm_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_riff_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_asy_quick(const char *filename);
+DUH *DUMBEXPORT dumb_load_okt_quick(const char *filename);
 
 DUH *DUMBEXPORT dumb_read_it_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_xm_quick(DUMBFILE *f);
@@ -447,6 +451,7 @@ DUH *DUMBEXPORT dumb_read_old_psm_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_mtm_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_riff_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_asy_quick(DUMBFILE *f);
+DUH *DUMBEXPORT dumb_read_okt_quick(DUMBFILE *f);
 
 int32 DUMBEXPORT dumb_it_build_checkpoints(DUMB_IT_SIGDATA *sigdata, int startorder);
 void DUMBEXPORT dumb_it_do_initial_runthrough(DUH *duh);
@@ -606,6 +611,8 @@ sigdata_t *DUMBEXPORT duh_get_raw_sigdata(DUH *duh, int sig, int32 type);
 DUH_SIGRENDERER *DUMBEXPORT duh_encapsulate_raw_sigrenderer(sigrenderer_t *vsigrenderer, DUH_SIGTYPE_DESC *desc, int n_channels, int32 pos);
 sigrenderer_t *DUMBEXPORT duh_get_raw_sigrenderer(DUH_SIGRENDERER *sigrenderer, int32 type);
 
+int DUMBEXPORT duh_add_signal(DUH *duh, DUH_SIGTYPE_DESC *desc, sigdata_t *sigdata);
+
 
 /* Standard Signal Types */
 
@@ -662,6 +669,8 @@ typedef struct DUMB_VOLUME_RAMP_INFO DUMB_VOLUME_RAMP_INFO;
 
 typedef void (*DUMB_RESAMPLE_PICKUP)(DUMB_RESAMPLER *resampler, void *data);
 
+#include "internal/blip_buf.h"
+
 struct DUMB_RESAMPLER
 {
 	void *src;
@@ -679,6 +688,9 @@ struct DUMB_RESAMPLER
 		signed char x8[3*2];
 	} x;
 	int overshot;
+	int last_clock;
+	int last_amp[2];
+	blip_t* blip_buffer[2];
 };
 
 struct DUMB_VOLUME_RAMP_INFO

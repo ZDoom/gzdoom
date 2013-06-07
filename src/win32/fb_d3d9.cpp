@@ -66,7 +66,7 @@
 #include "r_main.h"
 #include "r_data/r_translate.h"
 #include "f_wipe.h"
-#include "st_stuff.h"
+#include "sbar.h"
 #include "win32iface.h"
 #include "doomstat.h"
 #include "v_palette.h"
@@ -225,7 +225,8 @@ const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
 
 CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 {
-	BorderNeedRefresh = SB_state = screen->GetPageCount();
+	V_SetBorderNeedRefresh();
+	ST_SetNeedRefresh();
 }
 
 CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

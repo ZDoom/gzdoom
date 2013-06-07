@@ -68,10 +68,10 @@ ACTOR Sorcerer1 7
 		SRCR F 7 A_Scream
 		SRCR G 7
 		SRCR HIJK 6
-		SRCR L 25 A_PlaySoundEx("dsparil/zap", "body")
+		SRCR L 25 A_PlaySound("dsparil/zap", CHAN_BODY, 1, false, ATTN_NONE)
 		SRCR MN 5
 		SRCR O 4
-		SRCR L 20 A_PlaySoundEx("dsparil/zap", "body")
+		SRCR L 20 A_PlaySound("dsparil/zap", CHAN_BODY, 1, false, ATTN_NONE)
 		SRCR MN 5
 		SRCR O 4
 		SRCR L 12
@@ -152,9 +152,9 @@ ACTOR Sorcerer2
 		Loop
 	Rise:
 		SOR2 AB 4
-		SOR2 C 4 A_PlaySoundEx("dsparil/rise", "Body")
+		SOR2 C 4 A_PlaySound("dsparil/rise", CHAN_BODY, 1, false, ATTN_NONE)
 		SOR2 DEF 4
-		SOR2 G 12 A_PlaySoundEx("dsparil/sight", "Body")
+		SOR2 G 12 A_PlaySound("dsparil/sight", CHAN_BODY, 1, false, ATTN_NONE)
 		Goto See
 	Pain:
 		SOR2 Q 3
@@ -171,15 +171,15 @@ ACTOR Sorcerer2
 	Death:
 		SDTH A 8 A_Sor2DthInit
 		SDTH B 8
-		SDTH C 8 A_PlaySoundEx("dsparil/scream", "Body")
+		SDTH C 8 A_PlaySound("dsparil/scream", CHAN_BODY, 1, false, ATTN_NONE)
 	DeathLoop:
 		SDTH DE 7
 		SDTH F 7 A_Sor2DthLoop
-		SDTH G 6 A_PlaySoundEx("dsparil/explode", "Body")
+		SDTH G 6 A_PlaySound("dsparil/explode", CHAN_BODY, 1, false, ATTN_NONE)
 		SDTH H 6
 		SDTH I 18
 		SDTH J 6 A_NoBlocking
-		SDTH K 6 A_PlaySoundEx("dsparil/bones", "Body")
+		SDTH K 6 A_PlaySound("dsparil/bones", CHAN_BODY, 1, false, ATTN_NONE)
 		SDTH LMN 6
 		SDTH O -1 A_BossDeath
 		Stop

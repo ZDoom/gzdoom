@@ -211,6 +211,17 @@ void ST_Clear()
 
 //---------------------------------------------------------------------------
 //
+// ST_SetNeedRefresh
+//
+//---------------------------------------------------------------------------
+
+void ST_SetNeedRefresh()
+{
+	SB_state = (StatusBar == NULL || screen == NULL) ? 0 : screen->GetPageCount();
+}
+
+//---------------------------------------------------------------------------
+//
 // Constructor
 //
 //---------------------------------------------------------------------------
@@ -297,7 +308,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		Displacement = 0;
 	}
 	::ST_X = ST_X;
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 //---------------------------------------------------------------------------
@@ -309,7 +320,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 void DBaseStatusBar::AttachToPlayer (player_t *player)
 {
 	CPlayer = player;
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 //---------------------------------------------------------------------------
@@ -331,7 +342,7 @@ int DBaseStatusBar::GetPlayer ()
 
 void DBaseStatusBar::MultiplayerChanged ()
 {
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 //---------------------------------------------------------------------------
@@ -441,7 +452,7 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DHUDMessage *msg)
 			// Redraw the status bar in case it was covered
 			if (screen != NULL)
 			{
-				SB_state = screen->GetPageCount();
+				ST_SetNeedRefresh();
 			}
 			return probe;
 		}
@@ -468,7 +479,7 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DWORD id)
 			// Redraw the status bar in case it was covered
 			if (screen != NULL)
 			{
-				SB_state = screen->GetPageCount();
+				ST_SetNeedRefresh();
 			}
 			return probe;
 		}
@@ -509,7 +520,7 @@ void DBaseStatusBar::ShowPlayerName ()
 	EColorRange color;
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
-	AttachMessage (new DHUDMessageFadeOut (SmallFont, CPlayer->userinfo.netname,
+	AttachMessage (new DHUDMessageFadeOut (SmallFont, CPlayer->userinfo.GetName(),
 		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), MAKE_ID('P','N','A','M'));
 }
 
@@ -1227,6 +1238,10 @@ void DBaseStatusBar::DrawMessages (int layer, int bottom)
 
 void DBaseStatusBar::Draw (EHudState state)
 {
+	// HUD_AltHud state is for popups only
+	if (state == HUD_AltHud)
+		return;
+
 	char line[64+10];
 
 	if ((SB_state != 0 || BorderNeedRefresh) && state == HUD_StatusBar)
@@ -1277,7 +1292,7 @@ void DBaseStatusBar::Draw (EHudState state)
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
 				TAG_DONE);
-			BorderNeedRefresh = screen->GetPageCount();
+			V_SetBorderNeedRefresh();
 		}
 	}
 
@@ -1496,6 +1511,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? ::ST_Y : SCREENHEIGHT);
 	DrawConsistancy ();
+	DrawWaiting ();
 	if (ShowLog && MustDrawLog(state)) DrawLog ();
 
 	if (noisedebug)
@@ -1597,6 +1613,39 @@ void DBaseStatusBar::DrawConsistancy () const
 	}
 }
 
+void DBaseStatusBar::DrawWaiting () const
+{
+	int i;
+	char conbuff[64], *buff_p;
+
+	if (!netgame)
+		return;
+
+	buff_p = NULL;
+	for (i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i] && players[i].waiting)
+		{
+			if (buff_p == NULL)
+			{
+				strcpy (conbuff, "Waiting for:");
+				buff_p = conbuff + 12;
+			}
+			*buff_p++ = ' ';
+			*buff_p++ = '1' + i;
+			*buff_p = 0;
+		}
+	}
+
+	if (buff_p != NULL)
+	{
+		screen->DrawText (SmallFont, CR_ORANGE, 
+			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
+			SmallFont->GetHeight()*CleanYfac, conbuff, DTA_CleanNoMove, true, TAG_DONE);
+		BorderTopRefresh = screen->GetPageCount ();
+	}
+}
+
 void DBaseStatusBar::FlashItem (const PClass *itemtype)
 {
 }
@@ -1637,7 +1686,7 @@ void DBaseStatusBar::Serialize (FArchive &arc)
 void DBaseStatusBar::ScreenSizeChanged ()
 {
 	st_scale.Callback ();
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{

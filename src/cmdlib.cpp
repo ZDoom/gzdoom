@@ -537,6 +537,7 @@ void CreatePath(const char *fn)
 		}
 		if (mkdir(copy, 0755) == -1)
 		{ // failed
+			free(copy);
 			return;
 		}
 exists:	if (p != NULL)
@@ -755,7 +756,7 @@ FString strbin1 (const char *start)
 //
 //==========================================================================
 
-void CleanseString(char *str)
+char *CleanseString(char *str)
 {
 	char *escape = strrchr(str, TEXTCOLOR_ESCAPE);
 	if (escape != NULL)
@@ -773,6 +774,7 @@ void CleanseString(char *str)
 			}
 		}
 	}
+	return str;
 }
 
 //==========================================================================

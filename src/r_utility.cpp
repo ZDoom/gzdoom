@@ -460,7 +460,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 void R_ExecuteSetViewSize ()
 {
 	setsizeneeded = false;
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 
 	R_SetWindow (setblocks, SCREENWIDTH, SCREENHEIGHT, ST_Y);
 
@@ -849,15 +849,17 @@ void R_SetupFrame (AActor *actor)
 	TArray<lightlist_t> &lightlist = viewsector->e->XFloor.lightlist;
 	if (lightlist.Size() > 0)
 	{
-		for(unsigned int i=0;i<lightlist.Size();i++)
+		for(unsigned int i = 0; i < lightlist.Size(); i++)
 		{
-			fixed_t lightbottom;
-			if (i<lightlist.Size()-1) 
-				lightbottom = lightlist[i+1].plane.ZatPoint(viewx, viewy);
-			else 
-				lightbottom = viewsector->floorplane.ZatPoint(viewx, viewy);
-
-			if (lightbottom < viewz)
+			secplane_t *plane;
+			int viewside;
+			plane = (i < lightlist.Size()-1) ? &lightlist[i+1].plane : &viewsector->floorplane;
+			viewside = plane->PointOnSide(viewx, viewy, viewz);
+			// Reverse the direction of the test if the plane was downward facing.
+			// We want to know if the view is above it, whatever its orientation may be.
+			if (plane->c < 0)
+				viewside = -viewside;
+			if (viewside > 0)
 			{
 				// 3d floor 'fog' is rendered as a blending value
 				PalEntry blendv = lightlist[i].blend;
@@ -874,9 +876,9 @@ void R_SetupFrame (AActor *actor)
 		const sector_t *s = viewsector->GetHeightSec();
 		if (s != NULL)
 		{
-			newblend = viewz < s->floorplane.ZatPoint (viewx, viewy)
+			newblend = s->floorplane.PointOnSide(viewx, viewy, viewz) < 0
 				? s->bottommap
-				: viewz > s->ceilingplane.ZatPoint (viewx, viewy)
+				: s->ceilingplane.PointOnSide(viewx, viewy, viewz) < 0
 				? s->topmap
 				: s->midmap;
 			if (APART(newblend) == 0 && newblend >= numfakecmaps)

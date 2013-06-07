@@ -49,6 +49,8 @@
 #include "doomstat.h"
 #include "g_level.h"
 
+#include <time.h>
+
 
 #define HUMETA_AltIcon 0x10f000
 
@@ -68,6 +70,8 @@ CVAR (Bool,  hud_showmonsters,	true,CVAR_ARCHIVE);		// Show monster stats on HUD
 CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
+CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
+CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 
 CVAR (Int, hud_ammo_red, 25, CVAR_ARCHIVE)					// ammo percent less than which status is red    
 CVAR (Int, hud_ammo_yellow, 50, CVAR_ARCHIVE)				// ammo percent less is yellow more green        
@@ -78,13 +82,15 @@ CVAR (Int, hud_armor_red, 25, CVAR_ARCHIVE)					// armor amount less than which 
 CVAR (Int, hud_armor_yellow, 50, CVAR_ARCHIVE)				// armor amount less than which status is yellow 
 CVAR (Int, hud_armor_green, 100, CVAR_ARCHIVE)				// armor amount above is blue, below is green    
 
+CVAR (Bool, hud_berserk_health, true, CVAR_ARCHIVE);		// when found berserk pack instead of health box
+
 CVAR (Int, hudcolor_titl, CR_YELLOW, CVAR_ARCHIVE)			// color of automap title
 CVAR (Int, hudcolor_time, CR_RED, CVAR_ARCHIVE)				// color of level/hub time
 CVAR (Int, hudcolor_ltim, CR_ORANGE, CVAR_ARCHIVE)			// color of single level time
 CVAR (Int, hudcolor_ttim, CR_GOLD, CVAR_ARCHIVE)			// color of total time
 CVAR (Int, hudcolor_xyco, CR_GREEN, CVAR_ARCHIVE)			// color of coordinates
 
-CVAR (Int, hudcolor_statnames, CR_RED, CVAR_ARCHIVE)		// For the letters befóre the stats
+CVAR (Int, hudcolor_statnames, CR_RED, CVAR_ARCHIVE)		// For the letters before the stats
 CVAR (Int, hudcolor_stats, CR_GREEN, CVAR_ARCHIVE)			// For the stats values themselves
 
 
@@ -95,6 +101,7 @@ static FFont * IndexFont;					// The font for the inventory indices
 
 // Icons
 static FTexture * healthpic;				// Health icon
+static FTexture * berserkpic;				// Berserk icon (Doom only)
 static FTexture * fragpic;					// Frags icon
 static FTexture * invgems[4];				// Inventory arrows
 
@@ -265,16 +272,22 @@ static void DrawStatus(player_t * CPlayer, int x, int y)
 //
 //===========================================================================
 
-static void DrawHealth(int health, int x, int y)
+static void DrawHealth(player_t *CPlayer, int x, int y)
 {
+	int health = CPlayer->health;
+
 	// decide on the color first
 	int fontcolor =
 		health < hud_health_red ? CR_RED :
 		health < hud_health_yellow ? CR_GOLD :
 		health <= hud_health_green ? CR_GREEN :
 		CR_BLUE;
-	
-	DrawImageToBox(healthpic, x, y, 31, 17);
+
+	const bool haveBerserk = hud_berserk_health
+		&& NULL != berserkpic
+		&& NULL != CPlayer->mo->FindInventory< APowerStrength >();
+
+	DrawImageToBox(haveBerserk ? berserkpic : healthpic, x, y, 31, 17);
 	DrawHudNumber(HudFont, fontcolor, health, x + 33, y + 17);
 }
 
@@ -806,6 +819,84 @@ static void DrawCoordinates(player_t * CPlayer)
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 }
 
+//---------------------------------------------------------------------------
+//
+// Draw in-game time
+//
+// Check AltHUDTime option value in wadsrc/static/menudef.txt
+// for meaning of all display modes
+//
+//---------------------------------------------------------------------------
+
+static void DrawTime()
+{
+	if (hud_showtime <= 0 || hud_showtime > 9)
+	{
+		return;
+	}
+
+	int hours   = 0;
+	int minutes = 0;
+	int seconds = 0;
+
+	if (hud_showtime < 8)
+	{
+		const int timeTicks =
+			hud_showtime < 4
+				? level.maptime
+				: (hud_showtime < 6
+					? level.time
+					: level.totaltime);
+		const int timeSeconds = timeTicks / TICRATE;
+
+		hours   =  timeSeconds / 3600;
+		minutes = (timeSeconds % 3600) / 60;
+		seconds =  timeSeconds % 60;
+	}
+	else
+	{
+		time_t now;
+		time(&now);
+
+		struct tm* timeinfo = localtime(&now);
+
+		if (NULL != timeinfo)
+		{
+			hours   = timeinfo->tm_hour;
+			minutes = timeinfo->tm_min;
+			seconds = timeinfo->tm_sec;
+		}
+	}
+
+	const bool showMillis  = 1 == hud_showtime;
+	const bool showSeconds = showMillis || (0 == hud_showtime % 2);
+
+	char timeString[sizeof "HH:MM:SS.MMM"];
+
+	if (showMillis)
+	{
+		const int millis  = (level.time % TICRATE) * (1000 / TICRATE);
+
+		mysnprintf(timeString, sizeof(timeString), "%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+	}
+	else if (showSeconds)
+	{
+		mysnprintf(timeString, sizeof(timeString), "%02i:%02i:%02i", hours, minutes, seconds);
+	}
+	else
+	{
+		mysnprintf(timeString, sizeof(timeString), "%02i:%02i", hours, minutes);
+	}
+
+	const int characterCount = static_cast<int>( sizeof "HH:MM" - 1
+		+ (showSeconds ? sizeof ":SS"  - 1 : 0)
+		+ (showMillis  ? sizeof ".MMM" - 1 : 0) );
+	const int width  = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
+	const int height = SmallFont->GetHeight();
+
+	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, FRACUNIT);
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -857,7 +948,7 @@ void DrawHUD()
 			DrawStatus(CPlayer, 5, hudheight-75);
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
-		DrawHealth(CPlayer->health, 5, hudheight-45);
+		DrawHealth(CPlayer, 5, hudheight-45);
 		DrawArmor(CPlayer->mo->FindInventory<ABasicArmor>(), 
 			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
@@ -869,6 +960,8 @@ void DrawHUD()
 			StatusBar->DrawCrosshair();
 		}
 		if (idmypos) DrawCoordinates(CPlayer);
+
+		DrawTime();
 	}
 	else
 	{
@@ -889,18 +982,18 @@ void DrawHUD()
 
 		if (am_showtime)
 		{
-			seconds = level.time /TICRATE;
-			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
-			bottom -= fonth;
-
-			// Single level time for hubs
 			if (level.clusterflags&CLUSTER_HUB)
 			{
-				seconds= level.maptime /TICRATE;
+				seconds = level.time /TICRATE;
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
+				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
+				bottom -= fonth;
 			}
+
+			// Single level time for hubs
+			seconds= level.maptime /TICRATE;
+			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
+			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
 		}
 
 		ST_FormatMapName(mapname);
@@ -935,6 +1028,7 @@ void HUD_InitHud()
 
 	default:
 		healthpic = TexMan.FindTexture("MEDIA0");
+		berserkpic = TexMan.FindTexture("PSTRA0");
 		HudFont=FFont::FindFont("HUDFONT_DOOM");
 		break;
 	}
@@ -971,6 +1065,12 @@ void HUD_InitHud()
 				sc.MustGetString();
 				FTextureID tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
 				if (tex.isValid()) healthpic = TexMan[tex];
+			}
+			else if (sc.Compare("Berserk"))
+			{
+				sc.MustGetString();
+				FTextureID tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+				if (tex.isValid()) berserkpic = TexMan[tex];
 			}
 			else
 			{

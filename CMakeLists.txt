@@ -1,4 +1,5 @@
 cmake_minimum_required( VERSION 2.4 )
+project(ZDoom)
 
 IF( NOT CMAKE_BUILD_TYPE )
 	SET( CMAKE_BUILD_TYPE Debug CACHE STRING

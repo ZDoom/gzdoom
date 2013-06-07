@@ -179,8 +179,8 @@ void DMessageBoxMenu::Drawer ()
 	PalEntry fade = 0;
 
 	int fontheight = SmallFont->GetHeight();
-	//BorderNeedRefresh = screen->GetPageCount ();
-	//SB_state = screen->GetPageCount ();
+	//V_SetBorderNeedRefresh();
+	//ST_SetNeedRefresh();
 
 	y = 100;
 

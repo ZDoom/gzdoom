@@ -117,13 +117,13 @@ void P_Ticker (void)
 	{
 		P_ThinkParticles ();	// [RH] make the particles think
 	}
-	StatusBar->Tick ();		// [RH] moved this here
 
 	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&
 			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].isbot))
 			P_PlayerThink (&players[i]);
 
+	StatusBar->Tick ();		// [RH] moved this here
 	level.Tick ();			// [RH] let the level tick
 	DThinker::RunThinkers ();
 

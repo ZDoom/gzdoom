@@ -631,7 +631,10 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 	}
 
 	actor->DecalGenerator = decal;
-	decal->Users.Push (type);
+	if (decal != NULL)
+	{
+		decal->Users.Push (type);
+	}
 }
 
 void FDecalLib::ParseFader (FScanner &sc)

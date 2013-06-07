@@ -243,6 +243,7 @@ player_t::player_t()
   lastkilltime(0),
   multicount(0),
   spreecount(0),
+  WeaponState(0),
   ReadyWeapon(0),
   PendingWeapon(0),
   cheats(0),
@@ -621,7 +622,7 @@ void APlayerPawn::BeginPlay ()
 
 void APlayerPawn::Tick()
 {
-	if (player != NULL && player->mo == this && player->morphTics == 0 && player->playerstate != PST_DEAD)
+	if (player != NULL && player->mo == this && player->CanCrouch() && player->playerstate != PST_DEAD)
 	{
 		height = FixedMul(GetDefault()->height, player->crouchfactor);
 	}
@@ -848,6 +849,12 @@ AWeapon *APlayerPawn::BestWeapon(PClassAmmo *ammotype)
 			!weap->CheckAmmo (AWeapon::PrimaryFire, false))
 			continue;
 
+		// Don't select if if there isn't enough ammo as determined by the weapon's author.
+		if (weap->MinSelAmmo1 > 0 && (weap->Ammo1 == NULL || weap->Ammo1->Amount < weap->MinSelAmmo1))
+			continue;
+		if (weap->MinSelAmmo2 > 0 && (weap->Ammo2 == NULL || weap->Ammo2->Amount < weap->MinSelAmmo2))
+			continue;
+
 		// This weapon is usable!
 		bestOrder = weap->SelectionOrder;
 		bestMatch = weap;
@@ -874,7 +881,7 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassAmmo *ammotype)
 		player->PendingWeapon = best;
 		if (player->ReadyWeapon != NULL)
 		{
-			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetDownState());
+			P_DropWeapon(player);
 		}
 		else if (player->PendingWeapon != WP_NOCHANGE)
 		{
@@ -895,7 +902,7 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassAmmo *ammotype)
 
 void APlayerPawn::CheckWeaponSwitch(PClassAmmo *ammotype)
 {
-	if (!player->userinfo.neverswitch &&
+	if (!player->userinfo.GetNeverSwitch() &&
 		player->PendingWeapon == WP_NOCHANGE && 
 		(player->ReadyWeapon == NULL ||
 		 (player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
@@ -1067,10 +1074,10 @@ const char *APlayerPawn::GetSoundClass() const
 {
 	if (player != NULL &&
 		(player->mo == NULL || !(player->mo->flags4 &MF4_NOSKIN)) &&
-		(unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
-		(size_t)player->userinfo.skin < numskins)
+		(unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
+		(size_t)player->userinfo.GetSkin() < numskins)
 	{
-		return skins[player->userinfo.skin].name;
+		return skins[player->userinfo.GetSkin()].name;
 	}
 
 	// [GRB]
@@ -1570,75 +1577,50 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 //
 // P_CheckPlayerSprites
 //
-// Here's the place where crouching sprites are handled
-// This must be called each frame before rendering
+// Here's the place where crouching sprites are handled.
+// R_ProjectSprite() calls this for any players.
 //
 //===========================================================================
 
-void P_CheckPlayerSprites()
+void P_CheckPlayerSprite(AActor *actor, int &spritenum, fixed_t &scalex, fixed_t &scaley)
 {
-	for (int i = 0; i < MAXPLAYERS; i++)
+	player_t *player = actor->player;
+	int crouchspriteno;
+
+	if (player->userinfo.GetSkin() != 0 && !(actor->flags4 & MF4_NOSKIN))
 	{
-		player_t * player = &players[i];
-		APlayerPawn * mo = player->mo;
+		// Convert from default scale to skin scale.
+		fixed_t defscaleY = actor->GetDefault()->scaleY;
+		fixed_t defscaleX = actor->GetDefault()->scaleX;
+		scaley = Scale(scaley, skins[player->userinfo.GetSkin()].ScaleY, defscaleY);
+		scalex = Scale(scalex, skins[player->userinfo.GetSkin()].ScaleX, defscaleX);
+	}
 
-		if (playeringame[i] && mo != NULL)
+	// Set the crouch sprite?
+	if (player->crouchfactor < FRACUNIT*3/4)
+	{
+		if (spritenum == actor->SpawnState->sprite || spritenum == player->mo->crouchsprite) 
 		{
-			int crouchspriteno;
-			fixed_t defscaleY = mo->GetDefault()->scaleY;
-			fixed_t defscaleX = mo->GetDefault()->scaleX;
-			
-			if (player->userinfo.skin != 0 && !(player->mo->flags4 & MF4_NOSKIN))
-			{
-				defscaleY = skins[player->userinfo.skin].ScaleY;
-				defscaleX = skins[player->userinfo.skin].ScaleX;
-			}
-			
-			// Set the crouch sprite
-			if (player->crouchfactor < FRACUNIT*3/4)
-			{
-				if (mo->sprite == mo->SpawnState->sprite || mo->sprite == mo->crouchsprite) 
-				{
-					crouchspriteno = mo->crouchsprite;
-				}
-				else if (!(player->mo->flags4 & MF4_NOSKIN) &&
-						(mo->sprite == skins[player->userinfo.skin].sprite ||
-						 mo->sprite == skins[player->userinfo.skin].crouchsprite))
-				{
-					crouchspriteno = skins[player->userinfo.skin].crouchsprite;
-				}
-				else
-				{
-					// no sprite -> squash the existing one
-					crouchspriteno = -1;
-				}
+			crouchspriteno = player->mo->crouchsprite;
+		}
+		else if (!(actor->flags4 & MF4_NOSKIN) &&
+				(spritenum == skins[player->userinfo.GetSkin()].sprite ||
+				 spritenum == skins[player->userinfo.GetSkin()].crouchsprite))
+		{
+			crouchspriteno = skins[player->userinfo.GetSkin()].crouchsprite;
+		}
+		else
+		{ // no sprite -> squash the existing one
+			crouchspriteno = -1;
+		}
 
-				if (crouchspriteno > 0) 
-				{
-					mo->sprite = crouchspriteno;
-					mo->scaleY = defscaleY;
-				}
-				else if (player->playerstate != PST_DEAD)
-				{
-					mo->scaleY = player->crouchfactor < FRACUNIT*3/4 ? defscaleY/2 : defscaleY;
-				}
-			}
-			else	// Set the normal sprite
-			{
-				if (mo->sprite != 0)
-				{
-					if (mo->sprite == mo->crouchsprite)
-					{
-						mo->sprite = mo->SpawnState->sprite;
-					}
-					else if (mo->sprite != 0 && mo->sprite == skins[player->userinfo.skin].crouchsprite)
-					{
-						mo->sprite = skins[player->userinfo.skin].sprite;
-					}
-				}
-				mo->scaleY = defscaleY;
-			}
-			mo->scaleX = defscaleX;
+		if (crouchspriteno > 0) 
+		{
+			spritenum = crouchspriteno;
+		}
+		else if (player->playerstate != PST_DEAD && player->crouchfactor < FRACUNIT*3/4)
+		{
+			scaley /= 2;
 		}
 	}
 }
@@ -1690,8 +1672,16 @@ void P_ForwardThrust (player_t *player, angle_t angle, fixed_t move)
 // reduced at a regular rate, even on ice (where the player coasts).
 //
 
-void P_Bob (player_t *player, angle_t angle, fixed_t move)
+void P_Bob (player_t *player, angle_t angle, fixed_t move, bool forward)
 {
+	if (forward
+		&& (player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
+		&& player->mo->pitch != 0)
+	{
+		angle_t pitch = (angle_t)player->mo->pitch >> ANGLETOFINESHIFT;
+		move = FixedMul (move, finecosine[pitch]);
+	}
+
 	angle >>= ANGLETOFINESHIFT;
 
 	player->velx += FixedMul(move, finecosine[angle]);
@@ -1741,7 +1731,7 @@ void P_CalcHeight (player_t *player)
 		}
 		else
 		{
-			player->bob = FixedMul (player->bob, player->userinfo.MoveBob);
+			player->bob = FixedMul (player->bob, player->userinfo.GetMoveBob());
 
 			if (player->bob > MAXBOB)
 				player->bob = MAXBOB;
@@ -1765,7 +1755,7 @@ void P_CalcHeight (player_t *player)
 		if (player->health > 0)
 		{
 			angle = DivScale13 (level.time, 120*TICRATE/35) & FINEMASK;
-			bob = FixedMul (player->userinfo.StillBob, finesine[angle]);
+			bob = FixedMul (player->userinfo.GetStillBob(), finesine[angle]);
 		}
 		else
 		{
@@ -1884,8 +1874,8 @@ void P_MovePlayer (player_t *player)
 		fm = FixedMul (fm, player->mo->Speed);
 		sm = FixedMul (sm, player->mo->Speed);
 
-		// When crouching speed and bobbing have to be reduced
-		if (player->morphTics==0 && player->crouchfactor != FRACUNIT)
+		// When crouching, speed and bobbing have to be reduced
+		if (player->CanCrouch() && player->crouchfactor != FRACUNIT)
 		{
 			fm = FixedMul(fm, player->crouchfactor);
 			sm = FixedMul(sm, player->crouchfactor);
@@ -1897,12 +1887,12 @@ void P_MovePlayer (player_t *player)
 
 		if (forwardmove)
 		{
-			P_Bob (player, mo->angle, (cmd->ucmd.forwardmove * bobfactor) >> 8);
+			P_Bob (player, mo->angle, (cmd->ucmd.forwardmove * bobfactor) >> 8, true);
 			P_ForwardThrust (player, mo->angle, forwardmove);
 		}
 		if (sidemove)
 		{
-			P_Bob (player, mo->angle-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8);
+			P_Bob (player, mo->angle-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8, false);
 			P_SideThrust (player, mo->angle, sidemove);
 		}
 
@@ -2206,7 +2196,7 @@ void P_PlayerThink (player_t *player)
 		player->ReadyWeapon != NULL &&			// No adjustment if no weapon.
 		player->ReadyWeapon->FOVScale != 0)		// No adjustment if the adjustment is zero.
 	{
-		// A negative scale is used top prevent G_AddViewAngle/G_AddViewPitch
+		// A negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
 		// from scaling with the FOV scale.
 		desired *= fabs(player->ReadyWeapon->FOVScale);
 	}
@@ -2301,7 +2291,7 @@ void P_PlayerThink (player_t *player)
 	{
 		player->cmd.ucmd.buttons &= ~BT_CROUCH;
 	}
-	if (player->morphTics == 0 && player->health > 0 && level.IsCrouchingAllowed())
+	if (player->CanCrouch() && player->health > 0 && level.IsCrouchingAllowed())
 	{
 		if (!totallyfrozen)
 		{
@@ -2309,11 +2299,11 @@ void P_PlayerThink (player_t *player)
 		
 			if (crouchdir == 0)
 			{
-				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH)? -1 : 1;
+				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH) ? -1 : 1;
 			}
 			else if (player->cmd.ucmd.buttons & BT_CROUCH)
 			{
-				player->crouching=0;
+				player->crouching = 0;
 			}
 			if (crouchdir == 1 && player->crouchfactor < FRACUNIT &&
 				player->mo->z + player->mo->height < player->mo->ceilingz)
@@ -2435,10 +2425,9 @@ void P_PlayerThink (player_t *player)
 				// Jumping while crouching will force an un-crouch but not jump
 				player->crouching = 1;
 			}
-			else
-			if (player->mo->waterlevel >= 2)
+			else if (player->mo->waterlevel >= 2)
 			{
-				player->mo->velz = 4*FRACUNIT;
+				player->mo->velz = FixedMul(4*FRACUNIT, player->mo->Speed);
 			}
 			else if (player->mo->flags & MF_NOGRAVITY)
 			{
@@ -2476,7 +2465,7 @@ void P_PlayerThink (player_t *player)
 			}
 			if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY) || (player->cheats & CF_NOCLIP2))
 			{
-				player->mo->velz = cmd->ucmd.upmove << 9;
+				player->mo->velz = FixedMul(player->mo->Speed, cmd->ucmd.upmove << 9);
 				if (player->mo->waterlevel < 2 && !(player->mo->flags & MF_NOGRAVITY))
 				{
 					player->mo->flags2 |= MF2_FLY;
@@ -2680,8 +2669,13 @@ void P_UnPredictPlayer ()
 	if (player->cheats & CF_PREDICTING)
 	{
 		AActor *act = player->mo;
+		AActor *savedcamera = player->camera;
 
 		*player = PredictionPlayerBackup;
+
+		// Restore the camera instead of using the backup's copy, because spynext/prev
+		// could cause it to change during prediction.
+		player->camera = savedcamera;
 
 		act->UnlinkFromWorld ();
 		memcpy (&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
@@ -2781,6 +2775,16 @@ void player_t::Serialize (FArchive &arc)
 			mo->accuracy = oldaccuracy;
 			mo->stamina = oldstamina;
 		}
+	}
+	if (SaveVersion < 4041)
+	{
+		// Move weapon state flags from cheats and into WeaponState.
+		WeaponState = ((cheats >> 14) & 1) | ((cheats & (0x37 << 24)) >> (24 - 1));
+		cheats &= ~((1 << 14) | (0x37 << 24));
+	}
+	else
+	{
+		arc << WeaponState;
 	}
 	arc << LogText
 		<< ConversationNPC

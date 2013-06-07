@@ -69,8 +69,8 @@ void R_InitSkyMap ()
 	int skyheight;
 	FTexture *skytex1, *skytex2;
 
-	skytex1 = TexMan[sky1texture];
-	skytex2 = TexMan[sky2texture];
+	skytex1 = TexMan(sky1texture, true);
+	skytex2 = TexMan(sky2texture, true);
 
 	if (skytex1 == NULL)
 		return;
@@ -107,9 +107,8 @@ void R_InitSkyMap ()
 	}
 	else if (skyheight > 200)
 	{
-		skytexturemid = (200 - skyheight) << FRACBITS;
+		skytexturemid = FixedMul((200 - skyheight) << FRACBITS, skytex1->yScale);
 	}
-	skytexturemid = FixedMul(skytexturemid, skytex1->yScale);
 
 	if (viewwidth != 0 && viewheight != 0)
 	{

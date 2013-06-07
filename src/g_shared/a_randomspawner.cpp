@@ -31,6 +31,7 @@ class ARandomSpawner : public AActor
 		DDropItem *di;   // di will be our drop item list iterator
 		DDropItem *drop; // while drop stays as the reference point.
 		int n = 0;
+		bool nomonsters = (dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS);
 
 		Super::BeginPlay();
 		drop = di = GetDropItems();
@@ -40,29 +41,46 @@ class ARandomSpawner : public AActor
 			{
 				if (di->Name != NAME_None)
 				{
-					if (di->Amount < 0) di->Amount = 1; // default value is -1, we need a positive value.
-					n += di->Amount; // this is how we can weight the list.
+					if (!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER))
+					{
+						if (di->Amount < 0) di->Amount = 1; // default value is -1, we need a positive value.
+						n += di->Amount; // this is how we can weight the list.
+					}
 					di = di->Next;
 				}
+			}
+			if (n == 0)
+			{ // Nothing left to spawn. They must have all been monsters, and monsters are disabled.
+				Destroy();
+				return;
 			}
 			// Then we reset the iterator to the start position...
 			di = drop;
 			// Take a random number...
 			n = pr_randomspawn(n);
 			// And iterate in the array up to the random number chosen.
-			while (n > -1)
+			while (n > -1 && di != NULL)
 			{
-				if (di->Name != NAME_None)
+				if (di->Name != NAME_None &&
+					(!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER)))
 				{
 					n -= di->Amount;
-					if ((di->Next != NULL) && (n > -1)) di = di->Next; else n = -1;
+					if ((di->Next != NULL) && (n > -1))
+						di = di->Next;
+					else
+						n = -1;
+				}
+				else
+				{
+					di = di->Next;
 				}
 			}
 			// So now we can spawn the dropped item.
-			if (bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+			if (di == NULL || bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
 			{
 				Spawn("Unknown", x, y, z, NO_REPLACE);		// Show that there's a problem.
-				Destroy(); return;
+				Destroy();
+				return;
 			}
 			else if (pr_randomspawn() <= di->Probability)	// prob 255 = always spawn, prob 0 = almost never spawn.
 			{
@@ -167,7 +185,7 @@ class ARandomSpawner : public AActor
 				newmobj->z += SpawnPoint[2];
 			}
 			if (newmobj->flags & MF_MISSILE)
-				P_CheckMissileSpawn(newmobj);
+				P_CheckMissileSpawn(newmobj, 0);
 			// Bouncecount is used to count how many recursions we're in.
 			if (newmobj->IsKindOf(PClass::FindClass("RandomSpawner")))
 				newmobj->bouncecount = ++bouncecount;
@@ -179,8 +197,10 @@ class ARandomSpawner : public AActor
 			if (rep && ((rep->flags4 & MF4_BOSSDEATH) || (rep->flags2 & MF2_BOSS)))
 				boss = true;
 		}
-		if (boss) this->tracer = newmobj;
-		else Destroy();	// "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
+		if (boss)
+			this->tracer = newmobj;
+		else	// "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
+			Destroy();
 	}
 
 	void Tick()	// This function is needed for handling boss replacers

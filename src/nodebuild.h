@@ -34,6 +34,8 @@ public:
 	FEvent *FindEvent (double distance) const;
 	void DeleteAll ();
 
+	void PrintTree () const { PrintTree (Root); }
+
 private:
 	FEvent Nil;
 	FEvent *Root;
@@ -42,6 +44,8 @@ private:
 	void DeletionTraverser (FEvent *event);
 	FEvent *Successor (FEvent *event) const;
 	FEvent *Predecessor (FEvent *event) const;
+
+	void PrintTree (const FEvent *event) const;
 };
 
 struct FSimpleVert

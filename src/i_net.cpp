@@ -272,12 +272,12 @@ void PacketGet (void)
 			if (StartScreen != NULL)
 			{
 				StartScreen->NetMessage ("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.netname);
+					players[sendplayer[node]].userinfo.GetName());
 			}
 			else
 			{
 				Printf("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.netname);
+					players[sendplayer[node]].userinfo.GetName());
 			}
 
 			doomcom.data[0] = 0x80;	// NCMD_EXIT

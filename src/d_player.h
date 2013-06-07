@@ -183,6 +183,7 @@ enum
 {
 	PPF_NOTHRUSTWHENINVUL = 1,	// Attacks do not thrust the player if they are invulnerable.
 	PPF_CANSUPERMORPH = 2,		// Being remorphed into this class can give you a Tome of Power
+	PPF_CROUCHABLEMORPH = 4,	// This morphed player can crouch
 };
 
 //
@@ -215,7 +216,6 @@ typedef enum
 	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
-	CF_WEAPONREADY		= 1 << 14,		// [RH] Weapon is in the ready state and can fire its primary attack
 	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
 	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
 	CF_REFLECTION		= 1 << 19,
@@ -223,14 +223,21 @@ typedef enum
 	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
-	CF_WEAPONBOBBING	= 1 << 24,		// [HW] Bob weapon while the player is moving
-	CF_WEAPONREADYALT	= 1 << 25,		// Weapon can fire its secondary attack
-	CF_WEAPONSWITCHOK	= 1 << 26,		// It is okay to switch away from this weapon
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
-	CF_WEAPONRELOADOK   = 1 << 28,      // [XA] Okay to reload this weapon.
-	CF_WEAPONZOOMOK     = 1 << 29,      // [XA] Okay to use weapon zoom function.
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;
+
+enum
+{
+	WF_WEAPONREADY		= 1 << 0,		// [RH] Weapon is in the ready state and can fire its primary attack
+	WF_WEAPONBOBBING	= 1 << 1,		// [HW] Bob weapon while the player is moving
+	WF_WEAPONREADYALT	= 1 << 2,		// Weapon can fire its secondary attack
+	WF_WEAPONSWITCHOK	= 1 << 3,		// It is okay to switch away from this weapon
+	WF_DISABLESWITCH	= 1 << 4,		// Disable weapon switching completely
+	WF_WEAPONRELOADOK	= 1 << 5,		// [XA] Okay to reload this weapon.
+	WF_WEAPONZOOMOK		= 1 << 6,		// [XA] Okay to use weapon zoom function.
+	WF_REFIRESWITCHOK	= 1 << 7,		// Mirror WF_WEAPONSWITCHOK for A_ReFire
+};	
 
 #define WPIECE1		1
 #define WPIECE2		2
@@ -241,6 +248,29 @@ typedef enum
 
 #define MAXPLAYERNAME	15
 
+// [GRB] Custom player classes
+enum
+{
+	PCF_NOMENU			= 1,	// Hide in new game menu
+};
+
+class FPlayerClass
+{
+public:
+	FPlayerClass ();
+	FPlayerClass (const FPlayerClass &other);
+	~FPlayerClass ();
+
+	bool CheckSkin (int skin);
+
+	PClassPlayerPawn *Type;
+	DWORD Flags;
+	TArray<int> Skins;
+};
+
+extern TArray<FPlayerClass> PlayerClasses;
+
+// User info (per-player copies of each CVAR_USERINFO cvar)
 enum
 {
 	GENDER_MALE,
@@ -248,20 +278,80 @@ enum
 	GENDER_NEUTER
 };
 
-struct userinfo_t
+struct userinfo_t : TMap<FName,FBaseCVar *>
 {
-	char		netname[MAXPLAYERNAME+1];
-	BYTE		team;
-	int			aimdist;
-	int			color;
-	int			colorset;
-	int			skin;
-	int			gender;
-	bool		neverswitch;
-	fixed_t		MoveBob, StillBob;
-	int			PlayerClass;
+	int GetAimDist() const
+	{
+		if (dmflags2 & DF2_NOAUTOAIM)
+		{
+			return 0;
+		}
 
-	int GetAimDist() const { return (dmflags2 & DF2_NOAUTOAIM)? 0 : aimdist; }
+		float aim = *static_cast<FFloatCVar *>(*CheckKey(NAME_Autoaim));
+		if (aim > 35 || aim < 0)
+		{
+			return ANGLE_1*35;
+		}
+		else
+		{
+			return xs_RoundToInt(fabs(aim * ANGLE_1));
+		}
+	}
+	const char *GetName() const
+	{
+		return *static_cast<FStringCVar *>(*CheckKey(NAME_Name));
+	}
+	int GetTeam() const
+	{
+		return *static_cast<FIntCVar *>(*CheckKey(NAME_Team));
+	}
+	int GetColorSet() const
+	{
+		return *static_cast<FIntCVar *>(*CheckKey(NAME_ColorSet));
+	}
+	uint32 GetColor() const
+	{
+		return *static_cast<FColorCVar *>(*CheckKey(NAME_Color));
+	}
+	bool GetNeverSwitch() const
+	{
+		return *static_cast<FBoolCVar *>(*CheckKey(NAME_NeverSwitchOnPickup));
+	}
+	fixed_t GetMoveBob() const
+	{
+		return FLOAT2FIXED(*static_cast<FFloatCVar *>(*CheckKey(NAME_MoveBob)));
+	}
+	fixed_t GetStillBob() const
+	{
+		return FLOAT2FIXED(*static_cast<FFloatCVar *>(*CheckKey(NAME_StillBob)));
+	}
+	int GetPlayerClassNum() const
+	{
+		return *static_cast<FIntCVar *>(*CheckKey(NAME_PlayerClass));
+	}
+	PClassPlayerPawn *GetPlayerClassType() const
+	{
+		return PlayerClasses[GetPlayerClassNum()].Type;
+	}
+	int GetSkin() const
+	{
+		return *static_cast<FIntCVar *>(*CheckKey(NAME_Skin));
+	}
+	int GetGender() const
+	{
+		return *static_cast<FIntCVar *>(*CheckKey(NAME_Gender));
+	}
+
+	void Reset();
+	int TeamChanged(int team);
+	int SkinChanged(const char *skinname);
+	int SkinNumChanged(int skinnum);
+	int GenderChanged(const char *gendername);
+	int PlayerClassChanged(const char *classname);
+	int PlayerClassNumChanged(int classnum);
+	uint32 ColorChanged(const char *colorname);
+	uint32 ColorChanged(uint32 colorval);
+	int ColorSetChanged(int setnum);
 };
 
 FArchive &operator<< (FArchive &arc, userinfo_t &info);
@@ -325,6 +415,7 @@ public:
 	int			lastkilltime;			// [RH] For multikills
 	BYTE		multicount;
 	BYTE		spreecount;				// [RH] Keep track of killing sprees
+	BYTE		WeaponState;
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
@@ -333,6 +424,7 @@ public:
 	int			timefreezer;			// Player has an active time freezer
 	short		refire;					// refired shots are less accurate
 	short		inconsistant;
+	bool		waiting;
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
 	int			hazardcount;			// for delayed Strife damage
@@ -438,6 +530,11 @@ public:
 		crouching = 0;
 		crouchviewdelta = 0;
 	}
+	
+	bool CanCrouch() const
+	{
+		return morphTics == 0 || mo->PlayerFlags & PPF_CROUCHABLEMORPH;
+	}
 
 	int GetSpawnClass();
 };
@@ -447,7 +544,7 @@ extern player_t players[MAXPLAYERS];
 
 FArchive &operator<< (FArchive &arc, player_t *&p);
 
-void P_CheckPlayerSprites();
+void P_CheckPlayerSprite(AActor *mo, int &spritenum, fixed_t &scalex, fixed_t &scaley);
 
 inline void AActor::SetFriendPlayer(player_t *player)
 {
@@ -473,27 +570,5 @@ inline bool AActor::IsNoClip2() const
 #define CROUCHSPEED (FRACUNIT/12)
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
-
-// [GRB] Custom player classes
-enum
-{
-	PCF_NOMENU			= 1,	// Hide in new game menu
-};
-
-class FPlayerClass
-{
-public:
-	FPlayerClass ();
-	FPlayerClass (const FPlayerClass &other);
-	~FPlayerClass ();
-
-	bool CheckSkin (int skin);
-
-	PClassPlayerPawn *Type;
-	DWORD Flags;
-	TArray<int> Skins;
-};
-
-extern TArray<FPlayerClass> PlayerClasses;
 
 #endif // __D_PLAYER_H__

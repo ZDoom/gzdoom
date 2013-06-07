@@ -140,6 +140,7 @@ vissprite_t		**firstvissprite;
 vissprite_t		**vissprite_p;
 vissprite_t		**lastvissprite;
 int 			newvissprite;
+bool			DrewAVoxel;
 
 static vissprite_t **spritesorter;
 static int spritesortersize = 0;
@@ -188,6 +189,7 @@ void R_DeinitSprites()
 void R_ClearSprites (void)
 {
 	vissprite_p = firstvissprite;
+	DrewAVoxel = false;
 }
 
 
@@ -431,13 +433,18 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	{
 		R_CheckOffscreenBuffer(RenderTarget->GetWidth(), RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
 	}
+	if (spr->bInMirror)
+	{
+		flags |= DVF_MIRRORED;
+	}
 
 	// Render the voxel, either directly to the screen or offscreen.
-	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
+	R_DrawVoxel(spr->vx, spr->vy, spr->vz, spr->vang, spr->gx, spr->gy, spr->gz, spr->angle,
+		spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
-	if (flags != 0)
+	if ((flags & ~DVF_MIRRORED) != 0)
 	{
 		for (int x = 0; x < viewwidth; ++x)
 		{
@@ -530,6 +537,14 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	tex = NULL;
 	voxel = NULL;
 
+	int spritenum = thing->sprite;
+	fixed_t spritescaleX = thing->scaleX;
+	fixed_t spritescaleY = thing->scaleY;
+	if (thing->player != NULL)
+	{
+		P_CheckPlayerSprite(thing, spritenum, spritescaleX, spritescaleY);
+	}
+
 	if (thing->picnum.isValid())
 	{
 		picnum = thing->picnum;
@@ -564,13 +579,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		// decide which texture to use for the sprite
 #ifdef RANGECHECK
-		if ((unsigned)thing->sprite >= (unsigned)sprites.Size ())
+		if (spritenum >= (signed)sprites.Size () || spritenum < 0)
 		{
-			DPrintf ("R_ProjectSprite: invalid sprite number %i\n", thing->sprite);
+			DPrintf ("R_ProjectSprite: invalid sprite number %u\n", spritenum);
 			return;
 		}
 #endif
-		spritedef_t *sprdef = &sprites[thing->sprite];
+		spritedef_t *sprdef = &sprites[spritenum];
 		if (thing->frame >= sprdef->numframes)
 		{
 			// If there are no frames at all for this sprite, don't draw it.
@@ -631,13 +646,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		// [RH] Added scaling
 		int scaled_to = tex->GetScaledTopOffset();
 		int scaled_bo = scaled_to - tex->GetScaledHeight();
-		gzt = fz + thing->scaleY * scaled_to;
-		gzb = fz + thing->scaleY * scaled_bo;
+		gzt = fz + spritescaleY * scaled_to;
+		gzb = fz + spritescaleY * scaled_bo;
 	}
 	else
 	{
-		xscale = FixedMul(thing->scaleX, voxel->Scale);
-		yscale = FixedMul(thing->scaleY, voxel->Scale);
+		xscale = FixedMul(spritescaleX, voxel->Scale);
+		yscale = FixedMul(spritescaleY, voxel->Scale);
 		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - thing->floorclip;
 		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
@@ -689,7 +704,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 
 		// calculate edges of the shape
-		const fixed_t thingxscalemul = DivScale16(thing->scaleX, tex->xScale);
+		const fixed_t thingxscalemul = DivScale16(spritescaleX, tex->xScale);
 
 		tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 		x1 = centerx + MulScale32 (tx, xscale);
@@ -705,11 +720,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
-		xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
+		xscale = FixedDiv(FixedMul(spritescaleX, xscale), tex->xScale);
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 		x2--;
 
-		fixed_t yscale = SafeDivScale16(thing->scaleY, tex->yScale);
+		fixed_t yscale = SafeDivScale16(spritescaleY, tex->yScale);
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();
@@ -759,10 +774,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->angle -= angle_t(ang * (4294967296.f / 360));
 		}
 
-		// These are irrelevant for voxels.
-		vis->texturemid = 0x1CEDBEEF;
-		vis->startfrac	= 0x1CEDBEEF;
-		vis->xiscale	= 0x1CEDBEEF;
+		vis->vx = viewx;
+		vis->vy = viewy;
+		vis->vz = viewz;
+		vis->vang = viewangle;
 	}
 
 	// killough 3/27/98: save sector for special clipping later
@@ -776,6 +791,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->gz = fz;
 	vis->gzb = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
+	vis->deltax = fx - viewx;
+	vis->deltay = fy - viewy;
 	vis->renderflags = thing->renderflags;
 	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->Style.RenderStyle = thing->RenderStyle;
@@ -786,11 +803,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
 	vis->ColormapNum = 0;
+	vis->bInMirror = MirrorFlags & RF_XFLIP;
 
 	if (voxel != NULL)
 	{
 		vis->voxel = voxel->Voxel;
 		vis->bIsVoxel = true;
+		DrewAVoxel = true;
 	}
 	else
 	{
@@ -1111,7 +1130,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
-		if (!noaccel &&
+		if (!noaccel && realfixedcolormap == NULL &&
 			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
 			vis->pic->UseBasePalette())
 		{
@@ -1323,9 +1342,20 @@ void R_DrawRemainingPlayerSprites()
 //		gain compared to the old function.
 //
 // Sort vissprites by depth, far to near
+
+// This is the standard version, which does a simple test based on depth.
 static bool sv_compare(vissprite_t *a, vissprite_t *b)
 {
 	return a->idepth > b->idepth;
+}
+
+// This is an alternate version, for when one or more voxel is in view.
+// It does a 2D distance test based on whichever one is furthest from
+// the viewpoint.
+static bool sv_compare2d(vissprite_t *a, vissprite_t *b)
+{
+	return TVector2<double>(a->deltax, a->deltay).LengthSquared() <
+		   TVector2<double>(b->deltax, b->deltay).LengthSquared();
 }
 
 #if 0
@@ -1896,6 +1926,16 @@ void R_DrawSprite (vissprite_t *spr)
 				return;
 			}
 		}
+		// Add everything outside the left and right edges to the clipping array
+		// for R_DrawVisVoxel().
+		if (x1 > 0)
+		{
+			clearbufshort(cliptop, x1, viewheight);
+		}
+		if (x2 < viewwidth - 1)
+		{
+			clearbufshort(cliptop + x2 + 1, viewwidth - x2 - 1, viewheight);
+		}
 		int minvoxely = spr->gzt <= hzt ? 0 : (spr->gzt - hzt) / spr->yscale;
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
 		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
@@ -1948,7 +1988,8 @@ void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
 
 void R_DrawMasked (void)
 {
-	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
+	DrewAVoxel = true;		// TESTME
+	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
 
 	if (height_top == NULL)
 	{ // kg3D - no visible 3D floors, normal rendering
@@ -2227,7 +2268,8 @@ void R_DrawParticle (vissprite_t *vis)
 
 extern fixed_t baseyaspectmul;
 
-void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+void R_DrawVoxel(fixed_t globalposx, fixed_t globalposy, fixed_t globalposz, angle_t viewang,
+	fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
@@ -2243,11 +2285,13 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 
 	const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
 	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
-	const fixed_t globalposx =  viewx >> 12;
-	const fixed_t globalposy = -viewy >> 12;
-	const fixed_t globalposz = -viewz >> 8;
 	const double centerxwide_f = centerxwide;
 	const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
+
+	// Convert to Build's coordinate system.
+	globalposx =  globalposx >> 12;
+	globalposy = -globalposy >> 12;
+	globalposz = -globalposz >> 8;
 
 	dasprx =  dasprx >> 12;
 	daspry = -daspry >> 12;
@@ -2258,20 +2302,19 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	daxscale = daxscale / (0xC000 >> 6);
 	dayscale = dayscale / (0xC000 >> 6);
 
-	cosang = viewcos >> 2;
-	sinang = -viewsin >> 2;
+	cosang = finecosine[viewang >> ANGLETOFINESHIFT] >> 2;
+	sinang = -finesine[viewang >> ANGLETOFINESHIFT] >> 2;
 	sprcosang = finecosine[dasprang >> ANGLETOFINESHIFT] >> 2;
 	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
 
 	R_SetupDrawSlab(colormap);
 
 	// Select mip level
-	i = abs(DMulScale8(dasprx - globalposx, viewcos, daspry - globalposy, -viewsin));
+	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
 	i = DivScale6(i, MIN(daxscale, dayscale));
 	j = FocalLengthX >> 3;
-	for (k = 0; k < voxobj->NumMips; ++k)
+	for (k = 0; i >= j && k < voxobj->NumMips; ++k)
 	{
-		if (i < j) { break; }
 		i >>= 1;
 	}
 	if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
@@ -2402,6 +2445,13 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
+
+				if (flags & DVF_MIRRORED)
+				{
+					int t = viewwidth - lx;
+					lx = viewwidth - rx;
+					rx = t;
+				}
 
 				fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
 				fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));

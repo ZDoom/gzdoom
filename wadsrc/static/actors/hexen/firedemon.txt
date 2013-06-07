@@ -46,6 +46,7 @@ ACTOR FireDemon 10060
 		FDMN ABC 5 Bright A_FiredChase
 		Loop
 	Pain:
+		FDMN D 0 Bright A_UnSetInvulnerable
 		FDMN D 6 Bright A_Pain
 		Goto Chase
 	Missile:

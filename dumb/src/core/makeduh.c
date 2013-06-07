@@ -130,3 +130,22 @@ DUH *make_duh(
 
 	return duh;
 }
+
+int DUMBEXPORT duh_add_signal(DUH *duh, DUH_SIGTYPE_DESC *desc, sigdata_t *sigdata)
+{
+	DUH_SIGNAL **signal;
+
+	if ( !duh || !desc || !sigdata ) return -1;
+
+	signal = ( DUH_SIGNAL ** ) realloc( duh->signal, ( duh->n_signals + 1 ) * sizeof( *duh->signal ) );
+	if ( !signal ) return -1;
+	duh->signal = signal;
+
+	memmove( signal + 1, signal, duh->n_signals * sizeof( *signal ) );
+	duh->n_signals++;
+
+	signal[ 0 ] = make_signal( desc, sigdata );
+	if ( !signal[ 0 ] ) return -1;
+
+	return 0;
+}

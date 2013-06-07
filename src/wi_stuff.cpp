@@ -253,8 +253,8 @@ static FTexture* 		sucks;
 static FTexture* 		killers;	// "killers", "victims"
 static FTexture* 		victims;
 static FTexture* 		total;		// "Total", your face, your dead face
-static FTexture* 		star;
-static FTexture* 		bstar;
+//static FTexture* 		star;
+//static FTexture* 		bstar;
 static FTexture* 		p;			// Player graphic
 static FTexture*		lnames[2];	// Name graphics of each level (centered)
 
@@ -1655,7 +1655,7 @@ void WI_drawNetgameStats ()
 			FTexture *pic = TexMan[player->mo->ScoreIcon];
 			screen->DrawTexture(pic, icon_x, y, DTA_CleanNoMove, true, TAG_DONE);
 		}
-		screen->DrawText(SmallFont, color, name_x, y + ypadding, player->userinfo.netname, DTA_CleanNoMove, true, TAG_DONE);
+		screen->DrawText(SmallFont, color, name_x, y + ypadding, player->userinfo.GetName(), DTA_CleanNoMove, true, TAG_DONE);
 		WI_drawPercent(SmallFont, kills_x, y + ypadding, cnt_kills[i], wbs->maxkills, false, color);
 		missed_kills -= cnt_kills[i];
 		if (ng_state >= 4)
@@ -1995,10 +1995,11 @@ void WI_loadData(void)
 		killers = TexMan["WIKILRS"];	// "killers" (vertical]
 		victims = TexMan["WIVCTMS"];	// "victims" (horiz]
 		total = TexMan["WIMSTT"];		// "total"
-		star = TexMan["STFST01"];		// your face
-		bstar = TexMan["STFDEAD0"];		// dead face
+//		star = TexMan["STFST01"];		// your face
+//		bstar = TexMan["STFDEAD0"];		// dead face
  		p = TexMan["STPBANY"];
 	}
+#if 0
 	else if (gameinfo.gametype & GAME_Raven)
 	{
 		if (gameinfo.gametype == GAME_Heretic)
@@ -2017,6 +2018,7 @@ void WI_loadData(void)
 		star = BigFont->GetChar('*', NULL);
 		bstar = star;
 	}
+#endif
 
 	// Use the local level structure which can be overridden by hubs
 	lnametexts[0] = level.LevelName;		

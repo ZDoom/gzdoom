@@ -45,6 +45,7 @@
 #include "p_udmf.h"
 #include "r_state.h"
 #include "r_data/colormaps.h"
+#include "w_wad.h"
 
 //===========================================================================
 //
@@ -97,6 +98,11 @@ static char HexenSectorSpecialOk[256]={
 	1,1,1,1,1,
 };
 
+static inline bool P_IsThingSpecial(int specnum)
+{
+	return (specnum >= Thing_Projectile && specnum <= Thing_SpawnNoFog) ||
+			specnum == Thing_SpawnFacing || Thing_ProjectileIntercept || Thing_ProjectileAimed;
+}
 
 enum
 {
@@ -466,7 +472,7 @@ public:
 
 	void ParseThing(FMapThing *th)
 	{
-		FString arg0str;
+		FString arg0str, arg1str;
 
 		memset(th, 0, sizeof(*th));
 		sc.MustGetToken('{');
@@ -521,6 +527,11 @@ public:
 			case NAME_Arg0Str:
 				CHECK_N(Zd);
 				arg0str = CheckString(key);
+				break;
+
+			case NAME_Arg1Str:
+				CHECK_N(Zd);
+				arg1str = CheckString(key);
 				break;
 
 			case NAME_Skill1:
@@ -616,16 +627,23 @@ public:
 				break;
 
 			default:
-				if (!strnicmp("user_", key.GetChars(), 5))
-				{
-					// Custom user key - handle later
+				if (0 == strnicmp("user_", key.GetChars(), 5))
+				{ // Custom user key - Sets an actor's user variable directly
+					FMapThingUserData ud;
+					ud.Property = key;
+					ud.Value = CheckInt(key);
+					MapThingsUserData.Push(ud);
 				}
 				break;
 			}
 		}
-		if (arg0str.IsNotEmpty() && P_IsACSSpecial(th->special))
+		if (arg0str.IsNotEmpty() && (P_IsACSSpecial(th->special) || th->special == 0))
 		{
 			th->args[0] = -FName(arg0str);
+		}
+		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(th->special) || th->special == 0))
+		{
+			th->args[1] = -FName(arg1str);
 		}
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.
@@ -662,7 +680,7 @@ public:
 	{
 		bool passuse = false;
 		bool strifetrans = false;
-		FString arg0str;
+		FString arg0str, arg1str;
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
@@ -721,6 +739,11 @@ public:
 			case NAME_Arg0Str:
 				CHECK_N(Zd);
 				arg0str = CheckString(key);
+				continue;
+
+			case NAME_Arg1Str:
+				CHECK_N(Zd);
+				arg1str = CheckString(key);
 				continue;
 
 			case NAME_Blocking:
@@ -937,9 +960,13 @@ public:
 			ld->sidedef[0] = (side_t*)(intptr_t)(1);
 			Printf("Line %d has no first side.\n", index);
 		}
-		if (arg0str.IsNotEmpty() && P_IsACSSpecial(ld->special))
+		if (arg0str.IsNotEmpty() && (P_IsACSSpecial(ld->special) || ld->special == 0))
 		{
 			ld->args[0] = -FName(arg0str);
+		}
+		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(ld->special) || ld->special == 0))
+		{
+			ld->args[1] = -FName(arg1str);
 		}
 	}
 
@@ -1050,6 +1077,10 @@ public:
 
 			case NAME_lightabsolute:
 				Flag(sd->Flags, WALLF_ABSLIGHTING, key);
+				continue;
+
+			case NAME_lightfog:
+				Flag(sd->Flags, WALLF_LIGHT_FOG, key);
 				continue;
 
 			case NAME_nofakecontrast:
@@ -1511,6 +1542,7 @@ public:
 				isTranslated = false;
 				break;
 			case NAME_ZDoomTranslated:
+				level.flags2 |= LEVEL2_DUMMYSWITCHES;
 				namespace_bits = Zdt;
 				break;
 			case NAME_Vavoom:
@@ -1575,8 +1607,18 @@ public:
 			if (sc.Compare("thing"))
 			{
 				FMapThing th;
+				unsigned userdatastart = MapThingsUserData.Size();
 				ParseThing(&th);
 				MapThingsConverted.Push(th);
+				if (userdatastart < MapThingsUserData.Size())
+				{ // User data added
+					MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
+					// Mark end of the user data for this map thing
+					FMapThingUserData ud;
+					ud.Property = NAME_None;
+					ud.Value = 0;
+					MapThingsUserData.Push(ud);
+				}
 			}
 			else if (sc.Compare("linedef"))
 			{

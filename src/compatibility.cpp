@@ -50,6 +50,7 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "r_state.h"
+#include "w_wad.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -58,7 +59,7 @@
 struct FCompatOption
 {
 	const char *Name;
-	int CompatFlags;
+	DWORD CompatFlags;
 	int WhichSlot;
 };
 
@@ -76,7 +77,9 @@ enum
 	CP_SETFLAGS,
 	CP_SETSPECIAL,
 	CP_CLEARSPECIAL,
-	CP_SETACTIVATION
+	CP_SETACTIVATION,
+	CP_SECTORFLOOROFFSET,
+	CP_SETWALLYSCALE,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -99,6 +102,7 @@ static FCompatOption Options[] =
 	{ "resetplayerspeed",		BCOMPATF_RESETPLAYERSPEED, SLOT_BCOMPAT },
 	{ "vileghosts",				BCOMPATF_VILEGHOSTS, SLOT_BCOMPAT },
 	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
+	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
@@ -134,6 +138,16 @@ static FCompatOption Options[] =
 	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
+};
+
+static const char *const LineSides[] =
+{
+	"Front", "Back", NULL
+};
+
+static const char *const WallTiers[] =
+{
+	"Top", "Mid", "Bot", NULL
 };
 
 static TArray<int> CompatParams;
@@ -257,6 +271,28 @@ void ParseCompatibility()
 				CompatParams.Push(sc.Number);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("sectorflooroffset"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SECTORFLOOROFFSET);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetFloat();
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
+			}
+			else if (sc.Compare("setwallyscale"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETWALLYSCALE);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(LineSides));
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(WallTiers));
+				sc.MustGetFloat();
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
 			else 
 			{
@@ -435,6 +471,30 @@ void SetCompatibilityParams()
 						line->activation = CompatParams[i+2];
 					}
 					i += 3;
+					break;
+				}
+				case CP_SECTORFLOOROFFSET:
+				{
+					if (CompatParams[i+1] < numsectors)
+					{
+						sector_t *sec = &sectors[CompatParams[i+1]];
+						sec->floorplane.ChangeHeight(CompatParams[i+2]);
+						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2]);
+					}
+					i += 3;
+					break;
+				}
+				case CP_SETWALLYSCALE:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						side_t *side = lines[CompatParams[i+1]].sidedef[CompatParams[i+2]];
+						if (side != NULL)
+						{
+							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4]);
+						}
+					}
+					i += 5;
 					break;
 				}
 			}

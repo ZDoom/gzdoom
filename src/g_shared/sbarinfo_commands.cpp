@@ -736,9 +736,9 @@ class CommandDrawString : public SBarInfoCommand
 					}
 					break;
 				case PLAYERCLASS:
-					if(statusBar->CPlayer->userinfo.PlayerClass != cache)
+					if(statusBar->CPlayer->userinfo.GetPlayerClassNum() != cache)
 					{
-						cache = statusBar->CPlayer->userinfo.PlayerClass;
+						cache = statusBar->CPlayer->userinfo.GetPlayerClassNum();
 						str = GetPrintableDisplayName(statusBar->CPlayer->cls);
 						RealignString();
 					}
@@ -758,7 +758,7 @@ class CommandDrawString : public SBarInfoCommand
 				case PLAYERNAME:
 					// Can't think of a good way to detect changes to this, so
 					// I guess copying it every tick will have to do.
-					str = statusBar->CPlayer->userinfo.netname;
+					str = statusBar->CPlayer->userinfo.GetName();
 					RealignString();
 					break;
 				case GLOBALVAR:
@@ -1960,11 +1960,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			int spacing = 0;
-			if(!vertical)
-				spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
-			else
-				spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
+			int spacing = GetCounterSpacing(statusBar);
 		
 			int bgalpha = block->Alpha();
 			if(translucent)
@@ -2107,16 +2103,36 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			}
 			sc.MustGetToken(';');
 		}
+		int GetCounterSpacing(const DSBarInfo *statusBar) const
+		{
+			FTexture *box = (style != STYLE_Strife)
+				? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]
+				: statusBar->Images[statusBar->invBarOffset + imgCURSOR];
+			if (box == NULL)
+			{ // Don't crash without a graphic.
+				return 32;
+			}
+			else
+			{
+				int spacing;
+				if (!vertical)
+				{
+					spacing = box->GetScaledWidth();
+				}
+				else
+				{
+					spacing = box->GetScaledHeight();
+				}
+				return spacing + ((style != STYLE_Strife) ? 1 : -1);
+			}
+		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
 			// Make the counters if need be.
 			if(counters == NULL)
 			{
-				int spacing = 0;
-				if(!vertical)
-					spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledWidth() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledWidth() - 1;
-				else
-					spacing = (style != STYLE_Strife) ? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]->GetScaledHeight() + 1 : statusBar->Images[statusBar->invBarOffset + imgCURSOR]->GetScaledHeight() - 1;
+				int spacing = GetCounterSpacing(statusBar);
+
 				counters = new CommandDrawNumber*[size];
 		
 				for(unsigned int i = 0;i < size;i++)
@@ -2314,7 +2330,8 @@ class CommandDrawBar : public SBarInfoCommand
 	public:
 		CommandDrawBar(SBarInfo *script) : SBarInfoCommand(script),
 			border(0), horizontal(false), reverse(false), foreground(-1),
-			background(-1), type(HEALTH), interpolationSpeed(0), drawValue(0)
+			background(-1), type(HEALTH), interpolationSpeed(0), drawValue(0),
+			pixel(-1)
 		{
 		}
 
@@ -2633,7 +2650,14 @@ class CommandDrawBar : public SBarInfoCommand
 				value = 0;
 			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1))
 			{
-				if(value < drawValue)
+				// [BL] Since we used a percentage (in order to get the most fluid animation)
+				//      we need to establish a cut off point so the last pixel won't hang as the animation slows
+				if(pixel == -1 && statusBar->Images[foreground])
+					pixel = MAX(1, FRACUNIT/statusBar->Images[foreground]->GetWidth());
+
+				if(abs(drawValue - value) < pixel)
+					drawValue = value;
+				else if(value < drawValue)
 					drawValue -= clamp<fixed_t>((drawValue - value) >> 2, 1, FixedDiv(interpolationSpeed<<FRACBITS, FRACUNIT*100));
 				else if(drawValue < value)
 					drawValue += clamp<fixed_t>((value - drawValue) >> 2, 1, FixedDiv(interpolationSpeed<<FRACBITS, FRACUNIT*100));
@@ -2711,6 +2735,7 @@ class CommandDrawBar : public SBarInfoCommand
 
 		int					interpolationSpeed;
 		fixed_t				drawValue;
+		fixed_t				pixel;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3021,7 +3046,7 @@ class CommandDrawGem : public SBarInfoCommand
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			goalValue = armor ? statusBar->armor->Amount : statusBar->CPlayer->mo->health;
+			goalValue = armor ? (statusBar->armor ? statusBar->armor->Amount : 0) : statusBar->CPlayer->mo->health;
 			int max = armor ? 100 : statusBar->CPlayer->mo->GetMaxHealth() + statusBar->CPlayer->mo->stamina;
 			if(max != 0 && goalValue > 0)
 			{
@@ -3349,7 +3374,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_DRAWSTRING: return new CommandDrawString(script);
 			case SBARINFO_DRAWNUMBER: return new CommandDrawNumber(script);
 			case SBARINFO_DRAWMUGSHOT: return new CommandDrawMugShot(script);
-			case SBARINFO_DRAWSELECTEDINVENTORY: return reinterpret_cast<CommandDrawImage *> (new CommandDrawSelectedInventory(script));
+			case SBARINFO_DRAWSELECTEDINVENTORY: return static_cast<SBarInfoCommandFlowControl *> (new CommandDrawSelectedInventory(script));
 			case SBARINFO_DRAWSHADER: return new CommandDrawShader(script);
 			case SBARINFO_DRAWINVENTORYBAR: return new CommandDrawInventoryBar(script);
 			case SBARINFO_DRAWKEYBAR: return new CommandDrawKeyBar(script);

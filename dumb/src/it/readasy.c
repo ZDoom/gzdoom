@@ -71,7 +71,7 @@ static int it_asy_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 					entry->mask |= IT_ENTRY_INSTRUMENT;
 				}
 
-				_dumb_it_xm_convert_effect( buffer[ pos + 2 ] & 0x0F, buffer[ pos + 3 ], entry, 1 );
+				_dumb_it_xm_convert_effect( buffer[ pos + 2 ], buffer[ pos + 3 ], entry, 1 );
 
 				if ( entry->mask ) ++entry;
 			}
@@ -90,7 +90,7 @@ static int it_asy_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 
 static int it_asy_read_sample_header( IT_SAMPLE *sample, DUMBFILE *f )
 {
-	int finetune;
+	int finetune, key_offset;
 
 /**
      21       22   Chars     Sample 1 name.  If the name is not a full
@@ -111,7 +111,7 @@ assumed not to be an instrument name, and is probably a message.
 	sample->default_volume = dumbfile_getc( f ); // Should we be setting global_volume to this instead?
 	sample->global_volume = 64;
 	if ( sample->default_volume > 64 ) sample->default_volume = 64;
-	dumbfile_skip( f, 1 ); /* XXX unknown */
+	key_offset = ( signed char ) dumbfile_getc( f ); /* base key offset */
 	sample->length = dumbfile_igetl( f );
 	sample->loop_start = dumbfile_igetl( f );
 	sample->loop_end = sample->loop_start + dumbfile_igetl( f );
@@ -124,7 +124,7 @@ assumed not to be an instrument name, and is probably a message.
 	sample->flags = IT_SAMPLE_EXISTS;
 
 	sample->default_pan = 0;
-	sample->C5_speed = (int)( AMIGA_CLOCK / 214.0 );//( int32 )( 16726.0 * pow( DUMB_PITCH_BASE, finetune * 32 ) );
+	sample->C5_speed = (int)( AMIGA_CLOCK / 214.0 * pow( DUMB_SEMITONE_BASE, key_offset ) );//( long )( 16726.0 * pow( DUMB_PITCH_BASE, finetune * 32 ) );
 	sample->finetune = finetune * 32;
 	// the above line might be wrong
 

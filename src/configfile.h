@@ -78,6 +78,7 @@ protected:
 
 	virtual char *ReadLine (char *string, int n, void *file) const;
 	bool ReadConfig (void *file);
+	static const char *GenerateEndTag(const char *value);
 
 	bool OkayToWrite;
 	bool FileExisted;
@@ -110,6 +111,7 @@ private:
 	FConfigEntry *FindEntry (FConfigSection *section, const char *key) const;
 	FConfigSection *NewConfigSection (const char *name);
 	FConfigEntry *NewConfigEntry (FConfigSection *section, const char *key, const char *value);
+	FConfigEntry *ReadMultiLineValue (void *file, FConfigSection *section, const char *key, const char *terminator);
 	void SetSectionNote (FConfigSection *section, const char *note);
 
 public:

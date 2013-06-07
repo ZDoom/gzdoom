@@ -271,7 +271,6 @@ bool F7ZFile::Open(bool quiet)
 	for (DWORD i = 0; i < NumLumps; ++i)
 	{
 		CSzFileItem *file = &Archive->DB.db.Files[i];
-		char name[256];
 
 		// skip Directories
 		if (file->IsDir)
@@ -280,10 +279,9 @@ bool F7ZFile::Open(bool quiet)
 			continue;
 		}
 
-		strncpy(name, file->Name, countof(name)-1);
-		name[countof(name)-1] = 0;
+		FString name = file->Name;
 		FixPathSeperator(name);
-		strlwr(name);
+		name.ToLower();
 
 		lump_p->LumpNameSetup(name);
 		lump_p->LumpSize = int(file->Size);

@@ -82,7 +82,7 @@ static int FindWadLevelInfo (const char *name)
 //
 //==========================================================================
 
-level_info_t *FindLevelInfo (const char *mapname)
+level_info_t *FindLevelInfo (const char *mapname, bool allowdefault)
 {
 	int i;
 
@@ -90,7 +90,7 @@ level_info_t *FindLevelInfo (const char *mapname)
 	{
 		return &wadlevelinfos[i];
 	}
-	else
+	else if (allowdefault)
 	{
 		if (TheDefaultLevelInfo.LevelName.IsEmpty())
 		{
@@ -100,6 +100,7 @@ level_info_t *FindLevelInfo (const char *mapname)
 		}
 		return &TheDefaultLevelInfo;
 	}
+	return NULL;
 }
 
 //==========================================================================
@@ -197,6 +198,9 @@ void G_ClearSnapshots (void)
 	{
 		wadlevelinfos[i].ClearSnapshot();
 	}
+	// Since strings are only locked when snapshotting a level, unlock them
+	// all now, since we got rid of all the snapshots that cared about them.
+	GlobalACSStrings.UnlockAll();
 }
 
 //==========================================================================
@@ -304,6 +308,10 @@ FString level_info_t::LookupLevelName()
 			else if (mapname[0] == 'M' && mapname[1] == 'A' && mapname[2] == 'P')
 			{
 				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(mapname + 3));
+			}
+			else if (mapname[0] == 'L' && mapname[1] == 'E' && mapname[2] == 'V' && mapname[3] == 'E' && mapname[4] == 'L')
+			{
+				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(mapname + 5));
 			}
 			thename = strstr (lookedup, checkstring);
 			if (thename == NULL)
@@ -1267,6 +1275,7 @@ MapFlagHandlers[] =
 	{ "forgetstate",					MITYPE_SETFLAG2,	LEVEL2_FORGETSTATE, 0 },
 	{ "rememberstate",					MITYPE_CLRFLAG2,	LEVEL2_FORGETSTATE, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
+	{ "spawnwithweaponraised",			MITYPE_SETFLAG2,	LEVEL2_PRERAISEWEAPON, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },

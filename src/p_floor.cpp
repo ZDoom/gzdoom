@@ -375,18 +375,18 @@ manual_floor:
 			floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.d) ? -1 : 1;
 			break;
 
-		case DFloor::floorRaiseAndCrush:
+		case DFloor::floorRaiseAndCrushDoom:
 			floor->m_Crush = crush;
 		case DFloor::floorRaiseToLowestCeiling:
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
-			if (floortype == DFloor::floorRaiseAndCrush)
+			if (floortype == DFloor::floorRaiseAndCrushDoom)
 				newheight -= 8 * FRACUNIT;
 			ceilingheight = sec->FindLowestCeilingPoint (&spot2);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			if (sec->floorplane.ZatPointDist (spot2, floor->m_FloorDestDist) > ceilingheight)
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (spot2,
-					floortype == DFloor::floorRaiseAndCrush ? ceilingheight - 8*FRACUNIT : ceilingheight);
+					floortype == DFloor::floorRaiseAndCrushDoom ? ceilingheight - 8*FRACUNIT : ceilingheight);
 			break;
 
 		case DFloor::floorRaiseToHighest:
@@ -404,6 +404,13 @@ manual_floor:
 		case DFloor::floorRaiseToLowest:
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestFloorSurrounding (&spot);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
+			break;
+
+		case DFloor::floorRaiseAndCrush:
+			floor->m_Crush = crush;
+			floor->m_Direction = 1;
+			newheight = sec->FindLowestCeilingPoint (&spot) - 8*FRACUNIT;
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			break;
 

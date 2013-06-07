@@ -46,8 +46,8 @@
 #include "templates.h"
 #include "g_level.h"
 
-// List of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-PClassActor *SpawnableThings[MAX_SPAWNABLES];
+// Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
+TMap<int, PClassActor *> SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
@@ -58,10 +58,9 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
 
-	if (type >= MAX_SPAWNABLES)
-		return false;
+	kind = P_GetSpawnableType(type);
 
-	if ( (kind = SpawnableThings[type]) == NULL)
+	if (kind == NULL)
 		return false;
 
 	// Handle decorate replacements.
@@ -182,18 +181,16 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 	if (type_name == NULL)
 	{
-		if (type >= MAX_SPAWNABLES)
-			return false;
-
-		if ((kind = SpawnableThings[type]) == NULL)
-			return false;
+		kind = P_GetSpawnableType(type);
 	}
 	else
 	{
-		if ((kind = PClass::FindActor(type_name)) == NULL)
-			return false;
+		kind = PClass::FindActor(type_name);
 	}
-
+	if (kind == NULL)
+	{
+		return false;
+	}
 
 	// Handle decorate replacements.
 	kind = kind->GetReplacement();
@@ -339,7 +336,7 @@ nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 					}
 					if (mobj->flags & MF_MISSILE)
 					{
-						if (P_CheckMissileSpawn (mobj))
+						if (P_CheckMissileSpawn (mobj, spot->radius))
 						{
 							rtn = true;
 						}
@@ -487,17 +484,53 @@ void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 	}
 }
 
+PClassActor *P_GetSpawnableType(int spawnnum)
+{
+	if (spawnnum < 0)
+	{ // A named arg from a UDMF map
+		FName spawnname = FName(ENamedName(-spawnnum));
+		if (spawnname.IsValidName())
+		{
+			return PClass::FindActor(spawnname);
+		}
+	}
+	else
+	{ // A numbered arg from a Hexen or UDMF map
+		PClassActor **type = SpawnableThings.CheckKey(spawnnum);
+		if (type != NULL)
+		{
+			return *type;
+		}
+	}
+	return NULL;
+}
+
+typedef TMap<int, PClassActor *>::Pair SpawnablePair;
+
+static int STACK_ARGS SpawnableSort(const void *a, const void *b)
+{
+	return (*((SpawnablePair **)a))->Key - (*((SpawnablePair **)b))->Key;
+}
 
 CCMD (dumpspawnables)
 {
-	int i;
+	TMapIterator<int, PClassActor *> it(SpawnableThings);
+	SpawnablePair *pair, **allpairs;
+	int i = 0;
 
-	for (i = 0; i < MAX_SPAWNABLES; i++)
+	// Sort into numerical order, since their arrangement in the map can
+	// be in an unspecified order.
+	allpairs = new TMap<int, PClassActor *>::Pair *[SpawnableThings.CountUsed()];
+	while (it.NextPair(pair))
 	{
-		if (SpawnableThings[i] != NULL)
-		{
-			Printf ("%d %s\n", i, SpawnableThings[i]->TypeName.GetChars());
-		}
+		allpairs[i++] = pair;
 	}
+	qsort(allpairs, i, sizeof(*allpairs), SpawnableSort);
+	for (int j = 0; j < i; ++j)
+	{
+		pair = allpairs[j];
+		Printf ("%d %s\n", pair->Key, pair->Value->TypeName.GetChars());
+	}
+	delete[] allpairs;
 }
 

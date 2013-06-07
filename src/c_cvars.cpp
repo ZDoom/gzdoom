@@ -132,10 +132,10 @@ FBaseCVar::~FBaseCVar ()
 	}
 }
 
-void FBaseCVar::ForceSet (UCVarValue value, ECVarType type)
+void FBaseCVar::ForceSet (UCVarValue value, ECVarType type, bool nouserinfosend)
 {
 	DoSet (value, type);
-	if (Flags & CVAR_USERINFO)
+	if ((Flags & CVAR_USERINFO) && !nouserinfosend && !(Flags & CVAR_IGNORE))
 		D_UserInfoChanged (this);
 	if (m_UseCallback)
 		Callback ();
@@ -266,7 +266,7 @@ static GUID cGUID;
 static char truestr[] = "true";
 static char falsestr[] = "false";
 
-char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
+const char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 {
 	switch (type)
 	{
@@ -849,9 +849,7 @@ UCVarValue FStringCVar::GetFavoriteRepDefault (ECVarType *type) const
 
 void FStringCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 {
-	if (DefaultValue)
-		delete[] DefaultValue;
-	DefaultValue = ToString (value, type);
+	ReplaceString(&DefaultValue, ToString(value, type));
 	if (Flags & CVAR_ISDEFAULT)
 	{
 		SetGenericRep (value, type);
@@ -1274,52 +1272,56 @@ static int STACK_ARGS sortcvars (const void *a, const void *b)
 
 void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter)
 {
-	FBaseCVar *cvar = CVars;
-	while (cvar)
+	// Accumulate all cvars that match the filter flags.
+	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 	{
-		if (cvar->Flags & filter)
-			cvars.Push (cvar);
-		cvar = cvar->m_Next;
+		if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_IGNORE))
+			cvars.Push(cvar);
 	}
-	if (cvars.Size () > 0)
+	// Now sort them, so they're in a deterministic order and not whatever
+	// order the linker put them in.
+	if (cvars.Size() > 0)
 	{
-		cvars.ShrinkToFit ();
-		qsort (&cvars[0], cvars.Size(), sizeof(FBaseCVar *), sortcvars);
+		qsort(&cvars[0], cvars.Size(), sizeof(FBaseCVar *), sortcvars);
 	}
 }
 
 void C_WriteCVars (BYTE **demo_p, DWORD filter, bool compact)
 {
-	FBaseCVar *cvar = CVars;
-	BYTE *ptr = *demo_p;
+	FString dump = C_GetMassCVarString(filter, compact);
+	size_t dumplen = dump.Len() + 1;	// include terminating \0
+	memcpy(*demo_p, dump.GetChars(), dumplen);
+	*demo_p += dumplen;
+}
+
+FString C_GetMassCVarString (DWORD filter, bool compact)
+{
+	FBaseCVar *cvar;
+	FString dump;
 
 	if (compact)
 	{
 		TArray<FBaseCVar *> cvars;
-		ptr += sprintf ((char *)ptr, "\\\\%ux", filter);
-		FilterCompactCVars (cvars, filter);
+		dump.AppendFormat("\\\\%ux", filter);
+		FilterCompactCVars(cvars, filter);
 		while (cvars.Pop (cvar))
 		{
-			UCVarValue val = cvar->GetGenericRep (CVAR_String);
-			ptr += sprintf ((char *)ptr, "\\%s", val.String);
+			UCVarValue val = cvar->GetGenericRep(CVAR_String);
+			dump << '\\' << val.String;
 		}
 	}
 	else
 	{
-		cvar = CVars;
-		while (cvar)
+		for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 		{
-			if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_NOSAVE))
+			if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE|CVAR_IGNORE)))
 			{
-				UCVarValue val = cvar->GetGenericRep (CVAR_String);
-				ptr += sprintf ((char *)ptr, "\\%s\\%s",
-					cvar->GetName (), val.String);
+				UCVarValue val = cvar->GetGenericRep(CVAR_String);
+				dump << '\\' << cvar->GetName() << '\\' << val.String;
 			}
-			cvar = cvar->m_Next;
 		}
 	}
-
-	*demo_p = ptr + 1;
+	return dump;
 }
 
 void C_ReadCVars (BYTE **demo_p)
@@ -1390,58 +1392,42 @@ void C_ReadCVars (BYTE **demo_p)
 	*demo_p += strlen (*((char **)demo_p)) + 1;
 }
 
-static struct backup_s
+struct FCVarBackup
 {
-	char *name, *string;
-} CVarBackups[MAX_DEMOCVARS];
-
-static int numbackedup = 0;
+	FString Name, String;
+};
+static TArray<FCVarBackup> CVarBackups;
 
 void C_BackupCVars (void)
 {
-	struct backup_s *backup = CVarBackups;
-	FBaseCVar *cvar = CVars;
+	assert(CVarBackups.Size() == 0);
+	CVarBackups.Clear();
 
-	while (cvar)
+	FCVarBackup backup;
+
+	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 	{
-		if ((cvar->Flags & (CVAR_SERVERINFO|CVAR_DEMOSAVE))
-			&& !(cvar->Flags & CVAR_LATCH))
+		if ((cvar->Flags & (CVAR_SERVERINFO|CVAR_DEMOSAVE)) && !(cvar->Flags & CVAR_LATCH))
 		{
-			if (backup == &CVarBackups[MAX_DEMOCVARS])
-				I_Error ("C_BackupDemoCVars: Too many cvars to save (%d)", MAX_DEMOCVARS);
-			backup->name = copystring (cvar->GetName());
-			backup->string = copystring (cvar->GetGenericRep (CVAR_String).String);
-			backup++;
+			backup.Name = cvar->GetName();
+			backup.String = cvar->GetGenericRep(CVAR_String).String;
+			CVarBackups.Push(backup);
 		}
-		cvar = cvar->m_Next;
 	}
-	numbackedup = int(backup - CVarBackups);
 }
 
 void C_RestoreCVars (void)
 {
-	struct backup_s *backup = CVarBackups;
-	int i;
-
-	for (i = numbackedup; i; i--, backup++)
+	for (unsigned int i = 0; i < CVarBackups.Size(); ++i)
 	{
-		cvar_set (backup->name, backup->string);
+		cvar_set(CVarBackups[i].Name, CVarBackups[i].String);
 	}
 	C_ForgetCVars();
 }
 
 void C_ForgetCVars (void)
 {
-	struct backup_s *backup = CVarBackups;
-	int i;
-
-	for (i = numbackedup; i; i--, backup++)
-	{
-		delete[] backup->name;
-		delete[] backup->string;
-		backup->name = backup->string = NULL;
-	}
-	numbackedup = 0;
+	CVarBackups.Clear();
 }
 
 FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev)
@@ -1489,6 +1475,30 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 	return var;
 }
 
+//===========================================================================
+//
+// C_CreateCVar
+//
+// Create a new cvar with the specified name and type. It should not already
+// exist.
+//
+//===========================================================================
+
+FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, DWORD flags)
+{
+	assert(FindCVar(var_name, NULL) == NULL);
+	flags |= CVAR_AUTO;
+	switch (var_type)
+	{
+	case CVAR_Bool:		return new FBoolCVar(var_name, 0, flags);
+	case CVAR_Int:		return new FIntCVar(var_name, 0, flags);
+	case CVAR_Float:	return new FFloatCVar(var_name, 0, flags);
+	case CVAR_String:	return new FStringCVar(var_name, NULL, flags);
+	case CVAR_Color:	return new FColorCVar(var_name, 0, flags);
+	default:			return NULL;
+	}
+}
+
 void UnlatchCVars (void)
 {
 	FLatchedValue var;
@@ -1522,33 +1532,14 @@ void C_SetCVarsToDefaults (void)
 	}
 }
 
-void C_ArchiveCVars (FConfigFile *f, int type)
+void C_ArchiveCVars (FConfigFile *f, uint32 filter)
 {
-	// type 0: Game-specific cvars
-	// type 1: Global cvars
-	// type 2: Unknown cvars
-	// type 3: Unknown global cvars
-	// type 4: User info cvars
-	// type 5: Server info cvars
-	static const DWORD filters[6] =
-	{
-		CVAR_ARCHIVE,
-		CVAR_ARCHIVE|CVAR_GLOBALCONFIG,
-		CVAR_ARCHIVE|CVAR_AUTO,
-		CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_AUTO,
-		CVAR_ARCHIVE|CVAR_USERINFO,
-		CVAR_ARCHIVE|CVAR_SERVERINFO
-	};
-
 	FBaseCVar *cvar = CVars;
-	DWORD filter;
-
-	filter = filters[type];
 
 	while (cvar)
 	{
 		if ((cvar->Flags &
-			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
+			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MOD|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
 			== filter)
 		{
 			UCVarValue val;
@@ -1679,14 +1670,16 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 			else
 			{
 				++count;
-				Printf ("%c%c%c %s : :%s\n",
+				Printf ("%c%c%c%c%c %s = %s\n",
 					flags & CVAR_ARCHIVE ? 'A' : ' ',
 					flags & CVAR_USERINFO ? 'U' :
-				flags & CVAR_SERVERINFO ? 'S' :
-				flags & CVAR_AUTO ? 'C' : ' ',
+						flags & CVAR_SERVERINFO ? 'S' :
+						flags & CVAR_AUTO ? 'C' : ' ',
 					flags & CVAR_NOSET ? '-' :
-				flags & CVAR_LATCH ? 'L' :
-				flags & CVAR_UNSETTABLE ? '*' : ' ',
+						flags & CVAR_LATCH ? 'L' :
+						flags & CVAR_UNSETTABLE ? '*' : ' ',
+					flags & CVAR_MOD ? 'M' : ' ',
+					flags & CVAR_IGNORE ? 'X' : ' ',
 					var->GetName(),
 					var->GetGenericRep (CVAR_String).String);
 			}

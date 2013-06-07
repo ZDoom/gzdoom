@@ -57,7 +57,7 @@ extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
-FRandom FState::pr_statetics;
+FRandom FState::pr_statetics("StateTics");
 
 cycle_t ActionCycles;
 
@@ -168,7 +168,7 @@ void PClassActor::StaticInit()
 
 void PClassActor::StaticSetActorNums()
 {
-	memset(SpawnableThings, 0, sizeof(SpawnableThings));
+	SpawnableThings.Clear();
 	DoomEdMap.Empty();
 
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
@@ -360,7 +360,7 @@ void PClassActor::RegisterIDs()
 
 	if (GameFilter == GAME_Any || (GameFilter & gameinfo.gametype))
 	{
-		if (SpawnID != 0)
+		if (SpawnID > 0)
 		{
 			SpawnableThings[SpawnID] = cls;
 			if (cls != this) 

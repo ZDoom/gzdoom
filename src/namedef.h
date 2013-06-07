@@ -183,6 +183,13 @@ xx(Idle)
 xx(GenericFreezeDeath)
 xx(GenericCrush)
 
+// Bounce state names
+xx(Bounce)
+xx(Wall)
+xx(Floor)
+xx(Ceiling)
+xx(Creature)
+
 // Compatible death names for the decorate parser.
 xx(XDeath)
 xx(Burn)
@@ -223,6 +230,7 @@ xx(Rocket)
 xx(Plasma)
 xx(BFG)
 //xx(Railgun)
+xx(Dagger)
 
 // Damage types
 //xx(Fire)		already defined above
@@ -301,6 +309,7 @@ xx(Arg2)
 xx(Arg3)
 xx(Arg4)
 xx(Arg0Str)
+xx(Arg1Str)
 xx(Id)
 xx(V1)
 xx(V2)
@@ -450,6 +459,7 @@ xx(scalex_bottom)
 xx(scaley_bottom)
 xx(light)
 xx(lightabsolute)
+xx(lightfog)
 xx(nofakecontrast)
 xx(smoothlighting)
 xx(blockprojectiles)
@@ -550,6 +560,13 @@ xx(Inter_Strife_Lose)
 xx(Inter_Strife_MAP03)
 xx(Inter_Strife_MAP10)
 xx(Multiplayer)
+
+// more stuff
+xx(ColorSet)
+xx(NeverSwitchOnPickup)
+xx(MoveBob)
+xx(StillBob)
+xx(PlayerClass)
 
 // Decorate compatibility functions
 xx(DecoRandom)

@@ -210,3 +210,17 @@ FEvent *FEventTree::GetMinimum ()
 	}
 	return node;
 }
+
+void FEventTree::PrintTree (const FEvent *event) const
+{
+	// Use the CRT's sprintf so that it shares the same formatting as ZDBSP's output.
+	char buff[100];
+	if (event != &Nil)
+	{
+		PrintTree(event->Left);
+		sprintf(buff, " Distance %g, vertex %d, seg %u\n",
+			sqrt(event->Distance/4294967296.0), event->Info.Vertex, (unsigned)event->Info.FrontSeg);
+		Printf(PRINT_LOG, "%s", buff);
+		PrintTree(event->Right);
+	}
+}

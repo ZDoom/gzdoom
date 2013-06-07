@@ -409,7 +409,7 @@ void M_SetMenu(FName menu, int param)
 	FMenuDescriptor **desc = MenuDescriptors.CheckKey(menu);
 	if (desc != NULL)
 	{
-		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame)
+		if ((*desc)->mNetgameMessage.IsNotEmpty() && netgame && !demoplayback)
 		{
 			M_StartMessage((*desc)->mNetgameMessage, 1);
 			return;
@@ -734,7 +734,7 @@ void M_ClearMenus ()
 		DMenu::CurrentMenu->Destroy();
 		DMenu::CurrentMenu = NULL;
 	}
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 	menuactive = MENU_Off;
 }
 
@@ -957,5 +957,6 @@ CCMD(reset2saved)
 {
 	GameConfig->DoGlobalSetup ();
 	GameConfig->DoGameSetup (gameinfo.ConfigName);
+	GameConfig->DoModSetup (gameinfo.ConfigName);
 	R_SetViewSize (screenblocks);
 }

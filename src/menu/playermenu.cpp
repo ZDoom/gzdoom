@@ -545,11 +545,11 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_ROTATION, 0);
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_MODE, 1);
 		li->SetValue(FListMenuItemPlayerDisplay::PDF_TRANSLATE, 1);
-		li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.PlayerClass);
+		li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
 		if (PlayerClass != NULL && !(GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN) &&
-			players[consoleplayer].userinfo.PlayerClass != -1)
+			players[consoleplayer].userinfo.GetPlayerClassNum() != -1)
 		{
-			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, players[consoleplayer].userinfo.skin);
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_SKIN, players[consoleplayer].userinfo.GetSkin());
 		}
 	}
 
@@ -570,8 +570,8 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 		li->SetValue(0, team == TEAM_NONE? 0 : team + 1);
 	}
 
-	int mycolorset = players[consoleplayer].userinfo.colorset;
-	int color = players[consoleplayer].userinfo.color;
+	int mycolorset = players[consoleplayer].userinfo.GetColorSet();
+	int color = players[consoleplayer].userinfo.GetColor();
 
 	UpdateColorsets();
 
@@ -606,13 +606,16 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 		}
 		else
 		{
-			li->SetString(0, "Random");
+			// [XA] Remove the "Random" option if the relevant gameinfo flag is set.
+			if(!gameinfo.norandomplayerclass)
+				li->SetString(0, "Random");
 			for(unsigned i=0; i< PlayerClasses.Size(); i++)
 			{
 				const char *cls = GetPrintableDisplayName(PlayerClasses[i].Type);
-				li->SetString(i+1, cls);
+				li->SetString(gameinfo.norandomplayerclass ? i : i+1, cls);
 			}
-			li->SetValue(0, players[consoleplayer].userinfo.PlayerClass + 1);
+			int pclass = players[consoleplayer].userinfo.GetPlayerClassNum();
+			li->SetValue(0, gameinfo.norandomplayerclass && pclass >= 0 ? pclass : pclass + 1);
 		}
 	}
 
@@ -621,7 +624,7 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	li = GetItem(NAME_Gender);
 	if (li != NULL)
 	{
-		li->SetValue(0, players[consoleplayer].userinfo.gender);
+		li->SetValue(0, players[consoleplayer].userinfo.GetGender());
 	}
 
 	li = GetItem(NAME_Autoaim);
@@ -683,9 +686,9 @@ bool DPlayerMenu::Responder (event_t *ev)
 
 void DPlayerMenu::UpdateTranslation()
 {
-	int PlayerColor = players[consoleplayer].userinfo.color;
-	int	PlayerSkin = players[consoleplayer].userinfo.skin;
-	int PlayerColorset = players[consoleplayer].userinfo.colorset;
+	int PlayerColor = players[consoleplayer].userinfo.GetColor();
+	int	PlayerSkin = players[consoleplayer].userinfo.GetSkin();
+	int PlayerColorset = players[consoleplayer].userinfo.GetColorSet();
 
 	if (PlayerClass != NULL)
 	{
@@ -718,7 +721,7 @@ void DPlayerMenu::PickPlayerClass()
 		// [GRB] Pick a class from player class list
 		if (PlayerClasses.Size () > 1)
 		{
-			pclass = players[consoleplayer].userinfo.PlayerClass;
+			pclass = players[consoleplayer].userinfo.GetPlayerClassNum();
 
 			if (pclass < 0)
 			{
@@ -741,7 +744,7 @@ void DPlayerMenu::SendNewColor (int red, int green, int blue)
 {
 	char command[24];
 
-	players[consoleplayer].userinfo.color = MAKERGB(red, green, blue);
+	players[consoleplayer].userinfo.ColorChanged(MAKERGB(red,green,blue));
 	mysnprintf (command, countof(command), "color \"%02x %02x %02x\"", red, green, blue);
 	C_DoCommand (command);
 	UpdateTranslation();
@@ -766,7 +769,7 @@ void DPlayerMenu::UpdateColorsets()
 			FPlayerColorSet *colorset = PlayerClass->Type->GetColorSet(PlayerColorSets[i]);
 			li->SetString(i+1, colorset->Name);
 		}
-		int mycolorset = players[consoleplayer].userinfo.colorset;
+		int mycolorset = players[consoleplayer].userinfo.GetColorSet();
 		if (mycolorset != -1)
 		{
 			for(unsigned i=0;i<PlayerColorSets.Size(); i++)
@@ -795,7 +798,7 @@ void DPlayerMenu::UpdateSkins()
 	if (li != NULL)
 	{
 		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
-			players[consoleplayer].userinfo.PlayerClass == -1)
+			players[consoleplayer].userinfo.GetPlayerClassNum() == -1)
 		{
 			li->SetString(0, "Base");
 			li->SetValue(0, 0);
@@ -810,7 +813,7 @@ void DPlayerMenu::UpdateSkins()
 				{
 					int j = PlayerSkins.Push(i);
 					li->SetString(j, skins[i].name);
-					if (players[consoleplayer].userinfo.skin == i)
+					if (players[consoleplayer].userinfo.GetSkin() == i)
 					{
 						sel = j;
 					}
@@ -882,7 +885,7 @@ void DPlayerMenu::ColorSetChanged (FListMenuItem *li)
 		if (blue != NULL) blue->Enable(mycolorset == -1);
 
 		char command[24];
-		players[consoleplayer].userinfo.colorset = mycolorset;
+		players[consoleplayer].userinfo.ColorSetChanged(mycolorset);
 		mysnprintf(command, countof(command), "colorset %d", mycolorset);
 		C_DoCommand(command);
 		UpdateTranslation();
@@ -906,10 +909,10 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 
 	if (li->GetValue(0, &sel))
 	{
-		players[consoleplayer].userinfo.PlayerClass = sel-1;
+		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel-1);
 		PickPlayerClass();
 
-		cvar_set ("playerclass", sel == 0 ? "Random" : PlayerClass->Type->DisplayName.GetChars());
+		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->DisplayName.GetChars());
 
 		UpdateSkins();
 		UpdateColorsets();
@@ -918,7 +921,7 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 		li = GetItem(NAME_Playerdisplay);
 		if (li != NULL)
 		{
-			li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.PlayerClass);
+			li->SetValue(FListMenuItemPlayerDisplay::PDF_CLASS, players[consoleplayer].userinfo.GetPlayerClassNum());
 		}
 	}
 }
@@ -932,7 +935,7 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 void DPlayerMenu::SkinChanged (FListMenuItem *li)
 {
 	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
-		players[consoleplayer].userinfo.PlayerClass == -1)
+		players[consoleplayer].userinfo.GetPlayerClassNum() == -1)
 	{
 		return;
 	}
@@ -942,7 +945,7 @@ void DPlayerMenu::SkinChanged (FListMenuItem *li)
 	if (li->GetValue(0, &sel))
 	{
 		sel = PlayerSkins[sel];
-		players[consoleplayer].userinfo.skin = sel;
+		players[consoleplayer].userinfo.SkinNumChanged(sel);
 		UpdateTranslation();
 		cvar_set ("skin", skins[sel].name);
 
@@ -1009,7 +1012,7 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 			case NAME_Red:
 				if (li->GetValue(0, &v))
 				{
-					int color = players[consoleplayer].userinfo.color;
+					uint32 color = players[consoleplayer].userinfo.GetColor();
 					SendNewColor (v, GPART(color), BPART(color));
 				}
 				break;
@@ -1017,7 +1020,7 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 			case NAME_Green:
 				if (li->GetValue(0, &v))
 				{
-					int color = players[consoleplayer].userinfo.color;
+					uint32 color = players[consoleplayer].userinfo.GetColor();
 					SendNewColor (RPART(color), v, BPART(color));
 				}
 				break;
@@ -1025,7 +1028,7 @@ bool DPlayerMenu::MenuEvent (int mkey, bool fromcontroller)
 			case NAME_Blue:
 				if (li->GetValue(0, &v))
 				{
-					int color = players[consoleplayer].userinfo.color;
+					uint32 color = players[consoleplayer].userinfo.GetColor();
 					SendNewColor (RPART(color), GPART(color), v);
 				}
 				break;
@@ -1088,7 +1091,7 @@ bool DPlayerMenu::MouseEvent(int type, int x, int y)
 		case NAME_Red:
 			if (li->GetValue(0, &v))
 			{
-				int color = players[consoleplayer].userinfo.color;
+				uint32 color = players[consoleplayer].userinfo.GetColor();
 				SendNewColor (v, GPART(color), BPART(color));
 			}
 			break;
@@ -1096,7 +1099,7 @@ bool DPlayerMenu::MouseEvent(int type, int x, int y)
 		case NAME_Green:
 			if (li->GetValue(0, &v))
 			{
-				int color = players[consoleplayer].userinfo.color;
+				uint32 color = players[consoleplayer].userinfo.GetColor();
 				SendNewColor (RPART(color), v, BPART(color));
 			}
 			break;
@@ -1104,7 +1107,7 @@ bool DPlayerMenu::MouseEvent(int type, int x, int y)
 		case NAME_Blue:
 			if (li->GetValue(0, &v))
 			{
-				int color = players[consoleplayer].userinfo.color;
+				uint32 color = players[consoleplayer].userinfo.GetColor();
 				SendNewColor (RPART(color), GPART(color), v);
 			}
 			break;

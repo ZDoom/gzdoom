@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 		blast->vely = FixedMul (1*FRACUNIT, finesine[angle]);
 		blast->velz = (FRACUNIT*5/2) + (pr_blast() << 10);
 		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);
-		P_CheckMissileSpawn (blast);
+		P_CheckMissileSpawn (blast, self->radius);
 	}
 	return 0;
 }
@@ -224,7 +224,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 		tiny->velx = FixedMul (FRACUNIT*7/10, finecosine[angle]);
 		tiny->vely = FixedMul (FRACUNIT*7/10, finesine[angle]);
 		tiny->velz = FRACUNIT + (pr_volcimpact() << 9);
-		P_CheckMissileSpawn (tiny);
+		P_CheckMissileSpawn (tiny, self->radius);
 	}
 	return 0;
 }

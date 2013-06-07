@@ -85,8 +85,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (6);
-		P_DamageMobj (target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, target, self);
+		int newdam = P_DamageMobj (target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, target, self);
 		return 0;
 	}
 	dist = P_AproxDistance (self->x-target->x, self->y-target->y)
@@ -118,7 +118,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				fire->velz = baseFire->velz;
 				fire->Damage = NULL;
 				fire->health = (i+1) * 2;
-				P_CheckMissileSpawn (fire);
+				P_CheckMissileSpawn (fire, self->radius);
 			}
 		}
 	}
@@ -193,7 +193,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 		shard->velx = FixedMul (shard->Speed, finecosine[angle]);
 		shard->vely = FixedMul (shard->Speed, finesine[angle]);
 		shard->velz = -FRACUNIT*6/10;
-		P_CheckMissileSpawn (shard);
+		P_CheckMissileSpawn (shard, self->radius);
 	}
 	return 0;
 }

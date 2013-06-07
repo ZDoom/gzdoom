@@ -94,7 +94,7 @@ void FStat::ToggleStat (const char *name)
 void FStat::ToggleStat ()
 {
 	m_Active = !m_Active;
-	SB_state = StatusBar == NULL ? 0 : screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 void FStat::PrintStat ()
@@ -124,7 +124,7 @@ void FStat::PrintStat ()
 	}
 	if (count)
 	{
-		SB_state = screen->GetPageCount ();
+		ST_SetNeedRefresh();
 	}
 }
 

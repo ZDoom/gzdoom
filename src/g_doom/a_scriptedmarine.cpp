@@ -153,9 +153,10 @@ void AScriptedMarine::Tick ()
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(ignoremissile)	{ ignoremissile = false; }
 
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -169,7 +170,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
 		self->SetState (self->state + 1);
 		return 0;
 	}
-	if ((self->MissileState == NULL && !self->CheckMeleeRange ()) ||
+	if (((ignoremissile || self->MissileState == NULL) && !self->CheckMeleeRange ()) ||
 		!P_CheckSight (self, self->target) ||
 		pr_m_refire() < 4)	// Small chance of stopping even when target not dead
 	{

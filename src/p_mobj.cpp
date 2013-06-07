@@ -105,7 +105,6 @@ static FRandom pr_chunk ("Chunk");
 static FRandom pr_checkmissilespawn ("CheckMissileSpawn");
 static FRandom pr_spawnmissile ("SpawnMissile");
 static FRandom pr_missiledamage ("MissileDamage");
- FRandom pr_slam ("SkullSlam");
 static FRandom pr_multiclasschoice ("MultiClassChoice");
 static FRandom pr_rockettrail("RocketTrail");
 static FRandom pr_uniquetid("UniqueTID");
@@ -412,9 +411,7 @@ void AActor::Serialize (FArchive &arc)
 				!(flags4 & MF4_NOSKIN) &&
 				state->sprite == GetDefaultByType (player->cls)->SpawnState->sprite)
 			{ // Give player back the skin
-				sprite = skins[player->userinfo.skin].sprite;
-				scaleX = skins[player->userinfo.skin].ScaleX;
-				scaleY = skins[player->userinfo.skin].ScaleY;
+				sprite = skins[player->userinfo.GetSkin()].sprite;
 			}
 			if (Speed == 0)
 			{
@@ -549,7 +546,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 				// spawning.
 					if (player != NULL && skins != NULL)
 					{
-						sprite = skins[player->userinfo.skin].sprite;
+						sprite = skins[player->userinfo.GetSkin()].sprite;
 					}
 					else if (newsprite != prevsprite)
 					{
@@ -917,7 +914,7 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget, bool resetHealt
 	LastLookPlayerNumber = other->LastLookPlayerNumber;
 	flags  = (flags & ~MF_FRIENDLY) | (other->flags & MF_FRIENDLY);
 	flags3 = (flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (other->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
-	flags4 = (flags4 & ~MF4_NOHATEPLAYERS) | (other->flags4 & MF4_NOHATEPLAYERS);
+	flags4 = (flags4 & ~(MF4_NOHATEPLAYERS | MF4_BOSSSPAWNED)) | (other->flags4 & (MF4_NOHATEPLAYERS | MF4_BOSSSPAWNED));
 	FriendPlayer = other->FriendPlayer;
 	DesignatedTeam = other->DesignatedTeam;
 	if (changeTarget && other->target != NULL && !(other->target->flags3 & MF3_NOTARGET))
@@ -1008,7 +1005,7 @@ bool AActor::IsVisibleToPlayer() const
 		return true;
  
 	if (VisibleToTeam != 0 && teamplay &&
-		VisibleToTeam-1 != players[consoleplayer].userinfo.team )
+		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam() )
 		return false;
 
 	const player_t* pPlayer = players[consoleplayer].camera->player;
@@ -1095,7 +1092,7 @@ bool AActor::Grind(bool items)
 		// ZDoom behavior differs from standard as crushed corpses cannot be raised.
 		// The reason for the change was originally because of a problem with players,
 		// see rh_log entry for February 21, 1999. Don't know if it is still relevant.
-		if (state == NULL 												// Only use the default crushed state if:
+		if (state == NULL 									// Only use the default crushed state if:
 			&& !(flags & MF_NOBLOOD)						// 1. the monster bleeeds,
 			&& (i_compatflags & COMPATF_CORPSEGIBS)			// 2. the compat setting is on,
 			&& player == NULL)								// 3. and the thing isn't a player.
@@ -1159,11 +1156,12 @@ bool AActor::Grind(bool items)
 				gib->alpha = alpha;
 				gib->height = 0;
 				gib->radius = 0;
+
+				PalEntry bloodcolor = GetBloodColor();
+				if (bloodcolor != 0)
+					gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 			}
 			S_Sound (this, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
-
-			PalEntry bloodcolor = GetBloodColor();
-			if (bloodcolor!=0) gib->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
 		if (flags & MF_ICECORPSE)
 		{
@@ -1180,13 +1178,6 @@ bool AActor::Grind(bool items)
 		{
 			Destroy ();
 		}
-		return false;		// keep checking
-	}
-
-	// crunch dropped items
-	if (flags & MF_DROPPED)
-	{
-		if (items) Destroy (); // Only destroy dropped items if wanted
 		return false;		// keep checking
 	}
 
@@ -1487,6 +1478,22 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 
 	PlayBounceSound(true);
+
+	// Set bounce state
+	if (BounceFlags & BOUNCE_UseBounceState)
+	{
+		FName names[2];
+		FState *bouncestate;
+
+		names[0] = NAME_Bounce;
+		names[1] = plane.c < 0 ? NAME_Ceiling : NAME_Floor;
+		bouncestate = FindState(2, names);
+		if (bouncestate != NULL)
+		{
+			SetState(bouncestate);
+		}
+	}
+
 	if (BounceFlags & BOUNCE_MBF) // Bring it to rest below a certain speed
 	{
 		if (abs(velz) < (fixed_t)(Mass * GetGravity() / 64))
@@ -2916,8 +2923,8 @@ bool AActor::Slam (AActor *thing)
 		if (!(flags2 & MF2_DORMANT))
 		{
 			int dam = GetMissileDamage (7, 1);
-			P_DamageMobj (thing, this, this, dam, NAME_Melee);
-			P_TraceBleed (dam, thing, this);
+			int newdam = P_DamageMobj (thing, this, this, dam, NAME_Melee);
+			P_TraceBleed (newdam > 0 ? newdam : dam, thing, this);
 			// The charging monster may have died by the target's actions here.
 			if (health > 0)
 			{
@@ -3164,37 +3171,36 @@ void AActor::Tick ()
 		}
 
 
-		if (cl_rockettrails & 2)
+		if (effects & FX_ROCKET) 
 		{
-			if (effects & FX_ROCKET) 
+			if (++smokecounter == 4)
 			{
-				if (++smokecounter==4)
+				// add some smoke behind the rocket 
+				smokecounter = 0;
+				AActor *th = Spawn("RocketSmokeTrail", x-velx, y-vely, z-velz, ALLOW_REPLACE);
+				if (th)
 				{
-					// add some smoke behind the rocket 
-					smokecounter = 0;
-					AActor * th = Spawn("RocketSmokeTrail", x-velx, y-vely, z-velz, ALLOW_REPLACE);
-					if (th)
-					{
-						th->tics -= pr_rockettrail()&3;
-						if (th->tics < 1) th->tics = 1;
-					}
+					th->tics -= pr_rockettrail()&3;
+					if (th->tics < 1) th->tics = 1;
+					if (!(cl_rockettrails & 2)) th->renderflags |= RF_INVISIBLE;
 				}
 			}
-			else if (effects & FX_GRENADE) 
+		}
+		else if (effects & FX_GRENADE) 
+		{
+			if (++smokecounter == 8)
 			{
-				if (++smokecounter==8)
+				smokecounter = 0;
+				angle_t moveangle = R_PointToAngle2(0,0,velx,vely);
+				AActor * th = Spawn("GrenadeSmokeTrail", 
+					x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
+					y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
+					z - (height>>3) * (velz>>16) + (2*height)/3, ALLOW_REPLACE);
+				if (th)
 				{
-					smokecounter = 0;
-					angle_t moveangle = R_PointToAngle2(0,0,velx,vely);
-					AActor * th = Spawn("GrenadeSmokeTrail", 
-						x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
-						y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
-						z - (height>>3) * (velz>>16) + (2*height)/3, ALLOW_REPLACE);
-					if (th)
-					{
-						th->tics -= pr_rockettrail()&3;
-						if (th->tics < 1) th->tics = 1;
-					}
+					th->tics -= pr_rockettrail()&3;
+					if (th->tics < 1) th->tics = 1;
+					if (!(cl_rockettrails & 2)) th->renderflags |= RF_INVISIBLE;
 				}
 			}
 		}
@@ -3614,23 +3620,35 @@ void AActor::Tick ()
 		}
 	}
 
+	assert (state != NULL);
+	if (state == NULL)
+	{
+		Destroy();
+		return;
+	}
+	if (ObjectFlags & OF_JustSpawned && state->GetNoDelay())
+	{
+		// For immediately spawned objects with the NoDelay flag set for their
+		// Spawn state, explicitly set the current state so that it calls its
+		// action and chains 0-tic states.
+		int starttics = tics;
+		if (!SetState(state))
+			return;				// freed itself
+		// If the initial state had a duration of 0 tics, let the next state run
+		// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
+		if (starttics > 0 && tics >= 0)
+		{
+			tics++;
+		}
+	}
 	// cycle through states, calling action functions at transitions
 	if (tics != -1)
 	{
-		tics--;
-				
-		// you can cycle through multiple states in a tic
-		// [RH] Use <= 0 instead of == 0 so that spawnstates
+		// [RH] Use tics <= 0 instead of == 0 so that spawnstates
 		// of 0 tics work as expected.
-		if (tics <= 0)
+		if (--tics <= 0)
 		{
-			assert (state != NULL);
-			if (state == NULL)
-			{
-				Destroy();
-				return;
-			}
-			if (!SetState (state->GetNextState()))
+			if (!SetState(state->GetNextState()))
 				return; 		// freed itself
 		}
 	}
@@ -3964,7 +3982,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		actor->SpawnPoint[2] = (actor->z - actor->floorz);
 	}
 
-	actor->FloatBobPhase = rng();	// Don't make everything bob in sync
+	if (actor->FloatBobPhase == (BYTE)-1) actor->FloatBobPhase = rng();	// Don't make everything bob in sync (unless deliberately told to do)
 	if (actor->flags2 & MF2_FLOORCLIP)
 	{
 		actor->AdjustFloorClip ();
@@ -4248,7 +4266,7 @@ EXTERN_CVAR (Bool, chasedemo)
 
 extern bool demonew;
 
-APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer)
+APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 {
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
@@ -4275,7 +4293,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 			}
 			else
 			{
-				type = p->userinfo.PlayerClass;
+				type = p->userinfo.GetPlayerClassNum();
 				if (type < 0)
 				{
 					type = pr_multiclasschoice() % PlayerClasses.Size ();
@@ -4349,7 +4367,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 	{
 		G_PlayerReborn (playernum);
 	}
-	else if (oldactor != NULL && oldactor->player == p && !tempplayer)
+	else if (oldactor != NULL && oldactor->player == p && !(flags & SPF_TEMPPLAYER))
 	{
 		// Move the voodoo doll's inventory to the new player.
 		mobj->ObtainInventory (oldactor);
@@ -4357,8 +4375,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 	}
 
 	// [GRB] Reset skin
-	p->userinfo.skin = R_FindSkin (skins[p->userinfo.skin].name, p->CurrentPlayerClass);
-
+	p->userinfo.SkinNumChanged(R_FindSkin (skins[p->userinfo.GetSkin()].name, p->CurrentPlayerClass));
 
 	if (!(mobj->flags2 & MF2_DONTTRANSLATE))
 	{
@@ -4379,9 +4396,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 	// [RH] Set player sprite based on skin
 	if (!(mobj->flags4 & MF4_NOSKIN))
 	{
-		mobj->sprite = skins[p->userinfo.skin].sprite;
-		mobj->scaleX = skins[p->userinfo.skin].ScaleX;
-		mobj->scaleY = skins[p->userinfo.skin].ScaleY;
+		mobj->sprite = skins[p->userinfo.GetSkin()].sprite;
 	}
 
 	p->DesiredFOV = p->FOV = 90.f;
@@ -4424,11 +4439,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 		p->cheats = CF_CHASECAM;
 
 	// setup gun psprite
-	if (!tempplayer)
-	{
-		// This can also start a script so don't do it for
-		// the dummy player.
-		P_SetupPsprites (p);
+	if (!(flags & SPF_TEMPPLAYER))
+	{ // This can also start a script so don't do it for the dummy player.
+		P_SetupPsprites (p, !!(flags & SPF_WEAPONFULLYUP));
 	}
 
 	if (deathmatch)
@@ -4474,7 +4487,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, bool tempplayer
 	}
 
 	// [BC] Do script stuff
-	if (!tempplayer)
+	if (!(flags & SPF_TEMPPLAYER))
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
@@ -4660,7 +4673,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		AllPlayerStarts.Push(start);
 		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
 		{
-			return P_SpawnPlayer(&start, pnum);
+			return P_SpawnPlayer(&start, pnum, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 		return NULL;
 	}
@@ -4854,8 +4867,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
 {
 	AActor *puff;
-
-	z += pr_spawnpuff.Random2 () << 10;
+	
+	if (!(flags & PF_NORANDOMZ))
+		z += pr_spawnpuff.Random2 () << 10;
 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
@@ -5374,10 +5388,8 @@ void P_CheckSplash(AActor *self, fixed_t distance)
 //
 //---------------------------------------------------------------------------
 
-bool P_CheckMissileSpawn (AActor* th)
+bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 {
-	int shift, count = 1;
-
 	// [RH] Don't decrement tics if they are already less than 1
 	if ((th->flags4 & MF4_RANDOMIZE) && th->tics > 0)
 	{
@@ -5386,76 +5398,67 @@ bool P_CheckMissileSpawn (AActor* th)
 			th->tics = 1;
 	}
 
-	// move a little forward so an angle can be computed if it immediately explodes
-	if (th->Speed >= 100*FRACUNIT)
-	{ // Ultra-fast ripper spawning missile
-		shift = 3;
-	}
-	else
-	{ // Normal missile
-		shift = 1;
-	}
-
-	if (th->radius > 0)
+	if (maxdist > 0)
 	{
-		while ( ((th->velx >> shift) > th->radius) || ((th->vely >> shift) > th->radius))
+		// move a little forward so an angle can be computed if it immediately explodes
+		TVector3<double> advance(FIXED2DBL(th->velx), FIXED2DBL(th->vely), FIXED2DBL(th->velz));
+		double maxsquared = FIXED2DBL(maxdist);
+		maxsquared *= maxsquared;
+
+		// Keep halving the advance vector until we get something less than maxdist
+		// units away, since we still want to spawn the missile inside the shooter.
+		do
 		{
-			// we need to take smaller steps but to produce the same end result
-			// we have to do more of them.
-			shift++;
-			count<<=1;
+			advance *= 0.5f;
 		}
+		while (TVector2<double>(advance).LengthSquared() >= maxsquared);
+		th->x += FLOAT2FIXED(advance.X);
+		th->y += FLOAT2FIXED(advance.Y);
+		th->z += FLOAT2FIXED(advance.Z);
 	}
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
 
-	for(int i=0; i<count; i++)
+	// killough 8/12/98: for non-missile objects (e.g. grenades)
+	// 
+	// [GZ] MBF excludes non-missile objects from the P_TryMove test
+	// and subsequent potential P_ExplodeMissile call. That is because
+	// in MBF, a projectile is not an actor with the MF_MISSILE flag
+	// but an actor with either or both the MF_MISSILE and MF_BOUNCES
+	// flags, and a grenade is identified by not having MF_MISSILE.
+	// Killough wanted grenades not to explode directly when spawned,
+	// therefore they can be fired safely even when humping a wall as
+	// they will then just drop on the floor at their shooter's feet.
+	//
+	// However, ZDoom does allow non-missiles to be shot as well, so
+	// Killough's check for non-missiles is inadequate here. So let's
+	// replace it by a check for non-missile and MBF bounce type.
+	// This should allow MBF behavior where relevant without altering
+	// established ZDoom behavior for crazy stuff like a cacodemon cannon.
+	bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
+
+	// killough 3/15/98: no dropoff (really = don't care for missiles)
+	if (!(P_TryMove (th, th->x, th->y, false, NULL, tm, true)))
 	{
-		th->x += th->velx >> shift;
-		th->y += th->vely >> shift;
-		th->z += th->velz >> shift;
-
-		// killough 8/12/98: for non-missile objects (e.g. grenades)
-		// 
-		// [GZ] MBF excludes non-missile objects from the P_TryMove test
-		// and subsequent potential P_ExplodeMissile call. That is because
-		// in MBF, a projectile is not an actor with the MF_MISSILE flag
-		// but an actor with either or both the MF_MISSILE and MF_BOUNCES
-		// flags, and a grenade is identified by not having MF_MISSILE.
-		// Killough wanted grenades not to explode directly when spawned,
-		// therefore they can be fired safely even when humping a wall as
-		// they will then just drop on the floor at their shooter's feet.
-		//
-		// However, ZDoom does allow non-missiles to be shot as well, so
-		// Killough's check for non-missiles is inadequate here. So let's
-		// replace it by a check for non-missile and MBF bounce type.
-		// This should allow MBF behavior where relevant without altering
-		// established ZDoom behavior for crazy stuff like a cacodemon cannon.
-		bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
-
-		// killough 3/15/98: no dropoff (really = don't care for missiles)
-		if (!(P_TryMove (th, th->x, th->y, false, NULL, tm, true)))
+		// [RH] Don't explode ripping missiles that spawn inside something
+		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
 		{
-			// [RH] Don't explode ripping missiles that spawn inside something
-			if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
+			// If this is a monster spawned by A_CustomMissile subtract it from the counter.
+			th->ClearCounters();
+			// [RH] Don't explode missiles that spawn on top of horizon lines
+			if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)
 			{
-				// If this is a monster spawned by A_CustomMissile subtract it from the counter.
-				th->ClearCounters();
-				// [RH] Don't explode missiles that spawn on top of horizon lines
-				if (th->BlockingLine != NULL && th->BlockingLine->special == Line_Horizon)
-				{
-					th->Destroy ();
-				}
-				else if (MBFGrenade && th->BlockingLine != NULL													)
-				{
-					P_BounceWall(th);
-				}
-				else
-				{
-					P_ExplodeMissile (th, NULL, th->BlockingMobj);
-				}
-				return false;
+				th->Destroy ();
 			}
+			else if (MBFGrenade && th->BlockingLine != NULL)
+			{
+				P_BounceWall(th);
+			}
+			else
+			{
+				P_ExplodeMissile (th, NULL, th->BlockingMobj);
+			}
+			return false;
 		}
 	}
 	return true;
@@ -5590,7 +5593,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		th->SetFriendPlayer(owner->player);
 	}
 
-	return (!checkspawn || P_CheckMissileSpawn (th)) ? th : NULL;
+	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
 }
 
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
@@ -5620,7 +5623,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 		th->SetFriendPlayer(owner->player);
 	}
 
-	P_CheckMissileSpawn(th);
+	P_CheckMissileSpawn(th, source->radius);
 	return th;
 }
 
@@ -5709,7 +5712,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 		mo->SetFriendPlayer(owner->player);
 	}
 
-	return (!checkspawn || P_CheckMissileSpawn(mo)) ? mo : NULL;
+	return (!checkspawn || P_CheckMissileSpawn(mo, source->radius)) ? mo : NULL;
 }
 
 /*
@@ -5736,24 +5739,35 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 							  bool nofreeaim)
 {
 	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
-	int i;
 	angle_t an = angle;
 	angle_t pitch;
 	AActor *linetarget;
-	int vrange = nofreeaim? ANGLE_1*35 : 0;
+	AActor *defaultobject = GetDefaultByType(type);
+	int vrange = nofreeaim ? ANGLE_1*35 : 0;
 
-	if (source && source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
+	if (source == NULL)
+	{
+		return NULL;
+	}
+	if (source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
-		pitch = source->pitch; linetarget = NULL;
+		an = angle;
+		pitch = source->pitch;
+		linetarget = NULL;
 	}
 	else // see which target is to be aimed at
 	{
-		i = 2;
+		// [XA] If MaxTargetRange is defined in the spawned projectile, use this as the
+		//      maximum range for the P_AimLineAttack call later; this allows MaxTargetRange
+		//      to function as a "maximum tracer-acquisition range" for seeker missiles.
+		fixed_t linetargetrange = defaultobject->maxtargetrange > 0 ? defaultobject->maxtargetrange*64 : 16*64*FRACUNIT;
+
+		int i = 2;
 		do
 		{
 			an = angle + angdiff[i];
-			pitch = P_AimLineAttack (source, an, 16*64*FRACUNIT, &linetarget, vrange);
+			pitch = P_AimLineAttack (source, an, linetargetrange, &linetarget, vrange);
 	
 			if (source->player != NULL &&
 				!nofreeaim &&
@@ -5763,19 +5777,17 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 				break;
 			}
 		} while (linetarget == NULL && --i >= 0);
-	}
 
-	if (linetarget == NULL)
-	{
-		an = angle;
-		if (nofreeaim || !level.IsFreelookAllowed())
+		if (linetarget == NULL)
 		{
-			pitch = 0;
+			an = angle;
+			if (nofreeaim || !level.IsFreelookAllowed())
+			{
+				pitch = 0;
+			}
 		}
 	}
 	if (pLineTarget) *pLineTarget = linetarget;
-
-	i = GetDefaultByType (type)->flags3;
 
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
@@ -5823,7 +5835,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		MissileActor->SetFriendPlayer(source->player);
 	}
-	if (P_CheckMissileSpawn (MissileActor))
+	if (P_CheckMissileSpawn (MissileActor, source->radius))
 	{
 		return MissileActor;
 	}
@@ -5839,11 +5851,10 @@ bool AActor::IsTeammate (AActor *other)
 	int myTeam = DesignatedTeam;
 	int otherTeam = other->DesignatedTeam;
 	if (player)
-		myTeam = player->userinfo.team;
+		myTeam = player->userinfo.GetTeam();
 	if (other->player)
-		otherTeam = other->player->userinfo.team;
-	if (teamplay && myTeam != TEAM_NONE &&
-		myTeam == otherTeam)
+		otherTeam = other->player->userinfo.GetTeam();
+	if (teamplay && myTeam != TEAM_NONE && myTeam == otherTeam)
 	{
 		return true;
 	}
@@ -6187,26 +6198,26 @@ void PrintMiscActorInfo(AActor *query)
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
 
 		Printf("%s @ %p has the following flags:\n\tflags: %x", query->GetTag(), query, query->flags);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
 		Printf("\n\tflags2: %x", query->flags2);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
 		Printf("\n\tflags3: %x", query->flags3);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
 		Printf("\n\tflags4: %x", query->flags4);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
 		Printf("\n\tflags5: %x", query->flags5);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
 		Printf("\n\tflags6: %x", query->flags6);
-		for (flagi = 0; flagi < 31; flagi++)
+		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-		Printf("\nBounce style: %x\nBounce factors: f:%f, w:%f\nBounce flags: %x", 
+		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
-			FIXED2FLOAT(query->wallbouncefactor), query->BounceFlags);
+			FIXED2FLOAT(query->wallbouncefactor));
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 

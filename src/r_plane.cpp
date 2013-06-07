@@ -492,13 +492,39 @@ void R_ClearPlanes (bool fullclear)
 {
 	int i, max;
 
-	// kg3D - we can't just clear planes if there are fake planes
-	if(!fullclear && fakeActive) return;
-
-	max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
-	for (i = 0; i <= max; i++)	// new code -- killough
-		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
-			freehead = &(*freehead)->next;
+	// Don't clear fake planes if not doing a full clear.
+	if (!fullclear)
+	{
+		for (i = 0; i <= MAXVISPLANES-1; i++)	// new code -- killough
+		{
+			for (visplane_t **probe = &visplanes[i]; *probe != NULL; )
+			{
+				if ((*probe)->sky < 0)
+				{ // fake: move past it
+					probe = &(*probe)->next;
+				}
+				else
+				{ // not fake: move to freelist
+					visplane_t *vis = *probe;
+					*freehead = vis;
+					*probe = vis->next;
+					vis->next = NULL;
+					freehead = &vis->next;
+				}
+			}
+		}
+	}
+	else
+	{
+		max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
+		for (i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
+		{
+			for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
+			{
+				freehead = &(*freehead)->next;
+			}
+		}
+	}
 
 	if (fullclear)
 	{
@@ -597,7 +623,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		skybox = NULL;
 		alpha = FRACUNIT;
 	}
-		
+
 	// New visplane algorithm uses hash table -- killough
 	hash = isskybox ? MAXVISPLANES : visplane_hash (picnum.GetIndex(), lightlevel, height);
 
@@ -1002,15 +1028,15 @@ static void R_DrawSkyStriped (visplane_t *pl)
 CVAR (Bool, tilt, false, 0);
 //CVAR (Int, pa, 0, 0)
 
-void R_DrawPlanes ()
+int R_DrawPlanes ()
 {
 	visplane_t *pl;
 	int i;
-	int vpcount;
+	int vpcount = 0;
 
 	ds_color = 3;
 
-	for (i = vpcount = 0; i < MAXVISPLANES; i++)
+	for (i = 0; i < MAXVISPLANES; i++)
 	{
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
@@ -1024,6 +1050,7 @@ void R_DrawPlanes ()
 			}
 		}
 	}
+	return vpcount;
 }
 
 // kg3D - draw all visplanes with "height"
@@ -1329,13 +1356,12 @@ void R_DrawSkyBoxes ()
 
 	for (*freehead = visplanes[MAXVISPLANES], visplanes[MAXVISPLANES] = NULL; *freehead; )
 		freehead = &(*freehead)->next;
-
 }
 
 ADD_STAT(skyboxes)
 {
 	FString out;
-	out.Format (out, "%d skybox planes", numskyboxes);
+	out.Format ("%d skybox planes", numskyboxes);
 	return out;
 }
 
@@ -1671,7 +1697,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		plane_sz[0] = -plane_sz[0];
 	}
 
-	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (float)(abs(pl->height.ZatPoint (viewx, viewy) - viewz));
+	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(FIXED2DBL(viewx), FIXED2DBL(viewy)) - FIXED2DBL(viewz))) / 65536.0;
 
 	if (pl->height.c > 0)
 		planelightfloat = -planelightfloat;

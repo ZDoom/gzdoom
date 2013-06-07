@@ -280,15 +280,16 @@ FOptionMenuDescriptor *UpdateJoystickConfigMenu(IJoystickConfig *joy)
 			delete opt->mItems[i];
 			opt->mItems.Clear();
 		}
-		opt->mTitle.Format("Configure %s", joy->GetName().GetChars());
-
 		if (joy == NULL)
 		{
+			opt->mTitle = "Configure Controller";
 			it = new FOptionMenuItemStaticText("Invalid controller specified for menu", false);
 			opt->mItems.Push(it);
 		}
 		else
 		{
+			opt->mTitle.Format("Configure %s", joy->GetName().GetChars());
+
 			SELECTED_JOYSTICK = joy;
 
 			it = new FOptionMenuSliderJoySensitivity("Overall sensitivity", 0, 2, 0.1, 3);

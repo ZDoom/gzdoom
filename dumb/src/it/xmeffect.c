@@ -167,6 +167,7 @@ if (log) printf(" - %2d %02X", effect, value);
 		case XM_SET_GLOBAL_VOLUME:
 			effect = IT_SET_GLOBAL_VOLUME;
 			value *= 2;
+			if (value > 128) value = 128;
 			break;
 
 		case XM_KEY_OFF:
@@ -187,6 +188,7 @@ if (log) printf(" - %2d %02X", effect, value);
 		case EBASE+XM_E_SET_PANNING:           effect = SBASE+IT_S_SET_PAN;               break;
 		case EBASE+XM_E_FINE_VOLSLIDE_UP:      effect = IT_XM_FINE_VOLSLIDE_UP;           break;
 		case EBASE+XM_E_FINE_VOLSLIDE_DOWN:    effect = IT_XM_FINE_VOLSLIDE_DOWN;         break;
+		case EBASE+XM_E_SET_MIDI_MACRO:        effect = SBASE+IT_S_SET_MIDI_MACRO;        break;
 
 		case EBASE + XM_E_FINE_PORTA_UP:
 			effect = IT_PORTAMENTO_UP;

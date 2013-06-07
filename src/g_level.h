@@ -179,7 +179,7 @@ enum ELevelFlags
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
-	/*							= 0x00000080,	*/
+	LEVEL2_PRERAISEWEAPON		= 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
 	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
 	LEVEL2_CLIPMIDTEX			= 0x00000200,
 	LEVEL2_WRAPMIDTEX			= 0x00000400,
@@ -424,6 +424,8 @@ struct FLevelLocals
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
+	TObjPtr<class ASkyViewpoint> DefaultSkybox;
+
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
@@ -498,6 +500,7 @@ enum
 	CHANGELEVEL_CHANGESKILL = 8,
 	CHANGELEVEL_NOINTERMISSION = 16,
 	CHANGELEVEL_RESETHEALTH = 32,
+	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
@@ -512,7 +515,7 @@ void G_InitLevelLocals (void);
 void G_AirControlChanged ();
 
 cluster_info_t *FindClusterInfo (int cluster);
-level_info_t *FindLevelInfo (const char *mapname);
+level_info_t *FindLevelInfo (const char *mapname, bool allowdefault=true);
 level_info_t *FindLevelByNum (int num);
 level_info_t *CheckLevelRedirect (level_info_t *info);
 

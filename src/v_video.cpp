@@ -491,7 +491,7 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 		else
 		{
 normal:
-			// Treat it as a space-delemited hexadecimal string
+			// Treat it as a space-delimited hexadecimal string
 			for (i = 0; i < 3; ++i)
 			{
 				// Skip leading whitespace
@@ -1605,7 +1605,7 @@ void V_Init2()
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 	setsizeneeded = true;
 }
 

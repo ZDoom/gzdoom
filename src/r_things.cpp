@@ -1981,7 +1981,6 @@ void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
 
 void R_DrawMasked (void)
 {
-	DrewAVoxel = true;		// TESTME
 	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
 
 	if (height_top == NULL)

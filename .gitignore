@@ -1,0 +1,10 @@
+/Debug
+/*.ncb
+/*.suo
+/Release
+/wadsrc_wad
+/*.user
+/debug
+/release
+/release_gcc
+/DOOMSTATS.TXT

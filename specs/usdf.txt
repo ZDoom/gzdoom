@@ -113,14 +113,14 @@ conversation // Starts a dialog.
 
             // The amount of an item needed to successfully pick this option.
             // This can be repeated, but only the first will be shown (provided 
-            // diaplaycost is true).  All costs must be satisfied for success.
+            // displaycost is true).  All costs must be satisfied for success.
             cost
             {
                 item   = <integer>; // Item that is required for this option.
                 amount = <integer>; // Minimum amount of the item needed.
             }
 
-            displaycost     = <bool>;    // Weather the cost should be
+            displaycost     = <bool>;    // Whether the cost should be
                                          // displayed with the option.
                                          // If no cost is specified this should
                                          // be ignored.

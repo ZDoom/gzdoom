@@ -1498,7 +1498,7 @@ void P_SetRenderSector()
 		seg_t *seg = ss->firstline;
 
 		// Check for one-dimensional subsectors. These should be ignored when
-		// being processed for automap drawinng etc.
+		// being processed for automap drawing etc.
 		ss->flags |= SSECF_DEGENERATE;
 		for(j=2; j<ss->numlines; j++)
 		{

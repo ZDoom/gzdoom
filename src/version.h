@@ -41,12 +41,12 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "2.8pre"
+#define VERSIONSTR "1.9pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,7,9999,0
-#define RC_PRODUCTVERSION 2,7,9999,0
-#define RC_PRODUCTVERSION2 "2.8pre"
+#define RC_FILEVERSION 1,8,9999,0
+#define RC_PRODUCTVERSION 1,8,9999,0
+#define RC_PRODUCTVERSION2 "1.9pre"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
@@ -82,21 +82,23 @@ const char *GetVersionString();
 #define SAVEVERSTRINGIFY(x) #x
 #define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
 
+#define DYNLIGHT
+
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "ZDOOM"
-#define BASEWAD "zdoom.pk3"
+#define GAMESIG "GZDOOM"
+#define BASEWAD "gzdoom.pk3"
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "ZDoom"
-#define FORUM_URL "http://forum.zdoom.org"
-#define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
+#define GAMENAME "GZDoom"
+#define FORUM_URL "http://forum.drdteam.org"
+#define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=24"
 
 #ifdef unix
-#define GAME_DIR ".config/zdoom"
+#define GAME_DIR ".config/gzdoom"
 #elif defined(__APPLE__)
 #define GAME_DIR GAMENAME
 #else
-#define CDROM_DIR "C:\\ZDOOMDAT"
+#define CDROM_DIR "C:\\GZDOOMDAT"
 #endif
 
 

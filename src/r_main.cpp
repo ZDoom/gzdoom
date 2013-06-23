@@ -263,7 +263,7 @@ void R_SetVisibility (float vis)
 
 	CurrentVisibility = vis;
 
-	if (FocalTangent == 0)
+	if (FocalTangent == 0 || FocalLengthY == 0)
 	{ // If r_visibility is called before the renderer is all set up, don't
 	  // divide by zero. This will be called again later, and the proper
 	  // values can be initialized then.

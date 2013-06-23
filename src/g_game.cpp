@@ -2058,6 +2058,8 @@ static void PutSavePic (FILE *file, int width, int height)
 
 void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
 {
+	char buf[100];
+
 	// Do not even try, if we're not in a level. (Can happen after
 	// a demo finishes playback.)
 	if (lines == NULL || sectors == NULL)
@@ -2084,7 +2086,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	SaveVersion = SAVEVER;
 	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
-	M_AppendPNGText (stdfile, "Software", "ZDoom " DOTVERSIONSTR);
+	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
+	M_AppendPNGText (stdfile, "Software", buf);
 	M_AppendPNGText (stdfile, "Engine", GAMESIG);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
 	M_AppendPNGText (stdfile, "Title", description);

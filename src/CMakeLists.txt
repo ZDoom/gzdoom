@@ -483,12 +483,12 @@ if( BACKPATCH )
 	add_definitions( -DBACKPATCH )
 endif( BACKPATCH )
 
-# Update svnrevision.h
+# Update gitinfo.h
 
 get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )
 
 add_custom_target( revision_check ALL
-	COMMAND ${UPDATEREVISION_EXE} . src/svnrevision.h
+	COMMAND ${UPDATEREVISION_EXE} . src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 

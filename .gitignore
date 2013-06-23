@@ -24,4 +24,4 @@
 /tools/*/*.exe
 /tools/lemon/build
 /tools/re2c/build
-/wadsrc/*.pk3
+/wadsrc*/*.pk3

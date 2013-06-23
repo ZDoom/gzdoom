@@ -11,9 +11,9 @@ endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DDEBUGMODE=1" )
 
-if( CMAKE_COMPILER_IS_GNUC )
+if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -Wno-uninitialized" )
-endif( CMAKE_COMPILER_IS_GNUC )
+endif( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 
 CHECK_FUNCTION_EXISTS( itoa ITOA_EXISTS )
 if( NOT ITOA_EXISTS )
@@ -101,6 +101,6 @@ add_library( dumb
     src/it/xmeffect.c )
 target_link_libraries( dumb )
 
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	set_source_files_properties( src/it/filter.cpp PROPERTIES COMPILE_FLAGS -msse )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )

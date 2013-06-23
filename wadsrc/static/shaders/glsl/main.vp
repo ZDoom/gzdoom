@@ -1,0 +1,75 @@
+#ifndef NO_FOG
+	varying vec4 pixelpos;
+	attribute vec4 fogparams;
+	varying vec4 fogparm;
+#endif
+#ifndef NO_GLOW
+	varying vec2 glowdist;
+	attribute vec2 glowdistance;
+#endif
+
+#ifdef SOFTLIGHT
+	attribute float lightlevel_in;
+	varying float lightlevel;
+#endif
+
+void main()
+{
+	#ifdef SOFTLIGHT
+		lightlevel = lightlevel_in;
+	#endif
+
+	#ifndef NO_SM4
+		// Yes, I know... But using a texture matrix here saves me from the hassle of tracking its state across shaders. ;)
+		vec4 worldcoord = gl_TextureMatrix[7] * gl_Vertex;
+	#else
+		vec4 worldcoord = gl_Vertex;
+	#endif
+	vec4 eyeCoordPos = gl_ModelViewMatrix * worldcoord;
+
+	gl_FrontColor = gl_Color;
+
+	#ifndef NO_FOG
+		pixelpos.xyz = worldcoord.xyz;
+		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
+		fogparm = fogparams;
+	#endif
+	
+	#ifndef NO_GLOW
+		glowdist = glowdistance;
+	#endif
+	
+	#ifdef SPHEREMAP
+		vec3 u = normalize(eyeCoordPos.xyz);
+		vec3 n = normalize(gl_NormalMatrix * gl_Normal);
+		vec3 r = reflect(u, n);
+		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
+		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
+	#endif
+	
+	
+	#ifndef SPHEREMAP_0
+		gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+	#else
+		gl_TexCoord[0].xy = sst;
+	#endif
+	
+	/* only for reference purposes. I don't think this will ever get used.
+	#ifdef NUM_LAYERS
+		#ifndef SPHEREMAP_1
+			gl_TexCoord[1] = gl_TextureMatrix[1] * gl_MultiTexCoord0;
+		#else
+			gl_TexCoord[1].xy = sst;
+		#endif
+	#endif
+	*/
+	
+	#ifndef NO_SM4
+		gl_Position = gl_ModelViewProjectionMatrix * worldcoord;
+	#else
+		gl_Position = ftransform();
+	#endif
+    #ifdef __GLSL_CG_DATA_TYPES
+		gl_ClipVertex = eyeCoordPos;
+	#endif
+}

@@ -2424,10 +2424,6 @@
 			Name="Versioning"
 			>
 			<File
-				RelativePath=".\src\baseversion.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\version.h"
 				>
 			</File>

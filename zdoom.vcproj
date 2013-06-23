@@ -1168,10 +1168,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\d_dehackedactions.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\d_event.h"
 				>
 			</File>

@@ -118,7 +118,7 @@ public:
 	
 	fixed_t viewdistance;
 
-	BYTE lightlevel;
+	int lightlevel;
 	BYTE type;
 	BYTE flags;
 	short rellight;

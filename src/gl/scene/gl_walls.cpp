@@ -1098,7 +1098,7 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 	float to;
 	lightlist_t * light;
 	bool translucent;
-	byte savelight=lightlevel;
+	int savelight=lightlevel;
 	FColormap savecolor=Colormap;
 	float ul;
 	float texlength;
@@ -1108,12 +1108,12 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 	{
 		if (!gl_fixedcolormap)
 		{
-			// this may not yet be done!
+			// this may not yet be done
 			light=P_GetPlaneLight(rover->target, rover->top.plane,true);
 			Colormap.Clear();
 			Colormap.LightColor=(light->extra_colormap)->Fade;
-			// the fog plane defines the light level, not the front sector!
-			lightlevel=*light->p_lightlevel;
+			// the fog plane defines the light level, not the front sector
+			lightlevel = gl_ClampLight(*light->p_lightlevel);
 			gltexture=NULL;
 			type=RENDERWALL_FFBLOCK;
 		}
@@ -1520,7 +1520,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 	int rel = 0;
 	int orglightlevel = gl_ClampLight(frontsector->lightlevel);
-	lightlevel = seg->sidedef->GetLightLevel(!!(flags&GLWF_FOGGY), orglightlevel, false, &rel);
+	lightlevel = gl_ClampLight(seg->sidedef->GetLightLevel(!!(flags&GLWF_FOGGY), orglightlevel, false, &rel));
 	if (orglightlevel >= 253)			// with the software renderer fake contrast won't be visible above this.
 	{
 		rellight = 0;					

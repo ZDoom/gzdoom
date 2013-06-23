@@ -619,7 +619,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		FString cmd("kdialog --title \""GAMESIG" ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
 		            " --menu \"ZDoom found more than one IWAD\n"
-		            "Select from the list below to determine which one to use:\"");
+		            "Select from the list below to determine which one to use:\"";
 
 		for(i = 0; i < numwads; ++i)
 		{

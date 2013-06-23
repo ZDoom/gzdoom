@@ -701,6 +701,7 @@ add_executable( zdoom WIN32
 	g_skill.cpp
 	gameconfigfile.cpp
 	gi.cpp
+	gitinfo.cpp
 	hu_scores.cpp
 	i_net.cpp
 	info.cpp

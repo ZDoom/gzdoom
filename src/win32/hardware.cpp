@@ -56,11 +56,47 @@ EXTERN_CVAR (Float, vid_winscale)
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-extern HWND Window;
+#include "win32gliface.h"
 
 bool ForceWindowed;
 
 IVideo *Video;
+
+
+void I_RestartRenderer();
+int currentrenderer = -1;
+bool changerenderer;
+
+// [ZDoomGL]
+CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// 0: Software renderer
+	// 1: OpenGL renderer
+
+	if (self != currentrenderer)
+	{
+		switch (self)
+		{
+		case 0:
+			Printf("Switching to software renderer...\n");
+			break;
+		case 1:
+			Printf("Switching to OpenGL renderer...\n");
+			break;
+		default:
+			Printf("Unknown renderer (%d).  Falling back to software renderer...\n", *vid_renderer);
+			self = 0; // make sure to actually switch to the software renderer
+			break;
+		}
+		//changerenderer = true;
+		Printf("You must restart "GAMENAME" to switch the renderer\n");
+	}
+}
+
+CCMD (vid_restart)
+{
+}
+
 
 void I_ShutdownGraphics ()
 {
@@ -94,15 +130,18 @@ void I_InitGraphics ()
 		// not receive a WM_ACTIVATEAPP message, so both games think they
 		// are the active app. Huh?
 	}
-
 	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
-	Video = new Win32Video (0);
+
+	//currentrenderer = vid_renderer;
+	if (currentrenderer==1) Video = new Win32GLVideo(0);
+	else Video = new Win32Video (0);
+
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
-
+	
 	atterm (I_ShutdownGraphics);
-
+	
 	Video->SetWindowedScale (vid_winscale);
 }
 
@@ -113,9 +152,11 @@ static void I_DeleteRenderer()
 
 void I_CreateRenderer()
 {
+	currentrenderer = vid_renderer;
 	if (Renderer == NULL)
 	{
-		Renderer = new FSoftwareRenderer;
+		if (currentrenderer==1) Renderer = gl_CreateInterface();
+		else Renderer = new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);
 	}
 }
@@ -148,12 +189,12 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 	}
 	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
 
-	/* Right now, CreateFrameBuffer cannot return NULL
+	//* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
 	{
 		I_FatalError ("Mode %dx%d is unavailable\n", width, height);
 	}
-	*/
+	//*/
 	return res;
 }
 
@@ -332,7 +373,7 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		NewWidth = screen->GetWidth();
 		NewHeight = screen->GetHeight();
 		NewBits = DisplayBits;
-		setmodeneeded = true;
+		//setmodeneeded = true;	// This CVAR doesn't do anything and only causes problems!
 	}
 }
 

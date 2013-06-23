@@ -283,7 +283,6 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 	bool 		rtn;
 	sector_t*	sec;
 	DFloor*		floor;
-	//bool		manual = false; tag == 0 and manual == true constitutes the same evidence [fdari]
 	fixed_t		ceilingheight;
 	fixed_t		newheight;
 	vertex_t	*spot, *spot2;
@@ -296,7 +295,6 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		if (!line || !(sec = line->backsector))
 			return rtn;
 		secnum = (int)(sec-sectors);
-		//manual = true;
 		goto manual_floor;
 	}
 
@@ -814,7 +812,6 @@ bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
 	DFloor*				floor;
 	vertex_t*			spot;
 	fixed_t				height;
-	// bool				manual = false; Instead of breaking when manual is true, fail to (re)enter loop when tag is false (0).
 		
 	secnum = -1;
 	rtn = false;
@@ -823,7 +820,6 @@ bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
 	{
 		if (!line || !(s1 = line->backsector))
 			return rtn;
-		//manual = true;
 		goto manual_donut;
 	}
 
@@ -1378,7 +1374,6 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 	sector_t *sector;
 	DWaggleBase *waggle;
 	bool retCode;
-	//bool manual = false;
 
 	retCode = false;
 	sectorIndex = -1;
@@ -1387,7 +1382,6 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 	{
 		if (!line || !(sector = line->backsector))
 			return retCode;
-		//manual = true;
 		goto manual_waggle;
 	}
 

@@ -36,8 +36,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -58,8 +58,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -80,8 +80,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -102,8 +102,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;"
 			/>
 		</Configuration>
 	</Configurations>

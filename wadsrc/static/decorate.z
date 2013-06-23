@@ -1,0 +1,102 @@
+ACTOR DynamicLight native
+{
+	Height 0
+	Radius 0.1
+	FloatBobPhase 0
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+FIXMAPTHINGPOS
+	+INVISIBLE
+}
+
+
+ACTOR PointLight : DynamicLight 9800
+{
+	DynamicLight.Type "Point"
+}
+
+ACTOR PointLightPulse : PointLight 9801
+{
+	DynamicLight.Type "Pulse"
+}
+
+ACTOR PointLightFlicker : PointLight 9802
+{
+	DynamicLight.Type "Flicker"
+}
+
+ACTOR SectorPointLight : PointLight 9803
+{
+	DynamicLight.Type "Sector"
+}
+
+ACTOR PointLightFlickerRandom : PointLight 9804
+{
+	DynamicLight.Type "RandomFlicker"
+}
+
+// MISSILEMORE and MISSILEEVENMORE are used by the lights for additive and subtractive lights
+
+ACTOR PointLightAdditive : PointLight 9810
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightPulseAdditive : PointLightPulse 9811
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightFlickerAdditive : PointLightFlicker 9812
+{
+   +MISSILEMORE
+}
+
+ACTOR SectorPointLightAdditive : SectorPointLight 9813
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightFlickerRandomAdditive :PointLightFlickerRandom 9814
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightSubtractive : PointLight 9820
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR PointLightPulseSubtractive : PointLightPulse 9821
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR PointLightFlickerSubtractive : PointLightFlicker 9822
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR SectorPointLightSubtractive : SectorPointLight 9823
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR PointLightFlickerRandomSubtractive : PointLightFlickerRandom 9824
+{
+   +MISSILEEVENMORE
+}
+
+
+ACTOR VavoomLight : DynamicLight 9825 native
+{
+}
+
+ACTOR VavoomLightWhite : VavoomLight 1502 native
+{
+}
+
+ACTOR VavoomLightColor : VavoomLight 1503 native
+{
+}
+

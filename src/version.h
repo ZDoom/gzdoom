@@ -78,8 +78,8 @@ const char *GetVersionString();
 // SVN revision ever got.
 #define SAVEVER 4500
 
-#define SAVEVERSTRINGIFY2(x) str(x)
-#define SAVEVERSTRINGIFY(x) #x
+#define SAVEVERSTRINGIFY2(x) #x
+#define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
 #define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
 
 #define DYNLIGHT

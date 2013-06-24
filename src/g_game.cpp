@@ -859,10 +859,10 @@ static void ChangeSpy (int changespy)
 
 	// Otherwise, cycle to the next player.
 	bool checkTeam = !demoplayback && deathmatch;
-	int pnum = int(players[consoleplayer].camera->player - players);
-	if (changespy == SPY_CANCEL) {
-		pnum = consoleplayer;
-	} else {
+	int pnum = consoleplayer;
+	if (changespy != SPY_CANCEL) 
+	{
+		pnum = int(players[consoleplayer].camera->player - players);
 		int step = (changespy == SPY_NEXT) ? 1 : -1;
 
 		do

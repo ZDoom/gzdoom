@@ -270,6 +270,10 @@ void AActor::Serialize (FArchive &arc)
 		<< meleethreshold
 		<< meleerange
 		<< DamageType;
+	if (SaveVersion >= 4501)
+	{
+		arc << DamageTypeReceived;
+	}
 	if (SaveVersion >= 3237) 
 	{
 		arc

@@ -657,14 +657,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 
 	FState *diestate = NULL;
-	FName damagetype = (inflictor && inflictor->DeathType != NAME_None) ? inflictor->DeathType : DamageType;
 
-	if (damagetype != NAME_None)
+	if (DamageType != NAME_None)
 	{
-		diestate = FindState (NAME_Death, damagetype, true);
+		diestate = FindState (NAME_Death, DamageType, true);
 		if (diestate == NULL)
 		{
-			if (damagetype == NAME_Ice)
+			if (DamageType == NAME_Ice)
 			{ // If an actor doesn't have an ice death, we can still give them a generic one.
 
 				if (!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH) && (player || (flags3 & MF3_ISMONSTER)))
@@ -683,9 +682,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		// Don't pass on a damage type this actor cannot handle.
 		// (most importantly, prevent barrels from passing on ice damage.)
 		// Massacre must be preserved though.
-		if (damagetype != NAME_Massacre)
+		if (DamageType != NAME_Massacre)
 		{
-			damagetype = NAME_None;	
+			DamageType = NAME_None;	
 		}
 
 		if ((health < gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
@@ -1278,6 +1277,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	if (target->health <= 0)
 	{ // Death
 		target->special1 = damage;
+
+		// use inflictor's death type if it got one.
+		if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
+
 		// check for special fire damage or ice damage deaths
 		if (mod == NAME_Fire)
 		{

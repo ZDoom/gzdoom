@@ -208,8 +208,6 @@ static cheatseq_t HereticCheats[] =
 	{ CheatPonce,			0, 0, 0, {CHT_HEALTH,0},	Cht_Generic },
 	{ CheatSkel,			0, 0, 0, {CHT_KEYS,0},		Cht_Generic },
 	{ CheatChicken,			0, 0, 0, {CHT_MORPH,0},		Cht_Generic },
-	{ CheatAmmo,			0, 0, 0, {CHT_TAKEWEAPS,0},	Cht_Generic },
-	{ CheatGod,				0, 0, 0, {CHT_NOWUDIE,0},	Cht_Generic },
 	{ CheatMassacre,		0, 0, 0, {CHT_MASSACRE,0},	Cht_Generic },
 	{ CheatEngage,			0, 1, 0, {0,0},				Cht_ChangeLevel },
 	{ CheatPowerup1[0],		0, 0, 0, {CHT_GIMMIEA,0},	Cht_Generic },
@@ -223,6 +221,8 @@ static cheatseq_t HereticCheats[] =
 	{ CheatPowerup1[8],		0, 0, 0, {CHT_GIMMIEI,0},	Cht_Generic },
 	{ CheatPowerup1[9],		0, 0, 0, {CHT_GIMMIEJ,0},	Cht_Generic },
 	{ CheatPowerup1[10],	0, 0, 0, {CHT_GIMMIEZ,0},	Cht_Generic },
+	{ CheatAmmo,			0, 0, 0, {CHT_TAKEWEAPS,0},	Cht_Generic },
+	{ CheatGod,				0, 0, 0, {CHT_NOWUDIE,0},	Cht_Generic },
 };
 
 static cheatseq_t HexenCheats[] =
@@ -270,7 +270,6 @@ static cheatseq_t StrifeCheats[] =
 
 static cheatseq_t ChexCheats[] =
 {
-	{ CheatMus,				0, 1, 0, {0,0},				Cht_Music },
 	{ CheatKimHyers,		0, 1, 0, {0,0},				Cht_MyPos },
 	{ CheatShrrill,			0, 0, 0, {0,0},				Cht_AutoMap },
 	{ CheatDavidBrus,		0, 0, 0, {CHT_IDDQD,0},		Cht_Generic },
@@ -284,7 +283,8 @@ static cheatseq_t ChexCheats[] =
 	{ CheatDigitalCafe,		0, 0, 0, {CHT_BEHOLDA,0},	Cht_Generic },
 	{ CheatJoshuaStorms,	0, 0, 0, {CHT_BEHOLDL,0},	Cht_Generic },
 	{ CheatJoelKoenigs,		0, 0, 0, {CHT_CHAINSAW,0},	Cht_Generic },
-	{ CheatLeeSnyder,		0, 1, 0, {0,0},				Cht_ChangeLevel }
+	{ CheatLeeSnyder,		0, 1, 0, {0,0},				Cht_ChangeLevel },
+	{ CheatMus,				0, 1, 0, {0,0},				Cht_Music },
 };
 
 static cheatseq_t SpecialCheats[] =
@@ -342,8 +342,8 @@ bool ST_Responder (event_t *ev)
 	else
 	{
 		static cheatseq_t *cheatlists[] = { DoomCheats, HereticCheats, HexenCheats, StrifeCheats, ChexCheats, SpecialCheats };
-		static int counts[] = { countof(DoomCheats), countof(HereticCheats), countof(HexenCheats), 
-								countof(StrifeCheats), countof(ChexCheats), countof(SpecialCheats) };
+		static int counts[] = { countof(DoomCheats), countof(HereticCheats)-2, countof(HexenCheats), 
+								countof(StrifeCheats), countof(ChexCheats)-1, countof(SpecialCheats) };
 
 		for (size_t i=0; i<countof(cheatlists); i++)
 		{

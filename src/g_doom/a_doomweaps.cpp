@@ -115,6 +115,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	angle_t slope;
 	player_t *player;
 	AActor *linetarget;
+	int actualdamage;
 
 	ACTION_PARAM_START(9);
 	ACTION_PARAM_SOUND(fullsound, 0);
@@ -151,7 +152,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 			return;
 	}
 
-	P_LineAttack (self, angle, Range, slope, damage, NAME_Melee, pufftype, false, &linetarget);
+	P_LineAttack (self, angle, Range, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
 
 	if (!linetarget)
 	{
@@ -180,8 +181,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 		}
 	}
 
-	if (LifeSteal)
-		P_GiveBody (self, (damage * LifeSteal) >> FRACBITS);
+	if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
+		P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS);
 
 	S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		

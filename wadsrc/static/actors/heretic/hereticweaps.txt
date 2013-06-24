@@ -233,6 +233,7 @@ ACTOR GoldWandPuff2 : GoldWandFX1
 	Skip_Super
 	+NOBLOCKMAP
 	+NOGRAVITY
+	+PUFFONACTORS
 	States
 	{
 	Spawn:

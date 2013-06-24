@@ -96,10 +96,10 @@ const char* GameInfoBorders[] =
 		strcpy(gameinfo.key, sc.String); \
 	}
 
-#define GAMEINFOKEY_STRINGARRAY(key, variable, length) \
+#define GAMEINFOKEY_STRINGARRAY(key, variable, length, clear) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
 	{ \
-		gameinfo.key.Clear(); \
+		if (clear) gameinfo.key.Clear(); \
 		do \
 		{ \
 			sc.MustGetToken(TK_StringConst); \
@@ -282,8 +282,10 @@ void FMapInfoParser::ParseGameInfo()
 		}
 		// Insert valid keys here.
 		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
-		GAMEINFOKEY_STRINGARRAY(creditPages, "creditPage", 8)
-		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0)
+		GAMEINFOKEY_STRINGARRAY(creditPages, "addcreditPage", 8, false)
+		GAMEINFOKEY_STRINGARRAY(creditPages, "CreditPage", 8, true)
+		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "addplayerclasses", 0, false)
+		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0, true)
 		GAMEINFOKEY_STRING(titleMusic, "titleMusic")
 		GAMEINFOKEY_FLOAT(titleTime, "titleTime")
 		GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")
@@ -291,8 +293,9 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRING(chatSound, "chatSound")
 		GAMEINFOKEY_STRING(finaleMusic, "finaleMusic")
 		GAMEINFOKEY_CSTRING(finaleFlat, "finaleFlat", 8)
-		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8)
-		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8)
+		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8, true)
+		GAMEINFOKEY_STRINGARRAY(infoPages, "addinfoPage", 8, false)
+		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8, true)
 		GAMEINFOKEY_CSTRING(PauseSign, "pausesign", 8)
 		GAMEINFOKEY_STRING(quitSound, "quitSound")
 		GAMEINFOKEY_CSTRING(borderFlat, "borderFlat", 8)
@@ -321,7 +324,8 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
 		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
 		GAMEINFOKEY_INT(player5start, "player5start")
-		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0)
+		GAMEINFOKEY_STRINGARRAY(quitmessages, "addquitmessages", 0, false)
+		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0, true)
 		GAMEINFOKEY_STRING(mTitleColor, "menufontcolor_title")
 		GAMEINFOKEY_STRING(mFontColor, "menufontcolor_label")
 		GAMEINFOKEY_STRING(mFontColorValue, "menufontcolor_value")

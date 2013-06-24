@@ -265,7 +265,7 @@ enum
 	
 // --- mobj.flags5 ---
 
-	/*					= 0x00000001,	*/
+	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
 	/*					= 0x00000002,	*/
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	/*					= 0x00000008,	*/

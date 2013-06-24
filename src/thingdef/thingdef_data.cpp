@@ -182,6 +182,7 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF4, NOSKIN, AActor, flags4),
 	DEFINE_FLAG(MF4, BOSSDEATH, AActor, flags4),
 
+	DEFINE_FLAG(MF5, DONTDRAIN, AActor, flags5),
 	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
 	DEFINE_FLAG(MF5, COUNTSECRET, AActor, flags5),
 	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),

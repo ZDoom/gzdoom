@@ -41,9 +41,9 @@ int main(int argc, char **argv)
 	vertag[0] = '\0';
 	lastlog[0] = '\0';
 
-	if (argc != 3)
+	if (argc != 2)
 	{
-		fprintf(stderr, "Usage: %s <repository directory> <path to gitinfo.h>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <path to gitinfo.h>\n", argv[0]);
 		return 1;
 	}
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 		hash = lastlog + 1;
 	}
 
-	stream = fopen (argv[2], "r");
+	stream = fopen (argv[1], "r");
 	if (stream != NULL)
 	{
 		if (!gotrev)
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
 	if (needupdate)
 	{
-		stream = fopen (argv[2], "w");
+		stream = fopen (argv[1], "w");
 		if (stream == NULL)
 		{
 			return 1;
@@ -125,11 +125,11 @@ int main(int argc, char **argv)
 "#define GIT_TIME \"%s\"\n",
 			hash, vertag, hash, lastlog);
 		fclose(stream);
-		fprintf(stderr, "%s updated to commit %s.\n", argv[2], vertag);
+		fprintf(stderr, "%s updated to commit %s.\n", argv[1], vertag);
 	}
 	else
 	{
-		fprintf (stderr, "%s is up to date at commit %s.\n", argv[2], vertag);
+		fprintf (stderr, "%s is up to date at commit %s.\n", argv[1], vertag);
 	}
 
 	return 0;

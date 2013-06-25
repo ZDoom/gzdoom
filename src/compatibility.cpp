@@ -80,6 +80,7 @@ enum
 	CP_SETACTIVATION,
 	CP_SECTORFLOOROFFSET,
 	CP_SETWALLYSCALE,
+	CP_SETTHINGZ,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -294,6 +295,15 @@ void ParseCompatibility()
 				sc.MustGetFloat();
 				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
+			else if (sc.Compare("setthingz"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETTHINGZ);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetFloat();
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
+			}
 			else 
 			{
 				sc.UnGet();
@@ -497,6 +507,16 @@ void SetCompatibilityParams()
 					i += 5;
 					break;
 				}
+				case CP_SETTHINGZ:
+				{
+					// When this is called, the things haven't been spawned yet so we can alter the position inside the MapThings array.
+					if (CompatParams[i+1] < MapThingsConverted.Size())
+					{
+						MapThingsConverted[CompatParams[i+1]].z = CompatParams[i+2];
+					}
+					i += 3;
+					break;
+				}	
 			}
 		}
 	}

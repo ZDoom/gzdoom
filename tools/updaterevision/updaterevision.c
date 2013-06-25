@@ -29,8 +29,7 @@ void stripnl(char *str)
 
 int main(int argc, char **argv)
 {
-	char *name;
-	char vertag[64], lastlog[64], lasthash[64], run[256], *hash = NULL;
+	char vertag[64], lastlog[64], lasthash[64], *hash = NULL;
 	FILE *stream = NULL;
 	int gotrev = 0, needupdate = 1;
 
@@ -47,33 +46,19 @@ int main(int argc, char **argv)
 	// on a tag, it returns that tag. Otherwise it returns <most recent tag>-<number of
 	// commits since the tag>-<short hash>.
 	// Use git log to get the time of the latest commit in ISO 8601 format and its full hash.
-	sprintf(run, "git describe --tags && git log -1 --format=%%ai*%%H", argv[1]);
-	if ((name = tempnam(NULL, "gitout")) != NULL)
+	stream = popen("git describe --tags && git log -1 --format=%ai*%H", "r");
+
+	if (NULL != stream)
 	{
-#ifdef __APPLE__
-		// tempnam will return errno of 2 even though it is successful for our purposes.
-		errno = 0;
-#endif
-		if((stream = freopen(name, "w+b", stdout)) != NULL &&
-		   system(run) == 0 &&
-		   errno == 0 &&
-		   fseek(stream, 0, SEEK_SET) == 0 &&
-		   fgets(vertag, sizeof vertag, stream) == vertag &&
-		   fgets(lastlog, sizeof lastlog, stream) == lastlog)
+		if (fgets(vertag, sizeof vertag, stream) == vertag &&
+			fgets(lastlog, sizeof lastlog, stream) == lastlog)
 		{
 			stripnl(vertag);
 			stripnl(lastlog);
 			gotrev = 1;
 		}
-	}
-	if (stream != NULL)
-	{
-		fclose(stream);
-		remove(name);
-	}
-	if (name != NULL)
-	{
-		free(name);
+
+		pclose(stream);
 	}
 
 	if (gotrev)

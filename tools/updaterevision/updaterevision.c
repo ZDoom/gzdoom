@@ -14,6 +14,11 @@
 #include <ctype.h>
 #include <errno.h>
 
+#ifdef _WIN32
+#define popen _popen
+#define pclose _pclose
+#endif
+
 // Used to strip newline characters from lines read by fgets.
 void stripnl(char *str)
 {

@@ -347,3 +347,9 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	setlinespecial 397 NoiseAlert 0 0 0 0 0
 	setlinespecial 411 NoiseAlert 0 0 0 0 0
 }
+
+952CC8D03572E17BA550B01B366EFBB9 // Cheogsh map01
+{
+	// make the blue key spawn above the 3D floor
+	setthingz 918 296
+}

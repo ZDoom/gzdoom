@@ -90,6 +90,7 @@ enum
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+extern TArray<FMapThing> MapThingsConverted;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -510,7 +511,7 @@ void SetCompatibilityParams()
 				case CP_SETTHINGZ:
 				{
 					// When this is called, the things haven't been spawned yet so we can alter the position inside the MapThings array.
-					if (CompatParams[i+1] < MapThingsConverted.Size())
+					if ((unsigned)CompatParams[i+1] < MapThingsConverted.Size())
 					{
 						MapThingsConverted[CompatParams[i+1]].z = CompatParams[i+2];
 					}

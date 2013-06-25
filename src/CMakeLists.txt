@@ -505,7 +505,7 @@ endif( BACKPATCH )
 get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )
 
 add_custom_target( revision_check ALL
-	COMMAND ${UPDATEREVISION_EXE} . src/gitinfo.h
+	COMMAND ${UPDATEREVISION_EXE} src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 

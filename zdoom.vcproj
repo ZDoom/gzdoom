@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Checking gitinfo.h..."
-				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src src/gitinfo.h"
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -152,7 +152,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Checking gitinfo.h..."
-				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src src/gitinfo.h"
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -265,7 +265,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Checking gitinfo.h..."
-				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src src/gitinfo.h"
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -372,7 +372,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Checking gitinfo.h..."
-				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src src/gitinfo.h"
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"

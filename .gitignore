@@ -3,6 +3,7 @@
 *.suo
 *.pdb
 *.ilk
+*.aps
 /Release
 /wadsrc_wad
 *.user

@@ -56,6 +56,19 @@
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_templates.h"
 
+#ifndef _WIN32
+struct POINT {
+  SDWORD x; 
+  SDWORD y; 
+};
+struct RECT {
+  SDWORD left; 
+  SDWORD top; 
+  SDWORD right; 
+  SDWORD bottom; 
+}; 
+#endif
+
 EXTERN_CVAR(Bool, gl_vid_compatibility)
 
 //===========================================================================

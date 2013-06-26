@@ -240,6 +240,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	player_t *player;
 	const PClass *pufftype;
 	AActor *linetarget;
+	int actualdamage = 0;
 
 	if (NULL == (player = self->player))
 	{
@@ -273,7 +274,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		pufftype = PClass::FindClass("GauntletPuff1");
 	}
 	slope = P_AimLineAttack (self, angle, dist, &linetarget);
-	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget);
+	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
 	if (!linetarget)
 	{
 		if (pr_gatk() > 64)
@@ -298,7 +299,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	}
 	if (power)
 	{
-		P_GiveBody (self, damage>>1);
+		if (!(linetarget->flags5 & MF5_DONTDRAIN)) P_GiveBody (self, actualdamage>>1);
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
 	}
 	else

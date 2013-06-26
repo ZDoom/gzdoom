@@ -267,8 +267,8 @@ enum
 	
 // --- mobj.flags5 ---
 
-	MF5_INSTATECALL		= 0x00000001,	// This actor is being run through CallStateChain
-	/*					= 0x00000002,	*/
+	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
+	MF5_INSTATECALL		= 0x00000002,	// This actor is being run through CallStateChain
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	/*					= 0x00000008,	*/
 	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret

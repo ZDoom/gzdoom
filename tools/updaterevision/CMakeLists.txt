@@ -1,12 +1,12 @@
 cmake_minimum_required( VERSION 2.4 )
 
 if( WIN32 )
-	if( CMAKE_COMPILER_IS_GNUC OR CMAKE_COMPILER_IS_GNUCXX )
+	if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 		add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/trustinfo.o
 			COMMAND windres -o ${CMAKE_CURRENT_BINARY_DIR}/trustinfo.o -i ${CMAKE_CURRENT_SOURCE_DIR}/trustinfo.rc
 			DEPENDS trustinfo.rc )
 		set( TRUSTINFO trustinfo.o )
-	else( CMAKE_COMPILER_IS_GNUC OR CMAKE_COMPILER_IS_GNUCXX )
+	else( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 		if( MSVC_VERSION GREATER 1399 )
 			# VC 8+ adds a manifest automatically to the executable. We need to
 			# merge ours with it.
@@ -14,7 +14,7 @@ if( WIN32 )
 		else( MSVC_VERSION GREATER 1399 )
 			set( TRUSTINFO trustinfo.rc )
 		endif( MSVC_VERSION GREATER 1399 )
-	endif( CMAKE_COMPILER_IS_GNUC OR CMAKE_COMPILER_IS_GNUCXX )
+	endif( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 endif( WIN32 )
 
 add_executable( updaterevision updaterevision.c ${TRUSTINFO} )

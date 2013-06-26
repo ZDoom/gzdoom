@@ -1095,7 +1095,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			FString newlabel;
 
 			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " " DOTVERSIONSTR_NOREV ": %s", label);
+			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
 			SetWindowText(hDlg, newlabel.GetChars());
 		}
 		// Populate the list with all the IWADs found

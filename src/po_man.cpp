@@ -848,7 +848,7 @@ FPolyObj::FPolyObj()
 
 int FPolyObj::GetMirror()
 {
-	return Linedefs[0]->args[1];
+	return MirrorNum;
 }
 
 //==========================================================================
@@ -1572,6 +1572,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			sd->linedef->special = 0;
 			sd->linedef->args[0] = 0;
 			IterFindPolySides(&polyobjs[index], sd);
+			po->MirrorNum = sd->linedef->args[1];
 			po->crush = (type != PO_SPAWN_TYPE) ? 3 : 0;
 			po->bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
 			po->tag = tag;
@@ -1647,10 +1648,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			po->bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
 			po->tag = tag;
 			po->seqType = po->Sidedefs[0]->linedef->args[3];
-			// Next, change the polyobj's first line to point to a mirror
-			//		if it exists
-			po->Sidedefs[0]->linedef->args[1] =
-				po->Sidedefs[0]->linedef->args[2];
+			po->MirrorNum = po->Sidedefs[0]->linedef->args[2];
 		}
 		else
 			I_Error ("SpawnPolyobj: Poly %d does not exist\n", tag);

@@ -2334,6 +2334,28 @@ int D_LoadDehLumps()
 	{
 		count += D_LoadDehLump(lumpnum);
 	}
+
+	if (0 == PatchSize)
+	{
+		// No DEH/BEX patch is loaded yet, try to find lump(s) with specific extensions
+
+		for (lumpnum = 0, lastlump = Wads.GetNumLumps();
+			 lumpnum < lastlump;
+			 ++lumpnum)
+		{
+			const char* const fullName  = Wads.GetLumpFullName(lumpnum);
+			const char* const extension = strrchr(fullName, '.');
+
+			const bool isDehOrBex = NULL != extension
+				&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
+
+			if (isDehOrBex)
+			{
+				count += D_LoadDehLump(lumpnum);
+			}
+		}
+	}
+
 	return count;
 }
 

@@ -632,8 +632,10 @@ void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 void WritePNGfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
+	char software[100];
+	mysnprintf(software, countof(software), GAMENAME " %s", GetVersionString());
 	if (!M_CreatePNG (file, buffer, palette, color_type, width, height, pitch) ||
-		!M_AppendPNGText (file, "Software", GAMENAME DOTVERSIONSTR) ||
+		!M_AppendPNGText (file, "Software", software) ||
 		!M_FinishPNG (file))
 	{
 		Printf ("Could not create screenshot.\n");

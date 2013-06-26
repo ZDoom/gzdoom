@@ -28,8 +28,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Checking svnrevision.h..."
-				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src src/svnrevision.h"
+				Description="Checking gitinfo.h..."
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -151,7 +151,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="$(OutDir)\updaterevision.exe src src/svnrevision.h"
+				Description="Checking gitinfo.h..."
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -263,8 +264,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Checking svnrevision.h..."
-				CommandLine="$(OutDir)\updaterevision.exe src src/svnrevision.h"
+				Description="Checking gitinfo.h..."
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -370,7 +371,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="$(OutDir)\updaterevision.exe src src/svnrevision.h"
+				Description="Checking gitinfo.h..."
+				CommandLine="&quot;$(OutDir)\updaterevision.exe&quot; src/gitinfo.h"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -650,6 +652,10 @@
 			</File>
 			<File
 				RelativePath=".\src\gi.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\gitinfo.cpp"
 				>
 			</File>
 			<File
@@ -1159,10 +1165,6 @@
 			</File>
 			<File
 				RelativePath=".\src\d_dehacked.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\d_dehackedactions.h"
 				>
 			</File>
 			<File

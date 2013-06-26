@@ -1495,6 +1495,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	angle_t 	angle;
 	int 		pitch;
 	AActor *	linetarget;
+	int			actualdamage;
 
 	if (!norandom)
 		damage *= pr_cwpunch() % 8 + 1;
@@ -1515,13 +1516,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 		pufftype = PClass::FindActor(NAME_BulletPuff);
 	int puffFlags = LAF_ISMELEEATTACK | (flags & CPF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
-	P_LineAttack (self, angle, range, pitch, damage, NAME_Melee, pufftype, puffFlags, &linetarget);
+	P_LineAttack (self, angle, range, pitch, damage, NAME_Melee, pufftype, puffFlags, &linetarget, &actualdamage);
 
 	// turn to face target
 	if (linetarget)
 	{
-		if (lifesteal)
-			P_GiveBody (self, (damage * lifesteal) >> FRACBITS);
+		if (lifesteal && !(linetarget->flags5 & MF5_DONTDRAIN))
+			P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS);
 
 		if (weapon != NULL)
 		{
@@ -2672,6 +2673,69 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
 				DoCheckSightOrRange(self, players[i].camera, range))
+			{
+				return numret;
+			}
+		}
+	}
+	ACTION_JUMP(jump);
+	return numret;
+}
+
+//===========================================================================
+//
+// A_CheckRange
+// Jumps if this actor is out of range of all players.
+//
+//===========================================================================
+static bool DoCheckRange(AActor *self, AActor *camera, double range)
+{
+	if (camera == NULL)
+	{
+		return false;
+	}
+	// Check distance first, since it's cheaper than checking sight.
+	double dx = self->x - camera->x;
+	double dy = self->y - camera->y;
+	double dz;
+	fixed_t eyez = (camera->z + camera->height - (camera->height>>2));	// same eye height as P_CheckSight
+	if (eyez > self->z + self->height){
+		dz = self->z + self->height - eyez;
+	}
+	else if (eyez < self->z){
+		dz = self->z - eyez;
+	}
+	else{
+		dz = 0;
+	}
+	if ((dx*dx) + (dy*dy) + (dz*dz) <= range){
+		// Within range
+		return true;
+	}
+	return false;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FLOAT(range);
+	PARAM_STATE(jump);
+
+	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+
+	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			// Always check from each player.
+			if (DoCheckRange(self, players[i].mo, range))
+			{
+				return numret;
+			}
+			// If a player is viewing from a non-player, check that too.
+			if (players[i].camera != NULL && players[i].camera->player == NULL &&
+				DoCheckRange(self, players[i].camera, range))
 			{
 				return numret;
 			}

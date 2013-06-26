@@ -88,7 +88,6 @@ inline T max( T a, T b) { return (((a)>(b)) ? (a) : (b)); }
 #define _access(a,b)	access(a,b)
 #endif
 #ifndef _WIN32
-#include "platform.h"
 #include <SDL.h>
 #endif
 #include "gl/system/gl_interface.h"

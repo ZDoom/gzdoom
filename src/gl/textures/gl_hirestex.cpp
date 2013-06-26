@@ -56,8 +56,8 @@
 #include "d_main.h"
 #include "zstring.h"
 
-#ifdef __GNUC__
-#include "Linux/platform.h" /* Without this it would fail on _access on line 374 (378 now) */
+#ifndef _WIN32
+#define _access(a,b)	access(a,b)
 #endif
 
 static int Doom2Wad = -1;

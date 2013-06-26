@@ -176,7 +176,7 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 		// Translate each vertex.
 		for(k = 0, pVtx = pfr->vertices; k < info.numVertices; k++, pVtx++)
 		{
-			UnpackVector(USHORT(pVtx->normal), frame->normals[k].xyz);
+			UnpackVector((unsigned short)(pVtx->normal), frame->normals[k].xyz);
 			for(c = 0; c < 3; c++)
 			{
 				frame->vertices[k].xyz[axis[c]] =
@@ -208,7 +208,7 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 	for(i = 0; i < info.numLODs; i++)
 		for(k = 0; k < lodInfo[i].numTriangles; k++)
 			for(c = 0; c < 3; c++)
-				vertexUsage[SHORT(triangles[i][k].vertexIndices[c])] |= 1 << i;
+				vertexUsage[short(triangles[i][k].vertexIndices[c])] |= 1 << i;
 
 	loaded=true;
 	return true;

@@ -321,7 +321,9 @@ SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
 	
 #if defined(__APPLE__)
 	// Need to set title here because a window is not created yet when calling the same function from main()
-	SDL_WM_SetCaption( GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")", NULL );
+	char caption[100];
+	mysnprintf(caption, countof(caption), GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+	SDL_WM_SetCaption(caption, NULL);
 #endif // __APPLE__
 }
 

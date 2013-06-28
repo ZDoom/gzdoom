@@ -371,6 +371,20 @@ if( NOT NO_ASM )
 	ENDMACRO( ADD_ASM_FILE )
 endif( NOT NO_ASM )
 
+# OpenGL on OS X: Search for GLEW include files
+
+if( APPLE )
+	find_path( GLEW_INCLUDE_DIR GL/glew.h
+		PATHS "/usr/include"
+		"/usr/local/include" )
+
+	if( GLEW_INCLUDE_DIR )
+		message( STATUS "GLEW include files found at ${GLEW_INCLUDE_DIR}" )
+	else( GLEW_INCLUDE_DIR )
+		message( SEND_ERROR "Could not find GLEW include files" )
+	endif( GLEW_INCLUDE_DIR )
+endif( APPLE )
+
 # Decide on SSE setup
 
 set( SSE_MATTERS NO )
@@ -521,6 +535,12 @@ if( FLUIDSYNTH_FOUND )
 	include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
   endif( NOT DYN_FLUIDSYNTH )
 endif( FLUIDSYNTH_FOUND )
+
+# OpenGL on OS X: GLEW include directory
+
+if( APPLE )
+	include_directories( "${GLEW_INCLUDE_DIR}" )
+endif( APPLE )
 
 # Start defining source files for ZDoom
 

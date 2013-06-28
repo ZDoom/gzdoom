@@ -3,6 +3,7 @@
 
 #if defined(__APPLE__)
 #define APIENTRY
+#define APIENTRYP *
 #endif // __APPLE__
 
 #include "basictypes.h"

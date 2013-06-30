@@ -137,18 +137,6 @@ static ALCenum checkALCError(ALCdevice *device, const char *fn, unsigned int ln)
 }
 #define getALCError(d) checkALCError((d), __FILE__, __LINE__)
 
-static ALsizei GetBufferLength(ALuint buffer, const char *fn, unsigned int ln)
-{
-	ALint bits, channels, size;
-	alGetBufferi(buffer, AL_BITS, &bits);
-	alGetBufferi(buffer, AL_CHANNELS, &channels);
-	alGetBufferi(buffer, AL_SIZE, &size);
-	if(checkALError(fn, ln) == AL_NO_ERROR)
-		return (ALsizei)(size / (channels * bits / 8));
-	return 0;
-}
-#define getBufferLength(b) GetBufferLength((b), __FILE__, __LINE__)
-
 extern ReverbContainer *ForcedEnvironment;
 
 #define PITCH_MULT (0.7937005f) /* Approx. 4 semitones lower; what Nash suggested */
@@ -575,9 +563,17 @@ unsigned int OpenALSoundRenderer::GetMSLength(SoundHandle sfx)
 
 unsigned int OpenALSoundRenderer::GetSampleLength(SoundHandle sfx)
 {
-	if(!sfx.data)
-		return 0;
-	return getBufferLength(*((ALuint*)sfx.data));
+    if(sfx.data)
+    {
+        ALuint buffer = *((ALuint*)sfx.data);
+        ALint bits, channels, size;
+        alGetBufferi(buffer, AL_BITS, &bits);
+        alGetBufferi(buffer, AL_CHANNELS, &channels);
+        alGetBufferi(buffer, AL_SIZE, &size);
+        if(getALError() == AL_NO_ERROR)
+            return (ALsizei)(size / (channels * bits / 8));
+    }
+    return 0;
 }
 
 float OpenALSoundRenderer::GetOutputRate()

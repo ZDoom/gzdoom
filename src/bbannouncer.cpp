@@ -231,7 +231,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 
 		if (killer == NULL)
 		{ // The world killed the player
-			if (killee->player->userinfo.gender == GENDER_MALE)
+			if (killee->player->userinfo.GetGender() == GENDER_MALE)
 			{ // Only males have scrotums to separate
 				choice = &WorldKillSounds[rannum % 3];
 			}
@@ -244,11 +244,11 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 		else if (killer == killee)
 		{ // The player killed self
 			choice = &SuicideSounds[rannum & 3];
-			killerName = killer->player->userinfo.netname;
+			killerName = killer->player->userinfo.GetName();
 		}
 		else
 		{ // Another player did the killing
-			if (killee->player->userinfo.gender == GENDER_MALE)
+			if (killee->player->userinfo.GetGender() == GENDER_MALE)
 			{ // Only males can be castrated
 				choice = &KillSounds[rannum % countof(KillSounds)];
 			}
@@ -256,7 +256,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 			{
 				choice = &KillSounds[rannum % (countof(KillSounds) - 1)];
 			}
-			killerName = killer->player->userinfo.netname;
+			killerName = killer->player->userinfo.GetName();
 
 			// Blood only plays the announcement sound on the killer's
 			// computer. I think it sounds neater to also hear it on
@@ -269,8 +269,8 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 		{
 			char assembled[1024];
 
-			SexMessage (message, assembled, killee->player->userinfo.gender,
-				killee->player->userinfo.netname, killerName);
+			SexMessage (message, assembled, killee->player->userinfo.GetGender(),
+				killee->player->userinfo.GetName(), killerName);
 			Printf (PRINT_MEDIUM, "%s\n", assembled);
 		}
 		if (playSound)
@@ -301,8 +301,8 @@ bool AnnounceTelefrag (AActor *killer, AActor *killee)
 		{
 			char assembled[1024];
 
-			SexMessage (message, assembled, killee->player->userinfo.gender,
-				killee->player->userinfo.netname, killer->player->userinfo.netname);
+			SexMessage (message, assembled, killee->player->userinfo.GetGender(),
+				killee->player->userinfo.GetName(), killer->player->userinfo.GetName());
 			Printf (PRINT_MEDIUM, "%s\n", assembled);
 		}
 		if (killee->CheckLocalView (consoleplayer) ||

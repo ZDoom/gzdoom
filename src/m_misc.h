@@ -47,4 +47,6 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, siz
 // Prepends ~/.zdoom to path
 FString GetUserFile (const char *path);
 
+FString M_ZLibError(int zerrnum);
+
 #endif

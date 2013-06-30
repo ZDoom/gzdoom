@@ -56,6 +56,7 @@
 #include "colormatcher.h"
 #include "thingdef_exp.h"
 #include "version.h"
+#include "templates.h"
 
 //==========================================================================
 //***
@@ -237,14 +238,53 @@ do_stop:
 			sc.MustGetString();
 			statestring = sc.String;
 
-			sc.MustGetNumber();
-			state.Tics = clamp<int>(sc.Number, -1, 32767);
+			if (sc.CheckString("RANDOM"))
+			{
+				int min, max;
+
+				sc.MustGetStringName("(");
+				sc.MustGetNumber();
+				min = clamp<int>(sc.Number, -1, SHRT_MAX);
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				max = clamp<int>(sc.Number, -1, SHRT_MAX);
+				sc.MustGetStringName(")");
+				if (min > max)
+				{
+					swapvalues(min, max);
+				}
+				state.Tics = min;
+				state.TicRange = max - min;
+			}
+			else
+			{
+				sc.MustGetNumber();
+				state.Tics = clamp<int>(sc.Number, -1, SHRT_MAX);
+				state.TicRange = 0;
+			}
 
 			while (sc.GetString() && !sc.Crossed)
 			{
 				if (sc.Compare("BRIGHT")) 
 				{
 					state.Fullbright = true;
+					continue;
+				}
+				if (sc.Compare("FAST")) 
+				{
+					state.Fast = true;
+					continue;
+				}
+				if (sc.Compare("NODELAY"))
+				{
+					if (bag.statedef.GetStateLabelIndex(NAME_Spawn) == bag.statedef.GetStateCount())
+					{
+						state.NoDelay = true;
+					}
+					else
+					{
+						sc.ScriptMessage("NODELAY may only be used immediately after Spawn:");
+					}
 					continue;
 				}
 				if (sc.Compare("OFFSET"))
@@ -274,7 +314,7 @@ do_stop:
 					continue;
 				}
 
-				// Make the action name lowercase to satisfy the gperf hashers
+				// Make the action name lowercase
 				strlwr (sc.String);
 
 				if (DoActionSpecials(sc, state, bag))
@@ -310,8 +350,7 @@ do_stop:
 						int paramindex = PrepareStateParameters(&state, numparams, bag.Info->Class);
 						int paramstart = paramindex;
 						bool varargs = params[numparams - 1] == '+';
-						int varargcount=0;
-
+						int varargcount = 0;
 
 						if (varargs)
 						{

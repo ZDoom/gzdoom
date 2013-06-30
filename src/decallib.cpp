@@ -631,7 +631,10 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 	}
 
 	actor->DecalGenerator = decal;
-	decal->Users.Push (type);
+	if (decal != NULL)
+	{
+		decal->Users.Push (type);
+	}
 }
 
 void FDecalLib::ParseFader (FScanner &sc)
@@ -1121,16 +1124,19 @@ FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (DWORD start
 const FDecalTemplate *FDecalGroup::GetDecal () const
 {
 	const FDecalBase *decal = Choices.PickEntry ();
-	const FDecalBase *remember;
+	const FDecalBase *remember = decal;
 
 	// Repeatedly GetDecal() until the result is constant, since
 	// the choice might be another FDecalGroup.
-	do
+	if (decal != NULL)
 	{
-		remember = decal;
-		decal = decal->GetDecal ();
-	} while (decal != remember);
-	return static_cast<const FDecalTemplate *>(decal);
+		do
+		{
+			remember = decal;
+			decal = decal->GetDecal ();
+		} while (decal != NULL && decal != remember);
+	}
+	return static_cast<const FDecalTemplate *>(remember);
 }
 
 FDecalAnimator::FDecalAnimator (const char *name)

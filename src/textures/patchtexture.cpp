@@ -94,7 +94,7 @@ static bool CheckIfPatch(FileReader & file)
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);
 	
-	if (height > 0 && height < 2048 && width > 0 && width <= 2048 && width < file.GetLength()/4)
+	if (height > 0 && height <= 2048 && width > 0 && width <= 2048 && width < file.GetLength()/4)
 	{
 		// The dimensions seem like they might be valid for a patch, so
 		// check the column directory for extra security. At least one

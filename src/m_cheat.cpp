@@ -45,6 +45,7 @@
 #include "d_net.h"
 #include "d_dehacked.h"
 #include "gi.h"
+#include "farchive.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -87,7 +88,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_DQDON");
 		else
 			msg = GStrings("STSTR_DQDOFF");
-		SB_state = screen->GetPageCount ();
+		ST_SetNeedRefresh();
 		break;
 
 	case CHT_BUDDHA:
@@ -104,6 +105,20 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_NCON");
 		else
 			msg = GStrings("STSTR_NCOFF");
+		break;
+
+	case CHT_NOCLIP2:
+		player->cheats ^= CF_NOCLIP2;
+		if (player->cheats & CF_NOCLIP2)
+		{
+			player->cheats |= CF_NOCLIP;
+			msg = GStrings("STSTR_NC2ON");
+		}
+		else
+		{
+			player->cheats &= ~CF_NOCLIP;
+			msg = GStrings("STSTR_NCOFF");
+		}
 		break;
 
 	case CHT_NOVELOCITY:
@@ -181,7 +196,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_POWER:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 			if (item != NULL)
 			{
 				item->Destroy ();
@@ -295,8 +310,10 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->flags3 = player->mo->GetDefault()->flags3;
 				player->mo->flags4 = player->mo->GetDefault()->flags4;
 				player->mo->flags5 = player->mo->GetDefault()->flags5;
+				player->mo->flags6 = player->mo->GetDefault()->flags6;
 				player->mo->renderflags &= ~RF_INVISIBLE;
 				player->mo->height = player->mo->GetDefault()->height;
+				player->mo->radius = player->mo->GetDefault()->radius;
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
 				player->mo->SetState (player->mo->SpawnState);
@@ -504,8 +521,8 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
-	else
-		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
+	else if (cheat != CHT_CHASECAM)
+		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
 }
 
 const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickundo)
@@ -586,7 +603,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	const PClass *type;
 
 	if (player != &players[consoleplayer])
-		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
+		Printf ("%s is a cheater: give %s\n", player->userinfo.GetName(), name);
 
 	if (player->mo == NULL || player->health <= 0)
 	{
@@ -768,7 +785,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 					!type->IsDescendantOf (RUNTIME_CLASS(APowerup)) &&
 					!type->IsDescendantOf (RUNTIME_CLASS(AArmor)))
 				{
-					GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					// Do not give replaced items unless using "give everything"
+					if (giveall == ALL_YESYES || type->GetReplacement() == type)
+					{
+						GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					}
 				}
 			}
 		}
@@ -786,7 +807,11 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AInventory *def = (AInventory*)GetDefaultByType (type);
 				if (def->Icon.isValid())
 				{
-					GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					// Do not give replaced items unless using "give everything"
+					if (giveall == ALL_YESYES || type->GetReplacement() == type)
+					{
+						GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+					}
 				}
 			}
 		}
@@ -1033,14 +1058,53 @@ void cht_Take (player_t *player, const char *name, int amount)
 	return;
 }
 
+class DSuicider : public DThinker
+{
+	DECLARE_CLASS(DSuicider, DThinker)
+	HAS_OBJECT_POINTERS;
+public:
+	TObjPtr<APlayerPawn> Pawn;
+
+	void Tick()
+	{
+		Pawn->flags |= MF_SHOOTABLE;
+		Pawn->flags2 &= ~MF2_INVULNERABLE;
+		// Store the player's current damage factor, to restore it later.
+		fixed_t plyrdmgfact = Pawn->DamageFactor;
+		Pawn->DamageFactor = 65536;
+		P_DamageMobj (Pawn, Pawn, Pawn, TELEFRAG_DAMAGE, NAME_Suicide);
+		Pawn->DamageFactor = plyrdmgfact;
+		if (Pawn->health <= 0)
+		{
+			Pawn->flags &= ~MF_SHOOTABLE;
+		}
+		Destroy();
+	}
+	// You'll probably never be able to catch this in a save game, but
+	// just in case, add a proper serializer.
+	void Serialize(FArchive &arc)
+	{ 
+		Super::Serialize(arc);
+		arc << Pawn;
+	}
+};
+
+IMPLEMENT_POINTY_CLASS(DSuicider)
+ DECLARE_POINTER(Pawn)
+END_POINTERS
+
 void cht_Suicide (player_t *plyr)
 {
+	// If this cheat was initiated by the suicide ccmd, and this is a single
+	// player game, the CHT_SUICIDE will be processed before the tic is run,
+	// so the console has not gone up yet. Use a temporary thinker to delay
+	// the suicide until the game ticks so that death noises can be heard on
+	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		plyr->mo->flags |= MF_SHOOTABLE;
-		plyr->mo->flags2 &= ~MF2_INVULNERABLE;
-		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, TELEFRAG_DAMAGE, NAME_Suicide);
-		if (plyr->mo->health <= 0) plyr->mo->flags &= ~MF_SHOOTABLE;
+		DSuicider *suicide = new DSuicider;
+		suicide->Pawn = plyr->mo;
+		GC::WriteBarrier(suicide, suicide->Pawn);
 	}
 }
 

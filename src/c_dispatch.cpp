@@ -1019,32 +1019,7 @@ FConsoleAlias::~FConsoleAlias ()
 	m_Command[1] = m_Command[0] = FString();
 }
 
-FString BuildString (int argc, char **argv)
-{
-	if (argc == 1)
-	{
-		return *argv;
-	}
-	else
-	{
-		FString buf;
-		int arg;
-
-		for (arg = 0; arg < argc; arg++)
-		{
-			if (strchr (argv[arg], ' '))
-			{
-				buf.AppendFormat ("\"%s\" ", argv[arg]);
-			}
-			else
-			{
-				buf.AppendFormat ("%s ", argv[arg]);
-			}
-		}
-		return buf;
-	}
-}
-
+// Given an argument vector, reconstitute the command line it could have been produced from.
 FString BuildString (int argc, FString *argv)
 {
 	if (argc == 1)
@@ -1058,8 +1033,23 @@ FString BuildString (int argc, FString *argv)
 
 		for (arg = 0; arg < argc; arg++)
 		{
-			if (strchr (argv[arg], ' '))
-			{
+			if (strchr(argv[arg], '"'))
+			{ // If it contains one or more quotes, we need to escape them.
+				buf << '"';
+				long substr_start = 0, quotepos;
+				while ((quotepos = argv[arg].IndexOf('"', substr_start)) >= 0)
+				{
+					if (substr_start < quotepos)
+					{
+						buf << argv[arg].Mid(substr_start, quotepos - substr_start);
+					}
+					buf << "\\\"";
+					substr_start = quotepos + 1;
+				}
+				buf << argv[arg].Mid(substr_start) << "\" ";
+			}
+			else if (strchr(argv[arg], ' '))
+			{ // If it contains a space, it needs to be quoted.
 				buf << '"' << argv[arg] << "\" ";
 			}
 			else

@@ -84,6 +84,8 @@ void P_Ticker (void)
 	if (paused || P_CheckTickerPaused())
 		return;
 
+	P_NewPspriteTick();
+
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 	if ((level.time & 3) == 0)
 	{
@@ -99,7 +101,7 @@ void P_Ticker (void)
 	// off the music.
 	for (i = 0; i < MAXPLAYERS; i++ )
 	{
-		if (playeringame[i] && players[i].cheats & CF_TIMEFREEZE)
+		if (playeringame[i] && players[i].timefreezer != 0)
 			break;
 	}
 
@@ -115,13 +117,13 @@ void P_Ticker (void)
 	{
 		P_ThinkParticles ();	// [RH] make the particles think
 	}
-	StatusBar->Tick ();		// [RH] moved this here
 
 	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&
 			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].isbot))
 			P_PlayerThink (&players[i]);
 
+	StatusBar->Tick ();		// [RH] moved this here
 	level.Tick ();			// [RH] let the level tick
 	DThinker::RunThinkers ();
 

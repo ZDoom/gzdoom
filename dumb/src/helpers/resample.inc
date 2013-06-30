@@ -69,6 +69,11 @@ void dumb_reset_resampler(DUMB_RESAMPLER *resampler, SRCTYPE *src, int src_chann
 	}
 	for (i = 0; i < src_channels*3; i++) resampler->X[i] = 0;
 	resampler->overshot = -1;
+	resampler->last_clock = 0;
+	resampler->last_amp[0] = 0;
+	resampler->last_amp[1] = 0;
+	blip_clear(resampler->blip_buffer[0]);
+	blip_clear(resampler->blip_buffer[1]);
 }
 
 
@@ -77,6 +82,21 @@ DUMB_RESAMPLER *dumb_start_resampler(SRCTYPE *src, int src_channels, int32 pos, 
 {
 	DUMB_RESAMPLER *resampler = malloc(sizeof(*resampler));
 	if (!resampler) return NULL;
+	resampler->blip_buffer[0] = blip_new( 256 );
+	if (!resampler->blip_buffer[0])
+	{
+		free(resampler);
+		return NULL;
+	}
+	resampler->blip_buffer[1] = blip_new( 256 );
+	if (!resampler->blip_buffer[1])
+	{
+		free(resampler->blip_buffer[0]);
+		free(resampler);
+		return NULL;
+	}
+	blip_set_rates(resampler->blip_buffer[0], 65536, 1);
+	blip_set_rates(resampler->blip_buffer[1], 65536, 1);
 	dumb_reset_resampler(resampler, src, src_channels, pos, start, end, quality);
 	return resampler;
 }
@@ -123,16 +143,41 @@ DUMB_RESAMPLER *dumb_start_resampler(SRCTYPE *src, int src_channels, int32 pos, 
 }
 #define RETURN_MONO_DEST_VOLUME_VARIABLES if ( volume ) volume->volume = (float)volr / 16777216.0f
 #define MONO_DEST_VOLUMES_ARE_ZERO (vol == 0 && volt == 0)
-#define MONO_DEST_MIX_ALIAS(op, upd, offset) { \
-	*dst++ op ALIAS(x[offset], vol); \
-	if ( upd ) UPDATE_VOLUME( volume, vol ); \
+#define POKE_ALIAS(offset) { \
+	int delta = ALIAS(x[offset]) - resampler->last_amp[0]; \
+	resampler->last_amp[0] += delta; \
+	if ( delta ) blip_add_delta( resampler->blip_buffer[0], resampler->last_clock, delta ); \
+	resampler->last_clock += inv_dt; \
 }
-#define STEREO_DEST_MIX_ALIAS(op, upd, offset) { \
-	int xm = x[offset]; \
-	*dst++ op ALIAS(xm, lvol); \
-	*dst++ op ALIAS(xm, rvol); \
-	if ( upd ) UPDATE_VOLUME( volume_left, lvol ); \
-	if ( upd ) UPDATE_VOLUME( volume_right, rvol ); \
+#define MONO_DEST_PEEK_ALIAS *dst = MULSC( blip_peek_sample( resampler->blip_buffer[0] ), vol )
+#define MONO_DEST_MIX_ALIAS(count) { \
+	int n = 0; \
+	resampler->last_clock -= count * 65536; \
+	blip_end_frame( resampler->blip_buffer[0], count * 65536 ); \
+	blip_read_samples( resampler->blip_buffer[0], blip_samples, count ); \
+	LOOP4( count, \
+		*dst++ += MULSC( blip_samples[n], vol ); \
+		n++; \
+		UPDATE_VOLUME( volume, vol ); \
+	); \
+}
+#define STEREO_DEST_PEEK_ALIAS { \
+	int sample = blip_peek_sample( resampler->blip_buffer[0] ); \
+	*dst++ = MULSC( sample, lvol ); \
+	*dst++ = MULSC( sample, rvol ); \
+}
+#define STEREO_DEST_MIX_ALIAS(count) { \
+	int sample, n = 0; \
+	resampler->last_clock -= count * 65536; \
+	blip_end_frame( resampler->blip_buffer[0], count * 65536 ); \
+	blip_read_samples( resampler->blip_buffer[0], blip_samples, count ); \
+	LOOP4( count, \
+		sample = blip_samples[n++]; \
+		*dst++ += MULSC( sample, lvol ); \
+		*dst++ += MULSC( sample, rvol ); \
+		UPDATE_VOLUME( volume_left, lvol ); \
+		UPDATE_VOLUME( volume_right, rvol ); \
+	); \
 }
 #define MONO_DEST_MIX_LINEAR(op, upd, o0, o1) { \
 	*dst++ op MULSC(LINEAR(x[o0], x[o1]), vol); \
@@ -208,16 +253,51 @@ DUMB_RESAMPLER *dumb_start_resampler(SRCTYPE *src, int src_channels, int32 pos, 
 	if ( volume_right ) volume_right->volume = (float)rvolr / 16777216.0f; \
 }
 #define MONO_DEST_VOLUMES_ARE_ZERO (lvol == 0 && lvolt == 0 && rvol == 0 && rvolt == 0)
-#define MONO_DEST_MIX_ALIAS(op, upd, offset) { \
-	*dst++ op ALIAS(x[(offset)*2], lvol) + ALIAS(x[(offset)*2+1], rvol); \
-	if ( upd ) UPDATE_VOLUME( volume_left, lvol ); \
-	if ( upd ) UPDATE_VOLUME( volume_right, rvol ); \
+#define POKE_ALIAS(offset) { \
+	int deltal = ALIAS(x[(offset)*2+0]) - resampler->last_amp[0]; \
+	int deltar = ALIAS(x[(offset)*2+1]) - resampler->last_amp[1]; \
+	resampler->last_amp[0] += deltal; \
+	resampler->last_amp[1] += deltar; \
+	if ( deltal ) blip_add_delta( resampler->blip_buffer[0], resampler->last_clock, deltal ); \
+	if ( deltar ) blip_add_delta( resampler->blip_buffer[1], resampler->last_clock, deltar ); \
+	resampler->last_clock += inv_dt; \
 }
-#define STEREO_DEST_MIX_ALIAS(op, upd, offset) { \
-	*dst++ op ALIAS(x[(offset)*2], lvol); \
-	*dst++ op ALIAS(x[(offset)*2+1], rvol); \
-	if ( upd ) UPDATE_VOLUME( volume_left, lvol ); \
-	if ( upd ) UPDATE_VOLUME( volume_right, rvol ); \
+#define MONO_DEST_PEEK_ALIAS { \
+	*dst = MULSC( blip_peek_sample( resampler->blip_buffer[0] ), lvol ) + \
+		MULSC( blip_peek_sample( resampler->blip_buffer[1] ), rvol ); \
+}
+#define MONO_DEST_MIX_ALIAS(count) { \
+	int n = 0; \
+	resampler->last_clock -= count * 65536; \
+	blip_end_frame( resampler->blip_buffer[0], count * 65536 ); \
+	blip_end_frame( resampler->blip_buffer[1], count * 65536 ); \
+	blip_read_samples( resampler->blip_buffer[0], blip_samples, count ); \
+	blip_read_samples( resampler->blip_buffer[1], blip_samples + 256, count ); \
+	LOOP4( count, \
+		*dst++ += MULSC( blip_samples[n], lvol ) + MULSC( blip_samples[256+n], rvol ); \
+		n++; \
+		UPDATE_VOLUME( volume_left, lvol ); \
+		UPDATE_VOLUME( volume_right, rvol ); \
+	); \
+}
+#define STEREO_DEST_PEEK_ALIAS { \
+	*dst++ = MULSC( blip_peek_sample( resampler->blip_buffer[0] ), lvol ); \
+	*dst++ = MULSC( blip_peek_sample( resampler->blip_buffer[1] ), rvol ); \
+}
+#define STEREO_DEST_MIX_ALIAS(count) { \
+	int n = 0; \
+	resampler->last_clock -= count * 65536; \
+	blip_end_frame( resampler->blip_buffer[0], count * 65536 ); \
+	blip_end_frame( resampler->blip_buffer[1], count * 65536 ); \
+	blip_read_samples( resampler->blip_buffer[0], blip_samples, count ); \
+	blip_read_samples( resampler->blip_buffer[1], blip_samples + 256, count ); \
+	LOOP4( count, \
+		*dst++ += MULSC( blip_samples[n], lvol); \
+		*dst++ += MULSC( blip_samples[256+n], rvol); \
+		n++; \
+		UPDATE_VOLUME( volume_left, lvol ); \
+		UPDATE_VOLUME( volume_right, rvol ); \
+	); \
 }
 #define MONO_DEST_MIX_LINEAR(op, upd, o0, o1) { \
 	*dst++ op MULSC(LINEAR(x[(o0)*2], x[(o1)*2]), lvol) + MULSC(LINEAR(x[(o0)*2+1], x[(o1)*2+1]), rvol); \

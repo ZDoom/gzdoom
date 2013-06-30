@@ -6,7 +6,7 @@ if( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 	set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
 endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
 	if( NOT PROFILE )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer" )
@@ -15,7 +15,7 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	if( HAVE_NO_ARRAY_BOUNDS )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-array-bounds" )
 	endif( HAVE_NO_ARRAY_BOUNDS )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 
 add_library( gme
     gme/Blip_Buffer.cpp

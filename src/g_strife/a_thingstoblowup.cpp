@@ -69,7 +69,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ExtraLightOff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Explode512)
 {
-	P_RadiusAttack (self, self->target, 512, 512, NAME_None, true);
+	P_RadiusAttack (self, self->target, 512, 512, NAME_None, RADF_HURTSOURCE);
 	if (self->target != NULL && self->target->player != NULL)
 	{
 		self->target->player->extralight = 5;

@@ -14,6 +14,8 @@
 #include "g_level.h"
 */
 
+EXTERN_CVAR(Bool, sv_unlimited_pickup)
+
 static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");
 static FRandom pr_poisoncloudd ("PoisonCloudDamage");
@@ -119,7 +121,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		 */
 
 		// When looking straight ahead, it uses a z velocity of 4 while the xy velocity
-		// is as set by the projectile. To accomodate this with a proper trajectory, we
+		// is as set by the projectile. To accommodate this with a proper trajectory, we
 		// aim the projectile ~20 degrees higher than we're looking at and increase the
 		// speed we fire at accordingly.
 		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
@@ -135,8 +137,69 @@ bool AArtiPoisonBag3::Use (bool pickup)
 
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
-		P_CheckMissileSpawn(mo);
+		P_CheckMissileSpawn(mo, Owner->radius);
 		return true;
+	}
+	return false;
+}
+
+// Poison Bag 4 (Generic Giver) ----------------------------------------------
+
+class AArtiPoisonBagGiver : public AArtiPoisonBag
+{
+	DECLARE_CLASS (AArtiPoisonBagGiver, AArtiPoisonBag)
+public:
+	bool Use (bool pickup);
+};
+
+IMPLEMENT_CLASS (AArtiPoisonBagGiver)
+
+bool AArtiPoisonBagGiver::Use (bool pickup)
+{
+	const PClass *MissileType = PClass::FindClass((ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	if (MissileType != NULL)
+	{
+		AActor *mo = Spawn (MissileType, Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
+		if (mo != NULL)
+		{
+			if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+			{
+				AInventory *inv = static_cast<AInventory *>(mo);
+				if (inv->CallTryPickup(Owner))
+					return true;
+			}
+			mo->Destroy();	// Destroy if not inventory or couldn't be picked up
+		}
+	}
+	return false;
+}
+
+// Poison Bag 5 (Generic Thrower) ----------------------------------------------
+
+class AArtiPoisonBagShooter : public AArtiPoisonBag
+{
+	DECLARE_CLASS (AArtiPoisonBagShooter, AArtiPoisonBag)
+public:
+	bool Use (bool pickup);
+};
+
+IMPLEMENT_CLASS (AArtiPoisonBagShooter)
+
+bool AArtiPoisonBagShooter::Use (bool pickup)
+{
+	const PClass *MissileType = PClass::FindClass((ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
+	if (MissileType != NULL)
+	{
+		AActor *mo = P_SpawnPlayerMissile(Owner, MissileType);
+		if (mo != NULL)
+		{
+			// automatic handling of seeker missiles
+			if (mo->flags2 & MF2_SEEKERMISSILE)
+			{
+				mo->tracer = Owner->target;
+			}
+			return true;
+		}
 	}
 	return false;
 }
@@ -178,10 +241,10 @@ bool AArtiPoisonBag::HandlePickup (AInventory *item)
 
 	if (GetClass() == GetFlechetteType(Owner))
 	{
-		if (Amount < MaxAmount)
+		if (Amount < MaxAmount || sv_unlimited_pickup)
 		{
 			Amount += item->Amount;
-			if (Amount > MaxAmount)
+			if (Amount > MaxAmount && !sv_unlimited_pickup)
 			{
 				Amount = MaxAmount;
 			}
@@ -246,7 +309,7 @@ class APoisonCloud : public AActor
 {
 	DECLARE_CLASS (APoisonCloud, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	void BeginPlay ();
 };
 
@@ -259,7 +322,7 @@ void APoisonCloud::BeginPlay ()
 	special2 = 0;
 }
 
-int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
+int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 {
 	if (victim->player)
 	{
@@ -282,12 +345,23 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 			{
 				damage = (int)((float)damage * level.teamdamage);
 			}
+			// Handle passive damage modifiers (e.g. PowerProtection)
+			if (victim->Inventory != NULL)
+			{
+				victim->Inventory->ModifyDamage(damage, damagetype, damage, true);
+			}
+			// Modify with damage factors
+			damage = FixedMul(damage, victim->DamageFactor);
+			if (damage > 0)
+			{
+				damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, victim->GetClass()->ActorInfo->DamageFactors);
+			}
 			if (damage > 0)
 			{
 				P_PoisonDamage (victim->player, this,
 					15+(pr_poisoncloudd()&15), false); // Don't play painsound
 
-				// If successful, play the posion sound.
+				// If successful, play the poison sound.
 				if (P_PoisonPlayer (victim->player, this, this->target, 50))
 					S_Sound (victim, CHAN_VOICE, "*poison", 1, ATTN_NORM);
 			}
@@ -346,10 +420,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 {
 	int bobIndex;
 	
-	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, true);
+	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, RADF_HURTSOURCE);
 	bobIndex = self->special2;
-	self->z += FloatBobOffsets[bobIndex]>>4;
-	self->special2 = (bobIndex+1)&63;
+	self->z += finesine[bobIndex << BOBTOFINESHIFT] >> 1;
+	self->special2 = (bobIndex + 1) & 63;
 }
 
 //===========================================================================

@@ -33,6 +33,8 @@
 */
 
 #include <SDL.h>
+#include <signal.h>
+#include <time.h>
 
 #include "hardware.h"
 #include "i_video.h"
@@ -175,7 +177,98 @@ void I_ClosestResolution (int *width, int *height, int bits)
 			return;
 		}
 	}
-}	
+}
+
+//==========================================================================
+//
+// SetFPSLimit
+//
+// Initializes an event timer to fire at a rate of <limit>/sec. The video
+// update will wait for this timer to trigger before updating.
+//
+// Pass 0 as the limit for unlimited.
+// Pass a negative value for the limit to use the value of vid_maxfps.
+//
+//==========================================================================
+
+EXTERN_CVAR(Int, vid_maxfps);
+EXTERN_CVAR(Bool, cl_capfps);
+
+#ifndef __APPLE__
+Semaphore FPSLimitSemaphore;
+
+static void FPSLimitNotify(sigval val)
+{
+	SEMAPHORE_SIGNAL(FPSLimitSemaphore)
+}
+
+void I_SetFPSLimit(int limit)
+{
+	static sigevent FPSLimitEvent;
+	static timer_t FPSLimitTimer;
+	static bool FPSLimitTimerEnabled = false;
+	static bool EventSetup = false;
+	if(!EventSetup)
+	{
+		EventSetup = true;
+		FPSLimitEvent.sigev_notify = SIGEV_THREAD;
+		FPSLimitEvent.sigev_signo = 0;
+		FPSLimitEvent.sigev_value.sival_int = 0;
+		FPSLimitEvent.sigev_notify_function = FPSLimitNotify;
+		FPSLimitEvent.sigev_notify_attributes = NULL;
+
+		SEMAPHORE_INIT(FPSLimitSemaphore, 0, 0)
+	}
+
+	if (limit < 0)
+	{
+		limit = vid_maxfps;
+	}
+	// Kill any leftover timer.
+	if (FPSLimitTimerEnabled)
+	{
+		timer_delete(FPSLimitTimer);
+		FPSLimitTimerEnabled = false;
+	}
+	if (limit == 0)
+	{ // no limit
+		DPrintf("FPS timer disabled\n");
+	}
+	else
+	{
+		FPSLimitTimerEnabled = true;
+		if(timer_create(CLOCK_REALTIME, &FPSLimitEvent, &FPSLimitTimer) == -1)
+			Printf("Failed to create FPS limitter event\n");
+		itimerspec period = { {0, 0}, {0, 0} };
+		period.it_value.tv_nsec = period.it_interval.tv_nsec = 1000000000 / limit;
+		if(timer_settime(FPSLimitTimer, 0, &period, NULL) == -1)
+			Printf("Failed to set FPS limitter timer\n");
+		DPrintf("FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
+	}
+}
+#else
+// So Apple doesn't support POSIX timers and I can't find a good substitute short of
+// having Objective-C Cocoa events or something like that.
+void I_SetFPSLimit(int limit)
+{
+}
+#endif
+
+CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (vid_maxfps < TICRATE && vid_maxfps != 0)
+	{
+		vid_maxfps = TICRATE;
+	}
+	else if (vid_maxfps > 1000)
+	{
+		vid_maxfps = 1000;
+	}
+	else if (cl_capfps == 0)
+	{
+		I_SetFPSLimit(vid_maxfps);
+	}
+}
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 

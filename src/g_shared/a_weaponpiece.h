@@ -8,6 +8,7 @@ protected:
 public:
 	void Serialize (FArchive &arc);
 	bool TryPickup (AActor *&toucher);
+	bool TryPickupRestricted (AActor *&toucher);
 	bool ShouldStay ();
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);

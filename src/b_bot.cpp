@@ -51,15 +51,16 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 		players[i].mo = NULL;
 	}
 	botinfo_t *bot = botinfo;
-	while (bot && stricmp (players[i].userinfo.netname, bot->name))
+	while (bot && stricmp (players[i].userinfo.GetName(), bot->name))
 		bot = bot->next;
 	if (bot)
 	{
 		bot->inuse = false;
-		bot->lastteam = keepTeam ? players[i].userinfo.team : TEAM_NONE;
+		bot->lastteam = keepTeam ? players[i].userinfo.GetTeam() : TEAM_NONE;
 	}
 	players[i].~player_t();
 	::new(&players[i]) player_t;
+	players[i].userinfo.Reset();
 	playeringame[i] = false;
 }
 

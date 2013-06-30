@@ -30,6 +30,9 @@ protected:
 	virtual void InitEffect ();
 	virtual void DoEffect ();
 	virtual void EndEffect ();
+
+	friend void EndAllPowerupEffects(AInventory *item);
+	friend void InitAllPowerupEffects(AInventory *item);
 };
 
 // An artifact is an item that gives the player a powerup when activated.
@@ -143,8 +146,13 @@ class APowerSpeed : public APowerup
 	DECLARE_CLASS (APowerSpeed, APowerup)
 protected:
 	void DoEffect ();
+	void Serialize(FArchive &arc);
 	fixed_t GetSpeedFactor();
+public:
+	int SpeedFlags;
 };
+
+#define PSF_NOTRAIL		1
 
 class APowerMinotaur : public APowerup
 {
@@ -214,8 +222,7 @@ class APowerRegeneration : public APowerup
 {
 	DECLARE_CLASS( APowerRegeneration, APowerup )
 protected:
-	void InitEffect( );
-	void EndEffect( );
+	void DoEffect();
 };
 
 class APowerHighJump : public APowerup
@@ -247,6 +254,7 @@ class APowerMorph : public APowerup
 	DECLARE_CLASS( APowerMorph, APowerup )
 public:
 	void Serialize (FArchive &arc);
+	void SetNoCallUndoMorph() { bNoCallUndoMorph = true; }
 
 	FNameNoInit	PlayerClass, MorphFlash, UnMorphFlash;
 	int MorphStyle;
@@ -256,6 +264,7 @@ protected:
 	void EndEffect ();
 	// Variables
 	player_t *Player;
+	bool bNoCallUndoMorph;	// Because P_UndoPlayerMorph() can call EndEffect recursively
 };
 
 #endif //__A_ARTIFACTS_H__

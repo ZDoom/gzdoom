@@ -1,14 +1,20 @@
+// The Doom and Heretic players are not excluded from pickup in case
+// somebody wants to use these weapons with either of those games.
+
 ACTOR FighterWeapon : Weapon native
 {
 	Weapon.Kickback 150
+	Inventory.ForbiddenTo ClericPlayer, MagePlayer
 }
 
 ACTOR ClericWeapon : Weapon native
 {
 	Weapon.Kickback 150
+	Inventory.ForbiddenTo FighterPlayer, MagePlayer
 }
 
 ACTOR MageWeapon : Weapon native
 {
 	Weapon.Kickback 150
+	Inventory.ForbiddenTo FighterPlayer, ClericPlayer
 }

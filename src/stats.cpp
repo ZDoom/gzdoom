@@ -42,6 +42,15 @@
 #include "m_swap.h"
 #include "sbar.h"
 
+
+#if defined (__APPLE__)
+
+mach_timebase_info_data_t cycle_t::s_info;
+bool cycle_t::s_initialized;
+
+#endif // __APPLE__
+
+
 FStat *FStat::FirstStat;
 
 FStat::FStat (const char *name)
@@ -85,7 +94,7 @@ void FStat::ToggleStat (const char *name)
 void FStat::ToggleStat ()
 {
 	m_Active = !m_Active;
-	SB_state = StatusBar == NULL ? 0 : screen->GetPageCount ();
+	ST_SetNeedRefresh();
 }
 
 void FStat::PrintStat ()
@@ -115,7 +124,7 @@ void FStat::PrintStat ()
 	}
 	if (count)
 	{
-		SB_state = screen->GetPageCount ();
+		ST_SetNeedRefresh();
 	}
 }
 

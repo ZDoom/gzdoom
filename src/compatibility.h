@@ -14,8 +14,7 @@ union FMD5Holder
 
 struct FCompatValues
 {
-	int CompatFlags;
-	int BCompatFlags;
+	int CompatFlags[3];
 	unsigned int ExtCommandIndex;
 };
 

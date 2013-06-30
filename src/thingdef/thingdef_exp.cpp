@@ -336,6 +336,18 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 	{
 		return new FxConstant(sc.Float, scpos);
 	}
+	else if (sc.CheckToken(TK_NameConst))
+	{
+		return new FxConstant(sc.Name, scpos);
+	}
+	else if (sc.CheckToken(TK_StringConst))
+	{
+		// String parameters are converted to names. Technically, this should be
+		// done at a higher level, as needed, but since no functions take string
+		// arguments and ACS_NamedExecuteWithResult/CallACS need names, this is
+		// a cheap way to get them working when people use "name" instead of 'name'.
+		return new FxConstant(FName(sc.String), scpos);
+	}
 	else if (sc.CheckToken(TK_Random))
 	{
 		FRandom *rng;

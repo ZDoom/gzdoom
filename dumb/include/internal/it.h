@@ -54,7 +54,7 @@ sigdata->flags & IT_COMPATIBLE_GXX
  * handle ambiguities in the format specification. The correct code in each
  * case will be determined most likely by experimentation.
  */
-#define STEREO_SAMPLES_COUNT_AS_TWO
+//#define STEREO_SAMPLES_COUNT_AS_TWO
 #define INVALID_ORDERS_END_SONG
 #define INVALID_NOTES_CAUSE_NOTE_CUT
 #define SUSTAIN_LOOP_OVERRIDES_NORMAL_LOOP
@@ -300,7 +300,18 @@ struct IT_SAMPLE
 #define IT_PTM_NOTE_SLIDE_DOWN_RETRIG 36
 #define IT_PTM_NOTE_SLIDE_UP_RETRIG   37
 
-#define IT_N_EFFECTS                  38
+/* More effects needed for OKT compatibility */
+#define IT_OKT_NOTE_SLIDE_DOWN        38
+#define IT_OKT_NOTE_SLIDE_DOWN_ROW    39
+#define IT_OKT_NOTE_SLIDE_UP          40
+#define IT_OKT_NOTE_SLIDE_UP_ROW      41
+#define IT_OKT_ARPEGGIO_3             42
+#define IT_OKT_ARPEGGIO_4             43
+#define IT_OKT_ARPEGGIO_5             44
+#define IT_OKT_VOLUME_SLIDE_DOWN      45
+#define IT_OKT_VOLUME_SLIDE_UP        46
+
+#define IT_N_EFFECTS                  47
 
 /* These represent the top nibble of the command value. */
 #define IT_S_SET_FILTER              0 /* Greyed out in IT... */
@@ -399,6 +410,10 @@ struct IT_PATTERN
 
 #define IT_WAS_A_669      1024
 
+#define IT_WAS_AN_OKT     2048
+
+#define IT_WAS_AN_STM     4096
+
 #define IT_ORDER_END  255
 #define IT_ORDER_SKIP 254
 
@@ -452,6 +467,7 @@ struct IT_PLAYING_ENVELOPE
 #define IT_PLAYING_SUSTAINOFF 2
 #define IT_PLAYING_FADING     4
 #define IT_PLAYING_DEAD       8
+#define IT_PLAYING_REVERSE    16
 
 struct IT_PLAYING
 {
@@ -586,7 +602,8 @@ struct IT_CHANNEL
 
 	unsigned char new_note_action;
 
-	int arpeggio;
+	unsigned int arpeggio;
+	int arpeggio_shift;
 	unsigned char retrig;
 	unsigned char xm_retrig;
 	int retrig_tick;
@@ -601,7 +618,7 @@ struct IT_CHANNEL
 	int portamento;
 	int toneporta;
 	int toneslide;
-	unsigned char toneslide_tick, last_toneslide_tick, ptm_toneslide, ptm_last_toneslide;
+	unsigned char toneslide_tick, last_toneslide_tick, ptm_toneslide, ptm_last_toneslide, okt_toneslide;
 	unsigned char destnote;
 	unsigned char toneslide_retrig;
 
@@ -642,6 +659,10 @@ struct IT_CHANNEL
 	unsigned char xm_lastEB;
 	unsigned char xm_lastX1;
 	unsigned char xm_lastX2;
+
+	unsigned char inv_loop_delay;
+	unsigned char inv_loop_speed;
+	int inv_loop_offset;
 
 	IT_PLAYING *playing;
 
@@ -802,6 +823,7 @@ extern DUH_SIGTYPE_DESC _dumb_sigtype_it;
 #define XM_E_NOTE_CUT              0xC
 #define XM_E_NOTE_DELAY            0xD
 #define XM_E_PATTERN_DELAY         0xE
+#define XM_E_SET_MIDI_MACRO        0xF
 
 #define XM_X_EXTRAFINE_PORTA_UP    1
 #define XM_X_EXTRAFINE_PORTA_DOWN  2
@@ -879,5 +901,7 @@ int _dumb_it_fix_invalid_orders(DUMB_IT_SIGDATA *sigdata);
 void _dumb_it_ptm_convert_effect(int effect, int value, IT_ENTRY *entry);
 
 int32 _dumb_it_read_sample_data_adpcm4(IT_SAMPLE *sample, DUMBFILE *f);
+
+void _dumb_it_interleave_stereo_sample(IT_SAMPLE *sample);
 
 #endif /* INTERNAL_IT_H */

@@ -210,11 +210,8 @@ bool FZipFile::Open(bool quiet)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
-		char name[256];
-
 		int len = LittleShort(zip_fh->NameLength);
-		strncpy(name, dirptr + sizeof(FZipCentralDirectoryInfo), MIN<int>(len, 255));
-		name[len] = 0;
+		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
 		dirptr += sizeof(FZipCentralDirectoryInfo) + 
 				  LittleShort(zip_fh->NameLength) + 
 				  LittleShort(zip_fh->ExtraLength) + 
@@ -236,7 +233,7 @@ bool FZipFile::Open(bool quiet)
 			zip_fh->Method != METHOD_IMPLODE &&
 			zip_fh->Method != METHOD_SHRINK)
 		{
-			if (!quiet) Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name, zip_fh->Method);
+			if (!quiet) Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name.GetChars(), zip_fh->Method);
 			skipped++;
 			continue;
 		}
@@ -244,13 +241,13 @@ bool FZipFile::Open(bool quiet)
 		zip_fh->Flags = LittleShort(zip_fh->Flags);
 		if (zip_fh->Flags & ZF_ENCRYPTED)
 		{
-			if (!quiet) Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name);
+			if (!quiet) Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name.GetChars());
 			skipped++;
 			continue;
 		}
 
 		FixPathSeperator(name);
-		strlwr(name);
+		name.ToLower();
 
 		lump_p->LumpNameSetup(name);
 		lump_p->LumpSize = LittleLong(zip_fh->UncompressedSize);

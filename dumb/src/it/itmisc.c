@@ -24,7 +24,7 @@
 
 DUMB_IT_SIGDATA *DUMBEXPORT duh_get_it_sigdata(DUH *duh)
 {
-	return duh_get_raw_sigdata(duh, 0, SIGTYPE_IT);
+	return duh_get_raw_sigdata(duh, -1, SIGTYPE_IT);
 }
 
 

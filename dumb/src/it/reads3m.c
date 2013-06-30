@@ -557,8 +557,8 @@ static DUMB_IT_SIGDATA *it_s3m_load_sigdata(DUMBFILE *f, int * cwtv)
 		return NULL;
 	}
 
-	sigdata->global_volume = dumbfile_getc(f) << 1;
-	if ( !sigdata->global_volume || sigdata->global_volume > 128 ) sigdata->global_volume = 128;
+	sigdata->global_volume = dumbfile_getc(f) * 16 / 11;
+	if ( !sigdata->global_volume || sigdata->global_volume > 93 ) sigdata->global_volume = 93;
 	sigdata->speed = dumbfile_getc(f);
 	if (sigdata->speed == 0) sigdata->speed = 6; // Should we? What about tempo?
 	sigdata->tempo = dumbfile_getc(f);

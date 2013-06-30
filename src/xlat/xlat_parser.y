@@ -27,7 +27,7 @@ external_declaration ::= NOP.
 %left XOR.
 %left AND.
 %left MINUS PLUS.
-%left MULTIPLY DIVIDE.
+%left MULTIPLY DIVIDE MODULUS.
 %left NEG.
 
 %type exp {int}
@@ -35,7 +35,8 @@ exp(A) ::= NUM(B).					{ A = B.val; }
 exp(A) ::= exp(B) PLUS exp(C).		{ A = B + C; }
 exp(A) ::= exp(B) MINUS exp(C).		{ A = B - C; }
 exp(A) ::= exp(B) MULTIPLY exp(C).	{ A = B * C; }
-exp(A) ::= exp(B) DIVIDE exp(C).	{ if (C != 0) A = B / C; else context->PrintError("Division by Zero"); }
+exp(A) ::= exp(B) DIVIDE exp(C).	{ if (C != 0) A = B / C; else context->PrintError("Division by zero"); }
+exp(A) ::= exp(B) MODULUS exp(C).	{ if (C != 0) A = B % C; else context->PrintError("Division by zero"); }
 exp(A) ::= exp(B) OR exp(C).		{ A = B | C; }
 exp(A) ::= exp(B) AND exp(C).		{ A = B & C; }
 exp(A) ::= exp(B) XOR exp(C).		{ A = B ^ C; }
@@ -88,15 +89,105 @@ single_enum ::= SYM(A) EQUALS exp(B).
 //
 //==========================================================================
 
-linetype_declaration ::= exp(linetype) EQUALS exp(flags) COMMA exp(special) LPAREN special_args(arg) RPAREN.
+%type linetype_exp {int}
+linetype_exp(Z) ::= exp(A).
+{
+	Z = static_cast<XlatParseContext *>(context)->DefiningLineType = A;
+}
+
+linetype_declaration ::= linetype_exp(linetype) EQUALS exp(flags) COMMA exp(special) LPAREN special_args(arg) RPAREN.
 {
 	SimpleLineTranslations.SetVal(linetype, 
 		FLineTrans(special&0xffff, flags+arg.addflags, arg.args[0], arg.args[1], arg.args[2], arg.args[3], arg.args[4]));
+	static_cast<XlatParseContext *>(context)->DefiningLineType = -1;
 }
 
-linetype_declaration ::= exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
+linetype_declaration ::= linetype_exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
 {
 	Printf ("%s, line %d: %s is undefined\n", context->SourceFile, context->SourceLine, S.sym);
+	static_cast<XlatParseContext *>(context)->DefiningLineType = -1;
+}
+
+%type exp_with_tag {int}
+exp_with_tag(A) ::= NUM(B).		{ XlatExpressions.Push(B.val); A = XlatExpressions.Push(XEXP_Const); }
+exp_with_tag(A) ::= TAG.									{ A = XlatExpressions.Push(XEXP_Tag); }
+exp_with_tag(A) ::= exp_with_tag PLUS exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Add); }
+exp_with_tag(A) ::= exp_with_tag MINUS exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Sub); }
+exp_with_tag(A) ::= exp_with_tag MULTIPLY exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Mul); }
+exp_with_tag(A) ::= exp_with_tag DIVIDE exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Div); }
+exp_with_tag(A) ::= exp_with_tag MODULUS exp_with_tag.		{ A = XlatExpressions.Push(XEXP_Mod); }
+exp_with_tag(A) ::= exp_with_tag OR exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Or);  }
+exp_with_tag(A) ::= exp_with_tag AND exp_with_tag.			{ A = XlatExpressions.Push(XEXP_And); }
+exp_with_tag(A) ::= exp_with_tag XOR exp_with_tag.			{ A = XlatExpressions.Push(XEXP_Xor); }
+exp_with_tag(A) ::= MINUS exp_with_tag. [NEG]				{ A = XlatExpressions.Push(XEXP_Neg); }
+exp_with_tag(A) ::= LPAREN exp_with_tag(B) RPAREN.			{ A = B; }
+
+
+%type special_arg {SpecialArg}
+
+special_arg(Z) ::= exp_with_tag(A).
+{
+	if (XlatExpressions[A] == XEXP_Tag)
+	{ // Store tags directly
+		Z.arg = 0;
+		Z.argop = ARGOP_Tag;
+		XlatExpressions.Delete(A);
+	}
+	else
+	{ // Try and evaluate it. If it's a constant, store it and erase the
+	  // expression. Otherwise, store the index to the expression. We make
+	  // no attempt to simplify non-constant expressions.
+		FXlatExprState state;
+		int val;
+		const int *endpt;
+		int *xnode;
+		
+		state.linetype = static_cast<XlatParseContext *>(context)->DefiningLineType;
+		state.tag = 0;
+		state.bIsConstant = true;
+		xnode = &XlatExpressions[A];
+		endpt = XlatExprEval[*xnode](&val, xnode, &state);
+		if (state.bIsConstant)
+		{
+			Z.arg = val;
+			Z.argop = ARGOP_Const;
+			endpt++;
+			assert(endpt >= &XlatExpressions[0]);
+			XlatExpressions.Resize((unsigned)(endpt - &XlatExpressions[0]));
+		}
+		else
+		{
+			Z.arg = A;
+			Z.argop = ARGOP_Expr;
+		}
+	}
+}
+
+%type multi_special_arg {SpecialArgs}
+
+multi_special_arg(Z) ::= special_arg(A).
+{
+	Z.addflags = A.argop << LINETRANS_TAGSHIFT;
+	Z.argcount = 1;
+	Z.args[0] = A.arg;
+	Z.args[1] = 0;
+	Z.args[2] = 0;
+	Z.args[3] = 0;
+	Z.args[4] = 0;
+}
+multi_special_arg(Z) ::= multi_special_arg(A) COMMA special_arg(B).
+{
+	Z = A;
+	if (Z.argcount < LINETRANS_MAXARGS)
+	{
+		Z.addflags |= B.argop << (LINETRANS_TAGSHIFT + Z.argcount * TAGOP_NUMBITS);
+		Z.args[Z.argcount] = B.arg;
+		Z.argcount++;
+	}
+	else if (Z.argcount++ == LINETRANS_MAXARGS)
+	{
+		context->PrintError("Line special has too many arguments\n");
+	}
 }
 
 %type special_args {SpecialArgs}
@@ -104,223 +195,16 @@ linetype_declaration ::= exp EQUALS exp COMMA SYM(S) LPAREN special_args RPAREN.
 special_args(Z) ::= . /* empty */
 {
 	Z.addflags = 0;
+	Z.argcount = 0;
 	Z.args[0] = 0;
 	Z.args[1] = 0;
 	Z.args[2] = 0;
 	Z.args[3] = 0;
 	Z.args[4] = 0;
 }
-special_args(Z) ::= TAG.
+special_args(Z) ::= multi_special_arg(A).
 {
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B) COMMA exp(C).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B) COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA exp(B) COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT1;
-	Z.args[0] = 0;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= TAG COMMA TAG.
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA TAG COMMA exp(C).
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA TAG COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= TAG COMMA TAG COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HAS2TAGS;
-	Z.args[0] = Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = 0;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA TAG COMMA exp(C).
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA TAG COMMA exp(C) COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA TAG COMMA exp(C) COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT2;
-	Z.args[0] = A;
-	Z.args[1] = 0;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT3;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA TAG COMMA exp(D).
-{
-	Z.addflags = LINETRANS_HASTAGAT3;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = D;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA TAG COMMA exp(D) COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT3;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = 0;
-	Z.args[3] = D;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT4;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = 0;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA TAG COMMA exp(E).
-{
-	Z.addflags = LINETRANS_HASTAGAT4;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = 0;
-	Z.args[4] = E;
-}
-special_args(Z) ::= exp(A) COMMA exp(B) COMMA exp(C) COMMA exp(D) COMMA TAG.
-{
-	Z.addflags = LINETRANS_HASTAGAT5;
-	Z.args[0] = A;
-	Z.args[1] = B;
-	Z.args[2] = C;
-	Z.args[3] = D;
-	Z.args[4] = 0;
+	Z = A;
 }
 
 //==========================================================================
@@ -463,7 +347,7 @@ list_val(A) ::= exp(B) COLON exp(C).
 maxlinespecial_def ::= MAXLINESPECIAL EQUALS exp(mx) SEMICOLON.
 {
 	// Just kill all specials higher than the max.
-	// If the translator wants to redefine some later, just let it.s
+	// If the translator wants to redefine some later, just let it.
 	SimpleLineTranslations.Resize(mx+1);
 }
 

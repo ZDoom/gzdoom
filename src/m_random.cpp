@@ -86,9 +86,8 @@
 extern FRandom pr_spawnmobj;
 extern FRandom pr_acs;
 extern FRandom pr_chase;
-extern FRandom pr_lost;
-extern FRandom pr_slam;
 extern FRandom pr_exrandom;
+extern FRandom pr_damagemobj;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -245,8 +244,7 @@ DWORD FRandom::StaticSumSeeds ()
 		pr_spawnmobj.sfmt.u[0] + pr_spawnmobj.idx +
 		pr_acs.sfmt.u[0] + pr_acs.idx +
 		pr_chase.sfmt.u[0] + pr_chase.idx +
-		pr_lost.sfmt.u[0] + pr_lost.idx +
-		pr_slam.sfmt.u[0] + pr_slam.idx;
+		pr_damagemobj.sfmt.u[0] + pr_damagemobj.idx;
 }
 
 //==========================================================================

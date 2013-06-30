@@ -106,6 +106,7 @@
 #include "po_man.h"
 #include "resourcefiles/resourcefile.h"
 #include "r_renderer.h"
+#include "p_local.h"
 
 #ifdef USE_POLYMOST
 #include "r_polymost.h"
@@ -157,7 +158,6 @@ EXTERN_CVAR (Bool, sv_unlimited_pickup)
 
 extern int testingmode;
 extern bool setmodeneeded;
-extern bool netdemo;
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 EXTERN_CVAR (Bool, st_scale)
 extern bool gameisdead;
@@ -515,8 +515,8 @@ CVAR (Flag, sv_nocountendmonst,		dmflags2, DF2_NOCOUNTENDMONST);
 //
 //==========================================================================
 
-int i_compatflags;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
-int ii_compatflags, ib_compatflags;
+int i_compatflags, i_compatflags2;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
+int ii_compatflags, ii_compatflags2, ib_compatflags;
 
 EXTERN_CVAR(Int, compatmode)
 
@@ -526,19 +526,30 @@ static int GetCompatibility(int mask)
 	else return (mask & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
 }
 
+static int GetCompatibility2(int mask)
+{
+	return (level.info == NULL) ? mask
+		: (mask & ~level.info->compatmask2) | (level.info->compatflags2 & level.info->compatmask2);
+}
+
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	int old = i_compatflags;
 	i_compatflags = GetCompatibility(self) | ii_compatflags;
-	if ((old ^i_compatflags) & COMPATF_POLYOBJ)
+	if ((old ^ i_compatflags) & COMPATF_POLYOBJ)
 	{
 		FPolyObj::ClearAllSubsectorLinks();
 	}
 }
 
+CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+{
+	i_compatflags2 = GetCompatibility2(self) | ii_compatflags2;
+}
+
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
-	int v;
+	int v, w = 0;
 
 	switch (self)
 	{
@@ -551,6 +562,7 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
 			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF|
 			COMPATF_LIGHT;
+		w= COMPATF2_FLOORMOVE;
 		break;
 
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
@@ -558,6 +570,7 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
 			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|
 			COMPATF_WALLRUN|COMPATF_NOTOSSDROPS|COMPATF_LIGHT|COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_BADANGLES|COMPATF2_FLOORMOVE;
 		break;
 
 	case 3: // Boom compat mode
@@ -573,47 +586,50 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 			COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS;
 		break;
 
-	case 6:	// Boom with some added settings to reenable spme 'broken' behavior
+	case 6:	// Boom with some added settings to reenable some 'broken' behavior
 		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_NO_PASSMOBJ|
 			COMPATF_INVISIBILITY|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|COMPATF_WALLRUN|COMPATF_NOTOSSDROPS;
 		break;
 
 	}
 	compatflags = v;
+	compatflags2 = w;
 }
 
-CVAR (Flag, compat_shortTex,	compatflags, COMPATF_SHORTTEX);
-CVAR (Flag, compat_stairs,		compatflags, COMPATF_STAIRINDEX);
-CVAR (Flag, compat_limitpain,	compatflags, COMPATF_LIMITPAIN);
-CVAR (Flag, compat_silentpickup,compatflags, COMPATF_SILENTPICKUP);
-CVAR (Flag, compat_nopassover,	compatflags, COMPATF_NO_PASSMOBJ);
-CVAR (Flag, compat_soundslots,	compatflags, COMPATF_MAGICSILENCE);
-CVAR (Flag, compat_wallrun,		compatflags, COMPATF_WALLRUN);
-CVAR (Flag, compat_notossdrops,	compatflags, COMPATF_NOTOSSDROPS);
-CVAR (Flag, compat_useblocking,	compatflags, COMPATF_USEBLOCKING);
-CVAR (Flag, compat_nodoorlight,	compatflags, COMPATF_NODOORLIGHT);
-CVAR (Flag, compat_ravenscroll,	compatflags, COMPATF_RAVENSCROLL);
-CVAR (Flag, compat_soundtarget,	compatflags, COMPATF_SOUNDTARGET);
-CVAR (Flag, compat_dehhealth,	compatflags, COMPATF_DEHHEALTH);
-CVAR (Flag, compat_trace,		compatflags, COMPATF_TRACE);
-CVAR (Flag, compat_dropoff,		compatflags, COMPATF_DROPOFF);
-CVAR (Flag, compat_boomscroll,	compatflags, COMPATF_BOOMSCROLL);
-CVAR (Flag, compat_invisibility,compatflags, COMPATF_INVISIBILITY);
-CVAR (Flag, compat_silentinstantfloors,compatflags, COMPATF_SILENT_INSTANT_FLOORS);
-CVAR (Flag, compat_sectorsounds,compatflags, COMPATF_SECTORSOUNDS);
-CVAR (Flag, compat_missileclip,	compatflags, COMPATF_MISSILECLIP);
-CVAR (Flag, compat_crossdropoff,compatflags, COMPATF_CROSSDROPOFF);
-CVAR (Flag, compat_anybossdeath,compatflags, COMPATF_ANYBOSSDEATH);
-CVAR (Flag, compat_minotaur,	compatflags, COMPATF_MINOTAUR);
-CVAR (Flag, compat_mushroom,	compatflags, COMPATF_MUSHROOM);
-CVAR (Flag, compat_mbfmonstermove,compatflags, COMPATF_MBFMONSTERMOVE);
-CVAR (Flag, compat_corpsegibs,	compatflags, COMPATF_CORPSEGIBS);
-CVAR (Flag, compat_noblockfriends,compatflags,COMPATF_NOBLOCKFRIENDS);
-CVAR (Flag, compat_spritesort,	compatflags,COMPATF_SPRITESORT);
-CVAR (Flag, compat_hitscan,		compatflags,COMPATF_HITSCAN);
-CVAR (Flag, compat_light,		compatflags,COMPATF_LIGHT);
-CVAR (Flag, compat_polyobj,		compatflags,COMPATF_POLYOBJ);
-CVAR (Flag, compat_maskedmidtex,compatflags,COMPATF_MASKEDMIDTEX);
+CVAR (Flag, compat_shortTex,			compatflags,  COMPATF_SHORTTEX);
+CVAR (Flag, compat_stairs,				compatflags,  COMPATF_STAIRINDEX);
+CVAR (Flag, compat_limitpain,			compatflags,  COMPATF_LIMITPAIN);
+CVAR (Flag, compat_silentpickup,		compatflags,  COMPATF_SILENTPICKUP);
+CVAR (Flag, compat_nopassover,			compatflags,  COMPATF_NO_PASSMOBJ);
+CVAR (Flag, compat_soundslots,			compatflags,  COMPATF_MAGICSILENCE);
+CVAR (Flag, compat_wallrun,				compatflags,  COMPATF_WALLRUN);
+CVAR (Flag, compat_notossdrops,			compatflags,  COMPATF_NOTOSSDROPS);
+CVAR (Flag, compat_useblocking,			compatflags,  COMPATF_USEBLOCKING);
+CVAR (Flag, compat_nodoorlight,			compatflags,  COMPATF_NODOORLIGHT);
+CVAR (Flag, compat_ravenscroll,			compatflags,  COMPATF_RAVENSCROLL);
+CVAR (Flag, compat_soundtarget,			compatflags,  COMPATF_SOUNDTARGET);
+CVAR (Flag, compat_dehhealth,			compatflags,  COMPATF_DEHHEALTH);
+CVAR (Flag, compat_trace,				compatflags,  COMPATF_TRACE);
+CVAR (Flag, compat_dropoff,				compatflags,  COMPATF_DROPOFF);
+CVAR (Flag, compat_boomscroll,			compatflags,  COMPATF_BOOMSCROLL);
+CVAR (Flag, compat_invisibility,		compatflags,  COMPATF_INVISIBILITY);
+CVAR (Flag, compat_silentinstantfloors,	compatflags,  COMPATF_SILENT_INSTANT_FLOORS);
+CVAR (Flag, compat_sectorsounds,		compatflags,  COMPATF_SECTORSOUNDS);
+CVAR (Flag, compat_missileclip,			compatflags,  COMPATF_MISSILECLIP);
+CVAR (Flag, compat_crossdropoff,		compatflags,  COMPATF_CROSSDROPOFF);
+CVAR (Flag, compat_anybossdeath,		compatflags,  COMPATF_ANYBOSSDEATH);
+CVAR (Flag, compat_minotaur,			compatflags,  COMPATF_MINOTAUR);
+CVAR (Flag, compat_mushroom,			compatflags,  COMPATF_MUSHROOM);
+CVAR (Flag, compat_mbfmonstermove,		compatflags,  COMPATF_MBFMONSTERMOVE);
+CVAR (Flag, compat_corpsegibs,			compatflags,  COMPATF_CORPSEGIBS);
+CVAR (Flag, compat_noblockfriends,		compatflags,  COMPATF_NOBLOCKFRIENDS);
+CVAR (Flag, compat_spritesort,			compatflags,  COMPATF_SPRITESORT);
+CVAR (Flag, compat_hitscan,				compatflags,  COMPATF_HITSCAN);
+CVAR (Flag, compat_light,				compatflags,  COMPATF_LIGHT);
+CVAR (Flag, compat_polyobj,				compatflags,  COMPATF_POLYOBJ);
+CVAR (Flag, compat_maskedmidtex,		compatflags,  COMPATF_MASKEDMIDTEX);
+CVAR (Flag, compat_badangles,			compatflags2, COMPATF2_BADANGLES);
+CVAR (Flag, compat_floormove,			compatflags2, COMPATF2_FLOORMOVE);
 
 //==========================================================================
 //
@@ -665,6 +681,8 @@ void D_Display ()
 			// Reload crosshair if transitioned to a different size
 			ST_LoadCrosshair (true);
 			AM_NewResolution ();
+			// Reset the mouse cursor in case the bit depth changed
+			vid_cursor.Callback();
 		}
 	}
 
@@ -679,21 +697,21 @@ void D_Display ()
 
 	if (screen->Lock (false))
 	{
-		SB_state = screen->GetPageCount ();
-		BorderNeedRefresh = screen->GetPageCount ();
+		ST_SetNeedRefresh();
+		V_SetBorderNeedRefresh();
 	}
 
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)
 	{
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 		NoWipe--;
 		wipe = false;
 		wipegamestate = gamestate;
 	}
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
-		BorderNeedRefresh = screen->GetPageCount ();
+		V_SetBorderNeedRefresh();
 		switch (wipegamestate)
 		{
 		default:
@@ -756,13 +774,14 @@ void D_Display ()
 			}
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
 				viewwindowx + viewwidth, viewwindowy + viewheight);
-			P_CheckPlayerSprites();
+			P_PredictPlayer(&players[consoleplayer]);
 			Renderer->RenderView(&players[consoleplayer]);
+			P_UnPredictPlayer();
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{
 				// Redraw everything every frame when using 2D accel
-				SB_state = screen->GetPageCount();
-				BorderNeedRefresh = screen->GetPageCount();
+				ST_SetNeedRefresh();
+				V_SetBorderNeedRefresh();
 			}
 			Renderer->DrawRemainingPlayerSprites();
 			screen->DrawBlendingRect();
@@ -783,17 +802,22 @@ void D_Display ()
 
 			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
 			{
+				StatusBar->DrawBottomStuff (HUD_AltHud);
 				if (DrawFSHUD || automapactive) DrawHUD();
-				StatusBar->DrawTopStuff (HUD_None);
+				StatusBar->Draw (HUD_AltHud);
+				StatusBar->DrawTopStuff (HUD_AltHud);
 			}
 			else 
 			if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
 			{
-				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
-				StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);
+				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
+				StatusBar->DrawBottomStuff (state);
+				StatusBar->Draw (state);
+				StatusBar->DrawTopStuff (state);
 			}
 			else
 			{
+				StatusBar->DrawBottomStuff (HUD_StatusBar);
 				StatusBar->Draw (HUD_StatusBar);
 				StatusBar->DrawTopStuff (HUD_StatusBar);
 			}
@@ -912,6 +936,7 @@ void D_Display ()
 
 void D_ErrorCleanup ()
 {
+	savegamerestore = false;
 	screen->Unlock ();
 	bglobal.RemoveAllBots (true);
 	D_QuitNetGame ();
@@ -1210,12 +1235,17 @@ void D_DoAdvanceDemo (void)
 	static int pagecount;
 	const char *pagename = NULL;
 
+	advancedemo = false;
+
+	if (gameaction != ga_nothing)
+	{
+		return;
+	}
+
 	V_SetBlend (0,0,0,0);
 	players[consoleplayer].playerstate = PST_LIVE;	// not reborn
-	advancedemo = false;
 	usergame = false;				// no save / end game here
 	paused = 0;
-	gameaction = ga_nothing;
 
 	// [RH] If you want something more dynamic for your title, create a map
 	// and name it TITLEMAP. That map will be loaded and used as the title.
@@ -1248,7 +1278,7 @@ void D_DoAdvanceDemo (void)
 		Advisory = NULL;
 		if (!M_DemoNoPlay)
 		{
-			BorderNeedRefresh = screen->GetPageCount ();
+			V_SetBorderNeedRefresh();
 			democount++;
 			mysnprintf (demoname + 4, countof(demoname) - 4, "%d", democount);
 			if (Wads.CheckNumForName (demoname) < 0)
@@ -1325,6 +1355,136 @@ CCMD (endgame)
 	{
 		gameaction = ga_fullconsole;
 		demosequence = -1;
+	}
+}
+
+//==========================================================================
+//
+// ParseCVarInfo
+//
+//==========================================================================
+
+void ParseCVarInfo()
+{
+	int lump, lastlump = 0;
+	bool addedcvars = false;
+
+	while ((lump = Wads.FindLump("CVARINFO", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+		sc.SetCMode(true);
+
+		while (sc.GetToken())
+		{
+			FString cvarname;
+			char *cvardefault = NULL;
+			ECVarType cvartype = CVAR_Dummy;
+			int cvarflags = CVAR_MOD|CVAR_ARCHIVE;
+			FBaseCVar *cvar;
+
+			// Check for flag tokens.
+			while (sc.TokenType == TK_Identifier)
+			{
+				if (stricmp(sc.String, "server") == 0)
+				{
+					cvarflags |= CVAR_SERVERINFO;
+				}
+				else if (stricmp(sc.String, "user") == 0)
+				{
+					cvarflags |= CVAR_USERINFO;
+				}
+				else if (stricmp(sc.String, "noarchive") == 0)
+				{
+					cvarflags &= ~CVAR_ARCHIVE;
+				}
+				else
+				{
+					sc.ScriptError("Unknown cvar attribute '%s'", sc.String);
+				}
+				sc.MustGetAnyToken();
+			}
+			// Do some sanity checks.
+			if ((cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO)) == 0 ||
+				(cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO)) == (CVAR_SERVERINFO|CVAR_USERINFO))
+			{
+				sc.ScriptError("One of 'server' or 'user' must be specified");
+			}
+			// The next token must be the cvar type.
+			if (sc.TokenType == TK_Bool)
+			{
+				cvartype = CVAR_Bool;
+			}
+			else if (sc.TokenType == TK_Int)
+			{
+				cvartype = CVAR_Int;
+			}
+			else if (sc.TokenType == TK_Float)
+			{
+				cvartype = CVAR_Float;
+			}
+			else if (sc.TokenType == TK_Color)
+			{
+				cvartype = CVAR_Color;
+			}
+			else if (sc.TokenType == TK_String)
+			{
+				cvartype = CVAR_String;
+			}
+			else
+			{
+				sc.ScriptError("Bad cvar type '%s'", sc.String);
+			}
+			// The next token must be the cvar name.
+			sc.MustGetToken(TK_Identifier);
+			if (FindCVar(sc.String, NULL) != NULL)
+			{
+				sc.ScriptError("cvar '%s' already exists", sc.String);
+			}
+			cvarname = sc.String;
+			// A default value is optional and signalled by a '=' token.
+			if (sc.CheckToken('='))
+			{
+				switch (cvartype)
+				{
+				case CVAR_Bool:
+					if (!sc.CheckToken(TK_True) && !sc.CheckToken(TK_False))
+					{
+						sc.ScriptError("Expected true or false");
+					}
+					cvardefault = sc.String;
+					break;
+				case CVAR_Int:
+					sc.MustGetNumber();
+					cvardefault = sc.String;
+					break;
+				case CVAR_Float:
+					sc.MustGetFloat();
+					cvardefault = sc.String;
+					break;
+				default:
+					sc.MustGetString();
+					cvardefault = sc.String;
+					break;
+				}
+			}
+			// Now create the cvar.
+			cvar = C_CreateCVar(cvarname, cvartype, cvarflags);
+			if (cvardefault != NULL)
+			{
+				UCVarValue val;
+				val.String = cvardefault;
+				cvar->SetGenericRepDefault(val, CVAR_String);
+			}
+			// To be like C and ACS, require a semicolon after everything.
+			sc.MustGetToken(';');
+			addedcvars = true;
+		}
+	}
+	// Only load mod cvars from the config if we defined some, so we don't
+	// clutter up the cvar space when not playing mods with custom cvars.
+	if (addedcvars)
+	{
+		GameConfig->DoModSetup (gameinfo.ConfigName);
 	}
 }
 
@@ -1681,6 +1841,25 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetString();
 			DoomStartupInfo.BkColor = V_GetColor(NULL, sc.String);
 		}
+		else if (!nextKey.CompareNoCase("STARTUPTYPE"))
+		{
+			sc.MustGetString();
+			FString sttype = sc.String;
+			if (!sttype.CompareNoCase("DOOM"))
+				DoomStartupInfo.Type = FStartupInfo::DoomStartup;
+			else if (!sttype.CompareNoCase("HERETIC"))
+				DoomStartupInfo.Type = FStartupInfo::HereticStartup;
+			else if (!sttype.CompareNoCase("HEXEN"))
+				DoomStartupInfo.Type = FStartupInfo::HexenStartup;
+			else if (!sttype.CompareNoCase("STRIFE"))
+				DoomStartupInfo.Type = FStartupInfo::StrifeStartup;
+			else DoomStartupInfo.Type = FStartupInfo::DefaultStartup;
+		}
+		else if (!nextKey.CompareNoCase("STARTUPSONG"))
+		{
+			sc.MustGetString();
+			DoomStartupInfo.Song = sc.String;
+		}
 	}
 	return iwad;
 }
@@ -2012,6 +2191,21 @@ static void CheckCmdLine()
 
 //==========================================================================
 //
+// FinalGC
+//
+// If this doesn't free everything, the debug CRT will let us know.
+//
+//==========================================================================
+
+static void FinalGC()
+{
+	Args = NULL;
+	GC::FullGC();
+	GC::DelSoftRootHead();	// the soft root head will not be collected by a GC so we have to do it explicitly
+}
+
+//==========================================================================
+//
 // D_DoomMain
 //
 //==========================================================================
@@ -2028,6 +2222,7 @@ void D_DoomMain (void)
 
 	D_DoomInit();
 	PClass::StaticInit ();
+	atterm(FinalGC);
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
@@ -2099,7 +2294,10 @@ void D_DoomMain (void)
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
-		
+
+		// Now that wads are loaded, define mod-specific cvars.
+		ParseCVarInfo();
+
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);
 
@@ -2127,8 +2325,14 @@ void D_DoomMain (void)
 		S_Init ();
 
 		Printf ("ST_Init: Init startup screen.\n");
-		if (!restart) StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
-		else StartScreen = new FStartupScreen(0);
+		if (!restart)
+		{
+			StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+		}
+		else
+		{
+			StartScreen = new FStartupScreen(0);
+		}
 
 		ParseCompatibility();
 
@@ -2137,14 +2341,17 @@ void D_DoomMain (void)
 		// [RH] Load sound environments
 		S_ParseReverbDef ();
 
+		// [RH] Parse any SNDINFO lumps
+		Printf ("S_InitData: Load sound definitions.\n");
+		S_InitData ();
+
 		// [RH] Parse through all loaded mapinfo lumps
 		Printf ("G_ParseMapInfo: Load map definitions.\n");
 		G_ParseMapInfo (iwad_info->MapInfo);
 		ReadStatistics();
 
-		// [RH] Parse any SNDINFO lumps
-		Printf ("S_InitData: Load sound definitions.\n");
-		S_InitData ();
+		// MUSINFO must be parsed after MAPINFO
+		S_ParseMusInfo();
 
 		Printf ("Texman.Init: Init texture manager.\n");
 		TexMan.Init();
@@ -2275,6 +2482,7 @@ void D_DoomMain (void)
 
 			delete StartScreen;
 			StartScreen = NULL;
+			S_Sound (CHAN_BODY, "misc/startupdone", 1, ATTN_NONE);
 
 			if (Args->CheckParm("-norun"))
 			{
@@ -2282,6 +2490,16 @@ void D_DoomMain (void)
 			}
 
 			V_Init2();
+			UpdateJoystickMenu(NULL);
+
+			v = Args->CheckValue ("-loadgame");
+			if (v)
+			{
+				FString file(v);
+				FixPathSeperator (file);
+				DefaultExtension (file, ".zds");
+				G_LoadGame (file);
+			}
 
 			v = Args->CheckValue("-playdemo");
 			if (v != NULL)
@@ -2296,15 +2514,6 @@ void D_DoomMain (void)
 			{
 				G_TimeDemo (v);
 				D_DoomLoop ();	// never returns
-			}
-				
-			v = Args->CheckValue ("-loadgame");
-			if (v)
-			{
-				FString file(v);
-				FixPathSeperator (file);
-				DefaultExtension (file, ".zds");
-				G_LoadGame (file);
 			}
 
 			if (gameaction != ga_loadgame && gameaction != ga_loadgamehidecon)

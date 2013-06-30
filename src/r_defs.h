@@ -38,8 +38,8 @@
 
 #include "dthinker.h"
 
-#define MAXWIDTH 2560
-#define MAXHEIGHT 1600
+#define MAXWIDTH 5760
+#define MAXHEIGHT 3600
 
 const WORD NO_INDEX = 0xffffu;
 const DWORD NO_SIDE = 0xffffffffu;
@@ -212,10 +212,16 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	// Returns < 0 : behind; == 0 : on; > 0 : in front
+	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
+	{
+		return TMulScale16(a,x, b,y, c,z) + d;
+	}
+
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
 	fixed_t Zat0 () const
 	{
-		return ic < 0? d:-d;
+		return ic < 0 ? d : -d;
 	}
 
 	// Returns the value of z at (x,y)
@@ -439,6 +445,7 @@ struct sector_t
 	void ClosestPoint(fixed_t x, fixed_t y, fixed_t &ox, fixed_t &oy) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
+	sector_t *GetHeightSec() const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 	void StopInterpolation(int position);
@@ -600,14 +607,6 @@ struct sector_t
 		planes[pos].TexZ += val;
 	}
 
-	sector_t *GetHeightSec() const 
-	{
-		return (heightsec &&
-			!(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-			!(this->e && this->e->XFloor.ffloors.Size())
-			)? heightsec : NULL;
-	}
-
 	static inline short ClampLight(int level)
 	{
 		return (short)clamp(level, SHRT_MIN, SHRT_MAX);
@@ -751,6 +750,7 @@ enum
 	WALLF_CLIP_MIDTEX	 = 16,	// Like the line counterpart, but only for this side.
 	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
 	WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
+	WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
 };
 
 struct side_t
@@ -783,7 +783,7 @@ struct side_t
 	BYTE		Flags;
 	int			Index;		// needed to access custom UDMF fields which are stored in loading order.
 
-	int GetLightLevel (bool foggy, int baselight, int *fake = NULL) const;
+	int GetLightLevel (bool foggy, int baselight, bool noabsolute=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
 	void SetLight(SWORD l)
 	{
@@ -839,11 +839,11 @@ struct side_t
 
 	void SetTextureXScale(int which, fixed_t scale)
 	{
-		textures[which].xscale = scale <= 0? FRACUNIT : scale;
+		textures[which].xscale = scale == 0 ? FRACUNIT : scale;
 	}
 	void SetTextureXScale(fixed_t scale)
 	{
-		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale <= 0? FRACUNIT : scale;
+		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : scale;
 	}
 	fixed_t GetTextureXScale(int which) const
 	{
@@ -857,11 +857,11 @@ struct side_t
 
 	void SetTextureYScale(int which, fixed_t scale)
 	{
-		textures[which].yscale = scale <= 0? FRACUNIT : scale;
+		textures[which].yscale = scale == 0 ? FRACUNIT : scale;
 	}
 	void SetTextureYScale(fixed_t scale)
 	{
-		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale <= 0? FRACUNIT : scale;
+		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : scale;
 	}
 	fixed_t GetTextureYScale(int which) const
 	{
@@ -910,6 +910,7 @@ struct line_t
 	slopetype_t	slopetype;	// To aid move clipping.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
+	int			locknumber;	// [Dusk] lock number for special
 };
 
 // phares 3/14/98

@@ -26,6 +26,7 @@ public:
 	void Tick ();
 	void ChangeData (int seqOffset, int delayTics, float volume, FSoundID currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);
+	int GetModeNum() const { return m_ModeNum; }
 	FName GetSequenceName() const;
 	static void StaticMarkHead() { GC::Mark(SequenceListHead); }
 
@@ -70,10 +71,10 @@ void SN_StopAllSequences (void);
 
 struct FSoundSequence
 {
-	FName	SeqName;
-	FName	Slot;
-	int		StopSound;
-	SDWORD	Script[1];	// + more until end of sequence script
+	FName	 SeqName;
+	FName	 Slot;
+	FSoundID StopSound;
+	SDWORD	 Script[1];	// + more until end of sequence script
 };
 
 void S_ParseSndSeq (int levellump);
@@ -89,12 +90,15 @@ DSeqNode *SN_CheckSequence (sector_t *sector, int chan);
 void SN_StopSequence (AActor *mobj);
 void SN_StopSequence (sector_t *sector, int chan);
 void SN_StopSequence (FPolyObj *poly);
+bool SN_AreModesSame(int sequence, seqtype_t type, int mode1, int mode2);
+bool SN_AreModesSame(const char *name, int mode1, int mode2);
 void SN_UpdateActiveSequences (void);
 ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr);
 void SN_DoStop (void *);
 void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
 	float volume, int currentSoundID);
 FName SN_GetSequenceSlot (int sequence, seqtype_t type);
+void SN_MarkPrecacheSounds (int sequence, seqtype_t type);
 bool SN_IsMakingLoopingSound (sector_t *sector);
 
 #endif //__S_SNDSEQ_H__

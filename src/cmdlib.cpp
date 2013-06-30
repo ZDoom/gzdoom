@@ -537,6 +537,7 @@ void CreatePath(const char *fn)
 		}
 		if (mkdir(copy, 0755) == -1)
 		{ // failed
+			free(copy);
 			return;
 		}
 exists:	if (p != NULL)
@@ -550,7 +551,7 @@ exists:	if (p != NULL)
 
 //==========================================================================
 //
-// strbin1	-- In-place version
+// strbin	-- In-place version
 //
 // [RH] Replaces the escape sequences in a string with actual escaped characters.
 // This operation is done in-place. The result is the new length of the string.
@@ -600,18 +601,20 @@ int strbin (char *str)
 				case 'x':
 				case 'X':
 					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
+					for (i = 0; i < 2; i++)
+					{
 						p++;
+						if (*p >= '0' && *p <= '9')
+							c = (c << 4) + *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c = (c << 4) + 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c = (c << 4) + 10 + *p-'A';
+						else
+						{
+							p--;
+							break;
+						}
 					}
 					*str++ = c;
 					break;
@@ -650,7 +653,7 @@ int strbin (char *str)
 // strbin1	-- String-creating version
 //
 // [RH] Replaces the escape sequences in a string with actual escaped characters.
-// This operation is done in-place.
+// The result is a new string.
 //
 //==========================================================================
 
@@ -698,18 +701,20 @@ FString strbin1 (const char *start)
 				case 'x':
 				case 'X':
 					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
+					for (i = 0; i < 2; i++)
+					{
 						p++;
+						if (*p >= '0' && *p <= '9')
+							c = (c << 4) + *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c = (c << 4) + 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c = (c << 4) + 10 + *p-'A';
+						else
+						{
+							p--;
+							break;
+						}
 					}
 					result << c;
 					break;
@@ -751,7 +756,7 @@ FString strbin1 (const char *start)
 //
 //==========================================================================
 
-void CleanseString(char *str)
+char *CleanseString(char *str)
 {
 	char *escape = strrchr(str, TEXTCOLOR_ESCAPE);
 	if (escape != NULL)
@@ -769,6 +774,7 @@ void CleanseString(char *str)
 			}
 		}
 	}
+	return str;
 }
 
 //==========================================================================

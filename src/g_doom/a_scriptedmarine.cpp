@@ -153,8 +153,11 @@ void AScriptedMarine::Tick ()
 //
 //============================================================================
 
-DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(ignoremissile, 0);
+
 	if (self->target == NULL || self->target->health <= 0)
 	{
 		if (self->MissileState && pr_m_refire() < 160)
@@ -167,7 +170,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_Refire)
 		self->SetState (self->state + 1);
 		return;
 	}
-	if ((self->MissileState == NULL && !self->CheckMeleeRange ()) ||
+	if (((ignoremissile || self->MissileState == NULL) && !self->CheckMeleeRange ()) ||
 		!P_CheckSight (self, self->target) ||
 		pr_m_refire() < 4)	// Small chance of stopping even when target not dead
 	{
@@ -354,7 +357,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
 		angle += pr_m_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, NAME_None, pufftype);
+	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);
 }
 
 //============================================================================
@@ -441,7 +444,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, NAME_BulletPuff);
+					  NAME_Hitscan, NAME_BulletPuff);
 	}
 	self->special1 = level.maptime;
 }

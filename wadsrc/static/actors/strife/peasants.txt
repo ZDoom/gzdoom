@@ -12,6 +12,8 @@ ACTOR Peasant : StrifeHumanoid
 	+FRIENDLY
 	-COUNTKILL
 	+NOSPLASHALERT
+	+FLOORCLIP
+	+JUSTHIT
 	MinMissileChance 150
 	MaxStepHeight 16
 	MaxDropoffHeight 32
@@ -27,7 +29,7 @@ ACTOR Peasant : StrifeHumanoid
 		Loop
 	See:
 		PEAS AABBCCDD 5 A_Wander
-		Loop
+		Goto Spawn
 	Melee:
 		PEAS E 10 A_FaceTarget
 		PEAS F 8 A_CustomMeleeAttack(2*random[PeasantAttack](1,5)+2)

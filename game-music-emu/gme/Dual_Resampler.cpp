@@ -62,10 +62,10 @@ void Dual_Resampler::play_frame_( Blip_Buffer& blip_buf, dsample_t* out )
 	assert( blip_buf.samples_avail() == pair_count );
 	
 	resampler.write( new_count );
-	
+
 	long count = resampler.read( sample_buf.begin(), sample_buf_size );
 	assert( count == (long) sample_buf_size );
-	
+
 	mix_samples( blip_buf, out );
 	blip_buf.remove_samples( pair_count );
 }

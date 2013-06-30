@@ -126,7 +126,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("ReadyGlow"));
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("SelectGlow"));
 	}
 	else
 	{

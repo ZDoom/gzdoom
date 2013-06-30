@@ -267,6 +267,7 @@ loop:
 	case '-': return TokenTrans[MINUS];
 	case '+': return TokenTrans[PLUS];
 	case '*': return TokenTrans[MULTIPLY];
+	case '%': return TokenTrans[MODULUS];
 	case '(': return TokenTrans[LPAREN];
 	case ')': return TokenTrans[RPAREN];
 	case ',': return TokenTrans[COMMA];

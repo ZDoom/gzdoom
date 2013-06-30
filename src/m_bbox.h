@@ -57,6 +57,15 @@ public:
 		m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FIXED_MAX;
 	}
 
+	// Returns a bounding box that encloses both bounding boxes
+	FBoundingBox operator | (const FBoundingBox &box2) const
+	{
+		return FBoundingBox(m_Box[BOXLEFT] < box2.m_Box[BOXLEFT] ? m_Box[BOXLEFT] : box2.m_Box[BOXLEFT],
+							m_Box[BOXBOTTOM] < box2.m_Box[BOXBOTTOM] ? m_Box[BOXBOTTOM] : box2.m_Box[BOXBOTTOM],
+							m_Box[BOXRIGHT] > box2.m_Box[BOXRIGHT] ? m_Box[BOXRIGHT] : box2.m_Box[BOXRIGHT],
+							m_Box[BOXTOP] > box2.m_Box[BOXTOP] ? m_Box[BOXTOP] : box2.m_Box[BOXTOP]);
+	}
+
 	void AddToBox (fixed_t x, fixed_t y);
 
 	inline fixed_t Top () const { return m_Box[BOXTOP]; }

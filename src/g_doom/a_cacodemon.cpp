@@ -22,8 +22,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_HeadAttack)
 	{
 		int damage = (pr_headattack()%6+1)*10;
 		S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
 	

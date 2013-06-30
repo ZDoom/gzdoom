@@ -54,6 +54,7 @@ struct FPolyObj
 	FPolyVertex				CenterSpot;
 	FBoundingBox			Bounds;	// Bounds in map coordinates 
 	subsector_t				*CenterSubsector;
+	int						MirrorNum;
 
 	angle_t		angle;
 	int			tag;			// reference tag assigned in HereticEd
@@ -76,6 +77,7 @@ struct FPolyObj
 	bool RotatePolyobj (angle_t angle);
 	void ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, side_t **side) const;
 	void LinkPolyobj ();
+	void RecalcActorFloorCeil(FBoundingBox bounds) const;
 	void CreateSubsectorLinks();
 	void ClearSubsectorLinks();
 	void CalcCenter();

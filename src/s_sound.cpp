@@ -101,7 +101,7 @@ extern float S_GetMusicVolume (const char *music);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range);
+static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range, AActor *actor, int channel);
 static bool S_IsChannelUsed(AActor *actor, int channel, int *seen);
 static void S_ActivatePlayList(bool goBack);
 static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel);
@@ -268,7 +268,7 @@ void S_NoiseDebug (void)
 		}
 		chan = (FSoundChan *)((size_t)chan->PrevChan - myoffsetof(FSoundChan, NextChan));
 	}
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 }
 
 static FString LastLocalSndInfo;
@@ -326,7 +326,6 @@ void S_InitData ()
 	LastLocalSndInfo = LastLocalSndSeq = "";
 	S_ParseSndInfo (false);
 	S_ParseSndSeq (-1);
-	S_ParseMusInfo();
 }
 
 //==========================================================================
@@ -365,6 +364,9 @@ void S_Shutdown ()
 		delete PlayList;
 		PlayList = NULL;
 	}
+	S_StopMusic (true);
+	mus_playing.name = "";
+	LastSong = "";
 }
 
 //==========================================================================
@@ -444,8 +446,9 @@ void S_Start ()
 	// start new music for the level
 	MusicPaused = false;
 
-	// [RH] This is a lot simpler now.
-	if (!savegamerestore)
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!savegamerestore && (level.info == NULL || level.info->snapshot == NULL || !level.info->isValid()))
 	{
 		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
 			S_ChangeMusic (level.Music, level.musicorder);
@@ -474,14 +477,15 @@ void S_PrecacheLevel ()
 		AActor *actor;
 		TThinkerIterator<AActor> iterator;
 
-		while ( (actor = iterator.Next ()) != NULL )
+		// Precache all sounds known to be used by the currently spawned actors.
+		while ( (actor = iterator.Next()) != NULL )
 		{
-			S_sfx[actor->SeeSound].bUsed = true;
-			S_sfx[actor->AttackSound].bUsed = true;
-			S_sfx[actor->PainSound].bUsed = true;
-			S_sfx[actor->DeathSound].bUsed = true;
-			S_sfx[actor->ActiveSound].bUsed = true;
-			S_sfx[actor->UseSound].bUsed = true;
+			actor->MarkPrecacheSounds();
+		}
+		// Precache all extra sounds requested by this map.
+		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
+		{
+			level.info->PrecacheSounds[i].MarkUsed();
 		}
 
 		for (i = 1; i < S_sfx.Size(); ++i)
@@ -898,6 +902,8 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		}
 		else if (sfx->bRandomHeader)
 		{
+			// Random sounds attenuate based on the original (random) sound as well as the chosen one.
+			attenuation *= sfx->Attenuation;
 			sound_id = FSoundID(S_PickReplacement (sound_id));
 			if (near_limit < 0) 
 			{
@@ -924,6 +930,9 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		}
 		sfx = &S_sfx[sound_id];
 	}
+
+	// Attenuate the attenuation based on the sound.
+	attenuation *= sfx->Attenuation;
 
 	// The passed rolloff overrides any sound-specific rolloff.
 	if (forcedrolloff != NULL && forcedrolloff->MinDistance != 0)
@@ -952,7 +961,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 
 	// If this sound doesn't like playing near itself, don't play it if
 	// that's what would happen.
-	if (near_limit > 0 && S_CheckSoundLimit(sfx, pos, near_limit, limit_range))
+	if (near_limit > 0 && S_CheckSoundLimit(sfx, pos, near_limit, limit_range, actor, channel))
 	{
 		chanflags |= CHAN_EVICTED;
 	}
@@ -1157,7 +1166,7 @@ void S_RestartSound(FSoundChan *chan)
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
-		if (chan->NearLimit > 0 && S_CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange))
+		if (chan->NearLimit > 0 && S_CheckSoundLimit(&S_sfx[chan->SoundID], pos, chan->NearLimit, chan->LimitRange, NULL, 0))
 		{
 			return;
 		}
@@ -1389,12 +1398,19 @@ bool S_CheckSingular(int sound_id)
 //
 // Limits the number of nearby copies of a sound that can play near
 // each other. If there are NearLimit instances of this sound already
-// playing within 256 units of the new sound, the new sound will not
-// start.
+// playing within sqrt(limit_range) (typically 256 units) of the new sound, the
+// new sound will not start.
+//
+// If an actor is specified, and it is already playing the same sound on
+// the same channel, this sound will not be limited. In this case, we're
+// restarting an already playing sound, so there's no need to limit it.
+//
+// Returns true if the sound should not play.
 //
 //==========================================================================
 
-bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range)
+bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range,
+	AActor *actor, int channel)
 {
 	FSoundChan *chan;
 	int count;
@@ -1404,6 +1420,12 @@ bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, floa
 		if (!(chan->ChanFlags & CHAN_EVICTED) && &S_sfx[chan->SoundID] == sfx)
 		{
 			FVector3 chanorigin;
+
+			if (actor != NULL && chan->EntChannel == channel &&
+				chan->SourceType == SOURCE_Actor && chan->Actor == actor)
+			{ // We are restarting a playing sound. Always let it play.
+				return false;
+			}
 
 			CalcPosVel(chan, &chanorigin, NULL);
 			if ((chanorigin - pos).LengthSquared() <= limit_range)
@@ -1568,6 +1590,29 @@ void S_RelinkSound (AActor *from, AActor *to)
 		}
 		chan = next;
 	}
+}
+
+
+//==========================================================================
+//
+// S_ChangeSoundVolume
+//
+//==========================================================================
+
+bool S_ChangeSoundVolume(AActor *actor, int channel, float volume)
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == SOURCE_Actor &&
+			chan->Actor == actor &&
+			(chan->EntChannel == channel || (i_compatflags & COMPATF_MAGICSILENCE)))
+		{
+			GSnd->ChannelVolume(chan, volume);
+			chan->Volume = volume;
+			return true;
+		}
+	}
+	return false;
 }
 
 //==========================================================================
@@ -1743,7 +1788,7 @@ void S_SetSoundPaused (int state)
 			S_ResumeSound(true);
 			if (GSnd != NULL)
 			{
-				GSnd->SetInactive(false);
+				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
 			}
 			if (!netgame
 #ifdef _DEBUG
@@ -1762,7 +1807,9 @@ void S_SetSoundPaused (int state)
 			S_PauseSound(false, true);
 			if (GSnd !=  NULL)
 			{
-				GSnd->SetInactive(true);
+				GSnd->SetInactive(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL ?
+					SoundRenderer::INACTIVE_Complete :
+					SoundRenderer::INACTIVE_Mute);
 			}
 			if (!netgame
 #ifdef _DEBUG
@@ -2112,7 +2159,6 @@ void S_StopChannel(FSoundChan *chan)
 	}
 }
 
-
 //==========================================================================
 //
 // (FArchive &) << (FSoundID &)
@@ -2366,6 +2412,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				mus_playing.baseorder = order;
 			}
 		}
+		else if (!mus_playing.handle->IsPlaying())
+		{
+			mus_playing.handle->Play(looping, order);
+		}
 		return true;
 	}
 
@@ -2464,7 +2514,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		if (snd_musicvolume <= 0)
 		{
 			mus_playing.loop = looping;
-			mus_playing.name = "";
+			mus_playing.name = musicname;
 			mus_playing.baseorder = order;
 			LastSong = musicname;
 			return true;
@@ -2591,7 +2641,44 @@ CCMD (playsound)
 {
 	if (argv.argc() > 1)
 	{
-		S_Sound (CHAN_AUTO | CHAN_UI, argv[1], 1.f, ATTN_NONE);
+		FSoundID id = argv[1];
+		if (id == 0)
+		{
+			Printf("'%s' is not a sound\n", argv[1]);
+		}
+		else
+		{
+			S_Sound (CHAN_AUTO | CHAN_UI, id, 1.f, ATTN_NONE);
+		}
+	}
+}
+
+//==========================================================================
+//
+// CCMD loopsound
+//
+//==========================================================================
+
+CCMD (loopsound)
+{
+	if (players[consoleplayer].mo != NULL && !netgame && argv.argc() > 1)
+	{
+		FSoundID id = argv[1];
+		if (id == 0)
+		{
+			Printf("'%s' is not a sound\n", argv[1]);
+		}
+		else
+		{
+			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->x,
+				players[consoleplayer].mo->y,
+				players[consoleplayer].mo->z + 32*FRACUNIT,
+				ALLOW_REPLACE);
+			if (icon != NULL)
+			{
+				S_Sound(icon, CHAN_BODY | CHAN_LOOP, id, 1.f, ATTN_IDLE);
+			}
+		}
 	}
 }
 
@@ -2693,6 +2780,7 @@ CCMD (stopmus)
 		PlayList = NULL;
 	}
 	S_StopMusic (false);
+	LastSong = "";	// forget the last played song so that it won't get restarted if some volume changes occur
 }
 
 //==========================================================================

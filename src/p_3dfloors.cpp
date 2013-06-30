@@ -108,7 +108,7 @@ void F3DFloor::UpdateColormap(FDynamicColormap *&map)
 // Add one 3D floor to the sector
 //
 //==========================================================================
-static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags,int transluc)
+static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags, int alpha)
 {
 	F3DFloor*      ffloor;
 	unsigned  i;
@@ -179,7 +179,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 
 	ffloor->flags  = flags;
 	ffloor->master = master;
-	ffloor->alpha  = transluc;
+	ffloor->alpha  = alpha;
 	ffloor->top.vindex = ffloor->bottom.vindex = -1;
 
 	// The engine cannot handle sloped translucent floors. Sorry
@@ -200,7 +200,11 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 
 	// kg3D - software renderer only hack
 	// this is really required because of ceilingclip and floorclip
-	if(flags & FF_BOTHPLANES) P_Add3DFloor(sec, sec2, master, FF_EXISTS | FF_THISINSIDE | FF_RENDERPLANES | FF_NOSHADE | FF_SEETHROUGH | FF_SHOOTTHROUGH | (flags & FF_INVERTSECTOR), transluc);
+	if(flags & FF_BOTHPLANES)
+	{
+		P_Add3DFloor(sec, sec2, master, FF_EXISTS | FF_THISINSIDE | FF_RENDERPLANES | FF_NOSHADE | FF_SEETHROUGH | FF_SHOOTTHROUGH |
+			(flags & (FF_INVERTSECTOR | FF_TRANSLUCENT | FF_ADDITIVETRANS)), alpha);
+	}
 }
 
 //==========================================================================
@@ -208,7 +212,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 // Creates all 3D floors defined by one linedef
 //
 //==========================================================================
-static int P_Set3DFloor(line_t * line, int param,int param2, int alpha)
+static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 {
 	int s,i;
 	int flags;
@@ -361,7 +365,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->z == rover->top.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->floorz == rover->top.plane->ZatPoint(mo->x, mo->y)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -391,7 +395,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->z+mo->height == rover->bottom.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->ceilingz == rover->bottom.plane->ZatPoint(mo->x, mo->y)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;
@@ -691,7 +695,7 @@ lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool unders
 //==========================================================================
 
 void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy)
+							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict)
 {
     if(thing)
     {
@@ -737,7 +741,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						lowestceilingpic = *rover->bottom.texture;
 					}
 					
-					if(ff_top > highestfloor && delta1 < delta2)
+					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->z >= ff_top))
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;

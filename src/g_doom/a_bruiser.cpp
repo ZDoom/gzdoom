@@ -10,8 +10,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BruisAttack)
 	{
 		int damage = (pr_bruisattack()%8+1)*10;
 		S_Sound (self, CHAN_WEAPON, "baron/melee", 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
 	

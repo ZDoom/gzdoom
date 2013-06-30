@@ -255,7 +255,8 @@ bool FMODMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
 	TArray<BYTE> midi;
 
-	song->CreateSMF(midi);
+	song->CreateSMF(midi, looping ? 0 : 1);
+	bLooping = looping;
 	Stream = GSnd->OpenStream((char *)&midi[0], looping ? SoundStream::Loop : 0, -1, midi.Size());
 	return false;
 }

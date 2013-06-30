@@ -443,6 +443,7 @@ bool SightCheck::P_SightTraverseIntercepts ()
 bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
 	fixed_t xt1,yt1,xt2,yt2;
+	long long _x1,_y1,_x2,_y2;
 	fixed_t xstep,ystep;
 	fixed_t partialx, partialy;
 	fixed_t xintercept, yintercept;
@@ -482,15 +483,19 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 	trace.dx = x2 - x1;
 	trace.dy = y2 - y1;
 
+	_x1 = (long long)x1 - bmaporgx;
+	_y1 = (long long)y1 - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
-	xt1 = x1>>MAPBLOCKSHIFT;
-	yt1 = y1>>MAPBLOCKSHIFT;
+	xt1 = int(_x1 >> MAPBLOCKSHIFT);
+	yt1 = int(_y1 >> MAPBLOCKSHIFT);
 
+	_x2 = (long long)x2 - bmaporgx;
+	_y2 = (long long)y2 - bmaporgy;
 	x2 -= bmaporgx;
 	y2 -= bmaporgy;
-	xt2 = x2>>MAPBLOCKSHIFT;
-	yt2 = y2>>MAPBLOCKSHIFT;
+	xt2 = int(_x2 >> MAPBLOCKSHIFT);
+	yt2 = int(_y2 >> MAPBLOCKSHIFT);
 
 // points should never be out of bounds, but check once instead of
 // each block
@@ -516,7 +521,7 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 		partialx = FRACUNIT;
 		ystep = 256*FRACUNIT;
 	}
-	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
+	yintercept = int(_y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
 
 
 	if (yt2 > yt1)
@@ -537,7 +542,7 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 		partialy = FRACUNIT;
 		xstep = 256*FRACUNIT;
 	}
-	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
+	xintercept = int(_x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
 
 	// [RH] Fix for traces that pass only through blockmap corners. In that case,
 	// xintercept and yintercept can both be set ahead of mapx and mapy, so the

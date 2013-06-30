@@ -59,9 +59,29 @@ void AWeapon::Serialize (FArchive &arc)
 		<< MoveCombatDist
 		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
 		<< bAltFire
-		<< ReloadCounter
-		<< FOVScale
+		<< ReloadCounter;		
+		if (SaveVersion >= 3615) {
+			arc << BobStyle << BobSpeed << BobRangeX << BobRangeY;
+		}
+	arc << FOVScale
 		<< Crosshair;
+	if (SaveVersion >= 4203)
+	{
+		arc << MinSelAmmo1 << MinSelAmmo2;
+	}
+}
+
+//===========================================================================
+//
+// AWeapon :: MarkPrecacheSounds
+//
+//===========================================================================
+
+void AWeapon::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	UpSound.MarkUsed();
+	ReadySound.MarkUsed();
 }
 
 //===========================================================================
@@ -69,6 +89,30 @@ void AWeapon::Serialize (FArchive &arc)
 // AWeapon :: TryPickup
 //
 // If you can't see the weapon when it's active, then you can't pick it up.
+//
+//===========================================================================
+
+bool AWeapon::TryPickupRestricted (AActor *&toucher)
+{
+	// Wrong class, but try to pick up for ammo
+	if (ShouldStay())
+	{ // Can't pick up weapons for other classes in coop netplay
+		return false;
+	}
+
+	bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
+	gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
+	if (gaveSome)
+	{
+		GoAwayAndDie ();
+	}
+	return gaveSome;
+}
+
+
+//===========================================================================
+//
+// AWeapon :: TryPickup
 //
 //===========================================================================
 
@@ -102,7 +146,7 @@ bool AWeapon::Use (bool pickup)
 	// weapon, if one exists.
 	if (SisterWeapon != NULL &&
 		SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
-		Owner->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2)))
+		Owner->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true))
 	{
 		useweap = SisterWeapon;
 	}
@@ -122,11 +166,16 @@ bool AWeapon::Use (bool pickup)
 
 void AWeapon::Destroy()
 {
-	if (SisterWeapon != NULL)
+	AWeapon *sister = SisterWeapon;
+
+	if (sister != NULL)
 	{
 		// avoid recursion
-		SisterWeapon->SisterWeapon = NULL;
-		SisterWeapon->Destroy();
+		sister->SisterWeapon = NULL;
+		if (sister != this)
+		{ // In case we are our own sister, don't crash.
+			sister->Destroy();
+		}
 	}
 	Super::Destroy();
 }
@@ -265,7 +314,7 @@ void AWeapon::AttachToOwner (AActor *other)
 	SisterWeapon = AddWeapon (SisterWeaponType);
 	if (Owner->player != NULL)
 	{
-		if (!Owner->player->userinfo.neverswitch && !(WeaponFlags & WIF_NO_AUTO_SWITCH))
+		if (!Owner->player->userinfo.GetNeverSwitch() && !(WeaponFlags & WIF_NO_AUTO_SWITCH))
 		{
 			Owner->player->PendingWeapon = this;
 		}
@@ -401,11 +450,12 @@ bool AWeapon::ShouldStay ()
 //
 //===========================================================================
 
-bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
+bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
 {
 	int altFire;
 	int count1, count2;
 	int enough, enoughmask;
+	int lAmmoUse1;
 
 	if ((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO))
 	{
@@ -428,7 +478,20 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
 	count1 = (Ammo1 != NULL) ? Ammo1->Amount : 0;
 	count2 = (Ammo2 != NULL) ? Ammo2->Amount : 0;
 
-	enough = (count1 >= AmmoUse1) | ((count2 >= AmmoUse2) << 1);
+	if ((WeaponFlags & WIF_DEHAMMO) && (Ammo1 == NULL))
+	{
+		lAmmoUse1 = 0;
+	}
+	else if (ammocount >= 0 && (WeaponFlags & WIF_DEHAMMO))
+	{
+		lAmmoUse1 = ammocount;
+	}
+	else
+	{
+		lAmmoUse1 = AmmoUse1;
+	}
+
+	enough = (count1 >= lAmmoUse1) | ((count2 >= AmmoUse2) << 1);
 	if (WeaponFlags & (WIF_PRIMARY_USES_BOTH << altFire))
 	{
 		enoughmask = 3;
@@ -463,11 +526,11 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
 //
 //===========================================================================
 
-bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough)
+bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
 {
 	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO)))
 	{
-		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false))
+		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false, false, ammouse))
 		{
 			return false;
 		}
@@ -475,7 +538,14 @@ bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough)
 		{
 			if (Ammo1 != NULL)
 			{
-				Ammo1->Amount -= AmmoUse1;
+				if (ammouse >= 0 && (WeaponFlags & WIF_DEHAMMO))
+				{
+					Ammo1->Amount -= ammouse;
+				}
+				else
+				{
+					Ammo1->Amount -= AmmoUse1;
+				}
 			}
 			if ((WeaponFlags & WIF_PRIMARY_USES_BOTH) && Ammo2 != NULL)
 			{
@@ -512,6 +582,10 @@ bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough)
 
 void AWeapon::PostMorphWeapon ()
 {
+	if (Owner == NULL)
+	{
+		return;
+	}
 	Owner->player->PendingWeapon = WP_NOCHANGE;
 	Owner->player->ReadyWeapon = this;
 	Owner->player->psprites[ps_weapon].sy = WEAPONBOTTOM;
@@ -607,17 +681,40 @@ FState *AWeapon::GetAltAtkState (bool hold)
 	return state;
 }
 
+//===========================================================================
+//
+// AWeapon :: GetRelState
+//
+//===========================================================================
+
+FState *AWeapon::GetRelState ()
+{
+	return FindState(NAME_Reload);
+}
+
+//===========================================================================
+//
+// AWeapon :: GetZoomState
+//
+//===========================================================================
+
+FState *AWeapon::GetZoomState ()
+{
+	return FindState(NAME_Zoom);
+}
+
 /* Weapon giver ***********************************************************/
 
-class AWeaponGiver : public AWeapon
-{
-	DECLARE_CLASS(AWeaponGiver, AWeapon)
-
-public:
-	bool TryPickup(AActor *&toucher);
-};
-
 IMPLEMENT_CLASS(AWeaponGiver)
+
+void AWeaponGiver::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	if (SaveVersion >= 4246)
+	{
+		arc << DropAmmoFactor;
+	}
+}
 
 bool AWeaponGiver::TryPickup(AActor *&toucher)
 {
@@ -635,8 +732,18 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 				if (weap != NULL)
 				{
 					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
+					weap->flags = (weap->flags & ~MF_DROPPED) | (this->flags & MF_DROPPED);
+
+					// If our ammo gives are non-negative, transfer them to the real weapon.
 					if (AmmoGive1 >= 0) weap->AmmoGive1 = AmmoGive1;
 					if (AmmoGive2 >= 0) weap->AmmoGive2 = AmmoGive2;
+
+					// If DropAmmoFactor is non-negative, modify the given ammo amounts.
+					if (DropAmmoFactor > 0)
+					{
+						weap->AmmoGive1 = FixedMul(weap->AmmoGive1, DropAmmoFactor);
+						weap->AmmoGive2 = FixedMul(weap->AmmoGive2, DropAmmoFactor);
+					}
 					weap->BecomeItem();
 				}
 				else return false;
@@ -644,7 +751,11 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 
 			weap = barrier_cast<AWeapon*>(master);
 			bool res = weap->CallTryPickup(toucher);
-			if (res) GoAwayAndDie();
+			if (res)
+			{
+				GoAwayAndDie();
+				master = NULL;
+			}
 			return res;
 		}
 	}
@@ -1120,6 +1231,7 @@ void FWeaponSlots::AddExtraWeapons()
 			(cls->ActorInfo->GameFilter == GAME_Any || (cls->ActorInfo->GameFilter & gameinfo.gametype)) &&
 			cls->ActorInfo->Replacement == NULL &&	// Replaced weapons don't get slotted.
 			cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)) &&
+			!(static_cast<AWeapon*>(GetDefaultByType(cls))->WeaponFlags & WIF_POWERED_UP) &&
 			!LocateWeapon(cls, NULL, NULL)			// Don't duplicate it if it's already present.
 			)
 		{
@@ -1235,7 +1347,7 @@ void FWeaponSlots::LocalSetup(const PClass *type)
 //
 //===========================================================================
 
-void FWeaponSlots::SendDifferences(const FWeaponSlots &other)
+void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 {
 	int i, j;
 
@@ -1256,7 +1368,15 @@ void FWeaponSlots::SendDifferences(const FWeaponSlots &other)
 			}
 		}
 		// The slots differ. Send mine.
-		Net_WriteByte(DEM_SETSLOT);
+		if (playernum == consoleplayer)
+		{
+			Net_WriteByte(DEM_SETSLOT);
+		}
+		else
+		{
+			Net_WriteByte(DEM_SETSLOTPNUM);
+			Net_WriteByte(playernum);
+		}
 		Net_WriteByte(i);
 		Net_WriteByte(Slots[i].Size());
 		for (j = 0; j < Slots[i].Size(); ++j)

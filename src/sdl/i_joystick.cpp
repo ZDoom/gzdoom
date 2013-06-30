@@ -1,5 +1,6 @@
 #include <SDL_joystick.h>
 
+#include "doomdef.h"
 #include "m_joy.h"
 
 class SDLInputJoystick: public IJoystickConfig
@@ -9,7 +10,12 @@ public:
 	{
 		Device = SDL_JoystickOpen(DeviceIndex);
 		if(Device != NULL)
+		{
+			NumAxes = SDL_JoystickNumAxes(Device);
+			NumHats = SDL_JoystickNumHats(Device);
+
 			SetDefaultConfig();
+		}
 	}
 	~SDLInputJoystick()
 	{
@@ -38,7 +44,7 @@ public:
 
 	int GetNumAxes()
 	{
-		return SDL_JoystickNumAxes(Device);
+		return NumAxes + NumHats*2;
 	}
 	float GetAxisDeadZone(int axis)
 	{
@@ -95,9 +101,14 @@ public:
 		for(int i = 0;i < GetNumAxes();i++)
 		{
 			AxisInfo info;
-			info.Name.Format("Axis %d", i);
+			if(i < NumAxes)
+				info.Name.Format("Axis %d", i+1);
+			else
+				info.Name.Format("Hat %d (%c)", (i-NumAxes)/2 + 1, (i-NumAxes)%2 == 0 ? 'x' : 'y');
 			info.DeadZone = 0.0f;
 			info.Multiplier = 1.0f;
+			info.Value = 0.0;
+			info.ButtonValue = 0;
 			if(i >= 5)
 				info.GameAxis = JOYAXIS_None;
 			else
@@ -118,7 +129,68 @@ public:
 		for (int i = 0; i < GetNumAxes(); ++i)
 		{
 			if(Axes[i].GameAxis != JOYAXIS_None)
-				axes[Axes[i].GameAxis] -= float(((double)SDL_JoystickGetAxis(Device, i)/32768.0) * Multiplier * Axes[i].Multiplier);
+				axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+		}
+	}
+
+	void ProcessInput()
+	{
+		BYTE buttonstate;
+
+		for (int i = 0; i < NumAxes; ++i)
+		{
+			buttonstate = 0;
+
+			Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32768.0;
+			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
+
+			// Map button to axis
+			// X and Y are handled differently so if we have 2 or more axes then we'll use that code instead.
+			if (NumAxes == 1 || (i >= 2 && i < NUM_JOYAXISBUTTONS))
+			{
+				Joy_GenerateButtonEvents(Axes[i].ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+				Axes[i].ButtonValue = buttonstate;
+			}
+		}
+
+		if(NumAxes > 1)
+		{
+			buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
+			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
+			Axes[0].ButtonValue = buttonstate;
+		}
+
+		// Map POV hats to buttons and axes.  Why axes?  Well apparently I have
+		// a gamepad where the left control stick is a POV hat (instead of the
+		// d-pad like you would expect, no that's pressure sensitive).  Also
+		// KDE's joystick dialog maps them to axes as well.
+		for (int i = 0; i < NumHats; ++i)
+		{
+			AxisInfo &x = Axes[NumAxes + i*2];
+			AxisInfo &y = Axes[NumAxes + i*2 + 1];
+
+			buttonstate = SDL_JoystickGetHat(Device, i);
+
+			// If we're going to assume that we can pass SDL's value into
+			// Joy_GenerateButtonEvents then we might as well assume the format here.
+			if(buttonstate & 0x1) // Up
+				y.Value = -1.0;
+			else if(buttonstate & 0x4) // Down
+				y.Value = 1.0;
+			else
+				y.Value = 0.0;
+			if(buttonstate & 0x2) // Left
+				x.Value = 1.0;
+			else if(buttonstate & 0x8) // Right
+				x.Value = -1.0;
+			else
+				x.Value = 0.0;
+
+			if(i < 4)
+			{
+				Joy_GenerateButtonEvents(x.ButtonValue, buttonstate, 4, KEY_JOYPOV1_UP + i*4);
+				x.ButtonValue = buttonstate;
+			}
 		}
 	}
 
@@ -129,6 +201,8 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		EJoyAxis GameAxis;
+		double Value;
+		BYTE ButtonValue;
 	};
 	static const EJoyAxis DefaultAxes[5];
 
@@ -137,6 +211,8 @@ protected:
 
 	float				Multiplier;
 	TArray<AxisInfo>	Axes;
+	int					NumAxes;
+	int					NumHats;
 };
 const EJoyAxis SDLInputJoystick::DefaultAxes[5] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_Pitch, JOYAXIS_Yaw, JOYAXIS_Up};
 
@@ -173,6 +249,12 @@ public:
 			sticks.Push(Joysticks[i]);
 		}
 	}
+
+	void ProcessInput() const
+	{
+		for(unsigned int i = 0;i < Joysticks.Size();++i)
+			Joysticks[i]->ProcessInput();
+	}
 protected:
 	TArray<SDLInputJoystick *> Joysticks;
 };
@@ -204,6 +286,12 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 	{
 		JoystickManager->AddAxes(axes);
 	}
+}
+
+void I_ProcessJoysticks()
+{
+	if (use_joystick)
+		JoystickManager->ProcessInput();
 }
 
 IJoystickConfig *I_UpdateDeviceList()

@@ -1,10 +1,11 @@
 
 // Fighter Weapon Piece -----------------------------------------------------
 
-ACTOR FighterWeaponPiece : WeaponPiece native
+ACTOR FighterWeaponPiece : WeaponPiece
 {
 	Inventory.PickupSound "misc/w_pkup"
 	Inventory.PickupMessage "$TXT_QUIETUS_PIECE"
+	Inventory.ForbiddenTo ClericPlayer, MagePlayer
 	WeaponPiece.Weapon FWeapQuietus
 	+FLOATBOB
 }

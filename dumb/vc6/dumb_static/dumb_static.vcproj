@@ -878,6 +878,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\helpers\blip_buf.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\helpers\clickrem.c"
 					>
 					<FileConfiguration
@@ -1561,6 +1565,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\it\loadokt.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\loadokt2.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\it\loadoldpsm.c"
 					>
 				</File>
@@ -1779,6 +1791,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\it\readokt.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\readokt2.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\it\readoldpsm.c"
 					>
 				</File>
@@ -1960,6 +1980,10 @@
 			<Filter
 				Name="internal"
 				>
+				<File
+					RelativePath="..\..\include\internal\blip_buf.h"
+					>
+				</File>
 				<File
 					RelativePath="..\..\include\internal\dumb.h"
 					>

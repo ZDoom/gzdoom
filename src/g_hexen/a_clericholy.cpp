@@ -25,44 +25,6 @@ static FRandom pr_wraithvergedrop ("WraithvergeDrop");
 void SpawnSpiritTail (AActor *spirit);
 
 //==========================================================================
-
-class AClericWeaponPiece : public AWeaponPiece
-{
-	DECLARE_CLASS (AClericWeaponPiece, AWeaponPiece)
-protected:
-	bool TryPickup (AActor *&toucher);
-};
-
-IMPLEMENT_CLASS (AClericWeaponPiece)
-
-bool AClericWeaponPiece::TryPickup (AActor *&toucher)
-{
-	if (!toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer)) &&
-		!toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)))
-	{
-		return Super::TryPickup(toucher);
-	}
-	else
-	{ // Wrong class, but try to pick up for ammo
-		if (ShouldStay())
-		{
-			// Can't pick up weapons for other classes in coop netplay
-			return false;
-		}
-
-		AWeapon * Defaults=(AWeapon*)GetDefaultByType(WeaponClass);
-
-		bool gaveSome = !!(toucher->GiveAmmo (Defaults->AmmoType1, Defaults->AmmoGive1) +
-						   toucher->GiveAmmo (Defaults->AmmoType2, Defaults->AmmoGive2));
-
-		if (gaveSome)
-		{
-			GoAwayAndDie ();
-		}
-		return gaveSome;
-	}
-}
-
 // Cleric's Wraithverge (Holy Symbol?) --------------------------------------
 
 class ACWeapWraithverge : public AClericWeapon
@@ -76,7 +38,21 @@ public:
 	}
 	PalEntry GetBlend ()
 	{
-		return PalEntry (CHolyCount * 128 / 3, 131, 131, 131);
+		if (paletteflash & PF_HEXENWEAPONS)
+		{
+			if (CHolyCount == 3)
+				return PalEntry(128, 70, 70, 70);
+			else if (CHolyCount == 2)
+				return PalEntry(128, 100, 100, 100);
+			else if (CHolyCount == 1)
+				return PalEntry(128, 130, 130, 130);
+			else
+				return PalEntry(0, 0, 0, 0);
+		}
+		else
+		{
+			return PalEntry (CHolyCount * 128 / 3, 131, 131, 131);
+		}
 	}
 	BYTE CHolyCount;
 };
@@ -136,7 +112,7 @@ bool AHolySpirit::Slam (AActor *thing)
 
 bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
 {
-	if (strength == BLAST_FULLSTRENGTH && tracer == source)
+	if (tracer == source)
 	{
 		tracer = target;
 		target = source;
@@ -168,17 +144,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 		switch (j)
 		{ // float bob index
 			case 0:
-				mo->special2 = pr_holyatk2()&7; // upper-left
+				mo->special2 = pr_holyatk2(8 << BOBTOFINESHIFT); // upper-left
 				break;
 			case 1:
-				mo->special2 = 32+(pr_holyatk2()&7); // upper-right
+				mo->special2 = FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT); // upper-right
 				break;
 			case 2:
-				mo->special2 = (32+(pr_holyatk2()&7))<<16; // lower-left
+				mo->special2 = (FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT)) << 16; // lower-left
 				break;
 			case 3:
-				i = pr_holyatk2();
-				mo->special2 = ((32+(i&7))<<16)+32+(pr_holyatk2()&7);
+				i = pr_holyatk2(8 << BOBTOFINESHIFT);
+				mo->special2 = ((FINEANGLES/2 + i) << 16) + FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT);
 				break;
 		}
 		mo->z = self->z;
@@ -373,7 +349,7 @@ static void CHolyFindTarget (AActor *actor)
 {
 	AActor *target;
 
-	if ( (target = P_RoughMonsterSearch (actor, 6)) )
+	if ( (target = P_RoughMonsterSearch (actor, 6, true)) )
 	{
 		actor->tracer = target;
 		actor->flags |= MF_NOCLIP|MF_SKULLFLY;
@@ -466,29 +442,25 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 //
 //============================================================================
 
-static void CHolyWeave (AActor *actor)
+void CHolyWeave (AActor *actor, FRandom &pr_random)
 {
 	fixed_t newX, newY;
 	int weaveXY, weaveZ;
 	int angle;
 
-	weaveXY = actor->special2>>16;
-	weaveZ = actor->special2&0xFFFF;
-	angle = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
-	newX = actor->x-FixedMul(finecosine[angle], 
-		FloatBobOffsets[weaveXY]<<2);
-	newY = actor->y-FixedMul(finesine[angle],
-		FloatBobOffsets[weaveXY]<<2);
-	weaveXY = (weaveXY+(pr_holyweave()%5))&63;
-	newX += FixedMul(finecosine[angle], 
-		FloatBobOffsets[weaveXY]<<2);
-	newY += FixedMul(finesine[angle], 
-		FloatBobOffsets[weaveXY]<<2);
+	weaveXY = actor->special2 >> 16;
+	weaveZ = actor->special2 & FINEMASK;
+	angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
+	newX = actor->x - FixedMul(finecosine[angle], finesine[weaveXY] * 32);
+	newY = actor->y - FixedMul(finesine[angle], finesine[weaveXY] * 32);
+	weaveXY = (weaveXY + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
+	newX += FixedMul(finecosine[angle], finesine[weaveXY] * 32);
+	newY += FixedMul(finesine[angle], finesine[weaveXY] * 32);
 	P_TryMove(actor, newX, newY, true);
-	actor->z -= FloatBobOffsets[weaveZ]<<1;
-	weaveZ = (weaveZ+(pr_holyweave()%5))&63;
-	actor->z += FloatBobOffsets[weaveZ]<<1;	
-	actor->special2 = weaveZ+(weaveXY<<16);
+	actor->z -= finesine[weaveZ] * 16;
+	weaveZ = (weaveZ + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
+	actor->z += finesine[weaveZ] * 16;
+	actor->special2 = weaveZ + (weaveXY << 16);
 }
 
 //============================================================================
@@ -518,7 +490,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 			self->args[0] = 5+(pr_holyseek()/20);
 		}
 	}
-	CHolyWeave (self);
+	CHolyWeave (self, pr_holyweave);
 }
 
 //============================================================================

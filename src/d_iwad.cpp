@@ -413,7 +413,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		}
 	}
 
-	if (iwadparm == NULL || wads[0].Path.IsEmpty())
+	if (iwadparm == NULL || wads[0].Path.IsEmpty() || mIWads[wads[0].Type].Required.IsNotEmpty())
 	{
 		if (GameConfig->SetSection ("IWADSearch.Directories"))
 		{
@@ -441,7 +441,8 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 				"heretic shadow of the serpent riders/base",
 				"hexen/base",
 				"hexen deathkings of the dark citadel/base",
-				"ultimate doom/base"
+				"ultimate doom/base",
+				"DOOM 3 BFG Edition/base/wads"
 			};
 			steam_path += "/SteamApps/common/";
 			for (i = 0; i < countof(steam_dirs); ++i)

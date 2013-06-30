@@ -453,8 +453,9 @@ size_t DObject::PropagateMark()
 			GC::Mark((DObject **)((BYTE *)this + *offsets));
 			offsets++;
 		}
+		return info->Size;
 	}
-	return info->Size;
+	return 0;
 }
 
 size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)

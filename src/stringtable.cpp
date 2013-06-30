@@ -324,6 +324,10 @@ size_t FStringTable::ProcessEscapes (char *iptr)
 // Finds a string by name and returns its value
 const char *FStringTable::operator[] (const char *name) const
 {
+	if (name == NULL)
+	{
+		return NULL;
+	}
 	DWORD bucket = MakeKey (name) & (HASH_SIZE - 1);
 	StringEntry *entry = Buckets[bucket];
 

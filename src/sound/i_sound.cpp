@@ -159,6 +159,9 @@ public:
 	void StopChannel(FISoundChannel *chan)
 	{
 	}
+	void ChannelVolume(FISoundChannel *, float)
+	{
+	}
 
 	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
@@ -208,7 +211,7 @@ public:
 	}
 
 	// Pauses or resumes *every* channel, including environmental reverb.
-	void SetInactive(bool inactive)
+	void SetInactive(SoundRenderer::EInactiveState inactive)
 	{
 	}
 

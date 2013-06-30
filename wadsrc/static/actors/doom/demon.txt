@@ -14,7 +14,7 @@ ACTOR Demon 3002
 	Height 56
 	Mass 400
 	Monster
-	+FLOORCLIP +FASTER +FASTMELEE
+	+FLOORCLIP
 	SeeSound "demon/sight"
 	AttackSound "demon/melee"
 	PainSound "demon/pain"
@@ -27,15 +27,15 @@ ACTOR Demon 3002
 		SARG AB 10 A_Look
 		Loop
 	See:
-		SARG AABBCCDD 2 A_Chase
+		SARG AABBCCDD 2 Fast A_Chase
 		Loop
 	Melee:
-		SARG EF 8 A_FaceTarget
-		SARG G 8 A_SargAttack
+		SARG EF 8 Fast A_FaceTarget
+		SARG G 8 Fast A_SargAttack
 		Goto See
 	Pain:
-		SARG H 2
-		SARG H 2 A_Pain
+		SARG H 2 Fast
+		SARG H 2 Fast A_Pain
 		Goto See
 	Death:
 		SARG I 8

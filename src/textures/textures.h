@@ -27,6 +27,7 @@ public:
 	bool isValid() const { return texnum > 0; }
 	bool Exists() const { return texnum >= 0; }
 	void SetInvalid() { texnum = -1; }
+	void SetNull() { texnum = 0; }
 	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
 	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
 	FTextureID operator +(int offset) throw();
@@ -194,6 +195,7 @@ public:
 		TEX_FontChar,
 		TEX_Override,	// For patches between TX_START/TX_END
 		TEX_Autopage,	// Automap background - used to enable the use of FAutomapTexture
+		TEX_SkinGraphic,
 		TEX_Null,
 		TEX_FirstDefined,
 	};
@@ -332,15 +334,20 @@ public:
 	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
 	// Get texture with translation
-	FTexture *operator() (FTextureID texnum)
+	FTexture *operator() (FTextureID texnum, bool withpalcheck=false)
 	{
 		if ((size_t)texnum.texnum >= Textures.Size()) return NULL;
-		return Textures[Translation[texnum.texnum]].Texture;
+		int picnum = Translation[texnum.texnum];
+		if (withpalcheck)
+		{
+			picnum = PalCheck(picnum).GetIndex();
+		}
+		return Textures[picnum].Texture;
 	}
 	FTexture *operator() (const char *texname)
 	{
 		FTextureID texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
-		if (texnum.texnum==-1) return NULL;
+		if (texnum.texnum == -1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
 	}
 
@@ -350,11 +357,14 @@ public:
 		return Textures[Translation[i]].Texture;
 	}
 
+	FTextureID PalCheck(FTextureID tex);
+
 	enum
 	{
 		TEXMAN_TryAny = 1,
 		TEXMAN_Overridable = 2,
 		TEXMAN_ReturnFirst = 4,
+		TEXMAN_AllowSkins = 8
 	};
 
 	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
@@ -434,6 +444,8 @@ private:
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
 	void ParseAnimatedDoor(FScanner &sc);
 
+	void InitPalettedVersions();
+
 	// Switches
 
 	void InitSwitchList ();
@@ -452,6 +464,7 @@ private:
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;
 	TArray<int> FirstTextureForFile;
+	TMap<int,int> PalettedVersions;		// maps from normal -> paletted version
 
 	TArray<FAnimDef *> mAnimations;
 	TArray<FSwitchDef *> mSwitchDefs;
@@ -529,6 +542,7 @@ public:
 	void MakeTexture ();
 
 protected:
+
 	DSimpleCanvas *Canvas;
 	BYTE *Pixels;
 	Span DummySpans[2];

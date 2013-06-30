@@ -403,14 +403,22 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b1, float r2, float g2, float b2)
+void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2)
 {
-	r1 = clamp(r1, 0.0f, 2.0f);
-	g1 = clamp(g1, 0.0f, 2.0f);
-	b1 = clamp(b1, 0.0f, 2.0f);
-	r2 = clamp(r2, 0.0f, 2.0f);
-	g2 = clamp(g2, 0.0f, 2.0f);
-	b2 = clamp(b2, 0.0f, 2.0f);
+	r1 = clamp(r1, 0.0, 2.0);
+	g1 = clamp(g1, 0.0, 2.0);
+	b1 = clamp(b1, 0.0, 2.0);
+	r2 = clamp(r2, 0.0, 2.0);
+	g2 = clamp(g2, 0.0, 2.0);
+	b2 = clamp(b2, 0.0, 2.0);
+
+	if (start > end)
+	{
+		swapvalues(start, end);
+		swapvalues(r1, r2);
+		swapvalues(g1, g2);
+		swapvalues(b1, b2);
+	}
 
 	r2 -= r1;
 	g2 -= g1;
@@ -419,7 +427,7 @@ void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b
 	g1 *= 255;
 	b1 *= 255;
 
-	for(int c = start; c < end; c++)
+	for(int c = start; c <= end; c++)
 	{
 		double intensity = (GPalette.BaseColors[c].r * 77 +
 							GPalette.BaseColors[c].g * 143 +
@@ -443,7 +451,7 @@ void FRemapTable::AddDesaturation(int start, int end, float r1,float g1, float b
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddToTranslation(const char * range)
+void FRemapTable::AddToTranslation(const char *range)
 {
 	int start,end;
 	bool desaturated = false;
@@ -515,39 +523,39 @@ void FRemapTable::AddToTranslation(const char * range)
 		else if (sc.TokenType == '%')
 		{
 			// translation using RGB values
-			float r1,g1,b1,r2,g2,b2;
+			double r1,g1,b1,r2,g2,b2;
 
 			sc.MustGetToken('[');
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			r1 = float(sc.Float);
+			r1 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			g1 = float(sc.Float);
+			g1 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			b1 = float(sc.Float);
+			b1 = sc.Float;
 			sc.MustGetToken(']');
 			sc.MustGetToken(':');
 			sc.MustGetToken('[');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			r2 = float(sc.Float);
+			r2 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			g2 = float(sc.Float);
+			g2 = sc.Float;
 			sc.MustGetToken(',');
 
 			sc.MustGetAnyToken();
 			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			b2 = float(sc.Float);
+			b2 = sc.Float;
 			sc.MustGetToken(']');
 
 			AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
@@ -858,6 +866,34 @@ static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 }
 
 //----------------------------------------------------------------------------
+
+static bool SetRange(FRemapTable *table, int start, int end, int first, int last)
+{
+	bool identity = true;
+	if (start == end)
+	{
+		int pi = (first + last) / 2;
+		table->Remap[start] = GPalette.Remap[pi];
+		identity &= (pi == start);
+		table->Palette[start] = GPalette.BaseColors[table->Remap[start]];
+		table->Palette[start].a = 255;
+	}
+	else
+	{
+		int palrange = last - first;
+		for (int i = start; i <= end; ++i)
+		{
+			int pi = first + palrange * (i - start) / (end - start);
+			table->Remap[i] = GPalette.Remap[pi];
+			identity &= (pi == i);
+			table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
+			table->Palette[i].a = 255;
+		}
+	}
+	return identity;
+}
+
+//----------------------------------------------------------------------------
 //
 //
 //
@@ -887,7 +923,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	{
 		for (i = 0; i < table->NumEntries; ++i)
 		{
-			table->Remap[i] = GPalette.Remap[i];
+			table->Remap[i] = i;
 		}
 		memcpy(table->Palette, GPalette.BaseColors, sizeof(*table->Palette) * table->NumEntries);
 	}
@@ -921,20 +957,12 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		// Use the pre-defined range instead of a custom one.
 		if (colorset->Lump < 0)
 		{
-			int first = colorset->FirstColor;
-			if (start == end)
+			identity &= SetRange(table, start, end, colorset->FirstColor, colorset->LastColor);
+			for (i = 0; i < colorset->NumExtraRanges; ++i)
 			{
-				table->Remap[i] = (first + colorset->LastColor) / 2;
-			}
-			else
-			{
-				int palrange = colorset->LastColor - first;
-				for (i = start; i <= end; ++i)
-				{
-					int pi = first + palrange * (i - start) / (end - start);
-					table->Remap[i] = GPalette.Remap[pi];
-					if (pi != i) identity = false;
-				}
+				identity &= SetRange(table,
+					colorset->Extra[i].RangeStart, colorset->Extra[i].RangeEnd,
+					colorset->Extra[i].FirstColor, colorset->Extra[i].LastColor);
 			}
 		}
 		else
@@ -944,13 +972,10 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 			for (i = start; i <= end; ++i)
 			{
 				table->Remap[i] = GPalette.Remap[trans[i]];
-				if (trans[i] != i) identity = false;
+				identity &= (trans[i] == i);
+				table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
+				table->Palette[i].a = 255;
 			}
-		}
-		for (i = start; i <= end; ++i)
-		{
-			table->Palette[i] = GPalette.BaseColors[table->Remap[i]];
-			table->Palette[i].a = 255;
 		}
 		// If the colorset created an identity translation mark it as inactive
 		table->Inactive = identity;
@@ -1076,7 +1101,7 @@ void R_BuildPlayerTranslation (int player)
 	D_GetPlayerColor (player, &h, &s, &v, &colorset);
 
 	R_CreatePlayerTranslation (h, s, v, colorset,
-		&skins[players[player].userinfo.skin],
+		&skins[players[player].userinfo.GetSkin()],
 		translationtables[TRANSLATION_Players][player],
 		translationtables[TRANSLATION_PlayersExtra][player]);
 }
@@ -1100,4 +1125,3 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 
 	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL);
 }
-

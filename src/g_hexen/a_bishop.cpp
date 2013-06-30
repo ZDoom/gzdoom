@@ -32,8 +32,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopAttack)
 	if (self->CheckMeleeRange())
 	{
 		int damage = pr_atk.HitDice (4);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
 	self->special1 = (pr_atk() & 3) + 5;
@@ -155,9 +155,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
-	self->z -= FloatBobOffsets[self->special2] >> 1;
+	self->z -= finesine[self->special2 << BOBTOFINESHIFT] * 4;
 	self->special2 = (self->special2 + 4) & 63;
-	self->z += FloatBobOffsets[self->special2] >> 1;
+	self->z += finesine[self->special2 << BOBTOFINESHIFT] * 4;
 }
 
 //============================================================================

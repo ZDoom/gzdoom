@@ -145,7 +145,7 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 	CommandLine.UnlockBuffer();
 
 	// Write MIDI song to temporary file
-	song->CreateSMF(midi);
+	song->CreateSMF(midi, looping ? 0 : 1);
 
 	f = fopen(DiskName, "wb");
 	if (f == NULL)
@@ -458,7 +458,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 
 		execvp (words.we_wordv[0], words.we_wordv);
 		fprintf(stderr,"execvp failed\n");
-		exit (0);	// if execvp succeeds, we never get here
+		_exit (0);	// if execvp succeeds, we never get here
 	}
 	else if (forkres < 0)
 	{

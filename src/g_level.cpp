@@ -77,6 +77,7 @@
 #include "d_netinf.h"
 #include "v_palette.h"
 #include "menu/menu.h"
+#include "a_sharedglobal.h"
 #include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
@@ -114,7 +115,6 @@ extern bool timingdemo;
 int starttime;
 
 
-extern bool netdemo;
 extern FString BackupSaveName;
 
 bool savegamerestore;
@@ -228,9 +228,8 @@ void G_NewInit ()
 	int i;
 
 	G_ClearSnapshots ();
-	SB_state = screen->GetPageCount ();
+	ST_SetNeedRefresh();
 	netgame = false;
-	netdemo = false;
 	multiplayer = false;
 	if (demoplayback)
 	{
@@ -241,14 +240,15 @@ void G_NewInit ()
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
 		player_t *p = &players[i];
-		userinfo_t saved_ui = players[i].userinfo;
+		userinfo_t saved_ui;
+		saved_ui.TransferFrom(players[i].userinfo);
 		int chasecam = p->cheats & CF_CHASECAM;
 		p->~player_t();
 		::new(p) player_t;
 		players[i].cheats |= chasecam;
 		players[i].playerstate = PST_DEAD;
 		playeringame[i] = 0;
-		players[i].userinfo = saved_ui;
+		players[i].userinfo.TransferFrom(saved_ui);
 	}
 	BackupSaveName = "";
 	consoleplayer = 0;
@@ -288,7 +288,7 @@ static void InitPlayerClasses ()
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
+			SinglePlayerClass[i] = players[i].userinfo.GetPlayerClassNum();
 			if (SinglePlayerClass[i] < 0 || !playeringame[i])
 			{
 				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
@@ -426,7 +426,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	demoplayback = false;
 	automapactive = false;
 	viewactive = true;
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 
 	//Added by MC: Initialize bots.
 	if (!deathmatch)
@@ -491,7 +491,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	}
 	else if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
-		nextinfo = FindLevelInfo (levelname);
+		nextinfo = FindLevelInfo (levelname, false);
 		if (nextinfo != NULL)
 		{
 			level_info_t *nextredir = nextinfo->CheckLevelRedirect();
@@ -657,14 +657,14 @@ void G_DoCompleted (void)
 	}
 	else
 	{
-		if (strncmp (nextlevel, "enDSeQ", 6) == 0)
+		level_info_t *nextinfo = FindLevelInfo (nextlevel, false);
+		if (nextinfo == NULL || strncmp (nextlevel, "enDSeQ", 6) == 0)
 		{
 			wminfo.next = nextlevel;
 			wminfo.LName1 = NULL;
 		}
 		else
 		{
-			level_info_t *nextinfo = FindLevelInfo (nextlevel);
 			wminfo.next = nextinfo->mapname;
 			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->pname, FTexture::TEX_MiscPatch)];
 		}
@@ -734,7 +734,17 @@ void G_DoCompleted (void)
 
 	if (mode == FINISH_SameHub)
 	{ // Remember the level's state for re-entry.
-		G_SnapshotLevel ();
+		if (!(level.flags2 & LEVEL2_FORGETSTATE))
+		{
+			G_SnapshotLevel ();
+			// Do not free any global strings this level might reference
+			// while it's not loaded.
+			FBehavior::StaticLockLevelVarStrings();
+		}
+		else
+		{ // Make sure we don't have a snapshot lying around from before.
+			level.info->ClearSnapshot();
+		}
 	}
 	else
 	{ // Forget the states of all existing levels.
@@ -872,6 +882,10 @@ void G_DoLoadLevel (int position, bool autosave)
 	{
 		level.flags2 &= ~LEVEL2_NOMONSTERS;
 	}
+	if (changeflags & CHANGELEVEL_PRERAISEWEAPON)
+	{
+		level.flags2 |= LEVEL2_PRERAISEWEAPON;
+	}
 
 	level.maptime = 0;
 	P_SetupLevel (level.mapname, position);
@@ -917,10 +931,13 @@ void G_DoLoadLevel (int position, bool autosave)
 	level.starttime = gametic;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
-	if (players[consoleplayer].camera == NULL ||
-		players[consoleplayer].camera->player != NULL)
-	{ // If we are viewing through a player, make sure it is us.
-        players[consoleplayer].camera = players[consoleplayer].mo;
+	// For each player, if they are viewing through a player, make sure it is themselves.
+	for (int ii = 0; ii < MAXPLAYERS; ++ii)
+	{
+		if (playeringame[ii] && (players[ii].camera == NULL || players[ii].camera->player != NULL))
+		{
+			players[ii].camera = players[ii].mo;
+		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
@@ -1115,8 +1132,8 @@ void G_FinishTravel ()
 
 			// The player being spawned here is a short lived dummy and
 			// must not start any ENTER script or big problems will happen.
-			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], true);
-			if (!changeflags & CHANGELEVEL_KEEPFACING)
+			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], int(pawn->player - players), SPF_TEMPPLAYER);
+			if (!(changeflags & CHANGELEVEL_KEEPFACING))
 			{
 				pawn->angle = pawndup->angle;
 				pawn->pitch = pawndup->pitch;
@@ -1140,12 +1157,14 @@ void G_FinishTravel ()
 			pawn->target = NULL;
 			pawn->lastenemy = NULL;
 			pawn->player->mo = pawn;
+			pawn->player->camera = pawn;
 			DObject::StaticPointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();
 			pawndup->Destroy ();
 			pawn->LinkToWorld ();
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
+			pawn->player->SendPitchLimits();
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{
@@ -1253,10 +1272,12 @@ void G_InitLevelLocals ()
 	level.skypic2[8] = 0;
 
 	compatflags.Callback();
+	compatflags2.Callback();
 
 	NormalLight.ChangeFade (level.fadeto);
 
 	level.DefaultEnvironment = info->DefaultEnvironment;
+	level.DefaultSkybox = NULL;
 }
 
 //==========================================================================
@@ -1364,6 +1385,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.maptime
 		<< i;
 
+	if (SaveVersion >= 3313)
+	{
+		arc << level.nextmusic;
+	}
+
 	// Hub transitions must keep the current total time
 	if (!hubLoad)
 		level.totaltime = i;
@@ -1414,6 +1440,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializePolyobjs (arc);
 	P_SerializeSubsectors(arc);
 	StatusBar->Serialize (arc);
+
+	if (SaveVersion >= 4222)
+	{ // This must be done *after* thinkers are serialized.
+		arc << level.DefaultSkybox;
+	}
 
 	arc << level.total_monsters << level.total_items << level.total_secrets;
 
@@ -1547,6 +1578,11 @@ void G_UnSnapshotLevel (bool hubLoad)
 	}
 	// No reason to keep the snapshot around once the level's been entered.
 	level.info->ClearSnapshot();
+	if (hubLoad)
+	{
+		// Unlock ACS global strings that were locked when the snapshot was made.
+		FBehavior::StaticUnlockLevelVarStrings();
+	}
 }
 
 //==========================================================================
@@ -1743,6 +1779,21 @@ void G_ReadSnapshots (PNGHandle *png)
 	png->File->ResetFilePtr();
 }
 
+//==========================================================================
+
+CCMD(listsnapshots)
+{
+	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		FCompressedMemFile *snapshot = wadlevelinfos[i].snapshot;
+		if (snapshot != NULL)
+		{
+			unsigned int comp, uncomp;
+			snapshot->GetSizes(comp, uncomp);
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].mapname, comp, uncomp);
+		}
+	}
+}
 
 //==========================================================================
 //

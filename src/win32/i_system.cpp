@@ -607,8 +607,8 @@ void I_DetectOS(void)
 
 	if (OSPlatform == os_unknown)
 	{
-		Printf ("(Assuming Windows 95)\n");
-		OSPlatform = os_Win95;
+		Printf ("(Assuming Windows 2000)\n");
+		OSPlatform = os_Win2k;
 	}
 }
 
@@ -1095,7 +1095,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			FString newlabel;
 
 			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " " DOTVERSIONSTR_NOREV ": %s", label);
+			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
 			SetWindowText(hDlg, newlabel.GetChars());
 		}
 		// Populate the list with all the IWADs found
@@ -1187,7 +1187,8 @@ bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
-	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
+	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null &&
+		(screen == NULL || !screen->Is8BitMode()))
 	{
 		// Must be no larger than 32x32.
 		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)

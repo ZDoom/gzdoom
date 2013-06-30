@@ -830,3 +830,51 @@ CCMD (writewave)
 		Printf ("Usage: writewave <filename> [sample rate]");
 	}
 }
+
+//==========================================================================
+//
+// CCMD writemidi
+//
+// If the currently playing song is a MIDI variant, write it to disk.
+// If successful, the current song will restart, since MIDI file generation
+// involves a simulated playthrough of the song.
+//
+//==========================================================================
+
+CCMD (writemidi)
+{
+	if (argv.argc() != 2)
+	{
+		Printf("Usage: writemidi <filename>");
+		return;
+	}
+	if (currSong == NULL)
+	{
+		Printf("No song is currently playing.\n");
+		return;
+	}
+	if (!currSong->IsMIDI())
+	{
+		Printf("Current song is not MIDI-based.\n");
+		return;
+	}
+
+	TArray<BYTE> midi;
+	FILE *f;
+	bool success;
+
+	static_cast<MIDIStreamer *>(currSong)->CreateSMF(midi, 1);
+	f = fopen(argv[1], "wb");
+	if (f == NULL)
+	{
+		Printf("Could not open %s.\n", argv[1]);
+		return;
+	}
+	success = (fwrite(&midi[0], 1, midi.Size(), f) == (size_t)midi.Size());
+	fclose (f);
+
+	if (!success)
+	{
+		Printf("Could not write to music file.\n");
+	}
+}

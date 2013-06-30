@@ -56,9 +56,9 @@ bool AMinotaur::Slam (AActor *thing)
 	return Super::Slam (thing);
 }
 
-int AMinotaur::DoSpecialDamage (AActor *target, int damage)
+int AMinotaur::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
-	damage = Super::DoSpecialDamage (target, damage);
+	damage = Super::DoSpecialDamage (target, damage, damagetype);
 	if ((damage != -1) && (flags & MF_SKULLFLY))
 	{ // Slam only when in charge mode
 		P_MinotaurSlam (this, target);
@@ -83,9 +83,9 @@ void AMinotaurFriend::Serialize (FArchive &arc)
 	arc << StartTime;
 }
 
-void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
+void AMinotaurFriend::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	if (tracer && tracer->health > 0 && tracer->player)
 	{
@@ -149,8 +149,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk1)
 	if (self->CheckMeleeRange())
 	{
 		int damage = pr_minotauratk1.HitDice (4);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		if ((player = self->target->player) != NULL &&
 			player->mo == self->target)
 		{ // Squish the player
@@ -281,8 +281,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 	{
 		int damage;
 		damage = pr_atk.HitDice (friendly ? 3 : 5);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
 	z = self->z + 40*FRACUNIT;
@@ -327,8 +327,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 		int damage;
 		
 		damage = pr_minotauratk3.HitDice (friendly ? 3 : 5);
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		if ((player = self->target->player) != NULL &&
 			player->mo == self->target)
 		{ // Squish the player
@@ -375,7 +375,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 	mo = Spawn("MinotaurFX3", x, y, self->floorz, ALLOW_REPLACE);
 	mo->target = self->target;
 	mo->velx = 1; // Force block checking
-	P_CheckMissileSpawn (mo);
+	P_CheckMissileSpawn (mo, self->radius);
 }
 
 //---------------------------------------------------------------------------
@@ -396,8 +396,8 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 	target->velx += FixedMul (thrust, finecosine[angle]);
 	target->vely += FixedMul (thrust, finesine[angle]);
 	damage = pr_minotaurslam.HitDice (static_cast<AMinotaur *>(source) ? 4 : 6);
-	P_DamageMobj (target, NULL, NULL, damage, NAME_Melee);
-	P_TraceBleed (damage, target, angle, 0);
+	int newdam = P_DamageMobj (target, NULL, NULL, damage, NAME_Melee);
+	P_TraceBleed (newdam > 0 ? newdam : damage, target, angle, 0);
 	if (target->player)
 	{
 		target->reactiontime = 14+(pr_minotaurslam()&7);
@@ -558,7 +558,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurChase)
 	if (!self1->target || (self1->target->health <= 0) ||
 		!(self1->target->flags&MF_SHOOTABLE))
 	{ // look for a new target
-		self1->SetState (self1->FindState ("Spawn"));
+		self1->SetIdle();
 		return;
 	}
 

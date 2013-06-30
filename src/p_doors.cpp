@@ -232,9 +232,13 @@ void DDoor::Tick ()
 //
 // [RH] DoorSound: Plays door sound depending on direction and speed
 //
+// If curseq is non-NULL, then it will check if the desired sound sequence
+// will result in a different command stream than the current one. If not,
+// then it does nothing.
+//
 //============================================================================
 
-void DDoor::DoorSound (bool raise) const
+void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 {
 	int choice;
 
@@ -253,11 +257,17 @@ void DDoor::DoorSound (bool raise) const
 
 	if (m_Sector->seqType >= 0)
 	{
-		SN_StartSequence (m_Sector, CHAN_CEILING, m_Sector->seqType, SEQ_DOOR, choice);
+		if (curseq == NULL || !SN_AreModesSame(m_Sector->seqType, SEQ_DOOR, choice, curseq->GetModeNum()))
+		{
+			SN_StartSequence(m_Sector, CHAN_CEILING, m_Sector->seqType, SEQ_DOOR, choice);
+		}
 	}
 	else if (m_Sector->SeqName != NAME_None)
 	{
-		SN_StartSequence (m_Sector, CHAN_CEILING, m_Sector->SeqName, choice);
+		if (curseq == NULL || !SN_AreModesSame(m_Sector->SeqName, choice, curseq->GetModeNum()))
+		{
+			SN_StartSequence(m_Sector, CHAN_CEILING, m_Sector->SeqName, choice);
+		}
 	}
 	else
 	{
@@ -318,7 +328,10 @@ void DDoor::DoorSound (bool raise) const
 			}
 			break;
 		}
-		SN_StartSequence (m_Sector, CHAN_CEILING, snd, choice);
+		if (curseq == NULL || !SN_AreModesSame(snd, choice, curseq->GetModeNum()))
+		{
+			SN_StartSequence(m_Sector, CHAN_CEILING, snd, choice);
+		}
 	}
 }
 
@@ -399,7 +412,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 //============================================================================
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-				int tag, int speed, int delay, int lock, int lightTag)
+				int tag, int speed, int delay, int lock, int lightTag, bool boomgen)
 {
 	bool		rtn = false;
 	int 		secnum;
@@ -427,6 +440,9 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		// if door already has a thinker, use it
 		if (sec->PlaneMoving(sector_t::ceiling))
 		{
+			// Boom used remote door logic for generalized doors, even if they are manual
+			if (boomgen)
+				return false;
 			if (sec->ceilingdata->IsKindOf (RUNTIME_CLASS(DDoor)))
 			{
 				DDoor *door = barrier_cast<DDoor *>(sec->ceilingdata);
@@ -450,15 +466,8 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 
 						door->m_Direction = -1;	// start going down immediately
 
-						// [RH] If this sector doesn't have a specific sound
-						// attached to it, start the door close sequence.
-						// Otherwise, just let the current one continue.
-						// FIXME: This should be check if the sound sequence has separate up/down
-						// paths, not if it was manually set.
-						if ((sec->seqType < 0 && sec->SeqName == NAME_None) || SN_CheckSequence(sec, CHAN_CEILING) == NULL)
-						{
-							door->DoorSound (false);
-						}
+						// Start the door close sequence.
+						door->DoorSound(false, SN_CheckSequence(sec, CHAN_CEILING));
 						return true;
 					}
 					else
@@ -479,7 +488,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
 		{
 			sec = &sectors[secnum];
-			// if the ceiling already moving, don't start the door action
+			// if the ceiling is already moving, don't start the door action
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 

@@ -190,6 +190,19 @@ HUSTR_29 = "level 29: the living end";
 HUSTR_30 = "level 30: icon of sin";
 HUSTR_31 = "level 31: wolfenstein";
 HUSTR_32 = "level 32: grosse";
+HUSTR_31B = "level 31: idkfa";
+HUSTR_32B = "level 32: keen";
+HUSTR_33 = "level 33: betray";
+
+NHUSTR_1 = "level 1: the earth base";
+NHUSTR_2 = "level 2: the pain labs";
+NHUSTR_3 = "level 3: canyon of the dead";
+NHUSTR_4 = "level 4: hell mountain";
+NHUSTR_5 = "level 5: vivisection";
+NHUSTR_6 = "level 6: inferno of blood";
+NHUSTR_7 = "level 7: baron's banquet";
+NHUSTR_8 = "level 8: tomb of malevolence";
+NHUSTR_9 = "level 9: march of the demons";
 
 PHUSTR_1 = "level 1: congo";
 PHUSTR_2 = "level 2: well of souls";
@@ -280,6 +293,7 @@ STSTR_KFAADDED = "Very Happy Ammo Added";
 STSTR_FAADDED = "Ammo (no keys) Added";
 STSTR_NCON = "No Clipping Mode ON";
 STSTR_NCOFF = "No Clipping Mode OFF";
+STSTR_NC2ON = "No Clipping Mode 2 ON";
 STSTR_BEHOLD = "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp";
 STSTR_BEHOLDX = "Power-up Toggled";
 STSTR_CHOPPERS = "... doesn't suck - GM";
@@ -539,6 +553,26 @@ T6TEXT =
 	"As you step off the transport, you hear\n"
 	"the stomp of a cyberdemon's iron shoe.";
 
+NERVETEXT =
+	"TROUBLE WAS BREWING AGAIN IN YOUR FAVORITE\n"
+	"VACATION SPOT... HELL. SOME CYBERDEMON\n"
+	"PUNK THOUGHT HE COULD TURN HELL INTO A\n"
+	"PERSONAL AMUSEMENT PARK, AND MAKE EARTH\n"
+	"THE TICKET BOOTH.\n"
+	"\n"
+	"WELL THAT HALF-ROBOT FREAK SHOW DIDN'T\n"
+	"KNOW WHO WAS COMING TO THE FAIR. THERE'S\n"
+	"NOTHING LIKE A SHOOTING GALLERY FULL OF\n"
+	"HELLSPAWN TO GET THE BLOOD PUMPING...\n"
+	"\n"
+	"NOW THE WALLS OF THE DEMON'S LABYRINTH\n"
+	"ECHO WITH THE SOUND OF HIS METALLIC LIMBS\n"
+	"HITTING THE FLOOR. HIS DEATH MOAN GURGLES\n"
+	"OUT THROUGH THE MESS YOU LEFT OF HIS FACE.\n"
+	"\n"
+	"THIS RIDE IS CLOSED.\n";
+
+
 // Cast list (must appear in this order)
 CC_ZOMBIE = "ZOMBIEMAN";
 CC_SHOTGUN = "SHOTGUN GUY";
@@ -620,6 +654,7 @@ OB_R_SPLASH = "%o should have stood back.";
 OB_ROCKET = "%o should have stood back.";
 OB_KILLEDSELF = "%o killed %hself.";
 
+OB_VOODOO = "%o was killed by the power of voodoo.";
 OB_STEALTHBABY = "%o thought %g saw an arachnotron.";
 OB_STEALTHVILE = "%o thought %g saw an archvile.";
 OB_STEALTHBARON = "%o thought %g saw a Baron of Hell.";
@@ -771,6 +806,7 @@ OB_MPMINIMISSILELAUNCHER = "%o gulped down %k's missile.";
 OB_MPSTRIFEGRENADE = "%o was inverted by %k's H-E grenade."; 
 OB_MPPHOSPHOROUSGRENADE = "%o took a flame bath in %k's phosphorous pyre."; 
 OB_MPFLAMETHROWER = "%o was barbecued by %k."; 
+OB_MPMAULER1 = "%o was zapped by %k.";
 OB_MPMAULER = "%o was viciously vaporized by %k."; 
 OB_MPSIGIL = "%o bowed down to the sheer power of %k's Sigil.";
 
@@ -778,6 +814,7 @@ OB_MPSIGIL = "%o bowed down to the sheer power of %k's Sigil.";
 OB_MONTELEFRAG = "%o was telefragged.";
 
 OB_DEFAULT = "%o died.";
+OB_MPDEFAULT = "%o was killed by %k.";
 OB_FRIENDLY1 = "%k mows down a teammate.";
 OB_FRIENDLY2 = "%k checks %p glasses.";
 OB_FRIENDLY3 = "%k gets a frag for the other team.";
@@ -790,6 +827,16 @@ STARTUP3 = "";
 STARTUP4 = "";
 STARTUP5 = "";
 
+// Scoreboard text
+SCORE_ITEMS = "ITEMS";
+SCORE_BONUS = "BONUS";
+SCORE_COLOR = "COLOR";
+SCORE_SECRET = "SECRET";
+SCORE_NAME = "NAME";
+SCORE_KILLS = "KILLS";
+SCORE_FRAGS = "FRAGS";
+SCORE_MISSED = "MISSED";
+SCORE_TOTAL = "TOTAL";
 
 // Item tags: Doom weapons
 TAG_FIST = "Brass Knuckles";
@@ -952,7 +999,7 @@ TAG_SECURITYKEY = "Security Key";
 TAG_COREKEY = "Core Key";	// "New_Key1" in the Teaser
 TAG_MAULERKEY = "Mauler Key";	// "New_Key2" in the Teaser
 TAG_FACTORYKEY = "Factory Key";	// "New_Key3" in the Teaser
-TAG_MINEKEY = "Mine_Key";	// "New_Key4" in the Teaser
+TAG_MINEKEY = "Mine Key";	// "New_Key4" in the Teaser
 TAG_NEWKEY5 = "New Key5";
 TAG_ORACLEPASS = "Oracle Pass";
 
@@ -1481,7 +1528,8 @@ TXT_RANDOM_PGUARD_10 = "If there is any honor inside that pathetic shell of a bo
 TXT_RANDOMGOODBYE_1 = "Bye!";
 TXT_RANDOMGOODBYE_2 = "Thanks, bye!";
 TXT_RANDOMGOODBYE_3 = "See you later!";
-TXT_HAVEENOUGH = "You seem to have enough!";
+TXT_HAVEENOUGH		= "You seem to have enough!";
+TXT_GOAWAY			= "Go away!";
 
 // Skills:
 

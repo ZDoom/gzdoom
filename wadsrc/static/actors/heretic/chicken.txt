@@ -68,6 +68,7 @@ ACTOR ChickenPlayer : PlayerPawn native
 	Speed 1
 	Gravity 0.125
 	+NOSKIN
+	+CANSUPERMORPH
 	PainSound "chicken/pain"
 	DeathSound "chicken/death"
 	Player.JumpZ 1

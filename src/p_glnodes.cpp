@@ -208,7 +208,7 @@ bool P_CheckForGLNodes()
 	int missing = CheckForMissingSegs();
 	if (missing > 0)
 	{
-		Printf("%d missing segs counted\nThe BSP needs to be rebuilt", missing);
+		Printf("%d missing segs counted\nThe BSP needs to be rebuilt.\n", missing);
 	}
 	return missing == 0;
 }
@@ -230,18 +230,18 @@ bool P_CheckForGLNodes()
 static int firstglvertex;
 static bool format5;
 
-static bool LoadGLVertexes(FileReader * f, wadlump_t * lump)
+static bool LoadGLVertexes(FileReader * lump)
 {
 	BYTE *gldata;
 	int                 i;
 
 	firstglvertex = numvertexes;
 	
-	int gllen=lump->Size;
+	int gllen=lump->GetLength();
 
 	gldata = new BYTE[gllen];
-	f->Seek(lump->FilePos, SEEK_SET);
-	f->Read(gldata, gllen);
+	lump->Seek(0, SEEK_SET);
+	lump->Read(gldata, gllen);
 
 	if (*(int *)gldata == gNd5) 
 	{
@@ -310,16 +310,16 @@ static inline int checkGLVertex3(int num)
 //
 //==========================================================================
 
-static bool LoadGLSegs(FileReader * f, wadlump_t * lump)
+static bool LoadGLSegs(FileReader * lump)
 {
 	char		*data;
 	int			i;
 	line_t		*ldef=NULL;
 	
-	numsegs = lump->Size;
+	numsegs = lump->GetLength();
 	data= new char[numsegs];
-	f->Seek(lump->FilePos, SEEK_SET);
-	f->Read(data, lump->Size);
+	lump->Seek(0, SEEK_SET);
+	lump->Read(data, numsegs);
 	segs=NULL;
 
 #ifdef _MSC_VER
@@ -442,15 +442,15 @@ static bool LoadGLSegs(FileReader * f, wadlump_t * lump)
 //
 //==========================================================================
 
-static bool LoadGLSubsectors(FileReader * f, wadlump_t * lump)
+static bool LoadGLSubsectors(FileReader * lump)
 {
 	char * datab;
 	int  i;
 	
-	numsubsectors = lump->Size;
+	numsubsectors = lump->GetLength();
 	datab = new char[numsubsectors];
-	f->Seek(lump->FilePos, SEEK_SET);
-	f->Read(datab, lump->Size);
+	lump->Seek(0, SEEK_SET);
+	lump->Read(datab, numsubsectors);
 	
 	if (numsubsectors == 0)
 	{
@@ -524,7 +524,7 @@ static bool LoadGLSubsectors(FileReader * f, wadlump_t * lump)
 //
 //==========================================================================
 
-static bool LoadNodes (FileReader * f, wadlump_t * lump)
+static bool LoadNodes (FileReader * lump)
 {
 	const int NF_SUBSECTOR = 0x8000;
 	const int GL5_NF_SUBSECTOR = (1 << 31);
@@ -538,15 +538,15 @@ static bool LoadNodes (FileReader * f, wadlump_t * lump)
 	if (!format5)
 	{
 		mapnode_t*	mn, * basemn;
-		numnodes = lump->Size / sizeof(mapnode_t);
+		numnodes = lump->GetLength() / sizeof(mapnode_t);
 
 		if (numnodes == 0) return false;
 
 		nodes = new node_t[numnodes];		
-		f->Seek(lump->FilePos, SEEK_SET);
+		lump->Seek(0, SEEK_SET);
 
 		basemn = mn = new mapnode_t[numnodes];
-		f->Read(mn, lump->Size);
+		lump->Read(mn, lump->GetLength());
 
 		used = (WORD *)alloca (sizeof(WORD)*numnodes);
 		memset (used, 0, sizeof(WORD)*numnodes);
@@ -598,15 +598,15 @@ static bool LoadNodes (FileReader * f, wadlump_t * lump)
 	else
 	{
 		gl5_mapnode_t*	mn, * basemn;
-		numnodes = lump->Size / sizeof(gl5_mapnode_t);
+		numnodes = lump->GetLength() / sizeof(gl5_mapnode_t);
 
 		if (numnodes == 0) return false;
 
 		nodes = new node_t[numnodes];		
-		f->Seek(lump->FilePos, SEEK_SET);
+		lump->Seek(0, SEEK_SET);
 
 		basemn = mn = new gl5_mapnode_t[numnodes];
-		f->Read(mn, lump->Size);
+		lump->Read(mn, lump->GetLength());
 
 		used = (WORD *)alloca (sizeof(WORD)*numnodes);
 		memset (used, 0, sizeof(WORD)*numnodes);
@@ -664,19 +664,19 @@ static bool LoadNodes (FileReader * f, wadlump_t * lump)
 //
 //==========================================================================
 
-static bool DoLoadGLNodes(FileReader * f, wadlump_t * lumps)
+static bool DoLoadGLNodes(FileReader ** lumps)
 {
-	if (!LoadGLVertexes(f, &lumps[0]))
+	if (!LoadGLVertexes(lumps[0]))
 	{
 		return false;
 	}
-	if (!LoadGLSegs(f, &lumps[1]))
+	if (!LoadGLSegs(lumps[1]))
 	{
 		delete [] segs;
 		segs = NULL;
 		return false;
 	}
-	if (!LoadGLSubsectors(f, &lumps[2]))
+	if (!LoadGLSubsectors(lumps[2]))
 	{
 		delete [] subsectors;
 		subsectors = NULL;
@@ -684,7 +684,7 @@ static bool DoLoadGLNodes(FileReader * f, wadlump_t * lumps)
 		segs = NULL;
 		return false;
 	}
-	if (!LoadNodes(f, &lumps[3]))
+	if (!LoadNodes(lumps[3]))
 	{
 		delete [] nodes;
 		nodes = NULL;
@@ -718,7 +718,7 @@ static bool DoLoadGLNodes(FileReader * f, wadlump_t * lumps)
 	int missing = CheckForMissingSegs();
 	if (missing > 0)
 	{
-		Printf("%d missing segs counted in GL nodes.\nThe BSP has to be rebuilt", missing);
+		Printf("%d missing segs counted in GL nodes.\nThe BSP has to be rebuilt.\n", missing);
 	}
 	return missing == 0;
 }
@@ -794,18 +794,20 @@ static int FindGLNodesInWAD(int labellump)
 // FindGLNodesInWAD
 //
 // Looks for GL nodes in the same WAD as the level itself
-// When this function returns the file pointer points to
-// the directory entry of the GL_VERTS lump
+// Function returns the lump number within the file. Returns -1 if the input
+// resource file is NULL.
 //
 //===========================================================================
 
-static int FindGLNodesInFile(FileReader * f, const char * label)
+static int FindGLNodesInFile(FResourceFile * f, const char * label)
 {
+	// No file open?  Probably shouldn't happen but assume no GL nodes
+	if(!f)
+		return -1;
+
 	FString glheader;
 	bool mustcheck=false;
-	DWORD id, dirofs, numentries;
-	DWORD offset, size;
-	char lumpname[9];
+	DWORD numentries = f->LumpCount();
 
 	glheader.Format("GL_%.8s", label);
 	if (glheader.Len()>8)
@@ -814,25 +816,17 @@ static int FindGLNodesInFile(FileReader * f, const char * label)
 		mustcheck=true;
 	}
 
-	f->Seek(0, SEEK_SET);
-	(*f) >> id >> numentries >> dirofs;
-
-	if ((id == IWAD_ID || id == PWAD_ID) && numentries > 4)
+	if (numentries > 4)
 	{
-		f->Seek(dirofs, SEEK_SET);
 		for(DWORD i=0;i<numentries-4;i++)
 		{
-			(*f) >> offset >> size;
-			f->Read(lumpname, 8);
-			if (!strnicmp(lumpname, glheader, 8))
+			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
 			{
 				if (mustcheck)
 				{
 					char check[16]={0};
-					int filepos = f->Tell();
-					f->Seek(offset, SEEK_SET);
-					f->Read(check, 16);
-					f->Seek(filepos, SEEK_SET);
+					FileReader *fr = f->GetLump(i)->GetReader();
+					fr->Read(check, 16);
 					if (MatchHeader(label, check)) return i;
 				}
 				else return i;
@@ -851,18 +845,20 @@ static int FindGLNodesInFile(FileReader * f, const char * label)
 
 bool P_LoadGLNodes(MapData * map)
 {
-
-	if (map->MapLumps[ML_GLZNODES].Size != 0)
+	if (map->MapLumps[ML_GLZNODES].Reader && map->MapLumps[ML_GLZNODES].Reader->GetLength() != 0)
 	{
-		const int idcheck = MAKE_ID('Z','G','L','N');
-		const int idcheck2 = MAKE_ID('Z','G','L','2');
-		const int idcheck3 = MAKE_ID('X','G','L','N');
-		const int idcheck4 = MAKE_ID('X','G','L','2');
+		const int idcheck1a = MAKE_ID('Z','G','L','N');
+		const int idcheck2a = MAKE_ID('Z','G','L','2');
+		const int idcheck3a = MAKE_ID('Z','G','L','3');
+		const int idcheck1b = MAKE_ID('X','G','L','N');
+		const int idcheck2b = MAKE_ID('X','G','L','2');
+		const int idcheck3b = MAKE_ID('X','G','L','3');
 		int id;
 
 		map->Seek(ML_GLZNODES);
 		map->file->Read (&id, 4);
-		if (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4)
+		if (id == idcheck1a || id == idcheck2a || id == idcheck3a ||
+			id == idcheck1b || id == idcheck2b || id == idcheck3b)
 		{
 			try
 			{
@@ -895,13 +891,12 @@ bool P_LoadGLNodes(MapData * map)
 
 	if (!CheckCachedNodes(map))
 	{
-		wadlump_t gwalumps[4];
+		FileReader *gwalumps[4] = { NULL, NULL, NULL, NULL };
 		char path[256];
 		int li;
 		int lumpfile = Wads.GetLumpFile(map->lumpnum);
-		bool mapinwad = map->file == Wads.GetFileReader(lumpfile);
-		FileReader * fr = map->file;
-		FILE * f_gwa = NULL;
+		bool mapinwad = map->InWad;
+		FResourceFile * f_gwa = map->resource;
 
 		const char * name = Wads.GetWadFullName(lumpfile);
 
@@ -914,10 +909,9 @@ bool P_LoadGLNodes(MapData * map)
 				// GL nodes are loaded with a WAD
 				for(int i=0;i<4;i++)
 				{
-					gwalumps[i].FilePos=Wads.GetLumpOffset(li+i+1);
-					gwalumps[i].Size=Wads.LumpLength(li+i+1);
+					gwalumps[i]=Wads.ReopenLumpNum(li+i+1);
 				}
-				return DoLoadGLNodes(fr, gwalumps);
+				return DoLoadGLNodes(gwalumps);
 			}
 			else
 			{
@@ -929,10 +923,8 @@ bool P_LoadGLNodes(MapData * map)
 					strcpy(ext, ".gwa");
 					// Todo: Compare file dates
 
-					f_gwa = fopen(path, "rb");
+					f_gwa = FResourceFile::OpenResourceFile(path, NULL, true);
 					if (f_gwa==NULL) return false;
-
-					fr = new FileReader(f_gwa);
 
 					strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(map->lumpnum), 8);
 				}
@@ -940,30 +932,28 @@ bool P_LoadGLNodes(MapData * map)
 		}
 
 		bool result = false;
-		li = FindGLNodesInFile(fr, map->MapLumps[0].Name);
+		li = FindGLNodesInFile(f_gwa, map->MapLumps[0].Name);
 		if (li!=-1)
 		{
 			static const char check[][9]={"GL_VERT","GL_SEGS","GL_SSECT","GL_NODES"};
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				(*fr) >> gwalumps[i].FilePos;
-				(*fr) >> gwalumps[i].Size;
-				fr->Read(gwalumps[i].Name, 8);
-				if (strnicmp(gwalumps[i].Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(i)->Name, check[i], 8))
 				{
 					result=false;
 					break;
 				}
+				else
+					gwalumps[i] = f_gwa->GetLump(i)->NewReader();
 			}
-			if (result) result = DoLoadGLNodes(fr, gwalumps);
+			if (result) result = DoLoadGLNodes(gwalumps);
 		}
 
-		if (f_gwa)
-		{
-			delete fr;
-			fclose(f_gwa);
-		}
+		if (f_gwa != map->resource)
+			delete f_gwa;
+		for(unsigned int i = 0;i < 4;++i)
+			delete gwalumps[i];
 		return result;
 	}
 	else return true;
@@ -1078,7 +1068,7 @@ static FString GetCachePath()
 	FSRef folder;
 
 	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)path.GetChars(), PATH_MAX))
+		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
 	{
 		path = pathstr;
 	}
@@ -1089,7 +1079,7 @@ static FString GetCachePath()
 	path += "/zdoom/cache";
 #else
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can share the node cache.
-	path = NicePath("~/.zdoom/cache");
+	path = NicePath("~/.config/zdoom/cache");
 #endif
 	return path;
 }
@@ -1234,7 +1224,7 @@ static bool CheckCachedNodes(MapData *map)
 	BYTE md5[16];
 	BYTE md5map[16];
 	DWORD numlin;
-	DWORD *verts;
+	DWORD *verts = NULL;
 
 	FString path = CreateCacheName(map, false);
 	FILE *f = fopen(path, "rb");
@@ -1298,6 +1288,10 @@ static bool CheckCachedNodes(MapData *map)
 	return true;
 
 errorout:
+	if (verts != NULL)
+	{
+		delete[] verts;
+	}
 	fclose(f);
 	return false;
 }
@@ -1504,7 +1498,7 @@ void P_SetRenderSector()
 		seg_t *seg = ss->firstline;
 
 		// Check for one-dimensional subsectors. These should be ignored when
-		// being processed for automap drawinng etc.
+		// being processed for automap drawing etc.
 		ss->flags |= SSECF_DEGENERATE;
 		for(j=2; j<ss->numlines; j++)
 		{

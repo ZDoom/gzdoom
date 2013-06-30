@@ -80,8 +80,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 	if ((self->args[3] % 4) == 0)
 	{
 		weaveindex = self->special2;
-		self->z += FloatBobOffsets[weaveindex]>>1;
-		self->special2 = (weaveindex+1)&63;
+		self->z += finesine[weaveindex << BOBTOFINESHIFT] * 4;
+		self->special2 = (weaveindex + 1) & 63;
 	}
 
 	angle = self->angle>>ANGLETOFINESHIFT;

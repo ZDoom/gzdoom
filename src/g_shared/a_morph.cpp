@@ -15,6 +15,9 @@
 
 static FRandom pr_morphmonst ("MorphMonster");
 
+void EndAllPowerupEffects(AInventory *item);
+void InitAllPowerupEffects(AInventory *item);
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_MorphPlayer
@@ -47,6 +50,13 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	}
 	if (p->morphTics)
 	{ // Player is already a beast
+		if ((p->mo->GetClass() == spawntype)
+			&& (p->mo->PlayerFlags & PPF_CANSUPERMORPH)
+			&& (p->morphTics < (((duration) ? duration : MORPHTICS) - TICRATE))
+			&& (p->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true) == NULL))
+		{ // Make a super chicken
+			p->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
+		}
 		return false;
 	}
 	if (p->health <= 0)
@@ -67,6 +77,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	}
 
 	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
+	EndAllPowerupEffects(actor->Inventory);
 	DObject::StaticPointerSubstitution (actor, morphed);
 	if ((actor->tid != 0) && (style & MORPH_NEWTIDBEHAVIOUR))
 	{
@@ -78,6 +89,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
+	morphed->Score = actor->Score;
 	p->PremorphWeapon = p->ReadyWeapon;
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	morphed->player = p;
@@ -136,6 +148,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 		}
 		item = next;
 	}
+	InitAllPowerupEffects(morphed->Inventory);
 	morphed->ActivateMorphWeapon ();
 	if (p->camera == actor)
 	{
@@ -193,17 +206,19 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 	pmo->player = NULL;
 
-	mo->ObtainInventory (pmo);
-	DObject::StaticPointerSubstitution (pmo, mo);
 	// Remove the morph power if the morph is being undone prematurely.
-	for (AInventory *item = mo->Inventory, *next = NULL; item != NULL; item = next)
+	for (AInventory *item = pmo->Inventory, *next = NULL; item != NULL; item = next)
 	{
 		next = item->Inventory;
 		if (item->IsKindOf(RUNTIME_CLASS(APowerMorph)))
 		{
+			static_cast<APowerMorph *>(item)->SetNoCallUndoMorph();
 			item->Destroy();
 		}
 	}
+	EndAllPowerupEffects(pmo->Inventory);
+	mo->ObtainInventory (pmo);
+	DObject::StaticPointerSubstitution (pmo, mo);
 	if ((pmo->tid != 0) && (player->MorphStyle & MORPH_NEWTIDBEHAVIOUR))
 	{
 		mo->tid = pmo->tid;
@@ -225,6 +240,8 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->flags  = (mo->flags & ~(MF_SHADOW|MF_NOGRAVITY)) | (pmo->flags & (MF_SHADOW|MF_NOGRAVITY));
 	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
+	mo->Score = pmo->Score;
+	InitAllPowerupEffects(mo->Inventory);
 
 	const PClass *exit_flash = player->MorphExitFlash;
 	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
@@ -235,7 +252,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	player->MorphStyle = 0;
 	player->MorphExitFlash = NULL;
 	player->viewheight = mo->ViewHeight;
-	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2), true);
 	if (level2 != NULL)
 	{
 		level2->Destroy ();
@@ -261,7 +278,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	// taking events, reset up the face, if any;
 	// this is only needed for old-skool skins
 	// and for the original DOOM status bar.
-	if ((player == &players[consoleplayer]))
+	if (player == &players[consoleplayer])
 	{
 		const char *face = pmo->GetClass()->Meta.GetMetaString (APMETA_Face);
 		if (face != NULL && strcmp(face, "None") != 0)
@@ -270,10 +287,11 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 			size_t skinindex = 0;
 			// If a custom skin was in use, then reload it
 			// or else the base skin for the player class.
-			if ((unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
-				(size_t)player->userinfo.skin < numskins)
+			if ((unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
+				(size_t)player->userinfo.GetSkin() < numskins)
 			{
-				skinindex = player->userinfo.skin;
+
+				skinindex = player->userinfo.GetSkin();
 			}
 			else if (PlayerClasses.Size () > 1)
 			{
@@ -355,7 +373,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 {
 	AMorphedMonster *morphed;
 
-	if (actor->player || spawntype == NULL ||
+	if (actor == NULL || actor->player || spawntype == NULL ||
 		actor->flags3 & MF3_DONTMORPH ||
 		!(actor->flags3 & MF3_ISMONSTER) ||
 		!spawntype->IsDescendantOf (RUNTIME_CLASS(AMorphedMonster)))
@@ -370,13 +388,14 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	morphed->UnmorphedMe = actor;
 	morphed->alpha = actor->alpha;
 	morphed->RenderStyle = actor->RenderStyle;
+	morphed->Score = actor->Score;
 
 	morphed->UnmorphTime = level.time + ((duration) ? duration : MORPHTICS) + pr_morphmonst();
 	morphed->MorphStyle = style;
 	morphed->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
 	morphed->FlagsSave = actor->flags & ~MF_JUSTHIT;
-	//morphed->special = actor->special;
-	//memcpy (morphed->args, actor->args, sizeof(actor->args));
+	morphed->special = actor->special;
+	memcpy (morphed->args, actor->args, sizeof(actor->args));
 	morphed->CopyFriendliness (actor, true);
 	morphed->flags |= actor->flags & MF_SHADOW;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
@@ -386,6 +405,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	}
 	morphed->AddToHash ();
 	actor->RemoveFromHash ();
+	actor->special = 0;
 	actor->tid = 0;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
@@ -408,7 +428,8 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 
 	if (beast->UnmorphTime == 0 || 
 		beast->UnmorphedMe == NULL ||
-		beast->flags3 & MF3_STAYMORPHED)
+		beast->flags3 & MF3_STAYMORPHED ||
+		beast->UnmorphedMe->flags3 & MF3_STAYMORPHED)
 	{
 		return false;
 	}
@@ -416,10 +437,13 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->SetOrigin (beast->x, beast->y, beast->z);
 	actor->flags |= MF_SOLID;
 	beast->flags &= ~MF_SOLID;
+	int beastflags6 = beast->flags6;
+	beast->flags6 &= ~MF6_TOUCHY;
 	if (!force && !P_TestMobjLocation (actor))
 	{ // Didn't fit
 		actor->flags &= ~MF_SOLID;
 		beast->flags |= MF_SOLID;
+		beast->flags6 = beastflags6;
 		beast->UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
 		return false;
 	}
@@ -439,6 +463,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->velz = beast->velz;
 	actor->tid = beast->tid;
 	actor->special = beast->special;
+	actor->Score = beast->Score;
 	memcpy (actor->args, beast->args, sizeof(actor->args));
 	actor->AddToHash ();
 	beast->UnmorphedMe = NULL;
@@ -525,11 +550,51 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 	return false;
 }
 
+//===========================================================================
+//
+// EndAllPowerupEffects
+//
+// Calls EndEffect() on every Powerup in the inventory list.
+//
+//===========================================================================
+
+void EndAllPowerupEffects(AInventory *item)
+{
+	while (item != NULL)
+	{
+		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
+		{
+			static_cast<APowerup *>(item)->EndEffect();
+		}
+		item = item->Inventory;
+	}
+}
+
+//===========================================================================
+//
+// InitAllPowerupEffects
+//
+// Calls InitEffect() on every Powerup in the inventory list.
+//
+//===========================================================================
+
+void InitAllPowerupEffects(AInventory *item)
+{
+	while (item != NULL)
+	{
+		if (item->IsKindOf(RUNTIME_CLASS(APowerup)))
+		{
+			static_cast<APowerup *>(item)->InitEffect();
+		}
+		item = item->Inventory;
+	}
+}
+
 // Base class for morphing projectiles --------------------------------------
 
 IMPLEMENT_CLASS(AMorphProjectile)
 
-int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
+int AMorphProjectile::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	const PClass *morph_flash = PClass::FindClass (MorphFlash);
 	const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
@@ -574,7 +639,7 @@ void AMorphedMonster::Destroy ()
 	Super::Destroy ();
 }
 
-void AMorphedMonster::Die (AActor *source, AActor *inflictor)
+void AMorphedMonster::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
 	// Dead things don't unmorph
 //	flags3 |= MF3_STAYMORPHED;
@@ -582,11 +647,11 @@ void AMorphedMonster::Die (AActor *source, AActor *inflictor)
 	// But they can now, so that line above has been
 	// moved into P_MorphedDeath() and is now set by
 	// that function if and only if it is needed.
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{
 		UnmorphedMe->health = health;
-		UnmorphedMe->Die (source, inflictor);
+		UnmorphedMe->Die (source, inflictor, dmgflags);
 	}
 }
 

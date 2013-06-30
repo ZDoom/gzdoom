@@ -117,11 +117,11 @@ ListMenu "PlayerclassMenu"
 {
 	IfGame(Doom, Heretic, Hexen, Strife)
 	{
-		NetgameMessage "$NETGAME"
+		NetgameMessage "$NEWGAME"
 	}
 	IfGame(Chex)
 	{
-		NetgameMessage "$CNETGAME"
+		NetgameMessage "$CNEWGAME"
 	}
 
 	IfGame(Doom, Strife, Chex)
@@ -159,11 +159,11 @@ ListMenu "EpisodeMenu"
 {
 	IfGame(Doom, Heretic, Hexen, Strife)
 	{
-		NetgameMessage "$NETGAME"
+		NetgameMessage "$NEWGAME"
 	}
 	IfGame(Chex)
 	{
-		NetgameMessage "$CNETGAME"
+		NetgameMessage "$CNEWGAME"
 	}
 
 	IfGame(Doom, Chex)
@@ -313,11 +313,9 @@ OptionMenuSettings
 {
 	// These can be overridden if a different menu fonts requires it.
 	Linespacing 8
-	LabelOffset 0
 	IfGame(Heretic, Hexen)
 	{
 		Linespacing 9
-		LabelOffset 2
 	}
 }
 
@@ -436,6 +434,8 @@ OptionMenu "CustomizeControls"
 	StaticText 	"Controls", 1
 	Control 	"Fire",					"+attack"
 	Control 	"Secondary Fire",		"+altattack"
+	Control 	"Weapon Reload",			"+reload"
+	Control 	"Weapon Zoom",				"+zoom"
 	Control 	"Use / Open",			"+use"
 	Control 	"Move forward",			"+forward"
 	Control 	"Move backward",		"+back"
@@ -465,6 +465,16 @@ OptionMenu "CustomizeControls"
 	StaticText 	"Weapons", 1
 	Control 	"Next weapon",			"weapnext"
 	Control 	"Previous weapon",		"weapprev"
+	Control		"Weapon Slot 1",		"slot 1"
+	Control		"Weapon Slot 2",		"slot 2"
+	Control		"Weapon Slot 3",		"slot 3"
+	Control		"Weapon Slot 4",		"slot 4"
+	Control		"Weapon Slot 5",		"slot 5"
+	Control		"Weapon Slot 6",		"slot 6"
+	Control		"Weapon Slot 7",		"slot 7"
+	Control		"Weapon Slot 8",		"slot 8"
+	Control		"Weapon Slot 9",		"slot 9"
+	Control		"Weapon Slot 0",		"slot 0"
 	StaticText 	""
 	StaticText 	"Inventory", 1
 	Control 	"Activate item",		"invuse"
@@ -651,7 +661,7 @@ OptionMenu "VideoOptions"
 	Submenu "Scoreboard Options", 		"ScoreboardOptions"
 	StaticText " "
 	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0, 0
-	Slider "Brightness",				"Gamma", 1.0, 3.0, 0.1
+	Slider "Brightness",				"Gamma", 0.75, 3.0, 0.05, 2
 	Option "Vertical Sync",				"vid_vsync", "OnOff"
 	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
 
@@ -724,6 +734,18 @@ OptionValue Crosshairs
 	// will be filled in from the XHAIRS lump
 }
 
+OptionValue ZDoomHexen
+{
+	0.0, "ZDoom"
+	1.0, "Hexen"
+}
+
+OptionValue ZDoomStrife
+{
+	0.0, "ZDoom"
+	1.0, "Strife"
+}
+
 OptionMenu "HUDOptions"
 {
 	Title "HUD Options"
@@ -740,7 +762,13 @@ OptionMenu "HUDOptions"
 	Option "Display nametags",			"displaynametags", "DisplayTagsTypes"
 	Option "Nametag color",				"nametagcolor", "TextColors", "displaynametags"
 	Option "Stretch status bar",		"st_scale", "OnOff"
+	Option "Stretch Fullscreen HUD",	"hud_scale", "OnOff"
 	Option "Use old ouch mug shot formula",	"st_oldouch", "OnOff"
+	StaticText " "
+	Option "Hexen weapon flashes",		"pf_hexenweaps",	"ZDoomHexen"
+	Option "Poison damage flashes",		"pf_poison",		"ZDoomHexen"
+	Option "Ice death flashes",			"pf_ice",			"ZDoomHexen"
+	Option "Poison Buildup flashes",	"pf_hazard",		"ZDoomStrife"
 }
 	
 //-------------------------------------------------------------------------------------------
@@ -755,15 +783,40 @@ OptionValue "AMCoordinates"
 	1, "Map"
 }
 
+OptionValue "AltHUDScale"
+{
+	0, "Off"
+	1, "Scale to 640x400"
+	2, "Pixel double"
+}
+
+OptionValue "AltHUDTime"
+{
+	0, "Off"
+	1, "Level, milliseconds"
+	2, "Level, seconds"
+	3, "Level"
+	4, "Hub, seconds"
+	5, "Hub"
+	6, "Total, seconds"
+	7, "Total"
+	8, "System, seconds"
+	9, "System"
+}
+
 OptionMenu "AltHUDOptions"
 {
 	Title "Alternative HUD"
 	//Indent 220
 	Option "Enable alternative HUD",				"hud_althud", "OnOff"
+	Option "Stretch alternative HUD",				"hud_althudscale", "AltHUDScale"
 	Option "Show secret count",						"hud_showsecrets", "OnOff"
 	Option "Show monster count",					"hud_showmonsters", "OnOff"
 	Option "Show item count",						"hud_showitems", "OnOff"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
+	Option "Show berserk",							"hud_berserk_health", "OnOff"
+	Option "Show time",								"hud_showtime", "AltHUDTime"
+	Option "Time color",							"hud_timecolor", "TextColors"
 	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "Yellow ammo display below %",			"hud_ammo_yellow", 0, 100, 1, 0
 	Slider "Red health display below",				"hud_health_red", 0, 100, 1, 0
@@ -775,12 +828,11 @@ OptionMenu "AltHUDOptions"
 	StaticText " "
 	StaticText "Alternative Automap HUD", 1
 	option "Map title color",						"hudcolor_titl", "TextColors"
-	option "Hub time color",						"hudcolor_time", "TextColors"
 	option "Map time color",						"hudcolor_ltim", "TextColors"
-	option "Total title color",						"hudcolor_ttim", "TextColors"
+	option "Hub time color",						"hudcolor_time", "TextColors"
+	option "Total time color",						"hudcolor_ttim", "TextColors"
 	option "Coordinate color",						"hudcolor_xyco", "TextColors"
 	option "Coordinate mode",						"map_point_coordinates", "AMCoordinates"
-	option "Map title color",						"hudcolor_titl", "TextColors"
 	option "Statistics name color",					"hudcolor_statnames", "TextColors"
 	option "Statistics color",						"hudcolor_stats", "TextColors"
 }
@@ -790,6 +842,13 @@ OptionMenu "AltHUDOptions"
 // Misc menu
 //
 //-------------------------------------------------------------------------------------------
+
+OptionValue Autosave
+{
+	0,	"Always"
+	1,	"Scripts Only"
+	2,	"Never"
+}
 
 OptionMenu "MiscOptions"
 {
@@ -803,8 +862,8 @@ OptionMenu "MiscOptions"
 	Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
 	StaticText " "
 	Option "Enable cheats from all games",			"allcheats", "OnOff"
-	Option "Enable autosaves",						"disableautosave", "OffOn"
-	Slider "Number of autosaves",					"autosavecount", 1, 32, 1, 0
+	Option "Enable autosaves",						"disableautosave", "Autosave"
+	Slider "Number of autosaves",					"autosavecount", 1, 20, 1, 0
 	StaticText " "
 	Option "Cache nodes",							"gl_cachenodes", "OnOff"
 	Slider "Time threshold for node caching",		"gl_cachetime", 0.0, 2.0, 0.1
@@ -1106,8 +1165,8 @@ OptionMenu GameplayOptions
 	Option "Allow spying",			"sv_disallowspying", "NoYes"
 	Option "Chasecam cheat",		"sv_chasecam", "YesNo"
 	Option "Check ammo for weapon switch",	"sv_dontcheckammo", "NoYes"
-	Option "Killing Romero kills all his spawns",	"sv_killbossmonst", "YesNo"
-	Option "Count monsters in end level sectors",	"sv_nocountendmonst", "NoYes"
+	Option "Icon's death kills its spawns",	"sv_killbossmonst", "YesNo"
+	Option "End sector counts for kill %",	"sv_nocountendmonst", "NoYes"
 
 	StaticText " "
 	StaticText "Deathmatch Settings",1
@@ -1194,6 +1253,8 @@ OptionMenu "CompatibilityOptions"
 	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
 	Option "Ignore Y offsets on masked midtextures",	"compat_MASKEDMIDTEX", "YesNo"
+	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
+	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
 	
 	Class "CompatibilityMenu"
 }
@@ -1266,6 +1327,7 @@ OptionString SoundOutputsUnix
 	"ALSA",			"ALSA"
 	"SDL",			"SDL"
 	"ESD",			"ESD"
+	"PulseAudio",	"PulseAudio"
 	"No sound",		"No sound"
 }
 
@@ -1392,13 +1454,37 @@ OptionMenu SoundOptions
  *
  *=======================================*/
 
+OptionValue GusMemory
+{
+	0, "Unlimited"
+	1, "256K"
+	2, "512K"
+	3, "768K"
+	4, "1024K"
+}
+
+OptionValue OplCores
+{
+	0, "MAME OPL2"
+	1, "DOSBox OPL3"
+	2, "Java OPL3"
+}
+
 OptionMenu AdvSoundOptions
 {
 	Title "ADVANCED SOUND OPTIONS"
 	Option "Sample rate",			"snd_samplerate", "SampleRates"
 	StaticText " "
 	StaticText "OPL Synthesis",	1
-	Option "Only emulate one OPL chip", "opl_onechip", "OnOff"
+	Slider "Number of emulated OPL chips", "opl_numchips", 1, 8, 1, 0
+	Option "Full MIDI stereo panning", "opl_fullpan", "OnOff"
+	Option "OPL Emulator Core", "opl_core", "OplCores"
+	StaticText " "
+	StaticText "GUS Emulation",	1
+	Slider "MIDI voices",	"midi_voices", 16, 256, 4, 0
+	Option "Emulate TiMidity", "midi_timiditylike", "OnOff"
+	Option "Read DMXGUS lumps", "midi_dmxgus", "OnOff"
+	Option "GUS memory size", "gus_memsize", "GusMemory"
 }
 
 /*=======================================
@@ -1455,26 +1541,29 @@ OptionMenu ModReplayerOptions
 
 OptionValue ForceRatios
 {
-	0.0, "Off" 
-	3.0, "4:3" 
-	1.0, "16:9" 
-	2.0, "16:10" 
+	0.0, "Off"
+	3.0, "4:3"
+	1.0, "16:9"
+	5.0, "17:10"
+	2.0, "16:10"
 	4.0, "5:4"
 }
 OptionValue Ratios
 {
-	0.0, "4:3" 
-	1.0, "16:9" 
-	2.0, "16:10" 
-	3.0, "All"
+	0.0, "4:3"
+	1.0, "16:9"
+	2.0, "16:10"
+	3.0, "17:10"
+	 -1, "All"
 }
 OptionValue RatiosTFT
 {
-	0.0, "4:3" 
-	4.0, "5:4" 
-	1.0, "16:9" 
-	2.0, "16:10" 
-	3.0, "All"
+	0.0, "4:3"
+	4.0, "5:4"
+	1.0, "16:9"
+	2.0, "16:10"
+	3.0, "17:10"
+	 -1, "All"
 }
 
 OptionMenu VideoModeMenu

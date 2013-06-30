@@ -96,15 +96,10 @@ FResourceLump::~FResourceLump()
 
 void FResourceLump::LumpNameSetup(const char *iname)
 {
-	char base[256];
 	const char *lname = strrchr(iname,'/');
 	lname = (lname == NULL) ? iname : lname + 1;
-	strcpy(base, lname);
-	char *dot = strrchr(base, '.');
-	if (dot != NULL)
-	{
-		*dot = 0;
-	}
+	FString base = lname;
+	base = base.Left(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
 	FullName = copystring(iname);

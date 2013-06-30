@@ -36,7 +36,7 @@ typedef enum
   FF_FADEWALLS         = 0x8000000,	// Applies real fog to walls and doesn't blend the view		
   FF_ADDITIVETRANS	   = 0x10000000, // Render this floor with additive translucency
   FF_FLOOD			   = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
-  FF_THISINSIDE			   = 0x40000000, // hack for software 3D with FF_BOTHPLANES
+  FF_THISINSIDE		   = 0x40000000, // hack for software 3D with FF_BOTHPLANES
 } ffloortype_e;
 
 // This is for the purpose of Sector_SetContents:
@@ -137,7 +137,7 @@ void P_Spawn3DFloors( void );
 struct FLineOpening;
 
 void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy);
+							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict);
 
 secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z);
 int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz);
@@ -170,7 +170,7 @@ inline void P_Spawn3DFloors( void ) {}
 struct FLineOpening;
 
 inline void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy) {}
+							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict) {}
 
 //secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z){return sector->floorplane;}
 

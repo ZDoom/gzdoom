@@ -46,12 +46,13 @@
 
 int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VOLUME_PARAMETERS, double delta)
 {
-	int dt;
+	int dt, inv_dt;
 	int VOLUME_VARIABLES;
 	long done;
 	long todo;
 	LONG_LONG todo64;
 	int quality;
+	int blip_samples[256*SRC_CHANNELS];
 
 	if (!resampler || resampler->dir == 0) return 0;
 	ASSERT(resampler->dir == -1 || resampler->dir == 1);
@@ -59,6 +60,7 @@ int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VO
 	done = 0;
 	dt = (int)(delta * 65536.0 + 0.5);
 	if (dt == 0 || dt == 0x80000000) return 0;
+	inv_dt = (int)(1.0 / delta * 65536.0 + 0.5);
 	SET_VOLUME_VARIABLES;
 
 	if (VOLUMES_ARE_ZERO) dst = NULL;
@@ -104,29 +106,33 @@ int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VO
 					subpos = (long)new_subpos & 65535;
 				} else if (quality <= DUMB_RQ_ALIASING) {
 					/* Aliasing, backwards */
-					SRCTYPE xbuf[2*SRC_CHANNELS];
+					int todo_clocks = todo << 16, todo_clocks_set = todo_clocks;
+ 					SRCTYPE xbuf[2*SRC_CHANNELS];
 					SRCTYPE *x = &xbuf[0];
-					SRCTYPE *xstart;
 					COPYSRC(xbuf, 0, resampler->X, 1);
 					COPYSRC(xbuf, 1, resampler->X, 2);
-					while (todo && x < &xbuf[2*SRC_CHANNELS]) {
+					if ( todo_clocks_set > 256 * 65536 ) todo_clocks_set = 256 * 65536;
+					while (resampler->last_clock < todo_clocks_set && x < &xbuf[2*SRC_CHANNELS]) {
 						// TODO: check what happens when multiple tempo slides occur per row
 						HEAVYASSERT(pos >= resampler->start);
-						MIX_ALIAS(+=, 1, 0);
-						subpos += dt;
-						pos += subpos >> 16;
-						x -= (subpos >> 16) * SRC_CHANNELS;
-						subpos &= 65535;
-						todo--;
+						POKE_ALIAS(0);
+						pos--;
+						x += SRC_CHANNELS;
 					}
-					x = xstart = &src[pos*SRC_CHANNELS];
-					LOOP4(todo,
-						MIX_ALIAS(+=, 1, 2);
-						subpos += dt;
-						x += (subpos >> 16) * SRC_CHANNELS;
-						subpos &= 65535;
-					);
-					pos += DIVIDE_BY_SRC_CHANNELS((long)(x - xstart));
+					x = &src[pos*SRC_CHANNELS];
+					while ( todo_clocks ) {
+						todo_clocks_set = todo_clocks;
+						if ( todo_clocks_set > 256 * 65536 ) todo_clocks_set = 256 * 65536;
+						todo_clocks -= todo_clocks_set;
+						while ( resampler->last_clock < todo_clocks_set )
+						{
+							POKE_ALIAS(2);
+							pos--;
+							x -= SRC_CHANNELS;
+						}
+						todo = todo_clocks_set >> 16;
+						MIX_ALIAS( todo );
+					}
 				} else if (quality <= DUMB_RQ_LINEAR) {
 					/* Linear interpolation, backwards */
 					SRCTYPE xbuf[3*SRC_CHANNELS];
@@ -205,28 +211,32 @@ int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VO
 					subpos = (long)new_subpos & 65535;
 				} else if (quality <= DUMB_RQ_ALIASING) {
 					/* Aliasing, forwards */
+					int todo_clocks = todo << 16, todo_clocks_set = todo_clocks;
 					SRCTYPE xbuf[2*SRC_CHANNELS];
 					SRCTYPE *x = &xbuf[0];
-					SRCTYPE *xstart;
 					COPYSRC(xbuf, 0, resampler->X, 1);
 					COPYSRC(xbuf, 1, resampler->X, 2);
-					while (todo && x < &xbuf[2*SRC_CHANNELS]) {
+					if ( todo_clocks_set > 256 * 65536 ) todo_clocks_set = 256 * 65536;
+					while (resampler->last_clock < todo_clocks_set && x < &xbuf[2*SRC_CHANNELS]) {
 						HEAVYASSERT(pos < resampler->end);
-						MIX_ALIAS(+=, 1, 0);
-						subpos += dt;
-						pos += subpos >> 16;
-						x += (subpos >> 16) * SRC_CHANNELS;
-						subpos &= 65535;
-						todo--;
+						POKE_ALIAS(0);
+						pos++;
+						x += SRC_CHANNELS;
 					}
-					x = xstart = &src[pos*SRC_CHANNELS];
-					LOOP4(todo,
-						MIX_ALIAS(+=, 1, -2);
-						subpos += dt;
-						x += (subpos >> 16) * SRC_CHANNELS;
-						subpos &= 65535;
-					);
-					pos += DIVIDE_BY_SRC_CHANNELS((long)(x - xstart));
+					x = &src[pos*SRC_CHANNELS];
+					while ( todo_clocks ) {
+						todo_clocks_set = todo_clocks;
+						if ( todo_clocks_set > 256 * 65536 ) todo_clocks_set = 256 * 65536;
+						todo_clocks -= todo_clocks_set;
+						while ( resampler->last_clock < todo_clocks_set )
+						{
+							POKE_ALIAS(-2);
+							pos++;
+							x += SRC_CHANNELS;
+						}
+						todo = todo_clocks_set >> 16;
+						MIX_ALIAS( todo );
+					}
 				} else if (quality <= DUMB_RQ_LINEAR) {
 					/* Linear interpolation, forwards */
 					SRCTYPE xbuf[3*SRC_CHANNELS];
@@ -339,7 +349,7 @@ void dumb_resample_get_current_sample(DUMB_RESAMPLER *resampler, VOLUME_PARAMETE
 		HEAVYASSERT(pos >= resampler->start);
 		if (dumb_resampling_quality <= DUMB_RQ_ALIASING) {
 			/* Aliasing, backwards */
-			MIX_ALIAS(=, 0, 1);
+			PEEK_ALIAS;
 		} else if (quality <= DUMB_RQ_LINEAR) {
 			/* Linear interpolation, backwards */
 			MIX_LINEAR(=, 0, 2, 1);
@@ -351,7 +361,7 @@ void dumb_resample_get_current_sample(DUMB_RESAMPLER *resampler, VOLUME_PARAMETE
 		HEAVYASSERT(pos < resampler->end);
 		if (dumb_resampling_quality <= DUMB_RQ_ALIASING) {
 			/* Aliasing */
-			MIX_ALIAS(=, 0, 1);
+			PEEK_ALIAS;
 		} else if (dumb_resampling_quality <= DUMB_RQ_LINEAR) {
 			/* Linear interpolation, forwards */
 			MIX_LINEAR(=, 0, 1, 2);
@@ -368,6 +378,7 @@ void dumb_resample_get_current_sample(DUMB_RESAMPLER *resampler, VOLUME_PARAMETE
 #undef MIX_CUBIC
 #undef MIX_LINEAR
 #undef MIX_ALIAS
+#undef PEEK_ALIAS
 #undef VOLUMES_ARE_ZERO
 #undef SET_VOLUME_VARIABLES
 #undef RETURN_VOLUME_VARIABLES

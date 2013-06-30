@@ -42,7 +42,12 @@
 #include <conio.h>
 #endif
 #include "muslib.h"
-#include "fmopl.h"
+#include "opl.h"
+#include "c_cvars.h"
+
+#define HALF_PI (PI*0.5)
+
+EXTERN_CVAR(Int, opl_core)
 
 OPLio::~OPLio()
 {
@@ -58,8 +63,15 @@ void OPLio::WriteDelay(int ticks)
 
 void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 {
-	YM3812Write (chips[which], 0, reg);
-	YM3812Write (chips[which], 1, data);
+	if (IsOPL3)
+	{
+		reg |= (which & 1) << 8;
+		which >>= 1;
+	}
+	if (chips[which] != NULL)
+	{
+		chips[which]->WriteReg(reg, data);
+	}
 }
 
 /*
@@ -68,12 +80,11 @@ void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 */
 void OPLio::OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
 {
-	static const uint op_num[] = {
-		0x000, 0x001, 0x002, 0x008, 0x009, 0x00A, 0x010, 0x011, 0x012,
-		0x100, 0x101, 0x102, 0x108, 0x109, 0x10A, 0x110, 0x111, 0x112};
+	static const uint op_num[OPL2CHANNELS] = {
+		0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x10, 0x11, 0x12};
 
-	uint reg = regbase+op_num[channel];
-	uint which = reg>>8;
+	uint which = channel / OPL2CHANNELS;
+	uint reg = regbase + op_num[channel % OPL2CHANNELS];
 	OPLwriteReg (which, reg, data1);
 	OPLwriteReg (which, reg+3, data2);
 }
@@ -84,12 +95,8 @@ void OPLio::OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2
 */
 void OPLio::OPLwriteValue(uint regbase, uint channel, uchar value)
 {
-	static const uint reg_num[] = {
-		0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008,
-		0x100, 0x101, 0x102, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108};
-
-	uint reg = regbase+reg_num[channel];
-	uint which = reg>>8;
+	uint which = channel / OPL2CHANNELS;
+	uint reg = regbase + (channel % OPL2CHANNELS);
 	OPLwriteReg (which, reg, value);
 }
 
@@ -252,6 +259,20 @@ void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 		else bits = 0x30;			// both
 
 		OPLwriteValue(0xC0, channel, instr->feedback | bits);
+
+		// Set real panning if we're using emulated chips.
+		int chanper = IsOPL3 ? OPL3CHANNELS : OPL2CHANNELS;
+		int which = channel / chanper;
+		if (chips[which] != NULL)
+		{
+			// This is the MIDI-recommended pan formula. 0 and 1 are
+			// both hard left so that 64 can be perfectly center.
+			// (Note that the 'pan' passed to this function is the
+			// MIDI pan position, subtracted by 64.)
+			double level = (pan <= -63) ? 0 : (pan + 64 - 1) / 126.0;
+			chips[which]->SetPanning(channel % chanper,
+				(float)cos(HALF_PI * level), (float)sin(HALF_PI * level));
+		}
 	}
 }
 
@@ -298,40 +319,45 @@ void OPLio::OPLshutup(void)
 /*
 * Initialize hardware upon startup
 */
-int OPLio::OPLinit(uint numchips)
+int OPLio::OPLinit(uint numchips, bool stereo, bool initopl3)
 {
-	assert(numchips >= 1 && numchips <= 2);
-	chips[0] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
-	chips[1] = NULL;
-	if (chips[0] != NULL)
+	assert(numchips >= 1 && numchips <= countof(chips));
+	uint i;
+	IsOPL3 = (opl_core == 1 || opl_core == 2);
+
+	memset(chips, 0, sizeof(chips));
+	if (IsOPL3)
 	{
-		if (numchips > 1)
+		numchips = (numchips + 1) >> 1;
+	}
+	for (i = 0; i < numchips; ++i)
+	{
+		OPLEmul *chip = IsOPL3 ? (opl_core == 1 ? DBOPLCreate(stereo) : JavaOPLCreate(stereo)) : YM3812Create(stereo);
+		if (chip == NULL)
 		{
-			chips[1] = YM3812Init (3579545, int(OPL_SAMPLE_RATE));
-			if (chips[1] == NULL)
-			{
-				YM3812Shutdown(chips[0]);
-				chips[0] = NULL;
-				return -1;
-			}
+			break;
 		}
+		chips[i] = chip;
 	}
-	else
-	{
-		return -1;
-	}
-	OPLchannels = OPL2CHANNELS * numchips;
-	OPLwriteInitState();
-	return 0;
+	NumChips = i;
+	OPLchannels = i * (IsOPL3 ? OPL3CHANNELS : OPL2CHANNELS);
+	OPLwriteInitState(initopl3);
+	return i;
 }
 
-void OPLio::OPLwriteInitState()
+void OPLio::OPLwriteInitState(bool initopl3)
 {
-	for (uint i = 0; i < OPLchannels / OPL2CHANNELS; ++i)
+	for (uint i = 0; i < NumChips; ++i)
 	{
-		OPLwriteReg (i, 0x01, 0x20);	// enable Waveform Select
-		OPLwriteReg (i, 0x0B, 0x40);	// turn off CSW mode
-		OPLwriteReg (i, 0xBD, 0x00);	// set vibrato/tremolo depth to low, set melodic mode
+		int chip = i << (int)IsOPL3;
+		if (IsOPL3 && initopl3)
+		{
+			OPLwriteReg(chip, 0x105, 0x01);	// enable YMF262/OPL3 mode
+			OPLwriteReg(chip, 0x104, 0x00);	// disable 4-operator mode
+		}
+		OPLwriteReg(chip, 0x01, 0x20);	// enable Waveform Select
+		OPLwriteReg(chip, 0x0B, 0x40);	// turn off CSW mode
+		OPLwriteReg(chip, 0xBD, 0x00);	// set vibrato/tremolo depth to low, set melodic mode
 	}
 	OPLshutup();
 }
@@ -341,8 +367,12 @@ void OPLio::OPLwriteInitState()
 */
 void OPLio::OPLdeinit(void)
 {
-	YM3812Shutdown (chips[0]);
-	chips[0] = NULL;
-	YM3812Shutdown (chips[1]);
-	chips[1] = NULL;
+	for (size_t i = 0; i < countof(chips); ++i)
+	{
+		if (chips[i] != NULL)
+		{
+			delete chips[i];
+			chips[i] = NULL;
+		}
+	}
 }

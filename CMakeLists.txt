@@ -1,4 +1,5 @@
 cmake_minimum_required( VERSION 2.4 )
+project(ZDoom)
 
 IF( NOT CMAKE_BUILD_TYPE )
 	SET( CMAKE_BUILD_TYPE Debug CACHE STRING
@@ -9,9 +10,11 @@ ENDIF( NOT CMAKE_BUILD_TYPE )
 set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created." )
 set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create." )
 
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
 option( NO_FMOD "Disable FMODEx sound support" )
 option( NO_OPENAL "Disable OpenAL sound support" )

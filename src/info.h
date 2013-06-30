@@ -44,6 +44,9 @@
 #include "dobject.h"
 #include "doomdef.h"
 
+#include "m_fixed.h"
+#include "m_random.h"
+
 struct Baggage;
 class FScanner;
 struct FActorInfo;
@@ -59,17 +62,20 @@ enum
 
 struct FState
 {
-	WORD		sprite;
-	SWORD		Tics;
-	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
-	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
-	BYTE		Frame:6;
-	BYTE		Fullbright:1;	// State is fullbright
-	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
-	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
-	short		Light;
 	FState		*NextState;
 	actionf_p	ActionFunc;
+	WORD		sprite;
+	SWORD		Tics;
+	WORD		TicRange;
+	BYTE		Frame;
+	BYTE		DefineFlags;	// Unused byte so let's use it during state creation.
+	int			Misc1;			// Was changed to SBYTE, reverted to long for MBF compat
+	int			Misc2;			// Was changed to BYTE, reverted to long for MBF compat
+	short		Light;
+	BYTE		Fullbright:1;	// State is fullbright
+	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
+	BYTE		Fast:1;
+	BYTE		NoDelay:1;		// Spawn states executes its action normally
 	int			ParameterIndex;
 
 	inline int GetFrame() const
@@ -86,7 +92,11 @@ struct FState
 	}
 	inline int GetTics() const
 	{
-		return Tics;
+		if (TicRange == 0)
+		{
+			return Tics;
+		}
+		return Tics + pr_statetics.GenRand32() % (TicRange + 1);
 	}
 	inline int GetMisc1() const
 	{
@@ -99,6 +109,10 @@ struct FState
 	inline FState *GetNextState() const
 	{
 		return NextState;
+	}
+	inline bool GetNoDelay() const
+	{
+		return NoDelay;
 	}
 	inline void SetFrame(BYTE frame)
 	{
@@ -131,6 +145,7 @@ struct FState
 	}
 	static const PClass *StaticFindStateOwner (const FState *state);
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
+	static FRandom pr_statetics;
 };
 
 struct FStateLabels;
@@ -160,6 +175,12 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 // Standard pre-defined skin colors
 struct FPlayerColorSet
 {
+	struct ExtraRange
+	{
+		BYTE RangeStart, RangeEnd;	// colors to remap
+		BYTE FirstColor, LastColor;	// colors to map to
+	};
+
 	FName Name;			// Name of this color
 
 	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
@@ -167,12 +188,42 @@ struct FPlayerColorSet
 
 	BYTE RepresentativeColor;		// A palette entry representative of this translation,
 									// for map arrows and status bar backgrounds and such
+	BYTE NumExtraRanges;
+	ExtraRange Extra[6];
 };
 
-typedef TMap<FName, fixed_t> DmgFactors;
+struct DmgFactors : public TMap<FName, fixed_t>
+{
+	fixed_t *CheckFactor(FName type);
+};
 typedef TMap<FName, int> PainChanceList;
 typedef TMap<FName, PalEntry> PainFlashList;
 typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
+
+
+
+struct DamageTypeDefinition
+{
+public:
+	DamageTypeDefinition() { Clear(); }
+
+	fixed_t DefaultFactor;
+	bool ReplaceFactor;
+	bool NoArmor;
+
+	void Apply(FName const type);
+	void Clear()
+	{
+		DefaultFactor = FRACUNIT;
+		ReplaceFactor = false;
+		NoArmor = false;
+	}
+
+	static DamageTypeDefinition *Get(FName const type);
+	static bool IgnoreArmor(FName const type);
+	static int ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors);
+};
+
 
 struct FActorInfo
 {
@@ -185,6 +236,7 @@ struct FActorInfo
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
 	void SetPainFlash(FName type, PalEntry color);
+	bool GetPainFlash(FName type, PalEntry *color) const;
 	void SetColorSet(int index, const FPlayerColorSet *set);
 
 	FState *FindState (int numnames, FName *names, bool exact=false) const;
@@ -192,6 +244,11 @@ struct FActorInfo
 	FState *FindState (FName name) const
 	{
 		return FindState(1, &name);
+	}
+
+	bool OwnsState(const FState *state)
+	{
+		return state >= OwnedStates && state < OwnedStates + NumOwnedStates;
 	}
 
 	FActorInfo *GetReplacement (bool lookskill=true);
@@ -210,6 +267,9 @@ struct FActorInfo
 	PainChanceList *PainChances;
 	PainFlashList *PainFlashes;
 	FPlayerColorSetMap *ColorSets;
+	TArray<const PClass *> VisibleToPlayerClass;
+	TArray<const PClass *> RestrictedToPlayerClass;
+	TArray<const PClass *> ForbiddenToPlayerClass;
 };
 
 class FDoomEdMap

@@ -175,12 +175,12 @@ bool P_IsBuildMap(MapData *map)
 		return true;
 	}
 
-	numsectors = LittleShort(*(WORD *)(data + 20));
+	const int numsec = LittleShort(*(WORD *)(data + 20));
 	int numwalls;
 
-	if (len < 26 + numsectors*sizeof(sectortype) ||
-		(numwalls = LittleShort(*(WORD *)(data + 22 + numsectors*sizeof(sectortype))),
-			len < 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
+	if (len < 26 + numsec*sizeof(sectortype) ||
+		(numwalls = LittleShort(*(WORD *)(data + 22 + numsec*sizeof(sectortype))),
+			len < 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
 		LittleLong(*(DWORD *)data) != 7 ||
 		LittleShort(*(WORD *)(data + 16)) >= 2048)
 	{ // Can't possibly be a version 7 BUILD map
@@ -210,19 +210,20 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 		return P_LoadBloodMap (data, len, sprites, numspr);
 	}
 
-	numsectors = LittleShort(*(WORD *)(data + 20));
+	const int numsec = LittleShort(*(WORD *)(data + 20));
 	int numwalls;
 	int numsprites;
 
-	if (len < 26 + numsectors*sizeof(sectortype) ||
-		(numwalls = LittleShort(*(WORD *)(data + 22 + numsectors*sizeof(sectortype))),
-			len < 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
+	if (len < 26 + numsec*sizeof(sectortype) ||
+		(numwalls = LittleShort(*(WORD *)(data + 22 + numsec*sizeof(sectortype))),
+			len < 24 + numsec*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
 		LittleLong(*(DWORD *)data) != 7 ||
 		LittleShort(*(WORD *)(data + 16)) >= 2048)
 	{ // Can't possibly be a version 7 BUILD map
 		return false;
 	}
 
+	numsectors = numsec;
 	LoadSectors ((sectortype *)(data + 22));
 	LoadWalls ((walltype *)(data + 24 + numsectors*sizeof(sectortype)), numwalls,
 		(sectortype *)(data + 22));

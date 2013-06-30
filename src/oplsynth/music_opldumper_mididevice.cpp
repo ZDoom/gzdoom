@@ -39,7 +39,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "w_wad.h"
-#include "fmopl.h"
+#include "opl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -139,7 +139,7 @@ DiskWriterIO::~DiskWriterIO()
 //
 //==========================================================================
 
-int DiskWriterIO::OPLinit(uint numchips)
+int DiskWriterIO::OPLinit(uint numchips, bool dontcare)
 {
 	// If the file extension is unknown or not present, the default format
 	// is RAW. Otherwise, you can use DRO.
@@ -155,7 +155,7 @@ int DiskWriterIO::OPLinit(uint numchips)
 	if (File == NULL)
 	{
 		Printf("Could not open %s for writing.\n", Filename.GetChars());
-		return -1;
+		return 0;
 	}
 
 	if (Format == FMT_RDOS)
@@ -188,8 +188,8 @@ int DiskWriterIO::OPLinit(uint numchips)
 	CurIntTime = 0;
 	CurChip = 0;
 	OPLchannels = OPL2CHANNELS * numchips;
-	OPLwriteInitState();
-	return 0;
+	OPLwriteInitState(false);
+	return numchips;
 }
 
 //==========================================================================
@@ -235,13 +235,13 @@ void DiskWriterIO::OPLwriteReg(int which, uint reg, uchar data)
 	{
 		if (reg != 0 && reg != 2 && (reg != 255 || data != 255))
 		{
-			BYTE cmd[2] = { data, reg };
+			BYTE cmd[2] = { data, BYTE(reg) };
 			fwrite(cmd, 1, 2, File);
 		}
 	}
 	else
 	{
-		BYTE cmd[3] = { 4, reg, data };
+		BYTE cmd[3] = { 4, BYTE(reg), data };
 		fwrite (cmd + (reg > 4), 1, 3 - (reg > 4), File);
 	}
 }
@@ -261,7 +261,7 @@ void DiskWriterIO :: SetChip(int chipnum)
 		CurChip = chipnum;
 		if (Format == FMT_RDOS)
 		{
-			BYTE switcher[2] = { chipnum + 1, 2 };
+			BYTE switcher[2] = { BYTE(chipnum + 1), 2 };
 			fwrite(switcher, 1, 2, File);
 		}
 		else
@@ -309,7 +309,7 @@ void DiskWriterIO::SetClockRate(double samples_per_tick)
 		}
 		else
 		{ // Change the clock rate in the middle of the song.
-			BYTE clock_change[4] = { 0, 2, clock_word & 255, clock_word >> 8 };
+			BYTE clock_change[4] = { 0, 2, BYTE(clock_word & 255), BYTE(clock_word >> 8) };
 			fwrite(clock_change, 1, 4, File);
 		}
 	}

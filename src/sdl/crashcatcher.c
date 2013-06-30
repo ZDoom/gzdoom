@@ -8,12 +8,15 @@
 #include <sys/ucontext.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>
 #ifndef PR_SET_PTRACER
 #define PR_SET_PTRACER 0x59616d61
 #endif
+#elif defined (__APPLE__)
+#include <signal.h>
 #endif
 
 

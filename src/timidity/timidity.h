@@ -117,12 +117,13 @@ typedef float final_volume_t;
   #define PI 3.14159265358979323846
 #endif
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#if defined(__GNUC__) && !defined(__clang__) && (defined(__i386__) || defined(__x86_64__))
 // [RH] MinGW's pow() function is terribly slow compared to VC8's
 // (I suppose because it's using an old version from MSVCRT.DLL).
 // On an Opteron running x86-64 Linux, this also ended up being about
 // 100 cycles faster than libm's pow(), which is why I'm using this
 // for GCC in general and not just for MinGW.
+// [CE] Clang doesn't yet support some inline ASM operations so I disabled it for that instance
 
 extern __inline__ double pow_x87_inline(double x,double y)
 {
@@ -623,6 +624,7 @@ timidity.h
 */
 struct DLS_Data;
 int LoadConfig(const char *filename);
+int LoadDMXGUS();
 extern int LoadConfig();
 extern void FreeAll();
 

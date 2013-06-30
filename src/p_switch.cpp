@@ -121,9 +121,15 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	fixed_t checkbot;
 	sector_t *front = side->sector;
 	FLineOpening open;
+	int flags = line->flags;
+
+	if (!side->GetTexture(side_t::mid).isValid())
+	{ // Do not force range checks for 3DMIDTEX lines if there is no actual midtexture.
+		flags &= ~ML_3DMIDTEX;
+	}
 
 	// 3DMIDTEX forces CHECKSWITCHRANGE because otherwise it might cause problems.
-	if (!(line->flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE)))
+	if (!(flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE)))
 		return true;
 
 	// calculate the point where the user would touch the wall.
@@ -169,15 +175,15 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	if (open.range <= 0)
 		goto onesided;
 
-	if ((TexMan.FindSwitch (side->GetTexture(side_t::top))) != NULL)
+	if ((TexMan.FindSwitch(side->GetTexture(side_t::top))) != NULL)
 	{
 		return (user->z + user->height >= open.top);
 	}
-	else if ((TexMan.FindSwitch (side->GetTexture(side_t::bottom))) != NULL)
+	else if ((TexMan.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
 		return (user->z <= open.bottom);
 	}
-	else if ((line->flags & (ML_3DMIDTEX)) || (TexMan.FindSwitch (side->GetTexture(side_t::mid))) != NULL)
+	else if ((flags & ML_3DMIDTEX) || (TexMan.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{
 		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
 		// to keep compatibility with Eternity's implementation.

@@ -3,8 +3,6 @@ include "xlat/doom.txt"
 maxlinespecial = 272;
 
 
-sector bitmask 0xffe0 clear;
-
 sector 15 = 0;
 sector 17 = 0;
 sector 18 = 0;

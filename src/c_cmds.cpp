@@ -175,6 +175,15 @@ CCMD (noclip)
 	Net_WriteByte (CHT_NOCLIP);
 }
 
+CCMD (noclip2)
+{
+	if (CheckCheatmode())
+		return;
+
+	Net_WriteByte (DEM_GENERICCHEAT);
+	Net_WriteByte (CHT_NOCLIP2);
+}
+
 CCMD (powerup)
 {
 	if (CheckCheatmode ())
@@ -245,7 +254,7 @@ CCMD (chase)
 	else
 	{
 		// Check if we're allowed to use chasecam.
-		if (gamestate != GS_LEVEL || (!(dmflags2 & DF2_CHASECAM) && CheckCheatmode ()))
+		if (gamestate != GS_LEVEL || (!(dmflags2 & DF2_CHASECAM) && deathmatch && CheckCheatmode ()))
 			return;
 
 		Net_WriteByte (DEM_GENERICCHEAT);
@@ -320,7 +329,7 @@ CCMD (hxvisit)
 
 CCMD (changemap)
 {
-	if (who == NULL)
+	if (who == NULL || !usergame)
 	{
 		Printf ("Use the map command when not in a game.\n");
 		return;
@@ -386,7 +395,7 @@ CCMD (take)
 
 CCMD (gameversion)
 {
-	Printf ("%s : " __DATE__ "\n", DOTVERSIONSTR);
+	Printf ("%s @ %s\nCommit %s", GetVersionString(), GetGitTime(), GetGitHash());
 }
 
 CCMD (print)
@@ -451,9 +460,9 @@ CCMD (puke)
 {
 	int argc = argv.argc();
 
-	if (argc < 2 || argc > 5)
+	if (argc < 2 || argc > 6)
 	{
-		Printf ("Usage: puke <script> [arg1] [arg2] [arg3]\n");
+		Printf ("Usage: puke <script> [arg1] [arg2] [arg3] [arg4]\n");
 	}
 	else
 	{
@@ -463,8 +472,8 @@ CCMD (puke)
 		{ // Script 0 is reserved for Strife support. It is not pukable.
 			return;
 		}
-		int arg[3] = { 0, 0, 0 };
-		int argn = MIN (argc - 2, 3), i;
+		int arg[4] = { 0, 0, 0, 0 };
+		int argn = MIN<int>(argc - 2, countof(arg)), i;
 
 		for (i = 0; i < argn; ++i)
 		{
@@ -485,6 +494,44 @@ CCMD (puke)
 		for (i = 0; i < argn; ++i)
 		{
 			Net_WriteLong (arg[i]);
+		}
+	}
+}
+
+CCMD (pukename)
+{
+	int argc = argv.argc();
+
+	if (argc < 2 || argc > 7)
+	{
+		Printf ("Usage: pukename \"<script>\" [\"always\"] [arg1] [arg2] [arg3] [arg4]\n");
+	}
+	else
+	{
+		bool always = false;
+		int argstart = 2;
+		int arg[4] = { 0, 0, 0, 0 };
+		int argn = 0, i;
+		
+		if (argc > 2)
+		{
+			if (stricmp(argv[2], "always") == 0)
+			{
+				always = true;
+				argstart = 3;
+			}
+			argn = MIN<int>(argc - argstart, countof(arg));
+			for (i = 0; i < argn; ++i)
+			{
+				arg[i] = atoi(argv[argstart + i]);
+			}
+		}
+		Net_WriteByte(DEM_RUNNAMEDSCRIPT);
+		Net_WriteString(argv[1]);
+		Net_WriteByte(argn | (always << 7));
+		for (i = 0; i < argn; ++i)
+		{
+			Net_WriteLong(arg[i]);
 		}
 	}
 }
@@ -911,9 +958,16 @@ CCMD(thaw)
 //-----------------------------------------------------------------------------
 CCMD(nextmap)
 {
-	char * next=NULL;
+	if (netgame)
+	{
+		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Nextmap"
+				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		return;
+	}
+	char *next = NULL;
 	
-	if (*level.nextmap) next = level.nextmap;
+	if (*level.nextmap)
+		next = level.nextmap;
 
 	if (next != NULL && strncmp(next, "enDSeQ", 6))
 	{
@@ -932,9 +986,16 @@ CCMD(nextmap)
 //-----------------------------------------------------------------------------
 CCMD(nextsecret)
 {
-	char * next=NULL;
+	if (netgame)
+	{
+		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Nextsecret"
+				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		return;
+	}
+	char *next = NULL;
 	
-	if (*level.secretmap) next = level.secretmap;
+	if (*level.secretmap)
+		next = level.secretmap;
 
 	if (next != NULL && strncmp(next, "enDSeQ", 6))
 	{
@@ -1050,7 +1111,8 @@ CCMD(secret)
 				{
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
-					levelname.Format("%s - %s\n", mapname, info->LevelName.GetChars());
+					const char *ln = !(info->flags & LEVEL_LOOKUPLEVELNAME)? info->LevelName.GetChars() : GStrings[info->LevelName.GetChars()];
+					levelname.Format("%s - %s\n", mapname, ln);
 					size_t llen = levelname.Len() - 1;
 					for(size_t ii=0; ii<llen; ii++) levelname += '-';
 					Printf(TEXTCOLOR_YELLOW"%s\n", levelname.GetChars());

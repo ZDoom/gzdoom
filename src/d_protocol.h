@@ -159,6 +159,11 @@ enum EDemoCommand
 	DEM_CONVCLOSE,		// 60
 	DEM_CONVNULL,		// 61
 	DEM_RUNSPECIAL,		// 62 Byte: Special number, Byte: Arg count, Ints: Args
+	DEM_SETPITCHLIMIT,	// 63 Byte: Up limit, Byte: Down limit (in degrees)
+	DEM_ADVANCEINTER,	// 64 Advance intermission screen state
+	DEM_RUNNAMEDSCRIPT,	// 65 String: Script name, Byte: Arg count + Always flag; each arg is a 4-byte int
+	DEM_REVERTCAMERA,	// 66
+	DEM_SETSLOTPNUM,	// 67 Byte: player number, the rest is the same as DEM_SETSLOT
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp
@@ -213,7 +218,8 @@ enum ECheatCommand
 	CHT_GIMMIEI,
 	CHT_GIMMIEJ,
 	CHT_GIMMIEZ,
-	CHT_BUDDHA
+	CHT_BUDDHA,
+	CHT_NOCLIP2
 };
 
 void StartChunk (int id, BYTE **stream);

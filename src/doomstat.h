@@ -230,6 +230,7 @@ struct DehInfo
 	BYTE ExplosionStyle;
 	fixed_t ExplosionAlpha;
 	int NoAutofreeze;
+	int BFGCells;
 };
 extern DehInfo deh;
 EXTERN_CVAR (Int, infighting)
@@ -240,6 +241,7 @@ EXTERN_CVAR (Int, dmflags);
 EXTERN_CVAR (Int, dmflags2);	// [BC]
 
 EXTERN_CVAR (Int, compatflags);
-extern int i_compatflags, ii_compatflags, ib_compatflags;
+EXTERN_CVAR (Int, compatflags2);
+extern int i_compatflags, i_compatflags2, ii_compatflags, ii_compatflags2, ib_compatflags;
 
 #endif

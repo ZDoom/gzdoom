@@ -364,7 +364,7 @@ Lock 3 Strife
 	Passcard
 	RemoteMessage "$TXT_NEED_PASSCARD"
 	Message "$TXT_NEED_PASSCARD_DOOR"
-	Mapcolor 128 266 150
+	Mapcolor 128 166 150
 }
 
 

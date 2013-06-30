@@ -67,7 +67,7 @@ public:
 	const PClass *StopBall;
 
 	void Serialize (FArchive &arc);
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
 IMPLEMENT_CLASS (AHeresiarch)
@@ -78,17 +78,17 @@ void AHeresiarch::Serialize (FArchive &arc)
 	arc << StopBall;
 }
 
-void AHeresiarch::Die (AActor *source, AActor *inflictor)
+void AHeresiarch::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
 	// The heresiarch just executes a script instead of a special upon death
 	int script = special;
 	special = 0;
 
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	if (script != 0)
 	{
-		P_StartScript (this, NULL, script, level.mapname, 0, 0, 0, 0, 0, false);
+		P_StartScript (this, NULL, script, level.mapname, NULL, 0, 0);
 	}
 }
 

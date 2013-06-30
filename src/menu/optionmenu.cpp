@@ -58,8 +58,6 @@
 
 void M_DrawConText (int color, int x, int y, const char *str)
 {
-	int len = (int)strlen(str);
-
 	screen->DrawText (ConFont, color, x, y, str,
 		DTA_CellX, 8 * CleanXfac_1,
 		DTA_CellY, 8 * CleanYfac_1,
@@ -400,8 +398,6 @@ void DOptionMenu::Drawer ()
 		}
 	}
 	mDesc->mDrawTop = y;
-	//int labelofs = OptionSettings.mLabelOffset * CleanXfac_1;
-	//int cursorspace = 14 * CleanXfac_1;
 	int fontheight = OptionSettings.mLinespacing * CleanYfac_1;
 	y *= CleanYfac_1;
 
@@ -440,7 +436,7 @@ void DOptionMenu::Drawer ()
 		{
 			if (((DMenu::MenuTime%8) < 6) || DMenu::CurrentMenu != this)
 			{
-				M_DrawConText(OptionSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y-CleanYfac_1+OptionSettings.mLabelOffset, "\xd");
+				M_DrawConText(OptionSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y+fontheight-9*CleanYfac_1, "\xd");
 			}
 		}
 	}
@@ -451,11 +447,11 @@ void DOptionMenu::Drawer ()
 
 	if (CanScrollUp)
 	{
-		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, ytop + OptionSettings.mLabelOffset, "\x1a");
+		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, ytop, "\x1a");
 	}
 	if (CanScrollDown)
 	{
-		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1 + OptionSettings.mLabelOffset, "\x1b");
+		M_DrawConText(CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1, "\x1b");
 	}
 	Super::Drawer();
 }
@@ -584,7 +580,7 @@ public:
 		Super::Drawer();
 
 		char text[64];
-		mysnprintf(text, 64, "compatflags = %d", *compatflags);
+		mysnprintf(text, 64, "compatflags = %d  compatflags2 = %d", *compatflags, *compatflags2);
 		screen->DrawText (SmallFont, OptionSettings.mFontColorValue,
 			(screen->GetWidth() - SmallFont->StringWidth (text) * CleanXfac_1) / 2, 0, text,
 			DTA_CleanNoMove_1, true, TAG_DONE);

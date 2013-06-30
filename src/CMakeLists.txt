@@ -121,64 +121,6 @@ if( WIN32 )
 		message( FATAL_ERROR "Could not find DirectX 9 libraries" )
 	endif( NOT DX_LIBS_FOUND )
 
-
-	if( NOT NO_OPENAL )
-		SET( GST_SEARCH_PATHS
-			ENV GSTSDK_DIR
-			ENV MINGDIR
-			"C:/Program Files/gstreamer"
-			"C:/gstreamer" )
-
-		message( STATUS "Looking for glib.h" )
-		find_path( GLIB_INCLUDE_DIR glib.h
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES include include/glib-2.0 )
-		if( GLIB_INCLUDE_DIR )
-			message(STATUS "Looking for glib.h - found: ${GLIB_INCLUDE_DIR}")
-		else( GLIB_INCLUDE_DIR )
-			message(STATUS "Looking for glib.h - not found")
-		endif( GLIB_INCLUDE_DIR )
-
-		message( STATUS "Looking for gst/gst.h" )
-		find_path( GST_INCLUDE_DIR gst/gst.h
-			PATHS ${GST_SEARCH_PATHS}
-			PATH_SUFFIXES include include/gstreamer-0.10 )
-		if( GST_INCLUDE_DIR )
-			message( STATUS "Looking for gst/gst.h - found: ${GST_INCLUDE_DIR}" )
-		else( GST_INCLUDE_DIR )
-			message( STATUS "Looking for gst/gst.h - not found" )
-		endif( GST_INCLUDE_DIR )
-
-		message( STATUS "Looking for al.h" )
-		set( OPENAL_SEARCH_PATHS
-			ENV ALSDK_DIR
-			ENV MINGDIR
-			"C:/Program Files/OpenAL 1.1 SDK"
-			"C:/Program Files (x86)/OpenAL 1.1 SDK"
-			"E:/Programs/Dev/OpenAL"
-			"E:/Program Files (x86)/OpenAL 1.1 SDK" )
-
-		find_path( OPENAL_INCLUDE_DIR al.h
-			PATHS ${OPENAL_SEARCH_PATHS}
-			PATH_SUFFIXES include include/AL )
-		if( OPENAL_INCLUDE_DIR )
-			message( STATUS "Looking for al.h - found: ${OPENAL_INCLUDE_DIR}" )
-		else( OPENAL_INCLUDE_DIR )
-			message( STATUS "Looking for al.h - not found" )
-		endif( OPENAL_INCLUDE_DIR )
-
-		if( NOT OPENAL_INCLUDE_DIR )
-			set( NO_OPENAL ON )
-		else( NOT OPENAL_INCLUDE_DIR )
-			include_directories( ${OPENAL_INCLUDE_DIR} )
-			if( GLIB_INCLUDE_DIR AND GST_INCLUDE_DIR )
-				include_directories( ${OPENAL_INCLUDE_DIR} ${GLIB_INCLUDE_DIR} ${GST_INCLUDE_DIR} )
-				set( WITH_GSTREAMER ON )
-			endif( GLIB_INCLUDE_DIR AND GST_INCLUDE_DIR )
-		endif( NOT OPENAL_INCLUDE_DIR )
-	endif( NOT NO_OPENAL )
-
-
 	set( ZDOOM_LIBS
 		wsock32
 		winmm
@@ -193,71 +135,12 @@ if( WIN32 )
 		ws2_32
 		setupapi
 		oleaut32 )
-
-	if( NOT NO_OPENAL )
-		message( STATUS "Looking for OpenAL library" )
-		find_library( OPENAL_LIBRARY NAMES OpenAL32
-			PATHS ${OPENAL_SEARCH_PATHS}
-			PATH_SUFFIXES lib )
-
-		if( NOT OPENAL_LIBRARY )
-			set( NO_OPENAL ON )
-			message( STATUS "Looking for OpenAL library - not found" )
-		else( NOT OPENAL_LIBRARY )
-			set( ZDOOM_LIBS ${ZDOOM_LIBS} "${OPENAL_LIBRARY}" )
-			message( STATUS "Looking for OpenAL library - found" )
-		endif( NOT OPENAL_LIBRARY )
-
-		if( WITH_GSTREAMER AND NOT NO_OPENAL )
-			message( STATUS "Looking for GST libraries" )
-			find_library( GST_LIBRARY1 NAMES gstapp-0.10
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-			find_library( GST_LIBRARY2 NAMES gstaudio-0.10
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-			find_library( GST_LIBRARY3 NAMES gstreamer-0.10
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-			find_library( GST_LIBRARY4 NAMES gthread-2.0
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-			find_library( GST_LIBRARY5 NAMES gmodule-2.0
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-			find_library( GST_LIBRARY6 NAMES gobject-2.0
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-			find_library( GST_LIBRARY7 NAMES glib-2.0
-				PATHS ${GST_SEARCH_PATHS}
-				PATH_SUFFIXES lib )
-
-			if( GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} "${GST_LIBRARY1}" "${GST_LIBRARY2}" "${GST_LIBRARY3}" "${GST_LIBRARY4}" "${GST_LIBRARY5}" "${GST_LIBRARY6}" "${GST_LIBRARY7}" )
-				message( STATUS "Looking for GST libraries - found" )
-			else( GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
-				set( WITH_GSTREAMER OFF )
-				message( STATUS "Looking for GST libraries - not found" )
-			endif( GST_LIBRARY1 AND GST_LIBRARY2 AND GST_LIBRARY3 AND GST_LIBRARY4 AND GST_LIBRARY5 AND GST_LIBRARY6 AND GST_LIBRARY7 )
-		endif( WITH_GSTREAMER AND NOT NO_OPENAL )
-	endif( NOT NO_OPENAL )
 else( WIN32 )
 	if( APPLE )
 		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
-
-		if( NOT NO_OPENAL )
-			set( ZDOOM_LIBS ${ZDOOM_LIBS} "-framework OpenAL")
-
-			check_library_exists( gstapp-0.10 gst_app_src_set_callbacks "" HAS_GSTAPP )
-			check_library_exists( gstaudio-0.10 gst_audio_set_channel_positions "" HAS_GSTAUDIO )
-			if( HAS_GSTAPP AND HAS_GSTAUDIO )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} gstapp-0.10 gst-audio-0.10 "-framework OpenAL")
-				set( WITH_GSTREAMER ON )
-			endif( HAS_GSTAPP AND HAS_GSTAUDIO )
-		endif( NOT NO_OPENAL )
 	else( APPLE )
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
@@ -283,21 +166,6 @@ else( WIN32 )
 				set( NO_GTK ON )
 			endif( GTK2_FOUND )
 		endif( NOT NO_GTK )
-
-		pkg_check_modules( OPENAL openal )
-		if( NOT OPENAL_FOUND )
-			set( NO_OPENAL ON )
-		else( NOT OPENAL_FOUND )
-			set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENAL_LIBRARIES} )
-			include_directories( ${OPENAL_INCLUDE_DIRS} )
-
-			pkg_check_modules( GSTREAMER gstreamer-app-0.10>=0.10.23 gstreamer-audio-0.10 )
-			if( GSTREAMER_FOUND )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GSTREAMER_LIBRARIES} )
-				include_directories( ${GSTREAMER_INCLUDE_DIRS} )
-				set( WITH_GSTREAMER ON )
-			endif( GSTREAMER_FOUND )
-		endif( NOT OPENAL_FOUND )
 
 		# Check for Xcursor library and header files
 		find_library( XCURSOR_LIB Xcursor )
@@ -333,6 +201,16 @@ else( WIN32 )
 	endif( FPU_CONTROL_DIR )
 endif( WIN32 )
 
+
+if( NOT NO_OPENAL )
+    find_package( OpenAL )
+    if( OPENAL_FOUND )
+        include_directories( ${OPENAL_INCLUDE_DIR} )
+        set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
+    else( OPENAL_FOUND )
+        set( NO_OPENAL ON )
+    endif( OPENAL_FOUND )
+endif( NOT NO_OPENAL )
 
 if( NOT NO_FMOD )
 	# Search for FMOD include files
@@ -395,8 +273,6 @@ if( NO_FMOD )
 endif( NO_FMOD )
 if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
-elseif( WITH_GSTREAMER )
-	add_definitions( -DWITH_GSTREAMER=1 )
 endif( NO_OPENAL )
 
 # Search for FluidSynth

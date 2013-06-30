@@ -16,8 +16,8 @@ endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" S
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
-option( NO_FMOD "Disable FMODEx sound support" )
-option( NO_OPENAL "Disable OpenAL sound support" )
+option( NO_FMOD "Disable FMODEx sound support" OFF )
+option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( JPEG )

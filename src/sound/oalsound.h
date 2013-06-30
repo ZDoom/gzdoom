@@ -11,16 +11,8 @@
 
 #ifndef NO_OPENAL
 
-#ifdef _WIN32
-#include <al.h>
-#include <alc.h>
-#elif defined(__APPLE__)
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#else
-#include <AL/al.h>
-#include <AL/alc.h>
-#endif
+#include "al.h"
+#include "alc.h"
 
 #ifndef ALC_ENUMERATE_ALL_EXT
 #define ALC_ENUMERATE_ALL_EXT 1

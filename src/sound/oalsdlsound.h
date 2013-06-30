@@ -22,6 +22,8 @@ class OpenALSoundStream : public SoundStream
     ALenum Format;
 
     bool NeedSwab;
+    bool NeedS8Conv;
+    bool NeedS16Conv;
     void *GetData(size_t bytes);
 
     // General methods
@@ -54,6 +56,8 @@ class Decoder
 {
     Sound_Sample *Sample;
     bool NeedSwab;
+    bool NeedS8Conv;
+    bool NeedS16Conv;
 
 public:
     Decoder(const void *data, unsigned int datalen);

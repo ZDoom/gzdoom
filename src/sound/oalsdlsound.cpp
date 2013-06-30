@@ -182,7 +182,8 @@ bool OpenALSoundStream::SetupSource()
 OpenALSoundStream::OpenALSoundStream(OpenALSoundRenderer *renderer)
     : Renderer(renderer), Sample(NULL), Source(0), Playing(false),
       Looping(false), Buffers(4), SampleRate(0), Format(0),
-      NeedSwab(false), Volume(1.f)
+      NeedSwab(false), NeedS8Conv(false), NeedS16Conv(false),
+      Volume(1.f)
 {
     for(size_t i = 0;i < Buffers.size();i++)
         Buffers[i] = 0;
@@ -328,6 +329,19 @@ void *OpenALSoundStream::GetData(size_t bytes)
             *(samples++) = ((smp>>8)&0x00FF) | ((smp<<8)*0xFF00);
         }
     }
+    if(NeedS8Conv)
+    {
+        char *samples = reinterpret_cast<char*>(data);
+        for(size_t i = 0;i < bytes;i++)
+            samples[i] = samples[i]^0x80;
+    }
+    if(NeedS16Conv)
+    {
+        short *samples = reinterpret_cast<short*>(data);
+        size_t count = bytes >> 1;
+        for(size_t i = 0;i < count;i++)
+            samples[i] = samples[i]^0x8000;
+    }
     return data;
 }
 
@@ -337,7 +351,16 @@ bool OpenALSoundStream::InitSample()
     SampleRate = Sample->actual.rate;
 
     Format = AL_NONE;
-    if(Sample->actual.format == AUDIO_U8)
+    if(Sample->actual.format == AUDIO_S8)
+    {
+        NeedS8Conv = true;
+        if(Sample->actual.channels == 1)
+            Format = AL_FORMAT_MONO8;
+        else if(Sample->actual.channels == 2)
+            Format = AL_FORMAT_STEREO8;
+        smpsize = 1 * Sample->actual.channels;
+    }
+    else if(Sample->actual.format == AUDIO_U8)
     {
         if(Sample->actual.channels == 1)
             Format = AL_FORMAT_MONO8;
@@ -348,6 +371,16 @@ bool OpenALSoundStream::InitSample()
     else if(Sample->actual.format == AUDIO_S16LSB || Sample->actual.format == AUDIO_S16MSB)
     {
         NeedSwab = (Sample->actual.format != AUDIO_S16SYS);
+        if(Sample->actual.channels == 1)
+            Format = AL_FORMAT_MONO16;
+        else if(Sample->actual.channels == 2)
+            Format = AL_FORMAT_STEREO16;
+        smpsize = 1 * Sample->actual.channels;
+    }
+    else if(Sample->actual.format == AUDIO_U16LSB || Sample->actual.format == AUDIO_U16MSB)
+    {
+        NeedS16Conv = true;
+        NeedSwab = (Sample->actual.format != AUDIO_U16SYS);
         if(Sample->actual.channels == 1)
             Format = AL_FORMAT_MONO16;
         else if(Sample->actual.channels == 2)
@@ -426,7 +459,7 @@ bool OpenALSoundStream::Init(const BYTE *data, unsigned int datalen)
 
 
 Decoder::Decoder(const void* data, unsigned int datalen)
-  : Sample(NULL), NeedSwab(false)
+  : Sample(NULL), NeedSwab(false), NeedS8Conv(false), NeedS16Conv(false)
 {
     Sample = Sound_NewSample(SDL_RWFromConstMem(data, datalen), NULL, NULL, 65536);
 }
@@ -441,7 +474,15 @@ Decoder::~Decoder()
 bool Decoder::GetFormat(ALenum *format, ALuint *rate)
 {
     ALenum fmt = AL_NONE;
-    if(Sample->actual.format == AUDIO_U8)
+    if(Sample->actual.format == AUDIO_S8)
+    {
+        NeedS8Conv = true;
+        if(Sample->actual.channels == 1)
+            fmt = AL_FORMAT_MONO8;
+        else if(Sample->actual.channels == 2)
+            fmt = AL_FORMAT_STEREO8;
+    }
+    else if(Sample->actual.format == AUDIO_U8)
     {
         if(Sample->actual.channels == 1)
             fmt = AL_FORMAT_MONO8;
@@ -451,6 +492,15 @@ bool Decoder::GetFormat(ALenum *format, ALuint *rate)
     else if(Sample->actual.format == AUDIO_S16LSB || Sample->actual.format == AUDIO_S16MSB)
     {
         NeedSwab = (Sample->actual.format != AUDIO_S16SYS);
+        if(Sample->actual.channels == 1)
+            fmt = AL_FORMAT_MONO16;
+        else if(Sample->actual.channels == 2)
+            fmt = AL_FORMAT_STEREO16;
+    }
+    else if(Sample->actual.format == AUDIO_U16LSB || Sample->actual.format == AUDIO_U16MSB)
+    {
+        NeedS16Conv = true;
+        NeedSwab = (Sample->actual.format != AUDIO_U16SYS);
         if(Sample->actual.channels == 1)
             fmt = AL_FORMAT_MONO16;
         else if(Sample->actual.channels == 2)
@@ -487,6 +537,20 @@ void* Decoder::GetData(ALsizei *size)
             short smp = *samples;
             *(samples++) = ((smp>>8)&0x00FF) | ((smp<<8)*0xFF00);
         }
+    }
+
+    if(NeedS8Conv)
+    {
+        char *samples = reinterpret_cast<char*>(data);
+        for(size_t i = 0;i < got;i++)
+            samples[i] = samples[i]^0x80;
+    }
+    if(NeedS16Conv)
+    {
+        short *samples = reinterpret_cast<short*>(data);
+        size_t count = got >> 1;
+        for(size_t i = 0;i < count;i++)
+            samples[i] = samples[i]^0x8000;
     }
 
     *size = got;

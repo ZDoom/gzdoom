@@ -196,8 +196,9 @@ private:
 	ALuint EnvFilters[2];
 	float LastWaterAbsorb;
 
-	std::vector<OpenALSoundStream*> Streams;
-	friend class OpenALSoundStream;
+    std::vector<SoundStream*> Streams;
+    friend class OpenALSoundStream;
+    friend class OpenALCallbackStream;
 };
 
 #endif // NO_OPENAL

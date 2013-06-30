@@ -202,11 +202,22 @@ else( WIN32 )
 endif( WIN32 )
 
 
+set( OAL_SOURCES sound/oalsound.cpp )
 if( NOT NO_OPENAL )
     find_package( OpenAL )
     if( OPENAL_FOUND )
         include_directories( ${OPENAL_INCLUDE_DIR} )
         set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
+        find_package( SDL )
+        if( SDL_FOUND )
+            find_package( SDL_sound )
+            if( SDL_SOUND_FOUND )
+                set_source_files_properties( sound/oalsound.cpp PROPERTIES COMPILE_FLAGS "-DWITH_SDL_SOUND=1" )
+                set( OAL_SOURCES ${OAL_SOURCES} sound/oalsdlsound.cpp )
+                include_directories( ${SDL_SOUND_INCLUDE_DIR} )
+                set( ZDOOM_LIBS ${SDL_SOUND_LIBRARIES} ${ZDOOM_LIBS} )
+            endif( SDL_SOUND_FOUND )
+        endif( SDL_FOUND )
     else( OPENAL_FOUND )
         set( NO_OPENAL ON )
     endif( OPENAL_FOUND )
@@ -900,7 +911,7 @@ add_executable( zdoom WIN32
 	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
 	sound/music_win_mididevice.cpp
-	sound/oalsound.cpp
+	${OAL_SOURCES}
 	sound/music_pseudo_mididevice.cpp
 	textures/animations.cpp
 	textures/anim_switches.cpp

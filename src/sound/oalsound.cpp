@@ -1817,7 +1817,7 @@ void OpenALSoundRenderer::SetSfxVolume(float volume)
 			alSourcef(source, AL_MAX_GAIN, volume);
 			if(schan->ManualGain)
 				volume *= GetRolloff(&schan->Rolloff, sqrt(schan->DistanceSqr));
-			alSourcef(source, AL_GAIN, volume);
+			alSourcef(source, AL_GAIN, volume * ((FSoundChan*)schan)->Volume);
 		}
 		schan = schan->NextChan;
 	}
@@ -1866,7 +1866,7 @@ float OpenALSoundRenderer::GetOutputRate()
 }
 
 
-SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
+SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 {
 	SoundHandle retval = { NULL };
 
@@ -1911,17 +1911,19 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 		return retval;
 	}
 
-	if(loopstart > 0 && LoopPoints)
+	if((loopstart > 0 || loopend > 0) && LoopPoints)
 	{
-		ALint loops[2] = { 
-			loopstart,
-			length / (channels*bits/8)
-		};
+		if(loopstart < 0)
+			loopstart = 0;
+		if(loopend < loopstart)
+			loopend = length / (channels*bits/8);
+
+		ALint loops[2] = { loopstart, loopend };
 		Printf("Setting loop points %d -> %d\n", loops[0], loops[1]);
 		alBufferiv(buffer, AL_LOOP_POINTS, loops);
 		getALError();
 	}
-	else if(loopstart > 0)
+	else if(loopstart > 0 || loopend > 0)
 	{
 		static bool warned = false;
 		if(!warned)
@@ -2170,11 +2172,11 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 	else chan->SysChannel = &source;
 
 	chan->Rolloff.RolloffType = ROLLOFF_Linear;
-	chan->Rolloff.MaxDistance = 2.f;
+	chan->Rolloff.MaxDistance = 1000.f;
 	chan->Rolloff.MinDistance = 1.f;
 	chan->DistanceScale = 1.f;
-	chan->DistanceSqr = (2.f-vol)*(2.f-vol);
-	chan->ManualGain = true;
+	chan->DistanceSqr = 1.f;
+	chan->ManualGain = false;
 
 	return chan;
 }
@@ -2321,6 +2323,20 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 	return chan;
 }
 
+void OpenALSoundRenderer::ChannelVolume(FISoundChannel *chan, float volume)
+{
+	if(chan == NULL || chan->SysChannel == NULL)
+		return;
+
+	alcSuspendContext(Context);
+
+	ALuint source = *((ALuint*)chan->SysChannel);
+
+	if(chan->ManualGain)
+		volume *= GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr));
+	alSourcef(source, AL_GAIN, SfxVolume * volume);
+}
+
 void OpenALSoundRenderer::StopChannel(FISoundChannel *chan)
 {
 	if(chan == NULL || chan->SysChannel == NULL)
@@ -2384,7 +2400,7 @@ void OpenALSoundRenderer::SetSfxPaused(bool paused, int slot)
 	}
 }
 
-void OpenALSoundRenderer::SetInactive(bool inactive)
+void OpenALSoundRenderer::SetInactive(EInactiveState)
 {
 }
 
@@ -2443,7 +2459,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
 	if(chan->ManualGain)
 	{
 		float gain = GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr));
-		alSourcef(source, AL_GAIN, SfxVolume*gain);
+		alSourcef(source, AL_GAIN, SfxVolume*gain*((FSoundChan*)chan)->Volume);
 	}
 
 	getALError();
@@ -2604,7 +2620,8 @@ float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)
 	ALfloat volume = 0.f;
 
 	if(!chan->ManualGain)
-		volume = SfxVolume * GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr));
+		volume = SfxVolume * ((FSoundChan*)chan)->Volume *
+		         GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr));
 	else
 	{
 		alGetSourcef(source, AL_GAIN, &volume);

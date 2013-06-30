@@ -420,6 +420,11 @@ public:
             if((flags&Mono)) Format = AL_FORMAT_MONO16;
             else Format = AL_FORMAT_STEREO16;
         }
+        else if((flags&Float) && alIsExtensionPresent("AL_EXT_FLOAT32"))
+        {
+            if((flags&Mono)) Format = AL_FORMAT_MONO_FLOAT32;
+            else Format = AL_FORMAT_STEREO_FLOAT32;
+        }
 
         if(Format == AL_NONE)
         {

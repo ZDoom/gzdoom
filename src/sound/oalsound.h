@@ -30,9 +30,9 @@
 #define AL_SOURCE_DISTANCE_MODEL                 0x200
 #endif
 
-#ifndef AL_EXT_loop_points
-#define AL_EXT_loop_points 1
-#define AL_LOOP_POINTS                           0x2015
+#ifndef AL_SOFT_loop_points
+#define AL_SOFT_loop_points 1
+#define AL_LOOP_POINTS_SOFT                      0x2015
 #endif
 
 #ifndef AL_EXT_float32

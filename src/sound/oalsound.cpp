@@ -224,8 +224,8 @@ public:
 
 	virtual ~OpenALSoundStream()
 	{
-		Renderer->Streams.erase(find(Renderer->Streams.begin(),
-		                             Renderer->Streams.end(), this));
+		Renderer->Streams.erase(std::find(Renderer->Streams.begin(),
+		                                  Renderer->Streams.end(), this));
 		Renderer = NULL;
 	}
 
@@ -288,7 +288,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
 	Printf("I_InitSound: Initializing OpenAL\n");
 
-	if(snd_aldevice != "Default")
+	if(strcmp(snd_aldevice, "Default") != 0)
 	{
 		Device = alcOpenDevice(*snd_aldevice);
 		if(!Device)
@@ -348,7 +348,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	DPrintf("  Extensions: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
 	SrcDistanceModel = alIsExtensionPresent("AL_EXT_source_distance_model");
-	LoopPoints = alIsExtensionPresent("AL_EXT_loop_points");
+	LoopPoints = alIsExtensionPresent("AL_SOFT_loop_points");
 
 	alDopplerFactor(0.5f);
 	alSpeedOfSound(343.3f * 96.0f);
@@ -642,7 +642,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 
 		ALint loops[2] = { loopstart, loopend };
 		Printf("Setting loop points %d -> %d\n", loops[0], loops[1]);
-		alBufferiv(buffer, AL_LOOP_POINTS, loops);
+		alBufferiv(buffer, AL_LOOP_POINTS_SOFT, loops);
 		getALError();
 	}
 	else if(loopstart > 0 || loopend > 0)
@@ -690,7 +690,7 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 
 	if(LoopPoints && decoder.LoopPts[1] > decoder.LoopPts[0])
 	{
-		alBufferiv(buffer, AL_LOOP_POINTS, decoder.LoopPts);
+		alBufferiv(buffer, AL_LOOP_POINTS_SOFT, decoder.LoopPts);
 		getALError();
 	}
 	else if(decoder.LoopPts[1] > decoder.LoopPts[0])
@@ -821,7 +821,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 	}
 
 	ALuint buffer = *((ALuint*)sfx.data);
-	ALuint &source = *find(Sources.begin(), Sources.end(), FreeSfx.back());
+	ALuint &source = *std::find(Sources.begin(), Sources.end(), FreeSfx.back());
 	alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
 	alSource3f(source, AL_VELOCITY, 0.f, 0.f, 0.f);
 	alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
@@ -930,7 +930,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 	ALint channels = 1;
 	alGetBufferi(buffer, AL_CHANNELS, &channels);
 
-	ALuint &source = *find(Sources.begin(), Sources.end(), FreeSfx.back());
+	ALuint &source = *std::find(Sources.begin(), Sources.end(), FreeSfx.back());
 	alSource3f(source, AL_POSITION, pos[0], pos[1], -pos[2]);
 	alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
 	alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
@@ -1075,12 +1075,12 @@ void OpenALSoundRenderer::StopChannel(FISoundChannel *chan)
 
 	std::vector<ALuint>::iterator i;
 
-	i = find(PausableSfx.begin(), PausableSfx.end(), source);
+	i = std::find(PausableSfx.begin(), PausableSfx.end(), source);
 	if(i != PausableSfx.end()) PausableSfx.erase(i);
-	i = find(ReverbSfx.begin(), ReverbSfx.end(), source);
+	i = std::find(ReverbSfx.begin(), ReverbSfx.end(), source);
 	if(i != ReverbSfx.end()) ReverbSfx.erase(i);
 
-	SfxGroup.erase(find(SfxGroup.begin(), SfxGroup.end(), source));
+	SfxGroup.erase(std::find(SfxGroup.begin(), SfxGroup.end(), source));
 	FreeSfx.push_back(source);
 }
 
@@ -1148,7 +1148,7 @@ void OpenALSoundRenderer::Sync(bool sync)
 			std::vector<ALuint>::iterator i = toplay.begin();
 			while(i != toplay.end())
 			{
-				if(find(PausableSfx.begin(), PausableSfx.end(), *i) != PausableSfx.end())
+				if(std::find(PausableSfx.begin(), PausableSfx.end(), *i) != PausableSfx.end())
 					i = toplay.erase(i);
 				else
 					i++;
@@ -1419,7 +1419,7 @@ void OpenALSoundRenderer::PrintDriversList()
 		return;
 	}
 
-	Printf("%c%s%2d. %s\n", ' ', ((snd_aldevice=="Default") ? TEXTCOLOR_BOLD : ""), 0,
+	Printf("%c%s%2d. %s\n", ' ', ((strcmp(snd_aldevice, "Default") == 0) ? TEXTCOLOR_BOLD : ""), 0,
 	       "Default");
 	for(int i = 1;*drivers;i++)
 	{

@@ -1518,6 +1518,10 @@ void OpenALSoundRenderer::UpdateSounds()
 {
     alcProcessContext(Context);
 
+    // For some reason this isn't being called?
+    foreach(SoundStream*, stream, Streams)
+        (*stream)->IsEnded();
+
     if(DisconnectNotify)
     {
         ALCint connected = ALC_TRUE;

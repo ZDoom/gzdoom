@@ -345,6 +345,41 @@ void *OpenALSoundStream::GetData(size_t bytes)
     return data;
 }
 
+FString OpenALSoundStream::GetStats()
+{
+    FString stats;
+    ALfloat volume;
+    ALint processed;
+    ALint queued;
+    ALint state;
+    ALenum err;
+
+    alGetSourcef(Source, AL_GAIN, &volume);
+    alGetSourcei(Source, AL_SOURCE_STATE, &state);
+    alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
+    alGetSourcei(Source, AL_BUFFERS_PROCESSED, &processed);
+    if((err=alGetError()) != AL_NO_ERROR)
+    {
+        stats = "Error getting stats: ";
+        stats += alGetString(err);
+        return stats;
+    }
+
+    stats = (state == AL_INITIAL) ? "Buffering" : (state == AL_STOPPED) ? "Underrun" :
+            (state == AL_PLAYING || state == AL_PAUSED) ? "Ready" : "Unknown state";
+    stats.AppendFormat(",%3d%% buffered", (queued ? 100-(processed*100/queued) : 0));
+    stats.AppendFormat(", %d%%", int(volume * 100));
+    if(state == AL_PAUSED)
+        stats += ", paused";
+    if(state == AL_PLAYING)
+        stats += ", playing";
+    stats.AppendFormat(", %uHz", SampleRate);
+    if(!Playing)
+        stats += " XX";
+    return stats;
+}
+
+
 bool OpenALSoundStream::InitSample()
 {
     UInt32 smpsize = 0;

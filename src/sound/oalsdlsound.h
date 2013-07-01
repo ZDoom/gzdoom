@@ -47,6 +47,8 @@ public:
 
     virtual bool IsEnded();
 
+    virtual FString GetStats();
+
     bool Init(const char *filename, int offset, int length);
     bool Init(const BYTE *data, unsigned int datalen);
 };

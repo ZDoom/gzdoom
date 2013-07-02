@@ -353,3 +353,11 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	// make the blue key spawn above the 3D floor
 	setthingz 918 296
 }
+
+64B6CE3CB7349B6F6B1A885C449ACB96 // Super Sonic Doom, map31
+{
+	// During the end-of-level tally, both PROP_FROZEN and PROP_TOTALLYFROZEN
+	// are set, but only PROP_TOTALLYFROZEN is cleared, so PROP_FROZEN is
+	// still set when returning to the origin map.
+	linkfrozenprops
+}

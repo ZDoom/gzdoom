@@ -5025,7 +5025,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 							{
 								S_Sound(spot, chan, sid, vol, atten);
 							}
-							else if (!S_IsActorPlayingSomething(spot, chan, sid))
+							else if (!S_IsActorPlayingSomething(spot, chan & 7, sid))
 							{
 								S_Sound(spot, chan | CHAN_LOOP, sid, vol, atten);
 							}

@@ -352,11 +352,8 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 				SetState("grin", false);
 				return 0;
 			}
-			else if (CurrentState == NULL)
-			{
-				bEvilGrin = false;
-			}
 		}
+		bEvilGrin = false;
 
 		bool ouch = (!st_oldouch && FaceHealth - player->health > ST_MUCHPAIN) || (st_oldouch && player->health - FaceHealth > ST_MUCHPAIN);
 		if (player->damagecount && 

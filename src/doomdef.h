@@ -349,6 +349,7 @@ enum
 	BCOMPATF_BADTELEPORTERS		= 1 << 3,	// Ignore tags on Teleport specials
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
 	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild
+	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 };
 
 // phares 3/20/98:

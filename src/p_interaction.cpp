@@ -658,7 +658,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	FState *diestate = NULL;
 	int gibhealth = GibHealth();
-	bool extremelydead = ((health < gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH));
+	int iflags4 = inflictor == NULL ? 0 : inflictor->flags4;
+	bool extremelydead = ((health < gibhealth || iflags4 & MF4_EXTREMEDEATH) && !(iflags4 & MF4_NOEXTREMEDEATH));
 
 	// Special check for 'extreme' damage type to ensure that it gets recorded properly as an extreme death for subsequent checks.
 	if (DamageType == NAME_Extreme)
@@ -703,7 +704,6 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 	if (diestate == NULL)
 	{
-		int flags4 = inflictor == NULL ? 0 : inflictor->flags4;
 		
 		// Don't pass on a damage type this actor cannot handle.
 		// (most importantly, prevent barrels from passing on ice damage.)

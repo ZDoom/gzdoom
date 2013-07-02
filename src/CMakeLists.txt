@@ -10,7 +10,12 @@ include( CheckCXXCompilerFlag )
 include( FindPkgConfig )
 include( FindOpenGL )
 
-option( NO_ASM "Disable assembly code" )
+if( NOT APPLE )
+	option( NO_ASM "Disable assembly code" OFF )
+else( NOT APPLE )
+	# At the moment asm code doesn't work with OS X, so disable by default
+	option( NO_ASM "Disable assembly code" ON )
+endif( NOT APPLE )
 if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker

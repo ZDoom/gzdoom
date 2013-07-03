@@ -156,7 +156,7 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	cancelled = false;
 
 	app = [NSApplication sharedApplication];
-	id windowTitle = [NSString stringWithUTF8String:GAMESIG " " DOTVERSIONSTR ": Select an IWAD to use"];
+	id windowTitle = [NSString stringWithFormat:@GAMESIG " %s: Select an IWAD to use", GetVersionString()];
 
 	NSRect frame = NSMakeRect(0, 0, 440, 450);
 	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];

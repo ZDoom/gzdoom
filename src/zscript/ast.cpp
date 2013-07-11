@@ -115,7 +115,7 @@ static void PrintStringConst(FString &out, FString str)
 static void PrintClass(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_Class *cnode = (ZCC_Class *)node;
-	out << "(class ";
+	out << "\n(class ";
 	PrintNodes(out, cnode->ClassName);
 	PrintNodes(out, cnode->ParentName);
 	PrintNodes(out, cnode->Replaces);
@@ -126,14 +126,14 @@ static void PrintClass(FString &out, ZCC_TreeNode *node)
 static void PrintStruct(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_Struct *snode = (ZCC_Struct *)node;
-	out.AppendFormat("(struct '%s' ", FName(snode->StructName).GetChars());
+	out.AppendFormat("\n(struct '%s' ", FName(snode->StructName).GetChars());
 	PrintNodes(out, snode->Body, ')');
 }
 
 static void PrintEnum(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_Enum *enode = (ZCC_Enum *)node;
-	out.AppendFormat("(enum '%s' ", FName(enode->EnumName).GetChars());
+	out.AppendFormat("\n(enum '%s' ", FName(enode->EnumName).GetChars());
 	PrintBuiltInType(out, enode->EnumType, true);
 	PrintNodes(out, enode->Elements, ')');
 }
@@ -148,7 +148,7 @@ static void PrintEnumNode(FString &out, ZCC_TreeNode *node)
 static void PrintStates(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_States *snode = (ZCC_States *)node;
-	out << "(states ";
+	out << "\n(states ";
 	PrintNodes(out, snode->Body, ')');
 }
 
@@ -160,7 +160,7 @@ static void PrintStatePart(FString &out, ZCC_TreeNode *node)
 static void PrintStateLabel(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateLabel *snode = (ZCC_StateLabel *)node;
-	out.AppendFormat("(state-label '%s')", FName(snode->Label).GetChars());
+	out.AppendFormat("\n(state-label '%s')", FName(snode->Label).GetChars());
 }
 
 static void PrintStateStop(FString &out, ZCC_TreeNode *node)
@@ -194,7 +194,7 @@ static void PrintStateGoto(FString &out, ZCC_TreeNode *node)
 static void PrintStateLine(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateLine *snode = (ZCC_StateLine *)node;
-	out.AppendFormat("(state-line %c%c%c%c %s %s ",
+	out.AppendFormat("\n(state-line %c%c%c%c %s %s ",
 		snode->Sprite[0], snode->Sprite[1], snode->Sprite[2], snode->Sprite[3],
 		snode->bBright ? "bright " : "",
 		snode->Frames->GetChars());
@@ -535,19 +535,21 @@ static void PrintDeclarator(FString &out, ZCC_TreeNode *node)
 static void PrintVarDeclarator(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_VarDeclarator *dnode = (ZCC_VarDeclarator *)node;
-	out << "(var-declarator ";
+	out << "\n(var-declarator ";
 	PrintNodes(out, dnode->Type);
 	out.AppendFormat("%x ", dnode->Flags);
 	PrintNodes(out, dnode->Names, ')');
+	out << '\n';
 }
 
 static void PrintFuncDeclarator(FString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncDeclarator *dnode = (ZCC_FuncDeclarator *)node;
-	out << "(func-declarator ";
+	out << "\n(func-declarator ";
 	PrintNodes(out, dnode->Type);
 	out.AppendFormat("%x %s ", dnode->Flags, FName(dnode->Name).GetChars());
 	PrintNodes(out, dnode->Params, ')');
+	out << '\n';
 }
 
 void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FString &, ZCC_TreeNode *) =

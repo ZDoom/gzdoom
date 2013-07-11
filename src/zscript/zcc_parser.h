@@ -493,6 +493,7 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 {
 	ZCC_FuncParamDecl *Params;
 	ENamedName Name;
+	ZCC_Statement *Body;
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root);

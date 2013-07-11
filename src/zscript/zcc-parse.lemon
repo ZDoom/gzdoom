@@ -533,6 +533,7 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		decl->Params = C.FuncParams;
 		decl->Name = C.FuncName;
 		decl->Flags = A | C.FuncFlags;
+		decl->Body = C.FuncBody;
 		X = decl;
 	}
 	else if (B != NULL && B->SiblingNext == B)

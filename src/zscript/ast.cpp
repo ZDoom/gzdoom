@@ -548,7 +548,8 @@ static void PrintFuncDeclarator(FString &out, ZCC_TreeNode *node)
 	out << "\n(func-declarator ";
 	PrintNodes(out, dnode->Type);
 	out.AppendFormat("%x %s ", dnode->Flags, FName(dnode->Name).GetChars());
-	PrintNodes(out, dnode->Params, ')');
+	PrintNodes(out, dnode->Params, ' ');
+	PrintNodes(out, dnode->Body, ')');
 	out << '\n';
 }
 

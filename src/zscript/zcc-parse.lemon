@@ -1061,19 +1061,19 @@ constant(X) ::= FLOATCONST(A).
 
 /************ Statements ************/
 
-function_body ::= compound_statement.
+function_body(X) ::= compound_statement(A).			{ X = A; }
 
 %type statement{ZCC_Statement *}
-statement ::= SEMICOLON.
-statement ::= labeled_statement.
-statement ::= compound_statement.
-statement ::= expression_statement SEMICOLON.
-statement ::= selection_statement.
-statement ::= iteration_statement.
-statement ::= jump_statement.
-statement ::= assign_statement SEMICOLON.
-statement ::= local_var SEMICOLON.
-statement ::= error SEMICOLON.
+statement(X) ::= SEMICOLON.							{ X = NULL; }
+statement(X) ::= labeled_statement(A).				{ X = A; }
+statement(X) ::= compound_statement(A).				{ X = A; }
+statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; }
+statement(X) ::= selection_statement(A).			{ X = A; }
+statement(X) ::= iteration_statement(A).			{ X = A; }
+statement(X) ::= jump_statement(A).					{ X = A; }
+statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; }
+statement(X) ::= local_var(A) SEMICOLON.			{ X = A; }
+statement(X) ::= error SEMICOLON.					{ X = NULL; }
 
 /*----- Jump Statements -----*/
 
@@ -1132,8 +1132,8 @@ statement_list(X) ::= statement(A).
 }
 statement_list(X) ::= statement_list(A) statement(B).
 {
+	SAFE_APPEND(A,B);
 	X = A;
-	A->AppendSibling(B);
 }
 
 /*----- Expression Statements -----*/

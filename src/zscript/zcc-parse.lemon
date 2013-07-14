@@ -820,7 +820,7 @@ unary_expr(X) ::= ALIGNOF unary_expr(A). [UNARY]
 
 expr(X) ::= unary_expr(A).
 {
-	A = X;
+	X = A;
 }
 expr(X) ::= expr(A) ADD expr(B).		/* a + b */
 {

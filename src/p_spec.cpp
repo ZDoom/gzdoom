@@ -653,7 +653,7 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2))
+					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2)
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks

@@ -1283,27 +1283,28 @@ labeled_statement(X) ::= DEFAULT COLON.
 /*----- Assignment Statements -----*/
 
 %type assign_statement{ZCC_AssignStmt *}
+%type assign_op{int}
 
 assign_statement(X) ::= expr_list(A) assign_op(OP) expr_list(B). [EQ]
 {
 	NEW_AST_NODE(AssignStmt,stmt);
-	stmt->AssignOp = OP.Int;
+	stmt->AssignOp = OP;
 	stmt->Dests = A;
 	stmt->Sources = B;
 	X = stmt;
 }
 
-assign_op ::= EQ.
-assign_op ::= MULEQ.
-assign_op ::= DIVEQ.
-assign_op ::= MODEQ.
-assign_op ::= ADDEQ.
-assign_op ::= SUBEQ.
-assign_op ::= LSHEQ.
-assign_op ::= RSHEQ.
-assign_op ::= ANDEQ.
-assign_op ::= OREQ.
-assign_op ::= XOREQ.
+assign_op(X) ::= EQ.			{ X = ZCC_EQ; }
+assign_op(X) ::= MULEQ.			{ X = ZCC_MULEQ; }
+assign_op(X) ::= DIVEQ.			{ X = ZCC_DIVEQ; }
+assign_op(X) ::= MODEQ.			{ X = ZCC_MODEQ; }
+assign_op(X) ::= ADDEQ.			{ X = ZCC_ADDEQ; }
+assign_op(X) ::= SUBEQ.			{ X = ZCC_SUBEQ; }
+assign_op(X) ::= LSHEQ.			{ X = ZCC_LSHEQ; }
+assign_op(X) ::= RSHEQ.			{ X = ZCC_RSHEQ; }
+assign_op(X) ::= ANDEQ.			{ X = ZCC_ANDEQ; }
+assign_op(X) ::= OREQ.			{ X = ZCC_OREQ; }
+assign_op(X) ::= XOREQ.			{ X = ZCC_XOREQ; }
 
 /*----- Local Variable Definition "Statements" -----*/
 

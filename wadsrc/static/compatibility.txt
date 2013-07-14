@@ -361,3 +361,18 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	// still set when returning to the origin map.
 	linkfrozenprops
 }
+
+D62DCA9EC226DE49108D5DD9271F7631 // Cheogsh 2 map04
+{
+	// Stuff in megasphere cage is positioned too low
+	setthingz 1640 528
+	setthingz 1641 528
+	setthingz 1642 528
+	setthingz 1643 528
+	setthingz 1644 528
+	setthingz 1645 528
+	setthingz 1646 528
+	setthingz 1647 528
+	setthingz 1648 528
+	setthingz 1649 528
+}

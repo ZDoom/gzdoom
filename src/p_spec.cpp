@@ -639,12 +639,21 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 			{
 				next = actor->snext;
 				// Only affect actors touching the 3D floor
-				if (actor->z + actor->height > sec->floorplane.ZatPoint(actor->x, actor->y))
+				fixed_t z1 = sec->floorplane.ZatPoint(actor->x, actor->y);
+				fixed_t z2 = sec->ceilingplane.ZatPoint(actor->x, actor->y);
+				if (z2 < z1)
+				{
+					// Account for Vavoom-style 3D floors
+					fixed_t zz = z1;
+					z1 = z2;
+					z2 = zz;
+				}
+				if (actor->z + actor->height > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->z <= sec->ceilingplane.ZatPoint(actor->x, actor->y))
+					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2))
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks

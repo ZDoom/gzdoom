@@ -174,7 +174,15 @@ void R_InitPlanes ()
 void R_DeinitPlanes ()
 {
 	fakeActive = 0;
-	R_ClearPlanes(false);
+
+	// do not use R_ClearPlanes because at this point the screen pointer is no longer valid.
+	for (int i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
+	{
+		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
+		{
+			freehead = &(*freehead)->next;
+		}
+	}
 	for (visplane_t *pl = freetail; pl != NULL; )
 	{
 		visplane_t *next = pl->next;
@@ -490,7 +498,7 @@ void R_MapColoredPlane (int y, int x1)
 
 void R_ClearPlanes (bool fullclear)
 {
-	int i, max;
+	int i;
 
 	// Don't clear fake planes if not doing a full clear.
 	if (!fullclear)
@@ -516,7 +524,6 @@ void R_ClearPlanes (bool fullclear)
 	}
 	else
 	{
-		max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
 		for (i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
 		{
 			for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
@@ -524,10 +531,7 @@ void R_ClearPlanes (bool fullclear)
 				freehead = &(*freehead)->next;
 			}
 		}
-	}
 
-	if (fullclear)
-	{
 		// opening / clipping determination
 		clearbufshort (floorclip, viewwidth, viewheight);
 		// [RH] clip ceiling to console bottom

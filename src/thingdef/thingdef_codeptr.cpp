@@ -70,6 +70,7 @@
 #include "m_bbox.h"
 #include "r_data/r_translate.h"
 #include "p_trace.h"
+#include "gstrings.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -2133,6 +2134,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 	ACTION_PARAM_FLOAT(time, 1);
 	ACTION_PARAM_NAME(fontname, 2);
 
+	if (text[0] == '$') text = GStrings(text+1);
 	if (self->CheckLocalView (consoleplayer) ||
 		(self->target!=NULL && self->target->CheckLocalView (consoleplayer)))
 	{
@@ -2171,6 +2173,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
 	float saved = con_midtime;
 	FFont *font = NULL;
 	
+	if (text[0] == '$') text = GStrings(text+1);
 	if (fontname != NAME_None)
 	{
 		font = V_GetFont(fontname);
@@ -2196,11 +2199,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 {
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STRING(text, 0);
+
+	if (text[0] == '$') text = GStrings(text+1);
 	Printf("%s\n", text);
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 
-//===========================================================================
+//=========================================================================
 //
 // A_LogInt
 //

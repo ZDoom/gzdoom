@@ -309,7 +309,6 @@ player_t::player_t()
   ConversationFaceTalker(0)
 {
 	memset (&cmd, 0, sizeof(cmd));
-	memset (&userinfo, 0, sizeof(userinfo));
 	memset (frags, 0, sizeof(frags));
 	memset (psprites, 0, sizeof(psprites));
 	memset (&skill, 0, sizeof(skill));

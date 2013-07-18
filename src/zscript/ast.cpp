@@ -34,6 +34,7 @@ public:
 		NestDepth = Column = 0;
 		WrapWidth = 72;
 		NeedSpace = false;
+		ConsecOpens = 0;
 	}
 
 	void Open(const char *label)
@@ -43,8 +44,10 @@ public:
 		if (NeedSpace)
 		{
 			Str << ' ';
+			ConsecOpens = 0;
 		}
 		Str << '(';
+		ConsecOpens++;
 		if (label != NULL)
 		{
 			Str.AppendCStrPart(label, labellen);
@@ -66,12 +69,29 @@ public:
 		// Don't break if not needed.
 		if (Column != NestDepth)
 		{
+			if (NeedSpace)
+			{
+				ConsecOpens = 0;
+			}
+			else
+			{ // Move hanging ( characters to the new line
+				Str.Truncate(long(Str.Len() - ConsecOpens));
+				NestDepth -= ConsecOpens;
+			}
 			Str << '\n';
 			Column = NestDepth;
 			NeedSpace = false;
 			if (NestDepth > 0)
 			{
 				Str.AppendFormat("%*s", NestDepth, "");
+			}
+			if (ConsecOpens > 0)
+			{
+				for (size_t i = 0; i < ConsecOpens; ++i)
+				{
+					Str << '(';
+				}
+				NestDepth += ConsecOpens;
 			}
 		}
 	}
@@ -143,6 +163,7 @@ private:
 	size_t NestDepth;
 	size_t Column;
 	size_t WrapWidth;
+	size_t ConsecOpens;
 	bool NeedSpace;
 };
 

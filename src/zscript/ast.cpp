@@ -4,7 +4,8 @@
 #include "zcc_parser.h"
 #include "zcc-parse.h"
 
-extern void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FString &, ZCC_TreeNode *);
+class FLispString;
+extern void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *);
 
 static const char *BuiltInTypeNames[] =
 {
@@ -23,7 +24,129 @@ static const char *BuiltInTypeNames[] =
 	"usertype"
 };
 
-static void PrintNode(FString &out, ZCC_TreeNode *node)
+class FLispString
+{
+public:
+	operator FString &() { return Str; }
+
+	FLispString()
+	{
+		NestDepth = Column = 0;
+		WrapWidth = 72;
+		NeedSpace = false;
+	}
+
+	void Open(const char *label)
+	{
+		size_t labellen = label != NULL ? strlen(label) : 0;
+		CheckWrap(labellen + 1 + NeedSpace);
+		if (NeedSpace)
+		{
+			Str << ' ';
+		}
+		Str << '(';
+		if (label != NULL)
+		{
+			Str.AppendCStrPart(label, labellen);
+		}
+		Column += labellen + 1 + NeedSpace;
+		NestDepth++;
+		NeedSpace = (label != NULL);
+	}
+	void Close()
+	{
+		assert(NestDepth != 0);
+		Str << ')';
+		Column++;
+		NestDepth--;
+		NeedSpace = true;
+	}
+	void Break()
+	{
+		// Don't break if not needed.
+		if (Column != NestDepth)
+		{
+			Str << '\n';
+			Column = NestDepth;
+			NeedSpace = false;
+			if (NestDepth > 0)
+			{
+				Str.AppendFormat("%*s", NestDepth, "");
+			}
+		}
+	}
+	bool CheckWrap(size_t len)
+	{
+		if (len + Column > WrapWidth)
+		{
+			Break();
+			return true;
+		}
+		return false;
+	}
+	void Add(const char *str, size_t len)
+	{
+		CheckWrap(len + NeedSpace);
+		if (NeedSpace)
+		{
+			Str << ' ';
+		}
+		Str.AppendCStrPart(str, len);
+		Column += len + NeedSpace;
+		NeedSpace = true;
+	}
+	void Add(const char *str)
+	{
+		Add(str, strlen(str));
+	}
+	void Add(FString &str)
+	{
+		Add(str.GetChars(), str.Len());
+	}
+	void AddName(FName name)
+	{
+		size_t namelen = strlen(name.GetChars());
+		CheckWrap(namelen + 2 + NeedSpace);
+		if (NeedSpace)
+		{
+			NeedSpace = false;
+			Str << ' ';
+		}
+		Str << '\'' << name.GetChars() << '\'';
+		Column += namelen + 2 + NeedSpace;
+		NeedSpace = true;
+	}
+	void AddChar(char c)
+	{
+		Add(&c, 1);
+	}
+	void AddInt(int i)
+	{
+		char buf[16];
+		size_t len = mysnprintf(buf, countof(buf), "%d", i);
+		Add(buf, len);
+	}
+	void AddHex(unsigned x)
+	{
+		char buf[10];
+		size_t len = mysnprintf(buf, countof(buf), "%08x", x);
+		Add(buf, len);
+	}
+	void AddFloat(double f)
+	{
+		char buf[32];
+		size_t len = mysnprintf(buf, countof(buf), "%g", f);
+		Add(buf, len);
+	}
+private:
+	FString Str;
+	size_t NestDepth;
+	size_t Column;
+	size_t WrapWidth;
+	bool NeedSpace;
+};
+
+static void PrintNode(FLispString &out, ZCC_TreeNode *node)
 {
 	assert(TreeNodePrinter[NUM_AST_NODE_TYPES-1] != NULL);
 	if (node->NodeType >= 0 && node->NodeType < NUM_AST_NODE_TYPES)
@@ -32,528 +155,592 @@ static void PrintNode(FString &out, ZCC_TreeNode *node)
 	}
 	else
 	{
-		out.AppendFormat("(unknown-node-type-%d)", node->NodeType);
+		out.Open("unknown-node-type");
+		out.AddInt(node->NodeType);
+		out.Close();
 	}
 }
 
-static void PrintNodes(FString &out, ZCC_TreeNode *node, char addchar=' ')
+static void PrintNodes(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_TreeNode *p;
 
 	if (node == NULL)
 	{
-		out << "nil";
+		out.Add("nil", 3);
 	}
 	else
 	{
-		out << '(';
+		out.Open(NULL);
 		p = node;
 		do
 		{
 			PrintNode(out, p);
 			p = p->SiblingNext;
-			if (p != node)
-			{
-				out << ' ';
-			}
 		} while (p != node);
-		out << ')';
-	}
-	if (addchar != '\0')
-	{
-		out << addchar;
+		out.Close();
 	}
 }
 
-static void PrintBuiltInType(FString &out, EZCCBuiltinType type, bool addspace)
+static void PrintBuiltInType(FLispString &out, EZCCBuiltinType type)
 {
 	assert(ZCC_NUM_BUILT_IN_TYPES == countof(BuiltInTypeNames));
 	if (unsigned(type) >= unsigned(ZCC_NUM_BUILT_IN_TYPES))
 	{
-		out.AppendFormat("bad-type-%u", type);
+		char buf[30];
+		size_t len = mysnprintf(buf, countof(buf), "bad-type-%u", type);
+		out.Add(buf, len);
 	}
 	else
 	{
-		out << BuiltInTypeNames[type];
-	}
-	if (addspace)
-	{
-		out << ' ';
+		out.Add(BuiltInTypeNames[type]);
 	}
 }
 
-static void PrintIdentifier(FString &out, ZCC_TreeNode *node)
+static void PrintIdentifier(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Identifier *inode = (ZCC_Identifier *)node;
-	out.AppendFormat("(identifier '%s')", FName(inode->Id).GetChars());
+	out.Open("identifier");
+	out.AddName(inode->Id);
+	out.Close();
 }
 
-static void PrintStringConst(FString &out, FString str)
+static void PrintStringConst(FLispString &out, FString str)
 {
-	out << '"';
+	FString outstr;
+	outstr << '"';
 	for (size_t i = 0; i < str.Len(); ++i)
 	{
 		if (str[i] == '"')
 		{
-			out << "\"";
+			outstr << "\"";
 		}
 		else if (str[i] == '\\')
 		{
-			out << "\\\\";
+			outstr << "\\\\";
 		}
 		else if (str[i] >= 32)
 		{
-			out << str[i];
+			outstr << str[i];
 		}
 		else
 		{
-			out.AppendFormat("\\x%02X", str[i]);
+			outstr.AppendFormat("\\x%02X", str[i]);
 		}
 	}
+	out.Add(outstr);
 }
 
-static void PrintClass(FString &out, ZCC_TreeNode *node)
+static void PrintClass(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Class *cnode = (ZCC_Class *)node;
-	out << "\n(class ";
+	out.Open("class");
 	PrintNodes(out, cnode->ClassName);
 	PrintNodes(out, cnode->ParentName);
 	PrintNodes(out, cnode->Replaces);
-	out.AppendFormat("%08x ", cnode->Flags);
-	PrintNodes(out, cnode->Body, ')');
+	out.AddHex(cnode->Flags);
+	PrintNodes(out, cnode->Body);
+	out.Close();
 }
 
-static void PrintStruct(FString &out, ZCC_TreeNode *node)
+static void PrintStruct(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Struct *snode = (ZCC_Struct *)node;
-	out.AppendFormat("\n(struct '%s' ", FName(snode->StructName).GetChars());
-	PrintNodes(out, snode->Body, ')');
+	out.Break();
+	out.Open("struct");
+	out.AddName(snode->StructName);
+	PrintNodes(out, snode->Body);
+	out.Close();
 }
 
-static void PrintEnum(FString &out, ZCC_TreeNode *node)
+static void PrintEnum(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Enum *enode = (ZCC_Enum *)node;
-	out.AppendFormat("\n(enum '%s' ", FName(enode->EnumName).GetChars());
-	PrintBuiltInType(out, enode->EnumType, true);
-	PrintNodes(out, enode->Elements, ')');
+	out.Break();
+	out.Open("enum");
+	out.AddName(enode->EnumName);
+	PrintBuiltInType(out, enode->EnumType);
+	PrintNodes(out, enode->Elements);
+	out.Close();
 }
 
-static void PrintEnumNode(FString &out, ZCC_TreeNode *node)
+static void PrintEnumNode(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_EnumNode *enode = (ZCC_EnumNode *)node;
-	out.AppendFormat("(enum-node '%s' ", FName(enode->ElemName).GetChars());
-	PrintNodes(out, enode->ElemValue, ')');
+	out.Open("enum-node");
+	out.AddName(enode->ElemName);
+	PrintNodes(out, enode->ElemValue);
+	out.Close();
 }
 
-static void PrintStates(FString &out, ZCC_TreeNode *node)
+static void PrintStates(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_States *snode = (ZCC_States *)node;
-	out << "\n(states ";
-	PrintNodes(out, snode->Body, ')');
+	out.Break();
+	out.Open("states");
+	PrintNodes(out, snode->Body);
+	out.Close();
 }
 
-static void PrintStatePart(FString &out, ZCC_TreeNode *node)
+static void PrintStatePart(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(state-part)";
+	out.Open("state-part");
+	out.Close();
 }
 
-static void PrintStateLabel(FString &out, ZCC_TreeNode *node)
+static void PrintStateLabel(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateLabel *snode = (ZCC_StateLabel *)node;
-	out.AppendFormat("\n(state-label '%s')", FName(snode->Label).GetChars());
+	out.Break();
+	out.Open("state-label");
+	out.AddName(snode->Label);
+	out.Close();
 }
 
-static void PrintStateStop(FString &out, ZCC_TreeNode *node)
+static void PrintStateStop(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(state-stop)";
+	out.Open("state-stop");
+	out.Close();
 }
 
-static void PrintStateWait(FString &out, ZCC_TreeNode *node)
+static void PrintStateWait(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(state-wait)";
+	out.Open("state-wait");
+	out.Close();
 }
 
-static void PrintStateFail(FString &out, ZCC_TreeNode *node)
+static void PrintStateFail(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(state-fail)";
+	out.Open("state-fail");
+	out.Close();
 }
 
-static void PrintStateLoop(FString &out, ZCC_TreeNode *node)
+static void PrintStateLoop(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(state-loop)";
+	out.Open("state-loop");
+	out.Close();
 }
 
-static void PrintStateGoto(FString &out, ZCC_TreeNode *node)
+static void PrintStateGoto(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateGoto *snode = (ZCC_StateGoto *)node;
-	out << "(state-goto ";
+	out.Open("state-goto");
 	PrintNodes(out, snode->Label);
-	PrintNodes(out, snode->Offset, ')');
+	PrintNodes(out, snode->Offset);
+	out.Close();
 }
 
-static void PrintStateLine(FString &out, ZCC_TreeNode *node)
+static void PrintStateLine(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_StateLine *snode = (ZCC_StateLine *)node;
-	out.AppendFormat("\n(state-line %c%c%c%c %s %s ",
-		snode->Sprite[0], snode->Sprite[1], snode->Sprite[2], snode->Sprite[3],
-		snode->bBright ? "bright " : "",
-		snode->Frames->GetChars());
+	out.Break();
+	out.Open("state-line");
+	out.Add(snode->Sprite, 4);
+	if (snode->bBright)
+	{
+		out.Add("bright", 6);
+	}
+	out.Add(*(snode->Frames));
 	PrintNodes(out, snode->Offset);
-	PrintNodes(out, snode->Action, ')');
+	PrintNodes(out, snode->Action);
+	out.Close();
 }
 
-static void PrintVarName(FString &out, ZCC_TreeNode *node)
+static void PrintVarName(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_VarName *vnode = (ZCC_VarName *)node;
-	out.AppendFormat("(var-name '%s')", FName(vnode->Name).GetChars());
+	out.Open("var-name");
+	out.AddName(vnode->Name);
+	out.Close();
 }
 
-static void PrintType(FString &out, ZCC_TreeNode *node)
+static void PrintType(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Type *tnode = (ZCC_Type *)node;
-	out << "(bad-type ";
-	PrintNodes(out, tnode->ArraySize, ')');
+	out.Open("bad-type");
+	PrintNodes(out, tnode->ArraySize);
+	out.Close();
 }
 
-static void PrintBasicType(FString &out, ZCC_TreeNode *node)
+static void PrintBasicType(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_BasicType *tnode = (ZCC_BasicType *)node;
-	out << "(basic-type ";
+	out.Open("basic-type");
 	PrintNodes(out, tnode->ArraySize);
-	PrintBuiltInType(out, tnode->Type, true);
-	PrintNodes(out, tnode->UserType, ')');
+	PrintBuiltInType(out, tnode->Type);
+	PrintNodes(out, tnode->UserType);
+	out.Close();
 }
 
-static void PrintMapType(FString &out, ZCC_TreeNode *node)
+static void PrintMapType(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_MapType *tnode = (ZCC_MapType *)node;
-	out << "(map-type ";
+	out.Open("map-type");
 	PrintNodes(out, tnode->ArraySize);
 	PrintNodes(out, tnode->KeyType);
-	PrintNodes(out, tnode->ValueType, ')');
+	PrintNodes(out, tnode->ValueType);
+	out.Close();
 }
 
-static void PrintDynArrayType(FString &out, ZCC_TreeNode *node)
+static void PrintDynArrayType(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_DynArrayType *tnode = (ZCC_DynArrayType *)node;
-	out << "(dyn-array-type ";
+	out.Open("dyn-array-type");
 	PrintNodes(out, tnode->ArraySize);
-	PrintNodes(out, tnode->ElementType, ')');
+	PrintNodes(out, tnode->ElementType);
+	out.Close();
 }
 
-static void PrintClassType(FString &out, ZCC_TreeNode *node)
+static void PrintClassType(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ClassType *tnode = (ZCC_ClassType *)node;
-	out << "(class-type ";
+	out.Open("class-type");
 	PrintNodes(out, tnode->ArraySize);
-	PrintNodes(out, tnode->Restriction, ')');
+	PrintNodes(out, tnode->Restriction);
+	out.Close();
 }
 
-static void PrintExprType(FString &out, EZCCExprType type)
+static void OpenExprType(FLispString &out, EZCCExprType type)
 {
 	static const char *const types[] =
 	{
-		"nil ",
-		"id ",
-		"super ",
-		"self ",
-		"string-const ",
-		"int-const ",
-		"uint-const ",
-		"float-const ",
-		"func-call ",
-		"array-access ",
-		"member-access ",
-		"post-inc ",
-		"post-dec ",
-		"pre-inc ",
-		"pre-dec ",
-		"negate ",
-		"anti-negate ",
-		"bit-not ",
-		"bool-not ",
-		"size-of ",
-		"align-of ",
-		"add ",
-		"sub ",
-		"mul ",
-		"div ",
-		"mod ",
-		"pow ",
-		"cross-product ",
-		"dot-product ",
-		"left-shift ",
-		"right-shift ",
-		"concat ",
-		"lt ",
-		"gt ",
-		"lteq ",
-		"gteq ",
-		"ltgteq ",
-		"is ",
-		"eqeq ",
-		"neq ",
-		"apreq ",
-		"bit-and ",
-		"bit-or ",
-		"bit-xor ",
-		"bool-and ",
-		"bool-or ",
-		"scope ",
-		"trinary ",
+		"nil",
+		"id",
+		"super",
+		"self",
+		"string-const",
+		"int-const",
+		"uint-const",
+		"float-const",
+		"func-call",
+		"array-access",
+		"member-access",
+		"post-inc",
+		"post-dec",
+		"pre-inc",
+		"pre-dec",
+		"negate",
+		"anti-negate",
+		"bit-not",
+		"bool-not",
+		"size-of",
+		"align-of",
+		"add",
+		"sub",
+		"mul",
+		"div",
+		"mod",
+		"pow",
+		"cross-product",
+		"dot-product",
+		"left-shift",
+		"right-shift",
+		"concat",
+		"lt",
+		"gt",
+		"lteq",
+		"gteq",
+		"ltgteq",
+		"is",
+		"eqeq",
+		"neq",
+		"apreq",
+		"bit-and",
+		"bit-or",
+		"bit-xor",
+		"bool-and",
+		"bool-or",
+		"scope",
+		"trinary",
 	};
 	assert(countof(types) == PEX_COUNT_OF);
 
+	char buf[32];
+
 	if (unsigned(type) < countof(types))
 	{
-		out << types[type];
+		mysnprintf(buf, countof(buf), "expr-%s", types[type]);
 	}
 	else
 	{
-		out.AppendFormat("bad-pex-%u ", type);
+		mysnprintf(buf, countof(buf), "bad-pex-%u", type);
 	}
+	out.Open(buf);
 }
 
-static void PrintExpression(FString &out, ZCC_TreeNode *node)
+static void PrintExpression(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Expression *enode = (ZCC_Expression *)node;
-	out << "(expr-";
-	PrintExprType(out, enode->Operation);
-	out << ')';
+	OpenExprType(out, enode->Operation);
+	out.Close();
 }
 
-static void PrintExprID(FString &out, ZCC_TreeNode *node)
+static void PrintExprID(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprID *enode = (ZCC_ExprID *)node;
 	assert(enode->Operation == PEX_ID);
-	out.AppendFormat("(expr-id '%s')", FName(enode->Identifier).GetChars());
+	out.Open("expr-id");
+	out.AddName(enode->Identifier);
+	out.Close();
 }
 
-static void PrintExprString(FString &out, ZCC_TreeNode *node)
+static void PrintExprString(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprString *enode = (ZCC_ExprString *)node;
 	assert(enode->Operation == PEX_StringConst);
-	out.AppendFormat("(expr-string-const ");
+	out.Open("expr-string-const");
 	PrintStringConst(out, *enode->Value);
-	out << ')';
+	out.Close();
 }
 
-static void PrintExprInt(FString &out, ZCC_TreeNode *node)
+static void PrintExprInt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprInt *enode = (ZCC_ExprInt *)node;
 	assert(enode->Operation == PEX_IntConst || enode->Operation == PEX_UIntConst);
-	out << "(expr-";
-	PrintExprType(out, enode->Operation);
-	out.AppendFormat("%d)", enode->Value);
+	OpenExprType(out, enode->Operation);
+	out.AddInt(enode->Value);
+	out.Close();
 }
 
-static void PrintExprFloat(FString &out, ZCC_TreeNode *node)
+static void PrintExprFloat(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprFloat *enode = (ZCC_ExprFloat *)node;
 	assert(enode->Operation == PEX_FloatConst);
-	out.AppendFormat("(expr-float-const %g)", enode->Value);
+	out.Open("expr-float-const");
+	out.AddFloat(enode->Value);
+	out.Close();
 }
 
-static void PrintExprFuncCall(FString &out, ZCC_TreeNode *node)
+static void PrintExprFuncCall(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprFuncCall *enode = (ZCC_ExprFuncCall *)node;
 	assert(enode->Operation == PEX_FuncCall);
-	out << "(expr-func-call ";
+	out.Open("expr-func-call");
 	PrintNodes(out, enode->Function);
-	PrintNodes(out, enode->Parameters, ')');
+	PrintNodes(out, enode->Parameters);
+	out.Close();
 }
 
-static void PrintExprMemberAccess(FString &out, ZCC_TreeNode *node)
+static void PrintExprMemberAccess(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprMemberAccess *enode = (ZCC_ExprMemberAccess *)node;
 	assert(enode->Operation == PEX_MemberAccess);
-	out << "(expr-member-access ";
+	out.Open("expr-member-access");
 	PrintNodes(out, enode->Left);
-	out.AppendFormat("'%s')", FName(enode->Right).GetChars());
+	out.AddName(enode->Right);
+	out.Close();
 }
 
-static void PrintExprUnary(FString &out, ZCC_TreeNode *node)
+static void PrintExprUnary(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprUnary *enode = (ZCC_ExprUnary *)node;
-	out << "(expr-";
-	PrintExprType(out, enode->Operation);
-	PrintNodes(out, enode->Operand, ')');
+	OpenExprType(out, enode->Operation);
+	PrintNodes(out, enode->Operand);
+	out.Close();
 }
 
-static void PrintExprBinary(FString &out, ZCC_TreeNode *node)
+static void PrintExprBinary(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprBinary *enode = (ZCC_ExprBinary *)node;
-	out << "(expr-";
-	PrintExprType(out, enode->Operation);
+	OpenExprType(out, enode->Operation);
 	PrintNodes(out, enode->Left);
-	PrintNodes(out, enode->Right, ')');
+	PrintNodes(out, enode->Right);
+	out.Close();
 }
 
-static void PrintExprTrinary(FString &out, ZCC_TreeNode *node)
+static void PrintExprTrinary(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprTrinary *enode = (ZCC_ExprTrinary *)node;
-	out << "(expr-";
-	PrintExprType(out, enode->Operation);
+	OpenExprType(out, enode->Operation);
 	PrintNodes(out, enode->Test);
 	PrintNodes(out, enode->Left);
-	PrintNodes(out, enode->Right, ')');
+	PrintNodes(out, enode->Right);
+	out.Close();
 }
 
-static void PrintFuncParam(FString &out, ZCC_TreeNode *node)
+static void PrintFuncParam(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncParm *pnode = (ZCC_FuncParm *)node;
-	out.AppendFormat("(func-parm %s ", FName(pnode->Label).GetChars());;
-	PrintNodes(out, pnode->Value, ')');
+	out.Open("func-parm");
+	out.AddName(pnode->Label);
+	PrintNodes(out, pnode->Value);
+	out.Close();
 }
 
-static void PrintStatement(FString &out, ZCC_TreeNode *node)
+static void PrintStatement(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(statement)";
+	out.Open("statement");
+	out.Close();
 }
 
-static void PrintCompoundStmt(FString &out, ZCC_TreeNode *node)
+static void PrintCompoundStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_CompoundStmt *snode = (ZCC_CompoundStmt *)node;
-	out << "(compound-stmt ";
-	PrintNodes(out, snode->Content, ')');
+	out.Open("compound-stmt");
+	PrintNodes(out, snode->Content);
+	out.Close();
 }
 
-static void PrintContinueStmt(FString &out, ZCC_TreeNode *node)
+static void PrintContinueStmt(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(continue-stmt)";
+	out.Open("continue-stmt");
+	out.Close();
 }
 
-static void PrintBreakStmt(FString &out, ZCC_TreeNode *node)
+static void PrintBreakStmt(FLispString &out, ZCC_TreeNode *node)
 {
-	out << "(break-stmt)";
+	out.Open("break-stmt");
+	out.Close();
 }
 
-static void PrintReturnStmt(FString &out, ZCC_TreeNode *node)
+static void PrintReturnStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ReturnStmt *snode = (ZCC_ReturnStmt *)node;
-	out << "(return-stmt ";
-	PrintNodes(out, snode->Values, ')');
+	out.Open("return-stmt");
+	PrintNodes(out, snode->Values);
+	out.Close();
 }
 
-static void PrintExpressionStmt(FString &out, ZCC_TreeNode *node)
+static void PrintExpressionStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExpressionStmt *snode = (ZCC_ExpressionStmt *)node;
-	out << "(expression-stmt ";
-	PrintNodes(out, snode->Expression, ')');
+	out.Open("expression-stmt");
+	PrintNodes(out, snode->Expression);
+	out.Close();
 }
 
-static void PrintIterationStmt(FString &out, ZCC_TreeNode *node)
+static void PrintIterationStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_IterationStmt *snode = (ZCC_IterationStmt *)node;
-	out << "(iteration-stmt ";
-	out << (snode->CheckAt == ZCC_IterationStmt::Start) ? "start " : "end ";
+	out.Open("iteration-stmt");
+	out.Add((snode->CheckAt == ZCC_IterationStmt::Start) ? "start" : "end");
 	PrintNodes(out, snode->LoopCondition);
 	PrintNodes(out, snode->LoopBumper);
-	PrintNodes(out, snode->LoopStatement, true);
+	PrintNodes(out, snode->LoopStatement);
+	out.Close();
 }
 
-static void PrintIfStmt(FString &out, ZCC_TreeNode *node)
+static void PrintIfStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_IfStmt *snode = (ZCC_IfStmt *)node;
-	out << "(if-stmt ";
+	out.Open("if-stmt");
 	PrintNodes(out, snode->Condition);
 	PrintNodes(out, snode->TruePath);
-	PrintNodes(out, snode->FalsePath, ')');
+	PrintNodes(out, snode->FalsePath);
+	out.Close();
 }
 
-static void PrintSwitchStmt(FString &out, ZCC_TreeNode *node)
+static void PrintSwitchStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_SwitchStmt *snode = (ZCC_SwitchStmt *)node;
-	out << "(switch-stmt ";
+	out.Open("switch-stmt");
 	PrintNodes(out, snode->Condition);
-	PrintNodes(out, snode->Content, ')');
+	PrintNodes(out, snode->Content);
+	out.Close();
 }
 
-static void PrintCaseStmt(FString &out, ZCC_TreeNode *node)
+static void PrintCaseStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_CaseStmt *snode = (ZCC_CaseStmt *)node;
-	out << "(case-stmt ";
-	PrintNodes(out, snode->Condition, ')');
+	out.Open("case-stmt");
+	PrintNodes(out, snode->Condition);
+	out.Close();
 }
 
-static void PrintAssignStmt(FString &out, ZCC_TreeNode *node)
+static void BadAssignOp(FLispString &out, int op)
+{
+	char buf[32];
+	size_t len = mysnprintf(buf, countof(buf), "assign-op-%d", op);
+	out.Add(buf, len);
+}
+
+static void PrintAssignStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_AssignStmt *snode = (ZCC_AssignStmt *)node;
-	out << "(assign-stmt ";
+	out.Open("assign-stmt");
 	switch (snode->AssignOp)
 	{
-	case ZCC_EQ:		out << "= "; break;
-	case ZCC_MULEQ:		out << "*= "; break;
-	case ZCC_DIVEQ:		out << "/= "; break;
-	case ZCC_MODEQ:		out << "%= "; break;
-	case ZCC_ADDEQ:		out << "+= "; break;
-	case ZCC_SUBEQ:		out << "-= "; break;
-	case ZCC_LSHEQ:		out << "<<= "; break;
-	case ZCC_RSHEQ:		out << ">>= "; break;
-	case ZCC_ANDEQ:		out << "&= "; break;
-	case ZCC_OREQ:		out << "|= "; break;
-	case ZCC_XOREQ:		out << "^= "; break;
-	default:
-		out.AppendFormat("assign-op-%d ", snode->AssignOp);
+	case ZCC_EQ:		out.AddChar('='); break;
+	case ZCC_MULEQ:		out.Add("*=", 2); break;
+	case ZCC_DIVEQ:		out.Add("/=", 2); break;
+	case ZCC_MODEQ:		out.Add("%=", 2); break;
+	case ZCC_ADDEQ:		out.Add("+=", 2); break;
+	case ZCC_SUBEQ:		out.Add("-=", 2); break;
+	case ZCC_LSHEQ:		out.Add("<<=", 2); break;
+	case ZCC_RSHEQ:		out.Add(">>=", 2); break;
+	case ZCC_ANDEQ:		out.Add("&=", 2); break;
+	case ZCC_OREQ:		out.Add("|=", 2); break;
+	case ZCC_XOREQ:		out.Add("^=", 2); break;
+	default:			BadAssignOp(out, snode->AssignOp); break;
 	}
 	PrintNodes(out, snode->Dests);
-	PrintNodes(out, snode->Sources, ')');
+	PrintNodes(out, snode->Sources);
+	out.Close();
 }
 
-static void PrintLocalVarStmt(FString &out, ZCC_TreeNode *node)
+static void PrintLocalVarStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_LocalVarStmt *snode = (ZCC_LocalVarStmt *)node;
-	out << "(local-var-stmt ";
+	out.Open("local-var-stmt");
 	PrintNodes(out, snode->Type);
 	PrintNodes(out, snode->Vars);
-	PrintNodes(out, snode->Inits, ')');
+	PrintNodes(out, snode->Inits);
+	out.Close();
 }
 
-static void PrintFuncParamDecl(FString &out, ZCC_TreeNode *node)
+static void PrintFuncParamDecl(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncParamDecl *dnode = (ZCC_FuncParamDecl *)node;
-	out << "(func-param-decl ";
+	out.Open("func-param-decl");
 	PrintNodes(out, dnode->Type);
-	out.AppendFormat("%s %x)", FName(dnode->Name).GetChars(), dnode->Flags);
+	out.AddName(dnode->Name);
+	out.AddHex(dnode->Flags);
+	out.Close();
 }
 
-static void PrintConstantDef(FString &out, ZCC_TreeNode *node)
+static void PrintConstantDef(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ConstantDef *dnode = (ZCC_ConstantDef *)node;
-	out.AppendFormat("(constant-def %s ", FName(dnode->Name).GetChars());
-	PrintNodes(out, dnode->Value, ')');
+	out.Open("constant-def");
+	out.AddName(dnode->Name);
+	PrintNodes(out, dnode->Value);
+	out.Close();
 }
 
-static void PrintDeclarator(FString &out, ZCC_TreeNode *node)
+static void PrintDeclarator(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Declarator *dnode = (ZCC_Declarator *)node;
-	out << "(declarator ";
+	out.Open("declarator");
 	PrintNodes(out, dnode->Type);
-	out.AppendFormat("%x)", dnode->Flags);
+	out.AddHex(dnode->Flags);
+	out.Close();
 }
 
-static void PrintVarDeclarator(FString &out, ZCC_TreeNode *node)
+static void PrintVarDeclarator(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_VarDeclarator *dnode = (ZCC_VarDeclarator *)node;
-	out << "\n(var-declarator ";
+	out.Break();
+	out.Open("var-declarator");
 	PrintNodes(out, dnode->Type);
-	out.AppendFormat("%x ", dnode->Flags);
-	PrintNodes(out, dnode->Names, ')');
-	out << '\n';
+	out.AddHex(dnode->Flags);
+	PrintNodes(out, dnode->Names);
+	out.Close();
 }
 
-static void PrintFuncDeclarator(FString &out, ZCC_TreeNode *node)
+static void PrintFuncDeclarator(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncDeclarator *dnode = (ZCC_FuncDeclarator *)node;
-	out << "\n(func-declarator ";
+	out.Break();
+	out.Open("func-declarator");
 	PrintNodes(out, dnode->Type);
-	out.AppendFormat("%x %s ", dnode->Flags, FName(dnode->Name).GetChars());
-	PrintNodes(out, dnode->Params, ' ');
-	PrintNodes(out, dnode->Body, ')');
-	out << '\n';
+	out.AddHex(dnode->Flags);
+	out.AddName(dnode->Name);
+	PrintNodes(out, dnode->Params);
+	PrintNodes(out, dnode->Body);
+	out.Close();
 }
 
-void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FString &, ZCC_TreeNode *) =
+void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *) =
 {
 	PrintIdentifier,
 	PrintClass,
@@ -607,7 +794,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FString &, ZCC_TreeNode *) =
 
 FString ZCC_PrintAST(ZCC_TreeNode *root)
 {
-	FString out;
-	PrintNodes(out, root, '\0');
+	FLispString out;
+	PrintNodes(out, root);
 	return out;
 }

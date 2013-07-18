@@ -234,6 +234,7 @@ static void PrintStringConst(FLispString &out, FString str)
 static void PrintClass(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Class *cnode = (ZCC_Class *)node;
+	out.Break();
 	out.Open("class");
 	PrintNodes(out, cnode->ClassName);
 	PrintNodes(out, cnode->ParentName);
@@ -561,6 +562,7 @@ static void PrintExprTrinary(FLispString &out, ZCC_TreeNode *node)
 static void PrintFuncParam(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncParm *pnode = (ZCC_FuncParm *)node;
+	out.Break();
 	out.Open("func-parm");
 	out.AddName(pnode->Label);
 	PrintNodes(out, pnode->Value);
@@ -576,6 +578,7 @@ static void PrintStatement(FLispString &out, ZCC_TreeNode *node)
 static void PrintCompoundStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_CompoundStmt *snode = (ZCC_CompoundStmt *)node;
+	out.Break();
 	out.Open("compound-stmt");
 	PrintNodes(out, snode->Content);
 	out.Close();
@@ -583,12 +586,14 @@ static void PrintCompoundStmt(FLispString &out, ZCC_TreeNode *node)
 
 static void PrintContinueStmt(FLispString &out, ZCC_TreeNode *node)
 {
+	out.Break();
 	out.Open("continue-stmt");
 	out.Close();
 }
 
 static void PrintBreakStmt(FLispString &out, ZCC_TreeNode *node)
 {
+	out.Break();
 	out.Open("break-stmt");
 	out.Close();
 }
@@ -596,6 +601,7 @@ static void PrintBreakStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintReturnStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ReturnStmt *snode = (ZCC_ReturnStmt *)node;
+	out.Break();
 	out.Open("return-stmt");
 	PrintNodes(out, snode->Values);
 	out.Close();
@@ -604,6 +610,7 @@ static void PrintReturnStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintExpressionStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExpressionStmt *snode = (ZCC_ExpressionStmt *)node;
+	out.Break();
 	out.Open("expression-stmt");
 	PrintNodes(out, snode->Expression);
 	out.Close();
@@ -612,6 +619,7 @@ static void PrintExpressionStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintIterationStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_IterationStmt *snode = (ZCC_IterationStmt *)node;
+	out.Break();
 	out.Open("iteration-stmt");
 	out.Add((snode->CheckAt == ZCC_IterationStmt::Start) ? "start" : "end");
 	PrintNodes(out, snode->LoopCondition);
@@ -623,9 +631,12 @@ static void PrintIterationStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintIfStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_IfStmt *snode = (ZCC_IfStmt *)node;
+	out.Break();
 	out.Open("if-stmt");
 	PrintNodes(out, snode->Condition);
+	out.Break();
 	PrintNodes(out, snode->TruePath);
+	out.Break();
 	PrintNodes(out, snode->FalsePath);
 	out.Close();
 }
@@ -633,8 +644,10 @@ static void PrintIfStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintSwitchStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_SwitchStmt *snode = (ZCC_SwitchStmt *)node;
+	out.Break();
 	out.Open("switch-stmt");
 	PrintNodes(out, snode->Condition);
+	out.Break();
 	PrintNodes(out, snode->Content);
 	out.Close();
 }
@@ -642,6 +655,7 @@ static void PrintSwitchStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintCaseStmt(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_CaseStmt *snode = (ZCC_CaseStmt *)node;
+	out.Break();
 	out.Open("case-stmt");
 	PrintNodes(out, snode->Condition);
 	out.Close();
@@ -691,6 +705,7 @@ static void PrintLocalVarStmt(FLispString &out, ZCC_TreeNode *node)
 static void PrintFuncParamDecl(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_FuncParamDecl *dnode = (ZCC_FuncParamDecl *)node;
+	out.Break();
 	out.Open("func-param-decl");
 	PrintNodes(out, dnode->Type);
 	out.AddName(dnode->Name);
@@ -701,6 +716,7 @@ static void PrintFuncParamDecl(FLispString &out, ZCC_TreeNode *node)
 static void PrintConstantDef(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ConstantDef *dnode = (ZCC_ConstantDef *)node;
+	out.Break();
 	out.Open("constant-def");
 	out.AddName(dnode->Name);
 	PrintNodes(out, dnode->Value);
@@ -710,6 +726,7 @@ static void PrintConstantDef(FLispString &out, ZCC_TreeNode *node)
 static void PrintDeclarator(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_Declarator *dnode = (ZCC_Declarator *)node;
+	out.Break();
 	out.Open("declarator");
 	PrintNodes(out, dnode->Type);
 	out.AddHex(dnode->Flags);

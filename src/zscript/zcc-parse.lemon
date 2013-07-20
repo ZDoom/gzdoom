@@ -402,7 +402,7 @@ type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) 
 	id->Id = A.Name();
 	X = type;
 }
-type_name(X) ::= LBRACKET dottable_id(A) RBRACKET.
+type_name(X) ::= DOT dottable_id(A).
 {
 	NEW_AST_NODE(BasicType, type);
 	type->Type = ZCC_UserType;
@@ -441,6 +441,7 @@ vector_size(X) ::= LT INTCONST(A) GT.
 %type type_or_array {ZCC_Type *}
 %type class_restrictor {ZCC_Identifier *}
 %type array_size{ZCC_Expression *}
+%type array_size_expr{ZCC_Expression *}
 
 aggregate_type(X) ::= MAP LT type_or_array(A) COMMA type_or_array(B) GT.	/* Hash table */
 {
@@ -478,7 +479,7 @@ type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; A->AppendSibling(
 type_list_or_void(X) ::= VOID.				{ X = NULL; }
 type_list_or_void(X) ::= type_list(A).		{ X = A; }
 
-array_size(X) ::= LBRACKET opt_expr(A) RBRACKET.
+array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
 {
 	if (A == NULL)
 	{
@@ -491,18 +492,13 @@ array_size(X) ::= LBRACKET opt_expr(A) RBRACKET.
 		X = A;
 	}
 }
-array_size(X) ::= array_size(A) LBRACKET opt_expr(B) RBRACKET.
+array_size(X) ::= array_size_expr(A).
 {
-	if (B == NULL)
-	{
-		NEW_AST_NODE(Expression,nil);
-		nil->Operation = PEX_Nil;
-		A->AppendSibling(nil);
-	}
-	else
-	{
-		A->AppendSibling(B);
-	}
+	X = A;
+}
+array_size(X) ::= array_size(A) array_size_expr(B).
+{
+	A->AppendSibling(B);
 	X = A;
 }
 
@@ -608,6 +604,12 @@ variables_or_function(X) ::= error SEMICOLON.
 %type func_const{int}
 
 variable_name(X) ::= IDENTIFIER(A).
+{
+	NEW_AST_NODE(VarName,var);
+	var->Name = ENamedName(A.Int);
+	X = var;
+}
+variable_name(X) ::= IDENTIFIER(A) array_size.
 {
 	NEW_AST_NODE(VarName,var);
 	var->Name = ENamedName(A.Int);

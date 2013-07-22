@@ -732,8 +732,8 @@ bool FMODSoundRenderer::Init()
 	}
 	if (wrongver != NULL)
 	{
-		Printf (" "TEXTCOLOR_ORANGE"Error! You are using %s version of FMOD (%x.%02x.%02x).\n"
-				" "TEXTCOLOR_ORANGE"This program was built for version %x.%02x.%02x\n",
+		Printf (" " TEXTCOLOR_ORANGE "Error! You are using %s version of FMOD (%x.%02x.%02x).\n"
+				" " TEXTCOLOR_ORANGE "This program was built for version %x.%02x.%02x\n",
 				wrongver,
 				version >> 16, (version >> 8) & 255, version & 255,
 				FMOD_VERSION >> 16, (FMOD_VERSION >> 8) & 255, FMOD_VERSION & 255);
@@ -1261,15 +1261,15 @@ void FMODSoundRenderer::PrintStatus()
 	unsigned int bufferlength;
 	int numbuffers;
 
-	Printf ("Loaded FMOD version: "TEXTCOLOR_GREEN"%x.%02x.%02x\n", ActiveFMODVersion >> 16,
+	Printf ("Loaded FMOD version: " TEXTCOLOR_GREEN "%x.%02x.%02x\n", ActiveFMODVersion >> 16,
 		(ActiveFMODVersion >> 8) & 255, ActiveFMODVersion & 255);
 	if (FMOD_OK == Sys->getOutput(&output))
 	{
-		Printf ("Output type: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(OutputNames, output));
+		Printf ("Output type: " TEXTCOLOR_GREEN "%s\n", Enum_NameForNum(OutputNames, output));
 	}
 	if (FMOD_OK == Sys->getSpeakerMode(&speakermode))
 	{
-		Printf ("Speaker mode: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(SpeakerModeNames, speakermode));
+		Printf ("Speaker mode: " TEXTCOLOR_GREEN "%s\n", Enum_NameForNum(SpeakerModeNames, speakermode));
 	}
 	if (FMOD_OK == Sys->getDriver(&driver))
 	{
@@ -1278,19 +1278,19 @@ void FMODSoundRenderer::PrintStatus()
 		{
 			strcpy(name, "Unknown");
 		}
-		Printf ("Driver: "TEXTCOLOR_GREEN"%d"TEXTCOLOR_NORMAL" ("TEXTCOLOR_ORANGE"%s"TEXTCOLOR_NORMAL")\n", driver, name);
+		Printf ("Driver: " TEXTCOLOR_GREEN "%d" TEXTCOLOR_NORMAL " (" TEXTCOLOR_ORANGE "%s" TEXTCOLOR_NORMAL ")\n", driver, name);
 		DumpDriverCaps(Driver_Caps, Driver_MinFrequency, Driver_MaxFrequency);
 	}
 	if (FMOD_OK == Sys->getSoftwareFormat(&samplerate, &format, &numoutputchannels, NULL, &resampler, NULL))
 	{
-		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer sample rate: "TEXTCOLOR_GREEN"%d\n", samplerate);
-		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer format: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(SoundFormatNames, format));
-		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer channels: "TEXTCOLOR_GREEN"%d\n", numoutputchannels);
-		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer resampler: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(ResamplerNames, resampler));
+		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer sample rate: " TEXTCOLOR_GREEN "%d\n", samplerate);
+		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer format: " TEXTCOLOR_GREEN "%s\n", Enum_NameForNum(SoundFormatNames, format));
+		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer channels: " TEXTCOLOR_GREEN "%d\n", numoutputchannels);
+		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer resampler: " TEXTCOLOR_GREEN "%s\n", Enum_NameForNum(ResamplerNames, resampler));
 	}
 	if (FMOD_OK == Sys->getDSPBufferSize(&bufferlength, &numbuffers))
 	{
-		Printf (TEXTCOLOR_LIGHTBLUE "DSP buffers: "TEXTCOLOR_GREEN"%u samples x %d\n", bufferlength, numbuffers);
+		Printf (TEXTCOLOR_LIGHTBLUE "DSP buffers: " TEXTCOLOR_GREEN "%u samples x %d\n", bufferlength, numbuffers);
 	}
 }
 
@@ -1302,8 +1302,8 @@ void FMODSoundRenderer::PrintStatus()
 
 void FMODSoundRenderer::DumpDriverCaps(FMOD_CAPS caps, int minfrequency, int maxfrequency)
 {
-	Printf (TEXTCOLOR_OLIVE "   Min. frequency: "TEXTCOLOR_GREEN"%d\n", minfrequency);
-	Printf (TEXTCOLOR_OLIVE "   Max. frequency: "TEXTCOLOR_GREEN"%d\n", maxfrequency);
+	Printf (TEXTCOLOR_OLIVE "   Min. frequency: " TEXTCOLOR_GREEN "%d\n", minfrequency);
+	Printf (TEXTCOLOR_OLIVE "   Max. frequency: " TEXTCOLOR_GREEN "%d\n", maxfrequency);
 	Printf ("  Features:\n");
 	if (caps == 0)									Printf(TEXTCOLOR_OLIVE "   None\n");
 	if (caps & FMOD_CAPS_HARDWARE)					Printf(TEXTCOLOR_OLIVE "   Hardware mixing\n");
@@ -1318,7 +1318,7 @@ void FMODSoundRenderer::DumpDriverCaps(FMOD_CAPS caps, int minfrequency, int max
 	{
 		Printf("\n");
 	}
-	if (caps & FMOD_CAPS_REVERB_LIMITED)			Printf("TEXTCOLOR_OLIVE    Limited reverb\n");
+	if (caps & FMOD_CAPS_REVERB_LIMITED)			Printf(TEXTCOLOR_OLIVE "   Limited reverb\n");
 }
 
 //==========================================================================
@@ -1386,11 +1386,11 @@ FString FMODSoundRenderer::GatherStats()
 	}
 #endif
 
-	out.Format ("%d channels,"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% CPU "
-		"(DSP:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
-		"Stream:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
-		"Geometry:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%% "
-		"Update:"TEXTCOLOR_YELLOW"%5.2f"TEXTCOLOR_NORMAL"%%)",
+	out.Format ("%d channels," TEXTCOLOR_YELLOW "%5.2f" TEXTCOLOR_NORMAL "%% CPU "
+		"(DSP:" TEXTCOLOR_YELLOW "%5.2f" TEXTCOLOR_NORMAL "%% "
+		"Stream:" TEXTCOLOR_YELLOW "%5.2f" TEXTCOLOR_NORMAL "%% "
+		"Geometry:" TEXTCOLOR_YELLOW "%5.2f" TEXTCOLOR_NORMAL "%% "
+		"Update:" TEXTCOLOR_YELLOW "%5.2f" TEXTCOLOR_NORMAL "%%)",
 		channels, total, dsp, stream, geometry, update);
 	return out;
 }

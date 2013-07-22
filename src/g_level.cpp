@@ -164,8 +164,8 @@ CCMD (map)
 {
 	if (netgame)
 	{
-		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Map"
-				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		Printf ("Use " TEXTCOLOR_BOLD "changemap" TEXTCOLOR_NORMAL " instead. " TEXTCOLOR_BOLD "Map"
+				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
 	if (argv.argc() > 1)

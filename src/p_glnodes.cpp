@@ -252,7 +252,7 @@ static bool LoadGLVertexes(FileReader * lump)
 		// GLNodes V1 and V4 are unsupported.
 		// V1 because the precision is insufficient and
 		// V4 due to the missing partner segs
-		Printf("GL nodes v%d found. This format is not supported by "GAMENAME"\n",
+		Printf("GL nodes v%d found. This format is not supported by " GAMENAME "\n",
 			(*(int *)gldata == gNd4)? 4:1);
 
 		delete [] gldata;

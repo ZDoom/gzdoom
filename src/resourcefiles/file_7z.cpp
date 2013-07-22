@@ -243,7 +243,7 @@ bool F7ZFile::Open(bool quiet)
 		Archive = NULL;
 		if (!quiet)
 		{
-			Printf("\n"TEXTCOLOR_RED"%s: ", Filename);
+			Printf("\n" TEXTCOLOR_RED "%s: ", Filename);
 			if (res == SZ_ERROR_UNSUPPORTED)
 			{
 				Printf("Decoder does not support this archive\n");

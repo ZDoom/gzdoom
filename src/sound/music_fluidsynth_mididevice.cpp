@@ -620,10 +620,10 @@ FString FluidSynthMIDIDevice::GetStats()
 	fluid_settings_getint(FluidSettings, "synth.polyphony", &maxpoly);
 	CritSec.Leave();
 
-	out.Format("Voices: "TEXTCOLOR_YELLOW"%3d"TEXTCOLOR_NORMAL"/"TEXTCOLOR_ORANGE"%3d"TEXTCOLOR_NORMAL"("TEXTCOLOR_RED"%3d"TEXTCOLOR_NORMAL")"
-			   TEXTCOLOR_YELLOW"%6.2f"TEXTCOLOR_NORMAL"%% CPU   "
-			   "Reverb: "TEXTCOLOR_YELLOW"%3s"TEXTCOLOR_NORMAL
-			   " Chorus: "TEXTCOLOR_YELLOW"%3s",
+	out.Format("Voices: " TEXTCOLOR_YELLOW "%3d" TEXTCOLOR_NORMAL "/" TEXTCOLOR_ORANGE "%3d" TEXTCOLOR_NORMAL "(" TEXTCOLOR_RED "%3d" TEXTCOLOR_NORMAL ")"
+			   TEXTCOLOR_YELLOW "%6.2f" TEXTCOLOR_NORMAL "%% CPU   "
+			   "Reverb: " TEXTCOLOR_YELLOW "%3s" TEXTCOLOR_NORMAL
+			   " Chorus: " TEXTCOLOR_YELLOW "%3s",
 		voices, polyphony, maxpoly, load, reverb, chorus);
 	return out;
 }

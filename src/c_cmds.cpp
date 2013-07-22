@@ -960,8 +960,8 @@ CCMD(nextmap)
 {
 	if (netgame)
 	{
-		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Nextmap"
-				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		Printf ("Use " TEXTCOLOR_BOLD "changemap" TEXTCOLOR_NORMAL " instead. " TEXTCOLOR_BOLD "Nextmap"
+				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
 	char *next = NULL;
@@ -988,8 +988,8 @@ CCMD(nextsecret)
 {
 	if (netgame)
 	{
-		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Nextsecret"
-				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		Printf ("Use " TEXTCOLOR_BOLD "changemap" TEXTCOLOR_NORMAL " instead. " TEXTCOLOR_BOLD "Nextsecret"
+				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
 	char *next = NULL;

@@ -922,7 +922,7 @@ void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf (TEXTCOLOR_RED"Script error, \"%s\" line %d:\n"TEXTCOLOR_RED"%s\n", ScriptName.GetChars(),
+	Printf (TEXTCOLOR_RED "Script error, \"%s\" line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 

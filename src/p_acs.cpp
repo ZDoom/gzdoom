@@ -112,6 +112,9 @@ FRandom pr_acs ("ACS");
 #define NOT_FLOOR			8
 #define NOT_CEILING			16
 
+// LineAtack flags
+#define FHF_NORANDOMPUFFZ	1
+
 // SpawnDecal flags
 #define SDF_ABSANGLE		1
 #define SDF_PERMANENT		2
@@ -4966,10 +4969,13 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
 				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
+				int flags			= argCount > 7 && args[7]? args[7] : 0;
+
+				int fhflags = (flags & FHF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 				if (args[0] == 0)
 				{
-					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype);
+					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 				}
 				else
 				{
@@ -4978,7 +4984,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 					while ((source = it.Next()) != NULL)
 					{
-						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype);
+						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 					}
 				}
 			}

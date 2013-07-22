@@ -616,7 +616,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
-		FString cmd("kdialog --title \""GAMESIG" ");
+		FString cmd("kdialog --title \"" GAMESIG " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
 		            " --menu \"ZDoom found more than one IWAD\n"
 		            "Select from the list below to determine which one to use:\"";

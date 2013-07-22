@@ -813,7 +813,7 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 	player_t * cplayer = player->camera->player;
 	if (cplayer) 
 	{
-		if (cplayer->extralight<0)
+		if (cplayer->extralight == INT_MIN)
 		{
 			gl_fixedcolormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
 			extralight=0;

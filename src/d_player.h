@@ -140,6 +140,7 @@ public:
 	int			SpawnMask;
 	FNameNoInit	MorphWeapon;
 	fixed_t		AttackZOffset;			// attack height, relative to player center
+	fixed_t		UseRange;				// [NS] Distance at which player can +use
 	const PClass *FlechetteType;
 
 	// [CW] Fades for when you are being damaged.

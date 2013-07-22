@@ -474,6 +474,10 @@ void APlayerPawn::Serialize (FArchive &arc)
 	{
 		arc << GruntSpeed << FallingScreamMinSpeed << FallingScreamMaxSpeed;
 	}
+	if (SaveVersion >= 4502)
+	{
+		arc << UseRange;
+	}
 }
 
 //===========================================================================

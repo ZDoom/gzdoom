@@ -261,6 +261,8 @@ enum
 
 struct userinfo_t : TMap<FName,FBaseCVar *>
 {
+	~userinfo_t();
+
 	int GetAimDist() const
 	{
 		if (dmflags2 & DF2_NOAUTOAIM)

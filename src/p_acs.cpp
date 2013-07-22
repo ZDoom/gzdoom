@@ -5562,7 +5562,8 @@ int DLevelScript::RunScript ()
 		case PCD_PUSHFUNCTION:
 		{
 			int funcnum = NEXTBYTE;
-			PushToStack(funcnum | activeBehavior->GetLibraryID());
+			// Not technically a string, but since we use the same tagging mechanism
+			PushToStack(TAGSTR(funcnum));
 			break;
 		}
 		case PCD_CALL:
@@ -5578,7 +5579,7 @@ int DLevelScript::RunScript ()
 				if(pcd == PCD_CALLSTACK)
 				{
 					funcnum = STACK(1);
-					module = FBehavior::StaticGetModule(funcnum>>16);
+					module = FBehavior::StaticGetModule(funcnum>>LIBRARYID_SHIFT);
 					--sp;
 
 					funcnum &= 0xFFFF; // Clear out tag
@@ -8455,7 +8456,8 @@ scriptwait:
 		case PCD_SAVESTRING:
 			// Saves the string
 			{
-				PushToStack(GlobalACSStrings.AddString(work, Stack, sp));
+				const int str = GlobalACSStrings.AddString(work, Stack, sp);
+				PushToStack(str);
 				STRINGBUILDER_FINISH(work);
 			}		
 			break;

@@ -1048,3 +1048,14 @@ CCMD (playerinfo)
 		}
 	}
 }
+
+userinfo_t::~userinfo_t()
+{
+	TMapIterator<FName, FBaseCVar *> it(*this);
+	TMap<FName, FBaseCVar *>::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		delete pair->Value;
+	}
+}

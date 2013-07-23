@@ -267,7 +267,6 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	bool usedown = dst->usedown;
 
 	
-	dst->~player_t();	// ensure that the userinfo in dst does not contain anything before copying everything over.
 	*dst = *src;		// To avoid memory leaks at this point the userinfo in src must be empty which is taken care of by the TransferFrom call above.
 
 	dst->cheats |= chasecam;

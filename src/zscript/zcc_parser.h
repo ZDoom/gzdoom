@@ -2,6 +2,7 @@ struct ZCCParseState
 {
 	ZCCParseState(FScanner &scanner) : sc(scanner)
 	{
+		TopNode = NULL;
 	}
 
 	FScanner &sc;

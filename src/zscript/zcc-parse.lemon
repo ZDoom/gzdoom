@@ -611,12 +611,14 @@ variable_name(X) ::= IDENTIFIER(A).
 {
 	NEW_AST_NODE(VarName,var);
 	var->Name = ENamedName(A.Int);
+	var->ArraySize = NULL;
 	X = var;
 }
-variable_name(X) ::= IDENTIFIER(A) array_size.
+variable_name(X) ::= IDENTIFIER(A) array_size(B).
 {
 	NEW_AST_NODE(VarName,var);
 	var->Name = ENamedName(A.Int);
+	var->ArraySize = B;
 	X = var;
 }
 

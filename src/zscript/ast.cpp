@@ -373,6 +373,7 @@ static void PrintVarName(FLispString &out, ZCC_TreeNode *node)
 	ZCC_VarName *vnode = (ZCC_VarName *)node;
 	out.Open("var-name");
 	out.AddName(vnode->Name);
+	PrintNodes(out, vnode->ArraySize);
 	out.Close();
 }
 

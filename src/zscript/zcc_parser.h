@@ -307,6 +307,7 @@ struct ZCC_StateLine : ZCC_StatePart
 struct ZCC_VarName : ZCC_TreeNode
 {
 	ENamedName Name;
+	ZCC_Expression *ArraySize;	// NULL if not an array
 };
 
 struct ZCC_Type : ZCC_TreeNode

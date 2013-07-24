@@ -522,11 +522,11 @@ array_size(X) ::= array_size(A) array_size_expr(B).
 /* Multiple type names are only valid for functions. */
 declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 {
-	if (C.FuncParams == NULL && C.VarNames == NULL)
+	if (C.FuncName == NAME_None && C.VarNames == NULL)
 	{ // An error. A message was already printed.
 		X = NULL;
 	}
-	else if (C.FuncParams != NULL)
+	else if (C.FuncName != NAME_None)
 	{ // A function
 		NEW_AST_NODE(FuncDeclarator, decl);
 		decl->Type = B;

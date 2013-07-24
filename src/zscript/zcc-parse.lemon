@@ -256,6 +256,7 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 %type state_goto_offset {ZCC_Expression *}
 %type state_action {ZCC_TreeNode *}
 %type state_call {ZCC_ExprFuncCall *}
+%type state_call_params {ZCC_FuncParm *}
 
 %include {
 	struct StateOpts {
@@ -348,7 +349,7 @@ state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
 state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; }
 
 state_call(X) ::= .											{ X = NULL; }
-state_call(X) ::= IDENTIFIER(A) func_expr_list(B).
+state_call(X) ::= IDENTIFIER(A) state_call_params(B).
 {
 	NEW_AST_NODE(ExprFuncCall, expr);
 	NEW_AST_NODE(ExprID, func);
@@ -360,6 +361,9 @@ state_call(X) ::= IDENTIFIER(A) func_expr_list(B).
 	expr->Parameters = B;
 	X = expr;
 }
+
+state_call_params(X) ::= .									{ X = NULL; }
+state_call_params(X) ::= LPAREN func_expr_list(A) RPAREN.	{ X = A; }
 
 /* Definition of a default class instance. */
 %type default_def {ZCC_CompoundStmt *}

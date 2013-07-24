@@ -160,6 +160,7 @@ public:
 	int			SpawnMask;
 	FNameNoInit	MorphWeapon;
 	fixed_t		AttackZOffset;			// attack height, relative to player center
+	fixed_t		UseRange;				// [NS] Distance at which player can +use
 	PClassActor *FlechetteType;
 
 	// [CW] Fades for when you are being damaged.
@@ -280,6 +281,8 @@ enum
 
 struct userinfo_t : TMap<FName,FBaseCVar *>
 {
+	~userinfo_t();
+
 	int GetAimDist() const
 	{
 		if (dmflags2 & DF2_NOAUTOAIM)

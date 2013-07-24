@@ -112,6 +112,9 @@ FRandom pr_acs ("ACS");
 #define NOT_FLOOR			8
 #define NOT_CEILING			16
 
+// LineAtack flags
+#define FHF_NORANDOMPUFFZ	1
+
 // SpawnDecal flags
 #define SDF_ABSANGLE		1
 #define SDF_PERMANENT		2
@@ -4961,10 +4964,13 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
 				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
+				int flags			= argCount > 7 && args[7]? args[7] : 0;
+
+				int fhflags = (flags & FHF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 				if (args[0] == 0)
 				{
-					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype);
+					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 				}
 				else
 				{
@@ -4973,7 +4979,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 					while ((source = it.Next()) != NULL)
 					{
-						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype);
+						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 					}
 				}
 			}
@@ -5020,7 +5026,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 							{
 								S_Sound(spot, chan, sid, vol, atten);
 							}
-							else if (!S_IsActorPlayingSomething(spot, chan, sid))
+							else if (!S_IsActorPlayingSomething(spot, chan & 7, sid))
 							{
 								S_Sound(spot, chan | CHAN_LOOP, sid, vol, atten);
 							}
@@ -5551,7 +5557,8 @@ int DLevelScript::RunScript ()
 		case PCD_PUSHFUNCTION:
 		{
 			int funcnum = NEXTBYTE;
-			PushToStack(funcnum | activeBehavior->GetLibraryID());
+			// Not technically a string, but since we use the same tagging mechanism
+			PushToStack(TAGSTR(funcnum));
 			break;
 		}
 		case PCD_CALL:
@@ -5567,7 +5574,7 @@ int DLevelScript::RunScript ()
 				if(pcd == PCD_CALLSTACK)
 				{
 					funcnum = STACK(1);
-					module = FBehavior::StaticGetModule(funcnum>>16);
+					module = FBehavior::StaticGetModule(funcnum>>LIBRARYID_SHIFT);
 					--sp;
 
 					funcnum &= 0xFFFF; // Clear out tag
@@ -8444,7 +8451,8 @@ scriptwait:
 		case PCD_SAVESTRING:
 			// Saves the string
 			{
-				PushToStack(GlobalACSStrings.AddString(work, Stack, sp));
+				const int str = GlobalACSStrings.AddString(work, Stack, sp);
+				PushToStack(str);
 				STRINGBUILDER_FINISH(work);
 			}		
 			break;

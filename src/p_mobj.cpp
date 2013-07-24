@@ -6029,7 +6029,15 @@ void AActor::Crash()
 		
 		if (DamageType != NAME_None)
 		{
-			crashstate = FindState(NAME_Crash, DamageType, true);
+			if (health < GetGibHealth())
+			{ // Extreme death
+				FName labels[] = { NAME_Crash, NAME_Extreme, DamageType };
+				crashstate = FindState (3, labels, true);
+			}
+			if (crashstate == NULL)
+			{ // Normal death
+				crashstate = FindState(NAME_Crash, DamageType, true);
+			}
 		}
 		if (crashstate == NULL)
 		{

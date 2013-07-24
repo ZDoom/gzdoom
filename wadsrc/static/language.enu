@@ -112,6 +112,7 @@ PD_YELLOWCO = "You need a yellow card to activate this object";
 PD_BLUESO = "You need a blue skull to activate this object";
 PD_REDSO = "You need a red skull to activate this object";
 PD_YELLOWSO = "You need a yellow skull to activate this object";
+NEWSAVE = "<New Save Game>";
 GGSAVED = "game saved.";
 HUSTR_MSGU = "[Message unsent]";
 PICKUP_PISTOL_DROPPED = "Picked up a pistol.";

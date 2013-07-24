@@ -763,7 +763,7 @@ protected:
 		fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
 		int usespecials);
 	friend bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
-		fixed_t speed, fixed_t height, int crush, int change, bool hexencrush, bool hereticlower=false);
+		fixed_t speed, fixed_t height, int crush, int change, bool hexencrush, bool hereticlower);
 	friend bool EV_FloorCrushStop (int tag);
 	friend bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed);
 private:
@@ -774,7 +774,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
 	int usespecials);
 bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
-	fixed_t speed, fixed_t height, int crush, int change, bool hexencrush, bool hereticlower);
+	fixed_t speed, fixed_t height, int crush, int change, bool hexencrush, bool hereticlower=false);
 bool EV_FloorCrushStop (int tag);
 bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed);
 

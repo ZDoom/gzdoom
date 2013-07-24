@@ -2458,6 +2458,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->UseRange = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 {
 	PROP_FIXED_PARM(m, 0);

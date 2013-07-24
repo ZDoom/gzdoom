@@ -713,7 +713,7 @@ void D_WriteUserInfoStrings (int pnum, BYTE **stream, bool compact)
 
 		if (!compact)
 		{ // In verbose mode, prepend the cvar's name
-			*stream += sprintf(*((char **)stream), "\\%s\\", pair->Key.GetChars());
+			*stream += sprintf(*((char **)stream), "\\%s", pair->Key.GetChars());
 		}
 		// A few of these need special handling for compatibility reasons.
 		switch (pair->Key.GetIndex())
@@ -1046,5 +1046,16 @@ CCMD (playerinfo)
 		{
 			PrintMiscActorInfo(players[i].mo);
 		}
+	}
+}
+
+userinfo_t::~userinfo_t()
+{
+	TMapIterator<FName, FBaseCVar *> it(*this);
+	TMap<FName, FBaseCVar *>::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		delete pair->Value;
 	}
 }

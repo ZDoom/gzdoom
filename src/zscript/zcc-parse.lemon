@@ -991,17 +991,22 @@ expr_list(X) ::= expr_list(A) COMMA expr(B).
  * but once you do that, all remaining parameters must also be named.
  * We let higher-level code handle this to keep this file simpler. */
 %type func_expr_list{ZCC_FuncParm *}
+%type func_expr_list1{ZCC_FuncParm *}
 %type named_expr{ZCC_FuncParm *}
 
 func_expr_list(X) ::= .
 {
 	X = NULL;
 }
-func_expr_list(X) ::= named_expr(A).
+func_expr_list(X) ::= func_expr_list1(A).
 {
 	X = A;
 }
-func_expr_list(X) ::= func_expr_list(A) COMMA named_expr(B).
+func_expr_list1(X) ::= named_expr(A).
+{
+	X = A;
+}
+func_expr_list1(X) ::= func_expr_list1(A) COMMA named_expr(B).
 {
 	X = A;
 	A->AppendSibling(B);

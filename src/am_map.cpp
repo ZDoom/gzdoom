@@ -204,6 +204,7 @@ CVAR (Color, am_ovthingcolor_friend,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_monster,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
+CVAR (Int,   am_showthingsprites,		0,			CVAR_ARCHIVE);
 
 
 static int bigstate = 0;
@@ -411,6 +412,9 @@ static fixed_t mapxstart=0; //x-value for the bitmap.
 static bool stopped = true;
 
 static void AM_calcMinMaxMtoF();
+
+static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
+	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, fixed_t alpha, DWORD fillcolor, FRenderStyle renderstyle);
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
@@ -2193,6 +2197,12 @@ AM_drawLineCharacter
 
 void AM_drawPlayers ()
 {
+	if (am_cheat >= 2 && am_showthingsprites > 0)
+	{
+		// Player sprites are drawn with the others
+		return;
+	}
+
 	mpoint_t pt;
 	angle_t angle;
 	int i;
@@ -2344,74 +2354,97 @@ void AM_drawThings ()
 		{
 			p.x = t->x >> FRACTOMAPBITS;
 			p.y = t->y >> FRACTOMAPBITS;
-			angle = t->angle;
 
-			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+			if (am_showthingsprites > 0)
 			{
-				AM_rotatePoint (&p.x, &p.y);
-				angle += ANG90 - players[consoleplayer].camera->angle;
+				const spritedef_t& sprite = sprites[t->sprite];
+				const size_t spriteIndex = sprite.spriteframes + (am_showthingsprites > 1 ? t->frame : 0);
+
+				const spriteframe_t& frame = SpriteFrames[spriteIndex];
+				const angle_t rotation = (frame.Texture[0] == frame.Texture[1])
+					? (t->angle + (angle_t)(ANGLE_45 / 2) * 9) >> 28
+					: (t->angle + (angle_t)(ANGLE_45 / 2) * 9 - (angle_t)(ANGLE_180 / 16)) >> 28;
+
+				const FTextureID textureID = frame.Texture[am_showthingsprites > 2 ? rotation : 0];
+				FTexture* texture = TexMan(textureID);
+
+				const fixed_t spriteScale = 10 * scale_mtof;
+
+				DrawMarker (texture, p.x, p.y, 0, 0,
+					spriteScale, spriteScale, 0, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
 			}
-
-			color = ThingColor;
-
-			// use separate colors for special thing types
-			if (t->flags3&MF3_ISMONSTER && !(t->flags&MF_CORPSE))
+			else
 			{
-				if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = ThingColor_Friend;
-				else color = ThingColor_Monster;
-			}
-			else if (t->flags&MF_SPECIAL)
-			{
-				// Find the key's own color.
-				// Only works correctly if single-key locks have lower numbers than any-key locks.
-				// That is the case for all default keys, however.
-				if (t->IsKindOf(RUNTIME_CLASS(AKey)))
+				angle = t->angle;
+
+				if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 				{
-					if (G_SkillProperty(SKILLP_EasyKey))
-					{
-						// Already drawn by AM_drawKeys(), so don't draw again
-						color.Index = -1;
-					}
-					else if (am_showkeys)
-					{
-						int P_GetMapColorForKey (AInventory * key);
-						int c = P_GetMapColorForKey(static_cast<AKey *>(t));
-
-						if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
-						else color = ThingColor_CountItem;
-						AM_drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0, color, p.x, p.y);
-						color.Index = -1;
-					}
-					else
-					{
-						color = ThingColor_Item;
-					}
+					AM_rotatePoint (&p.x, &p.y);
+					angle += ANG90 - players[consoleplayer].camera->angle;
 				}
-				else if (t->flags&MF_COUNTITEM)
-					color = ThingColor_CountItem;
-				else
-					color = ThingColor_Item;
-			}
 
-			if (color.Index != -1)
-			{
-				AM_drawLineCharacter
-				(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
-				 16<<MAPBITS, angle, color, p.x, p.y);
-			}
+				color = ThingColor;
 
-			if (am_cheat >= 3)
-			{
-				static const mline_t box[4] =
+				// use separate colors for special thing types
+				if (t->flags3&MF3_ISMONSTER && !(t->flags&MF_CORPSE))
 				{
-					{ { -MAPUNIT, -MAPUNIT }, {  MAPUNIT, -MAPUNIT } },
-					{ {  MAPUNIT, -MAPUNIT }, {  MAPUNIT,  MAPUNIT } },
-					{ {  MAPUNIT,  MAPUNIT }, { -MAPUNIT,  MAPUNIT } },
-					{ { -MAPUNIT,  MAPUNIT }, { -MAPUNIT, -MAPUNIT } },
-				};
+					if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = ThingColor_Friend;
+					else color = ThingColor_Monster;
+				}
+				else if (t->flags&MF_SPECIAL)
+				{
+					// Find the key's own color.
+					// Only works correctly if single-key locks have lower numbers than any-key locks.
+					// That is the case for all default keys, however.
+					if (t->IsKindOf(RUNTIME_CLASS(AKey)))
+					{
+						if (G_SkillProperty(SKILLP_EasyKey))
+						{
+							// Already drawn by AM_drawKeys(), so don't draw again
+							color.Index = -1;
+						}
+						else if (am_showkeys)
+						{
+							int P_GetMapColorForKey (AInventory * key);
+							int c = P_GetMapColorForKey(static_cast<AKey *>(t));
 
-				AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->angle, color, p.x, p.y);
+							if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
+							else color = ThingColor_CountItem;
+							AM_drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0, color, p.x, p.y);
+							color.Index = -1;
+						}
+						else
+						{
+							color = ThingColor_Item;
+						}
+					}
+					else if (t->flags&MF_COUNTITEM)
+						color = ThingColor_CountItem;
+					else
+						color = ThingColor_Item;
+				}
+
+				if (color.Index != -1)
+				{
+					AM_drawLineCharacter
+						(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
+						16<<MAPBITS, angle, color, p.x, p.y);
+				}
+
+				if (am_cheat >= 3)
+				{
+					static const mline_t box[4] =
+					{
+						{ { -MAPUNIT, -MAPUNIT }, {  MAPUNIT, -MAPUNIT } },
+						{ {  MAPUNIT, -MAPUNIT }, {  MAPUNIT,  MAPUNIT } },
+						{ {  MAPUNIT,  MAPUNIT }, { -MAPUNIT,  MAPUNIT } },
+						{ { -MAPUNIT,  MAPUNIT }, { -MAPUNIT, -MAPUNIT } },
+					};
+
+					AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->angle, color, p.x, p.y);
+				}
 			}
+
 			t = t->snext;
 		}
 	}

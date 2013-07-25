@@ -1747,6 +1747,7 @@ enum SIX_Flags
 	SIXF_TRANSFERSCALE			= 1 << 14,
 	SIXF_TRANSFERSPECIAL		= 1 << 15,
 	SIXF_CLEARCALLERSPECIAL		= 1 << 16,
+	SIXF_TRANSFERSTENCILCOL		= 1 << 17,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1858,6 +1859,10 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		self->special = 0;
 		memset(self->args, 0, sizeof(self->args));
+	}
+	if (flags & SIXF_TRANSFERSTENCILCOL)
+	{
+		mo->fillcolor = self->fillcolor;
 	}
 
 	return true;

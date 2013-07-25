@@ -2361,16 +2361,20 @@ void AM_drawThings ()
 				const size_t spriteIndex = sprite.spriteframes + (am_showthingsprites > 1 ? t->frame : 0);
 
 				const spriteframe_t& frame = SpriteFrames[spriteIndex];
-				const angle_t rotation = (frame.Texture[0] == frame.Texture[1])
-					? (t->angle + (angle_t)(ANGLE_45 / 2) * 9) >> 28
-					: (t->angle + (angle_t)(ANGLE_45 / 2) * 9 - (angle_t)(ANGLE_180 / 16)) >> 28;
+				angle_t angle = ANGLE_270 - t->angle;
+				if (frame.Texture[0] != frame.Texture[1]) angle += (ANGLE_180 / 16);
+				if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+				{
+					angle += players[consoleplayer].camera->angle - ANGLE_90;
+				}
+				const angle_t rotation = angle >> 28;
 
 				const FTextureID textureID = frame.Texture[am_showthingsprites > 2 ? rotation : 0];
 				FTexture* texture = TexMan(textureID);
 
 				const fixed_t spriteScale = 10 * scale_mtof;
 
-				DrawMarker (texture, p.x, p.y, 0, 0,
+				DrawMarker (texture, p.x, p.y, 0, !!(frame.Flip & (1 << rotation)),
 					spriteScale, spriteScale, 0, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
 			}
 			else

@@ -997,25 +997,41 @@ expr_list(X) ::= expr_list(A) COMMA expr(B).
  * but once you do that, all remaining parameters must also be named.
  * We let higher-level code handle this to keep this file simpler. */
 %type func_expr_list{ZCC_FuncParm *}
-%type func_expr_list1{ZCC_FuncParm *}
+%type func_expr_item{ZCC_FuncParm *}
 %type named_expr{ZCC_FuncParm *}
 
-func_expr_list(X) ::= .
+func_expr_list(X) ::= func_expr_item(A).
+{
+	X = A;
+}
+func_expr_list(X) ::= func_expr_list(A) COMMA func_expr_item(B).
+{
+	// Omitted parameters still need to appear as nodes in the list.
+	if (A == NULL)
+	{
+		NEW_AST_NODE(FuncParm,nil_a);
+		nil_a->Value = NULL;
+		nil_a->Label = NAME_None;
+		A = nil_a;
+	}
+	if (B == NULL)
+	{
+		NEW_AST_NODE(FuncParm,nil_b);
+		nil_b->Value = NULL;
+		nil_b->Label = NAME_None;
+		B = nil_b;
+	}
+	X = A;
+	A->AppendSibling(B);
+}
+
+func_expr_item(X) ::= .
 {
 	X = NULL;
 }
-func_expr_list(X) ::= func_expr_list1(A).
+func_expr_item(X) ::= named_expr(A).
 {
 	X = A;
-}
-func_expr_list1(X) ::= named_expr(A).
-{
-	X = A;
-}
-func_expr_list1(X) ::= func_expr_list1(A) COMMA named_expr(B).
-{
-	X = A;
-	A->AppendSibling(B);
 }
 
 named_expr(X) ::= IDENTIFIER(A) COLON expr(B).

@@ -371,6 +371,15 @@ public:
 				delete (*this)[i];
 		}
 	}
+	void DeleteAndClear()
+	{
+		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)
+		{
+			if ((*this)[i] != NULL) 
+				delete (*this)[i];
+		}
+		Clear();
+	}
 };
 
 // TAutoGrowArray -----------------------------------------------------------

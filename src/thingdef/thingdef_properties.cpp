@@ -544,7 +544,14 @@ DEFINE_PROPERTY(damage, X, Actor)
 
 	// Store this expression here for now. It will be converted to a function
 	// later once all actors have been processed.
-	defaults->Damage = (VMFunction *)id;
+	if (id == NULL)
+	{
+		defaults->Damage = NULL;
+	}
+	else
+	{
+		defaults->Damage = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(id) + 1);
+	}
 }
 
 //==========================================================================

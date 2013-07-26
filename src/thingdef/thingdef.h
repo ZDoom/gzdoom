@@ -154,6 +154,7 @@ public:
 
 extern FStateExpressions StateParams;
 
+extern TDeletingArray<class FxExpression *> ActorDamageFuncs;
 
 //==========================================================================
 //

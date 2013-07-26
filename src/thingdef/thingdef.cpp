@@ -66,6 +66,8 @@
 #include "vmbuilder.h"
 #include "stats.h"
 
+TDeletingArray<class FxExpression *> ActorDamageFuncs;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
 void ParseDecorate (FScanner &sc);
@@ -351,8 +353,8 @@ static void FinishThingdef()
 
 		if (def->Damage != NULL)
 		{
+			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->Damage - 1];
 			VMScriptFunction *sfunc;
-			FxDamageValue *dmg = (FxDamageValue *)def->Damage;
 			sfunc = dmg->GetFunction();
 			if (sfunc == NULL)
 			{
@@ -389,6 +391,9 @@ static void FinishThingdef()
 		I_Error("%d errors during actor postprocessing", errorcount);
 	}
 
+	ActorDamageFuncs.DeleteAndClear();
+	StateTempCalls.DeleteAndClear();
+
 	// Since these are defined in DECORATE now the table has to be initialized here.
 	for(int i = 0; i < 31; i++)
 	{
@@ -415,6 +420,7 @@ void LoadActors ()
 
 	timer.Reset(); timer.Clock();
 	StateParams.Clear();
+	ActorDamageFuncs.Clear();
 	GlobalSymbols.ReleaseSymbols();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();

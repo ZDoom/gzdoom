@@ -97,6 +97,27 @@ const VMOpInfo OpInfo[NUM_OPS] =
 #include "vmops.h"
 };
 
+static const char *const FlopNames[] =
+{
+	"abs",
+	"neg",
+	"acos",
+	"asin",
+	"atan",
+	"cos",
+	"cosh",
+	"exp",
+	"log",
+	"log10",
+	"sin",
+	"sinh",
+	"tan",
+	"tanh",
+	"sqrt",
+	"ceil",
+	"floor"
+};
+
 static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const VMScriptFunction *func);
 
 static int printf_wrapper(FILE *f, const char *fmt, ...)
@@ -260,6 +281,14 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				{
 					col += printf_wrapper(out, " [final]");
 				}
+			}
+			break;
+
+		case OP_FLOP:
+			col = printf_wrapper(out, "f%d,f%d,%d", code[i].a, code[i].b, code[i].c);
+			if (code[i].c < countof(FlopNames))
+			{
+				col +=printf_wrapper(out, " [%s]", FlopNames[code[i].c]);
 			}
 			break;
 

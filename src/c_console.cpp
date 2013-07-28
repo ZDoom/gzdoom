@@ -2121,7 +2121,20 @@ static bool C_TabCompleteList ()
 		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLine+2);
 		for (i = TabPos; nummatches > 0; ++i, --nummatches)
 		{
-			Printf ("%-*s", int(maxwidth), TabCommands[i].TabName.GetChars());
+			// [Dusk] Print console commands blue, CVars green, aliases red.
+			const char* colorcode = "";
+			FConsoleCommand* ccmd;
+			if (FindCVar (TabCommands[i].TabName, NULL))
+				colorcode = "\\c[Green]";
+			else if ((ccmd = FConsoleCommand::FindByName (TabCommands[i].TabName)) != NULL)
+			{
+				if (ccmd->IsAlias())
+					colorcode = "\\c[Red]";
+				else
+					colorcode = "\\c[Light Blue]";
+			}
+
+			Printf ("%s%-*s", strbin1 (colorcode).GetChars(), int(maxwidth), TabCommands[i].TabName.GetChars());
 			x += maxwidth;
 			if (x > ConCols - maxwidth)
 			{

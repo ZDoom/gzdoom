@@ -36,6 +36,7 @@ public:
 	size_t Emit(int opcode, int opa, int opb, int opc);
 	size_t Emit(int opcode, int opa, VM_SHALF opbc);
 	size_t Emit(int opcode, int opabc);
+	size_t EmitParamInt(int value);
 	size_t EmitLoadInt(int regnum, int value);
 	size_t EmitRetInt(int retnum, bool final, int value);
 

@@ -470,6 +470,28 @@ size_t VMFunctionBuilder::Emit(int opcode, int opabc)
 
 //==========================================================================
 //
+// VMFunctionBuilder :: EmitParamInt
+//
+// Passes a constant integer parameter, using either PARAMI and an immediate
+// value or PARAM and a constant register, as appropriate.
+//
+//==========================================================================
+
+size_t VMFunctionBuilder::EmitParamInt(int value)
+{
+	// Immediates for PARAMI must fit in 24 bits.
+	if (((value << 8) >> 8) == value)
+	{
+		return Emit(OP_PARAMI, value);
+	}
+	else
+	{
+		return Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, GetConstantInt(value));
+	}
+}
+
+//==========================================================================
+//
 // VMFunctionBuilder :: EmitLoadInt
 //
 // Loads an integer constant into a register, using either an immediate

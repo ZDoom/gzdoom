@@ -1615,6 +1615,10 @@ MNU_EPISODE			= "Select Episode";
 WI_FINISHED			= "finished";
 WI_ENTERING			= "Now entering:";
 
+AM_MONSTERS			= "Monsters:";
+AM_SECRETS			= "Secrets:";
+AM_ITEMS			= "Items:";
+
 // Bloodbath announcer
 
 BBA_BONED = "%k boned %o like a fish";

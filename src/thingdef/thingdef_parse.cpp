@@ -1010,18 +1010,6 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 		PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
 		sym->Arguments = args;
 		sym->Function = *(afd->VMPointer);
-		if (hasdefaults)
-		{
-			sym->defaultparameterindex = StateParams.Size();
-			for(unsigned int i = 0; i < DefaultParams.Size(); i++)
-			{
-				StateParams.Add(DefaultParams[i], cls, true);
-			}
-		}
-		else
-		{
-			sym->defaultparameterindex = -1;
-		}
 		if (error)
 		{
 			FScriptPosition::ErrorCounter++;

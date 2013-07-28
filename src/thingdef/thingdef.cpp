@@ -276,7 +276,7 @@ static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label,
 
 static void FinishThingdef()
 {
-	int errorcount = StateParams.ResolveAll();
+	int errorcount = 0;
 	unsigned i, j;
 	int codesize = 0;
 
@@ -419,7 +419,6 @@ void LoadActors ()
 	cycle_t timer;
 
 	timer.Reset(); timer.Clock();
-	StateParams.Clear();
 	ActorDamageFuncs.Clear();
 	GlobalSymbols.ReleaseSymbols();
 	FScriptPosition::ResetErrorCounter();

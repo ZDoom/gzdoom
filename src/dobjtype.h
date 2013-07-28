@@ -87,7 +87,6 @@ class PSymbolActionFunction : public PSymbol
 public:
 	FString Arguments;
 	VMFunction *Function;
-	int defaultparameterindex;
 
 	PSymbolActionFunction(FName name) : PSymbol(name) {}
 	PSymbolActionFunction() : PSymbol(NAME_None) {}

@@ -331,24 +331,12 @@ do_stop:
 						{
 							if (!sc.CheckString("(")) 
 							{
-//								state.ParameterIndex = afd->defaultparameterindex+1;
 								goto endofstate;
 							}
 						}
 						
-//						int paramindex = PrepareStateParameters(&state, numparams, bag.Info->Class);
-//						int paramstart = paramindex;
 						bool varargs = params[numparams - 1] == '+';
 						int varargcount = 0;
-
-						if (varargs)
-						{
-//							paramindex++;
-						}
-						else if (afd->defaultparameterindex > -1)
-						{
-//							StateParams.Copy(paramindex, afd->defaultparameterindex, int(afd->Arguments.Len()));
-						}
 
 						while (*params)
 						{
@@ -381,7 +369,6 @@ do_stop:
 								// Use the generic parameter parser for everything else
 								x = ParseParameter(sc, bag.Info, *params, false);
 							}
-//							StateParams.Set(paramindex++, x);
 							tcall->Parameters.Push(new FxParameter(x));
 							params++;
 							varargcount++;
@@ -391,11 +378,9 @@ do_stop:
 								{
 									if (sc.CheckString(")"))
 									{
-//										StateParams.Set(paramstart, new FxConstant(argcount, sc));
 										goto endofstate;
 									}
 									params--;
-									StateParams.Reserve(1, bag.Info);
 								}
 								else if ((islower(*params) || *params=='!') && sc.CheckString(")"))
 								{

@@ -127,33 +127,6 @@ struct FStateTempCall
 	int NumStates;
 };
 extern TDeletingArray<FStateTempCall *> StateTempCalls;
-
-struct FStateExpression
-{
-	FxExpression *expr;
-	PClassActor *owner;
-	bool constant;
-	bool cloned;
-};
-
-class FStateExpressions
-{
-	TArray<FStateExpression> expressions;
-
-public:
-	~FStateExpressions() { Clear(); }
-	void Clear();
-	int Add(FxExpression *x, PClassActor *o, bool c);
-	int Reserve(int num, PClassActor *cls);
-//	void Set(int num, FxExpression *x, bool cloned = false);
-//	void Copy(int dest, int src, int cnt);
-	int ResolveAll();
-	FxExpression *Get(int no);
-	unsigned int Size() { return expressions.Size(); }
-};
-
-extern FStateExpressions StateParams;
-
 extern TDeletingArray<class FxExpression *> ActorDamageFuncs;
 
 //==========================================================================

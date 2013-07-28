@@ -2125,16 +2125,16 @@ static bool C_TabCompleteList ()
 			const char* colorcode = "";
 			FConsoleCommand* ccmd;
 			if (FindCVar (TabCommands[i].TabName, NULL))
-				colorcode = "\\c[Green]";
+				colorcode = TEXTCOLOR_GREEN;
 			else if ((ccmd = FConsoleCommand::FindByName (TabCommands[i].TabName)) != NULL)
 			{
 				if (ccmd->IsAlias())
-					colorcode = "\\c[Red]";
+					colorcode = TEXTCOLOR_RED;
 				else
-					colorcode = "\\c[Light Blue]";
+					colorcode = TEXTCOLOR_LIGHTBLUE;
 			}
 
-			Printf ("%s%-*s", strbin1 (colorcode).GetChars(), int(maxwidth), TabCommands[i].TabName.GetChars());
+			Printf ("%s%-*s", colorcode, int(maxwidth), TabCommands[i].TabName.GetChars());
 			x += maxwidth;
 			if (x > ConCols - maxwidth)
 			{

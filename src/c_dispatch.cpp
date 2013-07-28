@@ -955,6 +955,11 @@ bool FConsoleCommand::AddToHash (FConsoleCommand **table)
 	return true;
 }
 
+FConsoleCommand* FConsoleCommand::FindByName (const char* name)
+{
+	return FindNameInHashTable (Commands, name, strlen (name));
+}
+
 FConsoleCommand::FConsoleCommand (const char *name, CCmdRun runFunc)
 	: m_RunFunc (runFunc)
 {

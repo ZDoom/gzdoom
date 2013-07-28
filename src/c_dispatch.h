@@ -93,6 +93,7 @@ public:
 	void PrintCommand () { Printf ("%s\n", m_Name); }
 
 	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key);
+	static FConsoleCommand* FindByName (const char* name);
 
 	FConsoleCommand *m_Next, **m_Prev;
 	char *m_Name;

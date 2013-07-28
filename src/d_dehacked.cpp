@@ -62,8 +62,6 @@
 #include "decallib.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
-#include "thingdef/thingdef.h"
-#include "thingdef/thingdef_exp.h"
 #include "vectors.h"
 #include "dobject.h"
 #include "r_data/r_translate.h"
@@ -72,6 +70,7 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "farchive.h"
+#include "vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -635,26 +634,149 @@ static int GetLine (void)
 	}
 }
 
-// This enum must be in sync with the Aliases array in DEHSUPP.
-enum MBFCodePointers
+// misc1 = vrange (arg +3), misc2 = hrange (arg+4)
+static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Mushroom
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);		// spawntype
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);		// numspawns
+	buildit.Emit(OP_PARAMI, 1);					// flag
+	// vrange
+	if (value1 == 0)
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);
+	}
+	else
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value1)));
+	}
+	// hrange
+	if (value2 == 0)
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);
+	}
+	else
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value2)));
+	}
+	return 5;
+}
+
+// misc1 = type (arg +0), misc2 = Z-pos (arg +2)
+static int CreateSpawnFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_SpawnItem
+	if (InfoNames[value1-1] == NULL)
+	{
+		I_Error("No class found for dehackednum %d!\n", value1+1);
+		return 0;
+	}
+	int typereg = buildit.GetConstantAddress(InfoNames[value1-1], ATAG_OBJECT);
+	int heightreg = buildit.GetConstantFloat(value2);
+
+	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, typereg);	// itemtype
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);							// distance
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, heightreg);	// height
+	// The rest of the parameters to A_SpawnItem can just keep their defaults
+	return 3;
+}
+
+// misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
+static int CreateTurnFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Turn
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1));		// angle
+	return 1;
+}
+
+// misc1 = angle (in degrees) (arg +0)
+static int CreateFaceFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_FaceTarget
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1));		// angle
+	return 1;
+}
+
+// misc1 = damage, misc 2 = sound
+static int CreateScratchFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_CustomMeleeAttack
+	buildit.EmitParamInt(value1);					// damage
+	if (value2)
+	{
+		buildit.EmitParamInt(SoundMap[value2-1]);	// hit sound
+		return 2;
+	}
+	return 1;
+}
+
+// misc1 = sound, misc2 = attenuation none (true) or normal (false)
+static int CreatePlaySoundFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_PlaySound
+	int float1 = buildit.GetConstantFloat(1);
+	int attenreg = buildit.GetConstantFloat(value2 ? ATTN_NONE : ATTN_NORM);
+
+	buildit.EmitParamInt(SoundMap[value1-1]);						// soundid
+	buildit.Emit(OP_PARAMI, CHAN_BODY);								// channel
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, float1);		// volume
+	buildit.Emit(OP_PARAMI, false);									// looping
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, attenreg);	// attenuation
+	return 5;
+}
+
+// misc1 = state, misc2 = probability
+static int CreateRandomJumpFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Jump
+	int statereg = buildit.GetConstantAddress(FindState(value1), ATAG_STATE);
+
+	buildit.EmitParamInt(value2);									// maxchance
+	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, statereg);	// jumpto
+	return 2;
+}
+
+// misc1 = Boom linedef type, misc2 = sector tag
+static int CreateLineEffectFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_LineEffect
+	// This is the second MBF codepointer that couldn't be translated easily.
+	// Calling P_TranslateLineDef() here was a simple matter, as was adding an
+	// extra parameter to A_CallSpecial so as to replicate the LINEDONE stuff,
+	// but unfortunately DEHACKED lumps are processed before the map translation
+	// arrays are initialized so this didn't work.
+	buildit.EmitParamInt(value1);					// special
+	buildit.EmitParamInt(value2);					// tag
+	return 2;
+}
+
+// No misc, but it's basically A_Explode with an added effect
+static int CreateNailBombFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Explode
+	// This one does not actually have MBF-style parameters. But since
+	// we're aliasing it to an extension of A_Explode...
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// damage
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// distance
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// flags
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// alert
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// fulldamagedistance
+	buildit.Emit(OP_PARAMI, 30);					// nails
+	buildit.Emit(OP_PARAMI, 10);					// naildamage
+	return 7;
+}
+
+// This array must be in sync with the Aliases array in DEHSUPP.
+static int (*MBFCodePointerFactories[])(VMFunctionBuilder&, int, int) =
 {
 	// Die and Detonate are not in this list because these codepointers have
 	// no dehacked arguments and therefore do not need special handling.
 	// NailBomb has no argument but is implemented as new parameters for A_Explode.
-	MBF_Mushroom,	// misc1 = vrange (arg +3), misc2 = hrange (arg+4)
-	MBF_Spawn,		// misc1 = type (arg +0), misc2 = Z-pos (arg +2)
-	MBF_Turn,		// misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
-	MBF_Face,		// misc1 = angle (in degrees) (arg +0)
-	MBF_Scratch,	// misc1 = damage, misc 2 = sound
-	MBF_PlaySound,	// misc1 = sound, misc2 = attenuation none (true) or normal (false)
-	MBF_RandomJump,	// misc1 = state, misc2 = probability
-	MBF_LineEffect,	// misc1 = Boom linedef type, misc2 = sector tag
-	SMMU_NailBomb,	// No misc, but it's basically A_Explode with an added effect
+	CreateMushroomFunc,
+	CreateSpawnFunc,
+	CreateTurnFunc,
+	CreateFaceFunc,
+	CreateScratchFunc,
+	CreatePlaySoundFunc,
+	CreateRandomJumpFunc,
+	CreateLineEffectFunc,
+	CreateNailBombFunc
 };
 
-// Hacks the parameter list for the given state so as to convert MBF-args (misc1 and misc2) into real args.
+// Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
-void SetDehParams(FState * state, int codepointer)
+void SetDehParams(FState *state, int codepointer)
 {
 	int value1 = state->GetMisc1();
 	int value2 = state->GetMisc2();
@@ -663,101 +785,36 @@ void SetDehParams(FState * state, int codepointer)
 	// Fakey fake script position thingamajig. Because NULL cannot be used instead.
 	// Even if the lump was parsed by an FScanner, there would hardly be a way to
 	// identify which line is troublesome.
-	FScriptPosition * pos = new FScriptPosition(FString("DEHACKED"), 0);
+	FScriptPosition *pos = new FScriptPosition(FString("DEHACKED"), 0);
 	
 	// Let's identify the codepointer we're dealing with.
 	PSymbolActionFunction *sym;
 	sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
-	// Bleargh! This will all have to be redone once scripting works
-
-	// Not sure exactly why the index for a state is greater by one point than the index for a symbol.
-#if 0
-	DPrintf("SetDehParams: Paramindex is %d, default is %d.\n", 
-		state->ParameterIndex-1, sym->defaultparameterindex);
-	if (state->ParameterIndex-1 == sym->defaultparameterindex)
+	if (codepointer < 0 || codepointer >= countof(MBFCodePointerFactories))
 	{
-		int a = PrepareStateParameters(state, MBFCodePointers[codepointer].params+1, 
-			FState::StaticFindStateOwner(state)) -1;
-		int b = sym->defaultparameterindex;
-		//		StateParams.Copy(a, b, MBFParams[codepointer]);
-		// Meh, function doesn't work. For some reason it resets the paramindex to the default value.
-		// For instance, a dehacked Commander Keen calling A_Explode would result in a crash as
-		// ACTION_PARAM_INT(damage, 0) would properly evaluate at paramindex 1377, but then 
-		// ACTION_PARAM_INT(distance, 1) would improperly evaluate at paramindex 148! Now I'm not sure
-		// whether it's a genuine problem or working as intended and merely not appropriate for the
-		// task at hand here. So rather than modify it, I use a simple for loop of Set()s and Get()s,
-		// with a small modification to Set() that I know will have no repercussion anywhere else.
-		for (int i = 0; i<MBFCodePointers[codepointer].params; i++)
-		{
-			StateParams.Set(a+i, StateParams.Get(b+i), true);
-		}
-		DPrintf("New paramindex is %d.\n", state->ParameterIndex-1);
-	}
-	int ParamIndex = state->ParameterIndex - 1;
-
-	switch (codepointer)
-	{
-	case MBF_Mushroom:
-		StateParams.Set(ParamIndex+2, new FxConstant(1, *pos)); // Flag
-		// NOTE: Do not convert to float here because it will lose precision. It must be double.
-		if (value1) StateParams.Set(ParamIndex+3, new FxConstant(value1/65536., *pos)); // vrange
-		if (value2) StateParams.Set(ParamIndex+4, new FxConstant(value2/65536., *pos)); // hrange
-		break;
-	case MBF_Spawn:
-		if (InfoNames[value1-1] == NULL)
-		{
-			I_Error("No class found for dehackednum %d!\n", value1+1);
-			return;
-		}
-		StateParams.Set(ParamIndex+0, new FxConstant(InfoNames[value1-1], *pos));	// type
-		StateParams.Set(ParamIndex+2, new FxConstant(value2, *pos));				// height
-		break;
-	case MBF_Turn:
-		// Intentional fall through. I tried something more complicated by creating an
-		// FxExpression that corresponded to "variable angle + angle" so as to use A_SetAngle
-		// as well, but it became an overcomplicated mess that didn't even work as I had to
-		// create a compile context as well and couldn't get it right.
-	case MBF_Face:
-		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos)); // angle
-		break;
-	case MBF_Scratch:	// misc1 = damage, misc 2 = sound
-		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos));							// damage
-		if (value2) StateParams.Set(ParamIndex+1, new FxConstant(SoundMap[value2-1], *pos));	// hit sound
-		break;
-	case MBF_PlaySound:
-		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));				// soundid
-		StateParams.Set(ParamIndex+1, new FxConstant(CHAN_BODY, *pos));							// channel
-		StateParams.Set(ParamIndex+2, new FxConstant(1.0, *pos));								// volume
-		StateParams.Set(ParamIndex+3, new FxConstant(false, *pos));								// looping
-		StateParams.Set(ParamIndex+4, new FxConstant((value2 ? ATTN_NONE : ATTN_NORM), *pos));	// attenuation
-		break;
-	case MBF_RandomJump:
-		StateParams.Set(ParamIndex+0, new FxConstant(2, *pos));					// count
-		StateParams.Set(ParamIndex+1, new FxConstant(value2, *pos));			// maxchance
-		StateParams.Set(ParamIndex+2, new FxConstant(FindState(value1), *pos));	// jumpto
-		break;
-	case MBF_LineEffect:
-		// This is the second MBF codepointer that couldn't be translated easily.
-		// Calling P_TranslateLineDef() here was a simple matter, as was adding an
-		// extra parameter to A_CallSpecial so as to replicate the LINEDONE stuff,
-		// but unfortunately DEHACKED lumps are processed before the map translation
-		// arrays are initialized so this didn't work.
-		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos));	// special
-		StateParams.Set(ParamIndex+1, new FxConstant(value2, *pos));	// tag
-		break;
-	case SMMU_NailBomb:
-		// That one does not actually have MBF-style parameters. But since
-		// we're aliasing it to an extension of A_Explode...
-		StateParams.Set(ParamIndex+5, new FxConstant(30, *pos));	// nails
-		StateParams.Set(ParamIndex+6, new FxConstant(10, *pos));	// naildamage
-		break;
-	default:
 		// This simply should not happen.
 		Printf("Unmanaged dehacked codepointer alias num %i\n", codepointer);
 	}
-#endif
+	else
+	{
+		VMFunctionBuilder buildit;
+		// Allocate registers used to pass parameters in.
+		// self, stateowner, state (all are pointers)
+		buildit.Registers[REGT_POINTER].Get(3);
+		// Emit code to pass the standard action function parameters.
+		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 0);
+		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 1);
+		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 2);
+		// Emit code for action parameters.
+		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Function, ATAG_OBJECT), NAP + argcount, 0);
+		// Attach it to the state.
+		VMScriptFunction *sfunc = buildit.MakeFunction();
+		sfunc->NumArgs = NAP;
+		state->SetAction(sfunc);
+	}
 }
 
 static int PatchThing (int thingy)

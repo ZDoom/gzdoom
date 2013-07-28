@@ -2338,7 +2338,6 @@ void AM_drawKeys ()
 //
 //
 //=============================================================================
-
 void AM_drawThings ()
 {
 	AMColor color;
@@ -2355,30 +2354,41 @@ void AM_drawThings ()
 			p.x = t->x >> FRACTOMAPBITS;
 			p.y = t->y >> FRACTOMAPBITS;
 
-			if (am_showthingsprites > 0)
+			if (am_showthingsprites > 0 && t->sprite > 0)
 			{
-				const spritedef_t& sprite = sprites[t->sprite];
-				const size_t spriteIndex = sprite.spriteframes + (am_showthingsprites > 1 ? t->frame : 0);
+				FTexture *texture = NULL;
+				spriteframe_t *frame;
+				angle_t rotation = 0;
 
-				const spriteframe_t& frame = SpriteFrames[spriteIndex];
-				angle_t angle = ANGLE_270 - t->angle;
-				if (frame.Texture[0] != frame.Texture[1]) angle += (ANGLE_180 / 16);
-				if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+				// try all modes backwards until a valid texture has been found.	
+				for(int show = am_showthingsprites; show > 0 && texture == NULL; show--)
 				{
-					angle += players[consoleplayer].camera->angle - ANGLE_90;
-				}
-				const angle_t rotation = angle >> 28;
+					const spritedef_t& sprite = sprites[t->sprite];
+					const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
-				const FTextureID textureID = frame.Texture[am_showthingsprites > 2 ? rotation : 0];
-				FTexture* texture = TexMan(textureID);
+					frame = &SpriteFrames[spriteIndex];
+					angle_t angle = ANGLE_270 - t->angle;
+					if (frame->Texture[0] != frame->Texture[1]) angle += (ANGLE_180 / 16);
+					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+					{
+						angle += players[consoleplayer].camera->angle - ANGLE_90;
+					}
+					rotation = angle >> 28;
+
+					const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
+					texture = TexMan(textureID);
+				}
+
+				if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
 				const fixed_t spriteScale = 10 * scale_mtof;
 
-				DrawMarker (texture, p.x, p.y, 0, !!(frame.Flip & (1 << rotation)),
+				DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 					spriteScale, spriteScale, 0, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
 			}
 			else
 			{
+		drawTriangle:
 				angle = t->angle;
 
 				if (am_rotate == 1 || (am_rotate == 2 && viewactive))

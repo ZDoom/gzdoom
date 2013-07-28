@@ -965,7 +965,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	{ // actor is invulnerable
 		if (target->player == NULL)
 		{
-			if (inflictor == NULL || !(inflictor->flags3 & MF3_FOILINVUL))
+			if (inflictor == NULL || (!(inflictor->flags3 & MF3_FOILINVUL) && !(flags & DMG_FOILINVUL)))
 			{
 				return -1;
 			}

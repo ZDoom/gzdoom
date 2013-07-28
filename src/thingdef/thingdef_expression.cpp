@@ -320,19 +320,6 @@ FxExpression *FxParameter::Resolve(FCompileContext& ctx)
 	return this;
 }
 
-static void EmitConstantInt(VMFunctionBuilder *build, int val)
-{
-	// If it fits in 24 bits, use PARAMI instead of PARAM.
-	if (((val << 8) >> 8) == val)
-	{
-		build->Emit(OP_PARAMI, val);
-	}
-	else
-	{
-		build->Emit(OP_PARAM, 0, REGT_INT | REGT_KONST, build->GetConstantInt(val));
-	}
-}
-
 ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 {
 	if (Operand->isConstant())
@@ -340,7 +327,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		ExpVal val = Operand->EvalExpression(NULL);
 		if (val.Type == VAL_Int || val.Type == VAL_Sound || val.Type == VAL_Name || val.Type == VAL_Color)
 		{
-			EmitConstantInt(build, val.Int);
+			build->EmitParamInt(val.Int);
 		}
 		else if (val.Type == VAL_Float)
 		{
@@ -3439,14 +3426,14 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 			{
 				assert(argex->ValueType == VAL_Name);
 				assert(argex->isConstant());
-				EmitConstantInt(build, -argex->EvalExpression(NULL).GetName());
+				build->EmitParamInt(-argex->EvalExpression(NULL).GetName());
 			}
 			else
 			{
 				assert(argex->ValueType == VAL_Int);
 				if (argex->isConstant())
 				{
-					EmitConstantInt(build, argex->EvalExpression(NULL).GetInt());
+					build->EmitParamInt(argex->EvalExpression(NULL).GetInt());
 				}
 				else
 				{
@@ -3920,7 +3907,7 @@ ExpEmit FxMultiNameState::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, REGT_POINTER, 1);		// pass stateowner
 	for (unsigned i = 0; i < names.Size(); ++i)
 	{
-		EmitConstantInt(build, names[i]);
+		build->EmitParamInt(names[i]);
 	}
 
 	// For one name, use the DecoFindSingleNameState function. For more than

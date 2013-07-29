@@ -1369,21 +1369,30 @@ static double DoFLOP(int flop, double v)
 	{
 	case FLOP_ABS:		return fabs(v);
 	case FLOP_NEG:		return -v;
+	case FLOP_EXP:		return exp(v);
+	case FLOP_LOG:		return log(v);
+	case FLOP_LOG10:	return log10(v);
+	case FLOP_SQRT:		return sqrt(v);
+	case FLOP_CEIL:		return ceil(v);
+	case FLOP_FLOOR:	return floor(v);
+
 	case FLOP_ACOS:		return acos(v);
 	case FLOP_ASIN:		return asin(v);
 	case FLOP_ATAN:		return atan(v);
 	case FLOP_COS:		return cos(v);
-	case FLOP_COSH:		return cosh(v);
-	case FLOP_EXP:		return exp(v);
-	case FLOP_LOG:		return log(v);
-	case FLOP_LOG10:	return log10(v);
 	case FLOP_SIN:		return sin(v);
-	case FLOP_SINH:		return sinh(v);
 	case FLOP_TAN:		return tan(v);
+
+	case FLOP_ACOS_DEG:	return acos(v) * (180 / M_PI);
+	case FLOP_ASIN_DEG:	return asin(v) * (180 / M_PI);
+	case FLOP_ATAN_DEG:	return atan(v) * (180 / M_PI);
+	case FLOP_COS_DEG:	return cos(v * (M_PI / 180));
+	case FLOP_SIN_DEG:	return sin(v * (M_PI / 180));
+	case FLOP_TAN_DEG:	return tan(v * (M_PI / 180));
+
+	case FLOP_COSH:		return cosh(v);
+	case FLOP_SINH:		return sinh(v);
 	case FLOP_TANH:		return tanh(v);
-	case FLOP_SQRT:		return sqrt(v);
-	case FLOP_CEIL:		return ceil(v);
-	case FLOP_FLOOR:	return floor(v);
 	}
 	assert(0);
 	return 0;

@@ -79,21 +79,30 @@ enum
 {
 	FLOP_ABS,
 	FLOP_NEG,
-	FLOP_ACOS,
-	FLOP_ASIN,
-	FLOP_ATAN,
-	FLOP_COS,
-	FLOP_COSH,
 	FLOP_EXP,
 	FLOP_LOG,
 	FLOP_LOG10,
-	FLOP_SIN,
-	FLOP_SINH,
-	FLOP_TAN,
-	FLOP_TANH,
 	FLOP_SQRT,
 	FLOP_CEIL,
 	FLOP_FLOOR,
+
+	FLOP_ACOS,			// This group works with radians
+	FLOP_ASIN,
+	FLOP_ATAN,
+	FLOP_COS,
+	FLOP_SIN,
+	FLOP_TAN,
+
+	FLOP_ACOS_DEG,		// This group works with degrees
+	FLOP_ASIN_DEG,
+	FLOP_ATAN_DEG,
+	FLOP_COS_DEG,
+	FLOP_SIN_DEG,
+	FLOP_TAN_DEG,
+
+	FLOP_COSH,
+	FLOP_SINH,
+	FLOP_TANH,
 };
 
 // Cast operations

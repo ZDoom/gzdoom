@@ -101,21 +101,30 @@ static const char *const FlopNames[] =
 {
 	"abs",
 	"neg",
-	"acos",
-	"asin",
-	"atan",
-	"cos",
-	"cosh",
 	"exp",
 	"log",
 	"log10",
-	"sin",
-	"sinh",
-	"tan",
-	"tanh",
 	"sqrt",
 	"ceil",
-	"floor"
+	"floor",
+
+	"acos rad",
+	"asin rad",
+	"atan rad",
+	"cos rad",
+	"sin rad",
+	"tan rad",
+
+	"acos deg",
+	"asin deg",
+	"atan deg",
+	"cos deg",
+	"sin deg",
+	"tan deg",
+
+	"cosh",
+	"sinh",
+	"tanh",
 };
 
 static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const VMScriptFunction *func);

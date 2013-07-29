@@ -3458,11 +3458,10 @@ ExpEmit FxGlobalFunctionCall::Emit(VMFunctionBuilder *build)
 	ExpEmit v = (*ArgList)[0]->Emit(build);
 	assert(!v.Konst && v.RegType == REGT_FLOAT);
 
-	build->Emit(OP_MULF_RK, v.RegNum, v.RegNum, build->GetConstantFloat(M_PI / 180.0));
 	build->Emit(OP_FLOP, v.RegNum, v.RegNum,
 		(Name == NAME_Sqrt) ?	FLOP_SQRT :
-		(Name == NAME_Sin) ?	FLOP_SIN :
-								FLOP_COS);
+		(Name == NAME_Sin) ?	FLOP_SIN_DEG :
+								FLOP_COS_DEG);
 	return v;
 }
 

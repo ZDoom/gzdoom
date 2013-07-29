@@ -897,8 +897,6 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	const AFuncDesc *afd;
 	FName funcname;
 	FString args;
-	TArray<FxExpression *> DefaultParams;
-	bool hasdefaults = false;
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
@@ -979,18 +977,12 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 				sc.UnGet();
 			}
 
-			FxExpression *def;
 			if (sc.CheckToken('='))
 			{
-				hasdefaults = true;
 				flags |= OPTIONAL;
-				def = ParseParameter(sc, cls, type, true);
+				FxExpression *def = ParseParameter(sc, cls, type, true);
+				delete def;
 			}
-			else
-			{
-				def = NULL;
-			}
-			DefaultParams.Push(def);
 
 			if (!(flags & OPTIONAL) && type != '+')
 			{

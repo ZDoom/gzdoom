@@ -196,7 +196,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool con
 //
 //==========================================================================
 
-static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClassActor *cls)
+static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
 	// Read the type and make sure it's int or float.
 	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Float))
@@ -208,7 +208,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClassActor *cls)
 		FxExpression *expr = ParseExpression (sc, cls);
 		sc.MustGetToken(';');
 
-		ExpVal val = expr->EvalExpression(NULL);
+		ExpVal val = expr->EvalExpression();
 		delete expr;
 		PSymbolConst *sym = new PSymbolConst(symname);
 		if (type == TK_Int)
@@ -256,7 +256,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls);
-			currvalue = expr->EvalExpression(NULL).GetInt();
+			currvalue = expr->EvalExpression().GetInt();
 			delete expr;
 		}
 		PSymbolConst *sym = new PSymbolConst(symname);
@@ -335,7 +335,7 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression (sc, cls);
-		int maxelems = expr->EvalExpression(NULL).GetInt();
+		int maxelems = expr->EvalExpression().GetInt();
 		delete expr;
 		sc.MustGetToken(']');
 		valuetype.MakeArray(maxelems);
@@ -402,7 +402,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls);
-		int maxelems = expr->EvalExpression(NULL).GetInt();
+		int maxelems = expr->EvalExpression().GetInt();
 		delete expr;
 		sc.MustGetToken(']');
 		if (maxelems <= 0)

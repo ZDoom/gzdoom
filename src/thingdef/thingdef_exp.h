@@ -667,7 +667,6 @@ public:
 	~FxRandom();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -681,7 +680,6 @@ class FxFRandom : public FxRandom
 {
 public:
 	FxFRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -702,7 +700,6 @@ public:
 	~FxRandom2();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -757,7 +754,6 @@ class FxSelf : public FxExpression
 public:
 	FxSelf(const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -822,7 +818,6 @@ public:
 	FxActionSpecialCall(FxExpression *self, int special, FArgumentList *args, const FScriptPosition &pos);
 	~FxActionSpecialCall();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

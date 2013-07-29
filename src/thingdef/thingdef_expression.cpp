@@ -2365,30 +2365,6 @@ FxExpression *FxRandom::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxRandom::EvalExpression()
-{
-	ExpVal val;
-	val.Type = VAL_Int;
-
-	if (min != NULL && max != NULL)
-	{
-		int minval = min->EvalExpression().GetInt();
-		int maxval = max->EvalExpression().GetInt();
-
-		if (maxval < minval)
-		{
-			swapvalues (maxval, minval);
-		}
-
-		val.Int = (*rng)(maxval - minval + 1) + minval;
-	}
-	else
-	{
-		val.Int = (*rng)();
-	}
-	return val;
-}
-
 int DecoRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	assert(numparam >= 1 && numparam <= 3);
@@ -2461,32 +2437,6 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 //
 //
 //==========================================================================
-
-ExpVal FxFRandom::EvalExpression()
-{
-	ExpVal val;
-	val.Type = VAL_Float;
-	int random = (*rng)(0x40000000);
-	double frandom = random / double(0x40000000);
-
-	if (min != NULL && max != NULL)
-	{
-		double minval = min->EvalExpression().GetFloat();
-		double maxval = max->EvalExpression().GetFloat();
-
-		if (maxval < minval)
-		{
-			swapvalues (maxval, minval);
-		}
-
-		val.Float = frandom * (maxval - minval) + minval;
-	}
-	else
-	{
-		val.Float = frandom;
-	}
-	return val;
-}
 
 int DecoFRandom(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
@@ -2583,16 +2533,6 @@ FxExpression *FxRandom2::Resolve(FCompileContext &ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxRandom2::EvalExpression()
-{
-	ExpVal maskval = mask->EvalExpression();
-	int imaskval = maskval.GetInt();
-
-	maskval.Type = VAL_Int;
-	maskval.Int = rng->Random2(imaskval);
-	return maskval;
-}
 
 ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 {
@@ -2749,18 +2689,9 @@ FxExpression *FxSelf::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxSelf::EvalExpression()
-{
-	ExpVal ret;
-	
-	ret.Type = VAL_Object;
-	ret.pointer = NULL;
-	return ret;
-}
-
 ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 {
-	// self is always the first pointer passed to the function;
+	// self is always the first pointer passed to the function
 	ExpEmit me(0, REGT_POINTER);
 	me.Fixed = true;
 	return me;
@@ -3362,32 +3293,6 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 // 
 //
 //==========================================================================
-
-ExpVal FxActionSpecialCall::EvalExpression()
-{
-	int v[5] = {0,0,0,0,0};
-	int special = Special;
-
-	if (ArgList != NULL)
-	{
-		for(unsigned i = 0; i < ArgList->Size(); i++)
-		{
-			if (special < 0)
-			{
-				special = -special;
-				v[i] = -(*ArgList)[i]->EvalExpression().GetName();
-			}
-			else
-			{
-				v[i] = (*ArgList)[i]->EvalExpression().GetInt();
-			}
-		}
-	}
-	ExpVal ret;
-	ret.Type = VAL_Int;
-	ret.Int = P_ExecuteSpecial(special, NULL, NULL, false, v[0], v[1], v[2], v[3], v[4]);
-	return ret;
-}
 
 int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {

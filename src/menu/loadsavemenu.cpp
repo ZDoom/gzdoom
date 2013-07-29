@@ -131,7 +131,8 @@ void ClearSaveGames()
 {
 	for(unsigned i=0;i<DLoadSaveMenu::SaveGames.Size(); i++)
 	{
-		delete DLoadSaveMenu::SaveGames[i];
+		if(!DLoadSaveMenu::SaveGames[i]->bNoDelete)
+			delete DLoadSaveMenu::SaveGames[i];
 	}
 	DLoadSaveMenu::SaveGames.Clear();
 }

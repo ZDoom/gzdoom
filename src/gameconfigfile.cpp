@@ -135,7 +135,7 @@ FGameConfigFile::FGameConfigFile ()
 			local_app_support << cpath << "/" GAME_DIR;
 			SetValueForKey("Path", local_app_support, true);
 		}
-#elif !defined(unix)
+#elif !defined(__unix__)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
@@ -153,7 +153,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", user_app_support, true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 		SetValueForKey ("Path", local_app_support, true);
-#elif !defined(unix)
+#elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "~/" GAME_DIR, true);
@@ -683,7 +683,7 @@ void FGameConfigFile::CreateStandardAutoExec(const char *section, bool start)
 		{
 			path << cpath << "/" GAME_DIR "/autoexec.cfg";
 		}
-#elif !defined(unix)
+#elif !defined(__unix__)
 		path = "$PROGDIR/autoexec.cfg";
 #else
 		path = GetUserFile ("autoexec.cfg");

@@ -850,6 +850,13 @@ OptionValue Autosave
 	2,	"Never"
 }
 
+OptionValue dehopt
+{
+	0,	"Never"
+	1,	"All"
+	2,	"Only last one"
+}
+
 OptionMenu "MiscOptions"
 {
 	Title "Miscellaneous Options"
@@ -864,6 +871,7 @@ OptionMenu "MiscOptions"
 	Option "Enable cheats from all games",			"allcheats", "OnOff"
 	Option "Enable autosaves",						"disableautosave", "Autosave"
 	Slider "Number of autosaves",					"autosavecount", 1, 20, 1, 0
+	Option "Load *.deh/*.bex lumps",				"dehload", "dehopt"
 	StaticText " "
 	Option "Cache nodes",							"gl_cachenodes", "OnOff"
 	Slider "Time threshold for node caching",		"gl_cachetime", 0.0, 2.0, 0.1
@@ -1010,8 +1018,11 @@ OptionMenu MapColorMenu
 	StaticText "Overlay Mode", 1
 	ColorPicker "You",							"am_ovyourcolor"		
 	ColorPicker "1-sided walls",				"am_ovwallcolor"		
-	ColorPicker "2-sided walls",				"am_ovotherwallscolor"
+	ColorPicker "2-sided walls with different floors",		"am_ovfdwallcolor"		
+	ColorPicker "2-sided walls with different ceilings",	"am_ovcdwallcolor"		
+	ColorPicker "2-sided walls with 3D floors",				"am_ovefwallcolor"		
 	ColorPicker "Not-yet-seen walls",			"am_ovunseencolor"	
+	ColorPicker "Locked doors",				"am_ovotherwallscolor"
 	ColorPicker "Teleporter",					"am_ovtelecolor"		
 	ColorPicker "Secret sector",				"am_ovsecretsectorcolor"	
 	ColorPicker "Special trigger lines",		"am_ovspecialwallcolor"

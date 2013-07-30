@@ -2329,6 +2329,18 @@ static int DoInclude (int dummy)
 	return GetLine();
 }
 
+CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by default.
+
+// checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
+static bool isDehFile(int lumpnum)
+{
+	const char* const fullName  = Wads.GetLumpFullName(lumpnum);
+	const char* const extension = strrchr(fullName, '.');
+
+	return NULL != extension && strchr(fullName, '/') == NULL
+		&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
+}
+
 int D_LoadDehLumps()
 {
 	int lastlump = 0, lumpnum, count = 0;
@@ -2338,28 +2350,32 @@ int D_LoadDehLumps()
 		count += D_LoadDehLump(lumpnum);
 	}
 
-#if 0	// commented out for 'maint' version.
-	if (0 == PatchSize)
+	if (0 == PatchSize && dehload > 0)
 	{
 		// No DEH/BEX patch is loaded yet, try to find lump(s) with specific extensions
 
-		for (lumpnum = 0, lastlump = Wads.GetNumLumps();
-			 lumpnum < lastlump;
-			 ++lumpnum)
+		if (dehload == 1)	// load all .DEH lumps that are found.
 		{
-			const char* const fullName  = Wads.GetLumpFullName(lumpnum);
-			const char* const extension = strrchr(fullName, '.');
-
-			const bool isDehOrBex = NULL != extension
-				&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
-
-			if (isDehOrBex)
+			for (lumpnum = 0, lastlump = Wads.GetNumLumps(); lumpnum < lastlump; ++lumpnum)
 			{
-				count += D_LoadDehLump(lumpnum);
+				if (isDehFile(lumpnum))
+				{
+					count += D_LoadDehLump(lumpnum);
+				}
+			}
+		}
+		else 	// only load the last .DEH lump that is found.
+		{
+			for (lumpnum = Wads.GetNumLumps()-1; lumpnum >=0; --lumpnum)
+			{
+				if (isDehFile(lumpnum))
+				{
+					count += D_LoadDehLump(lumpnum);
+					break;
+				}
 			}
 		}
 	}
-#endif
 
 	return count;
 }

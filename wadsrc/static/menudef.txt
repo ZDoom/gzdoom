@@ -1010,8 +1010,11 @@ OptionMenu MapColorMenu
 	StaticText "Overlay Mode", 1
 	ColorPicker "You",							"am_ovyourcolor"		
 	ColorPicker "1-sided walls",				"am_ovwallcolor"		
-	ColorPicker "2-sided walls",				"am_ovotherwallscolor"
+	ColorPicker "2-sided walls with different floors",		"am_ovfdwallcolor"		
+	ColorPicker "2-sided walls with different ceilings",	"am_ovcdwallcolor"		
+	ColorPicker "2-sided walls with 3D floors",				"am_ovefwallcolor"		
 	ColorPicker "Not-yet-seen walls",			"am_ovunseencolor"	
+	ColorPicker "Locked doors",				"am_ovotherwallscolor"
 	ColorPicker "Teleporter",					"am_ovtelecolor"		
 	ColorPicker "Secret sector",				"am_ovsecretsectorcolor"	
 	ColorPicker "Special trigger lines",		"am_ovspecialwallcolor"

@@ -2338,6 +2338,7 @@ int D_LoadDehLumps()
 		count += D_LoadDehLump(lumpnum);
 	}
 
+#if 0	// commented out for 'maint' version.
 	if (0 == PatchSize)
 	{
 		// No DEH/BEX patch is loaded yet, try to find lump(s) with specific extensions
@@ -2358,6 +2359,7 @@ int D_LoadDehLumps()
 			}
 		}
 	}
+#endif
 
 	return count;
 }

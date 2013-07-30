@@ -1919,7 +1919,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	leader = Args->CheckValue ("-savedir");
 	if (leader.IsEmpty())
 	{
-#if !defined(unix) && !defined(__APPLE__)
+#if !defined(__unix__) && !defined(__APPLE__)
 		if (Args->CheckParm ("-cdrom"))
 		{
 			leader = CDROM_DIR "/";
@@ -1931,7 +1931,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		}
 		if (leader.IsEmpty())
 		{
-#ifdef unix
+#ifdef __unix__
 			leader = "~/" GAME_DIR;
 #elif defined(__APPLE__)
 			char cpath[PATH_MAX];

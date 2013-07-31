@@ -87,6 +87,7 @@ CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
+CVAR (Int,   am_showthingsprites,		0,		CVAR_ARCHIVE);
 
 //=============================================================================
 //
@@ -108,29 +109,32 @@ CVAR (Color, am_gridcolor,			0x8b5a2b,	CVAR_ARCHIVE);
 CVAR (Color, am_xhaircolor,			0x808080,	CVAR_ARCHIVE);
 CVAR (Color, am_notseencolor,		0x6c6c6c,	CVAR_ARCHIVE);
 CVAR (Color, am_lockedcolor,		0x007800,	CVAR_ARCHIVE);
+CVAR (Color, am_intralevelcolor,	0x0000ff,	CVAR_ARCHIVE);
+CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
+CVAR (Color, am_secretsectorcolor,	0xff00ff,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_friend,	0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_monster,	0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_item,	0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_citem,	0xfcfcfc,	CVAR_ARCHIVE);
+
 CVAR (Color, am_ovyourcolor,		0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_ovwallcolor,		0x00ff00,	CVAR_ARCHIVE);
+CVAR (Color, am_ovsecretwallcolor,	0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovspecialwallcolor,	0xffffff,	CVAR_ARCHIVE);
-CVAR (Color, am_ovthingcolor,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovotherwallscolor,	0x008844,	CVAR_ARCHIVE);
+CVAR (Color, am_ovlockedcolor,		0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovefwallcolor,		0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovfdwallcolor,		0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovcdwallcolor,		0x008844,	CVAR_ARCHIVE);
 CVAR (Color, am_ovunseencolor,		0x00226e,	CVAR_ARCHIVE);
 CVAR (Color, am_ovtelecolor,		0xffff00,	CVAR_ARCHIVE);
-CVAR (Color, am_intralevelcolor,	0x0000ff,	CVAR_ARCHIVE);
-CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
-CVAR (Color, am_secretsectorcolor,	0xff00ff,	CVAR_ARCHIVE);
+CVAR (Color, am_ovinterlevelcolor,	0xffff00,	CVAR_ARCHIVE);
 CVAR (Color, am_ovsecretsectorcolor,0x00ffff,	CVAR_ARCHIVE);
-CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
-CVAR (Color, am_thingcolor_monster,		0xfcfcfc,	CVAR_ARCHIVE);
-CVAR (Color, am_thingcolor_item,		0xfcfcfc,	CVAR_ARCHIVE);
-CVAR (Color, am_thingcolor_citem,		0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_ovthingcolor,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_friend,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_monster,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
-CVAR (Int,   am_showthingsprites,		0,			CVAR_ARCHIVE);
 
 //=============================================================================
 //
@@ -293,23 +297,23 @@ static FColorCVar *cv_overlay[] = {
 	&am_backcolor,	// this will not be used in overlay mode
 	&am_ovyourcolor,
 	&am_ovwallcolor,
-	&am_ovspecialwallcolor,
+	&am_ovotherwallscolor,
 	&am_ovfdwallcolor,
 	&am_ovcdwallcolor,
 	&am_ovefwallcolor,
 	&am_ovthingcolor,
-	&am_ovthingcolor,
-	&am_ovthingcolor,
-	&am_ovthingcolor,
-	&am_ovthingcolor,
+	&am_ovthingcolor_item,
+	&am_ovthingcolor_citem,
+	&am_ovthingcolor_monster,
+	&am_ovthingcolor_friend,
 	&am_ovspecialwallcolor,
-	&am_ovwallcolor,
+	&am_ovsecretwallcolor,
 	&am_gridcolor,	// this will not be used in overlay mode
 	&am_xhaircolor,	// this will not be used in overlay mode
-	&am_ovspecialwallcolor,
-	&am_ovspecialwallcolor,
+	&am_ovunseencolor,
+	&am_ovlockedcolor,
 	&am_ovtelecolor,
-	&am_ovtelecolor,
+	&am_ovinterlevelcolor,
 	&am_ovsecretsectorcolor
 };
 

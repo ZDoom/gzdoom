@@ -452,7 +452,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 	decalNum = GetDecalID (sc);
 	sc.MustGetStringName ("{");
 
-	memset (&newdecal, 0, sizeof(newdecal));
+	memset ((void *)&newdecal, 0, sizeof(newdecal));
 	newdecal.PicNum.SetInvalid();
 	newdecal.ScaleX = newdecal.ScaleY = FRACUNIT;
 	newdecal.RenderFlags = RF_WALLSPRITE;

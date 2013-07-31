@@ -2945,7 +2945,7 @@ void FinishDehPatch ()
 		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
 			(typeNameBuilder, sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);
-		memcpy (defaults2, defaults1, sizeof(AActor));
+		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
 		// Make a copy of the replaced class's state labels 
 		FStateDefinitions statedef;

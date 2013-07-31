@@ -208,25 +208,35 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		FxExpression *expr = ParseExpression (sc, cls);
 		sc.MustGetToken(';');
 
-		ExpVal val = expr->EvalExpression();
-		delete expr;
-		PSymbolConst *sym = new PSymbolConst(symname);
-		if (type == TK_Int)
+		FCompileContext ctx(cls, true, true);
+		expr = expr->Resolve(ctx);
+		if (!expr->isConstant())
 		{
-			sym->ValueType = VAL_Int;
-			sym->Value = val.GetInt();
+			sc.ScriptMessage("Constant definition is not a constant");
+			FScriptPosition::ErrorCounter++;
 		}
 		else
 		{
-			sym->ValueType = VAL_Float;
-			sym->Float = val.GetFloat();
-		}
-		if (symt->AddSymbol (sym) == NULL)
-		{
-			delete sym;
-			sc.ScriptMessage ("'%s' is already defined in '%s'.",
-				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
-			FScriptPosition::ErrorCounter++;
+			ExpVal val = static_cast<FxConstant *>(expr)->GetValue();
+			delete expr;
+			PSymbolConst *sym = new PSymbolConst(symname);
+			if (type == TK_Int)
+			{
+				sym->ValueType = VAL_Int;
+				sym->Value = val.GetInt();
+			}
+			else
+			{
+				sym->ValueType = VAL_Float;
+				sym->Float = val.GetFloat();
+			}
+			if (symt->AddSymbol (sym) == NULL)
+			{
+				delete sym;
+				sc.ScriptMessage ("'%s' is already defined in '%s'.",
+					symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+				FScriptPosition::ErrorCounter++;
+			}
 		}
 	}
 	else
@@ -256,7 +266,17 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls);
-			currvalue = expr->EvalExpression().GetInt();
+			FCompileContext ctx(cls, true, true);
+			expr = expr->Resolve(ctx);
+			if (!expr->isConstant())
+			{
+				sc.ScriptMessage("'%s' must be constant", symname.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
+			else
+			{
+				currvalue = static_cast<FxConstant *>(expr)->GetValue().GetInt();
+			}
 			delete expr;
 		}
 		PSymbolConst *sym = new PSymbolConst(symname);
@@ -335,7 +355,13 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression (sc, cls);
-		int maxelems = expr->EvalExpression().GetInt();
+		FCompileContext ctx(cls, true, true);
+		expr = expr->Resolve(ctx);
+		if (!expr->isConstant())
+		{
+			sc.ScriptError("Array size must be constant");
+		}
+		int maxelems = static_cast<FxConstant *>(expr)->GetValue().GetInt();
 		delete expr;
 		sc.MustGetToken(']');
 		valuetype.MakeArray(maxelems);
@@ -402,8 +428,19 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls);
-		int maxelems = expr->EvalExpression().GetInt();
-		delete expr;
+		FCompileContext ctx(cls, true, true);
+		int maxelems;
+		expr = expr->Resolve(ctx);
+		if (!expr->isConstant())
+		{
+			sc.ScriptMessage("Array size must be a constant");
+			FScriptPosition::ErrorCounter++;
+			maxelems = 1;
+		}
+		else
+		{
+			maxelems = static_cast<FxConstant *>(expr)->GetValue().GetInt();
+		}
 		sc.MustGetToken(']');
 		if (maxelems <= 0)
 		{

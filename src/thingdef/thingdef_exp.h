@@ -230,7 +230,6 @@ public:
 	virtual FxExpression *Resolve(FCompileContext &ctx);
 	FxExpression *ResolveAsBoolean(FCompileContext &ctx);
 	
-	virtual ExpVal EvalExpression();
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
 
@@ -377,7 +376,11 @@ public:
 	{
 		return true;
 	}
-	ExpVal EvalExpression();
+
+	ExpVal GetValue() const
+	{
+		return value;
+	}
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -398,7 +401,6 @@ public:
 	~FxIntCast();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -412,7 +414,6 @@ public:
 	~FxFloatCast();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -448,7 +449,6 @@ public:
 	FxMinusSign(FxExpression*);
 	~FxMinusSign();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -466,7 +466,6 @@ public:
 	FxUnaryNotBitwise(FxExpression*);
 	~FxUnaryNotBitwise();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -484,7 +483,6 @@ public:
 	FxUnaryNotBoolean(FxExpression*);
 	~FxUnaryNotBoolean();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -519,7 +517,6 @@ public:
 
 	FxAddSub(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -535,7 +532,6 @@ public:
 
 	FxMulDiv(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -551,7 +547,6 @@ public:
 
 	FxCompareRel(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -567,7 +562,6 @@ public:
 
 	FxCompareEq(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -583,7 +577,6 @@ public:
 
 	FxBinaryInt(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -604,7 +597,6 @@ public:
 	~FxBinaryLogical();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -625,7 +617,6 @@ public:
 	~FxConditional();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -645,7 +636,6 @@ public:
 	~FxAbs();
 	FxExpression *Resolve(FCompileContext&);
 
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -719,7 +709,6 @@ public:
 	FxGlobalVariable(PSymbolVariable*, const FScriptPosition&);
 	FxExpression *Resolve(FCompileContext&);
 	void RequestAddress();
-	ExpVal EvalExpression();
 };
 
 //==========================================================================
@@ -739,7 +728,6 @@ public:
 	~FxClassMember();
 	FxExpression *Resolve(FCompileContext&);
 	void RequestAddress();
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -774,7 +762,6 @@ public:
 	~FxArrayElement();
 	FxExpression *Resolve(FCompileContext&);
 	//void RequestAddress();
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -837,7 +824,6 @@ public:
 	FxGlobalFunctionCall(FName fname, FArgumentList *args, const FScriptPosition &pos);
 	~FxGlobalFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -858,7 +844,6 @@ public:
 	FxClassTypeCast(const PClass *dtype, FxExpression *x);
 	~FxClassTypeCast();
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
@@ -895,7 +880,6 @@ public:
 
 	FxMultiNameState(const char *statestring, const FScriptPosition &pos);
 	FxExpression *Resolve(FCompileContext&);
-	ExpVal EvalExpression();
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 

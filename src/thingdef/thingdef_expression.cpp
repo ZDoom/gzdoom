@@ -198,22 +198,6 @@ static ExpVal GetVariableValue (void *address, FExpressionType &type)
 //
 //==========================================================================
 
-ExpVal FxExpression::EvalExpression()
-{
-	ScriptPosition.Message(MSG_ERROR, "Unresolved expression found");
-	ExpVal val;
-
-	val.Type = VAL_Int;
-	val.Int = 0;
-	return val;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 ExpEmit FxExpression::Emit (VMFunctionBuilder *build)
 {
 	ScriptPosition.Message(MSG_ERROR, "Unemitted expression found");
@@ -324,7 +308,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 {
 	if (Operand->isConstant())
 	{
-		ExpVal val = Operand->EvalExpression();
+		ExpVal val = static_cast<FxConstant *>(Operand)->GetValue();
 		if (val.Type == VAL_Int || val.Type == VAL_Sound || val.Type == VAL_Name || val.Type == VAL_Color)
 		{
 			build->EmitParamInt(val.Int);
@@ -367,17 +351,6 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		}
 	}
 	return ExpEmit();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-ExpVal FxConstant::EvalExpression()
-{
-	return value;
 }
 
 //==========================================================================
@@ -500,7 +473,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 	{
 		if (basex->isConstant())
 		{
-			ExpVal constval = basex->EvalExpression();
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
 			FxExpression *x = new FxConstant(constval.GetInt(), ScriptPosition);
 			delete this;
 			return x;
@@ -520,14 +493,6 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxIntCast::EvalExpression()
-{
-	ExpVal baseval = basex->EvalExpression();
-	baseval.Int = baseval.GetInt();
-	baseval.Type = VAL_Int;
-	return baseval;
-}
 
 ExpEmit FxIntCast::Emit(VMFunctionBuilder *build)
 {
@@ -585,7 +550,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 	{
 		if (basex->isConstant())
 		{
-			ExpVal constval = basex->EvalExpression();
+			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
 			FxExpression *x = new FxConstant(constval.GetFloat(), ScriptPosition);
 			delete this;
 			return x;
@@ -605,14 +570,6 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxFloatCast::EvalExpression()
-{
-	ExpVal baseval = basex->EvalExpression();
-	baseval.Float = baseval.GetFloat();
-	baseval.Type = VAL_Float;
-	return baseval;
-}
 
 ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 {
@@ -717,7 +674,7 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 	{
 		if (Operand->isConstant())
 		{
-			ExpVal val = Operand->EvalExpression();
+			ExpVal val = static_cast<FxConstant *>(Operand)->GetValue();
 			FxExpression *e = val.Type == VAL_Int?
 				new FxConstant(-val.Int, ScriptPosition) :
 				new FxConstant(-val.Float, ScriptPosition);
@@ -740,23 +697,6 @@ FxExpression *FxMinusSign::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxMinusSign::EvalExpression()
-{
-	ExpVal ret;
-
-	if (ValueType == VAL_Int)
-	{
-		ret.Int = -Operand->EvalExpression().GetInt();
-		ret.Type = VAL_Int;
-	}
-	else
-	{
-		ret.Float = -Operand->EvalExpression().GetFloat();
-		ret.Type = VAL_Float;
-	}
-	return ret;
-}
 
 ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 {
@@ -831,7 +771,7 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 
 	if (Operand->isConstant())
 	{
-		int result = ~Operand->EvalExpression().GetInt();
+		int result = ~static_cast<FxConstant *>(Operand)->GetValue().GetInt();
 		FxExpression *e = new FxConstant(result, ScriptPosition);
 		delete this;
 		return e;
@@ -845,15 +785,6 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxUnaryNotBitwise::EvalExpression()
-{
-	ExpVal ret;
-
-	ret.Int = ~Operand->EvalExpression().GetInt();
-	ret.Type = VAL_Int;
-	return ret;
-}
 
 ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 {
@@ -913,7 +844,7 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 	{
 		if (Operand->isConstant())
 		{
-			bool result = !Operand->EvalExpression().GetBool();
+			bool result = !static_cast<FxConstant *>(Operand)->GetValue().GetBool();
 			FxExpression *e = new FxConstant(result, ScriptPosition);
 			delete this;
 			return e;
@@ -934,15 +865,6 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxUnaryNotBoolean::EvalExpression()
-{
-	ExpVal ret;
-
-	ret.Int = !Operand->EvalExpression().GetBool();
-	ret.Type = VAL_Int;
-	return ret;
-}
 
 ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 {
@@ -1089,8 +1011,8 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		if (ValueType == VAL_Float)
 		{
 			double v;
-			double v1 = left->EvalExpression().GetFloat();
-			double v2 = right->EvalExpression().GetFloat();
+			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
+			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
 
 			v =	Operator == '+'? v1 + v2 : 
 				Operator == '-'? v1 - v2 : 0;
@@ -1102,8 +1024,8 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		else
 		{
 			int v;
-			int v1 = left->EvalExpression().GetInt();
-			int v2 = right->EvalExpression().GetInt();
+			int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+			int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
 
 			v =	Operator == '+'? v1 + v2 : 
 				Operator == '-'? v1 - v2 : 0;
@@ -1123,32 +1045,6 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxAddSub::EvalExpression()
-{
-	ExpVal ret;
-
-	if (ValueType == VAL_Float)
-	{
-		double v1 = left->EvalExpression().GetFloat();
-		double v2 = right->EvalExpression().GetFloat();
-
-		ret.Type = VAL_Float;
-		ret.Float = Operator == '+'? v1 + v2 : 
-			  		Operator == '-'? v1 - v2 : 0;
-	}
-	else
-	{
-		int v1 = left->EvalExpression().GetInt();
-		int v2 = right->EvalExpression().GetInt();
-
-		ret.Type = VAL_Int;
-		ret.Int = Operator == '+'? v1 + v2 : 
-				  Operator == '-'? v1 - v2 : 0;
-
-	}
-	return ret;
-}
 
 ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 {
@@ -1241,8 +1137,8 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 		if (ValueType == VAL_Float)
 		{
 			double v;
-			double v1 = left->EvalExpression().GetFloat();
-			double v2 = right->EvalExpression().GetFloat();
+			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
+			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
 
 			if (Operator != '*' && v2 == 0)
 			{
@@ -1262,8 +1158,8 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 		else
 		{
 			int v;
-			int v1 = left->EvalExpression().GetInt();
-			int v2 = right->EvalExpression().GetInt();
+			int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+			int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
 
 			if (Operator != '*' && v2 == 0)
 			{
@@ -1292,44 +1188,6 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxMulDiv::EvalExpression()
-{
-	ExpVal ret;
-
-	if (ValueType == VAL_Float)
-	{
-		double v1 = left->EvalExpression().GetFloat();
-		double v2 = right->EvalExpression().GetFloat();
-
-		if (Operator != '*' && v2 == 0)
-		{
-			I_Error("Division by 0");
-		}
-
-		ret.Type = VAL_Float;
-		ret.Float = Operator == '*'? v1 * v2 : 
-			  		Operator == '/'? v1 / v2 : 
-					Operator == '%'? fmod(v1, v2) : 0;
-	}
-	else
-	{
-		int v1 = left->EvalExpression().GetInt();
-		int v2 = right->EvalExpression().GetInt();
-
-		if (Operator != '*' && v2 == 0)
-		{
-			I_Error("Division by 0");
-		}
-
-		ret.Type = VAL_Int;
-		ret.Int = Operator == '*'? v1 * v2 : 
-				  Operator == '/'? v1 / v2 : 
-				  Operator == '%'? v1 % v2 : 0;
-
-	}
-	return ret;
-}
 
 ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 {
@@ -1425,8 +1283,8 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 
 		if (ValueType == VAL_Float)
 		{
-			double v1 = left->EvalExpression().GetFloat();
-			double v2 = right->EvalExpression().GetFloat();
+			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
+			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
 			v =	Operator == '<'? v1 < v2 : 
 				Operator == '>'? v1 > v2 : 
 				Operator == TK_Geq? v1 >= v2 : 
@@ -1434,8 +1292,8 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			int v1 = left->EvalExpression().GetInt();
-			int v2 = right->EvalExpression().GetInt();
+			int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+			int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
 			v =	Operator == '<'? v1 < v2 : 
 				Operator == '>'? v1 > v2 : 
 				Operator == TK_Geq? v1 >= v2 : 
@@ -1456,33 +1314,6 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxCompareRel::EvalExpression()
-{
-	ExpVal ret;
-
-	ret.Type = VAL_Int;
-
-	if (left->ValueType == VAL_Float || right->ValueType == VAL_Float)
-	{
-		double v1 = left->EvalExpression().GetFloat();
-		double v2 = right->EvalExpression().GetFloat();
-		ret.Int = Operator == '<'? v1 < v2 : 
-				  Operator == '>'? v1 > v2 : 
-				  Operator == TK_Geq? v1 >= v2 : 
-				  Operator == TK_Leq? v1 <= v2 : 0;
-	}
-	else
-	{
-		int v1 = left->EvalExpression().GetInt();
-		int v2 = right->EvalExpression().GetInt();
-		ret.Int = Operator == '<'? v1 < v2 : 
-				  Operator == '>'? v1 > v2 : 
-				  Operator == TK_Geq? v1 >= v2 : 
-				  Operator == TK_Leq? v1 <= v2 : 0;
-	}
-	return ret;
-}
 
 ExpEmit FxCompareRel::Emit(VMFunctionBuilder *build)
 {
@@ -1584,14 +1415,14 @@ cont:
 
 		if (ValueType == VAL_Float)
 		{
-			double v1 = left->EvalExpression().GetFloat();
-			double v2 = right->EvalExpression().GetFloat();
+			double v1 = static_cast<FxConstant *>(left)->GetValue().GetFloat();
+			double v2 = static_cast<FxConstant *>(right)->GetValue().GetFloat();
 			v = Operator == TK_Eq? v1 == v2 : v1 != v2;
 		}
 		else
 		{
-			int v1 = left->EvalExpression().GetInt();
-			int v2 = right->EvalExpression().GetInt();
+			int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+			int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
 			v = Operator == TK_Eq? v1 == v2 : v1 != v2;
 		}
 		FxExpression *e = new FxConstant(v, ScriptPosition);
@@ -1608,32 +1439,6 @@ cont:
 //
 //
 //==========================================================================
-
-ExpVal FxCompareEq::EvalExpression()
-{
-	ExpVal ret;
-
-	ret.Type = VAL_Int;
-
-	if (left->ValueType == VAL_Float || right->ValueType == VAL_Float)
-	{
-		double v1 = left->EvalExpression().GetFloat();
-		double v2 = right->EvalExpression().GetFloat();
-		ret.Int = Operator == TK_Eq? v1 == v2 : v1 != v2;
-	}
-	else if (left->ValueType == VAL_Int)
-	{
-		int v1 = left->EvalExpression().GetInt();
-		int v2 = right->EvalExpression().GetInt();
-		ret.Int = Operator == TK_Eq? v1 == v2 : v1 != v2;
-	}
-	else
-	{
-		// Implement pointer comparison
-		ret.Int = 0;
-	}
-	return ret;
-}
 
 ExpEmit FxCompareEq::Emit(VMFunctionBuilder *build)
 {
@@ -1725,8 +1530,8 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 	}
 	else if (left->isConstant() && right->isConstant())
 	{
-		int v1 = left->EvalExpression().GetInt();
-		int v2 = right->EvalExpression().GetInt();
+		int v1 = static_cast<FxConstant *>(left)->GetValue().GetInt();
+		int v2 = static_cast<FxConstant *>(right)->GetValue().GetInt();
 
 		FxExpression *e = new FxConstant(
 			Operator == TK_LShift? v1 << v2 : 
@@ -1747,25 +1552,6 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxBinaryInt::EvalExpression()
-{
-	int v1 = left->EvalExpression().GetInt();
-	int v2 = right->EvalExpression().GetInt();
-
-	ExpVal ret;
-
-	ret.Type = VAL_Int;
-	ret.Int =
-		Operator == TK_LShift? v1 << v2 : 
-		Operator == TK_RShift? v1 >> v2 : 
-		Operator == TK_URShift? int((unsigned int)(v1) >> v2) : 
-		Operator == '&'? v1 & v2 : 
-		Operator == '|'? v1 | v2 : 
-		Operator == '^'? v1 ^ v2 : 0;
-
-	return ret;
-}
 
 ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 {
@@ -1795,7 +1581,7 @@ ExpEmit FxBinaryInt::Emit(VMFunctionBuilder *build)
 	{ // Shift instructions use right-hand immediates instead of constant registers.
 		if (right->isConstant())
 		{
-			rop = right->EvalExpression().GetInt();
+			rop = static_cast<FxConstant *>(right)->GetValue().GetInt();
 			op2.Konst = true;
 		}
 		else
@@ -1886,8 +1672,8 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 
 	int b_left=-1, b_right=-1;
 
-	if (left->isConstant()) b_left = left->EvalExpression().GetBool();
-	if (right->isConstant()) b_right = right->EvalExpression().GetBool();
+	if (left->isConstant()) b_left = static_cast<FxConstant *>(left)->GetValue().GetBool();
+	if (right->isConstant()) b_right = static_cast<FxConstant *>(right)->GetValue().GetBool();
 
 	// Do some optimizations. This will throw out all sub-expressions that are not
 	// needed to retrieve the final result.
@@ -1965,25 +1751,6 @@ FxExpression *FxBinaryLogical::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxBinaryLogical::EvalExpression()
-{
-	bool b_left = left->EvalExpression().GetBool();
-	ExpVal ret;
-
-	ret.Type = VAL_Int;
-	ret.Int = false;
-
-	if (Operator == TK_AndAnd)
-	{
-		ret.Int = (b_left && right->EvalExpression().GetBool());
-	}
-	else if (Operator == TK_OrOr)
-	{
-		ret.Int = (b_left || right->EvalExpression().GetBool());
-	}
-	return ret;
-}
 
 ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 {
@@ -2088,7 +1855,7 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 
 	if (condition->isConstant())
 	{
-		ExpVal condval = condition->EvalExpression();
+		ExpVal condval = static_cast<FxConstant *>(condition)->GetValue();
 		bool result = condval.GetBool();
 
 		FxExpression *e = result? truex:falsex;
@@ -2121,15 +1888,6 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpVal FxConditional::EvalExpression()
-{
-	ExpVal condval = condition->EvalExpression();
-	bool result = condval.GetBool();
-
-	FxExpression *e = result? truex:falsex;
-	return e->EvalExpression();
-}
-
 ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit out;
@@ -2148,7 +1906,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 	if (truex->isConstant() && truex->ValueType == VAL_Int)
 	{
 		out = ExpEmit(build, REGT_INT);
-		build->EmitLoadInt(out.RegNum, truex->EvalExpression().GetInt());
+		build->EmitLoadInt(out.RegNum, static_cast<FxConstant *>(truex)->GetValue().GetInt());
 	}
 	else
 	{
@@ -2171,7 +1929,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 	build->BackpatchToHere(patchspot);
 	if (falsex->isConstant() && falsex->ValueType == VAL_Int)
 	{
-		build->EmitLoadInt(out.RegNum, falsex->EvalExpression().GetInt());
+		build->EmitLoadInt(out.RegNum, static_cast<FxConstant *>(falsex)->GetValue().GetInt());
 	}
 	else
 	{
@@ -2245,7 +2003,7 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 	}
 	else if (val->isConstant())
 	{
-		ExpVal value = val->EvalExpression();
+		ExpVal value = static_cast<FxConstant *>(val)->GetValue();
 		switch (value.Type)
 		{
 		case VAL_Int:
@@ -2273,23 +2031,6 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxAbs::EvalExpression()
-{
-	ExpVal value = val->EvalExpression();
-	switch (value.Type)
-	{
-	default:
-	case VAL_Int:
-		value.Int = abs(value.Int);
-		break;
-
-	case VAL_Float:
-		value.Float = fabs(value.Float);
-		break;
-	}
-	return value;
-}
 
 ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
 {
@@ -2761,28 +2502,6 @@ FxExpression *FxGlobalVariable::Resolve(FCompileContext&)
 //
 //==========================================================================
 
-ExpVal FxGlobalVariable::EvalExpression()
-{
-	ExpVal ret;
-	
-	if (!AddressRequested)
-	{
-		ret = GetVariableValue((void*)var->offset, var->ValueType);
-	}
-	else
-	{
-		ret.pointer = (void*)var->offset;
-		ret.Type = VAL_Pointer;
-	}
-	return ret;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FxClassMember::FxClassMember(FxExpression *x, PSymbolVariable* mem, const FScriptPosition &pos)
 : FxExpression(pos)
 {
@@ -2856,42 +2575,6 @@ FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
 		return NULL;
 	}
 	return this;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-ExpVal FxClassMember::EvalExpression()
-{
-	char *object = NULL;
-	if (classx->ValueType == VAL_Class)
-	{
-		// not implemented yet
-	}
-	else
-	{
-		object = classx->EvalExpression().GetPointer<char>();
-	}
-	if (object == NULL)
-	{
-		I_Error("Accessing member variable without valid object");
-	}
-
-	ExpVal ret;
-	
-	if (!AddressRequested)
-	{
-		ret = GetVariableValue(object + membervar->offset, membervar->ValueType);
-	}
-	else
-	{
-		ret.pointer = object + membervar->offset;
-		ret.Type = VAL_Pointer;
-	}
-	return ret;
 }
 
 ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
@@ -3071,23 +2754,6 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxArrayElement::EvalExpression()
-{
-	int * arraystart = Array->EvalExpression().GetPointer<int>();
-	int indexval = index->EvalExpression().GetInt();
-
-	if (indexval < 0 || indexval >= Array->ValueType.size)
-	{
-		I_Error("Array index out of bounds");
-	}
-
-	ExpVal ret;
-
-	ret.Int = arraystart[indexval];
-	ret.Type = VAL_Int;
-	return ret;
-}
-
 ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit start = Array->Emit(build);
@@ -3100,7 +2766,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	}
 	if (index->isConstant())
 	{
-		int indexval = index->EvalExpression().GetInt();
+		int indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
 		if (indexval < 0 || indexval >= Array->ValueType.size)
 		{
 			I_Error("Array index out of bounds");
@@ -3326,14 +2992,14 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 			{
 				assert(argex->ValueType == VAL_Name);
 				assert(argex->isConstant());
-				build->EmitParamInt(-argex->EvalExpression().GetName());
+				build->EmitParamInt(-static_cast<FxConstant *>(argex)->GetValue().GetName());
 			}
 			else
 			{
 				assert(argex->ValueType == VAL_Int);
 				if (argex->isConstant())
 				{
-					build->EmitParamInt(argex->EvalExpression().GetInt());
+					build->EmitParamInt(static_cast<FxConstant *>(argex)->GetValue().GetInt());
 				}
 				else
 				{
@@ -3408,7 +3074,7 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 	}
 	if ((*ArgList)[0]->isConstant())
 	{
-		double v = (*ArgList)[0]->EvalExpression().GetFloat();
+		double v = static_cast<FxConstant *>((*ArgList)[0])->GetValue().GetFloat();
 		if (Name == NAME_Sqrt)
 		{
 			v = sqrt(v);
@@ -3434,24 +3100,6 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 //
 //
 //==========================================================================
-
-ExpVal FxGlobalFunctionCall::EvalExpression()
-{
-	double v = (*ArgList)[0]->EvalExpression().GetFloat();
-	ExpVal ret;
-	ret.Type = VAL_Float;
-
-	if (Name == NAME_Sqrt)
-	{
-		ret.Float = sqrt(v);
-	}
-	else
-	{
-		v *= M_PI / 180.0;		// convert from degrees to radians
-		ret.Float = (Name == NAME_Sin) ? sin(v) : cos(v);
-	}
-	return ret;
-}
 
 ExpEmit FxGlobalFunctionCall::Emit(VMFunctionBuilder *build)
 {
@@ -3507,7 +3155,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 
 	if (basex->isConstant())
 	{
-		FName clsname = basex->EvalExpression().GetName();
+		FName clsname = static_cast<FxConstant *>(basex)->GetValue().GetName();
 		const PClass *cls = NULL;
 
 		if (clsname != NAME_None)
@@ -3549,23 +3197,6 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 // 
 //
 //==========================================================================
-
-ExpVal FxClassTypeCast::EvalExpression()
-{
-	FName clsname = basex->EvalExpression().GetName();
-	const PClass *cls = PClass::FindClass(clsname);
-
-	if (!cls->IsDescendantOf(desttype))
-	{
-		Printf("class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
-		cls = NULL;
-	}
-
-	ExpVal ret;
-	ret.Type = VAL_Class;
-	ret.pointer = (void*)cls;
-	return ret;
-}
 
 int DecoNameToClass(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
@@ -3735,25 +3366,6 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxMultiNameState::EvalExpression()
-{
-	ExpVal ret;
-	ret.Type = VAL_State;
-	ret.pointer = NULL;
-	if (ret.pointer == NULL)
-	{
-		const char *dot="";
-		Printf("Jump target '");
-		for (unsigned int i=0;i<names.Size();i++)
-		{
-			Printf("%s%s", dot, names[i].GetChars());
-			dot = ".";
-		}
-		Printf("' not found in\n");
-	}
-	return ret;
-}
-
 static int DoFindState(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, FName *names, int numnames)
 {
 	PARAM_OBJECT_AT(0, self, AActor);
@@ -3877,7 +3489,7 @@ ExpEmit FxDamageValue::Emit(VMFunctionBuilder *build)
 {
 	if (val->isConstant())
 	{
-		build->EmitRetInt(0, false, val->EvalExpression().Int);
+		build->EmitRetInt(0, false, static_cast<FxConstant *>(val)->GetValue().Int);
 	}
 	else
 	{

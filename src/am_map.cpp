@@ -68,96 +68,12 @@
 #include "a_keys.h"
 #include "r_data/colormaps.h"
 
-//=============================================================================
-//
-// Automap colors
-//
-//=============================================================================
-
-struct AMColor
-{
-	int Index;
-	uint32 RGB;
-
-	void FromCVar(FColorCVar & cv)
-	{
-		Index = cv.GetIndex();
-		RGB = uint32(cv) | MAKEARGB(255, 0, 0, 0);
-	}
-
-	void FromRGB(int r,int g, int b)
-	{
-		RGB = MAKEARGB(255, r, g, b);
-		Index = ColorMatcher.Pick(r, g, b);
-	}
-};
-
-static AMColor Background, YourColor, WallColor, TSWallColor,
-		   FDWallColor, CDWallColor, EFWallColor, ThingColor,
-		   ThingColor_Item, ThingColor_CountItem, ThingColor_Monster, ThingColor_Friend,
-		   SpecialWallColor, SecretWallColor, GridColor, XHairColor,
-		   NotSeenColor,
-		   LockedColor,
-		   AlmostBackground,
-		   IntraTeleportColor, InterTeleportColor,
-		   SecretSectorColor;
-
-static AMColor DoomColors[11];
-static BYTE DoomPaletteVals[11*3] =
-{
-	0x00,0x00,0x00, 0xff,0xff,0xff, 0x10,0x10,0x10,
-	0xfc,0x00,0x00, 0x80,0x80,0x80, 0xbc,0x78,0x48,
-	0xfc,0xfc,0x00, 0x74,0xfc,0x6c, 0x4c,0x4c,0x4c,
-	0x80,0x80,0x80, 0x6c,0x6c,0x6c
-};
-
-static AMColor StrifeColors[11];
-static BYTE StrifePaletteVals[11*3] =
-{
-	0x00,0x00,0x00,  239, 239,   0, 0x10,0x10,0x10,
-	 199, 195, 195,  119, 115, 115,   55,  59,  91,
-	 119, 115, 115, 0xfc,0x00,0x00, 0x4c,0x4c,0x4c,
-	187, 59, 0, 219, 171, 0
-};
-
-static AMColor RavenColors[11];
-static BYTE RavenPaletteVals[11*3] =
-{
-	0x6c,0x54,0x40,  255, 255, 255, 0x74,0x5c,0x48,
-	  75,  50,  16,   88,  93,  86,  208, 176, 133,  
-	 103,  59,  31,  236, 236, 236,    0,   0,   0,
-	   0,   0,   0,    0,   0,   0,
-};
 
 //=============================================================================
 //
-// globals
+// CVARs
 //
 //=============================================================================
-
-#define MAPBITS 12
-#define MapDiv SafeDivScale12
-#define MapMul MulScale12
-#define MAPUNIT (1<<MAPBITS)
-#define FRACTOMAPBITS (FRACBITS-MAPBITS)
-
-// scale on entry
-#define INITSCALEMTOF (.2*MAPUNIT)
-// used by MTOF to scale from map-to-frame-buffer coords
-static fixed_t scale_mtof = (fixed_t)INITSCALEMTOF;
-// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
-static fixed_t scale_ftom;
-
-// translates between frame-buffer and map distances
-inline fixed_t FTOM(fixed_t x)
-{
-	return x * scale_ftom;
-}
-
-inline fixed_t MTOF(fixed_t x)
-{
-	return MulScale24 (x, scale_mtof);
-}
 
 CVAR (Int,   am_rotate,				0,			CVAR_ARCHIVE);
 CVAR (Int,   am_overlay,			0,			CVAR_ARCHIVE);
@@ -167,6 +83,17 @@ CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
 CVAR (Int,   am_colorset,			0,			CVAR_ARCHIVE);
+CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
+CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
+
+//=============================================================================
+//
+// Automap colors
+//
+//=============================================================================
+
 CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
 CVAR (Color, am_yourcolor,			0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_wallcolor,			0x2c1808,	CVAR_ARCHIVE);
@@ -195,10 +122,6 @@ CVAR (Color, am_intralevelcolor,	0x0000ff,	CVAR_ARCHIVE);
 CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
 CVAR (Color, am_secretsectorcolor,	0xff00ff,	CVAR_ARCHIVE);
 CVAR (Color, am_ovsecretsectorcolor,0x00ffff,	CVAR_ARCHIVE);
-CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
-CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_monster,		0xfcfcfc,	CVAR_ARCHIVE);
 CVAR (Color, am_thingcolor_item,		0xfcfcfc,	CVAR_ARCHIVE);
@@ -208,6 +131,300 @@ CVAR (Color, am_ovthingcolor_monster,	0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Color, am_ovthingcolor_citem,		0xe88800,	CVAR_ARCHIVE);
 CVAR (Int,   am_showthingsprites,		0,			CVAR_ARCHIVE);
+
+//=============================================================================
+//
+// internal representation of a single color
+//
+//=============================================================================
+
+struct AMColor
+{
+	int Index;
+	uint32 RGB;
+
+	void FromCVar(FColorCVar & cv)
+	{
+		Index = cv.GetIndex();
+		RGB = uint32(cv) | MAKEARGB(255, 0, 0, 0);
+	}
+
+	void FromRGB(int r,int g, int b)
+	{
+		RGB = MAKEARGB(255, r, g, b);
+		Index = ColorMatcher.Pick(r, g, b);
+	}
+
+	void setInvalid()
+	{
+		Index = -1;
+		RGB = -1;
+	}
+
+	bool isValid() const
+	{
+		return Index > -1;
+	}
+};
+
+//=============================================================================
+//
+// a complete color set
+//
+//=============================================================================
+
+struct AMColorset
+{
+	enum
+	{
+		Background, 
+		YourColor, 
+		WallColor, 
+		TSWallColor,
+		FDWallColor, 
+		CDWallColor, 
+		EFWallColor, 
+		ThingColor,
+		ThingColor_Item, 
+		ThingColor_CountItem, 
+		ThingColor_Monster, 
+		ThingColor_Friend,
+		SpecialWallColor, 
+		SecretWallColor, 
+		GridColor, 
+		XHairColor,
+		NotSeenColor,
+		LockedColor,
+		IntraTeleportColor, 
+		InterTeleportColor,
+		SecretSectorColor,
+		AlmostBackgroundColor,
+		AM_NUM_COLORS
+	};
+
+	AMColor c[AM_NUM_COLORS];
+	bool displayLocks;
+	bool forcebackground;
+
+	void initFromCVars(FColorCVar **values)
+	{
+		for(int i=0;i<AlmostBackgroundColor; i++)
+		{
+			c[i].FromCVar(*values[i]);
+		}
+
+		DWORD ba = *(values[0]);
+
+		int r = RPART(ba) - 16;
+		int g = GPART(ba) - 16;
+		int b = BPART(ba) - 16;
+
+		if (r < 0)
+			r += 32;
+		if (g < 0)
+			g += 32;
+		if (b < 0)
+			b += 32;
+
+		c[AlmostBackgroundColor].FromRGB(r, g, b);
+		displayLocks = true;
+		forcebackground = false;
+	}
+
+	void initFromColors(const unsigned char *colors, bool showlocks)
+	{
+		for(int i=0, j=0; i<AM_NUM_COLORS; i++, j+=3)
+		{
+			if (colors[j] == 1 && colors[j+1] == 0 && colors[j+2] == 0)
+			{
+				c[i].setInvalid();
+			}
+			else
+			{
+				c[i].FromRGB(colors[j], colors[j+1], colors[j+2]);
+			}
+		}
+		displayLocks = showlocks;
+		forcebackground = false;
+	}
+
+	const AMColor &operator[](int index) const
+	{
+		return c[index];
+	}
+
+	bool isValid(int index) const
+	{
+		return c[index].isValid();
+	}
+};
+
+//=============================================================================
+//
+// predefined colorsets
+//
+//=============================================================================
+
+static FColorCVar *cv_standard[] = {
+	&am_backcolor,
+	&am_yourcolor,
+	&am_wallcolor,
+	&am_tswallcolor,
+	&am_fdwallcolor,
+	&am_cdwallcolor,
+	&am_efwallcolor,
+	&am_thingcolor,
+	&am_thingcolor_item,
+	&am_thingcolor_citem,
+	&am_thingcolor_monster,
+	&am_thingcolor_friend,
+	&am_specialwallcolor,
+	&am_secretwallcolor,
+	&am_gridcolor,
+	&am_xhaircolor,
+	&am_notseencolor,
+	&am_lockedcolor,
+	&am_intralevelcolor,
+	&am_interlevelcolor,
+	&am_secretsectorcolor
+};
+
+static FColorCVar *cv_overlay[] = {
+	&am_backcolor,	// this will not be used in overlay mode
+	&am_ovyourcolor,
+	&am_ovwallcolor,
+	&am_ovspecialwallcolor,
+	&am_ovfdwallcolor,
+	&am_ovcdwallcolor,
+	&am_ovefwallcolor,
+	&am_ovthingcolor,
+	&am_ovthingcolor,
+	&am_ovthingcolor,
+	&am_ovthingcolor,
+	&am_ovthingcolor,
+	&am_ovspecialwallcolor,
+	&am_ovwallcolor,
+	&am_gridcolor,	// this will not be used in overlay mode
+	&am_xhaircolor,	// this will not be used in overlay mode
+	&am_ovspecialwallcolor,
+	&am_ovspecialwallcolor,
+	&am_ovtelecolor,
+	&am_ovtelecolor,
+	&am_ovsecretsectorcolor
+};
+
+#define NOT_USED 1,0,0	// use almost black as indicator for an unused color
+
+static unsigned char DoomColors[]= {
+	0x00,0x00,0x00, // background
+	0xff,0xff,0xff, // yourcolor
+	0xfc,0x00,0x00, // wallcolor
+	0x80,0x80,0x80, // tswallcolor
+	0xbc,0x78,0x48,	// fdwallcolor
+	0xfc,0xfc,0x00, // cdwallcolor
+	0xbc,0x78,0x48,	// efwallcolor
+	0x74,0xfc,0x6c, // thingcolor
+	0x74,0xfc,0x6c, // thingcolor_item
+	0x74,0xfc,0x6c, // thingcolor_citem
+	0x74,0xfc,0x6c, // thingcolor_monster
+	0x74,0xfc,0x6c, // thingcolor_friend
+	NOT_USED,		// specialwallcolor
+	NOT_USED,		// secretwallcolor
+	0x4c,0x4c,0x4c,	// gridcolor
+	0x80,0x80,0x80, // xhaircolor
+	0x6c,0x6c,0x6c,	// notseencolor
+	0xfc,0xfc,0x00, // lockedcolor
+	NOT_USED,		// intrateleport
+	NOT_USED,		// interteleport
+	NOT_USED,		// secretsector
+	0x10,0x10,0x10,	// almostbackground
+};
+
+static unsigned char StrifeColors[]= {
+	0x00,0x00,0x00, // background
+	239, 239,   0,	// yourcolor
+	199, 195, 195,	// wallcolor
+	119, 115, 115,	// tswallcolor
+	 55,  59,  91,	// fdwallcolor
+	119, 115, 115,	// cdwallcolor
+	 55,  59,  91,	// efwallcolor
+	187,  59,   0,	// thingcolor
+	219, 171,   0,	// thingcolor_item
+	219, 171,   0,	// thingcolor_citem
+	0xfc,0x00,0x00,	// thingcolor_monster
+	0xfc,0x00,0x00, // thingcolor_friend
+	NOT_USED,		// specialwallcolor
+	NOT_USED,		// secretwallcolor
+	0x4c,0x4c,0x4c,	// gridcolor
+	0x80,0x80,0x80, // xhaircolor
+	0x6c,0x6c,0x6c,	// notseencolor
+	119, 115, 115,	// lockedcolor
+	NOT_USED,		// intrateleport
+	NOT_USED,		// interteleport
+	NOT_USED,		// secretsector
+	0x10,0x10,0x10,	// almostbackground
+};
+
+static unsigned char RavenColors[]= {
+	0x6c,0x54,0x40, // background
+	0xff,0xff,0xff, // yourcolor
+	 75,  50,  16,	// wallcolor
+	 88,  93,  86,	// tswallcolor
+	208, 176, 133,  // fdwallcolor
+	103,  59,  31,	// cdwallcolor
+	208, 176, 133,  // efwallcolor
+	236, 236, 236,	// thingcolor
+	236, 236, 236,	// thingcolor_item
+	236, 236, 236,	// thingcolor_citem
+	236, 236, 236,	// thingcolor_monster
+	236, 236, 236,	// thingcolor_friend
+	NOT_USED,		// specialwallcolor
+	NOT_USED,		// secretwallcolor
+	 75,  50,  16,	// gridcolor
+	0x00,0x00,0x00, // xhaircolor
+	0x00,0x00,0x00,	// notseencolor
+	103,  59,  31,	// lockedcolor
+	NOT_USED,		// intrateleport
+	NOT_USED,		// interteleport
+	NOT_USED,		// secretsector
+	0x10,0x10,0x10,	// almostbackground
+};
+
+#undef NOT_USED
+
+static AMColorset AMColors;
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+#define MAPBITS 12
+#define MapDiv SafeDivScale12
+#define MapMul MulScale12
+#define MAPUNIT (1<<MAPBITS)
+#define FRACTOMAPBITS (FRACBITS-MAPBITS)
+
+// scale on entry
+#define INITSCALEMTOF (.2*MAPUNIT)
+// used by MTOF to scale from map-to-frame-buffer coords
+static fixed_t scale_mtof = (fixed_t)INITSCALEMTOF;
+// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
+static fixed_t scale_ftom;
+
+// translates between frame-buffer and map distances
+inline fixed_t FTOM(fixed_t x)
+{
+	return x * scale_ftom;
+}
+
+inline fixed_t MTOF(fixed_t x)
+{
+	return MulScale24 (x, scale_mtof);
+}
+
 
 
 static int bigstate = 0;
@@ -259,6 +476,17 @@ CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
 	}
 }
 
+EXTERN_CVAR (Bool, sv_cheats)
+CUSTOM_CVAR (Int, am_cheat, 0, 0)
+{
+	// No automap cheat in net games when cheats are disabled!
+	if (netgame && !sv_cheats && self != 0)
+	{
+		self = 0;
+	}
+}
+
+
 
 #define AM_NUMMARKPOINTS 10
 
@@ -306,11 +534,14 @@ struct islope_t
 
 
 
+//=============================================================================
 //
 // The vector graphics for the automap.
 //  A line drawing of the player pointing right,
 //   starting from the middle.
 //
+//=============================================================================
+
 static TArray<mline_t> MapArrow;
 static TArray<mline_t> CheatMapArrow;
 static TArray<mline_t> CheatKey;
@@ -345,15 +576,11 @@ static mline_t square_guy[] = {
 
 
 
-EXTERN_CVAR (Bool, sv_cheats)
-CUSTOM_CVAR (Int, am_cheat, 0, 0)
-{
-	// No automap cheat in net games when cheats are disabled!
-	if (netgame && !sv_cheats && self != 0)
-	{
-		self = 0;
-	}
-}
+//=============================================================================
+//
+//
+//
+//=============================================================================
 
 static int 	grid = 0;
 
@@ -563,21 +790,6 @@ void AM_StaticInit()
 	}
 	markpointnum = 0;
 	mapback.SetInvalid();
-
-	static DWORD *lastpal = NULL;
-	//static int lastback = -1;
-	DWORD *palette;
-	
-	palette = (DWORD *)GPalette.BaseColors;
-
-	int i, j;
-
-	for (i = j = 0; i < 11; i++, j += 3)
-	{
-		DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
-		StrifeColors[i].FromRGB(StrifePaletteVals[j], StrifePaletteVals[j+1], StrifePaletteVals[j+2]);
-		RavenColors[i].FromRGB(RavenPaletteVals[j], RavenPaletteVals[j+1], RavenPaletteVals[j+2]);
-	}
 }
 
 //=============================================================================
@@ -913,133 +1125,28 @@ static void AM_initColors (bool overlayed)
 {
 	if (overlayed)
 	{
-		YourColor.FromCVar (am_ovyourcolor);
-		WallColor.FromCVar (am_ovwallcolor);
-		SpecialWallColor.FromCVar(am_ovspecialwallcolor);
-		SecretWallColor = WallColor;
-		SecretSectorColor.FromCVar (am_ovsecretsectorcolor);
-		ThingColor_Item.FromCVar (am_ovthingcolor_item);
-		ThingColor_CountItem.FromCVar (am_ovthingcolor_citem);
-		ThingColor_Friend.FromCVar (am_ovthingcolor_friend);
-		ThingColor_Monster.FromCVar (am_ovthingcolor_monster);
-		ThingColor.FromCVar (am_ovthingcolor);
-		LockedColor.FromCVar (am_ovotherwallscolor);
-		EFWallColor.FromCVar (am_ovefwallcolor);
-		FDWallColor.FromCVar (am_ovfdwallcolor);
-		CDWallColor.FromCVar (am_ovcdwallcolor);
-		TSWallColor.FromCVar (am_ovunseencolor);
-		NotSeenColor = TSWallColor;
-		InterTeleportColor.FromCVar (am_ovtelecolor);
-		IntraTeleportColor = InterTeleportColor;
+		AMColors.initFromCVars(cv_overlay);
 	}
 	else switch(am_colorset)
 	{
 		default:
-		{
 			/* Use the custom colors in the am_* cvars */
-			Background.FromCVar (am_backcolor);
-			YourColor.FromCVar (am_yourcolor);
-			SecretWallColor.FromCVar (am_secretwallcolor);
-			SpecialWallColor.FromCVar (am_specialwallcolor);
-			WallColor.FromCVar (am_wallcolor);
-			TSWallColor.FromCVar (am_tswallcolor);
-			FDWallColor.FromCVar (am_fdwallcolor);
-			CDWallColor.FromCVar (am_cdwallcolor);
-			EFWallColor.FromCVar (am_efwallcolor);
-			ThingColor_Item.FromCVar (am_thingcolor_item);
-			ThingColor_CountItem.FromCVar (am_thingcolor_citem);
-			ThingColor_Friend.FromCVar (am_thingcolor_friend);
-			ThingColor_Monster.FromCVar (am_thingcolor_monster);
-			ThingColor.FromCVar (am_thingcolor);
-			GridColor.FromCVar (am_gridcolor);
-			XHairColor.FromCVar (am_xhaircolor);
-			NotSeenColor.FromCVar (am_notseencolor);
-			LockedColor.FromCVar (am_lockedcolor);
-			InterTeleportColor.FromCVar (am_interlevelcolor);
-			IntraTeleportColor.FromCVar (am_intralevelcolor);
-			SecretSectorColor.FromCVar (am_secretsectorcolor);
-
-			DWORD ba = am_backcolor;
-
-			int r = RPART(ba) - 16;
-			int g = GPART(ba) - 16;
-			int b = BPART(ba) - 16;
-
-			if (r < 0)
-				r += 32;
-			if (g < 0)
-				g += 32;
-			if (b < 0)
-				b += 32;
-
-			AlmostBackground.FromRGB(r, g, b);
+			AMColors.initFromCVars(cv_standard);
 			break;
-		}
 
 		case 1:	// Doom
 			// Use colors corresponding to the original Doom's
-			Background = DoomColors[0];
-			YourColor = DoomColors[1];
-			AlmostBackground = DoomColors[2];
-			SecretSectorColor = 		
-				SecretWallColor =
-				SpecialWallColor =
-				WallColor = DoomColors[3];
-			TSWallColor = DoomColors[4];
-			EFWallColor = FDWallColor = DoomColors[5];
-			LockedColor =
-				CDWallColor = DoomColors[6];
-			ThingColor_Item = 
-				ThingColor_Friend = 
-				ThingColor_Monster =
-				ThingColor = DoomColors[7];
-			GridColor = DoomColors[8];
-			XHairColor = DoomColors[9];
-			NotSeenColor = DoomColors[10];
+			AMColors.initFromColors(DoomColors, false);
 			break;
 
 		case 2:	// Strife
 			// Use colors corresponding to the original Strife's
-			Background = StrifeColors[0];
-			YourColor = StrifeColors[1];
-			AlmostBackground = DoomColors[2];
-			SecretSectorColor = 		
-				SecretWallColor =
-				SpecialWallColor =
-				WallColor = StrifeColors[3];
-			TSWallColor = StrifeColors[4];
-			EFWallColor = FDWallColor = StrifeColors[5];
-			LockedColor =
-				CDWallColor = StrifeColors[6];
-			ThingColor_Item = StrifeColors[10];
-			ThingColor_Friend = 
-				ThingColor_Monster = StrifeColors[7];
-			ThingColor = StrifeColors[9];
-			GridColor = StrifeColors[8];
-			XHairColor = DoomColors[9];
-			NotSeenColor = DoomColors[10];
+			AMColors.initFromColors(StrifeColors, false);
 			break;
 
 		case 3:	// Raven
 			// Use colors corresponding to the original Raven's
-			Background = RavenColors[0];
-			YourColor = RavenColors[1];
-			AlmostBackground = DoomColors[2];
-			SecretSectorColor = 		
-				SecretWallColor =
-				SpecialWallColor =
-				WallColor = RavenColors[3];
-			TSWallColor = RavenColors[4];
-			EFWallColor = FDWallColor = RavenColors[5];
-			LockedColor =
-				CDWallColor = RavenColors[6];
-			ThingColor = 
-			ThingColor_Item = 
-			ThingColor_Friend = 
-				ThingColor_Monster = RavenColors[7];
-			GridColor = RavenColors[4];
-			XHairColor = RavenColors[9];
-			NotSeenColor = RavenColors[10];
+			AMColors.initFromColors(RavenColors, true);
 			break;
 
 	}
@@ -1541,13 +1648,18 @@ void AM_drawMline (mline_t *ml, const AMColor &color)
 	}
 }
 
+inline void AM_drawMline (mline_t *ml, int colorindex)
+{
+	AM_drawMline(ml, AMColors[colorindex]);
+}
+
 //=============================================================================
 //
 // Draws flat (floor/ceiling tile) aligned grid lines.
 //
 //=============================================================================
 
-void AM_drawGrid (const AMColor &color)
+void AM_drawGrid (int color)
 {
 	fixed_t x, y;
 	fixed_t start, end;
@@ -1786,20 +1898,23 @@ void AM_drawSubsectors()
 
 static bool AM_CheckSecret(line_t *line)
 {
-	if (line->frontsector != NULL)
+	if (AMColors.isValid(AMColors.SecretSectorColor))
 	{
-		if (line->frontsector->secretsector)
+		if (line->frontsector != NULL)
 		{
-			if (am_map_secrets!=0 && !(line->frontsector->special&SECRET_MASK)) return true;
-			if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
+			if (line->frontsector->secretsector)
+			{
+				if (am_map_secrets!=0 && !(line->frontsector->special&SECRET_MASK)) return true;
+				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
+			}
 		}
-	}
-	if (line->backsector != NULL)
-	{
-		if (line->backsector->secretsector)
+		if (line->backsector != NULL)
 		{
-			if (am_map_secrets!=0 && !(line->backsector->special&SECRET_MASK)) return true;
-			if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
+			if (line->backsector->secretsector)
+			{
+				if (am_map_secrets!=0 && !(line->backsector->special&SECRET_MASK)) return true;
+				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
+			}
 		}
 	}
 	return false;
@@ -1982,39 +2097,42 @@ void AM_drawWalls (bool allmap)
 			if (AM_CheckSecret(&lines[i]))
 			{
 				// map secret sectors like Boom
-				AM_drawMline(&l, SecretSectorColor);
+				AM_drawMline(&l, AMColors.SecretSectorColor);
 			}
 			else if (lines[i].flags & ML_SECRET)
 			{ // secret door
 				if (am_cheat != 0 && lines[i].backsector != NULL)
-					AM_drawMline(&l, SecretWallColor);
+					AM_drawMline(&l, AMColors.SecretWallColor);
 			    else
-					AM_drawMline(&l, WallColor);
-			} else if (lines[i].locknumber > 0) { // [Dusk] specials w/ locknumbers
+					AM_drawMline(&l, AMColors.WallColor);
+			} 
+			else if (lines[i].locknumber > 0 && AMColors.displayLocks) 
+			{ // [Dusk] specials w/ locknumbers
 				lock = lines[i].locknumber;
 				color = P_GetMapColorForLock(lock);
 				
 				AMColor c;
 				if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
-				else c = LockedColor;
+				else c = AMColors[AMColors.LockedColor];
 				
 				AM_drawMline (&l, c);
-			} else if ((lines[i].special == Teleport ||
+			} 
+			else if ((lines[i].special == Teleport ||
 				lines[i].special == Teleport_NoFog ||
 				lines[i].special == Teleport_ZombieChanger ||
 				lines[i].special == Teleport_Line) &&
 				(lines[i].activation & SPAC_PlayerActivate) &&
-				am_colorset == 0)
+				AMColors.isValid(AMColors.IntraTeleportColor))
 			{ // intra-level teleporters
-				AM_drawMline(&l, IntraTeleportColor);
+				AM_drawMline(&l, AMColors.IntraTeleportColor);
 			}
 			else if ((lines[i].special == Teleport_NewMap ||
 					 lines[i].special == Teleport_EndGame ||
 					 lines[i].special == Exit_Normal ||
 					 lines[i].special == Exit_Secret) &&
-					am_colorset == 0)
+					 AMColors.isValid(AMColors.InterTeleportColor))
 			{ // inter-level/game-ending teleporters
-				AM_drawMline(&l, InterTeleportColor);
+				AM_drawMline(&l, AMColors.InterTeleportColor);
 			}
 			else if (lines[i].special == Door_LockedRaise ||
 					 lines[i].special == ACS_LockedExecute ||
@@ -2022,7 +2140,7 @@ void AM_drawWalls (bool allmap)
 					 (lines[i].special == Door_Animated && lines[i].args[3] != 0) ||
 					 (lines[i].special == Generic_Door && lines[i].args[4] != 0))
 			{
-				if (am_colorset == 0 || am_colorset == 3)	// Raven games show door colors
+				if (AMColors.displayLocks)
 				{
 					int P_GetMapColorForLock(int lock);
 
@@ -2035,16 +2153,16 @@ void AM_drawWalls (bool allmap)
 					AMColor c;
 
 					if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
-					else c = LockedColor;
+					else c = AMColors[AMColors.LockedColor];
 
 					AM_drawMline (&l, c);
 				}
 				else
 				{
-					AM_drawMline (&l, LockedColor);  // locked special
+					AM_drawMline (&l, AMColors.LockedColor);  // locked special
 				}
 			}
-			else if (am_showtriggerlines && am_colorset == 0 && lines[i].special != 0
+			else if (am_showtriggerlines && AMColors.isValid(AMColors.SpecialWallColor) && lines[i].special != 0
 				&& lines[i].special != Door_Open
 				&& lines[i].special != Door_Close
 				&& lines[i].special != Door_CloseWaitOpen
@@ -2053,31 +2171,31 @@ void AM_drawWalls (bool allmap)
 				&& lines[i].special != Generic_Door
 				&& (lines[i].activation & SPAC_PlayerActivate))
 			{
-				AM_drawMline(&l, SpecialWallColor);	// wall with special non-door action the player can do
+				AM_drawMline(&l, AMColors.SpecialWallColor);	// wall with special non-door action the player can do
 			}
 			else if (lines[i].backsector == NULL)
 			{
-				AM_drawMline(&l, WallColor);	// one-sided wall
+				AM_drawMline(&l, AMColors.WallColor);	// one-sided wall
 			}
 			else if (lines[i].backsector->floorplane
 				  != lines[i].frontsector->floorplane)
 			{
-				AM_drawMline(&l, FDWallColor); // floor level change
+				AM_drawMline(&l, AMColors.FDWallColor); // floor level change
 			}
 			else if (lines[i].backsector->ceilingplane
 				  != lines[i].frontsector->ceilingplane)
 			{
-				AM_drawMline(&l, CDWallColor); // ceiling level change
+				AM_drawMline(&l, AMColors.CDWallColor); // ceiling level change
 			}
 #ifdef _3DFLOORS
 			else if (AM_Check3DFloors(&lines[i]))
 			{
-				AM_drawMline(&l, EFWallColor); // Extra floor border
+				AM_drawMline(&l, AMColors.EFWallColor); // Extra floor border
 			}
 #endif
 			else if (am_cheat != 0)
 			{
-				AM_drawMline(&l, TSWallColor);
+				AM_drawMline(&l, AMColors.TSWallColor);
 			}
 		}
 		else if (allmap)
@@ -2089,7 +2207,7 @@ void AM_drawWalls (bool allmap)
 					continue;
 				}
 			}
-			AM_drawMline(&l, NotSeenColor);
+			AM_drawMline(&l, AMColors.NotSeenColor);
 		}
     }
 }
@@ -2239,7 +2357,7 @@ void AM_drawPlayers ()
 			arrow = &MapArrow[0];
 			numarrowlines = MapArrow.Size();
 		}
-		AM_drawLineCharacter(arrow, numarrowlines, 0, angle, YourColor, pt.x, pt.y);
+		AM_drawLineCharacter(arrow, numarrowlines, 0, angle, AMColors[AMColors.YourColor], pt.x, pt.y);
 		return;
 	}
 
@@ -2266,7 +2384,7 @@ void AM_drawPlayers ()
 
 		if (p->mo->alpha < OPAQUE)
 		{
-			color = AlmostBackground;
+			color = AMColors[AMColors.AlmostBackgroundColor];
 		}
 		else
 		{
@@ -2322,7 +2440,6 @@ void AM_drawKeys ()
 			angle += ANG90 - players[consoleplayer].camera->angle;
 		}
 
-		color = ThingColor;
 		if (key->flags & MF_SPECIAL)
 		{
 			// Find the key's own color.
@@ -2332,7 +2449,7 @@ void AM_drawKeys ()
 			int c = P_GetMapColorForKey(key);
 
 			if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
-			else color = ThingColor_CountItem;
+			else color = AMColors[AMColors.ThingColor_CountItem];
 			AM_drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0, color, p.x, p.y);
 		}
 	}
@@ -2402,13 +2519,13 @@ void AM_drawThings ()
 					angle += ANG90 - players[consoleplayer].camera->angle;
 				}
 
-				color = ThingColor;
+				color = AMColors[AMColors.ThingColor];
 
 				// use separate colors for special thing types
 				if (t->flags3&MF3_ISMONSTER && !(t->flags&MF_CORPSE))
 				{
-					if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = ThingColor_Friend;
-					else color = ThingColor_Monster;
+					if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = AMColors[AMColors.ThingColor_Friend];
+					else color = AMColors[AMColors.ThingColor_Monster];
 				}
 				else if (t->flags&MF_SPECIAL)
 				{
@@ -2428,19 +2545,19 @@ void AM_drawThings ()
 							int c = P_GetMapColorForKey(static_cast<AKey *>(t));
 
 							if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
-							else color = ThingColor_CountItem;
+							else color = AMColors[AMColors.ThingColor_CountItem];
 							AM_drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0, color, p.x, p.y);
 							color.Index = -1;
 						}
 						else
 						{
-							color = ThingColor_Item;
+							color = AMColors[AMColors.ThingColor_Item];
 						}
 					}
 					else if (t->flags&MF_COUNTITEM)
-						color = ThingColor_CountItem;
+						color = AMColors[AMColors.ThingColor_CountItem];
 					else
-						color = ThingColor_Item;
+						color = AMColors[AMColors.ThingColor_Item];
 				}
 
 				if (color.Index != -1)
@@ -2626,7 +2743,7 @@ void AM_Drawer ()
 		f_h = ST_Y;
 		f_p = screen->GetPitch ();
 
-		AM_clearFB(Background);
+		AM_clearFB(AMColors[AMColors.Background]);
 	}
 	else 
 	{
@@ -2642,7 +2759,7 @@ void AM_Drawer ()
 		AM_drawSubsectors();
 
 	if (grid)	
-		AM_drawGrid(GridColor);
+		AM_drawGrid(AMColors.GridColor);
 
 	AM_drawWalls(allmap);
 	AM_drawPlayers();
@@ -2654,7 +2771,7 @@ void AM_Drawer ()
 	AM_drawAuthorMarkers();
 
 	if (!viewactive)
-		AM_drawCrosshair(XHairColor);
+		AM_drawCrosshair(AMColors[AMColors.XHairColor]);
 
 	AM_drawMarks();
 

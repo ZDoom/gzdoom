@@ -1755,21 +1755,21 @@ static int PatchCheats (int dummy)
 static int PatchMisc (int dummy)
 {
 	static const struct Key keys[] = {
-		{ "Initial Health",			myoffsetof(struct DehInfo,StartHealth) },
-		{ "Initial Bullets",		myoffsetof(struct DehInfo,StartBullets) },
-		{ "Max Health",				myoffsetof(struct DehInfo,MaxHealth) },
-		{ "Max Armor",				myoffsetof(struct DehInfo,MaxArmor) },
-		{ "Green Armor Class",		myoffsetof(struct DehInfo,GreenAC) },
-		{ "Blue Armor Class",		myoffsetof(struct DehInfo,BlueAC) },
-		{ "Max Soulsphere",			myoffsetof(struct DehInfo,MaxSoulsphere) },
-		{ "Soulsphere Health",		myoffsetof(struct DehInfo,SoulsphereHealth) },
-		{ "Megasphere Health",		myoffsetof(struct DehInfo,MegasphereHealth) },
-		{ "God Mode Health",		myoffsetof(struct DehInfo,GodHealth) },
-		{ "IDFA Armor",				myoffsetof(struct DehInfo,FAArmor) },
-		{ "IDFA Armor Class",		myoffsetof(struct DehInfo,FAAC) },
-		{ "IDKFA Armor",			myoffsetof(struct DehInfo,KFAArmor) },
-		{ "IDKFA Armor Class",		myoffsetof(struct DehInfo,KFAAC) },
-		{ "No Autofreeze",			myoffsetof(struct DehInfo,NoAutofreeze) },
+		{ "Initial Health",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,StartHealth)) },
+		{ "Initial Bullets",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,StartBullets)) },
+		{ "Max Health",				static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MaxHealth)) },
+		{ "Max Armor",				static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MaxArmor)) },
+		{ "Green Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,GreenAC)) },
+		{ "Blue Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,BlueAC)) },
+		{ "Max Soulsphere",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MaxSoulsphere)) },
+		{ "Soulsphere Health",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,SoulsphereHealth)) },
+		{ "Megasphere Health",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MegasphereHealth)) },
+		{ "God Mode Health",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,GodHealth)) },
+		{ "IDFA Armor",				static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,FAArmor)) },
+		{ "IDFA Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,FAAC)) },
+		{ "IDKFA Armor",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,KFAArmor)) },
+		{ "IDKFA Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,KFAAC)) },
+		{ "No Autofreeze",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,NoAutofreeze)) },
 		{ NULL, 0 }
 	};
 	int result;
@@ -2945,7 +2945,7 @@ void FinishDehPatch ()
 		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
 			(typeNameBuilder, sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);
-		memcpy (defaults2, defaults1, sizeof(AActor));
+		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
 		// Make a copy of the replaced class's state labels 
 		FStateDefinitions statedef;

@@ -83,6 +83,7 @@ CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
 CVAR (Int,   am_colorset,			0,			CVAR_ARCHIVE);
+CVAR (Bool,  am_customcolors,		true,		CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
@@ -177,6 +178,32 @@ struct AMColor
 //
 //=============================================================================
 
+static const char *ColorNames[] = {
+		"Background", 
+		"YourColor", 
+		"WallColor", 
+		"TwoSidedWallColor",
+		"FloorDiffWallColor", 
+		"CeilingDiffWallColor", 
+		"ExtraFloorWallColor", 
+		"ThingColor",
+		"ThingColor_Item", 
+		"ThingColor_CountItem", 
+		"ThingColor_Monster", 
+		"ThingColor_Friend",
+		"SpecialWallColor", 
+		"SecretWallColor", 
+		"GridColor", 
+		"XHairColor",
+		"NotSeenColor",
+		"LockedColor",
+		"IntraTeleportColor", 
+		"InterTeleportColor",
+		"SecretSectorColor",
+		"AlmostBackgroundColor",
+		NULL
+};
+
 struct AMColorset
 {
 	enum
@@ -209,6 +236,7 @@ struct AMColorset
 	AMColor c[AM_NUM_COLORS];
 	bool displayLocks;
 	bool forcebackground;
+	bool defined;	// only for mod specific colorsets: must be true to be usable
 
 	void initFromCVars(FColorCVar **values)
 	{
@@ -250,6 +278,15 @@ struct AMColorset
 		}
 		displayLocks = showlocks;
 		forcebackground = false;
+	}
+
+	void setWhite()
+	{
+		c[0].FromRGB(0,0,0);
+		for(int i=1; i<AM_NUM_COLORS; i++)
+		{
+			c[i].FromRGB(255,255,255);
+		}
 	}
 
 	const AMColor &operator[](int index) const
@@ -397,7 +434,85 @@ static unsigned char RavenColors[]= {
 #undef NOT_USED
 
 static AMColorset AMColors;
+static AMColorset AMMod;
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FMapInfoParser::ParseAMColors()
+{
+	bool colorset = false;
+
+	AMMod.setWhite();
+	AMMod.defined = true;
+	sc.MustGetToken('{');
+	while(sc.GetToken())
+	{
+		if (sc.TokenType == '}') return;
+
+		sc.TokenMustBe(TK_Identifier);
+		FString nextKey = sc.String;
+		sc.MustGetToken('=');
+
+		if (nextKey.CompareNoCase("base") == 0)
+		{
+			if (colorset) sc.ScriptError("'base' must be specified before the first color");
+			sc.MustGetToken(TK_StringConst);
+			if (sc.Compare("doom"))
+			{
+				AMMod.initFromColors(DoomColors, false);
+			}
+			else if (sc.Compare("raven"))
+			{
+				AMMod.initFromColors(RavenColors, true);
+			}
+			else if (sc.Compare("strife"))
+			{
+				AMMod.initFromColors(StrifeColors, false);
+			}
+			else
+			{
+				sc.ScriptError("Unknown value for 'base'. Must be 'Doom', 'Strife' or 'Raven'.");
+			}
+		}
+		else if (nextKey.CompareNoCase("showlocks") == 0)
+		{
+			if(sc.CheckToken(TK_False)) 
+				AMMod.displayLocks = false; 
+			else 
+			{ 
+				sc.MustGetToken(TK_True); 
+				AMMod.displayLocks = true; 
+			} 
+		}
+		else
+		{
+			int i;
+			for (i = 0; ColorNames[i] != NULL; i++)
+			{
+				if (nextKey.CompareNoCase(ColorNames[i]) == 0)
+				{
+					sc.MustGetToken(TK_StringConst);
+					FString color = sc.String;
+					FString colorName = V_GetColorStringByName(color);
+					if(!colorName.IsEmpty()) color = colorName;
+					int colorval = V_GetColorFromString(NULL, color);
+					AMMod.c[i].FromRGB(RPART(colorval), GPART(colorval), BPART(colorval)); 
+					colorset = true;
+					break;
+				}
+			}
+			if (ColorNames[i]== NULL)
+			{
+				sc.ScriptError("Unknown key '%s'", nextKey.GetChars());
+			}
+		}
+	}
+}
 
 //=============================================================================
 //
@@ -1130,6 +1245,10 @@ static void AM_initColors (bool overlayed)
 	if (overlayed)
 	{
 		AMColors.initFromCVars(cv_overlay);
+	}
+	else if (am_customcolors && AMMod.defined)
+	{
+		AMColors = AMMod;
 	}
 	else switch(am_colorset)
 	{

@@ -924,6 +924,7 @@ OptionMenu AutomapOptions
 {
 	Title "AUTOMAP OPTIONS"
 	Option "Map color set",				"am_colorset", "MapColorTypes"
+	Option "Allow map defined colors"	"am_customcolors", "YesNo"
 	Submenu "Set custom colors",		"MapColorMenu"
 	Submenu "Customize map controls",	"MapControlsMenu"
 	StaticText " "

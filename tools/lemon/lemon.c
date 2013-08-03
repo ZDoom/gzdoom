@@ -632,7 +632,8 @@ struct lemon *lemp;
       if( rp->lhs->lambda ) continue;
       for(i=0; i<rp->nrhs; i++){
          struct symbol *sp = rp->rhs[i];
-         if( sp->type!=TERMINAL || sp->lambda==LEMON_FALSE ) break;
+         assert( sp->type==NONTERMINAL || sp->lambda==LEMON_FALSE );
+         if( sp->lambda==LEMON_FALSE ) break;
       }
       if( i==rp->nrhs ){
         rp->lhs->lambda = LEMON_TRUE;
@@ -2549,6 +2550,7 @@ struct lemon *gp;
     ErrorMsg(ps.filename,0,"Can't allocate %d of memory to hold this file.",
       filesize+1);
     gp->errorcnt++;
+	fclose(fp);
     return;
   }
   if( fread(filebuf,1,filesize,fp)!=filesize ){
@@ -2556,6 +2558,7 @@ struct lemon *gp;
       filesize);
     free(filebuf);
     gp->errorcnt++;
+	fclose(fp);
     return;
   }
   fclose(fp);
@@ -3421,6 +3424,10 @@ int mhflag;                 /* True if generating makeheaders output */
   /* Allocate and initialize types[] and allocate stddt[] */
   arraysize = lemp->nsymbol * 2;
   types = (char**)calloc( arraysize, sizeof(char*) );
+  if( types==0 ){
+    fprintf(stderr,"Out of memory.\n");
+    exit(1);
+  }
   maxdtlength = 0;
   if( lemp->vartype ){
     maxdtlength = lemonStrlen(lemp->vartype);
@@ -4028,12 +4035,14 @@ struct lemon *lemp;
   else                    prefix = "";
   in = file_open(lemp,".h","rb");
   if( in ){
+    int nextChar;
     for(i=1; i<lemp->nterminal && fgets(line,LINESIZE,in); i++){
       sprintf(pattern,"#define %s%-30s %2d\n",prefix,lemp->symbols[i]->name,i);
       if( strcmp(line,pattern) ) break;
     }
+    nextChar = fgetc(in);
     fclose(in);
-    if( i==lemp->nterminal ){
+    if( i==lemp->nterminal && nextChar==EOF ){
       /* No change in the file.  Don't rewrite it. */
       /* (not the best idea if you use make tools that check the date! */
       /*return;*/

@@ -62,13 +62,11 @@ struct FCompileContext
 {
 	PClassActor *cls;
 	bool lax;
-	bool isconst;
 
-	FCompileContext(PClassActor *_cls = NULL, bool _lax = false, bool _isconst = false)
+	FCompileContext(PClassActor *_cls = NULL, bool _lax = false)
 	{
 		cls = _cls;
 		lax = _lax;
-		isconst = _isconst;
 	}
 
 	PSymbol *FindInClass(FName identifier)

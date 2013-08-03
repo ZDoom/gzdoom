@@ -208,8 +208,6 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		FxExpression *expr = ParseExpression (sc, cls);
 		sc.MustGetToken(';');
 
-		FCompileContext ctx(cls);
-		expr = expr->Resolve(ctx);
 		if (!expr->isConstant())
 		{
 			sc.ScriptMessage("Constant definition is not a constant");
@@ -266,8 +264,6 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls);
-			FCompileContext ctx(cls);
-			expr = expr->Resolve(ctx);
 			if (!expr->isConstant())
 			{
 				sc.ScriptMessage("'%s' must be constant", symname.GetChars());
@@ -355,8 +351,6 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression (sc, cls);
-		FCompileContext ctx(cls);
-		expr = expr->Resolve(ctx);
 		if (!expr->isConstant())
 		{
 			sc.ScriptError("Array size must be constant");
@@ -428,9 +422,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls);
-		FCompileContext ctx(cls);
 		int maxelems;
-		expr = expr->Resolve(ctx);
 		if (!expr->isConstant())
 		{
 			sc.ScriptMessage("Array size must be a constant");

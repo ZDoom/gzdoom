@@ -13,127 +13,138 @@ static FString ZCCTokenName(int terminal);
 #include "zcc-parse.h"
 #include "zcc-parse.c"
 
-static TMap<SWORD, SWORD> TokenMap;
+struct TokenMapEntry
+{
+	SWORD TokenType;
+	WORD TokenName;
+	TokenMapEntry(SWORD a, WORD b)
+	: TokenType(a), TokenName(b)
+	{ }
+};
+static TMap<SWORD, TokenMapEntry> TokenMap;
 static SWORD BackTokenMap[YYERRORSYMBOL];	// YYERRORSYMBOL immediately follows the terminals described by the grammar
+
+#define TOKENDEF2(sc, zcc, name)	{ TokenMapEntry tme(zcc, name); TokenMap.Insert(sc, tme); } BackTokenMap[zcc] = sc
+#define TOKENDEF(sc, zcc)			TOKENDEF2(sc, zcc, NAME_None)
 
 static void InitTokenMap()
 {
-#define TOKENDEF(sc, zcc)	TokenMap.Insert(sc, zcc);	BackTokenMap[zcc] = sc
-	TOKENDEF('=',			ZCC_EQ);
-	TOKENDEF(TK_MulEq,		ZCC_MULEQ);
-	TOKENDEF(TK_DivEq,		ZCC_DIVEQ);
-	TOKENDEF(TK_ModEq,		ZCC_MODEQ);
-	TOKENDEF(TK_AddEq,		ZCC_ADDEQ);
-	TOKENDEF(TK_SubEq,		ZCC_SUBEQ);
-	TOKENDEF(TK_LShiftEq,	ZCC_LSHEQ);
-	TOKENDEF(TK_RShiftEq,	ZCC_RSHEQ);
-	TOKENDEF(TK_AndEq,		ZCC_ANDEQ);
-	TOKENDEF(TK_OrEq,		ZCC_OREQ);
-	TOKENDEF(TK_XorEq,		ZCC_XOREQ);
-	TOKENDEF('?',			ZCC_QUESTION);
-	TOKENDEF(':',			ZCC_COLON);
-	TOKENDEF(TK_OrOr,		ZCC_OROR);
-	TOKENDEF(TK_AndAnd,		ZCC_ANDAND);
-	TOKENDEF(TK_Eq,			ZCC_EQEQ);
-	TOKENDEF(TK_Neq,		ZCC_NEQ);
-	TOKENDEF(TK_ApproxEq,	ZCC_APPROXEQ);
-	TOKENDEF('<',			ZCC_LT);
-	TOKENDEF('>',			ZCC_GT);
-	TOKENDEF(TK_Leq,		ZCC_LTEQ);
-	TOKENDEF(TK_Geq,		ZCC_GTEQ);
-	TOKENDEF(TK_LtGtEq,		ZCC_LTGTEQ);
-	TOKENDEF(TK_Is,			ZCC_IS);
-	TOKENDEF(TK_DotDot,		ZCC_DOTDOT);
-	TOKENDEF('|',			ZCC_OR);
-	TOKENDEF('^',			ZCC_XOR);
-	TOKENDEF('&',			ZCC_AND);
-	TOKENDEF(TK_LShift,		ZCC_LSH);
-	TOKENDEF(TK_RShift,		ZCC_RSH);
-	TOKENDEF('-',			ZCC_SUB);
-	TOKENDEF('+',			ZCC_ADD);
-	TOKENDEF('*',			ZCC_MUL);
-	TOKENDEF('/',			ZCC_DIV);
-	TOKENDEF('%',			ZCC_MOD);
-	TOKENDEF(TK_Cross,		ZCC_CROSSPROD);
-	TOKENDEF(TK_Dot,		ZCC_DOTPROD);
-	TOKENDEF(TK_MulMul,		ZCC_POW);
-	TOKENDEF(TK_Incr,		ZCC_ADDADD);
-	TOKENDEF(TK_Decr,		ZCC_SUBSUB);
-	TOKENDEF('.',			ZCC_DOT);
-	TOKENDEF('(',			ZCC_LPAREN);
-	TOKENDEF(')',			ZCC_RPAREN);
-	TOKENDEF(TK_ColonColon,	ZCC_SCOPE);
-	TOKENDEF(';',			ZCC_SEMICOLON);
-	TOKENDEF(',',			ZCC_COMMA);
-	TOKENDEF(TK_Class,		ZCC_CLASS);
-	TOKENDEF(TK_Abstract,	ZCC_ABSTRACT);
-	TOKENDEF(TK_Native,		ZCC_NATIVE);
-	TOKENDEF(TK_Replaces,	ZCC_REPLACES);
-	TOKENDEF(TK_Static,		ZCC_STATIC);
-	TOKENDEF(TK_Private,	ZCC_PRIVATE);
-	TOKENDEF(TK_Protected,	ZCC_PROTECTED);
-	TOKENDEF(TK_Latent,		ZCC_LATENT);
-	TOKENDEF(TK_Final,		ZCC_FINAL);
-	TOKENDEF(TK_Meta,		ZCC_META);
-	TOKENDEF(TK_Deprecated,	ZCC_DEPRECATED);
-	TOKENDEF(TK_ReadOnly,	ZCC_READONLY);
-	TOKENDEF('{',			ZCC_LBRACE);
-	TOKENDEF('}',			ZCC_RBRACE);
-	TOKENDEF(TK_Struct,		ZCC_STRUCT);
-	TOKENDEF(TK_Enum,		ZCC_ENUM);
-	TOKENDEF(TK_SByte,		ZCC_SBYTE);
-	TOKENDEF(TK_Byte,		ZCC_BYTE);
-	TOKENDEF(TK_Short,		ZCC_SHORT);
-	TOKENDEF(TK_UShort,		ZCC_USHORT);
-	TOKENDEF(TK_Int,		ZCC_INT);
-	TOKENDEF(TK_UInt,		ZCC_UINT);
-	TOKENDEF(TK_Bool,		ZCC_BOOL);
-	TOKENDEF(TK_Float,		ZCC_FLOAT);
-	TOKENDEF(TK_Double,		ZCC_DOUBLE);
-	TOKENDEF(TK_String,		ZCC_STRING);
-	TOKENDEF(TK_Vector,		ZCC_VECTOR);
-	TOKENDEF(TK_Name,		ZCC_NAME);
-	TOKENDEF(TK_Map,		ZCC_MAP);
-	TOKENDEF(TK_Array,		ZCC_ARRAY);
-	TOKENDEF(TK_Void,		ZCC_VOID);
-	TOKENDEF('[',			ZCC_LBRACKET);
-	TOKENDEF(']',			ZCC_RBRACKET);
-	TOKENDEF(TK_In,			ZCC_IN);
-	TOKENDEF(TK_Out,		ZCC_OUT);
-	TOKENDEF(TK_Optional,	ZCC_OPTIONAL);
-	TOKENDEF(TK_Super,		ZCC_SUPER);
-	TOKENDEF(TK_Self,		ZCC_SELF);
-	TOKENDEF('~',			ZCC_TILDE);
-	TOKENDEF('!',			ZCC_BANG);
-	TOKENDEF(TK_SizeOf,		ZCC_SIZEOF);
-	TOKENDEF(TK_AlignOf,	ZCC_ALIGNOF);
-	TOKENDEF(TK_Continue,	ZCC_CONTINUE);
-	TOKENDEF(TK_Break,		ZCC_BREAK);
-	TOKENDEF(TK_Return,		ZCC_RETURN);
-	TOKENDEF(TK_Do,			ZCC_DO);
-	TOKENDEF(TK_For,		ZCC_FOR);
-	TOKENDEF(TK_While,		ZCC_WHILE);
-	TOKENDEF(TK_Until,		ZCC_UNTIL);
-	TOKENDEF(TK_If,			ZCC_IF);
-	TOKENDEF(TK_Else,		ZCC_ELSE);
-	TOKENDEF(TK_Switch,		ZCC_SWITCH);
-	TOKENDEF(TK_Case,		ZCC_CASE);
-	TOKENDEF(TK_Default,	ZCC_DEFAULT);
-	TOKENDEF(TK_Const,		ZCC_CONST);
-	TOKENDEF(TK_Stop,		ZCC_STOP);
-	TOKENDEF(TK_Wait,		ZCC_WAIT);
-	TOKENDEF(TK_Fail,		ZCC_FAIL);
-	TOKENDEF(TK_Loop,		ZCC_LOOP);
-	TOKENDEF(TK_Goto,		ZCC_GOTO);
-	TOKENDEF(TK_States,		ZCC_STATES);
+	TOKENDEF ('=',				ZCC_EQ);
+	TOKENDEF (TK_MulEq,			ZCC_MULEQ);
+	TOKENDEF (TK_DivEq,			ZCC_DIVEQ);
+	TOKENDEF (TK_ModEq,			ZCC_MODEQ);
+	TOKENDEF (TK_AddEq,			ZCC_ADDEQ);
+	TOKENDEF (TK_SubEq,			ZCC_SUBEQ);
+	TOKENDEF (TK_LShiftEq,		ZCC_LSHEQ);
+	TOKENDEF (TK_RShiftEq,		ZCC_RSHEQ);
+	TOKENDEF (TK_AndEq,			ZCC_ANDEQ);
+	TOKENDEF (TK_OrEq,			ZCC_OREQ);
+	TOKENDEF (TK_XorEq,			ZCC_XOREQ);
+	TOKENDEF ('?',				ZCC_QUESTION);
+	TOKENDEF (':',				ZCC_COLON);
+	TOKENDEF (TK_OrOr,			ZCC_OROR);
+	TOKENDEF (TK_AndAnd,		ZCC_ANDAND);
+	TOKENDEF (TK_Eq,			ZCC_EQEQ);
+	TOKENDEF (TK_Neq,			ZCC_NEQ);
+	TOKENDEF (TK_ApproxEq,		ZCC_APPROXEQ);
+	TOKENDEF ('<',				ZCC_LT);
+	TOKENDEF ('>',				ZCC_GT);
+	TOKENDEF (TK_Leq,			ZCC_LTEQ);
+	TOKENDEF (TK_Geq,			ZCC_GTEQ);
+	TOKENDEF (TK_LtGtEq,		ZCC_LTGTEQ);
+	TOKENDEF (TK_Is,			ZCC_IS);
+	TOKENDEF (TK_DotDot,		ZCC_DOTDOT);
+	TOKENDEF ('|',				ZCC_OR);
+	TOKENDEF ('^',				ZCC_XOR);
+	TOKENDEF ('&',				ZCC_AND);
+	TOKENDEF (TK_LShift,		ZCC_LSH);
+	TOKENDEF (TK_RShift,		ZCC_RSH);
+	TOKENDEF ('-',				ZCC_SUB);
+	TOKENDEF ('+',				ZCC_ADD);
+	TOKENDEF ('*',				ZCC_MUL);
+	TOKENDEF ('/',				ZCC_DIV);
+	TOKENDEF ('%',				ZCC_MOD);
+	TOKENDEF (TK_Cross,			ZCC_CROSSPROD);
+	TOKENDEF (TK_Dot,			ZCC_DOTPROD);
+	TOKENDEF (TK_MulMul,		ZCC_POW);
+	TOKENDEF (TK_Incr,			ZCC_ADDADD);
+	TOKENDEF (TK_Decr,			ZCC_SUBSUB);
+	TOKENDEF ('.',				ZCC_DOT);
+	TOKENDEF ('(',				ZCC_LPAREN);
+	TOKENDEF (')',				ZCC_RPAREN);
+	TOKENDEF (TK_ColonColon,	ZCC_SCOPE);
+	TOKENDEF (';',				ZCC_SEMICOLON);
+	TOKENDEF (',',				ZCC_COMMA);
+	TOKENDEF (TK_Class,			ZCC_CLASS);
+	TOKENDEF (TK_Abstract,		ZCC_ABSTRACT);
+	TOKENDEF (TK_Native,		ZCC_NATIVE);
+	TOKENDEF (TK_Replaces,		ZCC_REPLACES);
+	TOKENDEF (TK_Static,		ZCC_STATIC);
+	TOKENDEF (TK_Private,		ZCC_PRIVATE);
+	TOKENDEF (TK_Protected,		ZCC_PROTECTED);
+	TOKENDEF (TK_Latent,		ZCC_LATENT);
+	TOKENDEF (TK_Final,			ZCC_FINAL);
+	TOKENDEF (TK_Meta,			ZCC_META);
+	TOKENDEF (TK_Deprecated,	ZCC_DEPRECATED);
+	TOKENDEF (TK_ReadOnly,		ZCC_READONLY);
+	TOKENDEF ('{',				ZCC_LBRACE);
+	TOKENDEF ('}',				ZCC_RBRACE);
+	TOKENDEF (TK_Struct,		ZCC_STRUCT);
+	TOKENDEF (TK_Enum,			ZCC_ENUM);
+	TOKENDEF2(TK_SByte,			ZCC_SBYTE,		NAME_sbyte);
+	TOKENDEF2(TK_Byte,			ZCC_BYTE,		NAME_byte);
+	TOKENDEF2(TK_Short,			ZCC_SHORT,		NAME_short);
+	TOKENDEF2(TK_UShort,		ZCC_USHORT,		NAME_ushort);
+	TOKENDEF2(TK_Int,			ZCC_INT,		NAME_int);
+	TOKENDEF2(TK_UInt,			ZCC_UINT,		NAME_uint);
+	TOKENDEF2(TK_Bool,			ZCC_BOOL,		NAME_bool);
+	TOKENDEF2(TK_Float,			ZCC_FLOAT,		NAME_float);
+	TOKENDEF2(TK_Double,		ZCC_DOUBLE,		NAME_double);
+	TOKENDEF2(TK_String,		ZCC_STRING,		NAME_string);
+	TOKENDEF2(TK_Vector,		ZCC_VECTOR,		NAME_vector);
+	TOKENDEF2(TK_Name,			ZCC_NAME,		NAME_Name);
+	TOKENDEF2(TK_Map,			ZCC_MAP,		NAME_map);
+	TOKENDEF2(TK_Array,			ZCC_ARRAY,		NAME_array);
+	TOKENDEF (TK_Void,			ZCC_VOID);
+	TOKENDEF ('[',				ZCC_LBRACKET);
+	TOKENDEF (']',				ZCC_RBRACKET);
+	TOKENDEF (TK_In,			ZCC_IN);
+	TOKENDEF (TK_Out,			ZCC_OUT);
+	TOKENDEF (TK_Optional,		ZCC_OPTIONAL);
+	TOKENDEF (TK_Super,			ZCC_SUPER);
+	TOKENDEF (TK_Self,			ZCC_SELF);
+	TOKENDEF ('~',				ZCC_TILDE);
+	TOKENDEF ('!',				ZCC_BANG);
+	TOKENDEF (TK_SizeOf,		ZCC_SIZEOF);
+	TOKENDEF (TK_AlignOf,		ZCC_ALIGNOF);
+	TOKENDEF (TK_Continue,		ZCC_CONTINUE);
+	TOKENDEF (TK_Break,			ZCC_BREAK);
+	TOKENDEF (TK_Return,		ZCC_RETURN);
+	TOKENDEF (TK_Do,			ZCC_DO);
+	TOKENDEF (TK_For,			ZCC_FOR);
+	TOKENDEF (TK_While,			ZCC_WHILE);
+	TOKENDEF (TK_Until,			ZCC_UNTIL);
+	TOKENDEF (TK_If,			ZCC_IF);
+	TOKENDEF (TK_Else,			ZCC_ELSE);
+	TOKENDEF (TK_Switch,		ZCC_SWITCH);
+	TOKENDEF (TK_Case,			ZCC_CASE);
+	TOKENDEF2(TK_Default,		ZCC_DEFAULT,	NAME_default);
+	TOKENDEF (TK_Const,			ZCC_CONST);
+	TOKENDEF (TK_Stop,			ZCC_STOP);
+	TOKENDEF (TK_Wait,			ZCC_WAIT);
+	TOKENDEF (TK_Fail,			ZCC_FAIL);
+	TOKENDEF (TK_Loop,			ZCC_LOOP);
+	TOKENDEF (TK_Goto,			ZCC_GOTO);
+	TOKENDEF (TK_States,		ZCC_STATES);
 
-	TOKENDEF(TK_Identifier,		ZCC_IDENTIFIER);
-	TOKENDEF(TK_StringConst,	ZCC_STRCONST);
-	TOKENDEF(TK_IntConst,		ZCC_INTCONST);
-	TOKENDEF(TK_FloatConst,		ZCC_FLOATCONST);
-	TOKENDEF(TK_NonWhitespace,	ZCC_NWS);
-#undef TOKENDEF
+	TOKENDEF (TK_Identifier,	ZCC_IDENTIFIER);
+	TOKENDEF (TK_StringConst,	ZCC_STRCONST);
+	TOKENDEF (TK_IntConst,		ZCC_INTCONST);
+	TOKENDEF (TK_FloatConst,	ZCC_FLOATCONST);
+	TOKENDEF (TK_NonWhitespace,	ZCC_NWS);
 }
+#undef TOKENDEF
+#undef TOKENDEF2
 
 static void DoParse(const char *filename)
 {
@@ -202,10 +213,11 @@ static void DoParse(const char *filename)
 		}
 		else
 		{
-			SWORD *zcctoken = TokenMap.CheckKey(sc.TokenType);
+			TokenMapEntry *zcctoken = TokenMap.CheckKey(sc.TokenType);
 			if (zcctoken != NULL)
 			{
-				tokentype = *zcctoken;
+				tokentype = zcctoken->TokenType;
+				value.Int = zcctoken->TokenName;
 			}
 			else
 			{

@@ -435,7 +435,7 @@ vector_size(X) ::= LT INTCONST(A) GT.
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
 %fallback IDENTIFIER
-	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR NAME.
+	SBYTE BYTE SHORT USHORT INT UINT BOOL FLOAT DOUBLE STRING VECTOR NAME MAP ARRAY VOID.
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}

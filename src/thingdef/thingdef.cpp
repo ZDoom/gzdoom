@@ -293,7 +293,7 @@ static void FinishThingdef()
 		}
 		else
 		{
-			FCompileContext ctx(tcall->ActorClass, true);
+			FCompileContext ctx(tcall->ActorClass);
 			for (j = 0; j < tcall->Parameters.Size(); ++j)
 			{
 				tcall->Parameters[j]->Resolve(ctx);
@@ -358,7 +358,7 @@ static void FinishThingdef()
 			sfunc = dmg->GetFunction();
 			if (sfunc == NULL)
 			{
-				FCompileContext ctx(ti, true);
+				FCompileContext ctx(ti);
 				dmg->Resolve(ctx);
 				VMFunctionBuilder buildit;
 				buildit.Registers[REGT_POINTER].Get(1);		// The self pointer

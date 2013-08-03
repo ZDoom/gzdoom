@@ -208,7 +208,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		FxExpression *expr = ParseExpression (sc, cls);
 		sc.MustGetToken(';');
 
-		FCompileContext ctx(cls, true);
+		FCompileContext ctx(cls);
 		expr = expr->Resolve(ctx);
 		if (!expr->isConstant())
 		{
@@ -266,7 +266,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls);
-			FCompileContext ctx(cls, true);
+			FCompileContext ctx(cls);
 			expr = expr->Resolve(ctx);
 			if (!expr->isConstant())
 			{
@@ -355,7 +355,7 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression (sc, cls);
-		FCompileContext ctx(cls, true);
+		FCompileContext ctx(cls);
 		expr = expr->Resolve(ctx);
 		if (!expr->isConstant())
 		{
@@ -428,7 +428,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls);
-		FCompileContext ctx(cls, true);
+		FCompileContext ctx(cls);
 		int maxelems;
 		expr = expr->Resolve(ctx);
 		if (!expr->isConstant())

@@ -750,7 +750,7 @@ FxExpression *FxUnaryNotBitwise::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Operand, ctx);
 
-	if  (Operand->ValueType == VAL_Float && ctx.lax)
+	if  (Operand->ValueType == VAL_Float /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
 		Operand = new FxIntCast(Operand);
@@ -1501,7 +1501,7 @@ FxExpression *FxBinaryInt::Resolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	if (!ResolveLR(ctx, false)) return NULL;
 
-	if (ctx.lax && ValueType == VAL_Float)
+	if (ValueType == VAL_Float /* lax */)
 	{
 		// For DECORATE which allows floats here.
 		if (left->ValueType != VAL_Int)
@@ -2711,7 +2711,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(Array,ctx);
 	SAFE_RESOLVE(index,ctx);
 
-	if (index->ValueType == VAL_Float && ctx.lax)
+	if (index->ValueType == VAL_Float /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
 		index = new FxIntCast(index);
@@ -2932,7 +2932,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 			}
 			else if ((*ArgList)[i]->ValueType != VAL_Int)
 			{
-				if (ctx.lax && ((*ArgList)[i]->ValueType == VAL_Float))
+				if ((*ArgList)[i]->ValueType == VAL_Float /* lax */)
 				{
 					(*ArgList)[i] = new FxIntCast((*ArgList)[i]);
 				}
@@ -3163,12 +3163,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 			cls = PClass::FindClass(clsname);
 			if (cls == NULL)
 			{
-				if (!ctx.lax)
-				{
-					ScriptPosition.Message(MSG_ERROR,"Unknown class name '%s'", clsname.GetChars());
-					delete this;
-					return NULL;
-				}
+				/* lax */
 				// Since this happens in released WADs it must pass without a terminal error... :(
 				ScriptPosition.Message(MSG_WARNING,
 					"Unknown class name '%s'", 
@@ -3341,12 +3336,8 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 			destination = scope->FindState(names.Size()-1, &names[1], false);
 			if (destination == NULL)
 			{
-				ScriptPosition.Message(ctx.lax? MSG_WARNING:MSG_ERROR, "Unknown state jump destination");
-				if (!ctx.lax)
-				{
-					delete this;
-					return NULL;
-				}
+				ScriptPosition.Message(MSG_WARNING, "Unknown state jump destination");
+				/* lax */
 				return this;
 			}
 		}

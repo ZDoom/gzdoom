@@ -61,12 +61,10 @@ extern PSymbolTable		 GlobalSymbols;
 struct FCompileContext
 {
 	PClassActor *cls;
-	bool lax;
 
-	FCompileContext(PClassActor *_cls = NULL, bool _lax = false)
+	FCompileContext(PClassActor *_cls = NULL)
 	{
 		cls = _cls;
-		lax = _lax;
 	}
 
 	PSymbol *FindInClass(FName identifier)

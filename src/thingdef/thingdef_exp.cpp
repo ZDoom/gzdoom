@@ -76,9 +76,7 @@ FxExpression *ParseExpression (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *data = ParseExpressionM (sc, cls);
 
-	FCompileContext ctx;
-	ctx.cls = cls;
-	ctx.lax = true;
+	FCompileContext ctx(cls);
 	data = data->Resolve(ctx);
 
 	return data;

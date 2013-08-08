@@ -319,16 +319,10 @@ protected:
 
 // Struct/class fields ------------------------------------------------------
 
-class PField : public DObject
+// A PField describes a symbol that takes up physical space in the struct.
+class PField : public PSymbol
 {
-	DECLARE_ABSTRACT_CLASS(PField, DObject);
-public:
-	FName FieldName;
-};
-
-class PMemberField : public PField
-{
-	DECLARE_CLASS(PMemberField, PField);
+	DECLARE_CLASS(PField, PSymbol);
 	HAS_OBJECT_POINTERS
 public:
 	unsigned int FieldOffset;

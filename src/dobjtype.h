@@ -412,10 +412,14 @@ class PStruct : public PNamedType
 {
 	DECLARE_CLASS(PStruct, PNamedType);
 public:
+	PStruct(FName name, DObject *outer);
+
 	TArray<PField *> Fields;
 	PSymbolTable	 Symbols;
 
 	size_t PropagateMark();
+protected:
+	PStruct();
 };
 
 class PPrototype : public PCompoundType
@@ -585,6 +589,7 @@ PPointer *NewPointer(PType *type);
 PClassPointer *NewClassPointer(PClass *restrict);
 PClassWaitingForParent *NewUnknownClass(FName myname, FName parentname);
 PEnum *NewEnum(FName name, DObject *outer);
+PStruct *NewStruct(FName name, DObject *outer);
 
 // Built-in types -----------------------------------------------------------
 

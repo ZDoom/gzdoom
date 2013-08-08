@@ -901,6 +901,27 @@ IMPLEMENT_CLASS(PStruct)
 
 //==========================================================================
 //
+// PStruct - Default Constructor
+//
+//==========================================================================
+
+PStruct::PStruct()
+{
+}
+
+//==========================================================================
+//
+// PStruct - Parameterized Constructor
+//
+//==========================================================================
+
+PStruct::PStruct(FName name, DObject *outer)
+: PNamedType(name, outer)
+{
+}
+
+//==========================================================================
+//
 // PStruct :: PropagateMark
 //
 //==========================================================================
@@ -913,6 +934,26 @@ size_t PStruct::PropagateMark()
 	marked = Fields.Size() * sizeof(void*);
 	marked += Symbols.MarkSymbols();
 	return marked + Super::PropagateMark();
+}
+
+//==========================================================================
+//
+// NewStruct
+// Returns a PStruct for the given name and container, making sure not to
+// create duplicates.
+//
+//==========================================================================
+
+PStruct *NewStruct(FName name, DObject *outer)
+{
+	size_t bucket;
+	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, &bucket);
+	if (stype == NULL)
+	{
+		stype = new PStruct(name, outer);
+		TypeTable.AddType(stype, RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, bucket);
+	}
+	return static_cast<PStruct *>(stype);
 }
 
 /* PPrototype *************************************************************/

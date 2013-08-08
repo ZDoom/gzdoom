@@ -224,6 +224,7 @@ public:
 	FName			TypeName;		// this type's name
 
 	PNamedType() : Outer(NULL) {}
+	PNamedType(FName name, DObject *outer) : Outer(outer), TypeName(name) {}
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
@@ -341,8 +342,12 @@ class PEnum : public PNamedType
 	DECLARE_CLASS(PEnum, PNamedType);
 	HAS_OBJECT_POINTERS;
 public:
+	PEnum(FName name, DObject *outer);
+
 	PType *ValueType;
 	TMap<FName, int> Values;
+protected:
+	PEnum();
 };
 
 class PArray : public PCompoundType
@@ -579,6 +584,7 @@ PDynArray *NewDynArray(PType *type);
 PPointer *NewPointer(PType *type);
 PClassPointer *NewClassPointer(PClass *restrict);
 PClassWaitingForParent *NewUnknownClass(FName myname, FName parentname);
+PEnum *NewEnum(FName name, DObject *outer);
 
 // Built-in types -----------------------------------------------------------
 

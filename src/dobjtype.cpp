@@ -568,6 +568,49 @@ IMPLEMENT_POINTY_CLASS(PEnum)
  DECLARE_POINTER(ValueType)
 END_POINTERS
 
+//==========================================================================
+//
+// PEnum - Default Constructor
+//
+//==========================================================================
+
+PEnum::PEnum()
+: ValueType(NULL)
+{
+}
+
+//==========================================================================
+//
+// PEnum - Parameterized Constructor
+//
+//==========================================================================
+
+PEnum::PEnum(FName name, DObject *outer)
+: PNamedType(name, outer), ValueType(NULL)
+{
+}
+
+//==========================================================================
+//
+// NewEnum
+//
+// Returns a PEnum for the given name and container, making sure not to
+// create duplicates.
+//
+//==========================================================================
+
+PEnum *NewEnum(FName name, DObject *outer)
+{
+	size_t bucket;
+	PType *etype = TypeTable.FindType(RUNTIME_CLASS(PEnum), (intptr_t)outer, (intptr_t)name, &bucket);
+	if (etype == NULL)
+	{
+		etype = new PEnum(name, outer);
+		TypeTable.AddType(etype, RUNTIME_CLASS(PEnum), (intptr_t)outer, (intptr_t)name, bucket);
+	}
+	return static_cast<PEnum *>(etype);
+}
+
 /* PArray *****************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PArray)

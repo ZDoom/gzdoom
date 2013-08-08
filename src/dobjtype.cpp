@@ -640,9 +640,9 @@ PArray *NewArray(PType *type, unsigned int count)
 	if (atype == NULL)
 	{
 		atype = new PArray(type, count);
-		TypeTable.AddType(type, RUNTIME_CLASS(PArray), (intptr_t)type, count, bucket);
+		TypeTable.AddType(atype, RUNTIME_CLASS(PArray), (intptr_t)type, count, bucket);
 	}
-	return (PArray *)type;
+	return (PArray *)atype;
 }
 
 /* PVector ****************************************************************/

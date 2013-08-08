@@ -408,6 +408,7 @@ class PStruct : public PNamedType
 	DECLARE_CLASS(PStruct, PNamedType);
 public:
 	TArray<PField *> Fields;
+	PSymbolTable	 Symbols;
 
 	size_t PropagateMark();
 };
@@ -464,7 +465,6 @@ public:
 	const size_t		*FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
-	PSymbolTable		 Symbols;
 
 	void (*ConstructNative)(void *);
 
@@ -478,7 +478,6 @@ public:
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	const PClass *NativeClass() const;
-	size_t PropagateMark();
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
 	bool IsAncestorOf(const PClass *ti) const

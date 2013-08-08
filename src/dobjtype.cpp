@@ -864,8 +864,12 @@ IMPLEMENT_CLASS(PStruct)
 
 size_t PStruct::PropagateMark()
 {
+	size_t marked;
+	
 	GC::MarkArray(Fields);
-	return Fields.Size() * sizeof(void*) + Super::PropagateMark();
+	marked = Fields.Size() * sizeof(void*);
+	marked += Symbols.MarkSymbols();
+	return marked + Super::PropagateMark();
 }
 
 /* PPrototype *************************************************************/
@@ -1081,7 +1085,6 @@ PClass::PClass()
 
 PClass::~PClass()
 {
-	Symbols.ReleaseSymbols();
 	if (Defaults != NULL)
 	{
 		M_Free(Defaults);
@@ -1429,22 +1432,6 @@ const PClass *PClass::NativeClass() const
 		cls = cls->ParentClass;
 
 	return cls;
-}
-
-//==========================================================================
-//
-// PClass :: PropagateMark
-//
-//==========================================================================
-
-size_t PClass::PropagateMark()
-{
-	size_t marked;
-
-	// Mark symbols
-	marked = Symbols.MarkSymbols();
-
-	return marked + Super::PropagateMark();
 }
 
 /* FTypeTable **************************************************************/

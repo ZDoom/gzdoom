@@ -103,7 +103,7 @@ struct FMapInfoParser
 
 	void ParseIntermissionAction(FIntermissionDescriptor *Desc);
 	void ParseIntermission();
-	void ParseAMColors();
+	void ParseAMColors(bool);
 	FName CheckEndSequence();
 	FName ParseEndGame();
 };

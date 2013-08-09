@@ -928,6 +928,13 @@ OptionValue STSTypes
 	3, "Rotated"
 }
 
+OptionValue MapBackTypes
+{
+	0, "Off"
+	1, "On"
+	2, "Map defined colors only"
+}
+
 OptionMenu AutomapOptions
 {
 	Title "AUTOMAP OPTIONS"
@@ -948,7 +955,7 @@ OptionMenu AutomapOptions
 	Option "Show total time elapsed",	"am_showtotaltime", "OnOff"
 	Option "Show secrets on map",		"am_map_secrets", "SecretTypes"
 	Option "Show map label",			"am_showmaplabel", "MaplabelTypes"
-	Option "Draw map background",		"am_drawmapback", "OnOff"
+	Option "Draw map background",		"am_drawmapback", "MapBackTypes"
 	Option "Show keys (cheat)",			"am_showkeys", "OnOff"
 	Option "Show trigger lines",		"am_showtriggerlines", "OnOff"
 	Option "Show things as sprites",	"am_showthingsprites", "STSTypes"

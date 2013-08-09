@@ -927,6 +927,10 @@ public:
 				Flag(ld->flags, ML_BLOCKSIGHT, key); 
 				continue;
 			
+			case NAME_blockhitscan:
+				Flag(ld->flags, ML_BLOCKHITSCAN, key); 
+				continue;
+			
 			// [Dusk] lock number
 			case NAME_Locknumber:
 				ld->locknumber = CheckInt(key);

@@ -3511,6 +3511,8 @@ enum
 	APROP_Radius		= 36,
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
+	APROP_ViewHeight	= 39,
+	APROP_AttackZOffset	= 40
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3726,6 +3728,16 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->reactiontime = value;
 		break;
 
+	case APROP_ViewHeight:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->ViewHeight = value;
+		break;
+
+	case APROP_AttackZOffset:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3798,6 +3810,23 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Radius:		return actor->radius;
 	case APROP_ReactionTime:return actor->reactiontime;
 	case APROP_MeleeRange:	return actor->meleerange;
+	case APROP_ViewHeight:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->ViewHeight;
+							}
+							else
+							{
+								return 0;
+							}
+	case APROP_AttackZOffset:
+							if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->AttackZOffset;
+							}
+							else
+							{
+								return 0;
+							}
 
 	case APROP_SeeSound:	return GlobalACSStrings.AddString(actor->SeeSound, stack, stackdepth);
 	case APROP_AttackSound:	return GlobalACSStrings.AddString(actor->AttackSound, stack, stackdepth);
@@ -3850,6 +3879,8 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Radius:
 		case APROP_ReactionTime:
 		case APROP_MeleeRange:
+		case APROP_ViewHeight:
+		case APROP_AttackZOffset:
 			return (GetActorProperty(tid, property, NULL, 0) == value);
 
 		// Boolean values need to compare to a binary version of value

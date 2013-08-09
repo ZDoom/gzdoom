@@ -161,7 +161,9 @@ public:
 	FNameNoInit	MorphWeapon;
 	fixed_t		AttackZOffset;			// attack height, relative to player center
 	fixed_t		UseRange;				// [NS] Distance at which player can +use
+	fixed_t		AirCapacity;			// Multiplier for air supply underwater.
 	PClassActor *FlechetteType;
+
 
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;

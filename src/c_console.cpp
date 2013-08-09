@@ -1742,7 +1742,7 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 		}
 		break;
 
-#ifdef unix
+#ifdef __unix__
 	case EV_GUI_MButtonDown:
 		C_PasteText(I_GetFromClipboard(true), buffer, len);
 		break;
@@ -2121,7 +2121,20 @@ static bool C_TabCompleteList ()
 		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLine+2);
 		for (i = TabPos; nummatches > 0; ++i, --nummatches)
 		{
-			Printf ("%-*s", int(maxwidth), TabCommands[i].TabName.GetChars());
+			// [Dusk] Print console commands blue, CVars green, aliases red.
+			const char* colorcode = "";
+			FConsoleCommand* ccmd;
+			if (FindCVar (TabCommands[i].TabName, NULL))
+				colorcode = TEXTCOLOR_GREEN;
+			else if ((ccmd = FConsoleCommand::FindByName (TabCommands[i].TabName)) != NULL)
+			{
+				if (ccmd->IsAlias())
+					colorcode = TEXTCOLOR_RED;
+				else
+					colorcode = TEXTCOLOR_LIGHTBLUE;
+			}
+
+			Printf ("%s%-*s", colorcode, int(maxwidth), TabCommands[i].TabName.GetChars());
 			x += maxwidth;
 			if (x > ConCols - maxwidth)
 			{

@@ -447,7 +447,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	memcpy (defaults, GetDefault<AActor>(), sizeof(AActor));
+	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 }
 
@@ -2469,6 +2469,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 {
 	PROP_FIXED_PARM(z, 0);
 	defaults->UseRange = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->AirCapacity = z;
 }
 
 //==========================================================================

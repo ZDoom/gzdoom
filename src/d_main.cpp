@@ -38,7 +38,7 @@
 #endif
 #include <float.h>
 
-#if defined(unix) || defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 
@@ -2029,7 +2029,7 @@ static void AddAutoloadFiles(const char *gamesection)
 			D_AddFile (allwads, wad);
 	
 		// [RH] Add any .wad files in the skins directory
-#ifdef unix
+#ifdef __unix__
 		file = SHARE_DIR;
 #else
 		file = progdir;
@@ -2037,7 +2037,7 @@ static void AddAutoloadFiles(const char *gamesection)
 		file += "skins";
 		D_AddDirectory (allwads, file);
 
-#ifdef unix
+#ifdef __unix__
 		file = NicePath("~/" GAME_DIR "/skins");
 		D_AddDirectory (allwads, file);
 #endif	
@@ -2157,7 +2157,7 @@ static void CheckCmdLine()
 		Printf ("%s", GStrings("D_DEVSTR"));
 	}
 
-#if !defined(unix) && !defined(__APPLE__)
+#if !defined(__unix__) && !defined(__APPLE__)
 	// We do not need to support -cdrom under Unix, because all the files
 	// that would go to c:\\zdoomdat are already stored in .zdoom inside
 	// the user's home directory.

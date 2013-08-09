@@ -749,6 +749,8 @@ int I_FindClose (void *handle)
 	findstate_t *state = (findstate_t *)handle;
 	if (handle != (void*)-1 && state->count > 0)
 	{
+		for(int i = 0;i < state->count;++i)
+			free (state->namelist[i]);
 		state->count = 0;
 		free (state->namelist);
 		state->namelist = NULL;

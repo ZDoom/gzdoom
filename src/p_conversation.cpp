@@ -1152,7 +1152,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 				break;
 			}
 		}
-		if (jump)
+		if (jump && CurNode->ItemCheckNode > 0)
 		{
 			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];

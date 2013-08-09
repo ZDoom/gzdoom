@@ -288,6 +288,7 @@ class USDFParser : public UDMFParserBase
 		//node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
 
 		node->ThisNodeNum = StrifeDialogues.Push(node);
+		node->ItemCheckNode = -1;
 
 		FString SpeakerName;
 		FString Dialogue;

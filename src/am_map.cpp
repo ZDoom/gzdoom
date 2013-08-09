@@ -2229,7 +2229,7 @@ void AM_drawWalls (bool allmap)
 
 		if (am_cheat != 0 || (lines[i].flags & ML_MAPPED))
 		{
-			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
+			if ((lines[i].flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 			{
 				if (!am_showallenabled || CheckCheatmode(false))
 				{
@@ -2336,14 +2336,14 @@ void AM_drawWalls (bool allmap)
 				AM_drawMline(&l, AMColors.EFWallColor); // Extra floor border
 			}
 #endif
-			else if (am_cheat != 0)
+			else if (am_cheat > 0 && am_cheat < 4)
 			{
 				AM_drawMline(&l, AMColors.TSWallColor);
 			}
 		}
 		else if (allmap)
 		{
-			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
+			if ((lines[i].flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 			{
 				if (!am_showallenabled || CheckCheatmode(false))
 				{
@@ -2463,7 +2463,7 @@ AM_drawLineCharacter
 
 void AM_drawPlayers ()
 {
-	if (am_cheat >= 2 && am_showthingsprites > 0)
+	if (am_cheat >= 2 && am_cheat != 4 && am_showthingsprites > 0)
 	{
 		// Player sprites are drawn with the others
 		return;
@@ -2710,7 +2710,7 @@ void AM_drawThings ()
 						16<<MAPBITS, angle, color, p.x, p.y);
 				}
 
-				if (am_cheat >= 3)
+				if (am_cheat == 3 || am_cheat == 6)
 				{
 					static const mline_t box[4] =
 					{
@@ -2908,7 +2908,7 @@ void AM_Drawer ()
 	AM_drawPlayers();
 	if (G_SkillProperty(SKILLP_EasyKey))
 		AM_drawKeys();
-	if (am_cheat >= 2 || allthings)
+	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
 		AM_drawThings();
 
 	AM_drawAuthorMarkers();

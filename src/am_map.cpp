@@ -85,7 +85,7 @@ CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
 CVAR (Int,   am_colorset,			0,			CVAR_ARCHIVE);
 CVAR (Bool,  am_customcolors,		true,		CVAR_ARCHIVE);
 CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
-CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
+CVAR (Int,	 am_drawmapback,		1,			CVAR_ARCHIVE);
 CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtriggerlines,	false,		CVAR_ARCHIVE);
 CVAR (Int,   am_showthingsprites,		0,		CVAR_ARCHIVE);
@@ -435,6 +435,7 @@ static unsigned char RavenColors[]= {
 
 static AMColorset AMColors;
 static AMColorset AMMod;
+static AMColorset AMModOverlay;
 
 
 //=============================================================================
@@ -443,12 +444,14 @@ static AMColorset AMMod;
 //
 //=============================================================================
 
-void FMapInfoParser::ParseAMColors()
+void FMapInfoParser::ParseAMColors(bool overlay)
 {
 	bool colorset = false;
 
-	AMMod.setWhite();
-	AMMod.defined = true;
+	AMColorset &cset = overlay? AMModOverlay : AMMod;
+
+	cset.setWhite();
+	cset.defined = true;
 	sc.MustGetToken('{');
 	while(sc.GetToken())
 	{
@@ -464,15 +467,15 @@ void FMapInfoParser::ParseAMColors()
 			sc.MustGetToken(TK_StringConst);
 			if (sc.Compare("doom"))
 			{
-				AMMod.initFromColors(DoomColors, false);
+				cset.initFromColors(DoomColors, false);
 			}
 			else if (sc.Compare("raven"))
 			{
-				AMMod.initFromColors(RavenColors, true);
+				cset.initFromColors(RavenColors, true);
 			}
 			else if (sc.Compare("strife"))
 			{
-				AMMod.initFromColors(StrifeColors, false);
+				cset.initFromColors(StrifeColors, false);
 			}
 			else
 			{
@@ -482,11 +485,11 @@ void FMapInfoParser::ParseAMColors()
 		else if (nextKey.CompareNoCase("showlocks") == 0)
 		{
 			if(sc.CheckToken(TK_False)) 
-				AMMod.displayLocks = false; 
+				cset.displayLocks = false; 
 			else 
 			{ 
 				sc.MustGetToken(TK_True); 
-				AMMod.displayLocks = true; 
+				cset.displayLocks = true; 
 			} 
 		}
 		else
@@ -501,7 +504,7 @@ void FMapInfoParser::ParseAMColors()
 					FString colorName = V_GetColorStringByName(color);
 					if(!colorName.IsEmpty()) color = colorName;
 					int colorval = V_GetColorFromString(NULL, color);
-					AMMod.c[i].FromRGB(RPART(colorval), GPART(colorval), BPART(colorval)); 
+					cset.c[i].FromRGB(RPART(colorval), GPART(colorval), BPART(colorval)); 
 					colorset = true;
 					break;
 				}
@@ -1244,7 +1247,14 @@ static void AM_initColors (bool overlayed)
 {
 	if (overlayed)
 	{
-		AMColors.initFromCVars(cv_overlay);
+		if (am_customcolors && AMModOverlay.defined)
+		{
+			AMColors = AMModOverlay;
+		}
+		else
+		{
+			AMColors.initFromCVars(cv_overlay);
+		}
 	}
 	else if (am_customcolors && AMMod.defined)
 	{
@@ -1598,7 +1608,17 @@ void AM_Ticker ()
 
 void AM_clearFB (const AMColor &color)
 {
-	if (!mapback.isValid() || !am_drawmapback)
+	bool drawback = mapback.isValid() && am_drawmapback != 0;
+	if (am_drawmapback == 2)
+	{
+		// only draw background when using a mod defined custom color set or Raven colors, if am_drawmapback is 2.
+		if (!am_customcolors || !AMMod.defined)
+		{
+			drawback &= (am_colorset == 3);
+		}
+	}
+
+	if (!drawback)
 	{
 		screen->Clear (0, 0, f_w, f_h, color.Index, color.RGB);
 	}
@@ -2209,7 +2229,7 @@ void AM_drawWalls (bool allmap)
 
 		if (am_cheat != 0 || (lines[i].flags & ML_MAPPED))
 		{
-			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
+			if ((lines[i].flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 			{
 				if (!am_showallenabled || CheckCheatmode(false))
 				{
@@ -2316,14 +2336,14 @@ void AM_drawWalls (bool allmap)
 				AM_drawMline(&l, AMColors.EFWallColor); // Extra floor border
 			}
 #endif
-			else if (am_cheat != 0)
+			else if (am_cheat > 0 && am_cheat < 4)
 			{
 				AM_drawMline(&l, AMColors.TSWallColor);
 			}
 		}
 		else if (allmap)
 		{
-			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
+			if ((lines[i].flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 			{
 				if (!am_showallenabled || CheckCheatmode(false))
 				{
@@ -2443,7 +2463,7 @@ AM_drawLineCharacter
 
 void AM_drawPlayers ()
 {
-	if (am_cheat >= 2 && am_showthingsprites > 0)
+	if (am_cheat >= 2 && am_cheat != 4 && am_showthingsprites > 0)
 	{
 		// Player sprites are drawn with the others
 		return;
@@ -2690,7 +2710,7 @@ void AM_drawThings ()
 						16<<MAPBITS, angle, color, p.x, p.y);
 				}
 
-				if (am_cheat >= 3)
+				if (am_cheat == 3 || am_cheat == 6)
 				{
 					static const mline_t box[4] =
 					{
@@ -2888,7 +2908,7 @@ void AM_Drawer ()
 	AM_drawPlayers();
 	if (G_SkillProperty(SKILLP_EasyKey))
 		AM_drawKeys();
-	if (am_cheat >= 2 || allthings)
+	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
 		AM_drawThings();
 
 	AM_drawAuthorMarkers();

@@ -1842,12 +1842,12 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 				sc.ScriptError("intermission definitions not supported with old MAPINFO syntax");
 			}
 		}
-		else if (sc.Compare("automap"))
+		else if (sc.Compare("automap") || sc.Compare("automap_overlay"))
 		{
 			if (format_type != FMT_Old)
 			{
 				format_type = FMT_New;
-				ParseAMColors();
+				ParseAMColors(sc.Compare("automap_overlay"));
 			}
 			else
 			{

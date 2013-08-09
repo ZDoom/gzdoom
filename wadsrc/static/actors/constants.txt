@@ -4,6 +4,9 @@ const int PAF_NOSKULLATTACK = 1;
 const int PAF_AIMFACING = 2;
 const int PAF_NOTARGET = 4;
 
+// Flags for A_VileAttack
+const int VAF_DMGTYPEAPPLYTODIRECT = 1;
+
 // Flags for A_Saw
 const int SF_NORANDOM = 1;
 const int SF_RANDOMLIGHTMISS = 2;

@@ -346,23 +346,19 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 	bool put=false;
 	TArray<lightlist_t> & lightlist=frontsector->e->XFloor.lightlist;
 
-	//y1+=y;
-	//y2+=y;
-	//y=0;
 	for(i=0;i<lightlist.Size();i++)
 	{
 		// Particles don't go through here so we can safely assume that actor is not NULL
 		if (i<lightlist.Size()-1) lightbottom=lightlist[i+1].plane.ZatPoint(actor->x,actor->y);
 		else lightbottom=frontsector->floorplane.ZatPoint(actor->x,actor->y);
 
-		//maplighttop=FIXED2FLOAT(lightlist[i].height);
 		maplightbottom=FIXED2FLOAT(lightbottom);
 		if (maplightbottom<z2) maplightbottom=z2;
 
 		if (maplightbottom<z1)
 		{
 			copySprite=*this;
-			copySprite.lightlevel=*lightlist[i].p_lightlevel;
+			copySprite.lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
 			copySprite.Colormap.CopyLightColor(lightlist[i].extra_colormap);
 
 			if (glset.nocoloredspritelighting)
@@ -387,7 +383,6 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 			put=true;
 		}
 	}
-	//if (y1<y2) PutSprite(translucent);
 }
 
 

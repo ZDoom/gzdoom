@@ -60,7 +60,7 @@
 FDynamicColormap *F3DFloor::GetColormap()
 {
 	// If there's no fog in either model or target sector this is easy and fast.
-	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & FF_FADEWALLS))
+	if ((target->ColorMap->Fade == 0 && model->ColorMap->Fade == 0) || (flags & (FF_FADEWALLS|FF_FOG)))
 	{
 		return model->ColorMap;
 	}

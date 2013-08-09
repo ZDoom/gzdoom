@@ -1326,7 +1326,11 @@ public:
 					continue;
 
 				case NAME_hidden:
-					sec->MoreFlags |= SECF_HIDDEN;
+					Flag(sec->MoreFlags, SECF_HIDDEN, key);
+					break;
+
+				case NAME_Waterzone:
+					Flag(sec->MoreFlags, SECF_UNDERWATER, key);
 					break;
 
 				default:

@@ -442,6 +442,7 @@ xx(Alphafloor)
 xx(Alphaceiling)
 xx(Renderstylefloor)
 xx(Renderstyleceiling)
+xx(Waterzone)
 
 xx(offsetx_top)
 xx(offsety_top)

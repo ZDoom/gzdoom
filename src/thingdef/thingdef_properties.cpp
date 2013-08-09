@@ -2422,6 +2422,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->AirCapacity = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 {
 	PROP_FIXED_PARM(m, 0);

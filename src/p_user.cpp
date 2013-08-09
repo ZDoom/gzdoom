@@ -477,6 +477,10 @@ void APlayerPawn::Serialize (FArchive &arc)
 	{
 		arc << UseRange;
 	}
+	if (SaveVersion >= 4503)
+	{
+		arc << AirCapacity;
+	}
 }
 
 //===========================================================================
@@ -1066,7 +1070,7 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 	{
 		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
 	}
-	if (level.airsupply> 0) player->air_finished = level.time + level.airsupply;
+	if (level.airsupply> 0 && player->mo->AirCapacity > 0) player->air_finished = level.time + FixedMul(level.airsupply, player->mo->AirCapacity);
 	else player->air_finished = INT_MAX;
 	return wasdrowning;
 }

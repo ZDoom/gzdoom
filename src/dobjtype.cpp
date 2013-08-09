@@ -638,7 +638,10 @@ PArray::PArray(PType *etype, unsigned int ecount)
 : ElementType(etype), ElementCount(ecount)
 {
 	Align = etype->Align;
-	Size = etype->Size * ecount;
+	// Since we are concatenating elements together, the element size should
+	// also be padded to the nearest alignment.
+	ElementSize = (etype->Size + (etype->Align - 1)) & ~(etype->Align - 1);
+	Size = ElementSize * ecount;
 }
 
 //==========================================================================

@@ -355,6 +355,7 @@ public:
 
 	PType *ElementType;
 	unsigned int ElementCount;
+	unsigned int ElementSize;
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;

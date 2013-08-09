@@ -1750,6 +1750,7 @@ void P_LoadThings (MapData * map)
 
 		memset (&mti[i], 0, sizeof(mti[i]));
 
+		mti[i].gravity = FRACUNIT;
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
@@ -1825,6 +1826,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].ClassFilter = (mti[i].flags & MTF_CLASS_MASK) >> MTF_CLASS_SHIFT;
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
 		mti[i].Conversation = 0;
+		mti[i].gravity = FRACUNIT;
 	}
 	delete[] mtp;
 }

@@ -1143,7 +1143,9 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT
-				 && !(target->flags & MF_NOGRAVITY))
+				 && !(target->flags & MF_NOGRAVITY)
+				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
+				 )
 			{
 				ang += ANG180;
 				thrust *= 4;

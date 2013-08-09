@@ -922,6 +922,34 @@ PStruct::PStruct(FName name, DObject *outer)
 
 //==========================================================================
 //
+// PStruct :: AddField
+//
+// Appends a new field to the end of a struct.
+//
+//==========================================================================
+
+PField *PStruct::AddField(FName name, PType *type)
+{
+	PField *field = new PField(name, type);
+
+	// The new field is added to the end of this struct, alignment permitting.
+	field->FieldOffset = (Size + (type->Align - 1)) & ~(type->Align - 1);
+
+	// Enlarge this struct to enclose the new field.
+	Size = field->FieldOffset + type->Size;
+
+	// This struct's alignment is the same as the largest alignment of any of
+	// its fields.
+	Align = MAX(Align, type->Align);
+
+	Fields.Push(field);
+	Symbols.AddSymbol(field);
+
+	return field;
+}
+
+//==========================================================================
+//
 // PStruct :: PropagateMark
 //
 //==========================================================================

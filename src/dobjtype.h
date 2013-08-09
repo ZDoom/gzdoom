@@ -325,6 +325,8 @@ class PField : public PSymbol
 	DECLARE_CLASS(PField, PSymbol);
 	HAS_OBJECT_POINTERS
 public:
+	PField(FName name, PType *type) : PSymbol(name), FieldOffset(0), FieldType(type) {}
+
 	unsigned int FieldOffset;
 	PType *FieldType;
 };
@@ -410,6 +412,8 @@ public:
 
 	TArray<PField *> Fields;
 	PSymbolTable	 Symbols;
+
+	PField *AddField(FName name, PType *type);
 
 	size_t PropagateMark();
 protected:

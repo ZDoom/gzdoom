@@ -342,6 +342,7 @@ struct FMapThing
 	int			special;
 	int			args[5];
 	int			Conversation;
+	fixed_t		gravity;
 
 	void Serialize (FArchive &);
 };

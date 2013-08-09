@@ -475,6 +475,7 @@ public:
 		FString arg0str, arg1str;
 
 		memset(th, 0, sizeof(*th));
+		th->gravity = FRACUNIT;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -513,6 +514,11 @@ public:
 			case NAME_Special:
 				CHECK_N(Hx | Zd | Zdt | Va)
 				th->special = CheckInt(key);
+				break;
+
+			case NAME_Gravity:
+				CHECK_N(Zd | Zdt)
+				th->gravity = CheckFixed(key);
 				break;
 
 			case NAME_Arg0:

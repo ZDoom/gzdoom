@@ -40,6 +40,7 @@
 #include "s_sound.h"
 #include "d_event.h"
 #include "m_random.h"
+#include "doomerrors.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
 #include "w_wad.h"
@@ -170,13 +171,21 @@ CCMD (map)
 	}
 	if (argv.argc() > 1)
 	{
-		if (!P_CheckMapData(argv[1]))
+		try
 		{
-			Printf ("No map %s\n", argv[1]);
+			if (!P_CheckMapData(argv[1]))
+			{
+				Printf ("No map %s\n", argv[1]);
+			}
+			else
+			{
+				G_DeferedInitNew (argv[1]);
+			}
 		}
-		else
+		catch(CRecoverableError &error)
 		{
-			G_DeferedInitNew (argv[1]);
+			if (error.GetMessage())
+				Printf("%s", error.GetMessage());
 		}
 	}
 	else

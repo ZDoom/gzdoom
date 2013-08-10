@@ -425,12 +425,16 @@ class PPrototype : public PCompoundType
 {
 	DECLARE_CLASS(PPrototype, PCompoundType);
 public:
+	PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
+
 	TArray<PType *> ArgumentTypes;
 	TArray<PType *> ReturnTypes;
 
 	size_t PropagateMark();
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+protected:
+	PPrototype();
 };
 
 // TBD: Should we really support overloading?
@@ -589,6 +593,7 @@ PClassPointer *NewClassPointer(PClass *restrict);
 PClassWaitingForParent *NewUnknownClass(FName myname, FName parentname);
 PEnum *NewEnum(FName name, DObject *outer);
 PStruct *NewStruct(FName name, DObject *outer);
+PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
 
 // Built-in types -----------------------------------------------------------
 

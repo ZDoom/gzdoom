@@ -993,6 +993,27 @@ IMPLEMENT_CLASS(PPrototype)
 
 //==========================================================================
 //
+// PPrototype - Default Constructor
+//
+//==========================================================================
+
+PPrototype::PPrototype()
+{
+}
+
+//==========================================================================
+//
+// PPrototype - Parameterized Constructor
+//
+//==========================================================================
+
+PPrototype::PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes)
+: ArgumentTypes(argtypes), ReturnTypes(rettypes)
+{
+}
+
+//==========================================================================
+//
 // PPrototype :: IsMatch
 //
 //==========================================================================
@@ -1029,6 +1050,27 @@ size_t PPrototype::PropagateMark()
 	GC::MarkArray(ReturnTypes);
 	return (ArgumentTypes.Size() + ReturnTypes.Size()) * sizeof(void*) +
 		Super::PropagateMark();
+}
+
+//==========================================================================
+//
+// NewPrototype
+//
+// Returns a PPrototype for the given return and argument types, making sure
+// not to create duplicates.
+//
+//==========================================================================
+
+PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes)
+{
+	size_t bucket;
+	PType *proto = TypeTable.FindType(RUNTIME_CLASS(PPrototype), (intptr_t)&argtypes, (intptr_t)&rettypes, &bucket);
+	if (proto == NULL)
+	{
+		proto = new PPrototype(rettypes, argtypes);
+		TypeTable.AddType(proto, RUNTIME_CLASS(PPrototype), (intptr_t)&argtypes, (intptr_t)&rettypes, bucket);
+	}
+	return static_cast<PPrototype *>(proto);
 }
 
 /* PFunction **************************************************************/

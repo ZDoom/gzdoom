@@ -573,7 +573,7 @@ struct FTypeTable
 	void Mark();
 	void Clear();
 
-	static size_t Hash(const void *p1, intptr_t p2, intptr_t p3);
+	static size_t Hash(const PClass *p1, intptr_t p2, intptr_t p3);
 };
 
 

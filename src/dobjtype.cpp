@@ -1646,17 +1646,34 @@ void FTypeTable::AddType(PType *type)
 //
 //==========================================================================
 
-size_t FTypeTable::Hash(const void *p1, intptr_t p2, intptr_t p3)
+size_t FTypeTable::Hash(const PClass *p1, intptr_t p2, intptr_t p3)
 {
 	size_t i1 = (size_t)p1;
-	size_t i2 = (size_t)p2;
-	size_t i3 = (size_t)p3;
 
 	// Swap the high and low halves of i1. The compiler should be smart enough
 	// to transform this into a ROR or ROL.
 	i1 = (i1 >> (sizeof(size_t)*4)) | (i1 << (sizeof(size_t)*4));
 
-	return (~i1 ^ i2) + i3 * 961748927;	// i3 is multiplied by a prime
+	if (p1 != RUNTIME_CLASS(PPrototype))
+	{
+		size_t i2 = (size_t)p2;
+		size_t i3 = (size_t)p3;
+		return (~i1 ^ i2) + i3 * 961748927;	// i3 is multiplied by a prime
+	}
+	else
+	{ // Prototypes need to hash the TArrays at p2 and p3
+		const TArray<PType *> *a2 = (const TArray<PType *> *)p2;
+		const TArray<PType *> *a3 = (const TArray<PType *> *)p3;
+		for (unsigned i = 0; i < a2->Size(); ++i)
+		{
+			i1 = (i1 * 961748927) + (size_t)((*a2)[i]);
+		}
+		for (unsigned i = 0; i < a3->Size(); ++i)
+		{
+			i1 = (i1 * 961748927) + (size_t)((*a3)[i]);
+		}
+		return i1;
+	}
 }
 
 //==========================================================================

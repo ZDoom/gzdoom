@@ -5047,6 +5047,15 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 	}
+	else if ((thing->z != oldfloorz && !(thing->flags & MF_NOLIFTDROP)))
+	{
+		fixed_t oldz = thing->z;
+		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
+		{
+			thing->z = thing->z - oldfloorz + thing->floorz;
+			P_CheckFakeFloorTriggers (thing, oldz);
+		}
+	}
 }
 
 //=============================================================================
@@ -5058,6 +5067,7 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 {
 	fixed_t oldfloorz = thing->floorz;
+	fixed_t oldz = thing->z;
 
 	P_AdjustFloorCeil (thing, cpos);
 
@@ -5072,22 +5082,30 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 			return; // do not move bridge things
 		}
 		intersectors.Clear ();
-		fixed_t oldz = thing->z;
 		thing->z = thing->floorz;
-		switch (P_PushUp (thing, cpos))
+	}
+	else
+	{
+		if((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
 		{
-		default:
-			P_CheckFakeFloorTriggers (thing, oldz);
-			break;
-		case 1:
-			P_DoCrunch (thing, cpos);
-			P_CheckFakeFloorTriggers (thing, oldz);
-			break;
-		case 2:
-			P_DoCrunch (thing, cpos);
-			thing->z = oldz;
-			break;
+			intersectors.Clear ();
+			thing->z = thing->z - oldfloorz + thing->floorz;
 		}
+		else return;
+	}
+	switch (P_PushUp (thing, cpos))
+	{
+	default:
+		P_CheckFakeFloorTriggers (thing, oldz);
+		break;
+	case 1:
+		P_DoCrunch (thing, cpos);
+		P_CheckFakeFloorTriggers (thing, oldz);
+		break;
+	case 2:
+		P_DoCrunch (thing, cpos);
+		thing->z = oldz;
+		break;
 	}
 }
 

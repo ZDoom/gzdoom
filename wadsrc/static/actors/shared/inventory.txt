@@ -300,6 +300,7 @@ ACTOR PowerDrain : Powerup native
 ACTOR PowerRegeneration : Powerup native
 {
 	Powerup.Duration -120
+	Powerup.Strength 5
 }
 
 ACTOR PowerHighJump : Powerup native {}

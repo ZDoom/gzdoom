@@ -1697,7 +1697,7 @@ void APowerRegeneration::DoEffect()
 {
 	if (Owner != NULL && Owner->health > 0 && (level.time & 31) == 0)
 	{
-		if (P_GiveBody(Owner, 5))
+		if (P_GiveBody(Owner, Strength))
 		{
 			S_Sound(Owner, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
 		}

@@ -332,6 +332,7 @@ enum
 	MF6_INTRYMOVE		= 0x10000000,	// Executing P_TryMove
 	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 	MF6_NOTONAUTOMAP	= 0x40000000,	// will not be shown on automap with the 'scanner' powerup.
+	MF6_RELATIVETOFLOOR	= 0x80000000,	// [RC] Make flying actors be affected by lifts.
 
 // --- mobj.renderflags ---
 

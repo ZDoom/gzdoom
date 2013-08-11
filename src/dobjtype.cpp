@@ -253,7 +253,6 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PMap)->TypeTableType = RUNTIME_CLASS(PMap);
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
-	RUNTIME_CLASS(PFunction)->TypeTableType = RUNTIME_CLASS(PFunction);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 
 	TypeTable.AddType(TypeSInt8 = new PInt(1, false));

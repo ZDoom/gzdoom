@@ -440,9 +440,9 @@ protected:
 };
 
 // TBD: Should we really support overloading?
-class PFunction : public PNamedType
+class PFunction : public PSymbol
 {
-	DECLARE_CLASS(PFunction, PNamedType);
+	DECLARE_CLASS(PFunction, PSymbol);
 public:
 	struct Variant
 	{
@@ -452,6 +452,9 @@ public:
 	TArray<Variant> Variants;
 
 	size_t PropagateMark();
+
+	PFunction(FName name) : PSymbol(name) {}
+	PFunction() : PSymbol(NAME_None) {}
 };
 
 // Meta-info for every class derived from DObject ---------------------------

@@ -4951,3 +4951,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDamageType)
 
 	self->DamageType = damagetype;
 }
+
+//==========================================================================
+//
+// A_DropItem
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(spawntype, 0);
+	ACTION_PARAM_INT(amount, 1);
+	ACTION_PARAM_INT(chance, 2);
+
+	P_DropItem(self, spawntype, amount, chance);
+}

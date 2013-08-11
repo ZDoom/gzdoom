@@ -8,6 +8,13 @@
 #include "thingdef/thingdef_type.h"
 #include "vm.h"
 
+// Variable/parameter/field flags -------------------------------------------
+
+// Making all these different storage types use a common set of flags seems
+// like the simplest thing to do.
+
+#define VARF_Optional	(1<<0)			// func param is optional
+
 // Symbol information -------------------------------------------------------
 
 class PSymbol : public DObject
@@ -448,6 +455,7 @@ public:
 	{
 		PPrototype *Proto;
 		VMFunction *Implementation;
+		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 	};
 	TArray<Variant> Variants;
 

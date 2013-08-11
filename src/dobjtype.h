@@ -329,6 +329,8 @@ public:
 
 	unsigned int FieldOffset;
 	PType *FieldType;
+protected:
+	PField();
 };
 
 // Compound types -----------------------------------------------------------

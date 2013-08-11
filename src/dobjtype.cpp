@@ -987,6 +987,21 @@ PStruct *NewStruct(FName name, DObject *outer)
 	return static_cast<PStruct *>(stype);
 }
 
+/* PField *****************************************************************/
+
+IMPLEMENT_CLASS(PField)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PField::PField()
+: PSymbol(NAME_None)
+{
+}
+
 /* PPrototype *************************************************************/
 
 IMPLEMENT_CLASS(PPrototype)

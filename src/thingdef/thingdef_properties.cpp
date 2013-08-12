@@ -180,6 +180,33 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 #endif
 }
 
+INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror)
+{
+	const char *dot = strchr (flagname, '.');
+	FFlagDef *fd;
+	const PClass *cls = owner->GetClass();
+
+	if (dot != NULL)
+	{
+		FString part1(flagname, dot-flagname);
+		fd = FindFlag (cls, part1, dot+1);
+	}
+	else
+	{
+		fd = FindFlag (cls, flagname, NULL);
+	}
+
+	if (fd != NULL)
+	{
+		return CheckActorFlag(owner, fd);
+	}
+	else
+	{
+		if (printerror) Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+		return false;
+	}
+}
+
 //===========================================================================
 //
 // HandleDeprecatedFlags

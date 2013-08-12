@@ -1300,7 +1300,7 @@ void D_DoAdvanceDemo (void)
 		gamestate = GS_DEMOSCREEN;
 		pagename = gameinfo.titlePage;
 		pagetic = (int)(gameinfo.titleTime * TICRATE);
-		S_StartMusic (gameinfo.titleMusic);
+		S_ChangeMusic (gameinfo.titleMusic, gameinfo.titleOrder, false);
 		demosequence = 3;
 		pagecount = 0;
 		C_HideConsole ();

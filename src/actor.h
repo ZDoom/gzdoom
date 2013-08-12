@@ -332,7 +332,11 @@ enum
 	MF6_INTRYMOVE		= 0x10000000,	// Executing P_TryMove
 	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 	MF6_NOTONAUTOMAP	= 0x40000000,	// will not be shown on automap with the 'scanner' powerup.
-	MF6_NOTELESTOMP		= 0x80000000,	// cannot telefrag under any circumstances (even when set by MAPINFO)
+
+// --- mobj.flags6 ---
+
+	MF7_NEVERTARGET		= 0x00000001,	// can not be targetted at all, even if monster friendliness is considered.
+	MF7_NOTELESTOMP		= 0x00000002,	// cannot telefrag under any circumstances (even when set by MAPINFO)
 
 // --- mobj.renderflags ---
 

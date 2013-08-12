@@ -235,7 +235,9 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF6, POISONALWAYS, AActor, flags6),
 	DEFINE_FLAG(MF6, NOTAUTOAIMED, AActor, flags6),
 	DEFINE_FLAG(MF6, NOTONAUTOMAP, AActor, flags6),
-	DEFINE_FLAG(MF6, NOTELESTOMP, AActor, flags6),
+
+	DEFINE_FLAG(MF7, NEVERTARGET, AActor, flags7),
+	DEFINE_FLAG(MF7, NOTELESTOMP, AActor, flags7),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

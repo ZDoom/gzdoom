@@ -2644,6 +2644,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			corpsehit->flags4 = info->flags4;
 			corpsehit->flags5 = info->flags5;
 			corpsehit->flags6 = info->flags6;
+			corpsehit->flags7 = info->flags7;
 			corpsehit->health = info->health;
 			corpsehit->target = NULL;
 			corpsehit->lastenemy = NULL;

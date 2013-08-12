@@ -200,8 +200,12 @@ void AActor::Serialize (FArchive &arc)
 		<< flags3
 		<< flags4
 		<< flags5
-		<< flags6
-		<< special1
+		<< flags6;
+	if (SaveVersion >= 4504)
+	{
+		arc << flags7;
+	}
+	arc	<< special1
 		<< special2
 		<< health
 		<< movedir
@@ -826,7 +830,7 @@ void AActor::CopyFriendliness (AActor *other, bool changeTarget, bool resetHealt
 	flags4 = (flags4 & ~(MF4_NOHATEPLAYERS | MF4_BOSSSPAWNED)) | (other->flags4 & (MF4_NOHATEPLAYERS | MF4_BOSSSPAWNED));
 	FriendPlayer = other->FriendPlayer;
 	DesignatedTeam = other->DesignatedTeam;
-	if (changeTarget && other->target != NULL && !(other->target->flags3 & MF3_NOTARGET))
+	if (changeTarget && other->target != NULL && !(other->target->flags3 & MF3_NOTARGET) && !(other->target->flags7 & MF7_NEVERTARGET))
 	{
 		// LastHeard must be set as well so that A_Look can react to the new target if called
 		LastHeard = target = other->target;
@@ -6133,6 +6137,9 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n\tflags6: %x", query->flags6);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
+		Printf("\n\tflags7: %x", query->flags7);
+		for (flagi = 0; flagi <= 31; flagi++)
+			if (query->flags7 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
 			FIXED2FLOAT(query->wallbouncefactor));

@@ -31,6 +31,7 @@ bool CheckDeprecatedFlags(const AActor *actor, FActorInfo *info, int index);
 const char *GetFlagName(unsigned int flagnum, int flagoffset);
 void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
 INTBOOL CheckActorFlag(const AActor *actor, FFlagDef *fd);
+INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror = true);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
 

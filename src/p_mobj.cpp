@@ -200,8 +200,12 @@ void AActor::Serialize (FArchive &arc)
 		<< flags3
 		<< flags4
 		<< flags5
-		<< flags6
-		<< special1
+		<< flags6;
+	if (SaveVersion >= 4504)
+	{
+		arc << flags7;
+	}
+	arc	<< special1
 		<< special2
 		<< health
 		<< movedir
@@ -6133,6 +6137,9 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n\tflags6: %x", query->flags6);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
+		Printf("\n\tflags7: %x", query->flags7);
+		for (flagi = 0; flagi <= 31; flagi++)
+			if (query->flags7 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
 			FIXED2FLOAT(query->wallbouncefactor));

@@ -300,7 +300,7 @@ ACTOR Actor native //: Thinker
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	action native A_SetTics(int tics);
 	action native A_SetDamageType(name damagetype);
-	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = -1);
+	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
 
 	action native A_CheckSightOrRange(float distance, state label);
 	action native A_CheckRange(float distance, state label);

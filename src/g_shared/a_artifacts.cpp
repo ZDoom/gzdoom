@@ -589,7 +589,7 @@ void APowerInvisibility::DoEffect ()
 	Super::DoEffect();
 	// Due to potential interference with other PowerInvisibility items
 	// the effect has to be refreshed each tic.
-	fixed_t ts = Strength * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
+	fixed_t ts = (Strength/100) * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
 	Owner->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
 	switch (Mode)
 	{
@@ -669,7 +669,7 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 	else if (changed == 1)
 	{
 		// something else set the weapon sprite back to opaque but this item is still active.
-		fixed_t ts = Strength * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
+		fixed_t ts = (Strength/100) * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
 		vis->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
 		switch (Mode)
 		{
@@ -696,7 +696,7 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 	// Handling of Strife-like cumulative invisibility powerups, the weapon itself shouldn't become invisible
 	if ((vis->alpha < TRANSLUC25 && special1 > 0) || (vis->alpha == 0))
 	{
-		vis->alpha = clamp<fixed_t>((OPAQUE - Strength), 0, OPAQUE);
+		vis->alpha = clamp<fixed_t>((OPAQUE - (Strength/100)), 0, OPAQUE);
 		vis->colormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 	}
 	return -1;	// This item is valid so another one shouldn't reset the translucency

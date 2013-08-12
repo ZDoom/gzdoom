@@ -1286,7 +1286,8 @@ DEFINE_PROPERTY(clearflags, 0, Actor)
 		defaults->flags3 =
 		defaults->flags4 =
 		defaults->flags5 =
-		defaults->flags6 = 0;
+		defaults->flags6 =
+		defaults->flags7 = 0;
 	defaults->flags2 &= MF2_ARGSDEFINED;	// this flag must not be cleared
 }
 
@@ -2113,9 +2114,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
-	// Puts a percent value in the 0.0..1.0 range
 	PROP_FIXED_PARM(f, 0);
-	*pStrength = f / 100;
+	*pStrength = f;
 }
 
 //==========================================================================

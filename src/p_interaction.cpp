@@ -1508,6 +1508,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	if (other == this)
 		return false;		// [RH] Don't hate self (can happen when shooting barrels)
 
+	if (other->flags7 & MF7_NEVERTARGET)
+		return false;		// never EVER target me!
+
 	if (!(other->flags & MF_SHOOTABLE))
 		return false;		// Don't attack things that can't be hurt
 

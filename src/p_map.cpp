@@ -334,8 +334,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 					
 	spechit.Clear ();
 
-	bool StompAlwaysFrags = (thing->flags2 & MF2_TELESTOMP) || 
-							(level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
+	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags6 & MF6_NOTELESTOMP);
 
 	FBoundingBox box(x, y, thing->radius);
 	FBlockLinesIterator it(box);

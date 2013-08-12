@@ -236,7 +236,7 @@ enum
 	MF4_RANDOMIZE		= 0x00000010,	// Missile has random initial tic count
 	MF4_NOSKIN			= 0x00000020,	// Player cannot use skins
 	MF4_FIXMAPTHINGPOS	= 0x00000040,	// Fix this actor's position when spawned as a map thing
-	MF4_ACTLIKEBRIDGE	= 0x00000080,	// Pickups can "stand" on this actor
+	MF4_ACTLIKEBRIDGE	= 0x00000080,	// Pickups can "stand" on this actor / cannot be moved by any sector action.
 	MF4_STRIFEDAMAGE	= 0x00000100,	// Strife projectiles only do up to 4x damage, not 8x
 
 	MF4_CANUSEWALLS		= 0x00000200,	// Can activate 'use' specials
@@ -266,7 +266,7 @@ enum
 // --- mobj.flags5 ---
 
 	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
-	/*					= 0x00000002,	*/
+	/*					= 0x00000002,	   reserved for use by scripting branch */
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_NOFORWARDFALL	= 0x00000008,	// Does not make any actor fall forward by being damaged by this
 	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret
@@ -284,7 +284,7 @@ enum
 	MF5_NEVERFAST		= 0x00010000,	// never uses 'fast' attacking logic
 	MF5_ALWAYSRESPAWN	= 0x00020000,	// always respawns, regardless of skill setting
 	MF5_NEVERRESPAWN	= 0x00040000,	// never respawns, regardless of skill setting
-	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hittin this actor
+	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hitting this actor
 	MF5_NOINFIGHTING	= 0x00100000,	// This actor doesn't switch target when it's hurt 
 	MF5_NOINTERACTION	= 0x00200000,	// Thing is completely excluded from any gameplay related checks
 	MF5_NOTIMEFREEZE	= 0x00400000,	// Actor is not affected by time freezer
@@ -332,6 +332,7 @@ enum
 	MF6_INTRYMOVE		= 0x10000000,	// Executing P_TryMove
 	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 	MF6_NOTONAUTOMAP	= 0x40000000,	// will not be shown on automap with the 'scanner' powerup.
+	MF6_NOTELESTOMP		= 0x80000000,	// cannot telefrag under any circumstances (even when set by MAPINFO)
 
 // --- mobj.renderflags ---
 

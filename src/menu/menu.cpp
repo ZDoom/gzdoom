@@ -909,6 +909,11 @@ CCMD (openmenu)
 	M_SetMenu(argv[1], -1);
 }
 
+CCMD (closemenu)
+{
+	M_ClearMenus();
+}
+
 //
 //		Toggle messages on/off
 //

@@ -5242,7 +5242,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		{
 			const char *type = FBehavior::StaticLookupString(args[1]);
 			int amount = argCount >= 3? args[2] : -1;
-			int chance = argCount >= 4? args[3] : -1;
+			int chance = argCount >= 4? args[3] : 256;
 			const PClass *cls = PClass::FindClass(type);
 			int cnt = 0;
 			if (cls != NULL)

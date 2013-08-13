@@ -338,6 +338,7 @@ enum
 
 	MF7_NEVERTARGET		= 0x00000001,	// can not be targetted at all, even if monster friendliness is considered.
 	MF7_NOTELESTOMP		= 0x00000002,	// cannot telefrag under any circumstances (even when set by MAPINFO)
+	MF7_ALWAYSTELEFRAG	= 0x00000004,	// will unconditionally be telefragged when in the way. Overrides all other settings.
 
 // --- mobj.renderflags ---
 

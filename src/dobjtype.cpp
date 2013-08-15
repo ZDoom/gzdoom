@@ -69,6 +69,7 @@ PString *TypeString;
 PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
+PStatePointer *TypeState;
 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -267,6 +268,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeName = new PName);
 	TypeTable.AddType(TypeSound = new PSound);
 	TypeTable.AddType(TypeColor = new PColor);
+	TypeTable.AddType(TypeState = new PStatePointer);
 
 }
 
@@ -446,6 +448,23 @@ PColor::PColor()
 {
 	assert(sizeof(PalEntry) == __alignof(PalEntry));
 }
+
+/* PStatePointer **********************************************************/
+
+IMPLEMENT_CLASS(PStatePointer)
+
+//==========================================================================
+//
+// PStatePointer Default Constructor
+//
+//==========================================================================
+
+PStatePointer::PStatePointer()
+: PInt(sizeof(FState *), true)
+{
+	Align = __alignof(FState *);
+}
+
 
 /* PPointer ***************************************************************/
 

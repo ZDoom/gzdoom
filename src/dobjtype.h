@@ -291,6 +291,13 @@ public:
 
 // Pointers -----------------------------------------------------------------
 
+class PStatePointer : public PInt
+{
+	DECLARE_CLASS(PStatePointer, PInt);
+public:
+	PStatePointer();
+};
+
 class PPointer : public PInt
 {
 	DECLARE_CLASS(PPointer, PInt);
@@ -618,5 +625,6 @@ extern PString *TypeString;
 extern PName *TypeName;
 extern PSound *TypeSound;
 extern PColor *TypeColor;
+extern PStatePointer *TypeState;
 
 #endif

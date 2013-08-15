@@ -579,6 +579,25 @@ void PClassPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 	id2 = (intptr_t)ClassRestriction;
 }
 
+//==========================================================================
+//
+// NewClassPointer
+//
+// Returns a PClassPointer for the restricted type.
+//
+//==========================================================================
+
+PClassPointer *NewClassPointer(PClass *restrict)
+{
+	size_t bucket;
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, &bucket);
+	if (ptype == NULL)
+	{
+		ptype = new PClassPointer(restrict);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, bucket);
+	}
+	return static_cast<PClassPointer *>(ptype);
+}
 
 /* PEnum ******************************************************************/
 

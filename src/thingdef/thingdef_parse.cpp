@@ -67,35 +67,46 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 //
 //==========================================================================
 
-FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool constant)
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant)
 {
 	FxExpression *x = NULL;
 	int v;
 
-	switch(type)
+	if (type == TypeSound)
 	{
-	case 'S':
-	case 's':		// Sound name
 		sc.MustGetString();
 		x = new FxConstant(FSoundID(sc.String), sc);
-		break;
-
-	case 'M':
-	case 'm':		// Actor name
+	}
+	else if (type == TypeSInt32 || type == TypeFloat64)
+	{
+		x = ParseExpression (sc, cls);
+		if (constant && !x->isConstant())
+		{
+			sc.ScriptMessage("Default parameter must be constant.");
+			FScriptPosition::ErrorCounter++;
+		}
+		// Do automatic coercion between ints and floats.
+		if (type == TypeSInt32)
+		{
+			if (x->ValueType != VAL_Int)
+			{
+				x = new FxIntCast(x);
+			}
+		}
+		else
+		{
+			if (x->ValueType != VAL_Float)
+			{
+				x = new FxFloatCast(x);
+			}
+		}
+	}
+	else if (type == TypeName || type == TypeString)
+	{
 		sc.SetEscape(true);
 		sc.MustGetString();
 		sc.SetEscape(false);
-		x = new FxClassTypeCast(RUNTIME_CLASS(AActor), new FxConstant(FName(sc.String), sc));
-		break;
-
-	case 'N':
-	case 'n':		// name
-	case 'T':
-	case 't':		// String
-		sc.SetEscape(true);
-		sc.MustGetString();
-		sc.SetEscape(false);
-		if (type == 'n' || type == 'N')
+		if (type == TypeName)
 		{
 			x = new FxConstant(sc.String[0] ? FName(sc.String) : NAME_None, sc);
 		}
@@ -103,10 +114,9 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool con
 		{
 			x = new FxConstant(strbin1(sc.String), sc);
 		}
-		break;
-
-	case 'C':
-	case 'c':		// Color
+	}
+	else if (type == TypeColor)
+	{
 		sc.MustGetString ();
 		if (sc.Compare("none"))
 		{
@@ -122,16 +132,12 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool con
 			// 0 needs to be the default so we have to mark the color.
 			v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 		}
-		{
-			ExpVal val;
-			val.Type = VAL_Color;
-			val.Int = v;
-			x = new FxConstant(val, sc);
-			break;
-		}
-
-	case 'L':
-	case 'l':
+		ExpVal val;
+		val.Type = VAL_Color;
+		val.Int = v;
+		x = new FxConstant(val, sc);
+	}
+	else if (type == TypeState)
 	{
 		// This forces quotation marks around the state name.
 		sc.MustGetToken(TK_StringConst);
@@ -151,39 +157,18 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool con
 		{
 			x = new FxMultiNameState(sc.String, sc);
 		}
-		break;
 	}
-
-	case 'X':
-	case 'x':
-	case 'Y':
-	case 'y':
-		x = ParseExpression (sc, cls);
-		if (constant && !x->isConstant())
-		{
-			sc.ScriptMessage("Default parameter must be constant.");
-			FScriptPosition::ErrorCounter++;
-		}
-		// Do automatic coercion between ints and floats.
-		if (type == 'x' || type == 'X')
-		{
-			if (x->ValueType != VAL_Int)
-			{
-				x = new FxIntCast(x);
-			}
-		}
-		else
-		{
-			if (x->ValueType != VAL_Float)
-			{
-				x = new FxFloatCast(x);
-			}
-		}
-		break;
-
-	default:
-		assert(false);
-		return NULL;
+	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
+	{	// Actor name
+		sc.SetEscape(true);
+		sc.MustGetString();
+		sc.SetEscape(false);
+		x = new FxClassTypeCast(static_cast<PClassPointer *>(type)->ClassRestriction, new FxConstant(FName(sc.String), sc));
+	}
+	else
+	{
+		assert(false && "Unknown parameter type");
+		x = NULL;
 	}
 	return x;
 }
@@ -917,15 +902,12 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 
 static void ParseActionDef (FScanner &sc, PClassActor *cls)
 {
-	enum
-	{
-		OPTIONAL = 1
-	};
-
 	bool error = false;
 	const AFuncDesc *afd;
 	FName funcname;
-	FString args;
+	TArray<PType *> rets;
+	TArray<PType *> args;
+	TArray<DWORD> argflags;
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
@@ -934,6 +916,11 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	}
 
 	sc.MustGetToken(TK_Native);
+	// check for a return value
+	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Bool))
+	{
+		rets.Push(TypeSInt32);
+	}
 	sc.MustGetToken(TK_Identifier);
 	funcname = sc.String;
 	afd = FindFunction(sc.String);
@@ -942,13 +929,18 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", sc.String);
 		error++;
 	}
+	args.Push(NewClassPointer(cls)), argflags.Push(0);						// implied self pointer
+	args.Push(NewClassPointer(RUNTIME_CLASS(AActor))), argflags.Push(0);	// implied stateowner pointer
+	args.Push(TypeState), argflags.Push(0);									// implied callingstate pointer
+
 	sc.MustGetToken('(');
 	if (!sc.CheckToken(')'))
 	{
 		while (sc.TokenType != ')')
 		{
 			int flags = 0;
-			char type = '@';
+			PType *type = NULL;
+			PClass *restrict = NULL;
 
 			// Retrieve flags before type name
 			for (;;)
@@ -967,32 +959,42 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 			{
 			case TK_Bool:
 			case TK_Int:
-				type = 'x';
+				type = TypeSInt32;
 				break;
 
 			case TK_Float:
-				type = 'y';
+				type = TypeFloat64;
 				break;
 
-			case TK_Sound:		type = 's';		break;
-			case TK_String:		type = 't';		break;
-			case TK_Name:		type = 'n';		break;
-			case TK_State:		type = 'l';		break;
-			case TK_Color:		type = 'c';		break;
+			case TK_Sound:		type = TypeSound;		break;
+			case TK_String:		type = TypeString;		break;
+			case TK_Name:		type = TypeName;		break;
+			case TK_State:		type = TypeState;		break;
+			case TK_Color:		type = TypeColor;		break;
 			case TK_Class:
 				sc.MustGetToken('<');
-				sc.MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
+				sc.MustGetToken(TK_Identifier);	// Get class name
+				restrict = PClass::FindClass(sc.String);
+				if (restrict == NULL)
+				{
+					sc.ScriptMessage("Unknown class type %s", sc.String);
+					FScriptPosition::ErrorCounter++;
+				}
+				else
+				{
+					type = NewClassPointer(restrict);
+				}
 				sc.MustGetToken('>');
-				type = 'm';
 				break;
 			case TK_Ellipsis:
-				type = '+';
+				// Making the final type NULL signals a varargs function.
+				type = NULL;
 				sc.MustGetToken(')');
 				sc.UnGet();
 				break;
 			default:
 				sc.ScriptMessage ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
-				type = 'x';
+				type = TypeSInt32;
 				FScriptPosition::ErrorCounter++;
 				break;
 			}
@@ -1008,16 +1010,13 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 
 			if (sc.CheckToken('='))
 			{
-				flags |= OPTIONAL;
+				flags |= VARF_Optional;
 				FxExpression *def = ParseParameter(sc, cls, type, true);
 				delete def;
 			}
 
-			if (!(flags & OPTIONAL) && type != '+')
-			{
-				type -= 'a' - 'A';
-			}
-			args += type;
+			args.Push(type);
+			argflags.Push(flags);
 			sc.MustGetAnyToken();
 			if (sc.TokenType != ',' && sc.TokenType != ')')
 			{
@@ -1028,14 +1027,14 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	sc.MustGetToken(';');
 	if (afd != NULL)
 	{
-		PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
-		sym->Arguments = args;
-		sym->Function = *(afd->VMPointer);
+		PFunction *sym = new PFunction(funcname);
+		sym->AddVariant(NewPrototype(rets, args), argflags, *(afd->VMPointer));
+		sym->Flags = VARF_Method | VARF_Action;
 		if (error)
 		{
 			FScriptPosition::ErrorCounter++;
 		}
-		else if (cls->Symbols.AddSymbol (sym) == NULL)
+		else if (cls->Symbols.AddSymbol(sym) == NULL)
 		{
 			delete sym;
 			sc.ScriptMessage ("'%s' is already defined in class '%s'.",

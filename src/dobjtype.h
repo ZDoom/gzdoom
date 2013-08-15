@@ -64,23 +64,7 @@ public:
 };
 
 // An action function -------------------------------------------------------
-//
-// The Arguments string is a string of characters as understood by
-// the DECORATE parser:
-//
-// If the letter is uppercase, it is required. Lowercase letters are optional.
-//   i = integer
-//   f = fixed point
-//   s = sound name
-//   m = actor name
-//   t = string
-//   l = jump label
-//   c = color
-//   x = expression
-//   y = expression
-// If the final character is a +, the previous parameter is repeated indefinitely,
-// and an "imaginary" first parameter is inserted containing the total number of
-// parameters passed.
+
 struct FState;
 struct StateCallData;
 class VMFrameStack;
@@ -88,18 +72,6 @@ struct VMValue;
 struct VMReturn;
 typedef int (*actionf_p)(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret);/*(VM_ARGS)*/
 class VMFunction;
-
-class PSymbolActionFunction : public PSymbol
-{
-	DECLARE_CLASS(PSymbolActionFunction, PSymbol);
-	HAS_OBJECT_POINTERS;
-public:
-	FString Arguments;
-	VMFunction *Function;
-
-	PSymbolActionFunction(FName name) : PSymbol(name) {}
-	PSymbolActionFunction() : PSymbol(NAME_None) {}
-};
 
 // A VM function ------------------------------------------------------------
 
@@ -469,6 +441,7 @@ public:
 	TArray<Variant> Variants;
 	DWORD Flags;
 
+	unsigned AddVariant(PPrototype *proto, TArray<DWORD> &argflags, VMFunction *impl);
 
 	size_t PropagateMark();
 

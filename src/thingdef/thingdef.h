@@ -188,7 +188,7 @@ AFuncDesc *FindFunction(const char * string);
 
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name);
+PFunction *FindGlobalActionFunction(const char *name);
 
 //==========================================================================
 //
@@ -201,7 +201,7 @@ void SetReplacement(FScanner &sc, PClassActor *info, FName replaceName);
 
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
 void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag);
-FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, char type, bool constant);
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant);
 
 
 enum 

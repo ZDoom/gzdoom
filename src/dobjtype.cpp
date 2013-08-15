@@ -1145,6 +1145,25 @@ size_t PFunction::PropagateMark()
 	return Variants.Size() * sizeof(Variants[0]) + Super::PropagateMark();
 }
 
+//==========================================================================
+//
+// PFunction :: AddVariant
+//
+// Adds a new variant for this function. Does not check if a matching
+// variant already exists.
+//
+//==========================================================================
+
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, VMFunction *impl)
+{
+	Variant variant;
+
+	variant.Proto = proto;
+	variant.ArgFlags = argflags;
+	variant.Implementation = impl;
+	return Variants.Push(variant);
+}
+
 /* PClass *****************************************************************/
 
 IMPLEMENT_POINTY_CLASS(PClass)
@@ -1814,9 +1833,6 @@ CCMD(typetable)
 IMPLEMENT_ABSTRACT_CLASS(PSymbol);
 IMPLEMENT_CLASS(PSymbolConst);
 IMPLEMENT_CLASS(PSymbolVariable);
-IMPLEMENT_POINTY_CLASS(PSymbolActionFunction)
- DECLARE_POINTER(Function)
-END_POINTERS
 IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
  DECLARE_POINTER(Function)
 END_POINTERS

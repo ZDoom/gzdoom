@@ -553,9 +553,9 @@ FVariableInfo *FindVariable(const char * string, const PClass *cls)
 //
 //==========================================================================
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name)
+PFunction *FindGlobalActionFunction(const char *name)
 {
-	return dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false));
+	return dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false));
 }
 
 

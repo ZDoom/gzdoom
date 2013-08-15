@@ -100,7 +100,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
 
-		tcall->Function = FindGlobalActionFunction("A_CallSpecial")->Function;
+		tcall->Function = FindGlobalActionFunction("A_CallSpecial")->Variants[0].Implementation;
 		return true;
 	}
 	return false;
@@ -312,18 +312,29 @@ do_stop:
 					goto endofstate;
 				}
 
-				PSymbolActionFunction *afd = dyn_cast<PSymbolActionFunction>(bag.Info->Symbols.FindSymbol (FName(sc.String, true), true));
+				PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(FName(sc.String, true), true));
 				if (afd != NULL)
 				{
-					tcall->Function = afd->Function;
-					if (!afd->Arguments.IsEmpty())
+					tcall->Function = afd->Variants[0].Implementation;
+					const TArray<PType *> &params = afd->Variants[0].Proto->ArgumentTypes;
+					const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
+					int numparams = (int)params.Size();
+					int pnum = 0;
+					if (afd->Flags & VARF_Method)
 					{
-						const char *params = afd->Arguments.GetChars();
-						int numparams = (int)afd->Arguments.Len();
-				
+						numparams--;
+						pnum++;
+					}
+					if (afd->Flags & VARF_Action)
+					{
+						numparams -= 2;
+						pnum += 2;
+					}
+					if (numparams > 0)
+					{
 						int v;
 
-						if (!islower(*params))
+						if (!(paramflags[pnum] & VARF_Optional))
 						{
 							sc.MustGetStringName("(");
 						}
@@ -335,13 +346,10 @@ do_stop:
 							}
 						}
 						
-						bool varargs = params[numparams - 1] == '+';
-						int varargcount = 0;
-
-						while (*params)
+						while (numparams > 0)
 						{
 							FxExpression *x;
-							if ((*params == 'l' || *params == 'L') && sc.CheckNumber())
+							if (params[pnum] == TypeState && sc.CheckNumber())
 							{
 								// Special case: State label as an offset
 								if (sc.Number > 0 && statestring.Len() > 1)
@@ -349,7 +357,7 @@ do_stop:
 									sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
 								}
 
-								v=sc.Number;
+								v = sc.Number;
 								if (v<0)
 								{
 									sc.ScriptError("Negative jump offsets are not allowed");
@@ -367,22 +375,23 @@ do_stop:
 							else
 							{
 								// Use the generic parameter parser for everything else
-								x = ParseParameter(sc, bag.Info, *params, false);
+								x = ParseParameter(sc, bag.Info, params[pnum], false);
 							}
 							tcall->Parameters.Push(new FxParameter(x));
-							params++;
-							varargcount++;
-							if (*params)
+							pnum++;
+							numparams--;
+							if (numparams > 0)
 							{
-								if (*params == '+')
-								{
+								if (params[pnum] == NULL)
+								{ // varargs function
 									if (sc.CheckString(")"))
 									{
 										goto endofstate;
 									}
-									params--;
+									pnum--;
+									numparams++;
 								}
-								else if ((islower(*params) || *params=='!') && sc.CheckString(")"))
+								else if ((paramflags[pnum] & VARF_Optional) && sc.CheckString(")"))
 								{
 									goto endofstate;
 								}

@@ -81,7 +81,7 @@ static void UnloadDehSupp ();
 
 
 // This is a list of all the action functions used by each of Doom's states.
-static TArray<PSymbolActionFunction *> Actions;
+static TArray<PFunction *> Actions;
 
 // These are the original heights of every Doom 2 thing. They are used if a patch
 // specifies that a thing should be hanging from the ceiling but doesn't specify
@@ -788,8 +788,8 @@ void SetDehParams(FState *state, int codepointer)
 	FScriptPosition *pos = new FScriptPosition(FString("DEHACKED"), 0);
 	
 	// Let's identify the codepointer we're dealing with.
-	PSymbolActionFunction *sym;
-	sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	PFunction *sym;
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
 	if (codepointer < 0 || codepointer >= countof(MBFCodePointerFactories))
@@ -809,7 +809,7 @@ void SetDehParams(FState *state, int codepointer)
 		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 2);
 		// Emit code for action parameters.
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Function, ATAG_OBJECT), NAP + argcount, 0);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), NAP + argcount, 0);
 		// Attach it to the state.
 		VMScriptFunction *sfunc = buildit.MakeFunction();
 		sfunc->NumArgs = NAP;
@@ -1711,7 +1711,7 @@ static int PatchWeapon (int weapNum)
 	return result;
 }
 
-static void SetPointer(FState *state, PSymbolActionFunction *sym, int frame = 0)
+static void SetPointer(FState *state, PFunction *sym, int frame = 0)
 {
 	if (sym == NULL)
 	{
@@ -1720,7 +1720,7 @@ static void SetPointer(FState *state, PSymbolActionFunction *sym, int frame = 0)
 	}
 	else
 	{
-		state->SetAction(sym->Function);
+		state->SetAction(sym->Variants[0].Implementation);
 
 		for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)
 		{
@@ -2103,15 +2103,15 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PSymbolActionFunction *sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
 				if (sym == NULL)
 				{
 					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
-					FString &args = sym->Arguments;
-					if (args.Len() != 0 && (args[0] < 'a' || args[0] > 'z'))
+					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+					if (args.Size() != 0 && !(args[0] & VARF_Optional))
 					{
 						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
@@ -2680,15 +2680,15 @@ static bool LoadDehSupp ()
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PSymbolActionFunction *sym = dyn_cast<PSymbolActionFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
 						}
 						else
 						{
-							FString &args = sym->Arguments;
-							if (args.Len() != 0 && (args[0] < 'a' || args[0] > 'z'))
+							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+							if (args.Size() != 0 && !(args[0] & VARF_Optional))
 							{
 								sc.ScriptError("Incompatible code pointer '%s'", sc.String);
 							}

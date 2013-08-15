@@ -739,9 +739,12 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		SetState (diestate);
 
-		tics -= pr_killmobj() & 3;
-		if (tics < 1)
-			tics = 1;
+		if (tics > 1)
+		{
+			tics -= pr_killmobj() & 3;
+			if (tics < 1)
+				tics = 1;
+		}
 	}
 	else
 	{

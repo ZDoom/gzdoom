@@ -332,11 +332,11 @@ int MatchString (const char *in, const char **strings);
 
 
 #define DEFINE_MEMBER_VARIABLE(name, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), &RUNTIME_CLASS_CASTLESS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, name)), &RUNTIME_CLASS_CASTLESS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 #define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), &RUNTIME_CLASS_CASTLESS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, alias)), &RUNTIME_CLASS_CASTLESS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 	

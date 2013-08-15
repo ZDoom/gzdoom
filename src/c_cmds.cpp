@@ -49,6 +49,7 @@
 
 #include "i_system.h"
 
+#include "doomerrors.h"
 #include "doomstat.h"
 #include "gstrings.h"
 #include "s_sound.h"
@@ -341,22 +342,30 @@ CCMD (changemap)
 
 	if (argv.argc() > 1)
 	{
-		if (!P_CheckMapData(argv[1]))
+		try
 		{
-			Printf ("No map %s\n", argv[1]);
-		}
-		else
-		{
-			if (argv.argc() > 2)
+			if (!P_CheckMapData(argv[1]))
 			{
-				Net_WriteByte (DEM_CHANGEMAP2);
-				Net_WriteByte (atoi(argv[2]));
+				Printf ("No map %s\n", argv[1]);
 			}
 			else
 			{
-				Net_WriteByte (DEM_CHANGEMAP);
+				if (argv.argc() > 2)
+				{
+					Net_WriteByte (DEM_CHANGEMAP2);
+					Net_WriteByte (atoi(argv[2]));
+				}
+				else
+				{
+					Net_WriteByte (DEM_CHANGEMAP);
+				}
+				Net_WriteString (argv[1]);
 			}
-			Net_WriteString (argv[1]);
+		}
+		catch(CRecoverableError &error)
+		{
+			if (error.GetMessage())
+				Printf("%s", error.GetMessage());
 		}
 	}
 	else

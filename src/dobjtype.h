@@ -13,7 +13,9 @@
 // Making all these different storage types use a common set of flags seems
 // like the simplest thing to do.
 
-#define VARF_Optional	(1<<0)			// func param is optional
+#define VARF_Optional		(1<<0)	// func param is optional
+#define VARF_Method			(1<<1)	// func has an implied self parameter
+#define VARF_Action			(1<<2)	// func has implied owner and state parameters
 
 // Symbol information -------------------------------------------------------
 
@@ -465,11 +467,13 @@ public:
 		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 	};
 	TArray<Variant> Variants;
+	DWORD Flags;
+
 
 	size_t PropagateMark();
 
-	PFunction(FName name) : PSymbol(name) {}
-	PFunction() : PSymbol(NAME_None) {}
+	PFunction(FName name) : PSymbol(name), Flags(0) {}
+	PFunction() : PSymbol(NAME_None), Flags(0) {}
 };
 
 // Meta-info for every class derived from DObject ---------------------------

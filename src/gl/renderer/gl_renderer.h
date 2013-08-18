@@ -71,21 +71,7 @@ public:
 	FFlatVertexBuffer *mVBO;
 
 
-	FGLRenderer(OpenGLFrameBuffer *fb) 
-	{
-		framebuffer = fb;
-		mCurrentPortal = NULL;
-		mMirrorCount = 0;
-		mPlaneMirrorCount = 0;
-		mLightCount = 0;
-		mAngles = FRotator(0,0,0);
-		mViewVector = FVector2(0,0);
-		mCameraPos = FVector3(0,0,0);
-		mVBO = NULL;
-		gl_spriteindex = 0;
-		mShaderManager = NULL;
-		glpart2 = glpart = gllight = mirrortexture = NULL;
-	}
+	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 
 	angle_t FrustumAngle();

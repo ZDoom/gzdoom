@@ -29,10 +29,6 @@ CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 
 CVAR(Bool, gl_debug, false, 0)
 
-RenderContext gl;
-
-
-EXTERN_CVAR(Bool, gl_vid_compatibility)
 EXTERN_CVAR(Int, vid_refreshrate)
 
 //==========================================================================
@@ -49,12 +45,11 @@ Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 	I_SetWndProc();
 	m_DisplayWidth = vid_defwidth;
 	m_DisplayHeight = vid_defheight;
-	m_DisplayBits = gl_vid_compatibility? 16:32;
+	m_DisplayBits = 32;
 	m_DisplayHz = 60;
 
 	GetDisplayDeviceName();
 	MakeModesList();
-	GetContext(gl);
 	SetPixelFormat();
 
 }
@@ -202,8 +197,8 @@ void Win32GLVideo::StartModeIterator(int bits, bool fs)
 {
 	m_IteratorMode = m_Modes;
 	// I think it's better to ignore the game-side settings of bit depth.
-	// The GL renderer will always default to 32 bits, except in compatibility mode
-	m_IteratorBits = gl_vid_compatibility? 16:32;	
+	// The GL renderer will always default to 32 bits because 16 bit modes cannot have a stencil buffer.
+	m_IteratorBits = 32;	
 	m_IteratorFS = fs;
 }
 
@@ -339,7 +334,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 
 	m_DisplayWidth = width;
 	m_DisplayHeight = height;
-	m_DisplayBits = gl_vid_compatibility? 16:32;
+	m_DisplayBits = 32;
 	m_DisplayHz = 60;
 
 	if (vid_refreshrate == 0)
@@ -604,7 +599,7 @@ bool Win32GLVideo::SetPixelFormat()
 //
 //==========================================================================
 
-bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample)
+bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 {
 	int colorDepth;
 	HDC deskDC;
@@ -612,154 +607,90 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, bool nostencil, int mult
 	int pixelFormat;
 	unsigned int numFormats;
 	float attribsFloat[] = {0.0f, 0.0f};
-	int stencil;
 	
 	deskDC = GetDC(GetDesktopWindow());
 	colorDepth = GetDeviceCaps(deskDC, BITSPIXEL);
 	ReleaseDC(GetDesktopWindow(), deskDC);
 
-	/*
-	if (!nostencil && colorDepth < 32)
+	if (wglChoosePixelFormatARB)
 	{
-		Printf("R_OPENGL: Desktop not in 32 bit mode!\n");
-		return false;
-	}
-	*/
-
-	if (!nostencil)
-	{
-		for (stencil=1;stencil>=0;stencil--)
+		attributes[0]	=	WGL_RED_BITS_ARB; //bits
+		attributes[1]	=	8;
+		attributes[2]	=	WGL_GREEN_BITS_ARB; //bits
+		attributes[3]	=	8;
+		attributes[4]	=	WGL_BLUE_BITS_ARB; //bits
+		attributes[5]	=	8;
+		attributes[6]	=	WGL_ALPHA_BITS_ARB;
+		attributes[7]	=	8;
+		attributes[8]	=	WGL_DEPTH_BITS_ARB;
+		attributes[9]	=	24;
+		attributes[10]	=	WGL_STENCIL_BITS_ARB;
+		attributes[11]	=	8;
+	
+		attributes[12]	=	WGL_DRAW_TO_WINDOW_ARB;	//required to be true
+		attributes[13]	=	true;
+		attributes[14]	=	WGL_SUPPORT_OPENGL_ARB;
+		attributes[15]	=	true;
+		attributes[16]	=	WGL_DOUBLE_BUFFER_ARB;
+		attributes[17]	=	true;
+	
+		attributes[18]	=	WGL_ACCELERATION_ARB;	//required to be FULL_ACCELERATION_ARB
+		if (allowsoftware)
 		{
-			if (wglChoosePixelFormatARB && stencil)
-			{
-				attributes[0]	=	WGL_RED_BITS_ARB; //bits
-				attributes[1]	=	8;
-				attributes[2]	=	WGL_GREEN_BITS_ARB; //bits
-				attributes[3]	=	8;
-				attributes[4]	=	WGL_BLUE_BITS_ARB; //bits
-				attributes[5]	=	8;
-				attributes[6]	=	WGL_ALPHA_BITS_ARB;
-				attributes[7]	=	8;
-				attributes[8]	=	WGL_DEPTH_BITS_ARB;
-				attributes[9]	=	24;
-				attributes[10]	=	WGL_STENCIL_BITS_ARB;
-				attributes[11]	=	8;
-			
-				attributes[12]	=	WGL_DRAW_TO_WINDOW_ARB;	//required to be true
-				attributes[13]	=	true;
-				attributes[14]	=	WGL_SUPPORT_OPENGL_ARB;
-				attributes[15]	=	true;
-				attributes[16]	=	WGL_DOUBLE_BUFFER_ARB;
-				attributes[17]	=	true;
-			
-				attributes[18]	=	WGL_ACCELERATION_ARB;	//required to be FULL_ACCELERATION_ARB
-				if (allowsoftware)
-				{
-					attributes[19]	=	WGL_NO_ACCELERATION_ARB;
-				}
-				else
-				{
-					attributes[19]	=	WGL_FULL_ACCELERATION_ARB;
-				}
-			
-				if (multisample > 0)
-				{
-					attributes[20]	=	WGL_SAMPLE_BUFFERS_ARB;
-					attributes[21]	=	true;
-					attributes[22]	=	WGL_SAMPLES_ARB;
-					attributes[23]	=	multisample;
-				}
-				else
-				{
-					attributes[20]	=	0;
-					attributes[21]	=	0;
-					attributes[22]	=	0;
-					attributes[23]	=	0;
-				}
-			
-				attributes[24]	=	0;
-				attributes[25]	=	0;
-			
-				if (!wglChoosePixelFormatARB(m_hDC, attributes, attribsFloat, 1, &pixelFormat, &numFormats))
-				{
-					Printf("R_OPENGL: Couldn't choose pixel format. Retrying in compatibility mode\n");
-					goto oldmethod;
-				}
-			
-				if (numFormats == 0)
-				{
-					Printf("R_OPENGL: No valid pixel formats found. Retrying in compatibility mode\n");
-					goto oldmethod;
-				}
-
-				break;
-			}
-			else
-			{
-			oldmethod:
-				// If wglChoosePixelFormatARB is not found we have to do it the old fashioned way.
-				static PIXELFORMATDESCRIPTOR pfd = {
-					sizeof(PIXELFORMATDESCRIPTOR),
-						1,
-						PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-						PFD_TYPE_RGBA,
-						32, // color depth
-						0, 0, 0, 0, 0, 0,
-						0,
-						0,
-						0,
-						0, 0, 0, 0,
-						32, // z depth
-						stencil*8, // stencil buffer
-						0,
-						PFD_MAIN_PLANE,
-						0,
-						0, 0, 0
-				};
-
-				pixelFormat = ChoosePixelFormat(m_hDC, &pfd);
-				DescribePixelFormat(m_hDC, pixelFormat, sizeof(pfd), &pfd);
-
-				if (pfd.dwFlags & PFD_GENERIC_FORMAT)
-				{
-					if (!allowsoftware)
-					{
-						if (stencil==0)
-						{
-							// not accelerated!
-							Printf("R_OPENGL: OpenGL driver not accelerated!  Falling back to software renderer.\n");
-							return false;
-						}
-						else
-						{
-							Printf("R_OPENGL: OpenGL driver not accelerated! Retrying in compatibility mode\n");
-							continue;
-						}
-					}
-				}
-				break;
-			}
+			attributes[19]	=	WGL_NO_ACCELERATION_ARB;
+		}
+		else
+		{
+			attributes[19]	=	WGL_FULL_ACCELERATION_ARB;
+		}
+	
+		if (multisample > 0)
+		{
+			attributes[20]	=	WGL_SAMPLE_BUFFERS_ARB;
+			attributes[21]	=	true;
+			attributes[22]	=	WGL_SAMPLES_ARB;
+			attributes[23]	=	multisample;
+		}
+		else
+		{
+			attributes[20]	=	0;
+			attributes[21]	=	0;
+			attributes[22]	=	0;
+			attributes[23]	=	0;
+		}
+	
+		attributes[24]	=	0;
+		attributes[25]	=	0;
+	
+		if (!wglChoosePixelFormatARB(m_hDC, attributes, attribsFloat, 1, &pixelFormat, &numFormats))
+		{
+			Printf("R_OPENGL: Couldn't choose pixel format. Retrying in compatibility mode\n");
+			goto oldmethod;
+		}
+	
+		if (numFormats == 0)
+		{
+			Printf("R_OPENGL: No valid pixel formats found. Retrying in compatibility mode\n");
+			goto oldmethod;
 		}
 	}
 	else
 	{
-		// Use the cheapest mode available and let's hope the driver can handle this...
-		stencil=0;
-
+	oldmethod:
 		// If wglChoosePixelFormatARB is not found we have to do it the old fashioned way.
 		static PIXELFORMATDESCRIPTOR pfd = {
 			sizeof(PIXELFORMATDESCRIPTOR),
 				1,
 				PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
 				PFD_TYPE_RGBA,
-				16, // color depth
+				32, // color depth
 				0, 0, 0, 0, 0, 0,
 				0,
 				0,
 				0,
 				0, 0, 0, 0,
-				16, // z depth
-				0, // stencil buffer
+				32, // z depth
+				8, // stencil buffer
 				0,
 				PFD_MAIN_PLANE,
 				0,
@@ -773,14 +704,10 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, bool nostencil, int mult
 		{
 			if (!allowsoftware)
 			{
-				Printf("R_OPENGL: OpenGL driver not accelerated! Falling back to software renderer.\n");
+				Printf("R_OPENGL: OpenGL driver not accelerated!  Falling back to software renderer.\n");
 				return false;
 			}
 		}
-	}
-	if (stencil==0)
-	{
-		gl.flags|=RFL_NOSTENCIL;
 	}
 
 	if (!::SetPixelFormat(m_hDC, pixelFormat, NULL))
@@ -797,12 +724,12 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, bool nostencil, int mult
 //
 //==========================================================================
 
-bool Win32GLVideo::InitHardware (HWND Window, bool allowsoftware, bool nostencil, int multisample)
+bool Win32GLVideo::InitHardware (HWND Window, bool allowsoftware, int multisample)
 {
 	m_Window=Window;
 	m_hDC = GetDC(Window);
 
-	if (!SetupPixelFormat(allowsoftware, nostencil, multisample))
+	if (!SetupPixelFormat(allowsoftware, multisample))
 	{
 		Printf ("R_OPENGL: Reverting to software mode...\n");
 		return false;
@@ -965,7 +892,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 		I_RestoreWindowedPos();
 	}
 
-	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, false, gl_vid_compatibility, localmultisample))
+	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, false, localmultisample))
 	{
 		vid_renderer = 0;
 		return;

@@ -69,8 +69,6 @@ struct RECT {
 }; 
 #endif
 
-EXTERN_CVAR(Bool, gl_vid_compatibility)
-
 //===========================================================================
 // 
 //	Screen wipes
@@ -127,10 +125,6 @@ private:
 
 bool OpenGLFrameBuffer::WipeStartScreen(int type)
 {
-	if (gl_vid_compatibility)
-	{
-		return false;	// not all required features present.
-	}
 	switch (type)
 	{
 	case wipe_Burn:

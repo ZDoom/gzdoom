@@ -119,10 +119,6 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 		rw = GetTexDimension (w);
 		rh = GetTexDimension (h);
 
-		if (gl_vid_compatibility)
-		{
-			mipmap=false;
-		}
 		gl.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, (mipmap && use_mipmapping && !forcenofiltering));
 
 		if (rw == w && rh == h)

@@ -511,15 +511,12 @@ void FGLRenderer::RenderScene(int recursion)
 	// flood all the gaps with the back sector's flat texture
 	// This will always be drawn like GLDL_PLAIN or GLDL_FOG, depending on the fog settings
 	
-	if (!(gl.flags&RFL_NOSTENCIL))	// needs a stencil to work!
-	{
-		gl.DepthMask(false);							// don't write to Z-buffer!
-		gl_RenderState.EnableFog(true);
-		gl_RenderState.EnableAlphaTest(false);
-		gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-		gl_drawinfo->DrawUnhandledMissingTextures();
-		gl_RenderState.EnableAlphaTest(true);
-	}
+	gl.DepthMask(false);							// don't write to Z-buffer!
+	gl_RenderState.EnableFog(true);
+	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
+	gl_drawinfo->DrawUnhandledMissingTextures();
+	gl_RenderState.EnableAlphaTest(true);
 	gl.DepthMask(true);
 
 	gl.PolygonOffset(0.0f, 0.0f);

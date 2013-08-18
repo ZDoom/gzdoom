@@ -73,6 +73,8 @@ CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 FGLRenderer *GLRenderer;
 
 void gl_SetupMenu();
+void gl_LoadExtensions();
+void gl_PrintStartupLog();
 
 //==========================================================================
 //
@@ -115,14 +117,14 @@ void OpenGLFrameBuffer::InitializeState()
 {
 	static bool first=true;
 
-	gl.LoadExtensions();
+	gl_LoadExtensions();
 	Super::InitializeState();
 	if (first)
 	{
 		first=false;
 		// [BB] For some reason this crashes, if compiled with MinGW and optimization. Has to be investigated.
 #ifdef _MSC_VER
-		gl.PrintStartupLog();
+		gl_PrintStartupLog();
 #endif
 
 		if (gl.flags&RFL_NPOT_TEXTURE)

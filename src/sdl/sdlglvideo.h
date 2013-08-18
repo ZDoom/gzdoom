@@ -27,8 +27,8 @@ class SDLGLVideo : public IVideo
 	bool NextMode (int *width, int *height, bool *letterbox);
 	bool SetResolution (int width, int height, int bits);
 
-	bool SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample);
-	bool InitHardware (bool allowsoftware, bool nostencil, int multisample);
+	bool SetupPixelFormat(bool allowsoftware, int multisample);
+	bool InitHardware (bool allowsoftware, int multisample);
 
 private:
 	int IteratorMode;

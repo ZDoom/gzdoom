@@ -470,15 +470,6 @@ void GLPortal::EndFrame()
 {
 	GLPortal * p;
 
-	if (gl.flags & RFL_NOSTENCIL)
-	{
-		while (portals.Pop(p) && p)
-		{
-			delete p;
-		}
-		return;
-	}
-
 	if (gl_portalinfo)
 	{
 		Printf("%s%d portals, depth = %d\n%s{\n", indent.GetChars(), portals.Size(), renderdepth, indent.GetChars());

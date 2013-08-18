@@ -42,7 +42,7 @@ public:
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
 	virtual bool SetResolution (int width, int height, int bits);
 	void DumpAdapters();
-	bool InitHardware (HWND Window, bool allowsoftware, bool nostencil, int multisample);
+	bool InitHardware (HWND Window, bool allowsoftware, int multisample);
 	void Shutdown();
 	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
 
@@ -83,7 +83,7 @@ protected:
 	HWND InitDummy();
 	void ShutdownDummy(HWND dummy);
 	bool SetPixelFormat();
-	bool SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample);
+	bool SetupPixelFormat(bool allowsoftware, int multisample);
 
 	void GetDisplayDeviceName();
 	void MakeModesList();

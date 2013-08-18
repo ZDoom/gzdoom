@@ -16,7 +16,6 @@ EXTERN_CVAR(Bool, gl_colormap_shader)
 EXTERN_CVAR(Bool, gl_brightmap_shader)
 EXTERN_CVAR(Bool, gl_glow_shader)
 
-EXTERN_CVAR(Bool, gl_vid_compatibility)
 EXTERN_CVAR(Bool,gl_enhanced_nightvision)
 EXTERN_CVAR(Int, screenblocks);
 EXTERN_CVAR(Bool, gl_texture)

@@ -81,6 +81,22 @@ EXTERN_CVAR(Bool, gl_render_segs)
 //
 //-----------------------------------------------------------------------------
 
+FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb) 
+{
+	framebuffer = fb;
+	mCurrentPortal = NULL;
+	mMirrorCount = 0;
+	mPlaneMirrorCount = 0;
+	mLightCount = 0;
+	mAngles = FRotator(0,0,0);
+	mViewVector = FVector2(0,0);
+	mCameraPos = FVector3(0,0,0);
+	mVBO = NULL;
+	gl_spriteindex = 0;
+	mShaderManager = NULL;
+	glpart2 = glpart = gllight = mirrortexture = NULL;
+}
+
 void FGLRenderer::Initialize()
 {
 	glpart2 = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart2.png"), FTexture::TEX_MiscPatch);

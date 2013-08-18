@@ -21,7 +21,6 @@ typedef void (APIENTRYP PFNGLMULTITEXCOORD2FVPROC) (GLenum target, const GLfloat
 enum RenderFlags
 {
 	RFL_NPOT_TEXTURE=1,
-	RFL_NOSTENCIL=2,
 	RFL_OCCLUSION_QUERY=4,
 	// [BB] Added texture compression flags.
 	RFL_TEXTURE_COMPRESSION=8,
@@ -66,10 +65,6 @@ struct RenderContext
 	{
 		return maxuniforms>=2048? 128:64;
 	}
-
-	void (APIENTRY * LoadExtensions) ();
-	void (APIENTRY * SetTextureMode) (int type);
-	void (APIENTRY * PrintStartupLog) ();
 
 	void (APIENTRY * Begin) (GLenum mode);
 	void (APIENTRY * End) (void);
@@ -236,8 +231,6 @@ struct RenderContext
 	PFNGLTEXBUFFERARBPROC TexBufferARB;
 };
 
-
-void APIENTRY GetContext(RenderContext & gl);
 
 #endif
 

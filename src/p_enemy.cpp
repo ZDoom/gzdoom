@@ -1425,6 +1425,9 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 		if (!(link->flags3 & MF3_ISMONSTER))
 			continue;			// don't target it if it isn't a monster (could be a barrel)
 
+		if (link->flags7 & MF7_NEVERTARGET)
+			continue;
+
 		other = NULL;
 		if (link->flags & MF_FRIENDLY)
 		{

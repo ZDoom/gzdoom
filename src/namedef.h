@@ -467,6 +467,7 @@ xx(blockprojectiles)
 xx(blockuse)
 xx(hidden)
 xx(blocksight)
+xx(blockhitscan)
 
 xx(Renderstyle)
 

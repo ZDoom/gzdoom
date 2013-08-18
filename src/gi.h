@@ -91,11 +91,13 @@ struct gameinfo_t
 	TArray<FName> PlayerClasses;
 
 	FString titleMusic;
+	int titleOrder;
 	float titleTime;
 	float advisoryTime;
 	float pageTime;
 	FString chatSound;
 	FString finaleMusic;
+	int finaleOrder;
 	char finaleFlat[9];
 	char borderFlat[9];
 	char SkyFlatName[9];
@@ -114,6 +116,7 @@ struct gameinfo_t
 	FString backpacktype;
 	FString statusbar;
 	FString intermissionMusic;
+	int intermissionOrder;
 	FString CursorPic;
 	DWORD dimcolor;
 	float dimamount;

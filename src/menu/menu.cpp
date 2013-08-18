@@ -207,7 +207,7 @@ bool DMenu::MouseEventBack(int type, int x, int y)
 {
 	if (m_show_backbutton >= 0)
 	{
-		FTexture *tex = TexMan[gameinfo.mBackButton];
+		FTexture *tex = TexMan(gameinfo.mBackButton);
 		if (tex != NULL)
 		{
 			if (m_show_backbutton&1) x -= screen->GetWidth() - tex->GetScaledWidth() * CleanXfac;
@@ -263,7 +263,7 @@ void DMenu::Drawer ()
 {
 	if (this == DMenu::CurrentMenu && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 	{
-		FTexture *tex = TexMan[gameinfo.mBackButton];
+		FTexture *tex = TexMan(gameinfo.mBackButton);
 		int w = tex->GetScaledWidth() * CleanXfac;
 		int h = tex->GetScaledHeight() * CleanYfac;
 		int x = (!(m_show_backbutton&1))? 0:screen->GetWidth() - w;
@@ -907,6 +907,11 @@ CCMD (openmenu)
 	}
 	M_StartControlPanel (true);
 	M_SetMenu(argv[1], -1);
+}
+
+CCMD (closemenu)
+{
+	M_ClearMenus();
 }
 
 //

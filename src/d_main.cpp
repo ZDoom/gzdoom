@@ -855,7 +855,7 @@ void D_Display ()
 		FTexture *tex;
 		int x;
 
-		tex = TexMan[gameinfo.PauseSign];
+		tex = TexMan(gameinfo.PauseSign);
 		x = (SCREENWIDTH - tex->GetScaledWidth() * CleanXfac)/2 +
 			tex->GetScaledLeftOffset() * CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
@@ -1300,7 +1300,7 @@ void D_DoAdvanceDemo (void)
 		gamestate = GS_DEMOSCREEN;
 		pagename = gameinfo.titlePage;
 		pagetic = (int)(gameinfo.titleTime * TICRATE);
-		S_StartMusic (gameinfo.titleMusic);
+		S_ChangeMusic (gameinfo.titleMusic, gameinfo.titleOrder, false);
 		demosequence = 3;
 		pagecount = 0;
 		C_HideConsole ();

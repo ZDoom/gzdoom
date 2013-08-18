@@ -46,6 +46,7 @@
 #include "p_acs.h"
 #include "p_saveg.h"
 #include "p_lnspec.h"
+#include "p_enemy.h"
 #include "m_random.h"
 #include "doomstat.h"
 #include "c_console.h"
@@ -4232,6 +4233,8 @@ enum EACSFunctions
 	ACSF_PlayActorSound,
 	ACSF_SpawnDecal,
 	ACSF_CheckFont,
+	ACSF_DropItem,
+	ACSF_CheckFlag,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -5229,6 +5232,49 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_CheckFont:
 			// bool CheckFont(str fontname)
 			return V_GetFont(FBehavior::StaticLookupString(args[0])) != NULL;
+
+		case ACSF_DropItem:
+		{
+			const char *type = FBehavior::StaticLookupString(args[1]);
+			int amount = argCount >= 3? args[2] : -1;
+			int chance = argCount >= 4? args[3] : 256;
+			const PClass *cls = PClass::FindClass(type);
+			int cnt = 0;
+			if (cls != NULL)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						P_DropItem(activator, cls, amount, chance);
+						cnt++;
+					}
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *actor;
+
+					while ((actor = it.Next()) != NULL)
+					{
+						P_DropItem(actor, cls, amount, chance);
+						cnt++;
+					}
+				}
+				return cnt;
+			}
+			break;
+		}
+
+		case ACSF_CheckFlag:
+		{
+			AActor *actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				return !!CheckActorFlag(actor, FBehavior::StaticLookupString(args[1]));
+			}
+			break;
+		}
 
 		default:
 			break;

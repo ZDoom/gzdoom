@@ -4016,30 +4016,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 		return numret;
 	}
 
-	long dot = flagname.IndexOf('.');
-	FFlagDef *fd;
-	PClassActor *cls = owner->GetClass();
-
-	if (dot >= 0)
+	if (CheckActorFlag(owner, flagname))
 	{
-		FString part1(flagname.Left(dot));
-		fd = FindFlag(cls, part1, flagname.Mid(dot+1));
-	}
-	else
-	{
-		fd = FindFlag(cls, flagname, NULL);
-	}
-
-	if (fd != NULL)
-	{
-		if (CheckActorFlag(owner, fd))
-		{
-			ACTION_JUMP(jumpto);
-		}
-	}
-	else
-	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname.GetChars(), cls->TypeName.GetChars());
+		ACTION_JUMP(jumpto);
 	}
 	return numret;
 }
@@ -5224,4 +5203,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDamageType)
 
 	self->DamageType = damagetype;
 	return 0;
+}
+
+//==========================================================================
+//
+// A_DropItem
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(spawntype, 0);
+	ACTION_PARAM_INT(amount, 1);
+	ACTION_PARAM_INT(chance, 2);
+
+	P_DropItem(self, spawntype, amount, chance);
 }

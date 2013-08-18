@@ -1138,7 +1138,9 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT
-				 && !(target->flags & MF_NOGRAVITY))
+				 && !(target->flags & MF_NOGRAVITY)
+				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
+				 )
 			{
 				ang += ANG180;
 				thrust *= 4;
@@ -1500,6 +1502,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 {
 	if (other == this)
 		return false;		// [RH] Don't hate self (can happen when shooting barrels)
+
+	if (other->flags7 & MF7_NEVERTARGET)
+		return false;		// never EVER target me!
 
 	if (!(other->flags & MF_SHOOTABLE))
 		return false;		// Don't attack things that can't be hurt

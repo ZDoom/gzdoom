@@ -42,11 +42,6 @@
 
 extern FStringTable GStrings;
 
-// QuitGame messages
-#define NUM_QUITDOOMMESSAGES   14
-#define NUM_QUITSTRIFEMESSAGES 8
-#define NUM_QUITCHEXMESSAGES   7
-
 extern const char *endmsg[];
 
 

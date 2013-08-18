@@ -33,6 +33,12 @@ RenderContext gl;
 EXTERN_CVAR(Bool, gl_vid_compatibility)
 EXTERN_CVAR(Int, vid_refreshrate)
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 {
 	#ifdef _WIN32
@@ -50,15 +56,33 @@ Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 Win32GLVideo::~Win32GLVideo()
 {
 	FreeModes();
 	if (GLRenderer != NULL) GLRenderer->FlushTextures();
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLVideo::SetWindowedScale(float scale)
 {
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 struct MonitorEnumState
 {
@@ -88,6 +112,12 @@ static BOOL CALLBACK GetDisplayDeviceNameMonitorEnumProc(HMONITOR hMonitor, HDC,
 
 	return TRUE;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void Win32GLVideo::GetDisplayDeviceName()
 {
@@ -121,6 +151,12 @@ void Win32GLVideo::GetDisplayDeviceName()
 	}
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLVideo::MakeModesList()
 {
 	ModeInfo *pMode, *nextmode;
@@ -153,6 +189,12 @@ void Win32GLVideo::MakeModesList()
 	}
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLVideo::StartModeIterator(int bits, bool fs)
 {
 	m_IteratorMode = m_Modes;
@@ -161,6 +203,12 @@ void Win32GLVideo::StartModeIterator(int bits, bool fs)
 	m_IteratorBits = gl_vid_compatibility? 16:32;	
 	m_IteratorFS = fs;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 bool Win32GLVideo::NextMode(int *width, int *height, bool *letterbox)
 {
@@ -183,6 +231,12 @@ bool Win32GLVideo::NextMode(int *width, int *height, bool *letterbox)
 
 	return false;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void Win32GLVideo::AddMode(int x, int y, int bits, int baseHeight, int refreshHz)
 {
@@ -213,6 +267,12 @@ void Win32GLVideo::AddMode(int x, int y, int bits, int baseHeight, int refreshHz
 	(*probep)->next = probe;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLVideo::FreeModes()
 {
 	ModeInfo *mode = m_Modes;
@@ -226,6 +286,12 @@ void Win32GLVideo::FreeModes()
 
 	m_Modes = NULL;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 bool Win32GLVideo::GoFullscreen(bool yes)
 {
@@ -257,6 +323,12 @@ bool Win32GLVideo::GoFullscreen(bool yes)
 	return yes;
 }
 
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer *old)
 {
@@ -302,6 +374,12 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 	return fb;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 bool Win32GLVideo::SetResolution (int width, int height, int bits)
 {
 	if (GLRenderer != NULL) GLRenderer->FlushTextures();
@@ -315,6 +393,12 @@ bool Win32GLVideo::SetResolution (int width, int height, int bits)
 	V_DoModeSetup(width, height, bits);
 	return true;	// We must return true because the old video context no longer exists.
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 struct DumpAdaptersState
 {
@@ -359,6 +443,12 @@ static BOOL CALLBACK DumpAdaptersMonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT,
 	return TRUE;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLVideo::DumpAdapters()
 {
 	DumpAdaptersState das;
@@ -369,7 +459,19 @@ void Win32GLVideo::DumpAdapters()
 	EnumDisplayMonitors(0, 0, DumpAdaptersMonitorEnumProc, LPARAM(&das));
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 IMPLEMENT_ABSTRACT_CLASS(Win32GLFrameBuffer)
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height) 
 {
@@ -448,6 +550,12 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 	ReleaseDC(Window, hDC);
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 Win32GLFrameBuffer::~Win32GLFrameBuffer()
 {
 	if (m_supportsGamma) 
@@ -470,9 +578,21 @@ Win32GLFrameBuffer::~Win32GLFrameBuffer()
 }
 
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLFrameBuffer::InitializeState()
 {
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 bool Win32GLFrameBuffer::CanUpdate()
 {
@@ -480,12 +600,24 @@ bool Win32GLFrameBuffer::CanUpdate()
 	return true;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLFrameBuffer::SetGammaTable(WORD *tbl)
 {
 	HDC hDC = GetDC(Window);
 	SetDeviceGammaRamp(hDC, (void *)tbl);
 	ReleaseDC(Window, hDC);
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 bool Win32GLFrameBuffer::Lock(bool buffered)
 {
@@ -508,6 +640,12 @@ bool Win32GLFrameBuffer::IsLocked ()
 { 
 	return m_Lock>0;// true;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 bool Win32GLFrameBuffer::IsFullscreen()
 {
@@ -546,10 +684,22 @@ void Win32GLFrameBuffer::ReleaseResources ()
 {
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void Win32GLFrameBuffer::SetVSync (bool vsync)
 {
 	if (gl.SetVSync!=NULL) gl.SetVSync(vsync);
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void Win32GLFrameBuffer::NewRefreshRate ()
 {

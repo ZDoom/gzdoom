@@ -5,8 +5,10 @@
 //#define __wtypes_h__
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINDOWS 0x410
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501			// Support the mouse wheel and session notification.
 #define _WIN32_IE 0x0500
+#endif
 #define DIRECTINPUT_VERSION 0x800
 #define DIRECTDRAW_VERSION 0x0300
 

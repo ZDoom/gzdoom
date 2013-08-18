@@ -27,6 +27,9 @@ class SDLGLVideo : public IVideo
 	bool NextMode (int *width, int *height, bool *letterbox);
 	bool SetResolution (int width, int height, int bits);
 
+	bool SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample);
+	bool InitHardware (bool allowsoftware, bool nostencil, int multisample);
+
 private:
 	int IteratorMode;
 	int IteratorBits;
@@ -50,6 +53,7 @@ public:
 	bool IsFullscreen ();
 
 	virtual void SetVSync( bool vsync );
+	void SwapBuffers();
 	
 	void NewRefreshRate ();
 

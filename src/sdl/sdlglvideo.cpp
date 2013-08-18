@@ -279,6 +279,67 @@ bool SDLGLVideo::SetResolution (int width, int height, int bits)
 	return true;	// We must return true because the old video context no longer exists.
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+bool SDLGLVideo::SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample)
+{
+	int stencil;
+	
+	if (!nostencil)
+	{
+		stencil=1;
+		SDL_GL_SetAttribute( SDL_GL_RED_SIZE,  8 );
+		SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE,  8 );
+		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  8 );
+		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE,  8 );
+		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE,  24 );
+		SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE,  8 );
+//		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 );
+		if (multisample > 0) {
+			SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
+			SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, multisample );
+		}
+	}
+	else
+	{
+		// Use the cheapest mode available and let's hope the driver can handle this...
+		stencil=0;
+
+		SDL_GL_SetAttribute( SDL_GL_RED_SIZE,  4 );
+		SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE,  4 );
+		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  4 );
+		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE,  4 );
+		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE,  16 );
+		//SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 )*/
+	}
+	if (stencil==0)
+	{
+		gl.flags|=RFL_NOSTENCIL;
+	}
+	return true;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+bool SDLGLVideo::InitHardware (bool allowsoftware, bool nostencil, int multisample)
+{
+	if (!SetupPixelFormat(allowsoftware, nostencil, multisample))
+	{
+		Printf ("R_OPENGL: Reverting to software mode...\n");
+		return false;
+	}
+	return true;
+}
+
+
 // FrameBuffer implementation -----------------------------------------------
 
 SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
@@ -294,7 +355,7 @@ SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen)
 
 	UpdatePending = false;
 	
-	if (!gl.InitHardware(false, gl_vid_compatibility, localmultisample))
+	if (!static_cast<SDLGLVideo*>(Video)->InitHardware(false, gl_vid_compatibility, localmultisample))
 	{
 		vid_renderer = 0;
 		return;
@@ -334,6 +395,9 @@ SDLGLFB::~SDLGLFB ()
 		SDL_SetGammaRamp(m_origGamma[0], m_origGamma[1], m_origGamma[2]);
 	}
 }
+
+
+
 
 void SDLGLFB::InitializeState() 
 {
@@ -415,5 +479,10 @@ void SDLGLFB::SetVSync( bool vsync )
 
 void SDLGLFB::NewRefreshRate ()
 {
+}
+
+void SDLGLFB::SwapBuffers()
+{
+	SDL_GL_SwapBuffers ();
 }
 

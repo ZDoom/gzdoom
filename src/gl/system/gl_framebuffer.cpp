@@ -96,7 +96,7 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	needsetgamma = true;
 	swapped = false;
 	Accel2D = true;
-	if (gl.SetVSync!=NULL) gl.SetVSync(vid_vsync);
+	SetVSync(vid_vsync);
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
@@ -228,7 +228,7 @@ void OpenGLFrameBuffer::Swap()
 		//DoSetGamma();
 		needsetgamma = false;
 	}
-	gl.SwapBuffers();
+	SwapBuffers();
 	Finish.Unclock();
 	swapped = true;
 	FHardwareTexture::UnbindAll();

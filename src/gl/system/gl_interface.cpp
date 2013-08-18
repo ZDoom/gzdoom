@@ -5,7 +5,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005 Tim Stump
-** Copyright 2005 Christoph Oelckers
+** Copyright 2005-2013 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -51,18 +51,7 @@
 static void APIENTRY glBlendEquationDummy (GLenum mode);
 
 
-#if !defined (unix) && !defined (__APPLE__)
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-#endif
-
 static TArray<FString>  m_Extensions;
-
-#if !defined (unix) && !defined (__APPLE__)
-HWND m_Window;
-HDC m_hDC;
-HGLRC m_hRC;
-#endif
 
 #define gl pgl
 
@@ -71,143 +60,6 @@ RenderContext * gl;
 int occlusion_type=0;
 
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-#if !defined (unix) && !defined (__APPLE__)
-static HWND InitDummy()
-{
-	HMODULE g_hInst = GetModuleHandle(NULL);
-	HWND dummy;
-	//Create a rect structure for the size/position of the window
-	RECT windowRect;
-	windowRect.left = 0;
-	windowRect.right = 64;
-	windowRect.top = 0;
-	windowRect.bottom = 64;
-
-	//Window class structure
-	WNDCLASS wc;
-
-	//Fill in window class struct
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wc.lpfnWndProc = (WNDPROC) DefWindowProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = g_hInst;
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = NULL;
-	wc.lpszMenuName = NULL;
-	wc.lpszClassName = "GZDoomOpenGLDummyWindow";
-
-	//Register window class
-	if(!RegisterClass(&wc))
-	{
-		return 0;
-	}
-
-	//Set window style & extended style
-	DWORD style, exStyle;
-	exStyle = WS_EX_CLIENTEDGE;
-	style = WS_SYSMENU | WS_BORDER | WS_CAPTION;// | WS_VISIBLE;
-
-	//Adjust the window size so that client area is the size requested
-	AdjustWindowRectEx(&windowRect, style, false, exStyle);
-
-	//Create Window
-	if(!(dummy = CreateWindowEx(exStyle,
-		"GZDoomOpenGLDummyWindow",
-		"GZDOOM",
-		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | style,
-		0, 0,
-		windowRect.right-windowRect.left,
-		windowRect.bottom-windowRect.top,
-		NULL, NULL,
-		g_hInst,
-		NULL)))
-	{
-		UnregisterClass("GZDoomOpenGLDummyWindow", g_hInst);
-		return 0;
-	}
-	ShowWindow(dummy, SW_HIDE);
-
-	return dummy;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static void ShutdownDummy(HWND dummy)
-{
-	DestroyWindow(dummy);
-	UnregisterClass("GZDoomOpenGLDummyWindow", GetModuleHandle(NULL));
-}
-
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static bool ReadInitExtensions()
-{
-	HDC hDC;
-	HGLRC hRC;
-	HWND dummy;
-
-	PIXELFORMATDESCRIPTOR pfd = {
-		sizeof(PIXELFORMATDESCRIPTOR),
-			1,
-			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-			PFD_TYPE_RGBA,
-			32, // color depth
-			0, 0, 0, 0, 0, 0,
-			0,
-			0,
-			0,
-			0, 0, 0, 0,
-			16, // z depth
-			0, // stencil buffer
-			0,
-			PFD_MAIN_PLANE,
-			0,
-			0, 0, 0
-	};
-
-	int pixelFormat;
-
-	// we have to create a dummy window to init stuff from or the full init stuff fails
-	dummy = InitDummy();
-
-	hDC = GetDC(dummy);
-	pixelFormat = ChoosePixelFormat(hDC, &pfd);
-	DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
-
-	SetPixelFormat(hDC, pixelFormat, &pfd);
-
-	hRC = wglCreateContext(hDC);
-	wglMakeCurrent(hDC, hRC);
-
-	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-	// any extra stuff here?
-
-	wglMakeCurrent(NULL, NULL);
-	wglDeleteContext(hRC);
-	ReleaseDC(dummy, hDC);
-	ShutdownDummy(dummy);
-
-	return true;
-}
-#endif
 
 //==========================================================================
 //
@@ -295,12 +147,6 @@ static void APIENTRY LoadExtensions()
 	if (strcmp(version, "2.0") >= 0) gl->flags|=RFL_GL_20;
 	if (strcmp(version, "2.1") >= 0) gl->flags|=RFL_GL_21;
 	if (strcmp(version, "3.0") >= 0) gl->flags|=RFL_GL_30;
-
-
-#if !defined (unix) && !defined (__APPLE__)
-	PFNWGLSWAPINTERVALEXTPROC vs = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-	if (vs) gl->SetVSync = vs;
-#endif
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl->max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -437,21 +283,6 @@ static void APIENTRY LoadExtensions()
 
 		gl->flags|=RFL_FRAMEBUFFER;
 	}
-#if 0
-	else if (CheckExtension("GL_EXT_framebuffer_object") && 
-			 CheckExtension("GL_EXT_packed_depth_stencil"))
-	{
-		gl->GenFramebuffers			= (PFNGLGENFRAMEBUFFERSPROC)wglGetProcAddress("glGenFramebuffersEXT");
-		gl->BindFramebuffer			= (PFNGLBINDFRAMEBUFFERPROC)wglGetProcAddress("glBindFramebufferEXT");
-		gl->FramebufferTexture2D	= (PFNGLFRAMEBUFFERTEXTURE2DPROC)wglGetProcAddress("glFramebufferTexture2DEXT");
-		gl->GenRenderbuffers		= (PFNGLGENRENDERBUFFERSPROC)wglGetProcAddress("glGenRenderbuffersEXT");
-		gl->BindRenderbuffer		= (PFNGLBINDRENDERBUFFERPROC)wglGetProcAddress("glBindRenderbufferEXT");
-		gl->RenderbufferStorage		= (PFNGLRENDERBUFFERSTORAGEPROC)wglGetProcAddress("glRenderbufferStorageEXT");
-		gl->FramebufferRenderbuffer	= (PFNGLFRAMEBUFFERRENDERBUFFERPROC)wglGetProcAddress("glFramebufferRenderbufferEXT");
-
-		gl->flags|=RFL_FRAMEBUFFER;
-	}
-#endif
 
 #if 0
 	if (CheckExtension("GL_ARB_texture_buffer_object") && 
@@ -501,372 +332,6 @@ static void APIENTRY PrintStartupLog()
 	glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, &v);
 	Printf ("Max. combined uniform blocks: %d\n", v);
 
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-#if !defined (unix) && !defined (__APPLE__)
-static bool SetupPixelFormat(HDC hDC, bool allowsoftware, bool nostencil, int multisample)
-{
-	int colorDepth;
-	HDC deskDC;
-	int attributes[26];
-	int pixelFormat;
-	unsigned int numFormats;
-	float attribsFloat[] = {0.0f, 0.0f};
-	int stencil;
-	
-	deskDC = GetDC(GetDesktopWindow());
-	colorDepth = GetDeviceCaps(deskDC, BITSPIXEL);
-	ReleaseDC(GetDesktopWindow(), deskDC);
-
-	/*
-	if (!nostencil && colorDepth < 32)
-	{
-		Printf("R_OPENGL: Desktop not in 32 bit mode!\n");
-		return false;
-	}
-	*/
-
-	if (!nostencil)
-	{
-		for (stencil=1;stencil>=0;stencil--)
-		{
-			if (wglChoosePixelFormatARB && stencil)
-			{
-				attributes[0]	=	WGL_RED_BITS_ARB; //bits
-				attributes[1]	=	8;
-				attributes[2]	=	WGL_GREEN_BITS_ARB; //bits
-				attributes[3]	=	8;
-				attributes[4]	=	WGL_BLUE_BITS_ARB; //bits
-				attributes[5]	=	8;
-				attributes[6]	=	WGL_ALPHA_BITS_ARB;
-				attributes[7]	=	8;
-				attributes[8]	=	WGL_DEPTH_BITS_ARB;
-				attributes[9]	=	24;
-				attributes[10]	=	WGL_STENCIL_BITS_ARB;
-				attributes[11]	=	8;
-			
-				attributes[12]	=	WGL_DRAW_TO_WINDOW_ARB;	//required to be true
-				attributes[13]	=	true;
-				attributes[14]	=	WGL_SUPPORT_OPENGL_ARB;
-				attributes[15]	=	true;
-				attributes[16]	=	WGL_DOUBLE_BUFFER_ARB;
-				attributes[17]	=	true;
-			
-				attributes[18]	=	WGL_ACCELERATION_ARB;	//required to be FULL_ACCELERATION_ARB
-				if (allowsoftware)
-				{
-					attributes[19]	=	WGL_NO_ACCELERATION_ARB;
-				}
-				else
-				{
-					attributes[19]	=	WGL_FULL_ACCELERATION_ARB;
-				}
-			
-				if (multisample > 0)
-				{
-					attributes[20]	=	WGL_SAMPLE_BUFFERS_ARB;
-					attributes[21]	=	true;
-					attributes[22]	=	WGL_SAMPLES_ARB;
-					attributes[23]	=	multisample;
-				}
-				else
-				{
-					attributes[20]	=	0;
-					attributes[21]	=	0;
-					attributes[22]	=	0;
-					attributes[23]	=	0;
-				}
-			
-				attributes[24]	=	0;
-				attributes[25]	=	0;
-			
-				if (!wglChoosePixelFormatARB(hDC, attributes, attribsFloat, 1, &pixelFormat, &numFormats))
-				{
-					Printf("R_OPENGL: Couldn't choose pixel format. Retrying in compatibility mode\n");
-					goto oldmethod;
-				}
-			
-				if (numFormats == 0)
-				{
-					Printf("R_OPENGL: No valid pixel formats found. Retrying in compatibility mode\n");
-					goto oldmethod;
-				}
-
-				break;
-			}
-			else
-			{
-			oldmethod:
-				// If wglChoosePixelFormatARB is not found we have to do it the old fashioned way.
-				static PIXELFORMATDESCRIPTOR pfd = {
-					sizeof(PIXELFORMATDESCRIPTOR),
-						1,
-						PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-						PFD_TYPE_RGBA,
-						32, // color depth
-						0, 0, 0, 0, 0, 0,
-						0,
-						0,
-						0,
-						0, 0, 0, 0,
-						32, // z depth
-						stencil*8, // stencil buffer
-						0,
-						PFD_MAIN_PLANE,
-						0,
-						0, 0, 0
-				};
-
-				pixelFormat = ChoosePixelFormat(hDC, &pfd);
-				DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
-
-				if (pfd.dwFlags & PFD_GENERIC_FORMAT)
-				{
-					if (!allowsoftware)
-					{
-						if (stencil==0)
-						{
-							// not accelerated!
-							Printf("R_OPENGL: OpenGL driver not accelerated!  Falling back to software renderer.\n");
-							return false;
-						}
-						else
-						{
-							Printf("R_OPENGL: OpenGL driver not accelerated! Retrying in compatibility mode\n");
-							continue;
-						}
-					}
-				}
-				break;
-			}
-		}
-	}
-	else
-	{
-		// Use the cheapest mode available and let's hope the driver can handle this...
-		stencil=0;
-
-		// If wglChoosePixelFormatARB is not found we have to do it the old fashioned way.
-		static PIXELFORMATDESCRIPTOR pfd = {
-			sizeof(PIXELFORMATDESCRIPTOR),
-				1,
-				PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-				PFD_TYPE_RGBA,
-				16, // color depth
-				0, 0, 0, 0, 0, 0,
-				0,
-				0,
-				0,
-				0, 0, 0, 0,
-				16, // z depth
-				0, // stencil buffer
-				0,
-				PFD_MAIN_PLANE,
-				0,
-				0, 0, 0
-		};
-
-		pixelFormat = ChoosePixelFormat(hDC, &pfd);
-		DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
-
-		if (pfd.dwFlags & PFD_GENERIC_FORMAT)
-		{
-			if (!allowsoftware)
-			{
-				Printf("R_OPENGL: OpenGL driver not accelerated! Falling back to software renderer.\n");
-				return false;
-			}
-		}
-	}
-	if (stencil==0)
-	{
-		gl->flags|=RFL_NOSTENCIL;
-	}
-
-	if (!SetPixelFormat(hDC, pixelFormat, NULL))
-	{
-		Printf("R_OPENGL: Couldn't set pixel format.\n");
-		return false;
-	}
-	return true;
-}
-#else
-
-static bool SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample)
-{
-	int stencil;
-	
-	if (!nostencil)
-	{
-		stencil=1;
-		SDL_GL_SetAttribute( SDL_GL_RED_SIZE,  8 );
-		SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE,  8 );
-		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  8 );
-		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE,  8 );
-		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE,  24 );
-		SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE,  8 );
-//		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 );
-		if (multisample > 0) {
-			SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-			SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, multisample );
-		}
-	}
-	else
-	{
-		// Use the cheapest mode available and let's hope the driver can handle this...
-		stencil=0;
-
-		SDL_GL_SetAttribute( SDL_GL_RED_SIZE,  4 );
-		SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE,  4 );
-		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  4 );
-		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE,  4 );
-		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE,  16 );
-		//SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 )*/
-	}
-	if (stencil==0)
-	{
-		gl->flags|=RFL_NOSTENCIL;
-	}
-	return true;
-}
-#endif
-
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-#if !defined (unix) && !defined (__APPLE__)
-CVAR(Bool, gl_debug, false, 0)
-
-static bool APIENTRY InitHardware (HWND Window, bool allowsoftware, bool nostencil, int multisample)
-{
-	m_Window=Window;
-	m_hDC = GetDC(Window);
-
-	if (!SetupPixelFormat(m_hDC, allowsoftware, nostencil, multisample))
-	{
-		Printf ("R_OPENGL: Reverting to software mode...\n");
-		return false;
-	}
-
-	m_hRC = 0;
-	if (wglCreateContextAttribsARB != NULL)
-	{
-		int ctxAttribs[] = {
-			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-			WGL_CONTEXT_MINOR_VERSION_ARB, 3,
-			WGL_CONTEXT_FLAGS_ARB, gl_debug? WGL_CONTEXT_DEBUG_BIT_ARB : 0,
-			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-			0
-		};
-
-		m_hRC = wglCreateContextAttribsARB(m_hDC, 0, ctxAttribs);
-	}
-	if (m_hRC == 0)
-	{
-		m_hRC = wglCreateContext(m_hDC);
-	}
-
-	if (m_hRC == NULL)
-	{
-		Printf ("R_OPENGL: Couldn't create render context. Reverting to software mode...\n");
-		return false;
-	}
-
-	wglMakeCurrent(m_hDC, m_hRC);
-	return true;
-}
-
-#else
-static bool APIENTRY InitHardware (bool allowsoftware, bool nostencil, int multisample)
-{
-	if (!SetupPixelFormat(allowsoftware, nostencil, multisample))
-	{
-		Printf ("R_OPENGL: Reverting to software mode...\n");
-		return false;
-	}
-	return true;
-}
-#endif
-
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-#if !defined (unix) && !defined (__APPLE__)
-static void APIENTRY Shutdown()
-{
-	if (m_hRC)
-	{
-		wglMakeCurrent(0, 0);
-		wglDeleteContext(m_hRC);
-	}
-	if (m_hDC) ReleaseDC(m_Window, m_hDC);
-}
-
-
-static bool APIENTRY SetFullscreen(const char *devicename, int w, int h, int bits, int hz)
-{
-	DEVMODE dm;
-
-	if (w==0)
-	{
-		ChangeDisplaySettingsEx(devicename, 0, 0, 0, 0);
-	}
-	else
-	{
-		dm.dmSize = sizeof(DEVMODE);
-		dm.dmSpecVersion = DM_SPECVERSION;//Somebody owes me...
-		dm.dmDriverExtra = 0;//...1 hour of my life back
-		dm.dmPelsWidth = w;
-		dm.dmPelsHeight = h;
-		dm.dmBitsPerPel = bits;
-		dm.dmDisplayFrequency = hz;
-		dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
-		if (DISP_CHANGE_SUCCESSFUL != ChangeDisplaySettingsEx(devicename, &dm, 0, CDS_FULLSCREEN, 0))
-		{
-			dm.dmFields &= ~DM_DISPLAYFREQUENCY;
-			return DISP_CHANGE_SUCCESSFUL == ChangeDisplaySettingsEx(devicename, &dm, 0, CDS_FULLSCREEN, 0);
-		}
-	}
-	return true;
-}
-#endif
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static void APIENTRY iSwapBuffers()
-{
-#if !defined (unix) && !defined (__APPLE__)
-	SwapBuffers(m_hDC);
-#else
-	SDL_GL_SwapBuffers ();
-#endif
-}
-
-static BOOL APIENTRY SetVSync( int vsync )
-{
-#if defined (__APPLE__)
-	return kCGLNoError == CGLSetParameter( CGLGetCurrentContext(), kCGLCPSwapInterval, &vsync );
-#else // !__APPLE__
-	// empty placeholder
-	return false;
-#endif // __APPLE__
 }
 
 //==========================================================================
@@ -969,12 +434,6 @@ static void APIENTRY SetTextureMode(int type)
 //
 //==========================================================================
 
-/*
-extern "C"
-{
-
-__declspec(dllexport) 
-*/
 void APIENTRY GetContext(RenderContext & gl)
 {
 	::gl=&gl;
@@ -984,14 +443,6 @@ void APIENTRY GetContext(RenderContext & gl)
 	gl.LoadExtensions = LoadExtensions;
 	gl.SetTextureMode = SetTextureMode;
 	gl.PrintStartupLog = PrintStartupLog;
-	gl.InitHardware = InitHardware;
-#if !defined (unix) && !defined (__APPLE__)
-	gl.Shutdown = Shutdown;
-#endif
-	gl.SwapBuffers = iSwapBuffers;
-#if !defined (unix) && !defined (__APPLE__)
-	gl.SetFullscreen = SetFullscreen;
-#endif
 
 	gl.Begin = glBegin;
 	gl.End = glEnd;
@@ -1069,13 +520,6 @@ void APIENTRY GetContext(RenderContext & gl)
 	gl.Flush = glFlush;
 
 	gl.BlendEquation = glBlendEquationDummy;
-	gl.SetVSync = SetVSync;
-
-#if !defined (unix) && !defined (__APPLE__)
-	ReadInitExtensions();
-	//GL is not yet inited in UNIX version, read them later in LoadExtensions
-#endif
-
 }
 
 

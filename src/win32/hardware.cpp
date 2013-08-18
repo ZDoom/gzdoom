@@ -56,12 +56,15 @@ EXTERN_CVAR (Float, vid_winscale)
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-#include "win32gliface.h"
+extern HWND Window;
 
 bool ForceWindowed;
 
 IVideo *Video;
 
+// do not include GL headers here, only declare the necessary functions.
+IVideo *gl_CreateVideo();
+FRenderer *gl_CreateInterface();
 
 void I_RestartRenderer();
 int currentrenderer = -1;
@@ -134,7 +137,7 @@ void I_InitGraphics ()
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
 	//currentrenderer = vid_renderer;
-	if (currentrenderer==1) Video = new Win32GLVideo(0);
+	if (currentrenderer==1) Video = gl_CreateVideo();
 	else Video = new Win32Video (0);
 
 	if (Video == NULL)

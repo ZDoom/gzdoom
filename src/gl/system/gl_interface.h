@@ -70,16 +70,6 @@ struct RenderContext
 	void (APIENTRY * LoadExtensions) ();
 	void (APIENTRY * SetTextureMode) (int type);
 	void (APIENTRY * PrintStartupLog) ();
-	BOOL (APIENTRY * SetVSync) (int on);
-#if !defined (unix) && !defined (__APPLE__)
-	bool (APIENTRY * InitHardware) (HWND, bool allowsoftware, bool nostencil, int multisample);
-	void (APIENTRY * Shutdown) ();
-#else
-	bool (APIENTRY * InitHardware) (bool allowsoftware, bool nostencil, int multisample);
-#endif
-	void (APIENTRY * SwapBuffers) ();
-	bool (APIENTRY * SetFullscreen) (const char *devicename, int w, int h, int bits, int hz);
-
 
 	void (APIENTRY * Begin) (GLenum mode);
 	void (APIENTRY * End) (void);
@@ -246,8 +236,6 @@ struct RenderContext
 	PFNGLTEXBUFFERARBPROC TexBufferARB;
 };
 
-
-typedef void (APIENTRY * GetContextProc)(RenderContext & gl);
 
 void APIENTRY GetContext(RenderContext & gl);
 

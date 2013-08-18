@@ -1,17 +1,9 @@
 #ifndef __WIN32GLIFACE_H__
 #define __WIN32GLIFACE_H__
 
-/*
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <gl/gl.h>
-
-#include "gl/glext.h"
-#include "gl/wglext.h"
-*/
-
-#include "win32iface.h"
+#include "gl/system/gl_system.h"
 #include "hardware.h"
+#include "win32iface.h"
 #include "v_video.h"
 #include "tarray.h"
 
@@ -50,6 +42,13 @@ public:
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
 	virtual bool SetResolution (int width, int height, int bits);
 	void DumpAdapters();
+	bool InitHardware (HWND Window, bool allowsoftware, bool nostencil, int multisample);
+	void Shutdown();
+	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
+
+	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+	HDC m_hDC;
 
 protected:
 	struct ModeInfo
@@ -78,6 +77,14 @@ protected:
 	char *m_DisplayDeviceName;
 	HMONITOR m_hMonitor;
 
+	HWND m_Window;
+	HGLRC m_hRC;
+
+	HWND InitDummy();
+	void ShutdownDummy(HWND dummy);
+	bool SetPixelFormat();
+	bool SetupPixelFormat(bool allowsoftware, bool nostencil, int multisample);
+
 	void GetDisplayDeviceName();
 	void MakeModesList();
 	void AddMode(int x, int y, int bits, int baseHeight, int refreshHz);
@@ -100,6 +107,8 @@ public:
 	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
 	virtual ~Win32GLFrameBuffer();
 
+	PFNWGLSWAPINTERVALEXTPROC vsyncfunc;
+
 	// unused but must be defined
 	virtual void Blank ();
 	virtual bool PaintToWindow ();
@@ -109,10 +118,11 @@ public:
 	virtual void ReleaseResources ();
 
 	void SetVSync (bool vsync);
+	void SwapBuffers();
 	void NewRefreshRate ();
 
 
-	int GetTrueHeight() { return static_cast<Win32GLVideo*>(Video)->GetTrueHeight(); }
+	int GetTrueHeight() { return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); }
 
 	bool Lock(bool buffered);
 	bool Lock ();

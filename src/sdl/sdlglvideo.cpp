@@ -311,13 +311,6 @@ bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
 		Printf ("R_OPENGL: Reverting to software mode...\n");
 		return false;
 	}
-	int value = 0;
-	SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &value );
-	if (!value) 
-	{
-		Printf("R_OPENGL: Failed to initialize stencil buffer! Reverting to software mode...\n");
-	}
-
 	return true;
 }
 

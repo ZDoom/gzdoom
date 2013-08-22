@@ -5213,10 +5213,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDamageType)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 {
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_CLASS(spawntype, 0);
-	ACTION_PARAM_INT(amount, 1);
-	ACTION_PARAM_INT(chance, 2);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS   (spawntype, AActor);
+	PARAM_INT_OPT (amount)		{ amount = -1; }
+	PARAM_INT_OPT (chance)		{ chance = 256; }
 
 	P_DropItem(self, spawntype, amount, chance);
+	return 0;
 }

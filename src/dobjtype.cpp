@@ -1099,10 +1099,10 @@ PField *PStruct::AddField(FName name, PType *type)
 	PField *field = new PField(name, type);
 
 	// The new field is added to the end of this struct, alignment permitting.
-	field->FieldOffset = (Size + (type->Align - 1)) & ~(type->Align - 1);
+	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
 
 	// Enlarge this struct to enclose the new field.
-	Size = field->FieldOffset + type->Size;
+	Size = field->Offset + type->Size;
 
 	// This struct's alignment is the same as the largest alignment of any of
 	// its fields.
@@ -1161,7 +1161,7 @@ IMPLEMENT_CLASS(PField)
 //==========================================================================
 
 PField::PField()
-: PSymbol(NAME_None)
+: PSymbol(NAME_None), Offset(0), Type(NULL), Flags(0)
 {
 }
 

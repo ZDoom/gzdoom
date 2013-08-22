@@ -208,6 +208,29 @@ PType::~PType()
 
 //==========================================================================
 //
+// PType :: SetValue
+//
+//==========================================================================
+
+void PType::SetValue(void *addr, int val)
+{
+	assert(0 && "Cannot set value for this type");
+}
+
+//==========================================================================
+//
+// PType :: GetValue
+//
+//==========================================================================
+
+int PType::GetValueInt(void *addr)
+{
+	assert(0 && "Cannot get value for this type");
+	return 0;
+}
+
+//==========================================================================
+//
 // PType :: IsMatch
 //
 //==========================================================================
@@ -360,6 +383,69 @@ PInt::PInt(unsigned int size, bool unsign)
 {
 }
 
+//==========================================================================
+//
+// PInt :: SetValue
+//
+//==========================================================================
+
+void PInt::SetValue(void *addr, int val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	if (Size == 4)
+	{
+		*(int *)addr = val;
+	}
+	else if (Size == 1)
+	{
+		*(BYTE *)addr = val;
+	}
+	else if (Size == 2)
+	{
+		*(WORD *)addr = val;
+	}
+	else if (Size == 8)
+	{
+		*(QWORD *)addr = val;
+	}
+	else
+	{
+		assert(0 && "Unhandled integer size");
+	}
+}
+
+//==========================================================================
+//
+// PInt :: GetValueInt
+//
+//==========================================================================
+
+int PInt::GetValueInt(void *addr)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	if (Size == 4)
+	{
+		return *(int *)addr;
+	}
+	else if (Size == 1)
+	{
+		return Unsigned ? *(BYTE *)addr : *(SBYTE *)addr;
+	}
+	else if (Size == 2)
+	{
+		return Unsigned ? *(WORD *)addr : *(SWORD *)addr;
+	}
+	else if (Size == 8)
+	{ // truncated output
+		return (int)*(QWORD *)addr;
+	}
+	else
+	{
+		assert(0 && "Unhandled integer size");
+		return 0;
+	}
+}
+
 /* PFloat *****************************************************************/
 
 IMPLEMENT_CLASS(PFloat)
@@ -384,6 +470,46 @@ PFloat::PFloat()
 PFloat::PFloat(unsigned int size)
 : PBasicType(size, size)
 {
+}
+
+//==========================================================================
+//
+// PFloat :: SetValue
+//
+//==========================================================================
+
+void PFloat::SetValue(void *addr, int val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	if (Size == 4)
+	{
+		*(float *)addr = (float)val;
+	}
+	else
+	{
+		assert(Size == 8);
+		*(double *)addr = val;
+	}
+}
+
+//==========================================================================
+//
+// PFloat :: GetValueInt
+//
+//==========================================================================
+
+int PFloat::GetValueInt(void *addr)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	if (Size == 4)
+	{
+		return xs_ToInt(*(float *)addr);
+	}
+	else
+	{
+		assert(Size == 8);
+		return xs_ToInt(*(double *)addr);
+	}
 }
 
 /* PString ****************************************************************/

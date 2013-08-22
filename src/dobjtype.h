@@ -167,6 +167,12 @@ public:
 	PType(unsigned int size, unsigned int align);
 	virtual ~PType();
 
+	// Sets the value of a variable of this type at (addr)
+	virtual void SetValue(void *addr, int val);
+
+	// Gets the value of a variable of this type at (addr)
+	virtual int GetValueInt(void *addr);
+
 	// Returns true if this type matches the two identifiers. Referring to the
 	// above table, any type is identified by at most two characteristics. Each
 	// type that implements this function will cast these to the appropriate type.
@@ -219,6 +225,9 @@ class PInt : public PBasicType
 public:
 	PInt(unsigned int size, bool unsign);
 
+	virtual void SetValue(void *addr, int val);
+	virtual int GetValueInt(void *addr);
+
 	bool Unsigned;
 protected:
 	PInt();
@@ -229,6 +238,9 @@ class PFloat : public PBasicType
 	DECLARE_CLASS(PFloat, PBasicType);
 public:
 	PFloat(unsigned int size);
+
+	virtual void SetValue(void *addr, int val);
+	virtual int GetValueInt(void *addr);
 protected:
 	PFloat();
 };

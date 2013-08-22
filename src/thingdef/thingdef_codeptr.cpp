@@ -4365,16 +4365,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 	PARAM_NAME	(varname);
 	PARAM_INT	(value);
 
-	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
-	if (var == NULL || !var->bUserVar || var->ValueType.Type != VAL_Int)
+	if (var == NULL || (var->Flags & VARF_Native) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 	{
 		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
 		return 0;
 	}
 	// Set the value of the specified user variable.
-	*(int *)(reinterpret_cast<BYTE *>(self) + var->offset) = value;
+	var->Type->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset, value);
 	return 0;
 }
 
@@ -4391,22 +4391,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 	PARAM_INT	(pos);
 	PARAM_INT	(value);
 
-	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
-	if (var == NULL || !var->bUserVar || var->ValueType.Type != VAL_Array || var->ValueType.BaseType != VAL_Int)
+	if (var == NULL || (var->Flags & VARF_Native) ||
+		!var->Type->IsKindOf(RUNTIME_CLASS(PArray)) ||
+		!static_cast<PArray *>(var->Type)->ElementType->IsKindOf(RUNTIME_CLASS(PBasicType)))
 	{
 		Printf("%s is not a user array in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
 		return 0;
 	}
-	if (pos < 0 || pos >= var->ValueType.size)
+	PArray *arraytype = static_cast<PArray *>(var->Type);
+	if ((unsigned)pos >= arraytype->ElementCount)
 	{
 		Printf("%d is out of bounds in array %s in class %s\n", pos, varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
 		return 0;
 	}
 	// Set the value of the specified user array at index pos.
-	((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[pos] = value;
+	arraytype->ElementType->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset + arraytype->ElementSize * pos, value);
 	return 0;
 }
 

@@ -4273,59 +4273,56 @@ int DLevelScript::LineFromID(int id)
 	}
 }
 
+bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type)
+{
+	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PArray *arraytype;
+	BYTE *baddr = reinterpret_cast<BYTE *>(self);
+
+	if (var == NULL || (var->Flags & VARF_Native))
+	{
+		return false;
+	}
+	type = var->Type;
+	arraytype = dyn_cast<PArray>(type);
+	if (arraytype != NULL)
+	{
+		// unwrap contained type
+		type = arraytype->ElementType;
+		// offset by index (if in bounds)
+		if ((unsigned)index < arraytype->ElementCount)
+		{ // out of bounds
+			return false;
+		}
+		baddr += arraytype->ElementSize * index;
+	}
+	else if (index != 0)
+	{ // ignore attempts to set indexed values on non-arrays
+		return false;
+	}
+	addr = baddr;
+	return true;
+}
+
 static void SetUserVariable(AActor *self, FName varname, int index, int value)
 {
-	int max;
-	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	void *addr;
+	PType *type;
 
-	if (var == NULL || !var->bUserVar)
+	if (GetVarAddrType(self, varname, index, addr, type))
 	{
-		return;
-	}
-	if (var->ValueType.Type == VAL_Int)
-	{
-		max = 1;
-	}
-	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
-	{
-		max = var->ValueType.size;
-	}
-	else
-	{
-		return;
-	}
-	// Set the value of the specified user variable.
-	if (index >= 0 && index < max)
-	{
-		((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index] = value;
+		type->SetValue(addr, value);
 	}
 }
 
 static int GetUserVariable(AActor *self, FName varname, int index)
 {
-	int max;
-	PSymbolVariable *var = dyn_cast<PSymbolVariable>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	void *addr;
+	PType *type;
 
-	if (var == NULL || !var->bUserVar)
+	if (GetVarAddrType(self, varname, index, addr, type))
 	{
-		return 0;
-	}
-	if (var->ValueType.Type == VAL_Int)
-	{
-		max = 1;
-	}
-	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
-	{
-		max = var->ValueType.size;
-	}
-	else
-	{
-		return 0;
-	}
-	// Get the value of the specified user variable.
-	if (index >= 0 && index < max)
-	{
-		return ((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index];
+		return type->GetValueInt(addr);
 	}
 	return 0;
 }

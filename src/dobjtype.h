@@ -16,6 +16,7 @@
 #define VARF_Optional		(1<<0)	// func param is optional
 #define VARF_Method			(1<<1)	// func has an implied self parameter
 #define VARF_Action			(1<<2)	// func has implied owner and state parameters
+#define VARF_Native			(1<<3)	// func is native code/don't auto serialize field
 
 // Symbol information -------------------------------------------------------
 

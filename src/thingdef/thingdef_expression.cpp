@@ -2348,12 +2348,6 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 		}
-		else if (sym->IsKindOf(RUNTIME_CLASS(PSymbolVariable)))	// global variables will always be native
-		{
-			PSymbolVariable *vsym = static_cast<PSymbolVariable*>(sym);
-			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as global variable, address %d\n", Identifier.GetChars(), vsym->offset);
-			newex = new FxGlobalVariable(vsym, ScriptPosition);
-		}
 		else
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid global identifier '%s'\n", Identifier.GetChars());
@@ -2436,64 +2430,6 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 	ExpEmit me(0, REGT_POINTER);
 	me.Fixed = true;
 	return me;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxGlobalVariable::FxGlobalVariable(PSymbolVariable *mem, const FScriptPosition &pos)
-: FxExpression(pos)
-{
-	var = mem;
-	AddressRequested = false;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FxGlobalVariable::RequestAddress()
-{
-	AddressRequested = true;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxExpression *FxGlobalVariable::Resolve(FCompileContext&)
-{
-	CHECKRESOLVED();
-	switch (var->ValueType.Type)
-	{
-	case VAL_Int:
-	case VAL_Bool:
-		ValueType = VAL_Int;
-		break;
-
-	case VAL_Float:
-	case VAL_Fixed:
-	case VAL_Angle:
-		ValueType = VAL_Float;
-
-	case VAL_Object:
-	case VAL_Class:
-		ValueType = var->ValueType;
-		break;
-
-	default:
-		ScriptPosition.Message(MSG_ERROR, "Invalid type for global variable");
-		delete this;
-		return NULL;
-	}
-	return this;
 }
 
 //==========================================================================

@@ -692,23 +692,6 @@ public:
 
 //==========================================================================
 //
-//	FxGlobalVariable
-//
-//==========================================================================
-
-class FxGlobalVariable : public FxExpression
-{
-public:
-	PSymbolVariable *var;
-	bool AddressRequested;
-
-	FxGlobalVariable(PSymbolVariable*, const FScriptPosition&);
-	FxExpression *Resolve(FCompileContext&);
-	void RequestAddress();
-};
-
-//==========================================================================
-//
 //	FxClassMember
 //
 //==========================================================================

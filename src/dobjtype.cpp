@@ -70,6 +70,8 @@ PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
 PStatePointer *TypeState;
+PFixed *TypeFixed;
+PAngle *TypeAngle;
 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -314,6 +316,8 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
+	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
+	RUNTIME_CLASS(PAngle)->TypeTableType = RUNTIME_CLASS(PAngle);
 
 	TypeTable.AddType(TypeSInt8 = new PInt(1, false));
 	TypeTable.AddType(TypeUInt8 = new PInt(1, true));
@@ -328,7 +332,8 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSound = new PSound);
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
-
+	TypeTable.AddType(TypeFixed = new PFixed);
+	TypeTable.AddType(TypeAngle = new PAngle);
 }
 
 
@@ -736,6 +741,128 @@ PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
 	assert(sizeof(PalEntry) == __alignof(PalEntry));
+}
+
+/* PFixed *****************************************************************/
+
+IMPLEMENT_CLASS(PFixed)
+
+//==========================================================================
+//
+// PFixed Default Constructor
+//
+//==========================================================================
+
+PFixed::PFixed()
+: PFloat(sizeof(fixed_t))
+{
+}
+
+//==========================================================================
+//
+// PFixed :: SetValue
+//
+//==========================================================================
+
+void PFixed::SetValue(void *addr, int val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	*(fixed_t *)addr = val << FRACBITS;
+}
+
+//==========================================================================
+//
+// PFixed :: GetValueInt
+//
+//==========================================================================
+
+int PFixed::GetValueInt(void *addr) const
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	return *(fixed_t *)addr >> FRACBITS;
+}
+
+//==========================================================================
+//
+// PFixed :: GetStoreOp
+//
+//==========================================================================
+
+int PFixed::GetStoreOp() const
+{
+	return OP_SX;
+}
+
+//==========================================================================
+//
+// PFixed :: GetLoadOp
+//
+//==========================================================================
+
+int PFixed::GetLoadOp() const
+{
+	return OP_LX;
+}
+
+/* PAngle *****************************************************************/
+
+IMPLEMENT_CLASS(PAngle)
+
+//==========================================================================
+//
+// PAngle Default Constructor
+//
+//==========================================================================
+
+PAngle::PAngle()
+: PFloat(sizeof(angle_t))
+{
+}
+
+//==========================================================================
+//
+// PAngle :: SetValue
+//
+//==========================================================================
+
+void PAngle::SetValue(void *addr, int val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	*(angle_t *)addr = Scale(val, ANGLE_90, 90);
+}
+
+//==========================================================================
+//
+// PAngle :: GetValueInt
+//
+//==========================================================================
+
+int PAngle::GetValueInt(void *addr) const
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	return *(angle_t *)addr / ANGLE_1;
+}
+
+//==========================================================================
+//
+// PAngle :: GetStoreOp
+//
+//==========================================================================
+
+int PAngle::GetStoreOp() const
+{
+	return OP_SANG;
+}
+
+//==========================================================================
+//
+// PAngle :: GetLoadOp
+//
+//==========================================================================
+
+int PAngle::GetLoadOp() const
+{
+	return OP_LANG;
 }
 
 /* PStatePointer **********************************************************/

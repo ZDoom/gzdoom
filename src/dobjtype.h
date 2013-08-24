@@ -174,6 +174,14 @@ public:
 	// Gets the value of a variable of this type at (addr)
 	virtual int GetValueInt(void *addr) const;
 
+	// Gets the opcode to store from a register to memory
+	virtual int GetStoreOp() const;
+
+	// Gets the opcode to load from memory to a register
+	virtual int GetLoadOp() const;
+
+	// Gets the register type for this type
+	virtual int GetRegType() const;
 
 	// Returns true if this type matches the two identifiers. Referring to the
 	// above table, any type is identified by at most two characteristics. Each
@@ -229,6 +237,9 @@ public:
 
 	virtual void SetValue(void *addr, int val);
 	virtual int GetValueInt(void *addr) const;
+	virtual int GetStoreOp() const;
+	virtual int GetLoadOp() const;
+	virtual int GetRegType() const;
 
 	bool Unsigned;
 protected:
@@ -243,6 +254,9 @@ public:
 
 	virtual void SetValue(void *addr, int val);
 	virtual int GetValueInt(void *addr) const;
+	virtual int GetStoreOp() const;
+	virtual int GetLoadOp() const;
+	virtual int GetRegType() const;
 protected:
 	PFloat();
 };
@@ -252,6 +266,8 @@ class PString : public PBasicType
 	DECLARE_CLASS(PString, PBasicType);
 public:
 	PString();
+
+	virtual int GetRegType() const;
 };
 
 // Variations of integer types ----------------------------------------------
@@ -294,6 +310,10 @@ public:
 	PPointer(PType *pointsat);
 
 	PType *PointedType;
+
+	virtual int GetStoreOp() const;
+	virtual int GetLoadOp() const;
+	virtual int GetRegType() const;
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;

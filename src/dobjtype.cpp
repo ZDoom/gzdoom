@@ -231,6 +231,42 @@ int PType::GetValueInt(void *addr) const
 
 //==========================================================================
 //
+// PType :: GetStoreOp
+//
+//==========================================================================
+
+int PType::GetStoreOp() const
+{
+	assert(0 && "Cannot store this type");
+	return OP_NOP;
+}
+
+//==========================================================================
+//
+// PType :: GetLoadOp
+//
+//==========================================================================
+
+int PType::GetLoadOp() const
+{
+	assert(0 && "Cannot load this type");
+	return OP_NOP;
+}
+
+//==========================================================================
+//
+// PType :: GetRegType
+//
+//==========================================================================
+
+int PType::GetRegType() const
+{
+	assert(0 && "No register for this type");
+	return REGT_NIL;
+}
+
+//==========================================================================
+//
 // PType :: IsMatch
 //
 //==========================================================================
@@ -446,6 +482,71 @@ int PInt::GetValueInt(void *addr) const
 	}
 }
 
+//==========================================================================
+//
+// PInt :: GetStoreOp
+//
+//==========================================================================
+
+int PInt::GetStoreOp() const
+{
+	if (Size == 4)
+	{
+		return OP_SW;
+	}
+	else if (Size == 1)
+	{
+		return OP_SB;
+	}
+	else if (Size == 2)
+	{
+		return OP_SH;
+	}
+	else
+	{
+		assert(0 && "Unhandled integer size");
+		return OP_NOP;
+	}
+}
+
+//==========================================================================
+//
+// PInt :: GetLoadOp
+//
+//==========================================================================
+
+int PInt::GetLoadOp() const
+{
+	if (Size == 4)
+	{
+		return OP_LW;
+	}
+	else if (Size == 1)
+	{
+		return Unsigned ? OP_LBU : OP_LB;
+	}
+	else if (Size == 2)
+	{
+		return Unsigned ? OP_LHU : OP_LH;
+	}
+	else
+	{
+		assert(0 && "Unhandled integer size");
+		return OP_NOP;
+	}
+}
+
+//==========================================================================
+//
+// PInt :: GetRegType
+//
+//==========================================================================
+
+int PInt::GetRegType() const
+{
+	return REGT_INT;
+}
+
 /* PFloat *****************************************************************/
 
 IMPLEMENT_CLASS(PFloat)
@@ -512,6 +613,57 @@ int PFloat::GetValueInt(void *addr) const
 	}
 }
 
+//==========================================================================
+//
+// PFloat :: GetStoreOp
+//
+//==========================================================================
+
+int PFloat::GetStoreOp() const
+{
+	if (Size == 4)
+	{
+		return OP_SSP;
+	}
+	else
+	{
+		assert(Size == 8);
+		return OP_SDP;
+	}
+}
+
+//==========================================================================
+//
+// PFloat :: GetLoadOp
+//
+//==========================================================================
+
+int PFloat::GetLoadOp() const
+{
+	if (Size == 4)
+	{
+		return OP_LSP;
+	}
+	else
+	{
+		assert(Size == 8);
+		return OP_LDP;
+	}
+	assert(0 && "Cannot load this type");
+	return OP_NOP;
+}
+
+//==========================================================================
+//
+// PFloat :: GetRegType
+//
+//==========================================================================
+
+int PFloat::GetRegType() const
+{
+	return REGT_FLOAT;
+}
+
 /* PString ****************************************************************/
 
 IMPLEMENT_CLASS(PString)
@@ -525,6 +677,17 @@ IMPLEMENT_CLASS(PString)
 PString::PString()
 : PBasicType(sizeof(FString), __alignof(FString))
 {
+}
+
+//==========================================================================
+//
+// PString :: GetRegType
+//
+//==========================================================================
+
+int PString::GetRegType() const
+{
+	return REGT_STRING;
 }
 
 /* PName ******************************************************************/
@@ -620,6 +783,39 @@ PPointer::PPointer(PType *pointsat)
 : PInt(sizeof(void *), true), PointedType(pointsat)
 {
 	Align = __alignof(void *);
+}
+
+//==========================================================================
+//
+// PPointer :: GetStoreOp
+//
+//==========================================================================
+
+int PPointer::GetStoreOp() const
+{
+	return OP_SP;
+}
+
+//==========================================================================
+//
+// PPointer :: GetLoadOp
+//
+//==========================================================================
+
+int PPointer::GetLoadOp() const
+{
+	return PointedType->IsKindOf(RUNTIME_CLASS(PClass)) ? OP_LO : OP_LP;
+}
+
+//==========================================================================
+//
+// PPointer :: GetRegType
+//
+//==========================================================================
+
+int PPointer::GetRegType() const
+{
+	return REGT_POINTER;
 }
 
 //==========================================================================

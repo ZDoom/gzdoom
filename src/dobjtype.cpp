@@ -1414,11 +1414,12 @@ PStruct::PStruct(FName name, DObject *outer)
 //
 // PStruct :: AddField
 //
-// Appends a new field to the end of a struct.
+// Appends a new field to the end of a struct. Returns either the new field
+// or NULL if a symbol by that name already exists.
 //
 //==========================================================================
 
-PField *PStruct::AddField(FName name, PType *type)
+PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 {
 	PField *field = new PField(name, type);
 
@@ -1432,8 +1433,12 @@ PField *PStruct::AddField(FName name, PType *type)
 	// its fields.
 	Align = MAX(Align, type->Align);
 
+	if (Symbols.AddSymbol(field) == NULL)
+	{ // name is already in use
+		delete field;
+		return NULL;
+	}
 	Fields.Push(field);
-	Symbols.AddSymbol(field);
 
 	return field;
 }

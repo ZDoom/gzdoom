@@ -467,7 +467,7 @@ public:
 	TArray<PField *> Fields;
 	PSymbolTable	 Symbols;
 
-	PField *AddField(FName name, PType *type);
+	PField *AddField(FName name, PType *type, DWORD flags=0);
 
 	size_t PropagateMark();
 protected:

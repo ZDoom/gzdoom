@@ -172,7 +172,8 @@ public:
 	virtual void SetValue(void *addr, int val);
 
 	// Gets the value of a variable of this type at (addr)
-	virtual int GetValueInt(void *addr);
+	virtual int GetValueInt(void *addr) const;
+
 
 	// Returns true if this type matches the two identifiers. Referring to the
 	// above table, any type is identified by at most two characteristics. Each
@@ -227,7 +228,7 @@ public:
 	PInt(unsigned int size, bool unsign);
 
 	virtual void SetValue(void *addr, int val);
-	virtual int GetValueInt(void *addr);
+	virtual int GetValueInt(void *addr) const;
 
 	bool Unsigned;
 protected:
@@ -241,7 +242,7 @@ public:
 	PFloat(unsigned int size);
 
 	virtual void SetValue(void *addr, int val);
-	virtual int GetValueInt(void *addr);
+	virtual int GetValueInt(void *addr) const;
 protected:
 	PFloat();
 };

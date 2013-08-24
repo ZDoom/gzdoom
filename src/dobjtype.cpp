@@ -223,7 +223,7 @@ void PType::SetValue(void *addr, int val)
 //
 //==========================================================================
 
-int PType::GetValueInt(void *addr)
+int PType::GetValueInt(void *addr) const
 {
 	assert(0 && "Cannot get value for this type");
 	return 0;
@@ -420,7 +420,7 @@ void PInt::SetValue(void *addr, int val)
 //
 //==========================================================================
 
-int PInt::GetValueInt(void *addr)
+int PInt::GetValueInt(void *addr) const
 {
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	if (Size == 4)
@@ -498,7 +498,7 @@ void PFloat::SetValue(void *addr, int val)
 //
 //==========================================================================
 
-int PFloat::GetValueInt(void *addr)
+int PFloat::GetValueInt(void *addr) const
 {
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	if (Size == 4)

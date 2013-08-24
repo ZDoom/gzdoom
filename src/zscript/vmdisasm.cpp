@@ -1,6 +1,8 @@
 #include "vm.h"
 #include "c_console.h"
 
+#define NOP		MODE_AUNUSED | MODE_BUNUSED | MODE_CUNUSED
+
 #define LI		MODE_AI | MODE_BCJOINT | MODE_BCIMMS
 #define LKI		MODE_AI | MODE_BCJOINT | MODE_BCKI
 #define LKF		MODE_AF | MODE_BCJOINT | MODE_BCKF

@@ -280,7 +280,11 @@ static void FinishThingdef()
 	unsigned i, j;
 	int codesize = 0;
 
+#if 1
 	FILE *dump = fopen("disasm.txt", "w");
+#else
+	FILE *dump = NULL;
+#endif
 	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{
 		FStateTempCall *tcall = StateTempCalls[i];
@@ -317,13 +321,15 @@ static void FinishThingdef()
 			VMScriptFunction *sfunc = buildit.MakeFunction();
 			sfunc->NumArgs = NAP;
 			func = sfunc;
-#if 1
-			char label[64];
-			int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
-				tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
-			DumpFunction(dump, sfunc, label, labellen);
-			codesize += sfunc->CodeSize;
-#endif
+
+			if (dump != NULL)
+			{
+				char label[64];
+				int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
+					tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
+				DumpFunction(dump, sfunc, label, labellen);
+				codesize += sfunc->CodeSize;
+			}
 		}
 		for (int k = 0; k < tcall->NumStates; ++k)
 		{
@@ -370,8 +376,8 @@ static void FinishThingdef()
 				dmg->SetFunction(sfunc);
 			}
 			def->Damage = sfunc;
-#if 1
-			if (sfunc != NULL)
+
+			if (dump != NULL && sfunc != NULL)
 			{
 				char label[64];
 				int labellen = mysnprintf(label, countof(label), "Function %s.Damage",
@@ -379,13 +385,13 @@ static void FinishThingdef()
 				DumpFunction(dump, sfunc, label, labellen);
 				codesize += sfunc->CodeSize;
 			}
-#endif
 		}
 	}
-#if 1
-	fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
-#endif
-	fclose(dump);
+	if (dump != NULL)
+	{
+		fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
+		fclose(dump);
+	}
 	if (errorcount > 0)
 	{
 		I_Error("%d errors during actor postprocessing", errorcount);

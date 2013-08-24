@@ -164,36 +164,10 @@ struct ExpVal
 		return (Type == VAL_Int || Type == VAL_Sound) ? !!Int : Type == VAL_Float? Float!=0. : false;
 	}
 	
-	template<class T> T *GetPointer() const
-	{
-		return Type == VAL_Object || Type == VAL_Pointer? (T*)pointer : NULL;
-	}
-
-	FSoundID GetSoundID() const
-	{
-		return Type == VAL_Sound? Int : 0;
-	}
-
-	int GetColor() const
-	{
-		return Type == VAL_Color? Int : 0;
-	}
-
 	FName GetName() const
 	{
 		return Type == VAL_Name? ENamedName(Int) : NAME_None;
 	}
-	
-	FState *GetState() const
-	{
-		return Type == VAL_State? (FState*)pointer : NULL;
-	}
-
-	const PClass *GetClass() const
-	{
-		return Type == VAL_Class? (const PClass *)pointer : NULL;
-	}
-
 };
 
 struct ExpEmit

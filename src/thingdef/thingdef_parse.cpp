@@ -288,7 +288,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 
 static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
-	FExpressionType valuetype;
+	PType *valuetype;
 
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
@@ -301,27 +301,23 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 	switch (sc.TokenType)
 	{
 	case TK_Int:
-		valuetype = VAL_Int;
+		valuetype = TypeSInt32;
 		break;
 
 	case TK_Float:
-		valuetype = VAL_Float;
+		valuetype = TypeFloat64;
 		break;
 
 	case TK_Angle_t:
-		valuetype = VAL_Angle;
+		valuetype = TypeAngle;
 		break;
 
 	case TK_Fixed_t:
-		valuetype = VAL_Fixed;
-		break;
-
-	case TK_Bool:
-		valuetype = VAL_Bool;
+		valuetype = TypeFixed;
 		break;
 
 	case TK_Identifier:
-		valuetype = VAL_Object;
+		valuetype = NULL;
 		// Todo: Object type
 		sc.ScriptError("Object type variables not implemented yet!");
 		break;
@@ -343,7 +339,7 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 		int maxelems = static_cast<FxConstant *>(expr)->GetValue().GetInt();
 		delete expr;
 		sc.MustGetToken(']');
-		valuetype.MakeArray(maxelems);
+		valuetype = NewArray(valuetype, maxelems);
 	}
 	sc.MustGetToken(';');
 
@@ -353,17 +349,19 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 		sc.ScriptError("Unknown native variable '%s'", symname.GetChars());
 	}
 
-	PSymbolVariable *sym = new PSymbolVariable(symname);
-	sym->offset = vi->address;	// todo
-	sym->ValueType = valuetype;
-	sym->bUserVar = false;
+	PField *sym = new PField(symname, valuetype, VARF_Native);
+	sym->Offset = (unsigned)vi->address;	// todo
 
-	if (symt->AddSymbol (sym) == NULL)
+	if (symt->AddSymbol(sym) == NULL)
 	{
 		delete sym;
 		sc.ScriptMessage ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
 		FScriptPosition::ErrorCounter++;
+	}
+	else
+	{
+		cls->Fields.Push(sym);
 	}
 }
 
@@ -377,7 +375,8 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 
 static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
-	FExpressionType valuetype;
+	PType *type;
+	int maxelems = 1;
 
 	// Only non-native classes may have user variables.
 	if (!cls->bRuntimeClass)
@@ -392,7 +391,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 		sc.ScriptMessage("User variables must be of type int");
 		FScriptPosition::ErrorCounter++;
 	}
-	valuetype = VAL_Int;
+	type = TypeSInt32;
 
 	sc.MustGetToken(TK_Identifier);
 	// For now, restrict user variables to those that begin with "user_" to guarantee
@@ -407,7 +406,6 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls);
-		int maxelems;
 		if (!expr->isConstant())
 		{
 			sc.ScriptMessage("Array size must be a constant");
@@ -425,14 +423,12 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 			FScriptPosition::ErrorCounter++;
 			maxelems = 1;
 		}
-		valuetype.MakeArray(maxelems);
+		type = NewArray(type, maxelems);
 	}
 	sc.MustGetToken(';');
 
-	PSymbolVariable *sym = new PSymbolVariable(symname);
-	sym->offset = cls->Extend(sizeof(int) * (valuetype.Type == VAL_Array ? valuetype.size : 1));
-	sym->ValueType = valuetype;
-	sym->bUserVar = true;
+	PField *sym = new PField(symname, type, 0);
+	sym->Offset = cls->Extend(sizeof(int) * maxelems);
 	if (symt->AddSymbol(sym) == NULL)
 	{
 		delete sym;

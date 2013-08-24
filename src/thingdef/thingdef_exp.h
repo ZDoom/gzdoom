@@ -700,10 +700,10 @@ class FxClassMember : public FxExpression
 {
 public:
 	FxExpression *classx;
-	PSymbolVariable *membervar;
+	PField *membervar;
 	bool AddressRequested;
 
-	FxClassMember(FxExpression*, PSymbolVariable*, const FScriptPosition&);
+	FxClassMember(FxExpression*, PField*, const FScriptPosition&);
 	~FxClassMember();
 	FxExpression *Resolve(FCompileContext&);
 	void RequestAddress();

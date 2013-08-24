@@ -425,11 +425,22 @@ void DObject::SerializeUserVars(FArchive &arc)
 
 			while (it.NextPair(pair))
 			{
-				PSymbolVariable *var = dyn_cast<PSymbolVariable>(pair->Value);
-				if (var != NULL && var->bUserVar)
+				PField *var = dyn_cast<PField>(pair->Value);
+				if (var != NULL && !(var->Flags & VARF_Native))
 				{
-					count = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
-					varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
+					PType *type = var->Type;
+					PArray *arraytype = dyn_cast<PArray>(type);
+					if (arraytype == NULL)
+					{
+						count = 1;
+					}
+					else
+					{
+						count = arraytype->ElementCount;
+						type = arraytype->ElementType;
+					}
+					assert(type == TypeSInt32);
+					varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->Offset);
 
 					arc << var->SymbolName;
 					arc.WriteCount(count);
@@ -450,13 +461,24 @@ void DObject::SerializeUserVars(FArchive &arc)
 		arc << varname;
 		while (varname != NAME_None)
 		{
-			PSymbolVariable *var = dyn_cast<PSymbolVariable>(symt->FindSymbol(varname, true));
+			PField *var = dyn_cast<PField>(symt->FindSymbol(varname, true));
 			DWORD wanted = 0;
 
-			if (var != NULL && var->bUserVar)
+			if (var != NULL && !(var->Flags & VARF_Native))
 			{
-				wanted = var->ValueType.Type == VAL_Array ? var->ValueType.size : 1;
-				varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->offset);
+				PType *type = var->Type;
+				PArray *arraytype = dyn_cast<PArray>(type);
+				if (arraytype != NULL)
+				{
+					wanted = arraytype->ElementCount;
+					type = arraytype->ElementType;
+				}
+				else
+				{
+					wanted = 1;
+				}
+				assert(type == TypeSInt32);
+				varloc = (int *)(reinterpret_cast<BYTE *>(this) + var->Offset);
 			}
 			count = arc.ReadCount();
 			for (j = 0; j < MIN(wanted, count); ++j)

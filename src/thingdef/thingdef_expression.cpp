@@ -2261,10 +2261,10 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as class constant\n", Identifier.GetChars());
 			newex = FxConstant::MakeConstant(sym, ScriptPosition);
 		}
-		else if (sym->IsKindOf(RUNTIME_CLASS(PSymbolVariable)))
+		else if (sym->IsKindOf(RUNTIME_CLASS(PField)))
 		{
-			PSymbolVariable *vsym = static_cast<PSymbolVariable*>(sym);
-			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->offset);
+			PField *vsym = static_cast<PField*>(sym);
+			ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as member variable, index %d\n", Identifier.GetChars(), vsym->Offset);
 			newex = new FxClassMember((new FxSelf(ScriptPosition))->Resolve(ctx), vsym, ScriptPosition);
 		}
 		else
@@ -2370,7 +2370,7 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxClassMember::FxClassMember(FxExpression *x, PSymbolVariable* mem, const FScriptPosition &pos)
+FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	classx = x;
@@ -2418,29 +2418,34 @@ FxExpression *FxClassMember::Resolve(FCompileContext &ctx)
 		delete this;
 		return NULL;
 	}
-	switch (membervar->ValueType.Type)
+	PType *type = membervar->Type;
+	PArray *arraytype = dyn_cast<PArray>(type);
+
+	if (arraytype != NULL)
 	{
-	case VAL_Int:
-	case VAL_Bool:
+		type = arraytype->ElementType;
+	}
+	if (type->IsKindOf(RUNTIME_CLASS(PPointer)))
+	{
+		ValueType = VAL_Object;
+	}
+	else if (type->IsKindOf(RUNTIME_CLASS(PInt)))
+	{
 		ValueType = VAL_Int;
-		break;
-
-	case VAL_Float:
-	case VAL_Fixed:
-	case VAL_Angle:
+	}
+	else if (type->IsKindOf(RUNTIME_CLASS(PFloat)))
+	{
 		ValueType = VAL_Float;
-		break;
-
-	case VAL_Object:
-	case VAL_Class:
-	case VAL_Array:
-		ValueType = membervar->ValueType;
-		break;
-
-	default:
+	}
+	else
+	{
 		ScriptPosition.Message(MSG_ERROR, "Invalid type for member variable %s", membervar->SymbolName.GetChars());
 		delete this;
 		return NULL;
+	}
+	if (arraytype != NULL)
+	{
+		ValueType.MakeArray(arraytype->ElementCount);
 	}
 	return this;
 }
@@ -2452,17 +2457,17 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 
 	if (AddressRequested)
 	{
-		if (membervar->offset == 0)
+		if (membervar->Offset == 0)
 		{
 			return obj;
 		}
 		obj.Free(build);
 		ExpEmit out(build, REGT_POINTER);
-		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, build->GetConstantInt((int)membervar->offset));
+		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, build->GetConstantInt((int)membervar->Offset));
 		return out;
 	}
 
-	int offsetreg = build->GetConstantInt((int)membervar->offset);
+	int offsetreg = build->GetConstantInt((int)membervar->Offset);
 	ExpEmit loc, tmp;
 
 	if (obj.Konst)
@@ -2476,53 +2481,8 @@ ExpEmit FxClassMember::Emit(VMFunctionBuilder *build)
 		obj = newobj;
 	}
 
-	switch (membervar->ValueType.Type)
-	{
-	case VAL_Int:
-	case VAL_Sound:
-	case VAL_Name:
-	case VAL_Color:
-		loc = ExpEmit(build, REGT_INT);
-		build->Emit(OP_LW, loc.RegNum, obj.RegNum, offsetreg);
-		break;
-
-	case VAL_Bool:
-		loc = ExpEmit(build, REGT_INT);
-		// Some implementations have 1 byte bools, and others have
-		// 4 byte bools. For all I know, there might be some with
-		// 2 byte bools, too.
-		build->Emit((sizeof(bool) == 1 ? OP_LBU : sizeof(bool) == 2 ? OP_LHU : OP_LW),
-			loc.RegNum, obj.RegNum, offsetreg);
-		break;
-
-	case VAL_Float:
-		loc = ExpEmit(build, REGT_FLOAT);
-		build->Emit(OP_LDP, loc.RegNum, obj.RegNum, offsetreg);
-		break;
-
-	case VAL_Fixed:
-		loc = ExpEmit(build, REGT_FLOAT);
-		build->Emit(OP_LX, loc.RegNum, obj.RegNum, offsetreg);
-		break;
-
-	case VAL_Angle:
-		loc = ExpEmit(build, REGT_FLOAT);
-		tmp = ExpEmit(build, REGT_INT);
-		build->Emit(OP_LW, tmp.RegNum, obj.RegNum, offsetreg);
-		build->Emit(OP_CAST, loc.RegNum, tmp.RegNum, CAST_I2F);
-		build->Emit(OP_MULF_RK, loc.RegNum, loc.RegNum, build->GetConstantFloat(90.0 / ANGLE_90));
-		tmp.Free(build);
-		break;
-
-	case VAL_Object:
-	case VAL_Class:
-		loc = ExpEmit(build, REGT_POINTER);
-		build->Emit(OP_LO, loc.RegNum, obj.RegNum, offsetreg);
-		break;
-
-	default:
-		assert(0);
-	}
+	loc = ExpEmit(build, membervar->Type->GetRegType());
+	build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
 	obj.Free(build);
 	return loc;
 }

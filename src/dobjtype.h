@@ -49,21 +49,6 @@ public:
 	PSymbolConst() : PSymbol(NAME_None) {}
 };
 
-// A variable ---------------------------------------------------------
-
-class PSymbolVariable : public PSymbol
-{
-	DECLARE_CLASS(PSymbolVariable, PSymbol);
-public:
-	FExpressionType ValueType;
-	//int size;
-	intptr_t offset;
-	bool bUserVar;
-
-	PSymbolVariable(FName name) : PSymbol(name) {}
-	PSymbolVariable() : PSymbol(NAME_None) {}
-};
-
 // An action function -------------------------------------------------------
 
 struct FState;

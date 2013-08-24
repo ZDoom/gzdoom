@@ -316,6 +316,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PStruct)->TypeTableType = RUNTIME_CLASS(PStruct);
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
+	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
 	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
 	RUNTIME_CLASS(PAngle)->TypeTableType = RUNTIME_CLASS(PAngle);
 

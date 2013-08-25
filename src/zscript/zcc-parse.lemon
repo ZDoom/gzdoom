@@ -191,16 +191,20 @@ class_member(X) ::= const_def(A).						{ X = A; }
 /*----- Struct Definition -----*/
 /* Structs can define variables and enums. */
 
+%type opt_struct_body{ZCC_TreeNode *}
 %type struct_body{ZCC_TreeNode *}
 %type struct_member{ZCC_TreeNode *}
 
-struct_def(X) ::= STRUCT IDENTIFIER(A) LBRACE struct_body(B) RBRACE opt_semicolon.
+struct_def(X) ::= STRUCT IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
 {
 	NEW_AST_NODE(Struct,def);
 	def->StructName = A.Name();
 	def->Body = B;
 	X = def;
 }
+
+opt_struct_body(X) ::= .								{ X = NULL; }
+opt_struct_body(X) ::= struct_body(A).					{ X = A; }
 
 struct_body(X) ::= error.								{ X = NULL; }
 struct_body(X) ::= struct_member(A).					{ X = A; }
@@ -215,9 +219,10 @@ struct_member(X) ::= enum_def(A).						{ X = A; }
 
 %type enum_type {EZCCBuiltinType}
 %type enum_list {ZCC_EnumNode *}
+%type opt_enum_list {ZCC_EnumNode *}
 %type enumerator {ZCC_EnumNode *}
 
-enum_def(X) ::= ENUM IDENTIFIER(A) enum_type(B) LBRACE enum_list(C) opt_comma RBRACE opt_semicolon.
+enum_def(X) ::= ENUM IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRACE opt_semicolon.
 {
 	NEW_AST_NODE(Enum,def);
 	def->EnumName = A.Name();
@@ -232,6 +237,9 @@ enum_type(X) ::= COLON int_type(A).						{ X = A; }
 enum_list(X) ::= error.									{ X = NULL; }
 enum_list(X) ::= enumerator(A).							{ X = A; }
 enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; A->AppendSibling(B); }
+
+opt_enum_list(X) ::= .									{ X = NULL; }
+opt_enum_list(X) ::= enum_list(A) opt_comma.			{ X = A; }
 
 enumerator(X) ::= IDENTIFIER(A).
 {

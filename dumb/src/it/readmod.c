@@ -650,8 +650,8 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 	if ( ( rstrict & 2 ) )
 	{
-		long total_sample_size;
-		long remain;
+		int32 total_sample_size;
+		int32 remain;
 		rem = f;
 		f = dumbfile_buffer_mod_2(rem, sigdata->n_samples, sigdata->sample, &total_sample_size, &remain);
 		if (!f) {

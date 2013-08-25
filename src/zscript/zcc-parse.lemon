@@ -79,6 +79,8 @@ translation_unit(X) ::= error.											{ X = NULL; }
 
 %type external_declaration {ZCC_TreeNode *}
 external_declaration(X) ::= class_definition(A).						{ X = A; }
+external_declaration(X) ::= struct_def(A).								{ X = A; }
+external_declaration(X) ::= enum_def(A).								{ X = A; }
 
 /* Optional bits. */
 opt_semicolon ::= .

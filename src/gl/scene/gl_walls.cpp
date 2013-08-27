@@ -760,9 +760,21 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 
 	type = (seg->linedef->special == Line_Mirror && _type == RENDERWALL_M1S && gl_mirrors) ? RENDERWALL_MIRROR : _type;
 
-	float floatceilingref = FIXED2FLOAT(ceilingrefheight) + 
-							FIXED2FLOAT(tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos))) +
-							FIXED2FLOAT((peg ? (gltexture->TextureHeight(GLUSE_TEXTURE)<<FRACBITS)*tci.mTempScaleY-lh-v_offset:0));
+	float f1 = FIXED2FLOAT(ceilingrefheight);
+	float f2 = FIXED2FLOAT(tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos)));
+	float f3 = 0;
+	
+	if (peg)
+	{
+		int foo = (gltexture->TextureHeight(GLUSE_TEXTURE) << 17) / tci.mTempScaleY; 
+		fixed_t of = (foo >> 1) + (foo & 1); 
+		f3 = of - FIXED2FLOAT(lh - v_offset);
+
+		float f3a = FIXED2FLOAT((peg ? (gltexture->TextureHeight(GLUSE_TEXTURE)<<FRACBITS)*tci.mTempScaleY-lh-v_offset:0));
+		int a = 0;
+	}
+
+	float floatceilingref = f1+f2+f3;
 
 	if (!SetWallCoordinates(seg, &tci, floatceilingref, topleft, topright, bottomleft, bottomright, 
 							seg->sidedef->GetTextureXOffset(texpos))) return;
@@ -1448,7 +1460,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
-	if (seg->linedef-lines==2570)
+	if (seg->linedef-lines==636)
 		__asm nop
 #endif
 #endif

@@ -760,21 +760,8 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 
 	type = (seg->linedef->special == Line_Mirror && _type == RENDERWALL_M1S && gl_mirrors) ? RENDERWALL_MIRROR : _type;
 
-	float f1 = FIXED2FLOAT(ceilingrefheight);
-	float f2 = FIXED2FLOAT(tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos)));
-	float f3 = 0;
-	
-	if (peg)
-	{
-		int foo = (gltexture->TextureHeight(GLUSE_TEXTURE) << 17) / tci.mTempScaleY; 
-		fixed_t of = (foo >> 1) + (foo & 1); 
-		f3 = of - FIXED2FLOAT(lh - v_offset);
-
-		float f3a = FIXED2FLOAT((peg ? (gltexture->TextureHeight(GLUSE_TEXTURE)<<FRACBITS)*tci.mTempScaleY-lh-v_offset:0));
-		int a = 0;
-	}
-
-	float floatceilingref = f1+f2+f3;
+	float floatceilingref = FIXED2FLOAT(ceilingrefheight + tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos)));
+	if (peg) floatceilingref += tci.mRenderHeight - FIXED2FLOAT(lh + v_offset);
 
 	if (!SetWallCoordinates(seg, &tci, floatceilingref, topleft, topright, bottomleft, bottomright, 
 							seg->sidedef->GetTextureXOffset(texpos))) return;

@@ -223,7 +223,7 @@ struct FCoverageBuilder
 			{
 				FCoverageVertex *v1 = &shape[i];
 				FCoverageVertex *v2 = &shape[(i+1) % shape.Size()];
-				FCoverageLine vl = { *v1, *v2 };
+				FCoverageLine vl = {{*v1, *v2}};
 
 				double dist_v1 = PartitionDistance(v1, bsp);
 				double dist_v2 = PartitionDistance(v2, bsp);

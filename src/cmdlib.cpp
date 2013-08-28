@@ -957,7 +957,7 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 	}
 }
 
-#elif defined(__sun) || defined(linux)
+#elif defined(__sun) || defined(__linux__)
 
 //==========================================================================
 //

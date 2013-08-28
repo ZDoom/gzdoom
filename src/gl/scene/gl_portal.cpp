@@ -781,7 +781,7 @@ void GLPlaneMirrorPortal::DrawContents()
 	gl.Enable(GL_CLIP_PLANE0+renderdepth);
 	// This only works properly for non-sloped planes so don't bother with the math.
 	//double d[4]={origin->a/65536., origin->c/65536., origin->b/65536., FIXED2FLOAT(origin->d)};
-	double d[4]={0, PlaneMirrorMode, 0, FIXED2FLOAT(origin->d)};
+	double d[4]={0, static_cast<double>(PlaneMirrorMode), 0, FIXED2FLOAT(origin->d)};
 	gl.ClipPlane(GL_CLIP_PLANE0+renderdepth, d);
 
 	GLRenderer->DrawScene();

@@ -430,7 +430,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int cm, int clampmode, int
 		if (!hwtex->Bind(texunit, cm, translation))
 		{
 			
-			int w, h;
+			int w=0, h=0;
 
 			// Create this texture
 			unsigned char * buffer = NULL;

@@ -44,7 +44,7 @@
 #include "i_system.h"
 #include "gl/system/gl_cvars.h"
 
-#if defined (unix) || defined (__APPLE__)
+#if defined (__unix__) || defined (__APPLE__)
 #include <SDL.h>
 #define wglGetProcAddress(x) (*SDL_GL_GetProcAddress)(x)
 #endif
@@ -210,7 +210,7 @@ void gl_LoadExtensions()
 	// Don't even start if it's lower than 1.4
 	if (strcmp(version, "1.4") < 0) 
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least GL 1.4 is required to run "GAMENAME".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least GL 1.4 is required to run " GAMENAME ".\n");
 	}
 
 	// This loads any function pointers and flags that require a vaild render context to

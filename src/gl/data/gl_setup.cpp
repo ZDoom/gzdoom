@@ -130,7 +130,7 @@ static int MergeMapSections(int num)
 	cvertex_t vt;
 
 	// first step: Set mapsection for all vertex positions.
-	for(DWORD i=0;i<numsegs;i++)
+	for(DWORD i=0;i<(DWORD)numsegs;i++)
 	{
 		seg_t * seg = &segs[i];
 		int section = seg->Subsector->mapsection;
@@ -142,7 +142,7 @@ static int MergeMapSections(int num)
 	}
 
 	// second step: Check if any seg references more than one mapsection, either by subsector or by vertex
-	for(DWORD i=0;i<numsegs;i++)
+	for(DWORD i=0;i<(DWORD)numsegs;i++)
 	{
 		seg_t * seg = &segs[i];
 		int section = seg->Subsector->mapsection;

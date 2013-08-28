@@ -3993,8 +3993,12 @@ void AActor::HandleSpawnFlags ()
 	}
 	if (SpawnFlags & MTF_SECRET)
 	{
-		//Printf("Secret %s in sector %i!\n", GetTag(), Sector->sectornum);
-		flags5 |= MF5_COUNTSECRET;
+		if (!(flags5 & MF5_COUNTSECRET))
+		{
+			//Printf("Secret %s in sector %i!\n", GetTag(), Sector->sectornum);
+			flags5 |= MF5_COUNTSECRET;
+			level.total_secrets++;
+		}
 	}
 }
 

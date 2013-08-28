@@ -150,7 +150,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
 	ACTION_PARAM_FIXED(maxdist, 0);
 	ACTION_PARAM_INT(Flags, 1);
 
-	AActor * target;
+	AActor * target = NULL;
 	AActor * emitter = self;
 
 	if (self->player != NULL || (Flags & AMF_TARGETEMITTER))

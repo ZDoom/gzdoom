@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include "doomtype.h"
 
-#if defined(__GNUC__) && defined(__i386__)
+#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__)
 #include "gccinlines.h"
 #elif defined(_MSC_VER) && defined(_M_IX86)
 #include "mscinlines.h"

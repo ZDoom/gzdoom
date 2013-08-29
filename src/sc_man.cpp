@@ -895,7 +895,7 @@ FString FScanner::TokenName (int token, const char *string)
 
 //==========================================================================
 //
-// FScanner::ScriptError
+// FScanner::GetMessageLine
 //
 //==========================================================================
 

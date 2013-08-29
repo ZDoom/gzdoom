@@ -186,6 +186,7 @@ static void DoParse(const char *filename)
 
 	while (sc.GetToken())
 	{
+		value.SourceLoc = sc.GetMessageLine();
 		if (sc.TokenType == TK_StringConst)
 		{
 			value.String = state.Strings.Alloc(sc.String, sc.StringLen);

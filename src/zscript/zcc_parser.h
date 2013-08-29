@@ -11,11 +11,15 @@ struct ZCCParseState
 	struct ZCC_TreeNode *TopNode;
 };
 
-union ZCCToken
+struct ZCCToken
 {
-	int Int;
-	double Float;
-	FString *String;
+	union
+	{
+		int Int;
+		double Float;
+		FString *String;
+	};
+	int SourceLoc;
 
 	ENamedName Name() { return ENamedName(Int); }
 };
@@ -194,6 +198,11 @@ struct ZCC_TreeNode
 	// the whole list.
 	ZCC_TreeNode *SiblingNext;
 	ZCC_TreeNode *SiblingPrev;
+
+	// can't use FScriptPosition, because the string wouldn't have a chance to
+	// destruct if we did that.
+	FString *SourceName;
+	int SourceLoc;
 
 	// Node type is one of the node types above, which corresponds with
 	// one of the structures below.

@@ -180,6 +180,33 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 #endif
 }
 
+INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror)
+{
+	const char *dot = strchr (flagname, '.');
+	FFlagDef *fd;
+	const PClass *cls = owner->GetClass();
+
+	if (dot != NULL)
+	{
+		FString part1(flagname, dot-flagname);
+		fd = FindFlag (cls, part1, dot+1);
+	}
+	else
+	{
+		fd = FindFlag (cls, flagname, NULL);
+	}
+
+	if (fd != NULL)
+	{
+		return CheckActorFlag(owner, fd);
+	}
+	else
+	{
+		if (printerror) Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+		return false;
+	}
+}
+
 //===========================================================================
 //
 // HandleDeprecatedFlags
@@ -433,7 +460,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	memcpy (defaults, GetDefault<AActor>(), sizeof(AActor));
+	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
 	if (bag.DropItemList != NULL)
 	{
 		FreeDropItemChain (bag.DropItemList);
@@ -1286,7 +1313,8 @@ DEFINE_PROPERTY(clearflags, 0, Actor)
 		defaults->flags3 =
 		defaults->flags4 =
 		defaults->flags5 =
-		defaults->flags6 = 0;
+		defaults->flags6 =
+		defaults->flags7 = 0;
 	defaults->flags2 &= MF2_ARGSDEFINED;	// this flag must not be cleared
 }
 
@@ -2113,9 +2141,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
-	// Puts a percent value in the 0.0..1.0 range
 	PROP_FIXED_PARM(f, 0);
-	*pStrength = f / 100;
+	*pStrength = f;
 }
 
 //==========================================================================
@@ -2417,6 +2444,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 {
 	PROP_FIXED_PARM(z, 0);
 	defaults->UseRange = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->AirCapacity = z;
 }
 
 //==========================================================================

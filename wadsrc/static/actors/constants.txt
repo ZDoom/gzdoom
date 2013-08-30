@@ -4,6 +4,9 @@ const int PAF_NOSKULLATTACK = 1;
 const int PAF_AIMFACING = 2;
 const int PAF_NOTARGET = 4;
 
+// Flags for A_VileAttack
+const int VAF_DMGTYPEAPPLYTODIRECT = 1;
+
 // Flags for A_Saw
 const int SF_NORANDOM = 1;
 const int SF_RANDOMLIGHTMISS = 2;
@@ -344,6 +347,13 @@ enum
 	CLOFF_SKIPOBSTACLES = CLOFF_SKIPENEMY|CLOFF_SKIPFRIEND|CLOFF_SKIPOBJECT|CLOFF_SKIPNONHOSTILE,
 	CLOFF_NOAIM = CLOFF_NOAIM_VERT|CLOFF_NOAIM_HORZ
 };
+
+
+// Flags for A_AlertMonsters
+const int AMF_TARGETEMITTER = 1;
+const int AMF_TARGETNONPLAYER = 2;
+const int AMF_EMITFROMTARGET = 4;
+
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

@@ -46,6 +46,7 @@
 #include "p_acs.h"
 #include "p_saveg.h"
 #include "p_lnspec.h"
+#include "p_enemy.h"
 #include "m_random.h"
 #include "doomstat.h"
 #include "c_console.h"
@@ -3512,6 +3513,8 @@ enum
 	APROP_Radius		= 36,
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
+	APROP_ViewHeight	= 39,
+	APROP_AttackZOffset	= 40
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3727,6 +3730,16 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->reactiontime = value;
 		break;
 
+	case APROP_ViewHeight:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->ViewHeight = value;
+		break;
+
+	case APROP_AttackZOffset:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3799,6 +3812,23 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Radius:		return actor->radius;
 	case APROP_ReactionTime:return actor->reactiontime;
 	case APROP_MeleeRange:	return actor->meleerange;
+	case APROP_ViewHeight:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->ViewHeight;
+							}
+							else
+							{
+								return 0;
+							}
+	case APROP_AttackZOffset:
+							if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->AttackZOffset;
+							}
+							else
+							{
+								return 0;
+							}
 
 	case APROP_SeeSound:	return GlobalACSStrings.AddString(actor->SeeSound, stack, stackdepth);
 	case APROP_AttackSound:	return GlobalACSStrings.AddString(actor->AttackSound, stack, stackdepth);
@@ -3851,6 +3881,8 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Radius:
 		case APROP_ReactionTime:
 		case APROP_MeleeRange:
+		case APROP_ViewHeight:
+		case APROP_AttackZOffset:
 			return (GetActorProperty(tid, property, NULL, 0) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -4202,6 +4234,8 @@ enum EACSFunctions
 	ACSF_PlayActorSound,
 	ACSF_SpawnDecal,
 	ACSF_CheckFont,
+	ACSF_DropItem,
+	ACSF_CheckFlag,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -5203,6 +5237,49 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_CheckFont:
 			// bool CheckFont(str fontname)
 			return V_GetFont(FBehavior::StaticLookupString(args[0])) != NULL;
+
+		case ACSF_DropItem:
+		{
+			const char *type = FBehavior::StaticLookupString(args[1]);
+			int amount = argCount >= 3? args[2] : -1;
+			int chance = argCount >= 4? args[3] : 256;
+			const PClass *cls = PClass::FindClass(type);
+			int cnt = 0;
+			if (cls != NULL)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						P_DropItem(activator, cls, amount, chance);
+						cnt++;
+					}
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *actor;
+
+					while ((actor = it.Next()) != NULL)
+					{
+						P_DropItem(actor, cls, amount, chance);
+						cnt++;
+					}
+				}
+				return cnt;
+			}
+			break;
+		}
+
+		case ACSF_CheckFlag:
+		{
+			AActor *actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				return !!CheckActorFlag(actor, FBehavior::StaticLookupString(args[1]));
+			}
+			break;
+		}
 
 		default:
 			break;

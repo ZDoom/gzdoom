@@ -84,7 +84,7 @@ ACTOR Actor native //: Thinker
 	action native A_VileChase();
 	action native A_VileStart();
 	action native A_VileTarget(class<Actor> fire = "ArchvileFire");
-	action native A_VileAttack(sound snd = "vile/stop", int initialdmg = 20, int blastdmg = 70, int blastradius = 70, float thrustfac = 1.0, name damagetype = "Fire");
+	action native A_VileAttack(sound snd = "vile/stop", int initialdmg = 20, int blastdmg = 70, int blastradius = 70, float thrustfac = 1.0, name damagetype = "Fire", int flags = 0);
 	action native A_StartFire();
 	action native A_Fire(float spawnheight = 0);
 	action native A_FireCrackle();
@@ -180,7 +180,7 @@ ACTOR Actor native //: Thinker
 	action native A_TurretLook();
 	action native A_KlaxonBlare();
 	action native A_Countdown();
-	action native A_AlertMonsters(float maxdist = 0);
+	action native A_AlertMonsters(float maxdist = 0, int flags = 0);
 	action native A_ClearSoundTarget();
 	action native A_FireAssaultGun();
 	action native A_CheckTerrain();
@@ -300,6 +300,7 @@ ACTOR Actor native //: Thinker
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	action native A_SetTics(int tics);
 	action native A_SetDamageType(name damagetype);
+	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
 
 	action native A_CheckSightOrRange(float distance, state label);
 	action native A_CheckRange(float distance, state label);

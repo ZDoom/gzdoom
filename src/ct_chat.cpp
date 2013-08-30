@@ -169,7 +169,7 @@ bool CT_Responder (event_t *ev)
 			}
 			return true;
 		}
-#ifdef unix
+#ifdef __unix__
 		else if (ev->subtype == EV_GUI_MButtonDown)
 		{
 			CT_PasteChat(I_GetFromClipboard(true));

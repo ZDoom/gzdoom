@@ -31,6 +31,7 @@ bool CheckDeprecatedFlags(const AActor *actor, FActorInfo *info, int index);
 const char *GetFlagName(unsigned int flagnum, int flagoffset);
 void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
 INTBOOL CheckActorFlag(const AActor *actor, FFlagDef *fd);
+INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror = true);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
 
@@ -354,11 +355,11 @@ int MatchString (const char *in, const char **strings);
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 #define DEFINE_MEMBER_VARIABLE(name, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, name), RUNTIME_CLASS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, name)), RUNTIME_CLASS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 #define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, myoffsetof(cls, alias), RUNTIME_CLASS(cls) }; \
+	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, alias)), RUNTIME_CLASS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
 	

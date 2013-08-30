@@ -1425,6 +1425,9 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 		if (!(link->flags3 & MF3_ISMONSTER))
 			continue;			// don't target it if it isn't a monster (could be a barrel)
 
+		if (link->flags7 & MF7_NEVERTARGET)
+			continue;
+
 		other = NULL;
 		if (link->flags & MF_FRIENDLY)
 		{
@@ -2644,6 +2647,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			corpsehit->flags4 = info->flags4;
 			corpsehit->flags5 = info->flags5;
 			corpsehit->flags6 = info->flags6;
+			corpsehit->flags7 = info->flags7;
 			corpsehit->health = info->health;
 			corpsehit->target = NULL;
 			corpsehit->lastenemy = NULL;
@@ -3087,6 +3091,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 			{
 				AInventory * inv = static_cast<AInventory *>(mo);
 				ModifyDropAmount(inv, dropamount);
+				inv->ItemFlags |= IF_TOSSED;
 				if (inv->SpecialDropAction (source))
 				{
 					// The special action indicates that the item should not spawn

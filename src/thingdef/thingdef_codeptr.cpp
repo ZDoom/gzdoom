@@ -3777,32 +3777,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 
 	COPY_AAPTR_NOT_NULL(self, owner, checkpointer);
 	
-	const char *dot = strchr (flagname, '.');
-	FFlagDef *fd;
-	const PClass *cls = owner->GetClass();
-
-	if (dot != NULL)
+	if (CheckActorFlag(owner, flagname))
 	{
-		FString part1(flagname, dot-flagname);
-		fd = FindFlag (cls, part1, dot+1);
+		ACTION_JUMP(jumpto);
 	}
-	else
-	{
-		fd = FindFlag (cls, flagname, NULL);
-	}
-
-	if (fd != NULL)
-	{
-		if (CheckActorFlag(owner, fd))
-		{
-			ACTION_JUMP(jumpto);
-		}
-	}
-	else
-	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
-	}
-
 }
 
 
@@ -4950,4 +4928,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDamageType)
 	ACTION_PARAM_NAME(damagetype, 0);
 
 	self->DamageType = damagetype;
+}
+
+//==========================================================================
+//
+// A_DropItem
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(spawntype, 0);
+	ACTION_PARAM_INT(amount, 1);
+	ACTION_PARAM_INT(chance, 2);
+
+	P_DropItem(self, spawntype, amount, chance);
 }

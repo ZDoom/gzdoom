@@ -333,7 +333,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 }
 
 
-#if defined(unix)
+#if defined(__unix__)
 FString GetUserFile (const char *file)
 {
 	FString path;
@@ -698,7 +698,7 @@ void M_ScreenShot (const char *filename)
 	// find a file name to save it to
 	if (filename == NULL || filename[0] == '\0')
 	{
-#if !defined(unix) && !defined(__APPLE__)
+#if !defined(__unix__) && !defined(__APPLE__)
 		if (Args->CheckParm ("-cdrom"))
 		{
 			autoname = CDROM_DIR "\\";
@@ -715,7 +715,7 @@ void M_ScreenShot (const char *filename)
 			dirlen = autoname.Len();
 			if (dirlen == 0)
 			{
-#ifdef unix
+#ifdef __unix__
 				autoname = "~/" GAME_DIR "/screenshots/";
 #elif defined(__APPLE__)
 				char cpath[PATH_MAX];

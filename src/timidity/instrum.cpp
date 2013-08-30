@@ -166,7 +166,7 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 		tmp += ".pat";
 		if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
 		{
-#ifdef unix			// Windows isn't case-sensitive.
+#ifdef __unix__			// Windows isn't case-sensitive.
 			tmp.ToUpper();
 			if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
 #endif

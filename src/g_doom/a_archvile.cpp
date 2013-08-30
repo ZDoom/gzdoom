@@ -101,15 +101,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 //
 // A_VileAttack
 //
+
+// A_VileAttack flags
+#define VAF_DMGTYPEAPPLYTODIRECT 1
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 {		
-	ACTION_PARAM_START(6);
+	ACTION_PARAM_START(7);
 	ACTION_PARAM_SOUND(snd,0);
 	ACTION_PARAM_INT(dmg,1);
 	ACTION_PARAM_INT(blastdmg,2);
 	ACTION_PARAM_INT(blastrad,3);
 	ACTION_PARAM_FIXED(thrust,4);
 	ACTION_PARAM_NAME(dmgtype,5);
+	ACTION_PARAM_INT(flags,6);
 
 	AActor *fire, *target;
 	angle_t an;
@@ -123,7 +128,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 		return;
 
 	S_Sound (self, CHAN_WEAPON, snd, 1, ATTN_NORM);
-	int newdam = P_DamageMobj (target, self, self, dmg, NAME_None);
+
+	int newdam;
+
+	if (flags & VAF_DMGTYPEAPPLYTODIRECT)
+		newdam = P_DamageMobj (target, self, self, dmg, dmgtype);
+
+	else
+		newdam = P_DamageMobj (target, self, self, dmg, NAME_None);
+
 	P_TraceBleed (newdam > 0 ? newdam : dmg, target);
 		
 	an = self->angle >> ANGLETOFINESHIFT;

@@ -505,7 +505,7 @@ bool FCajunMaster::LoadBots ()
 	bool gotteam = false;
 
 	bglobal.ForgetBots ();
-#ifndef unix
+#ifndef __unix__
 	tmp = progdir;
 	tmp += "zcajun/" BOTFILENAME;
 	if (!FileExists (tmp))

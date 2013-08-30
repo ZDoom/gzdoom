@@ -4935,7 +4935,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(tics_to_set, 0);
 
-	if (stateowner != self && self->player != NULL)
+	if (stateowner != self && self->player != NULL && stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)))
 	{ // Is this a weapon? Need to check psp states for a match, then. Blah.
 		for (int i = 0; i < NUMPSPRITES; ++i)
 		{

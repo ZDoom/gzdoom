@@ -8394,7 +8394,7 @@ scriptwait:
 			{
 				int playernum = STACK(1);
 
-				if (playernum < 0 || playernum >= MAXPLAYERS || !playeringame[playernum] || players[playernum].camera == NULL)
+				if (playernum < 0 || playernum >= MAXPLAYERS || !playeringame[playernum] || players[playernum].camera == NULL || players[playernum].camera->player != NULL)
 				{
 					STACK(1) = -1;
 				}

@@ -4935,6 +4935,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(tics_to_set, 0);
 
+	if (stateowner != self && self->player != NULL)
+	{ // Is this a weapon? Need to check psp states for a match, then. Blah.
+		for (int i = 0; i < NUMPSPRITES; ++i)
+		{
+			if (self->player->psprites[i].state == CallingState)
+			{
+				self->player->psprites[i].tics = tics_to_set;
+				return;
+			}
+		}
+	}
+	// Just set tics for self.
 	self->tics = tics_to_set;
 }
 

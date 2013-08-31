@@ -541,7 +541,7 @@ CCMD (mapchecksum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		map = P_OpenMapData(argv[i]);
+		map = P_OpenMapData(argv[i], true);
 		if (map == NULL)
 		{
 			Printf("Cannot load %s as a map\n", argv[i]);

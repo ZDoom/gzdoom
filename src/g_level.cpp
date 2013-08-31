@@ -1923,7 +1923,7 @@ CCMD(listmaps)
 	for(unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
-		MapData *map = P_OpenMapData(info->mapname);
+		MapData *map = P_OpenMapData(info->mapname, true);
 
 		if (map != NULL)
 		{

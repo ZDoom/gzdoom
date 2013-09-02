@@ -73,7 +73,6 @@ static FRandom pr_script("FScript");
 
 #define AngleToFixed(x)  ((((double) x) / ((double) ANG45/45)) * FRACUNIT)
 #define FixedToAngle(x)  ((((double) x) / FRACUNIT) * ANG45/45)
-#define FIXED_TO_FLOAT(f) ((f)/(float)FRACUNIT)
 
 // functions. FParser::SF_ means Script Function not, well.. heh, me
 
@@ -1417,11 +1416,11 @@ void FParser::SF_PointToDist(void)
 	if (CheckArgs(4))
 	{
 		// Doing this in floating point is actually faster with modern computers!
-		float x = floatvalue(t_argv[2]) - floatvalue(t_argv[0]);
-		float y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
+		double x = floatvalue(t_argv[2]) - floatvalue(t_argv[0]);
+		double y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
    
 		t_return.type = svt_fixed;
-		t_return.value.f = (fixed_t)(sqrtf(x*x+y*y)*65536.f);
+		t_return.value.f = FLOAT2FIXED(sqrt(x*x+y*y)*65536.f);
 	}
 }
 

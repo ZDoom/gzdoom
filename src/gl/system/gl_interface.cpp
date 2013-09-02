@@ -42,6 +42,7 @@
 #include "zstring.h"
 #include "version.h"
 #include "i_system.h"
+#include "v_text.h"
 #include "gl/system/gl_cvars.h"
 
 #if defined (__unix__) || defined (__APPLE__)
@@ -207,10 +208,16 @@ void gl_LoadExtensions()
 
 	const char *version = (const char*)glGetString(GL_VERSION);
 
-	// Don't even start if it's lower than 1.4
-	if (strcmp(version, "1.4") < 0) 
+	// Don't even start if it's lower than 1.3
+	if (strcmp(version, "1.3") < 0) 
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least GL 1.4 is required to run " GAMENAME ".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least GL 1.3 is required to run " GAMENAME ".\n");
+	}
+	else if (strcmp(version, "1.4") < 0) 
+	{
+		// The engine will still assume 1.4 but the only 1.4 feature being used is GL_GENERATE_MIPMAP which should be supported as an extension
+		// on most 1.3 cards this is present but let's print a warning that not everything may work as intended.
+		Printf(TEXTCOLOR_RED "The current graphics driver implements a OpenGL version lower than 1.4 and may not support all features " GAMENAME " requires.\n");
 	}
 
 	// This loads any function pointers and flags that require a vaild render context to

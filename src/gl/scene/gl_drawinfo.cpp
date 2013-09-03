@@ -981,55 +981,55 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 	int recursion = GLPortal::GetRecursion();
 
 	// Create stencil 
-	gl.StencilFunc(GL_EQUAL,recursion,~0);		// create stencil
-	gl.StencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
-	gl.ColorMask(0,0,0,0);						// don't write to the graphics buffer
+	glStencilFunc(GL_EQUAL,recursion,~0);		// create stencil
+	glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
+	glColorMask(0,0,0,0);						// don't write to the graphics buffer
 	gl_RenderState.EnableTexture(false);
-	gl.Color3f(1,1,1);
-	gl.Enable(GL_DEPTH_TEST);
-	gl.DepthMask(true);
+	glColor3f(1,1,1);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
 
 	gl_RenderState.Apply();
-	gl.Begin(GL_TRIANGLE_FAN);
-	gl.Vertex3f(ws->x1, ws->z1, ws->y1);
-	gl.Vertex3f(ws->x1, ws->z2, ws->y1);
-	gl.Vertex3f(ws->x2, ws->z2, ws->y2);
-	gl.Vertex3f(ws->x2, ws->z1, ws->y2);
-	gl.End();
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex3f(ws->x1, ws->z1, ws->y1);
+	glVertex3f(ws->x1, ws->z2, ws->y1);
+	glVertex3f(ws->x2, ws->z2, ws->y2);
+	glVertex3f(ws->x2, ws->z1, ws->y2);
+	glEnd();
 
-	gl.StencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
-	gl.StencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
+	glStencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
+	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
 
-	gl.ColorMask(1,1,1,1);						// don't write to the graphics buffer
+	glColorMask(1,1,1,1);						// don't write to the graphics buffer
 	gl_RenderState.EnableTexture(true);
-	gl.Disable(GL_DEPTH_TEST);
-	gl.DepthMask(false);
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(false);
 }
 
 void FDrawInfo::ClearFloodStencil(wallseg * ws)
 {
 	int recursion = GLPortal::GetRecursion();
 
-	gl.StencilOp(GL_KEEP,GL_KEEP,GL_DECR);
+	glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
 	gl_RenderState.EnableTexture(false);
-	gl.ColorMask(0,0,0,0);						// don't write to the graphics buffer
-	gl.Color3f(1,1,1);
+	glColorMask(0,0,0,0);						// don't write to the graphics buffer
+	glColor3f(1,1,1);
 
 	gl_RenderState.Apply();
-	gl.Begin(GL_TRIANGLE_FAN);
-	gl.Vertex3f(ws->x1, ws->z1, ws->y1);
-	gl.Vertex3f(ws->x1, ws->z2, ws->y1);
-	gl.Vertex3f(ws->x2, ws->z2, ws->y2);
-	gl.Vertex3f(ws->x2, ws->z1, ws->y2);
-	gl.End();
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex3f(ws->x1, ws->z1, ws->y1);
+	glVertex3f(ws->x1, ws->z2, ws->y1);
+	glVertex3f(ws->x2, ws->z2, ws->y2);
+	glVertex3f(ws->x2, ws->z1, ws->y2);
+	glEnd();
 
 	// restore old stencil op.
-	gl.StencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-	gl.StencilFunc(GL_EQUAL,recursion,~0);
+	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
+	glStencilFunc(GL_EQUAL,recursion,~0);
 	gl_RenderState.EnableTexture(true);
-	gl.ColorMask(1,1,1,1);
-	gl.Enable(GL_DEPTH_TEST);
-	gl.DepthMask(true);
+	glColorMask(1,1,1,1);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
 }
 
 //==========================================================================
@@ -1078,7 +1078,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 
 	bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 
-	gl.Begin(GL_TRIANGLE_FAN);
+	glBegin(GL_TRIANGLE_FAN);
 	float prj_fac1 = (planez-fviewz)/(ws->z1-fviewz);
 	float prj_fac2 = (planez-fviewz)/(ws->z2-fviewz);
 
@@ -1094,24 +1094,24 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	float px4 = fviewx + prj_fac1 * (ws->x2-fviewx);
 	float py4 = fviewy + prj_fac1 * (ws->y2-fviewy);
 
-	gl.TexCoord2f(px1 / 64, -py1 / 64);
-	gl.Vertex3f(px1, planez, py1);
+	glTexCoord2f(px1 / 64, -py1 / 64);
+	glVertex3f(px1, planez, py1);
 
-	gl.TexCoord2f(px2 / 64, -py2 / 64);
-	gl.Vertex3f(px2, planez, py2);
+	glTexCoord2f(px2 / 64, -py2 / 64);
+	glVertex3f(px2, planez, py2);
 
-	gl.TexCoord2f(px3 / 64, -py3 / 64);
-	gl.Vertex3f(px3, planez, py3);
+	glTexCoord2f(px3 / 64, -py3 / 64);
+	glVertex3f(px3, planez, py3);
 
-	gl.TexCoord2f(px4 / 64, -py4 / 64);
-	gl.Vertex3f(px4, planez, py4);
+	glTexCoord2f(px4 / 64, -py4 / 64);
+	glVertex3f(px4, planez, py4);
 
-	gl.End();
+	glEnd();
 
 	if (pushed)
 	{
-		gl.PopMatrix();
-		gl.MatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
 	}
 }
 

@@ -165,7 +165,7 @@ void GLSprite::Draw(int pass)
 			}
 
 			gl_RenderState.AlphaFunc(GL_GEQUAL,minalpha*gl_mask_sprite_threshold);
-			gl.Color4f(0.2f,0.2f,0.2f,fuzzalpha);
+			glColor4f(0.2f,0.2f,0.2f,fuzzalpha);
 			additivefog = true;
 		}
 		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -220,7 +220,7 @@ void GLSprite::Draw(int pass)
 		                                   //&& GLRenderer->mViewActor != NULL
 		                                   && (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD ))) );
 		gl_RenderState.Apply();
-		gl.Begin(GL_TRIANGLE_STRIP);
+		glBegin(GL_TRIANGLE_STRIP);
 		if ( drawWithXYBillboard )
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
@@ -243,17 +243,17 @@ void GLSprite::Draw(int pass)
 
 			if (gltexture)
 			{
-				gl.TexCoord2f(ul, vt); gl.Vertex3fv(&v1[0]);
-				gl.TexCoord2f(ur, vt); gl.Vertex3fv(&v2[0]);
-				gl.TexCoord2f(ul, vb); gl.Vertex3fv(&v3[0]);
-				gl.TexCoord2f(ur, vb); gl.Vertex3fv(&v4[0]);
+				glTexCoord2f(ul, vt); glVertex3fv(&v1[0]);
+				glTexCoord2f(ur, vt); glVertex3fv(&v2[0]);
+				glTexCoord2f(ul, vb); glVertex3fv(&v3[0]);
+				glTexCoord2f(ur, vb); glVertex3fv(&v4[0]);
 			}
 			else	// Particle
 			{
-				gl.Vertex3fv(&v1[0]);
-				gl.Vertex3fv(&v2[0]);
-				gl.Vertex3fv(&v3[0]);
-				gl.Vertex3fv(&v4[0]);
+				glVertex3fv(&v1[0]);
+				glVertex3fv(&v2[0]);
+				glVertex3fv(&v3[0]);
+				glVertex3fv(&v4[0]);
 			}
 
 		}
@@ -261,20 +261,20 @@ void GLSprite::Draw(int pass)
 		{
 			if (gltexture)
 			{
-				gl.TexCoord2f(ul, vt); gl.Vertex3f(x1, z1, y1);
-				gl.TexCoord2f(ur, vt); gl.Vertex3f(x2, z1, y2);
-				gl.TexCoord2f(ul, vb); gl.Vertex3f(x1, z2, y1);
-				gl.TexCoord2f(ur, vb); gl.Vertex3f(x2, z2, y2);
+				glTexCoord2f(ul, vt); glVertex3f(x1, z1, y1);
+				glTexCoord2f(ur, vt); glVertex3f(x2, z1, y2);
+				glTexCoord2f(ul, vb); glVertex3f(x1, z2, y1);
+				glTexCoord2f(ur, vb); glVertex3f(x2, z2, y2);
 			}
 			else	// Particle
 			{
-				gl.Vertex3f(x1, z1, y1);
-				gl.Vertex3f(x2, z1, y2);
-				gl.Vertex3f(x1, z2, y1);
-				gl.Vertex3f(x2, z2, y2);
+				glVertex3f(x1, z1, y1);
+				glVertex3f(x2, z1, y2);
+				glVertex3f(x1, z2, y1);
+				glVertex3f(x2, z2, y2);
 			}
 		}
-		gl.End();
+		glEnd();
 	}
 	else
 	{

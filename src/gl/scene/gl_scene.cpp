@@ -164,7 +164,7 @@ void FGLRenderer::SetViewArea()
 void FGLRenderer::ResetViewport()
 {
 	int trueheight = static_cast<OpenGLFrameBuffer*>(screen)->GetTrueHeight();	// ugh...
-	gl.Viewport(0, (trueheight-screen->GetHeight())/2, screen->GetWidth(), screen->GetHeight()); 
+	glViewport(0, (trueheight-screen->GetHeight())/2, screen->GetWidth(), screen->GetHeight()); 
 }
 
 //-----------------------------------------------------------------------------
@@ -197,28 +197,28 @@ void FGLRenderer::SetViewport(GL_IRECT *bounds)
 
 		int vw = viewwidth;
 		int vh = viewheight;
-		gl.Viewport(viewwindowx, trueheight-bars-(height+viewwindowy-((height-vh)/2)), vw, height);
-		gl.Scissor(viewwindowx, trueheight-bars-(vh+viewwindowy), vw, vh);
+		glViewport(viewwindowx, trueheight-bars-(height+viewwindowy-((height-vh)/2)), vw, height);
+		glScissor(viewwindowx, trueheight-bars-(vh+viewwindowy), vw, vh);
 	}
 	else
 	{
-		gl.Viewport(bounds->left, bounds->top, bounds->width, bounds->height);
-		gl.Scissor(bounds->left, bounds->top, bounds->width, bounds->height);
+		glViewport(bounds->left, bounds->top, bounds->width, bounds->height);
+		glScissor(bounds->left, bounds->top, bounds->width, bounds->height);
 	}
-	gl.Enable(GL_SCISSOR_TEST);
+	glEnable(GL_SCISSOR_TEST);
 	
 	#ifdef _DEBUG
-		gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
-		gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	#else
-		gl.Clear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	#endif
 
-	gl.Enable(GL_MULTISAMPLE);
-	gl.Enable(GL_DEPTH_TEST);
-	gl.Enable(GL_STENCIL_TEST);
-	gl.StencilFunc(GL_ALWAYS,0,~0);	// default stencil
-	gl.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS,0,~0);	// default stencil
+	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 }
 
 //-----------------------------------------------------------------------------
@@ -248,8 +248,8 @@ void FGLRenderer::SetCameraPos(fixed_t viewx, fixed_t viewy, fixed_t viewz, angl
 
 void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 {
-	gl.MatrixMode(GL_PROJECTION);
-	gl.LoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
 	gluPerspective(fovy, ratio, 5.f, 65536.f);
@@ -267,24 +267,24 @@ void FGLRenderer::SetViewMatrix(bool mirror, bool planemirror)
 	if (gl.shadermodel >= 4)
 	{
 		gl.ActiveTexture(GL_TEXTURE7);
-		gl.MatrixMode(GL_TEXTURE);
-		gl.LoadIdentity();
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
 	}
 	gl.ActiveTexture(GL_TEXTURE0);
-	gl.MatrixMode(GL_TEXTURE);
-	gl.LoadIdentity();
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
 
-	gl.MatrixMode(GL_MODELVIEW);
-	gl.LoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -1:1;
 
-	gl.Rotatef(GLRenderer->mAngles.Roll,  0.0f, 0.0f, 1.0f);
-	gl.Rotatef(GLRenderer->mAngles.Pitch, 1.0f, 0.0f, 0.0f);
-	gl.Rotatef(GLRenderer->mAngles.Yaw,   0.0f, mult, 0.0f);
-	gl.Translatef( GLRenderer->mCameraPos.X * mult, -GLRenderer->mCameraPos.Z*planemult, -GLRenderer->mCameraPos.Y);
-	gl.Scalef(-mult, planemult, 1);
+	glRotatef(GLRenderer->mAngles.Roll,  0.0f, 0.0f, 1.0f);
+	glRotatef(GLRenderer->mAngles.Pitch, 1.0f, 0.0f, 0.0f);
+	glRotatef(GLRenderer->mAngles.Yaw,   0.0f, mult, 0.0f);
+	glTranslatef( GLRenderer->mCameraPos.X * mult, -GLRenderer->mCameraPos.Z*planemult, -GLRenderer->mCameraPos.Y);
+	glScalef(-mult, planemult, 1);
 }
 
 
@@ -346,7 +346,7 @@ void FGLRenderer::RenderScene(int recursion)
 {
 	RenderAll.Clock();
 
-	gl.DepthMask(true);
+	glDepthMask(true);
 	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion);
 
 	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
@@ -357,12 +357,12 @@ void FGLRenderer::RenderScene(int recursion)
 	// First draw all single-pass stuff
 
 	// Part 1: solid geometry. This is set up so that there are no transparent parts
-	gl.DepthFunc(GL_LESS);
+	glDepthFunc(GL_LESS);
 
 
 	gl_RenderState.EnableAlphaTest(false);
 
-	gl.Disable(GL_POLYGON_OFFSET_FILL);	// just in case
+	glDisable(GL_POLYGON_OFFSET_FILL);	// just in case
 
 	int pass;
 
@@ -434,13 +434,13 @@ void FGLRenderer::RenderScene(int recursion)
 
 
 		// second pass: draw lights (on fogged surfaces they are added to the textures!)
-		gl.DepthMask(false);
+		glDepthMask(false);
 		if (mLightCount && !gl_fixedcolormap)
 		{
 			if (gl_SetupLightTexture())
 			{
 				gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
-				gl.DepthFunc(GL_EQUAL);
+				glDepthFunc(GL_EQUAL);
 				if (glset.lightmode == 8) gl.VertexAttrib1f(VATTR_LIGHTLEVEL, 1.0f); // Korshun.
 				for(int i=GLDL_FIRSTLIGHT; i<=GLDL_LASTLIGHT; i++)
 				{
@@ -452,10 +452,10 @@ void FGLRenderer::RenderScene(int recursion)
 		}
 
 		// third pass: modulated texture
-		gl.Color3f(1.0f, 1.0f, 1.0f);
+		glColor3f(1.0f, 1.0f, 1.0f);
 		gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
 		gl_RenderState.EnableFog(false);
-		gl.DepthFunc(GL_LEQUAL);
+		glDepthFunc(GL_LEQUAL);
 		if (gl_texture) 
 		{
 			gl_RenderState.EnableAlphaTest(false);
@@ -473,7 +473,7 @@ void FGLRenderer::RenderScene(int recursion)
 		if (gl_lights && mLightCount && !gl_fixedcolormap)
 		{
 			gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
-			gl.DepthFunc(GL_EQUAL);
+			glDepthFunc(GL_EQUAL);
 			if (gl_SetupLightTexture())
 			{
 				for(int i=0; i<GLDL_TRANSLUCENT; i++)
@@ -489,10 +489,10 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Draw decals (not a real pass)
-	gl.DepthFunc(GL_LEQUAL);
-	gl.Enable(GL_POLYGON_OFFSET_FILL);
-	gl.PolygonOffset(-1.0f, -128.0f);
-	gl.DepthMask(false);
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(-1.0f, -128.0f);
+	glDepthMask(false);
 
 	for(int i=0; i<GLDL_TRANSLUCENT; i++)
 	{
@@ -501,26 +501,26 @@ void FGLRenderer::RenderScene(int recursion)
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
-	gl.DepthMask(true);
+	glDepthMask(true);
 
 
 	// Push bleeding floor/ceiling textures back a little in the z-buffer
 	// so they don't interfere with overlapping mid textures.
-	gl.PolygonOffset(1.0f, 128.0f);
+	glPolygonOffset(1.0f, 128.0f);
 
 	// flood all the gaps with the back sector's flat texture
 	// This will always be drawn like GLDL_PLAIN or GLDL_FOG, depending on the fog settings
 	
-	gl.DepthMask(false);							// don't write to Z-buffer!
+	glDepthMask(false);							// don't write to Z-buffer!
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_drawinfo->DrawUnhandledMissingTextures();
 	gl_RenderState.EnableAlphaTest(true);
-	gl.DepthMask(true);
+	glDepthMask(true);
 
-	gl.PolygonOffset(0.0f, 0.0f);
-	gl.Disable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(0.0f, 0.0f);
+	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	RenderAll.Unclock();
 }
@@ -537,7 +537,7 @@ void FGLRenderer::RenderTranslucent()
 {
 	RenderAll.Clock();
 
-	gl.DepthMask(false);
+	glDepthMask(false);
 	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
 
 	// final pass: translucent stuff
@@ -550,7 +550,7 @@ void FGLRenderer::RenderTranslucent()
 	gl_drawinfo->drawlists[GLDL_TRANSLUCENT].DrawSorted();
 	gl_RenderState.EnableBrightmap(false);
 
-	gl.DepthMask(true);
+	glDepthMask(true);
 
 	gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f);
 	RenderAll.Unclock();
@@ -683,14 +683,14 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			gl_RenderState.EnableAlphaTest(false);
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.BlendFunc(GL_DST_COLOR,GL_ZERO);
-			gl.Color4f(extra_red, extra_green, extra_blue, 1.0f);
+			glColor4f(extra_red, extra_green, extra_blue, 1.0f);
 			gl_RenderState.Apply(true);
-			gl.Begin(GL_TRIANGLE_STRIP);
-			gl.Vertex2f( 0.0f, 0.0f);
-			gl.Vertex2f( 0.0f, (float)SCREENHEIGHT);
-			gl.Vertex2f( (float)SCREENWIDTH, 0.0f);
-			gl.Vertex2f( (float)SCREENWIDTH, (float)SCREENHEIGHT);
-			gl.End();
+			glBegin(GL_TRIANGLE_STRIP);
+			glVertex2f( 0.0f, 0.0f);
+			glVertex2f( 0.0f, (float)SCREENHEIGHT);
+			glVertex2f( (float)SCREENWIDTH, 0.0f);
+			glVertex2f( (float)SCREENWIDTH, (float)SCREENHEIGHT);
+			glEnd();
 		}
 	}
 	else if (blendv.a)
@@ -720,14 +720,14 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.EnableAlphaTest(false);
 		gl_RenderState.EnableTexture(false);
-		gl.Color4fv(blend);
+		glColor4fv(blend);
 		gl_RenderState.Apply(true);
-		gl.Begin(GL_TRIANGLE_STRIP);
-		gl.Vertex2f( 0.0f, 0.0f);
-		gl.Vertex2f( 0.0f, (float)SCREENHEIGHT);
-		gl.Vertex2f( (float)SCREENWIDTH, 0.0f);
-		gl.Vertex2f( (float)SCREENWIDTH, (float)SCREENHEIGHT);
-		gl.End();
+		glBegin(GL_TRIANGLE_STRIP);
+		glVertex2f( 0.0f, 0.0f);
+		glVertex2f( 0.0f, (float)SCREENHEIGHT);
+		glVertex2f( (float)SCREENWIDTH, 0.0f);
+		glVertex2f( (float)SCREENWIDTH, (float)SCREENHEIGHT);
+		glEnd();
 	}
 }
 
@@ -748,12 +748,12 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	if ( renderHUDModel )
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
-		gl.Clear(GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		DrawPlayerSprites (viewsector, true);
 	}
 
-	gl.Disable(GL_STENCIL_TEST);
-	gl.Disable(GL_POLYGON_SMOOTH);
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_POLYGON_SMOOTH);
 
 	gl_RenderState.EnableFog(false);
 	framebuffer->Begin2D(false);
@@ -769,10 +769,10 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 
 	// Restore standard rendering state
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl.Color3f(1.0f,1.0f,1.0f);
+	glColor3f(1.0f,1.0f,1.0f);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableAlphaTest(true);
-	gl.Disable(GL_SCISSOR_TEST);
+	glDisable(GL_SCISSOR_TEST);
 }
 
 
@@ -966,7 +966,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	bounds.top=0;
 	bounds.width=width;
 	bounds.height=height;
-	gl.Flush();
+	glFlush();
 	SetFixedColormap(player);
 
 	// Check if there's some lights. If not some code can be skipped.
@@ -975,13 +975,13 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 
 	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, 
 								FieldOfView * 360.0f / FINEANGLES, 1.6f, 1.6f, true, false);
-	gl.Disable(GL_STENCIL_TEST);
+	glDisable(GL_STENCIL_TEST);
 	screen->Begin2D(false);
 	DrawBlend(viewsector);
-	gl.Flush();
+	glFlush();
 
 	byte * scr = (byte *)M_Malloc(width * height * 3);
-	gl.ReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
+	glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
 	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width*3);
 	M_Free(scr);
 }
@@ -1098,8 +1098,8 @@ int FGLInterface::GetMaxViewPitch(bool down)
 void FGLInterface::ClearBuffer(int color)
 {
 	PalEntry pe = GPalette.BaseColors[color];
-	gl.ClearColor(pe.r/255.f, pe.g/255.f, pe.b/255.f, 1.f);
-	gl.Clear(GL_COLOR_BUFFER_BIT);
+	glClearColor(pe.r/255.f, pe.g/255.f, pe.b/255.f, 1.f);
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 
 //===========================================================================
@@ -1163,7 +1163,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	if (!usefb)
 	{
-		gl.Flush();
+		glFlush();
 	}
 	else
 	{
@@ -1180,7 +1180,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 			usefb = false;
 			gl_usefb = false;
 			GLRenderer->EndOffscreen();
-			gl.Flush();
+			glFlush();
 		}
 #endif
 	}
@@ -1194,9 +1194,9 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	if (!usefb)
 	{
-		gl.Flush();
+		glFlush();
 		gltex->Bind(CM_DEFAULT, 0, 0);
-		gl.CopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
 	}
 	else
 	{
@@ -1204,7 +1204,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	}
 
 	gltex->Bind(CM_DEFAULT, 0, 0);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
 	tex->SetUpdated();
 }
 

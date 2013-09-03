@@ -227,7 +227,7 @@ bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & u
 		g= (g*(32-desaturation)+ gray*desaturation)/32;
 		b= (b*(32-desaturation)+ gray*desaturation)/32;
 	}
-	gl.Color3f(r,g,b);
+	glColor3f(r,g,b);
 	return true;
 }
 

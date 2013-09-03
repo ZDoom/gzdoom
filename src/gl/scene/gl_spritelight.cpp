@@ -156,7 +156,7 @@ static int gl_SetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subs
 		r *= ThingColor.r/255.f;
 		g *= ThingColor.g/255.f;
 		b *= ThingColor.b/255.f;
-		gl.Color4f(r, g, b, alpha);
+		glColor4f(r, g, b, alpha);
 		if (glset.lightmode == 8) 
 		{
 			gl.VertexAttrib1f(VATTR_LIGHTLEVEL, gl_CalcLightLevel(lightlevel, rellight, weapon) / 255.0f); // Korshun.
@@ -178,7 +178,7 @@ static int gl_SetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subs
 		g *= ThingColor.g/255.f;
 		b *= ThingColor.b/255.f;
 
-		gl.Color4f(r, g, b, alpha);		
+		glColor4f(r, g, b, alpha);		
 
 		if (dlightlevel == 0) return 0;
 
@@ -280,7 +280,7 @@ int gl_SetSpriteLighting(FRenderStyle style, AActor *thing, int lightlevel, int 
 
 	if (style.BlendOp == STYLEOP_Shadow)
 	{
-		gl.Color4f(0.2f * ThingColor.r / 255.f, 0.2f * ThingColor.g / 255.f, 
+		glColor4f(0.2f * ThingColor.r / 255.f, 0.2f * ThingColor.g / 255.f, 
 					0.2f * ThingColor.b / 255.f, (alpha = 0.33f));
 	}
 	else

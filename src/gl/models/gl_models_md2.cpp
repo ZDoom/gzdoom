@@ -279,7 +279,7 @@ void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices,FMod
 		pos += 4;
 
 		// The type of primitive depends on the sign.
-		gl.Begin(count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
+		glBegin(count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
 		count = abs(count);
 
 		while(count--)
@@ -287,11 +287,11 @@ void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices,FMod
 			v = (FGLCommandVertex *) pos;
 			pos += sizeof(FGLCommandVertex);
 
-			gl.TexCoord2fv(&v->s);
-			gl.Vertex3fv((float*)&vertices[v->index]);
+			glTexCoord2fv(&v->s);
+			glVertex3fv((float*)&vertices[v->index]);
 		}
 
-		gl.End();
+		glEnd();
 	}
 }
 

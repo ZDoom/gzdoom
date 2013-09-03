@@ -125,14 +125,14 @@ static void SkyVertex(int r, int c)
 		}
 		
 		
-		gl.TexCoord2f(skymirror? -u:u, v);
+		glTexCoord2f(skymirror? -u:u, v);
 	}
 	if (r != 4) y+=FRACUNIT*300;
 	// And finally the vertex.
 	fx =-FIXED2FLOAT(x);	// Doom mirrors the sky vertically!
 	fy = FIXED2FLOAT(y);
 	fz = FIXED2FLOAT(z);
-	gl.Vertex3f(fx, fy - 1.f, fz);
+	glVertex3f(fx, fy - 1.f, fz);
 }
 
 
@@ -181,13 +181,13 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 
 		if (!secondlayer)
 		{
-			gl.Color3f(R, G ,B);
-			gl.Begin(GL_TRIANGLE_FAN);
+			glColor3f(R, G ,B);
+			glBegin(GL_TRIANGLE_FAN);
 			for(c = 0; c < columns; c++)
 			{
 				SkyVertex(1, c);
 			}
-			gl.End();
+			glEnd();
 		}
 
 		gl_RenderState.EnableTexture(true);
@@ -198,12 +198,12 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 	{
 		gl_RenderState.Apply(true);
 		columns=4;	// no need to do more!
-		gl.Begin(GL_TRIANGLE_FAN);
+		glBegin(GL_TRIANGLE_FAN);
 		for(c = 0; c < columns; c++)
 		{
 			SkyVertex(0, c);
 		}
-		gl.End();
+		glEnd();
 	}
 	
 	// The total number of triangles per hemisphere can be calculated
@@ -212,7 +212,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 	{
 		if (yflip)
 		{
-			gl.Begin(GL_TRIANGLE_STRIP);
+			glBegin(GL_TRIANGLE_STRIP);
             SkyVertex(r + 1, 0);
 			SkyVertex(r, 0);
 			for(c = 1; c <= columns; c++)
@@ -220,11 +220,11 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 				SkyVertex(r + 1, c);
 				SkyVertex(r, c);
 			}
-			gl.End();
+			glEnd();
 		}
 		else
 		{
-			gl.Begin(GL_TRIANGLE_STRIP);
+			glBegin(GL_TRIANGLE_STRIP);
             SkyVertex(r, 0);
 			SkyVertex(r + 1, 0);
 			for(c = 1; c <= columns; c++)
@@ -232,7 +232,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 				SkyVertex(r, c);
 				SkyVertex(r + 1, c);
 			}
-			gl.End();
+			glEnd();
 		}
 	}
 }
@@ -255,33 +255,33 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 
 	if (tex)
 	{
-		gl.PushMatrix();
+		glPushMatrix();
 		tex->Bind(CM_Index, 0, 0);
 		texw = tex->TextureWidth(GLUSE_TEXTURE);
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
 
-		gl.Rotatef(-180.0f+x_offset, 0.f, 1.f, 0.f);
+		glRotatef(-180.0f+x_offset, 0.f, 1.f, 0.f);
 		yAdd = y_offset/texh;
 
 		if (texh < 200)
 		{
-			gl.Translatef(0.f, -1250.f, 0.f);
-			gl.Scalef(1.f, texh/230.f, 1.f);
+			glTranslatef(0.f, -1250.f, 0.f);
+			glScalef(1.f, texh/230.f, 1.f);
 		}
 		else if (texh <= 240)
 		{
-			gl.Translatef(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl.Scalef(1.f, 1.f + ((texh-200.f)/200.f) * 1.17f, 1.f);
+			glTranslatef(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			glScalef(1.f, 1.f + ((texh-200.f)/200.f) * 1.17f, 1.f);
 		}
 		else
 		{
-			gl.Translatef(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl.Scalef(1.f, 1.2f * 1.17f, 1.f);
-			gl.MatrixMode(GL_TEXTURE);
-			gl.PushMatrix();
-			gl.LoadIdentity();
-			gl.Scalef(1.f, 240.f / texh, 1.f);
-			gl.MatrixMode(GL_MODELVIEW);
+			glTranslatef(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			glScalef(1.f, 1.2f * 1.17f, 1.f);
+			glMatrixMode(GL_TEXTURE);
+			glPushMatrix();
+			glLoadIdentity();
+			glScalef(1.f, 240.f / texh, 1.f);
+			glMatrixMode(GL_MODELVIEW);
 			texscale = true;
 		}
 	}
@@ -330,11 +330,11 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	RenderSkyHemisphere(SKYHEMI_LOWER, mirror);
 	if (texscale)
 	{
-		gl.MatrixMode(GL_TEXTURE);
-		gl.PopMatrix();
-		gl.MatrixMode(GL_MODELVIEW);
+		glMatrixMode(GL_TEXTURE);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
 	}
-	if (tex) gl.PopMatrix();
+	if (tex) glPopMatrix();
 
 }
 
@@ -352,11 +352,11 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 	FMaterial * tex;
 
 	if (!sky2)
-		gl.Rotatef(-180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
+		glRotatef(-180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
 	else
-		gl.Rotatef(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
+		glRotatef(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
-	gl.Color3f(R, G ,B);
+	glColor3f(R, G ,B);
 
 	if (sb->faces[5]) 
 	{
@@ -366,61 +366,61 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
 		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(-128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(-128.f, -128.f, -128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(128.f, -128.f, -128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(0, 0);
+		glVertex3f(128.f, 128.f, -128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(-128.f, 128.f, -128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(-128.f, -128.f, -128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(128.f, -128.f, -128.f);
+		glEnd();
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1]);
 		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(-128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(-128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(-128.f, -128.f, 128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(-128.f, -128.f, -128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(0, 0);
+		glVertex3f(-128.f, 128.f, -128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(-128.f, 128.f, 128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(-128.f, -128.f, 128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(-128.f, -128.f, -128.f);
+		glEnd();
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2]);
 		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(-128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(128.f, -128.f, 128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(-128.f, -128.f, 128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(0, 0);
+		glVertex3f(-128.f, 128.f, 128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(128.f, 128.f, 128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(128.f, -128.f, 128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(-128.f, -128.f, 128.f);
+		glEnd();
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3]);
 		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(128.f, -128.f, -128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(128.f, -128.f, 128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(0, 0);
+		glVertex3f(128.f, 128.f, 128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(128.f, 128.f, -128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(128.f, -128.f, -128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(128.f, -128.f, 128.f);
+		glEnd();
 	}
 	else 
 	{
@@ -430,98 +430,98 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 
 		gl_RenderState.Apply();
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(128.f, 128.f, -128.f);
-		gl.TexCoord2f(.25f, 0);
-		gl.Vertex3f(-128.f, 128.f, -128.f);
-		gl.TexCoord2f(.25f, 1);
-		gl.Vertex3f(-128.f, -128.f, -128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(128.f, -128.f, -128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(0, 0);
+		glVertex3f(128.f, 128.f, -128.f);
+		glTexCoord2f(.25f, 0);
+		glVertex3f(-128.f, 128.f, -128.f);
+		glTexCoord2f(.25f, 1);
+		glVertex3f(-128.f, -128.f, -128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(128.f, -128.f, -128.f);
+		glEnd();
 
 		// east
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(.25f, 0);
-		gl.Vertex3f(-128.f, 128.f, -128.f);
-		gl.TexCoord2f(.5f, 0);
-		gl.Vertex3f(-128.f, 128.f, 128.f);
-		gl.TexCoord2f(.5f, 1);
-		gl.Vertex3f(-128.f, -128.f, 128.f);
-		gl.TexCoord2f(.25f, 1);
-		gl.Vertex3f(-128.f, -128.f, -128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(.25f, 0);
+		glVertex3f(-128.f, 128.f, -128.f);
+		glTexCoord2f(.5f, 0);
+		glVertex3f(-128.f, 128.f, 128.f);
+		glTexCoord2f(.5f, 1);
+		glVertex3f(-128.f, -128.f, 128.f);
+		glTexCoord2f(.25f, 1);
+		glVertex3f(-128.f, -128.f, -128.f);
+		glEnd();
 
 		// south
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(.5f, 0);
-		gl.Vertex3f(-128.f, 128.f, 128.f);
-		gl.TexCoord2f(.75f, 0);
-		gl.Vertex3f(128.f, 128.f, 128.f);
-		gl.TexCoord2f(.75f, 1);
-		gl.Vertex3f(128.f, -128.f, 128.f);
-		gl.TexCoord2f(.5f, 1);
-		gl.Vertex3f(-128.f, -128.f, 128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(.5f, 0);
+		glVertex3f(-128.f, 128.f, 128.f);
+		glTexCoord2f(.75f, 0);
+		glVertex3f(128.f, 128.f, 128.f);
+		glTexCoord2f(.75f, 1);
+		glVertex3f(128.f, -128.f, 128.f);
+		glTexCoord2f(.5f, 1);
+		glVertex3f(-128.f, -128.f, 128.f);
+		glEnd();
 
 		// west
-		gl.Begin(GL_TRIANGLE_FAN);
-		gl.TexCoord2f(.75f, 0);
-		gl.Vertex3f(128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(128.f, -128.f, -128.f);
-		gl.TexCoord2f(.75f, 1);
-		gl.Vertex3f(128.f, -128.f, 128.f);
-		gl.End();
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(.75f, 0);
+		glVertex3f(128.f, 128.f, 128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(128.f, 128.f, -128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(128.f, -128.f, -128.f);
+		glTexCoord2f(.75f, 1);
+		glVertex3f(128.f, -128.f, 128.f);
+		glEnd();
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces]);
 	tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
-	gl.Begin(GL_TRIANGLE_FAN);
+	glBegin(GL_TRIANGLE_FAN);
 	if (!sb->fliptop)
 	{
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(-128.f, 128.f, -128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(-128.f, 128.f, 128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(128.f, 128.f, 128.f);
+		glTexCoord2f(0, 0);
+		glVertex3f(128.f, 128.f, -128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(-128.f, 128.f, -128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(-128.f, 128.f, 128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(128.f, 128.f, 128.f);
 	}
 	else
 	{
-		gl.TexCoord2f(0, 0);
-		gl.Vertex3f(128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 0);
-		gl.Vertex3f(-128.f, 128.f, 128.f);
-		gl.TexCoord2f(1, 1);
-		gl.Vertex3f(-128.f, 128.f, -128.f);
-		gl.TexCoord2f(0, 1);
-		gl.Vertex3f(128.f, 128.f, -128.f);
+		glTexCoord2f(0, 0);
+		glVertex3f(128.f, 128.f, 128.f);
+		glTexCoord2f(1, 0);
+		glVertex3f(-128.f, 128.f, 128.f);
+		glTexCoord2f(1, 1);
+		glVertex3f(-128.f, 128.f, -128.f);
+		glTexCoord2f(0, 1);
+		glVertex3f(128.f, 128.f, -128.f);
 	}
-	gl.End();
+	glEnd();
 
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1]);
 	tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
-	gl.Begin(GL_TRIANGLE_FAN);
-	gl.TexCoord2f(0, 0);
-	gl.Vertex3f(128.f, -128.f, -128.f);
-	gl.TexCoord2f(1, 0);
-	gl.Vertex3f(-128.f, -128.f, -128.f);
-	gl.TexCoord2f(1, 1);
-	gl.Vertex3f(-128.f, -128.f, 128.f);
-	gl.TexCoord2f(0, 1);
-	gl.Vertex3f(128.f, -128.f, 128.f);
-	gl.End();
+	glBegin(GL_TRIANGLE_FAN);
+	glTexCoord2f(0, 0);
+	glVertex3f(128.f, -128.f, -128.f);
+	glTexCoord2f(1, 0);
+	glVertex3f(-128.f, -128.f, -128.f);
+	glTexCoord2f(1, 1);
+	glVertex3f(-128.f, -128.f, 128.f);
+	glTexCoord2f(0, 1);
+	glVertex3f(128.f, -128.f, 128.f);
+	glEnd();
 
 
 }
@@ -556,8 +556,8 @@ void GLSkyPortal::DrawContents()
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	gl.MatrixMode(GL_MODELVIEW);
-	gl.PushMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
 	GLRenderer->SetupView(0, 0, 0, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
@@ -601,13 +601,13 @@ void GLSkyPortal::DrawContents()
 		{
 			gl_RenderState.EnableTexture(false);
 			foglayer=true;
-			gl.Color4f(FadeColor.r/255.0f,FadeColor.g/255.0f,FadeColor.b/255.0f,skyfog/255.0f);
+			glColor4f(FadeColor.r/255.0f,FadeColor.g/255.0f,FadeColor.b/255.0f,skyfog/255.0f);
 			RenderDome(FNullTextureID(), NULL, 0, 0, false, CM_DEFAULT);
 			gl_RenderState.EnableTexture(true);
 			foglayer=false;
 		}
 	}
-	gl.PopMatrix();
+	glPopMatrix();
 	glset.lightmode = oldlightmode;
 }
 

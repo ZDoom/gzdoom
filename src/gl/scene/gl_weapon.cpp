@@ -152,12 +152,12 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 		gl_RenderState.EnableAlphaTest(false);
 	}
 	gl_RenderState.Apply();
-	gl.Begin(GL_TRIANGLE_STRIP);
-	gl.TexCoord2f(fU1, fV1); gl.Vertex2f(x1,y1);
-	gl.TexCoord2f(fU1, fV2); gl.Vertex2f(x1,y2);
-	gl.TexCoord2f(fU2, fV1); gl.Vertex2f(x2,y1);
-	gl.TexCoord2f(fU2, fV2); gl.Vertex2f(x2,y2);
-	gl.End();
+	glBegin(GL_TRIANGLE_STRIP);
+	glTexCoord2f(fU1, fV1); glVertex2f(x1,y1);
+	glTexCoord2f(fU1, fV2); glVertex2f(x1,y2);
+	glTexCoord2f(fU2, fV1); glVertex2f(x2,y1);
+	glTexCoord2f(fU2, fV2); glVertex2f(x2,y2);
+	glEnd();
 	if (tex->GetTransparent() || OverrideShader != 0)
 	{
 		gl_RenderState.EnableAlphaTest(true);
@@ -398,7 +398,7 @@ void FGLRenderer::DrawTargeterSprites()
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
 	gl_RenderState.BlendEquation(GL_FUNC_ADD);
-	gl.Color3f(1.0f,1.0f,1.0f);
+	glColor3f(1.0f,1.0f,1.0f);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
 	// The Targeter's sprites are always drawn normally.

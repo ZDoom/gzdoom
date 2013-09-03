@@ -297,16 +297,16 @@ void FRenderState::Apply(bool forcenoshader)
 		}
 		if (mTextureEnabled != ffTextureEnabled)
 		{
-			if ((ffTextureEnabled = mTextureEnabled)) gl.Enable(GL_TEXTURE_2D);
-			else gl.Disable(GL_TEXTURE_2D);
+			if ((ffTextureEnabled = mTextureEnabled)) glEnable(GL_TEXTURE_2D);
+			else glDisable(GL_TEXTURE_2D);
 		}
 		if (mFogEnabled != ffFogEnabled)
 		{
 			if ((ffFogEnabled = mFogEnabled)) 
 			{
-				gl.Enable(GL_FOG);
+				glEnable(GL_FOG);
 			}
-			else gl.Disable(GL_FOG);
+			else glDisable(GL_FOG);
 		}
 		if (mFogEnabled)
 		{
@@ -314,11 +314,11 @@ void FRenderState::Apply(bool forcenoshader)
 			{
 				ffFogColor = mFogColor;
 				GLfloat FogColor[4]={mFogColor.r/255.0f,mFogColor.g/255.0f,mFogColor.b/255.0f,0.0f};
-				gl.Fogfv(GL_FOG_COLOR, FogColor);
+				glFogfv(GL_FOG_COLOR, FogColor);
 			}
 			if (ffFogDensity != mFogDensity)
 			{
-				gl.Fogf(GL_FOG_DENSITY, mFogDensity/64000.f);
+				glFogf(GL_FOG_DENSITY, mFogDensity/64000.f);
 				ffFogDensity=mFogDensity;
 			}
 		}
@@ -327,8 +327,8 @@ void FRenderState::Apply(bool forcenoshader)
 			switch (ffSpecialEffect)
 			{
 			case EFF_SPHEREMAP:
-				gl.Disable(GL_TEXTURE_GEN_T);
-				gl.Disable(GL_TEXTURE_GEN_S);
+				glDisable(GL_TEXTURE_GEN_T);
+				glDisable(GL_TEXTURE_GEN_S);
 
 			default:
 				break;
@@ -337,10 +337,10 @@ void FRenderState::Apply(bool forcenoshader)
 			{
 			case EFF_SPHEREMAP:
 				// Use sphere mapping for this
-				gl.Enable(GL_TEXTURE_GEN_T);
-				gl.Enable(GL_TEXTURE_GEN_S);
-				gl.TexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				gl.TexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+				glEnable(GL_TEXTURE_GEN_T);
+				glEnable(GL_TEXTURE_GEN_S);
+				glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
+				glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
 				break;
 
 			default:

@@ -218,18 +218,18 @@ int FMD3Model::FindFrame(const char * name)
 void FMD3Model::RenderTriangles(MD3Surface * surf, MD3Vertex * vert)
 {
 	gl_RenderState.Apply();
-	gl.Begin(GL_TRIANGLES);
+	glBegin(GL_TRIANGLES);
 	for(int i=0; i<surf->numTriangles;i++)
 	{
 		for(int j=0;j<3;j++)
 		{
 			int x = surf->tris[i].VertIndex[j];
 
-			gl.TexCoord2fv(&surf->texcoords[x].s);
-			gl.Vertex3f(vert[x].x, vert[x].z, vert[x].y);
+			glTexCoord2fv(&surf->texcoords[x].s);
+			glVertex3f(vert[x].x, vert[x].z, vert[x].y);
 		}
 	}
-	gl.End();
+	glEnd();
 }
 
 void FMD3Model::RenderFrame(FTexture * skin, int frameno, int cm, int translation)
@@ -239,8 +239,8 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int cm, int translatio
 	MD3Frame * frame = &frames[frameno];
 
 	// I can't confirm correctness of this because no model I have tested uses this information
-	// gl.MatrixMode(GL_MODELVIEW);
-	// gl.Translatef(frame->origin[0], frame->origin[1], frame->origin[2]);
+	// glMatrixMode(GL_MODELVIEW);
+	// glTranslatef(frame->origin[0], frame->origin[1], frame->origin[2]);
 
 	for(int i=0;i<numSurfaces;i++)
 	{

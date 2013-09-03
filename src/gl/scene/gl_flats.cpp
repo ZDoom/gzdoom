@@ -93,12 +93,12 @@ bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		float xscale2=64.f/gltexture->TextureWidth(GLUSE_TEXTURE);
 		float yscale2=64.f/gltexture->TextureHeight(GLUSE_TEXTURE);
 
-		gl.MatrixMode(GL_TEXTURE);
-		gl.PushMatrix();
-		gl.Scalef(xscale1 ,yscale1,1.0f);
-		gl.Translatef(uoffs,voffs,0.0f);
-		gl.Scalef(xscale2 ,yscale2,1.0f);
-		gl.Rotatef(angle,0.0f,0.0f,1.0f);
+		glMatrixMode(GL_TEXTURE);
+		glPushMatrix();
+		glScalef(xscale1 ,yscale1,1.0f);
+		glTranslatef(uoffs,voffs,0.0f);
+		glScalef(xscale2 ,yscale2,1.0f);
+		glRotatef(angle,0.0f,0.0f,1.0f);
 		return true;
 	}
 	return false;
@@ -150,7 +150,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		draw_dlightf++;
 
 		// Render the light
-		gl.Begin(GL_TRIANGLE_FAN);
+		glBegin(GL_TRIANGLE_FAN);
 		for(k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
 		{
 			vertex_t *vt = v->v1;
@@ -158,12 +158,12 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 
 			t1.Set(vt->fx, zc, vt->fy);
 			Vector nearToVert = t1 - nearPt;
-			gl.TexCoord2f( (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
+			glTexCoord2f( (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
 
-			gl.Vertex3f(vt->fx, zc, vt->fy);
+			glVertex3f(vt->fx, zc, vt->fy);
 		}
 
-		gl.End();
+		glEnd();
 		node = node->nextLight;
 	}
 }
@@ -237,16 +237,16 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
-	gl.Begin(GL_TRIANGLE_FAN);
+	glBegin(GL_TRIANGLE_FAN);
 
 	for(unsigned int k=0; k<sub->numlines; k++)
 	{
 		vertex_t *vt = sub->firstline[k].v1;
-		gl.TexCoord2f(vt->fx/64.f, -vt->fy/64.f);
+		glTexCoord2f(vt->fx/64.f, -vt->fy/64.f);
 		float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-		gl.Vertex3f(vt->fx, zc, vt->fy);
+		glVertex3f(vt->fx, zc, vt->fy);
 	}
-	gl.End();
+	glEnd();
 
 	flatvertices += sub->numlines;
 	flatprimitives++;
@@ -273,7 +273,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	{
 		if (vboindex >= 0)
 		{
-			//gl.Color3f( 1.f,.5f,.5f);
+			//glColor3f( 1.f,.5f,.5f);
 			int index = vboindex;
 			for (int i=0; i<sector->subsectorcount; i++)
 			{
@@ -282,7 +282,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
 					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
-					gl.DrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
+					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
 					flatvertices += sub->numlines;
 					flatprimitives++;
 				}
@@ -291,7 +291,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 		}
 		else
 		{
-			//gl.Color3f( .5f,1.f,.5f); // these are for testing the VBO stuff.
+			//glColor3f( .5f,1.f,.5f); // these are for testing the VBO stuff.
 			// Draw the subsectors belonging to this sector
 			for (int i=0; i<sector->subsectorcount; i++)
 			{
@@ -362,8 +362,8 @@ void GLFlat::Draw(int pass)
 		DrawSubsectors(pass, false);
 		if (pushed) 
 		{
-			gl.PopMatrix();
-			gl.MatrixMode(GL_MODELVIEW);
+			glPopMatrix();
+			glMatrixMode(GL_MODELVIEW);
 		}
 		break;
 	}
@@ -427,8 +427,8 @@ void GLFlat::Draw(int pass)
 			gl_RenderState.EnableBrightmap(true);
 			if (pushed)
 			{
-				gl.PopMatrix();
-				gl.MatrixMode(GL_MODELVIEW);
+				glPopMatrix();
+				glMatrixMode(GL_MODELVIEW);
 			}
 		}
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -245,40 +245,40 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 
 	// the rest of the code is identical for textured rendering and lights
 
-	gl.Begin(GL_TRIANGLE_FAN);
+	glBegin(GL_TRIANGLE_FAN);
 
 	// lower left corner
 	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0], zbottom[0] - zfloor[0]);
-	if (textured&1) gl.TexCoord2f(tcs[0].u,tcs[0].v);
-	gl.Vertex3f(glseg.x1,zbottom[0],glseg.y1);
+	if (textured&1) glTexCoord2f(tcs[0].u,tcs[0].v);
+	glVertex3f(glseg.x1,zbottom[0],glseg.y1);
 
 	if (split && glseg.fracleft==0) SplitLeftEdge(tcs, glowing);
 
 	// upper left corner
 	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0], ztop[0] - zfloor[0]);
-	if (textured&1) gl.TexCoord2f(tcs[1].u,tcs[1].v);
-	gl.Vertex3f(glseg.x1,ztop[0],glseg.y1);
+	if (textured&1) glTexCoord2f(tcs[1].u,tcs[1].v);
+	glVertex3f(glseg.x1,ztop[0],glseg.y1);
 
 	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, glowing);
 
 	// color for right side
-	if (color2) gl.Color4fv(color2);
+	if (color2) glColor4fv(color2);
 
 	// upper right corner
 	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - ztop[1], ztop[1] - zfloor[1]);
-	if (textured&1) gl.TexCoord2f(tcs[2].u,tcs[2].v);
-	gl.Vertex3f(glseg.x2,ztop[1],glseg.y2);
+	if (textured&1) glTexCoord2f(tcs[2].u,tcs[2].v);
+	glVertex3f(glseg.x2,ztop[1],glseg.y2);
 
 	if (split && glseg.fracright==1) SplitRightEdge(tcs, glowing);
 
 	// lower right corner
 	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - zbottom[1], zbottom[1] - zfloor[1]);
-	if (textured&1) gl.TexCoord2f(tcs[3].u,tcs[3].v); 
-	gl.Vertex3f(glseg.x2,zbottom[1],glseg.y2);
+	if (textured&1) glTexCoord2f(tcs[3].u,tcs[3].v); 
+	glVertex3f(glseg.x2,zbottom[1],glseg.y2);
 
 	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, glowing);
 
-	gl.End();
+	glEnd();
 
 	vertexcount+=4;
 
@@ -328,14 +328,14 @@ void GLWall::RenderFogBoundary()
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.EnableFog(false);
 			gl_RenderState.AlphaFunc(GL_GREATER,0);
-			gl.DepthFunc(GL_LEQUAL);
-			gl.Color4f(fc[0],fc[1],fc[2], fogd1);
+			glDepthFunc(GL_LEQUAL);
+			glColor4f(fc[0],fc[1],fc[2], fogd1);
 			if (glset.lightmode == 8) gl.VertexAttrib1f(VATTR_LIGHTLEVEL, 1.0); // Korshun.
 
 			flags &= ~GLWF_GLOW;
 			RenderWall(4,fc);
 
-			gl.DepthFunc(GL_LESS);
+			glDepthFunc(GL_LESS);
 			gl_RenderState.EnableFog(true);
 			gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f);
 			gl_RenderState.EnableTexture(true);
@@ -364,7 +364,7 @@ void GLWall::RenderMirrorSurface()
 	gl_SetColor(lightlevel, 0, &Colormap ,0.1f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
-	gl.DepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_LEQUAL);
 	gl_SetFog(lightlevel, getExtraLight(), &Colormap, true);
 
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture);
@@ -379,19 +379,19 @@ void GLWall::RenderMirrorSurface()
 	// Restore the defaults for the translucent pass
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f*gl_mask_sprite_threshold);
-	gl.DepthFunc(GL_LESS);
+	glDepthFunc(GL_LESS);
 
 	// This is drawn in the translucent pass which is done after the decal pass
 	// As a result the decals have to be drawn here.
 	if (seg->sidedef->AttachedDecals)
 	{
-		gl.Enable(GL_POLYGON_OFFSET_FILL);
-		gl.PolygonOffset(-1.0f, -128.0f);
-		gl.DepthMask(false);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
+		glDepthMask(false);
 		DoDrawDecals();
-		gl.DepthMask(true);
-		gl.PolygonOffset(0.0f, 0.0f);
-		gl.Disable(GL_POLYGON_OFFSET_FILL);
+		glDepthMask(true);
+		glPolygonOffset(0.0f, 0.0f);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
@@ -471,8 +471,8 @@ void GLWall::Draw(int pass)
 	{
 		if (pass != GLPASS_DECALS)
 		{
-			gl.Enable(GL_POLYGON_OFFSET_FILL);
-			gl.PolygonOffset(-1.0f, -128.0f);
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(-1.0f, -128.0f);
 		}
 	}
 
@@ -585,8 +585,8 @@ void GLWall::Draw(int pass)
 	{
 		if (pass!=GLPASS_DECALS)
 		{
-			gl.Disable(GL_POLYGON_OFFSET_FILL);
-			gl.PolygonOffset(0, 0);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(0, 0);
 		}
 	}
 }

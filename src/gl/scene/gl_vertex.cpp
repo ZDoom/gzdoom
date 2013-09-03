@@ -85,8 +85,8 @@ void GLWall::SplitUpperEdge(texcoord * tcs, bool glow)
 		if (glow) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0] + (facc - fact) * fracfac, 
 									 ztop[0] - zfloor[0] + (fact - facf) * fracfac);
 
-		gl.TexCoord2f(tcs[1].u + facu * fracfac, tcs[1].v + facv * fracfac);
-		gl.Vertex3f(cseg->v2->fx, ztop[0] + fact * fracfac, cseg->v2->fy);
+		glTexCoord2f(tcs[1].u + facu * fracfac, tcs[1].v + facv * fracfac);
+		glVertex3f(cseg->v2->fx, ztop[0] + fact * fracfac, cseg->v2->fy);
 	}
 	vertexcount += sidedef->numsegs-1;
 }
@@ -121,8 +121,8 @@ void GLWall::SplitLowerEdge(texcoord * tcs, bool glow)
 		if (glow) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0] + (facc - facb) * fracfac, 
 									 zbottom[0] - zfloor[0] + (facb - facf) * fracfac);
 
-		gl.TexCoord2f(tcs[0].u + facu * fracfac, tcs[0].v + facv * fracfac);
-		gl.Vertex3f(cseg->v2->fx, zbottom[0] + facb * fracfac, cseg->v2->fy);
+		glTexCoord2f(tcs[0].u + facu * fracfac, tcs[0].v + facv * fracfac);
+		glVertex3f(cseg->v2->fx, zbottom[0] + facb * fracfac, cseg->v2->fy);
 	}
 	vertexcount += sidedef->numsegs-1;
 }
@@ -151,9 +151,9 @@ void GLWall::SplitLeftEdge(texcoord * tcs, bool glow)
 		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
 		{
 			if (glow) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - vi->heightlist[i], vi->heightlist[i] - zfloor[0]);
-			gl.TexCoord2f(factu1*(vi->heightlist[i] - ztop[0]) + tcs[1].u,
+			glTexCoord2f(factu1*(vi->heightlist[i] - ztop[0]) + tcs[1].u,
 						 factv1*(vi->heightlist[i] - ztop[0]) + tcs[1].v);
-			gl.Vertex3f(glseg.x1, vi->heightlist[i], glseg.y1);
+			glVertex3f(glseg.x1, vi->heightlist[i], glseg.y1);
 			i++;
 		}
 		vertexcount+=i;
@@ -184,9 +184,9 @@ void GLWall::SplitRightEdge(texcoord * tcs, bool glow)
 		while (i>0 && vi->heightlist[i] > zbottom[1])
 		{
 			if (glow) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - vi->heightlist[i], vi->heightlist[i] - zfloor[1]);
-			gl.TexCoord2f(factu2 * (vi->heightlist[i] - ztop[1]) + tcs[2].u,
+			glTexCoord2f(factu2 * (vi->heightlist[i] - ztop[1]) + tcs[2].u,
 						 factv2 * (vi->heightlist[i] - ztop[1]) + tcs[2].v);
-			gl.Vertex3f(glseg.x2, vi->heightlist[i], glseg.y2);
+			glVertex3f(glseg.x2, vi->heightlist[i], glseg.y2);
 			i--;
 		}
 		vertexcount+=i;

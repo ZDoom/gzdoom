@@ -331,11 +331,11 @@ void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, Pal
 
 	if (glset.lightmode != 8)
 	{
-		gl.Color4f(r * ThingColor.r/255.0f, g * ThingColor.g/255.0f, b * ThingColor.b/255.0f, alpha);
+		glColor4f(r * ThingColor.r/255.0f, g * ThingColor.g/255.0f, b * ThingColor.b/255.0f, alpha);
 	}
 	else
 	{ 
-		gl.Color4f(r, g, b, alpha);
+		glColor4f(r, g, b, alpha);
 
 		if (gl_fixedcolormap)
 		{

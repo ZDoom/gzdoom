@@ -696,7 +696,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 
 
 	// Setup transformation.
-	gl.DepthFunc(GL_LEQUAL);
+	glDepthFunc(GL_LEQUAL);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.EnableTexture(true);
 	// [BB] In case the model should be rendered translucent, do back face culling.
@@ -704,7 +704,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	// TO-DO: Implement proper depth sorting.
 	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
 	{
-		gl.Enable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glFrontFace(GL_CW);
 	}
 
@@ -754,45 +754,45 @@ void gl_RenderModel(GLSprite * spr, int cm)
 		
 	if (gl.shadermodel < 4)
 	{
-		gl.MatrixMode(GL_MODELVIEW);
-		gl.PushMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
 	}
 	else
 	{
 		gl.ActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
-		gl.MatrixMode(GL_TEXTURE);
-		gl.LoadIdentity();
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
 	}
 
 	// Model space => World space
-	gl.Translatef(spr->x, spr->z, spr->y );	
+	glTranslatef(spr->x, spr->z, spr->y );	
 	
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
-	gl.Rotatef(-angle, 0, 1, 0);
-	gl.Rotatef(pitch, 0, 0, 1);
-	gl.Rotatef(-roll, 1, 0, 0);
+	glRotatef(-angle, 0, 1, 0);
+	glRotatef(pitch, 0, 0, 1);
+	glRotatef(-roll, 1, 0, 0);
 	
 	// 2) Applying Doomsday like rotation of the weapon pickup models
 	// The rotation angle is based on the elapsed time.
 	
 	if( smf->flags & MDL_ROTATING )
 	{
-		gl.Translatef(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
-		gl.Rotatef(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
-		gl.Translatef(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
+		glTranslatef(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
+		glRotatef(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
+		glTranslatef(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
 	}
 
 	// 3) Scaling model.
-	gl.Scalef(scaleFactorX, scaleFactorZ, scaleFactorY);
+	glScalef(scaleFactorX, scaleFactorZ, scaleFactorY);
 
 	// 4) Aplying model offsets (model offsets do not depend on model scalings).
-	gl.Translatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 	
 	// 5) Applying model rotations.
-	gl.Rotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
-	gl.Rotatef(smf->pitchoffset, 0, 0, 1);
-	gl.Rotatef(-smf->rolloffset, 1, 0, 0);
+	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	glRotatef(smf->pitchoffset, 0, 0, 1);
+	glRotatef(-smf->rolloffset, 1, 0, 0);
 		
 	if (gl.shadermodel >= 4) gl.ActiveTexture(GL_TEXTURE0);
 
@@ -815,21 +815,21 @@ void gl_RenderModel(GLSprite * spr, int cm)
 
 	if (gl.shadermodel < 4)
 	{
-		gl.MatrixMode(GL_MODELVIEW);
-		gl.PopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 	}
 	else
 	{
 		gl.ActiveTexture(GL_TEXTURE7);
-		gl.MatrixMode(GL_TEXTURE);
-		gl.LoadIdentity();
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
 		gl.ActiveTexture(GL_TEXTURE0);
-		gl.MatrixMode(GL_MODELVIEW);
+		glMatrixMode(GL_MODELVIEW);
 	}
 
-	gl.DepthFunc(GL_LESS);
+	glDepthFunc(GL_LESS);
 	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
-		gl.Disable(GL_CULL_FACE);
+		glDisable(GL_CULL_FACE);
 }
 
 
@@ -850,45 +850,45 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm)
 
 	// [BB] The model has to be drawn independtly from the position of the player,
 	// so we have to reset the GL_MODELVIEW matrix.
-	gl.MatrixMode(GL_MODELVIEW);
-	gl.PushMatrix();
-	gl.LoadIdentity();
-	gl.DepthFunc(GL_LEQUAL);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glDepthFunc(GL_LEQUAL);
 
 	// [BB] In case the model should be rendered translucent, do back face culling.
 	// This solves a few of the problems caused by the lack of depth sorting.
 	// TO-DO: Implement proper depth sorting.
 	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
 	{
-		gl.Enable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glFrontFace(GL_CCW);
 	}
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	gl.Scalef(smf->xscale, smf->zscale, smf->yscale);
+	glScalef(smf->xscale, smf->zscale, smf->yscale);
 	
 	// Aplying model offsets (model offsets do not depend on model scalings).
-	gl.Translatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	gl.Rotatef(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
-	gl.Rotatef(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
+	glRotatef(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
+	glRotatef(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
-	gl.Rotatef(90., 0, 1, 0);
+	glRotatef(90., 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	gl.Rotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
-	gl.Rotatef(smf->pitchoffset, 0, 0, 1);
-	gl.Rotatef(-smf->rolloffset, 1, 0, 0);
+	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	glRotatef(smf->pitchoffset, 0, 0, 1);
+	glRotatef(-smf->rolloffset, 1, 0, 0);
 
 	gl_RenderFrameModels( smf, psp->state, psp->tics, playermo->player->ReadyWeapon->GetClass(), cm, NULL, 0 );
 
-	gl.MatrixMode(GL_MODELVIEW);
-	gl.PopMatrix();
-	gl.DepthFunc(GL_LESS);
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	glDepthFunc(GL_LESS);
 	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
-		gl.Disable(GL_CULL_FACE);
+		glDisable(GL_CULL_FACE);
 }
 
 //===========================================================================

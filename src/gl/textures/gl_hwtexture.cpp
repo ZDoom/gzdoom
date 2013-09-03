@@ -96,8 +96,8 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 	if (alphatexture) texformat=GL_ALPHA8;
 	else if (forcenocompression) texformat = GL_RGBA8;
-	if (glTexID==0) gl.GenTextures(1,&glTexID);
-	gl.BindTexture(GL_TEXTURE_2D, glTexID);
+	if (glTexID==0) glGenTextures(1,&glTexID);
+	glBindTexture(GL_TEXTURE_2D, glTexID);
 	lastbound[texunit]=glTexID;
 
 	if (!buffer)
@@ -109,7 +109,7 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 		// The texture must at least be initialized if no data is present.
 		mipmap=false;
-		gl.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, false);
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, false);
 		buffer=(unsigned char *)calloc(4,rw * (rh+1));
 		deletebuffer=true;
 		//texheight=-h;	
@@ -119,7 +119,7 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 		rw = GetTexDimension (w);
 		rh = GetTexDimension (h);
 
-		gl.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, (mipmap && use_mipmapping && !forcenofiltering));
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, (mipmap && use_mipmapping && !forcenofiltering));
 
 		if (rw == w && rh == h)
 		{
@@ -157,38 +157,38 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 			}
 		}
 	}
-	gl.TexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
 	if (deletebuffer) free(buffer);
 
 	// When using separate samplers the stuff below is not needed.
 	// if (gl.flags & RFL_SAMPLER_OBJECTS) return;
 
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
 	clampmode = wrapparam==GL_CLAMP? GLT_CLAMPX|GLT_CLAMPY : 0;
 
 	if (forcenofiltering)
 	{
-		gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		gl.TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
 	}
 	else
 	{
 		if (mipmap && use_mipmapping)
 		{
-			gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
 			if (gl_texture_filter_anisotropic)
 			{
-				gl.TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 			}
 		}
 		else
 		{
-			gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
 		}
-		gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
 	}
 }
 
@@ -230,7 +230,7 @@ void FHardwareTexture::DeleteTexture(unsigned int texid)
 				lastbound[i] = 0;
 			}
 		}
-		gl.DeleteTextures(1, &texid);
+		glDeleteTextures(1, &texid);
 	}
 }
 
@@ -249,7 +249,7 @@ void FHardwareTexture::Clean(bool all)
 		{
 			DeleteTexture(glTexID[i]);
 		}
-		//gl.DeleteTextures(cm_arraysize,glTexID);
+		//glDeleteTextures(cm_arraysize,glTexID);
 		memset(glTexID,0,sizeof(unsigned int)*cm_arraysize);
 	}
 	else
@@ -258,7 +258,7 @@ void FHardwareTexture::Clean(bool all)
 		{
 			DeleteTexture(glTexID[i]);
 		}
-		//gl.DeleteTextures(cm_arraysize-1,glTexID+1);
+		//glDeleteTextures(cm_arraysize-1,glTexID+1);
 		memset(glTexID+1,0,sizeof(unsigned int)*(cm_arraysize-1));
 	}
 	for(unsigned int i=0;i<glTexID_Translated.Size();i++)
@@ -328,7 +328,7 @@ unsigned int FHardwareTexture::Bind(int texunit, int cm,int translation)
 		if (lastbound[texunit]==*pTexID) return *pTexID;
 		lastbound[texunit]=*pTexID;
 		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0+texunit);
-		gl.BindTexture(GL_TEXTURE_2D, *pTexID);
+		glBindTexture(GL_TEXTURE_2D, *pTexID);
 		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0);
 		return *pTexID;
 	}
@@ -341,7 +341,7 @@ void FHardwareTexture::Unbind(int texunit)
 	if (lastbound[texunit] != 0)
 	{
 		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0+texunit);
-		gl.BindTexture(GL_TEXTURE_2D, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0);
 		lastbound[texunit] = 0;
 	}

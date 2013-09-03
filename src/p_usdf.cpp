@@ -224,7 +224,6 @@ class USDFParser : public UDMFParserBase
 		if (reply->ItemCheck.Size() > 0)
 		{
 			if (reply->ItemCheck[0].Amount <= 0) reply->NeedsGold = false;
-			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheck[0].Amount);
 		}
 
 		reply->Reply = ncopystring(ReplyString);

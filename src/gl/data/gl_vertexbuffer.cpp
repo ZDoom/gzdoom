@@ -43,6 +43,7 @@
 #include "p_local.h"
 #include "m_argv.h"
 #include "c_cvars.h"
+#include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -77,7 +78,7 @@ FVertexBuffer::FVertexBuffer()
 	if (gl.flags&RFL_VBO)
 	{
 		if (gl_usevbo == -1) gl_usevbo.Callback();
-		gl.GenBuffers(1, &vbo_id);
+		glGenBuffers(1, &vbo_id);
 	}
 }
 	
@@ -85,7 +86,7 @@ FVertexBuffer::~FVertexBuffer()
 {
 	if (vbo_id != 0)
 	{
-		gl.DeleteBuffers(1, &vbo_id);
+		glDeleteBuffers(1, &vbo_id);
 	}
 }
 
@@ -273,8 +274,8 @@ void FFlatVertexBuffer::MapVBO()
 {
 	if (map == NULL)
 	{
-		gl.BindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		map = (FFlatVertex*)gl.MapBufferRange(GL_ARRAY_BUFFER, 0, vbo_shadowdata.Size() * sizeof(FFlatVertex), 
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, vbo_shadowdata.Size() * sizeof(FFlatVertex), 
 			GL_MAP_WRITE_BIT|GL_MAP_FLUSH_EXPLICIT_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
 	}
 }
@@ -289,7 +290,7 @@ void FFlatVertexBuffer::UnmapVBO()
 {
 	if (map != NULL)
 	{
-		gl.UnmapBuffer(GL_ARRAY_BUFFER);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
 		map = NULL;
 	}
 }
@@ -316,11 +317,11 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 		MapVBO();
 		if (map == NULL) return;	// Error
 		memcpy(&map[startvt], &vbo_shadowdata[startvt], countvt * sizeof(FFlatVertex));
-		gl.FlushMappedBufferRange(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex));
+		glFlushMappedBufferRange(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex));
 	}
 	else
 	{
-		gl.BufferSubData(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex), &vbo_shadowdata[startvt]);
+		glBufferSubData(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex), &vbo_shadowdata[startvt]);
 	}
 }
 
@@ -336,8 +337,8 @@ void FFlatVertexBuffer::CreateVBO()
 	if (vbo_arg > 0)
 	{
 		CreateFlatVBO();
-		gl.BindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		gl.BufferData(GL_ARRAY_BUFFER, vbo_shadowdata.Size() * sizeof(FFlatVertex), &vbo_shadowdata[0], GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferData(GL_ARRAY_BUFFER, vbo_shadowdata.Size() * sizeof(FFlatVertex), &vbo_shadowdata[0], GL_DYNAMIC_DRAW);
 	}
 	else if (sectors)
 	{
@@ -362,8 +363,8 @@ void FFlatVertexBuffer::BindVBO()
 	if (vbo_arg > 0)
 	{
 		UnmapVBO();
-		gl.BindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		gl.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glVertexPointer(3,GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
 		glTexCoordPointer(2,GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
 		glEnableClientState(GL_VERTEX_ARRAY);

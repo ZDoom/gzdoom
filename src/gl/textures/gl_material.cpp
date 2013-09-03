@@ -50,6 +50,7 @@
 
 //#include "gl/gl_intern.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"

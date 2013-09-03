@@ -48,6 +48,7 @@
 #include "v_palette.h"
 #include "sc_man.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"

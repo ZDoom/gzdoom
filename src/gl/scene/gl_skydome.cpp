@@ -43,6 +43,7 @@
 #include "r_state.h"
 //#include "gl/gl_intern.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"

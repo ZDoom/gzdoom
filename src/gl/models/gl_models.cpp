@@ -51,6 +51,7 @@
 //#include "resources/voxels.h"
 //#include "gl/gl_intern.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
@@ -759,7 +760,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	}
 	else
 	{
-		gl.ActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
+		glActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
 		glMatrixMode(GL_TEXTURE);
 		glLoadIdentity();
 	}
@@ -794,7 +795,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	glRotatef(smf->pitchoffset, 0, 0, 1);
 	glRotatef(-smf->rolloffset, 1, 0, 0);
 		
-	if (gl.shadermodel >= 4) gl.ActiveTexture(GL_TEXTURE0);
+	if (gl.shadermodel >= 4) glActiveTexture(GL_TEXTURE0);
 
 #if 0
 	if (gl_light_models)
@@ -820,10 +821,10 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	}
 	else
 	{
-		gl.ActiveTexture(GL_TEXTURE7);
+		glActiveTexture(GL_TEXTURE7);
 		glMatrixMode(GL_TEXTURE);
 		glLoadIdentity();
-		gl.ActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE0);
 		glMatrixMode(GL_MODELVIEW);
 	}
 

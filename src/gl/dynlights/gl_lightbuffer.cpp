@@ -66,11 +66,11 @@
 
 FLightBuffer::FLightBuffer()
 {
-	gl.GenBuffers(1, &mIDbuf_RGB);
-	gl.BindBuffer(GL_TEXTURE_BUFFER, mIDbuf_RGB);
+	glGenBuffers(1, &mIDbuf_RGB);
+	glBindBuffer(GL_TEXTURE_BUFFER, mIDbuf_RGB);
 
-	gl.GenBuffers(1, &mIDbuf_Position);
-	gl.BindBuffer(GL_TEXTURE_BUFFER, mIDbuf_Position);
+	glGenBuffers(1, &mIDbuf_Position);
+	glBindBuffer(GL_TEXTURE_BUFFER, mIDbuf_Position);
 
 	glGenTextures(1, &mIDtex_RGB);
 	glBindTexture(GL_TEXTURE_BUFFER, mIDtex_RGB);
@@ -90,9 +90,9 @@ FLightBuffer::FLightBuffer()
 
 FLightBuffer::~FLightBuffer()
 {
-	gl.BindBuffer(GL_TEXTURE_BUFFER, 0);
-	gl.DeleteBuffers(1, &mIDbuf_RGB);
-	gl.DeleteBuffers(1, &mIDbuf_Position);
+	glBindBuffer(GL_TEXTURE_BUFFER, 0);
+	glDeleteBuffers(1, &mIDbuf_RGB);
+	glDeleteBuffers(1, &mIDbuf_Position);
 
 	glBindTexture(GL_TEXTURE_BUFFER, 0);
 	glDeleteTextures(1, &mIDtex_RGB);
@@ -108,11 +108,11 @@ FLightBuffer::~FLightBuffer()
 
 void FLightBuffer::BindTextures(int texunit1, int texunit2)
 {
-	gl.ActiveTexture(texunit1);
+	glActiveTexture(texunit1);
 	glBindTexture(GL_TEXTURE_BUFFER, mIDtex_RGB);
-	gl.ActiveTexture(texunit2);
+	glActiveTexture(texunit2);
 	glBindTexture(GL_TEXTURE_BUFFER, mIDtex_Position);
-	gl.ActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
@@ -155,11 +155,11 @@ void FLightBuffer::CollectLightSources()
 		}
 		GLRenderer->mLightCount = pPos.Size();
 
-		gl.BindBuffer(GL_TEXTURE_BUFFER, mIDbuf_RGB);
-		gl.BufferData(GL_TEXTURE_BUFFER, pLights.Size() * sizeof (FLightRGB), &pLights[0], GL_STREAM_DRAW);
+		glBindBuffer(GL_TEXTURE_BUFFER, mIDbuf_RGB);
+		glBufferData(GL_TEXTURE_BUFFER, pLights.Size() * sizeof (FLightRGB), &pLights[0], GL_STREAM_DRAW);
 
-		gl.BindBuffer(GL_TEXTURE_BUFFER, mIDbuf_Position);
-		gl.BufferData(GL_TEXTURE_BUFFER, pPos.Size() * sizeof (FLightPosition), &pPos[0], GL_STREAM_DRAW);
+		glBindBuffer(GL_TEXTURE_BUFFER, mIDbuf_Position);
+		glBufferData(GL_TEXTURE_BUFFER, pPos.Size() * sizeof (FLightPosition), &pPos[0], GL_STREAM_DRAW);
 
 	}
 }
@@ -173,8 +173,8 @@ void FLightBuffer::CollectLightSources()
 
 FLightIndexBuffer::FLightIndexBuffer()
 {
-	gl.GenBuffers(1, &mIDBuffer);
-	gl.BindBuffer(GL_TEXTURE_BUFFER, mIDBuffer);
+	glGenBuffers(1, &mIDBuffer);
+	glBindBuffer(GL_TEXTURE_BUFFER, mIDBuffer);
 
 	glGenTextures(1, &mIDTexture);
 	glBindTexture(GL_TEXTURE_BUFFER, mIDTexture);
@@ -189,8 +189,8 @@ FLightIndexBuffer::FLightIndexBuffer()
 
 FLightIndexBuffer::~FLightIndexBuffer()
 {
-	gl.BindBuffer(GL_TEXTURE_BUFFER, 0);
-	gl.DeleteBuffers(1, &mIDBuffer);
+	glBindBuffer(GL_TEXTURE_BUFFER, 0);
+	glDeleteBuffers(1, &mIDBuffer);
 
 	glBindTexture(GL_TEXTURE_BUFFER, 0);
 	glDeleteTextures(1, &mIDTexture);
@@ -219,9 +219,9 @@ void FLightIndexBuffer::AddLight(ADynamicLight *light)
 
 void FLightIndexBuffer::SendBuffer()
 {
-	gl.BindBuffer(GL_TEXTURE_BUFFER, mIDBuffer);
-	gl.BufferData(GL_TEXTURE_BUFFER, mBuffer.Size() * sizeof (short), &mBuffer[0], GL_STREAM_DRAW);
-	gl.BindBuffer(GL_TEXTURE_BUFFER, 0);
+	glBindBuffer(GL_TEXTURE_BUFFER, mIDBuffer);
+	glBufferData(GL_TEXTURE_BUFFER, mBuffer.Size() * sizeof (short), &mBuffer[0], GL_STREAM_DRAW);
+	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 }
 
 
@@ -233,9 +233,9 @@ void FLightIndexBuffer::SendBuffer()
 
 void FLightIndexBuffer::BindTexture(int texunit1)
 {
-	gl.ActiveTexture(texunit1);
+	glActiveTexture(texunit1);
 	glBindTexture(GL_TEXTURE_BUFFER, mIDTexture);
-	gl.ActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 

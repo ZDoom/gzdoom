@@ -263,7 +263,7 @@ public:
 		}
 		else
 		{
-			gl.BlendEquation(eq);
+			::glBlendEquation(eq);
 		}
 	}
 

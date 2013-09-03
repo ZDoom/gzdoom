@@ -49,6 +49,7 @@
 #include "templates.h"
 #include "vectors.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/system/gl_framebuffer.h"
@@ -506,7 +507,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.Apply(true);
-	gl.ActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 
 	// mask out the alpha channel of the wipeendscreen.
@@ -518,7 +519,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
 	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-	gl.ActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 
 	// Burn the new screen on top of it.
 	glColor4f(1.f, 1.f, 1.f, 1.f);
@@ -533,24 +534,24 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 
 
 	glBegin(GL_TRIANGLE_STRIP);
-	gl.MultiTexCoord2f(GL_TEXTURE0, 0, 0);
-	gl.MultiTexCoord2f(GL_TEXTURE1, 0, vb);
+	glMultiTexCoord2f(GL_TEXTURE0, 0, 0);
+	glMultiTexCoord2f(GL_TEXTURE1, 0, vb);
 	glVertex2i(0, 0);
-	gl.MultiTexCoord2f(GL_TEXTURE0, 0, 1);
-	gl.MultiTexCoord2f(GL_TEXTURE1, 0, 0);
+	glMultiTexCoord2f(GL_TEXTURE0, 0, 1);
+	glMultiTexCoord2f(GL_TEXTURE1, 0, 0);
 	glVertex2i(0, fb->Height);
-	gl.MultiTexCoord2f(GL_TEXTURE0, 1, 0);
-	gl.MultiTexCoord2f(GL_TEXTURE1, ur, vb);
+	glMultiTexCoord2f(GL_TEXTURE0, 1, 0);
+	glMultiTexCoord2f(GL_TEXTURE1, ur, vb);
 	glVertex2i(fb->Width, 0);
-	gl.MultiTexCoord2f(GL_TEXTURE0, 1, 1);
-	gl.MultiTexCoord2f(GL_TEXTURE1, ur, 0);
+	glMultiTexCoord2f(GL_TEXTURE0, 1, 1);
+	glMultiTexCoord2f(GL_TEXTURE1, ur, 0);
 	glVertex2i(fb->Width, fb->Height);
 	glEnd();
 
-	gl.ActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE1);
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
-	gl.ActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 
 	// The fire may not always stabilize, so the wipe is forced to end
 	// after an arbitrary maximum time.

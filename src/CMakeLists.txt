@@ -886,6 +886,7 @@ add_executable( zdoom WIN32
 	menu/playermenu.cpp
 	menu/readthis.cpp
 	menu/videomenu.cpp
+	gl/api/gl_api.cpp
 	gl/data/gl_sections.cpp
 	gl/data/gl_data.cpp
 	gl/data/gl_portaldata.cpp

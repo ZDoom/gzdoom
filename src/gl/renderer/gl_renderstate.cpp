@@ -39,6 +39,7 @@
 */
 
 #include "gl/system/gl_system.h"
+#include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
@@ -203,15 +204,15 @@ bool FRenderState::ApplyShader()
 
 		if (fogset != activeShader->currentfogenabled)
 		{
-			gl.Uniform1i(activeShader->fogenabled_index, (activeShader->currentfogenabled = fogset)); 
+			glUniform1i(activeShader->fogenabled_index, (activeShader->currentfogenabled = fogset)); 
 		}
 		if (mTextureMode != activeShader->currenttexturemode)
 		{
-			gl.Uniform1i(activeShader->texturemode_index, (activeShader->currenttexturemode = mTextureMode)); 
+			glUniform1i(activeShader->texturemode_index, (activeShader->currenttexturemode = mTextureMode)); 
 		}
 		if (activeShader->currentcamerapos.Update(&mCameraPos))
 		{
-			gl.Uniform3fv(activeShader->camerapos_index, 1, mCameraPos.vec); 
+			glUniform3fv(activeShader->camerapos_index, 1, mCameraPos.vec); 
 		}
 		/*if (mLightParms[0] != activeShader->currentlightfactor || 
 			mLightParms[1] != activeShader->currentlightdist ||
@@ -223,28 +224,28 @@ bool FRenderState::ApplyShader()
 			//activeShader->currentfogdensity = mFogDensity;
 			// premultiply the density with as much as possible here to reduce shader
 			// execution time.
-			gl.VertexAttrib4f(VATTR_FOGPARAMS, mLightParms[0], mLightParms[1], mFogDensity * (-LOG2E / 64000.f), 0);
+			glVertexAttrib4f(VATTR_FOGPARAMS, mLightParms[0], mLightParms[1], mFogDensity * (-LOG2E / 64000.f), 0);
 		}
 		if (mFogColor != activeShader->currentfogcolor)
 		{
 			activeShader->currentfogcolor = mFogColor;
 
-			gl.Uniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, 
+			glUniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, 
 							mFogColor.b/255.f, 0);
 		}
 		if (mGlowEnabled)
 		{
-			gl.Uniform4fv(activeShader->glowtopcolor_index, 1, mGlowTop.vec);
-			gl.Uniform4fv(activeShader->glowbottomcolor_index, 1, mGlowBottom.vec);
+			glUniform4fv(activeShader->glowtopcolor_index, 1, mGlowTop.vec);
+			glUniform4fv(activeShader->glowbottomcolor_index, 1, mGlowBottom.vec);
 		}
 		if (mLightEnabled)
 		{
-			gl.Uniform3iv(activeShader->lightrange_index, 1, mNumLights);
-			gl.Uniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
+			glUniform3iv(activeShader->lightrange_index, 1, mNumLights);
+			glUniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
 		}
 		if (glset.lightmode == 8)
 		{
-			gl.Uniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
+			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
 		}
 
 		return true;
@@ -284,7 +285,7 @@ void FRenderState::Apply(bool forcenoshader)
 		if (mBlendEquation != glBlendEquation)
 		{
 			glBlendEquation = mBlendEquation;
-			gl.BlendEquation(mBlendEquation);
+			::glBlendEquation(mBlendEquation);
 		}
 	}
 

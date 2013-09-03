@@ -44,6 +44,7 @@
 #include "a_sharedglobal.h"
 #include "gl/gl_functions.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -248,14 +249,14 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 	glBegin(GL_TRIANGLE_FAN);
 
 	// lower left corner
-	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0], zbottom[0] - zfloor[0]);
+	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0], zbottom[0] - zfloor[0]);
 	if (textured&1) glTexCoord2f(tcs[0].u,tcs[0].v);
 	glVertex3f(glseg.x1,zbottom[0],glseg.y1);
 
 	if (split && glseg.fracleft==0) SplitLeftEdge(tcs, glowing);
 
 	// upper left corner
-	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0], ztop[0] - zfloor[0]);
+	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0], ztop[0] - zfloor[0]);
 	if (textured&1) glTexCoord2f(tcs[1].u,tcs[1].v);
 	glVertex3f(glseg.x1,ztop[0],glseg.y1);
 
@@ -265,14 +266,14 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 	if (color2) glColor4fv(color2);
 
 	// upper right corner
-	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - ztop[1], ztop[1] - zfloor[1]);
+	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - ztop[1], ztop[1] - zfloor[1]);
 	if (textured&1) glTexCoord2f(tcs[2].u,tcs[2].v);
 	glVertex3f(glseg.x2,ztop[1],glseg.y2);
 
 	if (split && glseg.fracright==1) SplitRightEdge(tcs, glowing);
 
 	// lower right corner
-	if (glowing) gl.VertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - zbottom[1], zbottom[1] - zfloor[1]);
+	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - zbottom[1], zbottom[1] - zfloor[1]);
 	if (textured&1) glTexCoord2f(tcs[3].u,tcs[3].v); 
 	glVertex3f(glseg.x2,zbottom[1],glseg.y2);
 
@@ -330,7 +331,7 @@ void GLWall::RenderFogBoundary()
 			gl_RenderState.AlphaFunc(GL_GREATER,0);
 			glDepthFunc(GL_LEQUAL);
 			glColor4f(fc[0],fc[1],fc[2], fogd1);
-			if (glset.lightmode == 8) gl.VertexAttrib1f(VATTR_LIGHTLEVEL, 1.0); // Korshun.
+			if (glset.lightmode == 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0); // Korshun.
 
 			flags &= ~GLWF_GLOW;
 			RenderWall(4,fc);

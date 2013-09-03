@@ -3602,6 +3602,14 @@
 				Name="System"
 				>
 				<File
+					RelativePath=".\src\gl\api\gl_api.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\gl\api\gl_api.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\gl\system\gl_cvars.h"
 					>
 				</File>

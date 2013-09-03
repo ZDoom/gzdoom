@@ -46,6 +46,7 @@
 #include "doomstat.h"
 #include "a_sharedglobal.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
@@ -199,10 +200,10 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			// If occlusion query is supported let's use it to avoid rendering portals that aren't visible
 			if (doquery && gl.flags&RFL_OCCLUSION_QUERY)
 			{
-				if (!QueryObject) gl.GenQueries(1, &QueryObject);
+				if (!QueryObject) glGenQueries(1, &QueryObject);
 				if (QueryObject) 
 				{
-					gl.BeginQuery(GL_SAMPLES_PASSED_ARB, QueryObject);
+					glBeginQuery(GL_SAMPLES_PASSED_ARB, QueryObject);
 				}
 				else doquery = false;	// some kind of error happened
 					
@@ -212,7 +213,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 
 			if (doquery && gl.flags&RFL_OCCLUSION_QUERY)
 			{
-				gl.EndQuery(GL_SAMPLES_PASSED_ARB);
+				glEndQuery(GL_SAMPLES_PASSED_ARB);
 			}
 
 			// Clear Z-buffer
@@ -233,7 +234,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			{
 				GLuint sampleCount;
 
-				gl.GetQueryObjectuiv(QueryObject, GL_QUERY_RESULT_ARB, &sampleCount);
+				glGetQueryObjectuiv(QueryObject, GL_QUERY_RESULT_ARB, &sampleCount);
 
 				if (sampleCount==0) 	// not visible
 				{

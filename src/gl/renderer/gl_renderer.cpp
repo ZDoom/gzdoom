@@ -50,6 +50,7 @@
 #include "gl/gl_functions.h"
 #include "vectors.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_threads.h"
 #include "gl/renderer/gl_renderer.h"
@@ -123,7 +124,7 @@ FGLRenderer::~FGLRenderer()
 	if (glpart) delete glpart;
 	if (mirrortexture) delete mirrortexture;
 	if (gllight) delete gllight;
-	if (mFBID != 0) gl.DeleteFramebuffers(1, &mFBID);
+	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 }
 
 //===========================================================================
@@ -213,8 +214,8 @@ bool FGLRenderer::StartOffscreen()
 {
 	if (gl.flags & RFL_FRAMEBUFFER)
 	{
-		if (mFBID == 0) gl.GenFramebuffers(1, &mFBID);
-		gl.BindFramebuffer(GL_FRAMEBUFFER, mFBID);
+		if (mFBID == 0) glGenFramebuffers(1, &mFBID);
+		glBindFramebuffer(GL_FRAMEBUFFER, mFBID);
 		return true;
 	}
 	return false;
@@ -230,7 +231,7 @@ void FGLRenderer::EndOffscreen()
 {
 	if (gl.flags & RFL_FRAMEBUFFER)
 	{
-		gl.BindFramebuffer(GL_FRAMEBUFFER, 0); 
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 	}
 }
 

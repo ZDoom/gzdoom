@@ -57,6 +57,7 @@
 #include "p_local.h"
 #include "gl/gl_functions.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
@@ -266,11 +267,11 @@ void FGLRenderer::SetViewMatrix(bool mirror, bool planemirror)
 {
 	if (gl.shadermodel >= 4)
 	{
-		gl.ActiveTexture(GL_TEXTURE7);
+		glActiveTexture(GL_TEXTURE7);
 		glMatrixMode(GL_TEXTURE);
 		glLoadIdentity();
 	}
-	gl.ActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
 
@@ -441,7 +442,7 @@ void FGLRenderer::RenderScene(int recursion)
 			{
 				gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
 				glDepthFunc(GL_EQUAL);
-				if (glset.lightmode == 8) gl.VertexAttrib1f(VATTR_LIGHTLEVEL, 1.0f); // Korshun.
+				if (glset.lightmode == 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0f); // Korshun.
 				for(int i=GLDL_FIRSTLIGHT; i<=GLDL_LASTLIGHT; i++)
 				{
 					gl_drawinfo->drawlists[i].Draw(GLPASS_LIGHT);

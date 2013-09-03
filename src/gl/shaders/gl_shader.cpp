@@ -49,6 +49,7 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -119,8 +120,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			}
 		}
 
-		hVertProg = gl.CreateShader(GL_VERTEX_SHADER);
-		hFragProg = gl.CreateShader(GL_FRAGMENT_SHADER);	
+		hVertProg = glCreateShader(GL_VERTEX_SHADER);
+		hFragProg = glCreateShader(GL_FRAGMENT_SHADER);	
 
 
 		int vp_size = (int)vp_comb.Len();
@@ -129,68 +130,68 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		const char *vp_ptr = vp_comb.GetChars();
 		const char *fp_ptr = fp_comb.GetChars();
 
-		gl.ShaderSource(hVertProg, 1, &vp_ptr, &vp_size);
-		gl.ShaderSource(hFragProg, 1, &fp_ptr, &fp_size);
+		glShaderSource(hVertProg, 1, &vp_ptr, &vp_size);
+		glShaderSource(hFragProg, 1, &fp_ptr, &fp_size);
 
-		gl.CompileShader(hVertProg);
-		gl.CompileShader(hFragProg);
+		glCompileShader(hVertProg);
+		glCompileShader(hFragProg);
 
-		hShader = gl.CreateProgram();
+		hShader = glCreateProgram();
 
-		gl.AttachShader(hShader, hVertProg);
-		gl.AttachShader(hShader, hFragProg);
+		glAttachShader(hShader, hVertProg);
+		glAttachShader(hShader, hFragProg);
 
-		gl.BindAttribLocation(hShader, VATTR_GLOWDISTANCE, "glowdistance");
-		gl.BindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
-		gl.BindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
+		glBindAttribLocation(hShader, VATTR_GLOWDISTANCE, "glowdistance");
+		glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
+		glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
 
-		gl.LinkProgram(hShader);
+		glLinkProgram(hShader);
 
-		gl.GetShaderInfoLog(hVertProg, 10000, NULL, buffer);
+		glGetShaderInfoLog(hVertProg, 10000, NULL, buffer);
 		if (*buffer) 
 		{
 			error << "Vertex shader:\n" << buffer << "\n";
 		}
-		gl.GetShaderInfoLog(hFragProg, 10000, NULL, buffer);
+		glGetShaderInfoLog(hFragProg, 10000, NULL, buffer);
 		if (*buffer) 
 		{
 			error << "Vertex shader:\n" << buffer << "\n";
 		}
 
-		gl.GetProgramInfoLog(hShader, 10000, NULL, buffer);
+		glGetProgramInfoLog(hShader, 10000, NULL, buffer);
 		if (*buffer) 
 		{
 			error << "Linking:\n" << buffer << "\n";
 		}
 		int linked;
-		gl.GetObjectParameteriv(hShader, GL_LINK_STATUS, &linked);
+		glGetObjectParameteriv(hShader, GL_LINK_STATUS, &linked);
 		if (linked == 0)
 		{
 			// only print message if there's an error.
 			Printf("Init Shader '%s':\n%s\n", name, error.GetChars());
 		}
-		timer_index = gl.GetUniformLocation(hShader, "timer");
-		desaturation_index = gl.GetUniformLocation(hShader, "desaturation_factor");
-		fogenabled_index = gl.GetUniformLocation(hShader, "fogenabled");
-		texturemode_index = gl.GetUniformLocation(hShader, "texturemode");
-		camerapos_index = gl.GetUniformLocation(hShader, "camerapos");
-		lightparms_index = gl.GetUniformLocation(hShader, "lightparms");
-		colormapstart_index = gl.GetUniformLocation(hShader, "colormapstart");
-		colormaprange_index = gl.GetUniformLocation(hShader, "colormaprange");
-		lightrange_index = gl.GetUniformLocation(hShader, "lightrange");
-		fogcolor_index = gl.GetUniformLocation(hShader, "fogcolor");
-		lights_index = gl.GetUniformLocation(hShader, "lights");
-		dlightcolor_index = gl.GetUniformLocation(hShader, "dlightcolor");
+		timer_index = glGetUniformLocation(hShader, "timer");
+		desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
+		fogenabled_index = glGetUniformLocation(hShader, "fogenabled");
+		texturemode_index = glGetUniformLocation(hShader, "texturemode");
+		camerapos_index = glGetUniformLocation(hShader, "camerapos");
+		lightparms_index = glGetUniformLocation(hShader, "lightparms");
+		colormapstart_index = glGetUniformLocation(hShader, "colormapstart");
+		colormaprange_index = glGetUniformLocation(hShader, "colormaprange");
+		lightrange_index = glGetUniformLocation(hShader, "lightrange");
+		fogcolor_index = glGetUniformLocation(hShader, "fogcolor");
+		lights_index = glGetUniformLocation(hShader, "lights");
+		dlightcolor_index = glGetUniformLocation(hShader, "dlightcolor");
 
-		glowbottomcolor_index = gl.GetUniformLocation(hShader, "bottomglowcolor");
-		glowtopcolor_index = gl.GetUniformLocation(hShader, "topglowcolor");
+		glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
+		glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");
 		
-		gl.UseProgram(hShader);
+		glUseProgram(hShader);
 
-		int texture_index = gl.GetUniformLocation(hShader, "texture2");
-		if (texture_index > 0) gl.Uniform1i(texture_index, 1);
+		int texture_index = glGetUniformLocation(hShader, "texture2");
+		if (texture_index > 0) glUniform1i(texture_index, 1);
 
-		gl.UseProgram(0);
+		glUseProgram(0);
 		return !!linked;
 	}
 	return false;
@@ -204,9 +205,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 FShader::~FShader()
 {
-	gl.DeleteProgram(hShader);
-	gl.DeleteShader(hVertProg);
-	gl.DeleteShader(hFragProg);
+	glDeleteProgram(hShader);
+	glDeleteShader(hVertProg);
+	glDeleteShader(hFragProg);
 }
 
 
@@ -219,7 +220,7 @@ FShader::~FShader()
 bool FShader::Bind(float Speed)
 {
 	GLRenderer->mShaderManager->SetActiveShader(this);
-	if (timer_index >=0 && Speed > 0.f) gl.Uniform1f(timer_index, gl_frameMS*Speed/1000.f);
+	if (timer_index >=0 && Speed > 0.f) glUniform1f(timer_index, gl_frameMS*Speed/1000.f);
 	return true;
 }
 
@@ -376,8 +377,8 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
 			float m[3]= {map->ColorizeEnd[0] - map->ColorizeStart[0], 
 				map->ColorizeEnd[1] - map->ColorizeStart[1], map->ColorizeEnd[2] - map->ColorizeStart[2]};
 
-			gl.Uniform3fv(sh->colormapstart_index, 1, map->ColorizeStart);
-			gl.Uniform3fv(sh->colormaprange_index, 1, m);
+			glUniform3fv(sh->colormapstart_index, 1, map->ColorizeStart);
+			glUniform3fv(sh->colormaprange_index, 1, m);
 		}
 	}
 	else
@@ -390,7 +391,7 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
 			sh->Bind(Speed);
 			if (desat)
 			{
-				gl.Uniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
+				glUniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
 			}
 		}
 	}
@@ -578,7 +579,7 @@ void FShaderManager::SetActiveShader(FShader *sh)
 	// shadermodel needs to be tested here because without it UseProgram will be NULL.
 	if (gl.shadermodel > 0 && mActiveShader != sh)
 	{
-		gl.UseProgram(sh == NULL? 0 : sh->GetHandle());
+		glUseProgram(sh == NULL? 0 : sh->GetHandle());
 		mActiveShader = sh;
 	}
 }

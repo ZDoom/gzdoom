@@ -46,6 +46,7 @@
 #include "c_dispatch.h"
 #include "v_palette.h"
 
+#include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_material.h"
@@ -266,7 +267,7 @@ void FHardwareTexture::Clean(bool all)
 		DeleteTexture(glTexID_Translated[i].glTexID);
 	}
 	glTexID_Translated.Clear();
-	if (glDepthID != 0) gl.DeleteRenderbuffers(1, &glDepthID);
+	if (glDepthID != 0) glDeleteRenderbuffers(1, &glDepthID);
 }
 
 //===========================================================================
@@ -327,9 +328,9 @@ unsigned int FHardwareTexture::Bind(int texunit, int cm,int translation)
 	{
 		if (lastbound[texunit]==*pTexID) return *pTexID;
 		lastbound[texunit]=*pTexID;
-		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0+texunit);
+		if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
 		glBindTexture(GL_TEXTURE_2D, *pTexID);
-		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0);
+		if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 		return *pTexID;
 	}
 	return 0;
@@ -340,9 +341,9 @@ void FHardwareTexture::Unbind(int texunit)
 {
 	if (lastbound[texunit] != 0)
 	{
-		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0+texunit);
+		if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
 		glBindTexture(GL_TEXTURE_2D, 0);
-		if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0);
+		if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 		lastbound[texunit] = 0;
 	}
 }
@@ -367,11 +368,11 @@ int FHardwareTexture::GetDepthBuffer()
 	{
 		if (glDepthID == 0)
 		{
-			gl.GenRenderbuffers(1, &glDepthID);
-			gl.BindRenderbuffer(GL_RENDERBUFFER, glDepthID);
-			gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 
+			glGenRenderbuffers(1, &glDepthID);
+			glBindRenderbuffer(GL_RENDERBUFFER, glDepthID);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 
 				GetTexDimension(texwidth), GetTexDimension(texheight));
-			gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
+			glBindRenderbuffer(GL_RENDERBUFFER, 0);
 		}
 		return glDepthID;
 	}
@@ -389,8 +390,8 @@ void FHardwareTexture::BindToFrameBuffer()
 {
 	if (gl.flags & RFL_FRAMEBUFFER)
 	{
-		gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glTexID[0], 0);
-		gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glTexID[0], 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
 	}
 }
 
@@ -407,9 +408,9 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 
 	unsigned int * pTexID=GetTexID(cm, translation);
 
-	if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0+texunit);
+	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
 	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP, cm==CM_SHADE, texunit);
-	if (texunit != 0) gl.ActiveTexture(GL_TEXTURE0);
+	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 	return *pTexID;
 }
 

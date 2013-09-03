@@ -74,6 +74,7 @@
 #include <GL/glu.h>
 #include <GL/glext.h>
 #endif // __APPLE__
+#include "gl/api/gl_api.h"
 
 #ifdef _WIN32
 #define DWORD WINDOWS_DWORD	// I don't want to depend on this throughout the GL code!
@@ -92,9 +93,7 @@ inline T max( T a, T b) { return (((a)>(b)) ? (a) : (b)); }
 #ifndef _WIN32
 #include <SDL.h>
 #endif
-#include "gl/system/gl_interface.h"
 
-extern RenderContext gl;
 
 #ifdef LoadMenu
 #undef LoadMenu

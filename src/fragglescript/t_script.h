@@ -110,7 +110,7 @@ struct svalue_t
 
 int intvalue(const svalue_t & v);
 fixed_t fixedvalue(const svalue_t & v);
-float floatvalue(const svalue_t & v);
+double floatvalue(const svalue_t & v);
 const char *stringvalue(const svalue_t & v);
 AActor *actorvalue(const svalue_t &svalue);
 

@@ -2657,10 +2657,11 @@ void AM_drawThings ()
 
 					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
-					const fixed_t spriteScale = 10 * scale_mtof;
+					const fixed_t spriteXScale = FixedMul(t->scaleX, 10 * scale_mtof);
+					const fixed_t spriteYScale = FixedMul(t->scaleY, 10 * scale_mtof);
 
 					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
-						spriteScale, spriteScale, 0, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
+						spriteXScale, spriteYScale, t->Translation, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
 				}
 				else
 				{

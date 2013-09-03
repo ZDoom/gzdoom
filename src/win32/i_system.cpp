@@ -1569,3 +1569,31 @@ unsigned int I_MakeRNGSeed()
 	CryptReleaseContext(prov, 0);
 	return seed;
 }
+
+//==========================================================================
+//
+// I_GetLongPathName
+//
+// Returns the long version of the path, or the original if there isn't
+// anything worth changing.
+//
+//==========================================================================
+
+FString I_GetLongPathName(FString shortpath)
+{
+	DWORD buffsize = GetLongPathName(shortpath.GetChars(), NULL, 0);
+	if (buffsize == 0)
+	{ // nothing to change (it doesn't exist, maybe?)
+		return shortpath;
+	}
+	TCHAR *buff = new TCHAR[buffsize];
+	DWORD buffsize2 = GetLongPathName(shortpath.GetChars(), buff, buffsize);
+	if (buffsize2 >= buffsize)
+	{ // Failure! Just return the short path
+		delete[] buff;
+		return shortpath;
+	}
+	FString longpath(buff, buffsize2);
+	delete[] buff;
+	return longpath;
+}

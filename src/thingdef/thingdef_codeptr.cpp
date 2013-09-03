@@ -5189,6 +5189,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(tics_to_set);
 
+	if (stateowner != self && self->player != NULL && stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)))
+	{ // Is this a weapon? Need to check psp states for a match, then. Blah.
+		for (int i = 0; i < NUMPSPRITES; ++i)
+		{
+			if (self->player->psprites[i].state == callingstate)
+			{
+				self->player->psprites[i].tics = tics_to_set;
+				return 0;
+			}
+		}
+	}
+	// Just set tics for self.
 	self->tics = tics_to_set;
 	return 0;
 }

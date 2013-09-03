@@ -898,7 +898,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 
 static void ParseActionDef (FScanner &sc, PClassActor *cls)
 {
-	bool error = false;
+	unsigned int error = 0;
 	const AFuncDesc *afd;
 	FName funcname;
 	TArray<PType *> rets;
@@ -907,8 +907,8 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
-		sc.ScriptMessage ("action functions can only be imported by internal class and actor definitions!");
-		error++;
+		sc.ScriptMessage ("Action functions can only be imported by internal class and actor definitions!");
+		++error;
 	}
 
 	sc.MustGetToken(TK_Native);
@@ -923,7 +923,7 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	if (afd == NULL)
 	{
 		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", sc.String);
-		error++;
+		++error;
 	}
 	args.Push(NewClassPointer(cls)), argflags.Push(0);						// implied self pointer
 	args.Push(NewClassPointer(RUNTIME_CLASS(AActor))), argflags.Push(0);	// implied stateowner pointer
@@ -1028,7 +1028,7 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 		sym->Flags = VARF_Method | VARF_Action;
 		if (error)
 		{
-			FScriptPosition::ErrorCounter++;
+			FScriptPosition::ErrorCounter += error;
 		}
 		else if (cls->Symbols.AddSymbol(sym) == NULL)
 		{

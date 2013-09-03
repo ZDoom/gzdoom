@@ -53,11 +53,6 @@
 #include "r_data/r_translate.h"
 #include "g_level.h"
 
-#define WATER_SINK_FACTOR		3
-#define WATER_SINK_SMALL_FACTOR	4
-#define WATER_SINK_SPEED		(FRACUNIT/2)
-#define WATER_JUMP_SPEED		(FRACUNIT*7/2)
-
 CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR (Int, sv_smartaim, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 CVAR (Bool, cl_doautoaim, false, CVAR_ARCHIVE)

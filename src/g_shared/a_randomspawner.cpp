@@ -154,8 +154,9 @@ class ARandomSpawner : public AActor
 			newmobj->args[4]    = args[4];
 			newmobj->special1   = special1;
 			newmobj->special2   = special2;
-			newmobj->SpawnFlags = SpawnFlags;
+			newmobj->SpawnFlags = SpawnFlags & ~MTF_SECRET;	// MTF_SECRET needs special treatment to avoid incrementing the secret counter twice. It had already been processed for the spawner itself.
 			newmobj->HandleSpawnFlags();
+			newmobj->SpawnFlags = SpawnFlags;
 			newmobj->tid        = tid;
 			newmobj->AddToHash();
 			newmobj->velx = velx;

@@ -38,7 +38,7 @@ class PSymbolConst : public PSymbol
 {
 	DECLARE_CLASS(PSymbolConst, PSymbol);
 public:
-	int ValueType;
+	class PType *ValueType;
 	union
 	{
 		int Value;

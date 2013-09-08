@@ -297,17 +297,16 @@ FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 	PSymbolConst *csym = dyn_cast<PSymbolConst>(sym);
 	if (csym != NULL)
 	{
-		switch(csym->ValueType)
+		if (csym->ValueType->IsA(RUNTIME_CLASS(PInt)))
 		{
-		case VAL_Int:
 			x = new FxConstant(csym->Value, pos);
-			break;
-
-		case VAL_Float:
+		}
+		else if (csym->ValueType->IsA(RUNTIME_CLASS(PFloat)))
+		{
 			x = new FxConstant(csym->Float, pos);
-			break;
-
-		default:
+		}
+		else
+		{
 			pos.Message(MSG_ERROR, "Invalid constant '%s'\n", csym->SymbolName.GetChars());
 			return NULL;
 		}

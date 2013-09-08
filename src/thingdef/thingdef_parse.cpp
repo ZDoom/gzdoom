@@ -205,12 +205,12 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 			PSymbolConst *sym = new PSymbolConst(symname);
 			if (type == TK_Int)
 			{
-				sym->ValueType = VAL_Int;
+				sym->ValueType = TypeSInt32;
 				sym->Value = val.GetInt();
 			}
 			else
 			{
-				sym->ValueType = VAL_Float;
+				sym->ValueType = TypeFloat64;
 				sym->Float = val.GetFloat();
 			}
 			if (symt->AddSymbol (sym) == NULL)
@@ -261,7 +261,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 			delete expr;
 		}
 		PSymbolConst *sym = new PSymbolConst(symname);
-		sym->ValueType = VAL_Int;
+		sym->ValueType = TypeSInt32;
 		sym->Value = currvalue;
 		if (symt->AddSymbol (sym) == NULL)
 		{

@@ -442,10 +442,7 @@ static void OpenExprType(FLispString &out, EZCCExprType type)
 		"id",
 		"super",
 		"self",
-		"string-const",
-		"int-const",
-		"uint-const",
-		"float-const",
+		"const",
 		"func-call",
 		"array-access",
 		"member-access",
@@ -518,30 +515,23 @@ static void PrintExprID(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
-static void PrintExprString(FLispString &out, ZCC_TreeNode *node)
+static void PrintExprConstant(FLispString &out, ZCC_TreeNode *node)
 {
-	ZCC_ExprString *enode = (ZCC_ExprString *)node;
-	assert(enode->Operation == PEX_StringConst);
-	out.Open("expr-string-const");
-	PrintStringConst(out, *enode->Value);
-	out.Close();
-}
-
-static void PrintExprInt(FLispString &out, ZCC_TreeNode *node)
-{
-	ZCC_ExprInt *enode = (ZCC_ExprInt *)node;
-	assert(enode->Operation == PEX_IntConst || enode->Operation == PEX_UIntConst);
-	OpenExprType(out, enode->Operation);
-	out.AddInt(enode->Value);
-	out.Close();
-}
-
-static void PrintExprFloat(FLispString &out, ZCC_TreeNode *node)
-{
-	ZCC_ExprFloat *enode = (ZCC_ExprFloat *)node;
-	assert(enode->Operation == PEX_FloatConst);
-	out.Open("expr-float-const");
-	out.AddFloat(enode->Value);
+	ZCC_ExprConstant *enode = (ZCC_ExprConstant *)node;
+	assert(enode->Operation == PEX_ConstValue);
+	out.Open("expr-const");
+	if (enode->Type == TypeString)
+	{
+		PrintStringConst(out, *enode->StringVal);
+	}
+	else if (enode->Type == TypeFloat64)
+	{
+		out.AddFloat(enode->DoubleVal);
+	}
+	else
+	{
+		out.AddInt(enode->IntVal);
+	}
 	out.Close();
 }
 
@@ -817,9 +807,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintClassType,
 	PrintExpression,
 	PrintExprID,
-	PrintExprString,
-	PrintExprInt,
-	PrintExprFloat,
+	PrintExprConstant,
 	PrintExprFuncCall,
 	PrintExprMemberAccess,
 	PrintExprUnary,

@@ -75,9 +75,7 @@ enum EZCCTreeNodeType
 	AST_ClassType,
 	AST_Expression,
 	AST_ExprID,
-	AST_ExprString,
-	AST_ExprInt,
-	AST_ExprFloat,
+	AST_ExprConstant,
 	AST_ExprFuncCall,
 	AST_ExprMemberAccess,
 	AST_ExprUnary,
@@ -136,10 +134,7 @@ enum EZCCExprType
 	PEX_ID,
 	PEX_Super,
 	PEX_Self,
-	PEX_StringConst,
-	PEX_IntConst,
-	PEX_UIntConst,
-	PEX_FloatConst,
+	PEX_ConstValue,
 	PEX_FuncCall,
 	PEX_ArrayAccess,
 	PEX_MemberAccess,
@@ -352,19 +347,14 @@ struct ZCC_ExprID : ZCC_Expression
 	ENamedName Identifier;
 };
 
-struct ZCC_ExprString : ZCC_Expression
+struct ZCC_ExprConstant : ZCC_Expression
 {
-	FString *Value;
-};
-
-struct ZCC_ExprInt : ZCC_Expression
-{
-	int Value;
-};
-
-struct ZCC_ExprFloat : ZCC_Expression
-{
-	double Value;
+	union
+	{
+		FString *StringVal;
+		int IntVal;
+		double DoubleVal;
+	};
 };
 
 struct ZCC_FuncParm : ZCC_TreeNode

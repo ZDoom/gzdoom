@@ -726,7 +726,7 @@ const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
 %type expr{ZCC_Expression *}
 %type primary{ZCC_Expression *}
 %type unary_expr{ZCC_Expression *}
-%type constant{ZCC_Expression *}
+%type constant{ZCC_ExprConstant *}
 
 %include {
 #define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr, X); expr->Operation = T; expr->Operand = X; expr->Type = NULL
@@ -1091,22 +1091,22 @@ named_expr(X) ::= expr(B).
 /************ Constants ************/
 
 /* Allow C-like concatenation of adjacent string constants. */
-%type string_constant{ZCC_ExprString *}
+%type string_constant{ZCC_ExprConstant *}
 
 string_constant(X) ::= STRCONST(A).
 {
-	NEW_AST_NODE(ExprString, strconst, A);
-	strconst->Operation = PEX_StringConst;
+	NEW_AST_NODE(ExprConstant, strconst, A);
+	strconst->Operation = PEX_ConstValue;
 	strconst->Type = TypeString;
-	strconst->Value = A.String;
+	strconst->StringVal = A.String;
 	X = strconst;
 }
 string_constant(X) ::= string_constant(A) STRCONST(B).
 {
-	NEW_AST_NODE(ExprString, strconst, A);
-	strconst->Operation = PEX_StringConst;
+	NEW_AST_NODE(ExprConstant, strconst, A);
+	strconst->Operation = PEX_ConstValue;
 	strconst->Type = TypeString;
-	strconst->Value = stat->Strings.Alloc(*(A->Value) + *(B.String));
+	strconst->StringVal = stat->Strings.Alloc(*(A->StringVal) + *(B.String));
 	X = strconst;
 }
 
@@ -1116,18 +1116,18 @@ constant(X) ::= string_constant(A).
 }
 constant(X) ::= INTCONST(A).
 {
-	NEW_AST_NODE(ExprInt, intconst, A);
-	intconst->Operation = PEX_IntConst;
+	NEW_AST_NODE(ExprConstant, intconst, A);
+	intconst->Operation = PEX_ConstValue;
 	intconst->Type = TypeSInt32;
-	intconst->Value = A.Int;
+	intconst->IntVal = A.Int;
 	X = intconst;
 }
 constant(X) ::= FLOATCONST(A).
 {
-	NEW_AST_NODE(ExprFloat, floatconst, A);
-	floatconst->Operation = PEX_FloatConst;
+	NEW_AST_NODE(ExprConstant, floatconst, A);
+	floatconst->Operation = PEX_ConstValue;
 	floatconst->Type = TypeFloat64;
-	floatconst->Value = A.Float;
+	floatconst->DoubleVal = A.Float;
 	X = floatconst;
 }
 

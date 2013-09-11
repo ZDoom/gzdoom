@@ -1141,6 +1141,14 @@ constant(X) ::= FLOATCONST(A).
 	floatconst->DoubleVal = A.Float;
 	X = floatconst;
 }
+constant(X) ::= NAMECONST(A).
+{
+	NEW_AST_NODE(ExprConstant, floatconst, A);
+	floatconst->Operation = PEX_ConstValue;
+	floatconst->Type = TypeName;
+	floatconst->IntVal = A.Int;
+	X = floatconst;
+}
 
 /************ Statements ************/
 

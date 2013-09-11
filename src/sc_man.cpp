@@ -530,8 +530,19 @@ bool FScanner::GetToken ()
 		else if (TokenType == TK_IntConst)
 		{
 			char *stopper;
-			Number = strtol(String, &stopper, 0);
-			Float = Number;
+			// Check for unsigned
+			if (String[StringLen - 1] == 'u' || String[StringLen - 1] == 'U' ||
+				String[StringLen - 2] == 'u' || String[StringLen - 2] == 'U')
+			{
+				TokenType = TK_UIntConst;
+				Number = strtoul(String, &stopper, 0);
+				Float = (unsigned)Number;
+			}
+			else
+			{
+				Number = strtol(String, &stopper, 0);
+				Float = Number;
+			}
 		}
 		else if (TokenType == TK_FloatConst)
 		{

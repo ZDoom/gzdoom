@@ -188,7 +188,7 @@ std2:
 
 		L (L|D)*					{ RET(TK_Identifier); }
 
-		("0" [xX] H+ IS?) | ("0" D+ IS?) | (D+ IS?)
+		("0" [xX] H+ IS?IS?) | ("0" D+ IS?IS?) | (D+ IS?IS?)
 									{ RET(TK_IntConst); }
 
 		(D+ E FS?) | (D* "." D+ E? FS?) | (D+ "." D* E? FS?)

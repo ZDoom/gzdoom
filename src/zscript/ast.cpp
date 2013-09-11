@@ -267,6 +267,7 @@ static void PrintStringConst(FLispString &out, FString str)
 			outstr.AppendFormat("\\x%02X", str[i]);
 		}
 	}
+	outstr << '"';
 	out.Add(outstr);
 }
 

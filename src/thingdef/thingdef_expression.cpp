@@ -294,7 +294,7 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 FxExpression *FxConstant::MakeConstant(PSymbol *sym, const FScriptPosition &pos)
 {
 	FxExpression *x;
-	PSymbolConst *csym = dyn_cast<PSymbolConst>(sym);
+	PSymbolConstNumeric *csym = dyn_cast<PSymbolConstNumeric>(sym);
 	if (csym != NULL)
 	{
 		if (csym->ValueType->IsA(RUNTIME_CLASS(PInt)))

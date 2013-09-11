@@ -32,23 +32,6 @@ protected:
 	PSymbol(FName name) { SymbolName = name; }
 };
 
-// A constant value ---------------------------------------------------------
-
-class PSymbolConst : public PSymbol
-{
-	DECLARE_CLASS(PSymbolConst, PSymbol);
-public:
-	class PType *ValueType;
-	union
-	{
-		int Value;
-		double Float;
-	};
-
-	PSymbolConst(FName name) : PSymbol(name) {}
-	PSymbolConst() : PSymbol(NAME_None) {}
-};
-
 // An action function -------------------------------------------------------
 
 struct FState;
@@ -653,5 +636,45 @@ extern PColor *TypeColor;
 extern PStatePointer *TypeState;
 extern PFixed *TypeFixed;
 extern PAngle *TypeAngle;
+
+// A constant value ---------------------------------------------------------
+
+class PSymbolConst : public PSymbol
+{
+	DECLARE_CLASS(PSymbolConst, PSymbol);
+public:
+	PType *ValueType;
+
+	PSymbolConst(FName name, PType *type=NULL) : PSymbol(name), ValueType(type) {}
+	PSymbolConst() : PSymbol(NAME_None), ValueType(NULL) {}
+};
+
+// A constant numeric value -------------------------------------------------
+
+class PSymbolConstNumeric : public PSymbolConst
+{
+	DECLARE_CLASS(PSymbolConstNumeric, PSymbolConst);
+public:
+	union
+	{
+		int Value;
+		double Float;
+	};
+
+	PSymbolConstNumeric(FName name, PType *type=NULL) : PSymbolConst(name, type) {}
+	PSymbolConstNumeric() {}
+};
+
+// A constant string value --------------------------------------------------
+
+class PSymbolConstString : public PSymbolConst
+{
+	DECLARE_CLASS(PSymbolConstString, PSymbolConst);
+public:
+	FString Str;
+
+	PSymbolConstString(FName name, FString &str) : PSymbolConst(name, TypeString), Str(str) {}
+	PSymbolConstString() {}
+};
 
 #endif

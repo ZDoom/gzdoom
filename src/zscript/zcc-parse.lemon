@@ -449,7 +449,7 @@ type_name(X) ::= DOT dottable_id(A).
  * straight away.)
  */
 vector_size(X) ::= .						{ X.Int = ZCC_Vector3; X.SourceLoc = stat->sc.GetMessageLine(); }
-vector_size(X) ::= LT INTCONST(A) GT.
+vector_size(X) ::= LT intconst(A) GT.
 {
 	if (A.Int >= 2 && A.Int <= 4)
 	{
@@ -462,6 +462,8 @@ vector_size(X) ::= LT INTCONST(A) GT.
 	}
 	X.SourceLoc = A.SourceLoc;
 }
+intconst(X) ::= INTCONST(A).				{ X = A; }
+intconst(X) ::= UINTCONST(A).				{ X = A; }
 
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
@@ -1120,6 +1122,14 @@ constant(X) ::= INTCONST(A).
 	NEW_AST_NODE(ExprConstant, intconst, A);
 	intconst->Operation = PEX_ConstValue;
 	intconst->Type = TypeSInt32;
+	intconst->IntVal = A.Int;
+	X = intconst;
+}
+constant(X) ::= UINTCONST(A).
+{
+	NEW_AST_NODE(ExprConstant, intconst, A);
+	intconst->Operation = PEX_ConstValue;
+	intconst->Type = TypeUInt32;
 	intconst->IntVal = A.Int;
 	X = intconst;
 }

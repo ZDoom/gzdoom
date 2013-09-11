@@ -140,6 +140,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Identifier,	ZCC_IDENTIFIER);
 	TOKENDEF (TK_StringConst,	ZCC_STRCONST);
 	TOKENDEF (TK_IntConst,		ZCC_INTCONST);
+	TOKENDEF (TK_UIntConst,		ZCC_UINTCONST);
 	TOKENDEF (TK_FloatConst,	ZCC_FLOATCONST);
 	TOKENDEF (TK_NonWhitespace,	ZCC_NWS);
 }
@@ -196,6 +197,11 @@ static void DoParse(const char *filename)
 		{
 			value.Int = sc.Number;
 			tokentype = ZCC_INTCONST;
+		}
+		else if (sc.TokenType == TK_UIntConst)
+		{
+			value.Int = sc.Number;
+			tokentype = ZCC_UINTCONST;
 		}
 		else if (sc.TokenType == TK_FloatConst)
 		{

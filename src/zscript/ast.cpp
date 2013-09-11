@@ -155,7 +155,7 @@ public:
 	void AddFloat(double f)
 	{
 		char buf[32];
-		size_t len = mysnprintf(buf, countof(buf), "%g", f);
+		size_t len = mysnprintf(buf, countof(buf), "%.4f", f);
 		Add(buf, len);
 	}
 private:

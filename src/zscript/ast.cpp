@@ -140,10 +140,18 @@ public:
 	{
 		Add(&c, 1);
 	}
-	void AddInt(int i)
+	void AddInt(int i, bool un=false)
 	{
 		char buf[16];
-		size_t len = mysnprintf(buf, countof(buf), "%d", i);
+		size_t len;
+		if (!un)
+		{
+			len = mysnprintf(buf, countof(buf), "%d", i);
+		}
+		else
+		{
+			len = mysnprintf(buf, countof(buf), "%uu", i);
+		}
 		Add(buf, len);
 	}
 	void AddHex(unsigned x)
@@ -528,9 +536,9 @@ static void PrintExprConstant(FLispString &out, ZCC_TreeNode *node)
 	{
 		out.AddFloat(enode->DoubleVal);
 	}
-	else
+	else if (enode->Type->IsKindOf(RUNTIME_CLASS(PInt)))
 	{
-		out.AddInt(enode->IntVal);
+		out.AddInt(enode->IntVal, static_cast<PInt *>(enode->Type)->Unsigned);
 	}
 	out.Close();
 }

@@ -296,6 +296,7 @@ struct ZCC_StateLoop : ZCC_StatePart
 struct ZCC_Expression : ZCC_TreeNode
 {
 	EZCCExprType Operation;
+	PType *Type;
 };
 
 struct ZCC_StateGoto : ZCC_StatePart

@@ -519,6 +519,7 @@ array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
 	{
 		NEW_AST_NODE(Expression,nil,A);
 		nil->Operation = PEX_Nil;
+		nil->Type = NULL;
 		X = nil;
 	}
 	else
@@ -728,8 +729,8 @@ const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
 %type constant{ZCC_Expression *}
 
 %include {
-#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr, X); expr->Operation = T; expr->Operand = X
-#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr, X); expr->Operation = T; expr->Left = X; expr->Right = Y
+#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr, X); expr->Operation = T; expr->Operand = X; expr->Type = NULL
+#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr, X); expr->Operation = T; expr->Type = NULL; expr->Left = X; expr->Right = Y
 }
 
 /*----- Primary Expressions -----*/
@@ -739,12 +740,14 @@ primary(X) ::= IDENTIFIER(A).
 	NEW_AST_NODE(ExprID, expr, A);
 	expr->Operation = PEX_ID;
 	expr->Identifier = A.Name();
+	expr->Type = NULL;
 	X = expr;
 }
 primary(X) ::= SUPER(T).
 {
 	NEW_AST_NODE(Expression, expr, T);
 	expr->Operation = PEX_Super;
+	expr->Type = NULL;
 	X = expr;
 }
 primary(X) ::= constant(A).
@@ -755,6 +758,7 @@ primary(X) ::= SELF(T).
 {
 	NEW_AST_NODE(Expression, expr, T);
 	expr->Operation = PEX_Self;
+	expr->Type = NULL;
 	X = expr;
 }
 primary(X) ::= LPAREN expr(A) RPAREN.
@@ -766,6 +770,7 @@ primary(X) ::= primary(A) LPAREN func_expr_list(B) RPAREN. [DOT]		// Function ca
 {
 	NEW_AST_NODE(ExprFuncCall, expr, A);
 	expr->Operation = PEX_FuncCall;
+	expr->Type = NULL;
 	expr->Function = A;
 	expr->Parameters = B;
 	X = expr;
@@ -774,6 +779,7 @@ primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
 {
 	NEW_AST_NODE(ExprBinary, expr, B);
 	expr->Operation = PEX_ArrayAccess;
+	expr->Type = NULL;
 	expr->Left = A;
 	expr->Right = B;
 	X = expr;
@@ -782,6 +788,7 @@ primary(X) ::= primary(A) DOT IDENTIFIER(B).							// Member access
 {
 	NEW_AST_NODE(ExprMemberAccess, expr, B);
 	expr->Operation = PEX_MemberAccess;
+	expr->Type = NULL;
 	expr->Left = A;
 	expr->Right = ENamedName(B.Int);
 	X = expr;
@@ -1002,6 +1009,7 @@ expr(X) ::= expr(A) QUESTION expr(B) COLON expr(C).
 {
 	NEW_AST_NODE(ExprTrinary, expr, A);
 	expr->Operation = PEX_Trinary;
+	expr->Type = NULL;
 	expr->Test = A;
 	expr->Left = B;
 	expr->Right = C;
@@ -1089,6 +1097,7 @@ string_constant(X) ::= STRCONST(A).
 {
 	NEW_AST_NODE(ExprString, strconst, A);
 	strconst->Operation = PEX_StringConst;
+	strconst->Type = TypeString;
 	strconst->Value = A.String;
 	X = strconst;
 }
@@ -1096,6 +1105,7 @@ string_constant(X) ::= string_constant(A) STRCONST(B).
 {
 	NEW_AST_NODE(ExprString, strconst, A);
 	strconst->Operation = PEX_StringConst;
+	strconst->Type = TypeString;
 	strconst->Value = stat->Strings.Alloc(*(A->Value) + *(B.String));
 	X = strconst;
 }
@@ -1108,6 +1118,7 @@ constant(X) ::= INTCONST(A).
 {
 	NEW_AST_NODE(ExprInt, intconst, A);
 	intconst->Operation = PEX_IntConst;
+	intconst->Type = TypeSInt32;
 	intconst->Value = A.Int;
 	X = intconst;
 }
@@ -1115,6 +1126,7 @@ constant(X) ::= FLOATCONST(A).
 {
 	NEW_AST_NODE(ExprFloat, floatconst, A);
 	floatconst->Operation = PEX_FloatConst;
+	floatconst->Type = TypeFloat64;
 	floatconst->Value = A.Float;
 	X = floatconst;
 }

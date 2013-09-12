@@ -72,13 +72,13 @@
 #else // !__APPLE__
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/glext.h>
+#include "gl/api/glext.h"	//  use the local copy
 #endif // __APPLE__
 #include "gl/api/gl_api.h"
 
 #ifdef _WIN32
 #define DWORD WINDOWS_DWORD	// I don't want to depend on this throughout the GL code!
-#include <GL/wglext.h>
+#include "gl/api/wglext.h"
 #ifndef __WINE__
 #undef DWORD
 #endif

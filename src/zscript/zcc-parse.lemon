@@ -310,7 +310,12 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 					NEW_INTCONST_NODE(cval, TypeSInt32, 1, T);
 					one = cval;
 				}
-				BINARY_EXPR(prev->Value, one, PEX_Add);
+				NEW_AST_NODE(ExprID, label, node);
+				label->Operation = PEX_ID;
+				label->Identifier = prev->Name;
+				label->Type = NULL;
+
+				BINARY_EXPR(label, one, PEX_Add);
 				node->Value = expr;
 			}
 		}

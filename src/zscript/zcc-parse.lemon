@@ -884,15 +884,40 @@ unary_expr(X) ::= primary(A).
 }
 unary_expr(X) ::= SUB unary_expr(A). [UNARY]
 {
-	UNARY_EXPR(A,PEX_Negate);
-	X = expr;
+	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
+	if (A->Operation == PEX_ConstValue && (con->Type->IsA(RUNTIME_CLASS(PInt)) || con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	{ // For constants, manipulate the child node directly, and don't create a new node.
+		if (con->Type->IsA(RUNTIME_CLASS(PInt)))
+		{
+			con->IntVal = -con->IntVal;
+		}
+		else
+		{
+			con->DoubleVal = -con->DoubleVal;
+		}
+		X = A;
+	}
+	else
+	{ // For everything else, create a new node and do the negation later.
+		UNARY_EXPR(A,PEX_Negate);
+		X = expr;
+	}
 }
 unary_expr(X) ::= ADD unary_expr(A). [UNARY]
 {
 	// Even though this is really a no-op, we still need to make a node for
 	// it so we can type check that it is being applied to something numeric.
-	UNARY_EXPR(A,PEX_AntiNegate);
-	X = expr;
+	// But we can do that right now for constant numerals.
+	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
+	if (A->Operation != PEX_ConstValue || (!con->Type->IsA(RUNTIME_CLASS(PInt)) && !con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	{
+		UNARY_EXPR(A,PEX_AntiNegate);
+		X = expr;
+	}
+	else
+	{
+		X = A;
+	}
 }
 unary_expr(X) ::= SUBSUB unary_expr(A). [UNARY]
 {

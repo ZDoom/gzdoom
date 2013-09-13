@@ -211,17 +211,19 @@ struct ZCC_TreeNode
 			return;
 		}
 
-		// The new sibling node should only be in a list with itself.
-		assert(sibling->SiblingNext == sibling && sibling->SiblingPrev == sibling);
-
 		// Check integrity of our sibling list.
 		assert(SiblingPrev->SiblingNext == this);
 		assert(SiblingNext->SiblingPrev == this);
 
+		// Check integrity of new sibling list.
+		assert(sibling->SiblingPrev->SiblingNext = sibling);
+		assert(sibling->SiblingNext->SiblingPrev = sibling);
+
+		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
 		SiblingPrev->SiblingNext = sibling;
 		sibling->SiblingPrev = SiblingPrev;
-		SiblingPrev = sibling;
-		sibling->SiblingNext = this;
+		SiblingPrev = siblingend;
+		siblingend->SiblingNext = this;
 	}
 };
 

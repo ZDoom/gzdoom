@@ -33,6 +33,16 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 // If a is non-null, appends b to a. Otherwise, sets a to b.
 #define SAFE_APPEND(a,b) \
 	if (a == NULL) a = b; else a->AppendSibling(b);
+
+#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr, X); expr->Operation = T; expr->Operand = X; expr->Type = NULL
+#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr, X); expr->Operation = T; expr->Type = NULL; expr->Left = X; expr->Right = Y
+
+#define NEW_INTCONST_NODE(name,type,val,tok) \
+	NEW_AST_NODE(ExprConstant, name, tok); \
+	name->Operation = PEX_ConstValue; \
+	name->Type = type; \
+	name->IntVal = val
+
 }
 
 %token_prefix ZCC_
@@ -237,20 +247,81 @@ struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; A->AppendSibling(B
 struct_member(X) ::= declarator_no_fun(A).				{ X = A; }
 struct_member(X) ::= enum_def(A).						{ X = A; }
 
+/*----- Constant Definition ------*/
+/* Like UnrealScript, a constant's type is implied by its value's type. */
+const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
+{
+	NEW_AST_NODE(ConstantDef,def,T);
+	def->Name = A.Name();
+	def->Value = B;
+	def->Symbol = NULL;
+	X = def;
+}
+
 
 /*----- Enum Definition -----*/
 /* Enumerators are lists of named integers. */
 
-%type enum_list {ZCC_EnumNode *}
-%type opt_enum_list {ZCC_EnumNode *}
-%type enumerator {ZCC_EnumNode *}
+%type enum_list {ZCC_ConstantDef *}
+%type opt_enum_list {ZCC_ConstantDef *}
+%type enumerator {ZCC_ConstantDef *}
 
-enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRACE opt_semicolon.
+enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRACE(U) opt_semicolon.
 {
 	NEW_AST_NODE(Enum,def,T);
 	def->EnumName = A.Name();
 	def->EnumType = (EZCCBuiltinType)B.Int;
 	def->Elements = C;
+
+	// If the first element does not have an explicit value, make it 0.
+	if (C != NULL)
+	{
+		ZCC_ConstantDef *node = C, *prev = node;
+		ZCC_ExprConstant *one = NULL;
+
+		if (node->Value == NULL)
+		{
+			NEW_INTCONST_NODE(zero, TypeSInt32, 0, C);
+			node->Value = zero;
+		}
+		for (node = static_cast<ZCC_ConstantDef *>(node->SiblingNext);
+			node != C;
+			prev = node, node = static_cast<ZCC_ConstantDef *>(node->SiblingNext))
+		{
+			assert(node->NodeType == AST_ConstantDef);
+			// Leave explicit values alone.
+			if (node->Value != NULL)
+			{
+				continue;
+			}
+			// Compute implicit values by adding one to the preceding value.
+			assert(prev->Value != NULL);
+			// If the preceding node is a constant, then we can do this now.
+			if (prev->Value->Operation == PEX_ConstValue && prev->Value->Type->IsA(RUNTIME_CLASS(PInt)))
+			{
+				NEW_INTCONST_NODE(cval, prev->Value->Type, static_cast<ZCC_ExprConstant *>(prev->Value)->IntVal + 1, node);
+				node->Value = cval;
+			}
+			// Otherwise, create a new addition expression to add 1.
+			else
+			{
+				if (one == NULL)
+				{ // Use a single 1 node for the right-hand side of the addition.
+					NEW_INTCONST_NODE(cval, TypeSInt32, 1, T);
+					one = cval;
+				}
+				BINARY_EXPR(prev->Value, one, PEX_Add);
+				node->Value = expr;
+			}
+		}
+		// Add a new terminating node, to indicate that the ConstantDefs for this enum are done.
+		NEW_AST_NODE(EnumTerminator,term,U);
+		C->AppendSibling(term);
+	}
+	if (C != NULL)
+	{
+		def->AppendSibling(C);
+	}
 	X = def;
 }
 
@@ -266,16 +337,18 @@ opt_enum_list(X) ::= enum_list(A) opt_comma.			{ X = A; }
 
 enumerator(X) ::= IDENTIFIER(A).
 {
-	NEW_AST_NODE(EnumNode,node,A);
-	node->ElemName = A.Name();
-	node->ElemValue = NULL;
+	NEW_AST_NODE(ConstantDef,node,A);
+	node->Name = A.Name();
+	node->Value = NULL;
+	node->Symbol = NULL;
 	X = node;
 }
 enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 {
-	NEW_AST_NODE(EnumNode,node,A);
-	node->ElemName = A.Name();
-	node->ElemValue = B;
+	NEW_AST_NODE(ConstantDef,node,A);
+	node->Name = A.Name();
+	node->Value = B;
+	node->Symbol = NULL;
 	X = node;
 }
 
@@ -711,15 +784,6 @@ func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X
 func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 func_param_flags(X) ::= func_param_flags(A) OPTIONAL(T).	{ X.Int = A.Int | ZCC_Optional; X.SourceLoc = A.SourceLoc ? A.SourceLoc : T.SourceLoc; }
 
-/* Like UnrealScript, a constant's type is implied by its value's type. */
-const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
-{
-	NEW_AST_NODE(ConstantDef,def,T);
-	def->Name = A.Name();
-	def->Value = B;
-	X = def;
-}
-
 /************ Expressions ************/
 
 /* We use default to access a class's default instance. */
@@ -730,11 +794,6 @@ const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
 %type primary{ZCC_Expression *}
 %type unary_expr{ZCC_Expression *}
 %type constant{ZCC_ExprConstant *}
-
-%include {
-#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr, X); expr->Operation = T; expr->Operand = X; expr->Type = NULL
-#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr, X); expr->Operation = T; expr->Type = NULL; expr->Left = X; expr->Right = Y
-}
 
 /*----- Primary Expressions -----*/
 
@@ -1119,18 +1178,12 @@ constant(X) ::= string_constant(A).
 }
 constant(X) ::= INTCONST(A).
 {
-	NEW_AST_NODE(ExprConstant, intconst, A);
-	intconst->Operation = PEX_ConstValue;
-	intconst->Type = TypeSInt32;
-	intconst->IntVal = A.Int;
+	NEW_INTCONST_NODE(intconst, TypeSInt32, A.Int, A);
 	X = intconst;
 }
 constant(X) ::= UINTCONST(A).
 {
-	NEW_AST_NODE(ExprConstant, intconst, A);
-	intconst->Operation = PEX_ConstValue;
-	intconst->Type = TypeUInt32;
-	intconst->IntVal = A.Int;
+	NEW_INTCONST_NODE(intconst, TypeUInt32, A.Int, A);
 	X = intconst;
 }
 constant(X) ::= FLOATCONST(A).

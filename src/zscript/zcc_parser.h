@@ -57,7 +57,7 @@ enum EZCCTreeNodeType
 	AST_Class,
 	AST_Struct,
 	AST_Enum,
-	AST_EnumNode,
+	AST_EnumTerminator,
 	AST_States,
 	AST_StatePart,
 	AST_StateLabel,
@@ -251,13 +251,11 @@ struct ZCC_Enum : ZCC_TreeNode
 {
 	ENamedName EnumName;
 	EZCCBuiltinType EnumType;
-	struct ZCC_EnumNode *Elements;
+	struct ZCC_ConstantDef *Elements;
 };
 
-struct ZCC_EnumNode : ZCC_TreeNode
+struct ZCC_EnumTerminator : ZCC_TreeNode
 {
-	ENamedName ElemName;
-	ZCC_TreeNode *ElemValue;
 };
 
 struct ZCC_States : ZCC_TreeNode
@@ -478,6 +476,7 @@ struct ZCC_ConstantDef : ZCC_TreeNode
 {
 	ENamedName Name;
 	ZCC_Expression *Value;
+	PSymbolConst *Symbol;
 };
 
 struct ZCC_Declarator : ZCC_TreeNode

@@ -301,16 +301,13 @@ static void PrintEnum(FLispString &out, ZCC_TreeNode *node)
 	out.Open("enum");
 	out.AddName(enode->EnumName);
 	PrintBuiltInType(out, enode->EnumType);
-	PrintNodes(out, enode->Elements, false, true);
+	out.Add(enode->Elements == NULL ? "nil" : "...", 3);
 	out.Close();
 }
 
-static void PrintEnumNode(FLispString &out, ZCC_TreeNode *node)
+static void PrintEnumTerminator(FLispString &out, ZCC_TreeNode *node)
 {
-	ZCC_EnumNode *enode = (ZCC_EnumNode *)node;
-	out.Open("enum-node");
-	out.AddName(enode->ElemName);
-	PrintNodes(out, enode->ElemValue, false);
+	out.Open("enum-term");
 	out.Close();
 }
 
@@ -802,7 +799,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintClass,
 	PrintStruct,
 	PrintEnum,
-	PrintEnumNode,
+	PrintEnumTerminator,
 	PrintStates,
 	PrintStatePart,
 	PrintStateLabel,

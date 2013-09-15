@@ -1919,32 +1919,10 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	leader = Args->CheckValue ("-savedir");
 	if (leader.IsEmpty())
 	{
-#if !defined(__unix__) && !defined(__APPLE__)
-		if (Args->CheckParm ("-cdrom"))
-		{
-			leader = CDROM_DIR "/";
-		}
-		else
-#endif
-		{
-			leader = save_dir;
-		}
+		leader = save_dir;
 		if (leader.IsEmpty())
 		{
-#ifdef __unix__
-			leader = "~/" GAME_DIR;
-#elif defined(__APPLE__)
-			char cpath[PATH_MAX];
-			FSRef folder;
-
-			if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-				noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-			{
-				leader << cpath << "/" GAME_DIR "/Savegames/";
-			}
-#else
-			leader = progdir;
-#endif
+			leader = M_GetSavegamesPath();
 		}
 	}
 	size_t len = leader.Len();

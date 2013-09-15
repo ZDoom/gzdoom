@@ -95,8 +95,6 @@ const char *GetVersionString();
 #define GAME_DIR ".config/zdoom"
 #elif defined(__APPLE__)
 #define GAME_DIR GAMENAME
-#else
-#define CDROM_DIR "C:\\ZDOOMDAT"
 #endif
 
 

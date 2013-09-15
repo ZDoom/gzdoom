@@ -14,6 +14,114 @@
 
 #if defined(_WIN32)
 
+#include "version.h"	// for GAMENAME
+typedef HRESULT (*GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
+
+//===========================================================================
+//
+// IsProgramDirectoryWritable
+//
+// If the program directory is writable, then dump everything in there for
+// historical reasons. Otherwise, known folders get used instead.
+//
+//===========================================================================
+
+bool UseKnownFolders()
+{
+	// Cache this value so the semantics don't change during a single run
+	// of the program. (e.g. Somebody could add write access while the
+	// program is running.)
+	static INTBOOL iswritable = -1;
+	FString testpath;
+	HANDLE file;
+
+	if (iswritable >= 0)
+	{
+		return !iswritable;
+	}
+	testpath << progdir << "writest";
+	file = CreateFile(testpath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+		CREATE_ALWAYS,
+		FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(file);
+		Printf("Using program directory for storage\n");
+		iswritable = true;
+		return false;
+	}
+	Printf("Using known folders for storage\n");
+	iswritable = false;
+	return true;
+}
+
+//===========================================================================
+//
+// GetKnownFolder
+//
+// Returns the known_folder if SHGetKnownFolderPath is available, otherwise
+// returns the shell_folder using SHGetFolderPath.
+//
+//===========================================================================
+
+bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
+{
+	static GKFP SHGetKnownFolderPath = NULL;
+	static bool tested = false;
+
+	if (!tested)
+	{
+		tested = true;
+		HMODULE shell32 = GetModuleHandle("shell32.dll");
+		if (shell32 != NULL)
+		{
+			SHGetKnownFolderPath = (GKFP)GetProcAddress(shell32, "SHGetKnownFolderPath");
+		}
+	}
+
+	char pathstr[MAX_PATH];
+
+	// SHGetKnownFolderPath knows about more folders than SHGetFolderPath, but is
+	// new to Vista, hence the reason we support both.
+	if (SHGetKnownFolderPath == NULL)
+	{
+		if (shell_folder < 0)
+		{ // Not supported by SHGetFolderPath
+			return false;
+		}
+		if (create)
+		{
+			shell_folder |= CSIDL_FLAG_CREATE;
+		}
+		if (FAILED(SHGetFolderPathA(NULL, shell_folder, NULL, 0, pathstr)))
+		{
+			return false;
+		}
+		path = pathstr;
+		return true;
+	}
+	else
+	{
+		PWSTR wpath;
+		if (FAILED(SHGetKnownFolderPath(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
+		{
+			return false;
+		}
+		// FIXME: Support Unicode, at least for filenames. This function
+		// has no MBCS equivalent, so we have to convert it since we don't
+		// support Unicode. :(
+		bool converted = false;
+		if (WideCharToMultiByte(GetACP(), WC_NO_BEST_FIT_CHARS, wpath, -1,
+			pathstr, countof(pathstr), NULL, NULL) > 0)
+		{
+			path = pathstr;
+			converted = true;
+		}
+		CoTaskMemFree(wpath);
+		return converted;
+	}
+}
+
 //===========================================================================
 //
 // M_GetCachePath													Windows
@@ -22,18 +130,13 @@
 //
 //===========================================================================
 
-FString M_GetCachePath()
+FString M_GetCachePath(bool create)
 {
 	FString path;
 
-	char pathstr[MAX_PATH];
-	if (0 != SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, pathstr))
+	if (!GetKnownFolder(CSIDL_LOCAL_APPDATA, FOLDERID_LocalAppData, create, path))
 	{ // Failed (e.g. On Win9x): use program directory
 		path = progdir;
-	}
-	else
-	{
-		path = pathstr;
 	}
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
@@ -89,48 +192,50 @@ FString M_GetConfigPath(bool for_reading)
 	FString path;
 	HRESULT hr;
 
-	TCHAR uname[UNLEN+1];
-	DWORD unamelen = countof(uname);
-
-	// Because people complained, try for a user-specific .ini in the program directory first.
-	// If that is not writeable, use the one in the home directory instead.
-	hr = GetUserName(uname, &unamelen);
-	if (SUCCEEDED(hr) && uname[0] != 0)
+	// Construct a user-specific config name
+	if (UseKnownFolders() && GetKnownFolder(CSIDL_APPDATA, FOLDERID_RoamingAppData, true, path))
 	{
-		// Is it valid for a user name to have slashes?
-		// Check for them and substitute just in case.
-		char *probe = uname;
-		while (*probe != 0)
-		{
-			if (*probe == '\\' || *probe == '/')
-				*probe = '_';
-			++probe;
-		}
+		path += "/zdoom";
+		CreatePath(path);
+		path += "/zdoom.ini";
+	}
+	else
+	{ // construct "$PROGDIR/zdoom-$USER.ini"
+		TCHAR uname[UNLEN+1];
+		DWORD unamelen = countof(uname);
 
 		path = progdir;
-		path += "zdoom-";
-		path += uname;
-		path += ".ini";
-		if (for_reading)
+		hr = GetUserName(uname, &unamelen);
+		if (SUCCEEDED(hr) && uname[0] != 0)
 		{
-			if (!FileExists(path.GetChars()))
+			// Is it valid for a user name to have slashes?
+			// Check for them and substitute just in case.
+			char *probe = uname;
+			while (*probe != 0)
 			{
-				path = "";
+				if (*probe == '\\' || *probe == '/')
+					*probe = '_';
+				++probe;
 			}
+			path << "zdoom-" << uname << ".ini";
 		}
 		else
-		{ // check if writeable
-			FILE *checker = fopen (path.GetChars(), "a");
-			if (checker == NULL)
-			{
-				path = "";
-			}
-			else
-			{
-				fclose (checker);
-			}
+		{ // Couldn't get user name, so just use zdoom.ini
+			path += "zdoom.ini";
 		}
 	}
+
+	// If we are reading the config file, check if it exists. If not, fallback
+	// to $PROGDIR/zdoom.ini
+	if (for_reading)
+	{
+		if (!FileExists(path))
+		{
+			path = progdir;
+			path << "zdoom.ini";
+		}
+	}
+
 	return path;
 }
 
@@ -142,10 +247,31 @@ FString M_GetConfigPath(bool for_reading)
 //
 //===========================================================================
 
+// I'm not sure when FOLDERID_Screenshots was added, but it was probably
+// for Windows 8, since it's not in the v7.0 Windows SDK.
+static const GUID MyFOLDERID_Screenshots = { 0xb7bede81, 0xdf94, 0x4682, 0xa7, 0xd8, 0x57, 0xa5, 0x26, 0x20, 0xb8, 0x6f };
+
 FString M_GetScreenshotsPath()
 {
 	FString path;
-	path = progdir;
+
+	if (!UseKnownFolders())
+	{
+		return progdir;
+	}
+	else if (GetKnownFolder(-1, MyFOLDERID_Screenshots, true, path))
+	{
+		path << "/" GAMENAME;
+	}
+	else if (GetKnownFolder(CSIDL_MYPICTURES, FOLDERID_Pictures, true, path))
+	{
+		path << "/Screenshots/" GAMENAME;
+	}
+	else
+	{
+		return progdir;
+	}
+	CreatePath(path);
 	return path;
 }
 
@@ -160,7 +286,28 @@ FString M_GetScreenshotsPath()
 FString M_GetSavegamesPath()
 {
 	FString path;
-	path = progdir;
+
+	if (!UseKnownFolders())
+	{
+		return progdir;
+	}
+	// Try standard Saved Games folder
+	else if (GetKnownFolder(-1, FOLDERID_SavedGames, true, path))
+	{
+		path << "/" GAMENAME;
+	}
+	// Try defacto My Documents/My Games folder
+	else if (GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true, path))
+	{
+		// I assume since this isn't a standard folder, it doesn't have
+		// a localized name either.
+		path << "/My Games/" GAMENAME;
+		CreatePath(path);
+	}
+	else
+	{
+		path = progdir;
+	}
 	return path;
 }
 
@@ -174,14 +321,14 @@ FString M_GetSavegamesPath()
 //
 //===========================================================================
 
-FString M_GetCachePath()
+FString M_GetCachePath(bool create)
 {
 	FString path;
 
 	char pathstr[PATH_MAX];
 	FSRef folder;
 
-	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
 		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
 	{
 		path = pathstr;
@@ -409,11 +556,16 @@ FString GetUserFile (const char *file)
 //
 //===========================================================================
 
-FString M_GetCachePath()
+FString M_GetCachePath(bool create)
 {
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	return NicePath("~/.config/zdoom/cache");
+	FString path = NicePath("~/.config/zdoom/cache");
+	if (create)
+	{
+		CreatePath(create);
+	}
+	return path;
 }
 
 //===========================================================================

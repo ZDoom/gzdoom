@@ -1041,7 +1041,7 @@ typedef TArray<BYTE> MemFile;
 
 static FString CreateCacheName(MapData *map, bool create)
 {
-	FString path = M_GetCachePath();
+	FString path = M_GetCachePath(create);
 	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
@@ -1254,7 +1254,7 @@ errorout:
 CCMD(clearnodecache)
 {
 	TArray<FFileList> list;
-	FString path = M_GetCachePath();
+	FString path = M_GetCachePath(false);
 	path += "/";
 
 	try

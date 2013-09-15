@@ -53,7 +53,7 @@ FString M_ZLibError(int zerrnum);
 #ifdef __unix__
 FString GetUserFile (const char *path);		// Prepends ~/.zdoom to path
 #endif
-FString M_GetCachePath();
+FString M_GetCachePath(bool create);
 FString M_GetAutoexecPath();
 FString M_GetCajunPath(const char *filename);
 FString M_GetConfigPath(bool for_reading);

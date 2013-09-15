@@ -646,8 +646,9 @@ void M_ScreenShot (const char *filename)
 		if (dirlen == 0)
 		{
 			autoname = M_GetScreenshotsPath();
+			dirlen = autoname.Len();
 		}
-		else if (dirlen > 0)
+		if (dirlen > 0)
 		{
 			if (autoname[dirlen-1] != '/' && autoname[dirlen-1] != '\\')
 			{

@@ -461,36 +461,7 @@ FString M_GetSavegamesPath()
 
 #else // Linux, et al.
 
-FString GetUserFile(const char *file)
-{
-	FString path;
-	struct stat info;
 
-	path = NicePath("~/" GAME_DIR "/");
-
-	if (stat(path, &info) == -1)
-	{
-		struct stat extrainfo;
-
-		// Sanity check for ~/.config
-		FString configPath = NicePath("~/.config/");
-		if (stat(configPath, &extrainfo) == -1)
-		{
-			if (mkdir(configPath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
-			{
-				I_FatalError("Failed to create ~/.config directory:\n%s", strerror(errno));
-			}
-		}
-		else if (!S_ISDIR(extrainfo.st_mode))
-		{
-			I_FatalError("~/.config must be a directory");
-		}
-
-		// This can be removed after a release or two
-		// Transfer the old zdoom directory to the new location
-		bool moved = false;
-		FString oldpath = NicePath("~/.zdoom/");
-		if (stat #if defined(__unix__)
 FString GetUserFile (const char *file)
 {
 	FString path;

@@ -75,6 +75,7 @@ void ACustomBridge::Destroy()
 			thing->Destroy();
 		}
 	}
+	Super::Destroy();
 }
 
 // Action functions for the non-Doom bridge --------------------------------

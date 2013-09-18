@@ -12,9 +12,16 @@
 #include "cmdlib.h"
 #include "m_misc.h"
 
-#if defined(_WIN32)
+#if !defined(__APPLE__) && !defined(_WIN32)
+#include <sys/stat.h>
+#include <sys/types.h>
+#include "i_system.h"
+#endif
 
 #include "version.h"	// for GAMENAME
+
+#if defined(_WIN32)
+
 typedef HRESULT (WINAPI *GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
 
 //===========================================================================
@@ -195,7 +202,7 @@ FString M_GetConfigPath(bool for_reading)
 	// Construct a user-specific config name
 	if (UseKnownFolders() && GetKnownFolder(CSIDL_APPDATA, FOLDERID_RoamingAppData, true, path))
 	{
-		path << '/' << GAME_DIR;
+		path += "/" GAME_DIR;
 		CreatePath(path);
 		path += "/zdoom.ini";
 	}
@@ -534,7 +541,7 @@ FString M_GetCachePath(bool create)
 	FString path = NicePath("~/.config/zdoom/cache");
 	if (create)
 	{
-		CreatePath(create);
+		CreatePath(path);
 	}
 	return path;
 }
@@ -564,16 +571,16 @@ FString M_GetCajunPath(const char *botfilename)
 {
 	FString path;
 
-	// Check first in ~/.config/zdoom./botfilename.
-	path = GetUserFile(BOTFILENAME);
-	if (!FileExists(tmp))
+	// Check first in ~/.config/zdoom/botfilename.
+	path = GetUserFile(botfilename);
+	if (!FileExists(path))
 	{
-		// Then check in SHARE_DIR/botfilename. (Some allowance for Macs
-		// should probably be made here.)
-		path = SHARE_DIR BOTFILENAME;
+		// Then check in SHARE_DIR/botfilename.
+		path = SHARE_DIR;
+		path << botfilename;
 		if (!FileExists(path))
 		{
-			path ="";
+			path = "";
 		}
 	}
 	return path;
@@ -604,7 +611,7 @@ FString M_GetConfigPath(bool for_reading)
 
 FString M_GetScreenshotsPath()
 {
-	return "~/" GAME_DIR "/screenshots/";
+	return NicePath("~/" GAME_DIR "/screenshots/");
 }
 
 //===========================================================================
@@ -617,7 +624,7 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return = "~/" GAME_DIR;
+	return NicePath("~/" GAME_DIR);
 }
 
 #endif

@@ -195,7 +195,7 @@ FString M_GetConfigPath(bool for_reading)
 	// Construct a user-specific config name
 	if (UseKnownFolders() && GetKnownFolder(CSIDL_APPDATA, FOLDERID_RoamingAppData, true, path))
 	{
-		path += "/zdoom";
+		path << '/' << GAME_DIR;
 		CreatePath(path);
 		path += "/zdoom.ini";
 	}

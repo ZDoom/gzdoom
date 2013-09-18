@@ -15,7 +15,7 @@
 #if defined(_WIN32)
 
 #include "version.h"	// for GAMENAME
-typedef HRESULT (*GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
+typedef HRESULT (WINAPI *GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
 
 //===========================================================================
 //

@@ -334,11 +334,12 @@ enum
 	MF6_NOTONAUTOMAP	= 0x40000000,	// will not be shown on automap with the 'scanner' powerup.
 	MF6_RELATIVETOFLOOR	= 0x80000000,	// [RC] Make flying actors be affected by lifts.
 
-// --- mobj.flags6 ---
+// --- mobj.flags7 ---
 
 	MF7_NEVERTARGET		= 0x00000001,	// can not be targetted at all, even if monster friendliness is considered.
 	MF7_NOTELESTOMP		= 0x00000002,	// cannot telefrag under any circumstances (even when set by MAPINFO)
 	MF7_ALWAYSTELEFRAG	= 0x00000004,	// will unconditionally be telefragged when in the way. Overrides all other settings.
+	MF7_HANDLENODELAY	= 0x00000008,	// respect NoDelay state flag
 
 // --- mobj.renderflags ---
 

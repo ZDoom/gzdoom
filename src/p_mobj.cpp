@@ -3525,19 +3525,23 @@ void AActor::Tick ()
 		Destroy();
 		return;
 	}
-	if (ObjectFlags & OF_JustSpawned && state->GetNoDelay())
+	if ((flags7 & MF7_HANDLENODELAY) && !(flags2 & MF2_DORMANT))
 	{
-		// For immediately spawned objects with the NoDelay flag set for their
-		// Spawn state, explicitly set the current state so that it calls its
-		// action and chains 0-tic states.
-		int starttics = tics;
-		if (!SetState(state))
-			return;				// freed itself
-		// If the initial state had a duration of 0 tics, let the next state run
-		// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
-		if (starttics > 0 && tics >= 0)
+		flags7 &= ~MF7_HANDLENODELAY;
+		if (state->GetNoDelay())
 		{
-			tics++;
+			// For immediately spawned objects with the NoDelay flag set for their
+			// Spawn state, explicitly set the current state so that it calls its
+			// action and chains 0-tic states.
+			int starttics = tics;
+			if (!SetState(state))
+				return;				// freed itself
+			// If the initial state had a duration of 0 tics, let the next state run
+			// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
+			else if (starttics > 0 && tics >= 0)
+			{
+				tics++;
+			}
 		}
 	}
 	// cycle through states, calling action functions at transitions
@@ -4024,6 +4028,7 @@ void AActor::PostBeginPlay ()
 		Renderer->StateChanged(this);
 	}
 	PrevAngle = angle;
+	flags7 |= MF7_HANDLENODELAY;
 }
 
 void AActor::MarkPrecacheSounds() const

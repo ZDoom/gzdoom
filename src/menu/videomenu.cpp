@@ -348,7 +348,7 @@ void M_InitVideoModesMenu ()
 static bool GetSelectedSize (int *width, int *height)
 {
 	FOptionMenuDescriptor *opt = GetVideoModeMenu();
-	if (opt != NULL)
+	if (opt != NULL && (unsigned)opt->mSelectedItem < opt->mItems.Size())
 	{
 		int line = opt->mSelectedItem;
 		int hsel;

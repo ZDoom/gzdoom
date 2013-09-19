@@ -352,6 +352,7 @@ class player_t
 {
 public:
 	player_t();
+	player_t &operator= (const player_t &p);
 
 	void Serialize (FArchive &arc);
 	size_t FixPointers (const DObject *obj, DObject *replacement);

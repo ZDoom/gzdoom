@@ -1404,7 +1404,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	}
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
-	int puffFlags = LAF_ISMELEEATTACK | (flags & CPF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+	int puffFlags = LAF_ISMELEEATTACK | ((flags & CPF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0);
 
 	P_LineAttack (self, angle, Range, pitch, Damage, NAME_Melee, PuffType, puffFlags, &linetarget, &actualdamage);
 
@@ -1426,7 +1426,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;
 		if (flags & CPF_DAGGER) P_DaggerAlert (self, linetarget);
-
 	}
 }
 

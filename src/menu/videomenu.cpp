@@ -166,15 +166,18 @@ public:
 				NewWidth = SCREENWIDTH;
 				NewHeight = SCREENHEIGHT;
 			}
-			OldWidth = SCREENWIDTH;
-			OldHeight = SCREENHEIGHT;
-			OldBits = DisplayBits;
-			NewBits = BitTranslate[DummyDepthCvar];
-			setmodeneeded = true;
-			testingmode = I_GetTime(false) + 5 * TICRATE;
-			S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
-			SetModesMenu (NewWidth, NewHeight, NewBits);
-			return true;
+			else
+			{
+				OldWidth = SCREENWIDTH;
+				OldHeight = SCREENHEIGHT;
+				OldBits = DisplayBits;
+				NewBits = BitTranslate[DummyDepthCvar];
+				setmodeneeded = true;
+				testingmode = I_GetTime(false) + 5 * TICRATE;
+				S_Sound (CHAN_VOICE | CHAN_UI, "menu/choose", snd_menuvolume, ATTN_NONE);
+				SetModesMenu (NewWidth, NewHeight, NewBits);
+				return true;
+			}
 		}
 		return Super::Responder(ev);
 	}

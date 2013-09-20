@@ -62,7 +62,7 @@ typedef enum
 
 CVAR (Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR (Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
-CVAR (Bool, wi_noautostartmap, false, CVAR_ARCHIVE)
+CVAR (Bool, wi_noautostartmap, false, CVAR_USERINFO|CVAR_ARCHIVE)
 
 
 void WI_loadData ();
@@ -1098,11 +1098,28 @@ void WI_updateNoState ()
 {
 	WI_updateAnimatedBack();
 
+	if (acceleratestage)
+	{
+		cnt = 0;
+	}
+	else
+	{
+		bool noauto = noautostartmap;
 
-	if (!wi_noautostartmap && !noautostartmap) cnt--;
-	if (acceleratestage) cnt=0;
+		for (int i = 0; !noauto && i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i])
+			{
+				noauto |= players[i].userinfo.GetNoAutostartMap();
+			}
+		}
+		if (!noauto)
+		{
+			cnt--;
+		}
+	}
 
-	if (cnt==0)
+	if (cnt == 0)
 	{
 		WI_End();
 		G_WorldDone();

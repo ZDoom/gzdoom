@@ -915,7 +915,7 @@ void P_NewChaseDir(AActor * actor)
 	// MBF's monster_backing option. Made an actor flag instead. Also cleaned the code up to make it readable.
 	// Todo: implement the movement logic
 	AActor *target = actor->target;
-	if (target->health > 0 && !actor->IsFriend(target))
+	if (target->health > 0 && !actor->IsFriend(target) && target != actor->goal)
     {   // Live enemy target
 
 		if (actor->flags3 & MF3_AVOIDMELEE)

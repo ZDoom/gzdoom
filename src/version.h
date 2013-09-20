@@ -91,12 +91,10 @@ const char *GetVersionString();
 #define FORUM_URL "http://forum.zdoom.org"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
 
-#ifdef __unix__
-#define GAME_DIR ".config/zdoom"
-#elif defined(__APPLE__)
+#if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
-#define GAME_DIR "zdoom"
+#define GAME_DIR ".config/zdoom"
 #endif
 
 

@@ -1246,6 +1246,15 @@ flickerlight2 FIREBULL
     offset 0 40 0
 }
 
+flickerlight2 FIREBULL2
+{
+    color 1.0 0.7 0.0
+    size 48
+    secondarySize 60
+    interval 0.1
+    offset 0 40 0
+}
+
 object ZFireBull
 {
     frame FBULA { light FIREBULL }
@@ -1255,7 +1264,8 @@ object ZFireBull
     frame FBULE { light FIREBULL }
     frame FBULF { light FIREBULL }
     frame FBULG { light FIREBULL }
-    frame FBULH { light FIREBULL }
+    frame FBULI { light FIREBULL2 }
+    frame FBULJ { light FIREBULL }
 }
 
 object ZFireBullUnlit
@@ -1267,7 +1277,8 @@ object ZFireBullUnlit
     frame FBULE { light FIREBULL }
     frame FBULF { light FIREBULL }
     frame FBULG { light FIREBULL }
-    frame FBULH { light FIREBULL }
+    frame FBULI { light FIREBULL2 }
+    frame FBULJ { light FIREBULL }
 }
 
 

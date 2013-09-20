@@ -27,8 +27,8 @@ ACTOR ExplosiveBarrel 2035
 		BEXP C 5 BRIGHT
 		BEXP D 5 BRIGHT A_Explode
 		BEXP E 10 BRIGHT
-		BEXP E 1050 BRIGHT A_BarrelDestroy
-		BEXP E 5 A_Respawn
+		TNT1 A 1050 BRIGHT A_BarrelDestroy
+		TNT1 A 5 A_Respawn
 		Wait
 	}
 }

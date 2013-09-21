@@ -61,6 +61,8 @@ FTypeTable TypeTable;
 TArray<PClass *> PClass::AllClasses;
 bool PClass::bShutdown;
 
+PErrorType *TypeError;
+PVoidType *TypeVoid;
 PInt *TypeSInt8,  *TypeUInt8;
 PInt *TypeSInt16, *TypeUInt16;
 PInt *TypeSInt32, *TypeUInt32;
@@ -73,13 +75,15 @@ PStatePointer *TypeState;
 PFixed *TypeFixed;
 PAngle *TypeAngle;
 
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // A harmless non-NULL FlatPointer for classes without pointers.
 static const size_t TheEnd = ~(size_t)0;
 
 // CODE --------------------------------------------------------------------
+
+IMPLEMENT_CLASS(PErrorType)
+IMPLEMENT_CLASS(PVoidType)
 
 void DumpTypeTable()
 {
@@ -300,6 +304,8 @@ void PType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 void PType::StaticInit()
 {
+	RUNTIME_CLASS(PErrorType)->TypeTableType = RUNTIME_CLASS(PErrorType);
+	RUNTIME_CLASS(PVoidType)->TypeTableType = RUNTIME_CLASS(PVoidType);
 	RUNTIME_CLASS(PInt)->TypeTableType = RUNTIME_CLASS(PInt);
 	RUNTIME_CLASS(PFloat)->TypeTableType = RUNTIME_CLASS(PFloat);
 	RUNTIME_CLASS(PString)->TypeTableType = RUNTIME_CLASS(PString);
@@ -320,6 +326,8 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
 	RUNTIME_CLASS(PAngle)->TypeTableType = RUNTIME_CLASS(PAngle);
 
+	TypeTable.AddType(TypeError = new PErrorType);
+	TypeTable.AddType(TypeVoid = new PVoidType);
 	TypeTable.AddType(TypeSInt8 = new PInt(1, false));
 	TypeTable.AddType(TypeUInt8 = new PInt(1, true));
 	TypeTable.AddType(TypeSInt16 = new PInt(2, false));
@@ -877,9 +885,8 @@ IMPLEMENT_CLASS(PStatePointer)
 //==========================================================================
 
 PStatePointer::PStatePointer()
-: PInt(sizeof(FState *), true)
+: PBasicType(sizeof(FState *), __alignof(FState *))
 {
-	Align = __alignof(FState *);
 }
 
 
@@ -896,9 +903,8 @@ END_POINTERS
 //==========================================================================
 
 PPointer::PPointer()
-: PInt(sizeof(void *), true), PointedType(NULL)
+: PBasicType(sizeof(void *), __alignof(void *)), PointedType(NULL)
 {
-	Align = __alignof(void *);
 }
 
 //==========================================================================
@@ -908,9 +914,8 @@ PPointer::PPointer()
 //==========================================================================
 
 PPointer::PPointer(PType *pointsat)
-: PInt(sizeof(void *), true), PointedType(pointsat)
+: PBasicType(sizeof(void *), __alignof(void *)), PointedType(pointsat)
 {
-	Align = __alignof(void *);
 }
 
 //==========================================================================

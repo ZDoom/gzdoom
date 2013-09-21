@@ -165,6 +165,22 @@ public:
 	static void StaticInit();
 };
 
+// Not-really-a-type types --------------------------------------------------
+
+class PErrorType : public PType
+{
+	DECLARE_CLASS(PErrorType, PType);
+public:
+	PErrorType() : PType(0, 1) {}
+};
+
+class PVoidType : public PType
+{
+	DECLARE_CLASS(PVoidType, PType);
+public:
+	PVoidType() : PType(0, 1) {}
+};
+
 // Some categorization typing -----------------------------------------------
 
 class PBasicType : public PType
@@ -290,16 +306,16 @@ public:
 
 // Pointers -----------------------------------------------------------------
 
-class PStatePointer : public PInt
+class PStatePointer : public PBasicType
 {
-	DECLARE_CLASS(PStatePointer, PInt);
+	DECLARE_CLASS(PStatePointer, PBasicType);
 public:
 	PStatePointer();
 };
 
-class PPointer : public PInt
+class PPointer : public PBasicType
 {
-	DECLARE_CLASS(PPointer, PInt);
+	DECLARE_CLASS(PPointer, PBasicType);
 	HAS_OBJECT_POINTERS;
 public:
 	PPointer(PType *pointsat);
@@ -316,17 +332,14 @@ protected:
 	PPointer();
 };
 
-class PClass;
 class PClassPointer : public PPointer
 {
 	DECLARE_CLASS(PClassPointer, PPointer);
 	HAS_OBJECT_POINTERS;
 public:
-	PClassPointer(PClass *restrict);
+	PClassPointer(class PClass *restrict);
 
-	PClass *ClassRestriction;
-
-	typedef PClass *Type2;
+	class PClass *ClassRestriction;
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
@@ -625,6 +638,8 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 
 // Built-in types -----------------------------------------------------------
 
+extern PErrorType *TypeError;
+extern PVoidType *TypeVoid;
 extern PInt *TypeSInt8,  *TypeUInt8;
 extern PInt *TypeSInt16, *TypeUInt16;
 extern PInt *TypeSInt32, *TypeUInt32;
@@ -662,6 +677,8 @@ public:
 	};
 
 	PSymbolConstNumeric(FName name, PType *type=NULL) : PSymbolConst(name, type) {}
+	PSymbolConstNumeric(FName name, PType *type, int val) : PSymbolConst(name, type), Value(val) {}
+	PSymbolConstNumeric(FName name, PType *type, double val) : PSymbolConst(name, type), Float(val) {}
 	PSymbolConstNumeric() {}
 };
 

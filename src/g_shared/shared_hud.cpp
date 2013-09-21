@@ -135,12 +135,12 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans
 
 	if (tex)
 	{
-		int texwidth=tex->GetWidth();
-		int texheight=tex->GetHeight();
+		double texwidth=tex->GetScaledWidthDouble();
+		double texheight=tex->GetScaledHeightDouble();
 
-		if (w<texwidth) scale1=(double)w/texwidth;
+		if (w<texwidth) scale1=w/texwidth;
 		else scale1=1.0f;
-		if (h<texheight) scale2=(double)h/texheight;
+		if (h<texheight) scale2=h/texheight;
 		else scale2=1.0f;
 		if (scale2<scale1) scale1=scale2;
 
@@ -606,22 +606,40 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 // Weapons List
 //
 //---------------------------------------------------------------------------
-
-FTextureID GetWeaponIcon(AWeapon *weapon)	// This function is also used by SBARINFO
+FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale=NULL)	// This function is also used by SBARINFO
 {
-	FTextureID AltIcon = GetHUDIcon(weapon->GetClass());
+	FTextureID picnum, AltIcon = GetHUDIcon(item->GetClass());
 	FState * state=NULL, *ReadyState;
 	
-	FTextureID picnum = !AltIcon.isNull()? AltIcon : weapon->Icon;
-
-	if (picnum.isNull())
+	picnum.SetNull();
+	if (flags & DI_ALTICONFIRST)
 	{
-		if (weapon->SpawnState && weapon->SpawnState->sprite!=0)
+		if (!(flags & DI_SKIPALTICON) && AltIcon.isValid())
+			picnum = AltIcon;
+		else if (!(flags & DI_SKIPICON))
+			picnum = item->Icon;
+	}
+	else
+	{
+		if (!(flags & DI_SKIPICON) && item->Icon.isValid())
+			picnum = item->Icon;
+		else if (!(flags & DI_SKIPALTICON))
+			picnum = AltIcon;
+	}
+	
+	if (!picnum.isValid()) //isNull() is bad for checking, because picnum could be also invalid (-1)
+	{
+		if (!(flags & DI_SKIPSPAWN) && item->SpawnState && item->SpawnState->sprite!=0)
 		{
-			state = weapon->SpawnState;
+			state = item->SpawnState;
+			
+			if (applyscale != NULL && !(flags & DI_FORCESCALE))
+			{
+				*applyscale = true;
+			}
 		}
-		// no spawn state - now try the ready state
-		else if ((ReadyState = weapon->FindState(NAME_Ready)) && ReadyState->sprite!=0)
+		// no spawn state - now try the ready state if it's weapon
+		else if (!(flags & DI_SKIPREADY) && item->GetClass()->IsDescendantOf(RUNTIME_CLASS(AWeapon)) && (ReadyState = item->FindState(NAME_Ready)) && ReadyState->sprite!=0)
 		{
 			state = ReadyState;
 		}
@@ -651,7 +669,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans=0xd999;
 	}
 
-	FTextureID picnum = GetWeaponIcon(weapon);
+	FTextureID picnum = GetInventoryIcon(weapon, DI_ALTICONFIRST);
 
 	if (picnum.isValid())
 	{

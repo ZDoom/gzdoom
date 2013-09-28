@@ -46,6 +46,7 @@
 #include "g_game.h"
 #include "doomstat.h"
 #include "g_level.h"
+#include "colormatcher.h"
 #include "textures/bitmap.h"
 //#include "gl/gl_intern.h"
 
@@ -84,6 +85,7 @@ public:
 
 protected:
 	FVoxel *SourceVox;
+	BYTE *Pixels;
 
 };
 
@@ -101,6 +103,7 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 	WidthBits = 4;
 	HeightBits = 4;
 	WidthMask = 15;
+	Pixels = NULL;
 	gl_info.bNoFilter = true;
 	gl_info.bNoCompress = true;
 }
@@ -123,12 +126,42 @@ const BYTE *FVoxelTexture::GetColumn (unsigned int column, const Span **spans_ou
 
 const BYTE *FVoxelTexture::GetPixels ()
 {
-	// not needed
-	return NULL;
+	// GetPixels gets called when a translated palette is used so we still need to implement it here.
+	if (Pixels == NULL)
+	{
+		Pixels = new BYTE[256];
+
+		BYTE *pp = SourceVox->Palette;
+
+		if(pp != NULL)
+		{
+			for(int i=0;i<256;i++, pp+=3)
+			{
+				PalEntry pe;
+				pe.r = (pp[0] << 2) | (pp[0] >> 4);
+				pe.g = (pp[1] << 2) | (pp[1] >> 4);
+				pe.b = (pp[2] << 2) | (pp[2] >> 4);
+				Pixels[i] = ColorMatcher.Pick(pe);
+			}
+		}
+		else 
+		{
+			for(int i=0;i<256;i++, pp+=3)
+			{
+				Pixels[i] = (BYTE)i;
+			}
+		}  
+	}
+	return Pixels;
 }
 
 void FVoxelTexture::Unload ()
 {
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
 }
 
 //===========================================================================
@@ -146,15 +179,26 @@ int FVoxelTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, F
 	BYTE bitmap[256];
 	BYTE *pp = SourceVox->Palette;
 
-	for(int i=0;i<256;i++, pp+=3)
+	if(pp != NULL)
 	{
-		bitmap[i] = (BYTE)i;
-		pe[i].r = (pp[0] << 2) | (pp[0] >> 4);
-		pe[i].g = (pp[1] << 2) | (pp[1] >> 4);
-		pe[i].b = (pp[2] << 2) | (pp[2] >> 4);
-		pe[i].a = 255;
-    }
-    
+		for(int i=0;i<256;i++, pp+=3)
+		{
+			bitmap[i] = (BYTE)i;
+			pe[i].r = (pp[0] << 2) | (pp[0] >> 4);
+			pe[i].g = (pp[1] << 2) | (pp[1] >> 4);
+			pe[i].b = (pp[2] << 2) | (pp[2] >> 4);
+			pe[i].a = 255;
+		}
+	}
+	else 
+	{
+		for(int i=0;i<256;i++, pp+=3)
+		{
+			bitmap[i] = (BYTE)i;
+			pe[i] = GPalette.BaseColors[i];
+			pe[i].a = 255;
+		}
+	}    
 	bmp->CopyPixelData(x, y, bitmap, Width, Height, 1, 16, rotate, pe, inf);
 	return 0;
 }	

@@ -43,17 +43,6 @@
 
 #define rmdir _rmdir
 
-// TODO, maybe: stop using DWORD so I don't need to worry about conflicting
-// with Windows' typedef. Then I could just include the header file instead
-// of declaring everything here.
-#define MAX_PATH				260
-#define CSIDL_LOCAL_APPDATA		0x001c
-extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(void *hwnd, int csidl, void *hToken, unsigned long dwFlags, char *pszPath);
-
-#endif
-
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h>
 #endif
 
 #include "templates.h"
@@ -75,6 +64,7 @@ extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(void *hwnd, int
 #include "x86.h"
 #include "version.h"
 #include "md5.h"
+#include "m_misc.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
@@ -1048,45 +1038,10 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 
 typedef TArray<BYTE> MemFile;
 
-static FString GetCachePath()
-{
-	FString path;
-
-#ifdef _WIN32
-	char pathstr[MAX_PATH];
-	if (0 != SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, pathstr))
-	{ // Failed (e.g. On Win9x): use program directory
-		path = progdir;
-	}
-	else
-	{
-		path = pathstr;
-	}
-	path += "/zdoom/cache";
-#elif defined(__APPLE__)
-	char pathstr[PATH_MAX];
-	FSRef folder;
-
-	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
-	{
-		path = pathstr;
-	}
-	else
-	{
-		path = progdir;
-	}
-	path += "/zdoom/cache";
-#else
-	// Don't use GAME_DIR and such so that ZDoom and its child ports can share the node cache.
-	path = NicePath("~/.config/zdoom/cache");
-#endif
-	return path;
-}
 
 static FString CreateCacheName(MapData *map, bool create)
 {
-	FString path = GetCachePath();
+	FString path = M_GetCachePath(create);
 	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
@@ -1299,7 +1254,7 @@ errorout:
 CCMD(clearnodecache)
 {
 	TArray<FFileList> list;
-	FString path = GetCachePath();
+	FString path = M_GetCachePath(false);
 	path += "/";
 
 	try

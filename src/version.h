@@ -93,12 +93,10 @@ const char *GetVersionString();
 #define FORUM_URL "http://forum.drdteam.org"
 #define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=24"
 
-#ifdef __unix__
-#define GAME_DIR ".config/gzdoom"
-#elif defined(__APPLE__)
+#if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
-#define CDROM_DIR "C:\\GZDOOMDAT"
+#define GAME_DIR ".config/gzdoom"
 #endif
 
 

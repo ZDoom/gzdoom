@@ -325,6 +325,10 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_Gender));
 	}
+	bool GetNoAutostartMap() const
+	{
+		return *static_cast<FBoolCVar *>(*CheckKey(NAME_Wi_NoAutostartMap));
+	}
 
 	void Reset();
 	int TeamChanged(int team);
@@ -348,6 +352,7 @@ class player_t
 {
 public:
 	player_t();
+	player_t &operator= (const player_t &p);
 
 	void Serialize (FArchive &arc);
 	size_t FixPointers (const DObject *obj, DObject *replacement);

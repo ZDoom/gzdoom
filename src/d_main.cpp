@@ -2137,17 +2137,6 @@ static void CheckCmdLine()
 		Printf ("%s", GStrings("D_DEVSTR"));
 	}
 
-#if !defined(__unix__) && !defined(__APPLE__)
-	// We do not need to support -cdrom under Unix, because all the files
-	// that would go to c:\\zdoomdat are already stored in .zdoom inside
-	// the user's home directory.
-	if (Args->CheckParm("-cdrom"))
-	{
-		Printf ("%s", GStrings("D_CDROM"));
-		mkdir (CDROM_DIR, 0);
-	}
-#endif
-
 	// turbo option  // [RH] (now a cvar)
 	v = Args->CheckValue("-turbo");
 	if (v != NULL)

@@ -711,6 +711,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\m_specialpaths.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\md5.cpp"
 				>
 			</File>

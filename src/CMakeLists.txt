@@ -740,6 +740,7 @@ add_executable( zdoom WIN32
 	m_misc.cpp
 	m_png.cpp
 	m_random.cpp
+	m_specialpaths.cpp
 	memarena.cpp
 	md5.cpp
 	name.cpp

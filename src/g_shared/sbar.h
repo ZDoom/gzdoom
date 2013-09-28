@@ -444,6 +444,20 @@ void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
 extern FTexture *CrosshairImage;
 
-FTextureID GetWeaponIcon(AWeapon *weapon);
+FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale);
+
+enum DI_Flags
+{
+	DI_SKIPICON = 0x1,
+	DI_SKIPALTICON = 0x2,
+	DI_SKIPSPAWN = 0x4,
+	DI_SKIPREADY = 0x8,
+	DI_ALTICONFIRST = 0x10,
+	
+	DI_DRAWINBOX = 0x20, // Set when either width or height is not zero
+	
+	DI_FORCESCALE = 0x40,
+	DI_ALTERNATEONFAIL = 0x80
+};
 
 #endif /* __SBAR_H__ */

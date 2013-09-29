@@ -43,6 +43,25 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	name->Type = type; \
 	name->IntVal = val
 
+	struct ClassFlagsBlock {
+		VM_UWORD Flags;
+		ZCC_Identifier *Replaces;
+	};
+
+	struct StateOpts {
+		ZCC_Expression *Offset;
+		bool Bright;
+	};
+
+	struct VarOrFun
+	{
+		ZCC_VarName *VarNames;
+		ZCC_FuncParamDecl *FuncParams;
+		ZCC_CompoundStmt *FuncBody;
+		ENamedName FuncName;
+		int FuncFlags;
+		int SourceLoc;
+	};
 }
 
 %token_prefix ZCC_
@@ -164,12 +183,6 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; }
 
 %type class_flags{ClassFlagsBlock}
-%include {
-	struct ClassFlagsBlock {
-		VM_UWORD Flags;
-		ZCC_Identifier *Replaces;
-	};
-}
 class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
 class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | 0/*FIXME*/; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | 0/*FIXME*/; X.Replaces = A.Replaces; }
@@ -369,12 +382,6 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 %type state_call {ZCC_ExprFuncCall *}
 %type state_call_params {ZCC_FuncParm *}
 
-%include {
-	struct StateOpts {
-		ZCC_Expression *Offset;
-		bool Bright;
-	};
-}
 %type state_opts {StateOpts}
 
 states_def(X) ::= STATES(T) scanner_mode LBRACE states_body(A) RBRACE.
@@ -618,18 +625,6 @@ array_size(X) ::= array_size(A) array_size_expr(B).
 	X = A;
 }
 
-%include
-{
-	struct VarOrFun
-	{
-		ZCC_VarName *VarNames;
-		ZCC_FuncParamDecl *FuncParams;
-		ZCC_CompoundStmt *FuncBody;
-		ENamedName FuncName;
-		int FuncFlags;
-		int SourceLoc;
-	};
-}
 %type variables_or_function {VarOrFun}
 
 /* Multiple type names are only valid for functions. */
@@ -1231,6 +1226,16 @@ constant(X) ::= NAMECONST(A).
 	floatconst->Type = TypeName;
 	floatconst->IntVal = A.Int;
 	X = floatconst;
+}
+constant(X) ::= FALSE(A).
+{
+	NEW_INTCONST_NODE(boolconst, TypeBool, false, A);
+	X = boolconst;
+}
+constant(X) ::= TRUE(A).
+{
+	NEW_INTCONST_NODE(boolconst, TypeBool, true, A);
+	X = boolconst;
 }
 
 /************ Statements ************/

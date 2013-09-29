@@ -230,6 +230,13 @@ protected:
 	PInt();
 };
 
+class PBool : public PInt
+{
+	DECLARE_CLASS(PBool, PInt);
+public:
+	PBool() : PInt(sizeof(bool), true) {}
+};
+
 class PFloat : public PBasicType
 {
 	DECLARE_CLASS(PFloat, PBasicType);
@@ -643,6 +650,7 @@ extern PVoidType *TypeVoid;
 extern PInt *TypeSInt8,  *TypeUInt8;
 extern PInt *TypeSInt16, *TypeUInt16;
 extern PInt *TypeSInt32, *TypeUInt32;
+extern PBool *TypeBool;
 extern PFloat *TypeFloat32, *TypeFloat64;
 extern PString *TypeString;
 extern PName *TypeName;

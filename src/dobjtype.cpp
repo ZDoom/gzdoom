@@ -66,6 +66,7 @@ PVoidType *TypeVoid;
 PInt *TypeSInt8,  *TypeUInt8;
 PInt *TypeSInt16, *TypeUInt16;
 PInt *TypeSInt32, *TypeUInt32;
+PBool *TypeBool;
 PFloat *TypeFloat32, *TypeFloat64;
 PString *TypeString;
 PName *TypeName;
@@ -307,6 +308,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PErrorType)->TypeTableType = RUNTIME_CLASS(PErrorType);
 	RUNTIME_CLASS(PVoidType)->TypeTableType = RUNTIME_CLASS(PVoidType);
 	RUNTIME_CLASS(PInt)->TypeTableType = RUNTIME_CLASS(PInt);
+	RUNTIME_CLASS(PBool)->TypeTableType = RUNTIME_CLASS(PBool);
 	RUNTIME_CLASS(PFloat)->TypeTableType = RUNTIME_CLASS(PFloat);
 	RUNTIME_CLASS(PString)->TypeTableType = RUNTIME_CLASS(PString);
 	RUNTIME_CLASS(PName)->TypeTableType = RUNTIME_CLASS(PName);
@@ -334,6 +336,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeUInt16 = new PInt(2, true));
 	TypeTable.AddType(TypeSInt32 = new PInt(4, false));
 	TypeTable.AddType(TypeUInt32 = new PInt(4, true));
+	TypeTable.AddType(TypeBool = new PBool);
 	TypeTable.AddType(TypeFloat32 = new PFloat(4));
 	TypeTable.AddType(TypeFloat64 = new PFloat(8));
 	TypeTable.AddType(TypeString = new PString);
@@ -560,6 +563,10 @@ int PInt::GetRegType() const
 {
 	return REGT_INT;
 }
+
+/* PBool ******************************************************************/
+
+IMPLEMENT_CLASS(PBool)
 
 /* PFloat *****************************************************************/
 

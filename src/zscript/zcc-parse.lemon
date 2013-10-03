@@ -34,8 +34,8 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 #define SAFE_APPEND(a,b) \
 	if (a == NULL) a = b; else a->AppendSibling(b);
 
-#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr, X); expr->Operation = T; expr->Operand = X; expr->Type = NULL
-#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr, X); expr->Operation = T; expr->Type = NULL; expr->Left = X; expr->Right = Y
+#define UNARY_EXPR(X,T) NEW_AST_NODE(ExprUnary, expr1, X); expr1->Operation = T; expr1->Operand = X; expr1->Type = NULL
+#define BINARY_EXPR(X,Y,T) NEW_AST_NODE(ExprBinary, expr2, X); expr2->Operation = T; expr2->Type = NULL; expr2->Left = X; expr2->Right = Y
 
 #define NEW_INTCONST_NODE(name,type,val,tok) \
 	NEW_AST_NODE(ExprConstant, name, tok); \
@@ -329,7 +329,7 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 				label->Type = NULL;
 
 				BINARY_EXPR(label, one, PEX_Add);
-				node->Value = expr;
+				node->Value = expr2;
 			}
 		}
 		// Add a new terminating node, to indicate that the ConstantDefs for this enum are done.
@@ -858,17 +858,17 @@ primary(X) ::= primary(A) DOT IDENTIFIER(B).							// Member access
 primary(X) ::= primary(A) ADDADD.		/* postfix++ */
 {
 	UNARY_EXPR(A,PEX_PostInc);
-	X = expr;
+	X = expr1;
 }
 primary(X) ::= primary(A) SUBSUB.		/* postfix-- */
 {
 	UNARY_EXPR(A,PEX_PostDec);
-	X = expr;
+	X = expr1;
 }
 primary(X) ::= SCOPE primary(B).
 {
 	BINARY_EXPR(NULL,B,PEX_Scope);
-	X = expr;
+	X = expr2;
 }
 
 /*----- Unary Expressions -----*/
@@ -895,7 +895,7 @@ unary_expr(X) ::= SUB unary_expr(A). [UNARY]
 	else
 	{ // For everything else, create a new node and do the negation later.
 		UNARY_EXPR(A,PEX_Negate);
-		X = expr;
+		X = expr1;
 	}
 }
 unary_expr(X) ::= ADD unary_expr(A). [UNARY]
@@ -907,7 +907,7 @@ unary_expr(X) ::= ADD unary_expr(A). [UNARY]
 	if (A->Operation != PEX_ConstValue || (!con->Type->IsA(RUNTIME_CLASS(PInt)) && !con->Type->IsA(RUNTIME_CLASS(PFloat))))
 	{
 		UNARY_EXPR(A,PEX_AntiNegate);
-		X = expr;
+		X = expr1;
 	}
 	else
 	{
@@ -917,32 +917,32 @@ unary_expr(X) ::= ADD unary_expr(A). [UNARY]
 unary_expr(X) ::= SUBSUB unary_expr(A). [UNARY]
 {
 	UNARY_EXPR(A,PEX_PreDec);
-	X = expr;
+	X = expr1;
 }
 unary_expr(X) ::= ADDADD unary_expr(A). [UNARY]
 {
 	UNARY_EXPR(A,PEX_PreInc);
-	X = expr;
+	X = expr1;
 }
 unary_expr(X) ::= TILDE unary_expr(A). [UNARY]
 {
 	UNARY_EXPR(A,PEX_BitNot);
-	X = expr;
+	X = expr1;
 }
 unary_expr(X) ::= BANG unary_expr(A). [UNARY]
 {
 	UNARY_EXPR(A,PEX_BoolNot);
-	X = expr;
+	X = expr1;
 }
 unary_expr(X) ::= SIZEOF unary_expr(A). [UNARY]
 {
 	UNARY_EXPR(A,PEX_SizeOf);
-	X = expr;
+	X = expr1;
 }
 unary_expr(X) ::= ALIGNOF unary_expr(A). [UNARY]
 {
 	UNARY_EXPR(A,PEX_AlignOf);
-	X = expr;
+	X = expr1;
 }
 
 /* Due to parsing conflicts, C-style casting is not supported. You
@@ -958,136 +958,139 @@ expr(X) ::= unary_expr(A).
 expr(X) ::= expr(A) ADD expr(B).		/* a + b */
 {
 	BINARY_EXPR(A,B,PEX_Add);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) SUB expr(B).		/* a - b */
 {
 	BINARY_EXPR(A,B,PEX_Sub);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) MUL expr(B).		/* a * b */
 {
 	BINARY_EXPR(A,B,PEX_Mul);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) DIV expr(B).		/* a / b */
 {
 	BINARY_EXPR(A,B,PEX_Div);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) MOD expr(B).		/* a % b */
 {
 	BINARY_EXPR(A,B,PEX_Mod);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) POW expr(B).		/* a ** b */
 {
 	BINARY_EXPR(A,B,PEX_Pow);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) CROSSPROD expr(B).	/* a cross b */
 {
 	BINARY_EXPR(A,B,PEX_CrossProduct);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) DOTPROD expr(B).	/* a dot b */
 {
 	BINARY_EXPR(A,B,PEX_DotProduct);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) LSH expr(B).		/* a << b */
 {
 	BINARY_EXPR(A,B,PEX_LeftShift);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) RSH expr(B).		/* a >> b */
 {
 	BINARY_EXPR(A,B,PEX_RightShift);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) DOTDOT expr(B).		/* a .. b */
 {
 	BINARY_EXPR(A,B,PEX_Concat);
-	X = expr;
+	X = expr2;
 }
 
 expr(X) ::= expr(A) LT expr(B).			/* a < b */
 {
 	BINARY_EXPR(A,B,PEX_LT);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) GT expr(B).			/* a > b */
 {
-	BINARY_EXPR(A,B,PEX_GT);
-	X = expr;
+	BINARY_EXPR(A,B,PEX_LTEQ);
+	UNARY_EXPR(expr2,PEX_BoolNot);
+	X = expr1;
 }
 expr(X) ::= expr(A) LTEQ expr(B).		/* a <= b */
 {
 	BINARY_EXPR(A,B,PEX_LTEQ);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) GTEQ expr(B).		/* a >= b */
 {
-	BINARY_EXPR(A,B,PEX_GTEQ);
-	X = expr;
+	BINARY_EXPR(A,B,PEX_LT);
+	UNARY_EXPR(expr1,PEX_BoolNot);
+	X = expr1;
 }
 expr(X) ::= expr(A) LTGTEQ expr(B).		/* a <>= b */
 {
 	BINARY_EXPR(A,B,PEX_LTGTEQ);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) IS expr(B).			/* a is b */
 {
 	BINARY_EXPR(A,B,PEX_Is);
-	X = expr;
+	X = expr2;
 }
 
 expr(X) ::= expr(A) EQEQ expr(B).		/* a == b */
 {
 	BINARY_EXPR(A,B,PEX_EQEQ);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) NEQ expr(B).		/* a != b */
 {
-	BINARY_EXPR(A,B,PEX_NEQ);
-	X = expr;
+	BINARY_EXPR(A,B,PEX_EQEQ);
+	UNARY_EXPR(expr2,PEX_BoolNot);
+	X = expr1;
 }
 expr(X) ::= expr(A) APPROXEQ expr(B).	/* a ~== b */
 {
 	BINARY_EXPR(A,B,PEX_APREQ);
-	X = expr;
+	X = expr2;
 }
 
 expr(X) ::= expr(A) AND expr(B).		/* a & b */
 {
 	BINARY_EXPR(A,B,PEX_BitAnd);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) XOR expr(B).		/* a ^ b */
 {
 	BINARY_EXPR(A,B,PEX_BitXor);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) OR expr(B).			/* a | b */
 {
 	BINARY_EXPR(A,B,PEX_BitOr);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) ANDAND expr(B).		/* a && b */
 {
 	BINARY_EXPR(A,B,PEX_BoolAnd);
-	X = expr;
+	X = expr2;
 }
 expr(X) ::= expr(A) OROR expr(B).		/* a || b */
 {
 	BINARY_EXPR(A,B,PEX_BoolOr);
-	X = expr;
+	X = expr2;
 }
 
 expr(X) ::= expr(A) SCOPE expr(B).
 {
 	BINARY_EXPR(A,B,PEX_Scope);
-	X = expr;
+	X = expr2;
 }
 
 /*----- Trinary Expression -----*/
@@ -1337,7 +1340,7 @@ iteration_statement(X) ::= while_or_until(TY) LPAREN expr(EX) RPAREN statement(S
 	if (TY.Int == ZCC_UNTIL)
 	{ // Negate the loop condition
 		UNARY_EXPR(EX,PEX_BoolNot);
-		iter->LoopCondition = expr;
+		iter->LoopCondition = expr1;
 	}
 	else
 	{
@@ -1355,7 +1358,7 @@ iteration_statement(X) ::= DO(T) statement(ST) while_or_until(TY) LPAREN expr(EX
 	if (TY.Int == ZCC_UNTIL)
 	{ // Negate the loop condition
 		UNARY_EXPR(EX,PEX_BoolNot);
-		iter->LoopCondition = expr;
+		iter->LoopCondition = expr1;
 	}
 	else
 	{

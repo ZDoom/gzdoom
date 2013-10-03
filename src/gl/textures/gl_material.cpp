@@ -420,8 +420,8 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int cm, int clampmode, int
 			hwtex = CreateTexture(clampmode);
 		}
 
-		// Texture has become invalid
-		else if ((warp == 0 && !tex->bHasCanvas) && tex->CheckModified())
+		// Texture has become invalid - this is only for special textures, not the regular warping, which is handled above
+		else if ((warp == 0 && !tex->bHasCanvas && !tex->bWarped) && tex->CheckModified())
 		{
 			Clean(true);
 			hwtex = CreateTexture(clampmode);
@@ -480,8 +480,8 @@ const FHardwareTexture * FGLTexture::BindPatch(int texunit, int cm, int translat
 			CreatePatch();
 		}
 
-		// Texture has become invalid
-		else if ((warp == 0 && !tex->bHasCanvas) && tex->CheckModified())
+		// Texture has become invalid - this is only for special textures, not the regular warping, which is handled above
+		else if ((warp == 0 && !tex->bHasCanvas && !tex->bWarped) && tex->CheckModified())
 		{
 			Clean(true);
 			CreatePatch();

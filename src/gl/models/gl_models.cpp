@@ -78,7 +78,7 @@ class DeletingModelArray : public TArray<FModel *>
 {
 public:
 
-#if 0
+#if 1
 	~DeletingModelArray()
 	{
 		for(unsigned i=0;i<Size();i++)

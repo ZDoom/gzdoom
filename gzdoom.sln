@@ -1,5 +1,5 @@
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual C++ Express 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zdoom", "gzdoom.vcproj", "{8049475B-5C87-46F9-9358-635218A4EF18}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9B465A9E-E5C7-4577-B559-3CA2F7AE7D96} = {9B465A9E-E5C7-4577-B559-3CA2F7AE7D96}

@@ -2281,8 +2281,6 @@ void D_DoomMain (void)
 		execFiles = Args->GatherFiles ("-exec");
 		D_MultiExec (execFiles, true);
 
-		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
-
 		CopyFiles(allwads, pwads);
 
 		// Since this function will never leave we must delete this array here manually.
@@ -2297,6 +2295,8 @@ void D_DoomMain (void)
 
 		// Now that wads are loaded, define mod-specific cvars.
 		ParseCVarInfo();
+
+		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);

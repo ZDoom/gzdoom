@@ -1792,7 +1792,10 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 AInventory *ABackpackItem::CreateTossable ()
 {
 	ABackpackItem *pack = static_cast<ABackpackItem *>(Super::CreateTossable());
-	pack->bDepleted = true;
+	if (pack != NULL)
+	{
+		pack->bDepleted = true;
+	}
 	return pack;
 }
 

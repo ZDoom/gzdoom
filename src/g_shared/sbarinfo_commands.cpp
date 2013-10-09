@@ -173,13 +173,18 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			GetCoordinates(sc, fullScreenOffsets, imgx, imgy);
 			if(sc.CheckToken(','))
 			{
-				sc.MustGetToken(TK_Identifier);
-				if(sc.Compare("center"))
-					offset = CENTER;
-				else if(sc.Compare("centerbottom"))
-					offset = static_cast<Offset> (HMIDDLE|BOTTOM);
-				else if(!sc.Compare("lefttop")) //That's already set
-					sc.ScriptError("'%s' is not a valid alignment.", sc.String);
+				// Use none instead of topleft in case we decide we want to use
+				// alignments to remove the offset from images.
+				if(!sc.CheckToken(TK_None))
+				{
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("center"))
+						offset = CENTER;
+					else if(sc.Compare("centerbottom"))
+						offset = static_cast<Offset> (HMIDDLE|BOTTOM);
+					else
+						sc.ScriptError("'%s' is not a valid alignment.", sc.String);
+				}
 			}
 			if(sc.CheckToken(','))
 			{

@@ -548,30 +548,48 @@ if( APPLE )
 endif( APPLE )
 
 # Start defining source files for ZDoom
-
+set( PLAT_WIN32_SOURCES
+	win32/eaxedit.cpp
+	win32/fb_d3d9.cpp
+	win32/fb_d3d9_wipe.cpp
+	win32/fb_ddraw.cpp
+	win32/hardware.cpp
+	win32/helperthread.cpp
+	win32/i_cd.cpp
+	win32/i_crash.cpp
+	win32/i_input.cpp
+	win32/i_keyboard.cpp
+	win32/i_mouse.cpp
+	win32/i_dijoy.cpp
+	win32/i_rawps2.cpp
+	win32/i_xinput.cpp
+	win32/i_main.cpp
+	win32/i_movie.cpp
+	win32/i_system.cpp
+	win32/st_start.cpp
+	win32/win32gliface.cpp
+	win32/win32video.cpp )
+set( PLAT_SDL_SOURCES
+	sdl/crashcatcher.c
+	sdl/hardware.cpp
+	sdl/i_cd.cpp
+	sdl/i_input.cpp
+	sdl/i_joystick.cpp
+	sdl/i_main.cpp
+	sdl/i_movie.cpp
+	sdl/i_system.cpp
+	sdl/sdlvideo.cpp
+	sdl/sdlglvideo.cpp
+	sdl/st_start.cpp )
+set( PLAT_MAC_SOURCES
+	sdl/SDLMain.m
+	sdl/iwadpicker_cocoa.mm
+	sdl/i_system_cocoa.mm )
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
-	set( SYSTEM_SOURCES
-		win32/eaxedit.cpp
-		win32/fb_d3d9.cpp
-		win32/fb_d3d9_wipe.cpp
-		win32/fb_ddraw.cpp
-		win32/hardware.cpp
-		win32/helperthread.cpp
-		win32/i_cd.cpp
-		win32/i_crash.cpp
-		win32/i_input.cpp
-		win32/i_keyboard.cpp
-		win32/i_mouse.cpp
-		win32/i_dijoy.cpp
-		win32/i_rawps2.cpp
-		win32/i_xinput.cpp
-		win32/i_main.cpp
-		win32/i_movie.cpp
-		win32/i_system.cpp
-		win32/st_start.cpp
-		win32/win32gliface.cpp
-		win32/win32video.cpp )
+	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
+	set( OTHER_SYSTEM_SOURCES ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} )
+	
 	if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 		# CMake is not set up to compile and link rc files with GCC. :(
 		add_custom_command( OUTPUT zdoom-rc.o
@@ -583,20 +601,12 @@ if( WIN32 )
 	endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR sdl )
-	set( SYSTEM_SOURCES
-		sdl/crashcatcher.c
-		sdl/hardware.cpp
-		sdl/i_cd.cpp
-		sdl/i_input.cpp
-		sdl/i_joystick.cpp
-		sdl/i_main.cpp
-		sdl/i_movie.cpp
-		sdl/i_system.cpp
-		sdl/sdlglvideo.cpp
-		sdl/sdlvideo.cpp
-		sdl/st_start.cpp )
+	set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
 	if( APPLE )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} sdl/SDLMain.m sdl/iwadpicker_cocoa.mm sdl/i_system_cocoa.mm )
+		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_MAC_SOURCES} )
+		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
+	else( APPLE )
+		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_MAC_SOURCES} )
 	endif( APPLE )
 endif( WIN32 )
 
@@ -666,8 +676,10 @@ file( GLOB HEADER_FILES
 	intermission/*.h
 	menu/*.h
 	oplsynth/*.h
+	oplsynth/dosbox/*.h
 	r_data/*.h
 	resourcefiles/*.h
+	sdl/*.h
 	sfmt/*.h
 	sound/*.h
 	textures/*.h
@@ -676,8 +688,103 @@ file( GLOB HEADER_FILES
 	*.h
 )
 
+# These files will be flagged as "headers" so that they appear in project files
+# without being compiled.
+set( NOT_COMPILED_SOURCE_FILES
+	${OTHER_SYSTEM_SOURCES}
+	sc_man_scanner.h
+	sc_man_scanner.re
+	g_doom/a_arachnotron.cpp
+	g_doom/a_archvile.cpp
+	g_doom/a_bossbrain.cpp
+	g_doom/a_bruiser.cpp
+	g_doom/a_cacodemon.cpp
+	g_doom/a_cyberdemon.cpp
+	g_doom/a_demon.cpp
+	g_doom/a_doomimp.cpp
+	g_doom/a_doomweaps.cpp
+	g_doom/a_fatso.cpp
+	g_doom/a_keen.cpp
+	g_doom/a_lostsoul.cpp
+	g_doom/a_painelemental.cpp
+	g_doom/a_possessed.cpp
+	g_doom/a_revenant.cpp
+	g_doom/a_scriptedmarine.cpp
+	g_doom/a_spidermaster.cpp
+	g_heretic/a_chicken.cpp
+	g_heretic/a_dsparil.cpp
+	g_heretic/a_hereticartifacts.cpp
+	g_heretic/a_hereticimp.cpp
+	g_heretic/a_hereticweaps.cpp
+	g_heretic/a_ironlich.cpp
+	g_heretic/a_knight.cpp
+	g_heretic/a_wizard.cpp
+	g_hexen/a_bats.cpp
+	g_hexen/a_bishop.cpp
+	g_hexen/a_blastradius.cpp
+	g_hexen/a_boostarmor.cpp
+	g_hexen/a_centaur.cpp
+	g_hexen/a_clericflame.cpp
+	g_hexen/a_clericholy.cpp
+	g_hexen/a_clericmace.cpp
+	g_hexen/a_clericstaff.cpp
+	g_hexen/a_dragon.cpp
+	g_hexen/a_fighteraxe.cpp
+	g_hexen/a_fighterhammer.cpp
+	g_hexen/a_fighterplayer.cpp
+	g_hexen/a_fighterquietus.cpp
+	g_hexen/a_firedemon.cpp
+	g_hexen/a_flechette.cpp
+	g_hexen/a_fog.cpp
+	g_hexen/a_healingradius.cpp
+	g_hexen/a_heresiarch.cpp
+	g_hexen/a_hexenspecialdecs.cpp
+	g_hexen/a_iceguy.cpp
+	g_hexen/a_korax.cpp
+	g_hexen/a_magecone.cpp
+	g_hexen/a_magelightning.cpp
+	g_hexen/a_magestaff.cpp
+	g_hexen/a_pig.cpp
+	g_hexen/a_serpent.cpp
+	g_hexen/a_spike.cpp
+	g_hexen/a_summon.cpp
+	g_hexen/a_teleportother.cpp
+	g_hexen/a_wraith.cpp
+	g_strife/a_acolyte.cpp
+	g_strife/a_alienspectres.cpp
+	g_strife/a_coin.cpp
+	g_strife/a_crusader.cpp
+	g_strife/a_entityboss.cpp
+	g_strife/a_inquisitor.cpp
+	g_strife/a_oracle.cpp
+	g_strife/a_programmer.cpp
+	g_strife/a_reaver.cpp
+	g_strife/a_rebels.cpp
+	g_strife/a_sentinel.cpp
+	g_strife/a_stalker.cpp
+	g_strife/a_strifeitems.cpp
+	g_strife/a_strifeweapons.cpp
+	g_strife/a_templar.cpp
+	g_strife/a_thingstoblowup.cpp
+	g_shared/sbarinfo_commands.cpp
+	xlat/xlat_parser.y
+	xlat_parser.c
+	xlat_parser.h
+
+	# We could have the ASM macro add these files, but it wouldn't add all
+	# platforms.
+	asm_ia32/a.asm
+	asm_ia32/misc.asm
+	asm_ia32/tmap.asm
+	asm_ia32/tmap2.asm
+	asm_ia32/tmap3.asm
+	asm_x86_64/tmap3.asm
+	asm_x86_64/tmap3.s
+)
+
 add_executable( zdoom WIN32
 	${HEADER_FILES}
+	${NOT_COMPILED_SOURCE_FILES}
 	autostart.cpp
 	${ASM_SOURCES}
 	${SYSTEM_SOURCES}
@@ -1039,6 +1146,7 @@ add_executable( zdoom WIN32
 
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
+set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.
@@ -1090,4 +1198,51 @@ endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" S
 
 if( MSVC )
 	set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+	add_custom_command(TARGET zdoom POST_BUILD
+		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#2
+		COMMENT "Adding manifest..."
+	)
 endif( MSVC )
+
+source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
+source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")
+source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
+source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
+source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
+source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
+source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
+source_group("Decorate++" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thingdef/.+")
+source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
+source_group("Games\\Doom Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_doom/.+")
+source_group("Games\\Heretic Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_heretic/.+")
+source_group("Games\\Hexen Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_hexen/.+")
+source_group("Games\\Raven Shared" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_raven/.+")
+source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_strife/.+")
+source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
+source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
+source_group("OpenGL Renderer\\API" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/api/.+")
+source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
+source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
+source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx/.+")
+source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
+source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
+source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
+source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")
+source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
+source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
+source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")
+source_group("Render Core\\Render Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.h$")
+source_group("Render Core\\Render Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_.+\\.cpp$")
+source_group("Render Data\\Resource Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.h$")
+source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+\\.cpp$")
+source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
+source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
+source_group("Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/resourcefiles/.+")
+source_group("SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sdl/.+")
+source_group("SFML" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
+source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_shared/.+")
+source_group("Versioning" FILES version.h win32/zdoom.rc)
+source_group("Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/win32/.+")
+source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)
+source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h sc_man_scanner.re)

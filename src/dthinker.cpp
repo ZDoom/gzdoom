@@ -357,12 +357,10 @@ void DThinker::DestroyThinkersInList (FThinkerList &list)
 {
 	if (list.Sentinel != NULL)
 	{
-		DThinker *node = list.Sentinel->NextThinker;
-		while (node != list.Sentinel)
+		for (DThinker *node = list.Sentinel->NextThinker; node != list.Sentinel; node = list.Sentinel->NextThinker)
 		{
-			DThinker *next = node->NextThinker;
+			assert(node != NULL);
 			node->Destroy();
-			node = next;
 		}
 		list.Sentinel->Destroy();
 		list.Sentinel = NULL;
@@ -380,9 +378,8 @@ void DThinker::DestroyMostThinkersInList (FThinkerList &list, int stat)
 	  // it from the list. G_FinishTravel() will find it later from
 	  // a players[].mo link and destroy it then, after copying various
 	  // information to a new player.
-		for (DThinker *probe = list.Sentinel->NextThinker, *next; probe != list.Sentinel; probe = next)
+		for (DThinker *probe = list.Sentinel->NextThinker; probe != list.Sentinel; probe = list.Sentinel->NextThinker)
 		{
-			next = probe->NextThinker;
 			if (!probe->IsKindOf(RUNTIME_CLASS(APlayerPawn)) ||		// <- should not happen
 				static_cast<AActor *>(probe)->player == NULL ||
 				static_cast<AActor *>(probe)->player->mo != probe)

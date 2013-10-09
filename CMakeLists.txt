@@ -61,7 +61,8 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	set( ALL_C_FLAGS "/GF /Gy /GR-" )
+	# Set floating point model to fast or the GL render will suffer for it.
+	set( ALL_C_FLAGS "/GF /Gy /GR- /fp:fast" )
 	
 	# Avoid CRT DLL dependancies in release builds
 	set( REL_C_FLAGS "/MT" )

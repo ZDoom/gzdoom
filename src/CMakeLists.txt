@@ -550,10 +550,6 @@ endif( APPLE )
 
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
-	gl/hqnx/hq2x.cpp
-	gl/hqnx/hq3x.cpp
-	gl/hqnx/hq4x.cpp
-	gl/hqnx/Image.cpp
 	win32/eaxedit.cpp
 	win32/fb_d3d9.cpp
 	win32/fb_d3d9_wipe.cpp

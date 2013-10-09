@@ -76,8 +76,11 @@ if( WIN32 )
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
 		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		# This next one is for me.
-		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" )
+		# This next one is for Randy.
+		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
+		# .. and this one for Graf Zahl
+		"D:/portable/FMOD SoundSystem 4.26/FMOD Programmers API WIN32/api"
+		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )

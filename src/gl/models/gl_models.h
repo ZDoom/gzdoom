@@ -94,17 +94,6 @@ protected:
 		char            name[16];
 		FModelVertex *vertices;
 		FModelVertex *normals;
-
-		ModelFrame()
-		{
-			vertices = normals = NULL;
-		}
-
-		~ModelFrame()
-		{
-			if (vertices) delete [] vertices;
-			if (normals) delete [] normals;
-		}
 	};
 
 	struct DMDLoDInfo

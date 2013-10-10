@@ -659,6 +659,17 @@ void FTextureManager::ParseCameraTexture(FScanner &sc)
 			sc.UnGet ();
 		}
 	}
+	if (sc.GetString())
+	{
+		if (sc.Compare("WorldPanning"))
+		{
+			viewer->bWorldPanning = true;
+		}
+		else
+		{
+			sc.UnGet();
+		}
+	}
 	viewer->SetScaledSize(fitwidth, fitheight);
 }
 

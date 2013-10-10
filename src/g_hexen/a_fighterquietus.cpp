@@ -58,12 +58,12 @@ class AFSwordMissile : public AActor
 {
 	DECLARE_CLASS (AFSwordMissile, AActor)
 public:
-	int DoSpecialDamage(AActor *victim, AActor *source, int damage, FName damagetype);
+	int DoSpecialDamage(AActor *victim, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (AFSwordMissile)
 
-int AFSwordMissile::DoSpecialDamage(AActor *victim, AActor *source, int damage, FName damagetype)
+int AFSwordMissile::DoSpecialDamage(AActor *victim, int damage, FName damagetype)
 {
 	if (victim->player)
 	{

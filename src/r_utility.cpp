@@ -581,6 +581,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	viewy = iview->oviewy + FixedMul (frac, iview->nviewy - iview->oviewy);
 	viewz = iview->oviewz + FixedMul (frac, iview->nviewz - iview->oviewz);
 	if (player != NULL &&
+		!(player->cheats & CF_INTERPVIEW) &&
 		player - players == consoleplayer &&
 		camera == player->mo &&
 		!demoplayback &&

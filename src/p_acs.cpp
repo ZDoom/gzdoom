@@ -8250,7 +8250,9 @@ scriptwait:
 			if (STACK(2) == 0)
 			{
 				if (activator != NULL)
-					activator->angle = STACK(1) << 16;
+				{
+					activator->SetAngle(STACK(1) << 16);
+				}
 			}
 			else
 			{
@@ -8259,7 +8261,7 @@ scriptwait:
 
 				while ( (actor = iterator.Next ()) )
 				{
-					actor->angle = STACK(1) << 16;
+					actor->SetAngle(STACK(1) << 16);
 				}
 			}
 			sp -= 2;
@@ -8269,7 +8271,9 @@ scriptwait:
 			if (STACK(2) == 0)
 			{
 				if (activator != NULL)
-					activator->pitch = STACK(1) << 16;
+				{
+					activator->SetPitch(STACK(1) << 16);
+				}
 			}
 			else
 			{
@@ -8278,7 +8282,7 @@ scriptwait:
 
 				while ( (actor = iterator.Next ()) )
 				{
-					actor->pitch = STACK(1) << 16;
+					actor->SetPitch(STACK(1) << 16);
 				}
 			}
 			sp -= 2;

@@ -2252,6 +2252,9 @@ void P_PlayerThink (player_t *player)
 	{
 		player->inventorytics--;
 	}
+	// Don't interpolate the view for more than one tic
+	player->cheats &= ~CF_INTERPVIEW;
+
 	// No-clip cheat
 	if ((player->cheats & (CF_NOCLIP | CF_NOCLIP2)) == CF_NOCLIP2)
 	{ // No noclip2 without noclip

@@ -198,6 +198,7 @@ typedef enum
 	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
+	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
 	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
 	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
 	CF_REFLECTION		= 1 << 19,

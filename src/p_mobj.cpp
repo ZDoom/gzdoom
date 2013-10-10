@@ -2962,6 +2962,30 @@ void AActor::SetShade (int r, int g, int b)
 	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
 }
 
+void AActor::SetPitch(int p)
+{
+	if (p != pitch)
+	{
+		pitch = p;
+		if (player != NULL)
+		{
+			player->cheats |= CF_INTERPVIEW;
+		}
+	}
+}
+
+void AActor::SetAngle(angle_t ang)
+{
+	if (ang != angle)
+	{
+		angle = ang;
+		if (player != NULL)
+		{
+			player->cheats |= CF_INTERPVIEW;
+		}
+	}
+}
+
 //
 // P_MobjThinker
 //

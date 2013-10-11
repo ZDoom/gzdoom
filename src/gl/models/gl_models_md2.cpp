@@ -222,10 +222,7 @@ FDMDModel::~FDMDModel()
 	// clean up
 	if (skins != NULL)
 	{
-		for (i=0;i<info.numSkins;i++)
-		{
-			if (skins[i]!=NULL) delete skins[i];
-		}
+		// skins are managed by the texture manager so they must not be deleted here.
 		delete [] skins;
 	}
 

@@ -39,12 +39,12 @@ endfunction( add_pk3 )
 
 # Macro for building libraries without debugging information
 macro( make_release_only )
-	set( CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_RELEASE} )
 	set( CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_RELEASE} )
 	set( CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELEASE} )
-	set( CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_RELEASE} )
+	string( REPLACE "/MT " "/MTd " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_RELEASE} )
 	set( CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_RELEASE} )
 	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELEASE} )
+	string( REPLACE "/MT " "/MTd " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_RELEASE} )
 endmacro( make_release_only )
 
 IF( NOT CMAKE_BUILD_TYPE )
@@ -87,7 +87,7 @@ if( MSVC )
 	set( REL_C_FLAGS "/MT /Oy" )
 
 	# Debug allocations in debug builds
-	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd /Gm" )
+	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
 	if( MSVC_VERSION GREATER 1399 )

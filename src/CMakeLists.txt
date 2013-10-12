@@ -1093,8 +1093,22 @@ include_directories( .
 
 add_dependencies( zdoom revision_check )
 
+# Due to some quirks, we need to do this in this order
+if( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
+	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
+	# Linux distributions are slow to adopt 2.6. :(
+	set_target_properties( zdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+	set_target_properties( zdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
+endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
+
 if( MSVC )
-	set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
+	if( ZDOOM_GENERATE_MAPFILE )
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+	else( ZDOOM_GENERATE_MAPFILE )
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /MAP:${ZDOOM_EXE_NAME}.map")
+	endif( ZDOOM_GENERATE_MAPFILE )
+
 	add_custom_command(TARGET zdoom POST_BUILD
 		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#2
 		COMMENT "Adding manifest..."
@@ -1103,22 +1117,25 @@ if( MSVC )
 	create_default_target_launcher( zdoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 endif( MSVC )
 
-if( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSION )
+if( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSIONS )
 	set_target_properties( zdoom PROPERTIES
 		RUNTIME_OUTPUT_NAME ${ZDOOM_EXE_NAME}
 		RUNTIME_OUTPUT_NAME_DEBUG ${ZDOOM_EXE_NAME}d
 		RUNTIME_OUTPUT_NAME_MINSIZEREL ${ZDOOM_EXE_NAME}msr
 		RUNTIME_OUTPUT_NAME_RELWITHDEBINFO ${ZDOOM_EXE_NAME}rd
 	)
-	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zdoom> ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>
-		COMMENT "Copying to output directory..." )
-else( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSION )
-	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
-	# Linux distributions are slow to adopt 2.6. :(
-	set_target_properties( zdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
-	set_target_properties( zdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
-endif( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSION )
+
+	if( ZDOOM_GENERATE_MAPFILE )
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zdoom> ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE_DIR:zdoom>/zdoom.map ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>.map
+			COMMENT "Copying to output directory..." )
+	else( ZDOOM_GENERATE_MAPFILE )
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zdoom> ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>
+			COMMENT "Copying to output directory..." )
+	endif( ZDOOM_GENERATE_MAPFILE )
+endif( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSIONS )
 
 if( NOT WIN32 )
 	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )

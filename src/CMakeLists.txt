@@ -430,6 +430,12 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STRE
 	endif( NOT NO_STRIP )
 endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 
+# MSVC Flags
+
+if( MSVC )
+	set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DELAYLOAD:\"fmodex${X64}.dll\"" )
+endif( MSVC )
+
 # Check for functions that may or may not exist.
 
 CHECK_FUNCTION_EXISTS( filelength FILELENGTH_EXISTS )

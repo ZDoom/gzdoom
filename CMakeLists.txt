@@ -76,7 +76,7 @@ find_package( ZLIB )
 if( MSVC )
 	# Eliminate unreferenced functions and data
 	# Perform identical COMDAT folding
-	set( REL_LINKER_FLAGS "/opt:ref /opt:icf /nodefaultlib:msvcrt" )
+	set( REL_LINKER_FLAGS "/opt:ref /opt:icf /nodefaultlib:msvcrt /TSAWARE" )
 
 	# String pooling
 	# Function-level linking
@@ -84,10 +84,10 @@ if( MSVC )
 	set( ALL_C_FLAGS "/GF /Gy /GR-" )
 	
 	# Avoid CRT DLL dependancies in release builds
-	set( REL_C_FLAGS "/MT" )
+	set( REL_C_FLAGS "/MT /Oy" )
 
 	# Debug allocations in debug builds
-	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC" )
+	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd /Gm" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
 	if( MSVC_VERSION GREATER 1399 )
@@ -98,9 +98,11 @@ if( MSVC )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL} )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
+	string(REPLACE "/MDd " " " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
+	string(REPLACE "/MDd " " " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} )
 	string(REPLACE " /GR" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 endif( MSVC )
 

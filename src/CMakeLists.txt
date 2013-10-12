@@ -430,12 +430,6 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STRE
 	endif( NOT NO_STRIP )
 endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 
-# MSVC Flags
-
-if( MSVC )
-	set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DELAYLOAD:\"fmodex${X64}.dll\"" )
-endif( MSVC )
-
 # Check for functions that may or may not exist.
 
 CHECK_FUNCTION_EXISTS( filelength FILELENGTH_EXISTS )
@@ -1104,9 +1098,9 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP:${ZDOOM_EXE_NAME}.map")
 	else( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /MAP:${ZDOOM_EXE_NAME}.map")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
 	add_custom_command(TARGET zdoom POST_BUILD

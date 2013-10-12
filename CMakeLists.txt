@@ -37,6 +37,16 @@ function( add_pk3 PK3_NAME PK3_DIR )
 		DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} )
 endfunction( add_pk3 )
 
+# Macro for building libraries without debugging information
+macro( make_release_only )
+	set( CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_RELEASE} )
+	set( CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_RELEASE} )
+	set( CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELEASE} )
+	set( CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_RELEASE} )
+	set( CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_RELEASE} )
+	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELEASE} )
+endmacro( make_release_only )
+
 IF( NOT CMAKE_BUILD_TYPE )
 	SET( CMAKE_BUILD_TYPE Debug CACHE STRING
 		"Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."

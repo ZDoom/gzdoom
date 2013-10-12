@@ -1,6 +1,8 @@
 cmake_minimum_required( VERSION 2.4 )
 include( CheckCXXCompilerFlag )
 
+make_release_only()
+
 # I don't plan on debugging this, so make it a release build.
 if( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 	set( CMAKE_BUILD_TYPE "RelWithDebInfo" )

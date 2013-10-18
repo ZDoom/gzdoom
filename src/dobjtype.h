@@ -113,6 +113,7 @@ private:
 //   Map                           *      *
 //   Prototype                     *+     *+
 
+struct ZCC_ExprConstant;
 class PClassType;
 class PType : public DObject
 {
@@ -128,6 +129,15 @@ public:
 	typedef PClassType MetaClass;
 	MetaClass *GetClass() const;
 
+	struct Conversion
+	{
+		Conversion(PType *target, void (*convert)(ZCC_ExprConstant *, class FSharedStringArena &))
+			: TargetType(target), ConvertConstant(convert) {}
+
+		PType *TargetType;
+		void (*ConvertConstant)(ZCC_ExprConstant *val, class FSharedStringArena &strdump);
+	};
+
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
 	PType			*HashNext;		// next type in this type table
@@ -135,6 +145,10 @@ public:
 	PType();
 	PType(unsigned int size, unsigned int align);
 	virtual ~PType();
+
+	bool AddConversion(PType *target, void (*convertconst)(ZCC_ExprConstant *, class FSharedStringArena &));
+
+	int FindConversion(PType *target, const Conversion **slots, int numslots);
 
 	// Sets the value of a variable of this type at (addr)
 	virtual void SetValue(void *addr, int val);
@@ -163,6 +177,54 @@ public:
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 
 	static void StaticInit();
+
+private:
+	// Stuff for type conversion searches
+	class VisitQueue
+	{
+	public:
+		VisitQueue() : In(0), Out(0) {}
+		void Push(PType *type);
+		PType *Pop();
+		bool IsEmpty() { return In == Out; }
+
+	private:
+		// This is a fixed-sized ring buffer.
+		PType *Queue[64];
+		int In, Out;
+
+		void Advance(int &ptr)
+		{
+			ptr = (ptr + 1) & (countof(Queue) - 1);
+		}
+	};
+
+	class VisitedNodeSet
+	{
+	public:
+		VisitedNodeSet() { memset(Buckets, 0, sizeof(Buckets)); }
+		void Insert(PType *node);
+		bool Check(const PType *node);
+
+	private:
+		PType *Buckets[32];
+
+		size_t Hash(const PType *type) { return size_t(type) >> 4; }
+	};
+
+	TArray<Conversion> Conversions;
+	PType *PredType;
+	PType *VisitNext;
+	short PredConv;
+	short Distance;
+
+	void MarkPred(PType *pred, int conv, int dist)
+	{
+		PredType = pred;
+		PredConv = conv;
+		Distance = dist;
+	}
+	void FillConversionPath(const Conversion **slots);
 };
 
 // Not-really-a-type types --------------------------------------------------

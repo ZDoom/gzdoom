@@ -1866,7 +1866,7 @@ float OpenALSoundRenderer::GetOutputRate()
 }
 
 
-SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart)
+SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 {
 	SoundHandle retval = { NULL };
 
@@ -1915,7 +1915,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 	{
 		ALint loops[2] = { 
 			loopstart,
-			length / (channels*bits/8)
+			loopend == -1 ? length / (channels*bits/8) : loopend
 		};
 		Printf("Setting loop points %d -> %d\n", loops[0], loops[1]);
 		alBufferiv(buffer, AL_LOOP_POINTS, loops);
@@ -2346,6 +2346,21 @@ void OpenALSoundRenderer::StopChannel(FISoundChannel *chan)
 	FreeSfx.push_back(source);
 }
 
+void OpenALSoundRenderer::ChannelVolume(FISoundChannel *chan, float volume)
+{
+	if (chan != NULL && chan->SysChannel != NULL)
+	{
+		ALuint source = *((ALuint*)chan->SysChannel);
+
+		alcSuspendContext(Context);
+		alSourcef(source, AL_MAX_GAIN, volume);
+		if(chan->ManualGain)
+			volume *= GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr));
+		alSourcef(source, AL_GAIN, volume);
+	}
+	getALError();
+}
+
 unsigned int OpenALSoundRenderer::GetPosition(FISoundChannel *chan)
 {
 	if(chan == NULL || chan->SysChannel == NULL)
@@ -2384,7 +2399,7 @@ void OpenALSoundRenderer::SetSfxPaused(bool paused, int slot)
 	}
 }
 
-void OpenALSoundRenderer::SetInactive(bool inactive)
+void OpenALSoundRenderer::SetInactive(SoundRenderer::EInactiveState inactive)
 {
 }
 

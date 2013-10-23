@@ -1,10 +1,11 @@
 
 // Mage Weapon Piece --------------------------------------------------------
 
-ACTOR MageWeaponPiece : WeaponPiece native
+ACTOR MageWeaponPiece : WeaponPiece
 {
 	Inventory.PickupSound "misc/w_pkup"
 	Inventory.PickupMessage "$TXT_BLOODSCOURGE_PIECE"
+	Inventory.ForbiddenTo FighterPlayer, ClericPlayer
 	WeaponPiece.Weapon MWeapBloodscourge
 	+FLOATBOB
 }

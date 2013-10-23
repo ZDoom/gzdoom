@@ -34,7 +34,6 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "m_bbox.h"
-#include "p_local.h"
 #include "r_local.h"
 #include "r_plane.h"
 #include "r_bsp.h"
@@ -264,7 +263,7 @@ void R_SetVisibility (float vis)
 
 	CurrentVisibility = vis;
 
-	if (FocalTangent == 0)
+	if (FocalTangent == 0 || FocalLengthY == 0)
 	{ // If r_visibility is called before the renderer is all set up, don't
 	  // divide by zero. This will be called again later, and the proper
 	  // values can be initialized then.
@@ -763,7 +762,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	MaskedCycles.Reset();
 	WallScanCycles.Reset();
 
-	fakeActive = 0; // kg3D - reset fake floor idicator
+	fakeActive = 0; // kg3D - reset fake floor indicator
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
 	R_SetupBuffer ();

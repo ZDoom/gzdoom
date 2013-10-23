@@ -8,7 +8,8 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "afxres.h"
-#include "../version.h"
+#include "../version.h"
+#include "../gitinfo.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -36,7 +37,8 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
-    "#include ""../version.h""\r\0"
+    "#include ""../version.h""\r\r\n"
+    "#include ""../gitinfo.h""\r\0"
 END
 
 3 TEXTINCLUDE 
@@ -49,6 +51,7 @@ BEGIN
     "//\r\n"
     "// Version\r\n"
     "//\r\n"
+    "#define RC_FILEVERSION2 GIT_DESCRIPTION\r\n"
     "\r\n"
     "VS_VERSION_INFO VERSIONINFO\r\n"
     " FILEVERSION RC_FILEVERSION\r\n"
@@ -72,8 +75,8 @@ BEGIN
     "            VALUE ""FileDescription"", ""ZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
     "            VALUE ""InternalName"", ""ZDoom""\r\n"
-    "            VALUE ""LegalCopyright"", ""Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
-    "            VALUE ""LegalTrademarks"", ""Doom® is a Registered Trademark of id Software, Inc.""\r\n"
+    "            VALUE ""LegalCopyright"", ""Copyright \\u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
+    "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
     "            VALUE ""OriginalFilename"", ""zdoom.exe""\r\n"
     "            VALUE ""ProductName"", ""ZDoom""\r\n"
     "            VALUE ""ProductVersion"", RC_PRODUCTVERSION2\r\n"
@@ -83,7 +86,7 @@ BEGIN
     "    BEGIN\r\n"
     "        VALUE ""Translation"", 0x409, 1200\r\n"
     "    END\r\n"
-    "END\0"
+    "EN\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -468,6 +471,7 @@ IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 //
 // Version
 //
+#define RC_FILEVERSION2 GIT_DESCRIPTION
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION RC_FILEVERSION
@@ -491,8 +495,8 @@ BEGIN
             VALUE "FileDescription", "ZDoom"
             VALUE "FileVersion", RC_FILEVERSION2
             VALUE "InternalName", "ZDoom"
-            VALUE "LegalCopyright", "Copyright © 1993-1996 id Software, 1998-2010 Randy Heit"
-            VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
+            VALUE "LegalCopyright", "Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
+            VALUE "LegalTrademarks", "DoomR is a Registered Trademark of id Software, Inc."
             VALUE "OriginalFilename", "zdoom.exe"
             VALUE "ProductName", "ZDoom"
             VALUE "ProductVersion", RC_PRODUCTVERSION2

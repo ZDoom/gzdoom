@@ -27,7 +27,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ReaverRanged)
 		{
 			angle_t angle = bangle + (pr_reaverattack.Random2() << 20);
 			int damage = ((pr_reaverattack() & 7) + 1) * 3;
-			P_LineAttack (self, angle, MISSILERANGE, pitch, damage, NAME_None, NAME_StrifePuff);
+			P_LineAttack (self, angle, MISSILERANGE, pitch, damage, NAME_Hitscan, NAME_StrifePuff);
 		}
 	}
 }

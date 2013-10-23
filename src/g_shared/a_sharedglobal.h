@@ -9,7 +9,8 @@ struct vertex_t;
 struct side_t;
 struct F3DFloor;
 
-extern void P_SpawnDirt (AActor *actor, fixed_t radius);
+void P_SpawnDirt (AActor *actor, fixed_t radius);
+class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t tracedist, bool permanent);
 
 class DBaseDecal : public DThinker
 {
@@ -156,7 +157,7 @@ class AMorphProjectile : public AActor
 {
 	DECLARE_CLASS (AMorphProjectile, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 	void Serialize (FArchive &arc);
 
 	FNameNoInit	PlayerClass, MonsterClass, MorphFlash, UnMorphFlash;
@@ -170,7 +171,7 @@ class AMorphedMonster : public AActor
 public:
 	void Tick ();
 	void Serialize (FArchive &arc);
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void Destroy ();
 
 	TObjPtr<AActor> UnmorphedMe;

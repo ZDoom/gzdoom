@@ -105,6 +105,7 @@ public:
 	void PostBeginPlay ();
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
+	void MarkPrecacheSounds () const;
 };
 
 IMPLEMENT_CLASS (ASoundSequence)
@@ -156,6 +157,18 @@ void ASoundSequence::PostBeginPlay ()
 
 //==========================================================================
 //
+// ASoundSequence :: MarkPrecacheSounds
+//
+//==========================================================================
+
+void ASoundSequence::MarkPrecacheSounds() const
+{
+	Super::MarkPrecacheSounds();
+	SN_MarkPrecacheSounds(args[0], SEQ_ENVIRONMENT);
+}
+
+//==========================================================================
+//
 // ASoundSequence :: Activate
 //
 //==========================================================================
@@ -175,4 +188,3 @@ void ASoundSequence::Deactivate (AActor *activator)
 {
 	SN_StopSequence (this);
 }
-

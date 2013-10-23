@@ -78,7 +78,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
 	for (i = 0; i < nodeCount; ++i)
 	{
-		D(Printf(PRINT_LOG, "Node %d:\n", i));
+		D(Printf(PRINT_LOG, "Node %d:  Splitter[%08x,%08x] [%08x,%08x]\n", i,
+			outNodes[i].x, outNodes[i].y, outNodes[i].dx, outNodes[i].dy));
 		// Go backwards because on 64-bit systems, both of the intchildren are
 		// inside the first in-game child.
 		for (int j = 1; j >= 0; --j)
@@ -296,12 +297,14 @@ int FNodeBuilder::CloseSubsector (TArray<glseg_t> &segs, int subsector, vertex_t
 	{
 		seg = &Segs[SegList[j].SegNum];
 		angle_t ang = PointToAngle (Vertices[seg->v1].x - midx, Vertices[seg->v1].y - midy);
-		Printf(PRINT_LOG, "%d%c %5d(%5d,%5d)->%5d(%5d,%5d) - %3.3f  %d,%d\n", j,
+		Printf(PRINT_LOG, "%d%c %5d(%5d,%5d)->%5d(%5d,%5d) - %3.5f  %d,%d  [%08x,%08x]-[%08x,%08x]\n", j,
 			seg->linedef == -1 ? '+' : ':',
 			seg->v1, Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
 			seg->v2, Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
 			double(ang/2)*180/(1<<30),
-			seg->planenum, seg->planefront);
+			seg->planenum, seg->planefront,
+			Vertices[seg->v1].x, Vertices[seg->v1].y,
+			Vertices[seg->v2].x, Vertices[seg->v2].y);
 	}
 #endif
 
@@ -395,12 +398,16 @@ int FNodeBuilder::CloseSubsector (TArray<glseg_t> &segs, int subsector, vertex_t
 	Printf(PRINT_LOG, "Output GL subsector %d:\n", subsector);
 	for (i = segs.Size() - count; i < (int)segs.Size(); ++i)
 	{
-		Printf(PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)\n", i,
+		Printf(PRINT_LOG, "  Seg %5d%c(%5d,%5d)-(%5d,%5d)  [%08x,%08x]-[%08x,%08x]\n", i,
 			segs[i].linedef == NULL ? '+' : ' ',
 			segs[i].v1->x>>16,
 			segs[i].v1->y>>16,
 			segs[i].v2->x>>16,
-			segs[i].v2->y>>16);
+			segs[i].v2->y>>16,
+			segs[i].v1->x,
+			segs[i].v1->y,
+			segs[i].v2->x,
+			segs[i].v2->y);
 	}
 #endif
 

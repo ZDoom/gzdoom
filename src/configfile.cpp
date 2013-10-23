@@ -38,8 +38,11 @@
 
 #include "doomtype.h"
 #include "configfile.h"
+#include "m_random.h"
 
 #define READBUFFERSIZE	256
+
+static FRandom pr_endtag;
 
 //====================================================================
 //
@@ -53,6 +56,8 @@ FConfigFile::FConfigFile ()
 	LastSectionPtr = &Sections;
 	CurrentEntry = NULL;
 	PathName = "";
+	OkayToWrite = true;
+	FileExisted = true;
 }
 
 //====================================================================
@@ -70,6 +75,8 @@ FConfigFile::FConfigFile (const char *pathname,
 	CurrentEntry = NULL;
 	ChangePathName (pathname);
 	LoadConfigFile (nosechandler, userdata);
+	OkayToWrite = true;
+	FileExisted = true;
 }
 
 //====================================================================
@@ -85,6 +92,8 @@ FConfigFile::FConfigFile (const FConfigFile &other)
 	CurrentEntry = NULL;
 	ChangePathName (other.PathName);
 	*this = other;
+	OkayToWrite = other.OkayToWrite;
+	FileExisted = other.FileExisted;
 }
 
 //====================================================================
@@ -587,11 +596,15 @@ void FConfigFile::LoadConfigFile (void (*nosechandler)(const char *pathname, FCo
 	FILE *file = fopen (PathName, "r");
 	bool succ;
 
+	FileExisted = false;
 	if (file == NULL)
+	{
 		return;
+	}
 
 	succ = ReadConfig (file);
 	fclose (file);
+	FileExisted = succ;
 
 	if (!succ)
 	{ // First valid line did not define a section
@@ -669,11 +682,66 @@ bool FConfigFile::ReadConfig (void *file)
 					whiteprobe++;
 				}
 				*(whiteprobe - 1) = 0;
-				NewConfigEntry (section, start, whiteprobe);
+				// Check for multi-line value
+				if (whiteprobe[0] == '<' && whiteprobe[1] == '<' && whiteprobe[2] == '<' && whiteprobe[3] != '\0')
+				{
+					ReadMultiLineValue (file, section, start, whiteprobe + 3);
+				}
+				else
+				{
+					NewConfigEntry (section, start, whiteprobe);
+				}
 			}
 		}
 	}
 	return true;
+}
+
+//====================================================================
+//
+// FConfigFile :: ReadMultiLineValue
+//
+// Reads a multi-line value, with format as follows:
+//
+//    key=<<<ENDTAG
+//    ... blah blah blah ...
+//    >>>ENDTAG
+//
+// The final ENDTAG must be on a line all by itself.
+//
+//====================================================================
+
+FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(void *file, FConfigSection *section, const char *key, const char *endtag)
+{
+	char readbuf[READBUFFERSIZE];
+	FString value;
+	size_t endlen = strlen(endtag);
+
+	// Keep on reading lines until we reach a line that matches >>>endtag
+	while (ReadLine(readbuf, READBUFFERSIZE, file) != NULL)
+	{
+		// Does the start of this line match the endtag?
+		if (readbuf[0] == '>' && readbuf[1] == '>' && readbuf[2] == '>' &&
+			strncmp(readbuf + 3, endtag, endlen) == 0)
+		{ // Is there nothing but line break characters after the match?
+			size_t i;
+			for (i = endlen + 3; readbuf[i] != '\0'; ++i)
+			{
+				if (readbuf[i] != '\n' && readbuf[i] != '\r')
+				{ // Not a line break character
+					break;
+				}
+			}
+			if (readbuf[i] == '\0')
+			{ // We're done; strip the previous line's line breaks, since it's not part of the value.
+				value.StripRight("\n\r");
+			}
+			break;
+		}
+		// Append this line to the value.
+		value << readbuf;
+	}
+	return NewConfigEntry(section, key, value);
 }
 
 //====================================================================
@@ -695,6 +763,13 @@ char *FConfigFile::ReadLine (char *string, int n, void *file) const
 
 bool FConfigFile::WriteConfigFile () const
 {
+	if (!OkayToWrite && FileExisted)
+	{ // Pretend it was written anyway so that the user doesn't get
+	  // any "config not written" notifications, but only if the file
+	  // already existed. Otherwise, let it write out a default one.
+		return true;
+	}
+
 	FILE *file = fopen (PathName, "w");
 	FConfigSection *section;
 	FConfigEntry *entry;
@@ -715,7 +790,16 @@ bool FConfigFile::WriteConfigFile () const
 		fprintf (file, "[%s]\n", section->Name);
 		while (entry != NULL)
 		{
-			fprintf (file, "%s=%s\n", entry->Key, entry->Value);
+			if (strpbrk(entry->Value, "\r\n") == NULL)
+			{ // Single-line value
+				fprintf (file, "%s=%s\n", entry->Key, entry->Value);
+			}
+			else
+			{ // Multi-line value
+				const char *endtag = GenerateEndTag(entry->Value);
+				fprintf (file, "%s=<<<%s\n%s\n>>>%s\n", entry->Key,
+					endtag, entry->Value, endtag);
+			}
 			entry = entry->Next;
 		}
 		section = section->Next;
@@ -723,6 +807,44 @@ bool FConfigFile::WriteConfigFile () const
 	}
 	fclose (file);
 	return true;
+}
+
+//====================================================================
+//
+// FConfigFile :: GenerateEndTag
+//
+// Generates a terminator sequence for multi-line values that does
+// not appear anywhere in the value.
+//
+//====================================================================
+
+const char *FConfigFile::GenerateEndTag(const char *value)
+{
+	static const char Base64Table[] =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._";
+	static char EndTag[25] = "EOV-";
+
+	// Try different 20-character sequences until we find one that
+	// isn't in the value. We create the sequences by generating two
+	// 64-bit random numbers and Base64 encoding the first 15 bytes
+	// from them.
+	union { QWORD rand_num[2]; BYTE rand_bytes[16]; };
+	do
+	{
+		rand_num[0] = pr_endtag.GenRand64();
+		rand_num[1] = pr_endtag.GenRand64();
+
+		for (int i = 0; i < 5; ++i)
+		{
+			DWORD three_bytes = (rand_bytes[i*3] << 16) | (rand_bytes[i*3+1] << 8) | (rand_bytes[i*3+2]);
+			EndTag[4+i*4  ] = Base64Table[rand_bytes[i*3] >> 2];
+			EndTag[4+i*4+1] = Base64Table[((rand_bytes[i*3] & 3) << 4) | (rand_bytes[i*3+1] >> 4)];
+			EndTag[4+i*4+2] = Base64Table[((rand_bytes[i*3+1] & 15) << 2) | (rand_bytes[i*3+2] >> 6)];
+			EndTag[4+i*4+3] = Base64Table[rand_bytes[i*3+2] & 63];
+		}
+	}
+	while (strstr(value, EndTag) != NULL);
+	return EndTag;
 }
 
 //====================================================================

@@ -69,6 +69,19 @@
 
 static FRandom pr_glass ("GlassBreak");
 
+// There are aliases for the ACS specials that take names instead of numbers.
+// This table maps them onto the real number-based specials.
+BYTE NamedACSToNormalACS[7] =
+{
+	ACS_Execute,
+	ACS_Suspend,
+	ACS_Terminate,
+	ACS_LockedExecute,
+	ACS_LockedExecuteDoor,
+	ACS_ExecuteWithResult,
+	ACS_ExecuteAlways,
+};
+
 FName MODtoDamageType (int mod)
 {
 	switch (mod)
@@ -239,8 +252,9 @@ FUNC(LS_Generic_Door)
 {
 	int tag, lightTag;
 	DDoor::EVlDoor type;
+	bool boomgen = false;
 
-	switch (arg2 & 127)
+	switch (arg2 & 63)
 	{
 		case 0: type = DDoor::doorRaise;			break;
 		case 1: type = DDoor::doorOpen;				break;
@@ -248,6 +262,8 @@ FUNC(LS_Generic_Door)
 		case 3: type = DDoor::doorClose;			break;
 		default: return false;
 	}
+	// Boom doesn't allow manual generalized doors to be activated while they move
+	if (arg2 & 64) boomgen = true;
 	if (arg2 & 128)
 	{
 		// New for 2.0.58: Finally support BOOM's local door light effect
@@ -259,7 +275,7 @@ FUNC(LS_Generic_Door)
 		tag = arg0;
 		lightTag = 0;
 	}
-	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), arg4, lightTag);
+	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), arg4, lightTag, boomgen);
 }
 
 FUNC(LS_Floor_LowerByValue)
@@ -275,9 +291,9 @@ FUNC(LS_Floor_LowerToLowest)
 }
 
 FUNC(LS_Floor_LowerToHighest)
-// Floor_LowerToHighest (tag, speed, adjust)
+// Floor_LowerToHighest (tag, speed, adjust, hereticlower)
 {
-	return EV_DoFloor (DFloor::floorLowerToHighest, ln, arg0, SPEED(arg1), (arg2-128)*FRACUNIT, 0, 0, false);
+	return EV_DoFloor (DFloor::floorLowerToHighest, ln, arg0, SPEED(arg1), (arg2-128)*FRACUNIT, 0, 0, false, arg3==1);
 }
 
 FUNC(LS_Floor_LowerToNearest)
@@ -308,6 +324,12 @@ FUNC(LS_Floor_RaiseAndCrush)
 // Floor_RaiseAndCrush (tag, speed, crush, crushmode)
 {
 	return EV_DoFloor (DFloor::floorRaiseAndCrush, ln, arg0, SPEED(arg1), 0, arg2, 0, CRUSHTYPE(arg3));
+}
+
+FUNC(LS_Floor_RaiseAndCrushDoom)
+// Floor_RaiseAndCrushDoom (tag, speed, crush, crushmode)
+{
+	return EV_DoFloor (DFloor::floorRaiseAndCrushDoom, ln, arg0, SPEED(arg1), 0, arg2, 0, CRUSHTYPE(arg3));
 }
 
 FUNC(LS_Floor_RaiseByValueTimes8)
@@ -616,6 +638,12 @@ FUNC(LS_Ceiling_CrushAndRaiseA)
 	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 0, 0, CRUSHTYPE(arg4));
 }
 
+FUNC(LS_Ceiling_CrushAndRaiseDist)
+// Ceiling_CrushAndRaiseDist (tag, dist, speed, damage, crushtype)
+{
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaiseDist, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 0, 0, CRUSHTYPE(arg4));
+}
+
 FUNC(LS_Ceiling_CrushAndRaiseSilentA)
 // Ceiling_CrushAndRaiseSilentA (tag, dnspeed, upspeed, damage, crushtype)
 {
@@ -855,9 +883,9 @@ FUNC( LS_Teleport_NoStop )
 }
 
 FUNC(LS_Teleport_NoFog)
-// Teleport_NoFog (tid, useang, sectortag)
+// Teleport_NoFog (tid, useang, sectortag, keepheight)
 {
-	return EV_Teleport (arg0, arg2, ln, backSide, it, false, false, !arg1);
+	return EV_Teleport (arg0, arg2, ln, backSide, it, false, false, !arg1, true, !!arg3);
 }
 
 FUNC(LS_Teleport_ZombieChanger)
@@ -1534,9 +1562,21 @@ FUNC(LS_Thing_SetGoal)
 		ok = true;
 		if (self->flags & MF_SHOOTABLE)
 		{
+			if (self->target == self->goal)
+			{ // Targeting a goal already? -> don't target it anymore.
+			  // A_Look will set it to the goal, presuming no real targets
+			  // come into view by then.
+				self->target = NULL;
+			}
 			self->goal = goal;
-			if (arg3 == 0) self->flags5 &=~ MF5_CHASEGOAL;
-			else self->flags5 |= MF5_CHASEGOAL;
+			if (arg3 == 0)
+			{
+				self->flags5 &= ~MF5_CHASEGOAL;
+			}
+			else
+			{
+				self->flags5 |= MF5_CHASEGOAL;
+			}
 			if (self->target == NULL)
 			{
 				self->reactiontime = arg2 * TICRATE;
@@ -1598,24 +1638,46 @@ FUNC(LS_ACS_Execute)
 // ACS_Execute (script, map, s_arg1, s_arg2, s_arg3)
 {
 	level_info_t *info;
+	const char *mapname = NULL;
+	int args[3] = { arg2, arg3, arg4 };
+	int flags = (backSide ? ACS_BACKSIDE : 0);
 
 	if (arg1 == 0)
-		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, false, false);
-	else if ((info = FindLevelByNum (arg1)) )
-		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, false, false);
-	else return false;
+	{
+		mapname = level.mapname;
+	}
+	else if ((info = FindLevelByNum(arg1)) != NULL)
+	{
+		mapname = info->mapname;
+	}
+	else
+	{
+		return false;
+	}
+	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_ExecuteAlways)
 // ACS_ExecuteAlways (script, map, s_arg1, s_arg2, s_arg3)
 {
 	level_info_t *info;
+	const char *mapname = NULL;
+	int args[3] = { arg2, arg3, arg4 };
+	int flags = (backSide ? ACS_BACKSIDE : 0) | ACS_ALWAYS;
 
 	if (arg1 == 0)
-		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, true, false);
-	else if ((info = FindLevelByNum (arg1)) )
-		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, true, false);
-	else return false;
+	{
+		mapname = level.mapname;
+	}
+	else if ((info = FindLevelByNum(arg1)) != NULL)
+	{
+		mapname = info->mapname;
+	}
+	else
+	{
+		return false;
+	}
+	return P_StartScript(it, ln, arg0, mapname, args, 3, flags);
 }
 
 FUNC(LS_ACS_LockedExecute)
@@ -1637,12 +1699,15 @@ FUNC(LS_ACS_LockedExecuteDoor)
 }
 
 FUNC(LS_ACS_ExecuteWithResult)
-// ACS_ExecuteWithResult (script, s_arg1, s_arg2, s_arg3)
+// ACS_ExecuteWithResult (script, s_arg1, s_arg2, s_arg3, s_arg4)
 {
 	// This is like ACS_ExecuteAlways, except the script is always run on
 	// the current map, and the return value is whatever the script sets
 	// with SetResultValue.
-	return P_StartScript (it, ln, arg0, level.mapname, backSide, arg1, arg2, arg3, true, true);
+	int args[4] = { arg1, arg2, arg3, arg4 };
+	int flags = (backSide ? ACS_BACKSIDE : 0) | ACS_ALWAYS | ACS_WANTRESULT;
+
+	return P_StartScript (it, ln, arg0, level.mapname, args, 4, flags);
 }
 
 FUNC(LS_ACS_Suspend)
@@ -2492,6 +2557,7 @@ FUNC(LS_Line_SetBlocking)
 		ML_RAILING,
 		ML_BLOCKUSE,
 		ML_BLOCKSIGHT,
+		ML_BLOCKHITSCAN,
 		-1
 	};
 
@@ -2656,7 +2722,7 @@ FUNC(LS_SetPlayerProperty)
 			{ // Take power from activator
 				if (power != 4)
 				{
-					AInventory *item = it->FindInventory (powers[power]);
+					AInventory *item = it->FindInventory (powers[power], true);
 					if (item != NULL)
 					{
 						item->Destroy ();
@@ -2759,6 +2825,11 @@ FUNC(LS_SetPlayerProperty)
 	else
 	{
 		int i;
+
+		if ((ib_compatflags & BCOMPATF_LINKFROZENPROPS) && (mask & (CF_FROZEN | CF_TOTALLYFROZEN)))
+		{ // Clearing one of these properties clears both of them (if the compat flag is set.)
+			mask = CF_FROZEN | CF_TOTALLYFROZEN;
+		}
 
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
@@ -3185,7 +3256,7 @@ lnSpecFunc LineSpecials[256] =
 	/*  96 */ LS_FloorAndCeiling_RaiseByValue,
 	/*  97 */ LS_Ceiling_LowerAndCrushDist,
 	/*  98 */ LS_Sector_SetTranslucent,
-	/*  99 */ LS_NOP,
+	/*  99 */ LS_Floor_RaiseAndCrushDoom,
 	/* 100 */ LS_NOP,		// Scroll_Texture_Left
 	/* 101 */ LS_NOP,		// Scroll_Texture_Right
 	/* 102 */ LS_NOP,		// Scroll_Texture_Up
@@ -3244,17 +3315,17 @@ lnSpecFunc LineSpecials[256] =
 	/* 155 */ LS_NOP,
 	/* 156 */ LS_NOP,
 	/* 157 */ LS_NOP,		// SetGlobalFogParameter // in GZDoom
-	/* 158 */ LS_NOP,		// FS_Execute in GZDoom
+	/* 158 */ LS_NOP,		// FS_Execute
 	/* 159 */ LS_NOP,		// Sector_SetPlaneReflection in GZDoom
-	/* 160 */ LS_NOP,		// Sector_Set3DFloor in GZDoom and Vavoom
-	/* 161 */ LS_NOP,		// Sector_SetContents in GZDoom and Vavoom
-	/* 162 */ LS_NOP,
-	/* 163 */ LS_NOP,
-	/* 164 */ LS_NOP,
-	/* 165 */ LS_NOP,
-	/* 166 */ LS_NOP,
-	/* 167 */ LS_NOP,
-	/* 168 */ LS_NOP,
+	/* 160 */ LS_NOP,		// Sector_Set3DFloor
+	/* 161 */ LS_NOP,		// Sector_SetContents
+	/* 162 */ LS_NOP,		// Reserved Doom64 branch
+	/* 163 */ LS_NOP,		// Reserved Doom64 branch
+	/* 164 */ LS_NOP,		// Reserved Doom64 branch
+	/* 165 */ LS_NOP,		// Reserved Doom64 branch
+	/* 166 */ LS_NOP,		// Reserved Doom64 branch
+	/* 167 */ LS_NOP,		// Reserved Doom64 branch
+	/* 168 */ LS_Ceiling_CrushAndRaiseDist,
 	/* 169 */ LS_Generic_Crusher2,
 	/* 170 */ LS_Sector_SetCeilingScale2,
 	/* 171 */ LS_Sector_SetFloorScale2,

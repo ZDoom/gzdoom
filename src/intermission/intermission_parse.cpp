@@ -660,7 +660,7 @@ FName FMapInfoParser::ParseEndGame()
 		}
 	}
 	FIntermissionDescriptor *desc = new FIntermissionDescriptor;
-	FIntermissionAction *action;
+	FIntermissionAction *action = NULL;
 
 	switch (newSeq.EndType)
 	{
@@ -699,15 +699,23 @@ FName FMapInfoParser::ParseEndGame()
 		break;
 	}
 
-	action->mBackground = newSeq.PicName;
-	action->mMusic = newSeq.Music;
-	action->mMusicLooping = newSeq.MusicLooping;
-	desc->mActions.Push(action);
+	if (action == NULL)
+	{
+		sc.ScriptError("Endgame type was not defined");
+		return NAME_None;	// We won't really get here.
+	}
+	else
+	{
+		action->mBackground = newSeq.PicName;
+		action->mMusic = newSeq.Music;
+		action->mMusicLooping = newSeq.MusicLooping;
+		desc->mActions.Push(action);
 
-	FString seq;
-	seq.Format("@EndSequence_%d_", generated++);
-	ReplaceIntermission(seq, desc);
-	return FName(seq);
+		FString seq;
+		seq.Format("@EndSequence_%d_", generated++);
+		ReplaceIntermission(seq, desc);
+		return FName(seq);
+	}
 }
 
 //==========================================================================

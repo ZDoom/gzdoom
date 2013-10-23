@@ -62,7 +62,7 @@
 #include "templates.h"
 #include "c_console.h"
 #include "st_start.h"
-
+#include "m_misc.h"
 #include "doomstat.h"
 
 #include "i_net.h"
@@ -272,12 +272,12 @@ void PacketGet (void)
 			if (StartScreen != NULL)
 			{
 				StartScreen->NetMessage ("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.netname);
+					players[sendplayer[node]].userinfo.GetName());
 			}
 			else
 			{
 				Printf("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.netname);
+					players[sendplayer[node]].userinfo.GetName());
 			}
 
 			doomcom.data[0] = 0x80;	// NCMD_EXIT
@@ -303,7 +303,7 @@ void PacketGet (void)
 //			Printf("recv %d/%lu\n", c, msgsize + 1);
 			if (err != Z_OK)
 			{
-				Printf("Net decompression failed (zlib error %d)\n", err);
+				Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
 				// Pretend no packet
 				doomcom.remotenode = -1;
 				return;

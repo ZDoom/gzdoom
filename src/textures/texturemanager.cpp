@@ -51,9 +51,16 @@
 #include "farchive.h"
 #include "v_video.h"
 #include "r_renderer.h"
+#include "r_sky.h"
 #include "textures/textures.h"
 
 FTextureManager TexMan;
+
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE)
+{
+	// This is in case the sky texture has been substituted.
+	R_InitSkyMap ();
+}
 
 //==========================================================================
 //
@@ -120,7 +127,7 @@ void FTextureManager::DeleteAll()
 	{
 		if (mAnimatedDoors[i].TextureFrames != NULL)
 		{
-			delete mAnimatedDoors[i].TextureFrames;
+			delete[] mAnimatedDoors[i].TextureFrames;
 			mAnimatedDoors[i].TextureFrames = NULL;
 		}
 	}
@@ -169,7 +176,8 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 			{
 				// All NULL textures should actually return 0
 				if (tex->UseType == FTexture::TEX_FirstDefined && !(flags & TEXMAN_ReturnFirst)) return 0;
-				return FTextureID(tex->UseType==FTexture::TEX_Null? 0 : i);
+				if (tex->UseType == FTexture::TEX_SkinGraphic && !(flags & TEXMAN_AllowSkins)) return 0;
+				return FTextureID(tex->UseType==FTexture::TEX_Null ? 0 : i);
 			}
 			else if ((flags & TEXMAN_Overridable) && tex->UseType == FTexture::TEX_Override)
 			{
@@ -749,7 +757,7 @@ void FTextureManager::AddPatches (int lumpnum)
 	{
 		file->Read (name, 8);
 
-		if (CheckForTexture (name, FTexture::TEX_WallPatch, false) == -1)
+		if (CheckForTexture (name, FTexture::TEX_WallPatch, 0) == -1)
 		{
 			CreateTexture (Wads.CheckNumForName (name, ns_patches), FTexture::TEX_WallPatch);
 		}
@@ -824,6 +832,7 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 
 	for (int i= firsttx; i <= lasttx; i++)
 	{
+		bool skin = false;
 		char name[9];
 		Wads.GetLumpName(name, i);
 		name[8]=0;
@@ -862,11 +871,17 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 			// Don't bother looking this lump if something later overrides it.
 			if (Wads.CheckNumForName(name, ns_graphics) != i) continue;
 		}
+		else if (ns >= ns_firstskin)
+		{
+			// Don't bother looking this lump if something later overrides it.
+			if (Wads.CheckNumForName(name, ns) != i) continue;
+			skin = true;
+		}
 		else continue;
 
 		// Try to create a texture from this lump and add it.
 		// Unfortunately we have to look at everything that comes through here...
-		FTexture *out = FTexture::CreateTexture(i, FTexture::TEX_MiscPatch);
+		FTexture *out = FTexture::CreateTexture(i, skin ? FTexture::TEX_SkinGraphic : FTexture::TEX_MiscPatch);
 
 		if (out != NULL) 
 		{
@@ -915,7 +930,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 	static int texturetypes[] = {
 		FTexture::TEX_Sprite, FTexture::TEX_Null, FTexture::TEX_FirstDefined, 
 		FTexture::TEX_WallPatch, FTexture::TEX_Wall, FTexture::TEX_Flat, 
-		FTexture::TEX_Override, FTexture::TEX_MiscPatch 
+		FTexture::TEX_Override, FTexture::TEX_MiscPatch, FTexture::TEX_SkinGraphic
 	};
 
 	for(unsigned int i=0;i<countof(texturetypes);i++)
@@ -1001,6 +1016,57 @@ void FTextureManager::Init()
 	InitAnimDefs();
 	FixAnimations();
 	InitSwitchList();
+	InitPalettedVersions();
+}
+
+//==========================================================================
+//
+// FTextureManager :: InitPalettedVersions
+//
+//==========================================================================
+
+void FTextureManager::InitPalettedVersions()
+{
+	int lump, lastlump = 0;
+
+	PalettedVersions.Clear();
+	while ((lump = Wads.FindLump("PALVERS", &lastlump)) != -1)
+	{
+		FScanner sc(lump);
+
+		while (sc.GetString())
+		{
+			FTextureID pic1 = CheckForTexture(sc.String, FTexture::TEX_Any);
+			if (!pic1.isValid())
+			{
+				sc.ScriptMessage("Unknown texture %s to replace", sc.String);
+			}
+			sc.MustGetString();
+			FTextureID pic2 = CheckForTexture(sc.String, FTexture::TEX_Any);
+			if (!pic2.isValid())
+			{
+				sc.ScriptMessage("Unknown texture %s to use as replacement", sc.String);
+			}
+			if (pic1.isValid() && pic2.isValid())
+			{
+				PalettedVersions[pic1.GetIndex()] = pic2.GetIndex();
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// FTextureManager :: PalCheck
+//
+//==========================================================================
+
+FTextureID FTextureManager::PalCheck(FTextureID tex)
+{
+	if (vid_nopalsubstitutions) return tex;
+	int *newtex = PalettedVersions.CheckKey(tex.GetIndex());
+	if (newtex == NULL || *newtex == 0) return tex;
+	return *newtex;
 }
 
 //==========================================================================
@@ -1152,6 +1218,7 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 //
 // R_PrecacheLevel
 //
+
 // Preloads all relevant graphics for the level.
 //
 //===========================================================================

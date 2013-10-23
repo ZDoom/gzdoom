@@ -22,7 +22,7 @@
 //
 //==========================================================================
 
-void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor * Owner, const PClass * blasteffect)
+void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor * Owner, const PClass * blasteffect, bool dontdamage)
 {
 	angle_t angle,ang;
 	AActor *mo;
@@ -67,7 +67,7 @@ void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor * Owner
 	{
 		// Players handled automatically
 	}
-	else
+	else if (!dontdamage)
 	{
 		victim->flags2 |= MF2_BLASTED;
 	}
@@ -83,6 +83,7 @@ enum
 	BF_USEAMMO = 1,
 	BF_DONTWARN = 2,
 	BF_AFFECTBOSSES = 4,
+	BF_NOIMPACTDAMAGE = 8,
 };
 
 //==========================================================================
@@ -145,6 +146,6 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 		{ // Out of range
 			continue;
 		}
-		BlastActor (mo, strength, speed, self, blasteffect);
+		BlastActor (mo, strength, speed, self, blasteffect, !!(blastflags & BF_NOIMPACTDAMAGE));
 	}
 }

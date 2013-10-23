@@ -106,6 +106,12 @@ extern void (*R_DrawSpanTranslucent)(void);
 // Span drawing for masked, translucent textures.
 extern void (*R_DrawSpanMaskedTranslucent)(void);
 
+// Span drawing for translucent, additive textures.
+extern void (*R_DrawSpanAddClamp)(void);
+
+// Span drawing for masked, translucent, additive textures.
+extern void (*R_DrawSpanMaskedAddClamp)(void);
+
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
 void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *spans);

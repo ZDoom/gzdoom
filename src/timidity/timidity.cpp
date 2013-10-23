@@ -30,10 +30,14 @@
 #include "c_dispatch.h"
 #include "i_system.h"
 #include "files.h"
+#include "w_wad.h"
 
 CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, midi_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, midi_timiditylike, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(String, gus_patchdir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, midi_dmxgus, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 namespace Timidity
 {
@@ -551,7 +555,135 @@ int LoadConfig(const char *filename)
 
 int LoadConfig()
 {
-	return LoadConfig(midi_config);
+	if (midi_dmxgus)
+	{
+		return LoadDMXGUS();
+	}
+	else
+	{
+		return LoadConfig(midi_config);
+	}
+}
+
+int LoadDMXGUS()
+{
+	int lump = Wads.CheckNumForName("DMXGUS");
+	if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
+	if (lump == -1) return LoadConfig(midi_config);
+
+	FWadLump data = Wads.OpenLumpNum(lump);
+	if (data.GetLength() == 0) return LoadConfig(midi_config);
+
+	// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
+	FString ultradir = getenv("ULTRADIR");
+	if (ultradir.IsNotEmpty())
+	{
+		ultradir += "/midi";
+		add_to_pathlist(ultradir.GetChars());
+	}
+	// Load DMXGUS lump and patches from gus_patchdir
+	add_to_pathlist(gus_patchdir);
+
+	char readbuffer[1024];
+	long size = data.GetLength();
+	long read = 0;
+	BYTE remap[256];
+
+	FString patches[256];
+	memset(remap, 255, sizeof(remap));
+	char temp[16];
+	int current = -1;
+	int status = -1;
+	int gusbank = (gus_memsize >= 1 && gus_memsize <= 4) ? gus_memsize : -1;
+
+	data.Seek(0, SEEK_SET);
+
+	while (data.Gets(readbuffer, 1024) && read < size)
+	{
+		int i = 0;
+		while (readbuffer[i] != 0 && i < 1024)
+		{
+			// Don't try to parse comments
+			if (readbuffer[i] == '#') break;
+			// Actively ignore spaces
+			else if (readbuffer[i] == ' ') {}
+			// Comma separate values
+			else if (status >= 0 && status <= 4 && readbuffer[i] == ',')
+			{
+				if (++status == gusbank)
+				{
+					remap[current] = 0;
+				}
+			}
+			// Status -1: outside of a line
+			// Status 0: reading patch value
+			else if (status == -1 && readbuffer[i] >= '0' && readbuffer[i] <= '9')
+			{
+				current = readbuffer[i] - '0';
+				status = 0;
+			}
+			else if (status == 0 && readbuffer[i] >= '0' && readbuffer[i] <= '9')
+			{
+				current *= 10;
+				current += readbuffer[i] - '0';
+			}
+			// Status 1 through 4: remaps (256K, 512K, 768K, and 1024K resp.)
+			else if (status == gusbank && readbuffer[i] >= '0' && readbuffer[i] <= '9')
+			{
+				remap[current] *= 10;
+				remap[current] += readbuffer[i] - '0';
+			}
+			// Status 5: parsing patch name
+			else if (status == 5 && i < 1015)
+			{
+				memcpy(temp, readbuffer + i, 8);
+				for (int j = 0; j < 8; ++j)
+				{
+					if (temp[j] < 33)
+					{
+						temp[j] = 0;
+						break;
+					}
+				}
+				temp[8] = 0;
+				patches[current] = temp;
+				// Prepare to parse next line
+				status = -1;
+				break;
+			}
+
+			++i;
+		}
+		read += i;
+		if (i == 0) continue;
+		readbuffer[i-1] = 0;
+	}
+
+	if (tonebank[0] == NULL)
+	{
+		tonebank[0] = new ToneBank;
+		drumset[0] = new ToneBank;
+	}
+
+	// From 0 to 127: tonebank[0]; from 128 to 255: drumset[0].
+	ToneBank *bank = tonebank[0];
+	for (int k = 0; k < 256; ++k)
+	{
+		int j = (gusbank > 0) ? remap[k] : k;
+		if (k == 128) bank = drumset[0];
+		// No need to bother with things that don't exist
+		if (patches[j].IsEmpty())
+			continue;
+
+		int val = k % 128;
+		bank->tone[val].note = bank->tone[val].amp = bank->tone[val].pan =
+			bank->tone[val].fontbank = bank->tone[val].fontpreset =
+			bank->tone[val].fontnote = bank->tone[val].strip_loop = 
+			bank->tone[val].strip_envelope = bank->tone[val].strip_tail = -1;
+		bank->tone[val].name = patches[j];
+	}
+
+	return 0;
 }
 
 Renderer::Renderer(float sample_rate)

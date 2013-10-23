@@ -21,7 +21,7 @@ ACTOR Fist : Weapon
 	Weapon.SelectionOrder 3700
 	Weapon.Kickback 100
 	Obituary "$OB_MPFIST"
-	Tag "$FIST"
+	Tag "$TAG_FIST"
 	+WEAPON.WIMPY_WEAPON
 	+WEAPON.MELEEWEAPON
 	States

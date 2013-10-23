@@ -48,7 +48,8 @@ struct FTraceInfo
 	sector_t *CurSector;
 	fixed_t MaxDist;
 	fixed_t EnterDist;
-	bool (*TraceCallback)(FTraceResults &res);
+	ETraceStatus (*TraceCallback)(FTraceResults &res, void *data);
+	void *TraceCallbackData;
 	DWORD TraceFlags;
 	int inshootthrough;
 
@@ -59,7 +60,9 @@ struct FTraceInfo
 	int sectorsel;		
 
 	bool TraceTraverse (int ptflags);
+	bool CheckPlane(const secplane_t &plane);
 	bool CheckSectorPlane (const sector_t *sector, bool checkFloor);
+	bool Check3DFloorPlane(const F3DFloor *ffloor, bool checkBottom);
 };
 
 static bool EditTraceResult (DWORD flags, FTraceResults &res);
@@ -69,7 +72,7 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 			fixed_t vx, fixed_t vy, fixed_t vz, fixed_t maxDist,
 			DWORD actorMask, DWORD wallMask, AActor *ignore,
 			FTraceResults &res,
-			DWORD flags, bool (*callback)(FTraceResults &res))
+			DWORD flags, ETraceStatus (*callback)(FTraceResults &res, void *), void *callbackdata)
 {
 	int ptflags;
 	FTraceInfo inf;
@@ -89,18 +92,20 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	inf.MaxDist = maxDist;
 	inf.EnterDist = 0;
 	inf.TraceCallback = callback;
+	inf.TraceCallbackData = callbackdata;
 	inf.TraceFlags = flags;
-	res.CrossedWater = NULL;
 	inf.Results = &res;
 	inf.inshootthrough = true;
-
-	res.HitType = TRACE_HitNone;
-
-	// Do a 3D floor check in the starting sector
-	memset(&res, 0, sizeof(res));
 	inf.sectorsel=0;
+	memset(&res, 0, sizeof(res));
+	/* // Redundant with the memset
+	res.HitType = TRACE_HitNone;
+	res.CrossedWater = NULL;
+	res.Crossed3DWater = NULL;
+	*/
 
 #ifdef _3DFLOORS
+	// Do a 3D floor check in the starting sector
 	TDeletingArray<F3DFloor*> &ff = sector->e->XFloor.ffloors;
 
 	if (ff.Size())
@@ -114,8 +119,16 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 		for(unsigned int i=0;i<ff.Size();i++)
 		{
 			F3DFloor * rover=ff[i];
+			if (!(rover->flags&FF_EXISTS))
+				continue;
 
-			if (!(rover->flags&FF_SHOOTTHROUGH) && rover->flags&FF_EXISTS)
+			if (rover->flags&FF_SWIMMABLE && res.Crossed3DWater == NULL)
+			{
+				if (inf.Check3DFloorPlane(rover, false))
+					res.Crossed3DWater = rover;
+			}
+
+			if (!(rover->flags&FF_SHOOTTHROUGH))
 			{
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(x, y);
 				fixed_t ff_top=rover->top.plane->ZatPoint(x, y);
@@ -164,19 +177,19 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 #endif
 
 	// check for overflows and clip if necessary
-	SQWORD xd= (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
+	SQWORD xd = (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
 
 	if (xd>SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist=FixedDiv(FIXED_MAX-x,vx);
+		maxDist = inf.MaxDist = FixedDiv(FIXED_MAX - x, vx);
 	}
 	else if (xd<-SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist=FixedDiv(FIXED_MIN-x,vx);
+		maxDist = inf.MaxDist = FixedDiv(FIXED_MIN - x, vx);
 	}
 
 
-	SQWORD yd= (SQWORD)y + ( ( SQWORD(vy) * SQWORD(maxDist) )>>16);
+	SQWORD yd = (SQWORD)y + ( ( SQWORD(vy) * SQWORD(maxDist) )>>16);
 
 	if (yd>SQWORD(32767)*FRACUNIT)
 	{
@@ -235,13 +248,33 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 
 bool FTraceInfo::TraceTraverse (int ptflags)
 {
-	FPathTraverse it(StartX, StartY, StartX + FixedMul (Vx, MaxDist), StartY + FixedMul (Vy, MaxDist), ptflags);
+	FPathTraverse it(StartX, StartY, FixedMul (Vx, MaxDist), FixedMul (Vy, MaxDist), ptflags | PT_DELTA);
 	intercept_t *in;
 
 	while ((in = it.Next()))
 	{
 		fixed_t hitx, hity, hitz;
 		fixed_t dist;
+
+		// Deal with splashes in 3D floors
+#ifdef _3DFLOORS
+		if (CurSector->e->XFloor.ffloors.Size())
+		{
+			for(unsigned int i=0;i<CurSector->e->XFloor.ffloors.Size();i++)
+			{
+				F3DFloor * rover=CurSector->e->XFloor.ffloors[i];
+				if (!(rover->flags&FF_EXISTS))
+					continue;
+
+				// Deal with splashy stuff
+				if (rover->flags&FF_SWIMMABLE && Results->Crossed3DWater == NULL)
+				{
+					if (Check3DFloorPlane(rover, false))
+						Results->Crossed3DWater = rover;
+				}
+			}
+		}
+#endif
 
 		if (in->isaline)
 		{
@@ -287,7 +320,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				entersector = (lineside == 0) ? in->d.line->backsector : in->d.line->frontsector;
 				
 				// For backwards compatibility: Ignore lines with the same sector on both sides.
-				// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15 need it.
+				// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15) need it.
 				if (i_compatflags & COMPATF_TRACE && in->d.line->backsector == in->d.line->frontsector)
 				{
 					// We must check special activation here because the code below is never reached.
@@ -475,7 +508,13 @@ cont:
 
 			if (TraceCallback != NULL)
 			{
-				if (!TraceCallback (*Results)) return false;
+				switch (TraceCallback(*Results, TraceCallbackData))
+				{
+				case TRACE_Stop:	return false;
+				case TRACE_Abort:	Results->HitType = TRACE_HitNone; return false;
+				case TRACE_Skip:	Results->HitType = TRACE_HitNone; break;
+				default:			break;
+				}
 			}
 			else
 			{
@@ -484,8 +523,7 @@ cont:
 		}
 
 		// Encountered an actor
-		if (!(in->d.thing->flags & ActorMask) ||
-			in->d.thing == IgnoreThis)
+		if (!(in->d.thing->flags & ActorMask) || in->d.thing == IgnoreThis)
 		{
 			continue;
 		}
@@ -552,13 +590,19 @@ cont:
 			// the trace hit a 3D-floor before the thing.
 			// Calculate an intersection and abort.
 			Results->Sector = &sectors[CurSector->sectornum];
-			if (!CheckSectorPlane(CurSector, Results->HitType==TRACE_HitFloor))
+			if (!CheckSectorPlane(CurSector, Results->HitType == TRACE_HitFloor))
 			{
-				Results->HitType=TRACE_HitNone;
+				Results->HitType = TRACE_HitNone;
 			}
 			if (TraceCallback != NULL)
 			{
-				return TraceCallback (*Results);
+				switch (TraceCallback(*Results, TraceCallbackData))
+				{
+				case TRACE_Continue: return true;
+				case TRACE_Stop:	 return false;
+				case TRACE_Abort:	 Results->HitType = TRACE_HitNone; return false;
+				case TRACE_Skip:	 Results->HitType = TRACE_HitNone; return true;
+				}
 			}
 			else
 			{
@@ -577,7 +621,13 @@ cont1:
 
 		if (TraceCallback != NULL)
 		{
-			if (!TraceCallback (*Results)) return false;
+			switch (TraceCallback(*Results, TraceCallbackData))
+			{
+			case TRACE_Stop:	return false;
+			case TRACE_Abort:	Results->HitType = TRACE_HitNone; return false;
+			case TRACE_Skip:	Results->HitType = TRACE_HitNone; break;
+			default:			break;
+			}
 		}
 		else
 		{
@@ -587,19 +637,8 @@ cont1:
 	return true;
 }
 
-bool FTraceInfo::CheckSectorPlane (const sector_t *sector, bool checkFloor)
+bool FTraceInfo::CheckPlane (const secplane_t &plane)
 {
-	secplane_t plane;
-
-	if (checkFloor)
-	{
-		plane = sector->floorplane;
-	}
-	else
-	{
-		plane = sector->ceilingplane;
-	}
-
 	fixed_t den = TMulScale16 (plane.a, Vx, plane.b, Vy, plane.c, Vz);
 
 	if (den != 0)
@@ -621,6 +660,38 @@ bool FTraceInfo::CheckSectorPlane (const sector_t *sector, bool checkFloor)
 		}
 	}
 	return false;
+}
+
+bool FTraceInfo::CheckSectorPlane (const sector_t *sector, bool checkFloor)
+{
+	secplane_t plane;
+
+	if (checkFloor)
+	{
+		plane = sector->floorplane;
+	}
+	else
+	{
+		plane = sector->ceilingplane;
+	}
+
+	return CheckPlane(plane);
+}
+
+bool FTraceInfo::Check3DFloorPlane (const F3DFloor *ffloor, bool checkBottom)
+{
+	secplane_t plane;
+
+	if (checkBottom)
+	{
+		plane = *(ffloor->bottom.plane);
+	}
+	else
+	{
+		plane = *(ffloor->top.plane);
+	}
+
+	return CheckPlane(plane);
 }
 
 static bool EditTraceResult (DWORD flags, FTraceResults &res)

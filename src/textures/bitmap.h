@@ -318,6 +318,8 @@ enum ECopyOp
 	OP_REVERSESUBTRACT,
 	OP_MODULATE,
 	OP_COPYALPHA,
+	OP_COPYNEWALPHA,
+	OP_OVERLAY,
 	OP_OVERWRITE
 };
 
@@ -330,6 +332,13 @@ struct FCopyInfo
 	fixed_t invalpha;
 };
 
+struct bOverwrite
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = s; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+	static __forceinline bool ProcessAlpha0() { return true; }
+};
+
 struct bCopy
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = s; }
@@ -337,11 +346,25 @@ struct bCopy
 	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
-struct bOverwrite
+struct bCopyNewAlpha
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = s; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = (s*i->alpha) >> FRACBITS; }
+	static __forceinline bool ProcessAlpha0() { return false; }
+};
+
+struct bCopyAlpha
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
+};
+
+struct bOverlay
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = MAX(s,d); }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 struct bBlend
@@ -378,14 +401,6 @@ struct bModulate
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
 	static __forceinline bool ProcessAlpha0() { return false; }
 };
-
-struct bCopyAlpha
-{
-	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
-	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return false; }
-};
-
 
 
 #endif

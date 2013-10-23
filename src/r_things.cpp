@@ -61,6 +61,7 @@
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
 #include "r_data/voxels.h"
+#include "p_local.h"
 
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 
@@ -138,6 +139,7 @@ vissprite_t		**firstvissprite;
 vissprite_t		**vissprite_p;
 vissprite_t		**lastvissprite;
 int 			newvissprite;
+bool			DrewAVoxel;
 
 static vissprite_t **spritesorter;
 static int spritesortersize = 0;
@@ -185,6 +187,7 @@ void R_DeinitSprites()
 void R_ClearSprites (void)
 {
 	vissprite_p = firstvissprite;
+	DrewAVoxel = false;
 }
 
 
@@ -327,6 +330,13 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.alpha, vis->Translation, vis->FillColor);
 
+	if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
+	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
+	  // it is the brightest one. We need to get back to the proper light level for
+	  // this sprite.
+		dc_colormap += vis->ColormapNum << COLORMAPSHIFT;
+	}
+
 	if (mode != DontDraw)
 	{
 		if (mode == DoDraw0)
@@ -416,13 +426,18 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	{
 		R_CheckOffscreenBuffer(RenderTarget->GetWidth(), RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
 	}
+	if (spr->bInMirror)
+	{
+		flags |= DVF_MIRRORED;
+	}
 
 	// Render the voxel, either directly to the screen or offscreen.
-	R_DrawVoxel(spr->gx, spr->gy, spr->gz, spr->angle, spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
+	R_DrawVoxel(spr->vx, spr->vy, spr->vz, spr->vang, spr->gx, spr->gy, spr->gz, spr->angle,
+		spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
-	if (flags != 0)
+	if ((flags & ~DVF_MIRRORED) != 0)
 	{
 		for (int x = 0; x < viewwidth; ++x)
 		{
@@ -495,7 +510,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// Don't waste time projecting sprites that are definitely not visible.
 	if (thing == NULL ||
 		(thing->renderflags & RF_INVISIBLE) ||
-		!thing->RenderStyle.IsVisible(thing->alpha))
+		!thing->RenderStyle.IsVisible(thing->alpha) ||
+		!thing->IsVisibleToPlayer())
 	{
 		return;
 	}
@@ -503,7 +519,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// [RH] Interpolate the sprite's position to make it look smooth
 	fx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
 	fy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
-	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ);
+	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ) + thing->GetBobOffset(r_TicFrac);
 
 	// transform the origin point
 	tr_x = fx - viewx;
@@ -513,6 +529,14 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 	tex = NULL;
 	voxel = NULL;
+
+	int spritenum = thing->sprite;
+	fixed_t spritescaleX = thing->scaleX;
+	fixed_t spritescaleY = thing->scaleY;
+	if (thing->player != NULL)
+	{
+		P_CheckPlayerSprite(thing, spritenum, spritescaleX, spritescaleY);
+	}
 
 	if (thing->picnum.isValid())
 	{
@@ -548,13 +572,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		// decide which texture to use for the sprite
 #ifdef RANGECHECK
-		if ((unsigned)thing->sprite >= (unsigned)sprites.Size ())
+		if (spritenum >= (signed)sprites.Size () || spritenum < 0)
 		{
-			DPrintf ("R_ProjectSprite: invalid sprite number %i\n", thing->sprite);
+			DPrintf ("R_ProjectSprite: invalid sprite number %u\n", spritenum);
 			return;
 		}
 #endif
-		spritedef_t *sprdef = &sprites[thing->sprite];
+		spritedef_t *sprdef = &sprites[spritenum];
 		if (thing->frame >= sprdef->numframes)
 		{
 			// If there are no frames at all for this sprite, don't draw it.
@@ -603,7 +627,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	tx2 = tx >> 4;
 
 	// too far off the side?
-	if ((abs(tx) >> 6) > abs(tz))
+	// if it's a voxel, it can be further off the side
+	if ((voxel == NULL && (abs(tx) >> 6) > abs(tz)) ||
+		(voxel != NULL && (abs(tx) >> 7) > abs(tz)))
 	{
 		return;
 	}
@@ -613,13 +639,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		// [RH] Added scaling
 		int scaled_to = tex->GetScaledTopOffset();
 		int scaled_bo = scaled_to - tex->GetScaledHeight();
-		gzt = fz + thing->scaleY * scaled_to;
-		gzb = fz + thing->scaleY * scaled_bo;
+		gzt = fz + spritescaleY * scaled_to;
+		gzb = fz + spritescaleY * scaled_bo;
 	}
 	else
 	{
-		xscale = FixedMul(thing->scaleX, voxel->Scale);
-		yscale = FixedMul(thing->scaleY, voxel->Scale);
+		xscale = FixedMul(spritescaleX, voxel->Scale);
+		yscale = FixedMul(spritescaleY, voxel->Scale);
 		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - thing->floorclip;
 		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
@@ -648,7 +674,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		{
 			if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
 				return;
-			if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
+			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
 				return;
 		}
 	}
@@ -671,7 +697,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 
 		// calculate edges of the shape
-		const fixed_t thingxscalemul = DivScale16(thing->scaleX, tex->xScale);
+		const fixed_t thingxscalemul = DivScale16(spritescaleX, tex->xScale);
 
 		tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 		x1 = centerx + MulScale32 (tx, xscale);
@@ -687,11 +713,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
-		xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
+		xscale = FixedDiv(FixedMul(spritescaleX, xscale), tex->xScale);
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 		x2--;
 
-		fixed_t yscale = SafeDivScale16(thing->scaleY, tex->yScale);
+		fixed_t yscale = SafeDivScale16(spritescaleY, tex->yScale);
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();
@@ -738,13 +764,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if (voxelspin != 0)
 		{
 			double ang = double(I_FPSTime()) * voxelspin / 1000;
-			vis->angle += angle_t(ang * (4294967296.f / 360));
+			vis->angle -= angle_t(ang * (4294967296.f / 360));
 		}
 
-		// These are irrelevant for voxels.
-		vis->texturemid = 0x1CEDBEEF;
-		vis->startfrac	= 0x1CEDBEEF;
-		vis->xiscale	= 0x1CEDBEEF;
+		vis->vx = viewx;
+		vis->vy = viewy;
+		vis->vz = viewz;
+		vis->vang = viewangle;
 	}
 
 	// killough 3/27/98: save sector for special clipping later
@@ -758,6 +784,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->gz = fz;
 	vis->gzb = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
+	vis->deltax = fx - viewx;
+	vis->deltay = fy - viewy;
 	vis->renderflags = thing->renderflags;
 	if(thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 	vis->Style.RenderStyle = thing->RenderStyle;
@@ -767,11 +795,14 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->Style.alpha = thing->alpha;
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
+	vis->ColormapNum = 0;
+	vis->bInMirror = MirrorFlags & RF_XFLIP;
 
 	if (voxel != NULL)
 	{
 		vis->voxel = voxel->Voxel;
 		vis->bIsVoxel = true;
+		DrewAVoxel = true;
 	}
 	else
 	{
@@ -831,8 +862,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		else
 		{ // diminished light
-			vis->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (
-				(fixed_t)DivScale12 (r_SpriteVisibility, MAX(tz, MINZ)), spriteshade) << COLORMAPSHIFT);
+			vis->ColormapNum = GETPALOOKUP(
+				(fixed_t)DivScale12 (r_SpriteVisibility, MAX(tz, MINZ)), spriteshade);
+			vis->Style.colormap = mybasecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
 		}
 	}
 }
@@ -989,6 +1021,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vis->yscale = DivScale16(pspriteyscale, tex->yScale);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
+	vis->ColormapNum = 0;
 
 	if (flip)
 	{
@@ -1090,7 +1123,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
-		if (!noaccel &&
+		if (!noaccel && realfixedcolormap == NULL &&
 			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
 			vis->pic->UseBasePalette())
 		{
@@ -1302,9 +1335,20 @@ void R_DrawRemainingPlayerSprites()
 //		gain compared to the old function.
 //
 // Sort vissprites by depth, far to near
+
+// This is the standard version, which does a simple test based on depth.
 static bool sv_compare(vissprite_t *a, vissprite_t *b)
 {
 	return a->idepth > b->idepth;
+}
+
+// This is an alternate version, for when one or more voxel is in view.
+// It does a 2D distance test based on whichever one is furthest from
+// the viewpoint.
+static bool sv_compare2d(vissprite_t *a, vissprite_t *b)
+{
+	return TVector2<double>(a->deltax, a->deltay).LengthSquared() <
+		   TVector2<double>(b->deltax, b->deltay).LengthSquared();
 }
 
 #if 0
@@ -1654,7 +1698,7 @@ void R_DrawSprite (vissprite_t *spr)
 				hzb = MAX(hzb, hz);
 			}
 		}
-		if (spr->FakeFlatStat != FAKED_BelowFloor)
+		if (spr->FakeFlatStat != FAKED_BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 		{
 			fixed_t hz = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
 			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;
@@ -1875,6 +1919,16 @@ void R_DrawSprite (vissprite_t *spr)
 				return;
 			}
 		}
+		// Add everything outside the left and right edges to the clipping array
+		// for R_DrawVisVoxel().
+		if (x1 > 0)
+		{
+			clearbufshort(cliptop, x1, viewheight);
+		}
+		if (x2 < viewwidth - 1)
+		{
+			clearbufshort(cliptop + x2 + 1, viewwidth - x2 - 1, viewheight);
+		}
 		int minvoxely = spr->gzt <= hzt ? 0 : (spr->gzt - hzt) / spr->yscale;
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : (spr->gzt - hzb) / spr->yscale;
 		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
@@ -1927,7 +1981,7 @@ void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
 
 void R_DrawMasked (void)
 {
-	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
+	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
 
 	if (height_top == NULL)
 	{ // kg3D - no visible 3D floors, normal rendering
@@ -2111,12 +2165,13 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->x1 = x1;
 	vis->x2 = x2;
 	vis->Translation = 0;
-	vis->startfrac = particle->color;
+	vis->startfrac = 255 & (particle->color >>24);
 	vis->pic = NULL;
 	vis->bIsVoxel = false;
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;
+	vis->ColormapNum = 0;
 
 	if (fixedlightlev >= 0)
 	{
@@ -2126,12 +2181,15 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	{
 		vis->Style.colormap = fixedcolormap;
 	}
+	else if(particle->bright) {
+		vis->Style.colormap = map;
+	}
 	else
 	{
 		// Using MulScale15 instead of 16 makes particles slightly more visible
 		// than regular sprites.
-		vis->Style.colormap = map + (GETPALOOKUP (MulScale15 (tiz, r_SpriteVisibility),
-			shade) << COLORMAPSHIFT);
+		vis->ColormapNum = GETPALOOKUP(MulScale15 (tiz, r_SpriteVisibility), shade);
+		vis->Style.colormap = map + (vis->ColormapNum << COLORMAPSHIFT);
 	}
 }
 
@@ -2200,15 +2258,10 @@ void R_DrawParticle (vissprite_t *vis)
 	} while (--ycount);
 }
 
-static fixed_t distrecip(fixed_t y)
-{
-	y >>= 3;
-	return y == 0 ? 0 : SafeDivScale32(centerxwide, y);
-}
-
 extern fixed_t baseyaspectmul;
 
-void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+void R_DrawVoxel(fixed_t globalposx, fixed_t globalposy, fixed_t globalposz, angle_t viewang,
+	fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
@@ -2216,37 +2269,44 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 	fixed_t cosang, sinang, sprcosang, sprsinang;
 	int backx, backy, gxinc, gyinc;
 	int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, dazscale;
-	int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yplc, yinc=0;
+	int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yinc=0;
 	int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
 	kvxslab_t *voxptr, *voxend;
 	FVoxelMipLevel *mip;
+	int z1a[64], z2a[64], yplc[64];
 
 	const int nytooclose = centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
 	const int xdimenscale = Scale(centerxwide, yaspectmul, 160);
-	const fixed_t globalposx =  viewx >> 12;
-	const fixed_t globalposy = -viewy >> 12;
-	const fixed_t globalposz = -viewz >> 8;
+	const double centerxwide_f = centerxwide;
+	const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
+
+	// Convert to Build's coordinate system.
+	globalposx =  globalposx >> 12;
+	globalposy = -globalposy >> 12;
+	globalposz = -globalposz >> 8;
 
 	dasprx =  dasprx >> 12;
 	daspry = -daspry >> 12;
 	dasprz = -dasprz >> 8;
-	daxscale >>= 10;
-	dayscale >>= 10;
 
-	cosang = viewcos >> 2;
-	sinang = -viewsin >> 2;
+	// Shift the scales from 16 bits of fractional precision to 6.
+	// Also do some magic voodoo scaling to make them the right size.
+	daxscale = daxscale / (0xC000 >> 6);
+	dayscale = dayscale / (0xC000 >> 6);
+
+	cosang = finecosine[viewang >> ANGLETOFINESHIFT] >> 2;
+	sinang = -finesine[viewang >> ANGLETOFINESHIFT] >> 2;
 	sprcosang = finecosine[dasprang >> ANGLETOFINESHIFT] >> 2;
 	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
 
 	R_SetupDrawSlab(colormap);
 
 	// Select mip level
-	i = abs(DMulScale8(dasprx - globalposx, viewcos, daspry - globalposy, -viewsin));
+	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
 	i = DivScale6(i, MIN(daxscale, dayscale));
 	j = FocalLengthX >> 3;
-	for (k = 0; k < voxobj->NumMips; ++k)
+	for (k = 0; i >= j && k < voxobj->NumMips; ++k)
 	{
-		if (i < j) { break; }
 		i >>= 1;
 	}
 	if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
@@ -2296,7 +2356,7 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 		ggyinc[i] = y; y += gyinc;
 	}
 
-	syoff = DivScale21(globalposz - dasprz, dazscale) + (mip->PivotZ << 7);
+	syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (mip->PivotZ << 7);
 	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 	for (cnt = 0; cnt < 8; cnt++)
@@ -2372,15 +2432,21 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 				voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
 				if (voxptr >= voxend) continue;
 
-				lx = MulScale32(nx >> 3, distrecip(ny+y1)) + centerx;
+				lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + centerx;
 				if (lx < 0) lx = 0;
-				rx = MulScale32((nx + nxoff) >> 3, distrecip(ny+y2)) + centerx;
+				rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + centerx;
 				if (rx > viewwidth) rx = viewwidth;
 				if (rx <= lx) continue;
-				rx -= lx;
 
-				fixed_t l1 = distrecip(ny-yoff);
-				fixed_t l2 = distrecip(ny+yoff);
+				if (flags & DVF_MIRRORED)
+				{
+					int t = viewwidth - lx;
+					lx = viewwidth - rx;
+					rx = t;
+				}
+
+				fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
+				fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));
 				for (; voxptr < voxend; voxptr = (kvxslab_t *)((BYTE *)voxptr + voxptr->zleng + 3))
 				{
 					const BYTE *col = voxptr->col;
@@ -2425,43 +2491,88 @@ void R_DrawVoxel(fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t daspran
 						z2 = MulScale32(l1, j + (zleng << 15)) + centery;
 					}
 
+					if (z2 <= z1) continue;
+
 					if (zleng == 1)
 					{
-						yplc = 0; yinc = 0;
-						if (z1 < daumost[lx]) z1 = daumost[lx];
+						yinc = 0;
 					}
 					else
 					{
 						if (z2-z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
-						else if (z2 > z1) yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
-						if (z1 < daumost[lx]) { yplc = yinc*(daumost[lx]-z1); z1 = daumost[lx]; } else yplc = 0;
+						else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 					}
-					if (z2 > dadmost[lx]) z2 = dadmost[lx];
-					z2 -= z1; if (z2 <= 0) continue;
-
-					if (!(flags & DVF_OFFSCREEN))
+					// [RH] Clip each column separately, not just by the first one.
+					for (int stripwidth = MIN<int>(countof(z1a), rx - lx), lxt = lx;
+						lxt < rx;
+						(lxt += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lxt))
 					{
-						// Draw directly to the screen.
-						R_DrawSlab(rx, yplc, z2, yinc, col, ylookup[z1] + lx + dc_destorg);
-					}
-					else
-					{
-						// Record the area covered and possibly draw to an offscreen buffer.
-						dc_yl = z1;
-						dc_yh = z1 + z2 - 1;
-						dc_count = z2;
-						dc_iscale = yinc;
-						for (int x = 0; x < rx; ++x)
+						// Calculate top and bottom pixels locations
+						for (int xxx = 0; xxx < stripwidth; ++xxx)
 						{
-							OffscreenCoverageBuffer->InsertSpan(lx + x, z1, z1 + z2);
-							if (!(flags & DVF_SPANSONLY))
+							if (zleng == 1)
 							{
-								dc_x = lx + x;
-								rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
-								dc_source = col;
-								dc_texturefrac = yplc;
-								hcolfunc_pre();
+								yplc[xxx] = 0;
+								z1a[xxx] = MAX<int>(z1, daumost[lxt + xxx]);
 							}
+							else
+							{
+								if (z1 < daumost[lxt + xxx])
+								{
+									yplc[xxx] = yinc * (daumost[lxt + xxx] - z1);
+									z1a[xxx] = daumost[lxt + xxx];
+								}
+								else
+								{
+									yplc[xxx] = 0;
+									z1a[xxx] = z1;
+								}
+							}
+							z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
+						}
+						// Find top and bottom pixels that match and draw them as one strip
+						for (int xxl = 0, xxr; xxl < stripwidth; )
+						{
+							if (z1a[xxl] >= z2a[xxl])
+							{ // No column here
+								xxl++;
+								continue;
+							}
+							int z1 = z1a[xxl];
+							int z2 = z2a[xxl];
+							// How many columns share the same extents?
+							for (xxr = xxl + 1; xxr < stripwidth; ++xxr)
+							{
+								if (z1a[xxr] != z1 || z2a[xxr] != z2)
+									break;
+							}
+
+							if (!(flags & DVF_OFFSCREEN))
+							{
+								// Draw directly to the screen.
+								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, ylookup[z1] + lxt + xxl + dc_destorg);
+							}
+							else
+							{
+								// Record the area covered and possibly draw to an offscreen buffer.
+								dc_yl = z1;
+								dc_yh = z2 - 1;
+								dc_count = z2 - z1;
+								dc_iscale = yinc;
+								for (int x = xxl; x < xxr; ++x)
+								{
+									OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z2);
+									if (!(flags & DVF_SPANSONLY))
+									{
+										dc_x = lxt + x;
+										rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
+										dc_source = col;
+										dc_texturefrac = yplc[xxl];
+										hcolfunc_pre();
+									}
+								}
+							}
+							xxl = xxr;
 						}
 					}
 				}
@@ -2549,7 +2660,7 @@ void FCoverageBuffer::InsertSpan(int listnum, int start, int stop)
 			{ // The existing span completely covers this one.	//     +++++
 				return;
 			}
-			// Extend the existing span with the new one.		// ======
+extend:		// Extend the existing span with the new one.		// ======
 			span = *span_p;										//     +++++++
 			span->Stop = stop;									// (or)  +++++
 
@@ -2577,6 +2688,11 @@ void FCoverageBuffer::InsertSpan(int listnum, int start, int stop)
 		{ // The new span extends the existing span from		//    ++++
 		  // the beginning.										// (or) ++++
 			(*span_p)->Start = start;
+			if ((*span_p)->Stop < stop)
+			{ // The new span also extends the existing span	//     ======
+			  // at the bottom									// ++++++++++++++
+				goto extend;
+			}
 			goto check;
 		}
 		else													//         ======

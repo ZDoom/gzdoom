@@ -76,12 +76,7 @@ void ATeleportFog::PostBeginPlay ()
 
 void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
 {
-	const PClass *fog=NULL;
-
-	if (spawnid > 0 && spawnid < MAX_SPAWNABLES && SpawnableThings[spawnid] != NULL)
-	{
-		fog = SpawnableThings[spawnid];
-	}
+	const PClass *fog = P_GetSpawnableType(spawnid);
 
 	if (fog == NULL)
 	{
@@ -99,7 +94,7 @@ void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
 //
 
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
-				 bool useFog, bool sourceFog, bool keepOrientation, bool bHaltVelocity)
+				 bool useFog, bool sourceFog, bool keepOrientation, bool bHaltVelocity, bool keepHeight)
 {
 	fixed_t oldx;
 	fixed_t oldy;
@@ -110,6 +105,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	sector_t *destsect;
 	bool resetpitch = false;
 	fixed_t floorheight, ceilingheight;
+	fixed_t missilespeed;
 
 	oldx = thing->x;
 	oldy = thing->y;
@@ -122,7 +118,15 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		player = NULL;
 	floorheight = destsect->floorplane.ZatPoint (x, y);
 	ceilingheight = destsect->ceilingplane.ZatPoint (x, y);
-	if (z == ONFLOORZ)
+	if (thing->flags & MF_MISSILE)
+	{ // We don't measure z velocity, because it doesn't change.
+		missilespeed = xs_CRoundToInt(TVector2<double>(thing->velx, thing->vely).Length());
+	}
+	if (keepHeight)
+	{
+		z = floorheight + aboveFloor;
+	}
+	else if (z == ONFLOORZ)
 	{
 		if (player)
 		{
@@ -180,14 +184,16 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (sourceFog)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		Spawn<ATeleportFog> (oldx, oldy, oldz + fogDelta, ALLOW_REPLACE);
+		AActor *fog = Spawn<ATeleportFog> (oldx, oldy, oldz + fogDelta, ALLOW_REPLACE);
+		fog->target = thing;
 	}
 	if (useFog)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 		an = angle >> ANGLETOFINESHIFT;
-		Spawn<ATeleportFog> (x + 20*finecosine[an],
+		AActor *fog = Spawn<ATeleportFog> (x + 20*finecosine[an],
 			y + 20*finesine[an], thing->z + fogDelta, ALLOW_REPLACE);
+		fog->target = thing;
 		if (thing->player)
 		{
 			// [RH] Zoom player's field of vision
@@ -206,8 +212,8 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (thing->flags & MF_MISSILE)
 	{
 		angle >>= ANGLETOFINESHIFT;
-		thing->velx = FixedMul (thing->Speed, finecosine[angle]);
-		thing->vely = FixedMul (thing->Speed, finesine[angle]);
+		thing->velx = FixedMul (missilespeed, finecosine[angle]);
+		thing->vely = FixedMul (missilespeed, finesine[angle]);
 	}
 	// [BC] && bHaltVelocity.
 	else if (!keepOrientation && bHaltVelocity) // no fog doesn't alter the player's momentum
@@ -315,13 +321,14 @@ static AActor *SelectTeleDest (int tid, int tag)
 }
 
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog,
-				  bool sourceFog, bool keepOrientation, bool haltVelocity)
+				  bool sourceFog, bool keepOrientation, bool haltVelocity, bool keepHeight)
 {
 	AActor *searcher;
 	fixed_t z;
 	angle_t angle = 0;
 	fixed_t s = 0, c = 0;
 	fixed_t velx = 0, vely = 0;
+	angle_t badangle = 0;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -367,7 +374,11 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	{
 		z = ONFLOORZ;
 	}
-	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation, haltVelocity))
+	if ((i_compatflags2 & COMPATF2_BADANGLES) && (thing->player != NULL))
+	{
+		badangle = 1 << ANGLETOFINESHIFT;
+	}
+	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle + badangle, fog, sourceFog, keepOrientation, haltVelocity, keepHeight))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!fog && line && keepOrientation)
@@ -513,9 +524,9 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			while (P_PointOnLineSide(x, y, l) != side && --fudge >= 0)
 			{
 				if (abs(l->dx) > abs(l->dy))
-					y -= l->dx < 0 != side ? -1 : 1;
+					y -= (l->dx < 0) != side ? -1 : 1;
 				else
-					x += l->dy < 0 != side ? -1 : 1;
+					x += (l->dy < 0) != side ? -1 : 1;
 			}
 
 			// Adjust z position to be same height above ground as before.

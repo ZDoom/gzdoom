@@ -21,7 +21,10 @@ Actor PlayerPawn : Actor native
 	+NOBLOCKMONST
 	Player.AttackZOffset 8
 	Player.JumpZ 8
+	Player.GruntSpeed 12
+	Player.FallingScreamSpeed 35,40
 	Player.ViewHeight 41
+	Player.UseRange 64
 	Player.ForwardMove 1,1
 	Player.SideMove 1,1
 	Player.ColorRange 0,0
@@ -29,6 +32,8 @@ Actor PlayerPawn : Actor native
 	Player.DamageScreenColor "ff 00 00"
 	Player.MugShotMaxHealth 0
 	Player.FlechetteType "ArtiPoisonBag3"
+	Player.AirCapacity 1
+	Obituary "$OB_MPDEFAULT"
 }
 
 Actor PlayerChunk : PlayerPawn native

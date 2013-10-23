@@ -48,14 +48,14 @@ include "xlat/defines.i"
  46 = SHOOT|REP|MONST,	Door_Open (tag, D_SLOW)
  47 = SHOOT,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
  48 = 0,		Scroll_Texture_Left (SCROLL_UNIT)
- 49 = USE,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
+ 49 = USE,		Ceiling_CrushAndRaiseDist (tag, 8, C_SLOW, 10)
  50 = USE,		Door_Close (tag, D_SLOW)
  51 = USE,		Exit_Secret (0)
  52 = WALK,		Exit_Normal (0)
  53 = WALK,		Plat_PerpetualRaiseLip (tag, P_SLOW, PLATWAIT, 0)
  54 = WALK,		Plat_Stop (tag)
- 55 = USE,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
- 56 = WALK,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
+ 55 = USE,		Floor_RaiseAndCrushDoom (tag, F_SLOW, 10, 2)
+ 56 = WALK,		Floor_RaiseAndCrushDoom (tag, F_SLOW, 10, 2)
  57 = WALK,		Ceiling_CrushStop (tag)
  58 = WALK,		Floor_RaiseByValue (tag, F_SLOW, 24)
  59 = WALK,		Floor_RaiseByValueTxTy (tag, F_SLOW, 24)
@@ -64,7 +64,7 @@ include "xlat/defines.i"
  62 = USE|REP,		Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
  63 = USE|REP,		Door_Raise (tag, D_SLOW, VDOORWAIT)
  64 = USE|REP,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
- 65 = USE|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
+ 65 = USE|REP,		Floor_RaiseAndCrushDoom (tag, F_SLOW, 10, 2)
  66 = USE|REP,		Plat_UpByValueStayTx (tag, P_SLOW/2, 3)
  67 = USE|REP,		Plat_UpByValueStayTx (tag, P_SLOW/2, 4)
  68 = USE|REP,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
@@ -93,7 +93,7 @@ include "xlat/defines.i"
  91 = WALK|REP,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
  92 = WALK|REP,		Floor_RaiseByValue (tag, F_SLOW, 24)
  93 = WALK|REP,		Floor_RaiseByValueTxTy (tag, F_SLOW, 24)
- 94 = WALK|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10, 2)
+ 94 = WALK|REP,		Floor_RaiseAndCrushDoom (tag, F_SLOW, 10, 2)
  95 = WALK|REP,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
  96 = WALK|REP,		Floor_RaiseByTexture (tag, F_SLOW)
  97 = WALK|REP|MONST,	Teleport (0, tag)
@@ -209,10 +209,10 @@ include "xlat/defines.i"
 204 = USE,		Ceiling_LowerToHighestFloor (tag, C_SLOW)
 205 = USE|REP,		Ceiling_LowerToLowest (tag, C_SLOW)
 206 = USE|REP,		Ceiling_LowerToHighestFloor (tag, C_SLOW)
-207 = WALK|MONST,	Teleport_NoFog (0, 0, tag)
-208 = WALK|REP|MONST,	Teleport_NoFog (0, 0, tag)
-209 = USE|MONST,	Teleport_NoFog (0, 0, tag)
-210 = USE|REP|MONST,	Teleport_NoFog (0, 0, tag)
+207 = WALK|MONST,	Teleport_NoFog (0, 0, tag, 1)
+208 = WALK|REP|MONST,	Teleport_NoFog (0, 0, tag, 1)
+209 = USE|MONST,	Teleport_NoFog (0, 0, tag, 1)
+210 = USE|REP|MONST,	Teleport_NoFog (0, 0, tag, 1)
 211 = USE|REP,		Plat_ToggleCeiling (tag)
 212 = WALK|REP,		Plat_ToggleCeiling (tag)
 213 = 0,		Transfer_FloorLight (tag)
@@ -270,8 +270,8 @@ include "xlat/defines.i"
 265 = MONWALK|REP,	Teleport_Line (tag, tag, 1)
 266 = MONWALK,		Teleport_Line (tag, tag, 0)
 267 = MONWALK|REP,	Teleport_Line (tag, tag, 0)
-268 = MONWALK,		Teleport_NoFog (0, 0, tag)
-269 = MONWALK|REP,	Teleport_NoFog (0, 0, tag)
+268 = MONWALK,		Teleport_NoFog (0, 0, tag, 1)
+269 = MONWALK|REP,	Teleport_NoFog (0, 0, tag, 1)
 
 /****** MBF linetypes ******/
 
@@ -494,10 +494,10 @@ include "xlat/defines.i"
 			0x0008 : D_NORMAL,
 			0x0010 : D_FAST,
 			0x0018 : D_TURBO]
-	arg3 = 0x0060  [0x0000 : 0,
-			0x0020 : 1,
-			0x0040 : 2,
-			0x0060 : 3]
+	arg3 = 0x0060  [0x0000 : 64,
+			0x0020 : 65,
+			0x0040 : 66,
+			0x0060 : 67]
 	arg4 = 0x0300  [0x0000 : 8,
 			0x0100 : 34,
 			0x0200 : 69,

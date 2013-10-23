@@ -441,15 +441,7 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 		}
 		else
 		{
-			DWORD * flagvar = (DWORD*) ((char*)defaults + fd->structoffset);
-			if (mod == '+')
-			{
-				*flagvar |= fd->flagbit;
-			}
-			else
-			{
-				*flagvar &= ~fd->flagbit;
-			}
+			ModActorFlag(defaults, fd, mod == '+');
 		}
 	}
 	else
@@ -875,7 +867,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 		OPTIONAL = 1
 	};
 
-	bool error = false;
+	unsigned int error = 0;
 	const AFuncDesc *afd;
 	FName funcname;
 	FString args;
@@ -884,8 +876,8 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
-		sc.ScriptMessage ("action functions can only be imported by internal class and actor definitions!");
-		error++;
+		sc.ScriptMessage ("Action functions can only be imported by internal class and actor definitions!");
+		++error;
 	}
 
 	sc.MustGetToken(TK_Native);
@@ -895,7 +887,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 	if (afd == NULL)
 	{
 		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", sc.String);
-		error++;
+		++error;
 	}
 	sc.MustGetToken('(');
 	if (!sc.CheckToken(')'))
@@ -1006,7 +998,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 		}
 		if (error)
 		{
-			FScriptPosition::ErrorCounter++;
+			FScriptPosition::ErrorCounter += error;
 		}
 		else if (cls->Symbols.AddSymbol (sym) == NULL)
 		{
@@ -1108,7 +1100,7 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 		info->DoomEdNum = DoomEdNum > 0? DoomEdNum : -1;
 		info->Class->Meta.SetMetaString (ACMETA_Lump, Wads.GetLumpFullPath(sc.LumpNum));
 
-		SetReplacement(info, replaceName);
+		SetReplacement(sc, info, replaceName);
 
 		ResetBaggage (bag, info->Class->ParentClass);
 		bag->Info = info;
@@ -1179,7 +1171,50 @@ static void ParseActor(FScanner &sc)
 	sc.SetCMode (false);
 }
 
+//==========================================================================
+//
+// Reads a damage definition
+//
+//==========================================================================
 
+static void ParseDamageDefinition(FScanner &sc)
+{
+	sc.SetCMode (true); // This may be 100% irrelevant for such a simple syntax, but I don't know
+
+	// Get DamageType
+
+	sc.MustGetString();
+	FName damageType = sc.String;
+
+	DamageTypeDefinition dtd;
+
+	sc.MustGetToken('{');
+	while (sc.MustGetAnyToken(), sc.TokenType != '}')
+	{
+		if (sc.Compare("FACTOR"))
+		{
+			sc.MustGetFloat();
+			dtd.DefaultFactor = FLOAT2FIXED(sc.Float);
+			if (!dtd.DefaultFactor) dtd.ReplaceFactor = true; // Multiply by 0 yields 0: FixedMul(damage, FixedMul(factor, 0)) is more wasteful than FixedMul(factor, 0)
+		}
+		else if (sc.Compare("REPLACEFACTOR"))
+		{
+			dtd.ReplaceFactor = true;
+		}
+		else if (sc.Compare("NOARMOR"))
+		{
+			dtd.NoArmor = true;
+		}
+		else
+		{
+			sc.ScriptError("Unexpected data (%s) in damagetype definition.", sc.String);
+		}
+	}
+
+	dtd.Apply(damageType);
+
+	sc.SetCMode (false); // (set to true earlier in function)
+}
 
 //==========================================================================
 //
@@ -1261,6 +1296,11 @@ void ParseDecorate (FScanner &sc)
 			else if (sc.Compare("PROJECTILE"))
 			{
 				ParseOldDecoration (sc, DEF_Projectile);
+				break;
+			}
+			else if (sc.Compare("DAMAGETYPE"))
+			{
+				ParseDamageDefinition(sc);
 				break;
 			}
 		default:

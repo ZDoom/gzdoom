@@ -124,6 +124,7 @@ public:
 	bool Reopen ();	// Re-opens imploded file for reading only
 	void Close ();
 	bool IsOpen () const;
+	void GetSizes(unsigned int &one, unsigned int &two) const;
 
 	void Serialize (FArchive &arc);
 

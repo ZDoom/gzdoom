@@ -333,7 +333,10 @@ enum
 	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
 	COMPATF_LIGHT			= 1 << 29,	// Find neighboring light level like Doom
 	COMPATF_POLYOBJ			= 1 << 30,	// Draw polyobjects the old fashioned way
-	COMPATF_MASKEDMIDTEX	= 1 << 31,	// Ignore compositing when drawing masked midtextures
+	COMPATF_MASKEDMIDTEX	= 1u << 31,	// Ignore compositing when drawing masked midtextures
+
+	COMPATF2_BADANGLES		= 1 << 0,	// It is impossible to face directly NSEW.
+	COMPATF2_FLOORMOVE		= 1 << 1,	// Use the same floor motion behavior as Doom.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -345,6 +348,8 @@ enum
 	BCOMPATF_VILEGHOSTS			= 1 << 2,	// Monsters' radius and height aren't restored properly when resurrected.
 	BCOMPATF_BADTELEPORTERS		= 1 << 3,	// Ignore tags on Teleport specials
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
+	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild
+	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 };
 
 // phares 3/20/98:

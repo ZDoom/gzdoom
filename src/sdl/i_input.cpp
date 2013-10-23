@@ -493,10 +493,13 @@ void I_StartTic ()
 	I_GetEvent ();
 }
 
+void I_ProcessJoysticks ();
 void I_StartFrame ()
 {
 	if (KeySymToDIK[SDLK_BACKSPACE] == 0)
 	{
 		InitKeySymMap ();
 	}
+
+	I_ProcessJoysticks();
 }

@@ -61,7 +61,6 @@ void C_SetAlias (const char *name, const char *cmd);
 void C_ClearAliases ();
 
 // build a single string out of multiple strings
-FString BuildString (int argc, char **argv);
 FString BuildString (int argc, FString *argv);
 
 // Class that can parse command lines
@@ -94,6 +93,7 @@ public:
 	void PrintCommand () { Printf ("%s\n", m_Name); }
 
 	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key);
+	static FConsoleCommand* FindByName (const char* name);
 
 	FConsoleCommand *m_Next, **m_Prev;
 	char *m_Name;

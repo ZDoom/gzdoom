@@ -52,6 +52,7 @@
 #include "w_wad.h"
 #include "s_sound.h"
 #include "m_argv.h"
+#include "d_main.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -245,7 +246,7 @@ static const RGBQUAD TextModePalette[16] =
 	{ MD, MD,  0, 0 },		// 3 cyan
 	{  0,  0, MD, 0 },		// 4 red
 	{ MD,  0, MD, 0 },		// 5 magenta
-	{  0, MD, MD, 0 },		// 6 brown
+	{  0, LO, MD, 0 },		// 6 brown
 	{ MD, MD, MD, 0 },		// 7 light gray
 
 	{ LO, LO, LO, 0 },		// 8 dark gray
@@ -276,15 +277,18 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 
 	if (!Args->CheckParm("-nostartup"))
 	{
-		if (gameinfo.gametype == GAME_Hexen)
+		if (DoomStartupInfo.Type == FStartupInfo::HexenStartup ||
+			(gameinfo.gametype == GAME_Hexen && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FHexenStartupScreen(max_progress, hr);
 		}
-		else if (gameinfo.gametype == GAME_Heretic)
+		else if (DoomStartupInfo.Type == FStartupInfo::HereticStartup ||
+			(gameinfo.gametype == GAME_Heretic && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FHereticStartupScreen(max_progress, hr);
 		}
-		else if (gameinfo.gametype == GAME_Strife)
+		else if (DoomStartupInfo.Type == FStartupInfo::StrifeStartup ||
+			(gameinfo.gametype == GAME_Strife && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FStrifeStartupScreen(max_progress, hr);
 		}
@@ -684,8 +688,14 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
-	S_ChangeMusic ("orb", true, true);
-
+	if (DoomStartupInfo.Song.IsNotEmpty())
+	{
+		S_ChangeMusic(DoomStartupInfo.Song.GetChars(), true, true);
+	}
+	else
+	{
+		S_ChangeMusic ("orb", true, true);
+	}
 	hr = S_OK;
 }
 

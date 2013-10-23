@@ -4,6 +4,9 @@ const int PAF_NOSKULLATTACK = 1;
 const int PAF_AIMFACING = 2;
 const int PAF_NOTARGET = 4;
 
+// Flags for A_VileAttack
+const int VAF_DMGTYPEAPPLYTODIRECT = 1;
+
 // Flags for A_Saw
 const int SF_NORANDOM = 1;
 const int SF_RANDOMLIGHTMISS = 2;
@@ -17,12 +20,17 @@ const int CMF_AIMOFFSET = 1;
 const int CMF_AIMDIRECTION = 2;
 const int CMF_TRACKOWNER = 4;
 const int CMF_CHECKTARGETDEAD = 8;
+const int CMF_ABSOLUTEPITCH = 16;
+const int CMF_OFFSETPITCH = 32;
+const int CMF_SAVEPITCH = 64;
+const int CMF_ABSOLUTEANGLE = 128;
 
 // Flags for A_CustomBulletAttack
 const int CBAF_AIMFACING = 1;
 const int CBAF_NORANDOM = 2;
 const int CBAF_EXPLICITANGLE = 4;
 const int CBAF_NOPITCH = 8;
+const int CBAF_NORANDOMPUFFZ = 16;
 
 // Flags for A_GunFlash
 const int GFF_NOEXTCHANGE = 1;
@@ -33,20 +41,28 @@ const int FBF_NORANDOM = 2;
 const int FBF_EXPLICITANGLE = 4;
 const int FBF_NOPITCH = 8;
 const int FBF_NOFLASH = 16;
+const int FBF_NORANDOMPUFFZ = 32;
 
 // Flags for A_SpawnItemEx
-const int SXF_TRANSFERTRANSLATION=1;
-const int SXF_ABSOLUTEPOSITION=2;
-const int SXF_ABSOLUTEANGLE=4;
-const int SXF_ABSOLUTEMOMENTUM=8;
-const int SXF_ABSOLUTEVELOCITY=8;
-const int SXF_SETMASTER=16;
+const int SXF_TRANSFERTRANSLATION = 1;
+const int SXF_ABSOLUTEPOSITION = 2;
+const int SXF_ABSOLUTEANGLE = 4;
+const int SXF_ABSOLUTEMOMENTUM = 8;
+const int SXF_ABSOLUTEVELOCITY = 8;
+const int SXF_SETMASTER = 16;
 const int SXF_NOCHECKPOSITION = 32;
-const int SXF_TELEFRAG=64;
-const int SXF_CLIENTSIDE=128;	// only used by Skulltag
-const int SXF_TRANSFERAMBUSHFLAG=256;
-const int SXF_TRANSFERPITCH=512;
-const int SXF_TRANSFERPOINTERS=1024;
+const int SXF_TELEFRAG = 64;
+const int SXF_CLIENTSIDE = 128;	// only used by Skulltag
+const int SXF_TRANSFERAMBUSHFLAG = 256;
+const int SXF_TRANSFERPITCH = 512;
+const int SXF_TRANSFERPOINTERS = 1024;
+const int SXF_USEBLOODCOLOR = 2048;
+const int SXF_CLEARCALLERTID = 4096;
+const int SXF_MULTIPLYSPEED = 8192;
+const int SXF_TRANSFERSCALE = 16384;
+const int SXF_TRANSFERSPECIAL = 32768;
+const int SXF_CLEARCALLERSPECIAL = 65536;
+const int SXF_TRANSFERSTENCILCOL = 131072;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;
@@ -61,6 +77,7 @@ const int LOF_NOSOUNDCHECK = 2;
 const int LOF_DONTCHASEGOAL = 4;
 const int LOF_NOSEESOUND = 8;
 const int LOF_FULLVOLSEESOUND = 16;
+const int LOF_NOJUMP = 32;
 
 // Flags for A_Respawn
 const int RSF_FOG = 1;
@@ -79,6 +96,7 @@ const int JLOSF_TARGETLOS = 128;
 const int JLOSF_FLIPFOV = 256;
 const int JLOSF_ALLYNOJUMP = 512;
 const int JLOSF_COMBATANTONLY = 1024;
+const int JLOSF_NOAUTOAIM = 2048;
 
 // Flags for A_ChangeVelocity
 const int CVF_RELATIVE = 1;
@@ -86,10 +104,13 @@ const int CVF_REPLACE = 2;
 
 // Flags for A_WeaponReady
 const int WRF_NOBOB = 1;
-const int WRF_NOFIRE = 12;
 const int WRF_NOSWITCH = 2;
 const int WRF_NOPRIMARY = 4;
 const int WRF_NOSECONDARY = 8;
+const int WRF_NOFIRE = WRF_NOPRIMARY | WRF_NOSECONDARY;
+const int WRF_ALLOWRELOAD = 16;
+const int WRF_ALLOWZOOM = 32;
+const int WRF_DISABLESWITCH = 64;
 
 // Morph constants
 const int MRF_ADDSTAMINA = 1;
@@ -109,33 +130,61 @@ const int MRF_UNDOBYDEATHSAVES = 2048;
 const int RGF_SILENT = 1;
 const int RGF_NOPIERCING = 2;
 const int RGF_EXPLICITANGLE = 4;
+const int RGF_FULLBRIGHT = 8;
+const int RGF_CENTERZ = 16;
 
 // Flags for A_Mushroom
 const int MSF_Standard = 0;
 const int MSF_Classic = 1;
 const int MSF_DontHurt = 2;
 
+// Flags for A_Explode
+const int XF_HURTSOURCE = 1;
+const int XF_NOTMISSILE = 4;
+
+// Flags for A_RadiusThrust
+const int RTF_AFFECTSOURCE = 1;
+const int RTF_NOIMPACTDAMAGE = 2;
+const int RTF_NOTMISSILE = 4;
+
 // Flags for A_Blast
 const int BF_USEAMMO = 1;
 const int BF_DONTWARN = 2;
 const int BF_AFFECTBOSSES = 4;
+const int BF_NOIMPACTDAMAGE = 8;
 
 // Flags for A_SeekerMissile
 const int SMF_LOOK = 1;
 const int SMF_PRECISE = 2;
+const int SMF_CURSPEED = 4;
 
 // Flags for A_CustomPunch
 const int CPF_USEAMMO = 1;
 const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
+const int CPF_NORANDOMPUFFZ = 8;
 
 // Flags for A_Teleport
-const int TF_TELEFRAG = 1;
-const int TF_RANDOMDECIDE = 2;
+const int TF_TELEFRAG = 1;const int TF_RANDOMDECIDE = 2;
 
 // Flags for A_WolfAttack
 const int WAF_NORANDOM = 1;
 const int WAF_USEPUFF = 2;
+
+// Flags for A_RadiusGive
+enum
+{
+	RGF_GIVESELF	=   1,
+	RGF_PLAYERS		=   2,
+	RGF_MONSTERS	=   4,
+	RGF_OBJECTS		=   8,
+	RGF_VOODOO		=  16,
+	RGF_CORPSES		=  32,
+	RGF_NOTARGET	=  64,
+	RGF_NOTRACER	= 128,
+	RGF_NOMASTER	= 256,
+	RGF_CUBE		= 512,
+};
 
 // Activation flags
 enum
@@ -254,6 +303,50 @@ Const Int WARPF_COPYINTERPOLATION = 0x40;
 Const Int WARPF_STOP = 0x80;
 Const Int WARPF_TOFLOOR = 0x100;
 Const Int WARPF_TESTONLY = 0x200;
+
+// flags for A_SetPitch
+const int SPF_FORCECLAMP = 1;
+
+
+// flags for A_CheckLOF
+
+enum
+{
+	CLOFF_NOAIM_VERT =			0x1,
+	CLOFF_NOAIM_HORZ =			0x2,
+
+	CLOFF_JUMPENEMY =			0x4,
+	CLOFF_JUMPFRIEND =			0x8,
+	CLOFF_JUMPOBJECT =			0x10,
+	CLOFF_JUMPNONHOSTILE =		0x20,
+
+	CLOFF_SKIPENEMY =			0x40,
+	CLOFF_SKIPFRIEND =			0x80,
+	CLOFF_SKIPOBJECT =			0x100,
+	CLOFF_SKIPNONHOSTILE =		0x200,
+
+	CLOFF_MUSTBESHOOTABLE =		0x400,
+
+	CLOFF_SKIPTARGET =			0x800,
+	CLOFF_ALLOWNULL =			0x1000,
+	CLOFF_CHECKPARTIAL =		0x2000,
+
+	CLOFF_MUSTBEGHOST =			0x4000,
+	CLOFF_IGNOREGHOST =			0x8000,
+	
+	CLOFF_MUSTBESOLID =			0x10000,
+	CLOFF_BEYONDTARGET =		0x20000,
+
+	CLOFF_FROMBASE =			0x40000,
+	CLOFF_MUL_HEIGHT =			0x80000,
+	CLOFF_MUL_WIDTH =			0x100000,
+
+	CLOFF_JUMP_ON_MISS =		0x200000,
+	CLOFF_AIM_VERT_NOOFFSET =	0x400000,
+
+	CLOFF_SKIPOBSTACLES = CLOFF_SKIPENEMY|CLOFF_SKIPFRIEND|CLOFF_SKIPOBJECT|CLOFF_SKIPNONHOSTILE,
+	CLOFF_NOAIM = CLOFF_NOAIM_VERT|CLOFF_NOAIM_HORZ
+};
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

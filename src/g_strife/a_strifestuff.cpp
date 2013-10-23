@@ -524,14 +524,14 @@ class APowerCoupling : public AActor
 {
 	DECLARE_CLASS (APowerCoupling, AActor)
 public:
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 };
 
 IMPLEMENT_CLASS (APowerCoupling)
 
-void APowerCoupling::Die (AActor *source, AActor *inflictor)
+void APowerCoupling::Die (AActor *source, AActor *inflictor, int dmgflags)
 {
-	Super::Die (source, inflictor);
+	Super::Die (source, inflictor, dmgflags);
 
 	int i;
 
@@ -683,7 +683,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
 	AActor *drop = Spawn("FireDroplet", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	drop->velz = -FRACUNIT;
-	P_RadiusAttack (self, self, 64, 64, NAME_Fire, false);
+	P_RadiusAttack (self, self, 64, 64, NAME_Fire, 0);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)

@@ -60,6 +60,7 @@
 #include "v_font.h"
 #include "a_sharedglobal.h"
 #include "farchive.h"
+#include "a_keys.h"
 
 // State.
 #include "r_state.h"
@@ -176,7 +177,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 	}
 	if (deathmatch)
 	{
-		Printf ("%s exited the level.\n", self->player->userinfo.netname);
+		Printf ("%s exited the level.\n", self->player->userinfo.GetName());
 	}
 	return true;
 }
@@ -235,6 +236,8 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{
 		return false;
 	}
+	bool remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
+	if (line->locknumber > 0 && !P_CheckKeys (mo, line->locknumber, remote)) return false;
 	lineActivation = line->activation;
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;
@@ -285,7 +288,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 
 bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 {
-	int lineActivation = line->activation;
+ 	int lineActivation = line->activation;
 
 	if (line->flags & ML_FIRSTSIDEONLY && side == 1)
 	{
@@ -310,7 +313,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{
 		lineActivation |= SPAC_Cross|SPAC_MCross;
 	}
-	if (activationType ==SPAC_Use || activationType == SPAC_UseBack)
+	if (activationType == SPAC_Use || activationType == SPAC_UseBack)
 	{
 		if (!P_CheckSwitchRange(mo, line, side))
 		{
@@ -582,6 +585,86 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	}
 }
 
+//============================================================================
+//
+// P_SectorDamage
+//
+//============================================================================
+
+static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type, const PClass *protectClass, int flags)
+{
+	if (!(actor->flags & MF_SHOOTABLE))
+		return;
+
+	if (!(flags & DAMAGE_NONPLAYERS) && actor->player == NULL)
+		return;
+
+	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
+		return;
+
+	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor->x, actor->y) && !actor->waterlevel)
+		return;
+
+	if (protectClass != NULL)
+	{
+		if (actor->FindInventory(protectClass, !!(flags & DAMAGE_SUBCLASSES_PROTECT)))
+			return;
+	}
+
+	P_DamageMobj (actor, NULL, NULL, amount, type);
+}
+
+void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags)
+{
+	int secnum = -1;
+
+	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	{
+		AActor *actor, *next;
+		sector_t *sec = &sectors[secnum];
+
+		// Do for actors in this sector.
+		for (actor = sec->thinglist; actor != NULL; actor = next)
+		{
+			next = actor->snext;
+			DoSectorDamage(actor, sec, amount, type, protectClass, flags);
+		}
+		// If this is a 3D floor control sector, also do for anything in/on
+		// those 3D floors.
+		for (unsigned i = 0; i < sec->e->XFloor.attached.Size(); ++i)
+		{
+			sector_t *sec2 = sec->e->XFloor.attached[i];
+
+			for (actor = sec2->thinglist; actor != NULL; actor = next)
+			{
+				next = actor->snext;
+				// Only affect actors touching the 3D floor
+				fixed_t z1 = sec->floorplane.ZatPoint(actor->x, actor->y);
+				fixed_t z2 = sec->ceilingplane.ZatPoint(actor->x, actor->y);
+				if (z2 < z1)
+				{
+					// Account for Vavoom-style 3D floors
+					fixed_t zz = z1;
+					z1 = z2;
+					z2 = zz;
+				}
+				if (actor->z + actor->height > z1)
+				{
+					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
+					// damaged (so, anything touching it or above it). Other 3D floors between
+					// the actor and this one will not stop this effect.
+					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2)
+					{
+						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
+						// only works with the real sector's floor. We did the appropriate height checks
+						// for 3D floors already.
+						DoSectorDamage(actor, NULL, amount, type, protectClass, flags | DAMAGE_IN_AIR);
+					}
+				}
+			}
+		}
+	}
+}
 
 //============================================================================
 //
@@ -600,7 +683,7 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
 		if (actor->CheckLocalView (consoleplayer))
 		{
 			if (printmessage) C_MidPrint (SmallFont, secretmessage);
-			if (playsound) S_Sound (CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
+			if (playsound) S_Sound (CHAN_AUTO | CHAN_UI, "misc/secret", 1, ATTN_NORM);
 		}
 	}
 	level.found_secrets++;
@@ -1046,18 +1129,18 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			{
 				// Check if this portal needs to be copied to other sectors
 				// This must be done here to ensure that it gets done only after the portal is set up
-				if (lines[i].special == Sector_SetPortal &&
-					lines[i].args[1] == 1 &&
-					lines[i].args[2] == plane &&
-					lines[i].args[3] == sectortag)
+				if (lines[j].special == Sector_SetPortal &&
+					lines[j].args[1] == 1 &&
+					lines[j].args[2] == plane &&
+					lines[j].args[3] == sectortag)
 				{
-					if (lines[i].args[0] == 0)
+					if (lines[j].args[0] == 0)
 					{
-						SetPortal(lines[i].frontsector, plane, reference, alpha);
+						SetPortal(lines[j].frontsector, plane, reference, alpha);
 					}
 					else
 					{
-						for (int s=-1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
+						for (int s=-1; (s = P_FindSectorFromTag(lines[j].args[0],s)) >= 0;)
 						{
 							SetPortal(&sectors[s], plane, reference, alpha);
 						}
@@ -1179,6 +1262,7 @@ void P_SpawnSpecials (void)
 			break;
 
 		case dScroll_EastLavaDamage:
+			new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 			new DScroller (DScroller::sc_floor, (-FRACUNIT/2)<<3,
 				0, -1, int(sector-sectors), 0);
 			break;
@@ -1386,9 +1470,29 @@ void P_SpawnSpecials (void)
 // This is the main scrolling code
 // killough 3/7/98
 
+// [RH] Compensate for rotated sector textures by rotating the scrolling
+// in the opposite direction.
+static void RotationComp(const sector_t *sec, int which, fixed_t dx, fixed_t dy, fixed_t &tdx, fixed_t &tdy)
+{
+	angle_t an = sec->GetAngle(which);
+	if (an == 0)
+	{
+		tdx = dx;
+		tdy = dy;
+	}
+	else
+	{
+		an = an >> ANGLETOFINESHIFT;
+		fixed_t ca = -finecosine[an];
+		fixed_t sa = -finesine[an];
+		tdx = DMulScale16(dx, ca, -dy, sa);
+		tdy = DMulScale16(dy, ca,  dx, sa);
+	}
+}
+
 void DScroller::Tick ()
 {
-	fixed_t dx = m_dx, dy = m_dy;
+	fixed_t dx = m_dx, dy = m_dy, tdx, tdy;
 
 	if (m_Control != -1)
 	{	// compute scroll amounts based on a sector's height changes
@@ -1432,13 +1536,15 @@ void DScroller::Tick ()
 			break;
 
 		case sc_floor:						// killough 3/7/98: Scroll floor texture
-			sectors[m_Affectee].AddXOffset(sector_t::floor, dx);
-			sectors[m_Affectee].AddYOffset(sector_t::floor, dy);
+			RotationComp(&sectors[m_Affectee], sector_t::floor, dx, dy, tdx, tdy);
+			sectors[m_Affectee].AddXOffset(sector_t::floor, tdx);
+			sectors[m_Affectee].AddYOffset(sector_t::floor, tdy);
 			break;
 
 		case sc_ceiling:					// killough 3/7/98: Scroll ceiling texture
-			sectors[m_Affectee].AddXOffset(sector_t::ceiling, dx);
-			sectors[m_Affectee].AddYOffset(sector_t::ceiling, dy);
+			RotationComp(&sectors[m_Affectee], sector_t::ceiling, dx, dy, tdx, tdy);
+			sectors[m_Affectee].AddXOffset(sector_t::ceiling, tdx);
+			sectors[m_Affectee].AddYOffset(sector_t::ceiling, tdy);
 			break;
 
 		// [RH] Don't actually carry anything here. That happens later.
@@ -1740,24 +1846,28 @@ static void P_SpawnScrollers(void)
 			break;
 
 		case Scroll_Texture_Left:
+			l->special = special;	// Restore the special, for compat_useblocking's benefit.
 			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, l->args[0] * (FRACUNIT/64), 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
+			l->special = special;
 			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, l->args[0] * (-FRACUNIT/64), 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
+			l->special = special;
 			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, 0, l->args[0] * (FRACUNIT/64),
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
+			l->special = special;
 			s = int(lines[i].sidedef[0] - sides);
 			new DScroller (DScroller::sc_side, 0, l->args[0] * (-FRACUNIT/64),
 						   -1, s, accel, SCROLLTYPE(l->args[1]));

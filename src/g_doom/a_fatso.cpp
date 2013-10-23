@@ -141,7 +141,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	if (n == 0) n = self->Damage; // GetMissileDamage (0, 1);
 	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
 
-	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, !(flags & MSF_DontHurt));
+	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, (flags & MSF_DontHurt) ? 0 : RADF_HURTSOURCE);
 	P_CheckSplash(self, 128<<FRACBITS);
 
 	// Now launch mushroom cloud

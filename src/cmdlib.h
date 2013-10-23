@@ -47,7 +47,7 @@ const char *myasctime ();
 
 int strbin (char *str);
 FString strbin1 (const char *start);
-void CleanseString (char *str);
+char *CleanseString (char *str);
 
 void CreatePath(const char * fn);
 

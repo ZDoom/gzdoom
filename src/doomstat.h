@@ -59,6 +59,8 @@ extern	FString			startmap;			// [RH] Actual map name now
 
 extern	bool 			autostart;
 
+extern	FString			StoredWarp;			// [RH] +warp at the command line
+
 // Selected by user. 
 EXTERN_CVAR (Int, gameskill);
 extern	int				NextSkill;			// [RH] Skill to use at next level load
@@ -230,6 +232,7 @@ struct DehInfo
 	BYTE ExplosionStyle;
 	fixed_t ExplosionAlpha;
 	int NoAutofreeze;
+	int BFGCells;
 };
 extern DehInfo deh;
 EXTERN_CVAR (Int, infighting)
@@ -240,6 +243,7 @@ EXTERN_CVAR (Int, dmflags);
 EXTERN_CVAR (Int, dmflags2);	// [BC]
 
 EXTERN_CVAR (Int, compatflags);
-extern int i_compatflags, ii_compatflags, ib_compatflags;
+EXTERN_CVAR (Int, compatflags2);
+extern int i_compatflags, i_compatflags2, ii_compatflags, ii_compatflags2, ib_compatflags;
 
 #endif

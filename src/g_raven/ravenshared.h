@@ -7,7 +7,7 @@ class AMinotaur : public AActor
 {
 	DECLARE_CLASS (AMinotaur, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 
 public:
 	bool Slam (AActor *);
@@ -20,7 +20,7 @@ class AMinotaurFriend : public AMinotaur
 public:
 	int StartTime;
 
-	void Die (AActor *source, AActor *inflictor);
+	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	bool OkayToSwitchTarget (AActor *other);
 	void BeginPlay ();
 	void Serialize (FArchive &arc);

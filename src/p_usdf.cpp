@@ -41,6 +41,7 @@
 #include "doomerrors.h"
 #include "cmdlib.h"
 #include "actor.h"
+#include "w_wad.h"
 
 #define Zd 1
 #define St 2
@@ -223,7 +224,6 @@ class USDFParser : public UDMFParserBase
 		if (reply->ItemCheck.Size() > 0)
 		{
 			if (reply->ItemCheck[0].Amount <= 0) reply->NeedsGold = false;
-			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheck[0].Amount);
 		}
 
 		reply->Reply = ncopystring(ReplyString);
@@ -287,6 +287,7 @@ class USDFParser : public UDMFParserBase
 		//node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
 
 		node->ThisNodeNum = StrifeDialogues.Push(node);
+		node->ItemCheckNode = -1;
 
 		FString SpeakerName;
 		FString Dialogue;

@@ -103,7 +103,7 @@ static inline void MakeChunk (void *where, DWORD type, size_t len);
 static inline void StuffPalette (const PalEntry *from, BYTE *to);
 static bool WriteIDAT (FILE *file, const BYTE *data, int len);
 static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev, int bpp);
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout);
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -384,19 +384,19 @@ PNGHandle *M_VerifyPNG (FILE *file)
 
 	if (fread (&data, 1, 8, file) != 8)
 	{
-		return false;
+		return NULL;
 	}
 	if (data[0] != MAKE_ID(137,'P','N','G') || data[1] != MAKE_ID(13,10,26,10))
 	{ // Does not have PNG signature
-		return false;
+		return NULL;
 	}
 	if (fread (&data, 1, 8, file) != 8)
 	{
-		return false;
+		return NULL;
 	}
 	if (data[1] != MAKE_ID('I','H','D','R'))
 	{ // IHDR must be the first chunk
-		return false;
+		return NULL;
 	}
 
 	// It looks like a PNG so far, so start creating a PNGHandle for it
@@ -451,7 +451,7 @@ PNGHandle *M_VerifyPNG (FILE *file)
 	}
 
 	delete png;
-	return false;
+	return NULL;
 }
 
 //==========================================================================
@@ -604,7 +604,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 				in = prev;
 				if (bitdepth < 8)
 				{
-					UnpackPixels (passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2]);
+					UnpackPixels (passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2], colortype == 0);
 					in = adam7buff[2];
 				}
 				// Distribute pixels into the output buffer
@@ -688,7 +688,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 		passpitch = pitch << interlace;
 		for (curr = buffer + pitch * interlace; curr <= prev; curr += passpitch)
 		{
-			UnpackPixels (width, bytesPerRowIn, bitdepth, curr, curr);
+			UnpackPixels (width, bytesPerRowIn, bitdepth, curr, curr, colortype == 0);
 		}
 	}
 	return true;
@@ -1155,12 +1155,14 @@ void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
 //
 //==========================================================================
 
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout)
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout, bool grayscale)
 {
 	const BYTE *in;
 	BYTE *out;
 	BYTE pack;
 	int lastbyte;
+
+	assert(bitdepth == 1 || bitdepth == 2 || bitdepth == 4);
 
 	out = rowout + width;
 	in = rowin + bytesPerRow;
@@ -1241,5 +1243,44 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *
 			out[1] = pack & 15;
 		}
 		break;
+	}
+
+	// Expand grayscale to 8bpp
+	if (grayscale)
+	{
+		// Put the 2-bit lookup table on the stack, since it's probably already
+		// in a cache line.
+		union
+		{
+			uint32 bits2l;
+			BYTE bits2[4];
+		};
+
+		out = rowout + width;
+		switch (bitdepth)
+		{
+		case 1:
+			while (--out >= rowout)
+			{
+				// 1 becomes -1 (0xFF), and 0 remains untouched.
+				*out = 0 - *out;
+			}
+			break;
+
+		case 2:
+			bits2l = MAKE_ID(0x00,0x55,0xAA,0xFF);
+			while (--out >= rowout)
+			{
+				*out = bits2[*out];
+			}
+			break;
+
+		case 4:
+			while (--out >= rowout)
+			{
+				*out |= (*out << 4);
+			}
+			break;
+		}
 	}
 }

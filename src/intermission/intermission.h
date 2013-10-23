@@ -288,7 +288,7 @@ class DIntermissionController : public DObject
 	TObjPtr<DIntermissionScreen> mScreen;
 	bool mDeleteDesc;
 	bool mFirst;
-	bool mAdvance;
+	bool mAdvance, mSentAdvance;
 	BYTE mGameState;
 	int mIndex;
 
@@ -302,6 +302,8 @@ public:
 	void Ticker ();
 	void Drawer ();
 	void Destroy();
+
+	friend void F_AdvanceIntermission();
 };
 
 
@@ -312,6 +314,7 @@ void F_Drawer ();
 void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state);
 void F_StartIntermission(FName desc, BYTE state);
 void F_EndFinale ();
+void F_AdvanceIntermission();
 
 // Create an intermission from old cluster data
 void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 

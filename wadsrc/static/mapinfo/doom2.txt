@@ -8,6 +8,13 @@ episode map01
 	key = "h"
 }
 
+episode level01
+{
+	name = "No Rest for the Living"
+	key = "n"
+	optional
+}
+
 defaultmap
 {
 	sucktime = 1
@@ -422,5 +429,115 @@ cluster 10
 	flat = "$BGFLAT31"
 	music = "$MUSIC_READ_M"
 	entertext = lookup, "C6TEXT"
+}
+
+// No Rest for the Living
+
+map LEVEL01 lookup "NHUSTR_1"
+{
+	titlepatch = "NWILV00"
+	next = "LEVEL02"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 75
+	music = "$MUSIC_MESSAG"
+}
+
+map LEVEL02 lookup "NHUSTR_2"
+{
+	titlepatch = "NWILV01"
+	next = "LEVEL03"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 105
+	music = "$MUSIC_DDTBLU"
+}
+
+map LEVEL03 lookup "NHUSTR_3"
+{
+	titlepatch = "NWILV02"
+	next = "LEVEL04"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 120
+	music = "$MUSIC_DOOM"
+}
+
+map LEVEL04 lookup "NHUSTR_4"
+{
+	titlepatch = "NWILV03"
+	next = "LEVEL05"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 105
+	music = "$MUSIC_SHAWN"
+}
+
+map LEVEL05 lookup "NHUSTR_5"
+{
+	titlepatch = "NWILV04"
+	next = "LEVEL06"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 210
+	music = "$MUSIC_IN_CIT"
+}
+
+map LEVEL06 lookup "NHUSTR_6"
+{
+	titlepatch = "NWILV05"
+	next = "LEVEL07"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 105
+	sucktime = 1
+	music = "$MUSIC_THE_DA"
+}
+
+map LEVEL07 lookup "NHUSTR_7"
+{
+	titlepatch = "NWILV06"
+	next = "LEVEL08"
+	secretnext = "LEVEL09"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 165
+	map07special
+	music = "$MUSIC_IN_CIT"
+}
+
+map LEVEL08 lookup "NHUSTR_8"
+{
+	titlepatch = "NWILV07"
+	next = "EndGameC"
+	secretnext = "EndGameC"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 105
+	music = "$MUSIC_SHAWN"
+}
+
+map LEVEL09 lookup "NHUSTR_9"
+{
+	titlepatch = "NWILV08"
+	next = "LEVEL05"
+	secretnext = "LEVEL05"
+	sky1 = "SKY1"
+	cluster = 11
+	par = 135
+	music = "$MUSIC_DDTBLU"
+}
+
+cluster 11
+{
+	flat = "RROCK19"
+	music = "$MUSIC_READ_M"
+	exittext = lookup, "NERVETEXT"
 }
 

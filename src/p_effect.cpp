@@ -58,6 +58,8 @@ CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
 CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
 
+FRandom pr_railtrail("RailTrail");
+
 #define FADEFROMTTL(a)	(255/(a))
 
 // [RH] particle globals
@@ -151,8 +153,7 @@ void P_InitParticles ()
 		NumParticles = r_maxparticles;
 
 	// This should be good, but eh...
-	if ( NumParticles < 100 )
-		NumParticles = 100;
+	NumParticles = clamp<WORD>(NumParticles, 100, 65535);
 
 	P_DeinitParticles();
 	Particles = new particle_t[NumParticles];
@@ -208,6 +209,28 @@ void P_FindParticleSubsectors ()
 	}
 }
 
+static TMap<int, int> ColorSaver;
+
+static uint32 ParticleColor(int rgb)
+{
+	int *val;
+	int stuff;
+
+	val = ColorSaver.CheckKey(rgb);
+	if (val != NULL)
+	{
+		return *val;
+	}
+	stuff = rgb | (ColorMatcher.Pick(RPART(rgb), GPART(rgb), BPART(rgb)) << 24);
+	ColorSaver[rgb] = stuff;
+	return stuff;
+}
+
+static uint32 ParticleColor(int r, int g, int b)
+{
+	return ParticleColor(MAKERGB(r, g, b));
+}
+
 void P_InitEffects ()
 {
 	const struct ColorList *color = Colors;
@@ -215,13 +238,13 @@ void P_InitEffects ()
 	P_InitParticles();
 	while (color->color)
 	{
-		*(color->color) = ColorMatcher.Pick (color->r, color->g, color->b);
+		*(color->color) = ParticleColor(color->r, color->g, color->b);
 		color++;
 	}
 
 	int kind = gameinfo.defaultbloodparticlecolor;
-	blood1 = ColorMatcher.Pick(RPART(kind), GPART(kind), BPART(kind));
-	blood2 = ColorMatcher.Pick(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
+	blood1 = ParticleColor(kind);
+	blood2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 }
 
 
@@ -288,11 +311,16 @@ void P_RunEffects ()
 }
 
 //
-// AddParticle
+// JitterParticle
 //
 // Creates a particle with "jitter"
 //
 particle_t *JitterParticle (int ttl)
+{
+	return JitterParticle (ttl, 1.0);
+}
+// [XA] Added "drift speed" multiplier setting for enhanced railgun stuffs.
+particle_t *JitterParticle (int ttl, float drift)
 {
 	particle_t *particle = NewParticle ();
 
@@ -302,10 +330,10 @@ particle_t *JitterParticle (int ttl)
 
 		// Set initial velocities
 		for (i = 3; i; i--, val++)
-			*val = (FRACUNIT/4096) * (M_Random () - 128);
+			*val = (int)((FRACUNIT/4096) * (M_Random () - 128) * drift);
 		// Set initial accelerations
 		for (i = 3; i; i--, val++)
-			*val = (FRACUNIT/16384) * (M_Random () - 128);
+			*val = (int)((FRACUNIT/16384) * (M_Random () - 128) * drift);
 
 		particle->trans = 255;	// fully opaque
 		particle->ttl = ttl;
@@ -520,8 +548,8 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 		color2 = grey1;
 		break;
 	default:	// colorized blood
-		color1 = ColorMatcher.Pick(RPART(kind), GPART(kind), BPART(kind));
-		color2 = ColorMatcher.Pick(RPART(kind)>>1, GPART(kind)>>1, BPART(kind)>>1);
+		color1 = ParticleColor(kind);
+		color2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 		break;
 	}
 
@@ -558,21 +586,23 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, bool silent)
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, int flags, const PClass *spawnclass, angle_t angle, int duration, float sparsity, float drift)
 {
 	double length, lengthsquared;
 	int steps, i;
 	FAngle deg;
 	FVector3 step, dir, pos, extend;
+	bool fullbright;
 
 	dir = end - start;
 	lengthsquared = dir | dir;
 	length = sqrt(lengthsquared);
-	steps = int(length / 3);
+	steps = xs_FloorToInt(length / 3);
+	fullbright = !!(flags & RAF_FULLBRIGHT);
 
 	if (steps)
 	{
-		if (!silent)
+		if (!(flags & RAF_SILENT))
 		{
 			FSoundID sound;
 			
@@ -598,7 +628,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			{
 
 				// Only consider sound in 2D (for now, anyway)
-				// [BB] You have to devide by lengthsquared here, not multiply with it.
+				// [BB] You have to divide by lengthsquared here, not multiply with it.
 
 				r = ((start.Y - FIXED2FLOAT(mo->y)) * (-dir.Y) - (start.X - FIXED2FLOAT(mo->x)) * (dir.X)) / lengthsquared;
 				r = clamp<double>(r, 0., 1.);
@@ -641,12 +671,12 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	step = dir * 3;
 
 	// Create the outer spiral.
-	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0)
+	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0 && (spawnclass == NULL))
 	{
-		FVector3 spiral_step = step * r_rail_spiralsparsity;
-		int spiral_steps = steps * r_rail_spiralsparsity;
+		FVector3 spiral_step = step * r_rail_spiralsparsity * sparsity;
+		int spiral_steps = (int)(steps * r_rail_spiralsparsity / sparsity);
 		
-		color1 = color1 == 0 ? -1 : ColorMatcher.Pick(RPART(color1), GPART(color1), BPART(color1));
+		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = start;
 		deg = FAngle(270);
 		for (i = spiral_steps; i; i--)
@@ -657,15 +687,18 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			if (!p)
 				return;
 
+			int spiralduration = (duration == 0) ? 35 : duration;
+
 			p->trans = 255;
-			p->ttl = 35;
-			p->fade = FADEFROMTTL(35);
+			p->ttl = duration;
+			p->fade = FADEFROMTTL(spiralduration);
 			p->size = 3;
+			p->bright = fullbright;
 
 			tempvec = FMatrix3x3(dir, deg) * extend;
-			p->velx = FLOAT2FIXED(tempvec.X)>>4;
-			p->vely = FLOAT2FIXED(tempvec.Y)>>4;
-			p->velz = FLOAT2FIXED(tempvec.Z)>>4;
+			p->velx = FLOAT2FIXED(tempvec.X * drift)>>4;
+			p->vely = FLOAT2FIXED(tempvec.Y * drift)>>4;
+			p->velz = FLOAT2FIXED(tempvec.Z * drift)>>4;
 			tempvec += pos;
 			p->x = FLOAT2FIXED(tempvec.X);
 			p->y = FLOAT2FIXED(tempvec.Y);
@@ -694,18 +727,20 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	}
 
 	// Create the inner trail.
-	if (color2 != -1 && r_rail_trailsparsity > 0)
+	if (color2 != -1 && r_rail_trailsparsity > 0 && spawnclass == NULL)
 	{
-		FVector3 trail_step = step * r_rail_trailsparsity;
-		int trail_steps = steps * r_rail_trailsparsity;
+		FVector3 trail_step = step * r_rail_trailsparsity * sparsity;
+		int trail_steps = xs_FloorToInt(steps * r_rail_trailsparsity / sparsity);
 
-		color2 = color2 == 0 ? -1 : ColorMatcher.Pick(RPART(color2), GPART(color2), BPART(color2));
+		color2 = color2 == 0 ? -1 : ParticleColor(color2);
 		FVector3 diff(0, 0, 0);
 
 		pos = start;
 		for (i = trail_steps; i; i--)
 		{
-			particle_t *p = JitterParticle (33);
+			// [XA] inner trail uses a different default duration (33).
+			int innerduration = (duration == 0) ? 33 : duration;
+			particle_t *p = JitterParticle (innerduration, drift);
 
 			if (!p)
 				return;
@@ -731,6 +766,8 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 				p->accz -= FRACUNIT/4096;
 			pos += trail_step;
 
+			p->bright = fullbright;
+
 			if (color2 == -1)
 			{
 				int rand = M_Random();
@@ -746,6 +783,37 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			{
 				p->color = color2;
 			}
+		}
+	}
+	// create actors
+	if (spawnclass != NULL)
+	{
+		if (sparsity < 1)
+			sparsity = 32;
+
+		FVector3 trail_step = (step / 3) * sparsity;
+		int trail_steps = (int)((steps * 3) / sparsity);
+		FVector3 diff(0, 0, 0);
+
+		pos = start;
+		for (i = trail_steps; i; i--)
+		{
+			if (maxdiff > 0)
+			{
+				int rnd = pr_railtrail();
+				if (rnd & 1)
+					diff.X = clamp<float> (diff.X + ((rnd & 8) ? 1 : -1), -maxdiff, maxdiff);
+				if (rnd & 2)
+					diff.Y = clamp<float> (diff.Y + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
+				if (rnd & 4)
+					diff.Z = clamp<float> (diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
+			}			
+			FVector3 postmp = pos + diff;
+
+			AActor *thing = Spawn (spawnclass, FLOAT2FIXED(postmp.X), FLOAT2FIXED(postmp.Y), FLOAT2FIXED(postmp.Z), ALLOW_REPLACE);
+			if (thing)
+				thing->angle = angle;
+			pos += trail_step;
 		}
 	}
 }

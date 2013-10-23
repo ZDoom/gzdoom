@@ -71,6 +71,13 @@
 #include "m_fixed.h"
 #include "g_level.h"
 
+#ifdef USE_XCURSOR
+// Xlib has its own GC, so don't let it interfere.
+#define GC XGC
+#include <X11/Xcursor/Xcursor.h>
+#undef GC
+#endif
+
 EXTERN_CVAR (String, language)
 
 extern "C"
@@ -83,6 +90,11 @@ extern "C"
 extern bool GtkAvailable;
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
+#endif
+#ifdef USE_XCURSOR
+bool UseXCursor;
+SDL_Cursor *X11Cursor;
+SDL_Cursor *FirstCursor;
 #endif
 
 DWORD LanguageIDs[4] =
@@ -124,10 +136,7 @@ static DWORD BaseTime;
 static int TicFrozen;
 
 // Signal based timer.
-static struct timespec SignalTimeOut = { 0, 1000000/TICRATE };
-#ifdef HAVE_SIGTIMEDWAIT
-static sigset_t SignalWaitSet;
-#endif
+static Semaphore timerWait;
 static int tics;
 static DWORD sig_start, sig_next;
 
@@ -175,11 +184,6 @@ int I_GetTimePolled (bool saveMS)
 
 int I_GetTimeSignaled (bool saveMS)
 {
-	if (TicFrozen != 0)
-	{
-		return TicFrozen;
-	}
-
 	if (saveMS)
 	{
 		TicStart = sig_start;
@@ -203,15 +207,12 @@ int I_WaitForTicSignaled (int prevtic)
 {
 	assert (TicFrozen == 0);
 
-#ifdef HAVE_SIGTIMEDWAIT
-	while(sigtimedwait(&SignalWaitSet, NULL, &SignalTimeOut) == -1 && errno == EINTR)
-		;
-#else
-	while(nanosleep(&SignalTimeOut, NULL) == -1 && errno == EINTR)
-		;
-#endif
+	while(tics <= prevtic)
+	{
+		SEMAPHORE_WAIT(timerWait)
+	}
 
-	return I_GetTimePolled(false);
+	return tics;
 }
 
 void I_FreezeTimeSelect (bool frozen)
@@ -258,6 +259,7 @@ void I_HandleAlarm (int sig)
 		tics++;
 	sig_start = SDL_GetTicks();
 	sig_next = Scale((Scale (sig_start, TICRATE, 1000) + 1), 1000, TICRATE);
+	SEMAPHORE_SIGNAL(timerWait)
 }
 
 //
@@ -267,41 +269,30 @@ void I_HandleAlarm (int sig)
 //
 void I_SelectTimer()
 {
-	struct sigaction act;
+	SEMAPHORE_INIT(timerWait, 0, 0)
+#ifndef __sun
+	signal(SIGALRM, I_HandleAlarm);
+#else
+	struct sigaction alrmaction;
+	sigaction(SIGALRM, NULL, &alrmaction);
+	alrmaction.sa_handler = I_HandleAlarm;
+	sigaction(SIGALRM, &alrmaction, NULL);
+#endif
+
 	struct itimerval itv;
-
-	sigfillset (&act.sa_mask);
-	act.sa_flags = 0;
-	// [BL] This doesn't seem to be executed consistantly, I'm guessing the
-	//      sleep functions are taking over the signal. So for now, lets just
-	//      attach WaitForTic to signals in order to reduce CPU usage.
-	//act.sa_handler = I_HandleAlarm;
-	act.sa_handler = SIG_IGN;
-
-	sigaction (SIGALRM, &act, NULL);
-
 	itv.it_interval.tv_sec = itv.it_value.tv_sec = 0;
 	itv.it_interval.tv_usec = itv.it_value.tv_usec = 1000000/TICRATE;
 
-	// [BL] See above.
-	I_GetTime = I_GetTimePolled;
-	I_FreezeTime = I_FreezeTimePolled;
-
 	if (setitimer(ITIMER_REAL, &itv, NULL) != 0)
 	{
-		//I_GetTime = I_GetTimePolled;
-		//I_FreezeTime = I_FreezeTimePolled;
+		I_GetTime = I_GetTimePolled;
+		I_FreezeTime = I_FreezeTimePolled;
 		I_WaitForTic = I_WaitForTicPolled;
 	}
 	else
 	{
-#ifdef HAVE_SIGTIMEDWAIT
-		sigemptyset(&SignalWaitSet);
-		sigaddset(&SignalWaitSet, SIGALRM);
-#endif
-
-		//I_GetTime = I_GetTimeSignaled;
-		//I_FreezeTime = I_FreezeTimeSignaled;
+		I_GetTime = I_GetTimeSignaled;
+		I_FreezeTime = I_FreezeTimeSignaled;
 		I_WaitForTic = I_WaitForTicSignaled;
 	}
 }
@@ -372,6 +363,10 @@ void I_Quit (void)
 extern FILE *Logfile;
 bool gameisdead;
 
+#ifdef __APPLE__
+void Mac_I_FatalError(const char* errortext);
+#endif
+
 void STACK_ARGS I_FatalError (const char *error, ...)
 {
     static bool alreadyThrown = false;
@@ -384,9 +379,13 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		int index;
 		va_list argptr;
 		va_start (argptr, error);
-		index = vsprintf (errortext, error, argptr);
+		index = vsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
 		va_end (argptr);
 
+#ifdef __APPLE__
+		Mac_I_FatalError(errortext);
+#endif // __APPLE__		
+		
 		// Record error to log (if logging)
 		if (Logfile)
 		{
@@ -484,10 +483,12 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	GtkTreeIter iter, defiter;
 	int close_style = 0;
 	int i;
+	char caption[100];
 
 	// Create the dialog window.
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title (GTK_WINDOW(window), GAMESIG " " DOTVERSIONSTR ": Select an IWAD to use");
+	mysnprintf(caption, countof(caption), GAMESIG " %s: Select an IWAD to use", GetVersionString());
+	gtk_window_set_title (GTK_WINDOW(window), caption);
 	gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER(window), 10);
 	g_signal_connect (window, "delete_event", G_CALLBACK(gtk_main_quit), NULL);
@@ -615,9 +616,10 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
-		FString cmd("kdialog --title \""GAMESIG" "DOTVERSIONSTR": Select an IWAD to use\""
+		FString cmd("kdialog --title \"" GAMESIG " ");
+		cmd << GetVersionString() << ": Select an IWAD to use\""
 		            " --menu \"ZDoom found more than one IWAD\n"
-		            "Select from the list below to determine which one to use:\"");
+		            "Select from the list below to determine which one to use:\"";
 
 		for(i = 0; i < numwads; ++i)
 		{
@@ -747,6 +749,8 @@ int I_FindClose (void *handle)
 	findstate_t *state = (findstate_t *)handle;
 	if (handle != (void*)-1 && state->count > 0)
 	{
+		for(int i = 0;i < state->count;++i)
+			free (state->namelist[i]);
 		state->count = 0;
 		free (state->namelist);
 		state->namelist = NULL;
@@ -833,6 +837,47 @@ unsigned int I_MakeRNGSeed()
 	return seed;
 }
 
+#ifdef USE_XCURSOR
+// Hack! Hack! SDL does not provide a clean way to get the XDisplay.
+// On the other hand, there are no more planned updates for SDL 1.2,
+// so we should be fine making assumptions.
+struct SDL_PrivateVideoData
+{
+	int local_X11;
+	Display *X11_Display;
+};
+
+struct SDL_VideoDevice
+{
+	const char *name;
+	int (*functions[9])();
+	SDL_VideoInfo info;
+	SDL_PixelFormat *displayformatalphapixel;
+	int (*morefuncs[9])();
+	Uint16 *gamma;
+	int (*somefuncs[9])();
+	unsigned int texture;				// Only here if SDL was compiled with OpenGL support. Ack!
+	int is_32bit;
+	int (*itsafuncs[13])();
+	SDL_Surface *surfaces[3];
+	SDL_Palette *physpal;
+	SDL_Color *gammacols;
+	char *wm_strings[2];
+	int offsets[2];
+	SDL_GrabMode input_grab;
+	int handles_any_size;
+	SDL_PrivateVideoData *hidden;	// Why did they have to bury this so far in?
+};
+
+extern SDL_VideoDevice *current_video;
+#define SDL_Display (current_video->hidden->X11_Display)
+
+SDL_Cursor *CreateColorCursor(FTexture *cursorpic)
+{
+	return NULL;
+}
+#endif
+
 SDL_Surface *cursorSurface = NULL;
 SDL_Rect cursorBlit = {0, 0, 32, 32};
 bool I_SetCursor(FTexture *cursorpic)
@@ -845,6 +890,21 @@ bool I_SetCursor(FTexture *cursorpic)
 			return false;
 		}
 
+#ifdef USE_XCURSOR
+		if (UseXCursor)
+		{
+			if (FirstCursor == NULL)
+			{
+				FirstCursor = SDL_GetCursor();
+			}
+			X11Cursor = CreateColorCursor(cursorpic);
+			if (X11Cursor != NULL)
+			{
+				SDL_SetCursor(X11Cursor);
+				return true;
+			}
+		}
+#endif
 		if (cursorSurface == NULL)
 			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
 
@@ -866,6 +926,14 @@ bool I_SetCursor(FTexture *cursorpic)
 			SDL_FreeSurface(cursorSurface);
 			cursorSurface = NULL;
 		}
+#ifdef USE_XCURSOR
+		if (X11Cursor != NULL)
+		{
+			SDL_SetCursor(FirstCursor);
+			SDL_FreeCursor(X11Cursor);
+			X11Cursor = NULL;
+		}
+#endif
 	}
 	return true;
 }

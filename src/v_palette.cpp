@@ -159,8 +159,8 @@ void FPalette::SetPalette (const BYTE *colors)
 	// Find white and black from the original palette so that they can be
 	// used to make an educated guess of the translucency % for a BOOM
 	// translucency map.
-	WhiteIndex = BestColor ((DWORD *)BaseColors, 255, 255, 255);
-	BlackIndex = BestColor ((DWORD *)BaseColors, 0, 0, 0);
+	WhiteIndex = BestColor ((DWORD *)BaseColors, 255, 255, 255, 0, 255);
+	BlackIndex = BestColor ((DWORD *)BaseColors, 0, 0, 0, 0, 255);
 }
 
 // In ZDoom's new texture system, color 0 is used as the transparent color.
@@ -378,6 +378,10 @@ void InitPalette ()
 				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 		}
 	}
+
+	// Colormaps have to be initialized before actors are loaded,
+	// otherwise Powerup.Colormap will not work.
+	R_InitColormaps ();
 }
 
 extern "C" void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);

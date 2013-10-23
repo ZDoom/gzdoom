@@ -50,6 +50,7 @@
 #include "g_level.h"
 #include "p_conversation.h"
 #include "menu/menu.h"
+#include "d_net.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -79,7 +80,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		if (desc->mMusic.IsEmpty())
 		{
 			// only start the default music if this is the first action in an intermission
-			if (first) S_ChangeMusic (gameinfo.finaleMusic, 0, desc->mMusicLooping);
+			if (first) S_ChangeMusic (gameinfo.finaleMusic, gameinfo.finaleOrder, desc->mMusicLooping);
 		}
 		else
 		{
@@ -291,7 +292,7 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
-	if (mText[0] == '$') mText = GStrings[&mText[1]];
+	if (mText[0] == '$') mText = GStrings(&mText[1]);
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
@@ -327,15 +328,42 @@ void DIntermissionScreenText::Drawer ()
 		size_t count;
 		int c;
 		const FRemapTable *range;
-		
-		// draw some of the text onto the screen
-		int rowheight = SmallFont->GetHeight () + (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1);
-		bool scale = (CleanXfac != 1 || CleanYfac != 1);
-
-		int cx = mTextX;
-		int cy = mTextY;
 		const char *ch = mText;
-			
+
+		// Count number of rows in this text. Since it does not word-wrap, we just count
+		// line feed characters.
+		int numrows;
+
+		for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
+		{
+			numrows += (ch[c] == '\n');
+		}
+
+		int rowheight = SmallFont->GetHeight() * CleanYfac;
+		int rowpadding = (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1) * CleanYfac;
+
+		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
+		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		int startx = cx;
+
+		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
+		while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		{
+			rowpadding--;
+		}
+		// If it's still off the bottom, try to center it vertically.
+		if (cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		{
+			cy = (screen->GetHeight() - (numrows * (rowheight + rowpadding) - rowpadding)) / 2;
+			// If it's off the top now, you're screwed. It's too tall to fit.
+			if (cy < 0)
+			{
+				cy = 0;
+			}
+		}
+		rowheight += rowpadding;
+
+		// draw some of the text onto the screen
 		count = (mTicker - mTextDelay) / mTextSpeed;
 		range = SmallFont->GetColorTranslation (mTextColor);
 
@@ -346,33 +374,23 @@ void DIntermissionScreenText::Drawer ()
 				break;
 			if (c == '\n')
 			{
-				cx = mTextX;
+				cx = startx;
 				cy += rowheight;
 				continue;
 			}
 
 			pic = SmallFont->GetChar (c, &w);
-			if (cx+w > SCREENWIDTH)
+			w *= CleanXfac;
+			if (cx + w > SCREENWIDTH)
 				continue;
 			if (pic != NULL)
 			{
-				if (scale)
-				{
-					screen->DrawTexture (pic,
-						cx,// + 320 / 2,
-						cy,// + 200 / 2,
-						DTA_Translation, range,
-						DTA_Clean, true,
-						TAG_DONE);
-				}
-				else
-				{
-					screen->DrawTexture (pic,
-						cx,// + 320 / 2,
-						cy,// + 200 / 2,
-						DTA_Translation, range,
-						TAG_DONE);
-				}
+				screen->DrawTexture (pic,
+					cx,
+					cy,
+					DTA_Translation, range,
+					DTA_CleanNoMove, true,
+					TAG_DONE);
 			}
 			cx += w;
 		}
@@ -391,7 +409,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
 	mClass = PClass::FindClass(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
 	if (mClass != NULL) mDefaults = GetDefaultByType(mClass);
-	else 
+	else
 	{
 		mDefaults = NULL;
 		caststate = NULL;
@@ -488,7 +506,7 @@ int DIntermissionScreenCast::Ticker ()
 
 	if (--casttics > 0 && caststate != NULL)
 		return 0; 				// not time to change state yet
-				
+
 	if (caststate == NULL || caststate->GetTics() == -1 || caststate->GetNextState() == NULL ||
 		(caststate->GetNextState() == caststate && castdeath))
 	{
@@ -505,7 +523,7 @@ int DIntermissionScreenCast::Ticker ()
 		PlayAttackSound();
 		castframes++;
 	}
-		
+
 	if (castframes == 12 && !castdeath)
 	{
 		// go into attack frame
@@ -532,7 +550,7 @@ int DIntermissionScreenCast::Ticker ()
 		}
 		PlayAttackSound();
 	}
-		
+
 	if (castattacking)
 	{
 		if (castframes == 24 || caststate == mDefaults->SeeState )
@@ -543,7 +561,7 @@ int DIntermissionScreenCast::Ticker ()
 			caststate = mDefaults->SeeState;
 		}
 	}
-		
+
 	casttics = caststate->GetTics();
 	if (casttics == -1)
 		casttics = 15;
@@ -554,7 +572,7 @@ void DIntermissionScreenCast::Drawer ()
 {
 	spriteframe_t*		sprframe;
 	FTexture*			pic;
-	
+
 	Super::Drawer();
 
 	const char *name = mName;
@@ -567,22 +585,26 @@ void DIntermissionScreenCast::Drawer ()
 			name,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
-	
+
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
-		int castsprite;
+		int castsprite = caststate->sprite;
 
-		if (!(mDefaults->flags4 & MF4_NOSKIN) && 
+		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
 			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
 			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
 			skins != NULL)
 		{
-			castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
-		}
-		else
-		{
-			castsprite = caststate->sprite;
+			// Only use the skin sprite if this class has not been removed from the
+			// PlayerClasses list.
+			for (unsigned i = 0; i < PlayerClasses.Size(); ++i)
+			{
+				if (PlayerClasses[i].Type == mClass)
+				{
+					castsprite = skins[players[consoleplayer].userinfo.GetSkin()].sprite;
+				}
+			}
 		}
 
 		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
@@ -694,6 +716,7 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mDeleteDesc = DeleteDesc;
 	mIndex = 0;
 	mAdvance = false;
+	mSentAdvance = false;
 	mScreen = NULL;
 	mFirst = true;
 	mGameState = state;
@@ -711,7 +734,7 @@ bool DIntermissionController::NextPage ()
 		return false;
 	}
 
-	if (mScreen != NULL) 
+	if (mScreen != NULL)
 	{
 		bg = mScreen->GetBackground(&fill);
 		mScreen->Destroy();
@@ -763,13 +786,21 @@ bool DIntermissionController::Responder (event_t *ev)
 		{
 			const char *cmd = Bindings.GetBind (ev->data1);
 
-			if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
-				return false;		
+			if (cmd != NULL &&
+				(!stricmp(cmd, "toggleconsole") ||
+				 !stricmp(cmd, "screenshot")))
+			{
+				return false;
+			}
 		}
 
 		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing
 		int res = mScreen->Responder(ev);
-		mAdvance = (res == -1);
+		if (res == -1 && !mSentAdvance)
+		{
+			Net_WriteByte(DEM_ADVANCEINTER);
+			mSentAdvance = true;
+		}
 		return !!res;
 	}
 	return false;
@@ -777,6 +808,10 @@ bool DIntermissionController::Responder (event_t *ev)
 
 void DIntermissionController::Ticker ()
 {
+	if (mAdvance)
+	{
+		mSentAdvance = false;
+	}
 	if (mScreen != NULL)
 	{
 		mAdvance |= (mScreen->Ticker() == -1);
@@ -874,11 +909,11 @@ void F_StartIntermission(FName seq, BYTE state)
 //
 //==========================================================================
 
-bool F_Responder (event_t* ev) 
-{ 
+bool F_Responder (event_t* ev)
+{
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
-		return DIntermissionController::CurrentIntermission->Responder(ev); 
+		return DIntermissionController::CurrentIntermission->Responder(ev);
 	}
 	return false;
 }
@@ -889,11 +924,11 @@ bool F_Responder (event_t* ev)
 //
 //==========================================================================
 
-void F_Ticker () 
+void F_Ticker ()
 {
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
-		DIntermissionController::CurrentIntermission->Ticker(); 
+		DIntermissionController::CurrentIntermission->Ticker();
 	}
 }
 
@@ -907,7 +942,7 @@ void F_Drawer ()
 {
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
-		DIntermissionController::CurrentIntermission->Drawer(); 
+		DIntermissionController::CurrentIntermission->Drawer();
 	}
 }
 
@@ -922,7 +957,22 @@ void F_EndFinale ()
 {
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
-		DIntermissionController::CurrentIntermission->Destroy(); 
+		DIntermissionController::CurrentIntermission->Destroy();
 		DIntermissionController::CurrentIntermission = NULL;
 	}
 }
+
+//==========================================================================
+//
+// Called by net loop.
+//
+//==========================================================================
+
+void F_AdvanceIntermission()
+{
+	if (DIntermissionController::CurrentIntermission != NULL)
+	{
+		DIntermissionController::CurrentIntermission->mAdvance = true;
+	}
+}
+

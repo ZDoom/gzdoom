@@ -296,7 +296,7 @@ static int it_old_psm_read_patterns(IT_PATTERN * pattern, DUMBFILE * f, int num,
 				if (flags & 0x80) {
 					if ((*ptr < 60) && (channel < pchans)) {
 						entry->mask |= IT_ENTRY_NOTE;
-						entry->note = *ptr + 36;
+						entry->note = *ptr + 35;
 					}
 					ptr++;
 					if (*ptr) {

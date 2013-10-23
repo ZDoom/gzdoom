@@ -141,7 +141,8 @@ struct OP2instrEntry {
 /* From MLOPL_IO.CPP */
 #define OPL2CHANNELS	9
 #define OPL3CHANNELS	18
-#define MAXCHANNELS		18
+#define MAXOPL2CHIPS	8
+#define MAXCHANNELS		(OPL2CHANNELS * MAXOPL2CHIPS)
 
 
 /* Channel Flags: */
@@ -175,16 +176,18 @@ struct OPLio {
 	void	OPLwritePan(uint channel, struct OPL2instrument *instr, int pan);
 	void	OPLwriteInstrument(uint channel, struct OPL2instrument *instr);
 	void	OPLshutup(void);
-	void	OPLwriteInitState();
+	void	OPLwriteInitState(bool initopl3);
 
-	virtual int		OPLinit(uint numchips);
+	virtual int		OPLinit(uint numchips, bool stereo=false, bool initopl3=false);
 	virtual void	OPLdeinit(void);
 	virtual void	OPLwriteReg(int which, uint reg, uchar data);
 	virtual void	SetClockRate(double samples_per_tick);
 	virtual void	WriteDelay(int ticks);
 
+	class OPLEmul *chips[MAXOPL2CHIPS];
 	uint OPLchannels;
-	void *chips[2];
+	uint NumChips;
+	bool IsOPL3;
 };
 
 struct DiskWriterIO : public OPLio
@@ -192,7 +195,7 @@ struct DiskWriterIO : public OPLio
 	DiskWriterIO(const char *filename);
 	~DiskWriterIO();
 
-	int OPLinit(uint numchips);
+	int OPLinit(uint numchips, bool notused=false);
 	void OPLdeinit();
 	void OPLwriteReg(int which, uint reg, uchar data);
 	void SetClockRate(double samples_per_tick);
@@ -291,7 +294,6 @@ enum MUSctrl {
     ctrlPoly,
 };
 
-#define OPL_SAMPLE_RATE			49716.0
 #define ADLIB_CLOCK_MUL			24.0
 
 #endif // __MUSLIB_H_

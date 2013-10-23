@@ -62,6 +62,9 @@
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
 
+extern lighttable_t*	fixedcolormap;
+extern FSpecialColormap*realfixedcolormap;
+
 // TYPES -------------------------------------------------------------------
 
 struct InterpolationViewer
@@ -460,7 +463,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 void R_ExecuteSetViewSize ()
 {
 	setsizeneeded = false;
-	BorderNeedRefresh = screen->GetPageCount ();
+	V_SetBorderNeedRefresh();
 
 	R_SetWindow (setblocks, SCREENWIDTH, SCREENHEIGHT, ST_Y);
 
@@ -529,8 +532,9 @@ void R_Init ()
 	StartScreen->Progress();
 	V_InitFonts();
 	StartScreen->Progress();
-	R_InitColormaps ();
-	StartScreen->Progress();
+	// Colormap init moved back to InitPalette()
+	//R_InitColormaps ();
+	//StartScreen->Progress();
 
 	R_InitPointToAngle ();
 	R_InitTables ();
@@ -592,7 +596,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	{
 		viewangle = iview->nviewangle + (LocalViewAngle & 0xFFFF0000);
 
-		fixed_t delta = -(signed)(LocalViewPitch & 0xFFFF0000);
+		fixed_t delta = player->centering ? 0 : -(signed)(LocalViewPitch & 0xFFFF0000);
 
 		viewpitch = iview->nviewpitch;
 		if (delta > 0)
@@ -600,11 +604,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch + delta <= viewpitch)
 			{
-				viewpitch = Renderer->GetMaxViewPitch(true);
+				viewpitch = player->MaxPitch;
 			}
 			else
 			{
-				viewpitch = MIN(viewpitch + delta, Renderer->GetMaxViewPitch(true));
+				viewpitch = MIN(viewpitch + delta, player->MaxPitch);
 			}
 		}
 		else if (delta < 0)
@@ -612,11 +616,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch + delta >= viewpitch)
 			{
-				viewpitch = Renderer->GetMaxViewPitch(false);
+				viewpitch = player->MinPitch;
 			}
 			else
 			{
-				viewpitch = MAX(viewpitch + delta, Renderer->GetMaxViewPitch(false));
+				viewpitch = MAX(viewpitch + delta, player->MinPitch);
 			}
 		}
 	}
@@ -743,10 +747,6 @@ void R_SetupFrame (AActor *actor)
 		{
 			camera = player->camera = player->mo;
 		}
-		if (camera == actor)
-		{
-			P_PredictPlayer (player);
-		}
 	}
 	else
 	{
@@ -772,10 +772,7 @@ void R_SetupFrame (AActor *actor)
 	}
 
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
-		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) &&
-		(camera->RenderStyle.BlendOp != STYLEOP_None) &&
-		!(camera->renderflags & RF_INVISIBLE) &&
-		camera->sprite != SPR_TNT1)
+		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)))
 	{
 		// [RH] Use chasecam view
 		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector);
@@ -817,7 +814,6 @@ void R_SetupFrame (AActor *actor)
 	viewangle = TEST_ANGLE;
 #endif
 
-	Renderer->CopyStackedViewParameters();
 	R_SetViewAngle ();
 
 	interpolator.DoInterpolations (r_TicFrac);
@@ -856,15 +852,17 @@ void R_SetupFrame (AActor *actor)
 	TArray<lightlist_t> &lightlist = viewsector->e->XFloor.lightlist;
 	if (lightlist.Size() > 0)
 	{
-		for(unsigned int i=0;i<lightlist.Size();i++)
+		for(unsigned int i = 0; i < lightlist.Size(); i++)
 		{
-			fixed_t lightbottom;
-			if (i<lightlist.Size()-1) 
-				lightbottom = lightlist[i+1].plane.ZatPoint(viewx, viewy);
-			else 
-				lightbottom = viewsector->floorplane.ZatPoint(viewx, viewy);
-
-			if (lightbottom < viewz)
+			secplane_t *plane;
+			int viewside;
+			plane = (i < lightlist.Size()-1) ? &lightlist[i+1].plane : &viewsector->floorplane;
+			viewside = plane->PointOnSide(viewx, viewy, viewz);
+			// Reverse the direction of the test if the plane was downward facing.
+			// We want to know if the view is above it, whatever its orientation may be.
+			if (plane->c < 0)
+				viewside = -viewside;
+			if (viewside > 0)
 			{
 				// 3d floor 'fog' is rendered as a blending value
 				PalEntry blendv = lightlist[i].blend;
@@ -881,9 +879,9 @@ void R_SetupFrame (AActor *actor)
 		const sector_t *s = viewsector->GetHeightSec();
 		if (s != NULL)
 		{
-			newblend = viewz < s->floorplane.ZatPoint (viewx, viewy)
+			newblend = s->floorplane.PointOnSide(viewx, viewy, viewz) < 0
 				? s->bottommap
-				: viewz > s->ceilingplane.ZatPoint (viewx, viewy)
+				: s->ceilingplane.PointOnSide(viewx, viewy, viewz) < 0
 				? s->topmap
 				: s->midmap;
 			if (APART(newblend) == 0 && newblend >= numfakecmaps)
@@ -913,9 +911,9 @@ void R_SetupFrame (AActor *actor)
 		}
 	}
 
+	Renderer->CopyStackedViewParameters();
 	Renderer->SetupFrame(player);
 
-	P_UnPredictPlayer ();
 	validcount++;
 
 	if (RenderTarget == screen && r_clearbuffer != 0)
@@ -1010,6 +1008,11 @@ void FCanvasTextureInfo::UpdateAll ()
 {
 	FCanvasTextureInfo *probe;
 
+	// curse Doom's overuse of global variables in the renderer.
+	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
+	unsigned char *savecolormap = fixedcolormap;
+	FSpecialColormap *savecm = realfixedcolormap;
+
 	for (probe = List; probe != NULL; probe = probe->Next)
 	{
 		if (probe->Viewpoint != NULL && probe->Texture->bNeedsUpdate)
@@ -1017,6 +1020,9 @@ void FCanvasTextureInfo::UpdateAll ()
 			Renderer->RenderTextureView(probe->Texture, probe->Viewpoint, probe->FOV);
 		}
 	}
+
+	fixedcolormap = savecolormap;
+	realfixedcolormap = savecm;
 }
 
 //==========================================================================
@@ -1034,6 +1040,7 @@ void FCanvasTextureInfo::EmptyList ()
 	for (probe = List; probe != NULL; probe = next)
 	{
 		next = probe->Next;
+		probe->Texture->Unload();
 		delete probe;
 	}
 	List = NULL;

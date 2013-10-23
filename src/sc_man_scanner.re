@@ -1,4 +1,4 @@
-#define	YYCTYPE		char
+#define	YYCTYPE		unsigned char
 #define	YYCURSOR	cursor
 #define	YYLIMIT		limit
 #define	YYMARKER	marker

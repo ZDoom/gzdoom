@@ -66,7 +66,7 @@
 #include "r_main.h"
 #include "r_data/r_translate.h"
 #include "f_wipe.h"
-#include "st_stuff.h"
+#include "sbar.h"
 #include "win32iface.h"
 #include "doomstat.h"
 #include "v_palette.h"
@@ -225,7 +225,8 @@ const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
 
 CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 {
-	BorderNeedRefresh = SB_state = screen->GetPageCount();
+	V_SetBorderNeedRefresh();
+	ST_SetNeedRefresh();
 }
 
 CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1207,6 +1208,11 @@ void D3DFB::Flip()
 			dummy = *(int *)lr.pBits;
 			BlockSurface[BlockNum]->UnlockRect();
 		}
+	}
+	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
+	if (FPSLimitEvent != NULL)
+	{
+		WaitForSingleObject(FPSLimitEvent, 1000);
 	}
 	D3DDevice->Present(NULL, NULL, NULL, NULL);
 	InScene = false;
@@ -2969,6 +2975,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	float v1 = tex->Box->Bottom;
 	double uscale = 1.f / tex->Box->Owner->Width;
 	bool scissoring = false;
+	FBVERTEX *vert;
+	float yoffs;
 
 	if (parms.flipX)
 	{
@@ -2981,6 +2989,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 		x1 -= (parms.texwidth - parms.windowright) * xscale;
 		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
 	}
+
 #if 0
 	float vscale = 1.f / tex->Box->Owner->Height / yscale;
 	if (y0 < parms.uclip)
@@ -3030,7 +3039,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 
 	if (!SetStyle(tex, parms, color0, color1, *quad))
 	{
-		return;
+		goto done;
 	}
 
 	quad->Texture = tex->Box->Owner->Tex;
@@ -3041,7 +3050,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	quad->NumTris = 2;
 	quad->NumVerts = 4;
 
-	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
+	yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 
 #if 0
 	// Coordinates are truncated to integers, because that's effectively
@@ -3058,7 +3067,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	y1 = y1 - yoffs;
 #endif
 
-	FBVERTEX *vert = &VertexData[VertexPos];
+	vert = &VertexData[VertexPos];
 
 	// Fill the vertex buffer.
 	vert[0].x = float(x0);
@@ -3109,7 +3118,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	QuadBatchPos++;
 	VertexPos += 4;
 	IndexPos += 6;
-
+done:
 	if (scissoring)
 	{
 		EndQuadBatch();
@@ -3167,12 +3176,12 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 	quad->Group1 = 0;
 	if (tex->GetTexFormat() == D3DFMT_L8 && !tex->IsGray)
 	{
-		quad->Flags = BQF_WrapUV | BQF_GamePalette | BQF_DisableAlphaTest;
+		quad->Flags = BQF_WrapUV | BQF_GamePalette; // | BQF_DisableAlphaTest;
 		quad->ShaderNum = BQS_PalTex;
 	}
 	else
 	{
-		quad->Flags = BQF_WrapUV | BQF_DisableAlphaTest;
+		quad->Flags = BQF_WrapUV; // | BQF_DisableAlphaTest;
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = NULL;
@@ -3548,6 +3557,7 @@ void D3DFB::EndQuadBatch()
 		}
 		else if ((quad->Flags & BQF_Paletted) == BQF_CustomPalette)
 		{
+			assert(quad->Palette != NULL);
 			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
 		}
 #if 0

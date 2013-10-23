@@ -164,13 +164,15 @@ CVAR(Bool, debuganimated, false, 0)
 void FTextureManager::InitAnimated (void)
 {
 	const BITFIELD texflags = TEXMAN_Overridable;
-		// I think better not! This is only for old ANIMATED definition that
+		// I think better not! This is only for old ANIMATED definitions that
 		// don't know about ZDoom's more flexible texture system.
 		// | FTextureManager::TEXMAN_TryAny;
 
-	if (Wads.CheckNumForName ("ANIMATED") != -1)
+	int lumpnum = Wads.CheckNumForName ("ANIMATED");
+	if (lumpnum != -1)
 	{
-		FMemLump animatedlump = Wads.ReadLump ("ANIMATED");
+		FMemLump animatedlump = Wads.ReadLump (lumpnum);
+		int animatedlen = Wads.LumpLength(lumpnum);
 		const char *animdefs = (const char *)animatedlump.GetMem();
 		const char *anim_p;
 		FTextureID pic1, pic2;
@@ -182,6 +184,11 @@ void FTextureManager::InitAnimated (void)
 
 		for (anim_p = animdefs; *anim_p != -1; anim_p += 23)
 		{
+			// make sure the current chunk of data is inside the lump boundaries.
+			if (anim_p + 22 >= animdefs + animatedlen)
+			{
+				I_Error("Tried to read past end of ANIMATED lump.");
+			}
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
@@ -198,44 +205,52 @@ void FTextureManager::InitAnimated (void)
 					!(pic2 = CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
 					continue;
 			}
-			if (pic1 == pic2)
-			{
-				// This animation only has one frame. Skip it. (Doom aborted instead.)
-				Printf ("Animation %s in ANIMATED has only one frame\n", anim_p + 10);
-				continue;
-			}
 
 			FTexture *tex1 = Texture(pic1);
 			FTexture *tex2 = Texture(pic2);
 
-			if (tex1->UseType != tex2->UseType)
+			animspeed = (BYTE(anim_p[19]) << 0)  | (BYTE(anim_p[20]) << 8) |
+						(BYTE(anim_p[21]) << 16) | (BYTE(anim_p[22]) << 24);
+
+			// SMMU-style swirly hack? Don't apply on already-warping texture
+			if (animspeed > 65535 && tex1 != NULL && !tex1->bWarped)
 			{
-				// not the same type - 
-				continue;
+				FTexture *warper = new FWarp2Texture (tex1);
+				ReplaceTexture (pic1, warper, false);
 			}
-
-			if (debuganimated)
+			// These tests were not really relevant for swirling textures, or even potentially
+			// harmful, so they have been moved to the else block.
+			else
 			{
-				Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
-					tex1->Name, pic1.GetIndex(), tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
-					tex2->Name, pic2.GetIndex(), tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
+				if (tex1->UseType != tex2->UseType)
+				{
+					// not the same type - 
+					continue;
+				}
+
+				if (debuganimated)
+				{
+					Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
+						tex1->Name, pic1.GetIndex(), tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
+						tex2->Name, pic2.GetIndex(), tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
+				}
+
+				if (pic1 == pic2)
+				{
+					// This animation only has one frame. Skip it. (Doom aborted instead.)
+					Printf ("Animation %s in ANIMATED has only one frame\n", anim_p + 10);
+					continue;
+				}
+				// [RH] Allow for backward animations as well as forward.
+				else if (pic1 > pic2)
+				{
+					swapvalues (pic1, pic2);
+					animtype = FAnimDef::ANIM_Backward;
+				}
+
+				// Speed is stored as tics, but we want ms so scale accordingly.
+				AddSimpleAnim (pic1, pic2 - pic1 + 1, animtype, Scale (animspeed, 1000, 35));
 			}
-
-			// [RH] Allow for backward animations as well as forward.
-			if (pic1 > pic2)
-			{
-				swapvalues (pic1, pic2);
-				animtype = FAnimDef::ANIM_Backward;
-			}
-
-			// Speed is stored as tics, but we want ms so scale accordingly.
-			animspeed = /* .speed */
-				Scale ((BYTE(anim_p[19]) << 0) |
-					   (BYTE(anim_p[20]) << 8) |
-					   (BYTE(anim_p[21]) << 16) |
-					   (BYTE(anim_p[22]) << 24), 1000, 35);
-
-			AddSimpleAnim (pic1, pic2 - pic1 + 1, animtype, animspeed);
 		}
 	}
 }
@@ -450,7 +465,7 @@ void FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usety
 void FTextureManager::ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
 {
 	FTextureID framenum;
-	DWORD min, max;
+	DWORD min = 1, max = 1;
 
 	framenum = ParseFramenum (sc, picnum, usetype, missing);
 	ParseTime (sc, min, max);
@@ -521,6 +536,7 @@ void FTextureManager::ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 	}
 	else
 	{
+		min = max = 1;
 		sc.ScriptError ("Must specify a duration for animation frame");
 	}
 }
@@ -641,6 +657,17 @@ void FTextureManager::ParseCameraTexture(FScanner &sc)
 		else
 		{
 			sc.UnGet ();
+		}
+	}
+	if (sc.GetString())
+	{
+		if (sc.Compare("WorldPanning"))
+		{
+			viewer->bWorldPanning = true;
+		}
+		else
+		{
+			sc.UnGet();
 		}
 	}
 	viewer->SetScaledSize(fitwidth, fitheight);

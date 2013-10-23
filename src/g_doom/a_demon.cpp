@@ -20,7 +20,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SargAttack)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = ((pr_sargattack()%10)+1)*4;
-		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
-		P_TraceBleed (damage, self->target, self);
+		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
+		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
 }

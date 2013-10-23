@@ -94,6 +94,17 @@ struct FStartupInfo
 	FString Name;
 	DWORD FgColor;			// Foreground color for title banner
 	DWORD BkColor;			// Background color for title banner
+	FString Song;
+	int Type;
+	enum
+	{
+		DefaultStartup,
+		DoomStartup,
+		HereticStartup,
+		HexenStartup,
+		StrifeStartup,
+	};
+
 };
 
 extern FStartupInfo DoomStartupInfo;

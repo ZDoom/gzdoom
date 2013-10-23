@@ -30,6 +30,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_TemplarAttack)
 		damage = (pr_templar() & 4) * 2;
 		angle = self->angle + (pr_templar.Random2() << 19);
 		pitchdiff = pr_templar.Random2() * 332063;
-		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, NAME_None, NAME_MaulerPuff);
+		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, NAME_Hitscan, NAME_MaulerPuff);
 	}
 }

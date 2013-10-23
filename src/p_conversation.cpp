@@ -218,27 +218,6 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 
 //============================================================================
 //
-// P_FreeStrifeConversations
-//
-//============================================================================
-
-void P_FreeStrifeConversations ()
-{
-	FStrifeDialogueNode *node;
-
-	while (StrifeDialogues.Pop (node))
-	{
-		delete node;
-	}
-
-	DialogueRoots.Clear();
-	ClassRoots.Clear();
-
-	PrevNode = NULL;
-}
-
-//============================================================================
-//
 // LoadScriptFile
 //
 // Loads a SCRIPTxx file and converts it into a more useful internal format.
@@ -727,7 +706,6 @@ public:
 
 	DConversationMenu(FStrifeDialogueNode *CurNode) 
 	{
-		menuactive = MENU_OnNoPause;
 		mCurNode = CurNode;
 		mDialogueLines = NULL;
 		mShowGold = false;
@@ -742,7 +720,7 @@ public:
 			toSay = GStrings[dlgtext];
 			if (toSay == NULL)
 			{
-				toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
+				toSay = GStrings["TXT_GOAWAY"];	// Ok, it's lame - but it doesn't look like an error to the player. ;)
 			}
 		}
 		else
@@ -774,7 +752,10 @@ public:
 			{
 				ReplyText = GStrings(ReplyText + 1);
 			}
-			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyText);
+			FString ReplyString = ReplyText;
+			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheck[0].Amount);
+
+			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyString);
 
 			mResponses.Push(mResponseLines.Size());
 			for (j = 0; ReplyLines[j].Width >= 0; ++j)
@@ -831,6 +812,15 @@ public:
 
 	bool MenuEvent(int mkey, bool fromcontroller)
 	{
+		if (demoplayback)
+		{ // During demo playback, don't let the user do anything besides close this menu.
+			if (mkey == MKEY_Back)
+			{
+				Close();
+				return true;
+			}
+			return false;
+		}
 		if (mkey == MKEY_Up)
 		{
 			if (--mSelection < 0) mSelection = mResponses.Size() - 1;
@@ -916,6 +906,10 @@ public:
 
 	bool Responder(event_t *ev)
 	{
+		if (demoplayback)
+		{ // No interaction during demo playback
+			return false;
+		}
 		if (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_Char && ev->data1 >= '0' && ev->data1 <= '9')
 		{ // Activate an item of type numberedmore (dialogue only)
 			mSelection = ev->data1 == '0' ? 9 : ev->data1 - '1';
@@ -935,7 +929,6 @@ public:
 		const char *speakerName;
 		int x, y, linesize;
 		int width, fontheight;
-		int labelofs;
 
 		player_t *cp = &players[consoleplayer];
 
@@ -968,6 +961,7 @@ public:
 		if (CurNode->SpeakerName != NULL)
 		{
 			speakerName = CurNode->SpeakerName;
+			if (speakerName[0] == '$') speakerName = GStrings(speakerName+1);
 		}
 		else
 		{
@@ -1024,8 +1018,6 @@ public:
 		}
 
 		y = mYpos;
-		labelofs = OptionSettings.mLabelOffset;
-		y -= labelofs;
 		fontheight = OptionSettings.mLinespacing;
 
 		int response = 0;
@@ -1050,7 +1042,7 @@ public:
 					int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
 
 					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
-					int yy = (y-1+labelofs - 100) * CleanYfac + screen->GetHeight() / 2;
+					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
 					screen->DrawText (ConFont, color, x, yy, "\xd",
 						DTA_CellX, 8 * CleanXfac,
 						DTA_CellY, 8 * CleanYfac,
@@ -1065,6 +1057,31 @@ public:
 IMPLEMENT_ABSTRACT_CLASS(DConversationMenu)
 int DConversationMenu::mSelection;	// needs to be preserved if the same dialogue is restarted
 
+
+//============================================================================
+//
+// P_FreeStrifeConversations
+//
+//============================================================================
+
+void P_FreeStrifeConversations ()
+{
+	FStrifeDialogueNode *node;
+
+	while (StrifeDialogues.Pop (node))
+	{
+		delete node;
+	}
+
+	DialogueRoots.Clear();
+	ClassRoots.Clear();
+
+	PrevNode = NULL;
+	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	{
+		DMenu::CurrentMenu->Close();
+	}
+}
 
 //============================================================================
 //
@@ -1138,7 +1155,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 				break;
 			}
 		}
-		if (jump)
+		if (jump && CurNode->ItemCheckNode > 0)
 		{
 			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];
@@ -1171,6 +1188,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		M_StartControlPanel (false);
 		M_ActivateMenu(cmenu);
 		ConversationPauseTic = gametic + 20;
+		menuactive = MENU_OnNoPause;
 	}
 }
 
@@ -1397,6 +1415,13 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 {
 	player_t *player = &players[pnum];
 
+	// The conversation menus are normally closed by the menu code, but that
+	// doesn't happen during demo playback, so we need to do it here.
+	if (demoplayback && DMenu::CurrentMenu != NULL &&
+		DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DConversationMenu)))
+	{
+		DMenu::CurrentMenu->Close();
+	}
 	if (netcode == DEM_CONVREPLY)
 	{
 		int nodenum = ReadWord(stream);

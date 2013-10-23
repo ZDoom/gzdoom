@@ -48,10 +48,14 @@ enum EHudState
 {
 	HUD_StatusBar,
 	HUD_Fullscreen,
-	HUD_None
+	HUD_None,
+
+	HUD_AltHud // Used for passing through popups to the alt hud
 };
 
 class AWeapon;
+
+void ST_SetNeedRefresh();
 
 // HUD Message base object --------------------------------------------------
 
@@ -66,25 +70,61 @@ public:
 
 	virtual void Serialize (FArchive &arc);
 
-	void Draw (int bottom);
+	void Draw (int bottom, int visibility);
 	virtual void ResetText (const char *text);
 	virtual void DrawSetup ();
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();	// Returns true to indicate time for removal
 	virtual void ScreenSizeChanged ();
 
+	void SetVisibility(int vis)
+	{
+		VisibilityFlags = vis;
+	}
+	void SetRenderStyle(ERenderStyle style)
+	{
+		Style = style;
+	}
+	void SetAlpha(fixed_t alpha)
+	{
+		Alpha = alpha;
+	}
+	void SetNoWrap(bool nowrap)
+	{
+		NoWrap = nowrap;
+		ResetText(SourceText);
+	}
+	void SetClipRect(int x, int y, int width, int height)
+	{
+		ClipX = x;
+		ClipY = y;
+		ClipWidth = width;
+		ClipHeight = height;
+	}
+	void SetWrapWidth(int wrap)
+	{
+		WrapWidth = wrap;
+		ResetText(SourceText);
+	}
+
 protected:
 	FBrokenLines *Lines;
 	int Width, Height, NumLines;
 	float Left, Top;
-	bool CenterX;
+	bool CenterX, NoWrap;
 	int HoldTics;
 	int Tics;
 	int State;
+	int VisibilityFlags;
 	int HUDWidth, HUDHeight;
+	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
+	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
 	EColorRange TextColor;
 	FFont *Font;
+	FRenderStyle Style;
+	fixed_t Alpha;
 
+	void CalcClipCoords(int hudheight);
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
@@ -93,6 +133,14 @@ private:
 	char *SourceText;
 
 	friend class DBaseStatusBar;
+};
+
+// HUD message visibility flags
+enum
+{
+	HUDMSG_NotWith3DView		= 1,
+	HUDMSG_NotWithFullMap		= 2,
+	HUDMSG_NotWithOverlayMap	= 4,
 };
 
 // HUD Message; appear instantly, then fade out type ------------------------
@@ -242,6 +290,16 @@ int FindMugShotStateIndex(FName state);
 class FTexture;
 class AAmmo;
 
+enum
+{
+	HUDMSGLayer_OverHUD,
+	HUDMSGLayer_UnderHUD,
+	HUDMSGLayer_OverMap,
+
+	NUM_HUDMSGLAYERS,
+	HUDMSGLayer_Default = HUDMSGLayer_OverHUD,
+};
+
 class DBaseStatusBar : public DObject
 {
 	DECLARE_CLASS (DBaseStatusBar, DObject)
@@ -281,11 +339,10 @@ public:
 
 	void SetScaled (bool scale, bool force=false);
 
-	void AttachMessage (DHUDMessage *msg, uint32 id=0);
+	void AttachMessage (DHUDMessage *msg, uint32 id=0, int layer=HUDMSGLayer_Default);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);
 	DHUDMessage *DetachMessage (uint32 id);
 	void DetachAllMessages ();
-	bool CheckMessage (DHUDMessage *msg);
 	void ShowPlayerName ();
 	fixed_t GetDisplacement () { return Displacement; }
 	int GetPlayer ();
@@ -296,6 +353,7 @@ public:
 
 	virtual void Tick ();
 	virtual void Draw (EHudState state);
+			void DrawBottomStuff (EHudState state);
 			void DrawTopStuff (EHudState state);
 	virtual void FlashItem (const PClass *itemtype);
 	virtual void AttachToPlayer (player_t *player);
@@ -343,6 +401,7 @@ public:
 	bool Scaled;
 	bool Centering;
 	bool FixedOrigin;
+	bool CompleteBorder;
 	fixed_t CrosshairSize;
 	fixed_t Displacement;
 
@@ -363,12 +422,11 @@ public:
 private:
 	DBaseStatusBar() {}
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
-	void DrawMessages (int bottom);
+	void DrawMessages (int layer, int bottom);
 	void DrawConsistancy () const;
+	void DrawWaiting () const;
 
-	static BYTE DamageToAlpha[114];
-
-	TObjPtr<DHUDMessage> Messages;
+	TObjPtr<DHUDMessage> Messages[NUM_HUDMSGLAYERS];
 	bool ShowLog;
 };
 
@@ -385,5 +443,7 @@ void ST_FormatMapName(FString &mapname, const char *mapnamecolor = "");
 void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
 extern FTexture *CrosshairImage;
+
+FTextureID GetWeaponIcon(AWeapon *weapon);
 
 #endif /* __SBAR_H__ */

@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL)
+		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO))
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
 				return;
@@ -53,7 +53,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
 
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true, &linetarget);
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, LAF_ISMELEEATTACK, &linetarget);
 
 	// turn to face target
 	if (linetarget)
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 		AWeapon *weapon = self->player->ReadyWeapon;
 		if (weapon != NULL)
 		{
-			if (!weapon->DepleteAmmo (weapon->bAltFire))
+			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 				return;
 
 			P_SetPsprite (self->player, ps_flash, weapon->FindState(NAME_Flash));
@@ -115,6 +115,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	angle_t slope;
 	player_t *player;
 	AActor *linetarget;
+	int actualdamage;
 
 	ACTION_PARAM_START(9);
 	ACTION_PARAM_SOUND(fullsound, 0);
@@ -144,16 +145,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	angle = self->angle + (pr_saw.Random2() * (Spread_XY / 255));
 	slope = P_AimLineAttack (self, angle, Range, &linetarget) + (pr_saw.Random2() * (Spread_Z / 255));
 
-	P_LineAttack (self, angle, Range,
-				  slope, damage,
-				  NAME_None, pufftype);
-
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if ((weapon != NULL) && !(Flags & SF_NOUSEAMMO) && !(!linetarget && (Flags & SF_NOUSEAMMOMISS)))
+	if ((weapon != NULL) && !(Flags & SF_NOUSEAMMO) && !(!linetarget && (Flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO))
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
+
+	P_LineAttack (self, angle, Range, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
 
 	if (!linetarget)
 	{
@@ -182,8 +181,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 		}
 	}
 
-	if (LifeSteal)
-		P_GiveBody (self, (damage * LifeSteal) >> FRACBITS);
+	if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
+		P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS);
 
 	S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		
@@ -224,7 +223,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
@@ -255,7 +254,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
 			return;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
@@ -280,7 +279,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  pitch + (pr_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, NAME_BulletPuff);
+					  NAME_Hitscan, NAME_BulletPuff);
 	}
 }
 
@@ -310,7 +309,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 //
 //------------------------------------------------------------------------------------
 
-void P_SetSafeFlash(AWeapon * weapon, player_t * player, FState * flashstate, int index)
+void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
 {
 
 	const PClass * cls = weapon->GetClass();
@@ -339,9 +338,13 @@ void P_SetSafeFlash(AWeapon * weapon, player_t * player, FState * flashstate, in
 	}
 	// if we get here the state doesn't seem to belong to any class in the inheritance chain
 	// This can happen with Dehacked if the flash states are remapped. 
-	// The only way to check this would be to go through all Dehacked modifiable actors and
-	// find the correct one.
-	// For now let's assume that it will work.
+	// The only way to check this would be to go through all Dehacked modifiable actors, convert
+	// their states into a single flat array and find the correct one.
+	// Rather than that, just check to make sure it belongs to something.
+	if (FState::StaticFindStateOwner(flashstate + index) == NULL)
+	{ // Invalid state. With no index offset, it should at least be valid.
+		index = 0;
+	}
 	P_SetPsprite (player, ps_flash, flashstate + index);
 }
 
@@ -360,7 +363,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 		
 		S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
@@ -401,7 +404,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 	}
 	P_SpawnPlayerMissile (self, PClass::FindClass("Rocket"));
@@ -449,7 +452,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 
 		FState *flash = weapon->FindState(NAME_Flash);
@@ -465,7 +468,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 //
 // [RH] A_FireRailgun
 //
-static void FireRailgun(AActor *self, int RailOffset)
+static void FireRailgun(AActor *self, int offset_xy)
 {
 	int damage;
 	player_t *player;
@@ -478,7 +481,7 @@ static void FireRailgun(AActor *self, int RailOffset)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 
 		FState *flash = weapon->FindState(NAME_Flash);
@@ -490,7 +493,7 @@ static void FireRailgun(AActor *self, int RailOffset)
 
 	damage = deathmatch ? 100 : 150;
 
-	P_RailAttack (self, damage, RailOffset);
+	P_RailAttack (self, damage, offset_xy);
 }
 
 
@@ -530,7 +533,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, deh.BFGCells))
 			return;
 	}
 
@@ -586,8 +589,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 			damage += (pr_bfgspray() & 7) + 1;
 
 		thingToHit = linetarget;
-		P_DamageMobj (thingToHit, self->target, self->target, damage, spray->DamageType);
-		P_TraceBleed (damage, thingToHit, self->target);
+		int newdam = P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash), 
+			spray != NULL && (spray->flags3 & MF3_FOILINVUL)? DMG_FOILINVUL : 0);
+		P_TraceBleed (newdam > 0 ? newdam : damage, thingToHit, self->target);
 	}
 }
 
@@ -623,7 +627,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
 	}
 	self->player->extralight = 2;

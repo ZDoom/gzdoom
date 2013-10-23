@@ -26,7 +26,7 @@
  * pointer to the DUH struct. When you have finished with it, you must
  * pass the pointer to unload_duh() so that the memory can be freed.
  */
-DUH *DUMBEXPORT dumb_load_mod_quick(const char *filename, int restrict)
+DUH *DUMBEXPORT dumb_load_mod_quick(const char *filename, int rstrict)
 {
 	DUH *duh;
 	DUMBFILE *f = dumbfile_open(filename);
@@ -34,7 +34,7 @@ DUH *DUMBEXPORT dumb_load_mod_quick(const char *filename, int restrict)
 	if (!f)
 		return NULL;
 
-	duh = dumb_read_mod_quick(f, restrict);
+	duh = dumb_read_mod_quick(f, rstrict);
 
 	dumbfile_close(f);
 

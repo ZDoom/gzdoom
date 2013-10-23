@@ -774,7 +774,7 @@ void FParser::SF_PlayerName(void)
 	if(plnum !=-1)
 	{
 		t_return.type = svt_string;
-		t_return.string = players[plnum].userinfo.netname;
+		t_return.string = players[plnum].userinfo.GetName();
 	}
 	else
 	{
@@ -3367,7 +3367,7 @@ void FParser::SF_RadiusAttack()
 
 		if (spot && source)
 		{
-			P_RadiusAttack(spot, source, damage, damage, NAME_None, true);
+			P_RadiusAttack(spot, source, damage, damage, NAME_None, RADF_HURTSOURCE);
 		}
 	}
 }
@@ -3747,7 +3747,7 @@ void FParser::SF_LineAttack()
 		angle = (intvalue(t_argv[1]) * (ANG45 / 45));
 		slope = P_AimLineAttack(mo, angle, MISSILERANGE);
 
-		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_None, NAME_BulletPuff);
+		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_Hitscan, NAME_BulletPuff);
 	}
 }
 
@@ -4256,7 +4256,7 @@ void FParser::SF_SpawnShot2(void)
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
 			P_ThrustMobj(mo, mo->angle = source->angle, mo->Speed);
-			if (!P_CheckMissileSpawn(mo)) mo = NULL;
+			if (!P_CheckMissileSpawn(mo, source->radius)) mo = NULL;
 		}
 		t_return.value.mobj = mo;
 	}

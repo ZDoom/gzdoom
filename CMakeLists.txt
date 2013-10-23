@@ -1,4 +1,38 @@
 cmake_minimum_required( VERSION 2.4 )
+project(ZDoom)
+
+# Generator expression are available some time in CMake 2.8. Due to
+# cmake_minimum_required, we can assume a minor version of > 7 implies major >= 2
+if(${CMAKE_MAJOR_VERSION} GREATER 2 OR ${CMAKE_MINOR_VERSION} GREATER 7)
+	option( NO_GENERATOR_EXPRESSIONS "Disable generator expressions (for building pk3s with IDEs)." OFF )
+else(${CMAKE_MAJOR_VERSION} GREATER 2 OR ${CMAKE_MINOR_VERSION} GREATER 7)
+	set( NO_GENERATOR_EXPRESSIONS ON )
+endif(${CMAKE_MAJOR_VERSION} GREATER 2 OR ${CMAKE_MINOR_VERSION} GREATER 7)
+
+# Simplify pk3 building, add_pk3(filename srcdirectory)
+function( add_pk3 PK3_NAME PK3_DIR )
+	get_target_property(ZIPDIR_EXE zipdir LOCATION)
+
+	# Generate target name. Just use "pk3" for main pk3 target.
+	string( REPLACE "." "_" PK3_TARGET ${PK3_NAME} )
+	if( ${PK3_TARGET} STREQUAL "zdoom_pk3" )
+		set( PK3_TARGET "pk3" )
+	endif( ${PK3_TARGET} STREQUAL "zdoom_pk3" )
+
+	if( NO_GENERATOR_EXPRESSIONS )
+		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
+			COMMAND ${ZIPDIR_EXE} -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} $<TARGET_FILE_DIR:zdoom>
+			DEPENDS zipdir ${PK3_DIR} )
+	else( NO_GENERATOR_EXPRESSIONS )
+		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
+			COMMAND ${ZIPDIR_EXE} -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
+			DEPENDS zipdir ${PK3_DIR} )
+	endif( NO_GENERATOR_EXPRESSIONS )
+
+	add_custom_target( ${PK3_TARGET} ALL
+		DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} )
+endfunction( add_pk3 )
 
 IF( NOT CMAKE_BUILD_TYPE )
 	SET( CMAKE_BUILD_TYPE Debug CACHE STRING
@@ -9,9 +43,11 @@ ENDIF( NOT CMAKE_BUILD_TYPE )
 set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created." )
 set( ZDOOM_EXE_NAME "zdoom" CACHE FILEPATH "Name of the executable to create." )
 
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
 option( NO_FMOD "Disable FMODEx sound support" )
 option( NO_OPENAL "Disable OpenAL sound support" )

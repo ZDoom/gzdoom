@@ -365,8 +365,8 @@ ACTOR PillarAlienPower 227
 	States
 	{
 	Spawn:
-		APOW A -1 A_LoopActiveSound
-		Stop
+		APOW A 4 A_LoopActiveSound
+		Loop
 	}
 }
 
@@ -510,7 +510,7 @@ ACTOR WaterDropOnFloor 103
 	Game Strife
 	+NOBLOCKMAP
 	ConversationID 224, -1, -1
-	ActiveSound "world/waterdrips"
+	ActiveSound "world/waterdrip"
 	States
 	{
 	Spawn:

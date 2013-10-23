@@ -153,6 +153,7 @@ enum ELineFlags
 	ML_BLOCKPROJECTILE			= 0x01000000,
 	ML_BLOCKUSE					= 0x02000000,	// blocks all use actions through this line
 	ML_BLOCKSIGHT				= 0x04000000,	// blocks monster line of sight
+	ML_BLOCKHITSCAN				= 0x08000000,	// blocks hitscan attacks
 };
 
 
@@ -342,6 +343,7 @@ struct FMapThing
 	int			special;
 	int			args[5];
 	int			Conversation;
+	fixed_t		gravity;
 
 	void Serialize (FArchive &);
 };
@@ -400,11 +402,25 @@ enum EMapThingFlags
 	STF_ALTSHADOW		= 0x0200,
 };
 
+// A simplified mapthing for player starts
+struct FPlayerStart
+{
+	fixed_t x, y, z;
+	short angle, type;
+
+	FPlayerStart() { }
+	FPlayerStart(const FMapThing *mthing)
+	: x(mthing->x), y(mthing->y), z(mthing->z),
+	  angle(mthing->angle),
+	  type(mthing->type)
+	{ }
+};
 // Player spawn spots for deathmatch.
-extern TArray<FMapThing> deathmatchstarts;
+extern TArray<FPlayerStart> deathmatchstarts;
 
 // Player spawn spots.
-extern	FMapThing		playerstarts[MAXPLAYERS];
+extern FPlayerStart playerstarts[MAXPLAYERS];
+extern TArray<FPlayerStart> AllPlayerStarts;
 
 
 #endif					// __DOOMDATA__

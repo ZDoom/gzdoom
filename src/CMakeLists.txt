@@ -9,15 +9,20 @@ include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
 include( FindPkgConfig )
 
-option( NO_ASM "Disable assembly code" )
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( NOT APPLE )
+	option( NO_ASM "Disable assembly code" OFF )
+else( NOT APPLE )
+	# At the moment asm code doesn't work with OS X, so disable by default
+	option( NO_ASM "Disable assembly code" ON )
+endif( NOT APPLE )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
 	# instead of the separate strip utility.
 	if( APPLE )
 		set( NO_STRIP ON )
 	endif( APPLE )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 
 option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" )
 
@@ -44,7 +49,7 @@ set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
 	"27" "26" "25" "24" "23" "22" "21" "20" "21" "19" "18" "17" "16"
 	"15" "14" "13" "12" "11" "10" "09" "08" "07" "06" "05" "04" "03"
 	"02" "01" "00" )
-set( MAJOR_VERSIONS "30" "28" "26" "24" "22" "20" )
+set( MAJOR_VERSIONS "44" "34" "28" "26" "24" "22" "20" )
 set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
 foreach( majver ${MAJOR_VERSIONS} )
 	foreach( minver ${MINOR_VERSIONS} )
@@ -71,8 +76,11 @@ if( WIN32 )
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
 		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		# This next one is for me.
-		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" )
+		# This next one is for Randy.
+		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
+		# .. and this one for Graf Zahl
+		"D:/portable/FMOD SoundSystem 4.26/FMOD Programmers API WIN32/api"
+		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )
@@ -401,7 +409,7 @@ endif( NO_OPENAL )
 
 # Search for FluidSynth
 
-include( ../FindFluidSynth.cmake )
+find_package( FluidSynth )
 
 # Search for NASM
 
@@ -503,7 +511,7 @@ endif( NOT NO_ASM )
 set( SSE_MATTERS NO )
 
 # SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.
-if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+if( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 	CHECK_CXX_COMPILER_FLAG( "-msse2 -mfpmath=sse" CAN_DO_MFPMATH )
 	CHECK_CXX_COMPILER_FLAG( -arch:SSE2 CAN_DO_ARCHSSE2 )
 	if( CAN_DO_MFPMATH )
@@ -515,7 +523,7 @@ if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
 		set( SSE2_ENABLE -arch:SSE2 )
 		set( SSE_MATTERS YES )
 	endif( CAN_DO_MFPMATH )
-endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+endif( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 
 if( SSE_MATTERS )
 	if( WIN32 )
@@ -535,7 +543,7 @@ endif( SSE_MATTERS )
 
 # Set up flags for GCC
 
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	if( PROFILE )
 		set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
 		set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg" )
@@ -547,24 +555,24 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	if( NOT PROFILE )
 		set( REL_CXX_FLAGS "${REL_CXX_FLAGS} -fomit-frame-pointer" )
 	endif( NOT PROFILE )
-	set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${REL_CXX_FLAGS}" )
-	set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_CXX_FLAGS}" )
-	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_CXX_FLAGS}" )
+	set( CMAKE_CXX_FLAGS_RELEASE "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}" )
+	set( CMAKE_CXX_FLAGS_MINSIZEREL "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
+	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused -Wextra -Wno-missing-field-initializers" )
+	set( CMAKE_CXX_FLAGS "-Wall -Wno-unused -Wextra -Wno-missing-field-initializers ${CMAKE_CXX_FLAGS}" )
 
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
 	# which is a royal pain. The previous version I had been using was fine with them.
 	if( WIN32 )
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas -Wno-comment -Wno-format" )
+		set( CMAKE_CXX_FLAGS "-Wno-unknown-pragmas -Wno-comment -Wno-format ${CMAKE_CXX_FLAGS}" )
 	endif( WIN32 )
 
 	if( NOT NO_STRIP )
 		set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s" )
 		set (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -s" )
 	endif( NOT NO_STRIP )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 
 # Check for functions that may or may not exist.
 
@@ -587,13 +595,6 @@ CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
 if( NOT STRNICMP_EXISTS )
 	add_definitions( -Dstrnicmp=strncasecmp )
 endif( NOT STRNICMP_EXISTS )
-
-if( NOT WIN32 )
-	CHECK_FUNCTION_EXISTS( sigtimedwait SIGTIMEDWAIT_EXISTS )
-	if( SIGTIMEDWAIT_EXISTS )
-		add_definitions( -DHAVE_SIGTIMEDWAIT )
-	endif( SIGTIMEDWAIT_EXISTS )
-endif( NOT WIN32)
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
@@ -634,10 +635,12 @@ if( BACKPATCH )
 	add_definitions( -DBACKPATCH )
 endif( BACKPATCH )
 
-# Update svnrevision.h
+# Update gitinfo.h
+
+get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )
 
 add_custom_target( revision_check ALL
-	COMMAND ${CMAKE_BINARY_DIR}/tools/updaterevision/updaterevision . src/svnrevision.h
+	COMMAND ${UPDATEREVISION_EXE} src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
@@ -678,15 +681,15 @@ if( WIN32 )
 		win32/i_system.cpp
 		win32/st_start.cpp
 		win32/win32video.cpp )
-	if( CMAKE_COMPILER_IS_GNUCXX )
+	if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 		# CMake is not set up to compile and link rc files with GCC. :(
 		add_custom_command( OUTPUT zdoom-rc.o
 			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
 			DEPENDS win32/zdoom.rc )
 		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zdoom-rc.o )
-	else( CMAKE_COMPILER_IS_GNUCXX )
+	else( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
-	endif( CMAKE_COMPILER_IS_GNUCXX )
+	endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR sdl )
 	set( SYSTEM_SOURCES
@@ -701,7 +704,7 @@ else( WIN32 )
 		sdl/sdlvideo.cpp
 		sdl/st_start.cpp )
 	if( APPLE )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} sdl/SDLMain.m sdl/iwadpicker_cocoa.mm )
+		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} sdl/SDLMain.m sdl/iwadpicker_cocoa.mm sdl/i_system_cocoa.mm )
 	endif( APPLE )
 endif( WIN32 )
 
@@ -717,21 +720,19 @@ else( NO_ASM )
 		ADD_ASM_FILE( asm_ia32 tmap2 )
 		ADD_ASM_FILE( asm_ia32 tmap3 )
 	endif( X64 )
-	if( WIN32 )
-		if( NOT X64 )
-			ADD_ASM_FILE( win32 wrappers )
-		endif( NOT X64 )
-	endif( WIN32 )
 endif( NO_ASM )
+
+get_target_property( LEMON_EXE lemon LOCATION )
+get_target_property( RE2C_EXE re2c LOCATION )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .
-	COMMAND ${CMAKE_BINARY_DIR}/tools/lemon/lemon xlat_parser.y
+	COMMAND ${LEMON_EXE} xlat_parser.y
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND ${CMAKE_BINARY_DIR}/tools/re2c/re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
+	COMMAND ${RE2C_EXE} --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
@@ -754,7 +755,37 @@ elseif( FLUIDSYNTH_FOUND )
 	add_definitions( -DHAVE_FLUIDSYNTH )
 endif( DYN_FLUIDSYNTH )
 
+# Project files should be aware of the header files. We can GLOB these since
+# there's generally a new cpp for every header so this file will get changed
+if( WIN32 )
+	set( EXTRA_HEADER_DIRS win32/*.h )
+else( WIN32 )
+	set( EXTRA_HEADER_DIRS sdl/*.h )
+endif( WIN32 )
+file( GLOB HEADER_FILES
+	${EXTRA_HEADER_DIRS}
+	fragglescript/*.h
+	g_doom/*.h
+	g_heretic/*.h
+	g_hexen/*.h
+	g_raven/*.h
+	g_shared/*.h
+	g_strife/*.h
+	intermission/*.h
+	menu/*.h
+	oplsynth/*.h
+	r_data/*.h
+	resourcefiles/*.h
+	sfmt/*.h
+	sound/*.h
+	textures/*.h
+	thingdef/*.h
+	xlat/*.h
+	*.h
+)
+
 add_executable( zdoom WIN32
+	${HEADER_FILES}
 	autostart.cpp
 	${ASM_SOURCES}
 	${SYSTEM_SOURCES}
@@ -803,6 +834,7 @@ add_executable( zdoom WIN32
 	g_skill.cpp
 	gameconfigfile.cpp
 	gi.cpp
+	gitinfo.cpp
 	hu_scores.cpp
 	i_net.cpp
 	info.cpp
@@ -892,6 +924,7 @@ add_executable( zdoom WIN32
 	tables.cpp
 	teaminfo.cpp
 	tempfiles.cpp
+	v_blend.cpp
 	v_collection.cpp
 	v_draw.cpp
 	v_font.cpp
@@ -967,6 +1000,8 @@ add_executable( zdoom WIN32
 	oplsynth/music_opldumper_mididevice.cpp
 	oplsynth/music_opl_mididevice.cpp
 	oplsynth/opl_mus_player.cpp
+	oplsynth/dosbox/opl.cpp
+	oplsynth/OPL3.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1025,6 +1060,7 @@ add_executable( zdoom WIN32
 	thingdef/thingdef_data.cpp
 	thingdef/thingdef_exp.cpp
 	thingdef/thingdef_expression.cpp
+	thingdef/thingdef_function.cpp
 	thingdef/thingdef_parse.cpp
 	thingdef/thingdef_properties.cpp
 	thingdef/thingdef_states.cpp
@@ -1098,7 +1134,7 @@ if( NOT WIN32 )
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 endif( NOT WIN32 )
-if( CMAKE_COMPILER_IS_GNUCXX )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	# GCC misoptimizes this file
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
 
@@ -1106,4 +1142,8 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	if( SSE_MATTERS )
 		set_source_files_properties( x86.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 	endif( SSE_MATTERS )
-endif( CMAKE_COMPILER_IS_GNUCXX )
+endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+
+if( MSVC )
+	set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO")
+endif( MSVC )

@@ -29,7 +29,6 @@ struct event_t;
 extern int ST_X;
 extern int ST_Y;
 
-extern int SB_state;
 bool ST_Responder(event_t* ev);
 
 // [RH] Base blending values (for e.g. underwater)

@@ -96,7 +96,12 @@ SoftSynthMIDIDevice::~SoftSynthMIDIDevice()
 
 int SoftSynthMIDIDevice::OpenStream(int chunks, int flags, void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	Stream = GSnd->CreateStream(FillStream, (SampleRate / chunks) * 4, SoundStream::Float | flags, SampleRate, this);
+	int chunksize = (SampleRate / chunks) * 4;
+	if (!(flags & SoundStream::Mono))
+	{
+		chunksize *= 2;
+	}
+	Stream = GSnd->CreateStream(FillStream, chunksize, SoundStream::Float | flags, SampleRate, this);
 	if (Stream == NULL)
 	{
 		return 2;

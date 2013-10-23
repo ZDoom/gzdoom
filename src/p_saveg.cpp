@@ -50,6 +50,8 @@
 #include "p_setup.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "p_lnspec.h"
+#include "p_acs.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
@@ -89,7 +91,7 @@ void P_SerializePlayers (FArchive &arc, bool skipload)
 		{
 			if (playeringame[i])
 			{
-				arc.WriteString (players[i].userinfo.netname);
+				arc.WriteString (players[i].userinfo.GetName());
 				players[i].Serialize (arc);
 			}
 		}
@@ -112,6 +114,8 @@ void P_SerializePlayers (FArchive &arc, bool skipload)
 		{
 			SpawnExtraPlayers ();
 		}
+		// Redo pitch limits, since the spawned player has them at 0.
+		players[consoleplayer].SendPitchLimits();
 	}
 }
 
@@ -181,7 +185,7 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 		{
 			for (j = 0; j < MAXPLAYERS; ++j)
 			{
-				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.netname, nametemp[i]) == 0)
+				if (playerUsed[j] == 0 && stricmp(players[j].userinfo.GetName(), nametemp[i]) == 0)
 				{ // Found a match, so copy our temp player to the real player
 					Printf ("Found player %d (%s) at %d\n", i, nametemp[i], j);
 					CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
@@ -202,7 +206,7 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 				{
 					if (playerUsed[j] == 0)
 					{
-						Printf ("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.netname);
+						Printf ("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.GetName());
 						CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
 						playerUsed[j] = 1;
 						tempPlayerUsed[i] = 1;
@@ -252,11 +256,19 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 {
 	// The userinfo needs to be saved for real players, but it
 	// needs to come from the save for bots.
-	userinfo_t uibackup = dst->userinfo;
+	userinfo_t uibackup;
+	userinfo_t uibackup2;
+
+	uibackup.TransferFrom(dst->userinfo);
+	uibackup2.TransferFrom(src->userinfo);
+
 	int chasecam = dst->cheats & CF_CHASECAM;	// Remember the chasecam setting
 	bool attackdown = dst->attackdown;
 	bool usedown = dst->usedown;
-	*dst = *src;
+
+	
+	*dst = *src;		// To avoid memory leaks at this point the userinfo in src must be empty which is taken care of by the TransferFrom call above.
+
 	dst->cheats |= chasecam;
 
 	if (dst->isbot)
@@ -272,11 +284,15 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 		}
 		bglobal.botnum++;
 		bglobal.botingame[dst - players] = true;
+		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else
 	{
-		dst->userinfo = uibackup;
+		dst->userinfo.TransferFrom(uibackup);
 	}
+	// Validate the skin
+	dst->userinfo.SkinNumChanged(R_FindSkin(skins[dst->userinfo.GetSkin()].name, dst->CurrentPlayerClass));
+
 	// Make sure the player pawn points to the proper player struct.
 	if (dst->mo != NULL)
 	{
@@ -303,7 +319,7 @@ static void SpawnExtraPlayers ()
 		if (playeringame[i] && players[i].mo == NULL)
 		{
 			players[i].playerstate = PST_ENTER;
-			P_SpawnPlayer (&playerstarts[i]);
+			P_SpawnPlayer(&playerstarts[i], i, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 		}
 	}
 }
@@ -391,8 +407,16 @@ void P_SerializeWorld (FArchive &arc)
 			<< li->activation
 			<< li->special
 			<< li->Alpha
-			<< li->id
-			<< li->args[0] << li->args[1] << li->args[2] << li->args[3] << li->args[4];
+			<< li->id;
+		if (P_IsACSSpecial(li->special))
+		{
+			P_SerializeACSScriptNumber(arc, li->args[0], false);
+		}
+		else
+		{
+			arc << li->args[0];
+		}
+		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
 		for (j = 0; j < 2; j++)
 		{

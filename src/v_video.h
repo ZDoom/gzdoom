@@ -46,6 +46,7 @@ extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
 extern int DisplayWidth, DisplayHeight, DisplayBits;
 
 bool V_DoModeSetup (int width, int height, int bits);
+void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
 class FTexture;
 
@@ -215,6 +216,10 @@ public:
 
 	// 2D Text drawing
 	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...);
+#ifndef DrawText	// See WinUser.h for the definition of DrawText as a macro
+	void STACK_ARGS DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, ...);
+#endif
+	void DrawTextV (FFont *font, int normalcolor, int x, int y, const char *string, va_list tags);
 	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, ...);
 
 	struct DrawParms
@@ -402,6 +407,7 @@ public:
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
 	virtual int QueryNewPalette () = 0;
+	virtual bool Is8BitMode() = 0;
 #endif
 
 protected:
@@ -479,6 +485,7 @@ void V_DrawFrame (int left, int top, int width, int height);
 void V_DrawBorder (int x1, int y1, int x2, int y2);
 void V_RefreshViewBorder ();
 
+void V_SetBorderNeedRefresh();
 
 #if defined(X86_ASM) || defined(X64_ASM)
 extern "C" void ASM_PatchPitch (void);

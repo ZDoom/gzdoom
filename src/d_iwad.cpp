@@ -367,7 +367,7 @@ int FIWadManager::CheckIWAD (const char *doomwaddir, WadStuff *wads)
 // Under UNIX OSes, the search path is:
 //	  1. Current directory
 //	  2. $DOOMWADDIR
-//	  3. $HOME/.zdoom
+//	  3. $HOME/.config/zdoom
 //	  4. The share directory defined at compile time (/usr/local/share/zdoom)
 //
 // The search path can be altered by editing the IWADSearch.Directories
@@ -413,7 +413,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		}
 	}
 
-	if (iwadparm == NULL || wads[0].Path.IsEmpty())
+	if (iwadparm == NULL || wads[0].Path.IsEmpty() || mIWads[wads[0].Type].Required.IsNotEmpty())
 	{
 		if (GameConfig->SetSection ("IWADSearch.Directories"))
 		{
@@ -441,7 +441,8 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 				"heretic shadow of the serpent riders/base",
 				"hexen/base",
 				"hexen deathkings of the dark citadel/base",
-				"ultimate doom/base"
+				"ultimate doom/base",
+				"DOOM 3 BFG Edition/base/wads"
 			};
 			steam_path += "/SteamApps/common/";
 			for (i = 0; i < countof(steam_dirs); ++i)
@@ -515,9 +516,19 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		I_FatalError ("Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
 					  "Did you install ZDoom properly? You can do either of the following:\n"
 					  "\n"
+#if defined(_WIN32)
 					  "1. Place one or more of these wads in the same directory as ZDoom.\n"
 					  "2. Edit your zdoom-username.ini and add the directories of your iwads\n"
 					  "to the list beneath [IWADSearch.Directories]");
+#elif defined(__APPLE__)
+					  "1. Place one or more of these wads in ~/Library/Application Support/zdoom/\n"
+					  "2. Edit your ~/Library/Preferences/zdoom.ini and add the directories\n"
+					  "of your iwads to the list beneath [IWADSearch.Directories]");
+#else
+					  "1. Place one or more of these wads in ~/.config/zdoom/.\n"
+					  "2. Edit your ~/.config/zdoom/zdoom.ini and add the directories of your\n"
+					  "iwads to the list beneath [IWADSearch.Directories]");
+#endif
 	}
 
 	pickwad = 0;

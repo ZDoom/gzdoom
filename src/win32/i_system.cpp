@@ -607,8 +607,8 @@ void I_DetectOS(void)
 
 	if (OSPlatform == os_unknown)
 	{
-		Printf ("(Assuming Windows 95)\n");
-		OSPlatform = os_Win95;
+		Printf ("(Assuming Windows 2000)\n");
+		OSPlatform = os_Win2k;
 	}
 }
 
@@ -1095,7 +1095,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			FString newlabel;
 
 			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " " DOTVERSIONSTR_NOREV ": %s", label);
+			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
 			SetWindowText(hDlg, newlabel.GetChars());
 		}
 		// Populate the list with all the IWADs found
@@ -1187,7 +1187,8 @@ bool I_SetCursor(FTexture *cursorpic)
 {
 	HCURSOR cursor;
 
-	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
+	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null &&
+		(screen == NULL || !screen->Is8BitMode()))
 	{
 		// Must be no larger than 32x32.
 		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
@@ -1567,4 +1568,32 @@ unsigned int I_MakeRNGSeed()
 	}
 	CryptReleaseContext(prov, 0);
 	return seed;
+}
+
+//==========================================================================
+//
+// I_GetLongPathName
+//
+// Returns the long version of the path, or the original if there isn't
+// anything worth changing.
+//
+//==========================================================================
+
+FString I_GetLongPathName(FString shortpath)
+{
+	DWORD buffsize = GetLongPathName(shortpath.GetChars(), NULL, 0);
+	if (buffsize == 0)
+	{ // nothing to change (it doesn't exist, maybe?)
+		return shortpath;
+	}
+	TCHAR *buff = new TCHAR[buffsize];
+	DWORD buffsize2 = GetLongPathName(shortpath.GetChars(), buff, buffsize);
+	if (buffsize2 >= buffsize)
+	{ // Failure! Just return the short path
+		delete[] buff;
+		return shortpath;
+	}
+	FString longpath(buff, buffsize2);
+	delete[] buff;
+	return longpath;
 }

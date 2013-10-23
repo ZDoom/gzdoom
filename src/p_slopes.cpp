@@ -280,7 +280,7 @@ enum
 //
 //==========================================================================
 
-static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
+static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
 {
 	TMap<int, fixed_t> vt_heights[2];
 	FMapThing *mt;
@@ -311,15 +311,17 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
 
 	for(int i = 0; i < numvertexdatas; i++)
 	{
+		int ii = oldvertextable == NULL ? i : oldvertextable[i];
+
 		if (vertexdatas[i].flags & VERTEXFLAG_ZCeilingEnabled)
 		{
-			vt_heights[1][i] = vertexdatas[i].zCeiling;
+			vt_heights[1][ii] = vertexdatas[i].zCeiling;
 			vt_found = true;
 		}
 
 		if (vertexdatas[i].flags & VERTEXFLAG_ZFloorEnabled)
 		{
-			vt_heights[0][i] = vertexdatas[i].zFloor;
+			vt_heights[0][ii] = vertexdatas[i].zFloor;
 			vt_found = true;
 		}
 	}
@@ -413,7 +415,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
 //
 //===========================================================================
 
-void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt)
+void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
 {
 	FMapThing *mt;
 
@@ -421,7 +423,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt)
 	{
 		if ((mt->type >= THING_SlopeFloorPointLine &&
 			 mt->type <= THING_SetCeilingSlope) ||
-			mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
+			mt->type == THING_VavoomFloor || mt->type == THING_VavoomCeiling)
 		{
 			fixed_t x, y, z;
 			secplane_t *refplane;
@@ -439,7 +441,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt)
 				refplane = &sec->floorplane;
 			}
 			z = refplane->ZatPoint (x, y) + (mt->z);
-			if (mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
+			if (mt->type == THING_VavoomFloor || mt->type == THING_VavoomCeiling)
 			{
 				P_VavoomSlope(sec, mt->thingid, x, y, mt->z, mt->type & 1); 
 			}
@@ -465,7 +467,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt)
 		}
 	}
 
-	P_SetSlopesFromVertexHeights(firstmt, lastmt);
+	P_SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
 }
 
 

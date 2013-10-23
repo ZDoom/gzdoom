@@ -326,7 +326,7 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 				param = sc.Number;
 			}
 
-			FListMenuItem *it = new FListMenuItemText(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, text, desc->mFont, desc->mFontColor, action, param);
+			FListMenuItem *it = new FListMenuItemText(desc->mXpos, desc->mYpos, desc->mLinespacing, hotkey, text, desc->mFont, desc->mFontColor, desc->mFontColor2, action, param);
 			desc->mItems.Push(it);
 			desc->mYpos += desc->mLinespacing;
 			if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size()-1;
@@ -452,6 +452,37 @@ static void ParseListMenuBody(FScanner &sc, FListMenuDescriptor *desc)
 //
 //=============================================================================
 
+static bool CheckCompatible(FMenuDescriptor *newd, FMenuDescriptor *oldd)
+{
+	if (oldd->mClass == NULL) return true;
+	return oldd->mClass == newd->mClass;
+}
+
+static bool ReplaceMenu(FScanner &sc, FMenuDescriptor *desc)
+{
+	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
+	if (pOld != NULL && *pOld != NULL) 
+	{
+		if (CheckCompatible(desc, *pOld))
+		{
+			delete *pOld;
+		}
+		else
+		{
+			sc.ScriptMessage("Tried to replace menu '%s' with a menu of different type", desc->mMenuName.GetChars());
+			return true;
+		}
+	}
+	MenuDescriptors[desc->mMenuName] = desc;
+	return false;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 static void ParseListMenu(FScanner &sc)
 {
 	sc.MustGetString();
@@ -478,11 +509,9 @@ static void ParseListMenu(FScanner &sc)
 	desc->mWRight = 0;
 	desc->mCenter = false;
 
-	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
-	if (pOld != NULL && *pOld != NULL) delete *pOld;
-	MenuDescriptors[desc->mMenuName] = desc;
-
 	ParseListMenuBody(sc, desc);
+	bool scratch = ReplaceMenu(sc, desc);
+	if (scratch) delete desc;
 }
 
 //=============================================================================
@@ -509,7 +538,10 @@ static void ParseOptionValue(FScanner &sc)
 		pair.Text = strbin1(sc.String);
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
-	if (pOld != NULL && *pOld != NULL) delete *pOld;
+	if (pOld != NULL && *pOld != NULL) 
+	{
+		delete *pOld;
+	}
 	OptionValues[optname] = val;
 }
 
@@ -539,7 +571,10 @@ static void ParseOptionString(FScanner &sc)
 		pair.Text = strbin1(sc.String);
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
-	if (pOld != NULL && *pOld != NULL) delete *pOld;
+	if (pOld != NULL && *pOld != NULL) 
+	{
+		delete *pOld;
+	}
 	OptionValues[optname] = val;
 }
 
@@ -572,7 +607,7 @@ static void ParseOptionSettings(FScanner &sc)
 		else if (sc.Compare("LabelOffset"))
 		{
 			sc.MustGetNumber();
-			OptionSettings.mLabelOffset = sc.Number;
+			// ignored
 		}
 		else
 		{
@@ -806,13 +841,10 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->mIndent =  DefaultOptionMenuSettings.mIndent;
 	desc->mDontDim =  DefaultOptionMenuSettings.mDontDim;
 
-	FMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
-	if (pOld != NULL && *pOld != NULL) delete *pOld;
-	MenuDescriptors[desc->mMenuName] = desc;
-
 	ParseOptionMenuBody(sc, desc);
-
+	bool scratch = ReplaceMenu(sc, desc);
 	if (desc->mIndent == 0) desc->CalcIndent();
+	if (scratch) delete desc;
 }
 
 
@@ -946,7 +978,7 @@ static void BuildEpisodeMenu()
 					else
 					{
 						it = new FListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
-							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, NAME_Skillmenu, i);
+							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_Skillmenu, i);
 					}
 					ld->mItems.Push(it);
 					posy += ld->mLinespacing;
@@ -1035,7 +1067,7 @@ static void BuildPlayerclassMenu()
 			{
 				// create a dummy item that auto-chooses the default class.
 				FListMenuItemText *it = new FListMenuItemText(0, 0, 0, 'p', "player", 
-					ld->mFont,ld->mFontColor, NAME_Episodemenu, -1000);
+					ld->mFont,ld->mFontColor, ld->mFontColor2, NAME_Episodemenu, -1000);
 				ld->mAutoselect = ld->mItems.Push(it);
 				success = true;
 			}
@@ -1061,17 +1093,17 @@ static void BuildPlayerclassMenu()
 						if (pname != NULL)
 						{
 							FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
-								pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, i);
+								pname, ld->mFont,ld->mFontColor,ld->mFontColor2, NAME_Episodemenu, i);
 							ld->mItems.Push(it);
 							ld->mYpos += ld->mLinespacing;
 							n++;
 						}
 					}
 				}
-				if (n > 1)
+				if (n > 1 && !gameinfo.norandomplayerclass)
 				{
 					FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, 'r',
-						"$MNU_RANDOM", ld->mFont,ld->mFontColor, NAME_Episodemenu, -1);
+						"$MNU_RANDOM", ld->mFont,ld->mFontColor,ld->mFontColor2, NAME_Episodemenu, -1);
 					ld->mItems.Push(it);
 				}
 				if (n == 0)
@@ -1080,7 +1112,7 @@ static void BuildPlayerclassMenu()
 					if (pname != NULL)
 					{
 						FListMenuItemText *it = new FListMenuItemText(ld->mXpos, ld->mYpos, ld->mLinespacing, *pname,
-							pname, ld->mFont,ld->mFontColor, NAME_Episodemenu, 0);
+							pname, ld->mFont,ld->mFontColor,ld->mFontColor2, NAME_Episodemenu, 0);
 						ld->mItems.Push(it);
 					}
 				}
@@ -1105,7 +1137,7 @@ static void BuildPlayerclassMenu()
 		od->mScrollTop = 0;
 		od->mIndent = 160;
 		od->mDontDim = false;
-		od->mNetgameMessage = "$NETGAME";
+		od->mNetgameMessage = "$NEWGAME";
 
 		for (unsigned i = 0; i < PlayerClasses.Size (); i++)
 		{
@@ -1226,7 +1258,6 @@ void M_CreateMenus()
 	BuildPlayerclassMenu();
 	InitCrosshairsList();
 	InitKeySections();
-	UpdateJoystickMenu(NULL);
 
 	FOptionValues **opt = OptionValues.CheckKey(NAME_Mididevices);
 	if (opt != NULL) 
@@ -1242,7 +1273,7 @@ void M_CreateMenus()
 
 //=============================================================================
 //
-// THe skill menu must be refeshed each time it starts up
+// The skill menu must be refeshed each time it starts up
 //
 //=============================================================================
 extern int restart;
@@ -1327,8 +1358,8 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				FSkillInfo &skill = AllSkills[i];
 				FListMenuItem *li;
 				// Using a different name for skills that must be confirmed makes handling this easier.
-				FName action = skill.MustConfirm? NAME_StartgameConfirm : NAME_Startgame;
-
+				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
+					NAME_StartgameConfirm : NAME_Startgame;
 				FString *pItemText = NULL;
 				if (gs->PlayerClass != NULL)
 				{
@@ -1345,14 +1376,14 @@ void M_StartupSkillMenu(FGameStartup *gs)
 					EColorRange color = (EColorRange)skill.GetTextColor();
 					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
 					li = new FListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
-									pItemText? *pItemText : skill.MenuName, ld->mFont, color, action, i);
+									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, i);
 				}
 				ld->mItems.Push(li);
 				y += ld->mLinespacing;
 			}
 			if (AllEpisodes[gs->Episode].mNoSkill || AllSkills.Size() == 1)
 			{
-				ld->mAutoselect = firstitem + MIN(2u, AllSkills.Size()-1);
+				ld->mAutoselect = firstitem + M_GetDefaultSkill();
 			}
 			else
 			{
@@ -1395,7 +1426,8 @@ fail:
 		FSkillInfo &skill = AllSkills[i];
 		FOptionMenuItem *li;
 		// Using a different name for skills that must be confirmed makes handling this easier.
-		const char *action = skill.MustConfirm? "StartgameConfirm" : "Startgame";
+		const char *action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
+			"StartgameConfirm" : "Startgame";
 
 		FString *pItemText = NULL;
 		if (gs->PlayerClass != NULL)
@@ -1407,12 +1439,23 @@ fail:
 		if (!done)
 		{
 			done = true;
-			int defskill = DefaultSkill;
-			if ((unsigned int)defskill >= AllSkills.Size())
-			{
-				defskill = (AllSkills.Size() - 1) / 2;
-			}
-			od->mSelectedItem = defskill;
+			od->mSelectedItem = M_GetDefaultSkill();
 		}
 	}
+}
+
+//=============================================================================
+//
+// Returns the default skill level.
+//
+//=============================================================================
+
+int M_GetDefaultSkill()
+{
+	int defskill = DefaultSkill;
+	if ((unsigned int)defskill >= AllSkills.Size())
+	{
+		defskill = (AllSkills.Size() - 1) / 2;
+	}
+	return defskill;
 }

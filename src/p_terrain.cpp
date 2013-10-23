@@ -631,7 +631,8 @@ static void ParseFloor (FScanner &sc)
 	int terrain;
 
 	sc.MustGetString ();
-	picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Flat);
+	picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Flat,
+		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 	if (!picnum.Exists())
 	{
 		Printf ("Unknown flat %s\n", sc.String);
@@ -650,7 +651,7 @@ static void ParseFloor (FScanner &sc)
 
 //==========================================================================
 //
-// ParseFloor
+// ParseDefault
 //
 //==========================================================================
 

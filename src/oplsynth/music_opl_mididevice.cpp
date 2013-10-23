@@ -41,7 +41,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "v_text.h"
-#include "fmopl.h"
+#include "opl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -60,9 +60,13 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+EXTERN_CVAR(Int, opl_numchips)
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 // CODE --------------------------------------------------------------------
 
@@ -74,6 +78,7 @@
 
 OPLMIDIDevice::OPLMIDIDevice()
 {
+	FullPan = opl_fullpan;
 	FWadLump data = Wads.OpenLumpName("GENMIDI");
 	OPLloadBank(data);
 	SampleRate = (int)OPL_SAMPLE_RATE;
@@ -89,11 +94,11 @@ OPLMIDIDevice::OPLMIDIDevice()
 
 int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	if (io == NULL || io->OPLinit(TwoChips + 1))
+	if (io == NULL || 0 == (NumChips = io->OPLinit(opl_numchips, FullPan, true)))
 	{
 		return 1;
 	}
-	int ret = OpenStream(14, SoundStream::Mono, callback, userdata);
+	int ret = OpenStream(14, (FullPan || io->IsOPL3) ? 0 : SoundStream::Mono, callback, userdata);
 	if (ret == 0)
 	{
 		OPLstopMusic();

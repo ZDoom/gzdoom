@@ -50,6 +50,7 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "r_state.h"
+#include "w_wad.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -58,8 +59,15 @@
 struct FCompatOption
 {
 	const char *Name;
-	int CompatFlags;
-	int BCompatFlags;
+	DWORD CompatFlags;
+	int WhichSlot;
+};
+
+enum
+{
+	SLOT_COMPAT,
+	SLOT_COMPAT2,
+	SLOT_BCOMPAT
 };
 
 enum
@@ -67,7 +75,12 @@ enum
 	CP_END,
 	CP_CLEARFLAGS,
 	CP_SETFLAGS,
-	CP_SETSPECIAL
+	CP_SETSPECIAL,
+	CP_CLEARSPECIAL,
+	CP_SETACTIVATION,
+	CP_SECTORFLOOROFFSET,
+	CP_SETWALLYSCALE,
+	CP_SETTHINGZ,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,6 +90,7 @@ enum
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+extern TArray<FMapThing> MapThingsConverted;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -86,42 +100,57 @@ TMap<FMD5Holder, FCompatValues, FMD5HashTraits> BCompatMap;
 
 static FCompatOption Options[] =
 {
-	{ "setslopeoverflow",		0, BCOMPATF_SETSLOPEOVERFLOW },
-	{ "resetplayerspeed",		0, BCOMPATF_RESETPLAYERSPEED },
-	{ "vileghosts",				0, BCOMPATF_VILEGHOSTS },
-	{ "ignoreteleporttags",		0, BCOMPATF_BADTELEPORTERS },
+	{ "setslopeoverflow",		BCOMPATF_SETSLOPEOVERFLOW, SLOT_BCOMPAT },
+	{ "resetplayerspeed",		BCOMPATF_RESETPLAYERSPEED, SLOT_BCOMPAT },
+	{ "vileghosts",				BCOMPATF_VILEGHOSTS, SLOT_BCOMPAT },
+	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
+	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
+	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
-	{ "shorttex",				COMPATF_SHORTTEX, 0 },
-	{ "stairs",					COMPATF_STAIRINDEX, 0 },
-	{ "limitpain",				COMPATF_LIMITPAIN, 0 },
-	{ "nopassover",				COMPATF_NO_PASSMOBJ, 0 },
-	{ "notossdrops",			COMPATF_NOTOSSDROPS, 0 },
-	{ "useblocking", 			COMPATF_USEBLOCKING, 0 },
-	{ "nodoorlight",			COMPATF_NODOORLIGHT, 0 },
-	{ "ravenscroll",			COMPATF_RAVENSCROLL, 0 },
-	{ "soundtarget",			COMPATF_SOUNDTARGET, 0 },
-	{ "dehhealth",				COMPATF_DEHHEALTH, 0 },
-	{ "trace",					COMPATF_TRACE, 0 },
-	{ "dropoff",				COMPATF_DROPOFF, 0 },
-	{ "boomscroll",				COMPATF_BOOMSCROLL, 0 },
-	{ "invisibility",			COMPATF_INVISIBILITY, 0 },
-	{ "silentinstantfloors",	COMPATF_SILENT_INSTANT_FLOORS, 0 },
-	{ "sectorsounds",			COMPATF_SECTORSOUNDS, 0 },
-	{ "missileclip",			COMPATF_MISSILECLIP, 0 },
-	{ "crossdropoff",			COMPATF_CROSSDROPOFF, 0 },
-	{ "wallrun",				COMPATF_WALLRUN, 0 },		// [GZ] Added for CC MAP29
-	{ "anybossdeath",			COMPATF_ANYBOSSDEATH, 0},	// [GZ] Added for UAC_DEAD
-	{ "mushroom",				COMPATF_MUSHROOM, 0},
-	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, 0 },
-	{ "corpsegibs",				COMPATF_CORPSEGIBS, 0 },
-	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, 0 },
-	{ "spritesort",				COMPATF_SPRITESORT, 0 },
-	{ "hitscan",				COMPATF_HITSCAN, 0 },
-	{ "lightlevel",				COMPATF_LIGHT, 0 },
-	{ "polyobj",				COMPATF_POLYOBJ, 0 },
-	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, 0 },
+	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
+	{ "stairs",					COMPATF_STAIRINDEX, SLOT_COMPAT },
+	{ "limitpain",				COMPATF_LIMITPAIN, SLOT_COMPAT },
+	{ "nopassover",				COMPATF_NO_PASSMOBJ, SLOT_COMPAT },
+	{ "notossdrops",			COMPATF_NOTOSSDROPS, SLOT_COMPAT },
+	{ "useblocking", 			COMPATF_USEBLOCKING, SLOT_COMPAT },
+	{ "nodoorlight",			COMPATF_NODOORLIGHT, SLOT_COMPAT },
+	{ "ravenscroll",			COMPATF_RAVENSCROLL, SLOT_COMPAT },
+	{ "soundtarget",			COMPATF_SOUNDTARGET, SLOT_COMPAT },
+	{ "dehhealth",				COMPATF_DEHHEALTH, SLOT_COMPAT },
+	{ "trace",					COMPATF_TRACE, SLOT_COMPAT },
+	{ "dropoff",				COMPATF_DROPOFF, SLOT_COMPAT },
+	{ "boomscroll",				COMPATF_BOOMSCROLL, SLOT_COMPAT },
+	{ "invisibility",			COMPATF_INVISIBILITY, SLOT_COMPAT },
+	{ "silentinstantfloors",	COMPATF_SILENT_INSTANT_FLOORS, SLOT_COMPAT },
+	{ "sectorsounds",			COMPATF_SECTORSOUNDS, SLOT_COMPAT },
+	{ "missileclip",			COMPATF_MISSILECLIP, SLOT_COMPAT },
+	{ "crossdropoff",			COMPATF_CROSSDROPOFF, SLOT_COMPAT },
+	{ "wallrun",				COMPATF_WALLRUN, SLOT_COMPAT },		// [GZ] Added for CC MAP29
+	{ "anybossdeath",			COMPATF_ANYBOSSDEATH, SLOT_COMPAT },// [GZ] Added for UAC_DEAD
+	{ "mushroom",				COMPATF_MUSHROOM, SLOT_COMPAT },
+	{ "mbfmonstermove",			COMPATF_MBFMONSTERMOVE, SLOT_COMPAT },
+	{ "corpsegibs",				COMPATF_CORPSEGIBS, SLOT_COMPAT },
+	{ "noblockfriends",			COMPATF_NOBLOCKFRIENDS, SLOT_COMPAT },
+	{ "spritesort",				COMPATF_SPRITESORT, SLOT_COMPAT },
+	{ "hitscan",				COMPATF_HITSCAN, SLOT_COMPAT },
+	{ "lightlevel",				COMPATF_LIGHT, SLOT_COMPAT },
+	{ "polyobj",				COMPATF_POLYOBJ, SLOT_COMPAT },
+	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, SLOT_COMPAT },
+	{ "badangles",				COMPATF2_BADANGLES, SLOT_COMPAT2 },
+	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
+
 	{ NULL, 0, 0 }
+};
+
+static const char *const LineSides[] =
+{
+	"Front", "Back", NULL
+};
+
+static const char *const WallTiers[] =
+{
+	"Top", "Mid", "Bot", NULL
 };
 
 static TArray<int> CompatParams;
@@ -189,15 +218,13 @@ void ParseCompatibility()
 			md5array.Push(md5);
 			sc.MustGetString();
 		} while (!sc.Compare("{"));
-		flags.CompatFlags = 0;
-		flags.BCompatFlags = 0;
+		memset(flags.CompatFlags, 0, sizeof(flags.CompatFlags));
 		flags.ExtCommandIndex = ~0u;
 		while (sc.GetString())
 		{
 			if ((i = sc.MatchString(&Options[0].Name, sizeof(*Options))) >= 0)
 			{
-				flags.CompatFlags |= Options[i].CompatFlags;
-				flags.BCompatFlags |= Options[i].BCompatFlags;
+				flags.CompatFlags[Options[i].WhichSlot] |= Options[i].CompatFlags;
 			}
 			else if (sc.Compare("clearlineflags"))
 			{
@@ -226,11 +253,58 @@ void ParseCompatibility()
 
 				sc.MustGetString();
 				CompatParams.Push(P_FindLineSpecial(sc.String, NULL, NULL));
-				for(int i=0;i<5;i++)
+				for (int i = 0; i < 5; i++)
 				{
 					sc.MustGetNumber();
 					CompatParams.Push(sc.Number);
 				}
+			}
+			else if (sc.Compare("clearlinespecial"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_CLEARSPECIAL);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("setactivation"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETACTIVATION);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("sectorflooroffset"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SECTORFLOOROFFSET);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetFloat();
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
+			}
+			else if (sc.Compare("setwallyscale"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETWALLYSCALE);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(LineSides));
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(WallTiers));
+				sc.MustGetFloat();
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
+			}
+			else if (sc.Compare("setthingz"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETTHINGZ);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetFloat();
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
 			else 
 			{
@@ -261,6 +335,7 @@ void CheckCompatibility(MapData *map)
 {
 	FMD5Holder md5;
 	FCompatValues *flags;
+	bool onlyparams = true;
 
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
@@ -269,53 +344,74 @@ void CheckCompatibility(MapData *map)
 	{
 		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
+		ii_compatflags2 = 0;
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}
 	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPOLY1) && Wads.CheckLumpName(map->lumpnum, "MAP36"))
 	{
 		ii_compatflags = COMPATF_POLYOBJ;
+		ii_compatflags2 = 0;
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}
 	else if (Wads.GetLumpFile(map->lumpnum) == 2 && (gameinfo.flags & GI_COMPATPOLY2) && Wads.CheckLumpName(map->lumpnum, "MAP47"))
 	{
 		ii_compatflags = COMPATF_POLYOBJ;
+		ii_compatflags2 = 0;
 		ib_compatflags = 0;
 		ii_compatparams = -1;
 	}
 	else
 	{
-		map->GetChecksum(md5.Bytes);
+		onlyparams = false;
+	}
 
-		flags = BCompatMap.CheckKey(md5);
+	map->GetChecksum(md5.Bytes);
 
-		if (developer)
+	flags = BCompatMap.CheckKey(md5);
+
+	if (developer)
+	{
+		Printf("MD5 = ");
+		for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
 		{
-			Printf("MD5 = ");
-			for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
-			{
-				Printf("%02X", md5.Bytes[j]);
-			}
-			if (flags != NULL) Printf(", cflags = %08x, bflags = %08x\n", flags->CompatFlags, flags->BCompatFlags);
-			else Printf("\n");
+			Printf("%02X", md5.Bytes[j]);
 		}
-
 		if (flags != NULL)
 		{
-			ii_compatflags = flags->CompatFlags;
-			ib_compatflags = flags->BCompatFlags;
-			ii_compatparams = flags->ExtCommandIndex;
+			Printf(", cflags = %08x, cflags2 = %08x, bflags = %08x\n",
+				flags->CompatFlags[SLOT_COMPAT], flags->CompatFlags[SLOT_COMPAT2], flags->CompatFlags[SLOT_BCOMPAT]);
 		}
 		else
 		{
-			ii_compatflags = 0;
-			ib_compatflags = 0;
-			ii_compatparams = -1;
+			Printf("\n");
 		}
+	}
+
+	if (flags != NULL)
+	{
+		if (!onlyparams)
+		{
+			ii_compatflags = flags->CompatFlags[SLOT_COMPAT];
+			ii_compatflags2 = flags->CompatFlags[SLOT_COMPAT2];
+			ib_compatflags = flags->CompatFlags[SLOT_BCOMPAT];
+		}
+		ii_compatparams = flags->ExtCommandIndex;
+	}
+	else
+	{
+		if (!onlyparams)
+		{
+			ii_compatflags = 0;
+			ii_compatflags2 = 0;
+			ib_compatflags = 0;
+		}
+		ii_compatparams = -1;
 	}
 	// Reset i_compatflags
 	compatflags.Callback();
+	compatflags2.Callback();
 }
 
 //==========================================================================
@@ -368,6 +464,61 @@ void SetCompatibilityParams()
 					i+=8;
 					break;
 				}
+				case CP_CLEARSPECIAL:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->special = 0;
+						memset(line->args, 0, sizeof(line->args));
+					}
+					i += 2;
+					break;
+				}
+				case CP_SETACTIVATION:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						line_t *line = &lines[CompatParams[i+1]];
+						line->activation = CompatParams[i+2];
+					}
+					i += 3;
+					break;
+				}
+				case CP_SECTORFLOOROFFSET:
+				{
+					if (CompatParams[i+1] < numsectors)
+					{
+						sector_t *sec = &sectors[CompatParams[i+1]];
+						sec->floorplane.ChangeHeight(CompatParams[i+2]);
+						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2]);
+					}
+					i += 3;
+					break;
+				}
+				case CP_SETWALLYSCALE:
+				{
+					if (CompatParams[i+1] < numlines)
+					{
+						side_t *side = lines[CompatParams[i+1]].sidedef[CompatParams[i+2]];
+						if (side != NULL)
+						{
+							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4]);
+						}
+					}
+					i += 5;
+					break;
+				}
+				case CP_SETTHINGZ:
+				{
+					// When this is called, the things haven't been spawned yet so we can alter the position inside the MapThings array.
+					if ((unsigned)CompatParams[i+1] < MapThingsConverted.Size())
+					{
+						MapThingsConverted[CompatParams[i+1]].z = CompatParams[i+2];
+					}
+					i += 3;
+					break;
+				}	
 			}
 		}
 	}
@@ -390,7 +541,7 @@ CCMD (mapchecksum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		map = P_OpenMapData(argv[i]);
+		map = P_OpenMapData(argv[i], true);
 		if (map == NULL)
 		{
 			Printf("Cannot load %s as a map\n", argv[i]);
@@ -416,5 +567,5 @@ CCMD (mapchecksum)
 
 CCMD (hiddencompatflags)
 {
-	Printf("%08x %08x\n", ii_compatflags, ib_compatflags);
+	Printf("%08x %08x %08x\n", ii_compatflags, ii_compatflags2, ib_compatflags);
 }

@@ -36,8 +36,8 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-//#include "autosegs.h"
 #include "sc_man.h"
+#include "s_sound.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -136,7 +136,7 @@ enum ELevelFlags
 
 	LEVEL_SPECLOWERFLOOR		= 0x00000100,
 	LEVEL_SPECOPENDOOR			= 0x00000200,
-	LEVEL_SPECLOWERFLOORTOHIGHEST= 0x00000300,
+	LEVEL_SPECLOWERFLOORTOHIGHEST=0x00000300,
 	LEVEL_SPECACTIONSMASK		= 0x00000300,
 
 	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
@@ -162,7 +162,7 @@ enum ELevelFlags
 	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
 	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
 	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
-	//LEVEL_HEXENFORMAT			= 0x08000000,	// Level uses the Hexen map format
+	LEVEL_USEPLAYERSTARTZ		= 0x08000000,	// Use the Z position of player starts
 
 	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
 	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
@@ -170,18 +170,18 @@ enum ELevelFlags
 	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
 
 	// The flags QWORD is now split into 2 DWORDs 
-	//LEVEL2_DEATHSLIDESHOW		= 0x00000001,	// Slideshow on death
+	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
 	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
 
 	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
 	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
 
-	LEVEL2_MISSILESACTIVATEIMPACT = 0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
 	LEVEL2_FROZEN				= 0x00000020,	// Game is frozen by a TimeFreezer
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
-	LEVEL2_MUSICDEFINED			= 0x00000080,	// a marker to disable the $map command in SNDINFO for this map
+	LEVEL2_PRERAISEWEAPON		= 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
 	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
 	LEVEL2_CLIPMIDTEX			= 0x00000200,
 	LEVEL2_WRAPMIDTEX			= 0x00000400,
@@ -213,6 +213,7 @@ enum ELevelFlags
 	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
 	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
 	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
+	LEVEL2_FORGETSTATE			= 0x80000000,	// forget this map's state in a hub
 };
 
 
@@ -299,8 +300,8 @@ struct level_info_t
 	float		aircontrol;
 	int			WarpTrans;
 	int			airsupply;
-	DWORD		compatflags;
-	DWORD		compatmask;
+	DWORD		compatflags, compatflags2;
+	DWORD		compatmask, compatmask2;
 	FString		Translator;	// for converting Doom-format linedef and sector types.
 	int			DefaultEnvironment;	// Default sound environment for the map.
 	FName		Intermission;
@@ -326,6 +327,8 @@ struct level_info_t
 	FMusicMap	MusicMap;
 
 	TArray<FSpecialAction> specialactions;
+
+	TArray<FSoundID> PrecacheSounds;
 
 	level_info_t() 
 	{ 
@@ -401,6 +404,7 @@ struct FLevelLocals
 	int			musicorder;
 	int			cdtrack;
 	unsigned int cdid;
+	int			nextmusic;				// For MUSINFO purposes
 	char		skypic1[9];
 	char		skypic2[9];
 
@@ -421,6 +425,8 @@ struct FLevelLocals
 	fixed_t		airfriction;
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
+
+	TObjPtr<class ASkyViewpoint> DefaultSkybox;
 
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
@@ -496,6 +502,7 @@ enum
 	CHANGELEVEL_CHANGESKILL = 8,
 	CHANGELEVEL_NOINTERMISSION = 16,
 	CHANGELEVEL_RESETHEALTH = 32,
+	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
@@ -510,7 +517,7 @@ void G_InitLevelLocals (void);
 void G_AirControlChanged ();
 
 cluster_info_t *FindClusterInfo (int cluster);
-level_info_t *FindLevelInfo (const char *mapname);
+level_info_t *FindLevelInfo (const char *mapname, bool allowdefault=true);
 level_info_t *FindLevelByNum (int num);
 level_info_t *CheckLevelRedirect (level_info_t *info);
 
@@ -544,7 +551,8 @@ enum ESkillProperty
 	SKILLP_MonsterHealth,
 	SKILLP_FriendlyHealth,
 	SKILLP_NoPain,
-	SKILLP_ArmorFactor
+	SKILLP_ArmorFactor,
+	SKILLP_EasyKey,
 };
 int G_SkillProperty(ESkillProperty prop);
 const char * G_SkillName();
@@ -561,7 +569,9 @@ struct FSkillInfo
 	bool FastMonsters;
 	bool DisableCheats;
 	bool AutoUseHealth;
+
 	bool EasyBossBrain;
+	bool EasyKey;
 	int RespawnCounter;
 	int RespawnLimit;
 	fixed_t Aggressiveness;

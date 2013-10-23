@@ -334,8 +334,8 @@ FStateDefine *FStateDefinitions::FindStateLabelInList(TArray<FStateDefine> & lis
 	if (create)
 	{
 		FStateDefine def;
-		def.Label=name;
-		def.State=NULL;
+		def.Label = name;
+		def.State = NULL;
 		def.DefineFlags = SDF_NEXT;
 		return &list[list.Push(def)];
 	}
@@ -351,12 +351,11 @@ FStateDefine *FStateDefinitions::FindStateLabelInList(TArray<FStateDefine> & lis
 
 FStateDefine * FStateDefinitions::FindStateAddress(const char *name)
 {
-	FStateDefine * statedef=NULL;
-
+	FStateDefine *statedef = NULL;
 	TArray<FName> &namelist = MakeStateNameList(name);
+	TArray<FStateDefine> *statelist = &StateLabels;
 
-	TArray<FStateDefine> * statelist = &StateLabels;
-	for(unsigned i=0;i<namelist.Size();i++)
+	for(unsigned i = 0; i < namelist.Size(); i++)
 	{
 		statedef = FindStateLabelInList(*statelist, namelist[i], true);
 		statelist = &statedef->Children;
@@ -379,7 +378,7 @@ void FStateDefinitions::SetStateLabel (const char *statename, FState *state, BYT
 
 //==========================================================================
 //
-// Adds a new state to the curremt list
+// Adds a new state to the current list
 //
 //==========================================================================
 
@@ -391,6 +390,24 @@ void FStateDefinitions::AddStateLabel (const char *statename)
 	std->DefineFlags = SDF_INDEX;
 	laststate = NULL;
 	lastlabel = index;
+}
+
+//==========================================================================
+//
+// Returns the index a state label points to. May only be called before
+// installing states.
+//
+//==========================================================================
+
+int FStateDefinitions::GetStateLabelIndex (FName statename)
+{
+	FStateDefine *std = FindStateLabelInList(StateLabels, statename, false);
+	if (std == NULL)
+	{
+		return -1;
+	}
+	assert((size_t)std->State <= StateArray.Size() + 1);
+	return (int)((ptrdiff_t)std->State - 1);
 }
 
 //==========================================================================
@@ -523,6 +540,7 @@ void FStateDefinitions::MakeStateDefines(const PClass *cls)
 {
 	StateArray.Clear();
 	laststate = NULL;
+	laststatebeforelabel = NULL;
 	lastlabel = -1;
 
 	if (cls != NULL && cls->ActorInfo != NULL && cls->ActorInfo->StateList != NULL)
@@ -744,11 +762,18 @@ bool FStateDefinitions::SetGotoLabel(const char *string)
 	{ // Following a state definition: Modify it.
 		laststate->NextState = (FState*)copystring(string);	
 		laststate->DefineFlags = SDF_LABEL;
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	else if (lastlabel >= 0)
 	{ // Following a label: Retarget it.
 		RetargetStates (lastlabel+1, string);
+		if (laststatebeforelabel != NULL)
+		{
+			laststatebeforelabel->NextState = (FState*)copystring(string);	
+			laststatebeforelabel->DefineFlags = SDF_LABEL;
+			laststatebeforelabel = NULL;
+		}
 		return true;
 	}
 	return false;
@@ -767,11 +792,17 @@ bool FStateDefinitions::SetStop()
 	if (laststate != NULL)
 	{
 		laststate->DefineFlags = SDF_STOP;
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	else if (lastlabel >=0)
 	{
 		RetargetStates (lastlabel+1, NULL);
+		if (laststatebeforelabel != NULL)
+		{
+			laststatebeforelabel->DefineFlags = SDF_STOP;
+			laststatebeforelabel = NULL;
+		}
 		return true;
 	}
 	return false;
@@ -790,6 +821,7 @@ bool FStateDefinitions::SetWait()
 	if (laststate != NULL)
 	{
 		laststate->DefineFlags = SDF_WAIT;
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	return false;
@@ -809,6 +841,7 @@ bool FStateDefinitions::SetLoop()
 	{
 		laststate->DefineFlags = SDF_INDEX;
 		laststate->NextState = (FState*)(lastlabel+1);
+		laststatebeforelabel = NULL;
 		return true;
 	}
 	return false;
@@ -847,8 +880,12 @@ bool FStateDefinitions::AddStates(FState *state, const char *framechars)
 		state->Frame = frame;
 		state->SameFrame = noframe;
 		StateArray.Push(*state);
+
+		// NODELAY flag is not carried past the first state
+		state->NoDelay = false;
 	}
 	laststate = &StateArray[StateArray.Size() - 1];
+	laststatebeforelabel = laststate;
 	return !error;
 }
 
@@ -867,7 +904,6 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 	{
 		FState *realstates = new FState[count];
 		int i;
-		int currange;
 
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
 		actor->OwnedStates = realstates;
@@ -875,12 +911,15 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 
 		// adjust the state pointers
 		// In the case new states are added these must be adjusted, too!
-		FixStatePointers (actor, StateLabels);
+		FixStatePointers(actor, StateLabels);
 
-		for(i = currange = 0; i < count; i++)
+		// Fix state pointers that are gotos
+		ResolveGotoLabels(actor, defaults, StateLabels);
+
+		for (i = 0; i < count; i++)
 		{
 			// resolve labels and jumps
-			switch(realstates[i].DefineFlags)
+			switch (realstates[i].DefineFlags)
 			{
 			case SDF_STOP:	// stop
 				realstates[i].NextState = NULL;
@@ -899,14 +938,16 @@ int FStateDefinitions::FinishStates (FActorInfo *actor, AActor *defaults)
 				break;
 
 			case SDF_LABEL:
-				realstates[i].NextState = ResolveGotoLabel (defaults, actor->Class, (char *)realstates[i].NextState);
+				realstates[i].NextState = ResolveGotoLabel(defaults, actor->Class, (char *)realstates[i].NextState);
 				break;
 			}
 		}
 	}
-
-	// Fix state pointers that are gotos
-	ResolveGotoLabels (actor, defaults, StateLabels);
+	else
+	{
+		// Fix state pointers that are gotos
+		ResolveGotoLabels(actor, defaults, StateLabels);
+	}
 
 	return count;
 }

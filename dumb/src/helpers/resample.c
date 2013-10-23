@@ -117,9 +117,9 @@ int dumb_resampling_quality = DUMB_RQ_CUBIC;
  */
 #define LOOP4(iterator, CONTENT) \
 { \
-	while (iterator) { \
+	while ( (iterator)-- ) \
+	{ \
 		CONTENT; \
-		(iterator)--; \
 	} \
 }
 #endif
@@ -189,7 +189,7 @@ static void init_cubic(void)
 
 #define SRCTYPE sample_t
 #define SRCBITS 24
-#define ALIAS(x, vol) MULSC(x, vol)
+#define ALIAS(x) (x >> 8)
 #define LINEAR(x0, x1) (x0 + MULSC(x1 - x0, subpos))
 /*
 #define SET_CUBIC_COEFFICIENTS(x0, x1, x2, x3) { \
@@ -225,7 +225,7 @@ static void init_cubic(void)
 #define SUFFIX _16
 #define SRCTYPE short
 #define SRCBITS 16
-#define ALIAS(x, vol) (x * vol >> 8)
+#define ALIAS(x) (x)
 #define LINEAR(x0, x1) ((x0 << 8) + MULSC16(x1 - x0, subpos))
 /*
 #define SET_CUBIC_COEFFICIENTS(x0, x1, x2, x3) { \
@@ -247,7 +247,7 @@ static void init_cubic(void)
 #define SUFFIX _8
 #define SRCTYPE signed char
 #define SRCBITS 8
-#define ALIAS(x, vol) (x * vol)
+#define ALIAS(x) (x << 8)
 #define LINEAR(x0, x1) ((x0 << 16) + (x1 - x0) * subpos)
 /*
 #define SET_CUBIC_COEFFICIENTS(x0, x1, x2, x3) { \

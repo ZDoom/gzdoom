@@ -126,7 +126,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "GoldWandPuff1");
+	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
@@ -164,7 +164,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "GoldWandPuff2");
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff2");
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -240,6 +240,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	player_t *player;
 	const PClass *pufftype;
 	AActor *linetarget;
+	int actualdamage = 0;
 
 	if (NULL == (player = self->player))
 	{
@@ -273,7 +274,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		pufftype = PClass::FindClass("GauntletPuff1");
 	}
 	slope = P_AimLineAttack (self, angle, dist, &linetarget);
-	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget);
+	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
 	if (!linetarget)
 	{
 		if (pr_gatk() > 64)
@@ -298,7 +299,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	}
 	if (power)
 	{
-		P_GiveBody (self, damage>>1);
+		if (!(linetarget->flags5 & MF5_DONTDRAIN)) P_GiveBody (self, actualdamage>>1);
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
 	}
 	else
@@ -335,12 +336,12 @@ class AMaceFX4 : public AActor
 {
 	DECLARE_CLASS (AMaceFX4, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (AMaceFX4)
 
-int AMaceFX4::DoSpecialDamage (AActor *target, int damage)
+int AMaceFX4::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if ((target->flags2 & MF2_BOSS) || (target->flags3 & MF3_DONTSQUASH) || target->IsTeammate (this->target))
 	{ // Don't allow cheap boss kills and don't instagib teammates
@@ -395,7 +396,7 @@ void FireMacePL1B (AActor *actor)
 	ball->velx = (actor->velx>>1) + FixedMul(ball->Speed, finecosine[angle]);
 	ball->vely = (actor->vely>>1) + FixedMul(ball->Speed, finesine[angle]);
 	S_Sound (ball, CHAN_BODY, "weapons/maceshoot", 1, ATTN_NORM);
-	P_CheckMissileSpawn (ball);
+	P_CheckMissileSpawn (ball, actor->radius);
 }
 
 //----------------------------------------------------------------------------
@@ -538,7 +539,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 		tiny->velx = (self->velx>>1) + FixedMul(self->velz-FRACUNIT, finecosine[angle]);
 		tiny->vely = (self->vely>>1) + FixedMul(self->velz-FRACUNIT, finesine[angle]);
 		tiny->velz = self->velz;
-		P_CheckMissileSpawn (tiny);
+		P_CheckMissileSpawn (tiny, self->radius);
 
 		tiny = Spawn("MaceFX3", self->x, self->y, self->z, ALLOW_REPLACE);
 		angle = self->angle-ANG90;
@@ -548,7 +549,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 		tiny->velx = (self->velx>>1) + FixedMul(self->velz-FRACUNIT, finecosine[angle]);
 		tiny->vely = (self->vely>>1) + FixedMul(self->velz-FRACUNIT, finesine[angle]);
 		tiny->velz = self->velz;
-		P_CheckMissileSpawn (tiny);
+		P_CheckMissileSpawn (tiny, self->radius);
 	}
 	else
 	{ // Explode
@@ -657,7 +658,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			angle = 0;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget);
+				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget, 0, ALF_NOFRIENDS, NULL, self->target);
 				if (linetarget && self->target != linetarget)
 				{
 					self->tracer = linetarget;
@@ -703,10 +704,10 @@ class ABlasterFX1 : public AFastProjectile
 	DECLARE_CLASS(ABlasterFX1, AFastProjectile)
 public:
 	void Effect ();
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
-int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
+int ABlasterFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass ("Ironlich")))
 	{ // Less damage to Ironlich bosses
@@ -736,12 +737,12 @@ class ARipper : public AActor
 {
 	DECLARE_CLASS (ARipper, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS(ARipper)
 
-int ARipper::DoSpecialDamage (AActor *target, int damage)
+int ARipper::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass ("Ironlich")))
 	{ // Less damage to Ironlich bosses
@@ -784,7 +785,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 	{
 		angle += pr_fb1.Random2() << 18;
 	}
-	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, "BlasterPuff");
+	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "BlasterPuff");
 	S_Sound (self, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }
 
@@ -809,7 +810,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 		angle >>= ANGLETOFINESHIFT;
 		ripper->velx = FixedMul (ripper->Speed, finecosine[angle]);
 		ripper->vely = FixedMul (ripper->Speed, finesine[angle]);
-		P_CheckMissileSpawn (ripper);
+		P_CheckMissileSpawn (ripper, self->radius);
 	}
 }
 
@@ -822,12 +823,12 @@ class AHornRodFX2 : public AActor
 {
 	DECLARE_CLASS (AHornRodFX2, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (AHornRodFX2)
 
-int AHornRodFX2::DoSpecialDamage (AActor *target, int damage)
+int AHornRodFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
@@ -843,12 +844,12 @@ class ARainPillar : public AActor
 {
 	DECLARE_CLASS (ARainPillar, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (ARainPillar)
 
-int ARainPillar::DoSpecialDamage (AActor *target, int damage)
+int ARainPillar::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->flags2 & MF2_BOSS)
 	{ // Decrease damage for bosses
@@ -1064,7 +1065,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	mo->velx = 1; // Force collision detection
 	mo->velz = -mo->Speed;
 	mo->special2 = self->special2; // Transfer player number
-	P_CheckMissileSpawn (mo);
+	P_CheckMissileSpawn (mo, self->radius);
 	if (self->special1 != -1 && !S_IsActorPlayingSomething (self, CHAN_BODY, -1))
 	{
 		S_Sound (self, CHAN_BODY|CHAN_LOOP, self->special1, 1, ATTN_NORM);
@@ -1154,13 +1155,13 @@ class APhoenixFX1 : public AActor
 {
 	DECLARE_CLASS (APhoenixFX1, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 
 IMPLEMENT_CLASS (APhoenixFX1)
 
-int APhoenixFX1::DoSpecialDamage (AActor *target, int damage)
+int APhoenixFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->IsKindOf (PClass::FindClass("Sorcerer2")) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
@@ -1176,12 +1177,12 @@ class APhoenixFX2 : public AActor
 {
 	DECLARE_CLASS (APhoenixFX2, AActor)
 public:
-	int DoSpecialDamage (AActor *target, int damage);
+	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
 };
 
 IMPLEMENT_CLASS (APhoenixFX2)
 
-int APhoenixFX2::DoSpecialDamage (AActor *target, int damage)
+int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	if (target->player && pr_pfx2 () < 128)
 	{ // Freeze player for a bit
@@ -1277,6 +1278,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	AActor *mo;
 	angle_t angle;
 	fixed_t x, y, z;
+
 	fixed_t slope;
 	FSoundID soundid;
 	player_t *player;
@@ -1313,7 +1315,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	{
 		S_Sound (self, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
 	}	
-	P_CheckMissileSpawn (mo);
+	P_CheckMissileSpawn (mo, self->radius);
 }
 
 //----------------------------------------------------------------------------

@@ -111,7 +111,7 @@ T TWeightedList<T>::PickEntry () const
 	{
 		choice = choice->Next;
 	}
-	return choice->Value;
+	return choice != NULL ? choice->Value : NULL;
 }
 
 template<class T>

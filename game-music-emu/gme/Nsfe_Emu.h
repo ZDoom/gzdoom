@@ -46,7 +46,7 @@ public:
 public:
 	// deprecated
 	struct header_t { char tag [4]; };
-	Music_Emu::load;
+	using Music_Emu::load;
 	blargg_err_t load( header_t const& h, Data_Reader& in ) // use Remaining_Reader
 			{ return load_remaining_( &h, sizeof h, in ); }
 	void disable_playlist( bool = true ); // use clear_playlist()

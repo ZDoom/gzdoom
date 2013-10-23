@@ -118,7 +118,6 @@ FDirectory::FDirectory(const char * directory)
 	dirname = directory;
 	dirname.ReplaceChars('\\', '/');
 	if (dirname[dirname.Len()-1] != '/') dirname += '/';
-	free((void*)directory);
 	Filename = copystring(dirname);
 }
 
@@ -186,7 +185,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 			{
 				if (strstr(fileinfo.name, ".orig") || strstr(fileinfo.name, ".bak"))
 				{
-					// We shuuldn't add backup files to the lump directory
+					// We shouldn't add backup files to the lump directory
 					continue;
 				}
 
@@ -211,8 +210,8 @@ int FDirectory::AddDirectory(const char *dirpath)
 		DIR* directory = opendir(scanDirectories[i].GetChars());
 		if (directory == NULL)
 		{
-			Printf("Could not ready directory: %s\n", strerror(errno));
-			return NULL;
+			Printf("Could not read directory: %s\n", strerror(errno));
+			return 0;
 		}
 
 		struct dirent *file;
@@ -250,7 +249,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 
 int FDirectory::AddDirectory(const char *dirpath)
 {
-	char *argv [2] = {NULL, NULL };
+	char *argv [2] = { NULL, NULL };
 	argv[0] = new char[strlen(dirpath)+1];
 	strcpy(argv[0], dirpath);
 	FTS *fts;
@@ -261,7 +260,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 	if (fts == NULL)
 	{
 		Printf("Failed to start directory traversal: %s\n", strerror(errno));
-		return NULL;
+		return 0;
 	}
 	while ((ent = fts_read(fts)) != NULL)
 	{
@@ -336,7 +335,6 @@ FileReader *FDirectoryLump::NewReader()
 	{
 		FString fullpath = Owner->Filename;
 		fullpath += FullName;
-		printf("%s\n", fullpath.GetChars());
 		return new FileReader(fullpath);
 	}
 	catch (CRecoverableError &)

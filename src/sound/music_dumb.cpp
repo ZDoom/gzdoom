@@ -532,7 +532,7 @@ DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FILE *f
 		if (fread(mem + lenhave, 1, lenfull - lenhave, file) != (size_t)(lenfull - lenhave))
 		{
 			delete[] mem;
-			return false;
+			return NULL;
 		}
 		filestate->ptr = mem;
 	}
@@ -984,6 +984,15 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
 		{
 			duh = dumb_read_asy_quick(f);
+		}
+	}
+	else if (size >= 8 &&
+		dstart[0] == MAKE_ID('O','K','T','A') &&
+		dstart[1] == MAKE_ID('S','O','N','G'))
+	{
+		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		{
+			duh = dumb_read_okt_quick(f);
 		}
 	}
 

@@ -40,6 +40,10 @@ ACTOR Ironlich 6
 		LICH A 5 A_FaceTarget
 		LICH B 20 A_LichAttack
 		Goto See
+	Pain:
+		LICH A 4
+		LICH A 4 A_Pain
+		Goto See
 	Death:
 		LICH C 7
 		LICH D 7 A_Scream

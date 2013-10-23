@@ -174,7 +174,15 @@ void R_InitPlanes ()
 void R_DeinitPlanes ()
 {
 	fakeActive = 0;
-	R_ClearPlanes(false);
+
+	// do not use R_ClearPlanes because at this point the screen pointer is no longer valid.
+	for (int i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
+	{
+		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
+		{
+			freehead = &(*freehead)->next;
+		}
+	}
 	for (visplane_t *pl = freetail; pl != NULL; )
 	{
 		visplane_t *next = pl->next;
@@ -490,18 +498,40 @@ void R_MapColoredPlane (int y, int x1)
 
 void R_ClearPlanes (bool fullclear)
 {
-	int i, max;
+	int i;
 
-	// kg3D - we can't just clear planes if there are fake planes
-	if(!fullclear && fakeActive) return;
-
-	max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
-	for (i = 0; i <= max; i++)	// new code -- killough
-		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
-			freehead = &(*freehead)->next;
-
-	if (fullclear)
+	// Don't clear fake planes if not doing a full clear.
+	if (!fullclear)
 	{
+		for (i = 0; i <= MAXVISPLANES-1; i++)	// new code -- killough
+		{
+			for (visplane_t **probe = &visplanes[i]; *probe != NULL; )
+			{
+				if ((*probe)->sky < 0)
+				{ // fake: move past it
+					probe = &(*probe)->next;
+				}
+				else
+				{ // not fake: move to freelist
+					visplane_t *vis = *probe;
+					*freehead = vis;
+					*probe = vis->next;
+					vis->next = NULL;
+					freehead = &vis->next;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (i = 0; i <= MAXVISPLANES; i++)	// new code -- killough
+		{
+			for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
+			{
+				freehead = &(*freehead)->next;
+			}
+		}
+
 		// opening / clipping determination
 		clearbufshort (floorclip, viewwidth, viewheight);
 		// [RH] clip ceiling to console bottom
@@ -596,9 +626,8 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		else sky = 0;	// not skyflatnum so it can't be a sky
 		skybox = NULL;
 		alpha = FRACUNIT;
-		additive = false;
 	}
-		
+
 	// New visplane algorithm uses hash table -- killough
 	hash = isskybox ? MAXVISPLANES : visplane_hash (picnum.GetIndex(), lightlevel, height);
 
@@ -1003,15 +1032,15 @@ static void R_DrawSkyStriped (visplane_t *pl)
 CVAR (Bool, tilt, false, 0);
 //CVAR (Int, pa, 0, 0)
 
-void R_DrawPlanes ()
+int R_DrawPlanes ()
 {
 	visplane_t *pl;
 	int i;
-	int vpcount;
+	int vpcount = 0;
 
 	ds_color = 3;
 
-	for (i = vpcount = 0; i < MAXVISPLANES; i++)
+	for (i = 0; i < MAXVISPLANES; i++)
 	{
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
@@ -1025,6 +1054,7 @@ void R_DrawPlanes ()
 			}
 		}
 	}
+	return vpcount;
 }
 
 // kg3D - draw all visplanes with "height"
@@ -1047,7 +1077,7 @@ void R_DrawHeightPlanes(fixed_t height)
 				viewy = pl->viewy;
 				viewangle = pl->viewangle;
 				MirrorFlags = pl->MirrorFlags;
-				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, false, true);
+				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 			}
 		}
 	}
@@ -1080,7 +1110,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	}
 	else
 	{ // regular flat
-		FTexture *tex = TexMan(pl->picnum);
+		FTexture *tex = TexMan(pl->picnum, true);
 
 		if (tex->UseType == FTexture::TEX_Null)
 		{
@@ -1330,13 +1360,12 @@ void R_DrawSkyBoxes ()
 
 	for (*freehead = visplanes[MAXVISPLANES], visplanes[MAXVISPLANES] = NULL; *freehead; )
 		freehead = &(*freehead)->next;
-
 }
 
 ADD_STAT(skyboxes)
 {
 	FString out;
-	out.Format (out, "%d skybox planes", numskyboxes);
+	out.Format ("%d skybox planes", numskyboxes);
 	return out;
 }
 
@@ -1368,9 +1397,9 @@ void R_DrawSkyPlane (visplane_t *pl)
 		if (!(pl->sky & PL_SKYFLAT))
 		{	// use sky1
 		sky1:
-			frontskytex = TexMan(sky1tex);
+			frontskytex = TexMan(sky1tex, true);
 			if (level.flags & LEVEL_DOUBLESKY)
-				backskytex = TexMan(sky2tex);
+				backskytex = TexMan(sky2tex, true);
 			else
 				backskytex = NULL;
 			skyflip = 0;
@@ -1381,7 +1410,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 		}
 		else if (pl->sky == PL_SKYFLAT)
 		{	// use sky2
-			frontskytex = TexMan(sky2tex);
+			frontskytex = TexMan(sky2tex, true);
 			backskytex = NULL;
 			frontcyl = sky2cyl;
 			skyflip = 0;
@@ -1407,7 +1436,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 				pos = side_t::top;
 			}
 
-			frontskytex = TexMan(s->GetTexture(pos));
+			frontskytex = TexMan(s->GetTexture(pos), true);
 			if (frontskytex == NULL || frontskytex->UseType == FTexture::TEX_Null)
 			{ // [RH] The blank texture: Use normal sky instead.
 				goto sky1;
@@ -1528,16 +1557,24 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	else
 		plane_shade = true;
 
-	// Additive not supported yet because the drawer function doesn't look like it can handle it.
 	if (spanfunc != R_FillSpan)
 	{
 		if (masked)
 		{
-			if (alpha < OPAQUE)
+			if (alpha < OPAQUE || additive)
 			{
-				spanfunc = R_DrawSpanMaskedTranslucent;
-				dc_srcblend = Col2RGB8[alpha>>10];
-				dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				if (!additive)
+				{
+					spanfunc = R_DrawSpanMaskedTranslucent;
+					dc_srcblend = Col2RGB8[alpha>>10];
+					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				}
+				else
+				{
+					spanfunc = R_DrawSpanMaskedAddClamp;
+					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
+					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+				}
 			}
 			else
 			{
@@ -1546,11 +1583,20 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		}
 		else
 		{
-			if (alpha < OPAQUE)
+			if (alpha < OPAQUE || additive)
 			{
-				spanfunc = R_DrawSpanTranslucent;
-				dc_srcblend = Col2RGB8[alpha>>10];
-				dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				if (!additive)
+				{
+					spanfunc = R_DrawSpanTranslucent;
+					dc_srcblend = Col2RGB8[alpha>>10];
+					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+				}
+				else
+				{
+					spanfunc = R_DrawSpanAddClamp;
+					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
+					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+				}
 			}
 			else
 			{
@@ -1655,7 +1701,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		plane_sz[0] = -plane_sz[0];
 	}
 
-	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (float)(abs(pl->height.ZatPoint (viewx, viewy) - viewz));
+	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(FIXED2DBL(viewx), FIXED2DBL(viewy)) - FIXED2DBL(viewz))) / 65536.0;
 
 	if (pl->height.c > 0)
 		planelightfloat = -planelightfloat;

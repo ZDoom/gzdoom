@@ -34,6 +34,8 @@ public:
 	FEvent *FindEvent (double distance) const;
 	void DeleteAll ();
 
+	void PrintTree () const { PrintTree (Root); }
+
 private:
 	FEvent Nil;
 	FEvent *Root;
@@ -42,6 +44,8 @@ private:
 	void DeletionTraverser (FEvent *event);
 	FEvent *Successor (FEvent *event) const;
 	FEvent *Predecessor (FEvent *event) const;
+
+	void PrintTree (const FEvent *event) const;
 };
 
 struct FSimpleVert
@@ -209,6 +213,7 @@ public:
 		seg_t *&segs, glsegextra_t *&glsegextras, int &segCount,
 		subsector_t *&ssecs, int &subCount,
 		vertex_t *&verts, int &vertCount);
+	const int *GetOldVertexTable();
 
 	// These are used for building sub-BSP trees for polyobjects.
 	void Clear();
@@ -227,6 +232,7 @@ public:
 
 private:
 	IVertexMap *VertexMap;
+	int *OldVertexTable;
 
 	TArray<node_t> Nodes;
 	TArray<subsector_t> Subsectors;

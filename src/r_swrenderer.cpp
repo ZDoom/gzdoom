@@ -173,7 +173,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {
-	return down? MAX_DN_ANGLE*ANGLE_1 : -MAX_UP_ANGLE*ANGLE_1;
+	return down ? MAX_DN_ANGLE : MAX_UP_ANGLE;
 }
 
 //==========================================================================

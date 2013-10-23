@@ -32,7 +32,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
-		3*(pr_shootgun() % 5 + 1), NAME_None, NAME_StrifePuff);
+		3*(pr_shootgun() % 5 + 1), NAME_Hitscan, NAME_StrifePuff);
 }
 
 // Teleporter Beacon --------------------------------------------------------
@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 		{
 			rebel->Translation = owner->Translation;
 		}
-		rebel->FriendPlayer = owner->player != NULL ? BYTE(owner->player - players + 1) : 0;
+		rebel->SetFriendPlayer(owner->player);
 		// Set the rebel's target to whatever last hurt the player, so long as it's not
 		// one of the player's other rebels.
 		if (owner->target != NULL && !rebel->IsFriend (owner->target))

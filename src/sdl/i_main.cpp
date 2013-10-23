@@ -81,6 +81,10 @@ extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(c
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+#ifdef USE_XCURSOR
+extern bool UseXCursor;
+#endif
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifndef NO_GTK
@@ -134,20 +138,6 @@ void STACK_ARGS call_terms ()
 	}
 }
 
-//==========================================================================
-//
-// FinalGC
-//
-// Collect garbage one last time before exiting.
-//
-//==========================================================================
-
-static void FinalGC()
-{
-	Args = NULL;
-	GC::FullGC();
-}
-
 static void STACK_ARGS NewFailure ()
 {
     I_FatalError ("Failed to allocate memory from system heap");
@@ -160,7 +150,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	int i, p;
 
 	p = 0;
-	p += snprintf (buffer+p, size-p, GAMENAME" version " DOTVERSIONSTR " (" __DATE__ ")\n");
+	p += snprintf (buffer+p, size-p, GAMENAME" version %s (%s)\n", GetVersionString(), GetGitHash());
 #ifdef __VERSION__
 	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
 #endif
@@ -251,13 +241,15 @@ void I_ShutdownJoysticks();
 
 int main (int argc, char **argv)
 {
+#if !defined (__APPLE__)
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
 		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
 	}
+#endif // !__APPLE__
 
-	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
-		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
+	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
+		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -279,12 +271,46 @@ int main (int argc, char **argv)
 	}
 	atterm (SDL_Quit);
 
-	SDL_WM_SetCaption (GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")", NULL);
+	{
+		char viddriver[80];
+
+		if (SDL_VideoDriverName(viddriver, sizeof(viddriver)) != NULL)
+		{
+			printf("Using video driver %s\n", viddriver);
+#ifdef USE_XCURSOR
+			UseXCursor = (strcmp(viddriver, "x11") == 0);
+#endif
+		}
+		printf("\n");
+	}
+
+	char caption[100];
+	mysnprintf(caption, countof(caption), GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+	SDL_WM_SetCaption(caption, caption);
+
+#ifdef __APPLE__
+	
+	const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo();
+	if ( NULL != videoInfo )
+	{
+		EXTERN_CVAR(  Int, vid_defwidth  )
+		EXTERN_CVAR(  Int, vid_defheight )
+		EXTERN_CVAR(  Int, vid_defbits   )
+		EXTERN_CVAR( Bool, vid_vsync     )
+		EXTERN_CVAR( Bool, fullscreen    )
+		
+		vid_defwidth  = videoInfo->current_w;
+		vid_defheight = videoInfo->current_h;
+		vid_defbits   = videoInfo->vfmt->BitsPerPixel;
+		vid_vsync     = True;
+		fullscreen    = True;
+	}
+	
+#endif // __APPLE__
 	
     try
     {
 		Args = new DArgs(argc, argv);
-		atterm(FinalGC);
 
 		/*
 		  killough 1/98:

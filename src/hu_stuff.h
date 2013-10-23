@@ -28,7 +28,7 @@ class player_t;
 // Globally visible constants.
 //
 #define HU_FONTSTART	BYTE('!')		// the first font characters
-#define HU_FONTEND		BYTE('ß')		// the last font characters
+#define HU_FONTEND		BYTE('\377')	// the last font characters
 
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
@@ -46,7 +46,7 @@ extern int chatmodeon;
 // [RH] Draw deathmatch scores
 
 void HU_DrawScores (player_t *me);
-void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth);
+void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight);
 void HU_DrawColorBar(int x, int y, int height, int playernum);
 int HU_GetRowColor(player_t *player, bool hightlight);
 

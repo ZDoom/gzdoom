@@ -86,6 +86,7 @@ struct FMenuDescriptor
 	FName mMenuName;
 	FString mNetgameMessage;
 	int mType;
+	const PClass *mClass;
 
 	virtual ~FMenuDescriptor() {}
 };
@@ -108,7 +109,6 @@ struct FListMenuDescriptor : public FMenuDescriptor
 	FFont *mFont;
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
-	const PClass *mClass;
 	FMenuDescriptor *mRedirect;	// used to redirect overlong skill and episode menus to option menu based alternatives
 	bool mCenter;
 
@@ -139,7 +139,6 @@ struct FOptionMenuSettings
 	EColorRange mFontColorHighlight;
 	EColorRange mFontColorSelection;
 	int mLinespacing;
-	int mLabelOffset;
 };
 
 struct FOptionMenuDescriptor : public FMenuDescriptor
@@ -153,7 +152,6 @@ struct FOptionMenuDescriptor : public FMenuDescriptor
 	int mIndent;
 	int mPosition;
 	bool mDontDim;
-	const PClass *mClass;
 
 	void CalcIndent();
 	FOptionMenuItem *GetItem(FName name);
@@ -346,6 +344,7 @@ class FListMenuItemPlayerDisplay : public FListMenuItem
 	void SetPlayerClass(int classnum, bool force = false);
 	bool UpdatePlayerClass();
 	void UpdateRandomClass();
+	void UpdateTranslation();
 
 public:
 
@@ -394,8 +393,9 @@ class FListMenuItemText : public FListMenuItemSelectable
 	const char *mText;
 	FFont *mFont;
 	EColorRange mColor;
+	EColorRange mColorSelected;
 public:
-	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, FName child, int param = 0);
+	FListMenuItemText(int x, int y, int height, int hotkey, const char *text, FFont *font, EColorRange color, EColorRange color2, FName child, int param = 0);
 	~FListMenuItemText();
 	void Drawer(bool selected);
 	int GetWidth();
@@ -671,6 +671,7 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_ParseMenuDefs();
 void M_StartupSkillMenu(FGameStartup *gs);
+int M_GetDefaultSkill();
 void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
 void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);

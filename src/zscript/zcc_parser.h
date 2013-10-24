@@ -1,15 +1,7 @@
-struct ZCCParseState
-{
-	ZCCParseState(FScanner &scanner) : sc(scanner)
-	{
-		TopNode = NULL;
-	}
+#ifndef ZCC_PARSER_H
+#define ZCC_PARSER_H
 
-	FScanner &sc;
-	FSharedStringArena Strings;
-	FMemArena SyntaxArena;
-	struct ZCC_TreeNode *TopNode;
-};
+#include "memarena.h"
 
 struct ZCCToken
 {
@@ -500,3 +492,23 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root);
+
+struct ZCC_AST
+{
+	ZCC_AST() : TopNode(NULL) {}
+	ZCC_TreeNode *InitNode(size_t size, EZCCTreeNodeType type, ZCC_TreeNode *basis);
+
+	FSharedStringArena Strings;
+	FMemArena SyntaxArena;
+	struct ZCC_TreeNode *TopNode;
+};
+
+struct ZCCParseState : public ZCC_AST
+{
+	ZCCParseState(FScanner &scanner) : sc(scanner) {}
+	ZCC_TreeNode *InitNode(size_t size, EZCCTreeNodeType type);
+
+	FScanner &sc;
+};
+
+#endif

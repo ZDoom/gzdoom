@@ -2,18 +2,8 @@
 {
 // Allocates a new AST node off the parse state's arena.
 #define NEW_AST_NODE(type,name,tok) \
-	ZCC_##type *name = static_cast<ZCC_##type *>(InitNode(sizeof(ZCC_##type), AST_##type, stat)); \
+	ZCC_##type *name = static_cast<ZCC_##type *>(stat->InitNode(sizeof(ZCC_##type), AST_##type)); \
 	SetNodeLine(name, tok)
-
-static ZCC_TreeNode *InitNode(size_t size, EZCCTreeNodeType type, ZCCParseState *stat)
-{
-	ZCC_TreeNode *node = (ZCC_TreeNode *)stat->SyntaxArena.Alloc(size);
-	node->SiblingNext = node;
-	node->SiblingPrev = node;
-	node->NodeType = type;
-	node->SourceName = stat->Strings.Alloc(stat->sc.ScriptName);
-	return node;
-}
 
 static void SetNodeLine(ZCC_TreeNode *name, ZCCToken &tok)
 {

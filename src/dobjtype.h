@@ -744,6 +744,7 @@ public:
 	{
 		int Value;
 		double Float;
+		void *Pad;
 	};
 
 	PSymbolConstNumeric(FName name, PType *type=NULL) : PSymbolConst(name, type) {}

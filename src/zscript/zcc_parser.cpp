@@ -5,8 +5,8 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "m_alloc.h"
-#include "memarena.h"
 #include "zcc_parser.h"
+#include "zcc_compile.h"
 
 static FString ZCCTokenName(int terminal);
 
@@ -106,6 +106,8 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Map,			ZCC_MAP,		NAME_map);
 	TOKENDEF2(TK_Array,			ZCC_ARRAY,		NAME_array);
 	TOKENDEF (TK_Void,			ZCC_VOID);
+	TOKENDEF (TK_True,			ZCC_TRUE);
+	TOKENDEF (TK_False,			ZCC_FALSE);
 	TOKENDEF ('[',				ZCC_LBRACKET);
 	TOKENDEF (']',				ZCC_RBRACKET);
 	TOKENDEF (TK_In,			ZCC_IN);
@@ -144,6 +146,9 @@ static void InitTokenMap()
 	TOKENDEF (TK_UIntConst,		ZCC_UINTCONST);
 	TOKENDEF (TK_FloatConst,	ZCC_FLOATCONST);
 	TOKENDEF (TK_NonWhitespace,	ZCC_NWS);
+
+	ZCC_InitOperators();
+	ZCC_InitConversions();
 }
 #undef TOKENDEF
 #undef TOKENDEF2
@@ -249,16 +254,18 @@ static void DoParse(const char *filename)
 	ZCCParse(parser, ZCC_EOF, value, &state);
 	ZCCParse(parser, 0, value, &state);
 	ZCCParseFree(parser, free);
+
+	PSymbolTable symbols;
+	ZCCCompiler cc(state, NULL, symbols);
+	cc.Compile();
 #ifdef _DEBUG
 	if (f != NULL)
 	{
 		fclose(f);
 	}
-#endif
 	FString ast = ZCC_PrintAST(state.TopNode);
 	FString astfile = ExtractFileBase(filename, false);
 	astfile << ".ast";
-#ifdef _DEBUG
 	f = fopen(astfile, "w");
 	if (f != NULL)
 	{

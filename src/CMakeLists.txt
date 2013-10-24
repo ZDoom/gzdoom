@@ -952,6 +952,8 @@ add_executable( zdoom WIN32
 	zscript/vmdisasm.cpp
 	zscript/vmexec.cpp
 	zscript/vmframe.cpp
+	zscript/zcc_compile.cpp
+	zscript/zcc_expr.cpp
 	zscript/zcc_parser.cpp
 	autozend.cpp
 )

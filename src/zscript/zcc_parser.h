@@ -121,59 +121,8 @@ enum EZCCBuiltinType
 
 enum EZCCExprType
 {
-	PEX_Nil,
-
-	PEX_ID,
-	PEX_Super,
-	PEX_Self,
-	PEX_ConstValue,
-	PEX_FuncCall,
-	PEX_ArrayAccess,
-	PEX_MemberAccess,
-	PEX_PostInc,
-	PEX_PostDec,
-
-	PEX_PreInc,
-	PEX_PreDec,
-	PEX_Negate,
-	PEX_AntiNegate,
-	PEX_BitNot,
-	PEX_BoolNot,
-	PEX_SizeOf,
-	PEX_AlignOf,
-
-	PEX_Add,
-	PEX_Sub,
-	PEX_Mul,
-	PEX_Div,
-	PEX_Mod,
-	PEX_Pow,
-	PEX_CrossProduct,
-	PEX_DotProduct,
-	PEX_LeftShift,
-	PEX_RightShift,
-	PEX_Concat,
-
-	PEX_LT,
-	PEX_GT,
-	PEX_LTEQ,
-	PEX_GTEQ,
-	PEX_LTGTEQ,
-	PEX_Is,
-
-	PEX_EQEQ,
-	PEX_NEQ,
-	PEX_APREQ,
-
-	PEX_BitAnd,
-	PEX_BitOr,
-	PEX_BitXor,
-	PEX_BoolAnd,
-	PEX_BoolOr,
-
-	PEX_Scope,
-
-	PEX_Trinary,
+#define xx(a,z)	PEX_##a,
+#include "zcc_exprlist.h"
 
 	PEX_COUNT_OF
 };
@@ -345,6 +294,7 @@ struct ZCC_ExprConstant : ZCC_Expression
 	{
 		FString *StringVal;
 		int IntVal;
+		unsigned int UIntVal;
 		double DoubleVal;
 	};
 };
@@ -491,7 +441,58 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 	ZCC_Statement *Body;
 };
 
+typedef ZCC_ExprConstant *(*EvalConst1op)(ZCC_ExprConstant *);
+typedef ZCC_ExprConstant *(*EvalConst2op)(ZCC_ExprConstant *, ZCC_ExprConstant *, FSharedStringArena &);
+
+struct ZCC_OpProto
+{
+	ZCC_OpProto *Next;
+	PType *ResType;
+	PType *Type1;
+	PType *Type2;
+	union
+	{
+		EvalConst1op EvalConst1;
+		EvalConst2op EvalConst2;
+	};
+
+	ZCC_OpProto(PType *res, PType *t1, PType *t2)
+		: ResType(res), Type1(t1), Type2(t2) {}
+};
+
+struct ZCC_OpInfoType
+{
+	BYTE Nary:2;		// n-ary-ness of operator
+	
+	const char *OpName;
+	ZCC_OpProto *Protos;
+
+	void AddProto(PType *res, PType *optype, EvalConst1op evalconst);
+	void AddProto(PType *res, PType *left, PType *right, EvalConst2op evalconst);
+
+	ZCC_OpProto *FindBestProto(PType *optype, const PType::Conversion **route, int &numslots);
+	ZCC_OpProto *FindBestProto(PType *left, const PType::Conversion **route1, int &numslots,
+		PType *right, const PType::Conversion **route2, int &numslots2);
+};
+
+#define CONVERSION_ROUTE_SIZE	8
+
 FString ZCC_PrintAST(ZCC_TreeNode *root);
+
+void ZCC_InitOperators();
+
+extern ZCC_OpInfoType ZCC_OpInfo[PEX_COUNT_OF];
+
+static inline bool IsUnaryOp(EZCCExprType op)
+{
+	assert((unsigned)op < (unsigned)PEX_COUNT_OF);
+	return ZCC_OpInfo[op].Nary == 1;
+}
+static inline bool IsBinaryOp(EZCCExprType op)
+{
+	assert((unsigned)op < (unsigned)PEX_COUNT_OF);
+	return ZCC_OpInfo[op].Nary == 2;
+}
 
 struct ZCC_AST
 {

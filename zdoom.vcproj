@@ -3718,6 +3718,26 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\zscript\zcc_compile.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_compile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_errors.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_expr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_exprlist.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\zscript\zcc_parser.cpp"
 				>
 			</File>

@@ -442,61 +442,11 @@ static void PrintClassType(FLispString &out, ZCC_TreeNode *node)
 
 static void OpenExprType(FLispString &out, EZCCExprType type)
 {
-	static const char *const types[] =
-	{
-		"nil",
-		"id",
-		"super",
-		"self",
-		"const",
-		"func-call",
-		"array-access",
-		"member-access",
-		"post-inc",
-		"post-dec",
-		"pre-inc",
-		"pre-dec",
-		"negate",
-		"anti-negate",
-		"bit-not",
-		"bool-not",
-		"size-of",
-		"align-of",
-		"add",
-		"sub",
-		"mul",
-		"div",
-		"mod",
-		"pow",
-		"cross-product",
-		"dot-product",
-		"left-shift",
-		"right-shift",
-		"concat",
-		"lt",
-		"gt",
-		"lteq",
-		"gteq",
-		"ltgteq",
-		"is",
-		"eqeq",
-		"neq",
-		"apreq",
-		"bit-and",
-		"bit-or",
-		"bit-xor",
-		"bool-and",
-		"bool-or",
-		"scope",
-		"trinary",
-	};
-	assert(countof(types) == PEX_COUNT_OF);
-
 	char buf[32];
 
-	if (unsigned(type) < countof(types))
+	if (unsigned(type) < PEX_COUNT_OF)
 	{
-		mysnprintf(buf, countof(buf), "expr-%s", types[type]);
+		mysnprintf(buf, countof(buf), "expr-%s", ZCC_OpInfo[type].OpName);
 	}
 	else
 	{

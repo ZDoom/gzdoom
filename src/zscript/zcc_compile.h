@@ -16,6 +16,9 @@ private:
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_Struct *> Structs;
 	TArray<ZCC_Class *> Classes;
+	TMap<FName, ZCC_TreeNode *> NamedNodes;
+
+	bool AddNamedNode(FName name, ZCC_TreeNode *node);
 
 	ZCC_Expression *Simplify(ZCC_Expression *root);
 	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary);

@@ -10,6 +10,8 @@
 #include "v_text.h"
 #include "gdtoa.h"
 
+#define DEFINING_CONST ((PSymbolConst *)(void *)1)
+
 //==========================================================================
 //
 // ZCCCompiler Constructor
@@ -27,16 +29,62 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
 		{
 			switch (node->NodeType)
 			{
-			case AST_Class:			Classes.Push(static_cast<ZCC_Class *>(node));			break;
-			case AST_Struct:		Structs.Push(static_cast<ZCC_Struct *>(node));			break;
+			case AST_Class:
+//				if (AddNamedNode(static_cast<ZCC_Class *>(node)->ClassName, node))
+				{
+					Classes.Push(static_cast<ZCC_Class *>(node));
+				}
+				break;
+
+			case AST_Struct:
+				if (AddNamedNode(static_cast<ZCC_Struct *>(node)->StructName, node))
+				{
+					Structs.Push(static_cast<ZCC_Struct *>(node));
+				}
+				break;
+
 			case AST_Enum:			break;
 			case AST_EnumTerminator:break;
-			case AST_ConstantDef:	Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
-			default:				assert(0 && "Unhandled AST node type");					break;
+
+			case AST_ConstantDef:
+				if (AddNamedNode(static_cast<ZCC_ConstantDef *>(node)->Name, node))
+				{
+					Constants.Push(static_cast<ZCC_ConstantDef *>(node));
+				}
+				break;
+
+			default:
+				assert(0 && "Unhandled AST node type");
+				break;
 			}
 			node = node->SiblingNext;
 		}
 		while (node != ast.TopNode);
+	}
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: AddNamedNode
+//
+// Keeps track of definition nodes by their names. Ensures that all names
+// in this scope are unique.
+//
+//==========================================================================
+
+bool ZCCCompiler::AddNamedNode(FName name, ZCC_TreeNode *node)
+{
+	ZCC_TreeNode **check = NamedNodes.CheckKey(name);
+	if (check != NULL && *check != NULL)
+	{
+		Message(node, ERR_symbol_redefinition, "Attempt to redefine '%s'", name.GetChars());
+		Message(*check, ERR_original_definition, " Original definition is here");
+		return false;
+	}
+	else
+	{
+		NamedNodes.Insert(name, node);
+		return true;
 	}
 }
 
@@ -104,11 +152,7 @@ void ZCCCompiler::CompileConstants()
 		ZCC_ConstantDef *def = Constants[i];
 		if (def->Symbol == NULL)
 		{
-			PSymbolConst *sym = CompileConstant(def);
-			if (NULL == Symbols.AddSymbol(sym))
-			{
-				Message(Constants[i], ERR_symbol_redefinition, "Redefinition of symbol '%s'", FName(def->Name).GetChars());
-			}
+			CompileConstant(def);
 		}
 	}
 }
@@ -127,7 +171,7 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 {
 	assert(def->Symbol == NULL);
 
-	def->Symbol = (PSymbolConst *)(void *)1;	// mark as being defined (avoid recursion)
+	def->Symbol = DEFINING_CONST;	// avoid recursion
 	ZCC_Expression *val = Simplify(def->Value);
 	def->Value = val;
 	PSymbolConst *sym = NULL;
@@ -161,6 +205,8 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 		sym = new PSymbolConstNumeric(def->Name, TypeError, 0);
 	}
 	def->Symbol = sym;
+	PSymbol *addsym = Symbols.AddSymbol(sym);
+	assert(NULL != addsym && "Symbol was redefined (but we shouldn't have even had the chance to do so)");
 	return sym;
 }
 
@@ -347,7 +393,28 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 		}
 	}
 	else
-	{
+	{ // Check nodes that haven't had symbols created for them yet.
+		ZCC_TreeNode **node = NamedNodes.CheckKey(idnode->Identifier);
+		if (node != NULL && *node != NULL)
+		{
+			if ((*node)->NodeType == AST_ConstantDef)
+			{
+				ZCC_ConstantDef *def = static_cast<ZCC_ConstantDef *>(*node);
+				PSymbolConst *sym = def->Symbol;
+				
+				if (sym == DEFINING_CONST)
+				{
+					Message(idnode, ERR_recursive_definition, "Definition of '%s' is infinitely recursive", FName(idnode->Identifier).GetChars());
+					sym = NULL;
+				}
+				else
+				{
+					assert(sym == NULL);
+					sym = CompileConstant(def);
+				}
+				return NodeFromSymbolConst(sym, idnode);
+			}
+		}
 	}
 	// Identifier didn't refer to anything good, so type error it.
 	idnode->Type = TypeError;
@@ -368,7 +435,12 @@ ZCC_ExprConstant *ZCCCompiler::NodeFromSymbolConst(PSymbolConst *sym, ZCC_ExprID
 {
 	ZCC_ExprConstant *val = static_cast<ZCC_ExprConstant *>(AST.InitNode(sizeof(*val), AST_ExprConstant, idnode));
 	val->Operation = PEX_ConstValue;
-	if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConstString)))
+	if (sym == NULL)
+	{
+		val->Type = TypeError;
+		val->IntVal = 0;
+	}
+	else if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConstString)))
 	{
 		val->StringVal = AST.Strings.Alloc(static_cast<PSymbolConstString *>(sym)->Str);
 		val->Type = TypeString;

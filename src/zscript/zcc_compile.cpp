@@ -352,6 +352,7 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 	// Identifier didn't refer to anything good, so type error it.
 	idnode->Type = TypeError;
 	idnode->Operation = PEX_Nil;
+	idnode->NodeType = AST_Expression;
 	return idnode;
 }
 

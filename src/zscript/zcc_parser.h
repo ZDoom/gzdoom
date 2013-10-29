@@ -175,7 +175,7 @@ struct ZCC_Identifier : ZCC_TreeNode
 
 struct ZCC_Class : ZCC_TreeNode
 {
-	ZCC_Identifier *ClassName;
+	ENamedName ClassName;
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
 	VM_UWORD Flags;

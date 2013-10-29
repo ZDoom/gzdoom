@@ -276,7 +276,7 @@ static void PrintClass(FLispString &out, ZCC_TreeNode *node)
 	ZCC_Class *cnode = (ZCC_Class *)node;
 	out.Break();
 	out.Open("class");
-	PrintNodes(out, cnode->ClassName);
+	out.AddName(cnode->ClassName);
 	PrintNodes(out, cnode->ParentName);
 	PrintNodes(out, cnode->Replaces);
 	out.AddHex(cnode->Flags);

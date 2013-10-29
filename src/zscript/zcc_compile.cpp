@@ -30,7 +30,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
 			switch (node->NodeType)
 			{
 			case AST_Class:
-//				if (AddNamedNode(static_cast<ZCC_Class *>(node)->ClassName, node))
+				if (AddNamedNode(static_cast<ZCC_Class *>(node)->ClassName, node))
 				{
 					Classes.Push(static_cast<ZCC_Class *>(node));
 				}

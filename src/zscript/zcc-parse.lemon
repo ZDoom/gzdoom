@@ -158,10 +158,10 @@ class_definition(X) ::= class_head(A) class_body(B).
 	X = A;
 }
 
-class_head(X) ::= CLASS(T) dottable_id(A) class_ancestry(B) class_flags(C).
+class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 {
 	NEW_AST_NODE(Class,head,T);
-	head->ClassName = A;
+	head->ClassName = A.Name();
 	head->ParentName = B;
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;

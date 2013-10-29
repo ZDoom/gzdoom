@@ -74,7 +74,6 @@ void ParseDecorate (FScanner &sc);
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 PClassActor *QuestItemClasses[31];
-PSymbolTable GlobalSymbols;
 
 //==========================================================================
 //

@@ -10,8 +10,6 @@
 
 #define luai_nummod(a,b)        ((a) - floor((a)/(b))*(b))
 
-extern PSymbolTable GlobalSymbols;
-
 ZCC_OpInfoType ZCC_OpInfo[PEX_COUNT_OF] =
 {
 #define xx(a,n)	{ n, #a, NULL },

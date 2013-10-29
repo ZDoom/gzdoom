@@ -58,6 +58,7 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 FTypeTable TypeTable;
+PSymbolTable GlobalSymbols;
 TArray<PClass *> PClass::AllClasses;
 bool PClass::bShutdown;
 
@@ -458,6 +459,7 @@ void PType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 void PType::StaticInit()
 {
+	// Set up TypeTable hash keys.
 	RUNTIME_CLASS(PErrorType)->TypeTableType = RUNTIME_CLASS(PErrorType);
 	RUNTIME_CLASS(PVoidType)->TypeTableType = RUNTIME_CLASS(PVoidType);
 	RUNTIME_CLASS(PInt)->TypeTableType = RUNTIME_CLASS(PInt);
@@ -481,6 +483,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
 	RUNTIME_CLASS(PAngle)->TypeTableType = RUNTIME_CLASS(PAngle);
 
+	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
 	TypeTable.AddType(TypeVoid = new PVoidType);
 	TypeTable.AddType(TypeSInt8 = new PInt(1, false));
@@ -499,6 +502,26 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeFixed = new PFixed);
 	TypeTable.AddType(TypeAngle = new PAngle);
+
+	// Add types to the global symbol table.
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sbyte, TypeSInt8));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_byte, TypeUInt8));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_short, TypeSInt16));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_ushort, TypeUInt16));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_int, TypeSInt32));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_uint, TypeUInt32));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_bool, TypeBool));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_float, TypeFloat64));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_double, TypeFloat64));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_float32, TypeFloat32));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_float64, TypeFloat64));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_string, TypeString));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_name, TypeName));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sound, TypeSound));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_color, TypeColor));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_state, TypeState));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_fixed, TypeFixed));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_angle, TypeAngle));
 }
 
 
@@ -2454,6 +2477,9 @@ IMPLEMENT_ABSTRACT_CLASS(PSymbol);
 IMPLEMENT_CLASS(PSymbolConst);
 IMPLEMENT_CLASS(PSymbolConstNumeric);
 IMPLEMENT_CLASS(PSymbolConstString);
+IMPLEMENT_POINTY_CLASS(PSymbolType)
+ DECLARE_POINTER(Type)
+END_POINTERS
 IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
  DECLARE_POINTER(Function)
 END_POINTERS

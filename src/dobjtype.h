@@ -55,6 +55,19 @@ public:
 	PSymbolVMFunction() : PSymbol(NAME_None) {}
 };
 
+// A symbol for a type ------------------------------------------------------
+
+class PSymbolType : public PSymbol
+{
+	DECLARE_CLASS(PSymbolType, PSymbol);
+	HAS_OBJECT_POINTERS;
+public:
+	class PType *Type;
+
+	PSymbolType(FName name, class PType *ty) : PSymbol(name), Type(ty) {}
+	PSymbolType() : PSymbol(NAME_None) {}
+};
+
 // A symbol table -----------------------------------------------------------
 
 struct PSymbolTable
@@ -88,6 +101,8 @@ private:
 
 	friend class DObject;
 };
+
+extern PSymbolTable		 GlobalSymbols;
 
 // Basic information shared by all types ------------------------------------
 

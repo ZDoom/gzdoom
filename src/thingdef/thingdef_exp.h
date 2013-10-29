@@ -50,7 +50,6 @@
 #define SAFE_RESOLVE(p,c) RESOLVE(p,c); ABORT(p) 
 
 class VMFunctionBuilder;
-extern PSymbolTable		 GlobalSymbols;
 
 //==========================================================================
 //

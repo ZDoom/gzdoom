@@ -216,6 +216,18 @@ PType::~PType()
 
 //==========================================================================
 //
+// PType :: PropagateMark
+//
+//==========================================================================
+
+size_t PType::PropagateMark()
+{
+	size_t marked = Symbols.MarkSymbols();
+	return marked + Super::PropagateMark();
+}
+
+//==========================================================================
+//
 // PType :: AddConversion
 //
 //==========================================================================
@@ -1639,12 +1651,8 @@ PField *PStruct::AddField(FName name, PType *type, DWORD flags)
 
 size_t PStruct::PropagateMark()
 {
-	size_t marked;
-	
 	GC::MarkArray(Fields);
-	marked = Fields.Size() * sizeof(void*);
-	marked += Symbols.MarkSymbols();
-	return marked + Super::PropagateMark();
+	return Fields.Size() * sizeof(void*) + Super::PropagateMark();
 }
 
 //==========================================================================

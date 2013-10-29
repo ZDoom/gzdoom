@@ -156,6 +156,7 @@ public:
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
 	PType			*HashNext;		// next type in this type table
+	PSymbolTable	Symbols;
 
 	PType();
 	PType(unsigned int size, unsigned int align);
@@ -190,6 +191,8 @@ public:
 
 	// Get the type IDs used by IsMatch
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	size_t PropagateMark();
 
 	static void StaticInit();
 
@@ -530,7 +533,6 @@ public:
 	PStruct(FName name, DObject *outer);
 
 	TArray<PField *> Fields;
-	PSymbolTable	 Symbols;
 
 	PField *AddField(FName name, PType *type, DWORD flags=0);
 

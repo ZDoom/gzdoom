@@ -425,7 +425,6 @@ void LoadActors ()
 
 	timer.Reset(); timer.Clock();
 	ActorDamageFuncs.Clear();
-	GlobalSymbols.ReleaseSymbols();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;

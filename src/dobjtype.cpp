@@ -516,24 +516,24 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeAngle = new PAngle);
 
 	// Add types to the global symbol table.
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sbyte, TypeSInt8));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_byte, TypeUInt8));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_short, TypeSInt16));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_ushort, TypeUInt16));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_int, TypeSInt32));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_uint, TypeUInt32));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_bool, TypeBool));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_float, TypeFloat64));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_double, TypeFloat64));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_float32, TypeFloat32));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_float64, TypeFloat64));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_string, TypeString));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_name, TypeName));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sound, TypeSound));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_color, TypeColor));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_state, TypeState));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_fixed, TypeFixed));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_angle, TypeAngle));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Short, TypeSInt16));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_uShort, TypeUInt16));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Int, TypeSInt32));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_uInt, TypeUInt32));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Bool, TypeBool));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Float, TypeFloat64));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Double, TypeFloat64));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Float32, TypeFloat32));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Float64, TypeFloat64));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_String, TypeString));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Name, TypeName));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Sound, TypeSound));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Color, TypeColor));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_State, TypeState));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Fixed, TypeFixed));
+	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Angle, TypeAngle));
 }
 
 

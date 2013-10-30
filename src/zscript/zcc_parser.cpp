@@ -255,7 +255,7 @@ static void DoParse(const char *filename)
 	ZCCParse(parser, 0, value, &state);
 	ZCCParseFree(parser, free);
 
-	PSymbolTable symbols;
+	PSymbolTable symbols(&GlobalSymbols);
 	ZCCCompiler cc(state, NULL, symbols);
 	cc.Compile();
 #ifdef _DEBUG

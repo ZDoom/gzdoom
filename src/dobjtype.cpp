@@ -2507,6 +2507,11 @@ PSymbolTable::PSymbolTable()
 {
 }
 
+PSymbolTable::PSymbolTable(PSymbolTable *parent)
+: ParentSymbolTable(parent)
+{
+}
+
 PSymbolTable::~PSymbolTable ()
 {
 	ReleaseSymbols();

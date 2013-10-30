@@ -73,6 +73,7 @@ public:
 struct PSymbolTable
 {
 	PSymbolTable();
+	PSymbolTable(PSymbolTable *parent);
 	~PSymbolTable();
 
 	size_t MarkSymbols();

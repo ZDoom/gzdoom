@@ -315,7 +315,7 @@ class PBool : public PInt
 {
 	DECLARE_CLASS(PBool, PInt);
 public:
-	PBool() : PInt(sizeof(bool), true) {}
+	PBool();
 };
 
 class PFloat : public PBasicType
@@ -331,6 +331,22 @@ public:
 	virtual int GetRegType() const;
 protected:
 	PFloat();
+private:
+	struct SymbolInitF
+	{
+		ENamedName Name;
+		double Value;
+	};
+	struct SymbolInitI
+	{
+		ENamedName Name;
+		int Value;
+	};
+
+	void SetSingleSymbols();
+	void SetDoubleSymbols();
+	void SetSymbols(const SymbolInitF *syminit, size_t count);
+	void SetSymbols(const SymbolInitI *syminit, size_t count);
 };
 
 class PString : public PBasicType
@@ -767,6 +783,7 @@ public:
 
 	PSymbolConstNumeric(FName name, PType *type=NULL) : PSymbolConst(name, type) {}
 	PSymbolConstNumeric(FName name, PType *type, int val) : PSymbolConst(name, type), Value(val) {}
+	PSymbolConstNumeric(FName name, PType *type, unsigned int val) : PSymbolConst(name, type), Value((int)val) {}
 	PSymbolConstNumeric(FName name, PType *type, double val) : PSymbolConst(name, type), Float(val) {}
 	PSymbolConstNumeric() {}
 };

@@ -34,6 +34,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <float.h>
+#include <limits>
+
 #include "dobject.h"
 #include "i_system.h"
 #include "actor.h"
@@ -609,8 +612,10 @@ IMPLEMENT_CLASS(PInt)
 //==========================================================================
 
 PInt::PInt()
-: PBasicType(4, 4)
+: PBasicType(4, 4), Unsigned(false)
 {
+	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, -0x7FFFFFFF - 1));
+	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this,  0x7FFFFFFF));
 }
 
 //==========================================================================
@@ -622,6 +627,18 @@ PInt::PInt()
 PInt::PInt(unsigned int size, bool unsign)
 : PBasicType(size, size), Unsigned(unsign)
 {
+	if (!unsign)
+	{
+		int maxval = (1 << ((8 * size) - 1)) - 1;
+		int minval = -maxval - 1;
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, minval));
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, maxval));
+	}
+	else
+	{
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, 0u));
+		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << (8 * size)) - 1));
+	}
 }
 
 //==========================================================================
@@ -756,6 +773,21 @@ int PInt::GetRegType() const
 
 IMPLEMENT_CLASS(PBool)
 
+//==========================================================================
+//
+// PBool Default Constructor
+//
+//==========================================================================
+
+PBool::PBool()
+: PInt(sizeof(bool), true)
+{
+	// Override the default max set by PInt's constructor
+	PSymbolConstNumeric *maxsym = static_cast<PSymbolConstNumeric *>(Symbols.FindSymbol(NAME_Max, false));
+	assert(maxsym != NULL && maxsym->IsKindOf(RUNTIME_CLASS(PSymbolConstNumeric)));
+	maxsym->Value = 1;
+}
+
 /* PFloat *****************************************************************/
 
 IMPLEMENT_CLASS(PFloat)
@@ -767,8 +799,9 @@ IMPLEMENT_CLASS(PFloat)
 //==========================================================================
 
 PFloat::PFloat()
-: PBasicType(4, 4)
+: PBasicType(8, 8)
 {
+	SetDoubleSymbols();
 }
 
 //==========================================================================
@@ -780,6 +813,101 @@ PFloat::PFloat()
 PFloat::PFloat(unsigned int size)
 : PBasicType(size, size)
 {
+	if (size == 8)
+	{
+		SetDoubleSymbols();
+	}
+	else
+	{
+		assert(size == 4);
+		SetSingleSymbols();
+	}
+}
+
+//==========================================================================
+//
+// PFloat :: SetDoubleSymbols
+//
+// Setup constant values for 64-bit floats.
+//
+//==========================================================================
+
+void PFloat::SetDoubleSymbols()
+{
+	static const SymbolInitF symf[] =
+	{
+		{ NAME_Min_Normal,		DBL_MIN },
+		{ NAME_Max,				DBL_MAX },
+		{ NAME_Epsilon,			DBL_EPSILON },
+		{ NAME_NaN,				std::numeric_limits<double>::quiet_NaN() },
+		{ NAME_Infinity,		std::numeric_limits<double>::infinity() },
+		{ NAME_Min_Denormal,	std::numeric_limits<double>::denorm_min() }
+	};
+	static const SymbolInitI symi[] =
+	{
+		{ NAME_Dig,				DBL_DIG },
+		{ NAME_Min_Exp,			DBL_MIN_EXP },
+		{ NAME_Max_Exp,			DBL_MAX_EXP },
+		{ NAME_Mant_Dig,		DBL_MANT_DIG },
+		{ NAME_Min_10_Exp,		DBL_MIN_10_EXP },
+		{ NAME_Max_10_Exp,		DBL_MAX_10_EXP }
+	};
+	SetSymbols(symf, countof(symf));
+	SetSymbols(symi, countof(symi));
+}
+
+//==========================================================================
+//
+// PFloat :: SetSingleSymbols
+//
+// Setup constant values for 32-bit floats.
+//
+//==========================================================================
+
+void PFloat::SetSingleSymbols()
+{
+	static const SymbolInitF symf[] =
+	{
+		{ NAME_Min_Normal,		FLT_MIN },
+		{ NAME_Max,				FLT_MAX },
+		{ NAME_Epsilon,			FLT_EPSILON },
+		{ NAME_NaN,				std::numeric_limits<float>::quiet_NaN() },
+		{ NAME_Infinity,		std::numeric_limits<float>::infinity() },
+		{ NAME_Min_Denormal,	std::numeric_limits<float>::denorm_min() }
+	};
+	static const SymbolInitI symi[] =
+	{
+		{ NAME_Dig,				FLT_DIG },
+		{ NAME_Min_Exp,			FLT_MIN_EXP },
+		{ NAME_Max_Exp,			FLT_MAX_EXP },
+		{ NAME_Mant_Dig,		FLT_MANT_DIG },
+		{ NAME_Min_10_Exp,		FLT_MIN_10_EXP },
+		{ NAME_Max_10_Exp,		FLT_MAX_10_EXP }
+	};
+	SetSymbols(symf, countof(symf));
+	SetSymbols(symi, countof(symi));
+}
+
+//==========================================================================
+//
+// PFloat :: SetSymbols
+//
+//==========================================================================
+
+void PFloat::SetSymbols(const PFloat::SymbolInitF *sym, size_t count)
+{
+	for (size_t i = 0; i < count; ++i)
+	{
+		Symbols.AddSymbol(new PSymbolConstNumeric(sym[i].Name, this, sym[i].Value));
+	}
+}
+
+void PFloat::SetSymbols(const PFloat::SymbolInitI *sym, size_t count)
+{
+	for (size_t i = 0; i < count; ++i)
+	{
+		Symbols.AddSymbol(new PSymbolConstNumeric(sym[i].Name, this, sym[i].Value));
+	}
 }
 
 //==========================================================================

@@ -67,6 +67,7 @@ enum EZCCTreeNodeType
 	AST_ClassType,
 	AST_Expression,
 	AST_ExprID,
+	AST_ExprTypeRef,
 	AST_ExprConstant,
 	AST_ExprFuncCall,
 	AST_ExprMemberAccess,
@@ -286,6 +287,11 @@ struct ZCC_ClassType : ZCC_Type
 struct ZCC_ExprID : ZCC_Expression
 {
 	ENamedName Identifier;
+};
+
+struct ZCC_ExprTypeRef : ZCC_Expression
+{
+	PType *RefType;
 };
 
 struct ZCC_ExprConstant : ZCC_Expression

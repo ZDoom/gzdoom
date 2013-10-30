@@ -23,6 +23,7 @@ private:
 	ZCC_Expression *Simplify(ZCC_Expression *root);
 	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary);
 	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary);
+	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop);
 	ZCC_OpProto *PromoteUnary(EZCCExprType op, ZCC_Expression *&expr);
 	ZCC_OpProto *PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right);
 
@@ -35,7 +36,9 @@ private:
 	ZCC_Expression *AddCastNode(PType *type, ZCC_Expression *expr);
 
 	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode);
-	ZCC_ExprConstant *NodeFromSymbolConst(PSymbolConst *sym, ZCC_ExprID *idnode);
+	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source);
+	ZCC_ExprConstant *NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expression *idnode);
+	ZCC_ExprTypeRef *NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode);
 
 	void Message(ZCC_TreeNode *node, EZCCError errnum, const char *msg, ...);
 

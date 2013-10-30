@@ -471,6 +471,25 @@ static void PrintExprID(FLispString &out, ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintExprTypeRef(FLispString &out, ZCC_TreeNode *node)
+{
+	ZCC_ExprTypeRef *enode = (ZCC_ExprTypeRef *)node;
+	assert(enode->Operation == PEX_TypeRef);
+	out.Open("expr-type-ref");
+		 if (enode->RefType == TypeSInt8) { out.Add("sint8"); }
+	else if (enode->RefType == TypeUInt8) { out.Add("uint8"); }
+	else if (enode->RefType == TypeSInt16) { out.Add("sint16"); }
+	else if (enode->RefType == TypeSInt32) { out.Add("sint32"); }
+	else if (enode->RefType == TypeFloat32) { out.Add("float32"); }
+	else if (enode->RefType == TypeFloat64) { out.Add("float64"); }
+	else if (enode->RefType == TypeString) { out.Add("string"); }
+	else if (enode->RefType == TypeName) { out.Add("name"); }
+	else if (enode->RefType == TypeColor) { out.Add("color"); }
+	else if (enode->RefType == TypeSound) { out.Add("sound"); }
+	else { out.Add("other"); }
+	out.Close();
+}
+
 static void PrintExprConstant(FLispString &out, ZCC_TreeNode *node)
 {
 	ZCC_ExprConstant *enode = (ZCC_ExprConstant *)node;
@@ -767,6 +786,7 @@ void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *
 	PrintClassType,
 	PrintExpression,
 	PrintExprID,
+	PrintExprTypeRef,
 	PrintExprConstant,
 	PrintExprFuncCall,
 	PrintExprMemberAccess,

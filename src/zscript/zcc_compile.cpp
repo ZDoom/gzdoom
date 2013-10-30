@@ -230,6 +230,10 @@ ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root)
 	{
 		return IdentifyIdentifier(static_cast<ZCC_ExprID *>(root));
 	}
+	else if (root->Operation == PEX_MemberAccess)
+	{
+		return SimplifyMemberAccess(static_cast<ZCC_ExprMemberAccess *>(root));
+	}
 	else if (IsUnaryOp(root->Operation))
 	{
 		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root));
@@ -284,6 +288,40 @@ ZCC_Expression *ZCCCompiler::SimplifyBinary(ZCC_ExprBinary *binary)
 							  static_cast<ZCC_ExprConstant *>(binary->Right), AST.Strings);
 	}
 	return binary;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: SimplifyMemberAccess
+//
+//==========================================================================
+
+ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop)
+{
+	dotop->Left = Simplify(dotop->Left);
+
+	if (dotop->Left->Operation == PEX_TypeRef)
+	{ // Type refs can be evaluated now.
+		PType *ref = static_cast<ZCC_ExprTypeRef *>(dotop->Left)->RefType;
+		PSymbol *sym = ref->Symbols.FindSymbol(dotop->Right, true);
+		if (sym == NULL)
+		{
+			Message(dotop, ERR_not_a_member, "'%s' is not a valid member", FName(dotop->Right).GetChars());
+		}
+		else
+		{
+			ZCC_Expression *expr = NodeFromSymbol(sym, dotop);
+			if (expr == NULL)
+			{
+				Message(dotop, ERR_bad_symbol, "Unhandled symbol type encountered");
+			}
+			else
+			{
+				return expr;
+			}
+		}
+	}
+	return dotop;
 }
 
 //==========================================================================
@@ -387,9 +425,10 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 	PSymbol *sym;
 	if (NULL != (sym = Symbols.FindSymbol(idnode->Identifier, true)))
 	{
-		if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+		ZCC_Expression *node = NodeFromSymbol(sym, idnode);
+		if (node != NULL)
 		{
-			return NodeFromSymbolConst(static_cast<PSymbolConst *>(sym), idnode);
+			return node;
 		}
 	}
 	else
@@ -425,13 +464,32 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 
 //==========================================================================
 //
-// ZCCCompiler :: NodeFromSymoblConst
+// ZCCCompiler :: NodeFromSymbol
+//
+//==========================================================================
+
+ZCC_Expression *ZCCCompiler::NodeFromSymbol(PSymbol *sym, ZCC_Expression *source)
+{
+	if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
+	{
+		return NodeFromSymbolConst(static_cast<PSymbolConst *>(sym), source);
+	}
+	else if (sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
+	{
+		return NodeFromSymbolType(static_cast<PSymbolType *>(sym), source);
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: NodeFromSymbolConst
 //
 // Returns a new AST constant node with the symbol's content.
 //
 //==========================================================================
 
-ZCC_ExprConstant *ZCCCompiler::NodeFromSymbolConst(PSymbolConst *sym, ZCC_ExprID *idnode)
+ZCC_ExprConstant *ZCCCompiler::NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expression *idnode)
 {
 	ZCC_ExprConstant *val = static_cast<ZCC_ExprConstant *>(AST.InitNode(sizeof(*val), AST_ExprConstant, idnode));
 	val->Operation = PEX_ConstValue;
@@ -463,4 +521,21 @@ ZCC_ExprConstant *ZCCCompiler::NodeFromSymbolConst(PSymbolConst *sym, ZCC_ExprID
 		}
 	}
 	return val;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: NodeFromSymbolType
+//
+// Returns a new AST type ref node with the symbol's content.
+//
+//==========================================================================
+
+ZCC_ExprTypeRef *ZCCCompiler::NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode)
+{
+	ZCC_ExprTypeRef *ref = static_cast<ZCC_ExprTypeRef *>(AST.InitNode(sizeof(*ref), AST_ExprTypeRef, idnode));
+	ref->Operation = PEX_TypeRef;
+	ref->RefType = sym->Type;
+	ref->Type = NewClassPointer(RUNTIME_CLASS(PType));
+	return ref;
 }

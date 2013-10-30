@@ -7,4 +7,6 @@ enum EZCCError
 	ERR_symbol_redefinition				= 20002 | ZCCERR_ERROR,
 	ERR_original_definition				= 20003 | ZCCERR_ERROR,
 	ERR_recursive_definition			= 20004 | ZCCERR_ERROR,
+	ERR_not_a_member					= 20005 | ZCCERR_ERROR,
+	ERR_bad_symbol						= 20006 | ZCCERR_ERROR,
 };

@@ -8,6 +8,7 @@ xx(ConstValue,		0)
 xx(FuncCall,		0)
 xx(ArrayAccess,		0)
 xx(MemberAccess,	0)
+xx(TypeRef,			0)
 
 xx(PostInc,			1)
 xx(PostDec,			1)

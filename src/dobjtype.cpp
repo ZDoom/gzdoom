@@ -291,7 +291,7 @@ int PType::FindConversion(PType *target, const PType::Conversion **slots, int nu
 			PType *succ = t->Conversions[i].TargetType;
 			if (!visited.Check(succ))
 			{
-				succ->MarkPred(t, i, Distance + 1);
+				succ->MarkPred(t, i, t->Distance + 1);
 				visited.Insert(succ);
 				queue.Push(succ);
 			}

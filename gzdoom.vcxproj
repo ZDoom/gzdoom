@@ -1,0 +1,1869 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>zdoom</ProjectName>
+    <ProjectGuid>{8049475B-5C87-46F9-9358-635218A4EF18}</ProjectGuid>
+    <RootNamespace> zdoom</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.60430.2</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)Release\</OutDir>
+    <IntDir>$(ProjectDir)Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <ExecutablePath>C:\Users\Jonathan\AppData\Local\nasm;C:\Program Files (x86)\Git\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)Release\</OutDir>
+    <IntDir>$(ProjectDir)Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <ExecutablePath>C:\Users\Jonathan\AppData\Local\nasm;C:\Program Files (x86)\Git\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)Debug\</OutDir>
+    <IntDir>$(ProjectDir)Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\inc;$(IncludePath)</IncludePath>
+    <ExecutablePath>C:\Users\Jonathan\AppData\Local\nasm;C:\Program Files (x86)\Git\bin;$(ExecutablePath)</ExecutablePath>
+    <LibraryPath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)Debug\</OutDir>
+    <IntDir>$(ProjectDir)Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <ExecutablePath>C:\Users\Jonathan\AppData\Local\nasm;C:\Program Files (x86)\Git\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\inc;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\FMOD SoundSystem\FMOD Programmers API Windows\api\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Message>Checking gitinfo.h...</Message>
+      <Command>"$(OutDir)updaterevision.exe" src/gitinfo.h</Command>
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/zdoom.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu\gme;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WIN32;_WINDOWS;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;BACKPATCH;HAVE_FLUIDSYNTH;DYN_FLUIDSYNTH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader />
+      <PrecompiledHeaderOutputFile />
+      <AssemblerOutput />
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+      <CompileAs>Default</CompileAs>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>shfolder.lib;gdi32.lib;user32.lib;comctl32.lib;shell32.lib;advapi32.lib;comdlg32.lib;ole32.lib;dxguid.lib;dsound.lib;dinput8.lib;strmiids.lib;wsock32.lib;winmm.lib;fmodex_vc.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <OutputFile>$(TargetDir)$(TargetName).exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DelayLoadDLLs>fmodex.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>..\gzdoom.pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols />
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\Release/zdoom.map</MapFileName>
+      <MapExports>true</MapExports>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>0</StackReserveSize>
+      <TerminalServerAware>true</TerminalServerAware>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration />
+      <SetChecksum>true</SetChecksum>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <Manifest>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AssemblyIdentity />
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Message>Checking gitinfo.h...</Message>
+      <Command>"$(OutDir)updaterevision.exe" src/gitinfo.h</Command>
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\Release/zdoom.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu\gme;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WIN32;_WINDOWS;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader />
+      <PrecompiledHeaderOutputFile />
+      <AssemblerOutput />
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>ddraw.lib;dxguid.lib;dinput8.lib;comctl32.lib;strmiids.lib;wsock32.lib;ws2_32.lib;winmm.lib;fmodex64_vc.lib;setupapi.lib;oleaut32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <OutputFile>$(TargetDir)$(TargetName)_d.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DelayLoadDLLs>fmodex64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>..\gzdoom64.pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols />
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(OutDir)gzdoom.map</MapFileName>
+      <MapExports>true</MapExports>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>0</StackReserveSize>
+      <TerminalServerAware>true</TerminalServerAware>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <SetChecksum>true</SetChecksum>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Message>Checking gitinfo.h...</Message>
+      <Command>"$(OutDir)updaterevision.exe" src/gitinfo.h</Command>
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/zdoom.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu\gme;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32;_WINDOWS;_CRTDBG_MAP_ALLOC;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;BACKPATCH;HAVE_FLUIDSYNTH;DYN_FLUIDSYNTH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <PrecompiledHeaderOutputFile />
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>gdi32.lib;user32.lib;comctl32.lib;shell32.lib;advapi32.lib;comdlg32.lib;ole32.lib;dxguid.lib;dsound.lib;dinput8.lib;strmiids.lib;wsock32.lib;winmm.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;fmodex_vc.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(TargetDir)$(TargetName)_d.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <IgnoreSpecificDefaultLibraries>libcmt;msvcrtd;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <DelayLoadDLLs>fmodex.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/zdoomd.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>0</StackReserveSize>
+      <TerminalServerAware>true</TerminalServerAware>
+      <SetChecksum>false</SetChecksum>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>NotSet</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Message>Checking gitinfo.h...</Message>
+      <Command>"$(OutDir)updaterevision.exe" src/gitinfo.h</Command>
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\Debug/gzdoom.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu\gme;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32;_WINDOWS;_CRTDBG_MAP_ALLOC;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile />
+      <AssemblerOutput />
+      <AssemblerListingLocation>.\x64/Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\x64/Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\x64/Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>dxguid.lib;ddraw.lib;dinput8.lib;comctl32.lib;strmiids.lib;wsock32.lib;winmm.lib;fmodex64_vc.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(TargetDir)$(TargetName)_d.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <IgnoreSpecificDefaultLibraries>msvcrtd;libcmt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <DelayLoadDLLs>fmodex64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/gzdoomd.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>0</StackReserveSize>
+      <TerminalServerAware>true</TerminalServerAware>
+      <SetChecksum>false</SetChecksum>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\actorptrselect.cpp" />
+    <ClCompile Include="src\am_map.cpp" />
+    <ClCompile Include="src\autostart.cpp" />
+    <ClCompile Include="src\autozend.cpp" />
+    <ClCompile Include="src\b_bot.cpp" />
+    <ClCompile Include="src\B_func.cpp" />
+    <ClCompile Include="src\B_game.cpp" />
+    <ClCompile Include="src\b_move.cpp" />
+    <ClCompile Include="src\B_think.cpp" />
+    <ClCompile Include="src\bbannouncer.cpp" />
+    <ClCompile Include="src\c_bind.cpp" />
+    <ClCompile Include="src\c_cmds.cpp" />
+    <ClCompile Include="src\c_console.cpp" />
+    <ClCompile Include="src\c_cvars.cpp" />
+    <ClCompile Include="src\c_dispatch.cpp" />
+    <ClCompile Include="src\c_expr.cpp" />
+    <ClCompile Include="src\cmdlib.cpp" />
+    <ClCompile Include="src\colormatcher.cpp" />
+    <ClCompile Include="src\compatibility.cpp" />
+    <ClCompile Include="src\configfile.cpp" />
+    <ClCompile Include="src\ct_chat.cpp" />
+    <ClCompile Include="src\d_dehacked.cpp" />
+    <ClCompile Include="src\d_iwad.cpp" />
+    <ClCompile Include="src\D_main.cpp" />
+    <ClCompile Include="src\d_net.cpp" />
+    <ClCompile Include="src\d_netinfo.cpp" />
+    <ClCompile Include="src\d_protocol.cpp" />
+    <ClCompile Include="src\decallib.cpp" />
+    <ClCompile Include="src\dobject.cpp" />
+    <ClCompile Include="src\dobjgc.cpp" />
+    <ClCompile Include="src\dobjtype.cpp" />
+    <ClCompile Include="src\doomdef.cpp" />
+    <ClCompile Include="src\doomstat.cpp" />
+    <ClCompile Include="src\dsectoreffect.cpp" />
+    <ClCompile Include="src\dthinker.cpp" />
+    <ClCompile Include="src\f_wipe.cpp" />
+    <ClCompile Include="src\farchive.cpp" />
+    <ClCompile Include="src\files.cpp" />
+    <ClCompile Include="src\g_game.cpp" />
+    <ClCompile Include="src\g_hub.cpp" />
+    <ClCompile Include="src\g_level.cpp" />
+    <ClCompile Include="src\g_mapinfo.cpp" />
+    <ClCompile Include="src\g_skill.cpp" />
+    <ClCompile Include="src\gameconfigfile.cpp" />
+    <ClCompile Include="src\gi.cpp" />
+    <ClCompile Include="src\gitinfo.cpp" />
+    <ClCompile Include="src\hu_scores.cpp" />
+    <ClCompile Include="src\i_net.cpp" />
+    <ClCompile Include="src\info.cpp" />
+    <ClCompile Include="src\keysections.cpp" />
+    <ClCompile Include="src\lumpconfigfile.cpp" />
+    <ClCompile Include="src\m_alloc.cpp" />
+    <ClCompile Include="src\m_argv.cpp" />
+    <ClCompile Include="src\m_bbox.cpp" />
+    <ClCompile Include="src\m_cheat.cpp" />
+    <ClCompile Include="src\m_joy.cpp" />
+    <ClCompile Include="src\m_misc.cpp" />
+    <ClCompile Include="src\m_png.cpp" />
+    <ClCompile Include="src\m_random.cpp" />
+    <ClCompile Include="src\m_specialpaths.cpp" />
+    <ClCompile Include="src\md5.cpp" />
+    <ClCompile Include="src\memarena.cpp" />
+    <ClCompile Include="src\name.cpp" />
+    <ClCompile Include="src\nodebuild.cpp" />
+    <ClCompile Include="src\nodebuild_classify_nosse2.cpp" />
+    <ClCompile Include="src\nodebuild_classify_sse2.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="src\nodebuild_events.cpp" />
+    <ClCompile Include="src\nodebuild_extract.cpp" />
+    <ClCompile Include="src\nodebuild_gl.cpp" />
+    <ClCompile Include="src\nodebuild_utility.cpp" />
+    <ClCompile Include="src\p_3dfloors.cpp" />
+    <ClCompile Include="src\p_3dmidtex.cpp" />
+    <ClCompile Include="src\p_acs.cpp" />
+    <ClCompile Include="src\p_buildmap.cpp" />
+    <ClCompile Include="src\p_ceiling.cpp" />
+    <ClCompile Include="src\p_conversation.cpp" />
+    <ClCompile Include="src\p_doors.cpp" />
+    <ClCompile Include="src\p_effect.cpp" />
+    <ClCompile Include="src\p_enemy.cpp" />
+    <ClCompile Include="src\p_floor.cpp" />
+    <ClCompile Include="src\p_glnodes.cpp" />
+    <ClCompile Include="src\p_interaction.cpp" />
+    <ClCompile Include="src\p_lights.cpp" />
+    <ClCompile Include="src\p_linkedsectors.cpp" />
+    <ClCompile Include="src\p_lnspec.cpp" />
+    <ClCompile Include="src\p_map.cpp" />
+    <ClCompile Include="src\p_maputl.cpp" />
+    <ClCompile Include="src\p_mobj.cpp" />
+    <ClCompile Include="src\p_pillar.cpp" />
+    <ClCompile Include="src\p_plats.cpp" />
+    <ClCompile Include="src\p_pspr.cpp" />
+    <ClCompile Include="src\p_saveg.cpp" />
+    <ClCompile Include="src\p_sectors.cpp" />
+    <ClCompile Include="src\p_setup.cpp" />
+    <ClCompile Include="src\p_sight.cpp" />
+    <ClCompile Include="src\p_slopes.cpp" />
+    <ClCompile Include="src\p_spec.cpp" />
+    <ClCompile Include="src\p_states.cpp" />
+    <ClCompile Include="src\p_switch.cpp" />
+    <ClCompile Include="src\p_teleport.cpp" />
+    <ClCompile Include="src\p_terrain.cpp" />
+    <ClCompile Include="src\p_things.cpp" />
+    <ClCompile Include="src\p_tick.cpp" />
+    <ClCompile Include="src\p_trace.cpp" />
+    <ClCompile Include="src\p_udmf.cpp" />
+    <ClCompile Include="src\p_usdf.cpp" />
+    <ClCompile Include="src\p_user.cpp" />
+    <ClCompile Include="src\p_writemap.cpp" />
+    <ClCompile Include="src\p_xlat.cpp" />
+    <ClCompile Include="src\parsecontext.cpp" />
+    <ClCompile Include="src\po_man.cpp" />
+    <ClCompile Include="src\s_advsound.cpp" />
+    <ClCompile Include="src\s_environment.cpp" />
+    <ClCompile Include="src\s_playlist.cpp" />
+    <ClCompile Include="src\s_sndseq.cpp" />
+    <ClCompile Include="src\s_sound.cpp" />
+    <ClCompile Include="src\sc_man.cpp" />
+    <ClCompile Include="src\skins.cpp" />
+    <ClCompile Include="src\st_stuff.cpp" />
+    <ClCompile Include="src\statistics.cpp" />
+    <ClCompile Include="src\stats.cpp" />
+    <ClCompile Include="src\stringtable.cpp" />
+    <ClCompile Include="src\strnatcmp.c" />
+    <ClCompile Include="src\tables.cpp" />
+    <ClCompile Include="src\teaminfo.cpp" />
+    <ClCompile Include="src\tempfiles.cpp" />
+    <ClCompile Include="src\v_blend.cpp" />
+    <ClCompile Include="src\v_collection.cpp" />
+    <ClCompile Include="src\v_draw.cpp" />
+    <ClCompile Include="src\v_font.cpp" />
+    <ClCompile Include="src\v_palette.cpp" />
+    <ClCompile Include="src\v_pfx.cpp" />
+    <ClCompile Include="src\v_text.cpp" />
+    <ClCompile Include="src\v_video.cpp" />
+    <ClCompile Include="src\w_wad.cpp" />
+    <ClCompile Include="src\wi_stuff.cpp" />
+    <ClCompile Include="src\x86.cpp" />
+    <ClCompile Include="src\zstrformat.cpp" />
+    <ClCompile Include="src\zstring.cpp" />
+    <ClCompile Include="src\win32\eaxedit.cpp" />
+    <ClCompile Include="src\win32\fb_d3d9.cpp" />
+    <ClCompile Include="src\win32\fb_d3d9_wipe.cpp" />
+    <ClCompile Include="src\win32\fb_ddraw.cpp" />
+    <ClCompile Include="src\win32\hardware.cpp" />
+    <ClCompile Include="src\win32\helperthread.cpp" />
+    <ClCompile Include="src\win32\i_cd.cpp" />
+    <ClCompile Include="src\win32\i_crash.cpp" />
+    <ClCompile Include="src\win32\i_dijoy.cpp" />
+    <ClCompile Include="src\win32\i_input.cpp" />
+    <ClCompile Include="src\win32\i_keyboard.cpp" />
+    <ClCompile Include="src\win32\i_main.cpp" />
+    <ClCompile Include="src\win32\i_mouse.cpp" />
+    <ClCompile Include="src\win32\i_movie.cpp" />
+    <ClCompile Include="src\win32\i_rawps2.cpp" />
+    <ClCompile Include="src\win32\I_system.cpp" />
+    <ClCompile Include="src\win32\i_xinput.cpp" />
+    <ClCompile Include="src\win32\st_start.cpp" />
+    <ClCompile Include="src\win32\win32gliface.cpp" />
+    <ClCompile Include="src\win32\win32video.cpp" />
+    <ClCompile Include="src\g_shared\a_action.cpp" />
+    <ClCompile Include="src\g_shared\a_armor.cpp" />
+    <ClCompile Include="src\g_shared\a_artifacts.cpp" />
+    <ClCompile Include="src\g_shared\a_bridge.cpp" />
+    <ClCompile Include="src\g_shared\a_camera.cpp" />
+    <ClCompile Include="src\g_shared\a_debris.cpp" />
+    <ClCompile Include="src\g_shared\a_decals.cpp" />
+    <ClCompile Include="src\g_shared\a_fastprojectile.cpp" />
+    <ClCompile Include="src\g_shared\a_flashfader.cpp" />
+    <ClCompile Include="src\g_shared\a_fountain.cpp" />
+    <ClCompile Include="src\g_shared\a_hatetarget.cpp" />
+    <ClCompile Include="src\g_shared\a_keys.cpp" />
+    <ClCompile Include="src\g_shared\a_lightning.cpp" />
+    <ClCompile Include="src\g_shared\a_mapmarker.cpp" />
+    <ClCompile Include="src\g_shared\a_morph.cpp" />
+    <ClCompile Include="src\g_shared\a_movingcamera.cpp" />
+    <ClCompile Include="src\g_shared\a_pickups.cpp" />
+    <ClCompile Include="src\g_shared\a_puzzleitems.cpp" />
+    <ClCompile Include="src\g_shared\a_quake.cpp" />
+    <ClCompile Include="src\g_shared\a_randomspawner.cpp" />
+    <ClCompile Include="src\g_shared\a_secrettrigger.cpp" />
+    <ClCompile Include="src\g_shared\a_sectoraction.cpp" />
+    <ClCompile Include="src\g_shared\a_setcolor.cpp" />
+    <ClCompile Include="src\g_shared\a_skies.cpp" />
+    <ClCompile Include="src\g_shared\a_soundenvironment.cpp" />
+    <ClCompile Include="src\g_shared\a_soundsequence.cpp" />
+    <ClCompile Include="src\g_shared\a_spark.cpp" />
+    <ClCompile Include="src\g_shared\a_specialspot.cpp" />
+    <ClCompile Include="src\g_shared\a_waterzone.cpp" />
+    <ClCompile Include="src\g_shared\a_weaponpiece.cpp" />
+    <ClCompile Include="src\g_shared\a_weapons.cpp" />
+    <ClCompile Include="src\g_shared\hudmessages.cpp" />
+    <ClCompile Include="src\g_shared\sbar_mugshot.cpp" />
+    <ClCompile Include="src\g_shared\sbarinfo.cpp" />
+    <ClCompile Include="src\g_shared\sbarinfo_commands.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_shared\shared_hud.cpp" />
+    <ClCompile Include="src\g_shared\shared_sbar.cpp" />
+    <ClCompile Include="src\intermission\intermission.cpp" />
+    <ClCompile Include="src\intermission\intermission_parse.cpp" />
+    <ClCompile Include="src\r_3dfloors.cpp" />
+    <ClCompile Include="src\r_bsp.cpp" />
+    <ClCompile Include="src\r_draw.cpp" />
+    <ClCompile Include="src\r_drawt.cpp" />
+    <ClCompile Include="src\r_main.cpp" />
+    <ClCompile Include="src\r_plane.cpp" />
+    <ClCompile Include="src\r_polymost.cpp" />
+    <ClCompile Include="src\r_segs.cpp" />
+    <ClCompile Include="src\r_swrenderer.cpp" />
+    <ClCompile Include="src\r_things.cpp" />
+    <ClCompile Include="src\sound\fmodsound.cpp" />
+    <ClCompile Include="src\sound\i_music.cpp" />
+    <ClCompile Include="src\sound\i_sound.cpp" />
+    <ClCompile Include="src\sound\music_cd.cpp" />
+    <ClCompile Include="src\sound\music_dumb.cpp" />
+    <ClCompile Include="src\sound\music_fluidsynth_mididevice.cpp" />
+    <ClCompile Include="src\sound\music_gme.cpp" />
+    <ClCompile Include="src\sound\music_hmi_midiout.cpp" />
+    <ClCompile Include="src\sound\music_midi_base.cpp" />
+    <ClCompile Include="src\sound\music_midi_timidity.cpp" />
+    <ClCompile Include="src\sound\music_midistream.cpp" />
+    <ClCompile Include="src\sound\music_mus_midiout.cpp" />
+    <ClCompile Include="src\sound\music_mus_opl.cpp" />
+    <ClCompile Include="src\oplsynth\music_opl_mididevice.cpp" />
+    <ClCompile Include="src\oplsynth\music_opldumper_mididevice.cpp" />
+    <ClCompile Include="src\sound\music_pseudo_mididevice.cpp" />
+    <ClCompile Include="src\sound\music_smf_midiout.cpp" />
+    <ClCompile Include="src\sound\music_softsynth_mididevice.cpp" />
+    <ClCompile Include="src\sound\music_stream.cpp" />
+    <ClCompile Include="src\sound\music_timidity_mididevice.cpp" />
+    <ClCompile Include="src\sound\music_win_mididevice.cpp" />
+    <ClCompile Include="src\sound\music_xmi_midiout.cpp" />
+    <ClCompile Include="src\oplsynth\fmopl.cpp">
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </AssemblerOutput>
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </AssemblerOutput>
+    </ClCompile>
+    <ClCompile Include="src\oplsynth\mlopl.cpp" />
+    <ClCompile Include="src\oplsynth\mlopl_io.cpp" />
+    <ClCompile Include="src\oplsynth\OPL3.cpp" />
+    <ClCompile Include="src\oplsynth\opl_mus_player.cpp" />
+    <ClCompile Include="src\oplsynth\dosbox\opl.cpp" />
+    <ClCompile Include="src\timidity\instrum_font.cpp" />
+    <ClCompile Include="src\timidity\common.cpp" />
+    <ClCompile Include="src\timidity\instrum.cpp" />
+    <ClCompile Include="src\timidity\instrum_dls.cpp" />
+    <ClCompile Include="src\timidity\instrum_sf2.cpp" />
+    <ClCompile Include="src\timidity\mix.cpp" />
+    <ClCompile Include="src\timidity\playmidi.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="src\timidity\resample.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="src\timidity\timidity.cpp" />
+    <ClCompile Include="src\sdl\crashcatcher.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\sdl\hardware.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sdl\i_cd.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sdl\i_input.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sdl\i_main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sdl\i_movie.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sdl\i_system.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sdl\sdlglvideo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\sdl\sdlvideo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\sdl\st_start.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <XMLDocumentationFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.xdc</XMLDocumentationFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <XMLDocumentationFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.xdc</XMLDocumentationFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <XMLDocumentationFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.xdc</XMLDocumentationFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <XMLDocumentationFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.xdc</XMLDocumentationFileName>
+    </ClCompile>
+    <ClCompile Include="src\xlat\parse_xlat.cpp" />
+    <ClCompile Include="src\xlat\xlat_parser.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\sfmt\SFMT.cpp" />
+    <ClCompile Include="src\fragglescript\t_cmd.cpp" />
+    <ClCompile Include="src\fragglescript\t_fspic.cpp" />
+    <ClCompile Include="src\fragglescript\t_func.cpp" />
+    <ClCompile Include="src\fragglescript\t_load.cpp" />
+    <ClCompile Include="src\fragglescript\t_oper.cpp" />
+    <ClCompile Include="src\fragglescript\t_parse.cpp" />
+    <ClCompile Include="src\fragglescript\t_prepro.cpp" />
+    <ClCompile Include="src\fragglescript\t_script.cpp" />
+    <ClCompile Include="src\fragglescript\t_spec.cpp" />
+    <ClCompile Include="src\fragglescript\t_variable.cpp" />
+    <ClCompile Include="src\gl\api\gl_api.cpp" />
+    <ClCompile Include="src\gl\system\gl_framebuffer.cpp" />
+    <ClCompile Include="src\gl\system\gl_interface.cpp" />
+    <ClCompile Include="src\gl\system\gl_menu.cpp" />
+    <ClCompile Include="src\gl\system\gl_threads.cpp" />
+    <ClCompile Include="src\gl\system\gl_wipe.cpp" />
+    <ClCompile Include="src\gl\shaders\gl_shader.cpp" />
+    <ClCompile Include="src\gl\shaders\gl_texshader.cpp" />
+    <ClCompile Include="src\gl\dynlights\a_dynlight.cpp" />
+    <ClCompile Include="src\gl\dynlights\gl_dynlight.cpp" />
+    <ClCompile Include="src\gl\dynlights\gl_dynlight1.cpp" />
+    <ClCompile Include="src\gl\dynlights\gl_glow.cpp" />
+    <ClCompile Include="src\gl\dynlights\gl_lightbuffer.cpp" />
+    <ClCompile Include="src\gl\textures\gl_bitmap.cpp" />
+    <ClCompile Include="src\gl\textures\gl_hirestex.cpp" />
+    <ClCompile Include="src\gl\textures\gl_hqresize.cpp" />
+    <ClCompile Include="src\gl\textures\gl_hwtexture.cpp" />
+    <ClCompile Include="src\gl\textures\gl_material.cpp" />
+    <ClCompile Include="src\gl\textures\gl_skyboxtexture.cpp" />
+    <ClCompile Include="src\gl\textures\gl_texture.cpp" />
+    <ClCompile Include="src\gl\textures\gl_translate.cpp" />
+    <ClCompile Include="src\gl\models\gl_models.cpp" />
+    <ClCompile Include="src\gl\models\gl_models_md2.cpp" />
+    <ClCompile Include="src\gl\models\gl_models_md3.cpp" />
+    <ClCompile Include="src\gl\models\gl_voxels.cpp" />
+    <ClCompile Include="src\gl\scene\gl_bsp.cpp" />
+    <ClCompile Include="src\gl\scene\gl_clipper.cpp" />
+    <ClCompile Include="src\gl\scene\gl_decal.cpp" />
+    <ClCompile Include="src\gl\scene\gl_drawinfo.cpp" />
+    <ClCompile Include="src\gl\scene\gl_fakeflat.cpp" />
+    <ClCompile Include="src\gl\scene\gl_flats.cpp" />
+    <ClCompile Include="src\gl\scene\gl_portal.cpp" />
+    <ClCompile Include="src\gl\scene\gl_renderhacks.cpp" />
+    <ClCompile Include="src\gl\scene\gl_scene.cpp" />
+    <ClCompile Include="src\gl\scene\gl_sky.cpp" />
+    <ClCompile Include="src\gl\scene\gl_skydome.cpp" />
+    <ClCompile Include="src\gl\scene\gl_sprite.cpp" />
+    <ClCompile Include="src\gl\scene\gl_spritelight.cpp" />
+    <ClCompile Include="src\gl\scene\gl_vertex.cpp" />
+    <ClCompile Include="src\gl\scene\gl_walls.cpp" />
+    <ClCompile Include="src\gl\scene\gl_walls_draw.cpp" />
+    <ClCompile Include="src\gl\scene\gl_weapon.cpp" />
+    <ClCompile Include="src\gl\data\gl_data.cpp" />
+    <ClCompile Include="src\gl\data\gl_portaldata.cpp" />
+    <ClCompile Include="src\gl\data\gl_sections.cpp" />
+    <ClCompile Include="src\gl\data\gl_setup.cpp" />
+    <ClCompile Include="src\gl\data\gl_vertexbuffer.cpp" />
+    <ClCompile Include="src\gl\utility\gl_clock.cpp" />
+    <ClCompile Include="src\gl\utility\gl_cycler.cpp" />
+    <ClCompile Include="src\gl\utility\gl_geometric.cpp" />
+    <ClCompile Include="src\gl\renderer\gl_lightdata.cpp" />
+    <ClCompile Include="src\gl\renderer\gl_renderer.cpp" />
+    <ClCompile Include="src\gl\renderer\gl_renderstate.cpp" />
+    <ClCompile Include="src\gl\hqnx\hq2x.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\gl\hqnx\hq3x.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\gl\hqnx\hq4x.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\gl\hqnx\Image.cpp" />
+    <ClCompile Include="src\resourcefiles\ancientzip.cpp" />
+    <ClCompile Include="src\resourcefiles\file_7z.cpp" />
+    <ClCompile Include="src\resourcefiles\file_directory.cpp" />
+    <ClCompile Include="src\resourcefiles\file_grp.cpp" />
+    <ClCompile Include="src\resourcefiles\file_lump.cpp" />
+    <ClCompile Include="src\resourcefiles\file_pak.cpp" />
+    <ClCompile Include="src\resourcefiles\file_rff.cpp" />
+    <ClCompile Include="src\resourcefiles\file_wad.cpp" />
+    <ClCompile Include="src\resourcefiles\file_zip.cpp" />
+    <ClCompile Include="src\resourcefiles\resourcefile.cpp" />
+    <ClCompile Include="src\menu\colorpickermenu.cpp" />
+    <ClCompile Include="src\menu\joystickmenu.cpp" />
+    <ClCompile Include="src\menu\listmenu.cpp" />
+    <ClCompile Include="src\menu\loadsavemenu.cpp" />
+    <ClCompile Include="src\menu\menu.cpp" />
+    <ClCompile Include="src\menu\menudef.cpp" />
+    <ClCompile Include="src\menu\menuinput.cpp" />
+    <ClCompile Include="src\menu\messagebox.cpp" />
+    <ClCompile Include="src\menu\optionmenu.cpp" />
+    <ClCompile Include="src\menu\playerdisplay.cpp" />
+    <ClCompile Include="src\menu\playermenu.cpp" />
+    <ClCompile Include="src\menu\readthis.cpp" />
+    <ClCompile Include="src\menu\videomenu.cpp" />
+    <ClCompile Include="src\thingdef\olddecorations.cpp" />
+    <ClCompile Include="src\thingdef\thingdef.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_codeptr.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_data.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_exp.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_expression.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_function.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_parse.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_properties.cpp" />
+    <ClCompile Include="src\thingdef\thingdef_states.cpp" />
+    <ClCompile Include="src\g_doom\a_arachnotron.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_archvile.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_bossbrain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_bruiser.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_cacodemon.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_cyberdemon.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_demon.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_doomimp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_doommisc.cpp" />
+    <ClCompile Include="src\g_doom\a_doomweaps.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_fatso.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_keen.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_lostsoul.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_painelemental.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_possessed.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_revenant.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_scriptedmarine.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_doom\a_spidermaster.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_chicken.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_dsparil.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_hereticartifacts.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_hereticimp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_hereticmisc.cpp" />
+    <ClCompile Include="src\g_heretic\a_hereticweaps.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_ironlich.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_knight.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_heretic\a_wizard.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_bats.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_bishop.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_blastradius.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_boostarmor.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_centaur.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_clericflame.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_clericholy.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_clericmace.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_clericstaff.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_dragon.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_fighteraxe.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_fighterhammer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_fighterplayer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_fighterquietus.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_firedemon.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_flechette.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_fog.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_healingradius.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_heresiarch.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_hexenmisc.cpp" />
+    <ClCompile Include="src\g_hexen\a_hexenspecialdecs.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_iceguy.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_korax.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_magecone.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_magelightning.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_magestaff.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_pig.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_serpent.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_spike.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_summon.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_teleportother.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_hexen\a_wraith.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_raven\a_artitele.cpp" />
+    <ClCompile Include="src\g_raven\a_minotaur.cpp" />
+    <ClCompile Include="src\g_strife\a_acolyte.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_alienspectres.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_coin.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_crusader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_entityboss.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_inquisitor.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_loremaster.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_oracle.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_programmer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_reaver.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_rebels.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_sentinel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_spectral.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_stalker.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_strifeitems.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_strifestuff.cpp" />
+    <ClCompile Include="src\g_strife\a_strifeweapons.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
+      <PreprocessSuppressLineNumbers Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessSuppressLineNumbers>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
+      <PreprocessSuppressLineNumbers Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessSuppressLineNumbers>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_templar.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\a_thingstoblowup.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\g_strife\strife_sbar.cpp" />
+    <ClCompile Include="src\textures\anim_switches.cpp" />
+    <ClCompile Include="src\textures\animations.cpp" />
+    <ClCompile Include="src\textures\automaptexture.cpp" />
+    <ClCompile Include="src\textures\bitmap.cpp" />
+    <ClCompile Include="src\textures\buildtexture.cpp" />
+    <ClCompile Include="src\textures\canvastexture.cpp" />
+    <ClCompile Include="src\textures\ddstexture.cpp" />
+    <ClCompile Include="src\textures\emptytexture.cpp" />
+    <ClCompile Include="src\textures\flattexture.cpp" />
+    <ClCompile Include="src\textures\imgztexture.cpp" />
+    <ClCompile Include="src\textures\jpegtexture.cpp" />
+    <ClCompile Include="src\textures\multipatchtexture.cpp" />
+    <ClCompile Include="src\textures\patchtexture.cpp" />
+    <ClCompile Include="src\textures\pcxtexture.cpp" />
+    <ClCompile Include="src\textures\pngtexture.cpp" />
+    <ClCompile Include="src\textures\rawpagetexture.cpp" />
+    <ClCompile Include="src\textures\texture.cpp" />
+    <ClCompile Include="src\textures\texturemanager.cpp" />
+    <ClCompile Include="src\textures\tgatexture.cpp" />
+    <ClCompile Include="src\textures\warptexture.cpp" />
+    <ClCompile Include="src\r_data\colormaps.cpp" />
+    <ClCompile Include="src\r_data\r_interpolate.cpp" />
+    <ClCompile Include="src\r_data\r_translate.cpp" />
+    <ClCompile Include="src\r_data\renderstyle.cpp" />
+    <ClCompile Include="src\r_data\sprites.cpp" />
+    <ClCompile Include="src\r_data\voxels.cpp" />
+    <ClCompile Include="src\r_sky.cpp" />
+    <ClCompile Include="src\r_utility.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\sc_man_scanner.h" />
+    <ClInclude Include="src\actionspecials.h" />
+    <ClInclude Include="src\actor.h" />
+    <ClInclude Include="src\actorptrselect.h" />
+    <ClInclude Include="src\am_map.h" />
+    <ClInclude Include="src\announcer.h" />
+    <ClInclude Include="src\autosegs.h" />
+    <ClInclude Include="src\b_bot.H" />
+    <ClInclude Include="src\basicinlines.h" />
+    <ClInclude Include="src\basictypes.h" />
+    <ClInclude Include="src\c_bind.h" />
+    <ClInclude Include="src\c_console.h" />
+    <ClInclude Include="src\c_cvars.h" />
+    <ClInclude Include="src\c_dispatch.h" />
+    <ClInclude Include="src\cmdlib.h" />
+    <ClInclude Include="src\colormatcher.h" />
+    <ClInclude Include="src\compatibility.h" />
+    <ClInclude Include="src\configfile.h" />
+    <ClInclude Include="src\d_dehacked.h" />
+    <ClInclude Include="src\d_event.h" />
+    <ClInclude Include="src\d_gui.h" />
+    <ClInclude Include="src\d_main.h" />
+    <ClInclude Include="src\d_net.h" />
+    <ClInclude Include="src\d_netinf.h" />
+    <ClInclude Include="src\d_player.h" />
+    <ClInclude Include="src\d_protocol.h" />
+    <ClInclude Include="src\d_ticcmd.h" />
+    <ClInclude Include="src\decallib.h" />
+    <ClInclude Include="src\dobject.h" />
+    <ClInclude Include="src\dobjtype.h" />
+    <ClInclude Include="src\doomdata.h" />
+    <ClInclude Include="src\doomdef.h" />
+    <ClInclude Include="src\doomerrors.h" />
+    <ClInclude Include="src\doomstat.h" />
+    <ClInclude Include="src\doomtype.h" />
+    <ClInclude Include="src\dsectoreffect.h" />
+    <ClInclude Include="src\dthinker.h" />
+    <ClInclude Include="src\f_finale.h" />
+    <ClInclude Include="src\f_wipe.h" />
+    <ClInclude Include="src\farchive.h" />
+    <ClInclude Include="src\files.h" />
+    <ClInclude Include="src\g_game.h" />
+    <ClInclude Include="src\g_hub.h" />
+    <ClInclude Include="src\g_level.h" />
+    <ClInclude Include="src\gameconfigfile.h" />
+    <ClInclude Include="src\gametype.h" />
+    <ClInclude Include="src\gccinlines.h" />
+    <ClInclude Include="src\gi.h" />
+    <ClInclude Include="src\gstrings.h" />
+    <ClInclude Include="src\hu_stuff.h" />
+    <ClInclude Include="src\i_cd.h" />
+    <ClInclude Include="src\i_movie.h" />
+    <ClInclude Include="src\i_net.h" />
+    <ClInclude Include="src\i_video.h" />
+    <ClInclude Include="src\Info.h" />
+    <ClInclude Include="src\lists.h" />
+    <ClInclude Include="src\lumpconfigfile.h" />
+    <ClInclude Include="src\m_alloc.h" />
+    <ClInclude Include="src\m_argv.h" />
+    <ClInclude Include="src\m_bbox.h" />
+    <ClInclude Include="src\m_cheat.h" />
+    <ClInclude Include="src\m_crc32.h" />
+    <ClInclude Include="src\m_fixed.h" />
+    <ClInclude Include="src\m_joy.h" />
+    <ClInclude Include="src\m_misc.h" />
+    <ClInclude Include="src\m_png.h" />
+    <ClInclude Include="src\m_random.h" />
+    <ClInclude Include="src\m_swap.h" />
+    <ClInclude Include="src\md5.h" />
+    <ClInclude Include="src\memarena.h" />
+    <ClInclude Include="src\mscinlines.h" />
+    <ClInclude Include="src\mus2midi.h" />
+    <ClInclude Include="src\name.h" />
+    <ClInclude Include="src\namedef.h" />
+    <ClInclude Include="src\nodebuild.h" />
+    <ClInclude Include="src\p_3dfloors.h" />
+    <ClInclude Include="src\p_3dmidtex.h" />
+    <ClInclude Include="src\p_acs.h" />
+    <ClInclude Include="src\p_conversation.h" />
+    <ClInclude Include="src\p_effect.h" />
+    <ClInclude Include="src\p_enemy.h" />
+    <ClInclude Include="src\p_lnspec.h" />
+    <ClInclude Include="src\p_local.h" />
+    <ClInclude Include="src\p_pspr.h" />
+    <ClInclude Include="src\p_saveg.h" />
+    <ClInclude Include="src\p_setup.h" />
+    <ClInclude Include="src\p_spec.h" />
+    <ClInclude Include="src\p_terrain.h" />
+    <ClInclude Include="src\p_tick.h" />
+    <ClInclude Include="src\p_trace.h" />
+    <ClInclude Include="src\parsecontext.h" />
+    <ClInclude Include="src\po_man.h" />
+    <ClInclude Include="src\s_playlist.h" />
+    <ClInclude Include="src\s_sndseq.h" />
+    <ClInclude Include="src\s_sound.h" />
+    <ClInclude Include="src\sc_man.h" />
+    <ClInclude Include="src\sc_man_tokens.h" />
+    <ClInclude Include="src\skins.h" />
+    <ClInclude Include="src\st_start.h" />
+    <ClInclude Include="src\st_stuff.h" />
+    <ClInclude Include="src\statnums.h" />
+    <ClInclude Include="src\stats.h" />
+    <ClInclude Include="src\stringtable.h" />
+    <ClInclude Include="src\strnatcmp.h" />
+    <ClInclude Include="src\Tables.h" />
+    <ClInclude Include="src\tarray.h" />
+    <ClInclude Include="src\teaminfo.h" />
+    <ClInclude Include="src\tempfiles.h" />
+    <ClInclude Include="src\templates.h" />
+    <ClInclude Include="src\v_collection.h" />
+    <ClInclude Include="src\v_font.h" />
+    <ClInclude Include="src\v_palette.h" />
+    <ClInclude Include="src\v_pfx.h" />
+    <ClInclude Include="src\v_text.h" />
+    <ClInclude Include="src\v_video.h" />
+    <ClInclude Include="src\vectors.h" />
+    <ClInclude Include="src\w_wad.h" />
+    <ClInclude Include="src\w_zip.h" />
+    <ClInclude Include="src\weightedlist.h" />
+    <ClInclude Include="src\wi_stuff.h" />
+    <ClInclude Include="src\x86.h" />
+    <ClInclude Include="src\xs_Float.h" />
+    <ClInclude Include="src\zstring.h" />
+    <ClInclude Include="src\win32\critsec.h" />
+    <ClInclude Include="src\win32\hardware.h" />
+    <ClInclude Include="src\win32\helperthread.h" />
+    <ClInclude Include="src\win32\i_input.h" />
+    <ClInclude Include="src\win32\I_system.h" />
+    <ClInclude Include="src\win32\rawinput.h" />
+    <ClInclude Include="src\win32\resource.h" />
+    <ClInclude Include="src\win32\win32gliface.h" />
+    <ClInclude Include="src\win32\win32iface.h" />
+    <ClInclude Include="src\g_shared\a_action.h" />
+    <ClInclude Include="src\g_shared\a_artifacts.h" />
+    <ClInclude Include="src\g_shared\a_keys.h" />
+    <ClInclude Include="src\g_shared\a_lightning.h" />
+    <ClInclude Include="src\g_shared\a_pickups.h" />
+    <ClInclude Include="src\g_shared\a_sharedglobal.h" />
+    <ClInclude Include="src\g_shared\a_specialspot.h" />
+    <ClInclude Include="src\g_shared\a_weaponpiece.h" />
+    <ClInclude Include="src\g_shared\sbar.h" />
+    <ClInclude Include="src\g_shared\sbarinfo.h" />
+    <ClInclude Include="src\intermission\intermission.h" />
+    <ClInclude Include="src\r_3dfloors.h" />
+    <ClInclude Include="src\r_bsp.h" />
+    <ClInclude Include="src\r_draw.h" />
+    <ClInclude Include="src\r_local.h" />
+    <ClInclude Include="src\r_main.h" />
+    <ClInclude Include="src\r_plane.h" />
+    <ClInclude Include="src\r_polymost.h" />
+    <ClInclude Include="src\r_segs.h" />
+    <ClInclude Include="src\r_swrenderer.h" />
+    <ClInclude Include="src\r_things.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\sound\fmod_wrap.h" />
+    <ClInclude Include="src\sound\fmodsound.h" />
+    <ClInclude Include="src\sound\i_music.h" />
+    <ClInclude Include="src\sound\i_musicinterns.h" />
+    <ClInclude Include="src\sound\i_sound.h" />
+    <ClInclude Include="src\sound\i_soundinternal.h" />
+    <ClInclude Include="src\oplsynth\DEFTYPES.H" />
+    <ClInclude Include="src\oplsynth\muslib.h" />
+    <ClInclude Include="src\oplsynth\opl.h" />
+    <ClInclude Include="src\oplsynth\opl_mus_player.h" />
+    <ClInclude Include="src\oplsynth\dosbox\opl.h" />
+    <ClInclude Include="src\timidity\dls1.h" />
+    <ClInclude Include="src\timidity\dls2.h" />
+    <ClInclude Include="src\timidity\gf1patch.h" />
+    <ClInclude Include="src\timidity\sf2.h" />
+    <ClInclude Include="src\timidity\timidity.h" />
+    <ClInclude Include="src\sdl\critsec.h" />
+    <CustomBuild Include="src\sdl\dikeys.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="src\sdl\hardware.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="src\sdl\i_input.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="src\sdl\i_system.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="src\sdl\i_video.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="src\sdl\sdlglvideo.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="src\sdl\sdlvideo.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <ClInclude Include="src\xlat\xlat.h" />
+    <ClInclude Include="src\xlat\xlat_parser.h" />
+    <ClInclude Include="src\sfmt\SFMT-alti.h" />
+    <ClInclude Include="src\sfmt\SFMT-params.h" />
+    <ClInclude Include="src\sfmt\SFMT-params11213.h" />
+    <ClInclude Include="src\sfmt\SFMT-params1279.h" />
+    <ClInclude Include="src\sfmt\SFMT-params132049.h" />
+    <ClInclude Include="src\sfmt\SFMT-params19937.h" />
+    <ClInclude Include="src\sfmt\SFMT-params216091.h" />
+    <ClInclude Include="src\sfmt\SFMT-params2281.h" />
+    <ClInclude Include="src\sfmt\SFMT-params4253.h" />
+    <ClInclude Include="src\sfmt\SFMT-params44497.h" />
+    <ClInclude Include="src\sfmt\SFMT-params607.h" />
+    <ClInclude Include="src\sfmt\SFMT-params86243.h" />
+    <ClInclude Include="src\sfmt\SFMT-sse2.h" />
+    <ClInclude Include="src\sfmt\SFMT.h" />
+    <ClInclude Include="src\fragglescript\t_fs.h" />
+    <ClInclude Include="src\fragglescript\t_script.h" />
+    <ClInclude Include="src\gl\gl_functions.h" />
+    <ClInclude Include="src\gl\api\gl_api.h" />
+    <ClInclude Include="src\gl\system\gl_cvars.h" />
+    <ClInclude Include="src\gl\system\gl_framebuffer.h" />
+    <ClInclude Include="src\gl\system\gl_interface.h" />
+    <ClInclude Include="src\gl\system\gl_system.h" />
+    <ClInclude Include="src\gl\system\gl_threads.h" />
+    <ClInclude Include="src\gl\shaders\gl_shader.h" />
+    <ClInclude Include="src\gl\shaders\gl_texshader.h" />
+    <ClInclude Include="src\gl\dynlights\gl_dynlight.h" />
+    <ClInclude Include="src\gl\dynlights\gl_glow.h" />
+    <ClInclude Include="src\gl\dynlights\gl_lightbuffer.h" />
+    <ClInclude Include="src\gl\textures\gl_bitmap.h" />
+    <ClInclude Include="src\gl\textures\gl_hwtexture.h" />
+    <ClInclude Include="src\gl\textures\gl_material.h" />
+    <ClInclude Include="src\gl\textures\gl_skyboxtexture.h" />
+    <ClInclude Include="src\gl\textures\gl_texture.h" />
+    <ClInclude Include="src\gl\textures\gl_translate.h" />
+    <ClInclude Include="src\gl\models\gl_models.h" />
+    <ClInclude Include="src\gl\models\tab_anorms.h" />
+    <ClInclude Include="src\gl\scene\gl_clipper.h" />
+    <ClInclude Include="src\gl\scene\gl_drawinfo.h" />
+    <ClInclude Include="src\gl\scene\gl_portal.h" />
+    <ClInclude Include="src\gl\scene\gl_wall.h" />
+    <ClInclude Include="src\gl\data\gl_data.h" />
+    <ClInclude Include="src\gl\data\gl_sections.h" />
+    <ClInclude Include="src\gl\data\gl_vertexbuffer.h" />
+    <ClInclude Include="src\gl\utility\gl_clock.h" />
+    <ClInclude Include="src\gl\utility\gl_convert.h" />
+    <ClInclude Include="src\gl\utility\gl_cycler.h" />
+    <ClInclude Include="src\gl\utility\gl_geometric.h" />
+    <ClInclude Include="src\gl\utility\gl_templates.h" />
+    <ClInclude Include="src\gl\renderer\gl_colormap.h" />
+    <ClInclude Include="src\gl\renderer\gl_lightdata.h" />
+    <ClInclude Include="src\gl\renderer\gl_renderer.h" />
+    <ClInclude Include="src\gl\renderer\gl_renderstate.h" />
+    <ClInclude Include="src\gl\hqnx\hqnx.h" />
+    <ClInclude Include="src\gl\hqnx\Image.h" />
+    <ClInclude Include="src\resourcefiles\ancientzip.h" />
+    <ClInclude Include="src\resourcefiles\resourcefile.h" />
+    <ClInclude Include="src\menu\menu.h" />
+    <ClInclude Include="src\menu\optionmenuitems.h" />
+    <ClInclude Include="src\thingdef\thingdef.h" />
+    <ClInclude Include="src\thingdef\thingdef_exp.h" />
+    <ClInclude Include="src\thingdef\thingdef_type.h" />
+    <ClInclude Include="src\g_doom\a_doomglobal.h" />
+    <ClInclude Include="src\g_hexen\a_hexenglobal.h" />
+    <ClInclude Include="src\g_raven\ravenshared.h" />
+    <ClInclude Include="src\g_strife\a_strifeglobal.h" />
+    <ClInclude Include="src\textures\bitmap.h" />
+    <ClInclude Include="src\textures\textures.h" />
+    <ClInclude Include="src\r_data\colormaps.h" />
+    <ClInclude Include="src\r_data\r_interpolate.h" />
+    <ClInclude Include="src\r_data\r_translate.h" />
+    <ClInclude Include="src\r_data\renderstyle.h" />
+    <ClInclude Include="src\r_data\sprites.h" />
+    <ClInclude Include="src\r_data\voxels.h" />
+    <ClInclude Include="src\r_defs.h" />
+    <ClInclude Include="src\r_renderer.h" />
+    <ClInclude Include="src\r_sky.h" />
+    <ClInclude Include="src\r_state.h" />
+    <ClInclude Include="src\r_utility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="src\sc_man_scanner.re">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating %(Filename).h from src/%(Filename)%(Extension)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">tools\re2c\re2c --no-generation-date -s -o "src/%(Filename).h" "src/%(Filename)%(Extension)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">src/%(Filename).h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating %(Filename).h from src/%(Filename)%(Extension)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tools\re2c\re2c --no-generation-date -s -o "src/%(Filename).h" "src/%(Filename)%(Extension)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">src/%(Filename).h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating %(Filename).h from src/%(Filename)%(Extension)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">tools\re2c\re2c --no-generation-date -s -o "src/%(Filename).h" "src/%(Filename)%(Extension)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">src/%(Filename).h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating %(Filename).h from src/%(Filename)%(Extension)</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tools\re2c\re2c --no-generation-date -s -o "src/%(Filename).h" "src/%(Filename)%(Extension)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">src/%(Filename).h;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\asm_ia32\a.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\asm_ia32\misc.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\asm_ia32\tmap.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\asm_ia32\tmap2.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\asm_ia32\tmap3.asm">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nasm -g -o "$(IntDir)%(Filename).obj" -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -o "$(IntDir)%(Filename).obj"  -f win32 "%(FullPath)" -isrc/
+$(OutDir)fixrtext "$(IntDir)%(Filename).obj"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\asm_x86_64\tmap3.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">yasm -o "$(IntDir)%(Filename).obj"  -f win64 "%(FullPath)" -isrc/
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Assembling %(FullPath)...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">yasm -o "$(IntDir)%(Filename).obj"  -f win64 "%(FullPath)" -isrc/
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="src\win32\cursor1.cur" />
+    <None Include="wadsrc\static\shaders\d3d9\shaders.ps" />
+    <None Include="docs\console.html" />
+    <None Include="src\timidity\CHANGES" />
+    <None Include="src\timidity\COPYING" />
+    <None Include="src\timidity\FAQ" />
+    <None Include="src\timidity\README" />
+    <CustomBuild Include="src\xlat\xlat_parser.y">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generating xlat_parser.c and xlat_parser.h...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">tools\lemon\lemon.exe "%(FullPath)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)xlat_parser.c;%(RootDir)%(Directory)xlat_parser.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating xlat_parser.c and xlat_parser.h...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">tools\lemon\lemon.exe "%(FullPath)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)xlat_parser.c;%(RootDir)%(Directory)xlat_parser.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generating xlat_parser.c and xlat_parser.h...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">tools\lemon\lemon.exe "%(FullPath)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)xlat_parser.c;%(RootDir)%(Directory)xlat_parser.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating xlat_parser.c and xlat_parser.h...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">tools\lemon\lemon.exe "%(FullPath)"
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)xlat_parser.c;%(RootDir)%(Directory)xlat_parser.h;%(Outputs)</Outputs>
+    </CustomBuild>
+    <None Include="wadsrc\static\shaders\glsl\fogboundary.fp" />
+    <None Include="wadsrc\static\shaders\glsl\func_brightmap.fp" />
+    <None Include="wadsrc\static\shaders\glsl\func_normal.fp" />
+    <None Include="wadsrc\static\shaders\glsl\func_notexture.fp" />
+    <None Include="wadsrc\static\shaders\glsl\func_warp1.fp" />
+    <None Include="wadsrc\static\shaders\glsl\func_warp2.fp" />
+    <None Include="wadsrc\static\shaders\glsl\main.fp" />
+    <None Include="wadsrc\static\shaders\glsl\main.vp" />
+    <None Include="wadsrc\static\shaders\glsl\main_colormap.fp" />
+    <None Include="wadsrc\static\shaders\glsl\main_colormap.vp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\win32\boing1.ico" />
+    <Image Include="src\win32\boing2.ico" />
+    <Image Include="src\win32\boing3.ico" />
+    <Image Include="src\win32\boing4.ico" />
+    <Image Include="src\win32\boing5.ico" />
+    <Image Include="src\win32\boing6.ico" />
+    <Image Include="src\win32\boing7.ico" />
+    <Image Include="src\win32\boing8.ico" />
+    <Image Include="src\win32\deadguy.bmp" />
+    <Image Include="src\win32\icon1.ico" />
+    <Image Include="src\win32\icon2.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\classes.txt" />
+    <Text Include="src\CMakeLists.txt" />
+    <Text Include="docs\colors.txt" />
+    <Text Include="docs\commands.txt" />
+    <Text Include="docs\history.txt" />
+    <Text Include="docs\notes.txt" />
+    <Text Include="docs\rh-log.txt" />
+    <Text Include="docs\zdoom.txt" />
+    <Text Include="docs\BUILDLIC.TXT" />
+    <Text Include="docs\doomlic.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\win32\zdoom.rc">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_DEBUG;NO_MANIFEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">src\win32</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_DEBUG;NO_MANIFEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">src\win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">src\win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">src\win32</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="bzip2\bzip2.vcxproj">
+      <Project>{a7de5c73-d623-4118-a48a-bdfd1fae97d4}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="dumb\vc6\dumb_static\dumb_static.vcxproj">
+      <Project>{8997289f-10bf-4678-8baa-3bb509c84953}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="game-music-emu\game-music-emu.vcxproj">
+      <Project>{9b465a9e-e5c7-4577-b559-3ca2f7ae7d96}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gdtoa\gdtoa.vcxproj">
+      <Project>{b68e0abf-b627-48a3-a92f-d8f827a75054}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="jpeg-6b\jpeg-6b.vcxproj">
+      <Project>{ac3f5340-40cb-4c3a-8aa7-cb7158db4466}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="lzma\lzmalib.vcxproj">
+      <Project>{6eb27e78-7c7a-4f08-8e19-957e8eb3a20f}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\fixrtext\fixrtext.vcxproj">
+      <Project>{da47396f-60c1-4bde-a977-7f7de461cf77}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\lemon\lemon.vcxproj">
+      <Project>{0f80acbf-460e-44f0-b28e-b3272d1774a7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\re2c\re2c.vcxproj">
+      <Project>{667d2ee7-c357-49e2-9bab-0a4a45f0f76e}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\updaterevision\updaterevision.vcxproj">
+      <Project>{6077b7d6-349f-4077-b552-3bc302ef5859}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="wadsrc\wadsrc.vcxproj">
+      <Project>{1d179d4b-f008-431b-8c72-111f8372584f}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="zlib\zlib.vcxproj">
+      <Project>{f9d9e7d4-e1a2-4866-9e85-b1b14137ee63}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

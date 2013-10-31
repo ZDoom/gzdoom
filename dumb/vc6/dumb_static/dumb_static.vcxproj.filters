@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{f406ff91-a727-421c-ac1e-2c94f2d724b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\core">
+      <UniqueIdentifier>{ce6e3a66-1202-4e64-aa7d-2ad88ce4599e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\helpers">
+      <UniqueIdentifier>{48b673c4-6a16-479d-9c65-b61ade4c39a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\it">
+      <UniqueIdentifier>{60872a51-d310-4846-abb5-8658c66d0ca5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{33a3184a-ddd7-4a5b-b9d0-5a5fcdb43f5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\internal">
+      <UniqueIdentifier>{f6dcbf64-248f-4720-a5a2-fdb7cec9ebd3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\core\atexit.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\duhlen.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\duhtag.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\dumbfile.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\loadduh.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\makeduh.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rawsig.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\readduh.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\register.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rendduh.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rendsig.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\unload.c">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\barray.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\blip_buf.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\clickrem.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\memfile.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\resample.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\riff.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\sampbuf.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\silence.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\helpers\stdfile.c">
+      <Filter>src\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\filter.cpp">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itload.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itload2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itmisc.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itorder.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itread.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itread2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itrender.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\itunload.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\load669.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\load6692.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadasy.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadasy2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadmod.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadmod2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadmtm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadmtm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadokt.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadokt2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadoldpsm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadoldpsm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadpsm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadpsm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadptm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadptm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadriff.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadriff2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loads3m.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loads3m2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadstm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadstm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadxm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\loadxm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\ptmeffect.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\read669.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\read6692.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readam.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readasy.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readdsmf.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readmod.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readmod2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readmtm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readokt.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readokt2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readoldpsm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readpsm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readptm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readriff.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\reads3m.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\reads3m2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readstm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readstm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readxm.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\readxm2.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\it\xmeffect.c">
+      <Filter>src\it</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\dumb.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\internal\blip_buf.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\internal\dumb.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\internal\it.h">
+      <Filter>include\internal</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\src\helpers\resamp2.inc">
+      <Filter>src\helpers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\helpers\resamp3.inc">
+      <Filter>src\helpers</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\helpers\resample.inc">
+      <Filter>src\helpers</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

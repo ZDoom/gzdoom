@@ -1,0 +1,334 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release DLL|Win32">
+      <Configuration>Release DLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release DLL|x64">
+      <Configuration>Release DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9B465A9E-E5C7-4577-B559-3CA2F7AE7D96}</ProjectGuid>
+    <RootNamespace>gamemusicemu</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.60430.2</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;GME_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;GME_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="gme\Ay_Apu.cpp" />
+    <ClCompile Include="gme\Ay_Cpu.cpp" />
+    <ClCompile Include="gme\Ay_Emu.cpp" />
+    <ClCompile Include="gme\Blip_Buffer.cpp" />
+    <ClCompile Include="gme\Classic_Emu.cpp" />
+    <ClCompile Include="gme\Data_Reader.cpp" />
+    <ClCompile Include="gme\Dual_Resampler.cpp" />
+    <ClCompile Include="gme\Effects_Buffer.cpp" />
+    <ClCompile Include="gme\Fir_Resampler.cpp" />
+    <ClCompile Include="gme\Gb_Apu.cpp" />
+    <ClCompile Include="gme\Gb_Cpu.cpp" />
+    <ClCompile Include="gme\Gb_Oscs.cpp" />
+    <ClCompile Include="gme\Gbs_Emu.cpp" />
+    <ClCompile Include="gme\gme.cpp" />
+    <ClCompile Include="gme\Gme_File.cpp" />
+    <ClCompile Include="gme\Gym_Emu.cpp" />
+    <ClCompile Include="gme\Hes_Apu.cpp" />
+    <ClCompile Include="gme\Hes_Cpu.cpp" />
+    <ClCompile Include="gme\Hes_Emu.cpp" />
+    <ClCompile Include="gme\Kss_Cpu.cpp" />
+    <ClCompile Include="gme\Kss_Emu.cpp" />
+    <ClCompile Include="gme\Kss_Scc_Apu.cpp" />
+    <ClCompile Include="gme\M3u_Playlist.cpp" />
+    <ClCompile Include="gme\Multi_Buffer.cpp" />
+    <ClCompile Include="gme\Music_Emu.cpp" />
+    <ClCompile Include="gme\Nes_Apu.cpp" />
+    <ClCompile Include="gme\Nes_Cpu.cpp" />
+    <ClCompile Include="gme\Nes_Fme7_Apu.cpp" />
+    <ClCompile Include="gme\Nes_Namco_Apu.cpp" />
+    <ClCompile Include="gme\Nes_Oscs.cpp" />
+    <ClCompile Include="gme\Nes_Vrc6_Apu.cpp" />
+    <ClCompile Include="gme\Nsf_Emu.cpp" />
+    <ClCompile Include="gme\Nsfe_Emu.cpp" />
+    <ClCompile Include="gme\Sap_Apu.cpp" />
+    <ClCompile Include="gme\Sap_Cpu.cpp" />
+    <ClCompile Include="gme\Sap_Emu.cpp" />
+    <ClCompile Include="gme\Sms_Apu.cpp" />
+    <ClCompile Include="gme\Snes_Spc.cpp" />
+    <ClCompile Include="gme\Spc_Cpu.cpp" />
+    <ClCompile Include="gme\Spc_Dsp.cpp" />
+    <ClCompile Include="gme\Spc_Emu.cpp" />
+    <ClCompile Include="gme\Vgm_Emu.cpp" />
+    <ClCompile Include="gme\Vgm_Emu_Impl.cpp" />
+    <ClCompile Include="gme\Ym2413_Emu.cpp" />
+    <ClCompile Include="gme\Ym2612_Emu.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gme\Ay_Apu.h" />
+    <ClInclude Include="gme\Ay_Cpu.h" />
+    <ClInclude Include="gme\Ay_Emu.h" />
+    <ClInclude Include="gme\blargg_common.h" />
+    <ClInclude Include="gme\blargg_config.h" />
+    <ClInclude Include="gme\blargg_endian.h" />
+    <ClInclude Include="gme\blargg_source.h" />
+    <ClInclude Include="gme\Blip_Buffer.h" />
+    <ClInclude Include="gme\Classic_Emu.h" />
+    <ClInclude Include="gme\Data_Reader.h" />
+    <ClInclude Include="gme\Dual_Resampler.h" />
+    <ClInclude Include="gme\Effects_Buffer.h" />
+    <ClInclude Include="gme\Fir_Resampler.h" />
+    <ClInclude Include="gme\Gb_Apu.h" />
+    <ClInclude Include="gme\Gb_Cpu.h" />
+    <ClInclude Include="gme\gb_cpu_io.h" />
+    <ClInclude Include="gme\Gb_Oscs.h" />
+    <ClInclude Include="gme\Gbs_Emu.h" />
+    <ClInclude Include="gme\gme.h" />
+    <ClInclude Include="gme\Gme_File.h" />
+    <ClInclude Include="gme\Gym_Emu.h" />
+    <ClInclude Include="gme\Hes_Apu.h" />
+    <ClInclude Include="gme\Hes_Cpu.h" />
+    <ClInclude Include="gme\hes_cpu_io.h" />
+    <ClInclude Include="gme\Hes_Emu.h" />
+    <ClInclude Include="gme\Kss_Cpu.h" />
+    <ClInclude Include="gme\Kss_Emu.h" />
+    <ClInclude Include="gme\Kss_Scc_Apu.h" />
+    <ClInclude Include="gme\M3u_Playlist.h" />
+    <ClInclude Include="gme\Multi_Buffer.h" />
+    <ClInclude Include="gme\Music_Emu.h" />
+    <ClInclude Include="gme\Nes_Apu.h" />
+    <ClInclude Include="gme\Nes_Cpu.h" />
+    <ClInclude Include="gme\nes_cpu_io.h" />
+    <ClInclude Include="gme\Nes_Fme7_Apu.h" />
+    <ClInclude Include="gme\Nes_Namco_Apu.h" />
+    <ClInclude Include="gme\Nes_Oscs.h" />
+    <ClInclude Include="gme\Nes_Vrc6_Apu.h" />
+    <ClInclude Include="gme\Nsf_Emu.h" />
+    <ClInclude Include="gme\Nsfe_Emu.h" />
+    <ClInclude Include="gme\Sap_Apu.h" />
+    <ClInclude Include="gme\Sap_Cpu.h" />
+    <ClInclude Include="gme\sap_cpu_io.h" />
+    <ClInclude Include="gme\Sap_Emu.h" />
+    <ClInclude Include="gme\Sms_Apu.h" />
+    <ClInclude Include="gme\Sms_Oscs.h" />
+    <ClInclude Include="gme\Snes_Spc.h" />
+    <ClInclude Include="gme\Spc_Cpu.h" />
+    <ClInclude Include="gme\Spc_Dsp.h" />
+    <ClInclude Include="gme\Spc_Emu.h" />
+    <ClInclude Include="gme\Vgm_Emu.h" />
+    <ClInclude Include="gme\Vgm_Emu_Impl.h" />
+    <ClInclude Include="gme\Ym2413_Emu.h" />
+    <ClInclude Include="gme\Ym2612_Emu.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="changes.txt" />
+    <Text Include="design.txt" />
+    <Text Include="gme.txt" />
+    <Text Include="license.txt" />
+    <Text Include="readme.txt" />
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

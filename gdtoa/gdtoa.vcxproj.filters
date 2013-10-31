@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dmisc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dtoa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g__fmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g_ddfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g_dfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g_ffmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g_Qfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g_xfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="g_xLfmt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gdtoa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gethex.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gmisc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hd_init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hexnan.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="misc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="smisc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtod.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtodg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtodI.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtodnrp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtof.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoId.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoIdd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoIf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoIg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoIQ.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoIx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtoIxL.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtopd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtopdd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtopf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtopQ.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtopx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtopxL.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtord.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtordd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtorf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtorQ.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtorx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="strtorxL.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sum.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ulp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gdtoa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gdtoaimp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+</Project>

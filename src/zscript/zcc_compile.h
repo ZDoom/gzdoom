@@ -24,6 +24,7 @@ private:
 	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary);
 	ZCC_Expression *SimplifyBinary(ZCC_ExprBinary *binary);
 	ZCC_Expression *SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop);
+	ZCC_Expression *SimplifyFunctionCall(ZCC_ExprFuncCall *callop);
 	ZCC_OpProto *PromoteUnary(EZCCExprType op, ZCC_Expression *&expr);
 	ZCC_OpProto *PromoteBinary(EZCCExprType op, ZCC_Expression *&left, ZCC_Expression *&right);
 

@@ -226,7 +226,15 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 
 ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root)
 {
-	if (root->Operation == PEX_ID)
+	if (IsUnaryOp(root->Operation))
+	{
+		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root));
+	}
+	else if (IsBinaryOp(root->Operation))
+	{
+		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root));
+	}
+	else if (root->Operation == PEX_ID)
 	{
 		return IdentifyIdentifier(static_cast<ZCC_ExprID *>(root));
 	}
@@ -234,13 +242,9 @@ ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root)
 	{
 		return SimplifyMemberAccess(static_cast<ZCC_ExprMemberAccess *>(root));
 	}
-	else if (IsUnaryOp(root->Operation))
+	else if (root->Operation == PEX_FuncCall)
 	{
-		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root));
-	}
-	else if (IsBinaryOp(root->Operation))
-	{
-		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root));
+		return SimplifyFunctionCall(static_cast<ZCC_ExprFuncCall *>(root));
 	}
 	return root;
 }
@@ -322,6 +326,64 @@ ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop)
 		}
 	}
 	return dotop;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: SimplifyFunctionCall
+//
+// This may replace a function call with cast(s), since they look like the
+// same thing to the parser.
+//
+//==========================================================================
+
+ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop)
+{
+	ZCC_FuncParm *parm;
+	int parmcount = 0;
+
+	callop->Function = Simplify(callop->Function);
+	parm = callop->Parameters;
+	if (parm != NULL)
+	{
+		do
+		{
+			parmcount++;
+			assert(parm->NodeType == AST_FuncParm);
+			parm->Value = Simplify(parm->Value);
+			parm = static_cast<ZCC_FuncParm *>(parm->SiblingNext);
+		}
+		while (parm != callop->Parameters);
+	}
+	// If the left side is a type ref, then this is actually a cast
+	// and not a function call.
+	if (callop->Function->Operation == PEX_TypeRef)
+	{
+		if (parmcount != 1)
+		{
+			Message(callop, ERR_cast_needs_1_parm, "Type cast requires one parameter");
+			callop->ToErrorNode();
+		}
+		else
+		{
+			PType *dest = static_cast<ZCC_ExprTypeRef *>(callop->Function)->RefType;
+			const PType::Conversion *route[CONVERSION_ROUTE_SIZE];
+			int routelen = parm->Value->Type->FindConversion(dest, route, countof(route));
+			if (routelen < 0)
+			{
+				// FIXME: Need real type names
+				Message(callop, ERR_cast_not_possible, "Cannot convert type 1 to type 2");
+				callop->ToErrorNode();
+			}
+			else
+			{
+				ZCC_Expression *val = ApplyConversion(parm->Value, route, routelen);
+				assert(val->Type == dest);
+				return val;
+			}
+		}
+	}
+	return callop;
 }
 
 //==========================================================================
@@ -456,9 +518,7 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 		}
 	}
 	// Identifier didn't refer to anything good, so type error it.
-	idnode->Type = TypeError;
-	idnode->Operation = PEX_Nil;
-	idnode->NodeType = AST_Expression;
+	idnode->ToErrorNode();
 	return idnode;
 }
 

@@ -234,6 +234,14 @@ struct ZCC_Expression : ZCC_TreeNode
 {
 	EZCCExprType Operation;
 	PType *Type;
+
+	// Repurposes this node as an error node
+	void ToErrorNode()
+	{
+		Type = TypeError;
+		Operation = PEX_Nil;
+		NodeType = AST_Expression;
+	}
 };
 
 struct ZCC_StateGoto : ZCC_StatePart

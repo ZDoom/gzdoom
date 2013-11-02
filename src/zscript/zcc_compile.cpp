@@ -226,11 +226,11 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 
 ZCC_Expression *ZCCCompiler::Simplify(ZCC_Expression *root)
 {
-	if (IsUnaryOp(root->Operation))
+	if (root->NodeType == AST_ExprUnary)
 	{
 		return SimplifyUnary(static_cast<ZCC_ExprUnary *>(root));
 	}
-	else if (IsBinaryOp(root->Operation))
+	else if (root->NodeType == AST_ExprBinary)
 	{
 		return SimplifyBinary(static_cast<ZCC_ExprBinary *>(root));
 	}

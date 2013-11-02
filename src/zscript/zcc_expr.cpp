@@ -12,7 +12,7 @@
 
 ZCC_OpInfoType ZCC_OpInfo[PEX_COUNT_OF] =
 {
-#define xx(a,n)	{ n, #a, NULL },
+#define xx(a,z)	{ #a, NULL },
 #include "zcc_exprlist.h"
 };
 

@@ -476,8 +476,6 @@ struct ZCC_OpProto
 
 struct ZCC_OpInfoType
 {
-	BYTE Nary:2;		// n-ary-ness of operator
-	
 	const char *OpName;
 	ZCC_OpProto *Protos;
 
@@ -496,17 +494,6 @@ FString ZCC_PrintAST(ZCC_TreeNode *root);
 void ZCC_InitOperators();
 
 extern ZCC_OpInfoType ZCC_OpInfo[PEX_COUNT_OF];
-
-static inline bool IsUnaryOp(EZCCExprType op)
-{
-	assert((unsigned)op < (unsigned)PEX_COUNT_OF);
-	return ZCC_OpInfo[op].Nary == 1;
-}
-static inline bool IsBinaryOp(EZCCExprType op)
-{
-	assert((unsigned)op < (unsigned)PEX_COUNT_OF);
-	return ZCC_OpInfo[op].Nary == 2;
-}
 
 struct ZCC_AST
 {

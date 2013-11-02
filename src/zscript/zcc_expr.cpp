@@ -10,6 +10,8 @@
 
 #define luai_nummod(a,b)        ((a) - floor((a)/(b))*(b))
 
+static void FtoD(ZCC_ExprConstant *expr, FSharedStringArena &str_arena);
+
 ZCC_OpInfoType ZCC_OpInfo[PEX_COUNT_OF] =
 {
 #define xx(a,z)	{ #a, NULL },
@@ -134,7 +136,19 @@ ZCC_OpProto *ZCC_OpInfoType::FindBestProto(
 		{ // one or both operator types are unreachable
 			continue;
 		}
-		int dist = MIN(dist1, dist2);
+		// Do not count F32->F64 conversions in the distance comparisons. If we do, then
+		// [[float32 (op) int]] will choose the integer version instead of the floating point
+		// version, which we do not want.
+		int test_dist1 = dist1, test_dist2 = dist2;
+		if (routes[0][cur_route1][0]->ConvertConstant == FtoD)
+		{
+			test_dist1--;
+		}
+		if (routes[1][cur_route2][0]->ConvertConstant == FtoD)
+		{
+			test_dist2--;
+		}
+		int dist = MIN(test_dist1, test_dist2);
 		if (dist < best_low_dist)
 		{
 			best_low_dist = dist;

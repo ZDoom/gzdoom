@@ -160,10 +160,15 @@ public:
 		size_t len = mysnprintf(buf, countof(buf), "%08x", x);
 		Add(buf, len);
 	}
-	void AddFloat(double f)
+	void AddFloat(double f, bool single)
 	{
 		char buf[32];
 		size_t len = mysnprintf(buf, countof(buf), "%.4f", f);
+		if (single)
+		{
+			buf[len++] = 'f';
+			buf[len] = '\0';
+		}
 		Add(buf, len);
 	}
 private:
@@ -501,7 +506,11 @@ static void PrintExprConstant(FLispString &out, ZCC_TreeNode *node)
 	}
 	else if (enode->Type == TypeFloat64)
 	{
-		out.AddFloat(enode->DoubleVal);
+		out.AddFloat(enode->DoubleVal, false);
+	}
+	else if (enode->Type == TypeFloat32)
+	{
+		out.AddFloat(enode->DoubleVal, true);
 	}
 	else if (enode->Type == TypeName)
 	{

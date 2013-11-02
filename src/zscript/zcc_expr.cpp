@@ -613,6 +613,21 @@ static void DtoU32(ZCC_ExprConstant *expr, FSharedStringArena &str_arena)
 	expr->Type = TypeUInt32;
 }
 
+static void FtoD(ZCC_ExprConstant *expr, FSharedStringArena &str_arena)
+{
+	// Constant single precision numbers are stored as doubles.
+	assert(expr->Type == TypeFloat32);
+	expr->Type = TypeFloat64;
+}
+
+static void DtoF(ZCC_ExprConstant *expr, FSharedStringArena &str_arena)
+{
+	// Truncate double precision to single precision.
+	float poop = (float)expr->DoubleVal;
+	expr->DoubleVal = poop;
+	expr->Type = TypeFloat32;
+}
+
 static void S32toS(ZCC_ExprConstant *expr, FSharedStringArena &str_arena)
 {
 	char str[16];
@@ -664,7 +679,10 @@ void ZCC_InitConversions()
 	TypeSInt32->AddConversion(TypeFloat64, S32toD);
 	TypeSInt32->AddConversion(TypeString, S32toS);
 
+	TypeFloat32->AddConversion(TypeFloat64, FtoD);
+
 	TypeFloat64->AddConversion(TypeUInt32, DtoU32);
 	TypeFloat64->AddConversion(TypeSInt32, DtoS32);
+	TypeFloat64->AddConversion(TypeFloat32, DtoF);
 	TypeFloat64->AddConversion(TypeString, DtoS);
 }

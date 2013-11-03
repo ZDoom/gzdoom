@@ -627,7 +627,14 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 		else
 		{
-			new DStoredCommand (com, beg);
+			if (len == 4 && strnicmp(beg, "warp", 4) == 0)
+			{
+				StoredWarp = beg;
+			}
+			else
+			{
+				new DStoredCommand (com, beg);
+			}
 		}
 	}
 	else

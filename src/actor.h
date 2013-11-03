@@ -764,6 +764,10 @@ public:
 		return (PalEntry)GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
 	}
 
+	// These also set CF_INTERPVIEW for players.
+	void SetPitch(int p);
+	void SetAngle(angle_t ang);
+
 	const PClass *GetBloodType(int type = 0) const
 	{
 		const PClass *bloodcls;

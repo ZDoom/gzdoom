@@ -503,8 +503,8 @@ add_custom_target( revision_check ALL
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${FMOD_LIBRARY}" )
-include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${FMOD_LIBRARY}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
 
 if( FLUIDSYNTH_FOUND )
   if( NOT DYN_FLUIDSYNTH)
@@ -1065,7 +1065,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gme gdtoa dumb lzma )
+target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 include_directories( .
 	g_doom
 	g_heretic
@@ -1079,7 +1079,6 @@ include_directories( .
 	thingdef
 	timidity
 	xlat
-	../game-music-emu/gme
 	../gdtoa
 	../dumb/include
 	${CMAKE_BINARY_DIR}/gdtoa

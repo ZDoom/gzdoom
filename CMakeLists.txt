@@ -3,6 +3,7 @@ project(GZDoom)
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} )
 include( CreateLaunchers )
+include( FindPackageHandleStandardArgs )
 
 # Generator expression are available some time in CMake 2.8. Due to
 # cmake_minimum_required, we can assume a minor version of > 7 implies major >= 2
@@ -72,6 +73,13 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
+# GME
+find_path( GME_INCLUDE_DIR gme.h )
+find_library( GME_LIBRARIES gme )
+mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
+	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
+)
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -126,6 +134,7 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
+option(FORCE_INTERNAL_GME "Use internal gme" ON)
 
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 	message( STATUS "Using system zlib" )
@@ -157,11 +166,19 @@ else( BZIP2_FOUND AND NOT FORCE_INTERNAL_BZIP2 )
 	set( BZIP2_LIBRARY bz2 )
 endif( BZIP2_FOUND AND NOT FORCE_INTERNAL_BZIP2 )
 
+if( GME_FOUND AND NOT FORCE_INTERNAL_GME )
+	message( STATUS "Using system gme library ${GME_INCLUDE_DIR}" )
+else( GME_FOUND AND NOT FORCE_INTERNAL_GME )
+	message( STATUS "Using internal gme library" )
+	add_subdirectory( game-music-emu )
+	set( GME_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/game-music-emu" )
+	set( GME_LIBRARIES gme )
+endif( GME_FOUND AND NOT FORCE_INTERNAL_GME )
+
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
 
 add_subdirectory( lzma )
 add_subdirectory( tools )
-add_subdirectory( game-music-emu )
 add_subdirectory( dumb )
 add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )

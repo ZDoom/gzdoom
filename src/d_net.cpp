@@ -704,8 +704,6 @@ void GetPackets (void)
 			}
 			continue;			// extra setup packet
 		}
-
-		lastglobalrecvtime = I_GetTime (false); //Update the last time a packet was recieved
 						
 		netnode = doomcom.remotenode;
 		netconsole = playerfornode[netnode] & ~PL_DRONE;
@@ -1827,30 +1825,39 @@ void TryRunTics (void)
 			I_Error ("TryRunTics: lowtic < gametic");
 
 		// [Ed850] Check to see the last time a packet was recieved.
-		// If it's longer then 3 seconds, a node has likely stalled. Check which one and re-request its last packet.
+		// If it's longer then 3 seconds, a node has likely stalled.
 		if(I_GetTime(false) - lastglobalrecvtime >= TICRATE*3)
 		{
-			int latenode = 0; // Node 0 is the local player, and should always be the highest
 			lastglobalrecvtime = I_GetTime(false); //Bump the count
 
 			if(NetMode == NET_PeerToPeer || consoleplayer == Net_Arbitrator)
 			{
+				//Keep the local node in the for loop so we can still log any cases where the local node is /somehow/ late.
+				//However, we don't send a resend request for sanity reasons.
 				for (i = 0; i < doomcom.numnodes; i++)
-					if (nodeingame[i] && nettics[i] < nettics[latenode])
-						latenode = i;
+				{
+					if (nodeingame[i] && nettics[i] < gametic + counts)
+					{
+						if (debugfile)
+							fprintf (debugfile, "%i is slow (%i to %i)\n",
+								i, nettics[i], gametic+counts);
+						//Send resend request to the late node. Also mark the node as waiting to display it in the hud.
+						if(i != 0)
+							remoteresend[i] = players[playerfornode[i]].waiting = hadlate = true;
+					}
+					else
+						players[playerfornode[i]].waiting = false;
+				}
 			}
-			else if (nodeingame[nodeforplayer[Net_Arbitrator]] && 
-				nettics[nodeforplayer[Net_Arbitrator]] < nettics[0])
-			{	// Likely a packet server game. Only check the packet host.
-				latenode = Net_Arbitrator;
+			else
+			{	//Send a resend request to the Arbitrator, as it's obvious we are stuck here.
+				if (debugfile)
+					fprintf (debugfile, "Arbitrator is slow (%i to %i)\n",
+						Net_Arbitrator, nettics[Net_Arbitrator], gametic+counts);
+				//Send resend request to the Arbitrator. Also mark the Arbitrator as waiting to display it in the hud.
+				if(i != 0)
+					remoteresend[Net_Arbitrator] = players[playerfornode[Net_Arbitrator]].waiting = hadlate = true;
 			}
-
-			if (debugfile)
-				fprintf (debugfile, "lost tics from %i (%i to %i)\n",
-						 latenode, nettics[latenode], gametic);
-
-			if(latenode != 0) // Send resend request to late node (if not yourself... somehow). Also mark the node as waiting to display it in the hud.
-				remoteresend[latenode] = players[playerfornode[latenode]].waiting = hadlate = true;
 		}
 
 		// don't stay in here forever -- give the menu a chance to work
@@ -1862,12 +1869,11 @@ void TryRunTics (void)
 		}
 	}
 
-	if (hadlate)
-	{
-		hadlate = false;
-		for (i = 0; i < MAXPLAYERS; i++)
-			players[i].waiting = false;
-	}
+	//Tic lowtic is high enough to process this gametic. Clear all possible waiting info
+	hadlate = false;
+	for (i = 0; i < MAXPLAYERS; i++)
+		players[i].waiting = false;
+	lastglobalrecvtime = I_GetTime (false); //Update the last time the game tic'd over
 
 	// run the count tics
 	if (counts > 0)

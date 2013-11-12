@@ -143,6 +143,11 @@ if( WIN32 )
 		ws2_32
 		setupapi
 		oleaut32 )
+
+	# For some reason this isn't implied on 2005
+	if( MSVC80 )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
+	endif( MSVC80 )
 else( WIN32 )
 	if( APPLE )
 		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )
@@ -1097,7 +1102,11 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP:${ZDOOM_EXE_NAME}.map")
+		if( NOT MSVC80 )
+			set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP:${ZDOOM_EXE_NAME}.map")
+		else( NOT MSVC80 ) # 2005 doesn't support naming the map file.
+			set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP")
+		endif( NOT MSVC80 )
 	else( ZDOOM_GENERATE_MAPFILE )
 		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )

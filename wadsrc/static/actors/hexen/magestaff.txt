@@ -8,6 +8,7 @@ ACTOR MageWeaponPiece : WeaponPiece
 	Inventory.ForbiddenTo FighterPlayer, ClericPlayer
 	WeaponPiece.Weapon MWeapBloodscourge
 	+FLOATBOB
+	+NOGRAVITY
 }
 
 // Mage Weapon Piece 1 ------------------------------------------------------

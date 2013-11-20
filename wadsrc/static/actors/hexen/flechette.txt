@@ -99,6 +99,7 @@ ACTOR ArtiPoisonBag : Inventory 8000 native
 	Game Hexen
 	SpawnID 72
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.DefMaxAmount
 	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND

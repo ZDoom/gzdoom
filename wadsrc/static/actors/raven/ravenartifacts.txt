@@ -8,6 +8,7 @@ ACTOR ArtiHealth : HealthPickup 82
 	Health 25
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.FANCYPICKUPSOUND
 	Inventory.Icon ARTIPTN2
@@ -32,6 +33,7 @@ ACTOR ArtiSuperHealth : HealthPickup 32
 	Health 100
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.FANCYPICKUPSOUND
 	Inventory.Icon ARTISPHL
@@ -55,6 +57,7 @@ ACTOR ArtiFly : PowerupGiver 83
 	SpawnID 15
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.INTERHUBSTRIP
 	Inventory.RespawnTics 4230
@@ -78,6 +81,7 @@ ACTOR ArtiInvulnerability : PowerupGiver 84
 	SpawnID 133
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	Inventory.RespawnTics 4230
 	Inventory.Icon ARTIINVU
@@ -101,6 +105,7 @@ ACTOR ArtiInvulnerability2 : PowerupGiver 84
 	SpawnID 133
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	Inventory.RespawnTics 4230
 	Inventory.Icon ARTIDEFN
@@ -123,6 +128,7 @@ ACTOR ArtiTorch : PowerupGiver 33
 	SpawnID 73
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	Inventory.Icon ARTITRCH
 	Inventory.PickupMessage "$TXT_ARTITORCH"

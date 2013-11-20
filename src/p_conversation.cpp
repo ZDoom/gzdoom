@@ -522,19 +522,8 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 		// If the first item check has a positive amount required, then
 		// add that to the reply string. Otherwise, use the reply as-is.
-		if (rsp->Count[0] > 0)
-		{
-			char moneystr[128];
-
-			mysnprintf (moneystr, countof(moneystr), "%s for %u", rsp->Reply, rsp->Count[0]);
-			reply->Reply = copystring (moneystr);
-			reply->NeedsGold = true;
-		}
-		else
-		{
-			reply->Reply = copystring (rsp->Reply);
-			reply->NeedsGold = false;
-		}
+		reply->Reply = copystring (rsp->Reply);
+		reply->NeedsGold = (rsp->Count[0] > 0);
 
 		// QuickYes messages are shown when you meet the item checks.
 		// QuickNo messages are shown when you don't.

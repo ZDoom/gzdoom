@@ -565,7 +565,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		int tspeed = speed;
 
 		if (turnheld < SLOWTURNTICS)
-			tspeed *= 2;		// slow turn
+			tspeed += 2;		// slow turn
 		
 		if (Button_Right.bDown)
 		{

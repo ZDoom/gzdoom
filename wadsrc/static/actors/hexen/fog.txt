@@ -6,6 +6,7 @@ ACTOR FogSpawner 10000
 	Game Hexen
 	+NOSECTOR +NOBLOCKMAP
 	+FLOATBOB
+	+NOGRAVITY
 	+INVISIBLE
 
 	action native A_FogSpawn();

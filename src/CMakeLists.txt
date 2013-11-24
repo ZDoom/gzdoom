@@ -142,12 +142,8 @@ if( WIN32 )
 		comdlg32
 		ws2_32
 		setupapi
-		oleaut32 )
-
-	# For some reason this isn't implied on 2005
-	if( MSVC80 )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
-	endif( MSVC80 )
+		oleaut32 
+		DelayImp )
 else( WIN32 )
 	if( APPLE )
 		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )

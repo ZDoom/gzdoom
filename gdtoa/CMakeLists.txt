@@ -17,13 +17,15 @@ add_definitions( -DINFNAN_CHECK -DMULTIPLE_THREADS )
 
 if( NOT MSVC )
 	add_executable( arithchk arithchk.c )
+	get_target_property( ARITHCHK_EXE arithchk LOCATION )
 	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/arith.h 
-		COMMAND ${CMAKE_CURRENT_BINARY_DIR}/arithchk >${CMAKE_CURRENT_BINARY_DIR}/arith.h
+		COMMAND ${ARITHCHK_EXE} >${CMAKE_CURRENT_BINARY_DIR}/arith.h
 		DEPENDS arithchk )
 
 	add_executable( qnan qnan.c arith.h )
+	get_target_property( QNAN_EXE qnan LOCATION )
 	add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
-		COMMAND ${CMAKE_CURRENT_BINARY_DIR}/qnan >${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
+		COMMAND ${QNAN_EXE} >${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h
 		DEPENDS qnan )
 		
 	set( GEN_FP_FILES arith.h gd_qnan.h )

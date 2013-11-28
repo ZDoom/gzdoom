@@ -629,7 +629,9 @@ bool FMODSoundRenderer::IsValid()
 //
 //==========================================================================
 
+#ifndef FACILITY_VISUALCPP
 #define FACILITY_VISUALCPP  ((LONG)0x6d)
+#endif
 #define VcppException(sev,err)  ((sev) | (FACILITY_VISUALCPP<<16) | err)
 
 static int CheckException(DWORD code)

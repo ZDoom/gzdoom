@@ -92,9 +92,14 @@ if( MSVC )
 	# Set floating point model to fast or the GL render will suffer for it.
 	set( ALL_C_FLAGS "/GF /Gy /GR- /fp:fast" )
 	
-	# Avoid CRT DLL dependancies in release builds
-	set( REL_C_FLAGS "/MT /Oy /Oi" )
-
+	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
+	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
+	if( ZDOOM_GENERATE_ASM )
+		set( REL_C_FLAGS "/MT /Oy /Oi /FAcs" )
+	else( ZDOOM_GENERATE_ASM )
+		set( REL_C_FLAGS "/MT /Oy /Oi" )
+	endif( ZDOOM_GENERATE_ASM )
+	
 	# Debug allocations in debug builds
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 

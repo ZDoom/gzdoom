@@ -91,9 +91,14 @@ if( MSVC )
 	# Disable run-time type information
 	set( ALL_C_FLAGS "/GF /Gy /GR-" )
 	
-	# Avoid CRT DLL dependancies in release builds
-	set( REL_C_FLAGS "/MT /Oy" )
-
+	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
+	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
+	if( ZDOOM_GENERATE_ASM )
+		set( REL_C_FLAGS "/MT /Oy /FAcs" )
+	else( ZDOOM_GENERATE_ASM )
+		set( REL_C_FLAGS "/MT /Oy" )
+	endif( ZDOOM_GENERATE_ASM )
+	
 	# Debug allocations in debug builds
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 

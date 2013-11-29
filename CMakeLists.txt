@@ -92,6 +92,19 @@ if( MSVC )
 	# Set floating point model to fast or the GL render will suffer for it.
 	set( ALL_C_FLAGS "/GF /Gy /GR- /fp:fast" )
 	
+	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
+		# SSE2 option (mostly to switch it off in VC2012 and later where it's the default
+		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
+		if (ZDOOM_USE_SSE2)
+			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
+		else (ZDOOM_USE_SSE2)
+			if (MSVC_VERSION GREATER 1699)
+				# On Visual C++ 2012 and later SSE2 is the default, so we need to switch it off explicitly
+				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
+			endif (MSVC_VERSION GREATER 1699)
+		endif (ZDOOM_USE_SSE2)
+	endif( CMAKE_SIZEOF_VOID_P MATCHES "4")
+	
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
 	if( ZDOOM_GENERATE_ASM )
@@ -99,6 +112,7 @@ if( MSVC )
 	else( ZDOOM_GENERATE_ASM )
 		set( REL_C_FLAGS "/MT /Oy /Oi" )
 	endif( ZDOOM_GENERATE_ASM )
+
 	
 	# Debug allocations in debug builds
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )

@@ -1128,7 +1128,7 @@ if( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSIONS )
 	if( ZDOOM_GENERATE_MAPFILE )
 		add_custom_command(TARGET zdoom POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zdoom> ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE_DIR:zdoom>/zdoom.map ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>.map
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE_DIR:zdoom>/${ZDOOM_EXE_NAME}.map ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>.map
 			COMMENT "Copying to output directory..." )
 	else( ZDOOM_GENERATE_MAPFILE )
 		add_custom_command(TARGET zdoom POST_BUILD

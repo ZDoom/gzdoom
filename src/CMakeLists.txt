@@ -1215,7 +1215,7 @@ if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
 		if( NOT MSVC80 )
-			set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP:${ZDOOM_EXE_NAME}.map")
+			set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP:\"$(TargetDir)${ZDOOM_EXE_NAME}.map\"")
 		else( NOT MSVC80 ) # 2005 doesn't support naming the map file.
 			set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP")
 		endif( NOT MSVC80 )
@@ -1242,7 +1242,7 @@ if( ZDOOM_OUTPUT_OLDSTYLE AND NOT NO_GENERATOR_EXPRESSIONS )
 	if( ZDOOM_GENERATE_MAPFILE )
 		add_custom_command(TARGET zdoom POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zdoom> ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE_DIR:zdoom>/zdoom.map ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>.map
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE_DIR:zdoom>/${ZDOOM_EXE_NAME}.map ${ZDOOM_OUTPUT_DIR}/$<TARGET_FILE_NAME:zdoom>.map
 			COMMENT "Copying to output directory..." )
 	else( ZDOOM_GENERATE_MAPFILE )
 		add_custom_command(TARGET zdoom POST_BUILD

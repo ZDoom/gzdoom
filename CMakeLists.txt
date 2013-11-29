@@ -13,20 +13,6 @@ else(${CMAKE_MAJOR_VERSION} GREATER 2 OR ${CMAKE_MINOR_VERSION} GREATER 7)
 	set( NO_GENERATOR_EXPRESSIONS ON )
 endif(${CMAKE_MAJOR_VERSION} GREATER 2 OR ${CMAKE_MINOR_VERSION} GREATER 7)
 
-# Function to get a recursive list of files, but also get the directory names
-# as well unlike GLOB_RECURSE
-function( glob_recurse_with_directories OUTVAR DIR )
-	file( GLOB CHILDREN ${DIR}/* )
-	foreach( CHILD ${CHILDREN} )
-		if( IS_DIRECTORY ${CHILD} )
-			set( TEMP_LIST "" )
-			glob_recurse_with_directories( TEMP_LIST ${CHILD} )
-			set( ${OUTVAR} ${${OUTVAR}} ${TEMP_LIST} )
-		endif( IS_DIRECTORY ${CHILD} )
-	endforeach( CHILD ${CHILDREN} )
-	set( ${OUTVAR} ${${OUTVAR}} ${CHILDREN} PARENT_SCOPE )
-endfunction( glob_recurse_with_directories )
-
 # Simplify pk3 building, add_pk3(filename srcdirectory)
 function( add_pk3 PK3_NAME PK3_DIR )
 	get_target_property(ZIPDIR_EXE zipdir LOCATION)
@@ -37,21 +23,21 @@ function( add_pk3 PK3_NAME PK3_DIR )
 		set( PK3_TARGET "pk3" )
 	endif( ${PK3_TARGET} STREQUAL "zdoom_pk3" )
 
-	# Get as many files as we can to depend on.
-	glob_recurse_with_directories( PK3_DEPENDS ${PK3_DIR} )
-
 	if( NOT NO_GENERATOR_EXPRESSIONS AND NOT ZDOOM_OUTPUT_OLDSTYLE )
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
 			COMMAND ${ZIPDIR_EXE} -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} $<TARGET_FILE_DIR:zdoom>/${PK3_NAME}
-			DEPENDS zipdir ${PK3_DIR} ${PK3_DEPENDS} )
+			DEPENDS zipdir )
 	else( NOT NO_GENERATOR_EXPRESSIONS AND NOT ZDOOM_OUTPUT_OLDSTYLE )
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
 			COMMAND ${ZIPDIR_EXE} -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
-			DEPENDS zipdir ${PK3_DIR} ${PK3_DEPENDS} )
+			DEPENDS zipdir )
 	endif( NOT NO_GENERATOR_EXPRESSIONS AND NOT ZDOOM_OUTPUT_OLDSTYLE )
 
+	# Touch the zipdir executable here so that the pk3s are forced to rebuild
+	# each time since their dependecy has "changed."
 	add_custom_target( ${PK3_TARGET} ALL
+		COMMAND ${CMAKE_COMMAND} -E touch ${ZIPDIR_EXE}
 		DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} )
 endfunction( add_pk3 )
 

@@ -174,7 +174,6 @@ struct FDynLightData
 		siz[0]>>=2;
 		siz[1]>>=2;
 		siz[2]>>=2;
-		max<<=1;
 		if (siz[0] > max) siz[0] = max;
 		if (siz[1] > max) siz[1] = max;
 		if (siz[2] > max) siz[2] = max;

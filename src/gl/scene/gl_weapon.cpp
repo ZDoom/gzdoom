@@ -185,8 +185,17 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	AActor * playermo=players[consoleplayer].camera;
 	player_t * player=playermo->player;
 	
+	// this is the same as the software renderer
+	if (!player ||
+		!r_drawplayersprites ||
+		!camera->player ||
+		(players[consoleplayer].cheats & CF_CHASECAM))
+		return;
+
+	/*
 	if(!player || playermo->renderflags&RF_INVISIBLE || !r_drawplayersprites ||
 		mViewActor!=playermo || playermo->RenderStyle.BlendOp == STYLEOP_None) return;
+	*/
 
 	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy);
 

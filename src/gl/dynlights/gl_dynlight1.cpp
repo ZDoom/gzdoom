@@ -183,6 +183,10 @@ bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & u
 	{
 		return false;
 	}
+	if (light->owned && light->target != NULL && !light->target->IsVisibleToPlayer())
+	{
+		return false;
+	}
 
 	scale = 1.0f / ((2.f * radius) - dist);
 

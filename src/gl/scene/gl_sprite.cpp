@@ -918,7 +918,8 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	RenderStyle = STYLE_Translucent;
 	OverrideShader = 0;
 
-	ThingColor = particle->color; //GPalette.BaseColors[particle->color];
+	ThingColor = particle->color;
+	gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, Colormap.colormap);
 	ThingColor.a=0;
 
 	modelframe=NULL;

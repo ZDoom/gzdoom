@@ -610,7 +610,7 @@ if( WIN32 )
 	endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 
 	# [BB] Maxim Stepin's hq2x/3x/4x pixel upsampling algorithm as library. Currently only used with VC++.
-	if( MSVC )
+	if( MSVC AND NOT X64 )
 	set( SYSTEM_SOURCES
 		${SYSTEM_SOURCES}
 		gl/hqnx/Image.cpp
@@ -618,7 +618,7 @@ if( WIN32 )
 		gl/hqnx/hq3x.cpp
 		gl/hqnx/hq4x.cpp
 	)
-	endif( MSVC )
+	endif( MSVC AND NOT X64)
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR sdl )
 	set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )

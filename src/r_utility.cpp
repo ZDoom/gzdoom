@@ -89,6 +89,11 @@ CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
+CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.f) self = 0.f;
+	else if (self > 1.f) self = 1.f;
+}
 
 DCanvas			*RenderTarget;		// [RH] canvas to render to
 
@@ -837,10 +842,10 @@ void R_SetupFrame (AActor *actor)
 		int intensity = DEarthquake::StaticGetQuakeIntensity (camera);
 		if (intensity != 0)
 		{
-			viewx += ((pr_torchflicker() % (intensity<<2))
-						-(intensity<<1))<<FRACBITS;
-			viewy += ((pr_torchflicker() % (intensity<<2))
-						-(intensity<<1))<<FRACBITS;
+			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
+
+			viewx += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
+			viewy += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
 		}
 	}
 

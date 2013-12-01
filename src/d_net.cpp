@@ -1853,7 +1853,7 @@ void TryRunTics (void)
 			{	//Send a resend request to the Arbitrator, as it's obvious we are stuck here.
 				if (debugfile)
 					fprintf (debugfile, "Arbitrator is slow (%i to %i)\n",
-						Net_Arbitrator, nettics[Net_Arbitrator], gametic+counts);
+						nettics[Net_Arbitrator], gametic+counts);
 				//Send resend request to the Arbitrator. Also mark the Arbitrator as waiting to display it in the hud.
 				if(i != 0)
 					remoteresend[Net_Arbitrator] = players[playerfornode[Net_Arbitrator]].waiting = hadlate = true;

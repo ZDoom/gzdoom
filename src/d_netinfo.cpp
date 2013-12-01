@@ -1018,6 +1018,7 @@ CCMD (playerinfo)
 		if (!playeringame[i])
 		{
 			Printf(TEXTCOLOR_ORANGE "Player %d is not in the game\n", i);
+			return;
 		}
 
 		// Print special info

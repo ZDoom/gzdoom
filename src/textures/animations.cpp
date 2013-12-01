@@ -778,11 +778,10 @@ void FTextureManager::ParseAnimatedDoor(FScanner &sc)
 				}
 			}
 			frames.Push(v);
-			if (!sc.CheckString("allowdecals"))
-			{
-				Texture(v)->bNoDecals = true;
-			}
-
+		}
+		else if (!sc.Compare("allowdecals"))
+		{
+			if (anim.BaseTexture.Exists()) Texture(anim.BaseTexture)->bNoDecals = true;
 		}
 		else
 		{

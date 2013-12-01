@@ -26,8 +26,6 @@ void A_FAxeAttack (AActor *actor);
 
 extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
 
-EXTERN_CVAR (Int, cl_bloodtype)
-
 // The Fighter's Axe --------------------------------------------------------
 
 class AFWeapAxe : public AFighterWeapon

@@ -4879,7 +4879,8 @@ void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 				const PClass *bloodcls = thing->GetBloodType();
 				
 				P_TraceBleed (newdam > 0 ? newdam : cpos->crushchange, thing);
-				if (cl_bloodtype <= 1 && bloodcls != NULL)
+
+				if (bloodcls != NULL)
 				{
 					AActor *mo;
 
@@ -4892,14 +4893,15 @@ void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 					{
 						mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 					}
+
+					if (!(cl_bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
 				}
+
+				angle_t an;
+				an = (M_Random () - 128) << 24;
 				if (cl_bloodtype >= 1)
 				{
-					angle_t an;
-
-					an = (M_Random () - 128) << 24;
-					P_DrawSplash2 (32, thing->x, thing->y,
-								   thing->z + thing->height/2, an, 2, bloodcolor);
+					P_DrawSplash2(32, thing->x, thing->y, thing->z + thing->height / 2, an, 2, bloodcolor);
 				}
 			}
 			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))

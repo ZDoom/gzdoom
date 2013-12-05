@@ -155,7 +155,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		glGetShaderInfoLog(hFragProg, 10000, NULL, buffer);
 		if (*buffer) 
 		{
-			error << "Vertex shader:\n" << buffer << "\n";
+			error << "Fragment shader:\n" << buffer << "\n";
 		}
 
 		glGetProgramInfoLog(hShader, 10000, NULL, buffer);
@@ -289,6 +289,23 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 
+	name << ShaderName << "::foglayer";
+
+	try
+	{
+		shader_fl = new FShader;
+		if (!shader_fl->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_foglayer.fp", ShaderPath, "#define NO_GLOW\n"))
+		{
+			delete shader_fl;
+			shader_fl = NULL;
+		}
+	}
+	catch (CRecoverableError &err)
+	{
+		shader_fl = NULL;
+		I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
+	}
+
 	if (gl.shadermodel > 2)
 	{
 		for(int i = 0;i < NUM_SHADERS; i++)
@@ -344,8 +361,9 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 //==========================================================================
 FShaderContainer::~FShaderContainer()
 {
-	delete shader_cm;
-	for(int i = 0;i < NUM_SHADERS; i++)
+	if (shader_cm != NULL) delete shader_cm;
+	if (shader_fl != NULL) delete shader_fl;
+	for (int i = 0; i < NUM_SHADERS; i++)
 	{
 		if (shader[i] != NULL)
 		{
@@ -365,7 +383,15 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
 {
 	FShader *sh=NULL;
 
-	if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_MAXCOLORMAP)
+	if (cm == CM_FOGLAYER)
+	{
+		if (shader_fl)
+		{
+			shader_fl->Bind(Speed);
+		}
+		return shader_fl;
+	}
+	else if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_MAXCOLORMAP)
 	{
 		// these are never used with any kind of lighting or fog
 		sh = shader_cm;

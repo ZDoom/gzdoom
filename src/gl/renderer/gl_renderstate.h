@@ -211,6 +211,11 @@ public:
 		mLightData = lightdata;	// caution: the data must be preserved by the caller until the 'apply' call!
 	}
 
+	void SetFixedColormap(int cm)
+	{
+		mColormapState = cm;
+	}
+
 	PalEntry GetFogColor() const
 	{
 		return mFogColor;

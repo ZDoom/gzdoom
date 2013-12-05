@@ -24,6 +24,7 @@ enum EColorManipulation
 	// These are not to be passed to the texture manager
 	CM_LITE	= 0x20000000,		// special values to handle these items without excessive hacking
 	CM_TORCH= 0x20000010,		// These are not real color manipulations
+	CM_FOGLAYER= 0x20000020,	// Sprite shaped fog layer - this is only used as a parameter to FMaterial::BindPatch
 };
 
 #define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())

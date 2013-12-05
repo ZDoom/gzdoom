@@ -101,6 +101,8 @@ void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	gl_RenderState.SetTextureMode(tm);
 }
 
+CVAR(Bool, gl_nolayer, false, 0)
+
 //==========================================================================
 //
 // 
@@ -117,6 +119,7 @@ void GLSprite::Draw(int pass)
 
 
 	bool additivefog = false;
+	bool foglayer = false;
 	int rel = getExtraLight();
 
 	if (pass==GLPASS_TRANSLUCENT)
@@ -208,8 +211,36 @@ void GLSprite::Draw(int pass)
 		Colormap.FadeColor = Colormap.FadeColor.InverseColor();
 		additivefog=false;
 	}
+	if (RenderStyle.BlendOp == STYLEOP_RevSub || RenderStyle.BlendOp == STYLEOP_Sub)
+	{
+		if (!modelframe)
+		{
+			// non-black fog with subtractive style needs special treatment
+			if (!gl_isBlack(Colormap.FadeColor))
+			{
+				if (gl.shadermodel >= 4 && !gl_nolayer)
+				{
+					// fog layer only works on modern hardware. 
+					foglayer = true;
+					// Due to the two-layer approach we need to force an alpha test that lets everything pass
+					gl_RenderState.AlphaFunc(GL_GREATER, 0);
+				}
+				else
+				{
+					// this at least partially handles the fog issue
+					Colormap.FadeColor = Colormap.FadeColor.InverseColor();
+				}
+			}
+		}
+		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
+	}
 
-	gl_SetFog(foglevel, rel, &Colormap, additivefog);
+	if (!foglayer) gl_SetFog(foglevel, rel, &Colormap, additivefog);
+	else
+	{
+		gl_RenderState.EnableFog(false);
+		gl_RenderState.SetFog(0, 0);
+	}
 
 	if (gltexture) gltexture->BindPatch(Colormap.colormap, translation, OverrideShader);
 	else if (!modelframe) gl_RenderState.EnableTexture(false);
@@ -221,27 +252,67 @@ void GLSprite::Draw(int pass)
 		                                   //&& GLRenderer->mViewActor != NULL
 		                                   && (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD ))) );
 		gl_RenderState.Apply();
-		glBegin(GL_TRIANGLE_STRIP);
-		if ( drawWithXYBillboard )
+
+		Vector v1;
+		Vector v2;
+		Vector v3;
+		Vector v4;
+
+		if (drawWithXYBillboard)
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
 			// in the x/y plane.
-			float xcenter = (x1+x2)*0.5;
-			float ycenter = (y1+y2)*0.5;
-			float zcenter = (z1+z2)*0.5;
+			float xcenter = (x1 + x2)*0.5;
+			float ycenter = (y1 + y2)*0.5;
+			float zcenter = (z1 + z2)*0.5;
 			float angleRad = DEG2RAD(270. - float(GLRenderer->mAngles.Yaw));
-			
+
 			Matrix3x4 mat;
 			mat.MakeIdentity();
-			mat.Translate( xcenter, zcenter, ycenter);
+			mat.Translate(xcenter, zcenter, ycenter);
 			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
-			mat.Translate( -xcenter, -zcenter, -ycenter);
-			Vector v1 = mat * Vector(x1,z1,y1);
-			Vector v2 = mat * Vector(x2,z1,y2);
-			Vector v3 = mat * Vector(x1,z2,y1);
-			Vector v4 = mat * Vector(x2,z2,y2);
+			mat.Translate(-xcenter, -zcenter, -ycenter);
+			v1 = mat * Vector(x1, z1, y1);
+			v2 = mat * Vector(x2, z1, y2);
+			v3 = mat * Vector(x1, z2, y1);
+			v4 = mat * Vector(x2, z2, y2);
+		}
+		else
+		{
+			v1 = Vector(x1, z1, y1);
+			v2 = Vector(x2, z1, y2);
+			v3 = Vector(x1, z2, y1);
+			v4 = Vector(x2, z2, y2);
+		}
 
+		glBegin(GL_TRIANGLE_STRIP);
+		if (gltexture)
+		{
+			glTexCoord2f(ul, vt); glVertex3fv(&v1[0]);
+			glTexCoord2f(ur, vt); glVertex3fv(&v2[0]);
+			glTexCoord2f(ul, vb); glVertex3fv(&v3[0]);
+			glTexCoord2f(ur, vb); glVertex3fv(&v4[0]);
+		}
+		else	// Particle
+		{
+			glVertex3fv(&v1[0]);
+			glVertex3fv(&v2[0]);
+			glVertex3fv(&v3[0]);
+			glVertex3fv(&v4[0]);
+		}
+
+		glEnd();
+
+		if (foglayer)
+		{
+			// If we get here we know that we have colored fog and no fixed colormap.
+			gl_SetFog(foglevel, rel, &Colormap, additivefog);
+			gl_RenderState.SetFixedColormap(CM_FOGLAYER);
+			gl_RenderState.BlendEquation(GL_FUNC_ADD);
+			gl_RenderState.Apply();
+
+			glBegin(GL_TRIANGLE_STRIP);
 			if (gltexture)
 			{
 				glTexCoord2f(ul, vt); glVertex3fv(&v1[0]);
@@ -256,26 +327,9 @@ void GLSprite::Draw(int pass)
 				glVertex3fv(&v3[0]);
 				glVertex3fv(&v4[0]);
 			}
+			glEnd();
 
 		}
-		else
-		{
-			if (gltexture)
-			{
-				glTexCoord2f(ul, vt); glVertex3f(x1, z1, y1);
-				glTexCoord2f(ur, vt); glVertex3f(x2, z1, y2);
-				glTexCoord2f(ul, vb); glVertex3f(x1, z2, y1);
-				glTexCoord2f(ur, vb); glVertex3f(x2, z2, y2);
-			}
-			else	// Particle
-			{
-				glVertex3f(x1, z1, y1);
-				glVertex3f(x2, z1, y2);
-				glVertex3f(x1, z2, y1);
-				glVertex3f(x2, z2, y2);
-			}
-		}
-		glEnd();
 	}
 	else
 	{

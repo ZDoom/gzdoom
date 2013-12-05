@@ -105,12 +105,12 @@ class FShaderContainer
 
 	FShader *shader[NUM_SHADERS];
 	FShader *shader_cm;	// the shader for fullscreen colormaps
+	FShader *shader_fl;	// the shader for the fog layer
 
 public:
 	FShaderContainer(const char *ShaderName, const char *ShaderPath);
 	~FShaderContainer();
 	FShader *Bind(int cm, bool glowing, float Speed, bool lights);
-	
 };
 
 

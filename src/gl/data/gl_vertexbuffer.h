@@ -24,7 +24,7 @@ struct FFlatVertex	// exactly 32 bytes large
 {
 	float x,z,y,w;	// w only for padding to make one vertex 32 bytes - maybe it will find some use later
 	float u,v;		// texture coordinates
-	float dc, df;	// distance to floor and ceiling on walls - used for glowing
+	//float dc, df;	// distance to floor and ceiling on walls - used for glowing
 
 	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
 };

@@ -310,6 +310,7 @@ void GLSprite::Draw(int pass)
 			gl_SetFog(foglevel, rel, &Colormap, additivefog);
 			gl_RenderState.SetFixedColormap(CM_FOGLAYER);
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
+			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gl_RenderState.Apply();
 
 			glBegin(GL_TRIANGLE_STRIP);

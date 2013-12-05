@@ -57,7 +57,8 @@ FRenderStyle LegacyRenderStyles[STYLE_Count] =
 			 /* STYLE_Add */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		0 }},
 		  /* STYLE_Shaded */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed }},
 /* STYLE_TranslucentStencil */{{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed }},
-            /* STYLE_Shadow */{{ STYLEOP_Shadow,	0,					0,					0 }},
+          /* STYLE_Shadow */  {{ STYLEOP_Shadow,	0,					0,					0 }},
+		  /* STYLE_Subtract*/ {{ STYLEOP_RevSub,	STYLEALPHA_One,		STYLEALPHA_One,		0 }},
 };
 #else
 FRenderStyle LegacyRenderStyles[STYLE_Count];
@@ -74,7 +75,8 @@ static const BYTE Styles[STYLE_Count * 4] =
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		0,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed,
-	STYLEOP_Shadow,		0,					0,					0
+	STYLEOP_Shadow,		0,					0,					0,
+	STYLEOP_RevSub,		STYLEALPHA_One,		STYLEALPHA_One,		0,
 };
 
 static struct LegacyInit

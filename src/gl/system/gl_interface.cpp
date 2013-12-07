@@ -47,6 +47,9 @@
 #include "gl/system/gl_cvars.h"
 
 #if defined (__unix__) || defined (__APPLE__)
+#define PROC void*
+#define LPCSTR const char*
+
 #include <SDL.h>
 #define wglGetProcAddress(x) (*SDL_GL_GetProcAddress)(x)
 #endif
@@ -62,7 +65,7 @@ int occlusion_type=0;
 PROC myGetProcAddress(LPCSTR proc)
 {
 	PROC p = wglGetProcAddress(proc);
-	if (p == NULL) I_Error("Fatal: GL function '%s' not found.");
+	if (p == NULL) I_Error("Fatal: GL function '%s' not found.", proc);
 	return p;
 }
 

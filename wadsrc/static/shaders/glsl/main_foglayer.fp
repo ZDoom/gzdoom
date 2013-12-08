@@ -54,6 +54,6 @@ void main()
 	fogfactor = exp2 (fogparm.z * fogdist);
 	
 	vec4 frag = Process(vec4(1.0,1.0,1.0,1.0));
-	gl_FragColor = vec4(fogcolor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * glColor.a);
+	gl_FragColor = vec4(fogcolor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * gl_Color.a);
 }
 

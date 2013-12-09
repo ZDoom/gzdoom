@@ -104,9 +104,6 @@ if( WIN32 )
 		include_directories( ${XINPUT_INCLUDE_DIR} )
 	endif( NOT XINPUT_INCLUDE_DIR )
 
-	find_library( DX_ddraw_LIBRARY ddraw
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Lib Lib/${XBITS} )
 	find_library( DX_dxguid_LIBRARY dxguid
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Lib Lib/${XBITS} )
@@ -115,9 +112,6 @@ if( WIN32 )
 		PATH_SUFFIXES Lib Lib/${XBITS} )
 
 	set( DX_LIBS_FOUND YES )
-	if( NOT DX_ddraw_LIBRARY )
-		set( DX_LIBS_FOUND NO )
-	endif( NOT DX_ddraw_LIBRARY )
 	if( NOT DX_dxguid_LIBRARY )
 		set( DX_LIBS_FOUND NO )
 	endif( NOT DX_dxguid_LIBRARY )
@@ -132,7 +126,6 @@ if( WIN32 )
 	set( ZDOOM_LIBS
 		wsock32
 		winmm
-		"${DX_ddraw_LIBRARY}"
 		"${DX_dxguid_LIBRARY}"
 		"${DX_dinput8_LIBRARY}"
 		ole32

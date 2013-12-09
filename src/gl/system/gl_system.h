@@ -66,14 +66,18 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+//GL headers
 #if defined(__APPLE__)
 #include <GL/glew.h>
 #include <OpenGL/OpenGL.h>
-#else // !__APPLE__
+#elif defined(__unix__)
+#include <GL/glew.h>
+#include "gl/api/glext.h"
+#else // !__APPLE__ && !__unix__
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include "gl/api/glext.h"	//  use the local copy
-#endif // __APPLE__
+#include "gl/api/glext.h"
+#endif
 #include "gl/api/gl_api.h"
 
 #ifdef _WIN32

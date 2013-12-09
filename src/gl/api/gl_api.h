@@ -1,7 +1,7 @@
-#if defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__)
 #define APIENTRY
 #define APIENTRYP *
-#endif // __APPLE__
+#endif // __unix__ || __APPLE__
 
 #ifndef __EXTERN
 #define __EXTERN extern

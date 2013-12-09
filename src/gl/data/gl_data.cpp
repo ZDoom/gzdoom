@@ -110,6 +110,7 @@ void AdjustSpriteOffsets()
 		FScanner sc;
 		sc.OpenLumpNum(lump);
 		GLRenderer->FlushTextures();
+		int ofslumpno = Wads.GetLumpFile(lump);
 		while (sc.GetString())
 		{
 			int x,y;
@@ -124,11 +125,11 @@ void AdjustSpriteOffsets()
 				FTexture * tex = TexMan[texno];
 
 				int lumpnum = tex->GetSourceLump();
-				// We only want to change texture offsets for sprites in the IWAD!
+				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.
 				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
 				{
 					int wadno = Wads.GetLumpFile(lumpnum);
-					if (wadno==FWadCollection::IWAD_FILENUM)
+					if (wadno==FWadCollection::IWAD_FILENUM || wadno == ofslumpno)
 					{
 						tex->LeftOffset=x;
 						tex->TopOffset=y;

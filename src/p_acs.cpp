@@ -6796,7 +6796,18 @@ scriptwait:
 			break;
 
 		case PCD_PRINTBINARY:
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))
+#define HAS_DIAGNOSTIC_PRAGMA
+#endif
+#ifdef HAS_DIAGNOSTIC_PRAGMA
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat="
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif
 			work.AppendFormat ("%B", STACK(1));
+#ifdef HAS_DIAGNOSTIC_PRAGMA
+#pragma GCC diagnostic pop
+#endif
 			--sp;
 			break;
 

@@ -611,7 +611,7 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		gl_RenderState.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (glset.brightfog && fogdensity != 0 && fogcolor != 0)
+		if (glset.lightmode == 8 && glset.brightfog && fogdensity != 0 && fogcolor != 0)
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
 	}
 }

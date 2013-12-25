@@ -294,8 +294,9 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 			FTextureID tex = line->sidedef[0]->GetTexture(side_t::top);
 			if (!tex.Exists() && alpha<255)
 			{
-				alpha=clamp(-tex.GetIndex(), 0, 255);
+				alpha = -tex.GetIndex();
 			}
+			alpha = clamp(alpha, 0, 255);
 			if (alpha==0) flags&=~(FF_RENDERALL|FF_BOTHPLANES|FF_ALLSIDES);
 			else if (alpha!=255) flags|=FF_TRANSLUCENT;
 										 

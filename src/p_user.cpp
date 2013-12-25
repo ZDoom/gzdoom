@@ -2473,9 +2473,10 @@ void P_PlayerThink (player_t *player)
 				if ( player->cheats & CF_HIGHJUMP )	jumpvelz *= 2;
 
 				player->mo->velz += jumpvelz;
-				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
 				player->jumpTics = -1;
+				if (!(player->cheats & CF_PREDICTING))
+					S_Sound(player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 			}
 		}
 
@@ -2502,7 +2503,7 @@ void P_PlayerThink (player_t *player)
 				{
 					player->mo->flags2 |= MF2_FLY;
 					player->mo->flags |= MF_NOGRAVITY;
-					if (player->mo->velz <= -39*FRACUNIT)
+					if ((player->mo->velz <= -39 * FRACUNIT) && !(player->cheats & CF_PREDICTING))
 					{ // Stop falling scream
 						S_StopSound (player->mo, CHAN_VOICE);
 					}

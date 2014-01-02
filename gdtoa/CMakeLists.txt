@@ -15,7 +15,7 @@ endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" S
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 add_definitions( -DINFNAN_CHECK -DMULTIPLE_THREADS )
 
-if( NOT MSVC )
+if( NOT MSVC AND NOT APPLE )
 	if( NOT CMAKE_CROSSCOMPILING )
 		add_executable( arithchk arithchk.c )
 	endif( NOT CMAKE_CROSSCOMPILING )
@@ -35,7 +35,7 @@ if( NOT MSVC )
 		
 	set( GEN_FP_FILES arith.h gd_qnan.h )
 	set( GEN_FP_DEPS ${CMAKE_CURRENT_BINARY_DIR}/arith.h ${CMAKE_CURRENTY_BINARY_DIR}/gd_qnan.h )
-endif( NOT MSVC )
+endif( NOT MSVC AND NOT APPLE )
 
 add_library( gdtoa
 	${GEN_FP_FILES}

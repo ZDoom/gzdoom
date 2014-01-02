@@ -167,7 +167,7 @@ THIS SOFTWARE.
 #define GDTOAIMP_H_INCLUDED
 #include "gdtoa.h"
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 /* [RH] Generating gd_qnan.h strikes me as too cumbersome under Visual
  * Studio, so here's the equivalent, given the limited number of
  * architectures that MSC can target. (Itanium? Who cares about that?)
@@ -188,6 +188,34 @@ THIS SOFTWARE.
  * it turns out that it has a true long double type. I thought that
  * all ia32 compilers had phased out extended precision.
  */
+#elif defined(__APPLE__)
+#if defined(__x86_64__) || defined(__i386__)
+#define f_QNAN 0xffc00000
+#define d_QNAN0 0x0
+#define d_QNAN1 0xfff80000
+#define ld_QNAN0 0x0
+#define ld_QNAN1 0xc0000000
+#define ld_QNAN2 0xffff
+#define ld_QNAN3 0x0
+#define ldus_QNAN0 0x0
+#define ldus_QNAN1 0x0
+#define ldus_QNAN2 0x0
+#define ldus_QNAN3 0xc000
+#define ldus_QNAN4 0xffff
+#else
+#define f_QNAN 0xffc00000
+#define d_QNAN0 0xfff80000
+#define d_QNAN1 0x0
+#define ld_QNAN0 0xfff80000
+#define ld_QNAN1 0x0
+#define ld_QNAN2 0x0
+#define ld_QNAN3 0x0
+#define ldus_QNAN0 0xfff8
+#define ldus_QNAN1 0x0
+#define ldus_QNAN2 0x0
+#define ldus_QNAN3 0x0
+#define ldus_QNAN4 0x0
+#endif
 #else
 #include "gd_qnan.h"
 #endif

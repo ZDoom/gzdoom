@@ -17,7 +17,10 @@ if( WIN32 )
 	endif( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 endif( WIN32 )
 
-add_executable( updaterevision updaterevision.c ${TRUSTINFO} )
+if( NOT CMAKE_CROSSCOMPILING )
+	add_executable( updaterevision updaterevision.c ${TRUSTINFO} )
+	set( CROSS_EXPORTS ${CROSS_EXPORTS} updaterevision PARENT_SCOPE )
+endif( NOT CMAKE_CROSSCOMPILING )
 
 if( MT_MERGE )
 	get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )

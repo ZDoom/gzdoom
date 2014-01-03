@@ -270,7 +270,8 @@ void FMugShot::Tick(player_t *player)
 			RampageTimer++;
 		}
 	}
-	else
+	// Only reset the rampage timer if the weapon becomes ready to fire.
+	else if((player->WeaponState & (WF_WEAPONREADY|WF_WEAPONREADYALT)))
 	{
 		RampageTimer = 0;
 	}

@@ -7,3 +7,5 @@ if( WIN32 )
 endif( WIN32 )
 add_subdirectory( updaterevision )
 add_subdirectory( zipdir )
+
+set( CROSS_EXPORTS ${CROSS_EXPORTS} PARENT_SCOPE )

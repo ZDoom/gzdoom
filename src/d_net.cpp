@@ -1747,6 +1747,8 @@ void TryRunTics (void)
 	
 	if (counts == 0 && !doWait)
 	{
+		// Check possible stall conditions
+		Net_CheckLastRecieved(counts);
 		return;
 	}
 
@@ -1824,41 +1826,8 @@ void TryRunTics (void)
 		if (lowtic < gametic)
 			I_Error ("TryRunTics: lowtic < gametic");
 
-		// [Ed850] Check to see the last time a packet was recieved.
-		// If it's longer then 3 seconds, a node has likely stalled.
-		if(I_GetTime(false) - lastglobalrecvtime >= TICRATE*3)
-		{
-			lastglobalrecvtime = I_GetTime(false); //Bump the count
-
-			if(NetMode == NET_PeerToPeer || consoleplayer == Net_Arbitrator)
-			{
-				//Keep the local node in the for loop so we can still log any cases where the local node is /somehow/ late.
-				//However, we don't send a resend request for sanity reasons.
-				for (i = 0; i < doomcom.numnodes; i++)
-				{
-					if (nodeingame[i] && nettics[i] < gametic + counts)
-					{
-						if (debugfile)
-							fprintf (debugfile, "%i is slow (%i to %i)\n",
-								i, nettics[i], gametic+counts);
-						//Send resend request to the late node. Also mark the node as waiting to display it in the hud.
-						if(i != 0)
-							remoteresend[i] = players[playerfornode[i]].waiting = hadlate = true;
-					}
-					else
-						players[playerfornode[i]].waiting = false;
-				}
-			}
-			else
-			{	//Send a resend request to the Arbitrator, as it's obvious we are stuck here.
-				if (debugfile)
-					fprintf (debugfile, "Arbitrator is slow (%i to %i)\n",
-						nettics[Net_Arbitrator], gametic+counts);
-				//Send resend request to the Arbitrator. Also mark the Arbitrator as waiting to display it in the hud.
-				if(i != 0)
-					remoteresend[Net_Arbitrator] = players[playerfornode[Net_Arbitrator]].waiting = hadlate = true;
-			}
-		}
+		// Check possible stall conditions
+		Net_CheckLastRecieved (counts);
 
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime (false) - entertic >= TICRATE/3)
@@ -1898,6 +1867,44 @@ void TryRunTics (void)
 			NetUpdate ();	// check for new console commands
 		}
 		S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
+	}
+}
+
+void Net_CheckLastRecieved (int counts)
+{
+	// [Ed850] Check to see the last time a packet was recieved.
+	// If it's longer then 3 seconds, a node has likely stalled.
+	if (I_GetTime(false) - lastglobalrecvtime >= TICRATE * 3)
+	{
+		lastglobalrecvtime = I_GetTime(false); //Bump the count
+
+		if (NetMode == NET_PeerToPeer || consoleplayer == Net_Arbitrator)
+		{
+			//Keep the local node in the for loop so we can still log any cases where the local node is /somehow/ late.
+			//However, we don't send a resend request for sanity reasons.
+			for (int i = 0; i < doomcom.numnodes; i++)
+			{
+				if (nodeingame[i] && nettics[i] <= gametic + counts)
+				{
+					if (debugfile && !players[playerfornode[i]].waiting)
+						fprintf(debugfile, "%i is slow (%i to %i)\n",
+						i, nettics[i], gametic + counts);
+					//Send resend request to the late node. Also mark the node as waiting to display it in the hud.
+					if (i != 0)
+						remoteresend[i] = players[playerfornode[i]].waiting = hadlate = true;
+				}
+				else
+					players[playerfornode[i]].waiting = false;
+			}
+		}
+		else
+		{	//Send a resend request to the Arbitrator, as it's obvious we are stuck here.
+			if (debugfile && !players[playerfornode[Net_Arbitrator]].waiting)
+				fprintf(debugfile, "Arbitrator is slow (%i to %i)\n",
+				nettics[Net_Arbitrator], gametic + counts);
+			//Send resend request to the Arbitrator. Also mark the Arbitrator as waiting to display it in the hud.
+			remoteresend[Net_Arbitrator] = players[playerfornode[Net_Arbitrator]].waiting = hadlate = true;
+		}
 	}
 }
 

@@ -263,15 +263,14 @@ void FMugShot::Tick(player_t *player)
 			CurrentState = NULL;
 		}
 	}
-	if ((player->cmd.ucmd.buttons & (BT_ATTACK|BT_ALTATTACK)) && !(player->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)) && player->ReadyWeapon)
+	if (player->attackdown && !(player->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)) && player->ReadyWeapon)
 	{
 		if (RampageTimer != ST_RAMPAGEDELAY)
 		{
 			RampageTimer++;
 		}
 	}
-	// Only reset the rampage timer if the weapon becomes ready to fire.
-	else if((player->WeaponState & (WF_WEAPONREADY|WF_WEAPONREADYALT)))
+	else
 	{
 		RampageTimer = 0;
 	}

@@ -31,6 +31,8 @@ THIS SOFTWARE.
 
 #include "gdtoaimp.h"
 
+ extern ULong NanDflt_d_D2A[2];
+
  void
 #ifdef KR_headers
 ULtodd(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
@@ -48,8 +50,8 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 
 	  case STRTOG_Normal:
 		L[_1] = (bits[1] >> 21 | bits[2] << 11) & (ULong)0xffffffffL;
-		L[_0] = bits[2] >> 21 | bits[3] << 11 & 0xfffff
-			  | exp + 0x3ff + 105 << 20;
+		L[_0] = (bits[2] >> 21) | (bits[3] << 11 & 0xfffff)
+			  | ((exp + 0x3ff + 105) << 20);
 		exp += 0x3ff + 52;
 		if (bits[1] &= 0x1fffff) {
 			i = hi0bits(bits[1]) - 11;
@@ -60,7 +62,7 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 			else
 				exp -= i;
 			if (i > 0) {
-				bits[1] = bits[1] << i | bits[0] >> 32-i;
+				bits[1] = bits[1] << i | bits[0] >> (32-i);
 				bits[0] = bits[0] << i & (ULong)0xffffffffL;
 				}
 			}
@@ -73,11 +75,11 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 			else
 				exp -= i;
 			if (i < 32) {
-				bits[1] = bits[0] >> 32 - i;
+				bits[1] = bits[0] >> (32 - i);
 				bits[0] = bits[0] << i & (ULong)0xffffffffL;
 				}
 			else {
-				bits[1] = bits[0] << i - 32;
+				bits[1] = bits[0] << (i - 32);
 				bits[0] = 0;
 				}
 			}
@@ -86,7 +88,7 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 			break;
 			}
 		L[2+_1] = bits[0];
-		L[2+_0] = bits[1] & 0xfffff | exp << 20;
+		L[2+_0] = (bits[1] & 0xfffff) | (exp << 20);
 		break;
 
 	  case STRTOG_Denormal:
@@ -105,10 +107,10 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 	  nearly_normal:
 		i = hi0bits(bits[3]) - 11;	/* i >= 12 */
 		j = 32 - i;
-		L[_0] = (bits[3] << i | bits[2] >> j) & 0xfffff
-			| 65 - i << 20;
+		L[_0] = ((bits[3] << i | bits[2] >> j) & 0xfffff)
+			| ((65 - i) << 20);
 		L[_1] = (bits[2] << i | bits[1] >> j) & 0xffffffffL;
-		L[2+_0] = bits[1] & ((ULong)1L << j) - 1;
+		L[2+_0] = bits[1] & (((ULong)1L << j) - 1);
 		L[2+_1] = bits[0];
 		break;
 
@@ -117,34 +119,34 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 		if (i < 0) {
 			j = -i;
 			i += 32;
-			L[_0] = bits[2] >> j & 0xfffff | (33 + j) << 20;
+			L[_0] = (bits[2] >> j & 0xfffff) | ((33 + j) << 20);
 			L[_1] = (bits[2] << i | bits[1] >> j) & 0xffffffffL;
-			L[2+_0] = bits[1] & ((ULong)1L << j) - 1;
+			L[2+_0] = bits[1] & (((ULong)1L << j) - 1);
 			L[2+_1] = bits[0];
 			break;
 			}
 		if (i == 0) {
-			L[_0] = bits[2] & 0xfffff | 33 << 20;
+			L[_0] = (bits[2] & 0xfffff) | (33 << 20);
 			L[_1] = bits[1];
 			L[2+_0] = 0;
 			L[2+_1] = bits[0];
 			break;
 			}
 		j = 32 - i;
-		L[_0] = (bits[2] << i | bits[1] >> j) & 0xfffff
-				| j + 1 << 20;
+		L[_0] = (((bits[2] << i) | (bits[1] >> j)) & 0xfffff)
+				| ((j + 1) << 20);
 		L[_1] = (bits[1] << i | bits[0] >> j) & 0xffffffffL;
 		L[2+_0] = 0;
-		L[2+_1] = bits[0] & (1L << j) - 1;
+		L[2+_1] = bits[0] & ((1L << j) - 1);
 		break;
 
 	  hardly_normal:
 		j = 11 - hi0bits(bits[1]);
 		i = 32 - j;
-		L[_0] = bits[1] >> j & 0xfffff | j + 1 << 20;
+		L[_0] = (bits[1] >> j & 0xfffff) | ((j + 1) << 20);
 		L[_1] = (bits[1] << i | bits[0] >> j) & 0xffffffffL;
 		L[2+_0] = 0;
-		L[2+_1] = bits[0] & ((ULong)1L << j) - 1;
+		L[2+_1] = bits[0] & (((ULong)1L << j) - 1);
 		break;
 
 	  case STRTOG_Infinite:
@@ -153,16 +155,17 @@ ULtodd(ULong *L, ULong *bits, Long exp, int k)
 		break;
 
 	  case STRTOG_NaN:
-		L[0] = L[2] = d_QNAN0;
-		L[1] = L[3] = d_QNAN1;
+		L[_0] = L[_0+2] = NanDflt_d_D2A[1];
+		L[_1] = L[_1+2] = NanDflt_d_D2A[0];
 		break;
 
 	  case STRTOG_NaNbits:
-		L[_1] = (bits[1] >> 21 | bits[2] << 11) & (ULong)0xffffffffL;
-		L[_0] = bits[2] >> 21 | bits[3] << 11
-			  | (ULong)0x7ff00000L;
-		L[2+_1] = bits[0];
-		L[2+_0] = bits[1] | (ULong)0x7ff00000L;
+		L[_1] = (bits[1] >> 20 | bits[2] << 12) & (ULong)0xffffffffL;
+		L[_0] = bits[2] >> 20 | bits[3] << 12;
+		L[_0] |= (L[_1] | L[_0]) ? (ULong)0x7ff00000L : (ULong)0x7ff80000L;
+		L[2+_1] = bits[0] & (ULong)0xffffffffL;
+		L[2+_0] = bits[1] & 0xfffffL;
+		L[2+_0] |= (L[2+_1] | L[2+_0]) ? (ULong)0x7ff00000L : (ULong)0x7ff80000L;
 	  }
 	if (k & STRTOG_Neg) {
 		L[_0] |= 0x80000000L;
@@ -178,12 +181,11 @@ strtordd(CONST char *s, char **sp, int rounding, double *dd)
 #endif
 {
 #ifdef Sudden_Underflow
-	static CONST FPI fpi0 = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
+	static FPI fpi0 = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
 #else
-	static CONST FPI fpi0 = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
+	static FPI fpi0 = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
 #endif
-	CONST FPI *fpi;
-	FPI fpi1;
+	FPI *fpi, fpi1;
 	ULong bits[4];
 	Long exp;
 	int k;

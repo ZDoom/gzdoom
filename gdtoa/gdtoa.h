@@ -66,16 +66,13 @@ THIS SOFTWARE.
 #else
 #include "arith.h"
 #endif
+#include <stddef.h> /* for size_t */
 
-/* [RH] On 64-bit Unix systems, long is a 64-bit type. I do not that is
- * is what is desired here, so I sacrifice compatibility with systems
- * that use 16-bit ints (oh no!) and make Long an int instead.
- */
 #ifndef Long
-typedef int Long;
+#define Long int
 #endif
 #ifndef ULong
-typedef unsigned int ULong;
+typedef unsigned Long ULong;
 #endif
 #ifndef UShort
 typedef unsigned short UShort;
@@ -111,9 +108,9 @@ typedef unsigned short UShort;
 
 	/* The following may be or-ed into one of the above values. */
 
-	STRTOG_Neg	= 0x08,
-	STRTOG_Inexlo	= 0x10,
-	STRTOG_Inexhi	= 0x20,
+	STRTOG_Neg	= 0x08, /* does not affect STRTOG_Inexlo or STRTOG_Inexhi */
+	STRTOG_Inexlo	= 0x10,	/* returned result rounded toward zero */
+	STRTOG_Inexhi	= 0x20, /* returned result rounded away from zero */
 	STRTOG_Inexact	= 0x30,
 	STRTOG_Underflow= 0x40,
 	STRTOG_Overflow	= 0x80
@@ -126,6 +123,7 @@ FPI {
 	int emax;
 	int rounding;
 	int sudden_underflow;
+	int int_max;
 	} FPI;
 
 enum {	/* FPI.rounding values: same as FLT_ROUNDS */
@@ -135,29 +133,31 @@ enum {	/* FPI.rounding values: same as FLT_ROUNDS */
 	FPI_Round_down = 3
 	};
 
-// Our strtod is not the CRT's strtod.
-#include <stdlib.h>
-#define strtod mystrtod
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern char* dtoa  ANSI((double d, int mode, int ndigits, int *decpt,
 			int *sign, char **rve));
-extern char* gdtoa ANSI((CONST FPI *fpi, int be, ULong *bits, int *kindp,
+extern char* gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
 			int mode, int ndigits, int *decpt, char **rve));
 extern void freedtoa ANSI((char*));
 extern float  strtof ANSI((CONST char *, char **));
 extern double strtod ANSI((CONST char *, char **));
-extern int strtodg ANSI((CONST char*, char**, CONST FPI*, Long*, ULong*));
+extern int strtodg ANSI((CONST char*, char**, FPI*, Long*, ULong*));
 
-extern char*	g_ddfmt  ANSI((char*, double*, int, unsigned));
-extern char*	g_dfmt   ANSI((char*, double*, int, unsigned));
-extern char*	g_ffmt   ANSI((char*, float*,  int, unsigned));
-extern char*	g_Qfmt   ANSI((char*, void*,   int, unsigned));
-extern char*	g_xfmt   ANSI((char*, void*,   int, unsigned));
-extern char*	g_xLfmt  ANSI((char*, void*,   int, unsigned));
+extern char*	g_ddfmt   ANSI((char*, double*, int, size_t));
+extern char*	g_ddfmt_p ANSI((char*, double*,	int, size_t, int));
+extern char*	g_dfmt    ANSI((char*, double*, int, size_t));
+extern char*	g_dfmt_p  ANSI((char*, double*,	int, size_t, int));
+extern char*	g_ffmt    ANSI((char*, float*,  int, size_t));
+extern char*	g_ffmt_p  ANSI((char*, float*,	int, size_t, int));
+extern char*	g_Qfmt    ANSI((char*, void*,   int, size_t));
+extern char*	g_Qfmt_p  ANSI((char*, void*,	int, size_t, int));
+extern char*	g_xfmt    ANSI((char*, void*,   int, size_t));
+extern char*	g_xfmt_p  ANSI((char*, void*,	int, size_t, int));
+extern char*	g_xLfmt   ANSI((char*, void*,   int, size_t));
+extern char*	g_xLfmt_p ANSI((char*, void*,	int, size_t, int));
 
 extern int	strtoId  ANSI((CONST char*, char**, double*, double*));
 extern int	strtoIdd ANSI((CONST char*, char**, double*, double*));

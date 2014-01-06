@@ -303,6 +303,8 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 		int		Alpha() const { return currentAlpha; }
 		// Same as Draw but takes into account ForceScaled and temporarily sets the scaling if needed.
 		void	DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, int alpha);
+		// Silence hidden overload warning since this is a special use class.
+		using SBarInfoCommandFlowControl::Draw;
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, int xOffset, int yOffset, int alpha)
 		{
 			this->xOffset = xOffset;

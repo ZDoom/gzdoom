@@ -1033,11 +1033,6 @@ bool D3DFB::IsFullscreen ()
 //
 //==========================================================================
 
-bool D3DFB::Lock ()
-{
-	return Lock(true);
-}
-
 bool D3DFB::Lock (bool buffered)
 {
 	if (LockCount++ > 0)

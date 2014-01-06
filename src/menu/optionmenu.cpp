@@ -468,11 +468,6 @@ FOptionMenuItem::~FOptionMenuItem()
 	if (mLabel != NULL) delete [] mLabel;
 }
 
-bool FOptionMenuItem::CheckCoordinate(FOptionMenuDescriptor *desc, int x, int y)
-{
-	return false;
-}
-
 int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 {
 	return indent;

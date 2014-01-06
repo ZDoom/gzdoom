@@ -6807,12 +6807,16 @@ scriptwait:
 			break;
 
 		case PCD_PRINTBINARY:
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))) || defined(__clang__)
 #define HAS_DIAGNOSTIC_PRAGMA
 #endif
 #ifdef HAS_DIAGNOSTIC_PRAGMA
 #pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"
+#else
 #pragma GCC diagnostic ignored "-Wformat="
+#endif
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 #endif
 			work.AppendFormat ("%B", STACK(1));

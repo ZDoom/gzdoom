@@ -370,8 +370,8 @@ extern "C" void bz_internal_error (int errcode)
 //
 //==========================================================================
 
-static void *SzAlloc(void *p, size_t size) { p = p; return malloc(size); }
-static void SzFree(void *p, void *address) { p = p; free(address); }
+static void *SzAlloc(void *, size_t size) { return malloc(size); }
+static void SzFree(void *, void *address) { free(address); }
 ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 FileReaderLZMA::FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool zip)

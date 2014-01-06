@@ -1747,10 +1747,20 @@ class CommandGameMode : public SBarInfoCommandFlowControl
 
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
+			static bool warnUnknown = true;
 			do
 			{
 				sc.MustGetToken(TK_Identifier);
-				modes |= static_cast<GameModes> (1<<sc.MustMatchString(modeNames));
+				int mode = sc.MatchString(modeNames);
+				if(mode >= 0)
+					modes |= static_cast<GameModes> (1<<mode);
+				else if(warnUnknown)
+				{
+					// Only warn about unknowns for cross port compatibility
+					// Also only warn once to keep logs from getting messy.
+					warnUnknown = false;
+					FScriptPosition(sc).Message(MSG_WARNING, "Ignoring unknown gamemode %s (future cases will be silently ignored).", sc.String);
+				}
 			}
 			while(sc.CheckToken(','));
 			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);

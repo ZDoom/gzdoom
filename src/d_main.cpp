@@ -1861,6 +1861,15 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 			sc.MustGetString();
 			DoomStartupInfo.Song = sc.String;
 		}
+		else
+		{
+			// Silently ignore unknown properties
+			do
+			{
+				sc.MustGetAnyToken();
+			}
+			while(sc.CheckToken(','));
+		}
 	}
 	return iwad;
 }

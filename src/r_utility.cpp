@@ -608,7 +608,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		if (delta > 0)
 		{
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
-			if (viewpitch + delta <= viewpitch)
+			if (viewpitch > INT_MAX - delta)
 			{
 				viewpitch = player->MaxPitch;
 			}
@@ -620,7 +620,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		else if (delta < 0)
 		{
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
-			if (viewpitch + delta >= viewpitch)
+			if (viewpitch < INT_MIN - delta)
 			{
 				viewpitch = player->MinPitch;
 			}

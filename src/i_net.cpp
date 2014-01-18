@@ -293,7 +293,7 @@ void PacketGet (void)
 			return;
 		}
 	}
-	else if (c > 0)
+	else if (node >= 0 && c > 0)
 	{
 		doomcom.data[0] = TransmitBuffer[0] & ~NCMD_COMPRESSED;
 		if (TransmitBuffer[0] & NCMD_COMPRESSED)
@@ -315,6 +315,12 @@ void PacketGet (void)
 //			Printf("recv %d\n", c);
 			memcpy(doomcom.data + 1, TransmitBuffer + 1, c - 1);
 		}
+	}
+	else if (c > 0)
+	{	//The packet is not from any in-game node, so we might as well discard it.
+		Printf("Dropped packet: Unknown host (%s:%d)\n", inet_ntoa(fromaddress.sin_addr), fromaddress.sin_port);
+		doomcom.remotenode = -1;
+		return;
 	}
 
 	doomcom.remotenode = node;

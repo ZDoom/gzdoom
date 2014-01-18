@@ -74,12 +74,12 @@ public:
 	{
 	}
 
-	double GetValue()
+	double GetSliderValue()
 	{
 		return SELECTED_JOYSTICK->GetSensitivity();
 	}
 
-	void SetValue(double val)
+	void SetSliderValue(double val)
 	{
 		SELECTED_JOYSTICK->SetSensitivity(float(val));
 	}
@@ -104,14 +104,14 @@ public:
 		mNeg = 1;
 	}
 
-	double GetValue()
+	double GetSliderValue()
 	{
 		double d = SELECTED_JOYSTICK->GetAxisScale(mAxis);
 		mNeg = d < 0? -1:1;
 		return d;
 	}
 
-	void SetValue(double val)
+	void SetSliderValue(double val)
 	{
 		SELECTED_JOYSTICK->SetAxisScale(mAxis, float(val * mNeg));
 	}
@@ -136,14 +136,14 @@ public:
 		mNeg = 1;
 	}
 
-	double GetValue()
+	double GetSliderValue()
 	{
 		double d = SELECTED_JOYSTICK->GetAxisDeadZone(mAxis);
 		mNeg = d < 0? -1:1;
 		return d;
 	}
 
-	void SetValue(double val)
+	void SetSliderValue(double val)
 	{
 		SELECTED_JOYSTICK->SetAxisDeadZone(mAxis, float(val * mNeg));
 	}

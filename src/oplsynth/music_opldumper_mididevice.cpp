@@ -139,7 +139,7 @@ DiskWriterIO::~DiskWriterIO()
 //
 //==========================================================================
 
-int DiskWriterIO::OPLinit(uint numchips, bool dontcare)
+int DiskWriterIO::OPLinit(uint numchips, bool, bool)
 {
 	// If the file extension is unknown or not present, the default format
 	// is RAW. Otherwise, you can use DRO.

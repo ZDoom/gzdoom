@@ -192,7 +192,7 @@ static size_t safe_write(int fd, const void *buf, size_t len)
 
 static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 {
-	ucontext_t *ucontext = (ucontext_t*)context;
+	//ucontext_t *ucontext = (ucontext_t*)context;
 	pid_t dbg_pid;
 	int fd[2];
 

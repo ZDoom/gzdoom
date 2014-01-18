@@ -364,8 +364,6 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		static int dieticks[MAXPLAYERS];
 		int pnum = int(this->player-players);
-		if (dieticks[pnum] == gametic)
-			gametic=gametic;
 		dieticks[pnum] = gametic;
 		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
 		this->player->cheats&CF_PREDICTING?"predicting":"real");

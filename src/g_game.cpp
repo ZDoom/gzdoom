@@ -775,7 +775,7 @@ void G_AddViewPitch (int look)
 	else if (look > 0)
 	{
 		// Avoid overflowing
-		if (LocalViewPitch + look <= LocalViewPitch)
+		if (LocalViewPitch > INT_MAX - look)
 		{
 			LocalViewPitch = 0x78000000;
 		}
@@ -787,7 +787,7 @@ void G_AddViewPitch (int look)
 	else if (look < 0)
 	{
 		// Avoid overflowing
-		if (LocalViewPitch + look >= LocalViewPitch)
+		if (LocalViewPitch < INT_MIN - look)
 		{
 			LocalViewPitch = -0x78000000;
 		}

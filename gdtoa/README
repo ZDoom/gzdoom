@@ -56,7 +56,9 @@ two letters:
 		whose sum is the desired value
 
 For decimal -> binary conversions, there are three families of
-helper routines: one for round-nearest:
+helper routines: one for round-nearest (or the current rounding
+mode on IEEE-arithmetic systems that provide the C99 fegetround()
+function, if compiled with -DHonor_FLT_ROUNDS):
 
 	strtof
 	strtod
@@ -150,12 +152,14 @@ suffer double rounding due to use of extended-precision registers.
 For some conversions this variant of strtod is less efficient than the
 one in strtod.c when the latter is run with 53-bit rounding precision.
 
-The values that the strto* routines return for NaNs are determined by
-gd_qnan.h, which the makefile generates by running the program whose
-source is qnan.c.  Note that the rules for distinguishing signaling
-from quiet NaNs are system-dependent.  For cross-compilation, you need
-to determine arith.h and gd_qnan.h suitably, e.g., using the
-arithmetic of the target machine.
+When float or double are involved, the values that the strto* routines
+return for NaNs are determined by gd_qnan.h, which the makefile
+generates by running the program whose source is qnan.c.  For other
+types, default NaN values are specified in g__fmt.c and may need
+adjusting.  Note that the rules for distinguishing signaling from
+quiet NaNs are system-dependent.  For cross-compilation, you need to
+determine arith.h and gd_qnan.h suitably, e.g., using the arithmetic
+of the target machine.
 
 C99's hexadecimal floating-point constants are recognized by the
 strto* routines (but this feature has not yet been heavily tested).
@@ -170,10 +174,11 @@ hexadecimal digits, it is taken for the fraction bits of the resulting
 NaN; if there are two or more strings of hexadecimal digits, each
 string is assigned to the next available sequence of 32-bit words of
 fractions bits (starting with the most significant), right-aligned in
-each sequence.
+each sequence.  Strings of hexadecimal digits may be preceded by "0x"
+or "0X".
 
-For binary -> decimal conversions, I've provided just one family
-of helper routines:
+For binary -> decimal conversions, I've provided a family of helper
+routines:
 
 	g_ffmt
 	g_dfmt
@@ -181,6 +186,12 @@ of helper routines:
 	g_xfmt
 	g_xLfmt
 	g_Qfmt
+	g_ffmt_p
+	g_dfmt_p
+	g_ddfmt_p
+	g_xfmt_p
+	g_xLfmt_p
+	g_Qfmt_p
 
 which do a "%g" style conversion either to a specified number of decimal
 places (if their ndig argument is positive), or to the shortest
@@ -191,6 +202,36 @@ in the buffer, if the buffer was long enough, or 0.  Other forms of
 conversion are easily done with the help of gdtoa(), such as %e or %f
 style and conversions with direction of rounding specified (so that, if
 desired, the decimal value is either >= or <= the binary value).
+On IEEE-arithmetic systems that provide the C99 fegetround() function,
+if compiled with -DHonor_FLT_ROUNDS, these routines honor the current
+rounding mode.  For pedants, the ...fmt_p() routines are similar to the
+...fmt() routines, but have an additional final int argument, nik,
+that for conversions of Infinity or NaN, determines whether upper,
+lower, or mixed case is used, whether (...) is added to NaN values,
+and whether the sign of a NaN is reported or suppressed:
+
+	nik = ic + 6*(nb + 3*ns),
+
+where ic with 0 <= ic < 6 controls the rendering of Infinity and NaN:
+
+	0 ==> Infinity or NaN
+	1 ==> infinity or nan
+	2 ==> INFINITY or NAN
+	3 ==> Inf or NaN
+	4 ==> inf or nan
+	5 ==> INF or NAN
+
+nb with 0 <= nb < 3 determines whether NaN values are rendered
+as NaN(...):
+
+	0 ==> no
+	1 ==> yes
+	2 ==> no for default NaN values; yes otherwise
+
+ns = 0 or 1 determines whether the sign of NaN values reported:
+
+	0 ==> distinguish NaN and -NaN
+	1 ==> report both as NaN
 
 For an example of more general conversions based on dtoa(), see
 netlib's "printf.c from ampl/solvers".
@@ -331,6 +372,29 @@ and denormals; see gdtoa.h.
 Compiling g__fmt.c, strtod.c, and strtodg.c with -DUSE_LOCALE causes
 the decimal-point character to be taken from the current locale; otherwise
 it is '.'.
+
+Source files dtoa.c and strtod.c in this directory are derived from
+netlib's "dtoa.c from fp" and are meant to function equivalently.
+When compiled with Honor_FLT_ROUNDS #defined (on systems that provide
+FLT_ROUNDS and fegetround() as specified in the C99 standard), they
+honor the current rounding mode.  Because FLT_ROUNDS is buggy on some
+(Linux) systems -- not reflecting calls on fesetround(), as the C99
+standard says it should -- when Honor_FLT_ROUNDS is #defined, the
+current rounding mode is obtained from fegetround() rather than from
+FLT_ROUNDS, unless Trust_FLT_ROUNDS is also #defined.
+
+Compile with -DUSE_LOCALE to use the current locale; otherwise
+decimal points are assumed to be '.'.  With -DUSE_LOCALE, unless
+you also compile with -DNO_LOCALE_CACHE, the details about the
+current "decimal point" character string are cached and assumed not
+to change during the program's execution.
+
+On machines with a 64-bit long double and perhaps a 113-bit "quad"
+type, you can invoke "make Printf" to add Printf (and variants, such
+as Fprintf) to gdtoa.a.  These are analogs, declared in stdio1.h, of
+printf and fprintf, etc. in which %La, %Le, %Lf, and %Lg are for long
+double and (if appropriate) %Lqa, %Lqe, %Lqf, and %Lqg are for quad
+precision printing.
 
 Please send comments to	David M. Gay (dmg at acm dot org, with " at "
 changed at "@" and " dot " changed to ".").

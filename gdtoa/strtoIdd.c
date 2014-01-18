@@ -39,9 +39,9 @@ strtoIdd(CONST char *s, char **sp, double *f0, double *f1)
 #endif
 {
 #ifdef Sudden_Underflow
-	static CONST FPI fpi = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
+	static FPI fpi = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
 #else
-	static CONST FPI fpi = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
+	static FPI fpi = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
 #endif
 	Long exp[2];
 	Bigint *B[2];

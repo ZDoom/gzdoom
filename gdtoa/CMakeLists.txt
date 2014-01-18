@@ -41,45 +41,8 @@ add_library( gdtoa
 	${GEN_FP_FILES}
 	dmisc.c
 	dtoa.c
-	g_Qfmt.c
-	g__fmt.c
-	g_ddfmt.c
-	g_dfmt.c
-	g_ffmt.c
-	g_xLfmt.c
-	g_xfmt.c
-	gdtoa.c
-	gethex.c
-	gmisc.c
-	hd_init.c
-	hexnan.c
 	misc.c
-	smisc.c
-	strtoIQ.c
-	strtoId.c
-	strtoIdd.c
-	strtoIf.c
-	strtoIg.c
-	strtoIx.c
-	strtoIxL.c
-	strtod.c
-	strtodI.c
-	strtodg.c
-	strtof.c
-	strtopQ.c
-	strtopd.c
-	strtopdd.c
-	strtopf.c
-	strtopx.c
-	strtopxL.c
-	strtorQ.c
-	strtord.c
-	strtordd.c
-	strtorf.c
-	strtorx.c
-	strtorxL.c
-	sum.c
-	ulp.c)
+	)
 target_link_libraries( gdtoa )
 if( GEN_FP_DEPS )
 	add_dependencies( gdtoa ${GEN_FP_DEPS} )

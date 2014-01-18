@@ -38,7 +38,7 @@ strtoIQ(s, sp, a, b) CONST char *s; char **sp; void *a; void *b;
 strtoIQ(CONST char *s, char **sp, void *a, void *b)
 #endif
 {
-	static CONST FPI fpi = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
+	static FPI fpi = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
 	Long exp[2];
 	Bigint *B[2];
 	int k, rv[2];

@@ -31,6 +31,8 @@ THIS SOFTWARE.
 
 #include "gdtoaimp.h"
 
+ extern ULong NanDflt_f_D2A[1];
+
  void
 #ifdef KR_headers
 ULtof(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
@@ -46,7 +48,7 @@ ULtof(ULong *L, ULong *bits, Long exp, int k)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		L[0] = bits[0] & 0x7fffff | exp + 0x7f + 23 << 23;
+		L[0] = (bits[0] & 0x7fffff) | ((exp + 0x7f + 23) << 23);
 		break;
 
 	  case STRTOG_Denormal:
@@ -58,7 +60,7 @@ ULtof(ULong *L, ULong *bits, Long exp, int k)
 		break;
 
 	  case STRTOG_NaN:
-		L[0] = f_QNAN;
+		L[0] = NanDflt_f_D2A[0];
 	  }
 	if (k & STRTOG_Neg)
 		L[0] |= 0x80000000L;
@@ -71,9 +73,8 @@ strtorf(s, sp, rounding, f) CONST char *s; char **sp; int rounding; float *f;
 strtorf(CONST char *s, char **sp, int rounding, float *f)
 #endif
 {
-	static CONST FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
-	CONST FPI *fpi;
-	FPI fpi1;
+	static FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	FPI *fpi, fpi1;
 	ULong bits[1];
 	Long exp;
 	int k;

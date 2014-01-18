@@ -704,8 +704,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		printf ("%d. %s (%s)\n", i+1, wads[i].Name.GetChars(), filepart);
 	}
 	printf ("Which one? ");
-	scanf ("%d", &i);
-	if (i > numwads)
+	if (scanf ("%d", &i) != 1 || i > numwads)
 		return -1;
 	return i-1;
 }
@@ -719,7 +718,7 @@ bool I_WriteIniFailed ()
 
 static const char *pattern;
 
-#if defined(__APPLE__) && !defined(__llvm__)
+#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED < 1080
 static int matchfile (struct dirent *ent)
 #else
 static int matchfile (const struct dirent *ent)

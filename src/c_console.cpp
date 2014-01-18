@@ -610,8 +610,6 @@ static int FlushLines (const char *start, const char *stop)
 			break;
 		}
 	}
-	if (i != TopLine)
-		i = i;
 	return i;
 }
 

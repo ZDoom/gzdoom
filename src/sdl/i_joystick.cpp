@@ -1,7 +1,11 @@
 #include <SDL_joystick.h>
 
 #include "doomdef.h"
+#include "templates.h"
 #include "m_joy.h"
+
+// Very small deadzone so that floating point magic doesn't happen
+#define MIN_DEADZONE 0.000001f
 
 class SDLInputJoystick: public IJoystickConfig
 {
@@ -65,7 +69,7 @@ public:
 
 	void SetAxisDeadZone(int axis, float zone)
 	{
-		Axes[axis].DeadZone = zone;
+		Axes[axis].DeadZone = clamp(zone, MIN_DEADZONE, 1.f);
 	}
 	void SetAxisMap(int axis, EJoyAxis gameaxis)
 	{
@@ -83,7 +87,7 @@ public:
 	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{
-		return Axes[axis].DeadZone == 0.0f;
+		return Axes[axis].DeadZone <= MIN_DEADZONE;
 	}
 	bool IsAxisMapDefault(int axis)
 	{
@@ -105,7 +109,7 @@ public:
 				info.Name.Format("Axis %d", i+1);
 			else
 				info.Name.Format("Hat %d (%c)", (i-NumAxes)/2 + 1, (i-NumAxes)%2 == 0 ? 'x' : 'y');
-			info.DeadZone = 0.0f;
+			info.DeadZone = MIN_DEADZONE;
 			info.Multiplier = 1.0f;
 			info.Value = 0.0;
 			info.ButtonValue = 0;
@@ -141,7 +145,7 @@ public:
 		{
 			buttonstate = 0;
 
-			Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32768.0;
+			Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
 			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
 
 			// Map button to axis

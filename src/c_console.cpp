@@ -41,6 +41,7 @@
 
 #include "version.h"
 #include "g_game.h"
+#include "c_bind.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -1696,6 +1697,12 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 			break;
 		
 		case '`':
+			// Check to see if we have ` bound to the console before accepting
+			// it as a way to close the console.
+			if (Bindings.GetBinding(KEY_GRAVE).CompareNoCase("toggleconsole"))
+			{
+				break;
+			}
 		case GK_ESCAPE:
 			// Close console and clear command line. But if we're in the
 			// fullscreen console mode, there's nothing to fall back on

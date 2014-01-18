@@ -130,6 +130,7 @@ enum ESkillLevels
 #define KEY_F10 				0x44	// DIK_F10
 #define KEY_F11 				0x57	// DIK_F11
 #define KEY_F12 				0x58	// DIK_F12
+#define KEY_GRAVE				0x29	// DIK_GRAVE
 
 #define KEY_BACKSPACE			0x0e	// DIK_BACK
 

@@ -4639,6 +4639,12 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		if (defaults->SpawnState == NULL ||
 			sprites[defaults->SpawnState->sprite].numframes == 0)
 		{
+			// We don't load mods for shareware games so we'll just ignore
+			// missing actors. Heretic needs this since the shareware includes
+			// the retail weapons in Deathmatch.
+			if (gameinfo.flags & GI_SHAREWARE)
+				return NULL;
+
 			Printf ("%s at (%i, %i) has no frames\n",
 					i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
 			i = PClass::FindClass("Unknown");

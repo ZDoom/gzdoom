@@ -5169,7 +5169,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 			}
 		}
 		planez = rover->bottom.plane->ZatPoint(x, y);
-		if (planez < z) return false;
+		if (planez < z && !(planez < thing->floorz)) return false;
 	}
 #endif
 	hsec = sec->GetHeightSec();

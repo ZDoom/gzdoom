@@ -2205,7 +2205,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 	ACTION_PARAM_STRING(text, 0);
 
 	if (text[0] == '$') text = GStrings(text+1);
-	Printf("%s\n", text);
+	FString formatted = strbin1(text);
+	Printf("%s\n", formatted.GetChars());
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 

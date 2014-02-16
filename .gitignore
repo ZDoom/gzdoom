@@ -15,6 +15,7 @@
 /release_gcc
 /dumb/vc6/dumb_static/release
 /dumb/vc6/dumb_static/debug
+/dumb/vc6/dumb_static/x64
 /DOOMSTATS.TXT
 /src/gitinfo.h
 /src/sc_man_scanner.h
@@ -26,5 +27,14 @@
 /tools/*/*.exe
 /tools/lemon/build
 /tools/re2c/build
-/wadsrc*/*.pk3
+/tools/updaterevision/x64/
+/tools/zipdir/x64
+/wadsrc/*.pk3
 /build_vc2013
+/bzip2/x64/
+/disasm.txt
+/game-music-emu/x64/
+/gdtoa/x64/
+/jpeg-6b/x64/
+/lzma/x64/
+/zlib/x64/

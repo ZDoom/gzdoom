@@ -607,8 +607,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		// same visplane, then only the floor sky will be drawn.
 		plane.c = height.c;
 		plane.ic = height.ic;
-		isskybox = skybox != NULL && !skybox->bInSkybox &&
-			(skybox->bAlways || picnum == skyflatnum);
+		isskybox = skybox != NULL && !skybox->bInSkybox;
 	}
 	else if (skybox != NULL && skybox->bAlways && !skybox->bInSkybox)
 	{

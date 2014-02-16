@@ -655,7 +655,14 @@ static void TakeStrifeItem (player_t *player, const PClass *itemtype, int amount
 		item->Amount -= amount;
 		if (item->Amount <= 0)
 		{
-			item->Destroy ();
+			if (item->ItemFlags & IF_KEEPDEPLETED)
+			{
+				item->Amount = 0;
+			}
+			else
+			{
+				item->Destroy ();
+			}
 		}
 	}
 }

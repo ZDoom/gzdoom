@@ -91,7 +91,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 
 	fixed_t SpawnX = spot->x;
 	fixed_t SpawnY = spot->y;
-	fixed_t SpawnZ = spot->z + self->tracer? 70*FRACUNIT : 0;
+	fixed_t SpawnZ = spot->z + (self->tracer? 70*FRACUNIT : 0);
 	
 	an = self->angle >> ANGLETOFINESHIFT;
 	second = Spawn("EntitySecond", SpawnX + FixedMul (secondRadius, finecosine[an]),

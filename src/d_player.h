@@ -342,8 +342,8 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	int ColorSetChanged(int setnum);
 };
 
-FArchive &operator<< (FArchive &arc, userinfo_t &info);
-
+void ReadUserInfo(FArchive &arc, userinfo_t &info, FString &skin);
+void WriteUserInfo(FArchive &arc, userinfo_t &info);
 
 //
 // Extended player object info: player_t

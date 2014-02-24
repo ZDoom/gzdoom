@@ -2742,14 +2742,22 @@ void P_UnPredictPlayer ()
 void player_t::Serialize (FArchive &arc)
 {
 	int i;
+	FString skinname;
 
 	arc << cls
 		<< mo
 		<< camera
 		<< playerstate
-		<< cmd
-		<< userinfo
-		<< DesiredFOV << FOV
+		<< cmd;
+	if (arc.IsLoading())
+	{
+		ReadUserInfo(arc, userinfo, skinname);
+	}
+	else
+	{
+		WriteUserInfo(arc, userinfo);
+	}
+	arc << DesiredFOV << FOV
 		<< viewz
 		<< viewheight
 		<< deltaviewheight
@@ -2899,6 +2907,10 @@ void player_t::Serialize (FArchive &arc)
 		// don't want +use to still be down after the game is loaded.
 		oldbuttons = ~0;
 		original_oldbuttons = ~0;
+	}
+	if (skinname.IsNotEmpty())
+	{
+		userinfo.SkinChanged(skinname, CurrentPlayerClass);
 	}
 }
 

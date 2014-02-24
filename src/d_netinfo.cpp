@@ -941,14 +941,21 @@ void WriteUserInfo(FArchive &arc, userinfo_t &info)
 	arc << name;
 }
 
-void ReadUserInfo(FArchive &arc, userinfo_t &info)
+void ReadUserInfo(FArchive &arc, userinfo_t &info, FString &skin)
 {
 	FName name;
 	FBaseCVar **cvar;
 	char *str = NULL;
 	UCVarValue val;
 
+	if (SaveVersion < 4253)
+	{
+		ReadCompatibleUserInfo(arc, info);
+		return;
+	}
+
 	info.Reset();
+	skin = NULL;
 	for (arc << name; name != NAME_None; arc << name)
 	{
 		cvar = info.CheckKey(name);
@@ -958,7 +965,7 @@ void ReadUserInfo(FArchive &arc, userinfo_t &info)
 			switch (name)
 			{
 			case NAME_Team:			info.TeamChanged(atoi(str)); break;
-			case NAME_Skin:			info.SkinChanged(str, 0); break;
+			case NAME_Skin:			skin = str; break;	// Caller must call SkinChanged() once current calss is known
 			case NAME_PlayerClass:	info.PlayerClassChanged(str); break;
 			default:
 				val.String = str;
@@ -971,23 +978,6 @@ void ReadUserInfo(FArchive &arc, userinfo_t &info)
 	{
 		delete[] str;
 	}
-}
-
-FArchive &operator<< (FArchive &arc, userinfo_t &info)
-{
-	if (SaveVersion < 4253)
-	{
-		ReadCompatibleUserInfo(arc, info);
-	}
-	else if (arc.IsStoring())
-	{
-		WriteUserInfo(arc, info);
-	}
-	else
-	{
-		ReadUserInfo(arc, info);
-	}
-	return arc;
 }
 
 CCMD (playerinfo)

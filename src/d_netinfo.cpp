@@ -387,7 +387,7 @@ void D_SetupUserInfo ()
 			{
 			// Some cvars don't copy their original value directly.
 			case NAME_Team:			coninfo->TeamChanged(team); break;
-			case NAME_Skin:			coninfo->SkinChanged(skin); break;
+			case NAME_Skin:			coninfo->SkinChanged(skin, players[consoleplayer].CurrentPlayerClass); break;
 			case NAME_Gender:		coninfo->GenderChanged(gender); break;
 			case NAME_PlayerClass:	coninfo->PlayerClassChanged(playerclass); break;
 			// The rest do.
@@ -447,9 +447,9 @@ int userinfo_t::TeamChanged(int team)
 	return team;
 }
 
-int userinfo_t::SkinChanged(const char *skinname)
+int userinfo_t::SkinChanged(const char *skinname, int playerclass)
 {
-	int skinnum = R_FindSkin(skinname, 0);
+	int skinnum = R_FindSkin(skinname, playerclass);
 	*static_cast<FIntCVar *>((*this)[NAME_Skin]) = skinnum;
 	return skinnum;
 }
@@ -821,7 +821,7 @@ void D_ReadUserInfoStrings (int pnum, BYTE **stream, bool update)
 				break;
 
 			case NAME_Skin:
-				info->SkinChanged(value);
+				info->SkinChanged(value, players[pnum].CurrentPlayerClass);
 				if (players[pnum].mo != NULL)
 				{
 					if (players[pnum].cls != NULL &&
@@ -958,7 +958,7 @@ void ReadUserInfo(FArchive &arc, userinfo_t &info)
 			switch (name)
 			{
 			case NAME_Team:			info.TeamChanged(atoi(str)); break;
-			case NAME_Skin:			info.SkinChanged(str); break;
+			case NAME_Skin:			info.SkinChanged(str, 0); break;
 			case NAME_PlayerClass:	info.PlayerClassChanged(str); break;
 			default:
 				val.String = str;

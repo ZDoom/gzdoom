@@ -332,7 +332,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 
 	void Reset();
 	int TeamChanged(int team);
-	int SkinChanged(const char *skinname);
+	int SkinChanged(const char *skinname, int playerclass);
 	int SkinNumChanged(int skinnum);
 	int GenderChanged(const char *gendername);
 	int PlayerClassChanged(const char *classname);

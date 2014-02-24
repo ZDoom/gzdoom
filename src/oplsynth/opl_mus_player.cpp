@@ -267,7 +267,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 					{
 						for (i = 0; i < io->NumChips; ++i)
 						{
-							io->chips[i]->Update(samples1, samplesleft);
+							io->chips[i]->Update(samples1, numsamples);
 						}
 						OffsetSamples(samples1, numsamples << stereoshift);
 					}

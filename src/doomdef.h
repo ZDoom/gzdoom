@@ -351,6 +351,7 @@ enum
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
 	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
+	BCOMPATF_NOWINDOWCHECK		= 1 << 7,	// Disable the window check in CheckForPushSpecial()
 };
 
 // phares 3/20/98:

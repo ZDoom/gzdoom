@@ -1640,7 +1640,7 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj, bool wind
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
-		if (windowcheck && line->backsector != NULL)
+		if (windowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 		  // or similar construct we are standing inside of.
 			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(mobj->x, mobj->y);

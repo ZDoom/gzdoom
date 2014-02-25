@@ -376,3 +376,8 @@ D62DCA9EC226DE49108D5DD9271F7631 // Cheogsh 2 map04
 	setthingz 1648 528
 	setthingz 1649 528
 }
+
+B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
+{
+	DisablePushWindowCheck
+}

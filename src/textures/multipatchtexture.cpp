@@ -244,7 +244,6 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	Height = SAFESHORT(mtexture.d->height);
 	strncpy (Name, (const char *)mtexture.d->name, 8);
 	Name[8] = 0;
-
 	CalcBitSize ();
 
 	xScale = mtexture.d->ScaleX ? mtexture.d->ScaleX*(FRACUNIT/8) : FRACUNIT;
@@ -279,6 +278,10 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 			Printf ("Unknown patch %s in texture %s\n", patchlookup[LittleShort(mpatch.d->patch)].Name, Name);
 			NumParts--;
 			i--;
+		}
+		else
+		{
+			Parts[i].Texture->bKeepAround = true;
 		}
 		if (strife)
 			mpatch.s++;
@@ -859,7 +862,6 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		{
 			pnames.Read (patchlookup[i].Name, 8);
 			patchlookup[i].Name[8] = 0;
-
 			FTextureID j = CheckForTexture (patchlookup[i].Name, FTexture::TEX_WallPatch);
 			if (j.isValid())
 			{

@@ -428,7 +428,7 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 	Textures[index].Texture = newtexture;
 
 	newtexture->id = oldtexture->id;
-	if (free)
+	if (free && !oldtexture->bKeepAround)
 	{
 		delete oldtexture;
 	}

@@ -2009,26 +2009,20 @@ void FSpecialFont::LoadTranslations()
 	}
 
 	// exclude the non-translated colors from the translation calculation
-	if (notranslate != NULL)
-	{
-		for (i = 0; i < 256; i++)
-			if (notranslate[i])
-				usedcolors[i] = false;
-	}
+	for (i = 0; i < 256; i++)
+		if (notranslate[i])
+			usedcolors[i] = false;
 
 	TotalColors = ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, &luminosity);
 
 	// Map all untranslated colors into the table of used colors
-	if (notranslate != NULL)
+	for (i = 0; i < 256; i++) 
 	{
-		for (i = 0; i < 256; i++) 
+		if (notranslate[i])
 		{
-			if (notranslate[i]) 
-			{
-				PatchRemap[i] = TotalColors;
-				identity[TotalColors] = i;
-				TotalColors++;
-			}
+			PatchRemap[i] = TotalColors;
+			identity[TotalColors] = i;
+			TotalColors++;
 		}
 	}
 

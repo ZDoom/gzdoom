@@ -96,7 +96,7 @@ fail:		delete[] scoredata;
 	else if (((DWORD *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
 		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L'))
 	{
-		if (((DWORD *)scoredata)[2] == MAKE_ID(0,0,1,0))
+		if (LittleShort(((WORD *)scoredata)[5]) == 1)
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;

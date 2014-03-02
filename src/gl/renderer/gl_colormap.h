@@ -55,7 +55,7 @@ struct FColormap
 	void GetFixedColormap()
 	{
 		Clear();
-		colormap = gl_fixedcolormap >= CM_LITE? CM_DEFAULT : gl_fixedcolormap;
+		colormap = gl_fixedcolormap >= (int)CM_LITE? (int)CM_DEFAULT : gl_fixedcolormap;
 	}
 
 	FColormap & operator=(FDynamicColormap * from)

@@ -1084,6 +1084,7 @@ void G_StartTravel ()
 		{
 			AActor *pawn = players[i].mo;
 			AInventory *inv;
+			players[i].camera = NULL;
 
 			// Only living players travel. Dead ones get a new body on the new level.
 			if (players[i].health > 0)

@@ -914,34 +914,34 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 	}
 
-	// touchy object is alive, toucher is solid
-	if (thing->flags6 & MF6_TOUCHY && tm.thing->flags & MF_SOLID && thing->health > 0 &&
-	// Thing is an armed mine or a sentient thing
-	(thing->flags6 & MF6_ARMED || thing->IsSentient()) &&
-	// either different classes or players
-		(thing->player || thing->GetClass() != tm.thing->GetClass()) &&
-	// or different species if DONTHARMSPECIES
-		(!(thing->flags6 & MF6_DONTHARMSPECIES) || thing->GetSpecies() != tm.thing->GetSpecies()) &&
-	// touches vertically
-		thing->z + thing->height >= tm.thing->z && tm.thing->z + tm.thing->height >= thing->z &&
-	// prevents lost souls from exploding when fired by pain elementals
-		(thing->master != tm.thing && tm.thing->master != thing))
-	// Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
-	// but different classes trigger the touchiness, but that seems less straightforwards.
+	if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
 	{
-		thing->flags6 &= ~MF6_ARMED; // Disarm
-		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_None, DMG_FORCED);  // kill object
-		return true;
-	}
+		// touchy object is alive, toucher is solid
+		if (thing->flags6 & MF6_TOUCHY && tm.thing->flags & MF_SOLID && thing->health > 0 &&
+			// Thing is an armed mine or a sentient thing
+			(thing->flags6 & MF6_ARMED || thing->IsSentient()) &&
+			// either different classes or players
+			(thing->player || thing->GetClass() != tm.thing->GetClass()) &&
+			// or different species if DONTHARMSPECIES
+			(!(thing->flags6 & MF6_DONTHARMSPECIES) || thing->GetSpecies() != tm.thing->GetSpecies()) &&
+			// touches vertically
+			thing->z + thing->height >= tm.thing->z && tm.thing->z + tm.thing->height >= thing->z &&
+			// prevents lost souls from exploding when fired by pain elementals
+			(thing->master != tm.thing && tm.thing->master != thing))
+			// Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
+			// but different classes trigger the touchiness, but that seems less straightforwards.
+		{
+			thing->flags6 &= ~MF6_ARMED; // Disarm
+			P_DamageMobj(thing, NULL, NULL, thing->health, NAME_None, DMG_FORCED);  // kill object
+			return true;
+		}
 
-	// Check for MF6_BUMPSPECIAL
-	// By default, only players can activate things by bumping into them
-	if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
-		|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
-		|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
-		) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
-	{
-		if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
+		// Check for MF6_BUMPSPECIAL
+		// By default, only players can activate things by bumping into them
+		if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
+			|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
+			|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
+			) && (level.maptime > thing->lastbump)) // Leave the bumper enough time to go away
 		{
 			if (P_ActivateThingSpecial(thing, tm.thing))
 				thing->lastbump = level.maptime + TICRATE;
@@ -955,6 +955,17 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		tm.thing->BlockingMobj = NULL;
 		return res;
 	}
+
+	// [ED850] Player Prediction ends here. There is nothing else they could/should do.
+	if (tm.thing->player != NULL && (tm.thing->player->cheats & CF_PREDICTING))
+	{
+		solid = (thing->flags & MF_SOLID) &&
+			!(thing->flags & MF_NOCLIP) &&
+			((tm.thing->flags & MF_SOLID) || (tm.thing->flags6 & MF6_BLOCKEDBYSOLIDACTORS));
+
+		return !solid || unblocking;
+	}
+
 	// Check for blasted thing running into another
 	if ((tm.thing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
 	{
@@ -1203,8 +1214,7 @@ bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 		}
 		return false;		// don't traverse any more
 	}
-	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH) &&
-		(tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING)))
+	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
 	{ // Push thing
 		if (thing->lastpush != tm.PushTime)
 		{

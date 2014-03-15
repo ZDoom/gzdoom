@@ -2726,16 +2726,15 @@ int P_FindUniqueTID(int start_tid, int limit)
 
 	if (start_tid != 0)
 	{ // Do a linear search.
-		int end_tid = start_tid;
-		if (start_tid > 0 && limit > INT_MAX - start_tid + 1)
-		{ // If 'limit+start_tid-1' overflows, clamp 'end_tid' to INT_MAX
-			end_tid = INT_MAX;
+		if (start_tid > INT_MAX-limit+1)
+		{ // If 'limit+start_tid-1' overflows, clamp 'limit' to INT_MAX
+			limit = INT_MAX;
 		}
 		else
 		{
-			end_tid += limit-1;
+			limit += start_tid-1;
 		}
-		for (tid = start_tid; tid <= end_tid; ++tid)
+		for (tid = start_tid; tid <= limit; ++tid)
 		{
 			if (tid != 0 && !P_IsTIDUsed(tid))
 			{

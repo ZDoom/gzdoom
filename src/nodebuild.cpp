@@ -90,7 +90,7 @@ FNodeBuilder::~FNodeBuilder()
 	}
 	if (OldVertexTable != NULL)
 	{
-		delete OldVertexTable;
+		delete[] OldVertexTable;
 	}
 }
 

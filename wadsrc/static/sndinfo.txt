@@ -634,7 +634,7 @@ $limit misc/spawn		1
 //
 
 minotaur/sight			minsit
-minotaur/melee			stfhit
+minotaur/melee			stfpow
 minotaur/attack1		minat1
 minotaur/attack2		minat2
 minotaur/attack3		minat3

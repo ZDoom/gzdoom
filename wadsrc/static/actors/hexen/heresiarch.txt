@@ -18,6 +18,7 @@ ACTOR Heresiarch 10080 native
 	+NOTARGET
 	+NOICEDEATH
 	+DEFLECT
+	+NOBLOOD
 	SeeSound "SorcererSight"
 	PainSound "SorcererPain"
 	DeathSound "SorcererDeathScream"

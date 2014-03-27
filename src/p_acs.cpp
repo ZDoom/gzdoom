@@ -3529,7 +3529,8 @@ enum
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
 	APROP_ViewHeight	= 39,
-	APROP_AttackZOffset	= 40
+	APROP_AttackZOffset	= 40,
+	APROP_StencilColor	= 41
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3755,6 +3756,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
 		break;
 
+	case APROP_StencilColor:
+		actor->SetShade(value);
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3852,6 +3857,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_ActiveSound:	return GlobalACSStrings.AddString(actor->ActiveSound, stack, stackdepth);
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies(), stack, stackdepth);
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag(), stack, stackdepth);
+	case APROP_StencilColor:return actor->fillcolor;
 
 	default:				return 0;
 	}

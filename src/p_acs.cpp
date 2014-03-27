@@ -7874,14 +7874,22 @@ scriptwait:
 		case PCD_GETSECTORCEILINGZ:
 			// Arguments are (tag, x, y). If you don't use slopes, then (x, y) don't
 			// really matter and can be left as (0, 0) if you like.
+			// [Dusk] If tag = 0, then this returns the z height at whatever sector
+			// is in x, y.
 			{
-				int secnum = P_FindSectorFromTag (STACK(3), -1);
+				int tag = STACK(3);
+				int secnum;
+				fixed_t x = STACK(2) << FRACBITS;
+				fixed_t y = STACK(1) << FRACBITS;
 				fixed_t z = 0;
+
+				if (tag != 0)
+					secnum = P_FindSectorFromTag (tag, -1);
+				else
+					secnum = P_PointInSector (x, y) - sectors;
 
 				if (secnum >= 0)
 				{
-					fixed_t x = STACK(2) << FRACBITS;
-					fixed_t y = STACK(1) << FRACBITS;
 					if (pcd == PCD_GETSECTORFLOORZ)
 					{
 						z = sectors[secnum].floorplane.ZatPoint (x, y);

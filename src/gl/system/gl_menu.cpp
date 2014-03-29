@@ -59,21 +59,6 @@ CUSTOM_CVAR (Float, vid_contrast, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 // when they are actually valid.
 void gl_SetupMenu()
 {
-#ifndef _MSC_VER
-	FOptionValues **opt = OptionValues.CheckKey("HqResizeModes");
-	if (opt != NULL) 
-	{
-		for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
-		{
-			// Delete HQnX resize modes for non MSVC targets
-			if ((*opt)->mValues[i].Value >= 4.0)
-			{
-				(*opt)->mValues.Delete(i);
-			}
-		}
-	}
-#endif
-
 	if (gl.shadermodel < 4)
 	{
 		// Radial fog and Doom lighting are not available in SM < 4 cards

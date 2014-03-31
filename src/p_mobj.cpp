@@ -2936,7 +2936,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 	if (P_CheckSight (this, link))
 	{
 		// AMageStaffFX2::IsOkayToAttack had an extra check here, generalized with a flag,
-		// to only allow the check to succeed if the enemy was in a ~84° FOV of the player
+		// to only allow the check to succeed if the enemy was in a ~84ï¿½ FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
 			angle_t angle = R_PointToAngle2(Friend->x, 
@@ -6167,25 +6167,25 @@ void PrintMiscActorInfo(AActor *query)
 		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
 
-		Printf("%s @ %p has the following flags:\n\tflags: %x", query->GetTag(), query, query->flags);
+		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
-		Printf("\n\tflags2: %x", query->flags2);
+		Printf("\n   flags2: %x", query->flags2);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
-		Printf("\n\tflags3: %x", query->flags3);
+		Printf("\n   flags3: %x", query->flags3);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
-		Printf("\n\tflags4: %x", query->flags4);
+		Printf("\n   flags4: %x", query->flags4);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
-		Printf("\n\tflags5: %x", query->flags5);
+		Printf("\n   flags5: %x", query->flags5);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
-		Printf("\n\tflags6: %x", query->flags6);
+		Printf("\n   flags6: %x", query->flags6);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-		Printf("\n\tflags7: %x", query->flags7);
+		Printf("\n   flags7: %x", query->flags7);
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags7 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 

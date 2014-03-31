@@ -55,6 +55,7 @@ ACTOR MummyLeader : Mummy 45
 {
 	Game Heretic
 	SpawnID 2
+	Species "MummyLeader"
 	Health 100
 	Painchance 64
 	Obituary "$OB_MUMMYLEADER"
@@ -89,6 +90,7 @@ ACTOR MummyLeaderGhost : MummyLeader 46
 {
 	Game Heretic
 	SpawnID 9
+	Species "MummyLeaderGhost"
 	+SHADOW
 	+GHOST
 	RenderStyle Translucent

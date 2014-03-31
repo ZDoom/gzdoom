@@ -82,6 +82,7 @@ ACTOR HereticImpLeader : HereticImp 5
 {
 	Game Heretic
 	SpawnID 7
+	Species "HereticImpLeader"
 	Health 80
 	-MISSILEMORE
 	AttackSound "himp/leaderattack"

@@ -39,18 +39,11 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_texture.h"
 #include "c_cvars.h"
-// [BB] hqnx scaling is only supported with the MS compiler.
-#if (defined _MSC_VER) && (!defined _WIN64)
-#include "gl/hqnx/hqnx.h"
-#endif
+#include "gl/hqnx/hqx.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-#ifdef _MSC_VER
 	if (self < 0 || self > 6)
-#else
-	if (self < 0 || self > 3)
-#endif
 		self = 0;
 	GLRenderer->FlushTextures();
 }
@@ -186,9 +179,7 @@ static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32* , uint32*
 	return newBuffer;
 }
 
-// [BB] hqnx scaling is only supported with the MS compiler.
-#if (defined _MSC_VER) && (!defined _WIN64)
-static unsigned char *hqNxHelper( void (*hqNxFunction) ( int*, unsigned char*, int, int, int ),
+static unsigned char *hqNxHelper( void (*hqNxFunction) ( unsigned*, unsigned*, int, int ),
 							  const int N,
 							  unsigned char *inputBuffer,
 							  const int inWidth,
@@ -200,22 +191,17 @@ static unsigned char *hqNxHelper( void (*hqNxFunction) ( int*, unsigned char*, i
 
 	if (!initdone)
 	{
-		InitLUTs();
+		hqxInit();
 		initdone = true;
 	}
 	outWidth = N * inWidth;
 	outHeight = N *inHeight;
 
-	CImage cImageIn;
-	cImageIn.SetImage(inputBuffer, inWidth, inHeight, 32);
-	cImageIn.Convert32To17();
-
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
-	hqNxFunction( reinterpret_cast<int*>(cImageIn.m_pBitmap), newBuffer, cImageIn.m_Xres, cImageIn.m_Yres, outWidth*4 );
+	hqNxFunction( reinterpret_cast<unsigned*>(inputBuffer), reinterpret_cast<unsigned*>(newBuffer), inWidth, inHeight );
 	delete[] inputBuffer;
 	return newBuffer;
 }
-#endif
 
 //===========================================================================
 // 
@@ -263,11 +249,13 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		outWidth = inWidth;
 		outHeight = inHeight;
 		int type = gl_texture_hqresize;
+#if 0
 		// hqNx does not preserve the alpha channel so fall back to ScaleNx for such textures
 		if (hasAlpha && type > 3)
 		{
 			type -= 3;
 		}
+#endif
 
 		switch (type)
 		{
@@ -277,15 +265,12 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 			return scaleNxHelper( &scale3x, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 3:
 			return scaleNxHelper( &scale4x, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-// [BB] hqnx scaling is only supported with the MS compiler.
-#if (defined _MSC_VER) && (!defined _WIN64)
 		case 4:
 			return hqNxHelper( &hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 5:
 			return hqNxHelper( &hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 6:
 			return hqNxHelper( &hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-#endif
 		}
 	}
 	return inputBuffer;

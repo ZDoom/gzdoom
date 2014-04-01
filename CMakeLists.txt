@@ -88,7 +88,7 @@ find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
 # GME
-find_path( GME_INCLUDE_DIR gme.h )
+find_path( GME_INCLUDE_DIR gme/gme.h )
 find_library( GME_LIBRARIES gme )
 mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME

@@ -65,6 +65,8 @@ CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(AActor)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
+static TArray<AActor *> PredictionSectorListBackup;
+static TArray<msecnode_t *> PredictionSector_sprev_Backup;
 
 // [GRB] Custom player classes
 TArray<FPlayerClass> PlayerClasses;
@@ -2661,13 +2663,39 @@ void P_PredictPlayer (player_t *player)
 	player->cheats |= CF_PREDICTING;
 
 	// The ordering of the touching_sectorlist needs to remain unchanged
+	// Also store a copy of all previous sector_thinglist nodes
 	msecnode_t *mnode = act->touching_sectorlist;
+	msecnode_t *snode;
+	PredictionSector_sprev_Backup.Clear();
 	PredictionTouchingSectorsBackup.Clear ();
 
 	while (mnode != NULL)
 	{
 		PredictionTouchingSectorsBackup.Push (mnode->m_sector);
+
+		for (snode = mnode->m_sector->touching_thinglist; snode; snode = snode->m_snext)
+		{
+			if (snode->m_thing == act)
+			{
+				PredictionSector_sprev_Backup.Push(snode->m_sprev);
+				break;
+			}
+		}
+
 		mnode = mnode->m_tnext;
+	}
+
+	// Keep an ordered list off all actors in the linked sector.
+	PredictionSectorListBackup.Clear();
+	if (!(act->flags & MF_NOSECTOR))
+	{
+		AActor *link = act->Sector->thinglist;
+		
+		while (link != NULL)
+		{
+			PredictionSectorListBackup.Push(link);
+			link = link->snext;
+		}
 	}
 
 	// Blockmap ordering also needs to stay the same, so unlink the block nodes
@@ -2701,6 +2729,7 @@ void P_UnPredictPlayer ()
 
 	if (player->cheats & CF_PREDICTING)
 	{
+		unsigned int i;
 		AActor *act = player->mo;
 		AActor *savedcamera = player->camera;
 
@@ -2710,23 +2739,93 @@ void P_UnPredictPlayer ()
 		// could cause it to change during prediction.
 		player->camera = savedcamera;
 
-		act->UnlinkFromWorld ();
-		memcpy (&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
+		act->UnlinkFromWorld();
+		memcpy(&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x - (BYTE *)act));
 
 		// Make the sector_list match the player's touching_sectorlist before it got predicted.
-		P_DelSeclist (sector_list);
+		P_DelSeclist(sector_list);
 		sector_list = NULL;
-		for (unsigned int i = PredictionTouchingSectorsBackup.Size (); i-- > 0; )
+		for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
 		{
-			sector_list = P_AddSecnode (PredictionTouchingSectorsBackup[i], act, sector_list);
+			sector_list = P_AddSecnode(PredictionTouchingSectorsBackup[i], act, sector_list);
 		}
 
 		// The blockmap ordering needs to remain unchanged, too. Right now, act has the right
 		// pointers, so temporarily set its MF_NOBLOCKMAP flag so that LinkToWorld() does not
 		// mess with them.
-		act->flags |= MF_NOBLOCKMAP;
-		act->LinkToWorld ();
-		act->flags &= ~MF_NOBLOCKMAP;
+		{
+			DWORD keepflags = act->flags;
+			act->flags |= MF_NOBLOCKMAP;
+			act->LinkToWorld();
+			act->flags = keepflags;
+		}
+
+		// Restore sector links.
+		if (!(act->flags & MF_NOSECTOR))
+		{
+			sector_t *sec = act->Sector;
+			AActor *me, *next;
+			AActor **link;// , **prev;
+
+			// The thinglist is just a pointer chain. We are restoring the exact same things, so we can NULL the head safely
+			sec->thinglist = NULL;
+
+			// [ED850] It doesn't look like I need this method. I'll keep it just incase something crops up, however.
+			/*for (i = PredictionSectorListBackup.Size(); i-- > 0;)
+			{
+				me = PredictionSectorListBackup[i];
+				prev = me->sprev;
+				next = me->snext;
+
+				if (prev != NULL)	// prev will be NULL if this actor gets deleted due to cleaning up from a broken savegame
+				{
+					if ((*prev = next))  // unlink from sector list
+						next->sprev = prev;
+					me->snext = NULL;
+					me->sprev = (AActor **)(size_t)0xBeefCafe;	// Woo! Bug-catching value!
+				}
+			}*/
+
+			for (i = PredictionSectorListBackup.Size(); i-- > 0;)
+			{
+				me = PredictionSectorListBackup[i];
+				link = &sec->thinglist;
+				next = *link;
+				if ((me->snext = next))
+					next->sprev = &me->snext;
+				me->sprev = link;
+				*link = me;
+			}
+
+			// Restore sector thinglist order
+			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
+			{
+				msecnode_t *snode;
+
+				for (snode = PredictionTouchingSectorsBackup[i]->touching_thinglist; snode; snode = snode->m_snext)
+				{
+					// If we were already the head, none of this is needed
+					if (snode->m_thing == act && PredictionSector_sprev_Backup[i])
+					{
+						if (snode->m_sprev)
+							snode->m_sprev->m_snext = snode->m_snext;
+						else
+							snode->m_sector->touching_thinglist = snode->m_snext;
+						if (snode->m_snext)
+							snode->m_snext->m_sprev = snode->m_sprev;
+
+						snode->m_sprev = PredictionSector_sprev_Backup[i];
+
+						// At the moment, we don't exist in the list anymore, but we do know what our previous node is, so we set its current m_snext->m_sprev to us.
+						if (snode->m_sprev->m_snext)
+							snode->m_sprev->m_snext->m_sprev = snode;
+						snode->m_snext = snode->m_sprev->m_snext;
+						snode->m_sprev->m_snext = snode;
+						break;
+					}
+				}
+			}
+		}
 
 		// Now fix the pointers in the blocknode chain
 		FBlockNode *block = act->BlockNode;

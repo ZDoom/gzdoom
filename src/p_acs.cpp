@@ -3529,7 +3529,8 @@ enum
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
 	APROP_ViewHeight	= 39,
-	APROP_AttackZOffset	= 40
+	APROP_AttackZOffset	= 40,
+	APROP_StencilColor	= 41
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3755,6 +3756,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
 		break;
 
+	case APROP_StencilColor:
+		actor->SetShade(value);
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3852,6 +3857,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_ActiveSound:	return GlobalACSStrings.AddString(actor->ActiveSound, stack, stackdepth);
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies(), stack, stackdepth);
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag(), stack, stackdepth);
+	case APROP_StencilColor:return actor->fillcolor;
 
 	default:				return 0;
 	}
@@ -3898,6 +3904,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MeleeRange:
 		case APROP_ViewHeight:
 		case APROP_AttackZOffset:
+		case APROP_StencilColor:
 			return (GetActorProperty(tid, property, NULL, 0) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -7874,14 +7881,22 @@ scriptwait:
 		case PCD_GETSECTORCEILINGZ:
 			// Arguments are (tag, x, y). If you don't use slopes, then (x, y) don't
 			// really matter and can be left as (0, 0) if you like.
+			// [Dusk] If tag = 0, then this returns the z height at whatever sector
+			// is in x, y.
 			{
-				int secnum = P_FindSectorFromTag (STACK(3), -1);
+				int tag = STACK(3);
+				int secnum;
+				fixed_t x = STACK(2) << FRACBITS;
+				fixed_t y = STACK(1) << FRACBITS;
 				fixed_t z = 0;
+
+				if (tag != 0)
+					secnum = P_FindSectorFromTag (tag, -1);
+				else
+					secnum = P_PointInSector (x, y) - sectors;
 
 				if (secnum >= 0)
 				{
-					fixed_t x = STACK(2) << FRACBITS;
-					fixed_t y = STACK(1) << FRACBITS;
 					if (pcd == PCD_GETSECTORFLOORZ)
 					{
 						z = sectors[secnum].floorplane.ZatPoint (x, y);

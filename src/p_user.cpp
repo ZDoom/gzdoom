@@ -2770,22 +2770,6 @@ void P_UnPredictPlayer ()
 			// The thinglist is just a pointer chain. We are restoring the exact same things, so we can NULL the head safely
 			sec->thinglist = NULL;
 
-			// [ED850] It doesn't look like I need this method. I'll keep it just incase something crops up, however.
-			/*for (i = PredictionSectorListBackup.Size(); i-- > 0;)
-			{
-				me = PredictionSectorListBackup[i];
-				prev = me->sprev;
-				next = me->snext;
-
-				if (prev != NULL)	// prev will be NULL if this actor gets deleted due to cleaning up from a broken savegame
-				{
-					if ((*prev = next))  // unlink from sector list
-						next->sprev = prev;
-					me->snext = NULL;
-					me->sprev = (AActor **)(size_t)0xBeefCafe;	// Woo! Bug-catching value!
-				}
-			}*/
-
 			for (i = PredictionSectorListBackup.Size(); i-- > 0;)
 			{
 				me = PredictionSectorListBackup[i];
@@ -2797,15 +2781,18 @@ void P_UnPredictPlayer ()
 				*link = me;
 			}
 
+			msecnode_t *snode;
+
 			// Restore sector thinglist order
 			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
 			{
-				msecnode_t *snode;
+				// If we were already the head node, then nothing needs to change
+				if (PredictionSector_sprev_Backup[i] == NULL)
+					continue;
 
 				for (snode = PredictionTouchingSectorsBackup[i]->touching_thinglist; snode; snode = snode->m_snext)
 				{
-					// If we were already the head, none of this is needed
-					if (snode->m_thing == act && PredictionSector_sprev_Backup[i])
+					if (snode->m_thing == act)
 					{
 						if (snode->m_sprev)
 							snode->m_sprev->m_snext = snode->m_snext;

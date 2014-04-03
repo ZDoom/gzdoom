@@ -63,7 +63,7 @@ struct visplane_s
 
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
 	unsigned short pad;				//		allocated immediately after the
-	unsigned short top[3];			//		visplane.
+	unsigned short top[];			//		visplane.
 };
 typedef struct visplane_s visplane_t;
 

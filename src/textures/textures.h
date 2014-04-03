@@ -119,7 +119,7 @@ struct patch_t
 	SWORD			height; 
 	SWORD			leftoffset; 	// pixels to the left of origin 
 	SWORD			topoffset;		// pixels below the origin 
-	DWORD 			columnofs[8];	// only [width] used
+	DWORD 			columnofs[];	// only [width] used
 	// the [0] is &columnofs[width] 
 };
 

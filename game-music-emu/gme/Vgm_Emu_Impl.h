@@ -1,6 +1,6 @@
 // Low-level parts of Vgm_Emu
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef VGM_EMU_IMPL_H
 #define VGM_EMU_IMPL_H
 

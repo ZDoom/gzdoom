@@ -1,4 +1,4 @@
-Game_Music_Emu 0.5.2 Design
+Game_Music_Emu 0.6.0 Design
 ---------------------------
 This might be slightly out-of-date at times, but will be a big help in
 understanding the library implementation.

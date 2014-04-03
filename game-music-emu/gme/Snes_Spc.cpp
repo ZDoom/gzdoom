@@ -1,6 +1,6 @@
 // SPC emulation support: init, sample buffering, reset, SPC loading
 
-// snes_spc 0.9.0. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Snes_Spc.h"
 
@@ -303,7 +303,7 @@ void Snes_Spc::set_output( sample_t* out, int size )
 			assert( out <= out_end );
 		}
 		
-		dsp.set_output( out, int(out_end - out) );
+		dsp.set_output( out, out_end - out );
 	}
 	else
 	{

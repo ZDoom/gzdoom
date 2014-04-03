@@ -1,6 +1,6 @@
 // Nintendo NES/Famicom NSFE music file emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef NSFE_EMU_H
 #define NSFE_EMU_H
 

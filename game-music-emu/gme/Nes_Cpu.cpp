@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Nes_Cpu.h"
 
@@ -921,7 +921,7 @@ imm##op:
 			goto loop;
 		status &= ~st_i;
 	handle_cli: {
-		//dprintf( "CLI at %d\n", TIME );
+		//debug_printf( "CLI at %d\n", TIME );
 		this->r.status = status; // update externally-visible I flag
 		blargg_long delta = s.base - irq_time_;
 		if ( delta <= 0 )
@@ -944,7 +944,7 @@ imm##op:
 		
 		// TODO: implement
 	delayed_cli:
-		dprintf( "Delayed CLI not emulated\n" );
+		debug_printf( "Delayed CLI not emulated\n" );
 		goto loop;
 	}
 	
@@ -960,7 +960,7 @@ imm##op:
 		if ( s_time < 0 )
 			goto loop;
 		
-		dprintf( "Delayed SEI not emulated\n" );
+		debug_printf( "Delayed SEI not emulated\n" );
 		goto loop;
 	}
 	

@@ -10,9 +10,9 @@ int Gbs_Emu::cpu_read( gb_addr_t addr )
 		result = apu.read_register( clock(), addr );
 #ifndef NDEBUG
 	else if ( unsigned (addr - 0x8000) < 0x2000 || unsigned (addr - 0xE000) < 0x1F00 )
-		dprintf( "Read from unmapped memory $%.4x\n", (unsigned) addr );
+		debug_printf( "Read from unmapped memory $%.4x\n", (unsigned) addr );
 	else if ( unsigned (addr - 0xFF01) < 0xFF80 - 0xFF01 )
-		dprintf( "Unhandled I/O read 0x%4X\n", (unsigned) addr );
+		debug_printf( "Unhandled I/O read 0x%4X\n", (unsigned) addr );
 #endif
 	return result;
 }
@@ -38,7 +38,7 @@ void Gbs_Emu::cpu_write( gb_addr_t addr, int data )
 				ram [offset] = 0xFF;
 
 			//if ( addr == 0xFFFF )
-			//  dprintf( "Wrote interrupt mask\n" );
+			//  debug_printf( "Wrote interrupt mask\n" );
 		}
 	}
 	else if ( (addr ^ 0x2000) <= 0x2000 - 1 )
@@ -48,7 +48,7 @@ void Gbs_Emu::cpu_write( gb_addr_t addr, int data )
 #ifndef NDEBUG
 	else if ( unsigned (addr - 0x8000) < 0x2000 || unsigned (addr - 0xE000) < 0x1F00 )
 	{
-		dprintf( "Wrote to unmapped memory $%.4x\n", (unsigned) addr );
+		debug_printf( "Wrote to unmapped memory $%.4x\n", (unsigned) addr );
 	}
 #endif
 }
@@ -59,7 +59,7 @@ void Gbs_Emu::cpu_write( gb_addr_t addr, int data )
 #define CPU_READ_FAST_( emu, addr, time, out ) \
 {\
 	out = READ_PROG( addr );\
-	if ( unsigned (addr - Gb_Apu::start_addr) <= Gb_Apu::register_count )\
+	if ( unsigned (addr - Gb_Apu::start_addr) < Gb_Apu::register_count )\
 		out = emu->apu.read_register( emu->cpu_time - time * clocks_per_instr, addr );\
 	else\
 		check( out == emu->cpu_read( addr ) );\

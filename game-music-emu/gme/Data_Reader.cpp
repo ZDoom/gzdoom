@@ -1,15 +1,12 @@
 // File_Extractor 0.4.0. http://www.slack.net/~ant/
 
-#define _CRT_SECURE_NO_WARNINGS
-#define IN_GME 1
+#include "Data_Reader.h"
 
+#include "blargg_endian.h"
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "Data_Reader.h"
-
-#include "blargg_endian.h"
 /* Copyright (C) 2005-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
 General Public License as published by the Free Software Foundation; either
@@ -92,11 +89,11 @@ Remaining_Reader::Remaining_Reader( void const* h, long size, Data_Reader* r )
 	in = r;
 }
 
-long Remaining_Reader::remain() const { return long(header_end - header + in->remain()); }
+long Remaining_Reader::remain() const { return header_end - header + in->remain(); }
 
 long Remaining_Reader::read_first( void* out, long count )
 {
-	long first = long(header_end - header);
+	long first = header_end - header;
 	if ( first )
 	{
 		if ( first > count )
@@ -213,7 +210,7 @@ long Std_File_Reader::size() const
 
 long Std_File_Reader::read_avail( void* p, long s )
 {
-	return (long)fread( p, 1, s, (FILE*) file_ );
+	return fread( p, 1, s, (FILE*) file_ );
 }
 
 blargg_err_t Std_File_Reader::read( void* p, long s )

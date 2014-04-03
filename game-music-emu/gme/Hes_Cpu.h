@@ -1,6 +1,6 @@
 // PC Engine CPU emulator for use with HES music files
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef HES_CPU_H
 #define HES_CPU_H
 

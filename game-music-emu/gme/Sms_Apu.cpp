@@ -141,7 +141,7 @@ void Sms_Noise::run( blip_time_t time, blip_time_t end_time )
 		do
 		{
 			int changed = shifter + 1;
-			shifter = (feedback & (unsigned)-(signed)(shifter & 1)) ^ (shifter >> 1);
+			shifter = (feedback & -(shifter & 1)) ^ (shifter >> 1);
 			if ( changed & 2 ) // true if bits 0 and 1 differ
 			{
 				delta = -delta;

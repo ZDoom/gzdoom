@@ -5,7 +5,6 @@
 #define DATA_READER_H
 
 #include "blargg_common.h"
-#include "gme.h"
 
 // Supports reading and finding out how many bytes are remaining
 class Data_Reader {
@@ -117,7 +116,7 @@ private:
 // Invokes callback function to read data. Size of data must be specified in advance.
 class Callback_Reader : public Data_Reader {
 public:
-	typedef const char* (GMEAPI *callback_t)( void* data, void* out, int count );
+	typedef const char* (*callback_t)( void* data, void* out, int count );
 	Callback_Reader( callback_t, long size, void* data = 0 );
 public:
 	long read_avail( void*, long );

@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Gb_Cpu.h"
 
@@ -89,11 +89,6 @@ unsigned const n_flag = 0x40;
 unsigned const h_flag = 0x20;
 unsigned const c_flag = 0x10;
 
-#ifdef _MSC_VER
-// warning C4101: 'blargg_failed_' : unreferenced local variable
-// -- produced by the BOOST_STATIC_ASSERT line below
-#pragma warning(disable:4101)
-#endif
 bool Gb_Cpu::run( blargg_long cycle_count )
 {
 	state_.remain = blargg_ulong (cycle_count + clocks_per_instr) / clocks_per_instr;

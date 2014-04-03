@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Ay_Emu.h"
 
@@ -47,8 +47,8 @@ Ay_Emu::~Ay_Emu() { }
 
 static byte const* get_data( Ay_Emu::file_t const& file, byte const* ptr, int min_size )
 {
-	long pos = long(ptr - (byte const*) file.header);
-	long file_size = long(file.end - (byte const*) file.header);
+	long pos = ptr - (byte const*) file.header;
+	long file_size = file.end - (byte const*) file.header;
 	assert( (unsigned long) pos <= (unsigned long) file_size - 2 );
 	int offset = (BOOST::int16_t) get_be16( ptr );
 	if ( !offset || blargg_ulong (pos + offset) > blargg_ulong (file_size - min_size) )
@@ -207,11 +207,11 @@ blargg_err_t Ay_Emu::start_track_( int track )
 		if ( len > blargg_ulong (file.end - in) )
 		{
 			set_warning( "Missing file data" );
-			len = unsigned(file.end - in);
+			len = file.end - in;
 		}
-		//dprintf( "addr: $%04X, len: $%04X\n", addr, len );
+		//debug_printf( "addr: $%04X, len: $%04X\n", addr, len );
 		if ( addr < ram_start && addr >= 0x400 ) // several tracks use low data
-			dprintf( "Block addr in ROM\n" );
+			debug_printf( "Block addr in ROM\n" );
 		memcpy( mem.ram + addr, in, len );
 		
 		if ( file.end - blocks < 8 )
@@ -242,7 +242,7 @@ blargg_err_t Ay_Emu::start_track_( int track )
 	};
 	memcpy( mem.ram, passive, sizeof passive );
 	unsigned play_addr = get_be16( more_data + 4 );
-	//dprintf( "Play: $%04X\n", play_addr );
+	//debug_printf( "Play: $%04X\n", play_addr );
 	if ( play_addr )
 	{
 		memcpy( mem.ram, active, sizeof active );
@@ -315,7 +315,7 @@ void Ay_Emu::cpu_out_misc( cpu_time_t time, unsigned addr, int data )
 		}
 	}
 	
-	dprintf( "Unmapped OUT: $%04X <- $%02X\n", addr, data );
+	debug_printf( "Unmapped OUT: $%04X <- $%02X\n", addr, data );
 	return;
 	
 enable_cpc:
@@ -356,7 +356,7 @@ int ay_cpu_in( Ay_Cpu*, unsigned addr )
 	if ( (addr & 0xFF) == 0xFE )
 		return 0xFF; // other values break some beeper tunes
 	
-	dprintf( "Unmapped IN : $%04X\n", addr );
+	debug_printf( "Unmapped IN : $%04X\n", addr );
 	return 0xFF;
 }
 

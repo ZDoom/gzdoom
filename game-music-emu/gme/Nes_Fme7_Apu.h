@@ -1,6 +1,6 @@
 // Sunsoft FME-7 sound emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef NES_FME7_APU_H
 #define NES_FME7_APU_H
 
@@ -97,8 +97,8 @@ inline void Nes_Fme7_Apu::write_data( blip_time_t time, int data )
 {
 	if ( (unsigned) latch >= reg_count )
 	{
-		#ifdef dprintf
-			dprintf( "FME7 write to %02X (past end of sound registers)\n", (int) latch );
+		#ifdef debug_printf
+			debug_printf( "FME7 write to %02X (past end of sound registers)\n", (int) latch );
 		#endif
 		return;
 	}

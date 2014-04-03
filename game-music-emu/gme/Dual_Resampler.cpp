@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Dual_Resampler.h"
 
@@ -20,7 +20,13 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 unsigned const resampler_extra = 256;
 
-Dual_Resampler::Dual_Resampler() { }
+Dual_Resampler::Dual_Resampler() :
+	sample_buf_size(0),
+	oversamples_per_frame(-1),
+	buf_pos(-1),
+	resampler_size(0)
+{
+}
 
 Dual_Resampler::~Dual_Resampler() { }
 
@@ -62,10 +68,10 @@ void Dual_Resampler::play_frame_( Blip_Buffer& blip_buf, dsample_t* out )
 	assert( blip_buf.samples_avail() == pair_count );
 	
 	resampler.write( new_count );
-
+	
 	long count = resampler.read( sample_buf.begin(), sample_buf_size );
 	assert( count == (long) sample_buf_size );
-
+	
 	mix_samples( blip_buf, out );
 	blip_buf.remove_samples( pair_count );
 }

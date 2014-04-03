@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Vgm_Emu.h"
 
@@ -36,8 +36,7 @@ Vgm_Emu::Vgm_Emu()
 	
 	set_silence_lookahead( 1 ); // tracks should already be trimmed
 	
-	static equalizer_t const eq = { -14.0, 80, 0, 0, 0, 0, 0, 0, 0, 0 };
-	set_equalizer( eq );
+	set_equalizer( make_equalizer( -14.0, 80 ) );
 }
 
 Vgm_Emu::~Vgm_Emu() { }
@@ -58,7 +57,7 @@ static byte const* skip_gd3_str( byte const* in, byte const* end )
 static byte const* get_gd3_str( byte const* in, byte const* end, char* field )
 {
 	byte const* mid = skip_gd3_str( in, end );
-	int len = int(mid - in) / 2 - 1;
+	int len = (mid - in) / 2 - 1;
 	if ( len > 0 )
 	{
 		len = min( len, (int) Gme_File::max_field_ );
@@ -109,7 +108,7 @@ byte const* Vgm_Emu::gd3_data( int* size ) const
 		return 0;
 	
 	byte const* gd3 = data + header_size + gd3_offset;
-	long gd3_size = check_gd3_header( gd3, long(data_end - gd3) );
+	long gd3_size = check_gd3_header( gd3, data_end - gd3 );
 	if ( !gd3_size )
 		return 0;
 	
@@ -185,7 +184,7 @@ struct Vgm_File : Gme_Info_
 			if ( gd3_size )
 			{
 				RETURN_ERR( gd3.resize( gd3_size ) );
-				RETURN_ERR( in.read( gd3.begin(), (long)gd3.size() ) );
+				RETURN_ERR( in.read( gd3.begin(), gd3.size() ) );
 			}
 		}
 		return 0;
@@ -218,8 +217,8 @@ void Vgm_Emu::set_tempo_( double t )
 	{
 		vgm_rate = (long) (44100 * t + 0.5);
 		blip_time_factor = (long) floor( double (1L << blip_time_bits) / vgm_rate * psg_rate + 0.5 );
-		//dprintf( "blip_time_factor: %ld\n", blip_time_factor );
-		//dprintf( "vgm_rate: %ld\n", vgm_rate );
+		//debug_printf( "blip_time_factor: %ld\n", blip_time_factor );
+		//debug_printf( "vgm_rate: %ld\n", vgm_rate );
 		// TODO: remove? calculates vgm_rate more accurately (above differs at most by one Hz only)
 		//blip_time_factor = (long) floor( double (1L << blip_time_bits) * psg_rate / 44100 / t + 0.5 );
 		//vgm_rate = (long) floor( double (1L << blip_time_bits) * psg_rate / blip_time_factor + 0.5 );

@@ -114,7 +114,7 @@ long Stereo_Buffer::read_samples( blip_sample_t* out, long count )
 	if ( count )
 	{
 		int bufs_used = stereo_added | was_stereo;
-		//dprintf( "%X\n", bufs_used );
+		//debug_printf( "%X\n", bufs_used );
 		if ( bufs_used <= 1 )
 		{
 			mix_mono( out, count );

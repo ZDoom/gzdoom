@@ -134,7 +134,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gme_types.h.in
 # On some platforms we may need to change headers or whatnot based on whether
 # we're building the library or merely using the library. The following is
 # only defined when building the library to allow us to tell which is which.
-add_definitions(-DBLARGG_BUILD_DLL)
+#add_definitions(-DBLARGG_BUILD_DLL)
 
 # For the gme_types.h
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

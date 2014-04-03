@@ -107,8 +107,6 @@ struct FDoorAnimation
 	FName CloseSound;
 };
 
-
-
 // Patches.
 // A patch holds one or more columns.
 // Patches are used for sprites and all masked pictures, and we compose

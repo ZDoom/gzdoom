@@ -2138,7 +2138,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	fixed_t oldz = mo->z;
 	fixed_t grav = mo->GetGravity();
 
-//	
+//
 // check for smooth step up
 //
 	if (mo->player && mo->player->mo == mo && mo->z < mo->floorz)

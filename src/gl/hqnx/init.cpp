@@ -19,13 +19,14 @@
 #include <stdint.h>
 #include "hqx.h"
 
-uint32_t   RGBtoYUV[16777216];
+uint32_t   *RGBtoYUV;
 uint32_t   YUV1, YUV2;
 
 HQX_API void HQX_CALLCONV hqxInit(void)
 {
     /* Initalize RGB to YUV lookup table */
     uint32_t c, r, g, b, y, u, v;
+	RGBtoYUV = new uint32_t[16777216];
     for (c = 0; c < 16777215; c++) {
         r = (c & 0xFF0000) >> 16;
         g = (c & 0x00FF00) >> 8;

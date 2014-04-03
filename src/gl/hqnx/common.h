@@ -38,7 +38,7 @@
 #define trV   0x00000006
 
 /* RGB to YUV lookup table */
-extern uint32_t RGBtoYUV[16777216];
+extern uint32_t *RGBtoYUV;
 
 static inline uint32_t rgb_to_yuv(uint32_t c)
 {

@@ -303,7 +303,7 @@ void Snes_Spc::set_output( sample_t* out, int size )
 			assert( out <= out_end );
 		}
 		
-		dsp.set_output( out, out_end - out );
+		dsp.set_output( out, int(out_end - out) );
 	}
 	else
 	{

@@ -119,7 +119,7 @@ static blargg_err_t parse_info( byte const* in, long size, Sap_Emu::info_t* out 
 		char const* tag = (char const*) in;
 		while ( in < line_end && *in > ' ' )
 			in++;
-		int tag_len = (char const*) in - tag;
+		int tag_len = int((char const*) in - tag);
 		
 		while ( in < line_end && *in <= ' ' ) in++;
 		
@@ -256,7 +256,7 @@ blargg_err_t Sap_Emu::load_mem_( byte const* in, long size )
 	
 	set_warning( info.warning );
 	set_track_count( info.track_count );
-	set_voice_count( Sap_Apu::osc_count << info.stereo );
+	set_voice_count( Sap_Apu::osc_count << (int)info.stereo );
 	apu_impl.volume( gain() );
 	
 	return setup_buffer( 1773447 );
@@ -315,8 +315,8 @@ inline void Sap_Emu::call_init( int track )
 	
 	case 'C':
 		r.a = 0x70;
-		r.x = info.music_addr&0xFF;
-		r.y = info.music_addr >> 8;
+		r.x = (BOOST::uint8_t)(info.music_addr&0xFF);
+		r.y = (BOOST::uint8_t)(info.music_addr >> 8);
 		run_routine( info.play_addr + 3 );
 		r.a = 0;
 		r.x = track;

@@ -43,7 +43,7 @@ public:
 		int repeat; // count
 	};
 	entry_t const& operator [] ( int i ) const { return entries [i]; }
-	int size() const { return entries.size(); }
+	int size() const { return int(entries.size()); }
 	
 	void clear();
 	

@@ -69,7 +69,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #define READ_PROG16( addr )                 GET_LE16( ram + (addr) )
 
 #define SET_PC( n )     (pc = ram + (n))
-#define GET_PC()        (pc - ram)
+#define GET_PC()        (int(pc - ram))
 #define READ_PC( pc )   (*(pc))
 #define READ_PC16( pc ) GET_LE16( pc )
 
@@ -77,7 +77,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #define SPC_NO_SP_WRAPAROUND 0
 
 #define SET_SP( v )     (sp = ram + 0x101 + (v))
-#define GET_SP()        (sp - 0x101 - ram)
+#define GET_SP()        (int(sp - 0x101 - ram))
 
 #if SPC_NO_SP_WRAPAROUND
 #define PUSH16( v )     (sp -= 2, SET_LE16( sp, v ))
@@ -87,7 +87,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #else
 #define PUSH16( data )\
 {\
-	int addr = (sp -= 2) - ram;\
+	int addr = int((sp -= 2) - ram);\
 	if ( addr > 0x100 )\
 	{\
 		SET_LE16( sp, data );\
@@ -256,7 +256,7 @@ loop:
 		}
 		#else
 		{
-			int addr = sp - ram;
+			int addr = int(sp - ram);
 			SET_PC( GET_LE16( sp ) );
 			sp += 2;
 			if ( addr < 0x1FF )

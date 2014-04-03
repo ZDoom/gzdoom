@@ -89,6 +89,12 @@ unsigned const n_flag = 0x40;
 unsigned const h_flag = 0x20;
 unsigned const c_flag = 0x10;
 
+#ifdef _MSC_VER
+// warning C4101: 'blargg_failed_' : unreferenced local variable
+// -- produced by the BOOST_STATIC_ASSERT line below
+#pragma warning(disable:4101)
+#endif
+
 bool Gb_Cpu::run( blargg_long cycle_count )
 {
 	state_.remain = blargg_ulong (cycle_count + clocks_per_instr) / clocks_per_instr;
@@ -711,7 +717,7 @@ loop:
 		temp += prev;
 		flags &= z_flag;
 	add_16_hl:
-		rp.hl = temp;
+		rp.hl = (uint16_t)temp;
 	add_16_comm:
 		flags |= (temp >> 12) & c_flag;
 		flags |= (((temp & 0x0FFF) - (prev & 0x0FFF)) >> 7) & h_flag;

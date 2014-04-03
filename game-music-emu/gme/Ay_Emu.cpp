@@ -47,8 +47,8 @@ Ay_Emu::~Ay_Emu() { }
 
 static byte const* get_data( Ay_Emu::file_t const& file, byte const* ptr, int min_size )
 {
-	long pos = ptr - (byte const*) file.header;
-	long file_size = file.end - (byte const*) file.header;
+	long pos = long(ptr - (byte const*) file.header);
+	long file_size = long(file.end - (byte const*) file.header);
 	assert( (unsigned long) pos <= (unsigned long) file_size - 2 );
 	int offset = (BOOST::int16_t) get_be16( ptr );
 	if ( !offset || blargg_ulong (pos + offset) > blargg_ulong (file_size - min_size) )
@@ -207,7 +207,7 @@ blargg_err_t Ay_Emu::start_track_( int track )
 		if ( len > blargg_ulong (file.end - in) )
 		{
 			set_warning( "Missing file data" );
-			len = file.end - in;
+			len = unsigned(file.end - in);
 		}
 		//debug_printf( "addr: $%04X, len: $%04X\n", addr, len );
 		if ( addr < ram_start && addr >= 0x400 ) // several tracks use low data

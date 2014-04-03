@@ -106,10 +106,10 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 					unsigned noise_lfsr = this->noise_lfsr;
 					do
 					{
-						int new_dac = 0x1F & -(noise_lfsr >> 1 & 1);
+						int new_dac = 0x1F & (unsigned)-(int)(noise_lfsr >> 1 & 1);
 						// Implemented using "Galios configuration"
 						// TODO: find correct LFSR algorithm
-						noise_lfsr = (noise_lfsr >> 1) ^ (0xE008 & -(noise_lfsr & 1));
+						noise_lfsr = (noise_lfsr >> 1) ^ (0xE008 & (unsigned)-(int)(noise_lfsr & 1));
 						//noise_lfsr = (noise_lfsr >> 1) ^ (0x6000 & -(noise_lfsr & 1));
 						int delta = new_dac - dac;
 						if ( delta )

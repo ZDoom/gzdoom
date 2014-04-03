@@ -171,8 +171,8 @@ void Stereo_Buffer::mix_stereo( blip_sample_t* out_, blargg_long count )
 		BLIP_READER_NEXT( left, bass );
 		BLIP_READER_NEXT( right, bass );
 		
-		out [0] = l;
-		out [1] = r;
+		out [0] = (blip_sample_t)l;
+		out [1] = (blip_sample_t)r;
 		out += 2;
 	}
 	
@@ -201,8 +201,8 @@ void Stereo_Buffer::mix_stereo_no_center( blip_sample_t* out_, blargg_long count
 		BLIP_READER_NEXT( left, bass );
 		BLIP_READER_NEXT( right, bass );
 		
-		out [0] = l;
-		out [1] = r;
+		out [0] = (blip_sample_t)l;
+		out [1] = (blip_sample_t)r;
 		out += 2;
 	}
 	
@@ -223,8 +223,8 @@ void Stereo_Buffer::mix_mono( blip_sample_t* out_, blargg_long count )
 			s = 0x7FFF - (s >> 24);
 		
 		BLIP_READER_NEXT( center, bass );
-		out [0] = s;
-		out [1] = s;
+		out [0] = (blip_sample_t)s;
+		out [1] = (blip_sample_t)s;
 		out += 2;
 	}
 	

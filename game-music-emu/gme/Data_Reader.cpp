@@ -1,5 +1,7 @@
 // File_Extractor 0.4.0. http://www.slack.net/~ant/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "Data_Reader.h"
 
 #include "blargg_endian.h"
@@ -89,11 +91,11 @@ Remaining_Reader::Remaining_Reader( void const* h, long size, Data_Reader* r )
 	in = r;
 }
 
-long Remaining_Reader::remain() const { return header_end - header + in->remain(); }
+long Remaining_Reader::remain() const { return long(header_end - header + in->remain()); }
 
 long Remaining_Reader::read_first( void* out, long count )
 {
-	long first = header_end - header;
+	long first = long(header_end - header);
 	if ( first )
 	{
 		if ( first > count )
@@ -210,7 +212,7 @@ long Std_File_Reader::size() const
 
 long Std_File_Reader::read_avail( void* p, long s )
 {
-	return fread( p, 1, s, (FILE*) file_ );
+	return (long)fread( p, 1, s, (FILE*) file_ );
 }
 
 blargg_err_t Std_File_Reader::read( void* p, long s )

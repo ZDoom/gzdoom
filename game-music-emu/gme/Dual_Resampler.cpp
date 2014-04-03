@@ -127,8 +127,8 @@ void Dual_Resampler::mix_samples( Blip_Buffer& blip_buf, dsample_t* out )
 			r = 0x7FFF - (r >> 24);
 		
 		in += 2;
-		out [0] = l;
-		out [1] = r;
+		out [0] = (dsample_t)l;
+		out [1] = (dsample_t)r;
 		out += 2;
 	}
 	

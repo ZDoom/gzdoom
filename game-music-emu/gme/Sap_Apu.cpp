@@ -30,7 +30,7 @@ static void gen_poly( blargg_ulong mask, int count, byte* out )
 		{
 			// implemented using "Galios configuration"
 			bits |= (n & 1) << b;
-			n = (n >> 1) ^ (mask & -(n & 1));
+			n = (n >> 1) ^ (mask & (blargg_ulong)-(blargg_long)(n & 1));
 		}
 		while ( b++ < 7 );
 		*out++ = bits;

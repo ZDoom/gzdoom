@@ -228,14 +228,14 @@ struct Spc_File : Gme_Info_
 		{
 			RETURN_ERR( xid6.resize( xid6_size ) );
 			RETURN_ERR( in.skip( xid6_offset - Spc_Emu::header_size ) );
-			RETURN_ERR( in.read( xid6.begin(), xid6.size() ) );
+			RETURN_ERR( in.read( xid6.begin(), (long)xid6.size() ) );
 		}
 		return 0;
 	}
 	
 	blargg_err_t track_info_( track_info_t* out, int ) const
 	{
-		get_spc_info( header, xid6.begin(), xid6.size(), out );
+		get_spc_info( header, xid6.begin(), (long)xid6.size(), out );
 		return 0;
 	}
 };

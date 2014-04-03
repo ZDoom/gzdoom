@@ -57,7 +57,7 @@ static byte const* skip_gd3_str( byte const* in, byte const* end )
 static byte const* get_gd3_str( byte const* in, byte const* end, char* field )
 {
 	byte const* mid = skip_gd3_str( in, end );
-	int len = (mid - in) / 2 - 1;
+	int len = int(mid - in) / 2 - 1;
 	if ( len > 0 )
 	{
 		len = min( len, (int) Gme_File::max_field_ );
@@ -108,7 +108,7 @@ byte const* Vgm_Emu::gd3_data( int* size ) const
 		return 0;
 	
 	byte const* gd3 = data + header_size + gd3_offset;
-	long gd3_size = check_gd3_header( gd3, data_end - gd3 );
+	long gd3_size = check_gd3_header( gd3, long(data_end - gd3) );
 	if ( !gd3_size )
 		return 0;
 	
@@ -184,7 +184,7 @@ struct Vgm_File : Gme_Info_
 			if ( gd3_size )
 			{
 				RETURN_ERR( gd3.resize( gd3_size ) );
-				RETURN_ERR( in.read( gd3.begin(), gd3.size() ) );
+				RETURN_ERR( in.read( gd3.begin(), (long)gd3.size() ) );
 			}
 		}
 		return 0;

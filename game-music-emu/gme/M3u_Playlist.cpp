@@ -407,7 +407,7 @@ blargg_err_t M3u_Playlist::parse()
 blargg_err_t M3u_Playlist::load( Data_Reader& in )
 {
 	RETURN_ERR( data.resize( in.remain() + 1 ) );
-	RETURN_ERR( in.read( data.begin(), data.size() - 1 ) );
+	RETURN_ERR( in.read( data.begin(), long(data.size() - 1) ) );
 	return parse();
 }
 

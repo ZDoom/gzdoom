@@ -186,8 +186,8 @@ int Fir_Resampler_::avail_( blargg_long input_count ) const
 
 int Fir_Resampler_::skip_input( long count )
 {
-	int remain = write_pos - buf.begin();
-	int max_count = remain - width_ * stereo;
+	int remain = int(write_pos - buf.begin());
+	int max_count = int(remain - width_ * stereo);
 	if ( count > max_count )
 		count = max_count;
 	

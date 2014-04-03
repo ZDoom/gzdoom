@@ -1,5 +1,7 @@
 // Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "Nsfe_Emu.h"
 
 #include "blargg_endian.h"
@@ -35,7 +37,7 @@ inline void Nsfe_Info::unload()
 void Nsfe_Info::disable_playlist( bool b )
 {
 	playlist_disabled = b;
-	info.track_count = playlist.size();
+	info.track_count = (byte)playlist.size();
 	if ( !info.track_count || playlist_disabled )
 		info.track_count = actual_track_count_;
 }
@@ -171,7 +173,7 @@ blargg_err_t Nsfe_Info::load( Data_Reader& in, Nsf_Emu* nsf_emu )
 				blargg_vector<char> chars;
 				blargg_vector<const char*> strs;
 				RETURN_ERR( read_strs( in, size, chars, strs ) );
-				int n = strs.size();
+				int n = (int)strs.size();
 				
 				if ( n > 3 )
 					copy_str( strs [3], info.dumper, sizeof info.dumper );
@@ -190,7 +192,7 @@ blargg_err_t Nsfe_Info::load( Data_Reader& in, Nsf_Emu* nsf_emu )
 			
 			case BLARGG_4CHAR('e','m','i','t'):
 				RETURN_ERR( track_times.resize( size / 4 ) );
-				RETURN_ERR( in.read( track_times.begin(), track_times.size() * 4 ) );
+				RETURN_ERR( in.read( track_times.begin(), (long)track_times.size() * 4 ) );
 				break;
 			
 			case BLARGG_4CHAR('l','b','l','t'):

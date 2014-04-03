@@ -503,7 +503,7 @@ possibly_out_of_time:
 	add_hl_data: {
 		blargg_ulong sum = rp.hl + data;
 		data ^= rp.hl;
-		rp.hl = sum;
+		rp.hl = (uint16_t)sum;
 		flags = (flags & (S80 | Z40 | V04)) |
 				(sum >> 16) |
 				(sum >> 8 & (F20 | F08)) |
@@ -753,7 +753,7 @@ possibly_out_of_time:
 		flags = (flags & (S80 | Z40 | P04)) |
 				(temp & (F20 | F08)) |
 				(temp >> 8);
-		rg.a = temp;
+		rg.a = (uint8_t)temp;
 		goto loop;
 	}
 	
@@ -1085,7 +1085,7 @@ possibly_out_of_time:
 			blargg_ulong sum = temp + (flags & C01);
 			flags = ~data >> 2 & N02;
 			if ( flags )
-				sum = -sum;
+				sum = (blargg_ulong)-(blargg_long)sum;
 			sum += rp.hl;
 			temp ^= rp.hl;
 			temp ^= sum;
@@ -1093,7 +1093,7 @@ possibly_out_of_time:
 					(temp >> 8 & H10) |
 					(sum >> 8 & (S80 | F20 | F08)) |
 					((temp - -0x8000) >> 14 & V04);
-			rp.hl = sum;
+			rp.hl = (uint16_t)sum;
 			if ( (uint16_t) sum )
 				goto loop;
 			flags |= Z40;

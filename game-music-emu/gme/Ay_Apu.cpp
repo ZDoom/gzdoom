@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Ay_Apu.h"
 
@@ -123,8 +123,8 @@ void Ay_Apu::write_data_( int addr, int data )
 	
 	if ( (unsigned) addr >= 14 )
 	{
-		#ifdef dprintf
-			dprintf( "Wrote to I/O port %02X\n", (int) addr );
+		#ifdef debug_printf
+			debug_printf( "Wrote to I/O port %02X\n", (int) addr );
 		#endif
 	}
 	
@@ -220,7 +220,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 					end_time = final_end_time;
 				
 				//if ( !(regs [12] | regs [11]) )
-				//  dprintf( "Used envelope period 0\n" );
+				//  debug_printf( "Used envelope period 0\n" );
 			}
 			else if ( !volume )
 			{
@@ -250,7 +250,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 			ntime = start_time + old_noise_delay;
 			noise_lfsr = old_noise_lfsr;
 			//if ( (regs [6] & 0x1F) == 0 )
-			//  dprintf( "Used noise period 0\n" );
+			//  debug_printf( "Used noise period 0\n" );
 		}
 		
 		// The following efficiently handles several cases (least demanding first):

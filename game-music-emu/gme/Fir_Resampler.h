@@ -1,6 +1,6 @@
 // Finite impulse response (FIR) resampler with adjustable FIR size
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef FIR_RESAMPLER_H
 #define FIR_RESAMPLER_H
 
@@ -51,7 +51,7 @@ public:
 	int input_needed( blargg_long count ) const;
 	
 	// Number of output samples available
-	int avail() const { return avail_( blargg_long(write_pos - &buf [width_ * stereo]) ); }
+	int avail() const { return avail_( blargg_long(write_pos - &buf [width_ * stereo] )); }
 	
 public:
 	~Fir_Resampler_();

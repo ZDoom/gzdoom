@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Hes_Apu.h"
 
@@ -106,10 +106,10 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 					unsigned noise_lfsr = this->noise_lfsr;
 					do
 					{
-						int new_dac = 0x1F & (unsigned)-(signed)(noise_lfsr >> 1 & 1);
+						int new_dac = 0x1F & (unsigned)-(int)(noise_lfsr >> 1 & 1);
 						// Implemented using "Galios configuration"
 						// TODO: find correct LFSR algorithm
-						noise_lfsr = (noise_lfsr >> 1) ^ (0xE008 & (unsigned)-(signed)(noise_lfsr & 1));
+						noise_lfsr = (noise_lfsr >> 1) ^ (0xE008 & (unsigned)-(int)(noise_lfsr & 1));
 						//noise_lfsr = (noise_lfsr >> 1) ^ (0x6000 & -(noise_lfsr & 1));
 						int delta = new_dac - dac;
 						if ( delta )
@@ -158,7 +158,7 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 						//period = 0x1000 * 2;
 						period = 1;
 						//if ( !(volume_0 | volume_1) )
-						//  dprintf( "Used period 0\n" );
+						//  debug_printf( "Used period 0\n" );
 					}
 					
 					// maintain phase when silent
@@ -295,7 +295,7 @@ void Hes_Apu::write_data( blip_time_t time, int addr, int data )
 		 
 		 case 0x809:
 		 	if ( !(data & 0x80) && (data & 0x03) != 0 )
-		 		dprintf( "HES LFO not supported\n" );
+		 		debug_printf( "HES LFO not supported\n" );
 		}
 	}
 }

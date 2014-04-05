@@ -1,12 +1,12 @@
 // Fast SNES SPC-700 DSP emulator (about 3x speed of accurate one)
 
-// snes_spc 0.9.0
+// Game_Music_Emu 0.6.0
 #ifndef SPC_DSP_H
 #define SPC_DSP_H
 
 #include "blargg_common.h"
 
-class Spc_Dsp {
+struct Spc_Dsp {
 public:
 	typedef BOOST::uint8_t uint8_t;
 	
@@ -51,10 +51,7 @@ public:
 
 	// If true, prevents channels and global volumes from being phase-negated
 	void disable_surround( bool disable = true );
-	
-	enum { gain_unit = 0x100 };
-	void set_gain( int gain );
-	
+
 // State
 	
 	// Resets DSP and uses supplied values to initialize registers
@@ -140,7 +137,6 @@ private:
 		// non-emulation state
 		uint8_t* ram; // 64K shared RAM between DSP and SMP
 		int mute_mask;
-		int gain;
 		int surround_threshold;
 		sample_t* out;
 		sample_t* out_end;
@@ -203,8 +199,6 @@ inline void Spc_Dsp::write( int addr, int data )
 			m.regs [r_endx] = 0;
 	}
 }
-
-inline void Spc_Dsp::set_gain( int gain ) { m.gain = gain; }
 
 inline void Spc_Dsp::disable_surround( bool disable )
 {

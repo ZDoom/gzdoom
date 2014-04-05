@@ -1,15 +1,14 @@
 // File_Extractor 0.4.0. http://www.slack.net/~ant/
 
 #define _CRT_SECURE_NO_WARNINGS
-#define IN_GME 1
-
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
 
 #include "Data_Reader.h"
 
 #include "blargg_endian.h"
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+
 /* Copyright (C) 2005-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
 General Public License as published by the Free Software Foundation; either

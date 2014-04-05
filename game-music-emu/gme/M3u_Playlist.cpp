@@ -1,6 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
-
-#define IN_GME 1
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "M3u_Playlist.h"
 #include "Music_Emu.h"
@@ -54,9 +52,9 @@ blargg_err_t Gme_File::load_m3u( const char* path ) { return load_m3u_( playlist
 
 blargg_err_t Gme_File::load_m3u( Data_Reader& in )  { return load_m3u_( playlist.load( in ) ); }
 
-gme_err_t GMEAPI gme_load_m3u( Music_Emu* me, const char* path ) { return me->load_m3u( path ); }
+BLARGG_EXPORT gme_err_t gme_load_m3u( Music_Emu* me, const char* path ) { return me->load_m3u( path ); }
 
-gme_err_t GMEAPI gme_load_m3u_data( Music_Emu* me, const void* data, long size )
+BLARGG_EXPORT gme_err_t gme_load_m3u_data( Music_Emu* me, const void* data, long size )
 {
 	Mem_File_Reader in( data, size );
 	return me->load_m3u( in );

@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 // Based on Gens 2.10 ym2612.c
 
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <math.h>
 
-/* Copyright (C) 2002 StÈphane Dallongeville (gens AT consolemul.com) */
+/* Copyright (C) 2002 Stephane Dallongeville (gens AT consolemul.com) */
 /* Copyright (C) 2004-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
 General Public License as published by the Free Software Foundation; either
@@ -44,9 +44,9 @@ struct slot_t
 	int MUL;    // parametre "multiple de frequence"
 	int TL;     // Total Level = volume lorsque l'enveloppe est au plus haut
 	int TLL;    // Total Level ajusted
-	int SLL;    // Sustin Level (ajusted) = volume o˘ l'enveloppe termine sa premiere phase de regression
+	int SLL;    // Sustin Level (ajusted) = volume oÅEl'enveloppe termine sa premiere phase de regression
 	int KSR_S;  // Key Scale Rate Shift = facteur de prise en compte du KSL dans la variations de l'enveloppe
-	int KSR;    // Key Scale Rate = cette valeur est calculee par rapport ‡ la frequence actuelle, elle va influer
+	int KSR;    // Key Scale Rate = cette valeur est calculee par rapport ÅEla frequence actuelle, elle va influer
 				// sur les differents parametres de l'enveloppe comme l'attaque, le decay ...  comme dans la realite !
 	int SEG;    // Type enveloppe SSG
 	int env_xor;
@@ -58,24 +58,24 @@ struct slot_t
 	const int *RR;  // Release Rate (table pointeur) = Taux pour le rel'chement (RR[KSR])
 	int Fcnt;   // Frequency Count = compteur-frequence pour determiner l'amplitude actuelle (SIN[Finc >> 16])
 	int Finc;   // frequency step = pas d'incrementation du compteur-frequence
-				// plus le pas est grand, plus la frequence est aÔgu (ou haute)
+				// plus le pas est grand, plus la frequence est aÅEu (ou haute)
 	int Ecurp;  // Envelope current phase = cette variable permet de savoir dans quelle phase
 				// de l'enveloppe on se trouve, par exemple phase d'attaque ou phase de maintenue ...
 				// en fonction de la valeur de cette variable, on va appeler une fonction permettant
-				// de mettre ‡ jour l'enveloppe courante.
-	int Ecnt;   // Envelope counter = le compteur-enveloppe permet de savoir o˘ l'on se trouve dans l'enveloppe
+				// de mettre ÅEjour l'enveloppe courante.
+	int Ecnt;   // Envelope counter = le compteur-enveloppe permet de savoir oÅEl'on se trouve dans l'enveloppe
 	int Einc;   // Envelope step courant
 	int Ecmp;   // Envelope counter limite pour la prochaine phase
 	int EincA;  // Envelope step for Attack = pas d'incrementation du compteur durant la phase d'attaque
-				// cette valeur est egal ‡ AR[KSR]
+				// cette valeur est egal ÅEAR[KSR]
 	int EincD;  // Envelope step for Decay = pas d'incrementation du compteur durant la phase de regression
-				// cette valeur est egal ‡ DR[KSR]
+				// cette valeur est egal ÅEDR[KSR]
 	int EincS;  // Envelope step for Sustain = pas d'incrementation du compteur durant la phase de maintenue
-				// cette valeur est egal ‡ SR[KSR]
+				// cette valeur est egal ÅESR[KSR]
 	int EincR;  // Envelope step for Release = pas d'incrementation du compteur durant la phase de rel'chement
-				// cette valeur est egal ‡ RR[KSR]
-	int *OUTp;  // pointeur of SLOT output = pointeur permettant de connecter la sortie de ce slot ‡ l'entree
-				// d'un autre ou carrement ‡ la sortie de la voie
+				// cette valeur est egal ÅERR[KSR]
+	int *OUTp;  // pointeur of SLOT output = pointeur permettant de connecter la sortie de ce slot ÅEl'entree
+				// d'un autre ou carrement ÅEla sortie de la voie
 	int INd;    // input data of the slot = donnees en entree du slot
 	int ChgEnM; // Change envelop mask.
 	int AMS;    // AMS depth level of this SLOT = degre de modulation de l'amplitude par le LFO
@@ -102,10 +102,10 @@ struct state_t
 {
 	int TimerBase;      // TimerBase calculation
 	int Status;         // YM2612 Status (timer overflow)
-	int TimerA;         // timerA limit = valeur jusqu'‡ laquelle le timer A doit compter
+	int TimerA;         // timerA limit = valeur jusqu'ÅElaquelle le timer A doit compter
 	int TimerAL;
 	int TimerAcnt;      // timerA counter = valeur courante du Timer A
-	int TimerB;         // timerB limit = valeur jusqu'‡ laquelle le timer B doit compter
+	int TimerB;         // timerB limit = valeur jusqu'ÅElaquelle le timer B doit compter
 	int TimerBL;
 	int TimerBcnt;      // timerB counter = valeur courante du Timer B
 	int Mode;           // Mode actuel des voie 3 et 6 (normal / special)
@@ -1255,7 +1255,7 @@ void Ym2612_Impl::run( int pair_count, Ym2612_Emu::sample_t* out )
 	if ( YM2612.Mode & 3 )
 		run_timer( pair_count );
 	
-	// Mise ‡ jour des pas des compteurs-frequences s'ils ont ete modifies
+	// Mise ÅEjour des pas des compteurs-frequences s'ils ont ete modifies
 	
 	for ( int chi = 0; chi < channel_count; chi++ )
 	{
@@ -1277,7 +1277,7 @@ void Ym2612_Impl::run( int pair_count, Ym2612_Emu::sample_t* out )
 			int ksr = ch.KC [i2] >> sl.KSR_S;   // keycode attenuation
 			sl.Finc = (finc + sl.DT [ch.KC [i2]]) * sl.MUL;
 			if (sl.KSR != ksr)          // si le KSR a change alors
-			{                       // les differents taux pour l'enveloppe sont mis ‡ jour
+			{                       // les differents taux pour l'enveloppe sont mis ÅEjour
 				sl.KSR = ksr;
 
 				sl.EincA = sl.AR [ksr];

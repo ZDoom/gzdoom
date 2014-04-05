@@ -1,6 +1,6 @@
 // Turbo Grafx 16 (PC Engine) PSG sound chip emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef HES_APU_H
 #define HES_APU_H
 

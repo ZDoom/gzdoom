@@ -1,6 +1,6 @@
 // SNES SPC-700 APU emulator
 
-// snes_spc 0.9.0
+// Game_Music_Emu 0.6.0
 #ifndef SNES_SPC_H
 #define SNES_SPC_H
 
@@ -66,10 +66,7 @@ public:
 	// Sets tempo, where tempo_unit = normal, tempo_unit / 2 = half speed, etc.
 	enum { tempo_unit = 0x100 };
 	void set_tempo( int );
-	
-	enum { gain_unit = Spc_Dsp::gain_unit };
-	void set_gain( int gain );
-	
+
 // SPC music files
 
 	// Loads SPC data into emulator
@@ -107,6 +104,22 @@ public:
 	bool check_kon();
 #endif
 
+public:
+	// TODO: document
+	struct regs_t
+	{
+		int pc;
+		int a;
+		int x;
+		int y;
+		int psw;
+		int sp;
+	};
+	regs_t& smp_regs() { return m.cpu_regs; }
+	
+	uint8_t* smp_ram() { return m.ram.ram; }
+	
+	void run_until( time_t t ) { run_until_( t ); }
 public:
 	BLARGG_DISABLE_NOTHROW
 	
@@ -146,15 +159,7 @@ private:
 		
 		uint8_t smp_regs [2] [reg_count];
 		
-		struct
-		{
-			int pc;
-			int a;
-			int x;
-			int y;
-			int psw;
-			int sp;
-		} cpu_regs;
+		regs_t cpu_regs;
 		
 		rel_time_t  dsp_time;
 		time_t      spc_time;
@@ -270,8 +275,6 @@ inline void Snes_Spc::write_port( time_t t, int port, int data )
 	assert( (unsigned) port < port_count );
 	run_until_( t ) [0x10 + port] = data;
 }
-
-inline void Snes_Spc::set_gain( int gain ) { dsp.set_gain( gain ); }
 
 inline void Snes_Spc::mute_voices( int mask ) { dsp.mute_voices( mask ); }
 	

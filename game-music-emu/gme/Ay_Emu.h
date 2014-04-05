@@ -1,6 +1,6 @@
 // Sinclair Spectrum AY music file emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef AY_EMU_H
 #define AY_EMU_H
 
@@ -46,7 +46,6 @@ protected:
 private:
 	file_t file;
 	
-	unsigned play_addr;
 	cpu_time_t play_period;
 	cpu_time_t next_play;
 	Blip_Buffer* beeper_output;

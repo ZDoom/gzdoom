@@ -271,7 +271,7 @@ void Gb_Apu::write_register( blip_time_t time, unsigned addr, int data )
 			}
 			else
 			{
-				//dprintf( "APU powered on\n" );
+				//debug_printf( "APU powered on\n" );
 			}
 		}
 	}

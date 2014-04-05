@@ -44,7 +44,7 @@ inline byte const* Hes_Emu::cpu_set_mmr( int page, int bank )
 		
 		default:
 			if ( bank != 0xFF )
-				dprintf( "Unmapped bank $%02X\n", bank );
+				debug_printf( "Unmapped bank $%02X\n", bank );
 			return rom.unmapped();
 	}
 	

@@ -1,6 +1,6 @@
 // M3U playlist file parser, with support for subtrack information
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef M3U_PLAYLIST_H
 #define M3U_PLAYLIST_H
 
@@ -43,7 +43,7 @@ public:
 		int repeat; // count
 	};
 	entry_t const& operator [] ( int i ) const { return entries [i]; }
-	int size() const { return (int)entries.size(); }
+	int size() const { return int(entries.size()); }
 	
 	void clear();
 	

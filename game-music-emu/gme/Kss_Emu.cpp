@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Kss_Emu.h"
 
@@ -230,9 +230,9 @@ blargg_err_t Kss_Emu::start_track_( int track )
 		bank_count = max_banks;
 		set_warning( "Bank data missing" );
 	}
-	//dprintf( "load_size : $%X\n", load_size );
-	//dprintf( "bank_size : $%X\n", bank_size );
-	//dprintf( "bank_count: %d (%d claimed)\n", bank_count, header_.bank_mode & 0x7F );
+	//debug_printf( "load_size : $%X\n", load_size );
+	//debug_printf( "bank_size : $%X\n", bank_size );
+	//debug_printf( "bank_count: %d (%d claimed)\n", bank_count, header_.bank_mode & 0x7F );
 	
 	ram [idle_addr] = 0xFF;
 	cpu::reset( unmapped_write, unmapped_read );
@@ -301,7 +301,7 @@ void Kss_Emu::cpu_write( unsigned addr, int data )
 		return;
 	}
 	
-	dprintf( "LD ($%04X),$%02X\n", addr, data );
+	debug_printf( "LD ($%04X),$%02X\n", addr, data );
 }
 
 void kss_cpu_write( Kss_Cpu* cpu, unsigned addr, int data )
@@ -358,7 +358,7 @@ void kss_cpu_out( Kss_Cpu* cpu, cpu_time_t time, unsigned addr, int data )
 	#endif
 	}
 	
-	dprintf( "OUT $%04X,$%02X\n", addr, data );
+	debug_printf( "OUT $%04X,$%02X\n", addr, data );
 }
 
 int kss_cpu_in( Kss_Cpu*, cpu_time_t, unsigned addr )
@@ -368,7 +368,7 @@ int kss_cpu_in( Kss_Cpu*, cpu_time_t, unsigned addr )
 	//{
 	//}
 	
-	dprintf( "IN $%04X\n", addr );
+	debug_printf( "IN $%04X\n", addr );
 	return 0;
 }
 

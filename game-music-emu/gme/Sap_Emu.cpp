@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Sap_Emu.h"
 
@@ -336,7 +336,7 @@ blargg_err_t Sap_Emu::start_track_( int track )
 	{
 		unsigned start = get_le16( in );
 		unsigned end   = get_le16( in + 2 );
-		//dprintf( "Block $%04X-$%04X\n", start, end );
+		//debug_printf( "Block $%04X-$%04X\n", start, end );
 		in += 4;
 		if ( end < start )
 		{
@@ -390,7 +390,7 @@ void Sap_Emu::cpu_write_( sap_addr_t addr, int data )
 	}
 
 	if ( (addr & ~0x0010) != 0xD20F || data != 0x03 )
-		dprintf( "Unmapped write $%04X <- $%02X\n", addr, data );
+		debug_printf( "Unmapped write $%04X <- $%02X\n", addr, data );
 }
 
 inline void Sap_Emu::call_play()

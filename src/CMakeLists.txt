@@ -238,6 +238,30 @@ endif( NOT OPENGL_GLU_FOUND )
 set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENGL_LIBRARIES} )
 include_directories( ${OPENGL_INCLUDE_DIR} )
 
+
+# check for GLEW
+find_path( GLEW_INCLUDE_DIR GL/glew.h
+	PATHS "/usr/include"
+	"/usr/local/include" )
+
+if( GLEW_INCLUDE_DIR )
+	message( STATUS "GLEW include files found at ${GLEW_INCLUDE_DIR}" )
+else( GLEW_INCLUDE_DIR )
+	message( SEND_ERROR "Could not find GLEW include files" )
+endif( GLEW_INCLUDE_DIR )
+
+# GLEW include directory
+include_directories( "${GLEW_INCLUDE_DIR}" )
+
+find_library( GLEW_LIBRARY glew32 )
+
+if( NOT GLEW_LIBRARY )
+	message( SEND_ERROR "Could not find GLEW library files" )
+endif( NOT GLEW_LIBRARY )
+	
+set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GLEW_LIBRARY} )
+
+
 # Decide on the name of the FMOD library we want to use.
 
 if( NOT FMOD_LIB_NAME AND MSVC )
@@ -395,20 +419,6 @@ if( NOT NO_ASM )
 	ENDMACRO( ADD_ASM_FILE )
 endif( NOT NO_ASM )
 
-# OpenGL on OS X: Search for GLEW include files
-
-if( APPLE )
-	find_path( GLEW_INCLUDE_DIR GL/glew.h
-		PATHS "/usr/include"
-		"/usr/local/include" )
-
-	if( GLEW_INCLUDE_DIR )
-		message( STATUS "GLEW include files found at ${GLEW_INCLUDE_DIR}" )
-	else( GLEW_INCLUDE_DIR )
-		message( SEND_ERROR "Could not find GLEW include files" )
-	endif( GLEW_INCLUDE_DIR )
-endif( APPLE )
-
 # Decide on SSE setup
 
 set( SSE_MATTERS NO )
@@ -564,12 +574,6 @@ if( NOT DYN_FLUIDSYNTH)
 else( NOT DYN_FLUIDSYNTH )
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${CMAKE_DL_LIBS} )
 endif( NOT DYN_FLUIDSYNTH )
-
-# OpenGL on OS X: GLEW include directory
-
-if( APPLE )
-	include_directories( "${GLEW_INCLUDE_DIR}" )
-endif( APPLE )
 
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES

@@ -7,6 +7,7 @@
 #define __EXTERN extern
 #endif
 
+#if 0
 __EXTERN PFNGLBLENDEQUATIONPROC glBlendEquation;
 
 // ARB_SHADER_OBJECTS
@@ -98,3 +99,5 @@ __EXTERN PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
 __EXTERN PFNGLTEXBUFFERARBPROC glTexBufferARB;
 
 #undef __EXTERN
+
+#endif

@@ -705,22 +705,19 @@ FMaterial::FMaterial(FTexture * tx, bool forceexpand)
 
 		mBaseLayer = ValidateSysTexture(tx, true);
 
-		if (gl.flags & RFL_NPOT_TEXTURE)	// trimming only works if non-power-of-2 textures are supported
+		int trim[4];
+
+		if (TrimBorders(trim))
 		{
-			int trim[4];
+			Width[GLUSE_SPRITE] = trim[2] + 2;
+			Height[GLUSE_SPRITE] = trim[3] + 2;
+			LeftOffset[GLUSE_SPRITE] -= trim[0];
+			TopOffset[GLUSE_SPRITE] -= trim[1];
 
-			if (TrimBorders(trim))
-			{
-				Width[GLUSE_SPRITE] = trim[2] + 2;
-				Height[GLUSE_SPRITE] = trim[3] + 2;
-				LeftOffset[GLUSE_SPRITE] -= trim[0];
-				TopOffset[GLUSE_SPRITE] -= trim[1];
-
-				SpriteU[0] = SpriteU[1] * (trim[0] / (float)Width[GLUSE_PATCH]);
-				SpriteV[0] = SpriteV[1] * (trim[1] / (float)Height[GLUSE_PATCH]);
-				SpriteU[1] *= (trim[0]+trim[2]+2) / (float)Width[GLUSE_PATCH]; 
-				SpriteV[1] *= (trim[1]+trim[3]+2) / (float)Height[GLUSE_PATCH]; 
-			}
+			SpriteU[0] = SpriteU[1] * (trim[0] / (float)Width[GLUSE_PATCH]);
+			SpriteV[0] = SpriteV[1] * (trim[1] / (float)Height[GLUSE_PATCH]);
+			SpriteU[1] *= (trim[0]+trim[2]+2) / (float)Width[GLUSE_PATCH]; 
+			SpriteV[1] *= (trim[1]+trim[3]+2) / (float)Height[GLUSE_PATCH]; 
 		}
 	}
 }

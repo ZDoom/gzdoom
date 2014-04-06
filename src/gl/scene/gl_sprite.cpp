@@ -584,39 +584,19 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		gltexture=FMaterial::ValidateTexture(patch, false);
 		if (!gltexture) return;
 
-		if (gl.flags & RFL_NPOT_TEXTURE)	// trimming only works if non-power-of-2 textures are supported
+		vt = gltexture->GetSpriteVT();
+		vb = gltexture->GetSpriteVB();
+		gltexture->GetRect(&r, GLUSE_SPRITE);
+		if (mirror)
 		{
-			vt = gltexture->GetSpriteVT();
-			vb = gltexture->GetSpriteVB();
-			gltexture->GetRect(&r, GLUSE_SPRITE);
-			if (mirror)
-			{
-				r.left=-r.width-r.left;	// mirror the sprite's x-offset
-				ul = gltexture->GetSpriteUL();
-				ur = gltexture->GetSpriteUR();
-			}
-			else
-			{
-				ul = gltexture->GetSpriteUR();
-				ur = gltexture->GetSpriteUL();
-			}
+			r.left=-r.width-r.left;	// mirror the sprite's x-offset
+			ul = gltexture->GetSpriteUL();
+			ur = gltexture->GetSpriteUR();
 		}
 		else
 		{
-			vt = gltexture->GetVT();
-			vb = gltexture->GetVB();
-			gltexture->GetRect(&r, GLUSE_PATCH);
-			if (mirror)
-			{
-				r.left=-r.width-r.left;	// mirror the sprite's x-offset
-				ul = gltexture->GetUL();
-				ur = gltexture->GetUR();
-			}
-			else
-			{
-				ul = gltexture->GetUR();
-				ur = gltexture->GetUL();
-			}
+			ul = gltexture->GetSpriteUR();
+			ur = gltexture->GetSpriteUL();
 		}
 
 		r.Scale(FIXED2FLOAT(spritescaleX),FIXED2FLOAT(spritescaleY));

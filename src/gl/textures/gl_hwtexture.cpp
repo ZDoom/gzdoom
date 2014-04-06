@@ -72,11 +72,7 @@ unsigned int FHardwareTexture::lastbound[FHardwareTexture::MAX_TEXTURES];
 int FHardwareTexture::GetTexDimension(int value)
 {
 	if (value > gl.max_texturesize) return gl.max_texturesize;
-	if (gl.flags&RFL_NPOT_TEXTURE) return value;
-
-	int i=1;
-	while (i<value) i+=i;
-	return i;
+	return value;
 }
 
 //===========================================================================
@@ -122,37 +118,13 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, (mipmap && use_mipmapping && !forcenofiltering));
 
-		if (rw == w && rh == h)
+		if (rw < w || rh < h)
 		{
-		}
-		else if (wrapparam==GL_REPEAT || rw < w || rh < h)
-		{
-			// The image must be scaled to fit the texture
+			// The texture is larger than what the hardware can handle so scale it down.
 			unsigned char * scaledbuffer=(unsigned char *)calloc(4,rw * (rh+1));
 			if (scaledbuffer)
 			{
 				gluScaleImage(GL_RGBA,w, h,GL_UNSIGNED_BYTE,buffer, rw, rh, GL_UNSIGNED_BYTE,scaledbuffer);
-				deletebuffer=true;
-				buffer=scaledbuffer;
-			}
-		}
-		else
-		{
-			// The image must be copied to a larger buffer
-			unsigned char * scaledbuffer=(unsigned char *)calloc(4,rw * (rh+1));
-			if (scaledbuffer)
-			{
-				for(int y=0;y<h;y++)
-				{
-					memcpy(scaledbuffer + rw * y * 4, buffer + w * y * 4, w * 4);
-					// duplicate the last row to eliminate texture filtering artifacts on borders!
-					if (rw>w) 
-						memcpy(	scaledbuffer + rw * y * 4 + w * 4,
-						scaledbuffer + rw * y * 4 + w * 4 -4, 4);
-				}
-				// also duplicate the last line for the same reason!
-				memcpy(	scaledbuffer + rw * h * 4, 	scaledbuffer + rw * (h-1) * 4, w*4 + 4);
-				
 				deletebuffer=true;
 				buffer=scaledbuffer;
 			}

@@ -232,29 +232,26 @@ public:
 FVoxelVertexBuffer::FVoxelVertexBuffer(TArray<FVoxelVertex> &verts, TArray<unsigned int> &indices)
 {
 	ibo_id = 0;
-	if (gl.flags&RFL_VBO)
-	{
-		glGenBuffers(1, &ibo_id);
+	glGenBuffers(1, &ibo_id);
 
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, verts.Size() * sizeof(FVoxelVertex), &verts[0], GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		if (verts.Size() > 65535)
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glBufferData(GL_ARRAY_BUFFER, verts.Size() * sizeof(FVoxelVertex), &verts[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+	if (verts.Size() > 65535)
+	{
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+		isint = true;
+	}
+	else
+	{
+		unsigned short *sbuffer = new unsigned short[indices.Size()];
+		for(unsigned i=0;i<indices.Size();i++)
 		{
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-			isint = true;
+			sbuffer[i] = (unsigned short)indices[i];
 		}
-		else
-		{
-			unsigned short *sbuffer = new unsigned short[indices.Size()];
-			for(unsigned i=0;i<indices.Size();i++)
-			{
-				sbuffer[i] = (unsigned short)indices[i];
-			}
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Size() * sizeof(unsigned short), sbuffer, GL_STATIC_DRAW);
-			delete [] sbuffer;
-			isint = false;
-		}
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.Size() * sizeof(unsigned short), sbuffer, GL_STATIC_DRAW);
+		delete [] sbuffer;
+		isint = false;
 	}
 }
 
@@ -470,10 +467,7 @@ bool FVoxelModel::Load(const char * fn, int lumpnum, const char * buffer, int le
 
 void FVoxelModel::MakeGLData()
 {
-	if (gl.flags&RFL_VBO)
-	{
-		mVBO = new FVoxelVertexBuffer(mVertices, mIndices);
-	}
+	mVBO = new FVoxelVertexBuffer(mVertices, mIndices);
 }
 
 //===========================================================================
@@ -514,16 +508,13 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int cm, int translatio
 	tex->Bind(cm, 0, translation);
 	gl_RenderState.Apply();
 
-	if (gl.flags&RFL_VBO)
+	if (mVBO == NULL) MakeGLData();
+	if (mVBO != NULL)
 	{
-		if (mVBO == NULL) MakeGLData();
-		if (mVBO != NULL)
-		{
-			mVBO->BindVBO();
-			glDrawElements(GL_QUADS, mIndices.Size(), mVBO->IsInt()? GL_UNSIGNED_INT:GL_UNSIGNED_SHORT, 0);
-			GLRenderer->mVBO->BindVBO();
-			return;
-		}
+		mVBO->BindVBO();
+		glDrawElements(GL_QUADS, mIndices.Size(), mVBO->IsInt()? GL_UNSIGNED_INT:GL_UNSIGNED_SHORT, 0);
+		GLRenderer->mVBO->BindVBO();
+		return;
 	}
 
 	glBegin(GL_QUADS);

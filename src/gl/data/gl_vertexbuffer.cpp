@@ -51,7 +51,7 @@
 
 CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < -1 || self > 2 || !(gl.flags&RFL_VBO))
+	if (self < -1 || self > 2)
 	{
 		self = 0;
 	}
@@ -75,11 +75,8 @@ CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 FVertexBuffer::FVertexBuffer()
 {
 	vbo_id = 0;
-	if (gl.flags&RFL_VBO)
-	{
-		if (gl_usevbo == -1) gl_usevbo.Callback();
-		glGenBuffers(1, &vbo_id);
-	}
+	if (gl_usevbo == -1) gl_usevbo.Callback();
+	glGenBuffers(1, &vbo_id);
 }
 	
 FVertexBuffer::~FVertexBuffer()
@@ -99,14 +96,7 @@ FVertexBuffer::~FVertexBuffer()
 FFlatVertexBuffer::FFlatVertexBuffer()
 : FVertexBuffer()
 {
-	if (!(gl.flags&RFL_VBO)) 
-	{
-		vbo_arg = 0;
-	}
-	else
-	{
-		vbo_arg = gl_usevbo;
-	}
+	vbo_arg = gl_usevbo;
 	map = NULL;
 }
 

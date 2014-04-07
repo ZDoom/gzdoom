@@ -4260,6 +4260,7 @@ enum EACSFunctions
 	ACSF_CheckFlag,
 	ACSF_SetLineActivation,
 	ACSF_GetLineActivation,
+	ACSF_GetActorPowerupTics,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -5322,6 +5323,27 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			{
 				int line = P_FindLineFromID(args[0], -1);
 				return line >= 0 ? lines[line].activation : 0;
+			}
+			break;
+
+		case ACSF_GetActorPowerupTics:
+			if (argCount >= 2)
+			{
+				const PClass *powerupclass = PClass::FindClass(FBehavior::StaticLookupString(args[1]));
+				if (powerupclass == NULL || !RUNTIME_CLASS(APowerup)->IsAncestorOf(powerupclass))
+				{
+					Printf("'%s' is not a type of Powerup.\n", FBehavior::StaticLookupString(args[1]));
+					return 0;
+				}
+
+				AActor *actor = SingleActorFromTID(args[0], activator);
+				if (actor != NULL)
+				{
+					APowerup* powerup = (APowerup*)actor->FindInventory(powerupclass);
+					if (powerup != NULL)
+						return powerup->EffectTics;
+				}
+				return 0;
 			}
 			break;
 

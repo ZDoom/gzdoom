@@ -345,6 +345,15 @@ struct FMapThing
 	int			args[5];
 	int			Conversation;
 	fixed_t		gravity;
+	fixed_t		alpha;
+	DWORD		fillcolor;
+	fixed_t		scaleX;
+	fixed_t		scaleY;
+	int			health;
+	int			score;
+	short		pitch;
+	short		roll;
+	DWORD		RenderStyle;
 
 	void Serialize (FArchive &);
 };
@@ -386,14 +395,6 @@ enum EMapThingFlags
 
 	MTF_SECRET			= 0x080000,	// Secret pickup
 	MTF_NOINFIGHTING	= 0x100000,
-
-	// PSX Doom and Doom 64 effects
-
-	MTF_TRANS			= 0x200000,  // 50% alpha
-	MTF_ADD				= 0x400000,  // 100% additive
-	MTF_SUBTRACT		= 0x800000,  // 100% subtractive
-	MTF_SPECTRE			= 0x1000000, // 25% additive
-	MTF_DOUBLEHEALTH	= 0x2000000, // Double hit points
 
 	// BOOM and DOOM compatible versions of some of the above
 

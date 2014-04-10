@@ -476,6 +476,9 @@ public:
 
 		memset(th, 0, sizeof(*th));
 		th->gravity = FRACUNIT;
+		th->RenderStyle = STYLE_Count;
+		th->alpha = -1;
+		th->health = 1;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -632,29 +635,87 @@ public:
 				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
-			case NAME_Transparent:
-				CHECK_N(Zd | Zdt)
-				Flag(th->flags, MTF_TRANS, key);
+			case NAME_Renderstyle:
+				{
+				FName style = CheckString(key);
+				switch (style)
+				{
+				case NAME_None:
+					th->RenderStyle = STYLE_None;
+					break;
+				default:
+				case NAME_Normal:
+					th->RenderStyle = STYLE_Normal;
+					break;
+				case NAME_Fuzzy:
+					th->RenderStyle = STYLE_Fuzzy;
+					break;
+				case NAME_SoulTrans:
+					th->RenderStyle = STYLE_SoulTrans;
+					break;
+				case NAME_OptFuzzy:
+					th->RenderStyle = STYLE_OptFuzzy;
+					break;
+				case NAME_Stencil:
+					th->RenderStyle = STYLE_Stencil;
+					break;
+				case NAME_Translucent:
+					th->RenderStyle = STYLE_Translucent;
+					break;
+				case NAME_Add:
+				case NAME_Additive:
+					th->RenderStyle = STYLE_Add;
+					break;
+				case NAME_Shaded:
+					th->RenderStyle = STYLE_Shaded;
+					break;
+				case NAME_TranslucentStencil:
+					th->RenderStyle = STYLE_TranslucentStencil;
+					break;
+				case NAME_Shadow:
+					th->RenderStyle = STYLE_Shadow;
+					break;
+				case NAME_Subtract:
+				case NAME_Subtractive:
+					th->RenderStyle = STYLE_Subtract;
+					break;
+				}
+				}
 				break;
 
-			case NAME_Additive:
-				CHECK_N(Zd | Zdt)
-				Flag(th->flags, MTF_ADD, key);
+			case NAME_Alpha:
+				th->alpha = CheckFixed(key);
 				break;
 
-			case NAME_Subtractive:
-				CHECK_N(Zd | Zdt)
-				Flag(th->flags, MTF_SUBTRACT, key);
+			case NAME_FillColor:
+				th->fillcolor = CheckInt(key);
+
+			case NAME_Health:
+				th->health = CheckInt(key);
 				break;
 
-			case NAME_Spectre:
-				CHECK_N(Zd | Zdt)
-				Flag(th->flags, MTF_SPECTRE, key);
+			case NAME_Score:
+				th->score = CheckInt(key);
 				break;
 
-			case NAME_Doublehealth:
-				CHECK_N(Zd | Zdt)
-				Flag(th->flags, MTF_DOUBLEHEALTH, key);
+			case NAME_Pitch:
+				th->pitch = (short)CheckInt(key);
+				break;
+
+			case NAME_Roll:
+				th->roll = (short)CheckInt(key);
+				break;
+
+			case NAME_ScaleX:
+				th->scaleX = CheckFixed(key);
+				break;
+
+			case NAME_ScaleY:
+				th->scaleY = CheckFixed(key);
+				break;
+
+			case NAME_Scale:
+				th->scaleX = th->scaleY = CheckFixed(key);
 				break;
 
 			default:

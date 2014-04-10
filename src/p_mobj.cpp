@@ -219,8 +219,12 @@ void AActor::Serialize (FArchive &arc)
 		<< threshold
 		<< player
 		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
-		<< SpawnAngle
-		<< skillrespawncount
+		<< SpawnAngle;
+	if (SaveVersion >= 4506)
+	{
+		arc << StartHealth;
+	}
+	arc << skillrespawncount
 		<< tracer
 		<< floorclip
 		<< tid
@@ -4022,24 +4026,6 @@ void AActor::HandleSpawnFlags ()
 		RenderStyle = STYLE_Translucent;
 		alpha = TRANSLUC25;
 	}
-	else if (SpawnFlags & MTF_TRANS)
-	{
-		RenderStyle = STYLE_Translucent;
-		alpha = TRANSLUC50;
-	}
-	else if (SpawnFlags & MTF_ADD)
-	{
-		RenderStyle = STYLE_Add;
-	}
-	else if (SpawnFlags & MTF_SUBTRACT)
-	{
-		RenderStyle = STYLE_Subtract;
-	}
-	else if (SpawnFlags & MTF_SPECTRE)
-	{
-		RenderStyle = STYLE_Add;
-		alpha = TRANSLUC25;
-	}
 	else if (SpawnFlags & MTF_ALTSHADOW)
 	{
 		RenderStyle = STYLE_None;
@@ -4052,10 +4038,6 @@ void AActor::HandleSpawnFlags ()
 			flags5 |= MF5_COUNTSECRET;
 			level.total_secrets++;
 		}
-	}
-	if (SpawnFlags & MTF_DOUBLEHEALTH)
-	{
-		health *= 2;
 	}
 }
 
@@ -4811,11 +4793,42 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 	}
 
+	// Set various UDMF options
+	if (mthing->alpha != -1)
+	{
+		DPrintf("Setting alpha to %f", FIXED2FLOAT(mthing->alpha));
+		mobj->alpha = mthing->alpha;
+	}
+	if (mthing->RenderStyle != STYLE_Count)
+		mobj->RenderStyle = (ERenderStyle)mthing->RenderStyle;
+	if (mthing->scaleX)
+		mobj->scaleX = FixedMul(mthing->scaleX, mobj->scaleX);
+	if (mthing->scaleY)
+		mobj->scaleY = FixedMul(mthing->scaleY, mobj->scaleY);
+	if (mthing->pitch)
+		mobj->pitch = ANGLE_1 * mthing->pitch;
+	if (mthing->roll)
+		mobj->roll = ANGLE_1 * mthing->roll;
+	if (mthing->score)
+		mobj->Score = mthing->score;
+	if (mthing->fillcolor)
+		mobj->fillcolor = mthing->fillcolor;
+
 	mobj->BeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{
 		mobj->LevelSpawned ();
 	}
+
+	if (mthing->health > 0)
+		mobj->health *= mthing->health;
+	else
+		mobj->health = -mthing->health;
+	if (mthing->health == 0)
+		mobj->Die(NULL, NULL);
+	else if (mthing->health != 1)
+		mobj->StartHealth = mobj->health;
+
 	return mobj;
 }
 
@@ -6038,18 +6051,19 @@ void AActor::SetIdle()
 
 int AActor::SpawnHealth()
 {
-	if (!(flags3 & MF3_ISMONSTER) || GetDefault()->health == 0)
+	int defhealth = StartHealth ? StartHealth : GetDefault()->health;
+	if (!(flags3 & MF3_ISMONSTER) || defhealth == 0)
 	{
-		return GetDefault()->health;
+		return defhealth;
 	}
 	else if (flags & MF_FRIENDLY)
 	{
-		int adj = FixedMul(GetDefault()->health, G_SkillProperty(SKILLP_FriendlyHealth));
+		int adj = FixedMul(defhealth, G_SkillProperty(SKILLP_FriendlyHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
 	else
 	{
-		int adj = FixedMul(GetDefault()->health, G_SkillProperty(SKILLP_MonsterHealth));
+		int adj = FixedMul(defhealth, G_SkillProperty(SKILLP_MonsterHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
 }

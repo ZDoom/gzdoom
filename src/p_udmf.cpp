@@ -632,6 +632,31 @@ public:
 				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
+			case NAME_Transparent:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_TRANS, key);
+				break;
+
+			case NAME_Additive:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_ADD, key);
+				break;
+
+			case NAME_Subtractive:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_SUBTRACT, key);
+				break;
+
+			case NAME_Spectre:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_SPECTRE, key);
+				break;
+
+			case NAME_Doublehealth:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_DOUBLEHEALTH, key);
+				break;
+
 			default:
 				if (0 == strnicmp("user_", key.GetChars(), 5))
 				{ // Custom user key - Sets an actor's user variable directly
@@ -686,6 +711,7 @@ public:
 	{
 		bool passuse = false;
 		bool strifetrans = false;
+		bool strifetrans2 = false;
 		FString arg0str, arg1str;
 
 		memset(ld, 0, sizeof(*ld));
@@ -801,6 +827,11 @@ public:
 			case NAME_Translucent:
 				CHECK_N(St | Zd | Zdt | Va)
 				strifetrans = CheckBool(key); 
+				continue;
+
+			case NAME_Transparent:
+				CHECK_N(St | Zd | Zdt | Va)
+				strifetrans2 = CheckBool(key); 
 				continue;
 
 			case NAME_Passuse:
@@ -964,6 +995,10 @@ public:
 		if (strifetrans && ld->Alpha == FRACUNIT)
 		{
 			ld->Alpha = FRACUNIT * 3/4;
+		}
+		if (strifetrans2 && ld->Alpha == FRACUNIT)
+		{
+			ld->Alpha = FRACUNIT * 1/4;
 		}
 		if (ld->sidedef[0] == NULL)
 		{

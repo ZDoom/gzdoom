@@ -373,6 +373,11 @@ xx(Friend)
 xx(Strifeally)
 xx(Standing)
 xx(Countsecret)
+//xx(Transparent) defined below for linedefs
+//xx(Additive) already defined for invisibility types
+xx(Subtractive)
+xx(Spectre)
+xx(Doublehealth)
 
 xx(Blocking)
 xx(Blockmonsters)

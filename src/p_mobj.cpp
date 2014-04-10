@@ -4022,6 +4022,24 @@ void AActor::HandleSpawnFlags ()
 		RenderStyle = STYLE_Translucent;
 		alpha = TRANSLUC25;
 	}
+	else if (SpawnFlags & MTF_TRANS)
+	{
+		RenderStyle = STYLE_Translucent;
+		alpha = TRANSLUC50;
+	}
+	else if (SpawnFlags & MTF_ADD)
+	{
+		RenderStyle = STYLE_Add;
+	}
+	else if (SpawnFlags & MTF_SUBTRACT)
+	{
+		RenderStyle = STYLE_Subtract;
+	}
+	else if (SpawnFlags & MTF_SPECTRE)
+	{
+		RenderStyle = STYLE_Add;
+		alpha = TRANSLUC25;
+	}
 	else if (SpawnFlags & MTF_ALTSHADOW)
 	{
 		RenderStyle = STYLE_None;
@@ -4034,6 +4052,10 @@ void AActor::HandleSpawnFlags ()
 			flags5 |= MF5_COUNTSECRET;
 			level.total_secrets++;
 		}
+	}
+	if (SpawnFlags & MTF_DOUBLEHEALTH)
+	{
+		health *= 2;
 	}
 }
 

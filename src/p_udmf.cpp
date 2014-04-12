@@ -643,7 +643,6 @@ public:
 				case NAME_None:
 					th->RenderStyle = STYLE_None;
 					break;
-				default:
 				case NAME_Normal:
 					th->RenderStyle = STYLE_Normal;
 					break;
@@ -678,6 +677,8 @@ public:
 				case NAME_Subtract:
 				case NAME_Subtractive:
 					th->RenderStyle = STYLE_Subtract;
+					break;
+				default:
 					break;
 				}
 				}

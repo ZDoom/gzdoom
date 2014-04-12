@@ -2527,8 +2527,9 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			if (!(corpsehit->flags & MF_CORPSE) )
 				continue;	// not a monster
 			
-			if (corpsehit->tics != -1)
-				continue;	// not lying still yet
+			if (corpsehit->tics != -1 && // not lying still yet
+				!corpsehit->state->GetCanRaise()) // or not ready to be raised yet
+				continue;
 			
 			raisestate = corpsehit->FindState(NAME_Raise);
 			if (raisestate == NULL)

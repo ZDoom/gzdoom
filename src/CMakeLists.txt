@@ -1038,8 +1038,6 @@ add_executable( zdoom WIN32
 	menu/playermenu.cpp
 	menu/readthis.cpp
 	menu/videomenu.cpp
-	gl/api/gl_api.cpp
-	gl/data/gl_sections.cpp
 	gl/data/gl_data.cpp
 	gl/data/gl_portaldata.cpp
 	gl/data/gl_setup.cpp
@@ -1291,7 +1289,6 @@ source_group("Games\\Strife Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DI
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
-source_group("OpenGL Renderer\\API" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/api/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
 source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx/.+")

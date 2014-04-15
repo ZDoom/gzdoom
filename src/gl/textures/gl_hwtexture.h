@@ -57,6 +57,7 @@ private:
 
 	int GetDepthBuffer();
 	void DeleteTexture(unsigned int texid);
+	void Resize(int width, int height, unsigned char *src_data, unsigned char *dst_data);
 
 public:
 	FHardwareTexture(int w, int h, bool mip, bool wrap, bool nofilter, bool nocompress);

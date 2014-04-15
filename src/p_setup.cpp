@@ -1843,6 +1843,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].fillcolor = 0 = mti[i].scaleX = mti[i].scaleY = mti[i].score = 0;
 	}
 	delete[] mtp;
 }

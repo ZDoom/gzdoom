@@ -1840,6 +1840,9 @@ void P_LoadThings2 (MapData * map)
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
 		mti[i].Conversation = 0;
 		mti[i].gravity = FRACUNIT;
+		mti[i].RenderStyle = STYLE_Count;
+		mti[i].alpha = -1;
+		mti[i].health = 1;
 	}
 	delete[] mtp;
 }

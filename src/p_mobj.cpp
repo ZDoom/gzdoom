@@ -405,7 +405,7 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 //
 // Get the actual duration of the next state
 // We are using a state flag now to indicate a state that should be
-// accelerated in Fast mode.
+// accelerated in Fast mode or slowed in Slow mode.
 //
 //==========================================================================
 
@@ -415,6 +415,10 @@ int AActor::GetTics(FState * newstate)
 	if (isFast() && newstate->Fast)
 	{
 		return tics - (tics>>1);
+	}
+	else if (isSlow() && newstate->Slow)
+	{
+		return tics<<1;
 	}
 	return tics;
 }
@@ -4080,6 +4084,11 @@ bool AActor::isFast()
 	if (flags5&MF5_ALWAYSFAST) return true;
 	if (flags5&MF5_NEVERFAST) return false;
 	return !!G_SkillProperty(SKILLP_FastMonsters);
+}
+
+bool AActor::isSlow()
+{
+	return !!G_SkillProperty(SKILLP_SlowMonsters);
 }
 
 void AActor::Activate (AActor *activator)

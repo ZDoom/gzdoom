@@ -1008,6 +1008,7 @@ public:
 	bool SetState (FState *newstate, bool nofunction=false);
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
+	bool isSlow();
 	void SetIdle();
 	void ClearCounters();
 

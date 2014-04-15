@@ -313,6 +313,11 @@ do_stop:
 					sc.MustGetStringName(")");
 					continue;
 				}
+				if (sc.Compare("CANRAISE"))
+				{
+					state.CanRaise = true;
+					continue;
+				}
 
 				// Make the action name lowercase
 				strlwr (sc.String);

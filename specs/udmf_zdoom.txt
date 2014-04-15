@@ -117,6 +117,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       locknumber = <int>;       // Line special is locked
       arg0str = <string>;       // Alternate string-based version of arg0
 
+      transparent   = <bool>; // true = line is a Strife transparent line (alpha 0.25)
+
       * Note about arg0str
 
       For lines with ACS specials (80-86 and 226), if arg0str is present and non-null, it
@@ -207,6 +209,21 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       arg0str = <string>;       // Alternate string-based version of arg0
 	  gravity = <float>;		// Set per-actor gravity. Positive values are multiplied with the class's property, 
 	                            // negative values are used as their absolute. Default = 1.0.
+								
+	  health = <int>;			// Set per-actor health. Positive values are multiplied with the class's property,
+								// negative values are used as their absolute. Default = 1.
+								
+	  renderstyle = <string>;	// Set per-actor render style, overriding the class default. Possible values can be "normal",
+								// "none", "add" or "additive", "subtract" or "subtractive", "stencil", "translucentstencil",
+								// "translucent", "fuzzy", "optfuzzy", "soultrans". Default is an empty string for no change.
+	  fillcolor = <integer>;    // Fill color used by the "stencil" and "translucentstencil" rendestyles, as RRGGBB value, default = 0x000000.
+	  alpha = <float>;          // Translucency of this actor (if applicable to renderstyle), default is 1.0.
+	  score = <int>;			// Score value of this actor, overriding the class default if not null. Default = 0.
+      pitch = <integer>; 		// Pitch of thing in degrees. Default = 0 (horizontal).
+      roll = <integer>; 		// Pitch of thing in degrees. Default = 0 (horizontal).
+	  scalex = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
+	  scaley = <float>;         // Horizontal scaling on thing. Default = 0 (ignored).
+	  scale = <float>;        	// Vertical and horizontal scaling on thing. Default = 0 (ignored).
 
       * Note about arg0str
 
@@ -334,6 +351,9 @@ Added arg0str thing property.
 
 1.21 09.08.2013
 Added waterzone sector property.
+
+1.22 12.04.2014
+Added transparent line property (to be folded back to core UDMF standard), and health, score, renderstyle, fillcolor, alpha, scale, scalex, scaley, pitch and roll thing properties.
 
 ===============================================================================
 EOF

@@ -363,5 +363,6 @@ lineflag 7 = ML_DONTDRAW;
 lineflag 8 = ML_MAPPED;
 lineflag 9 = ML_RAILING;
 lineflag 10 = ML_BLOCK_FLOATERS;
+lineflag 11 = ML_TRANSPARENT;
 lineflag 12 = ML_TRANSLUCENT;
 

@@ -40,10 +40,11 @@
 #include "gl/textures/gl_texture.h"
 #include "c_cvars.h"
 #include "gl/hqnx/hqx.h"
+#include "gl/xBRZ/xbrz.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 6)
+	if (self < 0 || self > 9)
 		self = 0;
 	GLRenderer->FlushTextures();
 }
@@ -203,6 +204,23 @@ static unsigned char *hqNxHelper( void (*hqNxFunction) ( unsigned*, unsigned*, i
 	return newBuffer;
 }
 
+static unsigned char *xBRZHelper(
+							  const int N,
+							  unsigned char *inputBuffer,
+							  const int inWidth,
+							  const int inHeight,
+							  int &outWidth,
+							  int &outHeight )
+{
+	outWidth = N * inWidth;
+	outHeight = N *inHeight;
+
+	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
+	xbrz::scale( N, reinterpret_cast<const unsigned*>(inputBuffer), reinterpret_cast<unsigned*>(newBuffer), inWidth, inHeight );
+	delete[] inputBuffer;
+	return newBuffer;
+}
+
 //===========================================================================
 // 
 // [BB] Upsamples the texture in inputBuffer, frees inputBuffer and returns
@@ -271,6 +289,12 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 			return hqNxHelper( &hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 6:
 			return hqNxHelper( &hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 7:
+			return xBRZHelper( 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 8:
+			return xBRZHelper( 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
+		case 9:
+			return xBRZHelper( 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		}
 	}
 	return inputBuffer;

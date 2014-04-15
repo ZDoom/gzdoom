@@ -722,6 +722,7 @@ file( GLOB HEADER_FILES
 	gl/data/*.h
 	gl/dynlights/*.h
 	gl/hqnx/*.h
+	gl/xBRZ/*.h
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
@@ -1053,6 +1054,7 @@ add_executable( zdoom WIN32
 	gl/hqnx/hq2x.cpp
 	gl/hqnx/hq3x.cpp
 	gl/hqnx/hq4x.cpp
+	gl/xBRZ/xbrz.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_texture.cpp
 	gl/textures/gl_material.cpp

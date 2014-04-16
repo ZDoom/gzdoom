@@ -441,27 +441,33 @@ CCMD (exec)
 	}
 }
 
+void execLogfile(const char *fn)
+{
+	if ((Logfile = fopen(fn, "w")))
+	{
+		const char *timestr = myasctime();
+		Printf("Log started: %s\n", timestr);
+	}
+	else
+	{
+		Printf("Could not start log\n");
+	}
+}
+
 CCMD (logfile)
 {
-	const char *timestr = myasctime ();
 
 	if (Logfile)
 	{
-		Printf ("Log stopped: %s\n", timestr);
+		const char *timestr = myasctime();
+		Printf("Log stopped: %s\n", timestr);
 		fclose (Logfile);
 		Logfile = NULL;
 	}
 
 	if (argv.argc() >= 2)
 	{
-		if ( (Logfile = fopen (argv[1], "w")) )
-		{
-			Printf ("Log started: %s\n", timestr);
-		}
-		else
-		{
-			Printf ("Could not start log\n");
-		}
+		execLogfile(argv[1]);
 	}
 }
 

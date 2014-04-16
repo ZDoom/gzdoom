@@ -2223,6 +2223,13 @@ void D_DoomMain (void)
 	FString *args;
 	int argcount;
 
+	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
+	FString logfile = Args->TakeValue("+logfile");
+	if (logfile != NULL)
+	{
+		execLogfile(logfile);
+	}
+
 	D_DoomInit();
 	PClass::StaticInit ();
 	atterm(FinalGC);

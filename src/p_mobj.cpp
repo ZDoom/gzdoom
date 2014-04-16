@@ -4795,10 +4795,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 	// Set various UDMF options
 	if (mthing->alpha != -1)
-	{
-		DPrintf("Setting alpha to %f", FIXED2FLOAT(mthing->alpha));
 		mobj->alpha = mthing->alpha;
-	}
 	if (mthing->RenderStyle != STYLE_Count)
 		mobj->RenderStyle = (ERenderStyle)mthing->RenderStyle;
 	if (mthing->scaleX)

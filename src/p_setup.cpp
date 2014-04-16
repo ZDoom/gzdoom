@@ -1764,6 +1764,9 @@ void P_LoadThings (MapData * map)
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
+		mti[i].RenderStyle = STYLE_Count;
+		mti[i].alpha = -1;
+		mti[i].health = 1;
 		flags &= ~MTF_SKILLMASK;
 		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
 		if (gameinfo.gametype == GAME_Strife)
@@ -1837,6 +1840,10 @@ void P_LoadThings2 (MapData * map)
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
 		mti[i].Conversation = 0;
 		mti[i].gravity = FRACUNIT;
+		mti[i].RenderStyle = STYLE_Count;
+		mti[i].alpha = -1;
+		mti[i].health = 1;
+		mti[i].fillcolor = mti[i].scaleX = mti[i].scaleY = mti[i].score = 0;
 	}
 	delete[] mtp;
 }

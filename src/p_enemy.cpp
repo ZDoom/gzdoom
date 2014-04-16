@@ -1693,11 +1693,11 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 					&& P_AproxDistance (player->mo->velx, player->mo->vely)
 					< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
-					return false;
+					continue;
 				}
 				if (pr_lookforplayers() < 225)
 				{ // Player isn't sneaking, but still didn't detect
-					return false;
+					continue;
 				}
 			}
 		}

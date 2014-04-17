@@ -42,19 +42,16 @@ ACTOR Crusader 3005
 		ROB2 AABBCCDD 3 A_Chase
 		Loop
 	Missile:
-		ROB2 E 3 A_FaceTarget
-		ROB2 F 2 Bright A_CrusaderChoose
-		ROB2 E 2 Bright A_CrusaderSweepLeft
-		ROB2 F 3 Bright A_CrusaderSweepLeft
-		ROB2 E 2 Bright A_CrusaderSweepLeft
-		ROB2 F 2 Bright A_CrusaderSweepLeft
-		ROB2 E 2 Bright A_CrusaderSweepRight
-		ROB2 F 2 Bright A_CrusaderSweepRight
-		ROB2 E 2 Bright A_CrusaderSweepRight
-		ROB2 F 2 A_CrusaderRefire
+		ROB2 E 3 Slow A_FaceTarget
+		ROB2 F 2 Slow Bright A_CrusaderChoose
+		ROB2 E 2 Slow Bright A_CrusaderSweepLeft
+		ROB2 F 3 Slow Bright A_CrusaderSweepLeft
+		ROB2 EF 2 Slow Bright A_CrusaderSweepLeft
+		ROB2 EFE 2 Slow Bright A_CrusaderSweepRight
+		ROB2 F 2 Slow A_CrusaderRefire
 		Loop
 	Pain:
-		ROB2 D 1 A_Pain
+		ROB2 D 1 Slow A_Pain
 		Goto See
 	Death:
 		ROB2 G 3 A_Scream

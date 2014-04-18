@@ -238,6 +238,7 @@ skill baby
 	AmmoFactor = 2
 	DamageFactor = 0.5
 	EasyBossBrain
+	SlowMonsters
 	SpawnFilter = Baby
 	PicName = "M_JKILL"
 	Name = "$SSKILL_BABY"

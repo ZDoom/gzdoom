@@ -405,7 +405,7 @@ bool AActor::InStateSequence(FState * newstate, FState * basestate)
 //
 // Get the actual duration of the next state
 // We are using a state flag now to indicate a state that should be
-// accelerated in Fast mode.
+// accelerated in Fast mode or slowed in Slow mode.
 //
 //==========================================================================
 
@@ -415,6 +415,10 @@ int AActor::GetTics(FState * newstate)
 	if (isFast() && newstate->Fast)
 	{
 		return tics - (tics>>1);
+	}
+	else if (isSlow() && newstate->Slow)
+	{
+		return tics<<1;
 	}
 	return tics;
 }
@@ -4082,6 +4086,11 @@ bool AActor::isFast()
 	return !!G_SkillProperty(SKILLP_FastMonsters);
 }
 
+bool AActor::isSlow()
+{
+	return !!G_SkillProperty(SKILLP_SlowMonsters);
+}
+
 void AActor::Activate (AActor *activator)
 {
 	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
@@ -4795,10 +4804,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 	// Set various UDMF options
 	if (mthing->alpha != -1)
-	{
-		DPrintf("Setting alpha to %f", FIXED2FLOAT(mthing->alpha));
 		mobj->alpha = mthing->alpha;
-	}
 	if (mthing->RenderStyle != STYLE_Count)
 		mobj->RenderStyle = (ERenderStyle)mthing->RenderStyle;
 	if (mthing->scaleX)

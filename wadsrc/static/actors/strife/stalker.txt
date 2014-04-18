@@ -45,14 +45,14 @@ ACTOR Stalker 186
 		STLK J 10 A_Look
 		Loop
 	See:
-		STLK A 1 A_StalkerChaseDecide
-		STLK ABB 3 A_Chase
-		STLK C 3 A_StalkerWalk
-		STLK C 3 A_Chase
+		STLK A 1 Slow A_StalkerChaseDecide
+		STLK ABB 3 Slow A_Chase
+		STLK C 3 Slow A_StalkerWalk
+		STLK C 3 Slow A_Chase
 		Loop
 	Melee:
-		STLK J 3 A_FaceTarget
-		STLK K 3 A_StalkerAttack
+		STLK J 3 Slow A_FaceTarget
+		STLK K 3 Slow A_StalkerAttack
 	SeeFloor:
 		STLK J 3 A_StalkerWalk
 		STLK KK 3 A_Chase

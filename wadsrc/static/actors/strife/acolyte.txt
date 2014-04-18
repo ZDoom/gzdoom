@@ -39,16 +39,16 @@ ACTOR Acolyte : StrifeHumanoid
 		AGRD ABCDABCD 5 A_Wander
 		Loop
 	See:
-		AGRD A 6 A_AcolyteBits
-		AGRD BCD 6 A_Chase
+		AGRD A 6 Fast Slow A_AcolyteBits
+		AGRD BCD 6 Fast Slow A_Chase
 		Loop
 	Missile:
-		AGRD E 8 A_FaceTarget
-		AGRD FE 4 A_ShootGun
-		AGRD F 6 A_ShootGun
+		AGRD E 8 Fast Slow A_FaceTarget
+		AGRD FE 4 Fast Slow A_ShootGun
+		AGRD F 6 Fast Slow A_ShootGun
 		Goto See
 	Pain:
-		AGRD O 8 A_Pain
+		AGRD O 8 Fast Slow A_Pain
 		Goto See
 	Death:
 		AGRD G 4
@@ -170,8 +170,8 @@ ACTOR AcolyteShadow : Acolyte 58
 		AGRD A 6 A_BeShadowyFoe
 		Goto Super::See+1
 	Pain:
-		AGRD O 0 A_SetShadow
-		AGRD O 8 A_Pain
+		AGRD O 0 Fast Slow A_SetShadow
+		AGRD O 8 Fast Slow A_Pain
 		Goto See
 	}
 }

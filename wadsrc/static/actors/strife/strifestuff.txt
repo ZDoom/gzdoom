@@ -1786,8 +1786,8 @@ ACTOR CeilingTurret 27
 		Loop
 	Missile:
 	Pain:
-		TURT B 4 A_ShootGun
-		TURT D 3 A_SentinelRefire
+		TURT B 4 Slow A_ShootGun
+		TURT D 3 Slow A_SentinelRefire
 		TURT A 4 A_SentinelRefire
 		Loop
 	Death:

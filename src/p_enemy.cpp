@@ -1542,7 +1542,6 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	int 		c;
-	int 		stop;
 	int			pnum;
 	player_t*	player;
 	bool chasegoal = params? (!(params->flags & LOF_DONTCHASEGOAL)) : true;
@@ -1615,20 +1614,22 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	{
 		pnum = actor->LastLookPlayerNumber;
 	}
-	stop = (pnum - 1) & (MAXPLAYERS-1);
 		
 	for (;;)
 	{
-		pnum = (pnum + 1) & (MAXPLAYERS-1);
-		if (!playeringame[pnum])
-			continue;
-
-		if (actor->TIDtoHate == 0)
+		// [ED850] Each and every player should only ever be checked once.
+		if (c++ < MAXPLAYERS)
 		{
-			actor->LastLookPlayerNumber = pnum;
-		}
+			pnum = (pnum + 1) & (MAXPLAYERS - 1);
+			if (!playeringame[pnum])
+				continue;
 
-		if (++c == MAXPLAYERS-1 || pnum == stop)
+			if (actor->TIDtoHate == 0)
+			{
+				actor->LastLookPlayerNumber = pnum;
+			}
+		}
+		else
 		{
 			// done looking
 			if (actor->target == NULL)
@@ -1692,11 +1693,11 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 					&& P_AproxDistance (player->mo->velx, player->mo->vely)
 					< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
-					return false;
+					continue;
 				}
 				if (pr_lookforplayers() < 225)
 				{ // Player isn't sneaking, but still didn't detect
-					return false;
+					continue;
 				}
 			}
 		}

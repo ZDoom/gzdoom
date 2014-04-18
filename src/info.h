@@ -77,6 +77,7 @@ struct FState
 	BYTE		Fast:1;
 	BYTE		NoDelay:1;		// Spawn states executes its action normally
 	BYTE		CanRaise:1;		// Allows a monster to be resurrected without waiting for an infinate frame
+	BYTE		Slow:1;			// Inverse of fast
 	int			ParameterIndex;
 
 	inline int GetFrame() const

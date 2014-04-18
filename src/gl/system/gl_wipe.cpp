@@ -53,6 +53,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_templates.h"
@@ -506,7 +507,8 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	glEnd();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.Apply(true);
+	gl_RenderState.Apply();
+	GLRenderer->mShaderManager->SetActiveShader(NULL);	// fixme: We need to replace the burn wipe with a shader effect later.
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 

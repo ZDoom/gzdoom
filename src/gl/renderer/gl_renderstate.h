@@ -80,7 +80,7 @@ enum EEffect
 {
 	EFF_NONE,
 	EFF_FOGBOUNDARY,
-	EFF_SPHEREMAP,
+	EFF_SPHEREMAP
 };
 
 class FRenderState
@@ -116,7 +116,7 @@ class FRenderState
 	int glAlphaFunc;
 	float glAlphaThreshold;
 	bool glAlphaTest;
-	int glBlendEquation;
+	int gl_BlendEquation;
 
 	bool ffTextureEnabled;
 	bool ffFogEnabled;
@@ -136,7 +136,7 @@ public:
 	void Reset();
 
 	int SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime);
-	void Apply(bool forcenoshader = false);
+	void Apply();
 
 	void SetTextureMode(int mode)
 	{

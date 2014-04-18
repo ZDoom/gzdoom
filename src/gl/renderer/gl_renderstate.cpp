@@ -47,8 +47,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_colormap.h"
 
-void gl_SetTextureMode(int type);
-
 FRenderState gl_RenderState;
 int FStateAttr::ChangeCounter;
 
@@ -77,7 +75,7 @@ void FRenderState::Reset()
 	mAlphaFunc = GL_GEQUAL;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
-	glBlendEquation = -1;
+	gl_BlendEquation = -1;
 	m2D = true;
 }
 
@@ -129,16 +127,12 @@ bool FRenderState::ApplyShader()
 	}
 	else
 	{
-		useshaders = (!m2D || mEffectState != 0 || mColormapState); // all 3D rendering and 2D with texture effects.
+		FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
 
-		if (useshaders)
+		if (shd != NULL)
 		{
-			FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
-
-			if (shd != NULL)
-			{
-				activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
-			}
+			activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
+			assert(activeShader != NULL);
 		}
 	}
 
@@ -215,7 +209,7 @@ bool FRenderState::ApplyShader()
 //
 //==========================================================================
 
-void FRenderState::Apply(bool forcenoshader)
+void FRenderState::Apply()
 {
 	if (!gl_direct_state_change)
 	{
@@ -237,74 +231,13 @@ void FRenderState::Apply(bool forcenoshader)
 			if (mAlphaTest) glEnable(GL_ALPHA_TEST);
 			else glDisable(GL_ALPHA_TEST);
 		}
-		if (mBlendEquation != glBlendEquation)
+		if (mBlendEquation != gl_BlendEquation)
 		{
-			glBlendEquation = mBlendEquation;
+			gl_BlendEquation = mBlendEquation;
 			::glBlendEquation(mBlendEquation);
 		}
 	}
 
-	if (forcenoshader || !ApplyShader())
-	{
-		GLRenderer->mShaderManager->SetActiveShader(NULL);
-		if (mTextureMode != ffTextureMode)
-		{
-			gl_SetTextureMode((ffTextureMode = mTextureMode));
-		}
-		if (mTextureEnabled != ffTextureEnabled)
-		{
-			if ((ffTextureEnabled = mTextureEnabled)) glEnable(GL_TEXTURE_2D);
-			else glDisable(GL_TEXTURE_2D);
-		}
-		if (mFogEnabled != ffFogEnabled)
-		{
-			if ((ffFogEnabled = mFogEnabled)) 
-			{
-				glEnable(GL_FOG);
-			}
-			else glDisable(GL_FOG);
-		}
-		if (mFogEnabled)
-		{
-			if (ffFogColor != mFogColor)
-			{
-				ffFogColor = mFogColor;
-				GLfloat FogColor[4]={mFogColor.r/255.0f,mFogColor.g/255.0f,mFogColor.b/255.0f,0.0f};
-				glFogfv(GL_FOG_COLOR, FogColor);
-			}
-			if (ffFogDensity != mFogDensity)
-			{
-				glFogf(GL_FOG_DENSITY, mFogDensity/64000.f);
-				ffFogDensity=mFogDensity;
-			}
-		}
-		if (mSpecialEffect != ffSpecialEffect)
-		{
-			switch (ffSpecialEffect)
-			{
-			case EFF_SPHEREMAP:
-				glDisable(GL_TEXTURE_GEN_T);
-				glDisable(GL_TEXTURE_GEN_S);
-
-			default:
-				break;
-			}
-			switch (mSpecialEffect)
-			{
-			case EFF_SPHEREMAP:
-				// Use sphere mapping for this
-				glEnable(GL_TEXTURE_GEN_T);
-				glEnable(GL_TEXTURE_GEN_S);
-				glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_SPHERE_MAP);
-				break;
-
-			default:
-				break;
-			}
-			ffSpecialEffect = mSpecialEffect;
-		}
-	}
-
+	ApplyShader();
 }
 

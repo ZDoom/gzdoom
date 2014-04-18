@@ -177,7 +177,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 		columns = 4 * (gl_sky_detail > 0 ? gl_sky_detail : 1);
 		foglayer=true;
 		gl_RenderState.EnableTexture(false);
-		gl_RenderState.Apply(true);
+		gl_RenderState.Apply();
 
 
 		if (!secondlayer)
@@ -197,7 +197,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 	}
 	else
 	{
-		gl_RenderState.Apply(true);
+		gl_RenderState.Apply();
 		columns=4;	// no need to do more!
 		glBegin(GL_TRIANGLE_FAN);
 		for(c = 0; c < columns; c++)

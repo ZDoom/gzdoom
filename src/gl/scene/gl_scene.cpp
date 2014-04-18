@@ -706,7 +706,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.BlendFunc(GL_DST_COLOR,GL_ZERO);
 			glColor4f(extra_red, extra_green, extra_blue, 1.0f);
-			gl_RenderState.Apply(true);
+			gl_RenderState.Apply();
 			glBegin(GL_TRIANGLE_STRIP);
 			glVertex2f( 0.0f, 0.0f);
 			glVertex2f( 0.0f, (float)SCREENHEIGHT);
@@ -743,7 +743,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		gl_RenderState.EnableAlphaTest(false);
 		gl_RenderState.EnableTexture(false);
 		glColor4fv(blend);
-		gl_RenderState.Apply(true);
+		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_STRIP);
 		glVertex2f( 0.0f, 0.0f);
 		glVertex2f( 0.0f, (float)SCREENHEIGHT);

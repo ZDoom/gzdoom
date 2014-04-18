@@ -123,7 +123,7 @@ class FShaderManager
 {
 	enum 
 	{ 
-		NUM_EFFECTS = 2 
+		NUM_EFFECTS = 2
 	};
 
 	TArray<FShaderContainer*> mTextureEffects;

@@ -46,76 +46,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 
-#if defined (__unix__) || defined (__APPLE__)
-#define PROC void*
-#define LPCSTR const char*
-
-#include <SDL.h>
-#define wglGetProcAddress(x) (*SDL_GL_GetProcAddress)(x)
-#endif
-static void APIENTRY glBlendEquationDummy (GLenum mode);
-
-
-static TArray<FString>  m_Extensions;
-
 RenderContext gl;
-
-int occlusion_type=0;
-
-PROC myGetProcAddress(LPCSTR proc)
-{
-	PROC p = wglGetProcAddress(proc);
-	if (p == NULL) I_Error("Fatal: GL function '%s' not found.", proc);
-	return p;
-}
-
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static void CollectExtensions()
-{
-	const char *supported = NULL;
-	char *extensions, *extension;
-
-	supported = (char *)glGetString(GL_EXTENSIONS);
-
-	if (supported)
-	{
-		extensions = new char[strlen(supported) + 1];
-		strcpy(extensions, supported);
-
-		extension = strtok(extensions, " ");
-		while(extension)
-		{
-			m_Extensions.Push(FString(extension));
-			extension = strtok(NULL, " ");
-		}
-
-		delete [] extensions;
-	}
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static bool CheckExtension(const char *ext)
-{
-	for (unsigned int i = 0; i < m_Extensions.Size(); ++i)
-	{
-		if (m_Extensions[i].CompareNoCase(ext) == 0) return true;
-	}
-
-	return false;
-}
-
-
 
 //==========================================================================
 //
@@ -125,7 +56,6 @@ static bool CheckExtension(const char *ext)
 
 static void InitContext()
 {
-	gl.flags=0;
 }
 
 //==========================================================================
@@ -136,8 +66,7 @@ static void InitContext()
 
 void gl_LoadExtensions()
 {
-	InitContext();
-	CollectExtensions();
+	gl.flags = 0;
 
 	const char *version = (const char*)glGetString(GL_VERSION);
 
@@ -147,13 +76,10 @@ void gl_LoadExtensions()
 		I_FatalError("Unsupported OpenGL version.\nAt least GL 3.3 is required to run " GAMENAME ".\n");
 	}
 
-	// This loads any function pointers and flags that require a vaild render context to
-	// initialize properly
-
 	gl.vendorstring=(char*)glGetString(GL_VENDOR);
 
-	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
-	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
+	if (glewIsSupported("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
+	if (glewIsSupported("GL_EXT_texture_compression_s3tc")) gl.flags |= RFL_TEXTURE_COMPRESSION_S3TC;
 	if (strstr(gl.vendorstring, "NVIDIA")) gl.flags|=RFL_NVIDIA;
 	else if (strstr(gl.vendorstring, "ATI Technologies")) gl.flags|=RFL_ATI;
 
@@ -192,96 +118,6 @@ void gl_PrintStartupLog()
 	glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, &v);
 	Printf ("Max. combined uniform blocks: %d\n", v);
 
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static void APIENTRY glBlendEquationDummy (GLenum mode)
-{
-	// If this is not supported all non-existent modes are
-	// made to draw nothing.
-	if (mode == GL_FUNC_ADD)
-	{
-		glColorMask(true, true, true, true);
-	}
-	else
-	{
-		glColorMask(false, false, false, false);
-	}
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void gl_SetTextureMode(int type)
-{
-	static float white[] = {1.f,1.f,1.f,1.f};
-
-	if (type == TM_MASK)
-	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE); 
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-	}
-	else if (type == TM_OPAQUE)
-	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE); 
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-	}
-	else if (type == TM_INVERT)
-	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_ONE_MINUS_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE); 
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-	}
-	else if (type == TM_INVERTOPAQUE)
-	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_ONE_MINUS_SRC_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE); 
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-	}
-	else // if (type == TM_MODULATE)
-	{
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	}
 }
 
 //} // extern "C"

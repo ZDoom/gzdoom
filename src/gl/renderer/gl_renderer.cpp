@@ -269,7 +269,7 @@ void FGLRenderer::ClearBorders()
 	glColor3f(0.f, 0.f, 0.f);
 	gl_RenderState.Set2DMode(true);
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply(true);
+	gl_RenderState.Apply();
 
 	glBegin(GL_QUADS);
 	// upper quad
@@ -442,7 +442,7 @@ void FGLRenderer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 
 {
 	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply(true);
+	gl_RenderState.Apply();
 	glColor3ub(p.r, p.g, p.b);
 	glBegin(GL_LINES);
 	glVertex2i(x1, y1);
@@ -460,7 +460,7 @@ void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
 {
 	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply(true);
+	gl_RenderState.Apply();
 	glColor3ub(p.r, p.g, p.b);
 	glBegin(GL_POINTS);
 	glVertex2i(x1, y1);
@@ -481,7 +481,7 @@ void FGLRenderer::Dim(PalEntry color, float damount, int x1, int y1, int w, int 
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
-	gl_RenderState.Apply(true);
+	gl_RenderState.Apply();
 	
 	r = color.r/255.0f;
 	g = color.g/255.0f;

@@ -41,6 +41,7 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/vsMathLib.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
@@ -194,6 +195,31 @@ bool FRenderState::ApplyShader()
 		if (glset.lightmode == 8)
 		{
 			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
+		}
+
+		if (activeShader->mMatrixTick[0] < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)
+		{
+			// update model matrix
+			VSML.matrixToGL(activeShader->mModelMatLocation, VSML.MODEL);
+			activeShader->mMatrixTick[0] = VSML.getLastUpdate(VSML.MODEL);
+		}
+		if (activeShader->mMatrixTick[1] < VSML.getLastUpdate(VSML.VIEW) && activeShader->mViewMatLocation >= 0)
+		{
+			// update view matrix
+			VSML.matrixToGL(activeShader->mViewMatLocation, VSML.VIEW);
+			activeShader->mMatrixTick[1] = VSML.getLastUpdate(VSML.VIEW);
+		}
+		if (activeShader->mMatrixTick[2] < VSML.getLastUpdate(VSML.PROJECTION) && activeShader->mProjMatLocation >= 0)
+		{
+			// update view-projection matrix
+			VSML.matrixToGL(activeShader->mProjMatLocation, VSML.PROJECTION);
+			activeShader->mMatrixTick[2] = VSML.getLastUpdate(VSML.PROJECTION);
+		}
+		if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0) && activeShader->mTexMatLocation >= 0)
+		{
+			// update view-projection matrix
+			VSML.matrixToGL(activeShader->mTexMatLocation, VSML.AUX0);
+			activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
 		}
 
 		return true;

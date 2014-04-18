@@ -164,6 +164,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		// only print message if there's an error.
 		Printf("Init Shader '%s':\n%s\n", name, error.GetChars());
 	}
+	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
+	mViewMatLocation = glGetUniformLocation(hShader, "ViewMatrix");
+	mProjMatLocation = glGetUniformLocation(hShader, "ProjectionMatrix");
+	mTexMatLocation = glGetUniformLocation(hShader, "TextureMatrix");
 	timer_index = glGetUniformLocation(hShader, "timer");
 	desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
 	fogenabled_index = glGetUniformLocation(hShader, "fogenabled");

@@ -67,6 +67,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
+#include "gl/data/vsMathLib.h"
 
 //===========================================================================
 // 
@@ -262,10 +263,8 @@ void FGLRenderer::ClearBorders()
 	int borderHeight = (trueHeight - height) / 2;
 
 	glViewport(0, 0, width, trueHeight);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, width * 1.0, 0.0, trueHeight, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
+	VSML.loadIdentity(VSML.PROJECTION);
+	VSML.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
 	glColor3f(0.f, 0.f, 0.f);
 	gl_RenderState.Set2DMode(true);
 	gl_RenderState.EnableTexture(false);

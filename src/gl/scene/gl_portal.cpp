@@ -61,6 +61,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/utility/gl_geometric.h"
+#include "gl/data/vsMathLib.h"
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -114,17 +115,13 @@ void GLPortal::BeginScene()
 void GLPortal::ClearScreen()
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
+	VSML.pushMatrix(VSML.VIEW);
+	VSML.pushMatrix(VSML.PROJECTION);
 	screen->Begin2D(false);
 	screen->Dim(0, 1.f, 0, 0, SCREENWIDTH, SCREENHEIGHT);
 	glEnable(GL_DEPTH_TEST);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	VSML.popMatrix(VSML.PROJECTION);
+	VSML.popMatrix(VSML.VIEW);
 	if (multi) glEnable(GL_MULTISAMPLE);
 	gl_RenderState.Set2DMode(false);
 }
@@ -1047,8 +1044,7 @@ void GLHorizonPortal::DrawContents()
 
 	if (pushed)
 	{
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
+		VSML.popMatrix(VSML.AUX0);
 	}
 
 	PortalAll.Unclock();

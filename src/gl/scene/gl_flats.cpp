@@ -63,6 +63,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/data/vsMathLib.h"
 
 //==========================================================================
 //
@@ -94,12 +95,11 @@ bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		float xscale2=64.f/gltexture->TextureWidth(GLUSE_TEXTURE);
 		float yscale2=64.f/gltexture->TextureHeight(GLUSE_TEXTURE);
 
-		glMatrixMode(GL_TEXTURE);
-		glPushMatrix();
-		glScalef(xscale1 ,yscale1,1.0f);
-		glTranslatef(uoffs,voffs,0.0f);
-		glScalef(xscale2 ,yscale2,1.0f);
-		glRotatef(angle,0.0f,0.0f,1.0f);
+		VSML.pushMatrix(VSML.AUX0);
+		VSML.scale(VSML.AUX0, xscale1 ,yscale1,1.0f);
+		VSML.translate(VSML.AUX0, uoffs, voffs, 0.0f);
+		VSML.scale(VSML.AUX0, xscale2, yscale2, 1.0f);
+		VSML.rotate(VSML.AUX0, angle, 0.0f, 0.0f, 1.0f);
 		return true;
 	}
 	return false;
@@ -363,8 +363,7 @@ void GLFlat::Draw(int pass)
 		DrawSubsectors(pass, false);
 		if (pushed) 
 		{
-			glPopMatrix();
-			glMatrixMode(GL_MODELVIEW);
+			VSML.popMatrix(VSML.AUX0);
 		}
 		break;
 	}
@@ -428,8 +427,7 @@ void GLFlat::Draw(int pass)
 			gl_RenderState.EnableBrightmap(true);
 			if (pushed)
 			{
-				glPopMatrix();
-				glMatrixMode(GL_MODELVIEW);
+				VSML.popMatrix(VSML.AUX0);
 			}
 		}
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

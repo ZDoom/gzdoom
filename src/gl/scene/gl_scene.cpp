@@ -75,6 +75,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/data/vsMathLib.h"
 
 //==========================================================================
 //
@@ -247,36 +248,11 @@ void FGLRenderer::SetCameraPos(fixed_t viewx, fixed_t viewy, fixed_t viewz, angl
 //
 //-----------------------------------------------------------------------------
 
-static void setPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
-{
-	GLdouble m[4][4];
-	double sine, cotangent, deltaZ;
-	double radians = fovy / 2 * M_PI / 180;
-
-	deltaZ = zFar - zNear;
-	sine = sin(radians);
-	if ((deltaZ == 0) || (sine == 0) || (aspect == 0)) {
-		return;
-	}
-	cotangent = cos(radians) / sine;
-
-	memset(m, 0, sizeof(m));
-	m[0][0] = cotangent / aspect;
-	m[1][1] = cotangent;
-	m[2][2] = -(zFar + zNear) / deltaZ;
-	m[2][3] = -1;
-	m[3][2] = -2 * zNear * zFar / deltaZ;
-	m[3][3] = 0;
-	glLoadMatrixd(&m[0][0]);
-}
-
-
 void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 {
-	glMatrixMode(GL_PROJECTION);
-
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	setPerspective(fovy, ratio, 5.f, 65536.f);
+	VSML.loadIdentity(VSML.PROJECTION);
+	VSML.perspective(fovy, ratio, 5.f, 65536.f);
 	gl_RenderState.Set2DMode(false);
 }
 
@@ -288,25 +264,18 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 
 void FGLRenderer::SetViewMatrix(bool mirror, bool planemirror)
 {
-	glActiveTexture(GL_TEXTURE7);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-
-	glActiveTexture(GL_TEXTURE0);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	VSML.loadIdentity(VSML.AUX0);
+	VSML.loadIdentity(VSML.MODEL);
+	VSML.loadIdentity(VSML.VIEW);
 
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -1:1;
 
-	glRotatef(GLRenderer->mAngles.Roll,  0.0f, 0.0f, 1.0f);
-	glRotatef(GLRenderer->mAngles.Pitch, 1.0f, 0.0f, 0.0f);
-	glRotatef(GLRenderer->mAngles.Yaw,   0.0f, mult, 0.0f);
-	glTranslatef( GLRenderer->mCameraPos.X * mult, -GLRenderer->mCameraPos.Z*planemult, -GLRenderer->mCameraPos.Y);
-	glScalef(-mult, planemult, 1);
+	VSML.rotate(VSML.VIEW, GLRenderer->mAngles.Roll,  0.0f, 0.0f, 1.0f);
+	VSML.rotate(VSML.VIEW, GLRenderer->mAngles.Pitch, 1.0f, 0.0f, 0.0f);
+	VSML.rotate(VSML.VIEW, GLRenderer->mAngles.Yaw, 0.0f, mult, 0.0f);
+	VSML.translate(VSML.VIEW, GLRenderer->mCameraPos.X * mult, -GLRenderer->mCameraPos.Z*planemult, -GLRenderer->mCameraPos.Y);
+	VSML.scale(VSML.VIEW, -mult, planemult, 1);
 }
 
 

@@ -54,6 +54,7 @@
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_skyboxtexture.h"
 #include "gl/textures/gl_material.h"
+#include "gl/data/vsMathLib.h"
 
 
 //-----------------------------------------------------------------------------
@@ -251,38 +252,36 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	int texh = 0;
 	bool texscale = false;
 
-	// 57 worls units roughly represent one sky texel for the glTranslate call.
+	// 57 world units roughly represent one sky texel for the VSML.translate call.
 	const float skyoffsetfactor = 57;
 
 	if (tex)
 	{
-		glPushMatrix();
+		VSML.pushMatrix(VSML.VIEW);
 		tex->Bind(CM_Index, 0, 0);
 		texw = tex->TextureWidth(GLUSE_TEXTURE);
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
 
-		glRotatef(-180.0f+x_offset, 0.f, 1.f, 0.f);
+		VSML.rotate(VSML.VIEW, -180.0f+x_offset, 0.f, 1.f, 0.f);
 		yAdd = y_offset/texh;
 
 		if (texh < 200)
 		{
-			glTranslatef(0.f, -1250.f, 0.f);
-			glScalef(1.f, texh/230.f, 1.f);
+			VSML.translate(VSML.VIEW, 0.f, -1250.f, 0.f);
+			VSML.scale(VSML.VIEW, 1.f, texh/230.f, 1.f);
 		}
 		else if (texh <= 240)
 		{
-			glTranslatef(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			glScalef(1.f, 1.f + ((texh-200.f)/200.f) * 1.17f, 1.f);
+			VSML.translate(VSML.VIEW, 0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			VSML.scale(VSML.VIEW, 1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
 		}
 		else
 		{
-			glTranslatef(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			glScalef(1.f, 1.2f * 1.17f, 1.f);
-			glMatrixMode(GL_TEXTURE);
-			glPushMatrix();
-			glLoadIdentity();
-			glScalef(1.f, 240.f / texh, 1.f);
-			glMatrixMode(GL_MODELVIEW);
+			VSML.translate(VSML.VIEW, 0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			VSML.scale(VSML.VIEW, 1.f, 1.2f * 1.17f, 1.f);
+			VSML.pushMatrix(VSML.AUX0);
+			VSML.loadIdentity(VSML.AUX0);
+			VSML.scale(VSML.AUX0, 1.f, 240.f / texh, 1.f);
 			texscale = true;
 		}
 	}
@@ -331,11 +330,12 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	RenderSkyHemisphere(SKYHEMI_LOWER, mirror);
 	if (texscale)
 	{
-		glMatrixMode(GL_TEXTURE);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
+		VSML.popMatrix(VSML.AUX0);
 	}
-	if (tex) glPopMatrix();
+	if (tex)
+	{
+		VSML.popMatrix(VSML.VIEW);
+	}
 
 }
 
@@ -353,9 +353,9 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 	FMaterial * tex;
 
 	if (!sky2)
-		glRotatef(-180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
+		VSML.rotate(VSML.VIEW, -180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
 	else
-		glRotatef(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
+		VSML.rotate(VSML.VIEW, -180.0f + x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
 	glColor3f(R, G ,B);
 
@@ -557,8 +557,7 @@ void GLSkyPortal::DrawContents()
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
+	VSML.pushMatrix(VSML.VIEW);
 	GLRenderer->SetupView(0, 0, 0, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
@@ -608,7 +607,7 @@ void GLSkyPortal::DrawContents()
 			foglayer=false;
 		}
 	}
-	glPopMatrix();
+	VSML.popMatrix(VSML.VIEW);
 	glset.lightmode = oldlightmode;
 }
 

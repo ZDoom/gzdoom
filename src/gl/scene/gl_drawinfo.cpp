@@ -56,6 +56,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/data/vsMathLib.h"
 
 FDrawInfo * gl_drawinfo;
 
@@ -1110,8 +1111,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 
 	if (pushed)
 	{
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
+		VSML.popMatrix(VSML.AUX0);
 	}
 }
 

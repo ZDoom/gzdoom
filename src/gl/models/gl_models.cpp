@@ -59,6 +59,7 @@
 #include "gl/utility/gl_geometric.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/data/vsMathLib.h"
 
 static inline float GetTimeFloat()
 {
@@ -752,42 +753,39 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	// This is rather crappy way to transfer fixet_t type into angle in degrees, but its works!
 	if(smf->flags & MDL_INHERITACTORPITCH) pitch += float(static_cast<double>(spr->actor->pitch >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->pitch & 0x0000FFFF) / (1 << 29) * 45);
 	if(smf->flags & MDL_INHERITACTORROLL) roll += float(static_cast<double>(spr->actor->roll >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->roll & 0x0000FFFF) / (1 << 29) * 45);
-		
-	glActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
+	
+
+	VSML.loadIdentity(VSML.MODEL);
 
 	// Model space => World space
-	glTranslatef(spr->x, spr->z, spr->y );	
+	VSML.translate(VSML.MODEL, spr->x, spr->z, spr->y );	
 	
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
-	glRotatef(-angle, 0, 1, 0);
-	glRotatef(pitch, 0, 0, 1);
-	glRotatef(-roll, 1, 0, 0);
+	VSML.rotate(VSML.MODEL, -angle, 0, 1, 0);
+	VSML.rotate(VSML.MODEL, pitch, 0, 0, 1);
+	VSML.rotate(VSML.MODEL, -roll, 1, 0, 0);
 	
 	// 2) Applying Doomsday like rotation of the weapon pickup models
 	// The rotation angle is based on the elapsed time.
 	
 	if( smf->flags & MDL_ROTATING )
 	{
-		glTranslatef(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
-		glRotatef(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
-		glTranslatef(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
+		VSML.translate(VSML.MODEL, smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
+		VSML.rotate(VSML.MODEL, rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
+		VSML.translate(VSML.MODEL, - smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
 	}
 
 	// 3) Scaling model.
-	glScalef(scaleFactorX, scaleFactorZ, scaleFactorY);
+	VSML.scale(VSML.MODEL, scaleFactorX, scaleFactorZ, scaleFactorY);
 
 	// 4) Aplying model offsets (model offsets do not depend on model scalings).
-	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	VSML.translate(VSML.MODEL, smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 	
 	// 5) Applying model rotations.
-	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
-	glRotatef(smf->pitchoffset, 0, 0, 1);
-	glRotatef(-smf->rolloffset, 1, 0, 0);
-		
-	glActiveTexture(GL_TEXTURE0);
+	VSML.rotate(VSML.MODEL, - ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	VSML.rotate(VSML.MODEL, smf->pitchoffset, 0, 0, 1);
+	VSML.rotate(VSML.MODEL, -smf->rolloffset, 1, 0, 0);
 
 #if 0
 	if (gl_light_models)
@@ -806,11 +804,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 
 	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), cm, NULL, translation );
 
-	glActiveTexture(GL_TEXTURE7);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	glActiveTexture(GL_TEXTURE0);
-	glMatrixMode(GL_MODELVIEW);
+	VSML.loadIdentity(VSML.MODEL);
 
 	glDepthFunc(GL_LESS);
 	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
@@ -833,11 +827,10 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm)
 	if ( smf == NULL )
 		return;
 
-	// [BB] The model has to be drawn independtly from the position of the player,
-	// so we have to reset the GL_MODELVIEW matrix.
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+	// [BB] The model has to be drawn indepently from the position of the player,
+	// so we have to reset the VIEW matrix.
+	VSML.pushMatrix(VSML.VIEW);
+	VSML.loadIdentity(VSML.VIEW);
 	glDepthFunc(GL_LEQUAL);
 
 	// [BB] In case the model should be rendered translucent, do back face culling.
@@ -850,27 +843,26 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm)
 	}
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	glScalef(smf->xscale, smf->zscale, smf->yscale);
+	VSML.scale(VSML.VIEW, smf->xscale, smf->zscale, smf->yscale);
 	
 	// Aplying model offsets (model offsets do not depend on model scalings).
-	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	VSML.translate(VSML.VIEW, smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	glRotatef(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
-	glRotatef(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
+	VSML.rotate(VSML.VIEW, FIXED2FLOAT(ofsx) / 4, 0, 1, 0);
+	VSML.rotate(VSML.VIEW, -FIXED2FLOAT(ofsy - WEAPONTOP) / 4, 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
-	glRotatef(90., 0, 1, 0);
+	VSML.rotate(VSML.VIEW, 90., 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
-	glRotatef(smf->pitchoffset, 0, 0, 1);
-	glRotatef(-smf->rolloffset, 1, 0, 0);
+	VSML.rotate(VSML.VIEW, -ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	VSML.rotate(VSML.VIEW, smf->pitchoffset, 0, 0, 1);
+	VSML.rotate(VSML.VIEW, -smf->rolloffset, 1, 0, 0);
 
 	gl_RenderFrameModels( smf, psp->state, psp->tics, playermo->player->ReadyWeapon->GetClass(), cm, NULL, 0 );
 
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	VSML.popMatrix(VSML.VIEW);
 	glDepthFunc(GL_LESS);
 	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
 		glDisable(GL_CULL_FACE);

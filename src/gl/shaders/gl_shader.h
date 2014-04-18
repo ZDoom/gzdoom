@@ -38,6 +38,11 @@ class FShader
 	int lights_index;
 	int dlightcolor_index;
 
+	int mModelMatLocation;
+	int mViewMatLocation;
+	int mProjMatLocation;
+	int mTexMatLocation;
+
 	int glowbottomcolor_index;
 	int glowtopcolor_index;
 
@@ -48,6 +53,7 @@ class FShader
 
 	PalEntry currentfogcolor;
 	float currentfogdensity;
+	unsigned int mMatrixTick[4];
 
 	FStateVec3 currentcamerapos;
 
@@ -72,6 +78,8 @@ public:
 		fogcolor_index = -1;
 		lights_index = -1;
 		dlightcolor_index = -1;
+
+		mMatrixTick[0] = mMatrixTick[1] = mMatrixTick[2] = mMatrixTick[3] = 0;
 
 	}
 

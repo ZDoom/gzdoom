@@ -63,6 +63,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
+#include "gl/data/vsMathLib.h"
 
 IMPLEMENT_CLASS(OpenGLFrameBuffer)
 EXTERN_CVAR (Float, vid_brightness)
@@ -164,6 +165,11 @@ void OpenGLFrameBuffer::InitializeState()
 
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	VSML.loadIdentity(VSML.AUX0);
+	VSML.loadIdentity(VSML.MODEL);
+	VSML.loadIdentity(VSML.VIEW);
+	VSML.loadIdentity(VSML.PROJECTION);
 
 	int trueH = GetTrueHeight();
 	int h = GetHeight();
@@ -386,17 +392,15 @@ FNativePalette *OpenGLFrameBuffer::CreatePalette(FRemapTable *remap)
 //==========================================================================
 bool OpenGLFrameBuffer::Begin2D(bool)
 {
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(
-		(GLdouble) 0,
-		(GLdouble) GetWidth(), 
-		(GLdouble) GetHeight(), 
-		(GLdouble) 0,
-		(GLdouble) -1.0, 
-		(GLdouble) 1.0 
+	VSML.loadIdentity(VSML.VIEW);
+	VSML.loadIdentity(VSML.PROJECTION);
+	VSML.ortho(
+		0.f,
+		(GLfloat) GetWidth(), 
+		(GLfloat) GetHeight(), 
+		0.f,
+		-1.0f, 
+		1.0f
 		);
 	glDisable(GL_DEPTH_TEST);
 

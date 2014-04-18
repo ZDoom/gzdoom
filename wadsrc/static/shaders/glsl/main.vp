@@ -13,19 +13,19 @@
 	varying float lightlevel;
 #endif
 
+uniform mat4 ModelMatrix;
+uniform mat4 ViewMatrix;
+uniform mat4 ProjectionMatrix;
+uniform mat4 TextureMatrix;
+
 void main()
 {
 	#ifdef SOFTLIGHT
 		lightlevel = lightlevel_in;
 	#endif
 
-	#ifndef NO_SM4
-		// Yes, I know... But using a texture matrix here saves me from the hassle of tracking its state across shaders. ;)
-		vec4 worldcoord = gl_TextureMatrix[7] * gl_Vertex;
-	#else
-		vec4 worldcoord = gl_Vertex;
-	#endif
-	vec4 eyeCoordPos = gl_ModelViewMatrix * worldcoord;
+	vec4 worldcoord = ModelMatrix * gl_Vertex;
+	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
 	gl_FrontColor = gl_Color;
 
@@ -49,26 +49,13 @@ void main()
 	
 	
 	#ifndef SPHEREMAP_0
-		gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+		gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
 	#else
 		gl_TexCoord[0].xy = sst;
 	#endif
 	
-	/* only for reference purposes. I don't think this will ever get used.
-	#ifdef NUM_LAYERS
-		#ifndef SPHEREMAP_1
-			gl_TexCoord[1] = gl_TextureMatrix[1] * gl_MultiTexCoord0;
-		#else
-			gl_TexCoord[1].xy = sst;
-		#endif
-	#endif
-	*/
 	
-	#ifndef NO_SM4
-		gl_Position = gl_ModelViewProjectionMatrix * worldcoord;
-	#else
-		gl_Position = ftransform();
-	#endif
+	gl_Position = ProjectionMatrix * eyeCoordPos;
     #ifdef __GLSL_CG_DATA_TYPES
 		gl_ClipVertex = eyeCoordPos;
 	#endif

@@ -1176,14 +1176,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	gl_fixedcolormap=CM_DEFAULT;
 
-	bool usefb;
-
-	if (gl.flags & RFL_FRAMEBUFFER)
-	{
-		usefb = gl_usefb || width > screen->GetWidth() || height > screen->GetHeight();
-	}
-	else usefb = false;
-
+	bool usefb = gl_usefb || width > screen->GetWidth() || height > screen->GetHeight();
 
 	if (!usefb)
 	{

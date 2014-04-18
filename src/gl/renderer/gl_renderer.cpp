@@ -212,13 +212,9 @@ void FGLRenderer::FlushTextures()
 
 bool FGLRenderer::StartOffscreen()
 {
-	if (gl.flags & RFL_FRAMEBUFFER)
-	{
-		if (mFBID == 0) glGenFramebuffers(1, &mFBID);
-		glBindFramebuffer(GL_FRAMEBUFFER, mFBID);
-		return true;
-	}
-	return false;
+	if (mFBID == 0) glGenFramebuffers(1, &mFBID);
+	glBindFramebuffer(GL_FRAMEBUFFER, mFBID);
+	return true;
 }
 
 //===========================================================================
@@ -229,10 +225,7 @@ bool FGLRenderer::StartOffscreen()
 
 void FGLRenderer::EndOffscreen()
 {
-	if (gl.flags & RFL_FRAMEBUFFER)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0); 
-	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 }
 
 //===========================================================================

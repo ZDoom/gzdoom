@@ -141,10 +141,10 @@ void gl_LoadExtensions()
 
 	const char *version = (const char*)glGetString(GL_VERSION);
 
-	// Don't even start if it's lower than 1.3
-	if (strcmp(version, "2.0") < 0) 
+	// Don't even start if it's lower than 3.3. There's little point adding modern featues if it all gets bogged down by the requirement to support ancient hardware.
+	if (strcmp(version, "3.3") < 0) 
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least GL 2.0 is required to run " GAMENAME ".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least GL 3.3 is required to run " GAMENAME ".\n");
 	}
 
 	// This loads any function pointers and flags that require a vaild render context to
@@ -158,14 +158,9 @@ void gl_LoadExtensions()
 	if (strstr(gl.vendorstring, "NVIDIA")) gl.flags|=RFL_NVIDIA;
 	else if (strstr(gl.vendorstring, "ATI Technologies")) gl.flags|=RFL_ATI;
 
-	if (strcmp(version, "2.0") >= 0) gl.flags|=RFL_GL_20;
-	if (strcmp(version, "2.1") >= 0) gl.flags|=RFL_GL_21;
-	if (strcmp(version, "3.0") >= 0) gl.flags|=RFL_GL_30;
-
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
-	if (gl.flags & RFL_GL_20)
 	{
 		// Rules:
 		// SM4 will always use shaders. No option to switch them off is needed here.
@@ -188,12 +183,6 @@ void gl_LoadExtensions()
 	{
 		gl.flags|=RFL_MAP_BUFFER_RANGE;
 	}
-
-	if (gl.flags & RFL_GL_30)
-	{
-		gl.flags|=RFL_FRAMEBUFFER;
-	}
-
 }
 
 //==========================================================================

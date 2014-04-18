@@ -435,19 +435,15 @@ void FHardwareTexture::UnbindAll()
 
 int FHardwareTexture::GetDepthBuffer()
 {
-	if (gl.flags & RFL_FRAMEBUFFER)
+	if (glDepthID == 0)
 	{
-		if (glDepthID == 0)
-		{
-			glGenRenderbuffers(1, &glDepthID);
-			glBindRenderbuffer(GL_RENDERBUFFER, glDepthID);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 
-				GetTexDimension(texwidth), GetTexDimension(texheight));
-			glBindRenderbuffer(GL_RENDERBUFFER, 0);
-		}
-		return glDepthID;
+		glGenRenderbuffers(1, &glDepthID);
+		glBindRenderbuffer(GL_RENDERBUFFER, glDepthID);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 
+			GetTexDimension(texwidth), GetTexDimension(texheight));
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	}
-	return 0;
+	return glDepthID;
 }
 
 
@@ -459,11 +455,8 @@ int FHardwareTexture::GetDepthBuffer()
 
 void FHardwareTexture::BindToFrameBuffer()
 {
-	if (gl.flags & RFL_FRAMEBUFFER)
-	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glTexID[0], 0);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
-	}
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glTexID[0], 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
 }
 
 

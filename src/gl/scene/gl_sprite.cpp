@@ -786,7 +786,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 
 	ThingColor=0xffffff;
 	RenderStyle = thing->RenderStyle;
-	OverrideShader = 0;
+	OverrideShader = -1;
 	trans = FIXED2FLOAT(thing->alpha);
 	hw_styleflags = STYLEHW_Normal;
 
@@ -951,7 +951,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	trans=particle->trans/255.0f;
 	RenderStyle = STYLE_Translucent;
-	OverrideShader = 0;
+	OverrideShader = -1;
 
 	ThingColor = particle->color;
 	gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, Colormap.colormap);

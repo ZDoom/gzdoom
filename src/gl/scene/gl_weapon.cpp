@@ -306,7 +306,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	// Set the render parameters
 
-	int OverrideShader = 0;
+	int OverrideShader = -1;
 	float trans = 0.f;
 	if (vis.RenderStyle.BlendOp >= STYLEOP_Fuzz && vis.RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
 	{

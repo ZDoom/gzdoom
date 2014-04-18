@@ -837,7 +837,7 @@ outl:
 void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 {
 	int usebright = false;
-	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
+	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT;
 
@@ -885,7 +885,7 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 void FMaterial::BindPatch(int cm, int translation, int overrideshader)
 {
 	int usebright = false;
-	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
+	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 
 	int softwarewarp = gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, cm, tex->gl_info.shaderspeed);

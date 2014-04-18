@@ -449,7 +449,8 @@ struct FEffectShader
 static const FEffectShader effectshaders[]=
 {
 	{"fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "#define NO_GLOW\n"},
-	{"spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define NO_GLOW\n#define NO_DESATURATE\n#define SPHEREMAP\n#define SPHEREMAP_0\n"}
+	{"spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define NO_GLOW\n#define NO_DESATURATE\n#define SPHEREMAP\n#define SPHEREMAP_0\n"},
+	{"burn", "shaders/glsl/burn.vp", "shaders/glsl/burn.fp", NULL, ""},
 };
 
 
@@ -512,7 +513,7 @@ void FShaderManager::CompileShaders()
 		mTextureEffects.Push(shc);
 	}
 
-	for(int i=0;i<NUM_EFFECTS;i++)
+	for(int i=0;i<MAX_EFFECTS;i++)
 	{
 		FShader *eff = new FShader();
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
@@ -537,7 +538,7 @@ void FShaderManager::Clean()
 	{
 		if (mTextureEffects[i] != NULL) delete mTextureEffects[i];
 	}
-	for(int i=0;i<NUM_EFFECTS;i++)
+	for(int i=0;i<MAX_EFFECTS;i++)
 	{
 		if (mEffectShaders[i] != NULL) delete mEffectShaders[i];
 		mEffectShaders[i] = NULL;
@@ -588,10 +589,10 @@ void FShaderManager::SetActiveShader(FShader *sh)
 
 FShader *FShaderManager::BindEffect(int effect)
 {
-	if (effect > 0 && effect <= NUM_EFFECTS && mEffectShaders[effect-1] != NULL)
+	if (effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[effect] != NULL)
 	{
-		mEffectShaders[effect-1]->Bind(0);
-		return mEffectShaders[effect-1];
+		mEffectShaders[effect]->Bind(0);
+		return mEffectShaders[effect];
 	}
 	return NULL;
 }

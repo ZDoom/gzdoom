@@ -121,14 +121,9 @@ public:
 //==========================================================================
 class FShaderManager
 {
-	enum 
-	{ 
-		NUM_EFFECTS = 2
-	};
-
 	TArray<FShaderContainer*> mTextureEffects;
 	FShader *mActiveShader;
-	FShader *mEffectShaders[NUM_EFFECTS];
+	FShader *mEffectShaders[MAX_EFFECTS];
 
 	void Clean();
 	void CompileShaders();

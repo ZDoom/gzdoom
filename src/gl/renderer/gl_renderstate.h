@@ -78,9 +78,12 @@ struct FStateVec4 : public FStateAttr
 
 enum EEffect
 {
-	EFF_NONE,
+	EFF_NONE=-1,
 	EFF_FOGBOUNDARY,
-	EFF_SPHEREMAP
+	EFF_SPHEREMAP,
+	EFF_BURN,
+
+	MAX_EFFECTS
 };
 
 class FRenderState
@@ -117,13 +120,6 @@ class FRenderState
 	float glAlphaThreshold;
 	bool glAlphaTest;
 	int gl_BlendEquation;
-
-	bool ffTextureEnabled;
-	bool ffFogEnabled;
-	int ffTextureMode;
-	int ffSpecialEffect;
-	PalEntry ffFogColor;
-	float ffFogDensity;
 
 	bool ApplyShader();
 

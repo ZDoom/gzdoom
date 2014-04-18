@@ -63,11 +63,10 @@ void FRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mBrightmapEnabled = mFogEnabled = mGlowEnabled = mLightEnabled = false;
-	ffTextureEnabled = ffFogEnabled = false;
-	mSpecialEffect = ffSpecialEffect = EFF_NONE;
-	mFogColor.d = ffFogColor.d = -1;
-	mFogDensity = ffFogDensity = 0;
-	mTextureMode = ffTextureMode = -1;
+	mSpecialEffect = EFF_NONE;
+	mFogColor.d = -1;
+	mFogDensity = 0;
+	mTextureMode = -1;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
 	glSrcBlend = glDstBlend = -1;
@@ -121,7 +120,7 @@ bool FRenderState::ApplyShader()
 	bool useshaders = false;
 	FShader *activeShader = NULL;
 
-	if (mSpecialEffect > 0)
+	if (mSpecialEffect >= 0)
 	{
 		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
 	}

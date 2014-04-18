@@ -64,6 +64,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.DropAmmoFactor = -1;
 	skill.DamageFactor = FRACUNIT;
 	skill.FastMonsters = false;
+	skill.SlowMonsters = false;
 	skill.DisableCheats = false;
 	skill.EasyBossBrain = false;
 	skill.EasyKey = false;
@@ -117,6 +118,10 @@ void FMapInfoParser::ParseSkill ()
 		else if (sc.Compare ("fastmonsters"))
 		{
 			skill.FastMonsters = true;
+		}
+		else if (sc.Compare ("slowmonsters"))
+		{
+			skill.SlowMonsters = true;
 		}
 		else if (sc.Compare ("disablecheats"))
 		{
@@ -336,6 +341,9 @@ int G_SkillProperty(ESkillProperty prop)
 		case SKILLP_FastMonsters:
 			return AllSkills[gameskill].FastMonsters  || (dmflags & DF_FAST_MONSTERS);
 
+		case SKILLP_SlowMonsters:
+			return AllSkills[gameskill].SlowMonsters;
+
 		case SKILLP_Respawn:
 			if (dmflags & DF_MONSTERS_RESPAWN && AllSkills[gameskill].RespawnCounter==0) 
 				return TICRATE * gameinfo.defaultrespawntime;
@@ -433,6 +441,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	DropAmmoFactor = other.DropAmmoFactor;
 	DamageFactor = other.DamageFactor;
 	FastMonsters = other.FastMonsters;
+	SlowMonsters = other.SlowMonsters;
 	DisableCheats = other.DisableCheats;
 	AutoUseHealth = other.AutoUseHealth;
 	EasyBossBrain = other.EasyBossBrain;

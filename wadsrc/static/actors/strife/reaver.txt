@@ -32,16 +32,16 @@ ACTOR Reaver 3001
 		ROB1 BBCCDDEE 3 A_Chase
 		Loop
 	Melee:
-		ROB1 H 6 A_FaceTarget
-		ROB1 I 8 A_CustomMeleeAttack(random[ReaverMelee](1,8)*3, "reaver/blade")
-		ROB1 H 6
+		ROB1 H 6 Slow A_FaceTarget
+		ROB1 I 8 Slow A_CustomMeleeAttack(random[ReaverMelee](1,8)*3, "reaver/blade")
+		ROB1 H 6 Slow
 		Goto See
 	Missile:
-		ROB1 F 8 A_FaceTarget
-		ROB1 G 11 BRIGHT A_ReaverRanged
+		ROB1 F 8 Slow A_FaceTarget
+		ROB1 G 11 Slow BRIGHT A_ReaverRanged
 		Goto See
 	Pain:
-		ROB1 A 2
+		ROB1 A 2 Slow
 		ROB1 A 2 A_Pain
 		Goto See
 	Death:

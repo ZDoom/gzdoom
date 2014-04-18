@@ -8,9 +8,6 @@ enum RenderFlags
 	// [BB] Added texture compression flags.
 	RFL_TEXTURE_COMPRESSION=8,
 	RFL_TEXTURE_COMPRESSION_S3TC=16,
-
-	RFL_MAP_BUFFER_RANGE = 64,
-	RFL_TEXTUREBUFFER = 256,
 	RFL_NVIDIA = 512,
 	RFL_ATI = 1024,
 };
@@ -32,7 +29,6 @@ enum TexMode
 struct RenderContext
 {
 	unsigned int flags;
-	unsigned int shadermodel;
 	unsigned int maxuniforms;
 	int max_texturesize;
 	char * vendorstring;

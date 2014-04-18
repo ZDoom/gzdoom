@@ -624,7 +624,7 @@ FMaterial::FMaterial(FTexture * tx, bool forceexpand)
 	{
 		expanded = false;
 	}
-	else if (gl.shadermodel > 2) 
+	else
 	{
 		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
 		{
@@ -670,7 +670,7 @@ FMaterial::FMaterial(FTexture * tx, bool forceexpand)
 	tex = tx;
 
 	tx->gl_info.mExpanded = expanded;
-	FTexture *basetex = tx->GetRedirect(gl.shadermodel < 4);
+	FTexture *basetex = tx->GetRedirect(false);
 	if (!expanded && !basetex->gl_info.mExpanded && basetex->UseType != FTexture::TEX_Sprite)
 	{
 		// check if the texture is just a simple redirect to a patch

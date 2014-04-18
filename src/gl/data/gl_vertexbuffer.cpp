@@ -302,17 +302,10 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 		vt->z = splane.ZatPoint(vt->x, vt->y);
 		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;
 	}
-	if (gl.flags & RFL_MAP_BUFFER_RANGE)
-	{
-		MapVBO();
-		if (map == NULL) return;	// Error
-		memcpy(&map[startvt], &vbo_shadowdata[startvt], countvt * sizeof(FFlatVertex));
-		glFlushMappedBufferRange(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex));
-	}
-	else
-	{
-		glBufferSubData(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex), &vbo_shadowdata[startvt]);
-	}
+	MapVBO();
+	if (map == NULL) return;	// Error
+	memcpy(&map[startvt], &vbo_shadowdata[startvt], countvt * sizeof(FFlatVertex));
+	glFlushMappedBufferRange(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex));
 }
 
 //==========================================================================

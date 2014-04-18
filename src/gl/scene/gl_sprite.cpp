@@ -218,7 +218,7 @@ void GLSprite::Draw(int pass)
 			// non-black fog with subtractive style needs special treatment
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
-				if (gl.shadermodel >= 4 && !gl_nolayer)
+				if (!gl_nolayer)
 				{
 					// fog layer only works on modern hardware. 
 					foglayer = true;
@@ -795,7 +795,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		RenderStyle.CheckFuzz();
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl.shadermodel >= 4 && gl_fuzztype != 0)
+			if (gl_fuzztype != 0)
 			{
 				// Todo: implement shader selection here
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];

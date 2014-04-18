@@ -102,31 +102,7 @@ int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, flo
 		}
 	}
 
-	if (gl.shadermodel == 4)
-	{
-		usecmshader = cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK;
-	}
-	else if (gl.shadermodel == 3)
-	{
-		usecmshader = (cameratexture || gl_colormap_shader) && 
-			cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK;
-
-		if (!gl_brightmap_shader && shaderindex == 3) 
-		{
-			shaderindex = 0;
-		}
-		else if (!gl_warp_shader && shaderindex !=3)
-		{
-			if (shaderindex <= 2) softwarewarp = shaderindex;
-			shaderindex = 0;
-		}
-	}
-	else
-	{
-		usecmshader = cameratexture;
-		softwarewarp = shaderindex > 0 && shaderindex < 3? shaderindex : 0;
-		shaderindex = 0;
-	}
+	usecmshader = cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK;
 
 	mEffectState = shaderindex;
 	mColormapState = usecmshader? cm : CM_DEFAULT;
@@ -147,34 +123,13 @@ bool FRenderState::ApplyShader()
 	bool useshaders = false;
 	FShader *activeShader = NULL;
 
-	if (mSpecialEffect > 0 && gl.shadermodel > 2)
+	if (mSpecialEffect > 0)
 	{
 		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
 	}
 	else
 	{
-		switch (gl.shadermodel)
-		{
-		case 2:
-			useshaders = (mTextureEnabled && mColormapState != CM_DEFAULT);
-			break;
-
-		case 3:
-			useshaders = (
-				mEffectState != 0 ||	// special shaders
-				(mFogEnabled && (gl_fogmode == 2 || gl_fog_shader) && gl_fogmode != 0) || // fog requires a shader
-				(mTextureEnabled && (mEffectState != 0 || mColormapState)) ||		// colormap
-				mGlowEnabled		// glow requires a shader
-				);
-			break;
-
-		case 4:
-			useshaders = (!m2D || mEffectState != 0 || mColormapState); // all 3D rendering and 2D with texture effects.
-			break;
-
-		default:
-			break;
-		}
+		useshaders = (!m2D || mEffectState != 0 || mColormapState); // all 3D rendering and 2D with texture effects.
 
 		if (useshaders)
 		{

@@ -356,7 +356,6 @@ void InitGLRMapinfoData()
 		glset.map_notexturefill = opt->notexturefill;
 		glset.skyrotatevector = opt->skyrotatevector;
 		glset.skyrotatevector2 = opt->skyrotatevector2;
-		if (gl.shadermodel == 2 && glset.map_lightmode ==2) glset.map_lightmode = 3;
 	}
 	else
 	{

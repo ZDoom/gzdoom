@@ -288,12 +288,10 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 
 void FGLRenderer::SetViewMatrix(bool mirror, bool planemirror)
 {
-	if (gl.shadermodel >= 4)
-	{
-		glActiveTexture(GL_TEXTURE7);
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-	}
+	glActiveTexture(GL_TEXTURE7);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+
 	glActiveTexture(GL_TEXTURE0);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();

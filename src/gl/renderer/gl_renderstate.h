@@ -76,6 +76,20 @@ struct FStateVec4 : public FStateAttr
 };
 
 
+struct PrimAttr
+{
+	int mFlags;
+	unsigned char mColor[4];
+	unsigned char mFogColor[4];
+	int mGlowTop;
+	int mGlowBottom;
+	int mDynLight;
+	float mFogDensity;
+	float mLightFactor;
+	float mLightDist;
+};
+
+
 enum EEffect
 {
 	EFF_NONE=-1,

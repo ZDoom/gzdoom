@@ -89,7 +89,6 @@ void FRenderState::Reset()
 int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime)
 {
 	bool usecmshader;
-	int softwarewarp = 0;
 
 	if (shaderindex == 3)
 	{
@@ -106,7 +105,7 @@ int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, flo
 	mColormapState = usecmshader? cm : CM_DEFAULT;
 	if (usecmshader) cm = CM_DEFAULT;
 	mWarpTime = warptime;
-	return softwarewarp;
+	return 0;
 }
 
 

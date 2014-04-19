@@ -367,14 +367,8 @@ void FGLRenderer::RenderScene(int recursion)
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(gl_fixedcolormap == CM_DEFAULT);
-	gl_drawinfo->drawlists[GLDL_PLAIN].Sort();
-	gl_drawinfo->drawlists[GLDL_PLAIN].Draw(pass);
-	gl_RenderState.EnableBrightmap(false);
-	gl_drawinfo->drawlists[GLDL_FOG].Sort();
-	gl_drawinfo->drawlists[GLDL_FOG].Draw(pass);
-	gl_drawinfo->drawlists[GLDL_LIGHTFOG].Sort();
-	gl_drawinfo->drawlists[GLDL_LIGHTFOG].Draw(pass);
-
+	gl_drawinfo->drawlists[DLT_PLAIN].Sort();
+	gl_drawinfo->drawlists[DLT_PLAIN].Draw(pass);
 
 	gl_RenderState.EnableAlphaTest(true);
 
@@ -385,15 +379,8 @@ void FGLRenderer::RenderScene(int recursion)
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold);
-	gl_RenderState.EnableBrightmap(true);
-	gl_drawinfo->drawlists[GLDL_MASKED].Sort();
-	gl_drawinfo->drawlists[GLDL_MASKED].Draw(pass);
-	gl_RenderState.EnableBrightmap(false);
-	gl_drawinfo->drawlists[GLDL_FOGMASKED].Sort();
-	gl_drawinfo->drawlists[GLDL_FOGMASKED].Draw(pass);
-	gl_drawinfo->drawlists[GLDL_LIGHTFOGMASKED].Sort();
-	gl_drawinfo->drawlists[GLDL_LIGHTFOGMASKED].Draw(pass);
-
+	gl_drawinfo->drawlists[DLT_MASKED].Sort();
+	gl_drawinfo->drawlists[DLT_MASKED].Draw(pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -403,7 +390,7 @@ void FGLRenderer::RenderScene(int recursion)
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
 
-	for(int i=0; i<GLDL_TRANSLUCENT; i++)
+	for(int i=0; i<DLT_TRANSLUCENT; i++)
 	{
 		gl_drawinfo->drawlists[i].Draw(GLPASS_DECALS);
 	}
@@ -418,7 +405,7 @@ void FGLRenderer::RenderScene(int recursion)
 	glPolygonOffset(1.0f, 128.0f);
 
 	// flood all the gaps with the back sector's flat texture
-	// This will always be drawn like GLDL_PLAIN or GLDL_FOG, depending on the fog settings
+	// This will always be drawn like DLT_PLAIN.
 	
 	glDepthMask(false);							// don't write to Z-buffer!
 	gl_RenderState.EnableFog(true);
@@ -455,8 +442,8 @@ void FGLRenderer::RenderTranslucent()
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl_RenderState.EnableBrightmap(true);
-	gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(GLPASS_TRANSLUCENT);
-	gl_drawinfo->drawlists[GLDL_TRANSLUCENT].DrawSorted();
+	gl_drawinfo->drawlists[DLT_TRANSLUCENTBORDER].Draw(GLPASS_TRANSLUCENT);
+	gl_drawinfo->drawlists[DLT_TRANSLUCENT].DrawSorted();
 	gl_RenderState.EnableBrightmap(false);
 
 	glDepthMask(true);

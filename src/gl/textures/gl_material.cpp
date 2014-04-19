@@ -848,7 +848,7 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 	else clampmode = 4;
 
 	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, cm, clampmode, translation, allowhires? tex:NULL, softwarewarp);
-	if (gltexture != NULL && shaderindex > 0 && overrideshader == 0)
+	if (gltexture != NULL && shaderindex > 0 && overrideshader < 0)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{

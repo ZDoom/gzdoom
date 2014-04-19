@@ -38,10 +38,8 @@ enum WallTypes
 	RENDERWALL_MIRROR,
 	RENDERWALL_MIRRORSURFACE,
 	RENDERWALL_M2SNF,
-	RENDERWALL_M2SFOG,
 	RENDERWALL_COLOR,
 	RENDERWALL_FFBLOCK,
-	RENDERWALL_COLORLAYER,
 	// Insert new types at the end!
 };
 
@@ -263,7 +261,6 @@ public:
 	GLSectorPlane plane;
 	int lightlevel;
 	bool stack;
-	bool foggy;
 	bool ceiling;
 	BYTE renderflags;
 	int vboindex;

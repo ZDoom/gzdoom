@@ -308,7 +308,6 @@ void GLFlat::Draw(int pass)
 		}
 		else 
 		{
-			if (foggy) gl_RenderState.EnableBrightmap(false);
 			gltexture->Bind(Colormap.colormap);
 			bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true);
@@ -332,7 +331,7 @@ void GLFlat::Draw(int pass)
 // plane in the appropriate render list.
 //
 //==========================================================================
-inline void GLFlat::PutFlat(bool fog)
+inline void GLFlat::PutFlat(bool fogplane)
 {
 	int list;
 
@@ -340,32 +339,17 @@ inline void GLFlat::PutFlat(bool fog)
 	{
 		Colormap.GetFixedColormap();
 	}
-	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog)
+	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fogplane)
 	{
-		int list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
-		gl_drawinfo->drawlists[list].AddFlat (this);
+		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
+		list = (renderflags&SSRF_RENDER3DPLANES) ? DLT_TRANSLUCENT : DLT_TRANSLUCENTBORDER;
 	}
 	else if (gltexture != NULL)
 	{
-		static DrawListType list_indices[2][2][2]={
-			{ { GLDL_PLAIN, GLDL_FOG      }, { GLDL_MASKED,      GLDL_FOGMASKED      } },
-			{ { GLDL_LIGHT, GLDL_LIGHTFOG }, { GLDL_LIGHTMASKED, GLDL_LIGHTFOGMASKED } }
-		};
-
-		bool light = false;
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
-
-		if (!gl_fixedcolormap)
-		{
-			foggy = gl_CheckFog(&Colormap, lightlevel) || level.flags&LEVEL_HASFADETABLE;
-		}
-		else foggy = false;
-
-		list = list_indices[light][masked][foggy];
-		if (list == GLDL_LIGHT && gltexture->tex->gl_info.Brightmap && gl_BrightmapsActive()) list = GLDL_LIGHTBRIGHT;
-
-		gl_drawinfo->drawlists[list].AddFlat (this);
+		list = masked ? DLT_MASKED : DLT_PLAIN;
 	}
+	gl_drawinfo->drawlists[list].AddFlat(this);
 }
 
 //==========================================================================
@@ -377,11 +361,11 @@ inline void GLFlat::PutFlat(bool fog)
 //
 //==========================================================================
 
-void GLFlat::Process(sector_t * model, int whichplane, bool fog)
+void GLFlat::Process(sector_t * model, int whichplane, bool fogplane)
 {
 	plane.GetFromSector(model, whichplane);
 
-	if (!fog)
+	if (!fogplane)
 	{
 		if (plane.texture==skyflatnum) return;
 
@@ -405,7 +389,7 @@ void GLFlat::Process(sector_t * model, int whichplane, bool fog)
 
 	z = plane.plane.ZatPoint(0.f, 0.f);
 	
-	PutFlat(fog);
+	PutFlat(fogplane);
 	rendered_flats++;
 }
 

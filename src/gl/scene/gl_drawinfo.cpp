@@ -840,13 +840,15 @@ static int __cdecl dicmp (const void *a, const void *b)
 }
 
 
-void GLDrawList::Sort()
+bool GLDrawList::Sort()
 {
-	if (drawitems.Size()!=0 && gl_sort_textures)
+	if (drawitems.Size()!=0)
 	{
 		sortinfo=this;
 		qsort(&drawitems[0], drawitems.Size(), sizeof(drawitems[0]), dicmp);
+		return true;
 	}
+	else return false;
 }
 
 //==========================================================================
@@ -951,7 +953,7 @@ void FDrawInfo::StartScene()
 
 	next=gl_drawinfo;
 	gl_drawinfo=this;
-	for(int i=0;i<GLDL_TYPES;i++) drawlists[i].Reset();
+	for (int i = 0; i < DLT_TYPES; i++) drawlists[i].Reset();
 }
 
 //==========================================================================
@@ -963,7 +965,7 @@ void FDrawInfo::EndDrawInfo()
 {
 	FDrawInfo * di = gl_drawinfo;
 
-	for(int i=0;i<GLDL_TYPES;i++) di->drawlists[i].Reset();
+	for (int i = 0; i < DLT_TYPES; i++) di->drawlists[i].Reset();
 	gl_drawinfo=di->next;
 	di_list.Release(di);
 }

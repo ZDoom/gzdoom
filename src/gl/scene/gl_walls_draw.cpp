@@ -429,7 +429,7 @@ void GLWall::Draw(int pass)
 
 
 	// This allows mid textures to be drawn on lines that might overlap a sky wall
-	if ((flags&GLWF_SKYHACK && type==RENDERWALL_M2S) || type == RENDERWALL_COLORLAYER)
+	if ((flags&GLWF_SKYHACK && type==RENDERWALL_M2S))
 	{
 		if (pass != GLPASS_DECALS)
 		{
@@ -481,7 +481,7 @@ void GLWall::Draw(int pass)
 		}
 	}
 
-	if ((flags&GLWF_SKYHACK && type==RENDERWALL_M2S) || type == RENDERWALL_COLORLAYER)
+	if ((flags&GLWF_SKYHACK && type==RENDERWALL_M2S))
 	{
 		if (pass!=GLPASS_DECALS)
 		{

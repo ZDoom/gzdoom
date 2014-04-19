@@ -372,18 +372,14 @@ void GLSprite::Draw(int pass)
 inline void GLSprite::PutSprite(bool translucent)
 {
 	int list;
-	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
+	// [BB] Allow models to be drawn in the DLT_TRANSLUCENT pass.
 	if (translucent || !modelframe)
 	{
-		list = GLDL_TRANSLUCENT;
-	}
-	else if ((!gl_isBlack (Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE))
-	{
-		list = GLDL_FOGMASKED;
+		list = DLT_TRANSLUCENT;
 	}
 	else
 	{
-		list = GLDL_MASKED;
+		list = DLT_MASKED;
 	}
 	gl_drawinfo->drawlists[list].AddSprite(this);
 }

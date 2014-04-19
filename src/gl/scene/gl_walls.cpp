@@ -115,14 +115,13 @@ void GLWall::PutWall(bool translucent)
 		4,		//RENDERWALL_SECTORSTACK,      // special
 		4,		//RENDERWALL_PLANEMIRROR,      // special
 		4,		//RENDERWALL_MIRROR,           // special
-		1,		//RENDERWALL_MIRRORSURFACE,    // needs special handling
-		2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog
-		2,		//RENDERWALL_M2SFOG,            // depends on render and texture settings, no fog
+		1,		//RENDERWALL_MIRRORSURFACE,    // only created here from RENDERWALL_MIRROR
+		2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog, used on mid texture lines with a fog boundary.
 		3,		//RENDERWALL_COLOR,            // translucent
 		2,		//RENDERWALL_FFBLOCK           // depends on render and texture settings
-		4,		//RENDERWALL_COLORLAYER        // color layer needs special handling
 	};
 	
+	// Check for mid textures with an alpha channel
 	if (gltexture && gltexture->GetTransparent() && passflag[type] == 2)
 	{
 		translucent = true;
@@ -142,40 +141,33 @@ void GLWall::PutWall(bool translucent)
 	{
 		viewdistance = P_AproxDistance( ((seg->linedef->v1->x+seg->linedef->v2->x)>>1) - viewx,
 											((seg->linedef->v1->y+seg->linedef->v2->y)>>1) - viewy);
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
+		list = DLT_TRANSLUCENT;
+		gl_drawinfo->drawlists[list].AddWall(this);
 	}
 	else if (passflag[type]!=4)	// non-translucent walls
 	{
-		static DrawListType list_indices[2][2][2]={
-			{ { GLDL_PLAIN, GLDL_FOG      }, { GLDL_MASKED,      GLDL_FOGMASKED      } },
-			{ { GLDL_LIGHT, GLDL_LIGHTFOG }, { GLDL_LIGHTMASKED, GLDL_LIGHTFOGMASKED } }
-		};
-
 		bool masked;
-		bool light = false;
 
 		if (gl_fixedcolormap)
 		{
 			flags&=~GLWF_FOGGY;
 		}
 
-		masked = passflag[type]==1? false : (light && type!=RENDERWALL_FFBLOCK) || (gltexture && gltexture->isMasked());
+		masked = passflag[type]==1? false : (gltexture && gltexture->isMasked());
 
-		list = list_indices[light][masked][!!(flags&GLWF_FOGGY)];
-		if (list == GLDL_LIGHT)
+		if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S))
 		{
-			if (gltexture->tex->gl_info.Brightmap && gl_BrightmapsActive()) list = GLDL_LIGHTBRIGHT;
-			if (flags & GLWF_GLOW) list = GLDL_LIGHTBRIGHT;
+			list = DLT_MASKEDOFS;
+		}
+		else
+		{
+			list = masked ? DLT_MASKED : DLT_PLAIN;
 		}
 		gl_drawinfo->drawlists[list].AddWall(this);
 
 	}
 	else switch (type)
 	{
-	case RENDERWALL_COLORLAYER:
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
-		break;
-
 	// portals don't go into the draw list.
 	// Instead they are added to the portal manager
 	case RENDERWALL_HORIZON:
@@ -219,7 +211,7 @@ void GLWall::PutWall(bool translucent)
 		{
 			// draw a reflective layer over the mirror
 			type=RENDERWALL_MIRRORSURFACE;
-			gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].AddWall(this);
+			gl_drawinfo->drawlists[DLT_TRANSLUCENTBORDER].AddWall(this);
 		}
 		break;
 
@@ -254,6 +246,8 @@ void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 	if (fadewall) lightlevel=255;
 	PutWall(translucent);
 
+	// todo: This should be done directly in the shader
+	/*
 	if (fadewall)
 	{
 		FMaterial *tex = gltexture;
@@ -267,6 +261,7 @@ void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 		alpha = 1.0;
 		gltexture = tex;
 	}
+	*/
 }
 
 //==========================================================================

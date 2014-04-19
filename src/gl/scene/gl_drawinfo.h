@@ -13,28 +13,13 @@ enum GLDrawItemType
 
 enum DrawListType
 {
-	// These are organized so that the various multipass rendering modes
-	// have to be set as few times as possible
-	GLDL_LIGHT,	
-	GLDL_LIGHTBRIGHT,
-	GLDL_LIGHTMASKED,
-	GLDL_LIGHTFOG,
-	GLDL_LIGHTFOGMASKED,
+	DLT_PLAIN,	// all standard opaque geometry
+	DLT_MASKED,	// everything which uses an alpha mask for transparent parts
+	DLT_MASKEDOFS,	// same for walls with polygon offset
+	DLT_TRANSLUCENT,	// everything translucent, including sprites
+	DLT_TRANSLUCENTBORDER,	// translucent stuff that doesn't need to be sorted for depth.
 
-	GLDL_PLAIN,
-	GLDL_MASKED,
-	GLDL_FOG,
-	GLDL_FOGMASKED,
-
-	GLDL_TRANSLUCENT,
-	GLDL_TRANSLUCENTBORDER,
-
-	GLDL_TYPES,
-
-	GLDL_FIRSTLIGHT = GLDL_LIGHT,
-	GLDL_LASTLIGHT = GLDL_LIGHTFOGMASKED,
-	GLDL_FIRSTNOLIGHT = GLDL_PLAIN,
-	GLDL_LASTNOLIGHT = GLDL_FOGMASKED,
+	DLT_TYPES
 };
 
 enum Drawpasses
@@ -112,7 +97,7 @@ public:
 	void AddFlat(GLFlat * flat);
 	void AddSprite(GLSprite * sprite);
 	void Reset();
-	void Sort();
+	bool Sort();
 
 
 	void MakeSortList();
@@ -200,7 +185,7 @@ struct FDrawInfo
 	TArray<subsector_t *> HandledSubsectors;
 
 	FDrawInfo * next;
-	GLDrawList drawlists[GLDL_TYPES];
+	GLDrawList drawlists[DLT_TYPES];
 
 	FDrawInfo();
 	~FDrawInfo();

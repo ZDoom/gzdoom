@@ -96,7 +96,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mVBO = NULL;
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
-	glpart2 = glpart = gllight = mirrortexture = NULL;
+	glpart2 = glpart = mirrortexture = NULL;
 }
 
 void FGLRenderer::Initialize()
@@ -104,7 +104,6 @@ void FGLRenderer::Initialize()
 	glpart2 = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart2.png"), FTexture::TEX_MiscPatch);
 	glpart = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart.png"), FTexture::TEX_MiscPatch);
 	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
-	gllight = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/gllight.png"), FTexture::TEX_MiscPatch);
 
 	mVBO = new FFlatVertexBuffer;
 	mFBID = 0;
@@ -124,7 +123,6 @@ FGLRenderer::~FGLRenderer()
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;
 	if (mirrortexture) delete mirrortexture;
-	if (gllight) delete gllight;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 }
 

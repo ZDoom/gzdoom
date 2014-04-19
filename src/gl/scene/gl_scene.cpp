@@ -86,7 +86,6 @@ CVAR(Bool, gl_texture, true, 0)
 CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Bool, gl_forcemultipass, false, 0)
 
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, cl_capfps)
@@ -357,17 +356,13 @@ void FGLRenderer::RenderScene(int recursion)
 
 	int pass;
 
-	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights && gl_dynlight_shader)
+	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights)
 	{
 		pass = GLPASS_ALL;
 	}
-	else if (gl_texture)
-	{
-		pass = GLPASS_PLAIN;
-	}
 	else
 	{
-		pass = GLPASS_BASE;
+		pass = GLPASS_PLAIN;
 	}
 
 	gl_RenderState.EnableTexture(gl_texture);
@@ -389,7 +384,6 @@ void FGLRenderer::RenderScene(int recursion)
 		gl_RenderState.EnableTexture(true);
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
-	if (pass == GLPASS_BASE) pass = GLPASS_BASE_MASKED;
 	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold);
 	gl_RenderState.EnableBrightmap(true);
 	gl_drawinfo->drawlists[GLDL_MASKED].Sort();
@@ -400,82 +394,6 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_drawinfo->drawlists[GLDL_LIGHTFOGMASKED].Sort();
 	gl_drawinfo->drawlists[GLDL_LIGHTFOGMASKED].Draw(pass);
 
-	// And now the multipass stuff
-	if (!gl_dynlight_shader && gl_lights)
-	{
-		// First pass: empty background with sector light only
-
-		// Part 1: solid geometry. This is set up so that there are no transparent parts
-
-		// remove any remaining texture bindings and shaders whick may get in the way.
-		gl_RenderState.EnableTexture(false);
-		gl_RenderState.EnableBrightmap(false);
-		gl_RenderState.Apply();
-		gl_drawinfo->drawlists[GLDL_LIGHT].Draw(GLPASS_BASE);
-		gl_RenderState.EnableTexture(true);
-
-		// Part 2: masked geometry. This is set up so that only pixels with alpha>0.5 will show
-		// This creates a blank surface that only fills the nontransparent parts of the texture
-		gl_RenderState.SetTextureMode(TM_MASK);
-		gl_RenderState.EnableBrightmap(true);
-		gl_drawinfo->drawlists[GLDL_LIGHTBRIGHT].Draw(GLPASS_BASE_MASKED);
-		gl_drawinfo->drawlists[GLDL_LIGHTMASKED].Draw(GLPASS_BASE_MASKED);
-		gl_RenderState.EnableBrightmap(false);
-		gl_RenderState.SetTextureMode(TM_MODULATE);
-
-
-		// second pass: draw lights (on fogged surfaces they are added to the textures!)
-		glDepthMask(false);
-		if (mLightCount && !gl_fixedcolormap)
-		{
-			if (gl_SetupLightTexture())
-			{
-				gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
-				glDepthFunc(GL_EQUAL);
-				if (glset.lightmode == 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0f); // Korshun.
-				for(int i=GLDL_FIRSTLIGHT; i<=GLDL_LASTLIGHT; i++)
-				{
-					gl_drawinfo->drawlists[i].Draw(GLPASS_LIGHT);
-				}
-				gl_RenderState.BlendEquation(GL_FUNC_ADD);
-			}
-			else gl_lights=false;
-		}
-
-		// third pass: modulated texture
-		glColor3f(1.0f, 1.0f, 1.0f);
-		gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
-		gl_RenderState.EnableFog(false);
-		glDepthFunc(GL_LEQUAL);
-		if (gl_texture) 
-		{
-			gl_RenderState.EnableAlphaTest(false);
-			gl_drawinfo->drawlists[GLDL_LIGHT].Sort();
-			gl_drawinfo->drawlists[GLDL_LIGHT].Draw(GLPASS_TEXTURE);
-			gl_RenderState.EnableAlphaTest(true);
-			gl_drawinfo->drawlists[GLDL_LIGHTBRIGHT].Sort();
-			gl_drawinfo->drawlists[GLDL_LIGHTBRIGHT].Draw(GLPASS_TEXTURE);
-			gl_drawinfo->drawlists[GLDL_LIGHTMASKED].Sort();
-			gl_drawinfo->drawlists[GLDL_LIGHTMASKED].Draw(GLPASS_TEXTURE);
-		}
-
-		// fourth pass: additive lights
-		gl_RenderState.EnableFog(true);
-		if (gl_lights && mLightCount && !gl_fixedcolormap)
-		{
-			gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
-			glDepthFunc(GL_EQUAL);
-			if (gl_SetupLightTexture())
-			{
-				for(int i=0; i<GLDL_TRANSLUCENT; i++)
-				{
-					gl_drawinfo->drawlists[i].Draw(GLPASS_LIGHT_ADDITIVE);
-				}
-				gl_RenderState.BlendEquation(GL_FUNC_ADD);
-			}
-			else gl_lights=false;
-		}
-	}
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

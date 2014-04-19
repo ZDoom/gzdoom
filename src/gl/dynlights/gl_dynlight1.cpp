@@ -68,11 +68,6 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	else gl_DeleteAllAttachedLights();
 }
 
-CUSTOM_CVAR (Bool, gl_dynlight_shader, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self && (gl.maxuniforms < 1024)) self = false;
-}
-
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Float, gl_lights_intensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -233,22 +228,6 @@ bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & u
 		b= (b*(32-desaturation)+ gray*desaturation)/32;
 	}
 	glColor3f(r,g,b);
-	return true;
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-bool gl_SetupLightTexture()
-{
-
-	if (GLRenderer->gllight == NULL) return false;
-	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight);
-	pat->BindPatch(CM_DEFAULT, 0);
 	return true;
 }
 

@@ -106,69 +106,6 @@ bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 }
 
 
-//==========================================================================
-//
-// Flats 
-//
-//==========================================================================
-
-void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
-{
-	Plane p;
-	Vector nearPt, up, right, t1;
-	float scale;
-	unsigned int k;
-	seg_t *v;
-
-	FLightNode * node = sub->lighthead[pass==GLPASS_LIGHT_ADDITIVE];
-	gl_RenderState.Apply();
-	while (node)
-	{
-		ADynamicLight * light = node->lightsource;
-		
-		if (light->flags2&MF2_DORMANT)
-		{
-			node=node->nextLight;
-			continue;
-		}
-		iter_dlightf++;
-
-		// we must do the side check here because gl_SetupLight needs the correct plane orientation
-		// which we don't have for Legacy-style 3D-floors
-		fixed_t planeh = plane.plane.ZatPoint(light->x, light->y);
-		if (gl_lights_checkside && ((planeh<light->z && ceiling) || (planeh>light->z && !ceiling)))
-		{
-			node=node->nextLight;
-			continue;
-		}
-
-		p.Set(plane.plane);
-		if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.colormap, false, foggy)) 
-		{
-			node=node->nextLight;
-			continue;
-		}
-		draw_dlightf++;
-
-		// Render the light
-		glBegin(GL_TRIANGLE_FAN);
-		for(k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
-		{
-			vertex_t *vt = v->v1;
-			float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-
-			t1.Set(vt->fx, zc, vt->fy);
-			Vector nearToVert = t1 - nearPt;
-			glTexCoord2f( (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
-
-			glVertex3f(vt->fx, zc, vt->fy);
-		}
-
-		glEnd();
-		node = node->nextLight;
-	}
-}
-
 
 //==========================================================================
 //
@@ -331,33 +268,23 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 //==========================================================================
 void GLFlat::Draw(int pass)
 {
-	int i;
 	int rel = getExtraLight();
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (sector->sectornum == 2)
-		__asm nop
-#endif
+	{
+		int a = 0;
+	}
 #endif
 
 
 	switch (pass)
 	{
-	case GLPASS_BASE:
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
-		if (!foggy) gl_SetFog(lightlevel, rel, &Colormap, false);
-		DrawSubsectors(pass, false);
-		break;
-
 	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:
-	case GLPASS_BASE_MASKED:
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
-		if (!foggy || pass != GLPASS_BASE_MASKED) gl_SetFog(lightlevel, rel, &Colormap, false);
-		// fall through
-	case GLPASS_TEXTURE:
 	{
+		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
+		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gltexture->Bind(Colormap.colormap);
 		bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, false);
@@ -367,45 +294,6 @@ void GLFlat::Draw(int pass)
 		}
 		break;
 	}
-
-	case GLPASS_LIGHT:
-	case GLPASS_LIGHT_ADDITIVE:
-
-		if (!foggy)	gl_SetFog((255+lightlevel)>>1, 0, &Colormap, false);
-		else gl_SetFog(lightlevel, 0, &Colormap, true);	
-
-		if (sub)
-		{
-			DrawSubsectorLights(sub, pass);
-		}
-		else
-		{
-			// Draw the subsectors belonging to this sector
-			for (i=0; i<sector->subsectorcount; i++)
-			{
-				subsector_t * sub = sector->subsectors[i];
-
-				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags)
-				{
-					DrawSubsectorLights(sub, pass);
-				}
-			}
-
-			// Draw the subsectors assigned to it due to missing textures
-			if (!(renderflags&SSRF_RENDER3DPLANES))
-			{
-				gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-					gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-					gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
-
-				while (node)
-				{
-					DrawSubsectorLights(node->sub, pass);
-					node = node->next;
-				}
-			}
-		}
-		break;
 
 	case GLPASS_TRANSLUCENT:
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -464,20 +352,12 @@ inline void GLFlat::PutFlat(bool fog)
 			{ { GLDL_LIGHT, GLDL_LIGHTFOG }, { GLDL_LIGHTMASKED, GLDL_LIGHTFOGMASKED } }
 		};
 
-		bool light = gl_forcemultipass;
+		bool light = false;
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
 
 		if (!gl_fixedcolormap)
 		{
 			foggy = gl_CheckFog(&Colormap, lightlevel) || level.flags&LEVEL_HASFADETABLE;
-
-			if (gl_lights && !gl_dynlight_shader && GLRenderer->mLightCount)	// Are lights touching this sector?
-			{
-				for(int i=0;i<sector->subsectorcount;i++) if (sector->subsectors[i]->lighthead[0] != NULL)
-				{
-					light=true;
-				}
-			}
 		}
 		else foggy = false;
 
@@ -572,13 +452,9 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
-	if (frontsector==NULL)
-	{
-		__asm int 3
-	}
 	if (frontsector->sectornum==0)
 	{
-		__asm nop
+		int a = 0;
 	}
 #endif
 #endif

@@ -418,14 +418,13 @@ void GLWall::RenderTranslucentWall()
 //==========================================================================
 void GLWall::Draw(int pass)
 {
-	FLightNode * node;
 	int rel;
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
-	if (seg->linedef-lines==879)
-		__asm nop
-#endif
+	if (seg->linedef - lines == 879)
+	{
+		int a = 0;	// for setting breakpoints
+	}
 #endif
 
 
@@ -457,72 +456,10 @@ void GLWall::Draw(int pass)
 		gl_RenderState.EnableLight(false);
 		break;
 
-	case GLPASS_BASE:			// Base pass for non-masked polygons (all opaque geometry)
-	case GLPASS_BASE_MASKED:	// Base pass for masked polygons (2sided mid-textures and transparent 3D floors)
-		rel = rellight + getExtraLight();
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
-		if (!(flags&GLWF_FOGGY)) 
-		{
-			if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
-			else gl_SetFog(255, 0, NULL, false);
-		}
-		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		// fall through
-
-		if (pass != GLPASS_BASE)
-		{
-			gltexture->Bind(Colormap.colormap, flags, 0);
-		}
-		RenderWall(pass == GLPASS_BASE? 2:3, NULL);
-		gl_RenderState.EnableGlow(false);
-		gl_RenderState.EnableLight(false);
-		break;
-
-	case GLPASS_TEXTURE:		// modulated texture
-		gltexture->Bind(Colormap.colormap, flags, 0);
-		RenderWall(1, NULL);
-		break;
-
-	case GLPASS_LIGHT:
-	case GLPASS_LIGHT_ADDITIVE:
-		// black fog is diminishing light and should affect lights less than the rest!
-		if (!(flags&GLWF_FOGGY)) gl_SetFog((255+lightlevel)>>1, 0, NULL, false);
-		else gl_SetFog(lightlevel, 0, &Colormap, true);	
-
-		if (seg->sidedef == NULL)
-		{
-			node = NULL;
-		}
-		else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-		{
-			// Iterate through all dynamic lights which touch this wall and render them
-			node = seg->sidedef->lighthead[pass==GLPASS_LIGHT_ADDITIVE];
-		}
-		else if (sub)
-		{
-			// To avoid constant rechecking for polyobjects use the subsector's lightlist instead
-			node = sub->lighthead[pass==GLPASS_LIGHT_ADDITIVE];
-		}
-		else node = NULL;
-		while (node)
-		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
-			{
-				iter_dlight++;
-				RenderWall(1, NULL, node->lightsource);
-			}
-			node = node->nextLight;
-		}
-		break;
-
 	case GLPASS_DECALS:
-	case GLPASS_DECALS_NOFOG:
 		if (seg->sidedef && seg->sidedef->AttachedDecals)
 		{
-			if (pass==GLPASS_DECALS) 
-			{
-				gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
-			}
+			gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
 			DoDrawDecals();
 		}
 		break;

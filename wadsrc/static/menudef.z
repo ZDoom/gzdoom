@@ -165,7 +165,6 @@ OptionMenu "GLLightOptions"
 	Option "Force additive lighting",	gl_lights_additive,				"YesNo"
 	Slider "Light intensity",			gl_lights_intensity, 			0.0, 1.0, 0.1
 	Slider "Light size",				gl_lights_size,					0.0, 2.0, 0.1
-	Option "Use shaders for lights",	gl_dynlight_shader,				"YesNo"
 }
 
 OptionMenu "GLPrefOptions"

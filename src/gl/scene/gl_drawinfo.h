@@ -39,14 +39,8 @@ enum DrawListType
 
 enum Drawpasses
 {
-	GLPASS_BASE,		// Draws the untextured surface only
-	GLPASS_BASE_MASKED,	// Draws an untextured surface that is masked by the texture
 	GLPASS_PLAIN,		// Draws a texture that isn't affected by dynamic lights with sector light settings
-	GLPASS_LIGHT,		// Draws dynamic lights
-	GLPASS_LIGHT_ADDITIVE,	// Draws additive dynamic lights
-	GLPASS_TEXTURE,		// Draws the texture to be modulated with the light information on the base surface
 	GLPASS_DECALS,		// Draws a decal
-	GLPASS_DECALS_NOFOG,// Draws a decal without setting the fog (used for passes that need a fog layer)
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
 	GLPASS_ALL			// Everything at once, using shaders for dynamic lights
 };

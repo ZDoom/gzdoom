@@ -124,7 +124,7 @@ void FLightBuffer::BindTextures(int texunit1, int texunit2)
 
 void FLightBuffer::CollectLightSources()
 {
-	if (gl_dynlight_shader && gl_lights && GLRenderer->mLightCount && gl_fixedcolormap == CM_DEFAULT)
+	if (gl_lights && GLRenderer->mLightCount && gl_fixedcolormap == CM_DEFAULT)
 	{
 		TArray<FLightRGB> pLights(100);
 		TArray<FLightPosition> pPos(100);

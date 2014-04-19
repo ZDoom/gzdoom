@@ -273,7 +273,6 @@ public:
 
 	bool SetupSubsectorLights(bool lightsapplied, subsector_t * sub);
 	void DrawSubsector(subsector_t * sub);
-	void DrawSubsectorLights(subsector_t * sub, int pass);
 	void DrawSubsectors(int pass, bool istrans);
 
 	void PutFlat(bool fog = false);

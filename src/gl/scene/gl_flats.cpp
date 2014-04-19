@@ -154,14 +154,13 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 	if (numlights[2] > 0)
 	{
 		draw_dlightf+=numlights[2]/2;
-		gl_RenderState.EnableLight(true);
 		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
 		gl_RenderState.Apply();
 		return true;
 	}
 	if (lightsapplied) 
 	{
-		gl_RenderState.EnableLight(false);
+		gl_RenderState.SetLights(NULL, NULL);
 		gl_RenderState.Apply();
 	}
 	return false;
@@ -257,7 +256,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 			}
 		}
 	}
-	gl_RenderState.EnableLight(false);
+	gl_RenderState.SetLights(NULL, NULL);
 }
 
 

@@ -368,9 +368,13 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		if (glset.lightmode == 8)
 		{
 			if (gl_fixedcolormap)
-				glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
+			{
+				gl_RenderState.SetSoftLightLevel(1.0f);
+			}
 			else
-				glVertexAttrib1f(VATTR_LIGHTLEVEL, gl_CalcLightLevel(light, rel, false) / 255.0);
+			{
+				gl_RenderState.SetSoftLightLevel(gl_CalcLightLevel(light, rel, false) / 255.0f);
+			}
 		}
 	}
 	else

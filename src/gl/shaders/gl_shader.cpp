@@ -224,18 +224,6 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		"#define NO_DESATURATE\n",
 		"#define NO_GLOW\n",
 		"\n",
-		"#define NO_GLOW\n#define NO_DESATURATE\n#define DYNLIGHT\n",
-		"#define NO_DESATURATE\n#define DYNLIGHT\n",
-		"#define NO_GLOW\n#define DYNLIGHT\n",
-		"\n#define DYNLIGHT\n",
-		"#define NO_GLOW\n#define NO_DESATURATE\n#define SOFTLIGHT\n",
-		"#define NO_DESATURATE\n#define SOFTLIGHT\n",
-		"#define NO_GLOW\n#define SOFTLIGHT\n",
-		"\n#define SOFTLIGHT\n",
-		"#define NO_GLOW\n#define NO_DESATURATE\n#define DYNLIGHT\n#define SOFTLIGHT\n",
-		"#define NO_DESATURATE\n#define DYNLIGHT\n#define SOFTLIGHT\n",
-		"#define NO_GLOW\n#define DYNLIGHT\n#define SOFTLIGHT\n",
-		"\n#define DYNLIGHT\n#define SOFTLIGHT\n"
 	};
 
 	const char * shaderdesc[] = {
@@ -243,18 +231,6 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		"::glow",
 		"::desaturate",
 		"::glow+desaturate",
-		"::default+dynlight",
-		"::glow+dynlight",
-		"::desaturate+dynlight",
-		"::glow+desaturate+dynlight",
-		"::softlight",
-		"::glow+softlight",
-		"::desaturate+softlight",
-		"::glow+desaturate+softlight",
-		"::default+dynlight+softlight",
-		"::glow+dynlight+softlight",
-		"::desaturate+dynlight+softlight",
-		"::glow+desaturate+dynlight+softlight",
 	};
 
 	FString name;
@@ -302,17 +278,10 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		try
 		{
 			FString str;
-			if ((i&4) != 0)
-			{
-				if (gl.maxuniforms < 1024)
-				{
-					shader[i] = NULL;
-					continue;
-				}
-				// this can't be in the shader code due to ATI strangeness.
-				str = "#version 120\n#extension GL_EXT_gpu_shader4 : enable\n";
-				if (gl.MaxLights() == 128) str += "#define MAXLIGHTS128\n";
-			}
+			// this can't be in the shader code due to ATI strangeness.
+			str = "#version 120\n#extension GL_EXT_gpu_shader4 : enable\n";
+			if (gl.MaxLights() == 128) str += "#define MAXLIGHTS128\n";
+
 			str += shaderdefines[i];
 			shader[i] = new FShader;
 			if (!shader[i]->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str.GetChars()))
@@ -354,7 +323,7 @@ FShaderContainer::~FShaderContainer()
 //
 //==========================================================================
 
-FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
+FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed)
 {
 	FShader *sh=NULL;
 
@@ -385,7 +354,7 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
 	else
 	{
 		bool desat = cm>=CM_DESAT1 && cm<=CM_DESAT31;
-		sh = shader[glowing + 2*desat + 4*lights + (glset.lightmode & 8)];
+		sh = shader[glowing + 2*desat];
 		// [BB] If there was a problem when loading the shader, sh is NULL here.
 		if( sh )
 		{
@@ -444,7 +413,7 @@ struct FEffectShader
 static const FEffectShader effectshaders[]=
 {
 	{"fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "#define NO_GLOW\n"},
-	{"spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define NO_GLOW\n#define NO_DESATURATE\n#define SPHEREMAP\n#define SPHEREMAP_0\n"},
+	{"spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define NO_GLOW\n#define NO_DESATURATE\n#define SPHEREMAP\n"},
 	{"burn", "shaders/glsl/burn.vp", "shaders/glsl/burn.fp", NULL, ""},
 };
 

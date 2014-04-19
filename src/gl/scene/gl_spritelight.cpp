@@ -162,7 +162,7 @@ static int gl_SetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subs
 		glColor4f(r, g, b, alpha);
 		if (glset.lightmode == 8) 
 		{
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, gl_CalcLightLevel(lightlevel, rellight, weapon) / 255.0f); // Korshun.
+			gl_RenderState.SetSoftLightLevel(gl_CalcLightLevel(lightlevel, rellight, weapon) / 255.0f); // Korshun.
 			gl_RenderState.SetDynLight(result[0], result[1], result[2]);
 		}
 		return lightlevel;

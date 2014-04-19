@@ -208,7 +208,6 @@ void GLWall::SetupLights()
 	if (numlights[2] > 0)
 	{
 		draw_dlight+=numlights[2]/2;
-		gl_RenderState.EnableLight(true);
 		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
 	}
 }
@@ -453,7 +452,7 @@ void GLWall::Draw(int pass)
 		gltexture->Bind(Colormap.colormap, flags, 0);
 		RenderWall(3, NULL);
 		gl_RenderState.EnableGlow(false);
-		gl_RenderState.EnableLight(false);
+		gl_RenderState.SetLights(NULL, NULL);
 		break;
 
 	case GLPASS_DECALS:

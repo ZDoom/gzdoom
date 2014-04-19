@@ -63,7 +63,7 @@ CVAR(Bool, gl_direct_state_change, true, 0)
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mBrightmapEnabled = mFogEnabled = mGlowEnabled = mLightEnabled = false;
+	mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mSpecialEffect = EFF_NONE;
 	mFogColor.d = -1;
 	mFogDensity = 0;
@@ -130,7 +130,7 @@ bool FRenderState::ApplyShader()
 
 		if (shd != NULL)
 		{
-			activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
+			activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime);
 			assert(activeShader != NULL);
 		}
 	}
@@ -186,14 +186,20 @@ bool FRenderState::ApplyShader()
 			glUniform4fv(activeShader->glowtopcolor_index, 1, mGlowTop.vec);
 			glUniform4fv(activeShader->glowbottomcolor_index, 1, mGlowBottom.vec);
 		}
-		if (mLightEnabled)
+		//if (mLightEnabled)
 		{
 			glUniform3iv(activeShader->lightrange_index, 1, mNumLights);
-			glUniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
+			if (mLightData) glUniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
 		}
+
 		if (glset.lightmode == 8)
 		{
 			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
+			glVertexAttrib1f(VATTR_LIGHTLEVEL, mSoftLightLevel);
+		}
+		else
+		{
+			glVertexAttrib1f(VATTR_LIGHTLEVEL, -1.f);
 		}
 
 		if (activeShader->mMatrixTick[0] < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)

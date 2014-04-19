@@ -343,6 +343,7 @@ void FGLRenderer::RenderScene(int recursion)
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
+	//if (glset.lightmode != 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, -1.0);
 
 	// First draw all single-pass stuff
 

@@ -109,7 +109,7 @@ class FShaderContainer
 
 	FName Name;
 
-	enum { NUM_SHADERS = 16 };
+	enum { NUM_SHADERS = 4 };
 
 	FShader *shader[NUM_SHADERS];
 	FShader *shader_cm;	// the shader for fullscreen colormaps
@@ -118,7 +118,7 @@ class FShaderContainer
 public:
 	FShaderContainer(const char *ShaderName, const char *ShaderPath);
 	~FShaderContainer();
-	FShader *Bind(int cm, bool glowing, float Speed, bool lights);
+	FShader *Bind(int cm, bool glowing, float Speed);
 };
 
 

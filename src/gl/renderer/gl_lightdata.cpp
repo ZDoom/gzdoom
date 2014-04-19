@@ -338,12 +338,12 @@ void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, Pal
 
 		if (gl_fixedcolormap)
 		{
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
+			gl_RenderState.SetSoftLightLevel(1.f);
 		}
 		else
 		{
 			float lightlevel = gl_CalcLightLevel(light, rellight, weapon) / 255.0f;
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, lightlevel); 
+			gl_RenderState.SetSoftLightLevel(lightlevel);
 		}
 	}
 }
@@ -610,7 +610,9 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 
 		// Korshun: fullbright fog like in software renderer.
 		if (glset.lightmode == 8 && glset.brightfog && fogdensity != 0 && fogcolor != 0)
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
+		{
+			gl_RenderState.SetSoftLightLevel(1.0f);
+		}
 	}
 }
 

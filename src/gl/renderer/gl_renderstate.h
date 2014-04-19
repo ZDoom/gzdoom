@@ -105,10 +105,10 @@ class FRenderState
 	bool mTextureEnabled;
 	bool mFogEnabled;
 	bool mGlowEnabled;
-	bool mLightEnabled;
 	bool mBrightmapEnabled;
 	int mSpecialEffect;
 	int mTextureMode;
+	float mSoftLightLevel;
 	float mDynLight[3];
 	float mLightParms[2];
 	int mNumLights[3];
@@ -173,11 +173,6 @@ public:
 		mGlowEnabled = on;
 	}
 
-	void EnableLight(bool on)
-	{
-		mLightEnabled = on;
-	}
-
 	void EnableBrightmap(bool on)
 	{
 		mBrightmapEnabled = on;
@@ -192,6 +187,11 @@ public:
 	{
 		mGlowTop.Set(t[0], t[1], t[2], t[3]);
 		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
+	}
+
+	void SetSoftLightLevel(float lightlev)
+	{
+		mSoftLightLevel = lightlev;
 	}
 
 	void SetDynLight(float r,float g, float b)
@@ -215,10 +215,19 @@ public:
 
 	void SetLights(int *numlights, float *lightdata)
 	{
-		mNumLights[0] = numlights[0];
-		mNumLights[1] = numlights[1];
-		mNumLights[2] = numlights[2];
-		mLightData = lightdata;	// caution: the data must be preserved by the caller until the 'apply' call!
+		if (numlights != NULL)
+		{
+			mNumLights[0] = numlights[0];
+			mNumLights[1] = numlights[1];
+			mNumLights[2] = numlights[2];
+			mLightData = lightdata;	// caution: the data must be preserved by the caller until the 'apply' call!
+		}
+		else
+		{
+			mNumLights[0] = mNumLights[1] = mNumLights[2] = 0;
+			mLightData = NULL;
+		}
+	
 	}
 
 	void SetFixedColormap(int cm)

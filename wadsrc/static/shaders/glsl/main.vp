@@ -1,3 +1,5 @@
+// NOTE: NO_FOG is only for the colormap shader which doesn't use any lighting effects.
+
 #ifndef NO_FOG
 	varying vec4 pixelpos;
 	attribute vec4 fogparams;
@@ -8,10 +10,8 @@
 	attribute vec2 glowdistance;
 #endif
 
-#ifdef SOFTLIGHT
-	attribute float lightlevel_in;
-	varying float lightlevel;
-#endif
+attribute float lightlevel_in;
+varying float lightlevel;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
@@ -20,9 +20,7 @@ uniform mat4 TextureMatrix;
 
 void main()
 {
-	#ifdef SOFTLIGHT
-		lightlevel = lightlevel_in;
-	#endif
+	lightlevel = lightlevel_in;
 
 	vec4 worldcoord = ModelMatrix * gl_Vertex;
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
@@ -45,13 +43,9 @@ void main()
 		vec3 r = reflect(u, n);
 		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
-	#endif
-	
-	
-	#ifndef SPHEREMAP_0
-		gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
-	#else
 		gl_TexCoord[0].xy = sst;
+	#else
+		gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
 	#endif
 	
 	

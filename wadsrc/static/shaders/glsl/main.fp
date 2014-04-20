@@ -17,6 +17,8 @@ uniform vec4 lights[128];
 
 
 
+uniform float alphathreshold;
+uniform float clipheight;
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec3 dlightcolor;
@@ -170,6 +172,13 @@ vec4 applyFog(vec4 frag, float fogfactor)
 
 void main()
 {
+#ifndef NO_DISCARD
+	// clip plane emulation for plane reflections. These are always perfectly horizontal so a simple check of the pixelpos's y coordinate is sufficient.
+	// this setup is designed to perform this check with as few operations and values as possible.
+	if (pixelpos.y > clipheight + 65536.0) discard;
+	if (pixelpos.y < clipheight - 65536.0) discard;
+#endif
+
 	float fogdist = 0.0;
 	float fogfactor = 0.0;
 	
@@ -204,7 +213,7 @@ void main()
 			vec4 lightcolor = lights[i+1];
 			
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			dynlight += lightcolor;
+			dynlight.rgb += lightcolor.rgb;
 		}
 		for(int i=lightrange.x; i<lightrange.y; i+=2)
 		{
@@ -212,23 +221,35 @@ void main()
 			vec4 lightcolor = lights[i+1];
 			
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			dynlight -= lightcolor;
+			dynlight.rgb -= lightcolor.rgb;
 		}
+		frag.rgb = clamp(frag.rgb + dynlight.rgb, 0.0, 1.4);
+		frag = Process(frag);
+#ifndef NO_DISCARD
+		if (frag.a < alphathreshold)
+		{
+			discard;
+		}
+#endif
 		for(int i=lightrange.y; i<lightrange.z; i+=2)
 		{
 			vec4 lightpos = lights[i];
 			vec4 lightcolor = lights[i+1];
 			
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			addlight += lightcolor;
+			addlight.rgb += lightcolor.rgb;
 		}
-		frag.rgb = clamp(frag.rgb + dynlight.rgb, 0.0, 1.4);
-		frag = Process(frag);
 		frag.rgb += addlight.rgb;
 	}
 	else
 	{
 		frag = Process(frag);
+#ifndef NO_DISCARD
+		if (frag.a < alphathreshold)
+		{
+			discard;
+		}
+#endif
 	}
 
 	if (fogenabled < 0) 

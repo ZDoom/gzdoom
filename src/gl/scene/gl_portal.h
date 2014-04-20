@@ -82,6 +82,7 @@ class GLPortal
 	static int recursion;
 	static unsigned int QueryObject;
 protected:
+	static TArray<float> planestack;
 	static int MirrorFlag;
 	static int PlaneMirrorFlag;
 	static int renderdepth;

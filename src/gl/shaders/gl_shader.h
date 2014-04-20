@@ -37,6 +37,8 @@ class FShader
 	int fogcolor_index;
 	int lights_index;
 	int dlightcolor_index;
+	int alphathreshold_index;
+	int clipplane_index;
 
 	int mModelMatLocation;
 	int mViewMatLocation;
@@ -50,6 +52,8 @@ class FShader
 	int currenttexturemode;
 	float currentlightfactor;
 	float currentlightdist;
+	float currentalphathreshold;
+	float currentclipplane;
 
 	PalEntry currentfogcolor;
 	float currentfogdensity;
@@ -62,7 +66,7 @@ public:
 	{
 		hShader = hVertProg = hFragProg = 0;
 		currentfogenabled = currenttexturemode = 0;
-		currentlightfactor = currentlightdist = 0.0f;
+		currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = 0.0f;
 		currentfogdensity = -1;
 		currentfogcolor = 0;
 
@@ -78,6 +82,9 @@ public:
 		fogcolor_index = -1;
 		lights_index = -1;
 		dlightcolor_index = -1;
+		alphathreshold_index = -1;
+		clipplane_index = -1;
+
 
 		mMatrixTick[0] = mMatrixTick[1] = mMatrixTick[2] = mMatrixTick[3] = 0;
 

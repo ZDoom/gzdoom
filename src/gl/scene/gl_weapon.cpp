@@ -378,7 +378,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 					cmc.LightColor.b = (3*cmc.LightColor.b + 0xff)/4;
 				}
 			}
-			// set the lighting parameters (only calls glColor and glAlphaFunc)
+			// set the lighting parameters
 			gl_SetSpriteLighting(vis.RenderStyle, playermo, statebright[i]? 255 : lightlevel, 
 				0, &cmc, 0xffffff, trans, statebright[i], true);
 			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);

@@ -1,7 +1,7 @@
 // NOTE: NO_FOG is only for the colormap shader which doesn't use any lighting effects.
 
-#ifndef NO_FOG
 	varying vec4 pixelpos;
+#ifndef NO_FOG
 	attribute vec4 fogparams;
 	varying vec4 fogparm;
 #endif
@@ -27,9 +27,10 @@ void main()
 
 	gl_FrontColor = gl_Color;
 
+	pixelpos.xyz = worldcoord.xyz;
+	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
+	
 	#ifndef NO_FOG
-		pixelpos.xyz = worldcoord.xyz;
-		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 		fogparm = fogparams;
 	#endif
 	

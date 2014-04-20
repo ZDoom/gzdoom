@@ -171,6 +171,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	fogcolor_index = glGetUniformLocation(hShader, "fogcolor");
 	lights_index = glGetUniformLocation(hShader, "lights");
 	dlightcolor_index = glGetUniformLocation(hShader, "dlightcolor");
+	alphathreshold_index = glGetUniformLocation(hShader, "alphathreshold");
+	clipplane_index = glGetUniformLocation(hShader, "clipheight");
 
 	glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
 	glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");

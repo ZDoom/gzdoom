@@ -114,8 +114,8 @@ class FRenderState
 	int mNumLights[3];
 	float *mLightData;
 	int mSrcBlend, mDstBlend;
-	int mAlphaFunc;
 	float mAlphaThreshold;
+	float mClipPlane;
 	bool mAlphaTest;
 	int mBlendEquation;
 	bool m2D;
@@ -130,9 +130,6 @@ class FRenderState
 	float mWarpTime;
 
 	int glSrcBlend, glDstBlend;
-	int glAlphaFunc;
-	float glAlphaThreshold;
-	bool glAlphaTest;
 	int gl_BlendEquation;
 
 	bool ApplyShader();
@@ -235,6 +232,16 @@ public:
 		mColormapState = cm;
 	}
 
+	void SetClipPlane(float y)
+	{
+		mClipPlane = y;
+	}
+
+	float GetClipPlane()
+	{
+		return mClipPlane;
+	}
+
 	PalEntry GetFogColor() const
 	{
 		return mFogColor;
@@ -253,30 +260,16 @@ public:
 		}
 	}
 
+	// note: func may only be GL_GREATER or GL_GEQUAL to keep this simple. The engine won't need any other settings for the alpha test.
 	void AlphaFunc(int func, float thresh)
 	{
-		if (!gl_direct_state_change)
-		{
-			mAlphaFunc = func;
-			mAlphaThreshold = thresh;
-		}
-		else
-		{
-			::glAlphaFunc(func, thresh);
-		}
+		if (func == GL_GEQUAL) thresh -= 0.001f;	// reduce by 1/1000.
+		mAlphaThreshold = thresh;
 	}
 
 	void EnableAlphaTest(bool on)
 	{
-		if (!gl_direct_state_change)
-		{
-			mAlphaTest = on;
-		}
-		else
-		{
-			if (on) glEnable(GL_ALPHA_TEST);
-			else glDisable(GL_ALPHA_TEST);
-		}
+		mAlphaTest = on;
 	}
 
 	void BlendEquation(int eq)

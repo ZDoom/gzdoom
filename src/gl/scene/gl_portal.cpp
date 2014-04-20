@@ -78,6 +78,7 @@ EXTERN_CVAR(Bool, gl_noquery)
 EXTERN_CVAR(Int, r_mirror_recursions)
 
 TArray<GLPortal *> GLPortal::portals;
+TArray<float> GLPortal::planestack;
 int GLPortal::recursion;
 int GLPortal::MirrorFlag;
 int GLPortal::PlaneMirrorFlag;
@@ -766,14 +767,14 @@ void GLPlaneMirrorPortal::DrawContents()
 	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	ClearClipper();
 
-	glEnable(GL_CLIP_PLANE0+renderdepth);
-	// This only works properly for non-sloped planes so don't bother with the math.
-	//double d[4]={origin->a/65536., origin->c/65536., origin->b/65536., FIXED2FLOAT(origin->d)};
-	double d[4]={0, static_cast<double>(PlaneMirrorMode), 0, FIXED2FLOAT(origin->d)};
-	glClipPlane(GL_CLIP_PLANE0+renderdepth, d);
-
+	planestack.Push(gl_RenderState.GetClipPlane());
+	float f = FIXED2FLOAT(planez);
+	if (PlaneMirrorMode < 0) f -= 65536.f;	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
+	else f += 65536.f;	// floor mirror: clip everything with a z higher than the portal's floor
+	gl_RenderState.SetClipPlane(f);
 	GLRenderer->DrawScene();
-	glDisable(GL_CLIP_PLANE0+renderdepth);
+	planestack.Pop(f);
+	gl_RenderState.SetClipPlane(f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;
 }

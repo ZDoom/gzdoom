@@ -71,8 +71,6 @@ void FRenderState::Reset()
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
 	glSrcBlend = glDstBlend = -1;
-	glAlphaFunc = -1;
-	mAlphaFunc = GL_GEQUAL;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
 	gl_BlendEquation = -1;
@@ -192,6 +190,19 @@ bool FRenderState::ApplyShader()
 			if (mLightData) glUniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
 		}
 
+		float newthresh = mAlphaTest ? mAlphaThreshold : -1.f;
+		if (newthresh != activeShader->currentalphathreshold)
+		{
+			glUniform1f(activeShader->alphathreshold_index, newthresh);
+			activeShader->currentalphathreshold = newthresh;
+		}
+
+		if (mClipPlane != activeShader->currentclipplane)
+		{
+			glUniform1f(activeShader->clipplane_index, mClipPlane);
+			activeShader->currentclipplane = mClipPlane;
+		}
+
 		if (glset.lightmode == 8)
 		{
 			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
@@ -248,18 +259,6 @@ void FRenderState::Apply()
 			glSrcBlend = mSrcBlend;
 			glDstBlend = mDstBlend;
 			glBlendFunc(mSrcBlend, mDstBlend);
-		}
-		if (mAlphaFunc != glAlphaFunc || mAlphaThreshold != glAlphaThreshold)
-		{
-			glAlphaFunc = mAlphaFunc;
-			glAlphaThreshold = mAlphaThreshold;
-			::glBlendFunc(mAlphaFunc, mAlphaThreshold);
-		}
-		if (mAlphaTest != glAlphaTest)
-		{
-			glAlphaTest = mAlphaTest;
-			if (mAlphaTest) glEnable(GL_ALPHA_TEST);
-			else glDisable(GL_ALPHA_TEST);
 		}
 		if (mBlendEquation != gl_BlendEquation)
 		{

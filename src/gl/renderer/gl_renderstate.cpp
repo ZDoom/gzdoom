@@ -128,7 +128,7 @@ bool FRenderState::ApplyShader()
 
 		if (shd != NULL)
 		{
-			activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime);
+			activeShader = shd->Bind(mColormapState, mWarpTime);
 			assert(activeShader != NULL);
 		}
 	}
@@ -183,6 +183,16 @@ bool FRenderState::ApplyShader()
 		{
 			glUniform4fv(activeShader->glowtopcolor_index, 1, mGlowTop.vec);
 			glUniform4fv(activeShader->glowbottomcolor_index, 1, mGlowBottom.vec);
+			glUniform4fv(activeShader->glowtopplane_index, 1, mGlowTopPlane.vec);
+			glUniform4fv(activeShader->glowbottomplane_index, 1, mGlowBottomPlane.vec);
+			activeShader->currentglowstate = 1;
+		}
+		else if (activeShader->currentglowstate)
+		{
+			// if glowing is on, disable it.
+			glUniform4f(activeShader->glowtopcolor_index, 0.f, 0.f, 0.f, 0.f);
+			glUniform4f(activeShader->glowbottomcolor_index, 0.f, 0.f, 0.f, 0.f);
+			activeShader->currentglowstate = 0;
 		}
 		//if (mLightEnabled)
 		{

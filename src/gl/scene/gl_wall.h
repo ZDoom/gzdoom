@@ -99,6 +99,18 @@ public:
 		GLWF_NOSPLITLOWER=128,
 	};
 
+	enum
+	{
+		TRF_TEXTURED = 1,
+		TRF_ALLOWGLOW = 2,
+		TRF_NOSPLIT = 4,
+
+		TRF_BLANK = 0,
+		TRF_DEFAULT = TRF_TEXTURED | TRF_ALLOWGLOW,
+		TRF_TRANSLUCENT = TRF_DEFAULT | TRF_NOSPLIT
+	};
+
+
 	friend struct GLDrawList;
 	friend class GLPortal;
 
@@ -137,8 +149,9 @@ public:
 
 
 	FTextureID topflat,bottomflat;
+	secplane_t topplane, bottomplane;	// we need to save these to pass them to the shader for calculating glows.
 
-	// these are not the same as ytop and ybottom!!!
+	// these are not the same as ytop and ybottom!
 	float zceil[2];
 	float zfloor[2];
 
@@ -152,12 +165,7 @@ private:
 	void CheckTexturePosition();
 
 	void SetupLights();
-	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
-	void RenderWall(int textured, float * color2, ADynamicLight * light=NULL);
-	void RenderGlowingPoly(int textured, ADynamicLight * light=NULL);
-	int Intersection(FloatRect * rc,GLWall * result);
-
-	void FloodPlane(int pass);
+	void RenderWall(int textured);
 
 	void SkyPlane(sector_t *sector, int plane, bool allowmirror);
 	void SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2);
@@ -166,7 +174,6 @@ private:
 
 	void Put3DWall(lightlist_t * lightlist, bool translucent);
 	void SplitWall(sector_t * frontsector, bool translucent);
-	void LightPass();
 	void SetHorizon(vertex_t * ul, vertex_t * ur, vertex_t * ll, vertex_t * lr);
 	bool DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
 
@@ -207,10 +214,10 @@ private:
 	void RenderMirrorSurface();
 	void RenderTranslucentWall();
 
-	void SplitLeftEdge(texcoord * tcs, bool glow);
-	void SplitRightEdge(texcoord * tcs, bool glow);
-	void SplitUpperEdge(texcoord * tcs, bool glow);
-	void SplitLowerEdge(texcoord * tcs, bool glow);
+	void SplitLeftEdge(texcoord * tcs);
+	void SplitRightEdge(texcoord * tcs);
+	void SplitUpperEdge(texcoord * tcs);
+	void SplitLowerEdge(texcoord * tcs);
 
 public:
 

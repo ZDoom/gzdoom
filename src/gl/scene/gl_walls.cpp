@@ -71,7 +71,7 @@
 void GLWall::CheckGlowing()
 {
 	bottomglowcolor[3] = topglowcolor[3] = 0;
-	if (!gl_isFullbright(Colormap.LightColor, lightlevel) && gl_GlowActive())
+	if (!gl_isFullbright(Colormap.LightColor, lightlevel))
 	{
 		FTexture *tex = TexMan[topflat];
 		if (tex != NULL && tex->isGlowing())
@@ -1510,6 +1510,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 	topflat=frontsector->GetTexture(sector_t::ceiling);	// for glowing textures. These must be saved because
 	bottomflat=frontsector->GetTexture(sector_t::floor);	// the sector passed here might be a temporary copy.
+	topplane = frontsector->ceilingplane;
+	bottomplane = frontsector->floorplane;
 
 	// Save a little time (up to 0.3 ms per frame ;) )
 	if (frontsector->floorplane.a | frontsector->floorplane.b)

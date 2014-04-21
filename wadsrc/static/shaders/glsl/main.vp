@@ -1,17 +1,16 @@
-// NOTE: NO_FOG is only for the colormap shader which doesn't use any lighting effects.
 
-	varying vec4 pixelpos;
-#ifndef NO_FOG
+varying vec4 pixelpos;
+
+// This is for the colormap shader which doesn't implement any form of lighing special effects.	
+#ifndef NO_LIGHTING
 	attribute vec4 fogparams;
 	varying vec4 fogparm;
-#endif
-#ifndef NO_GLOW
 	varying vec2 glowdist;
-	attribute vec2 glowdistance;
+	uniform vec4 glowbottomplane, glowtopplane;
+	attribute float lightlevel_in;
+	varying float lightlevel;
 #endif
 
-attribute float lightlevel_in;
-varying float lightlevel;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
@@ -20,8 +19,6 @@ uniform mat4 TextureMatrix;
 
 void main()
 {
-	lightlevel = lightlevel_in;
-
 	vec4 worldcoord = ModelMatrix * gl_Vertex;
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
@@ -30,12 +27,12 @@ void main()
 	pixelpos.xyz = worldcoord.xyz;
 	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 	
-	#ifndef NO_FOG
+	#ifndef NO_LIGHTING
+		lightlevel = lightlevel_in;
 		fogparm = fogparams;
-	#endif
-	
-	#ifndef NO_GLOW
-		glowdist = glowdistance;
+		// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex attributes to the shader.
+		glowdist.x = -((glowtopplane.w + glowtopplane.x * worldcoord.x + glowtopplane.y * worldcoord.z) * glowtopplane.z) - worldcoord.y;
+		glowdist.y = worldcoord.y + ((glowbottomplane.w + glowbottomplane.x * worldcoord.x + glowbottomplane.y * worldcoord.z) * glowbottomplane.z);
 	#endif
 	
 	#ifdef SPHEREMAP
@@ -51,7 +48,4 @@ void main()
 	
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;
-    #ifdef __GLSL_CG_DATA_TYPES
-		gl_ClipVertex = eyeCoordPos;
-	#endif
 }

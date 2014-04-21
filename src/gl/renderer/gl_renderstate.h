@@ -3,6 +3,8 @@
 
 #include <string.h>
 #include "c_cvars.h"
+#include "m_fixed.h"
+#include "r_defs.h"
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
 
@@ -78,15 +80,22 @@ struct FStateVec4 : public FStateAttr
 
 struct PrimAttr
 {
-	int mFlags;
-	unsigned char mColor[4];
-	unsigned char mFogColor[4];
-	int mGlowTop;
-	int mGlowBottom;
-	int mDynLight;
 	float mFogDensity;
 	float mLightFactor;
 	float mLightDist;
+
+	// indices into float parameter buffer
+	// colors are stored in the parameter buffer because the most frequent case only uses default values so this keeps data amount lower.
+	int mColorIndex;
+	int mFogColorIndex;
+	int mObjectColorIndex;
+	int mAddLightIndex;
+
+	int mDynLightIndex;	// index of first dynamic light (each light has 2 vec4's, first light's lightcolor.a contains number of lights in the list, each primitive has 3 lists: modulated, subtractive and additive lights)
+	int mGlowIndex;		// each primitive has 4 vec4's: top and bottom color, top and bottom plane equations.
+
+	// index into the matrix buffer
+	int mTexMatrixIndex;	// one matrix if value != -1.
 };
 
 
@@ -122,6 +131,7 @@ class FRenderState
 
 	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
+	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor;
 	float mFogDensity;
 
@@ -184,6 +194,12 @@ public:
 	{
 		mGlowTop.Set(t[0], t[1], t[2], t[3]);
 		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
+	}
+
+	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
+	{
+		mGlowTopPlane.Set(FIXED2FLOAT(top.a), FIXED2FLOAT(top.b), FIXED2FLOAT(top.ic), FIXED2FLOAT(top.d));
+		mGlowBottomPlane.Set(FIXED2FLOAT(bottom.a), FIXED2FLOAT(bottom.b), FIXED2FLOAT(bottom.ic), FIXED2FLOAT(bottom.d));
 	}
 
 	void SetSoftLightLevel(float lightlev)

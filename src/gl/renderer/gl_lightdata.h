@@ -5,9 +5,6 @@
 #include "r_data/renderstyle.h"
 #include "gl/renderer/gl_colormap.h"
 
-bool gl_BrightmapsActive();
-bool gl_GlowActive();
-
 inline int gl_ClampLight(int lightlevel)
 {
 	return clamp(lightlevel, 0, 255);

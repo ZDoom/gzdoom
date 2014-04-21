@@ -137,7 +137,7 @@ void GLPortal::DrawPortalStencil()
 {
 	for(unsigned int i=0;i<lines.Size();i++)
 	{
-		lines[i].RenderWall(0, NULL);
+		lines[i].RenderWall(GLWall::TRF_BLANK);
 
 	}
 
@@ -605,7 +605,7 @@ void GLSkyboxPortal::DrawContents()
 
 	PlaneMirrorMode=0;
 
-	glDisable(GL_DEPTH_CLAMP_NV);
+	glDisable(GL_DEPTH_CLAMP);
 
 	viewx = origin->PrevX + FixedMul(r_TicFrac, origin->x - origin->PrevX);
 	viewy = origin->PrevY + FixedMul(r_TicFrac, origin->y - origin->PrevY);
@@ -635,7 +635,7 @@ void GLSkyboxPortal::DrawContents()
 	GLRenderer->DrawScene();
 	origin->flags&=~MF_JUSTHIT;
 	inskybox=false;
-	glEnable(GL_DEPTH_CLAMP_NV);
+	glEnable(GL_DEPTH_CLAMP);
 	skyboxrecursion--;
 
 	PlaneMirrorMode=old_pm;

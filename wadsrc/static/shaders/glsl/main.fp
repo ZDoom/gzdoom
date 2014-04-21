@@ -108,7 +108,6 @@ vec4 getLightColor(float fogdist, float fogfactor)
 		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
 	}
 	
-	#ifndef NO_GLOW
 	//
 	// handle glowing walls
 	//
@@ -121,7 +120,6 @@ vec4 getLightColor(float fogdist, float fogfactor)
 		color.rgb += desaturate(bottomglowcolor * (1.0 - glowdist.y / bottomglowcolor.a)).rgb;
 	}
 	color = min(color, 1.0);
-	#endif
 	
 	// calculation of actual light color is complete.
 	return color;

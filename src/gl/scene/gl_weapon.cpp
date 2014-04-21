@@ -192,11 +192,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		(players[consoleplayer].cheats & CF_CHASECAM))
 		return;
 
-	/*
-	if(!player || playermo->renderflags&RF_INVISIBLE || !r_drawplayersprites ||
-		mViewActor!=playermo || playermo->RenderStyle.BlendOp == STYLEOP_None) return;
-	*/
-
 	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy);
 
 	// check for fullbright
@@ -207,7 +202,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				bool disablefullbright = false;
 				FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, NULL);
-				if (lump.isValid() && gl_BrightmapsActive())
+				if (lump.isValid())
 				{
 					FMaterial * tex=FMaterial::ValidateTexture(lump, false);
 					if (tex)

@@ -126,7 +126,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
 
-	glBindAttribLocation(hShader, VATTR_GLOWDISTANCE, "glowdistance");
 	glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
 	glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
 
@@ -176,7 +175,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
 	glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");
-		
+	glowbottomplane_index = glGetUniformLocation(hShader, "glowbottomplane");
+	glowtopplane_index = glGetUniformLocation(hShader, "glowtopplane");
+
 	glUseProgram(hShader);
 
 	int texture_index = glGetUniformLocation(hShader, "texture2");
@@ -222,17 +223,13 @@ bool FShader::Bind(float Speed)
 FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPath)
 {
 	const char * shaderdefines[] = {
-		"#define NO_GLOW\n#define NO_DESATURATE\n",
 		"#define NO_DESATURATE\n",
-		"#define NO_GLOW\n",
 		"\n",
 	};
 
 	const char * shaderdesc[] = {
 		"::default",
-		"::glow",
 		"::desaturate",
-		"::glow+desaturate",
 	};
 
 	FString name;
@@ -242,7 +239,7 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 	try
 	{
 		shader_cm = new FShader;
-		if (!shader_cm->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_colormap.fp", ShaderPath, "#define NO_FOG\n#define NO_GLOW\n"))
+		if (!shader_cm->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_colormap.fp", ShaderPath, "#define NO_LIGHTING\n"))
 		{
 			delete shader_cm;
 			shader_cm = NULL;
@@ -259,7 +256,7 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 	try
 	{
 		shader_fl = new FShader;
-		if (!shader_fl->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_foglayer.fp", ShaderPath, "#define NO_GLOW\n"))
+		if (!shader_fl->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_foglayer.fp", ShaderPath, ""))
 		{
 			delete shader_fl;
 			shader_fl = NULL;
@@ -325,7 +322,7 @@ FShaderContainer::~FShaderContainer()
 //
 //==========================================================================
 
-FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed)
+FShader *FShaderContainer::Bind(int cm, float Speed)
 {
 	FShader *sh=NULL;
 
@@ -356,7 +353,7 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed)
 	else
 	{
 		bool desat = cm>=CM_DESAT1 && cm<=CM_DESAT31;
-		sh = shader[glowing + 2*desat];
+		sh = shader[desat];
 		// [BB] If there was a problem when loading the shader, sh is NULL here.
 		if( sh )
 		{

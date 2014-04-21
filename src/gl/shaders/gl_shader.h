@@ -7,7 +7,6 @@
 
 extern bool gl_shaderactive;
 
-const int VATTR_GLOWDISTANCE = 15;
 const int VATTR_FOGPARAMS = 14;
 const int VATTR_LIGHTLEVEL = 13; // Korshun.
 
@@ -39,15 +38,18 @@ class FShader
 	int dlightcolor_index;
 	int alphathreshold_index;
 	int clipplane_index;
+	int glowbottomcolor_index;
+	int glowtopcolor_index;
+	int glowbottomplane_index;
+	int glowtopplane_index;
 
 	int mModelMatLocation;
 	int mViewMatLocation;
 	int mProjMatLocation;
 	int mTexMatLocation;
 
-	int glowbottomcolor_index;
-	int glowtopcolor_index;
 
+	int currentglowstate;
 	int currentfogenabled;
 	int currenttexturemode;
 	float currentlightfactor;
@@ -65,7 +67,7 @@ public:
 	FShader()
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentfogenabled = currenttexturemode = 0;
+		currentfogenabled = currenttexturemode = currentglowstate = 0;
 		currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = 0.0f;
 		currentfogdensity = -1;
 		currentfogcolor = 0;
@@ -84,6 +86,10 @@ public:
 		dlightcolor_index = -1;
 		alphathreshold_index = -1;
 		clipplane_index = -1;
+		glowtopplane_index = -1;
+		glowbottomplane_index = -1;
+		glowtopcolor_index = -1;
+		glowbottomcolor_index = -1;
 
 
 		mMatrixTick[0] = mMatrixTick[1] = mMatrixTick[2] = mMatrixTick[3] = 0;
@@ -116,7 +122,7 @@ class FShaderContainer
 
 	FName Name;
 
-	enum { NUM_SHADERS = 4 };
+	enum { NUM_SHADERS = 2 };
 
 	FShader *shader[NUM_SHADERS];
 	FShader *shader_cm;	// the shader for fullscreen colormaps
@@ -125,7 +131,7 @@ class FShaderContainer
 public:
 	FShaderContainer(const char *ShaderName, const char *ShaderPath);
 	~FShaderContainer();
-	FShader *Bind(int cm, bool glowing, float Speed);
+	FShader *Bind(int cm, float Speed);
 };
 
 

@@ -62,57 +62,6 @@ EXTERN_CVAR(Bool, gl_seamless)
 
 //==========================================================================
 //
-// Sets up the texture coordinates for one light to be rendered
-//
-//==========================================================================
-bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light)
-{
-	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
-	Plane p;
-	Vector nearPt, up, right;
-	float scale;
-
-	p.Init(vtx,4);
-
-	if (!p.ValidNormal()) 
-	{
-		return false;
-	}
-
-	if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.colormap, true)) 
-	{
-		return false;
-	}
-
-	if (tcs != NULL)
-	{
-		Vector t1;
-		int outcnt[4]={0,0,0,0};
-
-		for(int i=0;i<4;i++)
-		{
-			t1.Set(&vtx[i*3]);
-			Vector nearToVert = t1 - nearPt;
-			tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-			tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
-
-			// quick check whether the light touches this polygon
-			if (tcs[i].u<0) outcnt[0]++;
-			if (tcs[i].u>1) outcnt[1]++;
-			if (tcs[i].v<0) outcnt[2]++;
-			if (tcs[i].v>1) outcnt[3]++;
-
-		}
-		// The light doesn't touch this polygon
-		if (outcnt[0]==4 || outcnt[1]==4 || outcnt[2]==4 || outcnt[3]==4) return false;
-	}
-
-	draw_dlight++;
-	return true;
-}
-
-//==========================================================================
-//
 // Collect lights for shader
 //
 //==========================================================================
@@ -219,64 +168,49 @@ void GLWall::SetupLights()
 //
 //==========================================================================
 
-void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
+void GLWall::RenderWall(int textured)
 {
 	texcoord tcs[4];
-	bool glowing;
-	bool split = (gl_seamless && !(textured&4) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
+	bool split = (gl_seamless && !(textured & TRF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
 
-	if (!light)
-	{
-		tcs[0]=lolft;
-		tcs[1]=uplft;
-		tcs[2]=uprgt;
-		tcs[3]=lorgt;
-		glowing = !!(flags&GLWF_GLOW) && (textured & 2);
-	}
-	else
-	{
-		if (!PrepareLight(tcs, light)) return;
-		glowing = false;
-	}
+	tcs[0]=lolft;
+	tcs[1]=uplft;
+	tcs[2]=uprgt;
+	tcs[3]=lorgt;
 
-	if (glowing) gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
+	if (!!(flags&GLWF_GLOW) && (textured & TRF_ALLOWGLOW))
+	{
+		gl_RenderState.SetGlowPlanes(topplane, bottomplane);
+		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
+	}
 
 	gl_RenderState.Apply();
-
-	// the rest of the code is identical for textured rendering and lights
 
 	glBegin(GL_TRIANGLE_FAN);
 
 	// lower left corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0], zbottom[0] - zfloor[0]);
-	if (textured&1) glTexCoord2f(tcs[0].u,tcs[0].v);
+	if (textured & TRF_TEXTURED) glTexCoord2f(tcs[0].u,tcs[0].v);
 	glVertex3f(glseg.x1,zbottom[0],glseg.y1);
 
-	if (split && glseg.fracleft==0) SplitLeftEdge(tcs, glowing);
+	if (split && glseg.fracleft==0) SplitLeftEdge(tcs);
 
 	// upper left corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0], ztop[0] - zfloor[0]);
-	if (textured&1) glTexCoord2f(tcs[1].u,tcs[1].v);
+	if (textured & TRF_TEXTURED) glTexCoord2f(tcs[1].u,tcs[1].v);
 	glVertex3f(glseg.x1,ztop[0],glseg.y1);
 
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, glowing);
-
-	// color for right side
-	if (color2) glColor4fv(color2);
+	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs);
 
 	// upper right corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - ztop[1], ztop[1] - zfloor[1]);
-	if (textured&1) glTexCoord2f(tcs[2].u,tcs[2].v);
+	if (textured & TRF_TEXTURED) glTexCoord2f(tcs[2].u,tcs[2].v);
 	glVertex3f(glseg.x2,ztop[1],glseg.y2);
 
-	if (split && glseg.fracright==1) SplitRightEdge(tcs, glowing);
+	if (split && glseg.fracright==1) SplitRightEdge(tcs);
 
 	// lower right corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - zbottom[1], zbottom[1] - zfloor[1]);
-	if (textured&1) glTexCoord2f(tcs[3].u,tcs[3].v); 
+	if (textured & TRF_TEXTURED) glTexCoord2f(tcs[3].u,tcs[3].v); 
 	glVertex3f(glseg.x2,zbottom[1],glseg.y2);
 
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, glowing);
+	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs);
 
 	glEnd();
 
@@ -299,7 +233,7 @@ void GLWall::RenderFogBoundary()
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 		gl_RenderState.EnableAlphaTest(false);
-		RenderWall(0, NULL);
+		RenderWall(GLWall::TRF_BLANK);
 		gl_RenderState.EnableAlphaTest(true);
 		gl_RenderState.SetEffect(EFF_NONE);
 	}
@@ -332,8 +266,7 @@ void GLWall::RenderMirrorSurface()
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture);
 	pat->BindPatch(Colormap.colormap, 0);
 
-	flags &= ~GLWF_GLOW;
-	RenderWall(0,NULL);
+	RenderWall(GLWall::TRF_BLANK);
 
 	gl_RenderState.SetEffect(EFF_NONE);
 
@@ -394,7 +327,7 @@ void GLWall::RenderTranslucentWall()
 	if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, extra, &Colormap, isadditive);
 	else gl_SetFog(255, 0, NULL, false);
 
-	RenderWall(5,NULL);
+	RenderWall(GLWall::TRF_TRANSLUCENT);
 
 	// restore default settings
 	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -448,7 +381,7 @@ void GLWall::Draw(int pass)
 
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gltexture->Bind(Colormap.colormap, flags, 0);
-		RenderWall(3, NULL);
+		RenderWall(GLWall::TRF_DEFAULT);
 		gl_RenderState.EnableGlow(false);
 		gl_RenderState.SetLights(NULL, NULL);
 		break;

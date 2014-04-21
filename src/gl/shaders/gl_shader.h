@@ -19,6 +19,7 @@ class FShader
 {
 	friend class FShaderContainer;
 	friend class FRenderState;
+	friend class FShaderManager;
 
 	unsigned int hShader;
 	unsigned int hVertProg;
@@ -156,6 +157,7 @@ public:
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
+	void SetColormapRange(int cm);
 
 	FShaderContainer *Get(unsigned int eff)
 	{
@@ -166,8 +168,6 @@ public:
 		}
 		return NULL;
 	}
-
-	void Recompile();
 };
 
 #define FIRST_USER_SHADER 12

@@ -146,7 +146,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		error << "Linking:\n" << buffer << "\n";
 	}
 	int linked;
-	glGetShaderiv(hShader, GL_LINK_STATUS, &linked);
+	glGetProgramiv(hShader, GL_LINK_STATUS, &linked);
 	if (linked == 0)
 	{
 		// only print message if there's an error.
@@ -325,27 +325,14 @@ FShader *FShaderContainer::Bind(int cm)
 
 	if (cm == CM_FOGLAYER)
 	{
-		if (shader_fl)
-		{
-			shader_fl->Bind();
-		}
+		if (shader_fl) shader_fl->Bind();
 		return shader_fl;
 	}
 	else if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_MAXCOLORMAP)
 	{
 		// these are never used with any kind of lighting or fog
-		sh = shader_cm;
-		// [BB] If there was a problem when loading the shader, sh is NULL here.
-		if( sh )
-		{
-			FSpecialColormap *map = &SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP];
-			sh->Bind();
-			float m[3]= {map->ColorizeEnd[0] - map->ColorizeStart[0], 
-				map->ColorizeEnd[1] - map->ColorizeStart[1], map->ColorizeEnd[2] - map->ColorizeStart[2]};
-
-			glUniform3fv(sh->colormapstart_index, 1, map->ColorizeStart);
-			glUniform3fv(sh->colormaprange_index, 1, m);
-		}
+		if (shader_cm) shader_cm->Bind();
+		return shader_cm;
 	}
 	else
 	{
@@ -408,7 +395,7 @@ struct FEffectShader
 
 static const FEffectShader effectshaders[]=
 {
-	{"fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "#define NO_GLOW\n"},
+	{"fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, ""},
 	{"spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define NO_GLOW\n#define NO_DESATURATE\n#define SPHEREMAP\n"},
 	{"burn", "shaders/glsl/burn.vp", "shaders/glsl/burn.fp", NULL, ""},
 };
@@ -434,18 +421,6 @@ FShaderManager::FShaderManager()
 FShaderManager::~FShaderManager()
 {
 	Clean();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FShaderManager::Recompile()
-{
-	Clean();
-	CompileShaders();
 }
 
 //==========================================================================
@@ -538,6 +513,26 @@ void FShaderManager::SetActiveShader(FShader *sh)
 	{
 		glUseProgram(sh == NULL? 0 : sh->GetHandle());
 		mActiveShader = sh;
+	}
+}
+
+//==========================================================================
+//
+// This sets the currently selected fixed colormap for all colormap shaders
+//
+//==========================================================================
+
+void FShaderManager::SetColormapRange(int cm)
+{
+	FSpecialColormap *map = &SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP];
+
+	float m[3] = { map->ColorizeEnd[0] - map->ColorizeStart[0], map->ColorizeEnd[1] - map->ColorizeStart[1], map->ColorizeEnd[2] - map->ColorizeStart[2] };
+
+	for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
+	{
+		FShader *sh = mTextureEffects[i]->shader_cm;
+		glProgramUniform3fv(sh->GetHandle(), sh->colormapstart_index, 1, map->ColorizeStart);
+		glProgramUniform3fv(sh->GetHandle(), sh->colormaprange_index, 1, m);
 	}
 }
 

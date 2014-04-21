@@ -736,11 +736,11 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 	int maxbound = 0;
 	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT;
 
-	gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, cm, tex->gl_info.shaderspeed);
-
 	if (tex->bHasCanvas || tex->bWarped) clampmode = 0;
 	else if (clampmode != -1) clampmode &= 3;
 	else clampmode = 4;
+
+	gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, cm, tex->gl_info.shaderspeed);
 
 	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, cm, clampmode, translation, allowhires? tex:NULL);
 	if (gltexture != NULL && shaderindex > 0 && overrideshader < 0)

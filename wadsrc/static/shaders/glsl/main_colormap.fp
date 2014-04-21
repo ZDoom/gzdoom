@@ -7,6 +7,7 @@ uniform sampler2D tex;
 
 uniform vec3 colormapstart;
 uniform vec3 colormaprange;
+varying vec4 pixelpos;
 
 vec4 Process(vec4 color);
 

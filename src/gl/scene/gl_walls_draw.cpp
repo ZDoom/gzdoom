@@ -249,11 +249,6 @@ void GLWall::RenderMirrorSurface()
 {
 	if (GLRenderer->mirrortexture == NULL) return;
 
-	// For the sphere map effect we need a normal of the mirror surface,
-	Vector v(glseg.y2-glseg.y1, 0 ,-glseg.x2+glseg.x1);
-	v.Normalize();
-	glNormal3fv(&v[0]);
-
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 

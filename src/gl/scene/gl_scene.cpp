@@ -733,6 +733,14 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 				}
 			}
 		}
+		// the fixed colormap is a per-frame global setting so rather than maintaining some state for it, set the shader info for it once up front and be done with it.
+		if (gl_fixedcolormap != CM_DEFAULT)
+		{
+			int setcm = gl_fixedcolormap;
+			if (setcm == CM_LITE) setcm = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+			mShaderManager->SetColormapRange(setcm);
+		}
+
 	}
 }
 

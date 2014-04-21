@@ -49,6 +49,7 @@ class FShader
 	int mTexMatLocation;
 
 
+	int currentwarpphase;
 	int currentglowstate;
 	int currentfogenabled;
 	int currenttexturemode;
@@ -68,7 +69,7 @@ public:
 	{
 		hShader = hVertProg = hFragProg = 0;
 		currentfogenabled = currenttexturemode = currentglowstate = 0;
-		currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = 0.0f;
+		currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
 		currentfogcolor = 0;
 
@@ -104,7 +105,7 @@ public:
 	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
 	void SetLightRange(int start, int end, int forceadd);
 
-	bool Bind(float Speed);
+	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 
 };
@@ -131,7 +132,7 @@ class FShaderContainer
 public:
 	FShaderContainer(const char *ShaderName, const char *ShaderPath);
 	~FShaderContainer();
-	FShader *Bind(int cm, float Speed);
+	FShader *Bind(int cm);
 };
 
 

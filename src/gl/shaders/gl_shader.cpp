@@ -57,8 +57,6 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
 
-extern long gl_frameMS;
-
 //==========================================================================
 //
 //
@@ -207,10 +205,9 @@ FShader::~FShader()
 //
 //==========================================================================
 
-bool FShader::Bind(float Speed)
+bool FShader::Bind()
 {
 	GLRenderer->mShaderManager->SetActiveShader(this);
-	if (timer_index >=0 && Speed > 0.f) glUniform1f(timer_index, gl_frameMS*Speed/1000.f);
 	return true;
 }
 
@@ -322,7 +319,7 @@ FShaderContainer::~FShaderContainer()
 //
 //==========================================================================
 
-FShader *FShaderContainer::Bind(int cm, float Speed)
+FShader *FShaderContainer::Bind(int cm)
 {
 	FShader *sh=NULL;
 
@@ -330,7 +327,7 @@ FShader *FShaderContainer::Bind(int cm, float Speed)
 	{
 		if (shader_fl)
 		{
-			shader_fl->Bind(Speed);
+			shader_fl->Bind();
 		}
 		return shader_fl;
 	}
@@ -342,7 +339,7 @@ FShader *FShaderContainer::Bind(int cm, float Speed)
 		if( sh )
 		{
 			FSpecialColormap *map = &SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP];
-			sh->Bind(Speed);
+			sh->Bind();
 			float m[3]= {map->ColorizeEnd[0] - map->ColorizeStart[0], 
 				map->ColorizeEnd[1] - map->ColorizeStart[1], map->ColorizeEnd[2] - map->ColorizeStart[2]};
 
@@ -357,7 +354,7 @@ FShader *FShaderContainer::Bind(int cm, float Speed)
 		// [BB] If there was a problem when loading the shader, sh is NULL here.
 		if( sh )
 		{
-			sh->Bind(Speed);
+			sh->Bind();
 			if (desat)
 			{
 				glUniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
@@ -554,7 +551,7 @@ FShader *FShaderManager::BindEffect(int effect)
 {
 	if (effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[effect] != NULL)
 	{
-		mEffectShaders[effect]->Bind(0);
+		mEffectShaders[effect]->Bind();
 		return mEffectShaders[effect];
 	}
 	return NULL;

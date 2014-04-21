@@ -48,6 +48,8 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_colormap.h"
 
+extern long gl_frameMS;
+
 FRenderState gl_RenderState;
 int FStateAttr::ChangeCounter;
 
@@ -128,7 +130,7 @@ bool FRenderState::ApplyShader()
 
 		if (shd != NULL)
 		{
-			activeShader = shd->Bind(mColormapState, mWarpTime);
+			activeShader = shd->Bind(mColormapState);
 			assert(activeShader != NULL);
 		}
 	}
@@ -152,6 +154,17 @@ bool FRenderState::ApplyShader()
 		{
 			glUniform1i(activeShader->fogenabled_index, (activeShader->currentfogenabled = fogset)); 
 		}
+
+		if (activeShader->timer_index >= 0 && mWarpTime > 0.f)
+		{
+			float warpphase = gl_frameMS * mWarpTime / 1000.f;
+			if (warpphase != activeShader->currentwarpphase)
+			{
+				glUniform1f(activeShader->timer_index, warpphase);
+				activeShader->currentwarpphase = warpphase;
+			}
+		}
+
 		if (mTextureMode != activeShader->currenttexturemode)
 		{
 			glUniform1i(activeShader->texturemode_index, (activeShader->currenttexturemode = mTextureMode)); 

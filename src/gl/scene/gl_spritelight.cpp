@@ -268,7 +268,7 @@ int gl_SetSpriteLighting(FRenderStyle style, AActor *thing, int lightlevel, int 
 		{
 			ThingColor = thing->fillcolor;
 		}
-		gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, cm->colormap);
+		gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, cm);
 	}
 
 	// This doesn't work like in the software renderer.

@@ -536,6 +536,29 @@ void FShaderManager::SetColormapRange(int cm)
 	}
 }
 
+
+//==========================================================================
+//
+// To avoid maintenance this will be set when a warped texture is bound
+// because at that point the draw buffer needs to be flushed anyway.
+//
+//==========================================================================
+
+void FShaderManager::SetWarpSpeed(unsigned int eff, float speed)
+{
+	// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
+	if (eff < mTextureEffects.Size())
+	{
+		FShaderContainer *shc = mTextureEffects[eff];
+
+		float warpphase = gl_frameMS * speed / 1000.f;
+		// set for all 3 shaders because otherwise a lot of added maintenance would be needed.
+		glProgramUniform1f(shc->shader[0]->GetHandle(), shc->shader[0]->timer_index, warpphase);
+		glProgramUniform1f(shc->shader_cm->GetHandle(), shc->shader[0]->timer_index, warpphase);
+		glProgramUniform1f(shc->shader_fl->GetHandle(), shc->shader[0]->timer_index, warpphase);
+	}
+}
+
 //==========================================================================
 //
 //

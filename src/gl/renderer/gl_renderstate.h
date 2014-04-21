@@ -137,7 +137,6 @@ class FRenderState
 
 	int mEffectState;
 	int mColormapState;
-	float mWarpTime;
 
 	int glSrcBlend, glDstBlend;
 	int gl_BlendEquation;
@@ -152,7 +151,7 @@ public:
 
 	void Reset();
 
-	int SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime);
+	int SetupShader(int &shaderindex, int &cm);
 	void Apply();
 
 	void SetTextureMode(int mode)

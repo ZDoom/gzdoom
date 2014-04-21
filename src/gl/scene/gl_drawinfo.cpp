@@ -690,7 +690,7 @@ SortNode * GLDrawList::DoSort(SortNode * head)
 
 //==========================================================================
 //
-//
+// todo: need to check for identical textures in subsequent objects
 //
 //==========================================================================
 void GLDrawList::DoDraw(int pass, int i)
@@ -700,6 +700,7 @@ void GLDrawList::DoDraw(int pass, int i)
 	case GLDIT_FLAT:
 		{
 			GLFlat * f=&flats[drawitems[i].index];
+			//FlushIfNot(f->gltexture, 0);
 			RenderFlat.Clock();
 			f->Draw(pass);
 			RenderFlat.Unclock();
@@ -709,6 +710,7 @@ void GLDrawList::DoDraw(int pass, int i)
 	case GLDIT_WALL:
 		{
 			GLWall * w=&walls[drawitems[i].index];
+			//FlushIfNot(w->gltexture, w->flags);
 			RenderWall.Clock();
 			w->Draw(pass);
 			RenderWall.Unclock();
@@ -721,6 +723,7 @@ void GLDrawList::DoDraw(int pass, int i)
 			RenderSprite.Clock();
 			s->Draw(pass);
 			RenderSprite.Unclock();
+			//flush the render buffer
 		}
 		break;
 	case GLDIT_POLY: break;

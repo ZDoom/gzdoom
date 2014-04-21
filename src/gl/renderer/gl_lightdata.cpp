@@ -587,7 +587,7 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		}
 		// Handle desaturation
 		if (cmap->colormap != CM_DEFAULT)
-			gl_ModifyColor(fogcolor.r, fogcolor.g, fogcolor.b, cmap->colormap);
+			gl_ModifyColor(fogcolor.r, fogcolor.g, fogcolor.b, cmap);
 
 		gl_RenderState.EnableFog(true);
 		gl_RenderState.SetFog(fogcolor, fogdensity);
@@ -606,8 +606,9 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 //
 //==========================================================================
 
-void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, int cm)
+void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, const FColormap *cmap)
 {
+	int cm = cmap->colormap;
 	int gray = (red*77 + green*143 + blue*36)>>8;
 	if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_MAXCOLORMAP)
 	{

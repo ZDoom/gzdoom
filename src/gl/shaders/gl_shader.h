@@ -158,6 +158,7 @@ public:
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
 	void SetColormapRange(int cm);
+	void SetWarpSpeed(unsigned int eff, float speed);
 
 	FShaderContainer *Get(unsigned int eff)
 	{

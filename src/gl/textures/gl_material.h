@@ -116,7 +116,6 @@ class FMaterial
 	float SpriteU[2], SpriteV[2];
 	float spriteright, spritebottom;
 
-	void SetupShader(int shaderindex, int &cm);
 	FGLTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	bool TrimBorders(int *rect);
 

@@ -328,11 +328,7 @@ void GLWall::RenderTranslucentWall()
 	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (transparent) gl_RenderState.EnableAlphaTest(true);
 
-	if (!gltexture)	
-	{
-		gl_RenderState.EnableTexture(true);
-	}
-	gl_RenderState.EnableBrightmap(true);
+	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableGlow(false);
 }
 

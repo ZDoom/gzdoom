@@ -53,6 +53,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -740,8 +741,12 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 	else if (clampmode != -1) clampmode &= 3;
 	else clampmode = 4;
 
-	gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, cm, tex->gl_info.shaderspeed);
+	gl_RenderState.SetupShader(shaderindex, cm);
 
+	if (shaderindex == 1 || shaderindex == 2)
+	{
+		GLRenderer->mShaderManager->SetWarpSpeed(shaderindex, tex->gl_info.shaderspeed);
+	}
 	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, cm, clampmode, translation, allowhires? tex:NULL);
 	if (gltexture != NULL && shaderindex > 0 && overrideshader < 0)
 	{
@@ -783,7 +788,7 @@ void FMaterial::BindPatch(int cm, int translation, int overrideshader)
 	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 
-	gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, cm, tex->gl_info.shaderspeed);
+	gl_RenderState.SetupShader(shaderindex, cm);
 
 	const FHardwareTexture *glpatch = mBaseLayer->BindPatch(0, cm, translation);
 	// The only multitexture effect usable on sprites is the brightmap.

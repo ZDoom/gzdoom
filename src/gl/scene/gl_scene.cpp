@@ -382,6 +382,8 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold);
 	gl_drawinfo->drawlists[DLT_MASKED].Sort();
 	gl_drawinfo->drawlists[DLT_MASKED].Draw(pass);
+	// don't bother sorting. The render buffer needs to be flushed for each model anyway.
+	gl_drawinfo->drawlists[DLT_MODELS].Draw(pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

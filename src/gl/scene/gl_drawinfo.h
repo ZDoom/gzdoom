@@ -13,10 +13,11 @@ enum GLDrawItemType
 
 enum DrawListType
 {
-	DLT_PLAIN,	// all standard opaque geometry
-	DLT_MASKED,	// everything which uses an alpha mask for transparent parts
-	DLT_MASKEDOFS,	// same for walls with polygon offset
-	DLT_TRANSLUCENT,	// everything translucent, including sprites
+	DLT_PLAIN,				// all standard opaque geometry
+	DLT_MASKED,				// everything which uses an alpha mask for transparent parts
+	DLT_MASKEDOFS,			// same for walls with polygon offset
+	DLT_MODELS,				// models get their own list because they interfere with map geometry
+	DLT_TRANSLUCENT,		// everything translucent, including sprites
 	DLT_TRANSLUCENTBORDER,	// translucent stuff that doesn't need to be sorted for depth.
 
 	DLT_TYPES

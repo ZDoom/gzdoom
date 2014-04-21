@@ -379,7 +379,7 @@ inline void GLSprite::PutSprite(bool translucent)
 	}
 	else
 	{
-		list = DLT_MASKED;
+		list = DLT_MODELS;
 	}
 	gl_drawinfo->drawlists[list].AddSprite(this);
 }
@@ -950,7 +950,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	OverrideShader = -1;
 
 	ThingColor = particle->color;
-	gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, Colormap.colormap);
+	gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, &Colormap);
 	ThingColor.a=0;
 
 	modelframe=NULL;

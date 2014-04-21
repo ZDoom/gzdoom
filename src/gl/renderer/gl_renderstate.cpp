@@ -48,7 +48,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_colormap.h"
 
-extern long gl_frameMS;
 
 FRenderState gl_RenderState;
 int FStateAttr::ChangeCounter;
@@ -86,7 +85,7 @@ void FRenderState::Reset()
 //
 //==========================================================================
 
-int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime)
+int FRenderState::SetupShader(int &shaderindex, int &cm)
 {
 	bool usecmshader;
 
@@ -104,7 +103,6 @@ int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, flo
 	mEffectState = shaderindex;
 	mColormapState = usecmshader? cm : CM_DEFAULT;
 	if (usecmshader) cm = CM_DEFAULT;
-	mWarpTime = warptime;
 	return 0;
 }
 
@@ -153,16 +151,6 @@ bool FRenderState::ApplyShader()
 		if (fogset != activeShader->currentfogenabled)
 		{
 			glUniform1i(activeShader->fogenabled_index, (activeShader->currentfogenabled = fogset)); 
-		}
-
-		if (activeShader->timer_index >= 0 && mWarpTime > 0.f)
-		{
-			float warpphase = gl_frameMS * mWarpTime / 1000.f;
-			if (warpphase != activeShader->currentwarpphase)
-			{
-				glUniform1f(activeShader->timer_index, warpphase);
-				activeShader->currentwarpphase = warpphase;
-			}
 		}
 
 		if (mTextureMode != activeShader->currenttexturemode)

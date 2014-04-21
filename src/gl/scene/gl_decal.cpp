@@ -228,7 +228,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		BYTE G = xs_RoundToInt(g * green);
 		BYTE B = xs_RoundToInt(b * blue);
 
-		gl_ModifyColor(R,G,B, Colormap.colormap);
+		gl_ModifyColor(R,G,B, &Colormap);
 
 		red = R/255.f;
 		green = G/255.f;

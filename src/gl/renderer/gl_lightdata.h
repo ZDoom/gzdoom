@@ -51,7 +51,7 @@ __forceinline void gl_Desaturate(int gray, int ired, int igreen, int iblue, BYTE
 	blue = (iblue*(31-fac) + gray*fac)/31;
 }
 
-void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, int cm);
+void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, const FColormap *cmap);
 void gl_DeleteAllAttachedLights();
 void gl_RecreateAllAttachedLights();
 

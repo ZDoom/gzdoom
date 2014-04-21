@@ -84,37 +84,6 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 			pin+=step;
 		}
 	}
-	else if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_FIRSTSPECIALCOLORMAP + int(SpecialColormaps.Size()))
-	{
-		for(i=0;i<count;i++) 
-		{
-			if (T::A(pin) != 0)
-			{
-				PalEntry pe = SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP].GrayscaleToColor[T::Gray(pin)];
-				pout[0] = pe.r;
-				pout[1] = pe.g;
-				pout[2] = pe.b;
-				pout[3] = T::A(pin);
-			}
-			pout+=4;
-			pin+=step;
-		}
-	}
-	else if (cm<=CM_DESAT31)
-	{
-		// Desaturated light settings.
-		fac=cm-CM_DESAT0;
-		for(i=0;i<count;i++)
-		{
-			if (T::A(pin) != 0)
-			{
-				gl_Desaturate(T::Gray(pin), T::R(pin), T::G(pin), T::B(pin), pout[0], pout[1], pout[2], fac);
-				pout[3] = T::A(pin);
-			}
-			pout+=4;
-			pin+=step;
-		}
-	}
 }
 
 typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int cm, int count, int step);
@@ -155,6 +124,7 @@ void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
 //===========================================================================
 // 
 // Creates one of the special palette translations for the given palette
+// This is still needed by the skydome drawer
 //
 //===========================================================================
 void ModifyPalette(PalEntry * pout, PalEntry * pin, int cm, int count)

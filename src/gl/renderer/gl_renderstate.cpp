@@ -128,7 +128,7 @@ bool FRenderState::ApplyShader()
 
 		if (shd != NULL)
 		{
-			activeShader = shd->Bind(mColormapState);
+			activeShader = shd->Bind(mTextureEnabled? mColormapState : 0);
 			assert(activeShader != NULL);
 		}
 	}

@@ -240,6 +240,20 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 }
 
 
+//===========================================================================
+// 
+//
+//
+//===========================================================================
+static PalEntry ModifyCapColor(PalEntry pin, int cm)
+{
+	FColormap cmap;
+	cmap.colormap = cm;
+	gl_ModifyColor(pin.r, pin.g, pin.b, &cmap);
+	return pin;
+}
+
+
 //-----------------------------------------------------------------------------
 //
 //
@@ -289,11 +303,12 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(false);
-		if (CM_Index!=CM_DEFAULT) ModifyPalette(&pe, &pe, CM_Index, 1);
+		
+		if (CM_Index != CM_DEFAULT) pe = ModifyCapColor(pe, CM_Index);
 
-		R=pe.r/255.0f;
-		G=pe.g/255.0f;
-		B=pe.b/255.0f;
+		R = pe.r / 255.0f;
+		G = pe.g / 255.0f;
+		B = pe.b / 255.0f;
 
 		if (gl_fixedcolormap)
 		{
@@ -311,10 +326,10 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(true);
-		if (CM_Index!=CM_DEFAULT) ModifyPalette(&pe, &pe, CM_Index, 1);
-		R=pe.r/255.0f;
-		G=pe.g/255.0f;
-		B=pe.b/255.0f;
+		if (CM_Index != CM_DEFAULT) pe = ModifyCapColor(pe, CM_Index);
+		R = pe.r / 255.0f;
+		G = pe.g / 255.0f;
+		B = pe.b / 255.0f;
 
 		if (gl_fixedcolormap != CM_DEFAULT)
 		{

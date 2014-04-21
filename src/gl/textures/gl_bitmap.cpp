@@ -53,7 +53,6 @@ template<class T>
 void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int count, int step)
 {
 	int i;
-	int fac;
 
 	if (cm == CM_DEFAULT)
 	{
@@ -121,52 +120,6 @@ void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
 	}
 }
 
-//===========================================================================
-// 
-// Creates one of the special palette translations for the given palette
-// This is still needed by the skydome drawer
-//
-//===========================================================================
-void ModifyPalette(PalEntry * pout, PalEntry * pin, int cm, int count)
-{
-	int i;
-	int fac;
-
-	if (cm == CM_DEFAULT)
-	{
-		if (pin != pout)
-			memcpy(pout, pin, count * sizeof(PalEntry));
-	}
-	else if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_FIRSTSPECIALCOLORMAP + int(SpecialColormaps.Size()))
-	{
-		for(i=0;i<count;i++)
-		{
-			int gray = (pin[i].r*77 + pin[i].g*143 + pin[i].b*37) >> 8;
-			// This can be done in place so we cannot copy the color directly.
-			PalEntry pe = SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP].GrayscaleToColor[gray];
-			pout[i].r = pe.r;
-			pout[i].g = pe.g;
-			pout[i].b = pe.b;
-			pout[i].a = pin[i].a;
-		}
-	}
-	else if (cm<=CM_DESAT31)
-	{
-		// Desaturated light settings.
-		fac=cm-CM_DESAT0;
-		for(i=0;i<count;i++)
-		{
-			int gray=(pin[i].r*77 + pin[i].g*143 + pin[i].b*36)>>8;
-			gl_Desaturate(gray, pin[i].r, pin[i].g, pin[i].b, pout[i].r, pout[i].g, pout[i].b, fac);
-			pout[i].a = pin[i].a;
-		}
-	}
-	else if (pin!=pout)
-	{
-		memcpy(pout, pin, count * sizeof(PalEntry));
-	}
-}
-
 
 //===========================================================================
 //
@@ -218,11 +171,6 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 			case 0:
 				memcpy(penew, palette, 256*sizeof(PalEntry));
 				break;
-			}
-			if (cm!=0)
-			{
-				// Apply color modifications like invulnerability, desaturation and Boom colormaps
-				ModifyPalette(penew, penew, cm, 256);
 			}
 		}
 		// Now penew contains the actual palette that is to be used for creating the image.

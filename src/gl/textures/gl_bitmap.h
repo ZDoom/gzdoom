@@ -5,8 +5,6 @@
 #include "gl/textures/gl_material.h"
 
 
-void ModifyPalette(PalEntry * pout, PalEntry * pin, int cm, int count);
-
 class FGLBitmap : public FBitmap
 {
 	int cm;

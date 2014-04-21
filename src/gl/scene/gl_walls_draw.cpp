@@ -79,7 +79,7 @@ bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light)
 		return false;
 	}
 
-	if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.colormap, true, !!(flags&GLWF_FOGGY))) 
+	if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.colormap, true)) 
 	{
 		return false;
 	}
@@ -333,7 +333,6 @@ void GLWall::RenderMirrorSurface()
 	pat->BindPatch(Colormap.colormap, 0);
 
 	flags &= ~GLWF_GLOW;
-	//flags |= GLWF_NOSHADER;
 	RenderWall(0,NULL);
 
 	gl_RenderState.SetEffect(EFF_NONE);
@@ -381,7 +380,6 @@ void GLWall::RenderTranslucentWall()
 	int extra;
 	if (gltexture) 
 	{
-		if (flags&GLWF_FOGGY) gl_RenderState.EnableBrightmap(false);
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gltexture->Bind(Colormap.colormap, flags, 0);
 		extra = getExtraLight();

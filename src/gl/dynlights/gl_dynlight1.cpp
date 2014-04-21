@@ -161,7 +161,7 @@ bool gl_GetLight(Plane & p, ADynamicLight * light,
 //
 //==========================================================================
 bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, 
-				   float & scale, int desaturation, bool checkside, bool forceadditive)
+				   float & scale, int desaturation, bool checkside)
 {
 	Vector fn, pos;
 
@@ -200,7 +200,7 @@ bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & u
 #endif
 
 	float cs = 1.0f - (dist / radius);
-	if (gl_lights_additive || light->flags4&MF4_ADDITIVE || forceadditive) cs*=0.2f;	// otherwise the light gets too strong.
+	if (gl_lights_additive || light->flags4&MF4_ADDITIVE) cs*=0.2f;	// otherwise the light gets too strong.
 	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
 	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
 	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;

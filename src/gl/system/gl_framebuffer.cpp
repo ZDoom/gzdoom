@@ -141,27 +141,15 @@ void OpenGLFrameBuffer::InitializeState()
 	glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_DITHER);
-	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glEnable(GL_POLYGON_OFFSET_LINE);
 	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_CLAMP_NV);
+	glEnable(GL_DEPTH_CLAMP);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LINE_SMOOTH);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-	// This was to work around a bug in some older driver. Probably doesn't make sense anymore.
-	glEnable(GL_FOG);
-	glDisable(GL_FOG);
-
-	glHint(GL_FOG_HINT, GL_FASTEST);
-	glFogi(GL_FOG_MODE, GL_EXP);
-
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

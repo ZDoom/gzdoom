@@ -148,11 +148,6 @@ void GLWall::PutWall(bool translucent)
 	{
 		bool masked;
 
-		if (gl_fixedcolormap)
-		{
-			flags&=~GLWF_FOGGY;
-		}
-
 		masked = passflag[type]==1? false : (gltexture && gltexture->isMasked());
 
 		if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S))
@@ -1490,11 +1485,12 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	glseg.x2= FIXED2FLOAT(v2->x);
 	glseg.y2= FIXED2FLOAT(v2->y);
 	Colormap=frontsector->ColorMap;
-	flags = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE)? GLWF_FOGGY : 0;
+	flags = 0;
 
 	int rel = 0;
 	int orglightlevel = gl_ClampLight(frontsector->lightlevel);
-	lightlevel = gl_ClampLight(seg->sidedef->GetLightLevel(!!(flags&GLWF_FOGGY), orglightlevel, false, &rel));
+	bool foggy = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE);	// fog disables fake contrast
+	lightlevel = gl_ClampLight(seg->sidedef->GetLightLevel(foggy, orglightlevel, false, &rel));
 	if (orglightlevel >= 253)			// with the software renderer fake contrast won't be visible above this.
 	{
 		rellight = 0;					
@@ -1738,7 +1734,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		glseg.fracleft = 0;
 		glseg.fracright = 1;
 
-		flags = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE)? GLWF_FOGGY : 0;
+		flags = 0;
 
 		// can't do fake contrast without a sidedef
 		lightlevel = gl_ClampLight(frontsector->lightlevel);

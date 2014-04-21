@@ -267,9 +267,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
-	// The clip plane from the previous portal must be deactivated for this one.
-	clipsave = glIsEnabled(GL_CLIP_PLANE0+renderdepth-1);
-	if (clipsave) glDisable(GL_CLIP_PLANE0+renderdepth-1);
+	planestack.Push(gl_RenderState.GetClipPlane());
+	gl_RenderState.SetClipPlane(0.f);
 
 	// save viewpoint
 	savedviewx=viewx;
@@ -329,7 +328,11 @@ void GLPortal::End(bool usestencil)
 
 	PortalAll.Clock();
 	GLRenderer->mCurrentPortal = NextPortal;
-	if (clipsave) glEnable (GL_CLIP_PLANE0+renderdepth-1);
+
+	float f;
+	planestack.Pop(f);
+	gl_RenderState.SetClipPlane(f);
+
 	if (usestencil)
 	{
 		if (needdepth) FDrawInfo::EndDrawInfo();
@@ -767,14 +770,11 @@ void GLPlaneMirrorPortal::DrawContents()
 	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	ClearClipper();
 
-	planestack.Push(gl_RenderState.GetClipPlane());
 	float f = FIXED2FLOAT(planez);
 	if (PlaneMirrorMode < 0) f -= 65536.f;	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
 	else f += 65536.f;	// floor mirror: clip everything with a z higher than the portal's floor
 	gl_RenderState.SetClipPlane(f);
 	GLRenderer->DrawScene();
-	planestack.Pop(f);
-	gl_RenderState.SetClipPlane(f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;
 }

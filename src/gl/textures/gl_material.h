@@ -61,28 +61,24 @@ private:
 	FHardwareTexture *gltexture[5];
 	FHardwareTexture *glpatch;
 
-	int currentwarp;
-	int currentwarptime;
-
 	bool bHasColorkey;		// only for hires
 	bool bExpand;
 	float AlphaThreshold;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, int cm);
-	BYTE *WarpBuffer(BYTE *buffer, int Width, int Height, int warp);
 
 	FHardwareTexture *CreateTexture(int clampmode);
 	//bool CreateTexture();
 	bool CreatePatch();
 
-	const FHardwareTexture *Bind(int texunit, int cm, int clamp, int translation, FTexture *hirescheck, int warp);
-	const FHardwareTexture *BindPatch(int texunit, int cm, int translation, int warp);
+	const FHardwareTexture *Bind(int texunit, int cm, int clamp, int translation, FTexture *hirescheck);
+	const FHardwareTexture *BindPatch(int texunit, int cm, int translation);
 
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand, FTexture *hirescheck, int warp);
+	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand, FTexture *hirescheck);
 
 	void Clean(bool all);
 	int Dump(int i);
@@ -140,7 +136,7 @@ public:
 
 	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
 	{
-		return mBaseLayer->CreateTexBuffer(cm, translation, w, h, expand, allowhires? tex:NULL, 0);
+		return mBaseLayer->CreateTexBuffer(cm, translation, w, h, expand, allowhires? tex:NULL);
 	}
 
 	void Clean(bool f)

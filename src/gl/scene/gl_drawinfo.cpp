@@ -835,7 +835,7 @@ static int __cdecl dicmp (const void *a, const void *b)
 		}
 	}
 	if (tx[0]!=tx[1]) return tx[0]-tx[1];
-	if (clamp[0]!=clamp[1]) return clamp[0]-clamp[1];	// clamping forces different textures.
+	if (clamp[0]!=clamp[1]) return clamp[0]-clamp[1];	// clamping forces different textures so it must be part of the values used for comparison
 	return lights[0]-lights[1];
 }
 

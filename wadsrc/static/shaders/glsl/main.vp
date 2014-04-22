@@ -17,12 +17,26 @@ uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 uniform mat4 TextureMatrix;
 
+
+/*
+uniform int ColorFromBuffer;
+*/
+
 void main()
 {
 	vec4 worldcoord = ModelMatrix * gl_Vertex;
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	gl_FrontColor = gl_Color;
+	/*
+		if (ColorFromBuffer != 0)
+		{
+			gl_FrontColor = [color value from buffer];
+		}
+		else
+	*/
+		{
+			gl_FrontColor = gl_Color;
+		}
 
 	pixelpos.xyz = worldcoord.xyz;
 	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;

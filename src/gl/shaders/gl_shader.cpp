@@ -221,19 +221,9 @@ bool FShader::Bind()
 
 FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPath)
 {
-	const char * shaderdefines[] = {
-		"#define NO_DESATURATE\n",
-		"\n",
-	};
-
-	const char * shaderdesc[] = {
-		"::default",
-		"::desaturate",
-	};
-
 	FString name;
 
-	name << ShaderName << "::colormap";
+	name.Format("%s::colormap", ShaderName);
 
 	try
 	{
@@ -249,7 +239,7 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 
-	name << ShaderName << "::foglayer";
+	name.Format("%s::foglayer", ShaderName);
 
 	try
 	{
@@ -265,30 +255,23 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 
-	for(int i = 0;i < NUM_SHADERS; i++)
+	name.Format("%s::default", ShaderName);
+
+	// this can't be in the shader code due to ATI strangeness.
+	const char *str = (gl.MaxLights() == 128)? "#define MAXLIGHTS128\n" : "";
+
+	try
 	{
-		FString name;
-
-		name << ShaderName << shaderdesc[i];
-
-		try
+		shader = new FShader;
+		if (!shader->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str))
 		{
-			FString str;
-			// this can't be in the shader code due to ATI strangeness.
-			if (gl.MaxLights() == 128) str = "#define MAXLIGHTS128\n";
-
-			str += shaderdefines[i];
-			shader[i] = new FShader;
-			if (!shader[i]->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str.GetChars()))
-			{
-				I_FatalError("Unable to load shader %s\n", name.GetChars());
-			}
+			I_FatalError("Unable to load shader %s\n", name.GetChars());
 		}
-		catch(CRecoverableError &err)
-		{
-			shader[i] = NULL;
-			I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
-		}
+	}
+	catch(CRecoverableError &err)
+	{
+		shader = NULL;
+		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 }
 
@@ -301,14 +284,7 @@ FShaderContainer::~FShaderContainer()
 {
 	if (shader_cm != NULL) delete shader_cm;
 	if (shader_fl != NULL) delete shader_fl;
-	for (int i = 0; i < NUM_SHADERS; i++)
-	{
-		if (shader[i] != NULL)
-		{
-			delete shader[i];
-			shader[i] = NULL;
-		}
-	}
+	if (shader != NULL) delete shader;
 }
 
 //==========================================================================
@@ -332,8 +308,8 @@ FShader *FShaderContainer::Bind(int cm)
 	}
 	else
 	{
-		shader[0]->Bind();
-		return shader[0];
+		shader->Bind();
+		return shader;
 	}
 }
 
@@ -541,9 +517,9 @@ void FShaderManager::SetWarpSpeed(unsigned int eff, float speed)
 
 		float warpphase = gl_frameMS * speed / 1000.f;
 		// set for all 3 shaders because otherwise a lot of added maintenance would be needed.
-		glProgramUniform1f(shc->shader[0]->GetHandle(), shc->shader[0]->timer_index, warpphase);
-		glProgramUniform1f(shc->shader_cm->GetHandle(), shc->shader[0]->timer_index, warpphase);
-		glProgramUniform1f(shc->shader_fl->GetHandle(), shc->shader[0]->timer_index, warpphase);
+		glProgramUniform1f(shc->shader->GetHandle(), shc->shader->timer_index, warpphase);
+		glProgramUniform1f(shc->shader_cm->GetHandle(), shc->shader_cm->timer_index, warpphase);
+		glProgramUniform1f(shc->shader_fl->GetHandle(), shc->shader_fl->timer_index, warpphase);
 	}
 }
 

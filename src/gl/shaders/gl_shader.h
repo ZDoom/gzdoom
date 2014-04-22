@@ -127,9 +127,7 @@ class FShaderContainer
 
 	FName Name;
 
-	enum { NUM_SHADERS = 2 };
-
-	FShader *shader[NUM_SHADERS];
+	FShader *shader;
 	FShader *shader_cm;	// the shader for fullscreen colormaps
 	FShader *shader_fl;	// the shader for the fog layer
 

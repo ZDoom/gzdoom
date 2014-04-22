@@ -71,12 +71,15 @@ float R_DoomLightingEquation(float light, float dist)
 
 vec4 desaturate(vec4 texel)
 {
-	#ifndef NO_DESATURATE
+	if (desaturation_factor > 0.0)
+	{
 		float gray = (texel.r * 0.3 + texel.g * 0.56 + texel.b * 0.14);	
 		return mix (vec4(gray,gray,gray,texel.a), texel, desaturation_factor);
-	#else
+	}
+	else
+	{
 		return texel;
-	#endif
+	}
 }
 
 //===========================================================================
@@ -212,6 +215,9 @@ void main()
 		vec4 dynlight = dlightcolor;
 		vec4 addlight = vec4(0.0,0.0,0.0,0.0);
 	
+		//
+		// modulated lights
+		//
 		for(int i=0; i<lightrange.x; i+=2)
 		{
 			vec4 lightpos = lights[i];
@@ -220,6 +226,9 @@ void main()
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 			dynlight.rgb += lightcolor.rgb;
 		}
+		//
+		// subtractive lights
+		//
 		for(int i=lightrange.x; i<lightrange.y; i+=2)
 		{
 			vec4 lightpos = lights[i];
@@ -236,6 +245,9 @@ void main()
 			discard;
 		}
 #endif
+		//
+		// additive lights - these can be done after the alpha test.
+		//
 		for(int i=lightrange.y; i<lightrange.z; i+=2)
 		{
 			vec4 lightpos = lights[i];
@@ -248,6 +260,9 @@ void main()
 	}
 	else
 	{
+		//
+		// there are no dynamic lights.
+		//
 		frag.rgb = clamp(frag.rgb + desaturate(dlightcolor).rgb, 0.0, 1.4);
 		frag = Process(frag);
 #ifndef NO_DISCARD
@@ -258,6 +273,9 @@ void main()
 #endif
 	}
 
+	//
+	// colored fog
+	//
 	if (fogenabled < 0) 
 	{
 		frag = applyFog(frag, fogfactor);

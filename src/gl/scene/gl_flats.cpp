@@ -210,7 +210,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	{
 		if (vboindex >= 0)
 		{
-			//glColor3f( 1.f,.5f,.5f);
 			int index = vboindex;
 			for (int i=0; i<sector->subsectorcount; i++)
 			{
@@ -228,7 +227,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 		}
 		else
 		{
-			//glColor3f( .5f,1.f,.5f); // these are for testing the VBO stuff.
 			// Draw the subsectors belonging to this sector
 			for (int i=0; i<sector->subsectorcount; i++)
 			{

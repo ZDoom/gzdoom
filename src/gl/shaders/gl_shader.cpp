@@ -335,19 +335,6 @@ FShader *FShaderContainer::Bind(int cm)
 		shader[0]->Bind();
 		return shader[0];
 	}
-	/*
-		bool desat = cm>=CM_DESAT1 && cm<=CM_DESAT31;
-		sh = shader[desat];
-		// [BB] If there was a problem when loading the shader, sh is NULL here.
-		if( sh )
-		{
-			sh->Bind();
-			if (desat)
-			{
-				glUniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
-			}
-		}
-	*/
 }
 
 

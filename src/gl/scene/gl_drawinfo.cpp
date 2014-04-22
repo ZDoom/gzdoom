@@ -991,7 +991,7 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 	glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
 	glColorMask(0,0,0,0);						// don't write to the graphics buffer
 	gl_RenderState.EnableTexture(false);
-	glColor3f(1,1,1);
+	gl_RenderState.ResetColor();
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(true);
 
@@ -1019,7 +1019,7 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 	glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
 	gl_RenderState.EnableTexture(false);
 	glColorMask(0,0,0,0);						// don't write to the graphics buffer
-	glColor3f(1,1,1);
+	gl_RenderState.ResetColor();
 
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);

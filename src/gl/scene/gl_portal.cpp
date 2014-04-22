@@ -185,7 +185,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 		glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
 		glColorMask(0,0,0,0);						// don't write to the graphics buffer
 		gl_RenderState.EnableTexture(false);
-		glColor3f(1,1,1);
+		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LESS);
 		gl_RenderState.Apply();
 
@@ -346,9 +346,8 @@ void GLPortal::End(bool usestencil)
 		in_area=savedviewarea;
 		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
-		glColor4f(1,1,1,1);
 		glColorMask(0,0,0,0);						// no graphics
-		glColor3f(1,1,1);
+		gl_RenderState.ResetColor();
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.Apply();
 
@@ -405,7 +404,7 @@ void GLPortal::End(bool usestencil)
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
 
-		glColor4f(1,1,1,1);
+		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0,1);
 		glColorMask(0,0,0,0);						// no graphics

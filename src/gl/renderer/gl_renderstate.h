@@ -119,6 +119,7 @@ enum EEffect
 
 class FRenderState
 {
+	float mColor[5];
 	bool mTextureEnabled;
 	bool mFogEnabled;
 	bool mGlowEnabled;
@@ -161,6 +162,35 @@ public:
 
 	int SetupShader(int &shaderindex, int &cm);
 	void Apply();
+
+	void SetColor(float r, float g, float b, float a = 1.f, float desat = 0.f)
+	{
+		mColor[0] = r;
+		mColor[1] = g;
+		mColor[2] = b;
+		mColor[3] = a;
+		mColor[4] = desat;
+	}
+
+	void SetColor(PalEntry pe, float desat = 0.f)
+	{
+		mColor[0] = pe.r/255.f;
+		mColor[1] = pe.g/255.f;
+		mColor[2] = pe.b/255.f;
+		mColor[3] = pe.a/255.f;
+		mColor[4] = desat;
+	}
+
+	void ResetColor()
+	{
+		mColor[0] = mColor[1] = mColor[2] = mColor[3] = 1.f;
+		mColor[4] = 0.f;
+	}
+
+	const float *GetColor() const
+	{
+		return mColor;
+	}
 
 	void SetTextureMode(int mode)
 	{

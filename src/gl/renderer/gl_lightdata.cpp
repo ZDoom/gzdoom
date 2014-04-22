@@ -251,7 +251,7 @@ PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
 		g = (mixlight + pe.g * blendfactor) / 255;
 		b = (mixlight + pe.b * blendfactor) / 255;
 	}
-	return PalEntry(BYTE(r), BYTE(g), BYTE(b));
+	return PalEntry(255, BYTE(r), BYTE(g), BYTE(b));
 }
 
 //==========================================================================
@@ -303,7 +303,7 @@ void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, boo
 	float r,g,b;
 
 	gl_GetLightColor(light, rellight, cm, &r, &g, &b, weapon);
-	glColor4f(r, g, b, alpha);
+	gl_RenderState.SetColor(r, g, b, alpha, cm->desaturation / 255.f);
 
 	if (glset.lightmode == 8)
 	{

@@ -52,26 +52,22 @@
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
 
 
 //==========================================================================
 //
-// Gets the light for a sprite - takes dynamic lights into account
+// Sets a single light value from all dynamic lights affecting the specified location
 //
 //==========================================================================
 
-bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec, int desaturation, float * out, line_t *line, int side)
+void gl_SetDynSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec)
 {
 	ADynamicLight *light;
 	float frac, lr, lg, lb;
 	float radius;
-	bool changed = false;
+	float out[3] = { 0.0f, 0.0f, 0.0f };
 	
-	out[0]=out[1]=out[2]=0;
-
 	for(int j=0;j<2;j++)
 	{
 		// Go through both light lists
@@ -93,14 +89,6 @@ bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_
 
 						if (frac > 0)
 						{
-							if (line != NULL)
-							{
-								if (P_PointOnLineSide(light->x, light->y, line) != side)
-								{
-									node = node->nextLight;
-									continue;
-								}
-							}
 							lr = light->GetRed() / 255.0f * gl_lights_intensity;
 							lg = light->GetGreen() / 255.0f * gl_lights_intensity;
 							lb = light->GetBlue() / 255.0f * gl_lights_intensity;
@@ -116,7 +104,6 @@ bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_
 							out[0] += lr * frac;
 							out[1] += lg * frac;
 							out[2] += lb * frac;
-							changed = true;
 						}
 					}
 				}
@@ -124,67 +111,17 @@ bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_
 			node = node->nextLight;
 		}
 	}
-	return changed;
+	gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 }
 
-
-
-//==========================================================================
-//
-// Sets the light for a sprite - takes dynamic lights into account
-//
-//==========================================================================
-
-static void gl_SetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec, 
-                              int lightlevel, int rellight, FColormap * cm, float alpha, bool weapon)
+void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
 {
-	float r,g,b;
-	float result[4]; // Korshun.
-
-	gl_GetLightColor(lightlevel, rellight, cm, &r, &g, &b, weapon);
-	glColor4f(r, g, b, alpha);
-
-	if (gl_GetSpriteLight(self, x, y, z, subsec, cm ? cm->colormap : 0, result))
+	if (thing != NULL)
 	{
-		gl_RenderState.SetDynLight(result[0], result[1], result[2]);
-
-		if (glset.lightmode == 8)
-		{
-			gl_RenderState.SetSoftLightLevel(gl_ClampLight(lightlevel + rellight) / 255.f);
-		}
+		gl_SetDynSpriteLight(thing, thing->x, thing->y, thing->z + (thing->height >> 1), thing->subsector);
+	}
+	else if (particle != NULL)
+	{
+		gl_SetDynSpriteLight(NULL, particle->x, particle->y, particle->z, particle->subsector);
 	}
 }
-
-void gl_SetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * cm, float alpha, bool weapon)
-{ 
-	subsector_t * subsec = thing->subsector;
-	gl_SetSpriteLight(thing, thing->x, thing->y, thing->z+(thing->height>>1), subsec, lightlevel, rellight, cm, alpha, weapon);
-}
-
-void gl_SetSpriteLight(particle_t * thing, int lightlevel, int rellight, FColormap *cm, float alpha)
-{ 
-	gl_SetSpriteLight(NULL, thing->x, thing->y, thing->z, thing->subsector, lightlevel, rellight, cm, alpha, false);
-}
-
-//==========================================================================
-//
-// Sets render state to draw the given render style
-//
-//==========================================================================
-
-void gl_SetSpriteLighting(FRenderStyle style, AActor *thing, int lightlevel, int rellight, FColormap *cm, 
-						  float alpha, bool fullbright, bool weapon)
-{
-	FColormap internal_cm;
-
-	if (gl_light_sprites && gl_lights && GLRenderer->mLightCount && !fullbright)
-	{
-		gl_SetSpriteLight(thing, lightlevel, rellight, cm, alpha, weapon);
-	}
-	else
-	{
-		gl_SetColor(lightlevel, rellight, cm, alpha, weapon);
-	}
-	gl_RenderState.AlphaFunc(GL_GEQUAL,alpha*gl_mask_sprite_threshold);
-}
-

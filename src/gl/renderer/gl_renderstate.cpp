@@ -132,6 +132,14 @@ bool FRenderState::ApplyShader()
 	if (activeShader)
 	{
 		int fogset = 0;
+
+		glColor4fv(mColor);
+		if (mColor[4] != activeShader->currentdesaturation)
+		{
+			activeShader->currentdesaturation = mColor[4];
+			glUniform1f(activeShader->desaturation_index, mColor[4]);
+		}
+
 		if (mFogEnabled)
 		{
 			if ((mFogColor & 0xffffff) == 0)

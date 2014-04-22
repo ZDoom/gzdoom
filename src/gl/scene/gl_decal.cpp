@@ -309,11 +309,9 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
 	{
 		// Note: This should be replaced with proper shader based lighting.
-		float result[3];
 		fixed_t x, y;
 		decal->GetXY(seg->sidedef, x, y);
-		gl_GetSpriteLight(NULL, x, y, zpos, sub, Colormap.desaturation, result, line, side == line->sidedef[0] ? 0 : 1);
-		gl_RenderState.SetDynLight(result[0], result[1], result[2]);
+		gl_SetDynSpriteLight(NULL, x, y, zpos, sub);
 	}
 
 	// alpha color only has an effect when using an alpha texture.

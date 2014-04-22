@@ -263,7 +263,7 @@ void FGLRenderer::ClearBorders()
 	glViewport(0, 0, width, trueHeight);
 	VSML.loadIdentity(VSML.PROJECTION);
 	VSML.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
-	glColor3f(0.f, 0.f, 0.f);
+	gl_RenderState.SetColor(0.f, 0.f, 0.f);
 	gl_RenderState.Set2DMode(true);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
@@ -387,8 +387,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		gl_RenderState.SetTextureMode(TM_OPAQUE);
 	}
 
-	glColor4f(r, g, b, FIXED2FLOAT(parms.alpha));
-	
+	gl_RenderState.SetColor(r, g, b, FIXED2FLOAT(parms.alpha));
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_STRIP);
@@ -402,13 +401,15 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	glVertex2d(x + w, y + h);
 	glEnd();
 
+#pragma message("to be converted!")
 	if (parms.colorOverlay)
 	{
 		gl_RenderState.SetTextureMode(TM_MASK);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		gl_RenderState.SetColor(PalEntry(parms.colorOverlay));
 		gl_RenderState.Apply();
-		glColor4ub(RPART(parms.colorOverlay),GPART(parms.colorOverlay),BPART(parms.colorOverlay),APART(parms.colorOverlay));
+
 		glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2f(u1, v1);
 		glVertex2d(x, y);
@@ -439,8 +440,8 @@ void FGLRenderer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 
 {
 	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
 	gl_RenderState.EnableTexture(false);
+	gl_RenderState.SetColor(p.r / 255.f, p.g / 255.f, p.b / 255.f);
 	gl_RenderState.Apply();
-	glColor3ub(p.r, p.g, p.b);
 	glBegin(GL_LINES);
 	glVertex2i(x1, y1);
 	glVertex2i(x2, y2);
@@ -457,8 +458,8 @@ void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
 {
 	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
 	gl_RenderState.EnableTexture(false);
+	gl_RenderState.SetColor(p.r / 255.f, p.g / 255.f, p.b / 255.f);
 	gl_RenderState.Apply();
-	glColor3ub(p.r, p.g, p.b);
 	glBegin(GL_POINTS);
 	glVertex2i(x1, y1);
 	glEnd();
@@ -473,19 +474,13 @@ void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
 
 void FGLRenderer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
 {
-	float r, g, b;
-	
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
+	gl_RenderState.SetColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, damount);
 	gl_RenderState.Apply();
 	
-	r = color.r/255.0f;
-	g = color.g/255.0f;
-	b = color.b/255.0f;
-	
 	glBegin(GL_TRIANGLE_FAN);
-	glColor4f(r, g, b, damount);
 	glVertex2i(x1, y1);
 	glVertex2i(x1, y1 + h);
 	glVertex2i(x1 + w, y1 + h);
@@ -525,9 +520,9 @@ void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *
 		fU2 = float(right-left) / src->GetWidth();
 		fV2 = float(bottom-top) / src->GetHeight();
 	}
+	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_STRIP);
-	glColor4f(1, 1, 1, 1);
 	glTexCoord2f(fU1, fV1); glVertex2f(left, top);
 	glTexCoord2f(fU1, fV2); glVertex2f(left, bottom);
 	glTexCoord2f(fU2, fV1); glVertex2f(right, top);
@@ -600,7 +595,8 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 
 	lightlevel = gl_CalcLightLevel(lightlevel, 0, true);
 	PalEntry pe = gl_CalcLightColor(lightlevel, cm.LightColor, cm.blendfactor, true);
-	glColor3ub(pe.r, pe.g, pe.b);
+
+	gl_RenderState.SetColor(pe);
 
 	gltexture->Bind(cm.colormap);
 

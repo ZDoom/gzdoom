@@ -60,6 +60,7 @@ class FShader
 	float currentlightdist;
 	float currentalphathreshold;
 	float currentclipplane;
+	float currentdesaturation;
 
 	PalEntry currentfogcolor;
 	float currentfogdensity;
@@ -72,7 +73,7 @@ public:
 	{
 		hShader = hVertProg = hFragProg = 0;
 		currentfogenabled = currenttexturemode = currentglowstate = 0;
-		currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = currentwarpphase = 0.0f;
+		currentdesaturation = currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
 		currentobjectcolor = currentfogcolor = 0;
 

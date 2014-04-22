@@ -582,7 +582,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			gl_RenderState.EnableAlphaTest(false);
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.BlendFunc(GL_DST_COLOR,GL_ZERO);
-			glColor4f(extra_red, extra_green, extra_blue, 1.0f);
+			gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
 			gl_RenderState.Apply();
 			glBegin(GL_TRIANGLE_STRIP);
 			glVertex2f( 0.0f, 0.0f);
@@ -619,7 +619,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.EnableAlphaTest(false);
 		gl_RenderState.EnableTexture(false);
-		glColor4fv(blend);
+		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_STRIP);
 		glVertex2f( 0.0f, 0.0f);
@@ -669,7 +669,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 
 	// Restore standard rendering state
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor3f(1.0f,1.0f,1.0f);
+	gl_RenderState.ResetColor();
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableAlphaTest(true);
 	glDisable(GL_SCISSOR_TEST);

@@ -169,7 +169,7 @@ void GLSprite::Draw(int pass)
 			}
 
 			gl_RenderState.AlphaFunc(GL_GEQUAL,minalpha*gl_mask_sprite_threshold);
-			glColor4f(0.2f,0.2f,0.2f,fuzzalpha);
+			gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, fuzzalpha, Colormap.desaturation / 255.f);
 			additivefog = true;
 		}
 		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -179,22 +179,12 @@ void GLSprite::Draw(int pass)
 	}
 	if (RenderStyle.BlendOp!=STYLEOP_Shadow)
 	{
-		if (actor)
+		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap)
 		{
-			gl_SetSpriteLighting(RenderStyle, actor, lightlevel, rel, &Colormap, trans, fullbright || gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP, false);
+			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
-		else if (particle)
-		{
-			if (gl_light_particles)
-			{
-				gl_SetSpriteLight(particle, lightlevel, rel, &Colormap, trans);
-			}
-			else 
-			{
-				gl_SetColor(lightlevel, rel, &Colormap, trans);
-			}
-		}
-		else return;
+		gl_SetColor(lightlevel, rel, &Colormap, trans);
+		gl_RenderState.AlphaFunc(GL_GEQUAL, trans * gl_mask_sprite_threshold);
 	}
 
 	if (gl_isBlack(Colormap.FadeColor)) foglevel=lightlevel;
@@ -205,11 +195,13 @@ void GLSprite::Draw(int pass)
 		additivefog = true;
 	}
 
+	/*
 	if (RenderStyle.Flags & STYLEF_InvertOverlay) 
 	{
 		Colormap.FadeColor = Colormap.FadeColor.InverseColor();
 		additivefog=false;
 	}
+	*/
 	if (RenderStyle.BlendOp == STYLEOP_RevSub || RenderStyle.BlendOp == STYLEOP_Sub)
 	{
 		if (!modelframe)

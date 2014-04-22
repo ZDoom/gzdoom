@@ -280,9 +280,9 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipestartscreen->Bind(0, CM_DEFAULT);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
 	glVertex2i(0, 0);
@@ -295,7 +295,8 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	glEnd();
 
 	fb->wipeendscreen->Bind(0, CM_DEFAULT);
-	glColor4f(1.f, 1.f, 1.f, clamp(Clock/32.f, 0.f, 1.f));
+	gl_RenderState.SetColor(1.f, 1.f, 1.f, clamp(Clock/32.f, 0.f, 1.f));
+	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
 	glVertex2i(0, 0);
@@ -347,9 +348,9 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	// Draw the new screen on the bottom.
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
+	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipeendscreen->Bind(0, CM_DEFAULT);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
 	glVertex2i(0, 0);
@@ -399,7 +400,6 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 					float th = (float)FHardwareTexture::GetTexDimension(fb->Height);
 					rect.bottom = fb->Height - rect.bottom;
 					rect.top = fb->Height - rect.top;
-					glColor4f(1.f, 1.f, 1.f, 1.f);
 					glBegin(GL_TRIANGLE_STRIP);
 					glTexCoord2f(rect.left / tw, rect.top / th);
 					glVertex2i(rect.left, rect.bottom);
@@ -492,9 +492,9 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	// Put the initial screen back to the buffer.
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipestartscreen->Bind(0, CM_DEFAULT);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
 	glVertex2i(0, 0);
@@ -508,10 +508,10 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.SetEffect(EFF_BURN);
+	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 
 	// Burn the new screen on top of it.
-	glColor4f(1.f, 1.f, 1.f, 1.f);
 	fb->wipeendscreen->Bind(1, CM_DEFAULT);
 
 	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, false, 0, CM_DEFAULT);

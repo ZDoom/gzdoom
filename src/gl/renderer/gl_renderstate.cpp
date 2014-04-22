@@ -66,6 +66,7 @@ void FRenderState::Reset()
 	mTextureEnabled = true;
 	mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mSpecialEffect = EFF_NONE;
+	mObjectColor.d = -1;
 	mFogColor.d = -1;
 	mFogDensity = 0;
 	mTextureMode = -1;
@@ -87,8 +88,6 @@ void FRenderState::Reset()
 
 int FRenderState::SetupShader(int &shaderindex, int &cm)
 {
-	bool usecmshader;
-
 	if (shaderindex == 3)
 	{
 		// Brightmap should not be used.
@@ -98,11 +97,8 @@ int FRenderState::SetupShader(int &shaderindex, int &cm)
 		}
 	}
 
-	usecmshader = cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK;
-
 	mEffectState = shaderindex;
-	mColormapState = usecmshader? cm : CM_DEFAULT;
-	if (usecmshader) cm = CM_DEFAULT;
+	if (cm > CM_DEFAULT && cm < CM_MAXCOLORMAP) cm = CM_DEFAULT;
 	return 0;
 }
 
@@ -128,7 +124,7 @@ bool FRenderState::ApplyShader()
 
 		if (shd != NULL)
 		{
-			activeShader = shd->Bind(mTextureEnabled? mColormapState : 0);
+			activeShader = shd->Bind(mTextureEnabled? mShaderSelect : 0);
 			assert(activeShader != NULL);
 		}
 	}
@@ -177,8 +173,13 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader->currentfogcolor = mFogColor;
 
-			glUniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, 
-							mFogColor.b/255.f, 0);
+			glUniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, mFogColor.b/255.f, 0);
+		}
+		if (mObjectColor != activeShader->currentobjectcolor)
+		{
+			activeShader->currentobjectcolor = mObjectColor;
+
+			glUniform4f(activeShader->objectcolor_index, mObjectColor.r / 255.f, mObjectColor.g / 255.f, mObjectColor.b / 255.f, 1.0f);
 		}
 		if (mGlowEnabled)
 		{
@@ -214,9 +215,9 @@ bool FRenderState::ApplyShader()
 			activeShader->currentclipplane = mClipPlane;
 		}
 
+		glUniform4f(activeShader->dlightcolor_index, mDynLight[0], mDynLight[1], mDynLight[2], 0.f);
 		if (glset.lightmode == 8)
 		{
-			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, mSoftLightLevel);
 		}
 		else

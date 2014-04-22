@@ -960,7 +960,9 @@ void GLHorizonPortal::DrawContents()
 	if (gltexture && gltexture->tex->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		gl_SetColor(255, 0, NULL, 1.f);
+		FColormap cmap = origin->colormap;
+		cmap.ClearColor();
+		gl_SetColor(255, 0, &cmap, 1.f);
 		gl_SetFog(255, 0, &origin->colormap, false);
 	}
 	else 

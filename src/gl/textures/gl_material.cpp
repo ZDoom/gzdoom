@@ -251,7 +251,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int cm, int translation, int & w, in
 
 	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
 	// Also don't upsample warped textures.
-	buffer = gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, bIsTransparent || cm == CM_SHADE );
+	buffer = gl_CreateUpsampledTextureBuffer(tex, buffer, W, H, w, h, !!bIsTransparent );
 	return buffer;
 }
 

@@ -348,17 +348,11 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 // Light + color
 
 bool gl_GetSpriteLight(AActor *Self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec, int desaturation, float * out, line_t *line = NULL, int side = 0);
-int gl_SetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * cm, float alpha, PalEntry ThingColor = 0xffffff, bool weapon=false);
 
-void gl_GetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * cm,
-					   float *red, float *green, float *blue,
-					   PalEntry ThingColor, bool weapon);
+void gl_SetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * cm, float alpha, bool weapon=false);
+void gl_SetSpriteLight(particle_t * thing, int lightlevel, int rellight, FColormap *cm, float alpha);
+void gl_SetSpriteLighting(FRenderStyle style, AActor *thing, int lightlevel, int rellight, FColormap *cm, float alpha, bool fullbright, bool weapon);
 
-int gl_SetSpriteLighting(FRenderStyle style, AActor *thing, int lightlevel, int rellight, FColormap *cm, 
-						  PalEntry ThingColor, float alpha, bool fullbright, bool weapon);
-
-int gl_SetSpriteLight(particle_t * thing, int lightlevel, int rellight, FColormap *cm, float alpha, PalEntry ThingColor = 0xffffff);
-void gl_GetLightForThing(AActor * thing, float upper, float lower, float & r, float & g, float & b);
 
 
 

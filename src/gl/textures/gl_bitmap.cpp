@@ -54,34 +54,17 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 {
 	int i;
 
-	if (cm == CM_DEFAULT)
+	for(i=0;i<count;i++)
 	{
-		for(i=0;i<count;i++)
+		if (T::A(pin) != 0)
 		{
-			if (T::A(pin) != 0)
-			{
-				pout[0]=T::R(pin);
-				pout[1]=T::G(pin);
-				pout[2]=T::B(pin);
-				pout[3]=T::A(pin);
-			}
-			pout+=4;
-			pin+=step;
+			pout[0]=T::R(pin);
+			pout[1]=T::G(pin);
+			pout[2]=T::B(pin);
+			pout[3]=T::A(pin);
 		}
-	}
-	else if (cm == CM_SHADE)
-	{
-		// Alpha shade uses the red channel for true color pics
-		for(i=0;i<count;i++)
-		{
-			if (T::A(pin) != 0)
-			{
-				pout[0] = pout[1] =	pout[2] = 255;
-				pout[3] = T::R(pin);
-			}
-			pout+=4;
-			pin+=step;
-		}
+		pout+=4;
+		pin+=step;
 	}
 }
 
@@ -137,41 +120,27 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 	{
 		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
 
-		// CM_SHADE is an alpha map with 0==transparent and 1==opaque
-		if (cm == CM_SHADE) 
+		// apply any translation. 
+		// The ice and blood color translations are done directly
+		// because that yields better results.
+		switch(translation)
 		{
-			for(int i=0;i<256;i++) 
-			{
-				if (palette[i].a != 0)
-					penew[i]=PalEntry(i, 255,255,255);
-				else
-					penew[i]=PalEntry(0,255,255,255);	// If the palette contains transparent colors keep them.
-			}
-		}
-		else
+		default:
 		{
-			// apply any translation. 
-			// The ice and blood color translations are done directly
-			// because that yields better results.
-			switch(translation)
+			PalEntry *ptrans = GLTranslationPalette::GetPalette(translation);
+			if (ptrans)
 			{
-			default:
-			{
-				PalEntry *ptrans = GLTranslationPalette::GetPalette(translation);
-				if (ptrans)
+				for(i = 0; i < 256; i++)
 				{
-					for(i = 0; i < 256; i++)
-					{
-						penew[i] = (ptrans[i]&0xffffff) | (palette[i]&0xff000000);
-					}
-					break;
+					penew[i] = (ptrans[i]&0xffffff) | (palette[i]&0xff000000);
 				}
-			}
-
-			case 0:
-				memcpy(penew, palette, 256*sizeof(PalEntry));
 				break;
 			}
+		}
+
+		case 0:
+			memcpy(penew, palette, 256*sizeof(PalEntry));
+			break;
 		}
 		// Now penew contains the actual palette that is to be used for creating the image.
 

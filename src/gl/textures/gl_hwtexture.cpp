@@ -473,7 +473,7 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	unsigned int * pTexID=GetTexID(cm, translation);
 
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
-	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP, cm==CM_SHADE, texunit);
+	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP, false, texunit);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 	return *pTexID;
 }

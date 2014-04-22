@@ -142,14 +142,21 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	int blendequation = renderops[style.BlendOp&15];
 	int texturemode = drawopaque? TM_OPAQUE : TM_MODULATE;
 
-	if (style.Flags & STYLEF_ColorIsFixed)
+	if (style.Flags & STYLEF_RedIsAlpha)
+	{
+		texturemode = TM_REDTOALPHA;
+	}
+	else if (style.Flags & STYLEF_ColorIsFixed)
 	{
 		texturemode = TM_MASK;
 	}
+#if 0
+	// right now this is not supported in the shader, or used elsewhere in the engine
 	else if (style.Flags & STYLEF_InvertSource)
 	{
 		texturemode = drawopaque? TM_INVERTOPAQUE : TM_INVERT;
 	}
+#endif
 
 	if (blendequation == -1)
 	{
@@ -291,44 +298,16 @@ void gl_GetLightColor(int lightlevel, int rellight, const FColormap * cm, float 
 // set current light color
 //
 //==========================================================================
-void gl_SetColor(int light, int rellight, const FColormap * cm, float *red, float *green, float *blue, PalEntry ThingColor, bool weapon)
-{ 
-	float r,g,b;
-	gl_GetLightColor(light, rellight, cm, &r, &g, &b, weapon);
-
-	*red = r * ThingColor.r/255.0f;
-	*green = g * ThingColor.g/255.0f;
-	*blue = b * ThingColor.b/255.0f;
-}
-
-//==========================================================================
-//
-// set current light color
-//
-//==========================================================================
-void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, PalEntry ThingColor, bool weapon)
+void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, bool weapon)
 { 
 	float r,g,b;
 
 	gl_GetLightColor(light, rellight, cm, &r, &g, &b, weapon);
+	glColor4f(r, g, b, alpha);
 
-	if (glset.lightmode != 8)
+	if (glset.lightmode == 8)
 	{
-		glColor4f(r * ThingColor.r/255.0f, g * ThingColor.g/255.0f, b * ThingColor.b/255.0f, alpha);
-	}
-	else
-	{ 
-		glColor4f(r, g, b, alpha);
-
-		if (gl_fixedcolormap)
-		{
-			gl_RenderState.SetSoftLightLevel(1.f);
-		}
-		else
-		{
-			float lightlevel = gl_CalcLightLevel(light, rellight, weapon) / 255.0f;
-			gl_RenderState.SetSoftLightLevel(lightlevel);
-		}
+		gl_RenderState.SetSoftLightLevel(gl_fixedcolormap? 1.f : gl_ClampLight(light + rellight) / 255.0f);
 	}
 }
 
@@ -617,9 +596,9 @@ void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, const FColormap *cmap
 		green = pe.g;
 		blue = pe.b;
 	}
-	else if (cm >= CM_DESAT1 && cm <= CM_DESAT31)
+	else if (cmap->desaturation > 0)
 	{
-		gl_Desaturate(gray, red, green, blue, red, green, blue, cm - CM_DESAT0);
+		gl_Desaturate(gray, red, green, blue, red, green, blue, cmap->desaturation);
 	}
 }
 

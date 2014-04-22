@@ -1,8 +1,9 @@
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec3 camerapos;
-varying vec4 pixelpos;
-varying vec4 fogparm;
+uniform int texturemode;
+in vec4 pixelpos;
+in vec4 fogparm;
 
 uniform sampler2D tex;
 
@@ -22,7 +23,25 @@ vec4 desaturate(vec4 texel)
 vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture2D(tex, st);
-	return texel;
+	
+	//
+	// Apply texture modes
+	//
+	switch (texturemode)
+	{
+		case 1:
+			texel.rgb = vec3(1.0,1.0,1.0);
+			break;
+			
+		case 2:
+			texel.a = 1.0;
+			break;
+			
+		case 3:
+			texel = vec4(1.0, 1.0, 1.0, texel.r);
+			break;
+	}
+	return desaturate(texel);
 }
 
 //===========================================================================
@@ -39,18 +58,14 @@ void main()
 	//
 	// calculate fog factor
 	//
-	#ifndef NO_SM4
-		if (fogenabled == -1) 
-		{
-			fogdist = pixelpos.w;
-		}
-		else 
-		{
-			fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
-		}
-	#else
+	if (fogenabled == -1) 
+	{
 		fogdist = pixelpos.w;
-	#endif
+	}
+	else 
+	{
+		fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
+	}
 	fogfactor = exp2 (fogparm.z * fogdist);
 	
 	vec4 frag = Process(vec4(1.0,1.0,1.0,1.0));

@@ -43,6 +43,7 @@ class FShader
 	int glowtopcolor_index;
 	int glowbottomplane_index;
 	int glowtopplane_index;
+	int objectcolor_index;
 
 	int mModelMatLocation;
 	int mViewMatLocation;
@@ -50,6 +51,7 @@ class FShader
 	int mTexMatLocation;
 
 
+	PalEntry currentobjectcolor;
 	int currentwarpphase;
 	int currentglowstate;
 	int currentfogenabled;
@@ -72,7 +74,7 @@ public:
 		currentfogenabled = currenttexturemode = currentglowstate = 0;
 		currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
-		currentfogcolor = 0;
+		currentobjectcolor = currentfogcolor = 0;
 
 		timer_index = -1;
 		desaturation_index = -1;

@@ -17,8 +17,7 @@ void gl_SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefog
 int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon);
 PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force = false);
 void gl_GetLightColor(int lightlevel, int rellight, const FColormap * cm, float * pred, float * pgreen, float * pblue, bool weapon=false);
-void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, PalEntry ThingColor = 0xffffff, bool weapon=false);
-void gl_SetColor(int light, int rellight, const FColormap * cm, float *red, float *green, float *blue, PalEntry ThingColor=0xffffff, bool weapon=false);
+void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, bool weapon=false);
 
 float gl_GetFogDensity(int lightlevel, PalEntry fogcolor);
 struct sector_t;
@@ -46,9 +45,9 @@ inline bool gl_isFullbright(PalEntry color, int lightlevel)
 
 __forceinline void gl_Desaturate(int gray, int ired, int igreen, int iblue, BYTE & red, BYTE & green, BYTE & blue, int fac)
 {
-	red = (ired*(31-fac) + gray*fac)/31;
-	green = (igreen*(31-fac) + gray*fac)/31;
-	blue = (iblue*(31-fac) + gray*fac)/31;
+	red = (ired*(255-fac) + gray*fac)/255;
+	green = (igreen*(255-fac) + gray*fac)/255;
+	blue = (iblue*(255-fac) + gray*fac)/255;
 }
 
 void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, const FColormap *cmap);

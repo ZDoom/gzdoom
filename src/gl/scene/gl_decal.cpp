@@ -40,6 +40,7 @@
 
 #include "doomdata.h"
 #include "gl/system/gl_system.h"
+#include "gl/system/gl_interface.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 
@@ -74,7 +75,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	int light;
 	int rel;
 	float a;
-	bool flipx, flipy, loadAlpha;
+	bool flipx, flipy;
 	DecalVertex dv[4];
 	FTextureID decalTile;
 	
@@ -179,69 +180,13 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		rel = rellight + getExtraLight();
 	}
 	
-	int r = RPART(decal->AlphaColor);
-	int g = GPART(decal->AlphaColor);
-	int b = BPART(decal->AlphaColor);
 	FColormap p = Colormap;
 	
 	if (glset.nocoloredspritelighting)
 	{
-		int v = (Colormap.LightColor.r * 77 + Colormap.LightColor.g*143 + Colormap.LightColor.b*35)/255;
-		p.LightColor = PalEntry(p.colormap, v, v, v);
+		p.Decolorize();
 	}
 	
-	float red, green, blue;
-	
-	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
-	{
-		loadAlpha = true;
-		p.colormap=CM_SHADE;
-
-		if (glset.lightmode != 8)
-		{
-			gl_GetLightColor(light, rel, &p, &red, &green, &blue);
-		}
-		else
-		{
-			gl_GetLightColor(lightlevel, rellight, &p, &red, &green, &blue);
-		}
-		
-		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
-		{
-			float result[3];
-			fixed_t x, y;
-			decal->GetXY(seg->sidedef, x, y);
-			gl_GetSpriteLight(NULL, x, y, zpos, sub, Colormap.colormap-CM_DESAT0, result, line, side == line->sidedef[0]? 0:1);
-			if (glset.lightmode != 8)
-			{
-				red = clamp<float>(result[0]+red, 0, 1.0f);
-				green = clamp<float>(result[1]+green, 0, 1.0f);
-				blue = clamp<float>(result[2]+blue, 0, 1.0f);
-			}
-			else
-			{
-				gl_RenderState.SetDynLight(result[0], result[1], result[2]);
-			}
-		}
-
-		BYTE R = xs_RoundToInt(r * red);
-		BYTE G = xs_RoundToInt(g * green);
-		BYTE B = xs_RoundToInt(b * blue);
-
-		gl_ModifyColor(R,G,B, &Colormap);
-
-		red = R/255.f;
-		green = G/255.f;
-		blue = B/255.f;
-	}	
-	else
-	{
-		loadAlpha = false;
-		
-		red = 1.f;
-		green = 1.f;
-		blue = 1.f;
-	}
 	
 	
 	a = FIXED2FLOAT(decal->Alpha);
@@ -359,36 +304,27 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		float vb = tex->GetVB();
 		for(i=0;i<4;i++) dv[i].v=vb-dv[i].v;
 	}
-	// fog is set once per wall in the calling function and not per decal!
 
-	if (loadAlpha)
+	// calculate dynamic light effect.
+	if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
 	{
-		glColor4f(red, green, blue, a);
-
-		if (glset.lightmode == 8)
-		{
-			if (gl_fixedcolormap)
-			{
-				gl_RenderState.SetSoftLightLevel(1.0f);
-			}
-			else
-			{
-				gl_RenderState.SetSoftLightLevel(gl_CalcLightLevel(light, rel, false) / 255.0f);
-			}
-		}
-	}
-	else
-	{
-		if (glset.lightmode == 8)
-		{
-			gl_SetColor(light, rel, &p, a, extralight); // Korshun.
-		}
-		else
-		{
-			gl_SetColor(light, rel, &p, a);
-		}
+		// Note: This should be replaced with proper shader based lighting.
+		float result[3];
+		fixed_t x, y;
+		decal->GetXY(seg->sidedef, x, y);
+		gl_GetSpriteLight(NULL, x, y, zpos, sub, Colormap.desaturation, result, line, side == line->sidedef[0] ? 0 : 1);
+		gl_RenderState.SetDynLight(result[0], result[1], result[2]);
 	}
 
+	// alpha color only has an effect when using an alpha texture.
+	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
+	{
+		gl_RenderState.SetObjectColor(decal->AlphaColor);
+	}
+
+	gl_SetColor(light, rel, &p, a);
+
+	// for additively drawn decals we must temporarily set the fog color to black.
 	PalEntry fc = gl_RenderState.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
 	{
@@ -411,6 +347,8 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	}
 	glEnd();
 	rendered_decals++;
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetFog(fc,-1);
 	gl_RenderState.SetDynLight(0,0,0);
 }

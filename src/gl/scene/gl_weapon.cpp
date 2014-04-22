@@ -281,7 +281,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		statebright[0] = statebright[1] = true;
 	}
 
-	PalEntry ThingColor = playermo->fillcolor;
+	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
+
 	visstyle_t vis;
 
 	vis.RenderStyle=playermo->RenderStyle;
@@ -340,6 +341,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	// now draw the different layers of the weapon
 	gl_RenderState.EnableBrightmap(true);
+	gl_RenderState.SetObjectColor(ThingColor);
 	if (statebright[0] || statebright[1])
 	{
 		// brighten the weapon to reduce the difference between
@@ -360,7 +362,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			if (statebright[i]) 
 			{
 				if (fakesec == viewsector || in_area != area_below)	
-					// under water areas keep most of their color for fullbright objects
 				{
 					cmc.LightColor.r=
 					cmc.LightColor.g=
@@ -368,17 +369,26 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				}
 				else
 				{
-					cmc.LightColor.r = (3*cmc.LightColor.r + 0xff)/4;
+					// under water areas keep most of their color for fullbright objects
+					cmc.LightColor.r = (3 * cmc.LightColor.r + 0xff) / 4;
 					cmc.LightColor.g = (3*cmc.LightColor.g + 0xff)/4;
 					cmc.LightColor.b = (3*cmc.LightColor.b + 0xff)/4;
 				}
 			}
 			// set the lighting parameters
-			gl_SetSpriteLighting(vis.RenderStyle, playermo, statebright[i]? 255 : lightlevel, 
-				0, &cmc, 0xffffff, trans, statebright[i], true);
+			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
+			{
+				glColor4f(0.2f, 0.2f, 0.2f, 0.33f);
+				gl_RenderState.AlphaFunc(GL_GEQUAL, 0.075f*gl_mask_sprite_threshold);
+			}
+			else
+			{
+				gl_SetSpriteLighting(vis.RenderStyle, playermo, statebright[i] ? 255 : lightlevel, 0, &cmc, trans, statebright[i], true);
+			}
 			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);
 		}
 	}
+	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.EnableBrightmap(false);
 	glset.lightmode = oldlightmode;
 }

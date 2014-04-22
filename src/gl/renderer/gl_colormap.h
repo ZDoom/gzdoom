@@ -13,18 +13,11 @@ enum EColorManipulation
 
 	CM_INVALID=-1,
 	CM_DEFAULT=0,					// untranslated
-	CM_DESAT0=CM_DEFAULT,
-	CM_DESAT1,					// minimum desaturation
-	CM_DESAT31=CM_DESAT1+30,	// maximum desaturation = grayscale
 	CM_FIRSTSPECIALCOLORMAP,		// first special fixed colormap
-
-	// special internal values for texture creation
-	CM_SHADE= 0x10000002,		// alpha channel texture
 
 	// These are not to be passed to the texture manager
 	CM_LITE	= 0x20000000,		// special values to handle these items without excessive hacking
 	CM_TORCH= 0x20000010,		// These are not real color manipulations
-	CM_FOGLAYER= 0x20000020,	// Sprite shaped fog layer - this is only used as a parameter to FMaterial::BindPatch
 };
 
 #define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())
@@ -36,6 +29,7 @@ struct FColormap
 	PalEntry		FadeColor;		// a is fadedensity>>1
 	int				colormap;
 	int				blendfactor;
+	int				desaturation;
 
 	void Clear()
 	{
@@ -43,6 +37,7 @@ struct FColormap
 		FadeColor=0;
 		colormap = CM_DEFAULT;
 		blendfactor=0;
+		desaturation = 0;
 	}
 
 	void ClearColor()
@@ -61,7 +56,8 @@ struct FColormap
 	FColormap & operator=(FDynamicColormap * from)
 	{
 		LightColor = from->Color;
-		colormap = from->Desaturate>>3;
+		colormap = CM_DEFAULT;
+		desaturation = from->Desaturate;
 		FadeColor = from->Fade;
 		blendfactor = from->Color.a;
 		return * this;
@@ -70,8 +66,14 @@ struct FColormap
 	void CopyLightColor(FDynamicColormap * from)
 	{
 		LightColor = from->Color;
-		colormap = from->Desaturate>>3;
+		desaturation = from->Desaturate;
 		blendfactor = from->Color.a;
+	}
+
+	void Decolorize()	// this for 'nocoloredspritelighting and not the same as desaturation. The normal formula results in a value that's too dark.
+	{
+		int v = (LightColor.r + LightColor.g + LightColor.b) / 3;
+		LightColor.r = LightColor.g = LightColor.b = (255 + v + v) / 3;
 	}
 };
 

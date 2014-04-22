@@ -2,8 +2,8 @@ uniform float clipheight;
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec3 camerapos;
-varying vec4 pixelpos;
-varying vec4 fogparm;
+in vec4 pixelpos;
+in vec4 fogparm;
 
 //===========================================================================
 //

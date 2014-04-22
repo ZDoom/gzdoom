@@ -77,14 +77,15 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FMemLump fp_data = Wads.ReadLump(fp_lump);
 
 
+	FString version = "#version 400 compatibility\n";
 	FString vp_comb;
 	FString fp_comb;
 	vp_comb = defines;
 
 	fp_comb = vp_comb;
 	// This uses GetChars on the strings to get rid of terminating 0 characters.
-	vp_comb << vp_data.GetString().GetChars() << "\n";
-	fp_comb << fp_data.GetString().GetChars() << "\n";
+	vp_comb << version << vp_data.GetString().GetChars() << "\n";
+	fp_comb << version << fp_data.GetString().GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{
@@ -150,7 +151,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	if (linked == 0)
 	{
 		// only print message if there's an error.
-		Printf("Init Shader '%s':\n%s\n", name, error.GetChars());
+		I_FatalError("Init Shader '%s':\n%s\n", name, error.GetChars());
 	}
 	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
 	mViewMatLocation = glGetUniformLocation(hShader, "ViewMatrix");
@@ -170,6 +171,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	dlightcolor_index = glGetUniformLocation(hShader, "dlightcolor");
 	alphathreshold_index = glGetUniformLocation(hShader, "alphathreshold");
 	clipplane_index = glGetUniformLocation(hShader, "clipheight");
+	objectcolor_index = glGetUniformLocation(hShader, "objectcolor");
 
 	glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
 	glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");
@@ -213,7 +215,7 @@ bool FShader::Bind()
 
 //==========================================================================
 //
-//
+// Since all shaders are REQUIRED, any error here needs to be fatal
 //
 //==========================================================================
 
@@ -238,14 +240,13 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		shader_cm = new FShader;
 		if (!shader_cm->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_colormap.fp", ShaderPath, "#define NO_LIGHTING\n"))
 		{
-			delete shader_cm;
-			shader_cm = NULL;
+			I_FatalError("Unable to load shader %s\n", name.GetChars());
 		}
 	}
 	catch(CRecoverableError &err)
 	{
 		shader_cm = NULL;
-		I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
+		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 
 	name << ShaderName << "::foglayer";
@@ -255,14 +256,13 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		shader_fl = new FShader;
 		if (!shader_fl->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_foglayer.fp", ShaderPath, ""))
 		{
-			delete shader_fl;
-			shader_fl = NULL;
+			I_FatalError("Unable to load shader %s\n", name.GetChars());
 		}
 	}
 	catch (CRecoverableError &err)
 	{
 		shader_fl = NULL;
-		I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
+		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 
 	for(int i = 0;i < NUM_SHADERS; i++)
@@ -275,21 +275,19 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		{
 			FString str;
 			// this can't be in the shader code due to ATI strangeness.
-			str = "#version 120\n#extension GL_EXT_gpu_shader4 : enable\n";
-			if (gl.MaxLights() == 128) str += "#define MAXLIGHTS128\n";
+			if (gl.MaxLights() == 128) str = "#define MAXLIGHTS128\n";
 
 			str += shaderdefines[i];
 			shader[i] = new FShader;
 			if (!shader[i]->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str.GetChars()))
 			{
-				delete shader[i];
-				shader[i] = NULL;
+				I_FatalError("Unable to load shader %s\n", name.GetChars());
 			}
 		}
 		catch(CRecoverableError &err)
 		{
 			shader[i] = NULL;
-			I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
+			I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 		}
 	}
 }
@@ -321,21 +319,23 @@ FShaderContainer::~FShaderContainer()
 
 FShader *FShaderContainer::Bind(int cm)
 {
-	FShader *sh=NULL;
-
-	if (cm == CM_FOGLAYER)
+	if (cm == SHD_FOGLAYER)
 	{
-		if (shader_fl) shader_fl->Bind();
+		shader_fl->Bind();
 		return shader_fl;
 	}
-	else if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_MAXCOLORMAP)
+	else if (cm == SHD_COLORMAP)
 	{
 		// these are never used with any kind of lighting or fog
-		if (shader_cm) shader_cm->Bind();
+		shader_cm->Bind();
 		return shader_cm;
 	}
 	else
 	{
+		shader[0]->Bind();
+		return shader[0];
+	}
+	/*
 		bool desat = cm>=CM_DESAT1 && cm<=CM_DESAT31;
 		sh = shader[desat];
 		// [BB] If there was a problem when loading the shader, sh is NULL here.
@@ -347,8 +347,7 @@ FShader *FShaderContainer::Bind(int cm)
 				glUniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
 			}
 		}
-	}
-	return sh;
+	*/
 }
 
 
@@ -468,7 +467,9 @@ void FShaderManager::CompileShaders()
 
 void FShaderManager::Clean()
 {
-	SetActiveShader(NULL);
+	glUseProgram(NULL);
+	mActiveShader = NULL;
+
 	for(unsigned int i=0;i<mTextureEffects.Size();i++)
 	{
 		if (mTextureEffects[i] != NULL) delete mTextureEffects[i];
@@ -511,7 +512,7 @@ void FShaderManager::SetActiveShader(FShader *sh)
 {
 	if (mActiveShader != sh)
 	{
-		glUseProgram(sh == NULL? 0 : sh->GetHandle());
+		glUseProgram(sh->GetHandle());
 		mActiveShader = sh;
 	}
 }

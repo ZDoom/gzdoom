@@ -1,4 +1,3 @@
-
 // Changing this constant gives results very similar to changing r_visibility.
 // Default is 232, it seems to give exactly the same light bands as software renderer.
 #define DOOMLIGHTFACTOR 232.0
@@ -21,16 +20,17 @@ uniform float alphathreshold;
 uniform float clipheight;
 uniform int fogenabled;
 uniform vec4 fogcolor;
-uniform vec3 dlightcolor;
+uniform vec4 dlightcolor;		// one global light value that will get added just like a dynamic light.
+uniform vec4 objectcolor;		// object's own color - not part of the lighting.
 uniform vec3 camerapos;
-varying vec4 pixelpos;
-varying vec4 fogparm;
+in vec4 pixelpos;
+in vec4 fogparm;
 //uniform vec2 lightparms;
 uniform float desaturation_factor;
 
 uniform vec4 topglowcolor;
 uniform vec4 bottomglowcolor;
-varying vec2 glowdist;
+in vec2 glowdist;
 
 uniform int texturemode;
 uniform sampler2D tex;
@@ -38,7 +38,7 @@ uniform sampler2D tex;
 vec4 Process(vec4 color);
 
 
-varying float lightlevel;
+in float lightlevel;
 
 // Doom lighting equation ripped from EDGE.
 // Big thanks to EDGE developers for making the only port
@@ -91,7 +91,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	if (lightlevel >= 0.0)
 	{
 		float newlightlevel = 1.0 - R_DoomLightingEquation(lightlevel, gl_FragCoord.z);
-		color.rgb *= clamp(vec3(newlightlevel) + dlightcolor, 0.0, 1.0);
+		color.rgb *= newlightlevel;
 	}
 	
 	//
@@ -138,14 +138,21 @@ vec4 getTexel(vec2 st)
 	//
 	// Apply texture modes
 	//
-	if (texturemode == 2) 
+	switch (texturemode)
 	{
-		texel.a = 1.0;
+		case 1:
+			texel.rgb = vec3(1.0,1.0,1.0);
+			break;
+			
+		case 2:
+			texel.a = 1.0;
+			break;
+			
+		case 3:
+			texel = vec4(1.0, 1.0, 1.0, texel.r);
+			break;
 	}
-	else if (texturemode == 1) 
-	{
-		texel.rgb = vec3(1.0,1.0,1.0);
-	}
+	texel *= objectcolor;
 
 	return desaturate(texel);
 }
@@ -202,7 +209,7 @@ void main()
 	
 	if (lightrange.z > 0)
 	{
-		vec4 dynlight = vec4(0.0,0.0,0.0,0.0);
+		vec4 dynlight = dlightcolor;
 		vec4 addlight = vec4(0.0,0.0,0.0,0.0);
 	
 		for(int i=0; i<lightrange.x; i+=2)
@@ -221,7 +228,7 @@ void main()
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 			dynlight.rgb -= lightcolor.rgb;
 		}
-		frag.rgb = clamp(frag.rgb + dynlight.rgb, 0.0, 1.4);
+		frag.rgb = clamp(frag.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
 		frag = Process(frag);
 #ifndef NO_DISCARD
 		if (frag.a < alphathreshold)
@@ -237,10 +244,11 @@ void main()
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 			addlight.rgb += lightcolor.rgb;
 		}
-		frag.rgb += addlight.rgb;
+		frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
 	}
 	else
 	{
+		frag.rgb = clamp(frag.rgb + desaturate(dlightcolor).rgb, 0.0, 1.4);
 		frag = Process(frag);
 #ifndef NO_DISCARD
 		if (frag.a < alphathreshold)
@@ -256,3 +264,4 @@ void main()
 	}
 	gl_FragColor = frag;
 }
+

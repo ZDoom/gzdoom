@@ -112,23 +112,23 @@ void GLSprite::Draw(int pass)
 {
 	if (pass!=GLPASS_PLAIN && pass != GLPASS_ALL && pass!=GLPASS_TRANSLUCENT) return;
 
-	// Hack to enable bright sprites in faded maps
-	uint32 backupfade = Colormap.FadeColor.d;
-	if (gl_spritebrightfog && fullbright)
-		Colormap.FadeColor = 0;
-
 
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = getExtraLight();
 
+	gl_RenderState.SetObjectColor(ThingColor);
+	if (Colormap.colormap == CM_LITE)
+	{
+		gl_RenderState.SelectShader(SHD_COLORMAP);
+	}
+
 	if (pass==GLPASS_TRANSLUCENT)
 	{
 		// The translucent pass requires special setup for the various modes.
 
-		// Brightmaps will only be used when doing regular drawing ops and having no fog
-		if (!gl_spritebrightfog && (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE || 
-			RenderStyle.BlendOp != STYLEOP_Add))
+		// for special render styles brightmaps would not look good - especially for subtractive.
+		if (RenderStyle.BlendOp != STYLEOP_Add)
 		{
 			gl_RenderState.EnableBrightmap(false);
 		}
@@ -152,7 +152,7 @@ void GLSprite::Draw(int pass)
 			float fuzzalpha=0.44f;
 			float minalpha=0.1f;
 
-			// fog + fuzz don't work well without some fiddling with the alpha value!
+			// fog + fuzz don't work well without some fiddling with the alpha value.
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
 				float xcamera=FIXED2FLOAT(viewx);
@@ -162,7 +162,7 @@ void GLSprite::Draw(int pass)
 
 				if (!Colormap.FadeColor.a) Colormap.FadeColor.a=clamp<int>(255-lightlevel,60,255);
 
-				// this value was determined by trial and error and is scale dependent!
+				// this value was determined by trial and error and is scale dependent.
 				float factor=0.05f+exp(-Colormap.FadeColor.a*dist/62500.f);
 				fuzzalpha*=factor;
 				minalpha*=factor;
@@ -181,18 +181,17 @@ void GLSprite::Draw(int pass)
 	{
 		if (actor)
 		{
-			lightlevel = gl_SetSpriteLighting(RenderStyle, actor, lightlevel, rel, &Colormap, ThingColor, trans,
-							 fullbright || gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP, false);
+			gl_SetSpriteLighting(RenderStyle, actor, lightlevel, rel, &Colormap, trans, fullbright || gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP, false);
 		}
 		else if (particle)
 		{
 			if (gl_light_particles)
 			{
-				lightlevel = gl_SetSpriteLight(particle, lightlevel, rel, &Colormap, trans, ThingColor);
+				gl_SetSpriteLight(particle, lightlevel, rel, &Colormap, trans);
 			}
 			else 
 			{
-				gl_SetColor(lightlevel, rel, &Colormap, trans, ThingColor);
+				gl_SetColor(lightlevel, rel, &Colormap, trans);
 			}
 		}
 		else return;
@@ -308,7 +307,7 @@ void GLSprite::Draw(int pass)
 		{
 			// If we get here we know that we have colored fog and no fixed colormap.
 			gl_SetFog(foglevel, rel, &Colormap, additivefog);
-			gl_RenderState.SetFixedColormap(CM_FOGLAYER);
+			gl_RenderState.SelectShader(SHD_FOGLAYER);
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gl_RenderState.Apply();
@@ -355,10 +354,12 @@ void GLSprite::Draw(int pass)
 		}
 	}
 
-	// End of gl_sprite_brightfog hack: restore FadeColor to normalcy
-	if (backupfade != Colormap.FadeColor.d)
-		Colormap.FadeColor = backupfade;
+	if (Colormap.colormap == CM_LITE || foglayer)
+	{
+		gl_RenderState.SelectShader(SHD_DEFAULT);
+	}
 
+	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetDynLight(0,0,0);
 }
@@ -421,13 +422,6 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 				copySprite.Colormap.LightColor.b=(255+v+v)/3;
 			}
 
-			if (!gl_isWhite(ThingColor))
-			{
-				copySprite.Colormap.LightColor.r=(copySprite.Colormap.LightColor.r*ThingColor.r)>>8;
-				copySprite.Colormap.LightColor.g=(copySprite.Colormap.LightColor.g*ThingColor.g)>>8;
-				copySprite.Colormap.LightColor.b=(copySprite.Colormap.LightColor.b*ThingColor.b)>>8;
-			}
-
 			z1=copySprite.z2=maplightbottom;
 			vt=copySprite.vb=copySprite.vt+ 
 				(maplightbottom-copySprite.z1)*(copySprite.vb-copySprite.vt)/(z2-copySprite.z1);
@@ -466,13 +460,6 @@ void GLSprite::SetSpriteColor(sector_t *sector, fixed_t center_y)
 				Colormap.LightColor.r=
 				Colormap.LightColor.g=
 				Colormap.LightColor.b=(255+v+v)/3;
-			}
-
-			if (!gl_isWhite(ThingColor))
-			{
-				Colormap.LightColor.r=(Colormap.LightColor.r*ThingColor.r)>>8;
-				Colormap.LightColor.g=(Colormap.LightColor.g*ThingColor.g)>>8;
-				Colormap.LightColor.b=(Colormap.LightColor.b*ThingColor.b)>>8;
 			}
 			return;
 		}
@@ -745,7 +732,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			if (gl_enhanced_nightvision &&
 				(thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
 			{
-				Colormap.colormap = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+				Colormap.colormap = CM_LITE;
 			}
 		}
 	}
@@ -771,17 +758,14 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		}
 		else if (glset.nocoloredspritelighting)
 		{
-			int v = (Colormap.LightColor.r /* * 77 */ + Colormap.LightColor.g /**143 */ + Colormap.LightColor.b /**35*/)/3;//255;
-			Colormap.LightColor.r=
-			Colormap.LightColor.g=
-			Colormap.LightColor.b=(255+v+v)/3;
+			Colormap.Decolorize();
 		}
 	}
 
 	translation=thing->Translation;
 
-	ThingColor=0xffffff;
 	RenderStyle = thing->RenderStyle;
+	ThingColor = (RenderStyle.Flags & STYLEF_ColorIsFixed)? thing->fillcolor : 0xffffff;
 	OverrideShader = -1;
 	trans = FIXED2FLOAT(thing->alpha);
 	hw_styleflags = STYLEHW_Normal;
@@ -950,8 +934,6 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	OverrideShader = -1;
 
 	ThingColor = particle->color;
-	gl_ModifyColor(ThingColor.r, ThingColor.g, ThingColor.b, &Colormap);
-	ThingColor.a=0;
 
 	modelframe=NULL;
 	gltexture=NULL;

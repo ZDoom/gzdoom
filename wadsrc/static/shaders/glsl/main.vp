@@ -1,14 +1,14 @@
 
-varying vec4 pixelpos;
+out vec4 pixelpos;
 
 // This is for the colormap shader which doesn't implement any form of lighing special effects.	
 #ifndef NO_LIGHTING
-	attribute vec4 fogparams;
-	varying vec4 fogparm;
-	varying vec2 glowdist;
+	in vec4 fogparams;
+	out vec4 fogparm;
+	out vec2 glowdist;
 	uniform vec4 glowbottomplane, glowtopplane;
-	attribute float lightlevel_in;
-	varying float lightlevel;
+	in float lightlevel_in;
+	out float lightlevel;
 #endif
 
 
@@ -30,7 +30,7 @@ void main()
 	#ifndef NO_LIGHTING
 		lightlevel = lightlevel_in;
 		fogparm = fogparams;
-		// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex attributes to the shader.
+		// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex ins to the shader.
 		glowdist.x = -((glowtopplane.w + glowtopplane.x * worldcoord.x + glowtopplane.y * worldcoord.z) * glowtopplane.z) - worldcoord.y;
 		glowdist.y = worldcoord.y + ((glowbottomplane.w + glowbottomplane.x * worldcoord.x + glowbottomplane.y * worldcoord.z) * glowbottomplane.z);
 	#endif

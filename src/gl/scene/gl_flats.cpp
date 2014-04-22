@@ -143,7 +143,7 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 			}
 
 			p.Set(plane.plane);
-			gl_GetLight(p, light, Colormap.colormap, false, false, lightdata);
+			gl_GetLight(p, light, false, false, lightdata);
 			node = node->nextLight;
 		}
 	}

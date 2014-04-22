@@ -315,21 +315,21 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 
 	if (!img->bHasCanvas)
 	{
-		if (!parms.alphaChannel) 
+		int translation = 0;
+		if (!parms.alphaChannel)
 		{
-			int translation = 0;
 			if (parms.remap != NULL && !parms.remap->Inactive)
 			{
 				GLTranslationPalette * pal = static_cast<GLTranslationPalette*>(parms.remap->GetNative());
 				if (pal) translation = -pal->GetIndex();
 			}
-			gltex->BindPatch(CM_DEFAULT, translation);
 		}
 		else 
 		{
-			// This is an alpha texture
-			gltex->BindPatch(CM_SHADE, 0);
+			// This is an alpha texture (which now can be handled directly in the shader without messing things up)
+			gl_RenderState.SetTextureMode(TM_REDTOALPHA);
 		}
+		gltex->BindPatch(CM_DEFAULT, translation);
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();

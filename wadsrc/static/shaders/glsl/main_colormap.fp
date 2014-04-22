@@ -1,13 +1,14 @@
 
 uniform float alphathreshold;
 uniform float clipheight;
+uniform vec4 objectcolor;
 
 uniform int texturemode;
 uniform sampler2D tex;
 
 uniform vec3 colormapstart;
 uniform vec3 colormaprange;
-varying vec4 pixelpos;
+in vec4 pixelpos;
 
 vec4 Process(vec4 color);
 
@@ -21,21 +22,26 @@ vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture2D(tex, st);
 	
-	#ifndef NO_TEXTUREMODE
-		//
-		// Apply texture modes
-		//
-		if (texturemode == 2) 
-		{
-			texel.a = 1.0;
-		}
-		else if (texturemode == 1) 
-		{
+	//
+	// Apply texture modes
+	//
+	switch (texturemode)
+	{
+		case 1:
 			texel.rgb = vec3(1.0,1.0,1.0);
-		}
-	#endif
+			break;
+			
+		case 2:
+			texel.a = 1.0;
+			break;
+			
+		case 3:
+			texel = vec4(1.0, 1.0, 1.0, texel.r);
+			break;
+	}
+	texel *= objectcolor;
 
-	return texel;
+	return desaturate(texel);
 }
 
 

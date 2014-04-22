@@ -182,7 +182,7 @@ struct FDynLightData
 
 
 
-bool gl_GetLight(Plane & p, ADynamicLight * light, int desaturation, bool checkside, bool forceadditive, FDynLightData &data);
+bool gl_GetLight(Plane & p, ADynamicLight * light, bool checkside, bool forceadditive, FDynLightData &data);
 
 
 #endif

@@ -8,6 +8,14 @@
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
 
+enum
+{
+	SHD_DEFAULT = 0,
+	SHD_COLORMAP = 1,
+	SHD_FOGLAYER = 2,
+};
+
+
 struct FStateAttr
 {
 	static int ChangeCounter;
@@ -132,11 +140,11 @@ class FRenderState
 	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
-	PalEntry mFogColor;
+	PalEntry mFogColor, mObjectColor;
 	float mFogDensity;
 
 	int mEffectState;
-	int mColormapState;
+	int mShaderSelect;
 
 	int glSrcBlend, glDstBlend;
 	int gl_BlendEquation;
@@ -184,6 +192,11 @@ public:
 		mBrightmapEnabled = on;
 	}
 
+	void SelectShader(int on)
+	{
+		mShaderSelect = on;
+	}
+
 	void SetCameraPos(float x, float y, float z)
 	{
 		mCameraPos.Set(x,y,z);
@@ -225,6 +238,11 @@ public:
 		mLightParms[1] = d;
 	}
 
+	void SetObjectColor(PalEntry c)
+	{
+		mObjectColor = c;
+	}
+
 	void SetLights(int *numlights, float *lightdata)
 	{
 		if (numlights != NULL)
@@ -242,9 +260,9 @@ public:
 	
 	}
 
-	void SetFixedColormap(int cm)
+	void SetFixedColormap(bool cm)
 	{
-		mColormapState = cm;
+		mShaderSelect = cm;
 	}
 
 	void SetClipPlane(float y)

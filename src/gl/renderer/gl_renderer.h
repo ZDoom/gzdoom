@@ -5,6 +5,7 @@
 #include "v_video.h"
 #include "vectors.h"
 #include "r_renderer.h"
+#include "gl/data/gl_parameterbuffer.h"
 
 struct particle_t;
 class FCanvasTexture;
@@ -68,6 +69,7 @@ public:
 	FVector3 mCameraPos;
 
 	FFlatVertexBuffer *mVBO;
+	FParameterBuffer *mParmBuffer;
 
 
 	FGLRenderer(OpenGLFrameBuffer *fb);

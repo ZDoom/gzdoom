@@ -77,7 +77,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FMemLump fp_data = Wads.ReadLump(fp_lump);
 
 
-	FString version = "#version 400 compatibility\n";
+	FString version = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : enable\n";
 	FString vp_comb;
 	FString fp_comb;
 	vp_comb = defines;
@@ -125,7 +125,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
 
-	glBindAttribLocation(hShader, VATTR_ALPHACHANNEL, "alphachannel");
+	glBindAttribLocation(hShader, VATTR_ATTRIBCOLOR, "attribColor");
 	glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
 	glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
 
@@ -173,6 +173,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	alphathreshold_index = glGetUniformLocation(hShader, "alphathreshold");
 	clipplane_index = glGetUniformLocation(hShader, "clipheight");
 	objectcolor_index = glGetUniformLocation(hShader, "objectcolor");
+	buffercolor_index = glGetUniformLocation(hShader, "bufferColor");
+	colorcontrol_index = glGetUniformLocation(hShader, "colorcontrol");
 
 	glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
 	glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");

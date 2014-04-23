@@ -47,6 +47,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_colormap.h"
+#include "gl/utility/gl_clock.h"
 
 
 FRenderState gl_RenderState;
@@ -70,6 +71,7 @@ void FRenderState::Reset()
 	mFogColor.d = -1;
 	mFogDensity = 0;
 	mTextureMode = -1;
+	mColorControl = 2;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
 	glSrcBlend = glDstBlend = -1;
@@ -132,12 +134,33 @@ bool FRenderState::ApplyShader()
 	if (activeShader)
 	{
 		int fogset = 0;
-
-		glColor4fv(mColor);
-		if (mColor[4] != activeShader->currentdesaturation)
+		if (true)//mColorControl == 2 && (mColor[4] != 0.f || mColor[3] == 0.f))
 		{
-			activeShader->currentdesaturation = mColor[4];
-			glUniform1f(activeShader->desaturation_index, mColor[4]);
+			// color goes to the parameter buffer
+			ParameterBufferElement *pptr;
+			int pindex = GLRenderer->mParmBuffer->Reserve(2, &pptr);
+			pptr[0].vec[0] = mColor[0];
+			pptr[0].vec[1] = mColor[1];
+			pptr[0].vec[2] = mColor[2];
+			pptr[0].vec[3] = mColor[3];
+			pptr[1].vec[0] = mColor[4];
+			glUniform1i(activeShader->buffercolor_index, pindex);
+		}
+		else
+		{
+			// color is coded into the index
+			PalEntry pe(
+				xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
+				xs_CRoundToInt(mColor[0] * 255.f + 0.1f),
+				xs_CRoundToInt(mColor[1] * 255.f + 0.1f),
+				xs_CRoundToInt(mColor[2] * 255.f + 0.1f));
+			glUniform1i(activeShader->buffercolor_index, pe.d);
+		}
+
+		if (mColorControl != activeShader->currentColorControl)
+		{
+			glUniform1i(activeShader->colorcontrol_index, mColorControl);
+			activeShader->currentColorControl = mColorControl;
 		}
 
 		if (mFogEnabled)

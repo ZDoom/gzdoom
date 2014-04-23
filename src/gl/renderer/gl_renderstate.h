@@ -121,6 +121,7 @@ class FRenderState
 {
 	TArray<unsigned int> mVAOStack;
 	float mColor[5];
+	int mColorControl;
 	bool mTextureEnabled;
 	bool mFogEnabled;
 	bool mGlowEnabled;
@@ -167,6 +168,11 @@ public:
 	void PushVertexArray()
 	{
 		mVAOStack.Push(mVertexArray);
+	}
+
+	void SetColorControl(int ctrl)
+	{
+		mColorControl = ctrl;
 	}
 
 	void PopVertexArray()

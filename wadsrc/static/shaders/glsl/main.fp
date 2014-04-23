@@ -26,7 +26,7 @@ uniform vec3 camerapos;
 in vec4 pixelpos;
 in vec4 fogparm;
 //uniform vec2 lightparms;
-uniform float desaturation_factor;
+in float desaturation_factor;
 
 uniform vec4 topglowcolor;
 uniform vec4 bottomglowcolor;

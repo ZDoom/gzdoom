@@ -7,7 +7,7 @@
 
 extern bool gl_shaderactive;
 
-const int VATTR_ALPHACHANNEL = 15;
+const int VATTR_ATTRIBCOLOR = 15;
 const int VATTR_FOGPARAMS = 14;
 const int VATTR_LIGHTLEVEL = 13; // Korshun.
 
@@ -45,6 +45,8 @@ class FShader
 	int glowbottomplane_index;
 	int glowtopplane_index;
 	int objectcolor_index;
+	int buffercolor_index;
+	int colorcontrol_index;
 
 	int mModelMatLocation;
 	int mViewMatLocation;
@@ -62,6 +64,7 @@ class FShader
 	float currentalphathreshold;
 	float currentclipplane;
 	float currentdesaturation;
+	int currentColorControl;
 
 	PalEntry currentfogcolor;
 	float currentfogdensity;
@@ -73,7 +76,7 @@ public:
 	FShader()
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentfogenabled = currenttexturemode = currentglowstate = 0;
+		currentColorControl = currentfogenabled = currenttexturemode = currentglowstate = 0;
 		currentdesaturation = currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
 		currentobjectcolor = currentfogcolor = 0;
@@ -96,6 +99,8 @@ public:
 		glowbottomplane_index = -1;
 		glowtopcolor_index = -1;
 		glowbottomcolor_index = -1;
+		buffercolor_index = -1;
+		colorcontrol_index = -1;
 
 
 		mMatrixTick[0] = mMatrixTick[1] = mMatrixTick[2] = mMatrixTick[3] = 0;

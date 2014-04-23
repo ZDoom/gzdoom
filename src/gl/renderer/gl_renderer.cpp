@@ -58,7 +58,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_texture.h"
@@ -94,6 +93,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mViewVector = FVector2(0,0);
 	mCameraPos = FVector3(0,0,0);
 	mVBO = NULL;
+	mParmBuffer = NULL;
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
 	glpart2 = glpart = mirrortexture = NULL;
@@ -106,6 +106,7 @@ void FGLRenderer::Initialize()
 	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
 
 	mVBO = new FFlatVertexBuffer;
+	mParmBuffer = new FParameterBuffer;
 	mFBID = 0;
 	SetupLevel();
 	mShaderManager = new FShaderManager;
@@ -119,6 +120,7 @@ FGLRenderer::~FGLRenderer()
 	FMaterial::FlushAll();
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
+	if (mParmBuffer != NULL) delete mParmBuffer;
 	if (mVBO != NULL) delete mVBO;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;

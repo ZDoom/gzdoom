@@ -11,7 +11,17 @@ out vec4 pixelpos;
 	out float lightlevel;
 #endif
 
-in float alphachannel;
+
+// valid colorcontrol modes are:
+//
+// 0: read color and alpha from attribute, no desaturation
+// 1: read color from buffer, alpha from attribute and no desaturation
+// 2: read color and alpha from buffer. If alpha is 0, bufferColor will be an index into the parameter buffer with 2 entries defining RGBA and desaturation
+uniform int colorcontrol;
+in vec4 attribColor;
+uniform int bufferColor;	// as AARRGGBB, 8 bits each.
+out float desaturation_factor;
+
 
 uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
@@ -19,21 +29,79 @@ uniform mat4 ProjectionMatrix;
 uniform mat4 TextureMatrix;
 
 
+layout(std430, binding = 3) buffer ParameterBuffer
+{
+	readonly vec4 Parameters[];
+};
+
+//--------------------------
+//
+// converts an integer with AARRGGBB value to a vec4.
+// These values are used to keep buffer size low. 
+// (We got more than enough shader performance to burn so the bandwidth savings are definitely worth it.)
+//
+//--------------------------
+
+vec4 int2vec4(int value)
+{
+	vec4 color;
+	
+	color.a = float((value >> 24) & 0xff)/ 255.0;
+	color.r = float((value >> 16) & 0xff)/ 255.0;
+	color.g = float((value >> 8) & 0xff) / (255.0);
+	color.b = float(value & 0xff)/ 255.0;
+	return color;
+}
+
 void main()
 {
 	vec4 worldcoord = ModelMatrix * gl_Vertex;
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
-	
-	// Note: gl_Color will later be replaced with a constant so that it can be taken out of most vertex buffers.
-	vec4 color = gl_Color;
+
+	//--------------------------
 	//
-	// For the skydome we cannot use constant color with alpha so add a little trick:
-	// If the alpha of the constant color is -1, us the separate 'alphachannel' attribute
-	if (color.a == -1.0)
+	// process the color
+	//
+	//--------------------------
+	vec4 color;
+	float desaturate;
+	switch (colorcontrol)
 	{
-		color.a = alphachannel;
+		case 0:
+			color = attribColor;
+			desaturate = 0.0;
+			break;
+			
+		case 1:
+			// int bufferColor = parambuffer[pb_index].bufferColor;
+			color = int2vec4(bufferColor);
+			color.a = attribColor.a;
+			desaturate = 0.0;
+			break;
+			
+		case 2:
+			// int bufferColor = parambuffer[pb_index].bufferColor;
+			if ((bufferColor & 0xff000000) != 0)
+			{
+				color = int2vec4(bufferColor);
+				desaturate = 0.0;
+			}
+			else
+			{
+				// this is not yet implemented
+				color = Parameters[bufferColor];
+				desaturate = Parameters[bufferColor+1].r;
+			}
+			break;
 	}
 	gl_FrontColor = color;
+	desaturation_factor = desaturate;
+	
+	//--------------------------
+	//
+	// end of color processing
+	//
+	//--------------------------
 
 	pixelpos.xyz = worldcoord.xyz;
 	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;

@@ -7,6 +7,7 @@
 
 extern bool gl_shaderactive;
 
+const int VATTR_ALPHACHANNEL = 15;
 const int VATTR_FOGPARAMS = 14;
 const int VATTR_LIGHTLEVEL = 13; // Korshun.
 

@@ -125,6 +125,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
 
+	glBindAttribLocation(hShader, VATTR_ALPHACHANNEL, "alphachannel");
 	glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
 	glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
 

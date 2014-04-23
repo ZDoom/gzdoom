@@ -287,6 +287,10 @@ void FRenderState::Apply()
 		}
 	}
 
+	if (mVertexArray != mLastVertexArray)
+	{
+		mLastVertexArray = mVertexArray;
+		glBindVertexArray(mVertexArray);
+	}
 	ApplyShader();
 }
-

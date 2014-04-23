@@ -232,6 +232,7 @@ public:
 FVoxelVertexBuffer::FVoxelVertexBuffer(TArray<FVoxelVertex> &verts, TArray<unsigned int> &indices)
 {
 	ibo_id = 0;
+	BindVBO();
 	glGenBuffers(1, &ibo_id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -278,6 +279,7 @@ FVoxelVertexBuffer::~FVoxelVertexBuffer()
 
 void FVoxelVertexBuffer::BindVBO()
 {
+	glBindVertexArray(vao_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	glVertexPointer(3,GL_FLOAT, sizeof(FVoxelVertex), &VVO->x);
@@ -506,17 +508,19 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int cm, int translatio
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin);
 	tex->Bind(cm, 0, translation);
-	gl_RenderState.Apply();
 
 	if (mVBO == NULL) MakeGLData();
 	if (mVBO != NULL)
 	{
-		mVBO->BindVBO();
-		glDrawElements(GL_QUADS, mIndices.Size(), mVBO->IsInt()? GL_UNSIGNED_INT:GL_UNSIGNED_SHORT, 0);
-		GLRenderer->mVBO->BindVBO();
+		gl_RenderState.PushVertexArray();
+		mVBO->BindVAO();
+		gl_RenderState.Apply();
+		glDrawElements(GL_QUADS, mIndices.Size(), mVBO->IsInt() ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
+		gl_RenderState.PopVertexArray();
 		return;
 	}
 
+	gl_RenderState.Apply();
 	glBegin(GL_QUADS);
 	for(unsigned i=0;i < mIndices.Size(); i++)
 	{

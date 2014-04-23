@@ -47,6 +47,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/renderer/gl_renderstate.h"
 
 
 CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -75,8 +76,10 @@ CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 FVertexBuffer::FVertexBuffer()
 {
 	vbo_id = 0;
+	vao_id = 0;
 	if (gl_usevbo == -1) gl_usevbo.Callback();
 	glGenBuffers(1, &vbo_id);
+	glGenVertexArrays(1, &vao_id);
 }
 	
 FVertexBuffer::~FVertexBuffer()
@@ -85,6 +88,15 @@ FVertexBuffer::~FVertexBuffer()
 	{
 		glDeleteBuffers(1, &vbo_id);
 	}
+	if (vao_id != 0)
+	{
+		glDeleteBuffers(1, &vao_id);
+	}
+}
+
+void FVertexBuffer::BindVAO()
+{
+	gl_RenderState.SetVertexArray(vao_id);
 }
 
 //==========================================================================
@@ -98,6 +110,7 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 {
 	vbo_arg = gl_usevbo;
 	map = NULL;
+	BindVBO();
 }
 
 FFlatVertexBuffer::~FFlatVertexBuffer()
@@ -345,6 +358,7 @@ void FFlatVertexBuffer::BindVBO()
 {
 	if (vbo_arg > 0)
 	{
+		glBindVertexArray(vao_id);
 		UnmapVBO();
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

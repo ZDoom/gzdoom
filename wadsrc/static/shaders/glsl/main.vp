@@ -11,6 +11,7 @@ out vec4 pixelpos;
 	out float lightlevel;
 #endif
 
+in float alphachannel;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
@@ -18,25 +19,21 @@ uniform mat4 ProjectionMatrix;
 uniform mat4 TextureMatrix;
 
 
-/*
-uniform int ColorFromBuffer;
-*/
-
 void main()
 {
 	vec4 worldcoord = ModelMatrix * gl_Vertex;
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
-
-	/*
-		if (ColorFromBuffer != 0)
-		{
-			gl_FrontColor = [color value from buffer];
-		}
-		else
-	*/
-		{
-			gl_FrontColor = gl_Color;
-		}
+	
+	// Note: gl_Color will later be replaced with a constant so that it can be taken out of most vertex buffers.
+	vec4 color = gl_Color;
+	//
+	// For the skydome we cannot use constant color with alpha so add a little trick:
+	// If the alpha of the constant color is -1, us the separate 'alphachannel' attribute
+	if (color.a == -1.0)
+	{
+		color.a = alphachannel;
+	}
+	gl_FrontColor = color;
 
 	pixelpos.xyz = worldcoord.xyz;
 	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;

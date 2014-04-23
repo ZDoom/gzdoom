@@ -56,7 +56,7 @@ private:
 	TArray<TranslatedTexture> glTexID_Translated;
 	unsigned int glDepthID;	// only used by camera textures
 
-	void LoadImage(unsigned char * buffer,int w, int h, unsigned int & glTexID,int wrapparam, bool alphatexture, int texunit);
+	void LoadImage(unsigned char * buffer,int w, int h, unsigned int & glTexID,int wrapparam, int texunit);
 	unsigned * GetTexID(int cm, int translation);
 
 	int GetDepthBuffer();

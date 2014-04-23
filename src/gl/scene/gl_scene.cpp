@@ -820,7 +820,7 @@ void FGLRenderer::RenderView (player_t* player)
 		LastCamera=player->camera;
 	}
 
-	mVBO->BindVBO();
+	mVBO->BindVAO();
 
 	// reset statistics counters
 	ResetProfilingData();

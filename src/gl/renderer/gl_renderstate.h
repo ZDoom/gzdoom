@@ -119,6 +119,7 @@ enum EEffect
 
 class FRenderState
 {
+	TArray<unsigned int> mVAOStack;
 	float mColor[5];
 	bool mTextureEnabled;
 	bool mFogEnabled;
@@ -137,6 +138,7 @@ class FRenderState
 	bool mAlphaTest;
 	int mBlendEquation;
 	bool m2D;
+	unsigned int mVertexArray, mLastVertexArray;
 
 	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
@@ -162,6 +164,23 @@ public:
 
 	int SetupShader(int &shaderindex, int &cm);
 	void Apply();
+	void PushVertexArray()
+	{
+		mVAOStack.Push(mVertexArray);
+	}
+
+	void PopVertexArray()
+	{
+		if (mVAOStack.Size() > 0)
+		{
+			mVAOStack.Pop(mVertexArray);
+		}
+	}
+
+	void SetVertexArray(unsigned int vao)
+	{
+		mVertexArray = vao;
+	}
 
 	void SetColor(float r, float g, float b, float a = 1.f, float desat = 0.f)
 	{

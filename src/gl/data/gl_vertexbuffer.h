@@ -13,11 +13,13 @@ class FVertexBuffer
 {
 protected:
 	unsigned int vbo_id;
+	unsigned int vao_id;
 
 public:
 	FVertexBuffer();
 	virtual ~FVertexBuffer();
-	virtual void BindVBO() = 0;
+	void BindVAO();
+	unsigned int GetVAO() { return vao_id; }
 };
 
 struct FFlatVertex	// exactly 32 bytes large
@@ -38,6 +40,7 @@ class FFlatVertexBuffer : public FVertexBuffer
 
 	void MapVBO();
 	void CheckPlanes(sector_t *sector);
+	void BindVBO();
 
 public:
 	int vbo_arg;
@@ -53,7 +56,6 @@ public:
 	void CreateFlatVBO();
 	void CreateVBO();
 	void UpdatePlaneVertices(sector_t *sec, int plane);
-	void BindVBO();
 	void CheckUpdate(sector_t *sector);
 	void UnmapVBO();
 

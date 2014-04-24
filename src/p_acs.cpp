@@ -3546,6 +3546,8 @@ static const int LegacyRenderStyleIndices[] =
 	65,	// STYLE_Add,
 	66,	// STYLE_Shaded,
 	67,	// STYLE_TranslucentStencil,
+	68,	// STYLE_Shadow,
+	69,	// STYLE_Subtract,
 	-1
 };
 

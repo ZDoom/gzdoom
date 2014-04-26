@@ -59,38 +59,24 @@ void main()
 	//
 	//--------------------------
 	vec4 color;
-	float desaturate;
 	switch (colorcontrol)
 	{
 		case 0:
 			color = attribColor;
-			desaturate = 0.0;
 			break;
 			
 		case 1:
 			// int bufferColor = parambuffer[pb_index].bufferColor;
 			color = int2vec4(bufferColor);
 			color.a = attribColor.a;
-			desaturate = 0.0;
 			break;
 			
 		case 2:
-			// int bufferColor = parambuffer[pb_index].bufferColor;
-			if ((bufferColor & 0xff000000) != 0)
-			{
-				color = int2vec4(bufferColor);
-				desaturate = 0.0;
-			}
-			else
-			{
-				// this is not yet implemented
-				color = Parameters[bufferColor];
-				desaturate = Parameters[bufferColor+1].r;
-			}
+			color = int2vec4(bufferColor);
 			break;
 	}
 	gl_FrontColor = color;
-	desaturation_factor = desaturate;
+	desaturation_factor = 0.0;//fixme! desaturate;
 	
 	//--------------------------
 	//

@@ -31,7 +31,6 @@ class FHardwareTexture
 	{
 		unsigned int glTexID;
 		int translation;
-		int cm;
 	};
 
 public:
@@ -52,12 +51,12 @@ private:
 	bool forcenofiltering;
 	bool forcenocompression;
 
-	unsigned int * glTexID;
+	unsigned int glTexID;
 	TArray<TranslatedTexture> glTexID_Translated;
 	unsigned int glDepthID;	// only used by camera textures
 
 	void LoadImage(unsigned char * buffer,int w, int h, unsigned int & glTexID,int wrapparam, int texunit);
-	unsigned * GetTexID(int cm, int translation);
+	unsigned * GetTexID(int translation);
 
 	int GetDepthBuffer();
 	void DeleteTexture(unsigned int texid);
@@ -72,8 +71,8 @@ public:
 
 	void BindToFrameBuffer();
 
-	unsigned int Bind(int texunit, int cm, int translation=0);
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h,bool wrap, int texunit, int cm, int translation=0);
+	unsigned int Bind(int texunit, int translation=0);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h,bool wrap, int texunit, int translation=0);
 	void Resize(int _width, int _height) ;
 
 	void Clean(bool all);

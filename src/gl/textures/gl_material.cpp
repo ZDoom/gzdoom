@@ -310,7 +310,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int cm, int clampmode, int
 		hwtex = gltexture[clampmode] = gltexture[4];
 		gltexture[4] = NULL;
 
-		if (hwtex->Bind(texunit, cm, translation))
+		if (hwtex->Bind(texunit, translation))
 		{
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (clampmode & GLT_CLAMPX)? GL_CLAMP_TO_EDGE : GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (clampmode & GLT_CLAMPY)? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -331,7 +331,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int cm, int clampmode, int
 		}
 
 		// Bind it to the system.
-		if (!hwtex->Bind(texunit, cm, translation))
+		if (!hwtex->Bind(texunit, translation))
 		{
 			
 			int w=0, h=0;
@@ -344,7 +344,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int cm, int clampmode, int
 				buffer = CreateTexBuffer(cm, translation, w, h, false, hirescheck);
 				tex->ProcessData(buffer, w, h, false);
 			}
-			if (!hwtex->CreateTexture(buffer, w, h, true, texunit, cm, translation)) 
+			if (!hwtex->CreateTexture(buffer, w, h, true, texunit, translation)) 
 			{
 				// could not create texture
 				delete[] buffer;
@@ -385,14 +385,14 @@ const FHardwareTexture * FGLTexture::BindPatch(int texunit, int cm, int translat
 
 
 		// Bind it to the system. 
-		if (!glpatch->Bind(texunit, cm, translation))
+		if (!glpatch->Bind(texunit, translation))
 		{
 			int w, h;
 
 			// Create this texture
 			unsigned char * buffer = CreateTexBuffer(cm, translation, w, h, bExpand, NULL);
 			tex->ProcessData(buffer, w, h, true);
-			if (!glpatch->CreateTexture(buffer, w, h, false, texunit, cm, translation)) 
+			if (!glpatch->CreateTexture(buffer, w, h, false, texunit, translation)) 
 			{
 				// could not create texture
 				delete[] buffer;

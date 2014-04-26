@@ -196,6 +196,11 @@ class VSMathLib {
 		*/
 		float *get(MatrixTypes aType);
 
+		void copy(float * pDest, MatrixTypes aType)
+		{
+			memcpy(pDest, mMatrix[aType], 16 * sizeof(float));
+		}
+
 		/** Similar to glGet for computed matrices
 		  *
 		  * \param aType any value from ComputedMatrixTypes

@@ -270,13 +270,13 @@ bool FRenderState::ApplyShader()
 		}
 		if (activeShader->mMatrixTick[2] < VSML.getLastUpdate(VSML.PROJECTION) && activeShader->mProjMatLocation >= 0)
 		{
-			// update view-projection matrix
+			// update projection matrix
 			VSML.matrixToGL(activeShader->mProjMatLocation, VSML.PROJECTION);
 			activeShader->mMatrixTick[2] = VSML.getLastUpdate(VSML.PROJECTION);
 		}
 		if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0) && activeShader->mTexMatLocation >= 0)
 		{
-			// update view-projection matrix
+			// update texture matrix
 			VSML.matrixToGL(activeShader->mTexMatLocation, VSML.AUX0);
 			activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
 		}

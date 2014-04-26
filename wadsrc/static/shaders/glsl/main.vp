@@ -24,15 +24,10 @@ out float desaturation_factor;
 
 
 uniform mat4 ModelMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
+//uniform mat4 ViewMatrix;
+//uniform mat4 ProjectionMatrix;
 uniform mat4 TextureMatrix;
 
-
-layout(std430, binding = 3) buffer ParameterBuffer
-{
-	readonly vec4 Parameters[];
-};
 
 //--------------------------
 //

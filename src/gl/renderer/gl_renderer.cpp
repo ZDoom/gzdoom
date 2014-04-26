@@ -57,6 +57,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_framestate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
@@ -94,6 +95,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mCameraPos = FVector3(0,0,0);
 	mVBO = NULL;
 	mParmBuffer = NULL;
+	mFrameState = NULL;
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
 	glpart2 = glpart = mirrortexture = NULL;
@@ -107,6 +109,7 @@ void FGLRenderer::Initialize()
 
 	mVBO = new FFlatVertexBuffer;
 	mParmBuffer = new FParameterBuffer;
+	mFrameState = new FFrameState;
 	mFBID = 0;
 	SetupLevel();
 	mShaderManager = new FShaderManager;
@@ -120,6 +123,7 @@ FGLRenderer::~FGLRenderer()
 	FMaterial::FlushAll();
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
+	if (mFrameState != NULL) delete mFrameState;
 	if (mParmBuffer != NULL) delete mParmBuffer;
 	if (mVBO != NULL) delete mVBO;
 	if (glpart2) delete glpart2;
@@ -142,7 +146,6 @@ void FGLRenderer::SetupLevel()
 void FGLRenderer::Begin2D()
 {
 	gl_RenderState.EnableFog(false);
-	gl_RenderState.Set2DMode(true);
 }
 
 //===========================================================================
@@ -266,7 +269,6 @@ void FGLRenderer::ClearBorders()
 	VSML.loadIdentity(VSML.PROJECTION);
 	VSML.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
 	gl_RenderState.SetColor(0.f, 0.f, 0.f);
-	gl_RenderState.Set2DMode(true);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
 

@@ -16,6 +16,7 @@ struct pspdef_t;
 class FShaderManager;
 class GLPortal;
 class FGLThreadManager;
+class FFrameState;
 
 enum SectorRenderFlags
 {
@@ -71,6 +72,7 @@ public:
 	FFlatVertexBuffer *mVBO;
 	FParameterBuffer *mParmBuffer;
 
+	FFrameState *mFrameState;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;

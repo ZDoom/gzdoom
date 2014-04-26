@@ -61,8 +61,10 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_framestate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/models/gl_models.h"
@@ -251,7 +253,6 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
 	VSML.loadIdentity(VSML.PROJECTION);
 	VSML.perspective(fovy, ratio, 5.f, 65536.f);
-	gl_RenderState.Set2DMode(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -287,6 +288,9 @@ void FGLRenderer::SetupView(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t
 {
 	SetCameraPos(viewx, viewy, viewz, viewangle);
 	SetViewMatrix(mirror, planemirror);
+
+	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
+	GLRenderer->mFrameState->UpdateFor3D();
 }
 
 //-----------------------------------------------------------------------------
@@ -337,8 +341,6 @@ void FGLRenderer::RenderScene(int recursion)
 
 	glDepthMask(true);
 	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion);
-
-	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
@@ -436,7 +438,6 @@ void FGLRenderer::RenderTranslucent()
 	RenderAll.Clock();
 
 	glDepthMask(false);
-	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
 
 	// final pass: translucent stuff
 	gl_RenderState.EnableAlphaTest(true);
@@ -660,8 +661,10 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
-		DrawPlayerSprites (viewsector, false);
+		GLRenderer->mFrameState->UpdateFor2D(true);
+		DrawPlayerSprites(viewsector, false);
 	}
+	GLRenderer->mFrameState->UpdateFor2D(false);
 	gl_RenderState.SelectShader(SHD_DEFAULT);
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
@@ -785,8 +788,8 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	SetViewport(bounds);
 	mCurrentFoV = fov;
 	SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-	SetCameraPos(viewx, viewy, viewz, viewangle);
-	SetViewMatrix(false, false);
+
+	SetupView(viewx, viewy, viewz, viewangle, false, false);
 
 	clipper.Clear();
 	angle_t a1 = FrustumAngle();
@@ -890,6 +893,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	glDisable(GL_STENCIL_TEST);
 	screen->Begin2D(false);
 	gl_RenderState.SelectShader(SHD_DEFAULT);
+	GLRenderer->mFrameState->UpdateFor2D(false);
 	DrawBlend(viewsector);
 	glFlush();
 

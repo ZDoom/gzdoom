@@ -78,7 +78,6 @@ void FRenderState::Reset()
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
 	gl_BlendEquation = -1;
-	m2D = true;
 }
 
 
@@ -134,28 +133,13 @@ bool FRenderState::ApplyShader()
 	if (activeShader)
 	{
 		int fogset = 0;
-		if (true)//mColorControl == 2 && (mColor[4] != 0.f || mColor[3] == 0.f))
-		{
-			// color goes to the parameter buffer
-			ParameterBufferElement *pptr;
-			int pindex = GLRenderer->mParmBuffer->Reserve(2, &pptr);
-			pptr[0].vec[0] = mColor[0];
-			pptr[0].vec[1] = mColor[1];
-			pptr[0].vec[2] = mColor[2];
-			pptr[0].vec[3] = mColor[3];
-			pptr[1].vec[0] = mColor[4];
-			glUniform1i(activeShader->buffercolor_index, pindex);
-		}
-		else
-		{
-			// color is coded into the index
-			PalEntry pe(
-				xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
-				xs_CRoundToInt(mColor[0] * 255.f + 0.1f),
-				xs_CRoundToInt(mColor[1] * 255.f + 0.1f),
-				xs_CRoundToInt(mColor[2] * 255.f + 0.1f));
-			glUniform1i(activeShader->buffercolor_index, pe.d);
-		}
+		PalEntry pe(
+			xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
+			xs_CRoundToInt(mColor[0] * 255.f + 0.1f),
+			xs_CRoundToInt(mColor[1] * 255.f + 0.1f),
+			xs_CRoundToInt(mColor[2] * 255.f + 0.1f));
+		glUniform1i(activeShader->buffercolor_index, pe.d);
+		// fixme: Reimplement desaturation.
 
 		if (mColorControl != activeShader->currentColorControl)
 		{

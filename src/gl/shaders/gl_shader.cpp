@@ -68,6 +68,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	static char buffer[10000];
 	FString error;
 
+	int i_lump = Wads.CheckNumForFullName("shaders/glsl/shaderdefs.i");
+	if (i_lump == -1) I_Error("Unable to load 'shaders/glsl/shaderdefs.i'");
+	FMemLump i_data = Wads.ReadLump(i_lump);
+
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
 	FMemLump vp_data = Wads.ReadLump(vp_lump);
@@ -84,8 +88,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	fp_comb = vp_comb;
 	// This uses GetChars on the strings to get rid of terminating 0 characters.
-	vp_comb << version << vp_data.GetString().GetChars() << "\n";
-	fp_comb << version << fp_data.GetString().GetChars() << "\n";
+	vp_comb << version << i_data.GetString().GetChars() << vp_data.GetString().GetChars() << "\n";
+	fp_comb << version << i_data.GetString().GetChars() << fp_data.GetString().GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{

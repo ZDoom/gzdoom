@@ -68,7 +68,6 @@ static inline float GetTimeFloat()
 
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
-EXTERN_CVAR(Int, gl_fogmode)
 
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;

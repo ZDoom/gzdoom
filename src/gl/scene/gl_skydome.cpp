@@ -113,7 +113,7 @@ static void SkyVertex(int r, int c)
 	if (!foglayer)
 	{
 
-		glColor4f(R, G, B, r==0? 0.0f : 1.0f);
+		glVertexAttrib4f(VATTR_ATTRIBCOLOR, 0, 0, 0, r==0? 0.0f : 1.0f);
 		
 		// And the texture coordinates.
 		if(!yflip)	// Flipped Y is for the lower hemisphere.
@@ -188,6 +188,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 
 		gl_RenderState.EnableTexture(true);
 		foglayer=false;
+		gl_RenderState.SetColor(R, G, B, 1.f);
 		gl_RenderState.Apply();
 	}
 	else
@@ -255,7 +256,7 @@ static PalEntry ModifyCapColor(PalEntry pin, int cm)
 //-----------------------------------------------------------------------------
 CVAR(Float, skyoffset, 0, 0)	// for testing
 
-static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror, int CM_Index)
+static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror, int CMapIndex)
 {
 	int texh = 0;
 	bool texscale = false;
@@ -265,28 +266,28 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 
 	if (tex)
 	{
-		VSML.pushMatrix(VSML.VIEW);
-		tex->Bind(CM_Index, 0, 0);
+		VSML.pushMatrix(VSML.MODEL);
+		tex->Bind(CMapIndex, 0, 0);
 		texw = tex->TextureWidth(GLUSE_TEXTURE);
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
 
-		VSML.rotate(VSML.VIEW, -180.0f+x_offset, 0.f, 1.f, 0.f);
+		VSML.rotate(VSML.MODEL, -180.0f+x_offset, 0.f, 1.f, 0.f);
 		yAdd = y_offset/texh;
 
 		if (texh < 200)
 		{
-			VSML.translate(VSML.VIEW, 0.f, -1250.f, 0.f);
-			VSML.scale(VSML.VIEW, 1.f, texh/230.f, 1.f);
+			VSML.translate(VSML.MODEL, 0.f, -1250.f, 0.f);
+			VSML.scale(VSML.MODEL, 1.f, texh/230.f, 1.f);
 		}
 		else if (texh <= 240)
 		{
-			VSML.translate(VSML.VIEW, 0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			VSML.scale(VSML.VIEW, 1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
+			VSML.translate(VSML.MODEL, 0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			VSML.scale(VSML.MODEL, 1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
 		}
 		else
 		{
-			VSML.translate(VSML.VIEW, 0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			VSML.scale(VSML.VIEW, 1.f, 1.2f * 1.17f, 1.f);
+			VSML.translate(VSML.MODEL, 0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			VSML.scale(VSML.MODEL, 1.f, 1.2f * 1.17f, 1.f);
 			VSML.pushMatrix(VSML.AUX0);
 			VSML.loadIdentity(VSML.AUX0);
 			VSML.scale(VSML.AUX0, 1.f, 240.f / texh, 1.f);
@@ -298,7 +299,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(false);
 		
-		if (CM_Index != CM_DEFAULT) pe = ModifyCapColor(pe, CM_Index);
+		if (CMapIndex != CM_DEFAULT) pe = ModifyCapColor(pe, CMapIndex);
 
 		Rc = pe.r / 255.0f;
 		Gc = pe.g / 255.0f;
@@ -321,7 +322,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(true);
-		if (CM_Index != CM_DEFAULT) pe = ModifyCapColor(pe, CM_Index);
+		if (CMapIndex != CM_DEFAULT) pe = ModifyCapColor(pe, CMapIndex);
 		Rc = pe.r / 255.0f;
 		Gc = pe.g / 255.0f;
 		Bc = pe.b / 255.0f;
@@ -345,7 +346,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	}
 	if (tex)
 	{
-		VSML.popMatrix(VSML.VIEW);
+		VSML.popMatrix(VSML.MODEL);
 	}
 
 }
@@ -357,16 +358,17 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 //
 //-----------------------------------------------------------------------------
 
-static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int CM_Index, bool sky2)
+static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int CMapIndex, bool sky2)
 {
 	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
 	int faces;
 	FMaterial * tex;
 
+	VSML.pushMatrix(VSML.MODEL);
 	if (!sky2)
-		VSML.rotate(VSML.VIEW, -180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
+		VSML.rotate(VSML.MODEL, -180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
 	else
-		VSML.rotate(VSML.VIEW, -180.0f + x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
+		VSML.rotate(VSML.MODEL, -180.0f + x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
 	if (sb->faces[5]) 
 	{
@@ -374,7 +376,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -389,7 +391,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -404,7 +406,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -419,7 +421,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -437,7 +439,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 		faces=1;
 		// all 4 sides
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
@@ -490,7 +492,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces]);
-	tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+	tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);
 	if (!sb->fliptop)
@@ -520,7 +522,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1]);
-	tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+	tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);
 	glTexCoord2f(0, 0);
@@ -533,6 +535,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 	glVertex3f(128.f, -128.f, 128.f);
 	glEnd();
 
+	VSML.popMatrix(VSML.MODEL);
 
 }
 
@@ -544,7 +547,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 void GLSkyPortal::DrawContents()
 {
 	bool drawBoth = false;
-	int CM_Index;
+	int CMapIndex;
 	PalEntry FadeColor(0,0,0,0);
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
@@ -554,11 +557,11 @@ void GLSkyPortal::DrawContents()
 
 	if (gl_fixedcolormap) 
 	{
-		CM_Index=gl_fixedcolormap<CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size()? gl_fixedcolormap:CM_DEFAULT;
+		CMapIndex=gl_fixedcolormap<CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size()? gl_fixedcolormap:CM_DEFAULT;
 	}
 	else 
 	{
-		CM_Index=CM_DEFAULT;
+		CMapIndex=CM_DEFAULT;
 		FadeColor=origin->fadecolor;
 	}
 
@@ -583,17 +586,18 @@ void GLSkyPortal::DrawContents()
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{
 		gl_RenderState.SetColor(R, G, B);
-		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], CM_Index, origin->sky2);
+		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], CMapIndex, origin->sky2);
 		gl_RenderState.EnableAlphaTest(true);
 	}
 	else
 	{
-		if (origin->texture[0]==origin->texture[1] && origin->doublesky) origin->doublesky=false;	
+		gl_RenderState.SetColorControl(CCTRL_ATTRIBALPHA);
+		if (origin->texture[0] == origin->texture[1] && origin->doublesky) origin->doublesky = false;
 
 		if (origin->texture[0])
 		{
 			gl_RenderState.SetTextureMode(TM_OPAQUE);
-			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, CM_Index);
+			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, CMapIndex);
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
@@ -603,7 +607,7 @@ void GLSkyPortal::DrawContents()
 		if (origin->doublesky && origin->texture[1])
 		{
 			secondlayer=true;
-			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false, CM_Index);
+			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false, CMapIndex);
 			secondlayer=false;
 		}
 
@@ -616,6 +620,7 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.EnableTexture(true);
 			foglayer=false;
 		}
+		gl_RenderState.SetColorControl(CCTRL_BUFFER);
 	}
 	VSML.popMatrix(VSML.VIEW);
 	glset.lightmode = oldlightmode;

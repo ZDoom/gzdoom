@@ -50,6 +50,8 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/data/gl_framestate.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/data/gl_data.h"
@@ -119,12 +121,12 @@ void GLPortal::ClearScreen()
 	VSML.pushMatrix(VSML.VIEW);
 	VSML.pushMatrix(VSML.PROJECTION);
 	screen->Begin2D(false);
+	GLRenderer->mFrameState->UpdateFor2D(false);
 	screen->Dim(0, 1.f, 0, 0, SCREENWIDTH, SCREENHEIGHT);
 	glEnable(GL_DEPTH_TEST);
 	VSML.popMatrix(VSML.PROJECTION);
 	VSML.popMatrix(VSML.VIEW);
 	if (multi) glEnable(GL_MULTISAMPLE);
-	gl_RenderState.Set2DMode(false);
 }
 
 
@@ -841,12 +843,12 @@ void GLMirrorPortal::DrawContents()
 		// any mirror--use floats to avoid integer overflow. 
 		// Use doubles to avoid losing precision which is very important here.
 
-		double dx = FIXED2FLOAT(v2->x - v1->x);
-		double dy = FIXED2FLOAT(v2->y - v1->y);
-		double x1 = FIXED2FLOAT(v1->x);
-		double y1 = FIXED2FLOAT(v1->y);
-		double x = FIXED2FLOAT(startx);
-		double y = FIXED2FLOAT(starty);
+		double dx = FIXED2DBL(v2->x - v1->x);
+		double dy = FIXED2DBL(v2->y - v1->y);
+		double x1 = FIXED2DBL(v1->x);
+		double y1 = FIXED2DBL(v1->y);
+		double x = FIXED2DBL(startx);
+		double y = FIXED2DBL(starty);
 
 		// the above two cases catch len == 0
 		double r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
@@ -974,12 +976,12 @@ void GLHorizonPortal::DrawContents()
 
 	gltexture->Bind(origin->colormap.colormap);
 
+	bool pushed = gl_SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();
 
 
-	bool pushed = gl_SetPlaneTextureRotation(sp, gltexture);
 
 	float vx=FIXED2FLOAT(viewx);
 	float vy=FIXED2FLOAT(viewy);

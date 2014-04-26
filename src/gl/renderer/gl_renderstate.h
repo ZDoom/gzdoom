@@ -15,6 +15,12 @@ enum
 	SHD_FOGLAYER = 2,
 };
 
+enum
+{
+	CCTRL_ATTRIB = 0,
+	CCTRL_ATTRIBALPHA = 1,
+	CCTRL_BUFFER = 2
+};
 
 struct FStateAttr
 {
@@ -138,7 +144,6 @@ class FRenderState
 	float mClipPlane;
 	bool mAlphaTest;
 	int mBlendEquation;
-	bool m2D;
 	unsigned int mVertexArray, mLastVertexArray;
 
 	FStateVec3 mCameraPos;
@@ -372,10 +377,6 @@ public:
 		}
 	}
 
-	void Set2DMode(bool on)
-	{
-		m2D = on;
-	}
 };
 
 extern FRenderState gl_RenderState;

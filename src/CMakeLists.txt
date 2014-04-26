@@ -1039,6 +1039,7 @@ add_executable( zdoom WIN32
 	menu/readthis.cpp
 	menu/videomenu.cpp
 	gl/data/gl_data.cpp
+	gl/data/gl_framestate.cpp
 	gl/data/gl_parameterbuffer.cpp
 	gl/data/gl_portaldata.cpp
 	gl/data/gl_setup.cpp

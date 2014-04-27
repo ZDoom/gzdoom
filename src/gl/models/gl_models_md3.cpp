@@ -258,7 +258,7 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int cm, int translatio
 
 		FMaterial * tex = FMaterial::ValidateTexture(surfaceSkin);
 
-		tex->Bind(cm, 0, translation);
+		tex->Bind(0, translation);
 		RenderTriangles(surf, surf->vertices + frameno * surf->numVertices);
 	}
 }
@@ -283,7 +283,7 @@ void FMD3Model::RenderFrameInterpolated(FTexture * skin, int frameno, int framen
 
 		FMaterial * tex = FMaterial::ValidateTexture(surfaceSkin);
 
-		tex->Bind(cm, 0, translation);
+		tex->Bind(0, translation);
 
 		MD3Vertex* verticesInterpolated = new MD3Vertex[surfaces[i].numVertices];
 		MD3Vertex* vertices1 = surf->vertices + frameno * surf->numVertices;

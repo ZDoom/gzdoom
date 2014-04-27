@@ -95,7 +95,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	FMaterial * tex = FMaterial::ValidateTexture(lump, false);
 	if (!tex) return;
 
-	tex->BindPatch(cm_index, 0, OverrideShader);
+	tex->BindPatch(0, OverrideShader);
 
 	int vw = viewwidth;
 	int vh = viewheight;

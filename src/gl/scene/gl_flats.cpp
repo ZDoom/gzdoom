@@ -281,7 +281,7 @@ void GLFlat::Draw(int pass)
 	{
 		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gltexture->Bind(Colormap.colormap);
+		gltexture->Bind();
 		bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, false);
 		if (pushed) 
@@ -303,7 +303,7 @@ void GLFlat::Draw(int pass)
 		}
 		else 
 		{
-			gltexture->Bind(Colormap.colormap);
+			gltexture->Bind();
 			bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true);
 			gl_RenderState.EnableBrightmap(true);

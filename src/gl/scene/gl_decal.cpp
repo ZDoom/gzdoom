@@ -244,7 +244,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		
 	zpos+= FRACUNIT*(flipy? decalheight-decaltopo : decaltopo);
 
-	tex->BindPatch(p.colormap, decal->Translation);
+	tex->BindPatch(decal->Translation);
 
 	dv[1].z=dv[2].z = FIXED2FLOAT(zpos);
 	dv[0].z=dv[3].z = dv[1].z - decalheight;

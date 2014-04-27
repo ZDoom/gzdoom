@@ -167,7 +167,7 @@ public:
 
 	void Reset();
 
-	int SetupShader(int &shaderindex, int &cm);
+	int SetupShader(int &shaderindex);
 	void Apply();
 	void PushVertexArray()
 	{

@@ -985,7 +985,7 @@ void GLHorizonPortal::DrawContents()
 	}
 
 
-	gltexture->Bind(origin->colormap.colormap);
+	gltexture->Bind();
 
 	bool pushed = gl_SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.EnableAlphaTest(false);

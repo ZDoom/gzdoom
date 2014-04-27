@@ -259,7 +259,7 @@ void GLWall::RenderMirrorSurface()
 	gl_SetFog(lightlevel, getExtraLight(), &Colormap, true);
 
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture);
-	pat->BindPatch(Colormap.colormap, 0);
+	pat->BindPatch(0);
 
 	RenderWall(GLWall::TRF_BLANK);
 
@@ -309,7 +309,7 @@ void GLWall::RenderTranslucentWall()
 	if (gltexture) 
 	{
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gltexture->Bind(Colormap.colormap, flags, 0);
+		gltexture->Bind(flags, 0);
 		extra = getExtraLight();
 	}
 	else 
@@ -371,7 +371,7 @@ void GLWall::Draw(int pass)
 		else gl_SetFog(255, 0, NULL, false);
 
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gltexture->Bind(Colormap.colormap, flags, 0);
+		gltexture->Bind(flags, 0);
 		RenderWall(GLWall::TRF_DEFAULT);
 		gl_RenderState.EnableGlow(false);
 		gl_RenderState.SetLights(NULL, NULL);

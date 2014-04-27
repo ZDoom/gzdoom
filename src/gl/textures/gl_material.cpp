@@ -730,7 +730,7 @@ outl:
 //
 //===========================================================================
 
-void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
+void FMaterial::Bind(int clampmode, int translation, int overrideshader)
 {
 	int usebright = false;
 	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
@@ -741,7 +741,7 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 	else if (clampmode != -1) clampmode &= 3;
 	else clampmode = 4;
 
-	gl_RenderState.SetupShader(shaderindex, cm);
+	gl_RenderState.SetupShader(shaderindex);
 
 	if (shaderindex == 1 || shaderindex == 2)
 	{
@@ -782,13 +782,13 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 //
 //===========================================================================
 
-void FMaterial::BindPatch(int cm, int translation, int overrideshader)
+void FMaterial::BindPatch(int translation, int overrideshader)
 {
 	int usebright = false;
 	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 
-	gl_RenderState.SetupShader(shaderindex, cm);
+	gl_RenderState.SetupShader(shaderindex);
 
 	const FHardwareTexture *glpatch = mBaseLayer->BindPatch(0, translation);
 	// The only multitexture effect usable on sprites is the brightmap.
@@ -815,7 +815,7 @@ void FMaterial::Precache()
 {
 	if (tex->UseType==FTexture::TEX_Sprite) 
 	{
-		BindPatch(CM_DEFAULT, 0);
+		BindPatch();
 	}
 	else 
 	{
@@ -824,10 +824,10 @@ void FMaterial::Precache()
 		{
 			if (mBaseLayer->gltexture[i] != 0)
 			{
-				Bind (CM_DEFAULT, i, 0);
+				Bind (i, 0);
 				cached++;
 			}
-			if (cached == 0) Bind(CM_DEFAULT, -1, 0);
+			if (cached == 0) Bind(-1, 0);
 		}
 	}
 }

@@ -267,7 +267,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex)
 	{
 		VSML.pushMatrix(VSML.MODEL);
-		tex->Bind(CMapIndex, 0, 0);
+		tex->Bind(0, 0);
 		texw = tex->TextureWidth(GLUSE_TEXTURE);
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
 
@@ -358,7 +358,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 //
 //-----------------------------------------------------------------------------
 
-static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int CMapIndex, bool sky2)
+static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
 {
 	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
 	int faces;
@@ -376,7 +376,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -391,7 +391,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1]);
-		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -406,7 +406,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2]);
-		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -421,7 +421,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3]);
-		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -439,7 +439,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 		faces=1;
 		// all 4 sides
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
@@ -492,7 +492,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces]);
-	tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+	tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);
 	if (!sb->fliptop)
@@ -522,7 +522,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1]);
-	tex->Bind(CMapIndex, GLT_CLAMPX|GLT_CLAMPY, 0);
+	tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);
 	glTexCoord2f(0, 0);
@@ -555,14 +555,14 @@ void GLSkyPortal::DrawContents()
 	if (glset.lightmode == 8) glset.lightmode = 2;
 
 
-	if (gl_fixedcolormap) 
+	if (gl_fixedcolormap)
 	{
-		CMapIndex=gl_fixedcolormap<CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size()? gl_fixedcolormap:CM_DEFAULT;
+		CMapIndex = gl_fixedcolormap<CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size() ? gl_fixedcolormap : CM_DEFAULT;
 	}
-	else 
+	else
 	{
-		CMapIndex=CM_DEFAULT;
-		FadeColor=origin->fadecolor;
+		CMapIndex = CM_DEFAULT;
+		FadeColor = origin->fadecolor;
 	}
 
 	gl_RenderState.EnableFog(false);
@@ -586,7 +586,7 @@ void GLSkyPortal::DrawContents()
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{
 		gl_RenderState.SetColor(R, G, B);
-		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], CMapIndex, origin->sky2);
+		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 		gl_RenderState.EnableAlphaTest(true);
 	}
 	else

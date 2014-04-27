@@ -1103,7 +1103,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	if (!usefb)
 	{
 		glFlush();
-		gltex->Bind(CM_DEFAULT, 0, 0);
+		gltex->Bind(0, 0);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
 	}
 	else
@@ -1111,7 +1111,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 		GLRenderer->EndOffscreen();
 	}
 
-	gltex->Bind(CM_DEFAULT, 0, 0);
+	gltex->Bind(0, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
 	tex->SetUpdated();
 }

@@ -87,19 +87,9 @@ void FRenderState::Reset()
 //
 //==========================================================================
 
-int FRenderState::SetupShader(int &shaderindex, int &cm)
+int FRenderState::SetupShader(int &shaderindex)
 {
-	if (shaderindex == 3)
-	{
-		// Brightmap should not be used.
-		if (!mBrightmapEnabled || cm >= CM_FIRSTSPECIALCOLORMAP)
-		{
-			shaderindex = 0;
-		}
-	}
-
 	mEffectState = shaderindex;
-	if (cm > CM_DEFAULT && cm < CM_MAXCOLORMAP) cm = CM_DEFAULT;
 	return 0;
 }
 

@@ -225,7 +225,7 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.SetFog(0, 0);
 	}
 
-	if (gltexture) gltexture->BindPatch(Colormap.colormap, translation, OverrideShader);
+	if (gltexture) gltexture->BindPatch(translation, OverrideShader);
 	else if (!modelframe) gl_RenderState.EnableTexture(false);
 
 	if (!modelframe)

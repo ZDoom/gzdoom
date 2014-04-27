@@ -336,7 +336,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 			// This is an alpha texture (which now can be handled directly in the shader without messing things up)
 			gl_RenderState.SetTextureMode(TM_REDTOALPHA);
 		}
-		gltex->BindPatch(CM_DEFAULT, translation);
+		gltex->BindPatch(translation);
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();
@@ -345,7 +345,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	}
 	else
 	{
-		gltex->Bind(CM_DEFAULT, 0, 0);
+		gltex->Bind(0, 0);
 		u2=1.f;
 		v2=-1.f;
 		u1 = v1 = 0.f;
@@ -511,7 +511,7 @@ void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *
 	
 	if (!gltexture) return;
 
-	gltexture->Bind(CM_DEFAULT, 0, 0);
+	gltexture->Bind(0, 0);
 	
 	// scaling is not used here.
 	if (!local_origin)
@@ -606,7 +606,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 
 	gl_RenderState.SetColor(pe);
 
-	gltexture->Bind(cm.colormap);
+	gltexture->Bind();
 
 	int i;
 	float rot = float(rotation * M_PI / float(1u << 31));

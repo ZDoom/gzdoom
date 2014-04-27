@@ -1077,7 +1077,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	int rel = getExtraLight();
 	gl_SetColor(lightlevel, rel, &Colormap, 1.0f);
 	gl_SetFog(lightlevel, rel, &Colormap, false);
-	gltexture->Bind(Colormap.colormap);
+	gltexture->Bind();
 
 	float fviewx = FIXED2FLOAT(viewx);
 	float fviewy = FIXED2FLOAT(viewy);

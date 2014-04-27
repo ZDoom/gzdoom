@@ -293,6 +293,21 @@ bool F7ZFile::Open(bool quiet)
 	}
 	// Resize the lump record array to its actual size
 	NumLumps -= skipped;
+
+	if (NumLumps > 0)
+	{
+		// Quick check for unsupported compression method
+
+		TArray<char> temp;
+		temp.Resize(Lumps[0].LumpSize);
+
+		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
+		{
+			if (!quiet) Printf("\n%s: unsupported 7z/LZMA file!\n", Filename);
+			return false;
+		}
+	}
+
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
 
 	// Entries in archives are sorted alphabetically

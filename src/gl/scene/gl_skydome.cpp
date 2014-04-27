@@ -79,7 +79,6 @@ static int texw;
 static float yAdd;
 static bool foglayer;
 static bool secondlayer;
-static float R,G,B;
 static float Rc, Gc, Bc;
 static bool skymirror; 
 
@@ -184,11 +183,11 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 				SkyVertex(1, c);
 			}
 			glEnd();
+			gl_RenderState.SetObjectColor(0xffffffff);	// unset the cap's color
 		}
 
 		gl_RenderState.EnableTexture(true);
 		foglayer=false;
-		gl_RenderState.SetColor(R, G, B, 1.f);
 		gl_RenderState.Apply();
 	}
 	else
@@ -232,20 +231,6 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 			glEnd();
 		}
 	}
-}
-
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-static PalEntry ModifyCapColor(PalEntry pin, int cm)
-{
-	FColormap cmap;
-	cmap.colormap = cm;
-	gl_ModifyColor(pin.r, pin.g, pin.b, &cmap);
-	return pin;
 }
 
 
@@ -298,23 +283,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(false);
-		
-		if (CMapIndex != CM_DEFAULT) pe = ModifyCapColor(pe, CMapIndex);
-
-		Rc = pe.r / 255.0f;
-		Gc = pe.g / 255.0f;
-		Bc = pe.b / 255.0f;
-
-		if (gl_fixedcolormap)
-		{
-			float rr, gg, bb;
-
-			gl_GetLightColor(255, 0, NULL, &rr, &gg, &bb);
-			Rc*=rr;
-			Gc*=gg;
-			Bc*=bb;
-		}
-		gl_RenderState.SetColor(Rc, Gc, Bc);
+		gl_RenderState.SetObjectColor(pe);
 	}
 
 	RenderSkyHemisphere(SKYHEMI_UPPER, mirror);
@@ -322,21 +291,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(true);
-		if (CMapIndex != CM_DEFAULT) pe = ModifyCapColor(pe, CMapIndex);
-		Rc = pe.r / 255.0f;
-		Gc = pe.g / 255.0f;
-		Bc = pe.b / 255.0f;
-
-		if (gl_fixedcolormap != CM_DEFAULT)
-		{
-			float rr,gg,bb;
-
-			gl_GetLightColor(255, 0, NULL, &rr, &gg, &bb);
-			Rc*=rr;
-			Gc*=gg;
-			Bc*=bb;
-		}
-		gl_RenderState.SetColor(Rc, Gc, Bc);
+		gl_RenderState.SetObjectColor(pe);
 	}
 
 	RenderSkyHemisphere(SKYHEMI_LOWER, mirror);
@@ -565,6 +520,7 @@ void GLSkyPortal::DrawContents()
 		FadeColor = origin->fadecolor;
 	}
 
+	gl_RenderState.SetColor(1.f, 1.f, 1.f, 1.f);
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -572,20 +528,8 @@ void GLSkyPortal::DrawContents()
 	VSML.pushMatrix(VSML.VIEW);
 	GLRenderer->SetupView(0, 0, 0, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
-	if (gl_fixedcolormap != CM_DEFAULT)
-	{
-		float rr, gg, bb;
-
-		gl_GetLightColor(255, 0, NULL, &rr, &gg, &bb);
-		R = rr;
-		G = gg;
-		B = bb;
-	}
-	else R = G = B = 1.f;
-
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{
-		gl_RenderState.SetColor(R, G, B);
 		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 		gl_RenderState.EnableAlphaTest(true);
 	}

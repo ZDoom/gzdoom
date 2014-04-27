@@ -301,20 +301,21 @@ void main()
 		{
 			float gray = (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
 			vec4 cm = uFixedColormapStart + gray * uFixedColormapRange;
-			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
+			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a*gl_Color.a);
 			break;
 		}
 		
 		case 2:
 		{
 			frag = frag * uFixedColormapStart;
+			frag.a *= gl_Color.a;
 			break;
 		}
 		
 		case 3:
 		{
 			float gray = 1.0 - (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
-			frag = vec4(gray, gray, gray, frag.a) * uFixedColormapStart;
+			frag = vec4(gray, gray, gray, frag.a*gl_Color.a) * uFixedColormapStart;
 			break;
 		}
 		

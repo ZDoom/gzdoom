@@ -241,7 +241,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 //-----------------------------------------------------------------------------
 CVAR(Float, skyoffset, 0, 0)	// for testing
 
-static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror, int CMapIndex)
+static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror)
 {
 	int texh = 0;
 	bool texscale = false;
@@ -502,7 +502,6 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 void GLSkyPortal::DrawContents()
 {
 	bool drawBoth = false;
-	int CMapIndex;
 	PalEntry FadeColor(0,0,0,0);
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
@@ -510,13 +509,8 @@ void GLSkyPortal::DrawContents()
 	if (glset.lightmode == 8) glset.lightmode = 2;
 
 
-	if (gl_fixedcolormap)
+	if (!gl_fixedcolormap)
 	{
-		CMapIndex = gl_fixedcolormap<CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size() ? gl_fixedcolormap : CM_DEFAULT;
-	}
-	else
-	{
-		CMapIndex = CM_DEFAULT;
 		FadeColor = origin->fadecolor;
 	}
 
@@ -541,7 +535,7 @@ void GLSkyPortal::DrawContents()
 		if (origin->texture[0])
 		{
 			gl_RenderState.SetTextureMode(TM_OPAQUE);
-			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, CMapIndex);
+			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored);
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
@@ -550,7 +544,7 @@ void GLSkyPortal::DrawContents()
 		if (origin->doublesky && origin->texture[1])
 		{
 			secondlayer=true;
-			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false, CMapIndex);
+			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false);
 			secondlayer=false;
 		}
 
@@ -559,7 +553,7 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.EnableTexture(false);
 			foglayer=true;
 			glColor4f(FadeColor.r/255.0f,FadeColor.g/255.0f,FadeColor.b/255.0f,skyfog/255.0f);
-			RenderDome(FNullTextureID(), NULL, 0, 0, false, CM_DEFAULT);
+			RenderDome(FNullTextureID(), NULL, 0, 0, false);
 			gl_RenderState.EnableTexture(true);
 			foglayer=false;
 		}

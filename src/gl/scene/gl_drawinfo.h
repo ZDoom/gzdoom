@@ -25,10 +25,10 @@ enum DrawListType
 
 enum Drawpasses
 {
-	GLPASS_PLAIN,		// Draws a texture that isn't affected by dynamic lights with sector light settings
+	GLPASS_PLAIN,		// Main pass without dynamic lights
+	GLPASS_ALL,			// Main pass with dynamic lights
 	GLPASS_DECALS,		// Draws a decal
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
-	GLPASS_ALL			// Everything at once, using shaders for dynamic lights
 };
 
 //==========================================================================

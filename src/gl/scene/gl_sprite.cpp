@@ -112,7 +112,7 @@ CVAR(Bool, gl_nolayer, false, 0)
 //==========================================================================
 void GLSprite::Draw(int pass)
 {
-	if (pass!=GLPASS_PLAIN && pass != GLPASS_ALL && pass!=GLPASS_TRANSLUCENT) return;
+	if (pass == GLPASS_DECALS) return;
 
 
 	bool additivefog = false;
@@ -134,7 +134,7 @@ void GLSprite::Draw(int pass)
 
 		gl_SetRenderStyle(RenderStyle, false, 
 			// The rest of the needed checks are done inside gl_SetRenderStyle
-			trans > 1.f - FLT_EPSILON && gl_usecolorblending && gl_fixedcolormap < CM_FIRSTSPECIALCOLORMAP && actor && 
+			trans > 1.f - FLT_EPSILON && gl_usecolorblending && gl_fixedcolormap == CM_DEFAULT && actor && 
 			fullbright && gltexture && !gltexture->GetTransparent());
 
 		if (hw_styleflags == STYLEHW_NoAlphaTest)

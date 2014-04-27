@@ -309,8 +309,6 @@ void FHardwareTexture::DeleteTexture(unsigned int texid)
 //===========================================================================
 void FHardwareTexture::Clean(bool all)
 {
-	int cm_arraysize = CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size();
-
 	if (all)
 	{
 		DeleteTexture(glTexID);

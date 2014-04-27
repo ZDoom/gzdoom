@@ -367,7 +367,7 @@ void FGLRenderer::RenderScene(int recursion)
 	}
 
 	gl_RenderState.EnableTexture(gl_texture);
-	gl_RenderState.EnableBrightmap(gl_fixedcolormap == CM_DEFAULT);
+	gl_RenderState.EnableBrightmap(true);
 	gl_drawinfo->drawlists[DLT_PLAIN].Sort();
 	gl_drawinfo->drawlists[DLT_PLAIN].Draw(pass);
 

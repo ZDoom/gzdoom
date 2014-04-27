@@ -451,7 +451,6 @@ void FGLRenderer::RenderTranslucent()
 
 	glDepthMask(true);
 
-	gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f);
 	RenderAll.Unclock();
 }
 

@@ -142,15 +142,10 @@ void GLSprite::Draw(int pass)
 		{
 			gl_RenderState.EnableAlphaTest(false);
 		}
-		else
-		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL,trans*gl_mask_sprite_threshold);
-		}
 
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
 		{
 			float fuzzalpha=0.44f;
-			float minalpha=0.1f;
 
 			// fog + fuzz don't work well without some fiddling with the alpha value.
 			if (!gl_isBlack(Colormap.FadeColor))
@@ -165,10 +160,8 @@ void GLSprite::Draw(int pass)
 				// this value was determined by trial and error and is scale dependent.
 				float factor=0.05f+exp(-Colormap.FadeColor.a*dist/62500.f);
 				fuzzalpha*=factor;
-				minalpha*=factor;
 			}
 
-			gl_RenderState.AlphaFunc(GL_GEQUAL,minalpha*gl_mask_sprite_threshold);
 			gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, fuzzalpha, Colormap.desaturation / 255.f);
 			additivefog = true;
 		}
@@ -184,7 +177,6 @@ void GLSprite::Draw(int pass)
 			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
 		gl_SetColor(lightlevel, rel, &Colormap, trans);
-		gl_RenderState.AlphaFunc(GL_GEQUAL, trans * gl_mask_sprite_threshold);
 	}
 
 	if (gl_isBlack(Colormap.FadeColor)) foglevel=lightlevel;
@@ -334,16 +326,8 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
-
-		// [BB] Restore the alpha test after drawing a smooth particle.
-		if (hw_styleflags == STYLEHW_NoAlphaTest)
-		{
-			gl_RenderState.EnableAlphaTest(true);
-		}
-		else
-		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
-		}
+		gl_RenderState.EnableAlphaTest(true);
+		gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
 	}
 
 	if (Colormap.colormap == CM_LITE || foglayer)

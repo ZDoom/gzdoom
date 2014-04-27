@@ -53,6 +53,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_threads.h"
+#include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -146,6 +147,7 @@ void FGLRenderer::SetupLevel()
 void FGLRenderer::Begin2D()
 {
 	gl_RenderState.EnableFog(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 }
 
 //===========================================================================
@@ -268,6 +270,7 @@ void FGLRenderer::ClearBorders()
 	glViewport(0, 0, width, trueHeight);
 	VSML.loadIdentity(VSML.PROJECTION);
 	VSML.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
+	GLRenderer->mFrameState->UpdateFor2D(false);
 	gl_RenderState.SetColor(0.f, 0.f, 0.f);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
@@ -491,6 +494,7 @@ void FGLRenderer::Dim(PalEntry color, float damount, int x1, int y1, int w, int 
 	glVertex2i(x1 + w, y1);
 	glEnd();
 	
+	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 	gl_RenderState.EnableTexture(true);
 }
 

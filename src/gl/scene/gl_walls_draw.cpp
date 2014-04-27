@@ -254,7 +254,7 @@ void GLWall::RenderMirrorSurface()
 
 	gl_SetColor(lightlevel, 0, &Colormap ,0.1f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
-	gl_RenderState.AlphaFunc(GL_GREATER,0);
+	gl_RenderState.EnableAlphaTest(false);
 	glDepthFunc(GL_LEQUAL);
 	gl_SetFog(lightlevel, getExtraLight(), &Colormap, true);
 
@@ -267,7 +267,7 @@ void GLWall::RenderMirrorSurface()
 
 	// Restore the defaults for the translucent pass
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f*gl_mask_sprite_threshold);
+	gl_RenderState.EnableAlphaTest(true);
 	glDepthFunc(GL_LESS);
 
 	// This is drawn in the translucent pass which is done after the decal pass
@@ -283,6 +283,7 @@ void GLWall::RenderMirrorSurface()
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold); // this resets the changes made by the decal rendering.
 	}
 }
 
@@ -301,8 +302,7 @@ void GLWall::RenderTranslucentWall()
 	// and until that changes I won't fix this code for the new blending modes!
 	bool isadditive = RenderStyle == STYLE_Add;
 
-	if (!transparent) gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold*fabs(alpha));
-	else gl_RenderState.EnableAlphaTest(false);
+	if (transparent) gl_RenderState.EnableAlphaTest(false);
 	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 
 	int extra;
@@ -326,8 +326,8 @@ void GLWall::RenderTranslucentWall()
 
 	// restore default settings
 	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (transparent) gl_RenderState.EnableAlphaTest(true);
 
+	gl_RenderState.EnableAlphaTest(true);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableGlow(false);
 }

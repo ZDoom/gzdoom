@@ -602,7 +602,6 @@ void GLSkyPortal::DrawContents()
 		}
 		
 		gl_RenderState.EnableAlphaTest(true);
-		gl_RenderState.AlphaFunc(GL_GEQUAL,0.05f);
 		
 		if (origin->doublesky && origin->texture[1])
 		{

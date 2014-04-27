@@ -379,13 +379,11 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
 			{
 				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.desaturation / 255.f);
-				gl_RenderState.AlphaFunc(GL_GEQUAL, 0.075f*gl_mask_sprite_threshold);
 			}
 			else
 			{
 				gl_SetDynSpriteLight(playermo, NULL);
 				gl_SetColor(statebright[i] ? 255 : lightlevel, 0, &cmc, trans, true);
-				gl_RenderState.AlphaFunc(GL_GEQUAL, trans*gl_mask_sprite_threshold);
 			}
 			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);
 		}
@@ -414,7 +412,6 @@ void FGLRenderer::DrawTargeterSprites()
 
 	gl_RenderState.EnableBrightmap(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
 	gl_RenderState.BlendEquation(GL_FUNC_ADD);
 	gl_RenderState.ResetColor();
 	gl_RenderState.SetTextureMode(TM_MODULATE);

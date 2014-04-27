@@ -10,7 +10,7 @@ layout(std140, binding = 1) uniform FrameState
 	int uFogMode;
 	int uFixedColormap;				// 0, when no fixed colormap, 1 for a light value, 2 for a color blend
 	vec4 uFixedColormapStart;
-	vec4 uFixedColormapEnd;
+	vec4 uFixedColormapRange;
 };
 
 

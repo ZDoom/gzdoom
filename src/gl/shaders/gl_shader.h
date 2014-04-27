@@ -25,6 +25,7 @@ class FShader
 	unsigned int hShader;
 	unsigned int hVertProg;
 	unsigned int hFragProg;
+	FName mName;
 
 	int alphathreshold_index;
 
@@ -33,8 +34,6 @@ class FShader
 	int fogenabled_index;
 	int texturemode_index;
 	int lightparms_index;
-	int colormapstart_index;
-	int colormaprange_index;
 	int lightrange_index;
 	int fogcolor_index;
 	int lights_index;
@@ -67,7 +66,8 @@ class FShader
 	unsigned int mMatrixTick[4];
 
 public:
-	FShader()
+	FShader(const char *name)
+		: mName(name)
 	{
 		hShader = hVertProg = hFragProg = 0;
 		currentColorControl = currentfogenabled = currenttexturemode = currentglowstate = 0;
@@ -80,8 +80,6 @@ public:
 		fogenabled_index = -1;
 		texturemode_index = -1;
 		lightparms_index = -1;
-		colormapstart_index = -1;
-		colormaprange_index = -1;
 		lightrange_index = -1;
 		fogcolor_index = -1;
 		lights_index = -1;
@@ -112,29 +110,6 @@ public:
 
 };
 
-//==========================================================================
-//
-// This class contains the shaders for the different lighting modes
-// that are required (e.g. special colormaps etc.)
-//
-//==========================================================================
-
-class FShaderContainer
-{
-	friend class FShaderManager;
-
-	FName Name;
-
-	FShader *shader;
-	FShader *shader_cm;	// the shader for fullscreen colormaps
-	FShader *shader_fl;	// the shader for the fog layer
-
-public:
-	FShaderContainer(const char *ShaderName, const char *ShaderPath);
-	~FShaderContainer();
-	FShader *Bind(int cm);
-};
-
 
 //==========================================================================
 //
@@ -143,7 +118,7 @@ public:
 //==========================================================================
 class FShaderManager
 {
-	TArray<FShaderContainer*> mTextureEffects;
+	TArray<FShader*> mTextureEffects;
 	FShader *mActiveShader;
 	FShader *mEffectShaders[MAX_EFFECTS];
 
@@ -153,13 +128,13 @@ class FShaderManager
 public:
 	FShaderManager();
 	~FShaderManager();
+	FShader *Compile(const char *ShaderName, const char *ShaderPath);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
-	void SetColormapRange(int cm);
 	void SetWarpSpeed(unsigned int eff, float speed);
 
-	FShaderContainer *Get(unsigned int eff)
+	FShader *Get(unsigned int eff)
 	{
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 		if (eff < mTextureEffects.Size())

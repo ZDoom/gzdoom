@@ -1,6 +1,15 @@
 #ifndef __FRAMESTATE_H
 #define __FRAMESTATE_H
 
+enum
+{
+	FXM_DEFAULT,
+	FXM_COLORRANGE,
+	FXM_COLOR,
+	FXM_COLORINVERT,
+	FXM_FOGLAYER,	// not a real fixed colormap but it's convenient to include it here.
+};
+
 
 struct FrameStateData
 {
@@ -12,7 +21,7 @@ struct FrameStateData
 	int mFogMode;
 	int mFixedColormap;				// 0, when no fixed colormap, 1 for a light value, 2 for a color blend
 	float mFixedColormapStart[4];
-	float mFixedColormapEnd[4];
+	float mFixedColormapRange[4];
 };
 
 
@@ -29,6 +38,12 @@ public:
 	void UpdateFor3D();
 	void UpdateFor2D(bool weapon);
 	void UpdateViewMatrix();	// there are a few cases where this needs to be changed independently from the rest of the state
+
+	void ChangeFixedColormap(int newfix);
+	void ResetFixedColormap()
+	{
+		ChangeFixedColormap(mData.mFixedColormap);
+	}
 };
 
 #endif

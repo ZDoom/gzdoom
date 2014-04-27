@@ -50,9 +50,11 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_framestate.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
@@ -115,13 +117,10 @@ void GLSprite::Draw(int pass)
 
 	bool additivefog = false;
 	bool foglayer = false;
+	bool cmreset = false;
 	int rel = getExtraLight();
 
 	gl_RenderState.SetObjectColor(ThingColor);
-	if (Colormap.colormap == CM_LITE)
-	{
-		gl_RenderState.SelectShader(SHD_COLORMAP);
-	}
 
 	if (pass==GLPASS_TRANSLUCENT)
 	{
@@ -228,6 +227,12 @@ void GLSprite::Draw(int pass)
 	if (gltexture) gltexture->BindPatch(translation, OverrideShader);
 	else if (!modelframe) gl_RenderState.EnableTexture(false);
 
+	if (Colormap.colormap == CM_LITE)
+	{
+		GLRenderer->mFrameState->ChangeFixedColormap(FXM_COLORINVERT);
+		cmreset = true;
+	}
+
 	if (!modelframe)
 	{
 		// [BB] Billboard stuff
@@ -291,7 +296,8 @@ void GLSprite::Draw(int pass)
 		{
 			// If we get here we know that we have colored fog and no fixed colormap.
 			gl_SetFog(foglevel, rel, &Colormap, additivefog);
-			gl_RenderState.SelectShader(SHD_FOGLAYER);
+			GLRenderer->mFrameState->ChangeFixedColormap(FXM_FOGLAYER);
+			cmreset = true;
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gl_RenderState.Apply();
@@ -330,9 +336,9 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
 	}
 
-	if (Colormap.colormap == CM_LITE || foglayer)
+	if (cmreset)
 	{
-		gl_RenderState.SelectShader(SHD_DEFAULT);
+		GLRenderer->mFrameState->ResetFixedColormap();
 	}
 
 	gl_RenderState.SetObjectColor(0xffffffff);

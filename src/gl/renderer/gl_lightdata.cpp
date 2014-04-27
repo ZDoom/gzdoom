@@ -262,24 +262,10 @@ PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
 void gl_GetLightColor(int lightlevel, int rellight, const FColormap * cm, float * pred, float * pgreen, float * pblue, bool weapon)
 {
 	float & r=*pred,& g=*pgreen,& b=*pblue;
-	int torch=0;
 
 	if (gl_fixedcolormap) 
 	{
-		if (gl_fixedcolormap==CM_LITE)
-		{
-			if (gl_enhanced_nightvision) r=0.375f, g=1.0f, b=0.375f;
-			else r=g=b=1.0f;
-		}
-		else if (gl_fixedcolormap>=CM_TORCH)
-		{
-			int flicker=gl_fixedcolormap-CM_TORCH;
-			r=(0.8f+(7-flicker)/70.0f);
-			if (r>1.0f) r=1.0f;
-			b=g=r;
-			if (gl_enhanced_nightvision) b*=0.75f;
-		}
-		else r=g=b=1.0f;
+		r=g=b=1.0f;
 		return;
 	}
 

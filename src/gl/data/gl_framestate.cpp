@@ -48,6 +48,7 @@
 #include "gl/renderer/gl_colormap.h"
 #include "m_fixed.h"
 #include "r_utility.h"
+#include "cmdlib.h"
 
 //==========================================================================
 //
@@ -64,6 +65,7 @@ FFrameState::FFrameState()
 	bDSA = !!glewIsSupported("GL_EXT_direct_state_access");
 	UpdateFor2D(false);
 	memset(&mData, 0, sizeof(mData));
+	mData.mFixedColormapStart[3] = mData.mFixedColormapRange[3] = 1.f;
 }
 
 //==========================================================================
@@ -96,23 +98,47 @@ void FFrameState::UpdateFor3D()
 
 	if (gl_fixedcolormap > CM_TORCH)
 	{
-		mData.mFixedColormap = 2;
+		int flicker = gl_fixedcolormap - CM_TORCH;
+		mData.mFixedColormapStart[0] =
+		mData.mFixedColormapStart[1] =
+		mData.mFixedColormapStart[2] = MIN<float>(0.8f + (7 - flicker) / 70.0f, 1.f);
+		if (gl_enhanced_nightvision) mData.mFixedColormapStart[2] *= 0.75f;
+		mData.mFixedColormap = FXM_COLOR;
 	}
 	else if (gl_fixedcolormap == CM_LITE)
 	{
-		mData.mFixedColormap = 2;
+		mData.mFixedColormap = FXM_COLOR;
+		if (gl_enhanced_nightvision)
+		{
+			mData.mFixedColormapStart[0] = 0.375f;
+			mData.mFixedColormapStart[1] = 1.0f;
+			mData.mFixedColormapStart[2] = 0.375f;
+		}
+		else
+		{
+			mData.mFixedColormapStart[0] =
+			mData.mFixedColormapStart[1] =
+			mData.mFixedColormapStart[2] = 1.f;
+		}
 	}
 	else if (gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < CM_MAXCOLORMAP)
 	{
-		mData.mFixedColormap = 1;
+		FSpecialColormap *map = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+		mData.mFixedColormap = FXM_COLORRANGE;
+		mData.mFixedColormapStart[0] = map->ColorizeStart[0];
+		mData.mFixedColormapStart[1] = map->ColorizeStart[1];
+		mData.mFixedColormapStart[2] = map->ColorizeStart[2];
+
+		mData.mFixedColormapRange[0] = map->ColorizeEnd[0] - map->ColorizeStart[0];
+		mData.mFixedColormapRange[1] = map->ColorizeEnd[1] - map->ColorizeStart[1];
+		mData.mFixedColormapRange[2] = map->ColorizeEnd[2] - map->ColorizeStart[2];
 	}
 	else
 	{
-		mData.mFixedColormap = 0;
+		mData.mFixedColormap = FXM_DEFAULT;
 	}
 
-	//float mFixedColormapStart[4];
-	//float mFixedColormapEnd[4];
+
 
 	if (bDSA)
 	{
@@ -177,3 +203,24 @@ void FFrameState::UpdateViewMatrix()
 	}
 }
 
+//==========================================================================
+//
+// allows per drawcall change of the fixed colormap 
+// This is only needed in two places:
+// - for drawing inverted sprites with the Infrared powerup
+// - for drawing a fog layer over a subtractively blended sprite.
+//
+//==========================================================================
+
+void FFrameState::ChangeFixedColormap(int newfix)
+{
+	if (bDSA)
+	{
+		glNamedBufferSubDataEXT(mBufferId, myoffsetof(FrameStateData, mFixedColormap), sizeof(int), &newfix);
+	}
+	else
+	{
+		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
+		glBufferSubData(GL_UNIFORM_BUFFER, myoffsetof(FrameStateData, mFixedColormap), sizeof(int), &newfix);
+	}
+}

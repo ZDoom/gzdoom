@@ -10,13 +10,6 @@ EXTERN_CVAR(Bool, gl_direct_state_change)
 
 enum
 {
-	SHD_DEFAULT = 0,
-	SHD_COLORMAP = 1,
-	SHD_FOGLAYER = 2,
-};
-
-enum
-{
 	CCTRL_ATTRIB = 0,
 	CCTRL_ATTRIBALPHA = 1,
 	CCTRL_BUFFER = 2
@@ -152,7 +145,6 @@ class FRenderState
 	float mFogDensity;
 
 	int mEffectState;
-	int mShaderSelect;
 
 	int glSrcBlend, glDstBlend;
 	int gl_BlendEquation;
@@ -251,11 +243,6 @@ public:
 		mBrightmapEnabled = on;
 	}
 
-	void SelectShader(int on)
-	{
-		mShaderSelect = on;
-	}
-
 	void SetGlowParams(float *t, float *b)
 	{
 		mGlowTop.Set(t[0], t[1], t[2], t[3]);
@@ -312,11 +299,6 @@ public:
 			mLightData = NULL;
 		}
 	
-	}
-
-	void SetFixedColormap(bool cm)
-	{
-		mShaderSelect = cm;
 	}
 
 	PalEntry GetFogColor() const

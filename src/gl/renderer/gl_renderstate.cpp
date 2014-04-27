@@ -111,12 +111,12 @@ bool FRenderState::ApplyShader()
 	}
 	else
 	{
-		FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
+		FShader *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
 
 		if (shd != NULL)
 		{
-			activeShader = shd->Bind(mTextureEnabled? mShaderSelect : 0);
-			assert(activeShader != NULL);
+			activeShader = shd;
+			shd->Bind();
 		}
 	}
 

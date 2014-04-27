@@ -663,7 +663,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 		DrawPlayerSprites(viewsector, false);
 	}
 	GLRenderer->mFrameState->UpdateFor2D(false);
-	gl_RenderState.SelectShader(SHD_DEFAULT);
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
 
@@ -705,7 +704,6 @@ void FGLRenderer::ProcessScene(bool toscreen)
 void FGLRenderer::SetFixedColormap (player_t *player)
 {
 	gl_fixedcolormap=CM_DEFAULT;
-	gl_RenderState.SelectShader(SHD_DEFAULT);
 
 	// check for special colormaps
 	player_t * cplayer = player->camera->player;
@@ -737,18 +735,6 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 				}
 			}
 		}
-		// the fixed colormap is a per-frame global setting so rather than maintaining some state for it, set the shader info for it once up front and be done with it.
-		if (gl_fixedcolormap != CM_DEFAULT)
-		{
-			int setcm = gl_fixedcolormap;
-			if (setcm == CM_LITE) setcm = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
-			else if (gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < CM_MAXCOLORMAP)
-			{
-				gl_RenderState.SelectShader(SHD_COLORMAP);
-			}
-			mShaderManager->SetColormapRange(setcm);
-		}
-
 	}
 }
 
@@ -890,7 +876,6 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 								FieldOfView * 360.0f / FINEANGLES, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	screen->Begin2D(false);
-	gl_RenderState.SelectShader(SHD_DEFAULT);
 	GLRenderer->mFrameState->UpdateFor2D(false);
 	DrawBlend(viewsector);
 	glFlush();

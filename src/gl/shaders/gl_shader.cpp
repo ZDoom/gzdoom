@@ -185,8 +185,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	fogenabled_index = glGetUniformLocation(hShader, "fogenabled");
 	texturemode_index = glGetUniformLocation(hShader, "texturemode");
 	lightparms_index = glGetUniformLocation(hShader, "lightparms");
-	colormapstart_index = glGetUniformLocation(hShader, "colormapstart");
-	colormaprange_index = glGetUniformLocation(hShader, "colormaprange");
 	lightrange_index = glGetUniformLocation(hShader, "lightrange");
 	fogcolor_index = glGetUniformLocation(hShader, "fogcolor");
 	lights_index = glGetUniformLocation(hShader, "lights");
@@ -241,100 +239,28 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPath)
+FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath)
 {
-	FString name;
-
-	name.Format("%s::colormap", ShaderName);
-
-	try
-	{
-		shader_cm = new FShader;
-		if (!shader_cm->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_colormap.fp", ShaderPath, "#define NO_LIGHTING\n"))
-		{
-			I_FatalError("Unable to load shader %s\n", name.GetChars());
-		}
-	}
-	catch(CRecoverableError &err)
-	{
-		shader_cm = NULL;
-		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
-	}
-
-	name.Format("%s::foglayer", ShaderName);
-
-	try
-	{
-		shader_fl = new FShader;
-		if (!shader_fl->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main_foglayer.fp", ShaderPath, ""))
-		{
-			I_FatalError("Unable to load shader %s\n", name.GetChars());
-		}
-	}
-	catch (CRecoverableError &err)
-	{
-		shader_fl = NULL;
-		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
-	}
-
-	name.Format("%s::default", ShaderName);
-
 	// this can't be in the shader code due to ATI strangeness.
 	const char *str = (gl.MaxLights() == 128)? "#define MAXLIGHTS128\n" : "";
 
+	FShader *shader = NULL;
 	try
 	{
-		shader = new FShader;
-		if (!shader->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str))
+		shader = new FShader(ShaderName);
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str))
 		{
-			I_FatalError("Unable to load shader %s\n", name.GetChars());
+			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
 	}
 	catch(CRecoverableError &err)
 	{
+		if (shader != NULL) delete shader;
 		shader = NULL;
-		I_FatalError("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
+		I_FatalError("Unable to load shader %s:\n%s\n", ShaderName, err.GetMessage());
 	}
+	return shader;
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-FShaderContainer::~FShaderContainer()
-{
-	if (shader_cm != NULL) delete shader_cm;
-	if (shader_fl != NULL) delete shader_fl;
-	if (shader != NULL) delete shader;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FShader *FShaderContainer::Bind(int cm)
-{
-	if (cm == SHD_FOGLAYER)
-	{
-		shader_fl->Bind();
-		return shader_fl;
-	}
-	else if (cm == SHD_COLORMAP)
-	{
-		// these are never used with any kind of lighting or fog
-		shader_cm->Bind();
-		return shader_cm;
-	}
-	else
-	{
-		shader->Bind();
-		return shader;
-	}
-}
-
 
 //==========================================================================
 //
@@ -420,7 +346,7 @@ void FShaderManager::CompileShaders()
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShaderContainer * shc = new FShaderContainer(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc);
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc);
 		mTextureEffects.Push(shc);
 	}
 
@@ -429,13 +355,13 @@ void FShaderManager::CompileShaders()
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShaderContainer * shc = new FShaderContainer(sfn, usershaders[i]);
+		FShader *shc = Compile(sfn, usershaders[i]);
 		mTextureEffects.Push(shc);
 	}
 
 	for(int i=0;i<MAX_EFFECTS;i++)
 	{
-		FShader *eff = new FShader();
+		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
 						effectshaders[i].fp2, effectshaders[i].defines))
 		{
@@ -480,7 +406,7 @@ int FShaderManager::Find(const char * shn)
 
 	for(unsigned int i=0;i<mTextureEffects.Size();i++)
 	{
-		if (mTextureEffects[i]->Name == sfn)
+		if (mTextureEffects[i]->mName == sfn)
 		{
 			return i;
 		}
@@ -503,26 +429,6 @@ void FShaderManager::SetActiveShader(FShader *sh)
 	}
 }
 
-//==========================================================================
-//
-// This sets the currently selected fixed colormap for all colormap shaders
-//
-//==========================================================================
-
-void FShaderManager::SetColormapRange(int cm)
-{
-	FSpecialColormap *map = &SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP];
-
-	float m[3] = { map->ColorizeEnd[0] - map->ColorizeStart[0], map->ColorizeEnd[1] - map->ColorizeStart[1], map->ColorizeEnd[2] - map->ColorizeStart[2] };
-
-	for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
-	{
-		FShader *sh = mTextureEffects[i]->shader_cm;
-		glProgramUniform3fv(sh->GetHandle(), sh->colormapstart_index, 1, map->ColorizeStart);
-		glProgramUniform3fv(sh->GetHandle(), sh->colormaprange_index, 1, m);
-	}
-}
-
 
 //==========================================================================
 //
@@ -536,13 +442,10 @@ void FShaderManager::SetWarpSpeed(unsigned int eff, float speed)
 	// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 	if (eff < mTextureEffects.Size())
 	{
-		FShaderContainer *shc = mTextureEffects[eff];
+		FShader *sh = mTextureEffects[eff];
 
 		float warpphase = gl_frameMS * speed / 1000.f;
-		// set for all 3 shaders because otherwise a lot of added maintenance would be needed.
-		glProgramUniform1f(shc->shader->GetHandle(), shc->shader->timer_index, warpphase);
-		glProgramUniform1f(shc->shader_cm->GetHandle(), shc->shader_cm->timer_index, warpphase);
-		glProgramUniform1f(shc->shader_fl->GetHandle(), shc->shader_fl->timer_index, warpphase);
+		glProgramUniform1f(sh->GetHandle(), sh->timer_index, warpphase);
 	}
 }
 

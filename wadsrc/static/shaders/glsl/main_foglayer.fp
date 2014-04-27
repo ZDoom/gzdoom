@@ -6,6 +6,7 @@ in vec4 pixelpos;
 in vec4 fogparm;
 
 uniform sampler2D tex;
+uniform vec4 objectcolor;
 
 vec4 Process(vec4 color);
 
@@ -41,6 +42,8 @@ vec4 getTexel(vec2 st)
 			texel = vec4(1.0, 1.0, 1.0, texel.r);
 			break;
 	}
+	texel *= objectcolor;
+
 	return desaturate(texel);
 }
 

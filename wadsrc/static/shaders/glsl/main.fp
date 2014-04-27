@@ -36,32 +36,10 @@ uniform int texturemode;
 uniform sampler2D tex;
 
 vec4 Process(vec4 color);
+vec4 ProcessLight(vec4 color);
 
 
 in float lightlevel;
-
-// Doom lighting equation ripped from EDGE.
-// Big thanks to EDGE developers for making the only port
-// that actually replicates software renderer's lighting in OpenGL.
-// Float version.
-// Basically replace int with float and divide all constants by 31.
-float R_DoomLightingEquation(float light, float dist)
-{
-	/* L in the range 0 to 63 */
-	float L = light * 63.0/31.0;
-
-	float min_L = clamp(36.0/31.0 - L, 0.0, 1.0);
-
-	// Fix objects getting totally black when close.
-	if (dist < 0.0001)
-		dist = 0.0001;
-
-	float scale = 1.0 / dist;
-	float index = (59.0/31.0 - L) - (scale * DOOMLIGHTFACTOR/31.0 - DOOMLIGHTFACTOR/31.0);
-
-	/* result is colormap index (0 bright .. 31 dark) */
-	return clamp(index, min_L, 1.0);
-}
 
 //===========================================================================
 //
@@ -84,53 +62,7 @@ vec4 desaturate(vec4 texel)
 
 //===========================================================================
 //
-// Calculate light
-//
-//===========================================================================
-
-vec4 getLightColor(float fogdist, float fogfactor)
-{
-	vec4 color = gl_Color;
-	if (lightlevel >= 0.0)
-	{
-		float newlightlevel = 1.0 - R_DoomLightingEquation(lightlevel, gl_FragCoord.z);
-		color.rgb *= newlightlevel;
-	}
-	
-	//
-	// apply light diminishing	
-	//
-	if (fogenabled > 0)
-	{
-		if (fogdist < fogparm.y && lightlevel < 0.0) // not with softlight enabled
-		{
-			color.rgb *= fogparm.x - (fogdist / fogparm.y) * (fogparm.x - 1.0);
-		}
-		
-		//color = vec4(color.rgb * (1.0 - fogfactor), color.a);
-		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
-	}
-	
-	//
-	// handle glowing walls
-	//
-	if (topglowcolor.a > 0.0 && glowdist.x < topglowcolor.a)
-	{
-		color.rgb += desaturate(topglowcolor * (1.0 - glowdist.x / topglowcolor.a)).rgb;
-	}
-	if (bottomglowcolor.a > 0.0 && glowdist.y < bottomglowcolor.a)
-	{
-		color.rgb += desaturate(bottomglowcolor * (1.0 - glowdist.y / bottomglowcolor.a)).rgb;
-	}
-	color = min(color, 1.0);
-	
-	// calculation of actual light color is complete.
-	return color;
-}
-
-//===========================================================================
-//
-// Gets a texel and performs common manipulations
+// This function is common for all (non-special-effect) fragment shaders
 //
 //===========================================================================
 
@@ -162,6 +94,122 @@ vec4 getTexel(vec2 st)
 
 //===========================================================================
 //
+// Doom lighting equation ripped from EDGE.
+// Big thanks to EDGE developers for making the only port
+// that actually replicates software renderer's lighting in OpenGL.
+// Float version.
+// Basically replace int with float and divide all constants by 31.
+//
+//===========================================================================
+
+float R_DoomLightingEquation(float light, float dist)
+{
+	/* L in the range 0 to 63 */
+	float L = light * 63.0/31.0;
+
+	float min_L = clamp(36.0/31.0 - L, 0.0, 1.0);
+
+	// Fix objects getting totally black when close.
+	if (dist < 0.0001)
+		dist = 0.0001;
+
+	float scale = 1.0 / dist;
+	float index = (59.0/31.0 - L) - (scale * DOOMLIGHTFACTOR/31.0 - DOOMLIGHTFACTOR/31.0);
+
+	/* result is colormap index (0 bright .. 31 dark) */
+	return clamp(index, min_L, 1.0);
+}
+
+//===========================================================================
+//
+// Calculate light
+//
+// It is important to note that the light color is not desaturated
+// due to ZDoom's implementation weirdness. Everything that's added
+// on top of it, e.g. dynamic lights and glows are, though, because
+// the objects emitting these lights are also.
+//
+//===========================================================================
+
+vec4 getLightColor(float fogdist, float fogfactor)
+{
+	vec4 color = gl_Color;
+	if (lightlevel >= 0.0)
+	{
+		float newlightlevel = 1.0 - R_DoomLightingEquation(lightlevel, gl_FragCoord.z);
+		color.rgb *= newlightlevel;
+	}
+	
+	//
+	// apply light diminishing through fog equation
+	//
+	else if (fogenabled > 0)
+	{
+		if (fogdist < fogparm.y)
+		{
+			color.rgb *= fogparm.x - (fogdist / fogparm.y) * (fogparm.x - 1.0);
+		}
+		
+		//color = vec4(color.rgb * (1.0 - fogfactor), color.a);
+		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
+	}
+	
+	//
+	// handle glowing walls
+	//
+	if (topglowcolor.a > 0.0 && glowdist.x < topglowcolor.a)
+	{
+		color.rgb += desaturate(topglowcolor * (1.0 - glowdist.x / topglowcolor.a)).rgb;
+	}
+	if (bottomglowcolor.a > 0.0 && glowdist.y < bottomglowcolor.a)
+	{
+		color.rgb += desaturate(bottomglowcolor * (1.0 - glowdist.y / bottomglowcolor.a)).rgb;
+	}
+	color = min(color, 1.0);
+
+	//
+	// apply brightmaps (or other light manipulation by custom shaders.
+	//
+	color = ProcessLight(color);
+
+	//
+	// apply dynamic lights (except additive)
+	//
+	vec4 dynlight = dlightcolor;
+
+	if (lightrange.z > 0)
+	{
+		//
+		// modulated lights
+		//
+		for(int i=0; i<lightrange.x; i+=2)
+		{
+			vec4 lightpos = lights[i];
+			vec4 lightcolor = lights[i+1];
+			
+			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+			dynlight.rgb += lightcolor.rgb;
+		}
+		//
+		// subtractive lights
+		//
+		for(int i=lightrange.x; i<lightrange.y; i+=2)
+		{
+			vec4 lightpos = lights[i];
+			vec4 lightcolor = lights[i+1];
+			
+			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+			dynlight.rgb -= lightcolor.rgb;
+		}
+	}
+	color.rgb = clamp(color.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
+	
+	// prevent any unintentional messing around with the alpha.
+	return vec4(color.rgb, gl_Color.a);
+}
+
+//===========================================================================
+//
 // Applies colored fog
 //
 //===========================================================================
@@ -187,6 +235,14 @@ void main()
 	if (pixelpos.y < clipheight - 65536.0) discard;
 #endif
 
+	vec4 frag = Process(vec4(1.0));
+#ifndef NO_DISCARD
+	if (frag.a < alphathreshold)
+	{
+		discard;
+	}
+#endif
+
 	float fogdist = 0.0;
 	float fogfactor = 0.0;
 	
@@ -207,44 +263,13 @@ void main()
 		fogfactor = exp2 (fogparm.z * fogdist);
 	}
 	
-	vec4 frag = getLightColor(fogdist, fogfactor);
+	frag *= getLightColor(fogdist, fogfactor);
 	
 	
 	if (lightrange.z > 0)
 	{
-		vec4 dynlight = dlightcolor;
 		vec4 addlight = vec4(0.0,0.0,0.0,0.0);
 	
-		//
-		// modulated lights
-		//
-		for(int i=0; i<lightrange.x; i+=2)
-		{
-			vec4 lightpos = lights[i];
-			vec4 lightcolor = lights[i+1];
-			
-			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			dynlight.rgb += lightcolor.rgb;
-		}
-		//
-		// subtractive lights
-		//
-		for(int i=lightrange.x; i<lightrange.y; i+=2)
-		{
-			vec4 lightpos = lights[i];
-			vec4 lightcolor = lights[i+1];
-			
-			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			dynlight.rgb -= lightcolor.rgb;
-		}
-		frag.rgb = clamp(frag.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
-		frag = Process(frag);
-#ifndef NO_DISCARD
-		if (frag.a < alphathreshold)
-		{
-			discard;
-		}
-#endif
 		//
 		// additive lights - these can be done after the alpha test.
 		//
@@ -257,20 +282,6 @@ void main()
 			addlight.rgb += lightcolor.rgb;
 		}
 		frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
-	}
-	else
-	{
-		//
-		// there are no dynamic lights.
-		//
-		frag.rgb = clamp(frag.rgb + desaturate(dlightcolor).rgb, 0.0, 1.4);
-		frag = Process(frag);
-#ifndef NO_DISCARD
-		if (frag.a < alphathreshold)
-		{
-			discard;
-		}
-#endif
 	}
 
 	//

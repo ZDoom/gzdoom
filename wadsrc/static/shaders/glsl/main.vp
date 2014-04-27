@@ -61,6 +61,7 @@ void main()
 	vec4 color;
 	switch (colorcontrol)
 	{
+		default:
 		case 0:
 			color = attribColor;
 			break;

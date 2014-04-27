@@ -81,15 +81,17 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FMemLump fp_data = Wads.ReadLump(fp_lump);
 
 
-	FString version = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : enable\n";
-	FString vp_comb;
-	FString fp_comb;
-	vp_comb = defines;
 
-	fp_comb = vp_comb;
-	// This uses GetChars on the strings to get rid of terminating 0 characters.
-	vp_comb << version << i_data.GetString().GetChars() << vp_data.GetString().GetChars() << "\n";
-	fp_comb << version << i_data.GetString().GetChars() << fp_data.GetString().GetChars() << "\n";
+	//
+	// The following code uses GetChars on the strings to get rid of terminating 0 characters. Do not remove or the code may break!
+	//
+
+	FString vp_comb = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : enable\n";
+	vp_comb << defines << i_data.GetString().GetChars();
+	FString fp_comb = vp_comb;
+
+	vp_comb << vp_data.GetString().GetChars() << "\n";
+	fp_comb << fp_data.GetString().GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{
@@ -100,6 +102,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			FMemLump pp_data = Wads.ReadLump(pp_lump);
 
 			fp_comb << pp_data.GetString().GetChars();
+
+			if (pp_data.GetString().IndexOf("ProcessLight") < 0)
+			{
+				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultlight.fp");
+				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultlight.fp");
+				FMemLump pl_data = Wads.ReadLump(pl_lump);
+				fp_comb << "\n" << pl_data.GetString().GetChars();
+			}
 		}
 		else 
 		{

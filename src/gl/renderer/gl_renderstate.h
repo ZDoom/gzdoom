@@ -142,7 +142,6 @@ class FRenderState
 	float *mLightData;
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
-	float mClipPlane;
 	bool mAlphaTest;
 	int mBlendEquation;
 	unsigned int mVertexArray, mLastVertexArray;
@@ -324,16 +323,6 @@ public:
 	void SetFixedColormap(bool cm)
 	{
 		mShaderSelect = cm;
-	}
-
-	void SetClipPlane(float y)
-	{
-		mClipPlane = y;
-	}
-
-	float GetClipPlane()
-	{
-		return mClipPlane;
 	}
 
 	PalEntry GetFogColor() const

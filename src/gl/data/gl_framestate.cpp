@@ -91,7 +91,7 @@ void FFrameState::UpdateFor3D()
 	mData.mCameraPos[0] = FIXED2FLOAT(viewx);
 	mData.mCameraPos[1] = FIXED2FLOAT(viewy);
 	mData.mCameraPos[2] = FIXED2FLOAT(viewz);
-	mData.mClipHeight = gl_RenderState.GetClipPlane();
+	//mClipHeight is set directly from the portal code.
 
 	if (gl_fixedcolormap > CM_TORCH)
 	{

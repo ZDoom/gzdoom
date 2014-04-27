@@ -1060,7 +1060,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 
 	if (gl_fixedcolormap) 
 	{
-		Colormap.GetFixedColormap();
+		Colormap.Clear();
 		lightlevel=255;
 	}
 	else

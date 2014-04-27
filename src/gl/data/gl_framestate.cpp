@@ -123,15 +123,7 @@ void FFrameState::UpdateFor3D()
 	}
 	else if (gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < CM_MAXCOLORMAP)
 	{
-		FSpecialColormap *map = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
-		mData.mFixedColormap = FXM_COLORRANGE;
-		mData.mFixedColormapStart[0] = map->ColorizeStart[0];
-		mData.mFixedColormapStart[1] = map->ColorizeStart[1];
-		mData.mFixedColormapStart[2] = map->ColorizeStart[2];
-
-		mData.mFixedColormapRange[0] = map->ColorizeEnd[0] - map->ColorizeStart[0];
-		mData.mFixedColormapRange[1] = map->ColorizeEnd[1] - map->ColorizeStart[1];
-		mData.mFixedColormapRange[2] = map->ColorizeEnd[2] - map->ColorizeStart[2];
+		SetFixedColormap(&SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP]);
 	}
 	else
 	{
@@ -223,4 +215,22 @@ void FFrameState::ChangeFixedColormap(int newfix)
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
 		glBufferSubData(GL_UNIFORM_BUFFER, myoffsetof(FrameStateData, mFixedColormap), sizeof(int), &newfix);
 	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FFrameState::SetFixedColormap(FSpecialColormap *map)
+{
+	mData.mFixedColormap = FXM_COLORRANGE;
+	mData.mFixedColormapStart[0] = map->ColorizeStart[0];
+	mData.mFixedColormapStart[1] = map->ColorizeStart[1];
+	mData.mFixedColormapStart[2] = map->ColorizeStart[2];
+
+	mData.mFixedColormapRange[0] = map->ColorizeEnd[0] - map->ColorizeStart[0];
+	mData.mFixedColormapRange[1] = map->ColorizeEnd[1] - map->ColorizeStart[1];
+	mData.mFixedColormapRange[2] = map->ColorizeEnd[2] - map->ColorizeStart[2];
 }

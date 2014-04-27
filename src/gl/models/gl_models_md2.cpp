@@ -293,7 +293,7 @@ void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices,FMod
 }
 
 
-void FDMDModel::RenderFrame(FTexture * skin, int frameno, int cm, int translation)
+void FDMDModel::RenderFrame(FTexture * skin, int frameno, int translation)
 {
 	int activeLod;
 
@@ -337,7 +337,7 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int cm, int translatio
 	RenderGLCommands(lods[activeLod].glCommands, numVerts, frame->vertices/*, modelColors, NULL*/);
 }
 
-void FDMDModel::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int cm, int translation)
+void FDMDModel::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	int activeLod = 0;
 

@@ -1,6 +1,8 @@
 #ifndef __FRAMESTATE_H
 #define __FRAMESTATE_H
 
+struct FSpecialColormap;
+
 enum
 {
 	FXM_DEFAULT,
@@ -39,6 +41,7 @@ public:
 	void UpdateFor2D(bool weapon);
 	void UpdateViewMatrix();	// there are a few cases where this needs to be changed independently from the rest of the state
 
+	void SetFixedColormap(FSpecialColormap *map);
 	void ChangeFixedColormap(int newfix);
 	void ResetFixedColormap()
 	{

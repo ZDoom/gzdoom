@@ -227,10 +227,13 @@ void GLSprite::Draw(int pass)
 	if (gltexture) gltexture->BindPatch(translation, OverrideShader);
 	else if (!modelframe) gl_RenderState.EnableTexture(false);
 
-	if (Colormap.colormap == CM_LITE)
+	if (gl_fixedcolormap == CM_LITE && gl_enhanced_nightvision && actor != NULL)
 	{
-		GLRenderer->mFrameState->ChangeFixedColormap(FXM_COLORINVERT);
-		cmreset = true;
+		if ((actor->flags3&MF3_ISMONSTER || actor->flags&(MF_SPECIAL | MF_MISSILE | MF_CORPSE)))
+		{
+			GLRenderer->mFrameState->ChangeFixedColormap(FXM_COLORINVERT);
+			cmreset = true;
+		}
 	}
 
 	if (!modelframe)
@@ -323,7 +326,7 @@ void GLSprite::Draw(int pass)
 	}
 	else
 	{
-		gl_RenderModel(this, Colormap.colormap);
+		gl_RenderModel(this);
 	}
 
 	if (pass==GLPASS_TRANSLUCENT)
@@ -707,16 +710,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			|| (gl_enhanced_nv_stealth == 3))								// Any fixed colormap
 			enhancedvision=true;
 
-		Colormap.GetFixedColormap();
-
-		if (gl_fixedcolormap==CM_LITE)
-		{
-			if (gl_enhanced_nightvision &&
-				(thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
-			{
-				Colormap.colormap = CM_LITE;
-			}
-		}
+		Colormap.Clear();
 	}
 	else 
 	{
@@ -883,7 +877,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	if (gl_fixedcolormap) 
 	{
-		Colormap.GetFixedColormap();
+		Colormap.Clear();
 	}
 	else if (!particle->bright)
 	{

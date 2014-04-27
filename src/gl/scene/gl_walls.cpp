@@ -131,7 +131,7 @@ void GLWall::PutWall(bool translucent)
 		// light planes don't get drawn with fullbright rendering
 		if (!gltexture && passflag[type]!=4) return;
 
-		Colormap.GetFixedColormap();
+		Colormap.Clear();
 	}
 
 	CheckGlowing();
@@ -494,7 +494,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 				hi.colormap.LightColor = (light->extra_colormap)->Color;
 			}
 
-			if (gl_fixedcolormap) hi.colormap.GetFixedColormap();
+			if (gl_fixedcolormap) hi.colormap.Clear();
 			horizon = &hi;
 			PutWall(0);
 		}
@@ -523,8 +523,8 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 				hi.colormap.LightColor = (light->extra_colormap)->Color;
 			}
 
-			if (gl_fixedcolormap) hi.colormap.GetFixedColormap();
-			horizon=&hi;
+			if (gl_fixedcolormap) hi.colormap.Clear();
+			horizon = &hi;
 			PutWall(0);
 		}
 	}

@@ -51,6 +51,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_framestate.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
@@ -69,7 +70,7 @@ EXTERN_CVAR(Int, gl_fuzztype)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, int cm_index, bool hudModelStep, int OverrideShader)
+void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, bool hudModelStep, int OverrideShader)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -83,7 +84,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	// [BB] In the HUD model step we just render the model and break out. 
 	if ( hudModelStep )
 	{
-		gl_RenderHUDModel( psp, sx, sy, cm_index );
+		gl_RenderHUDModel( psp, sx, sy);
 		return;
 	}
 
@@ -197,26 +198,27 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	// check for fullbright
 	if (player->fixedcolormap==NOFIXEDCOLORMAP)
 	{
-		for (i=0, psp=player->psprites; i<=ps_flash; i++,psp++)
+		for (i = 0, psp = player->psprites; i <= ps_flash; i++, psp++)
+		{
 			if (psp->state != NULL)
 			{
 				bool disablefullbright = false;
 				FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, NULL);
 				if (lump.isValid())
 				{
-					FMaterial * tex=FMaterial::ValidateTexture(lump, false);
+					FMaterial * tex = FMaterial::ValidateTexture(lump, false);
 					if (tex)
 						disablefullbright = tex->tex->gl_info.bBrightmapDisablesFullbright;
 				}
 				statebright[i] = !!psp->state->GetFullbright() && !disablefullbright;
 			}
-				
+		}
 	}
 
 	if (gl_fixedcolormap) 
 	{
 		lightlevel=255;
-		cm.GetFixedColormap();
+		cm.Clear();
 		statebright[0] = statebright[1] = true;
 		fakesec = viewsector;
 	}
@@ -293,12 +295,13 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		playermo->Inventory->AlterWeaponSprite(&vis);
 		if (vis.colormap >= SpecialColormaps[0].Colormap && 
 			vis.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap && 
-			cm.colormap == CM_DEFAULT)
+			gl_fixedcolormap == CM_DEFAULT)
 		{
 			ptrdiff_t specialmap = (vis.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
-			cm.colormap = int(CM_FIRSTSPECIALCOLORMAP + specialmap);
+			GLRenderer->mFrameState->SetFixedColormap(&SpecialColormaps[specialmap]);
 		}
 	}
+	GLRenderer->mFrameState->UpdateFor2D(true);
 
 	// Set the render parameters
 
@@ -385,7 +388,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				gl_SetDynSpriteLight(playermo, NULL);
 				gl_SetColor(statebright[i] ? 255 : lightlevel, 0, &cmc, trans, true);
 			}
-			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);
+			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, hudModelStep, OverrideShader);
 		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
@@ -418,5 +421,5 @@ void FGLRenderer::DrawTargeterSprites()
 
 	// The Targeter's sprites are always drawn normally.
 	for (i=ps_targetcenter, psp = &player->psprites[ps_targetcenter]; i<NUMPSPRITES; i++,psp++)
-		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, CM_DEFAULT, false, 0);
+		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, false, 0);
 }

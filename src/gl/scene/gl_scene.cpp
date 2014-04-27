@@ -659,7 +659,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if ( renderHUDModel == false )
 	{
-		GLRenderer->mFrameState->UpdateFor2D(true);
 		DrawPlayerSprites(viewsector, false);
 	}
 	GLRenderer->mFrameState->UpdateFor2D(false);

@@ -25,9 +25,8 @@ enum EColorManipulation
   // for internal use
 struct FColormap
 {
-	PalEntry		LightColor;		// a is saturation (0 full, 31=b/w, other=custom colormap)
+	PalEntry		LightColor;
 	PalEntry		FadeColor;		// a is fadedensity>>1
-	int				colormap;
 	int				blendfactor;
 	int				desaturation;
 
@@ -35,7 +34,6 @@ struct FColormap
 	{
 		LightColor=0xffffff;
 		FadeColor=0;
-		colormap = CM_DEFAULT;
 		blendfactor=0;
 		desaturation = 0;
 	}
@@ -50,13 +48,11 @@ struct FColormap
 	void GetFixedColormap()
 	{
 		Clear();
-		colormap = gl_fixedcolormap >= (int)CM_LITE? (int)CM_DEFAULT : gl_fixedcolormap;
 	}
 
 	FColormap & operator=(FDynamicColormap * from)
 	{
 		LightColor = from->Color;
-		colormap = CM_DEFAULT;
 		desaturation = from->Desaturate;
 		FadeColor = from->Fade;
 		blendfactor = from->Color.a;
@@ -70,7 +66,7 @@ struct FColormap
 		blendfactor = from->Color.a;
 	}
 
-	void Decolorize()	// this for 'nocoloredspritelighting and not the same as desaturation. The normal formula results in a value that's too dark.
+	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
 	{
 		int v = (LightColor.r + LightColor.g + LightColor.b) / 3;
 		LightColor.r = LightColor.g = LightColor.b = (255 + v + v) / 3;

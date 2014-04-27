@@ -27,9 +27,9 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
-	virtual void RenderFrame(FTexture * skin, int frame, int cm, int translation=0) = 0;
+	virtual void RenderFrame(FTexture * skin, int frame, int translation=0) = 0;
 	// [BB] Added RenderFrameInterpolated
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int cm, int translation=0) = 0;
+	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void MakeGLData() {}
 	virtual void CleanGLData() {}
 
@@ -138,8 +138,8 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int cm, int translation=0);
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int cm, int translation=0);
+	virtual void RenderFrame(FTexture * skin, int frame, int translation=0);
+	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 
 };
 
@@ -228,8 +228,8 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int cm, int translation=0);
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int cm, int translation=0);
+	virtual void RenderFrame(FTexture * skin, int frame, int translation=0);
+	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 };
 
 class FVoxelVertexBuffer;
@@ -291,8 +291,8 @@ public:
 	void MakeGLData();
 	void CleanGLData();
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int cm, int translation=0);
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int cm, int translation=0);
+	virtual void RenderFrame(FTexture * skin, int frame, int translation=0);
+	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	FTexture *GetPaletteTexture() const { return mPalette; }
 };
 
@@ -344,9 +344,9 @@ class GLSprite;
 void gl_InitModels();
 FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
 
-void gl_RenderModel(GLSprite * spr, int cm);
+void gl_RenderModel(GLSprite * spr);
 // [BB] HUD weapon model rendering functions.
-void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm);
+void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy);
 bool gl_IsHUDModelForPlayerAvailable (player_t * player);
 void gl_CleanModelData();
 

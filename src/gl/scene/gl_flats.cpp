@@ -332,7 +332,7 @@ inline void GLFlat::PutFlat(bool fogplane)
 
 	if (gl_fixedcolormap) 
 	{
-		Colormap.GetFixedColormap();
+		Colormap.Clear();
 	}
 	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fogplane)
 	{

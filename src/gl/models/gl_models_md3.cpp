@@ -232,7 +232,7 @@ void FMD3Model::RenderTriangles(MD3Surface * surf, MD3Vertex * vert)
 	glEnd();
 }
 
-void FMD3Model::RenderFrame(FTexture * skin, int frameno, int cm, int translation)
+void FMD3Model::RenderFrame(FTexture * skin, int frameno, int translation)
 {
 	if (frameno>=numFrames) return;
 
@@ -263,7 +263,7 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int cm, int translatio
 	}
 }
 
-void FMD3Model::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int cm, int translation)
+void FMD3Model::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	if (frameno>=numFrames || frameno2>=numFrames) return;
 

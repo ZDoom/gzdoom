@@ -26,6 +26,8 @@ class FShader
 	unsigned int hVertProg;
 	unsigned int hFragProg;
 
+	int alphathreshold_index;
+
 	int timer_index;
 	int desaturation_index;
 	int fogenabled_index;
@@ -38,7 +40,6 @@ class FShader
 	int fogcolor_index;
 	int lights_index;
 	int dlightcolor_index;
-	int alphathreshold_index;
 	int clipplane_index;
 	int glowbottomcolor_index;
 	int glowtopcolor_index;
@@ -49,8 +50,6 @@ class FShader
 	int colorcontrol_index;
 
 	int mModelMatLocation;
-	int mViewMatLocation;
-	int mProjMatLocation;
 	int mTexMatLocation;
 
 

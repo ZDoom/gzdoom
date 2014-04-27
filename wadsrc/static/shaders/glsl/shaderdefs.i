@@ -19,3 +19,7 @@ layout(std430, binding = 3) buffer ParameterBuffer
 	readonly vec4 Parameters[];
 };
 
+
+// settings that can't affect primitive batching for non-translucent stuff
+
+uniform float uAlphaThreshold;

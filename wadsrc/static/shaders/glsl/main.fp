@@ -16,7 +16,6 @@ uniform vec4 lights[128];
 
 
 
-uniform float alphathreshold;
 uniform float clipheight;
 uniform int fogenabled;
 uniform vec4 fogcolor;
@@ -238,7 +237,7 @@ void main()
 
 	vec4 frag = ProcessTexel();
 #ifndef NO_DISCARD
-	if (frag.a < alphathreshold)
+	if (frag.a < uAlphaThreshold)
 	{
 		discard;
 	}

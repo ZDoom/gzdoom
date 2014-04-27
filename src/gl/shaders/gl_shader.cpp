@@ -175,9 +175,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		// only print message if there's an error.
 		I_FatalError("Init Shader '%s':\n%s\n", name, error.GetChars());
 	}
+
+	alphathreshold_index = glGetUniformLocation(hShader, "uAlphaThreshold");
+
 	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
-	mViewMatLocation = glGetUniformLocation(hShader, "ViewMatrix");
-	mProjMatLocation = glGetUniformLocation(hShader, "ProjectionMatrix");
 	mTexMatLocation = glGetUniformLocation(hShader, "TextureMatrix");
 	timer_index = glGetUniformLocation(hShader, "timer");
 	desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
@@ -191,7 +192,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	fogcolor_index = glGetUniformLocation(hShader, "fogcolor");
 	lights_index = glGetUniformLocation(hShader, "lights");
 	dlightcolor_index = glGetUniformLocation(hShader, "dlightcolor");
-	alphathreshold_index = glGetUniformLocation(hShader, "alphathreshold");
 	clipplane_index = glGetUniformLocation(hShader, "clipheight");
 	objectcolor_index = glGetUniformLocation(hShader, "objectcolor");
 	buffercolor_index = glGetUniformLocation(hShader, "bufferColor");

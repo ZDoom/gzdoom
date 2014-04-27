@@ -1,5 +1,4 @@
 
-uniform float alphathreshold;
 uniform float clipheight;
 uniform vec4 objectcolor;
 
@@ -58,7 +57,7 @@ void main()
 
 	vec4 frag = ProcessTexel();
 #ifndef NO_DISCARD
-	if (frag.a < alphathreshold)
+	if (frag.a < uAlphaThreshold)
 	{
 		discard;
 	}

@@ -184,7 +184,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
 	fogenabled_index = glGetUniformLocation(hShader, "fogenabled");
 	texturemode_index = glGetUniformLocation(hShader, "texturemode");
-	camerapos_index = glGetUniformLocation(hShader, "camerapos");
 	lightparms_index = glGetUniformLocation(hShader, "lightparms");
 	colormapstart_index = glGetUniformLocation(hShader, "colormapstart");
 	colormaprange_index = glGetUniformLocation(hShader, "colormaprange");

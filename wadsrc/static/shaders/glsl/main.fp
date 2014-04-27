@@ -251,13 +251,13 @@ void main()
 	//
 	if (fogenabled != 0)
 	{
-		if (fogenabled == 1 || fogenabled == -1) 
+		if (uFogMode == 1) 
 		{
 			fogdist = pixelpos.w;
 		}
 		else 
 		{
-			fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
+			fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 		}
 		fogfactor = exp2 (fogparm.z * fogdist);
 	}

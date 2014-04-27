@@ -168,10 +168,6 @@ bool FRenderState::ApplyShader()
 		{
 			glUniform1i(activeShader->texturemode_index, (activeShader->currenttexturemode = mTextureMode)); 
 		}
-		if (activeShader->currentcamerapos.Update(&mCameraPos))
-		{
-			glUniform3fv(activeShader->camerapos_index, 1, mCameraPos.vec); 
-		}
 		/*if (mLightParms[0] != activeShader->currentlightfactor || 
 			mLightParms[1] != activeShader->currentlightdist ||
 			mFogDensity != activeShader->currentfogdensity)*/

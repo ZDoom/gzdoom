@@ -1,6 +1,5 @@
 uniform int fogenabled;
 uniform vec4 fogcolor;
-uniform vec3 camerapos;
 uniform int texturemode;
 in vec4 pixelpos;
 in vec4 fogparm;
@@ -77,13 +76,13 @@ void main()
 	//
 	// calculate fog factor
 	//
-	if (fogenabled == -1) 
+	if (uFogMode == 1) 
 	{
 		fogdist = pixelpos.w;
 	}
 	else 
 	{
-		fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
+		fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 	}
 	fogfactor = exp2 (fogparm.z * fogdist);
 	

@@ -146,7 +146,6 @@ class FRenderState
 	int mBlendEquation;
 	unsigned int mVertexArray, mLastVertexArray;
 
-	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor, mObjectColor;
@@ -255,11 +254,6 @@ public:
 	void SelectShader(int on)
 	{
 		mShaderSelect = on;
-	}
-
-	void SetCameraPos(float x, float y, float z)
-	{
-		mCameraPos.Set(x,y,z);
 	}
 
 	void SetGlowParams(float *t, float *b)

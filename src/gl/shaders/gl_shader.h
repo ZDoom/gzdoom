@@ -32,7 +32,6 @@ class FShader
 	int desaturation_index;
 	int fogenabled_index;
 	int texturemode_index;
-	int camerapos_index;
 	int lightparms_index;
 	int colormapstart_index;
 	int colormaprange_index;
@@ -67,8 +66,6 @@ class FShader
 	float currentfogdensity;
 	unsigned int mMatrixTick[4];
 
-	FStateVec3 currentcamerapos;
-
 public:
 	FShader()
 	{
@@ -82,7 +79,6 @@ public:
 		desaturation_index = -1;
 		fogenabled_index = -1;
 		texturemode_index = -1;
-		camerapos_index = -1;
 		lightparms_index = -1;
 		colormapstart_index = -1;
 		colormaprange_index = -1;

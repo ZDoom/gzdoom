@@ -63,6 +63,7 @@ FFrameState::FFrameState()
 	glBufferStorage(GL_UNIFORM_BUFFER, bytesize, NULL, GL_DYNAMIC_STORAGE_BIT);
 	bDSA = !!glewIsSupported("GL_EXT_direct_state_access");
 	UpdateFor2D(false);
+	memset(&mData, 0, sizeof(mData));
 }
 
 //==========================================================================
@@ -89,8 +90,8 @@ void FFrameState::UpdateFor3D()
 	mData.mLightMode = glset.lightmode;
 	mData.mFogMode = gl_fogmode;
 	mData.mCameraPos[0] = FIXED2FLOAT(viewx);
-	mData.mCameraPos[1] = FIXED2FLOAT(viewy);
-	mData.mCameraPos[2] = FIXED2FLOAT(viewz);
+	mData.mCameraPos[2] = FIXED2FLOAT(viewy);
+	mData.mCameraPos[1] = FIXED2FLOAT(viewz);
 	//mClipHeight is set directly from the portal code.
 
 	if (gl_fixedcolormap > CM_TORCH)

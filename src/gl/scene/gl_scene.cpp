@@ -289,7 +289,6 @@ void FGLRenderer::SetupView(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t
 	SetCameraPos(viewx, viewy, viewz, viewangle);
 	SetViewMatrix(mirror, planemirror);
 
-	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
 	GLRenderer->mFrameState->UpdateFor3D();
 }
 

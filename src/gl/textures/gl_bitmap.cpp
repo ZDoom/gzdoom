@@ -50,7 +50,7 @@
 //
 //===========================================================================
 template<class T>
-void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int count, int step)
+void iCopyColors(unsigned char * pout, const unsigned char * pin, int count, int step)
 {
 	int i;
 
@@ -68,7 +68,7 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 	}
 }
 
-typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int cm, int count, int step);
+typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int count, int step);
 
 static CopyFunc copyfuncs[]={
 	iCopyColors<cRGB>,
@@ -98,7 +98,7 @@ void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
 		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], cm, srcwidth, step_x);
+			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x);
 		}
 	}
 }

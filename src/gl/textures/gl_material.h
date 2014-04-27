@@ -65,20 +65,20 @@ private:
 	bool bExpand;
 	float AlphaThreshold;
 
-	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, int cm);
+	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 
 	FHardwareTexture *CreateTexture(int clampmode);
 	//bool CreateTexture();
 	bool CreatePatch();
 
-	const FHardwareTexture *Bind(int texunit, int cm, int clamp, int translation, FTexture *hirescheck);
-	const FHardwareTexture *BindPatch(int texunit, int cm, int translation);
+	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck);
+	const FHardwareTexture *BindPatch(int texunit, int translation);
 
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand, FTexture *hirescheck);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand, FTexture *hirescheck);
 
 	void Clean(bool all);
 	int Dump(int i);
@@ -133,9 +133,9 @@ public:
 	void Bind(int cm, int clamp = 0, int translation = 0, int overrideshader = -1);
 	void BindPatch(int cm, int translation = 0, int overrideshader = -1);
 
-	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
 	{
-		return mBaseLayer->CreateTexBuffer(cm, translation, w, h, expand, allowhires? tex:NULL);
+		return mBaseLayer->CreateTexBuffer(translation, w, h, expand, allowhires? tex:NULL);
 	}
 
 	void Clean(bool f)
@@ -228,7 +228,7 @@ public:
 			if (!mBaseLayer->tex->bHasCanvas)
 			{
 				int w, h;
-				unsigned char *buffer = CreateTexBuffer(CM_DEFAULT, 0, w, h);
+				unsigned char *buffer = CreateTexBuffer(0, w, h);
 				delete [] buffer;
 			}
 			else

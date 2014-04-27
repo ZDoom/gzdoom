@@ -767,7 +767,13 @@ void GLPlaneMirrorPortal::DrawContents()
 	int old_pm=PlaneMirrorMode;
 
 	fixed_t planez = origin->ZatPoint(viewx, viewy);
-	viewz = 2*planez - viewz - FRACUNIT;
+	// I'm getting imprecisions here when using my own math stuff so let's offset the reflection a bit. Needs more investigation.
+	#if 0
+		viewz = 2 * planez - viewz - FRACUNIT / 2;
+	#else
+		if (planez > viewz) viewz = 2 * planez - viewz - FRACUNIT / 5;
+		else viewz = 2 * planez - viewz + FRACUNIT / 5;
+	#endif
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = ksgn(origin->c);
 

@@ -1,5 +1,5 @@
 
-vec4 Process(vec4 color)
+vec4 ProcessTexel()
 {
 	return getTexel(gl_TexCoord[0].st);
 }

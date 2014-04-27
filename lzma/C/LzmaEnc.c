@@ -1,5 +1,5 @@
 /* LzmaEnc.c -- LZMA Encoder
-2009-02-02 : Igor Pavlov : Public domain */
+2010-04-16 : Igor Pavlov : Public domain */
 
 #include <string.h>
 
@@ -13,7 +13,7 @@
 #include "LzmaEnc.h"
 
 #include "LzFind.h"
-#ifdef COMPRESS_MF_MT
+#ifndef _7ZIP_ST
 #include "LzFindMt.h"
 #endif
 
@@ -66,7 +66,7 @@ void LzmaEncProps_Normalize(CLzmaEncProps *p)
   if (p->mc == 0)  p->mc = (16 + (p->fb >> 1)) >> (p->btMode ? 0 : 1);
   if (p->numThreads < 0)
     p->numThreads =
-      #ifdef COMPRESS_MF_MT
+      #ifndef _7ZIP_ST
       ((p->btMode && p->algo) ? 2 : 1);
       #else
       1;
@@ -139,7 +139,7 @@ void LzmaEnc_FastPosInit(Byte *g_FastPos)
 
 typedef unsigned CState;
 
-typedef struct _COptimal
+typedef struct
 {
   UInt32 price;
 
@@ -172,7 +172,7 @@ typedef struct _COptimal
 #define kEndPosModelIndex 14
 #define kNumPosModels (kEndPosModelIndex - kStartPosModelIndex)
 
-#define kNumFullDistances (1 << (kEndPosModelIndex / 2))
+#define kNumFullDistances (1 << (kEndPosModelIndex >> 1))
 
 #ifdef _LZMA_PROB32
 #define CLzmaProb UInt32
@@ -218,7 +218,7 @@ typedef struct
   UInt32 counters[LZMA_NUM_PB_STATES_MAX];
 } CLenPriceEnc;
 
-typedef struct _CRangeEnc
+typedef struct
 {
   UInt32 range;
   Byte cache;
@@ -231,26 +231,6 @@ typedef struct _CRangeEnc
   UInt64 processed;
   SRes res;
 } CRangeEnc;
-
-typedef struct _CSeqInStreamBuf
-{
-  ISeqInStream funcTable;
-  const Byte *data;
-  SizeT rem;
-} CSeqInStreamBuf;
-
-static SRes MyRead(void *pp, void *data, size_t *size)
-{
-  size_t curSize = *size;
-  CSeqInStreamBuf *p = (CSeqInStreamBuf *)pp;
-  if (p->rem < curSize)
-    curSize = p->rem;
-  memcpy(data, p->data, curSize);
-  p->rem -= curSize;
-  p->data += curSize;
-  *size = curSize;
-  return SZ_OK;
-}
 
 typedef struct
 {
@@ -274,19 +254,19 @@ typedef struct
   UInt32 state;
 } CSaveState;
 
-typedef struct _CLzmaEnc
+typedef struct
 {
   IMatchFinder matchFinder;
   void *matchFinderObj;
 
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   Bool mtMode;
   CMatchFinderMt matchFinderMt;
   #endif
 
   CMatchFinder matchFinderBase;
 
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   Byte pad[128];
   #endif
   
@@ -351,8 +331,7 @@ typedef struct _CLzmaEnc
   UInt32 dictSize;
   UInt32 matchFinderCycles;
 
-  ISeqInStream *inStream;
-  CSeqInStreamBuf seqBufInStream;
+  int needInit;
 
   CSaveState saveState;
 } CLzmaEnc;
@@ -416,7 +395,7 @@ SRes LzmaEnc_SetProps(CLzmaEncHandle pp, const CLzmaEncProps *props2)
   LzmaEncProps_Normalize(&props);
 
   if (props.lc > LZMA_LC_MAX || props.lp > LZMA_LP_MAX || props.pb > LZMA_PB_MAX ||
-      props.dictSize > (1 << kDicLogSizeMaxCompress) || props.dictSize > (1 << 30))
+      props.dictSize > ((UInt32)1 << kDicLogSizeMaxCompress) || props.dictSize > ((UInt32)1 << 30))
     return SZ_ERROR_PARAM;
   p->dictSize = props.dictSize;
   p->matchFinderCycles = props.mc;
@@ -449,7 +428,7 @@ SRes LzmaEnc_SetProps(CLzmaEncHandle pp, const CLzmaEncProps *props2)
 
   p->writeEndMark = props.writeEndMark;
 
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   /*
   if (newMultiThread != _multiThread)
   {
@@ -1698,7 +1677,7 @@ void LzmaEnc_Construct(CLzmaEnc *p)
 {
   RangeEnc_Construct(&p->rc);
   MatchFinder_Construct(&p->matchFinderBase);
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   MatchFinderMt_Construct(&p->matchFinderMt);
   p->matchFinderMt.MatchFinder = &p->matchFinderBase;
   #endif
@@ -1737,7 +1716,7 @@ void LzmaEnc_FreeLits(CLzmaEnc *p, ISzAlloc *alloc)
 
 void LzmaEnc_Destruct(CLzmaEnc *p, ISzAlloc *alloc, ISzAlloc *allocBig)
 {
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   MatchFinderMt_Destruct(&p->matchFinderMt, allocBig);
   #endif
   MatchFinder_Free(&p->matchFinderBase, allocBig);
@@ -1754,11 +1733,10 @@ void LzmaEnc_Destroy(CLzmaEncHandle p, ISzAlloc *alloc, ISzAlloc *allocBig)
 static SRes LzmaEnc_CodeOneBlock(CLzmaEnc *p, Bool useLimits, UInt32 maxPackSize, UInt32 maxUnpackSize)
 {
   UInt32 nowPos32, startPos32;
-  if (p->inStream != 0)
+  if (p->needInit)
   {
-    p->matchFinderBase.stream = p->inStream;
     p->matchFinder.Init(p->matchFinderObj);
-    p->inStream = 0;
+    p->needInit = 0;
   }
 
   if (p->finished)
@@ -1923,7 +1901,7 @@ static SRes LzmaEnc_Alloc(CLzmaEnc *p, UInt32 keepWindowSize, ISzAlloc *alloc, I
   if (!RangeEnc_Alloc(&p->rc, alloc))
     return SZ_ERROR_MEM;
   btMode = (p->matchFinderBase.btMode != 0);
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   p->mtMode = (p->multiThread && !p->fastMode && btMode);
   #endif
 
@@ -1948,7 +1926,7 @@ static SRes LzmaEnc_Alloc(CLzmaEnc *p, UInt32 keepWindowSize, ISzAlloc *alloc, I
   if (beforeSize + p->dictSize < keepWindowSize)
     beforeSize = keepWindowSize - p->dictSize;
 
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   if (p->mtMode)
   {
     RINOK(MatchFinderMt_Create(&p->matchFinderMt, p->dictSize, beforeSize, p->numFastBytes, LZMA_MATCH_LEN_MAX, allocBig));
@@ -2056,11 +2034,12 @@ static SRes LzmaEnc_AllocAndInit(CLzmaEnc *p, UInt32 keepWindowSize, ISzAlloc *a
   return SZ_OK;
 }
 
-static SRes LzmaEnc_Prepare(CLzmaEncHandle pp, ISeqInStream *inStream, ISeqOutStream *outStream,
+static SRes LzmaEnc_Prepare(CLzmaEncHandle pp, ISeqOutStream *outStream, ISeqInStream *inStream,
     ISzAlloc *alloc, ISzAlloc *allocBig)
 {
   CLzmaEnc *p = (CLzmaEnc *)pp;
-  p->inStream = inStream;
+  p->matchFinderBase.stream = inStream;
+  p->needInit = 1;
   p->rc.outStream = outStream;
   return LzmaEnc_AllocAndInit(p, 0, alloc, allocBig);
 }
@@ -2070,15 +2049,16 @@ SRes LzmaEnc_PrepareForLzma2(CLzmaEncHandle pp,
     ISzAlloc *alloc, ISzAlloc *allocBig)
 {
   CLzmaEnc *p = (CLzmaEnc *)pp;
-  p->inStream = inStream;
+  p->matchFinderBase.stream = inStream;
+  p->needInit = 1;
   return LzmaEnc_AllocAndInit(p, keepWindowSize, alloc, allocBig);
 }
 
 static void LzmaEnc_SetInputBuf(CLzmaEnc *p, const Byte *src, SizeT srcLen)
 {
-  p->seqBufInStream.funcTable.Read = MyRead;
-  p->seqBufInStream.data = src;
-  p->seqBufInStream.rem = srcLen;
+  p->matchFinderBase.directInput = 1;
+  p->matchFinderBase.bufferBase = (Byte *)src;
+  p->matchFinderBase.directInputRem = srcLen;
 }
 
 SRes LzmaEnc_MemPrepare(CLzmaEncHandle pp, const Byte *src, SizeT srcLen,
@@ -2086,13 +2066,14 @@ SRes LzmaEnc_MemPrepare(CLzmaEncHandle pp, const Byte *src, SizeT srcLen,
 {
   CLzmaEnc *p = (CLzmaEnc *)pp;
   LzmaEnc_SetInputBuf(p, src, srcLen);
-  p->inStream = &p->seqBufInStream.funcTable;
+  p->needInit = 1;
+
   return LzmaEnc_AllocAndInit(p, keepWindowSize, alloc, allocBig);
 }
 
 void LzmaEnc_Finish(CLzmaEncHandle pp)
 {
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   CLzmaEnc *p = (CLzmaEnc *)pp;
   if (p->mtMode)
     MatchFinderMt_ReleaseStream(&p->matchFinderMt);
@@ -2101,7 +2082,7 @@ void LzmaEnc_Finish(CLzmaEncHandle pp)
   #endif
 }
 
-typedef struct _CSeqOutStreamBuf
+typedef struct
 {
   ISeqOutStream funcTable;
   Byte *data;
@@ -2170,20 +2151,16 @@ SRes LzmaEnc_CodeOneMemBlock(CLzmaEncHandle pp, Bool reInit,
   return res;
 }
 
-SRes LzmaEnc_Encode(CLzmaEncHandle pp, ISeqOutStream *outStream, ISeqInStream *inStream, ICompressProgress *progress,
-    ISzAlloc *alloc, ISzAlloc *allocBig)
+static SRes LzmaEnc_Encode2(CLzmaEnc *p, ICompressProgress *progress)
 {
-  CLzmaEnc *p = (CLzmaEnc *)pp;
   SRes res = SZ_OK;
 
-  #ifdef COMPRESS_MF_MT
+  #ifndef _7ZIP_ST
   Byte allocaDummy[0x300];
   int i = 0;
   for (i = 0; i < 16; i++)
     allocaDummy[i] = (Byte)i;
   #endif
-
-  RINOK(LzmaEnc_Prepare(pp, inStream, outStream, alloc, allocBig));
 
   for (;;)
   {
@@ -2200,8 +2177,15 @@ SRes LzmaEnc_Encode(CLzmaEncHandle pp, ISeqOutStream *outStream, ISeqInStream *i
       }
     }
   }
-  LzmaEnc_Finish(pp);
+  LzmaEnc_Finish(p);
   return res;
+}
+
+SRes LzmaEnc_Encode(CLzmaEncHandle pp, ISeqOutStream *outStream, ISeqInStream *inStream, ICompressProgress *progress,
+    ISzAlloc *alloc, ISzAlloc *allocBig)
+{
+  RINOK(LzmaEnc_Prepare(pp, outStream, inStream, alloc, allocBig));
+  return LzmaEnc_Encode2((CLzmaEnc *)pp, progress);
 }
 
 SRes LzmaEnc_WriteProperties(CLzmaEncHandle pp, Byte *props, SizeT *size)
@@ -2249,8 +2233,11 @@ SRes LzmaEnc_MemEncode(CLzmaEncHandle pp, Byte *dest, SizeT *destLen, const Byte
   outStream.overflow = False;
 
   p->writeEndMark = writeEndMark;
-  res = LzmaEnc_Encode(pp, &outStream.funcTable, &p->seqBufInStream.funcTable,
-      progress, alloc, allocBig);
+
+  p->rc.outStream = &outStream.funcTable;
+  res = LzmaEnc_MemPrepare(pp, src, srcLen, 0, alloc, allocBig);
+  if (res == SZ_OK)
+    res = LzmaEnc_Encode2(p, progress);
 
   *destLen -= outStream.rem;
   if (outStream.overflow)

@@ -224,12 +224,6 @@ bool FRenderState::ApplyShader()
 			activeShader->currentalphathreshold = newthresh;
 		}
 
-		if (mClipPlane != activeShader->currentclipplane)
-		{
-			glUniform1f(activeShader->clipplane_index, mClipPlane);
-			activeShader->currentclipplane = mClipPlane;
-		}
-
 		glUniform4f(activeShader->dlightcolor_index, mDynLight[0], mDynLight[1], mDynLight[2], 0.f);
 		if (glset.lightmode == 8)
 		{

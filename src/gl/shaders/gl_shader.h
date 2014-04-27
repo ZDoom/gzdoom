@@ -40,7 +40,6 @@ class FShader
 	int fogcolor_index;
 	int lights_index;
 	int dlightcolor_index;
-	int clipplane_index;
 	int glowbottomcolor_index;
 	int glowtopcolor_index;
 	int glowbottomplane_index;
@@ -61,7 +60,6 @@ class FShader
 	float currentlightfactor;
 	float currentlightdist;
 	float currentalphathreshold;
-	float currentclipplane;
 	float currentdesaturation;
 	int currentColorControl;
 
@@ -76,7 +74,7 @@ public:
 	{
 		hShader = hVertProg = hFragProg = 0;
 		currentColorControl = currentfogenabled = currenttexturemode = currentglowstate = 0;
-		currentdesaturation = currentlightfactor = currentlightdist = currentalphathreshold = currentclipplane = currentwarpphase = 0.0f;
+		currentdesaturation = currentlightfactor = currentlightdist = currentalphathreshold = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
 		currentobjectcolor = currentfogcolor = 0;
 
@@ -93,7 +91,6 @@ public:
 		lights_index = -1;
 		dlightcolor_index = -1;
 		alphathreshold_index = -1;
-		clipplane_index = -1;
 		glowtopplane_index = -1;
 		glowbottomplane_index = -1;
 		glowtopcolor_index = -1;

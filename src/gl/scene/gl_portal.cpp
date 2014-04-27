@@ -767,20 +767,21 @@ void GLPlaneMirrorPortal::DrawContents()
 	int old_pm=PlaneMirrorMode;
 
 	fixed_t planez = origin->ZatPoint(viewx, viewy);
-	viewz = 2*planez - viewz;
+	viewz = 2*planez - viewz - FRACUNIT;
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = ksgn(origin->c);
 
 	validcount++;
 
-	PlaneMirrorFlag++;
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
-	ClearClipper();
-
 	float f = FIXED2FLOAT(planez);
 	if (PlaneMirrorMode < 0) f -= 65536.f;	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
 	else f += 65536.f;	// floor mirror: clip everything with a z higher than the portal's floor
 	gl_RenderState.SetClipPlane(f);
+
+	PlaneMirrorFlag++;
+	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	ClearClipper();
+
 	GLRenderer->DrawScene();
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;

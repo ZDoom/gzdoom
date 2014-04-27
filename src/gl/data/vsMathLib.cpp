@@ -16,18 +16,15 @@ This is a simplified version of VSMathLib that has been adjusted for GZDoom's ne
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "doomtype.h"
 
 // This var keeps track of the single instance of VSMathLib
 VSMathLib VSML;
 
-#ifndef M_PI
-#define M_PI       3.14159265358979323846f
-#endif
-
-static inline float 
-DegToRad(float degrees) 
+static inline double 
+DegToRad(double degrees) 
 { 
-	return (float)(degrees * (M_PI / 180.0f));
+	return (double)(degrees * (M_PI / 180.0f));
 };
 
 
@@ -36,7 +33,7 @@ void
 VSMathLib::pushMatrix(MatrixTypes aType) 
 {
 	unsigned int index = mMatrixStack[aType].Reserve(16);
-	memcpy(&mMatrixStack[aType][index], mMatrix[aType], sizeof(float) * 16);
+	memcpy(&mMatrixStack[aType][index], mMatrix[aType], sizeof(double) * 16);
 }
 
 
@@ -47,7 +44,7 @@ VSMathLib::popMatrix(MatrixTypes aType)
 	unsigned int index = mMatrixStack[aType].Size();
 	if (index >= 16) 
 	{
-		memcpy(mMatrix[aType], &mMatrixStack[aType][index-16], sizeof(float) * 16);
+		memcpy(mMatrix[aType], &mMatrixStack[aType][index-16], sizeof(double) * 16);
 		mMatrixStack[aType].Resize(index-16);
 		mUpdateTick[aType]++;
 	}
@@ -65,10 +62,10 @@ VSMathLib::loadIdentity(MatrixTypes aType)
 
 // glMultMatrix implementation
 void 
-VSMathLib::multMatrix(MatrixTypes aType, float *aMatrix)
+VSMathLib::multMatrix(MatrixTypes aType, double *aMatrix)
 {
 	
-	float *a, *b, res[16];
+	double *a, *b, res[16];
 	a = mMatrix[aType];
 	b = aMatrix;
 
@@ -80,7 +77,28 @@ VSMathLib::multMatrix(MatrixTypes aType, float *aMatrix)
 			}
 		}
 	}
-	memcpy(mMatrix[aType], res, 16 * sizeof(float));
+	memcpy(mMatrix[aType], res, 16 * sizeof(double));
+	mUpdateTick[aType]++;
+}
+
+// glMultMatrix implementation
+void
+VSMathLib::multMatrix(MatrixTypes aType, float *aMatrix)
+{
+
+	double *a, res[16];
+	a = mMatrix[aType];
+	float *b = aMatrix;
+
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			res[j * 4 + i] = 0.0f;
+			for (int k = 0; k < 4; ++k) {
+				res[j * 4 + i] += a[k * 4 + i] * b[j * 4 + k];
+			}
+		}
+	}
+	memcpy(mMatrix[aType], res, 16 * sizeof(double));
 	mUpdateTick[aType]++;
 }
 
@@ -89,18 +107,18 @@ VSMathLib::multMatrix(MatrixTypes aType, float *aMatrix)
 
 // glLoadMatrix implementation
 void 
-VSMathLib::loadMatrix(MatrixTypes aType, float *aMatrix)
+VSMathLib::loadMatrix(MatrixTypes aType, double *aMatrix)
 {
-	memcpy(mMatrix[aType], aMatrix, 16 * sizeof(float));
+	memcpy(mMatrix[aType], aMatrix, 16 * sizeof(double));
 	mUpdateTick[aType]++;
 }
 
 
 // gl Translate implementation with matrix selection
 void 
-VSMathLib::translate(MatrixTypes aType, float x, float y, float z) 
+VSMathLib::translate(MatrixTypes aType, double x, double y, double z) 
 {
-	float mat[16];
+	double mat[16];
 
 	setIdentityMatrix(mat);
 	mat[12] = x;
@@ -114,7 +132,7 @@ VSMathLib::translate(MatrixTypes aType, float x, float y, float z)
 
 // gl Translate on the MODEL matrix
 void 
-VSMathLib::translate(float x, float y, float z) 
+VSMathLib::translate(double x, double y, double z) 
 {
 	translate(MODEL, x,y,z);
 }
@@ -122,9 +140,9 @@ VSMathLib::translate(float x, float y, float z)
 
 // gl Scale implementation with matrix selection
 void 
-VSMathLib::scale(MatrixTypes aType, float x, float y, float z) 
+VSMathLib::scale(MatrixTypes aType, double x, double y, double z) 
 {
-	float mat[16];
+	double mat[16];
 
 	setIdentityMatrix(mat,4);
 	mat[0] = x;
@@ -138,7 +156,7 @@ VSMathLib::scale(MatrixTypes aType, float x, float y, float z)
 
 // gl Scale on the MODELVIEW matrix
 void 
-VSMathLib::scale(float x, float y, float z) 
+VSMathLib::scale(double x, double y, double z) 
 {
 	scale(MODEL, x, y, z);
 }
@@ -146,22 +164,22 @@ VSMathLib::scale(float x, float y, float z)
 
 // gl Rotate implementation with matrix selection
 void 
-VSMathLib::rotate(MatrixTypes aType, float angle, float x, float y, float z)
+VSMathLib::rotate(MatrixTypes aType, double angle, double x, double y, double z)
 {
-	float mat[16];
-	float v[3];
+	double mat[16];
+	double v[3];
 
 	v[0] = x;
 	v[1] = y;
 	v[2] = z;
 
-	float radAngle = DegToRad(angle);
-	float co = cos(radAngle);
-	float si = sin(radAngle);
+	double radAngle = DegToRad(angle);
+	double co = cos(radAngle);
+	double si = sin(radAngle);
 	normalize(v);
-	float x2 = v[0]*v[0];
-	float y2 = v[1]*v[1];
-	float z2 = v[2]*v[2];
+	double x2 = v[0]*v[0];
+	double y2 = v[1]*v[1];
+	double z2 = v[2]*v[2];
 
 //	mat[0] = x2 + (y2 + z2) * co; 
 	mat[0] = co + x2 * (1 - co);// + (y2 + z2) * co; 
@@ -193,7 +211,7 @@ VSMathLib::rotate(MatrixTypes aType, float angle, float x, float y, float z)
 
 // gl Rotate implementation in the MODELVIEW matrix
 void 
-VSMathLib::rotate(float angle, float x, float y, float z)
+VSMathLib::rotate(double angle, double x, double y, double z)
 {
 	rotate(MODEL,angle,x,y,z);
 }
@@ -201,11 +219,11 @@ VSMathLib::rotate(float angle, float x, float y, float z)
 
 // gluLookAt implementation
 void 
-VSMathLib::lookAt(float xPos, float yPos, float zPos,
-					float xLook, float yLook, float zLook,
-					float xUp, float yUp, float zUp)
+VSMathLib::lookAt(double xPos, double yPos, double zPos,
+					double xLook, double yLook, double zLook,
+					double xUp, double yUp, double zUp)
 {
-	float dir[3], right[3], up[3];
+	double dir[3], right[3], up[3];
 
 	up[0] = xUp;	up[1] = yUp;	up[2] = zUp;
 
@@ -220,7 +238,7 @@ VSMathLib::lookAt(float xPos, float yPos, float zPos,
 	crossProduct(right,dir,up);
 	normalize(up);
 
-	float m1[16],m2[16];
+	double m1[16],m2[16];
 
 	m1[0]  = right[0];
 	m1[4]  = right[1];
@@ -254,11 +272,11 @@ VSMathLib::lookAt(float xPos, float yPos, float zPos,
 
 // gluPerspective implementation
 void 
-VSMathLib::perspective(float fov, float ratio, float nearp, float farp)
+VSMathLib::perspective(double fov, double ratio, double nearp, double farp)
 {
-	float projMatrix[16];
+	double projMatrix[16];
 
-	float f = 1.0f / tan (fov * (M_PI / 360.0f));
+	double f = 1.0f / tan (fov * (M_PI / 360.0f));
 
 	setIdentityMatrix(projMatrix,4);
 
@@ -275,11 +293,11 @@ VSMathLib::perspective(float fov, float ratio, float nearp, float farp)
 
 // glOrtho implementation
 void 
-VSMathLib::ortho(float left, float right, 
-			float bottom, float top, 
-			float nearp, float farp)
+VSMathLib::ortho(double left, double right, 
+			double bottom, double top, 
+			double nearp, double farp)
 {
-	float m[16];
+	double m[16];
 
 	setIdentityMatrix(m,4);
 
@@ -296,11 +314,11 @@ VSMathLib::ortho(float left, float right,
 
 // glFrustum implementation
 void 
-VSMathLib::frustum(float left, float right, 
-			float bottom, float top, 
-			float nearp, float farp)
+VSMathLib::frustum(double left, double right, 
+			double bottom, double top, 
+			double nearp, double farp)
 {
-	float m[16];
+	double m[16];
 
 	setIdentityMatrix(m,4);
 
@@ -318,7 +336,7 @@ VSMathLib::frustum(float left, float right,
 
 
 // returns a pointer to the requested matrix
-float *
+double *
 VSMathLib::get(MatrixTypes aType)
 {
 	return mMatrix[aType];
@@ -326,7 +344,7 @@ VSMathLib::get(MatrixTypes aType)
 
 
 // returns a pointer to the requested matrix
-float *
+double *
 VSMathLib::get(ComputedMatrixTypes aType)
 {
 	switch (aType) {
@@ -363,12 +381,15 @@ VSMathLib::get(ComputedMatrixTypes aType)
 void
 VSMathLib::matrixToGL(int loc, MatrixTypes aType)
 {
-	glUniformMatrix4fv(loc, 1, false, mMatrix[aType]);
+	float copyto[16];
+	copy(copyto, aType);
+	glUniformMatrix4fv(loc, 1, false, copyto);
 }
 
 void
 VSMathLib::matrixToGL(int loc, ComputedMatrixTypes aType)
 {
+	/*
 	if (aType == NORMAL) 
 	{
 		computeNormalMatrix3x3();
@@ -379,6 +400,7 @@ VSMathLib::matrixToGL(int loc, ComputedMatrixTypes aType)
 		computeDerivedMatrix(aType);
 		glUniformMatrix4fv(loc, 1, false, mCompMatrix[aType]);	
 	}
+	*/
 }
 
 
@@ -389,7 +411,7 @@ VSMathLib::matrixToGL(int loc, ComputedMatrixTypes aType)
 // sets the square matrix mat to the identity matrix,
 // size refers to the number of rows (or columns)
 void 
-VSMathLib::setIdentityMatrix( float *mat, int size) {
+VSMathLib::setIdentityMatrix( double *mat, int size) {
 
 	// fill matrix with 0s
 	for (int i = 0; i < size * size; ++i)
@@ -403,7 +425,7 @@ VSMathLib::setIdentityMatrix( float *mat, int size) {
 
 // Compute res = M * point
 void
-VSMathLib::multMatrixPoint(MatrixTypes aType, float *point, float *res) {
+VSMathLib::multMatrixPoint(MatrixTypes aType, double *point, double *res) {
 
 	for (int i = 0; i < 4; ++i) {
 
@@ -418,7 +440,7 @@ VSMathLib::multMatrixPoint(MatrixTypes aType, float *point, float *res) {
 
 // Compute res = M * point
 void
-VSMathLib::multMatrixPoint(ComputedMatrixTypes aType, float *point, float *res) {
+VSMathLib::multMatrixPoint(ComputedMatrixTypes aType, double *point, double *res) {
 
 
 	if (aType == NORMAL) {
@@ -474,7 +496,7 @@ VSMathLib::multMatrixPoint(ComputedMatrixTypes aType, float *point, float *res) 
 
 // res = a cross b;
 void 
-VSMathLib::crossProduct( float *a, float *b, float *res) {
+VSMathLib::crossProduct( double *a, double *b, double *res) {
 
 	res[0] = a[1] * b[2]  -  b[1] * a[2];
 	res[1] = a[2] * b[0]  -  b[2] * a[0];
@@ -483,10 +505,10 @@ VSMathLib::crossProduct( float *a, float *b, float *res) {
 
 
 // returns a . b
-float
-VSMathLib::dotProduct(float *a, float *b) {
+double
+VSMathLib::dotProduct(double *a, double *b) {
 
-	float res = a[0] * b[0]  +  a[1] * b[1]  +  a[2] * b[2];
+	double res = a[0] * b[0]  +  a[1] * b[1]  +  a[2] * b[2];
 
 	return res;
 }
@@ -494,9 +516,9 @@ VSMathLib::dotProduct(float *a, float *b) {
 
 // Normalize a vec3
 void 
-VSMathLib::normalize(float *a) {
+VSMathLib::normalize(double *a) {
 
-	float mag = sqrt(a[0] * a[0]  +  a[1] * a[1]  +  a[2] * a[2]);
+	double mag = sqrt(a[0] * a[0]  +  a[1] * a[1]  +  a[2] * a[2]);
 
 	a[0] /= mag;
 	a[1] /= mag;
@@ -506,7 +528,7 @@ VSMathLib::normalize(float *a) {
 
 // res = b - a
 void
-VSMathLib::subtract(float *a, float *b, float *res) {
+VSMathLib::subtract(double *a, double *b, double *res) {
 
 	res[0] = b[0] - a[0];
 	res[1] = b[1] - a[1];
@@ -516,7 +538,7 @@ VSMathLib::subtract(float *a, float *b, float *res) {
 
 // res = a + b
 void
-VSMathLib::add(float *a, float *b, float *res) {
+VSMathLib::add(double *a, double *b, double *res) {
 
 	res[0] = b[0] + a[0];
 	res[1] = b[1] + a[1];
@@ -525,8 +547,8 @@ VSMathLib::add(float *a, float *b, float *res) {
 
 
 // returns |a|
-float
-VSMathLib::length(float *a) {
+double
+VSMathLib::length(double *a) {
 
 	return(sqrt(a[0] * a[0]  +  a[1] * a[1]  +  a[2] * a[2]));
 
@@ -558,7 +580,7 @@ VSMathLib::computeNormalMatrix() {
 	mMat3x3[7] = mCompMatrix[VIEW_MODEL][9];
 	mMat3x3[8] = mCompMatrix[VIEW_MODEL][10];
 
-	float det, invDet;
+	double det, invDet;
 
 	det = mMat3x3[0] * (mMat3x3[4] * mMat3x3[8] - mMat3x3[5] * mMat3x3[7]) +
 		  mMat3x3[1] * (mMat3x3[5] * mMat3x3[6] - mMat3x3[8] * mMat3x3[3]) +
@@ -598,7 +620,7 @@ VSMathLib::computeNormalViewMatrix() {
 	mMat3x3[7] = mMatrix[VIEW][9];
 	mMat3x3[8] = mMatrix[VIEW][10];
 
-	float det, invDet;
+	double det, invDet;
 
 	det = mMat3x3[0] * (mMat3x3[4] * mMat3x3[8] - mMat3x3[5] * mMat3x3[7]) +
 		  mMat3x3[1] * (mMat3x3[5] * mMat3x3[6] - mMat3x3[8] * mMat3x3[3]) +
@@ -638,7 +660,7 @@ VSMathLib::computeNormalModelMatrix() {
 	mMat3x3[7] = mMatrix[MODEL][9];
 	mMat3x3[8] = mMatrix[MODEL][10];
 
-	float det, invDet;
+	double det, invDet;
 
 	det = mMat3x3[0] * (mMat3x3[4] * mMat3x3[8] - mMat3x3[5] * mMat3x3[7]) +
 		  mMat3x3[1] * (mMat3x3[5] * mMat3x3[6] - mMat3x3[8] * mMat3x3[3]) +
@@ -680,7 +702,7 @@ VSMathLib::computeNormalMatrix3x3() {
 	mMat3x3[7] = mCompMatrix[VIEW_MODEL][9];
 	mMat3x3[8] = mCompMatrix[VIEW_MODEL][10];
 
-	float det, invDet;
+	double det, invDet;
 
 	det = mMat3x3[0] * (mMat3x3[4] * mMat3x3[8] - mMat3x3[5] * mMat3x3[7]) +
 		  mMat3x3[1] * (mMat3x3[5] * mMat3x3[6] - mMat3x3[8] * mMat3x3[3]) +
@@ -717,7 +739,7 @@ VSMathLib::computeNormalViewMatrix3x3() {
 	mMat3x3[7] = mMatrix[VIEW][9];
 	mMat3x3[8] = mMatrix[VIEW][10];
 
-	float det, invDet;
+	double det, invDet;
 
 	det = mMat3x3[0] * (mMat3x3[4] * mMat3x3[8] - mMat3x3[5] * mMat3x3[7]) +
 		  mMat3x3[1] * (mMat3x3[5] * mMat3x3[6] - mMat3x3[8] * mMat3x3[3]) +
@@ -755,7 +777,7 @@ VSMathLib::computeNormalModelMatrix3x3() {
 	mMat3x3[7] = mMatrix[MODEL][9];
 	mMat3x3[8] = mMatrix[MODEL][10];
 
-	float det, invDet;
+	double det, invDet;
 
 	det = mMat3x3[0] * (mMat3x3[4] * mMat3x3[8] - mMat3x3[5] * mMat3x3[7]) +
 		  mMat3x3[1] * (mMat3x3[5] * mMat3x3[6] - mMat3x3[8] * mMat3x3[3]) +
@@ -782,16 +804,16 @@ VSMathLib::computeDerivedMatrix(ComputedMatrixTypes aType) {
 	
 	if (aType == PROJ_VIEW)
 	{
-		memcpy(mCompMatrix[PROJ_VIEW], mMatrix[PROJECTION], 16 * sizeof(float));
+		memcpy(mCompMatrix[PROJ_VIEW], mMatrix[PROJECTION], 16 * sizeof(double));
 		multMatrix(mCompMatrix[PROJ_VIEW], mMatrix[VIEW]);
 	}
 	else
 	{
-		memcpy(mCompMatrix[VIEW_MODEL], mMatrix[VIEW], 16 * sizeof(float));
+		memcpy(mCompMatrix[VIEW_MODEL], mMatrix[VIEW], 16 * sizeof(double));
 		multMatrix(mCompMatrix[VIEW_MODEL], mMatrix[MODEL]);
 
 		if (aType == PROJ_VIEW_MODEL) {
-			memcpy(mCompMatrix[PROJ_VIEW_MODEL], mMatrix[PROJECTION], 16 * sizeof(float));
+			memcpy(mCompMatrix[PROJ_VIEW_MODEL], mMatrix[PROJECTION], 16 * sizeof(double));
 			multMatrix(mCompMatrix[PROJ_VIEW_MODEL], mCompMatrix[VIEW_MODEL]);
 		}
 	}
@@ -800,10 +822,10 @@ VSMathLib::computeDerivedMatrix(ComputedMatrixTypes aType) {
 
 // aux function resMat = resMat * aMatrix
 void 
-VSMathLib::multMatrix(float *resMat, float *aMatrix)
+VSMathLib::multMatrix(double *resMat, double *aMatrix)
 {
 	
-	float *a, *b, res[16];
+	double *a, *b, res[16];
 	a = resMat;
 	b = aMatrix;
 
@@ -815,5 +837,5 @@ VSMathLib::multMatrix(float *resMat, float *aMatrix)
 			}
 		}
 	}
-	memcpy(a, res, 16 * sizeof(float));
+	memcpy(a, res, 16 * sizeof(double));
 }

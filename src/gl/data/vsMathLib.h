@@ -78,26 +78,26 @@ class VSMathLib {
 		  * \param aType any value from MatrixTypes
 		  * \param x,y,z vector to perform the translation
 		*/
-		void translate(MatrixTypes aType, float x, float y, float z);
+		void translate(MatrixTypes aType, double x, double y, double z);
 
 		/** Similar to gl Translate*. Applied to MODELVIEW only.
 		  *
 		  * \param x,y,z vector to perform the translation
 		*/
-		void translate(float x, float y, float z);
+		void translate(double x, double y, double z);
 
 		/** Similar to gl Scale*.
 		  *
 		  * \param aType any value from MatrixTypes
 		  * \param x,y,z scale factors
 		*/
-		void scale(MatrixTypes aType, float x, float y, float z);
+		void scale(MatrixTypes aType, double x, double y, double z);
 
 		/** Similar to gl Scale*. Applied to MODELVIEW only.
 		  *
 		  * \param x,y,z scale factors
 		*/
-		void scale(float x, float y, float z);
+		void scale(double x, double y, double z);
 
 		/** Similar to glTotate*. 
 		  *
@@ -105,14 +105,14 @@ class VSMathLib {
 		  * \param angle rotation angle in degrees
 		  * \param x,y,z rotation axis in degrees
 		*/
-		void rotate(MatrixTypes aType, float angle, float x, float y, float z);
+		void rotate(MatrixTypes aType, double angle, double x, double y, double z);
 
 		/** Similar to gl Rotate*. Applied to MODELVIEW only.
 		  *
 		  * \param angle rotation angle in degrees
 		  * \param x,y,z rotation axis in degrees
 		*/
-		void rotate(float angle, float x, float y, float z);
+		void rotate(double angle, double x, double y, double z);
 
 		/** Similar to glLoadIdentity.
 		  *
@@ -123,17 +123,18 @@ class VSMathLib {
 		/** Similar to glMultMatrix.
 		  *
 		  * \param aType any value from MatrixTypes
-		  * \param aMatrix matrix in column major order data, float[16]
+		  * \param aMatrix matrix in column major order data, double[16]
 		*/
 		void multMatrix(MatrixTypes aType, float *aMatrix);
+		void multMatrix(MatrixTypes aType, double *aMatrix);
 
 		/** Similar to gLoadMatrix.
 		  *
 		  * \param aType any value from MatrixTypes
-		  * \param aMatrix matrix in column major order data, float[16]
+		  * \param aMatrix matrix in column major order data, double[16]
 		*/
 
-		void loadMatrix(MatrixTypes aType, float *aMatrix);
+		void loadMatrix(MatrixTypes aType, double *aMatrix);
 
 		/** Similar to gl PushMatrix
 		  * 
@@ -153,9 +154,9 @@ class VSMathLib {
 		  * \param xLook, yLook, zLook point to aim the camera at
 		  * \param xUp, yUp, zUp camera's up vector
 		*/
-		void lookAt(float xPos, float yPos, float zPos,
-					float xLook, float yLook, float zLook,
-					float xUp, float yUp, float zUp);
+		void lookAt(double xPos, double yPos, double zPos,
+					double xLook, double yLook, double zLook,
+					double xUp, double yUp, double zUp);
 
 
 		/** Similar to gluPerspective
@@ -164,7 +165,7 @@ class VSMathLib {
 		  * \param ratio aspect ratio of the viewport or window
 		  * \param nearp,farp distance to the near and far planes
 		*/
-		void perspective(float fov, float ratio, float nearp, float farp);
+		void perspective(double fov, double ratio, double nearp, double farp);
 
 		/** Similar to glOrtho and gluOrtho2D (just leave the 
 		  * last two params blank).
@@ -175,8 +176,8 @@ class VSMathLib {
 		  * clipping planes
 		  * \param nearp,farp distance to the near and far planes
 		*/
-		void ortho(float left, float right, float bottom, float top, 
-						float nearp=-1.0f, float farp=1.0f);
+		void ortho(double left, double right, double bottom, double top, 
+						double nearp=-1.0f, double farp=1.0f);
 
 		/** Similar to glFrustum
 		  *
@@ -186,27 +187,35 @@ class VSMathLib {
 		  * clipping planes
 		  * \param nearp,farp distance to the near and far planes
 		*/
-		void frustum(float left, float right, float bottom, float top, 
-						float nearp, float farp);
+		void frustum(double left, double right, double bottom, double top, 
+						double nearp, double farp);
 
 		/** Similar to glGet
 		  *
 		  * \param aType any value from MatrixTypes
-		  * \returns pointer to the matrix (float[16])
+		  * \returns pointer to the matrix (double[16])
 		*/
-		float *get(MatrixTypes aType);
+		double *get(MatrixTypes aType);
+
+		void copy(double * pDest, MatrixTypes aType)
+		{
+			memcpy(pDest, mMatrix[aType], 16 * sizeof(double));
+		}
 
 		void copy(float * pDest, MatrixTypes aType)
 		{
-			memcpy(pDest, mMatrix[aType], 16 * sizeof(float));
+			for (int i = 0; i < 16; i++)
+			{
+				pDest[i] = (float)mMatrix[aType][i];
+			}
 		}
 
 		/** Similar to glGet for computed matrices
 		  *
 		  * \param aType any value from ComputedMatrixTypes
-		  * \returns pointer to the matrix (float[16] or float[9])
+		  * \returns pointer to the matrix (double[16] or double[9])
 		*/
-		float *get(ComputedMatrixTypes aType);
+		double *get(ComputedMatrixTypes aType);
 
 		/** Updates either the buffer or the uniform variables 
 		  * based on if the block name has been set
@@ -229,79 +238,79 @@ class VSMathLib {
 		/** Computes the multiplication of a matrix and a point 
 		  *
 		  * \param aType any value from MatrixTypes
-		  * \param point a float[4] representing a point
-		  * \param res a float[4] res = M * point
+		  * \param point a double[4] representing a point
+		  * \param res a double[4] res = M * point
 		*/
-		void multMatrixPoint(MatrixTypes aType, float *point, float *res);
+		void multMatrixPoint(MatrixTypes aType, double *point, double *res);
 
 		/** Computes the multiplication of a computed matrix and a point 
 		  *
 		  * \param aType any value from ComputedMatrixTypes
-		  * \param point a float[4] representing a point
-		  * \param res a float[4] res = M * point
+		  * \param point a double[4] representing a point
+		  * \param res a double[4] res = M * point
 		*/
-		void multMatrixPoint(ComputedMatrixTypes aType, float *point, float *res);
+		void multMatrixPoint(ComputedMatrixTypes aType, double *point, double *res);
 
 		/** vector cross product res = a x b
 		  * Note: memory for the result must be allocatted by the caller
 		  * 
-		  * \param a,b the two input float[3]
-		  * \param res the ouput result, a float[3]
+		  * \param a,b the two input double[3]
+		  * \param res the ouput result, a double[3]
 		*/
-		static void crossProduct( float *a, float *b, float *res);
+		static void crossProduct( double *a, double *b, double *res);
 
 		/** vector dot product 
 		  * 
-		  * \param a,b the two input float[3]
+		  * \param a,b the two input double[3]
 		  * \returns the dot product a.b
 		*/
-		static float dotProduct(float *a, float * b);
+		static double dotProduct(double *a, double * b);
 
 		/// normalize a vec3
-		static void normalize(float *a);
+		static void normalize(double *a);
 
 		/// vector subtraction res = b - a
-		static void subtract( float *a, float *b, float *res);
+		static void subtract( double *a, double *b, double *res);
 
 		/// vector addition res = a + b
-		static void add( float *a, float *b, float *res);
+		static void add( double *a, double *b, double *res);
 
 		/// vector length
-		static float length(float *a);
+		static double length(double *a);
 
 	protected:
 
 		/// aux variable to hold the result of vector ops
-		float mPointRes[4];
+		double mPointRes[4];
 
 		/// Matrix stacks for all matrix types
-		TArray<float> mMatrixStack[COUNT_MATRICES];
+		TArray<double> mMatrixStack[COUNT_MATRICES];
 
 		/// The storage for matrices
-		float mMatrix[COUNT_MATRICES][16];
-		float mCompMatrix[COUNT_COMPUTED_MATRICES][16];
+		double mMatrix[COUNT_MATRICES][16];
+		double mCompMatrix[COUNT_COMPUTED_MATRICES][16];
 		unsigned int mUpdateTick[COUNT_MATRICES];
 
 
 		/// The normal matrix
-		float mNormal[12];
-		float mNormal3x3[9];
-		float mNormalView3x3[9];		
-		float mNormalView[12];
-		float mNormalModel[12];
-		float mNormalModel3x3[9];
+		double mNormal[12];
+		double mNormal3x3[9];
+		double mNormalView3x3[9];		
+		double mNormalView[12];
+		double mNormalModel[12];
+		double mNormalModel3x3[9];
 		
 		/// aux 3x3 matrix
-		float mMat3x3[9];
+		double mMat3x3[9];
 
 		// AUX FUNCTIONS
 
-		/** Set a float* to an identity matrix
+		/** Set a double* to an identity matrix
 		  *
-		  * \param a float array with the matrix contents
+		  * \param a double array with the matrix contents
 		  * \param size the order of the matrix
 		*/
-		void setIdentityMatrix( float *mat, int size=4);
+		void setIdentityMatrix( double *mat, int size=4);
 
 		/// Computes the 3x4 normal matrix based on the modelview matrix
 		void computeNormalMatrix();
@@ -320,7 +329,7 @@ class VSMathLib {
 		void computeDerivedMatrix(ComputedMatrixTypes aType);
 
 		//resMatrix = resMatrix * aMatrix
-		void multMatrix(float *resMatrix, float *aMatrix);
+		void multMatrix(double *resMatrix, double *aMatrix);
 
 
 };

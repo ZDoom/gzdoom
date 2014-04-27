@@ -16,7 +16,6 @@ uniform vec4 lights[128];
 
 
 
-uniform float clipheight;
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec4 dlightcolor;		// one global light value that will get added just like a dynamic light.
@@ -231,8 +230,8 @@ void main()
 #ifndef NO_DISCARD
 	// clip plane emulation for plane reflections. These are always perfectly horizontal so a simple check of the pixelpos's y coordinate is sufficient.
 	// this setup is designed to perform this check with as few operations and values as possible.
-	if (pixelpos.y > clipheight + 65536.0) discard;
-	if (pixelpos.y < clipheight - 65536.0) discard;
+	if (pixelpos.y > uClipHeight + 65536.0) discard;
+	if (pixelpos.y < uClipHeight - 65536.0) discard;
 #endif
 
 	vec4 frag = ProcessTexel();

@@ -1,0 +1,7 @@
+
+void main()
+{
+	// perform exactly the same relevant steps as in the main shader to ensure matching results.
+	vec4 eyeCoordPos = ViewMatrix * gl_Vertex;
+	gl_Position = ProjectionMatrix * eyeCoordPos;
+}

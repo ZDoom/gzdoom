@@ -989,6 +989,7 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 	glStencilFunc(GL_EQUAL,recursion,~0);		// create stencil
 	glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
 	glColorMask(0,0,0,0);						// don't write to the graphics buffer
+	gl_RenderState.SetEffect(EFF_STENCIL);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.ResetColor();
 	glEnable(GL_DEPTH_TEST);
@@ -1004,6 +1005,7 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 
 	glStencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
 	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
+	gl_RenderState.SetEffect(EFF_NONE);
 
 	glColorMask(1,1,1,1);						// don't write to the graphics buffer
 	gl_RenderState.EnableTexture(true);
@@ -1018,6 +1020,7 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 	glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
 	gl_RenderState.EnableTexture(false);
 	glColorMask(0,0,0,0);						// don't write to the graphics buffer
+	gl_RenderState.SetEffect(EFF_STENCIL);
 	gl_RenderState.ResetColor();
 
 	gl_RenderState.Apply();
@@ -1032,7 +1035,8 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
 	glStencilFunc(GL_EQUAL,recursion,~0);
 	gl_RenderState.EnableTexture(true);
-	glColorMask(1,1,1,1);
+	gl_RenderState.SetEffect(EFF_NONE);
+	glColorMask(1, 1, 1, 1);
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(true);
 }

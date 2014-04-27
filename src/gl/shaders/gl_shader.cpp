@@ -374,9 +374,10 @@ struct FEffectShader
 
 static const FEffectShader effectshaders[]=
 {
-	{"fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, ""},
-	{"spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define NO_GLOW\n#define NO_DESATURATE\n#define SPHEREMAP\n"},
-	{"burn", "shaders/glsl/burn.vp", "shaders/glsl/burn.fp", NULL, ""},
+	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "" },
+	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define SPHEREMAP\n" },
+	{ "burn", "shaders/glsl/burn.vp", "shaders/glsl/burn.fp", NULL, "" },
+	{ "stencil", "shaders/glsl/stencil.vp", "shaders/glsl/stencil.fp", NULL, "" },
 };
 
 

@@ -186,6 +186,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 		glStencilFunc(GL_EQUAL,recursion,~0);		// create stencil
 		glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
 		glColorMask(0,0,0,0);						// don't write to the graphics buffer
+		gl_RenderState.SetEffect(EFF_STENCIL);
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LESS);
@@ -193,9 +194,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 
 		if (NeedDepthBuffer())
 		{
-			glDepthMask(false);							// don't write to Z-buffer!
-			if (!NeedDepthBuffer()) doquery = false;		// too much overhead and nothing to gain.
-			else if (gl_noquery) doquery = false;
+			glDepthMask(false);								// don't write to Z-buffer
+			if (gl_noquery) doquery = false;
 			
 			// If occlusion query is supported let's use it to avoid rendering portals that aren't visible
 			if (!QueryObject) glGenQueries(1, &QueryObject);
@@ -221,7 +221,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			gl_RenderState.EnableTexture(true);
 			glDepthFunc(GL_LESS);
 			glColorMask(1,1,1,1);
-			glDepthRange(0,1);
+			gl_RenderState.SetEffect(EFF_NONE);
+			glDepthRange(0, 1);
 
 			GLuint sampleCount;
 
@@ -250,6 +251,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
 			gl_RenderState.EnableTexture(true);
 			glColorMask(1,1,1,1);
+			gl_RenderState.SetEffect(EFF_NONE);
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);							// don't write to Z-buffer!
 		}
@@ -349,6 +351,7 @@ void GLPortal::End(bool usestencil)
 		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 		glColorMask(0,0,0,0);						// no graphics
+		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.ResetColor();
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.Apply();
@@ -375,7 +378,8 @@ void GLPortal::End(bool usestencil)
 
 
 		gl_RenderState.EnableTexture(true);
-		glColorMask(1,1,1,1);
+		gl_RenderState.SetEffect(EFF_NONE);
+		glColorMask(1, 1, 1, 1);
 		recursion--;
 
 		// restore old stencil op.
@@ -410,8 +414,10 @@ void GLPortal::End(bool usestencil)
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0,1);
 		glColorMask(0,0,0,0);						// no graphics
+		gl_RenderState.SetEffect(EFF_STENCIL);
 		gl_RenderState.EnableTexture(false);
 		DrawPortalStencil();
+		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.EnableTexture(true);
 		glColorMask(1,1,1,1);
 		glDepthFunc(GL_LESS);

@@ -1,3 +1,5 @@
+uniform float alphathreshold;
+uniform float clipheight;
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec3 camerapos;
@@ -9,6 +11,7 @@ uniform sampler2D tex;
 uniform vec4 objectcolor;
 
 vec4 Process(vec4 color);
+vec4 ProcessTexel();
 
 //===========================================================================
 //
@@ -55,6 +58,21 @@ vec4 getTexel(vec2 st)
 
 void main()
 {
+#ifndef NO_DISCARD
+	// clip plane emulation for plane reflections. These are always perfectly horizontal so a simple check of the pixelpos's y coordinate is sufficient.
+	// this setup is designed to perform this check with as few operations and values as possible.
+	if (pixelpos.y > clipheight + 65536.0) discard;
+	if (pixelpos.y < clipheight - 65536.0) discard;
+#endif
+
+	vec4 frag = ProcessTexel();
+#ifndef NO_DISCARD
+	if (frag.a < alphathreshold)
+	{
+		discard;
+	}
+#endif
+
 	float fogdist;
 	float fogfactor;
 	
@@ -71,7 +89,6 @@ void main()
 	}
 	fogfactor = exp2 (fogparm.z * fogdist);
 	
-	vec4 frag = Process(vec4(1.0,1.0,1.0,1.0));
 	gl_FragColor = vec4(fogcolor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * gl_Color.a);
 }
 

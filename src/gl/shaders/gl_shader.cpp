@@ -101,6 +101,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump);
 			FMemLump pp_data = Wads.ReadLump(pp_lump);
 
+			if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
+			{
+				// this looks like an old custom hardware shader.
+				// We need to replace the ProcessTexel call to make it work.
+
+				fp_comb.Substitute("vec4 frag = ProcessTexel();", "vec4 frag = Process(vec4(1.0));");
+			}
 			fp_comb << pp_data.GetString().GetChars();
 
 			if (pp_data.GetString().IndexOf("ProcessLight") < 0)

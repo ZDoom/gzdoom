@@ -36,6 +36,7 @@ uniform int texturemode;
 uniform sampler2D tex;
 
 vec4 Process(vec4 color);
+vec4 ProcessTexel();
 vec4 ProcessLight(vec4 color);
 
 
@@ -235,7 +236,7 @@ void main()
 	if (pixelpos.y < clipheight - 65536.0) discard;
 #endif
 
-	vec4 frag = Process(vec4(1.0));
+	vec4 frag = ProcessTexel();
 #ifndef NO_DISCARD
 	if (frag.a < alphathreshold)
 	{

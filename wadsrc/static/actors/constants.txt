@@ -221,7 +221,10 @@ enum
 	CHAN_VOICE = 2,
 	CHAN_ITEM = 3,
 	CHAN_BODY = 4,
-
+	CHAN_5 = 5,
+	CHAN_6 = 6,
+	CHAN_7 = 7,
+	
 	// modifier flags
 	CHAN_LISTENERZ = 8,
 	CHAN_MAYBE_LOCAL = 16,

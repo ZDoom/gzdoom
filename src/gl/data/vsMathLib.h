@@ -232,7 +232,15 @@ class VSMathLib {
 		void matrixToGL(int location, ComputedMatrixTypes aType);	
 
 
-		int getLastUpdate(MatrixTypes aType) { return mUpdateTick[aType]; }
+		int getLastUpdate(MatrixTypes aType) const
+		{ 
+			return mUpdateTick[aType]; 
+		}
+
+		int stackSize(MatrixTypes aType) const
+		{
+			return mMatrixStack[aType].Size();
+		}
 
 
 		/** Computes the multiplication of a matrix and a point 

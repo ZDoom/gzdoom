@@ -180,7 +180,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	alphathreshold_index = glGetUniformLocation(hShader, "uAlphaThreshold");
 
 	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
-	mTexMatLocation = glGetUniformLocation(hShader, "TextureMatrix");
 	timer_index = glGetUniformLocation(hShader, "timer");
 	desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
 	fogenabled_index = glGetUniformLocation(hShader, "fogenabled");

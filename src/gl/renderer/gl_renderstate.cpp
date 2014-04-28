@@ -220,11 +220,22 @@ bool FRenderState::ApplyShader()
 			VSML.matrixToGL(activeShader->mModelMatLocation, VSML.MODEL);
 			activeShader->mMatrixTick[0] = VSML.getLastUpdate(VSML.MODEL);
 		}
-		if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0) && activeShader->mTexMatLocation >= 0)
+		if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0))
 		{
-			// update texture matrix
-			VSML.matrixToGL(activeShader->mTexMatLocation, VSML.AUX0);
-			activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
+			int index;
+			if (VSML.stackSize(VSML.AUX0))
+			{
+				// update texture matrix
+				ParameterBufferElement *pptr;
+				index = GLRenderer->mParmBuffer->Reserve(4, &pptr);
+				VSML.copy(pptr->vec, VSML.AUX0);
+				activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
+			}
+			else
+			{
+				index = -1;
+			}
+			glUniform1i(101, index);
 		}
 
 		return true;

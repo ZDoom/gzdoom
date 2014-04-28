@@ -23,11 +23,11 @@ in vec4 attribColor;
 uniform int bufferColor;	// as AARRGGBB, 8 bits each.
 uniform int glowindex;
 layout (location = 100) uniform int dlights;	// this is temporary.
+layout (location = 101) uniform int texmat;	// this is temporary.
 out float desaturation_factor;
 
 
 uniform mat4 ModelMatrix;
-uniform mat4 TextureMatrix;
 
 
 //--------------------------
@@ -125,7 +125,15 @@ void main()
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
 		gl_TexCoord[0].xy = sst;
 	#else
-		gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
+		if (texmat != -1)
+		{
+			mat4 TextureMatrix = mat4(Parameters[texmat], Parameters[texmat+1], Parameters[texmat+2], Parameters[texmat+3]);
+			gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
+		}
+		else
+		{
+			gl_TexCoord[0] = gl_MultiTexCoord0;
+		}
 	#endif
 	
 	

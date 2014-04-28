@@ -44,8 +44,7 @@ class FShader
 	int colorcontrol_index;
 
 	int mModelMatLocation;
-	int mTexMatLocation;
-
+	
 
 	PalEntry currentobjectcolor;
 	int currentwarpphase;

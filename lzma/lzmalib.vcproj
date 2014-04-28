@@ -323,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\C\CpuArch.c"
+				>
+			</File>
+			<File
 				RelativePath=".\C\LzFind.c"
 				>
 			</File>
@@ -340,10 +344,6 @@
 			</File>
 			<File
 				RelativePath=".\C\LzmaEnc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\LzmaLib.c"
 				>
 			</File>
 			<File

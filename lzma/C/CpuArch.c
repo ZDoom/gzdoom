@@ -3,6 +3,10 @@
 
 #include "CpuArch.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #ifdef MY_CPU_X86_OR_AMD64
 
 #if (defined(_MSC_VER) && !defined(MY_CPU_AMD64)) || defined(__GNUC__)

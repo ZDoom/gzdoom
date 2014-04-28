@@ -113,7 +113,7 @@ bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 //==========================================================================
 extern FDynLightData lightdata;
 
-bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
+void GLFlat::SetupSubsectorLights(subsector_t * sub)
 {
 	Plane p;
 
@@ -147,22 +147,7 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 		}
 	}
 
-	int numlights[3];
-
-	lightdata.Combine(numlights, gl.MaxLights());
-	if (numlights[2] > 0)
-	{
-		draw_dlightf+=numlights[2]/2;
-		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
-		gl_RenderState.Apply();
-		return true;
-	}
-	if (lightsapplied) 
-	{
-		gl_RenderState.SetLights(NULL, NULL);
-		gl_RenderState.Apply();
-	}
-	return false;
+	gl_UploadLights(lightdata);
 }
 
 //==========================================================================
@@ -202,7 +187,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	if (sub)
 	{
 		// This represents a single subsector
-		if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+		if (pass == GLPASS_ALL) SetupSubsectorLights(sub);
 		DrawSubsector(sub);
 	}
 	else
@@ -216,7 +201,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				// This is just a quick hack to make translucent 3D floors and portals work.
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+					if (pass == GLPASS_ALL) SetupSubsectorLights(sub);
 					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
 					flatvertices += sub->numlines;
 					flatprimitives++;
@@ -232,7 +217,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				subsector_t * sub = sector->subsectors[i];
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+					if (pass == GLPASS_ALL) SetupSubsectorLights(sub);
 					DrawSubsector(sub);
 				}
 			}
@@ -247,13 +232,12 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 
 			while (node)
 			{
-				if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, node->sub);
+				if (pass == GLPASS_ALL) SetupSubsectorLights(node->sub);
 				DrawSubsector(node->sub);
 				node = node->next;
 			}
 		}
 	}
-	gl_RenderState.SetLights(NULL, NULL);
 }
 
 

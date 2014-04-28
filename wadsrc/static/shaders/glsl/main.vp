@@ -6,7 +6,7 @@ out vec4 fogparm;
 out vec2 glowdist;
 out vec4 topglowcolor;
 out vec4 bottomglowcolor;
-//out vec4 glowbottomplane, glowtopplane;
+flat out ivec4 lightrange;
 in float lightlevel_in;
 out float lightlevel;
 
@@ -18,8 +18,11 @@ out float lightlevel;
 // 2: read color and alpha from buffer. If alpha is 0, bufferColor will be an index into the parameter buffer with 2 entries defining RGBA and desaturation
 uniform int colorcontrol;
 in vec4 attribColor;
+
+// these 
 uniform int bufferColor;	// as AARRGGBB, 8 bits each.
 uniform int glowindex;
+layout (location = 100) uniform int dlights;	// this is temporary.
 out float desaturation_factor;
 
 
@@ -103,6 +106,15 @@ void main()
 		topglowcolor = vec4(0.0);
 		bottomglowcolor = vec4(0.0);
 		glowdist = vec2(0.0);
+	}
+	
+	if (dlights != -1)
+	{
+		lightrange = ivec4(Parameters[dlights]);
+	}
+	else
+	{
+		lightrange = ivec4(0);
 	}
 	
 	#ifdef SPHEREMAP

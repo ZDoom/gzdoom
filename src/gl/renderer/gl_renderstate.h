@@ -131,8 +131,6 @@ class FRenderState
 	float mSoftLightLevel;
 	float mDynLight[3];
 	float mLightParms[2];
-	int mNumLights[3];
-	float *mLightData;
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
 	bool mAlphaTest;
@@ -293,23 +291,6 @@ public:
 	void SetObjectColor(PalEntry c)
 	{
 		mObjectColor = c;
-	}
-
-	void SetLights(int *numlights, float *lightdata)
-	{
-		if (numlights != NULL)
-		{
-			mNumLights[0] = numlights[0];
-			mNumLights[1] = numlights[1];
-			mNumLights[2] = numlights[2];
-			mLightData = lightdata;	// caution: the data must be preserved by the caller until the 'apply' call!
-		}
-		else
-		{
-			mNumLights[0] = mNumLights[1] = mNumLights[2] = 0;
-			mLightData = NULL;
-		}
-	
 	}
 
 	PalEntry GetFogColor() const

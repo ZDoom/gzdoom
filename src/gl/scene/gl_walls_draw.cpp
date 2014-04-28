@@ -151,14 +151,8 @@ void GLWall::SetupLights()
 			node = node->nextLight;
 		}
 	}
-	int numlights[3];
-
-	lightdata.Combine(numlights, gl.MaxLights());
-	if (numlights[2] > 0)
-	{
-		draw_dlight+=numlights[2]/2;
-		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
-	}
+	if (lightdata.arrays[0].Size())
+	gl_UploadLights(lightdata);
 }
 
 //==========================================================================
@@ -184,6 +178,11 @@ void GLWall::RenderWall(int textured)
 	}
 
 	gl_RenderState.Apply();
+
+	if (textured & TRF_LIGHTS)
+	{
+		SetupLights();
+	}
 
 	glBegin(GL_TRIANGLE_FAN);
 
@@ -360,19 +359,16 @@ void GLWall::Draw(int pass)
 
 	switch (pass)
 	{
-	case GLPASS_ALL:			// Single-pass rendering
-		SetupLights();
-		// fall through
-	case GLPASS_PLAIN:			// Single-pass rendering
+	case GLPASS_ALL:
+	case GLPASS_PLAIN:
 		rel = rellight + getExtraLight();
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
 		else gl_SetFog(255, 0, NULL, false);
 
 		gltexture->Bind(flags, 0);
-		RenderWall(GLWall::TRF_DEFAULT);
+		RenderWall(pass == GLPASS_PLAIN? GLWall::TRF_DEFAULT : GLWall::TRF_DEFAULT|TRF_LIGHTS);
 		gl_RenderState.EnableGlow(false);
-		gl_RenderState.SetLights(NULL, NULL);
 		break;
 
 	case GLPASS_DECALS:

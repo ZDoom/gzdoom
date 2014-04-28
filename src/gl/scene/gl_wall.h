@@ -104,10 +104,11 @@ public:
 		TRF_TEXTURED = 1,
 		TRF_ALLOWGLOW = 2,
 		TRF_NOSPLIT = 4,
+		TRF_LIGHTS = 8,
 
 		TRF_BLANK = 0,
 		TRF_DEFAULT = TRF_TEXTURED | TRF_ALLOWGLOW,
-		TRF_TRANSLUCENT = TRF_DEFAULT | TRF_NOSPLIT
+		TRF_TRANSLUCENT = TRF_DEFAULT | TRF_NOSPLIT | TRF_LIGHTS
 	};
 
 
@@ -273,7 +274,7 @@ public:
 
 	int dynlightindex;
 
-	bool SetupSubsectorLights(bool lightsapplied, subsector_t * sub);
+	void SetupSubsectorLights(subsector_t * sub);
 	void DrawSubsector(subsector_t * sub);
 	void DrawSubsectors(int pass, bool istrans);
 

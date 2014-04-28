@@ -2,20 +2,6 @@
 // Default is 232, it seems to give exactly the same light bands as software renderer.
 #define DOOMLIGHTFACTOR 232.0
 
-
-// ATI does not like this inside an #ifdef so it will be prepended by the compiling code inside the .EXE now.
-//#version 120
-//#extension GL_EXT_gpu_shader4 : enable
-
-uniform ivec3 lightrange;
-#ifndef MAXLIGHTS128
-uniform vec4 lights[256];
-#else
-uniform vec4 lights[128];
-#endif
-
-
-
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec4 dlightcolor;		// one global light value that will get added just like a dynamic light.
@@ -25,6 +11,7 @@ in vec4 pixelpos;
 in vec4 fogparm;
 //uniform vec2 lightparms;
 in float desaturation_factor;
+flat in ivec4 lightrange;
 
 in vec4 topglowcolor;
 in vec4 bottomglowcolor;
@@ -133,23 +120,22 @@ float R_DoomLightingEquation(float light, float dist)
 vec4 getLightColor(float fogdist, float fogfactor)
 {
 	vec4 color = gl_Color;
-	if (lightlevel >= 0.0)
+	if (uLightMode == 8)
 	{
 		float newlightlevel = 1.0 - R_DoomLightingEquation(lightlevel, gl_FragCoord.z);
 		color.rgb *= newlightlevel;
 	}
-	
-	//
-	// apply light diminishing through fog equation
-	//
 	else if (fogenabled > 0)
 	{
+		// brightening around the player for light mode 2
 		if (fogdist < fogparm.y)
 		{
 			color.rgb *= fogparm.x - (fogdist / fogparm.y) * (fogparm.x - 1.0);
 		}
 		
-		//color = vec4(color.rgb * (1.0 - fogfactor), color.a);
+		//
+		// apply light diminishing through fog equation
+		//
 		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
 	}
 	
@@ -174,17 +160,18 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	//
 	// apply dynamic lights (except additive)
 	//
+	
 	vec4 dynlight = dlightcolor;
 
-	if (lightrange.z > 0)
+	if (lightrange.z > lightrange.x)
 	{
 		//
 		// modulated lights
 		//
-		for(int i=0; i<lightrange.x; i+=2)
+		for(int i=lightrange.x; i<lightrange.y; i+=2)
 		{
-			vec4 lightpos = lights[i];
-			vec4 lightcolor = lights[i+1];
+			vec4 lightpos = Parameters[i];
+			vec4 lightcolor = Parameters[i+1];
 			
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 			dynlight.rgb += lightcolor.rgb;
@@ -192,10 +179,10 @@ vec4 getLightColor(float fogdist, float fogfactor)
 		//
 		// subtractive lights
 		//
-		for(int i=lightrange.x; i<lightrange.y; i+=2)
+		for(int i=lightrange.y; i<lightrange.z; i+=2)
 		{
-			vec4 lightpos = lights[i];
-			vec4 lightcolor = lights[i+1];
+			vec4 lightpos = Parameters[i];
+			vec4 lightcolor = Parameters[i+1];
 			
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 			dynlight.rgb -= lightcolor.rgb;
@@ -269,17 +256,17 @@ void main()
 			frag *= getLightColor(fogdist, fogfactor);
 			
 			
-			if (lightrange.z > 0)
+			if (lightrange.w > lightrange.z)
 			{
 				vec4 addlight = vec4(0.0,0.0,0.0,0.0);
 			
 				//
 				// additive lights - these can be done after the alpha test.
 				//
-				for(int i=lightrange.y; i<lightrange.z; i+=2)
+				for(int i=lightrange.z; i<lightrange.w; i+=2)
 				{
-					vec4 lightpos = lights[i];
-					vec4 lightcolor = lights[i+1];
+					vec4 lightpos = Parameters[i];
+					vec4 lightcolor = Parameters[i+1];
 					
 					lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 					addlight.rgb += lightcolor.rgb;

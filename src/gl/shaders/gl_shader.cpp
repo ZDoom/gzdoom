@@ -86,7 +86,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	// The following code uses GetChars on the strings to get rid of terminating 0 characters. Do not remove or the code may break!
 	//
 
-	FString vp_comb = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : enable\n";
+	FString vp_comb = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : require\n#extension GL_ARB_explicit_uniform_location : require\n";
 	vp_comb << defines << i_data.GetString().GetChars();
 	FString fp_comb = vp_comb;
 
@@ -149,6 +149,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glBindAttribLocation(hShader, VATTR_ATTRIBCOLOR, "attribColor");
 	glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
 	glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
+
 
 	glLinkProgram(hShader);
 

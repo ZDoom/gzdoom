@@ -122,6 +122,7 @@ bool FRenderState::ApplyShader()
 
 	if (activeShader)
 	{
+		glUniform1i(100, -1);	// kill the old dynamic light list (must be removed once buffers are working!)
 		int fogset = 0;
 		PalEntry pe(
 			xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
@@ -194,11 +195,6 @@ bool FRenderState::ApplyShader()
 		{
 			// if glowing is on, disable it.
 			glUniform1i(activeShader->glowindex_index, -1);
-		}
-		//if (mLightEnabled)
-		{
-			glUniform3iv(activeShader->lightrange_index, 1, mNumLights);
-			if (mLightData) glUniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
 		}
 
 		float newthresh = mAlphaTest ? mAlphaThreshold : -1.f;

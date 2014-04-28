@@ -473,7 +473,7 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 	if (GLPortal::inskybox) fogdensity+=fogdensity/2;
 
 
-	// no fog in enhanced vision modes!
+	// no fog in enhanced vision modes
 	if (fogdensity==0 || gl_fogmode == 0)
 	{
 		gl_RenderState.EnableFog(false);

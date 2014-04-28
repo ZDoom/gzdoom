@@ -292,10 +292,10 @@ void GLFlat::Draw(int pass)
 	}
 
 	case GLPASS_TRANSLUCENT:
-		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
+		if (renderstyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 		gl_SetColor(lightlevel, rel, Colormap, alpha);
-		gl_SetFog(lightlevel, rel, &Colormap, false);
-		if (!gltexture)	
+		gl_SetFog(lightlevel, rel, &Colormap, renderstyle == STYLE_Add);
+		if (!gltexture)
 		{
 			gl_RenderState.EnableTexture(false);
 			DrawSubsectors(pass, true);

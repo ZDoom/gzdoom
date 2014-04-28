@@ -38,10 +38,7 @@ class FShader
 	int fogcolor_index;
 	int lights_index;
 	int dlightcolor_index;
-	int glowbottomcolor_index;
-	int glowtopcolor_index;
-	int glowbottomplane_index;
-	int glowtopplane_index;
+	int glowindex_index;
 	int objectcolor_index;
 	int buffercolor_index;
 	int colorcontrol_index;
@@ -85,10 +82,7 @@ public:
 		lights_index = -1;
 		dlightcolor_index = -1;
 		alphathreshold_index = -1;
-		glowtopplane_index = -1;
-		glowbottomplane_index = -1;
-		glowtopcolor_index = -1;
-		glowbottomcolor_index = -1;
+		glowindex_index = -1;
 		buffercolor_index = -1;
 		colorcontrol_index = -1;
 

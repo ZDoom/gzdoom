@@ -229,11 +229,11 @@ int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon)
 //
 //==========================================================================
 
-PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
+static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 {
 	int r,g,b;
 
-	if (glset.lightmode == 8 && !force)
+	if (glset.lightmode == 8)
 	{
 		return pe;
 	}
@@ -245,6 +245,8 @@ PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
 	}
 	else
 	{
+		// This is what Legacy does with colored light in 3D volumes. No, it doesn't really make sense...
+		// It also doesn't translate well to software style lighting.
 		int mixlight = light * (255 - blendfactor);
 
 		r = (mixlight + pe.r * blendfactor) / 255;
@@ -256,44 +258,22 @@ PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
 
 //==========================================================================
 //
-// Get current light color
-//
-//==========================================================================
-void gl_GetLightColor(int lightlevel, int rellight, const FColormap * cm, float * pred, float * pgreen, float * pblue, bool weapon)
-{
-	float & r=*pred,& g=*pgreen,& b=*pblue;
-
-	if (gl_fixedcolormap) 
-	{
-		r=g=b=1.0f;
-		return;
-	}
-
-	PalEntry lightcolor = cm? cm->LightColor : PalEntry(255,255,255);
-	int blendfactor = cm? cm->blendfactor : 0;
-
-	lightlevel = gl_CalcLightLevel(lightlevel, rellight, weapon);
-	PalEntry pe = gl_CalcLightColor(lightlevel, lightcolor, blendfactor);
-	r = pe.r/255.f;
-	g = pe.g/255.f;
-	b = pe.b/255.f;
-}
-
-//==========================================================================
-//
 // set current light color
 //
 //==========================================================================
-void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, bool weapon)
+void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float alpha, bool weapon)
 { 
-	float r,g,b;
-
-	gl_GetLightColor(light, rellight, cm, &r, &g, &b, weapon);
-	gl_RenderState.SetColor(r, g, b, alpha, cm->desaturation / 255.f);
-
-	if (glset.lightmode == 8)
+	if (gl_fixedcolormap != CM_DEFAULT)
 	{
-		gl_RenderState.SetSoftLightLevel(gl_fixedcolormap? 1.f : gl_ClampLight(light + rellight) / 255.0f);
+		gl_RenderState.SetColorAlpha(0xffffff, alpha, 0.f);
+		gl_RenderState.SetSoftLightLevel(1.f);
+	}
+	else
+	{
+		int hwlightlevel = gl_CalcLightLevel(sectorlightlevel, rellight, weapon);
+		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.blendfactor);
+		gl_RenderState.SetColorAlpha(pe, alpha, cm.desaturation / 255.f);
+		gl_RenderState.SetSoftLightLevel(gl_ClampLight(sectorlightlevel + rellight) / 255.0f);
 	}
 }
 
@@ -315,7 +295,7 @@ void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, boo
 //
 //==========================================================================
 
-float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
+static float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
 {
 	float density;
 
@@ -361,96 +341,63 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
 
 //==========================================================================
 //
-// Check fog by current lighting info
-//
-//==========================================================================
-
-bool gl_CheckFog(FColormap *cm, int lightlevel)
-{
-	// Check for fog boundaries. This needs a few more checks for the sectors
-	bool frontfog;
-
-	PalEntry fogcolor = cm->FadeColor;
-
-	if ((fogcolor.d & 0xffffff) == 0)
-	{
-		frontfog = false;
-	}
-	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
-	{
-		frontfog = true;
-	}
-	else  if (fogdensity!=0 || (glset.lightmode & 4))
-	{
-		// case 3: level has fog density set
-		frontfog = true;
-	}
-	else 
-	{
-		// case 4: use light level
-		frontfog = lightlevel < 248;
-	}
-	return frontfog;
-}
-
-//==========================================================================
-//
 // Check if the current linedef is a candidate for a fog boundary
+//
+// Requirements for a fog boundary:
+// - front sector has no fog
+// - back sector has fog
+// - at least one of both does not have a sky ceiling.
 //
 //==========================================================================
 
 bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 {
+	if (gl_fixedcolormap) return false;
+	if (frontsector == backsector) return false;	// there can't be a boundary if both sides are in the same sector.
+
 	// Check for fog boundaries. This needs a few more checks for the sectors
-	bool frontfog, backfog;
 
 	PalEntry fogcolor = frontsector->ColorMap->Fade;
 
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
-		frontfog = false;
+		return false;
 	}
 	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
 	{
-		frontfog = true;
 	}
 	else  if (fogdensity!=0 || (glset.lightmode & 4))
 	{
 		// case 3: level has fog density set
-		frontfog = true;
 	}
 	else 
 	{
 		// case 4: use light level
-		frontfog = frontsector->lightlevel < 248;
+		if (frontsector->lightlevel >= 248) return false;
 	}
-
-	if (backsector == NULL) return frontfog;
 
 	fogcolor = backsector->ColorMap->Fade;
 
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
-		backfog = false;
 	}
 	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
 	{
-		backfog = true;
+		return false;
 	}
 	else  if (fogdensity!=0 || (glset.lightmode & 4))
 	{
 		// case 3: level has fog density set
-		backfog = true;
+		return false;
 	}
 	else 
 	{
 		// case 4: use light level
-		backfog = backsector->lightlevel < 248;
+		if (backsector->lightlevel < 248) return false;
 	}
 
 	// in all other cases this might create more problems than it solves.
-	return (frontfog && !backfog && !gl_fixedcolormap &&
-			(frontsector->GetTexture(sector_t::ceiling)!=skyflatnum || 
+	return ((frontsector->GetTexture(sector_t::ceiling)!=skyflatnum || 
 			 backsector->GetTexture(sector_t::ceiling)!=skyflatnum));
 }
 
@@ -534,14 +481,17 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 	}
 	else
 	{
-		if (glset.lightmode == 2 && fogcolor == 0)
+		if (glset.lightmode == 2)
 		{
-			float light = gl_CalcLightLevel(lightlevel, rellight, false);
-			gl_SetShaderLight(light, lightlevel);
-		}
-		else
-		{
-			gl_RenderState.SetLightParms(1.f, 0.f);
+			if (fogcolor == 0)
+			{
+				float light = gl_CalcLightLevel(lightlevel, rellight, false);
+				gl_SetShaderLight(light, lightlevel);
+			}
+			else
+			{
+				gl_RenderState.SetLightParms(1.f, 0.f);
+			}
 		}
 
 		// For additive rendering using the regular fog color here would mean applying it twice

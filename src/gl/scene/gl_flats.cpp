@@ -279,7 +279,7 @@ void GLFlat::Draw(int pass)
 	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:
 	{
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
+		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gltexture->Bind();
 		bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
@@ -293,7 +293,7 @@ void GLFlat::Draw(int pass)
 
 	case GLPASS_TRANSLUCENT:
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		gl_SetColor(lightlevel, rel, &Colormap, alpha);
+		gl_SetColor(lightlevel, rel, Colormap, alpha);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		if (!gltexture)	
 		{

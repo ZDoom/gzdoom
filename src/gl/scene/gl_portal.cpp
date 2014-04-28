@@ -974,13 +974,13 @@ void GLHorizonPortal::DrawContents()
 		// glowing textures are always drawn full bright without color
 		FColormap cmap = origin->colormap;
 		cmap.ClearColor();
-		gl_SetColor(255, 0, &cmap, 1.f);
+		gl_SetColor(255, 0, cmap, 1.f);
 		gl_SetFog(255, 0, &origin->colormap, false);
 	}
 	else 
 	{
 		int rel = getExtraLight();
-		gl_SetColor(origin->lightlevel, rel, &origin->colormap, 1.0f);
+		gl_SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
 		gl_SetFog(origin->lightlevel, rel, &origin->colormap, false);
 	}
 

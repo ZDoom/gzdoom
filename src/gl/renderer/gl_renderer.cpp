@@ -601,10 +601,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	FColormap cm;
 	cm = colormap;
 
-	lightlevel = gl_CalcLightLevel(lightlevel, 0, true);
-	PalEntry pe = gl_CalcLightColor(lightlevel, cm.LightColor, cm.blendfactor, true);
-
-	gl_RenderState.SetColor(pe);
+	gl_SetColor(lightlevel, 0, cm, 1.f);
 
 	gltexture->Bind();
 

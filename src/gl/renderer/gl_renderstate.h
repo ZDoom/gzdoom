@@ -139,8 +139,7 @@ class FRenderState
 	int mBlendEquation;
 	unsigned int mVertexArray, mLastVertexArray;
 
-	FStateVec4 mGlowTop, mGlowBottom;
-	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
+	float mGlowParms[16];
 	PalEntry mFogColor, mObjectColor;
 	float mFogDensity;
 
@@ -202,6 +201,15 @@ public:
 		mColor[4] = desat;
 	}
 
+	void SetColorAlpha(PalEntry pe, float alpha = 1.f, float desat = 0.f)
+	{
+		mColor[0] = pe.r / 255.f;
+		mColor[1] = pe.g / 255.f;
+		mColor[2] = pe.b / 255.f;
+		mColor[3] = alpha;
+		mColor[4] = desat;
+	}
+
 	void ResetColor()
 	{
 		mColor[0] = mColor[1] = mColor[2] = mColor[3] = 1.f;
@@ -243,16 +251,19 @@ public:
 		mBrightmapEnabled = on;
 	}
 
-	void SetGlowParams(float *t, float *b)
+	void SetGlowParams(float *t, float *b, const secplane_t &top, const secplane_t &bottom)
 	{
-		mGlowTop.Set(t[0], t[1], t[2], t[3]);
-		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
-	}
-
-	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
-	{
-		mGlowTopPlane.Set(FIXED2FLOAT(top.a), FIXED2FLOAT(top.b), FIXED2FLOAT(top.ic), FIXED2FLOAT(top.d));
-		mGlowBottomPlane.Set(FIXED2FLOAT(bottom.a), FIXED2FLOAT(bottom.b), FIXED2FLOAT(bottom.ic), FIXED2FLOAT(bottom.d));
+		mGlowEnabled = true;
+		memcpy(&mGlowParms[0], t, 4 * sizeof(float));
+		memcpy(&mGlowParms[4], b, 4 * sizeof(float));
+		mGlowParms[8] = FIXED2FLOAT(top.a);
+		mGlowParms[9] = FIXED2FLOAT(top.b);
+		mGlowParms[10] = FIXED2FLOAT(top.ic);
+		mGlowParms[11] = FIXED2FLOAT(top.d);
+		mGlowParms[12] = FIXED2FLOAT(bottom.a);
+		mGlowParms[13] = FIXED2FLOAT(bottom.b);
+		mGlowParms[14] = FIXED2FLOAT(bottom.ic);
+		mGlowParms[15] = FIXED2FLOAT(bottom.d);
 	}
 
 	void SetSoftLightLevel(float lightlev)

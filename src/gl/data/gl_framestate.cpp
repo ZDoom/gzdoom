@@ -63,9 +63,9 @@ FFrameState::FFrameState()
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, mBufferId);
 	glBufferStorage(GL_UNIFORM_BUFFER, bytesize, NULL, GL_DYNAMIC_STORAGE_BIT);
 	bDSA = !!glewIsSupported("GL_EXT_direct_state_access");
-	UpdateFor2D(false);
 	memset(&mData, 0, sizeof(mData));
 	mData.mFixedColormapStart[3] = mData.mFixedColormapRange[3] = 1.f;
+	UpdateFor2D(false);
 }
 
 //==========================================================================

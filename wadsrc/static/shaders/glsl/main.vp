@@ -1,15 +1,14 @@
 
 out vec4 pixelpos;
 
-// This is for the colormap shader which doesn't implement any form of lighing special effects.	
-#ifndef NO_LIGHTING
-	in vec4 fogparams;
-	out vec4 fogparm;
-	out vec2 glowdist;
-	uniform vec4 glowbottomplane, glowtopplane;
-	in float lightlevel_in;
-	out float lightlevel;
-#endif
+in vec4 fogparams;
+out vec4 fogparm;
+out vec2 glowdist;
+out vec4 topglowcolor;
+out vec4 bottomglowcolor;
+//out vec4 glowbottomplane, glowtopplane;
+in float lightlevel_in;
+out float lightlevel;
 
 
 // valid colorcontrol modes are:
@@ -20,6 +19,7 @@ out vec4 pixelpos;
 uniform int colorcontrol;
 in vec4 attribColor;
 uniform int bufferColor;	// as AARRGGBB, 8 bits each.
+uniform int glowindex;
 out float desaturation_factor;
 
 
@@ -86,13 +86,24 @@ void main()
 	pixelpos.xyz = worldcoord.xyz;
 	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 	
-	#ifndef NO_LIGHTING
-		lightlevel = lightlevel_in;
-		fogparm = fogparams;
-		// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex ins to the shader.
+	lightlevel = lightlevel_in;
+	fogparm = fogparams;
+	// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex ins to the shader.
+	if (glowindex != -1)
+	{
+		topglowcolor = Parameters[glowindex];
+		bottomglowcolor = Parameters[glowindex+1];
+		vec4 glowtopplane = Parameters[glowindex+2];
+		vec4 glowbottomplane = Parameters[glowindex+3];
 		glowdist.x = -((glowtopplane.w + glowtopplane.x * worldcoord.x + glowtopplane.y * worldcoord.z) * glowtopplane.z) - worldcoord.y;
 		glowdist.y = worldcoord.y + ((glowbottomplane.w + glowbottomplane.x * worldcoord.x + glowbottomplane.y * worldcoord.z) * glowbottomplane.z);
-	#endif
+	}
+	else
+	{
+		topglowcolor = vec4(0.0);
+		bottomglowcolor = vec4(0.0);
+		glowdist = vec2(0.0);
+	}
 	
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);

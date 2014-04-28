@@ -479,6 +479,7 @@ void FGLRenderer::DrawScene(bool toscreen)
 		static_cast<OpenGLFrameBuffer*>(screen)->Swap();
 		All.Clock();
 	}
+	gl_RenderState.SetLightParms(1.f, 0.f);
 	RenderScene(recursion);
 
 	// Handle all portals after rendering the opaque objects but before
@@ -662,6 +663,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 		DrawPlayerSprites(viewsector, false);
 	}
 	GLRenderer->mFrameState->UpdateFor2D(false);
+	gl_fixedcolormap = CM_DEFAULT;
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
 
@@ -876,6 +878,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	glDisable(GL_STENCIL_TEST);
 	screen->Begin2D(false);
 	GLRenderer->mFrameState->UpdateFor2D(false);
+	gl_fixedcolormap = CM_DEFAULT;
 	DrawBlend(viewsector);
 	glFlush();
 

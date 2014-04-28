@@ -180,8 +180,7 @@ void GLWall::RenderWall(int textured)
 
 	if (!!(flags&GLWF_GLOW) && (textured & TRF_ALLOWGLOW))
 	{
-		gl_RenderState.SetGlowPlanes(topplane, bottomplane);
-		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
+		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor, topplane, bottomplane);
 	}
 
 	gl_RenderState.Apply();
@@ -252,7 +251,7 @@ void GLWall::RenderMirrorSurface()
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
-	gl_SetColor(lightlevel, 0, &Colormap ,0.1f);
+	gl_SetColor(lightlevel, 0, Colormap ,0.1f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.EnableAlphaTest(false);
 	glDepthFunc(GL_LEQUAL);
@@ -308,7 +307,6 @@ void GLWall::RenderTranslucentWall()
 	int extra;
 	if (gltexture) 
 	{
-		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gltexture->Bind(flags, 0);
 		extra = getExtraLight();
 	}
@@ -318,7 +316,7 @@ void GLWall::RenderTranslucentWall()
 		extra = 0;
 	}
 
-	gl_SetColor(lightlevel, extra, &Colormap, fabsf(alpha));
+	gl_SetColor(lightlevel, extra, Colormap, fabsf(alpha));
 	if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, extra, &Colormap, isadditive);
 	else gl_SetFog(255, 0, NULL, false);
 
@@ -366,11 +364,10 @@ void GLWall::Draw(int pass)
 		// fall through
 	case GLPASS_PLAIN:			// Single-pass rendering
 		rel = rellight + getExtraLight();
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
+		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
 		else gl_SetFog(255, 0, NULL, false);
 
-		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gltexture->Bind(flags, 0);
 		RenderWall(GLWall::TRF_DEFAULT);
 		gl_RenderState.EnableGlow(false);

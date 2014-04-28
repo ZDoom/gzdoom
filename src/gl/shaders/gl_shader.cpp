@@ -193,10 +193,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	buffercolor_index = glGetUniformLocation(hShader, "bufferColor");
 	colorcontrol_index = glGetUniformLocation(hShader, "colorcontrol");
 
-	glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
-	glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");
-	glowbottomplane_index = glGetUniformLocation(hShader, "glowbottomplane");
-	glowtopplane_index = glGetUniformLocation(hShader, "glowtopplane");
+	glowindex_index = glGetUniformLocation(hShader, "glowindex");
 
 	glUseProgram(hShader);
 

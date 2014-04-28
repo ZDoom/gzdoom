@@ -26,8 +26,8 @@ in vec4 fogparm;
 //uniform vec2 lightparms;
 in float desaturation_factor;
 
-uniform vec4 topglowcolor;
-uniform vec4 bottomglowcolor;
+in vec4 topglowcolor;
+in vec4 bottomglowcolor;
 in vec2 glowdist;
 
 uniform int texturemode;

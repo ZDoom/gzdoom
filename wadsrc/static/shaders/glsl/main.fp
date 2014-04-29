@@ -229,84 +229,89 @@ void main()
 	}
 #endif
 
-	switch (uFixedColormap)
+	switch (uSpecialMode)
 	{
-		case 0:
-		{
-			float fogdist = 0.0;
-			float fogfactor = 0.0;
-			
-
-			//
-			// calculate fog factor
-			//
-			if (fogenabled != 0)
+		default:
+			switch (uFixedColormap)
 			{
-				if (uFogMode == 1) 
+				case 0:
 				{
-					fogdist = pixelpos.w;
-				}
-				else 
-				{
-					fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
-				}
-				fogfactor = exp2 (fogparm.z * fogdist);
-			}
-			
-			frag *= getLightColor(fogdist, fogfactor);
-			
-			
-			if (lightrange.w > lightrange.z)
-			{
-				vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-			
-				//
-				// additive lights - these can be done after the alpha test.
-				//
-				for(int i=lightrange.z; i<lightrange.w; i+=2)
-				{
-					vec4 lightpos = Parameters[i];
-					vec4 lightcolor = Parameters[i+1];
+					float fogdist = 0.0;
+					float fogfactor = 0.0;
 					
-					lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-					addlight.rgb += lightcolor.rgb;
-				}
-				frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
-			}
 
-			//
-			// colored fog
-			//
-			if (fogenabled < 0) 
-			{
-				frag = applyFog(frag, fogfactor);
+					//
+					// calculate fog factor
+					//
+					if (fogenabled != 0)
+					{
+						if (uFogMode == 1) 
+						{
+							fogdist = pixelpos.w;
+						}
+						else 
+						{
+							fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
+						}
+						fogfactor = exp2 (fogparm.z * fogdist);
+					}
+					
+					frag *= getLightColor(fogdist, fogfactor);
+					
+					
+					if (lightrange.w > lightrange.z)
+					{
+						vec4 addlight = vec4(0.0,0.0,0.0,0.0);
+					
+						//
+						// additive lights - these can be done after the alpha test.
+						//
+						for(int i=lightrange.z; i<lightrange.w; i+=2)
+						{
+							vec4 lightpos = Parameters[i];
+							vec4 lightcolor = Parameters[i+1];
+							
+							lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+							addlight.rgb += lightcolor.rgb;
+						}
+						frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
+					}
+
+					//
+					// colored fog
+					//
+					if (fogenabled < 0) 
+					{
+						frag = applyFog(frag, fogfactor);
+					}
+					break;
+				}
+				
+				case 1:
+				{
+					float gray = (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
+					vec4 cm = uFixedColormapStart + gray * uFixedColormapRange;
+					frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a*gl_Color.a);
+					break;
+				}
+				
+				case 2:
+				{
+					frag = frag * uFixedColormapStart;
+					frag.a *= gl_Color.a;
+					break;
+				}
 			}
 			break;
-		}
 		
-		case 1:
-		{
-			float gray = (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
-			vec4 cm = uFixedColormapStart + gray * uFixedColormapRange;
-			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a*gl_Color.a);
-			break;
-		}
-		
-		case 2:
-		{
-			frag = frag * uFixedColormapStart;
-			frag.a *= gl_Color.a;
-			break;
-		}
-		
-		case 3:
+		case SPECMODE_INFRARED:
 		{
 			float gray = 1.0 - (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
 			frag = vec4(gray, gray, gray, frag.a*gl_Color.a) * uFixedColormapStart;
 			break;
 		}
 		
-		case 4:
+		case SPECMODE_FOGLAYER:
 		{
 			float fogdist;
 			float fogfactor;

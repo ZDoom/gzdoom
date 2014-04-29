@@ -15,6 +15,13 @@ enum
 	CCTRL_BUFFER = 2
 };
 
+enum
+{
+	SPECMODE_DEFAULT,
+	SPECMODE_INFRARED,
+	SPECMODE_FOGLAYER
+};
+
 struct FStateAttr
 {
 	static int ChangeCounter;
@@ -135,6 +142,7 @@ class FRenderState
 	float mAlphaThreshold;
 	bool mAlphaTest;
 	int mBlendEquation;
+	int mSpecialMode;
 	unsigned int mVertexArray, mLastVertexArray;
 
 	float mGlowParms[16];
@@ -262,6 +270,11 @@ public:
 		mGlowParms[13] = FIXED2FLOAT(bottom.b);
 		mGlowParms[14] = FIXED2FLOAT(bottom.ic);
 		mGlowParms[15] = FIXED2FLOAT(bottom.d);
+	}
+
+	void SetSpecialMode(int mode)
+	{
+		mSpecialMode = mode;
 	}
 
 	void SetSoftLightLevel(float lightlev)

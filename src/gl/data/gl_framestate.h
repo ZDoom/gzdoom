@@ -8,10 +8,9 @@ enum
 	FXM_DEFAULT,
 	FXM_COLORRANGE,
 	FXM_COLOR,
-	FXM_COLORINVERT,
-	FXM_FOGLAYER,	// not a real fixed colormap but it's convenient to include it here.
-};
 
+	FXM_IGNORE		// only to be used as parameter to ChangeFixedColormap
+};
 
 struct FrameStateData
 {
@@ -26,27 +25,45 @@ struct FrameStateData
 	float mFixedColormapRange[4];
 };
 
+struct FrameStateIndices
+{
+	int mLastSettingCounter;
+	int iViewMatrix;
+	int iProjectionMatrix;
+	int iCameraPos;
+	int iClipHeight;
+	int iLightMode;
+	int iFogMode;
+	int iFixedColormap;
+	int iFixedColormapStart;
+	int iFixedColormapRange;
+
+	void set(unsigned int prog);
+};
 
 class FFrameState
 {
-	bool bDSA;
-	unsigned int mBufferId;
+	int mUpdateCounter;
+
+	void DoApplyToShader(FrameStateIndices *in);
 
 public:
 	FrameStateData mData;
 	
 	FFrameState();
-	~FFrameState();
 	void UpdateFor3D();
 	void UpdateFor2D(bool weapon);
-	void UpdateViewMatrix();	// there are a few cases where this needs to be changed independently from the rest of the state
+	void ApplyToShader(FrameStateIndices *in)
+	{
+		if (in->mLastSettingCounter != mUpdateCounter)
+		{
+			DoApplyToShader(in);
+		}
+	}
 
 	void SetFixedColormap(FSpecialColormap *map);
-	void ChangeFixedColormap(int newfix);
-	void ResetFixedColormap()
-	{
-		ChangeFixedColormap(mData.mFixedColormap);
-	}
 };
+
+extern FFrameState gl_FrameState;
 
 #endif

@@ -3,6 +3,7 @@
 #define __GL_SHADERS_H__
 
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/data/gl_framestate.h"
 #include "name.h"
 
 extern bool gl_shaderactive;
@@ -42,6 +43,7 @@ class FShader
 	int objectcolor_index;
 	int buffercolor_index;
 	int colorcontrol_index;
+	int specialmode_index;
 
 	int mModelMatLocation;
 	
@@ -55,18 +57,22 @@ class FShader
 	float currentlightdist;
 	float currentalphathreshold;
 	float currentdesaturation;
+	int currentSpecialMode;
 	int currentColorControl;
 
 	PalEntry currentfogcolor;
 	float currentfogdensity;
 	unsigned int mMatrixTick[4];
 
+
 public:
+	FrameStateIndices mFrameStateIndices;
+
 	FShader(const char *name)
 		: mName(name)
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentColorControl = currentfogenabled = currenttexturemode = currentglowstate = 0;
+		currentSpecialMode = currentColorControl = currentfogenabled = currenttexturemode = currentglowstate = 0;
 		currentdesaturation = currentlightfactor = currentlightdist = currentalphathreshold = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
 		currentobjectcolor = currentfogcolor = 0;
@@ -100,6 +106,7 @@ public:
 
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
+
 
 };
 

@@ -56,6 +56,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_framestate.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -164,6 +165,7 @@ void OpenGLFrameBuffer::InitializeState()
 
 	Begin2D(false);
 	GLRenderer->Initialize();
+	gl_FrameState.UpdateFor2D(false);
 }
 
 //==========================================================================

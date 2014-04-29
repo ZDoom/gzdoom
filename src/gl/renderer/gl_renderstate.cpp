@@ -78,6 +78,7 @@ void FRenderState::Reset()
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
 	gl_BlendEquation = -1;
+	mSpecialMode = 0;
 }
 
 
@@ -117,6 +118,7 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader = shd;
 			shd->Bind();
+			gl_FrameState.ApplyToShader(&shd->mFrameStateIndices);
 		}
 	}
 

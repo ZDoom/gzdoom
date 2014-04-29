@@ -96,7 +96,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mCameraPos = FVector3(0,0,0);
 	mVBO = NULL;
 	mParmBuffer = NULL;
-	mFrameState = NULL;
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
 	glpart2 = glpart = mirrortexture = NULL;
@@ -110,7 +109,6 @@ void FGLRenderer::Initialize()
 
 	mVBO = new FFlatVertexBuffer;
 	mParmBuffer = new FParameterBuffer;
-	mFrameState = new FFrameState;
 	mFBID = 0;
 	SetupLevel();
 	mShaderManager = new FShaderManager;
@@ -124,7 +122,6 @@ FGLRenderer::~FGLRenderer()
 	FMaterial::FlushAll();
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
-	if (mFrameState != NULL) delete mFrameState;
 	if (mParmBuffer != NULL) delete mParmBuffer;
 	if (mVBO != NULL) delete mVBO;
 	if (glpart2) delete glpart2;
@@ -270,7 +267,7 @@ void FGLRenderer::ClearBorders()
 	glViewport(0, 0, width, trueHeight);
 	VSML.loadIdentity(VSML.PROJECTION);
 	VSML.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
-	GLRenderer->mFrameState->UpdateFor2D(false);
+	gl_FrameState.UpdateFor2D(false);
 	gl_RenderState.SetColor(0.f, 0.f, 0.f);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();

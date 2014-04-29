@@ -117,8 +117,8 @@ void GLSprite::Draw(int pass)
 
 	bool additivefog = false;
 	bool foglayer = false;
-	bool cmreset = false;
 	int rel = getExtraLight();
+	int usefixedcolormap = FXM_IGNORE;
 
 	gl_RenderState.SetObjectColor(ThingColor);
 
@@ -231,8 +231,7 @@ void GLSprite::Draw(int pass)
 	{
 		if ((actor->flags3&MF3_ISMONSTER || actor->flags&(MF_SPECIAL | MF_MISSILE | MF_CORPSE)))
 		{
-			GLRenderer->mFrameState->ChangeFixedColormap(FXM_COLORINVERT);
-			cmreset = true;
+			gl_RenderState.SetSpecialMode(SPECMODE_INFRARED);
 		}
 	}
 
@@ -298,12 +297,12 @@ void GLSprite::Draw(int pass)
 		if (foglayer)
 		{
 			// If we get here we know that we have colored fog and no fixed colormap.
-			gl_SetFog(foglevel, rel, &Colormap, additivefog);
-			GLRenderer->mFrameState->ChangeFixedColormap(FXM_FOGLAYER);
-			cmreset = true;
+			gl_SetFog(foglevel, rel, &Colormap, false);
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			gl_RenderState.SetSpecialMode(SPECMODE_FOGLAYER);
 			gl_RenderState.Apply();
+
 
 			glBegin(GL_TRIANGLE_STRIP);
 			if (gltexture)
@@ -339,11 +338,7 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
 	}
 
-	if (cmreset)
-	{
-		GLRenderer->mFrameState->ResetFixedColormap();
-	}
-
+	gl_RenderState.SetSpecialMode(SPECMODE_DEFAULT);
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetDynLight(0,0,0);

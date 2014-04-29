@@ -178,6 +178,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 
 	alphathreshold_index = glGetUniformLocation(hShader, "uAlphaThreshold");
+	specialmode_index = glGetUniformLocation(hShader, "uSpecialMode");
 
 	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
 	timer_index = glGetUniformLocation(hShader, "timer");
@@ -199,6 +200,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	int texture_index = glGetUniformLocation(hShader, "texture2");
 	if (texture_index > 0) glUniform1i(texture_index, 1);
+
+	mFrameStateIndices.set(hShader);
 
 	glUseProgram(0);
 	return !!linked;

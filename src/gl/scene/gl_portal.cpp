@@ -121,7 +121,8 @@ void GLPortal::ClearScreen()
 	VSML.pushMatrix(VSML.VIEW);
 	VSML.pushMatrix(VSML.PROJECTION);
 	screen->Begin2D(false);
-	GLRenderer->mFrameState->UpdateFor2D(false);
+	gl_FrameState.UpdateFor2D(false);
+	gl_RenderState.Apply();
 	screen->Dim(0, 1.f, 0, 0, SCREENWIDTH, SCREENHEIGHT);
 	glEnable(GL_DEPTH_TEST);
 	VSML.popMatrix(VSML.PROJECTION);
@@ -271,8 +272,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
-	planestack.Push(GLRenderer->mFrameState->mData.mClipHeight);
-	GLRenderer->mFrameState->mData.mClipHeight = 0.f;
+	planestack.Push(gl_FrameState.mData.mClipHeight);
+	gl_FrameState.mData.mClipHeight = 0.f;
 
 	// save viewpoint
 	savedviewx=viewx;
@@ -333,7 +334,7 @@ void GLPortal::End(bool usestencil)
 	PortalAll.Clock();
 	GLRenderer->mCurrentPortal = NextPortal;
 
-	planestack.Pop(GLRenderer->mFrameState->mData.mClipHeight);
+	planestack.Pop(gl_FrameState.mData.mClipHeight);
 
 	if (usestencil)
 	{
@@ -780,7 +781,7 @@ void GLPlaneMirrorPortal::DrawContents()
 	float f = FIXED2FLOAT(planez);
 	if (PlaneMirrorMode < 0) f -= 65536.f;	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
 	else f += 65536.f;	// floor mirror: clip everything with a z higher than the portal's floor
-	GLRenderer->mFrameState->mData.mClipHeight = f;
+	gl_FrameState.mData.mClipHeight = f;
 
 	PlaneMirrorFlag++;
 	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));

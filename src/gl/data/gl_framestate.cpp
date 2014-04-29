@@ -50,6 +50,28 @@
 #include "r_utility.h"
 #include "cmdlib.h"
 
+FFrameState gl_FrameState;
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FrameStateIndices::set(unsigned int prog)
+{
+	mLastSettingCounter = -1;
+	iViewMatrix = glGetUniformLocation(prog, "ViewMatrix");
+	iProjectionMatrix = glGetUniformLocation(prog, "ProjectionMatrix");
+	iCameraPos = glGetUniformLocation(prog, "uCameraPos");
+	iClipHeight = glGetUniformLocation(prog, "uClipHeight");
+	iLightMode = glGetUniformLocation(prog, "uLightMode");
+	iFogMode = glGetUniformLocation(prog, "uFogMode");
+	iFixedColormap = glGetUniformLocation(prog, "uFixedColormap");
+	iFixedColormapStart = glGetUniformLocation(prog, "uFixedColormapStart");
+	iFixedColormapRange = glGetUniformLocation(prog, "uFixedColormapRange");
+};
+
 //==========================================================================
 //
 // 
@@ -58,26 +80,12 @@
 
 FFrameState::FFrameState()
 {
-	int bytesize = sizeof(FrameStateData);
-	glGenBuffers(1, &mBufferId);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, mBufferId);
-	glBufferStorage(GL_UNIFORM_BUFFER, bytesize, NULL, GL_DYNAMIC_STORAGE_BIT);
-	bDSA = !!glewIsSupported("GL_EXT_direct_state_access");
+	mUpdateCounter = -1;
 	memset(&mData, 0, sizeof(mData));
 	mData.mFixedColormapStart[3] = mData.mFixedColormapRange[3] = 1.f;
 	UpdateFor2D(false);
 }
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-FFrameState::~FFrameState()
-{
-	glDeleteBuffers(1, &mBufferId);
-}
 
 //==========================================================================
 //
@@ -87,6 +95,7 @@ FFrameState::~FFrameState()
 
 void FFrameState::UpdateFor3D()
 {
+	mUpdateCounter++;
 	VSML.copy(mData.mViewMatrix, VSML.VIEW);
 	VSML.copy(mData.mProjectionMatrix, VSML.PROJECTION);
 	mData.mLightMode = glset.lightmode;
@@ -129,18 +138,6 @@ void FFrameState::UpdateFor3D()
 	{
 		mData.mFixedColormap = FXM_DEFAULT;
 	}
-
-
-
-	if (bDSA)
-	{
-		glNamedBufferSubDataEXT(mBufferId, 0, sizeof(FrameStateData), &mData);
-	}
-	else
-	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FrameStateData), &mData);
-	}
 }
 
 //==========================================================================
@@ -151,6 +148,7 @@ void FFrameState::UpdateFor3D()
 
 void FFrameState::UpdateFor2D(bool weapon)
 {
+	mUpdateCounter++;
 	VSML.copy(mData.mViewMatrix, VSML.VIEW);
 	VSML.copy(mData.mProjectionMatrix, VSML.PROJECTION);
 	mData.mLightMode = 0;
@@ -162,58 +160,6 @@ void FFrameState::UpdateFor2D(bool weapon)
 	if (!weapon)
 	{
 		mData.mFixedColormap = 0;
-	}
-
-	if (bDSA)
-	{
-		glNamedBufferSubDataEXT(mBufferId, 0, sizeof(FrameStateData), &mData);
-	}
-	else
-	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FrameStateData), &mData);
-	}
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void FFrameState::UpdateViewMatrix()
-{
-	VSML.copy(mData.mViewMatrix, VSML.VIEW);
-	if (bDSA)
-	{
-		glNamedBufferSubDataEXT(mBufferId, 0, sizeof(mData.mViewMatrix), &mData);
-	}
-	else
-	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mData.mViewMatrix), &mData);
-	}
-}
-
-//==========================================================================
-//
-// allows per drawcall change of the fixed colormap 
-// This is only needed in two places:
-// - for drawing inverted sprites with the Infrared powerup
-// - for drawing a fog layer over a subtractively blended sprite.
-//
-//==========================================================================
-
-void FFrameState::ChangeFixedColormap(int newfix)
-{
-	if (bDSA)
-	{
-		glNamedBufferSubDataEXT(mBufferId, myoffsetof(FrameStateData, mFixedColormap), sizeof(int), &newfix);
-	}
-	else
-	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glBufferSubData(GL_UNIFORM_BUFFER, myoffsetof(FrameStateData, mFixedColormap), sizeof(int), &newfix);
 	}
 }
 
@@ -233,4 +179,28 @@ void FFrameState::SetFixedColormap(FSpecialColormap *map)
 	mData.mFixedColormapRange[0] = map->ColorizeEnd[0] - map->ColorizeStart[0];
 	mData.mFixedColormapRange[1] = map->ColorizeEnd[1] - map->ColorizeStart[1];
 	mData.mFixedColormapRange[2] = map->ColorizeEnd[2] - map->ColorizeStart[2];
+}
+
+//==========================================================================
+//
+// Applies current settings to a shader
+//
+//==========================================================================
+
+void FFrameState::DoApplyToShader(FrameStateIndices *in)
+{
+	if (in->mLastSettingCounter != mUpdateCounter)
+	{
+		// only update if settings were changed since last time
+		in->mLastSettingCounter = mUpdateCounter;
+		glUniformMatrix4fv(in->iViewMatrix, 1, false, mData.mViewMatrix);
+		glUniformMatrix4fv(in->iProjectionMatrix, 1, false, mData.mProjectionMatrix);
+		glUniform4fv(in->iCameraPos, 1, mData.mCameraPos);
+		glUniform1f(in->iClipHeight, mData.mClipHeight);
+		glUniform1i(in->iLightMode, mData.mLightMode);
+		glUniform1i(in->iFogMode, mData.mFogMode);
+		glUniform1f(in->iFixedColormap, mData.mFixedColormap);
+		glUniform4fv(in->iFixedColormapStart, 1, mData.mFixedColormapStart);
+		glUniform4fv(in->iFixedColormapRange, 1, mData.mFixedColormapRange);
+	}
 }

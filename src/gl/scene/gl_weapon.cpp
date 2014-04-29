@@ -298,10 +298,10 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			gl_fixedcolormap == CM_DEFAULT)
 		{
 			ptrdiff_t specialmap = (vis.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
-			GLRenderer->mFrameState->SetFixedColormap(&SpecialColormaps[specialmap]);
+			gl_FrameState.SetFixedColormap(&SpecialColormaps[specialmap]);
 		}
 	}
-	GLRenderer->mFrameState->UpdateFor2D(true);
+	gl_FrameState.UpdateFor2D(true);
 
 	// Set the render parameters
 

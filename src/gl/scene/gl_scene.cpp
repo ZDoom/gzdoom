@@ -289,7 +289,7 @@ void FGLRenderer::SetupView(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t
 	SetCameraPos(viewx, viewy, viewz, viewangle);
 	SetViewMatrix(mirror, planemirror);
 
-	GLRenderer->mFrameState->UpdateFor3D();
+	gl_FrameState.UpdateFor3D();
 }
 
 //-----------------------------------------------------------------------------
@@ -662,7 +662,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	{
 		DrawPlayerSprites(viewsector, false);
 	}
-	GLRenderer->mFrameState->UpdateFor2D(false);
+	gl_FrameState.UpdateFor2D(false);
 	gl_fixedcolormap = CM_DEFAULT;
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
@@ -877,7 +877,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 								FieldOfView * 360.0f / FINEANGLES, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	screen->Begin2D(false);
-	GLRenderer->mFrameState->UpdateFor2D(false);
+	gl_FrameState.UpdateFor2D(false);
 	gl_fixedcolormap = CM_DEFAULT;
 	DrawBlend(viewsector);
 	glFlush();

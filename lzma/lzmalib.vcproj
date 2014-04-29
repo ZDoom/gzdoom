@@ -296,11 +296,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\C\7zStream.c"
+				RelativePath=".\C\7zCrcOpt.c"
 				>
 			</File>
 			<File
-				RelativePath=".\C\Alloc.c"
+				RelativePath=".\C\7zDec.c"
+				>
+			</File>
+			<File
+				RelativePath=".\C\7zIn.c"
+				>
+			</File>
+			<File
+				RelativePath=".\C\7zStream.c"
 				>
 			</File>
 			<File
@@ -308,7 +316,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\C\Bra.c"
+				>
+			</File>
+			<File
 				RelativePath=".\C\Bra86.c"
+				>
+			</File>
+			<File
+				RelativePath=".\C\CpuArch.c"
 				>
 			</File>
 			<File
@@ -320,15 +336,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\C\Lzma2Dec.c"
+				>
+			</File>
+			<File
 				RelativePath=".\C\LzmaDec.c"
 				>
 			</File>
 			<File
 				RelativePath=".\C\LzmaEnc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\LzmaLib.c"
 				>
 			</File>
 			<File
@@ -342,6 +358,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\C\7z.h"
+				>
+			</File>
+			<File
 				RelativePath=".\C\7zBuf.h"
 				>
 			</File>
@@ -351,10 +371,6 @@
 			</File>
 			<File
 				RelativePath=".\C\7zVersion.h"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Alloc.h"
 				>
 			</File>
 			<File
@@ -382,6 +398,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\C\Lzma2Dec.h"
+				>
+			</File>
+			<File
 				RelativePath=".\C\LzmaDec.h"
 				>
 			</File>
@@ -390,59 +410,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\C\LzmaLib.h"
-				>
-			</File>
-			<File
 				RelativePath=".\C\Threads.h"
 				>
 			</File>
 			<File
 				RelativePath=".\C\Types.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="7z"
-			>
-			<File
-				RelativePath=".\C\Archive\7z\7zDecode.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zDecode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zExtract.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zExtract.h"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zHeader.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zHeader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zIn.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zIn.h"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zItem.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\Archive\7z\7zItem.h"
 				>
 			</File>
 		</Filter>

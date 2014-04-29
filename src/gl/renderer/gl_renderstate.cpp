@@ -51,7 +51,6 @@
 
 
 FRenderState gl_RenderState;
-int FStateAttr::ChangeCounter;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
 
@@ -124,6 +123,38 @@ bool FRenderState::ApplyShader()
 
 	if (activeShader)
 	{
+		// set all uniforms that got changed since the last use of this shader
+		if (mColorControl != activeShader->currentColorControl)
+		{
+			glUniform1i(activeShader->colorcontrol_index, (activeShader->currentColorControl = mColorControl));
+		}
+		if (mTextureMode != activeShader->currenttexturemode)
+		{
+			glUniform1i(activeShader->texturemode_index, (activeShader->currenttexturemode = mTextureMode));
+		}
+		if (mObjectColor != activeShader->currentobjectcolor)
+		{
+			activeShader->currentobjectcolor = mObjectColor;
+			glUniform4f(activeShader->objectcolor_index, mObjectColor.r / 255.f, mObjectColor.g / 255.f, mObjectColor.b / 255.f, 1.0f);
+		}
+		if (activeShader->dyncolortick != mDynTick)
+		{
+			activeShader->dyncolortick = mDynTick;
+			glUniform4f(activeShader->dlightcolor_index, mDynLight[0], mDynLight[1], mDynLight[2], 0.f);
+		}
+		float newthresh = mAlphaTest ? mAlphaThreshold : -1.f;
+		if (newthresh != activeShader->currentalphathreshold)
+		{
+			glUniform1f(activeShader->alphathreshold_index, newthresh);
+			activeShader->currentalphathreshold = newthresh;
+		}
+		if (activeShader->mMatrixTick[0] < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)
+		{
+			// model matrix is a regular uniform which is part of the render state.
+			VSML.matrixToGL(activeShader->mModelMatLocation, VSML.MODEL);
+			activeShader->mMatrixTick[0] = VSML.getLastUpdate(VSML.MODEL);
+		}
+
 		glUniform1i(100, -1);	// kill the old dynamic light list (must be removed once buffers are working!)
 		int fogset = 0;
 		PalEntry pe(
@@ -134,12 +165,8 @@ bool FRenderState::ApplyShader()
 		glUniform1i(activeShader->buffercolor_index, pe.d);
 		// fixme: Reimplement desaturation.
 
-		if (mColorControl != activeShader->currentColorControl)
-		{
-			glUniform1i(activeShader->colorcontrol_index, mColorControl);
-			activeShader->currentColorControl = mColorControl;
-		}
 
+		// now the buffer stuff
 		if (mFogEnabled)
 		{
 			if ((mFogColor & 0xffffff) == 0)
@@ -157,10 +184,6 @@ bool FRenderState::ApplyShader()
 			glUniform1i(activeShader->fogenabled_index, (activeShader->currentfogenabled = fogset)); 
 		}
 
-		if (mTextureMode != activeShader->currenttexturemode)
-		{
-			glUniform1i(activeShader->texturemode_index, (activeShader->currenttexturemode = mTextureMode)); 
-		}
 		/*if (mLightParms[0] != activeShader->currentlightfactor || 
 			mLightParms[1] != activeShader->currentlightdist ||
 			mFogDensity != activeShader->currentfogdensity)*/
@@ -179,12 +202,6 @@ bool FRenderState::ApplyShader()
 
 			glUniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, mFogColor.b/255.f, 0);
 		}
-		if (mObjectColor != activeShader->currentobjectcolor)
-		{
-			activeShader->currentobjectcolor = mObjectColor;
-
-			glUniform4f(activeShader->objectcolor_index, mObjectColor.r / 255.f, mObjectColor.g / 255.f, mObjectColor.b / 255.f, 1.0f);
-		}
 		if (mGlowEnabled)
 		{
 			ParameterBufferElement *pptr;
@@ -199,14 +216,6 @@ bool FRenderState::ApplyShader()
 			glUniform1i(activeShader->glowindex_index, -1);
 		}
 
-		float newthresh = mAlphaTest ? mAlphaThreshold : -1.f;
-		if (newthresh != activeShader->currentalphathreshold)
-		{
-			glUniform1f(activeShader->alphathreshold_index, newthresh);
-			activeShader->currentalphathreshold = newthresh;
-		}
-
-		glUniform4f(activeShader->dlightcolor_index, mDynLight[0], mDynLight[1], mDynLight[2], 0.f);
 		if (glset.lightmode == 8)
 		{
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, mSoftLightLevel);
@@ -216,12 +225,6 @@ bool FRenderState::ApplyShader()
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, -1.f);
 		}
 
-		if (activeShader->mMatrixTick[0] < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)
-		{
-			// update model matrix
-			VSML.matrixToGL(activeShader->mModelMatLocation, VSML.MODEL);
-			activeShader->mMatrixTick[0] = VSML.getLastUpdate(VSML.MODEL);
-		}
 		if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0))
 		{
 			int index;

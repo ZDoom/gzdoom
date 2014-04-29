@@ -22,94 +22,15 @@ enum
 	SPECMODE_FOGLAYER
 };
 
-struct FStateAttr
-{
-	static int ChangeCounter;
-	int mLastChange;
-
-	FStateAttr()
-	{
-		mLastChange = -1;
-	}
-
-	bool operator == (const FStateAttr &other)
-	{
-		return mLastChange == other.mLastChange;
-	}
-
-	bool operator != (const FStateAttr &other)
-	{
-		return mLastChange != other.mLastChange;
-	}
-
-};
-
-struct FStateVec3 : public FStateAttr
-{
-	float vec[3];
-
-	bool Update(FStateVec3 *other)
-	{
-		if (mLastChange != other->mLastChange)
-		{
-			*this = *other;
-			return true;
-		}
-		return false;
-	}
-
-	void Set(float x, float y, float z)
-	{
-		vec[0] = x;
-		vec[1] = z;
-		vec[2] = y;
-		mLastChange = ++ChangeCounter;
-	}
-};
-
-struct FStateVec4 : public FStateAttr
-{
-	float vec[4];
-
-	bool Update(FStateVec4 *other)
-	{
-		if (mLastChange != other->mLastChange)
-		{
-			*this = *other;
-			return true;
-		}
-		return false;
-	}
-
-	void Set(float r, float g, float b, float a)
-	{
-		vec[0] = r;
-		vec[1] = g;
-		vec[2] = b;
-		vec[3] = a;
-		mLastChange = ++ChangeCounter;
-	}
-};
-
 
 struct PrimAttr
 {
-	float mFogDensity;
-	float mLightFactor;
-	float mLightDist;
-
-	// indices into float parameter buffer
-	// colors are stored in the parameter buffer because the most frequent case only uses default values so this keeps data amount lower.
-	int mColorIndex;
-	int mFogColorIndex;
-	int mObjectColorIndex;
-	int mAddLightIndex;
-
-	int mDynLightIndex;	// index of first dynamic light (each light has 2 vec4's, first light's lightcolor.a contains number of lights in the list, each primitive has 3 lists: modulated, subtractive and additive lights)
-	int mGlowIndex;		// each primitive has 4 vec4's: top and bottom color, top and bottom plane equations.
-
-	// index into the matrix buffer
-	int mTexMatrixIndex;	// one matrix if value != -1.
+	PalEntry mColor;
+	PalEntry mFogColor;
+	PalEntry mLightAttr;
+	int mGlowIndex;
+	int mLightIndex;
+	int mMatIndex;
 };
 
 
@@ -137,6 +58,7 @@ class FRenderState
 	int mTextureMode;
 	float mSoftLightLevel;
 	float mDynLight[3];
+	int mDynTick;
 	float mLightParms[2];
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
@@ -159,6 +81,7 @@ class FRenderState
 public:
 	FRenderState()
 	{
+		mDynTick = 0;
 		Reset();
 	}
 
@@ -284,6 +207,7 @@ public:
 
 	void SetDynLight(float r,float g, float b)
 	{
+		mDynTick++;
 		mDynLight[0] = r;
 		mDynLight[1] = g;
 		mDynLight[2] = b;

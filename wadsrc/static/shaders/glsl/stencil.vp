@@ -1,8 +1,6 @@
 
 out vec4 pixelpos;
 
-uniform mat4 ModelMatrix;
-
 void main()
 {
 	// perform exactly the same relevant steps as in the main shader to ensure matching results (that also means including the model matrix here!)

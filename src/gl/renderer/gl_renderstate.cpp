@@ -118,9 +118,9 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader = shd;
 			shd->Bind();
-			gl_FrameState.ApplyToShader(&shd->mFrameStateIndices);
 		}
 	}
+	gl_FrameState.ApplyToShader(&activeShader->mFrameStateIndices);
 
 	if (activeShader)
 	{

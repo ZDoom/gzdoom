@@ -179,18 +179,18 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	alphathreshold_index = glGetUniformLocation(hShader, "uAlphaThreshold");
 	specialmode_index = glGetUniformLocation(hShader, "uSpecialMode");
+	texturemode_index = glGetUniformLocation(hShader, "uTextureMode");
+	dlightcolor_index = glGetUniformLocation(hShader, "uDynLightColor");
+	objectcolor_index = glGetUniformLocation(hShader, "uObjectColor");
 
 	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
 	timer_index = glGetUniformLocation(hShader, "timer");
 	desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
 	fogenabled_index = glGetUniformLocation(hShader, "fogenabled");
-	texturemode_index = glGetUniformLocation(hShader, "texturemode");
 	lightparms_index = glGetUniformLocation(hShader, "lightparms");
 	lightrange_index = glGetUniformLocation(hShader, "lightrange");
 	fogcolor_index = glGetUniformLocation(hShader, "fogcolor");
 	lights_index = glGetUniformLocation(hShader, "lights");
-	dlightcolor_index = glGetUniformLocation(hShader, "dlightcolor");
-	objectcolor_index = glGetUniformLocation(hShader, "objectcolor");
 	buffercolor_index = glGetUniformLocation(hShader, "bufferColor");
 	colorcontrol_index = glGetUniformLocation(hShader, "colorcontrol");
 

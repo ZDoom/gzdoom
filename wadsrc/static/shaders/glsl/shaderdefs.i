@@ -23,5 +23,5 @@ layout(std430, binding = 3) buffer ParameterBuffer
 
 // settings that can't affect primitive batching for non-translucent stuff
 
-uniform float uAlphaThreshold;		// replacement for hardware alpha testing
-uniform int uSpecialMode;			// enables a few special rendering effects (currently: fog layer for subtractive sprites and inverse drawing of sprites in infrared mode)
+uniform mat4 ModelMatrix;
+

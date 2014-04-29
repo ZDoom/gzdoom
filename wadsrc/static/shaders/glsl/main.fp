@@ -1,15 +1,18 @@
+uniform float uAlphaThreshold;		// replacement for hardware alpha testing
+uniform int uTextureMode;			// normal, opaque or stencil?
+uniform int uSpecialMode;			// enables a few special rendering effects (currently: fog layer for subtractive sprites and inverse drawing of sprites in infrared mode)
+uniform vec4 uDynLightColor;		// one global light value that will get added just like a dynamic light.
+uniform vec4 uObjectColor;			// object's own color - not part of the lighting.
+
+
 // Changing this constant gives results very similar to changing r_visibility.
 // Default is 232, it seems to give exactly the same light bands as software renderer.
 #define DOOMLIGHTFACTOR 232.0
 
 uniform int fogenabled;
 uniform vec4 fogcolor;
-uniform vec4 dlightcolor;		// one global light value that will get added just like a dynamic light.
-uniform vec4 objectcolor;		// object's own color - not part of the lighting.
-uniform vec3 camerapos;
 in vec4 pixelpos;
 in vec4 fogparm;
-//uniform vec2 lightparms;
 in float desaturation_factor;
 flat in ivec4 lightrange;
 
@@ -17,7 +20,6 @@ in vec4 topglowcolor;
 in vec4 bottomglowcolor;
 in vec2 glowdist;
 
-uniform int texturemode;
 uniform sampler2D tex;
 
 vec4 Process(vec4 color);
@@ -59,7 +61,7 @@ vec4 getTexel(vec2 st)
 	//
 	// Apply texture modes
 	//
-	switch (texturemode)
+	switch (uTextureMode)
 	{
 		case 1:
 			texel.rgb = vec3(1.0,1.0,1.0);
@@ -73,7 +75,7 @@ vec4 getTexel(vec2 st)
 			texel = vec4(1.0, 1.0, 1.0, texel.r);
 			break;
 	}
-	texel *= objectcolor;
+	texel *= uObjectColor;
 
 	return desaturate(texel);
 }
@@ -161,7 +163,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	// apply dynamic lights (except additive)
 	//
 	
-	vec4 dynlight = dlightcolor;
+	vec4 dynlight = uDynLightColor;
 
 	if (lightrange.z > lightrange.x)
 	{

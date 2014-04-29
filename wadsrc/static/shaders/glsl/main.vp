@@ -27,9 +27,6 @@ layout (location = 101) uniform int texmat;	// this is temporary.
 out float desaturation_factor;
 
 
-uniform mat4 ModelMatrix;
-
-
 //--------------------------
 //
 // converts an integer with AARRGGBB value to a vec4.

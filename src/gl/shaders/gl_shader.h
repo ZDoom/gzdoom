@@ -49,6 +49,7 @@ class FShader
 	
 
 	PalEntry currentobjectcolor;
+	int dyncolortick;
 	int currentwarpphase;
 	int currentglowstate;
 	int currentfogenabled;

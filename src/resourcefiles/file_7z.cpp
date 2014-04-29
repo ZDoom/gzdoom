@@ -41,12 +41,8 @@
 #include "i_system.h"
 #include "w_wad.h"
 
-extern "C" {
-#include "Archive/7z/7zHeader.h"
-#include "Archive/7z/7zExtract.h"
-#include "Archive/7z/7zIn.h"
+#include "7z.h"
 #include "7zCrc.h"
-}
 
 
 //-----------------------------------------------------------------------
@@ -151,7 +147,7 @@ struct C7zArchive
 	SRes Extract(UInt32 file_index, char *buffer)
 	{
 		size_t offset, out_size_processed;
-		SRes res = SzAr_Extract(&DB, &LookStream.s, file_index,
+		SRes res = SzArEx_Extract(&DB, &LookStream.s, file_index,
 			&BlockIndex, &OutBuffer, &OutBufferSize,
 			&offset, &out_size_processed,
 			&g_Alloc, &g_Alloc);
@@ -279,7 +275,27 @@ bool F7ZFile::Open(bool quiet)
 			continue;
 		}
 
-		FString name = file->Name;
+		const size_t nameLength = SzArEx_GetFileNameUtf16(&Archive->DB, i, NULL);
+
+		if (0 == nameLength)
+		{
+			++skipped;
+			continue;
+		}
+
+		// Convert UTF-16 filename to plain ASCII
+
+		UInt16* const nameUTF16 = static_cast<UInt16*>(alloca(sizeof(UInt16) * nameLength));
+		SzArEx_GetFileNameUtf16(&Archive->DB, i, nameUTF16);
+
+		char* const nameASCII = static_cast<char*>(alloca(nameLength));
+
+		for (size_t c = 0; c < nameLength; ++c)
+		{
+			nameASCII[c] = static_cast<char>(nameUTF16[c]);
+		}
+
+		FString name = nameASCII;
 		FixPathSeperator(name);
 		name.ToLower();
 
@@ -293,6 +309,21 @@ bool F7ZFile::Open(bool quiet)
 	}
 	// Resize the lump record array to its actual size
 	NumLumps -= skipped;
+
+	if (NumLumps > 0)
+	{
+		// Quick check for unsupported compression method
+
+		TArray<char> temp;
+		temp.Resize(Lumps[0].LumpSize);
+
+		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
+		{
+			if (!quiet) Printf("\n%s: unsupported 7z/LZMA file!\n", Filename);
+			return false;
+		}
+	}
+
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
 
 	// Entries in archives are sorted alphabetically
@@ -351,6 +382,8 @@ FResourceFile *Check7Z(const char *filename, FileReader *file, bool quiet)
 		{
 			FResourceFile *rf = new F7ZFile(filename, file);
 			if (rf->Open(quiet)) return rf;
+
+			rf->Reader = NULL; // to avoid destruction of reader
 			delete rf;
 		}
 	}

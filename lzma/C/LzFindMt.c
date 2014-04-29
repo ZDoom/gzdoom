@@ -1,5 +1,5 @@
 /* LzFindMt.c -- multithreaded Match finder for LZ algorithms
-2008-10-04 : Igor Pavlov : Public domain */
+2009-09-20 : Igor Pavlov : Public domain */
 
 #include "LzHash.h"
 
@@ -97,7 +97,7 @@ void MtSync_Destruct(CMtSync *p)
 
 #define RINOK_THREAD(x) { if ((x) != 0) return SZ_ERROR_THREAD; }
 
-static SRes MtSync_Create2(CMtSync *p, unsigned (THREAD_FUNC_CALL_TYPE *startAddress)(void *), void *obj, UInt32 numBlocks)
+static SRes MtSync_Create2(CMtSync *p, unsigned (MY_STD_CALL *startAddress)(void *), void *obj, UInt32 numBlocks)
 {
   if (p->wasCreated)
     return SZ_OK;
@@ -119,7 +119,7 @@ static SRes MtSync_Create2(CMtSync *p, unsigned (THREAD_FUNC_CALL_TYPE *startAdd
   return SZ_OK;
 }
 
-static SRes MtSync_Create(CMtSync *p, unsigned (THREAD_FUNC_CALL_TYPE *startAddress)(void *), void *obj, UInt32 numBlocks)
+static SRes MtSync_Create(CMtSync *p, unsigned (MY_STD_CALL *startAddress)(void *), void *obj, UInt32 numBlocks)
 {
   SRes res = MtSync_Create2(p, startAddress, obj, numBlocks);
   if (res != SZ_OK)
@@ -143,7 +143,7 @@ DEF_GetHeads2(2,  (p[0] | ((UInt32)p[1] << 8)), hashMask = hashMask; crc = crc; 
 DEF_GetHeads(3,  (crc[p[0]] ^ p[1] ^ ((UInt32)p[2] << 8)) & hashMask)
 DEF_GetHeads(4,  (crc[p[0]] ^ p[1] ^ ((UInt32)p[2] << 8) ^ (crc[p[3]] << 5)) & hashMask)
 DEF_GetHeads(4b, (crc[p[0]] ^ p[1] ^ ((UInt32)p[2] << 8) ^ ((UInt32)p[3] << 16)) & hashMask)
-DEF_GetHeads(5,  (crc[p[0]] ^ p[1] ^ ((UInt32)p[2] << 8) ^ (crc[p[3]] << 5) ^ (crc[p[4]] << 3)) & hashMask)
+/* DEF_GetHeads(5,  (crc[p[0]] ^ p[1] ^ ((UInt32)p[2] << 8) ^ (crc[p[3]] << 5) ^ (crc[p[4]] << 3)) & hashMask) */
 
 void HashThreadFunc(CMatchFinderMt *mt)
 {
@@ -451,8 +451,8 @@ void MatchFinderMt_Destruct(CMatchFinderMt *p, ISzAlloc *alloc)
 #define kHashBufferSize (kMtHashBlockSize * kMtHashNumBlocks)
 #define kBtBufferSize (kMtBtBlockSize * kMtBtNumBlocks)
 
-static unsigned THREAD_FUNC_CALL_TYPE HashThreadFunc2(void *p) { HashThreadFunc((CMatchFinderMt *)p);  return 0; }
-static unsigned THREAD_FUNC_CALL_TYPE BtThreadFunc2(void *p)
+static unsigned MY_STD_CALL HashThreadFunc2(void *p) { HashThreadFunc((CMatchFinderMt *)p);  return 0; }
+static unsigned MY_STD_CALL BtThreadFunc2(void *p)
 {
   Byte allocaDummy[0x180];
   int i = 0;
@@ -711,47 +711,47 @@ UInt32 MatchFinderMt_GetMatches(CMatchFinderMt *p, UInt32 *distances)
   return len;
 }
 
-#define SKIP_HEADER2  do { GET_NEXT_BLOCK_IF_REQUIRED
-#define SKIP_HEADER(n) SKIP_HEADER2 if (p->btNumAvailBytes-- >= (n)) { const Byte *cur = p->pointerToCurPos; UInt32 *hash = p->hash;
-#define SKIP_FOOTER } INCREASE_LZ_POS p->btBufPos += p->btBuf[p->btBufPos] + 1; } while (--num != 0);
+#define SKIP_HEADER2_MT  do { GET_NEXT_BLOCK_IF_REQUIRED
+#define SKIP_HEADER_MT(n) SKIP_HEADER2_MT if (p->btNumAvailBytes-- >= (n)) { const Byte *cur = p->pointerToCurPos; UInt32 *hash = p->hash;
+#define SKIP_FOOTER_MT } INCREASE_LZ_POS p->btBufPos += p->btBuf[p->btBufPos] + 1; } while (--num != 0);
 
 void MatchFinderMt0_Skip(CMatchFinderMt *p, UInt32 num)
 {
-  SKIP_HEADER2 { p->btNumAvailBytes--;
-  SKIP_FOOTER
+  SKIP_HEADER2_MT { p->btNumAvailBytes--;
+  SKIP_FOOTER_MT
 }
 
 void MatchFinderMt2_Skip(CMatchFinderMt *p, UInt32 num)
 {
-  SKIP_HEADER(2)
+  SKIP_HEADER_MT(2)
       UInt32 hash2Value;
       MT_HASH2_CALC
       hash[hash2Value] = p->lzPos;
-  SKIP_FOOTER
+  SKIP_FOOTER_MT
 }
 
 void MatchFinderMt3_Skip(CMatchFinderMt *p, UInt32 num)
 {
-  SKIP_HEADER(3)
+  SKIP_HEADER_MT(3)
       UInt32 hash2Value, hash3Value;
       MT_HASH3_CALC
       hash[kFix3HashSize + hash3Value] =
       hash[                hash2Value] =
         p->lzPos;
-  SKIP_FOOTER
+  SKIP_FOOTER_MT
 }
 
 /*
 void MatchFinderMt4_Skip(CMatchFinderMt *p, UInt32 num)
 {
-  SKIP_HEADER(4)
+  SKIP_HEADER_MT(4)
       UInt32 hash2Value, hash3Value, hash4Value;
       MT_HASH4_CALC
       hash[kFix4HashSize + hash4Value] =
       hash[kFix3HashSize + hash3Value] =
       hash[                hash2Value] =
         p->lzPos;
-  SKIP_FOOTER
+  SKIP_FOOTER_MT
 }
 */
 

@@ -41,7 +41,8 @@
 #include "gl/system/gl_system.h"
 #include "gl/data/gl_parameterbuffer.h"
 
-#define PARAMETER_BUFFER_SIZE 200000
+#define PARAMETER_BUFFER_SIZE 250000
+#define ATTRIB_BUFFER_SIZE 100000
 
 //==========================================================================
 //
@@ -49,14 +50,14 @@
 //
 //==========================================================================
 
-FParameterBuffer::FParameterBuffer()
+FDataBuffer::FDataBuffer(unsigned int bytesize, int bindingpoint)
 {
-	mSize = PARAMETER_BUFFER_SIZE;
-	int bytesize = mSize * sizeof(ParameterBufferElement);
+	mPointer = 0;
+	mStartIndex = 0;
 	glGenBuffers(1, &mBufferId);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mBufferId);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingpoint, mBufferId);
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	mMappedBuffer = (ParameterBufferElement*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	mMappedBuffer = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 }
 
 //==========================================================================
@@ -65,7 +66,7 @@ FParameterBuffer::FParameterBuffer()
 //
 //==========================================================================
 
-FParameterBuffer::~FParameterBuffer()
+FDataBuffer::~FDataBuffer()
 {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferId);
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -79,9 +80,21 @@ FParameterBuffer::~FParameterBuffer()
 //
 //==========================================================================
 
-void FParameterBuffer::StartFrame()
+void FDataBuffer::StartFrame()
 {
 	mStartIndex = mPointer;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+FParameterBuffer::FParameterBuffer()
+: FDataBuffer(PARAMETER_BUFFER_SIZE*sizeof(ParameterBufferElement), 3)
+{
+	mSize = PARAMETER_BUFFER_SIZE;
 }
 
 //==========================================================================
@@ -99,6 +112,39 @@ unsigned int FParameterBuffer::Reserve(unsigned int amount, ParameterBufferEleme
 	}
 	unsigned int here = mPointer;
 	mPointer += amount;
-	*pptr = &mMappedBuffer[here];
+	ParameterBufferElement *pb = (ParameterBufferElement *)mMappedBuffer;
+	*pptr = &pb[here];
+	return here;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+FAttribBuffer::FAttribBuffer()
+: FDataBuffer(ATTRIB_BUFFER_SIZE*sizeof(AttribBufferElement), 2)
+{
+	mSize = ATTRIB_BUFFER_SIZE;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+unsigned int FAttribBuffer::Reserve(unsigned int amount, AttribBufferElement **pptr)
+{
+	if (mPointer + amount > mSize) mPointer = 0;
+	if (mPointer < mStartIndex && mPointer + amount > mStartIndex)
+	{
+		// DPrintf("Warning: Parameter buffer wraparound!\n");
+	}
+	unsigned int here = mPointer;
+	mPointer += amount;
+	AttribBufferElement *pb = (AttribBufferElement *)mMappedBuffer;
+	*pptr = &pb[here];
 	return here;
 }

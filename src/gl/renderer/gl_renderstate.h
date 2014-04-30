@@ -23,17 +23,6 @@ enum
 };
 
 
-struct PrimAttr
-{
-	PalEntry mColor;
-	PalEntry mFogColor;
-	PalEntry mLightAttr;
-	int mGlowIndex;
-	int mLightIndex;
-	int mMatIndex;
-};
-
-
 enum EEffect
 {
 	EFF_NONE=-1,
@@ -66,6 +55,8 @@ class FRenderState
 	int mBlendEquation;
 	int mSpecialMode;
 	unsigned int mVertexArray, mLastVertexArray;
+	int mLightIndex;
+	int mTexMatrixIndex;
 
 	float mGlowParms[16];
 	PalEntry mFogColor, mObjectColor;
@@ -92,6 +83,11 @@ public:
 	void PushVertexArray()
 	{
 		mVAOStack.Push(mVertexArray);
+	}
+
+	void SetDynLightIndex(int li)
+	{
+		mLightIndex = li;
 	}
 
 	void SetColorControl(int ctrl)

@@ -210,6 +210,11 @@ class VSMathLib {
 			}
 		}
 
+		int getStackSize(MatrixTypes aType)
+		{
+			return mMatrixStack[aType].Size();
+		}
+
 		/** Similar to glGet for computed matrices
 		  *
 		  * \param aType any value from ComputedMatrixTypes

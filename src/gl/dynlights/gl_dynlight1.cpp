@@ -163,6 +163,10 @@ void gl_UploadLights(FDynLightData &data)
 		memcpy(&pptr[1], &data.arrays[0][0], 4 * size0*sizeof(float));
 		memcpy(&pptr[1 + size0], &data.arrays[1][0], 4 * size1*sizeof(float));
 		memcpy(&pptr[1 + size0 + size1], &data.arrays[2][0], 4 * size2*sizeof(float));
-		glUniform1i(100, index);
+		gl_RenderState.SetDynLightIndex(index);
+	}
+	else
+	{
+		gl_RenderState.SetDynLightIndex(-1);
 	}
 }

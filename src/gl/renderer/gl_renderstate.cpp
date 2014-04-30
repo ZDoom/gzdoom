@@ -78,6 +78,7 @@ void FRenderState::Reset()
 	mBlendEquation = GL_FUNC_ADD;
 	gl_BlendEquation = -1;
 	mSpecialMode = 0;
+	mLightIndex = -1;
 }
 
 
@@ -123,7 +124,9 @@ bool FRenderState::ApplyShader()
 
 	if (activeShader)
 	{
+		//
 		// set all uniforms that got changed since the last use of this shader
+		//
 		if (mColorControl != activeShader->currentColorControl)
 		{
 			glUniform1i(activeShader->colorcontrol_index, (activeShader->currentColorControl = mColorControl));
@@ -155,7 +158,46 @@ bool FRenderState::ApplyShader()
 			activeShader->mMatrixTick[0] = VSML.getLastUpdate(VSML.MODEL);
 		}
 
-		glUniform1i(100, -1);	// kill the old dynamic light list (must be removed once buffers are working!)
+		//
+		// end of uniforms. Now for the buffer parameters.
+		//
+
+		AttribBufferElement *aptr;
+		unsigned int aindex = GLRenderer->mAttribBuffer->Reserve(1, &aptr);
+
+		glVertexAttribI1i(VATTR_ATTRIBINDEX, aindex);
+		if (mGlowEnabled)
+		{
+			ParameterBufferElement *pptr;
+			int glowindex = GLRenderer->mParmBuffer->Reserve(4, &pptr);
+			memcpy(pptr, mGlowParms, 16 * sizeof(float));
+			activeShader->currentglowstate = 1;
+			aptr->mGlowIndex = glowindex;
+		}
+		else
+		{
+			// if glowing is on, disable it.
+			aptr->mGlowIndex = -1;
+		}
+		aptr->mLightIndex = mLightIndex;
+
+		if (VSML.stackSize(VSML.AUX0) > 0)	// if there's nothing on the stack we don't need a texture matrix.
+		{
+			if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0))
+			{
+				// update texture matrix only if it is different from last time.
+				ParameterBufferElement *pptr;
+				mTexMatrixIndex = GLRenderer->mParmBuffer->Reserve(4, &pptr);
+				VSML.copy(pptr->vec, VSML.AUX0);
+				activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
+			}
+			aptr->mMatIndex = mTexMatrixIndex;
+		}
+		else
+		{
+			aptr->mMatIndex = -1;
+		}
+
 		int fogset = 0;
 		PalEntry pe(
 			xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
@@ -202,19 +244,6 @@ bool FRenderState::ApplyShader()
 
 			glUniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, mFogColor.b/255.f, 0);
 		}
-		if (mGlowEnabled)
-		{
-			ParameterBufferElement *pptr;
-			int glowindex = GLRenderer->mParmBuffer->Reserve(4, &pptr);
-			memcpy(pptr, mGlowParms, 16 * sizeof(float));
-			activeShader->currentglowstate = 1;
-			glUniform1i(activeShader->glowindex_index, glowindex);
-		}
-		else if (activeShader->currentglowstate)
-		{
-			// if glowing is on, disable it.
-			glUniform1i(activeShader->glowindex_index, -1);
-		}
 
 		if (glset.lightmode == 8)
 		{
@@ -224,25 +253,6 @@ bool FRenderState::ApplyShader()
 		{
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, -1.f);
 		}
-
-		if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0))
-		{
-			int index;
-			if (VSML.stackSize(VSML.AUX0))
-			{
-				// update texture matrix
-				ParameterBufferElement *pptr;
-				index = GLRenderer->mParmBuffer->Reserve(4, &pptr);
-				VSML.copy(pptr->vec, VSML.AUX0);
-				activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
-			}
-			else
-			{
-				index = -1;
-			}
-			glUniform1i(101, index);
-		}
-
 		return true;
 	}
 	return false;

@@ -194,8 +194,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	buffercolor_index = glGetUniformLocation(hShader, "bufferColor");
 	colorcontrol_index = glGetUniformLocation(hShader, "colorcontrol");
 
-	glowindex_index = glGetUniformLocation(hShader, "glowindex");
-
 	glUseProgram(hShader);
 
 	int texture_index = glGetUniformLocation(hShader, "texture2");

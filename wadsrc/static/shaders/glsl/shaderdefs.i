@@ -10,6 +10,20 @@ uniform int uFixedColormap;				// 0, when no fixed colormap, 1 for a light value
 uniform vec4 uFixedColormapStart;
 uniform vec4 uFixedColormapRange;
 
+struct Attr
+{
+	int aColor;
+	int aLightColor;
+	int aLightAttr;
+	int aGlowIndex;
+	int aLightIndex;
+	int aMatIndex;
+};
+	
+layout(std430, binding = 2) buffer AttribBuffer
+{
+	readonly Attr Attribs[];
+};
 
 layout(std430, binding = 3) buffer ParameterBuffer
 {

@@ -8,6 +8,8 @@
 
 extern bool gl_shaderactive;
 
+const int VATTR_ATTRIBINDEX = 12;
+
 const int VATTR_ATTRIBCOLOR = 15;
 const int VATTR_FOGPARAMS = 14;
 const int VATTR_LIGHTLEVEL = 13; // Korshun.
@@ -39,7 +41,6 @@ class FShader
 	int fogcolor_index;
 	int lights_index;
 	int dlightcolor_index;
-	int glowindex_index;
 	int objectcolor_index;
 	int buffercolor_index;
 	int colorcontrol_index;
@@ -88,7 +89,6 @@ public:
 		lights_index = -1;
 		dlightcolor_index = -1;
 		alphathreshold_index = -1;
-		glowindex_index = -1;
 		buffercolor_index = -1;
 		colorcontrol_index = -1;
 

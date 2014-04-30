@@ -694,7 +694,8 @@ SortNode * GLDrawList::DoSort(SortNode * head)
 //==========================================================================
 void GLDrawList::DoDraw(int pass, int i)
 {
-	switch(drawitems[i].rendertype)
+	gl_RenderState.SetDynLightIndex(-1);	// ensure that lights from the previous object are removed.
+	switch (drawitems[i].rendertype)
 	{
 	case GLDIT_FLAT:
 		{

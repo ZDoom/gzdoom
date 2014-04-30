@@ -148,6 +148,7 @@ void GLFlat::SetupSubsectorLights(subsector_t * sub)
 	}
 
 	gl_UploadLights(lightdata);
+	gl_RenderState.Apply();
 }
 
 //==========================================================================

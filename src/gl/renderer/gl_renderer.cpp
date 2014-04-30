@@ -96,6 +96,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mCameraPos = FVector3(0,0,0);
 	mVBO = NULL;
 	mParmBuffer = NULL;
+	mAttribBuffer = NULL;
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
 	glpart2 = glpart = mirrortexture = NULL;
@@ -109,6 +110,7 @@ void FGLRenderer::Initialize()
 
 	mVBO = new FFlatVertexBuffer;
 	mParmBuffer = new FParameterBuffer;
+	mAttribBuffer = new FAttribBuffer;
 	mFBID = 0;
 	SetupLevel();
 	mShaderManager = new FShaderManager;
@@ -123,6 +125,7 @@ FGLRenderer::~FGLRenderer()
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mParmBuffer != NULL) delete mParmBuffer;
+	if (mAttribBuffer != NULL) delete mAttribBuffer;
 	if (mVBO != NULL) delete mVBO;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;

@@ -71,6 +71,7 @@ public:
 
 	FFlatVertexBuffer *mVBO;
 	FParameterBuffer *mParmBuffer;
+	FAttribBuffer *mAttribBuffer;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;

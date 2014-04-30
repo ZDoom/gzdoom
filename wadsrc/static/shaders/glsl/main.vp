@@ -20,10 +20,9 @@ uniform int colorcontrol;
 in vec4 attribColor;
 
 // these 
+layout (location=12) in int attribindex;
+
 uniform int bufferColor;	// as AARRGGBB, 8 bits each.
-uniform int glowindex;
-layout (location = 100) uniform int dlights;	// this is temporary.
-layout (location = 101) uniform int texmat;	// this is temporary.
 out float desaturation_factor;
 
 
@@ -89,6 +88,7 @@ void main()
 	lightlevel = lightlevel_in;
 	fogparm = fogparams;
 	// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex ins to the shader.
+	int glowindex = Attribs[attribindex].aGlowIndex;
 	if (glowindex != -1)
 	{
 		topglowcolor = Parameters[glowindex];
@@ -105,6 +105,7 @@ void main()
 		glowdist = vec2(0.0);
 	}
 	
+	int dlights = Attribs[attribindex].aLightIndex;
 	if (dlights != -1)
 	{
 		lightrange = ivec4(Parameters[dlights]);
@@ -122,6 +123,7 @@ void main()
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
 		gl_TexCoord[0].xy = sst;
 	#else
+		int texmat = Attribs[attribindex].aMatIndex;
 		if (texmat != -1)
 		{
 			mat4 TextureMatrix = mat4(Parameters[texmat], Parameters[texmat+1], Parameters[texmat+2], Parameters[texmat+3]);

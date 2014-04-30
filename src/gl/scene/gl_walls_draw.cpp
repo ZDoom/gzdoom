@@ -177,12 +177,13 @@ void GLWall::RenderWall(int textured)
 		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor, topplane, bottomplane);
 	}
 
-	gl_RenderState.Apply();
 
 	if (textured & TRF_LIGHTS)
 	{
 		SetupLights();
 	}
+
+	gl_RenderState.Apply();
 
 	glBegin(GL_TRIANGLE_FAN);
 

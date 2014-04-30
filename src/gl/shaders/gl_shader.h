@@ -8,9 +8,9 @@
 
 extern bool gl_shaderactive;
 
+const int VATTR_ATTRIBCOLOR = 11;
 const int VATTR_ATTRIBINDEX = 12;
 
-const int VATTR_ATTRIBCOLOR = 15;
 const int VATTR_FOGPARAMS = 14;
 const int VATTR_LIGHTLEVEL = 13; // Korshun.
 
@@ -34,15 +34,9 @@ class FShader
 
 	int timer_index;
 	int desaturation_index;
-	int fogenabled_index;
 	int texturemode_index;
-	int lightparms_index;
-	int lightrange_index;
-	int fogcolor_index;
-	int lights_index;
 	int dlightcolor_index;
 	int objectcolor_index;
-	int buffercolor_index;
 	int colorcontrol_index;
 	int specialmode_index;
 
@@ -53,7 +47,6 @@ class FShader
 	int dyncolortick;
 	int currentwarpphase;
 	int currentglowstate;
-	int currentfogenabled;
 	int currenttexturemode;
 	float currentlightfactor;
 	float currentlightdist;
@@ -62,7 +55,6 @@ class FShader
 	int currentSpecialMode;
 	int currentColorControl;
 
-	PalEntry currentfogcolor;
 	float currentfogdensity;
 	unsigned int mMatrixTick[4];
 
@@ -74,22 +66,16 @@ public:
 		: mName(name)
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentSpecialMode = currentColorControl = currentfogenabled = currenttexturemode = currentglowstate = 0;
+		currentSpecialMode = currentColorControl = currenttexturemode = currentglowstate = 0;
 		currentdesaturation = currentlightfactor = currentlightdist = currentalphathreshold = currentwarpphase = 0.0f;
 		currentfogdensity = -1;
-		currentobjectcolor = currentfogcolor = 0;
+		currentobjectcolor = 0;
 
 		timer_index = -1;
 		desaturation_index = -1;
-		fogenabled_index = -1;
 		texturemode_index = -1;
-		lightparms_index = -1;
-		lightrange_index = -1;
-		fogcolor_index = -1;
-		lights_index = -1;
 		dlightcolor_index = -1;
 		alphathreshold_index = -1;
-		buffercolor_index = -1;
 		colorcontrol_index = -1;
 
 
@@ -103,7 +89,6 @@ public:
 
 	void SetColormapColor(float r, float g, float b, float r1, float g1, float b1);
 	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
-	void SetLightRange(int start, int end, int forceadd);
 
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }

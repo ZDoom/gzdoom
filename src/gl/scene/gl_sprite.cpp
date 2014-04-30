@@ -118,7 +118,6 @@ void GLSprite::Draw(int pass)
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = getExtraLight();
-	int usefixedcolormap = FXM_IGNORE;
 
 	gl_RenderState.SetObjectColor(ThingColor);
 

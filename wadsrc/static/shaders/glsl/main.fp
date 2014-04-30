@@ -9,8 +9,7 @@ uniform vec4 uObjectColor;			// object's own color - not part of the lighting.
 // Default is 232, it seems to give exactly the same light bands as software renderer.
 #define DOOMLIGHTFACTOR 232.0
 
-uniform int fogenabled;
-uniform vec4 fogcolor;
+in vec4 fogcolor;
 in vec4 pixelpos;
 in vec4 fogparm;
 in float desaturation_factor;
@@ -127,7 +126,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 		float newlightlevel = 1.0 - R_DoomLightingEquation(lightlevel, gl_FragCoord.z);
 		color.rgb *= newlightlevel;
 	}
-	else if (fogenabled > 0)
+	else if (fogcolor.a > 0.0)
 	{
 		// brightening around the player for light mode 2
 		if (fogdist < fogparm.y)
@@ -245,7 +244,7 @@ void main()
 					//
 					// calculate fog factor
 					//
-					if (fogenabled != 0)
+					if (fogcolor.a != 0.0)
 					{
 						if (uFogMode == 1) 
 						{
@@ -259,7 +258,6 @@ void main()
 					}
 					
 					frag *= getLightColor(fogdist, fogfactor);
-					
 					
 					if (lightrange.w > lightrange.z)
 					{
@@ -282,7 +280,7 @@ void main()
 					//
 					// colored fog
 					//
-					if (fogenabled < 0) 
+					if (fogcolor.a < 0.0) 
 					{
 						frag = applyFog(frag, fogfactor);
 					}

@@ -151,6 +151,10 @@ bool FRenderState::ApplyShader()
 			glUniform1f(activeShader->alphathreshold_index, newthresh);
 			activeShader->currentalphathreshold = newthresh;
 		}
+		if (mSpecialMode != activeShader->currentSpecialMode)
+		{
+			glUniform1i(activeShader->specialmode_index, (activeShader->currentSpecialMode = mSpecialMode));
+		}
 		if (activeShader->mMatrixTick[0] < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)
 		{
 			// model matrix is a regular uniform which is part of the render state.
@@ -199,32 +203,14 @@ bool FRenderState::ApplyShader()
 		}
 
 		int fogset = 0;
-		PalEntry pe(
+		aptr->mColor = PalEntry(
 			xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
 			xs_CRoundToInt(mColor[0] * 255.f + 0.1f),
 			xs_CRoundToInt(mColor[1] * 255.f + 0.1f),
 			xs_CRoundToInt(mColor[2] * 255.f + 0.1f));
-		glUniform1i(activeShader->buffercolor_index, pe.d);
-		// fixme: Reimplement desaturation.
 
-
-		// now the buffer stuff
-		if (mFogEnabled)
-		{
-			if ((mFogColor & 0xffffff) == 0)
-			{
-				fogset = gl_fogmode;
-			}
-			else
-			{
-				fogset = -gl_fogmode;
-			}
-		}
-
-		if (fogset != activeShader->currentfogenabled)
-		{
-			glUniform1i(activeShader->fogenabled_index, (activeShader->currentfogenabled = fogset)); 
-		}
+		aptr->mFogColor = mFogColor;
+		aptr->mFogColor.a = mFogEnabled;
 
 		/*if (mLightParms[0] != activeShader->currentlightfactor || 
 			mLightParms[1] != activeShader->currentlightdist ||
@@ -238,13 +224,6 @@ bool FRenderState::ApplyShader()
 			// execution time.
 			glVertexAttrib4f(VATTR_FOGPARAMS, mLightParms[0], mLightParms[1], mFogDensity * (-LOG2E / 64000.f), 0);
 		}
-		if (mFogColor != activeShader->currentfogcolor)
-		{
-			activeShader->currentfogcolor = mFogColor;
-
-			glUniform4f (activeShader->fogcolor_index, mFogColor.r/255.f, mFogColor.g/255.f, mFogColor.b/255.f, 0);
-		}
-
 		if (glset.lightmode == 8)
 		{
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, mSoftLightLevel);

@@ -13,7 +13,7 @@ uniform vec4 uFixedColormapRange;
 struct Attr
 {
 	int aColor;
-	int aLightColor;
+	int aFogColor;
 	int aLightAttr;
 	int aGlowIndex;
 	int aLightIndex;

@@ -199,7 +199,7 @@ void FFrameState::DoApplyToShader(FrameStateIndices *in)
 		glUniform1f(in->iClipHeight, mData.mClipHeight);
 		glUniform1i(in->iLightMode, mData.mLightMode);
 		glUniform1i(in->iFogMode, mData.mFogMode);
-		glUniform1f(in->iFixedColormap, mData.mFixedColormap);
+		glUniform1i(in->iFixedColormap, mData.mFixedColormap);
 		glUniform4fv(in->iFixedColormapStart, 1, mData.mFixedColormapStart);
 		glUniform4fv(in->iFixedColormapRange, 1, mData.mFixedColormapRange);
 	}

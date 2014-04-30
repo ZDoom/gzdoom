@@ -1,4 +1,4 @@
-uniform vec4 fogcolor;
+in vec4 fogcolor;
 in vec4 pixelpos;
 in vec4 fogparm;
 

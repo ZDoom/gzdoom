@@ -2,6 +2,7 @@
 out vec4 pixelpos;
 
 in vec4 fogparams;
+out vec4 fogcolor;
 out vec4 fogparm;
 out vec2 glowdist;
 out vec4 topglowcolor;
@@ -17,12 +18,11 @@ out float lightlevel;
 // 1: read color from buffer, alpha from attribute and no desaturation
 // 2: read color and alpha from buffer. If alpha is 0, bufferColor will be an index into the parameter buffer with 2 entries defining RGBA and desaturation
 uniform int colorcontrol;
-in vec4 attribColor;
 
-// these 
+layout (location=11) in vec4 attribColor;
 layout (location=12) in int attribindex;
 
-uniform int bufferColor;	// as AARRGGBB, 8 bits each.
+//uniform int bufferColor;	// as AARRGGBB, 8 bits each.
 out float desaturation_factor;
 
 
@@ -59,21 +59,33 @@ void main()
 	switch (colorcontrol)
 	{
 		default:
-		case 0:
+		case 0:	// color comes from vertex attribute
 			color = attribColor;
 			break;
 			
-		case 1:
-			// int bufferColor = parambuffer[pb_index].bufferColor;
-			color = int2vec4(bufferColor);
+		case 1:	// color comes from attribute buffer, alpha from vertex attribute
+			color = int2vec4(Attribs[attribindex].aColor);
 			color.a = attribColor.a;
 			break;
 			
-		case 2:
-			color = int2vec4(bufferColor);
+		case 2:	// color comes from attribute buffer
+			color = int2vec4(Attribs[attribindex].aColor);
 			break;
 	}
 	gl_FrontColor = color;
+	
+	vec4 fc = int2vec4(Attribs[attribindex].aFogColor);
+	if (fc.a != 0.0)
+	{
+		if (fc.rgb == vec3(0.0)) fc.a = 1.0;
+		else fc.a = -1.0;
+	}
+	else
+	{
+		fc = vec4(0.0);
+	}
+	fogcolor = fc;
+	
 	desaturation_factor = 0.0;//fixme! desaturate;
 	
 	//--------------------------

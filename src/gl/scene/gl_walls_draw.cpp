@@ -79,77 +79,74 @@ void GLWall::SetupLights()
 	{
 		return;
 	}
-	for(int i=0;i<2;i++)
+	FLightNode *node;
+	if (seg->sidedef == NULL)
 	{
-		FLightNode *node;
-		if (seg->sidedef == NULL)
-		{
-			node = NULL;
-		}
-		else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-		{
-			node = seg->sidedef->lighthead[i];
-		}
-		else if (sub)
-		{
-			// Polobject segs cannot be checked per sidedef so use the subsector instead.
-			node = sub->lighthead[i];
-		}
-		else node = NULL;
+		node = NULL;
+	}
+	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	{
+		node = seg->sidedef->lighthead;
+	}
+	else if (sub)
+	{
+		// Polobject segs cannot be checked per sidedef so use the subsector instead.
+		node = sub->lighthead;
+	}
+	else node = NULL;
 
-		// Iterate through all dynamic lights which touch this wall and render them
-		while (node)
+	// Iterate through all dynamic lights which touch this wall and render them
+	while (node)
+	{
+		if (!(node->lightsource->flags2&MF2_DORMANT))
 		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
+			iter_dlight++;
+
+			Vector fn, pos;
+
+			float x = FIXED2FLOAT(node->lightsource->x);
+			float y = FIXED2FLOAT(node->lightsource->y);
+			float z = FIXED2FLOAT(node->lightsource->z);
+			float dist = fabsf(p.DistToPoint(x, z, y));
+			float radius = (node->lightsource->GetRadius() * gl_lights_size);
+			float scale = 1.0f / ((2.f * radius) - dist);
+
+			if (radius > 0.f && dist < radius)
 			{
-				iter_dlight++;
+				Vector nearPt, up, right;
 
-				Vector fn, pos;
+				pos.Set(x,z,y);
+				fn=p.Normal();
+				fn.GetRightUp(right, up);
 
-				float x = FIXED2FLOAT(node->lightsource->x);
-				float y = FIXED2FLOAT(node->lightsource->y);
-				float z = FIXED2FLOAT(node->lightsource->z);
-				float dist = fabsf(p.DistToPoint(x, z, y));
-				float radius = (node->lightsource->GetRadius() * gl_lights_size);
-				float scale = 1.0f / ((2.f * radius) - dist);
+				Vector tmpVec = fn * dist;
+				nearPt = pos + tmpVec;
 
-				if (radius > 0.f && dist < radius)
+				Vector t1;
+				int outcnt[4]={0,0,0,0};
+				texcoord tcs[4];
+
+				// do a quick check whether the light touches this polygon
+				for(int i=0;i<4;i++)
 				{
-					Vector nearPt, up, right;
+					t1.Set(&vtx[i*3]);
+					Vector nearToVert = t1 - nearPt;
+					tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
+					tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
 
-					pos.Set(x,z,y);
-					fn=p.Normal();
-					fn.GetRightUp(right, up);
+					if (tcs[i].u<0) outcnt[0]++;
+					if (tcs[i].u>1) outcnt[1]++;
+					if (tcs[i].v<0) outcnt[2]++;
+					if (tcs[i].v>1) outcnt[3]++;
 
-					Vector tmpVec = fn * dist;
-					nearPt = pos + tmpVec;
-
-					Vector t1;
-					int outcnt[4]={0,0,0,0};
-					texcoord tcs[4];
-
-					// do a quick check whether the light touches this polygon
-					for(int i=0;i<4;i++)
-					{
-						t1.Set(&vtx[i*3]);
-						Vector nearToVert = t1 - nearPt;
-						tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-						tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
-
-						if (tcs[i].u<0) outcnt[0]++;
-						if (tcs[i].u>1) outcnt[1]++;
-						if (tcs[i].v<0) outcnt[2]++;
-						if (tcs[i].v>1) outcnt[3]++;
-
-					}
-					if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
-					{
-						gl_GetLight(p, node->lightsource, true, false, lightdata);
-					}
+				}
+				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
+				{
+					gl_GetLight(p, node->lightsource, true, false, lightdata);
 				}
 			}
-			node = node->nextLight;
 		}
+		node = node->nextLight;
 	}
 	if (lightdata.arrays[0].Size())
 	gl_UploadLights(lightdata);

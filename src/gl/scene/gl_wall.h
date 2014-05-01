@@ -274,7 +274,7 @@ public:
 
 	int dynlightindex;
 
-	void SetupSubsectorLights(subsector_t * sub);
+	void SetupPlaneLights(FLightNode *node);
 	void DrawSubsector(subsector_t * sub);
 	void DrawSubsectors(int pass, bool istrans);
 

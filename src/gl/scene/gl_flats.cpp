@@ -113,42 +113,37 @@ bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 //==========================================================================
 extern FDynLightData lightdata;
 
-void GLFlat::SetupSubsectorLights(subsector_t * sub)
+void GLFlat::SetupPlaneLights(FLightNode *node)
 {
 	Plane p;
 
 	lightdata.Clear();
-	for(int i=0;i<2;i++)
+	while (node)
 	{
-		FLightNode * node = sub->lighthead[i];
-		while (node)
-		{
-			ADynamicLight * light = node->lightsource;
+		ADynamicLight * light = node->lightsource;
 			
-			if (light->flags2&MF2_DORMANT)
-			{
-				node=node->nextLight;
-				continue;
-			}
-			iter_dlightf++;
-
-			// we must do the side check here because gl_SetupLight needs the correct plane orientation
-			// which we don't have for Legacy-style 3D-floors
-			fixed_t planeh = plane.plane.ZatPoint(light->x, light->y);
-			if (gl_lights_checkside && ((planeh<light->z && ceiling) || (planeh>light->z && !ceiling)))
-			{
-				node=node->nextLight;
-				continue;
-			}
-
-			p.Set(plane.plane);
-			gl_GetLight(p, light, false, false, lightdata);
-			node = node->nextLight;
+		if (light->flags2&MF2_DORMANT)
+		{
+			node=node->nextLight;
+			continue;
 		}
+		iter_dlightf++;
+
+		// we must do the side check here because gl_SetupLight needs the correct plane orientation
+		// which we don't have for Legacy-style 3D-floors
+		fixed_t planeh = plane.plane.ZatPoint(light->x, light->y);
+		if (gl_lights_checkside && ((planeh<light->z && ceiling) || (planeh>light->z && !ceiling)))
+		{
+			node=node->nextLight;
+			continue;
+		}
+
+		p.Set(plane.plane);
+		gl_GetLight(p, light, false, false, lightdata);
+		node = node->nextLight;
 	}
 
 	gl_UploadLights(lightdata);
-	gl_RenderState.Apply();
 }
 
 //==========================================================================
@@ -184,25 +179,26 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 {
 	bool lightsapplied = false;
 
-	gl_RenderState.Apply();
 	if (sub)
 	{
 		// This represents a single subsector
-		if (pass == GLPASS_ALL) SetupSubsectorLights(sub);
+		if (pass == GLPASS_ALL) SetupPlaneLights(sub->lighthead);
+		gl_RenderState.Apply();
 		DrawSubsector(sub);
 	}
 	else
 	{
+		if (pass == GLPASS_ALL) SetupPlaneLights(sector->lighthead);
+		gl_RenderState.Apply();
 		if (vboindex >= 0)
 		{
 			int index = vboindex;
-			for (int i=0; i<sector->subsectorcount; i++)
+			for (int i = 0; i<sector->subsectorcount; i++)
 			{
 				subsector_t * sub = sector->subsectors[i];
 				// This is just a quick hack to make translucent 3D floors and portals work.
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) SetupSubsectorLights(sub);
 					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
 					flatvertices += sub->numlines;
 					flatprimitives++;
@@ -213,12 +209,11 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 		else
 		{
 			// Draw the subsectors belonging to this sector
-			for (int i=0; i<sector->subsectorcount; i++)
+			for (int i = 0; i<sector->subsectorcount; i++)
 			{
 				subsector_t * sub = sector->subsectors[i];
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) SetupSubsectorLights(sub);
 					DrawSubsector(sub);
 				}
 			}
@@ -233,7 +228,8 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 
 			while (node)
 			{
-				if (pass == GLPASS_ALL) SetupSubsectorLights(node->sub);
+				if (pass == GLPASS_ALL) SetupPlaneLights(node->sub->lighthead);
+				gl_RenderState.Apply();
 				DrawSubsector(node->sub);
 				node = node->next;
 			}
@@ -261,8 +257,8 @@ void GLFlat::Draw(int pass)
 
 	switch (pass)
 	{
-	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:
+	case GLPASS_PLAIN:			// Single-pass rendering
 	{
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);

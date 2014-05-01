@@ -95,6 +95,7 @@ public:
 	FState *targetState;
 	FLightNode * touching_sides;
 	FLightNode * touching_subsectors;
+	FLightNode * touching_sector;
 
 private:
 	float DistToSeg(seg_t *seg);

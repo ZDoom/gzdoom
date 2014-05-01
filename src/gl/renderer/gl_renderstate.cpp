@@ -208,7 +208,7 @@ bool FRenderState::ApplyShader()
 		aptr->mFogColor = mFogColor;
 		aptr->mFogColor.a = mFogEnabled;
 		aptr->mLightAttr = mLightAttr;
-		aptr->mFogDensity = mFogDensity * (1.442692f /*1/log(2)*/ / 64000.f);
+		aptr->mFogDensity = mFogDensity * (-1.442692f /*1/log(2)*/ / 64000.f);
 		return true;
 	}
 	return false;

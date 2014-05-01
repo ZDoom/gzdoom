@@ -15,6 +15,7 @@ struct Attr
 	int aColor;
 	int aFogColor;
 	int aLightAttr;
+	float aFogDensity;
 	int aGlowIndex;
 	int aLightIndex;
 	int aMatIndex;

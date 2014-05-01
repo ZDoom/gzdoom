@@ -410,11 +410,11 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 void gl_SetShaderLight(float level, float olight)
 {
 #if 1 //ndef _DEBUG
-	const float MAXDIST = 256.f;
+	const float MAXDIST = 255.f;
 	const float THRESHOLD = 96.f;
 	const float FACTOR = 0.75f;
 #else
-	const float MAXDIST = 256.f;
+	const float MAXDIST = 255.f;
 	const float THRESHOLD = 96.f;
 	const float FACTOR = 2.75f;
 #endif

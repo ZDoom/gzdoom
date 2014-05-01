@@ -5,19 +5,20 @@ uniform vec4 uDynLightColor;		// one global light value that will get added just
 uniform vec4 uObjectColor;			// object's own color - not part of the lighting.
 
 
-// Changing this constant gives results very similar to changing r_visibility.
-// Default is 232, it seems to give exactly the same light bands as software renderer.
-#define DOOMLIGHTFACTOR 232.0
-
-in vec4 fogcolor;
 in vec4 pixelpos;
-in vec4 fogparm;
-in float desaturation_factor;
-flat in ivec4 lightrange;
-
+in vec4 fogcolor;
+in vec4 lightattr;
+in float fogdensity;
+in vec2 glowdist;
 in vec4 topglowcolor;
 in vec4 bottomglowcolor;
-in vec2 glowdist;
+flat in ivec4 lightrange;
+
+#define desaturation_factor lightattr.w
+#define lightfactor lightattr.r
+#define lightdistance lightattr.g
+#define lightlevel lightattr.b
+
 
 uniform sampler2D tex;
 
@@ -25,8 +26,6 @@ vec4 Process(vec4 color);
 vec4 ProcessTexel();
 vec4 ProcessLight(vec4 color);
 
-
-in float lightlevel;
 
 //===========================================================================
 //
@@ -91,6 +90,10 @@ vec4 getTexel(vec2 st)
 
 float R_DoomLightingEquation(float light, float dist)
 {
+	// Changing this constant gives results very similar to changing r_visibility.
+	// Default is 232, it seems to give exactly the same light bands as software renderer.
+	#define DOOMLIGHTFACTOR 232.0
+
 	/* L in the range 0 to 63 */
 	float L = light * 63.0/31.0;
 
@@ -129,9 +132,9 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	else if (fogcolor.a > 0.0)
 	{
 		// brightening around the player for light mode 2
-		if (fogdist < fogparm.y)
+		if (fogdist < lightdistance)
 		{
-			color.rgb *= fogparm.x - (fogdist / fogparm.y) * (fogparm.x - 1.0);
+			color.rgb *= lightfactor - (fogdist / lightdistance) * (lightfactor - 1.0);
 		}
 		
 		//
@@ -254,7 +257,7 @@ void main()
 						{
 							fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 						}
-						fogfactor = exp2 (fogparm.z * fogdist);
+						fogfactor = exp2 (fogdensity * fogdist);
 					}
 					
 					frag *= getLightColor(fogdist, fogfactor);
@@ -327,7 +330,7 @@ void main()
 			{
 				fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 			}
-			fogfactor = exp2 (fogparm.z * fogdist);
+			fogfactor = exp2 (fogdensity * fogdist);
 			
 			frag = vec4(fogcolor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * gl_Color.a);
 			break;

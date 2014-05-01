@@ -35,10 +35,8 @@ struct AttribBufferElement
 {
 	PalEntry mColor;			// AARRGGBB: light color
 	PalEntry mFogColor;			// RRGGBB: fog color, AA: fog enable flag
-	PalEntry mLightAttr;		// AA: desaturation factor, the rest depends on the current light settings
-								// for lightmode 2: RR: light distance, GGBB: light factor
-								// for lightmode 4 or colored fog: GGBB: fog density
-								// for lightmode 8: BB: sector light level
+	PalEntry mLightAttr;		// AA: desaturation factor, RR light factor * 32, GG: light distance, BB: sector light level (RRGG only for lightmode 2, BB only for lightmode 8, otherwise 0)
+	float mFogDensity;			// sadly this cannot be folded into the other values so we have to sacrifice a full 4 byte float for it...
 	int mGlowIndex;
 	int mLightIndex;
 	int mMatIndex;

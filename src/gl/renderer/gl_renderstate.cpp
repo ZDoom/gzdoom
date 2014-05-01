@@ -180,7 +180,6 @@ bool FRenderState::ApplyShader()
 		}
 		else
 		{
-			// if glowing is on, disable it.
 			aptr->mGlowIndex = -1;
 		}
 		aptr->mLightIndex = mLightIndex;
@@ -204,34 +203,21 @@ bool FRenderState::ApplyShader()
 
 		int fogset = 0;
 		aptr->mColor = PalEntry(
-			xs_CRoundToInt(mColor[3] * 255.f + 0.1f),
-			xs_CRoundToInt(mColor[0] * 255.f + 0.1f),
-			xs_CRoundToInt(mColor[1] * 255.f + 0.1f),
-			xs_CRoundToInt(mColor[2] * 255.f + 0.1f));
+			xs_CRoundToInt(mColor[3] * 255.f),
+			xs_CRoundToInt(mColor[0] * 255.f),
+			xs_CRoundToInt(mColor[1] * 255.f),
+			xs_CRoundToInt(mColor[2] * 255.f));
 
 		aptr->mFogColor = mFogColor;
 		aptr->mFogColor.a = mFogEnabled;
+		aptr->mLightAttr = PalEntry(
+			xs_CRoundToInt(mColor[4] * 255.f),
+			xs_CRoundToInt(mLightParms[0] *31.875f),
+			xs_CRoundToInt(mLightParms[1]),
+			xs_CRoundToInt(mSoftLightLevel * 255.f));
 
-		/*if (mLightParms[0] != activeShader->currentlightfactor || 
-			mLightParms[1] != activeShader->currentlightdist ||
-			mFogDensity != activeShader->currentfogdensity)*/
-		{
-			const float LOG2E = 1.442692f;	// = 1/log(2)
-			//activeShader->currentlightdist = mLightParms[1];
-			//activeShader->currentlightfactor = mLightParms[0];
-			//activeShader->currentfogdensity = mFogDensity;
-			// premultiply the density with as much as possible here to reduce shader
-			// execution time.
-			glVertexAttrib4f(VATTR_FOGPARAMS, mLightParms[0], mLightParms[1], mFogDensity * (-LOG2E / 64000.f), 0);
-		}
-		if (glset.lightmode == 8)
-		{
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, mSoftLightLevel);
-		}
-		else
-		{
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, -1.f);
-		}
+		const float LOG2E = 1.442692f;	// = 1/log(2)
+		aptr->mFogDensity = mFogDensity * (-LOG2E / 64000.f);
 		return true;
 	}
 	return false;

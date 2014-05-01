@@ -1,15 +1,12 @@
 
 out vec4 pixelpos;
-
-in vec4 fogparams;
 out vec4 fogcolor;
-out vec4 fogparm;
+out vec4 lightattr;
+out float fogdensity;
 out vec2 glowdist;
 out vec4 topglowcolor;
 out vec4 bottomglowcolor;
 flat out ivec4 lightrange;
-in float lightlevel_in;
-out float lightlevel;
 
 
 // valid colorcontrol modes are:
@@ -21,10 +18,6 @@ uniform int colorcontrol;
 
 layout (location=11) in vec4 attribColor;
 layout (location=12) in int attribindex;
-
-//uniform int bufferColor;	// as AARRGGBB, 8 bits each.
-out float desaturation_factor;
-
 
 //--------------------------
 //
@@ -85,8 +78,14 @@ void main()
 		fc = vec4(0.0);
 	}
 	fogcolor = fc;
-	
-	desaturation_factor = 0.0;//fixme! desaturate;
+
+	int value = Attribs[attribindex].aLightAttr;
+	fc.a = float((value >> 24) & 0xff)/ 255.0;
+	fc.r = float((value >> 16) & 0xff)/ 31.875;
+	fc.g = float((value >> 8) & 0xff);
+	fc.b = float(value & 0xff)/ 255.0;
+	lightattr = fc;
+	fogdensity = Attribs[attribindex].aFogDensity;
 	
 	//--------------------------
 	//
@@ -97,9 +96,7 @@ void main()
 	pixelpos.xyz = worldcoord.xyz;
 	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 	
-	lightlevel = lightlevel_in;
-	fogparm = fogparams;
-	// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex ins to the shader.
+	// set glow distance from the sector's plane equations so that we do not have to do this on the CPU and pass additional vertex attribs to the shader.
 	int glowindex = Attribs[attribindex].aGlowIndex;
 	if (glowindex != -1)
 	{

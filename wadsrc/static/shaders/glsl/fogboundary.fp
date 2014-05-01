@@ -1,6 +1,6 @@
 in vec4 fogcolor;
 in vec4 pixelpos;
-in vec4 fogparm;
+in float fogdensity;
 
 //===========================================================================
 //
@@ -31,7 +31,7 @@ void main()
 	{
 		fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 	}
-	fogfactor = exp2 (fogparm.z * fogdist);
+	fogfactor = exp2 (fogdensity * fogdist);
 	gl_FragColor = vec4(fogcolor.rgb, 1.0 - fogfactor);
 }
 

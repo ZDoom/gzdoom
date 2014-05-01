@@ -22,13 +22,13 @@ public:
 	unsigned int GetVAO() { return vao_id; }
 };
 
-struct FFlatVertex	// exactly 32 bytes large
+struct FFlatVertex
 {
-	float x,z,y,w;	// w only for padding to make one vertex 32 bytes - maybe it will find some use later
-	float u,v;		// texture coordinates
-	//float dc, df;	// distance to floor and ceiling on walls - used for glowing
+	float x,z,y;
+	float u,v;
+	int index;
 
-	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
+	void SetFlatVertex(vertex_t *vt, const secplane_t &plane, int aindex);
 };
 
 #define VTO ((FFlatVertex*)NULL)
@@ -50,7 +50,7 @@ public:
 	FFlatVertexBuffer();
 	~FFlatVertexBuffer();
 
-	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);
+	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int attribindex);
 	int CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor);
 	int CreateVertices(int h, sector_t *sec, const secplane_t &plane, int floor);
 	void CreateFlatVBO();

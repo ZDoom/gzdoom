@@ -127,6 +127,7 @@ FAttribBuffer::FAttribBuffer()
 : FDataBuffer(ATTRIB_BUFFER_SIZE*sizeof(AttribBufferElement), 2)
 {
 	mSize = ATTRIB_BUFFER_SIZE;
+	mFirstFree = 0;
 }
 
 //==========================================================================
@@ -137,7 +138,7 @@ FAttribBuffer::FAttribBuffer()
 
 unsigned int FAttribBuffer::Reserve(unsigned int amount, AttribBufferElement **pptr)
 {
-	if (mPointer + amount > mSize) mPointer = 0;
+	if (mPointer + amount > mSize) mPointer = mFirstFree;
 	if (mPointer < mStartIndex && mPointer + amount > mStartIndex)
 	{
 		// DPrintf("Warning: Parameter buffer wraparound!\n");
@@ -147,4 +148,15 @@ unsigned int FAttribBuffer::Reserve(unsigned int amount, AttribBufferElement **p
 	AttribBufferElement *pb = (AttribBufferElement *)mMappedBuffer;
 	*pptr = &pb[here];
 	return here;
+}
+
+//==========================================================================
+//
+// permanently allocate an entry for the flat vertex buffer
+//
+//==========================================================================
+
+unsigned int FAttribBuffer::Allocate()
+{
+	return mFirstFree++;
 }

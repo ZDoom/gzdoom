@@ -124,14 +124,14 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 //
 //==========================================================================
 
-void FFlatVertex::SetFlatVertex(vertex_t *vt, const secplane_t & plane)
+void FFlatVertex::SetFlatVertex(vertex_t *vt, const secplane_t & plane, int _index)
 {
 	x = vt->fx;
 	y = vt->fy;
 	z = plane.ZatPoint(vt->fx, vt->fy);
 	u = vt->fx/64.f;
 	v = -vt->fy/64.f;
-	w = /*dc = df =*/ 0;
+	index = _index;
 }
 
 //==========================================================================
@@ -156,12 +156,12 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 //
 //==========================================================================
 
-int FFlatVertexBuffer::CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor)
+int FFlatVertexBuffer::CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int attribindex)
 {
 	int idx = vbo_shadowdata.Reserve(sub->numlines);
 	for(unsigned int k=0; k<sub->numlines; k++, idx++)
 	{
-		vbo_shadowdata[idx].SetFlatVertex(sub->firstline[k].v1, plane);
+		vbo_shadowdata[idx].SetFlatVertex(sub->firstline[k].v1, plane, attribindex);
 		if (sub->sector->transdoor && floor) vbo_shadowdata[idx].z -= 1.f;
 	}
 	return idx;
@@ -176,11 +176,12 @@ int FFlatVertexBuffer::CreateSubsectorVertices(subsector_t *sub, const secplane_
 int FFlatVertexBuffer::CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor)
 {
 	int rt = vbo_shadowdata.Size();
+	unsigned int attribindex = -1;// GLRenderer->mAttribBuffer->Allocate();
 	// First calculate the vertices for the sector itself
 	for(int j=0; j<sec->subsectorcount; j++)
 	{
 		subsector_t *sub = sec->subsectors[j];
-		CreateSubsectorVertices(sub, plane, floor);
+		CreateSubsectorVertices(sub, plane, floor, attribindex);
 	}
 	return rt;
 }

@@ -44,9 +44,12 @@ struct AttribBufferElement
 
 class FAttribBuffer : public FDataBuffer
 {
+	int mFirstFree;
+
 public:
 	FAttribBuffer();
 	unsigned int Reserve(unsigned int amount, AttribBufferElement **pptr);
+	unsigned int Allocate();
 };
 
 

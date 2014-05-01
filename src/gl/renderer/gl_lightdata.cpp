@@ -265,15 +265,15 @@ void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float 
 { 
 	if (gl_fixedcolormap != CM_DEFAULT)
 	{
-		gl_RenderState.SetColorAlpha(0xffffff, alpha, 0.f);
-		gl_RenderState.SetSoftLightLevel(1.f);
+		gl_RenderState.SetColorAlpha(0xffffff, alpha, 0);
+		gl_RenderState.SetSoftLightLevel(255);
 	}
 	else
 	{
 		int hwlightlevel = gl_CalcLightLevel(sectorlightlevel, rellight, weapon);
 		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.blendfactor);
-		gl_RenderState.SetColorAlpha(pe, alpha, cm.desaturation / 255.f);
-		gl_RenderState.SetSoftLightLevel(gl_ClampLight(sectorlightlevel + rellight) / 255.0f);
+		gl_RenderState.SetColorAlpha(pe, alpha, cm.desaturation);
+		gl_RenderState.SetSoftLightLevel(gl_ClampLight(sectorlightlevel + rellight));
 	}
 }
 
@@ -407,21 +407,17 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 //
 //==========================================================================
 
-void gl_SetShaderLight(float level, float olight)
+void gl_SetShaderLight(int level, int olight)
 {
-#if 1 //ndef _DEBUG
-	const float MAXDIST = 255.f;
-	const float THRESHOLD = 96.f;
+	const int MAXDIST = 255;
+	const int THRESHOLD = 96;
 	const float FACTOR = 0.75f;
-#else
-	const float MAXDIST = 255.f;
-	const float THRESHOLD = 96.f;
-	const float FACTOR = 2.75f;
-#endif
+	const float MULTIPLIER = 31.875f;
 
 	if (level > 0)
 	{
-		float lightdist, lightfactor;
+		int lightdist;
+		float lightfactor;
 			
 		if (olight < THRESHOLD)
 		{
@@ -430,13 +426,13 @@ void gl_SetShaderLight(float level, float olight)
 		}
 		else lightdist = MAXDIST;
 
-		lightfactor = 1.f + ((olight/level) - 1.f) * FACTOR;
+		lightfactor = 1.f + ((float(olight)/level) - 1.f) * FACTOR;
 		if (lightfactor == 1.f) lightdist = 0.f;	// save some code in the shader
-		gl_RenderState.SetLightParms(lightfactor, lightdist);
+		gl_RenderState.SetLightParms(xs_CRoundToInt(lightfactor*MULTIPLIER), lightdist);
 	}
 	else
 	{
-		gl_RenderState.SetLightParms(1.f, 0.f);
+		gl_RenderState.SetLightParms(1, 0);
 	}
 }
 
@@ -485,12 +481,12 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		{
 			if (fogcolor == 0)
 			{
-				float light = gl_CalcLightLevel(lightlevel, rellight, false);
+				int light = gl_CalcLightLevel(lightlevel, rellight, false);
 				gl_SetShaderLight(light, lightlevel);
 			}
 			else
 			{
-				gl_RenderState.SetLightParms(1.f, 0.f);
+				gl_RenderState.SetLightParms(1, 0);
 			}
 		}
 
@@ -507,7 +503,7 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		// Korshun: fullbright fog like in software renderer.
 		if (glset.lightmode == 8 && glset.brightfog && fogdensity != 0 && fogcolor != 0)
 		{
-			gl_RenderState.SetSoftLightLevel(1.0f);
+			gl_RenderState.SetSoftLightLevel(255);
 		}
 	}
 }

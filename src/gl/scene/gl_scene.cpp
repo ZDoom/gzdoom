@@ -343,7 +343,6 @@ void FGLRenderer::RenderScene(int recursion)
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-	//if (glset.lightmode != 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, -1.0);
 
 	// First draw all single-pass stuff
 
@@ -479,7 +478,7 @@ void FGLRenderer::DrawScene(bool toscreen)
 		static_cast<OpenGLFrameBuffer*>(screen)->Swap();
 		All.Clock();
 	}
-	gl_RenderState.SetLightParms(1.f, 0.f);
+	gl_RenderState.SetLightParms(1, 0);
 	RenderScene(recursion);
 
 	// Handle all portals after rendering the opaque objects but before
@@ -500,9 +499,6 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 {
 	float blend[4]={0,0,0,0};
 	PalEntry blendv=0;
-	float extra_red;
-	float extra_green;
-	float extra_blue;
 	player_t *player = NULL;
 
 	if (players[consoleplayer].camera != NULL)
@@ -568,20 +564,16 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 	if (blendv.a==255)
 	{
 
-		extra_red = blendv.r / 255.0f;
-		extra_green = blendv.g / 255.0f;
-		extra_blue = blendv.b / 255.0f;
-
 		// If this is a multiplicative blend do it separately and add the additive ones on top of it!
 		blendv=0;
 
 		// black multiplicative blends are ignored
-		if (extra_red || extra_green || extra_blue)
+		if (blendv.d != 0xff000000)
 		{
 			gl_RenderState.EnableAlphaTest(false);
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.BlendFunc(GL_DST_COLOR,GL_ZERO);
-			gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
+			gl_RenderState.SetColor(blendv);
 			gl_RenderState.Apply();
 			glBegin(GL_TRIANGLE_STRIP);
 			glVertex2f( 0.0f, 0.0f);

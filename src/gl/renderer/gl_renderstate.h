@@ -37,7 +37,8 @@ enum EEffect
 class FRenderState
 {
 	TArray<unsigned int> mVAOStack;
-	float mColor[5];
+	PalEntry mColor;
+	PalEntry mLightAttr;
 	int mColorControl;
 	bool mTextureEnabled;
 	bool mFogEnabled;
@@ -48,7 +49,6 @@ class FRenderState
 	float mSoftLightLevel;
 	float mDynLight[3];
 	int mDynTick;
-	float mLightParms[2];
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
 	bool mAlphaTest;
@@ -57,6 +57,7 @@ class FRenderState
 	unsigned int mVertexArray, mLastVertexArray;
 	int mLightIndex;
 	int mTexMatrixIndex;
+	int mTexMatrixTick;
 
 	float mGlowParms[16];
 	PalEntry mFogColor, mObjectColor;
@@ -108,42 +109,29 @@ public:
 		mVertexArray = vao;
 	}
 
-	void SetColor(float r, float g, float b, float a = 1.f, float desat = 0.f)
+	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
-		mColor[0] = r;
-		mColor[1] = g;
-		mColor[2] = b;
-		mColor[3] = a;
-		mColor[4] = desat;
+		mColor = PalEntry(r*255.f, g*255.f, b*255.f, a*255.f);
+		mLightAttr.a = desat;
 	}
 
-	void SetColor(PalEntry pe, float desat = 0.f)
+	void SetColor(PalEntry pe, int desat = 0)
 	{
-		mColor[0] = pe.r/255.f;
-		mColor[1] = pe.g/255.f;
-		mColor[2] = pe.b/255.f;
-		mColor[3] = pe.a/255.f;
-		mColor[4] = desat;
+		mColor = pe;
+		mLightAttr.a = desat;
 	}
 
-	void SetColorAlpha(PalEntry pe, float alpha = 1.f, float desat = 0.f)
+	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
 	{
-		mColor[0] = pe.r / 255.f;
-		mColor[1] = pe.g / 255.f;
-		mColor[2] = pe.b / 255.f;
-		mColor[3] = alpha;
-		mColor[4] = desat;
+		mColor = pe;
+		mColor.a = alpha*255.f;
+		mLightAttr.a = desat;
 	}
 
 	void ResetColor()
 	{
-		mColor[0] = mColor[1] = mColor[2] = mColor[3] = 1.f;
-		mColor[4] = 0.f;
-	}
-
-	const float *GetColor() const
-	{
-		return mColor;
+		mColor = 0xffffffff;
+		mLightAttr.a = 0;
 	}
 
 	void SetTextureMode(int mode)
@@ -196,9 +184,9 @@ public:
 		mSpecialMode = mode;
 	}
 
-	void SetSoftLightLevel(float lightlev)
+	void SetSoftLightLevel(int lightlev)
 	{
-		mSoftLightLevel = lightlev;
+		mLightAttr.b= lightlev;
 	}
 
 	void SetDynLight(float r,float g, float b)
@@ -215,10 +203,10 @@ public:
 		if (d >= 0.0f) mFogDensity = d;
 	}
 
-	void SetLightParms(float f, float d)
+	void SetLightParms(int f, int d)
 	{
-		mLightParms[0] = f;
-		mLightParms[1] = d;
+		mLightAttr.r = f;
+		mLightAttr.g = d;
 	}
 
 	void SetObjectColor(PalEntry c)

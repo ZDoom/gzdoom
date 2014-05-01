@@ -160,7 +160,7 @@ void GLSprite::Draw(int pass)
 				fuzzalpha*=factor;
 			}
 
-			gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, fuzzalpha, Colormap.desaturation / 255.f);
+			gl_RenderState.SetColorAlpha(0x333333, fuzzalpha, Colormap.desaturation);
 			additivefog = true;
 		}
 		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)

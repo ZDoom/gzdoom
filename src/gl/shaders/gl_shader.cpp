@@ -146,10 +146,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
 
-	glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
-	glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
-
-
 	glLinkProgram(hShader);
 
 	glGetShaderInfoLog(hVertProg, 10000, NULL, buffer);
@@ -185,7 +181,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	mModelMatLocation = glGetUniformLocation(hShader, "ModelMatrix");
 	timer_index = glGetUniformLocation(hShader, "timer");
 
-	desaturation_index = glGetUniformLocation(hShader, "desaturation_factor");
 	colorcontrol_index = glGetUniformLocation(hShader, "colorcontrol");
 
 	glUseProgram(hShader);

@@ -11,9 +11,6 @@ extern bool gl_shaderactive;
 const int VATTR_ATTRIBCOLOR = 11;
 const int VATTR_ATTRIBINDEX = 12;
 
-const int VATTR_FOGPARAMS = 14;
-const int VATTR_LIGHTLEVEL = 13; // Korshun.
-
 //==========================================================================
 //
 //
@@ -33,7 +30,6 @@ class FShader
 	int alphathreshold_index;
 
 	int timer_index;
-	int desaturation_index;
 	int texturemode_index;
 	int dlightcolor_index;
 	int objectcolor_index;
@@ -56,7 +52,7 @@ class FShader
 	int currentColorControl;
 
 	float currentfogdensity;
-	unsigned int mMatrixTick[4];
+	unsigned int mMatrixTick;
 
 
 public:
@@ -72,14 +68,13 @@ public:
 		currentobjectcolor = 0;
 
 		timer_index = -1;
-		desaturation_index = -1;
 		texturemode_index = -1;
 		dlightcolor_index = -1;
 		alphathreshold_index = -1;
 		colorcontrol_index = -1;
 
 
-		mMatrixTick[0] = mMatrixTick[1] = mMatrixTick[2] = mMatrixTick[3] = 0;
+		mMatrixTick = 0;	// for the model matrix only 
 
 	}
 

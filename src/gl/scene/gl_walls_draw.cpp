@@ -252,11 +252,10 @@ void GLWall::RenderMirrorSurface()
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
 	gl_SetColor(lightlevel, 0, Colormap ,0.1f);
-	gl_SetFog(lightlevel, rellight, &Colormap, true);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
+	gl_SetFog(lightlevel, 0, &Colormap, true);
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 	gl_RenderState.EnableAlphaTest(false);
 	glDepthFunc(GL_LEQUAL);
-	gl_SetFog(lightlevel, getExtraLight(), &Colormap, true);
 
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture);
 	pat->BindPatch(0);

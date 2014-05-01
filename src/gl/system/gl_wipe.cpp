@@ -295,7 +295,7 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	glEnd();
 
 	fb->wipeendscreen->Bind(0);
-	gl_RenderState.SetColor(1.f, 1.f, 1.f, clamp(Clock/32.f, 0.f, 1.f));
+	gl_RenderState.SetColorAlpha(0xffffff, clamp(Clock/32.f, 0.f, 1.f));
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);

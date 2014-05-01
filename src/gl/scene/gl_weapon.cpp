@@ -381,7 +381,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			// set the lighting parameters
 			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
 			{
-				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.desaturation / 255.f);
+				gl_RenderState.SetColor(0x55333333, cmc.desaturation);
 			}
 			else
 			{

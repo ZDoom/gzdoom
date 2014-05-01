@@ -33,7 +33,7 @@ EXTERN_CVAR(Int, gl_weaponlight);
 
 inline	int getExtraLight()
 {
-	return extralight * gl_weaponlight; // ((glset.lightmode == 8)? 16:8);
+	return extralight * gl_weaponlight;
 }
 
 void gl_RecalcVertexHeights(vertex_t * v);

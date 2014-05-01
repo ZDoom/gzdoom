@@ -514,7 +514,7 @@ void GLSkyPortal::DrawContents()
 		FadeColor = origin->fadecolor;
 	}
 
-	gl_RenderState.SetColor(1.f, 1.f, 1.f, 1.f);
+	gl_RenderState.SetColor(0xffffffff);
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

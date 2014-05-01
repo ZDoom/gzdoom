@@ -79,6 +79,9 @@ void FRenderState::Reset()
 	gl_BlendEquation = -1;
 	mSpecialMode = 0;
 	mLightIndex = -1;
+	mTexMatrixTick = -1;
+	mColor = 0;
+	mLightAttr = 0;
 }
 
 
@@ -155,11 +158,11 @@ bool FRenderState::ApplyShader()
 		{
 			glUniform1i(activeShader->specialmode_index, (activeShader->currentSpecialMode = mSpecialMode));
 		}
-		if (activeShader->mMatrixTick[0] < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)
+		if (activeShader->mMatrixTick < VSML.getLastUpdate(VSML.MODEL) && activeShader->mModelMatLocation >= 0)
 		{
 			// model matrix is a regular uniform which is part of the render state.
 			VSML.matrixToGL(activeShader->mModelMatLocation, VSML.MODEL);
-			activeShader->mMatrixTick[0] = VSML.getLastUpdate(VSML.MODEL);
+			activeShader->mMatrixTick = VSML.getLastUpdate(VSML.MODEL);
 		}
 
 		//
@@ -186,13 +189,13 @@ bool FRenderState::ApplyShader()
 
 		if (VSML.stackSize(VSML.AUX0) > 0)	// if there's nothing on the stack we don't need a texture matrix.
 		{
-			if (activeShader->mMatrixTick[3] < VSML.getLastUpdate(VSML.AUX0))
+			if (mTexMatrixTick < VSML.getLastUpdate(VSML.AUX0))
 			{
 				// update texture matrix only if it is different from last time.
 				ParameterBufferElement *pptr;
 				mTexMatrixIndex = GLRenderer->mParmBuffer->Reserve(4, &pptr);
 				VSML.copy(pptr->vec, VSML.AUX0);
-				activeShader->mMatrixTick[3] = VSML.getLastUpdate(VSML.AUX0);
+				mTexMatrixTick = VSML.getLastUpdate(VSML.AUX0);
 			}
 			aptr->mMatIndex = mTexMatrixIndex;
 		}
@@ -201,23 +204,11 @@ bool FRenderState::ApplyShader()
 			aptr->mMatIndex = -1;
 		}
 
-		int fogset = 0;
-		aptr->mColor = PalEntry(
-			xs_CRoundToInt(mColor[3] * 255.f),
-			xs_CRoundToInt(mColor[0] * 255.f),
-			xs_CRoundToInt(mColor[1] * 255.f),
-			xs_CRoundToInt(mColor[2] * 255.f));
-
+		aptr->mColor = mColor;
 		aptr->mFogColor = mFogColor;
 		aptr->mFogColor.a = mFogEnabled;
-		aptr->mLightAttr = PalEntry(
-			xs_CRoundToInt(mColor[4] * 255.f),
-			xs_CRoundToInt(mLightParms[0] *31.875f),
-			xs_CRoundToInt(mLightParms[1]),
-			xs_CRoundToInt(mSoftLightLevel * 255.f));
-
-		const float LOG2E = 1.442692f;	// = 1/log(2)
-		aptr->mFogDensity = mFogDensity * (-LOG2E / 64000.f);
+		aptr->mLightAttr = mLightAttr;
+		aptr->mFogDensity = mFogDensity * (1.442692f /*1/log(2)*/ / 64000.f);
 		return true;
 	}
 	return false;

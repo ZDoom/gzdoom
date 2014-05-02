@@ -1993,7 +1993,14 @@ static void D_DoomInit()
 
 	SetLanguageIDs ();
 
-	rngseed = I_MakeRNGSeed();
+	const char *v = Args->CheckValue("-rngseed");
+	if (v)
+	{
+		rngseed = staticrngseed = atoi(v);
+		use_staticrng = true;
+	}
+	else
+		rngseed = I_MakeRNGSeed();
 	FRandom::StaticClearRandom ();
 
 	Printf ("M_LoadDefaults: Load system defaults.\n");

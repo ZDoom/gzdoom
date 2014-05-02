@@ -408,7 +408,11 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	if (!savegamerestore)
 	{
-		if (!netgame)
+		if (use_staticrng)
+		{
+			rngseed = staticrngseed;
+		}
+		else if (!netgame)
 		{ // [RH] Change the random seed for each new single player game
 			rngseed = rngseed + 1;
 		}

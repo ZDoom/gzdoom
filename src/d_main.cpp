@@ -2001,7 +2001,11 @@ static void D_DoomInit()
 		Printf("D_DoomInit: Static RNGseed %d set.\n", rngseed);
 	}
 	else
+	{
 		rngseed = I_MakeRNGSeed();
+		use_staticrng = false;
+	}
+		
 	FRandom::StaticClearRandom ();
 
 	Printf ("M_LoadDefaults: Load system defaults.\n");

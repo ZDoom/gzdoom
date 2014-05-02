@@ -1998,6 +1998,7 @@ static void D_DoomInit()
 	{
 		rngseed = staticrngseed = atoi(v);
 		use_staticrng = true;
+		Printf("D_DoomInit: Static RNGseed %d set.\n", rngseed);
 	}
 	else
 		rngseed = I_MakeRNGSeed();

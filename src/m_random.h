@@ -215,6 +215,10 @@ private:
 
 extern DWORD rngseed;			// The starting seed (not part of state)
 
+extern DWORD staticrngseed;		// Static rngseed that can be set by the user
+extern bool use_staticrng;
+
+
 // M_Random can be used for numbers that do not affect gameplay
 extern FRandom M_Random;
 

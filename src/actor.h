@@ -1011,6 +1011,8 @@ public:
 	bool isSlow();
 	void SetIdle();
 	void ClearCounters();
+	FState *GetRaiseState();
+	void Revive();
 
 	FState *FindState (FName label) const
 	{

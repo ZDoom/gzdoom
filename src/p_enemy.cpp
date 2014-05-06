@@ -2520,7 +2520,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 		fixed_t viletryx = self->x + FixedMul (absSpeed, xspeed[self->movedir]);
 		fixed_t viletryy = self->y + FixedMul (absSpeed, yspeed[self->movedir]);
 		AActor *corpsehit;
-		FState *raisestate;
 
 		FBlockThingsIterator it(FBoundingBox(viletryx, viletryy, 32*FRACUNIT));
 		while ((corpsehit = it.Next()))

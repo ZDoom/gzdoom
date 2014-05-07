@@ -1,4 +1,5 @@
 // Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -6082,7 +6083,7 @@ FState *AActor::GetRaiseState()
 	}
 
 	if (tics != -1 && // not lying still yet
-		state->GetCanRaise()) // or not ready to be raised yet
+		!state->GetCanRaise()) // or not ready to be raised yet
 	{
 		return NULL;
 	}

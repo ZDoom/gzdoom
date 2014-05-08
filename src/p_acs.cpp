@@ -4263,6 +4263,18 @@ enum EACSFunctions
 	ACSF_SetLineActivation,
 	ACSF_GetLineActivation,
 	ACSF_GetActorPowerupTics,
+	ACSF_ChangeActorAngle,
+	ACSF_ChangeActorPitch,		// 80
+
+	/* Zandronum's - these must be skipped when we reach 99!
+	-100:ResetMap(0),
+	-101 : PlayerIsSpectator(1),
+	-102 : ConsolePlayerNumber(0),
+	-103 : GetTeamProperty(2),
+	-104 : GetPlayerLivesLeft(1),
+	-105 : SetPlayerLivesLeft(2),
+	-106 : KickFromGame(2),
+	*/
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4521,6 +4533,50 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 		actor->z + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
+
+static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetAngle(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetAngle(angle << 16, interpolate);
+		}
+	}
+}
+
+static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetPitch(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetPitch(angle << 16, interpolate);
+		}
+	}
+}
+
+
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const SDWORD *stack, int stackdepth)
 {
@@ -5346,6 +5402,20 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 						return powerup->EffectTics;
 				}
 				return 0;
+			}
+			break;
+
+		case ACSF_ChangeActorAngle:
+			if (argCount >= 2)
+			{
+				SetActorAngle(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_ChangeActorPitch:
+			if (argCount >= 2)
+			{
+				SetActorPitch(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
 			}
 			break;
 
@@ -8323,44 +8393,12 @@ scriptwait:
 			break;
 
 		case PCD_SETACTORANGLE:		// [GRB]
-			if (STACK(2) == 0)
-			{
-				if (activator != NULL)
-				{
-					activator->SetAngle(STACK(1) << 16);
-				}
-			}
-			else
-			{
-				FActorIterator iterator (STACK(2));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
-				{
-					actor->SetAngle(STACK(1) << 16);
-				}
-			}
+			SetActorAngle(activator, STACK(2), STACK(1), false);
 			sp -= 2;
 			break;
 
 		case PCD_SETACTORPITCH:
-			if (STACK(2) == 0)
-			{
-				if (activator != NULL)
-				{
-					activator->SetPitch(STACK(1) << 16);
-				}
-			}
-			else
-			{
-				FActorIterator iterator (STACK(2));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
-				{
-					actor->SetPitch(STACK(1) << 16);
-				}
-			}
+			SetActorPitch(activator, STACK(2), STACK(1), false);
 			sp -= 2;
 			break;
 

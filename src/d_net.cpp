@@ -1052,6 +1052,12 @@ void NetUpdate (void)
 	if (singletics)
 		return; 		// singletic update is synchronous
 
+	if (demoplayback)
+	{
+		nettics[0] = (maketic / ticdup);
+		return;			// Don't touch netcmd data while playing a demo, as it'll already exist.
+	}
+
 	// If maketic didn't cross a ticdup boundary, only send packets
 	// to players waiting for resends.
 	resendOnly = (maketic / ticdup) == (maketic - i) / ticdup;

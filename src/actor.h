@@ -765,8 +765,8 @@ public:
 	}
 
 	// These also set CF_INTERPVIEW for players.
-	void SetPitch(int p);
-	void SetAngle(angle_t ang);
+	void SetPitch(int p, bool interpolate);
+	void SetAngle(angle_t ang, bool interpolate);
 
 	const PClass *GetBloodType(int type = 0) const
 	{
@@ -1011,6 +1011,8 @@ public:
 	bool isSlow();
 	void SetIdle();
 	void ClearCounters();
+	FState *GetRaiseState();
+	void Revive();
 
 	FState *FindState (FName label) const
 	{

@@ -3931,12 +3931,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 // Set actor's angle (in degrees).
 //
 //===========================================================================
+enum
+{
+	SPF_FORCECLAMP = 1,	// players always clamp
+	SPF_INTERPOLATE = 2,
+};
+
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_ANGLE(angle, 0);
-	self->SetAngle(angle);
+	ACTION_PARAM_INT(flags, 1)
+	self->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================
@@ -3946,11 +3953,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 // Set actor's pitch (in degrees).
 //
 //===========================================================================
-
-enum
-{
-	SPF_FORCECLAMP = 1,	// players always clamp
-};
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 {
@@ -3974,7 +3976,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 		}
 		pitch = clamp<int>(pitch, min, max);
 	}
-	self->SetPitch(pitch);
+	self->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================

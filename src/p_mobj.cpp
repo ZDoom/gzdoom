@@ -2962,24 +2962,24 @@ void AActor::SetShade (int r, int g, int b)
 	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
 }
 
-void AActor::SetPitch(int p)
+void AActor::SetPitch(int p, bool interpolate)
 {
 	if (p != pitch)
 	{
 		pitch = p;
-		if (player != NULL)
+		if (player != NULL && interpolate)
 		{
 			player->cheats |= CF_INTERPVIEW;
 		}
 	}
 }
 
-void AActor::SetAngle(angle_t ang)
+void AActor::SetAngle(angle_t ang, bool interpolate)
 {
 	if (ang != angle)
 	{
 		angle = ang;
-		if (player != NULL)
+		if (player != NULL && interpolate)
 		{
 			player->cheats |= CF_INTERPVIEW;
 		}

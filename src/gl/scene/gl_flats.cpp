@@ -334,11 +334,11 @@ void GLFlat::Draw(int pass)
 	int i;
 	int rel = getExtraLight();
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (sector->sectornum == 2)
-		__asm nop
-#endif
+	{
+		int a = 0;
+	}
 #endif
 
 
@@ -572,17 +572,11 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 {
 	lightlist_t * light;
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
-	if (frontsector==NULL)
-	{
-		__asm int 3
-	}
 	if (frontsector->sectornum==0)
 	{
-		__asm nop
+		int a = 0;
 	}
-#endif
 #endif
 
 	// Get the real sector for this one.

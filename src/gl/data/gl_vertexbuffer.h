@@ -20,11 +20,10 @@ public:
 	virtual void BindVBO() = 0;
 };
 
-struct FFlatVertex	// exactly 32 bytes large
+struct FFlatVertex
 {
-	float x,z,y,w;	// w only for padding to make one vertex 32 bytes - maybe it will find some use later
+	float x,z,y;	// world position
 	float u,v;		// texture coordinates
-	//float dc, df;	// distance to floor and ceiling on walls - used for glowing
 
 	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
 };
@@ -35,27 +34,27 @@ struct FFlatVertex	// exactly 32 bytes large
 class FFlatVertexBuffer : public FVertexBuffer
 {
 	FFlatVertex *map;
+	unsigned int mIndex;
 
-	void MapVBO();
 	void CheckPlanes(sector_t *sector);
 
 public:
 	int vbo_arg;
-	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for non-VBO rendering
+	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer
 
-public:
 	FFlatVertexBuffer();
 	~FFlatVertexBuffer();
 
+	void CreateVBO();
+	void BindVBO();
+	void CheckUpdate(sector_t *sector);
+
+private:
 	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);
 	int CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor);
 	int CreateVertices(int h, sector_t *sec, const secplane_t &plane, int floor);
 	void CreateFlatVBO();
-	void CreateVBO();
 	void UpdatePlaneVertices(sector_t *sec, int plane);
-	void BindVBO();
-	void CheckUpdate(sector_t *sector);
-	void UnmapVBO();
 
 };
 

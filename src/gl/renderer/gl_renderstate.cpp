@@ -41,6 +41,7 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
@@ -79,6 +80,7 @@ void FRenderState::Reset()
 	mBlendEquation = GL_FUNC_ADD;
 	glBlendEquation = -1;
 	m2D = true;
+	mVertexBuffer = mCurrentVertexBuffer = NULL;
 }
 
 
@@ -300,6 +302,12 @@ void FRenderState::Apply(bool forcenoshader)
 		}
 	}
 
+	if (mVertexBuffer != mCurrentVertexBuffer)
+	{
+		if (mVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
+		else mVertexBuffer->BindVBO();
+		mCurrentVertexBuffer = mVertexBuffer;
+	}
 	if (forcenoshader || !ApplyShader())
 	{
 		GLRenderer->mShaderManager->SetActiveShader(NULL);

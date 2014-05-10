@@ -272,7 +272,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	}
 	else
 	{
-		if (vboindex >= 0)
+		if (gl_usevbo && vboindex >= 0)
 		{
 			//glColor3f( 1.f,.5f,.5f);
 			int index = vboindex;

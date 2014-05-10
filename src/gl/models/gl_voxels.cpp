@@ -506,25 +506,27 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int cm, int translatio
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin);
 	tex->Bind(cm, 0, translation);
-	gl_RenderState.Apply();
 
 	if (mVBO == NULL) MakeGLData();
 	if (mVBO != NULL)
 	{
-		mVBO->BindVBO();
-		glDrawElements(GL_QUADS, mIndices.Size(), mVBO->IsInt()? GL_UNSIGNED_INT:GL_UNSIGNED_SHORT, 0);
-		GLRenderer->mVBO->BindVBO();
-		return;
+		gl_RenderState.SetVertexBuffer(mVBO);
+		gl_RenderState.Apply();
+		glDrawElements(GL_QUADS, mIndices.Size(), mVBO->IsInt() ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0);
+		gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	}
-
-	glBegin(GL_QUADS);
-	for(unsigned i=0;i < mIndices.Size(); i++)
+	else
 	{
-		FVoxelVertex *vert = &mVertices[mIndices[i]];
-		glTexCoord2fv(&vert->u);
-		glVertex3fv(&vert->x);
+		gl_RenderState.Apply();
+		glBegin(GL_QUADS);
+		for (unsigned i = 0; i < mIndices.Size(); i++)
+		{
+			FVoxelVertex *vert = &mVertices[mIndices[i]];
+			glTexCoord2fv(&vert->u);
+			glVertex3fv(&vert->x);
+		}
+		glEnd();
 	}
-	glEnd();
 }
 
 //===========================================================================

@@ -9,16 +9,8 @@ enum RenderFlags
 	RFL_TEXTURE_COMPRESSION=8,
 	RFL_TEXTURE_COMPRESSION_S3TC=16,
 
-	RFL_MAP_BUFFER_RANGE = 64,
-	RFL_FRAMEBUFFER = 128,
-	RFL_TEXTUREBUFFER = 256,
-	RFL_NVIDIA = 512,
-	RFL_ATI = 1024,
-
-
-	RFL_GL_20 = 0x10000000,
-	RFL_GL_21 = 0x20000000,
-	RFL_GL_30 = 0x40000000,
+	RFL_FRAMEBUFFER = 32,
+	RFL_BUFFER_STORAGE = 64,
 };
 
 enum TexMode
@@ -40,6 +32,7 @@ struct RenderContext
 	unsigned int flags;
 	unsigned int shadermodel;
 	unsigned int maxuniforms;
+	float version;
 	int max_texturesize;
 	char * vendorstring;
 

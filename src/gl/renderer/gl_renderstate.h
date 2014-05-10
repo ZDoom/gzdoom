@@ -5,6 +5,8 @@
 #include "c_cvars.h"
 #include "r_defs.h"
 
+class FVertexBuffer;
+
 EXTERN_CVAR(Bool, gl_direct_state_change)
 
 struct FStateAttr
@@ -104,6 +106,8 @@ class FRenderState
 	int mBlendEquation;
 	bool m2D;
 
+	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
+
 	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
@@ -139,6 +143,11 @@ public:
 
 	int SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime);
 	void Apply(bool forcenoshader = false);
+
+	void SetVertexBuffer(FVertexBuffer *vb)
+	{
+		mVertexBuffer = vb;
+	}
 
 	void SetTextureMode(int mode)
 	{

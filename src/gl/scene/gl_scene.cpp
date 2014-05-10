@@ -353,7 +353,6 @@ void FGLRenderer::CreateScene()
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
 	gl_drawinfo->ProcessSectorStacks();		// merge visplanes of sector stacks
 
-	GLRenderer->mVBO->UnmapVBO ();
 	ProcessAll.Unclock();
 
 }
@@ -931,7 +930,7 @@ void FGLRenderer::RenderView (player_t* player)
 		LastCamera=player->camera;
 	}
 
-	mVBO->BindVBO();
+	gl_RenderState.SetVertexBuffer(mVBO);
 
 	// reset statistics counters
 	ResetProfilingData();

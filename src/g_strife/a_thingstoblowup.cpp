@@ -89,8 +89,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 
 	sec->SetLightLevel(0);
 
-	newheight = sec->FindLowestFloorSurrounding (&spot);
+	fixed_t oldtheight = sec->floorplane.Zat0();
+	newheight = sec->FindLowestFloorSurrounding(&spot);
 	sec->floorplane.d = sec->floorplane.PointToDist (spot, newheight);
+	fixed_t newtheight = sec->floorplane.Zat0();
+	sec->ChangePlaneTexZ(sector_t::floor, newtheight - oldtheight);
 
 	for (int i = 0; i < 8; ++i)
 	{

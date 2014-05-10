@@ -410,13 +410,11 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 {
 	lightlist_t * light;
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (frontsector->sectornum==0)
 	{
 		int a = 0;
 	}
-#endif
 #endif
 
 	// Get the real sector for this one.

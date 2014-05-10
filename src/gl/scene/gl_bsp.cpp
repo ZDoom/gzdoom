@@ -97,7 +97,7 @@ static sector_t *currentsector;
 static void AddLine (seg_t *seg)
 {
 #ifdef _DEBUG
-	if (seg->linedef-lines==38)
+	if (seg->linedef - lines == 38)
 	{
 		int a = 0;
 	}

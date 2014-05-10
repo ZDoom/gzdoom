@@ -264,6 +264,8 @@ bool F7ZFile::Open(bool quiet)
 	Lumps = new F7ZLump[NumLumps];
 
 	F7ZLump *lump_p = Lumps;
+	TArray<UInt16> nameUTF16;
+	TArray<char> nameASCII;
 	for (DWORD i = 0; i < NumLumps; ++i)
 	{
 		CSzFileItem *file = &Archive->DB.db.Files[i];
@@ -283,20 +285,16 @@ bool F7ZFile::Open(bool quiet)
 			continue;
 		}
 
-		// Convert UTF-16 filename to plain ASCII
-
-		UInt16* const nameUTF16 = static_cast<UInt16*>(alloca(sizeof(UInt16) * nameLength));
-		SzArEx_GetFileNameUtf16(&Archive->DB, i, nameUTF16);
-
-		char* const nameASCII = static_cast<char*>(alloca(nameLength));
-
+		nameUTF16.Resize(nameLength);
+		nameASCII.Resize(nameLength);
+		SzArEx_GetFileNameUtf16(&Archive->DB, i, &nameUTF16[0]);
 		for (size_t c = 0; c < nameLength; ++c)
 		{
 			nameASCII[c] = static_cast<char>(nameUTF16[c]);
 		}
+		FixPathSeperator(&nameASCII[0]);
 
-		FString name = nameASCII;
-		FixPathSeperator(name);
+		FString name = &nameASCII[0];
 		name.ToLower();
 
 		lump_p->LumpNameSetup(name);

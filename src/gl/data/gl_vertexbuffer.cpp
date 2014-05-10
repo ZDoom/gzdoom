@@ -296,6 +296,7 @@ void FFlatVertexBuffer::CreateVBO()
 	{
 		CreateFlatVBO();
 		memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
+		mIndex = vbo_shadowdata.Size();
 	}
 	else if (sectors)
 	{

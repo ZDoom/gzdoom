@@ -238,20 +238,71 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
-	glBegin(GL_TRIANGLE_FAN);
-
-	for(unsigned int k=0; k<sub->numlines; k++)
+	if (!gl_usevbo)
 	{
-		vertex_t *vt = sub->firstline[k].v1;
-		glTexCoord2f(vt->fx/64.f, -vt->fy/64.f);
-		float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-		glVertex3f(vt->fx, zc, vt->fy);
+		glBegin(GL_TRIANGLE_FAN);
+
+		if (plane.plane.a | plane.plane.b)
+		{
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				glTexCoord2f(vt->fx / 64.f, -vt->fy / 64.f);
+				float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
+				glVertex3f(vt->fx, zc, vt->fy);
+			}
+		}
+		else
+		{
+			float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				glTexCoord2f(vt->fx / 64.f, -vt->fy / 64.f);
+				glVertex3f(vt->fx, zc, vt->fy);
+			}
+		}
+		glEnd();
 	}
-	glEnd();
+	else
+	{
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		if (plane.plane.a | plane.plane.b)
+		{
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				ptr->x = vt->fx;
+				ptr->y = vt->fy;
+				ptr->z = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
+				ptr->u = vt->fx / 64.f;
+				ptr->v = -vt->fy / 64.f;
+				ptr++;
+			}
+		}
+		else
+		{
+			float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				ptr->x = vt->fx;
+				ptr->y = vt->fy;
+				ptr->z = zc;
+				ptr->u = vt->fx / 64.f;
+				ptr->v = -vt->fy / 64.f;
+				ptr++;
+			}
+		}
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+	}
 
 	flatvertices += sub->numlines;
 	flatprimitives++;
 }
+
 
 //==========================================================================
 //
@@ -292,7 +343,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 		}
 		else
 		{
-			//glColor3f( .5f,1.f,.5f); // these are for testing the VBO stuff.
 			// Draw the subsectors belonging to this sector
 			for (int i=0; i<sector->subsectorcount; i++)
 			{

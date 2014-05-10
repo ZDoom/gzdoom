@@ -931,6 +931,7 @@ void FGLRenderer::RenderView (player_t* player)
 	}
 
 	gl_RenderState.SetVertexBuffer(mVBO);
+	GLRenderer->mVBO->Reset();
 
 	// reset statistics counters
 	ResetProfilingData();
@@ -991,6 +992,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	bounds.height=height;
 	glFlush();
 	SetFixedColormap(player);
+	gl_RenderState.SetVertexBuffer(mVBO);
+	GLRenderer->mVBO->Reset();
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);

@@ -48,7 +48,9 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -248,38 +250,80 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 
 	// the rest of the code is identical for textured rendering and lights
 
-	glBegin(GL_TRIANGLE_FAN);
 
-	// lower left corner
-	if (textured&1) glTexCoord2f(tcs[0].u,tcs[0].v);
-	glVertex3f(glseg.x1,zbottom[0],glseg.y1);
+	if (!gl_usevbo)
+	{
+		glBegin(GL_TRIANGLE_FAN);
 
-	if (split && glseg.fracleft==0) SplitLeftEdge(tcs);
+		// lower left corner
+		if (textured & 1) glTexCoord2f(tcs[0].u, tcs[0].v);
+		glVertex3f(glseg.x1, zbottom[0], glseg.y1);
 
-	// upper left corner
-	if (textured&1) glTexCoord2f(tcs[1].u,tcs[1].v);
-	glVertex3f(glseg.x1,ztop[0],glseg.y1);
+		if (split && glseg.fracleft == 0) SplitLeftEdge(tcs);
 
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs);
+		// upper left corner
+		if (textured & 1) glTexCoord2f(tcs[1].u, tcs[1].v);
+		glVertex3f(glseg.x1, ztop[0], glseg.y1);
 
-	// color for right side
-	if (color2) glColor4fv(color2);
+		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs);
 
-	// upper right corner
-	if (textured&1) glTexCoord2f(tcs[2].u,tcs[2].v);
-	glVertex3f(glseg.x2,ztop[1],glseg.y2);
+		// color for right side
+		if (color2) glColor4fv(color2);
 
-	if (split && glseg.fracright==1) SplitRightEdge(tcs);
+		// upper right corner
+		if (textured & 1) glTexCoord2f(tcs[2].u, tcs[2].v);
+		glVertex3f(glseg.x2, ztop[1], glseg.y2);
 
-	// lower right corner
-	if (textured&1) glTexCoord2f(tcs[3].u,tcs[3].v); 
-	glVertex3f(glseg.x2,zbottom[1],glseg.y2);
+		if (split && glseg.fracright == 1) SplitRightEdge(tcs);
 
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs);
+		// lower right corner
+		if (textured & 1) glTexCoord2f(tcs[3].u, tcs[3].v);
+		glVertex3f(glseg.x2, zbottom[1], glseg.y2);
 
-	glEnd();
+		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs);
 
-	vertexcount+=4;
+		glEnd();
+
+		vertexcount += 4;
+	}
+	else
+	{
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+
+		ptr->x = glseg.x1;
+		ptr->y = glseg.y1;
+		ptr->z = zbottom[0];
+		ptr->u = tcs[0].u;
+		ptr->v = tcs[0].v;
+		ptr++;
+		if (split && glseg.fracleft == 0) SplitLeftEdge(tcs, ptr);
+		ptr->x = glseg.x1;
+		ptr->y = glseg.y1;
+		ptr->z = ztop[0];
+		ptr->u = tcs[1].u;
+		ptr->v = tcs[1].v;
+		ptr++;
+		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, ptr);
+		ptr->x = glseg.x2;
+		ptr->y = glseg.y2;
+		ptr->z = ztop[1];
+		ptr->u = tcs[2].u;
+		ptr->v = tcs[2].v;
+		ptr++;
+		if (split && glseg.fracright == 1) SplitRightEdge(tcs, ptr);
+		ptr->x = glseg.x2;
+		ptr->y = glseg.y2;
+		ptr->z = zbottom[1];
+		ptr->u = tcs[3].u;
+		ptr->v = tcs[3].v;
+		ptr++;
+		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, ptr);
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		vertexcount += 4;
+	}
+
 
 }
 

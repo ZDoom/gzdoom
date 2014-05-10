@@ -35,6 +35,7 @@ class FFlatVertexBuffer : public FVertexBuffer
 {
 	FFlatVertex *map;
 	unsigned int mIndex;
+	unsigned int mCurIndex;
 
 	void CheckPlanes(sector_t *sector);
 
@@ -48,6 +49,23 @@ public:
 	void CreateVBO();
 	void BindVBO();
 	void CheckUpdate(sector_t *sector);
+
+	FFlatVertex *GetBuffer()
+	{
+		return &map[mCurIndex];
+	}
+	unsigned int GetCount(FFlatVertex *newptr, unsigned int *poffset)
+	{
+		unsigned int newofs = unsigned int(newptr - map);
+		unsigned int diff = newofs - mCurIndex;
+		*poffset = mCurIndex;
+		mCurIndex = newofs;
+		return diff;
+	}
+	void Reset()
+	{
+		mCurIndex = mIndex;
+	}
 
 private:
 	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);

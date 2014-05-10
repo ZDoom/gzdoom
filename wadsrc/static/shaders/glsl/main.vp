@@ -5,7 +5,7 @@
 #endif
 #ifndef NO_GLOW
 	varying vec2 glowdist;
-	attribute vec2 glowdistance;
+	uniform vec4 glowbottomplane, glowtopplane;
 #endif
 
 #ifdef SOFTLIGHT
@@ -36,7 +36,8 @@ void main()
 	#endif
 	
 	#ifndef NO_GLOW
-		glowdist = glowdistance;
+		glowdist.x = -((glowtopplane.w + glowtopplane.x * worldcoord.x + glowtopplane.y * worldcoord.z) * glowtopplane.z) - worldcoord.y;
+		glowdist.y = worldcoord.y + ((glowbottomplane.w + glowbottomplane.x * worldcoord.x + glowbottomplane.y * worldcoord.z) * glowbottomplane.z);
 	#endif
 	
 	#ifdef SPHEREMAP
@@ -53,16 +54,6 @@ void main()
 	#else
 		gl_TexCoord[0].xy = sst;
 	#endif
-	
-	/* only for reference purposes. I don't think this will ever get used.
-	#ifdef NUM_LAYERS
-		#ifndef SPHEREMAP_1
-			gl_TexCoord[1] = gl_TextureMatrix[1] * gl_MultiTexCoord0;
-		#else
-			gl_TexCoord[1].xy = sst;
-		#endif
-	#endif
-	*/
 	
 	#ifndef NO_SM4
 		gl_Position = gl_ModelViewProjectionMatrix * worldcoord;

@@ -223,7 +223,6 @@ void GLWall::SetupLights()
 void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 {
 	texcoord tcs[4];
-	bool glowing;
 	bool split = (gl_seamless && !(textured&4) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
 
 	if (!light)
@@ -232,15 +231,18 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 		tcs[1]=uplft;
 		tcs[2]=uprgt;
 		tcs[3]=lorgt;
-		glowing = !!(flags&GLWF_GLOW) && (textured & 2);
+		if (!!(flags&GLWF_GLOW) && (textured & 2))
+		{
+			gl_RenderState.SetGlowPlanes(topplane, bottomplane);
+			gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
+		}
+
 	}
 	else
 	{
 		if (!PrepareLight(tcs, light)) return;
-		glowing = false;
 	}
 
-	if (glowing) gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
 
 	gl_RenderState.Apply();
 
@@ -249,35 +251,31 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 	glBegin(GL_TRIANGLE_FAN);
 
 	// lower left corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0], zbottom[0] - zfloor[0]);
 	if (textured&1) glTexCoord2f(tcs[0].u,tcs[0].v);
 	glVertex3f(glseg.x1,zbottom[0],glseg.y1);
 
-	if (split && glseg.fracleft==0) SplitLeftEdge(tcs, glowing);
+	if (split && glseg.fracleft==0) SplitLeftEdge(tcs);
 
 	// upper left corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0], ztop[0] - zfloor[0]);
 	if (textured&1) glTexCoord2f(tcs[1].u,tcs[1].v);
 	glVertex3f(glseg.x1,ztop[0],glseg.y1);
 
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, glowing);
+	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs);
 
 	// color for right side
 	if (color2) glColor4fv(color2);
 
 	// upper right corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - ztop[1], ztop[1] - zfloor[1]);
 	if (textured&1) glTexCoord2f(tcs[2].u,tcs[2].v);
 	glVertex3f(glseg.x2,ztop[1],glseg.y2);
 
-	if (split && glseg.fracright==1) SplitRightEdge(tcs, glowing);
+	if (split && glseg.fracright==1) SplitRightEdge(tcs);
 
 	// lower right corner
-	if (glowing) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - zbottom[1], zbottom[1] - zfloor[1]);
 	if (textured&1) glTexCoord2f(tcs[3].u,tcs[3].v); 
 	glVertex3f(glseg.x2,zbottom[1],glseg.y2);
 
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, glowing);
+	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs);
 
 	glEnd();
 

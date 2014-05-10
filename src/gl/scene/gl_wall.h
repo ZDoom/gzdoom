@@ -141,6 +141,7 @@ public:
 
 
 	FTextureID topflat,bottomflat;
+	secplane_t topplane, bottomplane;	// we need to save these to pass them to the shader for calculating glows.
 
 	// these are not the same as ytop and ybottom!!!
 	float zceil[2];
@@ -158,8 +159,6 @@ private:
 	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
 	void RenderWall(int textured, float * color2, ADynamicLight * light=NULL);
-	void RenderGlowingPoly(int textured, ADynamicLight * light=NULL);
-	int Intersection(FloatRect * rc,GLWall * result);
 
 	void FloodPlane(int pass);
 
@@ -211,10 +210,10 @@ private:
 	void RenderMirrorSurface();
 	void RenderTranslucentWall();
 
-	void SplitLeftEdge(texcoord * tcs, bool glow);
-	void SplitRightEdge(texcoord * tcs, bool glow);
-	void SplitUpperEdge(texcoord * tcs, bool glow);
-	void SplitLowerEdge(texcoord * tcs, bool glow);
+	void SplitLeftEdge(texcoord * tcs);
+	void SplitRightEdge(texcoord * tcs);
+	void SplitUpperEdge(texcoord * tcs);
+	void SplitLowerEdge(texcoord * tcs);
 
 public:
 

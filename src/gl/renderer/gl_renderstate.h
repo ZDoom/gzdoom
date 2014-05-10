@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "c_cvars.h"
+#include "r_defs.h"
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
 
@@ -105,6 +106,7 @@ class FRenderState
 
 	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
+	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor;
 	float mFogDensity;
 
@@ -184,7 +186,13 @@ public:
 		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
 	}
 
-	void SetDynLight(float r,float g, float b)
+	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
+	{
+		mGlowTopPlane.Set(FIXED2FLOAT(top.a), FIXED2FLOAT(top.b), FIXED2FLOAT(top.ic), FIXED2FLOAT(top.d));
+		mGlowBottomPlane.Set(FIXED2FLOAT(bottom.a), FIXED2FLOAT(bottom.b), FIXED2FLOAT(bottom.ic), FIXED2FLOAT(bottom.d));
+	}
+
+	void SetDynLight(float r, float g, float b)
 	{
 		mDynLight[0] = r;
 		mDynLight[1] = g;

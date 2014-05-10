@@ -7,7 +7,6 @@
 
 extern bool gl_shaderactive;
 
-const int VATTR_GLOWDISTANCE = 15;
 const int VATTR_FOGPARAMS = 14;
 const int VATTR_LIGHTLEVEL = 13; // Korshun.
 
@@ -37,10 +36,12 @@ class FShader
 	int fogcolor_index;
 	int lights_index;
 	int dlightcolor_index;
-
 	int glowbottomcolor_index;
 	int glowtopcolor_index;
+	int glowbottomplane_index;
+	int glowtopplane_index;
 
+	int currentglowstate;
 	int currentfogenabled;
 	int currenttexturemode;
 	float currentlightfactor;
@@ -55,7 +56,7 @@ public:
 	FShader()
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentfogenabled = currenttexturemode = 0;
+		currentglowstate = currentfogenabled = currenttexturemode = 0;
 		currentlightfactor = currentlightdist = 0.0f;
 		currentfogdensity = -1;
 		currentfogcolor = 0;
@@ -72,7 +73,10 @@ public:
 		fogcolor_index = -1;
 		lights_index = -1;
 		dlightcolor_index = -1;
-
+		glowtopplane_index = -1;
+		glowbottomplane_index = -1;
+		glowtopcolor_index = -1;
+		glowbottomcolor_index = -1;
 	}
 
 	~FShader();

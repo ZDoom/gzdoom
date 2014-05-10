@@ -141,7 +141,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		glAttachShader(hShader, hVertProg);
 		glAttachShader(hShader, hFragProg);
 
-		glBindAttribLocation(hShader, VATTR_GLOWDISTANCE, "glowdistance");
 		glBindAttribLocation(hShader, VATTR_FOGPARAMS, "fogparams");
 		glBindAttribLocation(hShader, VATTR_LIGHTLEVEL, "lightlevel_in"); // Korshun.
 
@@ -185,7 +184,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 		glowbottomcolor_index = glGetUniformLocation(hShader, "bottomglowcolor");
 		glowtopcolor_index = glGetUniformLocation(hShader, "topglowcolor");
-		
+		glowbottomplane_index = glGetUniformLocation(hShader, "glowbottomplane");
+		glowtopplane_index = glGetUniformLocation(hShader, "glowtopplane");
+
 		glUseProgram(hShader);
 
 		int texture_index = glGetUniformLocation(hShader, "texture2");

@@ -61,7 +61,7 @@ extern int vertexcount;
 //
 //==========================================================================
 
-void GLWall::SplitUpperEdge(texcoord * tcs, bool glow)
+void GLWall::SplitUpperEdge(texcoord * tcs)
 {
 	if (seg == NULL || seg->sidedef == NULL || (seg->sidedef->Flags & WALLF_POLYOBJ) || seg->sidedef->numsegs == 1) return;
 
@@ -82,9 +82,6 @@ void GLWall::SplitUpperEdge(texcoord * tcs, bool glow)
 
 		float fracfac = sidefrac - glseg.fracleft;
 
-		if (glow) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - ztop[0] + (facc - fact) * fracfac, 
-									 ztop[0] - zfloor[0] + (fact - facf) * fracfac);
-
 		glTexCoord2f(tcs[1].u + facu * fracfac, tcs[1].v + facv * fracfac);
 		glVertex3f(cseg->v2->fx, ztop[0] + fact * fracfac, cseg->v2->fy);
 	}
@@ -97,7 +94,7 @@ void GLWall::SplitUpperEdge(texcoord * tcs, bool glow)
 //
 //==========================================================================
 
-void GLWall::SplitLowerEdge(texcoord * tcs, bool glow)
+void GLWall::SplitLowerEdge(texcoord * tcs)
 {
 	if (seg == NULL || seg->sidedef == NULL || (seg->sidedef->Flags & WALLF_POLYOBJ) || seg->sidedef->numsegs == 1) return;
 
@@ -118,9 +115,6 @@ void GLWall::SplitLowerEdge(texcoord * tcs, bool glow)
 
 		float fracfac = sidefrac - glseg.fracleft;
 
-		if (glow) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - zbottom[0] + (facc - facb) * fracfac, 
-									 zbottom[0] - zfloor[0] + (facb - facf) * fracfac);
-
 		glTexCoord2f(tcs[0].u + facu * fracfac, tcs[0].v + facv * fracfac);
 		glVertex3f(cseg->v2->fx, zbottom[0] + facb * fracfac, cseg->v2->fy);
 	}
@@ -133,7 +127,7 @@ void GLWall::SplitLowerEdge(texcoord * tcs, bool glow)
 //
 //==========================================================================
 
-void GLWall::SplitLeftEdge(texcoord * tcs, bool glow)
+void GLWall::SplitLeftEdge(texcoord * tcs)
 {
 	if (vertexes[0]==NULL) return;
 
@@ -150,7 +144,6 @@ void GLWall::SplitLeftEdge(texcoord * tcs, bool glow)
 		while (i<vi->numheights && vi->heightlist[i] <= zbottom[0] ) i++;
 		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
 		{
-			if (glow) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[0] - vi->heightlist[i], vi->heightlist[i] - zfloor[0]);
 			glTexCoord2f(factu1*(vi->heightlist[i] - ztop[0]) + tcs[1].u,
 						 factv1*(vi->heightlist[i] - ztop[0]) + tcs[1].v);
 			glVertex3f(glseg.x1, vi->heightlist[i], glseg.y1);
@@ -166,7 +159,7 @@ void GLWall::SplitLeftEdge(texcoord * tcs, bool glow)
 //
 //==========================================================================
 
-void GLWall::SplitRightEdge(texcoord * tcs, bool glow)
+void GLWall::SplitRightEdge(texcoord * tcs)
 {
 	if (vertexes[1]==NULL) return;
 
@@ -183,7 +176,6 @@ void GLWall::SplitRightEdge(texcoord * tcs, bool glow)
 		while (i>0 && vi->heightlist[i] >= ztop[1]) i--;
 		while (i>0 && vi->heightlist[i] > zbottom[1])
 		{
-			if (glow) glVertexAttrib2f(VATTR_GLOWDISTANCE, zceil[1] - vi->heightlist[i], vi->heightlist[i] - zfloor[1]);
 			glTexCoord2f(factu2 * (vi->heightlist[i] - ztop[1]) + tcs[2].u,
 						 factv2 * (vi->heightlist[i] - ztop[1]) + tcs[2].v);
 			glVertex3f(glseg.x2, vi->heightlist[i], glseg.y2);

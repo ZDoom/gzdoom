@@ -61,10 +61,12 @@ CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 		if (!(gl.flags & RFL_NVIDIA)) self = 0;
 		else self = 2;
 	}
+	/*
 	else if (GLRenderer != NULL && GLRenderer->mVBO != NULL && GLRenderer->mVBO->vbo_arg != self)
 	{
 		Printf("Vertex buffer use will be changed for the next level.\n");
 	}
+	*/
 }
 
 //==========================================================================

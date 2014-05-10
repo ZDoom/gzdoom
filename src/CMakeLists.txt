@@ -1043,6 +1043,7 @@ add_executable( zdoom WIN32
 	gl/data/gl_parameterbuffer.cpp
 	gl/data/gl_portaldata.cpp
 	gl/data/gl_setup.cpp
+	gl/data/gl_vbo.cpp
 	gl/data/gl_vertexbuffer.cpp
 	gl/data/vsMathLib.cpp
 	gl/dynlights/a_dynlight.cpp

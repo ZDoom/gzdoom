@@ -407,7 +407,7 @@ static void DoSubsector(subsector_t * sub)
 
 	if (sector->validcount != validcount)
 	{
-		GLRenderer->mVBO->CheckUpdate(sector);
+		//GLRenderer->mVBO->CheckUpdate(sector);
 	}
 
 	// [RH] Add particles

@@ -63,6 +63,7 @@
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/data/vsMathLib.h"
+#include "gl/data/gl_vbo.h"
 
 //==========================================================================
 //
@@ -154,16 +155,66 @@ void GLFlat::SetupPlaneLights(FLightNode *node)
 
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
-	glBegin(GL_TRIANGLE_FAN);
-
-	for(unsigned int k=0; k<sub->numlines; k++)
+	if (0)
 	{
-		vertex_t *vt = sub->firstline[k].v1;
-		glTexCoord2f(vt->fx/64.f, -vt->fy/64.f);
-		float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-		glVertex3f(vt->fx, zc, vt->fy);
+		glBegin(GL_TRIANGLE_FAN);
+
+		if (plane.plane.a | plane.plane.b)
+		{
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				glTexCoord2f(vt->fx / 64.f, -vt->fy / 64.f);
+				float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
+				glVertex3f(vt->fx, zc, vt->fy);
+			}
+		}
+		else
+		{
+			float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				glTexCoord2f(vt->fx / 64.f, -vt->fy / 64.f);
+				glVertex3f(vt->fx, zc, vt->fy);
+			}
+		}
+		glEnd();
 	}
-	glEnd();
+	else
+	{
+		FBufferVertex *ptr = GLRenderer->mMainVBO->GetBuffer();
+		if (plane.plane.a | plane.plane.b)
+		{
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				ptr->x = vt->fx;
+				ptr->y = vt->fy;
+				ptr->z = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
+				ptr->u = vt->fx / 64.f;
+				ptr->v = -vt->fy / 64.f;
+				ptr++;
+			}
+		}
+		else
+		{
+			float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
+			for (unsigned int k = 0; k < sub->numlines; k++)
+			{
+				vertex_t *vt = sub->firstline[k].v1;
+				ptr->x = vt->fx;
+				ptr->y = vt->fy;
+				ptr->z = zc;
+				ptr->u = vt->fx / 64.f;
+				ptr->v = -vt->fy / 64.f;
+				ptr++;
+			}
+		}
+		unsigned int offset;
+		unsigned int count = GLRenderer->mMainVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+	}
 
 	flatvertices += sub->numlines;
 	flatprimitives++;
@@ -190,6 +241,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	{
 		if (pass == GLPASS_ALL) SetupPlaneLights(sector->lighthead);
 		gl_RenderState.Apply();
+		/*
 		if (vboindex >= 0)
 		{
 			int index = vboindex;
@@ -207,6 +259,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 			}
 		}
 		else
+		*/
 		{
 			// Draw the subsectors belonging to this sector
 			for (int i = 0; i<sector->subsectorcount; i++)

@@ -66,6 +66,7 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_framestate.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_vbo.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/models/gl_models.h"
 #include "gl/scene/gl_clipper.h"
@@ -321,7 +322,7 @@ void FGLRenderer::CreateScene()
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
 	gl_drawinfo->ProcessSectorStacks();		// merge visplanes of sector stacks
 
-	GLRenderer->mVBO->UnmapVBO ();
+	//GLRenderer->mVBO->UnmapVBO ();
 	ProcessAll.Unclock();
 
 }
@@ -799,7 +800,8 @@ void FGLRenderer::RenderView (player_t* player)
 		LastCamera=player->camera;
 	}
 
-	mVBO->BindVAO();
+	mMainVBO->BindVAO();
+	mMainVBO->Reset();
 
 	// reset statistics counters
 	ResetProfilingData();

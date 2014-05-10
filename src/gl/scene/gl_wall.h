@@ -20,6 +20,7 @@ struct GLDrawList;
 struct GLSkyInfo;
 struct FTexCoordInfo;
 struct FPortal;
+struct FBufferVertex;
 
 
 enum WallTypes
@@ -219,6 +220,11 @@ private:
 	void SplitRightEdge(texcoord * tcs);
 	void SplitUpperEdge(texcoord * tcs);
 	void SplitLowerEdge(texcoord * tcs);
+
+	void SplitLeftEdge(texcoord * tcs, FBufferVertex *&ptr);
+	void SplitRightEdge(texcoord * tcs, FBufferVertex *&ptr);
+	void SplitUpperEdge(texcoord * tcs, FBufferVertex *&ptr);
+	void SplitLowerEdge(texcoord * tcs, FBufferVertex *&ptr);
 
 public:
 

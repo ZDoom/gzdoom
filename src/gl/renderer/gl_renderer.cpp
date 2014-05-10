@@ -59,6 +59,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_framestate.h"
+#include "gl/data/gl_vbo.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
@@ -94,7 +95,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mAngles = FRotator(0,0,0);
 	mViewVector = FVector2(0,0);
 	mCameraPos = FVector3(0,0,0);
-	mVBO = NULL;
+	mMainVBO = NULL;
+	//mVBO = NULL;
 	mParmBuffer = NULL;
 	mAttribBuffer = NULL;
 	gl_spriteindex = 0;
@@ -108,7 +110,8 @@ void FGLRenderer::Initialize()
 	glpart = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart.png"), FTexture::TEX_MiscPatch);
 	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
 
-	mVBO = new FFlatVertexBuffer;
+	//mVBO = new FFlatVertexBuffer;
+	mMainVBO = new FMainVertexBuffer;
 	mParmBuffer = new FParameterBuffer;
 	mAttribBuffer = new FAttribBuffer;
 	mFBID = 0;
@@ -126,7 +129,8 @@ FGLRenderer::~FGLRenderer()
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mParmBuffer != NULL) delete mParmBuffer;
 	if (mAttribBuffer != NULL) delete mAttribBuffer;
-	if (mVBO != NULL) delete mVBO;
+	if (mMainVBO != NULL) delete mMainVBO;
+	//if (mVBO != NULL) delete mVBO;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;
 	if (mirrortexture) delete mirrortexture;
@@ -141,7 +145,7 @@ FGLRenderer::~FGLRenderer()
 
 void FGLRenderer::SetupLevel()
 {
-	mVBO->CreateVBO();
+	//mVBO->CreateVBO();
 }
 
 void FGLRenderer::Begin2D()

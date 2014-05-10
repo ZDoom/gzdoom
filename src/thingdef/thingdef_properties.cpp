@@ -796,11 +796,13 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * renderstyles[]={
-		"NONE", "NORMAL", "FUZZY", "SOULTRANS", "OPTFUZZY", "STENCIL", "TRANSLUCENT", "ADD", "SHADED", "SUBTRACT", NULL };
+		"NONE", "NORMAL", "FUZZY", "SOULTRANS", "OPTFUZZY", "STENCIL", 
+		"TRANSLUCENT", "ADD", "SHADED", "SHADOW", "SUBTRACT", NULL };
 
 	static const int renderstyle_values[]={
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
-			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded, STYLE_Subtract};
+			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded,
+			STYLE_Shadow, STYLE_Subtract};
 
 	// make this work for old style decorations, too.
 	if (!strnicmp(str, "style_", 6)) str+=6;

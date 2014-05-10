@@ -221,7 +221,10 @@ enum
 	CHAN_VOICE = 2,
 	CHAN_ITEM = 3,
 	CHAN_BODY = 4,
-
+	CHAN_5 = 5,
+	CHAN_6 = 6,
+	CHAN_7 = 7,
+	
 	// modifier flags
 	CHAN_LISTENERZ = 8,
 	CHAN_MAYBE_LOCAL = 16,
@@ -304,8 +307,9 @@ Const Int WARPF_STOP = 0x80;
 Const Int WARPF_TOFLOOR = 0x100;
 Const Int WARPF_TESTONLY = 0x200;
 
-// flags for A_SetPitch
+// flags for A_SetPitch/SetAngle
 const int SPF_FORCECLAMP = 1;
+const int SPF_INTERPOLATE = 2;
 
 
 // flags for A_CheckLOF

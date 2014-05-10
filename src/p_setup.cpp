@@ -1826,6 +1826,8 @@ void P_LoadThings2 (MapData * map)
 
 	for(int i = 0; i< numthings; i++)
 	{
+		memset (&mti[i], 0, sizeof(mti[i]));
+
 		mti[i].thingid = LittleShort(mth[i].thingid);
 		mti[i].x = LittleShort(mth[i].x)<<FRACBITS;
 		mti[i].y = LittleShort(mth[i].y)<<FRACBITS;
@@ -1838,12 +1840,10 @@ void P_LoadThings2 (MapData * map)
 		mti[i].SkillFilter = MakeSkill(mti[i].flags);
 		mti[i].ClassFilter = (mti[i].flags & MTF_CLASS_MASK) >> MTF_CLASS_SHIFT;
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
-		mti[i].Conversation = 0;
 		mti[i].gravity = FRACUNIT;
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
-		mti[i].fillcolor = mti[i].scaleX = mti[i].scaleY = mti[i].score = 0;
 	}
 	delete[] mtp;
 }

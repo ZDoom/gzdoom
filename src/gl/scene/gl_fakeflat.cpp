@@ -218,13 +218,11 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		return sec;
 	}
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (sec-sectors==560)
 	{
-		__asm nop
+		int a = 0;
 	}
-#endif
 #endif
 
 	if (in_area==area_above)

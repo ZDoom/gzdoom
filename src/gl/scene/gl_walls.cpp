@@ -311,11 +311,11 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 	}
 	::SplitWall.Clock();
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (seg->linedef-lines==1)
-		__asm nop
-#endif
+	{
+		int a = 0;
+	}
 #endif
 
 	if (lightlist.Size()>1)
@@ -1445,11 +1445,11 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	sector_t * realfront;
 	sector_t * realback;
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (seg->linedef-lines==636)
-		__asm nop
-#endif
+	{
+		int a = 0;
+	}
 #endif
 		
 	// note: we always have a valid sidedef and linedef reference when getting here.

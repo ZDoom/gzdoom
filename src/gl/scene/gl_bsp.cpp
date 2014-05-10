@@ -96,11 +96,11 @@ static sector_t *currentsector;
 
 static void AddLine (seg_t *seg)
 {
-#ifdef _MSC_VER
 #ifdef _DEBUG
-	if (seg->linedef-lines==38)
-		__asm nop
-#endif
+	if (seg->linedef - lines == 38)
+	{
+		int a = 0;
+	}
 #endif
 
 	angle_t startAngle, endAngle;
@@ -382,13 +382,11 @@ static void DoSubsector(subsector_t * sub)
 	//if (!clipper.CheckBox(sub->bbox)) return;
 
 
-#ifdef _MSC_VER
 #ifdef _DEBUG
 	if (sub->sector-sectors==931)
 	{
-		__asm nop
+		int a = 0;
 	}
-#endif
 #endif
 
 	sector=sub->sector;

@@ -132,6 +132,7 @@ public:
 	BYTE type;
 	BYTE flags;
 	short rellight;
+	int aindex;
 
 	float topglowcolor[4];
 	float bottomglowcolor[4];
@@ -272,6 +273,7 @@ public:
 	float alpha;
 	GLSectorPlane plane;
 	int lightlevel;
+	int aindex;
 	bool stack;
 	bool ceiling;
 	BYTE renderflags;

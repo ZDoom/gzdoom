@@ -104,7 +104,7 @@ int FRenderState::SetupShader(int &shaderindex)
 //
 //==========================================================================
 
-bool FRenderState::ApplyShader()
+int FRenderState::ApplyShader()
 {
 	bool useshaders = false;
 	FShader *activeShader = NULL;
@@ -209,9 +209,9 @@ bool FRenderState::ApplyShader()
 		aptr->mFogColor.a = mFogEnabled;
 		aptr->mLightAttr = mLightAttr;
 		aptr->mFogDensity = mFogDensity * (-1.442692f /*1/log(2)*/ / 64000.f);
-		return true;
+		return aindex;
 	}
-	return false;
+	return -1;
 }
 
 
@@ -221,7 +221,7 @@ bool FRenderState::ApplyShader()
 //
 //==========================================================================
 
-void FRenderState::Apply()
+int FRenderState::Apply()
 {
 	if (!gl_direct_state_change)
 	{
@@ -243,5 +243,5 @@ void FRenderState::Apply()
 		mLastVertexArray = mVertexArray;
 		glBindVertexArray(mVertexArray);
 	}
-	ApplyShader();
+	return ApplyShader();
 }

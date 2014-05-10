@@ -181,7 +181,7 @@ void GLWall::RenderWall(int textured)
 		SetupLights();
 	}
 
-	gl_RenderState.Apply();
+	aindex = gl_RenderState.Apply();
 
 	if (0)
 	{
@@ -223,6 +223,7 @@ void GLWall::RenderWall(int textured)
 		ptr->z = zbottom[0];
 		ptr->u = lolft.u;
 		ptr->v = lolft.v;
+		ptr->index = aindex;
 		ptr++;
 		if (split && glseg.fracleft == 0) SplitLeftEdge(tcs, ptr);
 		ptr->x = glseg.x1;
@@ -230,6 +231,7 @@ void GLWall::RenderWall(int textured)
 		ptr->z = ztop[0];
 		ptr->u = uplft.u;
 		ptr->v = uplft.v;
+		ptr->index = aindex;
 		ptr++;
 		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, ptr);
 		ptr->x = glseg.x2;
@@ -237,6 +239,7 @@ void GLWall::RenderWall(int textured)
 		ptr->z = ztop[1];
 		ptr->u = uprgt.u;
 		ptr->v = uprgt.v;
+		ptr->index = aindex;
 		ptr++;
 		if (split && glseg.fracright == 1) SplitRightEdge(tcs, ptr);
 		ptr->x = glseg.x2;
@@ -244,6 +247,7 @@ void GLWall::RenderWall(int textured)
 		ptr->z = zbottom[1];
 		ptr->u = lorgt.u;
 		ptr->v = lorgt.v;
+		ptr->index = aindex;
 		ptr++;
 		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, ptr);
 		unsigned int offset;

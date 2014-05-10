@@ -194,6 +194,7 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 				ptr->z = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
 				ptr->u = vt->fx / 64.f;
 				ptr->v = -vt->fy / 64.f;
+				ptr->index = aindex;
 				ptr++;
 			}
 		}
@@ -208,6 +209,7 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 				ptr->z = zc;
 				ptr->u = vt->fx / 64.f;
 				ptr->v = -vt->fy / 64.f;
+				ptr->index = aindex;
 				ptr++;
 			}
 		}
@@ -234,13 +236,13 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	{
 		// This represents a single subsector
 		if (pass == GLPASS_ALL) SetupPlaneLights(sub->lighthead);
-		gl_RenderState.Apply();
+		aindex = gl_RenderState.Apply();
 		DrawSubsector(sub);
 	}
 	else
 	{
 		if (pass == GLPASS_ALL) SetupPlaneLights(sector->lighthead);
-		gl_RenderState.Apply();
+		aindex = gl_RenderState.Apply();
 		/*
 		if (vboindex >= 0)
 		{
@@ -282,7 +284,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 			while (node)
 			{
 				if (pass == GLPASS_ALL) SetupPlaneLights(node->sub->lighthead);
-				gl_RenderState.Apply();
+				aindex = gl_RenderState.Apply();
 				DrawSubsector(node->sub);
 				node = node->next;
 			}

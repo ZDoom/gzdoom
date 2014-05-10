@@ -68,7 +68,7 @@ class FRenderState
 	int glSrcBlend, glDstBlend;
 	int gl_BlendEquation;
 
-	bool ApplyShader();
+	int ApplyShader();
 
 public:
 	FRenderState()
@@ -80,7 +80,7 @@ public:
 	void Reset();
 
 	int SetupShader(int &shaderindex);
-	void Apply();
+	int Apply();
 	void PushVertexArray()
 	{
 		mVAOStack.Push(mVertexArray);

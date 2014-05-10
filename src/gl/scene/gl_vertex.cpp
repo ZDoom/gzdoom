@@ -115,6 +115,7 @@ void GLWall::SplitUpperEdge(texcoord * tcs, FBufferVertex *&ptr)
 		ptr->z = ztop[0] + fact * fracfac;
 		ptr->u = tcs[1].u + facu * fracfac;
 		ptr->v = tcs[1].v + facv * fracfac;
+		ptr->index = aindex;
 		ptr++;
 	}
 	vertexcount += sidedef->numsegs - 1;
@@ -179,6 +180,7 @@ void GLWall::SplitLowerEdge(texcoord * tcs, FBufferVertex *&ptr)
 		ptr->z = zbottom[0] + facb * fracfac;
 		ptr->u = tcs[0].u + facu * fracfac;
 		ptr->v = tcs[0].v + facv * fracfac;
+		ptr->index = aindex;
 		ptr++;
 
 		glTexCoord2f(tcs[0].u + facu * fracfac, tcs[0].v + facv * fracfac);
@@ -241,6 +243,7 @@ void GLWall::SplitLeftEdge(texcoord * tcs, FBufferVertex *&ptr)
 			ptr->z = vi->heightlist[i];
 			ptr->u = factu1*(vi->heightlist[i] - ztop[0]) + tcs[1].u;
 			ptr->v = factv1*(vi->heightlist[i] - ztop[0]) + tcs[1].v;
+			ptr->index = aindex;
 			ptr++;
 			i++;
 		}
@@ -302,6 +305,7 @@ void GLWall::SplitRightEdge(texcoord * tcs, FBufferVertex *&ptr)
 			ptr->z = vi->heightlist[i];
 			ptr->u = factu2*(vi->heightlist[i] - ztop[1]) + tcs[2].u;
 			ptr->v = factv2*(vi->heightlist[i] - ztop[1]) + tcs[2].v;
+			ptr->index = aindex;
 			ptr++;
 			i--;
 		}

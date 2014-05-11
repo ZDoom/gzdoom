@@ -421,6 +421,40 @@ static float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
 
 //==========================================================================
 //
+// Check fog by current lighting info
+//
+//==========================================================================
+
+bool gl_CheckFog(FColormap *cm, int lightlevel)
+{
+	// Check for fog boundaries. This needs a few more checks for the sectors
+	bool frontfog;
+
+	PalEntry fogcolor = cm->FadeColor;
+
+	if ((fogcolor.d & 0xffffff) == 0)
+	{
+		frontfog = false;
+	}
+	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
+	{
+		frontfog = true;
+	}
+	else  if (fogdensity!=0 || (glset.lightmode & 4))
+	{
+		// case 3: level has fog density set
+		frontfog = true;
+	}
+	else 
+	{
+		// case 4: use light level
+		frontfog = lightlevel < 248;
+	}
+	return frontfog;
+}
+
+//==========================================================================
+//
 // Check if the current linedef is a candidate for a fog boundary
 //
 // Requirements for a fog boundary:

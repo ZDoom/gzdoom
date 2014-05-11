@@ -46,28 +46,11 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 
-#if defined (__unix__) || defined (__APPLE__)
-#define PROC void*
-#define LPCSTR const char*
-
-#include <SDL.h>
-#define wglGetProcAddress(x) (*SDL_GL_GetProcAddress)(x)
-#endif
-static void APIENTRY glBlendEquationDummy (GLenum mode);
-
-
 static TArray<FString>  m_Extensions;
 
 RenderContext gl;
 
 int occlusion_type=0;
-
-PROC myGetProcAddress(LPCSTR proc)
-{
-	PROC p = wglGetProcAddress(proc);
-	if (p == NULL) I_Error("Fatal: GL function '%s' not found.", proc);
-	return p;
-}
 
 
 //==========================================================================
@@ -227,26 +210,6 @@ void gl_PrintStartupLog()
 	glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, &v);
 	Printf ("Max. combined uniform blocks: %d\n", v);
 
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-static void APIENTRY glBlendEquationDummy (GLenum mode)
-{
-	// If this is not supported all non-existent modes are
-	// made to draw nothing.
-	if (mode == GL_FUNC_ADD)
-	{
-		glColorMask(true, true, true, true);
-	}
-	else
-	{
-		glColorMask(false, false, false, false);
-	}
 }
 
 //==========================================================================

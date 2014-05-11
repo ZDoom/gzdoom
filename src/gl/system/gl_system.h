@@ -72,7 +72,7 @@
 #if defined(__APPLE__)
 	#include <OpenGL/OpenGL.h>
 #elif defined(__unix__)
-	#include <GL/glxew.h>
+	//#include <GL/glxew.h>
 #else // !__APPLE__ && !__unix__
 	#define DWORD WINDOWS_DWORD	// I don't want to depend on this throughout the GL code!
 	#include <GL/wglew.h>

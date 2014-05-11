@@ -251,7 +251,7 @@ void FRenderState::Apply(bool forcenoshader)
 		{
 			glAlphaFunc = mAlphaFunc;
 			glAlphaThreshold = mAlphaThreshold;
-			::glBlendFunc(mAlphaFunc, mAlphaThreshold);
+			::glAlphaFunc(mAlphaFunc, mAlphaThreshold);
 		}
 		if (mAlphaTest != glAlphaTest)
 		{

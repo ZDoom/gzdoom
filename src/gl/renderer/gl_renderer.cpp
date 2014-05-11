@@ -273,10 +273,10 @@ void FGLRenderer::ClearBorders()
 	glLoadIdentity();
 	glOrtho(0.0, width * 1.0, 0.0, trueHeight, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
-	glColor3f(0.f, 0.f, 0.f);
+	gl_RenderState.SetColor(0.f ,0.f ,0.f ,1.f);
 	gl_RenderState.Set2DMode(true);
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply(true);
+	gl_RenderState.Apply();
 
 	glBegin(GL_QUADS);
 	// upper quad
@@ -311,36 +311,35 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	double y = parms.y - parms.top * yscale;
 	double w = parms.destwidth;
 	double h = parms.destheight;
-	float u1, v1, u2, v2, r, g, b;
-	float light = 1.f;
+	float u1, v1, u2, v2;
+	int light = 255;
 
 	FMaterial * gltex = FMaterial::ValidateTexture(img);
 
 	if (parms.colorOverlay && (parms.colorOverlay & 0xffffff) == 0)
 	{
 		// Right now there's only black. Should be implemented properly later
-		light = 1.f - APART(parms.colorOverlay)/255.f;
+		light = 255 - APART(parms.colorOverlay);
 		parms.colorOverlay = 0;
 	}
 
 	if (!img->bHasCanvas)
 	{
-		if (!parms.alphaChannel) 
+		int translation = 0;
+		if (!parms.alphaChannel)
 		{
-			int translation = 0;
 			if (parms.remap != NULL && !parms.remap->Inactive)
 			{
 				GLTranslationPalette * pal = static_cast<GLTranslationPalette*>(parms.remap->GetNative());
 				if (pal) translation = -pal->GetIndex();
 			}
-			gltex->BindPatch(translation);
 		}
 		else 
 		{
 			// This is an alpha texture
 			gl_RenderState.SetTextureMode(TM_REDTOALPHA);
-			gltex->BindPatch(0);
 		}
+		gltex->BindPatch(translation);
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();
@@ -373,17 +372,17 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		u2 = float(u2 - (parms.texwidth - parms.windowright) / parms.texwidth);
 	}
 
+	PalEntry color;
 	if (parms.style.Flags & STYLEF_ColorIsFixed)
 	{
-		r = RPART(parms.fillcolor)/255.0f;
-		g = GPART(parms.fillcolor)/255.0f;
-		b = BPART(parms.fillcolor)/255.0f;
+		color = parms.fillcolor;
 	}
 	else
 	{
-		r = g = b = light;
+		color = PalEntry(light, light, light);
 	}
-	
+	color.a = Scale(parms.alpha, 255, FRACUNIT);
+
 	// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
 	int btm = (SCREENHEIGHT - screen->GetHeight()) / 2;
 	btm = SCREENHEIGHT - btm;
@@ -398,8 +397,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		gl_RenderState.SetTextureMode(TM_OPAQUE);
 	}
 
-	glColor4f(r, g, b, FIXED2FLOAT(parms.alpha));
-	
+	gl_RenderState.SetColor(color);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_STRIP);
@@ -418,8 +416,9 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		gl_RenderState.SetTextureMode(TM_MASK);
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		gl_RenderState.SetColor(PalEntry(parms.colorOverlay));
 		gl_RenderState.Apply();
-		glColor4ub(RPART(parms.colorOverlay),GPART(parms.colorOverlay),BPART(parms.colorOverlay),APART(parms.colorOverlay));
+
 		glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2f(u1, v1);
 		glVertex2d(x, y);
@@ -450,8 +449,8 @@ void FGLRenderer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 
 {
 	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply(true);
-	glColor3ub(p.r, p.g, p.b);
+	gl_RenderState.SetColorAlpha(p, 1.f);
+	gl_RenderState.Apply();
 	glBegin(GL_LINES);
 	glVertex2i(x1, y1);
 	glVertex2i(x2, y2);
@@ -468,8 +467,8 @@ void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
 {
 	PalEntry p = color? (PalEntry)color : GPalette.BaseColors[palcolor];
 	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply(true);
-	glColor3ub(p.r, p.g, p.b);
+	gl_RenderState.SetColorAlpha(p, 1.f);
+	gl_RenderState.Apply();
 	glBegin(GL_POINTS);
 	glVertex2i(x1, y1);
 	glEnd();
@@ -484,19 +483,13 @@ void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
 
 void FGLRenderer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
 {
-	float r, g, b;
-	
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
-	gl_RenderState.Apply(true);
-	
-	r = color.r/255.0f;
-	g = color.g/255.0f;
-	b = color.b/255.0f;
+	gl_RenderState.SetColorAlpha(color, damount);
+	gl_RenderState.Apply();
 	
 	glBegin(GL_TRIANGLE_FAN);
-	glColor4f(r, g, b, damount);
 	glVertex2i(x1, y1);
 	glVertex2i(x1, y1 + h);
 	glVertex2i(x1 + w, y1 + h);
@@ -536,9 +529,9 @@ void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *
 		fU2 = float(right-left) / src->GetWidth();
 		fV2 = float(bottom-top) / src->GetHeight();
 	}
+	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_STRIP);
-	glColor4f(1, 1, 1, 1);
 	glTexCoord2f(fU1, fV1); glVertex2f(left, top);
 	glTexCoord2f(fU1, fV2); glVertex2f(left, bottom);
 	glTexCoord2f(fU2, fV1); glVertex2f(right, top);
@@ -609,9 +602,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	FColormap cm;
 	cm = colormap;
 
-	lightlevel = gl_CalcLightLevel(lightlevel, 0, true);
-	PalEntry pe = gl_CalcLightColor(lightlevel, cm.LightColor, cm.blendfactor, true);
-	glColor3ub(pe.r, pe.g, pe.b);
+	gl_SetColor(lightlevel, 0, &cm, 1.f);
 
 	gltexture->Bind();
 

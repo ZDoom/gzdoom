@@ -183,8 +183,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	
 	if (glset.nocoloredspritelighting)
 	{
-		int v = (Colormap.LightColor.r * 77 + Colormap.LightColor.g*143 + Colormap.LightColor.b*35)/255;
-		p.LightColor = PalEntry(p.colormap, v, v, v);
+		p.Decolorize();
 	}
 	
 	

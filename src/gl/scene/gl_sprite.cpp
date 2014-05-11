@@ -112,10 +112,6 @@ void GLSprite::Draw(int pass)
 {
 	if (pass!=GLPASS_PLAIN && pass != GLPASS_ALL && pass!=GLPASS_TRANSLUCENT) return;
 
-	// Hack to enable bright sprites in faded maps
-	uint32 backupfade = Colormap.FadeColor.d;
-	if (gl_spritebrightfog && fullbright)
-		Colormap.FadeColor = 0;
 
 
 	bool additivefog = false;
@@ -126,16 +122,15 @@ void GLSprite::Draw(int pass)
 	{
 		// The translucent pass requires special setup for the various modes.
 
-		// Brightmaps will only be used when doing regular drawing ops and having no fog
-		if (!gl_spritebrightfog && (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE || 
-			RenderStyle.BlendOp != STYLEOP_Add))
+		// for special render styles brightmaps would not look good - especially for subtractive.
+		if (RenderStyle.BlendOp != STYLEOP_Add)
 		{
 			gl_RenderState.EnableBrightmap(false);
 		}
 
 		gl_SetRenderStyle(RenderStyle, false, 
 			// The rest of the needed checks are done inside gl_SetRenderStyle
-			trans > 1.f - FLT_EPSILON && gl_usecolorblending && gl_fixedcolormap < CM_FIRSTSPECIALCOLORMAP && actor && 
+			trans > 1.f - FLT_EPSILON && gl_usecolorblending && gl_fixedcolormap == CM_DEFAULT && actor && 
 			fullbright && gltexture && !gltexture->GetTransparent());
 
 		if (hw_styleflags == STYLEHW_NoAlphaTest)
@@ -169,7 +164,7 @@ void GLSprite::Draw(int pass)
 			}
 
 			gl_RenderState.AlphaFunc(GL_GEQUAL,minalpha*gl_mask_sprite_threshold);
-			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha);
+			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha, Colormap.desaturation);
 			additivefog = true;
 		}
 		else if (RenderStyle.BlendOp == STYLEOP_Add && RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -339,12 +334,8 @@ void GLSprite::Draw(int pass)
 		}
 	}
 
-	// End of gl_sprite_brightfog hack: restore FadeColor to normalcy
-	if (backupfade != Colormap.FadeColor.d)
-		Colormap.FadeColor = backupfade;
-
-	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetDynLight(0,0,0);
 }
 
@@ -696,7 +687,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gl_BrightmapsActive() || !gltexture || !gltexture->tex->gl_info.bBrightmapDisablesFullbright));
+		((thing->renderflags & RF_FULLBRIGHT) && (!gl.hasGLSL() || !gltexture || !gltexture->tex->gl_info.bBrightmapDisablesFullbright));
 
 	lightlevel=fullbright? 255 : 
 		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ? 
@@ -717,7 +708,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			|| (gl_enhanced_nv_stealth == 3))								// Any fixed colormap
 			enhancedvision=true;
 
-		Colormap.GetFixedColormap();
+		Colormap.Clear();
 
 		if (gl_fixedcolormap==CM_LITE)
 		{
@@ -750,10 +741,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		}
 		else if (glset.nocoloredspritelighting)
 		{
-			int v = (Colormap.LightColor.r /* * 77 */ + Colormap.LightColor.g /**143 */ + Colormap.LightColor.b /**35*/)/3;//255;
-			Colormap.LightColor.r=
-			Colormap.LightColor.g=
-			Colormap.LightColor.b=(255+v+v)/3;
+			Colormap.Decolorize();
 		}
 	}
 
@@ -894,7 +882,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	if (gl_fixedcolormap) 
 	{
-		Colormap.GetFixedColormap();
+		Colormap.Clear();
 	}
 	else if (!particle->bright)
 	{

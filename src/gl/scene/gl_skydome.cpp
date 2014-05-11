@@ -109,7 +109,7 @@ static void SkyVertex(int r, int c)
 	
 	if (!foglayer)
 	{
-		// this cannot use the renderstate because it's inside a primitive.
+		// this must not use the renderstate because it's inside a primitive.
 		glColor4f(1.f, 1.f, 1.f, r==0? 0.0f : 1.0f);
 		
 		// And the texture coordinates.
@@ -244,7 +244,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	int texh = 0;
 	bool texscale = false;
 
-	// 57 worls units roughly represent one sky texel for the glTranslate call.
+	// 57 world units roughly represent one sky texel for the glTranslate call.
 	const float skyoffsetfactor = 57;
 
 	if (tex)
@@ -511,7 +511,7 @@ void GLSkyPortal::DrawContents()
 		FadeColor = origin->fadecolor;
 	}
 
-	gl_RenderState.SetColor(0xffffffff);
+	gl_RenderState.ResetColor();
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

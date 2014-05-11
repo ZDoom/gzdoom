@@ -74,22 +74,6 @@ CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE);
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-bool gl_BrightmapsActive()
-{
-	return gl.hasGLSL();
-}
-
-bool gl_GlowActive()
-{
-	return gl.hasGLSL();
-}
-
-//==========================================================================
-//
 // Sets up the fog tables
 //
 //==========================================================================
@@ -337,7 +321,7 @@ void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, boo
 
 	gl_GetLightColor(light, rellight, cm, &r, &g, &b, weapon);
 
-	gl_RenderState.SetColor(r, g, b, alpha);
+	gl_RenderState.SetColor(r, g, b, alpha, cm->desaturation);
 	if (glset.lightmode == 8)
 	{ 
 		if (gl_fixedcolormap)
@@ -518,15 +502,9 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 
 void gl_SetShaderLight(float level, float olight)
 {
-#if 1 //ndef _DEBUG
 	const float MAXDIST = 256.f;
 	const float THRESHOLD = 96.f;
 	const float FACTOR = 0.75f;
-#else
-	const float MAXDIST = 256.f;
-	const float THRESHOLD = 96.f;
-	const float FACTOR = 2.75f;
-#endif
 
 	if (level > 0)
 	{
@@ -606,9 +584,6 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		{
 			fogcolor=0;
 		}
-		// Handle desaturation
-		if (cmap->colormap != CM_DEFAULT)
-			gl_ModifyColor(fogcolor.r, fogcolor.g, fogcolor.b, cmap->colormap);
 
 		gl_RenderState.EnableFog(true);
 		gl_RenderState.SetFog(fogcolor, fogdensity);
@@ -618,29 +593,6 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 			glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
 	}
 }
-
-//==========================================================================
-//
-// Modifies a color according to a specified colormap
-//
-//==========================================================================
-
-void gl_ModifyColor(BYTE & red, BYTE & green, BYTE & blue, int cm)
-{
-	int gray = (red*77 + green*143 + blue*36)>>8;
-	if (cm >= CM_FIRSTSPECIALCOLORMAP && cm < CM_MAXCOLORMAP)
-	{
-		PalEntry pe = SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP].GrayscaleToColor[gray];
-		red = pe.r;
-		green = pe.g;
-		blue = pe.b;
-	}
-	else if (cm >= CM_DESAT1 && cm <= CM_DESAT31)
-	{
-		gl_Desaturate(gray, red, green, blue, red, green, blue, cm - CM_DESAT0);
-	}
-}
-
 
 
 //==========================================================================

@@ -203,7 +203,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				bool disablefullbright = false;
 				FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, NULL);
-				if (lump.isValid() && gl_BrightmapsActive())
+				if (lump.isValid() && gl.hasGLSL())
 				{
 					FMaterial * tex=FMaterial::ValidateTexture(lump, false);
 					if (tex)
@@ -217,7 +217,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	if (gl_fixedcolormap) 
 	{
 		lightlevel=255;
-		cm.GetFixedColormap();
+		cm.Clear();
 		statebright[0] = statebright[1] = true;
 		fakesec = viewsector;
 	}
@@ -294,7 +294,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		playermo->Inventory->AlterWeaponSprite(&vis);
 		if (vis.colormap >= SpecialColormaps[0].Colormap && 
 			vis.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap && 
-			cm.colormap == CM_DEFAULT)
+			gl_fixedcolormap == CM_DEFAULT)
 		{
 			// this only happens for Strife's inverted weapon sprite
 			vis.RenderStyle.Flags |= STYLEF_InvertSource;
@@ -379,7 +379,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			// set the lighting parameters
 			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
 			{
-				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f);// 0x55333333, cmc.desaturation);
+				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.desaturation);
 			}
 			else
 			{

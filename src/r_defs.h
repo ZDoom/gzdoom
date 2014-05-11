@@ -771,6 +771,7 @@ struct sector_t
 	int							subsectorcount;		// list of subsectors
 	subsector_t **				subsectors;
 	FPortal *					portals[2];			// floor and ceiling portals
+	FLightNode *				lighthead[2];
 
 	enum
 	{

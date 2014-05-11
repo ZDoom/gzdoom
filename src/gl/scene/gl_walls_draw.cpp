@@ -81,7 +81,7 @@ bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light)
 		return false;
 	}
 
-	if (!gl_SetupLight(p, light, nearPt, up, right, scale, true, !!(flags&GLWF_FOGGY))) 
+	if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.desaturation, true, !!(flags&GLWF_FOGGY))) 
 	{
 		return false;
 	}
@@ -267,7 +267,7 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 
 		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs);
 
-		// color for right side
+		// color for right side (do not set in render state!)
 		if (color2) glColor4fv(color2);
 
 		// upper right corner
@@ -365,15 +365,13 @@ void GLWall::RenderFogBoundary()
 			float fogd1=(0.95f-exp(-fogdensity*dist1/62500.f)) * 1.05f;
 			float fogd2=(0.95f-exp(-fogdensity*dist2/62500.f)) * 1.05f;
 
-			gl_ModifyColor(Colormap.FadeColor.r, Colormap.FadeColor.g, Colormap.FadeColor.b, Colormap.colormap);
 			float fc[4]={Colormap.FadeColor.r/255.0f,Colormap.FadeColor.g/255.0f,Colormap.FadeColor.b/255.0f,fogd2};
 
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.EnableFog(false);
 			gl_RenderState.AlphaFunc(GL_GREATER,0);
 			glDepthFunc(GL_LEQUAL);
-			glColor4f(fc[0],fc[1],fc[2], fogd1);
-			gl_RenderState.SetColor(-1, 0, 0, 0);	// we do not want the render state to control the color.
+			gl_RenderState.SetColor(fc[0], fc[1], fc[2], fogd1, Colormap.desaturation);
 			if (glset.lightmode == 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0); // Korshun.
 
 			flags &= ~GLWF_GLOW;
@@ -406,10 +404,10 @@ void GLWall::RenderMirrorSurface()
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
 	gl_SetColor(lightlevel, 0, &Colormap ,0.1f);
+	gl_SetFog(lightlevel, 0, &Colormap, true);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
 	glDepthFunc(GL_LEQUAL);
-	gl_SetFog(lightlevel, getExtraLight(), &Colormap, true);
 
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture);
 	pat->BindPatch(0);

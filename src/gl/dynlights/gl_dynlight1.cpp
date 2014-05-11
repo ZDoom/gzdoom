@@ -234,14 +234,6 @@ bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & u
 	{
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 	}
-	if (desaturation>0)
-	{
-		float gray=(r*77 + g*143 + b*37)/257;
-
-		r= (r*(32-desaturation)+ gray*desaturation)/32;
-		g= (g*(32-desaturation)+ gray*desaturation)/32;
-		b= (b*(32-desaturation)+ gray*desaturation)/32;
-	}
 	glColor3f(r,g,b);
 	return true;
 }

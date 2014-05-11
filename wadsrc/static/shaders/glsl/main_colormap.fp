@@ -1,6 +1,7 @@
 uniform int texturemode;
 uniform sampler2D tex;
 
+uniform vec4 objectcolor;
 uniform vec3 colormapstart;
 uniform vec3 colormaprange;
 
@@ -28,7 +29,7 @@ vec4 getTexel(vec2 st)
 		texel.rgb = vec3(1.0,1.0,1.0);
 	}
 
-	return texel;
+	return texel*objectcolor;
 }
 
 

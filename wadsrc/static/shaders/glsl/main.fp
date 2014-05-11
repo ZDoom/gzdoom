@@ -23,6 +23,7 @@ uniform vec4 lights[128];
 
 uniform int fogenabled;
 uniform vec4 fogcolor;
+uniform vec4 objectcolor;
 uniform vec3 dlightcolor;
 uniform vec3 camerapos;
 varying vec4 pixelpos;
@@ -158,7 +159,7 @@ vec4 getTexel(vec2 st)
 	}
 	#endif
 
-	return desaturate(texel);
+	return desaturate(texel * objectcolor);
 }
 
 //===========================================================================

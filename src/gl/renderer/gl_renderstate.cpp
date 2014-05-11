@@ -78,6 +78,7 @@ void FRenderState::Reset()
 	mAlphaFunc = GL_GEQUAL;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
+	mObjectColor = 0xffffffff;
 	glBlendEquation = -1;
 	m2D = true;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
@@ -158,6 +159,7 @@ bool FRenderState::ApplyShader()
 	if (activeShader)
 	{
 		int fogset = 0;
+		//glColor4fv(mColor.vec);
 		if (mFogEnabled)
 		{
 			if ((mFogColor & 0xffffff) == 0)
@@ -226,6 +228,11 @@ bool FRenderState::ApplyShader()
 		{
 			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
 		}
+		if (mObjectColor != activeShader->currentobjectcolor)
+		{
+			activeShader->currentobjectcolor = mObjectColor;
+			glUniform4f(activeShader->objectcolor_index, mObjectColor.r / 255.f, mObjectColor.g / 255.f, mObjectColor.b / 255.f, mObjectColor.a / 255.f);
+		}
 
 		return true;
 	}
@@ -276,6 +283,8 @@ void FRenderState::Apply(bool forcenoshader)
 	}
 	if (forcenoshader || !ApplyShader())
 	{
+		//if (mColor.vec[0] >= 0.f) glColor4fv(mColor.vec);
+	
 		GLRenderer->mShaderManager->SetActiveShader(NULL);
 		if (mTextureMode != ffTextureMode)
 		{

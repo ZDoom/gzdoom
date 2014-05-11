@@ -107,11 +107,12 @@ class FRenderState
 	bool m2D;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
-
+	FStateVec4 mColor;
 	FStateVec3 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor;
+	PalEntry mObjectColor;
 	float mFogDensity;
 
 	int mEffectState;
@@ -147,6 +148,26 @@ public:
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
 		mVertexBuffer = vb;
+	}
+
+	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
+	{
+		mColor.Set(r, g, b, a);
+	}
+
+	void SetColor(PalEntry pe, int desat = 0)
+	{
+		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, pe.a/255.f);
+	}
+
+	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
+	{
+		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, alpha);
+	}
+
+	void ResetColor()
+	{
+		mColor.Set(1,1,1,1);
 	}
 
 	void SetTextureMode(int mode)

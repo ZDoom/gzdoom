@@ -373,6 +373,7 @@ void GLWall::RenderFogBoundary()
 			gl_RenderState.AlphaFunc(GL_GREATER,0);
 			glDepthFunc(GL_LEQUAL);
 			glColor4f(fc[0],fc[1],fc[2], fogd1);
+			gl_RenderState.SetColor(-1, 0, 0, 0);	// we do not want the render state to control the color.
 			if (glset.lightmode == 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0); // Korshun.
 
 			flags &= ~GLWF_GLOW;

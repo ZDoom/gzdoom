@@ -40,7 +40,9 @@ class FShader
 	int glowtopcolor_index;
 	int glowbottomplane_index;
 	int glowtopplane_index;
+	int objectcolor_index;
 
+	PalEntry currentobjectcolor;
 	int currentglowstate;
 	int currentfogenabled;
 	int currenttexturemode;
@@ -59,7 +61,7 @@ public:
 		currentglowstate = currentfogenabled = currenttexturemode = 0;
 		currentlightfactor = currentlightdist = 0.0f;
 		currentfogdensity = -1;
-		currentfogcolor = 0;
+		currentobjectcolor = currentfogcolor = 0;
 
 		timer_index = -1;
 		desaturation_index = -1;
@@ -73,6 +75,7 @@ public:
 		fogcolor_index = -1;
 		lights_index = -1;
 		dlightcolor_index = -1;
+		objectcolor_index = -1;
 		glowtopplane_index = -1;
 		glowbottomplane_index = -1;
 		glowtopcolor_index = -1;

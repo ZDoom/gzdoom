@@ -325,7 +325,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	{
 		if (gl_usevbo && vboindex >= 0)
 		{
-			//glColor3f( 1.f,.5f,.5f);
 			int index = vboindex;
 			for (int i=0; i<sector->subsectorcount; i++)
 			{

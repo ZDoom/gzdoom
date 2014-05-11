@@ -338,6 +338,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		else 
 		{
 			// This is an alpha texture
+			gl_RenderState.SetTextureMode(TM_REDTOALPHA);
 			gltex->BindPatch(CM_SHADE, 0);
 		}
 

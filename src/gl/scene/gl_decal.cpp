@@ -377,7 +377,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	{
 		if (glset.lightmode == 8)
 		{
-			gl_SetColor(light, rel, &p, a, extralight); // Korshun.
+			gl_SetColor(light, rel, &p, a, !!extralight); // Korshun.
 		}
 		else
 		{

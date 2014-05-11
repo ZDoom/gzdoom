@@ -59,6 +59,77 @@
 
 //==========================================================================
 //
+// Sets a single light value from all dynamic lights affecting the specified location
+//
+//==========================================================================
+
+void gl_SetDynSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec)
+{
+	ADynamicLight *light;
+	float frac, lr, lg, lb;
+	float radius;
+	float out[3] = { 0.0f, 0.0f, 0.0f };
+	
+	// Go through both light lists
+	for (int i = 0; i < 2; i++)
+	{
+		FLightNode * node = subsec->lighthead[i];
+		while (node)
+		{
+			light = node->lightsource;
+			if (!light->owned || light->target == NULL || light->target->IsVisibleToPlayer())
+			{
+				if (!(light->flags2&MF2_DORMANT) &&
+					(!(light->flags4&MF4_DONTLIGHTSELF) || light->target != self))
+				{
+					float dist = FVector3(FIXED2FLOAT(x - light->x), FIXED2FLOAT(y - light->y), FIXED2FLOAT(z - light->z)).Length();
+					radius = light->GetRadius() * gl_lights_size;
+
+					if (dist < radius)
+					{
+						frac = 1.0f - (dist / radius);
+
+						if (frac > 0)
+						{
+							lr = light->GetRed() / 255.0f * gl_lights_intensity;
+							lg = light->GetGreen() / 255.0f * gl_lights_intensity;
+							lb = light->GetBlue() / 255.0f * gl_lights_intensity;
+							if (light->IsSubtractive())
+							{
+								float bright = FVector3(lr, lg, lb).Length();
+								FVector3 lightColor(lr, lg, lb);
+								lr = (bright - lr) * -1;
+								lg = (bright - lg) * -1;
+								lb = (bright - lb) * -1;
+							}
+
+							out[0] += lr * frac;
+							out[1] += lg * frac;
+							out[2] += lb * frac;
+						}
+					}
+				}
+			}
+			node = node->nextLight;
+		}
+	}
+	gl_RenderState.SetDynLight(out[0], out[1], out[2]);
+}
+
+void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
+{
+	if (thing != NULL)
+	{
+		gl_SetDynSpriteLight(thing, thing->x, thing->y, thing->z + (thing->height >> 1), thing->subsector);
+	}
+	else if (particle != NULL)
+	{
+		gl_SetDynSpriteLight(NULL, particle->x, particle->y, particle->z, particle->subsector);
+	}
+}
+
+//==========================================================================
+//
 // Gets the light for a sprite - takes dynamic lights into account
 //
 //==========================================================================
@@ -294,7 +365,7 @@ int gl_SetSpriteLighting(FRenderStyle style, AActor *thing, int lightlevel, int 
 		}
 		else
 		{
-			gl_SetColor(lightlevel, rellight, cm, alpha, ThingColor, weapon);
+			gl_SetColor(lightlevel, rellight, cm, alpha, weapon);
 		}
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL,alpha*gl_mask_sprite_threshold);

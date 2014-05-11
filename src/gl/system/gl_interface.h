@@ -16,16 +16,13 @@ enum RenderFlags
 
 enum TexMode
 {
-	TMF_MASKBIT = 1,
-	TMF_OPAQUEBIT = 2,
-	TMF_INVERTBIT = 4,
+	TM_MODULATE = 0,	// (r, g, b, a)
+	TM_MASK = 1,		// (1, 1, 1, a)
+	TM_OPAQUE = 2,		// (r, g, b, 1)
+	TM_INVERSE = 3,		// (1-r, 1-g, 1-b, a)
+	TM_REDTOALPHA = 4,	// (1, 1, 1, r)
 
-	TM_MODULATE = 0,
-	TM_MASK = TMF_MASKBIT,
-	TM_OPAQUE = TMF_OPAQUEBIT,
-	TM_INVERT = TMF_INVERTBIT,
-	//TM_INVERTMASK = TMF_MASKBIT | TMF_INVERTBIT
-	TM_INVERTOPAQUE = TMF_INVERTBIT | TMF_OPAQUEBIT,
+	// 4 cannot be done natively without shaders and requires special textures.
 };
 
 struct RenderContext
@@ -36,6 +33,7 @@ struct RenderContext
 	float glslversion;
 	int max_texturesize;
 	char * vendorstring;
+	bool needAlphaTexture;
 
 	int MaxLights() const
 	{

@@ -460,7 +460,7 @@ void FGLRenderer::RenderScene(int recursion)
 			{
 				gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
 				glDepthFunc(GL_EQUAL);
-				if (glset.lightmode == 8) glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0f); // Korshun.
+				gl_RenderState.SetSoftLightLevel(255);
 				for(int i=GLDL_FIRSTLIGHT; i<=GLDL_LASTLIGHT; i++)
 				{
 					gl_drawinfo->drawlists[i].Draw(GLPASS_LIGHT);

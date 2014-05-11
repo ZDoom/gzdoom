@@ -593,7 +593,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	FColormap cm;
 	cm = colormap;
 
-	gl_SetColor(lightlevel, 0, &cm, 1.f);
+	gl_SetColor(lightlevel, 0, cm, 1.f);
 
 	gltexture->Bind();
 

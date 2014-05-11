@@ -395,7 +395,7 @@ void GLFlat::Draw(int pass)
 	switch (pass)
 	{
 	case GLPASS_BASE:
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
+		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		if (!foggy) gl_SetFog(lightlevel, rel, &Colormap, false);
 		DrawSubsectors(pass, false);
 		break;
@@ -403,7 +403,7 @@ void GLFlat::Draw(int pass)
 	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:
 	case GLPASS_BASE_MASKED:
-		gl_SetColor(lightlevel, rel, &Colormap,1.0f);
+		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		if (!foggy || pass != GLPASS_BASE_MASKED) gl_SetFog(lightlevel, rel, &Colormap, false);
 		// fall through
 	case GLPASS_TEXTURE:
@@ -460,7 +460,7 @@ void GLFlat::Draw(int pass)
 
 	case GLPASS_TRANSLUCENT:
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		gl_SetColor(lightlevel, rel, &Colormap, alpha);
+		gl_SetColor(lightlevel, rel, Colormap, alpha);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold*(alpha));
 		if (!gltexture)	

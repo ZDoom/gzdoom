@@ -212,6 +212,11 @@ bool FRenderState::ApplyShader()
 			glUniform4f(activeShader->dlightcolor_index, mDynColor.r / 255.f, mDynColor.g / 255.f, mDynColor.b / 255.f, 0);
 		}
 
+		if (glset.lightmode == 8)
+		{
+			glVertexAttrib1f(VATTR_LIGHTLEVEL, mSoftLight / 255.f);
+		}
+
 		return true;
 	}
 	return false;

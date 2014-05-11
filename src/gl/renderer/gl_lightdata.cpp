@@ -225,11 +225,11 @@ int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon)
 //
 //==========================================================================
 
-PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
+static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 {
 	int r,g,b;
 
-	if (glset.lightmode == 8 && !force)
+	if (glset.lightmode == 8)
 	{
 		return pe;
 	}
@@ -254,81 +254,22 @@ PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor, bool force)
 
 //==========================================================================
 //
-// Get current light color
+// set current light color
 //
 //==========================================================================
-void gl_GetLightColor(int lightlevel, int rellight, const FColormap * cm, float * pred, float * pgreen, float * pblue, bool weapon)
-{
-	float & r=*pred,& g=*pgreen,& b=*pblue;
-	int torch=0;
-
-	if (gl_fixedcolormap)
+void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float alpha, bool weapon)
+{ 
+	if (gl_fixedcolormap != CM_DEFAULT)
 	{
-		if (!gl_enhanced_nightvision || !gl.hasGLSL())
-		{
-			// we cannot multiply the light in here without causing major problems with the ThingColor so for older hardware
-			// these maps are done as a postprocessing overlay.
-			r = g = b = 1.0f;
-		}
-		else if (gl_fixedcolormap == CM_LITE)
-		{
-			r = 0.375f, g = 1.0f, b = 0.375f;
-		}
-		else if (gl_fixedcolormap >= CM_TORCH)
-		{
-			int flicker = gl_fixedcolormap - CM_TORCH;
-			r = (0.8f + (7 - flicker) / 70.0f);
-			if (r > 1.0f) r = 1.0f;
-			g = r;
-			b = g * 0.75f;
-		}
-		else r = g = b = 1.0f;
-		return;
+		gl_RenderState.SetColorAlpha(0xffffff, alpha, 0);
+		gl_RenderState.SetSoftLightLevel(255);
 	}
-
-	PalEntry lightcolor = cm? cm->LightColor : PalEntry(255,255,255);
-	int blendfactor = cm? cm->blendfactor : 0;
-
-	lightlevel = gl_CalcLightLevel(lightlevel, rellight, weapon);
-	PalEntry pe = gl_CalcLightColor(lightlevel, lightcolor, blendfactor);
-	r = pe.r/255.f;
-	g = pe.g/255.f;
-	b = pe.b/255.f;
-}
-
-//==========================================================================
-//
-// set current light color
-//
-//==========================================================================
-void gl_SetColor(int light, int rellight, const FColormap * cm, float *red, float *green, float *blue, bool weapon)
-{ 
-	gl_GetLightColor(light, rellight, cm, red, green, blue, weapon);
-}
-
-//==========================================================================
-//
-// set current light color
-//
-//==========================================================================
-void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, bool weapon)
-{ 
-	float r,g,b;
-
-	gl_GetLightColor(light, rellight, cm, &r, &g, &b, weapon);
-
-	gl_RenderState.SetColor(r, g, b, alpha, cm->desaturation);
-	if (glset.lightmode == 8)
-	{ 
-		if (gl_fixedcolormap)
-		{
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
-		}
-		else
-		{
-			float lightlevel = gl_CalcLightLevel(light, rellight, weapon) / 255.0f;
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, lightlevel); 
-		}
+	else
+	{
+		int hwlightlevel = gl_CalcLightLevel(sectorlightlevel, rellight, weapon);
+		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.blendfactor);
+		gl_RenderState.SetColorAlpha(pe, alpha, cm.desaturation);
+		gl_RenderState.SetSoftLightLevel(gl_ClampLight(sectorlightlevel + rellight));
 	}
 }
 
@@ -586,7 +527,9 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 
 		// Korshun: fullbright fog like in software renderer.
 		if (glset.lightmode == 8 && glset.brightfog && fogdensity != 0 && fogcolor != 0)
-			glVertexAttrib1f(VATTR_LIGHTLEVEL, 1.0);
+		{
+			gl_RenderState.SetSoftLightLevel(255);
+		}
 	}
 }
 

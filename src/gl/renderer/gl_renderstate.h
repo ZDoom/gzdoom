@@ -96,6 +96,7 @@ class FRenderState
 	bool mBrightmapEnabled;
 	int mSpecialEffect;
 	int mTextureMode;
+	int mSoftLight;
 	float mLightParms[2];
 	int mNumLights[3];
 	float *mLightData;
@@ -219,6 +220,11 @@ public:
 	{
 		mGlowTop.Set(t[0], t[1], t[2], t[3]);
 		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
+	}
+
+	void SetSoftLightLevel(int level)
+	{
+		mSoftLight = level;
 	}
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)

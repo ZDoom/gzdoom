@@ -962,13 +962,13 @@ void GLHorizonPortal::DrawContents()
 	if (gltexture && gltexture->tex->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		gl_SetColor(255, 0, &origin->colormap, 1.f);
+		gl_SetColor(255, 0, origin->colormap, 1.f);
 		gl_SetFog(255, 0, &origin->colormap, false);
 	}
 	else 
 	{
 		int rel = getExtraLight();
-		gl_SetColor(origin->lightlevel, rel, &origin->colormap, 1.0f);
+		gl_SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
 		gl_SetFog(origin->lightlevel, rel, &origin->colormap, false);
 	}
 

@@ -178,7 +178,7 @@ void GLSprite::Draw(int pass)
 		{
 			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
-		gl_SetColor(lightlevel, rel, &Colormap, trans);
+		gl_SetColor(lightlevel, rel, Colormap, trans);
 	}
 	gl_RenderState.SetObjectColor(ThingColor);
 

@@ -616,6 +616,19 @@ void FGLRenderer::DrawScene(bool toscreen)
 }
 
 
+static void FillScreen()
+{
+	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.Apply(true);
+	glBegin(GL_TRIANGLE_STRIP);
+	glVertex2f(0.0f, 0.0f);
+	glVertex2f(0.0f, (float)SCREENHEIGHT);
+	glVertex2f((float)SCREENWIDTH, 0.0f);
+	glVertex2f((float)SCREENWIDTH, (float)SCREENHEIGHT);
+	glEnd();
+}
+
 //==========================================================================
 //
 // Draws a blend over the entire view
@@ -642,12 +655,12 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		{
 			if (viewsector->heightsec && !(viewsector->MoreFlags&SECF_IGNOREHEIGHTSEC))
 			{
-				switch(in_area)
+				switch (in_area)
 				{
 				default:
-				case area_normal: blendv=viewsector->heightsec->midmap; break;
-				case area_above: blendv=viewsector->heightsec->topmap; break;
-				case area_below: blendv=viewsector->heightsec->bottommap; break;
+				case area_normal: blendv = viewsector->heightsec->midmap; break;
+				case area_above: blendv = viewsector->heightsec->topmap; break;
+				case area_below: blendv = viewsector->heightsec->bottommap; break;
 				}
 			}
 		}
@@ -655,71 +668,124 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		{
 			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
 
-			for(unsigned int i=0;i<lightlist.Size();i++)
+			for (unsigned int i = 0; i < lightlist.Size(); i++)
 			{
 				fixed_t lightbottom;
-				if (i<lightlist.Size()-1) 
-					lightbottom=lightlist[i+1].plane.ZatPoint(viewx,viewy);
-				else 
-					lightbottom=viewsector->floorplane.ZatPoint(viewx,viewy);
+				if (i < lightlist.Size() - 1)
+					lightbottom = lightlist[i + 1].plane.ZatPoint(viewx, viewy);
+				else
+					lightbottom = viewsector->floorplane.ZatPoint(viewx, viewy);
 
-				if (lightbottom<viewz && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				if (lightbottom < viewz && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
 				{
 					// 3d floor 'fog' is rendered as a blending value
-					blendv=lightlist[i].blend;
+					blendv = lightlist[i].blend;
 					// If this is the same as the sector's it doesn't apply!
-					if (blendv == viewsector->ColorMap->Fade) blendv=0;
+					if (blendv == viewsector->ColorMap->Fade) blendv = 0;
 					// a little hack to make this work for Legacy maps.
-					if (blendv.a==0 && blendv!=0) blendv.a=128;
+					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
 					break;
 				}
 			}
 		}
-	}
 
-	if (blendv.a==0)
-	{
-		blendv = R_BlendForColormap(blendv);
-		if (blendv.a==255)
+		if (blendv.a == 0)
 		{
-			// The calculated average is too dark so brighten it according to the palettes's overall brightness
-			int maxcol = MAX<int>(MAX<int>(framebuffer->palette_brightness, blendv.r), MAX<int>(blendv.g, blendv.b));
-			blendv.r = blendv.r * 255 / maxcol;
-			blendv.g = blendv.g * 255 / maxcol;
-			blendv.b = blendv.b * 255 / maxcol;
+			blendv = R_BlendForColormap(blendv);
+			if (blendv.a == 255)
+			{
+				// The calculated average is too dark so brighten it according to the palettes's overall brightness
+				int maxcol = MAX<int>(MAX<int>(framebuffer->palette_brightness, blendv.r), MAX<int>(blendv.g, blendv.b));
+				blendv.r = blendv.r * 255 / maxcol;
+				blendv.g = blendv.g * 255 / maxcol;
+				blendv.b = blendv.b * 255 / maxcol;
+			}
+		}
+
+		if (blendv.a == 255)
+		{
+
+			extra_red = blendv.r / 255.0f;
+			extra_green = blendv.g / 255.0f;
+			extra_blue = blendv.b / 255.0f;
+
+			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
+			blendv = 0;
+
+			// black multiplicative blends are ignored
+			if (extra_red || extra_green || extra_blue)
+			{
+				gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+				glColor4f(extra_red, extra_green, extra_blue, 1.0f);
+				FillScreen();
+			}
+		}
+		else if (blendv.a)
+		{
+			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, blendv.a / 255.0f, blend);
+		}
+	}
+	else if (!gl.hasGLSL())
+	{
+		float r, g, b;
+		bool inverse = false;
+		const float BLACK_THRESH = 0.05f;
+		const float WHITE_THRESH = 0.95f;
+
+		// for various reasons (performance and keeping the lighting code clean)
+		// we no longer do colormapped textures on pre GL 3.0 hardware and instead do 
+		// just a fullscreen overlay to emulate the inverse invulnerability effect or similar fullscreen blends.
+		if (gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < CM_MAXCOLORMAP)
+		{
+			FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+
+			if (scm->ColorizeEnd[0] < BLACK_THRESH && scm->ColorizeEnd[1] < BLACK_THRESH && scm->ColorizeEnd[2] < BLACK_THRESH)
+			{
+				r = scm->ColorizeStart[0];
+				g = scm->ColorizeStart[1];
+				b = scm->ColorizeStart[2];
+				inverse = true;
+			}
+			else
+			{
+				r = scm->ColorizeEnd[0];
+				g = scm->ColorizeEnd[1];
+				b = scm->ColorizeEnd[2];
+			}
+
+		}
+		else if (gl_enhanced_nightvision)
+		{
+			if (gl_fixedcolormap == CM_LITE)
+			{
+				r = 0.375f, g = 1.0f, b = 0.375f;
+			}
+			else if (gl_fixedcolormap >= CM_TORCH)
+			{
+				int flicker = gl_fixedcolormap - CM_TORCH;
+				r = (0.8f + (7 - flicker) / 70.0f);
+				if (r > 1.0f) r = 1.0f;
+				g = r;
+				b = g * 0.75f;
+			}
+			else r = g = b = 1.f;
+		}
+
+		if (inverse)
+		{
+			gl_RenderState.BlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+			glColor4f(1.f, 1.f, 1.f, 1.f);
+			FillScreen();
+		}
+
+		if (r < WHITE_THRESH || g < WHITE_THRESH || b < WHITE_THRESH)
+		{
+			gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+			glColor4f(r, g, b, 1.0f);
+			FillScreen();
 		}
 	}
 
-	if (blendv.a==255)
-	{
-
-		extra_red = blendv.r / 255.0f;
-		extra_green = blendv.g / 255.0f;
-		extra_blue = blendv.b / 255.0f;
-
-		// If this is a multiplicative blend do it separately and add the additive ones on top of it!
-		blendv=0;
-
-		// black multiplicative blends are ignored
-		if (extra_red || extra_green || extra_blue)
-		{
-			gl_RenderState.EnableAlphaTest(false);
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.BlendFunc(GL_DST_COLOR,GL_ZERO);
-			glColor4f(extra_red, extra_green, extra_blue, 1.0f);
-			gl_RenderState.Apply(true);
-			glBegin(GL_TRIANGLE_STRIP);
-			glVertex2f( 0.0f, 0.0f);
-			glVertex2f( 0.0f, (float)SCREENHEIGHT);
-			glVertex2f( (float)SCREENWIDTH, 0.0f);
-			glVertex2f( (float)SCREENWIDTH, (float)SCREENHEIGHT);
-			glEnd();
-		}
-	}
-	else if (blendv.a)
-	{
-		V_AddBlend (blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, blendv.a/255.0f,blend);
-	}
 
 	// This mostly duplicates the code in shared_sbar.cpp
 	// When I was writing this the original was called too late so that I
@@ -741,16 +807,8 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 	if (blend[3]>0.0f)
 	{
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gl_RenderState.EnableAlphaTest(false);
-		gl_RenderState.EnableTexture(false);
 		glColor4fv(blend);
-		gl_RenderState.Apply(true);
-		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f( 0.0f, 0.0f);
-		glVertex2f( 0.0f, (float)SCREENHEIGHT);
-		glVertex2f( (float)SCREENWIDTH, 0.0f);
-		glVertex2f( (float)SCREENWIDTH, (float)SCREENHEIGHT);
-		glEnd();
+		FillScreen();
 	}
 }
 

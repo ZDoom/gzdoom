@@ -275,22 +275,27 @@ void gl_GetLightColor(int lightlevel, int rellight, const FColormap * cm, float 
 	float & r=*pred,& g=*pgreen,& b=*pblue;
 	int torch=0;
 
-	if (gl_fixedcolormap) 
+	if (gl_fixedcolormap)
 	{
-		if (gl_fixedcolormap==CM_LITE)
+		if (!gl_enhanced_nightvision || !gl.hasGLSL())
 		{
-			if (gl_enhanced_nightvision) r=0.375f, g=1.0f, b=0.375f;
-			else r=g=b=1.0f;
+			// we cannot multiply the light in here without causing major problems with the ThingColor so for older hardware
+			// these maps are done as a postprocessing overlay.
+			r = g = b = 1.0f;
 		}
-		else if (gl_fixedcolormap>=CM_TORCH)
+		else if (gl_fixedcolormap == CM_LITE)
 		{
-			int flicker=gl_fixedcolormap-CM_TORCH;
-			r=(0.8f+(7-flicker)/70.0f);
-			if (r>1.0f) r=1.0f;
-			b=g=r;
-			if (gl_enhanced_nightvision) b*=0.75f;
+			r = 0.375f, g = 1.0f, b = 0.375f;
 		}
-		else r=g=b=1.0f;
+		else if (gl_fixedcolormap >= CM_TORCH)
+		{
+			int flicker = gl_fixedcolormap - CM_TORCH;
+			r = (0.8f + (7 - flicker) / 70.0f);
+			if (r > 1.0f) r = 1.0f;
+			g = r;
+			b = g * 0.75f;
+		}
+		else r = g = b = 1.0f;
 		return;
 	}
 

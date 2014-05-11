@@ -95,7 +95,6 @@ class FRenderState
 	bool mBrightmapEnabled;
 	int mSpecialEffect;
 	int mTextureMode;
-	float mDynLight[3];
 	float mLightParms[2];
 	int mNumLights[3];
 	float *mLightData;
@@ -113,6 +112,7 @@ class FRenderState
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
+	PalEntry mDynColor;
 	float mFogDensity;
 
 	int mEffectState;
@@ -153,21 +153,25 @@ public:
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
 		mColor.Set(r, g, b, a);
+		glColor4fv(mColor.vec);
 	}
 
 	void SetColor(PalEntry pe, int desat = 0)
 	{
 		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, pe.a/255.f);
+		glColor4fv(mColor.vec);
 	}
 
 	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
 	{
 		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, alpha);
+		glColor4fv(mColor.vec);
 	}
 
 	void ResetColor()
 	{
 		mColor.Set(1,1,1,1);
+		glColor4fv(mColor.vec);
 	}
 
 	void SetTextureMode(int mode)
@@ -224,9 +228,12 @@ public:
 
 	void SetDynLight(float r, float g, float b)
 	{
-		mDynLight[0] = r;
-		mDynLight[1] = g;
-		mDynLight[2] = b;
+		mDynColor = PalEntry(xs_CRoundToInt(r*255), xs_CRoundToInt(g*255), xs_CRoundToInt(b*255));
+	}
+
+	void SetDynLight(PalEntry pe)
+	{
+		mDynColor = pe;
 	}
 
 	void SetFog(PalEntry c, float d)

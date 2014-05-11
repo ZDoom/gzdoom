@@ -602,7 +602,7 @@ void GLSkyPortal::DrawContents()
 		{
 			gl_RenderState.EnableTexture(false);
 			foglayer=true;
-			glColor4f(FadeColor.r/255.0f,FadeColor.g/255.0f,FadeColor.b/255.0f,skyfog/255.0f);
+			gl_RenderState.SetColorAlpha(FadeColor, skyfog / 255.0f);
 			RenderDome(FNullTextureID(), NULL, 0, 0, false, CM_DEFAULT);
 			gl_RenderState.EnableTexture(true);
 			foglayer=false;

@@ -286,7 +286,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		statebright[0] = statebright[1] = true;
 	}
 
-	PalEntry ThingColor = playermo->fillcolor;
+	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
+
 	visstyle_t vis;
 
 	vis.RenderStyle=playermo->RenderStyle;
@@ -345,6 +346,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	// now draw the different layers of the weapon
 	gl_RenderState.EnableBrightmap(true);
+	gl_RenderState.SetObjectColor(ThingColor);
 	if (statebright[0] || statebright[1])
 	{
 		// brighten the weapon to reduce the difference between
@@ -365,7 +367,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			if (statebright[i]) 
 			{
 				if (fakesec == viewsector || in_area != area_below)	
-					// under water areas keep most of their color for fullbright objects
 				{
 					cmc.LightColor.r=
 					cmc.LightColor.g=
@@ -373,7 +374,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				}
 				else
 				{
-					cmc.LightColor.r = (3*cmc.LightColor.r + 0xff)/4;
+					// under water areas keep most of their color for fullbright objects
+					cmc.LightColor.r = (3 * cmc.LightColor.r + 0xff) / 4;
 					cmc.LightColor.g = (3*cmc.LightColor.g + 0xff)/4;
 					cmc.LightColor.b = (3*cmc.LightColor.b + 0xff)/4;
 				}
@@ -384,6 +386,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);
 		}
 	}
+	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.SetDynLight(0, 0, 0);
 	gl_RenderState.EnableBrightmap(false);
 	glset.lightmode = oldlightmode;
 }
@@ -408,7 +412,7 @@ void FGLRenderer::DrawTargeterSprites()
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
 	gl_RenderState.BlendEquation(GL_FUNC_ADD);
-	glColor3f(1.0f,1.0f,1.0f);
+	gl_RenderState.ResetColor();
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
 	// The Targeter's sprites are always drawn normally.

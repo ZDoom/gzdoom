@@ -224,14 +224,15 @@ bool FRenderState::ApplyShader()
 			glUniform3iv(activeShader->lightrange_index, 1, mNumLights);
 			glUniform4fv(activeShader->lights_index, mNumLights[2], mLightData);
 		}
-		if (glset.lightmode == 8)
-		{
-			glUniform3fv(activeShader->dlightcolor_index, 1, mDynLight);
-		}
 		if (mObjectColor != activeShader->currentobjectcolor)
 		{
 			activeShader->currentobjectcolor = mObjectColor;
 			glUniform4f(activeShader->objectcolor_index, mObjectColor.r / 255.f, mObjectColor.g / 255.f, mObjectColor.b / 255.f, mObjectColor.a / 255.f);
+		}
+		if (mDynColor != activeShader->currentdlightcolor)
+		{
+			activeShader->currentobjectcolor = mObjectColor;
+			glUniform4f(activeShader->dlightcolor_index, mDynColor.r / 255.f, mDynColor.g / 255.f, mDynColor.b / 255.f, 0);
 		}
 
 		return true;

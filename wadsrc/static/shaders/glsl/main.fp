@@ -24,7 +24,7 @@ uniform vec4 lights[128];
 uniform int fogenabled;
 uniform vec4 fogcolor;
 uniform vec4 objectcolor;
-uniform vec3 dlightcolor;
+uniform vec4 dlightcolor;
 uniform vec3 camerapos;
 varying vec4 pixelpos;
 varying vec4 fogparm;
@@ -95,7 +95,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	vec4 color = gl_Color;
 	#ifdef SOFTLIGHT
 		float newlightlevel = 1.0 - R_DoomLightingEquation(lightlevel, gl_FragCoord.z);
-		color.rgb *= clamp(vec3(newlightlevel) + dlightcolor, 0.0, 1.0);
+		color.rgb *= clamp(vec3(newlightlevel), 0.0, 1.0);
 	#endif
 	#ifndef NO_FOG
 	//
@@ -187,11 +187,6 @@ void main()
 	float fogdist = 0.0;
 	float fogfactor = 0.0;
 	
-	#ifdef DYNLIGHT
-		vec4 dynlight = vec4(0.0,0.0,0.0,0.0);
-		vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-	#endif
-
 	#ifndef NO_FOG
 	//
 	// calculate fog factor
@@ -214,6 +209,9 @@ void main()
 	
 	
 	#ifdef DYNLIGHT
+		vec4 dynlight = dlightcolor;
+		vec4 addlight = vec4(0.0,0.0,0.0,0.0);
+
 		for(int i=0; i<lightrange.x; i+=2)
 		{
 			vec4 lightpos = lights[i];
@@ -238,13 +236,13 @@ void main()
 			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
 			addlight += lightcolor;
 		}
-		frag.rgb = clamp(frag.rgb + dynlight.rgb, 0.0, 1.4);
+		frag.rgb = clamp(frag.rgb + desaturate(dynlight.rgb), 0.0, 1.4);
 	#endif
 		
 	frag = Process(frag);
 
 	#ifdef DYNLIGHT
-		frag.rgb += addlight.rgb;
+		frag.rgb += desaturate(addlight.rgb);
 	#endif
 
 	#ifndef NO_FOG

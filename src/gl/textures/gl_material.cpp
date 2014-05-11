@@ -883,7 +883,7 @@ void FMaterial::Bind(int clampmode, int translation, int overrideshader)
 //
 //===========================================================================
 
-void FMaterial::BindPatch(int translation, int overrideshader)
+void FMaterial::BindPatch(int translation, int overrideshader, bool alphatexture)
 {
 	int usebright = false;
 	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
@@ -891,7 +891,7 @@ void FMaterial::BindPatch(int translation, int overrideshader)
 
 	int softwarewarp = gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, tex->gl_info.shaderspeed);
 
-	const FHardwareTexture *glpatch = mBaseLayer->BindPatch(0, translation, softwarewarp, gl.needAlphaTexture);
+	const FHardwareTexture *glpatch = mBaseLayer->BindPatch(0, translation, softwarewarp, alphatexture);
 	// The only multitexture effect usable on sprites is the brightmap.
 	if (glpatch != NULL && shaderindex == 3)
 	{

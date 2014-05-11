@@ -178,7 +178,6 @@ public:
 	void SetTextureMode(int mode)
 	{
 		mTextureMode = mode;
-		gl.checkTextureMode(mode);
 	}
 
 	void EnableTexture(bool on)

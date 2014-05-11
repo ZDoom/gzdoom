@@ -135,7 +135,7 @@ public:
 	}
 
 	void Bind(int clamp = 0, int translation = 0, int overrideshader = 0);
-	void BindPatch(int translation = 0, int overrideshader = 0);
+	void BindPatch(int translation = 0, int overrideshader = 0, bool alphatexture = false);
 
 	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
 	{

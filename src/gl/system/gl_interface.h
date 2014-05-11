@@ -20,9 +20,6 @@ enum TexMode
 	TM_MASK = 1,		// (1, 1, 1, a)
 	TM_OPAQUE = 2,		// (r, g, b, 1)
 	TM_INVERSE = 3,		// (1-r, 1-g, 1-b, a)
-	TM_REDTOALPHA = 4,	// (1, 1, 1, r)
-
-	// 4 cannot be done natively without shaders and requires special textures.
 };
 
 struct RenderContext
@@ -33,7 +30,6 @@ struct RenderContext
 	float glslversion;
 	int max_texturesize;
 	char * vendorstring;
-	bool needAlphaTexture;
 
 	int MaxLights() const
 	{
@@ -43,11 +39,6 @@ struct RenderContext
 	bool hasGLSL() const
 	{
 		return glslversion >= 1.3f;
-	}
-
-	void checkTextureMode(int mode)
-	{
-		if (!hasGLSL()) needAlphaTexture = (mode == TM_REDTOALPHA);
 	}
 };
 

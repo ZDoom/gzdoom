@@ -144,11 +144,7 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	int blendequation = renderops[style.BlendOp&15];
 	int texturemode = drawopaque? TM_OPAQUE : TM_MODULATE;
 
-	if (style.Flags & STYLEF_RedIsAlpha)
-	{
-		texturemode = TM_REDTOALPHA;
-	}
-	else if (style.Flags & STYLEF_ColorIsFixed)
+	if (style.Flags & STYLEF_ColorIsFixed)
 	{
 		texturemode = TM_MASK;
 	}

@@ -69,7 +69,7 @@ EXTERN_CVAR(Int, gl_fuzztype)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, bool hudModelStep, int OverrideShader)
+void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, bool hudModelStep, int OverrideShader, bool alphatexture)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -95,7 +95,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	FMaterial * tex = FMaterial::ValidateTexture(lump, false);
 	if (!tex) return;
 
-	tex->BindPatch(0, OverrideShader);
+	tex->BindPatch(0, OverrideShader, alphatexture);
 
 	int vw = viewwidth;
 	int vh = viewheight;
@@ -386,7 +386,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				gl_SetDynSpriteLight(playermo, NULL);
 				gl_SetColor(statebright[i] ? 255 : lightlevel, 0, &cmc, trans, true);
 			}
-			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, hudModelStep, OverrideShader);
+			DrawPSprite(player, psp, psp->sx + ofsx, psp->sy + ofsy, hudModelStep, OverrideShader, !!(vis.RenderStyle.Flags & STYLEF_RedIsAlpha));
 		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
@@ -420,5 +420,5 @@ void FGLRenderer::DrawTargeterSprites()
 
 	// The Targeter's sprites are always drawn normally.
 	for (i=ps_targetcenter, psp = &player->psprites[ps_targetcenter]; i<NUMPSPRITES; i++,psp++)
-		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, false, 0);
+		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, false, 0, false);
 }

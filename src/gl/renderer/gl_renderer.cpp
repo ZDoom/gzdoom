@@ -334,17 +334,14 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 				if (pal) translation = -pal->GetIndex();
 			}
 		}
-		else 
-		{
-			// This is an alpha texture
-			gl_RenderState.SetTextureMode(TM_REDTOALPHA);
-		}
-		gltex->BindPatch(translation);
+		gl_SetRenderStyle(parms.style, !parms.masked, false);
+		gltex->BindPatch(translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();
 		u2 = gltex->GetUR();
 		v2 = gltex->GetVB();
+
 	}
 	else
 	{
@@ -391,12 +388,6 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	int space = (static_cast<OpenGLFrameBuffer*>(screen)->GetTrueHeight()-screen->GetHeight())/2;
 	glScissor(parms.lclip, btm - parms.dclip + space, parms.rclip - parms.lclip, parms.dclip - parms.uclip);
 	
-	gl_SetRenderStyle(parms.style, !parms.masked, false);
-	if (img->bHasCanvas)
-	{
-		gl_RenderState.SetTextureMode(TM_OPAQUE);
-	}
-
 	gl_RenderState.SetColor(color);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();

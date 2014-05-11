@@ -26,10 +26,6 @@ vec4 getTexel(vec2 st)
 		texel = vec4(1.0-texel.r, 1.0-texel.g, 1.0-texel.b, texel.a);
 		return texel;
 	}
-	else if (texturemode == 4)
-	{
-		texel = vec4(1.0, 1.0, 1.0, texel.r);
-	}
 	else if (texturemode == 2) 
 	{
 		texel.a = 1.0;

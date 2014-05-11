@@ -328,7 +328,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 
 
 	gl_SetRenderStyle(decal->RenderStyle, false, false);
-	tex->BindPatch(decal->Translation);
+	tex->BindPatch(decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold

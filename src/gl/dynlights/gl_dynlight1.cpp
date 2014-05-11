@@ -241,7 +241,7 @@ bool gl_SetupLightTexture()
 
 	if (GLRenderer->gllight == NULL) return false;
 	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight);
-	pat->BindPatch(CM_DEFAULT, 0);
+	pat->BindPatch(0);
 	return true;
 }
 

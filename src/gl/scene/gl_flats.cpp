@@ -407,7 +407,7 @@ void GLFlat::Draw(int pass)
 		// fall through
 	case GLPASS_TEXTURE:
 	{
-		gltexture->Bind(Colormap.colormap);
+		gltexture->Bind();
 		bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, false);
 		if (pushed) 
@@ -471,7 +471,7 @@ void GLFlat::Draw(int pass)
 		else 
 		{
 			if (foggy) gl_RenderState.EnableBrightmap(false);
-			gltexture->Bind(Colormap.colormap);
+			gltexture->Bind();
 			bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true);
 			gl_RenderState.EnableBrightmap(true);
@@ -515,7 +515,7 @@ inline void GLFlat::PutFlat(bool fog)
 			{ { GLDL_LIGHT, GLDL_LIGHTFOG }, { GLDL_LIGHTMASKED, GLDL_LIGHTFOGMASKED } }
 		};
 
-		bool light = gl_forcemultipass;
+		bool light = false;
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
 
 		if (!gl_fixedcolormap)

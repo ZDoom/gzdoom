@@ -2,6 +2,10 @@
 #ifndef __GLTEXTURE_H
 #define __GLTEXTURE_H
 
+#ifdef LoadImage
+#undef LoadImage
+#endif
+
 #define SHADED_TEXTURE -1
 #define DIRECT_PALETTE -2
 

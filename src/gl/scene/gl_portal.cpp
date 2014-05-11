@@ -50,6 +50,7 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/data/gl_data.h"
@@ -187,7 +188,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 		glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
 		glColorMask(0,0,0,0);						// don't write to the graphics buffer
 		gl_RenderState.EnableTexture(false);
-		glColor3f(1,1,1);
+		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LESS);
 		gl_RenderState.Apply();
 
@@ -345,9 +346,8 @@ void GLPortal::End(bool usestencil)
 		in_area=savedviewarea;
 		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
-		glColor4f(1,1,1,1);
 		glColorMask(0,0,0,0);						// no graphics
-		glColor3f(1,1,1);
+		gl_RenderState.ResetColor();
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.Apply();
 
@@ -404,7 +404,7 @@ void GLPortal::End(bool usestencil)
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
 
-		glColor4f(1,1,1,1);
+		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0,1);
 		glColorMask(0,0,0,0);						// no graphics
@@ -604,7 +604,7 @@ void GLSkyboxPortal::DrawContents()
 
 	PlaneMirrorMode=0;
 
-	glDisable(GL_DEPTH_CLAMP_NV);
+	glDisable(GL_DEPTH_CLAMP);
 
 	viewx = origin->PrevX + FixedMul(r_TicFrac, origin->x - origin->PrevX);
 	viewy = origin->PrevY + FixedMul(r_TicFrac, origin->y - origin->PrevY);
@@ -634,7 +634,7 @@ void GLSkyboxPortal::DrawContents()
 	GLRenderer->DrawScene();
 	origin->flags&=~MF_JUSTHIT;
 	inskybox=false;
-	glEnable(GL_DEPTH_CLAMP_NV);
+	glEnable(GL_DEPTH_CLAMP);
 	skyboxrecursion--;
 
 	PlaneMirrorMode=old_pm;
@@ -844,12 +844,12 @@ void GLMirrorPortal::DrawContents()
 		// any mirror--use floats to avoid integer overflow. 
 		// Use doubles to avoid losing precision which is very important here.
 
-		double dx = FIXED2FLOAT(v2->x - v1->x);
-		double dy = FIXED2FLOAT(v2->y - v1->y);
-		double x1 = FIXED2FLOAT(v1->x);
-		double y1 = FIXED2FLOAT(v1->y);
-		double x = FIXED2FLOAT(startx);
-		double y = FIXED2FLOAT(starty);
+		double dx = FIXED2DBL(v2->x - v1->x);
+		double dy = FIXED2DBL(v2->y - v1->y);
+		double x1 = FIXED2DBL(v1->x);
+		double y1 = FIXED2DBL(v1->y);
+		double x = FIXED2DBL(startx);
+		double y = FIXED2DBL(starty);
 
 		// the above two cases catch len == 0
 		double r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
@@ -962,7 +962,7 @@ void GLHorizonPortal::DrawContents()
 	if (gltexture && gltexture->tex->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		gl_SetColor(255, 0, NULL, 1.f);
+		gl_SetColor(255, 0, &origin->colormap, 1.f);
 		gl_SetFog(255, 0, &origin->colormap, false);
 	}
 	else 
@@ -973,7 +973,7 @@ void GLHorizonPortal::DrawContents()
 	}
 
 
-	gltexture->Bind(origin->colormap.colormap);
+	gltexture->Bind();
 
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);

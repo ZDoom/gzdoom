@@ -10,12 +10,6 @@
 #pragma warning(disable:4244)
 #endif
 
-EXTERN_CVAR(Bool, gl_warp_shader)
-EXTERN_CVAR(Bool, gl_fog_shader)
-EXTERN_CVAR(Bool, gl_colormap_shader)
-EXTERN_CVAR(Bool, gl_brightmap_shader)
-EXTERN_CVAR(Bool, gl_glow_shader)
-
 EXTERN_CVAR(Bool,gl_enhanced_nightvision)
 EXTERN_CVAR(Int, screenblocks);
 EXTERN_CVAR(Bool, gl_texture)
@@ -26,8 +20,6 @@ EXTERN_CVAR(Bool, gl_texture_usehires)
 EXTERN_CVAR(Bool, gl_usefb)
 
 EXTERN_CVAR(Int, gl_weaponlight)
-
-EXTERN_CVAR(Bool, gl_forcemultipass)
 
 EXTERN_CVAR (Bool, gl_lights);
 EXTERN_CVAR (Bool, gl_attachedlights);

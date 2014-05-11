@@ -502,10 +502,10 @@ int FVoxelModel::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrame(FTexture * skin, int frame, int cm, int translation)
+void FVoxelModel::RenderFrame(FTexture * skin, int frame, int translation)
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin);
-	tex->Bind(cm, 0, translation);
+	tex->Bind(0, translation);
 
 	if (mVBO == NULL) MakeGLData();
 	if (mVBO != NULL)
@@ -535,8 +535,8 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int cm, int translatio
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int cm, int translation)
+void FVoxelModel::RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation)
 {
-	RenderFrame(skin, frame, cm, translation);
+	RenderFrame(skin, frame, translation);
 }
 

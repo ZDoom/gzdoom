@@ -82,6 +82,7 @@ void FRenderState::Reset()
 	glBlendEquation = -1;
 	m2D = true;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
+	mColormapState = CM_DEFAULT;
 }
 
 
@@ -91,33 +92,18 @@ void FRenderState::Reset()
 //
 //==========================================================================
 
-int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime)
+int FRenderState::SetupShader(bool cameratexture, int &shaderindex, float warptime)
 {
 	int softwarewarp = 0;
 
 
 	if (gl.hasGLSL())
 	{
-		if (shaderindex == 3)
-		{
-			// Brightmap should not be used.
-			if (!mBrightmapEnabled || cm >= CM_FIRSTSPECIALCOLORMAP)
-			{
-				shaderindex = 0;
-			}
-		}
-
-		mColormapState = cm;
-		if (cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK)
-		{
-			cm = CM_DEFAULT;
-		}
 		mEffectState = shaderindex;
 		mWarpTime = warptime;
 	}
 	else
 	{
-		if (cm != CM_SHADE) cm = CM_DEFAULT;
 		softwarewarp = shaderindex > 0 && shaderindex < 3? shaderindex : 0;
 		shaderindex = 0;
 	}
@@ -134,30 +120,21 @@ int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, flo
 
 bool FRenderState::ApplyShader()
 {
-	bool useshaders = false;
-	FShader *activeShader = NULL;
 
-	if (mSpecialEffect > 0 && gl.hasGLSL())
+	if (gl.hasGLSL())
 	{
-		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
-	}
-	else if (gl.hasGLSL())
-	{
-		useshaders = (!m2D || mEffectState != 0 || mColormapState); // all 3D rendering and 2D with texture effects.
-		if (useshaders)
+		FShader *activeShader;
+		if (mSpecialEffect > 0)
 		{
-			FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4);
-
-			if (shd != NULL)
-			{
-				activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
-			}
+			activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
 		}
-	}
+		FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4);
 
+		if (shd != NULL)
+		{
+			activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
+		}
 
-	if (activeShader)
-	{
 		int fogset = 0;
 		//glColor4fv(mColor.vec);
 		if (mFogEnabled)

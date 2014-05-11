@@ -412,7 +412,7 @@ void GLWall::RenderMirrorSurface()
 	gl_SetFog(lightlevel, getExtraLight(), &Colormap, true);
 
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture);
-	pat->BindPatch(Colormap.colormap, 0);
+	pat->BindPatch(0);
 
 	flags &= ~GLWF_GLOW;
 	//flags |= GLWF_NOSHADER;
@@ -465,7 +465,7 @@ void GLWall::RenderTranslucentWall()
 	{
 		if (flags&GLWF_FOGGY) gl_RenderState.EnableBrightmap(false);
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gltexture->Bind(Colormap.colormap, flags, 0);
+		gltexture->Bind(flags, 0);
 		extra = getExtraLight();
 	}
 	else 
@@ -532,7 +532,7 @@ void GLWall::Draw(int pass)
 		else gl_SetFog(255, 0, NULL, false);
 
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gltexture->Bind(Colormap.colormap, flags, 0);
+		gltexture->Bind(flags, 0);
 		RenderWall(3, NULL);
 		gl_RenderState.EnableGlow(false);
 		gl_RenderState.EnableLight(false);
@@ -552,7 +552,7 @@ void GLWall::Draw(int pass)
 
 		if (pass != GLPASS_BASE)
 		{
-			gltexture->Bind(Colormap.colormap, flags, 0);
+			gltexture->Bind(flags, 0);
 		}
 		RenderWall(pass == GLPASS_BASE? 2:3, NULL);
 		gl_RenderState.EnableGlow(false);
@@ -560,7 +560,7 @@ void GLWall::Draw(int pass)
 		break;
 
 	case GLPASS_TEXTURE:		// modulated texture
-		gltexture->Bind(Colormap.colormap, flags, 0);
+		gltexture->Bind(flags, 0);
 		RenderWall(1, NULL);
 		break;
 

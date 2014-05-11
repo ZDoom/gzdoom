@@ -179,23 +179,11 @@ void GLSprite::Draw(int pass)
 	}
 	if (RenderStyle.BlendOp!=STYLEOP_Shadow)
 	{
-		if (actor)
+		if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap)
 		{
-			lightlevel = gl_SetSpriteLighting(RenderStyle, actor, lightlevel, rel, &Colormap, 0xffffffff, trans,
-							 fullbright || gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP, false);
+			gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}
-		else if (particle)
-		{
-			if (gl_light_particles)
-			{
-				lightlevel = gl_SetSpriteLight(particle, lightlevel, rel, &Colormap, trans, 0xffffffff);
-			}
-			else 
-			{
-				gl_SetColor(lightlevel, rel, &Colormap, trans);
-			}
-		}
-		else return;
+		gl_SetColor(lightlevel, rel, &Colormap, trans);
 	}
 	gl_RenderState.SetObjectColor(ThingColor);
 
@@ -207,11 +195,6 @@ void GLSprite::Draw(int pass)
 		additivefog = true;
 	}
 
-	if (RenderStyle.Flags & STYLEF_InvertOverlay) 
-	{
-		Colormap.FadeColor = Colormap.FadeColor.InverseColor();
-		additivefog=false;
-	}
 	if (RenderStyle.BlendOp == STYLEOP_RevSub || RenderStyle.BlendOp == STYLEOP_Sub)
 	{
 		if (!modelframe)
@@ -243,7 +226,7 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.SetFog(0, 0);
 	}
 
-	if (gltexture) gltexture->BindPatch(Colormap.colormap, translation, OverrideShader);
+	if (gltexture) gltexture->BindPatch(translation, OverrideShader);
 	else if (!modelframe) gl_RenderState.EnableTexture(false);
 
 	if (!modelframe)
@@ -309,7 +292,7 @@ void GLSprite::Draw(int pass)
 		{
 			// If we get here we know that we have colored fog and no fixed colormap.
 			gl_SetFog(foglevel, rel, &Colormap, additivefog);
-			gl_RenderState.SetFixedColormap(CM_FOGLAYER);
+			//gl_RenderState.SetFixedColormap(CM_FOGLAYER); fixme: does not work yet.
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gl_RenderState.Apply();
@@ -335,7 +318,7 @@ void GLSprite::Draw(int pass)
 	}
 	else
 	{
-		gl_RenderModel(this, Colormap.colormap);
+		gl_RenderModel(this);
 	}
 
 	if (pass==GLPASS_TRANSLUCENT)
@@ -361,6 +344,7 @@ void GLSprite::Draw(int pass)
 		Colormap.FadeColor = backupfade;
 
 	gl_RenderState.EnableTexture(true);
+	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetDynLight(0,0,0);
 }
 

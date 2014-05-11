@@ -69,7 +69,7 @@ EXTERN_CVAR(Int, gl_fuzztype)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, int cm_index, bool hudModelStep, int OverrideShader)
+void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, bool hudModelStep, int OverrideShader)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -83,7 +83,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	// [BB] In the HUD model step we just render the model and break out. 
 	if ( hudModelStep )
 	{
-		gl_RenderHUDModel( psp, sx, sy, cm_index );
+		gl_RenderHUDModel( psp, sx, sy);
 		return;
 	}
 
@@ -95,7 +95,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	FMaterial * tex = FMaterial::ValidateTexture(lump, false);
 	if (!tex) return;
 
-	tex->BindPatch(cm_index, 0, OverrideShader);
+	tex->BindPatch(0, OverrideShader);
 
 	int vw = viewwidth;
 	int vh = viewheight;
@@ -192,17 +192,13 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		(players[consoleplayer].cheats & CF_CHASECAM))
 		return;
 
-	/*
-	if(!player || playermo->renderflags&RF_INVISIBLE || !r_drawplayersprites ||
-		mViewActor!=playermo || playermo->RenderStyle.BlendOp == STYLEOP_None) return;
-	*/
-
 	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy);
 
 	// check for fullbright
 	if (player->fixedcolormap==NOFIXEDCOLORMAP)
 	{
-		for (i=0, psp=player->psprites; i<=ps_flash; i++,psp++)
+		for (i = 0, psp = player->psprites; i <= ps_flash; i++, psp++)
+		{
 			if (psp->state != NULL)
 			{
 				bool disablefullbright = false;
@@ -215,7 +211,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				}
 				statebright[i] = !!psp->state->GetFullbright() && !disablefullbright;
 			}
-				
+		}
 	}
 
 	if (gl_fixedcolormap) 
@@ -300,8 +296,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			vis.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap && 
 			cm.colormap == CM_DEFAULT)
 		{
-			ptrdiff_t specialmap = (vis.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
-			cm.colormap = int(CM_FIRSTSPECIALCOLORMAP + specialmap);
+			// this only happens for Strife's inverted weapon sprite
+			vis.RenderStyle.Flags |= STYLEF_InvertSource;
 		}
 	}
 
@@ -380,10 +376,17 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 					cmc.LightColor.b = (3*cmc.LightColor.b + 0xff)/4;
 				}
 			}
-			// set the lighting parameters (only calls glColor and glAlphaFunc)
-			gl_SetSpriteLighting(vis.RenderStyle, playermo, statebright[i]? 255 : lightlevel, 
-				0, &cmc, 0xffffff, trans, statebright[i], true);
-			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);
+			// set the lighting parameters
+			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
+			{
+				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f);// 0x55333333, cmc.desaturation);
+			}
+			else
+			{
+				gl_SetDynSpriteLight(playermo, NULL);
+				gl_SetColor(statebright[i] ? 255 : lightlevel, 0, &cmc, trans, true);
+			}
+			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, hudModelStep, OverrideShader);
 		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
@@ -417,5 +420,5 @@ void FGLRenderer::DrawTargeterSprites()
 
 	// The Targeter's sprites are always drawn normally.
 	for (i=ps_targetcenter, psp = &player->psprites[ps_targetcenter]; i<NUMPSPRITES; i++,psp++)
-		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, CM_DEFAULT, false, 0);
+		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, false, 0);
 }

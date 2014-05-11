@@ -143,7 +143,7 @@ public:
 
 	void Reset();
 
-	int SetupShader(bool cameratexture, int &shaderindex, int &cm, float warptime);
+	int SetupShader(bool cameratexture, int &shaderindex, float warptime);
 	void Apply(bool forcenoshader = false);
 
 	void SetVertexBuffer(FVertexBuffer *vb)

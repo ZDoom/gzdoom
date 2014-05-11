@@ -85,7 +85,6 @@ CVAR(Bool, gl_texture, true, 0)
 CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Bool, gl_forcemultipass, false, 0)
 
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, cl_capfps)
@@ -845,6 +844,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	{
 		DrawPlayerSprites (viewsector, false);
 	}
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
 
@@ -918,6 +918,7 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 			}
 		}
 	}
+	gl_RenderState.SetFixedColormap(gl_fixedcolormap);
 }
 
 //-----------------------------------------------------------------------------
@@ -1060,6 +1061,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, 
 								FieldOfView * 360.0f / FINEANGLES, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	screen->Begin2D(false);
 	DrawBlend(viewsector);
 	glFlush();
@@ -1235,6 +1237,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	int height = gltex->TextureHeight(GLUSE_TEXTURE);
 
 	gl_fixedcolormap=CM_DEFAULT;
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
 	bool usefb;
 
@@ -1279,7 +1282,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	if (!usefb)
 	{
 		glFlush();
-		gltex->Bind(CM_DEFAULT, 0, 0);
+		gltex->Bind(0, 0);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
 	}
 	else
@@ -1287,7 +1290,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 		GLRenderer->EndOffscreen();
 	}
 
-	gltex->Bind(CM_DEFAULT, 0, 0);
+	gltex->Bind(0, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
 	tex->SetUpdated();
 }

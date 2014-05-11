@@ -152,7 +152,7 @@ void GLWall::PutWall(bool translucent)
 		};
 
 		bool masked;
-		bool light = gl_forcemultipass;
+		bool light = false;
 
 		if (!gl_fixedcolormap)
 		{

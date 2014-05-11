@@ -78,12 +78,10 @@ static int texw;
 static float yAdd;
 static bool foglayer;
 static bool secondlayer;
-static float R,G,B;
 static bool skymirror; 
 
 #define SKYHEMI_UPPER		0x1
 #define SKYHEMI_LOWER		0x2
-#define SKYHEMI_JUST_CAP	0x4	// Just draw the top or bottom cap.
 
 
 //-----------------------------------------------------------------------------
@@ -111,7 +109,8 @@ static void SkyVertex(int r, int c)
 	
 	if (!foglayer)
 	{
-		gl_SetColor(255, 0, NULL, r==0? 0.0f : 1.0f);
+		// this cannot use the renderstate because it's inside a primitive.
+		glColor4f(1.f, 1.f, 1.f, r==0? 0.0f : 1.0f);
 		
 		// And the texture coordinates.
 		if(!yflip)	// Flipped Y is for the lower hemisphere.
@@ -165,30 +164,24 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 	// two rows because the first one is always faded.
 	rows = 4;
 	
-	if (hemi & SKYHEMI_JUST_CAP)
-	{
-		return;
-	}
-
-
 	// Draw the cap as one solid color polygon
 	if (!foglayer)
 	{
 		columns = 4 * (gl_sky_detail > 0 ? gl_sky_detail : 1);
 		foglayer=true;
 		gl_RenderState.EnableTexture(false);
-		gl_RenderState.Apply(true);
+		gl_RenderState.Apply();
 
 
 		if (!secondlayer)
 		{
-			glColor3f(R, G ,B);
 			glBegin(GL_TRIANGLE_FAN);
 			for(c = 0; c < columns; c++)
 			{
 				SkyVertex(1, c);
 			}
 			glEnd();
+			gl_RenderState.SetObjectColor(0xffffffff);	// unset the cap's color
 		}
 
 		gl_RenderState.EnableTexture(true);
@@ -197,7 +190,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 	}
 	else
 	{
-		gl_RenderState.Apply(true);
+		gl_RenderState.Apply();
 		columns=4;	// no need to do more!
 		glBegin(GL_TRIANGLE_FAN);
 		for(c = 0; c < columns; c++)
@@ -246,7 +239,7 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 //-----------------------------------------------------------------------------
 CVAR(Float, skyoffset, 0, 0)	// for testing
 
-static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror, int CM_Index)
+static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror)
 {
 	int texh = 0;
 	bool texscale = false;
@@ -257,7 +250,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex)
 	{
 		glPushMatrix();
-		tex->Bind(CM_Index, 0, 0);
+		tex->Bind(0, 0);
 		texw = tex->TextureWidth(GLUSE_TEXTURE);
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
 
@@ -290,20 +283,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(false);
-
-		R=pe.r/255.0f;
-		G=pe.g/255.0f;
-		B=pe.b/255.0f;
-
-		if (gl_fixedcolormap)
-		{
-			float rr, gg, bb;
-
-			gl_GetLightColor(255, 0, NULL, &rr, &gg, &bb);
-			R*=rr;
-			G*=gg;
-			B*=bb;
-		}
+		gl_RenderState.SetObjectColor(pe);
 	}
 
 	RenderSkyHemisphere(SKYHEMI_UPPER, mirror);
@@ -311,19 +291,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 	if (tex && !secondlayer) 
 	{
 		PalEntry pe = tex->tex->GetSkyCapColor(true);
-		R=pe.r/255.0f;
-		G=pe.g/255.0f;
-		B=pe.b/255.0f;
-
-		if (gl_fixedcolormap != CM_DEFAULT)
-		{
-			float rr,gg,bb;
-
-			gl_GetLightColor(255, 0, NULL, &rr, &gg, &bb);
-			R*=rr;
-			G*=gg;
-			B*=bb;
-		}
+		gl_RenderState.SetObjectColor(pe);
 	}
 
 	RenderSkyHemisphere(SKYHEMI_LOWER, mirror);
@@ -344,7 +312,7 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 //
 //-----------------------------------------------------------------------------
 
-static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int CM_Index, bool sky2)
+static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
 {
 	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
 	int faces;
@@ -355,15 +323,13 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 	else
 		glRotatef(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
-	glColor3f(R, G ,B);
-
 	if (sb->faces[5]) 
 	{
 		faces=4;
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -378,7 +344,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -393,7 +359,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -408,7 +374,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
 		glTexCoord2f(0, 0);
@@ -426,7 +392,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 		faces=1;
 		// all 4 sides
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 
 		gl_RenderState.Apply();
 		glBegin(GL_TRIANGLE_FAN);
@@ -479,7 +445,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces]);
-	tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+	tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);
 	if (!sb->fliptop)
@@ -509,7 +475,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1]);
-	tex->Bind(CM_Index, GLT_CLAMPX|GLT_CLAMPY, 0);
+	tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLE_FAN);
 	glTexCoord2f(0, 0);
@@ -533,7 +499,6 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, int C
 void GLSkyPortal::DrawContents()
 {
 	bool drawBoth = false;
-	int CM_Index;
 	PalEntry FadeColor(0,0,0,0);
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
@@ -541,16 +506,12 @@ void GLSkyPortal::DrawContents()
 	if (glset.lightmode == 8) glset.lightmode = 2;
 
 
-	if (gl_fixedcolormap) 
+	if (!gl_fixedcolormap)
 	{
-		CM_Index=gl_fixedcolormap<CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size()? gl_fixedcolormap:CM_DEFAULT;
-	}
-	else 
-	{
-		CM_Index=CM_DEFAULT;
-		FadeColor=origin->fadecolor;
+		FadeColor = origin->fadecolor;
 	}
 
+	gl_RenderState.SetColor(0xffffffff);
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -561,18 +522,7 @@ void GLSkyPortal::DrawContents()
 
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{
-		if (gl_fixedcolormap != CM_DEFAULT)
-		{						
-			float rr,gg,bb;
-
-			gl_GetLightColor(255, 0, NULL, &rr, &gg, &bb);
-			R=rr;
-			G=gg;
-			B=bb;
-		}
-		else R=G=B=1.f;
-
-		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], CM_Index, origin->sky2);
+		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 		gl_RenderState.EnableAlphaTest(true);
 	}
 	else
@@ -582,7 +532,7 @@ void GLSkyPortal::DrawContents()
 		if (origin->texture[0])
 		{
 			gl_RenderState.SetTextureMode(TM_OPAQUE);
-			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, CM_Index);
+			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored);
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
@@ -592,7 +542,7 @@ void GLSkyPortal::DrawContents()
 		if (origin->doublesky && origin->texture[1])
 		{
 			secondlayer=true;
-			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false, CM_Index);
+			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false);
 			secondlayer=false;
 		}
 
@@ -601,7 +551,7 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.EnableTexture(false);
 			foglayer=true;
 			gl_RenderState.SetColorAlpha(FadeColor, skyfog / 255.0f);
-			RenderDome(FNullTextureID(), NULL, 0, 0, false, CM_DEFAULT);
+			RenderDome(FNullTextureID(), NULL, 0, 0, false);
 			gl_RenderState.EnableTexture(true);
 			foglayer=false;
 		}

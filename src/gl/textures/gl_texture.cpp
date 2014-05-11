@@ -210,7 +210,7 @@ PalEntry averageColor(const DWORD *data, int size, fixed_t maxout_factor)
 		g = Scale(g, maxout_factor, maxv);
 		b = Scale(b, maxout_factor, maxv);
 	}
-	return PalEntry(r,g,b);
+	return PalEntry(255,r,g,b);
 }
 
 

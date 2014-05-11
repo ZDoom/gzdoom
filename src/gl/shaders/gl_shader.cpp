@@ -79,7 +79,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	static char buffer[10000];
 	FString error;
 
-	if (gl.shadermodel > 0)
+	if (gl.hasGLSL())
 	{
 		int vp_lump = Wads.CheckNumForFullName(vert_prog_lump);
 		if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
@@ -93,10 +93,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		FString vp_comb;
 		FString fp_comb;
 		vp_comb = defines;
-		if (gl.shadermodel < 4) 
-		{
-			vp_comb << "#define NO_SM4\n";
-		}
 
 		fp_comb = vp_comb;
 		// This uses GetChars on the strings to get rid of terminating 0 characters.
@@ -307,52 +303,40 @@ FShaderContainer::FShaderContainer(const char *ShaderName, const char *ShaderPat
 		I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 	}
 
-	if (gl.shadermodel > 2)
+	for(int i = 0;i < NUM_SHADERS; i++)
 	{
-		for(int i = 0;i < NUM_SHADERS; i++)
+		FString name;
+
+		name << ShaderName << shaderdesc[i];
+
+		try
 		{
-			FString name;
-
-			name << ShaderName << shaderdesc[i];
-
-			try
+			FString str;
+			if ((i&4) != 0)
 			{
-				FString str;
-				if ((i&4) != 0)
+				if (gl.maxuniforms < 1024)
 				{
-					if (gl.maxuniforms < 1024 || gl.shadermodel != 4)
-					{
-						shader[i] = NULL;
-						continue;
-					}
-					// this can't be in the shader code due to ATI strangeness.
-					str = "#version 120\n#extension GL_EXT_gpu_shader4 : enable\n";
-					if (gl.MaxLights() == 128) str += "#define MAXLIGHTS128\n";
-				}
-				if ((i&8) == 0)
-				{
-					if (gl.shadermodel != 4)
-					{
-						shader[i] = NULL;
-						continue;
-					}
-				}
-				str += shaderdefines[i];
-				shader[i] = new FShader;
-				if (!shader[i]->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str.GetChars()))
-				{
-					delete shader[i];
 					shader[i] = NULL;
+					continue;
 				}
+				// this can't be in the shader code due to ATI strangeness.
+				str = "#version 120\n#extension GL_EXT_gpu_shader4 : enable\n";
+				if (gl.MaxLights() == 128) str += "#define MAXLIGHTS128\n";
 			}
-			catch(CRecoverableError &err)
+			str += shaderdefines[i];
+			shader[i] = new FShader;
+			if (!shader[i]->Load(name, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str.GetChars()))
 			{
+				delete shader[i];
 				shader[i] = NULL;
-				I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
 			}
 		}
+		catch(CRecoverableError &err)
+		{
+			shader[i] = NULL;
+			I_Error("Unable to load shader %s:\n%s\n", name.GetChars(), err.GetMessage());
+		}
 	}
-	else memset(shader, 0, sizeof(shader));
 }
 
 //==========================================================================
@@ -502,28 +486,15 @@ FShaderManager::~FShaderManager()
 //
 //==========================================================================
 
-void FShaderManager::Recompile()
-{
-	Clean();
-	CompileShaders();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FShaderManager::CompileShaders()
 {
 	mActiveShader = mEffectShaders[0] = mEffectShaders[1] = NULL;
-	if (gl.shadermodel > 0)
+	if (gl.hasGLSL())
 	{
 		for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 		{
 			FShaderContainer * shc = new FShaderContainer(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc);
 			mTextureEffects.Push(shc);
-			if (gl.shadermodel <= 2) return;	// SM2 will only initialize the default shader
 		}
 
 		for(unsigned i = 0; i < usershaders.Size(); i++)
@@ -531,25 +502,19 @@ void FShaderManager::CompileShaders()
 			FString name = ExtractFileBase(usershaders[i]);
 			FName sfn = name;
 
-			if (gl.shadermodel > 2)
-			{
-				FShaderContainer * shc = new FShaderContainer(sfn, usershaders[i]);
-				mTextureEffects.Push(shc);
-			}
+			FShaderContainer * shc = new FShaderContainer(sfn, usershaders[i]);
+			mTextureEffects.Push(shc);
 		}
 
-		if (gl.shadermodel > 2)
+		for(int i=0;i<NUM_EFFECTS;i++)
 		{
-			for(int i=0;i<NUM_EFFECTS;i++)
+			FShader *eff = new FShader();
+			if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
+							effectshaders[i].fp2, effectshaders[i].defines))
 			{
-				FShader *eff = new FShader();
-				if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-								effectshaders[i].fp2, effectshaders[i].defines))
-				{
-					delete eff;
-				}
-				else mEffectShaders[i] = eff;
+				delete eff;
 			}
+			else mEffectShaders[i] = eff;
 		}
 	}
 }
@@ -604,7 +569,7 @@ int FShaderManager::Find(const char * shn)
 void FShaderManager::SetActiveShader(FShader *sh)
 {
 	// shadermodel needs to be tested here because without it UseProgram will be NULL.
-	if (gl.shadermodel > 0 && mActiveShader != sh)
+	if (gl.hasGLSL() && mActiveShader != sh)
 	{
 		glUseProgram(sh == NULL? 0 : sh->GetHandle());
 		mActiveShader = sh;

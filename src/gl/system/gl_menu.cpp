@@ -59,7 +59,7 @@ CUSTOM_CVAR (Float, vid_contrast, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 // when they are actually valid.
 void gl_SetupMenu()
 {
-	if (gl.shadermodel < 4)
+	if (!gl.hasGLSL())
 	{
 		// Radial fog and Doom lighting are not available in SM < 4 cards
 		// The way they are implemented does not work well on older hardware.
@@ -94,29 +94,5 @@ void gl_SetupMenu()
 		if (gl_lightmode == 2 || gl_lightmode == 8) gl_lightmode = 3;
 		if (gl_fogmode == 2) gl_fogmode = 1;
 		if (gl_dynlight_shader) gl_dynlight_shader = false;
-	}
-
-	if (gl.shadermodel != 3)
-	{
-		// The shader menu will only be visible on SM3. 
-		// SM2 won't use shaders unless unavoidable (and then it's automatic) and SM4 will always use shaders.
-		// Find the OpenGLOptions menu and remove the item named GLShaderOptions.
-		
-		FMenuDescriptor **desc = MenuDescriptors.CheckKey("OpenGLOptions");
-		if (desc != NULL && (*desc)->mType == MDESC_OptionsMenu)
-		{
-			FOptionMenuDescriptor *opt = (FOptionMenuDescriptor *)*desc;
-
-			FName shader = "GLShaderOptions";
-			for(unsigned i=0;i<opt->mItems.Size();i++)
-			{
-				FName nm = opt->mItems[i]->GetAction(NULL);
-				if (nm == shader) 
-				{
-					delete opt->mItems[i];
-					opt->mItems.Delete(i);
-				}
-			}
-		}
 	}
 }

@@ -338,7 +338,7 @@ void GLWall::RenderFogBoundary()
 	if (gl_fogmode && gl_fixedcolormap == 0)
 	{
 		// with shaders this can be done properly
-		if (gl.shadermodel == 4 || (gl.shadermodel == 3 && gl_fog_shader))
+		if (gl.hasGLSL())
 		{
 			int rel = rellight + getExtraLight();
 			gl_SetFog(lightlevel, rel, &Colormap, false);

@@ -133,7 +133,6 @@ void gl_LoadExtensions()
 	// This loads any function pointers and flags that require a vaild render context to
 	// initialize properly
 
-	gl.shadermodel = 0;	// assume no shader support
 	gl.vendorstring=(char*)glGetString(GL_VENDOR);
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
@@ -141,23 +140,11 @@ void gl_LoadExtensions()
 	if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
 
 	gl.version = strtod((char*)glGetString(GL_VERSION), NULL);
+	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL);
+	if (Args->CheckParm("-noshader")) gl.glslversion = 0.0f;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	
-	// Rules:
-	// SM4 will always use shaders. No option to switch them off is needed here.
-	// SM3 has shaders optional but they are off by default (they will have a performance impact
-	// SM2 only uses shaders for colormaps on camera textures and has no option to use them in general.
-	//     On SM2 cards the shaders will be too slow and show visual bugs (at least on GF 6800.)
-	if (strcmp((const char*)glGetString(GL_SHADING_LANGUAGE_VERSION), "1.3") >= 0) gl.shadermodel = 4;
-	else if (CheckExtension("GL_NV_vertex_program3")) gl.shadermodel = 3;
-	else if (!strstr(gl.vendorstring, "NVIDIA")) gl.shadermodel = 3;
-	else gl.shadermodel = 2;	// Only for older NVidia cards which had notoriously bad shader support.
-
-	// Command line overrides for testing and problem cases.
-	if (Args->CheckParm("-sm2") && gl.shadermodel > 2) gl.shadermodel = 2;
-	else if (Args->CheckParm("-sm3") && gl.shadermodel > 3) gl.shadermodel = 3;
 
 	if (gl.version >= 3.f)
 	{
@@ -187,7 +174,7 @@ void gl_PrintStartupLog()
 	Printf ("Max. texture units: %d\n", v);
 	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. fragment uniforms: %d\n", v);
-	if (gl.shadermodel == 4) gl.maxuniforms = v;
+	if (gl.hasGLSL()) gl.maxuniforms = v;
 	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. vertex uniforms: %d\n", v);
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);

@@ -16,19 +16,17 @@ vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture2D(tex, st);
 	
-	#ifndef NO_TEXTUREMODE
-		//
-		// Apply texture modes
-		//
-		if (texturemode == 2) 
-		{
-			texel.a = 1.0;
-		}
-		else if (texturemode == 1) 
-		{
-			texel.rgb = vec3(1.0,1.0,1.0);
-		}
-	#endif
+	//
+	// Apply texture modes
+	//
+	if (texturemode == 2) 
+	{
+		texel.a = 1.0;
+	}
+	else if (texturemode == 1) 
+	{
+		texel.rgb = vec3(1.0,1.0,1.0);
+	}
 
 	return texel;
 }

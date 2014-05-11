@@ -753,7 +753,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	if(smf->flags & MDL_INHERITACTORPITCH) pitch += float(static_cast<double>(spr->actor->pitch >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->pitch & 0x0000FFFF) / (1 << 29) * 45);
 	if(smf->flags & MDL_INHERITACTORROLL) roll += float(static_cast<double>(spr->actor->roll >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->roll & 0x0000FFFF) / (1 << 29) * 45);
 		
-	if (gl.shadermodel < 4)
+	if (!gl.hasGLSL())
 	{
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -795,7 +795,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	glRotatef(smf->pitchoffset, 0, 0, 1);
 	glRotatef(-smf->rolloffset, 1, 0, 0);
 		
-	if (gl.shadermodel >= 4) glActiveTexture(GL_TEXTURE0);
+	if (gl.hasGLSL()) glActiveTexture(GL_TEXTURE0);
 
 #if 0
 	if (gl_light_models)
@@ -814,7 +814,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 
 	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), cm, NULL, translation );
 
-	if (gl.shadermodel < 4)
+	if (!gl.hasGLSL())
 	{
 		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();

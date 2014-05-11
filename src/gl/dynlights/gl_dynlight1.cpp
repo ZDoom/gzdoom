@@ -70,7 +70,17 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 
 CUSTOM_CVAR (Bool, gl_dynlight_shader, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self && (gl.maxuniforms < 1024 || gl.shadermodel < 4)) self = false;
+	if (self)
+	{
+		if (!gl.hasGLSL())
+		{
+			self = false;
+		}
+		else if (gl.maxuniforms < 1024 && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+		{
+			self = false;
+		}
+	}
 }
 
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);

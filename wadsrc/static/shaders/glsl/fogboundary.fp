@@ -18,18 +18,14 @@ void main()
 	//
 	// calculate fog factor
 	//
-	#ifndef NO_SM4
-		if (fogenabled == -1) 
-		{
-			fogdist = pixelpos.w;
-		}
-		else 
-		{
-			fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
-		}
-	#else
+	if (fogenabled == -1) 
+	{
 		fogdist = pixelpos.w;
-	#endif
+	}
+	else 
+	{
+		fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
+	}
 	fogfactor = exp2 (fogparm.z * fogdist);
 	gl_FragColor = vec4(fogcolor.rgb, 1.0 - fogfactor);
 }

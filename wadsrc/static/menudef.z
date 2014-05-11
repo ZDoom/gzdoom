@@ -14,13 +14,6 @@ OptionValue "EnhancedStealth"
 	3, "Any fixed colormap"
 }
 
-OptionValue "VBOModes"
-{
-	0, "Off"
-	1, "Static"
-	2, "Dynamic"
-}
-
 OptionValue "FilterModes"
 {
 	0, "None"
@@ -186,17 +179,7 @@ OptionMenu "GLPrefOptions"
 	Option "Particle style",			gl_particles_style,				"Particles"
 	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
 	Option "Rendering quality",			gl_render_precise,				"Precision"
-	Option "Use vertex buffer",			gl_usevbo,						"VBOModes"
-}
-
-OptionMenu "GLShaderOptions"
-{
-	Title "SHADER OPTIONS"
-	Option "Enable brightness maps",	gl_brightmap_shader,			"OnOff"
-	Option "Shaders for texture warp",	gl_warp_shader,					"OnOff"
-	Option "Shaders for fog",			gl_fog_shader,					"OnOff"
-	Option "Shaders for colormaps",		gl_colormap_shader,				"OnOff"
-	Option "Shaders for glowing textures",	gl_glow_shader,				"OnOff"
+	Option "Use vertex buffer",			gl_usevbo,						"OnOff"
 }
 
 OptionMenu "OpenGLOptions"
@@ -204,7 +187,6 @@ OptionMenu "OpenGLOptions"
 	Title "OPENGL OPTIONS"
 	Submenu "Dynamic Light Options",	"GLLightOptions"
 	Submenu "Texture Options", 			"GLTextureGLOptions"
-	Submenu "Shader Options", 			"GLShaderOptions"
 	Submenu "Preferences", 				"GLPrefOptions"
 }
 

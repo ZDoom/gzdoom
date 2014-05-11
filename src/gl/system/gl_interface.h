@@ -6,11 +6,12 @@
 enum RenderFlags
 {
 	// [BB] Added texture compression flags.
-	RFL_TEXTURE_COMPRESSION=8,
-	RFL_TEXTURE_COMPRESSION_S3TC=16,
+	RFL_TEXTURE_COMPRESSION=1,
+	RFL_TEXTURE_COMPRESSION_S3TC=2,
 
-	RFL_FRAMEBUFFER = 32,
-	RFL_BUFFER_STORAGE = 64,
+	RFL_FRAMEBUFFER = 4,
+	RFL_BUFFER_STORAGE = 8,
+	RFL_SHADER_STORAGE_BUFFER = 16,
 };
 
 enum TexMode
@@ -30,15 +31,20 @@ enum TexMode
 struct RenderContext
 {
 	unsigned int flags;
-	unsigned int shadermodel;
 	unsigned int maxuniforms;
 	float version;
+	float glslversion;
 	int max_texturesize;
 	char * vendorstring;
 
 	int MaxLights() const
 	{
 		return maxuniforms>=2048? 128:64;
+	}
+
+	bool hasGLSL() const
+	{
+		return glslversion >= 1.3f;
 	}
 };
 

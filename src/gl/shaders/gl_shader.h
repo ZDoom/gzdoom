@@ -153,8 +153,6 @@ public:
 		}
 		return NULL;
 	}
-
-	void Recompile();
 };
 
 #define FIRST_USER_SHADER 12

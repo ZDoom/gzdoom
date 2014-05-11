@@ -104,28 +104,13 @@ int FRenderState::SetupShader(bool cameratexture, int &shaderindex, int &cm, flo
 		}
 	}
 
-	if (gl.shadermodel == 4)
+	if (gl.hasGLSL())
 	{
 		usecmshader = cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK;
 	}
-	else if (gl.shadermodel == 3)
-	{
-		usecmshader = (cameratexture || gl_colormap_shader) && 
-			cm > CM_DEFAULT && cm < CM_MAXCOLORMAP && mTextureMode != TM_MASK;
-
-		if (!gl_brightmap_shader && shaderindex == 3) 
-		{
-			shaderindex = 0;
-		}
-		else if (!gl_warp_shader && shaderindex !=3)
-		{
-			if (shaderindex <= 2) softwarewarp = shaderindex;
-			shaderindex = 0;
-		}
-	}
 	else
 	{
-		usecmshader = cameratexture;
+		usecmshader = false;
 		softwarewarp = shaderindex > 0 && shaderindex < 3? shaderindex : 0;
 		shaderindex = 0;
 	}
@@ -149,43 +134,22 @@ bool FRenderState::ApplyShader()
 	bool useshaders = false;
 	FShader *activeShader = NULL;
 
-	if (mSpecialEffect > 0 && gl.shadermodel > 2)
+	if (mSpecialEffect > 0 && gl.hasGLSL())
 	{
 		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
 	}
-	else
+	else if (gl.hasGLSL())
 	{
-		switch (gl.shadermodel)
+		useshaders = (!m2D || mEffectState != 0 || mColormapState); // all 3D rendering and 2D with texture effects.
+	}
+
+	if (useshaders)
+	{
+		FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
+
+		if (shd != NULL)
 		{
-		case 2:
-			useshaders = (mTextureEnabled && mColormapState != CM_DEFAULT);
-			break;
-
-		case 3:
-			useshaders = (
-				mEffectState != 0 ||	// special shaders
-				(mFogEnabled && (gl_fogmode == 2 || gl_fog_shader) && gl_fogmode != 0) || // fog requires a shader
-				(mTextureEnabled && (mEffectState != 0 || mColormapState)) ||		// colormap
-				mGlowEnabled		// glow requires a shader
-				);
-			break;
-
-		case 4:
-			useshaders = (!m2D || mEffectState != 0 || mColormapState); // all 3D rendering and 2D with texture effects.
-			break;
-
-		default:
-			break;
-		}
-
-		if (useshaders)
-		{
-			FShaderContainer *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
-
-			if (shd != NULL)
-			{
-				activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
-			}
+			activeShader = shd->Bind(mColormapState, mGlowEnabled, mWarpTime, mLightEnabled);
 		}
 	}
 

@@ -73,9 +73,9 @@ CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
 FGLRenderer *GLRenderer;
 
-void gl_SetupMenu();
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
+void gl_SetupMenu();
 
 //==========================================================================
 //

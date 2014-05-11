@@ -313,7 +313,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		vis.RenderStyle.CheckFuzz();
 		if (vis.RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl.shadermodel >= 4 && gl_fuzztype != 0)
+			if (gl.hasGLSL() && gl_fuzztype != 0)
 			{
 				// Todo: implement shader selection here
 				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];

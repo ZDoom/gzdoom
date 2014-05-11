@@ -102,7 +102,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	//
 	if (fogenabled > 0)
 	{
-		#if (!defined(NO_SM4) || defined(DOOMLIGHT)) && !defined SOFTLIGHT
+		#if (defined(DOOMLIGHT)) && !defined SOFTLIGHT
 			// special lighting mode 'Doom' not available on older cards for performance reasons.
 			if (fogdist < fogparm.y) 
 			{
@@ -197,20 +197,14 @@ void main()
 	//
 	if (fogenabled != 0)
 	{
-		#ifndef NO_SM4
-			if (fogenabled == 1 || fogenabled == -1) 
-			{
-				fogdist = pixelpos.w;
-			}
-			else 
-			{
-				fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
-			}
-		#elif !defined(FOG_RADIAL)
+		if (fogenabled == 1 || fogenabled == -1) 
+		{
 			fogdist = pixelpos.w;
-		#else
+		}
+		else 
+		{
 			fogdist = max(16.0, distance(pixelpos.xyz, camerapos));
-		#endif
+		}
 		fogfactor = exp2 (fogparm.z * fogdist);
 	}
 	#endif

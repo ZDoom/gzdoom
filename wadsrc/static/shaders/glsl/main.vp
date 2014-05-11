@@ -19,12 +19,8 @@ void main()
 		lightlevel = lightlevel_in;
 	#endif
 
-	#ifndef NO_SM4
-		// Yes, I know... But using a texture matrix here saves me from the hassle of tracking its state across shaders. ;)
-		vec4 worldcoord = gl_TextureMatrix[7] * gl_Vertex;
-	#else
-		vec4 worldcoord = gl_Vertex;
-	#endif
+	// We use texture matrix 7 as the model matrix and the modelview matrix as the view matrix.
+	vec4 worldcoord = gl_TextureMatrix[7] * gl_Vertex;
 	vec4 eyeCoordPos = gl_ModelViewMatrix * worldcoord;
 
 	gl_FrontColor = gl_Color;
@@ -55,11 +51,7 @@ void main()
 		gl_TexCoord[0].xy = sst;
 	#endif
 	
-	#ifndef NO_SM4
-		gl_Position = gl_ModelViewProjectionMatrix * worldcoord;
-	#else
-		gl_Position = ftransform();
-	#endif
+	gl_Position = gl_ModelViewProjectionMatrix * worldcoord;
     #ifdef __GLSL_CG_DATA_TYPES
 		gl_ClipVertex = eyeCoordPos;
 	#endif

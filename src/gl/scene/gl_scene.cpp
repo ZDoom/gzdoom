@@ -405,7 +405,6 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_RenderState.EnableBrightmap(gl_fixedcolormap == CM_DEFAULT);
 	gl_drawinfo->drawlists[GLDL_PLAIN].Sort();
 	gl_drawinfo->drawlists[GLDL_PLAIN].Draw(pass);
-	gl_RenderState.EnableBrightmap(false);
 	gl_drawinfo->drawlists[GLDL_FOG].Sort();
 	gl_drawinfo->drawlists[GLDL_FOG].Draw(pass);
 	gl_drawinfo->drawlists[GLDL_LIGHTFOG].Sort();
@@ -422,10 +421,8 @@ void FGLRenderer::RenderScene(int recursion)
 	}
 	if (pass == GLPASS_BASE) pass = GLPASS_BASE_MASKED;
 	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold);
-	gl_RenderState.EnableBrightmap(true);
 	gl_drawinfo->drawlists[GLDL_MASKED].Sort();
 	gl_drawinfo->drawlists[GLDL_MASKED].Draw(pass);
-	gl_RenderState.EnableBrightmap(false);
 	gl_drawinfo->drawlists[GLDL_FOGMASKED].Sort();
 	gl_drawinfo->drawlists[GLDL_FOGMASKED].Draw(pass);
 	gl_drawinfo->drawlists[GLDL_LIGHTFOGMASKED].Sort();

@@ -461,7 +461,6 @@ void GLWall::RenderTranslucentWall()
 	int extra;
 	if (gltexture) 
 	{
-		if (flags&GLWF_FOGGY) gl_RenderState.EnableBrightmap(false);
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gltexture->Bind(flags, 0);
 		extra = getExtraLight();
@@ -486,7 +485,6 @@ void GLWall::RenderTranslucentWall()
 	{
 		gl_RenderState.EnableTexture(true);
 	}
-	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.EnableGlow(false);
 }
 

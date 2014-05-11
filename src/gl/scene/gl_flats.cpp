@@ -471,11 +471,9 @@ void GLFlat::Draw(int pass)
 		}
 		else 
 		{
-			if (foggy) gl_RenderState.EnableBrightmap(false);
 			gltexture->Bind();
 			bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true);
-			gl_RenderState.EnableBrightmap(true);
 			if (pushed)
 			{
 				glPopMatrix();

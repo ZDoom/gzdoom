@@ -393,10 +393,9 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
 			glUniform3fv(sh->colormaprange_index, 1, m);
 		}
 	}
-	/*
 	else
 	{
-		bool desat = cm>=CM_DESAT1 && cm<=CM_DESAT31;
+		bool desat = false;// cm >= CM_DESAT1 && cm <= CM_DESAT31;
 		sh = shader[glowing + 2*desat + 4*lights + (glset.lightmode & 8)];
 		// [BB] If there was a problem when loading the shader, sh is NULL here.
 		if( sh )
@@ -404,11 +403,10 @@ FShader *FShaderContainer::Bind(int cm, bool glowing, float Speed, bool lights)
 			sh->Bind(Speed);
 			if (desat)
 			{
-				glUniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
+				//glUniform1f(sh->desaturation_index, 1.f-float(cm-CM_DESAT0)/(CM_DESAT31-CM_DESAT0));
 			}
 		}
 	}
-	*/
 	return sh;
 }
 

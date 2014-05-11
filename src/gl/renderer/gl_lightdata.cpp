@@ -375,7 +375,7 @@ void gl_SetColor(int light, int rellight, const FColormap * cm, float alpha, Pal
 //
 //==========================================================================
 
-static float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
+float gl_GetFogDensity(int lightlevel, PalEntry fogcolor)
 {
 	float density;
 

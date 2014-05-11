@@ -236,6 +236,11 @@ public:
 		mDynColor = pe;
 	}
 
+	void SetObjectColor(PalEntry pe)
+	{
+		mObjectColor = pe;
+	}
+
 	void SetFog(PalEntry c, float d)
 	{
 		mFogColor = c;

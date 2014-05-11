@@ -2,6 +2,7 @@
 #define __GL_RENDERSTATE_H
 
 #include <string.h>
+#include "gl/system/gl_interface.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 
@@ -177,6 +178,7 @@ public:
 	void SetTextureMode(int mode)
 	{
 		mTextureMode = mode;
+		gl.checkTextureMode(mode);
 	}
 
 	void EnableTexture(bool on)

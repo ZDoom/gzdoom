@@ -48,7 +48,7 @@ enum ETexUse
 };
 
 
-class FGLTexture //: protected WorldTextureInfo, protected PatchTextureInfo
+class FGLTexture
 {
 	friend class FMaterial;
 public:
@@ -68,21 +68,21 @@ private:
 	bool bExpand;
 	float AlphaThreshold;
 
-	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, int cm);
+	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, bool alphatexture);
 	BYTE *WarpBuffer(BYTE *buffer, int Width, int Height, int warp);
 
 	FHardwareTexture *CreateTexture(int clampmode);
 	//bool CreateTexture();
 	bool CreatePatch();
 
-	const FHardwareTexture *Bind(int texunit, int cm, int clamp, int translation, FTexture *hirescheck, int warp);
-	const FHardwareTexture *BindPatch(int texunit, int cm, int translation, int warp);
+	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck, int warp);
+	const FHardwareTexture *BindPatch(int texunit, int translation, int warp, bool alphatexture);
 
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand, FTexture *hirescheck, int warp);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand, FTexture *hirescheck, int warp, bool alphatexture = false);
 
 	void Clean(bool all);
 	int Dump(int i);
@@ -138,9 +138,9 @@ public:
 	void Bind(int cm, int clamp = 0, int translation = 0, int overrideshader = 0);
 	void BindPatch(int cm, int translation = 0, int overrideshader = 0);
 
-	unsigned char * CreateTexBuffer(int cm, int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
 	{
-		return mBaseLayer->CreateTexBuffer(cm, translation, w, h, expand, allowhires? tex:NULL, 0);
+		return mBaseLayer->CreateTexBuffer(translation, w, h, expand, allowhires? tex:NULL, 0);
 	}
 
 	void Clean(bool f)
@@ -233,7 +233,7 @@ public:
 			if (!mBaseLayer->tex->bHasCanvas)
 			{
 				int w, h;
-				unsigned char *buffer = CreateTexBuffer(CM_DEFAULT, 0, w, h);
+				unsigned char *buffer = CreateTexBuffer(0, w, h);
 				delete [] buffer;
 			}
 			else

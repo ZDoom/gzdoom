@@ -44,6 +44,11 @@ struct RenderContext
 	{
 		return glslversion >= 1.3f;
 	}
+
+	void checkTextureMode(int mode)
+	{
+		if (!hasGLSL()) needAlphaTexture = (mode == TM_REDTOALPHA);
+	}
 };
 
 extern RenderContext gl;

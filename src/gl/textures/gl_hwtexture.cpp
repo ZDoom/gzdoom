@@ -277,9 +277,7 @@ FHardwareTexture::FHardwareTexture(int _width, int _height, bool _mipmap, bool w
 	texwidth=_width;
 	texheight=_height;
 
-	int cm_arraysize = CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size();
-	glTexID = new unsigned[cm_arraysize];
-	memset(glTexID,0,sizeof(unsigned int)*cm_arraysize);
+	glDefTexID = 0;
 	clampmode=0;
 	glDepthID = 0;
 	forcenofiltering = nofilter;
@@ -317,21 +315,8 @@ void FHardwareTexture::Clean(bool all)
 
 	if (all)
 	{
-		for (int i=0;i<cm_arraysize;i++)
-		{
-			DeleteTexture(glTexID[i]);
-		}
-		//glDeleteTextures(cm_arraysize,glTexID);
-		memset(glTexID,0,sizeof(unsigned int)*cm_arraysize);
-	}
-	else
-	{
-		for (int i=1;i<cm_arraysize;i++)
-		{
-			DeleteTexture(glTexID[i]);
-		}
-		//glDeleteTextures(cm_arraysize-1,glTexID+1);
-		memset(glTexID+1,0,sizeof(unsigned int)*(cm_arraysize-1));
+		DeleteTexture(glDefTexID);
+		glDefTexID = 0;
 	}
 	for(unsigned int i=0;i<glTexID_Translated.Size();i++)
 	{
@@ -349,7 +334,6 @@ void FHardwareTexture::Clean(bool all)
 FHardwareTexture::~FHardwareTexture() 
 { 
 	Clean(true); 
-	delete [] glTexID;
 }
 
 
@@ -359,28 +343,24 @@ FHardwareTexture::~FHardwareTexture()
 //
 //===========================================================================
 
-unsigned * FHardwareTexture::GetTexID(int cm, int translation)
+unsigned * FHardwareTexture::GetTexID(int translation)
 {
-	if (cm < 0 || cm >= CM_MAXCOLORMAP) cm=CM_DEFAULT;
-
 	if (translation==0)
 	{
-		return &glTexID[cm];
+		return &glDefTexID;
 	}
 
 	// normally there aren't more than very few different 
 	// translations here so this isn't performance critical.
 	for(unsigned int i=0;i<glTexID_Translated.Size();i++)
 	{
-		if (glTexID_Translated[i].cm == cm &&
-			glTexID_Translated[i].translation == translation)
+		if (glTexID_Translated[i].translation == translation)
 		{
 			return &glTexID_Translated[i].glTexID;
 		}
 	}
 
 	int add = glTexID_Translated.Reserve(1);
-	glTexID_Translated[add].cm=cm;
 	glTexID_Translated[add].translation=translation;
 	glTexID_Translated[add].glTexID=0;
 	return &glTexID_Translated[add].glTexID;
@@ -391,9 +371,10 @@ unsigned * FHardwareTexture::GetTexID(int cm, int translation)
 //	Binds this patch
 //
 //===========================================================================
-unsigned int FHardwareTexture::Bind(int texunit, int cm,int translation)
+unsigned int FHardwareTexture::Bind(int texunit, int translation, bool alphatexture)
 {
-	unsigned int * pTexID=GetTexID(cm, translation);
+	if (alphatexture) translation = TRANS_Alpha;
+	unsigned int * pTexID=GetTexID(translation);
 
 	if (*pTexID!=0)
 	{
@@ -461,7 +442,7 @@ void FHardwareTexture::BindToFrameBuffer()
 {
 	if (gl.flags & RFL_FRAMEBUFFER)
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glTexID[0], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glDefTexID, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
 	}
 }
@@ -472,15 +453,13 @@ void FHardwareTexture::BindToFrameBuffer()
 //	(re-)creates the texture
 //
 //===========================================================================
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, bool wrap, int texunit,
-									  int cm, int translation)
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, bool wrap, int texunit, int translation, bool alphatexture)
 {
-	if (cm < 0 || cm >= CM_MAXCOLORMAP) cm=CM_DEFAULT;
-
-	unsigned int * pTexID=GetTexID(cm, translation);
+	if (alphatexture) translation = TRANS_Alpha;
+	unsigned int * pTexID=GetTexID(translation);
 
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
-	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP, cm==CM_SHADE, texunit);
+	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP, alphatexture, texunit);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 	return *pTexID;
 }

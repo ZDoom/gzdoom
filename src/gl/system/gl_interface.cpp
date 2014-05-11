@@ -194,7 +194,6 @@ void gl_PrintStartupLog()
 
 void gl_SetTextureMode(int type)
 {
-	gl.needAlphaTexture = false;
 	if (type == TM_MASK)
 	{
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
@@ -239,7 +238,6 @@ void gl_SetTextureMode(int type)
 	else // if (type == TM_MODULATE)
 	{
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		gl.needAlphaTexture = (type == TM_REDTOALPHA);
 	}
 }
 

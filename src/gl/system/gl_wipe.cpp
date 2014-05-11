@@ -145,9 +145,9 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	}
 
 	wipestartscreen = new FHardwareTexture(Width, Height, false, false, false, true);
-	wipestartscreen->CreateTexture(NULL, Width, Height, false, 0, CM_DEFAULT);
+	wipestartscreen->CreateTexture(NULL, Width, Height, false, 0);
 	glFinish();
-	wipestartscreen->Bind(0, CM_DEFAULT);
+	wipestartscreen->Bind(0);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -168,9 +168,9 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 void OpenGLFrameBuffer::WipeEndScreen()
 {
 	wipeendscreen = new FHardwareTexture(Width, Height, false, false, false, true);
-	wipeendscreen->CreateTexture(NULL, Width, Height, false, 0, CM_DEFAULT);
+	wipeendscreen->CreateTexture(NULL, Width, Height, false, 0);
 	glFlush();
-	wipeendscreen->Bind(0, CM_DEFAULT);
+	wipeendscreen->Bind(0);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -280,7 +280,7 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();
-	fb->wipestartscreen->Bind(0, CM_DEFAULT);
+	fb->wipestartscreen->Bind(0);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
@@ -293,7 +293,7 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	glVertex2i(fb->Width, fb->Height);
 	glEnd();
 
-	fb->wipeendscreen->Bind(0, CM_DEFAULT);
+	fb->wipeendscreen->Bind(0);
 	glColor4f(1.f, 1.f, 1.f, clamp(Clock/32.f, 0.f, 1.f));
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
@@ -347,7 +347,7 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 	// Draw the new screen on the bottom.
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.Apply();
-	fb->wipeendscreen->Bind(0, CM_DEFAULT);
+	fb->wipeendscreen->Bind(0);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
@@ -363,7 +363,7 @@ bool OpenGLFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLFrameBuffer *fb)
 	int i, dy;
 	bool done = false;
 
-	fb->wipestartscreen->Bind(0, CM_DEFAULT);
+	fb->wipestartscreen->Bind(0);
 	// Copy the old screen in vertical strips on top of the new one.
 	while (ticks--)
 	{
@@ -492,7 +492,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();
-	fb->wipestartscreen->Bind(0, CM_DEFAULT);
+	fb->wipestartscreen->Bind(0);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
 	glTexCoord2f(0, vb);
@@ -523,10 +523,10 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	// Burn the new screen on top of it.
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-	fb->wipeendscreen->Bind(1, CM_DEFAULT);
+	fb->wipeendscreen->Bind(1);
 	//BurnTexture->Bind(0, CM_DEFAULT);
 
-	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, false, 0, CM_DEFAULT);
+	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, false, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

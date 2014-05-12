@@ -45,6 +45,7 @@
 
 #include "gl/system/gl_cvars.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -336,13 +337,28 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
 
 	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLE_FAN);
-	for(i=0;i<4;i++)
+	if (!gl_usevbo)
 	{
-		glTexCoord2f(dv[i].u,dv[i].v);
-		glVertex3f(dv[i].x,dv[i].z,dv[i].y);
+		glBegin(GL_TRIANGLE_FAN);
+		for (i = 0; i < 4; i++)
+		{
+			glTexCoord2f(dv[i].u, dv[i].v);
+			glVertex3f(dv[i].x, dv[i].z, dv[i].y);
+		}
+		glEnd();
 	}
-	glEnd();
+	else
+	{
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		for (i = 0; i < 4; i++)
+		{
+			ptr->Set(dv[i].x, dv[i].z, dv[i].y, dv[i].u, dv[i].v);
+			ptr++;
+		}
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+	}
 	rendered_decals++;
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.SetObjectColor(0xffffffff);

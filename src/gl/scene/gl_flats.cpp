@@ -153,14 +153,14 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 
 		// Render the light
 		glBegin(GL_TRIANGLE_FAN);
-		for(k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
+		for (k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
 		{
 			vertex_t *vt = v->v1;
 			float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
 
 			t1.Set(vt->fx, zc, vt->fy);
 			Vector nearToVert = t1 - nearPt;
-			glTexCoord2f( (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
+			glTexCoord2f((nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
 
 			glVertex3f(vt->fx, zc, vt->fy);
 		}

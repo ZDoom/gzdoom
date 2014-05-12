@@ -65,7 +65,6 @@ class FRenderState
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
 	PalEntry mDynColor;
-	float mFogDensity;
 
 	int mEffectState;
 	int mColormapState;

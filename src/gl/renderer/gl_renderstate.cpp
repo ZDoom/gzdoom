@@ -69,7 +69,7 @@ void FRenderState::Reset()
 	ffTextureEnabled = ffFogEnabled = false;
 	mSpecialEffect = ffSpecialEffect = EFF_NONE;
 	mFogColor.d = ffFogColor.d = -1;
-	mFogDensity = ffFogDensity = 0;
+	ffFogDensity = 0;
 	mTextureMode = ffTextureMode = -1;
 	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
@@ -316,10 +316,11 @@ void FRenderState::Apply(bool forcenoshader)
 				GLfloat FogColor[4]={mFogColor.r/255.0f,mFogColor.g/255.0f,mFogColor.b/255.0f,0.0f};
 				glFogfv(GL_FOG_COLOR, FogColor);
 			}
-			if (ffFogDensity != mFogDensity)
+			if (ffFogDensity != mLightParms[2])
 			{
-				glFogf(GL_FOG_DENSITY, mFogDensity/64000.f);
-				ffFogDensity=mFogDensity;
+				const float LOG2E = 1.442692f;	// = 1/log(2)
+				glFogf(GL_FOG_DENSITY, -mLightParms[2] / LOG2E);
+				ffFogDensity = mLightParms[2];
 			}
 		}
 		if (mSpecialEffect != ffSpecialEffect)

@@ -1,0 +1,14 @@
+
+out vec4 pixelpos;
+
+void main()
+{
+	// perform exactly the same relevant steps as in the main shader to ensure matching results (that also means including the model matrix here!)
+	vec4 worldcoord = ModelMatrix * gl_Vertex;
+	vec4 eyeCoordPos = ViewMatrix * worldcoord;
+
+	pixelpos.xyz = worldcoord.xyz;
+	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
+	
+	gl_Position = ProjectionMatrix * eyeCoordPos;
+}

@@ -26,6 +26,14 @@ struct FFlatVertex
 	float u,v;		// texture coordinates
 
 	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
+	void Set(float xx, float zz, float yy, float uu, float vv)
+	{
+		x = xx;
+		z = zz;
+		y = yy;
+		u = uu;
+		v = vv;
+	}
 };
 
 #define VTO ((FFlatVertex*)NULL)

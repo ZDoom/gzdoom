@@ -528,7 +528,7 @@ void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
 	touching_subsectors = AddLightNode(&subSec->lighthead[additive], subSec, this, touching_subsectors);
 	if (subSec->sector->validcount != ::validcount)
 	{
-		touching_sector = AddLightNode(&subSec->sector->lighthead[additive], subSec->sector, this, touching_sector);
+		touching_sector = AddLightNode(&subSec->render_sector->lighthead[additive], subSec->sector, this, touching_sector);
 		subSec->sector->validcount = ::validcount;
 	}
 

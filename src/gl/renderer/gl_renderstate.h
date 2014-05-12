@@ -68,7 +68,6 @@ class FRenderState
 
 	int mEffectState;
 	int mColormapState;
-	float mWarpTime;
 
 	int glSrcBlend, glDstBlend;
 	int glAlphaFunc;
@@ -93,7 +92,7 @@ public:
 
 	void Reset();
 
-	int SetupShader(bool cameratexture, int &shaderindex, float warptime);
+	int SetupShader(int &shaderindex, float warptime);
 	void Apply(bool forcenoshader = false);
 
 	void SetVertexBuffer(FVertexBuffer *vb)

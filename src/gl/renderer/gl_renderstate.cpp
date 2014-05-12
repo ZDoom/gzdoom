@@ -94,15 +94,14 @@ void FRenderState::Reset()
 //
 //==========================================================================
 
-int FRenderState::SetupShader(bool cameratexture, int &shaderindex, float warptime)
+int FRenderState::SetupShader(int &shaderindex, float warptime)
 {
 	int softwarewarp = 0;
-
 
 	if (gl.hasGLSL())
 	{
 		mEffectState = shaderindex;
-		mWarpTime = warptime;
+		if (shaderindex > 0) GLRenderer->mShaderManager->SetWarpSpeed(shaderindex, warptime);
 	}
 	else
 	{

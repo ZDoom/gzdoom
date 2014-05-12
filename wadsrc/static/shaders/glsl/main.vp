@@ -1,40 +1,19 @@
-#ifndef NO_FOG
-	varying vec4 pixelpos;
-	attribute vec4 fogparams;
-	varying vec4 fogparm;
-#endif
-#ifndef NO_GLOW
-	varying vec2 glowdist;
-	uniform vec4 glowbottomplane, glowtopplane;
-#endif
 
-#ifdef SOFTLIGHT
-	attribute float lightlevel_in;
-	varying float lightlevel;
-#endif
+out vec4 pixelpos;
+out vec2 glowdist;
 
 void main()
 {
-	#ifdef SOFTLIGHT
-		lightlevel = lightlevel_in;
-	#endif
-
-	// We use texture matrix 7 as the model matrix and the modelview matrix as the view matrix.
-	vec4 worldcoord = gl_TextureMatrix[7] * gl_Vertex;
-	vec4 eyeCoordPos = gl_ModelViewMatrix * worldcoord;
+	vec4 worldcoord = ModelMatrix * gl_Vertex;
+	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
 	gl_FrontColor = gl_Color;
-
-	#ifndef NO_FOG
-		pixelpos.xyz = worldcoord.xyz;
-		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
-		fogparm = fogparams;
-	#endif
 	
-	#ifndef NO_GLOW
-		glowdist.x = -((glowtopplane.w + glowtopplane.x * worldcoord.x + glowtopplane.y * worldcoord.z) * glowtopplane.z) - worldcoord.y;
-		glowdist.y = worldcoord.y + ((glowbottomplane.w + glowbottomplane.x * worldcoord.x + glowbottomplane.y * worldcoord.z) * glowbottomplane.z);
-	#endif
+	pixelpos.xyz = worldcoord.xyz;
+	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
+
+	glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
+	glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
 	
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);
@@ -42,17 +21,10 @@ void main()
 		vec3 r = reflect(u, n);
 		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
-	#endif
-	
-	
-	#ifndef SPHEREMAP_0
-		gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-	#else
 		gl_TexCoord[0].xy = sst;
+	#else
+		gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
 	#endif
 	
-	gl_Position = gl_ModelViewProjectionMatrix * worldcoord;
-    #ifdef __GLSL_CG_DATA_TYPES
-		gl_ClipVertex = eyeCoordPos;
-	#endif
+	gl_Position = ProjectionMatrix * eyeCoordPos;
 }

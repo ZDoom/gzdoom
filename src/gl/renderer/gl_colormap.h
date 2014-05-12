@@ -15,13 +15,11 @@ enum EColorManipulation
 	CM_DEFAULT=0,					// untranslated
 	CM_FIRSTSPECIALCOLORMAP,		// first special fixed colormap
 
-	// special internal values for texture creation
-	CM_SHADE= 0x10000002,		// alpha channel texture
+	CM_FOGLAYER = 0x10000000,	// Sprite shaped fog layer
 
 	// These are not to be passed to the texture manager
 	CM_LITE	= 0x20000000,		// special values to handle these items without excessive hacking
 	CM_TORCH= 0x20000010,		// These are not real color manipulations
-	CM_FOGLAYER= 0x20000020,	// Sprite shaped fog layer
 };
 
 #define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())

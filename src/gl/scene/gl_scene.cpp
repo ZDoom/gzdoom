@@ -842,6 +842,7 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 		DrawPlayerSprites (viewsector, false);
 	}
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.SetSoftLightLevel(-1);
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
 
@@ -1059,6 +1060,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 								FieldOfView * 360.0f / FINEANGLES, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.SetSoftLightLevel(-1);
 	screen->Begin2D(false);
 	DrawBlend(viewsector);
 	glFlush();

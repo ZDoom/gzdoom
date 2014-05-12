@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "gl/system/gl_interface.h"
+#include "gl/data/gl_data.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 
@@ -10,64 +11,9 @@ class FVertexBuffer;
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
 
-struct FStateAttr
-{
-	static int ChangeCounter;
-	int mLastChange;
-
-	FStateAttr()
-	{
-		mLastChange = -1;
-	}
-
-	bool operator == (const FStateAttr &other)
-	{
-		return mLastChange == other.mLastChange;
-	}
-
-	bool operator != (const FStateAttr &other)
-	{
-		return mLastChange != other.mLastChange;
-	}
-
-};
-
-struct FStateVec3 : public FStateAttr
-{
-	float vec[3];
-
-	bool Update(FStateVec3 *other)
-	{
-		if (mLastChange != other->mLastChange)
-		{
-			*this = *other;
-			return true;
-		}
-		return false;
-	}
-
-	void Set(float x, float y, float z)
-	{
-		vec[0] = x;
-		vec[1] = z;
-		vec[2] = y;
-		mLastChange = ++ChangeCounter;
-	}
-};
-
-struct FStateVec4 : public FStateAttr
+struct FStateVec4
 {
 	float vec[4];
-
-	bool Update(FStateVec4 *other)
-	{
-		if (mLastChange != other->mLastChange)
-		{
-			*this = *other;
-			return true;
-		}
-		return false;
-	}
 
 	void Set(float r, float g, float b, float a)
 	{
@@ -75,16 +21,19 @@ struct FStateVec4 : public FStateAttr
 		vec[1] = g;
 		vec[2] = b;
 		vec[3] = a;
-		mLastChange = ++ChangeCounter;
 	}
 };
 
 
 enum EEffect
 {
-	EFF_NONE,
+	EFF_NONE=-1,
 	EFF_FOGBOUNDARY,
 	EFF_SPHEREMAP,
+	EFF_BURN,
+	EFF_STENCIL,
+
+	MAX_EFFECTS
 };
 
 class FRenderState
@@ -96,9 +45,10 @@ class FRenderState
 	bool mBrightmapEnabled;
 	int mSpecialEffect;
 	int mTextureMode;
+	int mDesaturation;
 	int mSoftLight;
-	float mLightParms[2];
-	int mNumLights[3];
+	float mLightParms[4];
+	int mNumLights[4];
 	float *mLightData;
 	int mSrcBlend, mDstBlend;
 	int mAlphaFunc;
@@ -109,7 +59,7 @@ class FRenderState
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
-	FStateVec3 mCameraPos;
+	FStateVec4 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor;
@@ -155,25 +105,25 @@ public:
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
 		mColor.Set(r, g, b, a);
-		glColor4fv(mColor.vec);
+		mDesaturation = desat;
 	}
 
 	void SetColor(PalEntry pe, int desat = 0)
 	{
 		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, pe.a/255.f);
-		glColor4fv(mColor.vec);
+		mDesaturation = desat;
 	}
 
 	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
 	{
 		mColor.Set(pe.r/255.f, pe.g/255.f, pe.b/255.f, alpha);
-		glColor4fv(mColor.vec);
+		mDesaturation = desat;
 	}
 
 	void ResetColor()
 	{
 		mColor.Set(1,1,1,1);
-		glColor4fv(mColor.vec);
+		mDesaturation = 0;
 	}
 
 	void SetTextureMode(int mode)
@@ -213,7 +163,7 @@ public:
 
 	void SetCameraPos(float x, float y, float z)
 	{
-		mCameraPos.Set(x,y,z);
+		mCameraPos.Set(x, z, y, 0);
 	}
 
 	void SetGlowParams(float *t, float *b)
@@ -224,7 +174,8 @@ public:
 
 	void SetSoftLightLevel(int level)
 	{
-		mSoftLight = level;
+		if (glset.lightmode == 8) mLightParms[3] = level / 255.f;
+		else mLightParms[3] = -1.f;
 	}
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
@@ -235,7 +186,7 @@ public:
 
 	void SetDynLight(float r, float g, float b)
 	{
-		mDynColor = PalEntry(xs_CRoundToInt(r*255), xs_CRoundToInt(g*255), xs_CRoundToInt(b*255));
+		mDynColor = PalEntry(255, xs_CRoundToInt(r*255), xs_CRoundToInt(g*255), xs_CRoundToInt(b*255));
 	}
 
 	void SetDynLight(PalEntry pe)
@@ -250,21 +201,23 @@ public:
 
 	void SetFog(PalEntry c, float d)
 	{
+		const float LOG2E = 1.442692f;	// = 1/log(2)
 		mFogColor = c;
-		if (d >= 0.0f) mFogDensity = d;
+		if (d >= 0.0f) mLightParms[2] = d * (-LOG2E / 64000.f);
 	}
 
 	void SetLightParms(float f, float d)
 	{
-		mLightParms[0] = f;
-		mLightParms[1] = d;
+		mLightParms[1] = f;
+		mLightParms[0] = d;
 	}
 
 	void SetLights(int *numlights, float *lightdata)
 	{
-		mNumLights[0] = numlights[0];
-		mNumLights[1] = numlights[1];
-		mNumLights[2] = numlights[2];
+		mNumLights[0] = 0;
+		mNumLights[1] = numlights[0];
+		mNumLights[2] = numlights[1];
+		mNumLights[3] = numlights[2];
 		mLightData = lightdata;	// caution: the data must be preserved by the caller until the 'apply' call!
 	}
 

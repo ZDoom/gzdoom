@@ -136,7 +136,7 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 	{
 		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
 
-		// CM_SHADE is an alpha map with 0==transparent and 1==opaque
+		// alpha map with 0==transparent and 1==opaque
 		if (alphatex) 
 		{
 			for(int i=0;i<256;i++) 

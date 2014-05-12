@@ -7,80 +7,198 @@
 
 extern bool gl_shaderactive;
 
-const int VATTR_FOGPARAMS = 14;
-const int VATTR_LIGHTLEVEL = 13; // Korshun.
+//==========================================================================
+//
+//
+//==========================================================================
 
-//==========================================================================
-//
-//
-//==========================================================================
+class FUniform1i
+{
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+	}
+
+	void Set(int newvalue)
+	{
+		glUniform1i(mIndex, newvalue);
+	}
+};
+
+class FBufferedUniform1i
+{
+	int mBuffer;
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		mBuffer = 0;
+	}
+
+	void Set(int newvalue)
+	{
+		if (newvalue != mBuffer)
+		{
+			mBuffer = newvalue;
+			glUniform1i(mIndex, newvalue);
+		}
+	}
+};
+
+class FBufferedUniform4i
+{
+	int mBuffer[4];
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		memset(mBuffer, 0, sizeof(mBuffer));
+	}
+
+	void Set(const int *newvalue)
+	{
+		if (memcmp(newvalue, mBuffer, sizeof(mBuffer)))
+		{
+			memcpy(mBuffer, newvalue, sizeof(mBuffer));
+			glUniform4iv(mIndex, 1, newvalue);
+		}
+	}
+};
+
+class FBufferedUniform1f
+{
+	int mBuffer;
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		mBuffer = 0;
+	}
+
+	void Set(float newvalue)
+	{
+		if (newvalue != mBuffer)
+		{
+			mBuffer = newvalue;
+			glUniform1f(mIndex, newvalue);
+		}
+	}
+};
+
+class FBufferedUniform4f
+{
+	float mBuffer[4];
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		memset(mBuffer, 0, sizeof(mBuffer));
+	}
+
+	void Set(const float *newvalue)
+	{
+		if (memcmp(newvalue, mBuffer, sizeof(mBuffer)))
+		{
+			memcpy(mBuffer, newvalue, sizeof(mBuffer));
+			glUniform4fv(mIndex, 1, newvalue);
+		}
+	}
+};
+
+class FUniform4f
+{
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+	}
+
+	void Set(const float *newvalue)
+	{
+		glUniform4fv(mIndex, 1, newvalue);
+	}
+
+	void Set(float a, float b, float c, float d)
+	{
+		glUniform4f(mIndex, a, b, c, d);
+	}
+};
+
+class FBufferedUniformPE
+{
+	PalEntry mBuffer;
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		mBuffer = 0;
+	}
+
+	void Set(PalEntry newvalue)
+	{
+		if (newvalue != mBuffer)
+		{
+			mBuffer = newvalue;
+			glUniform4f(mIndex, newvalue.r/255.f, newvalue.g/255.f, newvalue.b/255.f, newvalue.a/255.f);
+		}
+	}
+};
+
 
 class FShader
 {
-	friend class FShaderContainer;
+	friend class FShaderManager;
 	friend class FRenderState;
 
 	unsigned int hShader;
 	unsigned int hVertProg;
 	unsigned int hFragProg;
+	FName mName;
 
+	FBufferedUniform1f muDesaturation;
+	FBufferedUniform1i muFogEnabled;
+	FBufferedUniform1i muTextureMode;
+	FBufferedUniform4f muCameraPos;
+	FBufferedUniform4f muLightParms;
+	FUniform1i muFixedColormap;
+	FUniform4f muColormapStart;
+	FUniform4f muColormapRange;
+	FBufferedUniform4i muLightRange;
+	FBufferedUniformPE muFogColor;
+	FBufferedUniformPE muDynLightColor;
+	FBufferedUniformPE muObjectColor;
+	FUniform4f muGlowBottomColor;
+	FUniform4f muGlowTopColor;
+	FUniform4f muGlowBottomPlane;
+	FUniform4f muGlowTopPlane;
+	
 	int timer_index;
-	int desaturation_index;
-	int fogenabled_index;
-	int texturemode_index;
-	int camerapos_index;
-	int lightparms_index;
-	int colormapstart_index;
-	int colormaprange_index;
-	int lightrange_index;
-	int fogcolor_index;
 	int lights_index;
-	int dlightcolor_index;
-	int glowbottomcolor_index;
-	int glowtopcolor_index;
-	int glowbottomplane_index;
-	int glowtopplane_index;
-	int objectcolor_index;
-
-	PalEntry currentdlightcolor;
-	PalEntry currentobjectcolor;
 	int currentglowstate;
-	int currentfogenabled;
-	int currenttexturemode;
-	float currentlightfactor;
-	float currentlightdist;
-
-	PalEntry currentfogcolor;
-	float currentfogdensity;
-
-	FStateVec3 currentcamerapos;
+	int currentfixedcolormap;
 
 public:
-	FShader()
+	FShader(const char *name)
+		: mName(name)
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentglowstate = currentfogenabled = currenttexturemode = 0;
-		currentlightfactor = currentlightdist = 0.0f;
-		currentfogdensity = -1;
-		currentdlightcolor = currentobjectcolor = currentfogcolor = 0;
-
-		timer_index = -1;
-		desaturation_index = -1;
-		fogenabled_index = -1;
-		texturemode_index = -1;
-		camerapos_index = -1;
-		lightparms_index = -1;
-		colormapstart_index = -1;
-		colormaprange_index = -1;
-		lightrange_index = -1;
-		fogcolor_index = -1;
-		lights_index = -1;
-		dlightcolor_index = -1;
-		objectcolor_index = -1;
-		glowtopplane_index = -1;
-		glowbottomplane_index = -1;
-		glowtopcolor_index = -1;
-		glowbottomcolor_index = -1;
+		currentglowstate = 0;
+		currentfixedcolormap = 0;
 	}
 
 	~FShader();
@@ -91,34 +209,10 @@ public:
 	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
 	void SetLightRange(int start, int end, int forceadd);
 
-	bool Bind(float Speed);
+	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 
-};
 
-//==========================================================================
-//
-// This class contains the shaders for the different lighting modes
-// that are required (e.g. special colormaps etc.)
-//
-//==========================================================================
-
-class FShaderContainer
-{
-	friend class FShaderManager;
-
-	FName Name;
-
-	enum { NUM_SHADERS = 16 };
-
-	FShader *shader[NUM_SHADERS];
-	FShader *shader_cm;	// the shader for fullscreen colormaps
-	FShader *shader_fl;	// the shader for the fog layer
-
-public:
-	FShaderContainer(const char *ShaderName, const char *ShaderPath);
-	~FShaderContainer();
-	FShader *Bind(int cm, bool glowing, float Speed, bool lights);
 };
 
 
@@ -129,14 +223,9 @@ public:
 //==========================================================================
 class FShaderManager
 {
-	enum 
-	{ 
-		NUM_EFFECTS = 2 
-	};
-
-	TArray<FShaderContainer*> mTextureEffects;
+	TArray<FShader*> mTextureEffects;
 	FShader *mActiveShader;
-	FShader *mEffectShaders[NUM_EFFECTS];
+	FShader *mEffectShaders[MAX_EFFECTS];
 
 	void Clean();
 	void CompileShaders();
@@ -144,11 +233,13 @@ class FShaderManager
 public:
 	FShaderManager();
 	~FShaderManager();
+	FShader *Compile(const char *ShaderName, const char *ShaderPath);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
+	void SetWarpSpeed(unsigned int eff, float speed);
 
-	FShaderContainer *Get(unsigned int eff)
+	FShader *Get(unsigned int eff)
 	{
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 		if (eff < mTextureEffects.Size())

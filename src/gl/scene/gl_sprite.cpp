@@ -287,7 +287,7 @@ void GLSprite::Draw(int pass)
 		{
 			// If we get here we know that we have colored fog and no fixed colormap.
 			gl_SetFog(foglevel, rel, &Colormap, additivefog);
-			//gl_RenderState.SetFixedColormap(CM_FOGLAYER); fixme: does not work yet.
+			gl_RenderState.SetFixedColormap(CM_FOGLAYER);
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gl_RenderState.Apply();
@@ -308,7 +308,7 @@ void GLSprite::Draw(int pass)
 				glVertex3fv(&v4[0]);
 			}
 			glEnd();
-
+			gl_RenderState.SetFixedColormap(CM_DEFAULT);
 		}
 	}
 	else

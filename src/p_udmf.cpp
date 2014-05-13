@@ -658,6 +658,9 @@ public:
 				case NAME_Stencil:
 					th->RenderStyle = STYLE_Stencil;
 					break;
+				case NAME_AddStencil:
+					th->RenderStyle = STYLE_AddStencil;
+					break;
 				case NAME_Translucent:
 					th->RenderStyle = STYLE_Translucent;
 					break;
@@ -667,6 +670,9 @@ public:
 					break;
 				case NAME_Shaded:
 					th->RenderStyle = STYLE_Shaded;
+					break;
+				case NAME_AddShaded:
+					th->RenderStyle = STYLE_AddShaded;
 					break;
 				case NAME_TranslucentStencil:
 					th->RenderStyle = STYLE_TranslucentStencil;

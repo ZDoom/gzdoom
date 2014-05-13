@@ -1450,7 +1450,7 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
 	}
 	else
 	{
-		picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
+		picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, FTexture::TEX_Flat);
 	}
 
 	if (picnum.isValid())

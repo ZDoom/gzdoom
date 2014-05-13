@@ -271,16 +271,14 @@ void FMapInfoParser::ParseGameInfo()
 		else if(nextKey.CompareNoCase("armoricons") == 0)
 		{
 			sc.MustGetToken(TK_StringConst);
-			strncpy(gameinfo.ArmorIcon1, sc.String, 8);
-			gameinfo.ArmorIcon1[8] = 0;
+			gameinfo.ArmorIcon1 = sc.String;
 			if (sc.CheckToken(','))
 			{
 				sc.MustGetToken(TK_FloatConst);
 				gameinfo.Armor2Percent = FLOAT2FIXED(sc.Float);
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_StringConst);
-				strncpy(gameinfo.ArmorIcon2, sc.String, 8);
-				gameinfo.ArmorIcon2[8] = 0;
+				gameinfo.ArmorIcon2 = sc.String;
 			}
 		}
 		else if(nextKey.CompareNoCase("maparrow") == 0)
@@ -295,7 +293,7 @@ void FMapInfoParser::ParseGameInfo()
 			else gameinfo.mCheatMapArrow = "";
 		}
 		// Insert valid keys here.
-		GAMEINFOKEY_CSTRING(titlePage, "titlePage", 8)
+		GAMEINFOKEY_STRING(TitlePage, "titlePage")
 		GAMEINFOKEY_STRINGARRAY(creditPages, "addcreditPage", 8, false)
 		GAMEINFOKEY_STRINGARRAY(creditPages, "CreditPage", 8, true)
 		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "addplayerclasses", 0, false)
@@ -306,17 +304,17 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_FLOAT(pageTime, "pageTime")
 		GAMEINFOKEY_STRING(chatSound, "chatSound")
 		GAMEINFOKEY_MUSIC(finaleMusic, finaleOrder, "finaleMusic")
-		GAMEINFOKEY_CSTRING(finaleFlat, "finaleFlat", 8)
+		GAMEINFOKEY_STRING(FinaleFlat, "finaleFlat")
 		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8, true)
 		GAMEINFOKEY_STRINGARRAY(infoPages, "addinfoPage", 8, false)
 		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8, true)
-		GAMEINFOKEY_CSTRING(PauseSign, "pausesign", 8)
+		GAMEINFOKEY_STRING(PauseSign, "pausesign")
 		GAMEINFOKEY_STRING(quitSound, "quitSound")
-		GAMEINFOKEY_CSTRING(borderFlat, "borderFlat", 8)
+		GAMEINFOKEY_STRING(BorderFlat, "borderFlat")
 		GAMEINFOKEY_FIXED(telefogheight, "telefogheight")
 		GAMEINFOKEY_FIXED(gibfactor, "gibfactor")
 		GAMEINFOKEY_INT(defKickback, "defKickback")
-		GAMEINFOKEY_CSTRING(SkyFlatName, "SkyFlatName", 8)
+		GAMEINFOKEY_STRING(SkyFlatName, "SkyFlatName")
 		GAMEINFOKEY_STRING(translator, "translator")
 		GAMEINFOKEY_COLOR(pickupcolor, "pickupcolor")
 		GAMEINFOKEY_COLOR(defaultbloodcolor, "defaultbloodcolor")
@@ -336,7 +334,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
-		GAMEINFOKEY_CSTRING(Endoom, "endoom", 8)
+		GAMEINFOKEY_STRING(Endoom, "endoom")
 		GAMEINFOKEY_INT(player5start, "player5start")
 		GAMEINFOKEY_STRINGARRAY(quitmessages, "addquitmessages", 0, false)
 		GAMEINFOKEY_STRINGARRAY(quitmessages, "quitmessages", 0, true)
@@ -347,7 +345,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRING(mFontColorHeader, "menufontcolor_header")
 		GAMEINFOKEY_STRING(mFontColorHighlight, "menufontcolor_highlight")
 		GAMEINFOKEY_STRING(mFontColorSelection, "menufontcolor_selection")
-		GAMEINFOKEY_CSTRING(mBackButton, "menubackbutton", 8)
+		GAMEINFOKEY_STRING(mBackButton, "menubackbutton")
 		GAMEINFOKEY_INT(TextScreenX, "textscreenx")
 		GAMEINFOKEY_INT(TextScreenY, "textscreeny")
 		GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")

@@ -78,7 +78,7 @@ struct gameinfo_t
 	EGameType gametype;
 	FString ConfigName;
 
-	char titlePage[9];
+	FString TitlePage;
 	bool drawreadthis;
 	bool noloopfinalemusic;
 	bool intermissioncounter;
@@ -98,13 +98,13 @@ struct gameinfo_t
 	FString chatSound;
 	FString finaleMusic;
 	int finaleOrder;
-	char finaleFlat[9];
-	char borderFlat[9];
-	char SkyFlatName[9];
-	char ArmorIcon1[9];
-	char ArmorIcon2[9];
-	char PauseSign[9];
-	char Endoom[9];
+	FString FinaleFlat;
+	FString BorderFlat;
+	FString SkyFlatName;
+	FString ArmorIcon1;
+	FString ArmorIcon2;
+	FString PauseSign;
+	FString Endoom;
 	fixed_t Armor2Percent;
 	FString quitSound;
 	gameborder_t *border;
@@ -133,7 +133,7 @@ struct gameinfo_t
 	FName mFontColorHeader;
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
-	char mBackButton[9];
+	FString mBackButton;
 	fixed_t gibfactor;
 	int TextScreenX;
 	int TextScreenY;

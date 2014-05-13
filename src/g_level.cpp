@@ -870,8 +870,8 @@ void G_DoLoadLevel (int position, bool autosave)
 	// DOOM determines the sky texture to be used
 	// depending on the current episode and the game version.
 	// [RH] Fetch sky parameters from FLevelLocals.
-	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
-	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+	sky1texture = level.skytexture1;
+	sky2texture = level.skytexture2;
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();
@@ -1222,15 +1222,16 @@ void G_InitLevelLocals ()
 	level.info = info;
 	level.skyspeed1 = info->skyspeed1;
 	level.skyspeed2 = info->skyspeed2;
-	strncpy (level.skypic2, info->skypic2, 8);
+	level.skytexture1 = TexMan.GetTexture(info->SkyPic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	level.skytexture2 = TexMan.GetTexture(info->SkyPic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	level.fadeto = info->fadeto;
 	level.cdtrack = info->cdtrack;
 	level.cdid = info->cdid;
 	level.FromSnapshot = false;
 	if (level.fadeto == 0)
 	{
-		R_SetDefaultColormap (info->fadetable);
-		if (strnicmp (info->fadetable, "COLORMAP", 8) != 0)
+		R_SetDefaultColormap (info->FadeTable);
+		if (strnicmp (info->FadeTable, "COLORMAP", 8) != 0)
 		{
 			level.flags |= LEVEL_HASFADETABLE;
 		}
@@ -1277,11 +1278,6 @@ void G_InitLevelLocals ()
 	level.nextmap[10] = 0;
 	strncpy (level.secretmap, info->secretmap, 10);
 	level.secretmap[10] = 0;
-	strncpy (level.skypic1, info->skypic1, 8);
-	level.skypic1[8] = 0;
-	if (!level.skypic2[0])
-		strncpy (level.skypic2, level.skypic1, 8);
-	level.skypic2[8] = 0;
 
 	compatflags.Callback();
 	compatflags2.Callback();
@@ -1406,18 +1402,18 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	if (!hubLoad)
 		level.totaltime = i;
 
-	if (arc.IsStoring ())
+	if (SaveVersion >= 4507)
 	{
-		arc.WriteName (level.skypic1);
-		arc.WriteName (level.skypic2);
+		arc << level.skytexture1 << level.skytexture2;
 	}
 	else
 	{
-		strncpy (level.skypic1, arc.ReadName(), 8);
-		strncpy (level.skypic2, arc.ReadName(), 8);
-		sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
-		sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
-		R_InitSkyMap ();
+		level.skytexture1 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+		level.skytexture2 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	}
+	if (arc.IsLoading())
+	{
+		R_InitSkyMap();
 	}
 
 	G_AirControlChanged ();

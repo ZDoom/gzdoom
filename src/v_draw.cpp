@@ -1444,9 +1444,9 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
 {
 	FTextureID picnum;
 
-	if (level.info != NULL && level.info->bordertexture[0] != 0)
+	if (level.info != NULL && level.info->BorderTexture.Len() != 0)
 	{
-		picnum = TexMan.CheckForTexture (level.info->bordertexture, FTexture::TEX_Flat);
+		picnum = TexMan.CheckForTexture (level.info->BorderTexture, FTexture::TEX_Flat);
 	}
 	else
 	{

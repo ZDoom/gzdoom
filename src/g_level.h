@@ -391,9 +391,9 @@ struct FLevelLocals
 	int			levelnum;
 	int			lumpnum;
 	FString		LevelName;
-	char		mapname[256];			// the lump name (E1M1, MAP01, etc)
-	char		nextmap[11];			// go here when using the regular exit
-	char		secretmap[11];			// map to go to when used secret exit
+	FString		MapName;			// the lump name (E1M1, MAP01, etc)
+	FString		NextMap;			// go here when using the regular exit
+	FString		NextSecretMap;		// map to go to when used secret exit
 	EMapType	maptype;
 
 	DWORD		flags;

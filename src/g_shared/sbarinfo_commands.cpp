@@ -830,7 +830,7 @@ class CommandDrawString : public SBarInfoCommand
 					if(level.lumpnum != cache)
 					{
 						cache = level.lumpnum;
-						str = level.mapname;
+						str = level.MapName;
 						str.ToUpper();
 						RealignString();
 					}

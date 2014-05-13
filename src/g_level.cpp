@@ -445,10 +445,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		bglobal.Init ();
 	}
 
-	if (mapname != level.mapname)
-	{
-		strcpy (level.mapname, mapname);
-	}
+	level.MapName = mapname;
 	if (bTitleLevel)
 	{
 		gamestate = GS_TITLELEVEL;
@@ -491,9 +488,9 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	{
 		// end the game
 		levelname = NULL;
-		if (!strncmp(level.nextmap, "enDSeQ",6))
+		if (!level.NextMap.Compare("enDSeQ",6))
 		{
-			levelname = level.nextmap;	// If there is already an end sequence please leave it alone!
+			nextlevel = level.NextMap;	// If there is already an end sequence please leave it alone!
 		}
 		else 
 		{
@@ -596,18 +593,18 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 const char *G_GetExitMap()
 {
-	return level.nextmap;
+	return level.NextMap;
 }
 
 const char *G_GetSecretExitMap()
 {
-	const char *nextmap = level.nextmap;
+	const char *nextmap = level.NextMap;
 
-	if (level.secretmap[0] != 0)
+	if (level.NextSecretMap.Len() > 0)
 	{
-		if (P_CheckMapData(level.secretmap))
+		if (P_CheckMapData(level.NextSecretMap))
 		{
-			nextmap = level.secretmap;
+			nextmap = level.NextSecretMap;
 		}
 	}
 	return nextmap;
@@ -641,7 +638,7 @@ void G_DoCompleted (void)
 
 	if (gamestate == GS_TITLELEVEL)
 	{
-		strncpy (level.mapname, nextlevel, 255);
+		level.MapName = nextlevel;
 		G_DoLoadLevel (startpos, false);
 		startpos = 0;
 		viewactive = true;
@@ -650,20 +647,20 @@ void G_DoCompleted (void)
 
 	// [RH] Mark this level as having been visited
 	if (!(level.flags & LEVEL_CHANGEMAPCHEAT))
-		FindLevelInfo (level.mapname)->flags |= LEVEL_VISITED;
+		FindLevelInfo (level.MapName)->flags |= LEVEL_VISITED;
 
 	if (automapactive)
 		AM_Stop ();
 
 	wminfo.finished_ep = level.cluster - 1;
 	wminfo.LName0 = TexMan[TexMan.CheckForTexture(level.info->PName, FTexture::TEX_MiscPatch)];
-	wminfo.current = level.mapname;
+	wminfo.current = level.MapName;
 
 	if (deathmatch &&
 		(dmflags & DF_SAME_LEVEL) &&
 		!(level.flags & LEVEL_CHANGEMAPCHEAT))
 	{
-		wminfo.next = level.mapname;
+		wminfo.next = level.MapName;
 		wminfo.LName1 = wminfo.LName0;
 	}
 	else
@@ -850,7 +847,7 @@ void G_DoLoadLevel (int position, bool autosave)
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			level.mapname, level.LevelName.GetChars());
+			level.MapName.GetChars(), level.LevelName.GetChars());
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -899,7 +896,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.maptime = 0;
-	P_SetupLevel (level.mapname, position);
+	P_SetupLevel (level.MapName, position);
 
 	AM_LevelInit();
 
@@ -1056,7 +1053,7 @@ void G_DoWorldDone (void)
 	}
 	else
 	{
-		strncpy (level.mapname, nextlevel, 255);
+		level.MapName = nextlevel;
 	}
 	G_StartTravel ();
 	G_DoLoadLevel (startpos, true);
@@ -1217,7 +1214,7 @@ void G_InitLevelLocals ()
 	level.flags = 0;
 	level.flags2 = 0;
 
-	info = FindLevelInfo (level.mapname);
+	info = FindLevelInfo (level.MapName);
 
 	level.info = info;
 	level.skyspeed1 = info->skyspeed1;
@@ -1274,10 +1271,8 @@ void G_InitLevelLocals ()
 	level.musicorder = info->musicorder;
 
 	level.LevelName = level.info->LookupLevelName();
-	strncpy (level.nextmap, info->nextmap, 10);
-	level.nextmap[10] = 0;
-	strncpy (level.secretmap, info->secretmap, 10);
-	level.secretmap[10] = 0;
+	level.NextMap = info->nextmap;
+	level.NextSecretMap = info->secretmap;
 
 	compatflags.Callback();
 	compatflags2.Callback();

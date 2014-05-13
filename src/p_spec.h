@@ -902,8 +902,8 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 #define ACS_NET				8
 
 int  P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags);
-void P_SuspendScript (int script, char *map);
-void P_TerminateScript (int script, char *map);
+void P_SuspendScript (int script, const char *map);
+void P_TerminateScript (int script, const char *map);
 void P_DoDeferedScripts (void);
 
 //

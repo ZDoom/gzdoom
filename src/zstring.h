@@ -252,9 +252,13 @@ public:
 
 	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }
 	int Compare (const char *other) const { return strcmp (Chars, other); }
+	int Compare(const FString &other, int len) const { return strncmp(Chars, other.Chars, len); }
+	int Compare(const char *other, int len) const { return strncmp(Chars, other, len); }
 
 	int CompareNoCase (const FString &other) const { return stricmp (Chars, other.Chars); }
 	int CompareNoCase (const char *other) const { return stricmp (Chars, other); }
+	int CompareNoCase(const FString &other, int len) const { return strnicmp(Chars, other.Chars, len); }
+	int CompareNoCase(const char *other, int len) const { return strnicmp(Chars, other, len); }
 
 protected:
 	const FStringData *Data() const { return (FStringData *)Chars - 1; }

@@ -3559,7 +3559,7 @@ void P_FreeExtraLevelData()
 //
 
 // [RH] position indicates the start spot to spawn at
-void P_SetupLevel (char *lumpname, int position)
+void P_SetupLevel (const char *lumpname, int position)
 {
 	cycle_t times[20];
 	FMapThing *buildthings;

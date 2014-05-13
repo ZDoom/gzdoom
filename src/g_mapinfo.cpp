@@ -227,7 +227,7 @@ void level_info_t::Reset()
 	mapname[0] = 0;
 	MapBackground = "";
 	levelnum = 0;
-	pname[0] = 0;
+	PName = "";
 	nextmap[0] = 0;
 	secretmap[0] = 0;
 	SkyPic1 = SkyPic2 = "-NOFLAT-";
@@ -898,7 +898,7 @@ DEFINE_MAP_OPTION(outsidefog, true)
 DEFINE_MAP_OPTION(titlepatch, true)
 {
 	parse.ParseAssign();
-	parse.ParseLumpOrTextureName(info->pname);
+	parse.ParseLumpOrTextureName(info->PName);
 }
 
 DEFINE_MAP_OPTION(partime, true)

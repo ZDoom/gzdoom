@@ -270,9 +270,9 @@ struct level_info_t
 	int			levelnum;
 	
 	char		mapname[9];
-	char		pname[9];
 	char		nextmap[11];
 	char		secretmap[11];
+	FString		PName;
 	FString		SkyPic1;
 	FString		SkyPic2;
 	FString		FadeTable;

@@ -656,7 +656,7 @@ void G_DoCompleted (void)
 		AM_Stop ();
 
 	wminfo.finished_ep = level.cluster - 1;
-	wminfo.LName0 = TexMan[TexMan.CheckForTexture(level.info->pname, FTexture::TEX_MiscPatch)];
+	wminfo.LName0 = TexMan[TexMan.CheckForTexture(level.info->PName, FTexture::TEX_MiscPatch)];
 	wminfo.current = level.mapname;
 
 	if (deathmatch &&
@@ -677,7 +677,7 @@ void G_DoCompleted (void)
 		else
 		{
 			wminfo.next = nextinfo->mapname;
-			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->pname, FTexture::TEX_MiscPatch)];
+			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->PName, FTexture::TEX_MiscPatch)];
 		}
 	}
 

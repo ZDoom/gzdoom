@@ -64,7 +64,7 @@ public:
 	}
 	unsigned int GetCount(FFlatVertex *newptr, unsigned int *poffset)
 	{
-		unsigned int newofs = unsigned int(newptr - map);
+		unsigned int newofs = (unsigned int)(newptr - map);
 		unsigned int diff = newofs - mCurIndex;
 		*poffset = mCurIndex;
 		mCurIndex = newofs;

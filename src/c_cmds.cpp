@@ -946,8 +946,15 @@ CCMD(changesky)
 	sky1name = argv[1];
 	if (sky1name[0] != 0)
 	{
-		strncpy (level.skypic1, sky1name, 8);
-		sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		FTextureID newsky = TexMan.GetTexture(sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+		if (newsky.Exists())
+		{
+			sky1texture = level.skytexture1 = newsky;
+		}
+		else
+		{
+			Printf("changesky: Texture '%s' not found\n", sky1name);
+		}
 	}
 	R_InitSkyMap ();
 }

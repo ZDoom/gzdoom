@@ -1316,8 +1316,14 @@ bool AM_clearMarks ()
 
 void AM_LevelInit ()
 {
-	const char *autopage = level.info->mapbg[0] == 0? "AUTOPAGE" : (const char*)&level.info->mapbg[0];
-	mapback = TexMan.CheckForTexture(autopage, FTexture::TEX_MiscPatch);
+	if (level.info->MapBackground.Len() == 0)
+	{
+		mapback = TexMan.CheckForTexture("AUTOPAGE", FTexture::TEX_MiscPatch);
+	}
+	else
+	{
+		mapback = TexMan.CheckForTexture(level.info->MapBackground, FTexture::TEX_MiscPatch);
+	}
 
 	AM_clearMarks();
 

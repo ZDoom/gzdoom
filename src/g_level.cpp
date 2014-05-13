@@ -1408,8 +1408,8 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	}
 	else
 	{
-		sky1texture = TexMan.GetTexture (arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
-		sky2texture = TexMan.GetTexture (arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+		level.skytexture1 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+		level.skytexture2 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	}
 	if (arc.IsLoading())
 	{

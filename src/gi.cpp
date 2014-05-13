@@ -51,7 +51,7 @@ const char *GameNames[17] =
 };
 
 
-static gameborder_t DoomBorder =
+static staticgameborder_t DoomBorder =
 {
 	8, 8,
 	"brdr_tl", "brdr_t", "brdr_tr",
@@ -59,7 +59,7 @@ static gameborder_t DoomBorder =
 	"brdr_bl", "brdr_b", "brdr_br"
 };
 
-static gameborder_t HereticBorder =
+static staticgameborder_t HereticBorder =
 {
 	4, 16,
 	"bordtl", "bordt", "bordtr",
@@ -67,7 +67,7 @@ static gameborder_t HereticBorder =
 	"bordbl", "bordb", "bordbr"
 };
 
-static gameborder_t StrifeBorder =
+static staticgameborder_t StrifeBorder =
 {
 	8, 8,
 	"brdr_tl", "brdr_t", "brdr_tr",
@@ -231,40 +231,37 @@ void FMapInfoParser::ParseGameInfo()
 		}
 		else if(nextKey.CompareNoCase("border") == 0)
 		{
-			if(sc.CheckToken(TK_Identifier))
+			staticgameborder_t *b;
+			if (sc.CheckToken(TK_Identifier))
 			{
 				switch(sc.MustMatchString(GameInfoBorders))
 				{
 					default:
-						gameinfo.border = &DoomBorder;
+						b = &DoomBorder;
 						break;
 					case 1:
-						gameinfo.border = &HereticBorder;
+						b = &HereticBorder;
 						break;
 					case 2:
-						gameinfo.border = &StrifeBorder;
+						b = &StrifeBorder;
 						break;
 				}
+				gameinfo.Border = *b;
 			}
 			else
 			{
 				// border = {size, offset, tr, t, tl, r, l ,br, b, bl};
-				char *graphics[8] = {DoomBorder.tr, DoomBorder.t, DoomBorder.tl, DoomBorder.r, DoomBorder.l, DoomBorder.br, DoomBorder.b, DoomBorder.bl};
+				FString *graphics[8] = { &gameinfo.Border.tr, &gameinfo.Border.t, &gameinfo.Border.tl, &gameinfo.Border.r, &gameinfo.Border.l, &gameinfo.Border.br, &gameinfo.Border.b, &gameinfo.Border.bl };
 				sc.MustGetToken(TK_IntConst);
-				DoomBorder.offset = sc.Number;
+				gameinfo.Border.offset = sc.Number;
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_IntConst);
-				DoomBorder.size = sc.Number;
+				gameinfo.Border.size = sc.Number;
 				for(int i = 0;i < 8;i++)
 				{
 					sc.MustGetToken(',');
 					sc.MustGetToken(TK_StringConst);
-					int len = int(strlen(sc.String));
-					if(len > 8)
-						sc.ScriptError("Border graphic can not be more than 8 characters long.\n");
-					memcpy(graphics[i], sc.String, len);
-					if(len < 8) // end with a null byte if the string is less than 8 chars.
-						graphics[i][len] = 0;
+					(*graphics[i]) = sc.String;
 				}
 			}
 		}

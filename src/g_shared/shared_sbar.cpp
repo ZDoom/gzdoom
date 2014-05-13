@@ -1090,12 +1090,12 @@ void DBaseStatusBar::RefreshBackground () const
 
 		if (setblocks >= 10)
 		{
-			const gameborder_t *border = gameinfo.border;
-			FTexture *p;
-
-			p = TexMan[border->b];
-			screen->FlatFill(0, y, x, y + p->GetHeight(), p, true);
-			screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetHeight(), p, true);
+			FTexture *p = TexMan[gameinfo.Border.b];
+			if (p != NULL)
+			{
+				screen->FlatFill(0, y, x, y + p->GetHeight(), p, true);
+				screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetHeight(), p, true);
+			}
 		}
 	}
 }

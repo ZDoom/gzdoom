@@ -52,7 +52,7 @@
 
 extern const char *GameNames[17];
 
-struct gameborder_t
+struct staticgameborder_t
 {
 	BYTE offset;
 	BYTE size;
@@ -64,6 +64,35 @@ struct gameborder_t
 	char bl[8];
 	char b[8];
 	char br[8];
+};
+
+struct gameborder_t
+{
+	BYTE offset;
+	BYTE size;
+	FString tl;
+	FString t;
+	FString tr;
+	FString l;
+	FString r;
+	FString bl;
+	FString b;
+	FString br;
+
+	gameborder_t &operator=(staticgameborder_t &other)
+	{
+		offset = other.offset;
+		size = other.size;
+		tl = other.tl;
+		t = other.t;
+		tr = other.tr;
+		l = other.l;
+		r = other.r;
+		bl = other.bl;
+		b = other.b;
+		br = other.br;
+		return *this;
+	}
 };
 
 struct FGIFont
@@ -107,7 +136,7 @@ struct gameinfo_t
 	FString Endoom;
 	fixed_t Armor2Percent;
 	FString quitSound;
-	gameborder_t *border;
+	gameborder_t Border;
 	int telefogheight;
 	int defKickback;
 	FString translator;

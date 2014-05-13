@@ -506,12 +506,14 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 			if (nextredir != NULL)
 			{
 				nextinfo = nextredir;
-				levelname = nextinfo->mapname;
 			}
 		}
+		nextlevel = nextinfo->MapName;
 	}
-
-	if (levelname != NULL) nextlevel = levelname;
+	else
+	{
+		nextlevel = levelname;
+	}
 
 	if (nextSkill != -1)
 		NextSkill = nextSkill;
@@ -673,7 +675,7 @@ void G_DoCompleted (void)
 		}
 		else
 		{
-			wminfo.next = nextinfo->mapname;
+			wminfo.next = nextinfo->MapName;
 			wminfo.LName1 = TexMan[TexMan.CheckForTexture(nextinfo->PName, FTexture::TEX_MiscPatch)];
 		}
 	}
@@ -1271,8 +1273,8 @@ void G_InitLevelLocals ()
 	level.musicorder = info->musicorder;
 
 	level.LevelName = level.info->LookupLevelName();
-	level.NextMap = info->nextmap;
-	level.NextSecretMap = info->secretmap;
+	level.NextMap = info->NextMap;
+	level.NextSecretMap = info->NextSecretMap;
 
 	compatflags.Callback();
 	compatflags2.Callback();
@@ -1616,7 +1618,7 @@ static void writeMapName (FArchive &arc, const char *name)
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
 	arc << i->snapshotVer;
-	writeMapName (arc, i->mapname);
+	writeMapName (arc, i->MapName);
 	i->snapshot->Serialize (arc);
 }
 
@@ -1654,7 +1656,7 @@ void G_WriteSnapshots (FILE *file)
 			{
 				arc = new FPNGChunkArchive (file, VIST_ID);
 			}
-			writeMapName (*arc, wadlevelinfos[i].mapname);
+			writeMapName (*arc, wadlevelinfos[i].MapName);
 		}
 	}
 
@@ -1793,7 +1795,7 @@ CCMD(listsnapshots)
 		{
 			unsigned int comp, uncomp;
 			snapshot->GetSizes(comp, uncomp);
-			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].mapname, comp, uncomp);
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), comp, uncomp);
 		}
 	}
 }
@@ -1805,7 +1807,7 @@ CCMD(listsnapshots)
 
 static void writeDefereds (FArchive &arc, level_info_t *i)
 {
-	writeMapName (arc, i->mapname);
+	writeMapName (arc, i->MapName);
 	arc << i->defered;
 }
 
@@ -1917,11 +1919,11 @@ CCMD(listmaps)
 	for(unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
-		MapData *map = P_OpenMapData(info->mapname, true);
+		MapData *map = P_OpenMapData(info->MapName, true);
 
 		if (map != NULL)
 		{
-			Printf("%s: '%s' (%s)\n", info->mapname, info->LookupLevelName().GetChars(),
+			Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
 				Wads.GetWadName(Wads.GetLumpFile(map->lumpnum)));
 			delete map;
 		}

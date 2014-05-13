@@ -167,6 +167,7 @@ public:
 	FString &operator += (char tail);
 	FString &operator += (const FName &name) { return *this += name.GetChars(); }
 	FString &AppendCStrPart (const char *tail, size_t tailLen);
+	FString &CopyCStrPart(const char *tail, size_t tailLen);
 
 	FString &operator << (const FString &tail) { return *this += tail; }
 	FString &operator << (const char *tail) { return *this += tail; }

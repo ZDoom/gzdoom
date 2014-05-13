@@ -83,7 +83,7 @@ struct FMapInfoParser
 	void ParseLumpOrTextureName(FString &name);
 
 	void ParseCluster();
-	void ParseNextMap(char *mapname);
+	void ParseNextMap(FString &mapname);
 	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
 	void ParseMapDefinition(level_info_t &leveldef);
 	void ParseGameInfo();
@@ -269,9 +269,9 @@ struct level_info_t
 {
 	int			levelnum;
 	
-	char		mapname[9];
-	char		nextmap[11];
-	char		secretmap[11];
+	FString		MapName;
+	FString		NextMap;
+	FString		NextSecretMap;
 	FString		PName;
 	FString		SkyPic1;
 	FString		SkyPic2;
@@ -313,7 +313,7 @@ struct level_info_t
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;
-	char		RedirectMap[9];
+	FString		RedirectMapName;
 
 	FString		EnterPic;
 	FString		ExitPic;

@@ -8942,7 +8942,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->mapname);
+		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
 

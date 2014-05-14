@@ -56,6 +56,7 @@ gameinfo
 	nightmarefast = true
 	pausesign = "PAUSED"
 	gibfactor = 0.5
+	dontcrunchcorpses = true
 	cursorpic = "herecurs"
 	textscreenx = 20
 	textscreeny = 5

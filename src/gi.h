@@ -113,6 +113,7 @@ struct gameinfo_t
 	bool intermissioncounter;
 	bool nightmarefast;
 	bool swapmenu;
+	bool dontcrunchcorpses;
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;

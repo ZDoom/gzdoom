@@ -220,8 +220,8 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 		{
 			if (firsttype == FTexture::TEX_Null) return FTextureID(0);
 			if (firsttype == FTexture::TEX_FirstDefined && !(flags & TEXMAN_ReturnFirst)) return FTextureID(0);
+			return FTextureID(firstfound);
 		}
-		return FTextureID(firstfound);
 	}
 
 	

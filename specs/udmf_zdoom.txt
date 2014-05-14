@@ -37,7 +37,7 @@ In addition to the base specification ZDoom recognizes the following lumps
 between the TEXTMAP and ENDMAP lumps:
 
     BEHAVIOR = contains compiled ACS code
-    DIALOGUE = contains compiled Strife conversation scripts.
+    DIALOGUE = contains compiled Strife or USDF conversation scripts.
     ZNODES = Nodes (must be stored as extended GL nodes. Compression is allowed
                     but deprecated for portability reasons.)
     BLOCKMAP = blockmap. It is recommended not to include this lump in UDMF maps.
@@ -166,6 +166,14 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       yscaleceiling = <float>;        // Y texture scale of ceiling texture, Default = 1.0.
       rotationfloor = <float>;        // Rotation of floor texture in degrees, Default = 0.0.
       rotationceiling = <float>;      // Rotation of ceiling texture in degrees, Default = 0.0.
+	  ceilingplane_a = <float>;       // Define the plane equation for the sector's ceiling. Default is a horizontal plane at 'heightceiling'.
+	  ceilingplane_b = <float>;       // 'heightceiling' will still be used to calculate texture alignment.
+	  ceilingplane_c = <float>;       // The plane equation will only be used if all 4 values are given.
+	  ceilingplane_d = <float>;
+	  floorplane_a = <float>;         // Define the plane equation for the sector's floor. Default is a horizontal plane at 'heightfloor'.
+	  floorplane_b = <float>;         // 'heightfloor' will still be used to calculate texture alignment.
+	  floorplane_c = <float>;         // The plane equation will only be used if all 4 values are given.
+	  floorplane_d = <float>;
       lightfloor = <integer>;         // The floor's light level. Default is 0.
       lightceiling = <integer>;       // The ceiling's light level. Default is 0.
       lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
@@ -354,6 +362,10 @@ Added waterzone sector property.
 
 1.22 12.04.2014
 Added transparent line property (to be folded back to core UDMF standard), and health, score, renderstyle, fillcolor, alpha, scale, scalex, scaley, pitch and roll thing properties.
+
+1.24 14.05.2014
+Added plane equations for sector slopes. (Please read carefully to ensure proper use!)
+Changed language describing the DIALOGUE lump to mention USDF as an option.
 
 ===============================================================================
 EOF

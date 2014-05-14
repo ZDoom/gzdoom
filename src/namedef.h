@@ -488,6 +488,15 @@ xx(blockhitscan)
 
 xx(Renderstyle)
 
+xx(ceilingplane_a)
+xx(ceilingplane_b)
+xx(ceilingplane_c)
+xx(ceilingplane_d)
+xx(floorplane_a)
+xx(floorplane_b)
+xx(floorplane_c)
+xx(floorplane_d)
+
 // USDF keywords
 xx(Amount)
 xx(Text)

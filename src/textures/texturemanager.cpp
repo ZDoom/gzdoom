@@ -233,7 +233,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 		{
 			FTexture *const NO_TEXTURE = (FTexture*)-1;
 			int lump = Wads.CheckNumForFullName(name);
-			if (lump != NULL)
+			if (lump >= 0)
 			{
 				FTexture *tex = Wads.GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);

@@ -314,7 +314,7 @@ static bool IsExMy(const char * name)
 
 void WI_LoadBackground(bool isenterpic)
 {
-	const char *lumpname;
+	const char *lumpname = NULL;
 	char buffer[10];
 	in_anim_t an;
 	lnode_t pt;

@@ -302,7 +302,7 @@ FString level_info_t::LookupLevelName()
 			// Strip out the header from the localized string
 			if (MapName.Len() > 3 && MapName[0] == 'E' && MapName[2] == 'M')
 			{
-				mysnprintf (checkstring, countof(checkstring), "%s: ", MapName);
+				mysnprintf (checkstring, countof(checkstring), "%s: ", MapName.GetChars());
 			}
 			else if (MapName.Len() > 3 && MapName[0] == 'M' && MapName[1] == 'A' && MapName[2] == 'P')
 			{

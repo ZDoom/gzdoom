@@ -622,12 +622,14 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 //
 //==========================================================================
 
+/*
 void FMapInfoParser::ParseLumpOrTextureName(char *name)
 {
 	sc.MustGetString();
 	uppercopy(name, sc.String);
 	name[8]=0;
 }
+*/
 
 void FMapInfoParser::ParseLumpOrTextureName(FString &name)
 {
@@ -1572,7 +1574,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 void FMapInfoParser::ParseEpisodeInfo ()
 {
 	unsigned int i;
-	char map[9];
+	FString map;
 	FString pic;
 	FString name;
 	bool remove = false;
@@ -1583,15 +1585,14 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 	// Get map name
 	sc.MustGetString ();
-	uppercopy (map, sc.String);
-	map[8] = 0;
+	map = sc.String;
 
 	if (sc.CheckString ("teaser"))
 	{
 		sc.MustGetString ();
 		if (gameinfo.flags & GI_SHAREWARE)
 		{
-			uppercopy (map, sc.String);
+			map = sc.String;
 		}
 	}
 

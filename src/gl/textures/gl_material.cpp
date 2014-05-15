@@ -855,7 +855,7 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 			FTexture *layer;
 			if (mTextureLayers[i].animated)
 			{
-				FTextureID id = mTextureLayers[i].texture->GetID();
+				FTextureID id = mTextureLayers[i].texture->id;
 				layer = TexMan(id);
 				ValidateSysTexture(layer, false);
 			}

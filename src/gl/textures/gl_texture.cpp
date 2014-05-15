@@ -696,8 +696,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	bool disable_fullbright=false;
 	bool thiswad = false;
 	bool iwad = false;
-	int maplump = -1;
-	FString maplumpname;
+	FTexture *bmtex = NULL;
 
 	sc.MustGetString();
 	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
@@ -734,17 +733,15 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 		{
 			sc.MustGetString();
 
-			if (maplump >= 0)
+			if (bmtex != NULL)
 			{
 				Printf("Multiple brightmap definitions in texture %s\n", tex? tex->Name : "(null)");
 			}
 
-			maplump = Wads.CheckNumForFullName(sc.String, true);
+			bmtex = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
 
-			if (maplump==-1) 
+			if (bmtex == NULL) 
 				Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name : "(null)");
-
-			maplumpname = sc.String;
 		}
 	}
 	if (!tex)
@@ -764,7 +761,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 		if (!useme) return;
 	}
 
-	if (maplump != -1)
+	if (bmtex != NULL)
 	{
 		if (tex->bWarped != 0)
 		{
@@ -772,31 +769,8 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 			return;
 		}
 
-		// Brightmap textures are stored in the texture manager so that multiple
-		// instances of the same textures can be avoided.
-		FTexture *brightmap;
-		FTextureID brightmapId = TexMan.FindTextureByLumpNum(maplump);
-
-		if (!brightmapId.isValid())
-		{
-			// a texture for this lump has not been created yet.
-			brightmap = FTexture::CreateTexture(maplump, tex->UseType);
-			if (!brightmap)
-			{
-				Printf("Unable to create texture from '%s' in brightmap definition for '%s'\n", 
-					maplumpname.GetChars(), tex->Name);
-				return;
-			}
-			brightmap->gl_info.bBrightmap = true;
-			brightmap->Name[0] = 0;	// brightmaps don't have names
-			TexMan.AddTexture(brightmap);
-		}
-		else
-		{
-			brightmap = TexMan[brightmapId];
-		}
-
-		tex->gl_info.Brightmap = brightmap;
+		bmtex->gl_info.bBrightmap = true;
+		tex->gl_info.Brightmap = bmtex;
 	}	
 	tex->gl_info.bBrightmapDisablesFullbright = disable_fullbright;
 }

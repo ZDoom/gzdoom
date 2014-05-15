@@ -272,11 +272,12 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		FString fmt;
 		int lump_wad;
 		int lump_map;
-		int lump_name;
+		int lump_name = -1;
 		
 		// Check for both *.wad and *.map in order to load Build maps
 		// as well. The higher one will take precedence.
-		lump_name = Wads.CheckNumForName(mapname);
+		// Names with more than 8 characters will only be checked as .wad and .map.
+		if (strlen(mapname) <= 8) lump_name = Wads.CheckNumForName(mapname);
 		fmt.Format("maps/%s.wad", mapname);
 		lump_wad = Wads.CheckNumForFullName(fmt);
 		fmt.Format("maps/%s.map", mapname);
@@ -3559,7 +3560,7 @@ void P_FreeExtraLevelData()
 //
 
 // [RH] position indicates the start spot to spawn at
-void P_SetupLevel (char *lumpname, int position)
+void P_SetupLevel (const char *lumpname, int position)
 {
 	cycle_t times[20];
 	FMapThing *buildthings;

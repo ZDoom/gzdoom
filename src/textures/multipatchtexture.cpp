@@ -1001,21 +1001,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 
 	if (!texno.isValid())
 	{
-		int lumpnum = Wads.CheckNumForFullName(sc.String);
-		if (lumpnum >= 0)
-		{
-			texno = TexMan.FindTextureByLumpNum(lumpnum);
-			if (texno.isValid ())
-			{
-				part.Texture = TexMan[texno];
-			}
-			else
-			{
-				part.Texture = FTexture::CreateTexture("", lumpnum, usetype);
-				TexMan.AddTexture(part.Texture);
-			}
-		}
-		else if (strlen(sc.String) <= 8 && !strpbrk(sc.String, "./"))
+		if (strlen(sc.String) <= 8 && !strpbrk(sc.String, "./"))
 		{
 			int lumpnum = Wads.CheckNumForName(sc.String, usetype == TEX_MiscPatch? ns_graphics : ns_patches);
 			if (lumpnum >= 0)

@@ -104,7 +104,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		}
 		else
 		{
-			texname = gameinfo.titlePage;
+			texname = gameinfo.TitlePage.GetChars();
 		}
 	}
 	else if (*texname == '$')

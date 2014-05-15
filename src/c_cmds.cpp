@@ -986,14 +986,10 @@ CCMD(nextmap)
 				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
-	char *next = NULL;
 	
-	if (*level.nextmap)
-		next = level.nextmap;
-
-	if (next != NULL && strncmp(next, "enDSeQ", 6))
+	if (level.NextMap.Len() > 0 && level.NextMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(next);
+		G_DeferedInitNew(level.NextMap);
 	}
 	else
 	{
@@ -1016,12 +1012,9 @@ CCMD(nextsecret)
 	}
 	char *next = NULL;
 	
-	if (*level.secretmap)
-		next = level.secretmap;
-
-	if (next != NULL && strncmp(next, "enDSeQ", 6))
+	if (level.NextSecretMap.Len() > 0 && level.NextSecretMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(next);
+		G_DeferedInitNew(level.NextSecretMap);
 	}
 	else
 	{
@@ -1107,8 +1100,8 @@ static void PrintSecretString(const char *string, bool thislevel)
 
 CCMD(secret)
 {
-	const char *mapname = argv.argc() < 2? level.mapname : argv[1];
-	bool thislevel = !stricmp(mapname, level.mapname);
+	const char *mapname = argv.argc() < 2? level.MapName.GetChars() : argv[1];
+	bool thislevel = !stricmp(mapname, level.MapName);
 	bool foundsome = false;
 
 	int lumpno=Wads.CheckNumForName("SECRETS");

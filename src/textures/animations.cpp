@@ -551,7 +551,7 @@ void FTextureManager::ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 
 void FTextureManager::ParseWarp(FScanner &sc)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny | TEXMAN_ShortNameOnly;
 	bool isflat = false;
 	bool type2 = sc.Compare ("warp2");	// [GRB]
 	sc.MustGetString ();
@@ -616,7 +616,7 @@ void FTextureManager::ParseWarp(FScanner &sc)
 
 void FTextureManager::ParseCameraTexture(FScanner &sc)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny | TEXMAN_ShortNameOnly;
 	int width, height;
 	int fitwidth, fitheight;
 	FString picname;

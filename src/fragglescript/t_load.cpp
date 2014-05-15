@@ -202,15 +202,13 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
-			strncpy(level.nextmap, sc.String, 8);
-			level.nextmap[8]=0;
+			level.NextMap = sc.String;
 		}
 		else if (sc.Compare("nextsecret"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
-			strncpy(level.secretmap, sc.String, 8);
-			level.secretmap[8]=0;
+			level.NextSecretMap = sc.String;
 		}
 		else if (sc.Compare("drown"))
 		{

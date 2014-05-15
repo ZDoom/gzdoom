@@ -1010,6 +1010,16 @@ bool AActor::Grind(bool items)
 	if ((flags & MF_CORPSE) && !(flags3 & MF3_DONTGIB) && (health <= 0))
 	{
 		FState * state = FindState(NAME_Crush);
+
+		// In Heretic and Chex Quest we don't change the actor's sprite, just its size.
+		if (state == NULL && gameinfo.dontcrunchcorpses)
+		{
+			flags &= ~MF_SOLID;
+			flags3 |= MF3_DONTGIB;
+			height = radius = 0;
+			return false;
+		}
+
 		bool isgeneric = false;
 		// ZDoom behavior differs from standard as crushed corpses cannot be raised.
 		// The reason for the change was originally because of a problem with players,

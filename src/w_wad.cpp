@@ -550,6 +550,37 @@ int FWadCollection::GetNumForFullName (const char *name)
 
 //==========================================================================
 //
+// link a texture with a given lump
+//
+//==========================================================================
+
+void FWadCollection::SetLinkedTexture(int lump, FTexture *tex)
+{
+	if ((size_t)lump < NumLumps)
+	{
+		FResourceLump *reslump = LumpInfo[lump].lump;
+		reslump->LinkedTexture = tex;
+	}
+}
+
+//==========================================================================
+//
+// retrieve linked texture
+//
+//==========================================================================
+
+FTexture *FWadCollection::GetLinkedTexture(int lump)
+{
+	if ((size_t)lump < NumLumps)
+	{
+		FResourceLump *reslump = LumpInfo[lump].lump;
+		return reslump->LinkedTexture;
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
 // W_LumpLength
 //
 // Returns the buffer size needed to load the given lump.

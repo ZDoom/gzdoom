@@ -2193,19 +2193,6 @@ void V_InitCustomFonts()
 					FTexture **p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
 					FTextureID texid = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
-					if (!texid.Exists())
-					{
-						int lumpno = Wads.CheckNumForFullName (sc.String);
-						if (lumpno >= 0)
-						{
-							texid = TexMan.FindTextureByLumpNum(lumpno);
-							if (!texid.Exists())
-							{
-								FTexture *tex = FTexture::CreateTexture("", lumpno, FTexture::TEX_MiscPatch);
-								texid = TexMan.AddTexture(tex);
-							}
-						}
-					}
 					if (texid.Exists())
 					{
 						*p = TexMan[texid];

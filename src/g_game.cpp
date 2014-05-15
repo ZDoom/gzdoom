@@ -1621,7 +1621,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		{ // Reload the level from scratch
 			bool indemo = demoplayback;
 			BackupSaveName = "";
-			G_InitNew (level.mapname, false);
+			G_InitNew (level.MapName, false);
 			demoplayback = indemo;
 //			gameaction = ga_loadlevel;
 		}
@@ -2027,7 +2027,7 @@ static void PutSaveComment (FILE *file)
 
 	// Get level name
 	//strcpy (comment, level.level_name);
-	mysnprintf(comment, countof(comment), "%s - %s", level.mapname, level.LevelName.GetChars());
+	mysnprintf(comment, countof(comment), "%s - %s", level.MapName.GetChars(), level.LevelName.GetChars());
 	len = (WORD)strlen (comment);
 	comment[len] = '\n';
 
@@ -2088,7 +2088,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	M_AppendPNGText (stdfile, "Engine", GAMESIG);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
 	M_AppendPNGText (stdfile, "Title", description);
-	M_AppendPNGText (stdfile, "Current Map", level.mapname);
+	M_AppendPNGText (stdfile, "Current Map", level.MapName);
 	PutSaveWads (stdfile);
 	PutSaveComment (stdfile);
 
@@ -2289,7 +2289,7 @@ void G_BeginRecording (const char *startmap)
 
 	if (startmap == NULL)
 	{
-		startmap = level.mapname;
+		startmap = level.MapName;
 	}
 	demo_p = demobuffer;
 

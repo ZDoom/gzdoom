@@ -83,7 +83,7 @@ struct FMapInfoParser
 	void ParseLumpOrTextureName(FString &name);
 
 	void ParseCluster();
-	void ParseNextMap(char *mapname);
+	void ParseNextMap(FString &mapname);
 	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
 	void ParseMapDefinition(level_info_t &leveldef);
 	void ParseGameInfo();
@@ -269,10 +269,10 @@ struct level_info_t
 {
 	int			levelnum;
 	
-	char		mapname[9];
-	char		pname[9];
-	char		nextmap[11];
-	char		secretmap[11];
+	FString		MapName;
+	FString		NextMap;
+	FString		NextSecretMap;
+	FString		PName;
 	FString		SkyPic1;
 	FString		SkyPic2;
 	FString		FadeTable;
@@ -313,7 +313,7 @@ struct level_info_t
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;
-	char		RedirectMap[9];
+	FString		RedirectMapName;
 
 	FString		EnterPic;
 	FString		ExitPic;
@@ -391,9 +391,9 @@ struct FLevelLocals
 	int			levelnum;
 	int			lumpnum;
 	FString		LevelName;
-	char		mapname[256];			// the lump name (E1M1, MAP01, etc)
-	char		nextmap[11];			// go here when using the regular exit
-	char		secretmap[11];			// map to go to when used secret exit
+	FString		MapName;			// the lump name (E1M1, MAP01, etc)
+	FString		NextMap;			// go here when using the regular exit
+	FString		NextSecretMap;		// map to go to when used secret exit
 	EMapType	maptype;
 
 	DWORD		flags;

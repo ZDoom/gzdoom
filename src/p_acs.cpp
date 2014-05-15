@@ -3542,6 +3542,8 @@ static const int LegacyRenderStyleIndices[] =
 	3,	// STYLE_SoulTrans,
 	4,	// STYLE_OptFuzzy,
 	5,	// STYLE_Stencil,
+	6,	// STYLE_AddStencil
+	7,	// STYLE_AddShaded
 	64,	// STYLE_Translucent
 	65,	// STYLE_Add,
 	66,	// STYLE_Shaded,
@@ -6979,7 +6981,7 @@ scriptwait:
 						break;
 
 					case PRINTNAME_LEVEL:
-						work += level.mapname;
+						work += level.MapName;
 						break;
 
 					case PRINTNAME_SKILL:
@@ -8940,7 +8942,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->mapname);
+		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
 
@@ -8948,7 +8950,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 
 int P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
-	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
+	if (map == NULL || 0 == strnicmp (level.MapName, map, 8))
 	{
 		FBehavior *module = NULL;
 		const ScriptPtr *scriptdata;
@@ -9001,17 +9003,17 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 	return false;
 }
 
-void P_SuspendScript (int script, char *map)
+void P_SuspendScript (int script, const char *map)
 {
-	if (strnicmp (level.mapname, map, 8))
+	if (strnicmp (level.MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_Suspended);
 }
 
-void P_TerminateScript (int script, char *map)
+void P_TerminateScript (int script, const char *map)
 {
-	if (strnicmp (level.mapname, map, 8))
+	if (strnicmp (level.MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_PleaseRemove);

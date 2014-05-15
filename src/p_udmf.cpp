@@ -1245,6 +1245,7 @@ public:
 		int lightcolor = -1;
 		int fadecolor = -1;
 		int desaturation = -1;
+		int fplaneflags = 0, cplaneflags = 0;
 
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
@@ -1446,6 +1447,48 @@ public:
 					Flag(sec->MoreFlags, SECF_UNDERWATER, key);
 					break;
 
+				case NAME_floorplane_a:
+					fplaneflags |= 1;
+					sec->floorplane.a = CheckFixed(key);
+					break;
+
+				case NAME_floorplane_b:
+					fplaneflags |= 2;
+					sec->floorplane.b = CheckFixed(key);
+					break;
+
+				case NAME_floorplane_c:
+					fplaneflags |= 4;
+					sec->floorplane.c = CheckFixed(key);
+					sec->floorplane.ic = FixedDiv(FRACUNIT, sec->floorplane.c);
+					break;
+
+				case NAME_floorplane_d:
+					fplaneflags |= 8;
+					sec->floorplane.d = CheckFixed(key);
+					break;
+
+				case NAME_ceilingplane_a:
+					cplaneflags |= 1;
+					sec->ceilingplane.a = CheckFixed(key);
+					break;
+
+				case NAME_ceilingplane_b:
+					cplaneflags |= 2;
+					sec->ceilingplane.b = CheckFixed(key);
+					break;
+
+				case NAME_ceilingplane_c:
+					cplaneflags |= 4;
+					sec->ceilingplane.c = CheckFixed(key);
+					sec->ceilingplane.ic = FixedDiv(FRACUNIT, sec->ceilingplane.c);
+					break;
+
+				case NAME_ceilingplane_d:
+					cplaneflags |= 8;
+					sec->ceilingplane.d = CheckFixed(key);
+					break;
+
 				default:
 					break;
 			}
@@ -1457,12 +1500,22 @@ public:
 		}
 
 		sec->secretsector = !!(sec->special&SECRET_MASK);
-		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
-		sec->floorplane.c = FRACUNIT;
-		sec->floorplane.ic = FRACUNIT;
-		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
-		sec->ceilingplane.c = -FRACUNIT;
-		sec->ceilingplane.ic = -FRACUNIT;
+		
+		// Reset the planes to their defaults if not all of the plane equation's parameters were found.
+		if (fplaneflags != 15)
+		{
+			sec->floorplane.a = sec->floorplane.b = 0;
+			sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
+			sec->floorplane.c = FRACUNIT;
+			sec->floorplane.ic = FRACUNIT;
+		}
+		if (cplaneflags != 15)
+		{
+			sec->ceilingplane.a = sec->ceilingplane.b = 0;
+			sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
+			sec->ceilingplane.c = -FRACUNIT;
+			sec->ceilingplane.ic = -FRACUNIT;
+		}
 
 		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1)
 		{

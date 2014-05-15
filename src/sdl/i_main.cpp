@@ -172,11 +172,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	}
 	else
 	{
-		char name[9];
-
-		strncpy (name, level.mapname, 8);
-		name[8] = 0;
-		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", name);
+		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", level.MapName.GetChars());
 
 		if (!viewactive)
 		{

@@ -79,7 +79,7 @@ struct FMapInfoParser
 
 	bool ParseLookupName(FString &dest);
 	void ParseMusic(FString &name, int &order);
-	void ParseLumpOrTextureName(char *name);
+	//void ParseLumpOrTextureName(char *name);
 	void ParseLumpOrTextureName(FString &name);
 
 	void ParseCluster();

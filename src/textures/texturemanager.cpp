@@ -238,6 +238,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 				FTexture *tex = Wads.GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);
 				if (tex != NULL) return tex->id;
+				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
 				tex = FTexture::CreateTexture("", lump, FTexture::TEX_Override);
 				if (tex != NULL)
 				{

@@ -363,7 +363,8 @@ public:
 		TEXMAN_Overridable = 2,
 		TEXMAN_ReturnFirst = 4,
 		TEXMAN_AllowSkins = 8,
-		TEXMAN_ShortNameOnly = 16
+		TEXMAN_ShortNameOnly = 16,
+		TEXMAN_DontCreate = 32
 	};
 
 	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);

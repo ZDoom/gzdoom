@@ -1054,7 +1054,7 @@ void NetUpdate (void)
 
 	if (demoplayback)
 	{
-		nettics[0] = (maketic / ticdup);
+		resendto[0] = nettics[0] = (maketic / ticdup);
 		return;			// Don't touch netcmd data while playing a demo, as it'll already exist.
 	}
 

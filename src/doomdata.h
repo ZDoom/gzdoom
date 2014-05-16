@@ -85,6 +85,14 @@ struct mapsidedef_t
 	short	sector;	// Front sector, towards viewer.
 };
 
+struct intmapsidedef_t
+{
+	FString toptexture;
+	FString bottomtexture;
+	FString midtexture;
+};
+
+
 // A LineDef, as used for editing, and as input to the BSP builder.
 struct maplinedef_t
 {

@@ -1410,6 +1410,8 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	}
 	if (arc.IsLoading())
 	{
+		sky1texture = level.skytexture1;
+		sky2texture = level.skytexture2;
 		R_InitSkyMap();
 	}
 

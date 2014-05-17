@@ -3944,7 +3944,9 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	{
 		return 0;
 	}
-	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string));
+	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string), FTexture::TEX_Flat,
+			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_DontCreate);
+
 	if (tex == NULL)
 	{ // If the texture we want to check against doesn't exist, then
 	  // they're obviously not the same.

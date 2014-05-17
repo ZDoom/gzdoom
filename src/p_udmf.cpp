@@ -118,8 +118,8 @@ enum
 	// namespace for each game
 };
 
-void SetTexture (sector_t *sector, int index, int position, const char *name8, FMissingTextureTracker &);
-void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &);
+void SetTexture (sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &, bool truncate);
+void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &);
 void P_AdjustLine (line_t *ld);
 void P_FinishLoadingLineDef(line_t *ld, int alpha);
 void SpawnMapThing(int index, FMapThing *mt, int position);
@@ -394,7 +394,7 @@ class UDMFParser : public UDMFParserBase
 
 	TArray<line_t> ParsedLines;
 	TArray<side_t> ParsedSides;
-	TArray<mapsidedef_t> ParsedSideTextures;
+	TArray<intmapsidedef_t> ParsedSideTextures;
 	TArray<sector_t> ParsedSectors;
 	TArray<vertex_t> ParsedVertices;
 	TArray<vertexdata_t> ParsedVertexDatas;
@@ -1089,14 +1089,14 @@ public:
 	//
 	//===========================================================================
 
-	void ParseSidedef(side_t *sd, mapsidedef_t *sdt, int index)
+	void ParseSidedef(side_t *sd, intmapsidedef_t *sdt, int index)
 	{
 		fixed_t texofs[2]={0,0};
 
 		memset(sd, 0, sizeof(*sd));
-		strncpy(sdt->bottomtexture, "-", 8);
-		strncpy(sdt->toptexture, "-", 8);
-		strncpy(sdt->midtexture, "-", 8);
+		sdt->bottomtexture = "-";
+		sdt->toptexture = "-";
+		sdt->midtexture = "-";
 		sd->SetTextureXScale(FRACUNIT);
 		sd->SetTextureYScale(FRACUNIT);
 
@@ -1115,15 +1115,15 @@ public:
 				continue;
 
 			case NAME_Texturetop:
-				strncpy(sdt->toptexture, CheckString(key), 8);
+				sdt->toptexture = CheckString(key);
 				continue;
 
 			case NAME_Texturebottom:
-				strncpy(sdt->bottomtexture, CheckString(key), 8);
+				sdt->bottomtexture = CheckString(key);
 				continue;
 
 			case NAME_Texturemiddle:
-				strncpy(sdt->midtexture, CheckString(key), 8);
+				sdt->midtexture = CheckString(key);
 				continue;
 
 			case NAME_Sector:
@@ -1287,11 +1287,11 @@ public:
 				continue;
 
 			case NAME_Texturefloor:
-				SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex);
+				SetTexture(sec, index, sector_t::floor, CheckString(key), missingTex, false);
 				continue;
 
 			case NAME_Textureceiling:
-				SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex);
+				SetTexture(sec, index, sector_t::ceiling, CheckString(key), missingTex, false);
 				continue;
 
 			case NAME_Lightlevel:
@@ -1799,7 +1799,7 @@ public:
 			else if (sc.Compare("sidedef"))
 			{
 				side_t si;
-				mapsidedef_t st;
+				intmapsidedef_t st;
 				ParseSidedef(&si, &st, ParsedSides.Size());
 				ParsedSides.Push(si);
 				ParsedSideTextures.Push(st);

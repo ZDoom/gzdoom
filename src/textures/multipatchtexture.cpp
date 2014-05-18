@@ -275,7 +275,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 		Parts[i].Texture = patchlookup[LittleShort(mpatch.d->patch)].Texture;
 		if (Parts[i].Texture == NULL)
 		{
-			Printf (TEXTCOLOR_RED "Unknown patch %s in texture %s\n", patchlookup[LittleShort(mpatch.d->patch)].Name, Name);
+			Printf(TEXTCOLOR_RED "Unknown patch %s in texture %s\n", patchlookup[LittleShort(mpatch.d->patch)].Name, Name);
 			NumParts--;
 			i--;
 		}
@@ -860,7 +860,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		for (DWORD i = 0; i < numpatches; ++i)
 		{
 			char pname[9];
-			pnames.Read (pname, 8);
+			pnames.Read(pname, 8);
 			pname[8] = '\0';
 			patchlookup[i].Name = pname;
 			FTextureID j = CheckForTexture (patchlookup[i].Name, FTexture::TEX_WallPatch);

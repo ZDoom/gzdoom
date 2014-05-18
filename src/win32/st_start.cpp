@@ -1086,12 +1086,12 @@ void ST_Endoom()
 {
 	if (showendoom == 0) exit(0);
 
-	if (gameinfo.Endoom[0] == 0) 
+	if (gameinfo.Endoom.Len() == 0) 
 	{
 		exit(0);
 	}
 
-	int endoom_lump = Wads.CheckNumForName (gameinfo.Endoom);
+	int endoom_lump = Wads.CheckNumForFullName (gameinfo.Endoom, true);
 
 	BYTE endoom_screen[4000];
 	BYTE *font;

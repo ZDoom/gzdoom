@@ -141,14 +141,7 @@ FTexture * LoadSkin(const char * path, const char * fn)
 	int texlump = FindGFXFile(buffer);
 	if (texlump>=0)
 	{
-		FTextureID texno = TexMan.FindTextureByLumpNum(texlump);
-		if (!texno.isValid())
-		{
-			FTexture *tex = FTexture::CreateTexture("", texlump, FTexture::TEX_Override);
-			TexMan.AddTexture(tex);
-			return tex;
-		}
-		return TexMan[texno];
+		return TexMan.FindTexture(Wads.GetLumpFullName(texlump), FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
 	}
 	else 
 	{

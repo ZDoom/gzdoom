@@ -303,7 +303,7 @@ void C_InitConback()
 
 	if (!conback.isValid())
 	{
-		conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
+		conback = TexMan.GetTexture (gameinfo.TitlePage, FTexture::TEX_MiscPatch);
 		conshade = MAKEARGB(175,0,0,0);
 		conline = true;
 	}

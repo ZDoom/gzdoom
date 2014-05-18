@@ -1054,7 +1054,7 @@ void NetUpdate (void)
 
 	if (demoplayback)
 	{
-		nettics[0] = (maketic / ticdup);
+		resendto[0] = nettics[0] = (maketic / ticdup);
 		return;			// Don't touch netcmd data while playing a demo, as it'll already exist.
 	}
 
@@ -1385,7 +1385,7 @@ bool DoArbitrate (void *userdata)
 
 			stream = &netbuffer[4];
 			s = ReadString (&stream);
-			startmap = FString(s, 8);
+			startmap = s;
 			delete[] s;
 			rngseed = ReadLong (&stream);
 			C_ReadCVars (&stream);
@@ -2573,7 +2573,7 @@ static void RunScript(BYTE **stream, APlayerPawn *pawn, int snum, int argn, int 
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn, NULL, snum, level.mapname, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn, NULL, snum, level.MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, BYTE **stream)

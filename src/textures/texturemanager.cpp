@@ -220,8 +220,38 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 		{
 			if (firsttype == FTexture::TEX_Null) return FTextureID(0);
 			if (firsttype == FTexture::TEX_FirstDefined && !(flags & TEXMAN_ReturnFirst)) return FTextureID(0);
+			return FTextureID(firstfound);
 		}
-		return FTextureID(firstfound);
+	}
+
+	
+	if (!(flags & TEXMAN_ShortNameOnly))
+	{
+		// We intentionally only look for textures in subdirectories.
+		// Any graphic being placed in the zip's root directory can not be found by this.
+		if (strchr(name, '/'))
+		{
+			FTexture *const NO_TEXTURE = (FTexture*)-1;
+			int lump = Wads.CheckNumForFullName(name);
+			if (lump >= 0)
+			{
+				FTexture *tex = Wads.GetLinkedTexture(lump);
+				if (tex == NO_TEXTURE) return FTextureID(-1);
+				if (tex != NULL) return tex->id;
+				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
+				tex = FTexture::CreateTexture("", lump, FTexture::TEX_Override);
+				if (tex != NULL)
+				{
+					Wads.SetLinkedTexture(lump, tex);
+					return AddTexture(tex);
+				}
+				else
+				{
+					// mark this lump as having no valid texture so that we don't have to retry creating one later.
+					Wads.SetLinkedTexture(lump, NO_TEXTURE);
+				}
+			}
+		}
 	}
 
 	return FTextureID(-1);
@@ -272,30 +302,6 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list)
 	}
 	return list.Size();
 }
-
-//==========================================================================
-//
-// FTextureManager :: FindTextureByLumpNum
-//
-//==========================================================================
-
-FTextureID FTextureManager::FindTextureByLumpNum (int lumpnum)
-{
-	if (lumpnum < 0)
-	{
-		return FTextureID(-1);
-	}
-	// This can't use hashing because using ReplaceTexture would break the hash chains. :(
-	for(unsigned i = 0; i <Textures.Size(); i++)
-	{
-		if (Textures[i].Texture->SourceLump == lumpnum)
-		{
-			return FTextureID(i);
-		}
-	}
-	return FTextureID(-1);
-}
-
 
 //==========================================================================
 //
@@ -1004,7 +1010,7 @@ void FTextureManager::Init()
 	{
 		if (wadlevelinfos[i].flags & LEVEL_DOUBLESKY)
 		{
-			FTextureID picnum = CheckForTexture (wadlevelinfos[i].skypic1, FTexture::TEX_Wall, false);
+			FTextureID picnum = CheckForTexture (wadlevelinfos[i].SkyPic1, FTexture::TEX_Wall, false);
 			if (picnum.isValid())
 			{
 				Textures[picnum.GetIndex()].Texture->SetFrontSkyLayer ();
@@ -1093,8 +1099,15 @@ void FTextureManager::WriteTexture (FArchive &arc, int picnum)
 		pic = Textures[picnum].Texture;
 	}
 
-	arc.WriteName (pic->Name);
-	arc.WriteCount (pic->UseType);
+	if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
+	{
+		arc.WriteName(Wads.GetLumpFullName(pic->SourceLump));
+	}
+	else
+	{
+		arc.WriteName(pic->Name);
+	}
+	arc.WriteCount(pic->UseType);
 }
 
 //==========================================================================

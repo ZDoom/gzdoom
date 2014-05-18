@@ -205,15 +205,13 @@ void gl_ParseVavoomSkybox()
 				sc.MustGetString();
 
 				maplump = Wads.CheckNumForFullName(sc.String, true);
-				if (maplump==-1) 
-					Printf("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name);
 
-				FTextureID tex = TexMan.FindTextureByLumpNum(maplump);
-				if (!tex.isValid())
+				FTexture *tex = TexMan.FindTexture(sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_TryAny);
+				if (tex != NULL)
 				{
-					tex = TexMan.CreateTexture(maplump, FTexture::TEX_MiscPatch);
+					Printf("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name);
 				}
-				sb->faces[facecount] = TexMan[tex];
+				sb->faces[facecount] = tex;
 				sc.MustGetStringName("}");
 			}
 			facecount++;

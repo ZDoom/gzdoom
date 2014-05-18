@@ -229,9 +229,10 @@ public:
 	void BeginPlay ();
 	void Activate (AActor *source);
 	void Deactivate (AActor *source);
-	virtual bool TriggerAction (AActor *triggerer, int activationType);
+	bool TriggerAction(AActor *triggerer, int activationType);
 protected:
-	bool CheckTrigger (AActor *triggerer) const;
+	virtual bool DoTriggerAction(AActor *triggerer, int activationType);
+	bool CheckTrigger(AActor *triggerer) const;
 };
 
 class ASkyViewpoint;

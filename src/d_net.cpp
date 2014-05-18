@@ -1385,7 +1385,7 @@ bool DoArbitrate (void *userdata)
 
 			stream = &netbuffer[4];
 			s = ReadString (&stream);
-			startmap = FString(s, 8);
+			startmap = FString(s, strlen(s));
 			delete[] s;
 			rngseed = ReadLong (&stream);
 			C_ReadCVars (&stream);

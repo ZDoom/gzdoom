@@ -492,7 +492,7 @@ int FWadCollection::CheckNumForFullName (const char *name, bool trynormal, int n
 		return -1;
 	}
 
-	i = FirstLumpIndex_FullName[MakeKey (name) % NumLumps];
+	i = FirstLumpIndex_FullName[MakeKey(name) % NumLumps];
 
 	while (i != NULL_INDEX && stricmp(name, LumpInfo[i].lump->FullName))
 	{
@@ -1013,6 +1013,16 @@ void FWadCollection::GetLumpName (char *to, int lump) const
 		*to = 0;
 	else
 		uppercopy (to, LumpInfo[lump].lump->Name);
+}
+
+void FWadCollection::GetLumpName(FString &to, int lump) const
+{
+	if ((size_t)lump >= NumLumps)
+		to = FString();
+	else {
+		to = LumpInfo[lump].lump->Name;
+		to.ToUpper();
+	}
 }
 
 //==========================================================================

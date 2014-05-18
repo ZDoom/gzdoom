@@ -41,8 +41,7 @@
 
 FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 {
-	strncpy (Name, name, 8);
-	Name[8] = 0;
+	Name = name;
 	Width = width;
 	Height = height;
 	LeftOffset = TopOffset = 0;

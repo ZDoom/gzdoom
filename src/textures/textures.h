@@ -157,11 +157,7 @@ public:
 	int SourceLump;
 	FTextureID id;
 
-	union
-	{
-		char Name[9];
-		DWORD dwName;		// Used with sprites
-	};
+	FString Name;
 	BYTE UseType;	// This texture's primary purpose
 
 	BYTE bNoDecals:1;		// Decals should not stick to texture

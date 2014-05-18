@@ -106,7 +106,6 @@ FIMGZTexture::FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t)
 	: FTexture(NULL, lumpnum), Pixels(0), Spans(0)
 {
 	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 	Width = w;
 	Height = h;
 	LeftOffset = l;

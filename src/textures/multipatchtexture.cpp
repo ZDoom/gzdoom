@@ -137,7 +137,7 @@ struct strifemaptexture_t
 
 struct FPatchLookup
 {
-	char Name[9];
+	FString Name;
 	FTexture *Texture;
 };
 
@@ -243,8 +243,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	Parts = NumParts > 0 ? new TexPart[NumParts] : NULL;
 	Width = SAFESHORT(mtexture.d->width);
 	Height = SAFESHORT(mtexture.d->height);
-	strncpy (Name, (const char *)mtexture.d->name, 8);
-	Name[8] = 0;
+	Name = (char *)mtexture.d->name;
 	CalcBitSize ();
 
 	xScale = mtexture.d->ScaleX ? mtexture.d->ScaleX*(FRACUNIT/8) : FRACUNIT;
@@ -824,7 +823,7 @@ FMultiPatchTexture::TexPart::TexPart()
 
 void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup, bool texture1)
 {
-	FPatchLookup *patchlookup;
+	FPatchLookup *patchlookup = NULL;
 	int i;
 	DWORD numpatches;
 
@@ -857,12 +856,13 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 
 		// Catalog the patches these textures use so we know which
 		// textures they represent.
-		patchlookup = (FPatchLookup *)alloca (numpatches * sizeof(*patchlookup));
-
+		patchlookup = new FPatchLookup[numpatches];
 		for (DWORD i = 0; i < numpatches; ++i)
 		{
-			pnames.Read (patchlookup[i].Name, 8);
-			patchlookup[i].Name[8] = 0;
+			char pname[9];
+			pnames.Read (pname, 8);
+			pname[8] = '\0';
+			patchlookup[i].Name = pname;
 			FTextureID j = CheckForTexture (patchlookup[i].Name, FTexture::TEX_WallPatch);
 			if (j.isValid())
 			{
@@ -892,6 +892,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 	if (maxoff < DWORD(numtextures+1)*4)
 	{
 		Printf ("Texture directory is too short");
+		delete[] patchlookup;
 		return;
 	}
 
@@ -902,6 +903,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		if (offset > maxoff)
 		{
 			Printf ("Bad texture directory");
+			delete[] patchlookup;
 			return;
 		}
 
@@ -937,6 +939,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		if (offset > maxoff)
 		{
 			Printf ("Bad texture directory");
+			delete[] patchlookup;
 			return;
 		}
 
@@ -960,6 +963,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 			StartScreen->Progress();
 		}
 	}
+	delete[] patchlookup;
 }
 
 
@@ -1221,8 +1225,8 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			bSilent = false;
 		}
 	}
-	uppercopy(Name, !textureName ? sc.String : textureName);
-	Name[8] = 0;
+	Name = !textureName ? sc.String : textureName;
+	Name.ToUpper();
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();
 	Width = sc.Number;

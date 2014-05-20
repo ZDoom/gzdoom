@@ -49,8 +49,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 
 
-const int BUFFER_SIZE = 2000000;
-
 CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self < -1 || self > 1 || !(gl.flags & RFL_BUFFER_STORAGE))
@@ -105,6 +103,7 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 	{
 		map = NULL;
 	}
+	mIndex = mCurIndex = 0;
 }
 
 FFlatVertexBuffer::~FFlatVertexBuffer()
@@ -296,7 +295,7 @@ void FFlatVertexBuffer::CreateVBO()
 	{
 		CreateFlatVBO();
 		memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
-		mIndex = vbo_shadowdata.Size();
+		mCurIndex = mIndex = vbo_shadowdata.Size();
 	}
 	else if (sectors)
 	{

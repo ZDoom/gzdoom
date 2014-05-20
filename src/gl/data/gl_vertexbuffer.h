@@ -47,6 +47,8 @@ class FFlatVertexBuffer : public FVertexBuffer
 
 	void CheckPlanes(sector_t *sector);
 
+	const unsigned int BUFFER_SIZE = 2000000;
+
 public:
 	int vbo_arg;
 	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer
@@ -68,6 +70,7 @@ public:
 		unsigned int diff = newofs - mCurIndex;
 		*poffset = mCurIndex;
 		mCurIndex = newofs;
+		if (mCurIndex >= BUFFER_SIZE) mCurIndex = mIndex;
 		return diff;
 	}
 #ifdef __GL_PCH_H	// we need the system includes for this but we cannot include them ourselves without creating #define clashes. The affected files wouldn't try to draw anyway.

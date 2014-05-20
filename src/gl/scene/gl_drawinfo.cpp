@@ -47,6 +47,7 @@
 
 #include "gl/system/gl_cvars.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/dynlights/gl_lightbuffer.h"
@@ -990,12 +991,30 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 	glDepthMask(true);
 
 	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex3f(ws->x1, ws->z1, ws->y1);
-	glVertex3f(ws->x1, ws->z2, ws->y1);
-	glVertex3f(ws->x2, ws->z2, ws->y2);
-	glVertex3f(ws->x2, ws->z1, ws->y2);
-	glEnd();
+	if (!gl_usevbo)
+	{
+		glBegin(GL_TRIANGLE_FAN);
+		glVertex3f(ws->x1, ws->z1, ws->y1);
+		glVertex3f(ws->x1, ws->z2, ws->y1);
+		glVertex3f(ws->x2, ws->z2, ws->y2);
+		glVertex3f(ws->x2, ws->z1, ws->y2);
+		glEnd();
+	}
+	else
+	{
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
+		ptr++;
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+	}
 
 	glStencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
 	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
@@ -1016,12 +1035,30 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 	gl_RenderState.ResetColor();
 
 	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex3f(ws->x1, ws->z1, ws->y1);
-	glVertex3f(ws->x1, ws->z2, ws->y1);
-	glVertex3f(ws->x2, ws->z2, ws->y2);
-	glVertex3f(ws->x2, ws->z1, ws->y2);
-	glEnd();
+	if (!gl_usevbo)
+	{
+		glBegin(GL_TRIANGLE_FAN);
+		glVertex3f(ws->x1, ws->z1, ws->y1);
+		glVertex3f(ws->x1, ws->z2, ws->y1);
+		glVertex3f(ws->x2, ws->z2, ws->y2);
+		glVertex3f(ws->x2, ws->z1, ws->y2);
+		glEnd();
+	}
+	else
+	{
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
+		ptr++;
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+	}
 
 	// restore old stencil op.
 	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
@@ -1078,7 +1115,6 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 
 	bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 
-	glBegin(GL_TRIANGLE_FAN);
 	float prj_fac1 = (planez-fviewz)/(ws->z1-fviewz);
 	float prj_fac2 = (planez-fviewz)/(ws->z2-fviewz);
 
@@ -1094,19 +1130,38 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	float px4 = fviewx + prj_fac1 * (ws->x2-fviewx);
 	float py4 = fviewy + prj_fac1 * (ws->y2-fviewy);
 
-	glTexCoord2f(px1 / 64, -py1 / 64);
-	glVertex3f(px1, planez, py1);
+	if (!gl_usevbo)
+	{
+		glBegin(GL_TRIANGLE_FAN);
+		glTexCoord2f(px1 / 64, -py1 / 64);
+		glVertex3f(px1, planez, py1);
 
-	glTexCoord2f(px2 / 64, -py2 / 64);
-	glVertex3f(px2, planez, py2);
+		glTexCoord2f(px2 / 64, -py2 / 64);
+		glVertex3f(px2, planez, py2);
 
-	glTexCoord2f(px3 / 64, -py3 / 64);
-	glVertex3f(px3, planez, py3);
+		glTexCoord2f(px3 / 64, -py3 / 64);
+		glVertex3f(px3, planez, py3);
 
-	glTexCoord2f(px4 / 64, -py4 / 64);
-	glVertex3f(px4, planez, py4);
+		glTexCoord2f(px4 / 64, -py4 / 64);
+		glVertex3f(px4, planez, py4);
 
-	glEnd();
+		glEnd();
+	}
+	else
+	{
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(px1, planez, py1, px1 / 64, -py1 / 64);
+		ptr++;
+		ptr->Set(px2, planez, py2, px2 / 64, -py2 / 64);
+		ptr++;
+		ptr->Set(px3, planez, py3, px3 / 64, -py3 / 64);
+		ptr++;
+		ptr->Set(px4, planez, py4, px4 / 64, -py4 / 64);
+		ptr++;
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+	}
 
 	if (pushed)
 	{

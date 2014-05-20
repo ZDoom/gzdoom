@@ -174,9 +174,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 		ptr++;
 		ptr->Set(x2, y2, 0, fU2, fV2);
 		ptr++;
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_STRIP, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 	if (tex->GetTransparent() || OverrideShader != 0)
 	{

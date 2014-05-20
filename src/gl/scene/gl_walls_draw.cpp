@@ -302,9 +302,7 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 		ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[3].u, tcs[3].v);
 		ptr++;
 		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, ptr);
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 		vertexcount += 4;
 	}
 

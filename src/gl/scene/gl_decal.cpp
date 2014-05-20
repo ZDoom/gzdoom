@@ -355,9 +355,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 			ptr->Set(dv[i].x, dv[i].z, dv[i].y, dv[i].u, dv[i].v);
 			ptr++;
 		}
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
 	rendered_decals++;
 	gl_RenderState.SetTextureMode(TM_MODULATE);

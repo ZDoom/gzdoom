@@ -637,9 +637,7 @@ static void FillScreen()
 		ptr++;
 		ptr->Set((float)SCREENWIDTH, (float)SCREENHEIGHT, 0, 0, 0);
 		ptr++;
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 }
 

@@ -1011,9 +1011,7 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 		ptr++;
 		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
 		ptr++;
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
 
 	glStencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
@@ -1055,9 +1053,7 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 		ptr++;
 		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
 		ptr++;
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
 
 	// restore old stencil op.
@@ -1158,9 +1154,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 		ptr++;
 		ptr->Set(px4, planez, py4, px4 / 64, -py4 / 64);
 		ptr++;
-		unsigned int offset;
-		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
-		glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
 
 	if (pushed)

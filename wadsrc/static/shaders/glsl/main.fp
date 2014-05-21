@@ -31,8 +31,13 @@ vec4 desaturate(vec4 texel)
 {
 	if (uDesaturationFactor > 0.0)
 	{
-		float gray = (texel.r * 0.3 + texel.g * 0.56 + texel.b * 0.14);	
-		return mix (vec4(gray,gray,gray,texel.a), texel, uDesaturationFactor);
+		float gray = (texel.r * 0.3 + texel.g * 0.56 + texel.b * 0.14) * uDesaturationFactor;	
+		
+		vec4 desaturated = vec4(gray,gray,gray,texel.a);
+		// I have absolutely no idea why this works and 'mix' doesn't...
+		texel *= (1.0-uDesaturationFactor);
+		return texel + desaturated;
+		//return mix (desaturated, texel, uDesaturationFactor);
 	}
 	else
 	{

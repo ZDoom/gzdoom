@@ -125,7 +125,7 @@ bool FRenderState::ApplyShader()
 	if (gl.hasGLSL())
 	{
 		FShader *activeShader;
-		if (mSpecialEffect > 0)
+		if (mSpecialEffect > EFF_NONE)
 		{
 			activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
 		}
@@ -151,7 +151,7 @@ bool FRenderState::ApplyShader()
 
 		glColor4fv(mColor.vec);
 
-		activeShader->muDesaturation.Set(mDesaturation);
+		activeShader->muDesaturation.Set(mDesaturation / 255.f);
 		activeShader->muFogEnabled.Set(fogset);
 		activeShader->muTextureMode.Set(mTextureMode);
 		activeShader->muCameraPos.Set(mCameraPos.vec);

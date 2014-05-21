@@ -1597,30 +1597,9 @@ void G_UnSnapshotLevel (bool hubLoad)
 //
 //==========================================================================
 
-static void writeMapName (FArchive &arc, const char *name)
-{
-	BYTE size;
-	if (name[7] != 0)
-	{
-		size = 8;
-	}
-	else
-	{
-		size = (BYTE)strlen (name);
-	}
-	arc << size;
-	arc.Write (name, size);
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
-	arc << i->snapshotVer;
-	writeMapName (arc, i->MapName);
+	arc << i->snapshotVer << i->MapName;
 	i->snapshot->Serialize (arc);
 }
 
@@ -1658,14 +1637,14 @@ void G_WriteSnapshots (FILE *file)
 			{
 				arc = new FPNGChunkArchive (file, VIST_ID);
 			}
-			writeMapName (*arc, wadlevelinfos[i].MapName);
+			(*arc) << wadlevelinfos[i].MapName;
 		}
 	}
 
 	if (arc != NULL)
 	{
-		BYTE zero = 0;
-		*arc << zero;
+		FString empty = "";
+		(*arc) << empty;
 		delete arc;
 	}
 
@@ -1706,6 +1685,7 @@ void G_ReadSnapshots (PNGHandle *png)
 	DWORD chunkLen;
 	BYTE namelen;
 	char mapname[256];
+	FString MapName;
 	level_info_t *i;
 
 	G_ClearSnapshots ();
@@ -1717,10 +1697,15 @@ void G_ReadSnapshots (PNGHandle *png)
 		DWORD snapver;
 
 		arc << snapver;
-		arc << namelen;
-		arc.Read (mapname, namelen);
-		mapname[namelen] = 0;
-		i = FindLevelInfo (mapname);
+		if (SaveVersion < 4508)
+		{
+			arc << namelen;
+			arc.Read(mapname, namelen);
+			mapname[namelen] = 0;
+			MapName = mapname;
+		}
+		else arc << MapName;
+		i = FindLevelInfo (MapName);
 		i->snapshotVer = snapver;
 		i->snapshot = new FCompressedMemFile;
 		i->snapshot->Serialize (arc);
@@ -1746,14 +1731,25 @@ void G_ReadSnapshots (PNGHandle *png)
 	{
 		FPNGChunkArchive arc (png->File->GetFile(), VIST_ID, chunkLen);
 
-		arc << namelen;
-		while (namelen != 0)
+		if (SaveVersion < 4508)
 		{
-			arc.Read (mapname, namelen);
-			mapname[namelen] = 0;
-			i = FindLevelInfo (mapname);
-			i->flags |= LEVEL_VISITED;
 			arc << namelen;
+			while (namelen != 0)
+			{
+				arc.Read(mapname, namelen);
+				mapname[namelen] = 0;
+				i = FindLevelInfo(mapname);
+				i->flags |= LEVEL_VISITED;
+				arc << namelen;
+			}
+		}
+		else
+		{
+			while (arc << MapName, MapName.Len() > 0)
+			{
+				i = FindLevelInfo(MapName);
+				i->flags |= LEVEL_VISITED;
+			}
 		}
 	}
 
@@ -1809,8 +1805,7 @@ CCMD(listsnapshots)
 
 static void writeDefereds (FArchive &arc, level_info_t *i)
 {
-	writeMapName (arc, i->MapName);
-	arc << i->defered;
+	arc << i->MapName << i->defered;
 }
 
 //==========================================================================
@@ -1837,8 +1832,8 @@ void P_WriteACSDefereds (FILE *file)
 	if (arc != NULL)
 	{
 		// Signal end of defereds
-		BYTE zero = 0;
-		*arc << zero;
+		FString empty = "";
+		(*arc) << empty;
 		delete arc;
 	}
 }
@@ -1852,6 +1847,7 @@ void P_ReadACSDefereds (PNGHandle *png)
 {
 	BYTE namelen;
 	char mapname[256];
+	FString MapName;
 	size_t chunklen;
 
 	P_RemoveDefereds ();
@@ -1860,18 +1856,33 @@ void P_ReadACSDefereds (PNGHandle *png)
 	{
 		FPNGChunkArchive arc (png->File->GetFile(), ACSD_ID, chunklen);
 
-		arc << namelen;
-		while (namelen)
+		if (SaveVersion < 4508)
 		{
-			arc.Read (mapname, namelen);
-			mapname[namelen] = 0;
-			level_info_t *i = FindLevelInfo (mapname);
-			if (i == NULL)
-			{
-				I_Error ("Unknown map '%s' in savegame", mapname);
-			}
-			arc << i->defered;
 			arc << namelen;
+			while (namelen != 0)
+			{
+				arc.Read(mapname, namelen);
+				mapname[namelen] = 0;
+				level_info_t *i = FindLevelInfo(mapname);
+				if (i == NULL)
+				{
+					I_Error("Unknown map '%s' in savegame", mapname);
+				}
+				arc << i->defered;
+				arc << namelen;
+			}
+		}
+		else
+		{
+			while (arc << MapName, MapName.Len() > 0)
+			{
+				level_info_t *i = FindLevelInfo(MapName);
+				if (i == NULL)
+				{
+					I_Error("Unknown map '%s' in savegame", MapName.GetChars());
+				}
+				arc << i->defered;
+			}
 		}
 	}
 	png->File->ResetFilePtr();

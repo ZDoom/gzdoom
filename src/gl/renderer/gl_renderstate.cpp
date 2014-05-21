@@ -129,12 +129,10 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
 		}
-		FShader *shd = GLRenderer->mShaderManager->Get(mTextureEnabled? mEffectState : 4);
-
-		if (shd != NULL)
+		else
 		{
-			activeShader = shd;
-			shd->Bind();
+			activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4);
+			activeShader->Bind();
 		}
 
 		int fogset = 0;

@@ -336,7 +336,7 @@ static void breakit (FBrokenLines *line, FFont *font, const BYTE *start, const B
 	line->Width = font->StringWidth (line->Text);
 }
 
-FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
+FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string, bool preservecolor)
 {
 	FBrokenLines lines[128];	// Support up to 128 lines (should be plenty)
 
@@ -397,7 +397,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 				space = string - 1;
 
 			breakit (&lines[i], font, start, space, linecolor);
-			if (c == '\n')
+			if (c == '\n' && !preservecolor)
 			{
 				lastcolor = "";		// Why, oh why, did I do it like this?
 			}

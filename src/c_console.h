@@ -47,6 +47,9 @@ typedef enum cstate_t
 } 
 constate_e;
 
+#define PRINTLEVELS 5
+extern int PrintColors[PRINTLEVELS + 2];
+
 extern constate_e ConsoleState;
 extern int ConBottom;
 

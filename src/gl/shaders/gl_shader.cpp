@@ -400,7 +400,7 @@ void FShaderManager::Clean()
 {
 	if (gl.hasGLSL())
 	{
-		glUseProgram(NULL);
+		glUseProgram(0);
 		mActiveShader = NULL;
 
 		for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
@@ -446,7 +446,7 @@ void FShaderManager::SetActiveShader(FShader *sh)
 {
 	if (gl.hasGLSL() && mActiveShader != sh)
 	{
-		glUseProgram(sh!= NULL? sh->GetHandle() : NULL);
+		glUseProgram(sh!= NULL? sh->GetHandle() : 0);
 		mActiveShader = sh;
 	}
 }

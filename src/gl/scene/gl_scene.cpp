@@ -747,7 +747,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		// for various reasons (performance and keeping the lighting code clean)
 		// we no longer do colormapped textures on pre GL 3.0 hardware and instead do 
 		// just a fullscreen overlay to emulate the inverse invulnerability effect or similar fullscreen blends.
-		if (gl_fixedcolormap >= CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < CM_MAXCOLORMAP)
+		if (gl_fixedcolormap >= (DWORD)CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < (DWORD)CM_MAXCOLORMAP)
 		{
 			FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
 
@@ -764,13 +764,14 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 				g = scm->ColorizeEnd[1];
 				b = scm->ColorizeEnd[2];
 			}
-
 		}
 		else if (gl_enhanced_nightvision)
 		{
 			if (gl_fixedcolormap == CM_LITE)
 			{
-				r = 0.375f, g = 1.0f, b = 0.375f;
+				r = 0.375f;
+				g = 1.0f;
+				b = 0.375f;
 			}
 			else if (gl_fixedcolormap >= CM_TORCH)
 			{
@@ -782,6 +783,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			}
 			else r = g = b = 1.f;
 		}
+		else r = g = b = 1.f;
 
 		if (inverse)
 		{

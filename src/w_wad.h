@@ -196,8 +196,8 @@ public:
 	int GetLumpOffset (int lump);					// [RH] Returns offset of lump in the wadfile
 	int GetLumpFlags (int lump);					// Return the flags for this lump
 	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
-	void FWadCollection::GetLumpName(FString &to, int lump) const;
-	const char *GetLumpFullName(int lump) const;	// [RH] Returns the lump's full name
+	void GetLumpName (FString &to, int lump) const;
+	const char *GetLumpFullName (int lump) const;	// [RH] Returns the lump's full name
 	FString GetLumpFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to

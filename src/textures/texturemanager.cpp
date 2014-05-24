@@ -949,7 +949,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 	{
 		if (newtextures[j] != NULL)
 		{
-			Printf("Texture %s has unknown type!\n", newtextures[j]->Name);
+			Printf("Texture %s has unknown type!\n", newtextures[j]->Name.GetChars());
 			AddTexture(newtextures[j]);
 		}
 	}

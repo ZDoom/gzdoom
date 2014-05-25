@@ -171,7 +171,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 {
-	int i;
+	unsigned int i;
 	angle_t angle;
 	AActor *shard;
 

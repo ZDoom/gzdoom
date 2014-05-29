@@ -240,25 +240,12 @@ include_directories( ${OPENGL_INCLUDE_DIR} )
 
 
 # check for GLEW
-find_path( GLEW_INCLUDE_DIR GL/glew.h
-	PATHS "/usr/include"
-	"/usr/local/include" )
 
-if( GLEW_INCLUDE_DIR )
-	message( STATUS "GLEW include files found at ${GLEW_INCLUDE_DIR}" )
-else( GLEW_INCLUDE_DIR )
-	message( SEND_ERROR "Could not find GLEW include files" )
-endif( GLEW_INCLUDE_DIR )
+find_package( GLEW REQUIRED )
 
 # GLEW include directory
 include_directories( "${GLEW_INCLUDE_DIR}" )
 
-find_library( GLEW_LIBRARY glew32 )
-
-if( NOT GLEW_LIBRARY )
-	message( SEND_ERROR "Could not find GLEW library files" )
-endif( NOT GLEW_LIBRARY )
-	
 set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GLEW_LIBRARY} )
 
 

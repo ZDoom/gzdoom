@@ -172,7 +172,7 @@ void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
 void	P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags);
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
 
-void P_GiveSecret(AActor *actor, bool printmessage, bool playsound);
+void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum);
 
 //
 // getSide()

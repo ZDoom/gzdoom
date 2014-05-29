@@ -163,7 +163,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			error << "Linking:\n" << buffer << "\n";
 		}
 		int linked;
-		glGetShaderiv(hShader, GL_LINK_STATUS, &linked);
+		glGetProgramiv(hShader, GL_LINK_STATUS, &linked);
 		if (linked == 0)
 		{
 			// only print message if there's an error.

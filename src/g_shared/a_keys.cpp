@@ -19,12 +19,29 @@ struct OneKey
 
 	bool check(AActor * owner)
 	{
-		// P_GetMapColorForKey() checks the key directly
-		if (owner->IsKindOf (RUNTIME_CLASS(AKey)))
+		if (owner->IsKindOf(RUNTIME_CLASS(AKey)))
+		{
+			// P_GetMapColorForKey() checks the key directly
 			return owner->IsA(key);
-		// Other calls check an actor that may have a key in its inventory.
-		else
-			return !!owner->FindInventory(key);
+		}
+		else 
+		{
+			// Other calls check an actor that may have a key in its inventory.
+			AInventory *item;
+
+			for (item = owner->Inventory; item != NULL; item = item->Inventory)
+			{
+				if (item->IsA(key))
+				{
+					return true;
+				}
+				else if (item->GetSpecies() == key->TypeName)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 };
 

@@ -104,6 +104,7 @@ private:
 	unsigned char clipsave;
 	GLPortal *NextPortal;
 	TArray<BYTE> savedmapsection;
+	TArray<unsigned int> mPrimIndices;
 
 protected:
 	TArray<GLWall> lines;

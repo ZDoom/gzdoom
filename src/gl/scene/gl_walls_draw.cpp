@@ -311,6 +311,36 @@ void GLWall::RenderWall(int textured, float * color2, ADynamicLight * light)
 
 //==========================================================================
 //
+// Gets the vertex data for rendering a stencil which needs to be
+// repeated several times
+//
+//==========================================================================
+
+void GLWall::GetPrimitive(unsigned int *store)
+{
+	static texcoord tcs[4] = { 0, 0, 0, 0 };
+	bool split = (gl_seamless && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
+
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+
+	ptr->Set(glseg.x1, zbottom[0], glseg.y1, 0, 0);
+	ptr++;
+	if (split && glseg.fracleft == 0) SplitLeftEdge(tcs, ptr);
+	ptr->Set(glseg.x1, ztop[0], glseg.y1, 0, 0);
+	ptr++;
+	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, ptr);
+	ptr->Set(glseg.x2, ztop[1], glseg.y2, 0, 0);
+	ptr++;
+	if (split && glseg.fracright == 1) SplitRightEdge(tcs, ptr);
+	ptr->Set(glseg.x2, zbottom[1], glseg.y2, 0, 0);
+	ptr++;
+	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, ptr);
+	store[1] = GLRenderer->mVBO->GetCount(ptr, &store[0]);
+	vertexcount += 4;
+ }
+
+//==========================================================================
+//
 // 
 //
 //==========================================================================

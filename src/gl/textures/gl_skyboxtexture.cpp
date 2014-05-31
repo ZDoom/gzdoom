@@ -150,8 +150,8 @@ void gl_ParseSkybox(FScanner &sc)
 	sc.MustGetString();
 
 	FSkyBox * sb = new FSkyBox;
-	uppercopy(sb->Name, sc.String);
-	sb->Name[8]=0;
+	sb->Name = sc.String;
+	sb->Name.ToUpper();
 	if (sc.CheckString("fliptop"))
 	{
 		sb->fliptop = true;
@@ -192,8 +192,8 @@ void gl_ParseVavoomSkybox()
 		int facecount=0;
 		int maplump = -1;
 		FSkyBox * sb = new FSkyBox;
-		uppercopy(sb->Name, sc.String);
-		sb->Name[8]=0;
+		sb->Name = sc.String;
+		sb->Name.ToUpper();
 		sb->fliptop = true;
 		sc.MustGetStringName("{");
 		while (!sc.CheckString("}"))

@@ -1018,7 +1018,7 @@ void AInventory::Touch (AActor *toucher)
 
 	if (flags5 & MF5_COUNTSECRET)
 	{
-		P_GiveSecret(toucher, true, true);
+		P_GiveSecret(toucher, true, true, -1);
 	}
 
 	//Added by MC: Check if item taken was the roam destination of any bot

@@ -145,7 +145,6 @@ FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
 : FTexture(NULL, lumpnum), Pixels(0), Spans(0)
 {
 	Wads.GetLumpName (Name, lumpnum);
-	Name[8] = 0;
 	Width = hdr->width;
 	Height = hdr->height;
 	// Alpha channel is used only for 32 bit RGBA and paletted images with RGBA palettes.

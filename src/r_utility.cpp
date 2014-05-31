@@ -972,7 +972,7 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, int fov)
 	texture = static_cast<FCanvasTexture *>(TexMan[picnum]);
 	if (!texture->bHasCanvas)
 	{
-		Printf ("%s is not a valid target for a camera\n", texture->Name);
+		Printf ("%s is not a valid target for a camera\n", texture->Name.GetChars());
 		return;
 	}
 

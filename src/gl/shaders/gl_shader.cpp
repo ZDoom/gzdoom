@@ -689,7 +689,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	{
 		if (tex->bWarped != 0)
 		{
-			Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name);
+			Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
 			return;
 		}
 		tex->gl_info.shaderspeed = speed; 

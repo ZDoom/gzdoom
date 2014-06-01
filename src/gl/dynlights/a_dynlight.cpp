@@ -689,7 +689,7 @@ CCMD(listlights)
 		if (dl->target)
 		{
 			FTextureID spr = gl_GetSpriteFrame(dl->target->sprite, dl->target->frame, 0, 0, NULL);
-			Printf(", frame = %s ", TexMan[spr]->Name);
+			Printf(", frame = %s ", TexMan[spr]->Name.GetChars());
 		}
 
 

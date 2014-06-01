@@ -168,7 +168,7 @@ void gl_ParseSkybox(FScanner &sc)
 	}
 	if (facecount != 3 && facecount != 6)
 	{
-		sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->Name);
+		sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->Name.GetChars());
 	}
 	sb->SetSize();
 	TexMan.AddTexture(sb);
@@ -209,7 +209,7 @@ void gl_ParseVavoomSkybox()
 				FTexture *tex = TexMan.FindTexture(sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex != NULL)
 				{
-					Printf("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name);
+					Printf("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name.GetChars());
 				}
 				sb->faces[facecount] = tex;
 				sc.MustGetStringName("}");
@@ -218,7 +218,7 @@ void gl_ParseVavoomSkybox()
 		}
 		if (facecount != 6)
 		{
-			sc.ScriptError("%s: Skybox definition requires 6 faces", sb->Name);
+			sc.ScriptError("%s: Skybox definition requires 6 faces", sb->Name.GetChars());
 		}
 		sb->SetSize();
 		TexMan.AddTexture(sb);

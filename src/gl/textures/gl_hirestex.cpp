@@ -177,7 +177,7 @@ int CheckDDPK3(FTexture *tex)
 
 		for (const char ** extp=extensions; *extp; extp++)
 		{
-			checkName.Format(*checklist, tex->Name, *extp);
+			checkName.Format(*checklist, tex->Name.GetChars(), *extp);
 			int lumpnum = Wads.CheckNumForFullName(checkName);
 			if (lumpnum >= 0) return lumpnum;
 		}
@@ -358,7 +358,7 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 
 		for (const char ** extp=extensions; *extp; extp++)
 		{
-			checkName.Format(*checklist, progdir.GetChars(), tex->Name, *extp);
+			checkName.Format(*checklist, progdir.GetChars(), tex->Name.GetChars(), *extp);
 			if (_access(checkName, 0) == 0) 
 			{
 				hascolorkey = !!strstr(checkName, "-ck.");

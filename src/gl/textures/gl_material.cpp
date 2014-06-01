@@ -1092,7 +1092,7 @@ int FGLTexture::Dump(int i)
 {
 	int cnt = 0;
 	int lump = tex->GetSourceLump();
-	Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name, i, lump, Wads.GetLumpFullName(lump));
+	Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
 	if (hirestexture) Printf(PRINT_LOG, "\tHirestexture\n");
 	if (glpatch) Printf(PRINT_LOG, "\tPatch\n"),cnt++;
 	if (gltexture[0]) Printf(PRINT_LOG, "\tTexture (x:no,  y:no )\n"),cnt++;

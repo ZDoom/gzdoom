@@ -61,6 +61,7 @@
 #include "a_sharedglobal.h"
 #include "farchive.h"
 #include "a_keys.h"
+#include "c_dispatch.h"
 
 // State.
 #include "r_state.h"
@@ -72,9 +73,6 @@
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 void P_SetupPortals();
 
-
-// [GrafZahl] Make this message changable by the user! ;)
-CVAR(String, secretmessage, "A Secret is revealed!", CVAR_ARCHIVE)
 
 IMPLEMENT_POINTY_CLASS (DScroller)
  DECLARE_POINTER (m_Interpolations[0])
@@ -581,7 +579,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	if (sector->special & SECRET_MASK)
 	{
 		sector->special &= ~SECRET_MASK;
-		P_GiveSecret(player->mo, true, true);
+		P_GiveSecret(player->mo, true, true, int(sector - sectors));
 	}
 }
 
@@ -672,7 +670,9 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 //
 //============================================================================
 
-void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
+CVAR(Bool, showsecretsector, false, 0)
+
+void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum)
 {
 	if (actor != NULL)
 	{
@@ -682,7 +682,16 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
 		}
 		if (actor->CheckLocalView (consoleplayer))
 		{
-			if (printmessage) C_MidPrint (SmallFont, secretmessage);
+			if (printmessage)
+			{
+				if (!showsecretsector || sectornum < 0) C_MidPrint(SmallFont, GStrings["SECRETMESSAGE"]);
+				else
+				{
+					FString s = GStrings["SECRETMESSAGE"];
+					s.AppendFormat(" (Sector %d)", sectornum);
+					C_MidPrint(SmallFont, s);
+				}
+			}
 			if (playsound) S_Sound (CHAN_AUTO | CHAN_UI, "misc/secret", 1, ATTN_NORM);
 		}
 	}

@@ -63,7 +63,7 @@ static bool R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool
 
 	if (frame >= MAX_SPRITE_FRAMES || rotation > 16)
 	{
-		Printf (TEXTCOLOR_RED"R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan[lump]->Name);
+		Printf (TEXTCOLOR_RED"R_InstallSpriteLump: Bad frame characters in lump %s\n", TexMan[lump]->Name.GetChars());
 		return false;
 	}
 
@@ -249,6 +249,8 @@ static void R_InstallSprite (int num)
 //	letter/number appended.
 // The rotation character can be 0 to signify no rotations.
 //
+#define TEX_DWNAME(tex) MAKE_ID(tex->Name[0], tex->Name[1], tex->Name[2], tex->Name[3])
+
 void R_InitSpriteDefs () 
 {
 	struct Hasher
@@ -272,7 +274,7 @@ void R_InitSpriteDefs ()
 		FTexture *tex = TexMan.ByIndex(i);
 		if (tex->UseType == FTexture::TEX_Sprite && strlen(tex->Name) >= 6)
 		{
-			size_t bucket = tex->dwName % smax;
+			size_t bucket = TEX_DWNAME(tex) % smax;
 			hashes[i].Next = hashes[bucket].Head;
 			hashes[bucket].Head = i;
 		}
@@ -352,7 +354,7 @@ void R_InitSpriteDefs ()
 		while (hash != -1)
 		{
 			FTexture *tex = TexMan[hash];
-			if (tex->dwName == intname)
+			if (TEX_DWNAME(tex) == intname)
 			{
 				bool res = R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false);
 

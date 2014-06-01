@@ -294,7 +294,7 @@ void FTexture::CreateDefaultBrightmap()
 				if (GlobalBrightmap.Remap[texbuf[i]] == white)
 				{
 					// Create a brightmap
-					DPrintf("brightmap created for texture '%s'\n", Name);
+					DPrintf("brightmap created for texture '%s'\n", Name.GetChars());
 					gl_info.Brightmap = new FBrightmapTexture(this);
 					gl_info.bBrightmapChecked = 1;
 					TexMan.AddTexture(gl_info.Brightmap);
@@ -302,7 +302,7 @@ void FTexture::CreateDefaultBrightmap()
 				}
 			}
 			// No bright pixels found
-			DPrintf("No bright pixels found in texture '%s'\n", Name);
+			DPrintf("No bright pixels found in texture '%s'\n", Name.GetChars());
 			gl_info.bBrightmapChecked = 1;
 		}
 		else
@@ -603,7 +603,7 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 
 FBrightmapTexture::FBrightmapTexture (FTexture *source)
 {
-	memset(Name, 0, sizeof(Name));
+	Name = "";
 	SourcePic = source;
 	CopySize(source);
 	bNoDecals = source->bNoDecals;
@@ -650,7 +650,7 @@ int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotat
 
 FCloneTexture::FCloneTexture (FTexture *source, int usetype)
 {
-	memset(Name, 0, sizeof(Name));
+	Name = "";
 	SourcePic = source;
 	CopySize(source);
 	bNoDecals = source->bNoDecals;
@@ -735,13 +735,13 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 			if (bmtex != NULL)
 			{
-				Printf("Multiple brightmap definitions in texture %s\n", tex? tex->Name : "(null)");
+				Printf("Multiple brightmap definitions in texture %s\n", tex? tex->Name.GetChars() : "(null)");
 			}
 
 			bmtex = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
 
 			if (bmtex == NULL) 
-				Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name : "(null)");
+				Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
 		}
 	}
 	if (!tex)
@@ -765,7 +765,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	{
 		if (tex->bWarped != 0)
 		{
-			Printf("Cannot combine warping with brightmap on texture '%s'\n", tex->Name);
+			Printf("Cannot combine warping with brightmap on texture '%s'\n", tex->Name.GetChars());
 			return;
 		}
 

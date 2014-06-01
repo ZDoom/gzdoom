@@ -1010,7 +1010,7 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 
 void FMaterial::BindToFrameBuffer()
 {
-	if (mBaseLayer->gltexture == NULL)
+	if (mBaseLayer->gltexture[0] == NULL)
 	{
 		// must create the hardware texture first
 		mBaseLayer->Bind(0, 0, 0, NULL, 0);
@@ -1093,7 +1093,7 @@ int FGLTexture::Dump(int i)
 {
 	int cnt = 0;
 	int lump = tex->GetSourceLump();
-	Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name, i, lump, Wads.GetLumpFullName(lump));
+	Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
 	if (hirestexture) Printf(PRINT_LOG, "\tHirestexture\n");
 	if (glpatch) Printf(PRINT_LOG, "\tPatch\n"),cnt++;
 	if (gltexture[0]) Printf(PRINT_LOG, "\tTexture (x:no,  y:no )\n"),cnt++;

@@ -78,7 +78,7 @@ FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int he
 	LeftOffset = left;
 	TopOffset = top;
 	CalcBitSize ();
-	mysnprintf (Name, countof(Name), "BTIL%04d", tilenum);
+	Name.Format("BTIL%04d", tilenum);
 	UseType = TEX_Build;
 }
 

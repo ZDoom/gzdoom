@@ -1168,8 +1168,21 @@ static void CreateCachedNodes(MapData *map)
 
 	FString path = CreateCacheName(map, true);
 	FILE *f = fopen(path, "wb");
-	fwrite(compressed, 1, outlen+offset, f);
-	fclose(f);
+
+	if (f != NULL)
+	{
+		if (fwrite(compressed, outlen+offset, 1, f) != 1)
+		{
+			Printf("Error saving nodes to file %s\n", path.GetChars());
+		}
+
+		fclose(f);
+	}
+	else
+	{
+		Printf("Cannot open nodes file %s for writing\n", path.GetChars());
+	}
+
 	delete [] compressed;
 }
 

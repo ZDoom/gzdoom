@@ -335,7 +335,7 @@ FString M_GetCachePath(bool create)
 	char pathstr[PATH_MAX];
 	FSRef folder;
 
-	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
 		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
 	{
 		path = pathstr;

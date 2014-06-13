@@ -284,7 +284,7 @@ void FVoxelVertexBuffer::BindVBO()
 	glTexCoordPointer(2,GL_FLOAT, sizeof(FVoxelVertex), &VVO->u);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_INDEX_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
 }
 
 

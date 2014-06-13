@@ -100,6 +100,12 @@ public:
 		mVertexBuffer = vb;
 	}
 
+	void ResetVertexBuffer()
+	{
+		// forces rebinding with the next 'apply' call.
+		mCurrentVertexBuffer = NULL;
+	}
+
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
 		mColor.Set(r, g, b, a);

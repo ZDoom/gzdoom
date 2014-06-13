@@ -95,4 +95,47 @@ private:
 
 };
 
+
+struct FSkyVertex
+{
+	float x, y, z, u, v;
+	PalEntry color;
+};
+
+class FSkyVertexBuffer : public FVertexBuffer
+{
+public:
+	static const int SKYHEMI_UPPER = 1;
+	static const int SKYHEMI_LOWER = 2;
+
+	enum
+	{
+		SKYMODE_MAINLAYER = 0,
+		SKYMODE_SECONDLAYER = 1,
+		SKYMODE_FOGLAYER = 2
+	};
+
+private:
+	TArray<FSkyVertex> mVertices;
+	TArray<unsigned int> mPrimStart;
+
+	int mRows, mColumns;
+
+	void SkyVertex(int r, int c, bool yflip);
+	void CreateSkyHemisphere(int hemi);
+	void CreateDome();
+	void RenderRow(int prim, int row, bool color);
+
+public:
+
+	FSkyVertexBuffer();
+	virtual ~FSkyVertexBuffer();
+	virtual void BindVBO();
+	void RenderDome(FMaterial *tex, int mode);
+
+};
+
+#define VSO ((FSkyVertex*)NULL)
+
+
 #endif

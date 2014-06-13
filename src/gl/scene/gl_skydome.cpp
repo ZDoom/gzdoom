@@ -45,6 +45,7 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -63,171 +64,208 @@
 //
 //-----------------------------------------------------------------------------
 
-CVAR (Int, gl_sky_detail, 16, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-EXTERN_CVAR (Bool, r_stretchsky)
+CVAR(Float, skyoffset, 0, 0)	// for testing
 
 extern int skyfog;
 
-// The texture offset to be applied to the texture coordinates in SkyVertex().
-
-static angle_t maxSideAngle = ANGLE_180 / 3;
-static int rows, columns;	
-static fixed_t scale = 10000 << FRACBITS;
-static bool yflip;
-static int texw;
-static float yAdd;
-static bool foglayer;
-static bool secondlayer;
-static bool skymirror; 
-
-#define SKYHEMI_UPPER		0x1
-#define SKYHEMI_LOWER		0x2
-
-
 //-----------------------------------------------------------------------------
 //
 //
 //
 //-----------------------------------------------------------------------------
 
-static void SkyVertex(int r, int c)
+FSkyVertexBuffer::FSkyVertexBuffer()
 {
-	angle_t topAngle= (angle_t)(c / (float)columns * ANGLE_MAX);
-	angle_t sideAngle = maxSideAngle * (rows - r) / rows;
+	CreateDome();
+}
+
+FSkyVertexBuffer::~FSkyVertexBuffer()
+{
+}
+
+void FSkyVertexBuffer::BindVBO()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glVertexPointer(3, GL_FLOAT, sizeof(FSkyVertex), &VSO->x);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(FSkyVertex), &VSO->u);
+	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(FSkyVertex), &VSO->color);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+}
+
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::SkyVertex(int r, int c, bool yflip)
+{
+	static const angle_t maxSideAngle = ANGLE_180 / 3;
+	static const fixed_t scale = 10000 << FRACBITS;
+
+	angle_t topAngle= (angle_t)(c / (float)mColumns * ANGLE_MAX);
+	angle_t sideAngle = maxSideAngle * (mRows - r) / mRows;
 	fixed_t height = finesine[sideAngle>>ANGLETOFINESHIFT];
 	fixed_t realRadius = FixedMul(scale, finecosine[sideAngle>>ANGLETOFINESHIFT]);
 	fixed_t x = FixedMul(realRadius, finecosine[topAngle>>ANGLETOFINESHIFT]);
 	fixed_t y = (!yflip) ? FixedMul(scale, height) : FixedMul(scale, height) * -1;
 	fixed_t z = FixedMul(realRadius, finesine[topAngle>>ANGLETOFINESHIFT]);
-	float fx, fy, fz;
-	float color = r * 1.f / rows;
-	float u, v;
-	float timesRepeat;
+
+	FSkyVertex vert;
 	
-	timesRepeat = (short)(4 * (256.f / texw));
-	if (timesRepeat == 0.f) timesRepeat = 1.f;
-	
-	if (!foglayer)
+	vert.color = r == 0 ? 0xffffff : 0xffffffff;
+		
+	// And the texture coordinates.
+	if(!yflip)	// Flipped Y is for the lower hemisphere.
 	{
-		// this must not use the renderstate because it's inside a primitive.
-		glColor4f(1.f, 1.f, 1.f, r==0? 0.0f : 1.0f);
-		
-		// And the texture coordinates.
-		if(!yflip)	// Flipped Y is for the lower hemisphere.
-		{
-			u = (-timesRepeat * c / (float)columns) ;
-			v = (r / (float)rows) + yAdd;
-		}
-		else
-		{
-			u = (-timesRepeat * c / (float)columns) ;
-			v = 1.0f + ((rows-r)/(float)rows) + yAdd;
-		}
-		
-		
-		glTexCoord2f(skymirror? -u:u, v);
+		vert.u = (-c / (float)mColumns) ;
+		vert.v = (r / (float)mRows);
 	}
+	else
+	{
+		vert.u = (-c / (float)mColumns);
+		vert.v = 1.0f + ((mRows - r) / (float)mRows);
+	}
+
 	if (r != 4) y+=FRACUNIT*300;
 	// And finally the vertex.
-	fx =-FIXED2FLOAT(x);	// Doom mirrors the sky vertically!
-	fy = FIXED2FLOAT(y);
-	fz = FIXED2FLOAT(z);
-	glVertex3f(fx, fy - 1.f, fz);
+	vert.x =-FIXED2FLOAT(x);	// Doom mirrors the sky vertically!
+	vert.y = FIXED2FLOAT(y) - 1.f;
+	vert.z = FIXED2FLOAT(z);
+
+	mVertices.Push(vert);
 }
 
 
 //-----------------------------------------------------------------------------
 //
-// Hemi is Upper or Lower. Zero is not acceptable.
-// The current texture is used. SKYHEMI_NO_TOPCAP can be used.
+//
 //
 //-----------------------------------------------------------------------------
 
-static void RenderSkyHemisphere(int hemi, bool mirror)
+void FSkyVertexBuffer::CreateSkyHemisphere(int hemi)
 {
 	int r, c;
-	
-	if (hemi & SKYHEMI_LOWER)
+	bool yflip = !!(hemi & SKYHEMI_LOWER);
+
+	mPrimStart.Push(mVertices.Size());
+
+	for (c = 0; c < mColumns; c++)
 	{
-		yflip = true;
+		SkyVertex(1, c, yflip);
 	}
-	else
+
+	// The total number of triangles per hemisphere can be calculated
+	// as follows: rows * columns * 2 + 2 (for the top cap).
+	for (r = 0; r < mRows; r++)
 	{
-		yflip = false;
-	}
-
-	skymirror = mirror;
-	
-	// The top row (row 0) is the one that's faded out.
-	// There must be at least 4 columns. The preferable number
-	// is 4n, where n is 1, 2, 3... There should be at least
-	// two rows because the first one is always faded.
-	rows = 4;
-	
-	// Draw the cap as one solid color polygon
-	if (!foglayer)
-	{
-		columns = 4 * (gl_sky_detail > 0 ? gl_sky_detail : 1);
-		foglayer=true;
-		gl_RenderState.EnableTexture(false);
-		gl_RenderState.Apply();
-
-
-		if (!secondlayer)
+		mPrimStart.Push(mVertices.Size());
+		for (c = 0; c <= mColumns; c++)
 		{
-			glBegin(GL_TRIANGLE_FAN);
-			for(c = 0; c < columns; c++)
-			{
-				SkyVertex(1, c);
-			}
-			glEnd();
-			gl_RenderState.SetObjectColor(0xffffffff);	// unset the cap's color
+			SkyVertex(r + yflip, c, yflip);
+			SkyVertex(r + 1 - yflip, c, yflip);
 		}
+	}
+}
 
-		gl_RenderState.EnableTexture(true);
-		foglayer=false;
-		gl_RenderState.Apply();
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::CreateDome()
+{
+	if (gl.version < 3.0f)
+	{
+		mColumns = 64;
+		mRows = 4;
 	}
 	else
 	{
-		gl_RenderState.Apply();
-		columns=4;	// no need to do more!
-		glBegin(GL_TRIANGLE_FAN);
-		for(c = 0; c < columns; c++)
+		mColumns = 128;
+		mRows = 4;
+	}
+	CreateSkyHemisphere(SKYHEMI_UPPER);
+	CreateSkyHemisphere(SKYHEMI_LOWER);
+	mPrimStart.Push(mVertices.Size());
+	if (gl.version >= 3.f)
+	{
+		// we won't bother with a real buffer for GL 2.x because the lack of shaders and therefore the objectColor uniform will require different handling.
+		// It'd also prevent changing to core features only.
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferData(GL_ARRAY_BUFFER, mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], GL_STATIC_DRAW);
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::RenderRow(int prim, int row, bool color)
+{
+	if (gl.version < 3.f)
+	{
+		glBegin(prim);
+		for (unsigned int i = mPrimStart[row]; i < mPrimStart[row + 1]; i++)
 		{
-			SkyVertex(0, c);
+			if (color) glColor4ubv((GLubyte*)&mVertices[i].color);
+			glTexCoord2fv(&mVertices[i].u);
+			glVertex3fv(&mVertices[i].x);
 		}
 		glEnd();
 	}
-	
-	// The total number of triangles per hemisphere can be calculated
-	// as follows: rows * columns * 2 + 2 (for the top cap).
-	for(r = 0; r < rows; r++)
+	else
 	{
-		if (yflip)
+		glDrawArrays(prim, mPrimStart[row], mPrimStart[row + 1] - mPrimStart[row]);
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
+{
+	int rc = mRows + 1;
+
+	if (mode != SKYMODE_SECONDLAYER)
+	{
+		if (mode == SKYMODE_MAINLAYER && tex != NULL)
 		{
-			glBegin(GL_TRIANGLE_STRIP);
-            SkyVertex(r + 1, 0);
-			SkyVertex(r, 0);
-			for(c = 1; c <= columns; c++)
-			{
-				SkyVertex(r + 1, c);
-				SkyVertex(r, c);
-			}
-			glEnd();
+			PalEntry pe = tex->tex->GetSkyCapColor(false);
+			gl_RenderState.SetObjectColor(pe);
+			gl_RenderState.EnableTexture(false);
 		}
-		else
+		gl_RenderState.Apply();
+		RenderRow(GL_TRIANGLE_FAN, 0, false);
+
+		if (mode == SKYMODE_MAINLAYER && tex != NULL)
 		{
-			glBegin(GL_TRIANGLE_STRIP);
-            SkyVertex(r, 0);
-			SkyVertex(r + 1, 0);
-			for(c = 1; c <= columns; c++)
-			{
-				SkyVertex(r, c);
-				SkyVertex(r + 1, c);
-			}
-			glEnd();
+			PalEntry pe = tex->tex->GetSkyCapColor(true);
+			gl_RenderState.SetObjectColor(pe);
 		}
+		gl_RenderState.Apply();
+		RenderRow(GL_TRIANGLE_FAN, rc, false);
+		if (mode == SKYMODE_MAINLAYER && tex != NULL)
+		{
+			gl_RenderState.EnableTexture(true);
+		}
+	}
+	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.Apply();
+	for (int i = 1; i <= mRows; i++)
+	{
+		RenderRow(GL_TRIANGLE_STRIP, i, true);
+		RenderRow(GL_TRIANGLE_STRIP, rc + i, true);
 	}
 }
 
@@ -237,12 +275,11 @@ static void RenderSkyHemisphere(int hemi, bool mirror)
 //
 //
 //-----------------------------------------------------------------------------
-CVAR(Float, skyoffset, 0, 0)	// for testing
 
-static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float y_offset, bool mirror)
+void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
 {
 	int texh = 0;
-	bool texscale = false;
+	int texw = 0;
 
 	// 57 world units roughly represent one sky texel for the glTranslate call.
 	const float skyoffsetfactor = 57;
@@ -255,8 +292,9 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
 
 		glRotatef(-180.0f+x_offset, 0.f, 1.f, 0.f);
-		yAdd = y_offset/texh;
 
+		float xscale = 1024.f / float(texw);
+		float yscale = 1.f;
 		if (texh < 200)
 		{
 			glTranslatef(0.f, -1250.f, 0.f);
@@ -271,37 +309,25 @@ static void RenderDome(FTextureID texno, FMaterial * tex, float x_offset, float 
 		{
 			glTranslatef(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
 			glScalef(1.f, 1.2f * 1.17f, 1.f);
-			glMatrixMode(GL_TEXTURE);
-			glPushMatrix();
-			glLoadIdentity();
-			glScalef(1.f, 240.f / texh, 1.f);
-			glMatrixMode(GL_MODELVIEW);
-			texscale = true;
+			yscale = 240.f / texh;
 		}
+		glMatrixMode(GL_TEXTURE);
+		glPushMatrix();
+		glLoadIdentity();
+		glScalef(mirror? -xscale : xscale, yscale, 1.f);
+		glTranslatef(1.f, y_offset / texh, 1.f);
+		glMatrixMode(GL_MODELVIEW);
 	}
 
-	if (tex && !secondlayer) 
-	{
-		PalEntry pe = tex->tex->GetSkyCapColor(false);
-		gl_RenderState.SetObjectColor(pe);
-	}
+	GLRenderer->mSkyVBO->RenderDome(tex, mode);
 
-	RenderSkyHemisphere(SKYHEMI_UPPER, mirror);
-
-	if (tex && !secondlayer) 
-	{
-		PalEntry pe = tex->tex->GetSkyCapColor(true);
-		gl_RenderState.SetObjectColor(pe);
-	}
-
-	RenderSkyHemisphere(SKYHEMI_LOWER, mirror);
-	if (texscale)
+	if (tex)
 	{
 		glMatrixMode(GL_TEXTURE);
 		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 	}
-	if (tex) glPopMatrix();
 
 }
 
@@ -527,12 +553,16 @@ void GLSkyPortal::DrawContents()
 	}
 	else
 	{
+		if (gl.version >= 3.f)
+		{
+			gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
+		}
 		if (origin->texture[0]==origin->texture[1] && origin->doublesky) origin->doublesky=false;	
 
 		if (origin->texture[0])
 		{
 			gl_RenderState.SetTextureMode(TM_OPAQUE);
-			RenderDome(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored);
+			RenderDome(origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyVertexBuffer::SKYMODE_MAINLAYER);
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
@@ -541,19 +571,22 @@ void GLSkyPortal::DrawContents()
 		
 		if (origin->doublesky && origin->texture[1])
 		{
-			secondlayer=true;
-			RenderDome(FNullTextureID(), origin->texture[1], origin->x_offset[1], origin->y_offset, false);
-			secondlayer=false;
+			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
 		if (skyfog>0 && (FadeColor.r ||FadeColor.g || FadeColor.b))
 		{
 			gl_RenderState.EnableTexture(false);
-			foglayer=true;
 			gl_RenderState.SetColorAlpha(FadeColor, skyfog / 255.0f);
-			RenderDome(FNullTextureID(), NULL, 0, 0, false);
+			// for the fog layer we must temporarily disable the color part of the vertex buffer.
+			glDisableClientState(GL_COLOR_ARRAY);
+			RenderDome(NULL, 0, 0, false, FSkyVertexBuffer::SKYMODE_FOGLAYER);
+			glEnableClientState(GL_COLOR_ARRAY);
 			gl_RenderState.EnableTexture(true);
-			foglayer=false;
+		}
+		if (gl.version >= 3.f)
+		{
+			gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 		}
 	}
 	glPopMatrix();

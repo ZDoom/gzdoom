@@ -122,7 +122,10 @@ void gl_LoadExtensions()
 	InitContext();
 	CollectExtensions();
 
-	const char *version = (const char*)glGetString(GL_VERSION);
+	const char *version = Args->CheckValue("-glversion");
+	if (version == NULL) version = (const char*)glGetString(GL_VERSION);
+	else Printf("Emulating OpenGL v %s\n", version);
+
 
 	// Don't even start if it's lower than 1.3
 	if (strcmp(version, "2.0") < 0) 
@@ -139,9 +142,9 @@ void gl_LoadExtensions()
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
 	if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
 
-	gl.version = strtod((char*)glGetString(GL_VERSION), NULL);
+	gl.version = strtod(version, NULL);
 	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL);
-	if (Args->CheckParm("-noshader")) gl.glslversion = 0.0f;
+	if (gl.version < 3.f) gl.glslversion = 0.f;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

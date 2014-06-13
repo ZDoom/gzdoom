@@ -9,6 +9,7 @@
 struct particle_t;
 class FCanvasTexture;
 class FFlatVertexBuffer;
+class FSkyVertexBuffer;
 class OpenGLFrameBuffer;
 struct FDrawInfo;
 struct pspdef_t;
@@ -69,6 +70,7 @@ public:
 	FVector3 mCameraPos;
 
 	FFlatVertexBuffer *mVBO;
+	FSkyVertexBuffer *mSkyVBO;
 
 
 	FGLRenderer(OpenGLFrameBuffer *fb);

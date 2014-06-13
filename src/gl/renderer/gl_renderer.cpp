@@ -94,6 +94,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mViewVector = FVector2(0,0);
 	mCameraPos = FVector3(0,0,0);
 	mVBO = NULL;
+	mSkyVBO = NULL;
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
 	glpart2 = glpart = gllight = mirrortexture = NULL;
@@ -107,6 +108,7 @@ void FGLRenderer::Initialize()
 	gllight = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/gllight.png"), FTexture::TEX_MiscPatch);
 
 	mVBO = new FFlatVertexBuffer;
+	mSkyVBO = new FSkyVertexBuffer;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	SetupLevel();
@@ -122,6 +124,7 @@ FGLRenderer::~FGLRenderer()
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mVBO != NULL) delete mVBO;
+	if (mSkyVBO != NULL) delete mSkyVBO;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;
 	if (mirrortexture) delete mirrortexture;

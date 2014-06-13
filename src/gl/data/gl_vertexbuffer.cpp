@@ -325,6 +325,7 @@ void FFlatVertexBuffer::BindVBO()
 		glTexCoordPointer(2,GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
 	}
 }
 

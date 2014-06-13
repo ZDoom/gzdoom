@@ -1246,6 +1246,7 @@ public:
 		int fadecolor = -1;
 		int desaturation = -1;
 		int fplaneflags = 0, cplaneflags = 0;
+		double fp[4] = { 0 }, cp[4] = { 0 };
 
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
@@ -1449,44 +1450,42 @@ public:
 
 				case NAME_floorplane_a:
 					fplaneflags |= 1;
-					sec->floorplane.a = CheckFixed(key);
+					fp[0] = CheckFloat(key);
 					break;
 
 				case NAME_floorplane_b:
 					fplaneflags |= 2;
-					sec->floorplane.b = CheckFixed(key);
+					fp[1] = CheckFloat(key);
 					break;
 
 				case NAME_floorplane_c:
 					fplaneflags |= 4;
-					sec->floorplane.c = CheckFixed(key);
-					sec->floorplane.ic = FixedDiv(FRACUNIT, sec->floorplane.c);
+					fp[2] = CheckFloat(key);
 					break;
 
 				case NAME_floorplane_d:
 					fplaneflags |= 8;
-					sec->floorplane.d = CheckFixed(key);
+					fp[3] = CheckFloat(key);
 					break;
 
 				case NAME_ceilingplane_a:
 					cplaneflags |= 1;
-					sec->ceilingplane.a = CheckFixed(key);
+					cp[0] = CheckFloat(key);
 					break;
 
 				case NAME_ceilingplane_b:
 					cplaneflags |= 2;
-					sec->ceilingplane.b = CheckFixed(key);
+					cp[1] = CheckFloat(key);
 					break;
 
 				case NAME_ceilingplane_c:
 					cplaneflags |= 4;
-					sec->ceilingplane.c = CheckFixed(key);
-					sec->ceilingplane.ic = FixedDiv(FRACUNIT, sec->ceilingplane.c);
+					cp[2] = CheckFloat(key);
 					break;
 
 				case NAME_ceilingplane_d:
 					cplaneflags |= 8;
-					sec->ceilingplane.d = CheckFixed(key);
+					cp[3] = CheckFloat(key);
 					break;
 
 				default:
@@ -1509,12 +1508,34 @@ public:
 			sec->floorplane.c = FRACUNIT;
 			sec->floorplane.ic = FRACUNIT;
 		}
+		else
+		{
+			double ulen = TVector3<double>(fp[0], fp[1], fp[2]).Length();
+
+			// normalize the vector, it must have a length of 1
+			sec->floorplane.a = FLOAT2FIXED(fp[0] / ulen);
+			sec->floorplane.b = FLOAT2FIXED(fp[1] / ulen);
+			sec->floorplane.c = FLOAT2FIXED(fp[2] / ulen);
+			sec->floorplane.d = FLOAT2FIXED(fp[3] / ulen);
+			sec->floorplane.ic = FLOAT2FIXED(ulen / fp[2]);
+		}
 		if (cplaneflags != 15)
 		{
 			sec->ceilingplane.a = sec->ceilingplane.b = 0;
 			sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
 			sec->ceilingplane.c = -FRACUNIT;
 			sec->ceilingplane.ic = -FRACUNIT;
+		}
+		else
+		{
+			double ulen = TVector3<double>(cp[0], cp[1], cp[2]).Length();
+
+			// normalize the vector, it must have a length of 1
+			sec->floorplane.a = FLOAT2FIXED(cp[0] / ulen);
+			sec->floorplane.b = FLOAT2FIXED(cp[1] / ulen);
+			sec->floorplane.c = FLOAT2FIXED(cp[2] / ulen);
+			sec->floorplane.d = FLOAT2FIXED(cp[3] / ulen);
+			sec->floorplane.ic = FLOAT2FIXED(ulen / cp[2]);
 		}
 
 		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1)

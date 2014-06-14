@@ -229,6 +229,7 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 {
 	int rc = mRows + 1;
 
+	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == SKYMODE_MAINLAYER && tex != NULL)
 	{
 		// if there's no shader we cannot use the default color from the buffer because the object color is part of the preset vertex attribute.
@@ -239,7 +240,7 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 		gl_RenderState.Apply();
 		RenderRow(GL_TRIANGLE_FAN, 0);
 
-		PalEntry pe = tex->tex->GetSkyCapColor(true);
+		pe = tex->tex->GetSkyCapColor(true);
 		gl_RenderState.SetObjectColor(pe);
 		gl_RenderState.Apply();
 		RenderRow(GL_TRIANGLE_FAN, rc);

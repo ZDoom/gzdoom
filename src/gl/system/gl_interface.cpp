@@ -132,6 +132,9 @@ void gl_LoadExtensions()
 	{
 		I_FatalError("Unsupported OpenGL version.\nAt least GL 2.0 is required to run " GAMENAME ".\n");
 	}
+	gl.version = strtod(version, NULL);
+	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL);
+	if (gl.version < 3.f) gl.glslversion = 0.f;
 
 	// This loads any function pointers and flags that require a vaild render context to
 	// initialize properly
@@ -140,11 +143,7 @@ void gl_LoadExtensions()
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
-	if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
-
-	gl.version = strtod(version, NULL);
-	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL);
-	if (gl.version < 3.f) gl.glslversion = 0.f;
+	if (gl.version >= 4.f && CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

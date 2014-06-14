@@ -332,7 +332,9 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
 					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+					drawcalls.Clock();
 					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
+					drawcalls.Unclock();
 					flatvertices += sub->numlines;
 					flatprimitives++;
 				}

@@ -269,39 +269,16 @@ void GLSprite::Draw(int pass)
 
 		FFlatVertex *ptr;
 		unsigned int offset, count;
-		if (!gl_usevbo)
-		{
-			glBegin(GL_TRIANGLE_STRIP);
-			if (gltexture)
-			{
-				glTexCoord2f(ul, vt); glVertex3fv(&v1[0]);
-				glTexCoord2f(ur, vt); glVertex3fv(&v2[0]);
-				glTexCoord2f(ul, vb); glVertex3fv(&v3[0]);
-				glTexCoord2f(ur, vb); glVertex3fv(&v4[0]);
-			}
-			else	// Particle
-			{
-				glVertex3fv(&v1[0]);
-				glVertex3fv(&v2[0]);
-				glVertex3fv(&v3[0]);
-				glVertex3fv(&v4[0]);
-			}
-
-			glEnd();
-		}
-		else
-		{
-			ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(v1[0], v1[1], v1[2], ul, vt);
-			ptr++;
-			ptr->Set(v2[0], v2[1], v2[2], ur, vt);
-			ptr++;
-			ptr->Set(v3[0], v3[1], v3[2], ul, vb);
-			ptr++;
-			ptr->Set(v4[0], v4[1], v4[2], ur, vb);
-			ptr++;
-			GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
-		}
+		ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(v1[0], v1[1], v1[2], ul, vt);
+		ptr++;
+		ptr->Set(v2[0], v2[1], v2[2], ur, vt);
+		ptr++;
+		ptr->Set(v3[0], v3[1], v3[2], ul, vb);
+		ptr++;
+		ptr->Set(v4[0], v4[1], v4[2], ur, vb);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
 
 		if (foglayer)
 		{
@@ -311,30 +288,7 @@ void GLSprite::Draw(int pass)
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			gl_RenderState.Apply();
-
-			if (!gl_usevbo)
-			{
-				glBegin(GL_TRIANGLE_STRIP);
-				if (gltexture)
-				{
-					glTexCoord2f(ul, vt); glVertex3fv(&v1[0]);
-					glTexCoord2f(ur, vt); glVertex3fv(&v2[0]);
-					glTexCoord2f(ul, vb); glVertex3fv(&v3[0]);
-					glTexCoord2f(ur, vb); glVertex3fv(&v4[0]);
-				}
-				else	// Particle
-				{
-					glVertex3fv(&v1[0]);
-					glVertex3fv(&v2[0]);
-					glVertex3fv(&v3[0]);
-					glVertex3fv(&v4[0]);
-				}
-				glEnd();
-			}
-			else
-			{
-				glDrawArrays(GL_TRIANGLE_STRIP, offset, count);
-			}
+			GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
 			gl_RenderState.SetFixedColormap(CM_DEFAULT);
 		}
 	}

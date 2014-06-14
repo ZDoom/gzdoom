@@ -154,28 +154,16 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 		gl_RenderState.EnableAlphaTest(false);
 	}
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
-	{
-		glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(fU1, fV1); glVertex2f(x1, y1);
-		glTexCoord2f(fU1, fV2); glVertex2f(x1, y2);
-		glTexCoord2f(fU2, fV1); glVertex2f(x2, y1);
-		glTexCoord2f(fU2, fV2); glVertex2f(x2, y2);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(x1, y1, 0, fU1, fV1);
-		ptr++;
-		ptr->Set(x1, y2, 0, fU1, fV2);
-		ptr++;
-		ptr->Set(x2, y1, 0, fU2, fV1);
-		ptr++;
-		ptr->Set(x2, y2, 0, fU2, fV2);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(x1, y1, 0, fU1, fV1);
+	ptr++;
+	ptr->Set(x1, y2, 0, fU1, fV2);
+	ptr++;
+	ptr->Set(x2, y1, 0, fU2, fV1);
+	ptr++;
+	ptr->Set(x2, y2, 0, fU2, fV2);
+	ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	if (tex->GetTransparent() || OverrideShader != 0)
 	{
 		gl_RenderState.EnableAlphaTest(true);

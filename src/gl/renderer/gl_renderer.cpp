@@ -283,36 +283,17 @@ void FGLRenderer::ClearBorders()
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
 
-	if (!gl_usevbo)
-	{
-		glBegin(GL_QUADS);
-		// upper quad
-		glVertex2i(0, borderHeight);
-		glVertex2i(0, 0);
-		glVertex2i(width, 0);
-		glVertex2i(width, borderHeight);
-
-		// lower quad
-		glVertex2i(0, trueHeight);
-		glVertex2i(0, trueHeight - borderHeight);
-		glVertex2i(width, trueHeight - borderHeight);
-		glVertex2i(width, trueHeight);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(0, borderHeight, 0, 0, 0); ptr++;
-		ptr->Set(0, 0, 0, 0, 0); ptr++;
-		ptr->Set(width, 0, 0, 0, 0); ptr++;
-		ptr->Set(width, borderHeight, 0, 0, 0); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-		ptr->Set(0, trueHeight, 0, 0, 0); ptr++;
-		ptr->Set(0, trueHeight - borderHeight, 0, 0, 0); ptr++;
-		ptr->Set(width, trueHeight - borderHeight, 0, 0, 0); ptr++;
-		ptr->Set(width, trueHeight, 0, 0, 0); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(0, borderHeight, 0, 0, 0); ptr++;
+	ptr->Set(0, 0, 0, 0, 0); ptr++;
+	ptr->Set(width, 0, 0, 0, 0); ptr++;
+	ptr->Set(width, borderHeight, 0, 0, 0); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	ptr->Set(0, trueHeight, 0, 0, 0); ptr++;
+	ptr->Set(0, trueHeight - borderHeight, 0, 0, 0); ptr++;
+	ptr->Set(width, trueHeight - borderHeight, 0, 0, 0); ptr++;
+	ptr->Set(width, trueHeight, 0, 0, 0); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	gl_RenderState.EnableTexture(true);
 
 	glViewport(0, (trueHeight - height) / 2, width, height); 
@@ -412,28 +393,13 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	gl_RenderState.SetColor(color);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
-	{
-		glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(u1, v1);
-		glVertex2d(x, y);
-		glTexCoord2f(u1, v2);
-		glVertex2d(x, y + h);
-		glTexCoord2f(u2, v1);
-		glVertex2d(x + w, y);
-		glTexCoord2f(u2, v2);
-		glVertex2d(x + w, y + h);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(x, y, 0, u1, v1); ptr++;
-		ptr->Set(x, y + h, 0, u1, v2); ptr++;
-		ptr->Set(x + w, y, 0, u2, v1); ptr++;
-		ptr->Set(x + w, y + h, 0, u2, v2); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(x, y, 0, u1, v1); ptr++;
+	ptr->Set(x, y + h, 0, u1, v2); ptr++;
+	ptr->Set(x + w, y, 0, u2, v1); ptr++;
+	ptr->Set(x + w, y + h, 0, u2, v2); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
 	if (parms.colorOverlay)
 	{
@@ -443,28 +409,12 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		gl_RenderState.SetColor(PalEntry(parms.colorOverlay));
 		gl_RenderState.Apply();
 
-		if (!gl_usevbo)
-		{
-			glBegin(GL_TRIANGLE_STRIP);
-			glTexCoord2f(u1, v1);
-			glVertex2d(x, y);
-			glTexCoord2f(u1, v2);
-			glVertex2d(x, y + h);
-			glTexCoord2f(u2, v1);
-			glVertex2d(x + w, y);
-			glTexCoord2f(u2, v2);
-			glVertex2d(x + w, y + h);
-			glEnd();
-		}
-		else
-		{
-			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(x, y, 0, u1, v1); ptr++;
-			ptr->Set(x, y + h, 0, u1, v2); ptr++;
-			ptr->Set(x + w, y, 0, u2, v1); ptr++;
-			ptr->Set(x + w, y + h, 0, u2, v2); ptr++;
-			GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-		}
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(x, y, 0, u1, v1); ptr++;
+		ptr->Set(x, y + h, 0, u1, v2); ptr++;
+		ptr->Set(x + w, y, 0, u2, v1); ptr++;
+		ptr->Set(x + w, y + h, 0, u2, v2); ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 
 	gl_RenderState.EnableAlphaTest(true);
@@ -487,20 +437,12 @@ void FGLRenderer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.SetColorAlpha(p, 1.f);
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
-	{
-		glBegin(GL_LINES);
-		glVertex2i(x1, y1);
-		glVertex2i(x2, y2);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(x1, y1, 0, 0, 0); ptr++;
-		ptr->Set(x2, y2, 0, 0, 0); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_LINES);
-	}
+
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(x1, y1, 0, 0, 0); ptr++;
+	ptr->Set(x2, y2, 0, 0, 0); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_LINES);
+	
 	gl_RenderState.EnableTexture(true);
 }
 
@@ -515,18 +457,11 @@ void FGLRenderer::DrawPixel(int x1, int y1, int palcolor, uint32 color)
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.SetColorAlpha(p, 1.f);
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
-	{
-		glBegin(GL_POINTS);
-		glVertex2i(x1, y1);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(x1, y1, 0, 0, 0); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_POINTS);
-	}
+
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(x1, y1, 0, 0, 0); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_POINTS);
+
 	gl_RenderState.EnableTexture(true);
 }
 
@@ -544,24 +479,13 @@ void FGLRenderer::Dim(PalEntry color, float damount, int x1, int y1, int w, int 
 	gl_RenderState.SetColorAlpha(color, damount);
 	gl_RenderState.Apply();
 	
-	if (!gl_usevbo)
-	{
-		glBegin(GL_TRIANGLE_FAN);
-		glVertex2i(x1, y1);
-		glVertex2i(x1, y1 + h);
-		glVertex2i(x1 + w, y1 + h);
-		glVertex2i(x1 + w, y1);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(x1, y1, 0, 0, 0); ptr++;
-		ptr->Set(x1, y1+h, 0, 0, 0); ptr++;
-		ptr->Set(x1+w, y1+h, 0, 0, 0); ptr++;
-		ptr->Set(x1+w, y1, 0, 0, 0); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
-	}
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(x1, y1, 0, 0, 0); ptr++;
+	ptr->Set(x1, y1+h, 0, 0, 0); ptr++;
+	ptr->Set(x1+w, y1+h, 0, 0, 0); ptr++;
+	ptr->Set(x1+w, y1, 0, 0, 0); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+
 	gl_RenderState.EnableTexture(true);
 }
 
@@ -597,24 +521,13 @@ void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *
 	}
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
-	{
-		glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(fU1, fV1); glVertex2f(left, top);
-		glTexCoord2f(fU1, fV2); glVertex2f(left, bottom);
-		glTexCoord2f(fU2, fV1); glVertex2f(right, top);
-		glTexCoord2f(fU2, fV2); glVertex2f(right, bottom);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(left, top, 0, fU1, fV1); ptr++;
-		ptr->Set(left, bottom, 0, fU1, fV2); ptr++;
-		ptr->Set(right, top, 0, fU2, fV1); ptr++;
-		ptr->Set(right, bottom, 0, fU2, fV2); ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(left, top, 0, fU1, fV1); ptr++;
+	ptr->Set(left, bottom, 0, fU1, fV2); ptr++;
+	ptr->Set(right, top, 0, fU2, fV1); ptr++;
+	ptr->Set(right, bottom, 0, fU2, fV2); ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 }
 
 //==========================================================================
@@ -702,41 +615,21 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	float oy = float(originy);
 
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
+
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	for (i = 0; i < npoints; ++i)
 	{
-		glBegin(GL_TRIANGLE_FAN);
-		for (i = 0; i < npoints; ++i)
+		float u = points[i].X - 0.5f - ox;
+		float v = points[i].Y - 0.5f - oy;
+		if (dorotate)
 		{
-			float u = points[i].X - 0.5f - ox;
-			float v = points[i].Y - 0.5f - oy;
-			if (dorotate)
-			{
-				float t = u;
-				u = t * cosrot - v * sinrot;
-				v = v * cosrot + t * sinrot;
-			}
-			glTexCoord2f(u * uscale, v * vscale);
-			glVertex3f(points[i].X, points[i].Y /* + yoffs */, 0);
+			float t = u;
+			u = t * cosrot - v * sinrot;
+			v = v * cosrot + t * sinrot;
 		}
-		glEnd();
+		ptr->Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale);
+		ptr++;
 	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		for (i = 0; i < npoints; ++i)
-		{
-			float u = points[i].X - 0.5f - ox;
-			float v = points[i].Y - 0.5f - oy;
-			if (dorotate)
-			{
-				float t = u;
-				u = t * cosrot - v * sinrot;
-				v = v * cosrot + t * sinrot;
-			}
-			ptr->Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale);
-			ptr++;
-		}
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
-	}
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 }
 

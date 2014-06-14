@@ -239,64 +239,35 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
-	if (!gl_usevbo)
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	if (plane.plane.a | plane.plane.b)
 	{
-		glBegin(GL_TRIANGLE_FAN);
-
-		if (plane.plane.a | plane.plane.b)
+		for (unsigned int k = 0; k < sub->numlines; k++)
 		{
-			for (unsigned int k = 0; k < sub->numlines; k++)
-			{
-				vertex_t *vt = sub->firstline[k].v1;
-				glTexCoord2f(vt->fx / 64.f, -vt->fy / 64.f);
-				float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-				glVertex3f(vt->fx, zc, vt->fy);
-			}
+			vertex_t *vt = sub->firstline[k].v1;
+			ptr->x = vt->fx;
+			ptr->y = vt->fy;
+			ptr->z = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
+			ptr->u = vt->fx / 64.f;
+			ptr->v = -vt->fy / 64.f;
+			ptr++;
 		}
-		else
-		{
-			float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
-			for (unsigned int k = 0; k < sub->numlines; k++)
-			{
-				vertex_t *vt = sub->firstline[k].v1;
-				glTexCoord2f(vt->fx / 64.f, -vt->fy / 64.f);
-				glVertex3f(vt->fx, zc, vt->fy);
-			}
-		}
-		glEnd();
 	}
 	else
 	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		if (plane.plane.a | plane.plane.b)
+		float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
+		for (unsigned int k = 0; k < sub->numlines; k++)
 		{
-			for (unsigned int k = 0; k < sub->numlines; k++)
-			{
-				vertex_t *vt = sub->firstline[k].v1;
-				ptr->x = vt->fx;
-				ptr->y = vt->fy;
-				ptr->z = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-				ptr->u = vt->fx / 64.f;
-				ptr->v = -vt->fy / 64.f;
-				ptr++;
-			}
+			vertex_t *vt = sub->firstline[k].v1;
+			ptr->x = vt->fx;
+			ptr->y = vt->fy;
+			ptr->z = zc;
+			ptr->u = vt->fx / 64.f;
+			ptr->v = -vt->fy / 64.f;
+			ptr++;
 		}
-		else
-		{
-			float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
-			for (unsigned int k = 0; k < sub->numlines; k++)
-			{
-				vertex_t *vt = sub->firstline[k].v1;
-				ptr->x = vt->fx;
-				ptr->y = vt->fy;
-				ptr->z = zc;
-				ptr->u = vt->fx / 64.f;
-				ptr->v = -vt->fy / 64.f;
-				ptr++;
-			}
-		}
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 	}
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 
 	flatvertices += sub->numlines;
 	flatprimitives++;
@@ -332,9 +303,9 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
 					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
-					drawcalls.Clock();
+					//drawcalls.Clock();
 					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
-					drawcalls.Unclock();
+					//drawcalls.Unclock();
 					flatvertices += sub->numlines;
 					flatprimitives++;
 				}

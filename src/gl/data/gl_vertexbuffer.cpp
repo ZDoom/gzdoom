@@ -53,7 +53,7 @@ CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 {
 	if (self < -1 || self > 1 || !(gl.flags & RFL_BUFFER_STORAGE))
 	{
-		self = 0;
+		if (self != 0) self = 0;
 	}
 	else if (self == -1)
 	{
@@ -101,7 +101,8 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 	}
 	else
 	{
-		map = NULL;
+		vbo_shadowdata.Reserve(BUFFER_SIZE);
+		map = &vbo_shadowdata[0];
 	}
 	mIndex = mCurIndex = 0;
 }
@@ -111,6 +112,25 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+//==========================================================================
+//
+// Renders the buffer's contents with immediate mode functions
+// This is here so that the immediate mode fallback does not need
+// to double all rendering code and can instead reuse the buffer-based version
+//
+//==========================================================================
+
+void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count)
+{
+	glBegin(primtype);
+	for (unsigned int i = 0; i < count; i++)
+	{
+		glTexCoord2fv(&map[offset + i].u);
+		glVertex3fv(&map[offset + i].x);
+	}
+	glEnd();
 }
 
 //==========================================================================
@@ -369,7 +389,7 @@ void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 
 void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
 {
-	if (vbo_arg == 2)
+	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
 		CheckPlanes(sector);
 		sector_t *hs = sector->GetHeightSec();

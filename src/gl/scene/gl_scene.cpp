@@ -617,28 +617,16 @@ static void FillScreen()
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
-	if (!gl_usevbo)
-	{
-		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f(0.0f, 0.0f);
-		glVertex2f(0.0f, (float)SCREENHEIGHT);
-		glVertex2f((float)SCREENWIDTH, 0.0f);
-		glVertex2f((float)SCREENWIDTH, (float)SCREENHEIGHT);
-		glEnd();
-	}
-	else
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		ptr->Set(0, 0, 0, 0, 0);
-		ptr++;
-		ptr->Set(0, (float)SCREENHEIGHT, 0, 0, 0);
-		ptr++;
-		ptr->Set((float)SCREENWIDTH, 0, 0, 0, 0);
-		ptr++;
-		ptr->Set((float)SCREENWIDTH, (float)SCREENHEIGHT, 0, 0, 0);
-		ptr++;
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	}
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(0, 0, 0, 0, 0);
+	ptr++;
+	ptr->Set(0, (float)SCREENHEIGHT, 0, 0, 0);
+	ptr++;
+	ptr->Set((float)SCREENWIDTH, 0, 0, 0, 0);
+	ptr++;
+	ptr->Set((float)SCREENWIDTH, (float)SCREENHEIGHT, 0, 0, 0);
+	ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 }
 
 //==========================================================================

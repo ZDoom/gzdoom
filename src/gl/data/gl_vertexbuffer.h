@@ -3,6 +3,7 @@
 
 #include "tarray.h"
 #include "gl/utility/gl_clock.h"
+#include "gl/system/gl_interface.h"
 
 struct vertex_t;
 struct secplane_t;
@@ -43,6 +44,7 @@ struct FFlatVertex
 class FFlatVertexBuffer : public FVertexBuffer
 {
 	FFlatVertex *map;
+	FFlatVertex mDrawBuffer[1000];
 	unsigned int mIndex;
 	unsigned int mCurIndex;
 
@@ -50,9 +52,10 @@ class FFlatVertexBuffer : public FVertexBuffer
 
 	const unsigned int BUFFER_SIZE = 2000000;
 
+	void ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count);
+
 public:
-	int vbo_arg;
-	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer
+	TArray<FFlatVertex> vbo_shadowdata;	// this is kept around for updating the actual (non-readable) buffer and as stand-in for pre GL 4.x
 
 	FFlatVertexBuffer();
 	~FFlatVertexBuffer();
@@ -67,6 +70,7 @@ public:
 	}
 	unsigned int GetCount(FFlatVertex *newptr, unsigned int *poffset)
 	{
+
 		unsigned int newofs = (unsigned int)(newptr - map);
 		unsigned int diff = newofs - mCurIndex;
 		*poffset = mCurIndex;
@@ -75,16 +79,29 @@ public:
 		return diff;
 	}
 #ifdef __GL_PCH_H	// we need the system includes for this but we cannot include them ourselves without creating #define clashes. The affected files wouldn't try to draw anyway.
+	void RenderArray(unsigned int primtype, unsigned int offset, unsigned int count)
+	{
+		drawcalls.Clock();
+		if (gl.flags & RFL_BUFFER_STORAGE)
+		{
+			glDrawArrays(primtype, offset, count);
+		}
+		else
+		{
+			ImmRenderBuffer(primtype, offset, count);
+		}
+		drawcalls.Unclock();
+	}
+
 	void RenderCurrent(FFlatVertex *newptr, unsigned int primtype, unsigned int *poffset = NULL, unsigned int *pcount = NULL)
 	{
 		unsigned int offset;
 		unsigned int count = GetCount(newptr, &offset);
-		drawcalls.Clock();
-		glDrawArrays(primtype, offset, count);
-		drawcalls.Unclock();
+		RenderArray(primtype, offset, count);
 		if (poffset) *poffset = offset;
 		if (pcount) *pcount = count;
 	}
+
 #endif
 	void Reset()
 	{

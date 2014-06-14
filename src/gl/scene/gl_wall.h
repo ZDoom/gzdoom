@@ -159,7 +159,7 @@ private:
 
 	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
-	void RenderWall(int textured, float * color2, ADynamicLight * light=NULL);
+	void RenderWall(int textured, ADynamicLight * light=NULL);
 	void GetPrimitive(unsigned int *store);
 
 	void FloodPlane(int pass);
@@ -211,11 +211,6 @@ private:
 	void RenderFogBoundary();
 	void RenderMirrorSurface();
 	void RenderTranslucentWall();
-
-	void SplitLeftEdge(texcoord * tcs);
-	void SplitRightEdge(texcoord * tcs);
-	void SplitUpperEdge(texcoord * tcs);
-	void SplitLowerEdge(texcoord * tcs);
 
 	void SplitLeftEdge(texcoord * tcs, FFlatVertex *&ptr);
 	void SplitRightEdge(texcoord * tcs, FFlatVertex *&ptr);

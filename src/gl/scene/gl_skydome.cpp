@@ -180,26 +180,32 @@ void FSkyVertexBuffer::CreateSkyHemisphere(int hemi)
 
 void FSkyVertexBuffer::CreateDome()
 {
-	if (gl.version < 3.0f)
-	{
-		mColumns = 64;
-		mRows = 4;
-	}
-	else
-	{
-		mColumns = 128;
-		mRows = 4;
-	}
+	// the first thing we put into the buffer is the fog layer object which is just 4 triangles around the viewpoint.
+
+	mVertices.Reserve(12);
+	mVertices[0].Set( 1.0f,  1.0f, -1.0f);
+	mVertices[1].Set( 1.0f, -1.0f, -1.0f);
+	mVertices[2].Set(-1.0f,  0.0f, -1.0f);
+
+	mVertices[3].Set( 1.0f,  1.0f, -1.0f);
+	mVertices[4].Set( 1.0f, -1.0f, -1.0f);
+	mVertices[5].Set( 0.0f,  0.0f,  1.0f);
+
+	mVertices[6].Set(-1.0f, 0.0f, -1.0f);
+	mVertices[7].Set( 1.0f, 1.0f, -1.0f);
+	mVertices[8].Set( 0.0f, 0.0f,  1.0f);
+
+	mVertices[9].Set(1.0f, -1.0f, -1.0f);
+	mVertices[10].Set(-1.0f, 0.0f, -1.0f);
+	mVertices[11].Set( 0.0f, 0.0f,  1.0f);
+
+	mColumns = 128;
+	mRows = 4;
 	CreateSkyHemisphere(SKYHEMI_UPPER);
 	CreateSkyHemisphere(SKYHEMI_LOWER);
 	mPrimStart.Push(mVertices.Size());
-	if (gl.version >= 3.f)
-	{
-		// we won't bother with a real buffer for GL 2.x because the lack of shaders and therefore the objectColor uniform will require different handling.
-		// It'd also prevent changing to core features only.
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], GL_STATIC_DRAW);
-	}
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glBufferData(GL_ARRAY_BUFFER, mVertices.Size() * sizeof(FSkyVertex), &mVertices[0], GL_STATIC_DRAW);
 }
 
 //-----------------------------------------------------------------------------
@@ -208,23 +214,9 @@ void FSkyVertexBuffer::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::RenderRow(int prim, int row, bool color)
+inline void FSkyVertexBuffer::RenderRow(int prim, int row)
 {
-	if (gl.version < 3.f)
-	{
-		glBegin(prim);
-		for (unsigned int i = mPrimStart[row]; i < mPrimStart[row + 1]; i++)
-		{
-			if (color) glColor4ubv((GLubyte*)&mVertices[i].color);
-			glTexCoord2fv(&mVertices[i].u);
-			glVertex3fv(&mVertices[i].x);
-		}
-		glEnd();
-	}
-	else
-	{
-		glDrawArrays(prim, mPrimStart[row], mPrimStart[row + 1] - mPrimStart[row]);
-	}
+	glDrawArrays(prim, mPrimStart[row], mPrimStart[row + 1] - mPrimStart[row]);
 }
 
 //-----------------------------------------------------------------------------
@@ -237,35 +229,29 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 {
 	int rc = mRows + 1;
 
-	if (mode != SKYMODE_SECONDLAYER)
+	if (mode == SKYMODE_MAINLAYER && tex != NULL)
 	{
-		if (mode == SKYMODE_MAINLAYER && tex != NULL)
-		{
-			PalEntry pe = tex->tex->GetSkyCapColor(false);
-			gl_RenderState.SetObjectColor(pe);
-			gl_RenderState.EnableTexture(false);
-		}
+		// if there's no shader we cannot use the default color from the buffer because the object color is part of the preset vertex attribute.
+		if (!gl.hasGLSL()) glDisableClientState(GL_COLOR_ARRAY);
+		PalEntry pe = tex->tex->GetSkyCapColor(false);
+		gl_RenderState.SetObjectColor(pe);
+		gl_RenderState.EnableTexture(false);
 		gl_RenderState.Apply();
-		RenderRow(GL_TRIANGLE_FAN, 0, false);
+		RenderRow(GL_TRIANGLE_FAN, 0);
 
-		if (mode == SKYMODE_MAINLAYER && tex != NULL)
-		{
-			PalEntry pe = tex->tex->GetSkyCapColor(true);
-			gl_RenderState.SetObjectColor(pe);
-		}
+		PalEntry pe = tex->tex->GetSkyCapColor(true);
+		gl_RenderState.SetObjectColor(pe);
 		gl_RenderState.Apply();
-		RenderRow(GL_TRIANGLE_FAN, rc, false);
-		if (mode == SKYMODE_MAINLAYER && tex != NULL)
-		{
-			gl_RenderState.EnableTexture(true);
-		}
+		RenderRow(GL_TRIANGLE_FAN, rc);
+		gl_RenderState.EnableTexture(true);
+		if (!gl.hasGLSL()) glEnableClientState(GL_COLOR_ARRAY);
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.Apply();
 	for (int i = 1; i <= mRows; i++)
 	{
-		RenderRow(GL_TRIANGLE_STRIP, i, true);
-		RenderRow(GL_TRIANGLE_STRIP, rc + i, true);
+		RenderRow(GL_TRIANGLE_STRIP, i);
+		RenderRow(GL_TRIANGLE_STRIP, rc + i);
 	}
 }
 
@@ -525,17 +511,11 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 void GLSkyPortal::DrawContents()
 {
 	bool drawBoth = false;
-	PalEntry FadeColor(0,0,0,0);
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	int oldlightmode = glset.lightmode;
 	if (glset.lightmode == 8) glset.lightmode = 2;
 
-
-	if (!gl_fixedcolormap)
-	{
-		FadeColor = origin->fadecolor;
-	}
 
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableFog(false);
@@ -553,10 +533,7 @@ void GLSkyPortal::DrawContents()
 	}
 	else
 	{
-		if (gl.version >= 3.f)
-		{
-			gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
-		}
+		gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 		if (origin->texture[0]==origin->texture[1] && origin->doublesky) origin->doublesky=false;	
 
 		if (origin->texture[0])
@@ -574,20 +551,20 @@ void GLSkyPortal::DrawContents()
 			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
-		if (skyfog>0 && (FadeColor.r ||FadeColor.g || FadeColor.b))
+		if (skyfog>0 && gl_fixedcolormap == CM_DEFAULT && (origin->fadecolor & 0xffffff) != 0)
 		{
+			PalEntry FadeColor = origin->fadecolor;
+			FadeColor.a = clamp<int>(skyfog, 0, 255);
+
 			gl_RenderState.EnableTexture(false);
-			gl_RenderState.SetColorAlpha(FadeColor, skyfog / 255.0f);
-			// for the fog layer we must temporarily disable the color part of the vertex buffer.
-			glDisableClientState(GL_COLOR_ARRAY);
-			RenderDome(NULL, 0, 0, false, FSkyVertexBuffer::SKYMODE_FOGLAYER);
-			glEnableClientState(GL_COLOR_ARRAY);
+			gl_RenderState.SetObjectColor(FadeColor);
+			gl_RenderState.Apply();
+			if (!gl.hasGLSL()) glDisableClientState(GL_COLOR_ARRAY);
+			glDrawArrays(GL_TRIANGLES, 0, 12);
+			if (!gl.hasGLSL()) glEnableClientState(GL_COLOR_ARRAY);
 			gl_RenderState.EnableTexture(true);
 		}
-		if (gl.version >= 3.f)
-		{
-			gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-		}
+		gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	}
 	glPopMatrix();
 	glset.lightmode = oldlightmode;

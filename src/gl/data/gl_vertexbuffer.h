@@ -100,6 +100,17 @@ struct FSkyVertex
 {
 	float x, y, z, u, v;
 	PalEntry color;
+
+	void Set(float xx, float zz, float yy, float uu=0, float vv=0, PalEntry col=0xffffffff)
+	{
+		x = xx;
+		z = zz;
+		y = yy;
+		u = uu;
+		v = vv;
+		color = col;
+	}
+
 };
 
 class FSkyVertexBuffer : public FVertexBuffer

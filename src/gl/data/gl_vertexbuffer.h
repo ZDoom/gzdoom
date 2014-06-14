@@ -2,6 +2,7 @@
 #define __VERTEXBUFFER_H
 
 #include "tarray.h"
+#include "gl/utility/gl_clock.h"
 
 struct vertex_t;
 struct secplane_t;
@@ -74,11 +75,15 @@ public:
 		return diff;
 	}
 #ifdef __GL_PCH_H	// we need the system includes for this but we cannot include them ourselves without creating #define clashes. The affected files wouldn't try to draw anyway.
-	void RenderCurrent(FFlatVertex *newptr, unsigned int primtype)
+	void RenderCurrent(FFlatVertex *newptr, unsigned int primtype, unsigned int *poffset = NULL, unsigned int *pcount = NULL)
 	{
 		unsigned int offset;
 		unsigned int count = GetCount(newptr, &offset);
+		drawcalls.Clock();
 		glDrawArrays(primtype, offset, count);
+		drawcalls.Unclock();
+		if (poffset) *poffset = offset;
+		if (pcount) *pcount = count;
 	}
 #endif
 	void Reset()
@@ -135,7 +140,7 @@ private:
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(int hemi);
 	void CreateDome();
-	void RenderRow(int prim, int row, bool color);
+	void RenderRow(int prim, int row);
 
 public:
 

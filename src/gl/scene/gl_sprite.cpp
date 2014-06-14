@@ -300,8 +300,7 @@ void GLSprite::Draw(int pass)
 			ptr++;
 			ptr->Set(v4[0], v4[1], v4[2], ur, vb);
 			ptr++;
-			count = GLRenderer->mVBO->GetCount(ptr, &offset);
-			glDrawArrays(GL_TRIANGLE_STRIP, offset, count);
+			GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
 		}
 
 		if (foglayer)

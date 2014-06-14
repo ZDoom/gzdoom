@@ -2,6 +2,7 @@
 #define __VERTEXBUFFER_H
 
 #include "tarray.h"
+#include "gl/system/gl_interface.h"
 
 struct vertex_t;
 struct secplane_t;
@@ -60,6 +61,8 @@ public:
 	void BindVBO();
 	void CheckUpdate(sector_t *sector);
 
+	bool SetBufferMode(bool hw);
+
 	FFlatVertex *GetBuffer()
 	{
 		return &map[mCurIndex];
@@ -78,6 +81,16 @@ public:
 	{
 		unsigned int offset;
 		unsigned int count = GetCount(newptr, &offset);
+		if (!(gl.flags & RFL_BUFFER_STORAGE))
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+			void *p = glMapBufferRange(GL_ARRAY_BUFFER, offset * sizeof(FFlatVertex), count * sizeof(FFlatVertex), GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
+			if (p != NULL)
+			{
+				memcpy(p, &vbo_shadowdata[offset], count * sizeof(FFlatVertex));
+				glUnmapBuffer(GL_ARRAY_BUFFER);
+			}
+		}
 		glDrawArrays(primtype, offset, count);
 	}
 #endif
@@ -135,7 +148,7 @@ private:
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(int hemi);
 	void CreateDome();
-	void RenderRow(int prim, int row, bool color);
+	void RenderRow(int prim, int row);
 
 public:
 

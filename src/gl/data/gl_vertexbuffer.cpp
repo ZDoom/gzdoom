@@ -45,21 +45,24 @@
 #include "c_cvars.h"
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 
 
-CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, gl_usevbo, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < -1 || self > 1 || !(gl.flags & RFL_BUFFER_STORAGE))
+	if (self < -1 || self > 1 /* || !(gl.flags & RFL_BUFFER_STORAGE)*/)
 	{
 		self = 0;
 	}
+	/*
 	else if (self == -1)
 	{
 		if (!(gl.flags & RFL_BUFFER_STORAGE)) self = 0;
 		else self = 1;
 	}
+	*/
 }
 
 //==========================================================================
@@ -92,16 +95,19 @@ FVertexBuffer::~FVertexBuffer()
 FFlatVertexBuffer::FFlatVertexBuffer()
 : FVertexBuffer()
 {
+	unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
-		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 	else
 	{
-		map = NULL;
+		glBufferData(GL_ARRAY_BUFFER, bytesize, NULL, GL_STREAM_DRAW);
+		vbo_shadowdata.Reserve(BUFFER_SIZE);
+		vbo_shadowdata.Clear();
+		map = &vbo_shadowdata[0];
 	}
 	mIndex = mCurIndex = 0;
 }
@@ -274,7 +280,7 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 	secplane_t &splane = sec->GetSecPlane(plane);
 	FFlatVertex *vt = &vbo_shadowdata[startvt];
 	FFlatVertex *mapvt = &map[startvt];
-	for(int i=0; i<countvt; i++, vt++)
+	for(int i=0; i<countvt; i++, vt++, mapvt++)
 	{
 		vt->z = splane.ZatPoint(vt->x, vt->y);
 		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;
@@ -291,21 +297,16 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 void FFlatVertexBuffer::CreateVBO()
 {
 	vbo_shadowdata.Clear();
+	CreateFlatVBO();
+	mCurIndex = mIndex = vbo_shadowdata.Size();
 	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
-		CreateFlatVBO();
 		memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
-		mCurIndex = mIndex = vbo_shadowdata.Size();
 	}
-	else if (sectors)
+	else
 	{
-		// set all VBO info to invalid values so that we can save some checks in the rendering code
-		for(int i=0;i<numsectors;i++)
-		{
-			sectors[i].vboindex[3] = sectors[i].vboindex[2] = 
-			sectors[i].vboindex[1] = sectors[i].vboindex[0] = -1;
-			sectors[i].vboheight[1] = sectors[i].vboheight[0] = FIXED_MIN;
-		}
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, vbo_shadowdata.Size() * sizeof(FFlatVertex), &vbo_shadowdata[0]);
 	}
 }
 
@@ -317,16 +318,13 @@ void FFlatVertexBuffer::CreateVBO()
 
 void FFlatVertexBuffer::BindVBO()
 {
-	if (gl.flags & RFL_BUFFER_STORAGE)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glVertexPointer(3,GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
-		glTexCoordPointer(2,GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-	}
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
 }
 
 //==========================================================================
@@ -337,7 +335,7 @@ void FFlatVertexBuffer::BindVBO()
 
 void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 {
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	//if (gl.flags & RFL_BUFFER_STORAGE)
 	{
 		if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
 		{

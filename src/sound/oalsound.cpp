@@ -591,7 +591,13 @@ OpenALSoundRenderer::OpenALSoundRenderer()
         }
     }
 
-    Printf("  Opened device "TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_DEVICE_SPECIFIER));
+    const ALCchar *current = NULL;
+    if(alcIsExtensionPresent(Device, "ALC_ENUMERATE_ALL_EXT"))
+        current = alcGetString(Device, ALC_ALL_DEVICES_SPECIFIER);
+    if(alcGetError(Device) != ALC_NO_ERROR || !current)
+        current = alcGetString(Device, ALC_DEVICE_SPECIFIER);
+    Printf("  Opened device "TEXTCOLOR_ORANGE"%s\n", current);
+
     ALCint major=0, minor=0;
     alcGetIntegerv(Device, ALC_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(Device, ALC_MINOR_VERSION, 1, &minor);
@@ -609,7 +615,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     // Make sure one source is capable of stereo output with the rest doing
     // mono, without running out of voices
     attribs.push_back(ALC_MONO_SOURCES);
-    attribs.push_back((std::max)(*snd_channels, 2) - 1);
+    attribs.push_back(std::max<ALCint>(*snd_channels, 2) - 1);
     attribs.push_back(ALC_STEREO_SOURCES);
     attribs.push_back(1);
     // Other attribs..?
@@ -657,7 +663,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     alcGetIntegerv(Device, ALC_MONO_SOURCES, 1, &numMono);
     alcGetIntegerv(Device, ALC_STEREO_SOURCES, 1, &numStereo);
 
-    Sources.resize((std::min)((std::max)(*snd_channels, 2), numMono+numStereo));
+    Sources.resize(std::min<size_t>(std::max<ALCint>(*snd_channels, 2),
+                                    numMono+numStereo));
     for(size_t i = 0;i < Sources.size();i++)
     {
         alGenSources(1, &Sources[i]);
@@ -1663,10 +1670,20 @@ void OpenALSoundRenderer::PrintDriversList()
     const ALCchar *drivers = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
                               alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER) :
                               alcGetString(NULL, ALC_DEVICE_SPECIFIER));
-    const ALCchar *current = alcGetString(Device, ALC_DEVICE_SPECIFIER);
     if(drivers == NULL)
     {
         Printf(TEXTCOLOR_YELLOW"Failed to retrieve device list: %s\n", alcGetString(NULL, alcGetError(NULL)));
+        return;
+    }
+
+    const ALCchar *current = NULL;
+    if(alcIsExtensionPresent(Device, "ALC_ENUMERATE_ALL_EXT"))
+        current = alcGetString(Device, ALC_ALL_DEVICES_SPECIFIER);
+    if(alcGetError(Device) != ALC_NO_ERROR || !current)
+        current = alcGetString(Device, ALC_DEVICE_SPECIFIER);
+    if(current == NULL)
+    {
+        Printf(TEXTCOLOR_YELLOW"Failed to retrieve device name: %s\n", alcGetString(Device, alcGetError(Device)));
         return;
     }
 

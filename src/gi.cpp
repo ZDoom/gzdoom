@@ -184,6 +184,20 @@ const char* GameInfoBorders[] =
 		gameinfo.key.color = NAME_Null; \
 	}
 
+#define GAMEINFOKEY_MUSIC(key, order, variable) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		gameinfo.order = 0; \
+		char *colon = strchr (sc.String, ':'); \
+		if (colon) \
+		{ \
+			gameinfo.order = atoi(colon+1); \
+			*colon = 0; \
+		} \
+		gameinfo.key = sc.String; \
+	}
+
 
 void FMapInfoParser::ParseGameInfo()
 {
@@ -286,12 +300,12 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRINGARRAY(creditPages, "CreditPage", 8, true)
 		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "addplayerclasses", 0, false)
 		GAMEINFOKEY_STRINGARRAY(PlayerClasses, "playerclasses", 0, true)
-		GAMEINFOKEY_STRING(titleMusic, "titleMusic")
+		GAMEINFOKEY_MUSIC(titleMusic, titleOrder, "titleMusic")
 		GAMEINFOKEY_FLOAT(titleTime, "titleTime")
 		GAMEINFOKEY_FLOAT(advisoryTime, "advisoryTime")
 		GAMEINFOKEY_FLOAT(pageTime, "pageTime")
 		GAMEINFOKEY_STRING(chatSound, "chatSound")
-		GAMEINFOKEY_STRING(finaleMusic, "finaleMusic")
+		GAMEINFOKEY_MUSIC(finaleMusic, finaleOrder, "finaleMusic")
 		GAMEINFOKEY_CSTRING(finaleFlat, "finaleFlat", 8)
 		GAMEINFOKEY_STRINGARRAY(finalePages, "finalePage", 8, true)
 		GAMEINFOKEY_STRINGARRAY(infoPages, "addinfoPage", 8, false)
@@ -309,7 +323,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_COLOR(defaultbloodparticlecolor, "defaultbloodparticlecolor")
 		GAMEINFOKEY_STRING(backpacktype, "backpacktype")
 		GAMEINFOKEY_STRING(statusbar, "statusbar")
-		GAMEINFOKEY_STRING(intermissionMusic, "intermissionMusic")
+		GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
 		GAMEINFOKEY_STRING(CursorPic, "CursorPic")
 		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
 		GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")

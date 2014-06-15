@@ -463,7 +463,7 @@ void STAT_ChangeLevel(const char *newl)
 		{
 			// we reached the end of this episode
 			int wad = 0;
-			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap);
+			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap, false);
 			if (map != NULL)
 			{
 				wad = Wads.GetLumpFile(map->lumpnum);

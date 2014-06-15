@@ -1376,7 +1376,7 @@ void OpenALSoundRenderer::SetSfxPaused(bool paused, int slot)
     }
 }
 
-void OpenALSoundRenderer::SetInactive(EInactiveState)
+void OpenALSoundRenderer::SetInactive(SoundRenderer::EInactiveState)
 {
 }
 

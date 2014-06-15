@@ -4,6 +4,9 @@ const int PAF_NOSKULLATTACK = 1;
 const int PAF_AIMFACING = 2;
 const int PAF_NOTARGET = 4;
 
+// Flags for A_VileAttack
+const int VAF_DMGTYPEAPPLYTODIRECT = 1;
+
 // Flags for A_Saw
 const int SF_NORANDOM = 1;
 const int SF_RANDOMLIGHTMISS = 2;
@@ -59,6 +62,7 @@ const int SXF_MULTIPLYSPEED = 8192;
 const int SXF_TRANSFERSCALE = 16384;
 const int SXF_TRANSFERSPECIAL = 32768;
 const int SXF_CLEARCALLERSPECIAL = 65536;
+const int SXF_TRANSFERSTENCILCOL = 131072;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;

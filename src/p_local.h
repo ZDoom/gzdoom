@@ -554,6 +554,7 @@ enum EDmgFlags
 	DMG_FORCED = 8,
 	DMG_NO_FACTOR = 16,
 	DMG_PLAYERATTACK = 32,
+	DMG_FOILINVUL = 64,
 };
 
 

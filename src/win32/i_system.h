@@ -155,6 +155,9 @@ typedef _W64 long WLONG_PTR;
 typedef long WLONG_PTR;
 #endif
 
+// Wrapper for GetLongPathName
+FString I_GetLongPathName(FString shortpath);
+
 // Directory searching routines
 
 // Mirror WIN32_FIND_DATAA in <winbase.h>

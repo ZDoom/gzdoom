@@ -436,7 +436,7 @@ static int limit_xm_getc(void *f)
 
 
 
-static long limit_xm_getnc(char *ptr, int32 n, void *f)
+static int32 limit_xm_getnc(char *ptr, int32 n, void *f)
 {
 	LIMITED_XM *lx = f;
 	int left;

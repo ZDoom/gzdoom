@@ -3993,8 +3993,12 @@ void AActor::HandleSpawnFlags ()
 	}
 	if (SpawnFlags & MTF_SECRET)
 	{
-		//Printf("Secret %s in sector %i!\n", GetTag(), Sector->sectornum);
-		flags5 |= MF5_COUNTSECRET;
+		if (!(flags5 & MF5_COUNTSECRET))
+		{
+			//Printf("Secret %s in sector %i!\n", GetTag(), Sector->sectornum);
+			flags5 |= MF5_COUNTSECRET;
+			level.total_secrets++;
+		}
 	}
 }
 
@@ -4712,6 +4716,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->SpawnPoint[2] = mthing->z;
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
+	if (mthing->gravity < 0) mobj->gravity = -mthing->gravity;
+	else if (mthing->gravity > 0) mobj->gravity = FixedMul(mobj->gravity, mthing->gravity);
+	else mobj->flags &= ~MF_NOGRAVITY;
+
 	P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 
 	if (!(mobj->flags2 & MF2_ARGSDEFINED))
@@ -5922,7 +5930,15 @@ void AActor::Crash()
 		
 		if (DamageType != NAME_None)
 		{
-			crashstate = FindState(NAME_Crash, DamageType, true);
+			if (health < GibHealth())
+			{ // Extreme death
+				FName labels[] = { NAME_Crash, NAME_Extreme, DamageType };
+				crashstate = FindState (3, labels, true);
+			}
+			if (crashstate == NULL)
+			{ // Normal death
+				crashstate = FindState(NAME_Crash, DamageType, true);
+			}
 		}
 		if (crashstate == NULL)
 		{

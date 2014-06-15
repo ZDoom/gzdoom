@@ -105,6 +105,7 @@ static FCompatOption Options[] =
 	{ "vileghosts",				BCOMPATF_VILEGHOSTS, SLOT_BCOMPAT },
 	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
 	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
+	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
@@ -540,7 +541,7 @@ CCMD (mapchecksum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		map = P_OpenMapData(argv[i]);
+		map = P_OpenMapData(argv[i], true);
 		if (map == NULL)
 		{
 			Printf("Cannot load %s as a map\n", argv[i]);

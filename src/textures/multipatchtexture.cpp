@@ -233,13 +233,13 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 		NumParts = SAFESHORT(mtexture.d->patchcount);
 	}
 
-	if (NumParts <= 0)
+	if (NumParts < 0)
 	{
 		I_FatalError ("Bad texture directory");
 	}
 
 	UseType = FTexture::TEX_Wall;
-	Parts = new TexPart[NumParts];
+	Parts = NumParts > 0 ? new TexPart[NumParts] : NULL;
 	Width = SAFESHORT(mtexture.d->width);
 	Height = SAFESHORT(mtexture.d->height);
 	strncpy (Name, (const char *)mtexture.d->name, 8);
@@ -906,7 +906,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 
 		// There is bizzarely a Doom editing tool that writes to the
 		// first two elements of columndirectory, so I can't check those.
-		if (SAFESHORT(tex->patchcount) <= 0 ||
+		if (SAFESHORT(tex->patchcount) < 0 ||
 			tex->columndirectory[2] != 0 ||
 			tex->columndirectory[3] != 0)
 		{

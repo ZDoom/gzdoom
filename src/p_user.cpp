@@ -309,10 +309,118 @@ player_t::player_t()
   ConversationFaceTalker(0)
 {
 	memset (&cmd, 0, sizeof(cmd));
-	memset (&userinfo, 0, sizeof(userinfo));
 	memset (frags, 0, sizeof(frags));
 	memset (psprites, 0, sizeof(psprites));
 	memset (&skill, 0, sizeof(skill));
+}
+
+player_t &player_t::operator=(const player_t &p)
+{
+	mo = p.mo;
+	playerstate = p.playerstate;
+	cmd = p.cmd;
+	original_cmd = p.original_cmd;
+	original_oldbuttons = p.original_oldbuttons;
+	// Intentionally not copying userinfo!
+	cls = p.cls;
+	DesiredFOV = p.DesiredFOV;
+	FOV = p.FOV;
+	viewz = p.viewz;
+	viewheight = p.viewheight;
+	deltaviewheight = p.deltaviewheight;
+	bob = p.bob;
+	velx = p.velx;
+	vely = p.vely;
+	centering = p.centering;
+	turnticks = p.turnticks;
+	attackdown = p.attackdown;
+	usedown = p.usedown;
+	oldbuttons = p.oldbuttons;
+	health = p.health;
+	inventorytics = p.inventorytics;
+	CurrentPlayerClass = p.CurrentPlayerClass;
+	backpack = p.backpack;
+	memcpy(frags, &p.frags, sizeof(frags));
+	fragcount = p.fragcount;
+	lastkilltime = p.lastkilltime;
+	multicount = p.multicount;
+	spreecount = p.spreecount;
+	WeaponState = p.WeaponState;
+	ReadyWeapon = p.ReadyWeapon;
+	PendingWeapon = p.PendingWeapon;
+	cheats = p.cheats;
+	timefreezer = p.timefreezer;
+	refire = p.refire;
+	inconsistant = p.inconsistant;
+	waiting = p.waiting;
+	killcount = p.killcount;
+	itemcount = p.itemcount;
+	secretcount = p.secretcount;
+	damagecount = p.damagecount;
+	bonuscount = p.bonuscount;
+	hazardcount = p.hazardcount;
+	poisoncount = p.poisoncount;
+	poisontype = p.poisontype;
+	poisonpaintype = p.poisonpaintype;
+	poisoner = p.poisoner;
+	attacker = p.attacker;
+	extralight = p.extralight;
+	fixedcolormap = p.fixedcolormap;
+	fixedlightlevel = p.fixedlightlevel;
+	memcpy(psprites, &p.psprites, sizeof(psprites));
+	morphTics = p.morphTics;
+	MorphedPlayerClass = p.MorphedPlayerClass;
+	MorphStyle = p.MorphStyle;
+	MorphExitFlash = p.MorphExitFlash;
+	PremorphWeapon = p.PremorphWeapon;
+	chickenPeck = p.chickenPeck;
+	jumpTics = p.jumpTics;
+	respawn_time = p.respawn_time;
+	camera = p.camera;
+	air_finished = p.air_finished;
+	LastDamageType = p.LastDamageType;
+	savedyaw = p.savedyaw;
+	savedpitch = p.savedpitch;
+	angle = p.angle;
+	dest = p.dest;
+	prev = p.prev;
+	enemy = p.enemy;
+	missile = p.missile;
+	mate = p.mate;
+	last_mate = p.last_mate;
+	settings_controller = p.settings_controller;
+	skill = p.skill;
+	t_active = p.t_active;
+	t_respawn = p.t_respawn;
+	t_strafe = p.t_strafe;
+	t_react = p.t_react;
+	t_fight = p.t_fight;
+	t_roam = p.t_roam;
+	t_rocket = p.t_rocket;
+	isbot = p.isbot;
+	first_shot = p.first_shot;
+	sleft = p.sleft;
+	allround = p.allround;
+	oldx = p.oldx;
+	oldy = p.oldy;
+	BlendR = p.BlendR;
+	BlendG = p.BlendG;
+	BlendB = p.BlendB;
+	BlendA = p.BlendA;
+	LogText = p.LogText;
+	MinPitch = p.MinPitch;
+	MaxPitch = p.MaxPitch;
+	crouching = p.crouching;
+	crouchdir = p.crouchdir;
+	crouchfactor = p.crouchfactor;
+	crouchoffset = p.crouchoffset;
+	crouchviewdelta = p.crouchviewdelta;
+	weapons = p.weapons;
+	ConversationNPC = p.ConversationNPC;
+	ConversationPC = p.ConversationPC;
+	ConversationNPCAngle = p.ConversationNPCAngle;
+	ConversationFaceTalker = p.ConversationFaceTalker;
+	return *this;
 }
 
 // This function supplements the pointer cleanup in dobject.cpp, because
@@ -473,6 +581,14 @@ void APlayerPawn::Serialize (FArchive &arc)
 	else
 	{
 		arc << GruntSpeed << FallingScreamMinSpeed << FallingScreamMaxSpeed;
+	}
+	if (SaveVersion >= 4502)
+	{
+		arc << UseRange;
+	}
+	if (SaveVersion >= 4503)
+	{
+		arc << AirCapacity;
 	}
 }
 
@@ -1063,7 +1179,7 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 	{
 		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
 	}
-	if (level.airsupply> 0) player->air_finished = level.time + level.airsupply;
+	if (level.airsupply> 0 && player->mo->AirCapacity > 0) player->air_finished = level.time + FixedMul(level.airsupply, player->mo->AirCapacity);
 	else player->air_finished = INT_MAX;
 	return wasdrowning;
 }

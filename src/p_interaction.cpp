@@ -657,10 +657,38 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 
 	FState *diestate = NULL;
+	int gibhealth = GibHealth();
+	int iflags4 = inflictor == NULL ? 0 : inflictor->flags4;
+	bool extremelydead = ((health < gibhealth || iflags4 & MF4_EXTREMEDEATH) && !(iflags4 & MF4_NOEXTREMEDEATH));
+
+	// Special check for 'extreme' damage type to ensure that it gets recorded properly as an extreme death for subsequent checks.
+	if (DamageType == NAME_Extreme)
+	{
+		extremelydead = true;
+		DamageType = NAME_None;
+	}
+
+	// find the appropriate death state. The order is:
+	//
+	// 1. If damagetype is not 'none' and death is extreme, try a damage type specific extreme death state
+	// 2. If no such state is found or death is not extreme try a damage type specific normal death state
+	// 3. If damagetype is 'ice' and actor is a monster or player, try the generic freeze death (unless prohibited)
+	// 4. If no state has been found and death is extreme, try the extreme death state
+	// 5. If no such state is found or death is not extreme try the regular death state.
+	// 6. If still no state has been found, destroy the actor immediately.
 
 	if (DamageType != NAME_None)
 	{
-		diestate = FindState (NAME_Death, DamageType, true);
+		if (extremelydead)
+		{
+			FName labels[] = { NAME_Death, NAME_Extreme, DamageType };
+			diestate = FindState(3, labels, true);
+		}
+		if (diestate == NULL)
+		{
+			diestate = FindState (NAME_Death, DamageType, true);
+			if (diestate != NULL) extremelydead = false;
+		}
 		if (diestate == NULL)
 		{
 			if (DamageType == NAME_Ice)
@@ -669,15 +697,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				if (!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH) && (player || (flags3 & MF3_ISMONSTER)))
 				{
 					diestate = FindState(NAME_GenericFreezeDeath);
+					extremelydead = false;
 				}
 			}
 		}
 	}
 	if (diestate == NULL)
 	{
-		int flags4 = inflictor == NULL ? 0 : inflictor->flags4;
-
-		int gibhealth = GibHealth();
 		
 		// Don't pass on a damage type this actor cannot handle.
 		// (most importantly, prevent barrels from passing on ice damage.)
@@ -687,23 +713,30 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 			DamageType = NAME_None;	
 		}
 
-		if ((health < gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
+		if (extremelydead)
 		{ // Extreme death
 			diestate = FindState (NAME_Death, NAME_Extreme, true);
-			// If a non-player, mark as extremely dead for the crash state.
-			if (diestate != NULL && player == NULL && health >= gibhealth)
-			{
-				health = gibhealth - 1;
-			}
-			// For players, mark the appropriate flag.
-			else if (player != NULL)
-			{
-				player->cheats |= CF_EXTREMELYDEAD;
-			}
 		}
 		if (diestate == NULL)
 		{ // Normal death
+			extremelydead = false;
 			diestate = FindState (NAME_Death);
+		}
+	}
+
+	if (extremelydead)
+	{ 
+		// We'll only get here if an actual extreme death state was used.
+
+		// For players, mark the appropriate flag.
+		if (player != NULL)
+		{
+			player->cheats |= CF_EXTREMELYDEAD;
+		}
+		// If a non-player, mark as extremely dead for the crash state.
+		else if (health >= gibhealth)
+		{
+			health = gibhealth - 1;
 		}
 	}
 
@@ -711,9 +744,12 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		SetState (diestate);
 
-		tics -= pr_killmobj() & 3;
-		if (tics < 1)
-			tics = 1;
+		if (tics > 1)
+		{
+			tics -= pr_killmobj() & 3;
+			if (tics < 1)
+				tics = 1;
+		}
 	}
 	else
 	{
@@ -932,7 +968,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	{ // actor is invulnerable
 		if (target->player == NULL)
 		{
-			if (inflictor == NULL || !(inflictor->flags3 & MF3_FOILINVUL))
+			if (inflictor == NULL || (!(inflictor->flags3 & MF3_FOILINVUL) && !(flags & DMG_FOILINVUL)))
 			{
 				return -1;
 			}
@@ -1107,7 +1143,9 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT
-				 && !(target->flags & MF_NOGRAVITY))
+				 && !(target->flags & MF_NOGRAVITY)
+				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
+				 )
 			{
 				ang += ANG180;
 				thrust *= 4;

@@ -752,7 +752,10 @@ public:
 			{
 				ReplyText = GStrings(ReplyText + 1);
 			}
-			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyText);
+			FString ReplyString = ReplyText;
+			if (reply->NeedsGold) ReplyString.AppendFormat(" for %u", reply->ItemCheck[0].Amount);
+
+			FBrokenLines *ReplyLines = V_BreakLines (SmallFont, 320-50-10, ReplyString);
 
 			mResponses.Push(mResponseLines.Size());
 			for (j = 0; ReplyLines[j].Width >= 0; ++j)
@@ -958,6 +961,7 @@ public:
 		if (CurNode->SpeakerName != NULL)
 		{
 			speakerName = CurNode->SpeakerName;
+			if (speakerName[0] == '$') speakerName = GStrings(speakerName+1);
 		}
 		else
 		{
@@ -1151,7 +1155,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 				break;
 			}
 		}
-		if (jump)
+		if (jump && CurNode->ItemCheckNode > 0)
 		{
 			int root = pc->player->ConversationNPC->ConversationRoot;
 			CurNode = StrifeDialogues[root + CurNode->ItemCheckNode - 1];

@@ -53,11 +53,6 @@
 #include "r_data/r_translate.h"
 #include "g_level.h"
 
-#define WATER_SINK_FACTOR		3
-#define WATER_SINK_SMALL_FACTOR	4
-#define WATER_SINK_SPEED		(FRACUNIT/2)
-#define WATER_JUMP_SPEED		(FRACUNIT*7/2)
-
 CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR (Int, sv_smartaim, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 CVAR (Bool, cl_doautoaim, false, CVAR_ARCHIVE)
@@ -3563,7 +3558,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	else tflags = TRACE_NoSky|TRACE_Impact;
 
 	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
-		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,
+		MF_SHOOTABLE, ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN, t1, trace,
 		tflags, hitGhosts ? CheckForGhost : CheckForSpectral))
 	{ // hit nothing
 		if (puffDefaults == NULL)
@@ -4359,14 +4354,17 @@ bool P_NoWayTraverse (AActor *usething, fixed_t endx, fixed_t endy)
 void P_UseLines (player_t *player)
 {
 	angle_t angle;
-	fixed_t x1, y1;
+	fixed_t x1, y1, usedist;
 	bool foundline;
 
 	foundline = false;
 
 	angle = player->mo->angle >> ANGLETOFINESHIFT;
-	x1 = player->mo->x + (USERANGE>>FRACBITS)*finecosine[angle];
-	y1 = player->mo->y + (USERANGE>>FRACBITS)*finesine[angle];
+	usedist = player->mo->UseRange;
+
+	// [NS] Now queries the Player's UseRange.
+	x1 = player->mo->x + FixedMul(usedist, finecosine[angle]);
+	y1 = player->mo->y + FixedMul(usedist, finesine[angle]);
 
 	// old code:
 	//
@@ -4398,13 +4396,20 @@ void P_UseLines (player_t *player)
 bool P_UsePuzzleItem (AActor *PuzzleItemUser, int PuzzleItemType)
 {
 	int angle;
-	fixed_t x1, y1, x2, y2;
+	fixed_t x1, y1, x2, y2, usedist;
 
 	angle = PuzzleItemUser->angle>>ANGLETOFINESHIFT;
 	x1 = PuzzleItemUser->x;
 	y1 = PuzzleItemUser->y;
-	x2 = x1+(USERANGE>>FRACBITS)*finecosine[angle];
-	y2 = y1+(USERANGE>>FRACBITS)*finesine[angle];
+
+	// [NS] If it's a Player, get their UseRange.
+	if (PuzzleItemUser->player)
+		usedist = PuzzleItemUser->player->mo->UseRange;
+	else
+		usedist = USERANGE;
+
+	x2 = x1 + FixedMul(usedist, finecosine[angle]);
+	y2 = y1 + FixedMul(usedist, finesine[angle]);
 
 	FPathTraverse it(x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;

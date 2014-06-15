@@ -9,7 +9,12 @@ include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
 include( FindPkgConfig )
 
-option( NO_ASM "Disable assembly code" )
+if( NOT APPLE )
+	option( NO_ASM "Disable assembly code" OFF )
+else( NOT APPLE )
+	# At the moment asm code doesn't work with OS X, so disable by default
+	option( NO_ASM "Disable assembly code" ON )
+endif( NOT APPLE )
 if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
@@ -71,8 +76,11 @@ if( WIN32 )
 	set( FMOD_SEARCH_PATHS
 		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
 		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		# This next one is for me.
-		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" )
+		# This next one is for Randy.
+		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
+		# .. and this one for Graf Zahl
+		"D:/portable/FMOD SoundSystem 4.26/FMOD Programmers API WIN32/api"
+		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )

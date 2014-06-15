@@ -74,7 +74,7 @@ public:
 	virtual void SetSfxVolume(float volume);
 	virtual void SetMusicVolume(float volume);
 	virtual SoundHandle LoadSound(BYTE *sfxdata, int length);
-	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend);
+	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1);
 	virtual void UnloadSound(SoundHandle sfx);
 	virtual unsigned int GetMSLength(SoundHandle sfx);
 	virtual unsigned int GetSampleLength(SoundHandle sfx);
@@ -104,7 +104,7 @@ public:
 	virtual void SetSfxPaused(bool paused, int slot);
 
 	// Pauses or resumes *every* channel, including environmental reverb.
-	virtual void SetInactive(EInactiveState state);
+	virtual void SetInactive(SoundRenderer::EInactiveState inactive);
 
 	// Updates the volume, separation, and pitch of a sound channel.
 	virtual void UpdateSoundParams3D(SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel);

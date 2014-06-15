@@ -1562,9 +1562,21 @@ FUNC(LS_Thing_SetGoal)
 		ok = true;
 		if (self->flags & MF_SHOOTABLE)
 		{
+			if (self->target == self->goal)
+			{ // Targeting a goal already? -> don't target it anymore.
+			  // A_Look will set it to the goal, presuming no real targets
+			  // come into view by then.
+				self->target = NULL;
+			}
 			self->goal = goal;
-			if (arg3 == 0) self->flags5 &=~ MF5_CHASEGOAL;
-			else self->flags5 |= MF5_CHASEGOAL;
+			if (arg3 == 0)
+			{
+				self->flags5 &= ~MF5_CHASEGOAL;
+			}
+			else
+			{
+				self->flags5 |= MF5_CHASEGOAL;
+			}
 			if (self->target == NULL)
 			{
 				self->reactiontime = arg2 * TICRATE;
@@ -2545,6 +2557,7 @@ FUNC(LS_Line_SetBlocking)
 		ML_RAILING,
 		ML_BLOCKUSE,
 		ML_BLOCKSIGHT,
+		ML_BLOCKHITSCAN,
 		-1
 	};
 
@@ -2812,6 +2825,11 @@ FUNC(LS_SetPlayerProperty)
 	else
 	{
 		int i;
+
+		if ((ib_compatflags & BCOMPATF_LINKFROZENPROPS) && (mask & (CF_FROZEN | CF_TOTALLYFROZEN)))
+		{ // Clearing one of these properties clears both of them (if the compat flag is set.)
+			mask = CF_FROZEN | CF_TOTALLYFROZEN;
+		}
 
 		for (i = 0; i < MAXPLAYERS; i++)
 		{

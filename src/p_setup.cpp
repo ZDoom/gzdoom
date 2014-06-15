@@ -250,7 +250,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 //
 //===========================================================================
 
-MapData *P_OpenMapData(const char * mapname)
+MapData *P_OpenMapData(const char * mapname, bool justcheck)
 {
 	MapData * map = new MapData;
 	FileReader * wadReader = NULL;
@@ -329,7 +329,20 @@ MapData *P_OpenMapData(const char * mapname)
 					// Since levels must be stored in WADs they can't really have full
 					// names and for any valid level lump this always returns the short name.
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
-					index = GetMapIndex(mapname, index, lumpname, i != 1 || Wads.LumpLength(lump_name + i) == 0);
+					try
+					{
+						index = GetMapIndex(mapname, index, lumpname, !justcheck);
+					}
+					catch(...)
+					{
+						delete map;
+						throw;
+					}
+					if (index == -2)
+					{
+						delete map;
+						return NULL;
+					}
 					if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
 					// The next lump is not part of this map anymore
@@ -461,7 +474,20 @@ MapData *P_OpenMapData(const char * mapname)
 
 			if (i>0)
 			{
-				index = GetMapIndex(maplabel, index, lumpname, true);
+				try
+				{
+					index = GetMapIndex(maplabel, index, lumpname, !justcheck);
+				}
+				catch(...)
+				{
+					delete map;
+					throw;
+				}
+				if (index == -2)
+				{
+					delete map;
+					return NULL;
+				}
 				if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
 				// The next lump is not part of this map anymore
@@ -492,7 +518,7 @@ MapData *P_OpenMapData(const char * mapname)
 
 bool P_CheckMapData(const char *mapname)
 {
-	MapData *mapd = P_OpenMapData(mapname);
+	MapData *mapd = P_OpenMapData(mapname, true);
 	if (mapd == NULL) return false;
 	delete mapd;
 	return true;
@@ -1734,6 +1760,7 @@ void P_LoadThings (MapData * map)
 
 		memset (&mti[i], 0, sizeof(mti[i]));
 
+		mti[i].gravity = FRACUNIT;
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
@@ -1809,6 +1836,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].ClassFilter = (mti[i].flags & MTF_CLASS_MASK) >> MTF_CLASS_SHIFT;
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
 		mti[i].Conversation = 0;
+		mti[i].gravity = FRACUNIT;
 	}
 	delete[] mtp;
 }
@@ -3592,7 +3620,7 @@ void P_SetupLevel (char *lumpname, int position)
 	P_FreeLevelData ();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 
-	MapData *map = P_OpenMapData(lumpname);
+	MapData *map = P_OpenMapData(lumpname, true);
 	if (map == NULL)
 	{
 		I_Error("Unable to open map '%s'\n", lumpname);

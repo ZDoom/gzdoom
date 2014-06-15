@@ -113,6 +113,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       blockprojectiles = <bool>;// Line blocks all projectiles
       blockuse = <bool>;        // Line blocks all use actions
       blocksight = <bool>;      // Line blocks monster line of sight
+      blockhitscan = <bool>;    // Line blocks hitscan attacks
       locknumber = <int>;       // Line special is locked
       arg0str = <string>;       // Alternate string-based version of arg0
 
@@ -186,6 +187,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       soundsequence = <string>;       // The sound sequence to play when this sector moves. Placing a
                                       // sound sequence thing in the sector will override this property.
       hidden = <bool>;                // if true this sector will not be drawn on the textured automap.
+      waterzone = <bool>;             // Sector is under water and swimmable
       
       * Note about dropactors
 
@@ -203,6 +205,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                 // Parameter is the conversation ID, 0 meaning none.
       countsecret = <bool>;     // Picking up this actor counts as a secret.
       arg0str = <string>;       // Alternate string-based version of arg0
+	  gravity = <float>;		// Set per-actor gravity. Positive values are multiplied with the class's property, 
+	                            // negative values are used as their absolute. Default = 1.0.
 
       * Note about arg0str
 
@@ -327,6 +331,9 @@ Added back locknumber property.
 
 1.20 25.02.2012
 Added arg0str thing property.
+
+1.21 09.08.2013
+Added waterzone sector property.
 
 ===============================================================================
 EOF

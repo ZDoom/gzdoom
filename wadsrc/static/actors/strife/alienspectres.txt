@@ -20,6 +20,7 @@ ACTOR AlienSpectre1 : SpectralMonster 129
 	PainSound "alienspectre/pain"
 	DeathSound "alienspectre/death"
 	ActiveSound "alienspectre/active"
+	Obituary "$OB_ALIENSPECTRE"
 	+NOGRAVITY
 	+FLOAT
 	+SHADOW

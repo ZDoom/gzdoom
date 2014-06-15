@@ -100,6 +100,7 @@ public:
 private:
 	int FindString(const char *str, size_t len, unsigned int h, unsigned int bucketnum);
 	int InsertString(FString &str, unsigned int h, unsigned int bucketnum, const SDWORD *stack, int stackdepth);
+	void FindFirstFreeEntry(unsigned int base);
 
 	enum { NUM_BUCKETS = 251 };
 	enum { FREE_ENTRY = 0xFFFFFFFE };	// Stored in PoolEntry's Next field

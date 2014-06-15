@@ -698,6 +698,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		mapthings[count].SkillFilter = 0xffff;
 		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
+		mapthings[count].gravity = FRACUNIT;
 
 		if (xsprites != NULL && sprites[i].lotag == 710)
 		{ // Blood ambient sound

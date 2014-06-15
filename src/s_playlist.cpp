@@ -63,7 +63,7 @@ bool FPlayList::ChangeList (const char *path)
 
 	if ( (file = fopen (path, "rb")) == NULL)
 	{
-		Printf ("Could not open "TEXTCOLOR_BOLD"%s"TEXTCOLOR_NORMAL": %s\n", path, strerror(errno));
+		Printf ("Could not open " TEXTCOLOR_BOLD "%s" TEXTCOLOR_NORMAL ": %s\n", path, strerror(errno));
 		return false;
 	}
 

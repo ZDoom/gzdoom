@@ -785,7 +785,7 @@ void AInventory::BecomePickup ()
 		LinkToWorld ();
 		P_FindFloorCeiling (this);
 	}
-	flags = GetDefault()->flags | MF_DROPPED;
+	flags = (GetDefault()->flags | MF_DROPPED) & ~MF_COUNTITEM;
 	renderflags &= ~RF_INVISIBLE;
 	SetState (SpawnState);
 }
@@ -1792,7 +1792,10 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 AInventory *ABackpackItem::CreateTossable ()
 {
 	ABackpackItem *pack = static_cast<ABackpackItem *>(Super::CreateTossable());
-	pack->bDepleted = true;
+	if (pack != NULL)
+	{
+		pack->bDepleted = true;
+	}
 	return pack;
 }
 

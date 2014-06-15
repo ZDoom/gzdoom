@@ -2113,9 +2113,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
-	// Puts a percent value in the 0.0..1.0 range
 	PROP_FIXED_PARM(f, 0);
-	*pStrength = f / 100;
+	*pStrength = f;
 }
 
 //==========================================================================
@@ -2408,6 +2407,24 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
 {
 	PROP_FIXED_PARM(z, 0);
 	defaults->ViewHeight = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->UseRange = z;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
+{
+	PROP_FIXED_PARM(z, 0);
+	defaults->AirCapacity = z;
 }
 
 //==========================================================================

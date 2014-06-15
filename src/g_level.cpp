@@ -40,6 +40,7 @@
 #include "s_sound.h"
 #include "d_event.h"
 #include "m_random.h"
+#include "doomerrors.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
 #include "w_wad.h"
@@ -164,19 +165,27 @@ CCMD (map)
 {
 	if (netgame)
 	{
-		Printf ("Use "TEXTCOLOR_BOLD"changemap"TEXTCOLOR_NORMAL" instead. "TEXTCOLOR_BOLD"Map"
-				TEXTCOLOR_NORMAL" is for single-player only.\n");
+		Printf ("Use " TEXTCOLOR_BOLD "changemap" TEXTCOLOR_NORMAL " instead. " TEXTCOLOR_BOLD "Map"
+				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
 	if (argv.argc() > 1)
 	{
-		if (!P_CheckMapData(argv[1]))
+		try
 		{
-			Printf ("No map %s\n", argv[1]);
+			if (!P_CheckMapData(argv[1]))
+			{
+				Printf ("No map %s\n", argv[1]);
+			}
+			else
+			{
+				G_DeferedInitNew (argv[1]);
+			}
 		}
-		else
+		catch(CRecoverableError &error)
 		{
-			G_DeferedInitNew (argv[1]);
+			if (error.GetMessage())
+				Printf("%s", error.GetMessage());
 		}
 	}
 	else
@@ -1914,7 +1923,7 @@ CCMD(listmaps)
 	for(unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
-		MapData *map = P_OpenMapData(info->mapname);
+		MapData *map = P_OpenMapData(info->mapname, true);
 
 		if (map != NULL)
 		{

@@ -70,6 +70,7 @@
 #include "m_bbox.h"
 #include "r_data/r_translate.h"
 #include "p_trace.h"
+#include "gstrings.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -1403,7 +1404,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	}
 
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
-	int puffFlags = LAF_ISMELEEATTACK | (flags & CPF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+	int puffFlags = LAF_ISMELEEATTACK | ((flags & CPF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0);
 
 	P_LineAttack (self, angle, Range, pitch, Damage, NAME_Melee, PuffType, puffFlags, &linetarget, &actualdamage);
 
@@ -1425,7 +1426,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;
 		if (flags & CPF_DAGGER) P_DaggerAlert (self, linetarget);
-
 	}
 }
 
@@ -1746,6 +1746,7 @@ enum SIX_Flags
 	SIXF_TRANSFERSCALE			= 1 << 14,
 	SIXF_TRANSFERSPECIAL		= 1 << 15,
 	SIXF_CLEARCALLERSPECIAL		= 1 << 16,
+	SIXF_TRANSFERSTENCILCOL		= 1 << 17,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1857,6 +1858,10 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		self->special = 0;
 		memset(self->args, 0, sizeof(self->args));
+	}
+	if (flags & SIXF_TRANSFERSTENCILCOL)
+	{
+		mo->fillcolor = self->fillcolor;
 	}
 
 	return true;
@@ -2133,6 +2138,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Print)
 	ACTION_PARAM_FLOAT(time, 1);
 	ACTION_PARAM_NAME(fontname, 2);
 
+	if (text[0] == '$') text = GStrings(text+1);
 	if (self->CheckLocalView (consoleplayer) ||
 		(self->target!=NULL && self->target->CheckLocalView (consoleplayer)))
 	{
@@ -2171,6 +2177,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PrintBold)
 	float saved = con_midtime;
 	FFont *font = NULL;
 	
+	if (text[0] == '$') text = GStrings(text+1);
 	if (fontname != NAME_None)
 	{
 		font = V_GetFont(fontname);
@@ -2196,11 +2203,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 {
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_STRING(text, 0);
+
+	if (text[0] == '$') text = GStrings(text+1);
 	Printf("%s\n", text);
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 
-//===========================================================================
+//=========================================================================
 //
 // A_LogInt
 //
@@ -4925,6 +4934,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(tics_to_set, 0);
 
+	if (stateowner != self && self->player != NULL && stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)))
+	{ // Is this a weapon? Need to check psp states for a match, then. Blah.
+		for (int i = 0; i < NUMPSPRITES; ++i)
+		{
+			if (self->player->psprites[i].state == CallingState)
+			{
+				self->player->psprites[i].tics = tics_to_set;
+				return;
+			}
+		}
+	}
+	// Just set tics for self.
 	self->tics = tics_to_set;
 }
 
@@ -4940,4 +4961,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetDamageType)
 	ACTION_PARAM_NAME(damagetype, 0);
 
 	self->DamageType = damagetype;
+}
+
+//==========================================================================
+//
+// A_DropItem
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_CLASS(spawntype, 0);
+	ACTION_PARAM_INT(amount, 1);
+	ACTION_PARAM_INT(chance, 2);
+
+	P_DropItem(self, spawntype, amount, chance);
 }

@@ -862,7 +862,10 @@ static void ChangeSpy (int changespy)
 	int pnum = consoleplayer;
 	if (changespy != SPY_CANCEL) 
 	{
-		pnum = int(players[consoleplayer].camera->player - players);
+		player_t *player = players[consoleplayer].camera->player;
+		// only use the camera as starting index if it's a valid player.
+		if (player != NULL) pnum = int(players[consoleplayer].camera->player - players);
+
 		int step = (changespy == SPY_NEXT) ? 1 : -1;
 
 		do

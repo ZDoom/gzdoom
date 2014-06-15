@@ -38,6 +38,7 @@ class ACustomBridge : public AActor
 	DECLARE_CLASS (ACustomBridge, AActor)
 public:
 	void BeginPlay ();
+	void Destroy();
 };
 
 IMPLEMENT_CLASS(ACustomBridge)
@@ -56,6 +57,25 @@ void ACustomBridge::BeginPlay ()
 		height = args[1] ? args[1] << FRACBITS : 4 * FRACUNIT;
 		RenderStyle = STYLE_Normal;
 	}
+}
+
+void ACustomBridge::Destroy()
+{
+	// Hexen originally just set a flag to make the bridge balls remove themselves in A_BridgeOrbit.
+	// But this is not safe with custom bridge balls that do not necessarily call that function.
+	// So the best course of action is to look for all bridge balls here and destroy them ourselves.
+	
+	TThinkerIterator<AActor> it;
+	AActor *thing;
+	
+	while ((thing = it.Next()))
+	{
+		if (thing->target == this)
+		{
+			thing->Destroy();
+		}
+	}
+	Super::Destroy();
 }
 
 // Action functions for the non-Doom bridge --------------------------------
@@ -89,10 +109,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	// Set rotation radius
 	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / (100 * FRACUNIT));
 
-	if (self->target->special1)
-	{
-		self->SetState (NULL);
-	}
 	self->angle += rotationspeed;
 	self->x = self->target->x + rotationradius * finecosine[self->angle >> ANGLETOFINESHIFT];
 	self->y = self->target->y + rotationradius * finesine[self->angle >> ANGLETOFINESHIFT];
@@ -115,7 +131,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 	cy = self->y;
 	cz = self->z;
 	startangle = pr_orbit() << 24;
-	self->special1 = 0;
 
 	// Spawn triad into world -- may be more than a triad now.
 	int ballcount = self->args[2]==0 ? 3 : self->args[2];
@@ -129,14 +144,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 	}
 }
 
-/* never used
-void A_BridgeRemove (AActor *self)
-{
-	self->special1 = true;		// Removing the bridge
-	self->flags &= ~MF_SOLID;
-	self->SetState (&ABridge::States[S_FREE_BRIDGE]);
-}
-*/
 
 // Invisible bridge --------------------------------------------------------
 

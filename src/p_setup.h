@@ -94,7 +94,7 @@ struct MapData
 	void GetChecksum(BYTE cksum[16]);
 };
 
-MapData * P_OpenMapData(const char * mapname);
+MapData * P_OpenMapData(const char * mapname, bool justcheck);
 bool P_CheckMapData(const char * mapname);
 
 

@@ -35,6 +35,7 @@
 #include <string.h>
 #include "m_argv.h"
 #include "cmdlib.h"
+#include "i_system.h"
 
 IMPLEMENT_CLASS (DArgs)
 
@@ -390,6 +391,14 @@ void DArgs::CollectFiles(const char *param, const char *extension)
 			Argv.Delete(i);
 		}
 	}
+
+	// Optional: Replace short path names with long path names
+#ifdef _WIN32
+	for (i = 0; i < work.Size(); ++i)
+	{
+		work[i] = I_GetLongPathName(work[i]);
+	}
+#endif
 
 	// Step 3: Add work back to Argv, as long as it's non-empty.
 	if (work.Size() > 0)

@@ -46,6 +46,7 @@
 #include "p_acs.h"
 #include "p_saveg.h"
 #include "p_lnspec.h"
+#include "p_enemy.h"
 #include "m_random.h"
 #include "doomstat.h"
 #include "c_console.h"
@@ -111,6 +112,9 @@ FRandom pr_acs ("ACS");
 #define NOT_TOP				4
 #define NOT_FLOOR			8
 #define NOT_CEILING			16
+
+// LineAtack flags
+#define FHF_NORANDOMPUFFZ	1
 
 // SpawnDecal flags
 #define SDF_ABSANGLE		1
@@ -571,11 +575,7 @@ int ACSStringPool::InsertString(FString &str, unsigned int h, unsigned int bucke
 	}
 	else
 	{ // Scan for the next free entry
-		unsigned int i;
-		for (i = FirstFreeEntry + 1; i < Pool.Size() && Pool[i].Next != FREE_ENTRY; ++i)
-		{
-		}
-		FirstFreeEntry = i;
+		FindFirstFreeEntry(FirstFreeEntry + 1);
 	}
 	PoolEntry *entry = &Pool[index];
 	entry->Str = str;
@@ -584,6 +584,23 @@ int ACSStringPool::InsertString(FString &str, unsigned int h, unsigned int bucke
 	entry->LockCount = 0;
 	PoolBuckets[bucketnum] = index;
 	return index | STRPOOL_LIBRARYID_OR;
+}
+
+//============================================================================
+//
+// ACSStringPool :: FindFirstFreeEntry
+//
+// Finds the first free entry, starting at base.
+//
+//============================================================================
+
+void ACSStringPool::FindFirstFreeEntry(unsigned base)
+{
+	while (base < Pool.Size() && Pool[base].Next != FREE_ENTRY)
+	{
+		base++;
+	}
+	FirstFreeEntry = base;
 }
 
 //============================================================================
@@ -634,6 +651,7 @@ void ACSStringPool::ReadStrings(PNGHandle *png, DWORD id)
 		{
 			delete[] str;
 		}
+		FindFirstFreeEntry(0);
 	}
 }
 
@@ -686,6 +704,7 @@ void ACSStringPool::Dump() const
 			Printf("%4u. (%2d) \"%s\"\n", i, Pool[i].LockCount, Pool[i].Str.GetChars());
 		}
 	}
+	Printf("First free %u\n", FirstFreeEntry);
 }
 
 //============================================================================
@@ -3509,6 +3528,8 @@ enum
 	APROP_Radius		= 36,
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
+	APROP_ViewHeight	= 39,
+	APROP_AttackZOffset	= 40
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3724,6 +3745,16 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->reactiontime = value;
 		break;
 
+	case APROP_ViewHeight:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->ViewHeight = value;
+		break;
+
+	case APROP_AttackZOffset:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3796,6 +3827,23 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Radius:		return actor->radius;
 	case APROP_ReactionTime:return actor->reactiontime;
 	case APROP_MeleeRange:	return actor->meleerange;
+	case APROP_ViewHeight:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->ViewHeight;
+							}
+							else
+							{
+								return 0;
+							}
+	case APROP_AttackZOffset:
+							if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->AttackZOffset;
+							}
+							else
+							{
+								return 0;
+							}
 
 	case APROP_SeeSound:	return GlobalACSStrings.AddString(actor->SeeSound, stack, stackdepth);
 	case APROP_AttackSound:	return GlobalACSStrings.AddString(actor->AttackSound, stack, stackdepth);
@@ -3848,6 +3896,8 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_Radius:
 		case APROP_ReactionTime:
 		case APROP_MeleeRange:
+		case APROP_ViewHeight:
+		case APROP_AttackZOffset:
 			return (GetActorProperty(tid, property, NULL, 0) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -4199,6 +4249,7 @@ enum EACSFunctions
 	ACSF_PlayActorSound,
 	ACSF_SpawnDecal,
 	ACSF_CheckFont,
+	ACSF_DropItem,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4966,10 +5017,13 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
 				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
+				int flags			= argCount > 7 && args[7]? args[7] : 0;
+
+				int fhflags = (flags & FHF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 				if (args[0] == 0)
 				{
-					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype);
+					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 				}
 				else
 				{
@@ -4978,7 +5032,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 					while ((source = it.Next()) != NULL)
 					{
-						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype);
+						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 					}
 				}
 			}
@@ -5025,7 +5079,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 							{
 								S_Sound(spot, chan, sid, vol, atten);
 							}
-							else if (!S_IsActorPlayingSomething(spot, chan, sid))
+							else if (!S_IsActorPlayingSomething(spot, chan & 7, sid))
 							{
 								S_Sound(spot, chan | CHAN_LOOP, sid, vol, atten);
 							}
@@ -5197,6 +5251,39 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_CheckFont:
 			// bool CheckFont(str fontname)
 			return V_GetFont(FBehavior::StaticLookupString(args[0])) != NULL;
+
+		case ACSF_DropItem:
+		{
+			const char *type = FBehavior::StaticLookupString(args[1]);
+			int amount = argCount >= 3? args[2] : -1;
+			int chance = argCount >= 4? args[3] : 256;
+			const PClass *cls = PClass::FindClass(type);
+			int cnt = 0;
+			if (cls != NULL)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						P_DropItem(activator, cls, amount, chance);
+						cnt++;
+					}
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *actor;
+
+					while ((actor = it.Next()) != NULL)
+					{
+						P_DropItem(actor, cls, amount, chance);
+						cnt++;
+					}
+				}
+				return cnt;
+			}
+			break;
+		}
 
 		default:
 			break;
@@ -5556,7 +5643,8 @@ int DLevelScript::RunScript ()
 		case PCD_PUSHFUNCTION:
 		{
 			int funcnum = NEXTBYTE;
-			PushToStack(funcnum | activeBehavior->GetLibraryID());
+			// Not technically a string, but since we use the same tagging mechanism
+			PushToStack(TAGSTR(funcnum));
 			break;
 		}
 		case PCD_CALL:
@@ -5572,7 +5660,7 @@ int DLevelScript::RunScript ()
 				if(pcd == PCD_CALLSTACK)
 				{
 					funcnum = STACK(1);
-					module = FBehavior::StaticGetModule(funcnum>>16);
+					module = FBehavior::StaticGetModule(funcnum>>LIBRARYID_SHIFT);
 					--sp;
 
 					funcnum &= 0xFFFF; // Clear out tag
@@ -8321,7 +8409,7 @@ scriptwait:
 			{
 				int playernum = STACK(1);
 
-				if (playernum < 0 || playernum >= MAXPLAYERS || !playeringame[playernum] || players[playernum].camera == NULL)
+				if (playernum < 0 || playernum >= MAXPLAYERS || !playeringame[playernum] || players[playernum].camera == NULL || players[playernum].camera->player != NULL)
 				{
 					STACK(1) = -1;
 				}
@@ -8449,7 +8537,8 @@ scriptwait:
 		case PCD_SAVESTRING:
 			// Saves the string
 			{
-				PushToStack(GlobalACSStrings.AddString(work, Stack, sp));
+				const int str = GlobalACSStrings.AddString(work, Stack, sp);
+				PushToStack(str);
 				STRINGBUILDER_FINISH(work);
 			}		
 			break;

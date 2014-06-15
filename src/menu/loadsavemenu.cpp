@@ -131,7 +131,8 @@ void ClearSaveGames()
 {
 	for(unsigned i=0;i<DLoadSaveMenu::SaveGames.Size(); i++)
 	{
-		delete DLoadSaveMenu::SaveGames[i];
+		if(!DLoadSaveMenu::SaveGames[i]->bNoDelete)
+			delete DLoadSaveMenu::SaveGames[i];
 	}
 	DLoadSaveMenu::SaveGames.Clear();
 }
@@ -898,7 +899,7 @@ IMPLEMENT_CLASS(DSaveMenu)
 DSaveMenu::DSaveMenu(DMenu *parent, FListMenuDescriptor *desc)
 : DLoadSaveMenu(parent, desc)
 {
-	strcpy (NewSaveNode.Title, "<New Save Game>");
+	strcpy (NewSaveNode.Title, GStrings["NEWSAVE"]);
 	NewSaveNode.bNoDelete = true;
 	SaveGames.Insert(0, &NewSaveNode);
 	TopItem = 0;

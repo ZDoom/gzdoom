@@ -218,6 +218,7 @@ int NoWipe;				// [RH] Allow wipe? (Needs to be set each time)
 bool singletics = false;	// debug flag to cancel adaptiveness
 FString startmap;
 bool autostart;
+FString StoredWarp;
 bool advancedemo;
 FILE *debugfile;
 event_t events[MAXEVENTS];
@@ -1300,7 +1301,7 @@ void D_DoAdvanceDemo (void)
 		gamestate = GS_DEMOSCREEN;
 		pagename = gameinfo.titlePage;
 		pagetic = (int)(gameinfo.titleTime * TICRATE);
-		S_StartMusic (gameinfo.titleMusic);
+		S_ChangeMusic (gameinfo.titleMusic, gameinfo.titleOrder, false);
 		demosequence = 3;
 		pagecount = 0;
 		C_HideConsole ();
@@ -2081,7 +2082,7 @@ static void CheckCmdLine()
 	{
 		startmap = "&wt@01";
 	}
-	autostart = false;
+	autostart = StoredWarp.IsNotEmpty();
 				
 	const char *val = Args->CheckValue ("-skill");
 	if (val)
@@ -2281,8 +2282,6 @@ void D_DoomMain (void)
 		execFiles = Args->GatherFiles ("-exec");
 		D_MultiExec (execFiles, true);
 
-		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
-
 		CopyFiles(allwads, pwads);
 
 		// Since this function will never leave we must delete this array here manually.
@@ -2297,6 +2296,8 @@ void D_DoomMain (void)
 
 		// Now that wads are loaded, define mod-specific cvars.
 		ParseCVarInfo();
+
+		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);
@@ -2529,6 +2530,11 @@ void D_DoomMain (void)
 					if (demorecording)
 						G_BeginRecording (startmap);
 					G_InitNew (startmap, false);
+					if (StoredWarp.IsNotEmpty())
+					{
+						AddCommandString(StoredWarp.LockBuffer());
+						StoredWarp = NULL;
+					}
 				}
 				else
 				{

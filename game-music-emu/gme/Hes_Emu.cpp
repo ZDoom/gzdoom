@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Hes_Emu.h"
 
@@ -273,12 +273,12 @@ void Hes_Emu::cpu_write_vdp( int addr, int data )
 		}
 		else
 		{
-			dprintf( "VDP not supported: $%02X <- $%02X\n", vdp.latch, data );
+			debug_printf( "VDP not supported: $%02X <- $%02X\n", vdp.latch, data );
 		}
 		break;
 	
 	case 3:
-		dprintf( "VDP MSB not supported: $%02X <- $%02X\n", vdp.latch, data );
+		debug_printf( "VDP MSB not supported: $%02X <- $%02X\n", vdp.latch, data );
 		break;
 	}
 }
@@ -325,7 +325,7 @@ void Hes_Emu::cpu_write_( hes_addr_t addr, int data )
 		run_until( time );
 		irq.disables = data;
 		if ( (data & 0xF8) && (data & 0xF8) != 0xF8 ) // flag questionable values
-			dprintf( "Int mask: $%02X\n", data );
+			debug_printf( "Int mask: $%02X\n", data );
 		break;
 	
 	case 0x1403:
@@ -344,7 +344,7 @@ void Hes_Emu::cpu_write_( hes_addr_t addr, int data )
 		return;
 		
 	default:
-		dprintf( "unmapped write $%04X <- $%02X\n", addr, data );
+		debug_printf( "unmapped write $%04X <- $%02X\n", addr, data );
 		return;
 #endif
 	}
@@ -368,14 +368,14 @@ int Hes_Emu::cpu_read_( hes_addr_t addr )
 		
 	case 0x0002:
 	case 0x0003:
-		dprintf( "VDP read not supported: %d\n", addr );
+		debug_printf( "VDP read not supported: %d\n", addr );
 		return 0;
 	
 	case 0x0C01:
 		//return timer.enabled; // TODO: remove?
 	case 0x0C00:
 		run_until( time );
-		dprintf( "Timer count read\n" );
+		debug_printf( "Timer count read\n" );
 		return (unsigned) (timer.count - 1) / timer_base;
 	
 	case 0x1402:
@@ -396,7 +396,7 @@ int Hes_Emu::cpu_read_( hes_addr_t addr )
 			break;
 		
 		default:
-			dprintf( "unmapped read  $%04X\n", addr );
+			debug_printf( "unmapped read  $%04X\n", addr );
 	#endif
 	}
 	

@@ -195,7 +195,7 @@ struct DiskWriterIO : public OPLio
 	DiskWriterIO(const char *filename);
 	~DiskWriterIO();
 
-	int OPLinit(uint numchips, bool notused=false);
+	int OPLinit(uint numchips, bool notused=false, bool notused2=false);
 	void OPLdeinit();
 	void OPLwriteReg(int which, uint reg, uchar data);
 	void SetClockRate(double samples_per_tick);

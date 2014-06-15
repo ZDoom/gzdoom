@@ -1,6 +1,6 @@
 // Common interface to game music file loading and information
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef GME_FILE_H
 #define GME_FILE_H
 

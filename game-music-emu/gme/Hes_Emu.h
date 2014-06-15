@@ -1,6 +1,6 @@
 // TurboGrafx-16/PC Engine HES music file emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef HES_EMU_H
 #define HES_EMU_H
 

@@ -1,6 +1,50 @@
 Game_Music_Emu Change Log
 -------------------------
 
+Game_Music_Emu 0.6.0
+--------------------
+
+- Note: A 0.5.6 release was referenced but never tagged or packaged.
+
+- SPC improvements:
+    - Switched to newer snes_spc 0.9.0 for SPC emulation. Uses fast DSP.
+    - Fixed Spc_Emu::gain().
+    - Fixed support for files <0x10200 bytes.
+
+- Other bugfixes:
+    - Fixed a couple of GBS bugs, one involving access of memory after
+      realloc.
+    - Blip_Buffer works on systems where 'double' is a single-precision
+      floating-point type.
+    - Fix uninitialized buffer size in dual_resampler.
+    - Compilation warnings squashed out as of clang 3.3-pre and gcc 4.7.2.
+
+- API changes/additions:
+    - Removed documentation of C++ interface, as the C interface in gme.h is
+      the only supported one.
+    - Added gme_enable_accuracy() for enabling more accurate sound emulation
+      options (currently affects SPC only).
+
+- Build system improvements:
+    - Add pkg_config support.
+    - Fix build on case-insensitive systems.
+    - Allow for install on Cygwin.
+    - Fix install on multilib systems, such as many 64-bit distros (CMake must
+      be able to figure out your system's libsuffix, if any).
+    - C++ implementation symbols are not leaked into the resultant library
+      file (requires symbol visibility support).
+
+- Sample player improvements:
+    - Can toggle fast/accurate emulation (with the 'A' key).
+
+Game_Music_Emu 0.5.5
+--------------------
+- CMake build support has been added.  You can build Game_Music_Emu as
+a shared library and install it so that you do not have to include your
+own copy if you know libgme will be present on your target system.
+Requires CMake 2.6 or higher.
+
+
 Game_Music_Emu 0.5.2
 --------------------
 - *TONS* of changes and improvements. You should re-read the new header

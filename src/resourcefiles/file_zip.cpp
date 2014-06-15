@@ -259,6 +259,13 @@ bool FZipFile::Open(bool quiet)
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
 		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);
 		lump_p->CheckEmbedded();
+
+		// Ignore some very specific names
+		if (0 == stricmp("dehacked.exe", name))
+		{
+			memset(lump_p->Name, 0, sizeof(lump_p->Name));
+		}
+
 		lump_p++;
 	}
 	// Resize the lump record array to its actual size
@@ -416,6 +423,8 @@ FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet)
 		{
 			FResourceFile *rf = new FZipFile(filename, file);
 			if (rf->Open(quiet)) return rf;
+
+			rf->Reader = NULL; // to avoid destruction of reader
 			delete rf;
 		}
 	}

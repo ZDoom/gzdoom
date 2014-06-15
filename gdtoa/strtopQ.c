@@ -49,6 +49,9 @@ THIS SOFTWARE.
 #define _3 0
 #endif
 
+ extern ULong NanDflt_Q_D2A[4];
+
+
  int
 #ifdef KR_headers
 strtopQ(s, sp, V) CONST char *s; char **sp; void *V;
@@ -56,13 +59,18 @@ strtopQ(s, sp, V) CONST char *s; char **sp; void *V;
 strtopQ(CONST char *s, char **sp, void *V)
 #endif
 {
-	static CONST FPI fpi = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, SI };
+	static FPI fpi0 = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, SI };
 	ULong bits[4];
 	Long exp;
 	int k;
 	ULong *L = (ULong*)V;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &exp, bits);
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:
@@ -90,10 +98,10 @@ strtopQ(CONST char *s, char **sp, void *V)
 		break;
 
 	  case STRTOG_NaN:
-		L[0] = ld_QNAN0;
-		L[1] = ld_QNAN1;
-		L[2] = ld_QNAN2;
-		L[3] = ld_QNAN3;
+		L[_0] = NanDflt_Q_D2A[3];
+		L[_1] = NanDflt_Q_D2A[2];
+		L[_2] = NanDflt_Q_D2A[1];
+		L[_3] = NanDflt_Q_D2A[0];
 	  }
 	if (k & STRTOG_Neg)
 		L[_0] |= 0x80000000L;

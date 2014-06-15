@@ -34,6 +34,10 @@
 // source files, so we can't use it. So define PATH_MAX to be what MAX_PATH
 // currently is:
 #define PATH_MAX 260
+
+// Disable warning about using unsized arrays in structs. It supports it just
+// fine, and so do Clang and GCC, but the latter two don't warn about it.
+#pragma warning(disable:4200)
 #endif
 
 #include <limits.h>

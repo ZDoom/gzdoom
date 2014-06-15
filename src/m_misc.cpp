@@ -31,9 +31,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h>
-#endif
 
 #include "doomtype.h"
 #include "version.h"
@@ -332,65 +329,6 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 	return (long)(buffplace - (char *)0);
 }
 
-
-#if defined(unix)
-FString GetUserFile (const char *file)
-{
-	FString path;
-	struct stat info;
-
-	path = NicePath("~/" GAME_DIR "/");
-
-	if (stat (path, &info) == -1)
-	{
-		struct stat extrainfo;
-
-		// Sanity check for ~/.config
-		FString configPath = NicePath("~/.config/");
-		if (stat (configPath, &extrainfo) == -1)
-		{
-			if (mkdir (configPath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
-			{
-				I_FatalError ("Failed to create ~/.config directory:\n%s", strerror(errno));
-			}
-		}
-		else if (!S_ISDIR(extrainfo.st_mode))
-		{
-			I_FatalError ("~/.config must be a directory");
-		}
-
-		// This can be removed after a release or two
-		// Transfer the old zdoom directory to the new location
-		bool moved = false;
-		FString oldpath = NicePath("~/.zdoom/");
-		if (stat (oldpath, &extrainfo) != -1)
-		{
-			if (rename(oldpath, path) == -1)
-			{
-				I_Error ("Failed to move old zdoom directory (%s) to new location (%s).",
-					oldpath.GetChars(), path.GetChars());
-			}
-			else
-				moved = true;
-		}
-
-		if (!moved && mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
-		{
-			I_FatalError ("Failed to create %s directory:\n%s",
-				path.GetChars(), strerror (errno));
-		}
-	}
-	else
-	{
-		if (!S_ISDIR(info.st_mode))
-		{
-			I_FatalError ("%s must be a directory", path.GetChars());
-		}
-	}
-	path += file;
-	return path;
-}
-#endif
 
 //
 // M_SaveDefaults
@@ -698,48 +636,23 @@ void M_ScreenShot (const char *filename)
 	// find a file name to save it to
 	if (filename == NULL || filename[0] == '\0')
 	{
-#if !defined(unix) && !defined(__APPLE__)
-		if (Args->CheckParm ("-cdrom"))
+		size_t dirlen;
+		autoname = Args->CheckValue("-shotdir");
+		if (autoname.IsEmpty())
 		{
-			autoname = CDROM_DIR "\\";
+			autoname = screenshot_dir;
 		}
-		else
-#endif
+		dirlen = autoname.Len();
+		if (dirlen == 0)
 		{
-			size_t dirlen;
-			autoname = Args->CheckValue("-shotdir");
-			if (autoname.IsEmpty())
-			{
-				autoname = screenshot_dir;
-			}
+			autoname = M_GetScreenshotsPath();
 			dirlen = autoname.Len();
-			if (dirlen == 0)
+		}
+		if (dirlen > 0)
+		{
+			if (autoname[dirlen-1] != '/' && autoname[dirlen-1] != '\\')
 			{
-#ifdef unix
-				autoname = "~/" GAME_DIR "/screenshots/";
-#elif defined(__APPLE__)
-				char cpath[PATH_MAX];
-				FSRef folder;
-				
-				if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-					noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-				{
-					autoname << cpath << "/" GAME_DIR "/Screenshots/";
-				}
-				else
-				{
-					autoname = "~";
-				}
-#else
-				autoname = progdir;
-#endif
-			}
-			else if (dirlen > 0)
-			{
-				if (autoname[dirlen-1] != '/' && autoname[dirlen-1] != '\\')
-				{
-					autoname += '/';
-				}
+				autoname += '/';
 			}
 		}
 		autoname = NicePath(autoname);

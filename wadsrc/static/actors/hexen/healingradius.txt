@@ -6,6 +6,7 @@ ACTOR ArtiHealingRadius : Inventory 10120 native
 	Game Hexen
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.DefMaxAmount
 	+INVENTORY.INVBAR 
 	+INVENTORY.PICKUPFLASH

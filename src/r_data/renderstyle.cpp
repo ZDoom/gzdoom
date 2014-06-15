@@ -47,17 +47,20 @@ CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
 #ifndef __APPLE__
 FRenderStyle LegacyRenderStyles[STYLE_Count] =
 {
-			/* STYLE_None */  {{ STYLEOP_None, 		STYLEALPHA_Zero,	STYLEALPHA_Zero,	0 }},
-		  /* STYLE_Normal */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_Alpha1 }},
-		   /* STYLE_Fuzzy */  {{ STYLEOP_Fuzz,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	0 }},
-	   /* STYLE_SoulTrans */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_TransSoulsAlpha }},
-		/* STYLE_OptFuzzy */  {{ STYLEOP_FuzzOrAdd,	STYLEALPHA_Src,		STYLEALPHA_InvSrc,	0 }},
-		 /* STYLE_Stencil */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_Alpha1 | STYLEF_ColorIsFixed }},
-	 /* STYLE_Translucent */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	0 }},
-			 /* STYLE_Add */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		0 }},
-		  /* STYLE_Shaded */  {{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed }},
-/* STYLE_TranslucentStencil */{{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed }},
-            /* STYLE_Shadow */{{ STYLEOP_Shadow,	0,					0,					0 }},
+	{ { STYLEOP_None, STYLEALPHA_Zero, STYLEALPHA_Zero, 0 } },											/* STYLE_None */  
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_Alpha1 } },								/* STYLE_Normal */
+	{ { STYLEOP_Fuzz, STYLEALPHA_Src, STYLEALPHA_InvSrc, 0 } },											/* STYLE_Fuzzy */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_TransSoulsAlpha } },						/* STYLE_SoulTrans */
+	{ { STYLEOP_FuzzOrAdd, STYLEALPHA_Src, STYLEALPHA_InvSrc, 0 } },									/* STYLE_OptFuzzy */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_Alpha1 | STYLEF_ColorIsFixed } },		/* STYLE_Stencil */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, 0 } },											/* STYLE_Translucent */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_One, 0 } },												/* STYLE_Add */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_RedIsAlpha | STYLEF_ColorIsFixed } },	/* STYLE_Shaded */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_ColorIsFixed } },						/* STYLE_TranslucentStencil */
+	{ { STYLEOP_Shadow, 0, 0, 0 } },																	/* STYLE_Shadow */
+	{ { STYLEOP_RevSub, STYLEALPHA_Src, STYLEALPHA_One, 0 } },											/* STYLE_Subtract*/
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_One, STYLEF_ColorIsFixed } },							/* STYLE_AddStencil */
+	{ { STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_One, STYLEF_RedIsAlpha | STYLEF_ColorIsFixed } },		/* STYLE_AddShaded */
 };
 #else
 FRenderStyle LegacyRenderStyles[STYLE_Count];
@@ -74,7 +77,10 @@ static const BYTE Styles[STYLE_Count * 4] =
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		0,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_RedIsAlpha | STYLEF_ColorIsFixed,
 	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed,
-	STYLEOP_Shadow,		0,					0,					0
+	STYLEOP_Shadow,		0,					0,					0,
+	STYLEOP_RevSub,		STYLEALPHA_Src,		STYLEALPHA_One,		0,
+	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		STYLEF_Alpha1 | STYLEF_ColorIsFixed,
+	STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_One,		STYLEF_RedIsAlpha | STYLEF_ColorIsFixed,
 };
 
 static struct LegacyInit

@@ -34,9 +34,9 @@ THIS SOFTWARE.
  Bigint *
 s2b
 #ifdef KR_headers
-	(s, nd0, nd, y9) CONST char *s; int nd0, nd; ULong y9;
+	(s, nd0, nd, y9, dplen) CONST char *s; int dplen, nd0, nd; ULong y9;
 #else
-	(CONST char *s, int nd0, int nd, ULong y9)
+	(CONST char *s, int nd0, int nd, ULong y9, int dplen)
 #endif
 {
 	Bigint *b;
@@ -60,10 +60,10 @@ s2b
 		s += 9;
 		do b = multadd(b, 10, *s++ - '0');
 			while(++i < nd0);
-		s++;
+		s += dplen;
 		}
 	else
-		s += 10;
+		s += dplen + 9;
 	for(; i < nd; i++)
 		b = multadd(b, 10, *s++ - '0');
 	return b;
@@ -80,30 +80,30 @@ ratio
 	U da, db;
 	int k, ka, kb;
 
-	dval(da) = b2d(a, &ka);
-	dval(db) = b2d(b, &kb);
+	dval(&da) = b2d(a, &ka);
+	dval(&db) = b2d(b, &kb);
 	k = ka - kb + ULbits*(a->wds - b->wds);
 #ifdef IBM
 	if (k > 0) {
-		word0(da) += (k >> 2)*Exp_msk1;
+		word0(&da) += (k >> 2)*Exp_msk1;
 		if (k &= 3)
-			dval(da) *= 1 << k;
+			dval(&da) *= 1 << k;
 		}
 	else {
 		k = -k;
-		word0(db) += (k >> 2)*Exp_msk1;
+		word0(&db) += (k >> 2)*Exp_msk1;
 		if (k &= 3)
-			dval(db) *= 1 << k;
+			dval(&db) *= 1 << k;
 		}
 #else
 	if (k > 0)
-		word0(da) += k*Exp_msk1;
+		word0(&da) += k*Exp_msk1;
 	else {
 		k = -k;
-		word0(db) += k*Exp_msk1;
+		word0(&db) += k*Exp_msk1;
 		}
 #endif
-	return dval(da) / dval(db);
+	return dval(&da) / dval(&db);
 	}
 
 #ifdef INFNAN_CHECK

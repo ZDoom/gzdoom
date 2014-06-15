@@ -1,7 +1,7 @@
 // Nintendo Game Boy CPU emulator
 // Treats every instruction as taking 4 cycles
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef GB_CPU_H
 #define GB_CPU_H
 

@@ -709,7 +709,7 @@ class OPLMUSDumper : public OPLMUSSong
 {
 public:
 	OPLMUSDumper(const OPLMUSSong *original, const char *filename);
-	void Play(bool looping);
+	void Play(bool looping, int);
 };
 
 // CD track/disk played through the multimedia system -----------------------

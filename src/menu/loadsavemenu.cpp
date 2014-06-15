@@ -345,7 +345,7 @@ void DLoadSaveMenu::NotifyNewSave (const char *file, const char *title, bool okF
 	for (unsigned i=0; i<SaveGames.Size(); i++)
 	{
 		FSaveGameNode *node = SaveGames[i];
-#ifdef unix
+#ifdef __unix__
 		if (node->Filename.Compare (file) == 0)
 #else
 		if (node->Filename.CompareNoCase (file) == 0)

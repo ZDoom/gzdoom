@@ -1,4 +1,4 @@
-// snes_spc 0.9.0. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Spc_Dsp.h"
 
@@ -606,8 +606,8 @@ skip_brr:
 		}
 		
 		// Sound out
-		int l = (((main_out_l * mvoll + echo_in_l * (int8_t) REG(evoll)) >> 14) * m.gain) >> 8;
-		int r = (((main_out_r * mvolr + echo_in_r * (int8_t) REG(evolr)) >> 14) * m.gain) >> 8;
+		int l = (main_out_l * mvoll + echo_in_l * (int8_t) REG(evoll)) >> 14;
+		int r = (main_out_r * mvolr + echo_in_r * (int8_t) REG(evolr)) >> 14;
 		
 		CLAMP16( l );
 		CLAMP16( r );
@@ -641,7 +641,6 @@ void Spc_Dsp::mute_voices( int mask )
 void Spc_Dsp::init( void* ram_64k )
 {
 	m.ram = (uint8_t*) ram_64k;
-	set_gain( gain_unit );
 	mute_voices( 0 );
 	disable_surround( false );
 	set_output( 0, 0 );

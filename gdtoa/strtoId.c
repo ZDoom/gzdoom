@@ -38,7 +38,7 @@ strtoId(s, sp, f0, f1) CONST char *s; char **sp; double *f0, *f1;
 strtoId(CONST char *s, char **sp, double *f0, double *f1)
 #endif
 {
-	static CONST FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	Long exp[2];
 	Bigint *B[2];
 	int k, rv[2];

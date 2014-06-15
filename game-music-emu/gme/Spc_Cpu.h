@@ -1,4 +1,4 @@
-// snes_spc 0.9.0. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 /* Copyright (C) 2004-2007 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -16,7 +16,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #if SPC_MORE_ACCURACY
 	#define SUSPICIOUS_OPCODE( name ) ((void) 0)
 #else
-	#define SUSPICIOUS_OPCODE( name ) dprintf( "SPC: suspicious opcode: " name "\n" )
+	#define SUSPICIOUS_OPCODE( name ) debug_printf( "SPC: suspicious opcode: " name "\n" )
 #endif
 
 #define CPU_READ( time, offset, addr )\
@@ -242,7 +242,7 @@ loop:
 		BRANCH( (uint8_t) nz )
 	
 	case 0x3F:{// CALL
-		int old_addr = int(GET_PC() + 2);
+		int old_addr = GET_PC() + 2;
 		SET_PC( READ_PC16( pc ) );
 		PUSH16( old_addr );
 		goto loop;
@@ -1184,7 +1184,7 @@ loop:
 		{
 			addr &= 0xFFFF;
 			SET_PC( addr );
-			dprintf( "SPC: PC wrapped around\n" );
+			debug_printf( "SPC: PC wrapped around\n" );
 			goto loop;
 		}
 	}
@@ -1205,7 +1205,7 @@ stop:
 	
 	// Uncache registers
 	if ( GET_PC() >= 0x10000 )
-		dprintf( "SPC: PC wrapped around\n" );
+		debug_printf( "SPC: PC wrapped around\n" );
 	m.cpu_regs.pc = (uint16_t) GET_PC();
 	m.cpu_regs.sp = ( uint8_t) GET_SP();
 	m.cpu_regs.a  = ( uint8_t) a;

@@ -172,11 +172,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	}
 	else
 	{
-		char name[9];
-
-		strncpy (name, level.mapname, 8);
-		name[8] = 0;
-		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", name);
+		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", level.MapName.GetChars());
 
 		if (!viewactive)
 		{
@@ -257,7 +253,12 @@ int main (int argc, char **argv)
 #if defined(__MACH__) && !defined(NOASM)
 	unprotect_rtext();
 #endif
-	
+
+	// Set LC_NUMERIC environment variable in case some library decides to
+	// clear the setlocale call at least this will be correct.
+	// Note that the LANG environment variable is overridden by LC_*
+	setenv ("LC_NUMERIC", "C", 1);
+
 #ifndef NO_GTK
 	GtkAvailable = gtk_init_check (&argc, &argv);
 #endif

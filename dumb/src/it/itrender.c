@@ -3950,6 +3950,7 @@ static int delta_to_note(float delta, int base)
 	return (int)note;
 }
 
+#if 0
 // Period table for Protracker octaves 0-5:
 static const unsigned short ProTrackerPeriodTable[6*12] =
 {
@@ -3981,6 +3982,7 @@ static const unsigned short ProTrackerTunedPeriods[16*12] =
 	1736,1640,1548,1460,1378,1302,1228,1160,1094,1032,974,920,
 	1724,1628,1536,1450,1368,1292,1220,1150,1086,1026,968,914 
 };
+#endif
 
 static void process_all_playing(DUMB_IT_SIGRENDERER *sigrenderer)
 {
@@ -4400,6 +4402,7 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 
 int dumb_it_max_to_mix = 64;
 
+#if 0
 static const int aiMODVol[] =
 {
 	0,
@@ -4425,6 +4428,7 @@ static const int aiPTMVolScaled[] =
 		836, 847, 859, 870, 881, 897, 908, 916,
 		927, 939, 950, 962, 969, 983, 1005, 1024
 };
+#endif
 
 static float calculate_volume(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *playing, double volume)
 {

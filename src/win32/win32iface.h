@@ -148,7 +148,6 @@ public:
 	~DDrawFB ();
 
 	bool IsValid ();
-	bool Lock ();
 	bool Lock (bool buffer);
 	void Unlock ();
 	void ForceBuffering (bool force);
@@ -231,7 +230,6 @@ public:
 	~D3DFB ();
 
 	bool IsValid ();
-	bool Lock ();
 	bool Lock (bool buffered);
 	void Unlock ();
 	void Update ();

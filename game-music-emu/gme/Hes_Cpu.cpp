@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Hes_Cpu.h"
 
@@ -148,7 +148,7 @@ loop:
 		/*
 		static long count;
 		if ( count == 1844 ) Debugger();
-		if ( s.base != correct ) dprintf( "%ld\n", count );
+		if ( s.base != correct ) debug_printf( "%ld\n", count );
 		count++;
 		*/
 	}
@@ -741,7 +741,7 @@ possibly_out_of_time:
 	ARITH_ADDR_MODES( 0x65 ) // ADC
 	adc_imm: {
 		if ( status & st_d )
-			dprintf( "Decimal mode not supported\n" );
+			debug_printf( "Decimal mode not supported\n" );
 		fint16 carry = c >> 8 & 1;
 		fint16 ov = (a ^ 0x80) + carry + (BOOST::int8_t) data; // sign-extend
 		status &= ~st_v;
@@ -1085,7 +1085,7 @@ possibly_out_of_time:
 			goto loop;
 		}
 	delayed_cli:
-		dprintf( "Delayed CLI not supported\n" ); // TODO: implement
+		debug_printf( "Delayed CLI not supported\n" ); // TODO: implement
 		goto loop;
 	}
 	
@@ -1100,7 +1100,7 @@ possibly_out_of_time:
 		s_time += delta;
 		if ( s_time < 0 )
 			goto loop;
-		dprintf( "Delayed SEI not supported\n" ); // TODO: implement
+		debug_printf( "Delayed SEI not supported\n" ); // TODO: implement
 		goto loop;
 	}
 	
@@ -1145,7 +1145,7 @@ possibly_out_of_time:
 		goto loop;
 
 	case 0x54: // CSL
-		dprintf( "CSL not supported\n" );
+		debug_printf( "CSL not supported\n" );
 		illegal_encountered = true;
 		goto loop;
 	
@@ -1154,7 +1154,7 @@ possibly_out_of_time:
 	
 	case 0xF4: { // SET
 		//fuint16 operand = GET_MSB();
-		dprintf( "SET not handled\n" );
+		debug_printf( "SET not handled\n" );
 		//switch ( data )
 		//{
 		//}
@@ -1233,7 +1233,7 @@ possibly_out_of_time:
 
 	default:
 		assert( (unsigned) opcode <= 0xFF );
-		dprintf( "Illegal opcode $%02X at $%04X\n", (int) opcode, (int) pc - 1 );
+		debug_printf( "Illegal opcode $%02X at $%04X\n", (int) opcode, (int) pc - 1 );
 		illegal_encountered = true;
 		goto loop;
 	}

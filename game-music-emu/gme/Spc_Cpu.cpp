@@ -1,6 +1,6 @@
 // Core SPC emulation: CPU, timers, SMP registers, memory
 
-// snes_spc 0.9.0. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Snes_Spc.h"
 
@@ -176,7 +176,7 @@ inline void Snes_Spc::dsp_write( int data, rel_time_t time )
 	if ( REGS [r_dspaddr] <= 0x7F )
 		dsp.write( REGS [r_dspaddr], data );
 	else if ( !SPC_MORE_ACCURACY )
-		dprintf( "SPC wrote to DSP register > $7F\n" );
+		debug_printf( "SPC wrote to DSP register > $7F\n" );
 }
 
 
@@ -277,8 +277,9 @@ static unsigned char const glitch_probs [3] [256] =
 };
 #endif
 
-// divided into multiple functions to keep rarely-used functionality separate
-// so often-used functionality can be optimized better by compiler
+// Read/write handlers are divided into multiple functions to keep rarely-used
+// functionality separate so often-used functionality can be optimized better
+// by compiler.
 
 // If write isn't preceded by read, data has this added to it
 int const no_read_before_write = 0x2000;
@@ -302,7 +303,7 @@ void Snes_Spc::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
 						t->next_time == time + TIMER_MUL( t, 1 ) &&
 						((period - 1) | ~0x0F) & period )
 				{
-					//dprintf( "SPC pathological timer target write\n" );
+					//debug_printf( "SPC pathological timer target write\n" );
 					
 					// If the period is 3, 5, or 9, there's a probability this behavior won't occur,
 					// based on the previous period
@@ -331,7 +332,7 @@ void Snes_Spc::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
 	case r_t1out:
 	case r_t2out:
 		if ( !SPC_MORE_ACCURACY )
-			dprintf( "SPC wrote to counter %d\n", (int) addr - r_t0out );
+			debug_printf( "SPC wrote to counter %d\n", (int) addr - r_t0out );
 		
 		if ( data < no_read_before_write  / 2 )
 			run_timer( &m.timers [addr - r_t0out], time - 1 )->counter = 0;
@@ -345,7 +346,7 @@ void Snes_Spc::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
 	
 	case r_test:
 		if ( (uint8_t) data != 0x0A )
-			dprintf( "SPC wrote to test register\n" );
+			debug_printf( "SPC wrote to test register\n" );
 		break;
 	
 	case r_control:

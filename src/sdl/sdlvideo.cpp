@@ -87,6 +87,10 @@ EXTERN_CVAR (Bool, cl_capfps)
 
 CVAR (Int, vid_displaybits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+// vid_asyncblit needs a restart to work. SDL doesn't seem to change if the
+// frame buffer is changed at run time.
+CVAR (Bool, vid_asyncblit, 1, CVAR_NOINITCALL|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (screen != NULL)
@@ -301,9 +305,8 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	UpdatePending = false;
 	NotPaletted = false;
 	FlashAmount = 0;
-	
 	Screen = SDL_SetVideoMode (width, height, vid_displaybits,
-		SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_ANYFORMAT|
+		(vid_asyncblit ? SDL_ASYNCBLIT : 0)|SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_ANYFORMAT|
 		(fullscreen ? SDL_FULLSCREEN : 0));
 
 	if (Screen == NULL)

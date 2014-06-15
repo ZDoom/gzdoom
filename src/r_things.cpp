@@ -608,6 +608,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			}
 		}
 	}
+	if (spritescaleX < 0)
+	{
+		spritescaleX = -spritescaleX;
+		flip = !flip;
+	}
 	if (voxel == NULL && (tex == NULL || tex->UseType == FTexture::TEX_Null))
 	{
 		return;

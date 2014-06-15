@@ -297,7 +297,7 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 					continue;
 
 				FTexture *tex = TexMan[line->sidedef[0]->GetTexture(side_t::top)];
-				texname = tex? tex->Name : NULL;
+				texname = tex ? tex->Name.GetChars() : NULL;
 				if (texname != NULL && texname[0] == 'D' && texname[1] == 'O' && texname[2] == 'R')
 				{
 					switch (texname[3])

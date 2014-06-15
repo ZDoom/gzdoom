@@ -43,17 +43,6 @@
 
 #define rmdir _rmdir
 
-// TODO, maybe: stop using DWORD so I don't need to worry about conflicting
-// with Windows' typedef. Then I could just include the header file instead
-// of declaring everything here.
-#define MAX_PATH				260
-#define CSIDL_LOCAL_APPDATA		0x001c
-extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(void *hwnd, int csidl, void *hToken, unsigned long dwFlags, char *pszPath);
-
-#endif
-
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h>
 #endif
 
 #include "templates.h"
@@ -75,6 +64,7 @@ extern "C" __declspec(dllimport) long __stdcall SHGetFolderPathA(void *hwnd, int
 #include "x86.h"
 #include "version.h"
 #include "md5.h"
+#include "m_misc.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
@@ -734,9 +724,10 @@ static bool DoLoadGLNodes(FileReader ** lumps)
 
 static bool MatchHeader(const char * label, const char * hdata)
 {
-	if (!memcmp(hdata, "LEVEL=", 6) == 0)
+	if (memcmp(hdata, "LEVEL=", 6) == 0)
 	{
 		size_t labellen = strlen(label);
+		labellen = MIN(size_t(8), labellen);
 
 		if (strnicmp(hdata+6, label, labellen)==0 && 
 			(hdata[6+labellen]==0xa || hdata[6+labellen]==0xd))
@@ -781,7 +772,7 @@ static int FindGLNodesInWAD(int labellump)
 				if (Wads.GetLumpFile(lump)==wadfile)
 				{
 					FMemLump mem = Wads.ReadLump(lump);
-					if (MatchHeader(Wads.GetLumpFullName(labellump), (const char *)mem.GetMem())) return true;
+					if (MatchHeader(Wads.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
 				}
 			}
 		}
@@ -791,7 +782,7 @@ static int FindGLNodesInWAD(int labellump)
 
 //===========================================================================
 //
-// FindGLNodesInWAD
+// FindGLNodesInFile
 //
 // Looks for GL nodes in the same WAD as the level itself
 // Function returns the lump number within the file. Returns -1 if the input
@@ -939,13 +930,13 @@ bool P_LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(i)->Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(i+1)->Name, check[i], 8))
 				{
 					result=false;
 					break;
 				}
 				else
-					gwalumps[i] = f_gwa->GetLump(i)->NewReader();
+					gwalumps[i] = f_gwa->GetLump(i+1)->NewReader();
 			}
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}
@@ -968,6 +959,7 @@ bool P_LoadGLNodes(MapData * map)
 bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 {
 	bool ret = false;
+	bool loaded = false;
 
 	// If the map loading code has performed a node rebuild we don't need to check for it again.
 	if (!rebuilt && !P_CheckForGLNodes())
@@ -987,7 +979,8 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 		numsegs = 0;
 
 		// Try to load GL nodes (cached or GWA)
-		if (!P_LoadGLNodes(map))
+		loaded = P_LoadGLNodes(map);
+		if (!loaded)
 		{
 			// none found - we have to build new ones!
 			unsigned int startTime, endTime;
@@ -1015,20 +1008,22 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 		}
 	}
 
+	if (!loaded)
+	{
 #ifdef DEBUG
-	// Building nodes in debug is much slower so let's cache them only if cachetime is 0
-	buildtime = 0;
+		// Building nodes in debug is much slower so let's cache them only if cachetime is 0
+		buildtime = 0;
 #endif
-	if (gl_cachenodes && buildtime/1000.f >= gl_cachetime)
-	{
-		DPrintf("Caching nodes\n");
-		CreateCachedNodes(map);
+		if (gl_cachenodes && buildtime/1000.f >= gl_cachetime)
+		{
+			DPrintf("Caching nodes\n");
+			CreateCachedNodes(map);
+		}
+		else
+		{
+			DPrintf("Not caching nodes (time = %f)\n", buildtime/1000.f);
+		}
 	}
-	else
-	{
-		DPrintf("Not caching nodes (time = %f)\n", buildtime/1000.f);
-	}
-
 
 	if (!gamenodes)
 	{
@@ -1048,45 +1043,10 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 
 typedef TArray<BYTE> MemFile;
 
-static FString GetCachePath()
-{
-	FString path;
-
-#ifdef _WIN32
-	char pathstr[MAX_PATH];
-	if (0 != SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, pathstr))
-	{ // Failed (e.g. On Win9x): use program directory
-		path = progdir;
-	}
-	else
-	{
-		path = pathstr;
-	}
-	path += "/zdoom/cache";
-#elif defined(__APPLE__)
-	char pathstr[PATH_MAX];
-	FSRef folder;
-
-	if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
-	{
-		path = pathstr;
-	}
-	else
-	{
-		path = progdir;
-	}
-	path += "/zdoom/cache";
-#else
-	// Don't use GAME_DIR and such so that ZDoom and its child ports can share the node cache.
-	path = NicePath("~/.config/zdoom/cache");
-#endif
-	return path;
-}
 
 static FString CreateCacheName(MapData *map, bool create)
 {
-	FString path = GetCachePath();
+	FString path = M_GetCachePath(create);
 	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
@@ -1212,8 +1172,21 @@ static void CreateCachedNodes(MapData *map)
 
 	FString path = CreateCacheName(map, true);
 	FILE *f = fopen(path, "wb");
-	fwrite(compressed, 1, outlen+offset, f);
-	fclose(f);
+
+	if (f != NULL)
+	{
+		if (fwrite(compressed, outlen+offset, 1, f) != 1)
+		{
+			Printf("Error saving nodes to file %s\n", path.GetChars());
+		}
+
+		fclose(f);
+	}
+	else
+	{
+		Printf("Cannot open nodes file %s for writing\n", path.GetChars());
+	}
+
 	delete [] compressed;
 }
 
@@ -1299,7 +1272,7 @@ errorout:
 CCMD(clearnodecache)
 {
 	TArray<FFileList> list;
-	FString path = GetCachePath();
+	FString path = M_GetCachePath(false);
 	path += "/";
 
 	try

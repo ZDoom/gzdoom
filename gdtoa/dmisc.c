@@ -46,7 +46,7 @@ rv_alloc(int i)
 
 	j = sizeof(ULong);
 	for(k = 0;
-		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= (size_t)i;
+		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= (size_t)(i);
 		j <<= 1)
 			k++;
 	r = (int*)Balloc(k);

@@ -1,15 +1,14 @@
-Game_Music_Emu 0.5.2
+Game_Music_Emu 0.6.0
 --------------------
 Author : Shay Green <gblargg@gmail.com>
 Website: http://www.slack.net/~ant/libs/
 Forum  : http://groups.google.com/group/blargg-sound-libs
+Source : https://code.google.com/p/game-music-emu/
 License: GNU Lesser General Public License (LGPL)
 
 Contents
 --------
 * Overview
-* C and C++ interfaces
-* Function reference
 * Error handling
 * Emulator types
 * M3U playlist support
@@ -21,7 +20,6 @@ Contents
 * Modular construction
 * Obscure features
 * Solving problems
-* Deprecated features
 * Thanks
 
 
@@ -62,56 +60,15 @@ deleted with gme_set_user_cleanup()
 Refer to gme.h for a comprehensive summary of features.
 
 
-C and C++ interfaces
---------------------
-While the library is written in C++, an extensive C interface is
-provided in gme.h. This C interface will be referred to throughout this
-documentation unless a feature is only available in the full C++
-interface. All C interface functions and other names have the gme_
-prefix, so you can recognize a C++-only feature by the lack of gme_ in
-the names used (contact me if you'd like a feature added to the C
-interface). If you're building a shared library, I highly recommend
-sticking to the C interface only, because it will be more stable between
-releases of the library than the C++ interface. Finally, the C and C++
-interfaces can be freely mixed without problems. Compare demo/basics.c
-with demo/cpp_basics.cpp to see how the C and C++ interfaces translate
-between each other.
-
-
-Function reference
-------------------
-Read the following header files for a complete reference to functions
-and features. The second group of header files can only be used in C++.
-
-blargg_config.h     Library configuration
-gme.h               C interface (also usable from C++)
-
-Gme_File.h          File loading and track information
-Music_Emu.h         Track playback and adjustments
-Data_Reader.h       Custom data readers
-Effects_Buffer.h    Sound buffer with adjustable stereo echo and panning
-M3u_Playlist.h      M3U playlist support
-Gbs_Emu.h           GBS equalizer settings
-Nsf_Emu.h           NSF equalizer settings
-Spc_Emu.h           SPC surround disable
-Vgm_Emu.h           VGM oversampling disable and custom buffer query
-
-
 Error handling
 --------------
-Functions which can fail have a return type of gme_err_t (blargg_err_t
-in the C++ interfaces), which is a pointer to an error string (const
-char*). If a function is successful it returns NULL. Errors that you can
-easily avoid are checked with debug assertions; gme_err_t return values
-are only used for genuine run-time errors that can't be easily predicted
-in advance (out of memory, I/O errors, incompatible file data). Your
-code should check all error values.
-
-To improve usability for C programmers, C++ programmers unfamiliar with
-exceptions, and compatibility with older C++ compilers, the library does
-*not* throw any C++ exceptions and uses malloc() instead of the standard
-operator new. This means that you *must* check for NULL when creating a
-library object with the new operator.
+Functions which can fail have a return type of gme_err_t, which is a
+pointer to an error string (const char*). If a function is successful it
+returns NULL. Errors that you can easily avoid are checked with debug
+assertions; gme_err_t return values are only used for genuine run-time
+errors that can't be easily predicted in advance (out of memory, I/O
+errors, incompatible file data). Your code should check all error
+values.
 
 When loading a music file in the wrong emulator or trying to load a
 non-music file, gme_wrong_file_type is returned. You can check for this
@@ -154,7 +111,9 @@ If you want to remove support for some music types to reduce your
 executable size, edit GME_TYPE_LIST in blargg_config.h. For example, to
 support just NSF and GBS, use this:
 
-	#define GME_TYPE_LIST gme_nsf_type, gme_gbs_type
+	#define GME_TYPE_LIST \
+		gme_nsf_type,\
+		gme_gbs_type
 
 
 M3U playlist support
@@ -270,40 +229,6 @@ create an emulator, you can use the following methods of loading:
 	}
 	
 	error = gme_load_custom( emu, my_read, file_size, my_data );
-
-* If you must load the file data into memory yourself, you can have the
-library use your data directly *without* making a copy. If you do this,
-you must not free the data until you're done playing the file.
-
-	error = emu->load_mem( pointer, size );
-
-* If you've already read the first bytes of a file (perhaps to determine
-the file type) and want to avoid seeking back to the beginning for
-performance reasons, use Remaining_Reader:
-
-	Std_File_Reader in;
-	error = in.open( file_path );
-	
-	char header [4];
-	error = in.read( &header, sizeof header );
-	...
-	
-	Remaining_Reader rem( &header, sizeof header, &in );
-	error = emu->load( rem );
-
-If you merely need access to a file's header after loading, use the
-emulator-specific header() functions, after casting the Music_Emu
-pointer to the specific emulator's type. This example examines the
-chip_flags field of the header if it's an NSF file:
-
-	if ( music_emu->type() == gme_nsf_type )
-	{
-		Nsf_Emu* nsf_emu = (Nsf_Emu*) music_emu;
-		if ( nsf_emu->header().chip_flags & 0x01 )
-			...
-	}
-
-Contact me if you want more information about loading files.
 
 
 Sound parameters
@@ -437,21 +362,6 @@ separate threads.
 * If all else fails, see if the demos work.
 
 
-Deprecated features
--------------------
-The following functions and other features have been deprecated and will
-be removed in a future release of the library. Alternatives to the
-deprecated features are listed to the right.
-
-Music_Emu::error_count()        warning()
-load( header, reader )          see "Loading file data" above
-Spc_Emu::trailer()              track_info()
-Spc_Emu::trailer_size()
-Gym_Emu::track_length()         track_info()
-Vgm_Emu::gd3_data()             track_info()
-Nsfe_Emu::disable_playlist()    clear_playlist()
-
-
 Thanks
 ------
 Big thanks to Chris Moeller (kode54) for help with library testing and
@@ -461,4 +371,6 @@ Brad Martin's excellent OpenSPC SNES DSP emulator worked well from the
 start. Also thanks to Richard Bannister, Mahendra Tallur, Shazz,
 nenolod, theHobbit, Johan Samuelsson, and nes6502 for testing, using,
 and giving feedback for the library in their respective game music
-players.
+players. More recently, Lucas Paul and Michael Pyne have helped nudge the
+library into a public repository and get its interface more stable for use
+in shared libraries.

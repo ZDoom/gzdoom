@@ -1,5 +1,7 @@
 cmake_minimum_required( VERSION 2.4 )
 
+make_release_only()
+
 include( CheckFunctionExists )
 
 # DUMB is much slower in a Debug build than a Release build, so we force a Release

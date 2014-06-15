@@ -295,7 +295,7 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 		fluid_chorus_speed, fluid_chorus_depth, fluid_chorus_type);
 	if (0 == LoadPatchSets(fluid_patchset))
 	{
-#ifdef unix
+#ifdef __unix__
 		// This is the standard location on Ubuntu.
 		if (0 == LoadPatchSets("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2"))
 		{
@@ -322,7 +322,7 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 			}
 		}
 #endif
-#ifdef unix
+#ifdef __unix__
 		}
 #endif
 	}

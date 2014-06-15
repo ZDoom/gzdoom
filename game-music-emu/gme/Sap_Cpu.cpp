@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Sap_Cpu.h"
 
@@ -889,7 +889,7 @@ imm##op:
 			goto loop;
 		}
 	delayed_cli:
-		dprintf( "Delayed CLI not emulated\n" );
+		debug_printf( "Delayed CLI not emulated\n" );
 		goto loop;
 	}
 	
@@ -904,7 +904,7 @@ imm##op:
 		s_time += delta;
 		if ( s_time < 0 )
 			goto loop;
-		dprintf( "Delayed SEI not emulated\n" );
+		debug_printf( "Delayed SEI not emulated\n" );
 		goto loop;
 	}
 	
@@ -945,7 +945,7 @@ handle_brk:
 		goto idle_done;
 	pc++;
 	result_ = 4;
-	dprintf( "BRK executed\n" );
+	debug_printf( "BRK executed\n" );
 	
 interrupt:
 	{

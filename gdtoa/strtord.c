@@ -31,6 +31,8 @@ THIS SOFTWARE.
 
 #include "gdtoaimp.h"
 
+ extern ULong NanDflt_d_D2A[2];
+
  void
 #ifdef KR_headers
 ULtod(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
@@ -61,8 +63,8 @@ ULtod(ULong *L, ULong *bits, Long exp, int k)
 		break;
 
 	  case STRTOG_NaN:
-		L[0] = d_QNAN0;
-		L[1] = d_QNAN1;
+		L[_0] = NanDflt_d_D2A[1];
+		L[_1] = NanDflt_d_D2A[0];
 	  }
 	if (k & STRTOG_Neg)
 		L[_0] |= 0x80000000L;
@@ -75,9 +77,8 @@ strtord(s, sp, rounding, d) CONST char *s; char **sp; int rounding; double *d;
 strtord(CONST char *s, char **sp, int rounding, double *d)
 #endif
 {
-	static CONST FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
-	CONST FPI *fpi;
-	FPI fpi1;
+	static FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	FPI *fpi, fpi1;
 	ULong bits[2];
 	Long exp;
 	int k;

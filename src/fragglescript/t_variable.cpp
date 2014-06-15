@@ -89,11 +89,12 @@ fixed_t fixedvalue(const svalue_t &v)
 //
 //==========================================================================
 
-float floatvalue(const svalue_t &v)
+double floatvalue(const svalue_t &v)
 {
-	return (float)( (v.type == svt_string ? atof(v.string) :       
-	v.type == svt_fixed ? (float)(v.value.f / (float)FRACUNIT) : 
-	v.type == svt_mobj ? -1.f : (float)v.value.i ));
+	return 
+		v.type == svt_string ? atof(v.string) :       
+		v.type == svt_fixed ? FIXED2DBL(v.value.f) : 
+		v.type == svt_mobj ? -1. : (double)v.value.i;
 }
 
 //==========================================================================

@@ -815,11 +815,6 @@ HRESULT DDrawFB::GetHR ()
 	return LastHR;
 }
 
-bool DDrawFB::Lock ()
-{
-	return Lock (false);
-}
-
 bool DDrawFB::Lock (bool useSimpleCanvas)
 {
 	static int lock_num;

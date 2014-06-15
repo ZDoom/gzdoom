@@ -42,8 +42,6 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <lmcons.h>
-#include <shlobj.h>
 extern HWND Window;
 #define USE_WINDOWS_DWORD
 #endif
@@ -135,7 +133,7 @@ FGameConfigFile::FGameConfigFile ()
 			local_app_support << cpath << "/" GAME_DIR;
 			SetValueForKey("Path", local_app_support, true);
 		}
-#elif !defined(unix)
+#elif !defined(__unix__)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
@@ -153,7 +151,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", user_app_support, true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 		SetValueForKey ("Path", local_app_support, true);
-#elif !defined(unix)
+#elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "~/" GAME_DIR, true);
@@ -588,106 +586,20 @@ void FGameConfigFile::ArchiveGlobalData ()
 FString FGameConfigFile::GetConfigPath (bool tryProg)
 {
 	const char *pathval;
-	FString path;
 
 	pathval = Args->CheckValue ("-config");
 	if (pathval != NULL)
 	{
 		return FString(pathval);
 	}
-#ifdef _WIN32
-	path = NULL;
-	HRESULT hr;
-
-	TCHAR uname[UNLEN+1];
-	DWORD unamelen = countof(uname);
-
-	// Because people complained, try for a user-specific .ini in the program directory first.
-	// If that is not writeable, use the one in the home directory instead.
-	hr = GetUserName (uname, &unamelen);
-	if (SUCCEEDED(hr) && uname[0] != 0)
-	{
-		// Is it valid for a user name to have slashes?
-		// Check for them and substitute just in case.
-		char *probe = uname;
-		while (*probe != 0)
-		{
-			if (*probe == '\\' || *probe == '/')
-				*probe = '_';
-			++probe;
-		}
-
-		path = progdir;
-		path += "zdoom-";
-		path += uname;
-		path += ".ini";
-		if (tryProg)
-		{
-			if (!FileExists (path.GetChars()))
-			{
-				path = "";
-			}
-		}
-		else
-		{ // check if writeable
-			FILE *checker = fopen (path.GetChars(), "a");
-			if (checker == NULL)
-			{
-				path = "";
-			}
-			else
-			{
-				fclose (checker);
-			}
-		}
-	}
-
-	if (path.IsEmpty())
-	{
-		if (Args->CheckParm ("-cdrom"))
-			return CDROM_DIR "\\zdoom.ini";
-
-		path = progdir;
-		path += "zdoom.ini";
-	}
-	return path;
-#elif defined(__APPLE__)
-	char cpath[PATH_MAX];
-	FSRef folder;
-	
-	if (noErr == FSFindFolder(kUserDomain, kPreferencesFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-	{
-		path = cpath;
-		path += "/zdoom.ini";
-		return path;
-	}
-	// Ungh.
-	return "zdoom.ini";
-#else
-	return GetUserFile ("zdoom.ini");
-#endif
+	return M_GetConfigPath(tryProg);
 }
 
 void FGameConfigFile::CreateStandardAutoExec(const char *section, bool start)
 {
 	if (!SetSection(section))
 	{
-		FString path;
-#ifdef __APPLE__
-		char cpath[PATH_MAX];
-		FSRef folder;
-		
-		if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			path << cpath << "/" GAME_DIR "/autoexec.cfg";
-		}
-#elif !defined(unix)
-		path = "$PROGDIR/autoexec.cfg";
-#else
-		path = GetUserFile ("autoexec.cfg");
-#endif
+		FString path = M_GetAutoexecPath();
 		SetSection (section, true);
 		SetValueForKey ("Path", path.GetChars());
 	}
@@ -794,6 +706,6 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 
 CCMD (whereisini)
 {
-	FString path = GameConfig->GetConfigPath (false);
+	FString path = M_GetConfigPath(false);
 	Printf ("%s\n", path.GetChars());
 }

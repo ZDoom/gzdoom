@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -137,7 +137,7 @@ blargg_err_t Nsfe_Info::load( Data_Reader& in, Nsf_Emu* nsf_emu )
 		blargg_long size = get_le32( block_header [0] );
 		blargg_long tag  = get_le32( block_header [1] );
 		
-		//dprintf( "tag: %c%c%c%c\n", char(tag), char(tag>>8), char(tag>>16), char(tag>>24) );
+		//debug_printf( "tag: %c%c%c%c\n", char(tag), char(tag>>8), char(tag>>16), char(tag>>24) );
 		
 		switch ( tag )
 		{

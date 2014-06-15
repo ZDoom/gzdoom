@@ -2,6 +2,8 @@
 
 [enu default]
 
+SECRETMESSAGE = "A secret is revealed!";
+
 D_DEVSTR = "Useless mode ON.\n";
 D_CDROM = "CD-ROM Version: zdoom.ini from c:\\zdoomdat\n";
 PRESSKEY = "press a key.";

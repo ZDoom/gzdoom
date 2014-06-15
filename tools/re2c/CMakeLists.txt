@@ -1,4 +1,7 @@
 cmake_minimum_required( VERSION 2.4 )
+
+if( NOT CMAKE_CROSSCOMPILING )
+
 include( CheckFunctionExists )
 include( CheckTypeSize )
 
@@ -30,3 +33,7 @@ add_executable( re2c
 	scanner.cc
 	substr.cc
 	translate.cc )
+
+set( CROSS_EXPORTS ${CROSS_EXPORTS} re2c PARENT_SCOPE )
+
+endif( NOT CMAKE_CROSSCOMPILING )

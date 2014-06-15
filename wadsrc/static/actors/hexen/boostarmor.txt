@@ -7,6 +7,7 @@ ACTOR ArtiBoostArmor : Inventory 8041 native
 	SpawnID 22
 	+COUNTITEM
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.DefMaxAmount
 	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND

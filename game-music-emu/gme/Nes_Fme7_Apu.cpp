@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Nes_Fme7_Apu.h"
 
@@ -56,7 +56,7 @@ void Nes_Fme7_Apu::run_until( blip_time_t end_time )
 		// check for unsupported mode
 		#ifndef NDEBUG
 			if ( (mode & 011) <= 001 && vol_mode & 0x1F )
-				dprintf( "FME7 used unimplemented sound mode: %02X, vol_mode: %02X\n",
+				debug_printf( "FME7 used unimplemented sound mode: %02X, vol_mode: %02X\n",
 						mode, vol_mode & 0x1F );
 		#endif
 		

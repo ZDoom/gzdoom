@@ -581,6 +581,18 @@ void I_DetectOS(void)
 					osname = "Server 2008 R2";
 				}
 			}
+			else if (info.dwMinorVersion == 2)	
+			{
+				// Microsoft broke this API for 8.1 so without jumping through hoops it won't be possible anymore to detect never versions aside from the build number, especially for older compilers.
+				if (info.wProductType == VER_NT_WORKSTATION)
+				{
+					osname = "8 (or higher)";
+				}
+				else
+				{
+					osname = "Server 2012 (or higher)";
+				}
+			}
 		}
 		break;
 

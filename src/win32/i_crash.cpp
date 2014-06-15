@@ -842,10 +842,15 @@ HANDLE WriteTextReport ()
 		Writef (file,
 			"\r\nFPU State:\r\n ControlWord=%04x StatusWord=%04x TagWord=%04x\r\n"
 			" ErrorOffset=%08x\r\n ErrorSelector=%08x\r\n DataOffset=%08x\r\n DataSelector=%08x\r\n"
-			" Cr0NpxState=%08x\r\n\r\n",
+			// Cr0NpxState was renamed in recent Windows headers so better skip it here. Its meaning is unknown anyway.
+			//" Cr0NpxState=%08x\r\n"
+			"\r\n"
+			,
 			(WORD)ctxt->FloatSave.ControlWord, (WORD)ctxt->FloatSave.StatusWord, (WORD)ctxt->FloatSave.TagWord,
 			ctxt->FloatSave.ErrorOffset, ctxt->FloatSave.ErrorSelector, ctxt->FloatSave.DataOffset,
-			ctxt->FloatSave.DataSelector, ctxt->FloatSave.Cr0NpxState);
+			ctxt->FloatSave.DataSelector
+			//, ctxt->FloatSave.Cr0NpxState
+			);
 
 		for (i = 0; i < 8; ++i)
 		{

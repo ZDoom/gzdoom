@@ -310,12 +310,16 @@ class USDFParser : public UDMFParserBase
 
 				case NAME_Voice:
 					{
-						FString soundname = (namespace_bits == St? "svox/" : "");
 						const char * name = CheckString(key);
 						if (name[0] != 0)
 						{
+							FString soundname = "svox/";
 							soundname += name;
 							node->SpeakerVoice = FSoundID(S_FindSound(soundname));
+							if (node->SpeakerVoice == 0 && namespace_bits == Zd)
+							{
+								node->SpeakerVoice = FSoundID(S_FindSound(name));
+							}
 						}
 					}
 					break;

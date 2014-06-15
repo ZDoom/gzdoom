@@ -3529,7 +3529,8 @@ enum
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
 	APROP_ViewHeight	= 39,
-	APROP_AttackZOffset	= 40
+	APROP_AttackZOffset	= 40,
+	APROP_StencilColor	= 41
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3541,10 +3542,14 @@ static const int LegacyRenderStyleIndices[] =
 	3,	// STYLE_SoulTrans,
 	4,	// STYLE_OptFuzzy,
 	5,	// STYLE_Stencil,
+	6,	// STYLE_AddStencil
+	7,	// STYLE_AddShaded
 	64,	// STYLE_Translucent
 	65,	// STYLE_Add,
 	66,	// STYLE_Shaded,
 	67,	// STYLE_TranslucentStencil,
+	68,	// STYLE_Shadow,
+	69,	// STYLE_Subtract,
 	-1
 };
 
@@ -3755,6 +3760,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
 		break;
 
+	case APROP_StencilColor:
+		actor->SetShade(value);
+		break;
+
 	default:
 		// do nothing.
 		break;
@@ -3852,6 +3861,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_ActiveSound:	return GlobalACSStrings.AddString(actor->ActiveSound, stack, stackdepth);
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies(), stack, stackdepth);
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag(), stack, stackdepth);
+	case APROP_StencilColor:return actor->fillcolor;
 
 	default:				return 0;
 	}
@@ -3898,6 +3908,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MeleeRange:
 		case APROP_ViewHeight:
 		case APROP_AttackZOffset:
+		case APROP_StencilColor:
 			return (GetActorProperty(tid, property, NULL, 0) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -3933,7 +3944,9 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	{
 		return 0;
 	}
-	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string));
+	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string), FTexture::TEX_Flat,
+			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_DontCreate);
+
 	if (tex == NULL)
 	{ // If the texture we want to check against doesn't exist, then
 	  // they're obviously not the same.
@@ -4250,6 +4263,22 @@ enum EACSFunctions
 	ACSF_SpawnDecal,
 	ACSF_CheckFont,
 	ACSF_DropItem,
+	ACSF_CheckFlag,
+	ACSF_SetLineActivation,
+	ACSF_GetLineActivation,
+	ACSF_GetActorPowerupTics,
+	ACSF_ChangeActorAngle,
+	ACSF_ChangeActorPitch,		// 80
+
+	/* Zandronum's - these must be skipped when we reach 99!
+	-100:ResetMap(0),
+	-101 : PlayerIsSpectator(1),
+	-102 : ConsolePlayerNumber(0),
+	-103 : GetTeamProperty(2),
+	-104 : GetPlayerLivesLeft(1),
+	-105 : SetPlayerLivesLeft(2),
+	-106 : KickFromGame(2),
+	*/
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4508,6 +4537,50 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 		actor->z + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
+
+static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetAngle(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetAngle(angle << 16, interpolate);
+		}
+	}
+}
+
+static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetPitch(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetPitch(angle << 16, interpolate);
+		}
+	}
+}
+
+
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const SDWORD *stack, int stackdepth)
 {
@@ -4933,7 +5006,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 			break;
 
 		case ACSF_UniqueTID:
-			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, argCount > 1 ? args[1] : 0);
+			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, (argCount > 1 && args[1] >= 0) ? args[1] : 0);
 
 		case ACSF_IsTIDUsed:
 			return P_IsTIDUsed(args[0]);
@@ -5284,6 +5357,71 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			break;
 		}
+
+		case ACSF_CheckFlag:
+		{
+			AActor *actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				return !!CheckActorFlag(actor, FBehavior::StaticLookupString(args[1]));
+			}
+			break;
+		}
+
+		case ACSF_SetLineActivation:
+			if (argCount >= 2)
+			{
+				int line = -1;
+
+				while ((line = P_FindLineFromID(args[0], line)) >= 0)
+				{
+					lines[line].activation = args[1];
+				}
+			}
+			break;
+
+		case ACSF_GetLineActivation:
+			if (argCount > 0)
+			{
+				int line = P_FindLineFromID(args[0], -1);
+				return line >= 0 ? lines[line].activation : 0;
+			}
+			break;
+
+		case ACSF_GetActorPowerupTics:
+			if (argCount >= 2)
+			{
+				const PClass *powerupclass = PClass::FindClass(FBehavior::StaticLookupString(args[1]));
+				if (powerupclass == NULL || !RUNTIME_CLASS(APowerup)->IsAncestorOf(powerupclass))
+				{
+					Printf("'%s' is not a type of Powerup.\n", FBehavior::StaticLookupString(args[1]));
+					return 0;
+				}
+
+				AActor *actor = SingleActorFromTID(args[0], activator);
+				if (actor != NULL)
+				{
+					APowerup* powerup = (APowerup*)actor->FindInventory(powerupclass);
+					if (powerup != NULL)
+						return powerup->EffectTics;
+				}
+				return 0;
+			}
+			break;
+
+		case ACSF_ChangeActorAngle:
+			if (argCount >= 2)
+			{
+				SetActorAngle(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_ChangeActorPitch:
+			if (argCount >= 2)
+			{
+				SetActorPitch(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
 
 		default:
 			break;
@@ -6796,7 +6934,22 @@ scriptwait:
 			break;
 
 		case PCD_PRINTBINARY:
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))) || defined(__clang__)
+#define HAS_DIAGNOSTIC_PRAGMA
+#endif
+#ifdef HAS_DIAGNOSTIC_PRAGMA
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"
+#else
+#pragma GCC diagnostic ignored "-Wformat="
+#endif
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif
 			work.AppendFormat ("%B", STACK(1));
+#ifdef HAS_DIAGNOSTIC_PRAGMA
+#pragma GCC diagnostic pop
+#endif
 			--sp;
 			break;
 
@@ -6830,7 +6983,7 @@ scriptwait:
 						break;
 
 					case PRINTNAME_LEVEL:
-						work += level.mapname;
+						work += level.MapName;
 						break;
 
 					case PRINTNAME_SKILL:
@@ -7826,14 +7979,22 @@ scriptwait:
 		case PCD_GETSECTORCEILINGZ:
 			// Arguments are (tag, x, y). If you don't use slopes, then (x, y) don't
 			// really matter and can be left as (0, 0) if you like.
+			// [Dusk] If tag = 0, then this returns the z height at whatever sector
+			// is in x, y.
 			{
-				int secnum = P_FindSectorFromTag (STACK(3), -1);
+				int tag = STACK(3);
+				int secnum;
+				fixed_t x = STACK(2) << FRACBITS;
+				fixed_t y = STACK(1) << FRACBITS;
 				fixed_t z = 0;
+
+				if (tag != 0)
+					secnum = P_FindSectorFromTag (tag, -1);
+				else
+					secnum = int(P_PointInSector (x, y) - sectors);
 
 				if (secnum >= 0)
 				{
-					fixed_t x = STACK(2) << FRACBITS;
-					fixed_t y = STACK(1) << FRACBITS;
 					if (pcd == PCD_GETSECTORFLOORZ)
 					{
 						z = sectors[secnum].floorplane.ZatPoint (x, y);
@@ -8191,13 +8352,11 @@ scriptwait:
 				sky2name = FBehavior::StaticLookupString (STACK(1));
 				if (sky1name[0] != 0)
 				{
-					strncpy (level.skypic1, sky1name, 8);
-					sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					sky1texture = level.skytexture1 = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				if (sky2name[0] != 0)
 				{
-					strncpy (level.skypic2, sky2name, 8);
-					sky2texture = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					sky2texture = level.skytexture2 = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				R_InitSkyMap ();
 				sp -= 2;
@@ -8236,40 +8395,12 @@ scriptwait:
 			break;
 
 		case PCD_SETACTORANGLE:		// [GRB]
-			if (STACK(2) == 0)
-			{
-				if (activator != NULL)
-					activator->angle = STACK(1) << 16;
-			}
-			else
-			{
-				FActorIterator iterator (STACK(2));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
-				{
-					actor->angle = STACK(1) << 16;
-				}
-			}
+			SetActorAngle(activator, STACK(2), STACK(1), false);
 			sp -= 2;
 			break;
 
 		case PCD_SETACTORPITCH:
-			if (STACK(2) == 0)
-			{
-				if (activator != NULL)
-					activator->pitch = STACK(1) << 16;
-			}
-			else
-			{
-				FActorIterator iterator (STACK(2));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
-				{
-					actor->pitch = STACK(1) << 16;
-				}
-			}
+			SetActorPitch(activator, STACK(2), STACK(1), false);
 			sp -= 2;
 			break;
 
@@ -8813,7 +8944,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->mapname);
+		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
 
@@ -8821,7 +8952,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 
 int P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
-	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
+	if (map == NULL || 0 == strnicmp (level.MapName, map, 8))
 	{
 		FBehavior *module = NULL;
 		const ScriptPtr *scriptdata;
@@ -8874,17 +9005,17 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 	return false;
 }
 
-void P_SuspendScript (int script, char *map)
+void P_SuspendScript (int script, const char *map)
 {
-	if (strnicmp (level.mapname, map, 8))
+	if (strnicmp (level.MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_Suspended);
 }
 
-void P_TerminateScript (int script, char *map)
+void P_TerminateScript (int script, const char *map)
 {
-	if (strnicmp (level.mapname, map, 8))
+	if (strnicmp (level.MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_PleaseRemove);

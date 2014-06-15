@@ -505,31 +505,13 @@ bool FCajunMaster::LoadBots ()
 	bool gotteam = false;
 
 	bglobal.ForgetBots ();
-#ifndef unix
-	tmp = progdir;
-	tmp += "zcajun/" BOTFILENAME;
-	if (!FileExists (tmp))
+	tmp = M_GetCajunPath(BOTFILENAME);
+	if (tmp.IsEmpty())
 	{
 		DPrintf ("No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
-#else
-	tmp = GetUserFile (BOTFILENAME);
-	if (!FileExists (tmp))
-	{
-		if (!FileExists (SHARE_DIR BOTFILENAME))
-		{
-			DPrintf ("No " BOTFILENAME ", so no bots\n");
-			return false;
-		}
-		else
-			sc.OpenFile (SHARE_DIR BOTFILENAME);
-	}
-#endif
-	else
-	{
-		sc.OpenFile (tmp);
-	}
+	sc.OpenFile(tmp);
 
 	while (sc.GetString ())
 	{

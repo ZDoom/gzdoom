@@ -157,6 +157,10 @@ loop:
 		{
 			return TokenTrans[NUM];
 		}
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+		// Work around GCC 4.8 bug 54570 causing release build crashes.
+		asm("" : "+g" (yylval));
+#endif
 		strcpy (yylval->sym, token);
 		return TokenTrans[SYM];
 	}

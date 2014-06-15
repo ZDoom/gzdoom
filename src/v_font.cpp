@@ -2009,26 +2009,20 @@ void FSpecialFont::LoadTranslations()
 	}
 
 	// exclude the non-translated colors from the translation calculation
-	if (notranslate != NULL)
-	{
-		for (i = 0; i < 256; i++)
-			if (notranslate[i])
-				usedcolors[i] = false;
-	}
+	for (i = 0; i < 256; i++)
+		if (notranslate[i])
+			usedcolors[i] = false;
 
 	TotalColors = ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, &luminosity);
 
 	// Map all untranslated colors into the table of used colors
-	if (notranslate != NULL)
+	for (i = 0; i < 256; i++) 
 	{
-		for (i = 0; i < 256; i++) 
+		if (notranslate[i])
 		{
-			if (notranslate[i]) 
-			{
-				PatchRemap[i] = TotalColors;
-				identity[TotalColors] = i;
-				TotalColors++;
-			}
+			PatchRemap[i] = TotalColors;
+			identity[TotalColors] = i;
+			TotalColors++;
 		}
 	}
 
@@ -2199,19 +2193,6 @@ void V_InitCustomFonts()
 					FTexture **p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
 					FTextureID texid = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
-					if (!texid.Exists())
-					{
-						int lumpno = Wads.CheckNumForFullName (sc.String);
-						if (lumpno >= 0)
-						{
-							texid = TexMan.FindTextureByLumpNum(lumpno);
-							if (!texid.Exists())
-							{
-								FTexture *tex = FTexture::CreateTexture("", lumpno, FTexture::TEX_MiscPatch);
-								texid = TexMan.AddTexture(tex);
-							}
-						}
-					}
 					if (texid.Exists())
 					{
 						*p = TexMan[texid];

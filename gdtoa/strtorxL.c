@@ -47,6 +47,8 @@ THIS SOFTWARE.
 #define _2 0
 #endif
 
+ extern ULong NanDflt_xL_D2A[3];
+
  void
 #ifdef KR_headers
 ULtoxL(L, bits, exp, k) ULong *L; ULong *bits; Long exp; int k;
@@ -69,14 +71,15 @@ ULtoxL(ULong *L, ULong *bits, Long exp, int k)
 		break;
 
 	  case STRTOG_Infinite:
-		L[_0] = 0x7fff << 16;
-		L[_1] = L[_2] = 0;
+		L[_0] = 0x7fff0000;
+		L[_1] = 0x80000000;
+		L[_2] = 0;
 		break;
 
 	  case STRTOG_NaN:
-		L[0] = ld_QNAN0;
-		L[1] = ld_QNAN1;
-		L[2] = ld_QNAN2;
+		L[_0] = NanDflt_xL_D2A[2];
+		L[_1] = NanDflt_xL_D2A[1];
+		L[_2] = NanDflt_xL_D2A[0];
 	  }
 	if (k & STRTOG_Neg)
 		L[_0] |= 0x80000000L;
@@ -89,9 +92,8 @@ strtorxL(s, sp, rounding, L) CONST char *s; char **sp; int rounding; void *L;
 strtorxL(CONST char *s, char **sp, int rounding, void *L)
 #endif
 {
-	static CONST FPI fpi0 = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
-	CONST FPI *fpi;
-	FPI fpi1;
+	static FPI fpi0 = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
+	FPI *fpi, fpi1;
 	ULong bits[2];
 	Long exp;
 	int k;

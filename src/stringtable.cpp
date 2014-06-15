@@ -55,7 +55,7 @@ struct FStringTable::StringEntry
 	StringEntry *Next;
 	char *Name;
 	BYTE PassNum;
-	char String[2];
+	char String[];
 };
 
 FStringTable::FStringTable ()
@@ -283,7 +283,7 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 			}
 			if (entry == NULL || cmpval > 0)
 			{
-				entry = (StringEntry *)M_Malloc (sizeof(*entry) + strText.Len() + strName.Len());
+				entry = (StringEntry *)M_Malloc (sizeof(*entry) + strText.Len() + strName.Len() + 2);
 				entry->Next = *pentry;
 				*pentry = entry;
 				strcpy (entry->String, strText.GetChars());
@@ -409,7 +409,7 @@ void FStringTable::SetString (const char *name, const char *newString)
 	size_t namelen = strlen (name);
 
 	// Create a new string entry
-	StringEntry *entry = (StringEntry *)M_Malloc (sizeof(*entry) + newlen + namelen);
+	StringEntry *entry = (StringEntry *)M_Malloc (sizeof(*entry) + newlen + namelen + 2);
 	strcpy (entry->String, newString);
 	strcpy (entry->Name = entry->String + newlen + 1, name);
 	entry->PassNum = 0;

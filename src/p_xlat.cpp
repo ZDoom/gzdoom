@@ -89,6 +89,9 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			case -2:
 				ld->Alpha = FRACUNIT*3/4;
 				break;
+			case -3:
+				ld->Alpha = FRACUNIT / 4;
+				break;
 			default:
 				newflags |= LineFlagTranslations[i].newvalue;
 				break;

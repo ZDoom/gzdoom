@@ -320,6 +320,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		message = GStrings("OB_DEFAULT");
 	}
 
+	// [CK] Don't display empty strings
+	if (message == NULL || strlen(message) <= 0)
+		return;
+		
 	SexMessage (message, gendermessage, gender,
 		self->player->userinfo.GetName(), attacker->player->userinfo.GetName());
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
@@ -364,8 +368,6 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		static int dieticks[MAXPLAYERS];
 		int pnum = int(this->player-players);
-		if (dieticks[pnum] == gametic)
-			gametic=gametic;
 		dieticks[pnum] = gametic;
 		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
 		this->player->cheats&CF_PREDICTING?"predicting":"real");
@@ -1507,6 +1509,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 {
 	if (other == this)
 		return false;		// [RH] Don't hate self (can happen when shooting barrels)
+
+	if (other->flags7 & MF7_NEVERTARGET)
+		return false;		// never EVER target me!
 
 	if (!(other->flags & MF_SHOOTABLE))
 		return false;		// Don't attack things that can't be hurt

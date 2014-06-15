@@ -454,7 +454,7 @@ int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 			node->PostBeginPlay();
 		}
 		else if (dest != NULL)
-		{ // Move thinker from this list to the destination list
+		{
 			I_Error("There is a thinker in the fresh list that has already ticked.\n");
 		}
 

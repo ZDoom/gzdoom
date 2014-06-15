@@ -130,6 +130,7 @@ enum ESkillLevels
 #define KEY_F10 				0x44	// DIK_F10
 #define KEY_F11 				0x57	// DIK_F11
 #define KEY_F12 				0x58	// DIK_F12
+#define KEY_GRAVE				0x29	// DIK_GRAVE
 
 #define KEY_BACKSPACE			0x0e	// DIK_BACK
 
@@ -350,6 +351,7 @@ enum
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
 	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
+	BCOMPATF_NOWINDOWCHECK		= 1 << 7,	// Disable the window check in CheckForPushSpecial()
 };
 
 // phares 3/20/98:

@@ -1755,21 +1755,21 @@ static int PatchCheats (int dummy)
 static int PatchMisc (int dummy)
 {
 	static const struct Key keys[] = {
-		{ "Initial Health",			myoffsetof(struct DehInfo,StartHealth) },
-		{ "Initial Bullets",		myoffsetof(struct DehInfo,StartBullets) },
-		{ "Max Health",				myoffsetof(struct DehInfo,MaxHealth) },
-		{ "Max Armor",				myoffsetof(struct DehInfo,MaxArmor) },
-		{ "Green Armor Class",		myoffsetof(struct DehInfo,GreenAC) },
-		{ "Blue Armor Class",		myoffsetof(struct DehInfo,BlueAC) },
-		{ "Max Soulsphere",			myoffsetof(struct DehInfo,MaxSoulsphere) },
-		{ "Soulsphere Health",		myoffsetof(struct DehInfo,SoulsphereHealth) },
-		{ "Megasphere Health",		myoffsetof(struct DehInfo,MegasphereHealth) },
-		{ "God Mode Health",		myoffsetof(struct DehInfo,GodHealth) },
-		{ "IDFA Armor",				myoffsetof(struct DehInfo,FAArmor) },
-		{ "IDFA Armor Class",		myoffsetof(struct DehInfo,FAAC) },
-		{ "IDKFA Armor",			myoffsetof(struct DehInfo,KFAArmor) },
-		{ "IDKFA Armor Class",		myoffsetof(struct DehInfo,KFAAC) },
-		{ "No Autofreeze",			myoffsetof(struct DehInfo,NoAutofreeze) },
+		{ "Initial Health",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,StartHealth)) },
+		{ "Initial Bullets",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,StartBullets)) },
+		{ "Max Health",				static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MaxHealth)) },
+		{ "Max Armor",				static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MaxArmor)) },
+		{ "Green Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,GreenAC)) },
+		{ "Blue Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,BlueAC)) },
+		{ "Max Soulsphere",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MaxSoulsphere)) },
+		{ "Soulsphere Health",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,SoulsphereHealth)) },
+		{ "Megasphere Health",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,MegasphereHealth)) },
+		{ "God Mode Health",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,GodHealth)) },
+		{ "IDFA Armor",				static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,FAArmor)) },
+		{ "IDFA Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,FAAC)) },
+		{ "IDKFA Armor",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,KFAArmor)) },
+		{ "IDKFA Armor Class",		static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,KFAAC)) },
+		{ "No Autofreeze",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,NoAutofreeze)) },
 		{ NULL, 0 }
 	};
 	int result;
@@ -2329,6 +2329,18 @@ static int DoInclude (int dummy)
 	return GetLine();
 }
 
+CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by default.
+
+// checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
+static bool isDehFile(int lumpnum)
+{
+	const char* const fullName  = Wads.GetLumpFullName(lumpnum);
+	const char* const extension = strrchr(fullName, '.');
+
+	return NULL != extension && strchr(fullName, '/') == NULL
+		&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
+}
+
 int D_LoadDehLumps()
 {
 	int lastlump = 0, lumpnum, count = 0;
@@ -2338,28 +2350,32 @@ int D_LoadDehLumps()
 		count += D_LoadDehLump(lumpnum);
 	}
 
-#if 0	// commented out for 'maint' version.
-	if (0 == PatchSize)
+	if (0 == PatchSize && dehload > 0)
 	{
 		// No DEH/BEX patch is loaded yet, try to find lump(s) with specific extensions
 
-		for (lumpnum = 0, lastlump = Wads.GetNumLumps();
-			 lumpnum < lastlump;
-			 ++lumpnum)
+		if (dehload == 1)	// load all .DEH lumps that are found.
 		{
-			const char* const fullName  = Wads.GetLumpFullName(lumpnum);
-			const char* const extension = strrchr(fullName, '.');
-
-			const bool isDehOrBex = NULL != extension
-				&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
-
-			if (isDehOrBex)
+			for (lumpnum = 0, lastlump = Wads.GetNumLumps(); lumpnum < lastlump; ++lumpnum)
 			{
-				count += D_LoadDehLump(lumpnum);
+				if (isDehFile(lumpnum))
+				{
+					count += D_LoadDehLump(lumpnum);
+				}
+			}
+		}
+		else 	// only load the last .DEH lump that is found.
+		{
+			for (lumpnum = Wads.GetNumLumps()-1; lumpnum >=0; --lumpnum)
+			{
+				if (isDehFile(lumpnum))
+				{
+					count += D_LoadDehLump(lumpnum);
+					break;
+				}
 			}
 		}
 	}
-#endif
 
 	return count;
 }
@@ -2929,7 +2945,7 @@ void FinishDehPatch ()
 		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
 			(typeNameBuilder, sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);
-		memcpy (defaults2, defaults1, sizeof(AActor));
+		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
 		// Make a copy of the replaced class's state labels 
 		FStateDefinitions statedef;

@@ -11,6 +11,7 @@ ACTOR Mana1 : Ammo 122
 	Radius 8
 	Height 8
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.Icon "MAN1I0"
 	Inventory.PickupMessage "$TXT_MANA_1"
 	States
@@ -34,6 +35,7 @@ ACTOR Mana2 : Ammo 124
 	Radius 8
 	Height 8
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.Icon "MAN2G0"
 	Inventory.PickupMessage "$TXT_MANA_2"
 	States
@@ -53,6 +55,7 @@ ACTOR Mana3 : CustomInventory 8004
 	Radius 8
 	Height 8
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.PickupMessage "$TXT_MANA_BOTH"
 	States
 	{
@@ -73,6 +76,7 @@ ACTOR ArtiBoostMana : CustomInventory 8003
 	Game Hexen
 	SpawnID 26
 	+FLOATBOB
+	+NOGRAVITY
 	+COUNTITEM
 	+INVENTORY.INVBAR
 	+INVENTORY.PICKUPFLASH

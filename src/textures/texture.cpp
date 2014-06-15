@@ -137,7 +137,10 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 FTexture * FTexture::CreateTexture (const char *name, int lumpnum, int usetype)
 {
 	FTexture *tex = CreateTexture(lumpnum, usetype);
-	if (tex != NULL && name != NULL) uppercopy(tex->Name, name);
+	if (tex != NULL && name != NULL) {
+		tex->Name = name;
+		tex->Name.ToUpper();
+	}
 	return tex;
 }
 
@@ -146,27 +149,29 @@ FTexture::FTexture (const char *name, int lumpnum)
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT), SourceLump(lumpnum),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
   Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
 	id.SetInvalid();
 	if (name != NULL)
 	{
-		uppercopy(Name, name);
+		Name = name;
+		Name.ToUpper();
 	}
 	else if (lumpnum < 0)
 	{
-		*Name = 0;
+		Name = FString();
 	}
 	else
 	{
 		Wads.GetLumpName (Name, lumpnum);
-		Name[8] = 0;
 	}
 }
 
 FTexture::~FTexture ()
 {
+	FTexture *link = Wads.GetLinkedTexture(SourceLump);
+	if (link == this) Wads.SetLinkedTexture(SourceLump, NULL);
 	KillNative();
 }
 
@@ -572,7 +577,6 @@ FDummyTexture::FDummyTexture ()
 	HeightBits = 6;
 	WidthBits = 6;
 	WidthMask = 63;
-	Name[0] = 0;
 	UseType = TEX_Null;
 }
 

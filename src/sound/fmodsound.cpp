@@ -63,7 +63,7 @@ extern HWND Window;
 #include "cmdlib.h"
 #include "s_sound.h"
 
-#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43800
+#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43600
 #error You are trying to compile with an unsupported version of FMOD.
 #endif
 
@@ -630,7 +630,9 @@ bool FMODSoundRenderer::IsValid()
 //
 //==========================================================================
 
+#ifndef FACILITY_VISUALCPP
 #define FACILITY_VISUALCPP  ((LONG)0x6d)
+#endif
 #define VcppException(sev,err)  ((sev) | (FACILITY_VISUALCPP<<16) | err)
 
 static int CheckException(DWORD code)
@@ -817,7 +819,7 @@ bool FMODSoundRenderer::Init()
 	}
 	
 	result = Sys->getNumDrivers(&driver);
-#ifdef unix
+#ifdef __unix__
 	if (result == FMOD_OK)
 	{
 		// On Linux, FMOD defaults to OSS. If OSS is not present, it doesn't
@@ -857,7 +859,7 @@ bool FMODSoundRenderer::Init()
 		result = Sys->setDriver(driver);
 	}
 	result = Sys->getDriver(&driver);
-#if FMOD_VERSION >= 0x43700
+#if FMOD_VERSION >= 0x43600
 	// We were built with an FMOD that only returns the control panel frequency
 	result = Sys->getDriverCaps(driver, &Driver_Caps, &Driver_MinFrequency, &speakermode);
 	Driver_MaxFrequency = Driver_MinFrequency;
@@ -1042,7 +1044,7 @@ bool FMODSoundRenderer::Init()
 	}
 
 	// Create DSP units for underwater effect
-#if FMOD_VERSION < 0x43701
+#if FMOD_VERSION < 0x43600
 	result = Sys->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &WaterLP);
 	if (result != FMOD_OK)
 	{
@@ -1105,7 +1107,7 @@ bool FMODSoundRenderer::Init()
 				WaterLP->setActive(false);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_RESONANCE, 2);
-#if FMOD_VERSION < 0x43701
+#if FMOD_VERSION < 0x43600
 				if (WaterReverb != NULL)
 				{
 					FMOD::DSPConnection *dry;

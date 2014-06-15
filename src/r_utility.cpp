@@ -89,6 +89,11 @@ CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
+CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.f) self = 0.f;
+	else if (self > 1.f) self = 1.f;
+}
 
 DCanvas			*RenderTarget;		// [RH] canvas to render to
 
@@ -581,6 +586,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	viewy = iview->oviewy + FixedMul (frac, iview->nviewy - iview->oviewy);
 	viewz = iview->oviewz + FixedMul (frac, iview->nviewz - iview->oviewz);
 	if (player != NULL &&
+		!(player->cheats & CF_INTERPVIEW) &&
 		player - players == consoleplayer &&
 		camera == player->mo &&
 		!demoplayback &&
@@ -602,7 +608,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		if (delta > 0)
 		{
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
-			if (viewpitch + delta <= viewpitch)
+			if (viewpitch > INT_MAX - delta)
 			{
 				viewpitch = player->MaxPitch;
 			}
@@ -614,7 +620,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		else if (delta < 0)
 		{
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
-			if (viewpitch + delta >= viewpitch)
+			if (viewpitch < INT_MIN - delta)
 			{
 				viewpitch = player->MinPitch;
 			}
@@ -836,10 +842,10 @@ void R_SetupFrame (AActor *actor)
 		int intensity = DEarthquake::StaticGetQuakeIntensity (camera);
 		if (intensity != 0)
 		{
-			viewx += ((pr_torchflicker() % (intensity<<2))
-						-(intensity<<1))<<FRACBITS;
-			viewy += ((pr_torchflicker() % (intensity<<2))
-						-(intensity<<1))<<FRACBITS;
+			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
+
+			viewx += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
+			viewy += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
 		}
 	}
 
@@ -966,7 +972,7 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, int fov)
 	texture = static_cast<FCanvasTexture *>(TexMan[picnum]);
 	if (!texture->bHasCanvas)
 	{
-		Printf ("%s is not a valid target for a camera\n", texture->Name);
+		Printf ("%s is not a valid target for a camera\n", texture->Name.GetChars());
 		return;
 	}
 

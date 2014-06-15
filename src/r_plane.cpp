@@ -558,9 +558,9 @@ static visplane_t *new_visplane (unsigned hash)
 
 	if (check == NULL)
 	{
-		check = (visplane_t *)M_Malloc (sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
-		memset(check, 0, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
-		check->bottom = &check->top[MAXWIDTH+2];
+		check = (visplane_t *)M_Malloc (sizeof(*check) + 3 + sizeof(*check->top)*(MAXWIDTH*2));
+		memset(check, 0, sizeof(*check) + 3 + sizeof(*check->top)*(MAXWIDTH*2));
+		check->bottom = check->top + MAXWIDTH+2;
 	}
 	else if (NULL == (freetail = freetail->next))
 	{
@@ -607,8 +607,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		// same visplane, then only the floor sky will be drawn.
 		plane.c = height.c;
 		plane.ic = height.ic;
-		isskybox = skybox != NULL && !skybox->bInSkybox &&
-			(skybox->bAlways || picnum == skyflatnum);
+		isskybox = skybox != NULL && !skybox->bInSkybox;
 	}
 	else if (skybox != NULL && skybox->bAlways && !skybox->bInSkybox)
 	{

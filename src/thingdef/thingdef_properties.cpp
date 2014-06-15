@@ -180,6 +180,33 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 #endif
 }
 
+INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror)
+{
+	const char *dot = strchr (flagname, '.');
+	FFlagDef *fd;
+	const PClass *cls = owner->GetClass();
+
+	if (dot != NULL)
+	{
+		FString part1(flagname, dot-flagname);
+		fd = FindFlag (cls, part1, dot+1);
+	}
+	else
+	{
+		fd = FindFlag (cls, flagname, NULL);
+	}
+
+	if (fd != NULL)
+	{
+		return CheckActorFlag(owner, fd);
+	}
+	else
+	{
+		if (printerror) Printf("Unknown flag '%s' in '%s'\n", flagname, cls->TypeName.GetChars());
+		return false;
+	}
+}
+
 //===========================================================================
 //
 // HandleDeprecatedFlags
@@ -433,7 +460,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	memcpy (defaults, GetDefault<AActor>(), sizeof(AActor));
+	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
 	if (bag.DropItemList != NULL)
 	{
 		FreeDropItemChain (bag.DropItemList);
@@ -769,11 +796,13 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * renderstyles[]={
-		"NONE","NORMAL","FUZZY","SOULTRANS","OPTFUZZY","STENCIL","TRANSLUCENT", "ADD","SHADED", NULL};
+		"NONE", "NORMAL", "FUZZY", "SOULTRANS", "OPTFUZZY", "STENCIL", 
+		"TRANSLUCENT", "ADD", "SHADED", "SHADOW", "SUBTRACT", "ADDSTENCIL", "ADDSHADED", NULL };
 
 	static const int renderstyle_values[]={
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
-			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded};
+			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded,
+			STYLE_Shadow, STYLE_Subtract, STYLE_AddStencil, STYLE_AddShaded};
 
 	// make this work for old style decorations, too.
 	if (!strnicmp(str, "style_", 6)) str+=6;
@@ -1286,7 +1315,8 @@ DEFINE_PROPERTY(clearflags, 0, Actor)
 		defaults->flags3 =
 		defaults->flags4 =
 		defaults->flags5 =
-		defaults->flags6 = 0;
+		defaults->flags6 =
+		defaults->flags7 = 0;
 	defaults->flags2 &= MF2_ARGSDEFINED;	// this flag must not be cleared
 }
 

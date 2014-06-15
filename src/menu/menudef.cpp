@@ -160,7 +160,7 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 		}
 		else if (sc.Compare("unix"))
 		{
-			#ifdef unix
+			#ifdef __unix__
 				filter = true;
 			#endif
 		}

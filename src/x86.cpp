@@ -57,7 +57,7 @@ void CheckCPUID(CPUInfo *cpu)
 #if defined(_M_IX86) || defined(__i386__)
 	// Old 486s do not have CPUID, so we must test for its presence.
 	// This code is adapted from the samples in AMD's document
-	// entitled "AMD-K6™ MMX Processor Multimedia Extensions."
+	// entitled "AMD-K6 MMX Processor Multimedia Extensions."
 #ifndef __GNUC__
 	__asm
 	{
@@ -299,7 +299,7 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 	}
 #endif
 
-#if defined(__amd64__) || defined(_M_IX64)
+#if defined(__amd64__) || defined(_M_X64)
 	long long color;
 
 	blending256 = _mm_set_epi64x(0x10001000100ll, 0x10001000100ll);

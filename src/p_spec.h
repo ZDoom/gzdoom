@@ -172,7 +172,7 @@ void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
 void	P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags);
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
 
-void P_GiveSecret(AActor *actor, bool printmessage, bool playsound);
+void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum);
 
 //
 // getSide()
@@ -902,8 +902,8 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 #define ACS_NET				8
 
 int  P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags);
-void P_SuspendScript (int script, char *map);
-void P_TerminateScript (int script, char *map);
+void P_SuspendScript (int script, const char *map);
+void P_TerminateScript (int script, const char *map);
 void P_DoDeferedScripts (void);
 
 //

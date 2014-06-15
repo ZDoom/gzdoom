@@ -385,8 +385,8 @@ void FShaderManager::CompileShaders()
 		// If shader compilation failed we can still run the fixed function mode so do that instead of aborting.
 		Printf("%s\n", err.GetMessage());
 		Printf(PRINT_HIGH, "Failed to compile shaders. Reverting to fixed function mode\n");
-		gl_usevbo = false;
 		gl.glslversion = 0.0;
+		gl.flags &= ~RFL_BUFFER_STORAGE;
 	}
 }
 

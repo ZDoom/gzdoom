@@ -49,19 +49,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 
 
-CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self < -1 || self > 1 || !(gl.flags & RFL_BUFFER_STORAGE))
-	{
-		if (self != 0) self = 0;
-	}
-	else if (self == -1)
-	{
-		if (!(gl.flags & RFL_BUFFER_STORAGE)) self = 0;
-		else self = 1;
-	}
-}
-
 //==========================================================================
 //
 // Create / destroy the VBO
@@ -71,7 +58,6 @@ CUSTOM_CVAR(Int, gl_usevbo, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 FVertexBuffer::FVertexBuffer()
 {
 	vbo_id = 0;
-	if (gl_usevbo == -1) gl_usevbo.Callback();
 	glGenBuffers(1, &vbo_id);
 }
 	

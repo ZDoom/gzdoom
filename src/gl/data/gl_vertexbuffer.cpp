@@ -294,7 +294,7 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 	secplane_t &splane = sec->GetSecPlane(plane);
 	FFlatVertex *vt = &vbo_shadowdata[startvt];
 	FFlatVertex *mapvt = &map[startvt];
-	for(int i=0; i<countvt; i++, vt++)
+	for(int i=0; i<countvt; i++, vt++, mapvt++)
 	{
 		vt->z = splane.ZatPoint(vt->x, vt->y);
 		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;

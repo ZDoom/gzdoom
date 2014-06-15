@@ -223,10 +223,10 @@ void GLWall::SetupLights()
 //
 //==========================================================================
 
-void GLWall::RenderWall(int textured, ADynamicLight * light)
+void GLWall::RenderWall(int textured, ADynamicLight * light, unsigned int *store)
 {
 	texcoord tcs[4];
-	bool split = (gl_seamless && !(textured&4) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
+	bool split = (gl_seamless && !(textured&RWF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
 
 	if (!light)
 	{
@@ -234,7 +234,7 @@ void GLWall::RenderWall(int textured, ADynamicLight * light)
 		tcs[1]=uplft;
 		tcs[2]=uprgt;
 		tcs[3]=lorgt;
-		if (!!(flags&GLWF_GLOW) && (textured & 2))
+		if ((flags&GLWF_GLOW) && (textured & RWF_GLOW))
 		{
 			gl_RenderState.SetGlowPlanes(topplane, bottomplane);
 			gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
@@ -247,10 +247,14 @@ void GLWall::RenderWall(int textured, ADynamicLight * light)
 	}
 
 
-	gl_RenderState.Apply();
+	if (!(textured & RWF_NORENDER))
+	{
+		gl_RenderState.Apply();
+	}
 
 	// the rest of the code is identical for textured rendering and lights
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+	unsigned int count, offset;
 
 	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[0].u, tcs[0].v);
 	ptr++;
@@ -264,39 +268,18 @@ void GLWall::RenderWall(int textured, ADynamicLight * light)
 	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[3].u, tcs[3].v);
 	ptr++;
 	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, ptr);
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
-	vertexcount += 4;
+	count = GLRenderer->mVBO->GetCount(ptr, &offset);
+	if (!(textured & RWF_NORENDER))
+	{
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, offset, count);
+		vertexcount += count;
+	}
+	if (store != NULL)
+	{
+		store[0] = offset;
+		store[1] = count;
+	}
 }
-
-//==========================================================================
-//
-// Gets the vertex data for rendering a stencil which needs to be
-// repeated several times
-//
-//==========================================================================
-
-void GLWall::GetPrimitive(unsigned int *store)
-{
-	static texcoord tcs[4] = { 0, 0, 0, 0 };
-	bool split = (gl_seamless && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
-
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-
-	ptr->Set(glseg.x1, zbottom[0], glseg.y1, 0, 0);
-	ptr++;
-	if (split && glseg.fracleft == 0) SplitLeftEdge(tcs, ptr);
-	ptr->Set(glseg.x1, ztop[0], glseg.y1, 0, 0);
-	ptr++;
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(tcs, ptr);
-	ptr->Set(glseg.x2, ztop[1], glseg.y2, 0, 0);
-	ptr++;
-	if (split && glseg.fracright == 1) SplitRightEdge(tcs, ptr);
-	ptr->Set(glseg.x2, zbottom[1], glseg.y2, 0, 0);
-	ptr++;
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(tcs, ptr);
-	store[1] = GLRenderer->mVBO->GetCount(ptr, &store[0]);
-	vertexcount += 4;
- }
 
 //==========================================================================
 //
@@ -315,13 +298,14 @@ void GLWall::RenderFogBoundary()
 			gl_SetFog(lightlevel, rel, &Colormap, false);
 			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 			gl_RenderState.EnableAlphaTest(false);
-			RenderWall(0);
+			RenderWall(RWF_BLANK);
 			gl_RenderState.EnableAlphaTest(true);
 			gl_RenderState.SetEffect(EFF_NONE);
 		}
 		else
 		{
-			// otherwise some approximation is needed. This won't look as good
+			// If we use the fixed function pipeline (GL 2.x)
+			// some approximation is needed. This won't look as good
 			// as the shader version but it's an acceptable compromise.
 			float fogdensity=gl_GetFogDensity(lightlevel, Colormap.FadeColor);
 
@@ -392,7 +376,7 @@ void GLWall::RenderMirrorSurface()
 	pat->BindPatch(0);
 
 	flags &= ~GLWF_GLOW;
-	RenderWall(0);
+	RenderWall(RWF_BLANK);
 
 	gl_RenderState.SetEffect(EFF_NONE);
 
@@ -453,7 +437,7 @@ void GLWall::RenderTranslucentWall()
 	if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, extra, &Colormap, isadditive);
 	else gl_SetFog(255, 0, NULL, false);
 
-	RenderWall(5);
+	RenderWall(RWF_TEXTURED|RWF_NOSPLIT);
 
 	// restore default settings
 	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -507,7 +491,7 @@ void GLWall::Draw(int pass)
 
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gltexture->Bind(flags, 0);
-		RenderWall(3);
+		RenderWall(RWF_TEXTURED|RWF_GLOW);
 		gl_RenderState.EnableGlow(false);
 		gl_RenderState.EnableLight(false);
 		break;
@@ -528,14 +512,14 @@ void GLWall::Draw(int pass)
 		{
 			gltexture->Bind(flags, 0);
 		}
-		RenderWall(pass == GLPASS_BASE? 2:3);
+		RenderWall(RWF_TEXTURED|RWF_GLOW);
 		gl_RenderState.EnableGlow(false);
 		gl_RenderState.EnableLight(false);
 		break;
 
 	case GLPASS_TEXTURE:		// modulated texture
 		gltexture->Bind(flags, 0);
-		RenderWall(1);
+		RenderWall(RWF_TEXTURED);
 		break;
 
 	case GLPASS_LIGHT:
@@ -564,7 +548,7 @@ void GLWall::Draw(int pass)
 			if (!(node->lightsource->flags2&MF2_DORMANT))
 			{
 				iter_dlight++;
-				RenderWall(1, node->lightsource);
+				RenderWall(RWF_TEXTURED, node->lightsource);
 			}
 			node = node->nextLight;
 		}

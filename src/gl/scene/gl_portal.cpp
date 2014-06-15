@@ -139,66 +139,36 @@ void GLPortal::ClearScreen()
 //-----------------------------------------------------------------------------
 void GLPortal::DrawPortalStencil()
 {
-	if (!gl_usevbo)
+	if (mPrimIndices.Size() == 0)
 	{
+		bool cap = NeedCap() && lines.Size() > 1;
+		mPrimIndices.Resize(2 * lines.Size() + 4 * cap);
+
 		for (unsigned int i = 0; i<lines.Size(); i++)
 		{
-			lines[i].RenderWall(0, NULL);
-
+			lines[i].RenderWall(GLWall::RWF_NORENDER, NULL, &mPrimIndices[i * 2]);
 		}
 
-		if (NeedCap() && lines.Size() > 1)
+		if (cap)
 		{
-			// Cap the stencil at the top and bottom 
-			// (cheap ass version)
-			glBegin(GL_TRIANGLE_FAN);
-			glVertex3f(-32767.0f, 32767.0f, -32767.0f);
-			glVertex3f(-32767.0f, 32767.0f, 32767.0f);
-			glVertex3f(32767.0f, 32767.0f, 32767.0f);
-			glVertex3f(32767.0f, 32767.0f, -32767.0f);
-			glEnd();
-			glBegin(GL_TRIANGLE_FAN);
-			glVertex3f(-32767.0f, -32767.0f, -32767.0f);
-			glVertex3f(-32767.0f, -32767.0f, 32767.0f);
-			glVertex3f(32767.0f, -32767.0f, 32767.0f);
-			glVertex3f(32767.0f, -32767.0f, -32767.0f);
-			glEnd();
+			// Cap the stencil at the top and bottom
+			int n = lines.Size() * 2;
+			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+			ptr->Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr->Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
+			ptr->Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
+			ptr->Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
+			mPrimIndices[n + 1] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n]);
+			ptr->Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr->Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
+			ptr->Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
+			ptr->Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+			mPrimIndices[n + 3] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n + 2]);
 		}
 	}
-	else
+	for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
 	{
-		if (mPrimIndices.Size() == 0)
-		{
-			bool cap = NeedCap() && lines.Size() > 1;
-			mPrimIndices.Resize(2 * lines.Size() + 4 * cap);
-
-			for (unsigned int i = 0; i<lines.Size(); i++)
-			{
-				lines[i].GetPrimitive(&mPrimIndices[i * 2]);
-			}
-
-			if (cap)
-			{
-				// Cap the stencil at the top and bottom 
-				// (cheap ass version)
-				int n = lines.Size() * 2;
-				FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-				ptr->Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
-				ptr->Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
-				ptr->Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
-				ptr->Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
-				mPrimIndices[n + 1] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n]);
-				ptr->Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
-				ptr->Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
-				ptr->Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
-				ptr->Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
-				mPrimIndices[n + 3] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n + 2]);
-			}
-		}
-		for (unsigned int i = 0; i < mPrimIndices.Size(); i += 2)
-		{
-			glDrawArrays(GL_TRIANGLE_FAN, mPrimIndices[i], mPrimIndices[i + 1]);
-		}
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, mPrimIndices[i], mPrimIndices[i + 1]);
 	}
 }
 
@@ -244,13 +214,13 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			if (!QueryObject) glGenQueries(1, &QueryObject);
 			if (QueryObject) 
 			{
-				glBeginQuery(GL_SAMPLES_PASSED_ARB, QueryObject);
+				glBeginQuery(GL_SAMPLES_PASSED, QueryObject);
 			}
 			else doquery = false;	// some kind of error happened
 
 			DrawPortalStencil();
 
-			glEndQuery(GL_SAMPLES_PASSED_ARB);
+			glEndQuery(GL_SAMPLES_PASSED);
 
 			// Clear Z-buffer
 			glStencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
@@ -268,7 +238,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 
 			GLuint sampleCount;
 
-			glGetQueryObjectuiv(QueryObject, GL_QUERY_RESULT_ARB, &sampleCount);
+			glGetQueryObjectuiv(QueryObject, GL_QUERY_RESULT, &sampleCount);
 
 			if (sampleCount==0) 	// not visible
 			{

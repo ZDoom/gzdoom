@@ -336,6 +336,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	else
 		glRotatef(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
+	FFlatVertex *ptr;
 	if (sb->faces[5]) 
 	{
 		faces=4;
@@ -344,164 +345,125 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 		tex = FMaterial::ValidateTexture(sb->faces[0]);
 		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(0, 0);
-		glVertex3f(128.f, 128.f, -128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(-128.f, 128.f, -128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(-128.f, -128.f, -128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(128.f, -128.f, -128.f);
-		glEnd();
+
+		ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(128.f, 128.f, -128.f, 0, 0);
+		ptr++;
+		ptr->Set(-128.f, 128.f, -128.f, 1, 0);
+		ptr++;
+		ptr->Set(128.f, -128.f, -128.f, 0, 1);
+		ptr++;
+		ptr->Set(-128.f, -128.f, -128.f, 1, 1);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1]);
-		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX | GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(0, 0);
-		glVertex3f(-128.f, 128.f, -128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(-128.f, 128.f, 128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(-128.f, -128.f, 128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(-128.f, -128.f, -128.f);
-		glEnd();
+
+		ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(-128.f, 128.f, -128.f, 0, 0);
+		ptr++;
+		ptr->Set(-128.f, 128.f, 128.f, 1, 0);
+		ptr++;
+		ptr->Set(-128.f, -128.f, -128.f, 0, 1);
+		ptr++;
+		ptr->Set(-128.f, -128.f, 128.f, 1, 1);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2]);
-		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
+		tex->Bind(GLT_CLAMPX | GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(0, 0);
-		glVertex3f(-128.f, 128.f, 128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(128.f, 128.f, 128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(128.f, -128.f, 128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(-128.f, -128.f, 128.f);
-		glEnd();
+
+		ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(-128.f, 128.f, 128.f, 0, 0);
+		ptr++;
+		ptr->Set(128.f, 128.f, 128.f, 1, 0);
+		ptr++;
+		ptr->Set(-128.f, -128.f, 128.f, 0, 1);
+		ptr++;
+		ptr->Set(128.f, -128.f, 128.f, 1, 1);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3]);
 		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 		gl_RenderState.Apply();
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(0, 0);
-		glVertex3f(128.f, 128.f, 128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(128.f, 128.f, -128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(128.f, -128.f, -128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(128.f, -128.f, 128.f);
-		glEnd();
+
+		ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(128.f, 128.f, 128.f, 0, 0);
+		ptr++;
+		ptr->Set(128.f, 128.f, -128.f, 1, 0);
+		ptr++;
+		ptr->Set(128.f, -128.f, 128.f, 0, 1);
+		ptr++;
+		ptr->Set(128.f, -128.f, -128.f, 1, 1);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 	else 
 	{
 		faces=1;
-		// all 4 sides
-		tex = FMaterial::ValidateTexture(sb->faces[0]);
-		tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 
-		gl_RenderState.Apply();
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(0, 0);
-		glVertex3f(128.f, 128.f, -128.f);
-		glTexCoord2f(.25f, 0);
-		glVertex3f(-128.f, 128.f, -128.f);
-		glTexCoord2f(.25f, 1);
-		glVertex3f(-128.f, -128.f, -128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(128.f, -128.f, -128.f);
-		glEnd();
-
-		// east
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(.25f, 0);
-		glVertex3f(-128.f, 128.f, -128.f);
-		glTexCoord2f(.5f, 0);
-		glVertex3f(-128.f, 128.f, 128.f);
-		glTexCoord2f(.5f, 1);
-		glVertex3f(-128.f, -128.f, 128.f);
-		glTexCoord2f(.25f, 1);
-		glVertex3f(-128.f, -128.f, -128.f);
-		glEnd();
-
-		// south
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(.5f, 0);
-		glVertex3f(-128.f, 128.f, 128.f);
-		glTexCoord2f(.75f, 0);
-		glVertex3f(128.f, 128.f, 128.f);
-		glTexCoord2f(.75f, 1);
-		glVertex3f(128.f, -128.f, 128.f);
-		glTexCoord2f(.5f, 1);
-		glVertex3f(-128.f, -128.f, 128.f);
-		glEnd();
-
-		// west
-		glBegin(GL_TRIANGLE_FAN);
-		glTexCoord2f(.75f, 0);
-		glVertex3f(128.f, 128.f, 128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(128.f, 128.f, -128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(128.f, -128.f, -128.f);
-		glTexCoord2f(.75f, 1);
-		glVertex3f(128.f, -128.f, 128.f);
-		glEnd();
+		ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(128.f, 128.f, -128.f, 0, 0);
+		ptr++;
+		ptr->Set(128.f, -128.f, -128.f, 0, 1);
+		ptr++;
+		ptr->Set(-128.f, 128.f, -128.f, 0.25f, 0);
+		ptr++;
+		ptr->Set(-128.f, -128.f, -128.f, 0.25f, 1);
+		ptr++;
+		ptr->Set(-128.f, 128.f, 128.f, 0.5f, 0);
+		ptr++;
+		ptr->Set(-128.f, -128.f, 128.f, 0.5f, 1);
+		ptr++;
+		ptr->Set(128.f, 128.f, 128.f, 0.75f, 0);
+		ptr++;
+		ptr->Set(128.f, -128.f, 128.f, 0.75f, 1);
+		ptr++;
+		ptr->Set(128.f, 128.f, -128.f, 1, 0);
+		ptr++;
+		ptr->Set(128.f, -128.f, -128.f, 1, 1);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 	}
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces]);
 	tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLE_FAN);
-	if (!sb->fliptop)
-	{
-		glTexCoord2f(0, 0);
-		glVertex3f(128.f, 128.f, -128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(-128.f, 128.f, -128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(-128.f, 128.f, 128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(128.f, 128.f, 128.f);
-	}
-	else
-	{
-		glTexCoord2f(0, 0);
-		glVertex3f(128.f, 128.f, 128.f);
-		glTexCoord2f(1, 0);
-		glVertex3f(-128.f, 128.f, 128.f);
-		glTexCoord2f(1, 1);
-		glVertex3f(-128.f, 128.f, -128.f);
-		glTexCoord2f(0, 1);
-		glVertex3f(128.f, 128.f, -128.f);
-	}
-	glEnd();
 
+	ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(128.f, 128.f, -128.f, 0, sb->fliptop);
+	ptr++;
+	ptr->Set(-128.f, 128.f, -128.f, 1, sb->fliptop);
+	ptr++;
+	ptr->Set(128.f, 128.f, 128.f, 0, !sb->fliptop);
+	ptr++;
+	ptr->Set(-128.f, 128.f, 128.f, 1, !sb->fliptop);
+	ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1]);
 	tex->Bind(GLT_CLAMPX|GLT_CLAMPY, 0);
 	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLE_FAN);
-	glTexCoord2f(0, 0);
-	glVertex3f(128.f, -128.f, -128.f);
-	glTexCoord2f(1, 0);
-	glVertex3f(-128.f, -128.f, -128.f);
-	glTexCoord2f(1, 1);
-	glVertex3f(-128.f, -128.f, 128.f);
-	glTexCoord2f(0, 1);
-	glVertex3f(128.f, -128.f, 128.f);
-	glEnd();
 
-
+	ptr = GLRenderer->mVBO->GetBuffer();
+	ptr->Set(128.f, -128.f, -128.f, 0, 0);
+	ptr++;
+	ptr->Set(-128.f, -128.f, -128.f, 1, 0);
+	ptr++;
+	ptr->Set(128.f, -128.f, 128.f, 0, 1);
+	ptr++;
+	ptr->Set(-128.f, -128.f, 128.f, 1, 1);
+	ptr++;
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 }
 
 //-----------------------------------------------------------------------------

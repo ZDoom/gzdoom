@@ -331,7 +331,7 @@ void GLWall::RenderFogBoundary()
 			// this case is special because it needs to change the color in the middle of the polygon so it cannot use the standard function
 			// This also needs no splits so it's relatively simple.
 			gl_RenderState.Apply();
-			glBegin(GL_TRIANGLE_FAN);
+			glBegin(GL_TRIANGLE_FAN);	// only used on GL 2.x!
 			glVertex3f(glseg.x1, zbottom[0], glseg.y1);
 			glVertex3f(glseg.x1, ztop[0], glseg.y1);
 			glColor4fv(fc);

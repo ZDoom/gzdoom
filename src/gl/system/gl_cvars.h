@@ -43,8 +43,4 @@ EXTERN_CVAR(Bool, gl_dynlight_shader)
 EXTERN_CVAR(Float, gl_mask_threshold)
 EXTERN_CVAR(Float, gl_mask_sprite_threshold)
 
-EXTERN_CVAR(Int, gl_usevbo)
-
-
-
 #endif // _GL_INTERN_H

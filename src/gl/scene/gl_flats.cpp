@@ -152,7 +152,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		gl_RenderState.Apply();
 
 		// Render the light
-		glBegin(GL_TRIANGLE_FAN);
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 		for (k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
 		{
 			vertex_t *vt = v->v1;
@@ -160,12 +160,10 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 
 			t1.Set(vt->fx, zc, vt->fy);
 			Vector nearToVert = t1 - nearPt;
-			glTexCoord2f((nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
-
-			glVertex3f(vt->fx, zc, vt->fy);
+			ptr->Set(vt->fx, zc, vt->fy, (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
+			ptr++;
 		}
-
-		glEnd();
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 		node = node->nextLight;
 	}
 }

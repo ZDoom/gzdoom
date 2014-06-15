@@ -44,7 +44,6 @@ struct FFlatVertex
 class FFlatVertexBuffer : public FVertexBuffer
 {
 	FFlatVertex *map;
-	FFlatVertex mDrawBuffer[1000];
 	unsigned int mIndex;
 	unsigned int mCurIndex;
 
@@ -169,6 +168,38 @@ public:
 };
 
 #define VSO ((FSkyVertex*)NULL)
+
+struct FModelVertex
+{
+	float x, y, z;	// world position
+	float u, v;		// texture coordinates
+
+	void Set(float xx, float yy, float zz, float uu, float vv)
+	{
+		x = xx;
+		y = yy;
+		z = zz;
+		u = uu;
+		v = vv;
+	}
+};
+
+
+class FModelVertexBuffer : public FVertexBuffer
+{
+	int mIndexFrame[2];
+
+public:
+	TArray<FModelVertex> vbo_shadowdata;	// this is kept around for interpolating on GL 2.0
+
+	FModelVertexBuffer();
+	~FModelVertexBuffer();
+
+	void BindVBO();
+	void UpdateBufferPointers(int frame1, int frame2);
+};
+
+#define VMO ((FModelVertex*)NULL)
 
 
 #endif

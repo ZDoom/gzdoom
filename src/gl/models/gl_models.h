@@ -2,8 +2,10 @@
 #define __GL_MODELS_H_
 
 #include "gl/utility/gl_geometric.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "p_pspr.h"
 #include "r_data/voxels.h"
+
 
 #define MAX_LODS			4
 

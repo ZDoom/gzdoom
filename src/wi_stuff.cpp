@@ -64,6 +64,7 @@ typedef enum
 CVAR (Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR (Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR (Bool, wi_noautostartmap, false, CVAR_USERINFO|CVAR_ARCHIVE)
+CVAR (Int, wi_autoadvance, 0, CVAR_SERVERINFO)
 
 
 void WI_loadData ();
@@ -1113,6 +1114,7 @@ void WI_updateNoState ()
 	else
 	{
 		bool noauto = noautostartmap;
+		bool autoskip = (wi_autoadvance > 0 && bcnt > (wi_autoadvance * TICRATE));
 
 		for (int i = 0; !noauto && i < MAXPLAYERS; ++i)
 		{
@@ -1121,7 +1123,7 @@ void WI_updateNoState ()
 				noauto |= players[i].userinfo.GetNoAutostartMap();
 			}
 		}
-		if (!noauto)
+		if (!noauto || autoskip)
 		{
 			cnt--;
 		}
@@ -1252,10 +1254,11 @@ void WI_updateDeathmatchStats ()
 
 	int i;
 	bool stillticking;
+	bool autoskip = (wi_autoadvance > 0 && bcnt > (wi_autoadvance * TICRATE));
 
 	WI_updateAnimatedBack();
 
-	if (acceleratestage && ng_state != 6)
+	if ((acceleratestage || autoskip) && ng_state != 6)
 	{
 		acceleratestage = 0;
 
@@ -1332,7 +1335,7 @@ void WI_updateDeathmatchStats ()
 		}
 
 		// All players are ready; proceed.
-		if (i == MAXPLAYERS && acceleratestage)
+		if ((i == MAXPLAYERS && acceleratestage) || autoskip)
 		{
 			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/pastdmstats", 1, ATTN_NONE);
 			WI_initShowNextLoc();
@@ -1503,10 +1506,11 @@ void WI_updateNetgameStats ()
 	int i;
 	int fsum;
 	bool stillticking;
+	bool autoskip = (wi_autoadvance > 0 && bcnt > (wi_autoadvance * TICRATE));
 
 	WI_updateAnimatedBack ();
 
-	if (acceleratestage && ng_state != 10)
+	if ((acceleratestage || autoskip) && ng_state != 10)
 	{
 		acceleratestage = 0;
 
@@ -1639,7 +1643,7 @@ void WI_updateNetgameStats ()
 		}
 
 		// All players are ready; proceed.
-		if (i == MAXPLAYERS && acceleratestage)
+		if ((i == MAXPLAYERS && acceleratestage) || autoskip)
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/pastcoopstats", 1, ATTN_NONE);
 			WI_initShowNextLoc();

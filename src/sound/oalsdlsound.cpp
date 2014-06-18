@@ -326,7 +326,7 @@ void *OpenALSoundStream::GetData(size_t bytes)
         for(size_t i = 0;i < count;i++)
         {
             short smp = *samples;
-            *(samples++) = ((smp>>8)&0x00FF) | ((smp<<8)*0xFF00);
+            *(samples++) = ((smp>>8)&0x00FF) | ((smp<<8)&0xFF00);
         }
     }
     if(NeedS8Conv)
@@ -410,7 +410,7 @@ bool OpenALSoundStream::InitSample()
             Format = AL_FORMAT_MONO16;
         else if(Sample->actual.channels == 2)
             Format = AL_FORMAT_STEREO16;
-        smpsize = 1 * Sample->actual.channels;
+        smpsize = 2 * Sample->actual.channels;
     }
     else if(Sample->actual.format == AUDIO_U16LSB || Sample->actual.format == AUDIO_U16MSB)
     {
@@ -420,7 +420,7 @@ bool OpenALSoundStream::InitSample()
             Format = AL_FORMAT_MONO16;
         else if(Sample->actual.channels == 2)
             Format = AL_FORMAT_STEREO16;
-        smpsize = 1 * Sample->actual.channels;
+        smpsize = 2 * Sample->actual.channels;
     }
 
     if(Format == AL_NONE)
@@ -570,7 +570,7 @@ void* Decoder::GetData(ALsizei *size)
         for(size_t i = 0;i < count;i++)
         {
             short smp = *samples;
-            *(samples++) = ((smp>>8)&0x00FF) | ((smp<<8)*0xFF00);
+            *(samples++) = ((smp>>8)&0x00FF) | ((smp<<8)&0xFF00);
         }
     }
 

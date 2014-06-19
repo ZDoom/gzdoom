@@ -15,6 +15,8 @@
 #include "r_data/voxels.h"
 #include "textures/textures.h"
 
+void gl_InitModels();
+
 // variables used to look up
 //	and range check thing_t sprites patches
 TArray<spritedef_t> sprites;
@@ -987,6 +989,8 @@ void R_InitSprites ()
 
 	// [RH] Sort the skins, but leave base as skin 0
 	//qsort (&skins[PlayerClasses.Size ()], numskins-PlayerClasses.Size (), sizeof(FPlayerSkin), skinsorter);
+
+	gl_InitModels();
 }
 
 void R_DeinitSpriteData()

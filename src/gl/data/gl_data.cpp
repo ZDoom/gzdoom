@@ -486,7 +486,6 @@ void gl_RecalcVertexHeights(vertex_t * v)
 
 void gl_InitData()
 {
-	gl_InitModels();
 	AdjustSpriteOffsets();
 }
 

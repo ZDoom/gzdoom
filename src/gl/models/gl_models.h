@@ -125,7 +125,7 @@ protected:
 	char           *vertexUsage;   // Bitfield for each vertex.
 	bool			allowTexComp;  // Allow texture compression with this.
 
-	static void RenderGLCommands(void *glCommands, unsigned int numVertices,FModelVertex * vertices);
+	static void RenderGLCommands(void *glCommands, unsigned int numVertices,FModelVertex * vertices, FModelVertex *vertices2, double inter);
 
 public:
 	FDMDModel() 

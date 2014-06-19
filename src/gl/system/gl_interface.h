@@ -12,6 +12,7 @@ enum RenderFlags
 	RFL_FRAMEBUFFER = 4,
 	RFL_BUFFER_STORAGE = 8,
 	RFL_SHADER_STORAGE_BUFFER = 16,
+	RFL_BASEINDEX = 32,
 };
 
 enum TexMode

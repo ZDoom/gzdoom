@@ -263,11 +263,13 @@ int FDMDModel::FindFrame(const char * name)
 // Render a set of GL commands using the given data.
 //
 //===========================================================================
-void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices,FModelVertex * vertices)
+
+void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices, FModelVertex * vertices, FModelVertex *vertices2, double inter)
 {
 	char   *pos;
 	FGLCommandVertex * v;
 	int     count;
+	const bool interpolate = (vertices2 != NULL && inter != 0.);
 
 	gl_RenderState.Apply();
 	for(pos = (char*)glCommands; *pos;)
@@ -277,100 +279,54 @@ void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices,FMod
 
 		// The type of primitive depends on the sign.
 		glBegin(count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
+
 		count = abs(count);
 
-		while(count--)
+		while (count--)
 		{
-			v = (FGLCommandVertex *) pos;
+			v = (FGLCommandVertex *)pos;
 			pos += sizeof(FGLCommandVertex);
 
 			glTexCoord2fv(&v->s);
-			glVertex3fv((float*)&vertices[v->index]);
+			if (!interpolate)
+			{
+				glVertex3fv(vertices[v->index].xyz);
+			}
+			else
+			{
+				float interp[3];
+				for (int i = 0; i < 3; i++)
+					interp[i] = inter * vertices[v->index].xyz[i] + (1. - inter) * vertices2[v->index].xyz[i];
+				glVertex3fv(interp);
+			}
 		}
-
 		glEnd();
 	}
+}
+
+void FDMDModel::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int translation)
+{
+	if (frameno >= info.numFrames || frameno2 >= info.numFrames) return;
+
+	if (!skin)
+	{
+		if (info.numSkins == 0) return;
+		skin = skins[0];
+		if (!skin) return;
+	}
+
+	FMaterial * tex = FMaterial::ValidateTexture(skin);
+
+	tex->Bind(0, translation);
+
+	RenderGLCommands(lods[0].glCommands, info.numVertices, frames[frameno].vertices, frames[frameno2].vertices, inter);
 }
 
 
 void FDMDModel::RenderFrame(FTexture * skin, int frameno, int translation)
 {
-	int activeLod;
-
-	if (frameno>=info.numFrames) return;
-
-	ModelFrame * frame = &frames[frameno];
-	//int mainFlags = mf->flags;
-
-	if (!skin)
-	{
-		if (info.numSkins==0) return;
-		skin = skins[0];
-		if (!skin) return;
-	}
-
-	FMaterial * tex = FMaterial::ValidateTexture(skin);
-
-	tex->Bind(0, translation);
-
-	int numVerts = info.numVertices;
-
-	// Determine the suitable LOD.
-	/*
-	if(info.numLODs > 1 && rend_model_lod != 0)
-	{
-	float   lodFactor = rend_model_lod * screen->Width() / 640.0f / (GLRenderer->mCurrentFoV / 90.0f);
-	if(lodFactor) lodFactor = 1 / lodFactor;
-
-	// Determine the LOD we will be using.
-	activeLod = (int) (lodFactor * spr->distance);
-	if(activeLod < 0) activeLod = 0;
-	if(activeLod >= mdl->info.numLODs) activeLod = mdl->info.numLODs - 1;
-	vertexUsage = mdl->vertexUsage;
-	}
-	else
-	*/
-	{
-		activeLod = 0;
-	}
-
-	RenderGLCommands(lods[activeLod].glCommands, numVerts, frame->vertices/*, modelColors, NULL*/);
+	RenderFrameInterpolated(skin, frameno, frameno, 0., translation);
 }
-
-void FDMDModel::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int translation)
-{
-	int activeLod = 0;
-
-	if (frameno>=info.numFrames || frameno2>=info.numFrames) return;
-
-	FModelVertex *vertices1 = frames[frameno].vertices;
-	FModelVertex *vertices2 = frames[frameno2].vertices;
-
-	if (!skin)
-	{
-		if (info.numSkins==0) return;
-		skin = skins[0];
-		if (!skin) return;
-	}
-
-	FMaterial * tex = FMaterial::ValidateTexture(skin);
-
-	tex->Bind(0, translation);
-
-	int numVerts = info.numVertices;
-
-	// [BB] Calculate the interpolated vertices by linear interpolation.
-	FModelVertex *verticesInterpolated = new FModelVertex[numVerts];
-	for( int k = 0; k < numVerts; k++ )
-	{
-		for ( int i = 0; i < 3; i++ )
-			verticesInterpolated[k].xyz[i] = (1-inter)*vertices1[k].xyz[i]+ (inter)*vertices2[k].xyz[i];
-	}
-
-	RenderGLCommands(lods[activeLod].glCommands, numVerts, verticesInterpolated/*, modelColors, NULL*/);
-	delete[] verticesInterpolated;
-}
-
 
 //===========================================================================
 //

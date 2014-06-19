@@ -163,6 +163,7 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 
 	temp = (char*)buffer + info.offsetFrames;
 	frames = new ModelFrame[info.numFrames];
+	ib_count = 0;
 
 	for(i = 0, frame = frames; i < info.numFrames; i++, frame++)
 	{
@@ -170,8 +171,9 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 		dmd_packedVertex_t *pVtx;
 
 		memcpy(frame->name, pfr->name, sizeof(pfr->name));
-		frame->vertices = new FModelVertex[info.numVertices];
-		frame->normals = new FModelVertex[info.numVertices];
+		frame->vertices = new DMDModelVertex[info.numVertices];
+		frame->normals = new DMDModelVertex[info.numVertices];
+		frame->vindex = UINT_MAX;
 
 		// Translate each vertex.
 		for(k = 0, pVtx = pfr->vertices; k < info.numVertices; k++, pVtx++)
@@ -244,6 +246,91 @@ FDMDModel::~FDMDModel()
 	if (vertexUsage != NULL) delete [] vertexUsage;
 }
 
+
+void FDMDModel::BuildVertexBuffer(FModelVertexBuffer *buf)
+{
+	for (int i = 0; i < info.numFrames; i++)
+	{
+		ModelFrame *frame = &frames[i];
+		DMDModelVertex *vert = frame->vertices;
+		DMDModelVertex *norm = frame->normals;
+		void *glCommands = lods[0].glCommands;
+
+		frame->vindex = buf->vbo_shadowdata.Size();
+
+		for (char *pos = (char*)glCommands; *pos;)
+		{
+			int count = *(int *)pos;
+			pos += 4;
+
+			// The type of primitive depends on the sign.
+			int primtype = count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN;
+			count = abs(count);
+
+			if (i == 0)
+			{
+				// build the index buffer - we'll use the same buffer for all frames so only create it once
+				unsigned int bufindex = buf->vbo_shadowdata.Size() - frame->vindex;
+				unsigned int bufp = bufindex;
+
+				if (primtype == GL_TRIANGLE_STRIP)
+				{
+					for (int t = 0; t < count - 2; t++)
+					{
+						unsigned int *p = &buf->ibo_shadowdata[buf->ibo_shadowdata.Reserve(3)];
+						if ((t & 1) == 0)
+						{
+							p[0] = bufp;
+							p[1] = bufp + 1;
+							p[2] = bufp + 2;
+						}
+						else
+						{
+							p[0] = bufp;
+							p[2] = bufp + 2;
+							p[1] = bufp + 1;
+						}
+						bufp++;
+					}
+				}
+				else
+				{
+					bufp++;
+					for (int t = 0; t < count - 2; t++)
+					{
+						unsigned int *p = &buf->ibo_shadowdata[buf->ibo_shadowdata.Reserve(3)];
+						p[0] = bufindex;
+						p[1] = bufp;
+						p[2] = bufp + 1;
+						bufp++;
+					}
+				}
+			}
+
+			while (count--)
+			{
+				FModelVertex bvert;
+
+				FGLCommandVertex * v = (FGLCommandVertex *)pos;
+				pos += sizeof(FGLCommandVertex);
+
+				bvert.Set(vert[v->index].xyz[0], vert[v->index].xyz[1], vert[v->index].xyz[2], v->s, v->t);
+				bvert.SetNormal(norm[v->index].xyz[0], norm[v->index].xyz[1], norm[v->index].xyz[2]);
+				buf->vbo_shadowdata.Push(bvert);
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
 //===========================================================================
 //
 // FDMDModel::FindFrame
@@ -264,7 +351,7 @@ int FDMDModel::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices, FModelVertex * vertices, FModelVertex *vertices2, double inter)
+void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices, DMDModelVertex * vertices, DMDModelVertex *vertices2, double inter)
 {
 	char   *pos;
 	FGLCommandVertex * v;
@@ -418,8 +505,9 @@ bool FMD2Model::Load(const char * path, int, const char * buffer, int length)
 		md2_triangleVertex_t *pVtx;
 
 		memcpy(frame->name, pfr->name, sizeof(pfr->name));
-		frame->vertices = new FModelVertex[info.numVertices];
-		frame->normals = new FModelVertex[info.numVertices];
+		frame->vertices = new DMDModelVertex[info.numVertices];
+		frame->normals = new DMDModelVertex[info.numVertices];
+		frame->vindex = UINT_MAX;
 
 		// Translate each vertex.
 		for(k = 0, pVtx = pfr->vertices; k < info.numVertices; k++, pVtx++)

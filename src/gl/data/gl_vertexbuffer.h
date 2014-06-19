@@ -182,6 +182,11 @@ struct FModelVertex
 		u = uu;
 		v = vv;
 	}
+
+	void SetNormal(float nx, float ny, float nz)
+	{
+		// GZDoom currently doesn't use normals. This function is so that the high level code can pretend it does.
+	}
 };
 
 
@@ -190,7 +195,9 @@ class FModelVertexBuffer : public FVertexBuffer
 	int mIndexFrame[2];
 
 public:
+	// these are public because it's the models having to fill them in.
 	TArray<FModelVertex> vbo_shadowdata;	// this is kept around for interpolating on GL 2.0
+	TArray<unsigned int> ibo_shadowdata;	// this is kept around for interpolating on GL 2.0
 
 	FModelVertexBuffer();
 	~FModelVertexBuffer();

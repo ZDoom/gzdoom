@@ -30,6 +30,7 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
+	virtual void BuildVertexBuffer(FModelVertexBuffer *buf);
 
 
 
@@ -54,7 +55,7 @@ protected:
 		int             flags;
 	};
 
-	struct FModelVertex
+	struct DMDModelVertex
 	{
 		float           xyz[3];
 	};
@@ -90,8 +91,9 @@ protected:
 	struct ModelFrame
 	{
 		char            name[16];
-		FModelVertex *vertices;
-		FModelVertex *normals;
+		DMDModelVertex *vertices;
+		DMDModelVertex *normals;
+		unsigned int vindex;
 	};
 
 	struct DMDLoDInfo
@@ -114,6 +116,9 @@ protected:
 	DMDInfo			info;
 	FTexture **		skins;
 	FTexCoord *		texCoords;
+
+	unsigned int	ib_index;
+	unsigned int	ib_count;
 	
 	ModelFrame  *	frames;
 	DMDLoDInfo		lodInfo[MAX_LODS];
@@ -121,7 +126,7 @@ protected:
 	char           *vertexUsage;   // Bitfield for each vertex.
 	bool			allowTexComp;  // Allow texture compression with this.
 
-	static void RenderGLCommands(void *glCommands, unsigned int numVertices,FModelVertex * vertices, FModelVertex *vertices2, double inter);
+	static void RenderGLCommands(void *glCommands, unsigned int numVertices,DMDModelVertex * vertices, DMDModelVertex *vertices2, double inter);
 
 public:
 	FDMDModel() 
@@ -131,12 +136,14 @@ public:
 		skins = NULL;
 		lods[0].glCommands = NULL;
 		info.numLODs = 0;
+		ib_count = 0;
 	}
 	virtual ~FDMDModel();
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void BuildVertexBuffer(FModelVertexBuffer *buf);
 
 };
 

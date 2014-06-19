@@ -30,8 +30,6 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
-	virtual void MakeGLData() {}
-	virtual void CleanGLData() {}
 
 
 
@@ -274,7 +272,6 @@ protected:
 	bool mOwningVoxel;	// if created through MODELDEF deleting this object must also delete the voxel object
 	TArray<FVoxelVertex> mVertices;
 	TArray<unsigned int> mIndices;
-	FVoxelVertexBuffer *mVBO;
 	FTexture *mPalette;
 	
 	void MakeSlabPolys(int x, int y, kvxslab_t *voxptr, FVoxelMap &check);
@@ -286,8 +283,6 @@ public:
 	~FVoxelModel();
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	void Initialize();
-	void MakeGLData();
-	void CleanGLData();
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	FTexture *GetPaletteTexture() const { return mPalette; }
@@ -345,6 +340,5 @@ void gl_RenderModel(GLSprite * spr);
 // [BB] HUD weapon model rendering functions.
 void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy);
 bool gl_IsHUDModelForPlayerAvailable (player_t * player);
-void gl_CleanModelData();
 
 #endif

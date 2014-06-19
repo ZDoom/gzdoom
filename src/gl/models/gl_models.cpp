@@ -899,16 +899,3 @@ bool gl_IsHUDModelForPlayerAvailable (player_t * player)
 	return ( smf != NULL );
 }
 
-//===========================================================================
-//
-// gl_CleanModelData
-//
-//===========================================================================
-
-void gl_CleanModelData()
-{
-	for (unsigned i=0;i<Models.Size(); i++)
-	{
-		Models[i]->CleanGLData();
-	}
-}

@@ -118,7 +118,6 @@ void FGLRenderer::Initialize()
 
 FGLRenderer::~FGLRenderer() 
 {
-	gl_CleanModelData();
 	gl_DeleteAllAttachedLights();
 	FMaterial::FlushAll();
 	//if (mThreadManager != NULL) delete mThreadManager;

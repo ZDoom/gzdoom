@@ -206,6 +206,37 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 	return true;
 }
 
+void FMD3Model::BuildVertexBuffer(FModelVertexBuffer *buf)
+{
+	for (int i = 0; i < numSurfaces; i++)
+	{
+		MD3Surface * surf = &surfaces[i];
+
+		surf->vindex = buf->vbo_shadowdata.Size();
+		surf->iindex = buf->ibo_shadowdata.Size();
+		for (int j = 0; j < numFrames * surf->numVertices; j++)
+		{
+			MD3Vertex* vert = surf->vertices + j;
+
+			FModelVertex bvert;
+
+			int tc = j % surf->numVertices;
+			bvert.Set(vert->x, vert->z, vert->y, surf->texcoords[tc].s, surf->texcoords[tc].t);
+			bvert.SetNormal(vert->nx, vert->nz, vert->ny);
+			buf->vbo_shadowdata.Push(bvert);
+		}
+
+		for (int k = 0; k < surf->numTriangles; k++)
+		{
+			for (int l = 0; l < 3; l++)
+			{
+				buf->ibo_shadowdata.Push(surf->tris[k].VertIndex[l]);
+			}
+		}
+	}
+}
+
+
 int FMD3Model::FindFrame(const char * name)
 {
 	for (int i=0;i<numFrames;i++)

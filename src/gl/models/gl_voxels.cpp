@@ -215,6 +215,7 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 	mOwningVoxel = owned;
 	mPalette = new FVoxelTexture(voxel);
 	Initialize();
+	iindex = vindex = UINT_MAX;
 }
 
 //===========================================================================
@@ -229,20 +230,39 @@ FVoxelModel::~FVoxelModel()
 	if (mOwningVoxel) delete mVoxel;
 }
 
+
 //===========================================================================
 //
 // 
 //
 //===========================================================================
 
-void FVoxelModel::AddVertex(FVoxelVertex &vert, FVoxelMap &check)
+void FVoxelModel::BuildVertexBuffer(FModelVertexBuffer *buf)
+{
+	vindex = buf->vbo_shadowdata.Size();
+	iindex = buf->ibo_shadowdata.Size();
+
+	FModelVertex *mv = &buf->vbo_shadowdata[buf->vbo_shadowdata.Reserve(mVertices.Size())];
+	unsigned int *mi = &buf->ibo_shadowdata[buf->ibo_shadowdata.Reserve(mIndices.Size())];
+
+	memcpy(mv, &mVertices[0], sizeof(FModelVertex)* mVertices.Size());
+	memcpy(mi, &mIndices[0], sizeof(unsigned int)* mIndices.Size());
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+unsigned int FVoxelModel::AddVertex(FModelVertex &vert, FVoxelMap &check)
 {
 	unsigned int index = check[vert];
 	if (index == 0xffffffff)
 	{
 		index = check[vert] =mVertices.Push(vert);
 	}
-	mIndices.Push(index);
+	return index;
 }
 
 //===========================================================================
@@ -257,8 +277,8 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 	float PivotY = mVoxel->Mips[0].PivotY / 256.f;
 	float PivotZ = mVoxel->Mips[0].PivotZ / 256.f;
 	int h = mVoxel->Mips[0].SizeZ;
-	FVoxelVertex vert;
-
+	FModelVertex vert;
+	unsigned int indx[4];
 
 	vert.u = (((col & 15) * 255 / 16) + 7) / 255.f;
 	vert.v = (((col / 16) * 255 / 16) + 7) / 255.f;
@@ -266,23 +286,29 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 	vert.x =  x1 - PivotX;
 	vert.z = -y1 + PivotY;
 	vert.y = -z1 + PivotZ;
-	AddVertex(vert, check);
+	indx[0] = AddVertex(vert, check);
 
 	vert.x =  x2 - PivotX;
 	vert.z = -y2 + PivotY;
 	vert.y = -z2 + PivotZ;
-	AddVertex(vert, check);
+	indx[1] = AddVertex(vert, check);
 
 	vert.x =  x4 - PivotX;
 	vert.z = -y4 + PivotY;
 	vert.y = -z4 + PivotZ;
-	AddVertex(vert, check);
+	indx[2] = AddVertex(vert, check);
 
 	vert.x =  x3 - PivotX;
 	vert.z = -y3 + PivotY;
 	vert.y = -z3 + PivotZ;
-	AddVertex(vert, check);
+	indx[3] = AddVertex(vert, check);
 
+	mIndices.Push(indx[0]);
+	mIndices.Push(indx[1]);
+	mIndices.Push(indx[2]);
+	mIndices.Push(indx[1]);
+	mIndices.Push(indx[3]);
+	mIndices.Push(indx[2]);
 }
 
 //===========================================================================
@@ -384,7 +410,7 @@ int FVoxelModel::FindFrame(const char * name)
 
 //===========================================================================
 //
-// Voxels never interpolate between frames
+// Voxels never interpolate between frames, they only have one.
 //
 //===========================================================================
 
@@ -394,10 +420,10 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double int
 	tex->Bind(0, translation);
 
 	gl_RenderState.Apply();
-	glBegin(GL_QUADS);
+	glBegin(GL_TRIANGLES);
 	for (unsigned i = 0; i < mIndices.Size(); i++)
 	{
-		FVoxelVertex *vert = &mVertices[mIndices[i]];
+		FModelVertex *vert = &mVertices[mIndices[i]];
 		glTexCoord2fv(&vert->u);
 		glVertex3fv(&vert->x);
 	}

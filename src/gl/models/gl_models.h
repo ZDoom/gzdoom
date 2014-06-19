@@ -30,7 +30,7 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
-	virtual void BuildVertexBuffer(FModelVertexBuffer *buf);
+	virtual void BuildVertexBuffer(FModelVertexBuffer *buf) = 0;
 
 
 
@@ -193,11 +193,15 @@ class FMD3Model : public FModel
 		MD3TexCoord * texcoords;
 		MD3Vertex * vertices;
 
+		unsigned int vindex;	// contains numframes arrays of vertices
+		unsigned int iindex;
+
 		MD3Surface()
 		{
 			tris=NULL;
 			vertices=NULL;
 			texcoords=NULL;
+			vindex = iindex = UINT_MAX;
 		}
 
 		~MD3Surface()
@@ -233,20 +237,13 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
-};
-
-class FVoxelVertexBuffer;
-
-struct FVoxelVertex
-{
-	float x,y,z;
-	float u,v;
+	virtual void BuildVertexBuffer(FModelVertexBuffer *buf);
 };
 
 struct FVoxelVertexHash
 {
 	// Returns the hash value for a key.
-	hash_t Hash(const FVoxelVertex &key) 
+	hash_t Hash(const FModelVertex &key) 
 	{ 
 		int ix = xs_RoundToInt(key.x);		
 		int iy = xs_RoundToInt(key.y);		
@@ -255,7 +252,7 @@ struct FVoxelVertexHash
 	}
 
 	// Compares two keys, returning zero if they are the same.
-	int Compare(const FVoxelVertex &left, const FVoxelVertex &right) 
+	int Compare(const FModelVertex &left, const FModelVertex &right) 
 	{ 
 		return left.x != right.x || left.y != right.y || left.z != right.z || left.u != right.u || left.v != right.v;
 	}
@@ -269,7 +266,7 @@ struct FIndexInit
 	}
 };
 
-typedef TMap<FVoxelVertex, unsigned int, FVoxelVertexHash, FIndexInit> FVoxelMap;
+typedef TMap<FModelVertex, unsigned int, FVoxelVertexHash, FIndexInit> FVoxelMap;
 
 
 class FVoxelModel : public FModel
@@ -277,13 +274,15 @@ class FVoxelModel : public FModel
 protected:
 	FVoxel *mVoxel;
 	bool mOwningVoxel;	// if created through MODELDEF deleting this object must also delete the voxel object
-	TArray<FVoxelVertex> mVertices;
+	TArray<FModelVertex> mVertices;
 	TArray<unsigned int> mIndices;
 	FTexture *mPalette;
+	unsigned int vindex;
+	unsigned int iindex;
 	
 	void MakeSlabPolys(int x, int y, kvxslab_t *voxptr, FVoxelMap &check);
 	void AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int x4, int y4, int z4, BYTE color, FVoxelMap &check);
-	void AddVertex(FVoxelVertex &vert, FVoxelMap &check);
+	unsigned int AddVertex(FModelVertex &vert, FVoxelMap &check);
 
 public:
 	FVoxelModel(FVoxel *voxel, bool owned);
@@ -293,6 +292,7 @@ public:
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	FTexture *GetPaletteTexture() const { return mPalette; }
+	void BuildVertexBuffer(FModelVertexBuffer *buf);
 };
 
 

@@ -57,6 +57,7 @@ extern TArray<BYTE> currentmapsection;
 
 void gl_InitPortals();
 void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, FPortal *portal);
+void gl_InitData();
 
 extern long gl_frameMS;
 

@@ -1224,6 +1224,7 @@ void FGLInterface::RenderView(player_t *player)
 void FGLInterface::Init()
 {
 	gl_ParseDefs();
+	gl_InitData();
 }
 
 //===========================================================================

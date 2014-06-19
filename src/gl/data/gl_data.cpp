@@ -477,9 +477,8 @@ void gl_RecalcVertexHeights(vertex_t * v)
 
 void gl_InitData()
 {
-	LineSpecials[157]=LS_SetGlobalFogParameter;
-	LineSpecials[159]=LS_Sector_SetPlaneReflection;
-	gl_InitModels();
+	LineSpecials[157] = LS_SetGlobalFogParameter;
+	LineSpecials[159] = LS_Sector_SetPlaneReflection;
 	AdjustSpriteOffsets();
 }
 

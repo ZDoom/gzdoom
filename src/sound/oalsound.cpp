@@ -88,9 +88,6 @@ void I_BuildALDeviceList(FOptionValues *opt)
 #include <string>
 #include <vector>
 
-#ifdef WITH_SDL_SOUND
-#include "SDL_sound.h"
-#endif
 
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
@@ -134,68 +131,8 @@ static ALCenum checkALCError(ALCdevice *device, const char *fn, unsigned int ln)
 }
 #define getALCError(d) checkALCError((d), __FILE__, __LINE__)
 
-#ifdef WITH_SDL_SOUND
-#include "oalsdlsound.h"
-#else
 
 class OpenALSoundStream : public SoundStream
-{
-    OpenALSoundRenderer *Renderer;
-
-public:
-    ALfloat Volume;
-
-    OpenALSoundStream(OpenALSoundRenderer *renderer)
-      : Renderer(renderer), Volume(1.0f)
-    { Renderer->Streams.push_back(this); }
-
-    virtual ~OpenALSoundStream()
-    {
-        Renderer->Streams.erase(std::find(Renderer->Streams.begin(),
-                                          Renderer->Streams.end(), this));
-        Renderer = NULL;
-    }
-
-
-    virtual bool Play(bool, float)
-    { return false; }
-
-    virtual void Stop()
-    { }
-
-    virtual void SetVolume(float vol)
-    { Volume = vol; }
-
-    virtual bool SetPaused(bool)
-    { return false; }
-
-    virtual unsigned int GetPosition()
-    { return 0; }
-
-    virtual bool IsEnded()
-    { return true; }
-
-    bool Init(const char*)
-    { return false; }
-
-    bool Init(const BYTE*, unsigned int)
-    { return false; }
-};
-
-class Decoder
-{
-public:
-    Decoder(const void*, unsigned int) { }
-    virtual ~Decoder() { }
-
-    bool GetFormat(ALenum*, ALuint*)
-    { return false; }
-    void *GetData(ALsizei *size)
-    { *size = 0; return NULL; }
-};
-#endif
-
-class OpenALCallbackStream : public SoundStream
 {
     OpenALSoundRenderer *Renderer;
 
@@ -220,7 +157,7 @@ class OpenALCallbackStream : public SoundStream
     std::auto_ptr<SoundDecoder> Decoder;
     static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
     {
-        OpenALCallbackStream *self = static_cast<OpenALCallbackStream*>(_sstream);
+        OpenALSoundStream *self = static_cast<OpenALSoundStream*>(_sstream);
         if(length < 0) return false;
 
         size_t got = self->Decoder->read((char*)ptr, length);
@@ -273,14 +210,14 @@ class OpenALCallbackStream : public SoundStream
     }
 
 public:
-    OpenALCallbackStream(OpenALSoundRenderer *renderer)
+    OpenALSoundStream(OpenALSoundRenderer *renderer)
       : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f)
     {
         Renderer->Streams.push_back(this);
         memset(Buffers, 0, sizeof(Buffers));
     }
 
-    virtual ~OpenALCallbackStream()
+    virtual ~OpenALSoundStream()
     {
         if(Source)
         {
@@ -657,19 +594,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     EnvFilters[0] = EnvFilters[1] = 0;
 
     Printf("I_InitSound: Initializing OpenAL\n");
-
-#ifdef WITH_SDL_SOUND
-    static bool sdl_sound_inited = false;
-    if(!sdl_sound_inited)
-    {
-        if(Sound_Init() == 0)
-        {
-            Printf(TEXTCOLOR_RED" Failed to init SDL_sound: %s\n", Sound_GetError());
-            return;
-        }
-        sdl_sound_inited = true;
-    }
-#endif
 
     if(strcmp(snd_aldevice, "Default") != 0)
     {
@@ -1154,7 +1078,7 @@ short *OpenALSoundRenderer::DecodeSample(int outlen, const void *coded, int size
 
 SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
 {
-    std::auto_ptr<OpenALCallbackStream> stream(new OpenALCallbackStream(this));
+    std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
     if(!stream->Init(callback, buffbytes, flags, samplerate, userdata))
         return NULL;
     return stream.release();
@@ -1162,7 +1086,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 
 SoundStream *OpenALSoundRenderer::OpenStream(const char *filename, int flags, int offset, int length)
 {
-    std::auto_ptr<OpenALCallbackStream> stream(new OpenALCallbackStream(this));
+    std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
 
     bool loop = (flags&SoundStream::Loop);
     bool ok = ((offset == -1) ? stream->Init((const BYTE*)filename, length, loop) :

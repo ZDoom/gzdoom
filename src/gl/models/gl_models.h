@@ -29,9 +29,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
-	virtual void RenderFrame(FTexture * skin, int frame, int translation=0) = 0;
-	// [BB] Added RenderFrameInterpolated
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
+	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void MakeGLData() {}
 	virtual void CleanGLData() {}
 
@@ -140,8 +138,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int translation=0);
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 
 };
 
@@ -222,7 +219,7 @@ class FMD3Model : public FModel
 	MD3Frame * frames;
 	MD3Surface * surfaces;
 
-	void RenderTriangles(MD3Surface * surf, MD3Vertex * vert);
+	void RenderTriangles(MD3Surface * surf, MD3Vertex * vert, MD3Vertex *vert2, double inter);
 
 public:
 	FMD3Model() { }
@@ -230,8 +227,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int translation=0);
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 };
 
 class FVoxelVertexBuffer;
@@ -293,8 +289,7 @@ public:
 	void MakeGLData();
 	void CleanGLData();
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int translation=0);
-	virtual void RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	FTexture *GetPaletteTexture() const { return mPalette; }
 };
 

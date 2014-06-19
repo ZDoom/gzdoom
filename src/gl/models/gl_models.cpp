@@ -675,9 +675,9 @@ void gl_RenderFrameModels( const FSpriteModelFrame *smf,
 		if (mdl!=NULL)
 		{
 			if ( smfNext && smf->modelframes[i] != smfNext->modelframes[i] )
-				mdl->RenderFrameInterpolated(smf->skins[i], smf->modelframes[i], smfNext->modelframes[i], inter, translation);
+				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], smfNext->modelframes[i], inter, translation);
 			else
-				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], translation);
+				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], NULL, 0.f, translation);
 		}
 	}
 }

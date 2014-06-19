@@ -498,11 +498,11 @@ int FVoxelModel::FindFrame(const char * name)
 
 //===========================================================================
 //
-// 
+// Voxels never interpolate between frames
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrame(FTexture * skin, int frame, int translation)
+void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation)
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin);
 	tex->Bind(0, translation);
@@ -527,16 +527,5 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int translation)
 		}
 		glEnd();
 	}
-}
-
-//===========================================================================
-//
-// Voxels never interpolate between frames
-//
-//===========================================================================
-
-void FVoxelModel::RenderFrameInterpolated(FTexture * skin, int frame, int frame2, double inter, int translation)
-{
-	RenderFrame(skin, frame, translation);
 }
 

@@ -215,8 +215,10 @@ int FMD3Model::FindFrame(const char * name)
 	return -1;
 }
 
-void FMD3Model::RenderTriangles(MD3Surface * surf, MD3Vertex * vert)
+void FMD3Model::RenderTriangles(MD3Surface * surf, MD3Vertex * vert, MD3Vertex *vert2, double inter)
 {
+	const bool interpolate = (vert2 != NULL && inter != 0. && vert != vert2);
+
 	gl_RenderState.Apply();
 	glBegin(GL_TRIANGLES);
 	for(int i=0; i<surf->numTriangles;i++)
@@ -226,44 +228,24 @@ void FMD3Model::RenderTriangles(MD3Surface * surf, MD3Vertex * vert)
 			int x = surf->tris[i].VertIndex[j];
 
 			glTexCoord2fv(&surf->texcoords[x].s);
-			glVertex3f(vert[x].x, vert[x].z, vert[x].y);
+			if (!interpolate)
+			{
+				glVertex3f(vert[x].x, vert[x].z, vert[x].y);
+			}
+			else
+			{
+				float interp[3];
+				interp[0] = inter * vert[x].x + (1. - inter) * vert2[x].x;
+				interp[1] = inter * vert[x].z + (1. - inter) * vert2[x].z;
+				interp[2] = inter * vert[x].y + (1. - inter) * vert2[x].y;
+				glVertex3fv(interp);
+			}
 		}
 	}
 	glEnd();
 }
 
-void FMD3Model::RenderFrame(FTexture * skin, int frameno, int translation)
-{
-	if (frameno>=numFrames) return;
-
-	MD3Frame * frame = &frames[frameno];
-
-	// I can't confirm correctness of this because no model I have tested uses this information
-	// glMatrixMode(GL_MODELVIEW);
-	// glTranslatef(frame->origin[0], frame->origin[1], frame->origin[2]);
-
-	for(int i=0;i<numSurfaces;i++)
-	{
-		MD3Surface * surf = &surfaces[i];
-
-		// [BB] In case no skin is specified via MODELDEF, check if the MD3 has a skin for the current surface.
-		// Note: Each surface may have a different skin.
-		FTexture *surfaceSkin = skin;
-		if (!surfaceSkin)
-		{
-			if (surf->numSkins==0) return;
-			surfaceSkin = surf->skins[0];
-			if (!surfaceSkin) return;
-		}
-
-		FMaterial * tex = FMaterial::ValidateTexture(surfaceSkin);
-
-		tex->Bind(0, translation);
-		RenderTriangles(surf, surf->vertices + frameno * surf->numVertices);
-	}
-}
-
-void FMD3Model::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	if (frameno>=numFrames || frameno2>=numFrames) return;
 
@@ -285,22 +267,10 @@ void FMD3Model::RenderFrameInterpolated(FTexture * skin, int frameno, int framen
 
 		tex->Bind(0, translation);
 
-		MD3Vertex* verticesInterpolated = new MD3Vertex[surfaces[i].numVertices];
 		MD3Vertex* vertices1 = surf->vertices + frameno * surf->numVertices;
 		MD3Vertex* vertices2 = surf->vertices + frameno2 * surf->numVertices;
 
-		// [BB] Calculate the interpolated vertices by linear interpolation.
-		for( int k = 0; k < surf->numVertices; k++ )
-		{
-			verticesInterpolated[k].x = (1-inter)*vertices1[k].x+ (inter)*vertices2[k].x;
-			verticesInterpolated[k].y = (1-inter)*vertices1[k].y+ (inter)*vertices2[k].y;
-			verticesInterpolated[k].z = (1-inter)*vertices1[k].z+ (inter)*vertices2[k].z;
-			// [BB] Apparently RenderTriangles doesn't use nx, ny, nz, so don't interpolate them.
-		}
-
-		RenderTriangles(surf, verticesInterpolated);
-
-		delete[] verticesInterpolated;
+		RenderTriangles(surf, vertices1, vertices2, inter);
 	}
 }
 

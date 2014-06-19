@@ -269,7 +269,7 @@ void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices, FMo
 	char   *pos;
 	FGLCommandVertex * v;
 	int     count;
-	const bool interpolate = (vertices2 != NULL && inter != 0.);
+	const bool interpolate = (vertices2 != NULL && inter != 0. && vertices != vertices2);
 
 	gl_RenderState.Apply();
 	for(pos = (char*)glCommands; *pos;)
@@ -304,7 +304,7 @@ void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices, FMo
 	}
 }
 
-void FDMDModel::RenderFrameInterpolated(FTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	if (frameno >= info.numFrames || frameno2 >= info.numFrames) return;
 
@@ -322,11 +322,6 @@ void FDMDModel::RenderFrameInterpolated(FTexture * skin, int frameno, int framen
 	RenderGLCommands(lods[0].glCommands, info.numVertices, frames[frameno].vertices, frames[frameno2].vertices, inter);
 }
 
-
-void FDMDModel::RenderFrame(FTexture * skin, int frameno, int translation)
-{
-	RenderFrameInterpolated(skin, frameno, frameno, 0., translation);
-}
 
 //===========================================================================
 //

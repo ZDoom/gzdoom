@@ -82,6 +82,8 @@ public:
 
 typedef bool (*SoundStreamCallback)(SoundStream *stream, void *buff, int len, void *userdata);
 
+struct SoundDecoder;
+
 class SoundRenderer
 {
 public:
@@ -150,6 +152,9 @@ public:
 	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	virtual void DrawWaveDebug(int mode);
+
+protected:
+    virtual SoundDecoder *CreateDecoder(BYTE *sfxdata, int length);
 };
 
 extern SoundRenderer *GSnd;

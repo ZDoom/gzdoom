@@ -1,6 +1,8 @@
 #ifndef __SNDINT_H
 #define __SNDINT_H
 
+#include <vector>
+
 #include "basictypes.h"
 
 // For convenience, this structure matches FMOD_REVERB_PROPERTIES.
@@ -101,5 +103,39 @@ struct FISoundChannel
 };
 
 
+enum SampleType
+{
+    SampleType_UInt8,
+    SampleType_Int16,
+    SampleType_Float32
+};
+enum ChannelConfig
+{
+    ChannelConfig_Mono,
+    ChannelConfig_Stereo,
+    ChannelConfig_Quad,
+    ChannelConfig_5point1,
+    ChannelConfig_7point1
+};
+
+struct SoundDecoder
+{
+    virtual bool open(const char *data, size_t length) = 0;
+
+    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) = 0;
+
+    virtual size_t read(char *buffer, size_t bytes) = 0;
+    virtual std::vector<char> readAll();
+    virtual bool seek(size_t ms_offset) = 0;
+    virtual size_t getSampleOffset() = 0;
+
+    SoundDecoder() { }
+    virtual ~SoundDecoder() { }
+
+private:
+    // Make non-copyable
+    SoundDecoder(const SoundDecoder &rhs);
+    SoundDecoder& operator=(const SoundDecoder &rhs);
+};
 
 #endif

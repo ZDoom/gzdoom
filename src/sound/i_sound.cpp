@@ -520,3 +520,26 @@ SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
 	return retval;
 }
 
+
+SoundDecoder *SoundRenderer::CreateDecoder(BYTE *sfxdata, int length)
+{
+    return NULL;
+}
+
+
+// Default readAll implementation, for decoders that can't do anything better
+std::vector<char> SoundDecoder::readAll()
+{
+    std::vector<char> output;
+    size_t total = 0;
+    size_t got;
+
+    output.resize(total+32768);
+    while((got=read(&output[total], output.size()-total)) > 0)
+    {
+        total += got;
+        output.resize(total*2);
+    }
+    output.resize(total);
+    return output;
+}

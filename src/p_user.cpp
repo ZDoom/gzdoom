@@ -2742,25 +2742,11 @@ void P_UnPredictPlayer ()
 		act->UnlinkFromWorld();
 		memcpy(&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x - (BYTE *)act));
 
-		// Make the sector_list match the player's touching_sectorlist before it got predicted.
-		P_DelSeclist(sector_list);
-		sector_list = NULL;
-		for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
-		{
-			sector_list = P_AddSecnode(PredictionTouchingSectorsBackup[i], act, sector_list);
-		}
-
-		// The blockmap ordering needs to remain unchanged, too. Right now, act has the right
-		// pointers, so temporarily set its MF_NOBLOCKMAP flag so that LinkToWorld() does not
-		// mess with them.
-		{
-			DWORD keepflags = act->flags;
-			act->flags |= MF_NOBLOCKMAP;
-			act->LinkToWorld();
-			act->flags = keepflags;
-		}
-
-		// Restore sector links.
+		// The blockmap ordering needs to remain unchanged, too.
+		// Restore sector links and refrences.
+		// [ED850] This is somewhat of a duplicate of LinkToWorld(), but we need to keep every thing the same,
+		// otherwise we end up fixing bugs in blockmap logic (i.e undefined behaviour with polyobject collisions),
+		// which we really don't want to do here.
 		if (!(act->flags & MF_NOSECTOR))
 		{
 			sector_t *sec = act->Sector;
@@ -2779,6 +2765,39 @@ void P_UnPredictPlayer ()
 					next->sprev = &me->snext;
 				me->sprev = link;
 				*link = me;
+			}
+
+			// Destroy old refrences
+			msecnode_t *node = sector_list;
+			while (node)
+			{
+				node->m_thing = NULL;
+				node = node->m_tnext;
+			}
+
+			// Make the sector_list match the player's touching_sectorlist before it got predicted.
+			P_DelSeclist(sector_list);
+			sector_list = NULL;
+			for (i = PredictionTouchingSectorsBackup.Size(); i-- > 0;)
+			{
+				sector_list = P_AddSecnode(PredictionTouchingSectorsBackup[i], act, sector_list);
+			}
+			act->touching_sectorlist = sector_list;	// Attach to thing
+			sector_list = NULL;		// clear for next time
+
+			node = sector_list;
+			while (node)
+			{
+				if (node->m_thing == NULL)
+				{
+					if (node == sector_list)
+						sector_list = node->m_tnext;
+					node = P_DelSecnode(node);
+				}
+				else
+				{
+					node = node->m_tnext;
+				}
 			}
 
 			msecnode_t *snode;

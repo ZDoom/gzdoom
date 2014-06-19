@@ -299,6 +299,10 @@ endif( NO_OPENAL )
 
 find_package( SndFile )
 
+# Search for libmpg123
+
+find_package( MPG123 )
+
 # Search for FluidSynth
 
 find_package( FluidSynth )
@@ -553,7 +557,10 @@ if( SNDFILE_FOUND )
     set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SNDFILE_LIBRARIES}" )
     include_directories( "${SNDFILE_INCLUDE_DIRS}" )
 endif( SNDFILE_FOUND )
-
+if( MPG123_FOUND )
+    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${MPG123_LIBRARIES}" )
+    include_directories( "${MPG123_INCLUDE_DIR}" )
+endif( MPG123_FOUND )
 if( NOT DYN_FLUIDSYNTH)
 	if( FLUIDSYNTH_FOUND )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FLUIDSYNTH_LIBRARIES}" )
@@ -671,6 +678,9 @@ endif( SSE_MATTERS )
 if( SNDFILE_FOUND )
     add_definitions( -DHAVE_SNDFILE )
 endif( SNDFILE_FOUND )
+if( MPG123_FOUND )
+    add_definitions( -DHAVE_MPG123 )
+endif( MPG123_FOUND )
 if( DYN_FLUIDSYNTH )
 	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
 elseif( FLUIDSYNTH_FOUND )
@@ -1034,6 +1044,7 @@ add_executable( zdoom WIN32
 	resourcefiles/file_directory.cpp
 	resourcefiles/resourcefile.cpp
 	sfmt/SFMT.cpp
+	sound/audio_mpg123_decoder.cpp
 	sound/audio_sndfile_decoder.cpp
 	sound/fmodsound.cpp
 	sound/i_music.cpp

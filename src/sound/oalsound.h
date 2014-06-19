@@ -191,10 +191,10 @@ private:
 
 	typedef std::map<WORD,ALuint> EffectMap;
 	ALuint EnvSlot;
+    ALuint EnvFilters[2];
 	EffectMap EnvEffects;
 
-	ALuint EnvFilters[2];
-	float LastWaterAbsorb;
+	bool WasInWater;
 
     std::vector<SoundStream*> Streams;
     friend class OpenALSoundStream;

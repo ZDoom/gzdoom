@@ -1448,9 +1448,6 @@ OptionMenu OpenALSoundItems
 	Title "OPENAL OPTIONS"
 	Option "Playback device",	"snd_aldevice",	"ALDevices"
 	Option "Enable EFX",		"snd_efx",		"OnOff"
-	StaticText	" "
-	StaticText	"Requires EFX", 1
-	Slider	"Underwater absorption",	"snd_waterabsorption", 0.0, 10.0, 0.5
 }
 
 

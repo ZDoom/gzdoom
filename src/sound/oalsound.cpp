@@ -56,13 +56,7 @@
 
 CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CUSTOM_CVAR (Float, snd_waterabsorption, 10.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-    if(*self < 0.0f)
-        self = 0.0f;
-    else if(*self > 10.0f)
-        self = 10.0f;
-}
+
 
 void I_BuildALDeviceList(FOptionValues *opt)
 {
@@ -687,7 +681,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     }
     DPrintf("  Allocated "TEXTCOLOR_BLUE"%u"TEXTCOLOR_NORMAL" sources\n", Sources.size());
 
-    LastWaterAbsorb = 0.0f;
+    WasInWater = false;
     if(*snd_efx && alcIsExtensionPresent(Device, "ALC_EXT_EFX"))
     {
         // EFX function pointers
@@ -1095,18 +1089,16 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
         {
             alSourcei(source, AL_DIRECT_FILTER, EnvFilters[0]);
             alSource3i(source, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
-            alSourcef(source, AL_AIR_ABSORPTION_FACTOR, LastWaterAbsorb);
         }
         else
         {
             alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
             alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
-            alSourcef(source, AL_AIR_ABSORPTION_FACTOR, 0.f);
         }
         alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
         alSourcef(source, AL_PITCH, PITCH(pitch));
     }
-    else if(LastWaterAbsorb > 0.f && !(chanflags&SNDF_NOREVERB))
+    else if(WasInWater && !(chanflags&SNDF_NOREVERB))
         alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
     else
         alSourcef(source, AL_PITCH, PITCH(pitch));
@@ -1239,18 +1231,16 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         {
             alSourcei(source, AL_DIRECT_FILTER, EnvFilters[0]);
             alSource3i(source, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
-            alSourcef(source, AL_AIR_ABSORPTION_FACTOR, LastWaterAbsorb);
         }
         else
         {
             alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
             alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
-            alSourcef(source, AL_AIR_ABSORPTION_FACTOR, 0.f);
         }
         alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, rolloffFactor);
         alSourcef(source, AL_PITCH, PITCH(pitch));
     }
-    else if(LastWaterAbsorb > 0.f && !(chanflags&SNDF_NOREVERB))
+    else if(WasInWater && !(chanflags&SNDF_NOREVERB))
         alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
     else
         alSourcef(source, AL_PITCH, PITCH(pitch));
@@ -1486,14 +1476,13 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
         const_cast<ReverbContainer*>(env)->Modified = false;
     }
 
-    // NOTE: Moving into and out of water (and changing water absorption) will
-    // undo pitch variations on sounds if either snd_waterreverb or EFX are
-    // disabled.
+    // NOTE: Moving into and out of water will undo pitch variations on sounds
+    // if either snd_waterreverb or EFX are disabled.
     if(listener->underwater || env->SoftwareWater)
     {
-        if(LastWaterAbsorb != *snd_waterabsorption)
+        if(!WasInWater)
         {
-            LastWaterAbsorb = *snd_waterabsorption;
+            WasInWater = true;
 
             if(EnvSlot != 0 && *snd_waterreverb)
             {
@@ -1503,15 +1492,14 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
                     env = env->Next;
                 LoadReverb(env ? env : DefaultEnvironments[0]);
 
-                alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 0.25f);
-                alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 0.75f);
+                alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 0.1f);
+                alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
                 alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
                 alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
 
                 // Apply the updated filters on the sources
                 foreach(ALuint, i, ReverbSfx)
                 {
-                    alSourcef(*i, AL_AIR_ABSORPTION_FACTOR, LastWaterAbsorb);
                     alSourcei(*i, AL_DIRECT_FILTER, EnvFilters[0]);
                     alSource3i(*i, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
                 }
@@ -1524,34 +1512,30 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
             getALError();
         }
     }
-    else
+    else if(WasInWater)
     {
-        if(LastWaterAbsorb > 0.f)
+        WasInWater = false;
+
+        if(EnvSlot != 0)
         {
-            LastWaterAbsorb = 0.f;
+            LoadReverb(env);
 
-            if(EnvSlot != 0)
+            alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
+            alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
+            alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
+            alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
+            foreach(ALuint, i, ReverbSfx)
             {
-                LoadReverb(env);
-
-                alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
-                alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
-                alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
-                alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
-                foreach(ALuint, i, ReverbSfx)
-                {
-                    alSourcef(*i, AL_AIR_ABSORPTION_FACTOR, 0.f);
-                    alSourcei(*i, AL_DIRECT_FILTER, EnvFilters[0]);
-                    alSource3i(*i, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
-                }
+                alSourcei(*i, AL_DIRECT_FILTER, EnvFilters[0]);
+                alSource3i(*i, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
             }
-            else
-            {
-                foreach(ALuint, i, ReverbSfx)
-                    alSourcef(*i, AL_PITCH, 1.f);
-            }
-            getALError();
         }
+        else
+        {
+            foreach(ALuint, i, ReverbSfx)
+                alSourcef(*i, AL_PITCH, 1.f);
+        }
+        getALError();
     }
 }
 

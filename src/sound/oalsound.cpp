@@ -212,6 +212,28 @@ class OpenALCallbackStream : public SoundStream
     ALuint Source;
 
     bool Playing;
+    bool Looping;
+    ALfloat Volume;
+
+
+    std::vector<BYTE> DecoderData;
+    std::auto_ptr<SoundDecoder> Decoder;
+    static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
+    {
+        OpenALCallbackStream *self = static_cast<OpenALCallbackStream*>(_sstream);
+        if(length < 0) return false;
+
+        size_t got = self->Decoder->read((char*)ptr, length);
+        if(got < (unsigned int)length)
+        {
+            if(!self->Looping || !self->Decoder->seek(0))
+                return false;
+            got += self->Decoder->read((char*)ptr+got, length-got);
+        }
+
+        return (got == (unsigned int)length);
+    }
+
 
     bool SetupSource()
     {
@@ -251,10 +273,8 @@ class OpenALCallbackStream : public SoundStream
     }
 
 public:
-    ALfloat Volume;
-
     OpenALCallbackStream(OpenALSoundRenderer *renderer)
-      : Renderer(renderer), Source(0), Playing(false), Volume(1.0f)
+      : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f)
     {
         Renderer->Streams.push_back(this);
         memset(Buffers, 0, sizeof(Buffers));
@@ -476,6 +496,89 @@ public:
         buffbytes += smpsize-1;
         buffbytes -= buffbytes%smpsize;
         Data.resize(buffbytes);
+
+        return true;
+    }
+
+    bool Init(const char *fname, int offset, int length, bool loop)
+    {
+        if(!SetupSource())
+            return false;
+
+        Decoder.reset(Renderer->CreateDecoder(fname, offset, length));
+        if(!Decoder.get()) return false;
+
+        Callback = DecoderCallback;
+        UserData = NULL;
+        Format = AL_NONE;
+
+        ChannelConfig chans;
+        SampleType type;
+        int srate;
+
+        Decoder->getInfo(&srate, &chans, &type);
+        if(chans == ChannelConfig_Mono)
+        {
+            if(type == SampleType_UInt8) Format = AL_FORMAT_MONO8;
+            if(type == SampleType_Int16) Format = AL_FORMAT_MONO16;
+        }
+        if(chans == ChannelConfig_Stereo)
+        {
+            if(type == SampleType_UInt8) Format = AL_FORMAT_STEREO8;
+            if(type == SampleType_Int16) Format = AL_FORMAT_STEREO16;
+        }
+
+        if(Format == AL_NONE)
+        {
+            Printf("Unsupported audio format (0x%x / 0x%x)\n", chans, type);
+            return false;
+        }
+        SampleRate = srate;
+        Looping = loop;
+
+        Data.resize((size_t)(0.2 * SampleRate) * 4);
+
+        return true;
+    }
+
+    bool Init(const BYTE *data, int length, bool loop)
+    {
+        if(!SetupSource())
+            return false;
+
+        DecoderData.insert(DecoderData.end(), data, data+length);
+        Decoder.reset(Renderer->CreateDecoder(&DecoderData[0], DecoderData.size()));
+        if(!Decoder.get()) return false;
+
+        Callback = DecoderCallback;
+        UserData = NULL;
+        Format = AL_NONE;
+
+        ChannelConfig chans;
+        SampleType type;
+        int srate;
+
+        Decoder->getInfo(&srate, &chans, &type);
+        if(chans == ChannelConfig_Mono)
+        {
+            if(type == SampleType_UInt8) Format = AL_FORMAT_MONO8;
+            if(type == SampleType_Int16) Format = AL_FORMAT_MONO16;
+        }
+        if(chans == ChannelConfig_Stereo)
+        {
+            if(type == SampleType_UInt8) Format = AL_FORMAT_STEREO8;
+            if(type == SampleType_Int16) Format = AL_FORMAT_STEREO16;
+        }
+
+        if(Format == AL_NONE)
+        {
+            Printf("Unsupported audio format (0x%x / 0x%x)\n", chans, type);
+            return false;
+        }
+        SampleRate = srate;
+        Looping = loop;
+
+        Data.resize((size_t)(0.2 * SampleRate) * 4);
 
         return true;
     }
@@ -955,21 +1058,37 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 {
     SoundHandle retval = { NULL };
-    ALenum format;
-    ALuint srate;
+    ALenum format = AL_NONE;
+    ChannelConfig chans;
+    SampleType type;
+    int srate;
 
-    Decoder decoder(sfxdata, length);
-    if(!decoder.GetFormat(&format, &srate))
-        return retval;
+    std::auto_ptr<SoundDecoder> decoder(CreateDecoder(sfxdata, length));
+    if(!decoder.get()) return retval;
 
-    ALsizei size;
-    void *data = decoder.GetData(&size);
-    if(data == NULL)
+    decoder->getInfo(&srate, &chans, &type);
+    if(chans == ChannelConfig_Mono)
+    {
+        if(type == SampleType_UInt8) format = AL_FORMAT_MONO8;
+        if(type == SampleType_Int16) format = AL_FORMAT_MONO16;
+    }
+    if(chans == ChannelConfig_Stereo)
+    {
+        if(type == SampleType_UInt8) format = AL_FORMAT_STEREO8;
+        if(type == SampleType_Int16) format = AL_FORMAT_STEREO16;
+    }
+
+    if(format == AL_NONE)
+    {
+        Printf("Unsupported audio format (0x%x / 0x%x)\n", chans, type);
         return retval;
+    }
+
+    std::vector<char> data = decoder->readAll();
 
     ALuint buffer = 0;
     alGenBuffers(1, &buffer);
-    alBufferData(buffer, format, data, size, srate);
+    alBufferData(buffer, format, &data[0], data.size(), srate);
 
     ALenum err;
     if((err=getALError()) != AL_NO_ERROR)
@@ -1012,29 +1131,25 @@ void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
     delete ((ALuint*)sfx.data);
 }
 
-short *OpenALSoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type)
+short *OpenALSoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
 {
-    short *samples = (short*)malloc(outlen);
-    memset(samples, 0, outlen);
+    char *samples = (char*)calloc(1, outlen);
+    ChannelConfig chans;
+    SampleType type;
+    int srate;
 
-    Decoder decoder(coded, sizebytes);
-    ALenum format;
-    ALuint srate;
+    std::auto_ptr<SoundDecoder> decoder(CreateDecoder((const BYTE*)coded, sizebytes));
+    if(!decoder.get()) return (short*)samples;
 
-    if(!decoder.GetFormat(&format, &srate))
-        return samples;
-    if(format != AL_FORMAT_MONO16)
+    decoder->getInfo(&srate, &chans, &type);
+    if(chans != ChannelConfig_Mono || type != SampleType_Int16)
     {
         DPrintf("Sample is not 16-bit mono\n");
-        return samples;
+        return (short*)samples;
     }
 
-    ALsizei size;
-    void *data = decoder.GetData(&size);
-    if(data != NULL)
-        memcpy(samples, data, std::min<size_t>(size, outlen));
-
-    return samples;
+    decoder->read(samples, outlen);
+    return (short*)samples;
 }
 
 SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
@@ -1047,10 +1162,11 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 
 SoundStream *OpenALSoundRenderer::OpenStream(const char *filename, int flags, int offset, int length)
 {
-    std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
+    std::auto_ptr<OpenALCallbackStream> stream(new OpenALCallbackStream(this));
 
-    bool ok = ((offset == -1) ? stream->Init((const BYTE*)filename, length) :
-                                stream->Init(filename, offset, length));
+    bool loop = (flags&SoundStream::Loop);
+    bool ok = ((offset == -1) ? stream->Init((const BYTE*)filename, length, loop) :
+                                stream->Init(filename, offset, length, loop));
     if(ok == false)
         return NULL;
 

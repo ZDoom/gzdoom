@@ -154,7 +154,8 @@ public:
 	virtual void DrawWaveDebug(int mode);
 
 protected:
-    virtual SoundDecoder *CreateDecoder(BYTE *sfxdata, int length);
+    virtual SoundDecoder *CreateDecoder(const BYTE *sfxdata, int length);
+    virtual SoundDecoder *CreateDecoder(const char *fname, int offset, int length);
 };
 
 extern SoundRenderer *GSnd;

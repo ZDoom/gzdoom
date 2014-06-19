@@ -306,6 +306,10 @@ if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
 endif( NO_OPENAL )
 
+# Search for libSndFile
+
+find_package( SndFile )
+
 # Search for FluidSynth
 
 find_package( FluidSynth )
@@ -556,6 +560,11 @@ message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
 set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" )
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
 
+if( SNDFILE_FOUND )
+    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SNDFILE_LIBRARIES}" )
+    include_directories( "${SNDFILE_INCLUDE_DIRS}" )
+endif( SNDFILE_FOUND )
+
 if( NOT DYN_FLUIDSYNTH)
 	if( FLUIDSYNTH_FOUND )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FLUIDSYNTH_LIBRARIES}" )
@@ -670,6 +679,9 @@ else( SSE_MATTERS )
 	set( X86_SOURCES )
 endif( SSE_MATTERS )
 
+if( SNDFILE_FOUND )
+    add_definitions( -DHAVE_SNDFILE )
+endif( SNDFILE_FOUND )
 if( DYN_FLUIDSYNTH )
 	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
 elseif( FLUIDSYNTH_FOUND )
@@ -1033,6 +1045,7 @@ add_executable( zdoom WIN32
 	resourcefiles/file_directory.cpp
 	resourcefiles/resourcefile.cpp
 	sfmt/SFMT.cpp
+	sound/audio_sndfile_decoder.cpp
 	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp

@@ -521,9 +521,32 @@ SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
 }
 
 
-SoundDecoder *SoundRenderer::CreateDecoder(BYTE *sfxdata, int length)
+SoundDecoder *SoundRenderer::CreateDecoder(const BYTE *sfxdata, int length)
 {
-    return NULL;
+    SoundDecoder *decoder = NULL;
+#ifdef HAVE_SNDFILE
+    decoder = new SndFileDecoder;
+    if(!decoder->open((const char*)sfxdata, length))
+    {
+        delete decoder;
+        decoder = NULL;
+    }
+#endif
+    return decoder;
+}
+
+SoundDecoder* SoundRenderer::CreateDecoder(const char *fname, int offset, int length)
+{
+    SoundDecoder *decoder = NULL;
+#ifdef HAVE_SNDFILE
+    decoder = new SndFileDecoder;
+    if(!decoder->open(fname, offset, length))
+    {
+        delete decoder;
+        decoder = NULL;
+    }
+#endif
+    return decoder;
 }
 
 

@@ -12,8 +12,7 @@ sf_count_t SndFileDecoder::file_seek(sf_count_t offset, int whence, void *user_d
     SndFileDecoder *self = reinterpret_cast<SndFileDecoder*>(user_data);
 
     long cur = ftell(self->File);
-    if(cur < 0 || (unsigned long)cur < self->FileLength)
-        return -1;
+    if(cur < 0) return -1;
 
     switch(whence)
     {
@@ -51,8 +50,7 @@ sf_count_t SndFileDecoder::file_read(void *ptr, sf_count_t count, void *user_dat
     SndFileDecoder *self = reinterpret_cast<SndFileDecoder*>(user_data);
 
     long cur = ftell(self->File);
-    if(cur < 0 || (unsigned long)cur < self->FileLength)
-        return -1;
+    if(cur < 0) return -1;
 
     cur -= self->FileOffset;
     if(count > (sf_count_t)(self->FileLength-cur))
@@ -172,7 +170,7 @@ bool SndFileDecoder::open(const char *data, size_t length)
 
 bool SndFileDecoder::open(const char *fname, size_t offset, size_t length)
 {
-    SF_VIRTUAL_IO sfio = { mem_get_filelen, mem_seek, mem_read, mem_write, mem_tell };
+    SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
     FileOffset = offset;
     FileLength = length;

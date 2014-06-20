@@ -550,39 +550,6 @@ static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 }
 
 
-static ALenum FormatFromDesc(int bits, int channels)
-{
-    if(bits == 8)
-    {
-        if(channels == 1) return AL_FORMAT_MONO8;
-        if(channels == 2) return AL_FORMAT_STEREO8;
-        if(channels == 4) return AL_FORMAT_QUAD8;
-        if(channels == 6) return AL_FORMAT_51CHN8;
-        if(channels == 7) return AL_FORMAT_61CHN8;
-        if(channels == 8) return AL_FORMAT_71CHN8;
-    }
-    if(bits == 16)
-    {
-        if(channels == 1) return AL_FORMAT_MONO16;
-        if(channels == 2) return AL_FORMAT_STEREO16;
-        if(channels == 4) return AL_FORMAT_QUAD16;
-        if(channels == 6) return AL_FORMAT_51CHN16;
-        if(channels == 7) return AL_FORMAT_61CHN16;
-        if(channels == 8) return AL_FORMAT_71CHN16;
-    }
-    if(bits == 32)
-    {
-        if(channels == 1) return AL_FORMAT_MONO_FLOAT32;
-        if(channels == 2) return AL_FORMAT_STEREO_FLOAT32;
-        if(channels == 4) return AL_FORMAT_QUAD32;
-        if(channels == 6) return AL_FORMAT_51CHN32;
-        if(channels == 7) return AL_FORMAT_61CHN32;
-        if(channels == 8) return AL_FORMAT_71CHN32;
-    }
-    return AL_NONE;
-}
-
-
 template<typename T>
 static void LoadALFunc(const char *name, T *x)
 { *x = reinterpret_cast<T>(alGetProcAddress(name)); }

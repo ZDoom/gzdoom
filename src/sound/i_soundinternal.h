@@ -182,7 +182,7 @@ struct SndFileDecoder : public SoundDecoder
     virtual bool seek(size_t ms_offset);
     virtual size_t getSampleOffset();
 
-    SndFileDecoder() : SndFile(0) { }
+    SndFileDecoder() : SndFile(0), File(0) { }
     virtual ~SndFileDecoder();
 
 protected:

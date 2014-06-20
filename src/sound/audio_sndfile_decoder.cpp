@@ -145,6 +145,9 @@ SndFileDecoder::~SndFileDecoder()
     if(SndFile)
         sf_close(SndFile);
     SndFile = 0;
+    if(File)
+        fclose(File);
+    File = 0;
 }
 
 bool SndFileDecoder::open(const char *data, size_t length)
@@ -157,14 +160,14 @@ bool SndFileDecoder::open(const char *data, size_t length)
     SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
     if(SndFile)
     {
-        if(SndInfo.channels != 1 && SndInfo.channels != 2)
-        {
-            sf_close(SndFile);
-            SndFile = 0;
-        }
+        if(SndInfo.channels == 1 || SndInfo.channels == 2)
+            return true;
+
+        sf_close(SndFile);
+        SndFile = 0;
     }
 
-    return SndFile != 0;
+    return false;
 }
 
 bool SndFileDecoder::open(const char *fname, size_t offset, size_t length)
@@ -189,6 +192,7 @@ bool SndFileDecoder::open(const char *fname, size_t offset, size_t length)
             }
         }
         fclose(File);
+        File = 0;
     }
 
     return false;

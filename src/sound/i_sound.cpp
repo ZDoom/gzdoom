@@ -525,52 +525,11 @@ SoundDecoder *SoundRenderer::CreateDecoder(const BYTE *sfxdata, int length)
 {
     SoundDecoder *decoder = NULL;
 #ifdef HAVE_MPG123
-    int mpg_start = -1;
-    int mpg_len = -1;
-
-    // Check for an ID3 tag to identify an mp3 (and skip the tag)
-    if(length > 10 && memcmp(sfxdata, "ID3", 3) == 0 &&
-       sfxdata[3] <= 4 && sfxdata[4] != 0xff &&
-       (sfxdata[5]&0x0f) == 0 && (sfxdata[6]&0x80) == 0 &&
-       (sfxdata[7]&0x80) == 0 && (sfxdata[8]&0x80) == 0 &&
-       (sfxdata[9]&0x80) == 0)
+    decoder = new MPG123Decoder;
+    if(!decoder->open((const char*)sfxdata, length))
     {
-        // ID3v2
-        mpg_start = (sfxdata[6]<<21) | (sfxdata[7]<<14) |
-                    (sfxdata[8]<< 7) | (sfxdata[9]    );
-        mpg_start += ((sfxdata[5]&0x10) ? 20 : 10);
-        mpg_len = length - mpg_start;
-    }
-    else if(length > 128 && memcmp(sfxdata+length-128, "TAG", 3) == 0)
-    {
-        // ID3v1
-        mpg_start = 0;
-        mpg_len = length - 128;
-    }
-    else if(length > 3)
-    {
-        // No ID3 tag. Check for a frame header
-        if((sfxdata[0] == 0xff && sfxdata[1]>>1 == 0x7d) || // MPEG-1
-           (sfxdata[0] == 0xff && sfxdata[1]>>1 == 0x79))   // MPEG-2
-        {
-            int brate_idx = (sfxdata[2]>>4) & 0x0f;
-            int srate_idx = (sfxdata[2]>>2) & 0x03;
-            if(brate_idx != 0 && brate_idx != 15 && srate_idx != 3)
-            {
-                mpg_start = 0;
-                mpg_len = length;
-            }
-        }
-    }
-
-    if(mpg_start >= 0 && mpg_len > 0 && mpg_start < length && mpg_len <= length-mpg_start)
-    {
-        decoder = new MPG123Decoder;
-        if(!decoder->open((const char*)sfxdata+mpg_start, mpg_len))
-        {
-            delete decoder;
-            decoder = NULL;
-        }
+        delete decoder;
+        decoder = NULL;
     }
 #endif
 #ifdef HAVE_SNDFILE

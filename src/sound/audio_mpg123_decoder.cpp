@@ -69,32 +69,68 @@ bool MPG123Decoder::open(const char *data, size_t length)
         inited = true;
     }
 
-    MemData = data;
-    MemPos = 0;
-    MemLength = length;
-
-    MPG123 = mpg123_new(NULL, NULL);
-    if(mpg123_replace_reader_handle(MPG123, mem_read, mem_lseek, NULL) == MPG123_OK &&
-       mpg123_open_handle(MPG123, this) == MPG123_OK)
+    // Check for ID3 tags and skip them
+    if(length > 10 && memcmp(data, "ID3", 3) == 0 &&
+       (BYTE)data[3] <= 4 && (BYTE)data[4] != 0xff &&
+       (data[5]&0x0f) == 0 && (data[6]&0x80) == 0 &&
+       (data[7]&0x80) == 0 && (data[8]&0x80) == 0 &&
+       (data[9]&0x80) == 0)
     {
-        int enc, channels;
-        long srate;
-
-        if(mpg123_getformat(MPG123, &srate, &channels, &enc) == MPG123_OK)
-        {
-            if((channels == 1 || channels == 2) && srate > 0 &&
-               mpg123_format_none(MPG123) == MPG123_OK &&
-               mpg123_format(MPG123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
-            {
-                // All OK
-                Done = false;
-                return true;
-            }
-        }
-        mpg123_close(MPG123);
+        // ID3v2
+        int start_offset;
+        start_offset = (data[6]<<21) | (data[7]<<14) |
+                       (data[8]<< 7) | (data[9]    );
+        start_offset += ((data[5]&0x10) ? 20 : 10);
+        length -= start_offset;
+        data += start_offset;
     }
-    mpg123_delete(MPG123);
-    MPG123 = 0;
+
+    if(length > 128 && memcmp(data+length-128, "TAG", 3) == 0) // ID3v1
+        length -= 128;
+
+    // Check for a frame header
+    bool frame_ok = false;
+    if(length > 3)
+    {
+        if((BYTE)data[0] == 0xff &&
+           ((data[1]&0xfe) == 0xfa/*MPEG-1*/ || (data[1]&0xfe) == 0xf2/*MPEG-2*/))
+        {
+            int brate_idx = (data[2]>>4) & 0x0f;
+            int srate_idx = (data[2]>>2) & 0x03;
+            if(brate_idx != 0 && brate_idx != 15 && srate_idx != 3)
+                frame_ok = true;
+        }
+    }
+
+    if(frame_ok)
+    {
+        MemData = data;
+        MemPos = 0;
+        MemLength = length;
+
+        MPG123 = mpg123_new(NULL, NULL);
+        if(mpg123_replace_reader_handle(MPG123, mem_read, mem_lseek, NULL) == MPG123_OK &&
+           mpg123_open_handle(MPG123, this) == MPG123_OK)
+        {
+            int enc, channels;
+            long srate;
+
+            if(mpg123_getformat(MPG123, &srate, &channels, &enc) == MPG123_OK)
+            {
+                if((channels == 1 || channels == 2) && srate > 0 &&
+                   mpg123_format_none(MPG123) == MPG123_OK &&
+                   mpg123_format(MPG123, srate, channels, MPG123_ENC_SIGNED_16) == MPG123_OK)
+                {
+                    // All OK
+                    Done = false;
+                    return true;
+                }
+            }
+            mpg123_close(MPG123);
+        }
+        mpg123_delete(MPG123);
+        MPG123 = 0;
+    }
 
     return false;
 }

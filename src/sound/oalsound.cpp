@@ -961,7 +961,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
             loopend = length / (channels*bits/8);
 
         ALint loops[2] = { loopstart, loopend };
-        Printf("Setting loop points %d -> %d\n", loops[0], loops[1]);
+        DPrintf("Setting loop points %d -> %d\n", loops[0], loops[1]);
         alBufferiv(buffer, AL_LOOP_POINTS_SOFT, loops);
         getALError();
     }

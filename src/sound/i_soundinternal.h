@@ -101,7 +101,7 @@ struct FISoundChannel
 	FRolloffInfo Rolloff;
 	float		DistanceScale;
 	float		DistanceSqr;
-	bool		ManualGain;
+	bool		ManualRolloff;
 };
 
 

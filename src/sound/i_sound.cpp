@@ -543,22 +543,19 @@ SoundDecoder *SoundRenderer::CreateDecoder(const BYTE *sfxdata, int length)
     SoundDecoder *decoder = NULL;
 #ifdef HAVE_MPG123
     decoder = new MPG123Decoder;
-    if(!decoder->open((const char*)sfxdata, length))
-    {
-        delete decoder;
-        decoder = NULL;
-    }
+    if(decoder->open((const char*)sfxdata, length))
+        return decoder;
+
+    delete decoder;
+    decoder = NULL;
 #endif
 #ifdef HAVE_SNDFILE
-    if(!decoder)
-    {
-        decoder = new SndFileDecoder;
-        if(!decoder->open((const char*)sfxdata, length))
-        {
-            delete decoder;
-            decoder = NULL;
-        }
-    }
+    decoder = new SndFileDecoder;
+    if(decoder->open((const char*)sfxdata, length))
+        return decoder;
+
+    delete decoder;
+    decoder = NULL;
 #endif
     return decoder;
 }
@@ -568,19 +565,19 @@ SoundDecoder* SoundRenderer::CreateDecoder(const char *fname, int offset, int le
     SoundDecoder *decoder = NULL;
 #ifdef HAVE_MPG123
     decoder = new MPG123Decoder;
-    if(!decoder->open(fname, offset, length))
-    {
-        delete decoder;
-        decoder = NULL;
-    }
+    if(decoder->open(fname, offset, length))
+        return decoder;
+
+    delete decoder;
+    decoder = NULL;
 #endif
 #ifdef HAVE_SNDFILE
     decoder = new SndFileDecoder;
-    if(!decoder->open(fname, offset, length))
-    {
-        delete decoder;
-        decoder = NULL;
-    }
+    if(decoder->open(fname, offset, length))
+        return decoder;
+
+    delete decoder;
+    decoder = NULL;
 #endif
     return decoder;
 }

@@ -1,4 +1,4 @@
-#include "i_soundinternal.h"
+#include "sndfile_decoder.h"
 
 #ifdef HAVE_SNDFILE
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)

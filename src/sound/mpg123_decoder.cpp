@@ -1,4 +1,4 @@
-#include "i_soundinternal.h"
+#include "mpg123_decoder.h"
 
 #ifdef HAVE_MPG123
 static bool inited = false;

@@ -56,6 +56,9 @@ extern HINSTANCE g_hInst;
 #include "fmodsound.h"
 #include "oalsound.h"
 
+#include "mpg123_decoder.h"
+#include "sndfile_decoder.h"
+
 #include "m_swap.h"
 #include "stats.h"
 #include "files.h"

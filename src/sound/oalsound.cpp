@@ -796,8 +796,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
     if(EnvSlot)
         Printf("  EFX enabled\n");
-
-    snd_sfxvolume.Callback();
 }
 
 OpenALSoundRenderer::~OpenALSoundRenderer()

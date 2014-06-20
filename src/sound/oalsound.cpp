@@ -851,7 +851,7 @@ void OpenALSoundRenderer::SetSfxVolume(float volume)
             alSourcef(source, AL_MAX_GAIN, volume);
             if(schan->ManualGain)
                 volume *= GetRolloff(&schan->Rolloff, sqrt(schan->DistanceSqr));
-            alSourcef(source, AL_GAIN, volume * ((FSoundChan*)schan)->Volume);
+            alSourcef(source, AL_GAIN, volume * schan->Volume);
         }
         schan = schan->NextChan;
     }

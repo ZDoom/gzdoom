@@ -1685,9 +1685,9 @@ void OpenALSoundRenderer::PurgeStoppedSources()
     // Release channels that are stopped
     foreach(ALuint, i, SfxGroup)
     {
-        ALint state = AL_PLAYING;
+        ALint state = AL_INITIAL;
         alGetSourcei(*i, AL_SOURCE_STATE, &state);
-        if(state == AL_PLAYING || state == AL_PAUSED)
+        if(state == AL_INITIAL || state == AL_PLAYING || state == AL_PAUSED)
             continue;
 
         FSoundChan *schan = Channels;

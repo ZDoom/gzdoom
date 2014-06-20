@@ -198,7 +198,6 @@ private:
 
     std::vector<SoundStream*> Streams;
     friend class OpenALSoundStream;
-    friend class OpenALCallbackStream;
 };
 
 #endif // NO_OPENAL

@@ -1044,11 +1044,10 @@ add_executable( zdoom WIN32
 	resourcefiles/file_directory.cpp
 	resourcefiles/resourcefile.cpp
 	sfmt/SFMT.cpp
-	sound/audio_mpg123_decoder.cpp
-	sound/audio_sndfile_decoder.cpp
 	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
+	sound/mpg123_decoder.cpp
 	sound/music_cd.cpp
 	sound/music_dumb.cpp
 	sound/music_gme.cpp
@@ -1066,6 +1065,7 @@ add_executable( zdoom WIN32
 	sound/music_timidity_mididevice.cpp
 	sound/music_win_mididevice.cpp
 	sound/oalsound.cpp
+	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	textures/animations.cpp
 	textures/anim_switches.cpp

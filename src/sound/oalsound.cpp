@@ -1350,8 +1350,20 @@ void OpenALSoundRenderer::SetSfxPaused(bool paused, int slot)
     }
 }
 
-void OpenALSoundRenderer::SetInactive(SoundRenderer::EInactiveState)
+void OpenALSoundRenderer::SetInactive(SoundRenderer::EInactiveState state)
 {
+    switch(state)
+    {
+        case SoundRenderer::INACTIVE_Active:
+            alListenerf(AL_GAIN, 1.0f);
+            break;
+
+        /* FIXME: This doesn't stop anything. */
+        case SoundRenderer::INACTIVE_Complete:
+        case SoundRenderer::INACTIVE_Mute:
+            alListenerf(AL_GAIN, 0.0f);
+            break;
+    }
 }
 
 void OpenALSoundRenderer::Sync(bool sync)

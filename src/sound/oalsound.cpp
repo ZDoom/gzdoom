@@ -1153,9 +1153,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
             return NULL;
     }
 
-    float rolloffFactor = 1.f;
     bool manualRolloff = true;
-
     ALuint buffer = GET_PTRID(sfx.data);
     ALuint source = FreeSfx.back();
     if(rolloff->RolloffType == ROLLOFF_Log)
@@ -1165,7 +1163,6 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         alSourcef(source, AL_REFERENCE_DISTANCE, rolloff->MinDistance/distscale);
         alSourcef(source, AL_MAX_DISTANCE, (1000.f+rolloff->MinDistance)/distscale);
         alSourcef(source, AL_ROLLOFF_FACTOR, rolloff->RolloffFactor);
-        rolloffFactor = rolloff->RolloffFactor;
         manualRolloff = false;
     }
     else if(rolloff->RolloffType == ROLLOFF_Linear && AL.EXT_source_distance_model)
@@ -1240,7 +1237,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
             alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
             alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
         }
-        alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, rolloffFactor);
+        alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
         alSourcef(source, AL_PITCH, PITCH(pitch));
     }
     else if(WasInWater && !(chanflags&SNDF_NOREVERB))

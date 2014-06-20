@@ -706,7 +706,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
         Device = NULL;
         return;
     }
-    DPrintf("  Allocated "TEXTCOLOR_BLUE"%u"TEXTCOLOR_NORMAL" sources\n", Sources.size());
+    DPrintf("  Allocated "TEXTCOLOR_BLUE"%zu"TEXTCOLOR_NORMAL" sources\n", Sources.size());
 
     WasInWater = false;
     if(*snd_efx && alcIsExtensionPresent(Device, "ALC_EXT_EFX"))

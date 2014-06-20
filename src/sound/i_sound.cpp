@@ -549,6 +549,14 @@ SoundDecoder *SoundRenderer::CreateDecoder(const BYTE *sfxdata, int length)
 SoundDecoder* SoundRenderer::CreateDecoder(const char *fname, int offset, int length)
 {
     SoundDecoder *decoder = NULL;
+#ifdef HAVE_MPG123
+    decoder = new MPG123Decoder;
+    if(!decoder->open(fname, offset, length))
+    {
+        delete decoder;
+        decoder = NULL;
+    }
+#endif
 #ifdef HAVE_SNDFILE
     decoder = new SndFileDecoder;
     if(!decoder->open(fname, offset, length))

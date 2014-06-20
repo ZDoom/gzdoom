@@ -149,7 +149,7 @@ struct MPG123Decoder : public SoundDecoder
     virtual bool seek(size_t ms_offset);
     virtual size_t getSampleOffset();
 
-    MPG123Decoder() : MPG123(0) { }
+    MPG123Decoder() : MPG123(0), File(0) { }
     virtual ~MPG123Decoder();
 
 protected:
@@ -159,6 +159,12 @@ protected:
 private:
     mpg123_handle *MPG123;
     bool Done;
+
+    FILE *File;
+    size_t FileLength;
+    size_t FileOffset;
+    static off_t file_lseek(void *handle, off_t offset, int whence);
+    static ssize_t file_read(void *handle, void *buffer, size_t bytes);
 
     const char *MemData;
     size_t MemLength;

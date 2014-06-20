@@ -122,6 +122,15 @@ public:
 	virtual FString GatherStats();
 
 private:
+    struct {
+        bool EXT_EFX;
+        bool EXT_disconnect;
+    } ALC;
+    struct {
+        bool EXT_source_distance_model;
+        bool SOFT_loop_points;
+    } AL;
+
 	// EFX Extension function pointer variables. Loaded after context creation
 	// if EFX is supported. These pointers may be context- or device-dependant,
 	// thus can't be static
@@ -169,10 +178,6 @@ private:
 
 	ALCdevice *Device;
 	ALCcontext *Context;
-
-	bool LoopPoints;
-	bool SrcDistanceModel;
-	bool DisconnectNotify;
 
 	std::vector<ALuint> Sources;
 

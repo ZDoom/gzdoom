@@ -555,8 +555,7 @@ static void LoadALFunc(const char *name, T *x)
 { *x = reinterpret_cast<T>(alGetProcAddress(name)); }
 
 OpenALSoundRenderer::OpenALSoundRenderer()
-    : Device(NULL), Context(NULL), SrcDistanceModel(false), SFXPaused(0),
-      PrevEnvironment(NULL), EnvSlot(0)
+    : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
 {
     EnvFilters[0] = EnvFilters[1] = 0;
 
@@ -592,8 +591,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  ALC Version: "TEXTCOLOR_BLUE"%d.%d\n", major, minor);
     DPrintf("  ALC Extensions: "TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
 
-    DisconnectNotify = alcIsExtensionPresent(Device, "ALC_EXT_disconnect");
-
     std::vector<ALCint> attribs;
     if(*snd_samplerate > 0)
     {
@@ -627,13 +624,15 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  Version: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
     DPrintf("  Extensions: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
-    SrcDistanceModel = alIsExtensionPresent("AL_EXT_source_distance_model");
-    LoopPoints = alIsExtensionPresent("AL_SOFT_loop_points");
+    ALC.EXT_EFX = alcIsExtensionPresent(Device, "ALC_EXT_EFX");
+    ALC.EXT_disconnect = alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
+    AL.EXT_source_distance_model = alIsExtensionPresent("AL_EXT_source_distance_model");
+    AL.SOFT_loop_points = alIsExtensionPresent("AL_SOFT_loop_points");
 
     alDopplerFactor(0.5f);
     alSpeedOfSound(343.3f * 96.0f);
     alDistanceModel(AL_INVERSE_DISTANCE);
-    if(SrcDistanceModel)
+    if(AL.EXT_source_distance_model)
         alEnable(AL_SOURCE_DISTANCE_MODEL);
 
     ALenum err = getALError();
@@ -676,7 +675,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  Allocated "TEXTCOLOR_BLUE"%zu"TEXTCOLOR_NORMAL" sources\n", Sources.size());
 
     WasInWater = false;
-    if(*snd_efx && alcIsExtensionPresent(Device, "ALC_EXT_EFX"))
+    if(*snd_efx && ALC.EXT_EFX)
     {
         // EFX function pointers
 #define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
@@ -920,7 +919,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
         return retval;
     }
 
-    if((loopstart > 0 || loopend > 0) && LoopPoints)
+    if((loopstart > 0 || loopend > 0) && AL.SOFT_loop_points)
     {
         if(loopstart < 0)
             loopstart = 0;
@@ -1176,7 +1175,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     {
         if(rolloff->RolloffType == ROLLOFF_Log)
         {
-            if(SrcDistanceModel)
+            if(AL.EXT_source_distance_model)
                 alSourcei(source, AL_DISTANCE_MODEL, AL_INVERSE_DISTANCE);
             alSourcef(source, AL_REFERENCE_DISTANCE, rolloff->MinDistance/distscale);
             alSourcef(source, AL_MAX_DISTANCE, (1000.f+rolloff->MinDistance)/distscale);
@@ -1184,7 +1183,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
             manualGain = false;
             gain = 1.f;
         }
-        else if(rolloff->RolloffType == ROLLOFF_Linear && SrcDistanceModel)
+        else if(rolloff->RolloffType == ROLLOFF_Linear && AL.EXT_source_distance_model)
         {
             alSourcei(source, AL_DISTANCE_MODEL, AL_LINEAR_DISTANCE);
             alSourcef(source, AL_REFERENCE_DISTANCE, rolloff->MinDistance/distscale);
@@ -1196,7 +1195,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     }
     if(manualGain)
     {
-        if(SrcDistanceModel)
+        if(AL.EXT_source_distance_model)
             alSourcei(source, AL_DISTANCE_MODEL, AL_NONE);
         if((chanflags&SNDF_AREA) && rolloff->MinDistance < 32.f)
             alSourcef(source, AL_REFERENCE_DISTANCE, 32.f/distscale);
@@ -1532,7 +1531,7 @@ void OpenALSoundRenderer::UpdateSounds()
     foreach(SoundStream*, stream, Streams)
         (*stream)->IsEnded();
 
-    if(DisconnectNotify)
+    if(ALC.EXT_disconnect)
     {
         ALCint connected = ALC_TRUE;
         alcGetIntegerv(Device, ALC_CONNECTED, 1, &connected);

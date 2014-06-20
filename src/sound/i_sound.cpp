@@ -48,6 +48,7 @@ extern HINSTANCE g_hInst;
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <memory>
 
 #include "doomtype.h"
 #include <math.h>
@@ -338,9 +339,25 @@ FString SoundRenderer::GatherStats ()
 	return "No stats for this sound renderer.";
 }
 
-short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type)
+short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
 {
-	return NULL;
+    short *samples = (short*)calloc(1, outlen);
+    ChannelConfig chans;
+    SampleType type;
+    int srate;
+
+    std::auto_ptr<SoundDecoder> decoder(CreateDecoder((const BYTE*)coded, sizebytes));
+    if(!decoder.get()) return samples;
+
+    decoder->getInfo(&srate, &chans, &type);
+    if(chans != ChannelConfig_Mono || type != SampleType_Int16)
+    {
+        DPrintf("Sample is not 16-bit mono\n");
+        return samples;
+    }
+
+    decoder->read((char*)samples, outlen);
+    return samples;
 }
 
 void SoundRenderer::DrawWaveDebug(int mode)

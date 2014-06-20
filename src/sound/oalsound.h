@@ -112,8 +112,6 @@ public:
 	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
 
-	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
-
 	virtual void MarkStartTime(FISoundChannel*);
 	virtual float GetAudibility(FISoundChannel*);
 

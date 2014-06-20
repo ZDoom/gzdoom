@@ -1053,26 +1053,6 @@ void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
     delete ((ALuint*)sfx.data);
 }
 
-short *OpenALSoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
-{
-    char *samples = (char*)calloc(1, outlen);
-    ChannelConfig chans;
-    SampleType type;
-    int srate;
-
-    std::auto_ptr<SoundDecoder> decoder(CreateDecoder((const BYTE*)coded, sizebytes));
-    if(!decoder.get()) return (short*)samples;
-
-    decoder->getInfo(&srate, &chans, &type);
-    if(chans != ChannelConfig_Mono || type != SampleType_Int16)
-    {
-        DPrintf("Sample is not 16-bit mono\n");
-        return (short*)samples;
-    }
-
-    decoder->read(samples, outlen);
-    return (short*)samples;
-}
 
 SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
 {

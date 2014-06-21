@@ -53,6 +53,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_templates.h"
@@ -505,7 +506,27 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	glVertex2i(fb->Width, fb->Height);
 	glEnd();
 
-	// the old burn warp code is obsolete and has to be replaced.
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetEffect(EFF_BURN);
+	gl_RenderState.ResetColor();
+	gl_RenderState.Apply();
+
+	// Burn the new screen on top of it.
+	fb->wipeendscreen->Bind(1);
+
+	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, false, 0);
+
+	glBegin(GL_TRIANGLE_STRIP);
+	glTexCoord2f(0, vb);
+	glVertex2i(0, 0);
+	glTexCoord2f(0, 0);
+	glVertex2i(0, fb->Height);
+	glTexCoord2f(ur, vb);
+	glVertex2i(fb->Width, 0);
+	glTexCoord2f(ur, 0);
+	glVertex2i(fb->Width, fb->Height);
+	glEnd();
+	gl_RenderState.SetEffect(EFF_NONE);
 
 	// The fire may not always stabilize, so the wipe is forced to end
 	// after an arbitrary maximum time.

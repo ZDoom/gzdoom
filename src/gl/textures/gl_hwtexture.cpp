@@ -218,7 +218,6 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 		// The texture must at least be initialized if no data is present.
 		mipmap=false;
-		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, false);
 		buffer=(unsigned char *)calloc(4,rw * (rh+1));
 		deletebuffer=true;
 		//texheight=-h;	
@@ -227,8 +226,6 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 	{
 		rw = GetTexDimension (w);
 		rh = GetTexDimension (h);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, (mipmap && use_mipmapping && !forcenofiltering));
 
 		if (rw < w || rh < h)
 		{
@@ -246,6 +243,7 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 	if (deletebuffer) free(buffer);
 
+	if (mipmap && use_mipmapping && !forcenofiltering) glGenerateMipmap(GL_TEXTURE_2D);
 	if (alphatexture && gl.version >= 3.3f)
 	{
 		static const GLint swizzleMask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};

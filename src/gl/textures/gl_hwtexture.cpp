@@ -190,8 +190,26 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 	bool deletebuffer=false;
 	bool use_mipmapping = TexFilter[gl_texture_filter].mipmapping;
 
-	if (alphatexture) texformat=GL_ALPHA8;
-	else if (forcenocompression) texformat = GL_RGBA8;
+	if (alphatexture)
+	{
+		// thanks to deprecation and delayed introduction of a suitable replacement feature this has become a bit messy...
+		if (gl.version >= 3.3f)
+		{
+			texformat = GL_R8;
+		}
+		else if (gl.version <= 3.0f || gl.hasCompatibility())
+		{
+			texformat = GL_ALPHA8;
+		}
+		else
+		{
+			texformat = GL_RGBA8;
+		}
+	}
+	else if (forcenocompression)
+	{
+		texformat = GL_RGBA8;
+	}
 	if (glTexID==0) glGenTextures(1,&glTexID);
 	glBindTexture(GL_TEXTURE_2D, glTexID);
 	lastbound[texunit]=glTexID;
@@ -238,6 +256,11 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
+	if (alphatexture && gl.version >= 3.3f)
+	{
+		static const GLint swizzleMask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+	}
 	clampmode = wrapparam==GL_CLAMP? GLT_CLAMPX|GLT_CLAMPY : 0;
 
 	if (forcenofiltering)

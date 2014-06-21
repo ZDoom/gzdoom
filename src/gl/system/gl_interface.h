@@ -41,6 +41,11 @@ struct RenderContext
 	{
 		return glslversion >= 1.3f;
 	}
+
+	bool hasCompatibility()	// will return false, once transition to a core profile is possible and a core profile is used.
+	{
+		return true;
+	}
 };
 
 extern RenderContext gl;

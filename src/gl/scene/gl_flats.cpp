@@ -501,7 +501,7 @@ inline void GLFlat::PutFlat(bool fog)
 		else foggy = false;
 
 		list = list_indices[light][masked][foggy];
-		if (list == GLDL_LIGHT && gltexture->tex->gl_info.Brightmap && gl.hasGLSL()) list = GLDL_LIGHTBRIGHT;
+		if (list == GLDL_LIGHT && gltexture->tex->gl_info.Brightmap) list = GLDL_LIGHTBRIGHT;
 
 		gl_drawinfo->drawlists[list].AddFlat (this);
 	}

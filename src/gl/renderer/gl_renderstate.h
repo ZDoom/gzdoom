@@ -92,8 +92,8 @@ public:
 
 	void Reset();
 
-	int SetupShader(int &shaderindex, float warptime);
-	void Apply(bool forcenoshader = false);
+	void SetupShader(int &shaderindex, float warptime);
+	void Apply();
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{

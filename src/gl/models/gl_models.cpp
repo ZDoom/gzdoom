@@ -744,17 +744,9 @@ void gl_RenderModel(GLSprite * spr)
 	if(smf->flags & MDL_INHERITACTORPITCH) pitch += float(static_cast<double>(spr->actor->pitch >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->pitch & 0x0000FFFF) / (1 << 29) * 45);
 	if(smf->flags & MDL_INHERITACTORROLL) roll += float(static_cast<double>(spr->actor->roll >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->roll & 0x0000FFFF) / (1 << 29) * 45);
 		
-	if (!gl.hasGLSL())
-	{
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-	}
-	else
-	{
-		glActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-	}
+	glActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
 
 	// Model space => World space
 	glTranslatef(spr->x, spr->z, spr->y );	
@@ -786,7 +778,7 @@ void gl_RenderModel(GLSprite * spr)
 	glRotatef(smf->pitchoffset, 0, 0, 1);
 	glRotatef(-smf->rolloffset, 1, 0, 0);
 		
-	if (gl.hasGLSL()) glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 
 #if 0
 	if (gl_light_models)
@@ -805,19 +797,11 @@ void gl_RenderModel(GLSprite * spr)
 
 	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), NULL, translation );
 
-	if (!gl.hasGLSL())
-	{
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-	}
-	else
-	{
-		glActiveTexture(GL_TEXTURE7);
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-		glActiveTexture(GL_TEXTURE0);
-		glMatrixMode(GL_MODELVIEW);
-	}
+	glActiveTexture(GL_TEXTURE7);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glActiveTexture(GL_TEXTURE0);
+	glMatrixMode(GL_MODELVIEW);
 
 	glDepthFunc(GL_LESS);
 	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))

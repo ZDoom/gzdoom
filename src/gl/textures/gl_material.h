@@ -61,28 +61,24 @@ private:
 	FHardwareTexture *gltexture[5];
 	FHardwareTexture *glpatch;
 
-	int currentwarp;
-	int currentwarptime;
-
 	bool bHasColorkey;		// only for hires
 	bool bExpand;
 	float AlphaThreshold;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, bool alphatexture);
-	BYTE *WarpBuffer(BYTE *buffer, int Width, int Height, int warp);
 
 	FHardwareTexture *CreateTexture(int clampmode);
 	//bool CreateTexture();
 	bool CreatePatch();
 
-	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck, int warp);
-	const FHardwareTexture *BindPatch(int texunit, int translation, int warp, bool alphatexture);
+	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck);
+	const FHardwareTexture *BindPatch(int texunit, int translation, bool alphatexture);
 
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand, FTexture *hirescheck, int warp, bool alphatexture = false);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand, FTexture *hirescheck, bool alphatexture = false);
 
 	void Clean(bool all);
 	int Dump(int i);

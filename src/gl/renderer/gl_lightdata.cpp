@@ -109,7 +109,6 @@ CUSTOM_CVAR(Int,gl_fogmode,1,CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (self>2) self=2;
 	if (self<0) self=0;
-	if (self == 2 && !gl.hasGLSL()) self = 1;
 }
 
 CUSTOM_CVAR(Int, gl_lightmode, 3 ,CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -117,7 +116,6 @@ CUSTOM_CVAR(Int, gl_lightmode, 3 ,CVAR_ARCHIVE|CVAR_NOINITCALL)
 	int newself = self;
 	if (newself > 4) newself=8;	// use 8 for software lighting to avoid conflicts with the bit mask
 	if (newself < 0) newself=0;
-	if ((newself == 2 || newself == 8) && !gl.hasGLSL()) newself = 3;
 	if (self != newself) self = newself;
 	glset.lightmode = newself;
 }

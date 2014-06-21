@@ -72,11 +72,7 @@ CUSTOM_CVAR (Bool, gl_dynlight_shader, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG |
 {
 	if (self)
 	{
-		if (!gl.hasGLSL())
-		{
-			self = false;
-		}
-		else if (gl.maxuniforms < 1024 && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+		if (gl.maxuniforms < 1024 && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 		{
 			self = false;
 		}

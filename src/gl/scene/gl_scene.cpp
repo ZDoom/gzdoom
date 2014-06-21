@@ -287,12 +287,10 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 
 void FGLRenderer::SetViewMatrix(bool mirror, bool planemirror)
 {
-	if (gl.hasGLSL())
-	{
-		glActiveTexture(GL_TEXTURE7);
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-	}
+	glActiveTexture(GL_TEXTURE7);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+
 	glActiveTexture(GL_TEXTURE0);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -725,69 +723,6 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, blendv.a / 255.0f, blend);
 		}
 	}
-	else if (!gl.hasGLSL())
-	{
-		float r, g, b;
-		bool inverse = false;
-		const float BLACK_THRESH = 0.05f;
-		const float WHITE_THRESH = 0.95f;
-
-		// for various reasons (performance and keeping the lighting code clean)
-		// we no longer do colormapped textures on pre GL 3.0 hardware and instead do 
-		// just a fullscreen overlay to emulate the inverse invulnerability effect or similar fullscreen blends.
-		if (gl_fixedcolormap >= (DWORD)CM_FIRSTSPECIALCOLORMAP && gl_fixedcolormap < (DWORD)CM_MAXCOLORMAP)
-		{
-			FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
-
-			if (scm->ColorizeEnd[0] < BLACK_THRESH && scm->ColorizeEnd[1] < BLACK_THRESH && scm->ColorizeEnd[2] < BLACK_THRESH)
-			{
-				r = scm->ColorizeStart[0];
-				g = scm->ColorizeStart[1];
-				b = scm->ColorizeStart[2];
-				inverse = true;
-			}
-			else
-			{
-				r = scm->ColorizeEnd[0];
-				g = scm->ColorizeEnd[1];
-				b = scm->ColorizeEnd[2];
-			}
-		}
-		else if (gl_enhanced_nightvision)
-		{
-			if (gl_fixedcolormap == CM_LITE)
-			{
-				r = 0.375f;
-				g = 1.0f;
-				b = 0.375f;
-			}
-			else if (gl_fixedcolormap >= CM_TORCH)
-			{
-				int flicker = gl_fixedcolormap - CM_TORCH;
-				r = (0.8f + (7 - flicker) / 70.0f);
-				if (r > 1.0f) r = 1.0f;
-				g = r;
-				b = g * 0.75f;
-			}
-			else r = g = b = 1.f;
-		}
-		else r = g = b = 1.f;
-
-		if (inverse)
-		{
-			gl_RenderState.BlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
-			gl_RenderState.ResetColor();
-			FillScreen();
-		}
-
-		if (r < WHITE_THRESH || g < WHITE_THRESH || b < WHITE_THRESH)
-		{
-			gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
-			gl_RenderState.SetColor(r, g, b, 1.0f);
-			FillScreen();
-		}
-	}
-
 
 	// This mostly duplicates the code in shared_sbar.cpp
 	// When I was writing this the original was called too late so that I
@@ -1245,15 +1180,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	gl_fixedcolormap=CM_DEFAULT;
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
-	bool usefb;
-
-	if (gl.flags & RFL_FRAMEBUFFER)
-	{
-		usefb = gl_usefb || width > screen->GetWidth() || height > screen->GetHeight();
-	}
-	else usefb = false;
-
-
+	bool usefb = gl_usefb || width > screen->GetWidth() || height > screen->GetHeight();
 	if (!usefb)
 	{
 		glFlush();

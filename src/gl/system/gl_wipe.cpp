@@ -505,52 +505,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	glVertex2i(fb->Width, fb->Height);
 	glEnd();
 
-	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.Apply(true);
-	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
-
-	// mask out the alpha channel of the wipeendscreen.
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE1);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE); 
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-
-	glActiveTexture(GL_TEXTURE0);
-
-	// Burn the new screen on top of it.
-	fb->wipeendscreen->Bind(1);
-	//BurnTexture->Bind(0, CM_DEFAULT);
-
-	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, false, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
-	glBegin(GL_TRIANGLE_STRIP);
-	glMultiTexCoord2f(GL_TEXTURE0, 0, 0);
-	glMultiTexCoord2f(GL_TEXTURE1, 0, vb);
-	glVertex2i(0, 0);
-	glMultiTexCoord2f(GL_TEXTURE0, 0, 1);
-	glMultiTexCoord2f(GL_TEXTURE1, 0, 0);
-	glVertex2i(0, fb->Height);
-	glMultiTexCoord2f(GL_TEXTURE0, 1, 0);
-	glMultiTexCoord2f(GL_TEXTURE1, ur, vb);
-	glVertex2i(fb->Width, 0);
-	glMultiTexCoord2f(GL_TEXTURE0, 1, 1);
-	glMultiTexCoord2f(GL_TEXTURE1, ur, 0);
-	glVertex2i(fb->Width, fb->Height);
-	glEnd();
-
-	glActiveTexture(GL_TEXTURE1);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
+	// the old burn warp code is obsolete and has to be replaced.
 
 	// The fire may not always stabilize, so the wipe is forced to end
 	// after an arbitrary maximum time.

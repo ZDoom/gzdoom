@@ -291,60 +291,13 @@ void GLWall::RenderFogBoundary()
 {
 	if (gl_fogmode && gl_fixedcolormap == 0)
 	{
-		// with shaders this can be done properly
-		if (gl.hasGLSL())
-		{
-			int rel = rellight + getExtraLight();
-			gl_SetFog(lightlevel, rel, &Colormap, false);
-			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
-			gl_RenderState.EnableAlphaTest(false);
-			RenderWall(RWF_BLANK);
-			gl_RenderState.EnableAlphaTest(true);
-			gl_RenderState.SetEffect(EFF_NONE);
-		}
-		else
-		{
-			// If we use the fixed function pipeline (GL 2.x)
-			// some approximation is needed. This won't look as good
-			// as the shader version but it's an acceptable compromise.
-			float fogdensity=gl_GetFogDensity(lightlevel, Colormap.FadeColor);
-
-			float xcamera=FIXED2FLOAT(viewx);
-			float ycamera=FIXED2FLOAT(viewy);
-
-			float dist1=Dist2(xcamera,ycamera, glseg.x1,glseg.y1);
-			float dist2=Dist2(xcamera,ycamera, glseg.x2,glseg.y2);
-
-
-			// these values were determined by trial and error and are scale dependent!
-			float fogd1=(0.95f-exp(-fogdensity*dist1/62500.f)) * 1.05f;
-			float fogd2=(0.95f-exp(-fogdensity*dist2/62500.f)) * 1.05f;
-
-			float fc[4]={Colormap.FadeColor.r/255.0f,Colormap.FadeColor.g/255.0f,Colormap.FadeColor.b/255.0f,fogd2};
-
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.EnableFog(false);
-			gl_RenderState.AlphaFunc(GL_GREATER,0);
-			glDepthFunc(GL_LEQUAL);
-			gl_RenderState.SetColor(fc[0], fc[1], fc[2], fogd1);
-
-			// this case is special because it needs to change the color in the middle of the polygon so it cannot use the standard function
-			// This also needs no splits so it's relatively simple.
-			gl_RenderState.Apply();
-			glBegin(GL_TRIANGLE_FAN);	// only used on GL 2.x!
-			glVertex3f(glseg.x1, zbottom[0], glseg.y1);
-			glVertex3f(glseg.x1, ztop[0], glseg.y1);
-			glColor4fv(fc);
-			glVertex3f(glseg.x2, ztop[1], glseg.y2);
-			glVertex3f(glseg.x2, zbottom[1], glseg.y2);
-			glEnd();
-			vertexcount += 4;
-
-			glDepthFunc(GL_LESS);
-			gl_RenderState.EnableFog(true);
-			gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f);
-			gl_RenderState.EnableTexture(true);
-		}
+		int rel = rellight + getExtraLight();
+		gl_SetFog(lightlevel, rel, &Colormap, false);
+		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
+		gl_RenderState.EnableAlphaTest(false);
+		RenderWall(RWF_BLANK);
+		gl_RenderState.EnableAlphaTest(true);
+		gl_RenderState.SetEffect(EFF_NONE);
 	}
 }
 

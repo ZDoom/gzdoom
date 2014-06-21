@@ -127,17 +127,13 @@ void gl_LoadExtensions()
 	else Printf("Emulating OpenGL v %s\n", version);
 
 
-	// Don't even start if it's lower than 1.3
-	if (strcmp(version, "2.0") < 0) 
+	// Don't even start if it's lower than 3.0
+	if (strcmp(version, "3.0") < 0) 
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least GL 2.0 is required to run " GAMENAME ".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least GL 3.0 is required to run " GAMENAME ".\n");
 	}
 	gl.version = strtod(version, NULL);
 	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL);
-	if (gl.version < 3.f) gl.glslversion = 0.f;
-
-	// This loads any function pointers and flags that require a vaild render context to
-	// initialize properly
 
 	gl.vendorstring=(char*)glGetString(GL_VENDOR);
 
@@ -148,11 +144,6 @@ void gl_LoadExtensions()
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	if (gl.version >= 3.f)
-	{
-		gl.flags|=RFL_FRAMEBUFFER;
-	}
 }
 
 //==========================================================================
@@ -176,7 +167,7 @@ void gl_PrintStartupLog()
 	Printf ("Max. texture units: %d\n", v);
 	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. fragment uniforms: %d\n", v);
-	if (gl.hasGLSL()) gl.maxuniforms = v;
+	gl.maxuniforms = v;
 	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. vertex uniforms: %d\n", v);
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);

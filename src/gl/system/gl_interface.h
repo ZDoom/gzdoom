@@ -9,7 +9,6 @@ enum RenderFlags
 	RFL_TEXTURE_COMPRESSION=1,
 	RFL_TEXTURE_COMPRESSION_S3TC=2,
 
-	RFL_FRAMEBUFFER = 4,
 	RFL_BUFFER_STORAGE = 8,
 	RFL_SHADER_STORAGE_BUFFER = 16,
 	RFL_BASEINDEX = 32,
@@ -35,16 +34,6 @@ struct RenderContext
 	int MaxLights() const
 	{
 		return maxuniforms>=2048? 128:64;
-	}
-
-	bool hasGLSL() const
-	{
-		return glslversion >= 1.3f;
-	}
-
-	bool hasCompatibility()	// will return false, once transition to a core profile is possible and a core profile is used.
-	{
-		return true;
 	}
 };
 

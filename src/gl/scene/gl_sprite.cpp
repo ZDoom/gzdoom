@@ -199,18 +199,9 @@ void GLSprite::Draw(int pass)
 			// non-black fog with subtractive style needs special treatment
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
-				if (gl.hasGLSL() && !gl_nolayer)
-				{
-					// fog layer only works on modern hardware. 
-					foglayer = true;
-					// Due to the two-layer approach we need to force an alpha test that lets everything pass
-					gl_RenderState.AlphaFunc(GL_GREATER, 0);
-				}
-				else
-				{
-					// this at least partially handles the fog issue
-					Colormap.FadeColor = Colormap.FadeColor.InverseColor();
-				}
+				foglayer = true;
+				// Due to the two-layer approach we need to force an alpha test that lets everything pass
+				gl_RenderState.AlphaFunc(GL_GREATER, 0);
 			}
 		}
 		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
@@ -668,7 +659,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gl.hasGLSL() || !gltexture || !gltexture->tex->gl_info.bBrightmapDisablesFullbright));
+		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->gl_info.bBrightmapDisablesFullbright));
 
 	lightlevel=fullbright? 255 : 
 		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ? 
@@ -737,7 +728,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		RenderStyle.CheckFuzz();
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl.hasGLSL() && gl_fuzztype != 0)
+			if (gl_fuzztype != 0)
 			{
 				// Todo: implement shader selection here
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];

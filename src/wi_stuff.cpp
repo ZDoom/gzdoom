@@ -45,6 +45,7 @@
 #include "v_text.h"
 #include "gi.h"
 #include "d_player.h"
+#include "d_netinf.h"
 #include "b_bot.h"
 #include "textures/textures.h"
 #include "r_data/r_translate.h"
@@ -63,6 +64,7 @@ typedef enum
 CVAR (Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR (Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR (Bool, wi_noautostartmap, false, CVAR_USERINFO|CVAR_ARCHIVE)
+CVAR (Int, wi_autoadvance, 0, CVAR_SERVERINFO)
 
 
 void WI_loadData ();
@@ -190,6 +192,7 @@ static TArray<in_anim_t> anims;
 #define SHOWNEXTLOCDELAY		4			// in seconds
 
 static int				acceleratestage;	// used to accelerate or skip a stage
+static bool				playerready[MAXPLAYERS];
 static int				me;					// wbs->pnum
 static stateenum_t		state;				// specifies current state
 static wbstartstruct_t *wbs;				// contains information passed into intermission
@@ -199,11 +202,17 @@ static int				bcnt;				// used for timing of background animation
 static int				cnt_kills[MAXPLAYERS];
 static int				cnt_items[MAXPLAYERS];
 static int				cnt_secret[MAXPLAYERS];
+static int				cnt_frags[MAXPLAYERS];
+static int				cnt_deaths[MAXPLAYERS];
 static int				cnt_time;
 static int				cnt_total_time;
 static int				cnt_par;
 static int				cnt_pause;
+static int				total_frags;
+static int				total_deaths;
 static bool				noautostartmap;
+static int				dofrags;
+static int				ng_state;
 
 //
 //		GRAPHICS
@@ -1105,6 +1114,7 @@ void WI_updateNoState ()
 	else
 	{
 		bool noauto = noautostartmap;
+		bool autoskip = (wi_autoadvance > 0 && bcnt > (wi_autoadvance * TICRATE));
 
 		for (int i = 0; !noauto && i < MAXPLAYERS; ++i)
 		{
@@ -1113,7 +1123,7 @@ void WI_updateNoState ()
 				noauto |= players[i].userinfo.GetNoAutostartMap();
 			}
 		}
-		if (!noauto)
+		if (!noauto || autoskip)
 		{
 			cnt--;
 		}
@@ -1208,128 +1218,134 @@ int WI_fragSum (int playernum)
 	return frags;
 }
 
-static int dm_state;
-static int dm_frags[MAXPLAYERS][MAXPLAYERS];
-static int dm_totals[MAXPLAYERS];
+static int player_deaths[MAXPLAYERS];
 
 void WI_initDeathmatchStats (void)
 {
-
 	int i, j;
 
 	state = StatCount;
 	acceleratestage = 0;
-	dm_state = 1;
+	memset(playerready, 0, sizeof(playerready));
+	memset(cnt_frags, 0, sizeof(cnt_frags));
+	memset(cnt_deaths, 0, sizeof(cnt_frags));
+	memset(player_deaths, 0, sizeof(player_deaths));
+	total_frags = 0;
+	total_deaths = 0;
 
+	ng_state = 1;
 	cnt_pause = TICRATE;
 
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
 		if (playeringame[i])
 		{
-			for (j=0 ; j<MAXPLAYERS ; j++)
+			for (j = 0; j < MAXPLAYERS; j++)
 				if (playeringame[j])
-					dm_frags[i][j] = 0;
-
-			dm_totals[i] = 0;
+					player_deaths[i] += plrs[j].frags[i];
+			total_deaths += player_deaths[i];
+			total_frags += plrs[i].fragcount;
 		}
 	}
 }
 
 void WI_updateDeathmatchStats ()
 {
-	/*
-	int i, j;
+
+	int i;
 	bool stillticking;
-	*/
+	bool autoskip = (wi_autoadvance > 0 && bcnt > (wi_autoadvance * TICRATE));
 
 	WI_updateAnimatedBack();
 
-	if (acceleratestage && dm_state != 4)
+	if ((acceleratestage || autoskip) && ng_state != 6)
 	{
-		/*
 		acceleratestage = 0;
-		
-		for (i=0 ; i<MAXPLAYERS ; i++)
+
+		for (i = 0; i<MAXPLAYERS; i++)
 		{
-			if (playeringame[i])
-			{
-				for (j=0 ; j<MAXPLAYERS ; j++)
-					if (playeringame[j])
-						dm_frags[i][j] = plrs[i].frags[j];
-					
-					dm_totals[i] = WI_fragSum(i);
-			}
+			if (!playeringame[i])
+				continue;
+
+			cnt_frags[i] = plrs[i].fragcount;
+			cnt_deaths[i] = player_deaths[i];
 		}
-		
-		S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
-		*/
-		dm_state = 4;
+		S_Sound(CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
+		ng_state = 6;
 	}
-	
-    
-	if (dm_state == 2)
+
+	if (ng_state == 2)
 	{
-		/*
-		if (!(bcnt&3))
-			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
-		
+		if (!(bcnt & 3))
+			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
+
 		stillticking = false;
 
-		for (i=0 ; i<MAXPLAYERS ; i++)
+		for (i = 0; i<MAXPLAYERS; i++)
 		{
-			if (playeringame[i])
-			{
-				for (j=0 ; j<MAXPLAYERS ; j++)
-				{
-					if (playeringame[j]
-						&& dm_frags[i][j] != plrs[i].frags[j])
-					{
-						if (plrs[i].frags[j] < 0)
-							dm_frags[i][j]--;
-						else
-							dm_frags[i][j]++;
+			if (!playeringame[i])
+				continue;
 
-						if (dm_frags[i][j] > 99)
-							dm_frags[i][j] = 99;
+			cnt_frags[i] += 2;
 
-						if (dm_frags[i][j] < -99)
-							dm_frags[i][j] = -99;
-						
-						stillticking = true;
-					}
-				}
-				dm_totals[i] = WI_fragSum(i);
+			if (cnt_frags[i] > plrs[i].fragcount)
+				cnt_frags[i] = plrs[i].fragcount;
+			else
+				stillticking = true;
+		}
 
-				if (dm_totals[i] > 99)
-					dm_totals[i] = 99;
-				
-				if (dm_totals[i] < -99)
-					dm_totals[i] = -99;
-			}
-			
+		if (!stillticking)
+		{
+			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
+			ng_state++;
+		}
+	}
+	else if (ng_state == 4)
+	{
+		if (!(bcnt & 3))
+			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/tick", 1, ATTN_NONE);
+
+		stillticking = false;
+
+		for (i = 0; i<MAXPLAYERS; i++)
+		{
+			if (!playeringame[i])
+				continue;
+
+			cnt_deaths[i] += 2;
+			if (cnt_deaths[i] > player_deaths[i])
+				cnt_deaths[i] = player_deaths[i];
+			else
+				stillticking = true;
 		}
 		if (!stillticking)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
-			dm_state++;
+			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
+			ng_state++;
 		}
-		*/
-		dm_state = 3;
 	}
-	else if (dm_state == 4)
+	else if (ng_state == 6)
 	{
-		if (acceleratestage)
+		int i;
+		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/pastdmstats", 1, ATTN_NONE);
+			// If the player is in the game and not ready, stop checking
+			if (playeringame[i] && !players[i].isbot && !playerready[i])
+				break;
+		}
+
+		// All players are ready; proceed.
+		if ((i == MAXPLAYERS && acceleratestage) || autoskip)
+		{
+			S_Sound(CHAN_VOICE | CHAN_UI, "intermission/pastdmstats", 1, ATTN_NONE);
 			WI_initShowNextLoc();
 		}
 	}
-	else if (dm_state & 1)
+	else if (ng_state & 1)
 	{
 		if (!--cnt_pause)
 		{
-			dm_state++;
+			ng_state++;
 			cnt_pause = TICRATE;
 		}
 	}
@@ -1339,96 +1355,125 @@ void WI_updateDeathmatchStats ()
 
 void WI_drawDeathmatchStats ()
 {
+	int i, pnum, x, y, ypadding, height, lineheight;
+	int maxnamewidth, maxscorewidth, maxiconheight;
+	int pwidth = IntermissionFont->GetCharWidth('%');
+	int icon_x, name_x, frags_x, deaths_x;
+	int deaths_len;
+	float h, s, v, r, g, b;
+	EColorRange color;
+	const char *text_deaths, *text_frags;
+	FTexture *readyico = TexMan.FindTexture("READYICO");
+	player_t *sortedplayers[MAXPLAYERS];
 
 	// draw animated background
-	WI_drawBackground(); 
-	WI_drawLF();
+	WI_drawBackground();
 
-	// [RH] Draw heads-up scores display
-	HU_DrawScores (&players[me]);
+	y = WI_drawLF();
 
-/*
-	int 		i;
-	int 		j;
-	int 		x;
-	int 		y;
-	int 		w;
-	
-	int 		lh; 	// line height
+	HU_GetPlayerWidths(maxnamewidth, maxscorewidth, maxiconheight);
+	// Use the readyico height if it's bigger.
+	height = readyico->GetScaledHeight() - readyico->GetScaledTopOffset();
+	maxiconheight = MAX(height, maxiconheight);
+	height = SmallFont->GetHeight() * CleanYfac;
+	lineheight = MAX(height, maxiconheight * CleanYfac);
+	ypadding = (lineheight - height + 1) / 2;
+	y += CleanYfac;
 
-	lh = WI_SPACINGY;
+	text_deaths = GStrings("SCORE_DEATHS");
+	//text_color = GStrings("SCORE_COLOR");
+	text_frags = GStrings("SCORE_FRAGS");
 
-	// draw stat titles (top line)
-	V_DrawPatchClean(DM_TOTALSX-LittleShort(total->width)/2,
-				DM_MATRIXY-WI_SPACINGY+10,
-				&FB,
-				total);
-	
-	V_DrawPatchClean(DM_KILLERSX, DM_KILLERSY, &FB, killers);
-	V_DrawPatchClean(DM_VICTIMSX, DM_VICTIMSY, &FB, victims);
+	icon_x = 8 * CleanXfac;
+	name_x = icon_x + maxscorewidth * CleanXfac;
+	frags_x = name_x + (maxnamewidth + MAX(SmallFont->StringWidth("XXXXX"), SmallFont->StringWidth(text_frags)) + 8) * CleanXfac;
+	deaths_x = frags_x + ((deaths_len = SmallFont->StringWidth(text_deaths)) + 8) * CleanXfac;
 
-	// draw P?
-	x = DM_MATRIXX + DM_SPACINGX;
-	y = DM_MATRIXY;
+	x = (SCREENWIDTH - deaths_x) >> 1;
+	icon_x += x;
+	name_x += x;
+	frags_x += x;
+	deaths_x += x;
 
-	for (i=0 ; i<MAXPLAYERS ; i++)
+	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
+
+	screen->DrawText(SmallFont, color, name_x, y, GStrings("SCORE_NAME"), DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, frags_x - SmallFont->StringWidth(text_frags)*CleanXfac, y, text_frags, DTA_CleanNoMove, true, TAG_DONE);
+	screen->DrawText(SmallFont, color, deaths_x - deaths_len*CleanXfac, y, text_deaths, DTA_CleanNoMove, true, TAG_DONE);
+	y += height + 6 * CleanYfac;
+
+	// Sort all players
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i])
-		{
-			V_DrawPatchClean(x-LittleShort(p[i]->width)/2,
-						DM_MATRIXY - WI_SPACINGY,
-						&FB,
-						p[i]);
-			
-			V_DrawPatchClean(DM_MATRIXX-LittleShort(p[i]->width)/2,
-						y,
-						&FB,
-						p[i]);
-
-			if (i == me)
-			{
-				V_DrawPatchClean(x-LittleShort(p[i]->width)/2,
-							DM_MATRIXY - WI_SPACINGY,
-							&FB,
-							bstar);
-
-				V_DrawPatchClean(DM_MATRIXX-LittleShort(p[i]->width)/2,
-							y,
-							&FB,
-							star);
-			}
-		}
-		x += DM_SPACINGX;
-		y += WI_SPACINGY;
+		sortedplayers[i] = &players[i];
 	}
 
-	// draw stats
-	y = DM_MATRIXY+10;
-	w = LittleShort(num[0]->width);
+	if (teamplay)
+		qsort(sortedplayers, MAXPLAYERS, sizeof(player_t *), compareteams);
+	else
+		qsort(sortedplayers, MAXPLAYERS, sizeof(player_t *), comparepoints);
 
-	for (i=0 ; i<MAXPLAYERS ; i++)
+	// Draw lines for each player
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		x = DM_MATRIXX + DM_SPACINGX;
+		player_t *player = sortedplayers[i];
+		pnum = int(player - players);
 
-		if (playeringame[i])
+		if (!playeringame[pnum])
+			continue;
+
+		D_GetPlayerColor(pnum, &h, &s, &v, NULL);
+		HSVtoRGB(&r, &g, &b, h, s, v);
+
+		screen->Dim(MAKERGB(clamp(int(r*255.f), 0, 255), 
+			clamp(int(g*255.f), 0, 255), 
+			clamp(int(b*255.f), 0, 255)), 0.8f, x, y - ypadding, (deaths_x - x) + (8 * CleanXfac), lineheight);
+
+		if (playerready[pnum] || player->isbot) // Bots are automatically assumed ready, to prevent confusion
+			screen->DrawTexture(readyico, x - (readyico->GetWidth() * CleanXfac), y, DTA_CleanNoMove, true, TAG_DONE);
+
+		color = (EColorRange)HU_GetRowColor(player, pnum == consoleplayer);
+		if (player->mo->ScoreIcon.isValid())
 		{
-			for (j=0 ; j<MAXPLAYERS ; j++)
-			{
-				if (playeringame[j])
-					WI_drawNum(x+w, y, dm_frags[i][j], 2);
-
-				x += DM_SPACINGX;
-			}
-			WI_drawNum(DM_TOTALSX+w, y, dm_totals[i], 2);
+			FTexture *pic = TexMan[player->mo->ScoreIcon];
+			screen->DrawTexture(pic, icon_x, y, DTA_CleanNoMove, true, TAG_DONE);
 		}
-		y += WI_SPACINGY;
+		screen->DrawText(SmallFont, color, name_x, y + ypadding, player->userinfo.GetName(), DTA_CleanNoMove, true, TAG_DONE);
+		WI_drawNum(SmallFont, frags_x, y + ypadding, cnt_frags[pnum], 0, false, color);
+		if (ng_state >= 2)
+		{
+			WI_drawNum(SmallFont, deaths_x, y + ypadding, cnt_deaths[pnum], 0, false, color);
+		}
+		y += lineheight + CleanYfac;
 	}
-*/
+
+	// Draw "TOTAL" line
+	y += height + 3 * CleanYfac;
+	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
+	screen->DrawText(SmallFont, color, name_x, y, GStrings("SCORE_TOTAL"), DTA_CleanNoMove, true, TAG_DONE);
+	WI_drawNum(SmallFont, frags_x, y, total_frags, 0, false, color);
+	if (ng_state >= 4)
+	{
+		WI_drawNum(SmallFont, deaths_x, y, total_deaths, 0, false, color);
+	}
+
+	// Draw game time
+	y += height + CleanYfac;
+
+	int seconds = plrs[me].stime / TICRATE;
+	int hours = seconds / 3600;
+	int minutes = (seconds % 3600) / 60;
+	seconds = seconds % 60;
+
+	FString leveltime = GStrings("SCORE_LVLTIME");
+	leveltime += ": ";
+
+	char timer[sizeof "HH:MM:SS"];
+	mysnprintf(timer, sizeof(timer), "%02i:%02i:%02i", hours, minutes, seconds);
+	leveltime += timer;
+
+	screen->DrawText(SmallFont, color, x, y, leveltime, DTA_CleanNoMove, true, TAG_DONE);
 }
-
-static int cnt_frags[MAXPLAYERS];
-static int    dofrags;
-static int    ng_state;
 
 void WI_initNetgameStats ()
 {
@@ -1437,6 +1482,7 @@ void WI_initNetgameStats ()
 
 	state = StatCount;
 	acceleratestage = 0;
+	memset(playerready, 0, sizeof(playerready));
 	ng_state = 1;
 
 	cnt_pause = TICRATE;
@@ -1460,10 +1506,11 @@ void WI_updateNetgameStats ()
 	int i;
 	int fsum;
 	bool stillticking;
+	bool autoskip = (wi_autoadvance > 0 && bcnt > (wi_autoadvance * TICRATE));
 
 	WI_updateAnimatedBack ();
 
-	if (acceleratestage && ng_state != 10)
+	if ((acceleratestage || autoskip) && ng_state != 10)
 	{
 		acceleratestage = 0;
 
@@ -1587,7 +1634,16 @@ void WI_updateNetgameStats ()
 	}
 	else if (ng_state == 10)
 	{
-		if (acceleratestage)
+		int i;
+		for (i = 0; i < MAXPLAYERS; i++)
+		{
+			// If the player is in the game and not ready, stop checking
+			if (playeringame[i] && !players[i].isbot && !playerready[i])
+				break;
+		}
+
+		// All players are ready; proceed.
+		if ((i == MAXPLAYERS && acceleratestage) || autoskip)
 		{
 			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/pastcoopstats", 1, ATTN_NONE);
 			WI_initShowNextLoc();
@@ -1611,8 +1667,10 @@ void WI_drawNetgameStats ()
 	int icon_x, name_x, kills_x, bonus_x, secret_x;
 	int bonus_len, secret_len;
 	int missed_kills, missed_items, missed_secrets;
+	float h, s, v, r, g, b;
 	EColorRange color;
-	const char *text_bonus, *text_color, *text_secret, *text_kills;
+	const char *text_bonus, *text_secret, *text_kills;
+	FTexture *readyico = TexMan.FindTexture("READYICO");
 
 	// draw animated background
 	WI_drawBackground(); 
@@ -1620,17 +1678,22 @@ void WI_drawNetgameStats ()
 	y = WI_drawLF();
 
 	HU_GetPlayerWidths(maxnamewidth, maxscorewidth, maxiconheight);
+	// Use the readyico height if it's bigger.
+	height = readyico->GetScaledHeight() - readyico->GetScaledTopOffset();
+	if (height > maxiconheight)
+	{
+		maxiconheight = height;
+	}
 	height = SmallFont->GetHeight() * CleanYfac;
 	lineheight = MAX(height, maxiconheight * CleanYfac);
 	ypadding = (lineheight - height + 1) / 2;
-	y += 16*CleanYfac;
+	y += CleanYfac;
 
 	text_bonus = GStrings((gameinfo.gametype & GAME_Raven) ? "SCORE_BONUS" : "SCORE_ITEMS");
-	text_color = GStrings("SCORE_COLOR");
 	text_secret = GStrings("SCORE_SECRET");
 	text_kills = GStrings("SCORE_KILLS");
 
-	icon_x = (SmallFont->StringWidth(text_color) + 8) * CleanXfac;
+	icon_x = 8 * CleanXfac;
 	name_x = icon_x + maxscorewidth * CleanXfac;
 	kills_x = name_x + (maxnamewidth + MAX(SmallFont->StringWidth("XXXXX"), SmallFont->StringWidth(text_kills)) + 8) * CleanXfac;
 	bonus_x = kills_x + ((bonus_len = SmallFont->StringWidth(text_bonus)) + 8) * CleanXfac;
@@ -1645,7 +1708,6 @@ void WI_drawNetgameStats ()
 
 	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
 
-	screen->DrawText(SmallFont, color, x, y, text_color, DTA_CleanNoMove, true, TAG_DONE);
 	screen->DrawText(SmallFont, color, name_x, y, GStrings("SCORE_NAME"), DTA_CleanNoMove, true, TAG_DONE);
 	screen->DrawText(SmallFont, color, kills_x - SmallFont->StringWidth(text_kills)*CleanXfac, y, text_kills, DTA_CleanNoMove, true, TAG_DONE);
 	screen->DrawText(SmallFont, color, bonus_x - bonus_len*CleanXfac, y, text_bonus, DTA_CleanNoMove, true, TAG_DONE);
@@ -1665,7 +1727,17 @@ void WI_drawNetgameStats ()
 			continue;
 
 		player = &players[i];
-		HU_DrawColorBar(x, y, lineheight, i);
+
+		D_GetPlayerColor(i, &h, &s, &v, NULL);
+		HSVtoRGB(&r, &g, &b, h, s, v);
+
+		screen->Dim(MAKERGB(clamp(int(r*255.f), 0, 255),
+			clamp(int(g*255.f), 0, 255),
+			clamp(int(b*255.f), 0, 255)), 0.8f, x, y - ypadding, (secret_x - x) + (8 * CleanXfac), lineheight);
+
+		if (playerready[i] || player->isbot) // Bots are automatically assumed ready, to prevent confusion
+			screen->DrawTexture(readyico, x - (readyico->GetWidth() * CleanXfac), y, DTA_CleanNoMove, true, TAG_DONE);
+
 		color = (EColorRange)HU_GetRowColor(player, i == consoleplayer);
 		if (player->mo->ScoreIcon.isValid())
 		{
@@ -1689,7 +1761,7 @@ void WI_drawNetgameStats ()
 	}
 
 	// Draw "MISSED" line
-	y += 5 * CleanYfac;
+	y += 3 * CleanYfac;
 	screen->DrawText(SmallFont, CR_DARKGRAY, name_x, y, GStrings("SCORE_MISSED"), DTA_CleanNoMove, true, TAG_DONE);
 	WI_drawPercent(SmallFont, kills_x, y, missed_kills, wbs->maxkills, false, CR_DARKGRAY);
 	if (ng_state >= 4)
@@ -1702,7 +1774,7 @@ void WI_drawNetgameStats ()
 	}
 
 	// Draw "TOTAL" line
-	y += height + 5 * CleanYfac;
+	y += height + 3 * CleanYfac;
 	color = (gameinfo.gametype & GAME_Raven) ? CR_GREEN : CR_UNTRANSLATED;
 	screen->DrawText(SmallFont, color, name_x, y, GStrings("SCORE_TOTAL"), DTA_CleanNoMove, true, TAG_DONE);
 	WI_drawNum(SmallFont, kills_x, y, wbs->maxkills, 0, false, color);
@@ -1939,6 +2011,7 @@ void WI_checkForAccelerate(void)
 					== players[i].oldbuttons) && !player->isbot)
 			{
 				acceleratestage = 1;
+				playerready[i] = true;
 			}
 			player->oldbuttons = player->cmd.ucmd.buttons;
 		}

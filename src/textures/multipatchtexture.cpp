@@ -268,14 +268,14 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 		if (unsigned(LittleShort(mpatch.d->patch)) >= unsigned(maxpatchnum))
 		{
 			I_FatalError ("Bad PNAMES and/or texture directory:\n\nPNAMES has %d entries, but\n%s wants to use entry %d.",
-				maxpatchnum, Name, LittleShort(mpatch.d->patch)+1);
+				maxpatchnum, Name.GetChars(), LittleShort(mpatch.d->patch)+1);
 		}
 		Parts[i].OriginX = LittleShort(mpatch.d->originx);
 		Parts[i].OriginY = LittleShort(mpatch.d->originy);
 		Parts[i].Texture = patchlookup[LittleShort(mpatch.d->patch)].Texture;
 		if (Parts[i].Texture == NULL)
 		{
-			Printf(TEXTCOLOR_RED "Unknown patch %s in texture %s\n", patchlookup[LittleShort(mpatch.d->patch)].Name, Name);
+			Printf(TEXTCOLOR_RED "Unknown patch %s in texture %s\n", patchlookup[LittleShort(mpatch.d->patch)].Name.GetChars(), Name.GetChars());
 			NumParts--;
 			i--;
 		}
@@ -290,7 +290,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	}
 	if (NumParts == 0)
 	{
-		Printf ("Texture %s is left without any patches\n", Name);
+		Printf ("Texture %s is left without any patches\n", Name.GetChars());
 	}
 
 	CheckForHacks ();
@@ -1023,7 +1023,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 	}
 	if (part.Texture == NULL)
 	{
-		if (!silent) Printf(TEXTCOLOR_RED "Unknown patch '%s' in texture '%s'\n", sc.String, Name);
+		if (!silent) Printf(TEXTCOLOR_RED "Unknown patch '%s' in texture '%s'\n", sc.String, Name.GetChars());
 	}
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();
@@ -1244,13 +1244,13 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			{
 				sc.MustGetFloat();
 				xScale = FLOAT2FIXED(sc.Float);
-				if (xScale == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name);
+				if (xScale == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name.GetChars());
 			}
 			else if (sc.Compare("YScale"))
 			{
 				sc.MustGetFloat();
 				yScale = FLOAT2FIXED(sc.Float);
-				if (yScale == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name);
+				if (yScale == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name.GetChars());
 			}
 			else if (sc.Compare("WorldPanning"))
 			{
@@ -1318,7 +1318,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 	if (Width <= 0 || Height <= 0)
 	{
 		UseType = FTexture::TEX_Null;
-		Printf("Texture %s has invalid dimensions (%d, %d)\n", Name, Width, Height);
+		Printf("Texture %s has invalid dimensions (%d, %d)\n", Name.GetChars(), Width, Height);
 		Width = Height = 1;
 	}
 	CalcBitSize ();

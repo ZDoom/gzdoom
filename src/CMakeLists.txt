@@ -789,6 +789,7 @@ add_executable( zdoom WIN32
 	c_bind.cpp
 	c_cmds.cpp
 	c_console.cpp
+	c_consolebuffer.cpp
 	c_cvars.cpp
 	c_dispatch.cpp
 	c_expr.cpp

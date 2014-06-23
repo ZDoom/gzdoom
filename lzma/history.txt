@@ -1,6 +1,14 @@
 HISTORY of the LZMA SDK
 -----------------------
 
+9.21 beta      2011-04-11
+-------------------------	
+- New class FString for file names at file systems.
+- Speed optimization in CRC code for big-endian CPUs.
+- The BUG in Lzma2Dec.c was fixed:
+    Lzma2Decode function didn't work.
+
+
 9.18 beta      2010-11-02
 -------------------------	
 - New small SFX module for installers (SfxSetup).

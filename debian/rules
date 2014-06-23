@@ -1,0 +1,49 @@
+#!/usr/bin/make -f
+
+fmodrevision = $(shell ls fmodapi444*linux.tar.gz | sed -e 's/fmodapi444//; s/linux.tar.gz//;')
+
+ifeq ($(DEB_HOST_ARCH), amd64)
+LIB64 = 64
+endif
+
+fmodpointversion = 4.44.$(fmodrevision)
+fmodversion = 444$(fmodrevision)
+fmoddirname = $(CURDIR)/fmodapi$(fmodversion)linux
+fmodlib = libfmodex$(LIB64)-$(fmodpointversion).so
+
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_configure:
+	rm -rf build fmodapi*linux
+	mkdir build
+	tar xvf fmodapi*linux.tar.gz
+
+	# FMOD ex doesn't have a soname entry. The linker will therefore use
+	# its filename to declare dependencies. Using a different filename allows
+	# manual library updates without re-linking the GZDoom binary.
+	cp $(fmoddirname)/api/lib/$(fmodlib) $(CURDIR)/build/libfmodex-4.44.so
+
+	cd build && cmake \
+	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_SKIP_RPATH=ON \
+	-DFORCE_INTERNAL_BZIP2=OFF \
+	-DFORCE_INTERNAL_GME=OFF \
+	-DFORCE_INTERNAL_JPEG=OFF \
+	-DFORCE_INTERNAL_ZLIB=OFF \
+	-DFMOD_LIBRARY=libfmodex-4.44.so \
+	-DFMOD_INCLUDE_DIR=$(fmoddirname)/api/inc/ $(CURDIR)
+
+override_dh_auto_build:
+	cd build && $(MAKE)
+
+override_dh_auto_install:
+	# will be handled by dh_install
+
+override_dh_shlibdeps:
+	dh_shlibdeps -l$(CURDIR)/debian/gzdoom/usr/lib/games/gzdoom
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz -z9

@@ -1,0 +1,46 @@
+Source: http://zdoom.org/wiki/License
+
+Build license
+    ZDoom borrows some elements from Ken Silverman's Build engine and tools, namely inline fixed point multiplication functions (mscinlines.h and gccinlines.h), some assembly code (asm_ia32/a.asm), the (unused) Polymost implementation (r_polymost.cpp), voxels rendering (r_things.cpp) and part of the decal and wall rendering code (r_segs.cpp, r_draw.cpp). The Build license is non-commercial only and requires the following text to be placed in the code: 
+
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+
+    Note that the code used to read Build-engine data is not itself derived from Build code. 
+Doom source license
+    This license prohibits commercial use. It naturally applies to all parts of the code originating from the Doom source code. Furthermore, the source code for Heretic and Hexen was released under Activision's standard EULA, which is inapplicable to source code. Kenn Hoekstra of Raven Software allowed to use the terms of the Doom source license instead. 
+
+“ 	Regarding the Heretic/Hexen source code: According to the licensing agreement that shipped with the game, you really can't do ANYTHING with the source code. The restrictions are such that you could never legally make a mod or distribute the code or modify it or ANYTHING without Raven and/or Activision dropping the elbow on you and causing you great bodily harm. This is a mistake. The bottom line about the Heretic/Hexen source code is that you can pretty much do anything with it that people did with the DOOM source code as long as you don't charge for it or use it to make money. 	”
+
+    All three games had their source code eventually re-released under the terms of the GPLv2, but ZDoom uses the older licensing scheme since the GPL is incompatible with other licenses used by parts of ZDoom; namely FMOD Ex, Build, and MAME. 
+    Note that many parts of Heretic and Hexen support were written before their source code was released, and are original independent work instead. 
+DUMB license
+    The foo_DUMB code is under the DUMB license. 
+FMOD Ex license
+    ZDoom's use of the FMOD Ex audio library is covered under the terms of the FMOD non-commercial license. The license also requires that the string "FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2011." be printed by the application (you see it during startup and in the console log). 
+GPL
+    The FraggleScript code is under the GPLv2. The GPL is normally incompatible with any non-commercial license (such as the FMOD and Build ones), and the code is therefore used with special permission from Simon Howard. Code from SMMU can be used in ZDoom or derived ports, as long as the source code remains open and the full copyright notice remains in place. 
+LGPL
+    Contrarily to the normal GPL, LGPL code can be used in non-commercial projects. Code under this license used in ZDoom include the internal TiMidity player (for GUS emulation), the Game Music Emu library, and the two OPL3 cores. 
+    In addition, GZDoom also includes LGPL code for the hqx algorithm. 
+MAME license
+    The OPL2 emulator is taken from the MAME project. Reuse of parts of MAME, as is the case in ZDoom, is under a non-commercial, open-source clause: 
+
+The source code cannot be used in a commercial product without the written
+authorization of the authors. Use in non-commercial products is allowed, and
+indeed encouraged.  If you use portions of the MAME source code in your
+program, however, you must make the full source code freely available as well.
+
+MUSLib license
+    OPL playback in ZDoom uses parts of the code from Vladimir Arnost's MUS File Player Library v1.75. This license allows use in freeware and shareware products; but prohibits use in non-shareware commercial products; unless Vladimir Arnost is first contacted and a licensing agreement negotiated with him. 
+Paul Hsieh derivative license
+    The hash function ZDoom uses for storing and retrieving names, found in c_dispatch.cpp, is based on Paul Hsieh's SuperFastHash algorithm. 
+ZDoom code license
+    Code original to ZDoom is under the 3-point modified BSD license. 
+    Since r128, the GZDoom OpenGL code adds two additional clauses to this license: if parts of this code is used outside of a GZDoom-derivative project, the terms of the LGPL applies instead; and in all cases the project must remain open source. 
+zlib license
+    ZDoom includes the zlib library by Jean-loup Gailly and Mark Adler and implements several ZIP decompression protocols. The concerned files are in the zlib subdirectory. The license requests the presence of the string "deflate 1.2.3 Copyright 1995-2005 Jean-loup Gailly." in the executable or the documentation. The rest of the conditions can be seen in zlib.h
+
+
+/usr/share/common-licenses

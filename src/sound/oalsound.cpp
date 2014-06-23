@@ -527,6 +527,8 @@ public:
 
 extern ReverbContainer *ForcedEnvironment;
 
+#define AREA_SOUND_RADIUS  (128.f)
+
 #define PITCH_MULT (0.7937005f) /* Approx. 4 semitones lower; what Nash suggested */
 
 #define PITCH(pitch) (snd_pitched ? (pitch)/128.f : 1.f)
@@ -1210,8 +1212,26 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
             float gain = GetRolloff(rolloff, sqrt(dist_sqr) * distscale);
             dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
+        if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
+        {
+            FVector3 near(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
+            float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
+            dir = near + (dir-near)*a;
+        }
         dir += listener->position;
 
+        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+    }
+    else if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
+    {
+        FVector3 dir = pos - listener->position;
+
+        float mindist = rolloff->MinDistance/distscale;
+        FVector3 near(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
+        float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
+        dir = near + (dir-near)*a;
+
+        dir += listener->position;
         alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
     }
     else
@@ -1425,7 +1445,6 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     FVector3 dir = pos - listener->position;
     chan->DistanceSqr = dir.LengthSquared();
 
-    ALuint source = GET_PTRID(chan->SysChannel);
     if(chan->ManualRolloff)
     {
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
@@ -1433,12 +1452,24 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
             float gain = GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr) * chan->DistanceScale);
             dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
-        dir += listener->position;
-
-        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
+        {
+            FVector3 near(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
+            float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
+            dir = near + (dir-near)*a;
+        }
     }
-    else
-        alSource3f(source, AL_POSITION, pos[0], pos[1], -pos[2]);
+    else if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
+    {
+        float mindist = chan->Rolloff.MinDistance / chan->DistanceScale;
+        FVector3 near(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
+        float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
+        dir = near + (dir-near)*a;
+    }
+    dir += listener->position;
+
+    ALuint source = GET_PTRID(chan->SysChannel);
+    alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     getALError();
 }

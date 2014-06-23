@@ -249,14 +249,14 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 		shader = new FShader(ShaderName);
 		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str))
 		{
-			I_Error("Unable to load shader %s\n", ShaderName);
+			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
 	}
 	catch(CRecoverableError &err)
 	{
 		if (shader != NULL) delete shader;
 		shader = NULL;
-		I_Error("Unable to load shader %s:\n%s\n", ShaderName, err.GetMessage());
+		I_FatalError("Unable to load shader %s:\n%s\n", ShaderName, err.GetMessage());
 	}
 	return shader;
 }
@@ -341,42 +341,32 @@ FShaderManager::~FShaderManager()
 
 void FShaderManager::CompileShaders()
 {
-	try
+	mActiveShader = mEffectShaders[0] = mEffectShaders[1] = NULL;
+
+	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		mActiveShader = mEffectShaders[0] = mEffectShaders[1] = NULL;
-		for (int i = 0; defaultshaders[i].ShaderName != NULL; i++)
-		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc);
-			mTextureEffects.Push(shc);
-		}
-
-		for (unsigned i = 0; i < usershaders.Size(); i++)
-		{
-			FString name = ExtractFileBase(usershaders[i]);
-			FName sfn = name;
-
-			FShader *shc = Compile(sfn, usershaders[i]);
-			mTextureEffects.Push(shc);
-		}
-
-		for (int i = 0; i < MAX_EFFECTS; i++)
-		{
-			FShader *eff = new FShader(effectshaders[i].ShaderName);
-			if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-				effectshaders[i].fp2, effectshaders[i].defines))
-			{
-				delete eff;
-			}
-			else mEffectShaders[i] = eff;
-		}
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc);
+		mTextureEffects.Push(shc);
 	}
-	catch (CRecoverableError &err)
+
+	for(unsigned i = 0; i < usershaders.Size(); i++)
 	{
-		// If shader compilation failed we can still run the fixed function mode so do that instead of aborting.
-		Printf("%s\n", err.GetMessage());
-		Printf(PRINT_HIGH, "Failed to compile shaders. Reverting to fixed function mode\n");
-		gl.glslversion = 0.0;
-		gl.flags &= ~RFL_BUFFER_STORAGE;
+		FString name = ExtractFileBase(usershaders[i]);
+		FName sfn = name;
+
+		FShader *shc = Compile(sfn, usershaders[i]);
+		mTextureEffects.Push(shc);
+	}
+
+	for(int i=0;i<MAX_EFFECTS;i++)
+	{
+		FShader *eff = new FShader(effectshaders[i].ShaderName);
+		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
+						effectshaders[i].fp2, effectshaders[i].defines))
+		{
+			delete eff;
+		}
+		else mEffectShaders[i] = eff;
 	}
 }
 
@@ -458,6 +448,9 @@ void FShaderManager::SetWarpSpeed(unsigned int eff, float speed)
 	}
 }
 
+//==========================================================================
+//
+//
 //
 //==========================================================================
 

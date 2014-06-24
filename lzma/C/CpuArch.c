@@ -3,10 +3,6 @@
 
 #include "CpuArch.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #ifdef MY_CPU_X86_OR_AMD64
 
 #if (defined(_MSC_VER) && !defined(MY_CPU_AMD64)) || defined(__GNUC__)
@@ -74,23 +70,7 @@ static void MyCPUID(UInt32 function, UInt32 *a, UInt32 *b, UInt32 *c, UInt32 *d)
   *c = c2;
   *d = d2;
 
-  #elif __PIC__
-
-  /* GCC or Clang WITH position-independent code generation */
-
-  __asm__ __volatile__ (
-    "xchgl %%ebx, %1\n"
-    "cpuid\n"
-    "xchgl %%ebx, %1\n"
-    : "=a" (*a) ,
-      "=r" (*b) ,
-      "=c" (*c) ,
-      "=d" (*d)
-    : "0" (function)) ;
-	
   #else
-
-  /* GCC or Clang WITHOUT position-independent code generation */
 
   __asm__ __volatile__ (
     "cpuid"

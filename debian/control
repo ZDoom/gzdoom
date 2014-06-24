@@ -1,0 +1,31 @@
+Source: gzdoom
+Section: games
+Priority: optional
+Maintainer: Marshall Banana <djcj@gmx.de>
+Build-Depends: debhelper (>= 9),
+               cmake,
+               libbz2-dev,
+               libfluidsynth-dev,
+               libglew-dev,
+               libgtk2.0-dev,
+               libjpeg-dev,
+               libsdl1.2-dev,
+               zlib1g-dev
+Standards-Version: 3.9.5
+Vcs-Git: https://github.com/coelckers/gzdoom.git
+Vcs-Browser: https://github.com/coelckers/gzdoom
+Homepage: http://www.osnanet.de/c.oelckers/gzdoom/
+
+Package: gzdoom
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         zenity
+Description: OpenGL Doom engine
+ This is a Doom source port based on ZDoom. It features an
+ OpenGL renderer and lots of new features, among them:
+   - 3D floors
+   - Dynamic lights
+   - Quake2/Unreal style skyboxes
+   - True color texture support
+   - Model support (limited at the moment)

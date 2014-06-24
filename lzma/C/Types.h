@@ -6,6 +6,10 @@
 
 #include <stddef.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #ifndef EXTERN_C_BEGIN
 #ifdef __cplusplus
 #define EXTERN_C_BEGIN extern "C" {
@@ -38,12 +42,14 @@ EXTERN_C_BEGIN
 
 typedef int SRes;
 
-#ifndef RINOK
-#define RINOK(x) { int __result__ = (x); if (__result__ != 0) return __result__; }
+#ifdef _WIN32
+typedef DWORD WRes;
+#else
+typedef int WRes;
 #endif
 
-#if defined(__APPLE__) && !__LP64__
-#define _LZMA_UINT32_IS_ULONG
+#ifndef RINOK
+#define RINOK(x) { int __result__ = (x); if (__result__ != 0) return __result__; }
 #endif
 
 typedef unsigned char Byte;

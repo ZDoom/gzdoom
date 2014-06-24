@@ -1,0 +1,12 @@
+gzdoom (1.8.5+git20140619-1~precise) precise; urgency=low
+
+  * Git snapshot
+  * Update lzma code
+
+ -- Marshall Banana <djcj@gmx.de>  Mon, 23 Jun 2014 14:49:28 +0200
+
+gzdoom (1.8.5) precise; urgency=low
+
+  * Initial release
+
+ -- Marshall Banana <djcj@gmx.de>  Sun, 22 Jun 2014 16:25:11 +0200

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=GZDoom
+GenericName=Doom Engine
+Exec=gzdoom
+Type=Application
+Categories=Game;
+StartupNotify=true
+Icon=gzdoom

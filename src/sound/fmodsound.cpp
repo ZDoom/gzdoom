@@ -1621,15 +1621,13 @@ static void SetCustomLoopPts(FMOD::Sound *sound)
 
 static FMOD_RESULT F_CALLBACK open_reader_callback(const char *name, int unicode, unsigned int *filesize, void **handle, void **userdata)
 {
-    char *endptr = NULL;
-    QWORD val = strtoull(name, &endptr, 0);
-    if(!endptr || *endptr != '\0')
+    FileReader *reader = NULL;
+    if(sscanf(name, "_FileReader_%p", &reader) != 1)
     {
         Printf("Invalid name in callback: %s\n", name);
         return FMOD_ERR_FILE_NOTFOUND;
     }
 
-    FileReader *reader = reinterpret_cast<FileReader*>((uintptr_t)val);
     *filesize = reader->GetLength();
     *handle = reader;
     *userdata = reader;
@@ -1702,7 +1700,7 @@ SoundStream *FMODSoundRenderer::OpenStream(std::auto_ptr<FileReader> reader, int
         exinfo.dlsname = patches;
     }
 
-    name.Format("0x%I64x", (QWORD)reader.get());
+    name.Format("_FileReader_%p", reader.get());
     result = Sys->createSound(name, mode, &exinfo, &stream);
     if(result == FMOD_ERR_FORMAT && exinfo.dlsname != NULL)
     {

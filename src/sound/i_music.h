@@ -34,6 +34,8 @@
 #ifndef __I_MUSIC_H__
 #define __I_MUSIC_H__
 
+#include <memory>
+
 #include "doomdef.h"
 
 class FileReader;
@@ -52,7 +54,7 @@ void I_SetMusicVolume (float volume);
 
 // Registers a song handle to song data.
 class MusInfo;
-MusInfo *I_RegisterSong (const char *file, BYTE *musiccache, int offset, int length, int device);
+MusInfo *I_RegisterSong (std::auto_ptr<FileReader> reader, int device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 MusInfo *I_RegisterURLSong (const char *url);
 

@@ -52,29 +52,22 @@ void OPLmusicBlock::Restart()
 	LastOffset = 0;
 }
 
-OPLmusicFile::OPLmusicFile (FILE *file, BYTE *musiccache, int len)
-	: ScoreLen (len)
+OPLmusicFile::OPLmusicFile (FileReader *reader)
+	: ScoreLen (reader->GetLength())
 {
 	if (io == NULL)
 	{
 		return;
 	}
 
-	scoredata = new BYTE[len];
+	scoredata = new BYTE[ScoreLen];
 
-	if (file)
-	{
-		if (fread (scoredata, 1, len, file) != (size_t)len)
-		{
-fail:		delete[] scoredata;
-			scoredata = NULL;
-			return;
-		}
-	}
-	else
-	{
-		memcpy(scoredata, &musiccache[0], len);
-	}
+    if (reader->Read(scoredata, ScoreLen) != ScoreLen)
+    {
+fail:	delete[] scoredata;
+        scoredata = NULL;
+        return;
+    }
 
 	if (0 == (NumChips = io->OPLinit(NumChips)))
 	{
@@ -100,7 +93,7 @@ fail:		delete[] scoredata;
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
-			ScoreLen = MIN<int>(len - 24, LittleLong(((DWORD *)scoredata)[4])) + 24;
+			ScoreLen = MIN<int>(ScoreLen - 24, LittleLong(((DWORD *)scoredata)[4])) + 24;
 		}
 		else if (((DWORD *)scoredata)[2] == MAKE_ID(2,0,0,0))
 		{
@@ -120,7 +113,7 @@ fail:		delete[] scoredata;
 			RawPlayer = DosBox2;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
 			int headersize = 0x1A + scoredata[0x19];
-			ScoreLen = MIN<int>(len - headersize, LittleLong(((DWORD *)scoredata)[3]) * 2) + headersize;
+			ScoreLen = MIN<int>(ScoreLen - headersize, LittleLong(((DWORD *)scoredata)[3]) * 2) + headersize;
 		}
 		else
 		{

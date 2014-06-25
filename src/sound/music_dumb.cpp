@@ -30,6 +30,7 @@
 #include "c_cvars.h"
 #include "i_sound.h"
 #include "i_system.h"
+#include "files.h"
 
 #undef CDECL	// w32api's windef.h defines this
 #include "../dumb/include/dumb.h"
@@ -512,31 +513,24 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FILE *file, BYTE *musiccache, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, std::auto_ptr<FileReader> &reader, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
 	if (lenhave >= lenfull)
-	{
 		filestate->ptr = (BYTE *)start;
-		return dumbfile_open_ex(filestate, &mem_dfs);
-	}
-	if (musiccache != NULL)
-	{
-		filestate->ptr = (BYTE *)musiccache;
-	}
-	else
-	{
-		BYTE *mem = new BYTE[lenfull];
-		memcpy(mem, start, lenhave);
-		if (fread(mem + lenhave, 1, lenfull - lenhave, file) != (size_t)(lenfull - lenhave))
-		{
-			delete[] mem;
-			return NULL;
-		}
-		filestate->ptr = mem;
-	}
-	return dumbfile_open_ex(filestate, &mem_dfs);
+    else
+    {
+        BYTE *mem = new BYTE[lenfull];
+        memcpy(mem, start, lenhave);
+        if (reader->Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
+        {
+            delete[] mem;
+            return NULL;
+        }
+        filestate->ptr = mem;
+    }
+    return dumbfile_open_ex(filestate, &mem_dfs);
 }
 
 //==========================================================================
@@ -856,7 +850,7 @@ static void MOD_SetAutoChip(DUH *duh)
 //
 //==========================================================================
 
-MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
+MusInfo *MOD_OpenSong(std::auto_ptr<FileReader> &reader)
 {
 	DUH *duh = 0;
 	int headsize;
@@ -880,40 +874,36 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 
 	atterm(dumb_exit);
 
+    int size = reader->GetLength();
+    fpos = reader->Tell();
+
 	filestate.ptr = start;
 	filestate.offset = 0;
 	headsize = MIN((int)sizeof(start), size);
-	if (musiccache != NULL)
-	{
-		memcpy(start, musiccache, headsize);
-	}
-	else
-	{
-		fpos = ftell(file);
-		if ((size_t)headsize != fread(start, 1, headsize, file))
-		{
-			return NULL;
-		}
-	}
+
+    if (headsize != reader->Read(start, headsize))
+    {
+        return NULL;
+    }
 
 	if (size >= 4 && dstart[0] == MAKE_ID('I','M','P','M'))
 	{
 		is_it = true;
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_it_quick(f);
 		}
 	}
 	else if (size >= 17 && !memcmp(start, "Extended Module: ", 17))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_xm_quick(f);
 		}
 	}
 	else if (size >= 0x30 && dstart[11] == MAKE_ID('S','C','R','M'))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_s3m_quick(f);
 		}
@@ -924,7 +914,7 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		  !memcmp( &start[20], "BMOD2STM", 8 ) ||
 		  !memcmp( &start[20], "WUZAMOD!", 8 ) ) )
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_stm_quick(f);
 		}
@@ -933,21 +923,21 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		((start[0] == 0x69 && start[1] == 0x66) ||
 		 (start[0] == 0x4A && start[1] == 0x4E)))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_669_quick(f);
 		}
 	}
 	else if (size >= 0x30 && dstart[11] == MAKE_ID('P','T','M','F'))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_ptm_quick(f);
 		}
 	}
 	else if (size >= 4 && dstart[0] == MAKE_ID('P','S','M',' '))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_psm_quick(f, 0/*start_order*/);
 			/*start_order = 0;*/
@@ -955,14 +945,14 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 	}
 	else if (size >= 4 && dstart[0] == (DWORD)MAKE_ID('P','S','M',254))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_old_psm_quick(f);
 		}
 	}
 	else if (size >= 3 && start[0] == 'M' && start[1] == 'T' && start[2] == 'M')
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_mtm_quick(f);
 		}
@@ -972,7 +962,7 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		 dstart[2] == MAKE_ID('A','M',' ',' ') ||
 		 dstart[2] == MAKE_ID('A','M','F','F')))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_riff_quick(f);
 		}
@@ -981,7 +971,7 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		!memcmp( start, "ASYLUM Music Format", 19 ) &&
 		!memcmp( start + 19, " V1.0", 5 ) )
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_asy_quick(f);
 		}
@@ -990,7 +980,7 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		dstart[0] == MAKE_ID('O','K','T','A') &&
 		dstart[1] == MAKE_ID('S','O','N','G'))
 	{
-		if ((f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_okt_quick(f);
 		}
@@ -1001,12 +991,9 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 		is_dos = false;
 		if (filestate.ptr == (BYTE *)start)
 		{
-			if (!(f = dumb_read_allfile(&filestate, start, file, musiccache, headsize, size)))
+			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
-				if (file != NULL)
-				{
-					fseek(file, fpos, SEEK_SET);
-				}
+                reader->Seek(fpos, SEEK_SET);
 				return NULL;
 			}
 		}
@@ -1053,15 +1040,13 @@ MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int size)
 	else
 	{
 		// Reposition file pointer for other codecs to do their checks.
-		if (file != NULL)
-		{
-			fseek(file, fpos, SEEK_SET);
-		}
+        reader->Seek(fpos, SEEK_SET);
 	}
-	if (filestate.ptr != (BYTE *)start && filestate.ptr != musiccache)
+	if (filestate.ptr != (BYTE *)start)
 	{
 		delete[] const_cast<BYTE *>(filestate.ptr);
 	}
+	if(state) reader.reset();
 	return state;
 }
 

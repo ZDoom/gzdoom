@@ -7,6 +7,8 @@
 #include "basictypes.h"
 #include "vectors.h"
 
+class FileReader;
+
 // For convenience, this structure matches FMOD_REVERB_PROPERTIES.
 // Since I can't very well #include system-specific stuff in the
 // main game files, I duplicate it here.
@@ -129,8 +131,7 @@ struct SoundDecoder
     virtual ~SoundDecoder() { }
 
 protected:
-    virtual bool open(const char *data, size_t length) = 0;
-    virtual bool open(const char *fname, size_t offset, size_t length) = 0;
+    virtual bool open(FileReader *reader) = 0;
     friend class SoundRenderer;
 
 private:

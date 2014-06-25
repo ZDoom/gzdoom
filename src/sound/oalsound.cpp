@@ -156,6 +156,7 @@ class OpenALSoundStream : public SoundStream
     ALfloat Volume;
 
 
+    std::auto_ptr<FileReader> Reader;
     std::vector<BYTE> DecoderData;
     std::auto_ptr<SoundDecoder> Decoder;
     static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
@@ -440,54 +441,13 @@ public:
         return true;
     }
 
-    bool Init(const char *fname, int offset, int length, bool loop)
+    bool Init(std::auto_ptr<FileReader> reader, bool loop)
     {
         if(!SetupSource())
             return false;
 
-        Decoder.reset(Renderer->CreateDecoder(fname, offset, length));
-        if(!Decoder.get()) return false;
-
-        Callback = DecoderCallback;
-        UserData = NULL;
-        Format = AL_NONE;
-
-        ChannelConfig chans;
-        SampleType type;
-        int srate;
-
-        Decoder->getInfo(&srate, &chans, &type);
-        if(chans == ChannelConfig_Mono)
-        {
-            if(type == SampleType_UInt8) Format = AL_FORMAT_MONO8;
-            if(type == SampleType_Int16) Format = AL_FORMAT_MONO16;
-        }
-        if(chans == ChannelConfig_Stereo)
-        {
-            if(type == SampleType_UInt8) Format = AL_FORMAT_STEREO8;
-            if(type == SampleType_Int16) Format = AL_FORMAT_STEREO16;
-        }
-
-        if(Format == AL_NONE)
-        {
-            Printf("Unsupported audio format (0x%x / 0x%x)\n", chans, type);
-            return false;
-        }
-        SampleRate = srate;
-        Looping = loop;
-
-        Data.resize((size_t)(0.2 * SampleRate) * 4);
-
-        return true;
-    }
-
-    bool Init(const BYTE *data, int length, bool loop)
-    {
-        if(!SetupSource())
-            return false;
-
-        DecoderData.insert(DecoderData.end(), data, data+length);
-        Decoder.reset(Renderer->CreateDecoder(&DecoderData[0], DecoderData.size()));
+        Reader = reader;
+        Decoder.reset(Renderer->CreateDecoder(Reader.get()));
         if(!Decoder.get()) return false;
 
         Callback = DecoderCallback;
@@ -949,12 +909,13 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
 SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 {
     SoundHandle retval = { NULL };
+    MemoryReader reader((const char*)sfxdata, length);
     ALenum format = AL_NONE;
     ChannelConfig chans;
     SampleType type;
     int srate;
 
-    std::auto_ptr<SoundDecoder> decoder(CreateDecoder(sfxdata, length));
+    std::auto_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
     if(!decoder.get()) return retval;
 
     decoder->getInfo(&srate, &chans, &type);
@@ -1031,15 +992,12 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
     return stream.release();
 }
 
-SoundStream *OpenALSoundRenderer::OpenStream(const char *filename, int flags, int offset, int length)
+SoundStream *OpenALSoundRenderer::OpenStream(std::auto_ptr<FileReader> reader, int flags)
 {
     std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
 
-    bool loop = (flags&SoundStream::Loop);
-    bool ok = ((offset == -1) ? stream->Init((const BYTE*)filename, length, loop) :
-                                stream->Init(filename, offset, length, loop));
-    if(ok == false)
-        return NULL;
+    bool ok = stream->Init(reader, (flags&SoundStream::Loop));
+    if(ok == false) return NULL;
 
     return stream.release();
 }

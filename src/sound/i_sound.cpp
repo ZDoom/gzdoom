@@ -172,7 +172,7 @@ public:
 	{
 		return NULL;
 	}
-	SoundStream *OpenStream (const char *filename, int flags, int offset, int length)
+	SoundStream *OpenStream (std::auto_ptr<FileReader> reader, int flags)
 	{
 		return NULL;
 	}
@@ -344,12 +344,13 @@ FString SoundRenderer::GatherStats ()
 
 short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
 {
+    MemoryReader reader((const char*)coded, sizebytes);
     short *samples = (short*)calloc(1, outlen);
     ChannelConfig chans;
     SampleType type;
     int srate;
 
-    std::auto_ptr<SoundDecoder> decoder(CreateDecoder((const BYTE*)coded, sizebytes));
+    std::auto_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
     if(!decoder.get()) return samples;
 
     decoder->getInfo(&srate, &chans, &type);
@@ -540,44 +541,30 @@ SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
 	return retval;
 }
 
-
-SoundDecoder *SoundRenderer::CreateDecoder(const BYTE *sfxdata, int length)
+SoundStream *SoundRenderer::OpenStream(const char *url, int flags)
 {
-    SoundDecoder *decoder = NULL;
-#ifdef HAVE_MPG123
-    decoder = new MPG123Decoder;
-    if(decoder->open((const char*)sfxdata, length))
-        return decoder;
-
-    delete decoder;
-    decoder = NULL;
-#endif
-#ifdef HAVE_SNDFILE
-    decoder = new SndFileDecoder;
-    if(decoder->open((const char*)sfxdata, length))
-        return decoder;
-
-    delete decoder;
-    decoder = NULL;
-#endif
-    return decoder;
+    return 0;
 }
 
-SoundDecoder* SoundRenderer::CreateDecoder(const char *fname, int offset, int length)
+SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
 {
     SoundDecoder *decoder = NULL;
+    int pos = reader->Tell();
+
 #ifdef HAVE_MPG123
     decoder = new MPG123Decoder;
-    if(decoder->open(fname, offset, length))
+    if(decoder->open(reader))
         return decoder;
+    reader->Seek(pos, SEEK_SET);
 
     delete decoder;
     decoder = NULL;
 #endif
 #ifdef HAVE_SNDFILE
     decoder = new SndFileDecoder;
-    if(decoder->open(fname, offset, length))
+    if(decoder->open(reader))
         return decoder;
+    reader->Seek(pos, SEEK_SET);
 
     delete decoder;
     decoder = NULL;

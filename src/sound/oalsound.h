@@ -82,7 +82,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata);
-	virtual SoundStream *OpenStream(const char *filename, int flags, int offset, int length);
+	virtual SoundStream *OpenStream(std::auto_ptr<FileReader> reader, int flags);
 
 	// Starts a sound.
 	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);

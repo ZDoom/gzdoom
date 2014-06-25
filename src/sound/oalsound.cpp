@@ -303,8 +303,21 @@ public:
         return (getALError()==AL_NO_ERROR);
     }
 
+    virtual bool SetPosition(unsigned int ms_pos)
+    {
+        if(!Decoder->seek(ms_pos))
+            return false;
+
+        alSourceStop(Source);
+        getALError();
+        return true;
+    }
+
     virtual unsigned int GetPosition()
-    { return 0; }
+    {
+        // FIXME: Decoder position - amount buffered + source offset
+        return 0;
+    }
 
     virtual bool IsEnded()
     {

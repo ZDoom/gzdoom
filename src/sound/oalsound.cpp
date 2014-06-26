@@ -323,6 +323,8 @@ public:
         if(!Decoder->seek(ms_pos))
             return false;
 
+        if(!Playing)
+            return true;
         // Stop the source so that all buffers become processed, then call
         // IsEnded() to refill and restart the source queue with the new
         // position.

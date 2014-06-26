@@ -1326,7 +1326,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			}
 			// If the sound is raw, just load it as such.
 			// Otherwise, try the sound as DMX format.
-			// If that fails, let FMOD try and figure it out.
+			// If that fails, let the sound system try and figure it out.
 			else if (sfx->bLoadRAW ||
 				(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
 			{

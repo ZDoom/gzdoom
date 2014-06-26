@@ -235,24 +235,24 @@ FString PseudoMIDIDevice::GetStats()
 
 //==========================================================================
 //
-// FMODMIDIDevice :: Open
+// SndSysMIDIDevice :: Open
 //
 //==========================================================================
 
-int FMODMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int SndSysMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
 	return 0;
 }
 
 //==========================================================================
 //
-// FMODMIDIDevice :: Preprocess
+// SndSysMIDIDevice :: Preprocess
 //
 // Create a standard MIDI file and stream it.
 //
 //==========================================================================
 
-bool FMODMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
+bool SndSysMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
     std::auto_ptr<MemoryArrayReader> reader(new MemoryArrayReader(NULL, 0));
     song->CreateSMF(reader->GetArray(), looping ? 0 : 1);

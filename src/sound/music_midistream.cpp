@@ -214,13 +214,13 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 			- if explicitly selected by $mididevice 
 			- when snd_mididevice  is -2 and no midi device is set for the song
 
-		- FMod:
+		- Sound System:
 			- if explicitly selected by $mididevice 
 			- when snd_mididevice  is -1 and no midi device is set for the song
 			- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
 
 		- MMAPI (Win32 only):
-			- if explicitly selected by $mididevice (non-Win32 redirects this to FMOD)
+			- if explicitly selected by $mididevice (non-Win32 redirects this to Sound System)
 			- when snd_mididevice  is >= 0 and no midi device is set for the song
 			- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
 	*/
@@ -232,7 +232,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	}
 	switch (snd_mididevice)
 	{
-	case -1:		return MDEV_FMOD;
+	case -1:		return MDEV_SNDSYS;
 	case -2:		return MDEV_TIMIDITY;
 	case -3:		return MDEV_OPL;
 	case -4:		return MDEV_GUS;
@@ -243,7 +243,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 		#ifdef _WIN32
 					return MDEV_MMAPI;
 		#else
-					return MDEV_FMOD;
+					return MDEV_SNDSYS;
 		#endif
 	}
 }
@@ -270,8 +270,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		return new FluidSynthMIDIDevice;
 #endif
 
-	case MDEV_FMOD:
-		return new FMODMIDIDevice;
+	case MDEV_SNDSYS:
+		return new SndSysMIDIDevice;
 
 	case MDEV_GUS:
 		return new TimidityMIDIDevice;

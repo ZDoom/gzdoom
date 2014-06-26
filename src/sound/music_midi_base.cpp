@@ -33,7 +33,7 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 	pair[p+1].Value = -3.0;
 	pair[p+2].Text = "TiMidity++";
 	pair[p+2].Value = -2.0;
-	pair[p+3].Text = "FMOD";
+	pair[p+3].Text = "Sound System";
 	pair[p+3].Value = -1.0;
 
 }

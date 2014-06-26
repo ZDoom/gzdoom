@@ -1526,7 +1526,7 @@ OptionMenu AdvSoundOptions
 
 OptionValue ModReplayers
 {
-	0.0, "FMOD"
+	0.0, "Sound System"
 	1.0, "foo_dumb"
 }
 

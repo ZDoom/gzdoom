@@ -1004,8 +1004,8 @@ MusInfo *MOD_OpenSong(std::auto_ptr<FileReader> &reader)
 		// No way to get the filename, so we can't check for a .mod extension, and
 		// therefore, trying to load an old 15-instrument SoundTracker module is not
 		// safe. We'll restrict MOD loading to 31-instrument modules with known
-		// signatures and let FMOD worry about 15-instrument ones. (Assuming it even
-		// supports them; I have not checked.)
+		// signatures and let the sound system worry about 15-instrument ones.
+		// (Assuming it even supports them)
 		duh = dumb_read_mod_quick(f, TRUE);
 	}
 

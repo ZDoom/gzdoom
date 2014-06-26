@@ -128,6 +128,7 @@ private:
     } ALC;
     struct {
         bool EXT_source_distance_model;
+        bool SOFT_deferred_updates;
         bool SOFT_loop_points;
     } AL;
 
@@ -171,6 +172,8 @@ private:
 	LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
 	LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
 
+    ALvoid (AL_APIENTRY*alDeferUpdatesSOFT)(void);
+    ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
 
 	void LoadReverb(const ReverbContainer *env);
 	void PurgeStoppedSources();

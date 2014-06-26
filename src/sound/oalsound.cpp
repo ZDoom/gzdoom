@@ -135,6 +135,20 @@ static ALCenum checkALCError(ALCdevice *device, const char *fn, unsigned int ln)
 #define getALCError(d) checkALCError((d), __FILE__, __LINE__)
 
 
+// Fallback methods for when AL_SOFT_deferred_updates isn't available. In most
+// cases these don't actually do anything, except on some Creative drivers
+// where they act as appropriate fallbacks.
+static ALvoid AL_APIENTRY _wrap_DeferUpdatesSOFT(void)
+{
+    alcSuspendContext(alcGetCurrentContext());
+}
+
+static ALvoid AL_APIENTRY _wrap_ProcessUpdatesSOFT(void)
+{
+    alcProcessContext(alcGetCurrentContext());
+}
+
+
 class OpenALSoundStream : public SoundStream
 {
     OpenALSoundRenderer *Renderer;
@@ -579,6 +593,7 @@ template<typename T>
 static void LoadALFunc(const char *name, T *x)
 { *x = reinterpret_cast<T>(alGetProcAddress(name)); }
 
+#define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
 OpenALSoundRenderer::OpenALSoundRenderer()
     : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
 {
@@ -652,6 +667,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     ALC.EXT_EFX = alcIsExtensionPresent(Device, "ALC_EXT_EFX");
     ALC.EXT_disconnect = alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
     AL.EXT_source_distance_model = alIsExtensionPresent("AL_EXT_source_distance_model");
+    AL.SOFT_deferred_updates = alIsExtensionPresent("AL_SOFT_deferred_updates");
     AL.SOFT_loop_points = alIsExtensionPresent("AL_SOFT_loop_points");
 
     alDopplerFactor(0.5f);
@@ -659,6 +675,17 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     alDistanceModel(AL_INVERSE_DISTANCE);
     if(AL.EXT_source_distance_model)
         alEnable(AL_SOURCE_DISTANCE_MODEL);
+
+    if(AL.SOFT_deferred_updates)
+    {
+        LOAD_FUNC(alDeferUpdatesSOFT);
+        LOAD_FUNC(alProcessUpdatesSOFT);
+    }
+    else
+    {
+        alDeferUpdatesSOFT = _wrap_DeferUpdatesSOFT;
+        alProcessUpdatesSOFT = _wrap_ProcessUpdatesSOFT;
+    }
 
     ALenum err = getALError();
     if(err != AL_NO_ERROR)
@@ -703,7 +730,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     if(*snd_efx && ALC.EXT_EFX)
     {
         // EFX function pointers
-#define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
         LOAD_FUNC(alGenEffects);
         LOAD_FUNC(alDeleteEffects);
         LOAD_FUNC(alIsEffect);
@@ -739,7 +765,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
         LOAD_FUNC(alGetAuxiliaryEffectSlotiv);
         LOAD_FUNC(alGetAuxiliaryEffectSlotf);
         LOAD_FUNC(alGetAuxiliaryEffectSlotfv);
-#undef LOAD_FUNC
         if(getALError() == AL_NO_ERROR)
         {
             ALuint envReverb;
@@ -788,6 +813,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     if(EnvSlot)
         Printf("  EFX enabled\n");
 }
+#undef LOAD_FUNC
 
 OpenALSoundRenderer::~OpenALSoundRenderer()
 {
@@ -838,7 +864,7 @@ void OpenALSoundRenderer::SetSfxVolume(float volume)
             ALuint source = GET_PTRID(schan->SysChannel);
             volume = SfxVolume;
 
-            alcSuspendContext(Context);
+            alDeferUpdatesSOFT();
             alSourcef(source, AL_MAX_GAIN, volume);
             alSourcef(source, AL_GAIN, volume * schan->Volume);
         }
@@ -1330,7 +1356,7 @@ void OpenALSoundRenderer::ChannelVolume(FISoundChannel *chan, float volume)
     if(chan == NULL || chan->SysChannel == NULL)
         return;
 
-    alcSuspendContext(Context);
+    alDeferUpdatesSOFT();
 
     ALuint source = GET_PTRID(chan->SysChannel);
     alSourcef(source, AL_GAIN, SfxVolume * volume);
@@ -1456,7 +1482,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     if(chan == NULL || chan->SysChannel == NULL)
         return;
 
-    alcSuspendContext(Context);
+    alDeferUpdatesSOFT();
 
     FVector3 dir = pos - listener->position;
     chan->DistanceSqr = dir.LengthSquared();
@@ -1495,7 +1521,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
     if(!listener->valid)
         return;
 
-    alcSuspendContext(Context);
+    alDeferUpdatesSOFT();
 
     float angle = listener->angle;
     ALfloat orient[6];
@@ -1593,7 +1619,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 
 void OpenALSoundRenderer::UpdateSounds()
 {
-    alcProcessContext(Context);
+    alProcessUpdatesSOFT();
 
     // For some reason this isn't being called?
     foreach(SoundStream*, stream, Streams)

@@ -32,7 +32,9 @@
 **
 **
 */
+#ifdef _WIN32
 #define USE_WINDOWS_DWORD
+#endif
 
 #include "7z.h"
 #include "7zCrc.h"

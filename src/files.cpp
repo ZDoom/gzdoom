@@ -33,7 +33,9 @@
 **
 */
 
+#ifdef _WIN32
 #define USE_WINDOWS_DWORD
+#endif
 #include "LzmaDec.h"
 
 #include "files.h"

@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 
 DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 {
-	int i;
+	unsigned int i;
 	AActor *tiny;
 	angle_t angle;
 

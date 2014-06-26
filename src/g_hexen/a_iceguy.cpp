@@ -125,7 +125,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 {
 	AActor *mo;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < 8; i++)
 	{

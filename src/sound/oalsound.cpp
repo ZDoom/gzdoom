@@ -388,12 +388,12 @@ public:
     FString GetStats()
     {
         FString stats;
+        size_t pos, len;
         ALfloat volume;
         ALint offset;
         ALint processed;
         ALint queued;
         ALint state;
-        size_t pos;
         ALenum err;
 
         alGetSourcef(Source, AL_GAIN, &volume);
@@ -412,16 +412,22 @@ public:
                 (state == AL_PLAYING || state == AL_PAUSED) ? "Ready" : "Unknown state";
 
         pos = Decoder->getSampleOffset();
+        len = Decoder->getSampleLength();
         if(state == AL_STOPPED)
             offset = BufferCount * (Data.size()/FrameSize);
         else
         {
             size_t rem = queued*(Data.size()/FrameSize) - offset;
             if(pos > rem) pos -= rem;
+            else if(len > 0) pos += len - rem;
             else pos = 0;
         }
+        pos = (size_t)(pos * 1000.0 / SampleRate);
+        len = (size_t)(len * 1000.0 / SampleRate);
         stats.AppendFormat(",%3lu%% buffered", 100 - 100*offset/(BufferCount*(Data.size()/FrameSize)));
-        stats.AppendFormat(", %zu ms", pos);
+        stats.AppendFormat(", %zu.%03zu", pos/1000, pos%1000);
+        if(len > 0)
+            stats.AppendFormat(" / %zu.%03zu", len/1000, len%1000);
         if(state == AL_PAUSED)
             stats += ", paused";
         if(state == AL_PLAYING)

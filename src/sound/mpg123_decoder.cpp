@@ -182,4 +182,10 @@ size_t MPG123Decoder::getSampleOffset()
     return mpg123_tell(MPG123);
 }
 
+size_t MPG123Decoder::getSampleLength()
+{
+    off_t len = mpg123_length(MPG123);
+    return (len > 0) ? len : 0;
+}
+
 #endif

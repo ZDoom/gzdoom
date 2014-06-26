@@ -14,6 +14,7 @@ struct MPG123Decoder : public SoundDecoder
     virtual size_t read(char *buffer, size_t bytes);
     virtual bool seek(size_t ms_offset);
     virtual size_t getSampleOffset();
+    virtual size_t getSampleLength();
 
     MPG123Decoder() : MPG123(0) { }
     virtual ~MPG123Decoder();

@@ -15,6 +15,7 @@ struct SndFileDecoder : public SoundDecoder
     virtual std::vector<char> readAll();
     virtual bool seek(size_t ms_offset);
     virtual size_t getSampleOffset();
+    virtual size_t getSampleLength();
 
     SndFileDecoder() : SndFile(0) { }
     virtual ~SndFileDecoder();

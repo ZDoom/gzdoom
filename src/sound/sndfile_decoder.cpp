@@ -106,4 +106,9 @@ size_t SndFileDecoder::getSampleOffset()
     return sf_seek(SndFile, 0, SEEK_CUR);
 }
 
+size_t SndFileDecoder::getSampleLength()
+{
+    return (SndInfo.frames > 0) ? SndInfo.frames : 0;
+}
+
 #endif

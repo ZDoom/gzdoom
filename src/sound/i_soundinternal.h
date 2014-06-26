@@ -126,6 +126,7 @@ struct SoundDecoder
     virtual std::vector<char> readAll();
     virtual bool seek(size_t ms_offset) = 0;
     virtual size_t getSampleOffset() = 0;
+    virtual size_t getSampleLength() { return 0; }
 
     SoundDecoder() { }
     virtual ~SoundDecoder() { }

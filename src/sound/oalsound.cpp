@@ -146,6 +146,7 @@ class OpenALSoundStream : public SoundStream
 
     ALsizei SampleRate;
     ALenum Format;
+    ALsizei FrameSize;
 
     static const int BufferCount = 4;
     ALuint Buffers[BufferCount];
@@ -308,15 +309,31 @@ public:
         if(!Decoder->seek(ms_pos))
             return false;
 
+        // Stop the source so that all buffers become processed, then call
+        // IsEnded() to refill and restart the source queue with the new
+        // position.
         alSourceStop(Source);
         getALError();
-        return true;
+        return !IsEnded();
     }
 
     virtual unsigned int GetPosition()
     {
-        // FIXME: Decoder position - amount buffered + source offset
-        return 0;
+        ALint offset, queued, state;
+        alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
+        alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
+        alGetSourcei(Source, AL_SOURCE_STATE, &state);
+        if(getALError() != AL_NO_ERROR)
+            return 0;
+
+        size_t pos = Decoder->getSampleOffset();
+        if(state != AL_STOPPED)
+        {
+            size_t rem = queued*(Data.size()/FrameSize) - offset;
+            if(pos > rem) pos -= rem;
+            else pos = 0;
+        }
+        return (unsigned int)(pos * 1000.0 / SampleRate);
     }
 
     virtual bool IsEnded()
@@ -372,12 +389,17 @@ public:
     {
         FString stats;
         ALfloat volume;
-        ALint boffset;
+        ALint offset;
+        ALint processed;
+        ALint queued;
         ALint state;
+        size_t pos;
         ALenum err;
 
         alGetSourcef(Source, AL_GAIN, &volume);
-        alGetSourcei(Source, AL_BYTE_OFFSET, &boffset);
+        alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
+        alGetSourcei(Source, AL_BUFFERS_PROCESSED, &processed);
+        alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
         alGetSourcei(Source, AL_SOURCE_STATE, &state);
         if((err=alGetError()) != AL_NO_ERROR)
         {
@@ -388,8 +410,18 @@ public:
 
         stats = (state == AL_INITIAL) ? "Buffering" : (state == AL_STOPPED) ? "Underrun" :
                 (state == AL_PLAYING || state == AL_PAUSED) ? "Ready" : "Unknown state";
-        stats.AppendFormat(",%3lu%% buffered", 100 - 100*boffset/(BufferCount*Data.size()));
-        stats.AppendFormat(", %d%%", int(volume * 100));
+
+        pos = Decoder->getSampleOffset();
+        if(state == AL_STOPPED)
+            offset = BufferCount * (Data.size()/FrameSize);
+        else
+        {
+            size_t rem = queued*(Data.size()/FrameSize) - offset;
+            if(pos > rem) pos -= rem;
+            else pos = 0;
+        }
+        stats.AppendFormat(",%3lu%% buffered", 100 - 100*offset/(BufferCount*(Data.size()/FrameSize)));
+        stats.AppendFormat(", %zu ms", pos);
         if(state == AL_PAUSED)
             stats += ", paused";
         if(state == AL_PLAYING)
@@ -415,15 +447,21 @@ public:
             if((flags&Mono)) Format = AL_FORMAT_MONO8;
             else Format = AL_FORMAT_STEREO8;
         }
-        else if(!(flags&(Bits32|Float)))
+        else if((flags&Float))
+        {
+            if(alIsExtensionPresent("AL_EXT_FLOAT32"))
+            {
+                if((flags&Mono)) Format = AL_FORMAT_MONO_FLOAT32;
+                else Format = AL_FORMAT_STEREO_FLOAT32;
+            }
+        }
+        else if((flags&Bits32))
+        {
+        }
+        else
         {
             if((flags&Mono)) Format = AL_FORMAT_MONO16;
             else Format = AL_FORMAT_STEREO16;
-        }
-        else if((flags&Float) && alIsExtensionPresent("AL_EXT_FLOAT32"))
-        {
-            if((flags&Mono)) Format = AL_FORMAT_MONO_FLOAT32;
-            else Format = AL_FORMAT_STEREO_FLOAT32;
         }
 
         if(Format == AL_NONE)
@@ -432,21 +470,21 @@ public:
             return false;
         }
 
-        int smpsize = 1;
+        FrameSize = 1;
         if((flags&Bits8))
-            smpsize *= 1;
+            FrameSize *= 1;
         else if((flags&(Bits32|Float)))
-            smpsize *= 4;
+            FrameSize *= 4;
         else
-            smpsize *= 2;
+            FrameSize *= 2;
 
         if((flags&Mono))
-            smpsize *= 1;
+            FrameSize *= 1;
         else
-            smpsize *= 2;
+            FrameSize *= 2;
 
-        buffbytes += smpsize-1;
-        buffbytes -= buffbytes%smpsize;
+        buffbytes += FrameSize-1;
+        buffbytes -= buffbytes%FrameSize;
         Data.resize(buffbytes);
 
         return true;
@@ -464,6 +502,7 @@ public:
         Callback = DecoderCallback;
         UserData = NULL;
         Format = AL_NONE;
+        FrameSize = 1;
 
         ChannelConfig chans;
         SampleType type;
@@ -474,12 +513,16 @@ public:
         {
             if(type == SampleType_UInt8) Format = AL_FORMAT_MONO8;
             if(type == SampleType_Int16) Format = AL_FORMAT_MONO16;
+            FrameSize *= 1;
         }
         if(chans == ChannelConfig_Stereo)
         {
             if(type == SampleType_UInt8) Format = AL_FORMAT_STEREO8;
             if(type == SampleType_Int16) Format = AL_FORMAT_STEREO16;
+            FrameSize *= 2;
         }
+        if(type == SampleType_UInt8) FrameSize *= 1;
+        if(type == SampleType_Int16) FrameSize *= 2;
 
         if(Format == AL_NONE)
         {
@@ -489,7 +532,7 @@ public:
         SampleRate = srate;
         Looping = loop;
 
-        Data.resize((size_t)(0.2 * SampleRate) * 4);
+        Data.resize((size_t)(0.2 * SampleRate) * FrameSize);
 
         return true;
     }

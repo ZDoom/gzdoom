@@ -32,6 +32,10 @@
 **
 **
 */
+#define USE_WINDOWS_DWORD
+
+#include "7z.h"
+#include "7zCrc.h"
 
 #include "resourcefile.h"
 #include "cmdlib.h"
@@ -41,8 +45,6 @@
 #include "i_system.h"
 #include "w_wad.h"
 
-#include "7z.h"
-#include "7zCrc.h"
 
 
 //-----------------------------------------------------------------------

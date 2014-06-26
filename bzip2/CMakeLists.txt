@@ -2,9 +2,9 @@ cmake_minimum_required( VERSION 2.4 )
 
 make_release_only()
 
-if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fomit-frame-pointer" )
-endif( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+endif( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 
 add_definitions( -DBZ_NO_STDIO )
 add_library( bz2

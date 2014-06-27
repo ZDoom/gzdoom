@@ -74,8 +74,30 @@ void SndFileDecoder::getInfo(int *samplerate, ChannelConfig *chans, SampleType *
 
 size_t SndFileDecoder::read(char *buffer, size_t bytes)
 {
-    int framesize = 2 * SndInfo.channels;
-    return sf_readf_short(SndFile, (short*)buffer, bytes/framesize) * framesize;
+    short *out = (short*)buffer;
+    size_t frames = bytes / SndInfo.channels / 2;
+    size_t total = 0;
+
+    // It seems libsndfile has a bug with converting float samples from Vorbis
+    // to the 16-bit shorts we use, which causes some PCM samples to overflow
+    // and wrap, creating static. So instead, read the samples as floats and
+    // convert to short ourselves.
+    // Use a loop to convert a handful of samples at a time, avoiding a heap
+    // allocation for temporary storage. 64 at a time works, though maybe it
+    // could be more.
+    while(total < frames)
+    {
+        size_t todo = std::min<size_t>(frames-total, 64/SndInfo.channels);
+        float tmp[64];
+
+        size_t got = sf_readf_float(SndFile, tmp, todo);
+        if(got < todo) frames = total + got;
+
+        for(size_t i = 0;i < got*SndInfo.channels;i++)
+            *out++ = (short)((std::min)((std::max)(tmp[i] * 32767.f, -32768.f), 32767.f));
+        total += got;
+    }
+    return total * SndInfo.channels * 2;
 }
 
 std::vector<char> SndFileDecoder::readAll()

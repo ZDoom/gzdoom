@@ -297,7 +297,12 @@ public:
 
     virtual void SetVolume(float vol)
     {
-        if(vol >= 0.0f) Volume = vol;
+        Volume = vol;
+        UpdateVolume();
+    }
+
+    void UpdateVolume()
+    {
         alSourcef(Source, AL_GAIN, Renderer->MusicVolume*Volume);
         getALError();
     }
@@ -875,7 +880,7 @@ void OpenALSoundRenderer::SetMusicVolume(float volume)
 {
     MusicVolume = volume;
     for(uint32 i = 0;i < Streams.Size();++i)
-        Streams[i]->SetVolume(-1.f);
+        Streams[i]->UpdateVolume();
 }
 
 unsigned int OpenALSoundRenderer::GetMSLength(SoundHandle sfx)

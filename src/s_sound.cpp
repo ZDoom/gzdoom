@@ -1350,8 +1350,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			}
 			else
 			{
-				len = Wads.LumpLength (sfx->lumpnum);
-				sfx->data = GSnd->LoadSound(sfxstart, len);
+				sfx->data = GSnd->LoadSound(sfxstart, size);
 			}
 			
 			if (sfxdata != NULL)

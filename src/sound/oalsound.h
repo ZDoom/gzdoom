@@ -182,27 +182,28 @@ private:
 	ALCdevice *Device;
 	ALCcontext *Context;
 
-	std::vector<ALuint> Sources;
+	TArray<ALuint> Sources;
 
 	ALfloat SfxVolume;
 	ALfloat MusicVolume;
 
 	int SFXPaused;
-	std::vector<ALuint> FreeSfx;
-	std::vector<ALuint> PausableSfx;
-	std::vector<ALuint> ReverbSfx;
-	std::vector<ALuint> SfxGroup;
+	TArray<ALuint> FreeSfx;
+	TArray<ALuint> PausableSfx;
+	TArray<ALuint> ReverbSfx;
+	TArray<ALuint> SfxGroup;
 
 	const ReverbContainer *PrevEnvironment;
 
-	typedef std::map<WORD,ALuint> EffectMap;
-	ALuint EnvSlot;
+    typedef TMap<WORD,ALuint> EffectMap;
+    typedef TMapIterator<WORD,ALuint> EffectMapIter;
+    ALuint EnvSlot;
     ALuint EnvFilters[2];
-	EffectMap EnvEffects;
+    EffectMap EnvEffects;
 
-	bool WasInWater;
+    bool WasInWater;
 
-    std::vector<SoundStream*> Streams;
+    TArray<OpenALSoundStream*> Streams;
     friend class OpenALSoundStream;
 };
 

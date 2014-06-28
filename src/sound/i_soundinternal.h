@@ -6,6 +6,7 @@
 
 #include "basictypes.h"
 #include "vectors.h"
+#include "tarray.h"
 
 class FileReader;
 
@@ -123,7 +124,7 @@ struct SoundDecoder
     virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) = 0;
 
     virtual size_t read(char *buffer, size_t bytes) = 0;
-    virtual std::vector<char> readAll();
+    virtual TArray<char> readAll();
     virtual bool seek(size_t ms_offset) = 0;
     virtual size_t getSampleOffset() = 0;
     virtual size_t getSampleLength() { return 0; }

@@ -1024,11 +1024,11 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
         return retval;
     }
 
-    std::vector<char> data = decoder->readAll();
+    TArray<char> data = decoder->readAll();
 
     ALuint buffer = 0;
     alGenBuffers(1, &buffer);
-    alBufferData(buffer, format, &data[0], data.size(), srate);
+    alBufferData(buffer, format, &data[0], data.Size(), srate);
 
     ALenum err;
     if((err=getALError()) != AL_NO_ERROR)

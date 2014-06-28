@@ -1312,51 +1312,36 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 		int size = Wads.LumpLength(sfx->lumpnum);
 		if (size > 0)
 		{
-			BYTE *sfxdata;
-			BYTE *sfxstart;
 			FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
-			sfxstart = sfxdata = new BYTE[size];
+			BYTE *sfxdata = new BYTE[size];
 			wlump.Read(sfxdata, size);
-			SDWORD len = LittleLong(((SDWORD *)sfxdata)[1]);
+			SDWORD dmxlen = LittleLong(((SDWORD *)sfxdata)[1]);
 
 			// If the sound is voc, use the custom loader.
-			if (strncmp ((const char *)sfxstart, "Creative Voice File", 19) == 0)
-			{
-				sfx->data = GSnd->LoadSoundVoc(sfxstart, size);
-			}
 			// If the sound is raw, just load it as such.
 			// Otherwise, try the sound as DMX format.
 			// If that fails, let the sound system try and figure it out.
-			else if (sfx->bLoadRAW ||
-				(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
+			if (strncmp ((const char *)sfxdata, "Creative Voice File", 19) == 0)
 			{
-				int frequency;
-
-				if (sfx->bLoadRAW)
-				{
-					len = Wads.LumpLength (sfx->lumpnum);
-					frequency = (sfx->bForce22050 ? 22050 : 11025);
-				}
-				else
-				{
-					frequency = LittleShort(((WORD *)sfxdata)[1]);
-					if (frequency == 0)
-					{
-						frequency = 11025;
-					}
-					sfxstart = sfxdata + 8;
-				}
-				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8, sfx->LoopStart);
+				sfx->data = GSnd->LoadSoundVoc(sfxdata, size);
+			}
+			else if (sfx->bLoadRAW)
+			{
+				int frequency = (sfx->bForce22050 ? 22050 : 11025);
+				sfx->data = GSnd->LoadSoundRaw(sfxdata, size, frequency, 1, 8, sfx->LoopStart);
+			}
+			else if (((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && dmxlen <= size - 8)
+			{
+				int frequency = LittleShort(((WORD *)sfxdata)[1]);
+				if (frequency == 0) frequency = 11025;
+				sfx->data = GSnd->LoadSoundRaw(sfxdata+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
 			}
 			else
 			{
-				sfx->data = GSnd->LoadSound(sfxstart, size);
+				sfx->data = GSnd->LoadSound(sfxdata, size);
 			}
-			
-			if (sfxdata != NULL)
-			{
-				delete[] sfxdata;
-			}
+
+			delete[] sfxdata;
 		}
 
 		if (!sfx->data.isValid())

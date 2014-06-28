@@ -167,7 +167,6 @@ class OpenALSoundStream : public SoundStream
 
 
     std::auto_ptr<FileReader> Reader;
-    std::vector<BYTE> DecoderData;
     std::auto_ptr<SoundDecoder> Decoder;
     static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
     {

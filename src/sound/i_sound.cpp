@@ -304,6 +304,27 @@ void I_ShutdownSound()
 	}
 }
 
+const char *GetSampleTypeName(enum SampleType type)
+{
+    switch(type)
+    {
+        case SampleType_UInt8: return "Unsigned 8-bit";
+        case SampleType_Int16: return "Signed 16-bit";
+    }
+    return "(invalid sample type)";
+}
+
+const char *GetChannelConfigName(enum ChannelConfig chan)
+{
+    switch(chan)
+    {
+        case ChannelConfig_Mono: return "Mono";
+        case ChannelConfig_Stereo: return "Stereo";
+    }
+    return "(invalid channel config)";
+}
+
+
 CCMD (snd_status)
 {
 	GSnd->PrintStatus ();

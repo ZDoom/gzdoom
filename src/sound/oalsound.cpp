@@ -545,7 +545,8 @@ public:
 
         if(Format == AL_NONE)
         {
-            Printf("Unsupported audio format (0x%x / 0x%x)\n", chans, type);
+            Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
+                   GetSampleTypeName(type));
             return false;
         }
         SampleRate = srate;
@@ -1019,7 +1020,8 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 
     if(format == AL_NONE)
     {
-        Printf("Unsupported audio format (0x%x / 0x%x)\n", chans, type);
+        Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
+               GetSampleTypeName(type));
         return retval;
     }
 

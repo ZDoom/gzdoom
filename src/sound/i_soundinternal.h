@@ -119,6 +119,9 @@ enum ChannelConfig
     ChannelConfig_Stereo
 };
 
+const char *GetSampleTypeName(enum SampleType type);
+const char *GetChannelConfigName(enum ChannelConfig chan);
+
 struct SoundDecoder
 {
     virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) = 0;

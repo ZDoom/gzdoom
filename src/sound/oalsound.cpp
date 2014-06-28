@@ -1787,36 +1787,38 @@ void OpenALSoundRenderer::PurgeStoppedSources()
 
 void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
 {
-    ALuint &envReverb = EnvEffects[env->ID];
+    ALuint *envReverb = EnvEffects.CheckKey(env->ID);
     bool doLoad = (env->Modified || !envReverb);
 
     if(!envReverb)
     {
         bool ok = false;
-        alGenEffects(1, &envReverb);
+
+        envReverb = &EnvEffects.Insert(env->ID, 0);
+        alGenEffects(1, envReverb);
         if(getALError() == AL_NO_ERROR)
         {
-            alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+            alEffecti(*envReverb, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
             ok = (alGetError() == AL_NO_ERROR);
             if(!ok)
             {
-                alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+                alEffecti(*envReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
                 ok = (alGetError() == AL_NO_ERROR);
             }
             if(!ok)
             {
-                alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_NULL);
+                alEffecti(*envReverb, AL_EFFECT_TYPE, AL_EFFECT_NULL);
                 ok = (alGetError() == AL_NO_ERROR);
             }
             if(!ok)
             {
-                alDeleteEffects(1, &envReverb);
+                alDeleteEffects(1, envReverb);
                 getALError();
             }
         }
         if(!ok)
         {
-            envReverb = 0;
+            *envReverb = 0;
             doLoad = false;
         }
     }
@@ -1826,7 +1828,7 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
         const REVERB_PROPERTIES &props = env->Properties;
         ALint type = AL_EFFECT_NULL;
 
-        alGetEffecti(envReverb, AL_EFFECT_TYPE, &type);
+        alGetEffecti(*envReverb, AL_EFFECT_TYPE, &type);
 #define mB2Gain(x) ((float)pow(10., (x)/2000.))
         if(type == AL_EFFECT_EAXREVERB)
         {
@@ -1837,53 +1839,53 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
                                    props.ReverbPan2 };
 #undef SETPARAM
 #define SETPARAM(e,t,v) alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
-            SETPARAM(envReverb, DIFFUSION, props.EnvDiffusion);
-            SETPARAM(envReverb, GAIN, mB2Gain(props.Room));
-            SETPARAM(envReverb, GAINHF, mB2Gain(props.RoomHF));
-            SETPARAM(envReverb, GAINLF, mB2Gain(props.RoomLF));
-            SETPARAM(envReverb, DECAY_TIME, props.DecayTime);
-            SETPARAM(envReverb, DECAY_HFRATIO, props.DecayHFRatio);
-            SETPARAM(envReverb, DECAY_LFRATIO, props.DecayLFRatio);
-            SETPARAM(envReverb, REFLECTIONS_GAIN, mB2Gain(props.Reflections));
-            SETPARAM(envReverb, REFLECTIONS_DELAY, props.ReflectionsDelay);
-            alEffectfv(envReverb, AL_EAXREVERB_REFLECTIONS_PAN, reflectpan);
-            SETPARAM(envReverb, LATE_REVERB_GAIN, mB2Gain(props.Reverb));
-            SETPARAM(envReverb, LATE_REVERB_DELAY, props.ReverbDelay);
-            alEffectfv(envReverb, AL_EAXREVERB_LATE_REVERB_PAN, latepan);
-            SETPARAM(envReverb, ECHO_TIME, props.EchoTime);
-            SETPARAM(envReverb, ECHO_DEPTH, props.EchoDepth);
-            SETPARAM(envReverb, MODULATION_TIME, props.ModulationTime);
-            SETPARAM(envReverb, MODULATION_DEPTH, props.ModulationDepth);
-            SETPARAM(envReverb, AIR_ABSORPTION_GAINHF, mB2Gain(props.AirAbsorptionHF));
-            SETPARAM(envReverb, HFREFERENCE, props.HFReference);
-            SETPARAM(envReverb, LFREFERENCE, props.LFReference);
-            SETPARAM(envReverb, ROOM_ROLLOFF_FACTOR, props.RoomRolloffFactor);
-            alEffecti(envReverb, AL_EAXREVERB_DECAY_HFLIMIT,
-                                 (props.Flags&REVERB_FLAGS_DECAYHFLIMIT)?AL_TRUE:AL_FALSE);
+            SETPARAM(*envReverb, DIFFUSION, props.EnvDiffusion);
+            SETPARAM(*envReverb, GAIN, mB2Gain(props.Room));
+            SETPARAM(*envReverb, GAINHF, mB2Gain(props.RoomHF));
+            SETPARAM(*envReverb, GAINLF, mB2Gain(props.RoomLF));
+            SETPARAM(*envReverb, DECAY_TIME, props.DecayTime);
+            SETPARAM(*envReverb, DECAY_HFRATIO, props.DecayHFRatio);
+            SETPARAM(*envReverb, DECAY_LFRATIO, props.DecayLFRatio);
+            SETPARAM(*envReverb, REFLECTIONS_GAIN, mB2Gain(props.Reflections));
+            SETPARAM(*envReverb, REFLECTIONS_DELAY, props.ReflectionsDelay);
+            alEffectfv(*envReverb, AL_EAXREVERB_REFLECTIONS_PAN, reflectpan);
+            SETPARAM(*envReverb, LATE_REVERB_GAIN, mB2Gain(props.Reverb));
+            SETPARAM(*envReverb, LATE_REVERB_DELAY, props.ReverbDelay);
+            alEffectfv(*envReverb, AL_EAXREVERB_LATE_REVERB_PAN, latepan);
+            SETPARAM(*envReverb, ECHO_TIME, props.EchoTime);
+            SETPARAM(*envReverb, ECHO_DEPTH, props.EchoDepth);
+            SETPARAM(*envReverb, MODULATION_TIME, props.ModulationTime);
+            SETPARAM(*envReverb, MODULATION_DEPTH, props.ModulationDepth);
+            SETPARAM(*envReverb, AIR_ABSORPTION_GAINHF, mB2Gain(props.AirAbsorptionHF));
+            SETPARAM(*envReverb, HFREFERENCE, props.HFReference);
+            SETPARAM(*envReverb, LFREFERENCE, props.LFReference);
+            SETPARAM(*envReverb, ROOM_ROLLOFF_FACTOR, props.RoomRolloffFactor);
+            alEffecti(*envReverb, AL_EAXREVERB_DECAY_HFLIMIT,
+                      (props.Flags&REVERB_FLAGS_DECAYHFLIMIT)?AL_TRUE:AL_FALSE);
 #undef SETPARAM
         }
         else if(type == AL_EFFECT_REVERB)
         {
 #define SETPARAM(e,t,v) alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
-            SETPARAM(envReverb, DIFFUSION, props.EnvDiffusion);
-            SETPARAM(envReverb, GAIN, mB2Gain(props.Room));
-            SETPARAM(envReverb, GAINHF, mB2Gain(props.RoomHF));
-            SETPARAM(envReverb, DECAY_TIME, props.DecayTime);
-            SETPARAM(envReverb, DECAY_HFRATIO, props.DecayHFRatio);
-            SETPARAM(envReverb, REFLECTIONS_GAIN, mB2Gain(props.Reflections));
-            SETPARAM(envReverb, REFLECTIONS_DELAY, props.ReflectionsDelay);
-            SETPARAM(envReverb, LATE_REVERB_GAIN, mB2Gain(props.Reverb));
-            SETPARAM(envReverb, LATE_REVERB_DELAY, props.ReverbDelay);
-            SETPARAM(envReverb, AIR_ABSORPTION_GAINHF, mB2Gain(props.AirAbsorptionHF));
-            SETPARAM(envReverb, ROOM_ROLLOFF_FACTOR, props.RoomRolloffFactor);
-            alEffecti(envReverb, AL_REVERB_DECAY_HFLIMIT,
-                                 (props.Flags&REVERB_FLAGS_DECAYHFLIMIT)?AL_TRUE:AL_FALSE);
+            SETPARAM(*envReverb, DIFFUSION, props.EnvDiffusion);
+            SETPARAM(*envReverb, GAIN, mB2Gain(props.Room));
+            SETPARAM(*envReverb, GAINHF, mB2Gain(props.RoomHF));
+            SETPARAM(*envReverb, DECAY_TIME, props.DecayTime);
+            SETPARAM(*envReverb, DECAY_HFRATIO, props.DecayHFRatio);
+            SETPARAM(*envReverb, REFLECTIONS_GAIN, mB2Gain(props.Reflections));
+            SETPARAM(*envReverb, REFLECTIONS_DELAY, props.ReflectionsDelay);
+            SETPARAM(*envReverb, LATE_REVERB_GAIN, mB2Gain(props.Reverb));
+            SETPARAM(*envReverb, LATE_REVERB_DELAY, props.ReverbDelay);
+            SETPARAM(*envReverb, AIR_ABSORPTION_GAINHF, mB2Gain(props.AirAbsorptionHF));
+            SETPARAM(*envReverb, ROOM_ROLLOFF_FACTOR, props.RoomRolloffFactor);
+            alEffecti(*envReverb, AL_REVERB_DECAY_HFLIMIT,
+                      (props.Flags&REVERB_FLAGS_DECAYHFLIMIT)?AL_TRUE:AL_FALSE);
 #undef SETPARAM
         }
 #undef mB2Gain
     }
 
-    alAuxiliaryEffectSloti(EnvSlot, AL_EFFECTSLOT_EFFECT, envReverb);
+    alAuxiliaryEffectSloti(EnvSlot, AL_EFFECTSLOT_EFFECT, *envReverb);
     getALError();
 }
 

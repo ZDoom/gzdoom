@@ -29,51 +29,51 @@
 // WAD files are stored little endian.
 
 #ifdef __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
+#include <libkern/OSByteOrder.h>
 
 inline short LittleShort(short x)
 {
-	return (short)CFSwapInt16LittleToHost((uint16_t)x);
+	return (short)OSSwapLittleToHostInt16((uint16_t)x);
 }
 
 inline unsigned short LittleShort(unsigned short x)
 {
-	return CFSwapInt16LittleToHost(x);
+	return OSSwapLittleToHostInt16(x);
 }
 
 inline short LittleShort(int x)
 {
-	return CFSwapInt16LittleToHost((uint16_t)x);
+	return OSSwapLittleToHostInt16((uint16_t)x);
 }
 
 inline int LittleLong(int x)
 {
-	return CFSwapInt32LittleToHost((uint32_t)x);
+	return OSSwapLittleToHostInt32((uint32_t)x);
 }
 
 inline unsigned int LittleLong(unsigned int x)
 {
-	return CFSwapInt32LittleToHost(x);
+	return OSSwapLittleToHostInt32(x);
 }
 
 inline short BigShort(short x)
 {
-	return (short)CFSwapInt16BigToHost((uint16_t)x);
+	return (short)OSSwapBigToHostInt16((uint16_t)x);
 }
 
 inline unsigned short BigShort(unsigned short x)
 {
-	return CFSwapInt16BigToHost(x);
+	return OSSwapBigToHostInt16(x);
 }
 
 inline int BigLong(int x)
 {
-	return CFSwapInt32BigToHost((uint32_t)x);
+	return OSSwapBigToHostInt32((uint32_t)x);
 }
 
 inline unsigned int BigLong(unsigned int x)
 {
-	return CFSwapInt32BigToHost(x);
+	return OSSwapBigToHostInt32(x);
 }
 
 #else

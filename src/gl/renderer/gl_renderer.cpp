@@ -109,6 +109,7 @@ void FGLRenderer::Initialize()
 
 	mVBO = new FFlatVertexBuffer;
 	mSkyVBO = new FSkyVertexBuffer;
+	mModelVBO = new FModelVertexBuffer;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	SetupLevel();
@@ -123,6 +124,7 @@ FGLRenderer::~FGLRenderer()
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mVBO != NULL) delete mVBO;
+	if (mModelVBO) delete mModelVBO;
 	if (mSkyVBO != NULL) delete mSkyVBO;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;

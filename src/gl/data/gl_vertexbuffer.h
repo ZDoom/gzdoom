@@ -193,6 +193,7 @@ struct FModelVertex
 class FModelVertexBuffer : public FVertexBuffer
 {
 	int mIndexFrame[2];
+	unsigned int ibo_id;
 
 public:
 	// these are public because it's the models having to fill them in.
@@ -203,7 +204,7 @@ public:
 	~FModelVertexBuffer();
 
 	void BindVBO();
-	void UpdateBufferPointers(int frame1, int frame2);
+	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2, float factor);
 };
 
 #define VMO ((FModelVertex*)NULL)

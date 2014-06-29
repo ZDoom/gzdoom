@@ -233,6 +233,7 @@ void FMD3Model::BuildVertexBuffer(FModelVertexBuffer *buf)
 				buf->ibo_shadowdata.Push(surf->tris[k].VertIndex[l]);
 			}
 		}
+		surf->icount = buf->ibo_shadowdata.Size() - surf->iindex;
 	}
 }
 

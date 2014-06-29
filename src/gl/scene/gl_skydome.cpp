@@ -93,6 +93,7 @@ void FSkyVertexBuffer::BindVBO()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
+	glDisableVertexAttribArray(VATTR_VERTEX2);
 }
 
 

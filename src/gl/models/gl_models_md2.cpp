@@ -43,11 +43,13 @@
 #include "sc_man.h"
 #include "m_crc32.h"
 
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
 #include "gl/textures/gl_material.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/data/gl_vertexbuffer.h"
 
 static float   avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
@@ -160,10 +162,11 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 		skins[i] = LoadSkin(path, buffer + info.offsetSkins + i*64);
 	}
 
+	texCoords = new FTexCoord[info.numTexCoords];
+	memcpy(texCoords, (byte*)buffer + info.offsetTexCoords, info.numTexCoords * sizeof(FTexCoord));
 
 	temp = (char*)buffer + info.offsetFrames;
 	frames = new ModelFrame[info.numFrames];
-	ib_count = 0;
 
 	for(i = 0, frame = frames; i < info.numFrames; i++, frame++)
 	{
@@ -193,24 +196,10 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 	for(i = 0; i < info.numLODs; i++)
 	{
 		lodInfo[i].numTriangles = LittleLong(lodInfo[i].numTriangles);
-		lodInfo[i].numGlCommands = LittleLong(lodInfo[i].numGlCommands);
 		lodInfo[i].offsetTriangles = LittleLong(lodInfo[i].offsetTriangles);
-		lodInfo[i].offsetGlCommands = LittleLong(lodInfo[i].offsetGlCommands);
 
-		triangles[i] = (FTriangle*)(buffer + lodInfo[i].offsetTriangles);
-
-		lods[i].glCommands = new int[lodInfo[i].numGlCommands];
-		memcpy(lods[i].glCommands, buffer + lodInfo[i].offsetGlCommands, sizeof(int) * lodInfo[i].numGlCommands);
+		lods[i].triangles = triangles[i] = (FTriangle*)(buffer + lodInfo[i].offsetTriangles);
 	}
-
-	// Determine vertex usage at each LOD level.
-	vertexUsage = new char[info.numVertices];
-	memset(vertexUsage, 0, info.numVertices);
-
-	for(i = 0; i < info.numLODs; i++)
-		for(k = 0; k < lodInfo[i].numTriangles; k++)
-			for(c = 0; c < 3; c++)
-				vertexUsage[short(triangles[i][k].vertexIndices[c])] |= 1 << i;
 
 	loaded=true;
 	return true;
@@ -240,10 +229,10 @@ FDMDModel::~FDMDModel()
 
 	for(i = 0; i < info.numLODs; i++)
 	{
-		delete [] lods[i].glCommands;
+		if (lods[i].triangles != NULL) delete[] lods[i].triangles;
 	}
 
-	if (vertexUsage != NULL) delete [] vertexUsage;
+	if (texCoords != NULL) delete[] texCoords;
 }
 
 
@@ -254,80 +243,30 @@ void FDMDModel::BuildVertexBuffer(FModelVertexBuffer *buf)
 		ModelFrame *frame = &frames[i];
 		DMDModelVertex *vert = frame->vertices;
 		DMDModelVertex *norm = frame->normals;
-		void *glCommands = lods[0].glCommands;
 
 		frame->vindex = buf->vbo_shadowdata.Size();
 
-		for (char *pos = (char*)glCommands; *pos;)
+
+		FTriangle *tri = lods[0].triangles;
+
+		for (int i = 0; i < lodInfo[0].numTriangles; i++)
 		{
-			int count = *(int *)pos;
-			pos += 4;
-
-			// The type of primitive depends on the sign.
-			int primtype = count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN;
-			count = abs(count);
-
-			if (i == 0)
-			{
-				// build the index buffer - we'll use the same buffer for all frames so only create it once
-				unsigned int bufindex = buf->vbo_shadowdata.Size() - frame->vindex;
-				unsigned int bufp = bufindex;
-
-				if (primtype == GL_TRIANGLE_STRIP)
-				{
-					for (int t = 0; t < count - 2; t++)
-					{
-						unsigned int *p = &buf->ibo_shadowdata[buf->ibo_shadowdata.Reserve(3)];
-						if ((t & 1) == 0)
-						{
-							p[0] = bufp;
-							p[1] = bufp + 1;
-							p[2] = bufp + 2;
-						}
-						else
-						{
-							p[0] = bufp;
-							p[2] = bufp + 2;
-							p[1] = bufp + 1;
-						}
-						bufp++;
-					}
-				}
-				else
-				{
-					bufp++;
-					for (int t = 0; t < count - 2; t++)
-					{
-						unsigned int *p = &buf->ibo_shadowdata[buf->ibo_shadowdata.Reserve(3)];
-						p[0] = bufindex;
-						p[1] = bufp;
-						p[2] = bufp + 1;
-						bufp++;
-					}
-				}
-			}
-
-			while (count--)
+			for (int j = 0; j < 3; j++)
 			{
 				FModelVertex bvert;
 
-				FGLCommandVertex * v = (FGLCommandVertex *)pos;
-				pos += sizeof(FGLCommandVertex);
+				int ti = tri->textureIndices[j];
+				int vi = tri->vertexIndices[j];
 
-				bvert.Set(vert[v->index].xyz[0], vert[v->index].xyz[1], vert[v->index].xyz[2], v->s, v->t);
-				bvert.SetNormal(norm[v->index].xyz[0], norm[v->index].xyz[1], norm[v->index].xyz[2]);
+				bvert.Set(vert[vi].xyz[0], vert[vi].xyz[1], vert[vi].xyz[2], (float)texCoords[ti].s /info.skinWidth, (float)texCoords[ti].t/info.skinHeight);
+				bvert.SetNormal(norm[vi].xyz[0], norm[vi].xyz[1], norm[vi].xyz[2]);
 				buf->vbo_shadowdata.Push(bvert);
 			}
+			tri++;
 		}
+
 	}
 }
-
-
-
-
-
-
-
 
 
 
@@ -347,49 +286,9 @@ int FDMDModel::FindFrame(const char * name)
 
 //===========================================================================
 //
-// Render a set of GL commands using the given data.
+//
 //
 //===========================================================================
-
-void FDMDModel::RenderGLCommands(void *glCommands, unsigned int numVertices, DMDModelVertex * vertices, DMDModelVertex *vertices2, double inter)
-{
-	char   *pos;
-	FGLCommandVertex * v;
-	int     count;
-	const bool interpolate = (vertices2 != NULL && inter != 0. && vertices != vertices2);
-
-	gl_RenderState.Apply();
-	for(pos = (char*)glCommands; *pos;)
-	{
-		count = *(int *) pos;
-		pos += 4;
-
-		// The type of primitive depends on the sign.
-		glBegin(count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-
-		count = abs(count);
-
-		while (count--)
-		{
-			v = (FGLCommandVertex *)pos;
-			pos += sizeof(FGLCommandVertex);
-
-			glTexCoord2fv(&v->s);
-			if (!interpolate)
-			{
-				glVertex3fv(vertices[v->index].xyz);
-			}
-			else
-			{
-				float interp[3];
-				for (int i = 0; i < 3; i++)
-					interp[i] = inter * vertices[v->index].xyz[i] + (1. - inter) * vertices2[v->index].xyz[i];
-				glVertex3fv(interp);
-			}
-		}
-		glEnd();
-	}
-}
 
 void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
@@ -406,7 +305,9 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 
 	tex->Bind(0, translation);
 
-	RenderGLCommands(lods[0].glCommands, info.numVertices, frames[frameno].vertices, frames[frameno2].vertices, inter);
+	gl_RenderState.Apply();
+	GLRenderer->mModelVBO->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex, inter);
+	glDrawArrays(GL_TRIANGLES, 0, lodInfo[0].numTriangles * 3);
 }
 
 
@@ -464,7 +365,6 @@ bool FMD2Model::Load(const char * path, int, const char * buffer, int length)
 	header.magic = MD2_MAGIC;
 	header.version = 8;
 	header.flags = 0;
-	vertexUsage = NULL;
 	info.skinWidth = LittleLong(md2header->skinWidth);
 	info.skinHeight = LittleLong(md2header->skinHeight);
 	info.frameSize = LittleLong(md2header->frameSize);
@@ -496,8 +396,11 @@ bool FMD2Model::Load(const char * path, int, const char * buffer, int length)
 
 	// The frames need to be unpacked.
 	md2_frames = (byte*)buffer + info.offsetFrames;
-
 	frames = new ModelFrame[info.numFrames];
+
+	texCoords = new FTexCoord[info.numTexCoords];
+	memcpy(texCoords, (byte*)buffer + info.offsetTexCoords, info.numTexCoords * sizeof(FTexCoord));
+
 
 	for(i = 0, frame = frames; i < info.numFrames; i++, frame++)
 	{
@@ -526,8 +429,9 @@ bool FMD2Model::Load(const char * path, int, const char * buffer, int length)
 	}
 
 
-	lods[0].glCommands = new int[lodInfo[0].numGlCommands];
-	memcpy(lods[0].glCommands, buffer + lodInfo[0].offsetGlCommands, sizeof(int) * lodInfo[0].numGlCommands);
+	lods[0].triangles = new FTriangle[lodInfo[0].numTriangles];
+		
+	memcpy(lods[0].triangles, buffer + lodInfo[0].offsetTriangles, sizeof(FTriangle) * lodInfo[0].numTriangles);
 
 	skins = new FTexture *[info.numSkins];
 

@@ -59,6 +59,7 @@
 #include "gl/utility/gl_geometric.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/shaders/gl_shader.h"
 
 static inline float GetTimeFloat()
 {
@@ -90,6 +91,76 @@ public:
 };
 
 DeletingModelArray Models;
+
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+FModelVertexBuffer::FModelVertexBuffer()
+{
+	ibo_id = 0;
+	glGenBuffers(1, &ibo_id);
+	//for (unsigned i = 1; i < Models.Size(); i++)
+	for (int i = Models.Size() - 1; i >= 0; i--)
+	{
+		Models[i]->BuildVertexBuffer(this);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glBufferData(GL_ARRAY_BUFFER,vbo_shadowdata.Size() * sizeof(FModelVertex), &vbo_shadowdata[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,ibo_shadowdata.Size() * sizeof(unsigned int), &ibo_shadowdata[0], GL_STATIC_DRAW);
+
+}
+
+FModelVertexBuffer::~FModelVertexBuffer()
+{
+	if (ibo_id != 0)
+	{
+		glDeleteBuffers(1, &ibo_id);
+	}
+}
+
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void FModelVertexBuffer::BindVBO()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+	//glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &VMO->x);
+	//glTexCoordPointer(2, GL_FLOAT, sizeof(FModelVertex), &VMO->u);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	glEnableVertexAttribArray(VATTR_VERTEX2);
+}
+
+//===========================================================================
+//
+// Sets up the buffer starts for frame interpolation
+// This must be called after gl_RenderState.Apply!
+//
+//===========================================================================
+
+unsigned int FModelVertexBuffer::SetupFrame(unsigned int frame1, unsigned int frame2, float factor)
+{
+	glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &VMO[frame1].x);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(FModelVertex), &VMO[frame1].u);
+	glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
+	return frame1;
+}
+
+
+
+
 
 static TArray<FSpriteModelFrame> SpriteModelFrames;
 static int * SpriteModelHash;
@@ -674,10 +745,14 @@ void gl_RenderFrameModels( const FSpriteModelFrame *smf,
 
 		if (mdl!=NULL)
 		{
+			gl_RenderState.SetVertexBuffer(GLRenderer->mModelVBO);
+
 			if ( smfNext && smf->modelframes[i] != smfNext->modelframes[i] )
 				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], smfNext->modelframes[i], inter, translation);
 			else
-				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], NULL, 0.f, translation);
+				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], smf->modelframes[i], 0.f, translation);
+
+			gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 		}
 	}
 }

@@ -6,7 +6,7 @@ out vec2 glowdist;
 
 void main()
 {
-	vec4 worldcoord = mix(gl_Vertex, aVertex2, uInterpolationFactor);
+	vec4 worldcoord = ModelMatrix * mix(gl_Vertex, aVertex2, uInterpolationFactor);
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
 	gl_FrontColor = gl_Color;

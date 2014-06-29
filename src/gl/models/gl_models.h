@@ -107,7 +107,6 @@ protected:
 	struct DMDLoD
 	{
 		FTriangle		* triangles;
-		int				* glCommands;
 	};
 
 
@@ -116,17 +115,11 @@ protected:
 	DMDInfo			info;
 	FTexture **		skins;
 	FTexCoord *		texCoords;
-
-	unsigned int	ib_index;
-	unsigned int	ib_count;
 	
 	ModelFrame  *	frames;
 	DMDLoDInfo		lodInfo[MAX_LODS];
 	DMDLoD			lods[MAX_LODS];
-	char           *vertexUsage;   // Bitfield for each vertex.
 	bool			allowTexComp;  // Allow texture compression with this.
-
-	static void RenderGLCommands(void *glCommands, unsigned int numVertices,DMDModelVertex * vertices, DMDModelVertex *vertices2, double inter);
 
 public:
 	FDMDModel() 
@@ -134,9 +127,12 @@ public:
 		loaded = false; 
 		frames = NULL;
 		skins = NULL;
-		lods[0].glCommands = NULL;
+		for (int i = 0; i < MAX_LODS; i++)
+		{
+			lods[i].triangles = NULL;
+		}
 		info.numLODs = 0;
-		ib_count = 0;
+		texCoords = NULL;
 	}
 	virtual ~FDMDModel();
 
@@ -195,6 +191,7 @@ class FMD3Model : public FModel
 
 		unsigned int vindex;	// contains numframes arrays of vertices
 		unsigned int iindex;
+		unsigned int icount;
 
 		MD3Surface()
 		{

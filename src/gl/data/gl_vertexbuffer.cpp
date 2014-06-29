@@ -45,6 +45,7 @@
 #include "c_cvars.h"
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/shaders/gl_shader.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 
@@ -332,6 +333,7 @@ void FFlatVertexBuffer::BindVBO()
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_COLOR_ARRAY);
+		glDisableVertexAttribArray(VATTR_VERTEX2);
 	}
 }
 

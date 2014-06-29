@@ -80,7 +80,7 @@ public:
 
 class FBufferedUniform1f
 {
-	int mBuffer;
+	float mBuffer;
 	int mIndex;
 
 public:

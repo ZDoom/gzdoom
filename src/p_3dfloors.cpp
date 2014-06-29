@@ -226,11 +226,11 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 		if (param==0)
 		{
 			flags=FF_EXISTS|FF_RENDERALL|FF_SOLID|FF_INVERTSECTOR;
+			alpha = 255;
 			for (i=0;i<sec->linecount;i++)
 			{
 				line_t * l=sec->lines[i];
 
-				alpha=255;
 				if (l->special==Sector_SetContents && l->frontsector==sec)
 				{
 					alpha=clamp<int>(l->args[1], 0, 100);
@@ -252,12 +252,10 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 
 						l->frontsector->ColorMap = 
 							GetSpecialLights (l->frontsector->ColorMap->Color, 
-											  (unsigned int)(vavoomcolors[l->args[0]]&VC_COLORMASK), 
+											  vavoomcolors[l->args[0]], 
 											  l->frontsector->ColorMap->Desaturate);
-										
-						alpha = (int)((unsigned int)(vavoomcolors[l->args[0]]&VC_ALPHAMASK)>>24);
 					}
-					else alpha=(alpha*255)/100;
+					alpha=(alpha*255)/100;
 					break;
 				}
 			}

@@ -66,11 +66,8 @@ void FRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mBrightmapEnabled = mFogEnabled = mGlowEnabled = mLightEnabled = false;
-	ffTextureEnabled = ffFogEnabled = false;
-	mSpecialEffect = ffSpecialEffect = EFF_NONE;
-	mFogColor.d = ffFogColor.d = -1;
-	ffFogDensity = 0;
-	mTextureMode = ffTextureMode = -1;
+	mFogColor.d = -1;
+	mTextureMode = -1;
 	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
@@ -85,6 +82,7 @@ void FRenderState::Reset()
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
 	mColormapState = CM_DEFAULT;
 	mLightParms[3] = -1.f;
+	mSpecialEffect = EFF_NONE;
 }
 
 
@@ -144,6 +142,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muDynLightColor.Set(mDynColor);
+	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 
 	if (mGlowEnabled)
 	{

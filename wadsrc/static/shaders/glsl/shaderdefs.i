@@ -9,6 +9,7 @@ uniform vec4 uObjectColor;
 uniform vec4 uDynLightColor;
 uniform vec4 uFogColor;
 uniform float uDesaturationFactor;
+uniform float uInterpolationFactor;
 
 // Fixed colormap stuff
 uniform int uFixedColormap;				// 0, when no fixed colormap, 1 for a light value, 2 for a color blend, 3 for a fog layer

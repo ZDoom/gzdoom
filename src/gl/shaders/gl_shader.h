@@ -7,6 +7,12 @@
 
 extern bool gl_shaderactive;
 
+enum
+{
+	VATTR_VERTEX2 = 15
+};
+
+
 //==========================================================================
 //
 //
@@ -186,6 +192,7 @@ class FShader
 	FUniform4f muGlowTopColor;
 	FUniform4f muGlowBottomPlane;
 	FUniform4f muGlowTopPlane;
+	FBufferedUniform1f muInterpolationFactor;
 	
 	int timer_index;
 	int lights_index;

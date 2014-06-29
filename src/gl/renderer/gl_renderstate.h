@@ -56,6 +56,7 @@ class FRenderState
 	bool mAlphaTest;
 	int mBlendEquation;
 	bool m2D;
+	float mInterpolationFactor;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
@@ -74,13 +75,6 @@ class FRenderState
 	float glAlphaThreshold;
 	bool glAlphaTest;
 	int glBlendEquation;
-
-	bool ffTextureEnabled;
-	bool ffFogEnabled;
-	int ffTextureMode;
-	int ffSpecialEffect;
-	PalEntry ffFogColor;
-	float ffFogDensity;
 
 	bool ApplyShader();
 
@@ -289,6 +283,11 @@ public:
 	void Set2DMode(bool on)
 	{
 		m2D = on;
+	}
+
+	void SetInterpolationFactor(float fac)
+	{
+		mInterpolationFactor = fac;
 	}
 };
 

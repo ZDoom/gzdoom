@@ -386,6 +386,11 @@ FNativePalette *OpenGLFrameBuffer::CreatePalette(FRemapTable *remap)
 //==========================================================================
 bool OpenGLFrameBuffer::Begin2D(bool)
 {
+	glActiveTexture(GL_TEXTURE7);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glActiveTexture(GL_TEXTURE0);
+	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);

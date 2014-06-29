@@ -151,7 +151,7 @@ class OpenALSoundStream : public SoundStream
     SoundStreamCallback Callback;
     void *UserData;
 
-    std::vector<ALubyte> Data;
+    TArray<ALubyte> Data;
 
     ALsizei SampleRate;
     ALenum Format;
@@ -263,14 +263,14 @@ public:
         alSourcei(Source, AL_BUFFER, 0);
         for(int i = 0;i < BufferCount;i++)
         {
-            if(!Callback(this, &Data[0], Data.size(), UserData))
+            if(!Callback(this, &Data[0], Data.Size(), UserData))
             {
                 if(i == 0)
                     return false;
                 break;
             }
 
-            alBufferData(Buffers[i], Format, &Data[0], Data.size(), SampleRate);
+            alBufferData(Buffers[i], Format, &Data[0], Data.Size(), SampleRate);
             alSourceQueueBuffers(Source, 1, &Buffers[i]);
         }
         if(getALError() != AL_NO_ERROR)
@@ -342,7 +342,7 @@ public:
         size_t pos = Decoder->getSampleOffset();
         if(state != AL_STOPPED)
         {
-            size_t rem = queued*(Data.size()/FrameSize) - offset;
+            size_t rem = queued*(Data.Size()/FrameSize) - offset;
             if(pos > rem) pos -= rem;
             else pos = 0;
         }
@@ -372,9 +372,9 @@ public:
             alSourceUnqueueBuffers(Source, 1, &bufid);
             processed--;
 
-            if(Callback(this, &Data[0], Data.size(), UserData))
+            if(Callback(this, &Data[0], Data.Size(), UserData))
             {
-                alBufferData(bufid, Format, &Data[0], Data.size(), SampleRate);
+                alBufferData(bufid, Format, &Data[0], Data.Size(), SampleRate);
                 alSourceQueueBuffers(Source, 1, &bufid);
             }
         }
@@ -427,17 +427,17 @@ public:
         pos = Decoder->getSampleOffset();
         len = Decoder->getSampleLength();
         if(state == AL_STOPPED)
-            offset = BufferCount * (Data.size()/FrameSize);
+            offset = BufferCount * (Data.Size()/FrameSize);
         else
         {
-            size_t rem = queued*(Data.size()/FrameSize) - offset;
+            size_t rem = queued*(Data.Size()/FrameSize) - offset;
             if(pos > rem) pos -= rem;
             else if(len > 0) pos += len - rem;
             else pos = 0;
         }
         pos = (size_t)(pos * 1000.0 / SampleRate);
         len = (size_t)(len * 1000.0 / SampleRate);
-        stats.AppendFormat(",%3lu%% buffered", 100 - 100*offset/(BufferCount*(Data.size()/FrameSize)));
+        stats.AppendFormat(",%3u%% buffered", 100 - 100*offset/(BufferCount*(Data.Size()/FrameSize)));
         stats.AppendFormat(", %zu.%03zu", pos/1000, pos%1000);
         if(len > 0)
             stats.AppendFormat(" / %zu.%03zu", len/1000, len%1000);
@@ -504,7 +504,7 @@ public:
 
         buffbytes += FrameSize-1;
         buffbytes -= buffbytes%FrameSize;
-        Data.resize(buffbytes);
+        Data.Resize(buffbytes);
 
         return true;
     }
@@ -552,7 +552,7 @@ public:
         SampleRate = srate;
         Looping = loop;
 
-        Data.resize((size_t)(0.2 * SampleRate) * FrameSize);
+        Data.Resize((size_t)(0.2 * SampleRate) * FrameSize);
 
         return true;
     }

@@ -6,13 +6,6 @@
 
 #include "Types.h"
 
-#ifdef _WIN32
-#include <windows.h>
-typedef DWORD WRes;
-#else
-typedef int WRes;
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -797,7 +797,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 {
-	int i;
+	unsigned int i;
 	angle_t angle;
 	AActor *ripper;
 

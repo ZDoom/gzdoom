@@ -97,22 +97,14 @@ SDL_Cursor *X11Cursor;
 SDL_Cursor *FirstCursor;
 #endif
 
-DWORD LanguageIDs[4] =
-{
-	MAKE_ID ('e','n','u',0),
-	MAKE_ID ('e','n','u',0),
-	MAKE_ID ('e','n','u',0),
-	MAKE_ID ('e','n','u',0)
-};
+DWORD LanguageIDs[4];
 	
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
 void (*I_FreezeTime) (bool frozen);
 
-void I_Tactile (int on, int off, int total)
+void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
-    // UNUSED.
-    on = off = total = 0;
 }
 
 ticcmd_t emptycmd;
@@ -326,6 +318,13 @@ void I_WaitVBL (int count)
 //
 void SetLanguageIDs ()
 {
+	size_t langlen = strlen(language);
+
+	DWORD lang = (langlen < 2 || langlen > 3) ?
+		MAKE_ID('e','n','u','\0') :
+		MAKE_ID(language[0],language[1],language[2],'\0');
+
+	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
 }
 
 //

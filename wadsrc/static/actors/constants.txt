@@ -164,6 +164,10 @@ const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
 const int CPF_NORANDOMPUFFZ = 8;
 
+// Flags for A_CustomMissile
+const int FPF_AIMATANGLE = 1;
+const int FPF_TRANSFERTRANSLATION = 2;
+
 // Flags for A_Teleport
 const int TF_TELEFRAG = 1;const int TF_RANDOMDECIDE = 2;
 

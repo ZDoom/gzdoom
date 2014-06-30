@@ -42,6 +42,7 @@
 #include "m_crc32.h"
 
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
 #include "gl/textures/gl_material.h"
@@ -233,7 +234,6 @@ void FMD3Model::BuildVertexBuffer(FModelVertexBuffer *buf)
 				buf->ibo_shadowdata.Push(surf->tris[k].VertIndex[l]);
 			}
 		}
-		surf->icount = buf->ibo_shadowdata.Size() - surf->iindex;
 	}
 }
 
@@ -245,36 +245,6 @@ int FMD3Model::FindFrame(const char * name)
 		if (!stricmp(name, frames[i].Name)) return i;
 	}
 	return -1;
-}
-
-void FMD3Model::RenderTriangles(MD3Surface * surf, MD3Vertex * vert, MD3Vertex *vert2, double inter)
-{
-	const bool interpolate = (vert2 != NULL && inter != 0. && vert != vert2);
-
-	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLES);
-	for(int i=0; i<surf->numTriangles;i++)
-	{
-		for(int j=0;j<3;j++)
-		{
-			int x = surf->tris[i].VertIndex[j];
-
-			glTexCoord2fv(&surf->texcoords[x].s);
-			if (!interpolate)
-			{
-				glVertex3f(vert[x].x, vert[x].z, vert[x].y);
-			}
-			else
-			{
-				float interp[3];
-				interp[0] = inter * vert[x].x + (1. - inter) * vert2[x].x;
-				interp[1] = inter * vert[x].z + (1. - inter) * vert2[x].z;
-				interp[2] = inter * vert[x].y + (1. - inter) * vert2[x].y;
-				glVertex3fv(interp);
-			}
-		}
-	}
-	glEnd();
 }
 
 void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double inter, int translation)
@@ -299,10 +269,9 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 
 		tex->Bind(0, translation);
 
-		MD3Vertex* vertices1 = surf->vertices + frameno * surf->numVertices;
-		MD3Vertex* vertices2 = surf->vertices + frameno2 * surf->numVertices;
-
-		RenderTriangles(surf, vertices1, vertices2, inter);
+		gl_RenderState.Apply();
+		GLRenderer->mModelVBO->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, inter);
+		glDrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, (void*)(intptr_t)(surf->iindex * sizeof(unsigned int)));
 	}
 }
 

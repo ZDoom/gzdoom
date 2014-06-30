@@ -191,7 +191,6 @@ class FMD3Model : public FModel
 
 		unsigned int vindex;	// contains numframes arrays of vertices
 		unsigned int iindex;
-		unsigned int icount;
 
 		MD3Surface()
 		{
@@ -224,8 +223,6 @@ class FMD3Model : public FModel
 
 	MD3Frame * frames;
 	MD3Surface * surfaces;
-
-	void RenderTriangles(MD3Surface * surf, MD3Vertex * vert, MD3Vertex *vert2, double inter);
 
 public:
 	FMD3Model() { }

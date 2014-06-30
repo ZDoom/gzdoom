@@ -58,8 +58,10 @@
 
 FVertexBuffer::FVertexBuffer()
 {
-	vbo_id = 0;
+	vao_id = vbo_id = 0;
 	glGenBuffers(1, &vbo_id);
+	glGenVertexArrays(1, &vao_id);
+
 }
 	
 FVertexBuffer::~FVertexBuffer()
@@ -68,6 +70,15 @@ FVertexBuffer::~FVertexBuffer()
 	{
 		glDeleteBuffers(1, &vbo_id);
 	}
+	if (vao_id != 0)
+	{
+		glDeleteVertexArrays(1, &vao_id);
+	}
+}
+
+void FVertexBuffer::BindVBO()
+{
+	glBindVertexArray(vao_id);
 }
 
 //==========================================================================
@@ -100,6 +111,14 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 		glBufferData(GL_ARRAY_BUFFER, 20 * sizeof(FFlatVertex), fill, GL_STATIC_DRAW);
 	}
 	mIndex = mCurIndex = 0;
+
+	glBindVertexArray(vao_id);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+	glVertexPointer(3,GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
+	glTexCoordPointer(2,GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glBindVertexArray(0);
 }
 
 FFlatVertexBuffer::~FFlatVertexBuffer()
@@ -361,27 +380,6 @@ void FFlatVertexBuffer::CreateVBO()
 			sectors[i].vboindex[1] = sectors[i].vboindex[0] = -1;
 			sectors[i].vboheight[1] = sectors[i].vboheight[0] = FIXED_MIN;
 		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::BindVBO()
-{
-	//if (gl.flags & RFL_BUFFER_STORAGE)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glVertexPointer(3,GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
-		glTexCoordPointer(2,GL_FLOAT, sizeof(FFlatVertex), &VTO->u);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-		glDisableVertexAttribArray(VATTR_VERTEX2);
 	}
 }
 

@@ -109,11 +109,17 @@ FModelVertexBuffer::FModelVertexBuffer()
 		Models[i]->BuildVertexBuffer(this);
 	}
 
+	glBindVertexArray(vao_id);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glBufferData(GL_ARRAY_BUFFER,vbo_shadowdata.Size() * sizeof(FModelVertex), &vbo_shadowdata[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,ibo_shadowdata.Size() * sizeof(unsigned int), &ibo_shadowdata[0], GL_STATIC_DRAW);
 
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableVertexAttribArray(VATTR_VERTEX2);
+	glBindVertexArray(0);
 }
 
 FModelVertexBuffer::~FModelVertexBuffer()
@@ -124,24 +130,6 @@ FModelVertexBuffer::~FModelVertexBuffer()
 	}
 }
 
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void FModelVertexBuffer::BindVBO()
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-	//glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &VMO->x);
-	//glTexCoordPointer(2, GL_FLOAT, sizeof(FModelVertex), &VMO->u);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_COLOR_ARRAY);
-	glEnableVertexAttribArray(VATTR_VERTEX2);
-}
 
 //===========================================================================
 //

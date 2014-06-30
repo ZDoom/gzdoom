@@ -3,10 +3,34 @@ in vec4 aVertex2;
 out vec4 pixelpos;
 out vec2 glowdist;
 
+#ifdef UNIFORM_VB
+uniform float fakeVB[100];
+#endif
 
 void main()
 {
-	vec4 worldcoord = ModelMatrix * mix(gl_Vertex, aVertex2, uInterpolationFactor);
+
+#ifdef UNIFORM_VB
+	vec4 vert;
+	vec4 tc;
+	
+	if (gl_MultiTexCoord0.x >= 100000.0)
+	{
+		int fakeVI = int(gl_MultiTexCoord0.y)*5;
+		vert = gl_Vertex + vec4(fakeVB[fakeVI], fakeVB[fakeVI+1], fakeVB[fakeVI+2], 0.0);
+		tc = vec4(fakeVB[fakeVI+3], fakeVB[fakeVI+4], 0.0, 0.0);
+	}
+	else
+	{
+		vert = gl_Vertex;
+		tc = gl_MultiTexCoord0;
+	}
+#else
+	#define vert gl_Vertex
+	#define tc gl_MultiTexCoord0
+#endif
+	
+	vec4 worldcoord = ModelMatrix * mix(vert, aVertex2, uInterpolationFactor);
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
 	gl_FrontColor = gl_Color;
@@ -25,7 +49,7 @@ void main()
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
 		gl_TexCoord[0].xy = sst;
 	#else
-		gl_TexCoord[0] = TextureMatrix * gl_MultiTexCoord0;
+		gl_TexCoord[0] = TextureMatrix * tc;
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;

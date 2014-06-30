@@ -90,6 +90,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	if (gl.glslversion >= 3.3f) vp_comb = "#version 330 compatibility\n";	// I can't shut up the deprecation warnings in GLSL 1.3 so if available use a version with compatibility profile.
 	// todo when using shader storage buffers, add
 	// "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : require\n" instead.
+
+	if (!(gl.flags & RFL_BUFFER_STORAGE))
+	{
+		// we only want the uniform array hack in the shader if we actually need it.
+		vp_comb << "#define UNIFORM_VB\n";
+	}
+
 	vp_comb << defines << i_data.GetString().GetChars();
 	FString fp_comb = vp_comb;
 
@@ -196,6 +203,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	timer_index = glGetUniformLocation(hShader, "timer");
 	lights_index = glGetUniformLocation(hShader, "lights");
+	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
 
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 

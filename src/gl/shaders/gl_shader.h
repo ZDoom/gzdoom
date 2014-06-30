@@ -196,6 +196,9 @@ class FShader
 	
 	int timer_index;
 	int lights_index;
+public:
+	int fakevb_index;
+private:
 	int currentglowstate;
 	int currentfixedcolormap;
 
@@ -245,6 +248,10 @@ public:
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
 	void SetWarpSpeed(unsigned int eff, float speed);
+	FShader *GetActiveShader() const
+	{
+		return mActiveShader;
+	}
 
 	FShader *Get(unsigned int eff)
 	{

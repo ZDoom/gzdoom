@@ -305,7 +305,7 @@ void FVoxelModel::AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3
 
 	mIndices.Push(indx[0]);
 	mIndices.Push(indx[1]);
-	mIndices.Push(indx[2]);
+	mIndices.Push(indx[3]);
 	mIndices.Push(indx[1]);
 	mIndices.Push(indx[3]);
 	mIndices.Push(indx[2]);
@@ -420,13 +420,7 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double int
 	tex->Bind(0, translation);
 
 	gl_RenderState.Apply();
-	glBegin(GL_TRIANGLES);
-	for (unsigned i = 0; i < mIndices.Size(); i++)
-	{
-		FModelVertex *vert = &mVertices[mIndices[i]];
-		glTexCoord2fv(&vert->u);
-		glVertex3fv(&vert->x);
-	}
-	glEnd();
+	GLRenderer->mModelVBO->SetupFrame(vindex, vindex, 0.f);
+	glDrawElements(GL_TRIANGLES, mIndices.Size(), GL_UNSIGNED_INT, (void*)(intptr_t)(iindex * sizeof(unsigned int)));
 }
 

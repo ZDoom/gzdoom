@@ -34,7 +34,7 @@ if( NOT MSVC AND NOT APPLE )
 		DEPENDS qnan )
 		
 	set( GEN_FP_FILES arith.h gd_qnan.h )
-	set( GEN_FP_DEPS ${CMAKE_CURRENT_BINARY_DIR}/arith.h ${CMAKE_CURRENTY_BINARY_DIR}/gd_qnan.h )
+	set( GEN_FP_DEPS ${CMAKE_CURRENT_BINARY_DIR}/arith.h ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h )
 endif( NOT MSVC AND NOT APPLE )
 
 add_library( gdtoa

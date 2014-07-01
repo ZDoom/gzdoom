@@ -186,7 +186,7 @@ class FShader
 	FUniform4f muColormapRange;
 	FBufferedUniform4i muLightRange;
 	FBufferedUniformPE muFogColor;
-	FBufferedUniformPE muDynLightColor;
+	FBufferedUniform4f muDynLightColor;
 	FBufferedUniformPE muObjectColor;
 	FUniform4f muGlowBottomColor;
 	FUniform4f muGlowTopColor;

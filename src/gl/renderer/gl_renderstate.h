@@ -65,7 +65,7 @@ class FRenderState
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
-	PalEntry mDynColor;
+	FStateVec4 mDynColor;
 
 	int mEffectState;
 	int mColormapState;
@@ -184,12 +184,7 @@ public:
 
 	void SetDynLight(float r, float g, float b)
 	{
-		mDynColor = PalEntry(255, xs_CRoundToInt(r*255), xs_CRoundToInt(g*255), xs_CRoundToInt(b*255));
-	}
-
-	void SetDynLight(PalEntry pe)
-	{
-		mDynColor = pe;
+		mDynColor.Set(r, g, b, 0);
 	}
 
 	void SetObjectColor(PalEntry pe)

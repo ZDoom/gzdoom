@@ -21,6 +21,8 @@
 #ifndef __HU_STUFF_H__
 #define __HU_STUFF_H__
 
+#include "doomtype.h"
+
 struct event_t;
 class player_t;
 
@@ -52,7 +54,7 @@ int HU_GetRowColor(player_t *player, bool hightlight);
 
 // Sorting routines
 
-int comparepoints(const void *arg1, const void *arg2);
-int compareteams(const void *arg1, const void *arg2);
+int STACK_ARGS comparepoints(const void *arg1, const void *arg2);
+int STACK_ARGS compareteams(const void *arg1, const void *arg2);
 
 #endif

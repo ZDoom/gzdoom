@@ -1,7 +1,9 @@
 
+#ifndef SIMPLE	// we do not need these for simple shaders
 in vec4 aVertex2;
 out vec4 pixelpos;
 out vec2 glowdist;
+#endif
 
 #ifdef UNIFORM_VB
 uniform float fakeVB[100];
@@ -30,16 +32,23 @@ void main()
 	#define tc gl_MultiTexCoord0
 #endif
 	
-	vec4 worldcoord = ModelMatrix * mix(vert, aVertex2, uInterpolationFactor);
+	#ifndef SIMPLE
+		vec4 worldcoord = ModelMatrix * mix(vert, aVertex2, uInterpolationFactor);
+	#else
+		vec4 worldcoord = ModelMatrix * vert;
+	#endif
+
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
 	gl_FrontColor = gl_Color;
-	
-	pixelpos.xyz = worldcoord.xyz;
-	pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
 
-	glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
-	glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
+	#ifndef SIMPLE
+		pixelpos.xyz = worldcoord.xyz;
+		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
+
+		glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
+		glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
+	#endif
 	
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);

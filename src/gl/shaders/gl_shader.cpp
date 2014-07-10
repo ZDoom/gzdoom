@@ -212,6 +212,27 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	int texture_index = glGetUniformLocation(hShader, "texture2");
 	if (texture_index > 0) glUniform1i(texture_index, 1);
 
+
+    GLint   binaryLength;
+    void*   binary;
+    FILE*   outfile;
+	GLenum binaryFormat;
+	//
+	//  Retrieve the binary from the program object
+	//
+	glGetProgramiv(hShader, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+	binary = (void*)malloc(binaryLength);
+	glGetProgramBinary(hShader, binaryLength, NULL, &binaryFormat, binary);
+
+	//
+	//  Cache the program binary for future runs
+	//
+	outfile = fopen(name, "wb");
+	fwrite(binary, binaryLength, 1, outfile);
+	fclose(outfile);
+	free(binary);
+
+
 	glUseProgram(0);
 	return !!linked;
 }
@@ -316,8 +337,8 @@ static const FEffectShader effectshaders[]=
 {
 	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "" },
 	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define SPHEREMAP\n" },
-	{ "burn", "shaders/glsl/burn.vp", "shaders/glsl/burn.fp", NULL, "" },
-	{ "stencil", "shaders/glsl/stencil.vp", "shaders/glsl/stencil.fp", NULL, "" },
+	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", NULL, "#define SIMPLE\n" },
+	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", NULL, "#define SIMPLE\n" },
 };
 
 

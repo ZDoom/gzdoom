@@ -268,29 +268,30 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 
 	if (tex)
 	{
-		glPushMatrix();
 		tex->Bind(0, 0);
 		texw = tex->TextureWidth(GLUSE_TEXTURE);
 		texh = tex->TextureHeight(GLUSE_TEXTURE);
+		gl_RenderState.EnableModelMatrix(true);
 
-		glRotatef(-180.0f+x_offset, 0.f, 1.f, 0.f);
+		gl_RenderState.mModelMatrix.loadIdentity();
+		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, 0.f, 1.f, 0.f);
 
 		float xscale = 1024.f / float(texw);
 		float yscale = 1.f;
 		if (texh < 200)
 		{
-			glTranslatef(0.f, -1250.f, 0.f);
-			glScalef(1.f, texh/230.f, 1.f);
+			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
+			gl_RenderState.mModelMatrix.scale(1.f, texh/230.f, 1.f);
 		}
 		else if (texh <= 240)
 		{
-			glTranslatef(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			glScalef(1.f, 1.f + ((texh-200.f)/200.f) * 1.17f, 1.f);
+			gl_RenderState.mModelMatrix.translate(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			gl_RenderState.mModelMatrix.scale(1.f, 1.f + ((texh-200.f)/200.f) * 1.17f, 1.f);
 		}
 		else
 		{
-			glTranslatef(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			glScalef(1.f, 1.2f * 1.17f, 1.f);
+			gl_RenderState.mModelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+			gl_RenderState.mModelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
 			yscale = 240.f / texh;
 		}
 		gl_RenderState.EnableTextureMatrix(true);
@@ -301,13 +302,7 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
 	gl_RenderState.EnableTextureMatrix(false);
-
-	if (tex)
-	{
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-	}
-
+	gl_RenderState.EnableModelMatrix(false);
 }
 
 
@@ -323,10 +318,12 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	int faces;
 	FMaterial * tex;
 
+	gl_RenderState.EnableModelMatrix(true);
+
 	if (!sky2)
-		glRotatef(-180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
+		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
 	else
-		glRotatef(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
+		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
 
 	FFlatVertex *ptr;
 	if (sb->faces[5]) 
@@ -456,6 +453,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	ptr->Set(-128.f, -128.f, 128.f, 1, 1);
 	ptr++;
 	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+	gl_RenderState.EnableModelMatrix(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -477,8 +475,7 @@ void GLSkyPortal::DrawContents()
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
+	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
 	GLRenderer->SetupView(0, 0, 0, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
@@ -519,7 +516,8 @@ void GLSkyPortal::DrawContents()
 		}
 		gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	}
-	glPopMatrix();
+	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
+	gl_RenderState.ApplyMatrices();
 	glset.lightmode = oldlightmode;
 }
 

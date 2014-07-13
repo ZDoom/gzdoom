@@ -54,6 +54,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_hwtexture.h"
@@ -386,23 +387,10 @@ FNativePalette *OpenGLFrameBuffer::CreatePalette(FRemapTable *remap)
 //==========================================================================
 bool OpenGLFrameBuffer::Begin2D(bool)
 {
-	glActiveTexture(GL_TEXTURE7);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	glActiveTexture(GL_TEXTURE0);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(
-		(GLdouble) 0,
-		(GLdouble) GetWidth(), 
-		(GLdouble) GetHeight(), 
-		(GLdouble) 0,
-		(GLdouble) -1.0, 
-		(GLdouble) 1.0 
-		);
+	gl_RenderState.mViewMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0, GetWidth(), GetHeight(), 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+
 	glDisable(GL_DEPTH_TEST);
 
 	// Korshun: ENABLE AUTOMAP ANTIALIASING!!!

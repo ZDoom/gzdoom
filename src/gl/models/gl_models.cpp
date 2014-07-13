@@ -863,11 +863,6 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy)
 	if ( smf == NULL )
 		return;
 
-	// [BB] The model has to be drawn independtly from the position of the player,
-	// so we have to reset the GL_MODELVIEW matrix.
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
 	glDepthFunc(GL_LEQUAL);
 
 	// [BB] In case the model should be rendered translucent, do back face culling.
@@ -879,28 +874,31 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy)
 		glFrontFace(GL_CCW);
 	}
 
+	// [BB] The model has to be drawn independently from the position of the player,
+	// so we have to reset the view matrix.
+	gl_RenderState.mViewMatrix.loadIdentity();
+
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	glScalef(smf->xscale, smf->zscale, smf->yscale);
+	gl_RenderState.mViewMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
 	
 	// Aplying model offsets (model offsets do not depend on model scalings).
-	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	gl_RenderState.mViewMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	glRotatef(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
-	glRotatef(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
+	gl_RenderState.mViewMatrix.rotate(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
+	gl_RenderState.mViewMatrix.rotate(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
-	glRotatef(90., 0, 1, 0);
+	gl_RenderState.mViewMatrix.rotate(90.f, 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
-	glRotatef(smf->pitchoffset, 0, 0, 1);
-	glRotatef(-smf->rolloffset, 1, 0, 0);
+	gl_RenderState.mViewMatrix.rotate(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	gl_RenderState.mViewMatrix.rotate(smf->pitchoffset, 0, 0, 1);
+	gl_RenderState.mViewMatrix.rotate(-smf->rolloffset, 1, 0, 0);
+	gl_RenderState.ApplyMatrices();
 
 	gl_RenderFrameModels( smf, psp->state, psp->tics, playermo->player->ReadyWeapon->GetClass(), NULL, 0 );
 
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
 	glDepthFunc(GL_LESS);
 	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
 		glDisable(GL_CULL_FACE);

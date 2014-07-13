@@ -267,14 +267,13 @@ void FGLRenderer::ClearBorders()
 	int borderHeight = (trueHeight - height) / 2;
 
 	glViewport(0, 0, width, trueHeight);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, width * 1.0, 0.0, trueHeight, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
+	gl_RenderState.mProjectionMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0.0f, width * 1.0f, 0.0f, trueHeight, -1.0f, 1.0f);
 	gl_RenderState.SetColor(0.f ,0.f ,0.f ,1.f);
 	gl_RenderState.Set2DMode(true);
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.Apply();
+	gl_RenderState.ApplyMatrices(); 
 
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 	ptr->Set(0, borderHeight, 0, 0, 0); ptr++;

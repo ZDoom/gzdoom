@@ -9,6 +9,7 @@
 #include "r_defs.h"
 
 class FVertexBuffer;
+extern TArray<VSMatrix> gl_MatrixStack;
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
 

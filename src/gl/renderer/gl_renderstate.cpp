@@ -57,6 +57,7 @@ CVAR(Bool, gl_direct_state_change, true, 0)
 
 
 static VSMatrix identityMatrix(1);
+TArray<VSMatrix> gl_MatrixStack;
 
 //==========================================================================
 //
@@ -296,3 +297,12 @@ void FRenderState::Apply()
 	ApplyShader();
 }
 
+
+
+void FRenderState::ApplyMatrices()
+{
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(mViewMatrix.get());
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(mProjectionMatrix.get());
+}

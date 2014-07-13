@@ -253,20 +253,15 @@ VSMatrix::lookAt(FLOATTYPE xPos, FLOATTYPE yPos, FLOATTYPE zPos,
 void 
 VSMatrix::perspective(FLOATTYPE fov, FLOATTYPE ratio, FLOATTYPE nearp, FLOATTYPE farp)
 {
-	FLOATTYPE projMatrix[16];
-
 	FLOATTYPE f = 1.0f / tan (fov * (M_PI / 360.0f));
 
-	setIdentityMatrix(projMatrix,4);
-
-	projMatrix[0] = f / ratio;
-	projMatrix[1 * 4 + 1] = f;
-	projMatrix[2 * 4 + 2] = (farp + nearp) / (nearp - farp);
-	projMatrix[3 * 4 + 2] = (2.0f * farp * nearp) / (nearp - farp);
-	projMatrix[2 * 4 + 3] = -1.0f;
-	projMatrix[3 * 4 + 3] = 0.0f;
-
-	multMatrix(projMatrix);
+	loadIdentity();
+	mMatrix[0] = f / ratio;
+	mMatrix[1 * 4 + 1] = f;
+	mMatrix[2 * 4 + 2] = (farp + nearp) / (nearp - farp);
+	mMatrix[3 * 4 + 2] = (2.0f * farp * nearp) / (nearp - farp);
+	mMatrix[2 * 4 + 3] = -1.0f;
+	mMatrix[3 * 4 + 3] = 0.0f;
 }
 
 
@@ -276,18 +271,14 @@ VSMatrix::ortho(FLOATTYPE left, FLOATTYPE right,
 			FLOATTYPE bottom, FLOATTYPE top, 
 			FLOATTYPE nearp, FLOATTYPE farp)
 {
-	FLOATTYPE m[16];
+	loadIdentity();
 
-	setIdentityMatrix(m,4);
-
-	m[0 * 4 + 0] = 2 / (right - left);
-	m[1 * 4 + 1] = 2 / (top - bottom);	
-	m[2 * 4 + 2] = -2 / (farp - nearp);
-	m[3 * 4 + 0] = -(right + left) / (right - left);
-	m[3 * 4 + 1] = -(top + bottom) / (top - bottom);
-	m[3 * 4 + 2] = -(farp + nearp) / (farp - nearp);
-
-	multMatrix(m);
+	mMatrix[0 * 4 + 0] = 2 / (right - left);
+	mMatrix[1 * 4 + 1] = 2 / (top - bottom);	
+	mMatrix[2 * 4 + 2] = -2 / (farp - nearp);
+	mMatrix[3 * 4 + 0] = -(right + left) / (right - left);
+	mMatrix[3 * 4 + 1] = -(top + bottom) / (top - bottom);
+	mMatrix[3 * 4 + 2] = -(farp + nearp) / (farp - nearp);
 }
 
 

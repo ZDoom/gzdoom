@@ -117,17 +117,14 @@ void GLPortal::BeginScene()
 void GLPortal::ClearScreen()
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
+	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
+	gl_MatrixStack.Push(gl_RenderState.mProjectionMatrix);
 	screen->Begin2D(false);
 	screen->Dim(0, 1.f, 0, 0, SCREENWIDTH, SCREENHEIGHT);
 	glEnable(GL_DEPTH_TEST);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	gl_MatrixStack.Pop(gl_RenderState.mProjectionMatrix);
+	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
+	gl_RenderState.ApplyMatrices();
 	if (multi) glEnable(GL_MULTISAMPLE);
 	gl_RenderState.Set2DMode(false);
 }

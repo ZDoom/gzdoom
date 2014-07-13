@@ -83,6 +83,7 @@ void FRenderState::Reset()
 	mColormapState = CM_DEFAULT;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
+	mClipHeight = 0.f;
 }
 
 
@@ -114,12 +115,13 @@ bool FRenderState::ApplyShader()
 	}
 	else
 	{
+		// todo: check how performance is affected by using 'discard' in a shader and if necessary create a separate set of discard-less shaders.
 		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4);
 		activeShader->Bind();
 	}
 
 	int fogset = 0;
-	//glColor4fv(mColor.vec);
+
 	if (mFogEnabled)
 	{
 		if ((mFogColor & 0xffffff) == 0)
@@ -143,6 +145,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
+	activeShader->muClipHeight.Set(mClipHeight);
 
 	if (mGlowEnabled)
 	{

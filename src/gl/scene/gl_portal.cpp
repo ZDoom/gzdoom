@@ -79,6 +79,7 @@ EXTERN_CVAR(Bool, gl_noquery)
 EXTERN_CVAR(Int, r_mirror_recursions)
 
 TArray<GLPortal *> GLPortal::portals;
+TArray<float> GLPortal::planestack;
 int GLPortal::recursion;
 int GLPortal::MirrorFlag;
 int GLPortal::PlaneMirrorFlag;
@@ -200,6 +201,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 		glStencilFunc(GL_EQUAL,recursion,~0);		// create stencil
 		glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
 		glColorMask(0,0,0,0);						// don't write to the graphics buffer
+		gl_RenderState.SetEffect(EFF_STENCIL);
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LESS);
@@ -235,7 +237,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			gl_RenderState.EnableTexture(true);
 			glDepthFunc(GL_LESS);
 			glColorMask(1,1,1,1);
-			glDepthRange(0,1);
+			gl_RenderState.SetEffect(EFF_NONE);
+			glDepthRange(0, 1);
 
 			GLuint sampleCount;
 
@@ -264,6 +267,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
 			gl_RenderState.EnableTexture(true);
 			glColorMask(1,1,1,1);
+			gl_RenderState.SetEffect(EFF_NONE);
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(false);							// don't write to Z-buffer!
 		}
@@ -283,9 +287,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
-	// The clip plane from the previous portal must be deactivated for this one.
-	clipsave = glIsEnabled(GL_CLIP_PLANE0+renderdepth-1);
-	if (clipsave) glDisable(GL_CLIP_PLANE0+renderdepth-1);
+	planestack.Push(gl_RenderState.GetClipHeight());
+	gl_RenderState.SetClipHeight(0.f);
 
 	// save viewpoint
 	savedviewx=viewx;
@@ -345,7 +348,11 @@ void GLPortal::End(bool usestencil)
 
 	PortalAll.Clock();
 	GLRenderer->mCurrentPortal = NextPortal;
-	if (clipsave) glEnable (GL_CLIP_PLANE0+renderdepth-1);
+
+	float f;
+	planestack.Pop(f);
+	gl_RenderState.SetClipHeight(f);
+
 	if (usestencil)
 	{
 		if (needdepth) FDrawInfo::EndDrawInfo();
@@ -360,6 +367,7 @@ void GLPortal::End(bool usestencil)
 		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 		glColorMask(0,0,0,0);						// no graphics
+		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.ResetColor();
 		gl_RenderState.EnableTexture(false);
 		gl_RenderState.Apply();
@@ -386,7 +394,8 @@ void GLPortal::End(bool usestencil)
 
 
 		gl_RenderState.EnableTexture(true);
-		glColorMask(1,1,1,1);
+		gl_RenderState.SetEffect(EFF_NONE);
+		glColorMask(1, 1, 1, 1);
 		recursion--;
 
 		// restore old stencil op.
@@ -421,8 +430,10 @@ void GLPortal::End(bool usestencil)
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0,1);
 		glColorMask(0,0,0,0);						// no graphics
+		gl_RenderState.SetEffect(EFF_STENCIL);
 		gl_RenderState.EnableTexture(false);
 		DrawPortalStencil();
+		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.EnableTexture(true);
 		glColorMask(1,1,1,1);
 		glDepthFunc(GL_LESS);
@@ -778,18 +789,16 @@ void GLPlaneMirrorPortal::DrawContents()
 
 	validcount++;
 
+	float f = FIXED2FLOAT(planez);
+	if (PlaneMirrorMode < 0) f -= 65536.f;	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
+	else f += 65536.f;	// floor mirror: clip everything with a z higher than the portal's floor
+	gl_RenderState.SetClipHeight(f);
+
 	PlaneMirrorFlag++;
 	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	ClearClipper();
 
-	glEnable(GL_CLIP_PLANE0+renderdepth);
-	// This only works properly for non-sloped planes so don't bother with the math.
-	//double d[4]={origin->a/65536., origin->c/65536., origin->b/65536., FIXED2FLOAT(origin->d)};
-	double d[4]={0, static_cast<double>(PlaneMirrorMode), 0, FIXED2FLOAT(origin->d)};
-	glClipPlane(GL_CLIP_PLANE0+renderdepth, d);
-
 	GLRenderer->DrawScene();
-	glDisable(GL_CLIP_PLANE0+renderdepth);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;
 }
@@ -988,12 +997,12 @@ void GLHorizonPortal::DrawContents()
 
 	gltexture->Bind();
 
+	bool pushed = gl_SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();
 
 
-	bool pushed = gl_SetPlaneTextureRotation(sp, gltexture);
 
 	float vx=FIXED2FLOAT(viewx);
 	float vy=FIXED2FLOAT(viewy);

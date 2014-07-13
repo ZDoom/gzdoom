@@ -57,6 +57,7 @@ class FRenderState
 	int mBlendEquation;
 	bool m2D;
 	float mInterpolationFactor;
+	float mClipHeight;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
@@ -98,6 +99,16 @@ public:
 	{
 		// forces rebinding with the next 'apply' call.
 		mCurrentVertexBuffer = NULL;
+	}
+
+	void SetClipHeight(float clip)
+	{
+		mClipHeight = clip;
+	}
+
+	float GetClipHeight()
+	{
+		return mClipHeight;
 	}
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)

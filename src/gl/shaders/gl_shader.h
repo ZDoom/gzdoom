@@ -193,6 +193,7 @@ class FShader
 	FUniform4f muGlowBottomPlane;
 	FUniform4f muGlowTopPlane;
 	FBufferedUniform1f muInterpolationFactor;
+	FBufferedUniform1f muClipHeight;
 	
 	int timer_index;
 	int lights_index;

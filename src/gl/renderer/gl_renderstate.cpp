@@ -301,10 +301,8 @@ void FRenderState::Apply()
 
 void FRenderState::ApplyMatrices()
 {
-	drawcalls.Clock();
 	if (GLRenderer->mShaderManager != NULL)
 	{
 		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix);
 	}
-	drawcalls.Unclock();
 }

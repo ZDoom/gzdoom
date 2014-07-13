@@ -193,7 +193,8 @@ class FShader
 	FUniform4f muGlowBottomPlane;
 	FUniform4f muGlowTopPlane;
 	FBufferedUniform1f muInterpolationFactor;
-	FBufferedUniform1f muClipHeight;
+	FBufferedUniform1f muClipHeightTop;
+	FBufferedUniform1f muClipHeightBottom;
 	
 	int timer_index;
 	int lights_index;
@@ -244,7 +245,7 @@ class FShaderManager
 public:
 	FShaderManager();
 	~FShaderManager();
-	FShader *Compile(const char *ShaderName, const char *ShaderPath);
+	FShader *Compile(const char *ShaderName, const char *ShaderPath, bool usediscard);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);

@@ -83,7 +83,8 @@ void FRenderState::Reset()
 	mColormapState = CM_DEFAULT;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mClipHeight = 0.f;
+	mClipHeightTop = 65536.f;
+	mClipHeightBottom = -65536.f;
 }
 
 
@@ -145,7 +146,8 @@ bool FRenderState::ApplyShader()
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
-	activeShader->muClipHeight.Set(mClipHeight);
+	activeShader->muClipHeightTop.Set(mClipHeightTop);
+	activeShader->muClipHeightBottom.Set(mClipHeightBottom);
 
 	if (mGlowEnabled)
 	{

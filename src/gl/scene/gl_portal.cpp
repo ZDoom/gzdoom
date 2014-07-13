@@ -287,8 +287,10 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
-	planestack.Push(gl_RenderState.GetClipHeight());
-	gl_RenderState.SetClipHeight(0.f);
+	planestack.Push(gl_RenderState.GetClipHeightTop());
+	planestack.Push(gl_RenderState.GetClipHeightBottom());
+	gl_RenderState.SetClipHeightTop(65536.f);
+	gl_RenderState.SetClipHeightBottom(-65536.f);
 
 	// save viewpoint
 	savedviewx=viewx;
@@ -351,7 +353,9 @@ void GLPortal::End(bool usestencil)
 
 	float f;
 	planestack.Pop(f);
-	gl_RenderState.SetClipHeight(f);
+	gl_RenderState.SetClipHeightBottom(f);
+	planestack.Pop(f);
+	gl_RenderState.SetClipHeightTop(f);
 
 	if (usestencil)
 	{
@@ -790,9 +794,9 @@ void GLPlaneMirrorPortal::DrawContents()
 	validcount++;
 
 	float f = FIXED2FLOAT(planez);
-	if (PlaneMirrorMode < 0) f -= 65536.f;	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
-	else f += 65536.f;	// floor mirror: clip everything with a z higher than the portal's floor
-	gl_RenderState.SetClipHeight(f);
+	// the coordinate fudging is needed because for some reason this is nowhere near precise and leaves gaps. Strange...
+	if (PlaneMirrorMode < 0) gl_RenderState.SetClipHeightTop(f+0.3f);	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
+	else gl_RenderState.SetClipHeightBottom(f-0.3f);	// floor mirror: clip everything with a z higher than the portal's floor
 
 	PlaneMirrorFlag++;
 	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));

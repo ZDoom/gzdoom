@@ -200,7 +200,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
 	muFixedColormap.Init(hShader, "uFixedColormap");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
-	muClipHeight.Init(hShader, "uClipHeight");
+	muClipHeightTop.Init(hShader, "uClipHeightTop");
+	muClipHeightBottom.Init(hShader, "uClipHeightBottom");
 
 	timer_index = glGetUniformLocation(hShader, "timer");
 	lights_index = glGetUniformLocation(hShader, "lights");
@@ -249,16 +250,18 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath)
+FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard)
 {
+	FString defines;
 	// this can't be in the shader code due to ATI strangeness.
-	const char *str = (gl.MaxLights() == 128)? "#define MAXLIGHTS128\n" : "";
+	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
+	if (!usediscard) defines += "#define NO_DISCARD\n";
 
 	FShader *shader = NULL;
 	try
 	{
 		shader = new FShader(ShaderName);
-		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, str))
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, defines.GetChars()))
 		{
 			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
@@ -352,11 +355,16 @@ FShaderManager::~FShaderManager()
 
 void FShaderManager::CompileShaders()
 {
-	mActiveShader = mEffectShaders[0] = mEffectShaders[1] = NULL;
+	mActiveShader = NULL;
+
+	for (int i = 0; i < MAX_EFFECTS; i++)
+	{
+		mEffectShaders[i] = NULL;
+	}
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc);
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true);
 		mTextureEffects.Push(shc);
 	}
 
@@ -365,7 +373,7 @@ void FShaderManager::CompileShaders()
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShader *shc = Compile(sfn, usershaders[i]);
+		FShader *shc = Compile(sfn, usershaders[i], true);
 		mTextureEffects.Push(shc);
 	}
 

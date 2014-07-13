@@ -1,7 +1,7 @@
 // This file contains common data definitions for both vertex and fragment shader
 
 uniform vec4 uCameraPos;
-uniform float uClipHeight;
+uniform float uClipHeightTop, uClipHeightBottom;
 
 uniform int uTextureMode;
 

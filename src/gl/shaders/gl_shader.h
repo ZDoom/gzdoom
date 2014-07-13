@@ -198,11 +198,15 @@ class FShader
 	
 	int timer_index;
 	int lights_index;
+	int modelmatrix_index;
+	int texturematrix_index;
 public:
 	int fakevb_index;
 private:
 	int currentglowstate;
 	int currentfixedcolormap;
+	bool currentTextureMatrixState;
+	bool currentModelMatrixState;
 
 public:
 	FShader(const char *name)
@@ -211,6 +215,8 @@ public:
 		hShader = hVertProg = hFragProg = 0;
 		currentglowstate = 0;
 		currentfixedcolormap = 0;
+		currentTextureMatrixState = true;	// by setting the matrix state to 'true' it is guaranteed to be set the first time the render state gets applied.
+		currentModelMatrixState = true;
 	}
 
 	~FShader();

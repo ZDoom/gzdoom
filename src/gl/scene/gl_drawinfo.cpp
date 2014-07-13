@@ -1083,9 +1083,8 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	float fviewy = FIXED2FLOAT(viewy);
 	float fviewz = FIXED2FLOAT(viewz);
 
+	gl_SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
-
-	bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
 
 	float prj_fac1 = (planez-fviewz)/(ws->z1-fviewz);
 	float prj_fac2 = (planez-fviewz)/(ws->z2-fviewz);
@@ -1113,11 +1112,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	ptr++;
 	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 
-	if (pushed)
-	{
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-	}
+	gl_RenderState.EnableTextureMatrix(false);
 }
 
 //==========================================================================

@@ -1000,7 +1000,7 @@ void GLHorizonPortal::DrawContents()
 
 	gltexture->Bind();
 
-	bool pushed = gl_SetPlaneTextureRotation(sp, gltexture);
+	gl_SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();
@@ -1059,12 +1059,7 @@ void GLHorizonPortal::DrawContents()
 	ptr++;
 	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 
-	if (pushed)
-	{
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-	}
-
+	gl_RenderState.EnableTextureMatrix(false);
 	PortalAll.Unclock();
 
 }

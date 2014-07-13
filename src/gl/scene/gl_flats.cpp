@@ -70,7 +70,7 @@
 //
 //==========================================================================
 
-bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
+void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
 {
 	// only manipulate the texture matrix if needed.
 	if (secplane->xoffs != 0 || secplane->yoffs != 0 ||
@@ -93,15 +93,13 @@ bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		float xscale2=64.f/gltexture->TextureWidth(GLUSE_TEXTURE);
 		float yscale2=64.f/gltexture->TextureHeight(GLUSE_TEXTURE);
 
-		glMatrixMode(GL_TEXTURE);
-		glPushMatrix();
-		glScalef(xscale1 ,yscale1,1.0f);
-		glTranslatef(uoffs,voffs,0.0f);
-		glScalef(xscale2 ,yscale2,1.0f);
-		glRotatef(angle,0.0f,0.0f,1.0f);
-		return true;
+		gl_RenderState.mTextureMatrix.loadIdentity();
+		gl_RenderState.mTextureMatrix.scale(xscale1 ,yscale1,1.0f);
+		gl_RenderState.mTextureMatrix.translate(uoffs,voffs,0.0f);
+		gl_RenderState.mTextureMatrix.scale(xscale2 ,yscale2,1.0f);
+		gl_RenderState.mTextureMatrix.rotate(angle,0.0f,0.0f,1.0f);
+		gl_RenderState.EnableTextureMatrix(true);
 	}
-	return false;
 }
 
 
@@ -377,13 +375,9 @@ void GLFlat::Draw(int pass)
 	case GLPASS_TEXTURE:
 	{
 		gltexture->Bind();
-		bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
+		gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, false);
-		if (pushed) 
-		{
-			glPopMatrix();
-			glMatrixMode(GL_MODELVIEW);
-		}
+		gl_RenderState.EnableTextureMatrix(false);
 		break;
 	}
 
@@ -440,13 +434,9 @@ void GLFlat::Draw(int pass)
 		else 
 		{
 			gltexture->Bind();
-			bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
+			gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true);
-			if (pushed)
-			{
-				glPopMatrix();
-				glMatrixMode(GL_MODELVIEW);
-			}
+			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		break;

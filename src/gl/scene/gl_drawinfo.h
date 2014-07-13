@@ -273,7 +273,7 @@ public:
 
 extern FDrawInfo * gl_drawinfo;
 
-bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture);
+void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture);
 void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending);
 
 #endif

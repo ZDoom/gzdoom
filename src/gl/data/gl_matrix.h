@@ -22,6 +22,12 @@
 
 #include <stdlib.h>
 
+#ifdef USE_DOUBLE
+typedef double FLOATTYPE;
+#else
+typedef float FLOATTYPE;
+#endif
+
 class VSMatrix {
 
 	public:
@@ -35,27 +41,32 @@ class VSMatrix {
 			loadIdentity();
 		}
 
-		void translate(double x, double y, double z);
-		void scale(double x, double y, double z);
-		void rotate(double angle, double x, double y, double z);
+		void translate(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z);
+		void scale(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z);
+		void rotate(FLOATTYPE angle, FLOATTYPE x, FLOATTYPE y, FLOATTYPE z);
 		void loadIdentity();
+#ifdef USE_DOUBLE
 		void multMatrix(const float *aMatrix);
-		void multMatrix(const double *aMatrix);
+#endif
+		void multMatrix(const FLOATTYPE *aMatrix);
 		void multMatrix(const VSMatrix &aMatrix)
 		{
 			multMatrix(aMatrix.mMatrix);
 		}
-		void loadMatrix(const double *aMatrix);
+		void loadMatrix(const FLOATTYPE *aMatrix);
+#ifdef USE_DOUBLE
 		void loadMatrix(const float *aMatrix);
-		void lookAt(double xPos, double yPos, double zPos, double xLook, double yLook, double zLook, double xUp, double yUp, double zUp);
-		void perspective(double fov, double ratio, double nearp, double farp);
-		void ortho(double left, double right, double bottom, double top, double nearp=-1.0f, double farp=1.0f);
-		void frustum(double left, double right, double bottom, double top, double nearp, double farp);
-		void copy(double * pDest)
+#endif
+		void lookAt(FLOATTYPE xPos, FLOATTYPE yPos, FLOATTYPE zPos, FLOATTYPE xLook, FLOATTYPE yLook, FLOATTYPE zLook, FLOATTYPE xUp, FLOATTYPE yUp, FLOATTYPE zUp);
+		void perspective(FLOATTYPE fov, FLOATTYPE ratio, FLOATTYPE nearp, FLOATTYPE farp);
+		void ortho(FLOATTYPE left, FLOATTYPE right, FLOATTYPE bottom, FLOATTYPE top, FLOATTYPE nearp=-1.0f, FLOATTYPE farp=1.0f);
+		void frustum(FLOATTYPE left, FLOATTYPE right, FLOATTYPE bottom, FLOATTYPE top, FLOATTYPE nearp, FLOATTYPE farp);
+		void copy(FLOATTYPE * pDest)
 		{
-			memcpy(pDest, mMatrix, 16 * sizeof(double));
+			memcpy(pDest, mMatrix, 16 * sizeof(FLOATTYPE));
 		}
 
+#ifdef USE_DOUBLE
 		void copy(float * pDest)
 		{
 			for (int i = 0; i < 16; i++)
@@ -63,30 +74,38 @@ class VSMatrix {
 				pDest[i] = (float)mMatrix[i];
 			}
 		}
+#endif
+
+		const FLOATTYPE *get() const
+		{
+			return mMatrix;
+		}
 
 		void matrixToGL(int location);	
-		void multMatrixPoint(const double *point, double *res);
+		void multMatrixPoint(const FLOATTYPE *point, FLOATTYPE *res);
 
+#ifdef USE_DOUBLE
 		void computeNormalMatrix(const float *aMatrix);
-		void computeNormalMatrix(const double *aMatrix);
+#endif
+		void computeNormalMatrix(const FLOATTYPE *aMatrix);
 		void computeNormalMatrix(const VSMatrix &aMatrix)
 		{
 			computeNormalMatrix(aMatrix.mMatrix);
 		}
 		
 	protected:
-		static void crossProduct(const double *a, const double *b, double *res);
-		static double dotProduct(const double *a, const double * b);
-		static void normalize(double *a);
-		static void subtract(const double *a, const double *b, double *res);
-		static void add(const double *a, const double *b, double *res);
-		static double length(const double *a);
-		static void multMatrix(double *resMatrix, const double *aMatrix);
+		static void crossProduct(const FLOATTYPE *a, const FLOATTYPE *b, FLOATTYPE *res);
+		static FLOATTYPE dotProduct(const FLOATTYPE *a, const FLOATTYPE * b);
+		static void normalize(FLOATTYPE *a);
+		static void subtract(const FLOATTYPE *a, const FLOATTYPE *b, FLOATTYPE *res);
+		static void add(const FLOATTYPE *a, const FLOATTYPE *b, FLOATTYPE *res);
+		static FLOATTYPE length(const FLOATTYPE *a);
+		static void multMatrix(FLOATTYPE *resMatrix, const FLOATTYPE *aMatrix);
 
-		static void setIdentityMatrix(double *mat, int size = 4);
+		static void setIdentityMatrix(FLOATTYPE *mat, int size = 4);
 
 		/// The storage for matrices
-		double mMatrix[16];
+		FLOATTYPE mMatrix[16];
 
 };
 

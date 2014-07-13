@@ -4,6 +4,7 @@
 #include <string.h>
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_matrix.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 
@@ -58,6 +59,8 @@ class FRenderState
 	bool m2D;
 	float mInterpolationFactor;
 	float mClipHeightTop, mClipHeightBottom;
+	bool mModelMatrixEnabled;
+	bool mTextureMatrixEnabled;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
@@ -80,6 +83,12 @@ class FRenderState
 	bool ApplyShader();
 
 public:
+
+	VSMatrix mProjectionMatrix;
+	VSMatrix mViewMatrix;
+	VSMatrix mModelMatrix;
+	VSMatrix mTextureMatrix;
+
 	FRenderState()
 	{
 		Reset();
@@ -89,6 +98,7 @@ public:
 
 	void SetupShader(int &shaderindex, float warptime);
 	void Apply();
+	void ApplyMatrices();
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
@@ -178,6 +188,16 @@ public:
 	void EnableBrightmap(bool on)
 	{
 		mBrightmapEnabled = on;
+	}
+
+	void EnableModelMatrix(bool on)
+	{
+		mModelMatrixEnabled = on;
+	}
+
+	void EnableTextureMatrix(bool on)
+	{
+		mTextureMatrixEnabled = on;
 	}
 
 	void SetCameraPos(float x, float y, float z)

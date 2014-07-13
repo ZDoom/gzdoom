@@ -36,8 +36,8 @@ uniform ivec4 uLightRange;
 
 
 // redefine the matrix names to what they actually represent.
-#define ModelMatrix  gl_TextureMatrix[7]
-#define ViewMatrix gl_ModelViewMatrix
 #define ProjectionMatrix gl_ProjectionMatrix
-#define TextureMatrix gl_TextureMatrix[0]
+#define ViewMatrix gl_ModelViewMatrix
+uniform mat4 ModelMatrix;
+uniform mat4 TextureMatrix;
 

@@ -293,20 +293,17 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 			glScalef(1.f, 1.2f * 1.17f, 1.f);
 			yscale = 240.f / texh;
 		}
-		glMatrixMode(GL_TEXTURE);
-		glPushMatrix();
-		glLoadIdentity();
-		glScalef(mirror? -xscale : xscale, yscale, 1.f);
-		glTranslatef(1.f, y_offset / texh, 1.f);
-		glMatrixMode(GL_MODELVIEW);
+		gl_RenderState.EnableTextureMatrix(true);
+		gl_RenderState.mTextureMatrix.loadIdentity();
+		gl_RenderState.mTextureMatrix.scale(mirror? -xscale : xscale, yscale, 1.f);
+		gl_RenderState.mTextureMatrix.translate(1.f, y_offset / texh, 1.f);
 	}
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
+	gl_RenderState.EnableTextureMatrix(false);
 
 	if (tex)
 	{
-		glMatrixMode(GL_TEXTURE);
-		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 	}

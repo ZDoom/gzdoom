@@ -806,65 +806,41 @@ void gl_RenderModel(GLSprite * spr)
 	// This is rather crappy way to transfer fixet_t type into angle in degrees, but its works!
 	if(smf->flags & MDL_INHERITACTORPITCH) pitch += float(static_cast<double>(spr->actor->pitch >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->pitch & 0x0000FFFF) / (1 << 29) * 45);
 	if(smf->flags & MDL_INHERITACTORROLL) roll += float(static_cast<double>(spr->actor->roll >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->roll & 0x0000FFFF) / (1 << 29) * 45);
-		
-	glActiveTexture(GL_TEXTURE7);	// Hijack the otherwise unused seventh texture matrix for the model to world transformation.
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
+
+	gl_RenderState.mModelMatrix.loadIdentity();
 
 	// Model space => World space
-	glTranslatef(spr->x, spr->z, spr->y );	
+	gl_RenderState.mModelMatrix.translate(spr->x, spr->z, spr->y );	
 	
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
-	glRotatef(-angle, 0, 1, 0);
-	glRotatef(pitch, 0, 0, 1);
-	glRotatef(-roll, 1, 0, 0);
+	gl_RenderState.mModelMatrix.rotate(-angle, 0, 1, 0);
+	gl_RenderState.mModelMatrix.rotate(pitch, 0, 0, 1);
+	gl_RenderState.mModelMatrix.rotate(-roll, 1, 0, 0);
 	
 	// 2) Applying Doomsday like rotation of the weapon pickup models
 	// The rotation angle is based on the elapsed time.
 	
 	if( smf->flags & MDL_ROTATING )
 	{
-		glTranslatef(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
-		glRotatef(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
-		glTranslatef(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
+		gl_RenderState.mModelMatrix.translate(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
+		gl_RenderState.mModelMatrix.rotate(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
+		gl_RenderState.mModelMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
 	}
 
 	// 3) Scaling model.
-	glScalef(scaleFactorX, scaleFactorZ, scaleFactorY);
+	gl_RenderState.mModelMatrix.scale(scaleFactorX, scaleFactorZ, scaleFactorY);
 
 	// 4) Aplying model offsets (model offsets do not depend on model scalings).
-	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	gl_RenderState.mModelMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 	
 	// 5) Applying model rotations.
-	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
-	glRotatef(smf->pitchoffset, 0, 0, 1);
-	glRotatef(-smf->rolloffset, 1, 0, 0);
-		
-	glActiveTexture(GL_TEXTURE0);
-
-#if 0
-	if (gl_light_models)
-	{
-		// The normal transform matrix only contains the inverse rotations and scalings but not the translations
-		NormalTransform.MakeIdentity();
-
-		NormalTransform.Scale(1.f/scaleFactorX, 1.f/scaleFactorZ, 1.f/scaleFactorY);
-		if( smf->flags & MDL_ROTATING ) NormalTransform.Rotate(smf->xrotate, smf->yrotate, smf->zrotate, -rotateOffset);
-		if (pitch != 0) NormalTransform.Rotate(0,0,1,-pitch);
-		if (angle != 0) NormalTransform.Rotate(0,1,0, angle);
-
-		gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), &ModelToWorld, &NormalTransform, translation );
-	}
-#endif
-
+	gl_RenderState.mModelMatrix.rotate(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	gl_RenderState.mModelMatrix.rotate(smf->pitchoffset, 0, 0, 1);
+	gl_RenderState.mModelMatrix.rotate(-smf->rolloffset, 1, 0, 0);
+	gl_RenderState.EnableModelMatrix(true);
 	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), NULL, translation );
-
-	glActiveTexture(GL_TEXTURE7);
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-	glActiveTexture(GL_TEXTURE0);
-	glMatrixMode(GL_MODELVIEW);
+	gl_RenderState.EnableModelMatrix(false);
 
 	glDepthFunc(GL_LESS);
 	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))

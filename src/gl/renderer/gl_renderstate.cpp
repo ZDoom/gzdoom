@@ -56,6 +56,8 @@ FRenderState gl_RenderState;
 CVAR(Bool, gl_direct_state_change, true, 0)
 
 
+static VSMatrix identityMatrix(1);
+
 //==========================================================================
 //
 //
@@ -224,6 +226,27 @@ bool FRenderState::ApplyShader()
 			activeShader->muFixedColormap.Set(2);
 			activeShader->muColormapStart.Set(r, g, b, 1.f);
 		}
+	}
+	if (mTextureMatrixEnabled)
+	{
+		mTextureMatrix.matrixToGL(activeShader->texturematrix_index);
+		activeShader->currentTextureMatrixState = true;
+	}
+	else if (activeShader->currentTextureMatrixState)
+	{
+		activeShader->currentTextureMatrixState = false;
+		identityMatrix.matrixToGL(activeShader->texturematrix_index);
+	}
+
+	if (mModelMatrixEnabled)
+	{
+		mModelMatrix.matrixToGL(activeShader->modelmatrix_index);
+		activeShader->currentModelMatrixState = true;
+	}
+	else if (activeShader->currentModelMatrixState)
+	{
+		activeShader->currentModelMatrixState = false;
+		identityMatrix.matrixToGL(activeShader->modelmatrix_index);
 	}
 	return true;
 }

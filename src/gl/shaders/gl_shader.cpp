@@ -206,6 +206,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	timer_index = glGetUniformLocation(hShader, "timer");
 	lights_index = glGetUniformLocation(hShader, "lights");
 	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
+	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
+	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 

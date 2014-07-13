@@ -51,6 +51,7 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
+#include "gl/data/gl_matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/system/gl_cvars.h"
@@ -206,6 +207,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	timer_index = glGetUniformLocation(hShader, "timer");
 	lights_index = glGetUniformLocation(hShader, "lights");
 	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
+	projectionmatrix_index = glGetUniformLocation(hShader, "ProjectionMatrix");
+	viewmatrix_index = glGetUniformLocation(hShader, "ViewMatrix");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 
@@ -276,6 +279,19 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 	}
 	return shader;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
+{
+	glProgramUniformMatrix4fv(hShader, projectionmatrix_index, 1, false, proj->get());
+	glProgramUniformMatrix4fv(hShader, viewmatrix_index, 1, false, view->get());
+}
+
 
 //==========================================================================
 //
@@ -485,6 +501,33 @@ FShader *FShaderManager::BindEffect(int effect)
 	return NULL;
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+EXTERN_CVAR(Int, gl_fuzztype)
+
+void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
+{
+	for (int i = 0; i <= 4; i++)
+	{
+		mTextureEffects[i]->ApplyMatrices(proj, view);
+	}
+	if (gl_fuzztype != 0)
+	{
+		mTextureEffects[4+gl_fuzztype]->ApplyMatrices(proj, view);
+	}
+	for (unsigned i = 12; i < mTextureEffects.Size(); i++)
+	{
+		mTextureEffects[i]->ApplyMatrices(proj, view);
+	}
+	for (int i = 0; i < MAX_EFFECTS; i++)
+	{
+		mEffectShaders[i]->ApplyMatrices(proj, view);
+	}
+}
 
 //==========================================================================
 //

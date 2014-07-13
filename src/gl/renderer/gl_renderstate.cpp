@@ -301,8 +301,10 @@ void FRenderState::Apply()
 
 void FRenderState::ApplyMatrices()
 {
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(mViewMatrix.get());
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(mProjectionMatrix.get());
+	drawcalls.Clock();
+	if (GLRenderer->mShaderManager != NULL)
+	{
+		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix);
+	}
+	drawcalls.Unclock();
 }

@@ -198,6 +198,8 @@ class FShader
 	
 	int timer_index;
 	int lights_index;
+	int projectionmatrix_index;
+	int viewmatrix_index;
 	int modelmatrix_index;
 	int texturematrix_index;
 public:
@@ -230,6 +232,7 @@ public:
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 
+	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
 
 };
 
@@ -256,6 +259,7 @@ public:
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
 	void SetWarpSpeed(unsigned int eff, float speed);
+	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
 	FShader *GetActiveShader() const
 	{
 		return mActiveShader;

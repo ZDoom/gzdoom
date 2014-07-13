@@ -794,9 +794,8 @@ void GLPlaneMirrorPortal::DrawContents()
 	validcount++;
 
 	float f = FIXED2FLOAT(planez);
-	// the coordinate fudging is needed because for some reason this is nowhere near precise and leaves gaps. Strange...
-	if (PlaneMirrorMode < 0) gl_RenderState.SetClipHeightTop(f+0.3f);	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
-	else gl_RenderState.SetClipHeightBottom(f-0.3f);	// floor mirror: clip everything with a z higher than the portal's floor
+	if (PlaneMirrorMode < 0) gl_RenderState.SetClipHeightTop(f);	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
+	else gl_RenderState.SetClipHeightBottom(f);	// floor mirror: clip everything with a z higher than the portal's floor
 
 	PlaneMirrorFlag++;
 	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));

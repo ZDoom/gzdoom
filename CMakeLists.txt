@@ -228,6 +228,12 @@ endif( GME_FOUND AND NOT FORCE_INTERNAL_GME )
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
 
+if( NOT CMAKE_CROSSCOMPILING )
+	if( NOT CROSS_EXPORTS )
+		set( CROSS_EXPORTS "" )
+	endif( NOT CROSS_EXPORTS )
+endif( NOT CMAKE_CROSSCOMPILING )
+
 add_subdirectory( lzma )
 add_subdirectory( tools )
 add_subdirectory( dumb )

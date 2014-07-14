@@ -253,9 +253,9 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 	// When using separate samplers the stuff below is not needed.
 	// if (gl.flags & RFL_SAMPLER_OBJECTS) return;
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapparam==GL_CLAMP? GL_CLAMP_TO_EDGE : GL_REPEAT);
-	clampmode = wrapparam==GL_CLAMP? GLT_CLAMPX|GLT_CLAMPY : 0;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapparam);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapparam);
+	clampmode = wrapparam==GL_CLAMP_TO_EDGE? GLT_CLAMPX|GLT_CLAMPY : 0;
 
 	if (forcenofiltering)
 	{
@@ -469,7 +469,7 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	unsigned int * pTexID=GetTexID(translation);
 
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
-	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP, alphatexture, texunit);
+	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP_TO_EDGE, alphatexture, texunit);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 	return *pTexID;
 }

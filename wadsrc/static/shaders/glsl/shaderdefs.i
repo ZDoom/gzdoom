@@ -4,6 +4,7 @@ uniform vec4 uCameraPos;
 uniform float uClipHeightTop, uClipHeightBottom;
 
 uniform int uTextureMode;
+uniform float uAlphaThreshold;
 
 // colors
 uniform vec4 uObjectColor;
@@ -34,8 +35,7 @@ uniform int uFogEnabled;
 // dynamic lights
 uniform ivec4 uLightRange;
 
-
-// redefine the matrix names to what they actually represent.
+// matrices
 uniform mat4 ProjectionMatrix;
 uniform mat4 ViewMatrix;
 uniform mat4 ModelMatrix;

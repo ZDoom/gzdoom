@@ -137,11 +137,11 @@ void GLSprite::Draw(int pass)
 
 		if (hw_styleflags == STYLEHW_NoAlphaTest)
 		{
-			gl_RenderState.EnableAlphaTest(false);
+			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		}
 		else
 		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL,trans*gl_mask_sprite_threshold);
+			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 		}
 
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
@@ -165,7 +165,7 @@ void GLSprite::Draw(int pass)
 				minalpha*=factor;
 			}
 
-			gl_RenderState.AlphaFunc(GL_GEQUAL,minalpha*gl_mask_sprite_threshold);
+			gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 			gl_RenderState.SetColor(0.2f,0.2f,0.2f,fuzzalpha, Colormap.desaturation);
 			additivefog = true;
 		}
@@ -294,16 +294,6 @@ void GLSprite::Draw(int pass)
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		gl_RenderState.SetTextureMode(TM_MODULATE);
-
-		// [BB] Restore the alpha test after drawing a smooth particle.
-		if (hw_styleflags == STYLEHW_NoAlphaTest)
-		{
-			gl_RenderState.EnableAlphaTest(true);
-		}
-		else
-		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
-		}
 	}
 
 	gl_RenderState.SetObjectColor(0xffffffff);

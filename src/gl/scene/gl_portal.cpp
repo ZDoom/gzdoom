@@ -998,7 +998,7 @@ void GLHorizonPortal::DrawContents()
 	gltexture->Bind();
 
 	gl_SetPlaneTextureRotation(sp, gltexture);
-	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();
 

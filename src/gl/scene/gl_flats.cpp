@@ -424,7 +424,7 @@ void GLFlat::Draw(int pass)
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 		gl_SetColor(lightlevel, rel, Colormap, alpha);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_threshold*(alpha));
+		gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		if (!gltexture)	
 		{
 			gl_RenderState.EnableTexture(false);

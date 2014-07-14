@@ -472,7 +472,7 @@ void GLSkyPortal::DrawContents()
 
 	gl_RenderState.ResetColor();
 	gl_RenderState.EnableFog(false);
-	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
@@ -481,7 +481,6 @@ void GLSkyPortal::DrawContents()
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{
 		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
-		gl_RenderState.EnableAlphaTest(true);
 	}
 	else
 	{
@@ -495,8 +494,7 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
-		gl_RenderState.EnableAlphaTest(true);
-		gl_RenderState.AlphaFunc(GL_GEQUAL,0.05f);
+		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.05f);
 		
 		if (origin->doublesky && origin->texture[1])
 		{

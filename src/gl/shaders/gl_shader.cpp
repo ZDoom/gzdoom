@@ -203,6 +203,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
 	muClipHeightTop.Init(hShader, "uClipHeightTop");
 	muClipHeightBottom.Init(hShader, "uClipHeightBottom");
+	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 
 	timer_index = glGetUniformLocation(hShader, "timer");
 	lights_index = glGetUniformLocation(hShader, "lights");

@@ -195,6 +195,7 @@ class FShader
 	FBufferedUniform1f muInterpolationFactor;
 	FBufferedUniform1f muClipHeightTop;
 	FBufferedUniform1f muClipHeightBottom;
+	FBufferedUniform1f muAlphaThreshold;
 	
 	int timer_index;
 	int lights_index;

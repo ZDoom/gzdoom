@@ -223,6 +223,12 @@ void main()
 #endif
 
 	vec4 frag = ProcessTexel();
+	
+#ifndef NO_DISCARD
+	// alpha testing
+	if (frag.a <= uAlphaThreshold) discard;
+#endif
+
 
 	switch (uFixedColormap)
 	{

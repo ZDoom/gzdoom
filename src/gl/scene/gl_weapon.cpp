@@ -151,7 +151,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 
 	if (tex->GetTransparent() || OverrideShader != 0)
 	{
-		gl_RenderState.EnableAlphaTest(false);
+		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	}
 	gl_RenderState.Apply();
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
@@ -164,10 +164,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	ptr->Set(x2, y2, 0, fU2, fV2);
 	ptr++;
 	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
-	if (tex->GetTransparent() || OverrideShader != 0)
-	{
-		gl_RenderState.EnableAlphaTest(true);
-	}
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 }
 
 //==========================================================================

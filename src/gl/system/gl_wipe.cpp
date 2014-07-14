@@ -280,7 +280,7 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	float vb = fb->GetHeight() / FHardwareTexture::GetTexDimension(fb->GetHeight());
 
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
-	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipestartscreen->Bind(0);
@@ -302,7 +302,7 @@ bool OpenGLFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLFrameBuffer *fb)
 	gl_RenderState.SetColorAlpha(0xffffff, clamp(Clock/32.f, 0.f, 1.f));
 	gl_RenderState.Apply();
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
-	gl_RenderState.EnableAlphaTest(true);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
 	return Clock >= 32;
@@ -490,7 +490,7 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 
 	// Put the initial screen back to the buffer.
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
-	gl_RenderState.EnableAlphaTest(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	fb->wipestartscreen->Bind(0);

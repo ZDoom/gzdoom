@@ -46,8 +46,6 @@ public:
 	void Shutdown();
 	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
 
-	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 	HDC m_hDC;
 
 protected:
@@ -107,7 +105,6 @@ public:
 	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
 	virtual ~Win32GLFrameBuffer();
 
-	PFNWGLSWAPINTERVALEXTPROC vsyncfunc;
 
 	// unused but must be defined
 	virtual void Blank ();

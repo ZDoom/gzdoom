@@ -3,7 +3,7 @@ uniform float timer;
 
 vec4 ProcessTexel()
 {
-	vec2 texCoord = gl_TexCoord[0].st;
+	vec2 texCoord = vTexCoord.st;
 	vec4 basicColor = getTexel(texCoord);
 
 	float texX = sin(mod(texCoord.x * 100.0 + timer*5.0, 3.489)) + texCoord.x / 4.0;

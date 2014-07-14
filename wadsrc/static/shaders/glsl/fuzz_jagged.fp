@@ -3,7 +3,7 @@ uniform float timer;
 
 vec4 ProcessTexel()
 {
-	vec2 texCoord = gl_TexCoord[0].st;
+	vec2 texCoord = vTexCoord.st;
 
 	vec2 texSplat;
 	const float pi = 3.14159265358979323846;

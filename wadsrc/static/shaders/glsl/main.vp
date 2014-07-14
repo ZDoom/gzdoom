@@ -5,6 +5,9 @@ out vec4 pixelpos;
 out vec2 glowdist;
 #endif
 
+out vec4 vTexCoord;
+out vec4 vColor;
+
 #ifdef UNIFORM_VB
 uniform float fakeVB[100];
 #endif
@@ -40,7 +43,7 @@ void main()
 
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	gl_FrontColor = gl_Color;
+	vColor = gl_Color;
 
 	#ifndef SIMPLE
 		pixelpos.xyz = worldcoord.xyz;
@@ -56,9 +59,9 @@ void main()
 		vec3 r = reflect(u, n.xyz);
 		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
-		gl_TexCoord[0].xy = sst;
+		vTexCoord.xy = sst;
 	#else
-		gl_TexCoord[0] = TextureMatrix * tc;
+		vTexCoord = TextureMatrix * tc;
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;

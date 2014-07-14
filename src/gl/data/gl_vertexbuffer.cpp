@@ -114,9 +114,9 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 
 	glBindVertexArray(vao_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glVertexPointer(3,GL_FLOAT, sizeof(FFlatVertex), &VTO->x);
+	glVertexAttribPointer(VATTR_VERTEX, 3,GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
 	glVertexAttribPointer(VATTR_TEXCOORD, 2,GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableVertexAttribArray(VATTR_VERTEX);
 	glEnableVertexAttribArray(VATTR_TEXCOORD);
 	glBindVertexArray(0);
 }

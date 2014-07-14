@@ -1,4 +1,5 @@
 
+in vec4 aPosition;
 in vec2 aTexCoord;
 in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
@@ -24,13 +25,13 @@ void main()
 	if (gl_MultiTexCoord0.x >= 100000.0)
 	{
 		int fakeVI = int(aTexCoord.y)*5;
-		vert = gl_Vertex + vec4(fakeVB[fakeVI], fakeVB[fakeVI+1], fakeVB[fakeVI+2], 0.0);
+		vert = aPosition + vec4(fakeVB[fakeVI], fakeVB[fakeVI+1], fakeVB[fakeVI+2], 0.0);
 		tc = vec4(fakeVB[fakeVI+3], fakeVB[fakeVI+4], 0.0, 0.0);
 	}
 	else
 #endif
 	{
-		vert = gl_Vertex;
+		vert = aPosition;
 		tc = vec4(aTexCoord, 0.0, 0.0);
 	}
 	

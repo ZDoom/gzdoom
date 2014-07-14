@@ -116,7 +116,7 @@ FModelVertexBuffer::FModelVertexBuffer()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,ibo_shadowdata.Size() * sizeof(unsigned int), &ibo_shadowdata[0], GL_STATIC_DRAW);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableVertexAttribArray(VATTR_VERTEX);
 	glEnableVertexAttribArray(VATTR_TEXCOORD);
 	glEnableVertexAttribArray(VATTR_VERTEX2);
 	glBindVertexArray(0);
@@ -140,7 +140,7 @@ FModelVertexBuffer::~FModelVertexBuffer()
 
 unsigned int FModelVertexBuffer::SetupFrame(unsigned int frame1, unsigned int frame2, float factor)
 {
-	glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &VMO[frame1].x);
+	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
 	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
 	glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
 	return frame1;

@@ -4,6 +4,8 @@ in vec2 glowdist;
 in vec4 vTexCoord;
 in vec4 vColor;
 
+out vec4 FragColor;
+
 #ifdef SHADER_STORAGE_LIGHTS
 	layout(std430, binding = 3) buffer ParameterBuffer
 	{
@@ -326,6 +328,6 @@ void main()
 			break;
 		}
 	}
-	gl_FragColor = frag;
+	FragColor = frag;
 }
 

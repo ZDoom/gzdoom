@@ -88,7 +88,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 //
 
 	FString vp_comb = "#version 130\n";
-	if (gl.glslversion >= 3.3f) vp_comb = "#version 330 compatibility\n";	// I can't shut up the deprecation warnings in GLSL 1.3 so if available use a version with compatibility profile.
+	if (gl.glslversion >= 3.3f) vp_comb = "#version 330 core\n";	// I can't shut up the deprecation warnings in GLSL 1.3 so if available use a version with compatibility profile.
 	// todo when using shader storage buffers, add
 	// "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : require\n" instead.
 

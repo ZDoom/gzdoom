@@ -1,4 +1,5 @@
 
+in vec2 aTexCoord;
 in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
 in vec4 aVertex2;
@@ -15,26 +16,23 @@ uniform float fakeVB[100];
 
 void main()
 {
-
-#ifdef UNIFORM_VB
 	vec4 vert;
 	vec4 tc;
+
+#ifdef UNIFORM_VB
 	
 	if (gl_MultiTexCoord0.x >= 100000.0)
 	{
-		int fakeVI = int(gl_MultiTexCoord0.y)*5;
+		int fakeVI = int(aTexCoord.y)*5;
 		vert = gl_Vertex + vec4(fakeVB[fakeVI], fakeVB[fakeVI+1], fakeVB[fakeVI+2], 0.0);
 		tc = vec4(fakeVB[fakeVI+3], fakeVB[fakeVI+4], 0.0, 0.0);
 	}
 	else
+#endif
 	{
 		vert = gl_Vertex;
-		tc = gl_MultiTexCoord0;
+		tc = vec4(aTexCoord, 0.0, 0.0);
 	}
-#else
-	#define vert gl_Vertex
-	#define tc gl_MultiTexCoord0
-#endif
 	
 	#ifndef SIMPLE
 		vec4 worldcoord = ModelMatrix * mix(vert, aVertex2, uInterpolationFactor);

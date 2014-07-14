@@ -81,10 +81,10 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 	glBindVertexArray(vao_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glVertexPointer(3, GL_FLOAT, sizeof(FSkyVertex), &VSO->x);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(FSkyVertex), &VSO->u);
+	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
 	glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSkyVertex), &VSO->color);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableVertexAttribArray(VATTR_TEXCOORD);
 	glEnableVertexAttribArray(VATTR_COLOR);
 	glBindVertexArray(0);
 

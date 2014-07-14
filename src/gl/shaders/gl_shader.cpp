@@ -157,6 +157,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
+
+	glBindAttribLocation(hShader, VATTR_TEXCOORD, "aTexCoord");
 	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 

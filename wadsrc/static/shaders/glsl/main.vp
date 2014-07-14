@@ -1,4 +1,5 @@
 
+in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
 in vec4 aVertex2;
 out vec4 pixelpos;
@@ -43,7 +44,7 @@ void main()
 
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	vColor = gl_Color;
+	vColor = aColor;
 
 	#ifndef SIMPLE
 		pixelpos.xyz = worldcoord.xyz;

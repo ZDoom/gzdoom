@@ -136,7 +136,7 @@ bool FRenderState::ApplyShader()
 		}
 	}
 
-	glColor4fv(mColor.vec);
+	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);

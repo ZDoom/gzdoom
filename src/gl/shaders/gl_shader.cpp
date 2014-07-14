@@ -120,6 +120,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				fp_comb.Substitute("vec4 frag = ProcessTexel();", "vec4 frag = Process(vec4(1.0));");
 			}
 			fp_comb << pp_data.GetString().GetChars();
+			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
 
 			if (pp_data.GetString().IndexOf("ProcessLight") < 0)
 			{
@@ -156,6 +157,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
+	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
+	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 
 	glLinkProgram(hShader);
 
@@ -212,8 +215,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	viewmatrix_index = glGetUniformLocation(hShader, "ViewMatrix");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
-
-	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 
 	glUseProgram(hShader);
 

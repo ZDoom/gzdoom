@@ -9,6 +9,7 @@ extern bool gl_shaderactive;
 
 enum
 {
+	VATTR_COLOR = 14,
 	VATTR_VERTEX2 = 15
 };
 

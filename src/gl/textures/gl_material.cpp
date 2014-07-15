@@ -58,7 +58,7 @@
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_bitmap.h"
 #include "gl/textures/gl_material.h"
-#include "gl/shaders/gl_shader.h"
+
 
 EXTERN_CVAR(Bool, gl_render_precise)
 EXTERN_CVAR(Int, gl_lightmode)
@@ -625,25 +625,6 @@ FMaterial::FMaterial(FTexture * tx, bool forceexpand)
 	{
 		expanded = false;
 	}
-	else if (gl.hasGLSL()) 
-	{
-		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
-		{
-			mShaderIndex = tx->gl_info.shaderindex;
-			expanded = false;
-		}
-		else
-		{
-			tx->CreateDefaultBrightmap();
-			if (tx->gl_info.Brightmap != NULL)
-			{
-				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
-				FTextureLayer layer = {tx->gl_info.Brightmap, false};
-				mTextureLayers.Push(layer);
-				mShaderIndex = 3;
-			}
-		}
-	}
 
 
 	for (int i=GLUSE_PATCH; i<=GLUSE_TEXTURE; i++)
@@ -671,7 +652,7 @@ FMaterial::FMaterial(FTexture * tx, bool forceexpand)
 	tex = tx;
 
 	tx->gl_info.mExpanded = expanded;
-	FTexture *basetex = tx->GetRedirect(!gl.hasGLSL());
+	FTexture *basetex = tx->GetRedirect(true);
 	if (!expanded && !basetex->gl_info.mExpanded && basetex->UseType != FTexture::TEX_Sprite)
 	{
 		// check if the texture is just a simple redirect to a patch
@@ -842,7 +823,7 @@ void FMaterial::Bind(int clampmode, int translation, int overrideshader)
 	int maxbound = 0;
 	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT;
 
-	int softwarewarp = gl_RenderState.SetupShader(shaderindex, tex->gl_info.shaderspeed);
+	int softwarewarp = (shaderindex == 1 || shaderindex == 2) ? shaderindex : 0;
 
 	if (tex->bHasCanvas || tex->bWarped) clampmode = 0;
 	else if (clampmode != -1) clampmode &= 3;
@@ -889,7 +870,7 @@ void FMaterial::BindPatch(int translation, int overrideshader, bool alphatexture
 	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 
-	int softwarewarp = gl_RenderState.SetupShader(shaderindex, tex->gl_info.shaderspeed);
+	int softwarewarp = (shaderindex == 1 || shaderindex == 2) ? shaderindex : 0;
 
 	const FHardwareTexture *glpatch = mBaseLayer->BindPatch(0, translation, softwarewarp, alphatexture);
 	// The only multitexture effect usable on sprites is the brightmap.

@@ -32,15 +32,6 @@ struct RenderContext
 	int max_texturesize;
 	char * vendorstring;
 
-	int MaxLights() const
-	{
-		return maxuniforms>=2048? 128:64;
-	}
-
-	bool hasGLSL() const
-	{
-		return glslversion >= 1.3f;
-	}
 };
 
 extern RenderContext gl;

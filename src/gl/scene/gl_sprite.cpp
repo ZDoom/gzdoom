@@ -54,11 +54,11 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
-#include "gl/dynlights/gl_glow.h"
+
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -199,18 +199,8 @@ void GLSprite::Draw(int pass)
 			// non-black fog with subtractive style needs special treatment
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
-				if (gl.hasGLSL() && !gl_nolayer)
-				{
-					// fog layer only works on modern hardware. 
-					foglayer = true;
-					// Due to the two-layer approach we need to force an alpha test that lets everything pass
-					gl_RenderState.AlphaFunc(GL_GREATER, 0);
-				}
-				else
-				{
-					// this at least partially handles the fog issue
-					Colormap.FadeColor = Colormap.FadeColor.InverseColor();
-				}
+				// this at least partially handles the fog issue
+				Colormap.FadeColor = Colormap.FadeColor.InverseColor();
 			}
 		}
 		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
@@ -279,18 +269,6 @@ void GLSprite::Draw(int pass)
 		ptr->Set(v4[0], v4[1], v4[2], ur, vb);
 		ptr++;
 		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_STRIP, &offset, &count);
-
-		if (foglayer)
-		{
-			// If we get here we know that we have colored fog and no fixed colormap.
-			gl_SetFog(foglevel, rel, &Colormap, additivefog);
-			gl_RenderState.SetFixedColormap(CM_FOGLAYER);
-			gl_RenderState.BlendEquation(GL_FUNC_ADD);
-			gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			gl_RenderState.Apply();
-			GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
-			gl_RenderState.SetFixedColormap(CM_DEFAULT);
-		}
 	}
 	else
 	{
@@ -667,15 +645,12 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
-	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gl.hasGLSL() || !gltexture || !gltexture->tex->gl_info.bBrightmapDisablesFullbright));
+	fullbright = (thing->flags5 & MF5_BRIGHT) || ((thing->renderflags & RF_FULLBRIGHT));
 
 	lightlevel=fullbright? 255 : 
 		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (BYTE)clamp<short>(rendersector->lightlevel, 0, 255);
-
-	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, thingx, thingy, thingz);
 
 	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
 	ThingColor.a = 255;
@@ -737,18 +712,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		RenderStyle.CheckFuzz();
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl.hasGLSL() && gl_fuzztype != 0)
-			{
-				// Todo: implement shader selection here
-				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = gl_fuzztype + 4;
-				trans = 0.99f;	// trans may not be 1 here
-				hw_styleflags |= STYLEHW_NoAlphaTest;
-			}
-			else
-			{
-				RenderStyle.BlendOp = STYLEOP_Shadow;
-			}
+			RenderStyle.BlendOp = STYLEOP_Shadow;
 		}
 	}
 

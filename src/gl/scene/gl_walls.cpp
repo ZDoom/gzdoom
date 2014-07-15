@@ -52,44 +52,15 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
-#include "gl/dynlights/gl_lightbuffer.h"
+
+
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/utility/gl_templates.h"
-#include "gl/shaders/gl_shader.h"
 
-
-//==========================================================================
-//
-// Checks whether a wall should glow
-//
-//==========================================================================
-void GLWall::CheckGlowing()
-{
-	bottomglowcolor[3] = topglowcolor[3] = 0;
-	if (!gl_isFullbright(Colormap.LightColor, lightlevel) && gl.hasGLSL())
-	{
-		FTexture *tex = TexMan[topflat];
-		if (tex != NULL && tex->isGlowing())
-		{
-			flags |= GLWall::GLWF_GLOW;
-			tex->GetGlowColor(topglowcolor);
-			topglowcolor[3] = tex->gl_info.GlowHeight;
-		}
-
-		tex = TexMan[bottomflat];
-		if (tex != NULL && tex->isGlowing())
-		{
-			flags |= GLWall::GLWF_GLOW;
-			tex->GetGlowColor(bottomglowcolor);
-			bottomglowcolor[3] = tex->gl_info.GlowHeight;
-		}
-	}
-}
 
 
 //==========================================================================
@@ -136,8 +107,6 @@ void GLWall::PutWall(bool translucent)
 		Colormap.Clear();
 	}
 
-	CheckGlowing();
-
 	if (translucent) // translucent walls
 	{
 		viewdistance = P_AproxDistance( ((seg->linedef->v1->x+seg->linedef->v2->x)>>1) - viewx,
@@ -156,7 +125,7 @@ void GLWall::PutWall(bool translucent)
 
 		if (!gl_fixedcolormap)
 		{
-			if (gl_lights && !gl_dynlight_shader)
+			if (gl_lights)
 			{
 				if (seg->sidedef == NULL)
 				{
@@ -182,11 +151,6 @@ void GLWall::PutWall(bool translucent)
 		masked = passflag[type]==1? false : (light && type!=RENDERWALL_FFBLOCK) || (gltexture && gltexture->isMasked());
 
 		list = list_indices[light][masked][!!(flags&GLWF_FOGGY)];
-		if (list == GLDL_LIGHT)
-		{
-			if (gltexture->tex->gl_info.Brightmap && gl.hasGLSL()) list = GLDL_LIGHTBRIGHT;
-			if (flags & GLWF_GLOW) list = GLDL_LIGHTBRIGHT;
-		}
 		gl_drawinfo->drawlists[list].AddWall(this);
 
 	}

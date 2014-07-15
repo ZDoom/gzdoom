@@ -48,12 +48,13 @@
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 
 

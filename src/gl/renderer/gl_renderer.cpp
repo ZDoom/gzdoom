@@ -59,9 +59,8 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
@@ -96,7 +95,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mVBO = NULL;
 	mSkyVBO = NULL;
 	gl_spriteindex = 0;
-	mShaderManager = NULL;
 	glpart2 = glpart = gllight = mirrortexture = NULL;
 }
 
@@ -112,8 +110,6 @@ void FGLRenderer::Initialize()
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	SetupLevel();
-	mShaderManager = new FShaderManager;
-	//mThreadManager = new FGLThreadManager;
 }
 
 FGLRenderer::~FGLRenderer() 
@@ -121,8 +117,6 @@ FGLRenderer::~FGLRenderer()
 	gl_CleanModelData();
 	gl_DeleteAllAttachedLights();
 	FMaterial::FlushAll();
-	//if (mThreadManager != NULL) delete mThreadManager;
-	if (mShaderManager != NULL) delete mShaderManager;
 	if (mVBO != NULL) delete mVBO;
 	if (mSkyVBO != NULL) delete mSkyVBO;
 	if (glpart2) delete glpart2;

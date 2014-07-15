@@ -57,10 +57,10 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
+
 #include "gl/models/gl_models.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/gl_functions.h"
 
 GLRenderSettings glset;
@@ -356,13 +356,9 @@ void InitGLRMapinfoData()
 		glset.map_notexturefill = opt->notexturefill;
 		glset.skyrotatevector = opt->skyrotatevector;
 		glset.skyrotatevector2 = opt->skyrotatevector2;
-		if (!gl.hasGLSL())
+		if (glset.map_lightmode >= 2)
 		{
-			// light modes 2 and 8 require shaders
-			if (glset.map_lightmode == 2 || glset.map_lightmode == 8)
-			{
-				glset.map_lightmode = 3;
-			}
+			glset.map_lightmode = 3;
 		}
 	}
 	else

@@ -52,10 +52,10 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
+
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
@@ -112,109 +112,6 @@ bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light)
 	draw_dlight++;
 	return true;
 }
-
-//==========================================================================
-//
-// Collect lights for shader
-//
-//==========================================================================
-FDynLightData lightdata;
-
-void GLWall::SetupLights()
-{
-	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
-	Plane p;
-
-	lightdata.Clear();
-	p.Init(vtx,4);
-
-	if (!p.ValidNormal()) 
-	{
-		return;
-	}
-	for(int i=0;i<2;i++)
-	{
-		FLightNode *node;
-		if (seg->sidedef == NULL)
-		{
-			node = NULL;
-		}
-		else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-		{
-			node = seg->sidedef->lighthead[i];
-		}
-		else if (sub)
-		{
-			// Polobject segs cannot be checked per sidedef so use the subsector instead.
-			node = sub->lighthead[i];
-		}
-		else node = NULL;
-
-		// Iterate through all dynamic lights which touch this wall and render them
-		while (node)
-		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
-			{
-				iter_dlight++;
-
-				Vector fn, pos;
-
-				float x = FIXED2FLOAT(node->lightsource->x);
-				float y = FIXED2FLOAT(node->lightsource->y);
-				float z = FIXED2FLOAT(node->lightsource->z);
-				float dist = fabsf(p.DistToPoint(x, z, y));
-				float radius = (node->lightsource->GetRadius() * gl_lights_size);
-				float scale = 1.0f / ((2.f * radius) - dist);
-
-				if (radius > 0.f && dist < radius)
-				{
-					Vector nearPt, up, right;
-
-					pos.Set(x,z,y);
-					fn=p.Normal();
-					fn.GetRightUp(right, up);
-
-					Vector tmpVec = fn * dist;
-					nearPt = pos + tmpVec;
-
-					Vector t1;
-					int outcnt[4]={0,0,0,0};
-					texcoord tcs[4];
-
-					// do a quick check whether the light touches this polygon
-					for(int i=0;i<4;i++)
-					{
-						t1.Set(&vtx[i*3]);
-						Vector nearToVert = t1 - nearPt;
-						tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-						tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
-
-						if (tcs[i].u<0) outcnt[0]++;
-						if (tcs[i].u>1) outcnt[1]++;
-						if (tcs[i].v<0) outcnt[2]++;
-						if (tcs[i].v>1) outcnt[3]++;
-
-					}
-					if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
-					{
-						gl_GetLight(p, node->lightsource, true, false, lightdata);
-					}
-				}
-			}
-			node = node->nextLight;
-		}
-	}
-	int numlights[3];
-
-	lightdata.Combine(numlights, gl.MaxLights());
-	if (numlights[2] > 0)
-	{
-		draw_dlight+=numlights[2]/2;
-		gl_RenderState.EnableLight(true);
-		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
-	}
-}
-
 
 //==========================================================================
 //
@@ -291,60 +188,46 @@ void GLWall::RenderFogBoundary()
 {
 	if (gl_fogmode && gl_fixedcolormap == 0)
 	{
-		// with shaders this can be done properly
-		if (gl.hasGLSL())
-		{
-			int rel = rellight + getExtraLight();
-			gl_SetFog(lightlevel, rel, &Colormap, false);
-			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
-			gl_RenderState.EnableAlphaTest(false);
-			RenderWall(RWF_BLANK);
-			gl_RenderState.EnableAlphaTest(true);
-			gl_RenderState.SetEffect(EFF_NONE);
-		}
-		else
-		{
-			// If we use the fixed function pipeline (GL 2.x)
-			// some approximation is needed. This won't look as good
-			// as the shader version but it's an acceptable compromise.
-			float fogdensity=gl_GetFogDensity(lightlevel, Colormap.FadeColor);
+		// If we use the fixed function pipeline (GL 2.x)
+		// some approximation is needed. This won't look as good
+		// as the shader version but it's an acceptable compromise.
+		float fogdensity=gl_GetFogDensity(lightlevel, Colormap.FadeColor);
 
-			float xcamera=FIXED2FLOAT(viewx);
-			float ycamera=FIXED2FLOAT(viewy);
+		float xcamera=FIXED2FLOAT(viewx);
+		float ycamera=FIXED2FLOAT(viewy);
 
-			float dist1=Dist2(xcamera,ycamera, glseg.x1,glseg.y1);
-			float dist2=Dist2(xcamera,ycamera, glseg.x2,glseg.y2);
+		float dist1=Dist2(xcamera,ycamera, glseg.x1,glseg.y1);
+		float dist2=Dist2(xcamera,ycamera, glseg.x2,glseg.y2);
 
 
-			// these values were determined by trial and error and are scale dependent!
-			float fogd1=(0.95f-exp(-fogdensity*dist1/62500.f)) * 1.05f;
-			float fogd2=(0.95f-exp(-fogdensity*dist2/62500.f)) * 1.05f;
+		// these values were determined by trial and error and are scale dependent!
+		float fogd1=(0.95f-exp(-fogdensity*dist1/62500.f)) * 1.05f;
+		float fogd2=(0.95f-exp(-fogdensity*dist2/62500.f)) * 1.05f;
 
-			float fc[4]={Colormap.FadeColor.r/255.0f,Colormap.FadeColor.g/255.0f,Colormap.FadeColor.b/255.0f,fogd2};
+		float fc[4]={Colormap.FadeColor.r/255.0f,Colormap.FadeColor.g/255.0f,Colormap.FadeColor.b/255.0f,fogd2};
 
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.EnableFog(false);
-			gl_RenderState.AlphaFunc(GL_GREATER,0);
-			glDepthFunc(GL_LEQUAL);
-			gl_RenderState.SetColor(fc[0], fc[1], fc[2], fogd1);
+		gl_RenderState.EnableTexture(false);
+		gl_RenderState.EnableFog(false);
+		gl_RenderState.AlphaFunc(GL_GREATER,0);
+		glDepthFunc(GL_LEQUAL);
+		gl_RenderState.SetColor(fc[0], fc[1], fc[2], fogd1);
 
-			// this case is special because it needs to change the color in the middle of the polygon so it cannot use the standard function
-			// This also needs no splits so it's relatively simple.
-			gl_RenderState.Apply();
-			glBegin(GL_TRIANGLE_FAN);	// only used on GL 2.x!
-			glVertex3f(glseg.x1, zbottom[0], glseg.y1);
-			glVertex3f(glseg.x1, ztop[0], glseg.y1);
-			glColor4fv(fc);
-			glVertex3f(glseg.x2, ztop[1], glseg.y2);
-			glVertex3f(glseg.x2, zbottom[1], glseg.y2);
-			glEnd();
-			vertexcount += 4;
+		// this case is special because it needs to change the color in the middle of the polygon so it cannot use the standard function
+		// This also needs no splits so it's relatively simple.
+		gl_RenderState.Apply();
+		glBegin(GL_TRIANGLE_FAN);	// only used on GL 2.x!
+		glVertex3f(glseg.x1, zbottom[0], glseg.y1);
+		glVertex3f(glseg.x1, ztop[0], glseg.y1);
+		glColor4fv(fc);
+		glVertex3f(glseg.x2, ztop[1], glseg.y2);
+		glVertex3f(glseg.x2, zbottom[1], glseg.y2);
+		glEnd();
+		vertexcount += 4;
 
-			glDepthFunc(GL_LESS);
-			gl_RenderState.EnableFog(true);
-			gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f);
-			gl_RenderState.EnableTexture(true);
-		}
+		glDepthFunc(GL_LESS);
+		gl_RenderState.EnableFog(true);
+		gl_RenderState.AlphaFunc(GL_GEQUAL,0.5f);
+		gl_RenderState.EnableTexture(true);
 	}
 }
 
@@ -481,8 +364,6 @@ void GLWall::Draw(int pass)
 	switch (pass)
 	{
 	case GLPASS_ALL:			// Single-pass rendering
-		SetupLights();
-		// fall through
 	case GLPASS_PLAIN:			// Single-pass rendering
 		rel = rellight + getExtraLight();
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);

@@ -65,12 +65,12 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_lightbuffer.h"
+
 #include "gl/models/gl_models.h"
 #include "gl/scene/gl_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
@@ -287,12 +287,6 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 
 void FGLRenderer::SetViewMatrix(bool mirror, bool planemirror)
 {
-	if (gl.hasGLSL())
-	{
-		glActiveTexture(GL_TEXTURE7);
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-	}
 	glActiveTexture(GL_TEXTURE0);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -388,11 +382,7 @@ void FGLRenderer::RenderScene(int recursion)
 
 	int pass;
 
-	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights && gl_dynlight_shader)
-	{
-		pass = GLPASS_ALL;
-	}
-	else if (gl_texture)
+	if (gl_texture)
 	{
 		pass = GLPASS_PLAIN;
 	}
@@ -429,7 +419,7 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_drawinfo->drawlists[GLDL_LIGHTFOGMASKED].Draw(pass);
 
 	// And now the multipass stuff
-	if (!gl_dynlight_shader && gl_lights)
+	if (gl_lights)
 	{
 		// First pass: empty background with sector light only
 
@@ -725,7 +715,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, blendv.a / 255.0f, blend);
 		}
 	}
-	else if (!gl.hasGLSL())
+	else
 	{
 		float r, g, b;
 		bool inverse = false;

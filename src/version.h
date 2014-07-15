@@ -86,17 +86,17 @@ const char *GetVersionString();
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "GZDOOM"
-#define BASEWAD "gzdoom.pk3"
+#define BASEWAD "gzdoomlite.pk3"
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "GZDoom"
+#define GAMENAME "GZDoom-Lite"
 #define FORUM_URL "http://forum.drdteam.org"
 #define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=24"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
-#define GAME_DIR ".config/gzdoom"
+#define GAME_DIR ".config/gzdoom-lite"
 #endif
 
 

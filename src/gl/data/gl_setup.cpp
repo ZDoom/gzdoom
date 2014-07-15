@@ -57,7 +57,7 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
+
 #include "gl/utility/gl_clock.h"
 #include "gl/gl_functions.h"
 

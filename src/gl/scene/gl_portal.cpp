@@ -52,13 +52,13 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/dynlights/gl_glow.h"
+
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"

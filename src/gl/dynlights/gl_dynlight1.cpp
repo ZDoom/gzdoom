@@ -47,12 +47,13 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 
 
@@ -66,21 +67,6 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 {
 	if (self) gl_RecreateAllAttachedLights();
 	else gl_DeleteAllAttachedLights();
-}
-
-CUSTOM_CVAR (Bool, gl_dynlight_shader, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self)
-	{
-		if (!gl.hasGLSL())
-		{
-			self = false;
-		}
-		else if (gl.maxuniforms < 1024 && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
-		{
-			self = false;
-		}
-	}
 }
 
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);

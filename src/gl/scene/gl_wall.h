@@ -163,11 +163,9 @@ public:
 	subsector_t * sub;		// For polyobjects
 private:
 
-	void CheckGlowing();
 	void PutWall(bool translucent);
 	void CheckTexturePosition();
 
-	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
 	void RenderWall(int textured, ADynamicLight * light=NULL, unsigned int *store = NULL);
 
@@ -281,7 +279,6 @@ public:
 
 	int dynlightindex;
 
-	bool SetupSubsectorLights(bool lightsapplied, subsector_t * sub);
 	void DrawSubsector(subsector_t * sub);
 	void DrawSubsectorLights(subsector_t * sub, int pass);
 	void DrawSubsectors(int pass, bool istrans);

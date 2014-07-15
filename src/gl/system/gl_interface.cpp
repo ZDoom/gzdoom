@@ -167,7 +167,6 @@ void gl_PrintStartupLog()
 	Printf ("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	Printf ("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
 	Printf ("GL_VERSION: %s\n", glGetString(GL_VERSION));
-	Printf ("GL_SHADING_LANGUAGE_VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	Printf ("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
 	int v;
 
@@ -175,17 +174,6 @@ void gl_PrintStartupLog()
 	Printf("Max. texture size: %d\n", v);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &v);
 	Printf ("Max. texture units: %d\n", v);
-	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
-	Printf ("Max. fragment uniforms: %d\n", v);
-	if (gl.hasGLSL()) gl.maxuniforms = v;
-	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
-	Printf ("Max. vertex uniforms: %d\n", v);
-	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
-	Printf ("Max. varying: %d\n", v);
-	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);
-	Printf("Max. combined shader storage blocks: %d\n", v);
-	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
-	Printf("Max. vertex shader storage blocks: %d\n", v);
 
 }
 

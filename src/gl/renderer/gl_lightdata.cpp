@@ -46,7 +46,7 @@
 #include "gl/renderer/gl_colormap.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/scene/gl_portal.h"
 #include "c_dispatch.h"
 #include "p_local.h"
@@ -107,18 +107,15 @@ CUSTOM_CVAR (Int, gl_distfog, 70, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int,gl_fogmode,1,CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
-	if (self>2) self=2;
+	if (self>1) self=1;
 	if (self<0) self=0;
-	if (self == 2 && !gl.hasGLSL()) self = 1;
 }
 
 CUSTOM_CVAR(Int, gl_lightmode, 3 ,CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	int newself = self;
-	if (newself > 4) newself=8;	// use 8 for software lighting to avoid conflicts with the bit mask
+	if (newself >= 2 && newself != 3) newself=3;	// use 8 for software lighting to avoid conflicts with the bit mask
 	if (newself < 0) newself=0;
-	if ((newself == 2 || newself == 8) && !gl.hasGLSL()) newself = 3;
-	if (self != newself) self = newself;
 	glset.lightmode = newself;
 }
 

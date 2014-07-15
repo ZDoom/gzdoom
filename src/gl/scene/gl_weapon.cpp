@@ -52,10 +52,10 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_glow.h"
+
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 
 EXTERN_CVAR (Bool, r_drawplayersprites)
@@ -208,12 +208,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				bool disablefullbright = false;
 				FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, NULL);
-				if (lump.isValid() && gl.hasGLSL())
-				{
-					FMaterial * tex=FMaterial::ValidateTexture(lump, false);
-					if (tex)
-						disablefullbright = tex->tex->gl_info.bBrightmapDisablesFullbright;
-				}
 				statebright[i] = !!psp->state->GetFullbright() && !disablefullbright;
 			}
 		}
@@ -245,7 +239,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 			lightlevel = (1.0 - min_L) * 255;
 		}
-		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->x, playermo->y, playermo->z);
 
 		// calculate colormap for weapon sprites
 		if (viewsector->e->XFloor.ffloors.Size() && !glset.nocoloredspritelighting)
@@ -316,17 +309,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		vis.RenderStyle.CheckFuzz();
 		if (vis.RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl.hasGLSL() && gl_fuzztype != 0)
-			{
-				// Todo: implement shader selection here
-				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = gl_fuzztype + 4;
-				trans = 0.99f;	// trans may not be 1 here
-			}
-			else
-			{
-				vis.RenderStyle.BlendOp = STYLEOP_Shadow;
-			}
+			vis.RenderStyle.BlendOp = STYLEOP_Shadow;
 		}
 		statebright[0] = statebright[1] = false;
 	}

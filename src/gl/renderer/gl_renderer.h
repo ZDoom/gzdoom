@@ -53,8 +53,6 @@ public:
 	int mLightCount;
 	float mCurrentFoV;
 	AActor *mViewActor;
-	FShaderManager *mShaderManager;
-	FGLThreadManager *mThreadManager;
 	int gl_spriteindex;
 	unsigned int mFBID;
 

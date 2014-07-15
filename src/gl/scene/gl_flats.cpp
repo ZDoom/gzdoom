@@ -55,10 +55,10 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
-#include "gl/dynlights/gl_lightbuffer.h"
+
+
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/shaders/gl_shader.h"
+
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
@@ -171,66 +171,6 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 
 //==========================================================================
 //
-// Flats 
-//
-//==========================================================================
-extern FDynLightData lightdata;
-
-bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
-{
-	Plane p;
-
-	lightdata.Clear();
-	for(int i=0;i<2;i++)
-	{
-		FLightNode * node = sub->lighthead[i];
-		while (node)
-		{
-			ADynamicLight * light = node->lightsource;
-			
-			if (light->flags2&MF2_DORMANT)
-			{
-				node=node->nextLight;
-				continue;
-			}
-			iter_dlightf++;
-
-			// we must do the side check here because gl_SetupLight needs the correct plane orientation
-			// which we don't have for Legacy-style 3D-floors
-			fixed_t planeh = plane.plane.ZatPoint(light->x, light->y);
-			if (gl_lights_checkside && ((planeh<light->z && ceiling) || (planeh>light->z && !ceiling)))
-			{
-				node=node->nextLight;
-				continue;
-			}
-
-			p.Set(plane.plane);
-			gl_GetLight(p, light, false, false, lightdata);
-			node = node->nextLight;
-		}
-	}
-
-	int numlights[3];
-
-	lightdata.Combine(numlights, gl.MaxLights());
-	if (numlights[2] > 0)
-	{
-		draw_dlightf+=numlights[2]/2;
-		gl_RenderState.EnableLight(true);
-		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
-		gl_RenderState.Apply();
-		return true;
-	}
-	if (lightsapplied) 
-	{
-		gl_RenderState.EnableLight(false);
-		gl_RenderState.Apply();
-	}
-	return false;
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -286,7 +226,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 	if (sub)
 	{
 		// This represents a single subsector
-		if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
 		DrawSubsector(sub);
 	}
 	else
@@ -300,7 +239,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				// This is just a quick hack to make translucent 3D floors and portals work.
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
 					drawcalls.Clock();
 					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
 					drawcalls.Unclock();
@@ -318,7 +256,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				subsector_t * sub = sector->subsectors[i];
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
 					DrawSubsector(sub);
 				}
 			}
@@ -333,13 +270,11 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 
 			while (node)
 			{
-				if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, node->sub);
 				DrawSubsector(node->sub);
 				node = node->next;
 			}
 		}
 	}
-	gl_RenderState.EnableLight(false);
 }
 
 
@@ -490,7 +425,7 @@ inline void GLFlat::PutFlat(bool fog)
 		{
 			foggy = gl_CheckFog(&Colormap, lightlevel) || level.flags&LEVEL_HASFADETABLE;
 
-			if (gl_lights && !gl_dynlight_shader && GLRenderer->mLightCount)	// Are lights touching this sector?
+			if (gl_lights && GLRenderer->mLightCount)	// Are lights touching this sector?
 			{
 				for(int i=0;i<sector->subsectorcount;i++) if (sector->subsectors[i]->lighthead[0] != NULL)
 				{
@@ -501,7 +436,6 @@ inline void GLFlat::PutFlat(bool fog)
 		else foggy = false;
 
 		list = list_indices[light][masked][foggy];
-		if (list == GLDL_LIGHT && gltexture->tex->gl_info.Brightmap && gl.hasGLSL()) list = GLDL_LIGHTBRIGHT;
 
 		gl_drawinfo->drawlists[list].AddFlat (this);
 	}

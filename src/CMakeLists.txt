@@ -729,7 +729,6 @@ file( GLOB HEADER_FILES
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
-	gl/shaders/*.h
 	gl/system/*.h
 	gl/textures/*.h
 	gl/utility/*.h
@@ -1084,11 +1083,7 @@ add_executable( zdoom WIN32
 	gl/scene/gl_vertex.cpp
 	gl/scene/gl_spritelight.cpp
 	gl/dynlights/gl_dynlight.cpp
-	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_dynlight1.cpp
-	gl/dynlights/gl_lightbuffer.cpp
-	gl/shaders/gl_shader.cpp
-	gl/shaders/gl_texshader.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_menu.cpp
@@ -1300,7 +1295,6 @@ source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_S
 source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
-source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")
 source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
 source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")
 source_group("OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/utility/.+")

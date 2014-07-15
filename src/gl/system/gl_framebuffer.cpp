@@ -75,7 +75,6 @@ FGLRenderer *GLRenderer;
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
-void gl_SetupMenu();
 
 //==========================================================================
 //
@@ -93,7 +92,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	LastCamera = NULL;
 
 	InitializeState();
-	gl_SetupMenu();
 	gl_GenerateGlobalBrightmapFromColormap();
 	DoSetGamma();
 	needsetgamma = true;

@@ -66,7 +66,6 @@ EXTERN_CVAR (Float, gl_lights_size);
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
 void gl_ParseBrightmap(FScanner &sc, int);
-void gl_DestroyUserShaders();
 void gl_ParseHardwareShader(FScanner &sc, int deflump);
 void gl_ParseSkybox(FScanner &sc);
 void gl_ParseDetailTexture(FScanner &sc);
@@ -1196,6 +1195,73 @@ void gl_RecreateAllAttachedLights()
 
 
 //==========================================================================
+//
+// Parses a shader definition and discards it
+//
+//==========================================================================
+
+void gl_ParseHardwareShader(FScanner &sc, int deflump)
+{
+	int type = FTexture::TEX_Any;
+
+	sc.MustGetString();
+	if (sc.Compare("texture")) ;
+	else if (sc.Compare("flat")) ;
+	else if (sc.Compare("sprite")) ;
+	else sc.UnGet();
+
+	sc.MustGetString();
+
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
+	{
+		sc.MustGetString();
+	}
+}
+
+//===========================================================================
+// 
+//	Reads glow definitions from GLDEFS
+//
+//===========================================================================
+void gl_InitGlow(FScanner &sc)
+{
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
+		sc.MustGetString();
+		if (sc.Compare("FLATS") || sc.Compare("WALLS"))
+		{
+			sc.MustGetStringName("{");
+			while (!sc.CheckString("}"))
+			{
+				sc.MustGetString();
+			}
+		}
+		else if (sc.Compare("TEXTURE"))
+		{
+			sc.SetCMode(true);
+			sc.MustGetString();
+			sc.MustGetStringName(",");
+			sc.MustGetString();
+			if (sc.CheckString(","))
+			{
+				if (sc.CheckNumber())
+				{
+					if (!sc.CheckString(",")) goto skip_fb;
+				}
+				sc.MustGetStringName("fullbright");
+			}
+		skip_fb:
+			sc.SetCMode(false);
+
+		}
+	}
+}
+
+
+
+//==========================================================================
 // The actual light def parsing code is there.
 // DoParseDefs is no longer called directly by ParseDefs, now it's called
 // by LoadDynLightDefs, which wasn't simply integrated into ParseDefs
@@ -1317,7 +1383,6 @@ void gl_ParseDefs()
 
 	atterm( gl_ReleaseLights ); 
 	gl_ReleaseLights();
-	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{
 	case GAME_Heretic:

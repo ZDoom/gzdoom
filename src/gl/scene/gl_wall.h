@@ -169,7 +169,7 @@ private:
 
 	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
-	void RenderWall(int textured, ADynamicLight * light=NULL, unsigned int *store = NULL);
+	void RenderWall(int textured, unsigned int *store = NULL);
 
 	void FloodPlane(int pass);
 

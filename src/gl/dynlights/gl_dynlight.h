@@ -184,8 +184,6 @@ struct FDynLightData
 
 
 bool gl_GetLight(Plane & p, ADynamicLight * light, bool checkside, bool forceadditive, FDynLightData &data);
-bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, float & scale, int desaturation, bool checkside=true, bool forceadditive=true);
-bool gl_SetupLightTexture();
 void gl_UploadLights(FDynLightData &data);
 
 

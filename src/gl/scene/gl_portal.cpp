@@ -144,7 +144,7 @@ void GLPortal::DrawPortalStencil()
 
 		for (unsigned int i = 0; i<lines.Size(); i++)
 		{
-			lines[i].RenderWall(GLWall::RWF_NORENDER, NULL, &mPrimIndices[i * 2]);
+			lines[i].RenderWall(GLWall::RWF_NORENDER, &mPrimIndices[i * 2]);
 		}
 
 		if (cap)

@@ -511,6 +511,7 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.Apply();
 			glDrawArrays(GL_TRIANGLES, 0, 12);
 			gl_RenderState.EnableTexture(true);
+			gl_RenderState.SetObjectColor(0xffffffff);
 		}
 		gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	}

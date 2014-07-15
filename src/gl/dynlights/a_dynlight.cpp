@@ -521,14 +521,12 @@ void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
 {
 	if (!subSec) return;
 
-	bool additive = (flags4&MF4_ADDITIVE) || gl_lights_additive;
-
 	subSec->validcount = ::validcount;
 
-	touching_subsectors = AddLightNode(&subSec->lighthead[additive], subSec, this, touching_subsectors);
+	touching_subsectors = AddLightNode(&subSec->lighthead, subSec, this, touching_subsectors);
 	if (subSec->sector->validcount != ::validcount)
 	{
-		touching_sector = AddLightNode(&subSec->render_sector->lighthead[additive], subSec->sector, this, touching_sector);
+		touching_sector = AddLightNode(&subSec->render_sector->lighthead, subSec->sector, this, touching_sector);
 		subSec->sector->validcount = ::validcount;
 	}
 
@@ -542,7 +540,7 @@ void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
 			if (DMulScale32 (y-seg->v1->y, seg->v2->x-seg->v1->x, seg->v1->x-x, seg->v2->y-seg->v1->y) <=0)
 			{
 				seg->linedef->validcount=validcount;
-				touching_sides = AddLightNode(&seg->sidedef->lighthead[additive], seg->sidedef, this, touching_sides);
+				touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
 			}
 		}
 
@@ -755,22 +753,15 @@ CCMD(listsublights)
 	{
 		subsector_t *sub = &subsectors[i];
 		int lights = 0;
-		int addlights = 0;
 
-		FLightNode * node = sub->lighthead[0];
+		FLightNode * node = sub->lighthead;
 		while (node != NULL)
 		{
 			lights++;
 			node = node->nextLight;
 		}
 
-		node = sub->lighthead[1];
-		while (node != NULL)
-		{
-			addlights++;
-			node = node->nextLight;
-		}
-		Printf(PRINT_LOG, "Subsector %d - %d lights, %d additive lights\n", i, lights, addlights);
+		Printf(PRINT_LOG, "Subsector %d - %d lights\n", i, lights);
 	}
 }
 

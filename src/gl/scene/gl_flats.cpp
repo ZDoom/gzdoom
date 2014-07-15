@@ -103,26 +103,24 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 }
 
 
+
 //==========================================================================
 //
 // Flats 
 //
 //==========================================================================
+extern FDynLightData lightdata;
 
-void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
+bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 {
 	Plane p;
-	Vector nearPt, up, right, t1;
-	float scale;
-	unsigned int k;
-	seg_t *v;
 
-	FLightNode * node = sub->lighthead[pass==GLPASS_LIGHT_ADDITIVE];
-	gl_RenderState.Apply();
+	lightdata.Clear();
+	FLightNode * node = sub->lighthead;
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
-		
+			
 		if (light->flags2&MF2_DORMANT)
 		{
 			node=node->nextLight;
@@ -140,71 +138,8 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		}
 
 		p.Set(plane.plane);
-		if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.desaturation, false, foggy)) 
-		{
-			node=node->nextLight;
-			continue;
-		}
-		draw_dlightf++;
-		gl_RenderState.Apply();
-
-		// Render the light
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		for (k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
-		{
-			vertex_t *vt = v->v1;
-			float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-
-			t1.Set(vt->fx, zc, vt->fy);
-			Vector nearToVert = t1 - nearPt;
-			ptr->Set(vt->fx, zc, vt->fy, (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
-			ptr++;
-		}
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+		gl_GetLight(p, light, false, false, lightdata);
 		node = node->nextLight;
-	}
-}
-
-
-//==========================================================================
-//
-// Flats 
-//
-//==========================================================================
-extern FDynLightData lightdata;
-
-bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
-{
-	Plane p;
-
-	lightdata.Clear();
-	for(int i=0;i<2;i++)
-	{
-		FLightNode * node = sub->lighthead[i];
-		while (node)
-		{
-			ADynamicLight * light = node->lightsource;
-			
-			if (light->flags2&MF2_DORMANT)
-			{
-				node=node->nextLight;
-				continue;
-			}
-			iter_dlightf++;
-
-			// we must do the side check here because gl_SetupLight needs the correct plane orientation
-			// which we don't have for Legacy-style 3D-floors
-			fixed_t planeh = plane.plane.ZatPoint(light->x, light->y);
-			if (gl_lights_checkside && ((planeh<light->z && ceiling) || (planeh>light->z && !ceiling)))
-			{
-				node=node->nextLight;
-				continue;
-			}
-
-			p.Set(plane.plane);
-			gl_GetLight(p, light, false, false, lightdata);
-			node = node->nextLight;
-		}
 	}
 
 	int numlights[3];
@@ -347,7 +282,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 //==========================================================================
 void GLFlat::Draw(int pass)
 {
-	int i;
 	int rel = getExtraLight();
 
 #ifdef _DEBUG
@@ -360,64 +294,14 @@ void GLFlat::Draw(int pass)
 
 	switch (pass)
 	{
-	case GLPASS_BASE:
-		gl_SetColor(lightlevel, rel, Colormap,1.0f);
-		if (!foggy) gl_SetFog(lightlevel, rel, &Colormap, false);
-		DrawSubsectors(pass, false);
-		break;
-
 	case GLPASS_PLAIN:			// Single-pass rendering
 	case GLPASS_ALL:
-	case GLPASS_BASE_MASKED:
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
-		if (!foggy || pass != GLPASS_BASE_MASKED) gl_SetFog(lightlevel, rel, &Colormap, false);
-		// fall through
-	case GLPASS_TEXTURE:
-	{
+		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gltexture->Bind();
 		gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, false);
 		gl_RenderState.EnableTextureMatrix(false);
-		break;
-	}
-
-	case GLPASS_LIGHT:
-	case GLPASS_LIGHT_ADDITIVE:
-
-		if (!foggy)	gl_SetFog((255+lightlevel)>>1, 0, &Colormap, false);
-		else gl_SetFog(lightlevel, 0, &Colormap, true);	
-
-		if (sub)
-		{
-			DrawSubsectorLights(sub, pass);
-		}
-		else
-		{
-			// Draw the subsectors belonging to this sector
-			for (i=0; i<sector->subsectorcount; i++)
-			{
-				subsector_t * sub = sector->subsectors[i];
-
-				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags)
-				{
-					DrawSubsectorLights(sub, pass);
-				}
-			}
-
-			// Draw the subsectors assigned to it due to missing textures
-			if (!(renderflags&SSRF_RENDER3DPLANES))
-			{
-				gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-					gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-					gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
-
-				while (node)
-				{
-					DrawSubsectorLights(node->sub, pass);
-					node = node->next;
-				}
-			}
-		}
 		break;
 
 	case GLPASS_TRANSLUCENT:
@@ -462,38 +346,15 @@ inline void GLFlat::PutFlat(bool fog)
 	}
 	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog)
 	{
-		int list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
-		gl_drawinfo->drawlists[list].AddFlat (this);
+		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
+		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
 	else if (gltexture != NULL)
 	{
-		static DrawListType list_indices[2][2][2]={
-			{ { GLDL_PLAIN, GLDL_FOG      }, { GLDL_MASKED,      GLDL_FOGMASKED      } },
-			{ { GLDL_LIGHT, GLDL_LIGHTFOG }, { GLDL_LIGHTMASKED, GLDL_LIGHTFOGMASKED } }
-		};
-
-		bool light = false;
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
-
-		if (!gl_fixedcolormap)
-		{
-			foggy = gl_CheckFog(&Colormap, lightlevel) || level.flags&LEVEL_HASFADETABLE;
-
-			if (gl_lights && !gl_dynlight_shader && GLRenderer->mLightCount)	// Are lights touching this sector?
-			{
-				for(int i=0;i<sector->subsectorcount;i++) if (sector->subsectors[i]->lighthead[0] != NULL)
-				{
-					light=true;
-				}
-			}
-		}
-		else foggy = false;
-
-		list = list_indices[light][masked][foggy];
-		if (list == GLDL_LIGHT && gltexture->tex->gl_info.Brightmap) list = GLDL_LIGHTBRIGHT;
-
-		gl_drawinfo->drawlists[list].AddFlat (this);
+		list = masked ? GLDL_MASKED : GLDL_PLAIN;
 	}
+	gl_drawinfo->drawlists[list].AddFlat (this);
 }
 
 //==========================================================================

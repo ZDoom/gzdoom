@@ -64,57 +64,6 @@ EXTERN_CVAR(Bool, gl_seamless)
 
 //==========================================================================
 //
-// Sets up the texture coordinates for one light to be rendered
-//
-//==========================================================================
-bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light)
-{
-	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
-	Plane p;
-	Vector nearPt, up, right;
-	float scale;
-
-	p.Init(vtx,4);
-
-	if (!p.ValidNormal()) 
-	{
-		return false;
-	}
-
-	if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.desaturation, true, !!(flags&GLWF_FOGGY))) 
-	{
-		return false;
-	}
-
-	if (tcs != NULL)
-	{
-		Vector t1;
-		int outcnt[4]={0,0,0,0};
-
-		for(int i=0;i<4;i++)
-		{
-			t1.Set(&vtx[i*3]);
-			Vector nearToVert = t1 - nearPt;
-			tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-			tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
-
-			// quick check whether the light touches this polygon
-			if (tcs[i].u<0) outcnt[0]++;
-			if (tcs[i].u>1) outcnt[1]++;
-			if (tcs[i].v<0) outcnt[2]++;
-			if (tcs[i].v>1) outcnt[3]++;
-
-		}
-		// The light doesn't touch this polygon
-		if (outcnt[0]==4 || outcnt[1]==4 || outcnt[2]==4 || outcnt[3]==4) return false;
-	}
-
-	draw_dlight++;
-	return true;
-}
-
-//==========================================================================
-//
 // Collect lights for shader
 //
 //==========================================================================
@@ -132,77 +81,74 @@ void GLWall::SetupLights()
 	{
 		return;
 	}
-	for(int i=0;i<2;i++)
+	FLightNode *node;
+	if (seg->sidedef == NULL)
 	{
-		FLightNode *node;
-		if (seg->sidedef == NULL)
-		{
-			node = NULL;
-		}
-		else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-		{
-			node = seg->sidedef->lighthead[i];
-		}
-		else if (sub)
-		{
-			// Polobject segs cannot be checked per sidedef so use the subsector instead.
-			node = sub->lighthead[i];
-		}
-		else node = NULL;
+		node = NULL;
+	}
+	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	{
+		node = seg->sidedef->lighthead;
+	}
+	else if (sub)
+	{
+		// Polobject segs cannot be checked per sidedef so use the subsector instead.
+		node = sub->lighthead;
+	}
+	else node = NULL;
 
-		// Iterate through all dynamic lights which touch this wall and render them
-		while (node)
+	// Iterate through all dynamic lights which touch this wall and render them
+	while (node)
+	{
+		if (!(node->lightsource->flags2&MF2_DORMANT))
 		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
+			iter_dlight++;
+
+			Vector fn, pos;
+
+			float x = FIXED2FLOAT(node->lightsource->x);
+			float y = FIXED2FLOAT(node->lightsource->y);
+			float z = FIXED2FLOAT(node->lightsource->z);
+			float dist = fabsf(p.DistToPoint(x, z, y));
+			float radius = (node->lightsource->GetRadius() * gl_lights_size);
+			float scale = 1.0f / ((2.f * radius) - dist);
+
+			if (radius > 0.f && dist < radius)
 			{
-				iter_dlight++;
+				Vector nearPt, up, right;
 
-				Vector fn, pos;
+				pos.Set(x,z,y);
+				fn=p.Normal();
+				fn.GetRightUp(right, up);
 
-				float x = FIXED2FLOAT(node->lightsource->x);
-				float y = FIXED2FLOAT(node->lightsource->y);
-				float z = FIXED2FLOAT(node->lightsource->z);
-				float dist = fabsf(p.DistToPoint(x, z, y));
-				float radius = (node->lightsource->GetRadius() * gl_lights_size);
-				float scale = 1.0f / ((2.f * radius) - dist);
+				Vector tmpVec = fn * dist;
+				nearPt = pos + tmpVec;
 
-				if (radius > 0.f && dist < radius)
+				Vector t1;
+				int outcnt[4]={0,0,0,0};
+				texcoord tcs[4];
+
+				// do a quick check whether the light touches this polygon
+				for(int i=0;i<4;i++)
 				{
-					Vector nearPt, up, right;
+					t1.Set(&vtx[i*3]);
+					Vector nearToVert = t1 - nearPt;
+					tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
+					tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
 
-					pos.Set(x,z,y);
-					fn=p.Normal();
-					fn.GetRightUp(right, up);
+					if (tcs[i].u<0) outcnt[0]++;
+					if (tcs[i].u>1) outcnt[1]++;
+					if (tcs[i].v<0) outcnt[2]++;
+					if (tcs[i].v>1) outcnt[3]++;
 
-					Vector tmpVec = fn * dist;
-					nearPt = pos + tmpVec;
-
-					Vector t1;
-					int outcnt[4]={0,0,0,0};
-					texcoord tcs[4];
-
-					// do a quick check whether the light touches this polygon
-					for(int i=0;i<4;i++)
-					{
-						t1.Set(&vtx[i*3]);
-						Vector nearToVert = t1 - nearPt;
-						tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
-						tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
-
-						if (tcs[i].u<0) outcnt[0]++;
-						if (tcs[i].u>1) outcnt[1]++;
-						if (tcs[i].v<0) outcnt[2]++;
-						if (tcs[i].v>1) outcnt[3]++;
-
-					}
-					if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
-					{
-						gl_GetLight(p, node->lightsource, true, false, lightdata);
-					}
+				}
+				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
+				{
+					gl_GetLight(p, node->lightsource, true, false, lightdata);
 				}
 			}
-			node = node->nextLight;
 		}
+		node = node->nextLight;
 	}
 	int numlights[3];
 
@@ -223,29 +169,20 @@ void GLWall::SetupLights()
 //
 //==========================================================================
 
-void GLWall::RenderWall(int textured, ADynamicLight * light, unsigned int *store)
+void GLWall::RenderWall(int textured, unsigned int *store)
 {
 	static texcoord tcs[4]; // making this variable static saves us a relatively costly stack integrity check.
 	bool split = (gl_seamless && !(textured&RWF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
 
-	if (!light)
+	tcs[0]=lolft;
+	tcs[1]=uplft;
+	tcs[2]=uprgt;
+	tcs[3]=lorgt;
+	if ((flags&GLWF_GLOW) && (textured & RWF_GLOW))
 	{
-		tcs[0]=lolft;
-		tcs[1]=uplft;
-		tcs[2]=uprgt;
-		tcs[3]=lorgt;
-		if ((flags&GLWF_GLOW) && (textured & RWF_GLOW))
-		{
-			gl_RenderState.SetGlowPlanes(topplane, bottomplane);
-			gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
-		}
-
+		gl_RenderState.SetGlowPlanes(topplane, bottomplane);
+		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
 	}
-	else
-	{
-		if (!PrepareLight(tcs, light)) return;
-	}
-
 
 	if (!(textured & RWF_NORENDER))
 	{
@@ -422,7 +359,6 @@ void GLWall::RenderTranslucentWall()
 //==========================================================================
 void GLWall::Draw(int pass)
 {
-	FLightNode * node;
 	int rel;
 
 #ifdef _DEBUG
@@ -459,64 +395,6 @@ void GLWall::Draw(int pass)
 		RenderWall(RWF_TEXTURED|RWF_GLOW);
 		gl_RenderState.EnableGlow(false);
 		gl_RenderState.EnableLight(false);
-		break;
-
-	case GLPASS_BASE:			// Base pass for non-masked polygons (all opaque geometry)
-	case GLPASS_BASE_MASKED:	// Base pass for masked polygons (2sided mid-textures and transparent 3D floors)
-		rel = rellight + getExtraLight();
-		gl_SetColor(lightlevel, rel, Colormap,1.0f);
-		if (!(flags&GLWF_FOGGY)) 
-		{
-			if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
-			else gl_SetFog(255, 0, NULL, false);
-		}
-		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		// fall through
-
-		if (pass != GLPASS_BASE)
-		{
-			gltexture->Bind(flags, 0);
-		}
-		RenderWall(RWF_TEXTURED|RWF_GLOW);
-		gl_RenderState.EnableGlow(false);
-		gl_RenderState.EnableLight(false);
-		break;
-
-	case GLPASS_TEXTURE:		// modulated texture
-		gltexture->Bind(flags, 0);
-		RenderWall(RWF_TEXTURED);
-		break;
-
-	case GLPASS_LIGHT:
-	case GLPASS_LIGHT_ADDITIVE:
-		// black fog is diminishing light and should affect lights less than the rest!
-		if (!(flags&GLWF_FOGGY)) gl_SetFog((255+lightlevel)>>1, 0, NULL, false);
-		else gl_SetFog(lightlevel, 0, &Colormap, true);	
-
-		if (seg->sidedef == NULL)
-		{
-			node = NULL;
-		}
-		else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-		{
-			// Iterate through all dynamic lights which touch this wall and render them
-			node = seg->sidedef->lighthead[pass==GLPASS_LIGHT_ADDITIVE];
-		}
-		else if (sub)
-		{
-			// To avoid constant rechecking for polyobjects use the subsector's lightlist instead
-			node = sub->lighthead[pass==GLPASS_LIGHT_ADDITIVE];
-		}
-		else node = NULL;
-		while (node)
-		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
-			{
-				iter_dlight++;
-				RenderWall(RWF_TEXTURED, node->lightsource);
-			}
-			node = node->nextLight;
-		}
 		break;
 
 	case GLPASS_DECALS:

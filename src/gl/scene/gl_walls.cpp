@@ -114,9 +114,8 @@ void GLWall::PutWall(bool translucent)
 		4,		//RENDERWALL_SECTORSTACK,      // special
 		4,		//RENDERWALL_PLANEMIRROR,      // special
 		4,		//RENDERWALL_MIRROR,           // special
-		1,		//RENDERWALL_MIRRORSURFACE,    // needs special handling
-		2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog
-		2,		//RENDERWALL_M2SFOG,            // depends on render and texture settings, no fog
+		1,		//RENDERWALL_MIRRORSURFACE,    // only created here from RENDERWALL_MIRROR
+		2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog, used on mid texture lines with a fog boundary.
 		3,		//RENDERWALL_COLOR,            // translucent
 		2,		//RENDERWALL_FFBLOCK           // depends on render and texture settings
 		4,		//RENDERWALL_COLORLAYER        // color layer needs special handling
@@ -145,47 +144,11 @@ void GLWall::PutWall(bool translucent)
 	}
 	else if (passflag[type]!=4)	// non-translucent walls
 	{
-		static DrawListType list_indices[2][2][2]={
-			{ { GLDL_PLAIN, GLDL_FOG      }, { GLDL_MASKED,      GLDL_FOGMASKED      } },
-			{ { GLDL_LIGHT, GLDL_LIGHTFOG }, { GLDL_LIGHTMASKED, GLDL_LIGHTFOGMASKED } }
-		};
 
 		bool masked;
-		bool light = false;
 
-		if (!gl_fixedcolormap)
-		{
-			if (gl_lights && !gl_dynlight_shader)
-			{
-				if (seg->sidedef == NULL)
-				{
-					light = false;
-				}
-				else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-				{
-					light = seg->sidedef->lighthead[0] != NULL;
-				}
-				else if (sub)
-				{
-					// for polyobjects we cannot use the side's light list. 
-					// We must use the subsector's.
-					light = sub->lighthead[0] != NULL;
-				}
-			}
-		}
-		else 
-		{
-			flags&=~GLWF_FOGGY;
-		}
-
-		masked = passflag[type]==1? false : (light && type!=RENDERWALL_FFBLOCK) || (gltexture && gltexture->isMasked());
-
-		list = list_indices[light][masked][!!(flags&GLWF_FOGGY)];
-		if (list == GLDL_LIGHT)
-		{
-			if (gltexture->tex->gl_info.Brightmap) list = GLDL_LIGHTBRIGHT;
-			if (flags & GLWF_GLOW) list = GLDL_LIGHTBRIGHT;
-		}
+		masked = passflag[type]==1? false : (gltexture && gltexture->isMasked());
+		list = masked ? GLDL_MASKED : GLDL_PLAIN;
 		gl_drawinfo->drawlists[list].AddWall(this);
 
 	}
@@ -1514,11 +1477,12 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	glseg.x2= FIXED2FLOAT(v2->x);
 	glseg.y2= FIXED2FLOAT(v2->y);
 	Colormap=frontsector->ColorMap;
-	flags = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE)? GLWF_FOGGY : 0;
+	flags = 0;
 
 	int rel = 0;
 	int orglightlevel = gl_ClampLight(frontsector->lightlevel);
-	lightlevel = gl_ClampLight(seg->sidedef->GetLightLevel(!!(flags&GLWF_FOGGY), orglightlevel, false, &rel));
+	bool foggy = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE);	// fog disables fake contrast
+	lightlevel = gl_ClampLight(seg->sidedef->GetLightLevel(foggy, orglightlevel, false, &rel));
 	if (orglightlevel >= 253)			// with the software renderer fake contrast won't be visible above this.
 	{
 		rellight = 0;					
@@ -1764,7 +1728,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		glseg.fracleft = 0;
 		glseg.fracright = 1;
 
-		flags = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE)? GLWF_FOGGY : 0;
+		flags = 0;
 
 		// can't do fake contrast without a sidedef
 		lightlevel = gl_ClampLight(frontsector->lightlevel);

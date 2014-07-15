@@ -68,17 +68,6 @@ CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	else gl_DeleteAllAttachedLights();
 }
 
-CUSTOM_CVAR (Bool, gl_dynlight_shader, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self)
-	{
-		if (gl.maxuniforms < 1024 && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
-		{
-			self = false;
-		}
-	}
-}
-
 CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Float, gl_lights_intensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -157,75 +146,6 @@ bool gl_GetLight(Plane & p, ADynamicLight * light, bool checkside, bool forceadd
 
 //==========================================================================
 //
-// Sets up the parameters to render one dynamic light onto one plane
-//
-//==========================================================================
-bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, 
-				   float & scale, int desaturation, bool checkside, bool forceadditive)
-{
-	Vector fn, pos;
-
-    float x = FIXED2FLOAT(light->x);
-	float y = FIXED2FLOAT(light->y);
-	float z = FIXED2FLOAT(light->z);
-	
-	float dist = fabsf(p.DistToPoint(x, z, y));
-	float radius = (light->GetRadius() * gl_lights_size);
-	
-	if (radius <= 0.f) return false;
-	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(x, z, y))
-	{
-		return false;
-	}
-	if (light->owned && light->target != NULL && !light->target->IsVisibleToPlayer())
-	{
-		return false;
-	}
-
-	scale = 1.0f / ((2.f * radius) - dist);
-
-	// project light position onto plane (find closest point on plane)
-
-
-	pos.Set(x,z,y);
-	fn=p.Normal();
-	fn.GetRightUp(right, up);
-
-#ifdef _MSC_VER
-	nearPt = pos + fn * dist;
-#else
-	Vector tmpVec = fn * dist;
-	nearPt = pos + tmpVec;
-#endif
-
-	float cs = 1.0f - (dist / radius);
-	if (gl_lights_additive || light->flags4&MF4_ADDITIVE || forceadditive) cs*=0.2f;	// otherwise the light gets too strong.
-	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
-	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
-	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;
-
-	if (light->IsSubtractive())
-	{
-		Vector v;
-		
-		gl_RenderState.BlendEquation(GL_FUNC_REVERSE_SUBTRACT);
-		v.Set(r, g, b);
-		r = v.Length() - r;
-		g = v.Length() - g;
-		b = v.Length() - b;
-	}
-	else
-	{
-		gl_RenderState.BlendEquation(GL_FUNC_ADD);
-	}
-	gl_RenderState.SetColor(r, g, b, 1.f, desaturation);
-	return true;
-}
-
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -257,31 +177,3 @@ void gl_UploadLights(FDynLightData &data)
 	}
 }
 #endif
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-bool gl_SetupLightTexture()
-{
-
-	if (GLRenderer->gllight == NULL) return false;
-	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight);
-	pat->BindPatch(0);
-	return true;
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-inline fixed_t P_AproxDistance3(fixed_t dx, fixed_t dy, fixed_t dz)
-{
-	return P_AproxDistance(P_AproxDistance(dx,dy),dz);
-}
-

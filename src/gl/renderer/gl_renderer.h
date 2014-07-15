@@ -62,8 +62,7 @@ public:
 	FTexture *glpart2;
 	FTexture *glpart;
 	FTexture *mirrortexture;
-	FTexture *gllight;
-
+	
 	float mSky1Pos, mSky2Pos;
 
 	FRotator mAngles;

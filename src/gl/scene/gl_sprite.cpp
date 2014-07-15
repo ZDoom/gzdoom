@@ -112,7 +112,7 @@ CVAR(Bool, gl_nolayer, false, 0)
 //==========================================================================
 void GLSprite::Draw(int pass)
 {
-	if (pass!=GLPASS_PLAIN && pass != GLPASS_ALL && pass!=GLPASS_TRANSLUCENT) return;
+	if (pass == GLPASS_DECALS) return;
 
 
 

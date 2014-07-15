@@ -293,8 +293,18 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 
 void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	glProgramUniformMatrix4fv(hShader, projectionmatrix_index, 1, false, proj->get());
-	glProgramUniformMatrix4fv(hShader, viewmatrix_index, 1, false, view->get());
+
+	if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)
+	{
+		glProgramUniformMatrix4fv(hShader, projectionmatrix_index, 1, false, proj->get());
+		glProgramUniformMatrix4fv(hShader, viewmatrix_index, 1, false, view->get());
+	}
+	else
+	{
+		Bind();
+		glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
+		glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
+	}
 }
 
 
@@ -486,7 +496,16 @@ void FShaderManager::SetWarpSpeed(unsigned int eff, float speed)
 		FShader *sh = mTextureEffects[eff];
 
 		float warpphase = gl_frameMS * speed / 1000.f;
-		glProgramUniform1f(sh->GetHandle(), sh->timer_index, warpphase);
+		if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)
+		{
+			glProgramUniform1f(sh->GetHandle(), sh->timer_index, warpphase);
+		}
+		else
+		{
+			// not so pretty...
+			sh->Bind();
+			glUniform1f(sh->timer_index, warpphase);
+		}
 	}
 }
 

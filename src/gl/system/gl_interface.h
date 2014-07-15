@@ -9,9 +9,10 @@ enum RenderFlags
 	RFL_TEXTURE_COMPRESSION=1,
 	RFL_TEXTURE_COMPRESSION_S3TC=2,
 
-	RFL_BUFFER_STORAGE = 8,
-	RFL_SHADER_STORAGE_BUFFER = 16,
-	RFL_BASEINDEX = 32,
+	RFL_SEPARATE_SHADER_OBJECTS = 4,	// we need this extension for glProgramUniform. On hardware not supporting it we need some rather clumsy workarounds
+	RFL_BUFFER_STORAGE = 8,				// allows persistently mapped buffers, which are the only efficient way to actually use a dynamic vertex buffer. If this isn't present, a workaround with uniform arrays is used.
+	RFL_SHADER_STORAGE_BUFFER = 16,		// to be used later for a parameter buffer
+	RFL_BASEINDEX = 32,					// currently unused
 };
 
 enum TexMode

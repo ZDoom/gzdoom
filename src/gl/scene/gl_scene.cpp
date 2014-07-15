@@ -376,6 +376,18 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_drawinfo->drawlists[GLDL_MASKED].Sort();
 	gl_drawinfo->drawlists[GLDL_MASKED].Draw(pass);
 
+	// this list is empty most of the time so only waste time on it when in use.
+	if (gl_drawinfo->drawlists[GLDL_MASKEDOFS].Size() > 0)
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
+		gl_drawinfo->drawlists[GLDL_MASKEDOFS].Sort();
+		gl_drawinfo->drawlists[GLDL_MASKEDOFS].Draw(pass);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(0, 0);
+	}
+
+	gl_drawinfo->drawlists[GLDL_MODELS].Draw(pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

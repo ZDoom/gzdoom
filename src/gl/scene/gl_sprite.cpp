@@ -315,13 +315,9 @@ inline void GLSprite::PutSprite(bool translucent)
 	{
 		list = GLDL_TRANSLUCENT;
 	}
-	else if ((!gl_isBlack (Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE))
-	{
-		list = GLDL_FOGMASKED;
-	}
 	else
 	{
-		list = GLDL_MASKED;
+		list = GLDL_MODELS;
 	}
 	gl_drawinfo->drawlists[list].AddSprite(this);
 }

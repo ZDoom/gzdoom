@@ -15,8 +15,8 @@ enum DrawListType
 {
 	GLDL_PLAIN,
 	GLDL_MASKED,
-	GLDL_FOG,
-	GLDL_FOGMASKED,
+	GLDL_MASKEDOFS,
+	GLDL_MODELS,
 
 	GLDL_TRANSLUCENT,
 	GLDL_TRANSLUCENTBORDER,
@@ -94,6 +94,11 @@ public:
 	~GLDrawList()
 	{
 		Reset();
+	}
+
+	unsigned int Size()
+	{
+		return drawitems.Size();
 	}
 
 	void AddWall(GLWall * wall);

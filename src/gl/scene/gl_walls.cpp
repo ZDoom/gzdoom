@@ -148,14 +148,22 @@ void GLWall::PutWall(bool translucent)
 		bool masked;
 
 		masked = passflag[type]==1? false : (gltexture && gltexture->isMasked());
-		list = masked ? GLDL_MASKED : GLDL_PLAIN;
+
+		if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S))
+		{
+			list = GLDL_MASKEDOFS;
+		}
+		else
+		{
+			list = masked ? GLDL_MASKED : GLDL_PLAIN;
+		}
 		gl_drawinfo->drawlists[list].AddWall(this);
 
 	}
 	else switch (type)
 	{
 	case RENDERWALL_COLORLAYER:
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
+		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].AddWall(this);
 		break;
 
 	// portals don't go into the draw list.

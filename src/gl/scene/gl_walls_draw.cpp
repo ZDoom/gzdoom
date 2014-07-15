@@ -369,14 +369,10 @@ void GLWall::Draw(int pass)
 #endif
 
 
-	// This allows mid textures to be drawn on lines that might overlap a sky wall
-	if ((flags&GLWF_SKYHACK && type==RENDERWALL_M2S) || type == RENDERWALL_COLORLAYER)
+	if (type == RENDERWALL_COLORLAYER)
 	{
-		if (pass != GLPASS_DECALS)
-		{
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(-1.0f, -128.0f);
-		}
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
 	}
 
 	switch (pass)
@@ -426,12 +422,9 @@ void GLWall::Draw(int pass)
 		}
 	}
 
-	if ((flags&GLWF_SKYHACK && type==RENDERWALL_M2S) || type == RENDERWALL_COLORLAYER)
+	if (type == RENDERWALL_COLORLAYER)
 	{
-		if (pass!=GLPASS_DECALS)
-		{
-			glDisable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(0, 0);
-		}
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(0, 0);
 	}
 }

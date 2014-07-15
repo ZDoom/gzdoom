@@ -97,11 +97,9 @@ public:
 		//GLWF_CLAMPX=1, use GLT_* for these!
 		//GLWF_CLAMPY=2,
 		GLWF_SKYHACK=4,
-		GLWF_FOGGY=8,
-		GLWF_GLOW=16,		// illuminated by glowing flats
-		GLWF_NOSHADER=32,	// cannot be drawn with shaders.
-		GLWF_NOSPLITUPPER=64,
-		GLWF_NOSPLITLOWER=128,
+		GLWF_GLOW=8,		// illuminated by glowing flats
+		GLWF_NOSPLITUPPER=16,
+		GLWF_NOSPLITLOWER=32,
 	};
 
 	enum

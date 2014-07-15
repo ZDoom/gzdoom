@@ -121,6 +121,7 @@ void OpenGLFrameBuffer::InitializeState()
 
 	if (first)
 	{
+		glewExperimental=TRUE;
 		glewInit();
 	}
 
@@ -140,7 +141,6 @@ void OpenGLFrameBuffer::InitializeState()
 	glDepthFunc(GL_LESS);
 
 	glEnable(GL_DITHER);
-	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glEnable(GL_POLYGON_OFFSET_LINE);

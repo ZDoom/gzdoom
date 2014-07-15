@@ -22,7 +22,7 @@ void main()
 
 #ifdef UNIFORM_VB
 	
-	if (gl_MultiTexCoord0.x >= 100000.0)
+	if (aTexCoord.x >= 100000.0)
 	{
 		int fakeVI = int(aTexCoord.y)*5;
 		vert = aPosition + vec4(fakeVB[fakeVI], fakeVB[fakeVI+1], fakeVB[fakeVI+2], 0.0);

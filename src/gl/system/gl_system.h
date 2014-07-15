@@ -68,7 +68,6 @@
 
 //GL headers
 #include <GL/glew.h>
-//#include "gl_load.h"
 
 #if defined(__APPLE__)
 	#include <OpenGL/OpenGL.h>

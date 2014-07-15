@@ -61,24 +61,15 @@ int occlusion_type=0;
 
 static void CollectExtensions()
 {
-	const char *supported = NULL;
-	char *extensions, *extension;
+	const char *extension;
 
-	supported = (char *)glGetString(GL_EXTENSIONS);
+	int max = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &max);
 
-	if (supported)
+	for(int i = 0; i < max; i++)
 	{
-		extensions = new char[strlen(supported) + 1];
-		strcpy(extensions, supported);
-
-		extension = strtok(extensions, " ");
-		while(extension)
-		{
-			m_Extensions.Push(FString(extension));
-			extension = strtok(NULL, " ");
-		}
-
-		delete [] extensions;
+		extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
+		m_Extensions.Push(FString(extension));
 	}
 }
 
@@ -132,14 +123,16 @@ void gl_LoadExtensions()
 	{
 		I_FatalError("Unsupported OpenGL version.\nAt least GL 3.0 is required to run " GAMENAME ".\n");
 	}
-	gl.version = strtod(version, NULL);
-	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL);
+
+	// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version
+	gl.version = strtod(version, NULL) + 0.01f;
+	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL) + 0.01f;
 
 	gl.vendorstring=(char*)glGetString(GL_VENDOR);
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
-	if (gl.version >= 4.f && CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
+	if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -157,11 +150,15 @@ void gl_PrintStartupLog()
 	Printf ("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
 	Printf ("GL_VERSION: %s\n", glGetString(GL_VERSION));
 	Printf ("GL_SHADING_LANGUAGE_VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-	Printf ("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
+	Printf ("GL_EXTENSIONS:");
+	for (unsigned i = 0; i < m_Extensions.Size(); i++)
+	{
+		Printf(" %s", m_Extensions[i].GetChars());
+	}
 	int v;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v);
-	Printf("Max. texture size: %d\n", v);
+	Printf("\nMax. texture size: %d\n", v);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &v);
 	Printf ("Max. texture units: %d\n", v);
 	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);

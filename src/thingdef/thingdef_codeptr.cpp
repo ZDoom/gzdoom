@@ -1297,6 +1297,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 // A_FireProjectile
 //
 //==========================================================================
+enum FP_Flags
+{
+	FPF_AIMATANGLE = 1,
+	FPF_TRANSFERTRANSLATION = 2,
+};
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
 	ACTION_PARAM_START(7);
@@ -1305,10 +1310,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	ACTION_PARAM_BOOL(UseAmmo, 2);
 	ACTION_PARAM_INT(SpawnOfs_XY, 3);
 	ACTION_PARAM_FIXED(SpawnHeight, 4);
-	ACTION_PARAM_BOOL(AimAtAngle, 5);
+	ACTION_PARAM_INT(Flags, 5);
 	ACTION_PARAM_ANGLE(pitch, 6);
 
 	if (!self->player) return;
+
 
 	player_t *player=self->player;
 	AWeapon * weapon=player->ReadyWeapon;
@@ -1327,18 +1333,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		fixed_t z = SpawnHeight;
 		fixed_t shootangle = self->angle;
 
-		if (AimAtAngle) shootangle+=Angle;
+		if (Flags & FPF_AIMATANGLE) shootangle += Angle;
 
 		// Temporarily adjusts the pitch
 		fixed_t SavedPlayerPitch = self->pitch;
 		self->pitch -= pitch;
 		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &linetarget);
 		self->pitch = SavedPlayerPitch;
+
 		// automatic handling of seeker missiles
 		if (misl)
 		{
+			if (Flags & FPF_TRANSFERTRANSLATION) misl->Translation = self->Translation;
 			if (linetarget && misl->flags2&MF2_SEEKERMISSILE) misl->tracer=linetarget;
-			if (!AimAtAngle)
+			if (!(Flags & FPF_AIMATANGLE))
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 

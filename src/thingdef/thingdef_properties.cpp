@@ -167,7 +167,7 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 	{
 		return fd->flagbit & *(DWORD *)(((char*)owner) + fd->structoffset);
 	}
-#ifdef __BID_ENDIAN__
+#ifdef __BIG_ENDIAN__
 	else if (fd->fieldsize == 2)
 	{
 		return fd->flagbit & *(WORD *)(((char*)owner) + fd->structoffset);

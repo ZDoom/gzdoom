@@ -16,14 +16,14 @@ else( NOT APPLE )
 	# At the moment asm code doesn't work with OS X, so disable by default
 	option( NO_ASM "Disable assembly code" ON )
 endif( NOT APPLE )
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
 	# instead of the separate strip utility.
 	if( APPLE )
 		set( NO_STRIP ON )
 	endif( APPLE )
-endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
 
@@ -463,7 +463,7 @@ endif( SSE_MATTERS )
 
 # Set up flags for GCC
 
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	if( PROFILE )
 		set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
 		set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg" )
@@ -492,7 +492,7 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STRE
 		set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s" )
 		set (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -s" )
 	endif( NOT NO_STRIP )
-endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 # Check for functions that may or may not exist.
 
@@ -622,15 +622,15 @@ if( WIN32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} )
 	
-	if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		# CMake is not set up to compile and link rc files with GCC. :(
 		add_custom_command( OUTPUT zdoom-rc.o
 			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
 			DEPENDS win32/zdoom.rc )
 		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zdoom-rc.o )
-	else( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+	else( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
-	endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR sdl )
@@ -643,12 +643,13 @@ else( WIN32 )
 	endif( APPLE )
 endif( WIN32 )
 
+if( NOT ASM_SOURCES )
+	set( ASM_SOURCES "" )
+endif( NOT ASM_SOURCES )
+
 if( NO_ASM )
 	add_definitions( -DNOASM )
 else( NO_ASM )
-	if( NOT ASM_SOURCES )
-		set( ASM_SOURCES "" )
-	endif( NOT ASM_SOURCES )
 	if( X64 )
 		ADD_ASM_FILE( asm_x86_64 tmap3 )
 	else( X64 )
@@ -1261,16 +1262,16 @@ if( NOT WIN32 )
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 endif( NOT WIN32 )
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
+if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
-endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+endif( CMAKE_COMPILER_IS_GNUCXX )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for this file.
 	if( SSE_MATTERS )
 		set_source_files_properties( x86.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 	endif( SSE_MATTERS )
-endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
 source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")

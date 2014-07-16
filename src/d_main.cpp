@@ -1987,8 +1987,6 @@ static void D_DoomInit()
 	Args->CollectFiles("-playdemo", ".lmp");
 	Args->CollectFiles("-file", NULL);	// anything left goes after -file
 
-	atterm (C_DeinitConsole);
-
 	gamestate = GS_STARTUP;
 
 	SetLanguageIDs ();

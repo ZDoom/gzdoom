@@ -2163,7 +2163,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		{
 			DWORD which = ReadLong (stream);
 
-			if (gamestate == GS_LEVEL && !paused)
+			if (gamestate == GS_LEVEL && !paused
+				&& players[player].playerstate != PST_DEAD)
 			{
 				AInventory *item = players[player].mo->Inventory;
 				while (item != NULL && item->InventoryID != which)

@@ -18,7 +18,7 @@ actor SuperBootspork : Chainsaw 2005
 actor MiniZorcher : Pistol
 {
 	game Chex
-	obituary "$OP_MPZORCH"
+	obituary "$OB_MPZORCH"
 	inventory.pickupmessage "$GOTMINIZORCHER"
 	Tag "$TAG_MINIZORCHER"
 	states
@@ -31,7 +31,7 @@ actor MiniZorcher : Pistol
 actor LargeZorcher : Shotgun 2001
 {
 	game Chex
-	obituary "$OP_MPZORCH"
+	obituary "$OB_MPZORCH"
 	inventory.pickupmessage "$GOTLARGEZORCHER"
 	Tag "$TAG_LARGEZORCHER"
 }

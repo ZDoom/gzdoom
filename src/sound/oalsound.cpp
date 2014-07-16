@@ -1840,6 +1840,7 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
 #undef SETPARAM
 #define SETPARAM(e,t,v) alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
             SETPARAM(*envReverb, DIFFUSION, props.EnvDiffusion);
+            SETPARAM(*envReverb, DENSITY, powf(props.EnvSize, 3.0f) * 0.0625f);
             SETPARAM(*envReverb, GAIN, mB2Gain(props.Room));
             SETPARAM(*envReverb, GAINHF, mB2Gain(props.RoomHF));
             SETPARAM(*envReverb, GAINLF, mB2Gain(props.RoomLF));
@@ -1868,6 +1869,7 @@ void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
         {
 #define SETPARAM(e,t,v) alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
             SETPARAM(*envReverb, DIFFUSION, props.EnvDiffusion);
+            SETPARAM(*envReverb, DENSITY, powf(props.EnvSize, 3.0f) * 0.0625f);
             SETPARAM(*envReverb, GAIN, mB2Gain(props.Room));
             SETPARAM(*envReverb, GAINHF, mB2Gain(props.RoomHF));
             SETPARAM(*envReverb, DECAY_TIME, props.DecayTime);

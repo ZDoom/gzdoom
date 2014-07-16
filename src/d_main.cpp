@@ -1598,7 +1598,7 @@ void D_AddConfigWads (TArray<FString> &wadfiles, const char *section)
 			{
 				// D_AddWildFile resets GameConfig's position, so remember it
 				GameConfig->GetPosition (pos);
-				D_AddWildFile (wadfiles, value);
+				D_AddWildFile (wadfiles, ExpandEnvVars(value));
 				// Reset GameConfig's position to get next wad
 				GameConfig->SetPosition (pos);
 			}

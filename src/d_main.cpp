@@ -1319,7 +1319,7 @@ void D_DoAdvanceDemo (void)
 		break;
 	}
 
-	if (pagename)
+	if (pagename.IsNotEmpty())
 	{
 		if (Page != NULL)
 		{
@@ -2235,7 +2235,7 @@ void D_DoomMain (void)
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
 	FString logfile = Args->TakeValue("+logfile");
-	if (logfile != NULL)
+	if (logfile.IsNotEmpty())
 	{
 		execLogfile(logfile);
 	}
@@ -2273,7 +2273,7 @@ void D_DoomMain (void)
 
 		// The IWAD selection dialogue does not show in fullscreen so if the
 		// restart is initiated without a defined IWAD assume for now that it's not going to change.
-		if (iwad.Len() == 0) iwad = lastIWAD;
+		if (iwad.IsEmpty()) iwad = lastIWAD;
 
 		FIWadManager *iwad_man = new FIWadManager;
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);

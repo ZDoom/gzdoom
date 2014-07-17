@@ -781,6 +781,8 @@ void I_Quit()
 	{
 		G_CheckDemoStatus();
 	}
+
+	C_DeinitConsole();
 }
 
 

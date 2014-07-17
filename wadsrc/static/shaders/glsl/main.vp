@@ -65,4 +65,6 @@ void main()
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;
+	gl_ClipDistance[0] = worldcoord.y - uClipHeightBottom;
+	gl_ClipDistance[1] = uClipHeightTop - worldcoord.y;
 }

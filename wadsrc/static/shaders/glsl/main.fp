@@ -220,16 +220,10 @@ vec4 applyFog(vec4 frag, float fogfactor)
 
 void main()
 {
-#ifndef NO_DISCARD
-	// clip plane emulation for plane reflections. These are always perfectly horizontal so a simple check of the pixelpos's y coordinate is sufficient.
-	if (pixelpos.y > uClipHeightTop) discard;
-	if (pixelpos.y < uClipHeightBottom) discard;
-#endif
-
 	vec4 frag = ProcessTexel();
 	
-#ifndef NO_DISCARD
-	// alpha testing
+#ifdef CORE_PROFILE
+	// alpha testing - only for the core profile, in compatibility mode we use the alpha test.
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
 

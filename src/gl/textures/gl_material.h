@@ -63,7 +63,6 @@ private:
 
 	bool bHasColorkey;		// only for hires
 	bool bExpand;
-	float AlphaThreshold;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, bool alphatexture);
 

@@ -136,24 +136,29 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 //
 //==========================================================================
 
-CVAR(Bool, gl_testbuffer, false, 0)
+CUSTOM_CVAR(Int, gl_rendermethod, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+}
 
 void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count)
 {
-#if 0
-	if (!gl_testbuffer)	// todo: remove the immediate mode calls once the uniform array method has been tested.
+	switch (gl_rendermethod)
 	{
-		glBegin(primtype);
-		for (unsigned int i = 0; i < count; i++)
+	case 0:
+#ifndef CORE_PROFILE
+		if (!(gl.flags & RFL_COREPROFILE))
 		{
-			glTexCoord2fv(&map[offset + i].u);
-			glVertex3fv(&map[offset + i].x);
+			glBegin(primtype);
+			for (unsigned int i = 0; i < count; i++)
+			{
+				glVertexAttrib2fv(VATTR_TEXCOORD, &map[offset + i].u);
+				glVertexAttrib3fv(VATTR_VERTEX, &map[offset + i].x);
+			}
+			glEnd();
+			break;
 		}
-		glEnd();
-	}
-	else
 #endif
-	{
+	case 1:
 		if (count > 20)
 		{
 			int start = offset;
@@ -186,6 +191,14 @@ void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offs
 			glUniform1fv(GLRenderer->mShaderManager->GetActiveShader()->fakevb_index, count * 5, &map[offset].x);
 			glDrawArrays(primtype, 0, count);
 		}
+		break;
+
+	case 2:
+		// glBufferSubData
+
+	case 3:
+		// glMapBufferRange
+		break;
 	}
 }
 

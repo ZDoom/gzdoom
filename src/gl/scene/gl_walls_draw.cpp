@@ -186,14 +186,7 @@ void GLWall::RenderWall(int textured, unsigned int *store)
 
 	if (!(textured & RWF_NORENDER))
 	{
-		// disable the clip plane if it isn't needed (which can be determined by a simple check.)
-		float ct = gl_RenderState.GetClipHeightTop();
-		float cb = gl_RenderState.GetClipHeightBottom();
-		if (ztop[0] <= ct && ztop[1] <= ct) gl_RenderState.SetClipHeightTop(65536.f);
-		if (zbottom[0] >= cb && zbottom[1] >= cb) gl_RenderState.SetClipHeightBottom(-65536.f);
 		gl_RenderState.Apply();
-		gl_RenderState.SetClipHeightTop(ct);
-		gl_RenderState.SetClipHeightBottom(cb);
 	}
 
 	// the rest of the code is identical for textured rendering and lights

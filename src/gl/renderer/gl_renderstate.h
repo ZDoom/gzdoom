@@ -74,8 +74,10 @@ class FRenderState
 	int mEffectState;
 	int mColormapState;
 
-	int glSrcBlend, glDstBlend;
 	float glAlphaThreshold;
+	bool glClipOn;
+
+	int glSrcBlend, glDstBlend;
 	bool glAlphaTest;
 	int glBlendEquation;
 

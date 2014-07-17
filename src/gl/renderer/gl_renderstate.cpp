@@ -149,7 +149,29 @@ bool FRenderState::ApplyShader()
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeightTop.Set(mClipHeightTop);
 	activeShader->muClipHeightBottom.Set(mClipHeightBottom);
-	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
+
+#ifndef CORE_PROFILE
+	if (!(gl.flags & RFL_COREPROFILE))
+	{
+		if (mAlphaThreshold != glAlphaThreshold)
+		{
+			glAlphaThreshold = mAlphaThreshold;
+			if (mAlphaThreshold < 0.f)
+			{
+				glDisable(GL_ALPHA_TEST);
+			}
+			else
+			{
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, mAlphaThreshold);
+			}
+		}
+	}
+	else
+#endif
+	{
+		activeShader->muAlphaThreshold.Set(mAlphaThreshold);
+	}
 
 	if (mGlowEnabled)
 	{

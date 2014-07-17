@@ -13,6 +13,7 @@ enum RenderFlags
 	RFL_BUFFER_STORAGE = 8,				// allows persistently mapped buffers, which are the only efficient way to actually use a dynamic vertex buffer. If this isn't present, a workaround with uniform arrays is used.
 	RFL_SHADER_STORAGE_BUFFER = 16,		// to be used later for a parameter buffer
 	RFL_BASEINDEX = 32,					// currently unused
+	RFL_COREPROFILE = 64,
 };
 
 enum TexMode

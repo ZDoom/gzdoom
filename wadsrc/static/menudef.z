@@ -105,12 +105,6 @@ OptionValue "HqResizeModes"
    6, "hq4x"
 }
 
-OptionValue "HqResizeTargets"
-{
-   0, "Everything"
-   1, "Sprites/fonts"
-}
- 
 OptionValue "FogMode"
 {
 	0, "Off"
@@ -128,6 +122,14 @@ OptionValue "FuzzStyle"
 	6, "Noise"
 	7, "Smooth Noise"
 	//5, "Jagged fuzz" I can't see any difference between this and 4 so it's disabled for now.
+}
+
+OptionValue "RenderMethods"
+{
+	0, "Immediate mode"
+	1, "Uniform array"
+	2, "Buffer upload"
+	3, "Mapped buffer"
 }
 
 OptionMenu "GLTextureGLOptions"
@@ -158,7 +160,6 @@ OptionMenu "GLLightOptions"
 	Option "Force additive lighting",	gl_lights_additive,				"YesNo"
 	Slider "Light intensity",			gl_lights_intensity, 			0.0, 1.0, 0.1
 	Slider "Light size",				gl_lights_size,					0.0, 2.0, 0.1
-	Option "Use shaders for lights",	gl_dynlight_shader,				"YesNo"
 }
 
 OptionMenu "GLPrefOptions"
@@ -179,7 +180,7 @@ OptionMenu "GLPrefOptions"
 	Option "Particle style",			gl_particles_style,				"Particles"
 	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
 	Option "Rendering quality",			gl_render_precise,				"Precision"
-	Option "Use vertex buffer",			gl_usevbo,						"OnOff"
+	Option "Render method",				gl_rendermethod,				"RenderMethods", 	"gl_persistent_avail"
 }
 
 OptionMenu "OpenGLOptions"

@@ -52,6 +52,7 @@ RenderContext gl;
 
 int occlusion_type=0;
 
+CVAR(Bool, gl_persistent_avail, false, CVAR_NOSET);
 
 //==========================================================================
 //
@@ -132,7 +133,11 @@ void gl_LoadExtensions()
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
-	if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
+	if (CheckExtension("GL_ARB_buffer_storage") && !Args->CheckParm("-nopersistentbuffers"))
+	{
+		gl.flags |= RFL_BUFFER_STORAGE;	// the cmdline option is for testing the fallback implementation on newer hardware.
+		gl_persistent_avail = true;
+	}
 	if (CheckExtension("GL_ARB_separate_shader_objects")) gl.flags |= RFL_SEPARATE_SHADER_OBJECTS;
 	if (!CheckExtension("GL_ARB_compatibility")) gl.flags |= RFL_COREPROFILE;
 	

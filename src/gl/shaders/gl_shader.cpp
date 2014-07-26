@@ -210,8 +210,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muClipHeightTop.Init(hShader, "uClipHeightTop");
 	muClipHeightBottom.Init(hShader, "uClipHeightBottom");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
+	muTimer.Init(hShader, "timer");
 
-	timer_index = glGetUniformLocation(hShader, "timer");
 	lights_index = glGetUniformLocation(hShader, "lights");
 	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
 	projectionmatrix_index = glGetUniformLocation(hShader, "ProjectionMatrix");
@@ -480,34 +480,6 @@ void FShaderManager::SetActiveShader(FShader *sh)
 	}
 }
 
-
-//==========================================================================
-//
-// To avoid maintenance this will be set when a warped texture is bound
-// because at that point the draw buffer needs to be flushed anyway.
-//
-//==========================================================================
-
-void FShaderManager::SetWarpSpeed(unsigned int eff, float speed)
-{
-	// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
-	if (eff < mTextureEffects.Size())
-	{
-		FShader *sh = mTextureEffects[eff];
-
-		float warpphase = gl_frameMS * speed / 1000.f;
-		if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)
-		{
-			glProgramUniform1f(sh->GetHandle(), sh->timer_index, warpphase);
-		}
-		else
-		{
-			// not so pretty...
-			sh->Bind();
-			glUniform1f(sh->timer_index, warpphase);
-		}
-	}
-}
 
 //==========================================================================
 //

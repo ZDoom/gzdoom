@@ -61,6 +61,7 @@ class FRenderState
 	float mClipHeightTop, mClipHeightBottom;
 	bool mModelMatrixEnabled;
 	bool mTextureMatrixEnabled;
+	float mShaderTimer;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
@@ -97,7 +98,12 @@ public:
 
 	void Reset();
 
-	void SetupShader(int &shaderindex, float warptime);
+	void SetShader(int shaderindex, float warptime)
+	{
+		mEffectState = shaderindex;
+		mShaderTimer = warptime;
+	}
+
 	void Apply();
 	void ApplyMatrices();
 

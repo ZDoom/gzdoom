@@ -737,7 +737,7 @@ void FMaterial::Bind(int clampmode, int translation, int overrideshader)
 	int maxbound = 0;
 	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT;
 
-	gl_RenderState.SetupShader(shaderindex, tex->gl_info.shaderspeed);
+	gl_RenderState.SetShader(shaderindex, tex->gl_info.shaderspeed);
 
 	if (tex->bHasCanvas || tex->bWarped) clampmode = 0;
 	else if (clampmode != -1) clampmode &= 3;
@@ -784,7 +784,7 @@ void FMaterial::BindPatch(int translation, int overrideshader, bool alphatexture
 	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 
-	gl_RenderState.SetupShader(shaderindex, tex->gl_info.shaderspeed);
+	gl_RenderState.SetShader(shaderindex, tex->gl_info.shaderspeed);
 
 	const FHardwareTexture *glpatch = mBaseLayer->BindPatch(0, translation, alphatexture);
 	// The only multitexture effect usable on sprites is the brightmap.

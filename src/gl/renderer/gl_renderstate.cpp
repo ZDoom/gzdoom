@@ -88,20 +88,6 @@ void FRenderState::Reset()
 	mClipHeightBottom = -65536.f;
 }
 
-
-//==========================================================================
-//
-// Set texture shader info
-//
-//==========================================================================
-
-void FRenderState::SetupShader(int &shaderindex, float warptime)
-{
-	mEffectState = shaderindex;
-	if (shaderindex > 0) GLRenderer->mShaderManager->SetWarpSpeed(shaderindex, warptime);
-}
-
-
 //==========================================================================
 //
 // Apply shader settings
@@ -149,6 +135,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeightTop.Set(mClipHeightTop);
 	activeShader->muClipHeightBottom.Set(mClipHeightBottom);
+	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
 
 #ifndef CORE_PROFILE
 	if (!(gl.flags & RFL_COREPROFILE))

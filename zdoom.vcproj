@@ -523,6 +523,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\c_consolebuffer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\c_cvars.cpp"
 				>
 			</File>

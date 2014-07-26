@@ -1320,11 +1320,11 @@ bool FLevelLocals::IsCrouchingAllowed() const
 
 bool FLevelLocals::IsFreelookAllowed() const
 {
-	if (level.flags & LEVEL_FREELOOK_NO)
+	if (dmflags & DF_NO_FREELOOK)
 		return false;
-	if (level.flags & LEVEL_FREELOOK_YES)
+	if (dmflags & DF_YES_FREELOOK)
 		return true;
-	return !(dmflags & DF_NO_FREELOOK);
+	return !(level.flags & LEVEL_FREELOOK_NO);
 }
 
 //==========================================================================

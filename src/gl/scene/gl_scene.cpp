@@ -765,6 +765,8 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 
 void FGLRenderer::EndDrawScene(sector_t * viewsector)
 {
+	gl_RenderState.EnableFog(false);
+
 	// [BB] HUD models need to be rendered here. Make sure that
 	// DrawPlayerSprites is only called once. Either to draw
 	// HUD models or to draw the weapon sprites.
@@ -779,7 +781,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_POLYGON_SMOOTH);
 
-	gl_RenderState.EnableFog(false);
 	framebuffer->Begin2D(false);
 
 	ResetViewport();

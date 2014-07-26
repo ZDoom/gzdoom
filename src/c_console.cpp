@@ -641,12 +641,14 @@ void C_NewModeAdjust ()
 	C_AdjustBottom ();
 }
 
+int consoletic = 0;
 void C_Ticker ()
 {
 	static int lasttic = 0;
+	consoletic++;
 
 	if (lasttic == 0)
-		lasttic = gametic - 1;
+		lasttic = consoletic - 1;
 
 	if (con_buffersize > 0)
 	{
@@ -657,7 +659,7 @@ void C_Ticker ()
 	{
 		if (ConsoleState == c_falling)
 		{
-			ConBottom += (gametic - lasttic) * (SCREENHEIGHT*2/25);
+			ConBottom += (consoletic - lasttic) * (SCREENHEIGHT * 2 / 25);
 			if (ConBottom >= SCREENHEIGHT / 2)
 			{
 				ConBottom = SCREENHEIGHT / 2;
@@ -666,7 +668,7 @@ void C_Ticker ()
 		}
 		else if (ConsoleState == c_rising)
 		{
-			ConBottom -= (gametic - lasttic) * (SCREENHEIGHT*2/25);
+			ConBottom -= (consoletic - lasttic) * (SCREENHEIGHT * 2 / 25);
 			if (ConBottom <= 0)
 			{
 				ConsoleState = c_up;
@@ -681,7 +683,7 @@ void C_Ticker ()
 		CursorTicker = C_BLINKRATE;
 	}
 
-	lasttic = gametic;
+	lasttic = consoletic;
 
 	if (NotifyTopGoal > NotifyTop)
 	{

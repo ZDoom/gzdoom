@@ -252,7 +252,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 
 	if (buttonSuccess)
 	{
-		if (activationType == SPAC_Use || activationType == SPAC_Impact)
+		if (activationType == SPAC_Use || activationType == SPAC_Impact || activationType == SPAC_Push)
 		{
 			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		}

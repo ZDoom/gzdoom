@@ -254,7 +254,7 @@ enum
 	DF_NO_JUMP				= 1 << 16,	// Don't allow jumping
 	DF_YES_JUMP				= 2 << 16,
 	DF_NO_FREELOOK			= 1 << 18,	// Don't allow freelook
-	DF_RESPAWN_SUPER		= 1 << 19,	// Respawn invulnerability and invisibility
+	DF_YES_FREELOOK			= 2 << 18,
 	DF_NO_FOV				= 1 << 20,	// Only let the arbitrator set FOV (for all players)
 	DF_NO_COOP_WEAPON_SPAWN	= 1 << 21,	// Don't spawn multiplayer weapons in coop games
 	DF_NO_CROUCH			= 1 << 22,	// Don't allow crouching
@@ -298,6 +298,7 @@ enum
 	DF2_DONTCHECKAMMO		= 1 << 24,	// Don't Check ammo when switching weapons.
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
+	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
 };
 
 // [RH] Compatibility flags.

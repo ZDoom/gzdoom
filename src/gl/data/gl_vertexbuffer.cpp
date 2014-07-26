@@ -96,21 +96,21 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mIndex = mCurIndex = 0;
 	}
 	else
 	{
 		vbo_shadowdata.Reserve(BUFFER_SIZE);
 		map = &vbo_shadowdata[0];
 
-		FFlatVertex fill[20];
 		for (int i = 0; i < 20; i++)
 		{
-			fill[i].Set(0, 0, 0, 100001.f, i);
+			map[i].Set(0, 0, 0, 100001.f, i);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-		glBufferData(GL_ARRAY_BUFFER, 20 * sizeof(FFlatVertex), fill, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, BUFFER_SIZE * sizeof(FFlatVertex), map, GL_STREAM_DRAW);
+		mIndex = mCurIndex = 20;
 	}
-	mIndex = mCurIndex = 0;
 
 	glBindVertexArray(vao_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -136,15 +136,23 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 //
 //==========================================================================
 
-CUSTOM_CVAR(Int, gl_rendermethod, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, gl_rendermethod, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
+	int newself = self;
+	if (newself < 0) newself = 0;
+	if (newself == 0 && (gl.flags & RFL_COREPROFILE)) newself = 1;
+	if (newself > 3) newself = 3;
 }
 
 void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count)
 {
+	// this will only get called if we can't acquire a persistently mapped buffer.
+	// Any of the provided methods are rather shitty, with immediate mode being the most reliable across different hardware.
+	// Still, allow this to be set per CVAR, just in case. Fortunately for newer hardware all this nonsense is not needed anymore.
 	switch (gl_rendermethod)
 	{
 	case 0:
+		// trusty old immediate mode
 #ifndef CORE_PROFILE
 		if (!(gl.flags & RFL_COREPROFILE))
 		{
@@ -159,6 +167,7 @@ void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offs
 		}
 #endif
 	case 1:
+		// uniform array
 		if (count > 20)
 		{
 			int start = offset;
@@ -195,9 +204,21 @@ void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offs
 
 	case 2:
 		// glBufferSubData
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(FFlatVertex), count * sizeof(FFlatVertex), &vbo_shadowdata[offset]);
+		glDrawArrays(primtype, offset, count);
+		break;
 
 	case 3:
 		// glMapBufferRange
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		void *p = glMapBufferRange(GL_ARRAY_BUFFER, offset * sizeof(FFlatVertex), count * sizeof(FFlatVertex), GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
+		if (p != NULL)
+		{
+			memcpy(p, &vbo_shadowdata[offset], count * sizeof(FFlatVertex));
+			glUnmapBuffer(GL_ARRAY_BUFFER);
+			glDrawArrays(primtype, offset, count);
+		}
 		break;
 	}
 }

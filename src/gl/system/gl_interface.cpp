@@ -131,7 +131,7 @@ void gl_LoadExtensions()
 
 	gl.vendorstring = (char*)glGetString(GL_VENDOR);
 
-	if (!strstr(gl.vendorstring, "NVIDIA Corporation")); gl.flags |= RFL_NOBUFFER;
+	if (!strstr(gl.vendorstring, "NVIDIA Corporation")) gl.flags |= RFL_NOBUFFER;
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
 	if (CheckExtension("GL_ARB_buffer_storage") && !Args->CheckParm("-nopersistentbuffers"))

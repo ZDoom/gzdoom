@@ -74,11 +74,9 @@ void FRenderState::Reset()
 	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
-	glSrcBlend = glDstBlend = -1;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
 	mObjectColor = 0xffffffff;
-	glBlendEquation = -1;
 	m2D = true;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
 	mColormapState = CM_DEFAULT;
@@ -86,6 +84,10 @@ void FRenderState::Reset()
 	mSpecialEffect = EFF_NONE;
 	mClipHeightTop = 65536.f;
 	mClipHeightBottom = -65536.f;
+
+	stSrcBlend = stDstBlend = -1;
+	stBlendEquation = -1;
+	stAlphaThreshold = -1.f;
 }
 
 //==========================================================================
@@ -140,9 +142,9 @@ bool FRenderState::ApplyShader()
 #ifndef CORE_PROFILE
 	if (!(gl.flags & RFL_COREPROFILE))
 	{
-		if (mAlphaThreshold != glAlphaThreshold)
+		if (mAlphaThreshold != stAlphaThreshold)
 		{
-			glAlphaThreshold = mAlphaThreshold;
+			stAlphaThreshold = mAlphaThreshold;
 			if (mAlphaThreshold < 0.f)
 			{
 				glDisable(GL_ALPHA_TEST);
@@ -150,7 +152,7 @@ bool FRenderState::ApplyShader()
 			else
 			{
 				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, mAlphaThreshold);
+				glAlphaFunc(GL_GREATER, mAlphaThreshold * mColor.vec[3]);
 			}
 		}
 	}
@@ -271,16 +273,16 @@ void FRenderState::Apply()
 {
 	if (!gl_direct_state_change)
 	{
-		if (mSrcBlend != glSrcBlend || mDstBlend != glDstBlend)
+		if (mSrcBlend != stSrcBlend || mDstBlend != stDstBlend)
 		{
-			glSrcBlend = mSrcBlend;
-			glDstBlend = mDstBlend;
+			stSrcBlend = mSrcBlend;
+			stDstBlend = mDstBlend;
 			glBlendFunc(mSrcBlend, mDstBlend);
 		}
-		if (mBlendEquation != glBlendEquation)
+		if (mBlendEquation != stBlendEquation)
 		{
-			glBlendEquation = mBlendEquation;
-			::glBlendEquation(mBlendEquation);
+			stBlendEquation = mBlendEquation;
+			glBlendEquation(mBlendEquation);
 		}
 	}
 

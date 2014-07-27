@@ -40,7 +40,7 @@ VSMatrix::setIdentityMatrix( FLOATTYPE *mat, int size) {
 
 
 
-// glLoadIdentity implementation
+// gl LoadIdentity implementation
 void 
 VSMatrix::loadIdentity()
 {
@@ -54,7 +54,7 @@ VSMatrix::loadIdentity()
 }
 
 
-// glMultMatrix implementation
+// gl MultMatrix implementation
 void 
 VSMatrix::multMatrix(const FLOATTYPE *aMatrix)
 {
@@ -76,7 +76,7 @@ VSMatrix::multMatrix(const FLOATTYPE *aMatrix)
 }
 
 #ifdef USE_DOUBLE
-// glMultMatrix implementation
+// gl MultMatrix implementation
 void
 VSMatrix::multMatrix(const float *aMatrix)
 {
@@ -100,7 +100,7 @@ VSMatrix::multMatrix(const float *aMatrix)
 
 
 
-// glLoadMatrix implementation
+// gl LoadMatrix implementation
 void 
 VSMatrix::loadMatrix(const FLOATTYPE *aMatrix)
 {
@@ -108,7 +108,7 @@ VSMatrix::loadMatrix(const FLOATTYPE *aMatrix)
 }
 
 #ifdef USE_DOUBLE
-// glLoadMatrix implementation
+// gl LoadMatrix implementation
 void 
 VSMatrix::loadMatrix(const float *aMatrix)
 {
@@ -265,7 +265,7 @@ VSMatrix::perspective(FLOATTYPE fov, FLOATTYPE ratio, FLOATTYPE nearp, FLOATTYPE
 }
 
 
-// glOrtho implementation
+// gl Ortho implementation
 void 
 VSMatrix::ortho(FLOATTYPE left, FLOATTYPE right, 
 			FLOATTYPE bottom, FLOATTYPE top, 
@@ -282,7 +282,7 @@ VSMatrix::ortho(FLOATTYPE left, FLOATTYPE right,
 }
 
 
-// glFrustum implementation
+// gl Frustum implementation
 void 
 VSMatrix::frustum(FLOATTYPE left, FLOATTYPE right, 
 			FLOATTYPE bottom, FLOATTYPE top, 

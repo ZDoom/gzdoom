@@ -4724,7 +4724,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// [RH] don't spawn extra weapons in coop if so desired
 	if (multiplayer && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))
 	{
-		if (i->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+		if (GetDefaultByType(i)->flags7 & MF7_WEAPONSPAWN)
 		{
 			if ((mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
 				return NULL;

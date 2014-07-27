@@ -793,7 +793,7 @@ void gl_RenderModel(GLSprite * spr)
 		{
 			if((x * cos(angle * M_PI / 180) + y * sin(angle * M_PI / 180)) / sqrt(x * x + y * y) < 0) pitch *= -1;
 		}
-		else pitch = abs(pitch);
+		else pitch = fabs(pitch);
 	}
 
 	if( smf->flags & MDL_ROTATING )

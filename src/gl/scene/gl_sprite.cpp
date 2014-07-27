@@ -663,9 +663,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 				if (smarterclip)
 				{
 					// Reduce slightly clipping adjustment of corpses
-					if (thing->flags & MF_CORPSE || spriteheight > abs(diffb))
+					if (thing->flags & MF_CORPSE || spriteheight > fabs(diffb))
 					{
-						float ratio = clamp<float>((abs(diffb) * (float)gl_sclipfactor/(spriteheight+1)), 0.5, 1.0);
+						float ratio = clamp<float>((fabs(diffb) * (float)gl_sclipfactor/(spriteheight+1)), 0.5, 1.0);
 						diffb*=ratio;
 					}
 					if (!diffb)
@@ -679,9 +679,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 								difft=0;
 							}
 						}
-						if (spriteheight > abs(difft))
+						if (spriteheight > fabs(difft))
 						{
-							float ratio = clamp<float>((abs(difft) * (float)gl_sclipfactor/(spriteheight+1)), 0.5, 1.0);
+							float ratio = clamp<float>((fabs(difft) * (float)gl_sclipfactor/(spriteheight+1)), 0.5, 1.0);
 							difft*=ratio;
 						}
 						z2-=difft;

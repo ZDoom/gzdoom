@@ -1157,7 +1157,7 @@ OptionValue  FallingDM
 	3, "Strife"
 }
 
-OptionValue  JumpCrouch
+OptionValue  JumpCrouchFreeLook
 {
 	0, "Default"
 	1, "Off"
@@ -1189,9 +1189,9 @@ OptionMenu GameplayOptions
 	Option "Degeneration",			"sv_degeneration", "YesNo"
 	Option "Allow Autoaim",			"sv_noautoaim", "NoYes"
 	Option "Allow Suicide",			"sv_disallowsuicide", "NoYes"
-	Option "Allow jump",			"sv_jump", "JumpCrouch"
-	Option "Allow crouch",			"sv_crouch", "JumpCrouch"
-	Option "Allow freelook",		"sv_nofreelook", "NoYes"
+	Option "Allow jump",			"sv_jump", "JumpCrouchFreeLook"
+	Option "Allow crouch",			"sv_crouch", "JumpCrouchFreeLook"
+	Option "Allow freelook",		"sv_freelook", "JumpCrouchFreeLook"
 	Option "Allow FOV",				"sv_nofov", "NoYes"
 	Option "Allow BFG aiming",		"sv_nobfgaim", "NoYes"
 	Option "Allow automap",			"sv_noautomap", "NoYes"

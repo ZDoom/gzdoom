@@ -18,7 +18,6 @@ CVAR(Bool, gl_portals, true, 0)
 CVAR(Bool, gl_noquery, false, 0)
 CVAR(Bool,gl_mirrors,true,0)	// This is for debugging only!
 CVAR(Bool,gl_mirror_envmap, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-CVAR(Bool, gl_render_segs, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_seamless, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int, r_mirror_recursions,4,CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
@@ -34,7 +33,6 @@ CUSTOM_CVAR(Bool, gl_plane_reflection, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
 CUSTOM_CVAR(Bool, gl_render_precise, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	//gl_render_segs=self;
 	gl_seamless=self;
 }
 

@@ -625,12 +625,38 @@ void gl_PreprocessLevel()
 	PrepareSegs();
 	PrepareSectorData();
 	InitVertexData();
+	int *checkmap = new int[numvertexes];
+	memset(checkmap, -1, sizeof(int)*numvertexes);
 	for(i=0;i<numsectors;i++) 
 	{
-		sectors[i].dirty = true;
 		sectors[i].sectornum = i;
 		PrepareTransparentDoors(&sectors[i]);
+
+		// This ignores vertices only used for seg splitting because those aren't needed here
+		for(int j = 0; j < sectors[i].linecount; j++)
+		{
+			line_t *l = sectors[i].lines[j];
+			if (l->sidedef[0]->Flags & WALLF_POLYOBJ) continue;	// don't bother with polyobjects
+
+			int vtnum1 = int(l->v1 - vertexes);
+			int vtnum2 = int(l->v2 - vertexes);
+
+			if (checkmap[numsectors + vtnum1] < i)
+			{
+				checkmap[numsectors + vtnum1] = i;
+				sectors[i].e->vertices.Push(&vertexes[vtnum1]);
+				vertexes[vtnum1].dirty = true;
+			}
+
+			if (checkmap[numsectors + vtnum2] < i)
+			{
+				checkmap[numsectors + vtnum2] = i;
+				sectors[i].e->vertices.Push(&vertexes[vtnum2]);
+				vertexes[vtnum2].dirty = true;
+			}
+		}
 	}
+	delete[] checkmap;
 
 	gl_InitPortals();
 

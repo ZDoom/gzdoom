@@ -116,11 +116,11 @@ class FRenderState
 	int mColormapState;
 	float mWarpTime;
 
-	int glSrcBlend, glDstBlend;
-	int glAlphaFunc;
-	float glAlphaThreshold;
-	bool glAlphaTest;
-	int glBlendEquation;
+	int stAlphaFunc;
+	float stAlphaThreshold;
+	int stSrcBlend, stDstBlend;
+	bool stAlphaTest;
+	int stBlendEquation;
 
 	bool ffTextureEnabled;
 	bool ffFogEnabled;
@@ -301,7 +301,7 @@ public:
 		}
 		else
 		{
-			::glBlendEquation(eq);
+			glBlendEquation(eq);
 		}
 	}
 

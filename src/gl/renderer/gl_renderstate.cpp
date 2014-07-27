@@ -74,13 +74,16 @@ void FRenderState::Reset()
 	mTextureMode = ffTextureMode = -1;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
-	glSrcBlend = glDstBlend = -1;
-	glAlphaFunc = -1;
 	mAlphaFunc = GL_GEQUAL;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
-	glBlendEquation = -1;
 	m2D = true;
+
+	stSrcBlend = stDstBlend = -1;
+	stBlendEquation = -1;
+	stAlphaFunc = -1;
+	stAlphaThreshold = -1.f;
+	stAlphaTest = true;
 }
 
 
@@ -277,28 +280,28 @@ void FRenderState::Apply(bool forcenoshader)
 {
 	if (!gl_direct_state_change)
 	{
-		if (mSrcBlend != glSrcBlend || mDstBlend != glDstBlend)
+		if (mSrcBlend != stSrcBlend || mDstBlend != stDstBlend)
 		{
-			glSrcBlend = mSrcBlend;
-			glDstBlend = mDstBlend;
+			stSrcBlend = mSrcBlend;
+			stDstBlend = mDstBlend;
 			glBlendFunc(mSrcBlend, mDstBlend);
 		}
-		if (mAlphaFunc != glAlphaFunc || mAlphaThreshold != glAlphaThreshold)
+		if (mAlphaFunc != stAlphaFunc || mAlphaThreshold != stAlphaThreshold)
 		{
-			glAlphaFunc = mAlphaFunc;
-			glAlphaThreshold = mAlphaThreshold;
-			::glAlphaFunc(mAlphaFunc, mAlphaThreshold);
+			stAlphaFunc = mAlphaFunc;
+			stAlphaThreshold = mAlphaThreshold;
+			glAlphaFunc(mAlphaFunc, mAlphaThreshold);
 		}
-		if (mAlphaTest != glAlphaTest)
+		if (mAlphaTest != stAlphaTest)
 		{
-			glAlphaTest = mAlphaTest;
+			stAlphaTest = mAlphaTest;
 			if (mAlphaTest) glEnable(GL_ALPHA_TEST);
 			else glDisable(GL_ALPHA_TEST);
 		}
-		if (mBlendEquation != glBlendEquation)
+		if (mBlendEquation != stBlendEquation)
 		{
-			glBlendEquation = mBlendEquation;
-			::glBlendEquation(mBlendEquation);
+			stBlendEquation = mBlendEquation;
+			glBlendEquation(mBlendEquation);
 		}
 	}
 

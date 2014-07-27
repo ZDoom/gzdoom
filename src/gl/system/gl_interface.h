@@ -14,6 +14,7 @@ enum RenderFlags
 	RFL_SHADER_STORAGE_BUFFER = 16,		// to be used later for a parameter buffer
 	RFL_BASEINDEX = 32,					// currently unused
 	RFL_COREPROFILE = 64,
+	RFL_NOBUFFER = 128,					// the static buffer makes no sense on GL 3.x AMD and Intel hardware, as long as compatibility mode is on
 };
 
 enum TexMode

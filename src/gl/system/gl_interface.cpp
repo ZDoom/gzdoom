@@ -120,7 +120,7 @@ void gl_LoadExtensions()
 
 
 	// Don't even start if it's lower than 3.0
-	if (strcmp(version, "3.0") < 0) 
+	if (strcmp(version, "3.0") < 0)
 	{
 		I_FatalError("Unsupported OpenGL version.\nAt least GL 3.0 is required to run " GAMENAME ".\n");
 	}
@@ -129,8 +129,9 @@ void gl_LoadExtensions()
 	gl.version = strtod(version, NULL) + 0.01f;
 	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL) + 0.01f;
 
-	gl.vendorstring=(char*)glGetString(GL_VENDOR);
+	gl.vendorstring = (char*)glGetString(GL_VENDOR);
 
+	if (!strstr(gl.vendorstring, "NVIDIA Corporation")); gl.flags |= RFL_NOBUFFER;
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
 	if (CheckExtension("GL_ARB_buffer_storage") && !Args->CheckParm("-nopersistentbuffers"))

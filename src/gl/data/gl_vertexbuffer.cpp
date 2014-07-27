@@ -96,7 +96,7 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		mIndex = mCurIndex = 0;
+		mNumReserved = mIndex = mCurIndex = 0;
 	}
 	else
 	{
@@ -109,7 +109,7 @@ FFlatVertexBuffer::FFlatVertexBuffer()
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferData(GL_ARRAY_BUFFER, BUFFER_SIZE * sizeof(FFlatVertex), map, GL_STREAM_DRAW);
-		mIndex = mCurIndex = 20;
+		mNumReserved = mIndex = mCurIndex = 20;
 	}
 
 	glBindVertexArray(vao_id);
@@ -390,6 +390,11 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;
 		mapvt->z = vt->z;
 	}
+	if (!(gl.flags & RFL_BUFFER_STORAGE))
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferSubData(GL_ARRAY_BUFFER, startvt * sizeof(FFlatVertex), countvt * sizeof(FFlatVertex), &vbo_shadowdata[startvt]);
+	}
 }
 
 //==========================================================================
@@ -400,12 +405,20 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 
 void FFlatVertexBuffer::CreateVBO()
 {
-	vbo_shadowdata.Clear();
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (!(gl.flags & RFL_NOBUFFER))
 	{
+		vbo_shadowdata.Resize(mNumReserved);
 		CreateFlatVBO();
-		memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
 		mCurIndex = mIndex = vbo_shadowdata.Size();
+		if (gl.flags & RFL_BUFFER_STORAGE)
+		{
+			memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
+		}
+		else
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+			glBufferSubData(GL_ARRAY_BUFFER, mNumReserved * sizeof(FFlatVertex), (mIndex - mNumReserved) * sizeof(FFlatVertex), &vbo_shadowdata[mNumReserved]);
+		}
 	}
 	else if (sectors)
 	{
@@ -417,6 +430,7 @@ void FFlatVertexBuffer::CreateVBO()
 			sectors[i].vboheight[1] = sectors[i].vboheight[0] = FIXED_MIN;
 		}
 	}
+
 }
 
 //==========================================================================
@@ -427,39 +441,28 @@ void FFlatVertexBuffer::CreateVBO()
 
 void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 {
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
 	{
-		if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
-		{
-			//if (sector->ceilingdata == NULL) // only update if there's no thinker attached
-			{
-				UpdatePlaneVertices(sector, sector_t::ceiling);
-				sector->vboheight[sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
-			}
-		}
-		if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[sector_t::floor])
-		{
-			//if (sector->floordata == NULL) // only update if there's no thinker attached
-			{
-				UpdatePlaneVertices(sector, sector_t::floor);
-				sector->vboheight[sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
-			}
-		}
+		UpdatePlaneVertices(sector, sector_t::ceiling);
+		sector->vboheight[sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
+	}
+	if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[sector_t::floor])
+	{
+		UpdatePlaneVertices(sector, sector_t::floor);
+		sector->vboheight[sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
 	}
 }
 
 //==========================================================================
 //
 // checks the validity of all planes attached to this sector
-// and updates them if possible. Anything moving will not be
-// updated unless it stops. This is to ensure that we never
-// have to synchronize with the rendering process.
+// and updates them if possible.
 //
 //==========================================================================
 
 void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
 {
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (!(gl.flags & RFL_NOBUFFER))
 	{
 		CheckPlanes(sector);
 		sector_t *hs = sector->GetHeightSec();

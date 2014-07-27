@@ -47,6 +47,7 @@ class FFlatVertexBuffer : public FVertexBuffer
 	FFlatVertex *map;
 	unsigned int mIndex;
 	unsigned int mCurIndex;
+	unsigned int mNumReserved;
 
 	void CheckPlanes(sector_t *sector);
 

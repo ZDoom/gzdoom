@@ -1,5 +1,9 @@
 // This file contains common data definitions for both vertex and fragment shader
 
+// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
+precision highp int;
+precision highp float;
+
 uniform vec4 uCameraPos;
 uniform int uTextureMode;
 uniform float uClipHeightTop, uClipHeightBottom;

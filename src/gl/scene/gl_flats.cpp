@@ -344,12 +344,12 @@ inline void GLFlat::PutFlat(bool fog)
 	{
 		Colormap.Clear();
 	}
-	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog)
+	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog || gltexture == NULL)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
 		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
-	else if (gltexture != NULL)
+	else
 	{
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
 		list = masked ? GLDL_MASKED : GLDL_PLAIN;

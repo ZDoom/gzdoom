@@ -121,7 +121,7 @@ void OpenGLFrameBuffer::InitializeState()
 
 	if (first)
 	{
-		glewExperimental=TRUE;
+		glewExperimental=true;
 		glewInit();
 	}
 

@@ -154,7 +154,7 @@ static const char * const ActorNames_init[]=
 	"RocketAmmo",
 	"RocketBox",
 	"Cell",
-	"CellBox",
+	"CellPack",
 	"Shell",
 	"ShellBox",
 	"Backpack",

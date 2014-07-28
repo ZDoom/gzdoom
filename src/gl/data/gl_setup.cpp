@@ -641,16 +641,16 @@ void gl_PreprocessLevel()
 			int vtnum1 = int(l->v1 - vertexes);
 			int vtnum2 = int(l->v2 - vertexes);
 
-			if (checkmap[numsectors + vtnum1] < i)
+			if (checkmap[vtnum1] < i)
 			{
-				checkmap[numsectors + vtnum1] = i;
+				checkmap[vtnum1] = i;
 				sectors[i].e->vertices.Push(&vertexes[vtnum1]);
 				vertexes[vtnum1].dirty = true;
 			}
 
-			if (checkmap[numsectors + vtnum2] < i)
+			if (checkmap[vtnum2] < i)
 			{
-				checkmap[numsectors + vtnum2] = i;
+				checkmap[vtnum2] = i;
 				sectors[i].e->vertices.Push(&vertexes[vtnum2]);
 				vertexes[vtnum2].dirty = true;
 			}

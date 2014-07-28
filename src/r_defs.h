@@ -649,10 +649,10 @@ struct sector_t
 		for (unsigned i = 0; i < e->XFloor.attached.Size(); i++) e->XFloor.attached[i]->SetVerticesDirty();
 	}
 
-	void SetPlaneTexZ(int pos, fixed_t val)
+	void SetPlaneTexZ(int pos, fixed_t val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = val;
-		SetAllVerticesDirty();
+		if (dirtify) SetAllVerticesDirty();
 	}
 
 	void ChangePlaneTexZ(int pos, fixed_t val)

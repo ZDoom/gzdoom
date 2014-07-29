@@ -189,41 +189,38 @@ static const char *TerrainKeywords[] =
 	NULL
 };
 
-// Alternate offsetof macro to shut GCC up
-#define theoffsetof(type,field) ((size_t)&((type*)1)->field - 1)
-
 static FGenericParse SplashParser[] =
 {
 	{ GEN_End,	  {0} },
-	{ GEN_Sound,  {theoffsetof(FSplashDef, SmallSplashSound)} },
-	{ GEN_Fixed,  {theoffsetof(FSplashDef, SmallSplashClip)} },
-	{ GEN_Sound,  {theoffsetof(FSplashDef, NormalSplashSound)} },
-	{ GEN_Class,  {theoffsetof(FSplashDef, SmallSplash)} },
-	{ GEN_Class,  {theoffsetof(FSplashDef, SplashBase)} },
-	{ GEN_Class,  {theoffsetof(FSplashDef, SplashChunk)} },
-	{ GEN_Byte,   {theoffsetof(FSplashDef, ChunkXVelShift)} },
-	{ GEN_Byte,   {theoffsetof(FSplashDef, ChunkYVelShift)} },
-	{ GEN_Byte,   {theoffsetof(FSplashDef, ChunkZVelShift)} },
-	{ GEN_Fixed,  {theoffsetof(FSplashDef, ChunkBaseZVel)} },
-	{ GEN_Bool,	  {theoffsetof(FSplashDef, NoAlert)} }
+	{ GEN_Sound,  {myoffsetof(FSplashDef, SmallSplashSound)} },
+	{ GEN_Fixed,  {myoffsetof(FSplashDef, SmallSplashClip)} },
+	{ GEN_Sound,  {myoffsetof(FSplashDef, NormalSplashSound)} },
+	{ GEN_Class,  {myoffsetof(FSplashDef, SmallSplash)} },
+	{ GEN_Class,  {myoffsetof(FSplashDef, SplashBase)} },
+	{ GEN_Class,  {myoffsetof(FSplashDef, SplashChunk)} },
+	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkXVelShift)} },
+	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkYVelShift)} },
+	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkZVelShift)} },
+	{ GEN_Fixed,  {myoffsetof(FSplashDef, ChunkBaseZVel)} },
+	{ GEN_Bool,	  {myoffsetof(FSplashDef, NoAlert)} }
 };
 
 static FGenericParse TerrainParser[] =
 {
 	{ GEN_End,	  {0} },
-	{ GEN_Splash, {theoffsetof(FTerrainDef, Splash)} },
-	{ GEN_Int,    {theoffsetof(FTerrainDef, DamageAmount)} },
+	{ GEN_Splash, {myoffsetof(FTerrainDef, Splash)} },
+	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageAmount)} },
 	{ GEN_Custom, {(size_t)ParseDamage} },
-	{ GEN_Int,    {theoffsetof(FTerrainDef, DamageTimeMask)} },
-	{ GEN_Fixed,  {theoffsetof(FTerrainDef, FootClip)} },
-	{ GEN_Float,  {theoffsetof(FTerrainDef, StepVolume)} },
-	{ GEN_Time,   {theoffsetof(FTerrainDef, WalkStepTics)} },
-	{ GEN_Time,   {theoffsetof(FTerrainDef, RunStepTics)} },
-	{ GEN_Sound,  {theoffsetof(FTerrainDef, LeftStepSound)} },
-	{ GEN_Sound,  {theoffsetof(FTerrainDef, RightStepSound)} },
-	{ GEN_Bool,   {theoffsetof(FTerrainDef, IsLiquid)} },
+	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageTimeMask)} },
+	{ GEN_Fixed,  {myoffsetof(FTerrainDef, FootClip)} },
+	{ GEN_Float,  {myoffsetof(FTerrainDef, StepVolume)} },
+	{ GEN_Time,   {myoffsetof(FTerrainDef, WalkStepTics)} },
+	{ GEN_Time,   {myoffsetof(FTerrainDef, RunStepTics)} },
+	{ GEN_Sound,  {myoffsetof(FTerrainDef, LeftStepSound)} },
+	{ GEN_Sound,  {myoffsetof(FTerrainDef, RightStepSound)} },
+	{ GEN_Bool,   {myoffsetof(FTerrainDef, IsLiquid)} },
 	{ GEN_Custom, {(size_t)ParseFriction} },
-	{ GEN_Bool,   {theoffsetof(FTerrainDef, AllowProtection)} },
+	{ GEN_Bool,   {myoffsetof(FTerrainDef, AllowProtection)} },
 };
 
 

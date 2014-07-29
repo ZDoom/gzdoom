@@ -1835,6 +1835,13 @@ void G_DoLoadGame ()
 		BYTE *vars_p = (BYTE *)text;
 		C_ReadCVars (&vars_p);
 		delete[] text;
+		if (SaveVersion <= 4509)
+		{
+			// account for the flag shuffling for making freelook a 3-state option
+			INTBOOL flag = dmflags & DF_YES_FREELOOK;
+			dmflags = dmflags & ~DF_YES_FREELOOK;
+			if (flag) dmflags2 = dmflags2 | DF2_RESPAWN_SUPER;
+		}
 	}
 
 	// dearchive all the modifications

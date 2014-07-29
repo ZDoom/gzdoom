@@ -335,6 +335,7 @@ Actor Weapon : Inventory native
 	Weapon.BobSpeed 1.0
 	Weapon.BobRangeX 1.0
 	Weapon.BobRangeY 1.0
+	+WEAPONSPAWN
 	States
 	{
 	LightDone:
@@ -362,4 +363,7 @@ Actor WeaponHolder : Inventory native
 	+INVENTORY.UNDROPPABLE
 }
 
-Actor WeaponPiece : Inventory native {}
+Actor WeaponPiece : Inventory native 
+{
+	+WEAPONSPAWN
+}

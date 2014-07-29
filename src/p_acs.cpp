@@ -3605,7 +3605,8 @@ enum
 	APROP_MeleeRange	= 38,
 	APROP_ViewHeight	= 39,
 	APROP_AttackZOffset	= 40,
-	APROP_StencilColor	= 41
+	APROP_StencilColor	= 41,
+	APROP_Friction		= 42,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3839,6 +3840,9 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->SetShade(value);
 		break;
 
+	case APROP_Friction:
+		actor->Friction = value;
+
 	default:
 		// do nothing.
 		break;
@@ -3937,6 +3941,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies(), stack, stackdepth);
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag(), stack, stackdepth);
 	case APROP_StencilColor:return actor->fillcolor;
+	case APROP_Friction:	return actor->Friction;
 
 	default:				return 0;
 	}

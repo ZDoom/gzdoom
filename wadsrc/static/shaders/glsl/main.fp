@@ -222,11 +222,9 @@ void main()
 {
 	vec4 frag = ProcessTexel();
 	
-#ifdef CORE_PROFILE
-	// alpha testing - only for the core profile, in compatibility mode we use the alpha test.
+#ifndef NO_ALPHATEST
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
-
 
 	switch (uFixedColormap)
 	{

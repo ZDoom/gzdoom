@@ -192,6 +192,8 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 	if (alphatexture)
 	{
 		// thanks to deprecation and delayed introduction of a suitable replacement feature this has become a bit messy...
+		// Of all the targeted hardware, the Intel GMA 2000 and 3000 are the only ones not supporting texture swizzle, and they
+		// are also the only ones not supoorting GL 3.3. On those we are forced to use a full RGBA texture here.
 		if (gl.version >= 3.3f)
 		{
 			texformat = GL_R8;

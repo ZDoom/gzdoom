@@ -138,29 +138,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muClipHeightTop.Set(mClipHeightTop);
 	activeShader->muClipHeightBottom.Set(mClipHeightBottom);
 	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
-
-#ifndef CORE_PROFILE
-	if (!(gl.flags & RFL_COREPROFILE))
-	{
-		if (mAlphaThreshold != stAlphaThreshold)
-		{
-			stAlphaThreshold = mAlphaThreshold;
-			if (mAlphaThreshold < 0.f)
-			{
-				glDisable(GL_ALPHA_TEST);
-			}
-			else
-			{
-				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, mAlphaThreshold * mColor.vec[3]);
-			}
-		}
-	}
-	else
-#endif
-	{
-		activeShader->muAlphaThreshold.Set(mAlphaThreshold);
-	}
+	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 
 	if (mGlowEnabled)
 	{

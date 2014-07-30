@@ -8,9 +8,7 @@ uniform vec4 uCameraPos;
 uniform int uTextureMode;
 uniform float uClipHeightTop, uClipHeightBottom;
 
-#ifdef CORE_PROFILE
 uniform float uAlphaThreshold;
-#endif
 
 
 // colors

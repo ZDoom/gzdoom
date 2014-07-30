@@ -175,12 +175,16 @@ void gl_PrintStartupLog()
 	gl.maxuniforms = v;
 	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. vertex uniforms: %d\n", v);
+	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
+	Printf ("Max. uniform block size: %d\n", v);
+	gl.maxuniformblock = v;
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);
 	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);
 	Printf("Max. combined shader storage blocks: %d\n", v);
 	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
 	Printf("Max. vertex shader storage blocks: %d\n", v);
+
 
 }
 

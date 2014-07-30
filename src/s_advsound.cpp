@@ -1433,7 +1433,7 @@ static void S_AddBloodSFX (int lumpnum)
 		ambient->periodmax = 0;
 		ambient->volume = 1;
 		ambient->attenuation = 1;
-		ambient->sound = name;
+		ambient->sound = FSoundID(sfxnum);
 	}
 }
 

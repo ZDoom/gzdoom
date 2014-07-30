@@ -708,7 +708,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		if (xsprites != NULL && sprites[i].lotag == 710)
 		{ // Blood ambient sound
 			mapthings[count].args[0] = xsprites[i].Data3;
-			// I am totally guessing abount the volume level. 50 seems to be a pretty
+			// I am totally guessing about the volume level. 50 seems to be a pretty
 			// typical value for Blood's standard maps, so I assume it's 100-based.
 			mapthings[count].args[1] = xsprites[i].Data4;
 			mapthings[count].args[2] = xsprites[i].Data1;

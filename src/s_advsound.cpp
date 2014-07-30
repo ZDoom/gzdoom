@@ -2231,7 +2231,7 @@ void AAmbientSound::BeginPlay ()
 //
 // AmbientSound :: Activate
 //
-// Starts playing a sound (or does nothing of the sound is already playing).
+// Starts playing a sound (or does nothing if the sound is already playing).
 //
 //==========================================================================
 

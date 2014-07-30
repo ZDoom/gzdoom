@@ -554,7 +554,13 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 			}
 		}
 	}
-  
+ 
+	if (mo->Friction != FRACUNIT)
+	{
+		friction = clamp(FixedMul(friction, mo->Friction), 0, FRACUNIT);
+		movefactor = FrictionToMoveFactor(friction);
+	}
+
 	if (frictionfactor)
 		*frictionfactor = movefactor;
 

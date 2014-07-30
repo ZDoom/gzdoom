@@ -927,8 +927,6 @@ void R_InitSprites ()
 		numskins++;
 	}
 
-	SpriteFrames.Clear();
-
 	// [RH] Do some preliminary setup
 	if (skins != NULL) delete [] skins;
 	skins = new FPlayerSkin[numskins];

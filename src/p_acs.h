@@ -144,6 +144,51 @@ struct ProfileCollector
 	int Index;
 };
 
+struct ACSLocalArrayInfo
+{
+	unsigned int Size;
+	int Offset;
+};
+
+struct ACSLocalArrays
+{
+	unsigned int Count;
+	ACSLocalArrayInfo *Info;
+
+	ACSLocalArrays()
+	{
+		Count = 0;
+		Info = NULL;
+	}
+	~ACSLocalArrays()
+	{
+		if (Info != NULL)
+		{
+			delete[] Info;
+			Info = NULL;
+		}
+	}
+
+	// Bounds-checking Set and Get for local arrays
+	void Set(int *locals, int arraynum, int arrayentry, int value)
+	{
+		if ((unsigned int)arraynum < Count &&
+			(unsigned int)arrayentry < Info[arraynum].Size)
+		{
+			locals[Info[arraynum].Offset + arrayentry] = value;
+		}
+	}
+	int Get(int *locals, int arraynum, int arrayentry)
+	{
+		if ((unsigned int)arraynum < Count &&
+			(unsigned int)arrayentry < Info[arraynum].Size)
+		{
+			return locals[Info[arraynum].Offset + arrayentry];
+		}
+		return 0;
+	}
+};
+
 // The in-memory version
 struct ScriptPtr
 {
@@ -153,6 +198,7 @@ struct ScriptPtr
 	BYTE ArgCount;
 	WORD VarCount;
 	WORD Flags;
+	ACSLocalArrays LocalArrays;
 
 	ACSProfileInfo ProfileData;
 };
@@ -189,13 +235,23 @@ struct ScriptFlagsPtr
 	WORD Flags;
 };
 
-struct ScriptFunction
+struct ScriptFunctionInFile
 {
 	BYTE ArgCount;
 	BYTE LocalCount;
 	BYTE HasReturnValue;
 	BYTE ImportNum;
 	DWORD Address;
+};
+
+struct ScriptFunction
+{
+	BYTE ArgCount;
+	BYTE HasReturnValue;
+	BYTE ImportNum;
+	int  LocalCount;
+	DWORD Address;
+	ACSLocalArrays LocalArrays;
 };
 
 // Script types
@@ -285,7 +341,7 @@ private:
 	BYTE *Chunks;
 	ScriptPtr *Scripts;
 	int NumScripts;
-	BYTE *Functions;
+	ScriptFunction *Functions;
 	ACSProfileInfo *FunctionProfileData;
 	int NumFunctions;
 	ArrayInfo *ArrayStore;
@@ -694,8 +750,25 @@ public:
 		PCD_SCRIPTWAITNAMED,
 		PCD_TRANSLATIONRANGE3,
 		PCD_GOTOSTACK,
+		PCD_ASSIGNSCRIPTARRAY,
+		PCD_PUSHSCRIPTARRAY,
+		PCD_ADDSCRIPTARRAY,
+		PCD_SUBSCRIPTARRAY,
+		PCD_MULSCRIPTARRAY,
+		PCD_DIVSCRIPTARRAY,
+/*370*/	PCD_MODSCRIPTARRAY,
+		PCD_INCSCRIPTARRAY,
+		PCD_DECSCRIPTARRAY,
+		PCD_ANDSCRIPTARRAY,
+		PCD_EORSCRIPTARRAY,
+		PCD_ORSCRIPTARRAY,
+		PCD_LSSCRIPTARRAY,
+		PCD_RSSCRIPTARRAY,
+		PCD_PRINTSCRIPTCHARARRAY,
+		PCD_PRINTSCRIPTCHRANGE,
+/*380*/	PCD_STRCPYTOSCRIPTCHRANGE,
 
-/*363*/	PCODE_COMMAND_COUNT
+/*381*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts

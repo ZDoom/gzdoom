@@ -1990,26 +1990,12 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 	friction = (0x1EB8*amount)/0x80 + 0xD001;
 
 	// killough 8/28/98: prevent odd situations
-	if (friction > FRACUNIT)
-		friction = FRACUNIT;
-	if (friction < 0)
-		friction = 0;
+	friction = clamp(friction, 0, FRACUNIT);
 
 	// The following check might seem odd. At the time of movement,
 	// the move distance is multiplied by 'friction/0x10000', so a
 	// higher friction value actually means 'less friction'.
-
-	// [RH] Twiddled these values so that velocity on ice (with
-	//		friction 0xf900) is the same as in Heretic/Hexen.
-	if (friction >= ORIG_FRICTION)	// ice
-//		movefactor = ((0x10092 - friction)*(0x70))/0x158;
-		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
-	else
-		movefactor = ((friction - 0xDB34)*(0xA))/0x80;
-
-	// killough 8/28/98: prevent odd situations
-	if (movefactor < 32)
-		movefactor = 32;
+	movefactor = FrictionToMoveFactor(friction);
 
 	for (s = -1; (s = P_FindSectorFromTag (tag,s)) >= 0; )
 	{

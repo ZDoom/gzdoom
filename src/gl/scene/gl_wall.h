@@ -135,7 +135,7 @@ public:
 	float topglowcolor[4];
 	float bottomglowcolor[4];
 
-	int firstdynlight, lastdynlight;
+	unsigned int dynlightindex, dynlightbuffer;
 	int firstwall, numwalls;	// splitting info.
 
 	union

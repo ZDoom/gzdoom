@@ -687,6 +687,8 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 {
 	int count = 0;
 
+	memset(mapthings, 0, sizeof(*mapthings)*numsprites);
+
 	for (int i = 0; i < numsprites; ++i)
 	{
 		mapthings[count].thingid = 0;
@@ -699,6 +701,9 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
 		mapthings[count].gravity = FRACUNIT;
+		mapthings[count].RenderStyle = STYLE_Count;
+		mapthings[count].alpha = -1;
+		mapthings[count].health = -1;
 
 		if (xsprites != NULL && sprites[i].lotag == 710)
 		{ // Blood ambient sound

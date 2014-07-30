@@ -289,8 +289,8 @@ bool F7ZFile::Open(bool quiet)
 			continue;
 		}
 
-		nameUTF16.Resize(nameLength);
-		nameASCII.Resize(nameLength);
+		nameUTF16.Resize((unsigned)nameLength);
+		nameASCII.Resize((unsigned)nameLength);
 		SzArEx_GetFileNameUtf16(&Archive->DB, i, &nameUTF16[0]);
 		for (size_t c = 0; c < nameLength; ++c)
 		{

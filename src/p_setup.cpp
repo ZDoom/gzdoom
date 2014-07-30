@@ -312,7 +312,6 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
-				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;

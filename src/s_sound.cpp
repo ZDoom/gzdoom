@@ -1334,7 +1334,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 				if (sfx->bLoadRAW)
 				{
 					len = Wads.LumpLength (sfx->lumpnum);
-					frequency = (sfx->bForce22050 ? 22050 : 11025);
+					frequency = sfx->RawRate;
 				}
 				else
 				{

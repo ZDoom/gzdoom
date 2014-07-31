@@ -728,7 +728,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		}
 		else
 		{
-			if (sprites[i].cstat & (16|32|32768)) continue;
+			if (sprites[i].cstat & 32768) continue;
 			if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
 
 			mapthings[count].type = 9988;

@@ -86,8 +86,8 @@ fixed_t rw_offset_top;
 fixed_t rw_offset_mid;
 fixed_t rw_offset_bottom;
 
-void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat);
-void PrepLWall (fixed_t *lwall, fixed_t walxrepeat);
+void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
+void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
 extern FWallCoords WallC;
 extern FWallTmapVals WallT;
 
@@ -621,7 +621,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 			walllower[i] = mfloorclip[i];
 	}
 
-	PrepLWall (lwall, curline->sidedef->TexelLength*xscale);
+	PrepLWall (lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2);
 	wallscan_np2_ds(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale);
 	R_FinishSetPatchStyle();
 }
@@ -1831,7 +1831,7 @@ void R_RenderSegLoop ()
 			yscale = FixedMul(rw_pic->yScale, rw_midtexturescaley);
 			if (xscale != lwallscale)
 			{
-				PrepLWall (lwall, curline->sidedef->TexelLength*xscale);
+				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.SX1, WallC.SX2);
 				lwallscale = xscale;
 			}
 			if (midtexture->bWorldPanning)
@@ -1874,7 +1874,7 @@ void R_RenderSegLoop ()
 				yscale = FixedMul(rw_pic->yScale, rw_toptexturescaley);
 				if (xscale != lwallscale)
 				{
-					PrepLWall (lwall, curline->sidedef->TexelLength*xscale);
+					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.SX1, WallC.SX2);
 					lwallscale = xscale;
 				}
 				if (toptexture->bWorldPanning)
@@ -1920,7 +1920,7 @@ void R_RenderSegLoop ()
 				yscale = FixedMul(rw_pic->yScale, rw_bottomtexturescaley);
 				if (xscale != lwallscale)
 				{
-					PrepLWall (lwall, curline->sidedef->TexelLength*xscale);
+					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.SX1, WallC.SX2);
 					lwallscale = xscale;
 				}
 				if (bottomtexture->bWorldPanning)
@@ -2265,7 +2265,7 @@ void R_NewWall (bool needlights)
 			bottomtexture ? FixedMul(bottomtexture->xScale, sidedef->GetTextureXScale(side_t::bottom)) :
 			FRACUNIT;
 
-		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale);
+		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.SX1, WallC.SX2);
 
 		if (fixedcolormap == NULL && fixedlightlev < 0)
 		{
@@ -2864,16 +2864,16 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	return bad;
 }
 
-static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat)
+static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 {
 	// fix for rounding errors
 	walxrepeat = abs(walxrepeat);
 	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
 	int x;
 
-	if (WallC.SX1 > 0)
+	if (x1 > 0)
 	{
-		for (x = WallC.SX1; x < WallC.SX2; x++)
+		for (x = x1; x < x2; x++)
 		{
 			if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
 			{
@@ -2886,7 +2886,7 @@ static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat)
 		}
 	}
 	fix = walxrepeat - 1 - fix;
-	for (x = WallC.SX2-1; x >= WallC.SX1; x--)
+	for (x = x2-1; x >= x1; x--)
 	{
 		if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
 		{
@@ -2899,16 +2899,16 @@ static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat)
 	}
 }
 
-void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
+void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 { // swall = scale, lwall = texturecolumn
 	double top, bot, i;
 	double xrepeat = fabs((double)walxrepeat);
 
-	i = WallC.SX1 - centerx;
+	i = x1 - centerx;
 	top = WallT.UoverZorg + WallT.UoverZstep * i;
 	bot = WallT.InvZorg + WallT.InvZstep * i;
 
-	for (int x = WallC.SX1; x < WallC.SX2; x++)
+	for (int x = x1; x < x2; x++)
 	{
 		double frac = top / bot;
 		if (walxrepeat < 0)
@@ -2923,23 +2923,23 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 		top += WallT.UoverZstep;
 		bot += WallT.InvZstep;
 	}
-	PrepWallRoundFix(lwall, walxrepeat);
+	PrepWallRoundFix(lwall, walxrepeat, x1, x2);
 }
 
-void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
+void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 { // lwall = texturecolumn
 	double top, bot, i;
 	double xrepeat = fabs((double)walxrepeat);
 	double topstep;
 
-	i = WallC.SX1 - centerx;
+	i = x1 - centerx;
 	top = WallT.UoverZorg + WallT.UoverZstep * i;
 	bot = WallT.InvZorg + WallT.InvZstep * i;
 
 	top *= xrepeat;
 	topstep = WallT.UoverZstep * xrepeat;
 
-	for (int x = WallC.SX1; x < WallC.SX2; x++)
+	for (int x = x1; x < x2; x++)
 	{
 		if (walxrepeat < 0)
 		{
@@ -2952,7 +2952,7 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 		top += topstep;
 		bot += WallT.InvZstep;
 	}
-	PrepWallRoundFix(lwall, walxrepeat);
+	PrepWallRoundFix(lwall, walxrepeat, x1, x2);
 }
 
 // pass = 0: when seg is first drawn
@@ -3190,11 +3190,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		goto done;
 	}
 
-	swapvalues (x1, WallC.SX1);
-	swapvalues (x2, WallC.SX2);
-	PrepWall (swall, lwall, WallSpriteTile->GetWidth() << FRACBITS);
-	swapvalues (x1, WallC.SX1);
-	swapvalues (x2, WallC.SX2);
+	PrepWall (swall, lwall, WallSpriteTile->GetWidth() << FRACBITS, x1, x2);
 
 	if (flipx)
 	{

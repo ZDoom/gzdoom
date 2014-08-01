@@ -133,6 +133,7 @@ void gl_LoadExtensions()
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
+	if (CheckExtension("GL_ARB_shader_storage_buffer_object")) gl.flags |= RFL_SHADER_STORAGE_BUFFER;
 	if (CheckExtension("GL_ARB_buffer_storage") && !Args->CheckParm("-nopersistentbuffers"))
 	{
 		gl.flags |= RFL_BUFFER_STORAGE;	// the cmdline option is for testing the fallback implementation on newer hardware.
@@ -178,6 +179,10 @@ void gl_PrintStartupLog()
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
 	Printf ("Max. uniform block size: %d\n", v);
 	gl.maxuniformblock = v;
+	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
+	Printf ("Uniform block alignment: %d\n", v);
+	gl.uniformblockalignment = v;
+
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);
 	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);

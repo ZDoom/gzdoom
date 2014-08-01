@@ -57,6 +57,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 
 //==========================================================================
 //
@@ -86,10 +87,19 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 //
 // The following code uses GetChars on the strings to get rid of terminating 0 characters. Do not remove or the code may break!
 //
+	unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
+	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 
-	FString vp_comb = "#version 130\n";
-	// todo when using shader storage buffers, add
-	// "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : require\n" instead.
+	FString vp_comb;
+
+	if (lightbuffertype == GL_UNIFORM_BUFFER)
+	{
+		vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+	}
+	else
+	{
+		vp_comb = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+	}
 
 	if (!(gl.flags & RFL_BUFFER_STORAGE))
 	{
@@ -196,7 +206,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muLightParms.Init(hShader, "uLightAttr");
 	muColormapStart.Init(hShader, "uFixedColormapStart");
 	muColormapRange.Init(hShader, "uFixedColormapRange");
-	muLightRange.Init(hShader, "uLightRange");
+	muLightIndex.Init(hShader, "uLightIndex");
 	muFogColor.Init(hShader, "uFogColor");
 	muDynLightColor.Init(hShader, "uDynLightColor");
 	muObjectColor.Init(hShader, "uObjectColor");
@@ -218,10 +228,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 
+	int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
+	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
+
 	glUseProgram(hShader);
 
-	int texture_index = glGetUniformLocation(hShader, "texture2");
-	if (texture_index > 0) glUniform1i(texture_index, 1);
+	tempindex = glGetUniformLocation(hShader, "texture2");
+	if (tempindex > 0) glUniform1i(tempindex, 1);
 
 	glUseProgram(0);
 	return !!linked;

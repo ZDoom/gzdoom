@@ -9,6 +9,7 @@
 #include "r_defs.h"
 
 class FVertexBuffer;
+class FShader;
 extern TArray<VSMatrix> gl_MatrixStack;
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
@@ -43,24 +44,22 @@ class FRenderState
 	bool mTextureEnabled;
 	bool mFogEnabled;
 	bool mGlowEnabled;
-	bool mLightEnabled;
 	bool mBrightmapEnabled;
+	int mLightIndex;
 	int mSpecialEffect;
 	int mTextureMode;
 	int mDesaturation;
 	int mSoftLight;
 	float mLightParms[4];
-	int mNumLights[4];
-	float *mLightData;
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
-	bool mAlphaTest;
 	int mBlendEquation;
+	bool mAlphaTest;
 	bool m2D;
-	float mInterpolationFactor;
-	float mClipHeightTop, mClipHeightBottom;
 	bool mModelMatrixEnabled;
 	bool mTextureMatrixEnabled;
+	float mInterpolationFactor;
+	float mClipHeightTop, mClipHeightBottom;
 	float mShaderTimer;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
@@ -79,6 +78,8 @@ class FRenderState
 	int stSrcBlend, stDstBlend;
 	bool stAlphaTest;
 	int stBlendEquation;
+
+	FShader *activeShader;
 
 	bool ApplyShader();
 
@@ -104,6 +105,7 @@ public:
 
 	void Apply();
 	void ApplyMatrices();
+	void ApplyLightIndex(int index);
 
 	void SetVertexBuffer(FVertexBuffer *vb)
 	{
@@ -185,9 +187,9 @@ public:
 		mGlowEnabled = on;
 	}
 
-	void EnableLight(bool on)
+	void SetLightIndex(int n)
 	{
-		mLightEnabled = on;
+		mLightIndex = n;
 	}
 
 	void EnableBrightmap(bool on)
@@ -249,15 +251,6 @@ public:
 	{
 		mLightParms[1] = f;
 		mLightParms[0] = d;
-	}
-
-	void SetLights(int *numlights, float *lightdata)
-	{
-		mNumLights[0] = 0;
-		mNumLights[1] = numlights[0];
-		mNumLights[2] = numlights[1];
-		mNumLights[3] = numlights[2];
-		mLightData = lightdata;	// caution: the data must be preserved by the caller until the 'apply' call!
 	}
 
 	void SetFixedColormap(int cm)

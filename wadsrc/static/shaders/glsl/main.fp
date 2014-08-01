@@ -7,14 +7,15 @@ in vec4 vColor;
 out vec4 FragColor;
 
 #ifdef SHADER_STORAGE_LIGHTS
-	layout(std430, binding = 3) buffer ParameterBuffer
+	layout(std430, binding = 1) buffer LightBufferSSO
 	{
 		vec4 lights[];
 	};
-#elif defined MAXLIGHTS128
-	uniform vec4 lights[256];
 #else
-	uniform vec4 lights[128];
+	layout(std140) uniform LightBufferUBO
+	{
+		vec4 lights[NUM_UBO_LIGHTS];
+	};
 #endif
 
 
@@ -169,29 +170,33 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	
 	vec4 dynlight = uDynLightColor;
 
-	if (uLightRange.z > uLightRange.x)
+	if (uLightIndex >= 0)
 	{
-		//
-		// modulated lights
-		//
-		for(int i=uLightRange.x; i<uLightRange.y; i+=2)
+		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
+		if (lightRange.z > lightRange.x)
 		{
-			vec4 lightpos = lights[i];
-			vec4 lightcolor = lights[i+1];
-			
-			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			dynlight.rgb += lightcolor.rgb;
-		}
-		//
-		// subtractive lights
-		//
-		for(int i=uLightRange.y; i<uLightRange.z; i+=2)
-		{
-			vec4 lightpos = lights[i];
-			vec4 lightcolor = lights[i+1];
-			
-			lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-			dynlight.rgb -= lightcolor.rgb;
+			//
+			// modulated lights
+			//
+			for(int i=lightRange.x; i<lightRange.y; i+=2)
+			{
+				vec4 lightpos = lights[i];
+				vec4 lightcolor = lights[i+1];
+				
+				lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+				dynlight.rgb += lightcolor.rgb;
+			}
+			//
+			// subtractive lights
+			//
+			for(int i=lightRange.y; i<lightRange.z; i+=2)
+			{
+				vec4 lightpos = lights[i];
+				vec4 lightcolor = lights[i+1];
+				
+				lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+				dynlight.rgb -= lightcolor.rgb;
+			}
 		}
 	}
 	color.rgb = clamp(color.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
@@ -254,22 +259,26 @@ void main()
 			
 			frag *= getLightColor(fogdist, fogfactor);
 			
-			if (uLightRange.w > uLightRange.z)
+			if (uLightIndex >= 0)
 			{
-				vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-			
-				//
-				// additive lights - these can be done after the alpha test.
-				//
-				for(int i=uLightRange.z; i<uLightRange.w; i+=2)
+				ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
+				if (lightRange.w > lightRange.z)
 				{
-					vec4 lightpos = lights[i];
-					vec4 lightcolor = lights[i+1];
-					
-					lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-					addlight.rgb += lightcolor.rgb;
+					vec4 addlight = vec4(0.0,0.0,0.0,0.0);
+				
+					//
+					// additive lights - these can be done after the alpha test.
+					//
+					for(int i=lightRange.z; i<lightRange.w; i+=2)
+					{
+						vec4 lightpos = lights[i];
+						vec4 lightcolor = lights[i+1];
+						
+						lightcolor.rgb *= max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+						addlight.rgb += lightcolor.rgb;
+					}
+					frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
 				}
-				frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
 			}
 
 			//

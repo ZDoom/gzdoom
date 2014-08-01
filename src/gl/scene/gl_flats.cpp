@@ -56,6 +56,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_glow.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
@@ -142,22 +143,8 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 		node = node->nextLight;
 	}
 
-	int numlights[3];
-
-	lightdata.Combine(numlights, gl.MaxLights());
-	if (numlights[2] > 0)
-	{
-		draw_dlightf+=numlights[2]/2;
-		gl_RenderState.EnableLight(true);
-		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
-		gl_RenderState.Apply();
-		return true;
-	}
-	if (lightsapplied) 
-	{
-		gl_RenderState.EnableLight(false);
-		gl_RenderState.Apply();
-	}
+	dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
+	gl_RenderState.ApplyLightIndex(dynlightindex);
 	return false;
 }
 
@@ -271,7 +258,6 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 			}
 		}
 	}
-	gl_RenderState.EnableLight(false);
 }
 
 
@@ -450,6 +436,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 	sector=&sectors[frontsector->sectornum];	
 	extsector_t::xfloor &x = sector->e->XFloor;
 	this->sub=NULL;
+	dynlightindex = -1;
 
 	byte &srf = gl_drawinfo->sectorrenderflags[sector->sectornum];
 

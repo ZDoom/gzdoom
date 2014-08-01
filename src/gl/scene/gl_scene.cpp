@@ -57,6 +57,7 @@
 #include "p_local.h"
 #include "gl/gl_functions.h"
 
+#include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
@@ -348,6 +349,7 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);	// just in case
+	GLRenderer->mLights->Finish();
 
 	int pass;
 

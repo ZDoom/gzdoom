@@ -39,93 +39,79 @@
 */
 
 #include "gl/system/gl_system.h"
+#include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/system/gl_interface.h"
+#include "gl/utility//gl_clock.h"
 
-static const int LIGHTBUF_BINDINGPOINT = 1;
+static const int BUFFER_SIZE = 160000;	// This means 80000 lights per frame and 160000*16 bytes == 2.56 MB.
 
 FLightBuffer::FLightBuffer()
 {
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
-		mBufferSize = 80000;	// 40000 lights per scene should be plenty. The largest I've ever seen was around 5000.
+		mBlockAlign = 0;
 	}
 	else
 	{
 		mBufferType = GL_UNIFORM_BUFFER;
-		mBufferSize = gl.maxuniformblock / 4 - 100;	// we need to be a bit careful here so don't use the full buffer size
+		mBlockSize = 2048;// gl.maxuniformblock / 4 - 100;
+		mBlockAlign = 1024;// ((mBlockSize * 2) & ~(gl.uniformblockalignment - 1)) / 4;	// count in vec4's
 	}
-	AddBuffer();
+
+	glGenBuffers(1, &mBufferId);
+	glBindBuffer(mBufferType, mBufferId);
+	unsigned int bytesize = BUFFER_SIZE * 4 * sizeof(float);
+	if (gl.flags & RFL_BUFFER_STORAGE)
+	{
+		glBufferStorage(mBufferType, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		void *map = glMapBufferRange(mBufferType, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mBufferPointer = (float*)map;
+		glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
+	}
+	else
+	{
+		glBufferData(mBufferType, bytesize, NULL, GL_STREAM_DRAW);
+		mBufferPointer = NULL;
+	}
+
 	Clear();
+	mLastMappedIndex = UINT_MAX;
 }
 
 FLightBuffer::~FLightBuffer()
 {
 	glBindBuffer(mBufferType, 0);
-	for (unsigned int i = 0; i < mBufferIds.Size(); i++)
-	{
-		glDeleteBuffers(1, &mBufferIds[i]);
-	}
-}
-
-void FLightBuffer::AddBuffer()
-{
-	unsigned int id;
-	glGenBuffers(1, &id);
-	mBufferIds.Push(id);
-	glBindBuffer(mBufferType, id);
-	unsigned int bytesize = mBufferSize * 8 * sizeof(float);
-	if (gl.flags & RFL_BUFFER_STORAGE)
-	{
-		glBufferStorage(mBufferType, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		void *map = glMapBufferRange(mBufferType, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		mBufferPointers.Push((float*)map);
-	}
-	else
-	{
-		glBufferData(mBufferType, bytesize, NULL, GL_STREAM_DRAW);
-	}
+	glDeleteBuffers(1, &mBufferId);
 }
 
 void FLightBuffer::Clear()
 {
-	mBufferNum = 0;
 	mIndex = 0;
 	mBufferArray.Clear();
-	mBufferStart.Clear();
 }
 
-void FLightBuffer::UploadLights(FDynLightData &data, unsigned int &buffernum, unsigned int &bufferindex)
+int FLightBuffer::UploadLights(FDynLightData &data)
 {
 	int size0 = data.arrays[0].Size()/4;
 	int size1 = data.arrays[1].Size()/4;
 	int size2 = data.arrays[2].Size()/4;
 	int totalsize = size0 + size1 + size2 + 1;
 
-	if (totalsize == 0) return;
+	if (totalsize <= 1) return -1;
 
-	if (mIndex + totalsize > mBufferSize)
+	if (mIndex + totalsize > BUFFER_SIZE)
 	{
-		if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
-		{
-			return;	// we do not want multiple shader storage blocks. 40000 lights is too much already
-		}
-		else
-		{
-			mBufferNum++;
-			mBufferStart.Push(mIndex);
-			mIndex = 0;
-			if (mBufferIds.Size() <= mBufferNum) AddBuffer();
-		}
+		return -1;	// we ran out of space. All following lights will be ignored
 	}
 
 	float *copyptr;
 
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (mBufferPointer != NULL)
 	{
-		copyptr = mBufferPointers[mBufferNum] + mIndex * 4;
+		copyptr = mBufferPointer + mIndex * 4;
 	}
 	else
 	{
@@ -133,20 +119,48 @@ void FLightBuffer::UploadLights(FDynLightData &data, unsigned int &buffernum, un
 		copyptr = &mBufferArray[pos];
 	}
 
-	float parmcnt[] = { mIndex + 1, mIndex + 1 + size0, mIndex + 1 + size0 + size1, mIndex + totalsize };
+	float parmcnt[] = { 0, size0, size0 + size1, size0 + size1 + size2 };
 
 	memcpy(&copyptr[0], parmcnt, 4 * sizeof(float));
-	memcpy(&copyptr[1], &data.arrays[0][0], 4 * size0*sizeof(float));
-	memcpy(&copyptr[1 + size0], &data.arrays[1][0], 4 * size1*sizeof(float));
-	memcpy(&copyptr[1 + size0 + size1], &data.arrays[2][0], 4 * size2*sizeof(float));
-	buffernum = mBufferNum;
-	bufferindex = mIndex;
+	memcpy(&copyptr[4], &data.arrays[0][0], 4 * size0*sizeof(float));
+	memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], 4 * size1*sizeof(float));
+	memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], 4 * size2*sizeof(float));
+
+	if (mBufferPointer == NULL)	// if we can't persistently map the buffer we need to upload it after all lights have been added.
+	{
+		glBindBuffer(mBufferType, mBufferId);
+		glBufferSubData(mBufferType, mIndex, totalsize * 4 * sizeof(float), copyptr);
+	}
+
+	unsigned int bufferindex = mIndex;
 	mIndex += totalsize;
+	draw_dlight += (totalsize-1) / 2;
+	return bufferindex;
 }
 
 void FLightBuffer::Finish()
 {
-	//glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferIds[0]);
+	/*
+	if (!(gl.flags & RFL_BUFFER_STORAGE))	// if we can't persistently map the buffer we need to upload it after all lights have been added.
+	{
+		glBindBuffer(mBufferType, mBufferId);
+		glBufferSubData(mBufferType, 0, mBufferArray.Size() * sizeof(float), &mBufferArray[0]);
+	}
+	*/
+	Clear();
+}
+
+int FLightBuffer::BindUBO(unsigned int index)
+{
+	unsigned int offset = (index / mBlockAlign) * mBlockAlign;
+
+	if (offset != mLastMappedIndex)
+	{
+		// this will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start to all shader programs
+		mLastMappedIndex = offset;
+		glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTBUF_BINDINGPOINT, mBufferId, offset*16, mBlockSize*16);	// we go from counting vec4's to counting bytes here.
+	}
+	return (index - offset);
 }
 
 

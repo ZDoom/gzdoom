@@ -7,23 +7,25 @@ struct FDynLightData;
 class FLightBuffer
 {
 	TArray<float> mBufferArray;
-	TArray<unsigned int> mBufferIds;
-	TArray<unsigned int> mBufferStart;
-	TArray<float *> mBufferPointers;
-	unsigned int mBufferType;
-	unsigned int mBufferSize;
-	unsigned int mIndex;
-	unsigned int mBufferNum;
+	unsigned int mBufferId;
+	float * mBufferPointer;
 
-	void AddBuffer();
+	unsigned int mBufferType;
+	unsigned int mIndex;
+	unsigned int mLastMappedIndex;
+	unsigned int mBlockAlign;
+	unsigned int mBlockSize;
 
 public:
 
 	FLightBuffer();
 	~FLightBuffer();
 	void Clear();
-	void UploadLights(FDynLightData &data, unsigned int &buffernum, unsigned int &bufferindex);
+	int UploadLights(FDynLightData &data);
 	void Finish();
+	int BindUBO(unsigned int index);
+	unsigned int GetBlockSize() const { return mBlockSize; }
+	unsigned int GetBufferType() const { return mBufferType; }
 };
 
 #endif

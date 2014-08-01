@@ -30,6 +30,7 @@ struct RenderContext
 	unsigned int flags;
 	unsigned int maxuniforms;
 	unsigned int maxuniformblock;
+	unsigned int uniformblockalignment;
 	float version;
 	float glslversion;
 	int max_texturesize;

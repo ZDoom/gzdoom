@@ -187,7 +187,7 @@ class FShader
 	FUniform1i muFixedColormap;
 	FUniform4f muColormapStart;
 	FUniform4f muColormapRange;
-	FBufferedUniform4i muLightRange;
+	FBufferedUniform1i muLightIndex;
 	FBufferedUniformPE muFogColor;
 	FBufferedUniform4f muDynLightColor;
 	FBufferedUniformPE muObjectColor;
@@ -281,6 +281,10 @@ public:
 
 #define FIRST_USER_SHADER 12
 
+enum
+{
+	LIGHTBUF_BINDINGPOINT = 1
+};
 
 #endif
 

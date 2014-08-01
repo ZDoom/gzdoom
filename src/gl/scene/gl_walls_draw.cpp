@@ -53,6 +53,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_glow.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
@@ -150,15 +151,8 @@ void GLWall::SetupLights()
 		}
 		node = node->nextLight;
 	}
-	int numlights[3];
 
-	lightdata.Combine(numlights, gl.MaxLights());
-	if (numlights[2] > 0)
-	{
-		draw_dlight+=numlights[2]/2;
-		gl_RenderState.EnableLight(true);
-		gl_RenderState.SetLights(numlights, &lightdata.arrays[0][0]);
-	}
+	dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 }
 
 
@@ -187,6 +181,7 @@ void GLWall::RenderWall(int textured, unsigned int *store)
 	if (!(textured & RWF_NORENDER))
 	{
 		gl_RenderState.Apply();
+		gl_RenderState.ApplyLightIndex(dynlightindex);
 	}
 
 	// the rest of the code is identical for textured rendering and lights
@@ -383,7 +378,6 @@ void GLWall::Draw(int pass)
 		gltexture->Bind(flags, 0);
 		RenderWall(RWF_TEXTURED|RWF_GLOW);
 		gl_RenderState.EnableGlow(false);
-		gl_RenderState.EnableLight(false);
 		break;
 
 	case GLPASS_DECALS:

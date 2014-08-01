@@ -144,36 +144,3 @@ bool gl_GetLight(Plane & p, ADynamicLight * light, bool checkside, bool forceadd
 }
 
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-#if 0
-void gl_UploadLights(FDynLightData &data)
-{
-	ParameterBufferElement *pptr;
-	int size0 = data.arrays[0].Size()/4;
-	int size1 = data.arrays[1].Size()/4;
-	int size2 = data.arrays[2].Size()/4;
-
-	if (size0 + size1 + size2 > 0)
-	{
-		int sizetotal = size0 + size1 + size2 + 1;
-		int index = GLRenderer->mParmBuffer->Reserve(sizetotal, &pptr);
-
-		float parmcnt[] = { index + 1, index + 1 + size0, index + 1 + size0 + size1, index + 1 + size0 + size1 + size2 };
-
-		memcpy(&pptr[0], parmcnt, 4 * sizeof(float));
-		memcpy(&pptr[1], &data.arrays[0][0], 4 * size0*sizeof(float));
-		memcpy(&pptr[1 + size0], &data.arrays[1][0], 4 * size1*sizeof(float));
-		memcpy(&pptr[1 + size0 + size1], &data.arrays[2][0], 4 * size2*sizeof(float));
-		gl_RenderState.SetDynLightIndex(index);
-	}
-	else
-	{
-		gl_RenderState.SetDynLightIndex(-1);
-	}
-}
-#endif

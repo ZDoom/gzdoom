@@ -67,6 +67,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 
 //===========================================================================
 // 
@@ -97,6 +98,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	gl_spriteindex = 0;
 	mShaderManager = NULL;
 	glpart2 = glpart = mirrortexture = NULL;
+	mLights = NULL;
 }
 
 void FGLRenderer::Initialize()
@@ -108,6 +110,7 @@ void FGLRenderer::Initialize()
 	mVBO = new FFlatVertexBuffer;
 	mSkyVBO = new FSkyVertexBuffer;
 	mModelVBO = new FModelVertexBuffer;
+	mLights = new FLightBuffer;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	SetupLevel();
@@ -124,6 +127,7 @@ FGLRenderer::~FGLRenderer()
 	if (mVBO != NULL) delete mVBO;
 	if (mModelVBO) delete mModelVBO;
 	if (mSkyVBO != NULL) delete mSkyVBO;
+	if (mLights != NULL) delete mLights;
 	if (glpart2) delete glpart2;
 	if (glpart) delete glpart;
 	if (mirrortexture) delete mirrortexture;

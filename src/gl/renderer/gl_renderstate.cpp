@@ -48,6 +48,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_colormap.h"
+#include "gl/dynlights//gl_lightbuffer.h"
 
 void gl_SetTextureMode(int type);
 
@@ -68,9 +69,10 @@ TArray<VSMatrix> gl_MatrixStack;
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mBrightmapEnabled = mFogEnabled = mGlowEnabled = mLightEnabled = false;
+	mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mFogColor.d = -1;
 	mTextureMode = -1;
+	mLightIndex = -1;
 	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
@@ -98,7 +100,6 @@ void FRenderState::Reset()
 
 bool FRenderState::ApplyShader()
 {
-	FShader *activeShader;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		activeShader = GLRenderer->mShaderManager->BindEffect(mSpecialEffect);
@@ -139,6 +140,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muClipHeightBottom.Set(mClipHeightBottom);
 	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
+	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
 
 	if (mGlowEnabled)
 	{
@@ -157,17 +159,6 @@ bool FRenderState::ApplyShader()
 		activeShader->muGlowTopPlane.Set(nulvec);
 		activeShader->muGlowBottomPlane.Set(nulvec);
 		activeShader->currentglowstate = 0;
-	}
-
-	if (mLightEnabled)
-	{
-		activeShader->muLightRange.Set(mNumLights);
-		glUniform4fv(activeShader->lights_index, mNumLights[3], mLightData);
-	}
-	else
-	{
-		static const int nulint[] = { 0, 0, 0, 0 };
-		activeShader->muLightRange.Set(nulint);
 	}
 
 	if (mColormapState != activeShader->currentfixedcolormap)
@@ -281,4 +272,13 @@ void FRenderState::ApplyMatrices()
 	{
 		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix);
 	}
+}
+
+void FRenderState::ApplyLightIndex(int index)
+{
+	if (GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER && index > -1)
+	{
+		index = GLRenderer->mLights->BindUBO(index);
+	}
+	activeShader->muLightIndex.Set(index);
 }

@@ -38,7 +38,7 @@ uniform vec4 uLightAttr;
 uniform int uFogEnabled;
 
 // dynamic lights
-uniform ivec4 uLightRange;
+uniform int uLightIndex;
 
 // matrices
 uniform mat4 ProjectionMatrix;

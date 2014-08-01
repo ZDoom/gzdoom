@@ -191,17 +191,7 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 	if (alphatexture)
 	{
-		// thanks to deprecation and delayed introduction of a suitable replacement feature this has become a bit messy...
-		// Of all the targeted hardware, the Intel GMA 2000 and 3000 are the only ones not supporting texture swizzle, and they
-		// are also the only ones not supoorting GL 3.3. On those we are forced to use a full RGBA texture here.
-		if (gl.version >= 3.3f)
-		{
-			texformat = GL_R8;
-		}
-		else
-		{
-			texformat = GL_RGBA8;
-		}
+		texformat = GL_R8;
 	}
 	else if (forcenocompression)
 	{
@@ -246,7 +236,7 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 	if (deletebuffer) free(buffer);
 
 	if (mipmap && use_mipmapping && !forcenofiltering) glGenerateMipmap(GL_TEXTURE_2D);
-	if (alphatexture && gl.version >= 3.3f)
+	if (alphatexture)
 	{
 		static const GLint swizzleMask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
 		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);

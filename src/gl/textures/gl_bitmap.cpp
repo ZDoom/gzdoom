@@ -55,34 +55,17 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, bool alphatex,
 {
 	int i;
 
-	if (!alphatex || gl.version >= 3.3f)	// GL 3.3+ uses a GL_R8 texture for alpha textures so the channels can remain as they are.
+	for(i=0;i<count;i++)
 	{
-		for(i=0;i<count;i++)
+		if (T::A(pin) != 0)
 		{
-			if (T::A(pin) != 0)
-			{
-				pout[0]=T::R(pin);
-				pout[1]=T::G(pin);
-				pout[2]=T::B(pin);
-				pout[3]=T::A(pin);
-			}
-			pout+=4;
-			pin+=step;
+			pout[0]=T::R(pin);
+			pout[1]=T::G(pin);
+			pout[2]=T::B(pin);
+			pout[3]=T::A(pin);
 		}
-	}
-	else
-	{
-		// Alpha shade uses the red channel for true color pics
-		for(i=0;i<count;i++)
-		{
-			if (T::A(pin) != 0)
-			{
-				pout[0] = pout[1] =	pout[2] = 255;
-				pout[3] = T::R(pin);
-			}
-			pout+=4;
-			pin+=step;
-		}
+		pout+=4;
+		pin+=step;
 	}
 }
 
@@ -140,25 +123,12 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 		// alpha map with 0==transparent and 1==opaque
 		if (alphatex) 
 		{
-			if (gl.version < 3.3f)
+			for (int i = 0; i<256; i++)
 			{
-				for (int i = 0; i<256; i++)
-				{
-					if (palette[i].a != 0)
-						penew[i] = PalEntry(i, 255, 255, 255);
-					else
-						penew[i] = PalEntry(0, 255, 255, 255);	// If the palette contains transparent colors keep them.
-				}
-			}
-			else	// on GL 3.3+ we use a GL_R8 texture so the layout is different.
-			{
-				for (int i = 0; i<256; i++)
-				{
-					if (palette[i].a != 0)
-						penew[i] = PalEntry(255, i, 255, 255);
-					else
-						penew[i] = PalEntry(255, 0, 255, 255);	// If the palette contains transparent colors keep them.
-				}
+				if (palette[i].a != 0)
+					penew[i] = PalEntry(255, i, 255, 255);
+				else
+					penew[i] = PalEntry(255, 0, 255, 255);	// If the palette contains transparent colors keep them.
 			}
 		}
 		else if (translation > 0)

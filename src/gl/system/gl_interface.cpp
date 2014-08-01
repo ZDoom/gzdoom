@@ -52,8 +52,6 @@ RenderContext gl;
 
 int occlusion_type=0;
 
-CVAR(Bool, gl_persistent_avail, false, CVAR_NOSET);
-
 //==========================================================================
 //
 // 
@@ -118,11 +116,10 @@ void gl_LoadExtensions()
 	if (version == NULL) version = (const char*)glGetString(GL_VERSION);
 	else Printf("Emulating OpenGL v %s\n", version);
 
-
 	// Don't even start if it's lower than 3.0
-	if (strcmp(version, "3.0") < 0)
+	if (strcmp(version, "3.3") < 0 || !CheckExtension("GL_ARB_buffer_storage"))
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least GL 3.0 is required to run " GAMENAME ".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 3.3 and the »GL_ARB_buffer_storage« extension is required to run " GAMENAME ".\n");
 	}
 
 	// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version
@@ -134,16 +131,8 @@ void gl_LoadExtensions()
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
 	if (CheckExtension("GL_ARB_shader_storage_buffer_object")) gl.flags |= RFL_SHADER_STORAGE_BUFFER;
-	if (CheckExtension("GL_ARB_buffer_storage") && !Args->CheckParm("-nopersistentbuffers"))
-	{
-		gl.flags |= RFL_BUFFER_STORAGE;	// the cmdline option is for testing the fallback implementation on newer hardware.
-		gl_persistent_avail = true;
-	}
 	if (CheckExtension("GL_ARB_separate_shader_objects")) gl.flags |= RFL_SEPARATE_SHADER_OBJECTS;
-	if (!CheckExtension("GL_ARB_compatibility")) gl.flags |= RFL_COREPROFILE;
 	
-	if (!(gl.flags & (RFL_COREPROFILE|RFL_BUFFER_STORAGE)) && !strstr(gl.vendorstring, "NVIDIA Corporation")) gl.flags |= RFL_NOBUFFER;
-
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }

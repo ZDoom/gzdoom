@@ -124,14 +124,6 @@ OptionValue "FuzzStyle"
 	//5, "Jagged fuzz" I can't see any difference between this and 4 so it's disabled for now.
 }
 
-OptionValue "RenderMethods"
-{
-	0, "Immediate mode"
-	1, "Uniform array"
-	2, "Buffer upload"
-	3, "Mapped buffer"
-}
-
 OptionMenu "GLTextureGLOptions"
 {
 	Title "TEXTURE OPTIONS"
@@ -180,7 +172,6 @@ OptionMenu "GLPrefOptions"
 	Option "Particle style",			gl_particles_style,				"Particles"
 	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
 	Option "Rendering quality",			gl_render_precise,				"Precision"
-	Option "Render method",				gl_rendermethod,				"RenderMethods", 	"gl_persistent_avail"
 }
 
 OptionMenu "OpenGLOptions"

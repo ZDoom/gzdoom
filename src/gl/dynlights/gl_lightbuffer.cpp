@@ -64,18 +64,10 @@ FLightBuffer::FLightBuffer()
 	glGenBuffers(1, &mBufferId);
 	glBindBuffer(mBufferType, mBufferId);
 	unsigned int bytesize = BUFFER_SIZE * 4 * sizeof(float);
-	if (gl.flags & RFL_BUFFER_STORAGE)
-	{
-		glBufferStorage(mBufferType, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		void *map = glMapBufferRange(mBufferType, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		mBufferPointer = (float*)map;
-		glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
-	}
-	else
-	{
-		glBufferData(mBufferType, bytesize, NULL, GL_STREAM_DRAW);
-		mBufferPointer = NULL;
-	}
+	glBufferStorage(mBufferType, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	void *map = glMapBufferRange(mBufferType, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	mBufferPointer = (float*)map;
+	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
 
 	Clear();
 	mLastMappedIndex = UINT_MAX;
@@ -109,15 +101,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 
 	float *copyptr;
 
-	if (mBufferPointer != NULL)
-	{
-		copyptr = mBufferPointer + mIndex * 4;
-	}
-	else
-	{
-		unsigned int pos = mBufferArray.Reserve(totalsize * 4);
-		copyptr = &mBufferArray[pos];
-	}
+	copyptr = mBufferPointer + mIndex * 4;
 
 	float parmcnt[] = { 0, size0, size0 + size1, size0 + size1 + size2 };
 
@@ -125,12 +109,6 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	memcpy(&copyptr[4], &data.arrays[0][0], 4 * size0*sizeof(float));
 	memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], 4 * size1*sizeof(float));
 	memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], 4 * size2*sizeof(float));
-
-	if (mBufferPointer == NULL)	// if we can't persistently map the buffer we need to upload it after all lights have been added.
-	{
-		glBindBuffer(mBufferType, mBufferId);
-		glBufferSubData(mBufferType, mIndex, totalsize * 4 * sizeof(float), copyptr);
-	}
 
 	unsigned int bufferindex = mIndex;
 	mIndex += totalsize;
@@ -140,13 +118,6 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 
 void FLightBuffer::Finish()
 {
-	/*
-	if (!(gl.flags & RFL_BUFFER_STORAGE))	// if we can't persistently map the buffer we need to upload it after all lights have been added.
-	{
-		glBindBuffer(mBufferType, mBufferId);
-		glBufferSubData(mBufferType, 0, mBufferArray.Size() * sizeof(float), &mBufferArray[0]);
-	}
-	*/
 	Clear();
 }
 

@@ -740,14 +740,9 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 	m_hRC = NULL;
 	if (myWglCreateContextAttribsARB != NULL)
 	{
-#ifndef CORE_PROFILE
-		bool core = !!Args->CheckParm("-core");
-#else
-		bool core = true;
-#endif
 		// let's try to get the best version possible. Some drivers only give us the version we request
 		// which breaks all version checks for feature support. The highest used features we use are from version 4.4, and 3.0 is a requirement.
-		static int versions[] = { 44, 43, 42, 41, 40, 33, 32, 30, -1 };
+		static int versions[] = { 44, 43, 42, 41, 40, 33, -1 };
 
 		for (int i = 0; versions[i] > 0; i++)
 		{
@@ -755,18 +750,13 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 				WGL_CONTEXT_MAJOR_VERSION_ARB, versions[i] / 10,
 				WGL_CONTEXT_MINOR_VERSION_ARB, versions[i] % 10,
 				WGL_CONTEXT_FLAGS_ARB, gl_debug ? WGL_CONTEXT_DEBUG_BIT_ARB : 0,
-				WGL_CONTEXT_PROFILE_MASK_ARB, core? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 				0
 			};
 
 			m_hRC = myWglCreateContextAttribsARB(m_hDC, 0, ctxAttribs);
 			if (m_hRC != NULL) break;
 		}
-	}
-	if (m_hRC == 0)
-	{
-		// If we are unable to get a core context, let's try whatever the system gives us.
-		m_hRC = wglCreateContext(m_hDC);
 	}
 
 	if (m_hRC == NULL)

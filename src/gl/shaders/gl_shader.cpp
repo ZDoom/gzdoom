@@ -94,17 +94,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+		vp_comb.Format("#version 330 core\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 	}
 	else
 	{
-		vp_comb = "#version 400 compatibility\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
-	}
-
-	if (!(gl.flags & RFL_BUFFER_STORAGE))
-	{
-		// we only want the uniform array hack in the shader if we actually need it.
-		vp_comb << "#define UNIFORM_VB\n";
+		vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
 	}
 
 	vp_comb << defines << i_data.GetString().GetChars();
@@ -306,7 +300,7 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
 
-	if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)
+	if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)	// this check is just for safety. All supported hardware reports this extension as being present.
 	{
 		glProgramUniformMatrix4fv(hShader, projectionmatrix_index, 1, false, proj->get());
 		glProgramUniformMatrix4fv(hShader, viewmatrix_index, 1, false, view->get());

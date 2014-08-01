@@ -31,6 +31,9 @@ extern short *openings;
 extern ptrdiff_t lastopening;
 extern size_t maxopenings;
 
+int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc);
+int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc);
+
 ptrdiff_t R_NewOpening (ptrdiff_t len);
 
 void R_CheckDrawSegs ();

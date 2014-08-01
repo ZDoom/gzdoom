@@ -51,12 +51,11 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "r_bsp.h"
+#include "r_segs.h"
 #include "v_palette.h"
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
-
-int WallMost (short *mostbuf, const secplane_t &plane);
 
 seg_t*			curline;
 side_t* 		sidedef;
@@ -693,12 +692,12 @@ void R_AddLine (seg_t *line)
 		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
 		{
 			rw_havehigh = true;
-			WallMost (wallupper, backsector->ceilingplane);
+			WallMost (wallupper, backsector->ceilingplane, &WallC);
 		}
 		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
 		{
 			rw_havelow = true;
-			WallMost (walllower, backsector->floorplane);
+			WallMost (walllower, backsector->floorplane, &WallC);
 		}
 
 		// Closed door.
@@ -800,8 +799,8 @@ void R_AddLine (seg_t *line)
 	}
 	else
 	{
-		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane);
-		rw_floorstat = WallMost (wallbottom, frontsector->floorplane);
+		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane, &WallC);
+		rw_floorstat = WallMost (wallbottom, frontsector->floorplane, &WallC);
 
 		// [RH] treat off-screen walls as solid
 #if 0	// Maybe later...

@@ -108,10 +108,6 @@
 #include "r_renderer.h"
 #include "p_local.h"
 
-#ifdef USE_POLYMOST
-#include "r_polymost.h"
-#endif
-
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
 
@@ -186,9 +182,6 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 	}
 }
 
-#ifdef USE_POLYMOST
-CVAR(Bool, testpolymost, false, 0)
-#endif
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 CVAR (Int, snd_drawoutput, 0, 0);
@@ -282,10 +275,6 @@ void D_ProcessEvents (void)
 			continue;				// console ate the event
 		if (M_Responder (ev))
 			continue;				// menu ate the event
-		#ifdef USE_POLYMOST
-			if (testpolymost)
-				Polymost_Responder (ev);
-		#endif
 		G_Responder (ev);
 	}
 }
@@ -307,9 +296,6 @@ void D_PostEvent (const event_t *ev)
 	}
 	events[eventhead] = *ev;
 	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling
-#ifdef USE_POLYMOST
-		&& !testpolymost		
-#endif
 		)
 	{
 		if (Button_Mlook.bDown || freelook)
@@ -743,15 +729,7 @@ void D_Display ()
 
 	hw2d = false;
 
-#ifdef USE_POLYMOST
-	if (testpolymost)
-	{
-		drawpolymosttest();
-		C_DrawConsole(hw2d);
-		M_Drawer();
-	}
-	else
-#endif
+
 	{
 		unsigned int nowtime = I_FPSTime();
 		TexMan.UpdateAnimations(nowtime);

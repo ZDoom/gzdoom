@@ -36,6 +36,8 @@ struct FWallCoords
 
 	int			SX1, SX2;	// x coords at left, right of wall in screen space
 	fixed_t		SZ1, SZ2;	// depth at left, right of wall in screen space
+
+	bool Init(int x1, int y1, int x2, int y2, int too_close);
 };
 
 struct FWallTmapVals
@@ -43,6 +45,10 @@ struct FWallTmapVals
 	float		DepthOrg, DepthScale;
 	float		UoverZorg, UoverZstep;
 	float		InvZorg, InvZstep;
+
+	void InitFromWallCoords(const FWallCoords *wallc);
+	void InitFromLine(int x1, int y1, int x2, int y2);
+	void InitDepth();
 };
 
 enum

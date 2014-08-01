@@ -3048,76 +3048,16 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	ly  = decaly - FixedMul (x1, finesine[ang]) - viewy;
 	ly2 = decaly + FixedMul (x2, finesine[ang]) - viewy;
 
-	WallC.TX1 = DMulScale20 (lx,  viewsin, -ly,  viewcos);
-	WallC.TX2 = DMulScale20 (lx2, viewsin, -ly2, viewcos);
-
-	WallC.TY1 = DMulScale20 (lx, viewtancos,  ly, viewtansin);
-	WallC.TY2 = DMulScale20 (lx2, viewtancos, ly2, viewtansin);
-
-	if (MirrorFlags & RF_XFLIP)
-	{
-		int t = 256-WallC.TX1;
-		WallC.TX1 = 256-WallC.TX2;
-		WallC.TX2 = t;
-		swapvalues (WallC.TY1, WallC.TY2);
-	}
-
-	if (WallC.TX1 >= -WallC.TY1)
-	{
-		if (WallC.TX1 > WallC.TY1) goto done;	// left edge is off the right side
-		if (WallC.TY1 == 0) goto done;
-		x1 = (centerxfrac + Scale (WallC.TX1, centerxfrac, WallC.TY1)) >> FRACBITS;
-		if (WallC.TX1 >= 0) x1 = MIN (viewwidth, x1+1); // fix for signed divide
-		WallC.SZ1 = WallC.TY1;
-	}
-	else
-	{
-		if (WallC.TX2 < -WallC.TY2) goto done;	// wall is off the left side
-		fixed_t den = WallC.TX1 - WallC.TX2 - WallC.TY2 + WallC.TY1;	
-		if (den == 0) goto done;
-		x1 = 0;
-		WallC.SZ1 = WallC.TY1 + Scale (WallC.TY2 - WallC.TY1, WallC.TX1 + WallC.TY1, den);
-	}
-
-	if (WallC.SZ1 < TOO_CLOSE_Z)
+	if (WallC.Init(lx, ly, lx2, ly2, TOO_CLOSE_Z))
 		goto done;
 
-	if (WallC.TX2 <= WallC.TY2)
-	{
-		if (WallC.TX2 < -WallC.TY2) goto done;	// right edge is off the left side
-		if (WallC.TY2 == 0) goto done;
-		x2 = (centerxfrac + Scale (WallC.TX2, centerxfrac, WallC.TY2)) >> FRACBITS;
-		if (WallC.TX2 >= 0) x2 = MIN (viewwidth, x2+1);	// fix for signed divide
-		WallC.SZ2 = WallC.TY2;
-	}
-	else
-	{
-		if (WallC.TX1 > WallC.TY1) goto done;	// wall is off the right side
-		fixed_t den = WallC.TY2 - WallC.TY1 - WallC.TX2 + WallC.TX1;
-		if (den == 0) goto done;
-		x2 = viewwidth;
-		WallC.SZ2 = WallC.TY1 + Scale (WallC.TY2 - WallC.TY1, WallC.TX1 - WallC.TY1, den);
-	}
+	x1 = WallC.SX1;
+	x2 = WallC.SX2;
 
-	if (x1 >= x2 || x1 > clipper->x2 || x2 <= clipper->x1 || WallC.SZ2 < TOO_CLOSE_Z)
+	if (x1 > clipper->x2 || x2 <= clipper->x1)
 		goto done;
 
-	if (MirrorFlags & RF_XFLIP)
-	{
-		WallT.UoverZorg = (float)WallC.TX2 * WallTMapScale;
-		WallT.UoverZstep = (float)(-WallC.TY2) * 32.f;
-		WallT.InvZorg = (float)(WallC.TX2 - WallC.TX1) * WallTMapScale;
-		WallT.InvZstep = (float)(WallC.TY1 - WallC.TY2) * 32.f;
-	}
-	else
-	{
-		WallT.UoverZorg = (float)WallC.TX1 * WallTMapScale;
-		WallT.UoverZstep = (float)(-WallC.TY1) * 32.f;
-		WallT.InvZorg = (float)(WallC.TX1 - WallC.TX2) * WallTMapScale;
-		WallT.InvZstep = (float)(WallC.TY2 - WallC.TY1) * 32.f;
-	}
-	WallT.DepthScale = WallT.InvZstep * WallTMapScale2;
-	WallT.DepthOrg = -WallT.UoverZstep * WallTMapScale2;
+	WallT.InitFromWallCoords(&WallC);
 
 	// Get the top and bottom clipping arrays
 	switch (decal->RenderFlags & RF_CLIPMASK)

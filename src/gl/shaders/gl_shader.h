@@ -249,6 +249,7 @@ public:
 class FShaderManager
 {
 	TArray<FShader*> mTextureEffects;
+	TArray<FShader*> mTextureEffectsNAT;
 	FShader *mActiveShader;
 	FShader *mEffectShaders[MAX_EFFECTS];
 
@@ -268,9 +269,13 @@ public:
 		return mActiveShader;
 	}
 
-	FShader *Get(unsigned int eff)
+	FShader *Get(unsigned int eff, bool alphateston)
 	{
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
+		if (!alphateston && eff <= 3)
+		{
+			return mTextureEffectsNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
+		}
 		if (eff < mTextureEffects.Size())
 		{
 			return mTextureEffects[eff];

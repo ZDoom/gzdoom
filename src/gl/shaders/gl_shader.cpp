@@ -299,18 +299,9 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 
 void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-
-	if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)	// this check is just for safety. All supported hardware reports this extension as being present.
-	{
-		glProgramUniformMatrix4fv(hShader, projectionmatrix_index, 1, false, proj->get());
-		glProgramUniformMatrix4fv(hShader, viewmatrix_index, 1, false, view->get());
-	}
-	else
-	{
-		Bind();
-		glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
-		glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
-	}
+	Bind();
+	glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
+	glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
 }
 
 
@@ -396,6 +387,8 @@ void FShaderManager::CompileShaders()
 {
 	mActiveShader = NULL;
 
+	mTextureEffects.Clear();
+	mTextureEffectsNAT.Clear();
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		mEffectShaders[i] = NULL;
@@ -405,6 +398,11 @@ void FShaderManager::CompileShaders()
 	{
 		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true);
 		mTextureEffects.Push(shc);
+		if (i <= 3)
+		{
+			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false);
+			mTextureEffectsNAT.Push(shc);
+		}
 	}
 
 	for(unsigned i = 0; i < usershaders.Size(); i++)
@@ -439,6 +437,10 @@ void FShaderManager::Clean()
 	glUseProgram(0);
 	mActiveShader = NULL;
 
+	for (unsigned int i = 0; i < mTextureEffectsNAT.Size(); i++)
+	{
+		if (mTextureEffectsNAT[i] != NULL) delete mTextureEffectsNAT[i];
+	}
 	for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
 	{
 		if (mTextureEffects[i] != NULL) delete mTextureEffects[i];
@@ -449,6 +451,7 @@ void FShaderManager::Clean()
 		mEffectShaders[i] = NULL;
 	}
 	mTextureEffects.Clear();
+	mTextureEffectsNAT.Clear();
 }
 
 //==========================================================================
@@ -513,10 +516,12 @@ EXTERN_CVAR(Int, gl_fuzztype)
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	for (int i = 0; i <= 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		mTextureEffects[i]->ApplyMatrices(proj, view);
+		mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
 	}
+	mTextureEffects[4]->ApplyMatrices(proj, view);
 	if (gl_fuzztype != 0)
 	{
 		mTextureEffects[4+gl_fuzztype]->ApplyMatrices(proj, view);
@@ -529,6 +534,7 @@ void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 	{
 		mEffectShaders[i]->ApplyMatrices(proj, view);
 	}
+	if (mActiveShader != NULL) mActiveShader->Bind();
 }
 
 //==========================================================================

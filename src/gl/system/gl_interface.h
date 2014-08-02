@@ -9,9 +9,7 @@ enum RenderFlags
 	RFL_TEXTURE_COMPRESSION=1,
 	RFL_TEXTURE_COMPRESSION_S3TC=2,
 
-	RFL_SEPARATE_SHADER_OBJECTS = 4,	// we need this extension for glProgramUniform. On hardware not supporting it we need some rather clumsy workarounds
-	RFL_SHADER_STORAGE_BUFFER = 16,		// to be used later for a parameter buffer
-	RFL_BASEINDEX = 32,					// currently unused
+	RFL_SHADER_STORAGE_BUFFER = 4,		// to be used later for a parameter buffer
 };
 
 enum TexMode

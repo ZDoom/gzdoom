@@ -52,13 +52,15 @@ FLightBuffer::FLightBuffer()
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
-		mBlockAlign = 0;
+		mBlockAlign = -1;
+		mBlockSize = BUFFER_SIZE;
 	}
 	else
 	{
 		mBufferType = GL_UNIFORM_BUFFER;
-		mBlockSize = 2048;// gl.maxuniformblock / 4 - 100;
-		mBlockAlign = 1024;// ((mBlockSize * 2) & ~(gl.uniformblockalignment - 1)) / 4;	// count in vec4's
+		mBlockSize = gl.maxuniformblock / 16;
+		if (mBlockSize > 2048) mBlockSize = 2048;	// we don't really need a larger buffer
+		mBlockAlign = mBlockSize / 2;
 	}
 
 	glGenBuffers(1, &mBufferId);
@@ -91,6 +93,30 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	int size1 = data.arrays[1].Size()/4;
 	int size2 = data.arrays[2].Size()/4;
 	int totalsize = size0 + size1 + size2 + 1;
+
+	if (mBlockAlign >= 0 && totalsize + (mIndex % mBlockAlign) > mBlockSize)
+	{
+		mIndex = ((mIndex + mBlockAlign) / mBlockAlign) * mBlockAlign;
+
+		// can't be rendered all at once.
+		if (totalsize > mBlockSize)
+		{
+			int diff = totalsize - mBlockSize;
+
+			size2 -= diff;
+			if (size2 < 0)
+			{
+				size1 += size2;
+				size2 = 0;
+			}
+			if (size1 < 0)
+			{
+				size0 += size1;
+				size1 = 0;
+			}
+			totalsize = size0 + size1 + size2 + 1;
+		}
+	}
 
 	if (totalsize <= 1) return -1;
 

@@ -106,8 +106,7 @@ bool FRenderState::ApplyShader()
 	}
 	else
 	{
-		// todo: check how performance is affected by using 'discard' in a shader and if necessary create a separate set of discard-less shaders.
-		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4);
+		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4, mAlphaThreshold >= 0.f);
 		activeShader->Bind();
 	}
 

@@ -299,18 +299,9 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 
 void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-
-	if (gl.flags & RFL_SEPARATE_SHADER_OBJECTS)	// this check is just for safety. All supported hardware reports this extension as being present.
-	{
-		glProgramUniformMatrix4fv(hShader, projectionmatrix_index, 1, false, proj->get());
-		glProgramUniformMatrix4fv(hShader, viewmatrix_index, 1, false, view->get());
-	}
-	else
-	{
-		Bind();
-		glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
-		glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
-	}
+	Bind();
+	glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
+	glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
 }
 
 

@@ -520,6 +520,7 @@ void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 	{
 		mEffectShaders[i]->ApplyMatrices(proj, view);
 	}
+	if (mActiveShader != NULL) mActiveShader->Bind();
 }
 
 //==========================================================================

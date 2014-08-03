@@ -41,7 +41,7 @@ static inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 		 :   "a,a,a,a,a,a" (a),
 		     "m,r,m,r,d,d" (b),
 		     "r,r,m,m,r,m" (c)
-		 : "%cc"
+		 : "cc"
 			);
 
 	return result;
@@ -59,7 +59,7 @@ static inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
 		 :  "a,a,a,a" (a),
 		    "m,r,m,r" (b),
 		    "c,c,I,I" (c)
-		 : "%cc"
+		 : "cc"
 			);
 	return result;
 }
@@ -210,7 +210,7 @@ static inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
 		: "a" (lo),
 		  "d" (hi),
 		  "r" (b)
-		: "%cc");
+		: "cc");
 	return result;
 }
 
@@ -226,7 +226,7 @@ static inline SDWORD DivScale1 (SDWORD a, SDWORD b)
 		 "=&d,d" (dummy)
 		: "a,a" (a),
 		  "r,m" (b)
-		: "%cc");
+		: "cc");
 	return result;
 }
 
@@ -241,7 +241,7 @@ static inline SDWORD DivScale1 (SDWORD a, SDWORD b)
 			: "a,a" (a<<s), \
 			  "d,d" (a>>(32-s)), \
 			  "r,m" (b) \
-			: "%cc"); \
+			: "cc"); \
 		return result; \
 	}
 
@@ -287,7 +287,7 @@ static inline SDWORD DivScale32 (SDWORD a, SDWORD b)
 		 "=d,d" (dummy)
 		: "d,d" (a),
 		  "r,m" (b)
-		: "%cc");
+		: "cc");
 	return result;
 }
 
@@ -313,7 +313,7 @@ static inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 		 "rep stosw"
 		:"=D" (buff), "=c" (count)
 		:"D" (buff), "c" (count), "a" (clear|(clear<<16))
-		:"%cc");
+		:"cc");
 }
 
 static inline SDWORD ksgn (SDWORD a)
@@ -327,6 +327,6 @@ static inline SDWORD ksgn (SDWORD a)
 		 "adc $0,%1"
 		:"=r" (dummy), "=r" (result)
 		:"0" (a)
-		:"%cc");
+		:"cc");
 	return result;
 }

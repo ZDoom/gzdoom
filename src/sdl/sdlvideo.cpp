@@ -15,6 +15,10 @@
 
 #include <SDL.h>
 
+#ifdef __APPLE__
+#include <OpenGL/OpenGL.h>
+#endif // __APPLE__
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -42,6 +46,8 @@ public:
 	bool IsFullscreen ();
 
 	friend class SDLVideo;
+
+	virtual void SetVSync (bool vsync);
 
 private:
 	PalEntry SourcePalette[256];
@@ -82,6 +88,7 @@ extern bool GUICapture;
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Bool, vid_vsync)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -326,6 +333,7 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdateColors ();
+	SetVSync (vid_vsync);
 }
 
 SDLFB::~SDLFB ()
@@ -533,6 +541,19 @@ void SDLFB::GetFlashedPalette (PalEntry pal[256])
 bool SDLFB::IsFullscreen ()
 {
 	return (Screen->flags & SDL_FULLSCREEN) != 0;
+}
+
+void SDLFB::SetVSync (bool vsync)
+{
+#ifdef __APPLE__
+	if (CGLContextObj context = CGLGetCurrentContext())
+	{
+		// Apply vsync for native backend only (where OpenGL context is set)
+
+		const GLint value = vsync ? 1 : 0;
+		CGLSetParameter(context, kCGLCPSwapInterval, &value);
+	}
+#endif // __APPLE__
 }
 
 ADD_STAT (blit)

@@ -559,11 +559,13 @@ set( PLAT_SDL_SOURCES
 	sdl/crashcatcher.c
 	sdl/hardware.cpp
 	sdl/i_cd.cpp
+	sdl/i_cursor.cpp
 	sdl/i_input.cpp
 	sdl/i_joystick.cpp
 	sdl/i_main.cpp
 	sdl/i_movie.cpp
 	sdl/i_system.cpp
+	sdl/i_timer.cpp
 	sdl/sdlvideo.cpp
 	sdl/st_start.cpp )
 set( PLAT_MAC_SOURCES

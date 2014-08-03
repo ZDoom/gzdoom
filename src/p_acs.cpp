@@ -1677,7 +1677,7 @@ void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
 
 static int ParseLocalArrayChunk(void *chunk, ACSLocalArrays *arrays, int offset)
 {
-	unsigned count = (LittleShort(((unsigned *)chunk)[1]) - 2) / 4;
+	unsigned count = (LittleShort(static_cast<unsigned short>(((unsigned *)chunk)[1]) - 2)) / 4;
 	int *sizes = (int *)((BYTE *)chunk + 10);
 	arrays->Count = count;
 	if (count > 0)

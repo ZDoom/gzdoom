@@ -23,6 +23,7 @@
 #ifndef __R_THINGS__
 #define __R_THINGS__
 
+#include "r_bsp.h"
 
 // A vissprite_t is a thing
 //	that will be drawn during a refresh.
@@ -31,7 +32,6 @@
 struct vissprite_t
 {
 	short			x1, x2;
-	fixed_t			cx;				// for line side calculation
 	fixed_t			gx, gy, gz;		// origin in world coordinates
 	angle_t			angle;
 	fixed_t			gzb, gzt;		// global bottom / top for silhouette clipping
@@ -43,18 +43,26 @@ struct vissprite_t
 	fixed_t			floorclip;
 	union
 	{
-		// Used by regular sprites
+		FTexture *pic;
+		struct FVoxel *voxel;
+	};
+	union
+	{
+		// Used by face sprites
 		struct
 		{
-			FTexture *pic;
 			fixed_t	texturemid;
 			fixed_t	startfrac;		// horizontal position of x1
 			fixed_t	xiscale;		// negative if flipped
 		};
+		// Used by wall sprites
+		struct
+		{
+			FWallCoords wallc;
+		};
 		// Used by voxels
 		struct
 		{
-			struct FVoxel *voxel;
 			fixed_t vx, vy, vz;		// view origin
 			angle_t vang;			// view angle
 		};
@@ -64,6 +72,7 @@ struct vissprite_t
 	F3DFloor		*fakefloor;
 	F3DFloor		*fakeceiling;
 	BYTE			bIsVoxel:1;		// [RH] Use voxel instead of pic
+	BYTE			bWallSprite:1;	// [RH] This is a wall sprite
 	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
 	BYTE			bInMirror:1;	// [RH] Sprite is "inside" a mirror
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
@@ -99,9 +108,11 @@ extern fixed_t			pspritexscale;
 extern fixed_t			pspriteyscale;
 extern fixed_t			pspritexiscale;
 
+extern FTexture			*WallSpriteTile;
+
 
 void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans);
-
+void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), size_t first);

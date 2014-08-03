@@ -2244,24 +2244,8 @@ void FSlide::HitSlideLine (line_t* ld)
 		slidemo->z <= slidemo->floorz &&
 		P_GetFriction (slidemo, NULL) > ORIG_FRICTION;
 
-	if (ld->slopetype == ST_HORIZONTAL)
-	{
-		if (icyfloor && (abs(tmymove) > abs(tmxmove)))
-		{
-			tmxmove /= 2; // absorb half the velocity
-			tmymove = -tmymove/2;
-			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
-			{
-				S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
-			}
-		}
-		else
-			tmymove = 0; // no more movement in the Y direction
-		return;
-	}
-
-	if (ld->slopetype == ST_VERTICAL)
-	{
+	if (ld->dx == 0)
+	{ // ST_VERTICAL
 		if (icyfloor && (abs(tmxmove) > abs(tmymove)))
 		{
 			tmxmove = -tmxmove/2; // absorb half the velocity
@@ -2273,6 +2257,22 @@ void FSlide::HitSlideLine (line_t* ld)
 		}																		//   |
 		else																	// phares
 			tmxmove = 0; // no more movement in the X direction
+		return;
+	}
+
+	if (ld->dy == 0)
+	{ // ST_HORIZONTAL
+		if (icyfloor && (abs(tmymove) > abs(tmxmove)))
+		{
+			tmxmove /= 2; // absorb half the velocity
+			tmymove = -tmymove/2;
+			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
+			{
+				S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+			}
+		}
+		else
+			tmymove = 0; // no more movement in the Y direction
 		return;
 	}
 

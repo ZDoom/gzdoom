@@ -26,13 +26,45 @@
 #include "tarray.h"
 #include <stddef.h>
 
+// The 3072 below is just an arbitrary value picked to avoid
+// drawing lines the player is too close to that would overflow
+// the texture calculations.
+#define TOO_CLOSE_Z 3072
+
+struct FWallCoords
+{
+	fixed_t		TX1, TX2;	// x coords at left, right of wall in view space
+	fixed_t		TY1, TY2;	// y coords at left, right of wall in view space
+
+	fixed_t		CX1, CX2;	// x coords at left, right of wall in camera space
+	fixed_t		CY1, CY2;	// y coords at left, right of wall in camera space
+
+	int			SX1, SX2;	// x coords at left, right of wall in screen space
+	fixed_t		SZ1, SZ2;	// depth at left, right of wall in screen space
+
+	bool Init(int x1, int y1, int x2, int y2, int too_close);
+};
+
+struct FWallTmapVals
+{
+	float		DepthOrg, DepthScale;
+	float		UoverZorg, UoverZstep;
+	float		InvZorg, InvZstep;
+
+	void InitFromWallCoords(const FWallCoords *wallc);
+	void InitFromLine(int x1, int y1, int x2, int y2);
+	void InitDepth();
+};
+
+extern FWallCoords WallC;
+extern FWallTmapVals WallT;
+
 enum
 {
 	FAKED_Center,
 	FAKED_BelowFloor,
 	FAKED_AboveCeiling
 };
-
 
 struct drawseg_t
 {
@@ -58,7 +90,7 @@ struct drawseg_t
 	int fake;	// ident fake drawseg, don't draw and clip sprites
 // backups
 	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures
-	float WallUoverZorg, WallUoverZstep, WallInvZorg, WallInvZstep, WallDepthScale, WallDepthOrg;
+	FWallTmapVals tmapvals;
 };
 
 

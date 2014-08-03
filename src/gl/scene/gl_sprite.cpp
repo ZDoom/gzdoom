@@ -678,7 +678,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		bool mirror;
 		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->angle, &mirror);
 		if (!patch.isValid()) return;
-		gltexture=FMaterial::ValidateTexture(patch, false);
+		gltexture = FMaterial::ValidateTexture(patch, false);
 		if (!gltexture) return;
 
 		vt = gltexture->GetSpriteVT();
@@ -686,7 +686,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		gltexture->GetRect(&r, GLUSE_SPRITE);
 		if (mirror)
 		{
-			r.left=-r.width-r.left;	// mirror the sprite's x-offset
+			r.left = -r.width - r.left;	// mirror the sprite's x-offset
 			ul = gltexture->GetSpriteUL();
 			ur = gltexture->GetSpriteUR();
 		}
@@ -696,28 +696,46 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			ur = gltexture->GetSpriteUL();
 		}
 
-		r.Scale(FIXED2FLOAT(spritescaleX),FIXED2FLOAT(spritescaleY));
+		r.Scale(FIXED2FLOAT(spritescaleX), FIXED2FLOAT(spritescaleY));
 
-		float rightfac=-r.left;
-		float leftfac=rightfac-r.width;
+		float rightfac = -r.left;
+		float leftfac = rightfac - r.width;
 
-		z1=z-r.top;
-		z2=z1-r.height;
+		z1 = z - r.top;
+		z2 = z1 - r.height;
 
 		float spriteheight = FIXED2FLOAT(spritescaleY) * gltexture->GetScaledHeightFloat(GLUSE_SPRITE);
-		
+
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
 			PerformSpriteClipAdjustment(thing, thingx, thingy, spriteheight);
 		}
-		float viewvecX = GLRenderer->mViewVector.X;
-		float viewvecY = GLRenderer->mViewVector.Y;
 
-		x1=x-viewvecY*leftfac;
-		x2=x-viewvecY*rightfac;
-		y1=y+viewvecX*leftfac;
-		y2=y+viewvecX*rightfac;		
+		float viewvecX;
+		float viewvecY;
+		switch (thing->renderflags & RF_SPRITETYPEMASK)
+		{
+		case RF_FACESPRITE:
+			viewvecX = GLRenderer->mViewVector.X;
+			viewvecY = GLRenderer->mViewVector.Y;
+
+			x1 = x - viewvecY*leftfac;
+			x2 = x - viewvecY*rightfac;
+			y1 = y + viewvecX*leftfac;
+			y2 = y + viewvecX*rightfac;
+			break;
+
+		case RF_WALLSPRITE:
+			viewvecX = FIXED2FLOAT(finecosine[thing->angle >> ANGLETOFINESHIFT]);
+			viewvecY = FIXED2FLOAT(finesine[thing->angle >> ANGLETOFINESHIFT]);
+
+			x1 = x + viewvecY*leftfac;
+			x2 = x + viewvecY*rightfac;
+			y1 = y - viewvecX*leftfac;
+			y2 = y - viewvecX*rightfac;
+			break;
+		}
 	}
 	else 
 	{
@@ -887,6 +905,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	particle=NULL;
 	
 	const bool drawWithXYBillboard = ( !(actor->renderflags & RF_FORCEYBILLBOARD)
+									   && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
 									   && players[consoleplayer].camera
 									   && (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD ) );
 

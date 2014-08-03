@@ -1421,7 +1421,11 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 		case 'V':
 			TabbedLast = false;
 			TabbedList = false;
+#ifdef __APPLE__
+			if (ev->data3 & GKM_META)
+#else // !__APPLE__
 			if (ev->data3 & GKM_CTRL)
+#endif // __APPLE__
 			{
 				if (data1 == 'C')
 				{ // copy to clipboard

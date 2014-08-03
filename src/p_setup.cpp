@@ -1858,6 +1858,7 @@ void P_SpawnThings (int position)
 		{
 			SetMapThingUserData(actor, *udi);
 		}
+		if (actor != NULL) actor->renderflags |= RF_WALLSPRITE;
 	}
 	for(int i=0; i<MAXPLAYERS; i++)
 	{

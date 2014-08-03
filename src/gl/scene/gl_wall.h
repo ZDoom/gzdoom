@@ -324,6 +324,7 @@ public:
 
 	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();
+	void PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight);
 
 public:
 

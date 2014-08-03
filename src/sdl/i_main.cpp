@@ -75,6 +75,10 @@
 
 extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(char*, char*));
 
+#ifdef __APPLE__
+void Mac_I_FatalError(const char* errortext);
+#endif
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -356,6 +360,11 @@ int main (int argc, char **argv)
 		I_ShutdownJoysticks();
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());
+
+#ifdef __APPLE__
+		Mac_I_FatalError(error.GetMessage());
+#endif // __APPLE__
+
 		exit (-1);
     }
     catch (...)

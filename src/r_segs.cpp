@@ -64,11 +64,6 @@ CVAR(Bool, r_np2, true, 0)
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
 
-// The 3072 below is just an arbitrary value picked to avoid
-// drawing lines the player is too close to that would overflow
-// the texture calculations.
-#define TOO_CLOSE_Z 3072
-
 extern fixed_t globaluclip, globaldclip;
 
 
@@ -86,10 +81,6 @@ fixed_t rw_offset_top;
 fixed_t rw_offset_mid;
 fixed_t rw_offset_bottom;
 
-void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
-void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
-extern FWallCoords WallC;
-extern FWallTmapVals WallT;
 
 int		wallshade;
 
@@ -139,7 +130,6 @@ static fixed_t	rw_bottomtexturescaley;
 FTexture		*rw_pic;
 
 static fixed_t	*maskedtexturecol;
-static FTexture	*WallSpriteTile;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
@@ -3216,8 +3206,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				{ // calculate lighting
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
-
-				WallSpriteColumn (R_DrawMaskedColumn);
+				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
 			}
 
@@ -3230,7 +3219,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
 				{
-					WallSpriteColumn (R_DrawMaskedColumnHoriz);
+					R_WallSpriteColumn (R_DrawMaskedColumnHoriz);
 					dc_x++;
 				}
 				rt_draw4cols (dc_x - 4);
@@ -3242,8 +3231,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 				{ // calculate lighting
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
-
-				WallSpriteColumn (R_DrawMaskedColumn);
+				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
 			}
 		}
@@ -3263,22 +3251,4 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	R_FinishSetPatchStyle ();
 done:
 	WallC = savecoord;
-}
-
-static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
-{
-	unsigned int texturecolumn = lwall[dc_x] >> FRACBITS;
-	dc_iscale = MulScale16 (swall[dc_x], rw_offset);
-	spryscale = SafeDivScale32 (1, dc_iscale);
-	if (sprflipvert)
-		sprtopscreen = centeryfrac + FixedMul (dc_texturemid, spryscale);
-	else
-		sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
-
-	const BYTE *column;
-	const FTexture::Span *spans;
-	column = WallSpriteTile->GetColumn (texturecolumn, &spans);
-	dc_texturefrac = 0;
-	drawfunc (column, spans);
-	rw_light += rw_lightstep;
 }

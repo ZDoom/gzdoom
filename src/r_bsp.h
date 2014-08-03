@@ -26,6 +26,11 @@
 #include "tarray.h"
 #include <stddef.h>
 
+// The 3072 below is just an arbitrary value picked to avoid
+// drawing lines the player is too close to that would overflow
+// the texture calculations.
+#define TOO_CLOSE_Z 3072
+
 struct FWallCoords
 {
 	fixed_t		TX1, TX2;	// x coords at left, right of wall in view space
@@ -50,6 +55,9 @@ struct FWallTmapVals
 	void InitFromLine(int x1, int y1, int x2, int y2);
 	void InitDepth();
 };
+
+extern FWallCoords WallC;
+extern FWallTmapVals WallT;
 
 enum
 {

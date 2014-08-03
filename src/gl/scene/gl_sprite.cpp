@@ -409,6 +409,103 @@ void GLSprite::SetSpriteColor(sector_t *sector, fixed_t center_y)
 //
 //==========================================================================
 
+void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight)
+{
+	bool smarterclip = false; // Set to true if one condition triggers the test below
+	if (((thing->player || thing->flags3&MF3_ISMONSTER ||
+		thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE ||
+		!(thing->flags&MF_CORPSE))) || (gl_spriteclip == 3 && (smarterclip = true)) || gl_spriteclip > 1)
+	{
+		float btm = 1000000.0f;
+		float top = -1000000.0f;
+		extsector_t::xfloor &x = thing->Sector->e->XFloor;
+
+		if (x.ffloors.Size())
+		{
+			for (unsigned int i = 0; i < x.ffloors.Size(); i++)
+			{
+				F3DFloor * ff = x.ffloors[i];
+				fixed_t floorh = ff->top.plane->ZatPoint(thingx, thingy);
+				fixed_t ceilingh = ff->bottom.plane->ZatPoint(thingx, thingy);
+				if (floorh == thing->floorz)
+				{
+					btm = FIXED2FLOAT(floorh);
+				}
+				if (ceilingh == thing->ceilingz)
+				{
+					top = FIXED2FLOAT(ceilingh);
+				}
+				if (btm != 1000000.0f && top != -1000000.0f)
+				{
+					break;
+				}
+			}
+		}
+		else if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		{
+			if (thing->flags2&MF2_ONMOBJ && thing->floorz ==
+				thing->Sector->heightsec->floorplane.ZatPoint(thingx, thingy))
+			{
+				btm = FIXED2FLOAT(thing->floorz);
+				top = FIXED2FLOAT(thing->ceilingz);
+			}
+		}
+		if (btm == 1000000.0f)
+			btm = FIXED2FLOAT(thing->Sector->floorplane.ZatPoint(thingx, thingy) - thing->floorclip);
+		if (top == -1000000.0f)
+			top = FIXED2FLOAT(thing->Sector->ceilingplane.ZatPoint(thingx, thingy));
+
+		float diffb = z2 - btm;
+		float difft = z1 - top;
+		if (diffb >= 0 /*|| !gl_sprite_clip_to_floor*/) diffb = 0;
+		// Adjust sprites clipping into ceiling and adjust clipping adjustment for tall graphics
+		if (smarterclip)
+		{
+			// Reduce slightly clipping adjustment of corpses
+			if (thing->flags & MF_CORPSE || spriteheight > fabs(diffb))
+			{
+				float ratio = clamp<float>((fabs(diffb) * (float)gl_sclipfactor / (spriteheight + 1)), 0.5, 1.0);
+				diffb *= ratio;
+			}
+			if (!diffb)
+			{
+				if (difft <= 0) difft = 0;
+				if (difft >= (float)gl_sclipthreshold)
+				{
+					// dumb copy of the above.
+					if (!(thing->flags3&MF3_ISMONSTER) || (thing->flags&MF_NOGRAVITY) || (thing->flags&MF_CORPSE) || difft > (float)gl_sclipthreshold)
+					{
+						difft = 0;
+					}
+				}
+				if (spriteheight > fabs(difft))
+				{
+					float ratio = clamp<float>((fabs(difft) * (float)gl_sclipfactor / (spriteheight + 1)), 0.5, 1.0);
+					difft *= ratio;
+				}
+				z2 -= difft;
+				z1 -= difft;
+			}
+		}
+		if (diffb <= (0 - (float)gl_sclipthreshold))	// such a large displacement can't be correct! 
+		{
+			// for living monsters standing on the floor allow a little more.
+			if (!(thing->flags3&MF3_ISMONSTER) || (thing->flags&MF_NOGRAVITY) || (thing->flags&MF_CORPSE) || diffb < (-1.8*(float)gl_sclipthreshold))
+			{
+				diffb = 0;
+			}
+		}
+		z2 -= diffb;
+		z1 -= diffb;
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void GLSprite::Process(AActor* thing,sector_t * sector)
 {
 	sector_t rs;
@@ -501,7 +598,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		bool mirror;
 		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->angle, &mirror);
 		if (!patch.isValid()) return;
-		gltexture=FMaterial::ValidateTexture(patch, false);
+		gltexture = FMaterial::ValidateTexture(patch, false);
 		if (!gltexture) return;
 
 		vt = gltexture->GetSpriteVT();
@@ -509,7 +606,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		gltexture->GetRect(&r, GLUSE_SPRITE);
 		if (mirror)
 		{
-			r.left=-r.width-r.left;	// mirror the sprite's x-offset
+			r.left = -r.width - r.left;	// mirror the sprite's x-offset
 			ul = gltexture->GetSpriteUL();
 			ur = gltexture->GetSpriteUR();
 		}
@@ -519,114 +616,46 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			ur = gltexture->GetSpriteUL();
 		}
 
-		r.Scale(FIXED2FLOAT(spritescaleX),FIXED2FLOAT(spritescaleY));
+		r.Scale(FIXED2FLOAT(spritescaleX), FIXED2FLOAT(spritescaleY));
 
-		float rightfac=-r.left;
-		float leftfac=rightfac-r.width;
+		float rightfac = -r.left;
+		float leftfac = rightfac - r.width;
 
-		z1=z-r.top;
-		z2=z1-r.height;
+		z1 = z - r.top;
+		z2 = z1 - r.height;
 
 		float spriteheight = FIXED2FLOAT(spritescaleY) * gltexture->GetScaledHeightFloat(GLUSE_SPRITE);
-		
+
 		// Tests show that this doesn't look good for many decorations and corpses
-		if (spriteheight>0 && gl_spriteclip>0)
+		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
-			bool smarterclip = false; // Set to true if one condition triggers the test below
-			if (((thing->player || thing->flags3&MF3_ISMONSTER ||
-				thing->IsKindOf(RUNTIME_CLASS(AInventory)))	&& (thing->flags&MF_ICECORPSE ||
-				!(thing->flags&MF_CORPSE))) || (gl_spriteclip==3 && (smarterclip = true)) || gl_spriteclip > 1)
-			{
-				float btm= 1000000.0f;
-				float top=-1000000.0f;
-				extsector_t::xfloor &x = thing->Sector->e->XFloor;
-
-				if (x.ffloors.Size())
-				{
-					for(unsigned int i=0;i<x.ffloors.Size();i++)
-					{
-						F3DFloor * ff=x.ffloors[i];
-						fixed_t floorh=ff->top.plane->ZatPoint(thingx, thingy);
-						fixed_t ceilingh=ff->bottom.plane->ZatPoint(thingx, thingy);
-						if (floorh==thing->floorz) 
-						{
-							btm=FIXED2FLOAT(floorh);
-						}
-						if (ceilingh==thing->ceilingz) 
-						{
-							top=FIXED2FLOAT(ceilingh);
-						}
-						if (btm != 1000000.0f && top != -1000000.0f)
-						{
-							break;
-						}
-					}
-				}
-				else if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
-				{
-					if (thing->flags2&MF2_ONMOBJ && thing->floorz==
-						thing->Sector->heightsec->floorplane.ZatPoint(thingx, thingy))
-					{
-						btm=FIXED2FLOAT(thing->floorz);
-						top=FIXED2FLOAT(thing->ceilingz);
-					}
-				}
-				if (btm==1000000.0f) 
-					btm= FIXED2FLOAT(thing->Sector->floorplane.ZatPoint(thingx, thingy)-thing->floorclip);
-				if (top==-1000000.0f)
-					top= FIXED2FLOAT(thing->Sector->ceilingplane.ZatPoint(thingx, thingy));
-
-				float diffb = z2 - btm;
-				float difft = z1 - top;
-				if (diffb >= 0 /*|| !gl_sprite_clip_to_floor*/) diffb = 0;
-				// Adjust sprites clipping into ceiling and adjust clipping adjustment for tall graphics
-				if (smarterclip)
-				{
-					// Reduce slightly clipping adjustment of corpses
-					if (thing->flags & MF_CORPSE || spriteheight > fabs(diffb))
-					{
-						float ratio = clamp<float>((fabs(diffb) * (float)gl_sclipfactor/(spriteheight+1)), 0.5, 1.0);
-						diffb*=ratio;
-					}
-					if (!diffb)
-					{
-						if (difft <= 0) difft = 0;
-						if (difft >= (float)gl_sclipthreshold) 
-						{
-							// dumb copy of the above.
-							if (!(thing->flags3&MF3_ISMONSTER) || (thing->flags&MF_NOGRAVITY) || (thing->flags&MF_CORPSE) || difft > (float)gl_sclipthreshold)
-							{
-								difft=0;
-							}
-						}
-						if (spriteheight > fabs(difft))
-						{
-							float ratio = clamp<float>((fabs(difft) * (float)gl_sclipfactor/(spriteheight+1)), 0.5, 1.0);
-							difft*=ratio;
-						}
-						z2-=difft;
-						z1-=difft;
-					}
-				}
-				if (diffb <= (0 - (float)gl_sclipthreshold))	// such a large displacement can't be correct! 
-				{
-					// for living monsters standing on the floor allow a little more.
-					if (!(thing->flags3&MF3_ISMONSTER) || (thing->flags&MF_NOGRAVITY) || (thing->flags&MF_CORPSE) || diffb<(-1.8*(float)gl_sclipthreshold))
-					{
-						diffb=0;
-					}
-				}
-				z2-=diffb;
-				z1-=diffb;
-			}
+			PerformSpriteClipAdjustment(thing, thingx, thingy, spriteheight);
 		}
-		float viewvecX = GLRenderer->mViewVector.X;
-		float viewvecY = GLRenderer->mViewVector.Y;
 
-		x1=x-viewvecY*leftfac;
-		x2=x-viewvecY*rightfac;
-		y1=y+viewvecX*leftfac;
-		y2=y+viewvecX*rightfac;		
+		float viewvecX;
+		float viewvecY;
+		switch (thing->renderflags & RF_SPRITETYPEMASK)
+		{
+		case RF_FACESPRITE:
+			viewvecX = GLRenderer->mViewVector.X;
+			viewvecY = GLRenderer->mViewVector.Y;
+
+			x1 = x - viewvecY*leftfac;
+			x2 = x - viewvecY*rightfac;
+			y1 = y + viewvecX*leftfac;
+			y2 = y + viewvecX*rightfac;
+			break;
+
+		case RF_WALLSPRITE:
+			viewvecX = FIXED2FLOAT(finecosine[thing->angle >> ANGLETOFINESHIFT]);
+			viewvecY = FIXED2FLOAT(finesine[thing->angle >> ANGLETOFINESHIFT]);
+
+			x1 = x + viewvecY*leftfac;
+			x2 = x + viewvecY*rightfac;
+			y1 = y - viewvecX*leftfac;
+			y2 = y - viewvecX*rightfac;
+			break;
+		}
 	}
 	else 
 	{
@@ -795,6 +824,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	particle=NULL;
 	
 	const bool drawWithXYBillboard = ( !(actor->renderflags & RF_FORCEYBILLBOARD)
+									   && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
 									   && players[consoleplayer].camera
 									   && (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD ) );
 

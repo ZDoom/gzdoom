@@ -728,15 +728,14 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		}
 		else
 		{
-			if (sprites[i].cstat & (16|32|32768)) continue;
+			if (sprites[i].cstat & 32768) continue;
 			if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
 
 			mapthings[count].type = 9988;
-			mapthings[count].args[0] = sprites[i].picnum & 255;
-			mapthings[count].args[1] = sprites[i].picnum >> 8;
+			mapthings[count].args[0] = sprites[i].picnum;
 			mapthings[count].args[2] = sprites[i].xrepeat;
 			mapthings[count].args[3] = sprites[i].yrepeat;
-			mapthings[count].args[4] = (sprites[i].cstat & 14) | ((sprites[i].cstat >> 9) & 1);
+			mapthings[count].args[4] = sprites[i].cstat;
 		}
 		count++;
 	}
@@ -874,22 +873,22 @@ void ACustomSprite::BeginPlay ()
 	char name[9];
 	Super::BeginPlay ();
 
-	mysnprintf (name, countof(name), "BTIL%04d", (args[0] + args[1]*256) & 0xffff);
+	mysnprintf (name, countof(name), "BTIL%04d", args[0] & 0xffff);
 	picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
 	scaleX = args[2] * (FRACUNIT/64);
 	scaleY = args[3] * (FRACUNIT/64);
 
-	if (args[4] & 2)
+	int cstat = args[4];
+	if (cstat & 2)
 	{
 		RenderStyle = STYLE_Translucent;
-		if (args[4] & 1)
-			alpha = TRANSLUC66;
-		else
-			alpha = TRANSLUC33;
+		alpha = (cstat & 512) ? TRANSLUC66 : TRANSLUC33;
 	}
-	if (args[4] & 4)
+	if (cstat & 4)
 		renderflags |= RF_XFLIP;
-	if (args[4] & 8)
+	if (cstat & 8)
 		renderflags |= RF_YFLIP;
+	// set face/wall/floor flags
+	renderflags |= ((cstat >> 4) & 3) << 12;
 }

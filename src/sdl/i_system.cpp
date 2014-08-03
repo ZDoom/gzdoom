@@ -78,6 +78,10 @@
 #undef GC
 #endif
 
+#ifdef __APPLE__
+#include <ApplicationServices/ApplicationServices.h>
+#endif // __APPLE__
+
 EXTERN_CVAR (String, language)
 
 extern "C"
@@ -609,6 +613,10 @@ int I_FindAttr (findstate_t *fileinfo)
 	return 0;
 }
 
+#ifdef __APPLE__
+static PasteboardRef s_clipboard;
+#endif // __APPLE__
+
 // Clipboard support requires GTK+
 // TODO: GTK+ uses UTF-8. We don't, so some conversions would be appropriate.
 void I_PutInClipboard (const char *str)
@@ -628,6 +636,23 @@ void I_PutInClipboard (const char *str)
 			gtk_clipboard_set_text(clipboard, str, -1);
 		}
 		*/
+	}
+#elif defined __APPLE__
+	if (NULL == s_clipboard)
+	{
+		PasteboardCreate(kPasteboardClipboard, &s_clipboard);
+	}
+
+	PasteboardClear(s_clipboard);
+	PasteboardSynchronize(s_clipboard);
+
+	const CFDataRef textData = CFDataCreate(kCFAllocatorDefault,
+		reinterpret_cast<const UInt8*>(str), strlen(str));
+
+	if (NULL != textData)
+	{
+		PasteboardPutItemFlavor(s_clipboard, PasteboardItemID(1),
+			CFSTR("public.utf8-plain-text"), textData, 0);
 	}
 #endif
 }
@@ -650,6 +675,61 @@ FString I_GetFromClipboard (bool use_primary_selection)
 			}
 		}
 	}
+#elif defined __APPLE__
+	FString result;
+
+	if (NULL == s_clipboard)
+	{
+		PasteboardCreate(kPasteboardClipboard, &s_clipboard);
+	}
+
+	PasteboardSynchronize(s_clipboard);
+
+	ItemCount itemCount = 0;
+	PasteboardGetItemCount(s_clipboard, &itemCount);
+
+	if (0 == itemCount)
+	{
+		return FString();
+	}
+
+	PasteboardItemID itemID;
+
+	if (0 != PasteboardGetItemIdentifier(s_clipboard, 1, &itemID))
+	{
+		return FString();
+	}
+
+	CFArrayRef flavorTypeArray;
+
+	if (0 != PasteboardCopyItemFlavors(s_clipboard, itemID, &flavorTypeArray))
+	{
+		return FString();
+	}
+
+	const CFIndex flavorCount = CFArrayGetCount(flavorTypeArray);
+
+	for (CFIndex flavorIndex = 0; flavorIndex < flavorCount; ++flavorIndex)
+	{
+		const CFStringRef flavorType = static_cast<const CFStringRef>(
+			CFArrayGetValueAtIndex(flavorTypeArray, flavorIndex));
+
+		if (UTTypeConformsTo(flavorType, CFSTR("public.utf8-plain-text")))
+		{
+			CFDataRef flavorData;
+
+			if (0 == PasteboardCopyItemFlavorData(s_clipboard, itemID, flavorType, &flavorData))
+			{
+				result += reinterpret_cast<const char*>(CFDataGetBytePtr(flavorData));
+			}
+
+			CFRelease(flavorData);
+		}
+	}
+
+	CFRelease(flavorTypeArray);
+
+	return result;
 #endif
 	return "";
 }

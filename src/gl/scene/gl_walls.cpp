@@ -984,6 +984,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		//
 		FloatRect *splitrect;
 		int v = gltexture->GetAreas(&splitrect);
+		if (seg->frontsector == seg->backsector) flags |= GLWF_NOSPLIT;	// we don't need to do vertex splits if a line has both sides in the same sector
 		if (v>0 && !drawfogboundary && !(seg->linedef->flags&ML_WRAP_MIDTEX))
 		{
 			// split the poly!

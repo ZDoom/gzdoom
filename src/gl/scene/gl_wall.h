@@ -99,6 +99,7 @@ public:
 		GLWF_GLOW=8,		// illuminated by glowing flats
 		GLWF_NOSPLITUPPER=16,
 		GLWF_NOSPLITLOWER=32,
+		GLWF_NOSPLIT=64,
 	};
 
 	enum

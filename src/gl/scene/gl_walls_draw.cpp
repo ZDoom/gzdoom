@@ -166,7 +166,7 @@ void GLWall::SetupLights()
 void GLWall::RenderWall(int textured, unsigned int *store)
 {
 	static texcoord tcs[4]; // making this variable static saves us a relatively costly stack integrity check.
-	bool split = (gl_seamless && !(textured&RWF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ));
+	bool split = (gl_seamless && !(textured&RWF_NOSPLIT) && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
 
 	tcs[0]=lolft;
 	tcs[1]=uplft;

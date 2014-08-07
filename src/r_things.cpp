@@ -409,7 +409,6 @@ void R_DrawWallSprite(vissprite_t *spr)
 {
 	int x1, x2;
 	fixed_t yscale;
-	int shade = LIGHT2SHADE(140);
 
 	x1 = MAX<int>(spr->x1, spr->wallc.sx1);
 	x2 = MIN<int>(spr->x2, spr->wallc.sx2 + 1);
@@ -440,6 +439,10 @@ void R_DrawWallSprite(vissprite_t *spr)
 		rereadcolormap = false;
 	}
 
+	int shade = LIGHT2SHADE(spr->sector->lightlevel + r_actualextralight);
+	GlobVis = r_WallVisibility;
+	rw_lightleft = SafeDivScale12(GlobVis, spr->wallc.sz1);
+	rw_lightstep = (SafeDivScale12(GlobVis, spr->wallc.sz2) - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1);
 	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
 		dc_colormap = usecolormap->Maps + fixedlightlev;

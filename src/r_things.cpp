@@ -411,8 +411,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 	fixed_t yscale;
 	int shade = LIGHT2SHADE(140);
 
-	x1 = MAX<int>(spr->x1, spr->wallc.SX1);
-	x2 = MIN<int>(spr->x2, spr->wallc.SX2 + 1);
+	x1 = MAX<int>(spr->x1, spr->wallc.sx1);
+	x2 = MIN<int>(spr->x2, spr->wallc.sx2 + 1);
 	if (x1 >= x2)
 		return;
 	WallT.InitFromWallCoords(&spr->wallc);
@@ -440,7 +440,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		rereadcolormap = false;
 	}
 
-	rw_light = rw_lightleft + (x1 - spr->wallc.SX1) * rw_lightstep;
+	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
 		dc_colormap = usecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
@@ -1057,7 +1057,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	if (wallc.Init(lx1, ly1, lx2, ly2, TOO_CLOSE_Z))
 		return;
 	
-	if (wallc.SX1 > WindowRight || wallc.SX2 <= WindowLeft)
+	if (wallc.sx1 > WindowRight || wallc.sx2 <= WindowLeft)
 		return;
 
 	// Sprite sorting should probably treat these as walls, not sprites,
@@ -1070,8 +1070,8 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	gzb = fz + yscale * scaled_bo;
 
 	vis = R_NewVisSprite();
-	vis->x1 = wallc.SX1 < WindowLeft ? WindowLeft : wallc.SX1;
-	vis->x2 = wallc.SX2 >= WindowRight ? WindowRight-1 : wallc.SX2-1;
+	vis->x1 = wallc.sx1 < WindowLeft ? WindowLeft : wallc.sx1;
+	vis->x2 = wallc.sx2 >= WindowRight ? WindowRight-1 : wallc.sx2-1;
 	vis->idepth = (unsigned)DivScale32(1, tz) >> 1;
 	vis->depth = tz;
 	vis->sector = thing->Sector;

@@ -376,10 +376,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			goto clearfog;
 		}
 
-		WallC.SZ1 = ds->sz1;
-		WallC.SZ2 = ds->sz2;
-		WallC.SX1 = ds->sx1;
-		WallC.SX2 = ds->sx2;
+		WallC.sz1 = ds->sz1;
+		WallC.sz2 = ds->sz2;
+		WallC.sx1 = ds->sx1;
+		WallC.sx2 = ds->sx2;
 
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
@@ -467,10 +467,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 	else
 	{ // Texture does wrap vertically.
-		WallC.SZ1 = ds->sz1;
-		WallC.SZ2 = ds->sz2;
-		WallC.SX1 = ds->sx1;
-		WallC.SX2 = ds->sx2;
+		WallC.sz1 = ds->sz1;
+		WallC.sz2 = ds->sz2;
+		WallC.sx1 = ds->sx1;
+		WallC.sx2 = ds->sx2;
 
 		if (CurrentSkybox)
 		{ // Midtex clipping doesn't work properly with skyboxes, since you're normally below the floor
@@ -587,14 +587,14 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
 
-	WallC.SZ1 = ds->sz1;
-	WallC.SZ2 = ds->sz2;
-	WallC.SX1 = ds->sx1;
-	WallC.SX2 = ds->sx2;
-	WallC.TX1 = ds->cx;
-	WallC.TY1 = ds->cy;
-	WallC.TX2 = ds->cx + ds->cdx;
-	WallC.TY2 = ds->cy + ds->cdy;
+	WallC.sz1 = ds->sz1;
+	WallC.sz2 = ds->sz2;
+	WallC.sx1 = ds->sx1;
+	WallC.sx2 = ds->sx2;
+	WallC.tx1 = ds->cx;
+	WallC.ty1 = ds->cy;
+	WallC.tx2 = ds->cx + ds->cdx;
+	WallC.ty2 = ds->cy + ds->cdy;
 	WallT = ds->tmapvals;
 
 	OWallMost(wallupper, sclipTop - viewz, &WallC);
@@ -1209,8 +1209,8 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	up = uwal;
 	down = most1;
 
-	assert(WallC.SX1 <= x1);
-	assert(WallC.SX2 > x2);
+	assert(WallC.sx1 <= x1);
+	assert(WallC.sx2 > x2);
 
 	// kg3D - fake floors instead of zdoom light list
 	for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
@@ -1821,7 +1821,7 @@ void R_RenderSegLoop ()
 			yscale = FixedMul(rw_pic->yScale, rw_midtexturescaley);
 			if (xscale != lwallscale)
 			{
-				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.SX1, WallC.SX2);
+				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
 				lwallscale = xscale;
 			}
 			if (midtexture->bWorldPanning)
@@ -1864,7 +1864,7 @@ void R_RenderSegLoop ()
 				yscale = FixedMul(rw_pic->yScale, rw_toptexturescaley);
 				if (xscale != lwallscale)
 				{
-					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.SX1, WallC.SX2);
+					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
 					lwallscale = xscale;
 				}
 				if (toptexture->bWorldPanning)
@@ -1910,7 +1910,7 @@ void R_RenderSegLoop ()
 				yscale = FixedMul(rw_pic->yScale, rw_bottomtexturescaley);
 				if (xscale != lwallscale)
 				{
-					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.SX1, WallC.SX2);
+					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
 					lwallscale = xscale;
 				}
 				if (bottomtexture->bWorldPanning)
@@ -2030,7 +2030,7 @@ void R_NewWall (bool needlights)
 		{
 			if (rw_havehigh)
 			{ // front ceiling is above back ceiling
-				memcpy (&walltop[WallC.SX1], &wallupper[WallC.SX1], (WallC.SX2 - WallC.SX1)*sizeof(walltop[0]));
+				memcpy (&walltop[WallC.sx1], &wallupper[WallC.sx1], (WallC.sx2 - WallC.sx1)*sizeof(walltop[0]));
 				rw_havehigh = false;
 			}
 			else if (rw_havelow && frontsector->ceilingplane != backsector->ceilingplane)
@@ -2255,15 +2255,15 @@ void R_NewWall (bool needlights)
 			bottomtexture ? FixedMul(bottomtexture->xScale, sidedef->GetTextureXScale(side_t::bottom)) :
 			FRACUNIT;
 
-		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.SX1, WallC.SX2);
+		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2);
 
 		if (fixedcolormap == NULL && fixedlightlev < 0)
 		{
 			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel)
 				+ r_actualextralight);
 			GlobVis = r_WallVisibility;
-			rw_lightleft = SafeDivScale12 (GlobVis, WallC.SZ1);
-			rw_lightstep = (SafeDivScale12 (GlobVis, WallC.SZ2) - rw_lightleft) / (WallC.SX2 - WallC.SX1);
+			rw_lightleft = SafeDivScale12 (GlobVis, WallC.sz1);
+			rw_lightstep = (SafeDivScale12 (GlobVis, WallC.sz2) - rw_lightleft) / (WallC.sx2 - WallC.sx1);
 		}
 		else
 		{
@@ -2337,19 +2337,19 @@ void R_StoreWallRange (int start, int stop)
 	}
 
 	rw_offset = sidedef->GetTextureXOffset(side_t::mid);
-	rw_light = rw_lightleft + rw_lightstep * (start - WallC.SX1);
+	rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 
-	ds_p->sx1 = WallC.SX1;
-	ds_p->sx2 = WallC.SX2;
-	ds_p->sz1 = WallC.SZ1;
-	ds_p->sz2 = WallC.SZ2;
-	ds_p->cx = WallC.TX1;
-	ds_p->cy = WallC.TY1;
-	ds_p->cdx = WallC.TX2 - WallC.TX1;
-	ds_p->cdy = WallC.TY2 - WallC.TY1;
+	ds_p->sx1 = WallC.sx1;
+	ds_p->sx2 = WallC.sx2;
+	ds_p->sz1 = WallC.sz1;
+	ds_p->sz2 = WallC.sz2;
+	ds_p->cx = WallC.tx1;
+	ds_p->cy = WallC.ty1;
+	ds_p->cdx = WallC.tx2 - WallC.tx1;
+	ds_p->cdy = WallC.ty2 - WallC.ty1;
 	ds_p->tmapvals = WallT;
-	ds_p->siz1 = (DWORD)DivScale32 (1, WallC.SZ1) >> 1;
-	ds_p->siz2 = (DWORD)DivScale32 (1, WallC.SZ2) >> 1;
+	ds_p->siz1 = (DWORD)DivScale32 (1, WallC.sz1) >> 1;
+	ds_p->siz2 = (DWORD)DivScale32 (1, WallC.sz2) >> 1;
 	ds_p->x1 = rw_x = start;
 	ds_p->x2 = stop-1;
 	ds_p->curline = curline;
@@ -2442,7 +2442,7 @@ void R_StoreWallRange (int start, int stop)
 		if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || ds_p->bFakeBoundary || IsFogBoundary (frontsector, backsector)) &&
 			(rw_ceilstat != 12 || !sidedef->GetTexture(side_t::top).isValid()) &&
 			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
-			(WallC.SZ1 >= TOO_CLOSE_Z && WallC.SZ2 >= TOO_CLOSE_Z))
+			(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 		{
 			fixed_t *swal;
 			fixed_t *lwal;
@@ -2590,59 +2590,59 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 	fixed_t s1, s2, s3, s4;
 
 	z = -(z >> 4);
-	s1 = MulScale16 (globaluclip, wallc->SZ1); s2 = MulScale16 (globaluclip, wallc->SZ2);
-	s3 = MulScale16 (globaldclip, wallc->SZ1); s4 = MulScale16 (globaldclip, wallc->SZ2);
+	s1 = MulScale16 (globaluclip, wallc->sz1); s2 = MulScale16 (globaluclip, wallc->sz2);
+	s3 = MulScale16 (globaldclip, wallc->sz1); s4 = MulScale16 (globaldclip, wallc->sz2);
 	bad = (z<s1)+((z<s2)<<1)+((z>s3)<<2)+((z>s4)<<3);
 
 #if 1
 	if ((bad&3) == 3)
 	{
-		memset (&mostbuf[wallc->SX1], 0, (wallc->SX2 - wallc->SX1)*sizeof(mostbuf[0]));
+		memset (&mostbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1)*sizeof(mostbuf[0]));
 		return bad;
 	}
 
 	if ((bad&12) == 12)
 	{
-		clearbufshort (&mostbuf[wallc->SX1], wallc->SX2 - wallc->SX1, viewheight);
+		clearbufshort (&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
 		return bad;
 	}
 #endif
-	ix1 = wallc->SX1; iy1 = wallc->SZ1;
-	ix2 = wallc->SX2; iy2 = wallc->SZ2;
+	ix1 = wallc->sx1; iy1 = wallc->sz1;
+	ix2 = wallc->sx2; iy2 = wallc->sz2;
 #if 1
 	if (bad & 3)
 	{
 		int t = DivScale30 (z-s1, s2-s1);
-		int inty = wallc->SZ1 + MulScale30 (wallc->SZ2 - wallc->SZ1, t);
-		int xcross = wallc->SX1 + Scale (MulScale30 (wallc->SZ2, t), wallc->SX2 - wallc->SX1, inty);
+		int inty = wallc->sz1 + MulScale30 (wallc->sz2 - wallc->sz1, t);
+		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2 - wallc->sx1, inty);
 
 		if ((bad & 3) == 2)
 		{
-			if (wallc->SX1 <= xcross) { iy2 = inty; ix2 = xcross; }
-			if (wallc->SX2 > xcross) memset (&mostbuf[xcross], 0, (wallc->SX2-xcross)*sizeof(mostbuf[0]));
+			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
+			if (wallc->sx2 > xcross) memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
 		}
 		else
 		{
-			if (xcross <= wallc->SX2) { iy1 = inty; ix1 = xcross; }
-			if (xcross > wallc->SX1) memset (&mostbuf[wallc->SX1], 0, (xcross-wallc->SX1)*sizeof(mostbuf[0]));
+			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
+			if (xcross > wallc->sx1) memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
 		}
 	}
 
 	if (bad & 12)
 	{
 		int t = DivScale30 (z-s3, s4-s3);
-		int inty = wallc->SZ1 + MulScale30 (wallc->SZ2 - wallc->SZ1, t);
-		int xcross = wallc->SX1 + Scale (MulScale30 (wallc->SZ2, t), wallc->SX2 - wallc->SX1, inty);
+		int inty = wallc->sz1 + MulScale30 (wallc->sz2 - wallc->sz1, t);
+		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2 - wallc->sx1, inty);
 
 		if ((bad & 12) == 8)
 		{
-			if (wallc->SX1 <= xcross) { iy2 = inty; ix2 = xcross; }
-			if (wallc->SX2 > xcross) clearbufshort (&mostbuf[xcross], wallc->SX2 - xcross, viewheight);
+			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
+			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2 - xcross, viewheight);
 		}
 		else
 		{
-			if (xcross <= wallc->SX2) { iy1 = inty; ix1 = xcross; }
-			if (xcross > wallc->SX1) clearbufshort (&mostbuf[wallc->SX1], xcross - wallc->SX1, viewheight);
+			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
+			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross - wallc->sx1, viewheight);
 		}
 	}
 
@@ -2660,12 +2660,12 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 	double max = viewheight;
 	double zz = z / 65536.0;
 #if 0
-	double z1 = zz * InvZtoScale / wallc->SZ1;
-	double z2 = zz * InvZtoScale / wallc->SZ2 - z1;
-	z2 /= (wallc->SX2 - wallc->SX1);
+	double z1 = zz * InvZtoScale / wallc->sz1;
+	double z2 = zz * InvZtoScale / wallc->sz2 - z1;
+	z2 /= (wallc->sx2 - wallc->sx1);
 	z1 += centeryfrac / 65536.0;
 
-	for (int x = wallc->SX1; x < wallc->SX2; ++x)
+	for (int x = wallc->sx1; x < wallc->sx2; ++x)
 	{
 		mostbuf[x] = xs_RoundToInt(clamp(z1, 0.0, max));
 		z1 += z2;
@@ -2673,12 +2673,12 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 #else
 	double top, bot, i;
 
-	i = wallc->SX1 - centerx;
+	i = wallc->sx1 - centerx;
 	top = WallT.UoverZorg + WallT.UoverZstep * i;
 	bot = WallT.InvZorg + WallT.InvZstep * i;
 	double cy = centeryfrac / 65536.0;
 
-	for (int x = wallc->SX1; x < wallc->SX2; x++)
+	for (int x = wallc->sx1; x < wallc->sx2; x++)
 	{
 		double frac = top / bot;
 		double scale = frac * WallT.DepthScale + WallT.DepthOrg;
@@ -2711,21 +2711,21 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	{
 		x = curline->v2->x;
 		y = curline->v2->y;
-		if (wallc->SX1 == 0 && 0 != (den = wallc->TX1 - wallc->TX2 + wallc->TY1 - wallc->TY2))
+		if (wallc->sx1 == 0 && 0 != (den = wallc->tx1 - wallc->tx2 + wallc->ty1 - wallc->ty2))
 		{
-			int frac = SafeDivScale30 (wallc->TY1 + wallc->TX1, den);
+			int frac = SafeDivScale30 (wallc->ty1 + wallc->tx1, den);
 			x -= MulScale30 (frac, x - curline->v1->x);
 			y -= MulScale30 (frac, y - curline->v1->y);
 		}
 		z1 = viewz - plane.ZatPoint (x, y);
 
-		if (wallc->SX2 > wallc->SX1 + 1)
+		if (wallc->sx2 > wallc->sx1 + 1)
 		{
 			x = curline->v1->x;
 			y = curline->v1->y;
-			if (wallc->SX2 == viewwidth && 0 != (den = wallc->TX1 - wallc->TX2 - wallc->TY1 + wallc->TY2))
+			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tx1 - wallc->tx2 - wallc->ty1 + wallc->ty2))
 			{
-				int frac = SafeDivScale30 (wallc->TY2 - wallc->TX2, den);
+				int frac = SafeDivScale30 (wallc->ty2 - wallc->tx2, den);
 				x += MulScale30 (frac, curline->v2->x - x);
 				y += MulScale30 (frac, curline->v2->y - y);
 			}
@@ -2740,21 +2740,21 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	{
 		x = curline->v1->x;
 		y = curline->v1->y;
-		if (wallc->SX1 == 0 && 0 != (den = wallc->TX1 - wallc->TX2 + wallc->TY1 - wallc->TY2))
+		if (wallc->sx1 == 0 && 0 != (den = wallc->tx1 - wallc->tx2 + wallc->ty1 - wallc->ty2))
 		{
-			int frac = SafeDivScale30 (wallc->TY1 + wallc->TX1, den);
+			int frac = SafeDivScale30 (wallc->ty1 + wallc->tx1, den);
 			x += MulScale30 (frac, curline->v2->x - x);
 			y += MulScale30 (frac, curline->v2->y - y);
 		}
 		z1 = viewz - plane.ZatPoint (x, y);
 
-		if (wallc->SX2 > wallc->SX1 + 1)
+		if (wallc->sx2 > wallc->sx1 + 1)
 		{
 			x = curline->v2->x;
 			y = curline->v2->y;
-			if (wallc->SX2 == viewwidth && 0 != (den = wallc->TX1 - wallc->TX2 - wallc->TY1 + wallc->TY2))
+			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tx1 - wallc->tx2 - wallc->ty1 + wallc->ty2))
 			{
-				int frac = SafeDivScale30 (wallc->TY2 - wallc->TX2, den);
+				int frac = SafeDivScale30 (wallc->ty2 - wallc->tx2, den);
 				x -= MulScale30 (frac, x - curline->v1->x);
 				y -= MulScale30 (frac, y - curline->v1->y);
 			}
@@ -2766,12 +2766,12 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		}
 	}
 
-	s1 = MulScale12 (globaluclip, wallc->SZ1); s2 = MulScale12 (globaluclip, wallc->SZ2);
-	s3 = MulScale12 (globaldclip, wallc->SZ1); s4 = MulScale12 (globaldclip, wallc->SZ2);
+	s1 = MulScale12 (globaluclip, wallc->sz1); s2 = MulScale12 (globaluclip, wallc->sz2);
+	s3 = MulScale12 (globaldclip, wallc->sz1); s4 = MulScale12 (globaldclip, wallc->sz2);
 	bad = (z1<s1)+((z2<s2)<<1)+((z1>s3)<<2)+((z2>s4)<<3);
 
-	ix1 = wallc->SX1; ix2 = wallc->SX2;
-	iy1 = wallc->SZ1; iy2 = wallc->SZ2;
+	ix1 = wallc->sx1; ix2 = wallc->sx2;
+	iy1 = wallc->sz1; iy2 = wallc->sz2;
 	oz1 = z1; oz2 = z2;
 
 	if ((bad&3) == 3)
@@ -2791,9 +2791,9 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	{
 			//inty = intz / (globaluclip>>16)
 		int t = SafeDivScale30 (oz1-s1, s2-s1+oz1-oz2);
-		int inty = wallc->SZ1 + MulScale30 (wallc->SZ2-wallc->SZ1,t);
+		int inty = wallc->sz1 + MulScale30 (wallc->sz2-wallc->sz1,t);
 		int intz = oz1 + MulScale30 (oz2-oz1,t);
-		int xcross = wallc->SX1 + Scale (MulScale30 (wallc->SZ2, t), wallc->SX2-wallc->SX1, inty);
+		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2-wallc->sx1, inty);
 
 		//t = divscale30((x1<<4)-xcross*yb1[w],xcross*(yb2[w]-yb1[w])-((x2-x1)<<4));
 		//inty = yb1[w] + mulscale30(yb2[w]-yb1[w],t);
@@ -2801,13 +2801,13 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 
 		if ((bad&3) == 2)
 		{
-			if (wallc->SX1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
-			memset (&mostbuf[xcross], 0, (wallc->SX2-xcross)*sizeof(mostbuf[0]));
+			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
+			memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
 		}
 		else
 		{
-			if (xcross <= wallc->SX2) { z1 = intz; iy1 = inty; ix1 = xcross; }
-			memset (&mostbuf[wallc->SX1], 0, (xcross-wallc->SX1)*sizeof(mostbuf[0]));
+			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
+			memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
 		}
 	}
 
@@ -2815,9 +2815,9 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	{
 			//inty = intz / (globaldclip>>16)
 		int t = SafeDivScale30 (oz1-s3, s4-s3+oz1-oz2);
-		int inty = wallc->SZ1 + MulScale30 (wallc->SZ2-wallc->SZ1,t);
+		int inty = wallc->sz1 + MulScale30 (wallc->sz2-wallc->sz1,t);
 		int intz = oz1 + MulScale30 (oz2-oz1,t);
-		int xcross = wallc->SX1 + Scale (MulScale30 (wallc->SZ2, t), wallc->SX2-wallc->SX1,inty);
+		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2-wallc->sx1,inty);
 
 		//t = divscale30((x1<<4)-xcross*yb1[w],xcross*(yb2[w]-yb1[w])-((x2-x1)<<4));
 		//inty = yb1[w] + mulscale30(yb2[w]-yb1[w],t);
@@ -2825,13 +2825,13 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 
 		if ((bad&12) == 8)
 		{
-			if (wallc->SX1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
-			if (wallc->SX2 > xcross) clearbufshort (&mostbuf[xcross], wallc->SX2-xcross, viewheight);
+			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
+			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2-xcross, viewheight);
 		}
 		else
 		{
-			if (xcross <= wallc->SX2) { z1 = intz; iy1 = inty; ix1 = xcross; }
-			if (xcross > wallc->SX1) clearbufshort (&mostbuf[wallc->SX1], xcross-wallc->SX1, viewheight);
+			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
+			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross-wallc->sx1, viewheight);
 		}
 	}
 
@@ -3041,8 +3041,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	if (WallC.Init(lx, ly, lx2, ly2, TOO_CLOSE_Z))
 		goto done;
 
-	x1 = WallC.SX1;
-	x2 = WallC.SX2;
+	x1 = WallC.sx1;
+	x2 = WallC.sx2;
 
 	if (x1 > clipper->x2 || x2 <= clipper->x1)
 		goto done;
@@ -3145,7 +3145,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		rereadcolormap = false;
 	}
 
-	rw_light = rw_lightleft + (x1 - WallC.SX1) * rw_lightstep;
+	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
 		dc_colormap = usecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)

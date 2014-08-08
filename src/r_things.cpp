@@ -416,8 +416,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 		return;
 	WallT.InitFromWallCoords(&spr->wallc);
 	PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2);
-	dc_texturemid = spr->gzt - viewz;
-	yscale = FRACUNIT;
+	yscale = spr->yscale;
+	dc_texturemid = FixedDiv(spr->gzt - viewz, yscale);
 	if (spr->renderflags & RF_XFLIP)
 	{
 		int right = (spr->pic->GetWidth() << FRACBITS) - 1;
@@ -1075,6 +1075,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	vis = R_NewVisSprite();
 	vis->x1 = wallc.sx1 < WindowLeft ? WindowLeft : wallc.sx1;
 	vis->x2 = wallc.sx2 >= WindowRight ? WindowRight-1 : wallc.sx2-1;
+	vis->yscale = yscale;
 	vis->idepth = (unsigned)DivScale32(1, tz) >> 1;
 	vis->depth = tz;
 	vis->sector = thing->Sector;

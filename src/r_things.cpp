@@ -411,7 +411,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	fixed_t yscale;
 
 	x1 = MAX<int>(spr->x1, spr->wallc.sx1);
-	x2 = MIN<int>(spr->x2, spr->wallc.sx2 + 1);
+	x2 = MIN<int>(spr->x2 + 1, spr->wallc.sx2 + 1);
 	if (x1 >= x2)
 		return;
 	WallT.InitFromWallCoords(&spr->wallc);
@@ -1074,7 +1074,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 
 	vis = R_NewVisSprite();
 	vis->x1 = wallc.sx1 < WindowLeft ? WindowLeft : wallc.sx1;
-	vis->x2 = wallc.sx2 >= WindowRight ? WindowRight-1 : wallc.sx2-1;
+	vis->x2 = wallc.sx2 >= WindowRight ? WindowRight : wallc.sx2-1;
 	vis->yscale = yscale;
 	vis->idepth = (unsigned)DivScale32(1, tz) >> 1;
 	vis->depth = tz;

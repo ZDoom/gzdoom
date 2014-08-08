@@ -821,7 +821,6 @@ void FWallTmapVals::InitFromWallCoords(const FWallCoords *wallc)
 		InvZorg = (float)(wallc->tx1 - wallc->tx2) * centerx;
 		InvZstep = (float)(wallc->ty2 - wallc->ty1);
 	}
-	InitDepth();
 }
 
 void FWallTmapVals::InitFromLine(int tx1, int ty1, int tx2, int ty2)
@@ -841,13 +840,6 @@ void FWallTmapVals::InitFromLine(int tx1, int ty1, int tx2, int ty2)
 	UoverZstep = (float)(-fully1);
 	InvZorg = (float)(fullx1 - fullx2) * centerx;
 	InvZstep = (float)(fully2 - fully1);
-	InitDepth();
-}
-
-void FWallTmapVals::InitDepth()
-{
-	DepthScale = InvZstep * WallTMapScale2;
-	DepthOrg = -UoverZstep * WallTMapScale2;
 }
 
 //

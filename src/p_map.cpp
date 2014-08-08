@@ -3470,7 +3470,7 @@ struct Origin
 {
 	AActor *Caller;
 	bool hitGhosts;
-	bool hitSameSpecie;
+	bool hitSameSpecies;
 };
 
 static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
@@ -3488,7 +3488,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 		return TRACE_Skip;
 	}
 
-	if (data->hitSameSpecie && res.Actor->GetSpecies() == data->Caller->GetSpecies()) 
+	if (data->hitSameSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) 
 	{
 		return TRACE_Skip;
 	}
@@ -3517,8 +3517,6 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 	TData.Caller = t1;
 	angle_t srcangle = angle;
 	int srcpitch = pitch;
-	bool hitGhosts;
-	bool hitSameSpecie;
 	bool killPuff = false;
 	AActor *puff = NULL;
 	int pflag = 0;
@@ -3566,7 +3564,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST)) ||
 		(puffDefaults && (puffDefaults->flags2 & MF2_THRUGHOST));
 
-	TData.hitSameSpecie = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
+	TData.hitSameSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
 
 	// if the puff uses a non-standard damage type, this will override default, hitscan and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.

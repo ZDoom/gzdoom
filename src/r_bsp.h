@@ -33,14 +33,11 @@
 
 struct FWallCoords
 {
-	fixed_t		tx1, tx2;	// x coords at left, right of wall in view space
-	fixed_t		ty1, ty2;	// y coords at left, right of wall in view space
+	fixed_t		tx1, tx2;	// x coords at left, right of wall in view space	rx1,rx2
+	fixed_t		ty1, ty2;	// y coords at left, right of wall in view space	ry1,ry2
 
-	fixed_t		cx1, cx2;	// x coords at left, right of wall in camera space
-	fixed_t		cy1, cy2;	// y coords at left, right of wall in camera space
-
-	short		sx1, sx2;	// x coords at left, right of wall in screen space
-	fixed_t		sz1, sz2;	// depth at left, right of wall in screen space
+	short		sx1, sx2;	// x coords at left, right of wall in screen space	xb1,xb2
+	fixed_t		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
 
 	bool Init(int x1, int y1, int x2, int y2, int too_close);
 };

@@ -239,6 +239,8 @@ static void unprotect_rtext()
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();
 
+const char* I_GetBackEndName();
+
 int main (int argc, char **argv)
 {
 #if !defined (__APPLE__)
@@ -248,8 +250,8 @@ int main (int argc, char **argv)
 	}
 #endif // !__APPLE__
 
-	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
-		GetVersionString(), GetGitTime(), __DATE__);
+	printf(GAMENAME" %s - %s - %s version\nCompiled on %s\n",
+		GetVersionString(), GetGitTime(), I_GetBackEndName(), __DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);

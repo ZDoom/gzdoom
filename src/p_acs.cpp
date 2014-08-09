@@ -120,6 +120,16 @@ FRandom pr_acs ("ACS");
 #define SDF_ABSANGLE		1
 #define SDF_PERMANENT		2
 
+// GetArmorInfo
+enum
+{
+	ARMORINFO_CLASSNAME,
+	ARMORINFO_SAVEAMOUNT,
+	ARMORINFO_SAVEPERCENT,
+	ARMORINFO_MAXABSORB,
+	ARMORINFO_MAXFULLABSORB,
+};
+
 struct CallReturn
 {
 	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
@@ -4349,6 +4359,7 @@ enum EACSFunctions
 	ACSF_GetActorPowerupTics,
 	ACSF_ChangeActorAngle,
 	ACSF_ChangeActorPitch,		// 80
+	ACSF_GetArmorInfo,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -4820,6 +4831,38 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				if (armor && armor->ArmorType == p) return armor->Amount;
 			}
 			return 0;
+		}
+
+		case ACSF_GetArmorInfo:
+		{
+			if (activator == NULL || activator->player == NULL) return 0;
+
+			ABasicArmor * equippedarmor = (ABasicArmor *) activator->FindInventory(NAME_BasicArmor);
+
+			if (equippedarmor && equippedarmor->Amount != 0)
+			{
+				switch(args[0])
+				{
+					case ARMORINFO_CLASSNAME:
+						return GlobalACSStrings.AddString(equippedarmor->ArmorType.GetChars(), stack, stackdepth);
+
+					case ARMORINFO_SAVEAMOUNT:
+						return equippedarmor->MaxAmount;
+
+					case ARMORINFO_SAVEPERCENT:
+						return equippedarmor->SavePercent;
+
+					case ARMORINFO_MAXABSORB:
+						return equippedarmor->MaxAbsorb;
+
+					case ARMORINFO_MAXFULLABSORB:
+						return equippedarmor->MaxFullAbsorb;
+
+					default:
+						return 0;
+				}
+			}
+			return args[0] == ARMORINFO_CLASSNAME ? GlobalACSStrings.AddString("None", stack, stackdepth) : 0;
 		}
 
 		case ACSF_SpawnSpotForced:

@@ -1476,8 +1476,13 @@ SDL_Rect** SDL_ListModes(SDL_PixelFormat* format, Uint32 flags)
 	return &resolutions[0];
 }
 
+int SDL_ShowCursor(int)
+{
+	// Does nothing
+	return 0;
+}
 
-//static GLAuxilium::Texture2D* s_softwareTexture;
+
 static GLuint s_frameBufferTexture = 0;
 
 static const Uint16 BYTES_PER_PIXEL = 4;
@@ -1596,6 +1601,19 @@ void SDL_GL_SwapBuffers()
 {
 	[[NSOpenGLContext currentContext] flushBuffer];
 }
+
+int SDL_GL_SetAttribute(SDL_GLattr attr, int value)
+{
+	if (SDL_GL_MULTISAMPLESAMPLES == attr)
+	{
+		[s_applicationDelegate setMultisample:value];
+	}
+
+	// Not interested in other attributes
+
+	return 0;
+}
+
 
 int SDL_LockSurface(SDL_Surface* surface)
 {

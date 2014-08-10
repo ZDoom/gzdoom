@@ -878,7 +878,6 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 - (int)multisample;
 - (void)setMultisample:(int)multisample;
 
-- (void)initializeOpenGL;
 - (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height;
 
 - (void)processEvents:(NSTimer*)timer;
@@ -1077,70 +1076,78 @@ static ApplicationDelegate* s_applicationDelegate;
 	m_openGLInitialized = true;
 }
 
+- (void)fullscreenWithWidth:(int)width height:(int)height
+{
+	NSScreen* screen = [m_window screen];
+
+	const NSRect screenFrame = [screen frame];
+	const NSRect displayRect = IsHiDPISupported()
+		? [screen convertRectToBacking:screenFrame]
+		: screenFrame;
+
+	const float  displayWidth  = displayRect.size.width;
+	const float  displayHeight = displayRect.size.height;
+	
+	const float pixelScaleFactorX = displayWidth  / static_cast< float >(width );
+	const float pixelScaleFactorY = displayHeight / static_cast< float >(height);
+	
+	s_frameBufferParameters.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
+	
+	s_frameBufferParameters.width  = width  * s_frameBufferParameters.pixelScale;
+	s_frameBufferParameters.height = height * s_frameBufferParameters.pixelScale;
+	
+	s_frameBufferParameters.shiftX = (displayWidth  - s_frameBufferParameters.width ) / 2.0f;
+	s_frameBufferParameters.shiftY = (displayHeight - s_frameBufferParameters.height) / 2.0f;
+
+	[m_window setLevel:NSMainMenuWindowLevel + 1];
+	[m_window setStyleMask:NSBorderlessWindowMask];
+	[m_window setHidesOnDeactivate:YES];
+	[m_window setFrame:displayRect display:YES];
+	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
+}
+
+- (void)windowedWithWidth:(int)width height:(int)height
+{
+	s_frameBufferParameters.pixelScale = 1.0f;
+	
+	s_frameBufferParameters.width  = static_cast< float >(width );
+	s_frameBufferParameters.height = static_cast< float >(height);
+	
+	s_frameBufferParameters.shiftX = 0.0f;
+	s_frameBufferParameters.shiftY = 0.0f;
+
+	const NSSize windowPixelSize = NSMakeSize(width, height);
+	const NSSize windowSize = IsHiDPISupported()
+		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
+		: windowPixelSize;
+
+	[m_window setLevel:NSNormalWindowLevel];
+	[m_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask];
+	[m_window setHidesOnDeactivate:NO];
+	[m_window setContentSize:windowSize];
+	[m_window center];
+}
+
 - (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height
 {
 	[self initializeOpenGL];
 	
-	CGLContextObj context = CGLGetCurrentContext();
-	NSView* view = [m_window contentView];
-	
 	if (fullscreen)
 	{
-		NSScreen* screen = [m_window screen];
-		const NSRect screenFrame = [screen frame];
-		const NSRect displayRect = IsHiDPISupported()
-			? [screen convertRectToBacking:screenFrame]
-			: screenFrame;
-
-		const float  displayWidth  = displayRect.size.width;
-		const float  displayHeight = displayRect.size.height;
-		
-		const float pixelScaleFactorX = displayWidth  / static_cast< float >(width );
-		const float pixelScaleFactorY = displayHeight / static_cast< float >(height);
-		
-		s_frameBufferParameters.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
-		
-		s_frameBufferParameters.width  = width  * s_frameBufferParameters.pixelScale;
-		s_frameBufferParameters.height = height * s_frameBufferParameters.pixelScale;
-		
-		s_frameBufferParameters.shiftX = (displayWidth  - s_frameBufferParameters.width ) / 2.0f;
-		s_frameBufferParameters.shiftY = (displayHeight - s_frameBufferParameters.height) / 2.0f;
-
-		[m_window setLevel:NSMainMenuWindowLevel + 1];
-		[m_window setStyleMask:NSBorderlessWindowMask];
-		[m_window setHidesOnDeactivate:YES];
-		[m_window setFrame:displayRect display:YES];
-		[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
+		[self fullscreenWithWidth:width height:height];
 	}
 	else
 	{
-		s_frameBufferParameters.pixelScale = 1.0f;
-		
-		s_frameBufferParameters.width  = static_cast< float >(width );
-		s_frameBufferParameters.height = static_cast< float >(height);
-		
-		s_frameBufferParameters.shiftX = 0.0f;
-		s_frameBufferParameters.shiftY = 0.0f;
-
-		const NSSize windowPixelSize = NSMakeSize(width, height);
-		const NSSize windowSize = IsHiDPISupported()
-			? [view convertSizeFromBacking:windowPixelSize]
-			: windowPixelSize;
-
-		[m_window setLevel:NSNormalWindowLevel];
-		[m_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask];
-		[m_window setHidesOnDeactivate:NO];
-		[m_window setContentSize:windowSize];
-		[m_window center];
+		[self windowedWithWidth:width height:height];
 	}
-	
+
 	const NSSize viewSize = GetRealContentViewSize(m_window);
 	
 	glViewport(0, 0, viewSize.width, viewSize.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
-	CGLFlushDrawable(context);
+
+	CGLFlushDrawable(CGLGetCurrentContext());
 
 	static NSString* const TITLE_STRING = 
 		[NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];

@@ -568,7 +568,7 @@ set( PLAT_SDL_SYSTEM_SOURCES
 	sdl/i_system.cpp
 	sdl/sdlvideo.cpp
 	sdl/st_start.cpp )
-set( PLAT_SDL_INPUT_SOURCES
+set( PLAT_SDL_SPECIAL_SOURCES
 	sdl/i_gui.cpp
 	sdl/i_input.cpp
 	sdl/i_joystick.cpp
@@ -607,7 +607,7 @@ if( APPLE )
 
 		set_source_files_properties( "${NIB_FILE}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 	else( OSX_COCOA_BACKEND )
-		set( PLAT_SDL_SOURCES ${PLAT_SDL_SYSTEM_SOURCES} ${PLAT_SDL_INPUT_SOURCES} "${FMOD_LIBRARY}" )
+		set( PLAT_SDL_SOURCES ${PLAT_SDL_SYSTEM_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} "${FMOD_LIBRARY}" )
 		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} sdl/SDLMain.m )
 	endif( OSX_COCOA_BACKEND )
 

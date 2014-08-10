@@ -63,6 +63,7 @@
 #include "textures.h"
 #include "v_video.h"
 #include "version.h"
+#include "i_rbopts.h"
 
 #undef Class
 
@@ -92,6 +93,7 @@
 
 // ---------------------------------------------------------------------------
 
+RenderBufferOptions rbOpts;
 
 CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_noprescale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -122,20 +124,6 @@ void I_ShutdownJoysticks();
 
 namespace
 {
-
-struct FrameBufferParameters
-{
-	float pixelScale;
-
-	float shiftX;
-	float shiftY;
-
-	float width;
-	float height;
-};
-
-FrameBufferParameters s_frameBufferParameters;
-
 
 const int ARGC_MAX = 64;
 
@@ -619,8 +607,8 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 
 	const CGFloat frameHeight = GetRealContentViewSize(window).height;
 
-	const CGFloat posX = (              viewPos.x - s_frameBufferParameters.shiftX) / s_frameBufferParameters.pixelScale;
-	const CGFloat posY = (frameHeight - viewPos.y - s_frameBufferParameters.shiftY) / s_frameBufferParameters.pixelScale;
+	const CGFloat posX = (              viewPos.x - rbOpts.shiftX) / rbOpts.pixelScale;
+	const CGFloat posY = (frameHeight - viewPos.y - rbOpts.shiftY) / rbOpts.pixelScale;
 
 	outEvent->data1 = static_cast< int >(posX);
 	outEvent->data2 = static_cast< int >(posY);
@@ -1091,13 +1079,13 @@ static ApplicationDelegate* s_applicationDelegate;
 	const float pixelScaleFactorX = displayWidth  / static_cast< float >(width );
 	const float pixelScaleFactorY = displayHeight / static_cast< float >(height);
 	
-	s_frameBufferParameters.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
+	rbOpts.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
 	
-	s_frameBufferParameters.width  = width  * s_frameBufferParameters.pixelScale;
-	s_frameBufferParameters.height = height * s_frameBufferParameters.pixelScale;
+	rbOpts.width  = width  * rbOpts.pixelScale;
+	rbOpts.height = height * rbOpts.pixelScale;
 	
-	s_frameBufferParameters.shiftX = (displayWidth  - s_frameBufferParameters.width ) / 2.0f;
-	s_frameBufferParameters.shiftY = (displayHeight - s_frameBufferParameters.height) / 2.0f;
+	rbOpts.shiftX = (displayWidth  - rbOpts.width ) / 2.0f;
+	rbOpts.shiftY = (displayHeight - rbOpts.height) / 2.0f;
 
 	[m_window setLevel:NSMainMenuWindowLevel + 1];
 	[m_window setStyleMask:NSBorderlessWindowMask];
@@ -1108,13 +1096,13 @@ static ApplicationDelegate* s_applicationDelegate;
 
 - (void)windowedWithWidth:(int)width height:(int)height
 {
-	s_frameBufferParameters.pixelScale = 1.0f;
+	rbOpts.pixelScale = 1.0f;
 	
-	s_frameBufferParameters.width  = static_cast< float >(width );
-	s_frameBufferParameters.height = static_cast< float >(height);
+	rbOpts.width  = static_cast< float >(width );
+	rbOpts.height = static_cast< float >(height);
 	
-	s_frameBufferParameters.shiftX = 0.0f;
-	s_frameBufferParameters.shiftY = 0.0f;
+	rbOpts.shiftX = 0.0f;
+	rbOpts.shiftY = 0.0f;
 
 	const NSSize windowPixelSize = NSMakeSize(width, height);
 	const NSSize windowSize = IsHiDPISupported()
@@ -1580,8 +1568,7 @@ static void ResetSoftwareViewport()
 	glViewport(0, 0, viewport[0], viewport[1]);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glViewport(s_frameBufferParameters.shiftX, s_frameBufferParameters.shiftY,
-			   s_frameBufferParameters.width,  s_frameBufferParameters.height);
+	glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
 }
 
 int SDL_WM_ToggleFullScreen(SDL_Surface* surface)

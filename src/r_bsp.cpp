@@ -408,7 +408,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->x, curline->v2->y))
 			{
 				// Check that the window is actually visible
-				for (int z = WallC.SX1; z < WallC.SX2; ++z)
+				for (int z = WallC.sx1; z < WallC.sx2; ++z)
 				{
 					if (floorclip[z] > ceilingclip[z])
 					{
@@ -541,12 +541,12 @@ void R_AddLine (seg_t *line)
 	if (WallC.Init(tx1, ty1, tx2, ty2, 32))
 		return;
 
-	if (WallC.SX1 > WindowRight || WallC.SX2 < WindowLeft)
+	if (WallC.sx1 > WindowRight || WallC.sx2 < WindowLeft)
 		return;
 
 	if (line->linedef == NULL)
 	{
-		if (R_CheckClipWallSegment (WallC.SX1, WallC.SX2))
+		if (R_CheckClipWallSegment (WallC.sx1, WallC.sx2))
 		{
 			InSubsector->flags |= SSECF_DRAWN;
 		}
@@ -695,7 +695,7 @@ void R_AddLine (seg_t *line)
 			// mark their subsectors as visible for automap texturing.
 			if (hasglnodes && !(InSubsector->flags & SSECF_DRAWN))
 			{
-				if (R_CheckClipWallSegment(WallC.SX1, WallC.SX2))
+				if (R_CheckClipWallSegment(WallC.sx1, WallC.sx2))
 				{
 					InSubsector->flags |= SSECF_DRAWN;
 				}
@@ -709,8 +709,8 @@ void R_AddLine (seg_t *line)
 	if (line->linedef->special == Line_Horizon)
 	{
 		// Be aware: Line_Horizon does not work properly with sloped planes
-		clearbufshort (walltop+WallC.SX1, WallC.SX2 - WallC.SX1, centery);
-		clearbufshort (wallbottom+WallC.SX1, WallC.SX2 - WallC.SX1, centery);
+		clearbufshort (walltop+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
+		clearbufshort (wallbottom+WallC.sx1, WallC.sx2 - WallC.sx1, centery);
 	}
 	else
 	{
@@ -735,7 +735,7 @@ void R_AddLine (seg_t *line)
 #endif
 	}
 
-	if (R_ClipWallSegment (WallC.SX1, WallC.SX2, solid))
+	if (R_ClipWallSegment (WallC.sx1, WallC.sx2, solid))
 	{
 		InSubsector->flags |= SSECF_DRAWN;
 	}
@@ -748,58 +748,58 @@ void R_AddLine (seg_t *line)
 //
 bool FWallCoords::Init(int x1, int y1, int x2, int y2, int too_close)
 {
-	TX1 = DMulScale20(x1, viewsin, -y1, viewcos);
-	TX2 = DMulScale20(x2, viewsin, -y2, viewcos);
+	tx1 = DMulScale20(x1, viewsin, -y1, viewcos);
+	tx2 = DMulScale20(x2, viewsin, -y2, viewcos);
 
-	TY1 = DMulScale20(x1, viewtancos, y1, viewtansin);
-	TY2 = DMulScale20(x2, viewtancos, y2, viewtansin);
+	ty1 = DMulScale20(x1, viewtancos, y1, viewtansin);
+	ty2 = DMulScale20(x2, viewtancos, y2, viewtansin);
 
 	if (MirrorFlags & RF_XFLIP)
 	{
-		int t = 256 - TX1;
-		TX1 = 256 - TX2;
-		TX2 = t;
-		swapvalues(TY1, TY2);
+		int t = 256 - tx1;
+		tx1 = 256 - tx2;
+		tx2 = t;
+		swapvalues(ty1, ty2);
 	}
 
-	if (TX1 >= -TY1)
+	if (tx1 >= -ty1)
 	{
-		if (TX1 > TY1) return true;	// left edge is off the right side
-		if (TY1 == 0) return true;
-		SX1 = (centerxfrac + Scale(TX1, centerxfrac, TY1)) >> FRACBITS;
-		if (TX1 >= 0) SX1 = MIN(viewwidth, SX1+1); // fix for signed divide
-		SZ1 = TY1;
+		if (tx1 > ty1) return true;	// left edge is off the right side
+		if (ty1 == 0) return true;
+		sx1 = (centerxfrac + Scale(tx1, centerxfrac, ty1)) >> FRACBITS;
+		if (tx1 >= 0) sx1 = MIN(viewwidth, sx1+1); // fix for signed divide
+		sz1 = ty1;
 	}
 	else
 	{
-		if (TX2 < -TY2) return true;	// wall is off the left side
-		fixed_t den = TX1 - TX2 - TY2 + TY1;	
+		if (tx2 < -ty2) return true;	// wall is off the left side
+		fixed_t den = tx1 - tx2 - ty2 + ty1;	
 		if (den == 0) return true;
-		SX1 = 0;
-		SZ1 = TY1 + Scale(TY2 - TY1, TX1 + TY1, den);
+		sx1 = 0;
+		sz1 = ty1 + Scale(ty2 - ty1, tx1 + ty1, den);
 	}
 
-	if (SZ1 < too_close)
+	if (sz1 < too_close)
 		return true;
 
-	if (TX2 <= TY2)
+	if (tx2 <= ty2)
 	{
-		if (TX2 < -TY2) return true;	// right edge is off the left side
-		if (TY2 == 0) return true;
-		SX2 = (centerxfrac + Scale(TX2, centerxfrac, TY2)) >> FRACBITS;
-		if (TX2 >= 0) SX2 = MIN(viewwidth, SX2+1);	// fix for signed divide
-		SZ2 = TY2;
+		if (tx2 < -ty2) return true;	// right edge is off the left side
+		if (ty2 == 0) return true;
+		sx2 = (centerxfrac + Scale(tx2, centerxfrac, ty2)) >> FRACBITS;
+		if (tx2 >= 0) sx2 = MIN(viewwidth, sx2+1);	// fix for signed divide
+		sz2 = ty2;
 	}
 	else
 	{
-		if (TX1 > TY1) return true;	// wall is off the right side
-		fixed_t den = TY2 - TY1 - TX2 + TX1;
+		if (tx1 > ty1) return true;	// wall is off the right side
+		fixed_t den = ty2 - ty1 - tx2 + tx1;
 		if (den == 0) return true;
-		SX2 = viewwidth;
-		SZ2 = TY1 + Scale(TY2 - TY1, TX1 - TY1, den);
+		sx2 = viewwidth;
+		sz2 = ty1 + Scale(ty2 - ty1, tx1 - ty1, den);
 	}
 
-	if (SZ2 < too_close || SX2 <= SX1)
+	if (sz2 < too_close || sx2 <= sx1)
 		return true;
 
 	return false;
@@ -809,17 +809,17 @@ void FWallTmapVals::InitFromWallCoords(const FWallCoords *wallc)
 {
 	if (MirrorFlags & RF_XFLIP)
 	{
-		UoverZorg = (float)wallc->TX2 * WallTMapScale;
-		UoverZstep = (float)(-wallc->TY2) * 32.f;
-		InvZorg = (float)(wallc->TX2 - wallc->TX1) * WallTMapScale;
-		InvZstep = (float)(wallc->TY1 - wallc->TY2) * 32.f;
+		UoverZorg = (float)wallc->tx2 * WallTMapScale;
+		UoverZstep = (float)(-wallc->ty2) * 32.f;
+		InvZorg = (float)(wallc->tx2 - wallc->tx1) * WallTMapScale;
+		InvZstep = (float)(wallc->ty1 - wallc->ty2) * 32.f;
 	}
 	else
 	{
-		UoverZorg = (float)wallc->TX1 * WallTMapScale;
-		UoverZstep = (float)(-wallc->TY1) * 32.f;
-		InvZorg = (float)(wallc->TX1 - wallc->TX2) * WallTMapScale;
-		InvZstep = (float)(wallc->TY2 - wallc->TY1) * 32.f;
+		UoverZorg = (float)wallc->tx1 * WallTMapScale;
+		UoverZstep = (float)(-wallc->ty1) * 32.f;
+		InvZorg = (float)(wallc->tx1 - wallc->tx2) * WallTMapScale;
+		InvZstep = (float)(wallc->ty2 - wallc->ty1) * 32.f;
 	}
 	InitDepth();
 }

@@ -886,8 +886,11 @@ class CommandDrawString : public SBarInfoCommand
 					}
 					break;
 				case TIME:
-					str.Format("%02d:%02d:%02d", (level.time/TICRATE)/3600, ((level.time/TICRATE)%3600)/60, (level.time/TICRATE)%60);
+				{
+					int sec = Tics2Seconds(level.time); 
+					str.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 					break;
+				}
 				case LOGTEXT:
 					str = statusBar->CPlayer->LogText;
 					break;

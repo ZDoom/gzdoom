@@ -409,16 +409,15 @@ void R_DrawWallSprite(vissprite_t *spr)
 {
 	int x1, x2;
 	fixed_t yscale;
-	int shade = LIGHT2SHADE(140);
 
-	x1 = MAX<int>(spr->x1, spr->wallc.SX1);
-	x2 = MIN<int>(spr->x2, spr->wallc.SX2 + 1);
+	x1 = MAX<int>(spr->x1, spr->wallc.sx1);
+	x2 = MIN<int>(spr->x2 + 1, spr->wallc.sx2 + 1);
 	if (x1 >= x2)
 		return;
 	WallT.InitFromWallCoords(&spr->wallc);
 	PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2);
-	dc_texturemid = spr->gzt - viewz;
-	yscale = FRACUNIT;
+	yscale = spr->yscale;
+	dc_texturemid = FixedDiv(spr->gzt - viewz, yscale);
 	if (spr->renderflags & RF_XFLIP)
 	{
 		int right = (spr->pic->GetWidth() << FRACBITS) - 1;
@@ -440,7 +439,11 @@ void R_DrawWallSprite(vissprite_t *spr)
 		rereadcolormap = false;
 	}
 
-	rw_light = rw_lightleft + (x1 - spr->wallc.SX1) * rw_lightstep;
+	int shade = LIGHT2SHADE(spr->sector->lightlevel + r_actualextralight);
+	GlobVis = r_WallVisibility;
+	rw_lightleft = SafeDivScale12(GlobVis, spr->wallc.sz1);
+	rw_lightstep = (SafeDivScale12(GlobVis, spr->wallc.sz2) - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1);
+	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
 		dc_colormap = usecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
@@ -1057,7 +1060,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	if (wallc.Init(lx1, ly1, lx2, ly2, TOO_CLOSE_Z))
 		return;
 	
-	if (wallc.SX1 > WindowRight || wallc.SX2 <= WindowLeft)
+	if (wallc.sx1 > WindowRight || wallc.sx2 <= WindowLeft)
 		return;
 
 	// Sprite sorting should probably treat these as walls, not sprites,
@@ -1070,8 +1073,9 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	gzb = fz + yscale * scaled_bo;
 
 	vis = R_NewVisSprite();
-	vis->x1 = wallc.SX1 < WindowLeft ? WindowLeft : wallc.SX1;
-	vis->x2 = wallc.SX2 >= WindowRight ? WindowRight-1 : wallc.SX2-1;
+	vis->x1 = wallc.sx1 < WindowLeft ? WindowLeft : wallc.sx1;
+	vis->x2 = wallc.sx2 >= WindowRight ? WindowRight : wallc.sx2-1;
+	vis->yscale = yscale;
 	vis->idepth = (unsigned)DivScale32(1, tz) >> 1;
 	vis->depth = tz;
 	vis->sector = thing->Sector;
@@ -2072,19 +2076,9 @@ void R_DrawSprite (vissprite_t *spr)
 		r1 = MAX<int> (ds->x1, x1);
 		r2 = MIN<int> (ds->x2, x2);
 
-		fixed_t neardepth, fardepth;
-		if (ds->sz1 < ds->sz2)
-		{
-			neardepth = ds->sz1, fardepth = ds->sz2;
-		}
-		else
-		{
-			neardepth = ds->sz2, fardepth = ds->sz1;
-		}
-		if (neardepth > spr->depth || (fardepth > spr->depth &&
-			// Check if sprite is in front of draw seg:
-			DMulScale32(spr->gy - ds->curline->v1->y, ds->curline->v2->x - ds->curline->v1->x,
-						ds->curline->v1->x - spr->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0))
+		// Check if sprite is in front of draw seg:
+		if (DMulScale32(spr->gy - ds->curline->v1->y, ds->curline->v2->x - ds->curline->v1->x,
+						ds->curline->v1->x - spr->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0)
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
 			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)

@@ -1306,8 +1306,8 @@ void DBaseStatusBar::Draw (EHudState state)
 	}
 	else if (automapactive)
 	{
-		int y, time = level.time / TICRATE, height;
-		int totaltime = level.totaltime / TICRATE;
+		int y, time = Tics2Seconds(level.time), height;
+		int totaltime = Tics2Seconds(level.totaltime);
 		EColorRange highlight = (gameinfo.gametype & GAME_DoomChex) ?
 			CR_UNTRANSLATED : CR_YELLOW;
 

@@ -62,4 +62,25 @@ struct FFileList
 
 void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 
+
+//==========================================================================
+//
+// Functions to compensate for a tic being a bit short.
+// Since ZDoom uses a milliseconds timer for game timing
+// 35 tics are actually only 0.98 seconds.
+// For real time display this needs to be adjusted
+//
+//==========================================================================
+
+inline int AdjustTics(int tics)
+{
+	return (tics * 98) / 100;
+}
+
+inline int Tics2Seconds(int tics)
+{
+	return (tics * 98) / (100 * TICRATE);
+}
+
+
 #endif

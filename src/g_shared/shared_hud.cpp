@@ -867,7 +867,7 @@ static void DrawTime()
 				: (hud_showtime < 6
 					? level.time
 					: level.totaltime);
-		const int timeSeconds = timeTicks / TICRATE;
+		const int timeSeconds = Tics2Seconds(timeTicks);
 
 		hours   =  timeSeconds / 3600;
 		minutes = (timeSeconds % 3600) / 60;
@@ -994,7 +994,7 @@ void DrawHUD()
 
 		if (am_showtotaltime)
 		{
-			seconds = level.totaltime / TICRATE;
+			seconds = Tics2Seconds(level.totaltime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
 			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
 			bottom -= fonth;
@@ -1004,14 +1004,14 @@ void DrawHUD()
 		{
 			if (level.clusterflags&CLUSTER_HUB)
 			{
-				seconds = level.time /TICRATE;
+				seconds = Tics2Seconds(level.time);
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
 				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
 				bottom -= fonth;
 			}
 
 			// Single level time for hubs
-			seconds= level.maptime /TICRATE;
+			seconds= Tics2Seconds(level.maptime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
 			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
 		}

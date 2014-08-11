@@ -1460,7 +1460,7 @@ void WI_drawDeathmatchStats ()
 	// Draw game time
 	y += height + CleanYfac;
 
-	int seconds = plrs[me].stime / TICRATE;
+	int seconds = Tics2Seconds(plrs[me].stime);
 	int hours = seconds / 3600;
 	int minutes = (seconds % 3600) / 60;
 	seconds = seconds % 60;
@@ -1817,9 +1817,9 @@ void WI_updateStats ()
 		cnt_kills[0] = plrs[me].skills;
 		cnt_items[0] = plrs[me].sitems;
 		cnt_secret[0] = plrs[me].ssecret;
-		cnt_time = plrs[me].stime / TICRATE;
+		cnt_time = Tics2Seconds(plrs[me].stime);
 		cnt_par = wbs->partime / TICRATE;
-	    cnt_total_time = wbs->totaltime / TICRATE;
+	    cnt_total_time = Tics2Seconds(wbs->totaltime);
 	}
 
 	if (sp_state == 2)
@@ -1882,19 +1882,21 @@ void WI_updateStats ()
 			cnt_total_time += 3;
 		}
 
-		if (!gameinfo.intermissioncounter || cnt_time >= plrs[me].stime / TICRATE)
-			cnt_time = plrs[me].stime / TICRATE;
+		int sec = Tics2Seconds(plrs[me].stime);
+		if (!gameinfo.intermissioncounter || cnt_time >= sec)
+			cnt_time = sec;
 
-		if (!gameinfo.intermissioncounter || cnt_total_time >= wbs->totaltime / TICRATE)
-			cnt_total_time = wbs->totaltime / TICRATE;
+		int tsec = Tics2Seconds(wbs->totaltime);
+		if (!gameinfo.intermissioncounter || cnt_total_time >= tsec)
+			cnt_total_time = tsec;
 
 		if (!gameinfo.intermissioncounter || cnt_par >= wbs->partime / TICRATE)
 		{
 			cnt_par = wbs->partime / TICRATE;
 
-			if (cnt_time >= plrs[me].stime / TICRATE)
+			if (cnt_time >= sec)
 			{
-				cnt_total_time = wbs->totaltime / TICRATE;
+				cnt_total_time = tsec;
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
 				sp_state++;
 			}

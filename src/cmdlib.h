@@ -5,6 +5,7 @@
 
 
 #include "doomtype.h"
+#include "doomdef.h"
 
 #include <stdio.h>
 #include <string.h>

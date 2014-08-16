@@ -805,6 +805,13 @@ OptionValue "AltHUDTime"
 	9, "System"
 }
 
+OptionValue "AltHUDLag"
+{
+	0, "Off"
+	1, "Netgames only"
+	2, "Always"
+}
+
 OptionMenu "AltHUDOptions"
 {
 	Title "Alternative HUD"
@@ -819,6 +826,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show weapons",							"hud_showweapons", "OnOff"
 	Option "Show time",								"hud_showtime", "AltHUDTime"
 	Option "Time color",							"hud_timecolor", "TextColors"
+	Option "Show network latency",					"hud_showlag", "AltHUDLag"
 	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "Yellow ammo display below %",			"hud_ammo_yellow", 0, 100, 1, 0
 	Slider "Red health display below",				"hud_health_red", 0, 100, 1, 0

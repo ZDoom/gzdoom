@@ -143,6 +143,7 @@ extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
 
 extern	int 			maketic;
 extern	int 			nettics[MAXNETNODES];
+extern	int				arb_maketic;
 
 extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
 extern	int 			ticdup;

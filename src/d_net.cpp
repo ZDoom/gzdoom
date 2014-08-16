@@ -117,6 +117,7 @@ int				playerfornode[MAXNETNODES];
 int 			maketic;
 int 			skiptics;
 int 			ticdup; 		
+int				arb_maketic;							// Arbitrators maketic difference
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 
@@ -150,6 +151,8 @@ CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		I_SetFPSLimit(-1);
 	}
 }
+
+CVAR(Bool, net_loadbalance, true, CVAR_SERVERINFO)
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial
@@ -346,6 +349,9 @@ int NetbufferSize ()
 	{
 		k += netbuffer[k] + 1;
 	}
+
+	if (doomcom.remotenode == nodeforplayer[Net_Arbitrator])
+		k++;
 
 	if (netbuffer[0] & NCMD_MULTI)
 	{
@@ -570,6 +576,9 @@ bool HGetPacket (void)
 
 	if (doomcom.datalength != NetbufferSize ())
 	{
+		Printf("Bad packet length %i (calculated %i)\n",
+			doomcom.datalength, NetbufferSize());
+
 		if (debugfile)
 			fprintf (debugfile,"---bad packet length %i (calculated %i)\n",
 				doomcom.datalength, NetbufferSize());
@@ -780,6 +789,11 @@ void GetPackets (void)
 				PlayerIsGone (nodeforplayer[netbuffer[k]], netbuffer[k]);
 				k++;
 			}
+		}
+
+		if (netconsole == Net_Arbitrator)
+		{
+			arb_maketic = netbuffer[k++];
 		}
 
 		playerbytes[0] = netconsole;
@@ -1190,6 +1204,12 @@ void NetUpdate (void)
 			}
 		}
 
+		if (consoleplayer == Net_Arbitrator)
+		{
+			// The number of tics we just made should be removed from the count.
+			netbuffer[k++] = ((maketic - newtics - gametic) / ticdup);
+		}
+
 		if (numtics > 0)
 		{
 			int l;
@@ -1298,10 +1318,16 @@ void NetUpdate (void)
 			// very jerky. The way I have it written right now basically means
 			// that it won't adapt. Fortunately, player prediction helps
 			// alleviate the lag somewhat.
-
-			if (NetMode != NET_PacketServer)
+			int average = 0;
+			if (net_loadbalance)
+				average = (((maketic - newtics - gametic) / ticdup) + arb_maketic) / 2;
+			if (NetMode == NET_PeerToPeer)
 			{
-				mastertics = nettics[nodeforplayer[Net_Arbitrator]];
+				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + average;
+			}
+			else if (NetMode == NET_PacketServer)
+			{
+				mastertics = mastertics + average;
 			}
 			if (nettics[0] <= mastertics)
 			{
@@ -2713,7 +2739,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 CCMD (pings)
 {
 	int i;
-
+	Printf("%d (%d ms) arbitrator buffer time\n", arb_maketic * ticdup, (arb_maketic * ticdup) * (1000 / TICRATE));
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],

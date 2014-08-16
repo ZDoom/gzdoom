@@ -25,6 +25,11 @@ void ABasicArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType;
+
+	if (SaveVersion >= 4511)
+	{
+		 arc << ActualSaveAmount;
+	}
 }
 
 //===========================================================================
@@ -69,6 +74,7 @@ AInventory *ABasicArmor::CreateCopy (AActor *other)
 	copy->Icon = Icon;
 	copy->BonusCount = BonusCount;
 	copy->ArmorType = ArmorType;
+	copy->ActualSaveAmount = ActualSaveAmount;
 	GoAwayAndDie ();
 	return copy;
 }
@@ -268,6 +274,7 @@ bool ABasicArmorPickup::Use (bool pickup)
 	armor->MaxAbsorb = MaxAbsorb;
 	armor->MaxFullAbsorb = MaxFullAbsorb;
 	armor->ArmorType = this->GetClass()->TypeName;
+	armor->ActualSaveAmount = SaveAmount;
 	return true;
 }
 
@@ -360,6 +367,7 @@ bool ABasicArmorBonus::Use (bool pickup)
 		armor->MaxAbsorb = MaxAbsorb;
 		armor->ArmorType = this->GetClass()->TypeName;
 		armor->MaxFullAbsorb = MaxFullAbsorb;
+		armor->ActualSaveAmount = MaxSaveAmount;
 	}
 
 	armor->Amount = MIN(armor->Amount + saveAmount, MaxSaveAmount + armor->BonusCount);

@@ -128,6 +128,7 @@ enum
 	ARMORINFO_SAVEPERCENT,
 	ARMORINFO_MAXABSORB,
 	ARMORINFO_MAXFULLABSORB,
+	ARMORINFO_ACTUALSAVEAMOUNT,
 };
 
 struct CallReturn
@@ -4857,6 +4858,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 					case ARMORINFO_MAXFULLABSORB:
 						return equippedarmor->MaxFullAbsorb;
+
+					case ARMORINFO_ACTUALSAVEAMOUNT:
+						return equippedarmor->ActualSaveAmount;
 
 					default:
 						return 0;

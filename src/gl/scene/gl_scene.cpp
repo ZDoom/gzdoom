@@ -659,7 +659,6 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	}
 
 	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_POLYGON_SMOOTH);
 
 	framebuffer->Begin2D(false);
 

@@ -1183,7 +1183,7 @@ void NetUpdate (void)
 		default: 
 			resendto[i] = MAX(0, lowtic); break;
 		case 1: resendto[i] = MAX(0, lowtic - 1); break;
-		case 2: resendto[i] = MAX(0, nettics[i]); break;
+		case 2: resendto[i] = nettics[i]; break;
 		}
 
 		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])

@@ -938,11 +938,6 @@ bool I_InitNetwork (void)
 		doomcom.ticdup = 1;
 	}
 
-	if (Args->CheckParm ("-extratic"))
-		doomcom.extratics = 1;
-	else
-		doomcom.extratics = 0;
-
 	v = Args->CheckValue ("-port");
 	if (v)
 	{

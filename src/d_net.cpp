@@ -117,7 +117,7 @@ int				playerfornode[MAXNETNODES];
 
 int 			maketic;
 int 			skiptics;
-int 			ticdup; 		
+int 			ticdup;
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 
@@ -153,6 +153,17 @@ CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO)
+CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO)
+{
+	if (self < 0)
+	{
+		self = 0;
+	}
+	else if (self > 3)
+	{
+		I_SetFPSLimit(-1);
+	}
+}
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial
@@ -1166,7 +1177,15 @@ void NetUpdate (void)
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 
-		resendto[i] = MAX (0, lowtic - doomcom.extratics);
+		switch (net_extratic)
+		{
+		case 0:
+		default: 
+			resendto[i] = MAX(0, lowtic); break;
+		case 1: resendto[i] = MAX(0, lowtic - 1); break;
+		case 2: resendto[i] = MAX(0, lowtic - (lowtic - nettics[i])); break;
+		case 3: resendto[i] = MAX(0, lowtic - (BACKUPTICS / 2 - 1)); break;
+		}
 
 		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])
 		{
@@ -1204,7 +1223,7 @@ void NetUpdate (void)
 
 		// Send current network delay
 		// The number of tics we just made should be removed from the count.
-		netbuffer[k++] = ((maketic - numtics - gametic) / ticdup);
+		netbuffer[k++] = ((maketic - newtics - gametic) / ticdup);
 
 		if (numtics > 0)
 		{
@@ -1319,7 +1338,7 @@ void NetUpdate (void)
 			if (NetMode == NET_PeerToPeer)
 			{
 				// Try to guess ahead the time it takes to send responses to the arbitrator
-				// [ED850] It seems that there is a bias based on network adaption (which the netwrok arbitrator doesn't do),
+				// [ED850] It seems that there is a bias based on network adaption (which the arbitrator doesn't do),
 				// so I have set this up to assume one less tic, which appears to balance it out.
 				if (net_ticbalance)
 					average = ((netdelay[0] + ARBITRATOR_DELAY) / 2) - 1;
@@ -1368,9 +1387,8 @@ void NetUpdate (void)
 //
 //  0 One byte set to NCMD_SETUP+2
 //  1 One byte for ticdup setting
-//  2 One byte for extratics setting
-//  3 One byte for NetMode setting
-//  4 String with starting map's name
+//  2 One byte for NetMode setting
+//  3 String with starting map's name
 //  . Four bytes for the RNG seed
 //  . Stream containing remaining game info
 //
@@ -1451,10 +1469,9 @@ bool DoArbitrate (void *userdata)
 			data->gotsetup[0] = 0x80;
 
 			ticdup = doomcom.ticdup = netbuffer[1];
-			doomcom.extratics = netbuffer[2];
-			NetMode = netbuffer[3];
+			NetMode = netbuffer[2];
 
-			stream = &netbuffer[4];
+			stream = &netbuffer[3];
 			s = ReadString (&stream);
 			startmap = s;
 			delete[] s;
@@ -1519,9 +1536,8 @@ bool DoArbitrate (void *userdata)
 	{
 		netbuffer[0] = NCMD_SETUP+2;
 		netbuffer[1] = (BYTE)doomcom.ticdup;
-		netbuffer[2] = (BYTE)doomcom.extratics;
-		netbuffer[3] = NetMode;
-		stream = &netbuffer[4];
+		netbuffer[2] = NetMode;
+		stream = &netbuffer[3];
 		WriteString (startmap, &stream);
 		WriteLong (rngseed, &stream);
 		C_WriteCVars (&stream, CVAR_SERVERINFO, true);

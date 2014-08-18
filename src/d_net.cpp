@@ -159,9 +159,9 @@ CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO)
 	{
 		self = 0;
 	}
-	else if (self > 3)
+	else if (self > 2)
 	{
-		I_SetFPSLimit(-1);
+		self = 2;
 	}
 }
 
@@ -1183,8 +1183,7 @@ void NetUpdate (void)
 		default: 
 			resendto[i] = MAX(0, lowtic); break;
 		case 1: resendto[i] = MAX(0, lowtic - 1); break;
-		case 2: resendto[i] = MAX(0, lowtic - (lowtic - nettics[i])); break;
-		case 3: resendto[i] = MAX(0, lowtic - (BACKUPTICS / 2 - 1)); break;
+		case 2: resendto[i] = MAX(0, nettics[i]); break;
 		}
 
 		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])

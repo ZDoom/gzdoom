@@ -935,8 +935,8 @@ static void DrawLatency()
 		return;
 	}
 
-	int localdelay = (maketic - gametic) * (1000 / TICRATE);
-	int arbitratordelay = (arb_maketic * ticdup) * (1000 / TICRATE);
+	int localdelay = (netdelay[0] * ticdup) * (1000 / TICRATE);
+	int arbitratordelay = (ARBITRATOR_DELAY * ticdup) * (1000 / TICRATE);
 	int color = CR_GREEN;
 	if (MAX(localdelay, arbitratordelay) > 200)
 	{

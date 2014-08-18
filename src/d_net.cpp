@@ -110,6 +110,7 @@ unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
 unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
 bool			hadlate;
+int				netdelay[MAXNETNODES];					// Used for storing network delay times.
 
 int 			nodeforplayer[MAXPLAYERS];
 int				playerfornode[MAXNETNODES];
@@ -117,7 +118,6 @@ int				playerfornode[MAXNETNODES];
 int 			maketic;
 int 			skiptics;
 int 			ticdup; 		
-int				arb_maketic;							// Arbitrators maketic difference
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 
@@ -152,7 +152,7 @@ CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CVAR(Bool, net_loadbalance, true, CVAR_SERVERINFO)
+CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO)
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial
@@ -350,8 +350,8 @@ int NetbufferSize ()
 		k += netbuffer[k] + 1;
 	}
 
-	if (doomcom.remotenode == nodeforplayer[Net_Arbitrator])
-		k++;
+	// Network delay byte
+	k++;
 
 	if (netbuffer[0] & NCMD_MULTI)
 	{
@@ -791,10 +791,8 @@ void GetPackets (void)
 			}
 		}
 
-		if (netconsole == Net_Arbitrator)
-		{
-			arb_maketic = netbuffer[k++];
-		}
+		// Pull current network delay from node
+		netdelay[netnode] = netbuffer[k++];
 
 		playerbytes[0] = netconsole;
 		if (netbuffer[0] & NCMD_MULTI)
@@ -1204,11 +1202,9 @@ void NetUpdate (void)
 			}
 		}
 
-		if (consoleplayer == Net_Arbitrator)
-		{
-			// The number of tics we just made should be removed from the count.
-			netbuffer[k++] = ((maketic - newtics - gametic) / ticdup);
-		}
+		// Send current network delay
+		// The number of tics we just made should be removed from the count.
+		netbuffer[k++] = ((maketic - numtics - gametic) / ticdup);
 
 		if (numtics > 0)
 		{
@@ -1319,15 +1315,15 @@ void NetUpdate (void)
 			// that it won't adapt. Fortunately, player prediction helps
 			// alleviate the lag somewhat.
 			int average = 0;
-			if (net_loadbalance)
-				average = (((maketic - newtics - gametic) / ticdup) + arb_maketic) / 2;
+
 			if (NetMode == NET_PeerToPeer)
 			{
+				// Try to guess ahead the time it takes to send responses to the arbitrator
+				// [ED850] It seems that there is a bias based on network adaption (which the netwrok arbitrator doesn't do),
+				// so I have set this up to assume one less tic, which appears to balance it out.
+				if (net_ticbalance)
+					average = ((netdelay[0] + ARBITRATOR_DELAY) / 2) - 1;
 				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + average;
-			}
-			else if (NetMode == NET_PacketServer)
-			{
-				mastertics = mastertics + average;
 			}
 			if (nettics[0] <= mastertics)
 			{
@@ -2739,7 +2735,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 CCMD (pings)
 {
 	int i;
-	Printf("%d (%d ms) arbitrator buffer time\n", arb_maketic * ticdup, (arb_maketic * ticdup) * (1000 / TICRATE));
+	Printf("%d (%d ms) arbitrator buffer time\n", ARBITRATOR_DELAY * ticdup, (ARBITRATOR_DELAY * ticdup) * (1000 / TICRATE));
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],

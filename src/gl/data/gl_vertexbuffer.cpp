@@ -90,26 +90,60 @@ void FVertexBuffer::BindVBO()
 FFlatVertexBuffer::FFlatVertexBuffer()
 : FVertexBuffer()
 {
-	unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	mNumReserved = mIndex = mCurIndex = 0;
+	if (gl.flags & RFL_BUFFER_STORAGE)
+	{
+		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
-	glBindVertexArray(vao_id);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glVertexAttribPointer(VATTR_VERTEX, 3,GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
-	glVertexAttribPointer(VATTR_TEXCOORD, 2,GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-	glEnableVertexAttribArray(VATTR_VERTEX);
-	glEnableVertexAttribArray(VATTR_TEXCOORD);
-	glBindVertexArray(0);
+		glBindVertexArray(vao_id);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glVertexAttribPointer(VATTR_VERTEX, 3,GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2,GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
+		glEnableVertexAttribArray(VATTR_VERTEX);
+		glEnableVertexAttribArray(VATTR_TEXCOORD);
+		glBindVertexArray(0);
+	}
+	else
+	{
+		vbo_shadowdata.Reserve(BUFFER_SIZE);
+		map = &vbo_shadowdata[0];
+	}
+	mNumReserved = mIndex = mCurIndex = 0;
 }
 
 FFlatVertexBuffer::~FFlatVertexBuffer()
 {
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	if (gl.flags & RFL_BUFFER_STORAGE)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+}
+
+//==========================================================================
+//
+// immediate mode fallback for drivers without GL_ARB_buffer_storage
+//
+// No single core method is performant enough  to handle this adequately
+// so we have to resort to immediate mode instead...
+//
+//==========================================================================
+
+void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count)
+{
+	// this will only get called if we can't acquire a persistently mapped buffer.
+#ifndef CORE_PROFILE
+	glBegin(primtype);
+	for (unsigned int i = 0; i < count; i++)
+	{
+		glVertexAttrib2fv(VATTR_TEXCOORD, &map[offset + i].u);
+		glVertexAttrib3fv(VATTR_VERTEX, &map[offset + i].x);
+	}
+	glEnd();
+#endif
 }
 
 //==========================================================================
@@ -289,10 +323,24 @@ void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
 
 void FFlatVertexBuffer::CreateVBO()
 {
-	vbo_shadowdata.Resize(mNumReserved);
-	CreateFlatVBO();
-	mCurIndex = mIndex = vbo_shadowdata.Size();
-	memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
+	if (gl.flags & RFL_BUFFER_STORAGE)
+	{
+		vbo_shadowdata.Resize(mNumReserved);
+		CreateFlatVBO();
+		mCurIndex = mIndex = vbo_shadowdata.Size();
+		memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));
+	}
+	else if (sectors)
+	{
+		// set all VBO info to invalid values so that we can save some checks in the rendering code
+		for(int i=0;i<numsectors;i++)
+		{
+			sectors[i].vboindex[3] = sectors[i].vboindex[2] = 
+			sectors[i].vboindex[1] = sectors[i].vboindex[0] = -1;
+			sectors[i].vboheight[1] = sectors[i].vboheight[0] = FIXED_MIN;
+		}
+	}
+
 }
 
 //==========================================================================
@@ -324,9 +372,12 @@ void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
 
 void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
 {
-	CheckPlanes(sector);
-	sector_t *hs = sector->GetHeightSec();
-	if (hs != NULL) CheckPlanes(hs);
-	for(unsigned i = 0; i < sector->e->XFloor.ffloors.Size(); i++)
-		CheckPlanes(sector->e->XFloor.ffloors[i]->model);
+	if (gl.flags & RFL_BUFFER_STORAGE)
+	{
+		CheckPlanes(sector);
+		sector_t *hs = sector->GetHeightSec();
+		if (hs != NULL) CheckPlanes(hs);
+		for (unsigned i = 0; i < sector->e->XFloor.ffloors.Size(); i++)
+			CheckPlanes(sector->e->XFloor.ffloors[i]->model);
+	}
 }

@@ -87,6 +87,7 @@ protected:
 	void MakeModesList();
 	void AddMode(int x, int y, int bits, int baseHeight, int refreshHz);
 	void FreeModes();
+	bool checkCoreUsability();
 public:
 	int GetTrueHeight() { return m_trueHeight; }
 

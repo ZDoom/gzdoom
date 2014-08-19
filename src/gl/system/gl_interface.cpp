@@ -117,9 +117,9 @@ void gl_LoadExtensions()
 	else Printf("Emulating OpenGL v %s\n", version);
 
 	// Don't even start if it's lower than 3.0
-	if (strcmp(version, "3.3") < 0 || !CheckExtension("GL_ARB_buffer_storage"))
+	if (strcmp(version, "3.3") < 0)
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 3.3 and the »GL_ARB_buffer_storage« extension is required to run " GAMENAME ".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 3.3 is required to run " GAMENAME ".\n");
 	}
 
 	// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version
@@ -130,7 +130,12 @@ void gl_LoadExtensions()
 
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags|=RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags|=RFL_TEXTURE_COMPRESSION_S3TC;
-	if (CheckExtension("GL_ARB_shader_storage_buffer_object")) gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+	if (!Args->CheckParm("-gl3"))
+	{
+		// don't use GL 4.x features when running in GL 3 emulation mode.
+		if (CheckExtension("GL_ARB_shader_storage_buffer_object")) gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+		if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
+	}
 	
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

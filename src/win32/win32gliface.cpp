@@ -726,6 +726,32 @@ bool Win32GLVideo::SetupPixelFormat(int multisample)
 //
 //==========================================================================
 
+bool Win32GLVideo::checkCoreUsability()
+{
+	// if we explicitly want to disable 4.x features this must fail.
+	if (Args->CheckParm("-gl3")) return false;
+
+	// GL 4.4 implies GL_ARB_buffer_storage
+	if (strcmp((char*)glGetString(GL_VERSION), "4.4") >= 0) return true;
+
+	// at this point GLEW has not been initialized so we have to retrieve glGetStringi ourselves.
+	PFNGLGETSTRINGIPROC myglGetStringi = (PFNGLGETSTRINGIPROC)wglGetProcAddress("glGetStringi");
+	if (!myglGetStringi) return false;	// this should not happen.
+
+	const char *extension;
+
+	int max = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &max);
+
+	// step through all reported extensions and see if we got what we need...
+	for (int i = 0; i < max; i++)
+	{
+		extension = (const char*)myglGetStringi(GL_EXTENSIONS, i);
+		if (!strcmp(extension, "GL_ARB_buffer_storage")) return true;
+	}
+	return false;
+}
+
 bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 {
 	m_Window=Window;
@@ -737,36 +763,50 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 		return false;
 	}
 
-	m_hRC = NULL;
-	if (myWglCreateContextAttribsARB != NULL)
+	for (int prof = WGL_CONTEXT_CORE_PROFILE_BIT_ARB; prof <= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB; prof++)
 	{
-		// let's try to get the best version possible. Some drivers only give us the version we request
-		// which breaks all version checks for feature support. The highest used features we use are from version 4.4, and 3.0 is a requirement.
-		static int versions[] = { 44, 43, 42, 41, 40, 33, -1 };
-
-		for (int i = 0; versions[i] > 0; i++)
+		m_hRC = NULL;
+		if (myWglCreateContextAttribsARB != NULL)
 		{
-			int ctxAttribs[] = {
-				WGL_CONTEXT_MAJOR_VERSION_ARB, versions[i] / 10,
-				WGL_CONTEXT_MINOR_VERSION_ARB, versions[i] % 10,
-				WGL_CONTEXT_FLAGS_ARB, gl_debug ? WGL_CONTEXT_DEBUG_BIT_ARB : 0,
-				WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-				0
-			};
+			// let's try to get the best version possible. Some drivers only give us the version we request
+			// which breaks all version checks for feature support. The highest used features we use are from version 4.4, and 3.3 is a requirement.
+			static int versions[] = { 45, 44, 43, 42, 41, 40, 33, -1 };
 
-			m_hRC = myWglCreateContextAttribsARB(m_hDC, 0, ctxAttribs);
-			if (m_hRC != NULL) break;
+			for (int i = 0; versions[i] > 0; i++)
+			{
+				int ctxAttribs[] = {
+					WGL_CONTEXT_MAJOR_VERSION_ARB, versions[i] / 10,
+					WGL_CONTEXT_MINOR_VERSION_ARB, versions[i] % 10,
+					WGL_CONTEXT_FLAGS_ARB, gl_debug ? WGL_CONTEXT_DEBUG_BIT_ARB : 0,
+					WGL_CONTEXT_PROFILE_MASK_ARB, prof,
+					0
+				};
+
+				m_hRC = myWglCreateContextAttribsARB(m_hDC, 0, ctxAttribs);
+				if (m_hRC != NULL) break;
+			}
+		}
+
+		if (m_hRC == NULL && prof == WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
+		{
+			Printf("R_OPENGL: Couldn't create render context. Reverting to software mode...\n");
+			return false;
+		}
+
+		wglMakeCurrent(m_hDC, m_hRC);
+
+		// we can only use core profile contexts if GL_ARB_buffer_storage is supported or GL version is >= 4.4
+		if (prof == WGL_CONTEXT_CORE_PROFILE_BIT_ARB && !checkCoreUsability())
+		{
+			wglMakeCurrent(0, 0);
+			wglDeleteContext(m_hRC);
+		}
+		else
+		{
+			return true;
 		}
 	}
-
-	if (m_hRC == NULL)
-	{
-		Printf ("R_OPENGL: Couldn't create render context. Reverting to software mode...\n");
-		return false;
-	}
-
-	wglMakeCurrent(m_hDC, m_hRC);
-	return true;
+	return false;
 }
 
 //==========================================================================

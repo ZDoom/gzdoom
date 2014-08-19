@@ -9,7 +9,8 @@ enum RenderFlags
 	RFL_TEXTURE_COMPRESSION=1,
 	RFL_TEXTURE_COMPRESSION_S3TC=2,
 
-	RFL_SHADER_STORAGE_BUFFER = 4,		// to be used later for a parameter buffer
+	RFL_SHADER_STORAGE_BUFFER = 4,
+	RFL_BUFFER_STORAGE = 8
 };
 
 enum TexMode

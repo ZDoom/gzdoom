@@ -83,7 +83,14 @@ public:
 	void RenderArray(unsigned int primtype, unsigned int offset, unsigned int count)
 	{
 		drawcalls.Clock();
-		glDrawArrays(primtype, offset, count);
+		if (gl.flags & RFL_BUFFER_STORAGE)
+		{
+			glDrawArrays(primtype, offset, count);
+		}
+		else
+		{
+			ImmRenderBuffer(primtype, offset, count);
+		}
 		drawcalls.Unclock();
 	}
 

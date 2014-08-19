@@ -2728,6 +2728,8 @@ void P_PredictPlayer (player_t *player)
 		P_PlayerThink (player);
 		player->mo->Tick ();
 	}
+
+	S_UpdateSounds(players[consoleplayer].camera);	// move positional sounds
 }
 
 extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);

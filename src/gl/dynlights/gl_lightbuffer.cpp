@@ -54,7 +54,7 @@ FLightBuffer::FLightBuffer()
 
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mByteSize = mBufferSize * sizeof(float);
-	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
 		mBlockAlign = -1;
@@ -70,7 +70,7 @@ FLightBuffer::FLightBuffer()
 
 	glGenBuffers(1, &mBufferId);
 	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
-	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
 		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -148,7 +148,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 		// create the new buffer's storage (twice as large as the old one)
 		mBufferSize *= 2;
 		mByteSize *= 2;
-		if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+		if (gl.flags & RFL_BUFFER_STORAGE)
 		{
 			glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 			mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -187,7 +187,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 
 void FLightBuffer::Begin()
 {
-	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (!(gl.flags & RFL_BUFFER_STORAGE))
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
@@ -196,7 +196,7 @@ void FLightBuffer::Begin()
 
 void FLightBuffer::Finish()
 {
-	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (!(gl.flags & RFL_BUFFER_STORAGE))
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		glUnmapBuffer(mBufferType);

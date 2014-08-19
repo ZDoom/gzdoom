@@ -279,16 +279,17 @@ public:
 
 	int dynlightindex;
 
-	bool SetupSubsectorLights(bool lightsapplied, subsector_t * sub);
+	void SetupSubsectorLights(int pass, subsector_t * sub, int *dli = NULL);
 	void DrawSubsector(subsector_t * sub);
 	void DrawSubsectorLights(subsector_t * sub, int pass);
-	void DrawSubsectors(int pass, bool istrans);
+	void DrawSubsectors(int pass, bool processlights, bool istrans);
+	void ProcessLights(bool istrans);
 
 	void PutFlat(bool fog = false);
 	void Process(sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(sector_t * frontsector);
-	void Draw(int pass);
+	void Draw(int pass, bool trans);
 };
 
 

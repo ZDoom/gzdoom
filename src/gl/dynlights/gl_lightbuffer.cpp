@@ -45,15 +45,20 @@
 #include "gl/system/gl_interface.h"
 #include "gl/utility//gl_clock.h"
 
-static const int BUFFER_SIZE = 160000;	// This means 80000 lights per frame and 160000*16 bytes == 2.56 MB.
+static const int INITIAL_BUFFER_SIZE = 160000;	// This means 80000 lights per frame and 160000*16 bytes == 2.56 MB.
+
+float *mMap;
 
 FLightBuffer::FLightBuffer()
 {
+
+	mBufferSize = INITIAL_BUFFER_SIZE;
+	mByteSize = mBufferSize * sizeof(float);
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
 		mBlockAlign = -1;
-		mBlockSize = BUFFER_SIZE;
+		mBlockSize = mBufferSize;
 	}
 	else
 	{
@@ -64,12 +69,17 @@ FLightBuffer::FLightBuffer()
 	}
 
 	glGenBuffers(1, &mBufferId);
-	glBindBuffer(mBufferType, mBufferId);
-	unsigned int bytesize = BUFFER_SIZE * 4 * sizeof(float);
-	glBufferStorage(mBufferType, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	void *map = glMapBufferRange(mBufferType, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	mBufferPointer = (float*)map;
 	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
+	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	{
+		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	}
+	else
+	{
+		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
+		mBufferPointer = NULL;
+	}
 
 	Clear();
 	mLastMappedIndex = UINT_MAX;
@@ -84,7 +94,8 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
-	mBufferArray.Clear();
+	mIndices.Clear();
+	mUploadIndex = 0;
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)
@@ -120,13 +131,45 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 
 	if (totalsize <= 1) return -1;
 
-	if (mIndex + totalsize > BUFFER_SIZE)
+	if (mIndex + totalsize > mBufferSize)
 	{
-		return -1;	// we ran out of space. All following lights will be ignored
+		// reallocate the buffer with twice the size
+		unsigned int newbuffer;
+
+		// first unmap the old buffer
+		glBindBuffer(mBufferType, mBufferId);
+		glUnmapBuffer(mBufferType);
+
+		// create and bind the new buffer, bind the old one to a copy target (too bad that DSA is not yet supported well enough to omit this crap.)
+		glGenBuffers(1, &newbuffer);
+		glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, newbuffer);
+		glBindBuffer(GL_COPY_READ_BUFFER, mBufferId);
+
+		// create the new buffer's storage (twice as large as the old one)
+		mBufferSize *= 2;
+		mByteSize *= 2;
+		if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+		{
+			glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+			mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		}
+		else
+		{
+			glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
+			mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
+		}
+
+		// copy contents and delete the old buffer.
+		glCopyBufferSubData(GL_COPY_READ_BUFFER, mBufferType, 0, 0, mByteSize/2);
+		glBindBuffer(GL_COPY_READ_BUFFER, 0);
+		glDeleteBuffers(1, &mBufferId);
+		mBufferId = newbuffer;
 	}
 
 	float *copyptr;
-
+	
+	assert(mBufferPointer != NULL);
+	if (mBufferPointer == NULL) return -1;
 	copyptr = mBufferPointer + mIndex * 4;
 
 	float parmcnt[] = { 0, size0, size0 + size1, size0 + size1 + size2 };
@@ -142,9 +185,23 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	return bufferindex;
 }
 
+void FLightBuffer::Begin()
+{
+	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	{
+		glBindBuffer(mBufferType, mBufferId);
+		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
+	}
+}
+
 void FLightBuffer::Finish()
 {
-	Clear();
+	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	{
+		glBindBuffer(mBufferType, mBufferId);
+		glUnmapBuffer(mBufferType);
+		mBufferPointer = NULL;
+	}
 }
 
 int FLightBuffer::BindUBO(unsigned int index)

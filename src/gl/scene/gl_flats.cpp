@@ -112,9 +112,16 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 //==========================================================================
 extern FDynLightData lightdata;
 
-bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
+void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 {
 	Plane p;
+
+	if (dli != NULL && *dli != -1)
+	{
+		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
+		(*dli)++;
+		return;
+	}
 
 	lightdata.Clear();
 	FLightNode * node = sub->lighthead;
@@ -143,9 +150,15 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 		node = node->nextLight;
 	}
 
-	dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-	gl_RenderState.ApplyLightIndex(dynlightindex);
-	return false;
+	int d = GLRenderer->mLights->UploadLights(lightdata);
+	if (pass == GLPASS_LIGHTSONLY)
+	{
+		GLRenderer->mLights->StoreIndex(d);
+	}
+	else
+	{
+		gl_RenderState.ApplyLightIndex(d);
+	}
 }
 
 //==========================================================================
@@ -197,15 +210,59 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 //
 //==========================================================================
 
-void GLFlat::DrawSubsectors(int pass, bool istrans)
+void GLFlat::ProcessLights(bool istrans)
 {
-	bool lightsapplied = false;
+	dynlightindex = GLRenderer->mLights->GetIndexPtr();
+
+	if (sub)
+	{
+		// This represents a single subsector
+		SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
+	}
+	else
+	{
+		// Draw the subsectors belonging to this sector
+		for (int i=0; i<sector->subsectorcount; i++)
+		{
+			subsector_t * sub = sector->subsectors[i];
+			if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
+			{
+				SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
+			}
+		}
+
+		// Draw the subsectors assigned to it due to missing textures
+		if (!(renderflags&SSRF_RENDER3DPLANES))
+		{
+			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
+				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+
+			while (node)
+			{
+				SetupSubsectorLights(GLPASS_LIGHTSONLY, node->sub);
+				node = node->next;
+			}
+		}
+	}
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
+{
+	int dli = dynlightindex;
 
 	gl_RenderState.Apply();
 	if (sub)
 	{
 		// This represents a single subsector
-		if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+		if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
 		DrawSubsector(sub);
 	}
 	else
@@ -216,10 +273,10 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 			for (int i=0; i<sector->subsectorcount; i++)
 			{
 				subsector_t * sub = sector->subsectors[i];
-				// This is just a quick hack to make translucent 3D floors and portals work.
+				
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+					if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
 					drawcalls.Clock();
 					glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
 					drawcalls.Unclock();
@@ -237,7 +294,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 				subsector_t * sub = sector->subsectors[i];
 				if (gl_drawinfo->ss_renderflags[sub-subsectors]&renderflags || istrans)
 				{
-					if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
+					if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
 					DrawSubsector(sub);
 				}
 			}
@@ -252,7 +309,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 
 			while (node)
 			{
-				if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, node->sub);
+				if (processlights) SetupSubsectorLights(GLPASS_ALL, node->sub, &dli);
 				DrawSubsector(node->sub);
 				node = node->next;
 			}
@@ -266,7 +323,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 //
 //
 //==========================================================================
-void GLFlat::Draw(int pass)
+void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIGHTSONLY
 {
 	int rel = getExtraLight();
 
@@ -286,8 +343,15 @@ void GLFlat::Draw(int pass)
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		gltexture->Bind();
 		gl_SetPlaneTextureRotation(&plane, gltexture);
-		DrawSubsectors(pass, false);
+		DrawSubsectors(pass, (pass == GLPASS_ALL || dynlightindex > -1), false);
 		gl_RenderState.EnableTextureMatrix(false);
+		break;
+
+	case GLPASS_LIGHTSONLY:
+		if (!trans || gltexture)
+		{
+			ProcessLights(trans);
+		}
 		break;
 
 	case GLPASS_TRANSLUCENT:
@@ -298,14 +362,14 @@ void GLFlat::Draw(int pass)
 		if (!gltexture)	
 		{
 			gl_RenderState.EnableTexture(false);
-			DrawSubsectors(pass, true);
+			DrawSubsectors(pass, false, true);
 			gl_RenderState.EnableTexture(true);
 		}
 		else 
 		{
 			gltexture->Bind();
 			gl_SetPlaneTextureRotation(&plane, gltexture);
-			DrawSubsectors(pass, true);
+			DrawSubsectors(pass, true, true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

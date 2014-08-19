@@ -692,7 +692,7 @@ SortNode * GLDrawList::DoSort(SortNode * head)
 //
 //
 //==========================================================================
-void GLDrawList::DoDraw(int pass, int i)
+void GLDrawList::DoDraw(int pass, int i, bool trans)
 {
 	switch(drawitems[i].rendertype)
 	{
@@ -700,7 +700,7 @@ void GLDrawList::DoDraw(int pass, int i)
 		{
 			GLFlat * f=&flats[drawitems[i].index];
 			RenderFlat.Clock();
-			f->Draw(pass);
+			f->Draw(pass, trans);
 			RenderFlat.Unclock();
 		}
 		break;
@@ -739,13 +739,13 @@ void GLDrawList::DoDrawSorted(SortNode * head)
 		{
 			DoDrawSorted(head->left);
 		}
-		DoDraw(GLPASS_TRANSLUCENT, head->itemindex);
+		DoDraw(GLPASS_TRANSLUCENT, head->itemindex, true);
 		if (head->equal)
 		{
 			SortNode * ehead=head->equal;
 			while (ehead)
 			{
-				DoDraw(GLPASS_TRANSLUCENT, ehead->itemindex);
+				DoDraw(GLPASS_TRANSLUCENT, ehead->itemindex, true);
 				ehead=ehead->equal;
 			}
 		}
@@ -779,7 +779,7 @@ void GLDrawList::Draw(int pass)
 {
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		DoDraw(pass, i);
+		DoDraw(pass, i, false);
 	}
 }
 

@@ -26,8 +26,9 @@ enum DrawListType
 
 enum Drawpasses
 {
-	GLPASS_PLAIN,		// Main pass without dynamic lights
 	GLPASS_ALL,			// Main pass with dynamic lights
+	GLPASS_LIGHTSONLY,	// only collect dynamic lights
+	GLPASS_PLAIN,		// Main pass without dynamic lights
 	GLPASS_DECALS,		// Draws a decal
 	GLPASS_DECALS_NOFOG,// Draws a decal without setting the fog (used for passes that need a fog layer)
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
@@ -120,7 +121,7 @@ public:
 	SortNode * SortSpriteList(SortNode * head);
 	SortNode * DoSort(SortNode * head);
 	
-	void DoDraw(int pass, int index);
+	void DoDraw(int pass, int index, bool trans);
 	void DoDrawSorted(SortNode * node);
 	void DrawSorted();
 	void Draw(int pass);

@@ -70,8 +70,19 @@ EXTERN_CVAR(Bool, gl_seamless)
 //==========================================================================
 FDynLightData lightdata;
 
+
 void GLWall::SetupLights()
 {
+	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
+	switch (type)
+	{
+	case RENDERWALL_FOGBOUNDARY:
+	case RENDERWALL_MIRRORSURFACE:
+	case RENDERWALL_COLOR:
+	case RENDERWALL_COLORLAYER:
+		return;
+	}
+
 	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
 	Plane p;
 
@@ -357,7 +368,7 @@ void GLWall::Draw(int pass)
 #endif
 
 
-	if (type == RENDERWALL_COLORLAYER)
+	if (type == RENDERWALL_COLORLAYER && pass != GLPASS_LIGHTSONLY)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
@@ -365,10 +376,14 @@ void GLWall::Draw(int pass)
 
 	switch (pass)
 	{
-	case GLPASS_ALL:			// Single-pass rendering
+	case GLPASS_LIGHTSONLY:
+		SetupLights();
+		break;
+
+	case GLPASS_ALL:
 		SetupLights();
 		// fall through
-	case GLPASS_PLAIN:			// Single-pass rendering
+	case GLPASS_PLAIN:
 		rel = rellight + getExtraLight();
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
@@ -409,7 +424,7 @@ void GLWall::Draw(int pass)
 		}
 	}
 
-	if (type == RENDERWALL_COLORLAYER)
+	if (type == RENDERWALL_COLORLAYER && pass != GLPASS_LIGHTSONLY)
 	{
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0, 0);

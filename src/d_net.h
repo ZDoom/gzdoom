@@ -142,9 +142,8 @@ extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
 
 extern	int 			maketic;
 extern	int 			nettics[MAXNETNODES];
-extern	int				netdelay[MAXNETNODES];
+extern	int				netdelay[MAXNETNODES][BACKUPTICS];
 extern	int 			nodeforplayer[MAXPLAYERS];
-#define ARBITRATOR_DELAY netdelay[nodeforplayer[Net_Arbitrator]]
 
 extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
 extern	int 			ticdup;

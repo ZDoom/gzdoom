@@ -419,7 +419,14 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	screen->DrawText (SmallFont, color, col4, y + ypadding, player->userinfo.GetName(),
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	mysnprintf(str, countof(str), "%d", (netdelay[nodeforplayer[(int)(player - players)]] * ticdup) * (1000 / TICRATE));
+	int avgdelay = 0;
+	for (int i = 0; i < BACKUPTICS; i++)
+	{
+		avgdelay += netdelay[nodeforplayer[(int)(player - players)]][i];
+	}
+	avgdelay /= BACKUPTICS;
+
+	mysnprintf(str, countof(str), "%d", (avgdelay * ticdup) * (1000 / TICRATE));
 
 	screen->DrawText(SmallFont, color, col5, y + ypadding, str,
 		DTA_CleanNoMove, true, TAG_DONE);

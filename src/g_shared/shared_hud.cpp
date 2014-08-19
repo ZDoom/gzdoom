@@ -934,9 +934,11 @@ static void DrawLatency()
 	{
 		return;
 	}
-
-	int localdelay = (netdelay[0] * ticdup) * (1000 / TICRATE);
-	int arbitratordelay = (ARBITRATOR_DELAY * ticdup) * (1000 / TICRATE);
+	int i, localdelay = 0, arbitratordelay = 0;
+	for (i = 0; i < BACKUPTICS; i++) localdelay += netdelay[0][i];
+	for (i = 0; i < BACKUPTICS; i++) arbitratordelay += netdelay[nodeforplayer[Net_Arbitrator]][i];
+	localdelay = ((localdelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
+	arbitratordelay = ((arbitratordelay / BACKUPTICS) * ticdup) * (1000 / TICRATE);
 	int color = CR_GREEN;
 	if (MAX(localdelay, arbitratordelay) > 200)
 	{

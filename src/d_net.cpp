@@ -110,7 +110,7 @@ unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
 unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
 bool			hadlate;
-int				netdelay[MAXNETNODES];					// Used for storing network delay times.
+int				netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
 
 int 			nodeforplayer[MAXPLAYERS];
 int				playerfornode[MAXNETNODES];
@@ -803,7 +803,7 @@ void GetPackets (void)
 		}
 
 		// Pull current network delay from node
-		netdelay[netnode] = netbuffer[k++];
+		netdelay[netnode][(nettics[netnode]+1) % BACKUPTICS] = netbuffer[k++];
 
 		playerbytes[0] = netconsole;
 		if (netbuffer[0] & NCMD_MULTI)
@@ -1340,7 +1340,15 @@ void NetUpdate (void)
 				// [ED850] It seems that there is a bias based on network adaption (which the arbitrator doesn't do),
 				// so I have set this up to assume one less tic, which appears to balance it out.
 				if (net_ticbalance)
-					average = ((netdelay[0] + ARBITRATOR_DELAY) / 2) - 1;
+				{
+					for (i = 0; i < BACKUPTICS; i++)
+					{
+						average += netdelay[nodeforplayer[Net_Arbitrator]][i];
+					}
+					average /= BACKUPTICS;
+					average = ((netdelay[0][nettics[0] % BACKUPTICS] + average) / 2) - 1;
+				}
+					
 				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + average;
 			}
 			if (nettics[0] <= mastertics)
@@ -2750,7 +2758,6 @@ void Net_SkipCommand (int type, BYTE **stream)
 CCMD (pings)
 {
 	int i;
-	Printf("%d (%d ms) arbitrator buffer time\n", ARBITRATOR_DELAY * ticdup, (ARBITRATOR_DELAY * ticdup) * (1000 / TICRATE));
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],

@@ -1173,7 +1173,7 @@ void NetUpdate (void)
 			netbuffer[k++] = lowtic;
 		}
 
-		numtics = lowtic - realstart;
+		numtics = MAX(0, lowtic - realstart);
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 

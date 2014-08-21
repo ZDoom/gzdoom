@@ -1704,6 +1704,11 @@ void D_CheckNetGame (void)
 			Printf("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
 				v != NULL ? "forced" : "auto");
 		}
+
+		if (Args->CheckParm("-extratic"))
+		{
+			net_extratic = 1;
+		}
 	}
 
 	// [RH] Setup user info

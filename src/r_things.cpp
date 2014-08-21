@@ -2076,9 +2076,22 @@ void R_DrawSprite (vissprite_t *spr)
 		r1 = MAX<int> (ds->x1, x1);
 		r2 = MIN<int> (ds->x2, x2);
 
+		fixed_t neardepth, fardepth;
+		if (!spr->bWallSprite)
+		{
+			if (ds->sz1 < ds->sz2)
+			{
+				neardepth = ds->sz1, fardepth = ds->sz2;
+			}
+			else
+			{
+				neardepth = ds->sz2, fardepth = ds->sz1;
+			}
+		}
 		// Check if sprite is in front of draw seg:
-		if (DMulScale32(spr->gy - ds->curline->v1->y, ds->curline->v2->x - ds->curline->v1->x,
-						ds->curline->v1->x - spr->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0)
+		if ((!spr->bWallSprite && neardepth > spr->depth) || ((spr->bWallSprite || fardepth > spr->depth) &&
+			DMulScale32(spr->gy - ds->curline->v1->y, ds->curline->v2->x - ds->curline->v1->x,
+						ds->curline->v1->x - spr->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0))
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
 			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)

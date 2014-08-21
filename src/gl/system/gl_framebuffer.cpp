@@ -121,8 +121,7 @@ void OpenGLFrameBuffer::InitializeState()
 
 	if (first)
 	{
-		glewExperimental=true;
-		glewInit();
+		ogl_LoadFunctions();
 	}
 
 	gl_LoadExtensions();
@@ -537,3 +536,4 @@ void OpenGLFrameBuffer::GameRestart()
 	LastCamera = NULL;
 	gl_GenerateGlobalBrightmapFromColormap();
 }
+

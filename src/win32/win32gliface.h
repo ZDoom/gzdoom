@@ -1,7 +1,6 @@
 #ifndef __WIN32GLIFACE_H__
 #define __WIN32GLIFACE_H__
 
-#include "gl/system/gl_system.h"
 #include "hardware.h"
 #include "win32iface.h"
 #include "v_video.h"

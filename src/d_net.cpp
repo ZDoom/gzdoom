@@ -1173,7 +1173,7 @@ void NetUpdate (void)
 			netbuffer[k++] = lowtic;
 		}
 
-		numtics = MAX(0, lowtic - realstart);
+		numtics = lowtic - realstart;
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 
@@ -1181,12 +1181,12 @@ void NetUpdate (void)
 		{
 		case 0:
 		default: 
-			resendto[i] = MAX(0, lowtic); break;
+			resendto[i] = lowtic; break;
 		case 1: resendto[i] = MAX(0, lowtic - 1); break;
 		case 2: resendto[i] = nettics[i]; break;
 		}
 
-		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])
+		if (numtics <= 0 && resendOnly && !remoteresend[i] && nettics[i])
 		{
 			continue;
 		}
@@ -1692,15 +1692,18 @@ void D_CheckNetGame (void)
 
 	consoleplayer = doomcom.consoleplayer;
 
-	v = Args->CheckValue ("-netmode");
-	if (v != NULL)
+	if (consoleplayer == Net_Arbitrator)
 	{
-		NetMode = atoi (v) != 0 ? NET_PacketServer : NET_PeerToPeer;
-	}
-	if (doomcom.numnodes > 1)
-	{
-		Printf ("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
-			v != NULL ? "forced" : "auto");
+		v = Args->CheckValue("-netmode");
+		if (v != NULL)
+		{
+			NetMode = atoi(v) != 0 ? NET_PacketServer : NET_PeerToPeer;
+		}
+		if (doomcom.numnodes > 1)
+		{
+			Printf("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
+				v != NULL ? "forced" : "auto");
+		}
 	}
 
 	// [RH] Setup user info
@@ -1727,6 +1730,11 @@ void D_CheckNetGame (void)
 		playeringame[i] = true;
 	for (i = 0; i < doomcom.numnodes; i++)
 		nodeingame[i] = true;
+
+	if (consoleplayer != Net_Arbitrator && doomcom.numnodes > 1)
+	{
+		Printf("Arbitrator selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode.\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
+	}
 
 	Printf ("player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom.numplayers, doomcom.numnodes);

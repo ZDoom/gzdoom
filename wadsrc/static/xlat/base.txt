@@ -24,7 +24,7 @@ include "xlat/defines.i"
  22 = WALK,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
  23 = USE,		Floor_LowerToLowest (tag, F_SLOW)
  24 = SHOOT,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
- 25 = WALK,		Ceiling_CrushAndRaiseDist (tag, C_SLOW, C_SLOW, 10)
+ 25 = WALK,		Ceiling_CrushAndRaiseDist (tag, 8, C_SLOW, 10)
  26 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, BCard | CardIsSkull, tag)
  27 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, YCard | CardIsSkull, tag)
  28 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, RCard | CardIsSkull, tag)

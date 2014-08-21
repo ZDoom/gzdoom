@@ -53,6 +53,8 @@ static void* SunGetProcAddress (const GLubyte* name)
 #if defined(_WIN32)
 
 #ifdef _MSC_VER
+// disable inlining here because it creates an incredible amount of bloat here.
+#pragma inline_depth(0)
 #pragma warning(disable: 4055)
 #pragma warning(disable: 4054)
 #endif

@@ -614,7 +614,7 @@ outl:
 void FMaterial::Bind(int clampmode, int translation, int overrideshader, bool alphatexture)
 {
 	int usebright = false;
-	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
+	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
 	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT && clampmode <= CLAMP_XY && !mExpanded;
 
@@ -624,7 +624,7 @@ void FMaterial::Bind(int clampmode, int translation, int overrideshader, bool al
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 
 	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, alphatexture, allowhires? tex:NULL);
-	if (gltexture != NULL && shaderindex > 0 && overrideshader == 0)
+	if (gltexture != NULL && shaderindex > 0 && overrideshader == -1)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{

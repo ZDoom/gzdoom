@@ -959,7 +959,7 @@ void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
 	{
 		if (cache)
 		{
-			tex->PrecacheGL();
+			tex->PrecacheGL(cache);
 		}
 		else
 		{
@@ -1067,10 +1067,10 @@ extern TexFilter_s TexFilter[];
 
 void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, int FOV)
 {
-	FMaterial * gltex = FMaterial::ValidateTexture(tex);
+	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 
-	int width = gltex->TextureWidth(GLUSE_TEXTURE);
-	int height = gltex->TextureHeight(GLUSE_TEXTURE);
+	int width = gltex->TextureWidth();
+	int height = gltex->TextureHeight();
 
 	gl_fixedcolormap=CM_DEFAULT;
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
@@ -1102,15 +1102,15 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 
 	GL_IRECT bounds;
 	bounds.left=bounds.top=0;
-	bounds.width=FHardwareTexture::GetTexDimension(gltex->GetWidth(GLUSE_TEXTURE));
-	bounds.height=FHardwareTexture::GetTexDimension(gltex->GetHeight(GLUSE_TEXTURE));
+	bounds.width=FHardwareTexture::GetTexDimension(gltex->GetWidth());
+	bounds.height=FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
 	GLRenderer->RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
 
 	if (!usefb)
 	{
 		glFlush();
-		gltex->Bind(0, 0);
+		gltex->Bind(0, 0, -1, false);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
 	}
 	else
@@ -1118,8 +1118,6 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 		GLRenderer->EndOffscreen();
 	}
 
-	gltex->Bind(0, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
 	tex->SetUpdated();
 }
 

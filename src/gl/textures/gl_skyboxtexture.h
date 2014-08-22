@@ -21,7 +21,7 @@ public:
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
 	bool UseBasePalette();
 	void Unload ();
-	void PrecacheGL();
+	void PrecacheGL(int cache);
 
 	void SetSize()
 	{

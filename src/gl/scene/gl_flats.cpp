@@ -77,11 +77,11 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 	if (secplane->xoffs != 0 || secplane->yoffs != 0 ||
 		secplane->xscale != FRACUNIT || secplane->yscale != FRACUNIT ||
 		secplane->angle != 0 || 
-		gltexture->TextureWidth(GLUSE_TEXTURE) != 64 ||
-		gltexture->TextureHeight(GLUSE_TEXTURE) != 64)
+		gltexture->TextureWidth() != 64 ||
+		gltexture->TextureHeight() != 64)
 	{
-		float uoffs=FIXED2FLOAT(secplane->xoffs)/gltexture->TextureWidth(GLUSE_TEXTURE);
-		float voffs=FIXED2FLOAT(secplane->yoffs)/gltexture->TextureHeight(GLUSE_TEXTURE);
+		float uoffs=FIXED2FLOAT(secplane->xoffs)/gltexture->TextureWidth();
+		float voffs=FIXED2FLOAT(secplane->yoffs)/gltexture->TextureHeight();
 
 		float xscale1=FIXED2FLOAT(secplane->xscale);
 		float yscale1=FIXED2FLOAT(secplane->yscale);
@@ -91,8 +91,8 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		}
 		float angle=-ANGLE_TO_FLOAT(secplane->angle);
 
-		float xscale2=64.f/gltexture->TextureWidth(GLUSE_TEXTURE);
-		float yscale2=64.f/gltexture->TextureHeight(GLUSE_TEXTURE);
+		float xscale2=64.f/gltexture->TextureWidth();
+		float yscale2=64.f/gltexture->TextureHeight();
 
 		gl_RenderState.mTextureMatrix.loadIdentity();
 		gl_RenderState.mTextureMatrix.scale(xscale1 ,yscale1,1.0f);
@@ -341,7 +341,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	case GLPASS_ALL:
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gltexture->Bind();
+		gltexture->Bind(CLAMP_NONE, 0, -1, false);
 		gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, (pass == GLPASS_ALL || dynlightindex > -1), false);
 		gl_RenderState.EnableTextureMatrix(false);
@@ -367,7 +367,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		}
 		else 
 		{
-			gltexture->Bind();
+			gltexture->Bind(CLAMP_NONE, 0, -1, false);
 			gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true, true);
 			gl_RenderState.EnableTextureMatrix(false);
@@ -424,7 +424,7 @@ void GLFlat::Process(sector_t * model, int whichplane, bool fog)
 	{
 		if (plane.texture==skyflatnum) return;
 
-		gltexture=FMaterial::ValidateTexture(plane.texture, true);
+		gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 		if (!gltexture) return;
 		if (gltexture->tex->isFullbright()) 
 		{

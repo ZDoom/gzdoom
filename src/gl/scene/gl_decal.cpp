@@ -103,17 +103,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	FMaterial *tex;
 
 
-	if (texture->UseType == FTexture::TEX_MiscPatch)
-	{
-		// We need to create a clone of this texture where we can force the
-		// texture filtering offset in.
-		if (texture->gl_info.DecalTexture == NULL)
-		{
-			texture->gl_info.DecalTexture = new FCloneTexture(texture, FTexture::TEX_Decal);
-		}
-		tex = FMaterial::ValidateTexture(texture->gl_info.DecalTexture);
-	}
-	else tex = FMaterial::ValidateTexture(texture);
+	tex = FMaterial::ValidateTexture(texture, true);
 
 
 	// the sectors are only used for their texture origin coordinates
@@ -192,10 +182,10 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	a = FIXED2FLOAT(decal->Alpha);
 	
 	// now clip the decal to the actual polygon
-	float decalwidth = tex->TextureWidth(GLUSE_PATCH)  * FIXED2FLOAT(decal->ScaleX);
-	float decalheight= tex->TextureHeight(GLUSE_PATCH) * FIXED2FLOAT(decal->ScaleY);
-	float decallefto = tex->GetLeftOffset(GLUSE_PATCH) * FIXED2FLOAT(decal->ScaleX);
-	float decaltopo  = tex->GetTopOffset(GLUSE_PATCH)  * FIXED2FLOAT(decal->ScaleY);
+	float decalwidth = tex->TextureWidth()  * FIXED2FLOAT(decal->ScaleX);
+	float decalheight= tex->TextureHeight() * FIXED2FLOAT(decal->ScaleY);
+	float decallefto = tex->GetLeftOffset() * FIXED2FLOAT(decal->ScaleX);
+	float decaltopo  = tex->GetTopOffset()  * FIXED2FLOAT(decal->ScaleY);
 
 	
 	float leftedge = glseg.fracleft * side->TexelLength;
@@ -329,7 +319,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 
 
 	gl_SetRenderStyle(decal->RenderStyle, false, false);
-	tex->BindPatch(decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
+	tex->Bind(CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold

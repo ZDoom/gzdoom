@@ -18,6 +18,7 @@ class FShaderManager;
 class GLPortal;
 class FGLThreadManager;
 class FLightBuffer;
+class FSamplerManager;
 
 enum SectorRenderFlags
 {
@@ -56,6 +57,7 @@ public:
 	float mCurrentFoV;
 	AActor *mViewActor;
 	FShaderManager *mShaderManager;
+	FSamplerManager *mSamplerManager;
 	FGLThreadManager *mThreadManager;
 	int gl_spriteindex;
 	unsigned int mFBID;

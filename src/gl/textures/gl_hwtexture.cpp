@@ -4,7 +4,7 @@
 ** containers for the various translations a texture can have.
 **
 **---------------------------------------------------------------------------
-** Copyright 2004-2005 Christoph Oelckers
+** Copyright 2004-2014 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -173,6 +173,7 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 }
 
 
+
 //===========================================================================
 // 
 //	Loads the texture image into the hardware
@@ -182,24 +183,27 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 // strange crashes deep inside the GL driver when I didn't do it!
 //
 //===========================================================================
-void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned int & glTexID,int wrapparam, bool alphatexture, int texunit)
+
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, bool alphatexture)
 {
 	int rh,rw;
 	int texformat=TexFormat[gl_texture_format];
 	bool deletebuffer=false;
-	bool use_mipmapping = TexFilter[gl_texture_filter].mipmapping;
 
 	if (alphatexture)
 	{
 		texformat = GL_R8;
+		translation = TRANS_Alpha;
 	}
 	else if (forcenocompression)
 	{
 		texformat = GL_RGBA8;
 	}
-	if (glTexID==0) glGenTextures(1,&glTexID);
-	glBindTexture(GL_TEXTURE_2D, glTexID);
-	lastbound[texunit]=glTexID;
+	TranslatedTexture * glTex=GetTexID(translation);
+	if (glTex->glTexID==0) glGenTextures(1,&glTex->glTexID);
+	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
+	glBindTexture(GL_TEXTURE_2D, glTex->glTexID);
+	lastbound[texunit] = glTex->glTexID;
 
 	if (!buffer)
 	{
@@ -209,7 +213,7 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 		rh = GetTexDimension (h);
 
 		// The texture must at least be initialized if no data is present.
-		mipmap=false;
+		glTex->mipmapped = false;
 		buffer=(unsigned char *)calloc(4,rw * (rh+1));
 		deletebuffer=true;
 		//texheight=-h;	
@@ -235,42 +239,19 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 
 	if (deletebuffer) free(buffer);
 
-	if (mipmap && use_mipmapping && !forcenofiltering) glGenerateMipmap(GL_TEXTURE_2D);
+	if (mipmap && TexFilter[gl_texture_filter].mipmapping)
+	{
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTex->mipmapped = true;
+	}
+
 	if (alphatexture)
 	{
 		static const GLint swizzleMask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
 		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 	}
-
-	// When using separate samplers the stuff below is not needed.
-	// if (gl.flags & RFL_SAMPLER_OBJECTS) return;
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapparam);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapparam);
-	clampmode = wrapparam==GL_CLAMP_TO_EDGE? GLT_CLAMPX|GLT_CLAMPY : 0;
-
-	if (forcenofiltering)
-	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
-	}
-	else
-	{
-		if (mipmap && use_mipmapping)
-		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-			if (gl_texture_filter_anisotropic)
-			{
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
-			}
-		}
-		else
-		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
-		}
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
-	}
+	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
+	return glTex->glTexID;
 }
 
 
@@ -279,17 +260,16 @@ void FHardwareTexture::LoadImage(unsigned char * buffer,int w, int h, unsigned i
 //	Creates a texture
 //
 //===========================================================================
-FHardwareTexture::FHardwareTexture(int _width, int _height, bool _mipmap, bool wrap, bool nofilter, bool nocompression) 
+FHardwareTexture::FHardwareTexture(int _width, int _height, bool nocompression) 
 {
 	forcenocompression = nocompression;
-	mipmap=_mipmap;
 	texwidth=_width;
 	texheight=_height;
 
-	glDefTexID = 0;
-	clampmode=0;
+	glDefTex.glTexID = 0;
+	glDefTex.translation = 0;
+	glDefTex.mipmapped = false;
 	glDepthID = 0;
-	forcenofiltering = nofilter;
 }
 
 
@@ -298,18 +278,20 @@ FHardwareTexture::FHardwareTexture(int _width, int _height, bool _mipmap, bool w
 //	Deletes a texture id and unbinds it from the texture units
 //
 //===========================================================================
-void FHardwareTexture::DeleteTexture(unsigned int texid)
+void FHardwareTexture::TranslatedTexture::Delete()
 {
-	if (texid != 0) 
+	if (glTexID != 0) 
 	{
 		for(int i = 0; i < MAX_TEXTURES; i++)
 		{
-			if (lastbound[i] == texid)
+			if (lastbound[i] == glTexID)
 			{
 				lastbound[i] = 0;
 			}
 		}
-		glDeleteTextures(1, &texid);
+		glDeleteTextures(1, &glTexID);
+		glTexID = 0;
+		mipmapped = false;
 	}
 }
 
@@ -324,14 +306,13 @@ void FHardwareTexture::Clean(bool all)
 
 	if (all)
 	{
-		DeleteTexture(glDefTexID);
-		glDefTexID = 0;
+		glDefTex.Delete();
 	}
-	for(unsigned int i=0;i<glTexID_Translated.Size();i++)
+	for(unsigned int i=0;i<glTex_Translated.Size();i++)
 	{
-		DeleteTexture(glTexID_Translated[i].glTexID);
+		glTex_Translated[i].Delete();
 	}
-	glTexID_Translated.Clear();
+	glTex_Translated.Clear();
 	if (glDepthID != 0) glDeleteRenderbuffers(1, &glDepthID);
 }
 
@@ -352,27 +333,28 @@ FHardwareTexture::~FHardwareTexture()
 //
 //===========================================================================
 
-unsigned * FHardwareTexture::GetTexID(int translation)
+FHardwareTexture::TranslatedTexture *FHardwareTexture::GetTexID(int translation)
 {
-	if (translation==0)
+	if (translation == 0)
 	{
-		return &glDefTexID;
+		return &glDefTex;
 	}
 
 	// normally there aren't more than very few different 
 	// translations here so this isn't performance critical.
-	for(unsigned int i=0;i<glTexID_Translated.Size();i++)
+	for (unsigned int i = 0; i < glTex_Translated.Size(); i++)
 	{
-		if (glTexID_Translated[i].translation == translation)
+		if (glTex_Translated[i].translation == translation)
 		{
-			return &glTexID_Translated[i].glTexID;
+			return &glTex_Translated[i];
 		}
 	}
 
-	int add = glTexID_Translated.Reserve(1);
-	glTexID_Translated[add].translation=translation;
-	glTexID_Translated[add].glTexID=0;
-	return &glTexID_Translated[add].glTexID;
+	int add = glTex_Translated.Reserve(1);
+	glTex_Translated[add].translation = translation;
+	glTex_Translated[add].glTexID = 0;
+	glTex_Translated[add].mipmapped = false;
+	return &glTex_Translated[add];
 }
 
 //===========================================================================
@@ -380,19 +362,25 @@ unsigned * FHardwareTexture::GetTexID(int translation)
 //	Binds this patch
 //
 //===========================================================================
-unsigned int FHardwareTexture::Bind(int texunit, int translation, bool alphatexture)
+unsigned int FHardwareTexture::Bind(int texunit, int translation, bool alphatexture, bool needmipmap)
 {
 	if (alphatexture) translation = TRANS_Alpha;
-	unsigned int * pTexID=GetTexID(translation);
+	TranslatedTexture *pTex = GetTexID(translation);
 
-	if (*pTexID!=0)
+	if (pTex->glTexID != 0)
 	{
-		if (lastbound[texunit]==*pTexID) return *pTexID;
-		lastbound[texunit]=*pTexID;
-		if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
-		glBindTexture(GL_TEXTURE_2D, *pTexID);
+		if (lastbound[texunit] == pTex->glTexID) return pTex->glTexID;
+		lastbound[texunit] = pTex->glTexID;
+		if (texunit != 0) glActiveTexture(GL_TEXTURE0 + texunit);
+		glBindTexture(GL_TEXTURE_2D, pTex->glTexID);
+		// Check if we need mipmaps on a texture that was creted without them.
+		if (needmipmap && !pTex->mipmapped && TexFilter[gl_texture_filter].mipmapping)
+		{
+			glGenerateMipmap(GL_TEXTURE_2D);
+			pTex->mipmapped = true;
+		}
 		if (texunit != 0) glActiveTexture(GL_TEXTURE0);
-		return *pTexID;
+		return pTex->glTexID;
 	}
 	return 0;
 }
@@ -445,25 +433,7 @@ int FHardwareTexture::GetDepthBuffer()
 
 void FHardwareTexture::BindToFrameBuffer()
 {
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glDefTexID, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glDefTex.glTexID, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
 }
-
-
-//===========================================================================
-// 
-//	(re-)creates the texture
-//
-//===========================================================================
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, bool wrap, int texunit, int translation, bool alphatexture)
-{
-	if (alphatexture) translation = TRANS_Alpha;
-	unsigned int * pTexID=GetTexID(translation);
-
-	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
-	LoadImage(buffer, w, h, *pTexID, wrap? GL_REPEAT:GL_CLAMP_TO_EDGE, alphatexture, texunit);
-	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
-	return *pTexID;
-}
-
 

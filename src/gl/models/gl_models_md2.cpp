@@ -301,9 +301,9 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		if (!skin) return;
 	}
 
-	FMaterial * tex = FMaterial::ValidateTexture(skin);
+	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
 
-	tex->Bind(0, translation);
+	tex->Bind(CLAMP_NONE, translation, -1, false);
 
 	gl_RenderState.Apply();
 	GLRenderer->mModelVBO->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex, inter);

@@ -1055,7 +1055,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 
 	plane.GetFromSector(sec, ceiling);
 
-	gltexture=FMaterial::ValidateTexture(plane.texture, true);
+	gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 	if (!gltexture) return;
 
 	if (gl_fixedcolormap) 
@@ -1077,7 +1077,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	int rel = getExtraLight();
 	gl_SetColor(lightlevel, rel, Colormap, 1.0f);
 	gl_SetFog(lightlevel, rel, &Colormap, false);
-	gltexture->Bind();
+	gltexture->Bind(CLAMP_NONE, 0, -1, false);
 
 	float fviewx = FIXED2FLOAT(viewx);
 	float fviewy = FIXED2FLOAT(viewy);

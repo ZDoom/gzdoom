@@ -111,7 +111,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 				}
 
 				FTextureID texno = s->GetTexture(pos);
-				skyinfo.texture[0] = FMaterial::ValidateTexture(texno, true);
+				skyinfo.texture[0] = FMaterial::ValidateTexture(texno, false, true);
 				if (!skyinfo.texture[0] || skyinfo.texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
 				skyinfo.skytexno1 = texno;
 				skyinfo.x_offset[0] = ANGLE_TO_FLOAT(s->GetTextureXOffset(pos));
@@ -123,7 +123,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 			normalsky:
 				if (level.flags&LEVEL_DOUBLESKY)
 				{
-					skyinfo.texture[1]=FMaterial::ValidateTexture(sky1texture, true);
+					skyinfo.texture[1]=FMaterial::ValidateTexture(sky1texture, false, true);
 					skyinfo.x_offset[1] = GLRenderer->mSky1Pos;
 					skyinfo.doublesky = true;
 				}
@@ -131,14 +131,14 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 				if ((level.flags&LEVEL_SWAPSKIES || (sky1==PL_SKYFLAT) || (level.flags&LEVEL_DOUBLESKY)) &&
 					sky2texture!=sky1texture)	// If both skies are equal use the scroll offset of the first!
 				{
-					skyinfo.texture[0]=FMaterial::ValidateTexture(sky2texture, true);
+					skyinfo.texture[0]=FMaterial::ValidateTexture(sky2texture, false, true);
 					skyinfo.skytexno1=sky2texture;
 					skyinfo.sky2 = true;
 					skyinfo.x_offset[0] = GLRenderer->mSky2Pos;
 				}
 				else
 				{
-					skyinfo.texture[0]=FMaterial::ValidateTexture(sky1texture, true);
+					skyinfo.texture[0]=FMaterial::ValidateTexture(sky1texture, false, true);
 					skyinfo.skytexno1=sky1texture;
 					skyinfo.x_offset[0] = GLRenderer->mSky1Pos;
 				}

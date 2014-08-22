@@ -56,23 +56,6 @@ protected:
 	//Span **Spans;
 };
 
-class FCloneTexture : public FTexture
-{
-public:
-	FCloneTexture (FTexture *source, int usetype);
-	~FCloneTexture ();
-
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
-	void Unload ();
-
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
-	bool UseBasePalette() { return false; }
-
-protected:
-	FTexture *SourcePic;
-};
-
 
 void gl_GenerateGlobalBrightmapFromColormap();
 PalEntry averageColor(const DWORD *data, int size, fixed_t maxout);

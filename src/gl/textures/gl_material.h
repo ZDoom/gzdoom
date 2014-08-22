@@ -13,6 +13,17 @@ EXTERN_CVAR(Bool, gl_precache)
 struct FRemapTable;
 class FTextureShader;
 
+enum
+{
+	CLAMP_NONE = 0,
+	CLAMP_X = 1,
+	CLAMP_Y = 2,
+	CLAMP_XY = 3,
+	CLAMP_XY_NOMIP = 4,
+	CLAMP_NOFILTER = 5,
+	CLAMP_CAMTEX = 6,
+};
+
 
 
 struct FTexCoordInfo
@@ -40,13 +51,6 @@ struct FTexCoordInfo
 //===========================================================================
 class FMaterial;
 
-enum ETexUse
-{
-	GLUSE_PATCH,
-	GLUSE_TEXTURE,
-	GLUSE_SPRITE,
-};
-
 
 class FGLTexture
 {
@@ -58,26 +62,23 @@ public:
 	int HiresLump;
 
 private:
-	FHardwareTexture *gltexture[5];
-	FHardwareTexture *glpatch;
+	FHardwareTexture *mHwTexture;
 
 	bool bHasColorkey;		// only for hires
 	bool bExpand;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, bool alphatexture);
 
-	FHardwareTexture *CreateTexture(int clampmode);
-	//bool CreateTexture();
-	bool CreatePatch();
+	FHardwareTexture *CreateHwTexture();
 
-	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck);
+	const FHardwareTexture *Bind(int texunit, int clamp, int translation, bool alphatexture, FTexture *hirescheck);
 	const FHardwareTexture *BindPatch(int texunit, int translation, bool alphatexture);
 
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand, FTexture *hirescheck, bool alphatexture = false);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool alphatexture);
 
 	void Clean(bool all);
 	int Dump(int i);
@@ -105,15 +106,16 @@ class FMaterial
 	TArray<FTextureLayer> mTextureLayers;
 	int mShaderIndex;
 
-	short LeftOffset[3];
-	short TopOffset[3];
-	short Width[3];
-	short Height[3];
-	short RenderWidth[2];
-	short RenderHeight[2];
+	short mLeftOffset;
+	short mTopOffset;
+	short mWidth;
+	short mHeight;
+	short mRenderWidth;
+	short mRenderHeight;
+	bool mExpanded;
 
-	float SpriteU[2], SpriteV[2];
-	float spriteright, spritebottom;
+	float mSpriteU[2], mSpriteV[2];
+	FloatRect mSpriteRect;
 
 	FGLTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	bool TrimBorders(int *rect);
@@ -129,12 +131,17 @@ public:
 		return !!mBaseLayer->tex->bMasked;
 	}
 
-	void Bind(int clamp = 0, int translation = 0, int overrideshader = 0);
-	void BindPatch(int translation = 0, int overrideshader = 0, bool alphatexture = false);
-
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool expand = false, bool allowhires=true) const
+	int GetLayers() const
 	{
-		return mBaseLayer->CreateTexBuffer(translation, w, h, expand, allowhires? tex:NULL, 0);
+		return mTextureLayers.Size() + 1;
+	}
+
+	//void Bind(int clamp = 0, int translation = 0, int overrideshader = 0, bool alphatexture = false);
+	void Bind(int clamp, int translation, int overrideshader, bool alphatexture);
+
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool allowhires=true) const
+	{
+		return mBaseLayer->CreateTexBuffer(translation, w, h, allowhires? tex:NULL, 0);
 	}
 
 	void Clean(bool f)
@@ -145,78 +152,82 @@ public:
 	void BindToFrameBuffer();
 	// Patch drawing utilities
 
-	void GetRect(FloatRect *r, ETexUse i) const;
+	void GetSpriteRect(FloatRect * r) const
+	{
+		*r = mSpriteRect;
+	}
+
 	void GetTexCoordInfo(FTexCoordInfo *tci, fixed_t x, fixed_t y) const;
 
 	// This is scaled size in integer units as needed by walls and flats
-	int TextureHeight(ETexUse i) const { return RenderHeight[i]; }
-	int TextureWidth(ETexUse i) const { return RenderWidth[i]; }
+	int TextureHeight() const { return mRenderHeight; }
+	int TextureWidth() const { return mRenderWidth; }
 
 	int GetAreas(FloatRect **pAreas) const;
 
-	int GetWidth(ETexUse i) const
+	int GetWidth() const
 	{
-		return Width[i];
+		return mWidth;
 	}
 
-	int GetHeight(ETexUse i) const
+	int GetHeight() const
 	{
-		return Height[i];
+		return mHeight;
 	}
 
-	int GetLeftOffset(ETexUse i) const
+	int GetLeftOffset() const
 	{
-		return LeftOffset[i];
+		return mLeftOffset;
 	}
 
-	int GetTopOffset(ETexUse i) const
+	int GetTopOffset() const
 	{
-		return TopOffset[i];
+		return mTopOffset;
 	}
 
-	int GetScaledLeftOffset(ETexUse i) const
+	int GetScaledLeftOffset() const
 	{
-		return DivScale16(LeftOffset[i], tex->xScale);
+		return DivScale16(mLeftOffset, tex->xScale);
 	}
 
-	int GetScaledTopOffset(ETexUse i) const
+	int GetScaledTopOffset() const
 	{
-		return DivScale16(TopOffset[i], tex->yScale);
+		return DivScale16(mTopOffset, tex->yScale);
 	}
 
-	float GetScaledLeftOffsetFloat(ETexUse i) const
+	float GetScaledLeftOffsetFloat() const
 	{
-		return LeftOffset[i] / FIXED2FLOAT(tex->xScale);
+		return mLeftOffset / FIXED2FLOAT(tex->xScale);
 	}
 
-	float GetScaledTopOffsetFloat(ETexUse i) const
+	float GetScaledTopOffsetFloat() const
 	{
-		return TopOffset[i] / FIXED2FLOAT(tex->yScale);
+		return mTopOffset/ FIXED2FLOAT(tex->yScale);
 	}
 
 	// This is scaled size in floating point as needed by sprites
-	float GetScaledWidthFloat(ETexUse i) const
+	float GetScaledWidthFloat() const
 	{
-		return Width[i] / FIXED2FLOAT(tex->xScale);
+		return mWidth / FIXED2FLOAT(tex->xScale);
 	}
 
-	float GetScaledHeightFloat(ETexUse i) const
+	float GetScaledHeightFloat() const
 	{
-		return Height[i] / FIXED2FLOAT(tex->yScale);
+		return mHeight / FIXED2FLOAT(tex->yScale);
 	}
 
 	// Get right/bottom UV coordinates for patch drawing
 	float GetUL() const { return 0; }
 	float GetVT() const { return 0; }
-	float GetUR() const { return spriteright; }
-	float GetVB() const { return spritebottom; }
-	float GetU(float upix) const { return upix/(float)Width[GLUSE_PATCH] * spriteright; }
-	float GetV(float vpix) const { return vpix/(float)Height[GLUSE_PATCH] * spritebottom; }
+	float GetUR() const { return 1; }
+	float GetVB() const { return 1; }
+	float GetU(float upix) const { return upix/(float)mWidth; }
+	float GetV(float vpix) const { return vpix/(float)mHeight; }
 
-	float GetSpriteUL() const { return SpriteU[0]; }
-	float GetSpriteVT() const { return SpriteV[0]; }
-	float GetSpriteUR() const { return SpriteU[1]; }
-	float GetSpriteVB() const { return SpriteV[1]; }
+	float GetSpriteUL() const { return mSpriteU[0]; }
+	float GetSpriteVT() const { return mSpriteV[0]; }
+	float GetSpriteUR() const { return mSpriteU[1]; }
+	float GetSpriteVB() const { return mSpriteV[1]; }
 
 
 
@@ -240,8 +251,8 @@ public:
 
 	static void DeleteAll();
 	static void FlushAll();
-	static FMaterial *ValidateTexture(FTexture * tex);
-	static FMaterial *ValidateTexture(FTextureID no, bool trans);
+	static FMaterial *ValidateTexture(FTexture * tex, bool expand);
+	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans);
 
 };
 

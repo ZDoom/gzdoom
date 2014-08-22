@@ -416,8 +416,8 @@ int FVoxelModel::FindFrame(const char * name)
 
 void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation)
 {
-	FMaterial * tex = FMaterial::ValidateTexture(skin);
-	tex->Bind(0, translation);
+	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
+	tex->Bind(CLAMP_NOFILTER, translation, -1, false);
 
 	gl_RenderState.Apply();
 	GLRenderer->mModelVBO->SetupFrame(vindex, vindex, 0.f);

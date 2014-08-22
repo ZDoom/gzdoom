@@ -93,10 +93,10 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, &mirror);
 	if (!lump.isValid()) return;
 
-	FMaterial * tex = FMaterial::ValidateTexture(lump, false);
+	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
 	if (!tex) return;
 
-	tex->BindPatch(0, OverrideShader, alphatexture);
+	tex->Bind(CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
 
 	int vw = viewwidth;
 	int vh = viewheight;
@@ -104,18 +104,18 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	// calculate edges of the shape
 	scalex = xratio[WidescreenRatio] * vw / 320;
 
-	tx = sx - ((160 + tex->GetScaledLeftOffset(GLUSE_PATCH))<<FRACBITS);
+	tx = sx - ((160 + tex->GetScaledLeftOffset())<<FRACBITS);
 	x1 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
 	if (x1 > vw)	return; // off the right side
 	x1+=viewwindowx;
 
-	tx +=  tex->TextureWidth(GLUSE_PATCH) << FRACBITS;
+	tx +=  tex->TextureWidth() << FRACBITS;
 	x2 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
 	if (x2 < 0) return; // off the left side
 	x2+=viewwindowx;
 
 	// killough 12/98: fix psprite positioning problem
-	texturemid = (100<<FRACBITS) - (sy-(tex->GetScaledTopOffset(GLUSE_PATCH)<<FRACBITS));
+	texturemid = (100<<FRACBITS) - (sy-(tex->GetScaledTopOffset()<<FRACBITS));
 
 	AWeapon * wi=player->ReadyWeapon;
 	if (wi && wi->YAdjust)
@@ -132,7 +132,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 
 	scale = ((SCREENHEIGHT*vw)/SCREENWIDTH) / 200.0f;    
 	y1 = viewwindowy + (vh >> 1) - (int)(((float)texturemid / (float)FRACUNIT) * scale);
-	y2 = y1 + (int)((float)tex->TextureHeight(GLUSE_PATCH) * scale) + 1;
+	y2 = y1 + (int)((float)tex->TextureHeight() * scale) + 1;
 
 	if (!mirror)
 	{
@@ -149,7 +149,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 		fV2=tex->GetVB();
 	}
 
-	if (tex->GetTransparent() || OverrideShader != 0)
+	if (tex->GetTransparent() || OverrideShader != -1)
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	}
@@ -207,7 +207,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, NULL);
 				if (lump.isValid())
 				{
-					FMaterial * tex=FMaterial::ValidateTexture(lump, false);
+					FMaterial * tex=FMaterial::ValidateTexture(lump, false, false);
 					if (tex)
 						disablefullbright = tex->tex->gl_info.bBrightmapDisablesFullbright;
 				}
@@ -306,7 +306,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	// Set the render parameters
 
-	int OverrideShader = 0;
+	int OverrideShader = -1;
 	float trans = 0.f;
 	if (vis.RenderStyle.BlendOp >= STYLEOP_Fuzz && vis.RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
 	{

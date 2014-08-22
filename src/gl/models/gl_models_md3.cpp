@@ -265,9 +265,9 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 			if (!surfaceSkin) return;
 		}
 
-		FMaterial * tex = FMaterial::ValidateTexture(surfaceSkin);
+		FMaterial * tex = FMaterial::ValidateTexture(surfaceSkin, false);
 
-		tex->Bind(0, translation);
+		tex->Bind(CLAMP_NONE, translation, -1, false);
 
 		gl_RenderState.Apply();
 		GLRenderer->mModelVBO->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, inter);

@@ -1245,7 +1245,7 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 					FTextureID pic = frame->Texture[k];
 					if (pic.isValid())
 					{
-						hitlist[pic.GetIndex()] = 1;
+						hitlist[pic.GetIndex()] = 5;
 					}
 				}
 			}
@@ -1264,7 +1264,7 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 	{
 		hitlist[sides[i].GetTexture(side_t::top).GetIndex()] =
 		hitlist[sides[i].GetTexture(side_t::mid).GetIndex()] =
-		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= 1;
+		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= 3;
 	}
 
 	// Sky texture is always present.
@@ -1276,11 +1276,11 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 
 	if (sky1texture.isValid())
 	{
-		hitlist[sky1texture.GetIndex()] |= 1;
+		hitlist[sky1texture.GetIndex()] |= 3;
 	}
 	if (sky2texture.isValid())
 	{
-		hitlist[sky2texture.GetIndex()] |= 1;
+		hitlist[sky2texture.GetIndex()] |= 3;
 	}
 }
 

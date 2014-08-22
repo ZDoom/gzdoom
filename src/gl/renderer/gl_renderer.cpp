@@ -64,6 +64,7 @@
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
+#include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
@@ -115,6 +116,7 @@ void FGLRenderer::Initialize()
 	mFBID = 0;
 	SetupLevel();
 	mShaderManager = new FShaderManager;
+	mSamplerManager = new FSamplerManager;
 	//mThreadManager = new FGLThreadManager;
 }
 
@@ -124,6 +126,7 @@ FGLRenderer::~FGLRenderer()
 	FMaterial::FlushAll();
 	//if (mThreadManager != NULL) delete mThreadManager;
 	if (mShaderManager != NULL) delete mShaderManager;
+	if (mSamplerManager != NULL) delete mSamplerManager;
 	if (mVBO != NULL) delete mVBO;
 	if (mModelVBO) delete mModelVBO;
 	if (mSkyVBO != NULL) delete mSkyVBO;
@@ -243,7 +246,7 @@ void FGLRenderer::EndOffscreen()
 
 unsigned char *FGLRenderer::GetTextureBuffer(FTexture *tex, int &w, int &h)
 {
-	FMaterial * gltex = FMaterial::ValidateTexture(tex);
+	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 	if (gltex)
 	{
 		return gltex->CreateTexBuffer(0, w, h);
@@ -310,7 +313,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	float u1, v1, u2, v2;
 	int light = 255;
 
-	FMaterial * gltex = FMaterial::ValidateTexture(img);
+	FMaterial * gltex = FMaterial::ValidateTexture(img, false);
 
 	if (parms.colorOverlay && (parms.colorOverlay & 0xffffff) == 0)
 	{
@@ -331,7 +334,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 			}
 		}
 		gl_SetRenderStyle(parms.style, !parms.masked, false);
-		gltex->BindPatch(translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
+		gltex->Bind(CLAMP_XY_NOMIP, translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();
@@ -341,10 +344,11 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	}
 	else
 	{
-		gltex->Bind(0, 0);
-		u2=1.f;
-		v2=-1.f;
-		u1 = v1 = 0.f;
+		gltex->Bind(CLAMP_XY_NOMIP, 0, -1, false);
+		u1 = 0.f;
+		v1 = 1.f;
+		u2 = 1.f;
+		v2 = 0.f;
 		gl_RenderState.SetTextureMode(TM_OPAQUE);
 	}
 	
@@ -490,11 +494,11 @@ void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *
 {
 	float fU1,fU2,fV1,fV2;
 
-	FMaterial *gltexture=FMaterial::ValidateTexture(src);
+	FMaterial *gltexture=FMaterial::ValidateTexture(src, false);
 	
 	if (!gltexture) return;
 
-	gltexture->Bind(0, 0);
+	gltexture->Bind(CLAMP_NONE, 0, -1, false);
 	
 	// scaling is not used here.
 	if (!local_origin)
@@ -575,7 +579,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 		return;
 	}
 
-	FMaterial *gltexture = FMaterial::ValidateTexture(texture);
+	FMaterial *gltexture = FMaterial::ValidateTexture(texture, false);
 
 	if (gltexture == NULL)
 	{
@@ -587,7 +591,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 
 	gl_SetColor(lightlevel, 0, cm, 1.f);
 
-	gltexture->Bind();
+	gltexture->Bind(CLAMP_NONE, 0, -1, false);
 
 	int i;
 	float rot = float(rotation * M_PI / float(1u << 31));

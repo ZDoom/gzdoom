@@ -36,7 +36,6 @@ EXTERN_CVAR(Bool,gl_mirror_envmap)
 
 EXTERN_CVAR(Bool,gl_mirrors)
 EXTERN_CVAR(Bool,gl_mirror_envmap)
-EXTERN_CVAR(Bool, gl_render_segs)
 EXTERN_CVAR(Bool, gl_seamless)
 
 EXTERN_CVAR(Float, gl_mask_threshold)

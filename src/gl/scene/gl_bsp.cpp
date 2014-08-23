@@ -186,20 +186,9 @@ static void AddLine (seg_t *seg)
 		{
 			SetupWall.Clock();
 
-			//if (!gl_multithreading)
-			{
-				GLWall wall;
-				wall.sub = currentsubsector;
-				wall.Process(seg, currentsector, backsector);
-			}
-			/*
-			else
-			{
-				FJob *job = new FGLJobProcessWall(currentsubsector, seg, 
-					currentsector->sectornum, backsector != NULL? backsector->sectornum : -1);
-				GLRenderer->mThreadManager->AddJob(job);
-			}
-			*/
+			GLWall wall;
+			wall.sub = currentsubsector;
+			wall.Process(seg, currentsector, backsector);
 			rendered_lines++;
 
 			SetupWall.Unclock();
@@ -341,21 +330,11 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 	sector_t * sec=sub->sector;
 	if (sec->thinglist != NULL)
 	{
-		//if (!gl_multithreading)
+		// Handle all things in sector.
+		for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
 		{
-			// Handle all things in sector.
-			for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
-			{
-				GLRenderer->ProcessSprite(thing, sector);
-			}
+			GLRenderer->ProcessSprite(thing, sector);
 		}
-		/*
-		else if (sec->thinglist != NULL)
-		{
-			FJob *job = new FGLJobProcessSprites(sector);
-			GLRenderer->mThreadManager->AddJob(job);
-		}
-		*/
 	}
 	SetupSprite.Unclock();
 }
@@ -416,20 +395,10 @@ static void DoSubsector(subsector_t * sub)
 	{
 		SetupSprite.Clock();
 
-		//if (!gl_multithreading)
+		for (i = ParticlesInSubsec[DWORD(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
-			for (i = ParticlesInSubsec[DWORD(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
-			{
-				GLRenderer->ProcessParticle(&Particles[i], fakesector);
-			}
+			GLRenderer->ProcessParticle(&Particles[i], fakesector);
 		}
-		/*
-		else if (ParticlesInSubsec[DWORD(sub-subsectors)] != NO_PARTICLE)
-		{
-			FJob job = new FGLJobProcessParticles(sub);
-			GLRenderer->mThreadManager->AddJob(job);
-		}
-		*/
 		SetupSprite.Unclock();
 	}
 
@@ -476,17 +445,7 @@ static void DoSubsector(subsector_t * sub)
 					srf |= SSRF_PROCESSED;
 
 					SetupFlat.Clock();
-					//if (!gl_multithreading)
-					{
-						GLRenderer->ProcessSector(fakesector);
-					}
-					/*
-					else
-					{
-						FJob *job = new FGLJobProcessFlats(sub);
-						GLRenderer->mThreadManager->AddJob(job);
-					}
-					*/
+					GLRenderer->ProcessSector(fakesector);
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.

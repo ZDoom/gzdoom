@@ -16,7 +16,6 @@ struct FDrawInfo;
 struct pspdef_t;
 class FShaderManager;
 class GLPortal;
-class FGLThreadManager;
 class FLightBuffer;
 class FSamplerManager;
 
@@ -58,7 +57,6 @@ public:
 	AActor *mViewActor;
 	FShaderManager *mShaderManager;
 	FSamplerManager *mSamplerManager;
-	FGLThreadManager *mThreadManager;
 	int gl_spriteindex;
 	unsigned int mFBID;
 

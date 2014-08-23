@@ -149,16 +149,18 @@ void gl_LoadExtensions()
 
 void gl_PrintStartupLog()
 {
+	int v;
+	glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &v);
+
 	Printf ("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	Printf ("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
-	Printf ("GL_VERSION: %s\n", glGetString(GL_VERSION));
+	Printf ("GL_VERSION: %s (%s profile)\n", glGetString(GL_VERSION), (v & GL_CONTEXT_CORE_PROFILE_BIT)? "Core" : "Compatibility");
 	Printf ("GL_SHADING_LANGUAGE_VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	Printf ("GL_EXTENSIONS:");
 	for (unsigned i = 0; i < m_Extensions.Size(); i++)
 	{
 		Printf(" %s", m_Extensions[i].GetChars());
 	}
-	int v;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v);
 	Printf("\nMax. texture size: %d\n", v);

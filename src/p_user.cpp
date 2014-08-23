@@ -62,6 +62,7 @@ static FRandom pr_skullpop ("SkullPop");
 
 // Variables for prediction
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(AActor)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
@@ -2722,14 +2723,16 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
+	bool NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
+		if (!NoInterpolateOld)
+			R_RebuildViewInterpolation(player);
+
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		P_PlayerThink (player);
 		player->mo->Tick ();
 	}
-
-	S_UpdateSounds(players[consoleplayer].camera);	// move positional sounds
 }
 
 extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);

@@ -380,7 +380,9 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		// ... and some items can never be telefragged while others will be telefragged by everything that teleports upon them.
 		if ((StompAlwaysFrags && !(th->flags6 & MF6_NOTELEFRAG)) || (th->flags7 & MF7_ALWAYSTELEFRAG))
 		{
-			P_DamageMobj(th, thing, thing, TELEFRAG_DAMAGE, NAME_Telefrag, DMG_THRUSTLESS);
+			// Don't actually damage if predicting a teleport
+			if (thing->player == NULL || !(thing->player->cheats & CF_PREDICTING))
+				P_DamageMobj(th, thing, thing, TELEFRAG_DAMAGE, NAME_Telefrag, DMG_THRUSTLESS);
 			continue;
 		}
 		return false;
@@ -1981,13 +1983,6 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		thing->AdjustFloorClip();
 	}
 
-	// [RH] Don't activate anything if just predicting
-	if (thing->player && (thing->player->cheats & CF_PREDICTING))
-	{
-		thing->flags6 &= ~MF6_INTRYMOVE;
-		return true;
-	}
-
 	// if any special lines were hit, do the effect
 	if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
 	{
@@ -1998,7 +1993,11 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			oldside = P_PointOnLineSide(oldx, oldy, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
-				if (thing->player)
+				if (thing->player && (thing->player->cheats & CF_PREDICTING))
+				{
+					P_PredictLine(ld, thing, oldside, SPAC_Cross);
+				}
+				else if (thing->player)
 				{
 					P_ActivateLine(ld, thing, oldside, SPAC_Cross);
 				}
@@ -2022,6 +2021,13 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 			}
 		}
+	}
+
+	// [RH] Don't activate anything if just predicting
+	if (thing->player && (thing->player->cheats & CF_PREDICTING))
+	{
+		thing->flags6 &= ~MF6_INTRYMOVE;
+		return true;
 	}
 
 	// [RH] Check for crossing fake floor/ceiling

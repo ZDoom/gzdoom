@@ -794,7 +794,6 @@ static int __cdecl dicmp (const void *a, const void *b)
 {
 	const GLDrawItem * di[2];
 	FMaterial * tx[2];
-	int lights[2];
 	int clamp[2];
 	//colormap_t cm[2];
 	di[0]=(const GLDrawItem *)a;
@@ -808,7 +807,6 @@ static int __cdecl dicmp (const void *a, const void *b)
 		{
 			GLFlat * f=&sortinfo->flats[di[i]->index];
 			tx[i]=f->gltexture;
-			lights[i]=f->lightlevel;
 			clamp[i] = 0;
 		}
 		break;
@@ -817,7 +815,6 @@ static int __cdecl dicmp (const void *a, const void *b)
 		{
 			GLWall * w=&sortinfo->walls[di[i]->index];
 			tx[i]=w->gltexture;
-			lights[i]=w->lightlevel;
 			clamp[i] = w->flags & 3;
 		}
 		break;
@@ -826,16 +823,14 @@ static int __cdecl dicmp (const void *a, const void *b)
 		{
 			GLSprite * s=&sortinfo->sprites[di[i]->index];
 			tx[i]=s->gltexture;
-			lights[i]=s->lightlevel;
-			clamp[i] = 4;
+			clamp[i] = 3;
 		}
 		break;
 		case GLDIT_POLY: break;
 		}
 	}
 	if (tx[0]!=tx[1]) return tx[0]-tx[1];
-	if (clamp[0]!=clamp[1]) return clamp[0]-clamp[1];	// clamping forces different textures.
-	return lights[0]-lights[1];
+	return clamp[0]-clamp[1];	// clamping forces different textures.
 }
 
 

@@ -1611,6 +1611,7 @@ OptionMenu NetworkOptions
 	Title "NETWORK OPTIONS"
 	StaticText "Local options", 1
 	Option "Movement prediction",		"cl_noprediction", "OffOn"
+	Option "Predict line actions",		"cl_predict_specials", "OnOff"
 	StaticText " "
 	StaticText "Host options", 1
 	Option "Extra Tics",				"net_extratic", "ExtraTicMode"

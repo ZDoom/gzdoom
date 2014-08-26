@@ -152,8 +152,8 @@ CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO)
-CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO)
+CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE)
+CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
 {
 	if (self < 0)
 	{
@@ -164,6 +164,19 @@ CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO)
 		self = 2;
 	}
 }
+
+#ifdef _DEBUG
+CVAR(Int, net_fakelatency, 0, 0);
+
+struct PacketStore
+{
+	int timer;
+	doomcom_t message;
+};
+
+static TArray<PacketStore> InBuffer;
+static TArray<PacketStore> OutBuffer;
+#endif
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial
@@ -504,7 +517,30 @@ void HSendPacket (int node, int len)
 	doomcom.remotenode = node;
 	doomcom.datalength = len;
 
-	I_NetCmd ();
+#ifdef _DEBUG
+	if (net_fakelatency / 2 > 0)
+	{
+		PacketStore store;
+		store.message = doomcom;
+		store.timer = I_GetTime(false) + ((net_fakelatency / 2) / (1000 / TICRATE));
+		OutBuffer.Push(store);
+	}
+	else
+		I_NetCmd();
+
+	for (unsigned int i = 0; i < OutBuffer.Size(); i++)
+	{
+		if (OutBuffer[i].timer <= I_GetTime(false))
+		{
+			doomcom = OutBuffer[i].message;
+			I_NetCmd();
+			OutBuffer.Delete(i);
+			i = -1;
+		}
+	}
+#else
+	I_NetCmd();
+#endif
 }
 
 //
@@ -526,12 +562,42 @@ bool HGetPacket (void)
 
 	if (demoplayback)
 		return false;
-				
+
 	doomcom.command = CMD_GET;
 	I_NetCmd ();
+
+#ifdef _DEBUG
+	if (net_fakelatency / 2 > 0 && doomcom.remotenode != -1)
+	{
+		PacketStore store;
+		store.message = doomcom;
+		store.timer = I_GetTime(false) + ((net_fakelatency / 2) / (1000 / TICRATE));
+		InBuffer.Push(store);
+		doomcom.remotenode = -1;
+	}
 	
 	if (doomcom.remotenode == -1)
+	{
+		bool gotmessage = false;
+		for (unsigned int i = 0; i < InBuffer.Size(); i++)
+		{
+			if (InBuffer[i].timer <= I_GetTime(false))
+			{
+				doomcom = InBuffer[i].message;
+				InBuffer.Delete(i);
+				gotmessage = true;
+				break;
+			}
+		}
+		if (!gotmessage)
+			return false;
+	}
+#else
+	if (doomcom.remotenode == -1)
+	{
 		return false;
+	}
+#endif
 		
 	if (debugfile)
 	{
@@ -1173,7 +1239,7 @@ void NetUpdate (void)
 			netbuffer[k++] = lowtic;
 		}
 
-		numtics = lowtic - realstart;
+		numtics = MAX(0, lowtic - realstart);
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 
@@ -1186,7 +1252,7 @@ void NetUpdate (void)
 		case 2: resendto[i] = nettics[i]; break;
 		}
 
-		if (numtics <= 0 && resendOnly && !remoteresend[i] && nettics[i])
+		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])
 		{
 			continue;
 		}
@@ -1332,24 +1398,49 @@ void NetUpdate (void)
 			// very jerky. The way I have it written right now basically means
 			// that it won't adapt. Fortunately, player prediction helps
 			// alleviate the lag somewhat.
-			int average = 0;
 
 			if (NetMode == NET_PeerToPeer)
 			{
-				// Try to guess ahead the time it takes to send responses to the arbitrator
+				// Try to guess ahead the time it takes to send responses to the slowest node
 				// [ED850] It seems that there is a bias based on network adaption (which the arbitrator doesn't do),
 				// so I have set this up to assume one less tic, which appears to balance it out.
+				int totalavg = 0;
 				if (net_ticbalance)
 				{
-					for (i = 0; i < BACKUPTICS; i++)
+					// We shouldn't adapt if we are already the slowest node, otherwise it just adds more latency
+					bool slow = true;
+					int nodeavg = 0;
+					for (i = 1; i < MAXNETNODES; i++)
 					{
-						average += netdelay[nodeforplayer[Net_Arbitrator]][i];
+						if (!nodeingame[i])
+							continue;
+
+						if (netdelay[i][0] > netdelay[0][0])
+						{
+							slow = false;
+							break;
+						}
 					}
-					average /= BACKUPTICS;
-					average = ((netdelay[0][nettics[0] % BACKUPTICS] + average) / 2) - 1;
+
+					if (!slow)
+					{
+						int totalnodes = 0;
+						for (i = 0; i < MAXNETNODES; i++)
+						{
+							if (!nodeingame[i])
+								continue;
+
+							totalnodes++;
+							nodeavg = 0;
+							for (j = 0; j < BACKUPTICS; j++) nodeavg += netdelay[i][j];
+							totalavg += (nodeavg / BACKUPTICS);
+						}
+
+						totalavg = (totalavg / totalnodes) - 1;
+					}
 				}
 					
-				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + average;
+				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + totalavg;
 			}
 			if (nettics[0] <= mastertics)
 			{
@@ -1867,6 +1958,9 @@ void TryRunTics (void)
 		{
 			C_Ticker();
 			M_Ticker();
+			// Repredict the player for new buffered movement
+			P_UnPredictPlayer();
+			P_PredictPlayer(&players[consoleplayer]);
 		}
 		return;
 	}
@@ -1902,6 +1996,9 @@ void TryRunTics (void)
 		{
 			C_Ticker ();
 			M_Ticker ();
+			// Repredict the player for new buffered movement
+			P_UnPredictPlayer();
+			P_PredictPlayer(&players[consoleplayer]);
 			return;
 		}
 	}
@@ -1915,6 +2012,7 @@ void TryRunTics (void)
 	// run the count tics
 	if (counts > 0)
 	{
+		P_UnPredictPlayer();
 		while (counts--)
 		{
 			if (gametic > lowtic)
@@ -1934,6 +2032,7 @@ void TryRunTics (void)
 
 			NetUpdate ();	// check for new console commands
 		}
+		P_PredictPlayer(&players[consoleplayer]);
 		S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 	}
 }

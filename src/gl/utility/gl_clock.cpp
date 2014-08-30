@@ -222,3 +222,12 @@ CCMD(bench)
 	}
 	C_HideConsole ();
 }
+
+bool gl_benching = false;
+
+void  checkBenchActive()
+{
+	FStat *stat = FStat::FindStat("rendertimes");
+	gl_benching = ((stat != NULL && stat->isActive()) || printstats);
+}
+

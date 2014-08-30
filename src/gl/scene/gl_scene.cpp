@@ -351,11 +351,11 @@ void FGLRenderer::RenderScene(int recursion)
 	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights && !(gl.flags & RFL_BUFFER_STORAGE))
 	{
 		GLRenderer->mLights->Begin();
-		gl_drawinfo->drawlists[GLDL_PLAINWALLS].Draw(GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_PLAINFLATS].Draw(GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLS].Draw(GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].Draw(GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Draw(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawWalls(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_PLAINFLATS].DrawFlats(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLS].DrawWalls(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].DrawFlats(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].Draw(GLPASS_LIGHTSONLY);
 		GLRenderer->mLights->Finish();
@@ -379,8 +379,8 @@ void FGLRenderer::RenderScene(int recursion)
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
-	gl_drawinfo->drawlists[GLDL_PLAINWALLS].Draw(pass);
-	gl_drawinfo->drawlists[GLDL_PLAINFLATS].Draw(pass);
+	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawWalls(pass);
+	gl_drawinfo->drawlists[GLDL_PLAINFLATS].DrawFlats(pass);
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -390,15 +390,15 @@ void FGLRenderer::RenderScene(int recursion)
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	gl_drawinfo->drawlists[GLDL_MASKEDWALLS].Draw(pass);
-	gl_drawinfo->drawlists[GLDL_MASKEDFLATS].Draw(pass);
+	gl_drawinfo->drawlists[GLDL_MASKEDWALLS].DrawWalls(pass);
+	gl_drawinfo->drawlists[GLDL_MASKEDFLATS].DrawFlats(pass);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
 	if (gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Draw(pass);
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(pass);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0, 0);
 	}
@@ -413,10 +413,8 @@ void FGLRenderer::RenderScene(int recursion)
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
 
-	for(int i=0; i<GLDL_TRANSLUCENT; i++)
-	{
-		gl_drawinfo->drawlists[i].Draw(GLPASS_DECALS);
-	}
+	// this is the only geometry type on which decals can possibly appear
+	gl_drawinfo->drawlists[GLDL_PLAINWALLS].Draw(GLPASS_DECALS);
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -439,8 +437,8 @@ void FGLRenderer::RenderScene(int recursion)
 
 	glPolygonOffset(0.0f, 0.0f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-
 	RenderAll.Unclock();
+
 }
 
 //-----------------------------------------------------------------------------
@@ -821,6 +819,7 @@ void FGLRenderer::RenderView (player_t* player)
 	OpenGLFrameBuffer* GLTarget = static_cast<OpenGLFrameBuffer*>(screen);
 	AActor *&LastCamera = GLTarget->LastCamera;
 
+	checkBenchActive();
 	if (player->camera != LastCamera)
 	{
 		// If the camera changed don't interpolate

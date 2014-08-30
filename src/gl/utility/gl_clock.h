@@ -9,6 +9,7 @@
 
 extern double gl_SecondsPerCycle;
 extern double gl_MillisecPerCycle;
+extern bool gl_benching;
 
 
 __forceinline long long GetClockCycle ()
@@ -75,13 +76,13 @@ public:
 		// Not using QueryPerformanceCounter directly, so we don't need
 		// to pull in the Windows headers for every single file that
 		// wants to do some profiling.
-		long long time = GetClockCycle();
+		long long time = (gl_benching? GetClockCycle() : 0);
 		Counter -= time;
 	}
 	
 	__forceinline void Unclock()
 	{
-		long long time = GetClockCycle();
+		long long time = (gl_benching? GetClockCycle() : 0);
 		Counter += time;
 	}
 	
@@ -118,6 +119,7 @@ extern int vertexcount, flatvertices, flatprimitives;
 
 void ResetProfilingData();
 void CheckBench();
+void  checkBenchActive();
 
 
 #endif

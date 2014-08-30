@@ -611,14 +611,26 @@ outl:
 //
 //===========================================================================
 
+static FMaterial *last;
+static int lastclamp;
+static int lasttrans;
+static bool lastalpha;
+
 void FMaterial::Bind(int clampmode, int translation, int overrideshader, bool alphatexture)
 {
-	int usebright = false;
 	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
+	gl_RenderState.SetShader(shaderindex, tex->gl_info.shaderspeed);
+
+	// avoid rebinding the same texture multiple times.
+	if (this == last && lastclamp == clampmode && translation == lasttrans && lastalpha == alphatexture) return;
+	last = this;
+	lastclamp = clampmode;
+	lastalpha = alphatexture;
+	lasttrans = translation;
+
+	int usebright = false;
 	int maxbound = 0;
 	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT && clampmode <= CLAMP_XY && !mExpanded;
-
-	gl_RenderState.SetShader(shaderindex, tex->gl_info.shaderspeed);
 
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;

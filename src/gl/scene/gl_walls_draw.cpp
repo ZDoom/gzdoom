@@ -395,18 +395,6 @@ void GLWall::Draw(int pass)
 		gl_RenderState.EnableGlow(false);
 		break;
 
-	case GLPASS_DECALS:
-	case GLPASS_DECALS_NOFOG:
-		if (seg->sidedef && seg->sidedef->AttachedDecals)
-		{
-			if (pass==GLPASS_DECALS) 
-			{
-				gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
-			}
-			DoDrawDecals();
-		}
-		break;
-
 	case GLPASS_TRANSLUCENT:
 		switch (type)
 		{

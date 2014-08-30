@@ -85,6 +85,7 @@ CVAR(Bool, gl_texture, true, 0)
 CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, cl_capfps)
@@ -340,11 +341,14 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 
-	gl_drawinfo->drawlists[GLDL_PLAINWALLS].SortWalls();
-	gl_drawinfo->drawlists[GLDL_PLAINFLATS].SortFlats();
-	gl_drawinfo->drawlists[GLDL_MASKEDWALLS].SortWalls();
-	gl_drawinfo->drawlists[GLDL_MASKEDFLATS].SortFlats();
-	gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+	if (gl_sort_textures)
+	{
+		gl_drawinfo->drawlists[GLDL_PLAINWALLS].SortWalls();
+		gl_drawinfo->drawlists[GLDL_PLAINFLATS].SortFlats();
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLS].SortWalls();
+		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].SortFlats();
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+	}
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
@@ -414,7 +418,7 @@ void FGLRenderer::RenderScene(int recursion)
 	glDepthMask(false);
 
 	// this is the only geometry type on which decals can possibly appear
-	gl_drawinfo->drawlists[GLDL_PLAINWALLS].Draw(GLPASS_DECALS);
+	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 

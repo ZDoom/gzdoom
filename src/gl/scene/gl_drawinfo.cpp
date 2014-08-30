@@ -59,8 +59,6 @@
 
 FDrawInfo * gl_drawinfo;
 
-CVAR(Bool, gl_sort_textures, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
 //==========================================================================
 //
 //
@@ -813,6 +811,19 @@ void GLDrawList::DrawFlats(int pass)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+void GLDrawList::DrawDecals()
+{
+	for(unsigned i=0;i<drawitems.Size();i++)
+	{
+		walls[drawitems[i].index].DoDrawDecals();
+	}
+}
+
+//==========================================================================
+//
 // Sorting the drawitems first by texture and then by light level.
 //
 //==========================================================================
@@ -844,7 +855,7 @@ static int __cdecl difcmp (const void *a, const void *b)
 
 void GLDrawList::SortWalls()
 {
-	if (drawitems.Size()!=0 && gl_sort_textures)
+	if (drawitems.Size() > 1)
 	{
 		sortinfo=this;
 		qsort(&drawitems[0], drawitems.Size(), sizeof(drawitems[0]), diwcmp);
@@ -853,7 +864,7 @@ void GLDrawList::SortWalls()
 
 void GLDrawList::SortFlats()
 {
-	if (drawitems.Size()!=0 && gl_sort_textures)
+	if (drawitems.Size() > 1)
 	{
 		sortinfo=this;
 		qsort(&drawitems[0], drawitems.Size(), sizeof(drawitems[0]), difcmp);

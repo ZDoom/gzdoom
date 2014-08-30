@@ -349,11 +349,15 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 //==========================================================================
 void GLWall::DoDrawDecals()
 {
-	DBaseDecal *decal = seg->sidedef->AttachedDecals;
-	while (decal)
+	if (seg->sidedef && seg->sidedef->AttachedDecals)
 	{
-		DrawDecal(decal);
-		decal = decal->WallNext;
+		gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
+		DBaseDecal *decal = seg->sidedef->AttachedDecals;
+		while (decal)
+		{
+			DrawDecal(decal);
+			decal = decal->WallNext;
+		}
 	}
 }
 

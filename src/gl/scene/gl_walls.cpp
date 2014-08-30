@@ -151,11 +151,11 @@ void GLWall::PutWall(bool translucent)
 
 		if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S))
 		{
-			list = GLDL_MASKEDOFS;
+			list = GLDL_MASKEDWALLSOFS;
 		}
 		else
 		{
-			list = masked ? GLDL_MASKED : GLDL_PLAIN;
+			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
 		gl_drawinfo->drawlists[list].AddWall(this);
 

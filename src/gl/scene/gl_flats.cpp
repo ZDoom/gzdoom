@@ -402,7 +402,7 @@ inline void GLFlat::PutFlat(bool fog)
 	else
 	{
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
-		list = masked ? GLDL_MASKED : GLDL_PLAIN;
+		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
 	}
 	gl_drawinfo->drawlists[list].AddFlat (this);
 }

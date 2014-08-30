@@ -340,18 +340,22 @@ void FGLRenderer::RenderScene(int recursion)
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 
-	gl_drawinfo->drawlists[GLDL_PLAIN].Sort();
-	gl_drawinfo->drawlists[GLDL_MASKED].Sort();
-	gl_drawinfo->drawlists[GLDL_MASKEDOFS].Sort();
+	gl_drawinfo->drawlists[GLDL_PLAINWALLS].SortWalls();
+	gl_drawinfo->drawlists[GLDL_PLAINFLATS].SortFlats();
+	gl_drawinfo->drawlists[GLDL_MASKEDWALLS].SortWalls();
+	gl_drawinfo->drawlists[GLDL_MASKEDFLATS].SortFlats();
+	gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
 	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights && !(gl.flags & RFL_BUFFER_STORAGE))
 	{
 		GLRenderer->mLights->Begin();
-		gl_drawinfo->drawlists[GLDL_PLAIN].Draw(GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKED].Draw(GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDOFS].Draw(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_PLAINWALLS].Draw(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_PLAINFLATS].Draw(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLS].Draw(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].Draw(GLPASS_LIGHTSONLY);
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Draw(GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].Draw(GLPASS_LIGHTSONLY);
 		GLRenderer->mLights->Finish();
@@ -375,7 +379,8 @@ void FGLRenderer::RenderScene(int recursion)
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
-	gl_drawinfo->drawlists[GLDL_PLAIN].Draw(pass);
+	gl_drawinfo->drawlists[GLDL_PLAINWALLS].Draw(pass);
+	gl_drawinfo->drawlists[GLDL_PLAINFLATS].Draw(pass);
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -385,14 +390,15 @@ void FGLRenderer::RenderScene(int recursion)
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	gl_drawinfo->drawlists[GLDL_MASKED].Draw(pass);
+	gl_drawinfo->drawlists[GLDL_MASKEDWALLS].Draw(pass);
+	gl_drawinfo->drawlists[GLDL_MASKEDFLATS].Draw(pass);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
-	if (gl_drawinfo->drawlists[GLDL_MASKEDOFS].Size() > 0)
+	if (gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
-		gl_drawinfo->drawlists[GLDL_MASKEDOFS].Draw(pass);
+		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Draw(pass);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0, 0);
 	}

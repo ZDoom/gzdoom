@@ -13,9 +13,11 @@ enum GLDrawItemType
 
 enum DrawListType
 {
-	GLDL_PLAIN,
-	GLDL_MASKED,
-	GLDL_MASKEDOFS,
+	GLDL_PLAINWALLS,
+	GLDL_PLAINFLATS,
+	GLDL_MASKEDWALLS,
+	GLDL_MASKEDFLATS,
+	GLDL_MASKEDWALLSOFS,
 	GLDL_MODELS,
 
 	GLDL_TRANSLUCENT,
@@ -106,7 +108,8 @@ public:
 	void AddFlat(GLFlat * flat);
 	void AddSprite(GLSprite * sprite);
 	void Reset();
-	void Sort();
+	void SortWalls();
+	void SortFlats();
 
 
 	void MakeSortList();
@@ -125,6 +128,8 @@ public:
 	void DoDrawSorted(SortNode * node);
 	void DrawSorted();
 	void Draw(int pass);
+	void DrawWalls(int pass);
+	void DrawFlats(int pass);
 	
 	GLDrawList * next;
 } ;

@@ -403,6 +403,7 @@ void FHardwareTexture::UnbindAll()
 	{
 		Unbind(texunit);
 	}
+	FMaterial::ClearLastTexture();
 }
 
 //===========================================================================

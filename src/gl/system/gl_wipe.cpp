@@ -240,6 +240,7 @@ void OpenGLFrameBuffer::WipeCleanup()
 		delete wipeendscreen;
 		wipeendscreen = NULL;
 	}
+	FMaterial::ClearLastTexture();
 }
 
 //==========================================================================

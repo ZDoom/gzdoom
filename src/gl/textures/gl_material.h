@@ -253,6 +253,7 @@ public:
 	static void FlushAll();
 	static FMaterial *ValidateTexture(FTexture * tex, bool expand);
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans);
+	static void ClearLastTexture();
 
 };
 

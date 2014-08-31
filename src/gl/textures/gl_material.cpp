@@ -753,6 +753,7 @@ void FMaterial::BindToFrameBuffer()
 		// must create the hardware texture first
 		mBaseLayer->Bind(0, 0, 0, false, NULL);
 		FHardwareTexture::Unbind(0);
+		ClearLastTexture();
 	}
 	mBaseLayer->mHwTexture->BindToFrameBuffer();
 }
@@ -809,3 +810,7 @@ void FMaterial::FlushAll()
 	}
 }
 
+void FMaterial::ClearLastTexture()
+{
+	last = NULL;
+}

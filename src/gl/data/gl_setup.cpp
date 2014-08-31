@@ -234,6 +234,7 @@ static void SpreadHackedFlag(subsector_t * sub)
 			if (!(sub2->hacked&1) && sub2->render_sector == sub->render_sector)
 			{
 				sub2->hacked|=1;
+				sub->hacked &= ~4;
 				SpreadHackedFlag (sub2);
 			}
 		}
@@ -286,7 +287,7 @@ static void PrepareSectorData()
 						subsectors[i].render_sector != seg[j].PartnerSeg->Subsector->render_sector)
 				{
 					DPrintf("Found hack: (%d,%d) (%d,%d)\n", seg[j].v1->x>>16, seg[j].v1->y>>16, seg[j].v2->x>>16, seg[j].v2->y>>16);
-					subsectors[i].hacked|=1;
+					subsectors[i].hacked|=5;
 					SpreadHackedFlag(&subsectors[i]);
 				}
 				if (seg[j].PartnerSeg==NULL) subsectors[i].hacked|=2;	// used for quick termination checks

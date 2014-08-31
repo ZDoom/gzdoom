@@ -1441,7 +1441,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	sector_t * realback;
 
 #ifdef _DEBUG
-	if (seg->linedef-lines==636)
+	if (seg->linedef-lines==1276)
 	{
 		int a = 0;
 	}
@@ -1657,7 +1657,11 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				}
 				else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 				{
-					gl_drawinfo->AddUpperMissingTexture(seg->sidedef, sub, bch1a);
+					// skip processing if the back is a malformed subsector
+					if (!(seg->PartnerSeg->Subsector->hacked & 4))
+					{
+						gl_drawinfo->AddUpperMissingTexture(seg->sidedef, sub, bch1a);
+					}
 				}
 			}
 		}
@@ -1726,7 +1730,11 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			else if (backsector->GetTexture(sector_t::floor)!=skyflatnum && 
 				!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				gl_drawinfo->AddLowerMissingTexture(seg->sidedef, sub, bfh1);
+				// skip processing if the back is a malformed subsector
+				if (!(seg->PartnerSeg->Subsector->hacked & 4))
+				{
+					gl_drawinfo->AddLowerMissingTexture(seg->sidedef, sub, bfh1);
+				}
 			}
 		}
 	}

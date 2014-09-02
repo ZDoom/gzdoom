@@ -70,7 +70,7 @@
 // information
 //
 //==========================================================================
-
+static float tics;
 void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
 {
 	// only manipulate the texture matrix if needed.
@@ -80,8 +80,8 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		gltexture->TextureWidth() != 64 ||
 		gltexture->TextureHeight() != 64)
 	{
-		float uoffs=FIXED2FLOAT(secplane->xoffs)/gltexture->TextureWidth();
-		float voffs=FIXED2FLOAT(secplane->yoffs)/gltexture->TextureHeight();
+		float uoffs = FIXED2FLOAT(secplane->xoffs) / gltexture->TextureWidth();
+		float voffs = FIXED2FLOAT(secplane->yoffs) / gltexture->TextureHeight();
 
 		float xscale1=FIXED2FLOAT(secplane->xscale);
 		float yscale1=FIXED2FLOAT(secplane->yscale);
@@ -328,7 +328,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	int rel = getExtraLight();
 
 #ifdef _DEBUG
-	if (sector->sectornum == 2)
+	if (sector->sectornum == 130)
 	{
 		int a = 0;
 	}

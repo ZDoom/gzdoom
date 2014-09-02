@@ -39,7 +39,7 @@ void main()
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
 		vTexCoord.xy = sst;
 	#else
-		vTexCoord = TextureMatrix * vec4(aTexCoord, 0.0, 0.0);
+		vTexCoord = TextureMatrix * vec4(aTexCoord, 0.0, 1.0);
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;

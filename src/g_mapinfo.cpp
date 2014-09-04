@@ -1886,7 +1886,7 @@ static void ClearMapinfo()
 //
 //==========================================================================
 
-void G_ParseMapInfo (const char *basemapinfo)
+void G_ParseMapInfo (FString basemapinfo)
 {
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
@@ -1895,7 +1895,7 @@ void G_ParseMapInfo (const char *basemapinfo)
 	atterm(ClearMapinfo);
 
 	// Parse the default MAPINFO for the current game. This lump *MUST* come from zdoom.pk3.
-	if (basemapinfo != NULL)
+	if (basemapinfo.IsNotEmpty())
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
@@ -1903,7 +1903,7 @@ void G_ParseMapInfo (const char *basemapinfo)
 		if (Wads.GetLumpFile(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo);
+				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}

@@ -48,8 +48,6 @@
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
 
-#include "basictypes.h"
-#include "basicinlines.h"
 #include "bitmap.h"
 #include "c_console.h"
 #include "c_dispatch.h"

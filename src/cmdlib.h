@@ -6,6 +6,7 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
+#include "m_fixed.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -75,12 +76,12 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 
 inline int AdjustTics(int tics)
 {
-	return (tics * 98) / 100;
+	return Scale(tics, 98, 100);
 }
 
 inline int Tics2Seconds(int tics)
 {
-	return (tics * 98) / (100 * TICRATE);
+	return Scale(tics, 98, (100 * TICRATE));
 }
 
 

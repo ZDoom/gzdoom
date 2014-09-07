@@ -558,7 +558,7 @@ bool FTexture::SmoothEdges(unsigned char * buffer,int w, int h)
 		l1+=4;
 		for(x=1;x<w-1;x++, l1+=4)
 		{
-			if (l1[MSB]==0 &&  !CHKPIX(-w) && !CHKPIX(-1) && !CHKPIX(1)) CHKPIX(w);
+			if (l1[MSB]==0 &&  !CHKPIX(-w) && !CHKPIX(-1) && !CHKPIX(1) && !CHKPIX(-w-1) && !CHKPIX(-w+1) && !CHKPIX(w-1) && !CHKPIX(w+1)) CHKPIX(w);
 		}
 		if (l1[MSB]==0 && !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(w);
 		l1+=4;

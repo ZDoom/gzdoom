@@ -2,6 +2,24 @@
 
 IWad
 {
+	Name = "The Adventures of Square"
+	Game = "Doom"
+	Config = "Square"
+	MustContain = "SQU-IWAD", "E1A1"
+	BannerColors = "ff ff ff", "80 00 80"
+}
+
+IWad
+{
+	Name = "The Adventures of Square (Square-ware)"
+	Game = "Doom"
+	Config = "Square"
+	MustContain = "SQU-SWE1", "E1A1"
+	BannerColors = "ff ff ff", "80 00 80"
+}
+
+IWad
+{
 	Name = "Harmony"
 	Game = "Doom"
 	Config = "Harmony"
@@ -361,4 +379,5 @@ Names
 	"harm1.wad"
 	"hacx.wad"
 	"hacx2.wad"
+	"square1.pk3"
 }

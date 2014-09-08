@@ -772,7 +772,6 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 		FMaterial *gltex = tex->gl_info.Material[expand];
 		if (gltex == NULL) 
 		{
-			//@sync-tex
 			gltex = new FMaterial(tex, expand);
 		}
 		return gltex;

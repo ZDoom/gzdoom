@@ -81,6 +81,7 @@ enum
 	CP_SECTORFLOOROFFSET,
 	CP_SETWALLYSCALE,
 	CP_SETTHINGZ,
+	CP_SETTAG,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -307,6 +308,15 @@ void ParseCompatibility()
 				sc.MustGetFloat();
 				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
+			else if (sc.Compare("setsectortag"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETTAG);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
 			else 
 			{
 				sc.UnGet();
@@ -520,6 +530,15 @@ void SetCompatibilityParams()
 					i += 3;
 					break;
 				}	
+				case CP_SETTAG:
+				{
+					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
+					{
+						sectors[CompatParams[i + 1]].tag = CompatParams[i + 2];
+					}
+					i += 3;
+					break;
+				}
 			}
 		}
 	}

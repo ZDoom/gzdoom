@@ -1047,7 +1047,6 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex)
 		FMaterial *gltex = tex->gl_info.Material;
 		if (gltex == NULL) 
 		{
-			//@sync-tex
 			gltex = new FMaterial(tex, false);
 		}
 		return gltex;

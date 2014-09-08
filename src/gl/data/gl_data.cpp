@@ -438,7 +438,6 @@ void gl_RecalcVertexHeights(vertex_t * v)
 	int i,j,k;
 	float height;
 
-	//@sync-vertexheights
 	v->numheights=0;
 	for(i=0;i<v->numsectors;i++)
 	{

@@ -264,6 +264,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 		else if (param==4)
 		{
 			flags=FF_EXISTS|FF_RENDERPLANES|FF_INVERTPLANES|FF_NOSHADE|FF_FIX;
+			if (param2 & 1) flags |= FF_SEETHROUGH;	// marker for allowing missing texture checks
 			alpha=255;
 		}
 		else 

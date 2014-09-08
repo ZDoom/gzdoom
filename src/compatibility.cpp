@@ -536,6 +536,7 @@ void SetCompatibilityParams()
 					{
 						sectors[CompatParams[i + 1]].tag = CompatParams[i + 2];
 					}
+					i += 3;
 					break;
 				}
 			}

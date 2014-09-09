@@ -227,8 +227,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	glUseProgram(hShader);
 
-	tempindex = glGetUniformLocation(hShader, "texture2");
-	if (tempindex > 0) glUniform1i(tempindex, 1);
+	// set up other texture units (if needed by the shader)
+	for (int i = 2; i<16; i++)
+	{
+		char stringbuf[20];
+		mysnprintf(stringbuf, 20, "texture%d", i);
+		tempindex = glGetUniformLocation(hShader, stringbuf);
+		if (tempindex > 0) glUniform1i(tempindex, i - 1);
+	}
 
 	glUseProgram(0);
 	return !!linked;

@@ -405,6 +405,7 @@ int FMaterial::mMaxBound;
 FMaterial::FMaterial(FTexture * tx, bool expanded)
 {
 	mShaderIndex = 0;
+	tex = tx;
 
 	// TODO: apply custom shader object here
 	/* if (tx->CustomShaderDefinition)
@@ -495,7 +496,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mMaterials.Push(this);
 	tx->gl_info.Material[expanded] = this;
 	if (tx->bHasCanvas) tx->gl_info.mIsTransparent = 0;
-	tex = tx;
 	mExpanded = expanded;
 }
 

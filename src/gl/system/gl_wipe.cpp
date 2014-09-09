@@ -150,6 +150,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	wipestartscreen = new FHardwareTexture(Width, Height, true);
 	wipestartscreen->CreateTexture(NULL, Width, Height, 0, false, 0, false);
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER);
+	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE);
 	glFinish();
 	wipestartscreen->Bind(0, false, false, false);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
@@ -515,9 +516,9 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	gl_RenderState.Apply();
 
 	// Burn the new screen on top of it.
-	fb->wipeendscreen->Bind(1, 0, false, false);
+	fb->wipeendscreen->Bind(0, 0, false, false);
 
-	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, 0, false, 0, false);
+	BurnTexture->CreateTexture(rgb_buffer, WIDTH, HEIGHT, 1, true, 0, false);
 
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, offset, count);
 	gl_RenderState.SetEffect(EFF_NONE);

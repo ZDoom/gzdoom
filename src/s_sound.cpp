@@ -1327,8 +1327,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			}
 			else if (sfx->bLoadRAW)
 			{
-				int frequency = (sfx->bForce22050 ? 22050 : 11025);
-				sfx->data = GSnd->LoadSoundRaw(sfxdata, size, frequency, 1, 8, sfx->LoopStart);
+				sfx->data = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart);
 			}
 			else if (((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && dmxlen <= size - 8)
 			{

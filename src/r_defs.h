@@ -882,18 +882,6 @@ struct side_t
 
 FArchive &operator<< (FArchive &arc, side_t::part &p);
 
-//
-// Move clipping aid for LineDefs.
-//
-enum slopetype_t
-{
-	ST_HORIZONTAL,
-	ST_VERTICAL,
-	ST_POSITIVE,
-	ST_NEGATIVE
-};
-
-
 struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
@@ -908,7 +896,6 @@ struct line_t
 	side_t		*sidedef[2];
 	//DWORD		sidenum[2];	// sidenum[1] will be NO_SIDE if one sided
 	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
-	slopetype_t	slopetype;	// To aid move clipping.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special

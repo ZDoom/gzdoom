@@ -641,13 +641,19 @@ FUNC(LS_Ceiling_CrushAndRaiseA)
 FUNC(LS_Ceiling_CrushAndRaiseDist)
 // Ceiling_CrushAndRaiseDist (tag, dist, speed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushAndRaiseDist, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 0, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 0, 0, CRUSHTYPE(arg4));
 }
 
 FUNC(LS_Ceiling_CrushAndRaiseSilentA)
 // Ceiling_CrushAndRaiseSilentA (tag, dnspeed, upspeed, damage, crushtype)
 {
 	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 1, 0, CRUSHTYPE(arg4));
+}
+
+FUNC(LS_Ceiling_CrushAndRaiseSilentDist)
+// Ceiling_CrushAndRaiseSilentDist (tag, dist, upspeed, damage, crushtype)
+{
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 1, 0, CRUSHTYPE(arg4));
 }
 
 FUNC(LS_Ceiling_RaiseToNearest)
@@ -3261,7 +3267,7 @@ lnSpecFunc LineSpecials[256] =
 	/* 101 */ LS_NOP,		// Scroll_Texture_Right
 	/* 102 */ LS_NOP,		// Scroll_Texture_Up
 	/* 103 */ LS_NOP,		// Scroll_Texture_Down
-	/* 104 */ LS_NOP,
+	/* 104 */ LS_Ceiling_CrushAndRaiseSilentDist,
 	/* 105 */ LS_NOP,
 	/* 106 */ LS_NOP,
 	/* 107 */ LS_NOP,

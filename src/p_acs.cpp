@@ -120,12 +120,24 @@ FRandom pr_acs ("ACS");
 #define SDF_ABSANGLE		1
 #define SDF_PERMANENT		2
 
+// GetArmorInfo
+enum
+{
+	ARMORINFO_CLASSNAME,
+	ARMORINFO_SAVEAMOUNT,
+	ARMORINFO_SAVEPERCENT,
+	ARMORINFO_MAXABSORB,
+	ARMORINFO_MAXFULLABSORB,
+	ARMORINFO_ACTUALSAVEAMOUNT,
+};
+
 struct CallReturn
 {
-	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard, unsigned int runaway)
+	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
 		: ReturnFunction(func),
 		  ReturnModule(module),
 		  ReturnLocals(locals),
+		  ReturnArrays(arrays),
 		  ReturnAddress(pc),
 		  bDiscardResult(discard),
 		  EntryInstrCount(runaway)
@@ -134,6 +146,7 @@ struct CallReturn
 	ScriptFunction *ReturnFunction;
 	FBehavior *ReturnModule;
 	SDWORD *ReturnLocals;
+	ACSLocalArrays *ReturnArrays;
 	int ReturnAddress;
 	int bDiscardResult;
 	unsigned int EntryInstrCount;
@@ -1673,6 +1686,26 @@ void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
 	}
 }
 
+static int ParseLocalArrayChunk(void *chunk, ACSLocalArrays *arrays, int offset)
+{
+	unsigned count = (LittleShort(static_cast<unsigned short>(((unsigned *)chunk)[1]) - 2)) / 4;
+	int *sizes = (int *)((BYTE *)chunk + 10);
+	arrays->Count = count;
+	if (count > 0)
+	{
+		ACSLocalArrayInfo *info = new ACSLocalArrayInfo[count];
+		arrays->Info = info;
+		for (unsigned i = 0; i < count; ++i)
+		{
+			info[i].Size = LittleLong(sizes[i]);
+			info[i].Offset = offset;
+			offset += info[i].Size;
+		}
+	}
+	// Return the new local variable size, with space for the arrays
+	return offset;
+}
+
 FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 {
 	BYTE *object;
@@ -1822,12 +1855,45 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	{
 		DWORD *chunk;
 
-		Functions = FindChunk (MAKE_ID('F','U','N','C'));
-		if (Functions != NULL)
+		// Load functions
+		BYTE *funcs;
+		Functions = NULL;
+		funcs = FindChunk (MAKE_ID('F','U','N','C'));
+		if (funcs != NULL)
 		{
-			NumFunctions = LittleLong(((DWORD *)Functions)[1]) / 8;
-			Functions += 8;
+			NumFunctions = LittleLong(((DWORD *)funcs)[1]) / 8;
+			funcs += 8;
 			FunctionProfileData = new ACSProfileInfo[NumFunctions];
+			Functions = new ScriptFunction[NumFunctions];
+			for (i = 0; i < NumFunctions; ++i)
+			{
+				ScriptFunctionInFile *funcf = &((ScriptFunctionInFile *)funcs)[i];
+				ScriptFunction *funcm = &Functions[i];
+				funcm->ArgCount = funcf->ArgCount;
+				funcm->HasReturnValue = funcf->HasReturnValue;
+				funcm->ImportNum = funcf->ImportNum;
+				funcm->LocalCount = funcf->LocalCount;
+				funcm->Address = funcf->Address;
+			}
+		}
+
+		// Load local arrays for functions
+		if (NumFunctions > 0)
+		{
+			for (chunk = (DWORD *)FindChunk(MAKE_ID('F','A','R','Y')); chunk != NULL; chunk = (DWORD *)NextChunk((BYTE *)chunk))
+			{
+				int size = LittleLong(chunk[1]);
+				if (size >= 6)
+				{
+					unsigned int func_num = LittleShort(((WORD *)chunk)[4]);
+					if (func_num < (unsigned int)NumFunctions)
+					{
+						ScriptFunction *func = &Functions[func_num];
+						// Unlike scripts, functions do not include their arg count in their local count.
+						func->LocalCount = ParseLocalArrayChunk(chunk, &func->LocalArrays, func->LocalCount + func->ArgCount) - func->ArgCount;
+					}
+				}
+			}
 		}
 
 		// Load JUMP points
@@ -2135,6 +2201,11 @@ FBehavior::~FBehavior ()
 		delete[] ArrayStore;
 		ArrayStore = NULL;
 	}
+	if (Functions != NULL)
+	{
+		delete[] Functions;
+		Functions = NULL;
+	}
 	if (FunctionProfileData != NULL)
 	{
 		delete[] FunctionProfileData;
@@ -2298,6 +2369,21 @@ void FBehavior::LoadScriptsDirectory ()
 			if (ptr != NULL)
 			{
 				ptr->VarCount = LittleShort(scripts.w[1]);
+			}
+		}
+	}
+
+	// Load script array sizes. (One chunk per script that uses arrays.)
+	for (scripts.b = FindChunk(MAKE_ID('S','A','R','Y')); scripts.dw != NULL; scripts.b = NextChunk(scripts.b))
+	{
+		int size = LittleLong(scripts.dw[1]);
+		if (size >= 6)
+		{
+			int script_num = LittleShort(scripts.w[4]);
+			ScriptPtr *ptr = const_cast<ScriptPtr *>(FindScript(script_num));
+			if (ptr != NULL)
+			{
+				ptr->VarCount = ParseLocalArrayChunk(scripts.b, &ptr->LocalArrays, ptr->VarCount);
 			}
 		}
 	}
@@ -3530,7 +3616,8 @@ enum
 	APROP_MeleeRange	= 38,
 	APROP_ViewHeight	= 39,
 	APROP_AttackZOffset	= 40,
-	APROP_StencilColor	= 41
+	APROP_StencilColor	= 41,
+	APROP_Friction		= 42,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3660,16 +3747,16 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Friendly:
+		if (actor->CountsAsKill()) level.total_monsters--;
 		if (value)
 		{
-			if (actor->CountsAsKill()) level.total_monsters--;
 			actor->flags |= MF_FRIENDLY;
 		}
 		else
 		{
 			actor->flags &= ~MF_FRIENDLY;
-			if (actor->CountsAsKill()) level.total_monsters++;
 		}
+		if (actor->CountsAsKill()) level.total_monsters++;
 		break;
 
 
@@ -3763,6 +3850,9 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_StencilColor:
 		actor->SetShade(value);
 		break;
+
+	case APROP_Friction:
+		actor->Friction = value;
 
 	default:
 		// do nothing.
@@ -3862,6 +3952,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies(), stack, stackdepth);
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag(), stack, stackdepth);
 	case APROP_StencilColor:return actor->fillcolor;
+	case APROP_Friction:	return actor->Friction;
 
 	default:				return 0;
 	}
@@ -4269,6 +4360,7 @@ enum EACSFunctions
 	ACSF_GetActorPowerupTics,
 	ACSF_ChangeActorAngle,
 	ACSF_ChangeActorPitch,		// 80
+	ACSF_GetArmorInfo,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -4740,6 +4832,41 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				if (armor && armor->ArmorType == p) return armor->Amount;
 			}
 			return 0;
+		}
+
+		case ACSF_GetArmorInfo:
+		{
+			if (activator == NULL || activator->player == NULL) return 0;
+
+			ABasicArmor * equippedarmor = (ABasicArmor *) activator->FindInventory(NAME_BasicArmor);
+
+			if (equippedarmor && equippedarmor->Amount != 0)
+			{
+				switch(args[0])
+				{
+					case ARMORINFO_CLASSNAME:
+						return GlobalACSStrings.AddString(equippedarmor->ArmorType.GetChars(), stack, stackdepth);
+
+					case ARMORINFO_SAVEAMOUNT:
+						return equippedarmor->MaxAmount;
+
+					case ARMORINFO_SAVEPERCENT:
+						return equippedarmor->SavePercent;
+
+					case ARMORINFO_MAXABSORB:
+						return equippedarmor->MaxAbsorb;
+
+					case ARMORINFO_MAXFULLABSORB:
+						return equippedarmor->MaxFullAbsorb;
+
+					case ARMORINFO_ACTUALSAVEAMOUNT:
+						return equippedarmor->ActualSaveAmount;
+
+					default:
+						return 0;
+				}
+			}
+			return args[0] == ARMORINFO_CLASSNAME ? GlobalACSStrings.AddString("None", stack, stackdepth) : 0;
 		}
 
 		case ACSF_SpawnSpotForced:
@@ -5460,13 +5587,49 @@ inline int getshort (int *&pc)
 	return res;
 }
 
+static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &sp, bool ranged)
+{
+	if (ranged)
+	{
+		capacity = STACK(1);
+		offset = STACK(2);
+		if (capacity < 1 || offset < 0)
+		{
+			sp -= 4;
+			return false;
+		}
+		sp -= 2;
+	}
+	else
+	{
+		capacity = INT_MAX;
+		offset = 0;
+	}
+	a = STACK(1);
+	offset += STACK(2);
+	sp -= 2;
+	return true;
+}
+
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 	SDWORD *locals = localvars;
+	ACSLocalArrays noarrays;
+	ACSLocalArrays *localarrays = &noarrays;
 	ScriptFunction *activeFunction = NULL;
 	FRemapTable *translation = 0;
 	int resultValue = 1;
+
+	if (InModuleScriptNumber >= 0)
+	{
+		ScriptPtr *ptr = activeBehavior->GetScriptPtr(InModuleScriptNumber);
+		assert(ptr != NULL);
+		if (ptr != NULL)
+		{
+			localarrays = &ptr->LocalArrays;
+		}
+	}
 
 	// Hexen truncates all special arguments to bytes (only when using an old MAPINFO and old ACS format
 	const int specialargmask = ((level.flags2 & LEVEL2_HEXENHACK) && activeBehavior->GetFormat() == ACS_Old) ? 255 : ~0;
@@ -5832,9 +5995,10 @@ int DLevelScript::RunScript ()
 				}
 				sp += i;
 				::new(&Stack[sp]) CallReturn(activeBehavior->PC2Ofs(pc), activeFunction,
-					activeBehavior, mylocals, pcd == PCD_CALLDISCARD, runaway);
+					activeBehavior, mylocals, localarrays, pcd == PCD_CALLDISCARD, runaway);
 				sp += (sizeof(CallReturn) + sizeof(int) - 1) / sizeof(int);
 				pc = module->Ofs2PC (func->Address);
+				localarrays = &func->LocalArrays;
 				activeFunction = func;
 				activeBehavior = module;
 				fmt = module->GetFormat();
@@ -5868,6 +6032,7 @@ int DLevelScript::RunScript ()
 				activeBehavior = ret->ReturnModule;
 				fmt = activeBehavior->GetFormat();
 				locals = ret->ReturnLocals;
+				localarrays = ret->ReturnArrays;
 				if (!ret->bDiscardResult)
 				{
 					Stack[sp++] = value;
@@ -5966,6 +6131,11 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_ASSIGNSCRIPTARRAY:
+			localarrays->Set(locals, NEXTBYTE, STACK(2), STACK(1));
+			sp -= 2;
+			break;
+
 		case PCD_ASSIGNMAPARRAY:
 			activeBehavior->SetArrayVal (*(activeBehavior->MapVars[NEXTBYTE]), STACK(2), STACK(1));
 			sp -= 2;
@@ -5995,6 +6165,10 @@ int DLevelScript::RunScript ()
 
 		case PCD_PUSHGLOBALVAR:
 			PushToStack (ACS_GlobalVars[NEXTBYTE]);
+			break;
+
+		case PCD_PUSHSCRIPTARRAY:
+			STACK(1) = localarrays->Get(locals, NEXTBYTE, STACK(1));
 			break;
 
 		case PCD_PUSHMAPARRAY:
@@ -6027,6 +6201,14 @@ int DLevelScript::RunScript ()
 		case PCD_ADDGLOBALVAR:
 			ACS_GlobalVars[NEXTBYTE] += STACK(1);
 			sp--;
+			break;
+
+		case PCD_ADDSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) + STACK(1));
+				sp -= 2;
+			}
 			break;
 
 		case PCD_ADDMAPARRAY:
@@ -6074,6 +6256,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_SUBSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) - STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_SUBMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6117,6 +6307,14 @@ int DLevelScript::RunScript ()
 		case PCD_MULGLOBALVAR:
 			ACS_GlobalVars[NEXTBYTE] *= STACK(1);
 			sp--;
+			break;
+
+		case PCD_MULSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) * STACK(1));
+				sp -= 2;
+			}
 			break;
 
 		case PCD_MULMAPARRAY:
@@ -6189,6 +6387,19 @@ int DLevelScript::RunScript ()
 			{
 				ACS_GlobalVars[NEXTBYTE] /= STACK(1);
 				sp--;
+			}
+			break;
+
+		case PCD_DIVSCRIPTARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) / STACK(1));
+				sp -= 2;
 			}
 			break;
 
@@ -6280,6 +6491,19 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_MODSCRIPTARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) % STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_MODMAPARRAY:
 			if (STACK(1) == 0)
 			{
@@ -6341,6 +6565,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_ANDSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) & STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_ANDMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6386,6 +6618,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_EORSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) ^ STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_EORMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6429,6 +6669,14 @@ int DLevelScript::RunScript ()
 		case PCD_ORGLOBALVAR:
 			ACS_GlobalVars[NEXTBYTE] |= STACK(1);
 			sp--;
+			break;
+
+		case PCD_ORSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) | STACK(1));
+				sp -= 2;
+			}
 			break;
 
 		case PCD_ORMAPARRAY:
@@ -6477,6 +6725,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_LSSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) << STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_LSMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6522,6 +6778,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_RSSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) >> STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_RSMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6564,6 +6828,14 @@ int DLevelScript::RunScript ()
 			++ACS_GlobalVars[NEXTBYTE];
 			break;
 
+		case PCD_INCSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(1);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) + 1);
+				sp--;
+			}
+			break;
+
 		case PCD_INCMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6603,6 +6875,14 @@ int DLevelScript::RunScript ()
 
 		case PCD_DECGLOBALVAR:
 			--ACS_GlobalVars[NEXTBYTE];
+			break;
+
+		case PCD_DECSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(1);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) - 1);
+				sp--;
+			}
 			break;
 
 		case PCD_DECMAPARRAY:
@@ -7031,37 +7311,35 @@ scriptwait:
 			}
 			break;
 
+		// Print script character array
+		case PCD_PRINTSCRIPTCHARARRAY:
+		case PCD_PRINTSCRIPTCHRANGE:
+			{
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTSCRIPTCHRANGE))
+				{
+					while (capacity-- && (c = localarrays->Get(locals, a, offset)) != '\0')
+					{
+						work += (char)c;
+						offset++;
+					}
+				}
+			}
+			break;
+
 		// [JB] Print map character array
 		case PCD_PRINTMAPCHARARRAY:
 		case PCD_PRINTMAPCHRANGE:
 			{
-				int capacity, offset;
-
-				if (pcd == PCD_PRINTMAPCHRANGE)
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTMAPCHRANGE))
 				{
-					capacity = STACK(1);
-					offset = STACK(2);
-					if (capacity < 1 || offset < 0)
+					while (capacity-- && (c = activeBehavior->GetArrayVal (a, offset)) != '\0')
 					{
-						sp -= 4;
-						break;
+						work += (char)c;
+						offset++;
 					}
-					sp -= 2;
 				}
-				else
-				{
-					capacity = 0x7FFFFFFF;
-					offset = 0;
-				}
-
-				int a = *(activeBehavior->MapVars[STACK(1)]);
-				offset += STACK(2);
-				int c;
-				while(capacity-- && (c = activeBehavior->GetArrayVal (a, offset)) != '\0') {
-					work += (char)c;
-					offset++;
-				}
-				sp-= 2;
 			}
 			break;
 
@@ -7069,32 +7347,15 @@ scriptwait:
 		case PCD_PRINTWORLDCHARARRAY:
 		case PCD_PRINTWORLDCHRANGE:
 			{
-				int capacity, offset;
-				if (pcd == PCD_PRINTWORLDCHRANGE)
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTWORLDCHRANGE))
 				{
-					capacity = STACK(1);
-					offset = STACK(2);
-					if (capacity < 1 || offset < 0)
+					while (capacity-- && (c = ACS_WorldArrays[a][offset]) != '\0')
 					{
-						sp -= 4;
-						break;
+						work += (char)c;
+						offset++;
 					}
-					sp -= 2;
 				}
-				else
-				{
-					capacity = 0x7FFFFFFF;
-					offset = 0;
-				}
-
-				int a = STACK(1);
-				offset += STACK(2);
-				int c;
-				while(capacity-- && (c = ACS_WorldArrays[a][offset]) != '\0') {
-					work += (char)c;
-					offset++;
-				}
-				sp-= 2;
 			}
 			break;
 
@@ -7102,32 +7363,15 @@ scriptwait:
 		case PCD_PRINTGLOBALCHARARRAY:
 		case PCD_PRINTGLOBALCHRANGE:
 			{
-				int capacity, offset;
-				if (pcd == PCD_PRINTGLOBALCHRANGE)
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTGLOBALCHRANGE))
 				{
-					capacity = STACK(1);
-					offset = STACK(2);
-					if (capacity < 1 || offset < 0)
+					while (capacity-- && (c = ACS_GlobalArrays[a][offset]) != '\0')
 					{
-						sp -= 4;
-						break;
+						work += (char)c;
+						offset++;
 					}
-					sp -= 2;
 				}
-				else
-				{
-					capacity = 0x7FFFFFFF;
-					offset = 0;
-				}
-
-				int a = STACK(1);
-				offset += STACK(2);
-				int c;
-				while(capacity-- && (c = ACS_GlobalArrays[a][offset]) != '\0') {
-					work += (char)c;
-					offset++;
-				}
-				sp-= 2;
 			}
 			break;
 
@@ -8674,6 +8918,7 @@ scriptwait:
 			}		
 			break;
 
+		case PCD_STRCPYTOSCRIPTCHRANGE:
 		case PCD_STRCPYTOMAPCHRANGE:
 		case PCD_STRCPYTOWORLDCHRANGE:
 		case PCD_STRCPYTOGLOBALCHRANGE:
@@ -8704,7 +8949,7 @@ scriptwait:
 					break;
 				}
 
-				for (int i = 0;i < STACK(1); i++)
+				for (int i = 0; i < STACK(1); i++)
 				{
 					if (! (*(lookup++)))
 					{
@@ -8715,43 +8960,55 @@ scriptwait:
 
 				switch (pcd)
 				{
-					case PCD_STRCPYTOMAPCHRANGE:
-						{
-							int a = STACK(5);
-							if (a < NUM_MAPVARS && a > 0 &&
-								activeBehavior->MapVars[a])
-							{
-								Stack[sp-6] = activeBehavior->CopyStringToArray(*(activeBehavior->MapVars[a]), index, capacity, lookup);
-							}
-						}
-						break;
-					case PCD_STRCPYTOWORLDCHRANGE:
-						{
-							int a = STACK(5);
+				case PCD_STRCPYTOSCRIPTCHRANGE:
+					{
+						int a = STACK(5);
 
-							while (capacity-- > 0)
-							{
-								ACS_WorldArrays[a][index++] = *lookup;
-								if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
-							}
-							
-							Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
-						}
-						break;
-					case PCD_STRCPYTOGLOBALCHRANGE:
+						while (capacity-- > 0)
 						{
-							int a = STACK(5);
-
-							while (capacity-- > 0)
-							{
-								ACS_GlobalArrays[a][index++] = *lookup;
-								if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
-							}
-							
-							Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+							localarrays->Set(locals, a, index++, *lookup);
+							if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
 						}
-						break;
-					
+						
+						Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+					}
+					break;
+				case PCD_STRCPYTOMAPCHRANGE:
+					{
+						int a = STACK(5);
+						if (a < NUM_MAPVARS && a > 0 &&
+							activeBehavior->MapVars[a])
+						{
+							Stack[sp-6] = activeBehavior->CopyStringToArray(*(activeBehavior->MapVars[a]), index, capacity, lookup);
+						}
+					}
+					break;
+				case PCD_STRCPYTOWORLDCHRANGE:
+					{
+						int a = STACK(5);
+
+						while (capacity-- > 0)
+						{
+							ACS_WorldArrays[a][index++] = *lookup;
+							if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
+						}
+						
+						Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+					}
+					break;
+				case PCD_STRCPYTOGLOBALCHRANGE:
+					{
+						int a = STACK(5);
+
+						while (capacity-- > 0)
+						{
+							ACS_GlobalArrays[a][index++] = *lookup;
+							if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
+						}
+						
+						Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+					}
+					break;
 				}
 				sp -= 5;
 			}

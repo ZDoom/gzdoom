@@ -511,8 +511,6 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.LimitRange = 256*256;
 	newsfx.bRandomHeader = false;
 	newsfx.bPlayerReserve = false;
-	newsfx.bForce11025 = false;
-	newsfx.bForce22050 = false;
 	newsfx.bLoadRAW = false;
 	newsfx.bPlayerCompat = false;
 	newsfx.b16bit = false;
@@ -520,6 +518,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.bSingular = false;
 	newsfx.bTentative = false;
 	newsfx.bPlayerSilent = false;
+	newsfx.RawRate = 0;
 	newsfx.link = sfxinfo_t::NO_LINK;
 	newsfx.Rolloff.RolloffType = ROLLOFF_Doom;
 	newsfx.Rolloff.MinDistance = 0;
@@ -1414,13 +1413,17 @@ static void S_AddBloodSFX (int lumpnum)
 	{
 		const char *name = Wads.GetLumpFullName(lumpnum);
 		sfxnum = S_AddSound(name, rawlump);
-		if (sfx->Format == 5)
-		{
-			S_sfx[sfxnum].bForce22050 = true;
+		if (sfx->Format < 5 || sfx->Format > 12)
+		{	// [0..4] + invalid formats
+			S_sfx[sfxnum].RawRate = 11025;
 		}
-		else // I don't know any other formats for this
-		{
-			S_sfx[sfxnum].bForce11025 = true;
+		else if (sfx->Format < 9)
+		{	// [5..8]
+			S_sfx[sfxnum].RawRate = 22050;
+		}
+		else
+		{	// [9..12]
+			S_sfx[sfxnum].RawRate = 44100;
 		}
 		S_sfx[sfxnum].bLoadRAW = true;
 		S_sfx[sfxnum].LoopStart = LittleLong(sfx->LoopStart);
@@ -1433,7 +1436,7 @@ static void S_AddBloodSFX (int lumpnum)
 		ambient->periodmax = 0;
 		ambient->volume = 1;
 		ambient->attenuation = 1;
-		ambient->sound = name;
+		ambient->sound = FSoundID(sfxnum);
 	}
 }
 
@@ -2231,7 +2234,7 @@ void AAmbientSound::BeginPlay ()
 //
 // AmbientSound :: Activate
 //
-// Starts playing a sound (or does nothing of the sound is already playing).
+// Starts playing a sound (or does nothing if the sound is already playing).
 //
 //==========================================================================
 

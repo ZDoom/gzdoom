@@ -70,9 +70,9 @@ static void MyCPUID(UInt32 function, UInt32 *a, UInt32 *b, UInt32 *c, UInt32 *d)
   *c = c2;
   *d = d2;
 
-  #elif __PIC__
+  #elif defined __PIC__ && defined __i386__
 
-  /* GCC or Clang WITH position-independent code generation */
+  /* GCC or Clang WITH position-independent code generation, i386 only */
 
   __asm__ __volatile__ (
     "xchgl %%ebx, %1\n"
@@ -86,7 +86,7 @@ static void MyCPUID(UInt32 function, UInt32 *a, UInt32 *b, UInt32 *c, UInt32 *d)
 	
   #else
 
-  /* GCC or Clang WITHOUT position-independent code generation */
+  /* GCC or Clang WITHOUT position-independent code generation, or x86_64 */
 
   __asm__ __volatile__ (
     "cpuid"

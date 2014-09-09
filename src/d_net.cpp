@@ -1276,7 +1276,7 @@ void NetUpdate (void)
 	// listen for other packets
 	GetPackets ();
 
-	if (!demoplayback)
+	if (!resendOnly)
 	{
 		// ideally nettics[0] should be 1 - 3 tics above lowtic
 		// if we are consistantly slower, speed up time
@@ -1323,7 +1323,7 @@ void NetUpdate (void)
 			}
 			oldnettics = nettics[0];
 		}
-	}// !demoplayback
+	}
 }
 
 

@@ -18,6 +18,7 @@ ACTOR Actor native //: Thinker
 	FloatSpeed 4
 	FloatBobPhase -1	// randomly initialize by default
 	Gravity 1
+	Friction 1
 	DamageFactor 1.0
 	PushFactor 0.25
 	WeaveIndexXY 0

@@ -540,7 +540,7 @@ bool MIDIStreamer::IsPlaying()
 
 void MIDIStreamer::MusicVolumeChanged()
 {
-	if (MIDI->FakeVolume())
+	if (MIDI != NULL && MIDI->FakeVolume())
 	{
 		float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
 		Volume = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
@@ -622,7 +622,7 @@ void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
 
 void MIDIStreamer::OutputVolume (DWORD volume)
 {
-	if (MIDI->FakeVolume())
+	if (MIDI != NULL && MIDI->FakeVolume())
 	{
 		NewVolume = volume;
 		VolumeChanged = true;

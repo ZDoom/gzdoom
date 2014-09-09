@@ -72,8 +72,6 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void R_SpanInitData ();
-void RP_RenderBSPNode (void *node);
-bool RP_SetupFrame (bool backside);
 void R_DeinitSprites();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -94,14 +92,12 @@ extern "C" int fuzzviewheight;
 static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
-static bool polyclipped;
 extern bool r_showviewer;
 bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
-CVAR (Int, r_polymost, 0, 0)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 
 fixed_t			r_BaseVisibility;
@@ -612,14 +608,6 @@ void R_SetupFreelook()
 	}
 }
 
-void R_SetupPolymost()
-{
-	if (r_polymost)
-	{
-		polyclipped = RP_SetupFrame (false);
-	}
-}
-
 //==========================================================================
 //
 // R_EnterMirror
@@ -812,11 +800,8 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
-	if (r_polymost < 2)
-	{
-		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
-		R_3D_ResetClip(); // reset clips (floor/ceiling)
-	}
+	R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
+	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;
 	WallCycles.Unclock();
 
@@ -843,16 +828,6 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		MaskedCycles.Unclock();
 
 		NetUpdate ();
-
-		if (r_polymost)
-		{
-			RP_RenderBSPNode (nodes + numnodes - 1);
-			if (polyclipped)
-			{
-				RP_SetupFrame (true);
-				RP_RenderBSPNode (nodes + numnodes - 1);
-			}
-		}
 	}
 	WallMirrors.Clear ();
 	interpolator.RestoreInterpolations ();

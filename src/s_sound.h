@@ -49,8 +49,6 @@ struct sfxinfo_t
 
 	WORD		bRandomHeader:1;
 	WORD		bPlayerReserve:1;
-	WORD		bForce11025:1;
-	WORD		bForce22050:1;
 	WORD		bLoadRAW:1;
 	WORD		bPlayerCompat:1;
 	WORD		b16bit:1;
@@ -58,6 +56,8 @@ struct sfxinfo_t
 	WORD		bSingular:1;
 	WORD		bTentative:1;
 	WORD		bPlayerSilent:1;		// This player sound is intentionally silent.
+
+	WORD		RawRate;				// Sample rate to use when bLoadRAW is true
 
 	int			LoopStart;				// -1 means no specific loop defined
 

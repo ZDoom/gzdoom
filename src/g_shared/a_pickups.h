@@ -423,6 +423,7 @@ public:
 	int MaxFullAbsorb;
 	int BonusCount;
 	FNameNoInit ArmorType;
+	int ActualSaveAmount;
 };
 
 // BasicArmorPickup replaces the armor you have.

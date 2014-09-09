@@ -16,11 +16,12 @@
 #include "p_setup.h"
 #include "g_level.h"
 #include "r_data/colormaps.h"
+#include "gi.h"
 
 // MACROS ------------------------------------------------------------------
 
-//#define SHADE2LIGHT(s) (clamp (160-2*(s), 0, 255))
-#define SHADE2LIGHT(s) (clamp (255-2*s, 0, 255))
+//#define SHADE2LIGHT(s) (160-2*(s))
+#define SHADE2LIGHT(s) (255-2*s)
 
 // TYPES -------------------------------------------------------------------
 
@@ -248,7 +249,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	BYTE infoBlock[37];
 	int mapver = data[5];
 	DWORD matt;
-	int numRevisions, numWalls, numsprites, skyLen;
+	int numRevisions, numWalls, numsprites, skyLen, visibility, parallaxType;
 	int i;
 	int k;
 
@@ -268,11 +269,14 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	{
 		memcpy (infoBlock, data + 6, 37);
 	}
+	skyLen = 2 << LittleShort(*(WORD *)(infoBlock + 16));
+	visibility = LittleLong(*(DWORD *)(infoBlock + 18));
+	parallaxType = infoBlock[26];
 	numRevisions = LittleLong(*(DWORD *)(infoBlock + 27));
 	numsectors = LittleShort(*(WORD *)(infoBlock + 31));
 	numWalls = LittleShort(*(WORD *)(infoBlock + 33));
 	numsprites = LittleShort(*(WORD *)(infoBlock + 35));
-	skyLen = 2 << LittleShort(*(WORD *)(infoBlock + 16));
+	Printf("Visibility: %d\n", visibility);
 
 	if (mapver == 7)
 	{
@@ -361,9 +365,8 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	// BUILD info from the map we need. (Sprites are ignored.)
 	LoadSectors (bsec);
 	LoadWalls (bwal, numWalls, bsec);
-	*mapthings = new FMapThing[numsprites + 1];
-	CreateStartSpot ((fixed_t *)infoBlock, *mapthings);
-	*numspr = 1 + LoadSprites (bspr, xspr, numsprites, bsec, *mapthings + 1);
+	*mapthings = new FMapThing[numsprites];
+	*numspr = LoadSprites (bspr, xspr, numsprites, bsec, *mapthings);
 
 	delete[] bsec;
 	delete[] bwal;
@@ -687,6 +690,8 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 {
 	int count = 0;
 
+	memset(mapthings, 0, sizeof(*mapthings)*numsprites);
+
 	for (int i = 0; i < numsprites; ++i)
 	{
 		mapthings[count].thingid = 0;
@@ -699,29 +704,41 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
 		mapthings[count].gravity = FRACUNIT;
+		mapthings[count].RenderStyle = STYLE_Count;
+		mapthings[count].alpha = -1;
+		mapthings[count].health = -1;
 
 		if (xsprites != NULL && sprites[i].lotag == 710)
 		{ // Blood ambient sound
 			mapthings[count].args[0] = xsprites[i].Data3;
-			// I am totally guessing abount the volume level. 50 seems to be a pretty
+			// I am totally guessing about the volume level. 50 seems to be a pretty
 			// typical value for Blood's standard maps, so I assume it's 100-based.
 			mapthings[count].args[1] = xsprites[i].Data4;
 			mapthings[count].args[2] = xsprites[i].Data1;
 			mapthings[count].args[3] = xsprites[i].Data2;
-			mapthings[count].args[4] = 0;
 			mapthings[count].type = 14065;
+		}
+		else if (xsprites != NULL && sprites[i].lotag == 1)
+		{ // Blood player start
+			if (xsprites[i].Data1 < 4)
+				mapthings[count].type = 1 + xsprites[i].Data1;
+			else
+				mapthings[count].type = gameinfo.player5start + xsprites[i].Data1 - 4;
+		}
+		else if (xsprites != NULL && sprites[i].lotag == 2)
+		{ // Bloodbath start
+			mapthings[count].type = 11;
 		}
 		else
 		{
-			if (sprites[i].cstat & (16|32|32768)) continue;
+			if (sprites[i].cstat & 32768) continue;
 			if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
 
 			mapthings[count].type = 9988;
-			mapthings[count].args[0] = sprites[i].picnum & 255;
-			mapthings[count].args[1] = sprites[i].picnum >> 8;
+			mapthings[count].args[0] = sprites[i].picnum;
 			mapthings[count].args[2] = sprites[i].xrepeat;
 			mapthings[count].args[3] = sprites[i].yrepeat;
-			mapthings[count].args[4] = (sprites[i].cstat & 14) | ((sprites[i].cstat >> 9) & 1);
+			mapthings[count].args[4] = sprites[i].cstat;
 		}
 		count++;
 	}
@@ -859,22 +876,22 @@ void ACustomSprite::BeginPlay ()
 	char name[9];
 	Super::BeginPlay ();
 
-	mysnprintf (name, countof(name), "BTIL%04d", (args[0] + args[1]*256) & 0xffff);
+	mysnprintf (name, countof(name), "BTIL%04d", args[0] & 0xffff);
 	picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
 	scaleX = args[2] * (FRACUNIT/64);
 	scaleY = args[3] * (FRACUNIT/64);
 
-	if (args[4] & 2)
+	int cstat = args[4];
+	if (cstat & 2)
 	{
 		RenderStyle = STYLE_Translucent;
-		if (args[4] & 1)
-			alpha = TRANSLUC66;
-		else
-			alpha = TRANSLUC33;
+		alpha = (cstat & 512) ? TRANSLUC66 : TRANSLUC33;
 	}
-	if (args[4] & 4)
+	if (cstat & 4)
 		renderflags |= RF_XFLIP;
-	if (args[4] & 8)
+	if (cstat & 8)
 		renderflags |= RF_YFLIP;
+	// set face/wall/floor flags
+	renderflags |= ((cstat >> 4) & 3) << 12;
 }

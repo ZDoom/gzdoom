@@ -39,8 +39,8 @@ ACTOR Revenant 66
 		SKEL I 6 A_SkelFist
 		Goto See
 	Missile:
-		SKEL J 1 BRIGHT A_FaceTarget 
-		SKEL J 9 BRIGHT A_FaceTarget
+		SKEL J 0 BRIGHT A_FaceTarget 
+		SKEL J 10 BRIGHT A_FaceTarget
 		SKEL K 10 A_SkelMissile
 		SKEL K 10 A_FaceTarget
 		Goto See

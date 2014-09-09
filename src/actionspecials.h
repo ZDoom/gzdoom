@@ -102,6 +102,7 @@ DEFINE_SPECIAL(Scroll_Texture_Left, 100, -1, -1, 2)
 DEFINE_SPECIAL(Scroll_Texture_Right, 101, -1, -1, 2)
 DEFINE_SPECIAL(Scroll_Texture_Up, 102, -1, -1, 2)
 DEFINE_SPECIAL(Scroll_Texture_Down, 103, -1, -1, 2)
+DEFINE_SPECIAL(Ceiling_CrushAndRaiseSilentDist, 104, 3, 5, 5)
 
 DEFINE_SPECIAL(Light_ForceLightning, 109, 1, 1, 1)
 DEFINE_SPECIAL(Light_RaiseByValue, 110, 2, 2, 2)

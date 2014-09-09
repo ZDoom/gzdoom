@@ -67,18 +67,17 @@ private:
 	bool bHasColorkey;		// only for hires
 	bool bExpand;
 
-	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height, bool alphatexture);
+	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 
 	FHardwareTexture *CreateHwTexture();
 
-	const FHardwareTexture *Bind(int texunit, int clamp, int translation, bool alphatexture, FTexture *hirescheck);
-	const FHardwareTexture *BindPatch(int texunit, int translation, bool alphatexture);
-
+	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck);
+	
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool alphatexture);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck);
 
 	void Clean(bool all);
 	int Dump(int i);
@@ -138,12 +137,11 @@ public:
 		return mTextureLayers.Size() + 1;
 	}
 
-	//void Bind(int clamp = 0, int translation = 0, int overrideshader = 0, bool alphatexture = false);
-	void Bind(int clamp, int translation, bool alphatexture);
+	void Bind(int clamp, int translation);
 
 	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool allowhires=true) const
 	{
-		return mBaseLayer->CreateTexBuffer(translation, w, h, allowhires? tex:NULL, 0);
+		return mBaseLayer->CreateTexBuffer(translation, w, h, allowhires? tex : NULL);
 	}
 
 	void Clean(bool f)

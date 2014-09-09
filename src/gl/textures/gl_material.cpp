@@ -109,7 +109,7 @@ FGLTexture::~FGLTexture()
 // Checks for the presence of a hires texture replacement and loads it
 //
 //==========================================================================
-unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *height, bool alphatexture)
+unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *height)
 {
 	if (HiresLump==-1) 
 	{
@@ -131,8 +131,6 @@ unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *heig
 		memset(buffer, 0, w * (h+1) * 4);
 
 		FGLBitmap bmp(buffer, w*4, w, h);
-		if (alphatexture) bmp.SetAlphaTex();
-
 		
 		int trans = hirestexture->CopyTrueColorPixels(&bmp, 0, 0);
 		hirestexture->CheckTrans(buffer, w*h, trans);
@@ -181,7 +179,7 @@ void FGLTexture::Clean(bool all)
 //
 //===========================================================================
 
-unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool alphatexture)
+unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck)
 {
 	unsigned char * buffer;
 	int W, H;
@@ -191,7 +189,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	// by hires textures
 	if (gl_texture_usehires && hirescheck != NULL)
 	{
-		buffer = LoadHiresTexture (hirescheck, &w, &h, alphatexture);
+		buffer = LoadHiresTexture (hirescheck, &w, &h);
 		if (buffer)
 		{
 			return buffer;
@@ -207,7 +205,6 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	FGLBitmap bmp(buffer, W*4, W, H);
 	bmp.SetTranslationInfo(translation);
-	if (alphatexture) bmp.SetAlphaTex();
 
 	if (tex->bComplex)
 	{
@@ -241,7 +238,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
 	// [BB] Potentially upsample the buffer.
-	return gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, bIsTransparent || alphatexture);
+	return gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, !!bIsTransparent);
 }
 
 
@@ -267,7 +264,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 //
 //===========================================================================
 
-const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, bool alphatexture, FTexture *hirescheck)
+const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, FTexture *hirescheck)
 {
 	int usebright = false;
 
@@ -288,7 +285,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 		}
 
 		// Bind it to the system.
-		if (!hwtex->Bind(texunit, translation, alphatexture, needmipmap))
+		if (!hwtex->Bind(texunit, translation, needmipmap))
 		{
 			
 			int w=0, h=0;
@@ -298,10 +295,10 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			
 			if (!tex->bHasCanvas)
 			{
-				buffer = CreateTexBuffer(translation, w, h, hirescheck, alphatexture);
+				buffer = CreateTexBuffer(translation, w, h, hirescheck);
 				tex->ProcessData(buffer, w, h, false);
 			}
-			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation, alphatexture)) 
+			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation)) 
 			{
 				// could not create texture
 				delete[] buffer;
@@ -614,16 +611,14 @@ outl:
 static FMaterial *last;
 static int lastclamp;
 static int lasttrans;
-static bool lastalpha;
 
 
-void FMaterial::Bind(int clampmode, int translation, bool alphatexture)
+void FMaterial::Bind(int clampmode, int translation)
 {
 	// avoid rebinding the same texture multiple times.
-	if (this == last && lastclamp == clampmode && translation == lasttrans && lastalpha == alphatexture) return;
+	if (this == last && lastclamp == clampmode && translation == lasttrans) return;
 	last = this;
 	lastclamp = clampmode;
-	lastalpha = alphatexture;
 	lasttrans = translation;
 
 	int usebright = false;
@@ -633,7 +628,7 @@ void FMaterial::Bind(int clampmode, int translation, bool alphatexture)
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 
-	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, alphatexture, allowhires? tex:NULL);
+	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, allowhires? tex:NULL);
 	if (gltexture != NULL)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
@@ -649,7 +644,7 @@ void FMaterial::Bind(int clampmode, int translation, bool alphatexture)
 			{
 				layer = mTextureLayers[i].texture;
 			}
-			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, false, NULL);
+			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, NULL);
 			maxbound = i+1;
 		}
 	}
@@ -669,7 +664,7 @@ void FMaterial::Bind(int clampmode, int translation, bool alphatexture)
 //===========================================================================
 void FMaterial::Precache()
 {
-	Bind(0, 0, false);
+	Bind(0, 0);
 }
 
 //===========================================================================
@@ -749,7 +744,7 @@ void FMaterial::BindToFrameBuffer()
 	if (mBaseLayer->mHwTexture == NULL)
 	{
 		// must create the hardware texture first
-		mBaseLayer->Bind(0, 0, 0, false, NULL);
+		mBaseLayer->Bind(0, 0, 0, NULL);
 		FHardwareTexture::Unbind(0);
 		ClearLastTexture();
 	}

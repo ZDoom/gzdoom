@@ -184,18 +184,13 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 //
 //===========================================================================
 
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, bool alphatexture)
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation)
 {
 	int rh,rw;
 	int texformat=TexFormat[gl_texture_format];
 	bool deletebuffer=false;
 
-	if (alphatexture)
-	{
-		texformat = GL_R8;
-		translation = TRANS_Alpha;
-	}
-	else if (forcenocompression)
+	if (forcenocompression)
 	{
 		texformat = GL_RGBA8;
 	}
@@ -245,11 +240,6 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		glTex->mipmapped = true;
 	}
 
-	if (alphatexture)
-	{
-		static const GLint swizzleMask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
-		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-	}
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0);
 	return glTex->glTexID;
 }
@@ -362,9 +352,8 @@ FHardwareTexture::TranslatedTexture *FHardwareTexture::GetTexID(int translation)
 //	Binds this patch
 //
 //===========================================================================
-unsigned int FHardwareTexture::Bind(int texunit, int translation, bool alphatexture, bool needmipmap)
+unsigned int FHardwareTexture::Bind(int texunit, int translation, bool needmipmap)
 {
-	if (alphatexture) translation = TRANS_Alpha;
 	TranslatedTexture *pTex = GetTexID(translation);
 
 	if (pTex->glTexID != 0)

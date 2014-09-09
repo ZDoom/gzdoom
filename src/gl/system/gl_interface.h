@@ -16,9 +16,10 @@ enum RenderFlags
 enum TexMode
 {
 	TM_MODULATE = 0,	// (r, g, b, a)
-	TM_MASK = 1,		// (1, 1, 1, a)
-	TM_OPAQUE = 2,		// (r, g, b, 1)
-	TM_INVERSE = 3,		// (1-r, 1-g, 1-b, a)
+	TM_MASK,			// (1, 1, 1, a)
+	TM_OPAQUE,			// (r, g, b, 1)
+	TM_INVERSE,			// (1-r, 1-g, 1-b, a)
+	TM_REDTOALPHA,		// (1, 1, 1, r)
 };
 
 struct RenderContext

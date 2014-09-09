@@ -20,11 +20,6 @@ enum EInvalid
 	Invalid = 0
 };
 
-enum ETranslation
-{
-	TRANS_Alpha = INT_MAX
-};
-
 enum
 {
 	GLT_CLAMPX=1,
@@ -66,7 +61,6 @@ private:
 	TArray<TranslatedTexture> glTex_Translated;
 	unsigned int glDepthID;	// only used by camera textures
 
-	void LoadImage(unsigned char * buffer,int w, int h, TranslatedTexture *glTex, bool mipmap, bool alphatexture, int texunit);
 	TranslatedTexture * GetTexID(int translation);
 
 	int GetDepthBuffer();
@@ -81,8 +75,8 @@ public:
 
 	void BindToFrameBuffer();
 
-	unsigned int Bind(int texunit, int translation, bool alphatexture, bool needmipmap);
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, bool alphatexture);
+	unsigned int Bind(int texunit, int translation, bool needmipmap);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation);
 
 	void Clean(bool all);
 };

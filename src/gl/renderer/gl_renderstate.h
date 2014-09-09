@@ -8,6 +8,7 @@
 #include "gl/textures/gl_material.h"
 #include "c_cvars.h"
 #include "r_defs.h"
+#include "r_data/r_translate.h"
 
 class FVertexBuffer;
 class FShader;
@@ -100,9 +101,16 @@ public:
 
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 	{
+		// textures without their own palette are a special case for use as an alpha texture:
+		// They use the color index directly as an alpha value instead of using the palette's red.
+		// To handle this case, we need to set a special translation for such textures.
+		if (alphatexture)
+		{
+			if (mat->tex->UseBasePalette()) translation = TRANSLATION(TRANSLATION_Standard, 8);
+		}
 		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
 		mShaderTimer = mat->tex->gl_info.shaderspeed;
-		mat->Bind(clampmode, translation, alphatexture);
+		mat->Bind(clampmode, translation);
 	}
 
 	void Apply();

@@ -60,16 +60,20 @@ vec4 getTexel(vec2 st)
 	//
 	switch (uTextureMode)
 	{
-		case 1:
+		case 1:	// TM_MASK
 			texel.rgb = vec3(1.0,1.0,1.0);
 			break;
 			
-		case 2:
+		case 2:	// TM_OPAQUE
 			texel.a = 1.0;
 			break;
 			
-		case 3:
+		case 3:	// TM_INVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
+			break;
+			
+		case 4:	// TM_REDTOALPHA
+			texel = vec4(1.0, 1.0, 1.0, texel.r);
 			break;
 	}
 	texel *= uObjectColor;

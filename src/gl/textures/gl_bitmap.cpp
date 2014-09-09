@@ -51,7 +51,7 @@
 //
 //===========================================================================
 template<class T>
-void iCopyColors(unsigned char * pout, const unsigned char * pin, bool alphatex, int count, int step)
+void iCopyColors(unsigned char * pout, const unsigned char * pin, int count, int step)
 {
 	int i;
 
@@ -69,7 +69,7 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, bool alphatex,
 	}
 }
 
-typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, bool alphatex, int count, int step);
+typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int count, int step);
 
 static CopyFunc copyfuncs[]={
 	iCopyColors<cRGB>,
@@ -99,7 +99,7 @@ void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
 		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], alphatex, srcwidth, step_x);
+			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x);
 		}
 	}
 }
@@ -120,18 +120,7 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 	{
 		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
 
-		// alpha map with 0==transparent and 1==opaque
-		if (alphatex) 
-		{
-			for (int i = 0; i<256; i++)
-			{
-				if (palette[i].a != 0)
-					penew[i] = PalEntry(255, i, 255, 255);
-				else
-					penew[i] = PalEntry(255, 0, 255, 255);	// If the palette contains transparent colors keep them.
-			}
-		}
-		else if (translation > 0)
+		if (translation > 0)
 		{
 			PalEntry *ptrans = GLTranslationPalette::GetPalette(translation);
 			if (ptrans)

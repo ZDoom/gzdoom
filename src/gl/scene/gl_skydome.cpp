@@ -268,7 +268,7 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 
 	if (tex)
 	{
-		tex->Bind(CLAMP_NONE, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
 		texw = tex->TextureWidth();
 		texh = tex->TextureHeight();
 		gl_RenderState.EnableModelMatrix(true);
@@ -333,7 +333,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 		// north
 		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		tex->Bind(CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
 
 		ptr = GLRenderer->mVBO->GetBuffer();
@@ -349,7 +349,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 		// east
 		tex = FMaterial::ValidateTexture(sb->faces[1], false);
-		tex->Bind(CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
 
 		ptr = GLRenderer->mVBO->GetBuffer();
@@ -365,7 +365,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 		// south
 		tex = FMaterial::ValidateTexture(sb->faces[2], false);
-		tex->Bind(CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
 
 		ptr = GLRenderer->mVBO->GetBuffer();
@@ -381,7 +381,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 		// west
 		tex = FMaterial::ValidateTexture(sb->faces[3], false);
-		tex->Bind(CLAMP_XY, 0, -1, false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 		gl_RenderState.Apply();
 
 		ptr = GLRenderer->mVBO->GetBuffer();
@@ -425,7 +425,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 	// top
 	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
-	tex->Bind(CLAMP_XY, 0, -1, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 	gl_RenderState.Apply();
 
 	ptr = GLRenderer->mVBO->GetBuffer();
@@ -441,7 +441,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 
 	// bottom
 	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
-	tex->Bind(CLAMP_XY, 0, -1, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
 	gl_RenderState.Apply();
 
 	ptr = GLRenderer->mVBO->GetBuffer();

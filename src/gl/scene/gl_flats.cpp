@@ -341,7 +341,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	case GLPASS_ALL:
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gltexture->Bind(CLAMP_NONE, 0, -1, false);
+		gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 		gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, (pass == GLPASS_ALL || dynlightindex > -1), false);
 		gl_RenderState.EnableTextureMatrix(false);
@@ -367,7 +367,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		}
 		else 
 		{
-			gltexture->Bind(CLAMP_NONE, 0, -1, false);
+			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 			gl_SetPlaneTextureRotation(&plane, gltexture);
 			DrawSubsectors(pass, true, true);
 			gl_RenderState.EnableTextureMatrix(false);

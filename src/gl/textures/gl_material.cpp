@@ -616,11 +616,9 @@ static int lastclamp;
 static int lasttrans;
 static bool lastalpha;
 
-void FMaterial::Bind(int clampmode, int translation, int overrideshader, bool alphatexture)
-{
-	int shaderindex = overrideshader >= 0? overrideshader : mShaderIndex;
-	gl_RenderState.SetShader(shaderindex, tex->gl_info.shaderspeed);
 
+void FMaterial::Bind(int clampmode, int translation, bool alphatexture)
+{
 	// avoid rebinding the same texture multiple times.
 	if (this == last && lastclamp == clampmode && translation == lasttrans && lastalpha == alphatexture) return;
 	last = this;
@@ -636,7 +634,7 @@ void FMaterial::Bind(int clampmode, int translation, int overrideshader, bool al
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 
 	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, alphatexture, allowhires? tex:NULL);
-	if (gltexture != NULL && shaderindex > 0 && overrideshader == -1)
+	if (gltexture != NULL)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
@@ -671,7 +669,7 @@ void FMaterial::Bind(int clampmode, int translation, int overrideshader, bool al
 //===========================================================================
 void FMaterial::Precache()
 {
-	Bind(0, 0, 0, false);
+	Bind(0, 0, false);
 }
 
 //===========================================================================

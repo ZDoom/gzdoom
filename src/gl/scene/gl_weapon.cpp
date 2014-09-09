@@ -96,7 +96,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
 	if (!tex) return;
 
-	tex->Bind(CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
 
 	int vw = viewwidth;
 	int vh = viewheight;

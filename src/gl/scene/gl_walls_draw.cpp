@@ -274,7 +274,7 @@ void GLWall::RenderMirrorSurface()
 	glDepthFunc(GL_LEQUAL);
 
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrortexture, false);
-	pat->Bind(CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(pat, CLAMP_NONE, 0, -1, false);
 
 	flags &= ~GLWF_GLOW;
 	RenderWall(RWF_BLANK);
@@ -326,7 +326,7 @@ void GLWall::RenderTranslucentWall()
 	if (gltexture) 
 	{
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gltexture->Bind(flags & 3, 0, -1, false);
+		gl_RenderState.SetMaterial(gltexture, flags & 3, 0, -1, false);
 		extra = getExtraLight();
 	}
 	else 
@@ -390,7 +390,7 @@ void GLWall::Draw(int pass)
 		else gl_SetFog(255, 0, NULL, false);
 
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gltexture->Bind(flags & 3, false, -1, false);
+		gl_RenderState.SetMaterial(gltexture, flags & 3, false, -1, false);
 		RenderWall(RWF_TEXTURED|RWF_GLOW);
 		gl_RenderState.EnableGlow(false);
 		break;

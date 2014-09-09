@@ -329,7 +329,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 			}
 		}
 		gl_SetRenderStyle(parms.style, !parms.masked, false);
-		gltex->Bind(CLAMP_XY_NOMIP, translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
+		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();
@@ -339,7 +339,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	}
 	else
 	{
-		gltex->Bind(CLAMP_XY_NOMIP, 0, -1, false);
+		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, 0, -1, false);
 		u1 = 0.f;
 		v1 = 1.f;
 		u2 = 1.f;
@@ -493,7 +493,7 @@ void FGLRenderer::FlatFill (int left, int top, int right, int bottom, FTexture *
 	
 	if (!gltexture) return;
 
-	gltexture->Bind(CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 	
 	// scaling is not used here.
 	if (!local_origin)
@@ -586,7 +586,7 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 
 	gl_SetColor(lightlevel, 0, cm, 1.f);
 
-	gltexture->Bind(CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
 	int i;
 	float rot = float(rotation * M_PI / float(1u << 31));

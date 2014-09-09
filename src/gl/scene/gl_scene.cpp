@@ -1119,7 +1119,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	if (!usefb)
 	{
 		glFlush();
-		gltex->Bind(0, 0, -1, false);
+		gl_RenderState.SetMaterial(gltex, 0, 0, -1, false);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
 	}
 	else

@@ -93,6 +93,8 @@ public:
 
 class FMaterial
 {
+	friend class FRenderState;
+
 	struct FTextureLayer
 	{
 		FTexture *texture;
@@ -137,7 +139,7 @@ public:
 	}
 
 	//void Bind(int clamp = 0, int translation = 0, int overrideshader = 0, bool alphatexture = false);
-	void Bind(int clamp, int translation, int overrideshader, bool alphatexture);
+	void Bind(int clamp, int translation, bool alphatexture);
 
 	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool allowhires=true) const
 	{

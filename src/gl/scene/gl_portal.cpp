@@ -1011,7 +1011,7 @@ void GLHorizonPortal::DrawContents()
 	}
 
 
-	gltexture->Bind(CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
 	gl_SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);

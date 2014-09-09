@@ -5,6 +5,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_matrix.h"
+#include "gl/textures/gl_material.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 
@@ -97,10 +98,11 @@ public:
 
 	void Reset();
 
-	void SetShader(int shaderindex, float warptime)
+	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 	{
-		mEffectState = shaderindex;
-		mShaderTimer = warptime;
+		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
+		mShaderTimer = mat->tex->gl_info.shaderspeed;
+		mat->Bind(clampmode, translation, alphatexture);
 	}
 
 	void Apply();

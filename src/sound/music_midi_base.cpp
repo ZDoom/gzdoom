@@ -172,7 +172,7 @@ CCMD (snd_listmididevices)
 	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MOD_SWSYNTH, 0);
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", MOD_SWSYNTH, 0);
-	PrintMidiDevice (-1, "Sound System", 0);
+	PrintMidiDevice (-1, "Sound System", 0, 0);
 	if (nummididevices != 0)
 	{
 		for (id = 0; id < nummididevices; ++id)

@@ -311,6 +311,9 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 
 		dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::vbo_fakefloor];
 		dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::floor];
+
+		dest->portals[sector_t::ceiling] = NULL;
+
 		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 		{
 			dest->lightlevel  = s->lightlevel;
@@ -347,12 +350,12 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 			}
 		}
 	}
-	else if (in_area==area_above)
+	else if (in_area == area_above)
 	{
-		dest->ColorMap=s->ColorMap;
+		dest->ColorMap = s->ColorMap;
 		dest->SetPlaneTexZ(sector_t::ceiling, sec->GetPlaneTexZ(sector_t::ceiling));
 		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
-		dest->ceilingplane= sec->ceilingplane;
+		dest->ceilingplane = sec->ceilingplane;
 		dest->floorplane = s->ceilingplane;
 		dest->floorplane.FlipVert();
 
@@ -361,6 +364,8 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 
 		dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::ceiling];
 		dest->vboheight[sector_t::ceiling] = sec->vboheight[sector_t::ceiling];
+
+		dest->portals[sector_t::floor] = NULL;
 
 		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 		{

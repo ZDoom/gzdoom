@@ -5,6 +5,9 @@
 
 #ifdef HAVE_MPG123
 
+#ifdef _MSC_VER
+typedef SSIZE_T ssize_t;
+#endif
 #include "mpg123.h"
 
 struct MPG123Decoder : public SoundDecoder

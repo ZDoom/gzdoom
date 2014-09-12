@@ -86,12 +86,14 @@
 - (NSRect)convertRectToBacking:(NSRect)aRect;
 @end
 
-#endif // NSAppKitVersionNumber10_7
+#endif // !NSAppKitVersionNumber10_7
 
 
 // ---------------------------------------------------------------------------
 
 RenderBufferOptions rbOpts;
+
+EXTERN_CVAR(Bool, vid_hidpi)
 
 CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_noprescale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -585,7 +587,7 @@ NSSize GetRealContentViewSize(const NSWindow* const window)
 	// TODO: figure out why [NSView frame] returns different values in "fullscreen" and in window
 	// In "fullscreen" the result is multiplied by [NSScreen backingScaleFactor], but not in window
 
-	return (IsHiDPISupported() && NSNormalWindowLevel == [window level])
+	return (vid_hidpi && NSNormalWindowLevel == [window level])
 		? [view convertSizeToBacking:frameSize]
 		: frameSize;
 }
@@ -840,10 +842,16 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 #endif
 {
 @private
-    FullscreenWindow* m_window;
-	
-	bool m_openGLInitialized;
+	FullscreenWindow* m_window;
+
 	int  m_multisample;
+
+	int  m_width;
+	int  m_height;
+	bool m_fullscreen;
+	bool m_hiDPI;
+
+	bool m_openGLInitialized;
 }
 
 - (id)init;
@@ -864,7 +872,8 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 - (int)multisample;
 - (void)setMultisample:(int)multisample;
 
-- (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height;
+- (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI;
+- (void)useHiDPI:(bool)hiDPI;
 
 - (void)processEvents:(NSTimer*)timer;
 
@@ -883,9 +892,15 @@ static ApplicationDelegate* s_applicationDelegate;
 - (id)init
 {
 	self = [super init];
-	
+
+	m_multisample = 0;
+
+	m_width      = -1;
+	m_height     = -1;
+	m_fullscreen = false;
+	m_hiDPI      = false;
+
 	m_openGLInitialized = false;
-	m_multisample       = 0;
 	
 	return self;
 }
@@ -1052,35 +1067,30 @@ static ApplicationDelegate* s_applicationDelegate;
 													 pixelFormat:pixelFormat];
 	[[glView openGLContext] makeCurrentContext];
 
-	if (IsHiDPISupported())
-	{
-		[glView setWantsBestResolutionOpenGLSurface:YES];
-	}
-	
 	[m_window setContentView:glView];
 	
 	m_openGLInitialized = true;
 }
 
-- (void)fullscreenWithWidth:(int)width height:(int)height
+- (void)switchToFullscreen
 {
 	NSScreen* screen = [m_window screen];
 
 	const NSRect screenFrame = [screen frame];
-	const NSRect displayRect = IsHiDPISupported()
+	const NSRect displayRect = vid_hidpi
 		? [screen convertRectToBacking:screenFrame]
 		: screenFrame;
 
 	const float  displayWidth  = displayRect.size.width;
 	const float  displayHeight = displayRect.size.height;
 	
-	const float pixelScaleFactorX = displayWidth  / static_cast< float >(width );
-	const float pixelScaleFactorY = displayHeight / static_cast< float >(height);
+	const float pixelScaleFactorX = displayWidth  / static_cast<float>(m_width );
+	const float pixelScaleFactorY = displayHeight / static_cast<float>(m_height);
 	
 	rbOpts.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
 	
-	rbOpts.width  = width  * rbOpts.pixelScale;
-	rbOpts.height = height * rbOpts.pixelScale;
+	rbOpts.width  = m_width  * rbOpts.pixelScale;
+	rbOpts.height = m_height * rbOpts.pixelScale;
 	
 	rbOpts.shiftX = (displayWidth  - rbOpts.width ) / 2.0f;
 	rbOpts.shiftY = (displayHeight - rbOpts.height) / 2.0f;
@@ -1092,18 +1102,18 @@ static ApplicationDelegate* s_applicationDelegate;
 	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
 }
 
-- (void)windowedWithWidth:(int)width height:(int)height
+- (void)switchToWindowed
 {
 	rbOpts.pixelScale = 1.0f;
 	
-	rbOpts.width  = static_cast< float >(width );
-	rbOpts.height = static_cast< float >(height);
+	rbOpts.width  = static_cast<float>(m_width );
+	rbOpts.height = static_cast<float>(m_height);
 	
 	rbOpts.shiftX = 0.0f;
 	rbOpts.shiftY = 0.0f;
 
-	const NSSize windowPixelSize = NSMakeSize(width, height);
-	const NSSize windowSize = IsHiDPISupported()
+	const NSSize windowPixelSize = NSMakeSize(m_width, m_height);
+	const NSSize windowSize = vid_hidpi
 		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
 		: windowPixelSize;
 
@@ -1114,18 +1124,39 @@ static ApplicationDelegate* s_applicationDelegate;
 	[m_window center];
 }
 
-- (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height
+- (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI
 {
-	[self initializeOpenGL];
-	
-	if (fullscreen)
+	if (fullscreen == m_fullscreen
+		&& width   == m_width
+		&& height  == m_height
+		&& hiDPI   == m_hiDPI)
 	{
-		[self fullscreenWithWidth:width height:height];
+		return;
+	}
+
+	m_fullscreen = fullscreen;
+	m_width      = width;
+	m_height     = height;
+	m_hiDPI      = hiDPI;
+
+	[self initializeOpenGL];
+
+	if (IsHiDPISupported())
+	{
+		NSOpenGLView* const glView = [m_window contentView];
+		[glView setWantsBestResolutionOpenGLSurface:m_hiDPI];
+	}
+
+	if (m_fullscreen)
+	{
+		[self switchToFullscreen];
 	}
 	else
 	{
-		[self windowedWithWidth:width height:height];
+		[self switchToWindowed];
 	}
+
+	rbOpts.dirty = true;
 
 	const NSSize viewSize = GetRealContentViewSize(m_window);
 	
@@ -1143,6 +1174,19 @@ static ApplicationDelegate* s_applicationDelegate;
 	{
 		[m_window makeKeyAndOrderFront:nil];
 	}	
+}
+
+- (void)useHiDPI:(bool)hiDPI
+{
+	if (!m_openGLInitialized)
+	{
+		return;
+	}
+
+	[self changeVideoResolution:m_fullscreen
+						  width:m_width
+						 height:m_height
+					   useHiDPI:hiDPI];
 }
 
 
@@ -1225,6 +1269,22 @@ static ApplicationDelegate* s_applicationDelegate;
 }
 
 @end
+
+
+// ---------------------------------------------------------------------------
+
+
+CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (IsHiDPISupported())
+	{
+		[s_applicationDelegate useHiDPI:self];
+	}
+	else if (0 != self)
+	{
+		self = 0;
+	}
+}
 
 
 // ---------------------------------------------------------------------------
@@ -1508,7 +1568,10 @@ static SDL_PixelFormat* GetPixelFormat()
 
 SDL_Surface* SDL_SetVideoMode(int width, int height, int, Uint32 flags)
 {
-	[s_applicationDelegate changeVideoResolution:(SDL_FULLSCREEN & flags) width:width height:height];
+	[s_applicationDelegate changeVideoResolution:(SDL_FULLSCREEN & flags)
+										   width:width
+										  height:height
+										useHiDPI:vid_hidpi];
 	
 	static SDL_Surface result;
 	
@@ -1554,21 +1617,6 @@ void SDL_WM_SetCaption(const char* title, const char* icon)
 	// Window title is set in SDL_SetVideoMode()
 }
 
-static void ResetSoftwareViewport()
-{
-	// For an unknown reason the following call to glClear() is needed
-	// to avoid drawing of garbage in fullscreen mode
-	// when game video resolution's aspect ratio is different from display one
-
-	GLint viewport[2];
-	glGetIntegerv(GL_MAX_VIEWPORT_DIMS, viewport);
-
-	glViewport(0, 0, viewport[0], viewport[1]);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
-}
-
 int SDL_WM_ToggleFullScreen(SDL_Surface* surface)
 {
 	if (surface->flags & SDL_FULLSCREEN)
@@ -1582,8 +1630,8 @@ int SDL_WM_ToggleFullScreen(SDL_Surface* surface)
 
 	[s_applicationDelegate changeVideoResolution:(SDL_FULLSCREEN & surface->flags)
 										   width:surface->w
-										  height:surface->h];
-	ResetSoftwareViewport();
+										  height:surface->h
+										useHiDPI:vid_hidpi];
 
 	return 1;
 }
@@ -1638,8 +1686,6 @@ static void SetupSoftwareRendering(SDL_Surface* screen)
 	glLoadIdentity();
 	glOrtho(0.0, screen->w, screen->h, 0.0, -1.0, 1.0);
 	
-	ResetSoftwareViewport();
-	
 	glEnable(GL_TEXTURE_2D);
 	
 	glGenTextures(1, &s_frameBufferTexture);
@@ -1660,12 +1706,24 @@ int SDL_Flip(SDL_Surface* screen)
 	{
 		SetupSoftwareRendering(screen);
 	}
+
+	if (rbOpts.dirty)
+	{
+		glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
+
+		// TODO: Figure out why the following glClear() call is needed
+		// to avoid drawing of garbage in fullscreen mode when
+		// in-game's aspect ratio is different from display one
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		rbOpts.dirty = false;
+	}
 	
 	const int width  = screen->w;
 	const int height = screen->h;
 	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-				 width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen->pixels);
+		width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen->pixels);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

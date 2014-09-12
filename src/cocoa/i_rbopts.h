@@ -43,6 +43,8 @@ struct RenderBufferOptions
 
 	float width;
 	float height;
+
+	bool dirty;
 };
 
 extern RenderBufferOptions rbOpts;

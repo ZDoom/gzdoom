@@ -6,7 +6,7 @@
 #ifdef HAVE_MPG123
 
 #ifdef _MSC_VER
-typedef SSIZE_T ssize_t;
+typedef int ssize_t;
 #endif
 #include "mpg123.h"
 

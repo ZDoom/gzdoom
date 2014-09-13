@@ -319,6 +319,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
+	deathmatch = 1;
 	G_ClearHubInfo();
 	if (!savegamerestore)
 	{
@@ -499,7 +500,9 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	}
 	else if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
-		nextinfo = FindLevelInfo (levelname, false);
+		FString reallevelname = levelname;
+		CheckWarpTransMap(reallevelname, true);
+		nextinfo = FindLevelInfo (reallevelname, false);
 		if (nextinfo != NULL)
 		{
 			level_info_t *nextredir = nextinfo->CheckLevelRedirect();
@@ -507,8 +510,12 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 			{
 				nextinfo = nextredir;
 			}
+			nextlevel = nextinfo->MapName;
 		}
-		nextlevel = nextinfo->MapName;
+		else
+		{
+			nextlevel = levelname;
+		}
 	}
 	else
 	{

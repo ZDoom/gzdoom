@@ -2,6 +2,9 @@
 #include "files.h"
 
 #ifdef HAVE_SNDFILE
+
+#include <algorithm>
+
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)
 {
     FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;

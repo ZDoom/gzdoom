@@ -857,6 +857,7 @@ public:
 
 	int				special1;		// Special info
 	int				special2;		// Special info
+	int				weaponspecial;	// Special info for weapons.
 	int 			health;
 	BYTE			movedir;		// 0-7
 	SBYTE			visdir;

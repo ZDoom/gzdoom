@@ -839,7 +839,7 @@ const Uint16 BYTES_PER_PIXEL = 4;
 // ---------------------------------------------------------------------------
 
 
-@interface ApplicationDelegate : NSResponder
+@interface ApplicationController : NSResponder
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 	<NSFileManagerDelegate>
 #endif
@@ -893,10 +893,10 @@ const Uint16 BYTES_PER_PIXEL = 4;
 @end
 
 
-static ApplicationDelegate* s_applicationDelegate;
+static ApplicationController* appCtrl;
 
 
-@implementation ApplicationDelegate
+@implementation ApplicationController
 
 - (id)init
 {
@@ -1329,7 +1329,7 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (IsHiDPISupported())
 	{
-		[s_applicationDelegate useHiDPI:self];
+		[appCtrl useHiDPI:self];
 	}
 	else if (0 != self)
 	{
@@ -1343,7 +1343,7 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void I_SetMainWindowVisible(bool visible)
 {
-	[s_applicationDelegate setMainWindowVisible:visible];
+	[appCtrl setMainWindowVisible:visible];
 	
 	SetNativeMouse(!visible);
 }
@@ -1405,7 +1405,7 @@ bool I_SetCursor(FTexture* cursorpic)
 										   hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
 	
-	[s_applicationDelegate invalidateCursorRects];
+	[appCtrl invalidateCursorRects];
 	
 	return true;
 }
@@ -1492,13 +1492,13 @@ int SDL_Init(Uint32 flags)
 
 void SDL_Quit()
 {
-	if (NULL != s_applicationDelegate)
+	if (NULL != appCtrl)
 	{
 		[NSApp setDelegate:nil];
 		[NSApp deactivate];
 
-		[s_applicationDelegate release];
-		s_applicationDelegate = NULL;
+		[appCtrl release];
+		appCtrl = NULL;
 	}
 }
 
@@ -1615,17 +1615,17 @@ static SDL_PixelFormat* GetPixelFormat()
 
 SDL_Surface* SDL_SetVideoMode(int width, int height, int, Uint32 flags)
 {
-	[s_applicationDelegate changeVideoResolution:(SDL_FULLSCREEN & flags)
-										   width:width
-										  height:height
-										useHiDPI:vid_hidpi];
-	
+	[appCtrl changeVideoResolution:(SDL_FULLSCREEN & flags)
+							 width:width
+							height:height
+						  useHiDPI:vid_hidpi];
+
 	static SDL_Surface result;
 
 	if (!(SDL_OPENGL & flags))
 	{
-		[s_applicationDelegate setupSoftwareRenderingWithWidth:width
-														height:height];
+		[appCtrl setupSoftwareRenderingWithWidth:width
+										  height:height];
 	}
 
 	result.flags    = flags;
@@ -1633,7 +1633,7 @@ SDL_Surface* SDL_SetVideoMode(int width, int height, int, Uint32 flags)
 	result.w        = width;
 	result.h        = height;
 	result.pitch    = width * BYTES_PER_PIXEL;
-	result.pixels   = [s_applicationDelegate softwareRenderingBuffer];
+	result.pixels   = [appCtrl softwareRenderingBuffer];
 	result.refcount = 1;
 	
 	result.clip_rect.x = 0;
@@ -1664,10 +1664,10 @@ int SDL_WM_ToggleFullScreen(SDL_Surface* surface)
 		surface->flags |= SDL_FULLSCREEN;
 	}
 
-	[s_applicationDelegate changeVideoResolution:(SDL_FULLSCREEN & surface->flags)
-										   width:surface->w
-										  height:surface->h
-										useHiDPI:vid_hidpi];
+	[appCtrl changeVideoResolution:(SDL_FULLSCREEN & surface->flags)
+							 width:surface->w
+							height:surface->h
+						  useHiDPI:vid_hidpi];
 
 	return 1;
 }
@@ -1682,7 +1682,7 @@ int SDL_GL_SetAttribute(SDL_GLattr attr, int value)
 {
 	if (SDL_GL_MULTISAMPLESAMPLES == attr)
 	{
-		[s_applicationDelegate setMultisample:value];
+		[appCtrl setMultisample:value];
 	}
 
 	// Not interested in other attributes
@@ -1832,8 +1832,8 @@ int main(int argc, char** argv)
 	[NSApplication sharedApplication];
 	[NSBundle loadNibNamed:@"zdoom" owner:NSApp];
 
-	s_applicationDelegate = [ApplicationDelegate new];
-	[NSApp setDelegate:s_applicationDelegate];
+	appCtrl = [ApplicationController new];
+	[NSApp setDelegate:appCtrl];
 
 	[NSApp run];
 

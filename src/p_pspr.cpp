@@ -211,6 +211,7 @@ void P_BringUpWeapon (player_t *player)
 	// make sure that the previous weapon's flash state is terminated.
 	// When coming here from a weapon drop it may still be active.
 	P_SetPsprite(player, ps_flash, NULL);
+	player->mo->weaponspecial = 0;
 }
 
 

@@ -1600,7 +1600,10 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		!multiplayer &&
-		players[0].health <= 0)
+		players[0].health <= 0 && 
+		actor->goal == NULL &&
+		gamestate != GS_TITLELEVEL
+		)
 	{ // Single player game and player is dead; look for monsters
 		return P_LookForMonsters (actor);
 	}

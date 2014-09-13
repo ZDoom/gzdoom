@@ -319,7 +319,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
-	deathmatch = 1;
 	G_ClearHubInfo();
 	if (!savegamerestore)
 	{

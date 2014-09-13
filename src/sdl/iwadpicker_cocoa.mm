@@ -376,6 +376,19 @@ static NSArray* GetKnownExtensions()
 
 EXTERN_CVAR(String, defaultiwad)
 
+static NSString* GetArchitectureString()
+{
+#ifdef __i386__
+	return @"i386";
+#elif defined __x86_64__
+	return @"x86_64";
+#elif defined __ppc__
+	return @"ppc";
+#elif defined __ppc64__
+	return @"ppc64";
+#endif
+}
+
 static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 {
 	assert(nil != parameters);
@@ -393,8 +406,12 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 		assert(commandLineParametersCount > 0);
 		
 		NSString* executablePath = [NSString stringWithUTF8String:Args->GetArg(0)];
+		NSString* architecture   = GetArchitectureString();
 		
-		NSMutableArray* arguments = [NSMutableArray arrayWithCapacity:commandLineParametersCount + 3];
+		NSMutableArray* arguments = [NSMutableArray arrayWithCapacity:commandLineParametersCount + 6];
+		[arguments addObject:@"-arch"];
+		[arguments addObject:architecture];
+		[arguments addObject:executablePath];
 		[arguments addObject:@"-wad_picker_restart"];
 		[arguments addObject:@"-iwad"];
 		[arguments addObject:[NSString stringWithUTF8String:iwadPath]];
@@ -419,7 +436,7 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 			wordfree(&expansion);
 		}
 
-		[NSTask launchedTaskWithLaunchPath:executablePath arguments:arguments];
+		[NSTask launchedTaskWithLaunchPath:@"/usr/bin/arch" arguments:arguments];
 
 		_exit(0); // to avoid atexit()'s functions
 	}

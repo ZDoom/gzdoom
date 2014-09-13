@@ -146,7 +146,6 @@ void ST_LoadCrosshair(bool alwaysload)
 {
 	int num = 0;
 	char name[16], size;
-	int lump;
 
 	if (!crosshairforce &&
 		players[consoleplayer].camera != NULL &&
@@ -179,18 +178,20 @@ void ST_LoadCrosshair(bool alwaysload)
 		num = -num;
 	}
 	size = (SCREENWIDTH < 640) ? 'S' : 'B';
+
 	mysnprintf (name, countof(name), "XHAIR%c%d", size, num);
-	if ((lump = Wads.CheckNumForName (name, ns_graphics)) == -1)
+	FTextureID texid = TexMan.CheckForTexture(name, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
+	if (!texid.isValid())
 	{
 		mysnprintf (name, countof(name), "XHAIR%c1", size);
-		if ((lump = Wads.CheckNumForName (name, ns_graphics)) == -1)
+		texid = TexMan.CheckForTexture(name, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
+		if (!texid.isValid())
 		{
-			strcpy (name, "XHAIRS1");
+			texid = TexMan.CheckForTexture("XHAIRS1", FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
 		}
-		num = 1;
 	}
 	CrosshairNum = num;
-	CrosshairImage = TexMan[TexMan.CheckForTexture(name, FTexture::TEX_MiscPatch)];
+	CrosshairImage = TexMan[texid];
 }
 
 //---------------------------------------------------------------------------

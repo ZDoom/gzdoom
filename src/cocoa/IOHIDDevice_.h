@@ -1,6 +1,6 @@
 //	    File: IOHIDDevice_.h
 //	Abstract: convieance functions for IOHIDDeviceGetProperty
-//	 Version: 2.0
+//	 Version: 2.0 + 5.3
 //	
 //	Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
 //	Inc. ("Apple") in consideration of your agreement to the following
@@ -40,7 +40,7 @@
 //	STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 //	POSSIBILITY OF SUCH DAMAGE.
 //	
-//	Copyright (C) 2009 Apple Inc. All Rights Reserved.
+//	Copyright (C) 2014 Apple Inc. All Rights Reserved.
 //	
 //*****************************************************
 #ifndef __IOHIDDevice__
@@ -120,10 +120,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the vendor ID for this device
+	// Returns:	uint32_t - the vendor ID for this device
 	//
 	
-	extern long IOHIDDevice_GetVendorID(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetVendorID(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -133,10 +133,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the VendorIDSource for this device
+	// Returns:	uint32_t - the VendorIDSource for this device
 	//
 	
-	extern long IOHIDDevice_GetVendorIDSource(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetVendorIDSource(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -146,10 +146,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the product ID for this device
+	// Returns:	uint32_t - the product ID for this device
 	//
 	
-	extern long IOHIDDevice_GetProductID(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetProductID(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -159,10 +159,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the VersionNumber for this device
+	// Returns:	uint32_t - the VersionNumber for this device
 	//
 	
-	extern long IOHIDDevice_GetVersionNumber(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetVersionNumber(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -211,10 +211,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the CountryCode for this device
+	// Returns:	uint32_t - the CountryCode for this device
 	//
 	
-	extern long IOHIDDevice_GetCountryCode(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetCountryCode(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -224,10 +224,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the location ID for this device
+	// Returns:	uint32_t - the location ID for this device
 	//
 	
-	extern long IOHIDDevice_GetLocationID(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetLocationID(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -302,10 +302,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the MaxInputReportSize for this device
+	// Returns:	uint32_t - the MaxInputReportSize for this device
 	//
 	
-	extern long IOHIDDevice_GetMaxInputReportSize(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetMaxInputReportSize(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -315,10 +315,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the MaxOutputReportSize for this device
+	// Returns:	uint32_t - the MaxOutputReportSize for this device
 	//
 	
-	extern long IOHIDDevice_GetMaxOutputReportSize(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetMaxOutputReportSize(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -328,10 +328,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the MaxFeatureReportSize for this device
+	// Returns:	uint32_t - the MaxFeatureReportSize for this device
 	//
 	
-	extern long IOHIDDevice_GetMaxFeatureReportSize(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetMaxFeatureReportSize(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//
@@ -341,10 +341,10 @@ extern "C" {
 	//
 	// Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 	//
-	// Returns:	long - the ReportInterval for this device
+	// Returns:	uint32_t - the ReportInterval for this device
 	//
 	
-	extern long IOHIDDevice_GetReportInterval(IOHIDDeviceRef inIOHIDDeviceRef);
+	extern uint32_t IOHIDDevice_GetReportInterval(IOHIDDeviceRef inIOHIDDeviceRef);
 	
 	//*************************************************************************
 	//

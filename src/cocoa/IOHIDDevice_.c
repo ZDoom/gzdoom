@@ -1,6 +1,6 @@
 //	    File: IOHIDDevice_.c
 //	Abstract: convieance functions for IOHIDDeviceGetProperty
-//	 Version: 2.0
+//	 Version: 2.0 + 5.3
 //	
 //	Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
 //	Inc. ("Apple") in consideration of your agreement to the following
@@ -59,8 +59,17 @@
 #pragma mark - local (static) function prototypes
 //-----------------------------------------------------
 
-static Boolean IOHIDDevice_GetLongProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, long *outValue);
-static void IOHIDDevice_SetLongProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, long inValue);
+static Boolean IOHIDDevice_GetUInt32Property(IOHIDDeviceRef inIOHIDDeviceRef,
+                                             CFStringRef	inKey,
+                                             uint32_t *		outValue);
+// static void IOHIDDevice_SetUInt32Property(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, uint32_t inValue);
+
+static Boolean IOHIDDevice_GetPtrProperty(IOHIDDeviceRef	inIOHIDDeviceRef,
+                                          CFStringRef		inKey,
+                                          void **			outValue);
+static void IOHIDDevice_SetPtrProperty(IOHIDDeviceRef	inIOHIDDeviceRef,
+                                       CFStringRef		inKey,
+                                       void *			inValue);
 
 //*****************************************************
 #pragma mark - exported globals
@@ -120,12 +129,12 @@ CFStringRef IOHIDDevice_GetTransport(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the vendor ID for this device
+// Returns:	uint32_t - the vendor ID for this device
 //
 
-long IOHIDDevice_GetVendorID(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDVendorIDKey), &result);
+uint32_t IOHIDDevice_GetVendorID(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDVendorIDKey), &result);
 	return (result);
 } // IOHIDDevice_GetVendorID
 
@@ -137,12 +146,12 @@ long IOHIDDevice_GetVendorID(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the VendorIDSource for this device
+// Returns:	uint32_t - the VendorIDSource for this device
 //
 
-long IOHIDDevice_GetVendorIDSource(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDVendorIDSourceKey), &result);
+uint32_t IOHIDDevice_GetVendorIDSource(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDVendorIDSourceKey), &result);
 	return (result);
 } // IOHIDDevice_GetVendorIDSource
 
@@ -154,12 +163,12 @@ long IOHIDDevice_GetVendorIDSource(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the product ID for this device
+// Returns:	uint32_t - the product ID for this device
 //
 
-long IOHIDDevice_GetProductID(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDProductIDKey), &result);
+uint32_t IOHIDDevice_GetProductID(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDProductIDKey), &result);
 	return (result);
 } // IOHIDDevice_GetProductID
 
@@ -171,12 +180,12 @@ long IOHIDDevice_GetProductID(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	CFStringRef - the VersionNumber for this device
+// Returns:	uint32_t - the VersionNumber for this device
 //
 
-long IOHIDDevice_GetVersionNumber(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDVersionNumberKey), &result);
+uint32_t IOHIDDevice_GetVersionNumber(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDVersionNumberKey), &result);
 	return (result);
 } // IOHIDDevice_GetVersionNumber
 
@@ -236,12 +245,12 @@ CFStringRef IOHIDDevice_GetSerialNumber(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	CFStringRef - the CountryCode for this device
+// Returns:	uint32_t - the CountryCode for this device
 //
 
-long IOHIDDevice_GetCountryCode(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDCountryCodeKey), &result);
+uint32_t IOHIDDevice_GetCountryCode(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDCountryCodeKey), &result);
 	return (result);
 } // IOHIDDevice_GetCountryCode
 
@@ -253,12 +262,12 @@ long IOHIDDevice_GetCountryCode(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the location ID for this device
+// Returns:	uint32_t - the location ID for this device
 //
 
-long IOHIDDevice_GetLocationID(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDLocationIDKey), &result);
+uint32_t IOHIDDevice_GetLocationID(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDLocationIDKey), &result);
 	return (result);
 }   // IOHIDDevice_GetLocationID
 
@@ -275,7 +284,7 @@ long IOHIDDevice_GetLocationID(IOHIDDeviceRef inIOHIDDeviceRef) {
 
 uint32_t IOHIDDevice_GetUsage(IOHIDDeviceRef inIOHIDDeviceRef) {
 	uint32_t result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDeviceUsageKey), (long *) &result);
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDDeviceUsageKey), &result);
 	return (result);
 } // IOHIDDevice_GetUsage
 
@@ -291,8 +300,8 @@ uint32_t IOHIDDevice_GetUsage(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 
 uint32_t IOHIDDevice_GetUsagePage(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDeviceUsagePageKey), &result);
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDDeviceUsagePageKey), &result);
 	return (result);
 }   // IOHIDDevice_GetUsagePage
 
@@ -320,12 +329,12 @@ CFArrayRef IOHIDDevice_GetUsagePairs(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	CFStringRef - the PrimaryUsage for this device
+// Returns:	uint32_t - the PrimaryUsage for this device
 //
 
 uint32_t IOHIDDevice_GetPrimaryUsage(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDPrimaryUsageKey), &result);
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDPrimaryUsageKey), &result);
 	return (result);
 } // IOHIDDevice_GetPrimaryUsage
 
@@ -337,12 +346,12 @@ uint32_t IOHIDDevice_GetPrimaryUsage(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	CFStringRef - the PrimaryUsagePage for this device
+// Returns:	uint32_t - the PrimaryUsagePage for this device
 //
 
 uint32_t IOHIDDevice_GetPrimaryUsagePage(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDPrimaryUsagePageKey), &result);
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDPrimaryUsagePageKey), &result);
 	return (result);
 } // IOHIDDevice_GetPrimaryUsagePage
 
@@ -354,12 +363,12 @@ uint32_t IOHIDDevice_GetPrimaryUsagePage(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long  - the MaxInputReportSize for this device
+// Returns:	uint32_t  - the MaxInputReportSize for this device
 //
 
-long IOHIDDevice_GetMaxInputReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDMaxInputReportSizeKey), &result);
+uint32_t IOHIDDevice_GetMaxInputReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDMaxInputReportSizeKey), &result);
 	return (result);
 } // IOHIDDevice_GetMaxInputReportSize
 
@@ -371,12 +380,12 @@ long IOHIDDevice_GetMaxInputReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the MaxOutput for this device
+// Returns:	uint32_t - the MaxOutput for this device
 //
 
-long IOHIDDevice_GetMaxOutputReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDMaxOutputReportSizeKey), &result);
+uint32_t IOHIDDevice_GetMaxOutputReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDMaxOutputReportSizeKey), &result);
 	return (result);
 } // IOHIDDevice_GetMaxOutputReportSize
 
@@ -388,12 +397,12 @@ long IOHIDDevice_GetMaxOutputReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the MaxFeatureReportSize for this device
+// Returns:	uint32_t - the MaxFeatureReportSize for this device
 //
 
-long IOHIDDevice_GetMaxFeatureReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDMaxFeatureReportSizeKey), &result);
+uint32_t IOHIDDevice_GetMaxFeatureReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDMaxFeatureReportSizeKey), &result);
 	return (result);
 } // IOHIDDevice_GetMaxFeatureReportSize
 
@@ -405,14 +414,14 @@ long IOHIDDevice_GetMaxFeatureReportSize(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 // Inputs:  inIOHIDDeviceRef - the IDHIDDeviceRef for this device
 //
-// Returns:	long - the ReportInterval for this device
+// Returns:	uint32_t - the ReportInterval for this device
 //
 #ifndef kIOHIDReportIntervalKey
 #define kIOHIDReportIntervalKey "ReportInterval"
 #endif
-long IOHIDDevice_GetReportInterval(IOHIDDeviceRef inIOHIDDeviceRef) {
-	long result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDReportIntervalKey), &result);
+uint32_t IOHIDDevice_GetReportInterval(IOHIDDeviceRef inIOHIDDeviceRef) {
+	uint32_t result = 0;
+	(void) IOHIDDevice_GetUInt32Property(inIOHIDDeviceRef, CFSTR(kIOHIDReportIntervalKey), &result);
 	return (result);
 } // IOHIDDevice_GetReportInterval
 
@@ -429,7 +438,7 @@ long IOHIDDevice_GetReportInterval(IOHIDDeviceRef inIOHIDDeviceRef) {
 
 IOHIDQueueRef IOHIDDevice_GetQueue(IOHIDDeviceRef inIOHIDDeviceRef) {
 	IOHIDQueueRef result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_QueueKey), (long *) &result);
+	(void) IOHIDDevice_GetPtrProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_QueueKey), (void *) &result);
 	if ( result ) {
 		assert( IOHIDQueueGetTypeID() == CFGetTypeID(result) );
 	}
@@ -450,7 +459,7 @@ IOHIDQueueRef IOHIDDevice_GetQueue(IOHIDDeviceRef inIOHIDDeviceRef) {
 //
 
 void IOHIDDevice_SetQueue(IOHIDDeviceRef inIOHIDDeviceRef, IOHIDQueueRef inQueueRef) {
-	IOHIDDevice_SetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_QueueKey), (long) inQueueRef);
+	IOHIDDevice_SetPtrProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_QueueKey), inQueueRef);
 }
 
 //*************************************************************************
@@ -466,7 +475,7 @@ void IOHIDDevice_SetQueue(IOHIDDeviceRef inIOHIDDeviceRef, IOHIDQueueRef inQueue
 
 IOHIDTransactionRef IOHIDDevice_GetTransaction(IOHIDDeviceRef inIOHIDDeviceRef) {
 	IOHIDTransactionRef result = 0;
-	(void) IOHIDDevice_GetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_TransactionKey), (long *) &result);
+	(void) IOHIDDevice_GetPtrProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_TransactionKey), (void *) &result);
 	return (result);
 } // IOHIDDevice_GetTransaction
 
@@ -483,7 +492,7 @@ IOHIDTransactionRef IOHIDDevice_GetTransaction(IOHIDDeviceRef inIOHIDDeviceRef) 
 //
 
 void IOHIDDevice_SetTransaction(IOHIDDeviceRef inIOHIDDeviceRef, IOHIDTransactionRef inTransactionRef) {
-	IOHIDDevice_SetLongProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_TransactionKey), (long) inTransactionRef);
+	IOHIDDevice_SetPtrProperty(inIOHIDDeviceRef, CFSTR(kIOHIDDevice_TransactionKey), inTransactionRef);
 }
 
 //*****************************************************
@@ -492,9 +501,9 @@ void IOHIDDevice_SetTransaction(IOHIDDeviceRef inIOHIDDeviceRef, IOHIDTransactio
 
 //*************************************************************************
 //
-// IOHIDDevice_GetLongProperty( inIOHIDDeviceRef, inKey, outValue )
+// IOHIDDevice_GetUInt32Property( inIOHIDDeviceRef, inKey, outValue )
 //
-// Purpose:	convieance function to return a long property of a device
+// Purpose:	convieance function to return a uint32_t property of a device
 //
 // Inputs:	inIOHIDDeviceRef		- the device
 //			inKey			- CFString for the
@@ -503,7 +512,7 @@ void IOHIDDevice_SetTransaction(IOHIDDeviceRef inIOHIDDeviceRef, IOHIDTransactio
 //			outValue		- the device
 //
 
-static Boolean IOHIDDevice_GetLongProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, long *outValue) {
+static Boolean IOHIDDevice_GetUInt32Property(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, uint32_t *outValue) {
 	Boolean result = FALSE;
 	if ( inIOHIDDeviceRef ) {
 		assert( IOHIDDeviceGetTypeID() == CFGetTypeID(inIOHIDDeviceRef) );
@@ -519,11 +528,66 @@ static Boolean IOHIDDevice_GetLongProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFSt
 	}
 	
 	return (result);
-}   // IOHIDDevice_GetLongProperty
+}   // IOHIDDevice_GetUInt32Property
 
 //*************************************************************************
 //
-// IOHIDDevice_SetLongProperty( inIOHIDDeviceRef, inKey, inValue )
+// IOHIDDevice_SetUInt32Property( inIOHIDDeviceRef, inKey, inValue )
+//
+// Purpose:	convieance function to set a long property of an Device
+//
+// Inputs:	inIOHIDDeviceRef	- the Device
+// inKey				- CFString for the key
+// inValue				- the value to set it to
+// Returns:	nothing
+//
+#if 0 // unused
+static void IOHIDDevice_SetUInt32Property(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, uint32_t inValue) {
+	CFNumberRef tCFNumberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &inValue);
+	if ( tCFNumberRef ) {
+		IOHIDDeviceSetProperty(inIOHIDDeviceRef, inKey, tCFNumberRef);
+		CFRelease(tCFNumberRef);
+	}
+} // IOHIDDevice_SetUInt32Property
+#endif
+//*************************************************************************
+//
+// IOHIDDevice_GetPtrProperty( inIOHIDDeviceRef, inKey, outValue )
+//
+// Purpose:	convieance function to return a pointer property of a device
+//
+// Inputs:	inIOHIDDeviceRef		- the device
+//			inKey			- CFString for the
+//			outValue		- address where to restore the element
+// Returns:	the action cookie
+//			outValue		- the device
+//
+
+static Boolean IOHIDDevice_GetPtrProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, void **outValue) {
+	Boolean result = FALSE;
+	if ( inIOHIDDeviceRef ) {
+		assert( IOHIDDeviceGetTypeID() == CFGetTypeID(inIOHIDDeviceRef) );
+
+		CFTypeRef tCFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef, inKey);
+		if ( tCFTypeRef ) {
+			// if this is a number
+			if ( CFNumberGetTypeID() == CFGetTypeID(tCFTypeRef) ) {
+				// get it's value
+#ifdef __LP64__
+				result = CFNumberGetValue( (CFNumberRef) tCFTypeRef, kCFNumberSInt64Type, outValue );
+#else
+				result = CFNumberGetValue( (CFNumberRef) tCFTypeRef, kCFNumberSInt32Type, outValue );
+#endif // ifdef __LP64__
+			}
+		}
+	}
+
+	return (result);
+} // IOHIDDevice_GetPtrProperty
+
+//*************************************************************************
+//
+// IOHIDDevice_SetPtrProperty( inIOHIDDeviceRef, inKey, inValue )
 //
 // Purpose:	convieance function to set a long property of an Device
 //
@@ -533,12 +597,16 @@ static Boolean IOHIDDevice_GetLongProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFSt
 // Returns:	nothing
 //
 
-static void IOHIDDevice_SetLongProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, long inValue) {
+static void IOHIDDevice_SetPtrProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFStringRef inKey, void *inValue) {
+#ifdef __LP64__
+	CFNumberRef tCFNumberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt64Type, &inValue);
+#else
 	CFNumberRef tCFNumberRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &inValue);
+#endif // ifdef __LP64__
 	if ( tCFNumberRef ) {
 		IOHIDDeviceSetProperty(inIOHIDDeviceRef, inKey, tCFNumberRef);
 		CFRelease(tCFNumberRef);
 	}
-}   // IOHIDDevice_SetLongProperty
+}   // IOHIDDevice_SetPtrProperty
 
 //*****************************************************

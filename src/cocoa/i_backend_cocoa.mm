@@ -770,6 +770,9 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 	D_PostEvent(&event);
 }
 
+
+const Uint16 BYTES_PER_PIXEL = 4;
+
 } // unnamed namespace
 
 
@@ -844,6 +847,9 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 @private
 	FullscreenWindow* m_window;
 
+	uint8_t* m_softwareRenderingBuffer;
+	GLuint   m_softwareRenderingTexture;
+
 	int  m_multisample;
 
 	int  m_width;
@@ -875,6 +881,9 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 - (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI;
 - (void)useHiDPI:(bool)hiDPI;
 
+- (void)setupSoftwareRenderingWithWidth:(int)width height:(int)height;
+- (void*)softwareRenderingBuffer;
+
 - (void)processEvents:(NSTimer*)timer;
 
 - (void)invalidateCursorRects;
@@ -893,6 +902,11 @@ static ApplicationDelegate* s_applicationDelegate;
 {
 	self = [super init];
 
+	m_window = nil;
+
+	m_softwareRenderingBuffer  = NULL;
+	m_softwareRenderingTexture = 0;
+
 	m_multisample = 0;
 
 	m_width      = -1;
@@ -907,6 +921,11 @@ static ApplicationDelegate* s_applicationDelegate;
 
 - (void)dealloc
 {
+	delete[] m_softwareRenderingBuffer;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDeleteTextures(1, &m_softwareRenderingTexture);
+
 	[m_window release];
 	
 	[super dealloc];
@@ -1187,6 +1206,38 @@ static ApplicationDelegate* s_applicationDelegate;
 						  width:m_width
 						 height:m_height
 					   useHiDPI:hiDPI];
+}
+
+
+- (void)setupSoftwareRenderingWithWidth:(int)width height:(int)height
+{
+	if (0 == m_softwareRenderingTexture)
+	{
+		glEnable(GL_TEXTURE_2D);
+
+		glGenTextures(1, &m_softwareRenderingTexture);
+		glBindTexture(GL_TEXTURE_2D, m_softwareRenderingTexture);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+
+	delete[] m_softwareRenderingBuffer;
+	m_softwareRenderingBuffer = new uint8_t[width * height * BYTES_PER_PIXEL];
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, width, height, 0.0, -1.0, 1.0);
+}
+
+- (void*)softwareRenderingBuffer
+{
+	return m_softwareRenderingBuffer;
 }
 
 
@@ -1536,10 +1587,6 @@ int SDL_ShowCursor(int)
 }
 
 
-static GLuint s_frameBufferTexture = 0;
-
-static const Uint16 BYTES_PER_PIXEL = 4;
-
 static SDL_PixelFormat* GetPixelFormat()
 {
 	static SDL_PixelFormat result;
@@ -1574,30 +1621,19 @@ SDL_Surface* SDL_SetVideoMode(int width, int height, int, Uint32 flags)
 										useHiDPI:vid_hidpi];
 	
 	static SDL_Surface result;
-	
-	const bool isSoftwareRenderer = !(SDL_OPENGL & flags);
-	
-	if (isSoftwareRenderer)
+
+	if (!(SDL_OPENGL & flags))
 	{
-		if (NULL != result.pixels)
-		{
-			free(result.pixels);
-		}
-		
-		if (0 != s_frameBufferTexture)
-		{
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glDeleteTextures(1, &s_frameBufferTexture);
-			s_frameBufferTexture = 0;
-		}
+		[s_applicationDelegate setupSoftwareRenderingWithWidth:width
+														height:height];
 	}
-	
+
 	result.flags    = flags;
 	result.format   = GetPixelFormat();
 	result.w        = width;
 	result.h        = height;
 	result.pitch    = width * BYTES_PER_PIXEL;
-	result.pixels   = isSoftwareRenderer ? malloc(width * height * BYTES_PER_PIXEL) : NULL;
+	result.pixels   = [s_applicationDelegate softwareRenderingBuffer];
 	result.refcount = 1;
 	
 	result.clip_rect.x = 0;
@@ -1678,35 +1714,10 @@ int SDL_BlitSurface(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_R
 }
 
 
-static void SetupSoftwareRendering(SDL_Surface* screen)
-{
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, screen->w, screen->h, 0.0, -1.0, 1.0);
-	
-	glEnable(GL_TEXTURE_2D);
-	
-	glGenTextures(1, &s_frameBufferTexture);
-	glBindTexture(GL_TEXTURE_2D, s_frameBufferTexture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
 int SDL_Flip(SDL_Surface* screen)
 {
 	assert(NULL != screen);
 	
-	if (0 == s_frameBufferTexture)
-	{
-		SetupSoftwareRendering(screen);
-	}
-
 	if (rbOpts.dirty)
 	{
 		glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);

@@ -376,7 +376,7 @@ FString IOKitJoystick::GetIdentifier()
 {
 	char identifier[ 32 ] = {0};
 	
-	snprintf( identifier, sizeof( identifier ), "VID_%04lx_PID_%04lx", 
+	snprintf( identifier, sizeof( identifier ), "VID_%04x_PID_%04x", 
 		IOHIDDevice_GetVendorID( m_device ), IOHIDDevice_GetProductID( m_device ) );
 	
 	return FString( identifier );

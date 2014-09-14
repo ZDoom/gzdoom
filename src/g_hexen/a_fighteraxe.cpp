@@ -253,7 +253,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 		}
 	}
 	// didn't find any creatures, so try to strike any walls
-	pmo->special1 = 0;
+	pmo->weaponspecial = 0;
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE, &linetarget);

@@ -1028,7 +1028,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	else if (flags & CMF_CHECKTARGETDEAD)
 	{
 		// Target is dead and the attack shall be aborted.
-		if (self->SeeState != NULL) self->SetState(self->SeeState);
+		if (self->SeeState != NULL && (self->health > 0 || !(self->flags3 & MF3_ISMONSTER))) self->SetState(self->SeeState);
 	}
 }
 

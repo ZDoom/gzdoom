@@ -1260,9 +1260,9 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         }
         if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
-            FVector3 near(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
+            FVector3 amb(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
             float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
-            dir = near + (dir-near)*a;
+            dir = amb + (dir-amb)*a;
         }
         dir += listener->position;
 
@@ -1273,9 +1273,9 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         FVector3 dir = pos - listener->position;
 
         float mindist = rolloff->MinDistance/distscale;
-        FVector3 near(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
+        FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
         float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
-        dir = near + (dir-near)*a;
+        dir = amb + (dir-amb)*a;
 
         dir += listener->position;
         alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
@@ -1499,17 +1499,17 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
         }
         if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
-            FVector3 near(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
+            FVector3 amb(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
             float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
-            dir = near + (dir-near)*a;
+            dir = amb + (dir-amb)*a;
         }
     }
     else if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
     {
         float mindist = chan->Rolloff.MinDistance / chan->DistanceScale;
-        FVector3 near(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
+        FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
         float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
-        dir = near + (dir-near)*a;
+        dir = amb + (dir-amb)*a;
     }
     dir += listener->position;
 

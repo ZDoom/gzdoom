@@ -168,15 +168,12 @@ void gl_PrintStartupLog()
 	Printf ("Max. texture units: %d\n", v);
 	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. fragment uniforms: %d\n", v);
-	gl.maxuniforms = v;
 	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. vertex uniforms: %d\n", v);
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
 	Printf ("Max. uniform block size: %d\n", v);
-	gl.maxuniformblock = v;
 	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
 	Printf ("Uniform block alignment: %d\n", v);
-	gl.uniformblockalignment = v;
 
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);

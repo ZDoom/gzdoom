@@ -66,7 +66,7 @@ static bool TryPunch(APlayerPawn *pmo, angle_t angle, int damage, fixed_t power)
 	slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE, &linetarget);
 	if (linetarget != NULL)
 	{
-		if (++pmo->special1 >= 3)
+		if (++pmo->weaponspecial >= 3)
 		{
 			damage <<= 1;
 			power *= 3;
@@ -117,9 +117,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 		if (TryPunch(pmo, pmo->angle + i*(ANG45/16), damage, power) ||
 			TryPunch(pmo, pmo->angle - i*(ANG45/16), damage, power))
 		{ // hit something
-			if (pmo->special1 >= 3)
+			if (pmo->weaponspecial >= 3)
 			{
-				pmo->special1 = 0;
+				pmo->weaponspecial = 0;
 				P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("Fire2"));
 				S_Sound (pmo, CHAN_VOICE, "*fistgrunt", 1, ATTN_NORM);
 			}
@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 		}
 	}
 	// didn't find any creatures, so try to strike any walls
-	pmo->special1 = 0;
+	pmo->weaponspecial = 0;
 
 	AActor *linetarget;
 	int slope = P_AimLineAttack (pmo, pmo->angle, MELEERANGE, &linetarget);

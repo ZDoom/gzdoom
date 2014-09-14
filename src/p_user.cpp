@@ -629,7 +629,16 @@ void APlayerPawn::BeginPlay ()
 		FString crouchspritename = sprites[crouchsprite].name;
 
 		int spritenorm = Wads.CheckNumForName(normspritename + "A1", ns_sprites);
+		if (spritenorm==-1) 
+		{
+			spritenorm = Wads.CheckNumForName(normspritename + "A0", ns_sprites);
+		}
+
 		int spritecrouch = Wads.CheckNumForName(crouchspritename + "A1", ns_sprites);
+		if (spritecrouch==-1) 
+		{
+			spritecrouch = Wads.CheckNumForName(crouchspritename + "A0", ns_sprites);
+		}
 		
 		if (spritenorm==-1 || spritecrouch ==-1) 
 		{

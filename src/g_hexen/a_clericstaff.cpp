@@ -164,7 +164,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 {
-	self->special1 = (pr_blink()>>1)+20;
+	self->weaponspecial = (pr_blink()>>1)+20;
 }
 
 //============================================================================
@@ -177,10 +177,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 {
 	if (self->player && self->player->ReadyWeapon)
 	{
-		if (!--self->special1)
+		if (!--self->weaponspecial)
 		{
 			P_SetPsprite (self->player, ps_weapon, self->player->ReadyWeapon->FindState ("Blink"));
-			self->special1 = (pr_blink()+50)>>2;
+			self->weaponspecial = (pr_blink()+50)>>2;
 		}
 		else 
 		{

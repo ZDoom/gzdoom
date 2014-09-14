@@ -94,7 +94,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		vp_comb.Format("#version 330 core\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+		vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 	}
 	else
 	{

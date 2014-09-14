@@ -117,9 +117,9 @@ void gl_LoadExtensions()
 	else Printf("Emulating OpenGL v %s\n", version);
 
 	// Don't even start if it's lower than 3.0
-	if (strcmp(version, "3.3") < 0)
+	if (strcmp(version, "3.0") < 0)
 	{
-		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 3.3 is required to run " GAMENAME ".\n");
+		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 3.0 is required to run " GAMENAME ".\n");
 	}
 
 	// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version

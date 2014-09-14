@@ -137,6 +137,14 @@ void gl_LoadExtensions()
 		if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
 	}
 	
+	int v;
+	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
+	gl.maxuniforms = v;
+	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
+	gl.maxuniformblock = v;
+	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
+	gl.uniformblockalignment = v;
+	
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }

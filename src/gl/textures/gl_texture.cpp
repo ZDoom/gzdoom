@@ -814,7 +814,7 @@ CCMD(textureinfo)
 		if (tex->gl_info.SystemTexture[0] || tex->gl_info.SystemTexture[1] || tex->gl_info.Material[0] || tex->gl_info.Material[1])
 		{
 			int lump = tex->GetSourceLump();
-			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", (const char*)(tex->Name), i, lump, Wads.GetLumpFullName(lump));
+			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
 			if (tex->gl_info.Material[0])
 			{
 				Printf(PRINT_LOG, "in use (normal)\n");

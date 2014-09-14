@@ -5,12 +5,12 @@
 #include "x86.h"
 #include "m_fixed.h"
 
+extern bool gl_benching;
+
 #ifdef _MSC_VER
 
 extern double gl_SecondsPerCycle;
 extern double gl_MillisecPerCycle;
-extern bool gl_benching;
-
 
 __forceinline long long GetClockCycle ()
 {

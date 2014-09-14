@@ -54,7 +54,7 @@ FLightBuffer::FLightBuffer()
 
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mByteSize = mBufferSize * sizeof(float);
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
 		mBlockAlign = -1;

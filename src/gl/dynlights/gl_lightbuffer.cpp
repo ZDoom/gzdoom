@@ -190,7 +190,7 @@ void FLightBuffer::Begin()
 	if (!(gl.flags & RFL_BUFFER_STORAGE))
 	{
 		glBindBuffer(mBufferType, mBufferId);
-		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
+		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT);
 	}
 }
 

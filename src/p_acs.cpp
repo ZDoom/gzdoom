@@ -2306,6 +2306,12 @@ void FBehavior::LoadScriptsDirectory ()
 	default:
 		break;
 	}
+
+// [EP] Clang 3.5.0 optimizer miscompiles this function and causes random
+// crashes in the program. I hope that Clang 3.5.x will fix this.
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ >= 5
+	asm("" : "+g" (NumScripts));
+#endif
 	for (i = 0; i < NumScripts; ++i)
 	{
 		Scripts[i].Flags = 0;

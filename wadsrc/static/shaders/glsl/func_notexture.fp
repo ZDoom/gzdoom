@@ -1,6 +1,6 @@
 
-vec4 Process(vec4 color)
+vec4 ProcessTexel()
 {
-	return color;
+	return desaturate(uObjectColor);	
 }
 

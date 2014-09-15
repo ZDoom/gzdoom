@@ -132,9 +132,15 @@ void FSkyBox::Unload ()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyBox::PrecacheGL()
+void FSkyBox::PrecacheGL(int cache)
 {
-	//for(int i=0;i<6;i++) if (faces[i]) faces[i]->PrecacheGL();
+	for (int i = 0; i < 6; i++)
+	{
+		if (faces[i])
+		{
+			faces[i]->PrecacheGL(cache);
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

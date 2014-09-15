@@ -5,22 +5,23 @@
 #include "gl/textures/gl_material.h"
 
 
-void ModifyPalette(PalEntry * pout, PalEntry * pin, int cm, int count);
-
 class FGLBitmap : public FBitmap
 {
-	int cm;
 	int translation;
 public:
 
-	FGLBitmap() { cm = CM_DEFAULT; translation = 0; }
+	FGLBitmap()
+	{
+		translation = 0;
+	}
 	FGLBitmap(BYTE *buffer, int pitch, int width, int height)
 		: FBitmap(buffer, pitch, width, height)
-	{ cm = CM_DEFAULT; translation = 0; }
-
-	void SetTranslationInfo(int _cm, int _trans=-1337)
 	{
-		if (_cm != -1) cm = _cm;
+		translation = 0;
+	}
+
+	void SetTranslationInfo(int _trans)
+	{
 		if (_trans != -1337) translation = _trans;
 
 	}

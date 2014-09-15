@@ -14,13 +14,6 @@ OptionValue "EnhancedStealth"
 	3, "Any fixed colormap"
 }
 
-OptionValue "VBOModes"
-{
-	0, "Off"
-	1, "Static"
-	2, "Dynamic"
-}
-
 OptionValue "FilterModes"
 {
 	0, "None"
@@ -112,12 +105,6 @@ OptionValue "HqResizeModes"
    6, "hq4x"
 }
 
-OptionValue "HqResizeTargets"
-{
-   0, "Everything"
-   1, "Sprites/fonts"
-}
- 
 OptionValue "FogMode"
 {
 	0, "Off"
@@ -152,6 +139,7 @@ OptionMenu "GLTextureGLOptions"
 	Option "Precache GL textures",		gl_precache,					"YesNo"
 	Option "Camera textures offscreen",	gl_usefb,						"OnOff"
 	Option "Trim sprite edges",			gl_trimsprites,					"OnOff"
+	Option "Sort draw lists by texture", gl_sort_textures,				"YesNo"
 }
 
 OptionMenu "GLLightOptions"
@@ -165,7 +153,6 @@ OptionMenu "GLLightOptions"
 	Option "Force additive lighting",	gl_lights_additive,				"YesNo"
 	Slider "Light intensity",			gl_lights_intensity, 			0.0, 1.0, 0.1
 	Slider "Light size",				gl_lights_size,					0.0, 2.0, 0.1
-	Option "Use shaders for lights",	gl_dynlight_shader,				"YesNo"
 }
 
 OptionMenu "GLPrefOptions"
@@ -186,17 +173,6 @@ OptionMenu "GLPrefOptions"
 	Option "Particle style",			gl_particles_style,				"Particles"
 	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
 	Option "Rendering quality",			gl_render_precise,				"Precision"
-	Option "Use vertex buffer",			gl_usevbo,						"VBOModes"
-}
-
-OptionMenu "GLShaderOptions"
-{
-	Title "SHADER OPTIONS"
-	Option "Enable brightness maps",	gl_brightmap_shader,			"OnOff"
-	Option "Shaders for texture warp",	gl_warp_shader,					"OnOff"
-	Option "Shaders for fog",			gl_fog_shader,					"OnOff"
-	Option "Shaders for colormaps",		gl_colormap_shader,				"OnOff"
-	Option "Shaders for glowing textures",	gl_glow_shader,				"OnOff"
 }
 
 OptionMenu "OpenGLOptions"
@@ -204,7 +180,6 @@ OptionMenu "OpenGLOptions"
 	Title "OPENGL OPTIONS"
 	Submenu "Dynamic Light Options",	"GLLightOptions"
 	Submenu "Texture Options", 			"GLTextureGLOptions"
-	Submenu "Shader Options", 			"GLShaderOptions"
 	Submenu "Preferences", 				"GLPrefOptions"
 }
 

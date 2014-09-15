@@ -824,6 +824,15 @@ void R_InitTranslationTables ()
 		remap->Remap[i] = IcePaletteRemap[v];
 		remap->Palette[i] = PalEntry(255, IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
 	}
+
+	// The alphatexture translation. Since alphatextures use the red channel this is just a standard grayscale mapping.
+	PushIdentityTable(TRANSLATION_Standard);
+	remap = translationtables[TRANSLATION_Standard][8];
+	for (i = 0; i < 256; i++)
+	{
+		remap->Remap[i] = i;
+		remap->Palette[i] = PalEntry(255, i, i, i);
+	}
 }
 
 //----------------------------------------------------------------------------

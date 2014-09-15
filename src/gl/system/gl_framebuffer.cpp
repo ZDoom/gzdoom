@@ -54,6 +54,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_hwtexture.h"
@@ -73,9 +74,9 @@ CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
 FGLRenderer *GLRenderer;
 
-void gl_SetupMenu();
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
+void gl_SetupMenu();
 
 //==========================================================================
 //
@@ -120,11 +121,12 @@ void OpenGLFrameBuffer::InitializeState()
 
 	if (first)
 	{
-		glewInit();
+		ogl_LoadFunctions();
 	}
 
 	gl_LoadExtensions();
 	Super::InitializeState();
+
 	if (first)
 	{
 		first=false;
@@ -137,31 +139,17 @@ void OpenGLFrameBuffer::InitializeState()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClearDepth(1.0f);
 	glDepthFunc(GL_LESS);
-	glShadeModel(GL_SMOOTH);
 
 	glEnable(GL_DITHER);
-	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glEnable(GL_POLYGON_OFFSET_LINE);
 	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_CLAMP_NV);
+	glEnable(GL_DEPTH_CLAMP);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LINE_SMOOTH);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GEQUAL,0.5f);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-	// This was to work around a bug in some older driver. Probably doesn't make sense anymore.
-	glEnable(GL_FOG);
-	glDisable(GL_FOG);
-
-	glHint(GL_FOG_HINT, GL_FASTEST);
-	glFogi(GL_FOG_MODE, GL_EXP);
-
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -386,18 +374,10 @@ FNativePalette *OpenGLFrameBuffer::CreatePalette(FRemapTable *remap)
 //==========================================================================
 bool OpenGLFrameBuffer::Begin2D(bool)
 {
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(
-		(GLdouble) 0,
-		(GLdouble) GetWidth(), 
-		(GLdouble) GetHeight(), 
-		(GLdouble) 0,
-		(GLdouble) -1.0, 
-		(GLdouble) 1.0 
-		);
+	gl_RenderState.mViewMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0, GetWidth(), GetHeight(), 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+
 	glDisable(GL_DEPTH_TEST);
 
 	// Korshun: ENABLE AUTOMAP ANTIALIASING!!!
@@ -557,3 +537,4 @@ void OpenGLFrameBuffer::GameRestart()
 	LastCamera = NULL;
 	gl_GenerateGlobalBrightmapFromColormap();
 }
+

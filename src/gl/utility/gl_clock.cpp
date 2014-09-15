@@ -23,6 +23,7 @@ glcycle_t All, Finish, PortalAll, Bsp;
 glcycle_t ProcessAll;
 glcycle_t RenderAll;
 glcycle_t Dirty;
+glcycle_t drawcalls;
 int vertexcount, flatvertices, flatprimitives;
 
 int rendered_lines,rendered_flats,rendered_sprites,render_vertexsplit,render_texsplit,rendered_decals, rendered_portals;
@@ -96,6 +97,7 @@ void ResetProfilingData()
 	SetupFlat.Reset();
 	RenderSprite.Reset();
 	SetupSprite.Reset();
+	drawcalls.Reset();
 
 	flatvertices=flatprimitives=vertexcount=0;
 	render_texsplit=render_vertexsplit=rendered_lines=rendered_flats=rendered_sprites=rendered_decals=rendered_portals = 0;
@@ -116,10 +118,10 @@ static void AppendRenderTimes(FString &str)
 	str.AppendFormat("W: Render=%2.3f, Split = %2.3f, Setup=%2.3f, Clip=%2.3f\n"
 		"F: Render=%2.3f, Setup=%2.3f\n"
 		"S: Render=%2.3f, Setup=%2.3f\n"
-		"All=%2.3f, Render=%2.3f, Setup=%2.3f, BSP = %2.3f, Portal=%2.3f, Finish=%2.3f\n",
+		"All=%2.3f, Render=%2.3f, Setup=%2.3f, BSP = %2.3f, Portal=%2.3f, Drawcalls=%2.3f, Finish=%2.3f\n",
 	RenderWall.TimeMS(), SplitWall.TimeMS(), setupwall, clipwall, RenderFlat.TimeMS(), SetupFlat.TimeMS(),
 	RenderSprite.TimeMS(), SetupSprite.TimeMS(), All.TimeMS() + Finish.TimeMS(), RenderAll.TimeMS(),
-	ProcessAll.TimeMS(), bsp, PortalAll.TimeMS(), Finish.TimeMS());
+	ProcessAll.TimeMS(), bsp, PortalAll.TimeMS(), drawcalls.TimeMS(), Finish.TimeMS());
 }
 
 static void AppendRenderStats(FString &out)
@@ -220,3 +222,12 @@ CCMD(bench)
 	}
 	C_HideConsole ();
 }
+
+bool gl_benching = false;
+
+void  checkBenchActive()
+{
+	FStat *stat = FStat::FindStat("rendertimes");
+	gl_benching = ((stat != NULL && stat->isActive()) || printstats);
+}
+

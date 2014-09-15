@@ -1,10 +1,10 @@
 //created by Evil Space Tomato
 uniform float timer;
 
-vec4 Process(vec4 color)
+vec4 ProcessTexel()
 {
-	vec2 texCoord = gl_TexCoord[0].st;
-	vec4 basicColor = getTexel(texCoord) * color;
+	vec2 texCoord = vTexCoord.st;
+	vec4 basicColor = getTexel(texCoord);
 
 	float texX = sin(mod(texCoord.x * 100.0 + timer*5.0, 3.489)) + texCoord.x / 4.0;
 	float texY = cos(mod(texCoord.y * 100.0 + timer*5.0, 3.489)) + texCoord.y / 4.0;

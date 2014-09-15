@@ -82,6 +82,7 @@ class GLPortal
 	static int recursion;
 	static unsigned int QueryObject;
 protected:
+	static TArray<float> planestack;
 	static int MirrorFlag;
 	static int PlaneMirrorFlag;
 	static int renderdepth;
@@ -101,9 +102,9 @@ private:
 	angle_t savedviewangle;
 	AActor * savedviewactor;
 	area_t savedviewarea;
-	unsigned char clipsave;
 	GLPortal *NextPortal;
 	TArray<BYTE> savedmapsection;
+	TArray<unsigned int> mPrimIndices;
 
 protected:
 	TArray<GLWall> lines;

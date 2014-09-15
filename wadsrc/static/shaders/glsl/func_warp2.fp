@@ -1,8 +1,8 @@
 uniform float timer;
 
-vec4 Process(vec4 color)
+vec4 ProcessTexel()
 {
-	vec2 texCoord = gl_TexCoord[0].st;
+	vec2 texCoord = vTexCoord.st;
 
 	const float pi = 3.14159265358979323846;
 	vec2 offset = vec2(0.0,0.0);
@@ -13,6 +13,6 @@ vec4 Process(vec4 color)
 
 	texCoord += offset;
 
-	return getTexel(texCoord) * color;
+	return getTexel(texCoord);
 }
 

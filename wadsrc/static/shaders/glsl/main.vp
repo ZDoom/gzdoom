@@ -1,66 +1,48 @@
-#ifndef NO_FOG
-	varying vec4 pixelpos;
-	attribute vec4 fogparams;
-	varying vec4 fogparm;
-#endif
-#ifndef NO_GLOW
-	varying vec2 glowdist;
-	uniform vec4 glowbottomplane, glowtopplane;
+
+in vec4 aPosition;
+in vec2 aTexCoord;
+in vec4 aColor;
+#ifndef SIMPLE	// we do not need these for simple shaders
+in vec4 aVertex2;
+out vec4 pixelpos;
+out vec2 glowdist;
 #endif
 
-#ifdef SOFTLIGHT
-	attribute float lightlevel_in;
-	varying float lightlevel;
-#endif
+out vec4 vTexCoord;
+out vec4 vColor;
 
 void main()
 {
-	#ifdef SOFTLIGHT
-		lightlevel = lightlevel_in;
-	#endif
-
-	#ifndef NO_SM4
-		// Yes, I know... But using a texture matrix here saves me from the hassle of tracking its state across shaders. ;)
-		vec4 worldcoord = gl_TextureMatrix[7] * gl_Vertex;
+	#ifndef SIMPLE
+		vec4 worldcoord = ModelMatrix * mix(aPosition, aVertex2, uInterpolationFactor);
 	#else
-		vec4 worldcoord = gl_Vertex;
+		vec4 worldcoord = ModelMatrix * aPosition;
 	#endif
-	vec4 eyeCoordPos = gl_ModelViewMatrix * worldcoord;
 
-	gl_FrontColor = gl_Color;
+	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	#ifndef NO_FOG
+	vColor = aColor;
+
+	#ifndef SIMPLE
 		pixelpos.xyz = worldcoord.xyz;
 		pixelpos.w = -eyeCoordPos.z/eyeCoordPos.w;
-		fogparm = fogparams;
-	#endif
-	
-	#ifndef NO_GLOW
-		glowdist.x = -((glowtopplane.w + glowtopplane.x * worldcoord.x + glowtopplane.y * worldcoord.z) * glowtopplane.z) - worldcoord.y;
-		glowdist.y = worldcoord.y + ((glowbottomplane.w + glowbottomplane.x * worldcoord.x + glowbottomplane.y * worldcoord.z) * glowbottomplane.z);
+
+		glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
+		glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
 	#endif
 	
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);
-		vec3 n = normalize(gl_NormalMatrix * gl_Normal);
-		vec3 r = reflect(u, n);
+		vec4 n = normalize(TextureMatrix * vec4(aTexCoord.x, 0.0, aTexCoord.y, 0.0));	// use texture matrix and coordinates for our normal. Since this is only used on walls, the normal's y coordinate is always 0.
+		vec3 r = reflect(u, n.xyz);
 		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);
-	#endif
-	
-	
-	#ifndef SPHEREMAP_0
-		gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+		vTexCoord.xy = sst;
 	#else
-		gl_TexCoord[0].xy = sst;
+		vTexCoord = TextureMatrix * vec4(aTexCoord, 0.0, 1.0);
 	#endif
 	
-	#ifndef NO_SM4
-		gl_Position = gl_ModelViewProjectionMatrix * worldcoord;
-	#else
-		gl_Position = ftransform();
-	#endif
-    #ifdef __GLSL_CG_DATA_TYPES
-		gl_ClipVertex = eyeCoordPos;
-	#endif
+	gl_Position = ProjectionMatrix * eyeCoordPos;
+	gl_ClipDistance[0] = worldcoord.y - uClipHeightBottom;
+	gl_ClipDistance[1] = uClipHeightTop - worldcoord.y;
 }

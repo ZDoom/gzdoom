@@ -2,6 +2,10 @@
 #ifndef __GLTEXTURE_H
 #define __GLTEXTURE_H
 
+#ifdef LoadImage
+#undef LoadImage
+#endif
+
 #define SHADED_TEXTURE -1
 #define DIRECT_PALETTE -2
 
@@ -9,6 +13,12 @@
 
 class FCanvasTexture;
 class AActor;
+
+// For error catching while changing parameters.
+enum EInvalid
+{
+	Invalid = 0
+};
 
 enum
 {
@@ -18,23 +28,26 @@ enum
 
 class FHardwareTexture
 {
+public:
 	enum
 	{
 		MAX_TEXTURES = 16
 	};
 
+private:
 	struct TranslatedTexture
 	{
 		unsigned int glTexID;
 		int translation;
-		int cm;
+		bool mipmapped;
+
+		void Delete();
 	};
 
 public:
 
 	static unsigned int lastbound[MAX_TEXTURES];
 	static int lastactivetexture;
-	static bool supportsNonPower2;
 	static int max_texturesize;
 
 	static int GetTexDimension(int value);
@@ -42,25 +55,19 @@ public:
 private:
 
 	short texwidth, texheight;
-	//float scalexfac, scaleyfac;
-	bool mipmap;
-	BYTE clampmode;
-	bool forcenofiltering;
 	bool forcenocompression;
 
-	unsigned int * glTexID;
-	TArray<TranslatedTexture> glTexID_Translated;
+	TranslatedTexture glDefTex;
+	TArray<TranslatedTexture> glTex_Translated;
 	unsigned int glDepthID;	// only used by camera textures
 
-	void LoadImage(unsigned char * buffer,int w, int h, unsigned int & glTexID,int wrapparam, bool alphatexture, int texunit);
-	unsigned * GetTexID(int cm, int translation);
+	TranslatedTexture * GetTexID(int translation);
 
 	int GetDepthBuffer();
-	void DeleteTexture(unsigned int texid);
 	void Resize(int width, int height, unsigned char *src_data, unsigned char *dst_data);
 
 public:
-	FHardwareTexture(int w, int h, bool mip, bool wrap, bool nofilter, bool nocompress);
+	FHardwareTexture(int w, int h, bool nocompress);
 	~FHardwareTexture();
 
 	static void Unbind(int texunit);
@@ -68,9 +75,8 @@ public:
 
 	void BindToFrameBuffer();
 
-	unsigned int Bind(int texunit, int cm, int translation=0);
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h,bool wrap, int texunit, int cm, int translation=0);
-	void Resize(int _width, int _height) ;
+	unsigned int Bind(int texunit, int translation, bool needmipmap);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation);
 
 	void Clean(bool all);
 };

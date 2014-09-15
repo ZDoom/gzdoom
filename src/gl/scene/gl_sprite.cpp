@@ -887,7 +887,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		{
 			// enhanced vision makes them more visible!
 			trans=0.5f;
+			FRenderStyle rs = RenderStyle;
 			RenderStyle = STYLE_Translucent;
+			RenderStyle.Flags = rs.Flags;	// Flags must be preserved, at this point it can only be STYLEF_InvertSource
 		}
 		else if (thing->flags & MF_STEALTH)	
 		{

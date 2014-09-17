@@ -57,7 +57,7 @@ FLightBuffer::FLightBuffer()
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
-		mBlockAlign = -1;
+		mBlockAlign = 0;
 		mBlockSize = mBufferSize;
 	}
 	else
@@ -100,12 +100,12 @@ void FLightBuffer::Clear()
 
 int FLightBuffer::UploadLights(FDynLightData &data)
 {
-	int size0 = data.arrays[0].Size()/4;
-	int size1 = data.arrays[1].Size()/4;
-	int size2 = data.arrays[2].Size()/4;
-	int totalsize = size0 + size1 + size2 + 1;
+	unsigned int size0 = data.arrays[0].Size()/4;
+	unsigned int size1 = data.arrays[1].Size()/4;
+	unsigned int size2 = data.arrays[2].Size()/4;
+	unsigned int totalsize = size0 + size1 + size2 + 1;
 
-	if (mBlockAlign >= 0 && totalsize + (mIndex % mBlockAlign) > mBlockSize)
+	if (mBlockAlign > 0 && totalsize + (mIndex % mBlockAlign) > mBlockSize)
 	{
 		mIndex = ((mIndex + mBlockAlign) / mBlockAlign) * mBlockAlign;
 
@@ -172,7 +172,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	if (mBufferPointer == NULL) return -1;
 	copyptr = mBufferPointer + mIndex * 4;
 
-	float parmcnt[] = { 0, size0, size0 + size1, size0 + size1 + size2 };
+	float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
 
 	memcpy(&copyptr[0], parmcnt, 4 * sizeof(float));
 	memcpy(&copyptr[4], &data.arrays[0][0], 4 * size0*sizeof(float));

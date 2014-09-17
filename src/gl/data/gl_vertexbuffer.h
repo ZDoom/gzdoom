@@ -51,8 +51,8 @@ class FFlatVertexBuffer : public FVertexBuffer
 
 	void CheckPlanes(sector_t *sector);
 
-	const unsigned int BUFFER_SIZE = 2000000;
-	const unsigned int BUFFER_SIZE_TO_USE = 1999500;
+	static const unsigned int BUFFER_SIZE = 2000000;
+	static const unsigned int BUFFER_SIZE_TO_USE = 1999500;
 
 	void ImmRenderBuffer(unsigned int primtype, unsigned int offset, unsigned int count);
 

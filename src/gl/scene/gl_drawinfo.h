@@ -8,7 +8,6 @@ enum GLDrawItemType
 	GLDIT_WALL,
 	GLDIT_FLAT,
 	GLDIT_SPRITE,
-	GLDIT_POLY,
 };
 
 enum DrawListType

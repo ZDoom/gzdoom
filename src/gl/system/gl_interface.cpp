@@ -133,8 +133,16 @@ void gl_LoadExtensions()
 	if (!Args->CheckParm("-gl3"))
 	{
 		// don't use GL 4.x features when running in GL 3 emulation mode.
-		if (CheckExtension("GL_ARB_shader_storage_buffer_object")) gl.flags |= RFL_SHADER_STORAGE_BUFFER;
-		if (CheckExtension("GL_ARB_buffer_storage")) gl.flags |= RFL_BUFFER_STORAGE;
+		if (CheckExtension("GL_ARB_buffer_storage"))
+		{
+			// work around a problem with older AMD drivers: Their implementation of shader storage buffer objects is piss-poor and does not match uniform buffers even closely.
+			// Recent drivers, GL 4.4 don't have this problem, these can easily be recognized by also supporting the GL_ARB_buffer_storage extension.
+			if (CheckExtension("GL_ARB_shader_storage_buffer_object"))
+			{
+				gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+			}
+			gl.flags |= RFL_BUFFER_STORAGE;
+		}
 	}
 	
 	int v;

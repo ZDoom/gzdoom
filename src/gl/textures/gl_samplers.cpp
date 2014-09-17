@@ -50,7 +50,7 @@ extern TexFilter_s TexFilter[];
 
 FSamplerManager::FSamplerManager()
 {
-	glGenSamplers(6, mSamplers);
+	glGenSamplers(7, mSamplers);
 	SetTextureFilterMode();
 	glSamplerParameteri(mSamplers[5], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glSamplerParameteri(mSamplers[5], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -70,7 +70,7 @@ FSamplerManager::FSamplerManager()
 FSamplerManager::~FSamplerManager()
 {
 	UnbindAll();
-	glDeleteSamplers(6, mSamplers);
+	glDeleteSamplers(7, mSamplers);
 }
 
 void FSamplerManager::UnbindAll()

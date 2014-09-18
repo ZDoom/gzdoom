@@ -1843,6 +1843,10 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		// If this is a missile or something else set the target to the originator
 		mo->target = originator ? originator : self;
 	}
+	if (flags & SIXF_SETMASTER)
+	{
+		mo->master = originator;
+	}
 	if (flags & SIXF_TRANSFERSCALE)
 	{
 		mo->scaleX = self->scaleX;

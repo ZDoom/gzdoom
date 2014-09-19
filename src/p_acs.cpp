@@ -4367,6 +4367,7 @@ enum EACSFunctions
 	ACSF_ChangeActorAngle,
 	ACSF_ChangeActorPitch,		// 80
 	ACSF_GetArmorInfo,
+	ACSF_DropInventory,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -5489,6 +5490,42 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return cnt;
 			}
 			break;
+		}
+
+		case ACSF_DropInventory:
+		{
+			const char *type = FBehavior::StaticLookupString(args[1]);
+			AInventory *inv;
+			
+			if (type != NULL)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						inv = activator->FindInventory(type);
+						if (inv)
+						{
+							activator->DropInventory(inv);
+						}
+					}
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *actor;
+					
+					while ((actor = it.Next()) != NULL)
+					{
+						inv = actor->FindInventory(type);
+						if (inv)
+						{
+							actor->DropInventory(inv);
+						}
+					}
+				}
+			}
+		break;
 		}
 
 		case ACSF_CheckFlag:

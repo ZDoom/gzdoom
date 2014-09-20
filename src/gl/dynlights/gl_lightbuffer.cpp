@@ -100,19 +100,20 @@ void FLightBuffer::Clear()
 
 int FLightBuffer::UploadLights(FDynLightData &data)
 {
-	unsigned int size0 = data.arrays[0].Size()/4;
-	unsigned int size1 = data.arrays[1].Size()/4;
-	unsigned int size2 = data.arrays[2].Size()/4;
-	unsigned int totalsize = size0 + size1 + size2 + 1;
+	int size0 = data.arrays[0].Size()/4;
+	int size1 = data.arrays[1].Size()/4;
+	int size2 = data.arrays[2].Size()/4;
+	int totalsize = size0 + size1 + size2 + 1;
 
-	if (mBlockAlign > 0 && totalsize + (mIndex % mBlockAlign) > mBlockSize)
+	// pointless type casting because some compilers can't print enough warnings.
+	if (mBlockAlign > 0 && (unsigned int)totalsize + (mIndex % mBlockAlign) > mBlockSize)
 	{
 		mIndex = ((mIndex + mBlockAlign) / mBlockAlign) * mBlockAlign;
 
 		// can't be rendered all at once.
-		if (totalsize > mBlockSize)
+		if ((unsigned int)totalsize > mBlockSize)
 		{
-			int diff = totalsize - mBlockSize;
+			int diff = totalsize - (int)mBlockSize;
 
 			size2 -= diff;
 			if (size2 < 0)

@@ -68,10 +68,7 @@ bool s_timerInitialized;
 bool s_timerExitRequested;
 
 uint32_t s_ticStart;
-uint32_t s_ticNext;
-
 uint32_t s_timerStart;
-uint32_t s_timerNext;
 
 int  s_tics;
 
@@ -99,7 +96,6 @@ void* TimerThreadFunc(void*)
 		}
 
 		s_timerStart = SDL_GetTicks();
-		s_timerNext  = Scale(Scale(s_timerStart, TICRATE, 1000) + 1, 1000, TICRATE);
 
 		pthread_cond_broadcast(&s_timerEvent);
 		pthread_mutex_unlock(&s_timerMutex);
@@ -113,7 +109,6 @@ int GetTimeThreaded(bool saveMS)
 	if (saveMS)
 	{
 		s_ticStart = s_timerStart;
-		s_ticNext  = s_timerNext;
 	}
 
 	return s_tics;
@@ -147,14 +142,12 @@ fixed_t I_GetTimeFrac(uint32* ms)
 
 	if (NULL != ms)
 	{
-		*ms = s_ticNext;
+		*ms = s_ticStart + 1000 / TICRATE;
 	}
 
-	const uint32_t step = s_ticNext - s_ticStart;
-
-	return 0 == step
+	return 0 == s_ticStart
 		? FRACUNIT
-		: clamp<fixed_t>( (now - s_ticStart) * FRACUNIT / step, 0, FRACUNIT);
+		: clamp<fixed_t>( (now - s_ticStart) * FRACUNIT * TICRATE / 1000, 0, FRACUNIT);
 }
 
 

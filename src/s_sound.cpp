@@ -1321,7 +1321,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			// If the sound is voc, use the custom loader.
 			if (strncmp ((const char *)sfxstart, "Creative Voice File", 19) == 0)
 			{
-				sfx->data = GSnd->LoadSoundVoc(sfxstart, len);
+				sfx->data = GSnd->LoadSoundVoc(sfxstart, size);
 			}
 			// If the sound is raw, just load it as such.
 			// Otherwise, try the sound as DMX format.

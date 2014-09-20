@@ -206,7 +206,7 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << flags7;
 	}
-	if (SaveVersion >= 4511)
+	if (SaveVersion >= 4512)
 	{
 		arc << weaponspecial;
 	}

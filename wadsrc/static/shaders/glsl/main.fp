@@ -12,7 +12,7 @@ out vec4 FragColor;
 		vec4 lights[];
 	};
 #else
-	layout(std140) uniform LightBufferUBO
+	/*layout(std140)*/ uniform LightBufferUBO
 	{
 		vec4 lights[NUM_UBO_LIGHTS];
 	};

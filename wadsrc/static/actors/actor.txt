@@ -62,6 +62,7 @@ ACTOR Actor native //: Thinker
 	native fixed_t radius;
 	native int reactiontime;
 	native fixed_t meleerange;
+	native fixed_t speed;
 
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
@@ -302,6 +303,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetTics(int tics);
 	action native A_SetDamageType(name damagetype);
 	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
+	action native A_SetSpeed(float speed);
 
 	action native A_CheckSightOrRange(float distance, state label);
 	action native A_CheckRange(float distance, state label);

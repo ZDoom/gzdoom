@@ -177,6 +177,11 @@ public:
 		mTextureMode = mode;
 	}
 
+	int GetTextureMode()
+	{
+		return mTextureMode;
+	}
+
 	void EnableTexture(bool on)
 	{
 		mTextureEnabled = on;

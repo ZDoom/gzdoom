@@ -338,10 +338,18 @@ void GLWall::RenderTranslucentWall()
 		gl_RenderState.EnableTexture(false);
 		extra = 0;
 	}
+	int tmode = gl_RenderState.GetTextureMode();
 
 	gl_SetColor(lightlevel, extra, Colormap, fabsf(alpha));
 	if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, extra, &Colormap, isadditive);
-	else gl_SetFog(255, 0, NULL, false);
+	else
+	{
+		if (flags & GLT_CLAMPY)
+		{
+			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
+		}
+		gl_SetFog(255, 0, NULL, false);
+	}
 
 	RenderWall(RWF_TEXTURED|RWF_NOSPLIT);
 
@@ -353,6 +361,7 @@ void GLWall::RenderTranslucentWall()
 		gl_RenderState.EnableTexture(true);
 	}
 	gl_RenderState.EnableGlow(false);
+	gl_RenderState.SetTextureMode(tmode);
 }
 
 //==========================================================================
@@ -363,6 +372,7 @@ void GLWall::RenderTranslucentWall()
 void GLWall::Draw(int pass)
 {
 	int rel;
+	int tmode;
 
 #ifdef _DEBUG
 	if (seg->linedef-lines==879)
@@ -384,13 +394,21 @@ void GLWall::Draw(int pass)
 	case GLPASS_PLAIN:
 		rel = rellight + getExtraLight();
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
+		tmode = gl_RenderState.GetTextureMode();
 		if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
-		else gl_SetFog(255, 0, NULL, false);
-
+		else
+		{
+			if (flags & GLT_CLAMPY)
+			{
+				if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
+			}
+			gl_SetFog(255, 0, NULL, false);
+		}
 		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
 		gl_RenderState.SetMaterial(gltexture, flags & 3, false, -1, false);
 		RenderWall(RWF_TEXTURED|RWF_GLOW);
 		gl_RenderState.EnableGlow(false);
+		gl_RenderState.SetTextureMode(tmode);
 		break;
 
 	case GLPASS_TRANSLUCENT:

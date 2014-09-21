@@ -798,7 +798,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	SetCameraPos(viewx, viewy, viewz, viewangle);
 	SetViewMatrix(false, false);
 	gl_RenderState.ApplyMatrices();
-	GLRenderer->mLights->Clear();
 
 	clipper.Clear();
 	angle_t a1 = FrustumAngle();
@@ -844,6 +843,8 @@ void FGLRenderer::RenderView (player_t* player)
 	gl_frameMS = I_MSTime();
 
 	P_FindParticleSubsectors ();
+
+	GLRenderer->mLights->Clear();
 
 	// prepare all camera textures that have been used in the last frame
 	FCanvasTextureInfo::UpdateAll();
@@ -896,6 +897,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	SetFixedColormap(player);
 	gl_RenderState.SetVertexBuffer(mVBO);
 	GLRenderer->mVBO->Reset();
+	GLRenderer->mLights->Clear();
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);

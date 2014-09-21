@@ -799,17 +799,20 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 			return false;
 		}
 
-		wglMakeCurrent(m_hDC, m_hRC);
+		if (m_hRC != NULL)
+		{
+			wglMakeCurrent(m_hDC, m_hRC);
 
-		// we can only use core profile contexts if GL_ARB_buffer_storage is supported or GL version is >= 4.4
-		if (prof == WGL_CONTEXT_CORE_PROFILE_BIT_ARB && !checkCoreUsability())
-		{
-			wglMakeCurrent(0, 0);
-			wglDeleteContext(m_hRC);
-		}
-		else
-		{
-			return true;
+			// we can only use core profile contexts if GL_ARB_buffer_storage is supported or GL version is >= 4.4
+			if (prof == WGL_CONTEXT_CORE_PROFILE_BIT_ARB && !checkCoreUsability())
+			{
+				wglMakeCurrent(0, 0);
+				wglDeleteContext(m_hRC);
+			}
+			else
+			{
+				return true;
+			}
 		}
 	}
 	return false;

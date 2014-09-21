@@ -1755,6 +1755,8 @@ enum SIX_Flags
 	SIXF_TRANSFERSPECIAL		= 1 << 15,
 	SIXF_CLEARCALLERSPECIAL		= 1 << 16,
 	SIXF_TRANSFERSTENCILCOL		= 1 << 17,
+	SIXF_TRANSFERALPHA			= 1 << 18,
+	SIXF_TRANSFERRENDERSTYLE	= 1 << 19,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1843,6 +1845,10 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		// If this is a missile or something else set the target to the originator
 		mo->target = originator ? originator : self;
 	}
+	if (flags & SIXF_SETMASTER)
+	{
+		mo->master = originator;
+	}
 	if (flags & SIXF_TRANSFERSCALE)
 	{
 		mo->scaleX = self->scaleX;
@@ -1870,6 +1876,14 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	if (flags & SIXF_TRANSFERSTENCILCOL)
 	{
 		mo->fillcolor = self->fillcolor;
+	}
+	if (flags & SIXF_TRANSFERALPHA)
+	{
+		mo->alpha = self->alpha;
+	}
+	if (flags & SIXF_TRANSFERRENDERSTYLE)
+	{
+		mo->RenderStyle = self->RenderStyle;
 	}
 
 	return true;
@@ -4965,4 +4979,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 	ACTION_PARAM_INT(chance, 2);
 
 	P_DropItem(self, spawntype, amount, chance);
+}
+
+//==========================================================================
+//
+// A_SetSpeed
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_FIXED(speed, 0);
+	
+	self->Speed = speed;
 }

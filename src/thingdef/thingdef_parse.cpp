@@ -374,6 +374,8 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		FScriptPosition::ErrorCounter++;
 	}
 
+
+
 	FName symname = sc.String;
 	if (sc.CheckToken('['))
 	{
@@ -390,6 +392,15 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		valuetype.MakeArray(maxelems);
 	}
 	sc.MustGetToken(';');
+
+	// We must ensure that we do not define duplicates, even when they come from a parent table.
+	if (symt->FindSymbol(symname, true) != NULL)
+	{
+		sc.ScriptMessage ("'%s' is already defined in '%s' or one of its ancestors.",
+			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");
+		FScriptPosition::ErrorCounter++;
+		return;
+	}
 
 	PSymbolVariable *sym = new PSymbolVariable(symname);
 	sym->offset = cls->Extend(sizeof(int) * (valuetype.Type == VAL_Array ? valuetype.size : 1));

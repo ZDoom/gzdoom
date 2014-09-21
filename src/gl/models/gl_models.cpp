@@ -483,7 +483,7 @@ void gl_InitModels()
 						smf.sprite = -1;
 						for (i = 0; i < (int)sprites.Size (); ++i)
 						{
-							if (strncmp (sprites[i].name, sc.String, 4) == 0)
+							if (strnicmp (sprites[i].name, sc.String, 4) == 0)
 							{
 								if (sprites[i].numframes==0)
 								{

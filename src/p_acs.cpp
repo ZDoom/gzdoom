@@ -4369,6 +4369,7 @@ enum EACSFunctions
 	ACSF_GetArmorInfo,
 	ACSF_DropInventory,
 	ACSF_PickActor,
+	ACSF_CanRaiseActor,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -5623,6 +5624,26 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				pickedActor->AddToHash();
 				
 				return 1;
+			}
+			break;
+
+		case ACSF_CanRaiseActor:
+			if (argCount >= 1) {
+				if (args[0] == 0) {
+					actor = SingleActorFromTID(args[0], activator);
+					if (actor != NULL) {
+						return P_Thing_CanRaise(actor);
+					}
+				}
+
+				FActorIterator iterator(args[0]);
+				bool canraiseall = false;
+				while ((actor = iterator.Next()))
+				{
+					canraiseall = !P_Thing_CanRaise(actor) | canraiseall;
+				}
+				
+				return !canraiseall;
 			}
 			break;
 

@@ -3785,6 +3785,52 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 
 //==========================================================================
 //
+// P_LinePickActor
+//
+//==========================================================================
+
+AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
+						DWORD actorMask, DWORD wallMask)
+{
+	fixed_t vx, vy, vz, shootz;
+	
+	angle >>= ANGLETOFINESHIFT;
+	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
+
+	vx = FixedMul(finecosine[pitch], finecosine[angle]);
+	vy = FixedMul(finecosine[pitch], finesine[angle]);
+	vz = -finesine[pitch];
+
+	shootz = t1->z - t1->floorclip + (t1->height >> 1);
+	if (t1->player != NULL)
+	{
+		shootz += FixedMul(t1->player->mo->AttackZOffset, t1->player->crouchfactor);
+	}
+	else
+	{
+		shootz += 8 * FRACUNIT;
+	}
+
+	FTraceResults trace;
+	Origin TData;
+	
+	TData.Caller = t1;
+	TData.hitGhosts = true;
+	
+	if (Trace(t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
+		actorMask, wallMask, t1, trace, TRACE_NoSky, CheckForActor, &TData))
+	{
+		if (trace.HitType == TRACE_HitActor)
+		{
+			return trace.Actor;
+		}
+	}
+
+	return NULL;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================

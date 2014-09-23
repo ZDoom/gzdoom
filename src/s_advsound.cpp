@@ -2347,14 +2347,14 @@ class AMusicChanger : public ASectorAction
 {
 	DECLARE_CLASS (AMusicChanger, ASectorAction)
 public:
-	virtual bool TriggerAction (AActor *triggerer, int activationType);
+	virtual bool DoTriggerAction (AActor *triggerer, int activationType);
 	virtual void Tick();
 	virtual void PostBeginPlay();
 };
 
 IMPLEMENT_CLASS(AMusicChanger)
 
-bool AMusicChanger::TriggerAction (AActor *triggerer, int activationType)
+bool AMusicChanger::DoTriggerAction (AActor *triggerer, int activationType)
 {
 	if (activationType & SECSPAC_Enter)
 	{
@@ -2364,7 +2364,7 @@ bool AMusicChanger::TriggerAction (AActor *triggerer, int activationType)
 			reactiontime = 30;
 		}
 	}
-	return Super::TriggerAction (triggerer, activationType);
+	return Super::DoTriggerAction (triggerer, activationType);
 }
  
 void AMusicChanger::Tick()

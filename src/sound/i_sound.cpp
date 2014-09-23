@@ -553,6 +553,7 @@ SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
 					break;
 				default: break;
 				}
+				i += blocksize;
 			}
 		}
 

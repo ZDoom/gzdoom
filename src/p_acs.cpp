@@ -2306,6 +2306,12 @@ void FBehavior::LoadScriptsDirectory ()
 	default:
 		break;
 	}
+
+// [EP] Clang 3.5.0 optimizer miscompiles this function and causes random
+// crashes in the program. I hope that Clang 3.5.x will fix this.
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ >= 5
+	asm("" : "+g" (NumScripts));
+#endif
 	for (i = 0; i < NumScripts; ++i)
 	{
 		Scripts[i].Flags = 0;
@@ -4361,6 +4367,8 @@ enum EACSFunctions
 	ACSF_ChangeActorAngle,
 	ACSF_ChangeActorPitch,		// 80
 	ACSF_GetArmorInfo,
+	ACSF_DropInventory,
+	ACSF_PickActor,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -5485,6 +5493,42 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			break;
 		}
 
+		case ACSF_DropInventory:
+		{
+			const char *type = FBehavior::StaticLookupString(args[1]);
+			AInventory *inv;
+			
+			if (type != NULL)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						inv = activator->FindInventory(type);
+						if (inv)
+						{
+							activator->DropInventory(inv);
+						}
+					}
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *actor;
+					
+					while ((actor = it.Next()) != NULL)
+					{
+						inv = actor->FindInventory(type);
+						if (inv)
+						{
+							actor->DropInventory(inv);
+						}
+					}
+				}
+			}
+		break;
+		}
+
 		case ACSF_CheckFlag:
 		{
 			AActor *actor = SingleActorFromTID(args[0], activator);
@@ -5547,6 +5591,38 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				SetActorPitch(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_PickActor:
+			if (argCount >= 5)
+			{
+				actor = SingleActorFromTID(args[0], activator);
+				if (actor == NULL)
+				{
+					return 0;
+				}
+
+				DWORD actorMask = MF_SHOOTABLE;
+				if (argCount >= 6) {
+					actorMask = args[5];
+				}
+
+				DWORD wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;
+				if (argCount >= 7) {
+					wallMask = args[6];
+				}
+
+				AActor* pickedActor = P_LinePickActor(actor, args[1] << 16, args[3], args[2] << 16, actorMask, wallMask);
+				if (pickedActor == NULL) {
+					return 0;
+				}
+
+				pickedActor->RemoveFromHash();
+				pickedActor->tid = args[4];
+				pickedActor->AddToHash();
+				
+				return 1;
 			}
 			break;
 

@@ -1318,23 +1318,23 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			SDWORD dmxlen = LittleLong(((SDWORD *)sfxdata)[1]);
 
 			// If the sound is voc, use the custom loader.
-			// If the sound is raw, just load it as such.
-			// Otherwise, try the sound as DMX format.
-			// If that fails, let the sound system try and figure it out.
 			if (strncmp ((const char *)sfxdata, "Creative Voice File", 19) == 0)
 			{
 				sfx->data = GSnd->LoadSoundVoc(sfxdata, size);
 			}
+			// If the sound is raw, just load it as such.
 			else if (sfx->bLoadRAW)
 			{
 				sfx->data = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart);
 			}
+			// Otherwise, try the sound as DMX format.
 			else if (((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && dmxlen <= size - 8)
 			{
 				int frequency = LittleShort(((WORD *)sfxdata)[1]);
 				if (frequency == 0) frequency = 11025;
 				sfx->data = GSnd->LoadSoundRaw(sfxdata+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
 			}
+			// If that fails, let the sound system try and figure it out.
 			else
 			{
 				sfx->data = GSnd->LoadSound(sfxdata, size);

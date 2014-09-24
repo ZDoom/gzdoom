@@ -3843,6 +3843,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->reactiontime = value;
 		break;
 
+	case APROP_MeleeRange:
+		actor->meleerange = value;
+		break;
+
 	case APROP_ViewHeight:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 			static_cast<APlayerPawn *>(actor)->ViewHeight = value;

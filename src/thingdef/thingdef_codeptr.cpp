@@ -3532,7 +3532,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 //===========================================================================
 //
-// A_DamageMaster (int amount)
+// A_DamageMaster (int amount, str damagetype)
 // Damages the master of this child by the specified amount. Negative values heal.
 //
 //===========================================================================
@@ -3558,7 +3558,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
 
 //===========================================================================
 //
-// A_DamageChildren (amount)
+// A_DamageChildren (amount, str damagetype)
 // Damages the children of this master by the specified amount. Negative values heal.
 //
 //===========================================================================
@@ -3592,7 +3592,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 
 //===========================================================================
 //
-// A_DamageSiblings (amount)
+// A_DamageSiblings (int amount, str damagetype)
 // Damages the siblings of this master by the specified amount. Negative values heal.
 //
 //===========================================================================
@@ -4993,4 +4993,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	ACTION_PARAM_FIXED(speed, 0);
 	
 	self->Speed = speed;
+}
+
+//===========================================================================
+//
+// A_DamageSelf (int amount, str damagetype)
+// Damages the calling actor by the specified amount. Negative values heal.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+
+	if (amount > 0)
+	{
+		P_DamageMobj(self, self, self, amount, DamageType, DMG_NO_ARMOR);
+	}
+	else if (amount < 0)
+	{
+		amount = -amount;
+		P_GiveBody(self, amount);
+	}
 }

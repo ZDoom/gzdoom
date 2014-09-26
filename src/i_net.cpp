@@ -208,11 +208,11 @@ void PacketSend (void)
 	{
 		I_FatalError("Netbuffer overflow!");
 	}
+	assert(!(doomcom.data[0] & NCMD_COMPRESSED));
 
 	uLong size = TRANSMIT_SIZE - 1;
 	if (doomcom.datalength >= 10)
 	{
-		assert(!(doomcom.data[0] & NCMD_COMPRESSED));
 		TransmitBuffer[0] = doomcom.data[0] | NCMD_COMPRESSED;
 		c = compress2(TransmitBuffer + 1, &size, doomcom.data + 1, doomcom.datalength - 1, 9);
 		size += 1;
@@ -937,11 +937,6 @@ bool I_InitNetwork (void)
 	{
 		doomcom.ticdup = 1;
 	}
-
-	if (Args->CheckParm ("-extratic"))
-		doomcom.extratics = 1;
-	else
-		doomcom.extratics = 0;
 
 	v = Args->CheckValue ("-port");
 	if (v)

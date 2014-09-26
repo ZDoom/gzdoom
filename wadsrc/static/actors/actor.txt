@@ -304,6 +304,9 @@ ACTOR Actor native //: Thinker
 	action native A_SetDamageType(name damagetype);
 	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
 	action native A_SetSpeed(float speed);
+	action native A_DamageSelf(int amount, name damagetype = "none");
+	action native A_DamageTarget(int amount, name damagetype = "none");
+	action native A_DamageTracer(int amount, name damagetype = "none");
 
 	action native A_CheckSightOrRange(float distance, state label);
 	action native A_CheckRange(float distance, state label);

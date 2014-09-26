@@ -166,6 +166,7 @@ void	P_UpdateSpecials (void);
 // when needed
 bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
+bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);

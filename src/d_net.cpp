@@ -110,13 +110,15 @@ unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
 unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
 bool			hadlate;
+int				netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
+int				lastaverage;
 
 int 			nodeforplayer[MAXPLAYERS];
 int				playerfornode[MAXNETNODES];
 
 int 			maketic;
 int 			skiptics;
-int 			ticdup; 		
+int 			ticdup;
 
 void D_ProcessEvents (void); 
 void G_BuildTiccmd (ticcmd_t *cmd); 
@@ -150,6 +152,32 @@ CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		I_SetFPSLimit(-1);
 	}
 }
+
+CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE)
+CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
+{
+	if (self < 0)
+	{
+		self = 0;
+	}
+	else if (self > 2)
+	{
+		self = 2;
+	}
+}
+
+#ifdef _DEBUG
+CVAR(Int, net_fakelatency, 0, 0);
+
+struct PacketStore
+{
+	int timer;
+	doomcom_t message;
+};
+
+static TArray<PacketStore> InBuffer;
+static TArray<PacketStore> OutBuffer;
+#endif
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial
@@ -347,6 +375,9 @@ int NetbufferSize ()
 		k += netbuffer[k] + 1;
 	}
 
+	// Network delay byte
+	k++;
+
 	if (netbuffer[0] & NCMD_MULTI)
 	{
 		count = netbuffer[k];
@@ -487,7 +518,30 @@ void HSendPacket (int node, int len)
 	doomcom.remotenode = node;
 	doomcom.datalength = len;
 
-	I_NetCmd ();
+#ifdef _DEBUG
+	if (net_fakelatency / 2 > 0)
+	{
+		PacketStore store;
+		store.message = doomcom;
+		store.timer = I_GetTime(false) + ((net_fakelatency / 2) / (1000 / TICRATE));
+		OutBuffer.Push(store);
+	}
+	else
+		I_NetCmd();
+
+	for (unsigned int i = 0; i < OutBuffer.Size(); i++)
+	{
+		if (OutBuffer[i].timer <= I_GetTime(false))
+		{
+			doomcom = OutBuffer[i].message;
+			I_NetCmd();
+			OutBuffer.Delete(i);
+			i = -1;
+		}
+	}
+#else
+	I_NetCmd();
+#endif
 }
 
 //
@@ -509,12 +563,42 @@ bool HGetPacket (void)
 
 	if (demoplayback)
 		return false;
-				
+
 	doomcom.command = CMD_GET;
 	I_NetCmd ();
+
+#ifdef _DEBUG
+	if (net_fakelatency / 2 > 0 && doomcom.remotenode != -1)
+	{
+		PacketStore store;
+		store.message = doomcom;
+		store.timer = I_GetTime(false) + ((net_fakelatency / 2) / (1000 / TICRATE));
+		InBuffer.Push(store);
+		doomcom.remotenode = -1;
+	}
 	
 	if (doomcom.remotenode == -1)
+	{
+		bool gotmessage = false;
+		for (unsigned int i = 0; i < InBuffer.Size(); i++)
+		{
+			if (InBuffer[i].timer <= I_GetTime(false))
+			{
+				doomcom = InBuffer[i].message;
+				InBuffer.Delete(i);
+				gotmessage = true;
+				break;
+			}
+		}
+		if (!gotmessage)
+			return false;
+	}
+#else
+	if (doomcom.remotenode == -1)
+	{
 		return false;
+	}
+#endif
 		
 	if (debugfile)
 	{
@@ -570,6 +654,9 @@ bool HGetPacket (void)
 
 	if (doomcom.datalength != NetbufferSize ())
 	{
+		Printf("Bad packet length %i (calculated %i)\n",
+			doomcom.datalength, NetbufferSize());
+
 		if (debugfile)
 			fprintf (debugfile,"---bad packet length %i (calculated %i)\n",
 				doomcom.datalength, NetbufferSize());
@@ -781,6 +868,9 @@ void GetPackets (void)
 				k++;
 			}
 		}
+
+		// Pull current network delay from node
+		netdelay[netnode][(nettics[netnode]+1) % BACKUPTICS] = netbuffer[k++];
 
 		playerbytes[0] = netconsole;
 		if (netbuffer[0] & NCMD_MULTI)
@@ -1150,11 +1240,18 @@ void NetUpdate (void)
 			netbuffer[k++] = lowtic;
 		}
 
-		numtics = lowtic - realstart;
+		numtics = MAX(0, lowtic - realstart);
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 
-		resendto[i] = MAX (0, lowtic - doomcom.extratics);
+		switch (net_extratic)
+		{
+		case 0:
+		default: 
+			resendto[i] = lowtic; break;
+		case 1: resendto[i] = MAX(0, lowtic - 1); break;
+		case 2: resendto[i] = nettics[i]; break;
+		}
 
 		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])
 		{
@@ -1189,6 +1286,10 @@ void NetUpdate (void)
 				}
 			}
 		}
+
+		// Send current network delay
+		// The number of tics we just made should be removed from the count.
+		netbuffer[k++] = ((maketic - newtics - gametic) / ticdup);
 
 		if (numtics > 0)
 		{
@@ -1299,9 +1400,37 @@ void NetUpdate (void)
 			// that it won't adapt. Fortunately, player prediction helps
 			// alleviate the lag somewhat.
 
-			if (NetMode != NET_PacketServer)
+			if (NetMode == NET_PeerToPeer)
 			{
-				mastertics = nettics[nodeforplayer[Net_Arbitrator]];
+				int totalavg = 0;
+				if (net_ticbalance)
+				{
+					// Try to guess ahead the time it takes to send responses to the slowest node
+					int nodeavg = 0, arbavg = 0;
+
+					for (j = 0; j < BACKUPTICS; j++)
+					{
+						arbavg += netdelay[nodeforplayer[Net_Arbitrator]][j];
+						nodeavg += netdelay[0][j];
+					}
+					arbavg /= BACKUPTICS;
+					nodeavg /= BACKUPTICS;
+
+					// We shouldn't adapt if we are already the arbitrator isn't what we are waiting for, otherwise it just adds more latency
+					if (arbavg > nodeavg)
+					{
+						lastaverage = totalavg = ((arbavg + nodeavg) / 2);
+					}
+					else
+					{
+						// Allow room to guess two tics ahead
+						if (nodeavg > (arbavg + 2) && lastaverage > 0)
+							lastaverage--;
+						totalavg = lastaverage;
+					}
+				}
+					
+				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + totalavg;
 			}
 			if (nettics[0] <= mastertics)
 			{
@@ -1346,9 +1475,8 @@ void NetUpdate (void)
 //
 //  0 One byte set to NCMD_SETUP+2
 //  1 One byte for ticdup setting
-//  2 One byte for extratics setting
-//  3 One byte for NetMode setting
-//  4 String with starting map's name
+//  2 One byte for NetMode setting
+//  3 String with starting map's name
 //  . Four bytes for the RNG seed
 //  . Stream containing remaining game info
 //
@@ -1429,10 +1557,9 @@ bool DoArbitrate (void *userdata)
 			data->gotsetup[0] = 0x80;
 
 			ticdup = doomcom.ticdup = netbuffer[1];
-			doomcom.extratics = netbuffer[2];
-			NetMode = netbuffer[3];
+			NetMode = netbuffer[2];
 
-			stream = &netbuffer[4];
+			stream = &netbuffer[3];
 			s = ReadString (&stream);
 			startmap = s;
 			delete[] s;
@@ -1497,9 +1624,8 @@ bool DoArbitrate (void *userdata)
 	{
 		netbuffer[0] = NCMD_SETUP+2;
 		netbuffer[1] = (BYTE)doomcom.ticdup;
-		netbuffer[2] = (BYTE)doomcom.extratics;
-		netbuffer[3] = NetMode;
-		stream = &netbuffer[4];
+		netbuffer[2] = NetMode;
+		stream = &netbuffer[3];
 		WriteString (startmap, &stream);
 		WriteLong (rngseed, &stream);
 		C_WriteCVars (&stream, CVAR_SERVERINFO, true);
@@ -1647,15 +1773,23 @@ void D_CheckNetGame (void)
 
 	consoleplayer = doomcom.consoleplayer;
 
-	v = Args->CheckValue ("-netmode");
-	if (v != NULL)
+	if (consoleplayer == Net_Arbitrator)
 	{
-		NetMode = atoi (v) != 0 ? NET_PacketServer : NET_PeerToPeer;
-	}
-	if (doomcom.numnodes > 1)
-	{
-		Printf ("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
-			v != NULL ? "forced" : "auto");
+		v = Args->CheckValue("-netmode");
+		if (v != NULL)
+		{
+			NetMode = atoi(v) != 0 ? NET_PacketServer : NET_PeerToPeer;
+		}
+		if (doomcom.numnodes > 1)
+		{
+			Printf("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
+				v != NULL ? "forced" : "auto");
+		}
+
+		if (Args->CheckParm("-extratic"))
+		{
+			net_extratic = 1;
+		}
 	}
 
 	// [RH] Setup user info
@@ -1682,6 +1816,11 @@ void D_CheckNetGame (void)
 		playeringame[i] = true;
 	for (i = 0; i < doomcom.numnodes; i++)
 		nodeingame[i] = true;
+
+	if (consoleplayer != Net_Arbitrator && doomcom.numnodes > 1)
+	{
+		Printf("Arbitrator selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode.\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
+	}
 
 	Printf ("player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom.numplayers, doomcom.numnodes);
@@ -1809,6 +1948,9 @@ void TryRunTics (void)
 		{
 			C_Ticker();
 			M_Ticker();
+			// Repredict the player for new buffered movement
+			P_UnPredictPlayer();
+			P_PredictPlayer(&players[consoleplayer]);
 		}
 		return;
 	}
@@ -1844,6 +1986,9 @@ void TryRunTics (void)
 		{
 			C_Ticker ();
 			M_Ticker ();
+			// Repredict the player for new buffered movement
+			P_UnPredictPlayer();
+			P_PredictPlayer(&players[consoleplayer]);
 			return;
 		}
 	}
@@ -1857,6 +2002,7 @@ void TryRunTics (void)
 	// run the count tics
 	if (counts > 0)
 	{
+		P_UnPredictPlayer();
 		while (counts--)
 		{
 			if (gametic > lowtic)
@@ -1876,6 +2022,7 @@ void TryRunTics (void)
 
 			NetUpdate ();	// check for new console commands
 		}
+		P_PredictPlayer(&players[consoleplayer]);
 		S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 	}
 }
@@ -2713,7 +2860,6 @@ void Net_SkipCommand (int type, BYTE **stream)
 CCMD (pings)
 {
 	int i;
-
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],

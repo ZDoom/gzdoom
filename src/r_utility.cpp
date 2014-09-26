@@ -737,24 +737,20 @@ void R_ClearPastViewer (AActor *actor)
 
 void R_RebuildViewInterpolation(player_t *player)
 {
-	InterpolationViewer *iview;
-	if (NoInterpolateView)
-	{
-		if (player != NULL && player->camera != NULL)
-		{
-			iview = FindPastViewer(player->camera);
-		}
+	if (player == NULL || player->camera == NULL)
+		return;
 
-		if (iview == NULL)
-			return;
+	if (!NoInterpolateView)
+		return;
+	NoInterpolateView = false;
 
-		NoInterpolateView = false;
-		iview->oviewx = iview->nviewx;
-		iview->oviewy = iview->nviewy;
-		iview->oviewz = iview->nviewz;
-		iview->oviewpitch = iview->nviewpitch;
-		iview->oviewangle = iview->nviewangle;
-	}
+	InterpolationViewer *iview = FindPastViewer(player->camera);
+
+	iview->oviewx = iview->nviewx;
+	iview->oviewy = iview->nviewy;
+	iview->oviewz = iview->nviewz;
+	iview->oviewpitch = iview->nviewpitch;
+	iview->oviewangle = iview->nviewangle;
 }
 
 //==========================================================================

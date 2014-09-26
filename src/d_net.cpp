@@ -1402,13 +1402,10 @@ void NetUpdate (void)
 
 			if (NetMode == NET_PeerToPeer)
 			{
-				// Try to guess ahead the time it takes to send responses to the slowest node
-				// [ED850] It seems that there is a bias based on network adaption (which the arbitrator doesn't do),
-				// so I have set this up to assume one less tic, which appears to balance it out.
 				int totalavg = 0;
 				if (net_ticbalance)
 				{
-					// We shouldn't adapt if we are already the slower then the arbitrator, otherwise it just adds more latency
+					// Try to guess ahead the time it takes to send responses to the slowest node
 					int nodeavg = 0, arbavg = 0;
 
 					for (j = 0; j < BACKUPTICS; j++)
@@ -1419,12 +1416,14 @@ void NetUpdate (void)
 					arbavg /= BACKUPTICS;
 					nodeavg /= BACKUPTICS;
 
+					// We shouldn't adapt if we are already the arbitrator isn't what we are waiting for, otherwise it just adds more latency
 					if (arbavg > nodeavg)
 					{
 						lastaverage = totalavg = ((arbavg + nodeavg) / 2);
 					}
 					else
 					{
+						// Allow room to guess two tics ahead
 						if (nodeavg > (arbavg + 2) && lastaverage > 0)
 							lastaverage--;
 						totalavg = lastaverage;

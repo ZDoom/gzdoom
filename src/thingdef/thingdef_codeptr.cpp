@@ -601,11 +601,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 //==========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_INT(health, 0);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_INT(ptr_selector, 2);
 
-	if (self->health < health) ACTION_JUMP(jump);
+	AActor *measured;
+
+	measured = COPY_AAPTR(self, ptr_selector);
+	
+	if (measured && measured->health < health)
+	{
+		ACTION_JUMP(jump);
+	}
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 }

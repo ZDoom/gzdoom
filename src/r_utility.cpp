@@ -731,6 +731,46 @@ void R_ClearPastViewer (AActor *actor)
 
 //==========================================================================
 //
+// R_RebuildViewInterpolation
+//
+//==========================================================================
+
+void R_RebuildViewInterpolation(player_t *player)
+{
+	InterpolationViewer *iview;
+	if (NoInterpolateView)
+	{
+		if (player != NULL && player->camera != NULL)
+		{
+			iview = FindPastViewer(player->camera);
+		}
+
+		if (iview == NULL)
+			return;
+
+		NoInterpolateView = false;
+		iview->oviewx = iview->nviewx;
+		iview->oviewy = iview->nviewy;
+		iview->oviewz = iview->nviewz;
+		iview->oviewpitch = iview->nviewpitch;
+		iview->oviewangle = iview->nviewangle;
+	}
+}
+
+//==========================================================================
+//
+// R_GetViewInterpolationStatus
+//
+//==========================================================================
+
+bool R_GetViewInterpolationStatus()
+{
+	return NoInterpolateView;
+}
+
+
+//==========================================================================
+//
 // R_SetupFrame
 //
 //==========================================================================

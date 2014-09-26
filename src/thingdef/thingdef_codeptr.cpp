@@ -5007,13 +5007,67 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 
-	if (amount > 0)
+		if (amount > 0)
+		{
+			P_DamageMobj(self, self, self, amount, DamageType, DMG_NO_ARMOR);
+		}
+		else if (amount < 0)
+		{
+			amount = -amount;
+			P_GiveBody(self, amount);
+		}
+}
+
+//===========================================================================
+//
+// A_DamageTarget (int amount, str damagetype)
+// Damages the target of the actor by the specified amount. Negative values heal.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+
+	if (self->target != NULL)
 	{
-		P_DamageMobj(self, self, self, amount, DamageType, DMG_NO_ARMOR);
+
+		if (amount > 0)
+		{
+			P_DamageMobj(self->target, self, self, amount, DamageType, DMG_NO_ARMOR);
+		}
+		else if (amount < 0)
+		{
+			amount = -amount;
+			P_GiveBody(self->target, amount);
+		}
 	}
-	else if (amount < 0)
+}
+
+//===========================================================================
+//
+// A_DamageTracer (int amount, str damagetype)
+// Damages the tracer of the actor by the specified amount. Negative values heal.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+
+	if (self->target != NULL)
 	{
-		amount = -amount;
-		P_GiveBody(self, amount);
+
+		if (amount > 0)
+		{
+			P_DamageMobj(self->tracer, self, self, amount, DamageType, DMG_NO_ARMOR);
+		}
+		else if (amount < 0)
+		{
+			amount = -amount;
+			P_GiveBody(self->tracer, amount);
+		}
 	}
 }

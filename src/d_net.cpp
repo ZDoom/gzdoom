@@ -111,6 +111,7 @@ unsigned int	currrecvtime[MAXPLAYERS];
 unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
 bool			hadlate;
 int				netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
+int				lastaverage;
 
 int 			nodeforplayer[MAXPLAYERS];
 int				playerfornode[MAXNETNODES];
@@ -1407,36 +1408,26 @@ void NetUpdate (void)
 				int totalavg = 0;
 				if (net_ticbalance)
 				{
-					// We shouldn't adapt if we are already the slowest node, otherwise it just adds more latency
-					bool slow = true;
-					int nodeavg = 0;
-					for (i = 1; i < MAXNETNODES; i++)
-					{
-						if (!nodeingame[i])
-							continue;
+					// We shouldn't adapt if we are already the slower then the arbitrator, otherwise it just adds more latency
+					int nodeavg = 0, arbavg = 0;
 
-						if (netdelay[i][0] > netdelay[0][0])
-						{
-							slow = false;
-							break;
-						}
+					for (j = 0; j < BACKUPTICS; j++)
+					{
+						arbavg += netdelay[nodeforplayer[Net_Arbitrator]][j];
+						nodeavg += netdelay[0][j];
 					}
+					arbavg /= BACKUPTICS;
+					nodeavg /= BACKUPTICS;
 
-					if (!slow)
+					if (arbavg > nodeavg)
 					{
-						int totalnodes = 0;
-						for (i = 0; i < MAXNETNODES; i++)
-						{
-							if (!nodeingame[i])
-								continue;
-
-							totalnodes++;
-							nodeavg = 0;
-							for (j = 0; j < BACKUPTICS; j++) nodeavg += netdelay[i][j];
-							totalavg += (nodeavg / BACKUPTICS);
-						}
-
-						totalavg = (totalavg / totalnodes) - 1;
+						lastaverage = totalavg = ((arbavg + nodeavg) / 2);
+					}
+					else
+					{
+						if (nodeavg > (arbavg + 2) && lastaverage > 0)
+							lastaverage--;
+						totalavg = lastaverage;
 					}
 				}
 					

@@ -2675,133 +2675,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 
 }
 
-enum KILS
-{
-	KILS_FOILINVUL =	1 << 0,
-	KILS_KILLMISSILES = 1 << 1,
-	KILS_NOMONSTERS =	1 << 2,
-};
-
-//===========================================================================
-//
-// A_KillMaster(damagetype, int flags)
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
-{
-	ACTION_PARAM_START(2);
-	ACTION_PARAM_NAME(damagetype, 0);
-	ACTION_PARAM_INT(flags, 1);
-
-	if (self->master != NULL)
-	{
-		if ((self->master->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
-		{
-			//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
-			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
-			//since that's the whole point of it.
-			if ((!(self->master->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(self->master->flags5 & MF5_NODAMAGE))
-			{
-				P_ExplodeMissile(self->master, NULL, NULL);
-			}
-		}
-		if (!(flags & KILS_NOMONSTERS))
-		{
-			if (flags & KILS_FOILINVUL)
-			{
-				P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
-			}
-			else
-			{
-				P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-			}
-		}		
-	}
-}
-
-//===========================================================================
-//
-// A_KillChildren(damagetype, int flags)
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
-{
-	ACTION_PARAM_START(2);
-	ACTION_PARAM_NAME(damagetype, 0);
-	ACTION_PARAM_INT(flags, 1);
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	while ( (mo = it.Next()) )
-	{
-		if (mo->master == self)
-		{
-			if ((mo->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
-			{
-				if ((!(mo->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(mo->flags5 & MF5_NODAMAGE))
-				{
-					P_ExplodeMissile(mo, NULL, NULL);
-				}
-			}
-			if (!(flags & KILS_NOMONSTERS))
-			{
-				if (flags & KILS_FOILINVUL)
-				{
-					P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
-				}
-				else
-				{
-					P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-				}
-			}
-		}
-	}
-}
-
-//===========================================================================
-//
-// A_KillSiblings(damagetype, int flags)
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
-{
-	ACTION_PARAM_START(2);
-	ACTION_PARAM_NAME(damagetype, 0);
-	ACTION_PARAM_INT(flags, 1);
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	if (self->master != NULL)
-	{
-		while ( (mo = it.Next()) )
-		{
-			if (mo->master == self->master && mo != self)
-			{
-				if ((mo->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
-				{
-					if ((!(mo->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(mo->flags5 & MF5_NODAMAGE))
-					{
-						P_ExplodeMissile(mo, NULL, NULL);
-					}
-				}
-				if (!(flags & KILS_NOMONSTERS))
-				{
-					if (flags & KILS_FOILINVUL)
-					{
-						P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
-					}
-					else
-					{
-						P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-					}
-				}
-			}
-		}
-	}
-}
-
 //===========================================================================
 //
 // A_CountdownArg
@@ -3609,156 +3482,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	ACTION_JUMP(jump);
 }
-
-enum DMSS
-{
-	DMSS_FOILINVUL			= 1,
-	DMSS_AFFECTARMOR		= 2,
-	DMSS_KILL				= 4,
-};
-
-//===========================================================================
-//
-// A_DamageMaster (int amount, str damagetype, int flags)
-// Damages the master of this child by the specified amount. Negative values heal.
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
-{
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_INT(amount, 0);
-	ACTION_PARAM_NAME(DamageType, 1);
-	ACTION_PARAM_INT(flags, 2);
-
-
-
-	if (self->master != NULL)
-	{
-		if ((amount > 0) || (flags & DMSS_KILL))
-		{
-			if (!(self->master->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-			{
-				if (flags & DMSS_KILL)
-				{
-					P_DamageMobj(self->master, self, self, self->master->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-				}
-				if (flags & DMSS_AFFECTARMOR)
-				{
-					P_DamageMobj(self->master, self, self, amount, DamageType, DMG_FOILINVUL);
-				}
-				else
-				{
-					P_DamageMobj(self->master, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-				}
-			}
-		}
-		else if (amount < 0)
-		{
-			amount = -amount;
-			P_GiveBody(self->master, amount);
-		}
-	}
-}
-
-//===========================================================================
-//
-// A_DamageChildren (amount, str damagetype, int flags)
-// Damages the children of this master by the specified amount. Negative values heal.
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
-{
-	TThinkerIterator<AActor> it;
-	AActor * mo;
-
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_INT(amount, 0);
-	ACTION_PARAM_NAME(DamageType, 1);
-	ACTION_PARAM_INT(flags, 2);
-
-	while ( (mo = it.Next()) )
-	{
-		if (mo->master == self)
-		{
-			if ((amount > 0) || (flags & DMSS_KILL)) //Bypass if kill flag is present; it won't matter. It intends to kill them.
-			{
-				if (!(mo->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-				{
-					if (flags & DMSS_KILL)
-					{
-						P_DamageMobj(mo, self, self, mo->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-					}
-					if (flags & DMSS_AFFECTARMOR)
-					{
-						P_DamageMobj(mo, self, self, amount, DamageType, DMG_FOILINVUL);
-					}
-					else
-					{
-						P_DamageMobj(mo, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-					}
-				}
-			}
-			else if (amount < 0)
-			{
-				amount = -amount;
-				P_GiveBody(mo, amount);
-			}
-		}
-	}
-}
-
-// [KS] *** End of my modifications ***
-
-//===========================================================================
-//
-// A_DamageSiblings (int amount, str damagetype, int flags)
-// Damages the siblings of this master by the specified amount. Negative values heal.
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
-{
-	TThinkerIterator<AActor> it;
-	AActor * mo;
-
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_INT(amount, 0);
-	ACTION_PARAM_NAME(DamageType, 1);
-	ACTION_PARAM_INT(flags, 2);
-
-	if (self->master != NULL)
-	{
-		while ((mo = it.Next()))
-		{
-			if (mo->master == self->master && mo != self)
-			{
-				if ((amount > 0) || (flags & DMSS_KILL))
-				{
-					if (!(mo->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-					{
-						if (flags & DMSS_KILL)
-						{
-							P_DamageMobj(mo, self, self, mo->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-						}
-						if (flags & DMSS_AFFECTARMOR)
-						{
-							P_DamageMobj(mo, self, self, amount, DamageType, DMG_FOILINVUL);
-						}
-						else
-						{
-							P_DamageMobj(mo, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-						}
-					}
-					else if (amount < 0)
-					{
-						amount = -amount;
-						P_GiveBody(mo, amount);
-					}
-				}
-			}
-		}
-	}
-}
-
 
 //===========================================================================
 //
@@ -5131,8 +4854,51 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 
 //===========================================================================
 //
-// A_DamageSelf (int amount, str damagetype, int flags)
-// Damages the calling actor by the specified amount. Negative values heal.
+// Common A_Damage handler
+//
+// A_Damage* (int amount, str damagetype, int flags)
+// Damages the specified actor by the specified amount. Negative values heal.
+//
+//===========================================================================
+
+enum DMSS
+{
+	DMSS_FOILINVUL			= 1,
+	DMSS_AFFECTARMOR		= 2,
+	DMSS_KILL				= 4,
+};
+
+static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
+{
+	if ((amount > 0) || (flags & DMSS_KILL))
+	{
+		if (!(dmgtarget->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
+		{
+			if (flags & DMSS_KILL)
+			{
+				P_DamageMobj(dmgtarget, self, self, dmgtarget->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
+			}
+			if (flags & DMSS_AFFECTARMOR)
+			{
+				P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL);
+			}
+			else
+			{
+				//[MC] DMG_FOILINVUL is needed for making the damage occur on the actor.
+				P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
+			}
+		}
+	}
+	else if (amount < 0)
+	{
+		amount = -amount;
+		P_GiveBody(dmgtarget, amount);
+	}
+}
+
+//===========================================================================
+//
+//
 //
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
@@ -5142,36 +4908,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 
-	if ((amount > 0) || (flags & DMSS_KILL))
-	{
-		if (!(self->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-		{
-			if (flags & DMSS_KILL)
-			{
-				P_DamageMobj(self, self, self, self->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-			}
-			if (flags & DMSS_AFFECTARMOR)
-			{
-				P_DamageMobj(self, self, self, amount, DamageType, DMG_FOILINVUL);
-			}
-			else
-			{
-				//[MC] DMG_FOILINVUL is needed for making the damage occur on the actor.
-				P_DamageMobj(self, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-			}
-		}
-	}
-	else if (amount < 0)
-	{
-		amount = -amount;
-		P_GiveBody(self, amount);
-	}
+	DoDamage(self, self, amount, DamageType, flags);
 }
 
 //===========================================================================
 //
-// A_DamageTarget (int amount, str damagetype, int flags)
-// Damages the target of the actor by the specified amount. Negative values heal.
+//
 //
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
@@ -5181,38 +4923,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 
-	if (self->target != NULL)
-	{
-		if ((amount > 0) || (flags & DMSS_KILL))
-		{
-			if (!(self->target->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-			{
-				if (flags & DMSS_KILL)
-				{
-					P_DamageMobj(self->target, self, self, self->target->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-				}
-				if (flags & DMSS_AFFECTARMOR)
-				{
-					P_DamageMobj(self->target, self, self, amount, DamageType, DMG_FOILINVUL);
-				}
-				else
-				{
-					P_DamageMobj(self->target, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-				}
-			}
-		}
-		else if (amount < 0)
-		{
-			amount = -amount;
-			P_GiveBody(self->target, amount);
-		}
-	}
+	if (self->target != NULL) DoDamage(self->target, self, amount, DamageType, flags);
 }
 
 //===========================================================================
 //
-// A_DamageTracer (int amount, str damagetype, int flags)
-// Damages the tracer of the actor by the specified amount. Negative values heal.
+//
 //
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
@@ -5222,34 +4938,108 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 
-	if (self->target != NULL)
-	{
+	if (self->tracer != NULL) DoDamage(self->tracer, self, amount, DamageType, flags);
+}
 
-		if ((amount > 0) || (flags & DMSS_KILL))
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+	ACTION_PARAM_INT(flags, 2);
+
+	if (self->master != NULL) DoDamage(self->master, self, amount, DamageType, flags);
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+	ACTION_PARAM_INT(flags, 2);
+
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	while ( (mo = it.Next()) )
+	{
+		if (mo->master == self) DoDamage(mo, self, amount, DamageType, flags);
+	}
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_INT(amount, 0);
+	ACTION_PARAM_NAME(DamageType, 1);
+	ACTION_PARAM_INT(flags, 2);
+
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()))
 		{
-			if (!(self->tracer->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-			{
-				if (flags & DMSS_KILL)
-				{
-					P_DamageMobj(self->tracer, self, self, self->tracer->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-				}
-				if (flags & DMSS_AFFECTARMOR)
-				{
-					P_DamageMobj(self->tracer, self, self, amount, DamageType, DMG_FOILINVUL);
-				}
-				else
-				{
-					P_DamageMobj(self->tracer, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-				}
-			}
-		}
-		else if (amount < 0)
-		{
-			amount = -amount;
-			P_GiveBody(self->tracer, amount);
+			if (mo->master == self->master && mo != self) DoDamage(mo, self, amount, DamageType, flags);
 		}
 	}
 }
+
+
+//===========================================================================
+//
+// A_Kill*(damagetype, int flags)
+//
+//===========================================================================
+enum KILS
+{
+	KILS_FOILINVUL =	1 << 0,
+	KILS_KILLMISSILES = 1 << 1,
+	KILS_NOMONSTERS =	1 << 2,
+};
+
+static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags)
+{
+	if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
+	{
+		//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
+		//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
+		//since that's the whole point of it.
+		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(killtarget->flags5 & MF5_NODAMAGE))
+		{
+			P_ExplodeMissile(self->target, NULL, NULL);
+		}
+	}
+	if (!(flags & KILS_NOMONSTERS))
+	{
+		if (flags & KILS_FOILINVUL)
+		{
+			P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
+		}
+		else
+		{
+			P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
+		}
+	}
+}
+
+
 
 //===========================================================================
 //
@@ -5262,30 +5052,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTarget)
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 
-	if (self->target != NULL)
-	{
-		if ((self->target->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
-		{
-			//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
-			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
-			//since that's the whole point of it.
-			if ((!(self->target->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(self->target->flags5 & MF5_NODAMAGE))
-			{
-				P_ExplodeMissile(self->target, NULL, NULL);
-			}
-		}
-		if (!(flags & KILS_NOMONSTERS))
-		{
-			if (flags & KILS_FOILINVUL)
-			{
-				P_DamageMobj(self->target, self, self, self->target->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
-			}
-			else
-			{
-				P_DamageMobj(self->target, self, self, self->target->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-			}
-		}
-	}
+	if (self->target != NULL) DoKill(self->target, self, damagetype, flags);
 }
 
 //===========================================================================
@@ -5299,31 +5066,66 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTracer)
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 
-	if (self->tracer != NULL)
+	if (self->tracer != NULL) DoKill(self->tracer, self, damagetype, flags);
+}
+
+//===========================================================================
+//
+// A_KillMaster(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_NAME(damagetype, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	if (self->master != NULL) DoKill(self->master, self, damagetype, flags);
+}
+
+//===========================================================================
+//
+// A_KillChildren(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_NAME(damagetype, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	while ( (mo = it.Next()) )
 	{
-		if ((self->tracer->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
+		if (mo->master == self) DoKill(mo, self, damagetype, flags);
+	}
+}
+
+//===========================================================================
+//
+// A_KillSiblings(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_NAME(damagetype, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	if (self->master != NULL)
+	{
+		while ( (mo = it.Next()) )
 		{
-			//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
-			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
-			//since that's the whole point of it.
-			if ((!(self->tracer->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(self->tracer->flags5 & MF5_NODAMAGE))
-			{
-				P_ExplodeMissile(self->tracer, NULL, NULL);
-			}
-		}
-		if (!(flags & KILS_NOMONSTERS))
-		{
-			if (flags & KILS_FOILINVUL)
-			{
-				P_DamageMobj(self->tracer, self, self, self->tracer->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
-			}
-			else
-			{
-				P_DamageMobj(self->tracer, self, self, self->tracer->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-			}
+			if (mo->master == self->master && mo != self) DoKill(mo, self, damagetype, flags);
 		}
 	}
 }
+
 
 //===========================================================================
 //

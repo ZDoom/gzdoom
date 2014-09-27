@@ -1824,7 +1824,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 			mo->Destroy();
 			return false;
 		}
-		else if (originator)
+		else if (originator && !(flags & SIXF_NOPOINTERS))
 		{
 			if (originator->flags3 & MF3_ISMONSTER)
 			{
@@ -1858,6 +1858,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	if (flags & SIXF_NOPOINTERS)
 	{
 		//[MC]Intentionally eliminate pointers. Overrides TRANSFERPOINTERS, but is overridden by SETMASTER/TARGET/TRACER.
+		mo->LastHeard = NULL; //Sanity check.
 		mo->target = NULL;
 		mo->master = NULL;
 		mo->tracer = NULL;

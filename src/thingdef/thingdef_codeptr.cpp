@@ -1767,6 +1767,7 @@ enum SIX_Flags
 	SIXF_TRANSFERRENDERSTYLE	= 1 << 19,
 	SIXF_SETTARGET				= 1 << 20,
 	SIXF_SETTRACER				= 1 << 21,
+	SIXF_NOPOINTERS				= 1 << 22,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1853,6 +1854,13 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		// If this is a missile or something else set the target to the originator
 		mo->target = originator ? originator : self;
+	}
+	if (flags & SIXF_NOPOINTERS)
+	{
+		//[MC]Intentionally eliminate pointers. Overrides TRANSFERPOINTERS, but is overridden by SETMASTER/TARGET/TRACER.
+		mo->target = NULL;
+		mo->master = NULL;
+		mo->tracer = NULL;
 	}
 	if (flags & SIXF_SETMASTER)
 	{
@@ -4378,7 +4386,8 @@ enum WARPF
 
 	WARPF_STOP = 0x80,
 	WARPF_TOFLOOR = 0x100,
-	WARPF_TESTONLY = 0x200
+	WARPF_TESTONLY = 0x200,
+	WARPF_ABSOLUTEPOSITION = 0x400,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
@@ -4411,59 +4420,72 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	{
 		angle += (flags & WARPF_USECALLERANGLE) ? self->angle : reference->angle;
 	}
-
-	if (!(flags & WARPF_ABSOLUTEOFFSET))
+	if (!(flags & WARPF_ABSOLUTEPOSITION))
 	{
-		angle_t fineangle = angle>>ANGLETOFINESHIFT;
-		oldx = xofs;
-
-		// (borrowed from A_SpawnItemEx, assumed workable)
-		// in relative mode negative y values mean 'left' and positive ones mean 'right'
-		// This is the inverse orientation of the absolute mode!
-
-		xofs = FixedMul(oldx, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
-		yofs = FixedMul(oldx, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
-	}
-
-	oldx = self->x;
-	oldy = self->y;
-	oldz = self->z;
-
-	if (flags & WARPF_TOFLOOR)
-	{
-		// set correct xy
-
-		self->SetOrigin(
-			reference->x + xofs,
-			reference->y + yofs,
-			reference->z);
-
-		// now the caller's floorz should be appropriate for the assigned xy-position
-		// assigning position again with
-		
-		if (zofs)
+		if (!(flags & WARPF_ABSOLUTEOFFSET))
 		{
-			// extra unlink, link and environment calculation
+			angle_t fineangle = angle >> ANGLETOFINESHIFT;
+			oldx = xofs;
+
+			// (borrowed from A_SpawnItemEx, assumed workable)
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+
+			xofs = FixedMul(oldx, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
+			yofs = FixedMul(oldx, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+		}
+
+		oldx = self->x;
+		oldy = self->y;
+		oldz = self->z;
+
+		if (flags & WARPF_TOFLOOR)
+		{
+			// set correct xy
+
 			self->SetOrigin(
-				self->x,
-				self->y,
-				self->floorz + zofs);
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z);
+
+			// now the caller's floorz should be appropriate for the assigned xy-position
+			// assigning position again with
+
+			if (zofs)
+			{
+				// extra unlink, link and environment calculation
+				self->SetOrigin(
+					self->x,
+					self->y,
+					self->floorz + zofs);
+			}
+			else
+			{
+				// if there is no offset, there should be no ill effect from moving down to the
+				// already identified floor
+
+				// A_Teleport does the same thing anyway
+				self->z = self->floorz;
+			}
 		}
 		else
 		{
-			// if there is no offset, there should be no ill effect from moving down to the
-			// already identified floor
-
-			// A_Teleport does the same thing anyway
-			self->z = self->floorz;
+			self->SetOrigin(
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z + zofs);
 		}
 	}
-	else
+	else //[MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
 	{
-		self->SetOrigin(
-			reference->x + xofs,
-			reference->y + yofs,
-			reference->z + zofs);
+		if (flags & WARPF_TOFLOOR)
+		{
+			self->SetOrigin(xofs, yofs, self->floorz + zofs);
+		}
+		else
+		{
+			self->SetOrigin(xofs, yofs, zofs);
+		}
 	}
 	
 	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(self))

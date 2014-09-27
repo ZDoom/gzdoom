@@ -46,29 +46,30 @@ const int FBF_NOFLASH = 16;
 const int FBF_NORANDOMPUFFZ = 32;
 
 // Flags for A_SpawnItemEx
-const int SXF_TRANSFERTRANSLATION = 1;
-const int SXF_ABSOLUTEPOSITION = 2;
-const int SXF_ABSOLUTEANGLE = 4;
-const int SXF_ABSOLUTEMOMENTUM = 8;
-const int SXF_ABSOLUTEVELOCITY = 8;
-const int SXF_SETMASTER = 16;
-const int SXF_NOCHECKPOSITION = 32;
-const int SXF_TELEFRAG = 64;
-const int SXF_CLIENTSIDE = 128;	// only used by Skulltag
-const int SXF_TRANSFERAMBUSHFLAG = 256;
-const int SXF_TRANSFERPITCH = 512;
-const int SXF_TRANSFERPOINTERS = 1024;
-const int SXF_USEBLOODCOLOR = 2048;
-const int SXF_CLEARCALLERTID = 4096;
-const int SXF_MULTIPLYSPEED = 8192;
-const int SXF_TRANSFERSCALE = 16384;
-const int SXF_TRANSFERSPECIAL = 32768;
-const int SXF_CLEARCALLERSPECIAL = 65536;
-const int SXF_TRANSFERSTENCILCOL = 131072;
-const int SXF_TRANSFERALPHA = 262144;
-const int SXF_TRANSFERRENDERSTYLE = 524288;
-const int SXF_SETTARGET = 1048576;
-const int SXF_SETTRACER = 2097152;
+const int SXF_TRANSFERTRANSLATION =		1 << 0;
+const int SXF_ABSOLUTEPOSITION =		1 << 1;
+const int SXF_ABSOLUTEANGLE =			1 << 2;
+const int SXF_ABSOLUTEMOMENTUM =		1 << 3;	//Since "momentum" is declared to be deprecated in the expressions, for compatibility
+const int SXF_ABSOLUTEVELOCITY =		1 << 3;	//purposes, this was made. It does the same thing though. Do not change the value.
+const int SXF_SETMASTER =				1 << 4;
+const int SXF_NOCHECKPOSITION =			1 << 5;
+const int SXF_TELEFRAG =				1 << 6;
+const int SXF_CLIENTSIDE =				1 << 7;	// only used by Skulltag
+const int SXF_TRANSFERAMBUSHFLAG =		1 << 8;
+const int SXF_TRANSFERPITCH =			1 << 9;
+const int SXF_TRANSFERPOINTERS =		1 << 10;
+const int SXF_USEBLOODCOLOR =			1 << 11;
+const int SXF_CLEARCALLERTID =			1 << 12;
+const int SXF_MULTIPLYSPEED =			1 << 13;
+const int SXF_TRANSFERSCALE =			1 << 14;
+const int SXF_TRANSFERSPECIAL =			1 << 15;
+const int SXF_CLEARCALLERSPECIAL =		1 << 16;
+const int SXF_TRANSFERSTENCILCOL =		1 << 17;
+const int SXF_TRANSFERALPHA =			1 << 18;
+const int SXF_TRANSFERRENDERSTYLE =		1 << 19;
+const int SXF_SETTARGET =				1 << 20;
+const int SXF_SETTRACER =				1 << 21;
+const int SXF_NOPOINTERS =				1 << 22;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;
@@ -316,6 +317,7 @@ Const Int WARPF_COPYINTERPOLATION = 0x40;
 Const Int WARPF_STOP = 0x80;
 Const Int WARPF_TOFLOOR = 0x100;
 Const Int WARPF_TESTONLY = 0x200;
+Const Int WAPRF_ABSOLUTEPOSITION = 0x400;
 
 // flags for A_SetPitch/SetAngle
 const int SPF_FORCECLAMP = 1;

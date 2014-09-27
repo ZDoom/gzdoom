@@ -3843,6 +3843,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->reactiontime = value;
 		break;
 
+	case APROP_MeleeRange:
+		actor->meleerange = value;
+		break;
+
 	case APROP_ViewHeight:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 			static_cast<APlayerPawn *>(actor)->ViewHeight = value;
@@ -4368,6 +4372,7 @@ enum EACSFunctions
 	ACSF_ChangeActorPitch,		// 80
 	ACSF_GetArmorInfo,
 	ACSF_DropInventory,
+	ACSF_PickActor,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -5590,6 +5595,38 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				SetActorPitch(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_PickActor:
+			if (argCount >= 5)
+			{
+				actor = SingleActorFromTID(args[0], activator);
+				if (actor == NULL)
+				{
+					return 0;
+				}
+
+				DWORD actorMask = MF_SHOOTABLE;
+				if (argCount >= 6) {
+					actorMask = args[5];
+				}
+
+				DWORD wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;
+				if (argCount >= 7) {
+					wallMask = args[6];
+				}
+
+				AActor* pickedActor = P_LinePickActor(actor, args[1] << 16, args[3], args[2] << 16, actorMask, wallMask);
+				if (pickedActor == NULL) {
+					return 0;
+				}
+
+				pickedActor->RemoveFromHash();
+				pickedActor->tid = args[4];
+				pickedActor->AddToHash();
+				
+				return 1;
 			}
 			break;
 

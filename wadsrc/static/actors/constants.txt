@@ -67,6 +67,8 @@ const int SXF_CLEARCALLERSPECIAL = 65536;
 const int SXF_TRANSFERSTENCILCOL = 131072;
 const int SXF_TRANSFERALPHA = 262144;
 const int SXF_TRANSFERRENDERSTYLE = 524288;
+const int SXF_SETTARGET = 1048576;
+const int SXF_SETTRACER = 2097152;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;
@@ -360,6 +362,16 @@ enum
 	CLOFF_NOAIM = CLOFF_NOAIM_VERT|CLOFF_NOAIM_HORZ
 };
 
+// Flags for A_Kill (Master/Target/Tracer/Children/Siblings) series
+
+const int KILS_FOILINVUL =		1;
+const int KILS_KILLMISSILES =	2;
+const int KILS_NOMONSTERS =		4;
+
+// Flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
+const int DMSS_FOILINVUL =		1;
+const int DMSS_AFFECTARMOR =	2;
+const int DMSS_KILL =			4;
 
 // Flags for A_AlertMonsters
 const int AMF_TARGETEMITTER = 1;

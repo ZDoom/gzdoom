@@ -1030,9 +1030,14 @@ public:
 				Flag(ld->flags, ML_BLOCKHITSCAN, key); 
 				continue;
 			
-			// [Dusk] lock number
+			// [TP] Locks the special with a key
 			case NAME_Locknumber:
 				ld->locknumber = CheckInt(key);
+				continue;
+
+			// [TP] Causes a 3d midtex to behave like an impassible line
+			case NAME_Midtex3dimpassible:
+				Flag(ld->flags, ML_3DMIDTEX_IMPASS, key);
 				continue;
 
 			default:
@@ -1080,6 +1085,10 @@ public:
 		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(ld->special) || ld->special == 0))
 		{
 			ld->args[1] = -FName(arg1str);
+		}
+		if ((ld->flags & ML_3DMIDTEX_IMPASS) && !(ld->flags & ML_3DMIDTEX)) // [TP]
+		{
+			Printf ("Line %d has midtex3dimpassible without midtex3d.\n", index);
 		}
 	}
 

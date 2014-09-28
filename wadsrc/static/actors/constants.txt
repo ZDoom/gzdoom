@@ -380,6 +380,15 @@ const int AMF_TARGETEMITTER = 1;
 const int AMF_TARGETNONPLAYER = 2;
 const int AMF_EMITFROMTARGET = 4;
 
+// Flags for A_Remove*
+enum
+{
+	RMVF_MISSILES =			1 << 0,
+	RMVF_NOMONSTERS =		1 << 1,
+	RMVF_MISC =				1 << 2,
+	RMVF_EVERYTHING =		1 << 3
+};
+
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

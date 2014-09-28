@@ -419,6 +419,7 @@ xx(Passuse)
 xx(Repeatspecial)
 xx(Conversation)
 xx(Locknumber)
+xx(Midtex3dimpassible)
 
 xx(Playercross)
 xx(Playeruse)

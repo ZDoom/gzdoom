@@ -5130,7 +5130,7 @@ static void DoRemove(AActor *removetarget, int flags)
 //===========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_RemoveTarget)
 {
-	if ((self->target != NULL) && (self->tracer->flags3 & MF3_ISMONSTER))
+	if ((self->target != NULL))
 	{
 		P_RemoveThing(self->target);
 	}
@@ -5143,7 +5143,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveTarget)
 //===========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_RemoveTracer)
 {
-	if ((self->tracer != NULL) && (self->tracer->flags3 & MF3_ISMONSTER))
+	if ((self->tracer != NULL))
 	{
 		P_RemoveThing(self->tracer);
 	}

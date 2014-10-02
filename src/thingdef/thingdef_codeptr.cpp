@@ -5128,11 +5128,13 @@ static void DoRemove(AActor *removetarget, int flags)
 // A_RemoveTarget
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTarget)
 {
-	if ((self->target != NULL))
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(flags, 0);
+	if (self->master != NULL)
 	{
-		P_RemoveThing(self->target);
+		DoRemove(self->target, flags);
 	}
 }
 
@@ -5141,11 +5143,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveTarget)
 // A_RemoveTracer
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveTracer)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTracer)
 {
-	if ((self->tracer != NULL))
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(flags, 0);
+	if (self->master != NULL)
 	{
-		P_RemoveThing(self->tracer);
+		DoRemove(self->tracer, flags);
 	}
 }
 

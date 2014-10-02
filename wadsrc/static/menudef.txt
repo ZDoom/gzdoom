@@ -458,6 +458,7 @@ OptionMenu "CustomizeControls"
 	Control 	"Run",					"+speed"
 	Control 	"Strafe",				"+strafe"
 	Control 	"Show Scoreboard",		"+showscores"
+	Control 	"Toggle Scoreboard",	"togglescoreboard"
 	StaticText 	""
 	StaticText 	"Chat", 1
 	Control 	"Say",					"messagemode"

@@ -273,7 +273,8 @@ void CT_Drawer (void)
 
 	if (players[consoleplayer].camera != NULL &&
 		(Button_ShowScores.bDown ||
-		 players[consoleplayer].camera->health <= 0) &&
+		 players[consoleplayer].camera->health <= 0 ||
+		 SB_ForceActive) &&
 		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
 		 gamestate != GS_INTERMISSION)
 	{

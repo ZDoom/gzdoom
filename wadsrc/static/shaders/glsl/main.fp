@@ -313,8 +313,7 @@ void main()
 		
 		case 2:
 		{
-			frag = frag * uFixedColormapStart;
-			frag.a *= vColor.a;
+			frag = vColor * frag * uFixedColormapStart;
 			break;
 		}
 

@@ -67,7 +67,12 @@ CUSTOM_CVAR (Int, gl_light_ambient, 20, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 
 CVAR(Int, gl_weaponlight, 8, CVAR_ARCHIVE);
-CVAR(Bool,gl_enhanced_nightvision,true,CVAR_ARCHIVE)
+CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	// The fixed colormap state needs to be reset because if this happens when
+	// a shader is set to CM_LITE or CM_TORCH it won't register the change in behavior caused by this CVAR.
+	GLRenderer->mShaderManager->ResetFixedColormap();
+}
 CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE);
 
 

@@ -269,6 +269,18 @@ public:
 		return mActiveShader;
 	}
 
+	void ResetFixedColormap()
+	{
+		for (unsigned i = 0; i < mTextureEffects.Size(); i++)
+		{
+			mTextureEffects[i]->currentfixedcolormap = -1;
+		}
+		for (unsigned i = 0; i < mTextureEffectsNAT.Size(); i++)
+		{
+			mTextureEffectsNAT[i]->currentfixedcolormap = -1;
+		}
+	}
+
 	FShader *Get(unsigned int eff, bool alphateston)
 	{
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom

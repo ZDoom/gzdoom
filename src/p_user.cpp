@@ -2744,8 +2744,11 @@ void P_UnPredictPlayer ()
 	if (player->cheats & CF_PREDICTING)
 	{
 		unsigned int i;
-		AActor *act = player->mo;
+		APlayerPawn *act = player->mo;
 		AActor *savedcamera = player->camera;
+
+		TObjPtr<AInventory> InvSel = act->InvSel;
+		int inventorytics = player->inventorytics;
 
 		*player = PredictionPlayerBackup;
 
@@ -2859,6 +2862,9 @@ void P_UnPredictPlayer ()
 			}
 			block = block->NextBlock;
 		}
+
+		act->InvSel = InvSel;
+		player->inventorytics = inventorytics;
 	}
 }
 

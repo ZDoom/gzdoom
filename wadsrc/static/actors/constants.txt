@@ -279,24 +279,25 @@ Const Int BLOCKF_USE = 128;
 // Pointer constants, bitfield-enabled
 
 Const Int AAPTR_DEFAULT = 0;
-Const Int AAPTR_NULL = 1;
-Const Int AAPTR_TARGET = 2;
-Const Int AAPTR_MASTER = 4;
-Const Int AAPTR_TRACER = 8;
+Const Int AAPTR_NULL = 0x1;
+Const Int AAPTR_TARGET = 0x2;
+Const Int AAPTR_MASTER = 0x4;
+Const Int AAPTR_TRACER = 0x8;
 
-Const Int AAPTR_PLAYER_GETTARGET = 16;
-Const Int AAPTR_PLAYER_GETCONVERSATION = 32;
+Const Int AAPTR_PLAYER_GETTARGET = 0x10;
+Const Int AAPTR_PLAYER_GETCONVERSATION = 0x20;
 
-Const Int AAPTR_PLAYER1 = 64;
-Const Int AAPTR_PLAYER2 = 128;
-Const Int AAPTR_PLAYER3 = 256;
-Const Int AAPTR_PLAYER4 = 512;
-Const Int AAPTR_PLAYER5 = 1024;
-Const Int AAPTR_PLAYER6 = 2048;
-Const Int AAPTR_PLAYER7 = 4096;
-Const Int AAPTR_PLAYER8 = 8192;
+Const Int AAPTR_PLAYER1 = 0x40;
+Const Int AAPTR_PLAYER2 = 0x80;
+Const Int AAPTR_PLAYER3 = 0x100;
+Const Int AAPTR_PLAYER4 = 0x200;
+Const Int AAPTR_PLAYER5 = 0x400;
+Const Int AAPTR_PLAYER6 = 0x800;
+Const Int AAPTR_PLAYER7 = 0x1000;
+Const Int AAPTR_PLAYER8 = 0x2000;
 
-Const Int AAPTR_FRIENDPLAYER = 16384;
+Const Int AAPTR_FRIENDPLAYER = 0x4000;
+Const Int AAPTR_LINETARGET = 0x8000;
 
 // Pointer operation flags
 
@@ -374,11 +375,21 @@ const int KILS_NOMONSTERS =		4;
 const int DMSS_FOILINVUL =		1;
 const int DMSS_AFFECTARMOR =	2;
 const int DMSS_KILL =			4;
+const int DMSS_NOFACTOR =	8;
 
 // Flags for A_AlertMonsters
 const int AMF_TARGETEMITTER = 1;
 const int AMF_TARGETNONPLAYER = 2;
 const int AMF_EMITFROMTARGET = 4;
+
+// Flags for A_Remove*
+enum
+{
+	RMVF_MISSILES =			1 << 0,
+	RMVF_NOMONSTERS =		1 << 1,
+	RMVF_MISC =				1 << 2,
+	RMVF_EVERYTHING =		1 << 3
+};
 
 
 // This is only here to provide one global variable for testing.

@@ -261,3 +261,36 @@ class FxGlobalFunctionCall_CheckClass : public FxGlobalFunctionCall
 	};
 
 GLOBALFUNCTION_ADDER(CheckClass);
+
+//==========================================================================
+//
+// Function: ispointerequal
+//
+//==========================================================================
+
+class FxGlobalFunctionCall_IsPointerEqual : public FxGlobalFunctionCall
+{
+	public:
+		GLOBALFUNCTION_DEFINE(IsPointerEqual);
+		
+		FxExpression *Resolve(FCompileContext& ctx)
+		{
+			CHECKRESOLVED();
+			
+			if (!ResolveArgs(ctx, 2, 2, true))
+				return NULL;
+			
+			ValueType = VAL_Int;
+			return this;
+		}
+		
+		ExpVal EvalExpression(AActor *self)
+		{
+			ExpVal ret;
+			ret.Type = VAL_Int;
+			ret.Int = COPY_AAPTR(self, (*ArgList)[0]->EvalExpression(self).GetInt()) == COPY_AAPTR(self, (*ArgList)[1]->EvalExpression(self).GetInt());
+			return ret;
+		}
+};
+
+GLOBALFUNCTION_ADDER(IsPointerEqual);

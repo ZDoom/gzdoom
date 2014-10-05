@@ -3671,65 +3671,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 	}
 }
 
-
-//===========================================================================
-//
-// A_RemoveMaster
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveMaster)
-{
-	if (self->master != NULL)
-	{
-		P_RemoveThing(self->master);
-	}
-}
-
-//===========================================================================
-//
-// A_RemoveChildren
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
-{
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_BOOL(removeall,0);
-
-	while ((mo = it.Next()) != NULL)
-	{
-		if (mo->master == self && (mo->health <= 0 || removeall))
-		{
-			P_RemoveThing(mo);
-		}
-	}
-}
-
-//===========================================================================
-//
-// A_RemoveSiblings
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
-{
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_BOOL(removeall,0);
-
-	if (self->master != NULL)
-	{
-		while ((mo = it.Next()) != NULL)
-		{
-			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
-			{
-				P_RemoveThing(mo);
-			}
-		}
-	}
-}
-
 //===========================================================================
 //
 // A_RaiseMaster
@@ -4889,6 +4830,7 @@ enum DMSS
 	DMSS_FOILINVUL			= 1,
 	DMSS_AFFECTARMOR		= 2,
 	DMSS_KILL				= 4,
+	DMSS_NOFACTOR			= 8,
 };
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
@@ -4903,12 +4845,26 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 			}
 			if (flags & DMSS_AFFECTARMOR)
 			{
-				P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL);
+				if (flags & DMSS_NOFACTOR)
+				{
+					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_FACTOR);
+				}
+				else
+				{
+					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL);
+				}
 			}
 			else
 			{
+				if (flags & DMSS_NOFACTOR)
+				{
+					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR | DMG_NO_FACTOR);
+				}
 				//[MC] DMG_FOILINVUL is needed for making the damage occur on the actor.
-				P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
+				else
+				{
+					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
+				}
 			}
 		}
 	}
@@ -5063,7 +5019,6 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 }
 
 
-
 //===========================================================================
 //
 // A_KillTarget(damagetype, int flags)
@@ -5149,17 +5104,52 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 	}
 }
 
+//===========================================================================
+//
+// DoRemove
+//
+//===========================================================================
+
+enum RMVF_flags
+{
+	RMVF_MISSILES = 1 << 0,
+	RMVF_NOMONSTERS = 1 << 1,
+	RMVF_MISC = 1 << 2,
+	RMVF_EVERYTHING = 1 << 3,
+};
+
+static void DoRemove(AActor *removetarget, int flags)
+{
+	if ((flags & RMVF_EVERYTHING))
+	{
+		P_RemoveThing(removetarget);
+	}
+	if ((flags & RMVF_MISC) && !((removetarget->flags3 & MF3_ISMONSTER) && (removetarget->flags & MF_MISSILE)))
+	{
+		P_RemoveThing(removetarget);
+	}
+	if ((removetarget->flags3 & MF3_ISMONSTER) && !(flags & RMVF_NOMONSTERS))
+	{
+		P_RemoveThing(removetarget);
+	}
+	if ((removetarget->flags & MF_MISSILE) && (flags & RMVF_MISSILES))
+	{
+		P_RemoveThing(removetarget);
+	}
+}
 
 //===========================================================================
 //
 // A_RemoveTarget
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveTarget)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTarget)
 {
-	if (self->target != NULL)
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(flags, 0);
+	if (self->master != NULL)
 	{
-		P_RemoveThing(self->target);
+		DoRemove(self->target, flags);
 	}
 }
 
@@ -5168,10 +5158,94 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveTarget)
 // A_RemoveTracer
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveTracer)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTracer)
 {
-	if (self->tracer != NULL)
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(flags, 0);
+	if (self->master != NULL)
 	{
-		P_RemoveThing(self->tracer);
+		DoRemove(self->tracer, flags);
 	}
 }
+
+//===========================================================================
+//
+// A_RemoveMaster
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveMaster)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(flags, 0);
+	if (self->master != NULL)
+	{
+		DoRemove(self->master, flags);
+	}
+}
+
+//===========================================================================
+//
+// A_RemoveChildren
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
+{
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_BOOL(removeall, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	while ((mo = it.Next()) != NULL)
+	{
+		if (mo->master == self && (mo->health <= 0 || removeall))
+		{
+			DoRemove(mo, flags);
+		}
+	}
+}
+
+//===========================================================================
+//
+// A_RemoveSiblings
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
+{
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_BOOL(removeall, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()) != NULL)
+		{
+			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
+			{
+				DoRemove(mo, flags);
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
+// A_Remove
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(removee, 0);
+	ACTION_PARAM_INT(flags, 1);
+
+	AActor *reference = COPY_AAPTR(self, removee);
+
+	if (reference != NULL)
+	{
+		DoRemove(reference, flags);
+	}
+}
+

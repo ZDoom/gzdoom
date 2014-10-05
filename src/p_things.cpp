@@ -445,6 +445,40 @@ bool P_Thing_Raise(AActor *thing)
 	return true;
 }
 
+bool P_Thing_CanRaise(AActor *thing)
+{
+	FState * RaiseState = thing->GetRaiseState();
+	if (RaiseState == NULL)
+	{
+		return false;
+	}
+	
+	AActor *info = thing->GetDefault();
+
+	// Check against real height and radius
+	int oldflags = thing->flags;
+	fixed_t oldheight = thing->height;
+	fixed_t oldradius = thing->radius;
+
+	thing->flags |= MF_SOLID;
+	thing->height = info->height;
+	thing->radius = info->radius;
+
+	bool check = P_CheckPosition (thing, thing->x, thing->y);
+
+	// Restore checked properties
+	thing->flags = oldflags;
+	thing->radius = oldradius;
+	thing->height = oldheight;
+
+	if (!check)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add, bool setbob)
 {
 	if (actor != NULL)

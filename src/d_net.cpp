@@ -1729,7 +1729,7 @@ void D_CheckNetGame (void)
 	v = Args->CheckValue("-netmode");
 	if (v != NULL && (atoi(v) != 0))
 	{
-		Printf(TEXTCOLOR_YELLOW "Notice: Using PacketServer (netmode 1) over the internet is unreliable and is prone to running too slow on some internet configurations."
+		Printf(TEXTCOLOR_YELLOW "Notice: Using PacketServer (netmode 1) over the internet is prone to running too slow on some internet configurations."
 			"\nIf the game is running well below excpected speeds, use netmode 0 (P2P) instead.\n");
 	}
 

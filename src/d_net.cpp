@@ -697,7 +697,7 @@ void PlayerIsGone (int netnode, int netconsole)
 		// Pick a new network arbitrator
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{
-			if (playeringame[i] && !players[i].isbot)
+			if (i != netconsole && playeringame[i] && !players[i].isbot)
 			{
 				Net_Arbitrator = i;
 				players[i].settings_controller = true;
@@ -1725,10 +1725,19 @@ void D_CheckNetGame (void)
 		resendto[i] = 0;				// which tic to start sending
 	}
 
+	// Packet server has proven to be rather slow over the internet. Print a warning about it.
+	v = Args->CheckValue("-netmode");
+	if (v != NULL && (atoi(v) != 0))
+	{
+		Printf(TEXTCOLOR_YELLOW "Notice: Using PacketServer (netmode 1) over the internet is unreliable and is prone to running too slow on some internet configurations."
+			"\nIf the game is running well below excpected speeds, use netmode 0 (P2P) instead.\n");
+	}
+
 	// I_InitNetwork sets doomcom and netgame
 	if (I_InitNetwork ())
 	{
-		NetMode = NET_PacketServer;
+		// For now, stop auto selecting PacketServer, as it's more likely to cause confusion.
+		//NetMode = NET_PacketServer;
 	}
 	if (doomcom.id != DOOMCOM_ID)
 	{

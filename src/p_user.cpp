@@ -63,6 +63,22 @@ static FRandom pr_skullpop ("SkullPop");
 // Variables for prediction
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+#define LERPSCALE 0.05
+
+struct PredictCheck
+{
+	int gametic;
+	fixed_t x;
+	fixed_t y;
+	fixed_t z;
+	fixed_t pitch;
+	fixed_t yaw;
+	bool onground;
+} static PredictionResults[BACKUPTICS], PredictionResult_Last;
+static int PredictionLerptics;
+static int PredictionMaxLerptics;
+
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(AActor)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
@@ -1882,6 +1898,7 @@ void P_MovePlayer (player_t *player)
 	else
 	{
 		mo->angle += cmd->ucmd.yaw << 16;
+		Printf("%d\n", cmd->ucmd.yaw);
 	}
 
 	player->onground = (mo->z <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (player->cheats & CF_NOCLIP2);
@@ -2648,7 +2665,7 @@ void P_PredictPlayer (player_t *player)
 		player->mo == NULL ||
 		player != &players[consoleplayer] ||
 		player->playerstate != PST_LIVE ||
-		!netgame ||
+		//!netgame ||
 		/*player->morphTics ||*/
 		(player->cheats & CF_PREDICTING))
 	{
@@ -2665,8 +2682,8 @@ void P_PredictPlayer (player_t *player)
 	// Save original values for restoration later
 	PredictionPlayerBackup = *player;
 
-	AActor *act = player->mo;
-	memcpy (PredictionActorBackup, &act->x, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
+	APlayerPawn *act = player->mo;
+	memcpy(PredictionActorBackup, &act->x, sizeof(APlayerPawn) - ((BYTE *)&act->x - (BYTE *)act));
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
@@ -2732,7 +2749,49 @@ void P_PredictPlayer (player_t *player)
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		P_PlayerThink (player);
 		player->mo->Tick ();
+
+		if (PredictionResults[i % BACKUPTICS].gametic && i == PredictionResults[i % BACKUPTICS].gametic && !NoInterpolateOld && PredictionLerptics >= PredictionMaxLerptics)
+		{
+			if (PredictionResults[i % BACKUPTICS].x != player->mo->x ||
+				PredictionResults[i % BACKUPTICS].y != player->mo->y ||
+				(PredictionResults[i % BACKUPTICS].z != player->mo->z && PredictionResults[i % BACKUPTICS].onground && player->onground))
+				// If the player was always on the ground, they might be on a lift, and lerping would be disruptive on z height changes alone
+			{
+				PredictionLerptics = 0;
+				PredictionMaxLerptics = (maxtic - gametic);
+			}
+		}
+
+		PredictionResults[i % BACKUPTICS].gametic = i;
+		PredictionResults[i % BACKUPTICS].x = player->mo->x;
+		PredictionResults[i % BACKUPTICS].y = player->mo->y;
+		PredictionResults[i % BACKUPTICS].z = player->mo->z;
+		PredictionResults[i % BACKUPTICS].onground = player->onground;
 	}
+
+	if (PredictionLerptics < PredictionMaxLerptics)
+	{
+		PredictionLerptics++;
+		FVector3 pointold, pointnew, step, difference, result;
+		pointold.X = FIXED2FLOAT(PredictionResult_Last.x); // Old player pos
+		pointold.Y = FIXED2FLOAT(PredictionResult_Last.y);
+		pointold.Z = FIXED2FLOAT(PredictionResult_Last.z);
+		pointnew.X = FIXED2FLOAT(player->mo->x); // New player pos
+		pointnew.Y = FIXED2FLOAT(player->mo->y);
+		pointnew.Z = FIXED2FLOAT(player->mo->z);
+
+		difference = pointnew - pointold;
+		step = difference / PredictionMaxLerptics;
+		result = step * PredictionLerptics;
+		result += pointold;
+
+		player->mo->x = FLOAT2FIXED(result.X);
+		player->mo->y = FLOAT2FIXED(result.Y);
+		player->mo->z = FLOAT2FIXED(result.Z);
+		Printf("Lerped! x%f y%f z%f\n", result.X, result.Y, result.Z);
+	}
+	if (PredictionLerptics >= PredictionMaxLerptics)
+		PredictionResult_Last = PredictionResults[(maxtic - 1) % BACKUPTICS];
 }
 
 extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);
@@ -2757,7 +2816,7 @@ void P_UnPredictPlayer ()
 		player->camera = savedcamera;
 
 		act->UnlinkFromWorld();
-		memcpy(&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x - (BYTE *)act));
+		memcpy(&act->x, PredictionActorBackup, sizeof(APlayerPawn) - ((BYTE *)&act->x - (BYTE *)act));
 
 		// The blockmap ordering needs to remain unchanged, too.
 		// Restore sector links and refrences.

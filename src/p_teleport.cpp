@@ -328,7 +328,6 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog,
 				  bool sourceFog, bool keepOrientation, bool haltVelocity, bool keepHeight)
 {
-	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
 
 	AActor *searcher;
 	fixed_t z;
@@ -341,6 +340,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	{ // Teleport function called with an invalid actor
 		return false;
 	}
+	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
 	if (thing->flags2 & MF2_NOTELEPORT)
 	{
 		return false;

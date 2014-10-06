@@ -388,7 +388,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			}
 			else
 			{
-				if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap)
+				if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
 				{
 					gl_SetDynSpriteLight(playermo, NULL);
 				}

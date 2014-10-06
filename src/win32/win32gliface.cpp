@@ -20,6 +20,7 @@
 #include "doomstat.h"
 #include "v_text.h"
 #include "m_argv.h"
+#include "doomerrors.h"
 //#include "gl_defs.h"
 
 #include "gl/renderer/gl_renderer.h"
@@ -378,9 +379,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 		//old->GetFlash(flashColor, flashAmount);
 		delete old;
 	}
-
 	fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
-
 	return fb;
 }
 
@@ -707,14 +706,14 @@ bool Win32GLVideo::SetupPixelFormat(int multisample)
 
 		if (pfd.dwFlags & PFD_GENERIC_FORMAT)
 		{
-			Printf("R_OPENGL: OpenGL driver not accelerated!  Falling back to software renderer.\n");
+			I_Error("R_OPENGL: OpenGL driver not accelerated!");
 			return false;
 		}
 	}
 
 	if (!::SetPixelFormat(m_hDC, pixelFormat, NULL))
 	{
-		Printf("R_OPENGL: Couldn't set pixel format.\n");
+		I_Error("R_OPENGL: Couldn't set pixel format.\n");
 		return false;
 	}
 	return true;
@@ -765,7 +764,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 
 	if (!SetupPixelFormat(multisample))
 	{
-		Printf ("R_OPENGL: Reverting to software mode...\n");
+		I_Error ("R_OPENGL: Unabl...\n");
 		return false;
 	}
 
@@ -795,7 +794,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 
 		if (m_hRC == NULL && prof == WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
 		{
-			Printf("R_OPENGL: Couldn't create render context. Reverting to software mode...\n");
+			I_Error ("R_OPENGL: Unable to create an OpenGL 3.x render context.\n");
 			return false;
 		}
 
@@ -815,6 +814,8 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 			}
 		}
 	}
+	// We get here if the driver doesn't support the modern context creation API which always means an old driver.
+	I_Error ("R_OPENGL: Unable to create an OpenGL 3.x render context.\n");
 	return false;
 }
 

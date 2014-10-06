@@ -388,7 +388,10 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			}
 			else
 			{
-				gl_SetDynSpriteLight(playermo, NULL);
+				if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap)
+				{
+					gl_SetDynSpriteLight(playermo, NULL);
+				}
 				gl_SetColor(statebright[i] ? 255 : lightlevel, 0, cmc, trans, true);
 			}
 			DrawPSprite(player, psp, psp->sx + ofsx, psp->sy + ofsy, hudModelStep, OverrideShader, !!(vis.RenderStyle.Flags & STYLEF_RedIsAlpha));

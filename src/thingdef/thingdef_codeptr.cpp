@@ -5002,7 +5002,7 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 		//since that's the whole point of it.
 		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(killtarget->flags5 & MF5_NODAMAGE))
 		{
-			P_ExplodeMissile(self->target, NULL, NULL);
+			P_ExplodeMissile(killtarget, NULL, NULL);
 		}
 	}
 	if (!(flags & KILS_NOMONSTERS))

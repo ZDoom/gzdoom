@@ -1768,6 +1768,7 @@ enum SIX_Flags
 	SIXF_SETTARGET				= 1 << 20,
 	SIXF_SETTRACER				= 1 << 21,
 	SIXF_NOPOINTERS				= 1 << 22,
+	SIXF_ORIGINATOR				= 1 << 23,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1803,11 +1804,13 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		mo->pitch = self->pitch;
 	}
-	while (originator && originator->isMissile())
+	if (!(flags & SIXF_ORIGINATOR))
 	{
-		originator = originator->target;
-	}
-
+		while (originator && originator->isMissile())
+		{
+			originator = originator->target;
+		}
+	}	
 	if (flags & SIXF_TELEFRAG) 
 	{
 		P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
@@ -5112,9 +5115,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 
 enum RMVF_flags
 {
-	RMVF_MISSILES = 1 << 0,
+	RMVF_MISSILES	= 1 << 0,
 	RMVF_NOMONSTERS = 1 << 1,
-	RMVF_MISC = 1 << 2,
+	RMVF_MISC		= 1 << 2,
 	RMVF_EVERYTHING = 1 << 3,
 };
 

@@ -64,20 +64,25 @@ static FRandom pr_skullpop ("SkullPop");
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-#define LERPSCALE 0.05
+CUSTOM_CVAR(Float, cl_predict_lerpscale, 0.05, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	P_PredictionLerpReset();
+}
+CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.1)
+		self = 0.1;
+	P_PredictionLerpReset();
+}
 
-struct PredictCheck
+struct PredictPos
 {
 	int gametic;
-	fixed_t x;
-	fixed_t y;
-	fixed_t z;
+	FVector3 point;
 	fixed_t pitch;
 	fixed_t yaw;
-	bool onground;
-} static PredictionResults[BACKUPTICS], PredictionResult_Last;
+} static PredictionLerpFrom, PredictionLerpResult, PredictionLast;
 static int PredictionLerptics;
-static int PredictionMaxLerptics;
 
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(AActor)];
@@ -1898,7 +1903,6 @@ void P_MovePlayer (player_t *player)
 	else
 	{
 		mo->angle += cmd->ucmd.yaw << 16;
-		Printf("%d\n", cmd->ucmd.yaw);
 	}
 
 	player->onground = (mo->z <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (player->cheats & CF_NOCLIP2);
@@ -2655,6 +2659,21 @@ void P_PlayerThink (player_t *player)
 	}
 }
 
+void P_PredictionLerpReset()
+{
+	PredictionLerptics = PredictionLast.gametic = PredictionLerpFrom.gametic = PredictionLerpResult.gametic = 0;
+}
+
+bool P_LerpCalculate(FVector3 from, FVector3 to, FVector3 &result, float scale)
+{
+	result = to - from;
+	result *= scale;
+	result = result + from;
+	FVector3 delta = result - to;
+
+	return (delta.LengthSquared() > cl_predict_lerpthreshold);
+}
+
 void P_PredictPlayer (player_t *player)
 {
 	int maxtic;
@@ -2740,7 +2759,7 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-	bool NoInterpolateOld = R_GetViewInterpolationStatus();
+	bool CanLerp = (cl_predict_lerpscale > 0), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		if (!NoInterpolateOld)
@@ -2750,48 +2769,44 @@ void P_PredictPlayer (player_t *player)
 		P_PlayerThink (player);
 		player->mo->Tick ();
 
-		if (PredictionResults[i % BACKUPTICS].gametic && i == PredictionResults[i % BACKUPTICS].gametic && !NoInterpolateOld && PredictionLerptics >= PredictionMaxLerptics)
+		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic && !NoInterpolateOld)
 		{
-			if (PredictionResults[i % BACKUPTICS].x != player->mo->x ||
-				PredictionResults[i % BACKUPTICS].y != player->mo->y ||
-				(PredictionResults[i % BACKUPTICS].z != player->mo->z && PredictionResults[i % BACKUPTICS].onground && player->onground))
-				// If the player was always on the ground, they might be on a lift, and lerping would be disruptive on z height changes alone
-			{
-				PredictionLerptics = 0;
-				PredictionMaxLerptics = (maxtic - gametic);
-			}
+			// Z is not compared as lifts will alter this with no apparent change
+			DoLerp = (PredictionLast.point.X != FIXED2FLOAT(player->mo->x) ||
+				PredictionLast.point.Y != FIXED2FLOAT(player->mo->y));
+		}
+	}
+
+	if (CanLerp)
+	{
+		if (DoLerp)
+		{
+			// If lerping is already in effect, use the previous camera postion so the view doesn't suddenly snap
+			PredictionLerpFrom = (PredictionLerptics == 0) ? PredictionLast : PredictionLerpResult;
+			PredictionLerptics = 1;
 		}
 
-		PredictionResults[i % BACKUPTICS].gametic = i;
-		PredictionResults[i % BACKUPTICS].x = player->mo->x;
-		PredictionResults[i % BACKUPTICS].y = player->mo->y;
-		PredictionResults[i % BACKUPTICS].z = player->mo->z;
-		PredictionResults[i % BACKUPTICS].onground = player->onground;
+		PredictionLast.gametic = maxtic - 1;
+		PredictionLast.point.X = FIXED2FLOAT(player->mo->x);
+		PredictionLast.point.Y = FIXED2FLOAT(player->mo->y);
+		PredictionLast.point.Z = FIXED2FLOAT(player->mo->z);
+
+		if (PredictionLerptics > 0)
+		{
+			if (PredictionLerpFrom.gametic > 0 &&
+				P_LerpCalculate(PredictionLerpFrom.point, PredictionLast.point, PredictionLerpResult.point, (float)PredictionLerptics * cl_predict_lerpscale))
+			{
+				PredictionLerptics++;
+				player->mo->x = FLOAT2FIXED(PredictionLerpResult.point.X);
+				player->mo->y = FLOAT2FIXED(PredictionLerpResult.point.Y);
+				player->mo->z = FLOAT2FIXED(PredictionLerpResult.point.Z);
+			}
+			else
+			{
+				PredictionLerptics = 0;
+			}
+		}
 	}
-
-	if (PredictionLerptics < PredictionMaxLerptics)
-	{
-		PredictionLerptics++;
-		FVector3 pointold, pointnew, step, difference, result;
-		pointold.X = FIXED2FLOAT(PredictionResult_Last.x); // Old player pos
-		pointold.Y = FIXED2FLOAT(PredictionResult_Last.y);
-		pointold.Z = FIXED2FLOAT(PredictionResult_Last.z);
-		pointnew.X = FIXED2FLOAT(player->mo->x); // New player pos
-		pointnew.Y = FIXED2FLOAT(player->mo->y);
-		pointnew.Z = FIXED2FLOAT(player->mo->z);
-
-		difference = pointnew - pointold;
-		step = difference / PredictionMaxLerptics;
-		result = step * PredictionLerptics;
-		result += pointold;
-
-		player->mo->x = FLOAT2FIXED(result.X);
-		player->mo->y = FLOAT2FIXED(result.Y);
-		player->mo->z = FLOAT2FIXED(result.Z);
-		Printf("Lerped! x%f y%f z%f\n", result.X, result.Y, result.Z);
-	}
-	if (PredictionLerptics >= PredictionMaxLerptics)
-		PredictionResult_Last = PredictionResults[(maxtic - 1) % BACKUPTICS];
 }
 
 extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);

@@ -88,6 +88,7 @@ DEFINE_MEMBER_VARIABLE(height, AActor)
 DEFINE_MEMBER_VARIABLE(radius, AActor)
 DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
 DEFINE_MEMBER_VARIABLE(meleerange, AActor)
+DEFINE_MEMBER_VARIABLE(Speed, AActor)
 
 
 //==========================================================================

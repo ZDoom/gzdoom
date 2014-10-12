@@ -73,6 +73,7 @@
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 void P_SetupPortals();
 
+EXTERN_CVAR(Bool, cl_predict_specials)
 
 IMPLEMENT_POINTY_CLASS (DScroller)
  DECLARE_POINTER (m_Interpolations[0])
@@ -404,6 +405,48 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		!(line->flags & ML_MONSTERSCANACTIVATE))
 	{
 		return false;
+	}
+	return true;
+}
+
+//============================================================================
+//
+// P_PredictLine
+//
+//============================================================================
+
+bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
+{
+	int lineActivation;
+	INTBOOL buttonSuccess;
+	BYTE special;
+
+	// Only predict a very specifc section of specials
+	if (line->special != Teleport_Line &&
+		line->special != Teleport)
+	{
+		return false;
+	}
+
+	if (!P_TestActivateLine(line, mo, side, activationType) || !cl_predict_specials)
+	{
+		return false;
+	}
+
+	if (line->locknumber > 0) return false;
+	lineActivation = line->activation;
+	buttonSuccess = false;
+	buttonSuccess = P_ExecuteSpecial(line->special,
+		line, mo, side == 1, line->args[0],
+		line->args[1], line->args[2],
+		line->args[3], line->args[4]);
+
+	special = line->special;
+
+	// end of changed code
+	if (developer && buttonSuccess)
+	{
+		Printf("Line special %d predicted on line %i\n", special, int(line - lines));
 	}
 	return true;
 }

@@ -546,6 +546,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindClass("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
 }
 
+
 //
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
@@ -559,14 +560,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	AActor				*thingToHit;
 	AActor				*linetarget;
 
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(7);
 	ACTION_PARAM_CLASS(spraytype, 0);
 	ACTION_PARAM_INT(numrays, 1);
 	ACTION_PARAM_INT(damagecnt, 2);
+	ACTION_PARAM_ANGLE(angle, 3);
+	ACTION_PARAM_FIXED(distance, 4);
+	ACTION_PARAM_ANGLE(vrange, 5);
+	ACTION_PARAM_INT(defdamage, 6);
 
 	if (spraytype == NULL) spraytype = PClass::FindClass("BFGExtra");
 	if (numrays <= 0) numrays = 40;
 	if (damagecnt <= 0) damagecnt = 15;
+	if (angle == 0) angle = ANG90;
+	if (distance <= 0) distance = 16 * 64 * FRACUNIT;
+	if (vrange == 0) vrange = ANGLE_1 * 32;
 
 	// [RH] Don't crash if no target
 	if (!self->target)
@@ -575,10 +583,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)
 	{
-		an = self->angle - ANG90/2 + ANG90/numrays*i;
+		an = self->angle - angle/2 + angle/numrays*i;
 
 		// self->target is the originator (player) of the missile
-		P_AimLineAttack (self->target, an, 16*64*FRACUNIT, &linetarget, ANGLE_1*32);
+		P_AimLineAttack (self->target, an, distance, &linetarget, vrange);
 
 		if (!linetarget)
 			continue;
@@ -589,10 +597,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 		if (spray && (spray->flags5 & MF5_PUFFGETSOWNER))
 			spray->target = self->target;
 
-		
-		damage = 0;
-		for (j = 0; j < damagecnt; ++j)
-			damage += (pr_bfgspray() & 7) + 1;
+		if (defdamage == 0)
+		{
+			damage = 0;
+			for (j = 0; j < damagecnt; ++j)
+				damage += (pr_bfgspray() & 7) + 1;
+		}
+		else
+		{
+			// if this is used, damagecnt will be ignored
+			damage = defdamage;
+		}
 
 		thingToHit = linetarget;
 		int newdam = P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash), 

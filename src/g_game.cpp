@@ -1635,12 +1635,6 @@ void G_DoReborn (int playernum, bool freshbot)
 	}
 	else
 	{
-		// Old lerp data needs to go
-		if (playernum == consoleplayer)
-		{
-			P_PredictionLerpReset();
-		}
-
 		// respawn at the start
 		// first disassociate the corpse
 		if (players[playernum].mo)

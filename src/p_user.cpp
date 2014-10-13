@@ -64,14 +64,14 @@ static FRandom pr_skullpop ("SkullPop");
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-CUSTOM_CVAR(Float, cl_predict_lerpscale, 0.05, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, cl_predict_lerpscale, 0.05f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	P_PredictionLerpReset();
 }
-CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < 0.1)
-		self = 0.1;
+	if (self < 0.1f)
+		self = 0.1f;
 	P_PredictionLerpReset();
 }
 
@@ -2671,7 +2671,8 @@ bool P_LerpCalculate(FVector3 from, FVector3 to, FVector3 &result, float scale)
 	result = result + from;
 	FVector3 delta = result - to;
 
-	return (delta.LengthSquared() > cl_predict_lerpthreshold);
+	// As a fail safe, assume extrapolation is the threshold.
+	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
 }
 
 void P_PredictPlayer (player_t *player)
@@ -2759,7 +2760,8 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-	bool CanLerp = (cl_predict_lerpscale > 0), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
+	// Values too small to be usable for lerping can be considered "off".
+	bool CanLerp = !(cl_predict_lerpscale < 0.01f), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		if (!NoInterpolateOld)
@@ -2779,7 +2781,10 @@ void P_PredictPlayer (player_t *player)
 
 	if (CanLerp)
 	{
-		if (DoLerp)
+		if (NoInterpolateOld)
+			P_PredictionLerpReset();
+
+		else if (DoLerp)
 		{
 			// If lerping is already in effect, use the previous camera postion so the view doesn't suddenly snap
 			PredictionLerpFrom = (PredictionLerptics == 0) ? PredictionLast : PredictionLerpResult;

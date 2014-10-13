@@ -76,8 +76,6 @@ FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
 void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
 const char *GetPrintableDisplayName(const PClass *cls);
 
-class player_t;
-
 class APlayerPawn : public AActor
 {
 	DECLARE_CLASS (APlayerPawn, AActor)
@@ -398,8 +396,7 @@ public:
 
 	int			inventorytics;
 	BYTE		CurrentPlayerClass;		// class # for this player instance
-	bool		backpack;
-	
+
 	int			frags[MAXPLAYERS];		// kills of other players
 	int			fragcount;				// [RH] Cumulative frags for this player
 	int			lastkilltime;			// [RH] For multikills

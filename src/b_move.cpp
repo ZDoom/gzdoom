@@ -17,20 +17,7 @@
 #include "gi.h"
 #include "a_keys.h"
 #include "d_event.h"
-
-enum dirtype_t
-{
-    DI_EAST,
-    DI_NORTHEAST,
-    DI_NORTH,
-    DI_NORTHWEST,
-    DI_WEST,
-    DI_SOUTHWEST,
-    DI_SOUTH,
-    DI_SOUTHEAST,
-    DI_NODIR,
-    NUMDIRS
-};
+#include "p_enemy.h"
 
 static FRandom pr_botopendoor ("BotOpenDoor");
 static FRandom pr_bottrywalk ("BotTryWalk");
@@ -39,10 +26,6 @@ static FRandom pr_botnewchasedir ("BotNewChaseDir");
 // borrow some tables from p_enemy.cpp
 extern dirtype_t opposite[9];
 extern dirtype_t diags[4];
-extern fixed_t xspeed[8];
-extern fixed_t yspeed[8];
-
-extern TArray<line_t *> spechit;
 
 //Called while the bot moves after its player->dest mobj
 //which can be a weapon/enemy/item whatever.

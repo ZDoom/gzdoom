@@ -240,7 +240,6 @@ player_t::player_t()
   health(0),
   inventorytics(0),
   CurrentPlayerClass(0),
-  backpack(0),
   fragcount(0),
   lastkilltime(0),
   multicount(0),
@@ -341,7 +340,6 @@ player_t &player_t::operator=(const player_t &p)
 	health = p.health;
 	inventorytics = p.inventorytics;
 	CurrentPlayerClass = p.CurrentPlayerClass;
-	backpack = p.backpack;
 	memcpy(frags, &p.frags, sizeof(frags));
 	fragcount = p.fragcount;
 	lastkilltime = p.lastkilltime;
@@ -2889,9 +2887,13 @@ void player_t::Serialize (FArchive &arc)
 		<< vely
 		<< centering
 		<< health
-		<< inventorytics
-		<< backpack
-		<< fragcount
+		<< inventorytics;
+	if (SaveVersion < 4513)
+	{
+		bool backpack;
+		arc << backpack;
+	}
+	arc << fragcount
 		<< spreecount
 		<< multicount
 		<< lastkilltime

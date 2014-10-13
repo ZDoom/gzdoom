@@ -174,7 +174,8 @@ typedef enum
 	PST_LIVE,	// Playing or camping.
 	PST_DEAD,	// Dead on the ground, view follows killer.
 	PST_REBORN,	// Ready to restart/respawn???
-	PST_ENTER	// [BC] Entered the game
+	PST_ENTER,	// [BC] Entered the game
+	PST_GONE	// Player has left the game
 } playerstate_t;
 
 

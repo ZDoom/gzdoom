@@ -4250,6 +4250,12 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !playeringame[playernum])
 		return NULL;
 
+	// Old lerp data needs to go
+	if (playernum == consoleplayer)
+	{
+		P_PredictionLerpReset();
+	}
+
 	p = &players[playernum];
 
 	if (p->cls == NULL)

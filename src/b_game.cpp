@@ -118,7 +118,7 @@ void FCajunMaster::Main (int buf)
 		BotThinkCycles.Clock();
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (playeringame[i] && players[i].mo && !freeze && players[i].isbot)
+			if (playeringame[i] && players[i].mo && !freeze && players[i].Bot.isbot)
 				Think (players[i].mo, &netcmds[i][buf]);
 		}
 		BotThinkCycles.Unclock();
@@ -176,10 +176,10 @@ void FCajunMaster::Init ()
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		waitingforspawn[i] = false;
-		if (playeringame[i] && players[i].isbot)
+		if (playeringame[i] && players[i].Bot.isbot)
 		{
 			CleanBotstuff (&players[i]);
-			players[i].isbot = false;
+			players[i].Bot.isbot = false;
 			botingame[i] = false;
 		}
 	}
@@ -214,7 +214,7 @@ void FCajunMaster::End ()
 	getspawned.Clear();
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i] && players[i].isbot)
+		if (playeringame[i] && players[i].Bot.isbot)
 		{
 			if (deathmatch)
 			{
@@ -336,7 +336,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		Net_WriteString (concat);
 	}
 
-	players[playernumber].skill = thebot->skill;
+	players[playernumber].Bot.skill = thebot->skill;
 
 	thebot->inuse = true;
 
@@ -363,7 +363,7 @@ void FCajunMaster::DoAddBot (int bnum, char *info)
 	else
 	{
 		multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
-		players[bnum].isbot = true;
+		players[bnum].Bot.isbot = true;
 		playeringame[bnum] = true;
 		players[bnum].mo = NULL;
 		players[bnum].playerstate = PST_ENTER;
@@ -425,22 +425,22 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 //Used when bots are respawned or at level starts.
 void FCajunMaster::CleanBotstuff (player_t *p)
 {
-	p->angle = ANG45;
-	p->dest = NULL;
-	p->enemy = NULL; //The dead meat.
-	p->missile = NULL; //A threatening missile that needs to be avoided.
-	p->mate = NULL;    //Friend (used for grouping in templay or coop.
-	p->last_mate = NULL; //If bot's mate dissapeared (not if died) that mate is pointed to by this. Allows bot to roam to it if necessary.
+	p->Bot.angle = ANG45;
+	p->Bot.dest = NULL;
+	p->Bot.enemy = NULL; //The dead meat.
+	p->Bot.missile = NULL; //A threatening missile that needs to be avoided.
+	p->Bot.mate = NULL;    //Friend (used for grouping in templay or coop.
+	p->Bot.last_mate = NULL; //If bot's mate dissapeared (not if died) that mate is pointed to by this. Allows bot to roam to it if necessary.
 	//Tickers
-	p->t_active = 0; //Open door, lower lift stuff, door must open and lift must go down before bot does anything radical like try a stuckmove
-	p->t_respawn = 0;
-	p->t_strafe = 0;
-	p->t_react = 0;
+	p->Bot.t_active = 0; //Open door, lower lift stuff, door must open and lift must go down before bot does anything radical like try a stuckmove
+	p->Bot.t_respawn = 0;
+	p->Bot.t_strafe = 0;
+	p->Bot.t_react = 0;
 	//Misc bools
-	p->isbot = true; //Important.
-	p->first_shot = true; //Used for reaction skill.
-	p->sleft = false; //If false, strafe is right.
-	p->allround = false;
+	p->Bot.isbot = true; //Important.
+	p->Bot.first_shot = true; //Used for reaction skill.
+	p->Bot.sleft = false; //If false, strafe is right.
+	p->Bot.allround = false;
 }
 
 

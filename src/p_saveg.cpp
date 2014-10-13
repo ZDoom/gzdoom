@@ -271,7 +271,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 
 	dst->cheats |= chasecam;
 
-	if (dst->isbot)
+	if (dst->Bot.isbot)
 	{
 		botinfo_t *thebot = bglobal.botinfo;
 		while (thebot && stricmp (name, thebot->name))

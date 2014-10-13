@@ -1024,8 +1024,8 @@ void AInventory::Touch (AActor *toucher)
 	//Added by MC: Check if item taken was the roam destination of any bot
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i] && this == players[i].dest)
-			players[i].dest = NULL;
+		if (playeringame[i] && this == players[i].Bot.dest)
+			players[i].Bot.dest = NULL;
 	}
 }
 

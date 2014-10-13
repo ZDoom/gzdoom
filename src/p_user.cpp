@@ -85,7 +85,7 @@ struct PredictPos
 static int PredictionLerptics;
 
 static player_t PredictionPlayerBackup;
-static BYTE PredictionActorBackup[sizeof(AActor)];
+static BYTE PredictionActorBackup[sizeof(APlayerPawn)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
 static TArray<AActor *> PredictionSectorListBackup;
 static TArray<msecnode_t *> PredictionSector_sprev_Backup;

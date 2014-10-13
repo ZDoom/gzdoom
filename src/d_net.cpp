@@ -1730,7 +1730,7 @@ void D_CheckNetGame (void)
 	if (v != NULL && (atoi(v) != 0))
 	{
 		Printf(TEXTCOLOR_YELLOW "Notice: Using PacketServer (netmode 1) over the internet is prone to running too slow on some internet configurations."
-			"\nIf the game is running well below excpected speeds, use netmode 0 (P2P) instead.\n");
+			"\nIf the game is running well below expected speeds, use netmode 0 (P2P) instead.\n");
 	}
 
 	// I_InitNetwork sets doomcom and netgame

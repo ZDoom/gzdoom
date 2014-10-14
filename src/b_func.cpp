@@ -249,7 +249,7 @@ shootmissile:
 
 		if (m)
 		{
-			if (inc[actor->id])
+			if (inc[actor->player - players])
 				actor->player->angle += m;
 			else
 				actor->player->angle -= m;
@@ -257,7 +257,7 @@ shootmissile:
 
 		if (abs (actor->player->angle - actor->angle) < 4*ANGLE_1)
 		{
-			inc[actor->id] = !inc[actor->id];
+			inc[actor->player - players] = !inc[actor->player - players];
 		}
 
 		if (Check_LOS (actor, enemy, (SHOOTFOV/2)))

@@ -1768,6 +1768,7 @@ enum SIX_Flags
 	SIXF_SETTARGET				= 1 << 20,
 	SIXF_SETTRACER				= 1 << 21,
 	SIXF_NOPOINTERS				= 1 << 22,
+	SIXF_ORIGINATOR				= 1 << 23,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1803,11 +1804,13 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		mo->pitch = self->pitch;
 	}
-	while (originator && originator->isMissile())
+	if (!(flags & SIXF_ORIGINATOR))
 	{
-		originator = originator->target;
-	}
-
+		while (originator && originator->isMissile())
+		{
+			originator = originator->target;
+		}
+	}	
 	if (flags & SIXF_TELEFRAG) 
 	{
 		P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
@@ -3278,18 +3281,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 
 enum JLOS_flags
 {
-	JLOSF_PROJECTILE=1,
-	JLOSF_NOSIGHT=2,
-	JLOSF_CLOSENOFOV=4,
-	JLOSF_CLOSENOSIGHT=8,
-	JLOSF_CLOSENOJUMP=16,
-	JLOSF_DEADNOJUMP=32,
-	JLOSF_CHECKMASTER=64,
-	JLOSF_TARGETLOS=128,
-	JLOSF_FLIPFOV=256,
-	JLOSF_ALLYNOJUMP=512,
-	JLOSF_COMBATANTONLY=1024,
-	JLOSF_NOAUTOAIM=2048,
+	JLOSF_PROJECTILE =		1,
+	JLOSF_NOSIGHT =			1 << 1,
+	JLOSF_CLOSENOFOV =		1 << 2,
+	JLOSF_CLOSENOSIGHT =	1 << 3,
+	JLOSF_CLOSENOJUMP =		1 << 4,
+	JLOSF_DEADNOJUMP =		1 << 5,
+	JLOSF_CHECKMASTER =		1 << 6,
+	JLOSF_TARGETLOS =		1 << 7,
+	JLOSF_FLIPFOV =			1 << 8,
+	JLOSF_ALLYNOJUMP =		1 << 9,
+	JLOSF_COMBATANTONLY =	1 << 10,
+	JLOSF_NOAUTOAIM =		1 << 11,
+	JLOSF_CHECKTRACER =		1 << 12,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
@@ -3314,9 +3318,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		{
 			target = self->master;
 		}
-		else if (self->flags & MF_MISSILE && (flags & JLOSF_PROJECTILE))
+		else if ((self->flags & MF_MISSILE && (flags & JLOSF_PROJECTILE)) || (flags & JLOSF_CHECKTRACER))
 		{
-			if (self->flags2 & MF2_SEEKERMISSILE)
+			if ((self->flags2 & MF2_SEEKERMISSILE) || (flags & JLOSF_CHECKTRACER))
 				target = self->tracer;
 			else
 				target = NULL;
@@ -5002,7 +5006,7 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 		//since that's the whole point of it.
 		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(killtarget->flags5 & MF5_NODAMAGE))
 		{
-			P_ExplodeMissile(self->target, NULL, NULL);
+			P_ExplodeMissile(killtarget, NULL, NULL);
 		}
 	}
 	if (!(flags & KILS_NOMONSTERS))
@@ -5112,9 +5116,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 
 enum RMVF_flags
 {
-	RMVF_MISSILES = 1 << 0,
+	RMVF_MISSILES	= 1 << 0,
 	RMVF_NOMONSTERS = 1 << 1,
-	RMVF_MISC = 1 << 2,
+	RMVF_MISC		= 1 << 2,
 	RMVF_EVERYTHING = 1 << 3,
 };
 

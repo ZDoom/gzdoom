@@ -76,6 +76,7 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "p_acs.h"
+#include "p_effect.h"
 #include "m_joy.h"
 #include "farchive.h"
 #include "r_renderer.h"
@@ -1013,10 +1014,16 @@ void G_Ticker ()
 	// do player reborns if needed
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i] &&
-			(players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER))
+		if (playeringame[i])
 		{
-			G_DoReborn (i, false);
+			if ((players[i].playerstate == PST_GONE))
+			{
+				G_DoPlayerPop(i);
+			}
+			if ((players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER))
+			{
+				G_DoReborn(i, false);
+			}
 		}
 	}
 
@@ -1656,6 +1663,56 @@ void G_DoReborn (int playernum, bool freshbot)
 			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 	}
+}
+
+//
+// G_DoReborn
+//
+void G_DoPlayerPop(int playernum)
+{
+	playeringame[playernum] = false;
+
+	if (deathmatch)
+	{
+		Printf("%s left the game with %d frags\n",
+			players[playernum].userinfo.GetName(),
+			players[playernum].fragcount);
+	}
+	else
+	{
+		Printf("%s left the game\n", players[playernum].userinfo.GetName());
+	}
+
+	// [RH] Revert each player to their own view if spying through the player who left
+	for (int ii = 0; ii < MAXPLAYERS; ++ii)
+	{
+		if (playeringame[ii] && players[ii].camera == players[playernum].mo)
+		{
+			players[ii].camera = players[ii].mo;
+			if (ii == consoleplayer && StatusBar != NULL)
+			{
+				StatusBar->AttachToPlayer(&players[ii]);
+			}
+		}
+	}
+
+	// [RH] Make the player disappear
+	FBehavior::StaticStopMyScripts(players[playernum].mo);
+	if (players[playernum].mo != NULL)
+	{
+		P_DisconnectEffect(players[playernum].mo);
+		players[playernum].mo->player = NULL;
+		players[playernum].mo->Destroy();
+		if (!(players[playernum].mo->ObjectFlags & OF_EuthanizeMe))
+		{ // We just destroyed a morphed player, so now the original player
+			// has taken their place. Destroy that one too.
+			players[playernum].mo->Destroy();
+		}
+		players[playernum].mo = NULL;
+		players[playernum].camera = NULL;
+	}
+	// [RH] Let the scripts know the player left
+	FBehavior::StaticStartTypedScripts(SCRIPT_Disconnect, NULL, true, playernum);
 }
 
 void G_ScreenShot (char *filename)

@@ -252,9 +252,13 @@ void AActor::Serialize (FArchive &arc)
 		<< MinMissileChance
 		<< SpawnFlags
 		<< Inventory
-		<< InventoryID
-		<< id
-		<< FloatBobPhase
+		<< InventoryID;
+	if (SaveVersion < 4513)
+	{
+		SDWORD id;
+		arc << id;
+	}
+	arc << FloatBobPhase
 		<< Translation
 		<< SeeSound
 		<< AttackSound
@@ -4246,6 +4250,12 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !playeringame[playernum])
 		return NULL;
 
+	// Old lerp data needs to go
+	if (playernum == consoleplayer)
+	{
+		P_PredictionLerpReset();
+	}
+
 	p = &players[playernum];
 
 	if (p->cls == NULL)
@@ -4357,9 +4367,6 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	mobj->angle = spawn_angle;
 	mobj->pitch = mobj->roll = 0;
 	mobj->health = p->health;
-
-	//Added by MC: Identification (number in the players[MAXPLAYERS] array)
-    mobj->id = playernum;
 
 	// [RH] Set player sprite based on skin
 	if (!(mobj->flags4 & MF4_NOSKIN))

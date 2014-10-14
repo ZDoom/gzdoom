@@ -1025,7 +1025,7 @@ void AInventory::Touch (AActor *toucher)
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i] && this == players[i].dest)
-    		players[i].dest = NULL;
+			players[i].dest = NULL;
 	}
 }
 

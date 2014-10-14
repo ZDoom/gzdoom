@@ -49,6 +49,7 @@
 #include "hu_stuff.h"
 #include "gstrings.h"
 #include "d_net.h"
+#include "c_dispatch.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -116,6 +117,8 @@ int STACK_ARGS compareteams (const void *arg1, const void *arg2)
 	}
 	return diff;
 }
+
+bool SB_ForceActive = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -491,4 +494,9 @@ int HU_GetRowColor(player_t *player, bool highlight)
 			return deathmatch ? sb_deathmatch_yourplayercolor : sb_cooperative_yourplayercolor;
 		}
 	}
+}
+
+CCMD (togglescoreboard)
+{
+	SB_ForceActive = !SB_ForceActive;
 }

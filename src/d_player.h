@@ -76,8 +76,6 @@ FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
 void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
 const char *GetPrintableDisplayName(const PClass *cls);
 
-class player_t;
-
 class APlayerPawn : public AActor
 {
 	DECLARE_CLASS (APlayerPawn, AActor)
@@ -176,7 +174,8 @@ typedef enum
 	PST_LIVE,	// Playing or camping.
 	PST_DEAD,	// Dead on the ground, view follows killer.
 	PST_REBORN,	// Ready to restart/respawn???
-	PST_ENTER	// [BC] Entered the game
+	PST_ENTER,	// [BC] Entered the game
+	PST_GONE	// Player has left the game
 } playerstate_t;
 
 
@@ -398,8 +397,7 @@ public:
 
 	int			inventorytics;
 	BYTE		CurrentPlayerClass;		// class # for this player instance
-	bool		backpack;
-	
+
 	int			frags[MAXPLAYERS];		// kills of other players
 	int			fragcount;				// [RH] Cumulative frags for this player
 	int			lastkilltime;			// [RH] For multikills

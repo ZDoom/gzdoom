@@ -458,6 +458,7 @@ OptionMenu "CustomizeControls"
 	Control 	"Run",					"+speed"
 	Control 	"Strafe",				"+strafe"
 	Control 	"Show Scoreboard",		"+showscores"
+	Control 	"Toggle Scoreboard",	"togglescoreboard"
 	StaticText 	""
 	StaticText 	"Chat", 1
 	Control 	"Say",					"messagemode"
@@ -1612,6 +1613,8 @@ OptionMenu NetworkOptions
 	StaticText "Local options", 1
 	Option "Movement prediction",		"cl_noprediction", "OffOn"
 	Option "Predict line actions",		"cl_predict_specials", "OnOff"
+	Slider "Prediction Lerp Scale",		"cl_predict_lerpscale", 0.0, 0.5, 0.05
+	Slider "Lerp Threshold",			"cl_predict_lerpthreshold", 0.1, 16.0, 0.1
 	StaticText " "
 	StaticText "Host options", 1
 	Option "Extra Tics",				"net_extratic", "ExtraTicMode"

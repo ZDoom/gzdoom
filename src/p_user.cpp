@@ -293,6 +293,7 @@ player_t::player_t()
   respawn_time(0),
   camera(0),
   air_finished(0),
+  Bot(0),
   BlendR(0),
   BlendG(0),
   BlendB(0),
@@ -311,7 +312,6 @@ player_t::player_t()
 	memset (&cmd, 0, sizeof(cmd));
 	memset (frags, 0, sizeof(frags));
 	memset (psprites, 0, sizeof(psprites));
-	memset (&Bot, 0, sizeof(Bot));
 }
 
 player_t &player_t::operator=(const player_t &p)
@@ -379,29 +379,7 @@ player_t &player_t::operator=(const player_t &p)
 	camera = p.camera;
 	air_finished = p.air_finished;
 	LastDamageType = p.LastDamageType;
-	Bot.savedyaw = p.Bot.savedyaw;
-	Bot.savedpitch = p.Bot.savedpitch;
-	Bot.angle = p.Bot.angle;
-	Bot.dest = p.Bot.dest;
-	Bot.prev = p.Bot.prev;
-	Bot.enemy = p.Bot.enemy;
-	Bot.missile = p.Bot.missile;
-	Bot.mate = p.Bot.mate;
-	Bot.last_mate = p.Bot.last_mate;
-	Bot.skill = p.Bot.skill;
-	Bot.t_active = p.Bot.t_active;
-	Bot.t_respawn = p.Bot.t_respawn;
-	Bot.t_strafe = p.Bot.t_strafe;
-	Bot.t_react = p.Bot.t_react;
-	Bot.t_fight = p.Bot.t_fight;
-	Bot.t_roam = p.Bot.t_roam;
-	Bot.t_rocket = p.Bot.t_rocket;
-	Bot.isbot = p.Bot.isbot;
-	Bot.first_shot = p.Bot.first_shot;
-	Bot.sleft = p.Bot.sleft;
-	Bot.allround = p.Bot.allround;
-	Bot.oldx = p.Bot.oldx;
-	Bot.oldy = p.Bot.oldy;
+	Bot = p.Bot;
 	settings_controller = p.settings_controller;
 	BlendR = p.BlendR;
 	BlendG = p.BlendG;
@@ -444,12 +422,7 @@ size_t player_t::FixPointers (const DObject *old, DObject *rep)
 	if (*&poisoner == old)			poisoner = replacement, changed++;
 	if (*&attacker == old)			attacker = replacement, changed++;
 	if (*&camera == old)			camera = replacement, changed++;
-	if (*&Bot.dest == old)			Bot.dest = replacement, changed++;
-	if (*&Bot.prev == old)			Bot.prev = replacement, changed++;
-	if (*&Bot.enemy == old)			Bot.enemy = replacement, changed++;
-	if (*&Bot.missile == old)		Bot.missile = replacement, changed++;
-	if (*&Bot.mate == old)			Bot.mate = replacement, changed++;
-	if (*&Bot.last_mate == old)		Bot.last_mate = replacement, changed++;
+	if (*&Bot == old)				Bot = static_cast<DBot *>(rep), changed++;
 	if (ReadyWeapon == old)			ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
 	if (PendingWeapon == old)		PendingWeapon = static_cast<AWeapon *>(rep), changed++;
 	if (*&PremorphWeapon == old)	PremorphWeapon = static_cast<AWeapon *>(rep), changed++;
@@ -464,12 +437,7 @@ size_t player_t::PropagateMark()
 	GC::Mark(poisoner);
 	GC::Mark(attacker);
 	GC::Mark(camera);
-	GC::Mark(Bot.dest);
-	GC::Mark(Bot.prev);
-	GC::Mark(Bot.enemy);
-	GC::Mark(Bot.missile);
-	GC::Mark(Bot.mate);
-	GC::Mark(Bot.last_mate);
+	GC::Mark(Bot);
 	GC::Mark(ReadyWeapon);
 	GC::Mark(ConversationNPC);
 	GC::Mark(ConversationPC);
@@ -718,10 +686,10 @@ void APlayerPawn::SetupWeaponSlots()
 		// If we're the local player, then there's a bit more work to do.
 		// This also applies if we're a bot and this is the net arbitrator.
 		if (player - players == consoleplayer ||
-			(player->Bot.isbot && consoleplayer == Net_Arbitrator))
+			(player->Bot != NULL && consoleplayer == Net_Arbitrator))
 		{
 			FWeaponSlots local_slots(player->weapons);
-			if (player->Bot.isbot)
+			if (player->Bot != NULL)
 			{ // Bots only need weapons from KEYCONF, not INI modifications.
 				P_PlaybackKeyConfWeapons(&local_slots);
 			}
@@ -2153,7 +2121,7 @@ void P_DeathThink (player_t *player)
 	if ((player->cmd.ucmd.buttons & BT_USE ||
 		((multiplayer || alwaysapplydmflags) && (dmflags & DF_FORCE_RESPAWN))) && !(dmflags2 & DF2_NO_RESPAWN))
 	{
-		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && !player->Bot.isbot))
+		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && player->Bot == NULL))
 		{
 			player->cls = NULL;		// Force a new class if the player is using a random class
 			player->playerstate = (multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN)) ? PST_REBORN : PST_ENTER;
@@ -2985,9 +2953,17 @@ void player_t::Serialize (FArchive &arc)
 		<< respawn_time
 		<< air_finished
 		<< turnticks
-		<< oldbuttons
-		<< Bot.isbot
-		<< BlendR
+		<< oldbuttons;
+	bool IsBot;
+	if (SaveVersion >= 4514)
+	{
+		arc << Bot;
+	}
+	else
+	{
+		arc << IsBot;
+	}
+	arc << BlendR
 		<< BlendG
 		<< BlendB
 		<< BlendA;
@@ -3070,32 +3046,30 @@ void player_t::Serialize (FArchive &arc)
 		onground = (mo->z <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (cheats & CF_NOCLIP2);
 	}
 
-	if (Bot.isbot)
+	if (SaveVersion < 4514 && IsBot)
 	{
-		arc	<< Bot.angle
-			<< Bot.dest
-			<< Bot.prev
-			<< Bot.enemy
-			<< Bot.missile
-			<< Bot.mate
-			<< Bot.last_mate
-			<< Bot.skill
-			<< Bot.t_active
-			<< Bot.t_respawn
-			<< Bot.t_strafe
-			<< Bot.t_react
-			<< Bot.t_fight
-			<< Bot.t_roam
-			<< Bot.t_rocket
-			<< Bot.first_shot
-			<< Bot.sleft
-			<< Bot.allround
-			<< Bot.oldx
-			<< Bot.oldy;
-	}
-	else
-	{
-		Bot.dest = Bot.prev = Bot.enemy = Bot.missile = Bot.mate = Bot.last_mate = NULL;
+		Bot = new DBot;
+
+		arc	<< Bot->angle
+			<< Bot->dest
+			<< Bot->prev
+			<< Bot->enemy
+			<< Bot->missile
+			<< Bot->mate
+			<< Bot->last_mate
+			<< Bot->skill
+			<< Bot->t_active
+			<< Bot->t_respawn
+			<< Bot->t_strafe
+			<< Bot->t_react
+			<< Bot->t_fight
+			<< Bot->t_roam
+			<< Bot->t_rocket
+			<< Bot->first_shot
+			<< Bot->sleft
+			<< Bot->allround
+			<< Bot->oldx
+			<< Bot->oldy;
 	}
 	if (arc.IsLoading ())
 	{

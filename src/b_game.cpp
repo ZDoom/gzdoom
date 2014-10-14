@@ -118,7 +118,7 @@ void FCajunMaster::Main (int buf)
 		BotThinkCycles.Clock();
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (playeringame[i] && players[i].mo && !freeze && players[i].Bot.isbot)
+			if (playeringame[i] && players[i].mo && !freeze && players[i].Bot != NULL)
 				Think (players[i].mo, &netcmds[i][buf]);
 		}
 		BotThinkCycles.Unclock();
@@ -172,16 +172,9 @@ void FCajunMaster::Init ()
 	body1 = NULL;
 	body2 = NULL;
 
-	//Remove all bots upon each level start, they'll get spawned instead.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		waitingforspawn[i] = false;
-		if (playeringame[i] && players[i].Bot.isbot)
-		{
-			CleanBotstuff (&players[i]);
-			players[i].Bot.isbot = false;
-			botingame[i] = false;
-		}
 	}
 
 	if (ctf && teamplay == false)
@@ -214,13 +207,12 @@ void FCajunMaster::End ()
 	getspawned.Clear();
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i] && players[i].Bot.isbot)
+		if (playeringame[i] && players[i].Bot != NULL)
 		{
 			if (deathmatch)
 			{
 				getspawned.Push(players[i].userinfo.GetName());
 			}
-			CleanBotstuff (&players[i]);
 		}
 	}
 	if (deathmatch)
@@ -335,8 +327,10 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		}
 		Net_WriteString (concat);
 	}
-
-	players[playernumber].Bot.skill = thebot->skill;
+	Net_WriteByte(thebot->skill.aiming);
+	Net_WriteByte(thebot->skill.perfection);
+	Net_WriteByte(thebot->skill.reaction);
+	Net_WriteByte(thebot->skill.isp);
 
 	thebot->inuse = true;
 
@@ -346,9 +340,17 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void FCajunMaster::DoAddBot (int bnum, char *info)
+void FCajunMaster::DoAddBot (BYTE **stream)
 {
+	int bnum = ReadByte (stream);
+	char *info = ReadString (stream);
 	BYTE *infob = (BYTE *)info;
+	botskill_t skill;
+	skill.aiming = ReadByte (stream);
+	skill.perfection = ReadByte (stream);
+	skill.reaction = ReadByte (stream);
+	skill.isp = ReadByte (stream);
+
 	D_ReadUserInfoStrings (bnum, &infob, false);
 	if (!deathmatch && playerstarts[bnum].type == 0)
 	{
@@ -363,11 +365,11 @@ void FCajunMaster::DoAddBot (int bnum, char *info)
 	else
 	{
 		multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
-		players[bnum].Bot.isbot = true;
+		players[bnum].Bot = new DBot;
+		players[bnum].Bot->skill = skill;
 		playeringame[bnum] = true;
 		players[bnum].mo = NULL;
 		players[bnum].playerstate = PST_ENTER;
-		botingame[bnum] = true;
 
 		if (teamplay)
 			Printf ("%s joined the %s team\n", players[bnum].userinfo.GetName(), Teams[players[bnum].userinfo.GetTeam()].GetName());
@@ -389,13 +391,13 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i] && botingame[i])
+		if (playeringame[i] && players[i].Bot != NULL)
 		{
 			// If a player is looking through this bot's eyes, make him
 			// look through his own eyes instead.
 			for (j = 0; j < MAXPLAYERS; ++j)
 			{
-				if (i != j && playeringame[j] && !botingame[j])
+				if (i != j && playeringame[j] && players[j].Bot == NULL)
 				{
 					if (players[j].camera == players[i].mo)
 					{
@@ -419,28 +421,6 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 			waitingforspawn[i] = false;
 	}
 	botnum = 0;
-}
-
-//Clean the bot part of the player_t
-//Used when bots are respawned or at level starts.
-void FCajunMaster::CleanBotstuff (player_t *p)
-{
-	p->Bot.angle = ANG45;
-	p->Bot.dest = NULL;
-	p->Bot.enemy = NULL; //The dead meat.
-	p->Bot.missile = NULL; //A threatening missile that needs to be avoided.
-	p->Bot.mate = NULL;    //Friend (used for grouping in templay or coop.
-	p->Bot.last_mate = NULL; //If bot's mate dissapeared (not if died) that mate is pointed to by this. Allows bot to roam to it if necessary.
-	//Tickers
-	p->Bot.t_active = 0; //Open door, lower lift stuff, door must open and lift must go down before bot does anything radical like try a stuckmove
-	p->Bot.t_respawn = 0;
-	p->Bot.t_strafe = 0;
-	p->Bot.t_react = 0;
-	//Misc bools
-	p->Bot.isbot = true; //Important.
-	p->Bot.first_shot = true; //Used for reaction skill.
-	p->Bot.sleft = false; //If false, strafe is right.
-	p->Bot.allround = false;
 }
 
 

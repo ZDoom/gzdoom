@@ -85,11 +85,10 @@ public:
 	void Main (int buf);
 	void Init ();
 	void End();
-	void CleanBotstuff (player_t *p);
 	bool SpawnBot (const char *name, int color = NOCOLOR);
 	bool LoadBots ();
 	void ForgetBots ();
-	void DoAddBot (int bnum, char *info);
+	void DoAddBot (BYTE **stream);
 	void RemoveAllBots (bool fromlist);
 
 	//(B_Func.c)
@@ -109,7 +108,6 @@ public:
 	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
-	bool botingame[MAXPLAYERS];
 	BYTE freeze:1;			//Game in freeze mode.
 	BYTE changefreeze:1;	//Game wants to change freeze mode.
 	int botnum;
@@ -145,14 +143,20 @@ protected:
 	bool	 observer; //Consoleplayer is observer.
 };
 
-class FBot
+class DBot : public DThinker
 {
+	DECLARE_CLASS(DBot,DThinker)
+	HAS_OBJECT_POINTERS
 public:
+	DBot ();
+
+	void Serialize (FArchive &arc);
+
 	angle_t		savedyaw;
 	int			savedpitch;
 
 	angle_t		angle;		// The wanted angle that the bot try to get every tic.
-							//  (used to get a smoth view movement)
+							//  (used to get a smooth view movement)
 	TObjPtr<AActor>		dest;		// Move Destination.
 	TObjPtr<AActor>		prev;		// Previous move destination.
 
@@ -179,10 +183,10 @@ public:
 	int			t_rocket;
 
 	//Misc booleans
-	bool		isbot;
 	bool		first_shot;	// Used for reaction skill.
 	bool		sleft;		// If false, strafe is right.
 	bool		allround;
+	bool		increase;
 
 	fixed_t		oldx;
 	fixed_t		oldy;

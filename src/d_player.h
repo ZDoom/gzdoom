@@ -442,7 +442,7 @@ public:
 	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
 
 	//Added by MC:
-	FBot		Bot;
+	TObjPtr<DBot> Bot;
 
 	bool		settings_controller;	// Player can control game settings.
 

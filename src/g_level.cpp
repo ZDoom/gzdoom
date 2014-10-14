@@ -1110,6 +1110,11 @@ void G_StartTravel ()
 					P_DelSector_List ();
 				}
 			}
+
+			if (players[i].Bot != NULL)
+			{
+				players[i].Bot->ChangeStatNum (STAT_TRAVELLING);
+			}
 		}
 	}
 }
@@ -1183,6 +1188,11 @@ void G_FinishTravel ()
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
 			pawn->player->SendPitchLimits();
+
+			if (pawn->player->Bot != NULL)
+			{
+				pawn->player->Bot->ChangeStatNum (STAT_DEFAULT);
+			}
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{

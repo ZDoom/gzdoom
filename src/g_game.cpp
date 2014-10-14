@@ -875,7 +875,7 @@ static void ChangeSpy (int changespy)
 			pnum &= MAXPLAYERS-1;
 			if (playeringame[pnum] &&
 				(!checkTeam || players[pnum].mo->IsTeammate (players[consoleplayer].mo) ||
-				(bot_allowspy && players[pnum].Bot.isbot)))
+				(bot_allowspy && players[pnum].Bot != NULL)))
 			{
 				break;
 			}
@@ -1156,7 +1156,7 @@ void G_Ticker ()
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
 			}
 
-			if (netgame && !players[i].Bot.isbot && !demoplayback && (gametic%ticdup) == 0)
+			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%ticdup) == 0)
 			{
 				//players[i].inconsistant = 0;
 				if (gametic > BACKUPTICS*ticdup && consistancy[i][buf] != cmd->consistancy)
@@ -1338,10 +1338,10 @@ void G_PlayerReborn (int player)
 	int			chasecam;
 	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
-	botskill_t  b_skill;	//Added by MC:
 	APlayerPawn *actor;
 	const PClass *cls;
 	FString		log;
+	DBot		*OldBot;	//Added by MC:
 
 	p = &players[player];
 
@@ -1351,12 +1351,12 @@ void G_PlayerReborn (int player)
 	itemcount = p->itemcount;
 	secretcount = p->secretcount;
 	currclass = p->CurrentPlayerClass;
-	b_skill = p->Bot.skill;    //Added by MC:
 	userinfo.TransferFrom(p->userinfo);
 	actor = p->mo;
 	cls = p->cls;
 	log = p->LogText;
 	chasecam = p->cheats & CF_CHASECAM;
+	OldBot = p->Bot;		//Added by MC:
 
 	// Reset player structure to its defaults
 	p->~player_t();
@@ -1374,7 +1374,12 @@ void G_PlayerReborn (int player)
 	p->LogText = log;
 	p->cheats |= chasecam;
 
-	p->Bot.skill = b_skill;	//Added by MC:
+	//Added by MC: Init bot structure.
+	if (OldBot != NULL)
+	{
+		p->Bot = new DBot;
+		p->Bot->skill = OldBot->skill;
+	}
 
 	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;
@@ -1385,12 +1390,6 @@ void G_PlayerReborn (int player)
 		actor->GiveDefaultInventory ();
 		p->ReadyWeapon = p->PendingWeapon;
 	}
-
-	//Added by MC: Init bot structure.
-	if (bglobal.botingame[player])
-		bglobal.CleanBotstuff (p);
-	else
-		p->Bot.isbot = false;
 }
 
 //

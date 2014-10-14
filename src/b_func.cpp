@@ -140,8 +140,7 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	fixed_t dist;
 	angle_t an;
 	int m;
-	static bool inc[MAXPLAYERS];
-	AActor *enemy = actor->player->Bot.enemy;
+	AActor *enemy = actor->player->Bot->enemy;
 
 	if (!enemy || !(enemy->flags & MF_SHOOTABLE) || enemy->health <= 0)
 		return;
@@ -149,20 +148,20 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	if (actor->player->ReadyWeapon == NULL)
 		return;
 
-	if (actor->player->damagecount > actor->player->Bot.skill.isp)
+	if (actor->player->damagecount > actor->player->Bot->skill.isp)
 	{
-		actor->player->Bot.first_shot = true;
+		actor->player->Bot->first_shot = true;
 		return;
 	}
 
 	//Reaction skill thing.
-	if (actor->player->Bot.first_shot &&
+	if (actor->player->Bot->first_shot &&
 		!(actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_REACTION_SKILL_THING))
 	{
-		actor->player->Bot.t_react = (100-actor->player->Bot.skill.reaction+1)/((pr_botdofire()%3)+3);
+		actor->player->Bot->t_react = (100-actor->player->Bot->skill.reaction+1)/((pr_botdofire()%3)+3);
 	}
-	actor->player->Bot.first_shot = false;
-	if (actor->player->Bot.t_react)
+	actor->player->Bot->first_shot = false;
+	if (actor->player->Bot->t_react)
 		return;
 
 	//MAKEME: Decrease the rocket suicides even more.
@@ -199,8 +198,8 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	else if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)
 	{
 		//MAKEME: This should be smarter.
-		if ((pr_botdofire()%200)<=actor->player->Bot.skill.reaction)
-			if(Check_LOS(actor, actor->player->Bot.enemy, SHOOTFOV))
+		if ((pr_botdofire()%200)<=actor->player->Bot->skill.reaction)
+			if(Check_LOS(actor, actor->player->Bot->enemy, SHOOTFOV))
 				no_fire = false;
 	}
 	else if (actor->player->ReadyWeapon->ProjectileType != NULL)
@@ -211,11 +210,11 @@ void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 			an = FireRox (actor, enemy, cmd);
 			if(an)
 			{
-				actor->player->Bot.angle = an;
+				actor->player->Bot->angle = an;
 				//have to be somewhat precise. to avoid suicide.
-				if (abs (actor->player->Bot.angle - actor->angle) < 12*ANGLE_1)
+				if (abs (actor->player->Bot->angle - actor->angle) < 12*ANGLE_1)
 				{
-					actor->player->Bot.t_rocket = 9;
+					actor->player->Bot->t_rocket = 9;
 					no_fire = false;
 				}
 			}
@@ -225,14 +224,14 @@ shootmissile:
 		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
 		m = dist / GetDefaultByType (actor->player->ReadyWeapon->ProjectileType)->Speed;
 		SetBodyAt (enemy->x + enemy->velx*m*2, enemy->y + enemy->vely*m*2, enemy->z, 1);
-		actor->player->Bot.angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
+		actor->player->Bot->angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
 		if (Check_LOS (actor, enemy, SHOOTFOV))
 			no_fire = false;
 	}
 	else
 	{
 		//Other weapons, mostly instant hit stuff.
-		actor->player->Bot.angle = R_PointToAngle2 (actor->x, actor->y, enemy->x, enemy->y);
+		actor->player->Bot->angle = R_PointToAngle2 (actor->x, actor->y, enemy->x, enemy->y);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
@@ -240,7 +239,7 @@ shootmissile:
 			aiming_penalty += pr_botdofire()%40;//Dark
 		if (actor->player->damagecount)
 			aiming_penalty += actor->player->damagecount; //Blood in face makes it hard to aim
-		aiming_value = actor->player->Bot.skill.aiming - aiming_penalty;
+		aiming_value = actor->player->Bot->skill.aiming - aiming_penalty;
 		if (aiming_value <= 0)
 			aiming_value = 1;
 		m = ((SHOOTFOV/2)-(aiming_value*SHOOTFOV/200)); //Higher skill is more accurate
@@ -249,15 +248,15 @@ shootmissile:
 
 		if (m)
 		{
-			if (inc[actor->player - players])
-				actor->player->Bot.angle += m;
+			if (actor->player->Bot->increase)
+				actor->player->Bot->angle += m;
 			else
-				actor->player->Bot.angle -= m;
+				actor->player->Bot->angle -= m;
 		}
 
-		if (abs (actor->player->Bot.angle - actor->angle) < 4*ANGLE_1)
+		if (abs (actor->player->Bot->angle - actor->angle) < 4*ANGLE_1)
 		{
-			inc[actor->player - players] = !inc[actor->player - players];
+			actor->player->Bot->increase = !actor->player->Bot->increase;
 		}
 
 		if (Check_LOS (actor, enemy, (SHOOTFOV/2)))
@@ -285,20 +284,20 @@ AActor *FCajunMaster::Choose_Mate (AActor *bot)
 	bool p_leader[MAXPLAYERS];
 
 	//is mate alive?
-	if (bot->player->Bot.mate)
+	if (bot->player->Bot->mate)
 	{
-		if (bot->player->Bot.mate->health <= 0)
-			bot->player->Bot.mate = NULL;
+		if (bot->player->Bot->mate->health <= 0)
+			bot->player->Bot->mate = NULL;
 		else
-			bot->player->Bot.last_mate = bot->player->Bot.mate;
+			bot->player->Bot->last_mate = bot->player->Bot->mate;
 	}
-	if (bot->player->Bot.mate) //Still is..
-		return bot->player->Bot.mate;
+	if (bot->player->Bot->mate) //Still is..
+		return bot->player->Bot->mate;
 
 	//Check old_mates status.
-	if (bot->player->Bot.last_mate)
-		if (bot->player->Bot.last_mate->health <= 0)
-			bot->player->Bot.last_mate = NULL;
+	if (bot->player->Bot->last_mate)
+		if (bot->player->Bot->last_mate->health <= 0)
+			bot->player->Bot->last_mate = NULL;
 
 	for (count = 0; count < MAXPLAYERS; count++)
 	{
@@ -307,8 +306,8 @@ AActor *FCajunMaster::Choose_Mate (AActor *bot)
 		p_leader[count] = false;
 		for (count2 = 0; count2 < MAXPLAYERS; count2++)
 		{
-			if (players[count].Bot.isbot
-				&& players[count2].Bot.mate == players[count].mo)
+			if (players[count2].Bot != NULL
+				&& players[count2].Bot->mate == players[count].mo)
 			{
 				p_leader[count] = true;
 				break;
@@ -337,7 +336,6 @@ AActor *FCajunMaster::Choose_Mate (AActor *bot)
 			&& ((bot->health/2) <= client->mo->health || !deathmatch)
 			&& !p_leader[count]) //taken?
 		{
-
 			if (P_CheckSight (bot, client->mo, SF_IGNOREVISIBILITY))
 			{
 				test = P_AproxDistance (client->mo->x - bot->x,
@@ -386,11 +384,11 @@ AActor *FCajunMaster::Find_enemy (AActor *bot)
 	}
 
 	//Note: It's hard to ambush a bot who is not alone
-	if (bot->player->Bot.allround || bot->player->Bot.mate)
+	if (bot->player->Bot->allround || bot->player->Bot->mate)
 		vangle = ANGLE_MAX;
 	else
 		vangle = ENEMY_SCAN_FOV;
-	bot->player->Bot.allround = false;
+	bot->player->Bot->allround = false;
 
 	target = NULL;
 	closest_dist = FIXED_MAX;

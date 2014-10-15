@@ -90,6 +90,7 @@ public:
 	void ForgetBots ();
 	void DoAddBot (BYTE **stream);
 	void RemoveAllBots (bool fromlist);
+	void DestroyAllBots ();
 
 	//(B_Func.c)
 	bool Check_LOS (AActor *mobj1, AActor *mobj2, angle_t vangle);
@@ -143,13 +144,14 @@ protected:
 	bool	 observer; //Consoleplayer is observer.
 };
 
-class DBot : public DThinker
+class DBot : public DObject
 {
-	DECLARE_CLASS(DBot,DThinker)
+	DECLARE_CLASS(DBot,DObject)
 	HAS_OBJECT_POINTERS
 public:
 	DBot ();
 
+	void Clear ();
 	void Serialize (FArchive &arc);
 
 	angle_t		savedyaw;

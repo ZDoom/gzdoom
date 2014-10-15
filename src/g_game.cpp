@@ -1341,7 +1341,7 @@ void G_PlayerReborn (int player)
 	APlayerPawn *actor;
 	const PClass *cls;
 	FString		log;
-	DBot		*OldBot;	//Added by MC:
+	DBot		*Bot;		//Added by MC:
 
 	p = &players[player];
 
@@ -1356,7 +1356,7 @@ void G_PlayerReborn (int player)
 	cls = p->cls;
 	log = p->LogText;
 	chasecam = p->cheats & CF_CHASECAM;
-	OldBot = p->Bot;		//Added by MC:
+	Bot = p->Bot;			//Added by MC:
 
 	// Reset player structure to its defaults
 	p->~player_t();
@@ -1373,13 +1373,7 @@ void G_PlayerReborn (int player)
 	p->cls = cls;
 	p->LogText = log;
 	p->cheats |= chasecam;
-
-	//Added by MC: Init bot structure.
-	if (OldBot != NULL)
-	{
-		p->Bot = new DBot;
-		p->Bot->skill = OldBot->skill;
-	}
+	p->Bot = Bot;			//Added by MC:
 
 	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;
@@ -1389,6 +1383,14 @@ void G_PlayerReborn (int player)
 	{
 		actor->GiveDefaultInventory ();
 		p->ReadyWeapon = p->PendingWeapon;
+	}
+
+	//Added by MC: Init bot structure.
+	if (p->Bot != NULL)
+	{
+		botskill_t skill = p->Bot->skill;
+		p->Bot->Clear ();
+		p->Bot->skill = skill;
 	}
 }
 

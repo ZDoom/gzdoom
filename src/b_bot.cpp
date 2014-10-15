@@ -25,6 +25,11 @@ END_POINTERS
 
 DBot::DBot ()
 {
+	Clear ();
+}
+
+void DBot::Clear ()
+{
 	savedyaw = 0;
 	savedpitch = 0;
 	angle = 0;
@@ -122,6 +127,11 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 	{
 		bot->inuse = false;
 		bot->lastteam = keepTeam ? players[i].userinfo.GetTeam() : TEAM_NONE;
+	}
+	if (players[i].Bot != NULL)
+	{
+		players[i].Bot->Destroy ();
+		players[i].Bot = NULL;
 	}
 	players[i].~player_t();
 	::new(&players[i]) player_t;

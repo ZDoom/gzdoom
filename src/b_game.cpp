@@ -352,6 +352,9 @@ void FCajunMaster::DoAddBot (BYTE **stream)
 	skill.isp = ReadByte (stream);
 
 	D_ReadUserInfoStrings (bnum, &infob, false);
+
+	delete[] info;
+
 	if (!deathmatch && playerstarts[bnum].type == 0)
 	{
 		Printf ("%s tried to join, but there was no player %d start\n",
@@ -421,6 +424,18 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 			waitingforspawn[i] = false;
 	}
 	botnum = 0;
+}
+
+void FCajunMaster::DestroyAllBots ()
+{
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (players[i].Bot != NULL)
+		{
+			players[i].Bot->Destroy ();
+			players[i].Bot = NULL;
+		}
+	}
 }
 
 

@@ -7,6 +7,7 @@ endif( COMMAND cmake_policy )
 include( CheckCXXSourceCompiles )
 include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
+include( CheckLibraryExists )
 include( FindPkgConfig )
 
 if( NOT APPLE )

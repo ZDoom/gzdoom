@@ -39,7 +39,6 @@
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "m_cheat.h"
-#include "p_effect.h"
 #include "p_local.h"
 #include "c_dispatch.h"
 #include "sbar.h"
@@ -670,6 +669,9 @@ void PlayerIsGone (int netnode, int netconsole)
 {
 	int i;
 
+	if (!nodeingame[netnode])
+		return;
+
 	for (i = netnode + 1; i < doomcom.numnodes; ++i)
 	{
 		if (nodeingame[i])
@@ -680,77 +682,40 @@ void PlayerIsGone (int netnode, int netconsole)
 		doomcom.numnodes = netnode;
 	}
 
+	if (playeringame[netconsole])
+	{
+		players[netconsole].playerstate = PST_GONE;
+	}
 	nodeingame[netnode] = false;
-	playeringame[netconsole] = false;
 	nodejustleft[netnode] = false;
 
-	if (deathmatch)
-	{
-		Printf ("%s left the game with %d frags\n",
-			players[netconsole].userinfo.GetName(),
-			players[netconsole].fragcount);
-	}
-	else
-	{
-		Printf ("%s left the game\n", players[netconsole].userinfo.GetName());
-	}
-
-	// [RH] Revert each player to their own view if spying through the player who left
-	for (int ii = 0; ii < MAXPLAYERS; ++ii)
-	{
-		if (playeringame[ii] && players[ii].camera == players[netconsole].mo)
-		{
-			players[ii].camera = players[ii].mo;
-			if (ii == consoleplayer && StatusBar != NULL)
-			{
-				StatusBar->AttachToPlayer (&players[ii]);
-			}
-		}
-	}
-
-	// [RH] Make the player disappear
-	FBehavior::StaticStopMyScripts (players[netconsole].mo);
-	if (players[netconsole].mo != NULL)
-	{
-		P_DisconnectEffect (players[netconsole].mo);
-		players[netconsole].mo->player = NULL;
-		players[netconsole].mo->Destroy ();
-		if (!(players[netconsole].mo->ObjectFlags & OF_EuthanizeMe))
-		{ // We just destroyed a morphed player, so now the original player
-		  // has taken their place. Destroy that one too.
-			players[netconsole].mo->Destroy();
-		}
-		players[netconsole].mo = NULL;
-		players[netconsole].camera = NULL;
-	}
-	// [RH] Let the scripts know the player left
-	FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, netconsole);
 	if (netconsole == Net_Arbitrator)
 	{
-		bglobal.RemoveAllBots (true);
-		Printf ("Removed all bots\n");
+		bglobal.RemoveAllBots(true);
+		Printf("Removed all bots\n");
 
 		// Pick a new network arbitrator
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{
-			if (playeringame[i] && !players[i].isbot)
+			if (i != netconsole && playeringame[i] && !players[i].isbot)
 			{
 				Net_Arbitrator = i;
 				players[i].settings_controller = true;
-				Printf ("%s is the new arbitrator\n", players[i].userinfo.GetName());
+				Printf("%s is the new arbitrator\n", players[i].userinfo.GetName());
 				break;
 			}
 		}
-		if (debugfile && NetMode == NET_PacketServer)
+	}
+
+	if (debugfile && NetMode == NET_PacketServer)
+	{
+		if (Net_Arbitrator == consoleplayer)
 		{
-			if (Net_Arbitrator == consoleplayer)
-			{
-				fprintf (debugfile, "I am the new master!\n");
-			}
-			else
-			{
-				fprintf (debugfile, "Node %d is the new master!\n", nodeforplayer[Net_Arbitrator]);
-			}
+			fprintf(debugfile, "I am the new master!\n");
+		}
+		else
+		{
+			fprintf(debugfile, "Node %d is the new master!\n", nodeforplayer[Net_Arbitrator]);
 		}
 	}
 
@@ -1760,10 +1725,19 @@ void D_CheckNetGame (void)
 		resendto[i] = 0;				// which tic to start sending
 	}
 
+	// Packet server has proven to be rather slow over the internet. Print a warning about it.
+	v = Args->CheckValue("-netmode");
+	if (v != NULL && (atoi(v) != 0))
+	{
+		Printf(TEXTCOLOR_YELLOW "Notice: Using PacketServer (netmode 1) over the internet is prone to running too slow on some internet configurations."
+			"\nIf the game is running well below expected speeds, use netmode 0 (P2P) instead.\n");
+	}
+
 	// I_InitNetwork sets doomcom and netgame
 	if (I_InitNetwork ())
 	{
-		NetMode = NET_PacketServer;
+		// For now, stop auto selecting PacketServer, as it's more likely to cause confusion.
+		//NetMode = NET_PacketServer;
 	}
 	if (doomcom.id != DOOMCOM_ID)
 	{

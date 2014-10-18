@@ -63,8 +63,29 @@ static FRandom pr_skullpop ("SkullPop");
 // Variables for prediction
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR(Float, cl_predict_lerpscale, 0.05f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	P_PredictionLerpReset();
+}
+CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.1f)
+		self = 0.1f;
+	P_PredictionLerpReset();
+}
+
+struct PredictPos
+{
+	int gametic;
+	FVector3 point;
+	fixed_t pitch;
+	fixed_t yaw;
+} static PredictionLerpFrom, PredictionLerpResult, PredictionLast;
+static int PredictionLerptics;
+
 static player_t PredictionPlayerBackup;
-static BYTE PredictionActorBackup[sizeof(AActor)];
+static BYTE PredictionActorBackup[sizeof(APlayerPawn)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
 static TArray<AActor *> PredictionSectorListBackup;
 static TArray<msecnode_t *> PredictionSector_sprev_Backup;
@@ -240,7 +261,6 @@ player_t::player_t()
   health(0),
   inventorytics(0),
   CurrentPlayerClass(0),
-  backpack(0),
   fragcount(0),
   lastkilltime(0),
   multicount(0),
@@ -341,7 +361,6 @@ player_t &player_t::operator=(const player_t &p)
 	health = p.health;
 	inventorytics = p.inventorytics;
 	CurrentPlayerClass = p.CurrentPlayerClass;
-	backpack = p.backpack;
 	memcpy(frags, &p.frags, sizeof(frags));
 	fragcount = p.fragcount;
 	lastkilltime = p.lastkilltime;
@@ -2638,6 +2657,22 @@ void P_PlayerThink (player_t *player)
 	}
 }
 
+void P_PredictionLerpReset()
+{
+	PredictionLerptics = PredictionLast.gametic = PredictionLerpFrom.gametic = PredictionLerpResult.gametic = 0;
+}
+
+bool P_LerpCalculate(FVector3 from, FVector3 to, FVector3 &result, float scale)
+{
+	result = to - from;
+	result *= scale;
+	result = result + from;
+	FVector3 delta = result - to;
+
+	// As a fail safe, assume extrapolation is the threshold.
+	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
+}
+
 void P_PredictPlayer (player_t *player)
 {
 	int maxtic;
@@ -2665,8 +2700,8 @@ void P_PredictPlayer (player_t *player)
 	// Save original values for restoration later
 	PredictionPlayerBackup = *player;
 
-	AActor *act = player->mo;
-	memcpy (PredictionActorBackup, &act->x, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
+	APlayerPawn *act = player->mo;
+	memcpy(PredictionActorBackup, &act->x, sizeof(APlayerPawn) - ((BYTE *)&act->x - (BYTE *)act));
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
@@ -2723,7 +2758,8 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-	bool NoInterpolateOld = R_GetViewInterpolationStatus();
+	// Values too small to be usable for lerping can be considered "off".
+	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		if (!NoInterpolateOld)
@@ -2732,6 +2768,47 @@ void P_PredictPlayer (player_t *player)
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		P_PlayerThink (player);
 		player->mo->Tick ();
+
+		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic && !NoInterpolateOld)
+		{
+			// Z is not compared as lifts will alter this with no apparent change
+			DoLerp = (PredictionLast.point.X != FIXED2FLOAT(player->mo->x) ||
+				PredictionLast.point.Y != FIXED2FLOAT(player->mo->y));
+		}
+	}
+
+	if (CanLerp)
+	{
+		if (NoInterpolateOld)
+			P_PredictionLerpReset();
+
+		else if (DoLerp)
+		{
+			// If lerping is already in effect, use the previous camera postion so the view doesn't suddenly snap
+			PredictionLerpFrom = (PredictionLerptics == 0) ? PredictionLast : PredictionLerpResult;
+			PredictionLerptics = 1;
+		}
+
+		PredictionLast.gametic = maxtic - 1;
+		PredictionLast.point.X = FIXED2FLOAT(player->mo->x);
+		PredictionLast.point.Y = FIXED2FLOAT(player->mo->y);
+		PredictionLast.point.Z = FIXED2FLOAT(player->mo->z);
+
+		if (PredictionLerptics > 0)
+		{
+			if (PredictionLerpFrom.gametic > 0 &&
+				P_LerpCalculate(PredictionLerpFrom.point, PredictionLast.point, PredictionLerpResult.point, (float)PredictionLerptics * cl_predict_lerpscale))
+			{
+				PredictionLerptics++;
+				player->mo->x = FLOAT2FIXED(PredictionLerpResult.point.X);
+				player->mo->y = FLOAT2FIXED(PredictionLerpResult.point.Y);
+				player->mo->z = FLOAT2FIXED(PredictionLerpResult.point.Z);
+			}
+			else
+			{
+				PredictionLerptics = 0;
+			}
+		}
 	}
 }
 
@@ -2744,8 +2821,11 @@ void P_UnPredictPlayer ()
 	if (player->cheats & CF_PREDICTING)
 	{
 		unsigned int i;
-		AActor *act = player->mo;
+		APlayerPawn *act = player->mo;
 		AActor *savedcamera = player->camera;
+
+		TObjPtr<AInventory> InvSel = act->InvSel;
+		int inventorytics = player->inventorytics;
 
 		*player = PredictionPlayerBackup;
 
@@ -2754,7 +2834,7 @@ void P_UnPredictPlayer ()
 		player->camera = savedcamera;
 
 		act->UnlinkFromWorld();
-		memcpy(&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x - (BYTE *)act));
+		memcpy(&act->x, PredictionActorBackup, sizeof(APlayerPawn) - ((BYTE *)&act->x - (BYTE *)act));
 
 		// The blockmap ordering needs to remain unchanged, too.
 		// Restore sector links and refrences.
@@ -2859,6 +2939,9 @@ void P_UnPredictPlayer ()
 			}
 			block = block->NextBlock;
 		}
+
+		act->InvSel = InvSel;
+		player->inventorytics = inventorytics;
 	}
 }
 
@@ -2889,9 +2972,13 @@ void player_t::Serialize (FArchive &arc)
 		<< vely
 		<< centering
 		<< health
-		<< inventorytics
-		<< backpack
-		<< fragcount
+		<< inventorytics;
+	if (SaveVersion < 4513)
+	{
+		bool backpack;
+		arc << backpack;
+	}
+	arc << fragcount
 		<< spreecount
 		<< multicount
 		<< lastkilltime

@@ -110,6 +110,7 @@ const char *neterror (void);
 enum
 {
 	PRE_CONNECT,			// Sent from guest to host for initial connection
+	PRE_KEEPALIVE,
 	PRE_DISCONNECT,			// Sent from guest that aborts the game
 	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
 	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
@@ -548,10 +549,15 @@ bool Host_CheckForConnects (void *userdata)
 				SendConAck (doomcom.numnodes, numplayers);
 			}
 			break;
+
+		case PRE_KEEPALIVE:
+			break;
 		}
 	}
 	if (doomcom.numnodes < numplayers)
 	{
+		// Send message to everyone as a keepalive
+		SendConAck(doomcom.numnodes, numplayers);
 		return false;
 	}
 
@@ -821,6 +827,10 @@ bool Guest_WaitForOthers (void *userdata)
 			break;
 		}
 	}
+
+	packet.Fake = PRE_FAKE;
+	packet.Message = PRE_KEEPALIVE;
+	PreSend(&packet, 2, &sendaddress[1]);
 
 	return false;
 }

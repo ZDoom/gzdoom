@@ -81,6 +81,7 @@ enum EFinishLevelType
 void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags);
 
 void G_DoReborn (int playernum, bool freshbot);
+void G_DoPlayerPop(int playernum);
 
 // Adds pitch to consoleplayer's viewpitch and clamps it
 void G_AddViewPitch (int look);

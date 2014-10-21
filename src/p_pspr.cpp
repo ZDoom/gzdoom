@@ -227,7 +227,7 @@ void P_FireWeapon (player_t *player, FState *state)
 
 	// [SO] 9/2/02: People were able to do an awful lot of damage
 	// when they were observers...
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}
@@ -263,7 +263,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 
 	// [SO] 9/2/02: People were able to do an awful lot of damage
 	// when they were observers...
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}
@@ -298,7 +298,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 void P_ReloadWeapon (player_t *player, FState *state)
 {
 	AWeapon *weapon;
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}
@@ -329,7 +329,7 @@ void P_ReloadWeapon (player_t *player, FState *state)
 void P_ZoomWeapon (player_t *player, FState *state)
 {
 	AWeapon *weapon;
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}

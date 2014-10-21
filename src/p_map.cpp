@@ -1919,13 +1919,13 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		//Added by MC: To prevent bot from getting into dangerous sectors.
-		if (thing->player && thing->player->isbot && thing->flags & MF_SHOOTABLE)
+		if (thing->player && thing->player->Bot != NULL && thing->flags & MF_SHOOTABLE)
 		{
 			if (tm.sector != thing->Sector
 				&& bglobal.IsDangerous(tm.sector))
 			{
-				thing->player->prev = thing->player->dest;
-				thing->player->dest = NULL;
+				thing->player->Bot->prev = thing->player->Bot->dest;
+				thing->player->Bot->dest = NULL;
 				thing->velx = 0;
 				thing->vely = 0;
 				thing->z = oldz;

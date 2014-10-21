@@ -4228,7 +4228,7 @@ int DLevelScript::DoClassifyActor(int tid)
 		{
 			classify |= ACTOR_VOODOODOLL;
 		}
-		if (actor->player->isbot)
+		if (actor->player->Bot != NULL)
 		{
 			classify |= ACTOR_BOT;
 		}
@@ -8632,7 +8632,7 @@ scriptwait:
 			}
 			else
 			{
-				STACK(1) = players[STACK(1)].isbot;
+				STACK(1) = (players[STACK(1)].Bot != NULL);
 			}
 			break;
 

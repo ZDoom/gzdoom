@@ -100,10 +100,10 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 		return;
 
 	//Added by MC: Finished with this destination.
-	if (toucher->player != NULL && toucher->player->isbot && special == toucher->player->dest)
+	if (toucher->player != NULL && toucher->player->Bot != NULL && special == toucher->player->Bot->dest)
 	{
-		toucher->player->prev = toucher->player->dest;
-    	toucher->player->dest = NULL;
+		toucher->player->Bot->prev = toucher->player->Bot->dest;
+		toucher->player->Bot->dest = NULL;
 	}
 
 	special->Touch (toucher);
@@ -593,7 +593,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		// even those caused by other monsters
 		players[0].killcount++;
 	}
-	
+
 	if (player)
 	{
 		// [RH] Death messages
@@ -608,17 +608,17 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		//Added by MC: Respawn bots
 		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback)
 		{
-			if (player->isbot)
-				player->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
+			if (player->Bot != NULL)
+				player->Bot->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
 
 			//Added by MC: Discard enemies.
 			for (int i = 0; i < MAXPLAYERS; i++)
 			{
-				if (players[i].isbot && this == players[i].enemy)
+				if (players[i].Bot != NULL && this == players[i].Bot->enemy)
 				{
-					if (players[i].dest ==  players[i].enemy)
-						players[i].dest = NULL;
-					players[i].enemy = NULL;
+					if (players[i].Bot->dest ==  players[i].Bot->enemy)
+						players[i].Bot->dest = NULL;
+					players[i].Bot->enemy = NULL;
 				}
 			}
 
@@ -1193,11 +1193,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	//
 	if (player)
 	{
-		
-        //Added by MC: Lets bots look allround for enemies if they survive an ambush.
-        if (player->isbot)
+		//Added by MC: Lets bots look allround for enemies if they survive an ambush.
+		if (player->Bot != NULL)
 		{
-            player->allround = true;
+			player->Bot->allround = true;
 		}
 
 		// end of game hell hack
@@ -1711,7 +1710,6 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		P_SetMobjState(target, target->info->painstate);
 	}
 */
-	return;
 }
 
 

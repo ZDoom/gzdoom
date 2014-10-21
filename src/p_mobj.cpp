@@ -3116,7 +3116,7 @@ void AActor::Tick ()
 				special2++;
 			}
 			//Added by MC: Freeze mode.
-			if (bglobal.freeze && !(player && !player->isbot))
+			if (bglobal.freeze && !(player && player->Bot == NULL))
 			{
 				return;
 			}
@@ -3237,18 +3237,18 @@ void AActor::Tick ()
 			bglobal.m_Thinking = true;
 			for (i = 0; i < MAXPLAYERS; i++)
 			{
-				if (!playeringame[i] || !players[i].isbot)
+				if (!playeringame[i] || players[i].Bot == NULL)
 					continue;
 
 				if (flags3 & MF3_ISMONSTER)
 				{
 					if (health > 0
-						&& !players[i].enemy
+						&& !players[i].Bot->enemy
 						&& player ? !IsTeammate (players[i].mo) : true
 						&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
 						&& P_CheckSight (players[i].mo, this, SF_SEEPASTBLOCKEVERYTHING))
 					{ //Probably a monster, so go kill it.
-						players[i].enemy = this;
+						players[i].Bot->enemy = this;
 					}
 				}
 				else if (flags & MF_SPECIAL)
@@ -3260,10 +3260,10 @@ void AActor::Tick ()
 				}
 				else if (flags & MF_MISSILE)
 				{
-					if (!players[i].missile && (flags3 & MF3_WARNBOT))
+					if (!players[i].Bot->missile && (flags3 & MF3_WARNBOT))
 					{ //warn for incoming missiles.
 						if (target != players[i].mo && bglobal.Check_LOS (players[i].mo, this, ANGLE_90))
-							players[i].missile = this;
+							players[i].Bot->missile = this;
 					}
 				}
 			}

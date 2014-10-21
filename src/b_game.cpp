@@ -369,6 +369,7 @@ void FCajunMaster::DoAddBot (BYTE **stream)
 	{
 		multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
 		players[bnum].Bot = new DBot;
+		GC::WriteBarrier (players[bnum].Bot);
 		players[bnum].Bot->skill = skill;
 		playeringame[bnum] = true;
 		players[bnum].mo = NULL;

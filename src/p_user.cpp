@@ -3049,6 +3049,7 @@ void player_t::Serialize (FArchive &arc)
 	if (SaveVersion < 4514 && IsBot)
 	{
 		Bot = new DBot;
+		GC::WriteBarrier (Bot);
 
 		arc	<< Bot->angle
 			<< Bot->dest

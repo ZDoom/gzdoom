@@ -125,6 +125,7 @@ private:
 	//(B_Func.c)
 	bool Reachable (AActor *actor, AActor *target);
 	void Dofire (AActor *actor, ticcmd_t *cmd);
+	bool IsLeader (player_t *player);
 	AActor *Choose_Mate (AActor *bot);
 	AActor *Find_enemy (AActor *bot);
 	void SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum);

@@ -270,6 +270,19 @@ shootmissile:
 	//actor->angle = R_PointToAngle2(actor->x, actor->y, actor->player->enemy->x, actor->player->enemy->y);
 }
 
+bool FCajunMaster::IsLeader (player_t *player)
+{
+	for (int count = 0; count < MAXPLAYERS; count++)
+	{
+		if (players[count].Bot != NULL
+			&& players[count].Bot->mate == player->mo)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 
 //This function is called every
 //tick (for each bot) to set
@@ -277,11 +290,9 @@ shootmissile:
 AActor *FCajunMaster::Choose_Mate (AActor *bot)
 {
 	int count;
-	int count2;
 	fixed_t closest_dist, test;
 	AActor *target;
 	AActor *observer;
-	bool p_leader[MAXPLAYERS];
 
 	//is mate alive?
 	if (bot->player->Bot->mate)
@@ -298,22 +309,6 @@ AActor *FCajunMaster::Choose_Mate (AActor *bot)
 	if (bot->player->Bot->last_mate)
 		if (bot->player->Bot->last_mate->health <= 0)
 			bot->player->Bot->last_mate = NULL;
-
-	for (count = 0; count < MAXPLAYERS; count++)
-	{
-		if (!playeringame[count])
-			continue;
-		p_leader[count] = false;
-		for (count2 = 0; count2 < MAXPLAYERS; count2++)
-		{
-			if (players[count2].Bot != NULL
-				&& players[count2].Bot->mate == players[count].mo)
-			{
-				p_leader[count] = true;
-				break;
-			}
-		}
-	}
 
 	target = NULL;
 	closest_dist = FIXED_MAX;
@@ -334,7 +329,7 @@ AActor *FCajunMaster::Choose_Mate (AActor *bot)
 			&& client->mo->health > 0
 			&& client->mo != observer
 			&& ((bot->health/2) <= client->mo->health || !deathmatch)
-			&& !p_leader[count]) //taken?
+			&& !IsLeader(client)) //taken?
 		{
 			if (P_CheckSight (bot, client->mo, SF_IGNOREVISIBILITY))
 			{

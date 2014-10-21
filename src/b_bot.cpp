@@ -141,6 +141,12 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 
 CCMD (removebots)
 {
+	if (!players[consoleplayer].settings_controller)
+	{
+		Printf ("Only setting controllers can remove bots\n");
+		return;
+	}
+
 	Net_WriteByte (DEM_KILLBOTS);
 }
 

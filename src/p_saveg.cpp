@@ -271,7 +271,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 
 	dst->cheats |= chasecam;
 
-	if (dst->isbot)
+	if (dst->Bot != NULL)
 	{
 		botinfo_t *thebot = bglobal.botinfo;
 		while (thebot && stricmp (name, thebot->name))
@@ -283,7 +283,6 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 			thebot->inuse = true;
 		}
 		bglobal.botnum++;
-		bglobal.botingame[dst - players] = true;
 		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else

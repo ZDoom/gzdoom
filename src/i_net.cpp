@@ -135,8 +135,8 @@ struct PreGamePacket
 	};
 	struct
 	{
-		u_long	address;
-		u_short	port;
+		DWORD	address;
+		WORD	port;
 		BYTE	player;
 		BYTE	pad;
 	} machines[MAXNETNODES];
@@ -658,6 +658,12 @@ void HostGame (int i)
 	if ((i == Args->NumArgs() - 1) || !(numplayers = atoi (Args->GetArg(i+1))))
 	{	// No player count specified, assume 2
 		numplayers = 2;
+	}
+
+	if (numplayers > MAXNETNODES)
+	{
+		I_FatalError("You cannot host a game with %d players. The limit is currently %d.", numplayers, MAXNETNODES);
+		return;
 	}
 
 	if (numplayers == 1)

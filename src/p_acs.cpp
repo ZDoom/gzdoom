@@ -4228,7 +4228,7 @@ int DLevelScript::DoClassifyActor(int tid)
 		{
 			classify |= ACTOR_VOODOODOLL;
 		}
-		if (actor->player->isbot)
+		if (actor->player->Bot != NULL)
 		{
 			classify |= ACTOR_BOT;
 		}
@@ -5619,15 +5619,27 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					wallMask = args[6];
 				}
 
+				bool forceTID = 0;
+				if (argCount >= 8)
+				{
+					if (args[7] != 0)
+						forceTID = 1;
+				}
+
 				AActor* pickedActor = P_LinePickActor(actor, args[1] << 16, args[3], args[2] << 16, actorMask, wallMask);
 				if (pickedActor == NULL) {
 					return 0;
 				}
 
-				pickedActor->RemoveFromHash();
-				pickedActor->tid = args[4];
-				pickedActor->AddToHash();
-				
+				if (!(forceTID) && (args[4] == 0) && (pickedActor->tid == 0))
+					return 0;
+
+				if ((pickedActor->tid == 0) || (forceTID))
+				{
+					pickedActor->RemoveFromHash();
+					pickedActor->tid = args[4];
+					pickedActor->AddToHash();
+				}
 				return 1;
 			}
 			break;
@@ -8632,7 +8644,7 @@ scriptwait:
 			}
 			else
 			{
-				STACK(1) = players[STACK(1)].isbot;
+				STACK(1) = (players[STACK(1)].Bot != NULL);
 			}
 			break;
 

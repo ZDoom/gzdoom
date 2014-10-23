@@ -251,6 +251,7 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 {
 	if (frameno>=numFrames || frameno2>=numFrames) return;
 
+	gl_RenderState.SetInterpolationFactor((float)inter);
 	for(int i=0;i<numSurfaces;i++)
 	{
 		MD3Surface * surf = &surfaces[i];
@@ -270,9 +271,10 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, translation, -1, false);
 
 		gl_RenderState.Apply();
-		GLRenderer->mModelVBO->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, inter);
+		GLRenderer->mModelVBO->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices);
 		glDrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, (void*)(intptr_t)(surf->iindex * sizeof(unsigned int)));
 	}
+	gl_RenderState.SetInterpolationFactor(0.f);
 }
 
 FMD3Model::~FMD3Model()

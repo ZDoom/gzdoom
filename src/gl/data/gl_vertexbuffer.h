@@ -204,7 +204,7 @@ public:
 	FModelVertexBuffer();
 	~FModelVertexBuffer();
 
-	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2, float factor);
+	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2);
 };
 
 #define VMO ((FModelVertex*)NULL)

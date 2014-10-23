@@ -420,7 +420,7 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double int
 	gl_RenderState.SetMaterial(tex, CLAMP_NOFILTER, translation, -1, false);
 
 	gl_RenderState.Apply();
-	GLRenderer->mModelVBO->SetupFrame(vindex, vindex, 0.f);
+	GLRenderer->mModelVBO->SetupFrame(vindex, vindex);
 	glDrawElements(GL_TRIANGLES, mIndices.Size(), GL_UNSIGNED_INT, (void*)(intptr_t)(iindex * sizeof(unsigned int)));
 }
 

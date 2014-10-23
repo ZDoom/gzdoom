@@ -304,10 +304,12 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
 
 	gl_RenderState.SetMaterial(tex, CLAMP_NONE, translation, -1, false);
+	gl_RenderState.SetInterpolationFactor((float)inter);
 
 	gl_RenderState.Apply();
-	GLRenderer->mModelVBO->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex, inter);
+	GLRenderer->mModelVBO->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex);
 	glDrawArrays(GL_TRIANGLES, 0, lodInfo[0].numTriangles * 3);
+	gl_RenderState.SetInterpolationFactor(0.f);
 }
 
 

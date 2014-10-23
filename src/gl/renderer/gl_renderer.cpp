@@ -584,7 +584,13 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	FColormap cm;
 	cm = colormap;
 
+	// We cannot use the software light mode here because it doesn't properly calculate the light for 2D rendering.
+	SBYTE savedlightmode = glset.lightmode;
+	if (glset.lightmode == 8) glset.lightmode = 0;
+
 	gl_SetColor(lightlevel, 0, cm, 1.f);
+
+	glset.lightmode = savedlightmode;
 
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 

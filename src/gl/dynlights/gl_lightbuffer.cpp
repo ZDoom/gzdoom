@@ -173,13 +173,6 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	if (mBufferPointer == NULL) return -1;
 	copyptr = mBufferPointer + mIndex * 4;
 
-	static unsigned int lastindex = 0;
-	if (mIndex > lastindex)
-	{
-		Printf("Light index: %d, size: %d\n", mIndex, totalsize);
-		lastindex = mIndex;
-	}
-
 	float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
 
 	memcpy(&copyptr[0], parmcnt, 4 * sizeof(float));

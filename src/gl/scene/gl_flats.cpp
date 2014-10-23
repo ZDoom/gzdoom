@@ -639,6 +639,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			if ((rover->flags&(FF_EXISTS|FF_RENDERPLANES|FF_THISINSIDE))==(FF_EXISTS|FF_RENDERPLANES))
 			{
 				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
+				if (rover->top.copied) continue;	// this plane has been dynamically created and does not produce any rendered surface.
 				if (rover->flags&(FF_INVERTPLANES|FF_BOTHPLANES))
 				{
 					fixed_t ff_top=rover->top.plane->ZatPoint(CenterSpot(sector));
@@ -679,6 +680,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			if ((rover->flags&(FF_EXISTS|FF_RENDERPLANES|FF_THISINSIDE))==(FF_EXISTS|FF_RENDERPLANES))
 			{
 				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
+				if (rover->bottom.copied) continue;	// this plane has been dynamically created and does not produce any rendered surface.
 				if (rover->flags&(FF_INVERTPLANES|FF_BOTHPLANES))
 				{
 					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));

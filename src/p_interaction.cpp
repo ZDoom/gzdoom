@@ -1672,7 +1672,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if (player->cheats & CF_BUDDHA)
+		if (player->cheats & CF_BUDDHA && damage < TELEFRAG_DAMAGE)
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}

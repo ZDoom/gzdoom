@@ -1111,24 +1111,27 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 					//     cases where they are clearly supposed to do that
 					if (thing->IsFriend(tm.thing->target))
 					{
-						// Friends never harm each other
-						return false;
+						// Friends never harm each other, unless the shooter has the HARMFRIENDS set.
+						if (!(thing->flags7 & MF7_HARMFRIENDS)) return false;
 					}
-					if (thing->TIDtoHate != 0 && thing->TIDtoHate == tm.thing->target->TIDtoHate)
+					else
 					{
-						// [RH] Don't hurt monsters that hate the same thing as you do
-						return false;
-					}
-					if (thing->GetSpecies() == tm.thing->target->GetSpecies() && !(thing->flags6 & MF6_DOHARMSPECIES))
-					{
-						// Don't hurt same species or any relative -
-						// but only if the target isn't one's hostile.
-						if (!thing->IsHostile(tm.thing->target))
+						if (thing->TIDtoHate != 0 && thing->TIDtoHate == tm.thing->target->TIDtoHate)
 						{
-							// Allow hurting monsters the shooter hates.
-							if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
+							// [RH] Don't hurt monsters that hate the same thing as you do
+							return false;
+						}
+						if (thing->GetSpecies() == tm.thing->target->GetSpecies() && !(thing->flags6 & MF6_DOHARMSPECIES))
+						{
+							// Don't hurt same species or any relative -
+							// but only if the target isn't one's hostile.
+							if (!thing->IsHostile(tm.thing->target))
 							{
-								return false;
+								// Allow hurting monsters the shooter hates.
+								if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
+								{
+									return false;
+								}
 							}
 						}
 					}

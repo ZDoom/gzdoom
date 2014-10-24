@@ -341,6 +341,7 @@ enum
 	MF7_ALWAYSTELEFRAG	= 0x00000004,	// will unconditionally be telefragged when in the way. Overrides all other settings.
 	MF7_HANDLENODELAY	= 0x00000008,	// respect NoDelay state flag
 	MF7_WEAPONSPAWN		= 0x00000010,	// subject to DF_NO_COOP_WEAPON_SPAWN dmflag
+	MF7_HARMFRIENDS		= 0x00000020,	// is allowed to harm friendly monsters.
 
 // --- mobj.renderflags ---
 

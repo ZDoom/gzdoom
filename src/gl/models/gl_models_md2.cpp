@@ -115,7 +115,6 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 	char   *temp;
 	ModelFrame *frame;
 	int     i, k, c;
-	FTriangle *triangles[MAX_LODS];
 	int     axis[3] = { VX, VY, VZ };
 
 	int fileoffset=12+sizeof(dmd_chunk_t);
@@ -197,8 +196,19 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 	{
 		lodInfo[i].numTriangles = LittleLong(lodInfo[i].numTriangles);
 		lodInfo[i].offsetTriangles = LittleLong(lodInfo[i].offsetTriangles);
-
-		lods[i].triangles = triangles[i] = (FTriangle*)(buffer + lodInfo[i].offsetTriangles);
+		if (lodInfo[i].numTriangles > 0)
+		{
+			lods[i].triangles = new FTriangle[lodInfo[i].numTriangles];
+			memcpy(lods[i].triangles, buffer + lodInfo[i].offsetTriangles, lodInfo[i].numTriangles * sizeof(FTriangle));
+			for (int j = 0; j < lodInfo[i].numTriangles; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					lods[i].triangles[j].textureIndices[k] = LittleShort(lods[i].triangles[j].textureIndices[k]);
+					lods[i].triangles[j].vertexIndices[k] = LittleShort(lods[i].triangles[j].vertexIndices[k]);
+				}
+			}
+		}
 	}
 
 	loaded=true;
@@ -465,7 +475,16 @@ bool FMD2Model::Load(const char * path, int, const char * buffer, int length)
 
 	lods[0].triangles = new FTriangle[lodInfo[0].numTriangles];
 		
-	memcpy(lods[0].triangles, buffer + lodInfo[0].offsetTriangles, sizeof(FTriangle) * lodInfo[0].numTriangles);
+	int cnt = lodInfo[0].numTriangles;
+	memcpy(lods[0].triangles, buffer + lodInfo[0].offsetTriangles, sizeof(FTriangle) * cnt);
+	for (int j = 0; j < cnt; j++)
+	{
+		for (int k = 0; k < 3; k++)
+		{
+			lods[0].triangles[j].textureIndices[k] = LittleShort(lods[0].triangles[j].textureIndices[k]);
+			lods[0].triangles[j].vertexIndices[k] = LittleShort(lods[0].triangles[j].vertexIndices[k]);
+		}
+	}
 
 	skins = new FTexture *[info.numSkins];
 

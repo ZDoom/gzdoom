@@ -1218,8 +1218,13 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
 			{
 				int newdam = damage;
-				player->mo->Inventory->AbsorbDamage (damage, mod, newdam);
-				damage = newdam;
+				player->mo->Inventory->AbsorbDamage(damage, mod, newdam);
+				if (damage < TELEFRAG_DAMAGE)
+				{
+					// if we are telefragging don't let the damage value go below that magic value. Some further checks would fail otherwise.
+					damage = newdam;
+				}
+
 				if (damage <= 0)
 				{
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
@@ -1232,7 +1237,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				}
 			}
 			
-			if (damage >= player->health
+			if (damage >= player->health && damage < TELEFRAG_DAMAGE &&
 				&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
 				&& !player->morphTics)
 			{ // Try to use some inventory health

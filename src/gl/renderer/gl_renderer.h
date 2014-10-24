@@ -10,7 +10,6 @@ struct particle_t;
 class FCanvasTexture;
 class FFlatVertexBuffer;
 class FSkyVertexBuffer;
-class FModelVertexBuffer;
 class OpenGLFrameBuffer;
 struct FDrawInfo;
 struct pspdef_t;
@@ -72,7 +71,6 @@ public:
 
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
-	FModelVertexBuffer *mModelVBO;
 	FLightBuffer *mLights;
 
 

@@ -207,36 +207,71 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 	return true;
 }
 
-void FMD3Model::BuildVertexBuffer(FModelVertexBuffer *buf)
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void FMD3Model::BuildVertexBuffer()
 {
-	for (int i = 0; i < numSurfaces; i++)
+	if (mVBuf == NULL)
 	{
-		MD3Surface * surf = &surfaces[i];
+		unsigned int vbufsize = 0;
+		unsigned int ibufsize = 0;
 
-		surf->vindex = buf->vbo_shadowdata.Size();
-		surf->iindex = buf->ibo_shadowdata.Size();
-		for (int j = 0; j < numFrames * surf->numVertices; j++)
+		for (int i = 0; i < numSurfaces; i++)
 		{
-			MD3Vertex* vert = surf->vertices + j;
-
-			FModelVertex bvert;
-
-			int tc = j % surf->numVertices;
-			bvert.Set(vert->x, vert->z, vert->y, surf->texcoords[tc].s, surf->texcoords[tc].t);
-			bvert.SetNormal(vert->nx, vert->nz, vert->ny);
-			buf->vbo_shadowdata.Push(bvert);
+			MD3Surface * surf = &surfaces[i];
+			vbufsize += numFrames * surf->numVertices;
+			ibufsize += 3 * surf->numTriangles;
 		}
 
-		for (int k = 0; k < surf->numTriangles; k++)
+		mVBuf = new FModelVertexBuffer(true);
+		FModelVertex *vertptr = mVBuf->LockVertexBuffer(vbufsize);
+		unsigned int *indxptr = mVBuf->LockIndexBuffer(ibufsize);
+
+		assert(vertptr != NULL && indxptr != NULL);
+
+		unsigned int vindex = 0, iindex = 0;
+
+		for (int i = 0; i < numSurfaces; i++)
 		{
-			for (int l = 0; l < 3; l++)
+			MD3Surface * surf = &surfaces[i];
+
+			surf->vindex = vindex;
+			surf->iindex = iindex;
+			for (int j = 0; j < numFrames * surf->numVertices; j++)
 			{
-				buf->ibo_shadowdata.Push(surf->tris[k].VertIndex[l]);
+				MD3Vertex* vert = surf->vertices + j;
+
+				FModelVertex *bvert = &vertptr[vindex++];
+
+				int tc = j % surf->numVertices;
+				bvert->Set(vert->x, vert->z, vert->y, surf->texcoords[tc].s, surf->texcoords[tc].t);
+				bvert->SetNormal(vert->nx, vert->nz, vert->ny);
 			}
+
+			for (int k = 0; k < surf->numTriangles; k++)
+			{
+				for (int l = 0; l < 3; l++)
+				{
+					indxptr[iindex++] = surf->tris[k].VertIndex[l];
+				}
+			}
+			surf->CleanTempData();
 		}
+		mVBuf->UnlockVertexBuffer();
+		mVBuf->UnlockIndexBuffer();
 	}
 }
 
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 int FMD3Model::FindFrame(const char * name)
 {
@@ -246,6 +281,12 @@ int FMD3Model::FindFrame(const char * name)
 	}
 	return -1;
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
@@ -271,11 +312,17 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, translation, -1, false);
 
 		gl_RenderState.Apply();
-		GLRenderer->mModelVBO->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices);
+		mVBuf->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices);
 		glDrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, (void*)(intptr_t)(surf->iindex * sizeof(unsigned int)));
 	}
 	gl_RenderState.SetInterpolationFactor(0.f);
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 FMD3Model::~FMD3Model()
 {

@@ -99,6 +99,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mLights = NULL;
 }
 
+void gl_LoadModels();
+
 void FGLRenderer::Initialize()
 {
 	glpart2 = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart2.png"), FTexture::TEX_MiscPatch);
@@ -107,13 +109,13 @@ void FGLRenderer::Initialize()
 
 	mVBO = new FFlatVertexBuffer;
 	mSkyVBO = new FSkyVertexBuffer;
-	mModelVBO = new FModelVertexBuffer;
 	mLights = new FLightBuffer();
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	SetupLevel();
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
+	gl_LoadModels();
 }
 
 FGLRenderer::~FGLRenderer() 
@@ -123,7 +125,6 @@ FGLRenderer::~FGLRenderer()
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mSamplerManager != NULL) delete mSamplerManager;
 	if (mVBO != NULL) delete mVBO;
-	if (mModelVBO) delete mModelVBO;
 	if (mSkyVBO != NULL) delete mSkyVBO;
 	if (mLights != NULL) delete mLights;
 	if (glpart2) delete glpart2;

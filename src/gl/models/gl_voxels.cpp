@@ -214,8 +214,6 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 	mVoxel = voxel;
 	mOwningVoxel = owned;
 	mPalette = new FVoxelTexture(voxel);
-	Initialize();
-	iindex = vindex = UINT_MAX;
 }
 
 //===========================================================================
@@ -230,24 +228,6 @@ FVoxelModel::~FVoxelModel()
 	if (mOwningVoxel) delete mVoxel;
 }
 
-
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-
-void FVoxelModel::BuildVertexBuffer(FModelVertexBuffer *buf)
-{
-	vindex = buf->vbo_shadowdata.Size();
-	iindex = buf->ibo_shadowdata.Size();
-
-	FModelVertex *mv = &buf->vbo_shadowdata[buf->vbo_shadowdata.Reserve(mVertices.Size())];
-	unsigned int *mi = &buf->ibo_shadowdata[buf->ibo_shadowdata.Reserve(mIndices.Size())];
-
-	memcpy(mv, &mVertices[0], sizeof(FModelVertex)* mVertices.Size());
-	memcpy(mi, &mIndices[0], sizeof(unsigned int)* mIndices.Size());
-}
 
 //===========================================================================
 //
@@ -392,6 +372,37 @@ void FVoxelModel::Initialize()
 //
 //===========================================================================
 
+void FVoxelModel::BuildVertexBuffer()
+{
+	if (mVBuf == NULL)
+	{
+		Initialize();
+
+		mVBuf = new FModelVertexBuffer(true);
+		FModelVertex *vertptr = mVBuf->LockVertexBuffer(mVertices.Size());
+		unsigned int *indxptr = mVBuf->LockIndexBuffer(mIndices.Size());
+
+		memcpy(vertptr, &mVertices[0], sizeof(FModelVertex)* mVertices.Size());
+		memcpy(indxptr, &mIndices[0], sizeof(unsigned int)* mIndices.Size());
+
+		mVBuf->UnlockVertexBuffer();
+		mVBuf->UnlockIndexBuffer();
+
+		// delete our temporary buffers
+		mVertices.Clear();
+		mIndices.Clear();
+		mVertices.ShrinkToFit();
+		mIndices.ShrinkToFit();
+	}
+}
+
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
 bool FVoxelModel::Load(const char * fn, int lumpnum, const char * buffer, int length)
 {
 	return false;	// not needed
@@ -420,7 +431,7 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double int
 	gl_RenderState.SetMaterial(tex, CLAMP_NOFILTER, translation, -1, false);
 
 	gl_RenderState.Apply();
-	GLRenderer->mModelVBO->SetupFrame(vindex, vindex);
-	glDrawElements(GL_TRIANGLES, mIndices.Size(), GL_UNSIGNED_INT, (void*)(intptr_t)(iindex * sizeof(unsigned int)));
+	mVBuf->SetupFrame(0, 0);
+	glDrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, (void*)(intptr_t)0);
 }
 

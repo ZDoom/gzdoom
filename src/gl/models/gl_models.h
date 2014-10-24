@@ -24,16 +24,19 @@ FTexture * LoadSkin(const char * path, const char * fn);
 class FModel
 {
 public:
-	FModel() { }
-	virtual ~FModel() { }
+
+	FModel() 
+	{ 
+		mVBuf = NULL;
+	}
+	virtual ~FModel();
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
-	virtual void BuildVertexBuffer(FModelVertexBuffer *buf) = 0;
+	virtual void BuildVertexBuffer() = 0;
 
-
-
+	FModelVertexBuffer *mVBuf;
 	FString mFileName;
 };
 
@@ -139,7 +142,8 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
-	virtual void BuildVertexBuffer(FModelVertexBuffer *buf);
+	void BuildVertexBuffer();
+	void CleanTempData();
 
 };
 
@@ -202,10 +206,18 @@ class FMD3Model : public FModel
 
 		~MD3Surface()
 		{
+			if (skins) delete [] skins;
+			CleanTempData();
+		}
+
+		void CleanTempData()
+		{
 			if (tris) delete [] tris;
 			if (vertices) delete [] vertices;
 			if (texcoords) delete [] texcoords;
-			if (skins) delete [] skins;
+			tris = NULL;
+			vertices = NULL;
+			texcoords = NULL;
 		}
 	};
 
@@ -231,7 +243,7 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
-	virtual void BuildVertexBuffer(FModelVertexBuffer *buf);
+	void BuildVertexBuffer();
 };
 
 struct FVoxelVertexHash
@@ -268,11 +280,10 @@ class FVoxelModel : public FModel
 protected:
 	FVoxel *mVoxel;
 	bool mOwningVoxel;	// if created through MODELDEF deleting this object must also delete the voxel object
+	FTexture *mPalette;
+	unsigned int mNumIndices;
 	TArray<FModelVertex> mVertices;
 	TArray<unsigned int> mIndices;
-	FTexture *mPalette;
-	unsigned int vindex;
-	unsigned int iindex;
 	
 	void MakeSlabPolys(int x, int y, kvxslab_t *voxptr, FVoxelMap &check);
 	void AddFace(int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3, int x4, int y4, int z4, BYTE color, FVoxelMap &check);
@@ -286,7 +297,7 @@ public:
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	FTexture *GetPaletteTexture() const { return mPalette; }
-	void BuildVertexBuffer(FModelVertexBuffer *buf);
+	void BuildVertexBuffer();
 };
 
 

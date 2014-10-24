@@ -197,12 +197,15 @@ class FModelVertexBuffer : public FVertexBuffer
 	unsigned int ibo_id;
 
 public:
-	// these are public because it's the models having to fill them in.
-	TArray<FModelVertex> vbo_shadowdata;	// this is kept around for interpolating on GL 2.0
-	TArray<unsigned int> ibo_shadowdata;	// this is kept around for interpolating on GL 2.0
 
-	FModelVertexBuffer();
+	FModelVertexBuffer(bool needindex);
 	~FModelVertexBuffer();
+
+	FModelVertex *LockVertexBuffer(unsigned int size);
+	void UnlockVertexBuffer();
+
+	unsigned int *LockIndexBuffer(unsigned int size);
+	void UnlockIndexBuffer();
 
 	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2);
 };

@@ -4348,12 +4348,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	ACTION_PARAM_INT(flags, 5);
 	ACTION_PARAM_STATE(success_state, 6);
 
-	fixed_t
-
-		oldx,
-		oldy,
-		oldz;
-
 	AActor *reference = COPY_AAPTR(self, destination_selector);
 
 	if (!reference)
@@ -4361,6 +4355,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		ACTION_SET_RESULT(false);
 		return;
 	}
+
+	fixed_t	oldx = self->x;
+	fixed_t	oldy = self->y;
+	fixed_t	oldz = self->z;
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
@@ -4371,19 +4369,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		if (!(flags & WARPF_ABSOLUTEOFFSET))
 		{
 			angle_t fineangle = angle >> ANGLETOFINESHIFT;
-			oldx = xofs;
+			fixed_t xofs1 = xofs;
 
 			// (borrowed from A_SpawnItemEx, assumed workable)
 			// in relative mode negative y values mean 'left' and positive ones mean 'right'
 			// This is the inverse orientation of the absolute mode!
 
-			xofs = FixedMul(oldx, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
-			yofs = FixedMul(oldx, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+			xofs = FixedMul(xofs1, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
+			yofs = FixedMul(xofs1, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
 		}
-
-		oldx = self->x;
-		oldy = self->y;
-		oldz = self->z;
 
 		if (flags & WARPF_TOFLOOR)
 		{

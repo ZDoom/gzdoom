@@ -387,6 +387,7 @@ void FVoxelModel::BuildVertexBuffer()
 
 		mVBuf->UnlockVertexBuffer();
 		mVBuf->UnlockIndexBuffer();
+		mNumIndices = mIndices.Size();
 
 		// delete our temporary buffers
 		mVertices.Clear();

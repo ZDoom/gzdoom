@@ -1296,6 +1296,18 @@ void APowerTargeter::InitEffect ()
 	PositionAccuracy ();
 }
 
+bool APowerTargeter::HandlePickup(AInventory *item)
+{
+	if (Super::HandlePickup(item))
+	{
+		InitEffect();	// reset the HUD sprites
+		return true;
+	}
+	return false;
+}
+
+
+
 void APowerTargeter::DoEffect ()
 {
 	Super::DoEffect ();

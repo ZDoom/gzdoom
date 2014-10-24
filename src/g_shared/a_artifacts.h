@@ -173,6 +173,7 @@ protected:
 	void EndEffect ();
 	void PositionAccuracy ();
 	void Travelled ();
+	bool HandlePickup(AInventory *item);
 };
 
 class APowerFrightener : public APowerup

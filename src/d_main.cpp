@@ -466,7 +466,7 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
 		}
 
 		// Come out of chasecam mode if we're not allowed to use chasecam.
-		if (!(dmflags2 & DF2_CHASECAM) && !G_SkillProperty (SKILLP_DisableCheats) && !sv_cheats)
+		if (!(dmflags2 & DF2_CHASECAM) && CheckCheatmode(false))
 		{
 			// Take us out of chasecam mode only.
 			if (p->cheats & CF_CHASECAM)

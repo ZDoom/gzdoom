@@ -2250,7 +2250,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		break;
 
 	case DEM_ADDBOT:
-		bglobal.DoAddBot (stream);
+		bglobal.TryAddBot (stream, player);
 		break;
 
 	case DEM_KILLBOTS:

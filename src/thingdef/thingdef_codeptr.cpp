@@ -4831,43 +4831,26 @@ enum DMSS
 	DMSS_AFFECTARMOR		= 2,
 	DMSS_KILL				= 4,
 	DMSS_NOFACTOR			= 8,
+	DMSS_FOILBUDDHA			= 16,
 };
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
 {
-	if ((amount > 0) || (flags & DMSS_KILL))
-	{
-		if (!(dmgtarget->flags2 & MF2_INVULNERABLE) || (flags & DMSS_FOILINVUL))
-		{
-			if (flags & DMSS_KILL)
-			{
-				P_DamageMobj(dmgtarget, self, self, dmgtarget->health, DamageType, DMG_NO_FACTOR | DMG_NO_ARMOR | DMG_FOILINVUL);
-			}
-			if (flags & DMSS_AFFECTARMOR)
-			{
-				if (flags & DMSS_NOFACTOR)
-				{
-					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_FACTOR);
-				}
-				else
-				{
-					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL);
-				}
-			}
-			else
-			{
-				if (flags & DMSS_NOFACTOR)
-				{
-					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR | DMG_NO_FACTOR);
-				}
-				//[MC] DMG_FOILINVUL is needed for making the damage occur on the actor.
-				else
-				{
-					P_DamageMobj(dmgtarget, self, self, amount, DamageType, DMG_FOILINVUL | DMG_NO_ARMOR);
-				}
-			}
-		}
-	}
+	int dmgFlags = 0;
+	if (flags & DMSS_FOILINVUL)
+		dmgFlags += DMG_FOILINVUL;
+	if (flags & DMSS_FOILBUDDHA)
+		dmgFlags += DMG_FOILBUDDHA;
+	if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
+		dmgFlags += DMG_NO_FACTOR;
+	if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
+		dmgFlags += DMG_NO_ARMOR;
+	if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
+		amount += dmgtarget->health;
+
+	if (amount > 0)
+		P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.
+
 	else if (amount < 0)
 	{
 		amount = -amount;
@@ -4991,30 +4974,32 @@ enum KILS
 	KILS_FOILINVUL =	1 << 0,
 	KILS_KILLMISSILES = 1 << 1,
 	KILS_NOMONSTERS =	1 << 2,
+	KILS_FOILBUDDHA =	1 << 3,
 };
 
 static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags)
 {
+	int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
+
+	if (KILS_FOILINVUL)
+		dmgFlags += DMG_FOILINVUL;
+	if (KILS_FOILBUDDHA)
+		dmgFlags += DMG_FOILBUDDHA;
+
 	if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
 	{
 		//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
 		//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
 		//since that's the whole point of it.
-		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && !(killtarget->flags5 & MF5_NODAMAGE))
+		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && 
+			(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
 		{
 			P_ExplodeMissile(killtarget, NULL, NULL);
 		}
 	}
 	if (!(flags & KILS_NOMONSTERS))
 	{
-		if (flags & KILS_FOILINVUL)
-		{
-			P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR | DMG_FOILINVUL);
-		}
-		else
-		{
-			P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-		}
+			P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, dmgFlags);
 	}
 }
 

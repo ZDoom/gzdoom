@@ -1262,7 +1262,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// telefrag him right? ;) (Unfortunately the damage is "absorbed" by armor,
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
-			if ((player->cheats & CF_BUDDHA2) || ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)	&& player->playerstate != PST_DEAD)
+			if (((player->cheats & CF_BUDDHA2) || ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)) && player->playerstate != PST_DEAD)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;

@@ -1203,9 +1203,6 @@ void APlayerPawn::GiveDefaultInventory ()
 {
 	if (player == NULL) return;
 
-	// [GRB] Give inventory specified in DECORATE
-	player->health = GetDefault ()->health;
-
 	// HexenArmor must always be the first item in the inventory because
 	// it provides player class based protection that should not affect
 	// any other protection item.

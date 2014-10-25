@@ -938,7 +938,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
 	bool justhit = false;
-
+	
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
 		return -1;
@@ -1209,8 +1209,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		if (!(flags & DMG_FORCED))
 		{
 			// check the real player, not a voodoo doll here for invulnerability effects
-			if (damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & CF_GODMODE)))
+			if ((damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
+				(player->cheats & CF_GODMODE))) || 
+				(player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NODAMAGE)) 
+				//Absolutely no hurting if NODAMAGE is involved. Same for GODMODE2.
 			{ // player is invulnerable, so don't hurt him
 				return -1;
 			}
@@ -1218,8 +1220,13 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
 			{
 				int newdam = damage;
-				player->mo->Inventory->AbsorbDamage (damage, mod, newdam);
-				damage = newdam;
+				player->mo->Inventory->AbsorbDamage(damage, mod, newdam);
+				if (damage < TELEFRAG_DAMAGE)
+				{
+					// if we are telefragging don't let the damage value go below that magic value. Some further checks would fail otherwise.
+					damage = newdam;
+				}
+
 				if (damage <= 0)
 				{
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
@@ -1232,7 +1239,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				}
 			}
 			
-			if (damage >= player->health
+			if (damage >= player->health && damage < TELEFRAG_DAMAGE
 				&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
 				&& !player->morphTics)
 			{ // Try to use some inventory health
@@ -1254,9 +1261,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// This does not save the player if damage >= TELEFRAG_DAMAGE, still need to
 			// telefrag him right? ;) (Unfortunately the damage is "absorbed" by armor,
 			// but telefragging should still do enough damage to kill the player)
-			if ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE
-				// Ignore players that are already dead.
-				&& player->playerstate != PST_DEAD)
+			// Ignore players that are already dead.
+			if (((player->cheats & CF_BUDDHA2) || ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)) && player->playerstate != PST_DEAD)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;
@@ -1316,43 +1322,52 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 
 	if (target->health <= 0)
-	{ // Death
-		target->special1 = damage;
-
-		// use inflictor's death type if it got one.
-		if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
-
-		// check for special fire damage or ice damage deaths
-		if (mod == NAME_Fire)
+	{ 
+		if ((target->flags7 & MF7_BUDDHA) && (damage < TELEFRAG_DAMAGE) && (!(inflictor->flags3 & MF7_FOILBUDDHA) && !(flags & DMG_FOILBUDDHA)))
+		{ //Make sure FOILINVUL flags work here too for monsters. Or perhaps consider a FOILBUDDHA flag...
+			target->health = 1;
+		}
+		else
 		{
-			if (player && !player->morphTics)
-			{ // Check for flame death
-				if (!inflictor ||
-					((target->health > -50) && (damage > 25)) ||
-					!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
+		
+			// Death
+			target->special1 = damage;
+
+			// use inflictor's death type if it got one.
+			if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
+
+			// check for special fire damage or ice damage deaths
+			if (mod == NAME_Fire)
+			{
+				if (player && !player->morphTics)
+				{ // Check for flame death
+					if (!inflictor ||
+						((target->health > -50) && (damage > 25)) ||
+						!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
+					{
+						target->DamageType = NAME_Fire;
+					}
+				}
+				else
 				{
 					target->DamageType = NAME_Fire;
 				}
 			}
 			else
 			{
-				target->DamageType = NAME_Fire;
+				target->DamageType = mod;
 			}
-		}
-		else
-		{
-			target->DamageType = mod;
-		}
-		if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
-		{ // Minotaur's kills go to his master
-			// Make sure still alive and not a pointer to fighter head
-			if (source->tracer->player && (source->tracer->player->mo == source->tracer))
-			{
-				source = source->tracer;
+			if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
+			{ // Minotaur's kills go to his master
+				// Make sure still alive and not a pointer to fighter head
+				if (source->tracer->player && (source->tracer->player->mo == source->tracer))
+				{
+					source = source->tracer;
+				}
 			}
+			target->Die (source, inflictor, flags);
+			return damage;
 		}
-		target->Die (source, inflictor, flags);
-		return damage;
 	}
 
 	woundstate = target->FindState(NAME_Wound, mod);
@@ -1672,7 +1687,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if (player->cheats & CF_BUDDHA)
+		if ((player->cheats & CF_BUDDHA && damage < TELEFRAG_DAMAGE) || (player->cheats & CF_BUDDHA2))
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}

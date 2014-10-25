@@ -205,6 +205,8 @@ typedef enum
 	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
+	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
+	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;

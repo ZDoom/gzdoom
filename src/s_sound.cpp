@@ -1575,7 +1575,7 @@ void S_RelinkSound (AActor *from, AActor *to)
 			{
 				chan->Actor = to;
 			}
-			else if (!(chan->ChanFlags & CHAN_LOOP))
+			else if (!(chan->ChanFlags & CHAN_LOOP) && !(compatflags2 & COMPATF2_SOUNDCUTOFF))
 			{
 				chan->Actor = NULL;
 				chan->SourceType = SOURCE_Unattached;

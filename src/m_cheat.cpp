@@ -340,7 +340,6 @@ void cht_DoCheat (player_t *player, int cheat)
 					player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
 				}
 				player->mo->DamageType = NAME_None;
-//				player->mo->GiveDefaultInventory();
 				if (player->ReadyWeapon != NULL)
 				{
 					P_SetPsprite(player, ps_weapon, player->ReadyWeapon->GetUpState());

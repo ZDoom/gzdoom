@@ -1363,6 +1363,7 @@ void G_PlayerReborn (int player)
 	::new(p) player_t;
 
 	memcpy (p->frags, frags, sizeof(p->frags));
+	p->health = actor->health;
 	p->fragcount = fragcount;
 	p->killcount = killcount;
 	p->itemcount = itemcount;
@@ -1381,6 +1382,8 @@ void G_PlayerReborn (int player)
 
 	if (gamestate != GS_TITLELEVEL)
 	{
+
+		// [GRB] Give inventory specified in DECORATE
 		actor->GiveDefaultInventory ();
 		p->ReadyWeapon = p->PendingWeapon;
 	}

@@ -271,6 +271,11 @@ ACTOR PowerFrightener : Powerup native
 	Powerup.Duration -60
 }
 
+ACTOR PowerBuddha : Powerup native
+{
+	Powerup.Duration -60
+}
+
 ACTOR PowerScanner : Powerup native
 {
 	Powerup.Duration -80

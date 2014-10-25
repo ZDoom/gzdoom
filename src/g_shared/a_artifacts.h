@@ -184,6 +184,14 @@ protected:
 	void EndEffect ();
 };
 
+class APowerBuddha : public APowerup
+{
+	DECLARE_CLASS (APowerBuddha, APowerup)
+protected:
+	void InitEffect ();
+	void EndEffect ();
+};
+
 class APowerTimeFreezer : public APowerup
 {
 	DECLARE_CLASS( APowerTimeFreezer, APowerup )

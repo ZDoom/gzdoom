@@ -236,6 +236,18 @@ void G_NewInit ()
 {
 	int i;
 
+	// Destory all old player refrences that may still exist
+	TThinkerIterator<APlayerPawn> it(STAT_TRAVELLING);
+	APlayerPawn *pawn, *next;
+
+	next = it.Next();
+	while ((pawn = next) != NULL)
+	{
+		next = it.Next();
+		pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
+		pawn->Destroy();
+	}
+
 	G_ClearSnapshots ();
 	ST_SetNeedRefresh();
 	netgame = false;

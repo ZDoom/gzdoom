@@ -141,6 +141,7 @@ static FCompatOption Options[] =
 	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, SLOT_COMPAT },
 	{ "badangles",				COMPATF2_BADANGLES, SLOT_COMPAT2 },
 	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
+	{ "soundcutoff",			COMPATF2_SOUNDCUTOFF, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };

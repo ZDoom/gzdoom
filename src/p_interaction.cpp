@@ -938,7 +938,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
 	bool justhit = false;
-
+	
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
 		return -1;
@@ -1209,8 +1209,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		if (!(flags & DMG_FORCED))
 		{
 			// check the real player, not a voodoo doll here for invulnerability effects
-			if (damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & CF_GODMODE)))
+			if ((damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
+				(player->cheats & CF_GODMODE))) || 
+				(player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NODAMAGE)) 
+				//Absolutely no hurting if NODAMAGE is involved. Same for GODMODE2.
 			{ // player is invulnerable, so don't hurt him
 				return -1;
 			}
@@ -1259,9 +1261,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// This does not save the player if damage >= TELEFRAG_DAMAGE, still need to
 			// telefrag him right? ;) (Unfortunately the damage is "absorbed" by armor,
 			// but telefragging should still do enough damage to kill the player)
-			if ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE
-				// Ignore players that are already dead.
-				&& player->playerstate != PST_DEAD)
+			// Ignore players that are already dead.
+			if ((player->cheats & CF_BUDDHA2) || ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)	&& player->playerstate != PST_DEAD)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;
@@ -1677,7 +1678,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if (player->cheats & CF_BUDDHA && damage < TELEFRAG_DAMAGE)
+		if ((player->cheats & CF_BUDDHA && damage < TELEFRAG_DAMAGE) || (player->cheats & CF_BUDDHA2))
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}

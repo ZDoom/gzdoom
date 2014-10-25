@@ -99,6 +99,23 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("TXT_BUDDHAOFF");
 		break;
 
+	case CHT_GOD2:
+		player->cheats ^= CF_GODMODE2;
+		if (player->cheats & CF_GODMODE2)
+			msg = GStrings("STSTR_DQD2ON");
+		else
+			msg = GStrings("STSTR_DQD2OFF");
+		ST_SetNeedRefresh();
+		break;
+
+	case CHT_BUDDHA2:
+		player->cheats ^= CF_BUDDHA2;
+		if (player->cheats & CF_BUDDHA2)
+			msg = GStrings("TXT_BUDDHA2ON");
+		else
+			msg = GStrings("TXT_BUDDHA2OFF");
+		break;
+
 	case CHT_NOCLIP:
 		player->cheats ^= CF_NOCLIP;
 		if (player->cheats & CF_NOCLIP)

@@ -292,6 +292,8 @@ STSTR_MUS = "Music Change";
 STSTR_NOMUS = "IMPOSSIBLE SELECTION";
 STSTR_DQDON = "Degreelessness Mode ON";
 STSTR_DQDOFF = "Degreelessness Mode OFF";
+STSTR_DQD2ON = "Ultimate Degreelessness Mode ON";
+STSTR_DQD2OFF = "Ultimate Degreelessness Mode OFF";
 STSTR_KFAADDED = "Very Happy Ammo Added";
 STSTR_FAADDED = "Ammo (no keys) Added";
 STSTR_NCON = "No Clipping Mode ON";
@@ -303,6 +305,8 @@ STSTR_CHOPPERS = "... doesn't suck - GM";
 STSTR_CLEV = "Changing Level...\n";
 TXT_BUDDHAON = "Buddha mode ON";
 TXT_BUDDHAOFF = "Buddha mode OFF";
+TXT_BUDDHA2ON = "Ultimate Buddha Mode ON";
+TXT_BUDDHA2OFF = "Ultimate Buddha Mode OFF";
 TXT_DEFAULTPICKUPMSG = "You got a pickup";
 
 E1TEXT =

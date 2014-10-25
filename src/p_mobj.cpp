@@ -5018,10 +5018,11 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 				cls = cls->ParentClass;
 			}
 		}
+
+	statedone:
+		if (!(bloodtype <= 1)) th->renderflags |= RF_INVISIBLE;
 	}
 
-statedone:
-	if (!(bloodtype <= 1)) th->renderflags |= RF_INVISIBLE;
 	if (bloodtype >= 1)
 		P_DrawSplash2 (40, x, y, z, dir, 2, bloodcolor);
 }

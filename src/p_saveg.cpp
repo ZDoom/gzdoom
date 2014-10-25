@@ -280,7 +280,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 		}
 		if (thebot)
 		{
-			thebot->inuse = true;
+			thebot->inuse = BOTINUSE_Yes;
 		}
 		bglobal.botnum++;
 		dst->userinfo.TransferFrom(uibackup2);

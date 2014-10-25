@@ -125,7 +125,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 		bot = bot->next;
 	if (bot)
 	{
-		bot->inuse = false;
+		bot->inuse = BOTINUSE_No;
 		bot->lastteam = keepTeam ? players[i].userinfo.GetTeam() : TEAM_NONE;
 	}
 	if (players[i].Bot != NULL)
@@ -172,7 +172,7 @@ CCMD (listbots)
 
 	while (thebot)
 	{
-		Printf ("%s%s\n", thebot->name, thebot->inuse ? " (active)" : "");
+		Printf ("%s%s\n", thebot->name, thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
 		thebot = thebot->next;
 		count++;
 	}

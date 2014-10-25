@@ -60,6 +60,13 @@ struct botskill_t
 
 FArchive &operator<< (FArchive &arc, botskill_t &skill);
 
+enum
+{
+	BOTINUSE_No,
+	BOTINUSE_Waiting,
+	BOTINUSE_Yes,
+};
+
 //Info about all bots in the bots.cfg
 //Updated during each level start.
 //Info given to bots when they're spawned.
@@ -69,7 +76,7 @@ struct botinfo_t
 	char *name;
 	char *info;
 	botskill_t skill;
-	bool inuse;
+	int inuse;
 	int lastteam;
 };
 
@@ -88,7 +95,7 @@ public:
 	bool SpawnBot (const char *name, int color = NOCOLOR);
 	bool LoadBots ();
 	void ForgetBots ();
-	void DoAddBot (BYTE **stream);
+	void TryAddBot (BYTE **stream, int player);
 	void RemoveAllBots (bool fromlist);
 	void DestroyAllBots ();
 
@@ -122,6 +129,9 @@ public:
 	bool	 m_Thinking;
 
 private:
+	//(B_Game.c)
+	bool DoAddBot (BYTE *info, botskill_t skill);
+
 	//(B_Func.c)
 	bool Reachable (AActor *actor, AActor *target);
 	void Dofire (AActor *actor, ticcmd_t *cmd);

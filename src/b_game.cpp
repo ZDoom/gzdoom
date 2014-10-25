@@ -89,8 +89,6 @@ enum
 	BOTCFG_TEAM
 };
 
-static bool waitingforspawn[MAXPLAYERS];
-
 FCajunMaster::~FCajunMaster()
 {
 	ForgetBots();
@@ -162,8 +160,6 @@ void FCajunMaster::Main (int buf)
 
 void FCajunMaster::Init ()
 {
-	int i;
-
 	botnum = 0;
 	firstthing = NULL;
 	spawn_tries = 0;
@@ -171,11 +167,6 @@ void FCajunMaster::Init ()
 	observer = false;
 	body1 = NULL;
 	body2 = NULL;
-
-	for (i = 0; i < MAXPLAYERS; i++)
-	{
-		waitingforspawn[i] = false;
-	}
 
 	if (ctf && teamplay == false)
 		teamplay = true; //Need teamplay for ctf. (which is not done yet)
@@ -192,7 +183,7 @@ void FCajunMaster::Init ()
 
 		while (thebot != NULL)
 		{
-			thebot->inuse = false;
+			thebot->inuse = BOTINUSE_No;
 			thebot = thebot->next;
 		}
 	}
@@ -232,12 +223,10 @@ void FCajunMaster::End ()
 //The color parameter can be either a
 //color (range from 0-10), or = NOCOLOR.
 //The color parameter overides bots
-//induvidual colors if not = NOCOLOR.
+//individual colors if not = NOCOLOR.
 
 bool FCajunMaster::SpawnBot (const char *name, int color)
 {
-	int playernumber;
-
 	//COLORS
 	static const char colors[11][17] =
 	{
@@ -254,36 +243,31 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		"\\color\\cf df 90"		//10 = Bleached Bone
 	};
 
-	for (playernumber = 0; playernumber < MAXPLAYERS; playernumber++)
-	{
-		if (!playeringame[playernumber] && !waitingforspawn[playernumber])
-		{
-			break;
-		}
-	}
-
-	if (playernumber == MAXPLAYERS)
-	{
-		Printf ("The maximum of %d players/bots has been reached\n", MAXPLAYERS);
-		return false;
-	}
-
 	botinfo_t *thebot;
+	int botshift;
 
 	if (name)
 	{
 		thebot = botinfo;
 
 		// Check if exist or already in the game.
+		botshift = 0;
 		while (thebot && stricmp (name, thebot->name))
+		{
 			thebot = thebot->next;
+			botshift++;
+		}
 
 		if (thebot == NULL)
 		{
    		 	Printf ("couldn't find %s in %s\n", name, BOTFILENAME);
 			return false;
 		}
-		else if (thebot->inuse)
+		else if (thebot->inuse == BOTINUSE_Waiting)
+		{
+			return false;
+		}
+		else if (thebot->inuse == BOTINUSE_Yes)
 		{
    		 	Printf ("%s is already in the thick\n", name);
 			return false;
@@ -296,9 +280,13 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		{
 			int rnum = (pr_botspawn() % loaded_bots);
 			thebot = botinfo;
+			botshift = 0;
 			while (rnum)
+			{
 				--rnum, thebot = thebot->next;
-			if (!thebot->inuse)
+				botshift++;
+			}
+			if (thebot->inuse == BOTINUSE_No)
 				vacant = true;
 		}
 	}
@@ -308,10 +296,10 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		return false;
 	}
 
-	waitingforspawn[playernumber] = true;
+	thebot->inuse = BOTINUSE_Waiting;
 
 	Net_WriteByte (DEM_ADDBOT);
-	Net_WriteByte (playernumber);
+	Net_WriteByte (botshift);
 	{
 		//Set color.
 		char concat[512];
@@ -332,61 +320,104 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	Net_WriteByte(thebot->skill.reaction);
 	Net_WriteByte(thebot->skill.isp);
 
-	thebot->inuse = true;
-
-	//Increment this.
-	botnum++;
-
 	return true;
 }
 
-void FCajunMaster::DoAddBot (BYTE **stream)
+void FCajunMaster::TryAddBot (BYTE **stream, int player)
 {
-	int bnum = ReadByte (stream);
+	int botshift = ReadByte (stream);
 	char *info = ReadString (stream);
-	BYTE *infob = (BYTE *)info;
 	botskill_t skill;
 	skill.aiming = ReadByte (stream);
 	skill.perfection = ReadByte (stream);
 	skill.reaction = ReadByte (stream);
 	skill.isp = ReadByte (stream);
 
-	D_ReadUserInfoStrings (bnum, &infob, false);
+	botinfo_t *thebot = NULL;
+
+	if (consoleplayer == player)
+	{
+		thebot = botinfo;
+
+		while (botshift > 0)
+		{
+			thebot = thebot->next;
+			botshift--;
+		}
+	}
+
+	if (DoAddBot ((BYTE *)info, skill))
+	{
+		if (consoleplayer == Net_Arbitrator)
+		{
+			//Increment this.
+			botnum++;
+		}
+
+		if (thebot != NULL)
+		{
+			thebot->inuse = BOTINUSE_Yes;
+		}
+	}
+	else
+	{
+		if (thebot != NULL)
+		{
+			thebot->inuse = BOTINUSE_No;
+		}
+	}
 
 	delete[] info;
+}
+
+bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
+{
+	int bnum;
+
+	for (bnum = 0; bnum < MAXPLAYERS; bnum++)
+	{
+		if (!playeringame[bnum])
+		{
+			break;
+		}
+	}
+
+	if (bnum == MAXPLAYERS)
+	{
+		Printf ("The maximum of %d players/bots has been reached\n", MAXPLAYERS);
+		return false;
+	}
+
+	D_ReadUserInfoStrings (bnum, &info, false);
 
 	if (!deathmatch && playerstarts[bnum].type == 0)
 	{
 		Printf ("%s tried to join, but there was no player %d start\n",
 			players[bnum].userinfo.GetName(), bnum+1);
 		ClearPlayer (bnum, false);	// Make the bot inactive again
-		if (botnum > 0)
-		{
-			botnum--;
-		}
+		return false;
 	}
+
+	multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
+	players[bnum].Bot = new DBot;
+	GC::WriteBarrier (players[bnum].Bot);
+	players[bnum].Bot->skill = skill;
+	playeringame[bnum] = true;
+	players[bnum].mo = NULL;
+	players[bnum].playerstate = PST_ENTER;
+
+	if (teamplay)
+		Printf ("%s joined the %s team\n", players[bnum].userinfo.GetName(), Teams[players[bnum].userinfo.GetTeam()].GetName());
 	else
+		Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
+
+	G_DoReborn (bnum, true);
+	if (StatusBar != NULL)
 	{
-		multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
-		players[bnum].Bot = new DBot;
-		GC::WriteBarrier (players[bnum].Bot);
-		players[bnum].Bot->skill = skill;
-		playeringame[bnum] = true;
-		players[bnum].mo = NULL;
-		players[bnum].playerstate = PST_ENTER;
-
-		if (teamplay)
-			Printf ("%s joined the %s team\n", players[bnum].userinfo.GetName(), Teams[players[bnum].userinfo.GetTeam()].GetName());
-		else
-			Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
-
-		G_DoReborn (bnum, true);
-		if (StatusBar != NULL)
-		{
-			StatusBar->MultiplayerChanged ();
-		}
+		StatusBar->MultiplayerChanged ();
 	}
-	waitingforspawn[bnum] = false;
+
+	return true;
 }
 
 void FCajunMaster::RemoveAllBots (bool fromlist)
@@ -421,8 +452,6 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 	if (fromlist)
 	{
 		wanted_botnum = 0;
-		for (i = 0; i < MAXPLAYERS; i++)
-			waitingforspawn[i] = false;
 	}
 	botnum = 0;
 }

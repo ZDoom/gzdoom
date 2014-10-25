@@ -1322,43 +1322,52 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 
 	if (target->health <= 0)
-	{ // Death
-		target->special1 = damage;
-
-		// use inflictor's death type if it got one.
-		if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
-
-		// check for special fire damage or ice damage deaths
-		if (mod == NAME_Fire)
+	{ 
+		if ((target->flags7 & MF7_BUDDHA) && (damage < TELEFRAG_DAMAGE) && (!(inflictor->flags3 & MF7_FOILBUDDHA) && !(flags & DMG_FOILBUDDHA)))
+		{ //Make sure FOILINVUL flags work here too for monsters. Or perhaps consider a FOILBUDDHA flag...
+			target->health = 1;
+		}
+		else
 		{
-			if (player && !player->morphTics)
-			{ // Check for flame death
-				if (!inflictor ||
-					((target->health > -50) && (damage > 25)) ||
-					!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
+		
+			// Death
+			target->special1 = damage;
+
+			// use inflictor's death type if it got one.
+			if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
+
+			// check for special fire damage or ice damage deaths
+			if (mod == NAME_Fire)
+			{
+				if (player && !player->morphTics)
+				{ // Check for flame death
+					if (!inflictor ||
+						((target->health > -50) && (damage > 25)) ||
+						!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
+					{
+						target->DamageType = NAME_Fire;
+					}
+				}
+				else
 				{
 					target->DamageType = NAME_Fire;
 				}
 			}
 			else
 			{
-				target->DamageType = NAME_Fire;
+				target->DamageType = mod;
 			}
-		}
-		else
-		{
-			target->DamageType = mod;
-		}
-		if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
-		{ // Minotaur's kills go to his master
-			// Make sure still alive and not a pointer to fighter head
-			if (source->tracer->player && (source->tracer->player->mo == source->tracer))
-			{
-				source = source->tracer;
+			if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
+			{ // Minotaur's kills go to his master
+				// Make sure still alive and not a pointer to fighter head
+				if (source->tracer->player && (source->tracer->player->mo == source->tracer))
+				{
+					source = source->tracer;
+				}
 			}
+			target->Die (source, inflictor, flags);
+			return damage;
 		}
-		target->Die (source, inflictor, flags);
-		return damage;
 	}
 
 	woundstate = target->FindState(NAME_Wound, mod);

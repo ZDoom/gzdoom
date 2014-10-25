@@ -100,10 +100,10 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 		return;
 
 	//Added by MC: Finished with this destination.
-	if (toucher->player != NULL && toucher->player->isbot && special == toucher->player->dest)
+	if (toucher->player != NULL && toucher->player->Bot != NULL && special == toucher->player->Bot->dest)
 	{
-		toucher->player->prev = toucher->player->dest;
-    	toucher->player->dest = NULL;
+		toucher->player->Bot->prev = toucher->player->Bot->dest;
+		toucher->player->Bot->dest = NULL;
 	}
 
 	special->Touch (toucher);
@@ -593,7 +593,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		// even those caused by other monsters
 		players[0].killcount++;
 	}
-	
+
 	if (player)
 	{
 		// [RH] Death messages
@@ -608,17 +608,17 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		//Added by MC: Respawn bots
 		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback)
 		{
-			if (player->isbot)
-				player->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
+			if (player->Bot != NULL)
+				player->Bot->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
 
 			//Added by MC: Discard enemies.
 			for (int i = 0; i < MAXPLAYERS; i++)
 			{
-				if (players[i].isbot && this == players[i].enemy)
+				if (players[i].Bot != NULL && this == players[i].Bot->enemy)
 				{
-					if (players[i].dest ==  players[i].enemy)
-						players[i].dest = NULL;
-					players[i].enemy = NULL;
+					if (players[i].Bot->dest ==  players[i].Bot->enemy)
+						players[i].Bot->dest = NULL;
+					players[i].Bot->enemy = NULL;
 				}
 			}
 
@@ -938,7 +938,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
 	bool justhit = false;
-
+	
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
 		return -1;
@@ -1193,11 +1193,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	//
 	if (player)
 	{
-		
-        //Added by MC: Lets bots look allround for enemies if they survive an ambush.
-        if (player->isbot)
+		//Added by MC: Lets bots look allround for enemies if they survive an ambush.
+		if (player->Bot != NULL)
 		{
-            player->allround = true;
+			player->Bot->allround = true;
 		}
 
 		// end of game hell hack
@@ -1210,8 +1209,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		if (!(flags & DMG_FORCED))
 		{
 			// check the real player, not a voodoo doll here for invulnerability effects
-			if (damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & CF_GODMODE)))
+			if ((damage < TELEFRAG_DAMAGE && ((player->mo->flags2 & MF2_INVULNERABLE) ||
+				(player->cheats & CF_GODMODE))) || 
+				(player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NODAMAGE)) 
+				//Absolutely no hurting if NODAMAGE is involved. Same for GODMODE2.
 			{ // player is invulnerable, so don't hurt him
 				return -1;
 			}
@@ -1219,8 +1220,13 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
 			{
 				int newdam = damage;
-				player->mo->Inventory->AbsorbDamage (damage, mod, newdam);
-				damage = newdam;
+				player->mo->Inventory->AbsorbDamage(damage, mod, newdam);
+				if (damage < TELEFRAG_DAMAGE)
+				{
+					// if we are telefragging don't let the damage value go below that magic value. Some further checks would fail otherwise.
+					damage = newdam;
+				}
+
 				if (damage <= 0)
 				{
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
@@ -1233,7 +1239,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				}
 			}
 			
-			if (damage >= player->health
+			if (damage >= player->health && damage < TELEFRAG_DAMAGE
 				&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
 				&& !player->morphTics)
 			{ // Try to use some inventory health
@@ -1255,9 +1261,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// This does not save the player if damage >= TELEFRAG_DAMAGE, still need to
 			// telefrag him right? ;) (Unfortunately the damage is "absorbed" by armor,
 			// but telefragging should still do enough damage to kill the player)
-			if ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE
-				// Ignore players that are already dead.
-				&& player->playerstate != PST_DEAD)
+			// Ignore players that are already dead.
+			if (((player->cheats & CF_BUDDHA2) || ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)) && player->playerstate != PST_DEAD)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;
@@ -1317,43 +1322,52 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 
 	if (target->health <= 0)
-	{ // Death
-		target->special1 = damage;
-
-		// use inflictor's death type if it got one.
-		if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
-
-		// check for special fire damage or ice damage deaths
-		if (mod == NAME_Fire)
+	{ 
+		if ((target->flags7 & MF7_BUDDHA) && (damage < TELEFRAG_DAMAGE) && (!(inflictor->flags3 & MF7_FOILBUDDHA) && !(flags & DMG_FOILBUDDHA)))
+		{ //Make sure FOILINVUL flags work here too for monsters. Or perhaps consider a FOILBUDDHA flag...
+			target->health = 1;
+		}
+		else
 		{
-			if (player && !player->morphTics)
-			{ // Check for flame death
-				if (!inflictor ||
-					((target->health > -50) && (damage > 25)) ||
-					!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
+		
+			// Death
+			target->special1 = damage;
+
+			// use inflictor's death type if it got one.
+			if (inflictor && inflictor->DeathType != NAME_None) mod = inflictor->DeathType;
+
+			// check for special fire damage or ice damage deaths
+			if (mod == NAME_Fire)
+			{
+				if (player && !player->morphTics)
+				{ // Check for flame death
+					if (!inflictor ||
+						((target->health > -50) && (damage > 25)) ||
+						!(inflictor->flags5 & MF5_SPECIALFIREDAMAGE))
+					{
+						target->DamageType = NAME_Fire;
+					}
+				}
+				else
 				{
 					target->DamageType = NAME_Fire;
 				}
 			}
 			else
 			{
-				target->DamageType = NAME_Fire;
+				target->DamageType = mod;
 			}
-		}
-		else
-		{
-			target->DamageType = mod;
-		}
-		if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
-		{ // Minotaur's kills go to his master
-			// Make sure still alive and not a pointer to fighter head
-			if (source->tracer->player && (source->tracer->player->mo == source->tracer))
-			{
-				source = source->tracer;
+			if (source && source->tracer && (source->flags5 & MF5_SUMMONEDMONSTER))
+			{ // Minotaur's kills go to his master
+				// Make sure still alive and not a pointer to fighter head
+				if (source->tracer->player && (source->tracer->player->mo == source->tracer))
+				{
+					source = source->tracer;
+				}
 			}
+			target->Die (source, inflictor, flags);
+			return damage;
 		}
-		target->Die (source, inflictor, flags);
-		return damage;
 	}
 
 	woundstate = target->FindState(NAME_Wound, mod);
@@ -1673,7 +1687,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if (player->cheats & CF_BUDDHA)
+		if ((player->cheats & CF_BUDDHA && damage < TELEFRAG_DAMAGE) || (player->cheats & CF_BUDDHA2))
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;
 		}
@@ -1711,7 +1725,6 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		P_SetMobjState(target, target->info->painstate);
 	}
 */
-	return;
 }
 
 

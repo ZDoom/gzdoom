@@ -106,7 +106,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	switch (self->GetClass()->TypeName)
 	{
 	case NAME_AlienSpectre1:
-		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 999, FRACUNIT, 0, 0, 0, false);
+		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 999, FRACUNIT, 0, -1, 0, false);
 		log = 95;
 		break;
 
@@ -180,7 +180,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 		{	// Another Sigil piece. Woohoo!
 			log = 83;
 		}
-		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, -1, 0, false);
 		break;
 
 	default:

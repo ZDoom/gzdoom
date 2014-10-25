@@ -198,7 +198,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 
 		if (ff_top > tmf.floorz)
 		{
-			if (ff_top <= tmf.z || (!(flags && FFCF_3DRESTRICT) && (tmf.thing != NULL && ff_bottom < tmf.z && ff_top < tmf.z + tmf.thing->MaxStepHeight)))
+			if (ff_top <= tmf.z || (!(flags & FFCF_3DRESTRICT) && (tmf.thing != NULL && ff_bottom < tmf.z && ff_top < tmf.z + tmf.thing->MaxStepHeight)))
 			{
 				tmf.dropoffz = tmf.floorz = ff_top;
 				tmf.floorpic = *rover->top.texture;
@@ -1111,24 +1111,27 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 					//     cases where they are clearly supposed to do that
 					if (thing->IsFriend(tm.thing->target))
 					{
-						// Friends never harm each other
-						return false;
+						// Friends never harm each other, unless the shooter has the HARMFRIENDS set.
+						if (!(thing->flags7 & MF7_HARMFRIENDS)) return false;
 					}
-					if (thing->TIDtoHate != 0 && thing->TIDtoHate == tm.thing->target->TIDtoHate)
+					else
 					{
-						// [RH] Don't hurt monsters that hate the same thing as you do
-						return false;
-					}
-					if (thing->GetSpecies() == tm.thing->target->GetSpecies() && !(thing->flags6 & MF6_DOHARMSPECIES))
-					{
-						// Don't hurt same species or any relative -
-						// but only if the target isn't one's hostile.
-						if (!thing->IsHostile(tm.thing->target))
+						if (thing->TIDtoHate != 0 && thing->TIDtoHate == tm.thing->target->TIDtoHate)
 						{
-							// Allow hurting monsters the shooter hates.
-							if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
+							// [RH] Don't hurt monsters that hate the same thing as you do
+							return false;
+						}
+						if (thing->GetSpecies() == tm.thing->target->GetSpecies() && !(thing->flags6 & MF6_DOHARMSPECIES))
+						{
+							// Don't hurt same species or any relative -
+							// but only if the target isn't one's hostile.
+							if (!thing->IsHostile(tm.thing->target))
 							{
-								return false;
+								// Allow hurting monsters the shooter hates.
+								if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
+								{
+									return false;
+								}
 							}
 						}
 					}
@@ -1919,13 +1922,13 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		//Added by MC: To prevent bot from getting into dangerous sectors.
-		if (thing->player && thing->player->isbot && thing->flags & MF_SHOOTABLE)
+		if (thing->player && thing->player->Bot != NULL && thing->flags & MF_SHOOTABLE)
 		{
 			if (tm.sector != thing->Sector
 				&& bglobal.IsDangerous(tm.sector))
 			{
-				thing->player->prev = thing->player->dest;
-				thing->player->dest = NULL;
+				thing->player->Bot->prev = thing->player->Bot->dest;
+				thing->player->Bot->dest = NULL;
 				thing->velx = 0;
 				thing->vely = 0;
 				thing->z = oldz;
@@ -2157,7 +2160,7 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 			{ // too big a step up
 				return false;
 			}
-			else if ((thing->flags & MF_MISSILE) && !(thing->flags6 && MF6_STEPMISSILE) && tm.floorz > newz)
+			else if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > newz)
 			{ // [RH] Don't let normal missiles climb steps
 				return false;
 			}

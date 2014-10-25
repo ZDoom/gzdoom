@@ -80,6 +80,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrusaderDeath)
 {
 	if (CheckBossDeath (self))
 	{
-		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 667, FRACUNIT, 0, 0, 0, false);
+		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 667, FRACUNIT, 0, -1, 0, false);
 	}
 }

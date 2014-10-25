@@ -205,6 +205,8 @@ typedef enum
 	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
+	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
+	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;
@@ -442,46 +444,9 @@ public:
 	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
 
 	//Added by MC:
-	angle_t		savedyaw;
-	int			savedpitch;
-
-	angle_t		angle;		// The wanted angle that the bot try to get every tic.
-							//  (used to get a smoth view movement)
-	TObjPtr<AActor>		dest;		// Move Destination.
-	TObjPtr<AActor>		prev;		// Previous move destination.
-
-
-	TObjPtr<AActor>		enemy;		// The dead meat.
-	TObjPtr<AActor>		missile;	// A threatening missile that needs to be avoided.
-	TObjPtr<AActor>		mate;		// Friend (used for grouping in teamplay or coop).
-	TObjPtr<AActor>		last_mate;	// If bots mate disappeared (not if died) that mate is
-							// pointed to by this. Allows bot to roam to it if
-							// necessary.
+	TObjPtr<DBot> Bot;
 
 	bool		settings_controller;	// Player can control game settings.
-
-	//Skills
-	struct botskill_t	skill;
-
-	//Tickers
-	int			t_active;	// Open door, lower lift stuff, door must open and
-							// lift must go down before bot does anything
-							// radical like try a stuckmove
-	int			t_respawn;
-	int			t_strafe;
-	int			t_react;
-	int			t_fight;
-	int			t_roam;
-	int			t_rocket;
-
-	//Misc booleans
-	bool		isbot;
-	bool		first_shot;	// Used for reaction skill.
-	bool		sleft;		// If false, strafe is right.
-	bool		allround;
-
-	fixed_t		oldx;
-	fixed_t		oldy;
 
 	float		BlendR;		// [RH] Final blending values
 	float		BlendG;

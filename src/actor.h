@@ -341,6 +341,9 @@ enum
 	MF7_ALWAYSTELEFRAG	= 0x00000004,	// will unconditionally be telefragged when in the way. Overrides all other settings.
 	MF7_HANDLENODELAY	= 0x00000008,	// respect NoDelay state flag
 	MF7_WEAPONSPAWN		= 0x00000010,	// subject to DF_NO_COOP_WEAPON_SPAWN dmflag
+	MF7_HARMFRIENDS		= 0x00000020,	// is allowed to harm friendly monsters.
+	MF7_BUDDHA			= 0x00000040,	// Behaves just like the buddha cheat. 
+	MF7_FOILBUDDHA		= 0x00000080,	// Similar to FOILINVUL, foils buddha mode.
 
 // --- mobj.renderflags ---
 
@@ -712,6 +715,9 @@ public:
 
 	// Transforms the actor into a finely-ground paste
 	virtual bool Grind(bool items);
+
+	// Get this actor's team
+	int GetTeam();
 
 	// Is the other actor on my team?
 	bool IsTeammate (AActor *other);

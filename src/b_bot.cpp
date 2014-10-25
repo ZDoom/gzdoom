@@ -1,7 +1,7 @@
-// Cajun bot console commands.
+// Cajun bot
 //
-// [RH] Moved out of d_netcmd.c (in Cajun source), because they don't really
-// belong there.
+// [RH] Moved console commands out of d_netcmd.c (in Cajun source), because
+// they don't really belong there.
 
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -13,6 +13,76 @@
 #include "teaminfo.h"
 #include "d_net.h"
 #include "farchive.h"
+
+IMPLEMENT_POINTY_CLASS(DBot)
+ DECLARE_POINTER(dest)
+ DECLARE_POINTER(prev)
+ DECLARE_POINTER(enemy)
+ DECLARE_POINTER(missile)
+ DECLARE_POINTER(mate)
+ DECLARE_POINTER(last_mate)
+END_POINTERS
+
+DBot::DBot ()
+{
+	Clear ();
+}
+
+void DBot::Clear ()
+{
+	savedyaw = 0;
+	savedpitch = 0;
+	angle = 0;
+	dest = NULL;
+	prev = NULL;
+	enemy = NULL;
+	missile = NULL;
+	mate = NULL;
+	last_mate = NULL;
+	memset(&skill, 0, sizeof(skill));
+	t_active = 0;
+	t_respawn = 0;
+	t_strafe = 0;
+	t_react = 0;
+	t_fight = 0;
+	t_roam = 0;
+	t_rocket = 0;
+	first_shot = true;
+	sleft = false;
+	allround = false;
+	increase = false;
+	oldx = 0;
+	oldy = 0;
+}
+
+void DBot::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+
+	arc << savedyaw
+		<< savedpitch
+		<< angle
+		<< dest
+		<< prev
+		<< enemy
+		<< missile
+		<< mate
+		<< last_mate
+		<< skill
+		<< t_active
+		<< t_respawn
+		<< t_strafe
+		<< t_react
+		<< t_fight
+		<< t_roam
+		<< t_rocket
+		<< first_shot
+		<< sleft
+		<< allround
+		<< increase
+		<< oldx
+		<< oldy;
+}
 
 CVAR (Int, bot_next_color, 11, 0)
 CVAR (Bool, bot_observer, false, 0)
@@ -58,6 +128,11 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 		bot->inuse = false;
 		bot->lastteam = keepTeam ? players[i].userinfo.GetTeam() : TEAM_NONE;
 	}
+	if (players[i].Bot != NULL)
+	{
+		players[i].Bot->Destroy ();
+		players[i].Bot = NULL;
+	}
 	players[i].~player_t();
 	::new(&players[i]) player_t;
 	players[i].userinfo.Reset();
@@ -66,6 +141,12 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 
 CCMD (removebots)
 {
+	if (!players[consoleplayer].settings_controller)
+	{
+		Printf ("Only setting controllers can remove bots\n");
+		return;
+	}
+
 	Net_WriteByte (DEM_KILLBOTS);
 }
 

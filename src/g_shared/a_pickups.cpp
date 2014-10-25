@@ -499,7 +499,7 @@ bool AInventory::ShouldRespawn ()
 {
 	if ((ItemFlags & IF_BIGPOWERUP) && !(dmflags2 & DF2_RESPAWN_SUPER)) return false;
 	if (ItemFlags & IF_NEVERRESPAWN) return false;
-	return !!(dmflags & DF_ITEMS_RESPAWN);
+	return !!((dmflags & DF_ITEMS_RESPAWN) || (ItemFlags & IF_ALWAYSRESPAWN));
 }
 
 //===========================================================================
@@ -1024,8 +1024,8 @@ void AInventory::Touch (AActor *toucher)
 	//Added by MC: Check if item taken was the roam destination of any bot
 	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if (playeringame[i] && this == players[i].dest)
-			players[i].dest = NULL;
+		if (playeringame[i] && players[i].Bot != NULL && this == players[i].Bot->dest)
+			players[i].Bot->dest = NULL;
 	}
 }
 

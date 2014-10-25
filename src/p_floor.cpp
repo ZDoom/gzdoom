@@ -320,7 +320,7 @@ manual_floor:
 		rtn = true;
 		floor = new DFloor (sec);
 		floor->m_Type = floortype;
-		floor->m_Crush = -1;
+		floor->m_Crush = crush;
 		floor->m_Hexencrush = hexencrush;
 		floor->m_Speed = speed;
 		floor->m_ResetCount = 0;				// [RH]
@@ -374,7 +374,6 @@ manual_floor:
 			break;
 
 		case DFloor::floorRaiseAndCrushDoom:
-			floor->m_Crush = crush;
 		case DFloor::floorRaiseToLowestCeiling:
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
@@ -406,7 +405,6 @@ manual_floor:
 			break;
 
 		case DFloor::floorRaiseAndCrush:
-			floor->m_Crush = crush;
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingPoint (&spot) - 8*FRACUNIT;
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);

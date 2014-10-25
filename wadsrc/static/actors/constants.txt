@@ -375,12 +375,14 @@ enum
 const int KILS_FOILINVUL =		1;
 const int KILS_KILLMISSILES =	2;
 const int KILS_NOMONSTERS =		4;
+const int KILS_FOILBUDDHA =		8;
 
 // Flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
 const int DMSS_FOILINVUL =		1;
 const int DMSS_AFFECTARMOR =	2;
 const int DMSS_KILL =			4;
 const int DMSS_NOFACTOR =		8;
+const int DMSS_FOILBUDDHA =		16;
 
 // Flags for A_AlertMonsters
 const int AMF_TARGETEMITTER = 1;

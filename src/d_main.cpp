@@ -466,7 +466,7 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
 		}
 
 		// Come out of chasecam mode if we're not allowed to use chasecam.
-		if (!(dmflags2 & DF2_CHASECAM) && !G_SkillProperty (SKILLP_DisableCheats) && !sv_cheats)
+		if (!(dmflags2 & DF2_CHASECAM) && CheckCheatmode(false))
 		{
 			// Take us out of chasecam mode only.
 			if (p->cheats & CF_CHASECAM)
@@ -620,6 +620,7 @@ CVAR (Flag, compat_polyobj,				compatflags,  COMPATF_POLYOBJ);
 CVAR (Flag, compat_maskedmidtex,		compatflags,  COMPATF_MASKEDMIDTEX);
 CVAR (Flag, compat_badangles,			compatflags2, COMPATF2_BADANGLES);
 CVAR (Flag, compat_floormove,			compatflags2, COMPATF2_FLOORMOVE);
+CVAR (Flag, compat_soundcutoff,			compatflags2, COMPATF2_SOUNDCUTOFF);
 
 //==========================================================================
 //
@@ -978,19 +979,19 @@ void D_DoomLoop ()
 				int i;
 				for (i = 0; i < MAXPLAYERS; i++)
 				{
-					if (playeringame[i] && players[i].isbot && players[i].mo)
+					if (playeringame[i] && players[i].Bot != NULL && players[i].mo)
 					{
-						players[i].savedyaw = players[i].mo->angle;
-						players[i].savedpitch = players[i].mo->pitch;
+						players[i].Bot->savedyaw = players[i].mo->angle;
+						players[i].Bot->savedpitch = players[i].mo->pitch;
 					}
 				}
 				bglobal.Main (maketic%BACKUPTICS);
 				for (i = 0; i < MAXPLAYERS; i++)
 				{
-					if (playeringame[i] && players[i].isbot && players[i].mo)
+					if (playeringame[i] && players[i].Bot != NULL && players[i].mo)
 					{
-						players[i].mo->angle = players[i].savedyaw;
-						players[i].mo->pitch = players[i].savedpitch;
+						players[i].mo->angle = players[i].Bot->savedyaw;
+						players[i].mo->pitch = players[i].Bot->savedpitch;
 					}
 				}
 				if (advancedemo)

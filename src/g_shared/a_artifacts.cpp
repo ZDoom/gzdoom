@@ -1413,7 +1413,7 @@ void APowerBuddha::InitEffect ()
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
-	Owner->player->cheats |= CF_FRIGHTENING;
+	Owner->player->cheats |= CF_BUDDHA;
 }
 
 //===========================================================================
@@ -1429,7 +1429,7 @@ void APowerBuddha::EndEffect ()
 	if (Owner== NULL || Owner->player == NULL)
 		return;
 
-	Owner->player->cheats &= ~CF_FRIGHTENING;
+	Owner->player->cheats &= ~CF_BUDDHA;
 }
 
 // Scanner powerup ----------------------------------------------------------

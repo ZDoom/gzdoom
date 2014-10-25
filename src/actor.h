@@ -716,6 +716,9 @@ public:
 	// Transforms the actor into a finely-ground paste
 	virtual bool Grind(bool items);
 
+	// Get this actor's team
+	int GetTeam();
+
 	// Is the other actor on my team?
 	bool IsTeammate (AActor *other);
 

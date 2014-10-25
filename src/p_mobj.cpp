@@ -5855,21 +5855,40 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	return NULL;
 }
 
+int AActor::GetTeam()
+{
+	if (player)
+	{
+		return player->userinfo.GetTeam();
+	}
+
+	int myTeam = DesignatedTeam;
+
+	// Check for monsters that belong to a player on the team but aren't part of the team themselves.
+	if (myTeam == TEAM_NONE && FriendPlayer != 0)
+	{
+		myTeam = players[FriendPlayer - 1].userinfo.GetTeam();
+	}
+	return myTeam;
+
+}
+
 bool AActor::IsTeammate (AActor *other)
 {
 	if (!other)
+	{
 		return false;
+	}
 	else if (!deathmatch && player && other->player)
-		return true;
-	int myTeam = DesignatedTeam;
-	int otherTeam = other->DesignatedTeam;
-	if (player)
-		myTeam = player->userinfo.GetTeam();
-	if (other->player)
-		otherTeam = other->player->userinfo.GetTeam();
-	if (teamplay && myTeam != TEAM_NONE && myTeam == otherTeam)
 	{
 		return true;
+	}
+	else if (teamplay)
+	{
+		int myTeam = GetTeam();
+		int otherTeam = other->GetTeam();
+
+		return (myTeam != TEAM_NONE && myTeam == otherTeam);
 	}
 	return false;
 }

@@ -1,0 +1,85 @@
+
+TexelShader "Normal"
+{
+	source "shaders/glsl/func_normal.fp", corelump
+}
+
+TexelShader "No Texture"
+{
+	source "shaders/glsl/func_notexture.fp", corelump
+}
+
+TexelShader "Warp 1"
+{
+	source "shaders/glsl/func_warp1.fp", corelump
+}
+
+TexelShader "Warp 2"
+{
+	source "shaders/glsl/func_warp1.fp", corelump
+}
+
+TexelShader "Wave X"
+{
+	source "shaders/glsl/func_wavex.fp", corelump
+}
+
+TexelShader "Fuzz Jagged"
+{
+	source "shaders/glsl/fuzz_jagged.fp", corelump
+}
+
+TexelShader "Fuzz Noise"
+{
+	source "shaders/glsl/fuzz_noise.fp", corelump
+}
+
+TexelShader "Fuzz Smooth"
+{
+	source "shaders/glsl/fuzz_smooth.fp", corelump
+}
+
+TexelShader "Fuzz Smooth Noise"
+{
+	source "shaders/glsl/fuzz_smoothnoise.fp", corelump
+}
+
+TexelShader "Fuzz Smooth Translucent"
+{
+	source "shaders/glsl/fuzz_smoothtranslucent.fp", corelump
+}
+
+TexelShader "Fuzz Standard"
+{
+	source "shaders/glsl/fuzz_standard.fp", corelump
+}
+
+TexelShader "Fuzz Swirly"
+{
+	source "shaders/glsl/fuzz_swirly.fp", corelump
+}
+
+TexelShader "Detail"
+{
+	source "shaders/glsl/func_detail.fp", corelump
+	property Texture "texture2"
+	property vec4 "uDetailParms"
+	{
+		x "uMultX"
+		y "uAddX"
+		z "uMultY"
+		w "uAddY"
+	}
+	property vec4 "uDetailScale"
+	{
+		x "uScale"
+		y "uScaleMin"
+		z "uScaleMax"
+	}
+}
+
+LightShader "Brightmap"
+{
+	source "shaders/glsl/func_detail.fp", corelump
+	property Texture "texture2"
+}

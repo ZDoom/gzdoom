@@ -4,6 +4,9 @@
 precision highp int;
 precision highp float;
 
+uniform float timer;	// this cannot be renamed due to use in the obsolete 'Hardwareshader' definition
+#define uTimer timer
+
 uniform vec4 uCameraPos;
 uniform int uTextureMode;
 uniform float uClipHeightTop, uClipHeightBottom;

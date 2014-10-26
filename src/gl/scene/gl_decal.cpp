@@ -305,7 +305,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	// alpha color only has an effect when using an alpha texture.
 	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
 	{
-		gl_RenderState.SetObjectColor(decal->AlphaColor);
+		gl_RenderState.SetObjectColor(decal->AlphaColor|0xff000000);
 	}
 
 	gl_SetColor(light, rel, p, a);

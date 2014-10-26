@@ -213,7 +213,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				{
 					FMaterial * tex=FMaterial::ValidateTexture(lump, false);
 					if (tex)
-						disablefullbright = tex->tex->gl_info.bBrightmapDisablesFullbright;
+						disablefullbright = tex->tex->gl_info.bDisableFullbright;
 				}
 				statebright[i] = !!psp->state->GetFullbright() && !disablefullbright;
 			}

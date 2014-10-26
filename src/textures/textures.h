@@ -349,8 +349,7 @@ public:
 		bool bSkybox:1;							// This is a skybox
 		bool bSkyColorDone:1;					// Fill color for sky
 		char bBrightmapChecked:1;				// Set to 1 if brightmap has been checked
-		bool bBrightmap:1;						// This is a brightmap
-		bool bBrightmapDisablesFullbright:1;	// This disables fullbright display
+		bool bDisableFullbright:1;				// This texture will not be displayed as fullbright sprite
 		bool bNoFilter:1;
 		bool bNoCompress:1;
 		bool mExpanded:1;

@@ -388,12 +388,15 @@ unsigned int FShaderManager::GetShaderIndex(FName tex, FName lite)
 	{
 		if (TexelShaders[i]->mName == tex)
 		{
-			unsigned int j;
-			for (j = 0; j < LightShaders.Size(); j++)
+			unsigned int j = 0;
+			if (!TexelShaders[i]->mNoLightShader)
 			{
-				if (LightShaders[j]->mName == lite) break;
+				for (j = 0; j < LightShaders.Size(); j++)
+				{
+					if (LightShaders[j]->mName == lite) break;
+				}
+				if (j == LightShaders.Size()) j = 0;	// 0 is the default
 			}
-			if (j == LightShaders.Size()) j = 0;	// 0 is the default
 
 			FString shname;
 			unsigned int ndx = mShaders.Reserve(1);

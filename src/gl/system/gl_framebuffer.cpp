@@ -57,6 +57,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
+#include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -536,6 +537,7 @@ void OpenGLFrameBuffer::GameRestart()
 	UpdatePalette ();
 	ScreenshotBuffer = NULL;
 	LastCamera = NULL;
+	GLRenderer->mShaderManager->Validate();
 	gl_GenerateGlobalBrightmapFromColormap();
 }
 

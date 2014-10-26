@@ -334,15 +334,16 @@ struct FEffectShader
 	const char *vp;
 	const char *fp1;
 	const char *fp2;
+	const char *fp3;
 	const char *defines;
 };
 
 static const FEffectShader effectshaders[]=
 {
-	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "#define NO_ALPHATEST\n" },
-	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
-	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
-	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, NULL, "#define NO_ALPHATEST\n" },
+	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/func_defaultlight.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", NULL, NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", NULL, NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
 
 
@@ -370,32 +371,50 @@ FShaderManager::~FShaderManager()
 
 //==========================================================================
 //
-// Initializes the shaders that are being used by the current texture set
-//
-//==========================================================================
-
-void FShaderManager::FindAllUsedShaders()
-{
-	for (int i = 0; i < TexMan.NumTextures(); i++)
-	{
-		FTexture *tex = TexMan.ByIndex(i);
-
-		if (tex->bWarped == 1) tex->gl_info.texelShader = "Warp 1";
-		else if (tex->bWarped == 2) tex->gl_info.texelShader = "Warp 2";
-
-		GLRenderer->mShaderManager->GetShaderIndex(tex->gl_info.texelShader, tex->gl_info.lightShader);
-	}
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
 
 unsigned int FShaderManager::GetShaderIndex(FName tex, FName lite)
 {
-	return 0;
+	for (unsigned int i = 0; i < mShaders.Size(); i++)
+	{
+		if (mShaders[i].mTexelName == tex && mShaders[i].mLightName == lite)
+		{
+			return i;
+		}
+	}
+	for (unsigned int i = 0; i < TexelShaders.Size(); i++)
+	{
+		if (TexelShaders[i]->mName == tex)
+		{
+			unsigned int j;
+			for (j = 0; j < LightShaders.Size(); j++)
+			{
+				if (LightShaders[j]->mName == lite) break;
+			}
+			if (j == LightShaders.Size()) j = 0;	// 0 is the default
+
+			FString shname;
+			unsigned int ndx = mShaders.Reserve(1);
+			FShaderContainer *cont = &mShaders[ndx];
+
+			shname << TexelShaders[i]->mName << "::" << LightShaders[j]->mName;
+			DPrintf("Compiling shader %s\n", shname);
+
+			cont->mTexelName = tex;
+			cont->mLightName = lite;
+			cont->mShader = Compile(shname, TexelShaders[i]->mSourceFile, LightShaders[j]->mSourceFile, true);
+
+			if (!TexelShaders[i]->bRequireAlphaTest)
+			{
+				cont->mShaderNAT = Compile(shname, TexelShaders[i]->mSourceFile, LightShaders[j]->mSourceFile, false);
+			}
+			return ndx;
+		}
+	}
+	// A shader with the requires settings cannot be created so fall back to the default shader.
+	return SHADER_DEFAULT;
 }
 
 //==========================================================================
@@ -423,25 +442,11 @@ void FShaderManager::CompileShaders()
 {
 	mActiveShader = NULL;
 
-	mTextureEffects.Clear();
-	mTextureEffectsNAT.Clear();
+	mShaders.Clear();
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		mEffectShaders[i] = NULL;
 	}
-
-	/*
-	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
-	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true);
-		mTextureEffects.Push(shc);
-		if (i <= 3)
-		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false);
-			mTextureEffectsNAT.Push(shc);
-		}
-	}
-	*/
 
 	// load the ones the engine accesses directly in order first. The rest gets set up on a need to use basis.
 	for (int i = 0; defShaderNames[i]; i++)
@@ -449,11 +454,21 @@ void FShaderManager::CompileShaders()
 		GetShaderIndex(defShaderNames[i], NAME_None);
 	}
 
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		FTexture *tex = TexMan.ByIndex(i);
+
+		if (tex->bWarped == 1) tex->gl_info.texelShader = "Warp 1";
+		else if (tex->bWarped == 2) tex->gl_info.texelShader = "Warp 2";
+
+		GetShaderIndex(tex->gl_info.texelShader, tex->gl_info.lightShader);
+	}
+
 	for(int i=0;i<MAX_EFFECTS;i++)
 	{
 		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-						effectshaders[i].fp2, NULL, effectshaders[i].defines))
+						effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines))
 		{
 			delete eff;
 		}
@@ -472,44 +487,18 @@ void FShaderManager::Clean()
 	glUseProgram(0);
 	mActiveShader = NULL;
 
-	for (unsigned int i = 0; i < mTextureEffectsNAT.Size(); i++)
+	for (unsigned int i = 0; i < mShaders.Size(); i++)
 	{
-		if (mTextureEffectsNAT[i] != NULL) delete mTextureEffectsNAT[i];
-	}
-	for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
-	{
-		if (mTextureEffects[i] != NULL) delete mTextureEffects[i];
+		if (mShaders[i].mShader != NULL) delete mShaders[i].mShader;
+		if (mShaders[i].mShaderNAT != NULL) delete mShaders[i].mShaderNAT;
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		if (mEffectShaders[i] != NULL) delete mEffectShaders[i];
 		mEffectShaders[i] = NULL;
 	}
-	mTextureEffects.Clear();
-	mTextureEffectsNAT.Clear();
+	mShaders.Clear();
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-/*
-int FShaderManager::Find(const char * shn)
-{
-	FName sfn = shn;
-
-	for(unsigned int i=0;i<mTextureEffects.Size();i++)
-	{
-		if (mTextureEffects[i]->mName == sfn)
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-*/
 
 //==========================================================================
 //
@@ -549,40 +538,19 @@ FShader *FShaderManager::BindEffect(int effect)
 //
 //
 //==========================================================================
-EXTERN_CVAR(Int, gl_fuzztype)
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	for (int i = 0; i < 4; i++)
+	for (unsigned int i = 0; i < mShaders.Size(); i++)
 	{
-		mTextureEffects[i]->ApplyMatrices(proj, view);
-		mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
-	}
-	mTextureEffects[4]->ApplyMatrices(proj, view);
-	if (gl_fuzztype != 0)
-	{
-		mTextureEffects[4+gl_fuzztype]->ApplyMatrices(proj, view);
-	}
-	for (unsigned i = 12; i < mTextureEffects.Size(); i++)
-	{
-		mTextureEffects[i]->ApplyMatrices(proj, view);
+		if (mShaders[i].mShader != NULL) mShaders[i].mShader->ApplyMatrices(proj, view);
+		if (mShaders[i].mShaderNAT != NULL) mShaders[i].mShaderNAT->ApplyMatrices(proj, view);
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		mEffectShaders[i]->ApplyMatrices(proj, view);
 	}
 	if (mActiveShader != NULL) mActiveShader->Bind();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void gl_DestroyUserShaders()
-{
-	// todo
 }
 
 //==========================================================================
@@ -696,8 +664,10 @@ void gl_ParseShaderDef(FScanner &sc, bool isLight)
 	bool CoreLump = false;
 	sc.SetCMode(true);
 	sc.MustGetString();
-	FName shadername = sc.String;
+	def->mName = sc.String;
 	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
+	{
 	sc.MustGetString();
 	if (sc.Compare("source"))
 	{
@@ -722,7 +692,7 @@ void gl_ParseShaderDef(FScanner &sc, bool isLight)
 		def->bRequireAlphaTest = true;
 	}
 	// parse other stuff here.
-	sc.MustGetStringName("}");
+	}
 
 	int lumpnum = Wads.CheckNumForFullName(def->mSourceFile);
 	if (lumpnum < 0)
@@ -751,4 +721,23 @@ void gl_ParseShaderDef(FScanner &sc, bool isLight)
 		pArr->Delete(defindex);
 	}
 	pArr->Push(def);
+}
+
+
+void gl_DestroyUserShaders()
+{
+	if (GLRenderer != NULL && GLRenderer->mShaderManager != NULL)
+	{
+		GLRenderer->mShaderManager->Clean();
+	}
+	for (unsigned int i = 0; i < TexelShaders.Size(); i++)
+	{
+		delete TexelShaders[i];
+	}
+	for (unsigned int i = 0; i < LightShaders.Size(); i++)
+	{
+		delete LightShaders[i];
+	}
+	TexelShaders.Clear();
+	LightShaders.Clear();
 }

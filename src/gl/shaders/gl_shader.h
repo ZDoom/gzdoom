@@ -271,25 +271,33 @@ public:
 //==========================================================================
 class FShaderManager
 {
-	TArray<FShader*> mTextureEffects;
-	TArray<FShader*> mTextureEffectsNAT;
+	struct FShaderContainer
+	{
+		FName mTexelName;
+		FName mLightName;
+		FShader *mShader;
+		FShader *mShaderNAT;
+	};
+
+	TArray<FShaderContainer> mShaders;
+
 	FShader *mActiveShader;
 	FShader *mEffectShaders[MAX_EFFECTS];
 
-	void Clean();
 	void CompileShaders();
 	void FindAllUsedShaders();
+	FShader *Compile(const char *ShaderName, const char *TexShaderPath, const char *LightShaderPath, bool usediscard);
+
 
 	
 public:
 	FShaderManager();
 	~FShaderManager();
-	FShader *Compile(const char *ShaderName, const char *TexShaderPath, const char *LightShaderPath, bool usediscard);
-	//int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
 	unsigned int GetShaderIndex(FName tex, FName light);
+	void Clean();
 	FShader *GetActiveShader() const
 	{
 		return mActiveShader;
@@ -297,32 +305,32 @@ public:
 
 	void ResetFixedColormap()
 	{
-		for (unsigned i = 0; i < mTextureEffects.Size(); i++)
+		for (unsigned i = 0; i < mShaders.Size(); i++)
 		{
-			mTextureEffects[i]->currentfixedcolormap = -1;
-		}
-		for (unsigned i = 0; i < mTextureEffectsNAT.Size(); i++)
-		{
-			mTextureEffectsNAT[i]->currentfixedcolormap = -1;
+			if (mShaders[i].mShader != NULL) mShaders[i].mShader->currentfixedcolormap = -1;
+			if (mShaders[i].mShaderNAT != NULL) mShaders[i].mShaderNAT->currentfixedcolormap = -1;
 		}
 	}
 
 	FShader *Get(unsigned int eff, bool alphateston)
 	{
-		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
-		if (!alphateston && eff <= 3)
+		if (eff < mShaders.Size())
 		{
-			return mTextureEffectsNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
-		}
-		if (eff < mTextureEffects.Size())
-		{
-			return mTextureEffects[eff];
+			if (!alphateston && mShaders[eff].mShaderNAT != NULL) return mShaders[eff].mShaderNAT;
+			return mShaders[eff].mShader;
 		}
 		return NULL;
 	}
-};
 
-#define FIRST_USER_SHADER 12
+	void Validate()
+	{
+		if (mShaders.Size() == 0)
+		{
+			CompileShaders();
+		}
+	}
+
+};
 
 enum
 {

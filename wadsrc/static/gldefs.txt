@@ -6,6 +6,7 @@ TexelShader "None"
 TexelShader "No Texture"
 {
 	source "shaders/glsl/func_notexture.fp", corelump
+	nolightshader
 }
 
 TexelShader "Warp 1"
@@ -93,6 +94,6 @@ LightShader "None"
 
 LightShader "Brightmap"
 {
-	source "shaders/glsl/func_detail.fp", corelump
+	source "shaders/glsl/func_brightmap.fp", corelump
 	//property Texture "texture2" // will be implemented later.
 }

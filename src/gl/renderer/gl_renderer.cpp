@@ -331,7 +331,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 			}
 		}
 		gl_SetRenderStyle(parms.style, !parms.masked, false);
-		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
+		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, SHADER_DEFAULT, !!(parms.style.Flags & STYLEF_RedIsAlpha));
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();

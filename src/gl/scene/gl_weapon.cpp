@@ -324,7 +324,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				// Todo: implement shader selection here
 				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = gl_fuzztype + 4;
+				OverrideShader = gl_fuzztype + SHADER_FUZZ;
 				trans = 0.99f;	// trans may not be 1 here
 			}
 			else

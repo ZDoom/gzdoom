@@ -59,13 +59,16 @@
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
+TArray<FShaderDefinition *> TexelShaders;
+TArray<FShaderDefinition *> LightShaders;
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * defines)
+bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * tex_proc_lump, const char *lite_proc_lump, const char * defines)
 {
 	static char buffer[10000];
 	FString error;
@@ -114,12 +117,12 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	vp_comb << vp_data.GetString().GetChars() << "\n";
 	fp_comb << fp_data.GetString().GetChars() << "\n";
 
-	if (proc_prog_lump != NULL)
+	if (tex_proc_lump != NULL)
 	{
-		if (*proc_prog_lump != '#')
+		if (*tex_proc_lump != '#')
 		{
-			int pp_lump = Wads.CheckNumForFullName(proc_prog_lump);
-			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump);
+			int pp_lump = Wads.CheckNumForFullName(tex_proc_lump);
+			if (pp_lump == -1) I_Error("Unable to load '%s'", tex_proc_lump);
 			FMemLump pp_data = Wads.ReadLump(pp_lump);
 
 			if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
@@ -131,20 +134,20 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			}
 			fp_comb << pp_data.GetString().GetChars();
 			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
-
-			if (pp_data.GetString().IndexOf("ProcessLight") < 0)
-			{
-				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultlight.fp");
-				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultlight.fp");
-				FMemLump pl_data = Wads.ReadLump(pl_lump);
-				fp_comb << "\n" << pl_data.GetString().GetChars();
-			}
 		}
 		else
 		{
 			// Proc_prog_lump is not a lump name but the source itself (from generated shaders)
-			fp_comb << proc_prog_lump + 1;
+			fp_comb << tex_proc_lump + 1;
 		}
+	}
+	if (lite_proc_lump != NULL)
+	{
+		int pp_lump = Wads.CheckNumForFullName(lite_proc_lump);
+		if (pp_lump == -1) I_Error("Unable to load '%s'", lite_proc_lump);
+		FMemLump pp_data = Wads.ReadLump(pp_lump);
+
+		fp_comb << pp_data.GetString().GetChars();
 	}
 
 	hVertProg = glCreateShader(GL_VERTEX_SHADER);
@@ -280,7 +283,7 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard)
+FShader *FShaderManager::Compile (const char *ShaderName, const char *TexShaderPath, const char *LightShaderPath, bool usediscard)
 {
 	FString defines;
 	// this can't be in the shader code due to ATI strangeness.
@@ -291,7 +294,7 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *ShaderPath
 	try
 	{
 		shader = new FShader(ShaderName);
-		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, defines.GetChars()))
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", TexShaderPath, LightShaderPath, defines.GetChars()))
 		{
 			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
@@ -324,32 +327,6 @@ void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 //
 //
 //==========================================================================
-struct FDefaultShader 
-{
-	const char * ShaderName;
-	const char * gettexelfunc;
-};
-
-// Note: the FIRST_USER_SHADER constant in gl_shader.h needs 
-// to be updated whenever the size of this array is modified.
-static const FDefaultShader defaultshaders[]=
-{	
-	{"Default",	"shaders/glsl/func_normal.fp"},
-	{"Warp 1",	"shaders/glsl/func_warp1.fp"},
-	{"Warp 2",	"shaders/glsl/func_warp2.fp"},
-	{"Brightmap","shaders/glsl/func_brightmap.fp"},
-	{"No Texture", "shaders/glsl/func_notexture.fp"},
-	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp"},
-	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp"},
-	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp"},
-	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp"},
-	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp"},
-	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp"},
-	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp"},
-	{NULL,NULL}
-};
-
-static TArray<FString> usershaders;
 
 struct FEffectShader
 {
@@ -393,9 +370,54 @@ FShaderManager::~FShaderManager()
 
 //==========================================================================
 //
+// Initializes the shaders that are being used by the current texture set
+//
+//==========================================================================
+
+void FShaderManager::FindAllUsedShaders()
+{
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		FTexture *tex = TexMan.ByIndex(i);
+
+		if (tex->bWarped == 1) tex->gl_info.texelShader = "Warp 1";
+		else if (tex->bWarped == 2) tex->gl_info.texelShader = "Warp 2";
+
+		GLRenderer->mShaderManager->GetShaderIndex(tex->gl_info.texelShader, tex->gl_info.lightShader);
+	}
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
+
+unsigned int FShaderManager::GetShaderIndex(FName tex, FName lite)
+{
+	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static const char *defShaderNames[] =
+{
+	"No Texture",
+	"None",
+	"Fuzz Standard",
+	"Fuzz Smooth",
+	"Fuzz Swirly",
+	"Fuzz Translucent",
+	"Fuzz Jagged",
+	"Fuzz Noise",
+	"Fuzz Smooth Noise",
+	NULL
+};
+
 
 void FShaderManager::CompileShaders()
 {
@@ -408,6 +430,7 @@ void FShaderManager::CompileShaders()
 		mEffectShaders[i] = NULL;
 	}
 
+	/*
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
 		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true);
@@ -418,21 +441,19 @@ void FShaderManager::CompileShaders()
 			mTextureEffectsNAT.Push(shc);
 		}
 	}
+	*/
 
-	for(unsigned i = 0; i < usershaders.Size(); i++)
+	// load the ones the engine accesses directly in order first. The rest gets set up on a need to use basis.
+	for (int i = 0; defShaderNames[i]; i++)
 	{
-		FString name = ExtractFileBase(usershaders[i]);
-		FName sfn = name;
-
-		FShader *shc = Compile(sfn, usershaders[i], true);
-		mTextureEffects.Push(shc);
+		GetShaderIndex(defShaderNames[i], NAME_None);
 	}
 
 	for(int i=0;i<MAX_EFFECTS;i++)
 	{
 		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-						effectshaders[i].fp2, effectshaders[i].defines))
+						effectshaders[i].fp2, NULL, effectshaders[i].defines))
 		{
 			delete eff;
 		}
@@ -474,6 +495,7 @@ void FShaderManager::Clean()
 //
 //==========================================================================
 
+/*
 int FShaderManager::Find(const char * shn)
 {
 	FName sfn = shn;
@@ -487,6 +509,7 @@ int FShaderManager::Find(const char * shn)
 	}
 	return -1;
 }
+*/
 
 //==========================================================================
 //
@@ -564,7 +587,27 @@ void gl_DestroyUserShaders()
 
 //==========================================================================
 //
-// Parses a shader definition
+// Find a shader definition
+//
+//==========================================================================
+
+static unsigned int FindShaderDef(TArray<FShaderDefinition *> &defarray, FName name)
+{
+	for (unsigned int i = 0; i < defarray.Size(); i++)
+	{
+		if (defarray[i]->mName == name)
+		{
+			return i;
+		}
+	}
+	return UINT_MAX;
+}
+
+//==========================================================================
+//
+// Parses an old hardware shader definition
+// This feature is deprecated so its functionality is intentionally
+// limited to what it was before.
 //
 //==========================================================================
 
@@ -587,6 +630,10 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	sc.MustGetString();
 	FTextureID no = TexMan.CheckForTexture(sc.String, type);
 	FTexture *tex = TexMan[no];
+	if (!tex)
+	{
+		sc.ScriptMessage("Texture '%s' not found\n", sc.String);
+	}
 
 	sc.MustGetToken('{');
 	while (!sc.CheckToken('}'))
@@ -596,6 +643,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 		{
 			sc.MustGetString();
 			maplumpname = sc.String;
+			maplumpname.ToLower();
 		}
 		else if (sc.Compare("speed"))
 		{
@@ -612,19 +660,95 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	{
 		if (tex->bWarped != 0)
 		{
-			Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+			sc.ScriptMessage("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
 			return;
 		}
 		tex->gl_info.shaderspeed = speed; 
-		for(unsigned i=0;i<usershaders.Size();i++)
+
+		FShaderDefinition *def;
+		FName nm = maplumpname + "@@@";
+		unsigned int defindex = FindShaderDef(TexelShaders, nm);
+		if (defindex == UINT_MAX)
 		{
-			if (!usershaders[i].CompareNoCase(maplumpname))
-			{
-				tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
-				return;
-			}
+			def = new FShaderDefinition;
+			def->mName = nm;
+			def->mCoreLump = false;
+			def->mNoLightShader = true;
+			def->mSourceFile = maplumpname;
+			TexelShaders.Push(def);
 		}
-		tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
+		else
+		{
+			def = TexelShaders[defindex];
+			def->mName = nm;
+			def->mCoreLump = false;
+			def->mNoLightShader = true;
+			def->mSourceFile = maplumpname;
+		}
+
 	}	
 }
 
+void gl_ParseShaderDef(FScanner &sc, bool isLight)
+{
+	FShaderDefinition *def = new FShaderDefinition;
+
+	bool CoreLump = false;
+	sc.SetCMode(true);
+	sc.MustGetString();
+	FName shadername = sc.String;
+	sc.MustGetStringName("{");
+	sc.MustGetString();
+	if (sc.Compare("source"))
+	{
+		sc.MustGetString();
+		def->mSourceFile = sc.String;
+		while (sc.CheckString(","))
+		{
+			sc.MustGetString();
+			if (sc.Compare("corelump"))
+			{
+				CoreLump = true;
+				def->mCoreLump = true;
+			}
+		}
+	}
+	else if (sc.Compare("nolightshader"))
+	{
+		def->mNoLightShader = true;
+	}
+	else if (sc.Compare("requirealphatest"))
+	{
+		def->bRequireAlphaTest = true;
+	}
+	// parse other stuff here.
+	sc.MustGetStringName("}");
+
+	int lumpnum = Wads.CheckNumForFullName(def->mSourceFile);
+	if (lumpnum < 0)
+	{
+		sc.ScriptMessage("Unable to find shader source '%s'", def->mSourceFile);
+	}
+	else if (CoreLump)
+	{
+		int wadnum = Wads.GetLumpFile(lumpnum);
+		if (wadnum > FWadCollection::IWAD_FILENUM)
+		{
+			I_FatalError("File %s is overriding core lump %s.",
+				Wads.GetWadFullName(wadnum), def->mSourceFile);
+		}
+	}
+
+	TArray<FShaderDefinition*> *pArr = isLight ? &LightShaders : &TexelShaders;
+	unsigned int defindex = FindShaderDef(*pArr, def->mName);
+	if (defindex != UINT_MAX)
+	{
+		// replacing core shaders is prohibited.
+		if ((*pArr)[defindex]->mCoreLump)
+		{
+			sc.ScriptError("Shader %s is overriding core shader", def->mName.GetChars());
+		}
+		pArr->Delete(defindex);
+	}
+	pArr->Push(def);
+}

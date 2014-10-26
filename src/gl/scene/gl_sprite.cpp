@@ -749,7 +749,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			{
 				// Todo: implement shader selection here
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = gl_fuzztype + 4;
+				OverrideShader = gl_fuzztype + SHADER_FUZZ;
 				trans = 0.99f;	// trans may not be 1 here
 				hw_styleflags |= STYLEHW_NoAlphaTest;
 			}

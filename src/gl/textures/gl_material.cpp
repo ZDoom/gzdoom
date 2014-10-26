@@ -411,38 +411,17 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mShaderIndex = 0;
 	tex = tx;
 
-	// TODO: apply custom shader object here
-	/* if (tx->CustomShaderDefinition)
-	{
-	}
-	else
-	*/
-	if (tx->bWarped)
-	{
-		mShaderIndex = tx->bWarped;
-		tx->gl_info.shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
-	}
-	else if (tx->bHasCanvas)
-	{
-	}
-	else
-	{
-		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
-		{
-			mShaderIndex = tx->gl_info.shaderindex;
-		}
-		else
-		{
 			tx->CreateDefaultBrightmap();
+	mShaderIndex = GLRenderer->mShaderManager->GetShaderIndex(tx->gl_info.texelShader, tx->gl_info.lightShader);
+
+	// this must later be replaced with the layers array.
 			if (tx->gl_info.Brightmap != NULL)
 			{
 				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
 				FTextureLayer layer = {tx->gl_info.Brightmap, false};
 				mTextureLayers.Push(layer);
-				mShaderIndex = 3;
 			}
-		}
-	}
+
 	mBaseLayer = ValidateSysTexture(tx, expanded);
 
 
@@ -793,7 +772,8 @@ again:
 		{
 			if (expand)
 			{
-				if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)
+				// since we have no idea what a shader might do to the texture, adding an outer frame for sprites needs to be disabled if we got a texel shader assigned to this texture
+				if (tex->gl_info.texelShader != NAME_None)
 				{
 					tex->gl_info.bNoExpand = true;
 					goto again;

@@ -50,6 +50,7 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
@@ -240,7 +241,6 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 	areacount = 0;
 	mIsTransparent = -1;
 	shaderspeed = 1.f;
-	shaderindex = 0;
 	precacheTime = 0;
 
 	Material[1] = Material[0] = NULL;
@@ -275,6 +275,7 @@ void FTexture::CreateDefaultBrightmap()
 {
 	if (!gl_info.bBrightmapChecked)
 	{
+		gl_info.bBrightmapChecked = 1;
 		// Check for brightmaps
 		if (UseBasePalette() && HasGlobalBrightmap &&
 			UseType != TEX_Decal && UseType != TEX_MiscPatch && UseType != TEX_FontChar &&
@@ -293,23 +294,16 @@ void FTexture::CreateDefaultBrightmap()
 					// Create a brightmap
 					DPrintf("brightmap created for texture '%s'\n", Name.GetChars());
 					gl_info.Brightmap = new FBrightmapTexture(this);
-					gl_info.bBrightmapChecked = 1;
 					TexMan.AddTexture(gl_info.Brightmap);
+					gl_info.lightShader = "Brightmap";
 					return;
 				}
 			}
 			// No bright pixels found
 			DPrintf("No bright pixels found in texture '%s'\n", Name.GetChars());
-			gl_info.bBrightmapChecked = 1;
-		}
-		else
-		{
-			// does not have one so set the flag to 'done'
-			gl_info.bBrightmapChecked = 1;
 		}
 	}
 }
-
 
 //==========================================================================
 //
@@ -703,13 +697,13 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 			if (bmtex != NULL)
 			{
-				Printf("Multiple brightmap definitions in texture %s\n", tex? tex->Name.GetChars() : "(null)");
+				sc.ScriptMessage("Multiple brightmap definitions in texture %s\n", tex? tex->Name.GetChars() : "(null)");
 			}
 
 			bmtex = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
 
 			if (bmtex == NULL) 
-				Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
+				sc.ScriptMessage("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
 		}
 	}
 	if (!tex)
@@ -731,14 +725,9 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 	if (bmtex != NULL)
 	{
-		if (tex->bWarped != 0)
-		{
-			Printf("Cannot combine warping with brightmap on texture '%s'\n", tex->Name.GetChars());
-			return;
-		}
-
 		bmtex->bMasked = false;
 		tex->gl_info.Brightmap = bmtex;
+		tex->gl_info.lightShader = "Brightmap";
 	}	
 	tex->gl_info.bDisableFullbright = disable_fullbright;
 }

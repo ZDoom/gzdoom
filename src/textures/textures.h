@@ -340,7 +340,8 @@ public:
 		int GlowHeight;
 		FloatRect *areas;
 		int areacount;
-		int shaderindex;
+		FName texelShader;
+		FName lightShader;
 		unsigned int precacheTime;
 		float shaderspeed;
 		int mIsTransparent:2;
@@ -489,6 +490,7 @@ public:
 
 	FSwitchDef *FindSwitch (FTextureID texture);
 	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
+
 
 	unsigned int precacheTime;
 

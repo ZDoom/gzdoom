@@ -250,7 +250,7 @@ public:
 
 	~FShader();
 
-	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char *defines);
+	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char *fragprog3, const char *defines);
 
 	void SetColormapColor(float r, float g, float b, float r1, float g1, float b1);
 	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
@@ -278,15 +278,18 @@ class FShaderManager
 
 	void Clean();
 	void CompileShaders();
+	void FindAllUsedShaders();
+
 	
 public:
 	FShaderManager();
 	~FShaderManager();
-	FShader *Compile(const char *ShaderName, const char *ShaderPath, bool usediscard);
-	int Find(const char *mame);
+	FShader *Compile(const char *ShaderName, const char *TexShaderPath, const char *LightShaderPath, bool usediscard);
+	//int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
+	unsigned int GetShaderIndex(FName tex, FName light);
 	FShader *GetActiveShader() const
 	{
 		return mActiveShader;
@@ -325,6 +328,27 @@ enum
 {
 	LIGHTBUF_BINDINGPOINT = 1
 };
+
+
+struct FShaderDefinition
+{
+	FName mName;
+	FString mSourceFile;
+	bool mNoLightShader;
+	bool mCoreLump;
+	bool bRequireAlphaTest;
+
+	FShaderDefinition()
+	{
+		mNoLightShader = false;
+		mCoreLump = false;
+		bRequireAlphaTest = false;
+	}
+};
+
+
+extern TArray<FShaderDefinition *> TexelShaders;
+extern TArray<FShaderDefinition *> LightShaders;
 
 #endif
 

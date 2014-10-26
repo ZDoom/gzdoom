@@ -10,6 +10,13 @@
 #include "r_defs.h"
 #include "r_data/r_translate.h"
 
+enum
+{
+	SHADER_NOTEXTURE = 0,
+	SHADER_DEFAULT = 1,
+	SHADER_FUZZ = 2
+};
+
 class FVertexBuffer;
 class FShader;
 extern TArray<VSMatrix> gl_MatrixStack;

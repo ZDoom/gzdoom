@@ -1,5 +1,4 @@
-
-TexelShader "Normal"
+TexelShader "None"
 {
 	source "shaders/glsl/func_normal.fp", corelump
 }
@@ -27,38 +26,46 @@ TexelShader "Wave X"
 TexelShader "Fuzz Jagged"
 {
 	source "shaders/glsl/fuzz_jagged.fp", corelump
+	nolightshader
 }
 
 TexelShader "Fuzz Noise"
 {
 	source "shaders/glsl/fuzz_noise.fp", corelump
+	nolightshader
 }
 
 TexelShader "Fuzz Smooth"
 {
 	source "shaders/glsl/fuzz_smooth.fp", corelump
+	nolightshader
 }
 
 TexelShader "Fuzz Smooth Noise"
 {
 	source "shaders/glsl/fuzz_smoothnoise.fp", corelump
+	nolightshader
 }
 
-TexelShader "Fuzz Smooth Translucent"
+TexelShader "Fuzz Translucent"
 {
 	source "shaders/glsl/fuzz_smoothtranslucent.fp", corelump
+	nolightshader
 }
 
 TexelShader "Fuzz Standard"
 {
 	source "shaders/glsl/fuzz_standard.fp", corelump
+	nolightshader
 }
 
 TexelShader "Fuzz Swirly"
 {
 	source "shaders/glsl/fuzz_swirly.fp", corelump
+	nolightshader
 }
 
+/* for now this is merely a reference for how later implementation should be done
 TexelShader "Detail"
 {
 	source "shaders/glsl/func_detail.fp", corelump
@@ -77,9 +84,15 @@ TexelShader "Detail"
 		z "uScaleMax"
 	}
 }
+*/
+
+LightShader "None"
+{
+	source "shaders/glsl/func_defaultlight.fp", corelump
+}
 
 LightShader "Brightmap"
 {
 	source "shaders/glsl/func_detail.fp", corelump
-	property Texture "texture2"
+	//property Texture "texture2" // will be implemented later.
 }

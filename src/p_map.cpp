@@ -4679,7 +4679,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 
 				if (!(flags & RADF_NODAMAGE))
 					newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
-				else if (thing->player == NULL && (!(flags & RADF_NOIMPACTDAMAGE) && !(thing->flags7 & MF7_FULLMASS)))
+				else if (thing->player == NULL && (!(flags & RADF_NOIMPACTDAMAGE) && !(thing->flags7 & MF7_DONTTHRUST)))
 					thing->flags2 |= MF2_BLASTED;
 
 				if (!(thing->flags & MF_ICECORPSE))
@@ -4691,7 +4691,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 					{
 						if (bombsource == NULL || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{
-							if (!(thing->flags7 & MF7_FULLMASS))
+							if (!(thing->flags7 & MF7_DONTTHRUST))
 							{
 							
 								thrust = points * 0.5f / (double)thing->Mass;

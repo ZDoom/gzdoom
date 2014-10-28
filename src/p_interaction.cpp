@@ -1097,6 +1097,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		&& !(target->flags & MF_NOCLIP)
 		&& !(inflictor->flags2 & MF2_NODMGTHRUST)
 		&& !(flags & DMG_THRUSTLESS)
+		&& !(target->flags7 & MF7_FULLMASS)
 		&& (source == NULL || source->player == NULL || !(source->flags2 & MF2_NODMGTHRUST)))
 	{
 		int kickback;
@@ -1324,7 +1325,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	if (target->health <= 0)
 	{ 
 		if ((target->flags7 & MF7_BUDDHA) && (damage < TELEFRAG_DAMAGE) && (!(inflictor->flags3 & MF7_FOILBUDDHA) && !(flags & DMG_FOILBUDDHA)))
-		{ //Make sure FOILINVUL flags work here too for monsters. Or perhaps consider a FOILBUDDHA flag...
+		{ //FOILBUDDHA or Telefrag damage must kill it.
 			target->health = 1;
 		}
 		else

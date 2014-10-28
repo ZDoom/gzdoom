@@ -383,6 +383,7 @@ const int DMSS_AFFECTARMOR =	2;
 const int DMSS_KILL =			4;
 const int DMSS_NOFACTOR =		8;
 const int DMSS_FOILBUDDHA =		16;
+const int DMSS_NOPROTECT =		32;
 
 // Flags for A_AlertMonsters
 const int AMF_TARGETEMITTER = 1;

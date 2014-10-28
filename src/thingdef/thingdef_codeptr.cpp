@@ -4832,6 +4832,7 @@ enum DMSS
 	DMSS_KILL				= 4,
 	DMSS_NOFACTOR			= 8,
 	DMSS_FOILBUDDHA			= 16,
+	DMSS_NOPROTECT			= 32,
 };
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
@@ -4847,6 +4848,8 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 		dmgFlags += DMG_NO_ARMOR;
 	if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
 		amount += dmgtarget->health;
+	if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
+		dmgFlags += DMG_NO_PROTECT;
 
 	if (amount > 0)
 		P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.

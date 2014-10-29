@@ -414,13 +414,25 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			tx->CreateDefaultBrightmap();
 	mShaderIndex = GLRenderer->mShaderManager->GetShaderIndex(tx->gl_info.texelShader, tx->gl_info.lightShader);
 
-	// this must later be replaced with the layers array.
-			if (tx->gl_info.Brightmap != NULL)
+	// create the texture layers array from the ordering info in the shader
+	FShader *shader = GLRenderer->mShaderManager->Get(mShaderIndex, false);
+	const TArray<FString> &texunits = shader->GetTexUnits();
+
+	for (unsigned i = 0; i < texunits.Size(); i++)
 			{
-				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
-				FTextureLayer layer = {tx->gl_info.Brightmap, false};
-				mTextureLayers.Push(layer);
+		for (unsigned j = 0; j < tx->gl_info.mLayers.Size(); j++)
+		{
+			FTextureLayer layer = { NULL, false };
+			if (tx->gl_info.mLayers[j].mSampler.Compare(texunits[i]) == 0)
+			{
+				ValidateSysTexture(tx->gl_info.mLayers[i].mTexture, expanded);
+				layer.texture = tx->gl_info.mLayers[i].mTexture;
+				layer.animated = tx->gl_info.mLayers[i].mAnimate;
 			}
+			mTextureLayers.Push(layer);
+			break;
+		}
+	}
 
 	mBaseLayer = ValidateSysTexture(tx, expanded);
 
@@ -635,6 +647,8 @@ void FMaterial::Bind(int clampmode, int translation)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
+			if (mTextureLayers[i].texture != NULL)
+			{
 			FTexture *layer;
 			if (mTextureLayers[i].animated)
 			{
@@ -646,8 +660,13 @@ void FMaterial::Bind(int clampmode, int translation)
 			{
 				layer = mTextureLayers[i].texture;
 			}
-			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, NULL);
-			maxbound = i+1;
+				layer->gl_info.SystemTexture[mExpanded]->Bind(i + 1, clampmode, 0, NULL);
+				maxbound = i + 1;
+		}
+			else
+			{
+				FHardwareTexture::Unbind(i + 1);
+	}
 		}
 	}
 	// unbind everything from the last texture that's still active

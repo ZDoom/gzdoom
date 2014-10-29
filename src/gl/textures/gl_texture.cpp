@@ -245,7 +245,6 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 
 	Material[1] = Material[0] = NULL;
 	SystemTexture[1] = SystemTexture[0] = NULL;
-	Brightmap = NULL;
 }
 
 FTexture::MiscGLInfo::~MiscGLInfo()
@@ -258,9 +257,6 @@ FTexture::MiscGLInfo::~MiscGLInfo()
 		if (SystemTexture[i] != NULL) delete SystemTexture[i];
 		SystemTexture[i] = NULL;
 	}
-
-	// this is just a reference to another texture in the texture manager.
-	Brightmap = NULL;
 
 	if (areas != NULL) delete [] areas;
 	areas = NULL;
@@ -279,7 +275,7 @@ void FTexture::CreateDefaultBrightmap()
 		// Check for brightmaps
 		if (UseBasePalette() && HasGlobalBrightmap &&
 			UseType != TEX_Decal && UseType != TEX_MiscPatch && UseType != TEX_FontChar &&
-			gl_info.Brightmap == NULL && bWarped == 0
+			gl_info.lightShader == NAME_None && bWarped == 0
 			) 
 		{
 			// May have one - let's check when we use this texture
@@ -291,10 +287,11 @@ void FTexture::CreateDefaultBrightmap()
 			{
 				if (GlobalBrightmap.Remap[texbuf[i]] == white)
 				{
-					// Create a brightmap
+					// Create a brightmap and let the texture manage maintain it.
+					FTexture *btex = new FBrightmapTexture(this);
+					TexMan.AddTexture(btex);
 					DPrintf("brightmap created for texture '%s'\n", Name.GetChars());
-					gl_info.Brightmap = new FBrightmapTexture(this);
-					TexMan.AddTexture(gl_info.Brightmap);
+					AddLayer("BrightmapTexture", btex, false);
 					gl_info.lightShader = "Brightmap";
 					return;
 				}
@@ -597,6 +594,31 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 }
 
 //===========================================================================
+// 
+//
+//
+//===========================================================================
+
+void FTexture::AddLayer(const char *sampler, FTexture *texture, bool animate)
+{
+	AddLayer(FString(sampler), texture, animate);
+}
+
+//===========================================================================
+// 
+//
+//
+//===========================================================================
+
+void FTexture::AddLayer(const FString &sampler, FTexture *texture, bool animate)
+{
+	FTexture::TextureDef *tdef = &gl_info.mLayers[gl_info.mLayers.Reserve(1)];
+	tdef->mSampler = sampler;
+	tdef->mTexture = texture;
+	tdef->mAnimate = animate;
+}
+
+//===========================================================================
 //
 // fake brightness maps
 // These are generated for textures affected by a colormap with
@@ -652,14 +674,9 @@ int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotat
 //
 //==========================================================================
 
-void gl_ParseBrightmap(FScanner &sc, int deflump)
+FTextureID gl_ParseTextureName(FScanner &sc)
 {
 	int type = FTexture::TEX_Any;
-	bool disable_fullbright=false;
-	bool thiswad = false;
-	bool iwad = false;
-	FTexture *bmtex = NULL;
-
 	sc.MustGetString();
 	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
 	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
@@ -667,7 +684,23 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	else sc.UnGet();
 
 	sc.MustGetString();
-	FTextureID no = TexMan.CheckForTexture(sc.String, type);
+	return TexMan.CheckForTexture(sc.String, type);
+}
+
+//==========================================================================
+//
+// Parses a brightmap definition
+//
+//==========================================================================
+
+void gl_ParseBrightmap(FScanner &sc, int deflump)
+{
+	bool disable_fullbright=false;
+	bool thiswad = false;
+	bool iwad = false;
+	FTexture *bmtex = NULL;
+
+	FTextureID no = gl_ParseTextureName(sc);;
 	FTexture *tex = TexMan[no];
 
 	sc.MustGetToken('{');
@@ -726,7 +759,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	if (bmtex != NULL)
 	{
 		bmtex->bMasked = false;
-		tex->gl_info.Brightmap = bmtex;
+		tex->AddLayer("BrightmapTexture", bmtex, false);
 		tex->gl_info.lightShader = "Brightmap";
 	}	
 	tex->gl_info.bDisableFullbright = disable_fullbright;

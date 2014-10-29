@@ -262,6 +262,10 @@ public:
 	unsigned int GetHandle() const { return hShader; }
 
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
+	const TArray<FString> &GetTexUnits() const
+	{
+		return mTexUnitNames; 
+	}
 
 };
 

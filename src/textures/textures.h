@@ -315,7 +315,6 @@ protected:
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
 		gl_info = other->gl_info;
-		gl_info.Brightmap = NULL;
 		gl_info.areas = NULL;
 	}
 
@@ -329,11 +328,18 @@ public:
 
 public:
 
-	struct MiscGLInfo
+	struct TextureDef
+	{
+		FString mSampler;
+		FTexture *mTexture;
+		bool mAnimate;
+	};
+
+ 	struct MiscGLInfo
 	{
 		FMaterial *Material[2];
 		FGLTexture *SystemTexture[2];
-		FTexture *Brightmap;
+		TArray<TextureDef> mLayers;
 		PalEntry GlowColor;
 		PalEntry FloorSkyColor;
 		PalEntry CeilingSkyColor;
@@ -371,6 +377,9 @@ public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	void CheckTrans(unsigned char * buffer, int size, int trans);
 	bool ProcessData(unsigned char * buffer, int w, int h, bool ispatch);
+	void AddLayer(const char *sampler, FTexture *texture, bool animate);
+	void AddLayer(const FString &sampler, FTexture *texture, bool animate);
+
 };
 
 // Texture manager

@@ -403,7 +403,7 @@ void P_RemoveThing(AActor * actor)
 	if (actor->player == NULL || actor != actor->player->mo)
 	{
 		// Don't also remove owned inventory items
-		if (actor->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory*>(actor)->Owner == NULL) return;
+		if (actor->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory*>(actor)->Owner != NULL) return;
 
 		// be friendly to the level statistics. ;)
 		actor->ClearCounters();

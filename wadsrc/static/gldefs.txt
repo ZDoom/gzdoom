@@ -70,7 +70,7 @@ TexelShader "Fuzz Swirly"
 TexelShader "Detail"
 {
 	source "shaders/glsl/func_detail.fp", corelump
-	property Texture "texture2"
+	TextureUnit "DetailTexture"
 	property vec4 "uDetailParms"
 	{
 		x "uMultX"
@@ -95,5 +95,5 @@ LightShader "None"
 LightShader "Brightmap"
 {
 	source "shaders/glsl/func_brightmap.fp", corelump
-	//property Texture "texture2" // will be implemented later.
+	TextureUnit "BrightmapTexture"
 }

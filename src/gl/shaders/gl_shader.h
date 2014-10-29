@@ -237,6 +237,8 @@ private:
 	bool currentTextureMatrixState;
 	bool currentModelMatrixState;
 
+	TArray<FString> mTexUnitNames;
+
 public:
 	FShader(const char *name)
 		: mName(name)
@@ -264,6 +266,23 @@ public:
 };
 
 
+struct FShaderDefinition
+{
+	FName mName;
+	FString mSourceFile;
+	bool mNoLightShader;
+	bool mCoreLump;
+	bool bRequireAlphaTest;
+	TArray<FString> mTextureUnitNames;
+
+	FShaderDefinition()
+	{
+		mNoLightShader = false;
+		mCoreLump = false;
+		bRequireAlphaTest = false;
+	}
+};
+
 //==========================================================================
 //
 // The global shader manager
@@ -286,7 +305,7 @@ class FShaderManager
 
 	void CompileShaders();
 	void FindAllUsedShaders();
-	FShader *Compile(const char *ShaderName, const char *TexShaderPath, const char *LightShaderPath, bool usediscard);
+	FShader *Compile(const char *ShaderName, FShaderDefinition *TexShader, FShaderDefinition *LightShader, bool usediscard);
 
 
 	
@@ -335,23 +354,6 @@ public:
 enum
 {
 	LIGHTBUF_BINDINGPOINT = 1
-};
-
-
-struct FShaderDefinition
-{
-	FName mName;
-	FString mSourceFile;
-	bool mNoLightShader;
-	bool mCoreLump;
-	bool bRequireAlphaTest;
-
-	FShaderDefinition()
-	{
-		mNoLightShader = false;
-		mCoreLump = false;
-		bRequireAlphaTest = false;
-	}
 };
 
 

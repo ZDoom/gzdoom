@@ -235,19 +235,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
-
-	glUseProgram(hShader);
-
-	// set up other texture units (if needed by the shader)
-	for (int i = 2; i<16; i++)
-	{
-		char stringbuf[20];
-		mysnprintf(stringbuf, 20, "texture%d", i);
-		tempindex = glGetUniformLocation(hShader, stringbuf);
-		if (tempindex > 0) glUniform1i(tempindex, i - 1);
-	}
-
-	glUseProgram(0);
 	return !!linked;
 }
 
@@ -283,7 +270,7 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderManager::Compile (const char *ShaderName, const char *TexShaderPath, const char *LightShaderPath, bool usediscard)
+FShader *FShaderManager::Compile (const char *ShaderName, FShaderDefinition *TexShader, FShaderDefinition *LightShader, bool usediscard)
 {
 	FString defines;
 	// this can't be in the shader code due to ATI strangeness.
@@ -294,9 +281,34 @@ FShader *FShaderManager::Compile (const char *ShaderName, const char *TexShaderP
 	try
 	{
 		shader = new FShader(ShaderName);
-		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", TexShaderPath, LightShaderPath, defines.GetChars()))
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", TexShader->mSourceFile, LightShader->mSourceFile, defines.GetChars()))
 		{
 			I_FatalError("Unable to load shader %s\n", ShaderName);
+		}
+		else
+		{
+
+			for (unsigned int i = 0; i<TexShader->mTextureUnitNames.Size(); i++)
+			{
+				shader->mTexUnitNames.Push(TexShader->mTextureUnitNames[i]);
+	}
+			for (unsigned int i = 0; i<LightShader->mTextureUnitNames.Size(); i++)
+			{
+				shader->mTexUnitNames.Push(LightShader->mTextureUnitNames[i]);
+			}
+
+			if (shader->mTexUnitNames.Size() > 0)
+			{
+				int texunit = 1;
+				glUseProgram(shader->hShader);
+				for (unsigned int i = 0; i < shader->mTexUnitNames.Size(); i++, texunit++)
+				{
+					int tempindex = glGetUniformLocation(shader->hShader, shader->mTexUnitNames[i]);
+					if (tempindex >= 0) glUniform1i(tempindex, texunit);
+					else I_Error("Unknown texture sampler name '%s'", shader->mTexUnitNames[i]);
+				}
+				glUseProgram(0);
+			}
 		}
 	}
 	catch(CRecoverableError &err)
@@ -407,16 +419,17 @@ unsigned int FShaderManager::GetShaderIndex(FName tex, FName lite)
 
 			cont->mTexelName = tex;
 			cont->mLightName = lite;
-			cont->mShader = Compile(shname, TexelShaders[i]->mSourceFile, LightShaders[j]->mSourceFile, true);
+			cont->mShader = cont->mShaderNAT = NULL;
+			cont->mShader = Compile(shname, TexelShaders[i], LightShaders[j], true);
 
 			if (!TexelShaders[i]->bRequireAlphaTest)
 			{
-				cont->mShaderNAT = Compile(shname, TexelShaders[i]->mSourceFile, LightShaders[j]->mSourceFile, false);
+				cont->mShaderNAT = Compile(shname, TexelShaders[i], LightShaders[j], false);
 			}
 			return ndx;
 		}
 	}
-	// A shader with the requires settings cannot be created so fall back to the default shader.
+	// A shader with the required settings cannot be created so fall back to the default shader.
 	return SHADER_DEFAULT;
 }
 
@@ -694,7 +707,17 @@ void gl_ParseShaderDef(FScanner &sc, bool isLight)
 	{
 		def->bRequireAlphaTest = true;
 	}
+		else if (sc.Compare("textureunit"))
+		{
+			sc.MustGetString();
+			def->mTextureUnitNames.Push(sc.String);
+		}
 	// parse other stuff here.
+		else
+		{
+			sc.ScriptError("Unknown token '%s'", sc.String);
+	}
+
 	}
 
 	int lumpnum = Wads.CheckNumForFullName(def->mSourceFile);

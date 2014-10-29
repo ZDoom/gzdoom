@@ -4783,7 +4783,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		}
 		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
 
-		if (P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY) || (RGF_NOSIGHT))
+		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
 			AInventory *gift = static_cast<AInventory *>(Spawn (item, 0, 0, 0, NO_REPLACE));
 			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))

@@ -402,10 +402,14 @@ void P_RemoveThing(AActor * actor)
 	// Don't remove live players.
 	if (actor->player == NULL || actor != actor->player->mo)
 	{
+		// Don't also remove owned inventory items
+		if (actor->IsKindOf(RUNTIME_CLASS(AInventory)) && static_cast<AInventory*>(actor)->Owner != NULL) return;
+
 		// be friendly to the level statistics. ;)
 		actor->ClearCounters();
 		actor->Destroy ();
 	}
+
 }
 
 bool P_Thing_Raise(AActor *thing)

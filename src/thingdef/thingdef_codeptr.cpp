@@ -1677,6 +1677,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 	DoGiveInventory(self->target, PUSH_PARAMINFO);
 }	
 
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToChildren)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	while ((mo = it.Next()))
+	{
+		if (mo->master == self) DoGiveInventory(mo, PUSH_PARAMINFO);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToSiblings)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()))
+		{
+			if (mo->master == self->master && mo != self) DoGiveInventory(mo, PUSH_PARAMINFO);
+		}
+	}
+}
+
 //===========================================================================
 //
 // A_TakeInventory
@@ -1736,6 +1761,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
 	DoTakeInventory(self->target, PUSH_PARAMINFO);
 }	
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromChildren)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	while ((mo = it.Next()))
+	{
+		if (mo->master == self) DoTakeInventory(mo, PUSH_PARAMINFO);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromSiblings)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()))
+		{
+			if (mo->master == self->master && mo != self) DoTakeInventory(mo, PUSH_PARAMINFO);
+		}
+	}
+}
 
 //===========================================================================
 //
@@ -4608,17 +4658,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
 //==========================================================================
 enum RadiusGiveFlags
 {
-	RGF_GIVESELF	=   1,
-	RGF_PLAYERS		=   2,
-	RGF_MONSTERS	=   4,
-	RGF_OBJECTS		=   8,
-	RGF_VOODOO		=  16,
-	RGF_CORPSES		=  32,
-	RGF_MASK		=  63,
-	RGF_NOTARGET	=  64,
-	RGF_NOTRACER	= 128,
-	RGF_NOMASTER	= 256,
-	RGF_CUBE		= 512,
+	RGF_GIVESELF	=   1 << 0,
+	RGF_PLAYERS		=   1 << 1,
+	RGF_MONSTERS	=   1 << 2,
+	RGF_OBJECTS		=   1 << 3,
+	RGF_VOODOO		=	1 << 4,
+	RGF_CORPSES		=	1 << 5,
+	RGF_MASK		=	63,
+	RGF_NOTARGET	=	1 << 6,
+	RGF_NOTRACER	=	1 << 7,
+	RGF_NOMASTER	=	1 << 8,
+	RGF_CUBE		=	1 << 9,
+	RGF_NOSIGHT		=	1 << 10,
+	RGF_MISSILES	=	1 << 11,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
@@ -4699,6 +4751,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				continue;
 			}
 		}
+		else if (thing->flags & MF_MISSILE)
+		{
+			if (!(flags & RGF_MISSILES))
+			{
+				continue;
+			}
+		}
 		else
 		{
 			continue;
@@ -4724,8 +4783,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		}
 		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
 
-		if (P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
-		{ // OK to give; target is in direct path
+		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
+		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
 			AInventory *gift = static_cast<AInventory *>(Spawn (item, 0, 0, 0, NO_REPLACE));
 			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
 			{
@@ -4832,6 +4891,7 @@ enum DMSS
 	DMSS_KILL				= 4,
 	DMSS_NOFACTOR			= 8,
 	DMSS_FOILBUDDHA			= 16,
+	DMSS_NOPROTECT			= 32,
 };
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
@@ -4847,6 +4907,8 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 		dmgFlags += DMG_NO_ARMOR;
 	if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
 		amount += dmgtarget->health;
+	if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
+		dmgFlags += DMG_NO_PROTECT;
 
 	if (amount > 0)
 		P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.

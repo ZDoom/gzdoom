@@ -66,26 +66,24 @@ TexelShader "Fuzz Swirly"
 	nolightshader
 }
 
-/* for now this is merely a reference for how later implementation should be done
 TexelShader "Detail"
 {
 	source "shaders/glsl/func_detail.fp", corelump
 	TextureUnit "DetailTexture"
-	property vec4 "uDetailParms"
+	vec4 "uDetailParms"
 	{
 		x "uMultX"
 		y "uAddX"
 		z "uMultY"
 		w "uAddY"
 	}
-	property vec4 "uDetailScale"
+	vec4 "uDetailScale"
 	{
 		x "uScale"
 		y "uScaleMin"
 		z "uScaleMax"
 	}
 }
-*/
 
 LightShader "None"
 {

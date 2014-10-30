@@ -673,11 +673,47 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	}	
 }
 
+static const char * const uniformtypes[] = {
+	"int",
+	"ivec2",
+	"ivec3",
+	"ivec4",
+	"float",
+	"vec2",
+	"vec3",
+	"vec4",
+	NULL
+};
+
+static const char * const xy[] = {
+	"x",
+	"y",
+	NULL
+};
+
+static const char * const xyz[] = {
+	"x",
+	"y",
+	"z",
+	NULL
+};
+
+static const char * const xyzw[] = {
+	"x",
+	"y",
+	"z",
+	"w",
+	NULL
+};
+
+static const char * const * const xyzarr[] = { NULL, xy, xyz, xyzw, NULL, xy, xyz, xyzw };
+
 void gl_ParseShaderDef(FScanner &sc, bool isLight)
 {
 	FShaderDefinition *def = new FShaderDefinition;
 
 	bool CoreLump = false;
+	int ut;
 	sc.SetCMode(true);
 	sc.MustGetString();
 	def->mName = sc.String;
@@ -712,7 +748,37 @@ void gl_ParseShaderDef(FScanner &sc, bool isLight)
 			sc.MustGetString();
 			def->mTextureUnitNames.Push(sc.String);
 		}
-	// parse other stuff here.
+		else if ((ut = sc.MatchString(uniformtypes)) >= 0)
+		{
+			sc.MustGetString();
+
+			FUniformDefinition ud;
+
+			ud.mName = sc.String;
+			ud.mRefPos = 0;
+			ud.mRef = NULL;
+			ud.mType = (BYTE)ut;
+
+			unsigned int udref = def->mUniforms.Push(ud);
+
+			if (ut != UT_INT && ut != UT_FLOAT)
+			{
+				if (sc.CheckString("{"))
+				{
+					while (!sc.CheckString("}"))
+					{
+						sc.MustGetString();
+						int utsub = sc.MatchString(xyzarr[ut]);
+						if (utsub == -1) sc.ScriptError("Unknown identifier '%s'", sc.String);
+						sc.MustGetString();
+						ud.mName = sc.String;
+						ud.mRefPos = (BYTE)utsub + 1;
+						ud.mRef = udref + 1;
+						def->mUniforms.Push(ud);
+					}
+				}
+			}
+		}
 		else
 		{
 			sc.ScriptError("Unknown token '%s'", sc.String);

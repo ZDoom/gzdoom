@@ -270,6 +270,26 @@ public:
 };
 
 
+enum EUniformType
+{
+	UT_INT,
+	UT_IVEC2,
+	UT_IVEC3,
+	UT_IVEC4,
+	UT_FLOAT,
+	UT_VEC2,
+	UT_VEC3,
+	UT_VEC4
+};
+
+struct FUniformDefinition
+{
+	FString mName;
+	BYTE mType;
+	BYTE mRefPos;
+	unsigned int mRef;
+};
+
 struct FShaderDefinition
 {
 	FName mName;
@@ -278,6 +298,7 @@ struct FShaderDefinition
 	bool mCoreLump;
 	bool bRequireAlphaTest;
 	TArray<FString> mTextureUnitNames;
+	TArray<FUniformDefinition> mUniforms;
 
 	FShaderDefinition()
 	{

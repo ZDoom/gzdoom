@@ -820,18 +820,20 @@ void gl_ParseObject(FScanner &sc)
 //
 //
 //-----------------------------------------------------------------------------
+void gl_DestroyUserShaders();
 
 void gl_ReleaseLights()
 {
-   unsigned int i;
+	unsigned int i;
 
-   for (i = 0; i < LightDefaults.Size(); i++)
-   {
-      delete LightDefaults[i];
-   }
+	for (i = 0; i < LightDefaults.Size(); i++)
+	{
+		delete LightDefaults[i];
+	}
 
-   LightAssociations.Clear();
-   LightDefaults.Clear();
+	LightAssociations.Clear();
+	LightDefaults.Clear();
+	gl_DestroyUserShaders();
 }
 
 //==========================================================================
@@ -1328,7 +1330,6 @@ void gl_ParseDefs()
 
 	atterm( gl_ReleaseLights ); 
 	gl_ReleaseLights();
-	gl_DestroyUserShaders();
 	switch (gameinfo.gametype)
 	{
 	case GAME_Heretic:

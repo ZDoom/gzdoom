@@ -4054,6 +4054,7 @@ enum T_Flags
 {
 	TF_TELEFRAG = 1, // Allow telefrag in order to teleport.
 	TF_RANDOMDECIDE = 2, // Randomly fail based on health. (A_Srcr2Decide)
+	TF_FORCED = 4, // Forget what's in the way. TF_Telefrag takes precedence though.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4103,7 +4104,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	fixed_t prevX = self->x;
 	fixed_t prevY = self->y;
 	fixed_t prevZ = self->z;
-	if (P_TeleportMove (self, spot->x, spot->y, spot->z, Flags & TF_TELEFRAG))
+	bool teleResult = false;
+
+	//Take precedence and cooperate with telefragging first.
+	if (P_TeleportMove(self, spot->x, spot->y, spot->z, Flags & TF_TELEFRAG))
+		teleResult = true;
+	
+	if ((!(teleResult)) && (Flags & TF_FORCED))
+	{ 
+		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
+		self->SetOrigin(spot->x, spot->y, spot->z);
+		teleResult = true;
+	}
+
+	if (teleResult)
 	{
 		ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
@@ -4509,7 +4523,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 				self->PrevY = self->y + reference->PrevY - reference->y;
 				self->PrevZ = self->z + reference->PrevZ - reference->z;
 			}
-			else if (! (flags & WARPF_INTERPOLATE))
+			else if (!(flags & WARPF_INTERPOLATE))
 			{
 				self->PrevX = self->x;
 				self->PrevY = self->y;

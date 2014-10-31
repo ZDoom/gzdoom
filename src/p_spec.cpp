@@ -714,6 +714,7 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 //============================================================================
 
 CVAR(Bool, showsecretsector, false, 0)
+CVAR(Bool, cl_showsecretmessage, true, CVAR_ARCHIVE)
 
 void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum)
 {
@@ -723,7 +724,7 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 		{
 			actor->player->secretcount++;
 		}
-		if (actor->CheckLocalView (consoleplayer))
+		if (cl_showsecretmessage && actor->CheckLocalView(consoleplayer))
 		{
 			if (printmessage)
 			{

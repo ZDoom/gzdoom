@@ -938,6 +938,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	FState * woundstate = NULL;
 	PainChanceList * pc = NULL;
 	bool justhit = false;
+	bool plrDontThrust = false;
+	bool invulpain = false;
+	int fakeDamage = 0;
+	int holdDamage = 0;
 	
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
@@ -972,7 +976,14 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		{
 			if (inflictor == NULL || (!(inflictor->flags3 & MF3_FOILINVUL) && !(flags & DMG_FOILINVUL)))
 			{
-				return -1;
+				if (target->flags7 & MF7_ALLOWPAIN)
+				{
+					invulpain = true; //This returns -1 later.
+					fakeDamage = damage; 
+					goto fakepain; //The label is above the massive pile of checks.
+				}
+				else
+					return -1;
 			}
 		}
 		else
@@ -980,11 +991,21 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// Players are optionally excluded from getting thrust by damage.
 			if (static_cast<APlayerPawn *>(target)->PlayerFlags & PPF_NOTHRUSTWHENINVUL)
 			{
-				return -1;
+				if (target->flags7 & MF7_ALLOWPAIN)
+					plrDontThrust = 1;
+				else
+					return -1;
 			}
 		}
 		
 	}
+	if ((target->flags7 & MF7_ALLOWPAIN) && (damage < TELEFRAG_DAMAGE))
+	{
+		//Intentionally do not jump to fakepain because the damage hasn't been dished out yet.
+		//Once it's dished out, THEN we can disregard damage factors affecting pain chances.
+		fakeDamage = damage;
+	}
+
 	if (inflictor != NULL)
 	{
 		if (inflictor->flags5 & MF5_PIERCEARMOR)
@@ -1010,6 +1031,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// Invulnerable, and won't wake up
 			return -1;
 		}
+
 		player = target->player;
 		if (player && damage > 1 && damage < TELEFRAG_DAMAGE)
 		{
@@ -1032,10 +1054,13 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 						return -1;
 				}
 			}
+			if (damage > 0)
+				damage = inflictor->DoSpecialDamage (target, damage, mod);
 
-			damage = inflictor->DoSpecialDamage (target, damage, mod);
 			if (damage == -1)
 			{
+				if (target->flags7 & MF7_ALLOWPAIN) //Hold off ending the function before we can deal the pain chances.
+					goto fakepain;
 				return -1;
 			}
 		}
@@ -1058,12 +1083,15 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		{
 			int olddam = damage;
 			target->Inventory->ModifyDamage(olddam, mod, damage, true);
-			if (olddam != damage && damage <= 0)
-			{ // Still allow FORCEPAIN
+			if (((target->flags7 & MF7_ALLOWPAIN) && (fakeDamage <= 0)) || (olddam != damage && damage <= 0))
+			{ // Still allow FORCEPAIN and make sure we're still passing along fake damage to hit enemies for their pain states.
 				if (MustForcePain(target, inflictor))
 				{
 					goto dopain;
 				}
+				else if (target->flags7 & MF7_ALLOWPAIN)
+					goto fakepain;
+
 				return -1;
 			}
 		}
@@ -1081,19 +1109,25 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				{
 					goto dopain;
 				}
+				else if (target->flags7 & MF7_ALLOWPAIN)
+					goto fakepain;
+
 				return -1;
 			}
 		}
-
-		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
+		if (damage > 0)
+			damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	}
 	if (damage == -1)
 	{
+		if (target->flags7 & MF7_ALLOWPAIN)
+			goto fakepain;
+
 		return -1;
 	}
 	// Push the target unless the source's weapon's kickback is 0.
 	// (i.e. Gauntlets/Chainsaw)
-	if (inflictor && inflictor != target	// [RH] Not if hurting own self
+	if (!(plrDontThrust) && inflictor && inflictor != target	// [RH] Not if hurting own self
 		&& !(target->flags & MF_NOCLIP)
 		&& !(inflictor->flags2 & MF2_NODMGTHRUST)
 		&& !(flags & DMG_THRUSTLESS)
@@ -1134,11 +1168,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
             {
                 fltthrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., fltthrust);
             }
-
 			thrust = FLOAT2FIXED(fltthrust);
-
-			// Don't apply ultra-small damage thrust
-			if (thrust < FRACUNIT/100) thrust = 0;
+			// Don't apply ultra-small damage thrust.
+			if (thrust < FRACUNIT / 100)
+				thrust = 0;
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
@@ -1147,8 +1180,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT
 				 && !(target->flags & MF_NOGRAVITY)
-				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
-				 )
+				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL)))
 			{
 				ang += ANG180;
 				thrust *= 4;
@@ -1215,6 +1247,12 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				(player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NODAMAGE)) 
 				//Absolutely no hurting if NODAMAGE is involved. Same for GODMODE2.
 			{ // player is invulnerable, so don't hurt him
+				if (player->mo->flags7 & MF7_ALLOWPAIN)
+				{
+					invulpain = true;
+					fakeDamage = damage;
+					goto fakepain;
+				}
 				return -1;
 			}
 
@@ -1232,7 +1270,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				{
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
 					if (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
-						(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS))
+						(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS) && 
+						(!(player->mo->flags2 & MF2_INVULNERABLE)))
 					{
 						goto dopain;
 					}
@@ -1296,7 +1335,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			damage = newdam;
 			if (damage <= 0)
 			{
-				return damage;
+				if (target->flags7 & MF7_ALLOWPAIN)
+					goto fakepain;
+				else
+					return damage;
 			}
 		}
 	
@@ -1383,6 +1425,12 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		}
 	}
 
+fakepain: //Needed so we can skip the rest of the above, but still obey the original rules.
+	if (target->flags7 & MF7_ALLOWPAIN && (fakeDamage != damage))
+	{
+		holdDamage = damage;
+		damage = fakeDamage;
+	}
 	
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
 		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
@@ -1474,6 +1522,14 @@ dopain:
 	if (justhit && (target->target == source || !target->target || !target->IsFriend(target->target)))
 		target->flags |= MF_JUSTHIT;    // fight back!
 
+	if (invulpain) //Note that this takes into account all the cheats a player has, in terms of invulnerability.
+	{
+		return -1; //NOW we return -1!
+	}
+	else if (target->flags7 & MF7_ALLOWPAIN)
+	{
+		return holdDamage;
+	}
 	return damage;
 }
 

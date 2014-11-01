@@ -162,6 +162,8 @@ int 			consoleplayer;			// player taking events
 int 			gametic;
 
 CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+FString			newdemoname;
+FString			newdemomap;
 FString			demoname;
 bool 			demorecording;
 bool 			demoplayback;
@@ -1048,6 +1050,10 @@ void G_Ticker ()
 		case ga_loadlevel:
 			G_DoLoadLevel (-1, false);
 			break;
+		case ga_recordgame:
+			G_CheckDemoStatus();
+			G_RecordDemo(newdemoname);
+			G_BeginRecording(newdemomap);
 		case ga_newgame2:	// Silence GCC (see above)
 		case ga_newgame:
 			G_DoNewGame ();
@@ -2434,6 +2440,16 @@ void G_DeferedPlayDemo (const char *name)
 
 CCMD (playdemo)
 {
+	if (netgame)
+	{
+		Printf("End your current netgame first!");
+		return;
+	}
+	if (demorecording)
+	{
+		Printf("End your current demo first!");
+		return;
+	}
 	if (argv.argc() > 1)
 	{
 		G_DeferedPlayDemo (argv[1]);

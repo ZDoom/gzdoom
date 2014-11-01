@@ -2588,7 +2588,8 @@ void P_PlayerThink (player_t *player)
 		{
 			if (player->mo->waterlevel < 3 ||
 				(player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & (CF_GODMODE | CF_NOCLIP2)))
+				(player->cheats & (CF_GODMODE | CF_NOCLIP2)) ||
+				(player->cheats & CF_GODMODE2))
 			{
 				player->mo->ResetAirSupply ();
 			}

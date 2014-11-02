@@ -244,6 +244,8 @@ static FFlagDef ActorFlags[]=
 	DEFINE_FLAG(MF7, HARMFRIENDS, AActor, flags7),
 	DEFINE_FLAG(MF7, BUDDHA, AActor, flags7),
 	DEFINE_FLAG(MF7, FOILBUDDHA, AActor, flags7),
+	DEFINE_FLAG(MF7, DONTTHRUST, AActor, flags7),
+	DEFINE_FLAG(MF7, ALLOWPAIN, AActor, flags7),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

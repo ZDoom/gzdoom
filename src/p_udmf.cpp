@@ -696,6 +696,7 @@ public:
 
 			case NAME_FillColor:
 				th->fillcolor = CheckInt(key);
+				break;
 
 			case NAME_Health:
 				th->health = CheckInt(key);
@@ -1540,11 +1541,11 @@ public:
 			double ulen = TVector3<double>(cp[0], cp[1], cp[2]).Length();
 
 			// normalize the vector, it must have a length of 1
-			sec->floorplane.a = FLOAT2FIXED(cp[0] / ulen);
-			sec->floorplane.b = FLOAT2FIXED(cp[1] / ulen);
-			sec->floorplane.c = FLOAT2FIXED(cp[2] / ulen);
-			sec->floorplane.d = FLOAT2FIXED(cp[3] / ulen);
-			sec->floorplane.ic = FLOAT2FIXED(ulen / cp[2]);
+			sec->ceilingplane.a = FLOAT2FIXED(cp[0] / ulen);
+			sec->ceilingplane.b = FLOAT2FIXED(cp[1] / ulen);
+			sec->ceilingplane.c = FLOAT2FIXED(cp[2] / ulen);
+			sec->ceilingplane.d = FLOAT2FIXED(cp[3] / ulen);
+			sec->ceilingplane.ic = FLOAT2FIXED(ulen / cp[2]);
 		}
 
 		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1)

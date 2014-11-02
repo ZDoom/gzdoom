@@ -344,6 +344,8 @@ enum
 	MF7_HARMFRIENDS		= 0x00000020,	// is allowed to harm friendly monsters.
 	MF7_BUDDHA			= 0x00000040,	// Behaves just like the buddha cheat. 
 	MF7_FOILBUDDHA		= 0x00000080,	// Similar to FOILINVUL, foils buddha mode.
+	MF7_DONTTHRUST		= 0x00000100,	// Thrusting functions do not take, and do not give thrust (damage) to actors with this flag.
+	MF7_ALLOWPAIN		= 0x00000200,	// Invulnerable or immune (via damagefactors) actors can still react to taking damage even if they don't.
 
 // --- mobj.renderflags ---
 

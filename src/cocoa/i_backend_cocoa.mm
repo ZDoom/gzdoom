@@ -1758,7 +1758,7 @@ int SDL_Flip(SDL_Surface* screen)
 #endif // __LITTLE_ENDIAN__
 
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-		width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen->pixels);
+		width, height, 0, format, GL_UNSIGNED_BYTE, screen->pixels);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

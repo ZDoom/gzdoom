@@ -1750,7 +1750,13 @@ int SDL_Flip(SDL_Surface* screen)
 	
 	const int width  = screen->w;
 	const int height = screen->h;
-	
+
+#ifdef __LITTLE_ENDIAN__
+	static const GLenum format = GL_RGBA;
+#else // __BIG_ENDIAN__
+	static const GLenum format = GL_ABGR_EXT;
+#endif // __LITTLE_ENDIAN__
+
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
 		width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen->pixels);
 

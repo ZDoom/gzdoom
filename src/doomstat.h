@@ -136,6 +136,8 @@ extern	int				consoleplayer;
 // Disable save/end game?
 extern	bool			usergame;
 
+extern	FString			newdemoname;
+extern	FString			newdemomap;
 extern	bool			demoplayback;
 extern	bool			demorecording;
 extern	int				demover;

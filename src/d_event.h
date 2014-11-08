@@ -61,6 +61,7 @@ typedef enum
 	ga_loadlevel,
 	ga_newgame,
 	ga_newgame2,
+	ga_recordgame,
 	ga_loadgame,
 	ga_loadgamehidecon,
 	ga_loadgameplaydemo,

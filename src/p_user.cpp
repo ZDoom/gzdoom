@@ -78,7 +78,9 @@ CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCO
 struct PredictPos
 {
 	int gametic;
-	FVector3 point;
+	fixed_t x;
+	fixed_t y;
+	fixed_t z;
 	fixed_t pitch;
 	fixed_t yaw;
 } static PredictionLerpFrom, PredictionLerpResult, PredictionLast;
@@ -2588,7 +2590,8 @@ void P_PlayerThink (player_t *player)
 		{
 			if (player->mo->waterlevel < 3 ||
 				(player->mo->flags2 & MF2_INVULNERABLE) ||
-				(player->cheats & (CF_GODMODE | CF_NOCLIP2)))
+				(player->cheats & (CF_GODMODE | CF_NOCLIP2)) ||
+				(player->cheats & CF_GODMODE2))
 			{
 				player->mo->ResetAirSupply ();
 			}
@@ -2605,12 +2608,19 @@ void P_PredictionLerpReset()
 	PredictionLerptics = PredictionLast.gametic = PredictionLerpFrom.gametic = PredictionLerpResult.gametic = 0;
 }
 
-bool P_LerpCalculate(FVector3 from, FVector3 to, FVector3 &result, float scale)
+bool P_LerpCalculate(PredictPos from, PredictPos to, PredictPos &result, float scale)
 {
-	result = to - from;
-	result *= scale;
-	result = result + from;
-	FVector3 delta = result - to;
+	FVector3 vecFrom(FIXED2DBL(from.x), FIXED2DBL(from.y), FIXED2DBL(from.z));
+	FVector3 vecTo(FIXED2DBL(to.x), FIXED2DBL(to.y), FIXED2DBL(to.z));
+	FVector3 vecResult;
+	vecResult = vecTo - vecFrom;
+	vecResult *= scale;
+	vecResult = vecResult + vecFrom;
+	FVector3 delta = vecResult - vecTo;
+
+	result.x = FLOAT2FIXED(vecResult.X);
+	result.y = FLOAT2FIXED(vecResult.Y);
+	result.z = FLOAT2FIXED(vecResult.Z);
 
 	// As a fail safe, assume extrapolation is the threshold.
 	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
@@ -2715,8 +2725,18 @@ void P_PredictPlayer (player_t *player)
 		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic && !NoInterpolateOld)
 		{
 			// Z is not compared as lifts will alter this with no apparent change
-			DoLerp = (PredictionLast.point.X != FIXED2FLOAT(player->mo->x) ||
-				PredictionLast.point.Y != FIXED2FLOAT(player->mo->y));
+			// Make lerping less picky by only testing whole units
+			DoLerp = ((PredictionLast.x >> 16) != (player->mo->x >> 16) ||
+				(PredictionLast.y >> 16) != (player->mo->y >> 16));
+
+			// Aditional Debug information
+			if (developer && DoLerp)
+			{
+				DPrintf("Lerp! Ltic (%d) && Ptic (%d) | Lx (%d) && Px (%d) | Ly (%d) && Py (%d)\n",
+					PredictionLast.gametic, i,
+					(PredictionLast.x >> 16), (player->mo->x >> 16),
+					(PredictionLast.y >> 16), (player->mo->y >> 16));
+			}
 		}
 	}
 
@@ -2733,19 +2753,19 @@ void P_PredictPlayer (player_t *player)
 		}
 
 		PredictionLast.gametic = maxtic - 1;
-		PredictionLast.point.X = FIXED2FLOAT(player->mo->x);
-		PredictionLast.point.Y = FIXED2FLOAT(player->mo->y);
-		PredictionLast.point.Z = FIXED2FLOAT(player->mo->z);
+		PredictionLast.x = player->mo->x;
+		PredictionLast.y = player->mo->y;
+		PredictionLast.z = player->mo->z;
 
 		if (PredictionLerptics > 0)
 		{
 			if (PredictionLerpFrom.gametic > 0 &&
-				P_LerpCalculate(PredictionLerpFrom.point, PredictionLast.point, PredictionLerpResult.point, (float)PredictionLerptics * cl_predict_lerpscale))
+				P_LerpCalculate(PredictionLerpFrom, PredictionLast, PredictionLerpResult, (float)PredictionLerptics * cl_predict_lerpscale))
 			{
 				PredictionLerptics++;
-				player->mo->x = FLOAT2FIXED(PredictionLerpResult.point.X);
-				player->mo->y = FLOAT2FIXED(PredictionLerpResult.point.Y);
-				player->mo->z = FLOAT2FIXED(PredictionLerpResult.point.Z);
+				player->mo->x = PredictionLerpResult.x;
+				player->mo->y = PredictionLerpResult.y;
+				player->mo->z = PredictionLerpResult.z;
 			}
 			else
 			{

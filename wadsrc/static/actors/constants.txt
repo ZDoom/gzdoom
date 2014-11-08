@@ -181,7 +181,9 @@ const int FPF_AIMATANGLE = 1;
 const int FPF_TRANSFERTRANSLATION = 2;
 
 // Flags for A_Teleport
-const int TF_TELEFRAG = 1;const int TF_RANDOMDECIDE = 2;
+const int TF_TELEFRAG = 1;
+const int TF_RANDOMDECIDE = 2;
+const int TF_FORCED = 4;
 
 // Flags for A_WolfAttack
 const int WAF_NORANDOM = 1;
@@ -326,6 +328,7 @@ Const Int WARPF_STOP = 0x80;
 Const Int WARPF_TOFLOOR = 0x100;
 Const Int WARPF_TESTONLY = 0x200;
 Const Int WAPRF_ABSOLUTEPOSITION = 0x400;
+Const Int WARPF_ABSOLUTEPOSITION = 0x400;
 
 // flags for A_SetPitch/SetAngle
 const int SPF_FORCECLAMP = 1;

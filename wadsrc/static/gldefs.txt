@@ -71,18 +71,22 @@ TexelShader "Detail"
 	source "shaders/glsl/func_detail.fp", corelump
 	TextureUnit "DetailTexture"
 	vec4 "uDetailParms"
+	/*
 	{
 		x "uMultX"
 		y "uAddX"
 		z "uMultY"
 		w "uAddY"
 	}
+	*/
 	vec4 "uDetailScale"
+	/*
 	{
 		x "uScale"
 		y "uScaleMin"
 		z "uScaleMax"
 	}
+	*/
 }
 
 LightShader "None"

@@ -415,7 +415,8 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mShaderIndex = GLRenderer->mShaderManager->GetShaderIndex(tx->gl_info.texelShader, tx->gl_info.lightShader);
 
 	// create the texture layers array from the ordering info in the shader
-	FShader *shader = GLRenderer->mShaderManager->Get(mShaderIndex, false);
+	FShader *shader = GLRenderer->mShaderManager->Get(mShaderIndex, true);
+	FShader *shaderNat = GLRenderer->mShaderManager->Get(mShaderIndex, false);
 	const TArray<FString> &texunits = shader->GetTexUnits();
 
 	for (unsigned i = 0; i < texunits.Size(); i++)
@@ -434,8 +435,13 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 	}
 
-	mBaseLayer = ValidateSysTexture(tx, expanded);
+	mUniforms.Resize(tx->gl_info.mUniforms.Size());
+	for (unsigned i = 0; i < tx->gl_info.mUniforms.Size(); i++)
+	{
+		mUniforms[i] = tx->gl_info.mUniforms[i]->getMaterialUniform(shader, shaderNat);
+	}
 
+	mBaseLayer = ValidateSysTexture(tx, expanded);
 
 	mWidth = tx->GetWidth();
 	mHeight = tx->GetHeight();

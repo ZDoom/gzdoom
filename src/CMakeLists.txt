@@ -1169,6 +1169,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	gl/dynlights/gl_dynlight1.cpp
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/shaders/gl_shader.cpp
+	gl/shaders/gl_uniform.cpp
 	gl/shaders/gl_texshader.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp

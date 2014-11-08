@@ -30,6 +30,7 @@ struct FCopyInfo;
 class FScanner;
 struct PClass;
 class FArchive;
+class FGLUniform;
 
 // Texture IDs
 class FTextureManager;
@@ -340,6 +341,7 @@ public:
 		FMaterial *Material[2];
 		FGLTexture *SystemTexture[2];
 		TArray<TextureDef> mLayers;
+		TDeletingArray<FGLUniform*> mUniforms;
 		PalEntry GlowColor;
 		PalEntry FloorSkyColor;
 		PalEntry CeilingSkyColor;

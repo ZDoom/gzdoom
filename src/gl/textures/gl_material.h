@@ -6,6 +6,7 @@
 #include "textures/textures.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/renderer/gl_colormap.h"
+#include "gl/shaders/gl_uniform.h"
 #include "i_system.h"
 
 EXTERN_CVAR(Bool, gl_precache)
@@ -105,6 +106,7 @@ class FMaterial
 
 	FGLTexture *mBaseLayer;	
 	TArray<FTextureLayer> mTextureLayers;
+	TArray<FMaterialUniform> mUniforms;
 	int mShaderIndex;
 
 	short mLeftOffset;

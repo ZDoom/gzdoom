@@ -777,44 +777,90 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 //			texture_name [detail_name [width [height [offset_x [offset_y]]]]]
 //		}
 //	}
-// This merely parses the block and returns no error if valid. The feature
-// is not actually implemented, so nothing else happens.
+// 
+// 
 //==========================================================================
+
+static const char * const wf[] = { "walls", "flats" };
 
 void gl_ParseDetailTexture(FScanner &sc)
 {
+	FString defDetail;
+
 	while (!sc.CheckToken('}'))
 	{
 		sc.MustGetString();
-		if (sc.Compare("walls") || sc.Compare("flats"))
+		int type = sc.MustMatchString(wf) ? FTexture::TEX_Wall : FTexture::TEX_Flat;
+
+		if (!sc.CheckToken('{'))
 		{
-			if (!sc.CheckToken('{'))
+			// This is supposed to be a global detail setting for all textures of one type. 
+			// Due to the complexity of ZDoom's texture management this cannot work so we skip it.
+			sc.ScriptMessage("Ignoring global %s detail definition", type == FTexture::TEX_Wall ? "Wall" : "Flat");
+			sc.MustGetString();  // Default detail texture
+			if (sc.CheckFloat()) // Width
 			{
-				sc.MustGetString();  // Default detail texture
-				if (sc.CheckFloat()) // Width
 				if (sc.CheckFloat()) // Height
-				if (sc.CheckFloat()) // OffsX
-				if (sc.CheckFloat()) // OffsY
 				{
-					// Nothing
-				}
-			}
-			else sc.UnGet();
-			sc.MustGetToken('{');
-			while (!sc.CheckToken('}'))
-			{
-				sc.MustGetString();  // Texture
-				if (sc.GetString())	 // Detail texture
-				{
-					if (sc.CheckFloat()) // Width
-					if (sc.CheckFloat()) // Height
 					if (sc.CheckFloat()) // OffsX
-					if (sc.CheckFloat()) // OffsY
 					{
-						// Nothing
+						if (sc.CheckFloat()) // OffsY
+						{
+						}
 					}
 				}
-				else sc.UnGet();
+			}
+		}
+		else sc.UnGet();
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			FString thisDetail;
+			FTexture *thisTex = NULL;
+			float thisWidth = 16;
+			float thisHeight = 16;
+			float thisOffsX = 0;
+			float thisOffsY = 0;
+
+			sc.MustGetString();
+			FTexture *tex = TexMan.FindTexture(sc.String, type);
+			if (tex == NULL)
+			{
+				sc.ScriptMessage("Texture '%s' not found", sc.String);
+			}
+
+			sc.MustGetString();	 // Detail texture
+			thisTex = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+			if (thisTex == NULL)
+			{
+				sc.ScriptMessage("Detail texture '%s' not found", sc.String);
+			}
+			thisDetail = sc.String;
+
+			if (sc.CheckFloat()) // Width
+			{
+				thisWidth = sc.Float;
+				if (sc.CheckFloat()) // Height
+				{
+					thisHeight = sc.Float;
+					if (sc.CheckFloat()) // OffsX
+					{
+						thisOffsX = sc.Float / thisWidth;
+						if (sc.CheckFloat()) // OffsY
+						{
+							thisOffsY = sc.Float / thisHeight;
+						}
+					}
+				}
+			}
+			if (thisTex != NULL)
+			{
+				tex->gl_info.texelShader = "DetailTexture";
+
+				FGLUniformConst4f *u1 = new FGLUniformConst4f("uDetailParms", thisWidth, thisOffsX, thisHeight, thisOffsY);
+				FGLUniformConst4f *u2 = new FGLUniformConst4f("uDetailScale", 2.f, 0.f, 1.f, 0.f);
+				tex->gl_info.mUniforms.Push(u1);
+				tex->gl_info.mUniforms.Push(u2);
 			}
 		}
 	}

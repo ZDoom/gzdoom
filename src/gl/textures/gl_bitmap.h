@@ -2,7 +2,6 @@
 #define __GL_BITMAP_H
 
 #include "textures/bitmap.h"
-#include "gl/textures/gl_material.h"
 
 
 class FGLBitmap : public FBitmap

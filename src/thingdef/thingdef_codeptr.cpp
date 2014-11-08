@@ -3783,36 +3783,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 
 //===========================================================================
 //
-// [TP] A_FaceConsolePlayer
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_FaceConsolePlayer) {
-	ACTION_PARAM_START (1);
-	ACTION_PARAM_ANGLE (MaxTurnAngle, 0);
-
-	angle_t		Angle;
-	angle_t		DeltaAngle;
-	AActor		*pConsolePlayer;
-
-	// Always watch the consoleplayer.
-	pConsolePlayer = players[consoleplayer].mo;
-	if (( playeringame[consoleplayer] == false ) || ( pConsolePlayer == NULL ))
-		return;
-
-	// Find the angle between the actor and the console player.
-	Angle = R_PointToAngle2( self->x, self->y, pConsolePlayer->x, pConsolePlayer->y );
-	DeltaAngle = Angle - self->angle;
-
-	if (( MaxTurnAngle == 0 ) || ( DeltaAngle < MaxTurnAngle ) || ( DeltaAngle > (unsigned)-MaxTurnAngle ))
-		self->angle = Angle;
-	else if ( DeltaAngle < ANG180 )
-		self->angle += MaxTurnAngle;
-	else
-		self->angle -= MaxTurnAngle;
-}
-
-//===========================================================================
-//
 // A_MonsterRefire
 //
 // Keep firing unless target got out of sight

@@ -186,6 +186,7 @@ ACTOR Actor native //: Thinker
 	action native A_ClearSoundTarget();
 	action native A_FireAssaultGun();
 	action native A_CheckTerrain();
+	action native A_FaceConsolePlayer(float MaxTurnAngle = 0); // [TP]
 
 	action native A_MissileAttack();
 	action native A_MeleeAttack();

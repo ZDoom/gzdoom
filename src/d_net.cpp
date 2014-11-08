@@ -691,9 +691,6 @@ void PlayerIsGone (int netnode, int netconsole)
 
 	if (netconsole == Net_Arbitrator)
 	{
-		bglobal.RemoveAllBots(true);
-		Printf("Removed all bots\n");
-
 		// Pick a new network arbitrator
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{

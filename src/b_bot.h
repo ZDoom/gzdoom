@@ -165,9 +165,6 @@ public:
 	void Clear ();
 	void Serialize (FArchive &arc);
 
-	angle_t		savedyaw;
-	int			savedpitch;
-
 	angle_t		angle;		// The wanted angle that the bot try to get every tic.
 							//  (used to get a smooth view movement)
 	TObjPtr<AActor>		dest;		// Move Destination.

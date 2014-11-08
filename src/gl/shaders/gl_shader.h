@@ -78,7 +78,7 @@ public:
 
 	~FShader();
 
-	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char *fragprog3, const char *defines);
+	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char *fragprog3, const char *fragprog4, const char *defines);
 
 	void SetColormapColor(float r, float g, float b, float r1, float g1, float b1);
 	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
@@ -143,6 +143,7 @@ class FShaderManager
 {
 	struct FShaderContainer
 	{
+		FName mCoordinateName;
 		FName mTexelName;
 		FName mLightName;
 		FShader *mShader;
@@ -156,7 +157,7 @@ class FShaderManager
 
 	void CompileShaders();
 	void FindAllUsedShaders();
-	FShader *Compile(const char *ShaderName, FShaderDefinition *TexShader, FShaderDefinition *LightShader, bool usediscard);
+	FShader *Compile(const char *ShaderName, FShaderDefinition *CoordShader, FShaderDefinition *TexShader, FShaderDefinition *LightShader, bool usediscard);
 
 
 	
@@ -166,7 +167,7 @@ public:
 	FShader *BindEffect(int effect);
 	void SetActiveShader(FShader *sh);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
-	unsigned int GetShaderIndex(FName tex, FName light);
+	unsigned int GetShaderIndex(FName coord, FName tex, FName light);
 	void Clean();
 	FShader *GetActiveShader() const
 	{
@@ -208,6 +209,7 @@ enum
 };
 
 
+extern TArray<FShaderDefinition *> CoordinateShaders;
 extern TArray<FShaderDefinition *> TexelShaders;
 extern TArray<FShaderDefinition *> LightShaders;
 

@@ -1,72 +1,91 @@
-TexelShader "None"
+//-------------
+//
+// coordinate functions
+//
+//-------------
+
+
+CoordinateFunction "None"
 {
-	source "shaders/glsl/func_normal.fp", corelump
+	source "shaders/glsl/func_coord_none.fp", corelump
 }
 
-TexelShader "No Texture"
+CoordinateFunction "Warp 1"
 {
-	source "shaders/glsl/func_notexture.fp", corelump
-	nolightshader
+	source "shaders/glsl/func_coord_warp1.fp", corelump
 }
 
-TexelShader "Warp 1"
+CoordinateFunction "Warp 2"
 {
-	source "shaders/glsl/func_warp1.fp", corelump
+	source "shaders/glsl/func_coord_warp1.fp", corelump
 }
 
-TexelShader "Warp 2"
+CoordinateFunction "Wave X"
 {
-	source "shaders/glsl/func_warp1.fp", corelump
+	source "shaders/glsl/func_coord_wavex.fp", corelump
 }
 
-TexelShader "Wave X"
+//-------------
+//
+// texel functions
+//
+//-------------
+
+
+TexelFunction "None"
 {
-	source "shaders/glsl/func_wavex.fp", corelump
+	source "shaders/glsl/func_texel_none.fp", corelump
 }
 
-TexelShader "Fuzz Jagged"
+TexelFunction "No Texture"
+{
+	source "shaders/glsl/func_texel_notexture.fp", corelump
+	noLightFunction
+}
+
+TexelFunction "Fuzz Jagged"
 {
 	source "shaders/glsl/fuzz_jagged.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Fuzz Noise"
+TexelFunction "Fuzz Noise"
 {
 	source "shaders/glsl/fuzz_noise.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Fuzz Smooth"
+TexelFunction "Fuzz Smooth"
 {
 	source "shaders/glsl/fuzz_smooth.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Fuzz Smooth Noise"
+TexelFunction "Fuzz Smooth Noise"
 {
 	source "shaders/glsl/fuzz_smoothnoise.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Fuzz Translucent"
+TexelFunction "Fuzz Translucent"
 {
 	source "shaders/glsl/fuzz_smoothtranslucent.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Fuzz Standard"
+TexelFunction "Fuzz Standard"
 {
 	source "shaders/glsl/fuzz_standard.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Fuzz Swirly"
+TexelFunction "Fuzz Swirly"
 {
 	source "shaders/glsl/fuzz_swirly.fp", corelump
-	nolightshader
+	noLightFunction
 }
 
-TexelShader "Detail"
+TexelFunction "Detail"
 {
 	source "shaders/glsl/func_detail.fp", corelump
 	TextureUnit "DetailTexture"
@@ -89,13 +108,19 @@ TexelShader "Detail"
 	*/
 }
 
-LightShader "None"
+//-------------
+//
+// light functions
+//
+//-------------
+
+LightFunction "None"
 {
-	source "shaders/glsl/func_defaultlight.fp", corelump
+	source "shaders/glsl/func_light_none.fp", corelump
 }
 
-LightShader "Brightmap"
+LightFunction "Brightmap"
 {
-	source "shaders/glsl/func_brightmap.fp", corelump
+	source "shaders/glsl/func_light_brightmap.fp", corelump
 	TextureUnit "BrightmapTexture"
 }

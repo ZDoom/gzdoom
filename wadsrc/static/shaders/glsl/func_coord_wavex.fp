@@ -1,5 +1,5 @@
 
-vec4 ProcessTexel()
+vec2 ProcessCoordinate()
 {
 	vec2 texCoord = vTexCoord.st;
 
@@ -7,6 +7,6 @@ vec4 ProcessTexel()
 
 	texCoord.x += sin(pi * 2.0 * (texCoord.y + uTimer * 0.125)) * 0.1;
 
-	return getTexel(texCoord);
+	return texCoord;
 }
 

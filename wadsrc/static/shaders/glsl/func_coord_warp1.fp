@@ -1,5 +1,5 @@
 
-vec4 ProcessTexel()
+vec2 ProcessCoordinate()
 {
 	vec2 texCoord = vTexCoord.st;
 
@@ -11,6 +11,6 @@ vec4 ProcessTexel()
 
 	texCoord += offset;
 
-	return getTexel(texCoord);
+	return texCoord;
 }
 

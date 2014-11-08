@@ -134,7 +134,7 @@ float R_DoomLightingEquation(float light, float dist)
 //
 //===========================================================================
 
-vec4 getLightColor(float fogdist, float fogfactor)
+vec4 getLightColor(vec2 coord, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
 	
@@ -173,7 +173,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	//
 	// apply brightmaps (or other light manipulation by custom shaders.
 	//
-	color = ProcessLight(color);
+	color = ProcessLight(coord, color);
 
 	//
 	// apply dynamic lights (except additive)
@@ -236,7 +236,8 @@ vec4 applyFog(vec4 frag, float fogfactor)
 
 void main()
 {
-	vec4 frag = ProcessTexel();
+	vec2 coord = ProcessCoordinate();
+	vec4 frag = ProcessTexel(coord);
 	
 #ifndef NO_ALPHATEST
 	if (frag.a <= uAlphaThreshold) discard;
@@ -268,7 +269,7 @@ void main()
 			}
 			
 			
-			frag *= getLightColor(fogdist, fogfactor);
+			frag *= getLightColor(coord, fogdist, fogfactor);
 			
 			if (uLightIndex >= 0)
 			{

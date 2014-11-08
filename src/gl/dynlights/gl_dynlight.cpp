@@ -71,7 +71,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump);
 void gl_ParseSkybox(FScanner &sc);
 void gl_ParseDetailTexture(FScanner &sc);
 void gl_ParseVavoomSkybox();
-void gl_ParseShaderDef(FScanner &sc, bool islight);
+void gl_ParseShaderDef(FScanner &sc, int functiontype);
 
 //==========================================================================
 //
@@ -860,8 +860,9 @@ static const char *CoreKeywords[]=
    "disable_fullbright",
    "hardwareshader",
    "detail",
-   "texelshader",
-   "lightshader",
+   "coordinatefunction",
+   "texelfunction",
+   "lightfunction",
    "#include",
    NULL
 };
@@ -884,6 +885,7 @@ enum
    TAG_DISABLE_FB,
    TAG_HARDWARESHADER,
    TAG_DETAIL,
+   TAG_COORDINATESHADER,
    TAG_TEXELSHADER,
    TAG_LIGHTSHADER,
    TAG_INCLUDE,
@@ -1277,11 +1279,14 @@ void gl_DoParseDefs(FScanner &sc, int workingLump)
 		case TAG_DETAIL:
 			gl_ParseDetailTexture(sc);
 			break;
+		case TAG_COORDINATESHADER:
+			gl_ParseShaderDef(sc, 0);
+			break;
 		case TAG_TEXELSHADER:
-			gl_ParseShaderDef(sc, false);
+			gl_ParseShaderDef(sc, 1);
 			break;
 		case TAG_LIGHTSHADER:
-			gl_ParseShaderDef(sc, true);
+			gl_ParseShaderDef(sc, 2);
 			break;
 		case TAG_DISABLE_FB:
 			{

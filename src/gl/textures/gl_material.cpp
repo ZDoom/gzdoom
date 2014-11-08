@@ -412,7 +412,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	tex = tx;
 
 			tx->CreateDefaultBrightmap();
-	mShaderIndex = GLRenderer->mShaderManager->GetShaderIndex(tx->gl_info.texelShader, tx->gl_info.lightShader);
+	mShaderIndex = GLRenderer->mShaderManager->GetShaderIndex(tx->gl_info.coordinateFunction, tx->gl_info.texelFunction, tx->gl_info.lightFunction);
 
 	// create the texture layers array from the ordering info in the shader
 	FShader *shader = GLRenderer->mShaderManager->Get(mShaderIndex, true);
@@ -798,7 +798,7 @@ again:
 			if (expand)
 			{
 				// since we have no idea what a shader might do to the texture, adding an outer frame for sprites needs to be disabled if we got a texel shader assigned to this texture
-				if (tex->gl_info.texelShader != NAME_None)
+				if (tex->gl_info.coordinateFunction != NAME_None)
 				{
 					tex->gl_info.bNoExpand = true;
 					goto again;

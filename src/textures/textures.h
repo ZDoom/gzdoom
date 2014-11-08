@@ -348,8 +348,9 @@ public:
 		int GlowHeight;
 		FloatRect *areas;
 		int areacount;
-		FName texelShader;
-		FName lightShader;
+		FName coordinateFunction;
+		FName texelFunction;
+		FName lightFunction;
 		unsigned int precacheTime;
 		float shaderspeed;
 		int mIsTransparent:2;

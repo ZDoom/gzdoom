@@ -275,7 +275,7 @@ void FTexture::CreateDefaultBrightmap()
 		// Check for brightmaps
 		if (UseBasePalette() && HasGlobalBrightmap &&
 			UseType != TEX_Decal && UseType != TEX_MiscPatch && UseType != TEX_FontChar &&
-			gl_info.lightShader == NAME_None && bWarped == 0
+			gl_info.lightFunction == NAME_None && bWarped == 0
 			) 
 		{
 			// May have one - let's check when we use this texture
@@ -292,7 +292,7 @@ void FTexture::CreateDefaultBrightmap()
 					TexMan.AddTexture(btex);
 					DPrintf("brightmap created for texture '%s'\n", Name.GetChars());
 					AddLayer("BrightmapTexture", btex, false);
-					gl_info.lightShader = "Brightmap";
+					gl_info.lightFunction = "Brightmap";
 					return;
 				}
 			}
@@ -760,7 +760,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	{
 		bmtex->bMasked = false;
 		tex->AddLayer("BrightmapTexture", bmtex, false);
-		tex->gl_info.lightShader = "Brightmap";
+		tex->gl_info.lightFunction = "Brightmap";
 	}	
 	tex->gl_info.bDisableFullbright = disable_fullbright;
 }
@@ -855,7 +855,7 @@ void gl_ParseDetailTexture(FScanner &sc)
 			}
 			if (thisTex != NULL)
 			{
-				tex->gl_info.texelShader = "DetailTexture";
+				tex->gl_info.texelFunction = "DetailTexture";
 
 				FGLUniformConst4f *u1 = new FGLUniformConst4f("uDetailParms", thisWidth, thisOffsX, thisHeight, thisOffsY);
 				FGLUniformConst4f *u2 = new FGLUniformConst4f("uDetailScale", 2.f, 0.f, 1.f, 0.f);

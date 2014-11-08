@@ -59,16 +59,19 @@
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
+TArray<FShaderDefinition *> CoordinateShaders;
 TArray<FShaderDefinition *> TexelShaders;
 TArray<FShaderDefinition *> LightShaders;
 
+static TArray<FShaderDefinition *> *ShaderArrays[] = { &CoordinateShaders, &TexelShaders, &LightShaders };
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * tex_proc_lump, const char *lite_proc_lump, const char * defines)
+bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * tex_proc_lump, const char *coord_proc_lump, const char *lite_proc_lump, const char * defines)
 {
 	static char buffer[10000];
 	FString error;
@@ -130,10 +133,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				// this looks like an old custom hardware shader.
 				// We need to replace the ProcessTexel call to make it work.
 
-				fp_comb.Substitute("vec4 frag = ProcessTexel();", "vec4 frag = Process(vec4(1.0));");
+				fp_comb.Substitute("vec4 frag = ProcessTexel(coord);", "vec4 frag = Process(vec4(1.0));");
 			}
 			fp_comb << pp_data.GetString().GetChars();
-			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
+
+			// fix old custom shaders which used the builtin variables. 
+			// This replacement will essentially skip the coordinate function, but since that's 'none' anyway, it doesn't matter.
+			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	
 		}
 		else
 		{
@@ -141,6 +147,15 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			fp_comb << tex_proc_lump + 1;
 		}
 	}
+	if (coord_proc_lump != NULL)
+	{
+		int pp_lump = Wads.CheckNumForFullName(coord_proc_lump);
+		if (pp_lump == -1) I_Error("Unable to load '%s'", coord_proc_lump);
+		FMemLump pp_data = Wads.ReadLump(pp_lump);
+
+		fp_comb << pp_data.GetString().GetChars();
+	}
+
 	if (lite_proc_lump != NULL)
 	{
 		int pp_lump = Wads.CheckNumForFullName(lite_proc_lump);
@@ -270,7 +285,7 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderManager::Compile (const char *ShaderName, FShaderDefinition *TexShader, FShaderDefinition *LightShader, bool usediscard)
+FShader *FShaderManager::Compile (const char *ShaderName, FShaderDefinition *CoordShader, FShaderDefinition *TexShader, FShaderDefinition *LightShader, bool usediscard)
 {
 	FString defines;
 	// this can't be in the shader code due to ATI strangeness.
@@ -281,7 +296,7 @@ FShader *FShaderManager::Compile (const char *ShaderName, FShaderDefinition *Tex
 	try
 	{
 		shader = new FShader(ShaderName);
-		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", TexShader->mSourceFile, LightShader->mSourceFile, defines.GetChars()))
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", TexShader->mSourceFile, CoordShader->mSourceFile, LightShader->mSourceFile, defines.GetChars()))
 		{
 			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
@@ -387,46 +402,54 @@ FShaderManager::~FShaderManager()
 //
 //==========================================================================
 
-unsigned int FShaderManager::GetShaderIndex(FName tex, FName lite)
+unsigned int FShaderManager::GetShaderIndex(FName coord, FName tex, FName lite)
 {
 	for (unsigned int i = 0; i < mShaders.Size(); i++)
 	{
-		if (mShaders[i].mTexelName == tex && mShaders[i].mLightName == lite)
+		if (mShaders[i].mCoordinateName == coord && mShaders[i].mTexelName == tex && mShaders[i].mLightName == lite)
 		{
 			return i;
 		}
 	}
-	for (unsigned int i = 0; i < TexelShaders.Size(); i++)
+	for (unsigned int i = 0; i < CoordinateShaders.Size(); i++)
 	{
-		if (TexelShaders[i]->mName == tex)
+		if (CoordinateShaders[i]->mName == coord)
 		{
-			unsigned int j = 0;
-			if (!TexelShaders[i]->mNoLightShader)
+
+			for (unsigned int i = 0; i < TexelShaders.Size(); i++)
 			{
-				for (j = 0; j < LightShaders.Size(); j++)
+				if (TexelShaders[i]->mName == tex)
 				{
-					if (LightShaders[j]->mName == lite) break;
+					unsigned int j = 0;
+					if (!TexelShaders[i]->mNoLightShader)
+					{
+						for (j = 0; j < LightShaders.Size(); j++)
+						{
+							if (LightShaders[j]->mName == lite) break;
+						}
+						if (j == LightShaders.Size()) j = 0;	// 0 is the default
+					}
+
+					FString shname;
+					unsigned int ndx = mShaders.Reserve(1);
+					FShaderContainer *cont = &mShaders[ndx];
+
+					shname << CoordinateShaders[i]->mName << "::" << TexelShaders[i]->mName << "::" << LightShaders[j]->mName;
+					DPrintf("Compiling shader %s\n", shname);
+
+					cont->mCoordinateName = coord;
+					cont->mTexelName = tex;
+					cont->mLightName = lite;
+					cont->mShader = cont->mShaderNAT = NULL;
+					cont->mShader = Compile(shname, CoordinateShaders[i], TexelShaders[i], LightShaders[j], true);
+
+					if (!TexelShaders[i]->bRequireAlphaTest)
+					{
+						cont->mShaderNAT = Compile(shname, CoordinateShaders[i], TexelShaders[i], LightShaders[j], false);
+					}
+					return ndx;
 				}
-				if (j == LightShaders.Size()) j = 0;	// 0 is the default
 			}
-
-			FString shname;
-			unsigned int ndx = mShaders.Reserve(1);
-			FShaderContainer *cont = &mShaders[ndx];
-
-			shname << TexelShaders[i]->mName << "::" << LightShaders[j]->mName;
-			DPrintf("Compiling shader %s\n", shname);
-
-			cont->mTexelName = tex;
-			cont->mLightName = lite;
-			cont->mShader = cont->mShaderNAT = NULL;
-			cont->mShader = Compile(shname, TexelShaders[i], LightShaders[j], true);
-
-			if (!TexelShaders[i]->bRequireAlphaTest)
-			{
-				cont->mShaderNAT = Compile(shname, TexelShaders[i], LightShaders[j], false);
-			}
-			return ndx;
 		}
 	}
 	// A shader with the required settings cannot be created so fall back to the default shader.
@@ -467,24 +490,24 @@ void FShaderManager::CompileShaders()
 	// load the ones the engine accesses directly in order first. The rest gets set up on a need to use basis.
 	for (int i = 0; defShaderNames[i]; i++)
 	{
-		GetShaderIndex(defShaderNames[i], NAME_None);
+		GetShaderIndex(NAME_None, defShaderNames[i], NAME_None);
 	}
 
 	for (int i = 0; i < TexMan.NumTextures(); i++)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
 
-		if (tex->bWarped == 1) tex->gl_info.texelShader = "Warp 1";
-		else if (tex->bWarped == 2) tex->gl_info.texelShader = "Warp 2";
+		if (tex->bWarped == 1) tex->gl_info.coordinateFunction = "Warp 1";
+		else if (tex->bWarped == 2) tex->gl_info.coordinateFunction = "Warp 2";
 
-		GetShaderIndex(tex->gl_info.texelShader, tex->gl_info.lightShader);
+		GetShaderIndex(tex->gl_info.coordinateFunction, tex->gl_info.texelFunction, tex->gl_info.lightFunction);
 	}
 
 	for(int i=0;i<MAX_EFFECTS;i++)
 	{
 		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-						effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines))
+						effectshaders[i].fp2, effectshaders[i].fp3, NULL, effectshaders[i].defines))
 		{
 			delete eff;
 		}
@@ -669,7 +692,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 			def->mNoLightShader = true;
 			def->mSourceFile = maplumpname;
 		}
-
+		tex->gl_info.texelFunction = nm;
 	}	
 }
 
@@ -708,7 +731,7 @@ static const char * const xyzw[] = {
 
 static const char * const * const xyzarr[] = { NULL, xy, xyz, xyzw, NULL, xy, xyz, xyzw };
 
-void gl_ParseShaderDef(FScanner &sc, bool isLight)
+void gl_ParseShaderDef(FScanner &sc, int functiontype)
 {
 	FShaderDefinition *def = new FShaderDefinition;
 
@@ -801,14 +824,14 @@ void gl_ParseShaderDef(FScanner &sc, bool isLight)
 		}
 	}
 
-	TArray<FShaderDefinition*> *pArr = isLight ? &LightShaders : &TexelShaders;
+	TArray<FShaderDefinition*> *pArr = ShaderArrays[functiontype];
 	unsigned int defindex = FindShaderDef(*pArr, def->mName);
 	if (defindex != UINT_MAX)
 	{
 		// replacing core shaders is prohibited.
 		if ((*pArr)[defindex]->mCoreLump)
 		{
-			sc.ScriptError("Shader %s is overriding core shader", def->mName.GetChars());
+			sc.ScriptError("Shader function %s is overriding core definition", def->mName.GetChars());
 		}
 		pArr->Delete(defindex);
 	}
@@ -822,6 +845,10 @@ void gl_DestroyUserShaders()
 	{
 		GLRenderer->mShaderManager->Clean();
 	}
+	for (unsigned int i = 0; i < CoordinateShaders.Size(); i++)
+	{
+		delete CoordinateShaders[i];
+	}
 	for (unsigned int i = 0; i < TexelShaders.Size(); i++)
 	{
 		delete TexelShaders[i];
@@ -830,6 +857,7 @@ void gl_DestroyUserShaders()
 	{
 		delete LightShaders[i];
 	}
+	CoordinateShaders.Clear();
 	TexelShaders.Clear();
 	LightShaders.Clear();
 }

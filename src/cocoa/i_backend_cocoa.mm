@@ -781,6 +781,19 @@ const Uint16 BYTES_PER_PIXEL = 4;
 // ---------------------------------------------------------------------------
 
 
+namespace
+{
+	const NSInteger LEVEL_FULLSCREEN = NSMainMenuWindowLevel + 1;
+	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
+
+	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
+	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
+}
+
+
+// ---------------------------------------------------------------------------
+
+
 @interface FullscreenWindow : NSWindow
 {
 
@@ -788,27 +801,8 @@ const Uint16 BYTES_PER_PIXEL = 4;
 
 - (bool)canBecomeKeyWindow;
 
-- (void)close;
-
-@end
-
-
-@implementation FullscreenWindow
-
-- (bool)canBecomeKeyWindow
-{
-	return true;
-}
-
-
-- (void)close
-{
-	[super close];
-	
-	I_ShutdownJoysticks();
-
-	[NSApp terminate:self];
-}
+- (void)setLevel:(NSInteger)level;
+- (void)setStyleMask:(NSUInteger)styleMask;
 
 @end
 
@@ -892,10 +886,49 @@ const Uint16 BYTES_PER_PIXEL = 4;
 
 - (void)setMainWindowVisible:(bool)visible;
 
+- (void)setWindowStyleMask:(NSUInteger)styleMask;
+
 @end
 
 
 static ApplicationController* appCtrl;
+
+
+// ---------------------------------------------------------------------------
+
+
+@implementation FullscreenWindow
+
+- (bool)canBecomeKeyWindow
+{
+	return true;
+}
+
+- (void)setLevel:(NSInteger)level
+{
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+	[super setLevel:level];
+#else // 10.5 or earlier
+	// Old Carbon-based way to make fullscreen window above dock and menu
+	// It's supported on 64-bit, but on 10.6 and later the following is preferred:
+	// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
+
+	const SystemUIMode mode = LEVEL_FULLSCREEN == level
+		? kUIModeAllHidden
+		: kUIModeNormal;
+	SetSystemUIMode(mode, 0);
+#endif // 10.6 or higher
+}
+
+- (void)setStyleMask:(NSUInteger)styleMask
+{
+	[appCtrl setWindowStyleMask:styleMask];
+}
+
+@end
+
+
+// ---------------------------------------------------------------------------
 
 
 @implementation ApplicationController
@@ -1040,6 +1073,23 @@ static ApplicationController* appCtrl;
 }
 
 
+- (FullscreenWindow*)createWindow:(NSUInteger)styleMask
+{
+	FullscreenWindow* window = [[FullscreenWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480)
+																   styleMask:styleMask
+																	 backing:NSBackingStoreBuffered
+																	   defer:NO];
+	[window setOpaque:YES];
+	[window makeFirstResponder:self];
+	[window setAcceptsMouseMovedEvents:YES];
+
+	NSButton* closeButton = [window standardWindowButton:NSWindowCloseButton];
+	[closeButton setAction:@selector(closeWindow:)];
+	[closeButton setTarget:self];
+
+	return window;
+}
+
 - (void)initializeOpenGL
 {
 	if (m_openGLInitialized)
@@ -1047,15 +1097,7 @@ static ApplicationController* appCtrl;
 		return;
 	}
 	
-	// Create window
-	
-	m_window = [[FullscreenWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480)
-												   styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask
-													 backing:NSBackingStoreBuffered
-													   defer:NO];
-	[m_window setOpaque:YES];
-	[m_window makeFirstResponder:self];
-	[m_window setAcceptsMouseMovedEvents:YES];
+	m_window = [self createWindow:STYLE_MASK_WINDOWED];
 	
 	// Create OpenGL context and view
 	
@@ -1093,7 +1135,7 @@ static ApplicationController* appCtrl;
 	m_openGLInitialized = true;
 }
 
-- (void)switchToFullscreen
+- (void)setFullscreenModeWidth:(int)width height:(int)height
 {
 	NSScreen* screen = [m_window screen];
 
@@ -1105,42 +1147,50 @@ static ApplicationController* appCtrl;
 	const float  displayWidth  = displayRect.size.width;
 	const float  displayHeight = displayRect.size.height;
 	
-	const float pixelScaleFactorX = displayWidth  / static_cast<float>(m_width );
-	const float pixelScaleFactorY = displayHeight / static_cast<float>(m_height);
+	const float pixelScaleFactorX = displayWidth  / static_cast<float>(width );
+	const float pixelScaleFactorY = displayHeight / static_cast<float>(height);
 	
 	rbOpts.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
 	
-	rbOpts.width  = m_width  * rbOpts.pixelScale;
-	rbOpts.height = m_height * rbOpts.pixelScale;
+	rbOpts.width  = width  * rbOpts.pixelScale;
+	rbOpts.height = height * rbOpts.pixelScale;
 	
 	rbOpts.shiftX = (displayWidth  - rbOpts.width ) / 2.0f;
 	rbOpts.shiftY = (displayHeight - rbOpts.height) / 2.0f;
 
-	[m_window setLevel:NSMainMenuWindowLevel + 1];
-	[m_window setStyleMask:NSBorderlessWindowMask];
-	[m_window setHidesOnDeactivate:YES];
+	if (!m_fullscreen)
+	{
+		[m_window setLevel:LEVEL_FULLSCREEN];
+		[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
+		[m_window setHidesOnDeactivate:YES];
+	}
+
 	[m_window setFrame:displayRect display:YES];
 	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
 }
 
-- (void)switchToWindowed
+- (void)setWindowedModeWidth:(int)width height:(int)height
 {
 	rbOpts.pixelScale = 1.0f;
 	
-	rbOpts.width  = static_cast<float>(m_width );
-	rbOpts.height = static_cast<float>(m_height);
+	rbOpts.width  = static_cast<float>(width );
+	rbOpts.height = static_cast<float>(height);
 	
 	rbOpts.shiftX = 0.0f;
 	rbOpts.shiftY = 0.0f;
 
-	const NSSize windowPixelSize = NSMakeSize(m_width, m_height);
+	const NSSize windowPixelSize = NSMakeSize(width, height);
 	const NSSize windowSize = vid_hidpi
 		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
 		: windowPixelSize;
 
-	[m_window setLevel:NSNormalWindowLevel];
-	[m_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask];
-	[m_window setHidesOnDeactivate:NO];
+	if (m_fullscreen)
+	{
+		[m_window setLevel:LEVEL_WINDOWED];
+		[m_window setStyleMask:STYLE_MASK_WINDOWED];
+		[m_window setHidesOnDeactivate:NO];
+	}
+
 	[m_window setContentSize:windowSize];
 	[m_window center];
 }
@@ -1155,33 +1205,28 @@ static ApplicationController* appCtrl;
 		return;
 	}
 
-	m_fullscreen = fullscreen;
-	m_width      = width;
-	m_height     = height;
-	m_hiDPI      = hiDPI;
-
 	[self initializeOpenGL];
 
 	if (IsHiDPISupported())
 	{
 		NSOpenGLView* const glView = [m_window contentView];
-		[glView setWantsBestResolutionOpenGLSurface:m_hiDPI];
+		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 	}
 
-	if (m_fullscreen)
+	if (fullscreen)
 	{
-		[self switchToFullscreen];
+		[self setFullscreenModeWidth:width height:height];
 	}
 	else
 	{
-		[self switchToWindowed];
+		[self setWindowedModeWidth:width height:height];
 	}
 
 	rbOpts.dirty = true;
 
 	const NSSize viewSize = GetRealContentViewSize(m_window);
 	
-	glViewport(0, 0, viewSize.width, viewSize.height);
+	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -1194,7 +1239,12 @@ static ApplicationController* appCtrl;
 	if (![m_window isKeyWindow])
 	{
 		[m_window makeKeyAndOrderFront:nil];
-	}	
+	}
+
+	m_fullscreen = fullscreen;
+	m_width      = width;
+	m_height     = height;
+	m_hiDPI      = hiDPI;
 }
 
 - (void)useHiDPI:(bool)hiDPI
@@ -1319,6 +1369,31 @@ static ApplicationController* appCtrl;
 	{
 		[m_window orderOut:nil];
 	}
+}
+
+
+- (void)setWindowStyleMask:(NSUInteger)styleMask
+{
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+	[m_window setStyleMask:styleMask];
+#else // 10.5 or earlier
+	// Before 10.6 it's impossible to change window's style mask
+	// To workaround this new window should be created with required style mask
+
+	FullscreenWindow* tempWindow = [self createWindow:styleMask];
+	[tempWindow setContentView:[m_window contentView]];
+
+	[m_window close];
+	m_window = tempWindow;
+#endif // 10.6 or higher
+}
+
+
+- (void)closeWindow:(id)sender
+{
+    I_ShutdownJoysticks();
+
+    [NSApp terminate:sender];
 }
 
 @end

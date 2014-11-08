@@ -1212,7 +1212,7 @@ endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 if( APPLE )
 	set_target_properties(zdoom PROPERTIES
-		LINK_FLAGS "-framework Cocoa -framework IOKit -framework OpenGL"
+		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cocoa/zdoom-info.plist" )
 
 	# Fix fmod link so that it can be found in the app bundle.

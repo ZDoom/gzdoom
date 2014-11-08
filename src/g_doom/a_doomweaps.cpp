@@ -609,9 +609,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 			damage = defdamage;
 		}
 
+		int dmgFlagPass = 0;
+		dmgFlagPass += (spray != NULL && (spray->flags3 & MF3_FOILINVUL)) ? DMG_FOILINVUL : 0; //[MC]Because the original foilinvul wasn't working.
+		dmgFlagPass += (spray != NULL && (spray->flags7 & MF7_FOILBUDDHA)) ? DMG_FOILBUDDHA : 0;
 		thingToHit = linetarget;
 		int newdam = P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash), 
-			spray != NULL && (spray->flags3 & MF3_FOILINVUL)? DMG_FOILINVUL : 0);
+			dmgFlagPass);
 		P_TraceBleed (newdam > 0 ? newdam : damage, thingToHit, self->target);
 	}
 }

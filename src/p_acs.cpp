@@ -2892,7 +2892,7 @@ void DACSThinker::Serialize (FArchive &arc)
 		{
 			DLevelScript *script;
 			script = Scripts;
-			while (true)
+			while (script)
 			{
 				scriptcount++;
 
@@ -2914,6 +2914,8 @@ void DACSThinker::Serialize (FArchive &arc)
 			// We are running through this list backwards, so the next entry is the last processed
 			DLevelScript *next = NULL;
 			arc << scriptcount;
+			Scripts = NULL;
+			LastScript = NULL;
 			for (int i = 0; i < scriptcount; i++)
 			{
 				arc << Scripts;

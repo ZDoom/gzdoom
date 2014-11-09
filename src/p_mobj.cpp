@@ -3228,7 +3228,7 @@ void AActor::Tick ()
 			}
 		}
 
-		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
+		if (bglobal.botnum && !demoplayback &&
 			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
 		{
 			BotSupportCycles.Clock();

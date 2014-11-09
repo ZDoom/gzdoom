@@ -691,9 +691,6 @@ void PlayerIsGone (int netnode, int netconsole)
 
 	if (netconsole == Net_Arbitrator)
 	{
-		bglobal.RemoveAllBots(true);
-		Printf("Removed all bots\n");
-
 		// Pick a new network arbitrator
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{
@@ -824,7 +821,6 @@ void GetPackets (void)
 		}
 
 		if (netbuffer[0] & NCMD_QUITTERS)
-
 		{
 			numplayers = netbuffer[k++];
 			for (int i = 0; i < numplayers; ++i)
@@ -902,60 +898,14 @@ void GetPackets (void)
 
 			for (i = 0; i < numplayers; ++i)
 			{
-				int node = (players[playerbytes[i]].Bot == NULL) ?
-					nodeforplayer[playerbytes[i]] : netnode;
+				int node = nodeforplayer[playerbytes[i]];
 
 				SkipTicCmd (&start, nettics[node] - realstart);
 				for (tics = nettics[node]; tics < realend; tics++)
 					ReadTicCmd (&start, playerbytes[i], tics);
-			}
-			// Update the number of tics received from each node. This must
-			// be separate from the above loop in case the master is also
-			// sending bot movements. If it's not separate, then the bots
-			// will only move on the master, because the other players will
-			// read the master's tics and then think they already got all
-			// the tics for the bots and skip the bot tics included in the
-			// packet.
-			for (i = 0; i < numplayers; ++i)
-			{
-				if (players[playerbytes[i]].Bot == NULL)
-				{
-					nettics[nodeforplayer[playerbytes[i]]] = realend;
-				}
-			}
-		}
-	}
-}
 
-void AdjustBots (int gameticdiv)
-{
-	// [RH] This loop adjusts the bots' rotations for ticcmds that have
-	// been already created but not yet executed. This way, the bot is still
-	// able to create ticcmds that accurately reflect the state it wants to
-	// be in even when gametic lags behind maketic.
-	for (int i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i] && players[i].Bot != NULL && players[i].mo)
-		{
-			players[i].Bot->savedyaw = players[i].mo->angle;
-			players[i].Bot->savedpitch = players[i].mo->pitch;
-			for (int j = gameticdiv; j < maketic/ticdup; j++)
-			{
-				players[i].mo->angle += (netcmds[i][j%BACKUPTICS].ucmd.yaw << 16) * ticdup;
-				players[i].mo->pitch -= (netcmds[i][j%BACKUPTICS].ucmd.pitch << 16) * ticdup;
+				nettics[nodeforplayer[playerbytes[i]]] = realend;
 			}
-		}
-	}
-}
-
-void UnadjustBots ()
-{
-	for (int i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i] && players[i].Bot != NULL && players[i].mo)
-		{
-			players[i].mo->angle = players[i].Bot->savedyaw;
-			players[i].mo->pitch = players[i].Bot->savedpitch;
 		}
 	}
 }
@@ -1006,9 +956,7 @@ void NetUpdate (void)
 		newtics = 0;
 	}
 
-	// build new ticcmds for console player (and bots if I am the arbitrator)
-	AdjustBots (gametic / ticdup);
-
+	// build new ticcmds for console player
 	for (i = 0; i < newtics; i++)
 	{
 		I_StartTic ();
@@ -1018,11 +966,6 @@ void NetUpdate (void)
 		
 		//Printf ("mk:%i ",maketic);
 		G_BuildTiccmd (&localcmds[maketic % LOCALCMDTICS]);
-		if (maketic % ticdup == 0)
-		{
-			//Added by MC: For some of that bot stuff. The main bot function.
-			bglobal.Main ((maketic / ticdup) % BACKUPTICS);
-		}
 		maketic++;
 
 		if (ticdup == 1 || maketic == 0)
@@ -1102,8 +1045,6 @@ void NetUpdate (void)
 		}
 	}
 
-	UnadjustBots ();
-
 	if (singletics)
 		return; 		// singletic update is synchronous
 
@@ -1123,14 +1064,11 @@ void NetUpdate (void)
 
 	if (consoleplayer == Net_Arbitrator)
 	{
-		for (j = 0; j < MAXPLAYERS; j++)
+		for (j = 0; j < doomcom.numnodes; j++)
 		{
-			if (playeringame[j])
+			if (nodeingame[j] && NetMode == NET_PacketServer)
 			{
-				if (players[j].Bot != NULL || NetMode == NET_PacketServer)
-				{
-					count++;
-				}
+				count++;
 			}
 		}
 
@@ -1265,15 +1203,12 @@ void NetUpdate (void)
 				netbuffer[0] |= NCMD_MULTI;
 				netbuffer[k++] = count;
 
-				for (l = 1, j = 0; j < MAXPLAYERS; j++)
+				for (l = 1, j = 0; j < doomcom.numnodes; j++)
 				{
-					if (playeringame[j] && j != playerfornode[i] && j != consoleplayer)
+					if (nodeingame[j] && j != i && j != nodeforplayer[consoleplayer] && NetMode == NET_PacketServer)
 					{
-						if (players[j].Bot != NULL || NetMode == NET_PacketServer)
-						{
-							playerbytes[l++] = j;
-							netbuffer[k++] = j;
-						}
+						playerbytes[l++] = playerfornode[j];
+						netbuffer[k++] = playerfornode[j];
 					}
 				}
 			}
@@ -1293,7 +1228,7 @@ void NetUpdate (void)
 					prev %= BACKUPTICS;
 
 					// The local player has their tics sent first, followed by
-					// the other players/bots.
+					// the other players.
 					if (l == 0)
 					{
 						WriteWord (localcmds[localstart].consistancy, &cmddata);
@@ -1308,23 +1243,17 @@ void NetUpdate (void)
 					}
 					else if (i != 0)
 					{
-						if (players[playerbytes[l]].Bot != NULL)
-						{
-							WriteWord (0, &cmddata);	// fake consistancy word
-						}
-						else
-						{
-							int len;
-							BYTE *spec;
+						int len;
+						BYTE *spec;
 
-							WriteWord (netcmds[playerbytes[l]][start].consistancy, &cmddata);
-							spec = NetSpecs[playerbytes[l]][start].GetData (&len);
-							if (spec != NULL)
-							{
-								memcpy (cmddata, spec, len);
-								cmddata += len;
-							}
+						WriteWord (netcmds[playerbytes[l]][start].consistancy, &cmddata);
+						spec = NetSpecs[playerbytes[l]][start].GetData (&len);
+						if (spec != NULL)
+						{
+							memcpy (cmddata, spec, len);
+							cmddata += len;
 						}
+
 						WriteUserCmdMessage (&netcmds[playerbytes[l]][start].ucmd,
 							prev >= 0 ? &netcmds[playerbytes[l]][prev].ucmd : NULL, &cmddata);
 					}

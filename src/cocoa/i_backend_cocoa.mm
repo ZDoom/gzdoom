@@ -1539,6 +1539,8 @@ bool I_SetCursor(FTexture* cursorpic)
 		// Load bitmap data to representation
 		
 		BYTE* buffer = [bitmapImageRep bitmapData];
+		memset(buffer, 0, imagePitch * imageHeight);
+
 		FBitmap bitmap(buffer, imagePitch, imageWidth, imageHeight);
 		cursorpic->CopyTrueColorPixels(&bitmap, 0, 0);
 		

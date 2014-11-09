@@ -2881,9 +2881,57 @@ DACSThinker::~DACSThinker ()
 void DACSThinker::Serialize (FArchive &arc)
 {
 	int scriptnum;
+	int scriptcount = 0;
 
 	Super::Serialize (arc);
-	arc << Scripts << LastScript;
+	if (SaveVersion < 4515)
+		arc << Scripts << LastScript;
+	else
+	{
+		if (arc.IsStoring())
+		{
+			DLevelScript *script;
+			script = Scripts;
+			while (script)
+			{
+				scriptcount++;
+
+				// We want to store this list backwards, so we can't loose the last pointer
+				if (script->next == NULL)
+					break;
+				script = script->next;
+			}
+			arc << scriptcount;
+
+			while (script)
+			{
+				arc << script;
+				script = script->prev;
+			}
+		}
+		else
+		{
+			// We are running through this list backwards, so the next entry is the last processed
+			DLevelScript *next = NULL;
+			arc << scriptcount;
+			Scripts = NULL;
+			LastScript = NULL;
+			for (int i = 0; i < scriptcount; i++)
+			{
+				arc << Scripts;
+
+				Scripts->next = next;
+				Scripts->prev = NULL;
+				if (next != NULL)
+					next->prev = Scripts;
+
+				next = Scripts;
+
+				if (i == 0)
+					LastScript = Scripts;
+			}
+		}
+	}
 	if (arc.IsStoring ())
 	{
 		ScriptMap::Iterator it(RunningScripts);
@@ -2969,7 +3017,8 @@ void DLevelScript::Serialize (FArchive &arc)
 	DWORD i;
 
 	Super::Serialize (arc);
-	arc << next << prev;
+	if (SaveVersion < 4515)
+		arc << next << prev;
 
 	P_SerializeACSScriptNumber(arc, script, false);
 

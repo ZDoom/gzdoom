@@ -125,7 +125,7 @@ public:
 	void DoDraw(int pass, int index, bool trans);
 	void DoDrawSorted(SortNode * node);
 	void DrawSorted();
-	void Draw(int pass);
+	void Draw(int pass, bool trans = false);
 	void DrawWalls(int pass);
 	void DrawFlats(int pass);
 	void DrawDecals();

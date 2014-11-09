@@ -771,11 +771,11 @@ void GLDrawList::DrawSorted()
 //
 //
 //==========================================================================
-void GLDrawList::Draw(int pass)
+void GLDrawList::Draw(int pass, bool trans)
 {
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		DoDraw(pass, i, false);
+		DoDraw(pass, i, trans);
 	}
 }
 

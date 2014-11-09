@@ -3783,6 +3783,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 
 //===========================================================================
 //
+// [TP] A_FaceConsolePlayer
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_FaceConsolePlayer) {
+	ACTION_PARAM_START (1);
+	ACTION_PARAM_ANGLE (MaxTurnAngle, 0);
+	// NOTE: It does nothing for zdoom.
+}
+
+//===========================================================================
+//
 // A_MonsterRefire
 //
 // Keep firing unless target got out of sight
@@ -4678,7 +4689,7 @@ enum RadiusGiveFlags
 	RGF_OBJECTS		=   1 << 3,
 	RGF_VOODOO		=	1 << 4,
 	RGF_CORPSES		=	1 << 5,
-	RGF_MASK		=	63,
+	RGF_MASK		=	2111,
 	RGF_NOTARGET	=	1 << 6,
 	RGF_NOTRACER	=	1 << 7,
 	RGF_NOMASTER	=	1 << 8,

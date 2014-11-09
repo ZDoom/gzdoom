@@ -1127,6 +1127,12 @@ void G_Ticker ()
 	// check, not just the player's x position like BOOM.
 	DWORD rngsum = FRandom::StaticSumSeeds ();
 
+	if ((gametic % ticdup) == 0)
+	{
+		//Added by MC: For some of that bot stuff. The main bot function.
+		bglobal.Main (buf);
+	}
+
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])

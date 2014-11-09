@@ -30,8 +30,6 @@ DBot::DBot ()
 
 void DBot::Clear ()
 {
-	savedyaw = 0;
-	savedpitch = 0;
 	angle = 0;
 	dest = NULL;
 	prev = NULL;
@@ -59,9 +57,15 @@ void DBot::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 
-	arc << savedyaw
-		<< savedpitch
-		<< angle
+	if (SaveVersion < 4515)
+	{
+		angle_t savedyaw;
+		int savedpitch;
+		arc << savedyaw
+			<< savedpitch;
+	}
+
+	arc << angle
 		<< dest
 		<< prev
 		<< enemy

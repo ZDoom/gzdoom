@@ -975,25 +975,6 @@ void D_DoomLoop ()
 				I_StartTic ();
 				D_ProcessEvents ();
 				G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
-				//Added by MC: For some of that bot stuff. The main bot function.
-				int i;
-				for (i = 0; i < MAXPLAYERS; i++)
-				{
-					if (playeringame[i] && players[i].Bot != NULL && players[i].mo)
-					{
-						players[i].Bot->savedyaw = players[i].mo->angle;
-						players[i].Bot->savedpitch = players[i].mo->pitch;
-					}
-				}
-				bglobal.Main (maketic%BACKUPTICS);
-				for (i = 0; i < MAXPLAYERS; i++)
-				{
-					if (playeringame[i] && players[i].Bot != NULL && players[i].mo)
-					{
-						players[i].mo->angle = players[i].Bot->savedyaw;
-						players[i].mo->pitch = players[i].Bot->savedpitch;
-					}
-				}
 				if (advancedemo)
 					D_DoAdvanceDemo ();
 				C_Ticker ();

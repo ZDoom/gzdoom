@@ -606,7 +606,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		player->respawn_time = level.time + TICRATE;
 
 		//Added by MC: Respawn bots
-		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback)
+		if (bglobal.botnum && !demoplayback)
 		{
 			if (player->Bot != NULL)
 				player->Bot->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;

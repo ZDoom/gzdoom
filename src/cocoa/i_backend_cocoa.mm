@@ -1955,39 +1955,8 @@ int SDL_SetPalette(SDL_Surface* surface, int flags, SDL_Color* colors, int first
 #undef main
 #endif // main
 
-static void CheckOSVersion()
-{
-	static const char* const PARAMETER_NAME = "kern.osrelease";
-
-	size_t size = 0;
-
-    if (-1 == sysctlbyname(PARAMETER_NAME, NULL, &size, NULL, 0))
-	{
-		return;
-	}
-
-    char* version = static_cast<char* >(alloca(size));
-
-    if (-1 == sysctlbyname(PARAMETER_NAME, version, &size, NULL, 0))
-	{
-		return;
-	}
-
-	if (strcmp(version, "10.0") < 0)
-	{
-		CFOptionFlags responseFlags;
-		CFUserNotificationDisplayAlert(0, kCFUserNotificationStopAlertLevel, NULL, NULL, NULL,
-			CFSTR("Unsupported version of OS X"), CFSTR("You need OS X 10.6 or higher running on Intel platform in order to play."),
-			NULL, NULL, NULL, &responseFlags);
-
-		exit(EXIT_FAILURE);
-	}
-}
-
 int main(int argc, char** argv)
 {
-	CheckOSVersion();
-
 	gettimeofday(&s_startTicks, NULL);
 
 	for (int i = 0; i <= argc; ++i)

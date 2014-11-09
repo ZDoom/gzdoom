@@ -102,7 +102,7 @@ void FCajunMaster::Main (int buf)
 
 	BotThinkCycles.Reset();
 
-	if (consoleplayer != Net_Arbitrator || demoplayback)
+	if (demoplayback)
 		return;
 
 	if (gamestate != GS_LEVEL)
@@ -122,37 +122,40 @@ void FCajunMaster::Main (int buf)
 		BotThinkCycles.Unclock();
 	}
 
-	//Add new bots?
-	if (wanted_botnum > botnum && !freeze)
+	if (consoleplayer == Net_Arbitrator)
 	{
-		if (t_join == ((wanted_botnum - botnum) * SPAWN_DELAY))
+		//Add new bots?
+		if (wanted_botnum > botnum && !freeze)
 		{
-            if (!SpawnBot (getspawned[spawn_tries]))
-				wanted_botnum--;
-            spawn_tries++;
+			if (t_join == ((wanted_botnum - botnum) * SPAWN_DELAY))
+			{
+				if (!SpawnBot (getspawned[spawn_tries]))
+					wanted_botnum--;
+				spawn_tries++;
+			}
+
+			t_join--;
 		}
 
-		t_join--;
-	}
-
-	//Check if player should go observer. Or un observe
-	if (bot_observer && !observer && !netgame)
-	{
-		Printf ("%s is now observer\n", players[consoleplayer].userinfo.GetName());
-		observer = true;
-		players[consoleplayer].mo->UnlinkFromWorld ();
-		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY|MF_FRIENDLY;
-		players[consoleplayer].mo->flags2 |= MF2_FLY;
-		players[consoleplayer].mo->LinkToWorld ();
-	}
-	else if (!bot_observer && observer && !netgame) //Go back
-	{
-		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.GetName());
-		observer = false;
-		players[consoleplayer].mo->UnlinkFromWorld ();
-		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY;
-		players[consoleplayer].mo->flags2 &= ~MF2_FLY;
-		players[consoleplayer].mo->LinkToWorld ();
+		//Check if player should go observer. Or un observe
+		if (bot_observer && !observer && !netgame)
+		{
+			Printf ("%s is now observer\n", players[consoleplayer].userinfo.GetName());
+			observer = true;
+			players[consoleplayer].mo->UnlinkFromWorld ();
+			players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY|MF_FRIENDLY;
+			players[consoleplayer].mo->flags2 |= MF2_FLY;
+			players[consoleplayer].mo->LinkToWorld ();
+		}
+		else if (!bot_observer && observer && !netgame) //Go back
+		{
+			Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.GetName());
+			observer = false;
+			players[consoleplayer].mo->UnlinkFromWorld ();
+			players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY;
+			players[consoleplayer].mo->flags2 &= ~MF2_FLY;
+			players[consoleplayer].mo->LinkToWorld ();
+		}
 	}
 
 	m_Thinking = false;
@@ -348,11 +351,8 @@ void FCajunMaster::TryAddBot (BYTE **stream, int player)
 
 	if (DoAddBot ((BYTE *)info, skill))
 	{
-		if (consoleplayer == Net_Arbitrator)
-		{
-			//Increment this.
-			botnum++;
-		}
+		//Increment this.
+		botnum++;
 
 		if (thebot != NULL)
 		{

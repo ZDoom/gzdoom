@@ -561,6 +561,11 @@ int PrintString (int printlevel, const char *outline)
 			maybedrawnow (false, false);
 		}
 	}
+	else if (Logfile != NULL)
+	{
+		fputs (outline, Logfile);
+		fflush (Logfile);
+	}
 	return (int)strlen (outline);
 }
 

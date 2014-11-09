@@ -1000,7 +1000,11 @@ static ApplicationController* appCtrl;
 
 - (void)setStyleMask:(NSUInteger)styleMask
 {
-	[appCtrl setWindowStyleMask:styleMask];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+    [super setStyleMask:styleMask];
+#else // 10.5 or earlier
+    [appCtrl setWindowStyleMask:styleMask];
+#endif // 10.6 or higher
 }
 
 @end
@@ -1455,18 +1459,15 @@ static ApplicationController* appCtrl;
 
 - (void)setWindowStyleMask:(NSUInteger)styleMask
 {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-	[m_window setStyleMask:styleMask];
-#else // 10.5 or earlier
 	// Before 10.6 it's impossible to change window's style mask
 	// To workaround this new window should be created with required style mask
+    // This method should not be called when building for Snow Leopard or newer
 
 	FullscreenWindow* tempWindow = [self createWindow:styleMask];
 	[tempWindow setContentView:[m_window contentView]];
 
 	[m_window close];
 	m_window = tempWindow;
-#endif // 10.6 or higher
 }
 
 

@@ -33,6 +33,8 @@
 
 #include "m_joy.h"
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1050
+
 #include "HID_Utilities_External.h"
 
 #include "d_event.h"
@@ -774,3 +776,37 @@ void I_ProcessJoysticks()
 		s_joystickManager->Update();
 	}
 }
+
+#else // prior to 10.5
+
+void I_StartupJoysticks()
+{
+}
+
+void I_ShutdownJoysticks()
+{
+}
+
+void I_GetJoysticks(TArray<IJoystickConfig*>& sticks)
+{
+	sticks.Clear();
+}
+
+void I_GetAxes(float axes[NUM_JOYAXIS])
+{
+	for (size_t i = 0; i < NUM_JOYAXIS; ++i)
+	{
+		axes[i] = 0.0f;
+	}
+}
+
+IJoystickConfig *I_UpdateDeviceList()
+{
+	return NULL;
+}
+
+void I_ProcessJoysticks()
+{
+}
+
+#endif // 10.5 or higher

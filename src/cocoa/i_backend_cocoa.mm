@@ -1378,7 +1378,9 @@ static ApplicationController* appCtrl;
 - (void)processEvents:(NSTimer*)timer
 {
 	ZD_UNUSED(timer);
-	
+
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
     while (true)
     {
         NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
@@ -1435,6 +1437,8 @@ static ApplicationController* appCtrl;
 	}
     
     [NSApp updateWindows];
+
+	[pool release];
 }
 
 
@@ -1513,6 +1517,8 @@ void I_SetMainWindowVisible(bool visible)
 
 bool I_SetCursor(FTexture* cursorpic)
 {
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
 	if (NULL == cursorpic || FTexture::TEX_Null == cursorpic->UseType)
 	{
 		s_cursor = [NSCursor arrowCursor];
@@ -1567,7 +1573,9 @@ bool I_SetCursor(FTexture* cursorpic)
 	}
 	
 	[appCtrl invalidateCursorRects];
-	
+
+	[pool release];
+
 	return true;
 }
 

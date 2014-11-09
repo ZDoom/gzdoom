@@ -3783,6 +3783,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 
 //===========================================================================
 //
+// [TP] A_FaceConsolePlayer
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_FaceConsolePlayer) {
+	ACTION_PARAM_START (1);
+	ACTION_PARAM_ANGLE (MaxTurnAngle, 0);
+	// NOTE: It does nothing for zdoom.
+}
+
+//===========================================================================
+//
 // A_MonsterRefire
 //
 // Keep firing unless target got out of sight

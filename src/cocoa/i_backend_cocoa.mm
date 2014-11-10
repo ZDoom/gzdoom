@@ -74,6 +74,14 @@
 // ---------------------------------------------------------------------------
 
 
+#ifndef NSAppKitVersionNumber10_6
+
+@interface NSWindow(SetStyleMask)
+- (void)setStyleMask:(NSUInteger)styleMask;
+@end
+
+#endif // !NSAppKitVersionNumber10_6
+
 #ifndef NSAppKitVersionNumber10_7
 
 @interface NSView(HiDPIStubs)
@@ -95,6 +103,7 @@
 
 RenderBufferOptions rbOpts;
 
+EXTERN_CVAR(Bool, fullscreen)
 EXTERN_CVAR(Bool, vid_hidpi)
 
 CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -266,7 +275,7 @@ void CheckNativeMouse()
 } // unnamed namespace
 
 
-// from iokit_joystick.cpp
+// see cocoa/i_joystick.cpp
 void I_ProcessJoysticks();
 
 
@@ -574,11 +583,9 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 
 bool IsHiDPISupported()
 {
-#ifdef NSAppKitVersionNumber10_7
-	return NSAppKitVersionNumber >= NSAppKitVersionNumber10_7;
-#else // !NSAppKitVersionNumber10_7
-	return false;
-#endif // NSAppKitVersionNumber10_7
+	// The following value shoud be equal to NSAppKitVersionNumber10_7
+	// and it's hard-coded in order to build on earlier SDKs
+	return NSAppKitVersionNumber >= 1138; 
 }
 
 NSSize GetRealContentViewSize(const NSWindow* const window)
@@ -589,7 +596,7 @@ NSSize GetRealContentViewSize(const NSWindow* const window)
 	// TODO: figure out why [NSView frame] returns different values in "fullscreen" and in window
 	// In "fullscreen" the result is multiplied by [NSScreen backingScaleFactor], but not in window
 
-	return (vid_hidpi && NSNormalWindowLevel == [window level])
+	return (vid_hidpi && !fullscreen)
 		? [view convertSizeToBacking:frameSize]
 		: frameSize;
 }
@@ -903,6 +910,15 @@ static ApplicationController* appCtrl;
 
 @implementation FullscreenWindow
 
+static bool s_fullscreenNewAPI;
+
++ (void)initialize
+{
+	// The following value shoud be equal to NSAppKitVersionNumber10_6
+	// and it's hard-coded in order to build on earlier SDKs
+	s_fullscreenNewAPI = NSAppKitVersionNumber >= 1038;
+}
+
 - (bool)canBecomeKeyWindow
 {
 	return true;
@@ -910,27 +926,33 @@ static ApplicationController* appCtrl;
 
 - (void)setLevel:(NSInteger)level
 {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-	[super setLevel:level];
-#else // 10.5 or earlier
-	// Old Carbon-based way to make fullscreen window above dock and menu
-	// It's supported on 64-bit, but on 10.6 and later the following is preferred:
-	// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
+	if (s_fullscreenNewAPI)
+	{
+		[super setLevel:level];
+	}
+	else
+	{
+		// Old Carbon-based way to make fullscreen window above dock and menu
+		// It's supported on 64-bit, but on 10.6 and later the following is preferred:
+		// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
 
-	const SystemUIMode mode = LEVEL_FULLSCREEN == level
-		? kUIModeAllHidden
-		: kUIModeNormal;
-	SetSystemUIMode(mode, 0);
-#endif // 10.6 or higher
+		const SystemUIMode mode = LEVEL_FULLSCREEN == level
+			? kUIModeAllHidden
+			: kUIModeNormal;
+		SetSystemUIMode(mode, 0);
+	}
 }
 
 - (void)setStyleMask:(NSUInteger)styleMask
 {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-    [super setStyleMask:styleMask];
-#else // 10.5 or earlier
-    [appCtrl setWindowStyleMask:styleMask];
-#endif // 10.6 or higher
+	if (s_fullscreenNewAPI)
+	{
+		[super setStyleMask:styleMask];
+	}
+	else
+	{
+		[appCtrl setWindowStyleMask:styleMask];
+	}
 }
 
 @end

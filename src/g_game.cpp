@@ -141,6 +141,7 @@ gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
 
 int 			paused;
+bool			pauseext;
 bool 			sendpause;				// send a pause event next tic 
 bool			sendsave;				// send a save event next tic 
 bool			sendturn180;			// [RH] send a 180 degree turn next tic
@@ -1152,13 +1153,13 @@ void G_Ticker ()
 			// If the user alt-tabbed away, paused gets set to -1. In this case,
 			// we do not want to read more demo commands until paused is no
 			// longer negative.
-			if (demoplayback && paused >= 0)
+			if (demoplayback)
 			{
 				G_ReadDemoTiccmd (cmd, i);
 			}
 			else
 			{
-				memcpy (cmd, newcmd, sizeof(ticcmd_t));
+				memcpy(cmd, newcmd, sizeof(ticcmd_t));
 			}
 
 			// check for turbo cheats

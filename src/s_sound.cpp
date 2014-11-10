@@ -1783,20 +1783,12 @@ void S_SetSoundPaused (int state)
 {
 	if (state)
 	{
-		if (paused <= 0)
+		if (paused == 0)
 		{
 			S_ResumeSound(true);
 			if (GSnd != NULL)
 			{
 				GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
-			}
-			if (!netgame
-#ifdef _DEBUG
-				&& !demoplayback
-#endif
-				)
-			{
-				paused = 0;
 			}
 		}
 	}
@@ -1811,15 +1803,15 @@ void S_SetSoundPaused (int state)
 					SoundRenderer::INACTIVE_Complete :
 					SoundRenderer::INACTIVE_Mute);
 			}
-			if (!netgame
-#ifdef _DEBUG
-				&& !demoplayback
-#endif
-				)
-			{
-				paused = -1;
-			}
 		}
+	}
+	if (!netgame
+#ifdef _DEBUG
+		&& !demoplayback
+#endif
+		)
+	{
+		pauseext = !state;
 	}
 }
 

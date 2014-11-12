@@ -43,6 +43,11 @@
 //	Copyright (C) 2009 Apple Inc. All Rights Reserved.
 //	
 //*****************************************************
+
+#include <AvailabilityMacros.h>
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+
 #define LOG_SCORING	0
 
 #include <stdlib.h> // malloc
@@ -917,3 +922,5 @@ int HIDGetElementConfig(HID_info_ptr inHIDInfoPtr, IOHIDDeviceRef *outIOHIDDevic
 		return (inHIDInfoPtr->actionCookie);
 	}
 } // HIDGetElementConfig
+
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1050

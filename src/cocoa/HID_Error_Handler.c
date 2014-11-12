@@ -43,6 +43,11 @@
 //	Copyright (C) 2009 Apple Inc. All Rights Reserved.
 //	
 //*****************************************************
+
+#include <AvailabilityMacros.h>
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+
 #ifdef DEBUG // not used in release
 #if !defined  (kBuildingLibrary)
 #define kVerboseErrors
@@ -99,3 +104,5 @@ void HIDReportError(const char *strError) {
 	}
 #endif // kVerboseErrors
 } // HIDReportError
+
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1050

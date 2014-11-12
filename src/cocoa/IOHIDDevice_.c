@@ -43,6 +43,11 @@
 //	Copyright (C) 2009 Apple Inc. All Rights Reserved.
 //	
 //*****************************************************
+
+#include <AvailabilityMacros.h>
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+
 #pragma mark - includes & imports
 //-----------------------------------------------------
 
@@ -610,3 +615,5 @@ static void IOHIDDevice_SetPtrProperty(IOHIDDeviceRef inIOHIDDeviceRef, CFString
 }   // IOHIDDevice_SetPtrProperty
 
 //*****************************************************
+
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1050

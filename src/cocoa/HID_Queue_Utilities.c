@@ -43,6 +43,11 @@
 //	Copyright (C) 2009 Apple Inc. All Rights Reserved.
 //	
 //*****************************************************
+
+#include <AvailabilityMacros.h>
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+
 #include "HID_Utilities_External.h"
 
 // ==================================
@@ -352,3 +357,5 @@ unsigned char HIDGetEvent(IOHIDDeviceRef inIOHIDDeviceRef, IOHIDValueRef *pIOHID
 	
 	return (false);     // did not get event
 } /* HIDGetEvent */
+
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1050

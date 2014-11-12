@@ -43,6 +43,11 @@
 //	Copyright (C) 2009 Apple Inc. All Rights Reserved.
 //	
 //*****************************************************
+
+#include <AvailabilityMacros.h>
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+
 #include <mach/mach.h>
 #include <mach/mach_error.h>
 
@@ -99,3 +104,5 @@ bool FreeHIDObject(io_service_t inHIDObject) {
 	
 	return (kIOReturnSuccess == kr);
 } // FreeHIDObject
+
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1050

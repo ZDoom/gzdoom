@@ -30,6 +30,7 @@ DBot::DBot ()
 
 void DBot::Clear ()
 {
+	player = NULL;
 	angle = 0;
 	dest = NULL;
 	prev = NULL;
@@ -64,6 +65,10 @@ void DBot::Serialize (FArchive &arc)
 		arc << savedyaw
 			<< savedpitch;
 	}
+	else if (SaveVersion >= 4516)
+	{
+		arc << player;
+	}
 
 	arc << angle
 		<< dest
@@ -86,6 +91,22 @@ void DBot::Serialize (FArchive &arc)
 		<< increase
 		<< oldx
 		<< oldy;
+}
+
+void DBot::Tick ()
+{
+	Super::Tick ();
+
+	if (player->mo == NULL || bglobal.freeze)
+	{
+		return;
+	}
+
+	BotThinkCycles.Clock();
+	bglobal.m_Thinking = true;
+	bglobal.Think (player->mo, &netcmds[player - players][((gametic + 1)/ticdup)%BACKUPTICS]);
+	bglobal.m_Thinking = false;
+	BotThinkCycles.Unclock();
 }
 
 CVAR (Int, bot_next_color, 11, 0)

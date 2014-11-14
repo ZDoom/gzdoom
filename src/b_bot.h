@@ -14,6 +14,7 @@
 #include "d_ticcmd.h"
 #include "r_defs.h"
 #include "a_pickups.h"
+#include "stats.h"
 
 #define FORWARDWALK		0x1900
 #define FORWARDRUN		0x3200
@@ -89,20 +90,22 @@ public:
 	void ClearPlayer (int playernum, bool keepTeam);
 
 	//(B_Game.c)
-	void Main (int buf);
+	void Main ();
 	void Init ();
 	void End();
 	bool SpawnBot (const char *name, int color = NOCOLOR);
-	bool LoadBots ();
-	void ForgetBots ();
 	void TryAddBot (BYTE **stream, int player);
 	void RemoveAllBots (bool fromlist);
-	void DestroyAllBots ();
+	bool LoadBots ();
+	void ForgetBots ();
 
 	//(B_Func.c)
 	bool Check_LOS (AActor *mobj1, AActor *mobj2, angle_t vangle);
+	void StartTravel ();
+	void FinishTravel ();
 
 	//(B_Think.c)
+	void Think (AActor *actor, ticcmd_t *cmd);
 	void WhatToGet (AActor *actor, AActor *item);
 
 	//(B_move.c)
@@ -144,7 +147,6 @@ private:
 	bool SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm);
 
 	//(B_Think.c)
-	void Think (AActor *actor, ticcmd_t *cmd);
 	void ThinkForMove (AActor *actor, ticcmd_t *cmd);
 	void Set_enemy (AActor *actor);
 
@@ -155,16 +157,18 @@ protected:
 	bool	 observer; //Consoleplayer is observer.
 };
 
-class DBot : public DObject
+class DBot : public DThinker
 {
-	DECLARE_CLASS(DBot,DObject)
+	DECLARE_CLASS(DBot,DThinker)
 	HAS_OBJECT_POINTERS
 public:
 	DBot ();
 
 	void Clear ();
 	void Serialize (FArchive &arc);
+	void Tick ();
 
+	player_t	*player;
 	angle_t		angle;		// The wanted angle that the bot try to get every tic.
 							//  (used to get a smooth view movement)
 	TObjPtr<AActor>		dest;		// Move Destination.
@@ -205,6 +209,7 @@ public:
 
 //Externs
 extern FCajunMaster bglobal;
+extern cycle_t BotThinkCycles, BotSupportCycles;
 
 EXTERN_CVAR (Float, bot_flag_return_time)
 EXTERN_CVAR (Int, bot_next_color)

@@ -84,7 +84,6 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern cycle_t BotSupportCycles;
 extern int BotWTG;
 EXTERN_CVAR (Int,  cl_rockettrails)
 
@@ -3043,7 +3042,6 @@ void AActor::Tick ()
 
 
 	AActor *onmo;
-	int i;
 
 	//assert (state != NULL);
 	if (state == NULL)
@@ -3233,35 +3231,36 @@ void AActor::Tick ()
 		{
 			BotSupportCycles.Clock();
 			bglobal.m_Thinking = true;
-			for (i = 0; i < MAXPLAYERS; i++)
-			{
-				if (!playeringame[i] || players[i].Bot == NULL)
-					continue;
 
+			DBot *Bot;
+			TThinkerIterator<DBot> it;
+
+			while ((Bot = it.Next ()) != NULL)
+			{
 				if (flags3 & MF3_ISMONSTER)
 				{
 					if (health > 0
-						&& !players[i].Bot->enemy
-						&& player ? !IsTeammate (players[i].mo) : true
-						&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
-						&& P_CheckSight (players[i].mo, this, SF_SEEPASTBLOCKEVERYTHING))
+						&& !Bot->enemy
+						&& player ? !IsTeammate (Bot->player->mo) : true
+						&& P_AproxDistance (Bot->player->mo->x-x, Bot->player->mo->y-y) < MAX_MONSTER_TARGET_DIST
+						&& P_CheckSight (Bot->player->mo, this, SF_SEEPASTBLOCKEVERYTHING))
 					{ //Probably a monster, so go kill it.
-						players[i].Bot->enemy = this;
+						Bot->enemy = this;
 					}
 				}
 				else if (flags & MF_SPECIAL)
 				{ //Item pickup time
 					//clock (BotWTG);
-					bglobal.WhatToGet (players[i].mo, this);
+					bglobal.WhatToGet (Bot->player->mo, this);
 					//unclock (BotWTG);
 					BotWTG++;
 				}
 				else if (flags & MF_MISSILE)
 				{
-					if (!players[i].Bot->missile && (flags3 & MF3_WARNBOT))
+					if (!Bot->missile && (flags3 & MF3_WARNBOT))
 					{ //warn for incoming missiles.
-						if (target != players[i].mo && bglobal.Check_LOS (players[i].mo, this, ANGLE_90))
-							players[i].Bot->missile = this;
+						if (target != Bot->player->mo && bglobal.Check_LOS (Bot->player->mo, this, ANGLE_90))
+							Bot->missile = this;
 					}
 				}
 			}

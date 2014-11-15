@@ -1375,6 +1375,7 @@ static bool s_fullscreenNewAPI;
 
 		glGenTextures(1, &m_softwareRenderingTexture);
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, m_softwareRenderingTexture);
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

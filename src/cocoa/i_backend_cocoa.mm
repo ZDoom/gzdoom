@@ -119,6 +119,21 @@ enum
 
 #endif // prior to 10.5
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1060
+
+enum
+{
+	NSApplicationActivationPolicyRegular
+};
+
+typedef NSInteger NSApplicationActivationPolicy;
+
+@interface NSApplication(ActivationPolicy)
+- (BOOL)setActivationPolicy:(NSApplicationActivationPolicy)activationPolicy;
+@end
+
+#endif // prior to 10.6
+
 #include <SDL.h>
 
 // Avoid collision between DObject class and Objective-C
@@ -2108,6 +2123,13 @@ int main(int argc, char** argv)
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
 	[NSApplication sharedApplication];
+
+	// The following code isn't mandatory,
+	// but it enables to run the application without a bundle
+	if ([NSApp respondsToSelector:@selector(setActivationPolicy:)])
+	{
+		[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+	}
 
 	CreateMenu();
 

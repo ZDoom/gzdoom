@@ -1975,6 +1975,107 @@ int SDL_SetPalette(SDL_Surface* surface, int flags, SDL_Color* colors, int first
 	
 } // extern "C"
 
+
+namespace
+{
+
+NSMenuItem* CreateApplicationMenu()
+{
+	NSMenu* menu = [NSMenu new];
+
+	[menu addItemWithTitle:[@"About " stringByAppendingString:@GAMENAME]
+					   action:@selector(orderFrontStandardAboutPanel:)
+				keyEquivalent:@""];
+	[menu addItem:[NSMenuItem separatorItem]];
+	[menu addItemWithTitle:[@"Hide " stringByAppendingString:@GAMENAME]
+					   action:@selector(hide:)
+				keyEquivalent:@"h"];
+	[[menu addItemWithTitle:@"Hide Others"
+						action:@selector(hideOtherApplications:)
+				 keyEquivalent:@"h"]
+	 setKeyEquivalentModifierMask:NSAlternateKeyMask | NSCommandKeyMask];
+	[menu addItemWithTitle:@"Show All"
+					   action:@selector(unhideAllApplications:)
+				keyEquivalent:@""];
+	[menu addItem:[NSMenuItem separatorItem]];
+	[menu addItemWithTitle:[@"Quit " stringByAppendingString:@GAMENAME]
+					   action:@selector(terminate:)
+				keyEquivalent:@"q"];
+
+	NSMenuItem* menuItem = [NSMenuItem new];
+	[menuItem setSubmenu:menu];
+
+	return menuItem;
+}
+
+NSMenuItem* CreateEditMenu()
+{
+	NSMenu* menu = [[NSMenu alloc] initWithTitle:@"Edit"];
+
+	[menu addItemWithTitle:@"Undo"
+						action:@selector(undo:)
+				 keyEquivalent:@"z"];
+	[menu addItemWithTitle:@"Redo"
+						action:@selector(redo:)
+				 keyEquivalent:@"Z"];
+	[menu addItem:[NSMenuItem separatorItem]];
+	[menu addItemWithTitle:@"Cut"
+						action:@selector(cut:)
+				 keyEquivalent:@"x"];
+	[menu addItemWithTitle:@"Copy"
+						action:@selector(copy:)
+				 keyEquivalent:@"c"];
+	[menu addItemWithTitle:@"Paste"
+						action:@selector(paste:)
+				 keyEquivalent:@"v"];
+	[menu addItemWithTitle:@"Delete"
+						action:@selector(delete:)
+				 keyEquivalent:@""];
+	[menu addItemWithTitle:@"Select All"
+						action:@selector(selectAll:)
+				 keyEquivalent:@"a"];
+
+	NSMenuItem* menuItem = [NSMenuItem new];
+	[menuItem setSubmenu:menu];
+
+	return menuItem;
+}
+
+NSMenuItem* CreateWindowMenu()
+{
+	NSMenu* menu = [[NSMenu alloc] initWithTitle:@"Window"];
+	[NSApp setWindowsMenu:menu];
+
+	[menu addItemWithTitle:@"Minimize"
+					action:@selector(performMiniaturize:)
+			 keyEquivalent:@"m"];
+	[menu addItemWithTitle:@"Zoom"
+					action:@selector(performZoom:)
+			 keyEquivalent:@""];
+	[menu addItem:[NSMenuItem separatorItem]];
+	[menu addItemWithTitle:@"Bring All to Front"
+					action:@selector(arrangeInFront:)
+			 keyEquivalent:@""];
+
+	NSMenuItem* menuItem = [NSMenuItem new];
+	[menuItem setSubmenu:menu];
+
+	return menuItem;
+}
+
+void CreateMenu()
+{
+	NSMenu* menuBar = [NSMenu new];
+	[menuBar addItem:CreateApplicationMenu()];
+	[menuBar addItem:CreateEditMenu()];
+	[menuBar addItem:CreateWindowMenu()];
+
+	[NSApp setMainMenu:menuBar];
+}
+
+} // unnamed namespace
+
+
 #ifdef main
 #undef main
 #endif // main
@@ -2006,7 +2107,12 @@ int main(int argc, char** argv)
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
 	[NSApplication sharedApplication];
-	[NSBundle loadNibNamed:@"zdoom" owner:NSApp];
+
+	// The following line isn't mandatory
+	// but it enables to run without application bundle
+	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+
+	CreateMenu();
 
 	appCtrl = [ApplicationController new];
 	[NSApp setDelegate:appCtrl];

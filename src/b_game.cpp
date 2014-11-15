@@ -170,16 +170,15 @@ void FCajunMaster::Init ()
 //Called on each level exit (from g_game.c).
 void FCajunMaster::End ()
 {
+	int i;
+
 	//Arrange wanted botnum and their names, so they can be spawned next level.
 	getspawned.Clear();
 	if (deathmatch)
 	{
-		DBot *Bot;
-		TThinkerIterator<DBot> it;
-
-		while ((Bot = it.Next ()) != NULL)
+		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			getspawned.Push(Bot->player->userinfo.GetName());
+			getspawned.Push(players[i].userinfo.GetName());
 		}
 
 		wanted_botnum = botnum;
@@ -393,30 +392,31 @@ bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
 
 void FCajunMaster::RemoveAllBots (bool fromlist)
 {
-	DBot *Bot;
-	TThinkerIterator<DBot> it;
-	int i;
+	int i, j;
 
-	while ((Bot = it.Next ()) != NULL)
+	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		// If a player is looking through this bot's eyes, make him
-		// look through his own eyes instead.
-		for (i = 0; i < MAXPLAYERS; ++i)
+		if (players[i].Bot != NULL)
 		{
-			if (Bot->player != &players[i] && playeringame[i] && players[i].Bot == NULL)
+			// If a player is looking through this bot's eyes, make him
+			// look through his own eyes instead.
+			for (j = 0; j < MAXPLAYERS; ++j)
 			{
-				if (players[i].camera == Bot->player->mo)
+				if (i != j && playeringame[j] && players[j].Bot == NULL)
 				{
-					players[i].camera = players[i].mo;
-					if (i == consoleplayer)
+					if (players[j].camera == players[i].mo)
 					{
-						StatusBar->AttachToPlayer (players + i);
+						players[j].camera = players[j].mo;
+						if (j == consoleplayer)
+						{
+							StatusBar->AttachToPlayer (players + j);
+						}
 					}
 				}
 			}
+			ClearPlayer (i, !fromlist);
+			FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, i);
 		}
-		ClearPlayer (Bot->player - players, !fromlist);
-		FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, Bot->player - players);
 	}
 
 	if (fromlist)

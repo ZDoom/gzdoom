@@ -1021,14 +1021,11 @@ void AInventory::Touch (AActor *toucher)
 		P_GiveSecret(toucher, true, true, -1);
 	}
 
-	DBot *Bot;
-	TThinkerIterator<DBot> it;
-
 	//Added by MC: Check if item taken was the roam destination of any bot
-	while ((Bot = it.Next ()) != NULL)
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
-		if (Bot->dest == this)
-			Bot->dest = NULL;
+		if (players[i].Bot != NULL && this == players[i].Bot->dest)
+			players[i].Bot->dest = NULL;
 	}
 }
 

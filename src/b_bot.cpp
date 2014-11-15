@@ -24,6 +24,7 @@ IMPLEMENT_POINTY_CLASS(DBot)
 END_POINTERS
 
 DBot::DBot ()
+: DThinker(STAT_BOT)
 {
 	Clear ();
 }

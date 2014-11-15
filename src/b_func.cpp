@@ -272,12 +272,10 @@ shootmissile:
 
 bool FCajunMaster::IsLeader (player_t *player)
 {
-	DBot *Bot;
-	TThinkerIterator<DBot> it;
-
-	while ((Bot = it.Next ()) != NULL)
+	for (int count = 0; count < MAXPLAYERS; count++)
 	{
-		if (Bot->mate == player->mo)
+		if (players[count].Bot != NULL
+			&& players[count].Bot->mate == player->mo)
 		{
 			return true;
 		}
@@ -557,22 +555,22 @@ bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FChec
 
 void FCajunMaster::StartTravel ()
 {
-	DBot *Bot;
-	TThinkerIterator<DBot> it;
-
-	while ((Bot = it.Next ()) != NULL)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		Bot->ChangeStatNum (STAT_TRAVELLING);
+		if (players[i].Bot != NULL)
+		{
+			players[i].Bot->ChangeStatNum (STAT_TRAVELLING);
+		}
 	}
 }
 
 void FCajunMaster::FinishTravel ()
 {
-	DBot *Bot;
-	TThinkerIterator<DBot> it(STAT_TRAVELLING);
-
-	while ((Bot = it.Next ()) != NULL)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		Bot->ChangeStatNum (STAT_DEFAULT);
+		if (players[i].Bot != NULL)
+		{
+			players[i].Bot->ChangeStatNum (STAT_BOT);
+		}
 	}
 }

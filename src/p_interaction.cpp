@@ -611,17 +611,14 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 			if (player->Bot != NULL)
 				player->Bot->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
 
-			DBot *Bot;
-			TThinkerIterator<DBot> it;
-
 			//Added by MC: Discard enemies.
-			while ((Bot = it.Next ()) != NULL)
+			for (int i = 0; i < MAXPLAYERS; i++)
 			{
-				if (this == Bot->enemy)
+				if (players[i].Bot != NULL && this == players[i].Bot->enemy)
 				{
-					if (Bot->dest ==  Bot->enemy)
-						Bot->dest = NULL;
-					Bot->enemy = NULL;
+					if (players[i].Bot->dest ==  players[i].Bot->enemy)
+						players[i].Bot->dest = NULL;
+					players[i].Bot->enemy = NULL;
 				}
 			}
 

@@ -3695,7 +3695,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 			// [GZ] If MF6_FORCEPAIN is set, we need to call P_DamageMobj even if damage is 0!
 			// Note: The puff may not yet be spawned here so we must check the class defaults, not the actor.
 			int newdam = damage;
-			if (damage || (puffDefaults != NULL && puffDefaults->flags6 & MF6_FORCEPAIN))
+			if (damage || (puffDefaults != NULL && ((puffDefaults->flags6 & MF6_FORCEPAIN) || (puffDefaults->flags7 & MF7_CAUSEPAIN))))
 			{
 				int dmgflags = DMG_INFLICTOR_IS_PUFF | pflag;
 				// Allow MF5_PIERCEARMOR on a weapon as well.

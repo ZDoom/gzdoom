@@ -2108,10 +2108,6 @@ int main(int argc, char** argv)
 
 	[NSApplication sharedApplication];
 
-	// The following line isn't mandatory
-	// but it enables to run without application bundle
-	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-
 	CreateMenu();
 
 	appCtrl = [ApplicationController new];

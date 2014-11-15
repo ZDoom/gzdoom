@@ -1163,6 +1163,8 @@ static bool s_fullscreenNewAPI;
 	
 	// Hide window as nothing will be rendered at this point
 	[m_window orderOut:nil];
+
+	I_ShutdownJoysticks();
 }
 
 
@@ -1186,10 +1188,6 @@ static bool s_fullscreenNewAPI;
 	[window setOpaque:YES];
 	[window makeFirstResponder:self];
 	[window setAcceptsMouseMovedEvents:YES];
-
-	NSButton* closeButton = [window standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(closeWindow:)];
-	[closeButton setTarget:self];
 
 	return window;
 }
@@ -1297,6 +1295,10 @@ static bool s_fullscreenNewAPI;
 
 	[m_window setContentSize:windowSize];
 	[m_window center];
+
+	NSButton* closeButton = [m_window standardWindowButton:NSWindowCloseButton];
+	[closeButton setAction:@selector(terminate:)];
+	[closeButton setTarget:NSApp];
 }
 
 - (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI
@@ -1494,14 +1496,6 @@ static bool s_fullscreenNewAPI;
 
 	[m_window close];
 	m_window = tempWindow;
-}
-
-
-- (void)closeWindow:(id)sender
-{
-    I_ShutdownJoysticks();
-
-    [NSApp terminate:sender];
 }
 
 @end

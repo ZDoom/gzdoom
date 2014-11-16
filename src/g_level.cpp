@@ -1443,12 +1443,14 @@ void G_AirControlChanged ()
 //
 //
 //==========================================================================
+void gl_SerializeGlobals(FArchive &arc);
 
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
 	int i = level.totaltime;
 	
 	Renderer->StartSerialize(arc);
+	gl_SerializeGlobals(arc);
 
 	arc << level.flags
 		<< level.flags2

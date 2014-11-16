@@ -833,15 +833,23 @@ void D_Display ()
 		}
 	}
 	// draw pause pic
-	if (paused && menuactive == MENU_Off)
+	if ((paused || pauseext) && menuactive == MENU_Off)
 	{
 		FTexture *tex;
 		int x;
+		FString pstring = "By ";
 
 		tex = TexMan(gameinfo.PauseSign);
 		x = (SCREENWIDTH - tex->GetScaledWidth() * CleanXfac)/2 +
 			tex->GetScaledLeftOffset() * CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+		if (paused && multiplayer)
+		{
+			pstring += players[paused - 1].userinfo.GetName();
+			screen->DrawText(SmallFont, CR_RED,
+				(screen->GetWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
+				(tex->GetScaledHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+		}
 	}
 
 	// [RH] Draw icon, if any

@@ -82,6 +82,7 @@ enum
 	CP_SETWALLYSCALE,
 	CP_SETTHINGZ,
 	CP_SETTAG,
+	CP_SETTHINGFLAGS,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -318,6 +319,15 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 			}
+			else if (sc.Compare("setthingflags"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETTHINGFLAGS);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
 			else 
 			{
 				sc.UnGet();
@@ -536,6 +546,15 @@ void SetCompatibilityParams()
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
 						sectors[CompatParams[i + 1]].tag = CompatParams[i + 2];
+					}
+					i += 3;
+					break;
+				}
+				case CP_SETTHINGFLAGS:
+				{
+					if ((unsigned)CompatParams[i + 1] < MapThingsConverted.Size())
+					{
+						MapThingsConverted[CompatParams[i + 1]].flags = CompatParams[i + 2];
 					}
 					i += 3;
 					break;

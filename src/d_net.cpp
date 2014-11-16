@@ -939,7 +939,7 @@ void NetUpdate (void)
 	newtics = nowtime - gametime;
 	gametime = nowtime;
 
-	if (newtics <= 0)	// nothing new to update
+	if (newtics <= 0 || pauseext)	// nothing new to update or window paused
 	{
 		GetPackets ();
 		return;

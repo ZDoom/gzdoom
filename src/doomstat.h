@@ -109,6 +109,7 @@ enum EMenuState
 extern	bool			automapactive;	// In AutoMap mode?
 extern	EMenuState		menuactive; 	// Menu overlayed?
 extern	int				paused; 		// Game Pause?
+extern	bool			pauseext;
 
 
 extern	bool			viewactive;

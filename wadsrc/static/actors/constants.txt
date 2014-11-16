@@ -175,6 +175,7 @@ const int CPF_USEAMMO = 1;
 const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
 const int CPF_NORANDOMPUFFZ = 8;
+const int CPF_NOTURN = 16;
 
 // Flags for A_CustomMissile
 const int FPF_AIMATANGLE = 1;

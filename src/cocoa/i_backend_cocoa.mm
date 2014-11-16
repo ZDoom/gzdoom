@@ -2021,6 +2021,11 @@ NSMenuItem* CreateApplicationMenu()
 	NSMenuItem* menuItem = [NSMenuItem new];
 	[menuItem setSubmenu:menu];
 
+	if ([NSApp respondsToSelector:@selector(setAppleMenu:)])
+	{
+		[NSApp performSelector:@selector(setAppleMenu:) withObject:menu];
+	}
+
 	return menuItem;
 }
 

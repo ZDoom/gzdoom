@@ -428,7 +428,7 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 			[arguments addObject:currentParameter];
 		}
 
-		wordexp_t expansion;
+		wordexp_t expansion = {};
 
 		if (0 == wordexp([parameters UTF8String], &expansion, 0))
 		{

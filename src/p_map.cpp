@@ -736,8 +736,18 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 		// that to calculate openings
-		SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy) / (1 << 24);
+		// [EP] Use 64 bit integers in order to keep the exact result of the
+		// multiplication, because in the worst case, which is by the map limit
+		// (32767 units, which is 2147418112 in fixed_t notation), the result
+		// would occupy 62 bits (if I consider also the addition with another
+		// and possible 62 bit value, it's 63 bits).
+		// This privilege could not be available if the starting data would be
+		// 64 bit long.
+		// With this, the division is exact as the 32 bit float counterpart,
+		// though I don't know why I had to discard the first 24 bits from the
+		// divisor.
 		SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) + (SQWORD(tm.y - ld->v1->y)*ld->dy));
+		SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy) / (1 << 24);
 		fixed_t r = (fixed_t)(r_num / r_den);
 		/*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
 		ld->frontsector->floorplane.a,

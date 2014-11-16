@@ -736,11 +736,9 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 		// that to calculate openings
-		float dx = (float)ld->dx;
-		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(tm.x - ld->v1->x) * dx +
-			(float)(tm.y - ld->v1->y) * dy) /
-			(dx*dx + dy*dy) * 16777216.f);
+		SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy) / (1 << 24);
+		SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) + (SQWORD(tm.y - ld->v1->y)*ld->dy));
+		fixed_t r = (fixed_t)(r_num / r_den);
 		/*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
 		ld->frontsector->floorplane.a,
 		ld->frontsector->floorplane.b,

@@ -2,6 +2,7 @@
 // Moved from sdl/i_system.cpp
 
 #include <assert.h>
+#include <signal.h>
 #include <sys/time.h>
 
 #include <SDL.h>

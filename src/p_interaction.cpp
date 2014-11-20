@@ -1069,11 +1069,11 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		{
 			int olddam = damage;
 
-			damage = FixedMul(damage, source->DamageMultiply);
 			if (source->Inventory != NULL)
 			{
 				source->Inventory->ModifyDamage(olddam, mod, damage, false);
 			}
+			damage = FixedMul(damage, source->DamageMultiply);
 
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN

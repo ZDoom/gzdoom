@@ -1065,10 +1065,16 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			}
 		}
 		// Handle active damage modifiers (e.g. PowerDamage)
-		if (source != NULL && source->Inventory != NULL)
+		if (source != NULL)
 		{
 			int olddam = damage;
-			source->Inventory->ModifyDamage(olddam, mod, damage, false);
+
+			damage = FixedMul(damage, source->DamageMultiply);
+			if (source->Inventory != NULL)
+			{
+				source->Inventory->ModifyDamage(olddam, mod, damage, false);
+			}
+
 			if (olddam != damage && damage <= 0)
 			{ // Still allow FORCEPAIN
 				if (MustForcePain(target, inflictor))

@@ -19,10 +19,12 @@
 /*
 	Nuked Yamaha YMF262(aka OPL3) emulator.
 	Thanks:
-		MAME Development Team:
+		MAME Development Team(Jarek Burczynski, Tatsuyuki Satoh):
 			Feedback and Rhythm part calculation information.
 		forums.submarine.org.uk(carbon14, opl3):
 			Tremolo and phase generator calculation information.
+		OPLx decapsulated(Matthew Gambrell and Olli Niemitalo):
+			OPL2 ROMs.
 */
 
 //version 1.4.2

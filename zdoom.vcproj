@@ -2632,6 +2632,14 @@
 					RelativePath=".\src\oplsynth\opl_mus_player.h"
 					>
 				</File>
+				<File
+					RelativePath=".\src\oplsynth\nukedopl3.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\nukedopl3.h"
+					>
+				</File>
 				<Filter
 					Name="DOSBox"
 					>

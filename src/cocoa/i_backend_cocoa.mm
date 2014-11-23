@@ -153,6 +153,7 @@ typedef NSInteger NSApplicationActivationPolicy;
 #include "v_video.h"
 #include "version.h"
 #include "i_rbopts.h"
+#include "i_osversion.h"
 
 #undef Class
 
@@ -2094,7 +2095,31 @@ void CreateMenu()
 	[NSApp setMainMenu:menuBar];
 }
 
+DarwinVersion GetDarwinVersion()
+{
+	DarwinVersion result = {};
+
+	int mib[2] = { CTL_KERN, KERN_OSRELEASE };
+	size_t size = 0;
+
+	if (0 == sysctl(mib, 2, NULL, &size, NULL, 0))
+	{
+		char* version = static_cast<char*>(alloca(size));
+
+		if (0 == sysctl(mib, 2, version, &size, NULL, 0))
+		{
+			sscanf(version, "%hu.%hu.%hu",
+				&result.major, &result.minor, &result.bugfix);
+		}
+	}
+
+	return result;
+}
+
 } // unnamed namespace
+
+
+const DarwinVersion darwinVersion = GetDarwinVersion();
 
 
 #ifdef main

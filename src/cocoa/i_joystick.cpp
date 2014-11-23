@@ -37,13 +37,12 @@
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
 
-#include <CoreServices/CoreServices.h>
-
 #include "HID_Utilities_External.h"
 
 #include "d_event.h"
 #include "doomdef.h"
 #include "templates.h"
+#include "i_osversion.h"
 
 
 namespace
@@ -730,16 +729,9 @@ IOKitJoystickManager* s_joystickManager;
 
 void I_StartupJoysticks()
 {
-	SInt32 majorVersion = 0;
-	SInt32 minorVersion = 0;
+	// HID Manager API is available on 10.5 (Darwin 9.x) or newer
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-	Gestalt(gestaltSystemVersionMajor, &majorVersion);
-	Gestalt(gestaltSystemVersionMinor, &minorVersion);
-#pragma clang diagnostic pop
-
-	if (majorVersion >= 10 && minorVersion >= 5)
+	if (darwinVersion.major >= 9)
 	{
 		s_joystickManager = new IOKitJoystickManager;
 	}

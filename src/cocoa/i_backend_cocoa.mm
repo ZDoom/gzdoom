@@ -45,9 +45,39 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+#include <SDL.h>
 
-// Missing definitions for 10.4 and earlier
+// Avoid collision between DObject class and Objective-C
+#define Class ObjectClass
+
+#include "bitmap.h"
+#include "c_console.h"
+#include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_event.h"
+#include "d_gui.h"
+#include "dikeys.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "s_sound.h"
+#include "textures.h"
+#include "v_video.h"
+#include "version.h"
+#include "i_rbopts.h"
+#include "i_osversion.h"
+
+#undef Class
+
+
+#define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
+
+
+// ---------------------------------------------------------------------------
+
+
+// The following definitions are required to build with older OS X SDKs
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
 
 typedef unsigned int NSUInteger;
 typedef          int NSInteger;
@@ -132,47 +162,13 @@ typedef NSInteger NSApplicationActivationPolicy;
 - (BOOL)setActivationPolicy:(NSApplicationActivationPolicy)activationPolicy;
 @end
 
-#endif // prior to 10.6
-
-#include <SDL.h>
-
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
-#include "bitmap.h"
-#include "c_console.h"
-#include "c_dispatch.h"
-#include "cmdlib.h"
-#include "d_event.h"
-#include "d_gui.h"
-#include "dikeys.h"
-#include "doomdef.h"
-#include "doomstat.h"
-#include "s_sound.h"
-#include "textures.h"
-#include "v_video.h"
-#include "version.h"
-#include "i_rbopts.h"
-#include "i_osversion.h"
-
-#undef Class
-
-
-#define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
-
-
-// ---------------------------------------------------------------------------
-
-
-#ifndef NSAppKitVersionNumber10_6
-
 @interface NSWindow(SetStyleMask)
 - (void)setStyleMask:(NSUInteger)styleMask;
 @end
 
-#endif // !NSAppKitVersionNumber10_6
+#endif // prior to 10.6
 
-#ifndef NSAppKitVersionNumber10_7
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 @interface NSView(HiDPIStubs)
 - (NSPoint)convertPointToBacking:(NSPoint)aPoint;
@@ -186,10 +182,11 @@ typedef NSInteger NSApplicationActivationPolicy;
 - (NSRect)convertRectToBacking:(NSRect)aRect;
 @end
 
-#endif // !NSAppKitVersionNumber10_7
+#endif // prior to 10.7
 
 
 // ---------------------------------------------------------------------------
+
 
 RenderBufferOptions rbOpts;
 

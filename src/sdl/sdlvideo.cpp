@@ -15,6 +15,10 @@
 
 #include <SDL.h>
 
+#ifdef __APPLE__
+#include <OpenGL/OpenGL.h>
+#endif // __APPLE__
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -42,6 +46,8 @@ public:
 	bool IsFullscreen ();
 
 	friend class SDLVideo;
+
+	virtual void SetVSync (bool vsync);
 
 private:
 	PalEntry SourcePalette[256];
@@ -75,13 +81,15 @@ struct MiniModeInfo
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern IVideo *Video;
-extern SDL_Surface *cursorSurface;
-extern SDL_Rect cursorBlit;
 extern bool GUICapture;
+
+SDL_Surface *cursorSurface = NULL;
+SDL_Rect cursorBlit = {0, 0, 32, 32};
 
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Bool, vid_vsync)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -326,6 +334,7 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdateColors ();
+	SetVSync (vid_vsync);
 }
 
 SDLFB::~SDLFB ()
@@ -533,6 +542,26 @@ void SDLFB::GetFlashedPalette (PalEntry pal[256])
 bool SDLFB::IsFullscreen ()
 {
 	return (Screen->flags & SDL_FULLSCREEN) != 0;
+}
+
+void SDLFB::SetVSync (bool vsync)
+{
+#ifdef __APPLE__
+	if (CGLContextObj context = CGLGetCurrentContext())
+	{
+		// Apply vsync for native backend only (where OpenGL context is set)
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+		// Inconsistency between 10.4 and 10.5 SDKs:
+		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
+		// So, GLint typedef'ed to long instead of int to workaround this issue
+		typedef long GLint;
+#endif // prior to 10.5
+
+		const GLint value = vsync ? 1 : 0;
+		CGLSetParameter(context, kCGLCPSwapInterval, &value);
+	}
+#endif // __APPLE__
 }
 
 ADD_STAT (blit)

@@ -2636,7 +2636,7 @@ void G_DoPlayDemo (void)
 	{
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
-		M_ReadFile (defdemoname, &demobuffer);
+		M_ReadFileMalloc (defdemoname, &demobuffer);
 	}
 	demo_p = demobuffer;
 

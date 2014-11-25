@@ -405,6 +405,13 @@ enum
 	RMVF_EVERYTHING =		1 << 3,
 };
 
+// Flags for A_Fade*
+enum
+{
+	FTF_REMOVE =	1 << 0,
+	FTF_CLAMP =		1 << 1,
+};
+
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

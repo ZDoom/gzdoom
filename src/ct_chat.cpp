@@ -145,12 +145,20 @@ bool CT_Responder (event_t *ev)
 				CT_BackSpace ();
 				return true;
 			}
+#ifdef __APPLE__
+			else if (ev->data1 == 'C' && (ev->data3 & GKM_META))
+#else // !__APPLE__
 			else if (ev->data1 == 'C' && (ev->data3 & GKM_CTRL))
+#endif // __APPLE__
 			{
 				I_PutInClipboard ((char *)ChatQueue);
 				return true;
 			}
+#ifdef __APPLE__
+			else if (ev->data1 == 'V' && (ev->data3 & GKM_META))
+#else // !__APPLE__
 			else if (ev->data1 == 'V' && (ev->data3 & GKM_CTRL))
+#endif // __APPLE__
 			{
 				CT_PasteChat(I_GetFromClipboard(false));
 			}

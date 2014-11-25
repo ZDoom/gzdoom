@@ -516,7 +516,14 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 					// with the dragon skin bracers.
 					if (damage < 10000)
 					{
+#if __APPLE__ && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__  == 1
+						// -O1 optimizer bug work around. Only needed for
+						// GCC 4.2.1 on OS X for 10.4/10.5 tools compatibility.
+						volatile fixed_t tmp = 300;
+						Slots[i] -= Scale (damage, SlotsIncrement[i], tmp);
+#else
 						Slots[i] -= Scale (damage, SlotsIncrement[i], 300);
+#endif
 						if (Slots[i] < 2*FRACUNIT)
 						{
 							Slots[i] = 0;

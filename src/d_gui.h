@@ -70,7 +70,8 @@ enum GUIKeyModifiers
 	GKM_SHIFT	= 1,
 	GKM_CTRL	= 2,
 	GKM_ALT		= 4,
-	GKM_LBUTTON = 8
+	GKM_META	= 8,
+	GKM_LBUTTON = 16
 };
 
 // Special codes for some GUI keys, including a few real ASCII codes.

@@ -3066,7 +3066,6 @@ void player_t::Serialize (FArchive &arc)
 	if (SaveVersion < 4514 && IsBot)
 	{
 		Bot = new DBot;
-		GC::WriteBarrier (Bot);
 
 		arc	<< Bot->angle
 			<< Bot->dest
@@ -3089,6 +3088,12 @@ void player_t::Serialize (FArchive &arc)
 			<< Bot->oldx
 			<< Bot->oldy;
 	}
+
+	if (SaveVersion < 4516 && Bot != NULL)
+	{
+		Bot->player = this;
+	}
+
 	if (arc.IsLoading ())
 	{
 		// If the player reloaded because they pressed +use after dying, we

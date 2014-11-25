@@ -84,7 +84,6 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern cycle_t BotSupportCycles;
 extern int BotWTG;
 EXTERN_CVAR (Int,  cl_rockettrails)
 
@@ -313,8 +312,16 @@ void AActor::Serialize (FArchive &arc)
 	}
 	arc << lastpush << lastbump
 		<< PainThreshold
-		<< DamageFactor
-		<< WeaveIndexXY << WeaveIndexZ
+		<< DamageFactor;
+	if (SaveVersion >= 4516)
+	{
+		arc << DamageMultiply;
+	}
+	else
+	{
+		DamageMultiply = FRACUNIT;
+	}
+	arc << WeaveIndexXY << WeaveIndexZ
 		<< PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner
 		<< PoisonDamage << PoisonDuration << PoisonPeriod;
 	if (SaveVersion >= 3235)
@@ -3868,6 +3875,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 	if (G_SkillProperty(SKILLP_FastMonsters))
 		actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);
+	actor->DamageMultiply = FRACUNIT;
 
 
 	// set subsector and/or block links

@@ -76,6 +76,69 @@ msecnode_t* sector_list = NULL;		// phares 3/16/98
 
 //==========================================================================
 //
+// GetCoefficientClosestPointInLine24
+//
+// Formula: (dotProduct(ldv1 - tm, ld) << 24) / dotProduct(ld, ld)
+// with: ldv1 = (ld->v1->x, ld->v1->y), tm = (tm.x, tm.y)
+// and ld = (ld->dx, ld->dy)
+// Returns truncated to range [0, 1 << 24].
+//
+//==========================================================================
+
+static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm)
+{
+	// [EP] Use 64 bit integers in order to keep the exact result of the
+	// multiplication, because in the case the vertexes have both the
+	// distance coordinates equal to the map limit (32767 units, which is
+	// 2147418112 in fixed_t notation), the product result would occupy
+	// 62 bits and the sum of two products would occupy 63 bits
+	// in the worst case. If instead the vertexes are very close (1 in
+	// fixed_t notation, which is 1.52587890625e-05 in float notation), the
+	// product and the sum can be 1 in the worst case, which is very tiny.
+
+	SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) +
+					(SQWORD(tm.y - ld->v1->y)*ld->dy));
+
+	// The denominator is always positive. Use this to avoid useless
+	// calculations.
+	SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy);
+
+	if (r_num <= 0) {
+		// [EP] The numerator is less or equal to zero, hence the closest
+		// point on the line is the first vertex. Truncate the result to 0.
+		return 0;
+	}
+
+	if (r_num >= r_den) {
+		// [EP] The division is greater or equal to 1, hence the closest
+		// point on the line is the second vertex. Truncate the result to
+		// 1 << 24.
+		return (1 << 24);
+	}
+
+	// [EP] Deal with the limited bits. The original formula is:
+	// r = (r_num << 24) / r_den,
+	// but r_num might be big enough to make the shift overflow.
+	// Since the numerator can't be saved in a 128bit integer,
+	// the denominator must be right shifted. If the denominator is
+	// less than (1 << 24), there would be a division by zero.
+	// Thanks to the fact that in this code path the denominator is greater
+	// than the numerator, it's possible to avoid this bad situation by
+	// just checking the last 24 bits of the numerator.
+	if ((r_num >> (63-24)) != 0) {
+		// [EP] In fact, if the numerator is greater than
+		// (1 << (63-24)), the denominator must be greater than
+		// (1 << (63-24)), hence the denominator won't be zero after
+		// the right shift by 24 places.
+		return (fixed_t)(r_num/(r_den >> 24));
+	}
+	// [EP] Having the last 24 bits all zero allows right shifting
+	// the numerator by 24 bits.
+	return (fixed_t)((r_num << 24)/r_den);
+}
+
+//==========================================================================
+//
 // PIT_FindFloorCeiling
 //
 // only3d set means to only check against 3D floors and midtexes.
@@ -736,51 +799,8 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 		// that to calculate openings
-		// [EP] Use 64 bit integers in order to keep the exact result of the
-		// multiplication, because in the case the vertexes have both the
-		// distance coordinates equal to the map limit (32767 units, which is
-		// 2147418112 in fixed_t notation), the product result would occupy
-		// 62 bits and the sum of two products would occupy 63 bits
-		// in the worst case. If instead the vertexes are very close (1 in
-		// fixed_t notation, which is 1.52587890625e-05 in float notation), the
-		// product and the sum can be 1 in the worst case, which is very tiny.
-		SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) +
-						(SQWORD(tm.y - ld->v1->y)*ld->dy));
-		// The denominator is always positive. Use this to avoid useless
-		// calculations.
-		SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy);
-		fixed_t r = 0;
-		if (r_num <= 0) {
-			// [EP] The numerator is less or equal to zero, hence the closest
-			// point on the line is the first vertex. Truncate the result to 0.
-			r = 0;
-		} else if (r_num >= r_den) {
-			// [EP] The division is greater or equal to 1, hence the closest
-			// point on the line is the second vertex. Truncate the result to
-			// 1 << 24.
-			r = (1 << 24);
-		} else {
-			// [EP] Deal with the limited bits. The original formula is:
-			// r = (r_num << 24) / r_den,
-			// but r_num might be big enough to make the shift overflow.
-			// Since the numerator can't be saved in a 128bit integer,
-			// the denominator must be right shifted. If the denominator is
-			// less than (1 << 24), there would be a division by zero.
-			// Thanks to the fact that in this code path the denominator is less
-			// than the numerator, it's possible to avoid this bad situation by
-			// just checking the last 24 bits of the numerator.
-			if ((r_num >> (63-24)) != 0) {
-				// [EP] In fact, if the numerator is greater than
-				// (1 << (63-24)), the denominator must be greater than
-				// (1 << (63-24)), hence the denominator won't be zero after
-				// the right shift by 24 places.
-				r = (r_num)/(r_den >> 24);
-			} else {
-				// [EP] Having the last 24 bits all zero allows right shifting
-				// the numerator by 24 bits.
-				r = (r_num << 24)/r_den;
-			}
-		}
+		fixed_t r = GetCoefficientClosestPointInLine24(ld, tm);
+
 		/*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
 		ld->frontsector->floorplane.a,
 		ld->frontsector->floorplane.b,

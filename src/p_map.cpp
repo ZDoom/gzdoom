@@ -132,8 +132,8 @@ static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm
 		// the right shift by 24 places.
 		return (fixed_t)(r_num/(r_den >> 24));
 	}
-	// [EP] Having the last 24 bits all zero allows right shifting
-	// the numerator by 24 bits.
+	// [EP] Having the last 24 bits all zero allows left shifting
+	// the numerator by 24 bits without overflow.
 	return (fixed_t)((r_num << 24)/r_den);
 }
 

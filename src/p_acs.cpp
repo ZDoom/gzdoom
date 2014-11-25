@@ -1581,19 +1581,27 @@ void FBehavior::StaticSerializeModuleStates (FArchive &arc)
 	for (modnum = 0; modnum < StaticModules.Size(); ++modnum)
 	{
 		FBehavior *module = StaticModules[modnum];
+		int ModSize = module->GetDataSize();
 
 		if (arc.IsStoring())
 		{
 			arc.WriteString (module->ModuleName);
+			if (SaveVersion >= 4516) arc << ModSize;
 		}
 		else
 		{
 			char *modname = NULL;
 			arc << modname;
+			if (SaveVersion >= 4516) arc << ModSize;
 			if (stricmp (modname, module->ModuleName) != 0)
 			{
 				delete[] modname;
 				I_Error ("Level was saved with a different set of ACS modules.");
+			}
+			else if (ModSize != module->GetDataSize())
+			{
+				delete[] modname;
+				I_Error("ACS module %s has changed from what was saved. (Have %d bytes, save has %d bytes)", module->ModuleName, module->GetDataSize(), ModSize);
 			}
 			delete[] modname;
 		}

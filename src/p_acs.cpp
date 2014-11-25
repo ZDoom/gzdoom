@@ -3673,6 +3673,7 @@ enum
 	APROP_AttackZOffset	= 40,
 	APROP_StencilColor	= 41,
 	APROP_Friction		= 42,
+	APROP_DamageMultiplier=43,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3862,6 +3863,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->DamageFactor = value;
 		break;
 
+	case APROP_DamageMultiplier:
+		actor->DamageMultiply = value;
+		break;
+
 	case APROP_MasterTID:
 		AActor *other;
 		other = SingleActorFromTID (value, NULL);
@@ -3933,6 +3938,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Speed:		return actor->Speed;
 	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
 	case APROP_DamageFactor:return actor->DamageFactor;
+	case APROP_DamageMultiplier: return actor->DamageMultiply;
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
 							{ // Check for a legacy render style that matches.

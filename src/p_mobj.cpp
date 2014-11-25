@@ -84,7 +84,6 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern cycle_t BotSupportCycles;
 extern int BotWTG;
 EXTERN_CVAR (Int,  cl_rockettrails)
 

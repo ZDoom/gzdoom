@@ -402,7 +402,7 @@ AActor *FCajunMaster::Find_enemy (AActor *bot)
 			&& bot != client->mo)
 		{
 			if (Check_LOS (bot, client->mo, vangle)) //Here's a strange one, when bot is standing still, the P_CheckSight within Check_LOS almost always returns false. tought it should be the same checksight as below but.. (below works) something must be fuckin wierd screded up. 
-			//if(P_CheckSight( bot, players[count].mo))
+			//if(P_CheckSight(bot, players[count].mo))
 			{
 				temp = P_AproxDistance (client->mo->x - bot->x,
 										client->mo->y - bot->y);
@@ -551,4 +551,26 @@ bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FChec
 	bool res = P_CheckPosition (actor, x, y, tm);
 	actor->flags = savedFlags;
 	return res;
+}
+
+void FCajunMaster::StartTravel ()
+{
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (players[i].Bot != NULL)
+		{
+			players[i].Bot->ChangeStatNum (STAT_TRAVELLING);
+		}
+	}
+}
+
+void FCajunMaster::FinishTravel ()
+{
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (players[i].Bot != NULL)
+		{
+			players[i].Bot->ChangeStatNum (STAT_BOT);
+		}
+	}
 }

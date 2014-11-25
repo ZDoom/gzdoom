@@ -9,8 +9,8 @@
 #include "v_palette.h"
 #include "textures.h"
 
-SDL_Surface *cursorSurface = NULL;
-SDL_Rect cursorBlit = {0, 0, 32, 32};
+extern SDL_Surface *cursorSurface;
+extern SDL_Rect cursorBlit;
 
 #ifdef USE_XCURSOR
 // Xlib has its own GC, so don't let it interfere.

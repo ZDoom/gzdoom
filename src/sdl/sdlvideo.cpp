@@ -81,9 +81,10 @@ struct MiniModeInfo
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern IVideo *Video;
-extern SDL_Surface *cursorSurface;
-extern SDL_Rect cursorBlit;
 extern bool GUICapture;
+
+SDL_Surface *cursorSurface = NULL;
+SDL_Rect cursorBlit = {0, 0, 32, 32};
 
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_maxfps)

@@ -1,6 +1,7 @@
 //hq3x filter demo program
 //----------------------------------------------------------
 //Copyright (C) 2003 MaxSt ( maxst@hiend3d.com )
+//Copyright (C) 2012-2014 Alexey Lysiuk
 //
 //This program is free software; you can redistribute it and/or
 //modify it under the terms of the GNU Lesser General Public
@@ -24,105 +25,73 @@ namespace HQnX_asm
 extern int   LUT16to32[65536*2];
 extern int   RGBtoYUV[65536*2];
 
-static const __int64 reg_blank = 0;
-static const __int64 const3    = 0x0003000300030003;
-static const __int64 const7    = 0x0007000700070007;
-static const __int64 treshold  = 0x0000000000300706;
+static const hq_vec const3 = hq_vec::expand(0x0003);
+static const hq_vec const7 = hq_vec::expand(0x0007);
 
 inline void Interp1(unsigned char * pc, int c1, int c2)
 {
   //*((int*)pc) = (c1*3+c2)/4;
-  __asm
-  {
-    mov        eax, pc
-    movd       mm1, c1
-    movd       mm2, c2
-    punpcklbw  mm1, reg_blank
-    punpcklbw  mm2, reg_blank
-    pmullw     mm1, const3
-    paddw      mm1, mm2
-    psrlw      mm1, 2
-    packuswb   mm1, reg_blank
-    movd       [eax], mm1
-  }
+
+  hq_vec result = hq_vec::load(c1);
+
+  result *= const3;
+  result += hq_vec::load(c2);
+  result >> 2;
+
+  result.store(pc);
 }
 
 inline void Interp2(unsigned char * pc, int c1, int c2, int c3)
 {
 //  *((int*)pc) = (c1*2+c2+c3)/4;
-  __asm
-  {
-    mov        eax, pc
-    movd       mm1, c1
-    movd       mm2, c2
-    movd       mm3, c3
-    punpcklbw  mm1, reg_blank
-    punpcklbw  mm2, reg_blank
-    punpcklbw  mm3, reg_blank
-    psllw      mm1, 1
-    paddw      mm1, mm2
-    paddw      mm1, mm3
-    psrlw      mm1, 2
-    packuswb   mm1, reg_blank
-    movd       [eax], mm1
-  }
+
+  hq_vec result = hq_vec::load(c1);
+
+  result << 1;
+  result += hq_vec::load(c2);
+  result += hq_vec::load(c3);
+  result >> 2;
+
+  result.store(pc);
 }
 
 inline void Interp3(unsigned char * pc, int c1, int c2)
 {
   //*((int*)pc) = (c1*7+c2)/8;
-  __asm
-  {
-    mov        eax, pc
-    movd       mm1, c1
-    movd       mm2, c2
-    punpcklbw  mm1, reg_blank
-    punpcklbw  mm2, reg_blank
-    pmullw     mm1, const7
-    paddw      mm1, mm2
-    psrlw      mm1, 3
-    packuswb   mm1, reg_blank
-    movd       [eax], mm1
-  }
+
+  hq_vec result = hq_vec::load(c1);
+
+  result *= const7;
+  result += hq_vec::load(c2);
+  result >> 3;
+
+  result.store(pc);
 }
 
 inline void Interp4(unsigned char * pc, int c1, int c2, int c3)
 {
   //*((int*)pc) = (c1*2+(c2+c3)*7)/16;
-  __asm
-  {
-    mov        eax, pc
-    movd       mm1, c1
-    movd       mm2, c2
-    movd       mm3, c3
-    punpcklbw  mm1, reg_blank
-    punpcklbw  mm2, reg_blank
-    punpcklbw  mm3, reg_blank
-    psllw      mm1, 1
-    paddw      mm2, mm3
-    pmullw     mm2, const7
-    paddw      mm1, mm2
-    psrlw      mm1, 4
-    packuswb   mm1, reg_blank
-    movd       [eax], mm1
-  }
+
+  hq_vec result = hq_vec::load(c2);
+
+  result += hq_vec::load(c3);
+  result *= const7;
+  result += hq_vec::load(c1) << 1;
+  result >> 4;
+
+  result.store(pc);
 }
 
 inline void Interp5(unsigned char * pc, int c1, int c2)
 {
   //*((int*)pc) = (c1+c2)/2;
-  __asm
-  {
-    mov        eax, pc
-    movd       mm1, c1
-    movd       mm2, c2
-    punpcklbw  mm1, reg_blank
-    punpcklbw  mm2, reg_blank
-    paddw      mm1, mm2
-    psrlw      mm1, 1
-    packuswb   mm1, reg_blank
-    movd       [eax], mm1
-  }
+
+  hq_vec result = hq_vec::load(c1);
+
+  result += hq_vec::load(c2);
+  result >> 1;
+
+  result.store(pc);
 }
 
 #define PIXEL00_1M  Interp1(pOut, c[5], c[1]);
@@ -179,7 +148,7 @@ inline void Interp5(unsigned char * pc, int c1, int c2)
 #define PIXEL22_5   Interp5(pOut+BpL+BpL+8, c[6], c[8]);
 #define PIXEL22_C   *((int*)(pOut+BpL+BpL+8)) = c[5];
 
-int Diff(unsigned int w5, unsigned int w1);
+bool Diff(const unsigned int, const unsigned int);
 
 void DLL hq3x_32( int * pIn, unsigned char * pOut, int Xres, int Yres, int BpL )
 {
@@ -3867,7 +3836,7 @@ void DLL hq3x_32( int * pIn, unsigned char * pOut, int Xres, int Yres, int BpL )
     pOut+=BpL;
     pOut+=BpL;
   }
-  __asm emms
+  hq_vec::reset();
 }
 
 

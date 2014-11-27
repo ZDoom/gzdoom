@@ -475,6 +475,7 @@ void GLSkyPortal::DrawContents()
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
 	GLRenderer->SetupView(0, 0, 0, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
@@ -519,5 +520,6 @@ void GLSkyPortal::DrawContents()
 	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
 	gl_RenderState.ApplyMatrices();
 	glset.lightmode = oldlightmode;
+	gl_RenderState.SetDepthClamp(oldClamp);
 }
 

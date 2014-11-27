@@ -90,6 +90,7 @@ void FRenderState::Reset()
 	stSrcBlend = stDstBlend = -1;
 	stBlendEquation = -1;
 	stAlphaThreshold = -1.f;
+	mLastDepthClamp = true;
 }
 
 //==========================================================================

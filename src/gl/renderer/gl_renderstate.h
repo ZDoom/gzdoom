@@ -63,6 +63,7 @@ class FRenderState
 	float mInterpolationFactor;
 	float mClipHeightTop, mClipHeightBottom;
 	float mShaderTimer;
+	bool mLastDepthClamp;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mColor;
@@ -307,6 +308,16 @@ public:
 		{
 			glBlendEquation(eq);
 		}
+	}
+
+	// This wraps the depth clamp setting because we frequently need to read it which OpenGL is not particularly performant at...
+	bool SetDepthClamp(bool on)
+	{
+		bool res = mLastDepthClamp;
+		if (!on) glDisable(GL_DEPTH_CLAMP);
+		else glEnable(GL_DEPTH_CLAMP);
+		mLastDepthClamp = on;
+		return res;
 	}
 
 	void Set2DMode(bool on)

@@ -3761,11 +3761,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 // A_RaiseMaster
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RaiseMaster)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(copy, 0);
+
 	if (self->master != NULL)
 	{
-		P_Thing_Raise(self->master);
+		if (copy)
+			P_Thing_Raise(self->master, self);
+		else
+			P_Thing_Raise(self->master, NULL);
 	}
 }
 
@@ -3774,8 +3780,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 // A_RaiseChildren
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RaiseChildren)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(copy, 0);
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
@@ -3783,7 +3791,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 	{
 		if (mo->master == self)
 		{
-			P_Thing_Raise(mo);
+			if (copy)
+				P_Thing_Raise(mo, self);
+			else
+				P_Thing_Raise(mo, NULL);
 		}
 	}
 }
@@ -3793,8 +3804,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 // A_RaiseSiblings
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RaiseSiblings)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(copy, 0);
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
@@ -3804,7 +3817,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 		{
 			if (mo->master == self->master && mo != self)
 			{
-				P_Thing_Raise(mo);
+				if (copy)
+					P_Thing_Raise(mo, self);
+				else
+					P_Thing_Raise(mo, NULL);
 			}
 		}
 	}

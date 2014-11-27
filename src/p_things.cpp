@@ -412,7 +412,7 @@ void P_RemoveThing(AActor * actor)
 
 }
 
-bool P_Thing_Raise(AActor *thing)
+bool P_Thing_Raise(AActor *thing, AActor *raiser)
 {
 	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
@@ -444,6 +444,12 @@ bool P_Thing_Raise(AActor *thing)
 	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 
 	thing->Revive();
+
+	if (raiser != NULL)
+	{
+		// Let's copy the friendliness of the one who raised it.
+		thing->CopyFriendliness(raiser, false);
+	}
 
 	thing->SetState (RaiseState);
 	return true;

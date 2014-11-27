@@ -171,7 +171,7 @@ bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
 int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
 void	P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add, bool setbob);
 void P_RemoveThing(AActor * actor);
-bool P_Thing_Raise(AActor *thing);
+bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 const PClass *P_GetSpawnableType(int spawnnum);
 

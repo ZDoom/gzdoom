@@ -738,7 +738,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 						lastceilingheight=ff_top;
 					}
 				}
-				if (!(rover->flags&FF_INVERTPLANES))
+				if (!rover->bottom.copied && !(rover->flags&FF_INVERTPLANES))
 				{
 					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));
 					if (ff_bottom<lastceilingheight)
@@ -785,7 +785,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 						lastfloorheight=ff_bottom;
 					}
 				}
-				if (!(rover->flags&FF_INVERTPLANES))
+				if (!rover->top.copied && !(rover->flags&FF_INVERTPLANES))
 				{
 					fixed_t ff_top=rover->top.plane->ZatPoint(CenterSpot(sector));
 					if (ff_top>lastfloorheight)

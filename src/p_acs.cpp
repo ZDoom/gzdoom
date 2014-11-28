@@ -7725,13 +7725,6 @@ scriptwait:
 						AddToConsole (-1, consolecolor);
 						AddToConsole (-1, work);
 						AddToConsole (-1, bar);
-						if (Logfile)
-						{
-							fputs (logbar, Logfile);
-							fputs (work, Logfile);
-							fputs (logbar, Logfile);
-							fflush (Logfile);
-						}
 					}
 				}
 			}

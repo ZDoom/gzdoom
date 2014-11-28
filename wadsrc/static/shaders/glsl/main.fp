@@ -53,7 +53,7 @@ vec4 desaturate(vec4 texel)
 
 vec4 getTexel(vec2 st)
 {
-	vec4 texel = texture2D(tex, st);
+	vec4 texel = texture(tex, st);
 	
 	//
 	// Apply texture modes

@@ -24,47 +24,49 @@ static FRandom pr_botmove ("BotMove");
 
 //This function is called each tic for each bot,
 //so this is what the bot does.
-void FCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
+void DBot::Think ()
 {
+	ticcmd_t *cmd = &netcmds[player - players][((gametic + 1)/ticdup)%BACKUPTICS];
+
 	memset (cmd, 0, sizeof(*cmd));
 
-	if (actor->player->Bot->enemy && actor->player->Bot->enemy->health <= 0)
-		actor->player->Bot->enemy = NULL;
+	if (enemy && enemy->health <= 0)
+		enemy = NULL;
 
-	if (actor->health > 0) //Still alive
+	if (player->mo->health > 0) //Still alive
 	{
 		if (teamplay || !deathmatch)
-			actor->player->Bot->mate = Choose_Mate (actor);
+			mate = Choose_Mate ();
 
-		angle_t oldyaw = actor->angle;
-		int oldpitch = actor->pitch;
+		angle_t oldyaw = player->mo->angle;
+		int oldpitch = player->mo->pitch;
 
-		Set_enemy (actor);
-		ThinkForMove (actor, cmd);
-		TurnToAng (actor);
+		Set_enemy ();
+		ThinkForMove (cmd);
+		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((actor->angle - oldyaw) >> 16) / ticdup;
-		cmd->ucmd.pitch = (short)((oldpitch - actor->pitch) >> 16);
+		cmd->ucmd.yaw = (short)((player->mo->angle - oldyaw) >> 16) / ticdup;
+		cmd->ucmd.pitch = (short)((oldpitch - player->mo->pitch) >> 16);
 		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
 		cmd->ucmd.pitch /= ticdup;
-		actor->angle = oldyaw + (cmd->ucmd.yaw << 16) * ticdup;
-		actor->pitch = oldpitch - (cmd->ucmd.pitch << 16) * ticdup;
+		player->mo->angle = oldyaw + (cmd->ucmd.yaw << 16) * ticdup;
+		player->mo->pitch = oldpitch - (cmd->ucmd.pitch << 16) * ticdup;
 	}
 
-	if (actor->player->Bot->t_active)	actor->player->Bot->t_active--;
-	if (actor->player->Bot->t_strafe)	actor->player->Bot->t_strafe--;
-	if (actor->player->Bot->t_react)	actor->player->Bot->t_react--;
-	if (actor->player->Bot->t_fight)	actor->player->Bot->t_fight--;
-	if (actor->player->Bot->t_rocket)	actor->player->Bot->t_rocket--;
-	if (actor->player->Bot->t_roam)		actor->player->Bot->t_roam--;
+	if (t_active)	t_active--;
+	if (t_strafe)	t_strafe--;
+	if (t_react)	t_react--;
+	if (t_fight)	t_fight--;
+	if (t_rocket)	t_rocket--;
+	if (t_roam)		t_roam--;
 
 	//Respawn ticker
-	if (actor->player->Bot->t_respawn)
+	if (t_respawn)
 	{
-		actor->player->Bot->t_respawn--;
+		t_respawn--;
 	}
-	else if (actor->health <= 0)
+	else if (player->mo->health <= 0)
 	{ // Time to respawn
 		cmd->ucmd.buttons |= BT_USE;
 	}
@@ -72,62 +74,57 @@ void FCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
 
 //how the bot moves.
 //MAIN movement function.
-void FCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
+void DBot::ThinkForMove (ticcmd_t *cmd)
 {
-	player_t *b;
 	fixed_t dist;
 	bool stuck;
 	int r;
 
-	b = actor->player;
-	if (b->Bot == NULL)
-		return;
-
 	stuck = false;
-	dist = b->Bot->dest ? P_AproxDistance(actor->x-b->Bot->dest->x, actor->y-b->Bot->dest->y) : 0;
+	dist = dest ? P_AproxDistance(player->mo->x-dest->x, player->mo->y-dest->y) : 0;
 
-	if (b->Bot->missile &&
-		((!b->Bot->missile->velx || !b->Bot->missile->vely) || !Check_LOS(actor, b->Bot->missile, SHOOTFOV*3/2)))
+	if (missile &&
+		((!missile->velx || !missile->vely) || !Check_LOS(missile, SHOOTFOV*3/2)))
 	{
-		b->Bot->sleft = !b->Bot->sleft;
-		b->Bot->missile = NULL; //Probably ended its travel.
+		sleft = !sleft;
+		missile = NULL; //Probably ended its travel.
 	}
 
-	if (actor->pitch > 0)
-		actor->pitch -= 80;
-	else if (actor->pitch <= -60)
-		actor->pitch += 80;
+	if (player->mo->pitch > 0)
+		player->mo->pitch -= 80;
+	else if (player->mo->pitch <= -60)
+		player->mo->pitch += 80;
 
 	//HOW TO MOVE:
-	if (b->Bot->missile && (P_AproxDistance(actor->x-b->Bot->missile->x, actor->y-b->Bot->missile->y)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.
+	if (missile && (P_AproxDistance(player->mo->x-missile->x, player->mo->y-missile->y)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.
 	{
-		Pitch (actor, b->Bot->missile);
-		actor->player->Bot->angle = R_PointToAngle2(actor->x, actor->y, b->Bot->missile->x, b->Bot->missile->y);
-		cmd->ucmd.sidemove = b->Bot->sleft ? -SIDERUN : SIDERUN;
+		Pitch (missile);
+		angle = R_PointToAngle2(player->mo->x, player->mo->y, missile->x, missile->y);
+		cmd->ucmd.sidemove = sleft ? -SIDERUN : SIDERUN;
 		cmd->ucmd.forwardmove = -FORWARDRUN; //Back IS best.
 
-		if ((P_AproxDistance(actor->x-b->Bot->oldx, actor->y-b->Bot->oldy)<50000)
-			&& b->Bot->t_strafe<=0)
+		if ((P_AproxDistance(player->mo->x-oldx, player->mo->y-oldy)<50000)
+			&& t_strafe<=0)
 		{
-			b->Bot->t_strafe = 5;
-			b->Bot->sleft = !b->Bot->sleft;
+			t_strafe = 5;
+			sleft = !sleft;
 		}
 
 		//If able to see enemy while avoiding missile, still fire at enemy.
-		if (b->Bot->enemy && Check_LOS (actor, b->Bot->enemy, SHOOTFOV)) 
-			Dofire (actor, cmd); //Order bot to fire current weapon
+		if (enemy && Check_LOS (enemy, SHOOTFOV)) 
+			Dofire (cmd); //Order bot to fire current weapon
 	}
-	else if (b->Bot->enemy && P_CheckSight (actor, b->Bot->enemy, 0)) //Fight!
+	else if (enemy && P_CheckSight (player->mo, enemy, 0)) //Fight!
 	{
-		Pitch (actor, b->Bot->enemy);
+		Pitch (enemy);
 
 		//Check if it's more important to get an item than fight.
-		if (b->Bot->dest && (b->Bot->dest->flags&MF_SPECIAL)) //Must be an item, that is close enough.
+		if (dest && (dest->flags&MF_SPECIAL)) //Must be an item, that is close enough.
 		{
-#define is(x) b->Bot->dest->IsKindOf (PClass::FindClass (#x))
+#define is(x) dest->IsKindOf (PClass::FindClass (#x))
 			if (
 				(
-				 (actor->health < b->Bot->skill.isp &&
+				 (player->mo->health < skill.isp &&
 				  (is (Medikit) ||
 				   is (Stimpack) ||
 				   is (Soulsphere) ||
@@ -140,78 +137,78 @@ void FCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 				  is (Megasphere)
 				 ) || 
 				 dist < (GETINCOMBAT/4) ||
-				 (b->ReadyWeapon == NULL || b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)
+				 (player->ReadyWeapon == NULL || player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)
 				)
-				&& (dist < GETINCOMBAT || (b->ReadyWeapon == NULL || b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
-				&& Reachable (actor, b->Bot->dest))
+				&& (dist < GETINCOMBAT || (player->ReadyWeapon == NULL || player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+				&& Reachable (dest))
 #undef is
 			{
 				goto roam; //Pick it up, no matter the situation. All bonuses are nice close up.
 			}
 		}
 
-		b->Bot->dest = NULL; //To let bot turn right
+		dest = NULL; //To let bot turn right
 
-		if (b->ReadyWeapon != NULL && !(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
-			actor->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
+		if (player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+			player->mo->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
-		if (!(b->Bot->enemy->flags3 & MF3_ISMONSTER))
-			b->Bot->t_fight = AFTERTICS;
+		if (!(enemy->flags3 & MF3_ISMONSTER))
+			t_fight = AFTERTICS;
 
-		if (b->Bot->t_strafe <= 0 &&
-			(P_AproxDistance(actor->x-b->Bot->oldx, actor->y-b->Bot->oldy)<50000
+		if (t_strafe <= 0 &&
+			(P_AproxDistance(player->mo->x-oldx, player->mo->y-oldy)<50000
 			|| ((pr_botmove()%30)==10))
 			)
 		{
 			stuck = true;
-			b->Bot->t_strafe = 5;
-			b->Bot->sleft = !b->Bot->sleft;
+			t_strafe = 5;
+			sleft = !sleft;
 		}
 
-		b->Bot->angle = R_PointToAngle2(actor->x, actor->y, b->Bot->enemy->x, b->Bot->enemy->y);
+		angle = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
 
-		if (b->ReadyWeapon == NULL ||
-			P_AproxDistance(actor->x-b->Bot->enemy->x, actor->y-b->Bot->enemy->y) >
-			b->ReadyWeapon->MoveCombatDist)
+		if (player->ReadyWeapon == NULL ||
+			P_AproxDistance(player->mo->x-enemy->x, player->mo->y-enemy->y) >
+			player->ReadyWeapon->MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
-			cmd->ucmd.forwardmove = (b->Bot->enemy->flags3 & MF3_ISMONSTER) ? FORWARDWALK : FORWARDRUN;
+			cmd->ucmd.forwardmove = (enemy->flags3 & MF3_ISMONSTER) ? FORWARDWALK : FORWARDRUN;
 		}
 		else if (!stuck) //Too close, so move away.
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
-			cmd->ucmd.forwardmove = (b->Bot->enemy->flags3 & MF3_ISMONSTER) ? -FORWARDWALK : -FORWARDRUN;
+			cmd->ucmd.forwardmove = (enemy->flags3 & MF3_ISMONSTER) ? -FORWARDWALK : -FORWARDRUN;
 		}
 
 		//Strafing.
-		if (b->Bot->enemy->flags3 & MF3_ISMONSTER) //It's just a monster so take it down cool.
+		if (enemy->flags3 & MF3_ISMONSTER) //It's just a monster so take it down cool.
 		{
-			cmd->ucmd.sidemove = b->Bot->sleft ? -SIDEWALK : SIDEWALK;
+			cmd->ucmd.sidemove = sleft ? -SIDEWALK : SIDEWALK;
 		}
 		else
 		{
-			cmd->ucmd.sidemove = b->Bot->sleft ? -SIDERUN : SIDERUN;
+			cmd->ucmd.sidemove = sleft ? -SIDERUN : SIDERUN;
 		}
-		Dofire (actor, cmd); //Order bot to fire current weapon
+		Dofire (cmd); //Order bot to fire current weapon
 	}
-	else if (b->Bot->mate && !b->Bot->enemy && (!b->Bot->dest || b->Bot->dest==b->Bot->mate)) //Follow mate move.
+	else if (mate && !enemy && (!dest || dest==mate)) //Follow mate move.
 	{
 		fixed_t matedist;
 
-		Pitch (actor, b->Bot->mate);
+		Pitch (mate);
 
-		if (!Reachable (actor, b->Bot->mate))
+		if (!Reachable (mate))
 		{
-			if (b->Bot->mate == b->Bot->dest && pr_botmove.Random() < 32)
+			if (mate == dest && pr_botmove.Random() < 32)
 			{ // [RH] If the mate is the dest, pick a new dest sometimes
-				b->Bot->dest = NULL;
+				dest = NULL;
 			}
 			goto roam;
 		}
 
-		actor->player->Bot->angle = R_PointToAngle2(actor->x, actor->y, b->Bot->mate->x, b->Bot->mate->y);
+		angle = R_PointToAngle2(player->mo->x, player->mo->y, mate->x, mate->y);
 
-		matedist = P_AproxDistance(actor->x - b->Bot->mate->x, actor->y - b->Bot->mate->y);
+		matedist = P_AproxDistance(player->mo->x - mate->x, player->mo->y - mate->y);
 		if (matedist > (FRIEND_DIST*2))
 			cmd->ucmd.forwardmove = FORWARDRUN;
 		else if (matedist > FRIEND_DIST)
@@ -221,42 +218,42 @@ void FCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 	}
 	else //Roam after something.
 	{
-		b->Bot->first_shot = true;
+		first_shot = true;
 
 	/////
 	roam:
 	/////
-		if (b->Bot->enemy && Check_LOS (actor, b->Bot->enemy, SHOOTFOV*3/2)) //If able to see enemy while avoiding missile , still fire at it.
-			Dofire (actor, cmd); //Order bot to fire current weapon
+		if (enemy && Check_LOS (enemy, SHOOTFOV*3/2)) //If able to see enemy while avoiding missile , still fire at it.
+			Dofire (cmd); //Order bot to fire current weapon
 
-		if (b->Bot->dest && !(b->Bot->dest->flags&MF_SPECIAL) && b->Bot->dest->health < 0)
+		if (dest && !(dest->flags&MF_SPECIAL) && dest->health < 0)
 		{ //Roaming after something dead.
-			b->Bot->dest = NULL;
+			dest = NULL;
 		}
 
-		if (b->Bot->dest == NULL)
+		if (dest == NULL)
 		{
-			if (b->Bot->t_fight && b->Bot->enemy) //Enemy/bot has jumped around corner. So what to do?
+			if (t_fight && enemy) //Enemy/bot has jumped around corner. So what to do?
 			{
-				if (b->Bot->enemy->player)
+				if (enemy->player)
 				{
-					if (((b->Bot->enemy->player->ReadyWeapon != NULL && b->Bot->enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) ||
-						(pr_botmove()%100)>b->Bot->skill.isp) && b->ReadyWeapon != NULL && !(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
-						b->Bot->dest = b->Bot->enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
-					else //hide while b->t_fight, but keep view at enemy.
-						b->Bot->angle = R_PointToAngle2(actor->x, actor->y, b->Bot->enemy->x, b->Bot->enemy->y);
+					if (((enemy->player->ReadyWeapon != NULL && enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) ||
+						(pr_botmove()%100)>skill.isp) && player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+						dest = enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
+					else //hide while t_fight, but keep view at enemy.
+						angle = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
 				} //Just a monster, so kill it.
 				else
-					b->Bot->dest = b->Bot->enemy;
+					dest = enemy;
 
-				//VerifFavoritWeapon(actor->player); //Dont know why here.., but it must be here, i know the reason, but not why at this spot, uh.
+				//VerifFavoritWeapon(player); //Dont know why here.., but it must be here, i know the reason, but not why at this spot, uh.
 			}
 			else //Choose a distant target. to get things going.
 			{
 				r = pr_botmove();
 				if (r < 128)
 				{
-					TThinkerIterator<AInventory> it (STAT_INVENTORY, firstthing);
+					TThinkerIterator<AInventory> it (STAT_INVENTORY, bglobal.firstthing);
 					AInventory *item = it.Next();
 
 					if (item != NULL || (item = it.Next()) != NULL)
@@ -271,60 +268,53 @@ void FCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 						{
 							item = it.Next();
 						}
-						firstthing = item;
-						b->Bot->dest = item;
+						bglobal.firstthing = item;
+						dest = item;
 					}
 				}
-				else if (b->Bot->mate && (r < 179 || P_CheckSight(actor, b->Bot->mate)))
+				else if (mate && (r < 179 || P_CheckSight(player->mo, mate)))
 				{
-					b->Bot->dest = b->Bot->mate;
+					dest = mate;
 				}
 				else if ((playeringame[(r&(MAXPLAYERS-1))]) && players[(r&(MAXPLAYERS-1))].mo->health > 0)
 				{
-					b->Bot->dest = players[(r&(MAXPLAYERS-1))].mo; 
+					dest = players[(r&(MAXPLAYERS-1))].mo; 
 				}
 			}
 
-			if (b->Bot->dest)
+			if (dest)
 			{
-				b->Bot->t_roam = MAXROAM;
+				t_roam = MAXROAM;
 			}
 		}
-		if (b->Bot->dest)
+		if (dest)
 		{ //Bot has a target so roam after it.
-			Roam (actor, cmd);
+			Roam (cmd);
 		}
 
 	} //End of movement main part.
 
-	if (!b->Bot->t_roam && b->Bot->dest)
+	if (!t_roam && dest)
 	{
-		b->Bot->prev = b->Bot->dest;
-		b->Bot->dest = NULL;
+		prev = dest;
+		dest = NULL;
 	}
 
-	if (b->Bot->t_fight<(AFTERTICS/2))
-		actor->flags |= MF_DROPOFF;
+	if (t_fight<(AFTERTICS/2))
+		player->mo->flags |= MF_DROPOFF;
 
-	b->Bot->oldx = actor->x;
-	b->Bot->oldy = actor->y;
+	oldx = player->mo->x;
+	oldy = player->mo->y;
 }
 
 //BOT_WhatToGet
 //
 //Determines if the bot will roam after an item or not.
-void FCajunMaster::WhatToGet (AActor *actor, AActor *item)
+void DBot::WhatToGet (AActor *item)
 {
-	player_t *b = actor->player;
-
-	if (b == NULL)
-	{
-		return;
-	}
-
 #define typeis(x) item->IsKindOf (PClass::FindClass (#x))
 	if ((item->renderflags & RF_INVISIBLE) //Under respawn and away.
-		|| item == b->Bot->prev)
+		|| item == prev)
 	{
 		return;
 	}
@@ -338,7 +328,7 @@ void FCajunMaster::WhatToGet (AActor *actor, AActor *item)
 		// FIXME
 		AWeapon *heldWeapon;
 
-		heldWeapon = static_cast<AWeapon *> (b->mo->FindInventory (item->GetClass()));
+		heldWeapon = static_cast<AWeapon *> (player->mo->FindInventory (item->GetClass()));
 		if (heldWeapon != NULL)
 		{
 			if (!weapgiveammo)
@@ -354,39 +344,38 @@ void FCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	{
 		AAmmo *ammo = static_cast<AAmmo *> (item);
 		const PClass *parent = ammo->GetParentAmmo ();
-		AInventory *holdingammo = b->mo->FindInventory (parent);
+		AInventory *holdingammo = player->mo->FindInventory (parent);
 
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)
 		{
 			return;
 		}
 	}
-	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && actor->health >= deh.MaxSoulsphere)
+	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && player->mo->health >= deh.MaxSoulsphere)
 		return;
-	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && actor->health >= deh.MaxHealth /*MAXHEALTH*/)
+	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && player->mo->health >= deh.MaxHealth /*MAXHEALTH*/)
 		return;
 
-	if ((b->Bot->dest == NULL ||
-		!(b->Bot->dest->flags & MF_SPECIAL)/* ||
-		!Reachable (actor, b->dest)*/)/* &&
-		Reachable (actor, item)*/)	// Calling Reachable slows this down tremendously
+	if ((dest == NULL ||
+		!(dest->flags & MF_SPECIAL)/* ||
+		!Reachable (dest)*/)/* &&
+		Reachable (item)*/)	// Calling Reachable slows this down tremendously
 	{
-		b->Bot->prev = b->Bot->dest;
-		b->Bot->dest = item;
-		b->Bot->t_roam = MAXROAM;
+		prev = dest;
+		dest = item;
+		t_roam = MAXROAM;
 	}
 }
 
-void FCajunMaster::Set_enemy (AActor *actor)
+void DBot::Set_enemy ()
 {
 	AActor *oldenemy;
-	AActor **enemy = &actor->player->Bot->enemy;
 
-	if (*enemy
-		&& (*enemy)->health > 0
-		&& P_CheckSight (actor, *enemy))
+	if (enemy
+		&& enemy->health > 0
+		&& P_CheckSight (player->mo, enemy))
 	{
-		oldenemy = *enemy;
+		oldenemy = enemy;
 	}
 	else
 	{
@@ -395,15 +384,14 @@ void FCajunMaster::Set_enemy (AActor *actor)
 
 	// [RH] Don't even bother looking for a different enemy if this is not deathmatch
 	// and we already have an existing enemy.
-	if (deathmatch || !*enemy)
+	if (deathmatch || !enemy)
 	{
-		actor->player->Bot->allround = !!*enemy;
-		*enemy = NULL;
-		*enemy = Find_enemy(actor);
-		if (!*enemy)
-			*enemy = oldenemy; //Try go for last (it will be NULL if there wasn't anyone)
+		allround = !!enemy;
+		enemy = Find_enemy();
+		if (!enemy)
+			enemy = oldenemy; //Try go for last (it will be NULL if there wasn't anyone)
 	}
 	//Verify that that enemy is really something alive that bot can kill.
-	if (*enemy && (((*enemy)->health < 0 || !((*enemy)->flags&MF_SHOOTABLE)) || actor->IsFriend(*enemy)))
-		*enemy = NULL;
+	if (enemy && ((enemy->health < 0 || !(enemy->flags&MF_SHOOTABLE)) || player->mo->IsFriend(enemy)))
+		enemy = NULL;
 }

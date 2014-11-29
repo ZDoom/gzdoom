@@ -66,7 +66,7 @@ void DBot::Serialize (FArchive &arc)
 		arc << savedyaw
 			<< savedpitch;
 	}
-	else if (SaveVersion >= 4516)
+	else
 	{
 		arc << player;
 	}
@@ -105,7 +105,7 @@ void DBot::Tick ()
 
 	BotThinkCycles.Clock();
 	bglobal.m_Thinking = true;
-	bglobal.Think (player->mo, &netcmds[player - players][((gametic + 1)/ticdup)%BACKUPTICS]);
+	Think ();
 	bglobal.m_Thinking = false;
 	BotThinkCycles.Unclock();
 }

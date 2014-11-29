@@ -27,57 +27,57 @@ static FRandom pr_botnewchasedir ("BotNewChaseDir");
 extern dirtype_t opposite[9];
 extern dirtype_t diags[4];
 
-//Called while the bot moves after its player->dest mobj
+//Called while the bot moves after its dest mobj
 //which can be a weapon/enemy/item whatever.
-void FCajunMaster::Roam (AActor *actor, ticcmd_t *cmd)
+void DBot::Roam (ticcmd_t *cmd)
 {
 	int delta;
 
-	if (Reachable(actor, actor->player->Bot->dest))
+	if (Reachable(dest))
 	{ // Straight towards it.
-		actor->player->Bot->angle = R_PointToAngle2(actor->x, actor->y, actor->player->Bot->dest->x, actor->player->Bot->dest->y);
+		angle = R_PointToAngle2(player->mo->x, player->mo->y, dest->x, dest->y);
 	}
-	else if (actor->movedir < 8) // turn towards movement direction if not there yet
+	else if (player->mo->movedir < 8) // turn towards movement direction if not there yet
 	{
-		actor->player->Bot->angle &= (angle_t)(7<<29);
-		delta = actor->player->Bot->angle - (actor->movedir << 29);
+		angle &= (angle_t)(7<<29);
+		delta = angle - (player->mo->movedir << 29);
 
 		if (delta > 0)
-			actor->player->Bot->angle -= ANG45;
+			angle -= ANG45;
 		else if (delta < 0)
-			actor->player->Bot->angle += ANG45;
+			angle += ANG45;
 	}
 
 	// chase towards destination.
-	if (--actor->movecount < 0 || !Move (actor, cmd))
+	if (--player->mo->movecount < 0 || !Move (cmd))
 	{
-		NewChaseDir (actor, cmd);
+		NewChaseDir (cmd);
 	}
 }
 
-bool FCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
+bool DBot::Move (ticcmd_t *cmd)
 {
 	fixed_t tryx, tryy;
 	bool try_ok;
 	int good;
 
-	if (actor->movedir == DI_NODIR)
+	if (player->mo->movedir == DI_NODIR)
 		return false;
 
-	if ((unsigned)actor->movedir >= 8)
+	if ((unsigned)player->mo->movedir >= 8)
 		I_Error ("Weird bot movedir!");
 
-	tryx = actor->x + 8*xspeed[actor->movedir];
-	tryy = actor->y + 8*yspeed[actor->movedir];
+	tryx = player->mo->x + 8*xspeed[player->mo->movedir];
+	tryy = player->mo->y + 8*yspeed[player->mo->movedir];
 
-	try_ok = CleanAhead (actor, tryx, tryy, cmd);
+	try_ok = bglobal.CleanAhead (player->mo, tryx, tryy, cmd);
 
 	if (!try_ok) //Anything blocking that could be opened etc..
 	{
 		if (!spechit.Size ())
 			return false;
 
-		actor->movedir = DI_NODIR;
+		player->mo->movedir = DI_NODIR;
 
 		good = 0;
 		line_t *ld;
@@ -86,16 +86,16 @@ bool FCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 		{
 			bool tryit = true;
 
-			if (ld->special == Door_LockedRaise && !P_CheckKeys (actor, ld->args[3], false))
+			if (ld->special == Door_LockedRaise && !P_CheckKeys (player->mo, ld->args[3], false))
 				tryit = false;
-			else if (ld->special == Generic_Door && !P_CheckKeys (actor, ld->args[4], false))
+			else if (ld->special == Generic_Door && !P_CheckKeys (player->mo, ld->args[4], false))
 				tryit = false;
 
 			if (tryit &&
-				(P_TestActivateLine (ld, actor, 0, SPAC_Use) ||
-				 P_TestActivateLine (ld, actor, 0, SPAC_Push)))
+				(P_TestActivateLine (ld, player->mo, 0, SPAC_Use) ||
+				 P_TestActivateLine (ld, player->mo, 0, SPAC_Push)))
 			{
-				good |= ld == actor->BlockingLine ? 1 : 2;
+				good |= ld == player->mo->BlockingLine ? 1 : 2;
 			}
 		}
 		if (good && ((pr_botopendoor() >= 203) ^ (good & 1)))
@@ -113,16 +113,16 @@ bool FCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 	return true;
 }
 
-bool FCajunMaster::TryWalk (AActor *actor, ticcmd_t *cmd)
+bool DBot::TryWalk (ticcmd_t *cmd)
 {
-    if (!Move (actor, cmd))
+    if (!Move (cmd))
         return false;
 
-    actor->movecount = pr_bottrywalk() & 60;
+    player->mo->movecount = pr_bottrywalk() & 60;
     return true;
 }
 
-void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
+void DBot::NewChaseDir (ticcmd_t *cmd)
 {
     fixed_t     deltax;
     fixed_t     deltay;
@@ -134,7 +134,7 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 
     dirtype_t   turnaround;
 
-    if (!actor->player->Bot->dest)
+    if (!dest)
 	{
 #ifndef BOT_RELEASE_COMPILE
         Printf ("Bot tried move without destination\n");
@@ -142,11 +142,11 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 		return;
 	}
 
-    olddir = (dirtype_t)actor->movedir;
+    olddir = (dirtype_t)player->mo->movedir;
     turnaround = opposite[olddir];
 
-    deltax = actor->player->Bot->dest->x - actor->x;
-    deltay = actor->player->Bot->dest->y - actor->y;
+    deltax = dest->x - player->mo->x;
+    deltay = dest->y - player->mo->y;
 
     if (deltax > 10*FRACUNIT)
         d[1] = DI_EAST;
@@ -165,8 +165,8 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
     // try direct route
     if (d[1] != DI_NODIR && d[2] != DI_NODIR)
     {
-        actor->movedir = diags[((deltay<0)<<1)+(deltax>0)];
-        if (actor->movedir != turnaround && TryWalk(actor, cmd))
+        player->mo->movedir = diags[((deltay<0)<<1)+(deltax>0)];
+        if (player->mo->movedir != turnaround && TryWalk(cmd))
             return;
     }
 
@@ -186,16 +186,16 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 
     if (d[1]!=DI_NODIR)
     {
-        actor->movedir = d[1];
-        if (TryWalk (actor, cmd))
+        player->mo->movedir = d[1];
+        if (TryWalk (cmd))
             return;
     }
 
     if (d[2]!=DI_NODIR)
     {
-        actor->movedir = d[2];
+        player->mo->movedir = d[2];
 
-        if (TryWalk(actor, cmd))
+        if (TryWalk(cmd))
             return;
     }
 
@@ -203,9 +203,9 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
     // so pick another direction.
     if (olddir!=DI_NODIR)
     {
-        actor->movedir = olddir;
+        player->mo->movedir = olddir;
 
-        if (TryWalk(actor, cmd))
+        if (TryWalk(cmd))
             return;
     }
 
@@ -218,9 +218,9 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
         {
             if (tdir!=turnaround)
             {
-                actor->movedir = tdir;
+                player->mo->movedir = tdir;
 
-                if (TryWalk(actor, cmd))
+                if (TryWalk(cmd))
                     return;
             }
         }
@@ -233,9 +233,9 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
         {
             if (tdir!=turnaround)
             {
-                actor->movedir = tdir;
+                player->mo->movedir = tdir;
 
-                if (TryWalk(actor, cmd))
+                if (TryWalk(cmd))
                     return;
             }
         }
@@ -243,12 +243,12 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 
     if (turnaround !=  DI_NODIR)
     {
-        actor->movedir = turnaround;
-        if (TryWalk(actor, cmd))
+        player->mo->movedir = turnaround;
+        if (TryWalk(cmd))
             return;
     }
 
-    actor->movedir = DI_NODIR;  // can not move
+    player->mo->movedir = DI_NODIR;  // can not move
 }
 
 
@@ -307,48 +307,48 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 #define MAXTURN (15*ANGLE_1) //Max degrees turned in one tic. Lower is smother but may cause the bot not getting where it should = crash
 #define TURNSENS 3 //Higher is smoother but slower turn.
 
-void FCajunMaster::TurnToAng (AActor *actor)
+void DBot::TurnToAng ()
 {
     int maxturn = MAXTURN;
 
-	if (actor->player->ReadyWeapon != NULL)
+	if (player->ReadyWeapon != NULL)
 	{
-		if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
+		if (player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
 		{
-			if (actor->player->Bot->t_roam && !actor->player->Bot->missile)
+			if (t_roam && !missile)
 			{ //Keep angle that where when shot where decided.
 				return;
 			}
 		}
 
 
-		if(actor->player->Bot->enemy)
-			if(!actor->player->Bot->dest) //happens when running after item in combat situations, or normal, prevents weak turns
-				if(actor->player->ReadyWeapon->ProjectileType == NULL && !(actor->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON))
-					if(Check_LOS(actor, actor->player->Bot->enemy, SHOOTFOV+5*ANGLE_1))
+		if(enemy)
+			if(!dest) //happens when running after item in combat situations, or normal, prevents weak turns
+				if(player->ReadyWeapon->ProjectileType == NULL && !(player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON))
+					if(Check_LOS(enemy, SHOOTFOV+5*ANGLE_1))
 						maxturn = 3;
 	}
 
-	int distance = actor->player->Bot->angle - actor->angle;
+	int distance = angle - player->mo->angle;
 
-	if (abs (distance) < OKAYRANGE && !actor->player->Bot->enemy)
+	if (abs (distance) < OKAYRANGE && !enemy)
 		return;
 
 	distance /= TURNSENS;
 	if (abs (distance) > maxturn)
 		distance = distance < 0 ? -maxturn : maxturn;
 
-	actor->angle += distance;
+	player->mo->angle += distance;
 }
 
-void FCajunMaster::Pitch (AActor *actor, AActor *target)
+void DBot::Pitch (AActor *target)
 {
 	double aim;
 	double diff;
 
-	diff = target->z - actor->z;
-	aim = atan (diff / (double)P_AproxDistance (actor->x - target->x, actor->y - target->y));
-	actor->pitch = -(int)(aim * ANGLE_180/M_PI);
+	diff = target->z - player->mo->z;
+	aim = atan (diff / (double)P_AproxDistance (player->mo->x - target->x, player->mo->y - target->y));
+	player->mo->pitch = -(int)(aim * ANGLE_180/M_PI);
 }
 
 //Checks if a sector is dangerous.
@@ -371,4 +371,3 @@ bool FCajunMaster::IsDangerous (sector_t *sec)
 		|| special == Damage_InstantDeath
 		|| special == sDamage_SuperHellslime;
 }
-

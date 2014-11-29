@@ -3259,7 +3259,7 @@ void AActor::Tick ()
 				else if (flags & MF_SPECIAL)
 				{ //Item pickup time
 					//clock (BotWTG);
-					bglobal.WhatToGet (players[i].mo, this);
+					players[i].Bot->WhatToGet (this);
 					//unclock (BotWTG);
 					BotWTG++;
 				}
@@ -3267,7 +3267,7 @@ void AActor::Tick ()
 				{
 					if (!players[i].Bot->missile && (flags3 & MF3_WARNBOT))
 					{ //warn for incoming missiles.
-						if (target != players[i].mo && bglobal.Check_LOS (players[i].mo, this, ANGLE_90))
+						if (target != players[i].mo && players[i].Bot->Check_LOS (this, ANGLE_90))
 							players[i].Bot->missile = this;
 					}
 				}

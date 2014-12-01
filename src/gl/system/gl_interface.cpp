@@ -139,7 +139,11 @@ void gl_LoadExtensions()
 			// Recent drivers, GL 4.4 don't have this problem, these can easily be recognized by also supporting the GL_ARB_buffer_storage extension.
 			if (CheckExtension("GL_ARB_shader_storage_buffer_object"))
 			{
-				gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+				// Shader storage buffer objects are broken on current Intel drivers.
+				if (strstr(gl.vendorstring, "Intel") == NULL)
+				{
+					gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+				}
 			}
 			gl.flags |= RFL_BUFFER_STORAGE;
 		}

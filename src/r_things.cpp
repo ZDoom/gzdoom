@@ -95,6 +95,7 @@ extern fixed_t globaluclip, globaldclip;
 EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_drawfuzz)
+EXTERN_CVAR(Bool, r_deathcamera);
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -1410,7 +1411,8 @@ void R_DrawPlayerSprites ()
 
 	if (!r_drawplayersprites ||
 		!camera->player ||
-		(players[consoleplayer].cheats & CF_CHASECAM))
+		(players[consoleplayer].cheats & CF_CHASECAM) ||
+		(r_deathcamera && camera->health <= 0))
 		return;
 
 	if(fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size()) {

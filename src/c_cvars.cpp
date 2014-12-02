@@ -1515,6 +1515,22 @@ void UnlatchCVars (void)
 	}
 }
 
+void DestroyCVarsFlagged (DWORD flags)
+{
+	FBaseCVar *cvar = CVars;
+	FBaseCVar *next = cvar;
+
+	while(cvar)
+	{
+		next = cvar->m_Next;
+
+		if(cvar->Flags & flags)
+			delete cvar;
+
+		cvar = next;
+	}
+}
+
 void C_SetCVarsToDefaults (void)
 {
 	FBaseCVar *cvar = CVars;

@@ -4302,12 +4302,15 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{
 		spawn_x = p->mo->x;
 		spawn_y = p->mo->y;
+		spawn_z = p->mo->z;
+
 		spawn_angle = p->mo->angle;
 	}
 	else
 	{
 		spawn_x = mthing->x;
 		spawn_y = mthing->y;
+
 		// Allow full angular precision but avoid roundoff errors for multiples of 45 degrees.
 		if (mthing->angle % 45 != 0)
 		{
@@ -4321,14 +4324,14 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		{
 			spawn_angle += 1 << ANGLETOFINESHIFT;
 		}
-	}
 
-	if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
-		spawn_z = ONCEILINGZ;
-	else if (GetDefaultByType(p->cls)->flags2 & MF2_SPAWNFLOAT)
-		spawn_z = FLOATRANDZ;
-	else
-		spawn_z = ONFLOORZ;
+		if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
+			spawn_z = ONCEILINGZ;
+		else if (GetDefaultByType(p->cls)->flags2 & MF2_SPAWNFLOAT)
+			spawn_z = FLOATRANDZ;
+		else
+			spawn_z = ONFLOORZ;
+	}
 
 	mobj = static_cast<APlayerPawn *>
 		(Spawn (p->cls, spawn_x, spawn_y, spawn_z, NO_REPLACE));

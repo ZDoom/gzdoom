@@ -4445,7 +4445,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{
 		APowerup *invul = static_cast<APowerup*>(p->mo->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
 		invul->EffectTics = 3*TICRATE;
-		invul->BlendColor = 0;				// don't mess with the view
+		invul->BlendColor = 0;			// don't mess with the view
+		invul->ItemFlags |= IF_UNDROPPABLE;	// Don't drop this
 		p->mo->effects |= FX_RESPAWNINVUL;	// [RH] special effect
 	}
 

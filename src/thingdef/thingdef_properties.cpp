@@ -2020,18 +2020,15 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 		"INVERSEMAP", "GOLDMAP", "REDMAP", "GREENMAP", "BLUEMAP", NULL };
 
 	int alpha;
-	bool giver;
 	PalEntry * pBlendColor;
 
 	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pBlendColor = &((APowerup*)defaults)->BlendColor;
-		giver = false;
 	}
 	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
-		giver = true;
 	}
 	else
 	{
@@ -2053,6 +2050,10 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(v);
 			return;
 		}
+		else if (!stricmp(name, "none") && info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+		{
+			*pBlendColor = MakeSpecialColormap(65535);
+		}
 
 		color = V_GetColor(NULL, name);
 	}
@@ -2064,7 +2065,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 	else alpha = 255/3;
 
 	alpha=clamp<int>(alpha, 0, 255);
-	if (alpha != 0 || giver) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
+	if (alpha != 0) *pBlendColor = MAKEARGB(alpha, 0, 0, 0) | color;
 	else *pBlendColor = 0;
 }
 

@@ -60,7 +60,7 @@ bool APowerupGiver::Use (bool pickup)
 	}
 	if (BlendColor != 0)
 	{
-		if (BlendColor.a != 0) power->BlendColor = BlendColor;
+		if (BlendColor != MakeSpecialColormap(65535)) power->BlendColor = BlendColor;
 		else power->BlendColor = 0;
 	}
 	if (Mode != NAME_None)

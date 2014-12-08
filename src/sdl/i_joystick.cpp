@@ -35,7 +35,7 @@ public:
 
 	FString GetName()
 	{
-		return SDL_JoystickName(DeviceIndex);
+		return SDL_JoystickName(Device);
 	}
 	float GetSensitivity()
 	{

@@ -12,6 +12,7 @@
 #include "v_palette.h"
 #include "sdlvideo.h"
 #include "r_swrenderer.h"
+#include "version.h"
 
 #include <SDL.h>
 
@@ -56,13 +57,15 @@ private:
 	int FlashAmount;
 	float Gamma;
 	bool UpdatePending;
-	
-	SDL_Surface *Screen;
-	
+
+	SDL_Window *Screen;
+	SDL_Renderer *Renderer;
+	SDL_Texture *Texture;
+
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	bool NotPaletted;
-	
+
 	void UpdateColors ();
 
 	SDLFB () {}
@@ -83,15 +86,14 @@ struct MiniModeInfo
 extern IVideo *Video;
 extern bool GUICapture;
 
-SDL_Surface *cursorSurface = NULL;
-SDL_Rect cursorBlit = {0, 0, 32, 32};
-
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, vid_vsync)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR (Int, vid_displaybits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -204,14 +206,19 @@ bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
 	}
 	else
 	{
-		SDL_Rect **modes = SDL_ListModes (NULL, SDL_FULLSCREEN|SDL_HWSURFACE);
-		if (modes != NULL && modes[IteratorMode] != NULL)
+		SDL_DisplayMode mode = {}, oldmode = {};
+		if(IteratorMode != 0)
+			SDL_GetDisplayMode(vid_adapter, IteratorMode-1, &oldmode);
+		do
 		{
-			*width = modes[IteratorMode]->w;
-			*height = modes[IteratorMode]->h;
+			if (SDL_GetDisplayMode(vid_adapter, IteratorMode, &mode) != 0)
+				return false;
 			++IteratorMode;
-			return true;
-		}
+		} while(mode.w == oldmode.w && mode.h == oldmode.h);
+
+		*width = mode.w;
+		*height = mode.h;
+		return true;
 	}
 	return false;
 }
@@ -230,11 +237,11 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		if (fb->Width == width &&
 			fb->Height == height)
 		{
-			bool fsnow = (fb->Screen->flags & SDL_FULLSCREEN) != 0;
+			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
 			if (fsnow != fullscreen)
 			{
-				SDL_WM_ToggleFullScreen (fb->Screen);
+				SDL_SetWindowFullscreen (fb->Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 			}
 			return old;
 		}
@@ -313,24 +320,37 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	UpdatePending = false;
 	NotPaletted = false;
 	FlashAmount = 0;
-	Screen = SDL_SetVideoMode (width, height, vid_displaybits,
-		(vid_asyncblit ? SDL_ASYNCBLIT : 0)|SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_ANYFORMAT|
-		(fullscreen ? SDL_FULLSCREEN : 0));
+
+	FString caption;
+	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+	Screen = SDL_CreateWindow (caption,
+		SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
+		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
 	if (Screen == NULL)
 		return;
+
+	Renderer = SDL_CreateRenderer (Screen, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE);
+	if (Renderer == NULL)
+		return;
+
+	Texture = SDL_CreateTexture (Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 
 	for (i = 0; i < 256; i++)
 	{
 		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
 	}
-	if (Screen->format->palette == NULL)
+	//if (Screen->format->palette == NULL)
 	{
 		NotPaletted = true;
-		GPfx.SetFormat (Screen->format->BitsPerPixel,
-			Screen->format->Rmask,
-			Screen->format->Gmask,
-			Screen->format->Bmask);
+
+		Uint32 format;
+		SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
+
+		Uint32 Rmask, Gmask, Bmask, Amask;
+		int bpp;
+		SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+		GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdateColors ();
@@ -339,6 +359,16 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 
 SDLFB::~SDLFB ()
 {
+	if(Screen)
+	{
+		if (Renderer)
+		{
+			if (Texture)
+				SDL_DestroyTexture (Texture);
+			SDL_DestroyRenderer (Renderer);
+		}
+		SDL_DestroyWindow (Screen);
+	}
 }
 
 bool SDLFB::IsValid ()
@@ -403,15 +433,18 @@ void SDLFB::Update ()
 	SDLFlipCycles.Reset();
 	BlitCycles.Clock();
 
-	if (SDL_LockSurface (Screen) == -1)
+	void *pixels;
+	int pitch;
+	if (SDL_LockTexture (Texture, NULL, &pixels, &pitch))
 		return;
 
 	if (NotPaletted)
 	{
 		GPfx.Convert (MemBuffer, Pitch,
-			Screen->pixels, Screen->pitch, Width, Height,
+			pixels, pitch, Width, Height,
 			FRACUNIT, FRACUNIT, 0, 0);
 	}
+#if 0
 	else
 	{
 		if (Screen->pitch == Pitch)
@@ -426,17 +459,13 @@ void SDLFB::Update ()
 			}
 		}
 	}
-	
-	SDL_UnlockSurface (Screen);
+#endif
 
-	if (cursorSurface != NULL && GUICapture)
-	{
-		// SDL requires us to draw a surface to get true color cursors.
-		SDL_BlitSurface(cursorSurface, NULL, Screen, &cursorBlit);
-	}
+	SDL_UnlockTexture (Texture);
 
 	SDLFlipCycles.Clock();
-	SDL_Flip (Screen);
+	SDL_RenderCopy(Renderer, Texture, NULL, NULL);
+	SDL_RenderPresent(Renderer);
 	SDLFlipCycles.Unclock();
 
 	BlitCycles.Unclock();
@@ -478,6 +507,7 @@ void SDLFB::UpdateColors ()
 		}
 		GPfx.SetPalette (palette);
 	}
+#if 0
 	else
 	{
 		SDL_Color colors[256];
@@ -496,6 +526,7 @@ void SDLFB::UpdateColors ()
 		}
 		SDL_SetPalette (Screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
 	}
+#endif
 }
 
 PalEntry *SDLFB::GetPalette ()
@@ -541,7 +572,7 @@ void SDLFB::GetFlashedPalette (PalEntry pal[256])
 
 bool SDLFB::IsFullscreen ()
 {
-	return (Screen->flags & SDL_FULLSCREEN) != 0;
+	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
 void SDLFB::SetVSync (bool vsync)

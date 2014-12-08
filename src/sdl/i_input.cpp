@@ -29,19 +29,16 @@ extern int paused;
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool,  sdl_nokeyrepeat,		false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR (Bool, fullscreen)
 
 extern int WaitingForKey, chatmodeon;
 extern constate_e ConsoleState;
 
-extern SDL_Surface *cursorSurface;
-extern SDL_Rect cursorBlit;
+static TMap<SDL_Keycode, BYTE> KeySymToDIK;
+static bool DownState[SDL_NUM_SCANCODES];
 
-static BYTE KeySymToDIK[SDLK_LAST], DownState[SDLK_LAST];
-
-static WORD DIKToKeySym[256] =
+static SDL_Keycode DIKToKeySym[256] =
 {
 	0, SDLK_ESCAPE, '1', '2', '3', '4', '5', '6',
 	'7', '8', '9', '0', '-', '=', SDLK_BACKSPACE, SDLK_TAB,
@@ -51,9 +48,9 @@ static WORD DIKToKeySym[256] =
 	'\'', '`', SDLK_LSHIFT, '\\', 'z', 'x', 'c', 'v',
 	'b', 'n', 'm', ',', '.', '/', SDLK_RSHIFT, SDLK_KP_MULTIPLY,
 	SDLK_LALT, ' ', SDLK_CAPSLOCK, SDLK_F1, SDLK_F2, SDLK_F3, SDLK_F4, SDLK_F5,
-	SDLK_F6, SDLK_F7, SDLK_F8, SDLK_F9, SDLK_F10, SDLK_NUMLOCK, SDLK_SCROLLOCK, SDLK_KP7,
-	SDLK_KP8, SDLK_KP9, SDLK_KP_MINUS, SDLK_KP4, SDLK_KP5, SDLK_KP6, SDLK_KP_PLUS, SDLK_KP1,
-	SDLK_KP2, SDLK_KP3, SDLK_KP0, SDLK_KP_PERIOD, 0, 0, 0, SDLK_F11,
+	SDLK_F6, SDLK_F7, SDLK_F8, SDLK_F9, SDLK_F10, SDLK_NUMLOCKCLEAR, SDLK_SCROLLLOCK, SDLK_KP_7,
+	SDLK_KP_8, SDLK_KP_9, SDLK_KP_MINUS, SDLK_KP_4, SDLK_KP_5, SDLK_KP_6, SDLK_KP_PLUS, SDLK_KP_1,
+	SDLK_KP_2, SDLK_KP_3, SDLK_KP_0, SDLK_KP_PERIOD, 0, 0, 0, SDLK_F11,
 	SDLK_F12, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, SDLK_F13, SDLK_F14, SDLK_F15, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -70,7 +67,7 @@ static WORD DIKToKeySym[256] =
 	0, 0, 0, 0, 0, SDLK_PAUSE, 0, SDLK_HOME,
 	SDLK_UP, SDLK_PAGEUP, 0, SDLK_LEFT, 0, SDLK_RIGHT, 0, SDLK_END,
 	SDLK_DOWN, SDLK_PAGEDOWN, SDLK_INSERT, SDLK_DELETE, 0, 0, 0, 0,
-	0, 0, 0, SDLK_LSUPER, SDLK_RSUPER, SDLK_MENU, SDLK_POWER, 0,
+	0, 0, 0, SDLK_LGUI, SDLK_RGUI, SDLK_MENU, SDLK_POWER, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -92,16 +89,12 @@ static void InitKeySymMap ()
 	KeySymToDIK[SDLK_RCTRL] = DIK_LCONTROL;
 	KeySymToDIK[SDLK_RALT] = DIK_LMENU;
 	// Depending on your Linux flavor, you may get SDLK_PRINT or SDLK_SYSREQ
-	KeySymToDIK[SDLK_PRINT] = DIK_SYSRQ;
+	KeySymToDIK[SDLK_PRINTSCREEN] = DIK_SYSRQ;
 }
 
 static void I_CheckGUICapture ()
 {
 	bool wantCapt;
-	bool repeat;
-	int oldrepeat, interval;
-
-	SDL_GetKeyRepeat(&oldrepeat, &interval);
 
 	if (menuactive == MENU_Off)
 	{
@@ -117,56 +110,20 @@ static void I_CheckGUICapture ()
 		GUICapture = wantCapt;
 		if (wantCapt)
 		{
-			int x, y;
-			SDL_GetMouseState (&x, &y);
-			cursorBlit.x = x;
-			cursorBlit.y = y;
-
 			FlushDIKState ();
 			memset (DownState, 0, sizeof(DownState));
-			repeat = !sdl_nokeyrepeat;
-			SDL_EnableUNICODE (1);
-		}
-		else
-		{
-			repeat = false;
-			SDL_EnableUNICODE (0);
-		}
-	}
-	if (wantCapt)
-	{
-		repeat = !sdl_nokeyrepeat;
-	}
-	else
-	{
-		repeat = false;
-	}
-	if (repeat != (oldrepeat != 0))
-	{
-		if (repeat)
-		{
-			SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-		}
-		else
-		{
-			SDL_EnableKeyRepeat (0, 0);
 		}
 	}
 }
 
 void I_SetMouseCapture()
 {
+	SDL_SetRelativeMouseMode (SDL_TRUE);
 }
 
 void I_ReleaseMouseCapture()
 {
-}
-
-static void CenterMouse ()
-{
-	SDL_WarpMouse (screen->GetWidth()/2, screen->GetHeight()/2);
-	SDL_PumpEvents ();
-	SDL_GetRelativeMouseState (NULL, NULL);
+	SDL_SetRelativeMouseMode (SDL_FALSE);
 }
 
 static void PostMouseMove (int x, int y)
@@ -210,30 +167,7 @@ static void MouseRead ()
 	}
 	if (x | y)
 	{
-		CenterMouse ();
 		PostMouseMove (x, -y);
-	}
-}
-
-static void WheelMoved(event_t *event)
-{
-	if (GUICapture)
-	{
-		if (event->type != EV_KeyUp)
-		{
-			SDLMod mod = SDL_GetModState();
-			event->type = EV_GUI_Event;
-			event->subtype = event->data1 == KEY_MWHEELUP ? EV_GUI_WheelUp : EV_GUI_WheelDown;
-			event->data1 = 0;
-			event->data3 = ((mod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
-						  ((mod & KMOD_CTRL) ? GKM_CTRL : 0) |
-						  ((mod & KMOD_ALT) ? GKM_ALT : 0);
-			D_PostEvent(event);
-		}
-	}
-	else
-	{
-		D_PostEvent(event);
 	}
 }
 
@@ -259,25 +193,19 @@ static bool inGame()
 
 static void I_CheckNativeMouse ()
 {
-	bool focus = (SDL_GetAppState() & (SDL_APPINPUTFOCUS|SDL_APPACTIVE))
-			== (SDL_APPINPUTFOCUS|SDL_APPACTIVE);
-	bool fs = (SDL_GetVideoSurface ()->flags & SDL_FULLSCREEN) != 0;
+	bool focus = SDL_GetMouseFocus() != NULL;
+	bool fs = screen->IsFullscreen();
 	
 	bool wantNative = !focus || (!use_mouse || GUICapture || paused || demoplayback || !inGame());
 
 	if (wantNative != NativeMouse)
 	{
 		NativeMouse = wantNative;
-		SDL_ShowCursor (wantNative ? cursorSurface == NULL : 0);
+		SDL_ShowCursor (wantNative);
+		SDL_SetRelativeMouseMode (wantNative ? SDL_FALSE : SDL_TRUE);
 		if (wantNative)
 		{
-			SDL_WM_GrabInput (SDL_GRAB_OFF);
 			FlushDIKState (KEY_MOUSE1, KEY_MOUSE8);
-		}
-		else
-		{
-			SDL_WM_GrabInput (SDL_GRAB_ON);
-			CenterMouse ();
 		}
 	}
 }
@@ -293,14 +221,17 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_QUIT:
 		exit (0);
 
-	case SDL_ACTIVEEVENT:
-		if (sev.active.state == SDL_APPINPUTFOCUS)
+	case SDL_WINDOWEVENT:
+		switch (sev.window.event)
 		{
-			if (sev.active.gain == 0)
-			{ // kill focus
-				FlushDIKState ();
-			}
-			S_SetSoundPaused(sev.active.gain);
+			case SDL_WINDOWEVENT_FOCUS_GAINED:
+			case SDL_WINDOWEVENT_FOCUS_LOST:
+				if (sev.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+				{ // kill focus
+					FlushDIKState ();
+				}
+				S_SetSoundPaused(sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+				break;
 		}
 		break;
 
@@ -320,32 +251,20 @@ void MessagePump (const SDL_Event &sev)
 				*/
 				switch (sev.button.button)
 				{
-				case 1:		event.data1 = KEY_MOUSE1;		break;
-				case 2:		event.data1 = KEY_MOUSE3;		break;
-				case 3:		event.data1 = KEY_MOUSE2;		break;
-				case 4:		event.data1 = KEY_MWHEELUP;		break;
-				case 5:		event.data1 = KEY_MWHEELDOWN;	break;
-				case 6:		event.data1 = KEY_MOUSE4;		break;	/* dunno; not generated by my mouse */
-				case 7:		event.data1 = KEY_MOUSE5;		break;	/* ditto */
-				case 8:		event.data1 = KEY_MOUSE4;		break;
+				case SDL_BUTTON_LEFT:	event.data1 = KEY_MOUSE1;		break;
+				case SDL_BUTTON_MIDDLE:	event.data1 = KEY_MOUSE3;		break;
+				case SDL_BUTTON_RIGHT:	event.data1 = KEY_MOUSE2;		break;
+				case 8:		event.data1 = KEY_MOUSE4;		break; // For whatever reason my side mouse buttons are here.
 				case 9:		event.data1 = KEY_MOUSE5;		break;
-				case 10:	event.data1 = KEY_MOUSE6;		break;
-				case 11:	event.data1 = KEY_MOUSE7;		break;
-				case 12:	event.data1 = KEY_MOUSE8;		break;
+				case SDL_BUTTON_X1:		event.data1 = KEY_MOUSE6;		break; // And these don't exist
+				case SDL_BUTTON_X2:		event.data1 = KEY_MOUSE7;		break;
+				case 6:		event.data1 = KEY_MOUSE8;		break;
 				default:	printf("SDL mouse button %s %d\n",
 					sev.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", sev.button.button);	break;
 				}
 				if (event.data1 != 0)
 				{
-					//DIKState[ActiveDIKState][event.data1] = (event.type == EV_KeyDown);
-					if (event.data1 == KEY_MWHEELUP || event.data1 == KEY_MWHEELDOWN)
-					{
-						WheelMoved(&event);
-					}
-					else
-					{
-						D_PostEvent(&event);
-					}
+					D_PostEvent(&event);
 				}
 			}
 		}
@@ -354,8 +273,8 @@ void MessagePump (const SDL_Event &sev)
 			int x, y;
 			SDL_GetMouseState (&x, &y);
 
-			cursorBlit.x = event.data1 = x;
-			cursorBlit.y = event.data2 = y;
+			event.data1 = x;
+			event.data2 = y;
 			event.type = EV_GUI_Event;
 			if(sev.type == SDL_MOUSEMOTION)
 				event.subtype = EV_GUI_MouseMove;
@@ -368,11 +287,25 @@ void MessagePump (const SDL_Event &sev)
 		}
 		break;
 
+	case SDL_MOUSEWHEEL:
+		if (GUICapture)
+		{
+			event.type = EV_GUI_Event;
+			event.subtype = sev.wheel.y > 0 ? EV_GUI_WheelUp : EV_GUI_WheelDown;
+			D_PostEvent (&event);
+		}
+		else
+		{
+			event.type = EV_KeyDown;
+			event.data1 = sev.wheel.y > 0 ? KEY_MWHEELUP : KEY_MWHEELDOWN;
+			D_PostEvent (&event);
+			event.type = EV_KeyUp;
+			D_PostEvent (&event);
+		}
+		break;
+
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
-		if (sev.key.keysym.sym >= SDLK_LAST)
-			break;
-
 		if (!GUICapture)
 		{
 			event.type = sev.type == SDL_KEYDOWN ? EV_KeyDown : EV_KeyUp;
@@ -394,19 +327,19 @@ void MessagePump (const SDL_Event &sev)
 						  ((sev.key.keysym.mod & KMOD_CTRL) ? GKM_CTRL : 0) |
 						  ((sev.key.keysym.mod & KMOD_ALT) ? GKM_ALT : 0);
 
-			if (sev.key.keysym.sym < SDLK_LAST)
+			//if (sev.key.keysym.sym < SDLK_LAST)
 			{
 				if (event.subtype == EV_GUI_KeyDown)
 				{
-					if (DownState[sev.key.keysym.sym])
+					if (DownState[sev.key.keysym.scancode])
 					{
 						event.subtype = EV_GUI_KeyRepeat;
 					}
-					DownState[sev.key.keysym.sym] = 1;
+					DownState[sev.key.keysym.scancode] = 1;
 				}
 				else
 				{
-					DownState[sev.key.keysym.sym] = 0;
+					DownState[sev.key.keysym.scancode] = 0;
 				}
 			}
 
@@ -442,20 +375,21 @@ void MessagePump (const SDL_Event &sev)
 				}
 				break;
 			}
-			event.data2 = sev.key.keysym.unicode & 0xff;
 			if (event.data1 < 128)
 			{
 				event.data1 = toupper(event.data1);
 				D_PostEvent (&event);
 			}
-			if (!iscntrl(event.data2) && event.subtype != EV_GUI_KeyUp)
-			{
-				event.subtype = EV_GUI_Char;
-				event.data1 = event.data2;
-				event.data2 = sev.key.keysym.mod & KMOD_ALT;
-				event.data3 = 0;
-				D_PostEvent (&event);
-			}
+		}
+		break;
+
+	case SDL_TEXTINPUT:
+		if (GUICapture)
+		{
+			event.type = EV_GUI_Event;
+			event.subtype = EV_GUI_Char;
+			event.data1 = sev.text.text[0];
+			D_PostEvent (&event);
 		}
 		break;
 

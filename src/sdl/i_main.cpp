@@ -278,22 +278,11 @@ int main (int argc, char **argv)
 	}
 	atterm (SDL_Quit);
 
-	{
-		char viddriver[80];
-
-		if (SDL_VideoDriverName(viddriver, sizeof(viddriver)) != NULL)
-		{
-			printf("Using video driver %s\n", viddriver);
+	printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
 #ifdef USE_XCURSOR
-			UseXCursor = (strcmp(viddriver, "x11") == 0);
+	UseXCursor = (strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0);
 #endif
-		}
-		printf("\n");
-	}
-
-	char caption[100];
-	mysnprintf(caption, countof(caption), GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
-	SDL_WM_SetCaption(caption, caption);
+	printf("\n");
 
 #ifdef __APPLE__
 	

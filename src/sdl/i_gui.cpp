@@ -9,9 +9,6 @@
 #include "v_palette.h"
 #include "textures.h"
 
-extern SDL_Surface *cursorSurface;
-extern SDL_Rect cursorBlit;
-
 #ifdef USE_XCURSOR
 // Xlib has its own GC, so don't let it interfere.
 #define GC XGC
@@ -22,40 +19,6 @@ bool UseXCursor;
 SDL_Cursor *X11Cursor;
 SDL_Cursor *FirstCursor;
 
-// Hack! Hack! SDL does not provide a clean way to get the XDisplay.
-// On the other hand, there are no more planned updates for SDL 1.2,
-// so we should be fine making assumptions.
-struct SDL_PrivateVideoData
-{
-	int local_X11;
-	Display *X11_Display;
-};
-
-struct SDL_VideoDevice
-{
-	const char *name;
-	int (*functions[9])();
-	SDL_VideoInfo info;
-	SDL_PixelFormat *displayformatalphapixel;
-	int (*morefuncs[9])();
-	Uint16 *gamma;
-	int (*somefuncs[9])();
-	unsigned int texture;				// Only here if SDL was compiled with OpenGL support. Ack!
-	int is_32bit;
-	int (*itsafuncs[13])();
-	SDL_Surface *surfaces[3];
-	SDL_Palette *physpal;
-	SDL_Color *gammacols;
-	char *wm_strings[2];
-	int offsets[2];
-	SDL_GrabMode input_grab;
-	int handles_any_size;
-	SDL_PrivateVideoData *hidden;	// Why did they have to bury this so far in?
-};
-
-extern SDL_VideoDevice *current_video;
-#define SDL_Display (current_video->hidden->X11_Display)
-
 SDL_Cursor *CreateColorCursor(FTexture *cursorpic)
 {
 	return NULL;
@@ -64,6 +27,9 @@ SDL_Cursor *CreateColorCursor(FTexture *cursorpic)
 
 bool I_SetCursor(FTexture *cursorpic)
 {
+	static SDL_Cursor *cursor;
+	static SDL_Surface *cursorSurface;
+
 	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
 	{
 		// Must be no larger than 32x32.
@@ -90,7 +56,6 @@ bool I_SetCursor(FTexture *cursorpic)
 		if (cursorSurface == NULL)
 			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
 
-		SDL_ShowCursor(0);
 		SDL_LockSurface(cursorSurface);
 		BYTE buffer[32*32*4];
 		memset(buffer, 0, 32*32*4);
@@ -98,11 +63,20 @@ bool I_SetCursor(FTexture *cursorpic)
 		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
 		memcpy(cursorSurface->pixels, bmp.GetPixels(), 32*32*4);
 		SDL_UnlockSurface(cursorSurface);
+
+		if (cursor)
+			SDL_FreeCursor (cursor);
+		cursor = SDL_CreateColorCursor (cursorSurface, 0, 0);
+		SDL_SetCursor (cursor);
 	}
 	else
 	{
-		SDL_ShowCursor(1);
-
+		if (cursor)
+		{
+			SDL_SetCursor (NULL);
+			SDL_FreeCursor (cursor);
+			cursor = NULL;
+		}
 		if (cursorSurface != NULL)
 		{
 			SDL_FreeSurface(cursorSurface);

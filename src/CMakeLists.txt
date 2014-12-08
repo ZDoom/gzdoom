@@ -210,14 +210,11 @@ else( WIN32 )
 	endif( NO_GTK )
 	
 	# Non-Windows version also needs SDL
-	find_package( SDL )
-	if( NOT SDL_FOUND )
-		message( SEND_ERROR "SDL is required for building." )
-	endif( NOT SDL_FOUND )
+	find_package( SDL2 REQUIRED )
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL_LIBRARY}" )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
 	endif( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-	include_directories( "${SDL_INCLUDE_DIR}" )
+	include_directories( "${SDL2_INCLUDE_DIR}" )
 
 	find_path( FPU_CONTROL_DIR fpu_control.h )
 	if( FPU_CONTROL_DIR )

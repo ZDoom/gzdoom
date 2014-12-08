@@ -2053,6 +2053,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 		else if (!stricmp(name, "none") && info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 		{
 			*pBlendColor = MakeSpecialColormap(65535);
+			return;
 		}
 
 		color = V_GetColor(NULL, name);

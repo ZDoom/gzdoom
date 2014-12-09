@@ -43,6 +43,7 @@ public:
 	bool SetGamma (float gamma);
 	bool SetFlash (PalEntry rgb, int amount);
 	void GetFlash (PalEntry &rgb, int &amount);
+	void SetFullscreen (bool fullscreen);
 	int GetPageCount ();
 	bool IsFullscreen ();
 
@@ -61,12 +62,14 @@ private:
 	SDL_Window *Screen;
 	SDL_Renderer *Renderer;
 	SDL_Texture *Texture;
+	SDL_Rect UpdateRect;
 
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	bool NotPaletted;
 
 	void UpdateColors ();
+	void ResetSDLRenderer ();
 
 	SDLFB () {}
 };
@@ -241,7 +244,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 	
 			if (fsnow != fullscreen)
 			{
-				SDL_SetWindowFullscreen (fb->Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+				fb->SetFullscreen (fullscreen);
 			}
 			return old;
 		}
@@ -323,6 +326,7 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 
 	FString caption;
 	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+
 	Screen = SDL_CreateWindow (caption,
 		SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
 		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
@@ -330,32 +334,23 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	if (Screen == NULL)
 		return;
 
-	Renderer = SDL_CreateRenderer (Screen, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE);
-	if (Renderer == NULL)
-		return;
-
-	Texture = SDL_CreateTexture (Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+	Renderer = NULL;
+	Texture = NULL;
+	ResetSDLRenderer ();
 
 	for (i = 0; i < 256; i++)
 	{
 		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
 	}
-	//if (Screen->format->palette == NULL)
-	{
-		NotPaletted = true;
 
-		Uint32 format;
-		SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
-
-		Uint32 Rmask, Gmask, Bmask, Amask;
-		int bpp;
-		SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-		GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
-	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdateColors ();
+
+#ifdef __APPLE__
 	SetVSync (vid_vsync);
+#endif
 }
+
 
 SDLFB::~SDLFB ()
 {
@@ -464,7 +459,7 @@ void SDLFB::Update ()
 	SDL_UnlockTexture (Texture);
 
 	SDLFlipCycles.Clock();
-	SDL_RenderCopy(Renderer, Texture, NULL, NULL);
+	SDL_RenderCopy(Renderer, Texture, NULL, &UpdateRect);
 	SDL_RenderPresent(Renderer);
 	SDLFlipCycles.Unclock();
 
@@ -570,9 +565,70 @@ void SDLFB::GetFlashedPalette (PalEntry pal[256])
 	}
 }
 
+void SDLFB::SetFullscreen (bool fullscreen)
+{
+	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	if (!fullscreen)
+	{
+		// Restore proper window size
+		SDL_SetWindowSize (Screen, Width, Height);
+	}
+
+	ResetSDLRenderer ();
+}
+
 bool SDLFB::IsFullscreen ()
 {
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+}
+
+void SDLFB::ResetSDLRenderer ()
+{
+	if (Renderer)
+	{
+		if (Texture)
+			SDL_DestroyTexture (Texture);
+		SDL_DestroyRenderer (Renderer);
+	}
+
+	Renderer = SDL_CreateRenderer (Screen, -1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE|
+									(vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
+	if (!Renderer)
+		return;
+
+	Texture = SDL_CreateTexture (Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Width, Height);
+
+	//if (Screen->format->palette == NULL)
+	{
+		NotPaletted = true;
+
+		Uint32 format;
+		SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
+
+		Uint32 Rmask, Gmask, Bmask, Amask;
+		int bpp;
+		SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+		GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
+	}
+
+	// Calculate update rectangle
+	if (IsFullscreen ())
+	{
+		int w, h;
+		SDL_GetWindowSize (Screen, &w, &h);
+		UpdateRect.w = w;
+		UpdateRect.h = w*Height/Width;
+		UpdateRect.x = 0;
+		UpdateRect.y = (h - UpdateRect.h)/2;
+	}
+	else
+	{
+		// In windowed mode we just update the whole window.
+		UpdateRect.x = 0;
+		UpdateRect.y = 0;
+		UpdateRect.w = Width;
+		UpdateRect.h = Height;
+	}
 }
 
 void SDLFB::SetVSync (bool vsync)
@@ -592,6 +648,8 @@ void SDLFB::SetVSync (bool vsync)
 		const GLint value = vsync ? 1 : 0;
 		CGLSetParameter(context, kCGLCPSwapInterval, &value);
 	}
+#else
+	ResetSDLRenderer ();
 #endif // __APPLE__
 }
 

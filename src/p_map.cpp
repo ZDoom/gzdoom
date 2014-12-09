@@ -1283,6 +1283,16 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			P_GiveBody(thing, -damage);
 		}
+
+		if ((thing->flags7 & MF7_THRUREFLECT) && (thing->flags2 & MF2_REFLECTIVE) && (tm.thing->flags & MF_MISSILE))
+		{
+			if (tm.thing->flags2 & MF2_SEEKERMISSILE)
+			{
+				tm.thing->tracer = tm.thing->target;
+			}
+			tm.thing->target = thing;
+			return true;
+		}
 		return false;		// don't traverse any more
 	}
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
@@ -1643,7 +1653,7 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // Don't clip against self
 			continue;
 		}
-		if ((actor->flags & MF_MISSILE) && thing == actor->target)
+		if ((actor->flags & MF_MISSILE) && (thing == actor->target))
 		{ // Don't clip against whoever shot the missile.
 			continue;
 		}
@@ -2983,18 +2993,20 @@ bool P_BounceWall(AActor *mo)
 extern FRandom pr_bounce;
 bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 {
+	//Don't go through all of this if the actor is reflective and wants things to pass through them.
+	if (BlockingMobj && ((BlockingMobj->flags2 & MF2_REFLECTIVE) && (BlockingMobj->flags7 & MF7_THRUREFLECT))) return true;
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)
-		|| ((mo->flags & MF_MISSILE) && (!(mo->flags2 & MF2_RIP) || (BlockingMobj->flags5 & MF5_DONTRIP) || ((mo->flags6 & MF6_NOBOSSRIP) && (BlockingMobj->flags2 & MF2_BOSS))) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
-		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))
-		))
+		|| ((mo->flags & MF_MISSILE) && (!(mo->flags2 & MF2_RIP) 
+		|| (BlockingMobj->flags5 & MF5_DONTRIP) 
+		|| ((mo->flags6 & MF6_NOBOSSRIP) && (BlockingMobj->flags2 & MF2_BOSS))) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))))
 	{
 		if (mo->bouncecount > 0 && --mo->bouncecount == 0) return false;
 
 		if (!ontop)
 		{
 			fixed_t speed;
-			angle_t angle = R_PointToAngle2(BlockingMobj->x,
-				BlockingMobj->y, mo->x, mo->y) + ANGLE_1*((pr_bounce() % 16) - 8);
+			angle_t angle = R_PointToAngle2(BlockingMobj->x,BlockingMobj->y, mo->x, mo->y) + ANGLE_1*((pr_bounce() % 16) - 8);
 			speed = P_AproxDistance(mo->velx, mo->vely);
 			speed = FixedMul(speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			mo->angle = angle;
@@ -5090,6 +5102,8 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		// is normally for projectiles which would have exploded by now anyway...
 		if (thing->flags6 & MF6_THRUSPECIES && thing->GetSpecies() == intersect->GetSpecies())
 			continue;
+		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))
+			continue;
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
@@ -5098,7 +5112,8 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			// Can't push bridges or things more massive than ourself
 			return 2;
 		}
-		fixed_t oldz = intersect->z;
+		fixed_t oldz;
+		oldz = intersect->z;
 		P_AdjustFloorCeil(intersect, cpos);
 		intersect->z = thing->z + thing->height + 1;
 		if (P_PushUp(intersect, cpos))

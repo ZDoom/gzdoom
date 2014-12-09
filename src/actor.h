@@ -347,6 +347,9 @@ enum
 	MF7_DONTTHRUST		= 0x00000100,	// Thrusting functions do not take, and do not give thrust (damage) to actors with this flag.
 	MF7_ALLOWPAIN		= 0x00000200,	// Invulnerable or immune (via damagefactors) actors can still react to taking damage even if they don't.
 	MF7_CAUSEPAIN		= 0x00000400,	// Damage sources with this flag can cause similar effects like ALLOWPAIN.
+	MF7_HITTARGET		= 0x00004000,	// The actor the projectile dies on is set to target, provided it's targetable anyway.
+	MF7_HITMASTER		= 0x00008000,	// Same as HITTARGET, except it's master instead of target.
+	MF7_HITTRACER		= 0x00010000,	// Same as HITTARGET, but for tracer.
 
 // --- mobj.renderflags ---
 

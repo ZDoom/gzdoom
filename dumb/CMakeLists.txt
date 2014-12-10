@@ -3,6 +3,7 @@ cmake_minimum_required( VERSION 2.4 )
 make_release_only()
 
 include( CheckFunctionExists )
+include( CheckCXXCompilerFlag )
 
 # DUMB is much slower in a Debug build than a Release build, so we force a Release
 # build here, since we're not maintaining DUMB, only using it.
@@ -104,5 +105,9 @@ add_library( dumb
 target_link_libraries( dumb )
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	set_source_files_properties( src/it/filter.cpp PROPERTIES COMPILE_FLAGS -msse )
+	CHECK_CXX_COMPILER_FLAG( -msse DUMB_CAN_USE_SSE )
+
+	if( DUMB_CAN_USE_SSE )
+		set_source_files_properties( src/it/filter.cpp PROPERTIES COMPILE_FLAGS -msse )
+	endif( DUMB_CAN_USE_SSE )
 endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

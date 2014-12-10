@@ -85,10 +85,6 @@ void Mac_I_FatalError(const char* errortext);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#ifdef USE_XCURSOR
-extern bool UseXCursor;
-#endif
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifndef NO_GTK
@@ -279,9 +275,6 @@ int main (int argc, char **argv)
 	atterm (SDL_Quit);
 
 	printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
-#ifdef USE_XCURSOR
-	UseXCursor = (strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0);
-#endif
 	printf("\n");
 
 #ifdef __APPLE__

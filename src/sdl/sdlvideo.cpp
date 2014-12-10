@@ -361,7 +361,8 @@ SDLFB::~SDLFB ()
 			if (Texture)
 				SDL_DestroyTexture (Texture);
 			SDL_DestroyRenderer (Renderer);
-		}
+ 		}
+
 		SDL_DestroyWindow (Screen);
 	}
 }
@@ -657,6 +658,6 @@ ADD_STAT (blit)
 {
 	FString out;
 	out.Format ("blit=%04.1f ms  flip=%04.1f ms",
-		BlitCycles.Time() * 1e-3, SDLFlipCycles.TimeMS());
+		BlitCycles.TimeMS(), SDLFlipCycles.TimeMS());
 	return out;
 }

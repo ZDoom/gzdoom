@@ -9,22 +9,6 @@
 #include "v_palette.h"
 #include "textures.h"
 
-#ifdef USE_XCURSOR
-// Xlib has its own GC, so don't let it interfere.
-#define GC XGC
-#include <X11/Xcursor/Xcursor.h>
-#undef GC
-
-bool UseXCursor;
-SDL_Cursor *X11Cursor;
-SDL_Cursor *FirstCursor;
-
-SDL_Cursor *CreateColorCursor(FTexture *cursorpic)
-{
-	return NULL;
-}
-#endif
-
 bool I_SetCursor(FTexture *cursorpic)
 {
 	static SDL_Cursor *cursor;
@@ -38,21 +22,6 @@ bool I_SetCursor(FTexture *cursorpic)
 			return false;
 		}
 
-#ifdef USE_XCURSOR
-		if (UseXCursor)
-		{
-			if (FirstCursor == NULL)
-			{
-				FirstCursor = SDL_GetCursor();
-			}
-			X11Cursor = CreateColorCursor(cursorpic);
-			if (X11Cursor != NULL)
-			{
-				SDL_SetCursor(X11Cursor);
-				return true;
-			}
-		}
-#endif
 		if (cursorSurface == NULL)
 			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
 
@@ -82,14 +51,6 @@ bool I_SetCursor(FTexture *cursorpic)
 			SDL_FreeSurface(cursorSurface);
 			cursorSurface = NULL;
 		}
-#ifdef USE_XCURSOR
-		if (X11Cursor != NULL)
-		{
-			SDL_SetCursor(FirstCursor);
-			SDL_FreeCursor(X11Cursor);
-			X11Cursor = NULL;
-		}
-#endif
 	}
 	return true;
 }

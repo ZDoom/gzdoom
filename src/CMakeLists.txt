@@ -560,8 +560,8 @@ set( PLAT_SDL_SPECIAL_SOURCES
 	sdl/i_joystick.cpp
 	sdl/i_timer.cpp )
 set( PLAT_MAC_SOURCES
-	sdl/iwadpicker_cocoa.mm
-	sdl/i_system_cocoa.mm )
+	cocoa/iwadpicker_cocoa.mm
+	cocoa/i_system_cocoa.mm )
 set( PLAT_COCOA_SOURCES
 	cocoa/HID_Config_Utilities.c
 	cocoa/HID_Error_Handler.c
@@ -581,8 +581,9 @@ if( APPLE )
 
 	if( OSX_COCOA_BACKEND )
 		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
+		add_definitions( -DUSE_NATIVE_COCOA )
 	else( OSX_COCOA_BACKEND )
-		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} sdl/SDLMain.m )
+		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 
 	set_source_files_properties( cocoa/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )

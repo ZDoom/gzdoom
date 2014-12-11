@@ -1702,37 +1702,27 @@ void SDL_Quit()
 }
 
 
-char* SDL_GetError()
+const char* SDL_GetError()
 {
 	static char empty[] = {0};
 	return empty;
 }
 
 
-char* SDL_VideoDriverName(char* namebuf, int maxlen)
+const char* SDL_GetCurrentVideoDriver()
 {
-	return strncpy(namebuf, "Native OpenGL", maxlen);
+	return "Native OpenGL";
 }
 
-const SDL_VideoInfo* SDL_GetVideoInfo()
+int SDL_GetDesktopDisplayMode(int displayIndex, SDL_DisplayMode *mode)
 {
-	// NOTE: Only required fields are assigned
-	
-	static SDL_PixelFormat pixelFormat;
-	memset(&pixelFormat, 0, sizeof(pixelFormat));
-	
-	pixelFormat.BitsPerPixel = 32;
-	
-	static SDL_VideoInfo videoInfo;
-	memset(&videoInfo, 0, sizeof(videoInfo));
-	
+	// NOTE: Only required fields are assigned	
 	const NSRect displayRect = [[NSScreen mainScreen] frame];
 	
-	videoInfo.current_w = displayRect.size.width;
-	videoInfo.current_h = displayRect.size.height;
-	videoInfo.vfmt      = &pixelFormat;
+	mode->w = displayRect.size.width;
+	mode->h = displayRect.size.height;
 	
-	return &videoInfo;
+	return 0;
 }
 
 SDL_Rect** SDL_ListModes(SDL_PixelFormat* format, Uint32 flags)
@@ -1820,73 +1810,151 @@ static SDL_PixelFormat* GetPixelFormat()
 	result.Rmask         = 0x000000FF;
 	result.Gmask         = 0x0000FF00;
 	result.Bmask         = 0x00FF0000;
-	result.Amask         = 0xFF000000;	
-	result.colorkey      = 0;
-	result.alpha         = 0xFF;
+	result.Amask         = 0xFF000000;
 	
 	return &result;
 }
 
-
-SDL_Surface* SDL_SetVideoMode(int width, int height, int, Uint32 flags)
+SDL_bool SDL_PixelFormatEnumToMasks(Uint32 format, int* bpp, Uint32* Rmask, Uint32* Gmask, Uint32* Bmask, Uint32* Amask)
 {
-	[appCtrl changeVideoResolution:(SDL_FULLSCREEN & flags)
+	assert(format == SDL_PIXELFORMAT_ABGR8888);
+
+	*bpp = 32;
+	*Rmask = 0x000000FF;
+	*Gmask = 0x0000FF00;
+	*Bmask = 0x00FF0000;
+	*Amask = 0xFF000000;
+
+	return SDL_TRUE;
+}
+
+struct SDL_Window
+{
+	Uint32 flags;
+	int w, h;
+	int pitch;
+	void *pixels;
+};
+
+struct SDL_Renderer { SDL_Window *window; };
+struct SDL_Texture { SDL_Window *window; };
+
+SDL_Window* SDL_CreateWindow(const char* title, int x, int y, int width, int height, Uint32 flags)
+{
+	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
 							 width:width
 							height:height
 						  useHiDPI:vid_hidpi];
 
-	static SDL_Surface result;
+	static SDL_Window result;
 
-	if (!(SDL_OPENGL & flags))
+	if (!(SDL_WINDOW_OPENGL & flags))
 	{
 		[appCtrl setupSoftwareRenderingWithWidth:width
 										  height:height];
 	}
 
 	result.flags    = flags;
-	result.format   = GetPixelFormat();
 	result.w        = width;
 	result.h        = height;
 	result.pitch    = width * BYTES_PER_PIXEL;
 	result.pixels   = [appCtrl softwareRenderingBuffer];
-	result.refcount = 1;
-	
-	result.clip_rect.x = 0;
-	result.clip_rect.y = 0;
-	result.clip_rect.w = width;
-	result.clip_rect.h = height;
-	
+
 	return &result;
 }
-
-
-void SDL_WM_SetCaption(const char* title, const char* icon)
+void SDL_DestroyWindow(SDL_Window *window)
 {
-	ZD_UNUSED(title);
-	ZD_UNUSED(icon);
-	
-	// Window title is set in SDL_SetVideoMode()
+	ZD_UNUSED(window);
 }
 
-int SDL_WM_ToggleFullScreen(SDL_Surface* surface)
+Uint32 SDL_GetWindowFlags(SDL_Window *window)
 {
-	if (surface->flags & SDL_FULLSCREEN)
+	return window->flags;
+}
+
+SDL_Surface *SDL_GetWindowSurface(SDL_Window *window)
+{
+	ZD_UNUSED(window);
+	return NULL;
+}
+
+void SDL_GetWindowSize(SDL_Window *window, int *w, int *h)
+{
+	*w = window->w;
+	*h = window->h;
+}
+
+void SDL_SetWindowSize(SDL_Window *window, int w, int h)
+{
+	// Currently this is used for handling the fullscreen->windowed transition.
+	// We can just no-op this for now.
+	ZD_UNUSED(window);
+	ZD_UNUSED(w);
+	ZD_UNUSED(h);
+}
+
+int SDL_SetWindowFullscreen(SDL_Window* window, Uint32 flags)
+{
+	if ((window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == (flags & SDL_WINDOW_FULLSCREEN_DESKTOP))
+		return 0;
+
+	if (window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
 	{
-		surface->flags &= ~SDL_FULLSCREEN;
+		window->flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 	else
 	{
-		surface->flags |= SDL_FULLSCREEN;
+		window->flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 
-	[appCtrl changeVideoResolution:(SDL_FULLSCREEN & surface->flags)
-							 width:surface->w
-							height:surface->h
+	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
+							 width:window->w
+							height:window->h
 						  useHiDPI:vid_hidpi];
 
-	return 1;
+	return 0;
 }
 
+SDL_Renderer *SDL_CreateRenderer(SDL_Window *window, int index, Uint32 flags)
+{
+	ZD_UNUSED(index);
+	ZD_UNUSED(flags);
+
+	static SDL_Renderer result;
+	result.window = window;
+
+	return &result;
+}
+void SDL_DestroyRenderer(SDL_Renderer *renderer)
+{
+	ZD_UNUSED(renderer);
+}
+
+SDL_Texture *SDL_CreateTexture(SDL_Renderer *renderer, Uint32 format, int access, int w, int h)
+{
+	ZD_UNUSED(format);
+	ZD_UNUSED(access);
+	ZD_UNUSED(w);
+	ZD_UNUSED(h);
+
+	static SDL_Texture result;
+	result.window = renderer->window;
+
+	return &result;
+}
+void SDL_DestroyTexture(SDL_Texture *texture)
+{
+	ZD_UNUSED(texture);
+}
+
+int SDL_QueryTexture(SDL_Texture *texture, Uint32* format, int* access, int* w, int* h)
+{
+	if(format) *format = SDL_PIXELFORMAT_ABGR8888;
+	if(access) *access = SDL_TEXTUREACCESS_STREAMING;
+	if(w) *w = texture->window->w;
+	if(h) *h = texture->window->h;
+	return 0;
+}
 
 void SDL_GL_SwapBuffers()
 {
@@ -1918,18 +1986,22 @@ void SDL_UnlockSurface(SDL_Surface* surface)
 	ZD_UNUSED(surface);
 }
 
-int SDL_BlitSurface(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect)
+int SDL_LockTexture(SDL_Texture* texture, const SDL_Rect *rect, void** pixels, int *pitch)
 {
-	ZD_UNUSED(src);
-	ZD_UNUSED(srcrect);
-	ZD_UNUSED(dst);
-	ZD_UNUSED(dstrect);
-	
+	assert(NULL == rect);
+
+	*pixels = texture->window->pixels;
+	*pitch = texture->window->pitch;
+
 	return 0;
 }
 
+void SDL_UnlockTexture(SDL_Texture *texture)
+{
+	ZD_UNUSED(texture);
+}
 
-int SDL_Flip(SDL_Surface* screen)
+int SDL_UpdateWindowSurface(SDL_Window *screen)
 {
 	assert(NULL != screen);
 	
@@ -1976,10 +2048,24 @@ int SDL_Flip(SDL_Surface* screen)
 	return 0;	
 }
 
-int SDL_SetPalette(SDL_Surface* surface, int flags, SDL_Color* colors, int firstcolor, int ncolors)
+int SDL_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *srcrect, const SDL_Rect *dstrect)
 {
-	ZD_UNUSED(surface);
-	ZD_UNUSED(flags);
+	ZD_UNUSED(renderer);
+	ZD_UNUSED(texture);
+	ZD_UNUSED(srcrect);
+	ZD_UNUSED(dstrect);
+
+	return 0;
+}
+
+void SDL_RenderPresent(SDL_Renderer *renderer)
+{
+	SDL_UpdateWindowSurface(renderer->window);
+}
+
+int SDL_SetPaletteColors(SDL_Palette* palette, const SDL_Color* colors, int firstcolor, int ncolors)
+{
+	ZD_UNUSED(palette);
 	ZD_UNUSED(colors);
 	ZD_UNUSED(firstcolor);
 	ZD_UNUSED(ncolors);

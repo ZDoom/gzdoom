@@ -237,7 +237,11 @@ void I_ShutdownJoysticks();
 
 const char* I_GetBackEndName();
 
+#ifdef USE_NATIVE_COCOA
+int SDL_main (int argc, char **argv)
+#else
 int main (int argc, char **argv)
+#endif
 {
 #if !defined (__APPLE__)
 	{
@@ -278,9 +282,9 @@ int main (int argc, char **argv)
 	printf("\n");
 
 #ifdef __APPLE__
-	
-	const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo();
-	if ( NULL != videoInfo )
+	EXTERN_CVAR( Int, vid_adapter )
+	SDL_DisplayMode videoInfo = {};
+	if ( SDL_GetDesktopDisplayMode (vid_adapter, &videoInfo) == 0 )
 	{
 		EXTERN_CVAR(  Int, vid_defwidth  )
 		EXTERN_CVAR(  Int, vid_defheight )
@@ -288,13 +292,11 @@ int main (int argc, char **argv)
 		EXTERN_CVAR( Bool, vid_vsync     )
 		EXTERN_CVAR( Bool, fullscreen    )
 		
-		vid_defwidth  = videoInfo->current_w;
-		vid_defheight = videoInfo->current_h;
-		vid_defbits   = videoInfo->vfmt->BitsPerPixel;
+		vid_defwidth  = videoInfo.w;
+		vid_defheight = videoInfo.h;
 		vid_vsync     = true;
 		fullscreen    = true;
-	}
-	
+	}	
 #endif // __APPLE__
 	
     try

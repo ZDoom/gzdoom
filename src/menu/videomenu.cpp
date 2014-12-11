@@ -247,8 +247,12 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 					if (Video != NULL)
 					{
 						while ((haveMode = Video->NextMode (&width, &height, &letterbox)) &&
-							(ratiomatch >= 0 && CheckRatio (width, height) != ratiomatch))
+							ratiomatch >= 0)
 						{
+							int ratio;
+							CheckRatio (width, height, &ratio);
+							if (ratio == ratiomatch)
+								break;
 						}
 					}
 

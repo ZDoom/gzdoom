@@ -18,5 +18,4 @@ class SDLVideo : public IVideo
 private:
 	int IteratorMode;
 	int IteratorBits;
-	bool IteratorFS;
 };

@@ -61,9 +61,14 @@ private:
 
 	SDL_Window *Screen;
 	SDL_Renderer *Renderer;
-	SDL_Texture *Texture;
+	union
+	{
+		SDL_Texture *Texture;
+		SDL_Surface *Surface;
+	};
 	SDL_Rect UpdateRect;
 
+	bool UsingRenderer;
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	bool NotPaletted;
@@ -98,11 +103,9 @@ EXTERN_CVAR (Bool, vid_vsync)
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-CVAR (Int, vid_displaybits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, vid_displaybits, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-// vid_asyncblit needs a restart to work. SDL doesn't seem to change if the
-// frame buffer is changed at run time.
-CVAR (Bool, vid_asyncblit, 1, CVAR_NOINITCALL|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, vid_forcesurface, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -151,6 +154,7 @@ static MiniModeInfo WinModes[] =
 	{ 960, 600 },	// 16:10
 	{ 960, 720 },
 	{ 1024, 576 },	// 16:9
+	{ 1024, 600 },	// 17:10
 	{ 1024, 640 },	// 16:10
 	{ 1024, 768 },
 	{ 1088, 612 },	// 16:9
@@ -160,6 +164,7 @@ static MiniModeInfo WinModes[] =
 	{ 1280, 720 },	// 16:9
 	{ 1280, 800 },	// 16:10
 	{ 1280, 960 },
+	{ 1280, 1024 },	// 5:4
 	{ 1360, 768 },	// 16:9
 	{ 1400, 787 },	// 16:9
 	{ 1400, 875 },	// 16:10
@@ -168,6 +173,13 @@ static MiniModeInfo WinModes[] =
 	{ 1600, 1000 },	// 16:10
 	{ 1600, 1200 },
 	{ 1920, 1080 },
+	{ 1920, 1200 },
+	{ 2048, 1536 },
+	{ 2560, 1440 },
+	{ 2560, 1600 },
+	{ 2880, 1800 },
+	{ 3840, 2160 },
+	{ 5120, 2880 }
 };
 
 static cycle_t BlitCycles;
@@ -175,10 +187,34 @@ static cycle_t SDLFlipCycles;
 
 // CODE --------------------------------------------------------------------
 
+void ScaleWithAspect (int &w, int &h, int Width, int Height)
+{
+	int resRatio = CheckRatio (Width, Height);
+	int screenRatio;
+	CheckRatio (w, h, &screenRatio);
+	if (resRatio == screenRatio)
+		return;
+
+	double yratio;
+	switch(resRatio)
+	{
+		case 0: yratio = 4./3.; break;
+		case 1: yratio = 16./9.; break;
+		case 2: yratio = 16./10.; break;
+		case 3: yratio = 17./10.; break;
+		case 4: yratio = 5./4.; break;
+		default: return;
+	}
+	double y = w/yratio;
+	if (y > h)
+		w = h*yratio;
+	else
+		h = y;
+}
+
 SDLVideo::SDLVideo (int parm)
 {
 	IteratorBits = 0;
-	IteratorFS = false;
 }
 
 SDLVideo::~SDLVideo ()
@@ -189,38 +225,18 @@ void SDLVideo::StartModeIterator (int bits, bool fs)
 {
 	IteratorMode = 0;
 	IteratorBits = bits;
-	IteratorFS = fs;
 }
 
 bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
 {
 	if (IteratorBits != 8)
 		return false;
-	
-	if (!IteratorFS)
-	{
-		if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
-		{
-			*width = WinModes[IteratorMode].Width;
-			*height = WinModes[IteratorMode].Height;
-			++IteratorMode;
-			return true;
-		}
-	}
-	else
-	{
-		SDL_DisplayMode mode = {}, oldmode = {};
-		if(IteratorMode != 0)
-			SDL_GetDisplayMode(vid_adapter, IteratorMode-1, &oldmode);
-		do
-		{
-			if (SDL_GetDisplayMode(vid_adapter, IteratorMode, &mode) != 0)
-				return false;
-			++IteratorMode;
-		} while(mode.w == oldmode.w && mode.h == oldmode.h);
 
-		*width = mode.w;
-		*height = mode.h;
+	if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
+	{
+		*width = WinModes[IteratorMode].Width;
+		*height = WinModes[IteratorMode].Height;
+		++IteratorMode;
 		return true;
 	}
 	return false;
@@ -431,8 +447,19 @@ void SDLFB::Update ()
 
 	void *pixels;
 	int pitch;
-	if (SDL_LockTexture (Texture, NULL, &pixels, &pitch))
-		return;
+	if (UsingRenderer)
+	{
+		if (SDL_LockTexture (Texture, NULL, &pixels, &pitch))
+			return;
+	}
+	else
+	{
+		if (SDL_LockSurface (Surface))
+			return;
+
+		pixels = Surface->pixels;
+		pitch = Surface->pitch;
+	}
 
 	if (NotPaletted)
 	{
@@ -440,29 +467,38 @@ void SDLFB::Update ()
 			pixels, pitch, Width, Height,
 			FRACUNIT, FRACUNIT, 0, 0);
 	}
-#if 0
 	else
 	{
-		if (Screen->pitch == Pitch)
+		if (pitch == Pitch)
 		{
-			memcpy (Screen->pixels, MemBuffer, Width*Height);
+			memcpy (pixels, MemBuffer, Width*Height);
 		}
 		else
 		{
 			for (int y = 0; y < Height; ++y)
 			{
-				memcpy ((BYTE *)Screen->pixels+y*Screen->pitch, MemBuffer+y*Pitch, Width);
+				memcpy ((BYTE *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
 			}
 		}
 	}
-#endif
 
-	SDL_UnlockTexture (Texture);
+	if (UsingRenderer)
+	{
+		SDL_UnlockTexture (Texture);
 
-	SDLFlipCycles.Clock();
-	SDL_RenderCopy(Renderer, Texture, NULL, &UpdateRect);
-	SDL_RenderPresent(Renderer);
-	SDLFlipCycles.Unclock();
+		SDLFlipCycles.Clock();
+		SDL_RenderCopy(Renderer, Texture, NULL, &UpdateRect);
+		SDL_RenderPresent(Renderer);
+		SDLFlipCycles.Unclock();
+	}
+	else
+	{
+		SDL_UnlockSurface (Surface);
+
+		SDLFlipCycles.Clock();
+		SDL_UpdateWindowSurface (Screen);
+		SDLFlipCycles.Unclock();
+	}
 
 	BlitCycles.Unclock();
 
@@ -503,7 +539,6 @@ void SDLFB::UpdateColors ()
 		}
 		GPfx.SetPalette (palette);
 	}
-#if 0
 	else
 	{
 		SDL_Color colors[256];
@@ -520,9 +555,8 @@ void SDLFB::UpdateColors ()
 				256, GammaTable[2][Flash.b], GammaTable[1][Flash.g], GammaTable[0][Flash.r],
 				FlashAmount);
 		}
-		SDL_SetPalette (Screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
+		SDL_SetPaletteColors (Surface->format->palette, colors, 0, 256);
 	}
-#endif
 }
 
 PalEntry *SDLFB::GetPalette ()
@@ -592,24 +626,48 @@ void SDLFB::ResetSDLRenderer ()
 		SDL_DestroyRenderer (Renderer);
 	}
 
-	Renderer = SDL_CreateRenderer (Screen, -1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE|
-									(vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
-	if (!Renderer)
-		return;
-
-	Texture = SDL_CreateTexture (Renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Width, Height);
-
-	//if (Screen->format->palette == NULL)
+	UsingRenderer = !vid_forcesurface;
+	if (UsingRenderer)
 	{
-		NotPaletted = true;
+		Renderer = SDL_CreateRenderer (Screen, -1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE|
+										(vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
+		if (!Renderer)
+			return;
 
-		Uint32 format;
-		SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
+		Uint32 fmt;
+		switch(vid_displaybits)
+		{
+			default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
+			case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
+			case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
+			case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
+			case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+		}
+		Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 
-		Uint32 Rmask, Gmask, Bmask, Amask;
-		int bpp;
-		SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-		GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
+		{
+			NotPaletted = true;
+
+			Uint32 format;
+			SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
+
+			Uint32 Rmask, Gmask, Bmask, Amask;
+			int bpp;
+			SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+			GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
+		}
+	}
+	else
+	{
+		Surface = SDL_GetWindowSurface (Screen);
+
+		if (Surface->format->palette == NULL)
+		{
+			NotPaletted = true;
+			GPfx.SetFormat (Surface->format->BitsPerPixel, Surface->format->Rmask, Surface->format->Gmask, Surface->format->Bmask);
+		}
+		else
+			NotPaletted = false;
 	}
 
 	// Calculate update rectangle
@@ -618,8 +676,9 @@ void SDLFB::ResetSDLRenderer ()
 		int w, h;
 		SDL_GetWindowSize (Screen, &w, &h);
 		UpdateRect.w = w;
-		UpdateRect.h = w*Height/Width;
-		UpdateRect.x = 0;
+		UpdateRect.h = h;
+		ScaleWithAspect (UpdateRect.w, UpdateRect.h, Width, Height);
+		UpdateRect.x = (w - UpdateRect.w)/2;
 		UpdateRect.y = (h - UpdateRect.h)/2;
 	}
 	else

@@ -99,7 +99,7 @@ static TArray<FString> PSR_ReadBaseInstalls(FScanner &sc)
 		if(key.Left(18).CompareNoCase("BaseInstallFolder_") == 0)
 		{
 			sc.MustGetToken(TK_StringConst);
-			result.Push(sc.String);
+			result.Push(FString(sc.String) + "/steamapps/common");
 		}
 		else
 		{
@@ -170,6 +170,7 @@ TArray<FString> I_GetSteamPath()
 	FString OSX_FindApplicationSupport();
 
 	FString regPath = OSX_FindApplicationSupport() + "/Steam/config/config.vdf";
+	Printf("Reading %s\n", regPath.GetChars());
 	try
 	{
 		SteamInstallFolders = ParseSteamRegistry(regPath);
@@ -208,6 +209,7 @@ TArray<FString> I_GetSteamPath()
 		{
 			struct stat st;
 			FString candidate(SteamInstallFolders[i] + "/" + AppInfo[app].BasePath);
+			Printf("Checking %s\n", candidate.GetChars());
 			if(stat(candidate, &st) == 0 && S_ISDIR(st.st_mode))
 				result.Push(candidate);
 		}

@@ -569,6 +569,7 @@ set( PLAT_SDL_SYSTEM_SOURCES
 	sdl/i_cd.cpp
 	sdl/i_main.cpp
 	sdl/i_movie.cpp
+	sdl/i_steam.cpp
 	sdl/i_system.cpp
 	sdl/sdlvideo.cpp
 	sdl/st_start.cpp )

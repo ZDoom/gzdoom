@@ -559,7 +559,7 @@ public:
 //
 //==========================================================================
 
-class FxRClamp : public FxExpression
+class FxPick : public FxExpression
 {
 protected:
 	FRandom * rng;
@@ -567,8 +567,8 @@ protected:
 
 public:
 
-	FxRClamp(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
-	~FxRClamp();
+	FxPick(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
+	~FxPick();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression(AActor *self);

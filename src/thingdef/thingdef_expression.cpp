@@ -1696,7 +1696,7 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 //
 //
 //==========================================================================
-FxRClamp::FxRClamp(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
+FxPick::FxPick(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	if (mi != NULL && ma != NULL)
@@ -1715,7 +1715,7 @@ FxRClamp::FxRClamp(FRandom * r, FxExpression *mi, FxExpression *ma, const FScrip
 //
 //==========================================================================
 
-FxRClamp::~FxRClamp()
+FxPick::~FxPick()
 {
 	SAFE_DELETE(min);
 	SAFE_DELETE(max);
@@ -1727,7 +1727,7 @@ FxRClamp::~FxRClamp()
 //
 //==========================================================================
 
-FxExpression *FxRClamp::Resolve(FCompileContext &ctx)
+FxExpression *FxPick::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	if (min && max)
@@ -1746,7 +1746,7 @@ FxExpression *FxRClamp::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxRClamp::EvalExpression(AActor *self)
+ExpVal FxPick::EvalExpression(AActor *self)
 {
 	ExpVal val;
 	val.Type = VAL_Int;

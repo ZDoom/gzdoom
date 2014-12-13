@@ -158,6 +158,7 @@ std2:
 		'random'					{ RET(TK_Random); }
 		'random2'					{ RET(TK_Random2); }
 		'frandom'					{ RET(TK_FRandom); }
+		'rclamp'					{ RET(TK_RClamp); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 

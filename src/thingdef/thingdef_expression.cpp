@@ -1696,6 +1696,89 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 //
 //
 //==========================================================================
+FxRClamp::FxRClamp(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	if (mi != NULL && ma != NULL)
+	{
+		min = new FxIntCast(mi);
+		max = new FxIntCast(ma);
+	}
+	else min = max = NULL;
+	rng = r;
+	ValueType = VAL_Int;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxRClamp::~FxRClamp()
+{
+	SAFE_DELETE(min);
+	SAFE_DELETE(max);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxRClamp::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	if (min && max)
+	{
+		RESOLVE(min, ctx);
+		RESOLVE(max, ctx);
+		ABORT(min && max);
+	}
+	return this;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxRClamp::EvalExpression(AActor *self)
+{
+	ExpVal val;
+	val.Type = VAL_Int;
+
+	if (min != NULL && max != NULL)
+	{
+		int minval = min->EvalExpression(self).GetInt();
+		int maxval = max->EvalExpression(self).GetInt();
+
+		if (maxval < minval)
+		{
+			swapvalues(maxval, minval);
+		}
+
+		val.Int = (*rng)(2); //rng->operator()(2); //(maxval - minval + 1) + minval;
+		if (val.Int > 0)
+			val.Int = maxval;
+		else
+			val.Int = minval;
+	}
+	else
+	{
+		val.Int = (*rng)();
+	}
+	return val;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
 : FxRandom(r, NULL, NULL, pos)
 {

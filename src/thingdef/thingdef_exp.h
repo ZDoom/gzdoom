@@ -559,6 +559,27 @@ public:
 //
 //==========================================================================
 
+class FxRClamp : public FxExpression
+{
+protected:
+	FRandom * rng;
+	FxExpression *min, *max;
+
+public:
+
+	FxRClamp(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
+	~FxRClamp();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpVal EvalExpression(AActor *self);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 class FxFRandom : public FxRandom
 {
 public:

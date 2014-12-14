@@ -374,6 +374,9 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 	else if (sc.CheckToken(TK_Pick))
 	{
 		FRandom *rng;
+		TArray<FxExpression*> list;
+		list.Clear();
+		int index = 0;
 
 		if (sc.CheckToken('['))
 		{
@@ -387,12 +390,17 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 		}
 		sc.MustGetToken('(');
 
-		FxExpression *min = ParseExpressionM(sc, cls);
-		sc.MustGetToken(',');
-		FxExpression *max = ParseExpressionM(sc, cls);
-		sc.MustGetToken(')');
+		while (!(sc.CheckToken(')')))
+		{
+			FxExpression *min = ParseExpressionM(sc, cls);
+			list.Push(min);
+			if (sc.CheckToken(')'))
+				break;
+			else
+				sc.MustGetToken(',');
+		}
 
-		return new FxPick(rng, min, max, sc);
+		return new FxPick(rng, list, sc);
 	}
 	else if (sc.CheckToken(TK_FRandom))
 	{

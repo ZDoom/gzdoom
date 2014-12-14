@@ -563,11 +563,11 @@ class FxPick : public FxExpression
 {
 protected:
 	FRandom * rng;
-	FxExpression *min, *max;
+	TArray<FxExpression*> min;
 
 public:
 
-	FxPick(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
+	FxPick(FRandom *, TArray<FxExpression*> mi, const FScriptPosition &pos);
 	~FxPick();
 	FxExpression *Resolve(FCompileContext&);
 

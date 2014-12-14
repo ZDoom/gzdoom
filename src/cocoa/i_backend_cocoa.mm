@@ -1625,48 +1625,6 @@ const char* I_GetBackEndName()
 extern "C" 
 {
 
-struct SDL_mutex
-{
-	pthread_mutex_t mutex;
-};
-
-
-SDL_mutex* SDL_CreateMutex()
-{
-	pthread_mutexattr_t attributes;
-	pthread_mutexattr_init(&attributes);
-	pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_RECURSIVE);
-	
-	SDL_mutex* result = new SDL_mutex;
-	
-	if (0 != pthread_mutex_init(&result->mutex, &attributes))
-	{
-		delete result;
-		result = NULL;
-	}
-	
-	pthread_mutexattr_destroy(&attributes);
-	
-	return result;
-}
-
-int SDL_mutexP(SDL_mutex* mutex)
-{
-	return pthread_mutex_lock(&mutex->mutex);
-}
-
-int SDL_mutexV(SDL_mutex* mutex)
-{
-	return pthread_mutex_unlock(&mutex->mutex);
-}
-
-void SDL_DestroyMutex(SDL_mutex* mutex)
-{
-	pthread_mutex_destroy(&mutex->mutex);
-	delete mutex;
-}
-
-
 static timeval s_startTicks;
 
 uint32_t SDL_GetTicks()

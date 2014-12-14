@@ -545,7 +545,7 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/st_start.cpp
 	win32/win32video.cpp )
-set( PLAT_SDL_SYSTEM_SOURCES
+set( PLAT_SDL_SOURCES
 	sdl/crashcatcher.c
 	sdl/hardware.cpp
 	sdl/i_cd.cpp
@@ -553,8 +553,7 @@ set( PLAT_SDL_SYSTEM_SOURCES
 	sdl/i_movie.cpp
 	sdl/i_system.cpp
 	sdl/sdlvideo.cpp
-	sdl/st_start.cpp )
-set( PLAT_SDL_SPECIAL_SOURCES
+	sdl/st_start.cpp
 	sdl/i_gui.cpp
 	sdl/i_input.cpp
 	sdl/i_joystick.cpp
@@ -563,39 +562,27 @@ set( PLAT_MAC_SOURCES
 	cocoa/iwadpicker_cocoa.mm
 	cocoa/i_system_cocoa.mm )
 set( PLAT_COCOA_SOURCES
-	cocoa/HID_Config_Utilities.c
-	cocoa/HID_Error_Handler.c
-	cocoa/HID_Name_Lookup.c
-	cocoa/HID_Queue_Utilities.c
-	cocoa/HID_Utilities.c
-	cocoa/IOHIDDevice_.c
-	cocoa/IOHIDElement_.c
-	cocoa/ImmrHIDUtilAddOn.c
+	cocoa/hid/HID_Config_Utilities.c
+	cocoa/hid/HID_Error_Handler.c
+	cocoa/hid/HID_Name_Lookup.c
+	cocoa/hid/HID_Queue_Utilities.c
+	cocoa/hid/HID_Utilities.c
+	cocoa/hid/IOHIDDevice_.c
+	cocoa/hid/IOHIDElement_.c
+	cocoa/hid/ImmrHIDUtilAddOn.c
+	cocoa/critsec.cpp
 	cocoa/i_backend_cocoa.mm
+	cocoa/i_cd.cpp
 	cocoa/i_joystick.cpp
+	cocoa/i_movie.cpp
+	cocoa/st_start.cpp
 	cocoa/i_timer.cpp
 	cocoa/zdoom.icns )
-
-if( APPLE )
-	set( PLAT_SDL_SOURCES ${PLAT_SDL_SYSTEM_SOURCES} "${FMOD_LIBRARY}" )
-
-	if( OSX_COCOA_BACKEND )
-		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
-		add_definitions( -DUSE_NATIVE_COCOA )
-	else( OSX_COCOA_BACKEND )
-		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} )
-	endif( OSX_COCOA_BACKEND )
-
-	set_source_files_properties( cocoa/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
-	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
-else( APPLE )
-	set( PLAT_SDL_SOURCES ${PLAT_SDL_SYSTEM_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} )
-endif( APPLE )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
-	set( OTHER_SYSTEM_SOURCES ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} )
+	set( OTHER_SYSTEM_SOURCES ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
 	
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		# CMake is not set up to compile and link rc files with GCC. :(
@@ -606,15 +593,25 @@ if( WIN32 )
 	else( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+elseif( APPLE )
+	if( OSX_COCOA_BACKEND )
+		set( SYSTEM_SOURCES_DIR cocoa )
+		set( SYSTEM_SOURCES ${PLAT_COCOA_SOURCES} )
+		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_SDL_SOURCES} )
+	else( OSX_COCOA_BACKEND )
+		set( SYSTEM_SOURCES_DIR sdl )
+		set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
+		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} )
+	endif( OSX_COCOA_BACKEND )
+
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_MAC_SOURCES} "${FMOD_LIBRARY}" )
+
+	set_source_files_properties( cocoa/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR sdl )
 	set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
-	if( APPLE )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_MAC_SOURCES} )
-		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
-	else( APPLE )
-		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_MAC_SOURCES} )
-	endif( APPLE )
+	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
 endif( WIN32 )
 
 if( NOT ASM_SOURCES )
@@ -672,11 +669,18 @@ endif( DYN_FLUIDSYNTH )
 # there's generally a new cpp for every header so this file will get changed
 if( WIN32 )
 	set( EXTRA_HEADER_DIRS win32/*.h )
+elseif( APPLE )
+	if( OSX_COCOA_BACKEND )
+		set( EXTRA_HEADER_DIRS cocoa/*.h )
+	else( OSX_COCOA_BACKEND )
+		set( EXTRA_HEADER_DIRS sdl/*.h )
+	endif( OSX_COCOA_BACKEND )
 else( WIN32 )
 	set( EXTRA_HEADER_DIRS sdl/*.h )
 endif( WIN32 )
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
+	cocoa/*.h
 	fragglescript/*.h
 	g_doom/*.h
 	g_heretic/*.h

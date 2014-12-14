@@ -37,7 +37,7 @@
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
 
-#include "HID_Utilities_External.h"
+#include "hid/HID_Utilities_External.h"
 
 #include "d_event.h"
 #include "doomdef.h"

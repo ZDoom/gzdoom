@@ -61,9 +61,16 @@
 #include "doomdef.h"
 #include "doomerrors.h"
 #include "doomstat.h"
+#include "hardware.h"
 #include "m_argv.h"
+#include "r_renderer.h"
+#include "r_swrenderer.h"
 #include "s_sound.h"
+#include "stats.h"
 #include "textures.h"
+#include "v_palette.h"
+#include "v_pfx.h"
+#include "v_text.h"
 #include "v_video.h"
 #include "version.h"
 #include "i_rbopts.h"
@@ -194,7 +201,7 @@ typedef NSInteger NSApplicationActivationPolicy;
 
 RenderBufferOptions rbOpts;
 
-EXTERN_CVAR(Bool, fullscreen   )
+EXTERN_CVAR(Bool, ticker       )
 EXTERN_CVAR(Bool, vid_hidpi    )
 EXTERN_CVAR(Bool, vid_vsync    )
 EXTERN_CVAR(Int,  vid_adapter  )
@@ -227,6 +234,37 @@ EXTERN_CVAR(Int, m_use_mouse);
 
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();
+
+
+// ---------------------------------------------------------------------------
+
+
+extern int NewWidth, NewHeight, NewBits, DisplayBits;
+
+
+CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	NewWidth = screen->GetWidth();
+	NewHeight = screen->GetHeight();
+	NewBits = DisplayBits;
+	setmodeneeded = true;
+}
+
+CUSTOM_CVAR(Float, vid_winscale, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 1.f)
+	{
+		self = 1.f;
+	}
+	else if (Video)
+	{
+		Video->SetWindowedScale (self);
+		NewWidth = screen->GetWidth();
+		NewHeight = screen->GetHeight();
+		NewBits = DisplayBits;
+		setmodeneeded = true;
+	}
+}
 
 
 // ---------------------------------------------------------------------------
@@ -2132,6 +2170,840 @@ int SDL_SetPaletteColors(SDL_Palette* palette, const SDL_Color* colors, int firs
 }
 	
 } // extern "C"
+
+
+// ---------------------------------------------------------------------------
+
+
+class CocoaVideo : public IVideo
+{
+public:
+	CocoaVideo(int parm);
+	~CocoaVideo();
+
+	EDisplayType GetDisplayType () { return DISPLAY_Both; }
+	void SetWindowedScale (float scale);
+
+	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
+
+	void StartModeIterator (int bits, bool fs);
+	bool NextMode (int *width, int *height, bool *letterbox);
+
+private:
+	int IteratorMode;
+	int IteratorBits;
+};
+
+class CocoaFrameBuffer : public DFrameBuffer
+{
+public:
+	CocoaFrameBuffer (int width, int height, bool fullscreen);
+	~CocoaFrameBuffer ();
+
+	bool Lock (bool buffer);
+	void Unlock ();
+	bool Relock ();
+	void ForceBuffering (bool force);
+	bool IsValid ();
+	void Update ();
+	PalEntry *GetPalette ();
+	void GetFlashedPalette (PalEntry pal[256]);
+	void UpdatePalette ();
+	bool SetGamma (float gamma);
+	bool SetFlash (PalEntry rgb, int amount);
+	void GetFlash (PalEntry &rgb, int &amount);
+	void SetFullscreen (bool fullscreen);
+	int GetPageCount ();
+	bool IsFullscreen ();
+
+	friend class CocoaVideo;
+
+	virtual void SetVSync (bool vsync);
+
+private:
+	PalEntry SourcePalette[256];
+	BYTE GammaTable[3][256];
+	PalEntry Flash;
+	int FlashAmount;
+	float Gamma;
+	bool UpdatePending;
+
+	SDL_Window *Screen;
+	SDL_Renderer *Renderer;
+	union
+	{
+		SDL_Texture *Texture;
+		SDL_Surface *Surface;
+	};
+	SDL_Rect UpdateRect;
+
+	bool NeedPalUpdate;
+	bool NeedGammaUpdate;
+	bool NotPaletted;
+
+	void UpdateColors ();
+	void ResetSDLRenderer ();
+
+	CocoaFrameBuffer () {}
+};
+
+struct MiniModeInfo
+{
+	WORD Width, Height;
+};
+
+
+EXTERN_CVAR (Float, Gamma)
+
+CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CVAR (Int, vid_displaybits, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CVAR (Bool, vid_forcesurface, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+CUSTOM_CVAR (Float, ggamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+
+static MiniModeInfo WinModes[] =
+{
+	{ 320, 200 },
+	{ 320, 240 },
+	{ 400, 225 },	// 16:9
+	{ 400, 300 },
+	{ 480, 270 },	// 16:9
+	{ 480, 360 },
+	{ 512, 288 },	// 16:9
+	{ 512, 384 },
+	{ 640, 360 },	// 16:9
+	{ 640, 400 },
+	{ 640, 480 },
+	{ 720, 480 },	// 16:10
+	{ 720, 540 },
+	{ 800, 450 },	// 16:9
+	{ 800, 480 },
+	{ 800, 500 },	// 16:10
+	{ 800, 600 },
+	{ 848, 480 },	// 16:9
+	{ 960, 600 },	// 16:10
+	{ 960, 720 },
+	{ 1024, 576 },	// 16:9
+	{ 1024, 600 },	// 17:10
+	{ 1024, 640 },	// 16:10
+	{ 1024, 768 },
+	{ 1088, 612 },	// 16:9
+	{ 1152, 648 },	// 16:9
+	{ 1152, 720 },	// 16:10
+	{ 1152, 864 },
+	{ 1280, 720 },	// 16:9
+	{ 1280, 854 },
+	{ 1280, 800 },	// 16:10
+	{ 1280, 960 },
+	{ 1280, 1024 },	// 5:4
+	{ 1360, 768 },	// 16:9
+	{ 1366, 768 },
+	{ 1400, 787 },	// 16:9
+	{ 1400, 875 },	// 16:10
+	{ 1400, 1050 },
+	{ 1440, 900 },
+	{ 1440, 960 },
+	{ 1440, 1080 },
+	{ 1600, 900 },	// 16:9
+	{ 1600, 1000 },	// 16:10
+	{ 1600, 1200 },
+	{ 1920, 1080 },
+	{ 1920, 1200 },
+	{ 2048, 1536 },
+	{ 2560, 1440 },
+	{ 2560, 1600 },
+	{ 2560, 2048 },
+	{ 2880, 1800 },
+	{ 3200, 1800 },
+	{ 3840, 2160 },
+	{ 3840, 2400 },
+	{ 4096, 2160 },
+	{ 5120, 2880 }
+};
+
+static cycle_t BlitCycles;
+static cycle_t SDLFlipCycles;
+
+// CODE --------------------------------------------------------------------
+
+void ScaleWithAspect (int &w, int &h, int Width, int Height)
+{
+	int resRatio = CheckRatio (Width, Height);
+	int screenRatio;
+	CheckRatio (w, h, &screenRatio);
+	if (resRatio == screenRatio)
+		return;
+
+	double yratio;
+	switch(resRatio)
+	{
+		case 0: yratio = 4./3.; break;
+		case 1: yratio = 16./9.; break;
+		case 2: yratio = 16./10.; break;
+		case 3: yratio = 17./10.; break;
+		case 4: yratio = 5./4.; break;
+		default: return;
+	}
+	double y = w/yratio;
+	if (y > h)
+		w = h*yratio;
+	else
+		h = y;
+}
+
+CocoaVideo::CocoaVideo (int parm)
+{
+	IteratorBits = 0;
+}
+
+CocoaVideo::~CocoaVideo ()
+{
+}
+
+void CocoaVideo::StartModeIterator (int bits, bool fs)
+{
+	IteratorMode = 0;
+	IteratorBits = bits;
+}
+
+bool CocoaVideo::NextMode (int *width, int *height, bool *letterbox)
+{
+	if (IteratorBits != 8)
+		return false;
+
+	if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
+	{
+		*width = WinModes[IteratorMode].Width;
+		*height = WinModes[IteratorMode].Height;
+		++IteratorMode;
+		return true;
+	}
+	return false;
+}
+
+DFrameBuffer *CocoaVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+{
+	static int retry = 0;
+	static int owidth, oheight;
+
+	PalEntry flashColor;
+	int flashAmount;
+
+	if (old != NULL)
+	{ // Reuse the old framebuffer if its attributes are the same
+		CocoaFrameBuffer *fb = static_cast<CocoaFrameBuffer *> (old);
+		if (fb->Width == width &&
+			fb->Height == height)
+		{
+			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+
+			if (fsnow != fullscreen)
+			{
+				fb->SetFullscreen (fullscreen);
+			}
+			return old;
+		}
+		old->GetFlash (flashColor, flashAmount);
+		old->ObjectFlags |= OF_YesReallyDelete;
+		if (screen == old) screen = NULL;
+		delete old;
+	}
+	else
+	{
+		flashColor = 0;
+		flashAmount = 0;
+	}
+
+	CocoaFrameBuffer *fb = new CocoaFrameBuffer (width, height, fullscreen);
+	retry = 0;
+
+	// If we could not create the framebuffer, try again with slightly
+	// different parameters in this order:
+	// 1. Try with the closest size
+	// 2. Try in the opposite screen mode with the original size
+	// 3. Try in the opposite screen mode with the closest size
+	// This is a somewhat confusing mass of recursion here.
+
+	while (fb == NULL || !fb->IsValid ())
+	{
+		if (fb != NULL)
+		{
+			delete fb;
+		}
+
+		switch (retry)
+		{
+			case 0:
+				owidth = width;
+				oheight = height;
+			case 2:
+				// Try a different resolution. Hopefully that will work.
+				I_ClosestResolution (&width, &height, 8);
+				break;
+
+			case 1:
+				// Try changing fullscreen mode. Maybe that will work.
+				width = owidth;
+				height = oheight;
+				fullscreen = !fullscreen;
+				break;
+
+			default:
+				// I give up!
+				I_FatalError ("Could not create new screen (%d x %d)", owidth, oheight);
+		}
+
+		++retry;
+		fb = static_cast<CocoaFrameBuffer *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+	}
+
+	fb->SetFlash (flashColor, flashAmount);
+
+	return fb;
+}
+
+void CocoaVideo::SetWindowedScale (float scale)
+{
+}
+
+
+CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
+: DFrameBuffer (width, height)
+{
+	int i;
+
+	NeedPalUpdate = false;
+	NeedGammaUpdate = false;
+	UpdatePending = false;
+	NotPaletted = false;
+	FlashAmount = 0;
+
+	FString caption;
+	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+
+	Screen = SDL_CreateWindow (caption,
+							   SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
+							   width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+
+	if (Screen == NULL)
+		return;
+
+	Renderer = NULL;
+	Texture = NULL;
+	ResetSDLRenderer ();
+
+	for (i = 0; i < 256; i++)
+	{
+		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
+	}
+
+	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
+	UpdateColors ();
+
+	SetVSync (vid_vsync);
+}
+
+
+CocoaFrameBuffer::~CocoaFrameBuffer ()
+{
+	if(Screen)
+	{
+		if (Renderer)
+		{
+			if (Texture)
+				SDL_DestroyTexture (Texture);
+			SDL_DestroyRenderer (Renderer);
+		}
+
+		SDL_DestroyWindow (Screen);
+	}
+}
+
+bool CocoaFrameBuffer::IsValid ()
+{
+	return DFrameBuffer::IsValid() && Screen != NULL;
+}
+
+int CocoaFrameBuffer::GetPageCount ()
+{
+	return 1;
+}
+
+bool CocoaFrameBuffer::Lock (bool buffered)
+{
+	return DSimpleCanvas::Lock ();
+}
+
+bool CocoaFrameBuffer::Relock ()
+{
+	return DSimpleCanvas::Lock ();
+}
+
+void CocoaFrameBuffer::Unlock ()
+{
+	if (UpdatePending && LockCount == 1)
+	{
+		Update ();
+	}
+	else if (--LockCount <= 0)
+	{
+		Buffer = NULL;
+		LockCount = 0;
+	}
+}
+
+void CocoaFrameBuffer::Update ()
+{
+	if (LockCount != 1)
+	{
+		if (LockCount > 0)
+		{
+			UpdatePending = true;
+			--LockCount;
+		}
+		return;
+	}
+
+	DrawRateStuff ();
+
+	Buffer = NULL;
+	LockCount = 0;
+	UpdatePending = false;
+
+	BlitCycles.Reset();
+	SDLFlipCycles.Reset();
+	BlitCycles.Clock();
+
+	void *pixels;
+	int pitch;
+
+	if (SDL_LockTexture (Texture, NULL, &pixels, &pitch))
+		return;
+
+	if (NotPaletted)
+	{
+		GPfx.Convert (MemBuffer, Pitch,
+					  pixels, pitch, Width, Height,
+					  FRACUNIT, FRACUNIT, 0, 0);
+	}
+	else
+	{
+		if (pitch == Pitch)
+		{
+			memcpy (pixels, MemBuffer, Width*Height);
+		}
+		else
+		{
+			for (int y = 0; y < Height; ++y)
+			{
+				memcpy ((BYTE *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
+			}
+		}
+	}
+
+	SDL_UnlockTexture (Texture);
+
+	SDLFlipCycles.Clock();
+	SDL_RenderCopy(Renderer, Texture, NULL, &UpdateRect);
+	SDL_RenderPresent(Renderer);
+	SDLFlipCycles.Unclock();
+
+	BlitCycles.Unclock();
+
+	if (NeedGammaUpdate)
+	{
+		bool Windowed = false;
+		NeedGammaUpdate = false;
+		CalcGamma ((Windowed || rgamma == 0.f) ? Gamma : (Gamma * rgamma), GammaTable[0]);
+		CalcGamma ((Windowed || ggamma == 0.f) ? Gamma : (Gamma * ggamma), GammaTable[1]);
+		CalcGamma ((Windowed || bgamma == 0.f) ? Gamma : (Gamma * bgamma), GammaTable[2]);
+		NeedPalUpdate = true;
+	}
+
+	if (NeedPalUpdate)
+	{
+		NeedPalUpdate = false;
+		UpdateColors ();
+	}
+}
+
+void CocoaFrameBuffer::UpdateColors ()
+{
+	if (NotPaletted)
+	{
+		PalEntry palette[256];
+
+		for (int i = 0; i < 256; ++i)
+		{
+			palette[i].r = GammaTable[0][SourcePalette[i].r];
+			palette[i].g = GammaTable[1][SourcePalette[i].g];
+			palette[i].b = GammaTable[2][SourcePalette[i].b];
+		}
+		if (FlashAmount)
+		{
+			DoBlending (palette, palette,
+						256, GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
+						FlashAmount);
+		}
+		GPfx.SetPalette (palette);
+	}
+	else
+	{
+		SDL_Color colors[256];
+
+		for (int i = 0; i < 256; ++i)
+		{
+			colors[i].r = GammaTable[0][SourcePalette[i].r];
+			colors[i].g = GammaTable[1][SourcePalette[i].g];
+			colors[i].b = GammaTable[2][SourcePalette[i].b];
+		}
+		if (FlashAmount)
+		{
+			DoBlending ((PalEntry *)colors, (PalEntry *)colors,
+						256, GammaTable[2][Flash.b], GammaTable[1][Flash.g], GammaTable[0][Flash.r],
+						FlashAmount);
+		}
+		SDL_SetPaletteColors (Surface->format->palette, colors, 0, 256);
+	}
+}
+
+PalEntry *CocoaFrameBuffer::GetPalette ()
+{
+	return SourcePalette;
+}
+
+void CocoaFrameBuffer::UpdatePalette ()
+{
+	NeedPalUpdate = true;
+}
+
+bool CocoaFrameBuffer::SetGamma (float gamma)
+{
+	Gamma = gamma;
+	NeedGammaUpdate = true;
+	return true;
+}
+
+bool CocoaFrameBuffer::SetFlash (PalEntry rgb, int amount)
+{
+	Flash = rgb;
+	FlashAmount = amount;
+	NeedPalUpdate = true;
+	return true;
+}
+
+void CocoaFrameBuffer::GetFlash (PalEntry &rgb, int &amount)
+{
+	rgb = Flash;
+	amount = FlashAmount;
+}
+
+// Q: Should I gamma adjust the returned palette?
+void CocoaFrameBuffer::GetFlashedPalette (PalEntry pal[256])
+{
+	memcpy (pal, SourcePalette, 256*sizeof(PalEntry));
+	if (FlashAmount)
+	{
+		DoBlending (pal, pal, 256, Flash.r, Flash.g, Flash.b, FlashAmount);
+	}
+}
+
+void CocoaFrameBuffer::SetFullscreen (bool fullscreen)
+{
+	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	if (!fullscreen)
+	{
+		// Restore proper window size
+		SDL_SetWindowSize (Screen, Width, Height);
+	}
+
+	ResetSDLRenderer ();
+}
+
+bool CocoaFrameBuffer::IsFullscreen ()
+{
+	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+}
+
+void CocoaFrameBuffer::ResetSDLRenderer ()
+{
+	if (Renderer)
+	{
+		if (Texture)
+			SDL_DestroyTexture (Texture);
+		SDL_DestroyRenderer (Renderer);
+	}
+
+	Renderer = SDL_CreateRenderer (Screen, -1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE|
+		(vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
+	if (!Renderer)
+		return;
+
+	Uint32 fmt;
+	switch(vid_displaybits)
+	{
+		default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
+		case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
+		case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
+		case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
+		case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+	}
+	Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
+
+	{
+		NotPaletted = true;
+
+		Uint32 format;
+		SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
+
+		Uint32 Rmask, Gmask, Bmask, Amask;
+		int bpp;
+		SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+		GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
+	}
+
+	// Calculate update rectangle
+	if (IsFullscreen ())
+	{
+		int w, h;
+		SDL_GetWindowSize (Screen, &w, &h);
+		UpdateRect.w = w;
+		UpdateRect.h = h;
+		ScaleWithAspect (UpdateRect.w, UpdateRect.h, Width, Height);
+		UpdateRect.x = (w - UpdateRect.w)/2;
+		UpdateRect.y = (h - UpdateRect.h)/2;
+	}
+	else
+	{
+		// In windowed mode we just update the whole window.
+		UpdateRect.x = 0;
+		UpdateRect.y = 0;
+		UpdateRect.w = Width;
+		UpdateRect.h = Height;
+	}
+}
+
+void CocoaFrameBuffer::SetVSync (bool vsync)
+{
+	if (CGLContextObj context = CGLGetCurrentContext())
+	{
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+		// Inconsistency between 10.4 and 10.5 SDKs:
+		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
+		// So, GLint typedef'ed to long instead of int to workaround this issue
+		typedef long GLint;
+#endif // prior to 10.5
+
+		const GLint value = vsync ? 1 : 0;
+		CGLSetParameter(context, kCGLCPSwapInterval, &value);
+	}
+}
+
+ADD_STAT (blit)
+{
+	FString out;
+	out.Format ("blit=%04.1f ms  flip=%04.1f ms",
+				BlitCycles.TimeMS(), SDLFlipCycles.TimeMS());
+	return out;
+}
+
+
+IVideo *Video;
+
+
+void I_ShutdownGraphics ()
+{
+	if (screen)
+	{
+		DFrameBuffer *s = screen;
+		screen = NULL;
+		s->ObjectFlags |= OF_YesReallyDelete;
+		delete s;
+	}
+	if (Video)
+		delete Video, Video = NULL;
+}
+
+void I_InitGraphics ()
+{
+	UCVarValue val;
+
+	val.Bool = !!Args->CheckParm ("-devparm");
+	ticker.SetGenericRepDefault (val, CVAR_Bool);
+
+	Video = new CocoaVideo (0);
+	if (Video == NULL)
+		I_FatalError ("Failed to initialize display");
+
+	atterm (I_ShutdownGraphics);
+
+	Video->SetWindowedScale (vid_winscale);
+}
+
+static void I_DeleteRenderer()
+{
+	if (Renderer != NULL) delete Renderer;
+}
+
+void I_CreateRenderer()
+{
+	if (Renderer == NULL)
+	{
+		Renderer = new FSoftwareRenderer;
+		atterm(I_DeleteRenderer);
+	}
+}
+
+
+DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
+{
+	bool fs = false;
+	switch (Video->GetDisplayType ())
+	{
+		case DISPLAY_WindowOnly:
+			fs = false;
+			break;
+		case DISPLAY_FullscreenOnly:
+			fs = true;
+			break;
+		case DISPLAY_Both:
+			fs = fullscreen;
+			break;
+	}
+
+	return Video->CreateFrameBuffer (width, height, fs, old);
+}
+
+bool I_CheckResolution (int width, int height, int bits)
+{
+	int twidth, theight;
+
+	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+	while (Video->NextMode (&twidth, &theight, NULL))
+	{
+		if (width == twidth && height == theight)
+			return true;
+	}
+	return false;
+}
+
+void I_ClosestResolution (int *width, int *height, int bits)
+{
+	int twidth, theight;
+	int cwidth = 0, cheight = 0;
+	int iteration;
+	DWORD closest = 4294967295u;
+
+	for (iteration = 0; iteration < 2; iteration++)
+	{
+		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+		while (Video->NextMode (&twidth, &theight, NULL))
+		{
+			if (twidth == *width && theight == *height)
+				return;
+
+			if (iteration == 0 && (twidth < *width || theight < *height))
+				continue;
+
+			DWORD dist = (twidth - *width) * (twidth - *width)
+			+ (theight - *height) * (theight - *height);
+
+			if (dist < closest)
+			{
+				closest = dist;
+				cwidth = twidth;
+				cheight = theight;
+			}
+		}
+		if (closest != 4294967295u)
+		{
+			*width = cwidth;
+			*height = cheight;
+			return;
+		}
+	}
+}
+
+
+EXTERN_CVAR(Int, vid_maxfps);
+EXTERN_CVAR(Bool, cl_capfps);
+
+// So Apple doesn't support POSIX timers and I can't find a good substitute short of
+// having Objective-C Cocoa events or something like that.
+void I_SetFPSLimit(int limit)
+{
+}
+
+CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (vid_maxfps < TICRATE && vid_maxfps != 0)
+	{
+		vid_maxfps = TICRATE;
+	}
+	else if (vid_maxfps > 1000)
+	{
+		vid_maxfps = 1000;
+	}
+	else if (cl_capfps == 0)
+	{
+		I_SetFPSLimit(vid_maxfps);
+	}
+}
+
+
+CCMD (vid_listmodes)
+{
+	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
+	int width, height, bits;
+	bool letterbox;
+
+	if (Video == NULL)
+	{
+		return;
+	}
+	for (bits = 1; bits <= 32; bits++)
+	{
+		Video->StartModeIterator (bits, screen->IsFullscreen());
+		while (Video->NextMode (&width, &height, &letterbox))
+		{
+			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
+			int ratio = CheckRatio (width, height);
+			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
+				"%s%4d x%5d x%3d%s%s\n",
+				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
+				width, height, bits,
+				ratios[ratio],
+				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB");
+		}
+	}
+}
+
+CCMD (vid_currentmode)
+{
+	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
+}
 
 
 namespace

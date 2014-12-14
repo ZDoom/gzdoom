@@ -1699,14 +1699,10 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 FxPick::FxPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos)
 : FxExpression(pos)
 {
-	int index = 0;
-	int max = mi.Size();
-	if (max > 0)
+	for (unsigned int index = 0; index < mi.Size(); index++)
 	{
-		for (index = 0; index < max; index++)
-			min.Push(new FxIntCast(mi[index]));
+		min.Push(new FxIntCast(mi[index]));
 	}
-	else min.Clear();
 	rng = r;
 	ValueType = VAL_Int;
 }
@@ -1719,7 +1715,6 @@ FxPick::FxPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos
 
 FxPick::~FxPick()
 {
-	min.Clear();
 }
 
 //==========================================================================
@@ -1730,17 +1725,11 @@ FxPick::~FxPick()
 
 FxExpression *FxPick::Resolve(FCompileContext &ctx)
 {
-	int index = 0;
 	CHECKRESOLVED();
-	int max = min.Size();
-	if (max > 0)
+	for (unsigned int index = 0; index < min.Size(); index++)
 	{
-		for (index = 0; index < max; index++)
-		{
-			RESOLVE(min[index], ctx);
-			ABORT(min[index]);
-		}
-		
+		RESOLVE(min[index], ctx);
+		ABORT(min[index]);
 	}
 	return this;
 };

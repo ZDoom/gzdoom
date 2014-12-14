@@ -563,7 +563,7 @@ class FxPick : public FxExpression
 {
 protected:
 	FRandom * rng;
-	TArray<FxExpression*> min;
+	TDeletingArray<FxExpression*> min;
 
 public:
 

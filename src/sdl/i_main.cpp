@@ -235,13 +235,7 @@ static void unprotect_rtext()
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();
 
-const char* I_GetBackEndName();
-
-#ifdef USE_NATIVE_COCOA
-int SDL_main (int argc, char **argv)
-#else
 int main (int argc, char **argv)
-#endif
 {
 #if !defined (__APPLE__)
 	{
@@ -250,8 +244,8 @@ int main (int argc, char **argv)
 	}
 #endif // !__APPLE__
 
-	printf(GAMENAME" %s - %s - %s version\nCompiled on %s\n",
-		GetVersionString(), GetGitTime(), I_GetBackEndName(), __DATE__);
+	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
+		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -280,24 +274,6 @@ int main (int argc, char **argv)
 
 	printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
 	printf("\n");
-
-#ifdef __APPLE__
-	EXTERN_CVAR( Int, vid_adapter )
-	SDL_DisplayMode videoInfo = {};
-	if ( SDL_GetDesktopDisplayMode (vid_adapter, &videoInfo) == 0 )
-	{
-		EXTERN_CVAR(  Int, vid_defwidth  )
-		EXTERN_CVAR(  Int, vid_defheight )
-		EXTERN_CVAR(  Int, vid_defbits   )
-		EXTERN_CVAR( Bool, vid_vsync     )
-		EXTERN_CVAR( Bool, fullscreen    )
-		
-		vid_defwidth  = videoInfo.w;
-		vid_defheight = videoInfo.h;
-		vid_vsync     = true;
-		fullscreen    = true;
-	}	
-#endif // __APPLE__
 	
     try
     {

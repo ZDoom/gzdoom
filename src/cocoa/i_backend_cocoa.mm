@@ -56,15 +56,19 @@
 #include "cmdlib.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "d_main.h"
 #include "dikeys.h"
 #include "doomdef.h"
+#include "doomerrors.h"
 #include "doomstat.h"
+#include "m_argv.h"
 #include "s_sound.h"
 #include "textures.h"
 #include "v_video.h"
 #include "version.h"
 #include "i_rbopts.h"
 #include "i_osversion.h"
+#include "i_system.h"
 
 #undef Class
 
@@ -190,8 +194,12 @@ typedef NSInteger NSApplicationActivationPolicy;
 
 RenderBufferOptions rbOpts;
 
-EXTERN_CVAR(Bool, fullscreen)
-EXTERN_CVAR(Bool, vid_hidpi)
+EXTERN_CVAR(Bool, fullscreen   )
+EXTERN_CVAR(Bool, vid_hidpi    )
+EXTERN_CVAR(Bool, vid_vsync    )
+EXTERN_CVAR(Int,  vid_adapter  )
+EXTERN_CVAR(Int,  vid_defwidth )
+EXTERN_CVAR(Int,  vid_defheight)
 
 CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_noprescale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -217,7 +225,88 @@ extern constate_e ConsoleState;
 
 EXTERN_CVAR(Int, m_use_mouse);
 
+void I_StartupJoysticks();
 void I_ShutdownJoysticks();
+
+
+// ---------------------------------------------------------------------------
+
+
+DArgs *Args; // command line arguments
+
+namespace
+{
+
+// The maximum number of functions that can be registered with atterm.
+static const size_t MAX_TERMS = 64;
+
+static void (*TermFuncs[MAX_TERMS])();
+static const char *TermNames[MAX_TERMS];
+static size_t NumTerms;
+
+void call_terms()
+{
+	while (NumTerms > 0)
+	{
+		TermFuncs[--NumTerms]();
+	}
+}
+
+} // unnamed namespace
+
+
+void addterm(void (*func)(), const char *name)
+{
+	// Make sure this function wasn't already registered.
+
+	for (size_t i = 0; i < NumTerms; ++i)
+	{
+		if (TermFuncs[i] == func)
+		{
+			return;
+		}
+	}
+
+	if (NumTerms == MAX_TERMS)
+	{
+		func();
+		I_FatalError("Too many exit functions registered.");
+	}
+
+	TermNames[NumTerms] = name;
+	TermFuncs[NumTerms] = func;
+
+	++NumTerms;
+}
+
+void popterm()
+{
+	if (NumTerms)
+	{
+		--NumTerms;
+	}
+}
+
+
+void I_SetMainWindowVisible(bool);
+
+void Mac_I_FatalError(const char* const message)
+{
+	I_SetMainWindowVisible(false);
+
+	const CFStringRef errorString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault,
+		message, kCFStringEncodingASCII, kCFAllocatorNull);
+
+	if (NULL != errorString)
+	{
+		CFOptionFlags dummy;
+
+		CFUserNotificationDisplayAlert( 0, kCFUserNotificationStopAlertLevel, NULL, NULL, NULL,
+			CFSTR("Fatal Error"), errorString, CFSTR("Exit"), NULL, NULL, &dummy);
+
+		CFRelease(errorString);
+	}
+}
 
 
 namespace
@@ -239,6 +328,112 @@ bool s_nativeMouse = true;
 size_t s_skipMouseMoves;
 
 NSCursor* s_cursor;
+
+
+void NewFailure()
+{
+	I_FatalError("Failed to allocate memory from system heap");
+}
+
+
+int OriginalMain(int argc, char** argv)
+{
+	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n",
+		   GetVersionString(), GetGitTime(), __DATE__);
+
+	seteuid(getuid());
+	std::set_new_handler(NewFailure);
+
+	// Set LC_NUMERIC environment variable in case some library decides to
+	// clear the setlocale call at least this will be correct.
+	// Note that the LANG environment variable is overridden by LC_*
+	setenv("LC_NUMERIC", "C", 1);
+	setlocale(LC_ALL, "C");
+
+	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
+	{
+		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
+		return -1;
+	}
+	atterm(SDL_Quit);
+
+	printf("\n");
+
+	SDL_DisplayMode videoInfo = {};
+
+	if (0 == SDL_GetDesktopDisplayMode(vid_adapter, &videoInfo))
+	{
+		vid_defwidth  = videoInfo.w;
+		vid_defheight = videoInfo.h;
+		vid_vsync     = true;
+		fullscreen    = true;
+	}
+
+	try
+	{
+		Args = new DArgs(argc, argv);
+
+		/*
+		 killough 1/98:
+
+		 This fixes some problems with exit handling
+		 during abnormal situations.
+
+		 The old code called I_Quit() to end program,
+		 while now I_Quit() is installed as an exit
+		 handler and exit() is called to exit, either
+		 normally or abnormally. Seg faults are caught
+		 and the error handler is used, to prevent
+		 being left in graphics mode or having very
+		 loud SFX noise because the sound card is
+		 left in an unstable state.
+		 */
+
+		atexit (call_terms);
+		atterm (I_Quit);
+
+		// Should we even be doing anything with progdir on Unix systems?
+		char program[PATH_MAX];
+		if (realpath (argv[0], program) == NULL)
+			strcpy (program, argv[0]);
+		char *slash = strrchr (program, '/');
+		if (slash != NULL)
+		{
+			*(slash + 1) = '\0';
+			progdir = program;
+		}
+		else
+		{
+			progdir = "./";
+		}
+
+		I_StartupJoysticks();
+		C_InitConsole(80 * 8, 25 * 8, false);
+		D_DoomMain();
+	}
+	catch(const CDoomError& error)
+	{
+		const char* const message = error.GetMessage();
+
+		if (NULL != message)
+		{
+			fprintf(stderr, "%s\n", message);
+			Mac_I_FatalError(message);
+		}
+		
+		exit(-1);
+	}
+	catch(...)
+	{
+		call_terms();
+		throw;
+	}
+	
+	return 0;
+}
+
+
+// ---------------------------------------------------------------------------
 
 
 void CheckGUICapture()
@@ -1131,7 +1326,7 @@ static bool s_fullscreenNewAPI;
 	[[NSRunLoop currentRunLoop] addTimer:timer
 								 forMode:NSDefaultRunLoopMode];
 
-	exit(SDL_main(s_argc, s_argv));
+	exit(OriginalMain(s_argc, s_argv));
 }
 
 
@@ -1613,32 +1808,8 @@ bool I_SetCursor(FTexture* cursorpic)
 // ---------------------------------------------------------------------------
 
 
-const char* I_GetBackEndName()
-{
-	return "Native Cocoa";
-}
-
-
-// ---------------------------------------------------------------------------
-
-
 extern "C" 
 {
-
-static timeval s_startTicks;
-
-uint32_t SDL_GetTicks()
-{
-	timeval now;
-	gettimeofday(&now, NULL);
-	
-	const uint32_t ticks = 
-		  (now.tv_sec  - s_startTicks.tv_sec ) * 1000
-		+ (now.tv_usec - s_startTicks.tv_usec) / 1000;
-	
-	return ticks;
-}
-
 
 int SDL_Init(Uint32 flags)
 {
@@ -1666,11 +1837,6 @@ const char* SDL_GetError()
 	return empty;
 }
 
-
-const char* SDL_GetCurrentVideoDriver()
-{
-	return "Native OpenGL";
-}
 
 int SDL_GetDesktopDisplayMode(int displayIndex, SDL_DisplayMode *mode)
 {
@@ -2099,8 +2265,6 @@ const DarwinVersion darwinVersion = GetDarwinVersion();
 
 int main(int argc, char** argv)
 {
-	gettimeofday(&s_startTicks, NULL);
-
 	for (int i = 0; i <= argc; ++i)
 	{
 		const char* const argument = argv[i];

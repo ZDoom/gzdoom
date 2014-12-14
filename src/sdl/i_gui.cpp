@@ -59,8 +59,3 @@ void I_SetMainWindowVisible(bool visible)
 {
 
 }
-
-const char* I_GetBackEndName()
-{
-	return "SDL";
-}

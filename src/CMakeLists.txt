@@ -549,18 +549,17 @@ set( PLAT_SDL_SOURCES
 	sdl/crashcatcher.c
 	sdl/hardware.cpp
 	sdl/i_cd.cpp
-	sdl/i_main.cpp
-	sdl/i_movie.cpp
-	sdl/i_system.cpp
-	sdl/sdlvideo.cpp
-	sdl/st_start.cpp
 	sdl/i_gui.cpp
 	sdl/i_input.cpp
 	sdl/i_joystick.cpp
-	sdl/i_timer.cpp )
+	sdl/i_main.cpp
+	sdl/i_movie.cpp
+	sdl/i_system.cpp	
+	sdl/i_timer.cpp
+	sdl/sdlvideo.cpp
+	sdl/st_start.cpp )
 set( PLAT_MAC_SOURCES
-	cocoa/iwadpicker_cocoa.mm
-	cocoa/i_system_cocoa.mm )
+	cocoa/iwadpicker_cocoa.mm )
 set( PLAT_COCOA_SOURCES
 	cocoa/hid/HID_Config_Utilities.c
 	cocoa/hid/HID_Error_Handler.c
@@ -575,8 +574,9 @@ set( PLAT_COCOA_SOURCES
 	cocoa/i_cd.cpp
 	cocoa/i_joystick.cpp
 	cocoa/i_movie.cpp
-	cocoa/st_start.cpp
+	cocoa/i_system.cpp
 	cocoa/i_timer.cpp
+	cocoa/st_start.cpp
 	cocoa/zdoom.icns )
 
 if( WIN32 )
@@ -601,6 +601,7 @@ elseif( APPLE )
 	else( OSX_COCOA_BACKEND )
 		set( SYSTEM_SOURCES_DIR sdl )
 		set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
+		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} cocoa/i_system_cocoa.mm )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 

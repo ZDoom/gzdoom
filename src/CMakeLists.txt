@@ -545,19 +545,20 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/st_start.cpp
 	win32/win32video.cpp )
+set( PLAT_POSIX_SOURCES
+	posix/i_cd.cpp
+	posix/i_movie.cpp
+	posix/i_system.cpp
+	posix/st_start.cpp )
 set( PLAT_SDL_SOURCES
 	sdl/crashcatcher.c
 	sdl/hardware.cpp
-	sdl/i_cd.cpp
 	sdl/i_gui.cpp
 	sdl/i_input.cpp
 	sdl/i_joystick.cpp
 	sdl/i_main.cpp
-	sdl/i_movie.cpp
-	sdl/i_system.cpp	
 	sdl/i_timer.cpp
-	sdl/sdlvideo.cpp
-	sdl/st_start.cpp )
+	sdl/sdlvideo.cpp )
 set( PLAT_MAC_SOURCES
 	cocoa/iwadpicker_cocoa.mm )
 set( PLAT_COCOA_SOURCES
@@ -571,18 +572,14 @@ set( PLAT_COCOA_SOURCES
 	cocoa/hid/ImmrHIDUtilAddOn.c
 	cocoa/critsec.cpp
 	cocoa/i_backend_cocoa.mm
-	cocoa/i_cd.cpp
 	cocoa/i_joystick.cpp
-	cocoa/i_movie.cpp
-	cocoa/i_system.cpp
 	cocoa/i_timer.cpp
-	cocoa/st_start.cpp
 	cocoa/zdoom.icns )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
-	set( OTHER_SYSTEM_SOURCES ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
+	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
 	
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		# CMake is not set up to compile and link rc files with GCC. :(
@@ -595,23 +592,23 @@ if( WIN32 )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
-		set( SYSTEM_SOURCES_DIR cocoa )
+		set( SYSTEM_SOURCES_DIR posix cocoa )
 		set( SYSTEM_SOURCES ${PLAT_COCOA_SOURCES} )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_SDL_SOURCES} )
 	else( OSX_COCOA_BACKEND )
-		set( SYSTEM_SOURCES_DIR sdl )
+		set( SYSTEM_SOURCES_DIR posix sdl )
 		set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
 		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} cocoa/i_system_cocoa.mm )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 
-	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_MAC_SOURCES} "${FMOD_LIBRARY}" )
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_MAC_SOURCES} "${FMOD_LIBRARY}" )
 
 	set_source_files_properties( cocoa/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
 else( WIN32 )
-	set( SYSTEM_SOURCES_DIR sdl )
-	set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
+	set( SYSTEM_SOURCES_DIR posix sdl )
+	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
 endif( WIN32 )
 
@@ -672,12 +669,12 @@ if( WIN32 )
 	set( EXTRA_HEADER_DIRS win32/*.h )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS cocoa/*.h )
+		set( EXTRA_HEADER_DIRS posix/*.h cocoa/*.h )
 	else( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS sdl/*.h )
+		set( EXTRA_HEADER_DIRS posix/*.h sdl/*.h )
 	endif( OSX_COCOA_BACKEND )
 else( WIN32 )
-	set( EXTRA_HEADER_DIRS sdl/*.h )
+	set( EXTRA_HEADER_DIRS posix/*.h sdl/*.h )
 endif( WIN32 )
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
@@ -693,6 +690,7 @@ file( GLOB HEADER_FILES
 	menu/*.h
 	oplsynth/*.h
 	oplsynth/dosbox/*.h
+	posix/*.h
 	r_data/*.h
 	resourcefiles/*.h
 	sdl/*.h

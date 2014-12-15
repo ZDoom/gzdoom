@@ -1,1 +1,0 @@
-../sdl/i_cd.cpp

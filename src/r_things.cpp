@@ -2121,8 +2121,10 @@ void R_DrawSprite (vissprite_t *spr)
 	for (ds = ds_p; ds-- > firstdrawseg; )  // new -- killough
 	{
 		// [ZZ] portal handling here
-		if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
-			continue;
+		//if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
+		//	continue;
+		// [ZZ] WARNING: uncommenting the two above lines, totally breaks sprite clipping
+
 		// kg3D - no clipping on fake segs
 		if (ds->fake) continue;
 		// determine if the drawseg obscures the sprite

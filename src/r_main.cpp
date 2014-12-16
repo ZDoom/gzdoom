@@ -625,31 +625,26 @@ void R_HighlightPortal (PortalDrawseg* pds)
 	//      I believe it won't break. if it does, blame me. :(
 
 	BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
-	RenderTarget->DrawLine(pds->x1, pds->ceilingclip[0], pds->x1, pds->floorclip[0], color, 0);
-	RenderTarget->DrawLine(pds->x2, pds->ceilingclip[pds->ceilingclip.Size()-1], pds->x2, pds->floorclip[pds->floorclip.Size()-1], color, 0);
 
 	BYTE* pixels = RenderTarget->GetBuffer();
 	// top edge
-	for (int x = pds->x1+1; x < pds->x2; x++)
+	for (int x = pds->x1; x <= pds->x2; x++)
 	{
 		if (x < 0 || x >= RenderTarget->GetWidth())
 			continue;
 
 		int p = x - pds->x1;
-
 		int Ytop = pds->ceilingclip[p];
 		int Ybottom = pds->floorclip[p];
 
+		if (x == pds->x1 || x == pds->x2)
+		{
+			RenderTarget->DrawLine(x, Ytop, x, Ybottom, color, 0);
+			continue;
+		}
+
 		int YtopPrev = pds->ceilingclip[p-1];
 		int YbottomPrev = pds->floorclip[p-1];
-
-		if (Ytop < 0) Ytop = 0;
-		if (Ybottom >= RenderTarget->GetHeight())
-			Ybottom = RenderTarget->GetHeight()-1;
-		
-		if (YtopPrev < 0) YtopPrev = 0;
-		if (YbottomPrev >= RenderTarget->GetHeight())
-			YbottomPrev = RenderTarget->GetHeight()-1;
 
 		if (abs(Ytop-YtopPrev) > 1)
 			RenderTarget->DrawLine(x, YtopPrev, x, Ytop, color, 0);
@@ -678,10 +673,6 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 			BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
 
-			if (Ytop < 0) Ytop = 0;
-			if (Ybottom >= RenderTarget->GetHeight())
-				Ybottom = RenderTarget->GetHeight()-1;
-
 			for (int y = Ytop; y <= Ybottom; y++)
 			{
 				*dest = color;
@@ -698,6 +689,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	angle_t startang = viewangle;
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
+	fixed_t startz = viewz;
 
 	CurrentPortalUniq++;
 
@@ -758,17 +750,11 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	CurrentPortal = pds;
 
 	R_ClearPlanes (false);
-	R_ClearClipSegs (pds->x1, pds->x2 + 1); // todo: check if this "+1" is actually needed
-
-	// some portals have height differences, account for this here
-	R_3D_EnterSkybox(); // push 3D floor height map
-
-	memcpy (ceilingclip + pds->x1, &pds->ceilingclip[0], pds->ceilingclip.Size()*sizeof(*ceilingclip));
-	memcpy (floorclip + pds->x1, &pds->floorclip[0], pds->floorclip.Size()*sizeof(*floorclip));
+	R_ClearClipSegs (pds->x1, pds->x2+1); // todo: check if this "+1" is actually needed
 
 	WindowLeft = pds->x1;
 	WindowRight = pds->x2;
-
+	
 	// RF_XFLIP should be removed before calling the root function
 	int prevmf = MirrorFlags;
 	if (pds->mirror)
@@ -778,6 +764,13 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		else MirrorFlags |= RF_XFLIP;
 	}
 
+	// some portals have height differences, account for this here
+	R_3D_EnterSkybox(); // push 3D floor height map
+
+	// first pass, set clipping
+	memcpy (ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len*sizeof(*ceilingclip));
+	memcpy (floorclip + pds->x1, &pds->floorclip[0], pds->len*sizeof(*floorclip));
+
 	R_RenderBSPNode (nodes + numnodes - 1);
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
@@ -786,6 +779,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	R_DrawSkyBoxes ();
 	PlaneCycles.Unclock();
 
+	fixed_t vzp = viewz;
+
 	int prevuniq = CurrentPortalUniq;
 	// depth check is in another place right now
 	unsigned int portalsAtEnd = WallPortals.Size ();
@@ -793,6 +788,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	{
 		R_EnterPortal (&WallPortals[portalsAtStart], depth + 1);
 	}
+	int prevuniq2 = CurrentPortalUniq;
 	CurrentPortalUniq = prevuniq;
 
 	NetUpdate();
@@ -803,16 +799,19 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 	NetUpdate();
 
+	R_3D_LeaveSkybox(); // pop 3D floor height map
+	CurrentPortalUniq = prevuniq2;
+
 	// draw a red line around a portal if it's being highlighted
 	if (r_highlight_portals)
 		R_HighlightPortal(pds);
 
-	R_3D_LeaveSkybox(); // pop 3D floor height map
 	CurrentPortal = prevpds;
 	MirrorFlags = prevmf;
 	viewangle = startang;
 	viewx = startx;
 	viewy = starty;
+	viewz = startz;
 }
 
 //==========================================================================
@@ -897,6 +896,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	WindowRight = viewwidth - 1;
 	MirrorFlags = 0;
 	CurrentPortal = NULL;
+	CurrentPortalUniq = 0;
 
 	r_dontmaplines = dontmaplines;
 	
@@ -936,6 +936,9 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		{
 			R_EnterPortal(&WallPortals[i], 0);
 		}
+
+		CurrentPortal = NULL;
+		CurrentPortalUniq = 0;
 
 		NetUpdate ();
 		

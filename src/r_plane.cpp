@@ -690,7 +690,10 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 			sky == check->sky &&
 			CurrentPortalUniq == check->CurrentPortalUniq &&
 			MirrorFlags == check->MirrorFlags &&
-			CurrentSkybox == check->CurrentSkybox
+			CurrentSkybox == check->CurrentSkybox &&
+			viewx == check->viewx &&
+			viewy == check->viewy &&
+			viewz == check->viewz
 			)
 		{
 		  return check;
@@ -1065,22 +1068,31 @@ void R_DrawHeightPlanes(fixed_t height)
 
 	ds_color = 3;
 
+	fixed_t oViewX = viewx, oViewY = viewy, oViewZ = viewz;
+	angle_t oViewAngle = viewangle;
+
 	for (i = 0; i < MAXVISPLANES; i++)
 	{
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
 			// kg3D - draw only correct planes
-			if(pl->CurrentSkybox != CurrentSkybox)
+			if(pl->CurrentSkybox != CurrentSkybox || pl->CurrentPortalUniq != CurrentPortalUniq)
 				continue;
 			if(pl->sky < 0 && pl->height.Zat0() == height) {
 				viewx = pl->viewx;
 				viewy = pl->viewy;
+				viewz = pl->viewz;
 				viewangle = pl->viewangle;
 				MirrorFlags = pl->MirrorFlags;
 				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 			}
 		}
 	}
+
+	viewx = oViewX;
+	viewy = oViewY;
+	viewz = oViewZ;
+	viewangle = oViewAngle;
 }
 
 

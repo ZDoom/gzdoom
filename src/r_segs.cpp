@@ -2591,10 +2591,24 @@ void R_StoreWallRange (int start, int stop)
 		pds.dst = curline->linedef->portal_dst;
 		pds.x1 = ds_p->x1;
 		pds.x2 = ds_p->x2;
-		pds.ceilingclip.Resize((pds.x2-pds.x1)+1);
-		memcpy(&pds.ceilingclip[0], openings + ds_p->sprtopclip, pds.ceilingclip.Size()*sizeof(*openings));
-		pds.floorclip.Resize((pds.x2-pds.x1)+1);
-		memcpy(&pds.floorclip[0], openings + ds_p->sprbottomclip, pds.floorclip.Size()*sizeof(*openings));
+		pds.len = (pds.x2 - pds.x1) + 1;
+		pds.ceilingclip.Resize(pds.len);
+		memcpy(&pds.ceilingclip[0], openings + ds_p->sprtopclip, pds.len*sizeof(*openings));
+		pds.floorclip.Resize(pds.len);
+		memcpy(&pds.floorclip[0], openings + ds_p->sprbottomclip, pds.len*sizeof(*openings));
+
+		for (int i = 0; i < (pds.x2-pds.x1)+1; i++)
+		{
+			if (pds.ceilingclip[i] < 0)
+				pds.ceilingclip[i] = 0;
+			if (pds.ceilingclip[i] >= RenderTarget->GetHeight())
+				pds.ceilingclip[i] = RenderTarget->GetHeight()-1;
+			if (pds.floorclip[i] < 0)
+				pds.floorclip[i] = 0;
+			if (pds.floorclip[i] >= RenderTarget->GetHeight())
+				pds.floorclip[i] = RenderTarget->GetHeight()-1;
+		}
+
 		pds.mirror = curline->linedef->portal_mirror;
 		WallPortals.Push(pds);
 	}

@@ -3760,11 +3760,11 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 				puff = P_SpawnPuff(t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags | PF_HITTHING);
 			}
 
-			if (puffDefaults != NULL && trace.Actor != NULL)
+			if (puffDefaults != NULL && trace.Actor != NULL && puff != NULL)
 			{
-				if (puffDefaults->flags7 && MF7_HITTARGET)	puffDefaults->target = trace.Actor;
-				if (puffDefaults->flags7 && MF7_HITMASTER)	puffDefaults->master = trace.Actor;
-				if (puffDefaults->flags7 && MF7_HITTRACER)	puffDefaults->tracer = trace.Actor;
+				if (puffDefaults->flags7 && MF7_HITTARGET)	puff->target = trace.Actor;
+				if (puffDefaults->flags7 && MF7_HITMASTER)	puff->master = trace.Actor;
+				if (puffDefaults->flags7 && MF7_HITTRACER)	puff->tracer = trace.Actor;
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -4209,11 +4209,11 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		{
 			P_SpawnPuff(source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);
 		}
-		if (hitactor != NULL && puffDefaults != NULL)
+		if (hitactor != NULL && puffDefaults != NULL && thepuff != NULL)
 		{
-			if (puffDefaults->flags7 & MF7_HITTARGET)	puffDefaults->target = hitactor;
-			if (puffDefaults->flags7 & MF7_HITMASTER)	puffDefaults->master = hitactor;
-			if (puffDefaults->flags7 & MF7_HITTRACER)	puffDefaults->tracer = hitactor;
+			if (puffDefaults->flags7 & MF7_HITTARGET)	thepuff->target = hitactor;
+			if (puffDefaults->flags7 & MF7_HITMASTER)	thepuff->master = hitactor;
+			if (puffDefaults->flags7 & MF7_HITTRACER)	thepuff->tracer = hitactor;
 		}
 		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 		{

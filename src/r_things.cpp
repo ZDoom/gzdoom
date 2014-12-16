@@ -2157,7 +2157,8 @@ void R_DrawSprite (vissprite_t *spr)
 						ds->curline->v1->x - spr->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0))
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
-			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
+			if (ds->CurrentPortalUniq == CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
+				(ds->maskedtexturecol != -1 || ds->bFogBoundary))
 				R_RenderMaskedSegRange (ds, r1, r2);
 			continue;
 		}
@@ -2522,9 +2523,6 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
 	{
 		drawseg_t *ds = &drawsegs[InterestingDrawsegs[p]];
-		// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
-		if (ds->CurrentPortalUniq != vis->CurrentPortalUniq)
-			continue;
 		// kg3D - no fake segs
 		if (ds->fake) continue;
 		if (ds->x1 >= x2 || ds->x2 < x1)
@@ -2533,7 +2531,9 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 		}
 		if (Scale (ds->siz2 - ds->siz1, (x2 + x1)/2 - ds->sx1, ds->sx2 - ds->sx1) + ds->siz1 < vis->idepth)
 		{
-			R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
+			// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
+			if (ds->CurrentPortalUniq == vis->CurrentPortalUniq)
+				R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
 		}
 	}
 }

@@ -36,7 +36,6 @@
 
 #include <sys/time.h>
 #include <sys/sysctl.h>
-#include <pthread.h>
 #include <dlfcn.h>
 
 #include <AppKit/AppKit.h>
@@ -44,8 +43,6 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
-
-#include <SDL.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -361,7 +358,7 @@ bool s_restartedFromWADPicker;
 
 
 bool s_nativeMouse = true;
-	
+
 // TODO: remove this magic!
 size_t s_skipMouseMoves;
 
@@ -376,8 +373,8 @@ void NewFailure()
 
 int OriginalMain(int argc, char** argv)
 {
-	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n",
-		   GetVersionString(), GetGitTime(), __DATE__);
+	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n\n",
+		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid(getuid());
 	std::set_new_handler(NewFailure);
@@ -388,24 +385,12 @@ int OriginalMain(int argc, char** argv)
 	setenv("LC_NUMERIC", "C", 1);
 	setlocale(LC_ALL, "C");
 
-	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
-	{
-		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
-		return -1;
-	}
-	atterm(SDL_Quit);
-
-	printf("\n");
-
-	SDL_DisplayMode videoInfo = {};
-
-	if (0 == SDL_GetDesktopDisplayMode(vid_adapter, &videoInfo))
-	{
-		vid_defwidth  = videoInfo.w;
-		vid_defheight = videoInfo.h;
-		vid_vsync     = true;
-		fullscreen    = true;
-	}
+	// Set reasonable default values for video settings
+	const NSSize screenSize = [[NSScreen mainScreen] frame].size;
+	vid_defwidth  = static_cast<int>(screenSize.width);
+	vid_defheight = static_cast<int>(screenSize.height);
+	vid_vsync     = true;
+	fullscreen    = true;
 
 	try
 	{
@@ -458,7 +443,7 @@ int OriginalMain(int argc, char** argv)
 			fprintf(stderr, "%s\n", message);
 			Mac_I_FatalError(message);
 		}
-		
+
 		exit(-1);
 	}
 	catch(...)
@@ -466,7 +451,7 @@ int OriginalMain(int argc, char** argv)
 		call_terms();
 		throw;
 	}
-	
+
 	return 0;
 }
 
@@ -479,7 +464,7 @@ void CheckGUICapture()
 	const bool wantCapture = (MENU_Off == menuactive)
 		? (c_down == ConsoleState || c_falling == ConsoleState || chatmodeon)
 		: (menuactive == MENU_On || menuactive == MENU_OnNoPause);
-	
+
 	if (wantCapture != GUICapture)
 	{
 		GUICapture = wantCapture;
@@ -499,9 +484,9 @@ void CenterCursor()
 	const NSRect  displayRect = [[window screen] frame];
 	const NSRect   windowRect = [window frame];
 	const CGPoint centerPoint = CGPointMake(NSMidX(windowRect), displayRect.size.height - NSMidY(windowRect));
-	
+
 	CGEventSourceRef eventSource = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
-	
+
 	if (NULL != eventSource)
 	{
 		CGEventRef mouseMoveEvent = CGEventCreateMouseEvent(eventSource,
@@ -512,10 +497,10 @@ void CenterCursor()
 			CGEventPost(kCGHIDEventTap, mouseMoveEvent);
 			CFRelease(mouseMoveEvent);
 		}
-		
+
 		CFRelease(eventSource);
 	}
-	
+
 	// TODO: remove this magic!
 	s_skipMouseMoves = 2;
 }
@@ -528,10 +513,10 @@ bool IsInGame()
 		default:
 		case 0:
 			return gamestate == GS_LEVEL;
-			
+
 		case 1:
 			return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
-			
+
 		case 2:
 			return true;
 	}
@@ -547,7 +532,7 @@ void SetNativeMouse(bool wantNative)
 		{
 			CenterCursor();
 		}
-		
+
 		CGAssociateMouseAndMouseCursorPosition(wantNative);
 		
 		if (wantNative)
@@ -565,7 +550,7 @@ void CheckNativeMouse()
 {
 	bool windowed = (NULL == screen) || !screen->IsFullscreen();
 	bool wantNative;
-	
+
 	if (windowed)
 	{
 		if (![NSApp isActive] || !use_mouse)
@@ -588,7 +573,7 @@ void CheckNativeMouse()
 		wantNative = m_use_mouse 
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
-	
+
 	SetNativeMouse(wantNative);
 }
 
@@ -608,7 +593,7 @@ void I_StartTic()
 {
 	CheckGUICapture();
 	CheckNativeMouse();
-	
+
 	I_ProcessJoysticks();
 	I_GetEvent();
 }
@@ -621,12 +606,12 @@ void I_StartFrame()
 
 void I_SetMouseCapture()
 {
-	
+
 }
 
 void I_ReleaseMouseCapture()
 {
-	
+
 }
 
 
@@ -1104,7 +1089,7 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 }
 
 
-const Uint16 BYTES_PER_PIXEL = 4;
+const size_t BYTES_PER_PIXEL = 4;
 
 } // unnamed namespace
 
@@ -1770,7 +1755,7 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 void I_SetMainWindowVisible(bool visible)
 {
 	[appCtrl setMainWindowVisible:visible];
-	
+
 	SetNativeMouse(!visible);
 }
 
@@ -1849,71 +1834,150 @@ bool I_SetCursor(FTexture* cursorpic)
 extern "C" 
 {
 
-int SDL_Init(Uint32 flags)
-{
-	ZD_UNUSED(flags);
-
-	return 0;
-}
-
-void SDL_Quit()
-{
-	if (NULL != appCtrl)
+	typedef enum
 	{
-		[NSApp setDelegate:nil];
-		[NSApp deactivate];
+		SDL_FALSE = 0,
+		SDL_TRUE = 1
+	} SDL_bool;
 
-		[appCtrl release];
-		appCtrl = NULL;
-	}
-}
+typedef int8_t		Sint8;
+typedef uint8_t		Uint8;
+typedef int16_t		Sint16;
+typedef uint16_t	Uint16;
+typedef int32_t		Sint32;
+typedef uint32_t	Uint32;
+
+	typedef enum
+	{
+		SDL_WINDOW_FULLSCREEN = 0x00000001,         /**< fullscreen window */
+		SDL_WINDOW_OPENGL = 0x00000002,             /**< window usable with OpenGL context */
+		SDL_WINDOW_SHOWN = 0x00000004,              /**< window is visible */
+		SDL_WINDOW_HIDDEN = 0x00000008,             /**< window is not visible */
+		SDL_WINDOW_BORDERLESS = 0x00000010,         /**< no window decoration */
+		SDL_WINDOW_RESIZABLE = 0x00000020,          /**< window can be resized */
+		SDL_WINDOW_MINIMIZED = 0x00000040,          /**< window is minimized */
+		SDL_WINDOW_MAXIMIZED = 0x00000080,          /**< window is maximized */
+		SDL_WINDOW_INPUT_GRABBED = 0x00000100,      /**< window has grabbed input focus */
+		SDL_WINDOW_INPUT_FOCUS = 0x00000200,        /**< window has input focus */
+		SDL_WINDOW_MOUSE_FOCUS = 0x00000400,        /**< window has mouse focus */
+		SDL_WINDOW_FULLSCREEN_DESKTOP = ( SDL_WINDOW_FULLSCREEN | 0x00001000 ),
+		SDL_WINDOW_FOREIGN = 0x00000800,            /**< window not created by SDL */
+		SDL_WINDOW_ALLOW_HIGHDPI = 0x00002000       /**< window should be created in high-DPI mode if supported */
+	} SDL_WindowFlags;
 
 
-const char* SDL_GetError()
-{
-	static char empty[] = {0};
-	return empty;
-}
+	typedef struct SDL_Rect {
+		Sint16 x, y;
+		Uint16 w, h;
+	} SDL_Rect;
+
+	typedef struct SDL_Color {
+		Uint8 r;
+		Uint8 g;
+		Uint8 b;
+		Uint8 unused;
+	} SDL_Color;
 
 
-int SDL_GetDesktopDisplayMode(int displayIndex, SDL_DisplayMode *mode)
-{
-	// NOTE: Only required fields are assigned	
-	const NSRect displayRect = [[NSScreen mainScreen] frame];
-	
-	mode->w = displayRect.size.width;
-	mode->h = displayRect.size.height;
-	
-	return 0;
-}
+	typedef struct SDL_Palette {
+		int       ncolors;
+		SDL_Color *colors;
+	} SDL_Palette;
+
+	typedef struct SDL_PixelFormat {
+		SDL_Palette *palette;
+		Uint8  BitsPerPixel;
+		Uint8  BytesPerPixel;
+		Uint8  Rloss;
+		Uint8  Gloss;
+		Uint8  Bloss;
+		Uint8  Aloss;
+		Uint8  Rshift;
+		Uint8  Gshift;
+		Uint8  Bshift;
+		Uint8  Ashift;
+		Uint32 Rmask;
+		Uint32 Gmask;
+		Uint32 Bmask;
+		Uint32 Amask;
+
+		/** RGB color key information */
+		Uint32 colorkey;
+		/** Alpha value information (per-surface alpha) */
+		Uint8  alpha;
+	} SDL_PixelFormat;
+
+	/** This structure should be treated as read-only, except for 'pixels',
+	 *  which, if not NULL, contains the raw pixel data for the surface.
+	 */
+	typedef struct SDL_Surface {
+		Uint32 flags;				/**< Read-only */
+		SDL_PixelFormat *format;		/**< Read-only */
+		int w, h;				/**< Read-only */
+		Uint16 pitch;				/**< Read-only */
+		void *pixels;				/**< Read-write */
+		int offset;				/**< Private */
+
+		/** Hardware-specific surface info */
+		struct private_hwdata *hwdata;
+
+		/** clipping information */
+		SDL_Rect clip_rect;			/**< Read-only */
+		Uint32 unused1;				/**< for binary compatibility */
+
+		/** Allow recursive locks */
+		Uint32 locked;				/**< Private */
+
+		/** info for fast blit mapping to other surfaces */
+		struct SDL_BlitMap *map;		/**< Private */
+
+		/** format version, bumped at every change to invalidate blit maps */
+		unsigned int format_version;		/**< Private */
+
+		/** Reference count -- used when freeing surface */
+		int refcount;				/**< Read-mostly */
+	} SDL_Surface;
+
+	typedef enum
+	{
+		SDL_RENDERER_SOFTWARE = 0x00000001,         /**< The renderer is a software fallback */
+		SDL_RENDERER_ACCELERATED = 0x00000002,      /**< The renderer uses hardware
+													 acceleration */
+		SDL_RENDERER_PRESENTVSYNC = 0x00000004,     /**< Present is synchronized
+													 with the refresh rate */
+		SDL_RENDERER_TARGETTEXTURE = 0x00000008     /**< The renderer supports
+													 rendering to texture */
+	} SDL_RendererFlags;
+
+	/**
+	 *  \brief Information on the capabilities of a render driver or context.
+	 */
+	typedef struct SDL_RendererInfo
+	{
+		const char *name;           /**< The name of the renderer */
+		Uint32 flags;               /**< Supported ::SDL_RendererFlags */
+		Uint32 num_texture_formats; /**< The number of available texture formats */
+		Uint32 texture_formats[16]; /**< The available texture formats */
+		int max_texture_width;      /**< The maximimum texture width */
+		int max_texture_height;     /**< The maximimum texture height */
+	} SDL_RendererInfo;
+
+	/**
+	 *  \brief The access pattern allowed for a texture.
+	 */
+	typedef enum
+	{
+		SDL_TEXTUREACCESS_STATIC,    /**< Changes rarely, not lockable */
+		SDL_TEXTUREACCESS_STREAMING, /**< Changes frequently, lockable */
+		SDL_TEXTUREACCESS_TARGET     /**< Texture can be used as a render target */
+	} SDL_TextureAccess;
 
 
-static SDL_PixelFormat* GetPixelFormat()
-{
-	static SDL_PixelFormat result;
-	
-	result.palette       = NULL;
-	result.BitsPerPixel  = BYTES_PER_PIXEL * 8;
-	result.BytesPerPixel = BYTES_PER_PIXEL;
-	result.Rloss         = 0;
-	result.Gloss         = 0;
-	result.Bloss         = 0;
-	result.Aloss         = 8;
-	result.Rshift        = 8;
-	result.Gshift        = 16;
-	result.Bshift        = 24;
-	result.Ashift        = 0;
-	result.Rmask         = 0x000000FF;
-	result.Gmask         = 0x0000FF00;
-	result.Bmask         = 0x00FF0000;
-	result.Amask         = 0xFF000000;
-	
-	return &result;
-}
+
 
 SDL_bool SDL_PixelFormatEnumToMasks(Uint32 format, int* bpp, Uint32* Rmask, Uint32* Gmask, Uint32* Bmask, Uint32* Amask)
 {
-	assert(format == SDL_PIXELFORMAT_ABGR8888);
+	//assert(format == SDL_PIXELFORMAT_ABGR8888);
 
 	*bpp = 32;
 	*Rmask = 0x000000FF;
@@ -2045,42 +2109,13 @@ void SDL_DestroyTexture(SDL_Texture *texture)
 
 int SDL_QueryTexture(SDL_Texture *texture, Uint32* format, int* access, int* w, int* h)
 {
-	if(format) *format = SDL_PIXELFORMAT_ABGR8888;
+	if(format) *format = 0; //SDL_PIXELFORMAT_ABGR8888;
 	if(access) *access = SDL_TEXTUREACCESS_STREAMING;
 	if(w) *w = texture->window->w;
 	if(h) *h = texture->window->h;
 	return 0;
 }
 
-void SDL_GL_SwapBuffers()
-{
-	[[NSOpenGLContext currentContext] flushBuffer];
-}
-
-int SDL_GL_SetAttribute(SDL_GLattr attr, int value)
-{
-	if (SDL_GL_MULTISAMPLESAMPLES == attr)
-	{
-		[appCtrl setMultisample:value];
-	}
-
-	// Not interested in other attributes
-
-	return 0;
-}
-
-
-int SDL_LockSurface(SDL_Surface* surface)
-{
-	ZD_UNUSED(surface);
-	
-	return 0;
-}
-
-void SDL_UnlockSurface(SDL_Surface* surface)
-{
-	ZD_UNUSED(surface);
-}
 
 int SDL_LockTexture(SDL_Texture* texture, const SDL_Rect *rect, void** pixels, int *pitch)
 {
@@ -2100,7 +2135,7 @@ void SDL_UnlockTexture(SDL_Texture *texture)
 int SDL_UpdateWindowSurface(SDL_Window *screen)
 {
 	assert(NULL != screen);
-	
+
 	if (rbOpts.dirty)
 	{
 		glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
@@ -2112,7 +2147,7 @@ int SDL_UpdateWindowSurface(SDL_Window *screen)
 
 		rbOpts.dirty = false;
 	}
-	
+
 	const int width  = screen->w;
 	const int height = screen->h;
 
@@ -2138,10 +2173,10 @@ int SDL_UpdateWindowSurface(SDL_Window *screen)
 	glEnd();
 
 	glFlush();
-	
-	SDL_GL_SwapBuffers();
-	
-	return 0;	
+
+	[[NSOpenGLContext currentContext] flushBuffer];
+
+	return 0;
 }
 
 int SDL_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *srcrect, const SDL_Rect *dstrect)
@@ -2348,7 +2383,7 @@ static cycle_t SDLFlipCycles;
 
 // CODE --------------------------------------------------------------------
 
-void ScaleWithAspect (int &w, int &h, int Width, int Height)
+void ScaleWithAspect (Uint16 &w, Uint16 &h, Uint16 Width, Uint16 Height)
 {
 	int resRatio = CheckRatio (Width, Height);
 	int screenRatio;
@@ -2503,9 +2538,8 @@ CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 	FString caption;
 	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
 
-	Screen = SDL_CreateWindow (caption,
-							   SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-							   width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+	Screen = SDL_CreateWindow (caption, 0, 0,
+		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
 	if (Screen == NULL)
 		return;
@@ -2761,15 +2795,15 @@ void CocoaFrameBuffer::ResetSDLRenderer ()
 	if (!Renderer)
 		return;
 
-	Uint32 fmt;
-	switch(vid_displaybits)
-	{
-		default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
-		case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
-		case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
-		case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
-		case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
-	}
+	Uint32 fmt = 0;
+//	switch(vid_displaybits)
+//	{
+//		default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
+//		case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
+//		case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
+//		case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
+//		case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+//	}
 	Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 
 	{
@@ -3129,6 +3163,18 @@ DarwinVersion GetDarwinVersion()
 	return result;
 }
 
+void ReleaseApplicationController()
+{
+	if (NULL != appCtrl)
+	{
+		[NSApp setDelegate:nil];
+		[NSApp deactivate];
+
+		[appCtrl release];
+		appCtrl = NULL;
+	}
+}
+
 } // unnamed namespace
 
 
@@ -3170,9 +3216,10 @@ int main(int argc, char** argv)
 
 	CreateMenu();
 
+	atterm(ReleaseApplicationController);
+
 	appCtrl = [ApplicationController new];
 	[NSApp setDelegate:appCtrl];
-
 	[NSApp run];
 
 	[pool release];

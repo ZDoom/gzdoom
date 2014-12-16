@@ -58,6 +58,7 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -687,7 +688,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 			yscale == check->yscale &&
 			angle == check->angle && 
 			sky == check->sky &&
-			CurrentMirror == check->CurrentMirror &&
+			CurrentPortalUniq == check->CurrentPortalUniq &&
 			MirrorFlags == check->MirrorFlags &&
 			CurrentSkybox == check->CurrentSkybox
 			)
@@ -719,7 +720,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->viewangle = stacked_angle;
 	check->Alpha = alpha;
 	check->Additive = additive;
-	check->CurrentMirror = CurrentMirror;
+	check->CurrentPortalUniq = CurrentPortalUniq;
 	check->MirrorFlags = MirrorFlags;
 	check->CurrentSkybox = CurrentSkybox;
 
@@ -808,7 +809,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->sky = pl->sky;
 		new_pl->Alpha = pl->Alpha;
 		new_pl->Additive = pl->Additive;
-		new_pl->CurrentMirror = pl->CurrentMirror;
+		new_pl->CurrentPortalUniq = pl->CurrentPortalUniq;
 		new_pl->MirrorFlags = pl->MirrorFlags;
 		new_pl->CurrentSkybox = pl->CurrentSkybox;
 		pl = new_pl;
@@ -1044,7 +1045,7 @@ int R_DrawPlanes ()
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
 			// kg3D - draw only correct planes
-			if(pl->CurrentMirror != CurrentMirror || pl->CurrentSkybox != CurrentSkybox)
+			if(pl->CurrentPortalUniq != CurrentPortalUniq || pl->CurrentSkybox != CurrentSkybox)
 				continue;
 			// kg3D - draw only real planes now
 			if(pl->sky >= 0) {
@@ -1270,6 +1271,7 @@ void R_DrawSkyBoxes ()
 
 		// Create a drawseg to clip sprites to the sky plane
 		R_CheckDrawSegs ();
+		ds_p->CurrentPortalUniq = CurrentPortalUniq;
 		ds_p->siz1 = INT_MAX;
 		ds_p->siz2 = INT_MAX;
 		ds_p->sz1 = 0;

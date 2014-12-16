@@ -56,6 +56,7 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 seg_t*			curline;
 side_t* 		sidedef;
@@ -98,8 +99,8 @@ static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
-seg_t *ActiveWallMirror;
-TArray<size_t> WallMirrors;
+TArray<PortalDrawseg> WallPortals;
+
 
 static subsector_t *InSubsector;
 
@@ -553,6 +554,10 @@ void R_AddLine (seg_t *line)
 		return;
 	}
 
+	// reject lines that aren't seen from the portal (if any)
+	if (CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, viewx, viewy))
+		return;
+
 	vertex_t *v1, *v2;
 
 	v1 = line->linedef->v1;
@@ -582,6 +587,8 @@ void R_AddLine (seg_t *line)
 
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
 	rw_havehigh = rw_havelow = false;
+
+	bool is_portal = (line->linedef && line->linedef->special == Line_Mirror);
 
 	// Single sided line?
 	if (backsector == NULL)
@@ -649,7 +656,9 @@ void R_AddLine (seg_t *line)
 		// Window.
 			solid = false;
 		}
-		else if (backsector->lightlevel != frontsector->lightlevel
+		else if (is_portal
+			
+			|| backsector->lightlevel != frontsector->lightlevel
 			|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
 			|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 			|| curline->sidedef->GetTexture(side_t::mid).isValid()

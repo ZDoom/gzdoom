@@ -6632,6 +6632,18 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Portals"
+			>
+			<File
+				RelativePath=".\src\portal.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\portal.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

@@ -57,6 +57,7 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "portal.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -610,52 +611,91 @@ void R_SetupFreelook()
 
 //==========================================================================
 //
-// R_EnterMirror
+// R_EnterPortal
 //
 // [RH] Draw the reflection inside a mirror
+// [ZZ] Merged with portal code, originally called R_EnterMirror
 //
 //==========================================================================
 
-void R_EnterMirror (drawseg_t *ds, int depth)
+void R_EnterPortal (PortalDrawseg* pds, int depth)
 {
+	// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
+	if (depth > 4)
+	{
+		BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 0, 0, 0, 0, 255);
+		int spacing = RenderTarget->GetPitch();
+		for (int x = pds->x1; x <= pds->x2; x++)
+		{
+			int Ytop = pds->ceilingclip[x-pds->x1];
+			int Ybottom = pds->floorclip[x-pds->x1];
+
+			BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
+
+			if (Ytop < 0) Ytop = 0;
+			if (Ybottom >= RenderTarget->GetHeight())
+				Ybottom = RenderTarget->GetHeight()-1;
+
+			for (int y = Ytop; y <= Ybottom; y++)
+			{
+				*dest = color;
+				dest += spacing;
+			}
+		}
+
+		return;
+	}
+
 	angle_t startang = viewangle;
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
 
-	CurrentMirror++;
+	int prevuniq = CurrentPortalUniq;
+	CurrentPortalUniq++;
 
-	unsigned int mirrorsAtStart = WallMirrors.Size ();
+	unsigned int portalsAtStart = WallPortals.Size ();
 
-	vertex_t *v1 = ds->curline->v1;
+	if (pds->mirror)
+	{
+		//vertex_t *v1 = ds->curline->v1;
+		vertex_t *v1 = pds->src->v1;
 
-	// Reflect the current view behind the mirror.
-	if (ds->curline->linedef->dx == 0)
-	{ // vertical mirror
-		viewx = v1->x - startx + v1->x;
-	}
-	else if (ds->curline->linedef->dy == 0)
-	{ // horizontal mirror
-		viewy = v1->y - starty + v1->y;
+		// Reflect the current view behind the mirror.
+		if (pds->src->dx == 0)
+		{ // vertical mirror
+			viewx = v1->x - startx + v1->x;
+		}
+		else if (pds->src->dy == 0)
+		{ // horizontal mirror
+			viewy = v1->y - starty + v1->y;
+		}
+		else
+		{ // any mirror--use floats to avoid integer overflow
+			vertex_t *v2 = pds->src->v2;
+
+			float dx = FIXED2FLOAT(v2->x - v1->x);
+			float dy = FIXED2FLOAT(v2->y - v1->y);
+			float x1 = FIXED2FLOAT(v1->x);
+			float y1 = FIXED2FLOAT(v1->y);
+			float x = FIXED2FLOAT(startx);
+			float y = FIXED2FLOAT(starty);
+
+			// the above two cases catch len == 0
+			float r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
+
+			viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
+			viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
+		}
+		viewangle = 2*R_PointToAngle2 (pds->src->v1->x, pds->src->v1->y,
+									   pds->src->v2->x, pds->src->v2->y) - startang;
+
 	}
 	else
-	{ // any mirror--use floats to avoid integer overflow
-		vertex_t *v2 = ds->curline->v2;
-
-		float dx = FIXED2FLOAT(v2->x - v1->x);
-		float dy = FIXED2FLOAT(v2->y - v1->y);
-		float x1 = FIXED2FLOAT(v1->x);
-		float y1 = FIXED2FLOAT(v1->y);
-		float x = FIXED2FLOAT(startx);
-		float y = FIXED2FLOAT(starty);
-
-		// the above two cases catch len == 0
-		float r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
-
-		viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
-		viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
+	{
+		P_TranslatePortalXY(pds->src, pds->dst, viewx, viewy);
+		P_TranslatePortalZ(pds->src, pds->dst, viewz);
+		P_TranslatePortalAngle(pds->src, pds->dst, viewangle);
 	}
-	viewangle = 2*R_PointToAngle2 (ds->curline->v1->x, ds->curline->v1->y,
-								   ds->curline->v2->x, ds->curline->v2->y) - startang;
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
@@ -666,35 +706,57 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	R_CopyStackedViewParameters();
 
 	validcount++;
-	ActiveWallMirror = ds->curline;
+	PortalDrawseg* prevpds = CurrentPortal;
+	CurrentPortal = pds;
 
 	R_ClearPlanes (false);
-	R_ClearClipSegs (ds->x1, ds->x2 + 1);
+	R_ClearClipSegs (pds->x1, pds->x2 + 1); // todo: check if this "+1" is actually needed
 
-	memcpy (ceilingclip + ds->x1, openings + ds->sprtopclip, (ds->x2 - ds->x1 + 1)*sizeof(*ceilingclip));
-	memcpy (floorclip + ds->x1, openings + ds->sprbottomclip, (ds->x2 - ds->x1 + 1)*sizeof(*floorclip));
+	// some portals have height differences, account for this here
+	R_3D_EnterSkybox(); // push 3D floor height map
 
-	WindowLeft = ds->x1;
-	WindowRight = ds->x2;
-	MirrorFlags = (depth + 1) & 1;
+	memcpy (ceilingclip + pds->x1, &pds->ceilingclip[0], pds->ceilingclip.Size()*sizeof(*ceilingclip));
+	memcpy (floorclip + pds->x1, &pds->floorclip[0], pds->floorclip.Size()*sizeof(*floorclip));
+
+	WindowLeft = pds->x1;
+	WindowRight = pds->x2;
+
+	// RF_XFLIP should be removed before calling the root function
+	int prevmf = MirrorFlags;
+	if (pds->mirror)
+	{
+		if (MirrorFlags & RF_XFLIP)
+			MirrorFlags &= ~RF_XFLIP;
+		else MirrorFlags |= RF_XFLIP;
+	}
 
 	R_RenderBSPNode (nodes + numnodes - 1);
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
+	PlaneCycles.Clock();
 	R_DrawPlanes ();
 	R_DrawSkyBoxes ();
+	PlaneCycles.Unclock();
 
-	// Allow up to 4 recursions through a mirror
-	if (depth < 4)
+	// depth check is in another place right now
+	unsigned int portalsAtEnd = WallPortals.Size ();
+	for (; portalsAtStart < portalsAtEnd; portalsAtStart++)
 	{
-		unsigned int mirrorsAtEnd = WallMirrors.Size ();
-
-		for (; mirrorsAtStart < mirrorsAtEnd; mirrorsAtStart++)
-		{
-			R_EnterMirror (drawsegs + WallMirrors[mirrorsAtStart], depth + 1);
-		}
+		R_EnterPortal (&WallPortals[portalsAtStart], depth + 1);
 	}
 
+	NetUpdate();
+
+	MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
+	R_DrawMasked ();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
+	MaskedCycles.Unclock();
+
+	NetUpdate();
+
+	R_3D_LeaveSkybox(); // pop 3D floor height map
+	CurrentPortal = prevpds;
+	MirrorFlags = prevmf;
+	CurrentPortalUniq = prevuniq;
 	viewangle = startang;
 	viewx = startx;
 	viewy = starty;
@@ -781,7 +843,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	WindowLeft = 0;
 	WindowRight = viewwidth - 1;
 	MirrorFlags = 0;
-	ActiveWallMirror = NULL;
+	CurrentPortal = NULL;
 
 	r_dontmaplines = dontmaplines;
 	
@@ -815,10 +877,11 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 		PlaneCycles.Unclock();
 
 		// [RH] Walk through mirrors
-		size_t lastmirror = WallMirrors.Size ();
-		for (unsigned int i = 0; i < lastmirror; i++)
+		// [ZZ] Merged with portals
+		size_t lastportal = WallPortals.Size();
+		for (unsigned int i = 0; i < lastportal; i++)
 		{
-			R_EnterMirror (drawsegs + WallMirrors[i], 0);
+			R_EnterPortal(&WallPortals[i], 0);
 		}
 
 		NetUpdate ();
@@ -829,7 +892,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 
 		NetUpdate ();
 	}
-	WallMirrors.Clear ();
+	WallPortals.Clear ();
 	interpolator.RestoreInterpolations ();
 	R_SetupBuffer ();
 

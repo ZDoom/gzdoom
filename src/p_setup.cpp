@@ -68,6 +68,7 @@
 #include "po_man.h"
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 #include "fragglescript/t_fs.h"
 
@@ -2161,6 +2162,11 @@ void P_LoadLineDefs (MapData * map)
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
+
+	// [ZZ] check initial portal link
+	for (int i = 0; i < numlines; i++)
+		P_CheckPortal(&lines[i]);
+
 	delete[] mldf;
 }
 

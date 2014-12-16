@@ -75,6 +75,7 @@
 #include "actorptrselect.h"
 #include "farchive.h"
 #include "decallib.h"
+#include "portal.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -7902,6 +7903,9 @@ scriptwait:
 					line->args[4] = STACK(1);
 					DPrintf("Set special on line %d (id %d) to %d(%d,%d,%d,%d,%d)\n",
 						linenum, STACK(7), specnum, arg0, STACK(4), STACK(3), STACK(2), STACK(1));
+
+					// [ZZ] re-link with portals (in case this was something related to portal specials)
+					P_CheckPortal(line);
 				}
 				sp -= 7;
 			}

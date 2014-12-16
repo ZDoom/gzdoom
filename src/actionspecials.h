@@ -140,7 +140,7 @@ DEFINE_SPECIAL(Teleport_NoStop, 154, 2, 3, 3)
 // Although ZDoom doesn't support them it's better to have them defined so that
 // WADs using them somewhere can at least be started without aborting due
 // to an error message.
-DEFINE_SPECIAL(SetGlobalFogParameter, 157, 2, 2, 2)
+DEFINE_SPECIAL(SetGlobalFogParameter, 157, 2, 2, 2) // vavoom? interferes with Line_SetVisualPortal
 DEFINE_SPECIAL(FS_Execute, 158, 1, 4, 4)
 DEFINE_SPECIAL(Sector_SetPlaneReflection, 159, 3, 3, 3)
 DEFINE_SPECIAL(Sector_Set3DFloor, 160, -1, -1, 5)
@@ -235,5 +235,8 @@ DEFINE_SPECIAL(Ceiling_RaiseToNearest, 252, 2, 2, 2)
 DEFINE_SPECIAL(Ceiling_LowerToLowest, 253, 2, 2, 2)
 DEFINE_SPECIAL(Ceiling_LowerToFloor, 254, 2, 2, 2)
 DEFINE_SPECIAL(Ceiling_CrushRaiseAndStaySilA, 255, 4, 5, 5)
+
+DEFINE_SPECIAL(Line_SetVisualPortal, 155, -1, -1, 3)
+DEFINE_SPECIAL(Line_SetPortal, 156, -1, -1, 3)
 
 #undef DEFINE_SPECIAL

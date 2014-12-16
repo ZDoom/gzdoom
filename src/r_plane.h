@@ -58,7 +58,7 @@ struct visplane_s
 
 	// kg3D - keep track of mirror and skybox owner
 	int CurrentSkybox;
-	int CurrentMirror; // mirror counter, counts all of them
+	int CurrentPortalUniq; // mirror counter, counts all of them
 	int MirrorFlags; // this is not related to CurrentMirror
 
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically

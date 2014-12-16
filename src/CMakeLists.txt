@@ -601,7 +601,7 @@ elseif( APPLE )
 	else( OSX_COCOA_BACKEND )
 		set( SYSTEM_SOURCES_DIR posix sdl )
 		set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
-		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} cocoa/i_system_cocoa.mm )
+		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} sdl/i_system_cocoa.mm )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 

@@ -38,6 +38,8 @@
 #pragma once
 #endif
 
+#include <stdlib.h>
+
 // Returns a file name suitable for use as a temp file.
 // If you create a file with this name (and presumably you
 // will), it will be deleted automatically by this class's

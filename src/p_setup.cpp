@@ -1961,6 +1961,11 @@ void P_SetLineID (int i, line_t *ld)
 		case Static_Init:
 			if (ld->args[1] == Init_SectorLink) setid = ld->args[0];
 			break;
+
+		case Line_SetPortal:
+		case Line_SetVisualPortal:
+			ld->id = ld->args[1]; // 0 = target id, 1 = this id, 2 = plane anchor
+			break;
 		}
 		if (setid != -1)
 		{

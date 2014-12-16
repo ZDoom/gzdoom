@@ -894,6 +894,10 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
+	bool		portal;
+	bool		portal_mirror;
+	bool		portal_passive;
+	line_t		*portal_dst;
 };
 
 // phares 3/14/98

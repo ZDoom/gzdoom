@@ -47,6 +47,7 @@
 #include "r_data/colormaps.h"
 #include "w_wad.h"
 #include "p_tags.h"
+#include "portal.h"
 
 //===========================================================================
 //
@@ -1741,6 +1742,11 @@ public:
 			P_AdjustLine(&lines[line]);
 			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
+
+		// [ZZ] check initial portal link
+		for (int i = 0; i < numlines; i++)
+			P_CheckPortal(&lines[i]);
+
 		assert(side <= numsides);
 		if (side < numsides)
 		{

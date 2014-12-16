@@ -588,8 +588,6 @@ void R_AddLine (seg_t *line)
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
 	rw_havehigh = rw_havelow = false;
 
-	bool is_portal = (line->linedef && line->linedef->special == Line_Mirror);
-
 	// Single sided line?
 	if (backsector == NULL)
 	{
@@ -656,7 +654,7 @@ void R_AddLine (seg_t *line)
 		// Window.
 			solid = false;
 		}
-		else if (is_portal
+		else if (line->linedef->portal // [ZZ] portals are always drawn, even if there's exactly same sector on both sides
 			
 			|| backsector->lightlevel != frontsector->lightlevel
 			|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)

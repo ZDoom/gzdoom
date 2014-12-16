@@ -198,12 +198,12 @@ else( WIN32 )
 		add_definitions( -DNO_GTK=1 )
 	endif( NO_GTK )
 	
-	# Non-Windows version also needs SDL
-	find_package( SDL2 REQUIRED )
+	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
+		find_package( SDL2 REQUIRED )
+		include_directories( "${SDL2_INCLUDE_DIR}" )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
 	endif( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-	include_directories( "${SDL2_INCLUDE_DIR}" )
 
 	find_path( FPU_CONTROL_DIR fpu_control.h )
 	if( FPU_CONTROL_DIR )

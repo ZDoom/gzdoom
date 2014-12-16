@@ -616,15 +616,63 @@ void R_SetupFreelook()
 //
 //==========================================================================
 
+CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
+CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
+
+void R_HighlightPortal (PortalDrawseg* pds)
+{
+	// [ZZ] NO OVERFLOW CHECKS HERE
+	//      I believe it won't break. if it does, blame me. :(
+
+	BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
+	RenderTarget->DrawLine(pds->x1, pds->ceilingclip[0], pds->x1, pds->floorclip[0], color, 0);
+	RenderTarget->DrawLine(pds->x2, pds->ceilingclip[pds->ceilingclip.Size()-1], pds->x2, pds->floorclip[pds->floorclip.Size()-1], color, 0);
+
+	BYTE* pixels = RenderTarget->GetBuffer();
+	// top edge
+	for (int x = pds->x1+1; x < pds->x2; x++)
+	{
+		if (x < 0 || x >= RenderTarget->GetWidth())
+			continue;
+
+		int p = x - pds->x1;
+
+		int Ytop = pds->ceilingclip[p];
+		int Ybottom = pds->floorclip[p];
+
+		int YtopPrev = pds->ceilingclip[p-1];
+		int YbottomPrev = pds->floorclip[p-1];
+
+		if (Ytop < 0) Ytop = 0;
+		if (Ybottom >= RenderTarget->GetHeight())
+			Ybottom = RenderTarget->GetHeight()-1;
+		
+		if (YtopPrev < 0) YtopPrev = 0;
+		if (YbottomPrev >= RenderTarget->GetHeight())
+			YbottomPrev = RenderTarget->GetHeight()-1;
+
+		if (abs(Ytop-YtopPrev) > 1)
+			RenderTarget->DrawLine(x, YtopPrev, x, Ytop, color, 0);
+		else *(pixels + Ytop * RenderTarget->GetPitch() + x) = color;
+
+		if (abs(Ybottom-YbottomPrev) > 1)
+			RenderTarget->DrawLine(x, YbottomPrev, x, Ybottom, color, 0);
+		else *(pixels + Ybottom * RenderTarget->GetPitch() + x) = color;
+	}
+}
+
 void R_EnterPortal (PortalDrawseg* pds, int depth)
 {
 	// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
-	if (depth > 4)
+	if (depth > r_portal_recursions)
 	{
 		BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 0, 0, 0, 0, 255);
 		int spacing = RenderTarget->GetPitch();
 		for (int x = pds->x1; x <= pds->x2; x++)
 		{
+			if (x < 0 || x >= RenderTarget->GetWidth())
+				continue;
+
 			int Ytop = pds->ceilingclip[x-pds->x1];
 			int Ybottom = pds->floorclip[x-pds->x1];
 
@@ -641,6 +689,9 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			}
 		}
 
+		if (r_highlight_portals)
+			R_HighlightPortal(pds);
+
 		return;
 	}
 
@@ -648,7 +699,6 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
 
-	int prevuniq = CurrentPortalUniq;
 	CurrentPortalUniq++;
 
 	unsigned int portalsAtStart = WallPortals.Size ();
@@ -736,12 +786,14 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	R_DrawSkyBoxes ();
 	PlaneCycles.Unclock();
 
+	int prevuniq = CurrentPortalUniq;
 	// depth check is in another place right now
 	unsigned int portalsAtEnd = WallPortals.Size ();
 	for (; portalsAtStart < portalsAtEnd; portalsAtStart++)
 	{
 		R_EnterPortal (&WallPortals[portalsAtStart], depth + 1);
 	}
+	CurrentPortalUniq = prevuniq;
 
 	NetUpdate();
 
@@ -751,10 +803,13 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 	NetUpdate();
 
+	// draw a red line around a portal if it's being highlighted
+	if (r_highlight_portals)
+		R_HighlightPortal(pds);
+
 	R_3D_LeaveSkybox(); // pop 3D floor height map
 	CurrentPortal = prevpds;
 	MirrorFlags = prevmf;
-	CurrentPortalUniq = prevuniq;
 	viewangle = startang;
 	viewx = startx;
 	viewy = starty;

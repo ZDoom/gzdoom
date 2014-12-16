@@ -641,7 +641,7 @@ void R_HighlightPortal (PortalDrawseg* pds)
 
 		if (x == pds->x1 || x == pds->x2)
 		{
-			RenderTarget->DrawLine(x, Ytop, x, Ybottom, color, 0);
+			RenderTarget->DrawLine(x, Ytop, x, Ybottom+1, color, 0);
 			continue;
 		}
 

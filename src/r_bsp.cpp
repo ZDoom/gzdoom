@@ -589,7 +589,7 @@ void R_AddLine (seg_t *line)
 	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
-	if (backsector == NULL)
+	if (backsector == NULL || (line->linedef->portal && line->sidedef == line->linedef->sidedef[0]))
 	{
 		solid = true;
 	}
@@ -654,9 +654,7 @@ void R_AddLine (seg_t *line)
 		// Window.
 			solid = false;
 		}
-		else if (line->linedef->portal // [ZZ] portals are always drawn, even if there's exactly same sector on both sides
-			
-			|| backsector->lightlevel != frontsector->lightlevel
+		else if (backsector->lightlevel != frontsector->lightlevel
 			|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
 			|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 			|| curline->sidedef->GetTexture(side_t::mid).isValid()

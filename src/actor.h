@@ -347,6 +347,14 @@ enum
 	MF7_DONTTHRUST		= 0x00000100,	// Thrusting functions do not take, and do not give thrust (damage) to actors with this flag.
 	MF7_ALLOWPAIN		= 0x00000200,	// Invulnerable or immune (via damagefactors) actors can still react to taking damage even if they don't.
 	MF7_CAUSEPAIN		= 0x00000400,	// Damage sources with this flag can cause similar effects like ALLOWPAIN.
+	MF7_THRUREFLECT		= 0x00000800,	// Actors who are reflective cause the missiles to not slow down or change angles.
+	MF7_MIRRORREFLECT	= 0x00001000,	// Actor is turned directly 180 degrees around when reflected.
+	MF7_AIMREFLECT		= 0x00002000,	// Actor is directly reflected straight back at the one who fired the projectile.
+	MF7_HITTARGET		= 0x00004000,	// The actor the projectile dies on is set to target, provided it's targetable anyway.
+	MF7_HITMASTER		= 0x00008000,	// Same as HITTARGET, except it's master instead of target.
+	MF7_HITTRACER		= 0x00010000,	// Same as HITTARGET, but for tracer.
+
+
 
 // --- mobj.renderflags ---
 
@@ -859,7 +867,7 @@ public:
 	DWORD			flags4;			// [RH] Even more flags!
 	DWORD			flags5;			// OMG! We need another one.
 	DWORD			flags6;			// Shit! Where did all the flags go?
-	DWORD			flags7;			// 
+	DWORD			flags7;			// WHO WANTS TO BET ON 8!?
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
 	DWORD			VisibleToTeam;

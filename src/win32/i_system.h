@@ -142,7 +142,7 @@ void I_SetWndProc();
 
 // [RH] Checks the registry for Steam's install path, so we can scan its
 // directories for IWADs if the user purchased any through Steam.
-FString I_GetSteamPath();
+TArray<FString> I_GetSteamPath();
 
 // Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
 // giving them proper prototypes under Win32, they are just macros for

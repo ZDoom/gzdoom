@@ -34,6 +34,10 @@
 
 #include <sys/stat.h>
 
+#ifdef __APPLE__
+#include <CoreServices/CoreServices.h>
+#endif // __APPLE__
+
 #include "doomerrors.h"
 #include "d_main.h"
 #include "zstring.h"

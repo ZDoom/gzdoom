@@ -222,9 +222,9 @@ ACTOR Actor native //: Thinker
 	action native A_Log(string whattoprint);
 	action native A_LogInt(int whattoprint);
 	action native A_SetTranslucent(float alpha, int style = 0);
-	action native A_FadeIn(float reduce = 0.1);
-	action native A_FadeOut(float reduce = 0.1, bool remove = true);
-	action native A_FadeTo(float target, float amount = 0.1, bool remove = false);
+	action native A_FadeIn(float reduce = 0.1, int flags = 0);
+	action native A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
+	action native A_FadeTo(float target, float amount = 0.1, int flags = 0);
 	action native A_SetScale(float scalex, float scaley = 0);
 	action native A_SetMass(int mass);
 	action native A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
@@ -241,9 +241,9 @@ ACTOR Actor native //: Thinker
 	action native A_KillMaster(name damagetype = "none", int flags = 0);
 	action native A_KillChildren(name damagetype = "none", int flags = 0);
 	action native A_KillSiblings(name damagetype = "none", int flags = 0);
-	action native A_RaiseMaster();
-	action native A_RaiseChildren();
-	action native A_RaiseSiblings();
+	action native A_RaiseMaster(bool copy = 0);
+	action native A_RaiseChildren(bool copy = 0);
+	action native A_RaiseSiblings(bool copy = 0);
 	action native A_CheckFloor(state label);
 	action native A_CheckCeiling(state label);
 	action native A_PlayerSkinCheck(state label);

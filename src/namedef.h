@@ -300,6 +300,7 @@ xx(CallACS)
 xx(Sqrt)
 xx(CheckClass)
 xx(IsPointerEqual)
+xx(Pick)
 
 // Various actor names which are used internally
 xx(MapSpot)

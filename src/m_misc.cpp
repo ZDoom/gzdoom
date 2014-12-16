@@ -137,6 +137,32 @@ int M_ReadFile (char const *name, BYTE **buffer)
 	return length;
 }
 
+//
+// M_ReadFile (same as above but use malloc instead of new to allocate the buffer.)
+//
+int M_ReadFileMalloc (char const *name, BYTE **buffer)
+{
+	int handle, count, length;
+	struct stat fileinfo;
+	BYTE *buf;
+
+	handle = open (name, O_RDONLY | O_BINARY, 0666);
+	if (handle == -1)
+		I_Error ("Couldn't read file %s", name);
+	if (fstat (handle,&fileinfo) == -1)
+		I_Error ("Couldn't read file %s", name);
+	length = fileinfo.st_size;
+	buf = (BYTE*)M_Malloc(length);
+	count = read (handle, buf, length);
+	close (handle);
+
+	if (count < length)
+		I_Error ("Couldn't read file %s", name);
+
+	*buffer = buf;
+	return length;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC M_FindResponseFile

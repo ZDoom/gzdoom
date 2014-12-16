@@ -76,6 +76,69 @@ msecnode_t* sector_list = NULL;		// phares 3/16/98
 
 //==========================================================================
 //
+// GetCoefficientClosestPointInLine24
+//
+// Formula: (dotProduct(ldv1 - tm, ld) << 24) / dotProduct(ld, ld)
+// with: ldv1 = (ld->v1->x, ld->v1->y), tm = (tm.x, tm.y)
+// and ld = (ld->dx, ld->dy)
+// Returns truncated to range [0, 1 << 24].
+//
+//==========================================================================
+
+static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm)
+{
+	// [EP] Use 64 bit integers in order to keep the exact result of the
+	// multiplication, because in the case the vertexes have both the
+	// distance coordinates equal to the map limit (32767 units, which is
+	// 2147418112 in fixed_t notation), the product result would occupy
+	// 62 bits and the sum of two products would occupy 63 bits
+	// in the worst case. If instead the vertexes are very close (1 in
+	// fixed_t notation, which is 1.52587890625e-05 in float notation), the
+	// product and the sum can be 1 in the worst case, which is very tiny.
+
+	SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) +
+					(SQWORD(tm.y - ld->v1->y)*ld->dy));
+
+	// The denominator is always positive. Use this to avoid useless
+	// calculations.
+	SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy);
+
+	if (r_num <= 0) {
+		// [EP] The numerator is less or equal to zero, hence the closest
+		// point on the line is the first vertex. Truncate the result to 0.
+		return 0;
+	}
+
+	if (r_num >= r_den) {
+		// [EP] The division is greater or equal to 1, hence the closest
+		// point on the line is the second vertex. Truncate the result to
+		// 1 << 24.
+		return (1 << 24);
+	}
+
+	// [EP] Deal with the limited bits. The original formula is:
+	// r = (r_num << 24) / r_den,
+	// but r_num might be big enough to make the shift overflow.
+	// Since the numerator can't be saved in a 128bit integer,
+	// the denominator must be right shifted. If the denominator is
+	// less than (1 << 24), there would be a division by zero.
+	// Thanks to the fact that in this code path the denominator is greater
+	// than the numerator, it's possible to avoid this bad situation by
+	// just checking the last 24 bits of the numerator.
+	if ((r_num >> (63-24)) != 0) {
+		// [EP] In fact, if the numerator is greater than
+		// (1 << (63-24)), the denominator must be greater than
+		// (1 << (63-24)), hence the denominator won't be zero after
+		// the right shift by 24 places.
+		return (fixed_t)(r_num/(r_den >> 24));
+	}
+	// [EP] Having the last 24 bits all zero allows left shifting
+	// the numerator by 24 bits without overflow.
+	return (fixed_t)((r_num << 24)/r_den);
+}
+
+//==========================================================================
+//
 // PIT_FindFloorCeiling
 //
 // only3d set means to only check against 3D floors and midtexes.
@@ -736,19 +799,8 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 		// that to calculate openings
-		// [EP] Use 64 bit integers in order to keep the exact result of the
-		// multiplication, because in the worst case, which is by the map limit
-		// (32767 units, which is 2147418112 in fixed_t notation), the result
-		// would occupy 62 bits (if I consider also the addition with another
-		// and possible 62 bit value, it's 63 bits).
-		// This privilege could not be available if the starting data would be
-		// 64 bit long.
-		// With this, the division is exact as the 32 bit float counterpart,
-		// though I don't know why I had to discard the first 24 bits from the
-		// divisor.
-		SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) + (SQWORD(tm.y - ld->v1->y)*ld->dy));
-		SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy) / (1 << 24);
-		fixed_t r = (fixed_t)(r_num / r_den);
+		fixed_t r = GetCoefficientClosestPointInLine24(ld, tm);
+
 		/*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
 		ld->frontsector->floorplane.a,
 		ld->frontsector->floorplane.b,
@@ -1231,6 +1283,16 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			P_GiveBody(thing, -damage);
 		}
+
+		if ((thing->flags7 & MF7_THRUREFLECT) && (thing->flags2 & MF2_REFLECTIVE) && (tm.thing->flags & MF_MISSILE))
+		{
+			if (tm.thing->flags2 & MF2_SEEKERMISSILE)
+			{
+				tm.thing->tracer = tm.thing->target;
+			}
+			tm.thing->target = thing;
+			return true;
+		}
 		return false;		// don't traverse any more
 	}
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
@@ -1591,7 +1653,7 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // Don't clip against self
 			continue;
 		}
-		if ((actor->flags & MF_MISSILE) && thing == actor->target)
+		if ((actor->flags & MF_MISSILE) && (thing == actor->target))
 		{ // Don't clip against whoever shot the missile.
 			continue;
 		}
@@ -2931,18 +2993,20 @@ bool P_BounceWall(AActor *mo)
 extern FRandom pr_bounce;
 bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 {
+	//Don't go through all of this if the actor is reflective and wants things to pass through them.
+	if (BlockingMobj && ((BlockingMobj->flags2 & MF2_REFLECTIVE) && (BlockingMobj->flags7 & MF7_THRUREFLECT))) return true;
 	if (mo && BlockingMobj && ((mo->BounceFlags & BOUNCE_AllActors)
-		|| ((mo->flags & MF_MISSILE) && (!(mo->flags2 & MF2_RIP) || (BlockingMobj->flags5 & MF5_DONTRIP) || ((mo->flags6 & MF6_NOBOSSRIP) && (BlockingMobj->flags2 & MF2_BOSS))) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
-		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))
-		))
+		|| ((mo->flags & MF_MISSILE) && (!(mo->flags2 & MF2_RIP) 
+		|| (BlockingMobj->flags5 & MF5_DONTRIP) 
+		|| ((mo->flags6 & MF6_NOBOSSRIP) && (BlockingMobj->flags2 & MF2_BOSS))) && (BlockingMobj->flags2 & MF2_REFLECTIVE))
+		|| ((BlockingMobj->player == NULL) && (!(BlockingMobj->flags3 & MF3_ISMONSTER)))))
 	{
 		if (mo->bouncecount > 0 && --mo->bouncecount == 0) return false;
 
 		if (!ontop)
 		{
 			fixed_t speed;
-			angle_t angle = R_PointToAngle2(BlockingMobj->x,
-				BlockingMobj->y, mo->x, mo->y) + ANGLE_1*((pr_bounce() % 16) - 8);
+			angle_t angle = R_PointToAngle2(BlockingMobj->x,BlockingMobj->y, mo->x, mo->y) + ANGLE_1*((pr_bounce() % 16) - 8);
 			speed = P_AproxDistance(mo->velx, mo->vely);
 			speed = FixedMul(speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			mo->angle = angle;
@@ -5038,6 +5102,8 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 		// is normally for projectiles which would have exploded by now anyway...
 		if (thing->flags6 & MF6_THRUSPECIES && thing->GetSpecies() == intersect->GetSpecies())
 			continue;
+		if ((thing->flags & MF_MISSILE) && (intersect->flags2 & MF2_REFLECTIVE) && (intersect->flags7 & MF7_THRUREFLECT))
+			continue;
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
 			(!(intersect->flags3 & MF3_ISMONSTER) && intersect->Mass > mymass) ||
 			(intersect->flags4 & MF4_ACTLIKEBRIDGE)
@@ -5046,7 +5112,8 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			// Can't push bridges or things more massive than ourself
 			return 2;
 		}
-		fixed_t oldz = intersect->z;
+		fixed_t oldz;
+		oldz = intersect->z;
 		P_AdjustFloorCeil(intersect, cpos);
 		intersect->z = thing->z + thing->height + 1;
 		if (P_PushUp(intersect, cpos))

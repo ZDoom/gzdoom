@@ -28,7 +28,9 @@ endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
 
-option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
+if( APPLE )
+    option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
+endif( APPLE )
 
 if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 	set( X64 64 )
@@ -590,6 +592,7 @@ set( PLAT_SDL_SYSTEM_SOURCES
 	sdl/i_cd.cpp
 	sdl/i_main.cpp
 	sdl/i_movie.cpp
+	sdl/i_steam.cpp
 	sdl/i_system.cpp
 	sdl/sdlvideo.cpp
 	sdl/sdlglvideo.cpp

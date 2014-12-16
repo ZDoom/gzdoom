@@ -2354,18 +2354,33 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslucent)
 // Fades the actor in
 //
 //===========================================================================
+
+enum FadeFlags
+{
+	FTF_REMOVE =	1 << 0,
+	FTF_CLAMP =		1 << 1,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 {
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_FIXED(reduce, 0);
+	ACTION_PARAM_INT(flags, 1);
 
 	if (reduce == 0)
 	{
-		reduce = FRACUNIT/10;
+		reduce = FRACUNIT / 10;
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha += reduce;
-	// Should this clamp alpha to 1.0?
+
+	if (self->alpha >= (FRACUNIT * 1))
+	{
+		if (flags & FTF_CLAMP)
+			self->alpha = (FRACUNIT * 1);
+		if (flags & FTF_REMOVE)
+			self->Destroy();
+	}
 }
 
 //===========================================================================
@@ -2379,7 +2394,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 {
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(reduce, 0);
-	ACTION_PARAM_BOOL(remove, 1);
+	ACTION_PARAM_INT(flags, 1);
 
 	if (reduce == 0)
 	{
@@ -2387,9 +2402,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha -= reduce;
-	if (self->alpha <= 0 && remove)
+	if (self->alpha <= 0)
 	{
-		self->Destroy();
+		if (flags & FTF_CLAMP)
+			self->alpha = 0;
+		if (flags & FTF_REMOVE)
+			self->Destroy();
 	}
 }
 
@@ -2406,7 +2424,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 	ACTION_PARAM_START(3);
 	ACTION_PARAM_FIXED(target, 0);
 	ACTION_PARAM_FIXED(amount, 1);
-	ACTION_PARAM_BOOL(remove, 2);
+	ACTION_PARAM_INT(flags, 2);
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 
@@ -2428,7 +2446,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 			self->alpha = target;
 		}
 	}
-	if (self->alpha == target && remove)
+	if (flags & FTF_CLAMP)
+	{
+		if (self->alpha > (FRACUNIT * 1))
+			self->alpha = (FRACUNIT * 1);
+		else if (self->alpha < 0)
+			self->alpha = 0;
+	}
+	if (self->alpha == target && (flags & FTF_REMOVE))
 	{
 		self->Destroy();
 	}
@@ -3046,37 +3071,41 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 
 enum CLOF_flags
 {
-	CLOFF_NOAIM_VERT =			0x1,
-	CLOFF_NOAIM_HORZ =			0x2,
+	CLOFF_NOAIM_VERT =			0x00000001,
+	CLOFF_NOAIM_HORZ =			0x00000002,
 
-	CLOFF_JUMPENEMY =			0x4,
-	CLOFF_JUMPFRIEND =			0x8,
-	CLOFF_JUMPOBJECT =			0x10,
-	CLOFF_JUMPNONHOSTILE =		0x20,
+	CLOFF_JUMPENEMY =			0x00000004,
+	CLOFF_JUMPFRIEND =			0x00000008,
+	CLOFF_JUMPOBJECT =			0x00000010,
+	CLOFF_JUMPNONHOSTILE =		0x00000020,
 
-	CLOFF_SKIPENEMY =			0x40,
-	CLOFF_SKIPFRIEND =			0x80,
-	CLOFF_SKIPOBJECT =			0x100,
-	CLOFF_SKIPNONHOSTILE =		0x200,
+	CLOFF_SKIPENEMY =			0x00000040,
+	CLOFF_SKIPFRIEND =			0x00000080,
+	CLOFF_SKIPOBJECT =			0x00000100,
+	CLOFF_SKIPNONHOSTILE =		0x00000200,
 
-	CLOFF_MUSTBESHOOTABLE =		0x400,
+	CLOFF_MUSTBESHOOTABLE =		0x00000400,
 
-	CLOFF_SKIPTARGET =			0x800,
-	CLOFF_ALLOWNULL =			0x1000,
-	CLOFF_CHECKPARTIAL =		0x2000,
+	CLOFF_SKIPTARGET =			0x00000800,
+	CLOFF_ALLOWNULL =			0x00001000,
+	CLOFF_CHECKPARTIAL =		0x00002000,
 
-	CLOFF_MUSTBEGHOST =			0x4000,
-	CLOFF_IGNOREGHOST =			0x8000,
+	CLOFF_MUSTBEGHOST =			0x00004000,
+	CLOFF_IGNOREGHOST =			0x00008000,
 	
-	CLOFF_MUSTBESOLID =			0x10000,
-	CLOFF_BEYONDTARGET =		0x20000,
+	CLOFF_MUSTBESOLID =			0x00010000,
+	CLOFF_BEYONDTARGET =		0x00020000,
 
-	CLOFF_FROMBASE =			0x40000,
-	CLOFF_MUL_HEIGHT =			0x80000,
-	CLOFF_MUL_WIDTH =			0x100000,
+	CLOFF_FROMBASE =			0x00040000,
+	CLOFF_MUL_HEIGHT =			0x00080000,
+	CLOFF_MUL_WIDTH =			0x00100000,
 
-	CLOFF_JUMP_ON_MISS =		0x200000,
-	CLOFF_AIM_VERT_NOOFFSET =	0x400000,
+	CLOFF_JUMP_ON_MISS =		0x00200000,
+	CLOFF_AIM_VERT_NOOFFSET =	0x00400000,
+
+	CLOFF_SETTARGET =			0x00800000,
+	CLOFF_SETMASTER =			0x01000000,
+	CLOFF_SETTRACER =			0x02000000,
 };
 
 struct LOFData
@@ -3316,6 +3345,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		{
 			return;
 		}
+		if ((trace.HitType == TRACE_HitActor) && (trace.Actor != NULL) && !(lof_data.BadActor))
+		{
+			if (flags & (CLOFF_SETTARGET))	self->target = trace.Actor;
+			if (flags & (CLOFF_SETMASTER))	self->master = trace.Actor;
+			if (flags & (CLOFF_SETTRACER))	self->tracer = trace.Actor;
+		}
+
 		ACTION_JUMP(jump);
 	}
 }
@@ -3736,11 +3772,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 // A_RaiseMaster
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RaiseMaster)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(copy, 0);
+
 	if (self->master != NULL)
 	{
-		P_Thing_Raise(self->master);
+		if (copy)
+			P_Thing_Raise(self->master, self);
+		else
+			P_Thing_Raise(self->master, NULL);
 	}
 }
 
@@ -3749,8 +3791,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 // A_RaiseChildren
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RaiseChildren)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(copy, 0);
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
@@ -3758,7 +3802,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 	{
 		if (mo->master == self)
 		{
-			P_Thing_Raise(mo);
+			if (copy)
+				P_Thing_Raise(mo, self);
+			else
+				P_Thing_Raise(mo, NULL);
 		}
 	}
 }
@@ -3768,8 +3815,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 // A_RaiseSiblings
 //
 //===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RaiseSiblings)
 {
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_BOOL(copy, 0);
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
@@ -3779,7 +3828,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 		{
 			if (mo->master == self->master && mo != self)
 			{
-				P_Thing_Raise(mo);
+				if (copy)
+					P_Thing_Raise(mo, self);
+				else
+					P_Thing_Raise(mo, NULL);
 			}
 		}
 	}

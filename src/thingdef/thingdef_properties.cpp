@@ -1422,7 +1422,7 @@ DEFINE_PROPERTY(stamina, I, Actor)
 DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	if (str == NULL) defaults->TeleFogSourceType = "TeleportFog";
+	if (str == NULL || *str == 0 || (!stricmp(str,""))) defaults->TeleFogSourceType = "TeleportFog";
 	else defaults->TeleFogSourceType = str;
 }
 
@@ -1432,8 +1432,8 @@ DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 DEFINE_PROPERTY(telefogdesttype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	if (str == NULL) defaults->TeleFogSourceType = "TeleportFog";
-	defaults->TeleFogDestType = str;
+	if (str == NULL || *str == 0 || (!stricmp(str, ""))) defaults->TeleFogDestType = "TeleportFog";
+	else defaults->TeleFogDestType = str;
 }
 
 //==========================================================================

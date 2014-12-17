@@ -983,6 +983,8 @@ public:
 
 	FNameNoInit PainType;
 	FNameNoInit DeathType;
+	FNameNoInit TeleFogSourceType;
+	FNameNoInit TeleFogDestType;
 
 	FState *SpawnState;
 	FState *SeeState;

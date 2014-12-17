@@ -317,6 +317,7 @@ ACTOR Actor native //: Thinker
 	action native A_GiveToSiblings(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromChildren(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
+	action native A_SetTeleFog(name oldpos, name newpos);
 
 	action native A_CheckSightOrRange(float distance, state label);
 	action native A_CheckRange(float distance, state label);

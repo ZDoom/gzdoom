@@ -74,19 +74,23 @@ void ATeleportFog::PostBeginPlay ()
 //
 //==========================================================================
 
-void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
+void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele, bool replace, bool setTarget)
 {
-	const PClass *fog = P_GetSpawnableType(spawnid);
+	AActor *mo;
+	FNameNoInit tf = (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType);
 
-	if (fog == NULL)
+	if (!tf) //If the actor doesn't have one, initialize the original.
 	{
-		AActor *mo = Spawn ("TeleportFog", x, y, z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		mo = Spawn<ATeleportFog>(x, y, z, (replace ? ALLOW_REPLACE : NO_REPLACE));
 	}
 	else
 	{
-		AActor *mo = Spawn (fog, x, y, z, ALLOW_REPLACE);
-		if (mo != NULL) S_Sound(mo, CHAN_BODY, mo->SeeSound, 1.f, ATTN_NORM);
+		mo = Spawn(tf, x, y, z, (replace ? ALLOW_REPLACE : NO_REPLACE));
 	}
+
+	if (mo != NULL && setTarget)
+		mo->target = mobj;
+
 }
 
 //
@@ -186,8 +190,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (sourceFog && !predicting)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		AActor *fog = Spawn<ATeleportFog> (oldx, oldy, oldz + fogDelta, ALLOW_REPLACE);
-		fog->target = thing;
+		P_SpawnTeleportFog(thing, oldx, oldy, oldz, true, true, true); //Passes the actor through which then pulls the TeleFog metadate types based on properties.
 	}
 	if (useFog)
 	{
@@ -195,9 +198,8 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		{
 			fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 			an = angle >> ANGLETOFINESHIFT;
-			AActor *fog = Spawn<ATeleportFog>(x + 20 * finecosine[an],
-				y + 20 * finesine[an], thing->z + fogDelta, ALLOW_REPLACE);
-			fog->target = thing;
+			P_SpawnTeleportFog(thing, x + 20 * finecosine[an], y + 20 * finesine[an], thing->z + fogDelta, false, true, true);
+
 		}
 		if (thing->player)
 		{

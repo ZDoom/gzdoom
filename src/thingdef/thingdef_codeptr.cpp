@@ -2938,9 +2938,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 {
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(flags, 0);
-
 	bool oktorespawn = false;
-
+	fixed_t oldx = self->x;
+	fixed_t oldy = self->y;
+	fixed_t oldz = self->z;
 	self->flags |= MF_SOLID;
 	self->height = self->GetDefault()->height;
 	CALL_ACTION(A_RestoreSpecialPosition, self);
@@ -2998,7 +2999,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 
 		if (flags & RSF_FOG)
 		{
-			Spawn<ATeleportFog> (self->x, self->y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+			P_SpawnTeleportFog(self, oldx, oldy, oldz, true);
+			P_SpawnTeleportFog(self, self->x, self->y, self->z, false);
 		}
 		if (self->CountsAsKill())
 		{
@@ -5376,4 +5378,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
 		DoRemove(reference, flags);
 	}
 }
+
+//===========================================================================
+//
+// A_SetTeleFog
+//
+// Sets the teleport fog(s) for the calling actor.
+// Takes a name of the classes for te source and destination. 
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_NAME(oldpos, 0);
+	ACTION_PARAM_NAME(newpos, 1);
+
+	if (oldpos)
+		self->TeleFogSourceType = oldpos;
+	if (newpos)
+		self->TeleFogDestType = newpos;
+}
+
 

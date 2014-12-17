@@ -190,7 +190,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	if (sourceFog && !predicting)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		P_SpawnTeleportFog(thing, oldx, oldy, oldz, true, true, true); //Passes the actor through which then pulls the TeleFog metadate types based on properties.
+		P_SpawnTeleportFog(thing, oldx, oldy, oldz, true, true); //Passes the actor through which then pulls the TeleFog metadate types based on properties.
 	}
 	if (useFog)
 	{
@@ -198,7 +198,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		{
 			fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 			an = angle >> ANGLETOFINESHIFT;
-			P_SpawnTeleportFog(thing, x + 20 * finecosine[an], y + 20 * finesine[an], thing->z + fogDelta, false, true, true);
+			P_SpawnTeleportFog(thing, x + 20 * finecosine[an], y + 20 * finesine[an], thing->z + fogDelta, false, true);
 
 		}
 		if (thing->player)

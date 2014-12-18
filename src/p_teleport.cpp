@@ -79,7 +79,8 @@ void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool befo
 	AActor *mo;
 	if ((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType) == NULL) //If the actor doesn't have one, initialize the original.
 	{
-		mo = Spawn<ATeleportFog>(x, y, z, ALLOW_REPLACE);
+		//Do nothing.
+		mo = NULL;
 	}
 	else
 	{

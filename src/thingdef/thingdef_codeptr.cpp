@@ -5395,11 +5395,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
 	ACTION_PARAM_NAME(oldpos, 0);
 	ACTION_PARAM_NAME(newpos, 1);
 	const PClass *check = PClass::FindClass(oldpos);
-	if (check != NULL)
+	if (check == NULL || !stricmp(oldpos, "none") || !stricmp(oldpos, "null"))
+		self->TeleFogSourceType = NULL;
+	else if (!stricmp(oldpos, ""))
+	{ //Don't change it if it's just ""
+	}
+	else
 		self->TeleFogSourceType = check;
 
 	check = PClass::FindClass(newpos);
-	if (check != NULL)
+	if (check == NULL || !stricmp(newpos, "none") || !stricmp(newpos, "null"))
+		self->TeleFogDestType = NULL;
+	else if (!stricmp(newpos, ""))
+	{ //Don't change it if it's just ""
+	}
+	else
 		self->TeleFogDestType = check;
 }
 

@@ -4776,10 +4776,10 @@ static void SetActorTeleFog(AActor *activator, int tid, FName telefogsrc, FName 
 		{
 			check = PClass::FindClass(telefogsrc);
 			if (check != NULL)
-				activator->TeleFogSourceType = check;
+				actor->TeleFogSourceType = check;
 			check = PClass::FindClass(telefogdest);
 			if (check != NULL)
-				activator->TeleFogDestType = check;
+				actor->TeleFogDestType = check;
 		}
 	}
 }
@@ -4806,11 +4806,11 @@ static int SwapActorTeleFog(AActor *activator, int tid)
 		
 		while ((actor = iterator.Next()))
 		{
-			if (activator->TeleFogSourceType == activator->TeleFogDestType) 
+			if (actor->TeleFogSourceType == actor->TeleFogDestType) 
 				continue; //They're the same. Save the effort.
-			const PClass *temp = activator->TeleFogSourceType;
-			activator->TeleFogSourceType = activator->TeleFogDestType;
-			activator->TeleFogDestType = temp;
+			const PClass *temp = actor->TeleFogSourceType;
+			actor->TeleFogSourceType = actor->TeleFogDestType;
+			actor->TeleFogDestType = temp;
 			count++;
 		}
 	}

@@ -554,35 +554,35 @@ set( PLAT_POSIX_SOURCES
 	posix/i_system.cpp
 	posix/st_start.cpp )
 set( PLAT_SDL_SOURCES
-	sdl/crashcatcher.c
-	sdl/hardware.cpp
-	sdl/i_gui.cpp
-	sdl/i_input.cpp
-	sdl/i_joystick.cpp
-	sdl/i_main.cpp
-	sdl/i_timer.cpp
-	sdl/sdlvideo.cpp )
-set( PLAT_MAC_SOURCES
-	cocoa/iwadpicker_cocoa.mm )
+	posix/sdl/crashcatcher.c
+	posix/sdl/hardware.cpp
+	posix/sdl/i_gui.cpp
+	posix/sdl/i_input.cpp
+	posix/sdl/i_joystick.cpp
+	posix/sdl/i_main.cpp
+	posix/sdl/i_timer.cpp
+	posix/sdl/sdlvideo.cpp )
+set( PLAT_OSX_SOURCES
+	posix/osx/iwadpicker_cocoa.mm
+	posix/osx/zdoom.icns )
 set( PLAT_COCOA_SOURCES
-	cocoa/hid/HID_Config_Utilities.c
-	cocoa/hid/HID_Error_Handler.c
-	cocoa/hid/HID_Name_Lookup.c
-	cocoa/hid/HID_Queue_Utilities.c
-	cocoa/hid/HID_Utilities.c
-	cocoa/hid/IOHIDDevice_.c
-	cocoa/hid/IOHIDElement_.c
-	cocoa/hid/ImmrHIDUtilAddOn.c
-	cocoa/critsec.cpp
-	cocoa/i_backend_cocoa.mm
-	cocoa/i_joystick.cpp
-	cocoa/i_timer.cpp
-	cocoa/zdoom.icns )
+	posix/cocoa/hid/HID_Config_Utilities.c
+	posix/cocoa/hid/HID_Error_Handler.c
+	posix/cocoa/hid/HID_Name_Lookup.c
+	posix/cocoa/hid/HID_Queue_Utilities.c
+	posix/cocoa/hid/HID_Utilities.c
+	posix/cocoa/hid/IOHIDDevice_.c
+	posix/cocoa/hid/IOHIDElement_.c
+	posix/cocoa/hid/ImmrHIDUtilAddOn.c
+	posix/cocoa/critsec.cpp
+	posix/cocoa/i_backend_cocoa.mm
+	posix/cocoa/i_joystick.cpp
+	posix/cocoa/i_timer.cpp )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
-	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
+	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} )
 	
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		# CMake is not set up to compile and link rc files with GCC. :(
@@ -595,24 +595,24 @@ if( WIN32 )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
-		set( SYSTEM_SOURCES_DIR posix cocoa )
+		set( SYSTEM_SOURCES_DIR posix posix/cocoa )
 		set( SYSTEM_SOURCES ${PLAT_COCOA_SOURCES} )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_SDL_SOURCES} )
 	else( OSX_COCOA_BACKEND )
-		set( SYSTEM_SOURCES_DIR posix sdl )
+		set( SYSTEM_SOURCES_DIR posix posix/sdl )
 		set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
-		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} sdl/i_system_cocoa.mm )
+		set( PLAT_OSX_SOURCES ${PLAT_OSX_SOURCES} posix/sdl/i_system.mm )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 
-	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_MAC_SOURCES} "${FMOD_LIBRARY}" )
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_OSX_SOURCES} "${FMOD_LIBRARY}" )
 
-	set_source_files_properties( cocoa/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+	set_source_files_properties( posix/osx/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
 else( WIN32 )
-	set( SYSTEM_SOURCES_DIR posix sdl )
+	set( SYSTEM_SOURCES_DIR posix posix/sdl )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )
-	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
+	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} )
 endif( WIN32 )
 
 if( NOT ASM_SOURCES )
@@ -672,16 +672,15 @@ if( WIN32 )
 	set( EXTRA_HEADER_DIRS win32/*.h )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS posix/*.h cocoa/*.h )
+		set( EXTRA_HEADER_DIRS posix/*.h posix/cocoa/*.h )
 	else( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS posix/*.h sdl/*.h )
+		set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
 	endif( OSX_COCOA_BACKEND )
 else( WIN32 )
-	set( EXTRA_HEADER_DIRS posix/*.h sdl/*.h )
+	set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
 endif( WIN32 )
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
-	cocoa/*.h
 	fragglescript/*.h
 	g_doom/*.h
 	g_heretic/*.h
@@ -694,9 +693,10 @@ file( GLOB HEADER_FILES
 	oplsynth/*.h
 	oplsynth/dosbox/*.h
 	posix/*.h
+	posix/cocoa/*.h
+	posix/sdl/*.h
 	r_data/*.h
 	resourcefiles/*.h
-	sdl/*.h
 	sfmt/*.h
 	sound/*.h
 	textures/*.h
@@ -1195,7 +1195,7 @@ endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 if( APPLE )
 	set_target_properties(zdoom PROPERTIES
 		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cocoa/zdoom-info.plist" )
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
 	# Fix fmod link so that it can be found in the app bundle.
 	find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
@@ -1218,7 +1218,6 @@ source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURC
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
 source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
-source_group("Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/cocoa/.+")
 source_group("Decorate++" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thingdef/.+")
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Games\\Doom Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_doom/.+")
@@ -1235,7 +1234,10 @@ source_group("Render Data\\Resource Sources" REGULAR_EXPRESSION "^${CMAKE_CURREN
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
 source_group("Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/resourcefiles/.+")
-source_group("SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sdl/.+")
+source_group("POSIX Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/.+")
+source_group("Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/cocoa/.+")
+source_group("OS X Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/.+")
+source_group("SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/sdl/.+")
 source_group("SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_shared/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)

@@ -333,7 +333,11 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << FriendPlayer;
 	}
-
+	if (SaveVersion >= 4518)
+	{
+		arc << TeleFogSourceType
+			<< TeleFogDestType;
+	}
 	{
 		FString tagstr;
 		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;

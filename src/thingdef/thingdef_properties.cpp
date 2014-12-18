@@ -1422,8 +1422,8 @@ DEFINE_PROPERTY(stamina, I, Actor)
 DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	if (str == NULL || *str == 0 || (!stricmp(str,""))) defaults->TeleFogSourceType = "TeleportFog";
-	else defaults->TeleFogSourceType = str;
+	if (!stricmp(str,"") || *str == 0) defaults->TeleFogSourceType = PClass::FindClass("TeleportFog");
+	else defaults->TeleFogSourceType = FindClassTentative(str,"TeleportFog");
 }
 
 //==========================================================================
@@ -1432,8 +1432,8 @@ DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 DEFINE_PROPERTY(telefogdesttype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	if (str == NULL || *str == 0 || (!stricmp(str, ""))) defaults->TeleFogDestType = "TeleportFog";
-	else defaults->TeleFogDestType = str;
+	if (!stricmp(str, "") || *str == 0) defaults->TeleFogDestType = PClass::FindClass("TeleportFog");
+	else defaults->TeleFogDestType = FindClassTentative(str, "TeleportFog");
 }
 
 //==========================================================================

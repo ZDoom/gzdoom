@@ -5385,6 +5385,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
 //
 // Sets the teleport fog(s) for the calling actor.
 // Takes a name of the classes for te source and destination. 
+// Can set both at the same time. Use "" to retain the previous fog without
+// changing it.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
@@ -5392,11 +5394,28 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_NAME(oldpos, 0);
 	ACTION_PARAM_NAME(newpos, 1);
+	const PClass *check = PClass::FindClass(oldpos);
+	if (check != NULL)
+		self->TeleFogSourceType = check;
 
-	if (oldpos)
-		self->TeleFogSourceType = oldpos;
-	if (newpos)
-		self->TeleFogDestType = newpos;
+	check = PClass::FindClass(newpos);
+	if (check != NULL)
+		self->TeleFogDestType = check;
 }
 
+//===========================================================================
+//
+// A_SwapTeleFog
+//
+// Switches the source and dest telefogs around. 
+//===========================================================================
 
+DEFINE_ACTION_FUNCTION(AActor, A_SwapTeleFog)
+{
+	if ((self->TeleFogSourceType != self->TeleFogDestType)) //Does nothing if they're the same.
+	{
+		const PClass *temp = self->TeleFogSourceType;
+		self->TeleFogSourceType = self->TeleFogDestType;
+		self->TeleFogDestType = temp;
+	}
+}

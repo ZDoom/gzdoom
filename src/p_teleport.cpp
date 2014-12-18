@@ -77,15 +77,13 @@ void ATeleportFog::PostBeginPlay ()
 void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele, bool setTarget)
 {
 	AActor *mo;
-	FNameNoInit tf = (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType);
-
-	if (!tf) //If the actor doesn't have one, initialize the original.
+	if ((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType) == NULL) //If the actor doesn't have one, initialize the original.
 	{
 		mo = Spawn<ATeleportFog>(x, y, z, ALLOW_REPLACE);
 	}
 	else
 	{
-		mo = Spawn(tf, x, y, z, ALLOW_REPLACE);
+		mo = Spawn((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), x, y, z, ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)

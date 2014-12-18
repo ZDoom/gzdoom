@@ -26,6 +26,8 @@ ACTOR Actor native //: Thinker
 	DesignatedTeam 255
 	PainType Normal
 	DeathType Normal
+	TeleFogSourceType "TeleportFog"
+	TeleFogDestType "TeleportFog"
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion

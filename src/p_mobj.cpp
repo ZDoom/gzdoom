@@ -333,7 +333,7 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << FriendPlayer;
 	}
-	if (SaveVersion >= 4518)
+	if (SaveVersion >= 4517)
 	{
 		arc << TeleFogSourceType
 			<< TeleFogDestType;

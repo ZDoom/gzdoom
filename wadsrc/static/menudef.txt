@@ -665,6 +665,7 @@ OptionMenu "VideoOptions"
 	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0, 0
 	Slider "Brightness",				"Gamma", 0.75, 3.0, 0.05, 2
 	Option "Vertical Sync",				"vid_vsync", "OnOff"
+	Option "Rendering Interpolation",	"cl_capfps", "OffOn"
 	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
 
 	StaticText " "
@@ -685,6 +686,7 @@ OptionMenu "VideoOptions"
 	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
 	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
 	Slider "Number of particles",		"r_maxparticles", 100, 10000, 100, 0
+	Slider "Number of decals",			"cl_maxdecals", 0, 10000, 100, 0
 	Option "Show player sprites",		"r_drawplayersprites", "OnOff"
 	Option "Death camera",				"r_deathcamera", "OnOff"
 	Option "Teleporter zoom",			"telezoom", "OnOff"

@@ -398,6 +398,9 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	else 
 	{
 		faces=1;
+		tex = FMaterial::ValidateTexture(sb->faces[0], false);
+		gl_RenderState.SetMaterial(tex, CLAMP_XY, 0, -1, false);
+		gl_RenderState.Apply();
 
 		ptr = GLRenderer->mVBO->GetBuffer();
 		ptr->Set(128.f, 128.f, -128.f, 0, 0);

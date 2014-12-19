@@ -4121,9 +4121,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 //===========================================================================
 enum T_Flags
 {
-	TF_TELEFRAG = 1, // Allow telefrag in order to teleport.
-	TF_RANDOMDECIDE = 2, // Randomly fail based on health. (A_Srcr2Decide)
-	TF_FORCED = 4, // Forget what's in the way. TF_Telefrag takes precedence though.
+	TF_TELEFRAG =		0x00000001, // Allow telefrag in order to teleport.
+	TF_RANDOMDECIDE =	0x00000002, // Randomly fail based on health. (A_Srcr2Decide)
+	TF_FORCED =			0x00000004, // Forget what's in the way. TF_Telefrag takes precedence though.
+	TF_KEEPVELOCITY =	0x00000008, // Preserve velocity.
+	TF_KEEPANGLE =		0x00000010, // Keep angle.
+	TF_USESPOTZ =		0x00000020, // Set the z to the spot's z, instead of the floor.
+	TF_NOSRCFOG =		0x00000040, // Don't leave any fog behind when teleporting.
+	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
+	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
+	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4154,14 +4161,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		if (pr_teleport() >= chance[chanceindex]) return;
 	}
 
-	if (TeleportState == NULL)
-	{
-		// Default to Teleport.
-		TeleportState = self->FindState("Teleport");
-		// If still nothing, then return.
-		if (!TeleportState) return;
-	}
-
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL) return;
 
@@ -4173,34 +4172,67 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	fixed_t prevX = self->x;
 	fixed_t prevY = self->y;
 	fixed_t prevZ = self->z;
-	bool teleResult = false;
 
 	//Take precedence and cooperate with telefragging first.
-	if (P_TeleportMove(self, spot->x, spot->y, spot->z, Flags & TF_TELEFRAG))
-		teleResult = true;
+	bool teleResult = P_TeleportMove(self, spot->x, spot->y, spot->z, Flags & TF_TELEFRAG);
 	
 	if ((!(teleResult)) && (Flags & TF_FORCED))
 	{ 
 		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
 		self->SetOrigin(spot->x, spot->y, spot->z);
 		teleResult = true;
+
 	}
 
 	if (teleResult)
 	{
-		ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
-
-		if (FogType)
-		{
-			Spawn(FogType, prevX, prevY, prevZ, ALLOW_REPLACE);
+		//If a fog type is defined in the parameter, or the user wants to use the actor's predefined fogs,
+		//and if there's no desire to be fogless, spawn a fog based upon settings.
+		if (FogType || (Flags & TF_USEACTORFOG))
+		{ 
+			if (!(Flags & TF_NOSRCFOG))
+			{
+				if (Flags & TF_USEACTORFOG)
+					P_SpawnTeleportFog(self, prevX, prevY, prevZ, true);
+				else
+					Spawn(FogType, prevX, prevY, prevZ, ALLOW_REPLACE);
+			}
+			if (!(Flags & TF_NODESTFOG))
+			{
+				if (Flags & TF_USEACTORFOG)
+					P_SpawnTeleportFog(self, self->x, self->y, self->z, false);
+				else
+					Spawn(FogType, self->x, self->y, self->z, ALLOW_REPLACE);
+			}
 		}
+		
+		if (Flags & TF_USESPOTZ)
+			self->z = spot->z;
+		else
+			self->z = self->floorz;
 
-		ACTION_JUMP(TeleportState);
+		if (!(Flags & TF_KEEPANGLE))
+			self->angle = spot->angle;
 
-		self->z = self->floorz;
-		self->angle = spot->angle;
-		self->velx = self->vely = self->velz = 0;
+		if (!(Flags & TF_KEEPVELOCITY))
+			self->velx = self->vely = self->velz = 0;
+
+		if (!(Flags & TF_NOJUMP))
+		{
+			if (TeleportState == NULL)
+			{
+				ACTION_SET_RESULT(false); // Jumps should never set the result for inventory state chains!
+				// Default to Teleport.
+				TeleportState = self->FindState("Teleport");
+				// If still nothing, then return.
+				if (!TeleportState) return;
+
+				ACTION_JUMP(TeleportState);
+				return;
+			}
+		}
 	}
+	ACTION_SET_RESULT(teleResult);
 }
 
 //===========================================================================

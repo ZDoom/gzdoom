@@ -77,7 +77,7 @@ void ATeleportFog::PostBeginPlay ()
 void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele, bool setTarget)
 {
 	AActor *mo;
-	if ((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType) == NULL) //If the actor doesn't have one, initialize the original.
+	if ((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType) == NULL)
 	{
 		//Do nothing.
 		mo = NULL;

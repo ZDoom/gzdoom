@@ -4246,17 +4246,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 
 		if (!(Flags & TF_NOJUMP))
 		{
+			ACTION_SET_RESULT(false); // Jumps should never set the result for inventory state chains!
 			if (TeleportState == NULL)
 			{
-				ACTION_SET_RESULT(false); // Jumps should never set the result for inventory state chains!
 				// Default to Teleport.
 				TeleportState = self->FindState("Teleport");
 				// If still nothing, then return.
 				if (!TeleportState) return;
-
-				ACTION_JUMP(TeleportState);
-				return;
 			}
+			ACTION_JUMP(TeleportState);
+			return;
 		}
 	}
 	ACTION_SET_RESULT(teleResult);

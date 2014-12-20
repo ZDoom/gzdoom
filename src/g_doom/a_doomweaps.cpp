@@ -188,7 +188,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 
 	if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
 	{
-		if (flags & SF_STEALARMOR)
+		if (Flags & SF_STEALARMOR)
 		{
 			if (!armorbonustype) armorbonustype = PClass::FindClass("ArmorBonus");
 

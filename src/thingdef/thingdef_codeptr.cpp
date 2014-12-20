@@ -1385,17 +1385,20 @@ enum
 	CPF_PULLIN = 4,
 	CPF_NORANDOMPUFFZ = 8,
 	CPF_NOTURN = 16,
+	CPF_STEALARMOR = 32,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 {
-	ACTION_PARAM_START(5);
+	ACTION_PARAM_START(8);
 	ACTION_PARAM_INT(Damage, 0);
 	ACTION_PARAM_BOOL(norandom, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(PuffType, 3);
 	ACTION_PARAM_FIXED(Range, 4);
 	ACTION_PARAM_FIXED(LifeSteal, 5);
+	ACTION_PARAM_INT(lifestealmax, 6);
+	ACTION_PARAM_CLASS(armorbonustype, 7);
 
 	if (!self->player) return;
 
@@ -1428,7 +1431,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	if (linetarget)
 	{
 		if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
-			P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS);
+		{
+			if (flags & CPF_STEALARMOR)
+			{
+				if (!armorbonustype) armorbonustype = PClass::FindClass("ArmorBonus");
+
+				if (armorbonustype->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+				{
+					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn (armorbonustype, 0,0,0, NO_REPLACE));
+					armorbonus->SaveAmount *= (actualdamage * LifeSteal) >> FRACBITS;
+					armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
+					armorbonus->flags |= MF_DROPPED;
+					armorbonus->ClearCounters();
+
+					if (!armorbonus->CallTryPickup (self))
+					{
+						armorbonus->Destroy ();
+					}
+				}
+			}
+
+			else
+			{
+				P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS, lifestealmax);
+			}
+		}
 
 		if (weapon != NULL)
 		{

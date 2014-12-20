@@ -16,6 +16,7 @@ const int SF_NOUSEAMMOMISS = 8;
 const int SF_NOUSEAMMO = 16;
 const int SF_NOPULLIN = 32;
 const int SF_NOTURN = 64;
+const int SF_STEALARMOR = 128;
 
 // Flags for A_CustomMissile
 const int CMF_AIMOFFSET = 1;
@@ -176,6 +177,7 @@ const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
 const int CPF_NORANDOMPUFFZ = 8;
 const int CPF_NOTURN = 16;
+const int CPF_STEALARMOR = 32;
 
 // Flags for A_CustomMissile
 const int FPF_AIMATANGLE = 1;

@@ -3003,6 +3003,10 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 	{
 		if (mo->bouncecount > 0 && --mo->bouncecount == 0) return false;
 
+		if (mo->flags7 & MF7_HITTARGET)	mo->target = BlockingMobj;
+		if (mo->flags7 & MF7_HITMASTER)	mo->master = BlockingMobj;
+		if (mo->flags7 & MF7_HITTRACER)	mo->tracer = BlockingMobj;
+
 		if (!ontop)
 		{
 			fixed_t speed;

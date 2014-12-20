@@ -5068,12 +5068,15 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_CLASS(filter, 3);
 
-	DoDamage(self, self, amount, DamageType, flags);
+	const PClass *c1 = self->GetClass();
+	if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+		DoDamage(self, self, amount, DamageType, flags);
 }
 
 //===========================================================================
@@ -5083,12 +5086,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_CLASS(filter, 3);
 
-	if (self->target != NULL) DoDamage(self->target, self, amount, DamageType, flags);
+	if (self->target != NULL)
+	{
+		const PClass *c1 = self->target->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoDamage(self->target, self, amount, DamageType, flags);
+	}
 }
 
 //===========================================================================
@@ -5098,12 +5107,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_CLASS(filter, 3);
 
-	if (self->tracer != NULL) DoDamage(self->tracer, self, amount, DamageType, flags);
+	if (self->tracer != NULL)
+	{
+		const PClass *c1 = self->tracer->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoDamage(self->tracer, self, amount, DamageType, flags);
+	}
 }
 
 //===========================================================================
@@ -5113,12 +5128,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_CLASS(filter, 3);
 
-	if (self->master != NULL) DoDamage(self->master, self, amount, DamageType, flags);
+	if (self->master != NULL)
+	{
+		const PClass *c1 = self->master->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoDamage(self->master, self, amount, DamageType, flags);
+	}
 }
 
 //===========================================================================
@@ -5128,17 +5149,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_CLASS(filter, 3);
 
 	TThinkerIterator<AActor> it;
 	AActor * mo;
 
 	while ( (mo = it.Next()) )
 	{
-		if (mo->master == self) DoDamage(mo, self, amount, DamageType, flags);
+		if (mo->master == self)
+		{
+			const PClass *c1 = mo->GetClass();
+			if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+				DoDamage(mo, self, amount, DamageType, flags);
+		}
 	}
 }
 
@@ -5149,10 +5176,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
+	ACTION_PARAM_CLASS(filter, 3);
 
 	TThinkerIterator<AActor> it;
 	AActor * mo;
@@ -5161,7 +5189,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
 	{
 		while ((mo = it.Next()))
 		{
-			if (mo->master == self->master && mo != self) DoDamage(mo, self, amount, DamageType, flags);
+			if (mo->master == self->master && mo != self)
+			{
+				const PClass *c1 = mo->GetClass();
+				if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+					DoDamage(mo, self, amount, DamageType, flags);
+			}
 		}
 	}
 }
@@ -5214,11 +5247,17 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTarget)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
-	if (self->target != NULL) DoKill(self->target, self, damagetype, flags);
+	if (self->target != NULL)
+	{
+		const PClass *c1 = self->target->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoKill(self->target, self, damagetype, flags);
+	}
 }
 
 //===========================================================================
@@ -5228,11 +5267,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTarget)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTracer)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
-	if (self->tracer != NULL) DoKill(self->tracer, self, damagetype, flags);
+	if (self->tracer != NULL)
+	{
+		const PClass *c1 = self->tracer->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoKill(self->tracer, self, damagetype, flags);
+	}
 }
 
 //===========================================================================
@@ -5242,11 +5287,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTracer)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
-	if (self->master != NULL) DoKill(self->master, self, damagetype, flags);
+	if (self->master != NULL)
+	{
+		const PClass *c1 = self->master->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoKill(self->master, self, damagetype, flags);
+	}
 }
 
 //===========================================================================
@@ -5256,16 +5307,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
 
 	while ( (mo = it.Next()) )
 	{
-		if (mo->master == self) DoKill(mo, self, damagetype, flags);
+		if (mo->master == self) 
+		{
+			const PClass *c1 = mo->GetClass();
+			if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+				DoKill(mo, self, damagetype, flags);
+		}
 	}
 }
 
@@ -5276,9 +5333,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
@@ -5287,7 +5345,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 	{
 		while ( (mo = it.Next()) )
 		{
-			if (mo->master == self->master && mo != self) DoKill(mo, self, damagetype, flags);
+			if (mo->master == self->master && mo != self)
+			{ 
+				const PClass *c1 = mo->GetClass();
+				if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+					DoKill(mo, self, damagetype, flags); 
+			}
 		}
 	}
 }
@@ -5333,11 +5396,15 @@ static void DoRemove(AActor *removetarget, int flags)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTarget)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(flags, 0);
-	if (self->master != NULL)
+	ACTION_PARAM_CLASS(filter, 1);
+	
+	if (self->target != NULL)
 	{
-		DoRemove(self->target, flags);
+		const PClass *c1 = self->target->GetClass();
+		if ((filter && (c1 == filter)) || (filter == NULL) || !(filter))
+			DoRemove(self->target, flags);
 	}
 }
 
@@ -5348,11 +5415,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTarget)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTracer)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(flags, 0);
-	if (self->master != NULL)
+	ACTION_PARAM_CLASS(filter, 1);
+	
+	if (self->tracer != NULL)
 	{
-		DoRemove(self->tracer, flags);
+		const PClass *c1 = self->tracer->GetClass();
+		if ((filter && (c1 == filter)) || (filter == NULL) || !(filter))
+			DoRemove(self->tracer, flags);
 	}
 }
 
@@ -5363,11 +5434,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTracer)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveMaster)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(flags, 0);
+	ACTION_PARAM_CLASS(filter, 1);
+	
 	if (self->master != NULL)
 	{
-		DoRemove(self->master, flags);
+		const PClass *c1 = self->master->GetClass();
+		if ((filter && (c1 == filter)) || (filter == NULL) || !(filter))
+			DoRemove(self->master, flags);
 	}
 }
 
@@ -5380,15 +5455,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
 {
 	TThinkerIterator<AActor> it;
 	AActor *mo;
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_BOOL(removeall, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
+	
 
 	while ((mo = it.Next()) != NULL)
 	{
 		if (mo->master == self && (mo->health <= 0 || removeall))
 		{
-			DoRemove(mo, flags);
+			const PClass *c1 = mo->GetClass();
+			if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+				DoRemove(mo, flags);
 		}
 	}
 }
@@ -5402,9 +5481,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 {
 	TThinkerIterator<AActor> it;
 	AActor *mo;
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_BOOL(removeall, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
 	if (self->master != NULL)
 	{
@@ -5412,7 +5492,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 		{
 			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
 			{
-				DoRemove(mo, flags);
+				const PClass *c1 = mo->GetClass();
+				if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+					DoRemove(mo, flags);
 			}
 		}
 	}
@@ -5425,15 +5507,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_INT(removee, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_CLASS(filter, 2);
 
 	AActor *reference = COPY_AAPTR(self, removee);
-
 	if (reference != NULL)
 	{
-		DoRemove(reference, flags);
+		const PClass *c1 = reference->GetClass();
+		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
+			DoRemove(reference, flags);
 	}
 }
 

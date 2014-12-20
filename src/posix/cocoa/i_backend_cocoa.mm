@@ -201,7 +201,6 @@ RenderBufferOptions rbOpts;
 EXTERN_CVAR(Bool, ticker       )
 EXTERN_CVAR(Bool, vid_hidpi    )
 EXTERN_CVAR(Bool, vid_vsync    )
-EXTERN_CVAR(Int,  vid_adapter  )
 EXTERN_CVAR(Int,  vid_defwidth )
 EXTERN_CVAR(Int,  vid_defheight)
 
@@ -1957,21 +1956,6 @@ typedef uint32_t	Uint32;
 	} SDL_TextureAccess;
 
 
-
-
-SDL_bool SDL_PixelFormatEnumToMasks(Uint32 format, int* bpp, Uint32* Rmask, Uint32* Gmask, Uint32* Bmask, Uint32* Amask)
-{
-	//assert(format == SDL_PIXELFORMAT_ABGR8888);
-
-	*bpp = 32;
-	*Rmask = 0x000000FF;
-	*Gmask = 0x0000FF00;
-	*Bmask = 0x00FF0000;
-	*Amask = 0xFF000000;
-
-	return SDL_TRUE;
-}
-
 struct SDL_Window
 {
 	Uint32 flags;
@@ -2016,27 +2000,6 @@ Uint32 SDL_GetWindowFlags(SDL_Window *window)
 	return window->flags;
 }
 
-SDL_Surface *SDL_GetWindowSurface(SDL_Window *window)
-{
-	ZD_UNUSED(window);
-	return NULL;
-}
-
-void SDL_GetWindowSize(SDL_Window *window, int *w, int *h)
-{
-	*w = window->w;
-	*h = window->h;
-}
-
-void SDL_SetWindowSize(SDL_Window *window, int w, int h)
-{
-	// Currently this is used for handling the fullscreen->windowed transition.
-	// We can just no-op this for now.
-	ZD_UNUSED(window);
-	ZD_UNUSED(w);
-	ZD_UNUSED(h);
-}
-
 int SDL_SetWindowFullscreen(SDL_Window* window, Uint32 flags)
 {
 	if ((window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == (flags & SDL_WINDOW_FULLSCREEN_DESKTOP))
@@ -2058,48 +2021,6 @@ int SDL_SetWindowFullscreen(SDL_Window* window, Uint32 flags)
 
 	return 0;
 }
-
-SDL_Renderer *SDL_CreateRenderer(SDL_Window *window, int index, Uint32 flags)
-{
-	ZD_UNUSED(index);
-	ZD_UNUSED(flags);
-
-	static SDL_Renderer result;
-	result.window = window;
-
-	return &result;
-}
-void SDL_DestroyRenderer(SDL_Renderer *renderer)
-{
-	ZD_UNUSED(renderer);
-}
-
-SDL_Texture *SDL_CreateTexture(SDL_Renderer *renderer, Uint32 format, int access, int w, int h)
-{
-	ZD_UNUSED(format);
-	ZD_UNUSED(access);
-	ZD_UNUSED(w);
-	ZD_UNUSED(h);
-
-	static SDL_Texture result;
-	result.window = renderer->window;
-
-	return &result;
-}
-void SDL_DestroyTexture(SDL_Texture *texture)
-{
-	ZD_UNUSED(texture);
-}
-
-int SDL_QueryTexture(SDL_Texture *texture, Uint32* format, int* access, int* w, int* h)
-{
-	if(format) *format = 0; //SDL_PIXELFORMAT_ABGR8888;
-	if(access) *access = SDL_TEXTUREACCESS_STREAMING;
-	if(w) *w = texture->window->w;
-	if(h) *h = texture->window->h;
-	return 0;
-}
-
 
 int SDL_UpdateWindowSurface(SDL_Window *screen)
 {
@@ -2176,31 +2097,34 @@ private:
 	size_t m_modeIterator;
 };
 
+
 class CocoaFrameBuffer : public DFrameBuffer
 {
 public:
 	CocoaFrameBuffer(int width, int height, bool fullscreen);
 	~CocoaFrameBuffer();
 
-	bool Lock (bool buffer);
-	void Unlock ();
-	bool Relock ();
-	void ForceBuffering (bool force);
-	bool IsValid ();
-	void Update ();
-	PalEntry *GetPalette ();
-	void GetFlashedPalette (PalEntry pal[256]);
-	void UpdatePalette ();
-	bool SetGamma (float gamma);
-	bool SetFlash (PalEntry rgb, int amount);
-	void GetFlash (PalEntry &rgb, int &amount);
-	void SetFullscreen (bool fullscreen);
-	int GetPageCount ();
-	bool IsFullscreen ();
+	virtual bool IsValid();
 
-	friend class CocoaVideo;
+	virtual bool Lock(bool buffer);
+	virtual void Unlock();
+	virtual void Update();
+	
+	virtual PalEntry* GetPalette();
+	virtual void GetFlashedPalette(PalEntry pal[256]);
+	virtual void UpdatePalette();
+	
+	virtual bool SetGamma(float gamma);
+	virtual bool SetFlash(PalEntry rgb, int amount);
+	virtual void GetFlash(PalEntry &rgb, int &amount);
 
-	virtual void SetVSync (bool vsync);
+	virtual int GetPageCount();
+
+	virtual bool IsFullscreen();
+
+	virtual void SetVSync(bool vsync);
+
+	void SetFullscreen(bool fullscreen);
 
 private:
 	PalEntry SourcePalette[256];
@@ -2211,102 +2135,96 @@ private:
 	bool UpdatePending;
 
 	SDL_Window *Screen;
-	SDL_Renderer *Renderer;
-	union
-	{
-		SDL_Texture *Texture;
-		SDL_Surface *Surface;
-	};
 
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 
-	void UpdateColors ();
-	void ResetSDLRenderer ();
-
-	CocoaFrameBuffer () {}
+	void UpdateColors();
 };
 
-struct MiniModeInfo
-{
-	WORD Width, Height;
-};
+
+// ---------------------------------------------------------------------------
 
 
 EXTERN_CVAR (Float, Gamma)
 
-CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-CVAR (Int, vid_displaybits, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-CVAR (Bool, vid_forcesurface, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (screen != NULL)
+	if (NULL != screen)
 	{
-		screen->SetGamma (Gamma);
-	}
-}
-CUSTOM_CVAR (Float, ggamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (screen != NULL)
-	{
-		screen->SetGamma (Gamma);
-	}
-}
-CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (screen != NULL)
-	{
-		screen->SetGamma (Gamma);
+		screen->SetGamma(Gamma);
 	}
 }
 
-static MiniModeInfo WinModes[] =
+CUSTOM_CVAR (Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	{ 320, 200 },
-	{ 320, 240 },
-	{ 400, 225 },	// 16:9
-	{ 400, 300 },
-	{ 480, 270 },	// 16:9
-	{ 480, 360 },
-	{ 512, 288 },	// 16:9
-	{ 512, 384 },
-	{ 640, 360 },	// 16:9
-	{ 640, 400 },
-	{ 640, 480 },
-	{ 720, 480 },	// 16:10
-	{ 720, 540 },
-	{ 800, 450 },	// 16:9
-	{ 800, 480 },
-	{ 800, 500 },	// 16:10
-	{ 800, 600 },
-	{ 848, 480 },	// 16:9
-	{ 960, 600 },	// 16:10
-	{ 960, 720 },
-	{ 1024, 576 },	// 16:9
-	{ 1024, 600 },	// 17:10
-	{ 1024, 640 },	// 16:10
-	{ 1024, 768 },
-	{ 1088, 612 },	// 16:9
-	{ 1152, 648 },	// 16:9
-	{ 1152, 720 },	// 16:10
-	{ 1152, 864 },
-	{ 1280, 720 },	// 16:9
-	{ 1280, 854 },
-	{ 1280, 800 },	// 16:10
-	{ 1280, 960 },
+	if (NULL != screen)
+	{
+		screen->SetGamma(Gamma);
+	}
+}
+
+CUSTOM_CVAR (Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (NULL != screen)
+	{
+		screen->SetGamma(Gamma);
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+static const struct MiniModeInfo
+{
+	uint16_t width;
+	uint16_t height;
+}
+VideoModes[] =
+{
+	{  320,  200 },
+	{  320,  240 },
+	{  400,  225 },	// 16:9
+	{  400,  300 },
+	{  480,  270 },	// 16:9
+	{  480,  360 },
+	{  512,  288 },	// 16:9
+	{  512,  384 },
+	{  640,  360 },	// 16:9
+	{  640,  400 },
+	{  640,  480 },
+	{  720,  480 },	// 16:10
+	{  720,  540 },
+	{  800,  450 },	// 16:9
+	{  800,  480 },
+	{  800,  500 },	// 16:10
+	{  800,  600 },
+	{  848,  480 },	// 16:9
+	{  960,  600 },	// 16:10
+	{  960,  720 },
+	{ 1024,  576 },	// 16:9
+	{ 1024,  600 },	// 17:10
+	{ 1024,  640 },	// 16:10
+	{ 1024,  768 },
+	{ 1088,  612 },	// 16:9
+	{ 1152,  648 },	// 16:9
+	{ 1152,  720 },	// 16:10
+	{ 1152,  864 },
+	{ 1280,  720 },	// 16:9
+	{ 1280,  854 },
+	{ 1280,  800 },	// 16:10
+	{ 1280,  960 },
 	{ 1280, 1024 },	// 5:4
-	{ 1360, 768 },	// 16:9
-	{ 1366, 768 },
-	{ 1400, 787 },	// 16:9
-	{ 1400, 875 },	// 16:10
+	{ 1360,  768 },	// 16:9
+	{ 1366,  768 },
+	{ 1400,  787 },	// 16:9
+	{ 1400,  875 },	// 16:10
 	{ 1400, 1050 },
-	{ 1440, 900 },
-	{ 1440, 960 },
+	{ 1440,  900 },
+	{ 1440,  960 },
 	{ 1440, 1080 },
-	{ 1600, 900 },	// 16:9
+	{ 1600,  900 },	// 16:9
 	{ 1600, 1000 },	// 16:10
 	{ 1600, 1200 },
 	{ 1920, 1080 },
@@ -2323,8 +2241,12 @@ static MiniModeInfo WinModes[] =
 	{ 5120, 2880 }
 };
 
+
 static cycle_t BlitCycles;
 static cycle_t FlipCycles;
+
+
+// ---------------------------------------------------------------------------
 
 
 CocoaVideo::CocoaVideo(int dummy)
@@ -2345,10 +2267,10 @@ bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
 {
 	ZD_UNUSED(letterbox);
 
-	if (m_modeIterator < sizeof(WinModes) / sizeof(WinModes[0]))
+	if (m_modeIterator < sizeof(VideoModes) / sizeof(VideoModes[0]))
 	{
-		*width  = WinModes[m_modeIterator].Width;
-		*height = WinModes[m_modeIterator].Height;
+		*width  = VideoModes[m_modeIterator].width;
+		*height = VideoModes[m_modeIterator].height;
 
 		++m_modeIterator;
 		return true;
@@ -2357,7 +2279,7 @@ bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
 	return false;
 }
 
-DFrameBuffer *CocoaVideo::CreateFrameBuffer(int width, int height, bool fullscreen, DFrameBuffer* old)
+DFrameBuffer* CocoaVideo::CreateFrameBuffer(int width, int height, bool fullscreen, DFrameBuffer* old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -2368,15 +2290,14 @@ DFrameBuffer *CocoaVideo::CreateFrameBuffer(int width, int height, bool fullscre
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
 		CocoaFrameBuffer *fb = static_cast<CocoaFrameBuffer *> (old);
-		if (fb->Width == width &&
-			fb->Height == height)
+		if (fb->GetWidth() == width &&
+			fb->GetHeight() == height)
 		{
-			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-
-			if (fsnow != fullscreen)
+			if (fb->IsFullscreen() != fullscreen)
 			{
 				fb->SetFullscreen (fullscreen);
 			}
+
 			return old;
 		}
 		old->GetFlash (flashColor, flashAmount);
@@ -2460,19 +2381,17 @@ CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 	if (Screen == NULL)
 		return;
 
-	Renderer = NULL;
-	Texture = NULL;
-	ResetSDLRenderer ();
+	GPfx.SetFormat(32, 0x000000FF, 0x0000FF00, 0x00FF0000);
 
 	for (size_t i = 0; i < 256; ++i)
 	{
 		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
 	}
 
-	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
-	UpdateColors ();
+	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
+	UpdateColors();
 
-	SetVSync (vid_vsync);
+	SetVSync(vid_vsync);
 }
 
 
@@ -2480,13 +2399,6 @@ CocoaFrameBuffer::~CocoaFrameBuffer ()
 {
 	if(Screen)
 	{
-		if (Renderer)
-		{
-			if (Texture)
-				SDL_DestroyTexture (Texture);
-			SDL_DestroyRenderer (Renderer);
-		}
-
 		SDL_DestroyWindow (Screen);
 	}
 }
@@ -2502,11 +2414,6 @@ int CocoaFrameBuffer::GetPageCount ()
 }
 
 bool CocoaFrameBuffer::Lock (bool buffered)
-{
-	return DSimpleCanvas::Lock ();
-}
-
-bool CocoaFrameBuffer::Relock ()
 {
 	return DSimpleCanvas::Lock ();
 }
@@ -2546,11 +2453,11 @@ void CocoaFrameBuffer::Update ()
 	FlipCycles.Reset();
 	BlitCycles.Clock();
 
-	GPfx.Convert(MemBuffer, Pitch, Texture->window->pixels, Texture->window->pitch,
+	GPfx.Convert(MemBuffer, Pitch, [appCtrl softwareRenderingBuffer], Width * BYTES_PER_PIXEL,
 		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
 
 	FlipCycles.Clock();
-	SDL_RenderPresent(Renderer);
+	SDL_UpdateWindowSurface(Screen);
 	FlipCycles.Unclock();
 
 	BlitCycles.Unclock();
@@ -2559,20 +2466,20 @@ void CocoaFrameBuffer::Update ()
 	{
 		bool Windowed = false;
 		NeedGammaUpdate = false;
-		CalcGamma ((Windowed || rgamma == 0.f) ? Gamma : (Gamma * rgamma), GammaTable[0]);
-		CalcGamma ((Windowed || ggamma == 0.f) ? Gamma : (Gamma * ggamma), GammaTable[1]);
-		CalcGamma ((Windowed || bgamma == 0.f) ? Gamma : (Gamma * bgamma), GammaTable[2]);
+		CalcGamma((Windowed || rgamma == 0.f) ? Gamma : (Gamma * rgamma), GammaTable[0]);
+		CalcGamma((Windowed || ggamma == 0.f) ? Gamma : (Gamma * ggamma), GammaTable[1]);
+		CalcGamma((Windowed || bgamma == 0.f) ? Gamma : (Gamma * bgamma), GammaTable[2]);
 		NeedPalUpdate = true;
 	}
 
 	if (NeedPalUpdate)
 	{
 		NeedPalUpdate = false;
-		UpdateColors ();
+		UpdateColors();
 	}
 }
 
-void CocoaFrameBuffer::UpdateColors ()
+void CocoaFrameBuffer::UpdateColors()
 {
 	PalEntry palette[256];
 
@@ -2590,7 +2497,7 @@ void CocoaFrameBuffer::UpdateColors ()
 			FlashAmount);
 	}
 
-	GPfx.SetPalette (palette);
+	GPfx.SetPalette(palette);
 }
 
 PalEntry *CocoaFrameBuffer::GetPalette ()
@@ -2637,52 +2544,11 @@ void CocoaFrameBuffer::GetFlashedPalette (PalEntry pal[256])
 void CocoaFrameBuffer::SetFullscreen (bool fullscreen)
 {
 	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-	if (!fullscreen)
-	{
-		// Restore proper window size
-		SDL_SetWindowSize (Screen, Width, Height);
-	}
-
-	ResetSDLRenderer ();
 }
 
 bool CocoaFrameBuffer::IsFullscreen ()
 {
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-}
-
-void CocoaFrameBuffer::ResetSDLRenderer ()
-{
-	if (Renderer)
-	{
-		if (Texture)
-			SDL_DestroyTexture (Texture);
-		SDL_DestroyRenderer (Renderer);
-	}
-
-	Renderer = SDL_CreateRenderer (Screen, -1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_TARGETTEXTURE|
-		(vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
-	if (!Renderer)
-		return;
-
-	Uint32 fmt = 0;
-//	switch(vid_displaybits)
-//	{
-//		default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
-//		case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
-//		case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
-//		case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
-//		case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
-//	}
-	Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
-
-	Uint32 format;
-	SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
-
-	Uint32 Rmask, Gmask, Bmask, Amask;
-	int bpp;
-	SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-	GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
 }
 
 void CocoaFrameBuffer::SetVSync (bool vsync)

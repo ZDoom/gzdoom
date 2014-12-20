@@ -1817,157 +1817,22 @@ bool I_SetCursor(FTexture* cursorpic)
 extern "C" 
 {
 
-	typedef enum
-	{
-		SDL_FALSE = 0,
-		SDL_TRUE = 1
-	} SDL_bool;
-
-typedef int8_t		Sint8;
-typedef uint8_t		Uint8;
-typedef int16_t		Sint16;
-typedef uint16_t	Uint16;
-typedef int32_t		Sint32;
-typedef uint32_t	Uint32;
-
-	typedef enum
-	{
-		SDL_WINDOW_FULLSCREEN = 0x00000001,         /**< fullscreen window */
-		SDL_WINDOW_OPENGL = 0x00000002,             /**< window usable with OpenGL context */
-		SDL_WINDOW_SHOWN = 0x00000004,              /**< window is visible */
-		SDL_WINDOW_HIDDEN = 0x00000008,             /**< window is not visible */
-		SDL_WINDOW_BORDERLESS = 0x00000010,         /**< no window decoration */
-		SDL_WINDOW_RESIZABLE = 0x00000020,          /**< window can be resized */
-		SDL_WINDOW_MINIMIZED = 0x00000040,          /**< window is minimized */
-		SDL_WINDOW_MAXIMIZED = 0x00000080,          /**< window is maximized */
-		SDL_WINDOW_INPUT_GRABBED = 0x00000100,      /**< window has grabbed input focus */
-		SDL_WINDOW_INPUT_FOCUS = 0x00000200,        /**< window has input focus */
-		SDL_WINDOW_MOUSE_FOCUS = 0x00000400,        /**< window has mouse focus */
-		SDL_WINDOW_FULLSCREEN_DESKTOP = ( SDL_WINDOW_FULLSCREEN | 0x00001000 ),
-		SDL_WINDOW_FOREIGN = 0x00000800,            /**< window not created by SDL */
-		SDL_WINDOW_ALLOW_HIGHDPI = 0x00002000       /**< window should be created in high-DPI mode if supported */
-	} SDL_WindowFlags;
-
-
-	typedef struct SDL_Rect {
-		Sint16 x, y;
-		Uint16 w, h;
-	} SDL_Rect;
-
-	typedef struct SDL_Color {
-		Uint8 r;
-		Uint8 g;
-		Uint8 b;
-		Uint8 unused;
-	} SDL_Color;
-
-
-	typedef struct SDL_Palette {
-		int       ncolors;
-		SDL_Color *colors;
-	} SDL_Palette;
-
-	typedef struct SDL_PixelFormat {
-		SDL_Palette *palette;
-		Uint8  BitsPerPixel;
-		Uint8  BytesPerPixel;
-		Uint8  Rloss;
-		Uint8  Gloss;
-		Uint8  Bloss;
-		Uint8  Aloss;
-		Uint8  Rshift;
-		Uint8  Gshift;
-		Uint8  Bshift;
-		Uint8  Ashift;
-		Uint32 Rmask;
-		Uint32 Gmask;
-		Uint32 Bmask;
-		Uint32 Amask;
-
-		/** RGB color key information */
-		Uint32 colorkey;
-		/** Alpha value information (per-surface alpha) */
-		Uint8  alpha;
-	} SDL_PixelFormat;
-
-	/** This structure should be treated as read-only, except for 'pixels',
-	 *  which, if not NULL, contains the raw pixel data for the surface.
-	 */
-	typedef struct SDL_Surface {
-		Uint32 flags;				/**< Read-only */
-		SDL_PixelFormat *format;		/**< Read-only */
-		int w, h;				/**< Read-only */
-		Uint16 pitch;				/**< Read-only */
-		void *pixels;				/**< Read-write */
-		int offset;				/**< Private */
-
-		/** Hardware-specific surface info */
-		struct private_hwdata *hwdata;
-
-		/** clipping information */
-		SDL_Rect clip_rect;			/**< Read-only */
-		Uint32 unused1;				/**< for binary compatibility */
-
-		/** Allow recursive locks */
-		Uint32 locked;				/**< Private */
-
-		/** info for fast blit mapping to other surfaces */
-		struct SDL_BlitMap *map;		/**< Private */
-
-		/** format version, bumped at every change to invalidate blit maps */
-		unsigned int format_version;		/**< Private */
-
-		/** Reference count -- used when freeing surface */
-		int refcount;				/**< Read-mostly */
-	} SDL_Surface;
-
-	typedef enum
-	{
-		SDL_RENDERER_SOFTWARE = 0x00000001,         /**< The renderer is a software fallback */
-		SDL_RENDERER_ACCELERATED = 0x00000002,      /**< The renderer uses hardware
-													 acceleration */
-		SDL_RENDERER_PRESENTVSYNC = 0x00000004,     /**< Present is synchronized
-													 with the refresh rate */
-		SDL_RENDERER_TARGETTEXTURE = 0x00000008     /**< The renderer supports
-													 rendering to texture */
-	} SDL_RendererFlags;
-
-	/**
-	 *  \brief Information on the capabilities of a render driver or context.
-	 */
-	typedef struct SDL_RendererInfo
-	{
-		const char *name;           /**< The name of the renderer */
-		Uint32 flags;               /**< Supported ::SDL_RendererFlags */
-		Uint32 num_texture_formats; /**< The number of available texture formats */
-		Uint32 texture_formats[16]; /**< The available texture formats */
-		int max_texture_width;      /**< The maximimum texture width */
-		int max_texture_height;     /**< The maximimum texture height */
-	} SDL_RendererInfo;
-
-	/**
-	 *  \brief The access pattern allowed for a texture.
-	 */
-	typedef enum
-	{
-		SDL_TEXTUREACCESS_STATIC,    /**< Changes rarely, not lockable */
-		SDL_TEXTUREACCESS_STREAMING, /**< Changes frequently, lockable */
-		SDL_TEXTUREACCESS_TARGET     /**< Texture can be used as a render target */
-	} SDL_TextureAccess;
-
+typedef enum
+{
+	SDL_WINDOW_FULLSCREEN = 0x00000001,         /**< fullscreen window */
+	SDL_WINDOW_OPENGL = 0x00000002,             /**< window usable with OpenGL context */
+	SDL_WINDOW_FULLSCREEN_DESKTOP = ( SDL_WINDOW_FULLSCREEN | 0x00001000 ),
+} SDL_WindowFlags;
 
 struct SDL_Window
 {
-	Uint32 flags;
+	uint32_t flags;
 	int w, h;
 	int pitch;
 	void *pixels;
 };
 
-struct SDL_Renderer { SDL_Window *window; };
-struct SDL_Texture { SDL_Window *window; };
-
-SDL_Window* SDL_CreateWindow(const char* title, int x, int y, int width, int height, Uint32 flags)
+SDL_Window* SDL_CreateWindow(const char* title, int x, int y, int width, int height, uint32_t flags)
 {
 	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
 							 width:width
@@ -1995,12 +1860,12 @@ void SDL_DestroyWindow(SDL_Window *window)
 	ZD_UNUSED(window);
 }
 
-Uint32 SDL_GetWindowFlags(SDL_Window *window)
+uint32_t SDL_GetWindowFlags(SDL_Window *window)
 {
 	return window->flags;
 }
 
-int SDL_SetWindowFullscreen(SDL_Window* window, Uint32 flags)
+int SDL_SetWindowFullscreen(SDL_Window* window, uint32_t flags)
 {
 	if ((window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == (flags & SDL_WINDOW_FULLSCREEN_DESKTOP))
 		return 0;
@@ -2067,11 +1932,6 @@ int SDL_UpdateWindowSurface(SDL_Window *screen)
 	[[NSOpenGLContext currentContext] flushBuffer];
 
 	return 0;
-}
-
-void SDL_RenderPresent(SDL_Renderer *renderer)
-{
-	SDL_UpdateWindowSurface(renderer->window);
 }
 
 } // extern "C"

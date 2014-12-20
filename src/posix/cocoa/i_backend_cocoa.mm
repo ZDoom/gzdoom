@@ -247,22 +247,6 @@ CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	setmodeneeded = true;
 }
 
-CUSTOM_CVAR(Float, vid_winscale, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 1.f)
-	{
-		self = 1.f;
-	}
-	else if (Video)
-	{
-		Video->SetWindowedScale (self);
-		NewWidth = screen->GetWidth();
-		NewHeight = screen->GetHeight();
-		NewBits = DisplayBits;
-		setmodeneeded = true;
-	}
-}
-
 
 // ---------------------------------------------------------------------------
 
@@ -2117,21 +2101,6 @@ int SDL_QueryTexture(SDL_Texture *texture, Uint32* format, int* access, int* w, 
 }
 
 
-int SDL_LockTexture(SDL_Texture* texture, const SDL_Rect *rect, void** pixels, int *pitch)
-{
-	assert(NULL == rect);
-
-	*pixels = texture->window->pixels;
-	*pitch = texture->window->pitch;
-
-	return 0;
-}
-
-void SDL_UnlockTexture(SDL_Texture *texture)
-{
-	ZD_UNUSED(texture);
-}
-
 int SDL_UpdateWindowSurface(SDL_Window *screen)
 {
 	assert(NULL != screen);
@@ -2179,31 +2148,11 @@ int SDL_UpdateWindowSurface(SDL_Window *screen)
 	return 0;
 }
 
-int SDL_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *srcrect, const SDL_Rect *dstrect)
-{
-	ZD_UNUSED(renderer);
-	ZD_UNUSED(texture);
-	ZD_UNUSED(srcrect);
-	ZD_UNUSED(dstrect);
-
-	return 0;
-}
-
 void SDL_RenderPresent(SDL_Renderer *renderer)
 {
 	SDL_UpdateWindowSurface(renderer->window);
 }
 
-int SDL_SetPaletteColors(SDL_Palette* palette, const SDL_Color* colors, int firstcolor, int ncolors)
-{
-	ZD_UNUSED(palette);
-	ZD_UNUSED(colors);
-	ZD_UNUSED(firstcolor);
-	ZD_UNUSED(ncolors);
-	
-	return 0;
-}
-	
 } // extern "C"
 
 
@@ -2213,27 +2162,25 @@ int SDL_SetPaletteColors(SDL_Palette* palette, const SDL_Color* colors, int firs
 class CocoaVideo : public IVideo
 {
 public:
-	CocoaVideo(int parm);
-	~CocoaVideo();
+	explicit CocoaVideo(int dummy);
 
-	EDisplayType GetDisplayType () { return DISPLAY_Both; }
-	void SetWindowedScale (float scale);
+	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
+	virtual void SetWindowedScale(float scale);
 
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
+	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer* old);
 
-	void StartModeIterator (int bits, bool fs);
-	bool NextMode (int *width, int *height, bool *letterbox);
+	virtual void StartModeIterator(int bits, bool fs);
+	virtual bool NextMode(int* width, int* height, bool* letterbox);
 
 private:
-	int IteratorMode;
-	int IteratorBits;
+	size_t m_modeIterator;
 };
 
 class CocoaFrameBuffer : public DFrameBuffer
 {
 public:
-	CocoaFrameBuffer (int width, int height, bool fullscreen);
-	~CocoaFrameBuffer ();
+	CocoaFrameBuffer(int width, int height, bool fullscreen);
+	~CocoaFrameBuffer();
 
 	bool Lock (bool buffer);
 	void Unlock ();
@@ -2270,11 +2217,9 @@ private:
 		SDL_Texture *Texture;
 		SDL_Surface *Surface;
 	};
-	SDL_Rect UpdateRect;
 
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
-	bool NotPaletted;
 
 	void UpdateColors ();
 	void ResetSDLRenderer ();
@@ -2379,66 +2324,40 @@ static MiniModeInfo WinModes[] =
 };
 
 static cycle_t BlitCycles;
-static cycle_t SDLFlipCycles;
+static cycle_t FlipCycles;
 
-// CODE --------------------------------------------------------------------
 
-void ScaleWithAspect (Uint16 &w, Uint16 &h, Uint16 Width, Uint16 Height)
+CocoaVideo::CocoaVideo(int dummy)
+: m_modeIterator(0)
 {
-	int resRatio = CheckRatio (Width, Height);
-	int screenRatio;
-	CheckRatio (w, h, &screenRatio);
-	if (resRatio == screenRatio)
-		return;
+	ZD_UNUSED(dummy);
+}
 
-	double yratio;
-	switch(resRatio)
+void CocoaVideo::StartModeIterator(int bits, bool fs)
+{
+	ZD_UNUSED(bits);
+	ZD_UNUSED(fs);
+
+	m_modeIterator = 0;
+}
+
+bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
+{
+	ZD_UNUSED(letterbox);
+
+	if (m_modeIterator < sizeof(WinModes) / sizeof(WinModes[0]))
 	{
-		case 0: yratio = 4./3.; break;
-		case 1: yratio = 16./9.; break;
-		case 2: yratio = 16./10.; break;
-		case 3: yratio = 17./10.; break;
-		case 4: yratio = 5./4.; break;
-		default: return;
-	}
-	double y = w/yratio;
-	if (y > h)
-		w = h*yratio;
-	else
-		h = y;
-}
+		*width  = WinModes[m_modeIterator].Width;
+		*height = WinModes[m_modeIterator].Height;
 
-CocoaVideo::CocoaVideo (int parm)
-{
-	IteratorBits = 0;
-}
-
-CocoaVideo::~CocoaVideo ()
-{
-}
-
-void CocoaVideo::StartModeIterator (int bits, bool fs)
-{
-	IteratorMode = 0;
-	IteratorBits = bits;
-}
-
-bool CocoaVideo::NextMode (int *width, int *height, bool *letterbox)
-{
-	if (IteratorBits != 8)
-		return false;
-
-	if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
-	{
-		*width = WinModes[IteratorMode].Width;
-		*height = WinModes[IteratorMode].Height;
-		++IteratorMode;
+		++m_modeIterator;
 		return true;
 	}
+
 	return false;
 }
 
-DFrameBuffer *CocoaVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *CocoaVideo::CreateFrameBuffer(int width, int height, bool fullscreen, DFrameBuffer* old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -2525,16 +2444,13 @@ void CocoaVideo::SetWindowedScale (float scale)
 
 
 CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
-: DFrameBuffer (width, height)
+: DFrameBuffer(width, height)
+, FlashAmount(0)
+, Gamma(0.0f)
+, UpdatePending(false)
+, NeedPalUpdate(false)
+, NeedGammaUpdate(false)
 {
-	int i;
-
-	NeedPalUpdate = false;
-	NeedGammaUpdate = false;
-	UpdatePending = false;
-	NotPaletted = false;
-	FlashAmount = 0;
-
 	FString caption;
 	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
 
@@ -2548,7 +2464,7 @@ CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 	Texture = NULL;
 	ResetSDLRenderer ();
 
-	for (i = 0; i < 256; i++)
+	for (size_t i = 0; i < 256; ++i)
 	{
 		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
 	}
@@ -2627,42 +2543,15 @@ void CocoaFrameBuffer::Update ()
 	UpdatePending = false;
 
 	BlitCycles.Reset();
-	SDLFlipCycles.Reset();
+	FlipCycles.Reset();
 	BlitCycles.Clock();
 
-	void *pixels;
-	int pitch;
+	GPfx.Convert(MemBuffer, Pitch, Texture->window->pixels, Texture->window->pitch,
+		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
 
-	if (SDL_LockTexture (Texture, NULL, &pixels, &pitch))
-		return;
-
-	if (NotPaletted)
-	{
-		GPfx.Convert (MemBuffer, Pitch,
-					  pixels, pitch, Width, Height,
-					  FRACUNIT, FRACUNIT, 0, 0);
-	}
-	else
-	{
-		if (pitch == Pitch)
-		{
-			memcpy (pixels, MemBuffer, Width*Height);
-		}
-		else
-		{
-			for (int y = 0; y < Height; ++y)
-			{
-				memcpy ((BYTE *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
-			}
-		}
-	}
-
-	SDL_UnlockTexture (Texture);
-
-	SDLFlipCycles.Clock();
-	SDL_RenderCopy(Renderer, Texture, NULL, &UpdateRect);
+	FlipCycles.Clock();
 	SDL_RenderPresent(Renderer);
-	SDLFlipCycles.Unclock();
+	FlipCycles.Unclock();
 
 	BlitCycles.Unclock();
 
@@ -2685,42 +2574,23 @@ void CocoaFrameBuffer::Update ()
 
 void CocoaFrameBuffer::UpdateColors ()
 {
-	if (NotPaletted)
-	{
-		PalEntry palette[256];
+	PalEntry palette[256];
 
-		for (int i = 0; i < 256; ++i)
-		{
-			palette[i].r = GammaTable[0][SourcePalette[i].r];
-			palette[i].g = GammaTable[1][SourcePalette[i].g];
-			palette[i].b = GammaTable[2][SourcePalette[i].b];
-		}
-		if (FlashAmount)
-		{
-			DoBlending (palette, palette,
-						256, GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
-						FlashAmount);
-		}
-		GPfx.SetPalette (palette);
-	}
-	else
+	for (size_t i = 0; i < 256; ++i)
 	{
-		SDL_Color colors[256];
-
-		for (int i = 0; i < 256; ++i)
-		{
-			colors[i].r = GammaTable[0][SourcePalette[i].r];
-			colors[i].g = GammaTable[1][SourcePalette[i].g];
-			colors[i].b = GammaTable[2][SourcePalette[i].b];
-		}
-		if (FlashAmount)
-		{
-			DoBlending ((PalEntry *)colors, (PalEntry *)colors,
-						256, GammaTable[2][Flash.b], GammaTable[1][Flash.g], GammaTable[0][Flash.r],
-						FlashAmount);
-		}
-		SDL_SetPaletteColors (Surface->format->palette, colors, 0, 256);
+		palette[i].r = GammaTable[0][SourcePalette[i].r];
+		palette[i].g = GammaTable[1][SourcePalette[i].g];
+		palette[i].b = GammaTable[2][SourcePalette[i].b];
 	}
+
+	if (FlashAmount)
+	{
+		DoBlending(palette, palette, 256,
+			GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
+			FlashAmount);
+	}
+
+	GPfx.SetPalette (palette);
 }
 
 PalEntry *CocoaFrameBuffer::GetPalette ()
@@ -2728,7 +2598,7 @@ PalEntry *CocoaFrameBuffer::GetPalette ()
 	return SourcePalette;
 }
 
-void CocoaFrameBuffer::UpdatePalette ()
+void CocoaFrameBuffer::UpdatePalette()
 {
 	NeedPalUpdate = true;
 }
@@ -2806,37 +2676,13 @@ void CocoaFrameBuffer::ResetSDLRenderer ()
 //	}
 	Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 
-	{
-		NotPaletted = true;
+	Uint32 format;
+	SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
 
-		Uint32 format;
-		SDL_QueryTexture(Texture, &format, NULL, NULL, NULL);
-
-		Uint32 Rmask, Gmask, Bmask, Amask;
-		int bpp;
-		SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
-		GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
-	}
-
-	// Calculate update rectangle
-	if (IsFullscreen ())
-	{
-		int w, h;
-		SDL_GetWindowSize (Screen, &w, &h);
-		UpdateRect.w = w;
-		UpdateRect.h = h;
-		ScaleWithAspect (UpdateRect.w, UpdateRect.h, Width, Height);
-		UpdateRect.x = (w - UpdateRect.w)/2;
-		UpdateRect.y = (h - UpdateRect.h)/2;
-	}
-	else
-	{
-		// In windowed mode we just update the whole window.
-		UpdateRect.x = 0;
-		UpdateRect.y = 0;
-		UpdateRect.w = Width;
-		UpdateRect.h = Height;
-	}
+	Uint32 Rmask, Gmask, Bmask, Amask;
+	int bpp;
+	SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+	GPfx.SetFormat (bpp, Rmask, Gmask, Bmask);
 }
 
 void CocoaFrameBuffer::SetVSync (bool vsync)
@@ -2855,11 +2701,10 @@ void CocoaFrameBuffer::SetVSync (bool vsync)
 	}
 }
 
-ADD_STAT (blit)
+ADD_STAT(blit)
 {
 	FString out;
-	out.Format ("blit=%04.1f ms  flip=%04.1f ms",
-				BlitCycles.TimeMS(), SDLFlipCycles.TimeMS());
+	out.Format("blit=%04.1f ms  flip=%04.1f ms", BlitCycles.TimeMS(), FlipCycles.TimeMS());
 	return out;
 }
 
@@ -2892,8 +2737,6 @@ void I_InitGraphics ()
 		I_FatalError ("Failed to initialize display");
 
 	atterm (I_ShutdownGraphics);
-
-	Video->SetWindowedScale (vid_winscale);
 }
 
 static void I_DeleteRenderer()

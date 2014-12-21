@@ -152,23 +152,33 @@ IOKitJoystick::IOKitJoystick( IOHIDDeviceRef device )
 : m_device( device )
 , m_sensitivity( DEFAULT_SENSITIVITY )
 {
-	IOHIDElementRef element = HIDGetFirstDeviceElement( device, kHIDElementTypeInput );
-	
-	while ( NULL != element )
+	assert(NULL != device);
+	assert(IOHIDDeviceGetTypeID() == CFGetTypeID(device));
+
+	CFArrayRef elements = IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone);
+	assert(NULL != elements);
+	assert(CFArrayGetTypeID() == CFGetTypeID(elements));
+
+	for (CFIndex i = 0, count = CFArrayGetCount(elements); i < count; ++i)
 	{
+		const IOHIDElementRef element =
+			static_cast<IOHIDElementRef>(const_cast<void*>(CFArrayGetValueAtIndex(elements, i)));
+		assert(NULL != element);
+		assert(IOHIDElementGetTypeID() == CFGetTypeID(element));
+
 		const uint32_t usagePage = IOHIDElementGetUsagePage( element );
-		
+
 		if ( kHIDPage_GenericDesktop == usagePage )
 		{
 			const uint32_t usage = IOHIDElementGetUsage( element );
-			
-			if ( kHIDUsage_GD_Slider == usage  
+
+			if ( kHIDUsage_GD_Slider == usage
 				|| kHIDUsage_GD_X    == usage || kHIDUsage_GD_Y  == usage || kHIDUsage_GD_Z  == usage
 				|| kHIDUsage_GD_Rx   == usage || kHIDUsage_GD_Ry == usage || kHIDUsage_GD_Rz == usage )
 			{
 				AxisInfo axis;
 				memset( &axis, 0, sizeof( axis ) );
-				
+
 				if ( const CFStringRef name = IOHIDElementGetName( element ) )
 				{
 					CFStringGetCString( name, axis.name, sizeof( axis.name ) - 1, kCFStringEncodingUTF8 );
@@ -177,22 +187,22 @@ IOKitJoystick::IOKitJoystick( IOHIDDeviceRef device )
 				{
 					snprintf( axis.name, sizeof( axis.name ), "Axis %i", m_axes.Size() + 1 );
 				}
-				
+
 				axis.element = element;
-				
+
 				m_axes.Push( axis );
-				
+
 				IOHIDElement_SetCalibrationMin( element, -1 );
 				IOHIDElement_SetCalibrationMax( element,  1 );
-				
+
 				HIDQueueElement( m_device, element );
 			}
 			else if ( kHIDUsage_GD_Hatswitch == usage && m_POVs.Size() < 4 )
 			{
 				m_POVs.Push( element );
-				
+
 				HIDQueueElement( m_device, element );
-			}			
+			}
 		}
 		else if ( kHIDPage_Button == usagePage )
 		{
@@ -200,9 +210,9 @@ IOKitJoystick::IOKitJoystick( IOHIDDeviceRef device )
 			
 			HIDQueueElement( m_device, element );
 		}
-		
-		element = HIDGetNextDeviceElement( element, kHIDElementTypeInput );
 	}
+
+	CFRelease(elements);
 
 	SetDefaultConfig();
 }

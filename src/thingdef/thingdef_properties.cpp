@@ -1418,6 +1418,26 @@ DEFINE_PROPERTY(stamina, I, Actor)
 
 //==========================================================================
 //
+//==========================================================================
+DEFINE_PROPERTY(telefogsourcetype, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	if (!stricmp(str, "") || (!stricmp(str, "none")) || (!stricmp(str, "null")) || *str == 0) defaults->TeleFogSourceType = NULL;
+	else defaults->TeleFogSourceType = FindClassTentative(str,"TeleportFog");
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(telefogdesttype, S, Actor)
+{
+	PROP_STRING_PARM(str, 0);
+	if (!stricmp(str, "") || (!stricmp(str, "none")) || (!stricmp(str, "null")) || *str == 0) defaults->TeleFogDestType = NULL;
+	else defaults->TeleFogDestType = FindClassTentative(str, "TeleportFog");
+}
+
+//==========================================================================
+//
 // Special inventory properties
 //
 //==========================================================================

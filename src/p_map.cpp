@@ -3003,6 +3003,10 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 	{
 		if (mo->bouncecount > 0 && --mo->bouncecount == 0) return false;
 
+		if (mo->flags7 & MF7_HITTARGET)	mo->target = BlockingMobj;
+		if (mo->flags7 & MF7_HITMASTER)	mo->master = BlockingMobj;
+		if (mo->flags7 & MF7_HITTRACER)	mo->tracer = BlockingMobj;
+
 		if (!ontop)
 		{
 			fixed_t speed;
@@ -3746,6 +3750,8 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 			hity = t1->y + FixedMul(vy, dist);
 			hitz = shootz + FixedMul(vz, dist);
 
+			
+
 			// Spawn bullet puffs or blood spots, depending on target type.
 			if ((puffDefaults != NULL && puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
@@ -3756,6 +3762,13 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 
 				// We must pass the unreplaced puff type here 
 				puff = P_SpawnPuff(t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags | PF_HITTHING);
+			}
+
+			if (puffDefaults != NULL && trace.Actor != NULL && puff != NULL)
+			{
+				if (puffDefaults->flags7 && MF7_HITTARGET)	puff->target = trace.Actor;
+				if (puffDefaults->flags7 && MF7_HITMASTER)	puff->master = trace.Actor;
+				if (puffDefaults->flags7 && MF7_HITTRACER)	puff->tracer = trace.Actor;
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -3776,7 +3789,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 				{
 					dmgflags |= DMG_NO_ARMOR;
 				}
-
+				
 				if (puff == NULL)
 				{
 					// Since the puff is the damage inflictor we need it here 
@@ -4150,7 +4163,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	int flags;
 
 	assert(puffclass != NULL);		// Because we set it to a default above
-	AActor *puffDefaults = GetDefaultByType(puffclass->GetReplacement());
+	AActor *puffDefaults = GetDefaultByType(puffclass->GetReplacement()); //Contains all the flags such as FOILINVUL, etc.
 
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0 : TRACE_PCross | TRACE_Impact;
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
@@ -4200,6 +4213,12 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		{
 			P_SpawnPuff(source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);
 		}
+		if (hitactor != NULL && puffDefaults != NULL && thepuff != NULL)
+		{
+			if (puffDefaults->flags7 & MF7_HITTARGET)	thepuff->target = hitactor;
+			if (puffDefaults->flags7 & MF7_HITMASTER)	thepuff->master = hitactor;
+			if (puffDefaults->flags7 & MF7_HITTRACER)	thepuff->tracer = hitactor;
+		}
 		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 		{
 			P_PoisonMobj(hitactor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
@@ -4208,6 +4227,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		dmgFlagPass += (puffDefaults->flags3 & MF3_FOILINVUL) ? DMG_FOILINVUL : 0; //[MC]Because the original foilinvul check wasn't working.
 		dmgFlagPass += (puffDefaults->flags7 & MF7_FOILBUDDHA) ? DMG_FOILBUDDHA : 0;
 		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, damage, damagetype, dmgFlagPass);
+
 		if (bleed)
 		{
 			P_SpawnBlood(x, y, z, (source->angle + angleoffset) - ANG180, newdam > 0 ? newdam : damage, hitactor);

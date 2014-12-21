@@ -16,6 +16,7 @@ const int SF_NOUSEAMMOMISS = 8;
 const int SF_NOUSEAMMO = 16;
 const int SF_NOPULLIN = 32;
 const int SF_NOTURN = 64;
+const int SF_STEALARMOR = 128;
 
 // Flags for A_CustomMissile
 const int CMF_AIMOFFSET = 1;
@@ -176,15 +177,29 @@ const int CPF_DAGGER = 2;
 const int CPF_PULLIN = 4;
 const int CPF_NORANDOMPUFFZ = 8;
 const int CPF_NOTURN = 16;
+const int CPF_STEALARMOR = 32;
 
 // Flags for A_CustomMissile
 const int FPF_AIMATANGLE = 1;
 const int FPF_TRANSFERTRANSLATION = 2;
 
 // Flags for A_Teleport
-const int TF_TELEFRAG = 1;
-const int TF_RANDOMDECIDE = 2;
-const int TF_FORCED = 4;
+enum
+{
+	TF_TELEFRAG =		0x00000001, // Allow telefrag in order to teleport.
+	TF_RANDOMDECIDE =	0x00000002, // Randomly fail based on health. (A_Srcr2Decide)
+	TF_FORCED =			0x00000004, // Forget what's in the way. TF_Telefrag takes precedence though.
+	TF_KEEPVELOCITY =	0x00000008, // Preserve velocity.
+	TF_KEEPANGLE =		0x00000010, // Keep angle.
+	TF_USESPOTZ =		0x00000020, // Set the z to the spot's z, instead of the floor.
+	TF_NOSRCFOG =		0x00000040, // Don't leave any fog behind when teleporting.
+	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
+	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
+	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
+
+	TF_KEEPORIENTATION = TF_KEEPVELOCITY|TF_KEEPANGLE,
+	TF_NOFOG = TF_NOSRCFOG|TF_NODESTFOG,
+};
 
 // Flags for A_WolfAttack
 const int WAF_NORANDOM = 1;

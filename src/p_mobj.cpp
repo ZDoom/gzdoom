@@ -333,7 +333,11 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << FriendPlayer;
 	}
-
+	if (SaveVersion >= 4517)
+	{
+		arc << TeleFogSourceType
+			<< TeleFogDestType;
+	}
 	{
 		FString tagstr;
 		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;
@@ -2680,18 +2684,10 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->PrevZ = z;		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
-	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z, ALLOW_REPLACE);
-	if (mo != NULL)
-	{
-		mo->z += TELEFOGHEIGHT;
-	}
+	P_SpawnTeleportFog(mobj, mobj->x, mobj->y, mobj->z + TELEFOGHEIGHT, true);
 
 	// spawn a teleport fog at the new spot
-	mo = Spawn ("TeleportFog", x, y, z, ALLOW_REPLACE);
-	if (mo != NULL)
-	{
-		mo->z += TELEFOGHEIGHT;
-	}
+	P_SpawnTeleportFog(mobj, x, y, z + TELEFOGHEIGHT, false);
 
 	// remove the old monster
 	mobj->Destroy ();

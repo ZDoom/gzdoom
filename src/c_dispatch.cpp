@@ -723,7 +723,7 @@ void AddCommandString (char *cmd, int keynum)
 						  // Note that deferred commands lose track of which key
 						  // (if any) they were pressed from.
 							*brkpt = ';';
-							new DWaitingCommand (brkpt, tics+1);
+							new DWaitingCommand (brkpt, tics);
 						}
 						return;
 					}

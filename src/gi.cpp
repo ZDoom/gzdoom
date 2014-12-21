@@ -290,6 +290,8 @@ void FMapInfoParser::ParseGameInfo()
 			else gameinfo.mCheatMapArrow = "";
 		}
 		// Insert valid keys here.
+		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
+		GAMEINFOKEY_STRING(mEasyKey, "easyKey")
 		GAMEINFOKEY_STRING(TitlePage, "titlePage")
 		GAMEINFOKEY_STRINGARRAY(creditPages, "addcreditPage", 8, false)
 		GAMEINFOKEY_STRINGARRAY(creditPages, "CreditPage", 8, true)

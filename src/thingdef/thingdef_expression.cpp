@@ -88,6 +88,7 @@ DEFINE_MEMBER_VARIABLE(height, AActor)
 DEFINE_MEMBER_VARIABLE(radius, AActor)
 DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
 DEFINE_MEMBER_VARIABLE(meleerange, AActor)
+DEFINE_MEMBER_VARIABLE(Speed, AActor)
 
 
 //==========================================================================
@@ -1682,6 +1683,73 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 		}
 
 		val.Int = (*rng)(maxval - minval + 1) + minval;
+	}
+	else
+	{
+		val.Int = (*rng)();
+	}
+	return val;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxPick::FxPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	for (unsigned int index = 0; index < mi.Size(); index++)
+	{
+		min.Push(new FxIntCast(mi[index]));
+	}
+	rng = r;
+	ValueType = VAL_Int;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxPick::~FxPick()
+{
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxPick::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	for (unsigned int index = 0; index < min.Size(); index++)
+	{
+		RESOLVE(min[index], ctx);
+		ABORT(min[index]);
+	}
+	return this;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxPick::EvalExpression(AActor *self)
+{
+	ExpVal val;
+	val.Type = VAL_Int;
+	int max = min.Size();
+	if (max > 0)
+	{
+		int select = (*rng)(max);
+		val.Int = min[select]->EvalExpression(self).GetInt();
 	}
 	else
 	{

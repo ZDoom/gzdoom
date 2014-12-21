@@ -434,8 +434,8 @@ static int R_PointOnSideSlow (fixed_t x, fixed_t y, node_t *node)
 	// add on a 386/486, but it certainly isn't on anything newer than that.
 	fixed_t	dx;
 	fixed_t	dy;
-	fixed_t	left;
-	fixed_t	right;
+	double	left;
+	double	right;
 
 	if (!node->dx)
 	{
@@ -466,8 +466,9 @@ static int R_PointOnSideSlow (fixed_t x, fixed_t y, node_t *node)
 		return 0;
 	}
 
-	left = FixedMul ( node->dy>>FRACBITS , dx );
-	right = FixedMul ( dy , node->dx>>FRACBITS );
+	// we must use doubles here because the fixed point code will produce errors due to loss of precision for extremely short linedefs.
+	left = (double)node->dy * (double)dx;
+	right = (double)dy * (double)node->dx;
 
 	if (right < left)
 	{

@@ -500,9 +500,10 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 					goodv = false;
 				break;
 			default:
-				if (value[i] < '0' && value[i] > '9' &&
-					value[i] < 'A' && value[i] > 'F' &&
-					value[i] < 'a' && value[i] > 'f')
+				if (value[i] < '0' || 
+					(value[i] > '9' && value[i] < 'A') || 
+					(value[i] > 'F' && value[i] < 'a') || 
+					value[i] > 'f')
 				{
 					goodv = false;
 				}
@@ -1511,6 +1512,22 @@ void UnlatchCVars (void)
 		if (var.Type == CVAR_String)
 			delete[] var.Value.String;
 		var.Variable->Flags = oldflags;
+	}
+}
+
+void DestroyCVarsFlagged (DWORD flags)
+{
+	FBaseCVar *cvar = CVars;
+	FBaseCVar *next = cvar;
+
+	while(cvar)
+	{
+		next = cvar->m_Next;
+
+		if(cvar->Flags & flags)
+			delete cvar;
+
+		cvar = next;
 	}
 }
 

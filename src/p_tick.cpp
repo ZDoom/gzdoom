@@ -120,7 +120,7 @@ void P_Ticker (void)
 
 	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&
-			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].isbot))
+			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].Bot != NULL))
 			P_PlayerThink (&players[i]);
 
 	StatusBar->Tick ();		// [RH] moved this here

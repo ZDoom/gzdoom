@@ -75,6 +75,10 @@
 
 extern "C" int cc_install_handlers(int, char**, int, int*, const char*, int(*)(char*, char*));
 
+#ifdef __APPLE__
+void Mac_I_FatalError(const char* errortext);
+#endif
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -235,6 +239,8 @@ static void unprotect_rtext()
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();
 
+const char* I_GetBackEndName();
+
 int main (int argc, char **argv)
 {
 #if !defined (__APPLE__)
@@ -244,8 +250,8 @@ int main (int argc, char **argv)
 	}
 #endif // !__APPLE__
 
-	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
-		GetVersionString(), GetGitTime(), __DATE__);
+	printf(GAMENAME" %s - %s - %s version\nCompiled on %s\n",
+		GetVersionString(), GetGitTime(), I_GetBackEndName(), __DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -356,6 +362,11 @@ int main (int argc, char **argv)
 		I_ShutdownJoysticks();
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());
+
+#ifdef __APPLE__
+		Mac_I_FatalError(error.GetMessage());
+#endif // __APPLE__
+
 		exit (-1);
     }
     catch (...)

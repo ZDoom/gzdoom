@@ -52,6 +52,8 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 void HU_DrawColorBar(int x, int y, int height, int playernum);
 int HU_GetRowColor(player_t *player, bool hightlight);
 
+extern bool SB_ForceActive;
+
 // Sorting routines
 
 int STACK_ARGS comparepoints(const void *arg1, const void *arg2);

@@ -1330,7 +1330,7 @@ void WI_updateDeathmatchStats ()
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
 			// If the player is in the game and not ready, stop checking
-			if (playeringame[i] && !players[i].isbot && !playerready[i])
+			if (playeringame[i] && players[i].Bot == NULL && !playerready[i])
 				break;
 		}
 
@@ -1429,7 +1429,7 @@ void WI_drawDeathmatchStats ()
 			clamp(int(g*255.f), 0, 255), 
 			clamp(int(b*255.f), 0, 255)), 0.8f, x, y - ypadding, (deaths_x - x) + (8 * CleanXfac), lineheight);
 
-		if (playerready[pnum] || player->isbot) // Bots are automatically assumed ready, to prevent confusion
+		if (playerready[pnum] || player->Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
 			screen->DrawTexture(readyico, x - (readyico->GetWidth() * CleanXfac), y, DTA_CleanNoMove, true, TAG_DONE);
 
 		color = (EColorRange)HU_GetRowColor(player, pnum == consoleplayer);
@@ -1460,7 +1460,7 @@ void WI_drawDeathmatchStats ()
 	// Draw game time
 	y += height + CleanYfac;
 
-	int seconds = plrs[me].stime / TICRATE;
+	int seconds = Tics2Seconds(plrs[me].stime);
 	int hours = seconds / 3600;
 	int minutes = (seconds % 3600) / 60;
 	seconds = seconds % 60;
@@ -1638,7 +1638,7 @@ void WI_updateNetgameStats ()
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
 			// If the player is in the game and not ready, stop checking
-			if (playeringame[i] && !players[i].isbot && !playerready[i])
+			if (playeringame[i] && players[i].Bot == NULL && !playerready[i])
 				break;
 		}
 
@@ -1735,7 +1735,7 @@ void WI_drawNetgameStats ()
 			clamp(int(g*255.f), 0, 255),
 			clamp(int(b*255.f), 0, 255)), 0.8f, x, y - ypadding, (secret_x - x) + (8 * CleanXfac), lineheight);
 
-		if (playerready[i] || player->isbot) // Bots are automatically assumed ready, to prevent confusion
+		if (playerready[i] || player->Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
 			screen->DrawTexture(readyico, x - (readyico->GetWidth() * CleanXfac), y, DTA_CleanNoMove, true, TAG_DONE);
 
 		color = (EColorRange)HU_GetRowColor(player, i == consoleplayer);
@@ -1817,9 +1817,9 @@ void WI_updateStats ()
 		cnt_kills[0] = plrs[me].skills;
 		cnt_items[0] = plrs[me].sitems;
 		cnt_secret[0] = plrs[me].ssecret;
-		cnt_time = plrs[me].stime / TICRATE;
+		cnt_time = Tics2Seconds(plrs[me].stime);
 		cnt_par = wbs->partime / TICRATE;
-	    cnt_total_time = wbs->totaltime / TICRATE;
+	    cnt_total_time = Tics2Seconds(wbs->totaltime);
 	}
 
 	if (sp_state == 2)
@@ -1882,19 +1882,21 @@ void WI_updateStats ()
 			cnt_total_time += 3;
 		}
 
-		if (!gameinfo.intermissioncounter || cnt_time >= plrs[me].stime / TICRATE)
-			cnt_time = plrs[me].stime / TICRATE;
+		int sec = Tics2Seconds(plrs[me].stime);
+		if (!gameinfo.intermissioncounter || cnt_time >= sec)
+			cnt_time = sec;
 
-		if (!gameinfo.intermissioncounter || cnt_total_time >= wbs->totaltime / TICRATE)
-			cnt_total_time = wbs->totaltime / TICRATE;
+		int tsec = Tics2Seconds(wbs->totaltime);
+		if (!gameinfo.intermissioncounter || cnt_total_time >= tsec)
+			cnt_total_time = tsec;
 
 		if (!gameinfo.intermissioncounter || cnt_par >= wbs->partime / TICRATE)
 		{
 			cnt_par = wbs->partime / TICRATE;
 
-			if (cnt_time >= plrs[me].stime / TICRATE)
+			if (cnt_time >= sec)
 			{
-				cnt_total_time = wbs->totaltime / TICRATE;
+				cnt_total_time = tsec;
 				S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
 				sp_state++;
 			}
@@ -2008,7 +2010,7 @@ void WI_checkForAccelerate(void)
 		{
 			if ((player->cmd.ucmd.buttons ^ player->oldbuttons) &&
 				((players[i].cmd.ucmd.buttons & players[i].oldbuttons)
-					== players[i].oldbuttons) && !player->isbot)
+					== players[i].oldbuttons) && player->Bot == NULL)
 			{
 				acceleratestage = 1;
 				playerready[i] = true;

@@ -1,3 +1,8 @@
+Gameinfo
+{
+	CheatKey = "maparrows/key.txt"
+	EasyKey = "maparrows/ravenkey.txt"
+}
 
 Intermission Inter_Titlescreen
 {

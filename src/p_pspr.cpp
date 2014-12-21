@@ -211,6 +211,7 @@ void P_BringUpWeapon (player_t *player)
 	// make sure that the previous weapon's flash state is terminated.
 	// When coming here from a weapon drop it may still be active.
 	P_SetPsprite(player, ps_flash, NULL);
+	player->mo->weaponspecial = 0;
 }
 
 
@@ -226,7 +227,7 @@ void P_FireWeapon (player_t *player, FState *state)
 
 	// [SO] 9/2/02: People were able to do an awful lot of damage
 	// when they were observers...
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}
@@ -262,7 +263,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 
 	// [SO] 9/2/02: People were able to do an awful lot of damage
 	// when they were observers...
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}
@@ -297,7 +298,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 void P_ReloadWeapon (player_t *player, FState *state)
 {
 	AWeapon *weapon;
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}
@@ -328,7 +329,7 @@ void P_ReloadWeapon (player_t *player, FState *state)
 void P_ZoomWeapon (player_t *player, FState *state)
 {
 	AWeapon *weapon;
-	if (!player->isbot && bot_observer)
+	if (player->Bot == NULL && bot_observer)
 	{
 		return;
 	}

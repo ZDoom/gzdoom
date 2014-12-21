@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 				{
 					P_ThrustMobj (linetarget, angle, power);
 				}
-				pmo->special1 = false; // Don't throw a hammer
+				pmo->weaponspecial = false; // Don't throw a hammer
 				goto hammerdone;
 			}
 		}
@@ -73,7 +73,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 				{
 					P_ThrustMobj(linetarget, angle, power);
 				}
-				pmo->special1 = false; // Don't throw a hammer
+				pmo->weaponspecial = false; // Don't throw a hammer
 				goto hammerdone;
 			}
 		}
@@ -83,11 +83,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget, 0, ALF_CHECK3D);
 	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, PClass::FindClass ("HammerPuff"), true) != NULL)
 	{
-		pmo->special1 = false;
+		pmo->weaponspecial = false;
 	}
 	else
 	{
-		pmo->special1 = true;
+		pmo->weaponspecial = true;
 	}
 hammerdone:
 	// Don't spawn a hammer if the player doesn't have enough mana
@@ -95,7 +95,7 @@ hammerdone:
 		!player->ReadyWeapon->CheckAmmo (player->ReadyWeapon->bAltFire ?
 			AWeapon::AltFire : AWeapon::PrimaryFire, false, true))
 	{ 
-		pmo->special1 = false;
+		pmo->weaponspecial = false;
 	}
 	return;		
 }
@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerThrow)
 		return;
 	}
 
-	if (!player->mo->special1)
+	if (!player->mo->weaponspecial)
 	{
 		return;
 	}

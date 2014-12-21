@@ -44,9 +44,9 @@ const char *GetVersionString();
 #define VERSIONSTR "1.8.08"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 1,8,08,0
-#define RC_PRODUCTVERSION 1,8,08,0
-#define RC_PRODUCTVERSION2 "1.8.08"
+#define RC_FILEVERSION 1,8,09,0
+#define RC_PRODUCTVERSION 1,8,09,0
+#define RC_PRODUCTVERSION2 "1.8.09"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you

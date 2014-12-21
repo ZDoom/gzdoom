@@ -414,6 +414,8 @@ int OriginalMain(int argc, char** argv)
 		}
 
 		I_StartupJoysticks();
+		atterm(I_ShutdownJoysticks);
+
 		C_InitConsole(80 * 8, 25 * 8, false);
 		D_DoomMain();
 	}
@@ -1166,8 +1168,6 @@ namespace
 
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification;
 
-- (void)applicationWillTerminate:(NSNotification*)aNotification;
-
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename;
 
 - (int)multisample;
@@ -1368,17 +1368,6 @@ static bool s_fullscreenNewAPI;
 	s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
 
 	return TRUE;
-}
-
-
-- (void)applicationWillTerminate:(NSNotification*)aNotification
-{
-	ZD_UNUSED(aNotification);
-	
-	// Hide window as nothing will be rendered at this point
-	[m_window orderOut:nil];
-
-	I_ShutdownJoysticks();
 }
 
 
@@ -1975,7 +1964,7 @@ public:
 	virtual void UpdatePalette();
 	
 	virtual bool SetGamma(float gamma);
-	virtual bool SetFlash(PalEntry rgb, int amount);
+	virtual bool SetFlash(PalEntry  rgb, int  amount);
 	virtual void GetFlash(PalEntry &rgb, int &amount);
 
 	virtual int GetPageCount();
@@ -1987,17 +1976,19 @@ public:
 	void SetFullscreen(bool fullscreen);
 
 private:
-	PalEntry SourcePalette[256];
-	BYTE GammaTable[3][256];
-	PalEntry Flash;
-	int FlashAmount;
-	float Gamma;
-	bool UpdatePending;
+	PalEntry m_palette[256];
+	bool     m_needPaletteUpdate;
+
+	BYTE     m_gammaTable[3][256];
+	float    m_gamma;
+	bool     m_needGammaUpdate;
+
+	PalEntry m_flashColor;
+	int      m_flashAmount;
+
+	bool     m_isUpdatePending;
 
 	SDL_Window *Screen;
-
-	bool NeedPalUpdate;
-	bool NeedGammaUpdate;
 
 	void UpdateColors();
 };
@@ -2036,7 +2027,7 @@ CUSTOM_CVAR (Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // ---------------------------------------------------------------------------
 
 
-static const struct MiniModeInfo
+static const struct
 {
 	uint16_t width;
 	uint16_t height;
@@ -2125,6 +2116,8 @@ void CocoaVideo::StartModeIterator(int bits, bool fs)
 
 bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
 {
+	assert(NULL != width);
+	assert(NULL != height);
 	ZD_UNUSED(letterbox);
 
 	if (m_modeIterator < sizeof(VideoModes) / sizeof(VideoModes[0]))
@@ -2226,11 +2219,11 @@ void CocoaVideo::SetWindowedScale (float scale)
 
 CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 : DFrameBuffer(width, height)
-, FlashAmount(0)
-, Gamma(0.0f)
-, UpdatePending(false)
-, NeedPalUpdate(false)
-, NeedGammaUpdate(false)
+, m_needPaletteUpdate(false)
+, m_gamma(0.0f)
+, m_needGammaUpdate(false)
+, m_flashAmount(0)
+, m_isUpdatePending(false)
 {
 	FString caption;
 	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
@@ -2245,10 +2238,10 @@ CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 
 	for (size_t i = 0; i < 256; ++i)
 	{
-		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
+		m_gammaTable[0][i] = m_gammaTable[1][i] = m_gammaTable[2][i] = i;
 	}
 
-	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
+	memcpy(m_palette, GPalette.BaseColors, sizeof(PalEntry) * 256);
 	UpdateColors();
 
 	SetVSync(vid_vsync);
@@ -2280,7 +2273,7 @@ bool CocoaFrameBuffer::Lock (bool buffered)
 
 void CocoaFrameBuffer::Unlock ()
 {
-	if (UpdatePending && LockCount == 1)
+	if (m_isUpdatePending && LockCount == 1)
 	{
 		Update ();
 	}
@@ -2297,7 +2290,7 @@ void CocoaFrameBuffer::Update ()
 	{
 		if (LockCount > 0)
 		{
-			UpdatePending = true;
+			m_isUpdatePending = true;
 			--LockCount;
 		}
 		return;
@@ -2307,7 +2300,7 @@ void CocoaFrameBuffer::Update ()
 
 	Buffer = NULL;
 	LockCount = 0;
-	UpdatePending = false;
+	m_isUpdatePending = false;
 
 	BlitCycles.Reset();
 	FlipCycles.Reset();
@@ -2322,19 +2315,19 @@ void CocoaFrameBuffer::Update ()
 
 	BlitCycles.Unclock();
 
-	if (NeedGammaUpdate)
+	if (m_needGammaUpdate)
 	{
 		bool Windowed = false;
-		NeedGammaUpdate = false;
-		CalcGamma((Windowed || rgamma == 0.f) ? Gamma : (Gamma * rgamma), GammaTable[0]);
-		CalcGamma((Windowed || ggamma == 0.f) ? Gamma : (Gamma * ggamma), GammaTable[1]);
-		CalcGamma((Windowed || bgamma == 0.f) ? Gamma : (Gamma * bgamma), GammaTable[2]);
-		NeedPalUpdate = true;
+		m_needGammaUpdate = false;
+		CalcGamma((Windowed || rgamma == 0.f) ? m_gamma : (m_gamma * rgamma), m_gammaTable[0]);
+		CalcGamma((Windowed || ggamma == 0.f) ? m_gamma : (m_gamma * ggamma), m_gammaTable[1]);
+		CalcGamma((Windowed || bgamma == 0.f) ? m_gamma : (m_gamma * bgamma), m_gammaTable[2]);
+		m_needPaletteUpdate = true;
 	}
 
-	if (NeedPalUpdate)
+	if (m_needPaletteUpdate)
 	{
-		NeedPalUpdate = false;
+		m_needPaletteUpdate = false;
 		UpdateColors();
 	}
 }
@@ -2345,16 +2338,16 @@ void CocoaFrameBuffer::UpdateColors()
 
 	for (size_t i = 0; i < 256; ++i)
 	{
-		palette[i].r = GammaTable[0][SourcePalette[i].r];
-		palette[i].g = GammaTable[1][SourcePalette[i].g];
-		palette[i].b = GammaTable[2][SourcePalette[i].b];
+		palette[i].r = m_gammaTable[0][m_palette[i].r];
+		palette[i].g = m_gammaTable[1][m_palette[i].g];
+		palette[i].b = m_gammaTable[2][m_palette[i].b];
 	}
 
-	if (FlashAmount)
+	if (m_flashAmount)
 	{
 		DoBlending(palette, palette, 256,
-			GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
-			FlashAmount);
+			m_gammaTable[0][m_flashColor.r], m_gammaTable[1][m_flashColor.g], m_gammaTable[2][m_flashColor.b],
+			m_flashAmount);
 	}
 
 	GPfx.SetPalette(palette);
@@ -2362,42 +2355,44 @@ void CocoaFrameBuffer::UpdateColors()
 
 PalEntry *CocoaFrameBuffer::GetPalette ()
 {
-	return SourcePalette;
+	return m_palette;
 }
 
 void CocoaFrameBuffer::UpdatePalette()
 {
-	NeedPalUpdate = true;
+	m_needPaletteUpdate = true;
 }
 
-bool CocoaFrameBuffer::SetGamma (float gamma)
+bool CocoaFrameBuffer::SetGamma(float gamma)
 {
-	Gamma = gamma;
-	NeedGammaUpdate = true;
+	m_gamma           = gamma;
+	m_needGammaUpdate = true;
+
 	return true;
 }
 
-bool CocoaFrameBuffer::SetFlash (PalEntry rgb, int amount)
+bool CocoaFrameBuffer::SetFlash(PalEntry rgb, int amount)
 {
-	Flash = rgb;
-	FlashAmount = amount;
-	NeedPalUpdate = true;
+	m_flashColor        = rgb;
+	m_flashAmount       = amount;
+	m_needPaletteUpdate = true;
+
 	return true;
 }
 
-void CocoaFrameBuffer::GetFlash (PalEntry &rgb, int &amount)
+void CocoaFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
 {
-	rgb = Flash;
-	amount = FlashAmount;
+	rgb    = m_flashColor;
+	amount = m_flashAmount;
 }
 
-// Q: Should I gamma adjust the returned palette?
-void CocoaFrameBuffer::GetFlashedPalette (PalEntry pal[256])
+void CocoaFrameBuffer::GetFlashedPalette(PalEntry pal[256])
 {
-	memcpy (pal, SourcePalette, 256*sizeof(PalEntry));
-	if (FlashAmount)
+	memcpy(pal, m_palette, sizeof m_palette);
+
+	if (0 != m_flashAmount)
 	{
-		DoBlending (pal, pal, 256, Flash.r, Flash.g, Flash.b, FlashAmount);
+		DoBlending (pal, pal, 256, m_flashColor.r, m_flashColor.g, m_flashColor.b, m_flashAmount);
 	}
 }
 
@@ -2413,25 +2408,22 @@ bool CocoaFrameBuffer::IsFullscreen ()
 
 void CocoaFrameBuffer::SetVSync (bool vsync)
 {
-	if (CGLContextObj context = CGLGetCurrentContext())
-	{
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-		// Inconsistency between 10.4 and 10.5 SDKs:
-		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
-		// So, GLint typedef'ed to long instead of int to workaround this issue
-		typedef long GLint;
+	const long value = vsync ? 1 : 0;
+#else // 10.5 or newer
+	const GLint value = vsync ? 1 : 0;
 #endif // prior to 10.5
 
-		const GLint value = vsync ? 1 : 0;
-		CGLSetParameter(context, kCGLCPSwapInterval, &value);
-	}
+	[[NSOpenGLContext currentContext] setValues:&value
+								   forParameter:NSOpenGLCPSwapInterval];
 }
+
 
 ADD_STAT(blit)
 {
-	FString out;
-	out.Format("blit=%04.1f ms  flip=%04.1f ms", BlitCycles.TimeMS(), FlipCycles.TimeMS());
-	return out;
+	FString result;
+	result.Format("blit=%04.1f ms  flip=%04.1f ms", BlitCycles.TimeMS(), FlipCycles.TimeMS());
+	return result;
 }
 
 

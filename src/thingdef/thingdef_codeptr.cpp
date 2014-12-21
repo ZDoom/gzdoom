@@ -5039,44 +5039,51 @@ static bool DoCheckFilter(AActor *mo, const PClass *filter, bool exclude)
 //
 // Common A_Damage handler
 //
-// A_Damage* (int amount, str damagetype, int flags)
+// A_Damage* (int amount, str damagetype, int flags, str filter, str species)
 // Damages the specified actor by the specified amount. Negative values heal.
+// Flags: See below.
+// Filter: Specified actor is the only type allowed to be affected.
+// Species: Specified species is the only type allowed to be affected.
+//
+// Examples: 
+// A_Damage(20,"Normal",DMSS_FOILINVUL,0,"DemonicSpecies") <--Only actors 
+//	with a species "DemonicSpecies" will be affected. Use 0 to not filter by actor.
 //
 //===========================================================================
 
 enum DMSS
 {
-	DMSS_FOILINVUL			= 1,
-	DMSS_AFFECTARMOR		= 2,
-	DMSS_KILL				= 4,
-	DMSS_NOFACTOR			= 8,
-	DMSS_FOILBUDDHA			= 16,
-	DMSS_NOPROTECT			= 32,
-	DMSS_EXFILTER			= 64,
-	DMSS_EXSPECIES			= 128,
+	DMSS_FOILINVUL			= 1,	//Foil invulnerability
+	DMSS_AFFECTARMOR		= 2,	//Make it affect armor
+	DMSS_KILL				= 4,	//Damages them for their current health
+	DMSS_NOFACTOR			= 8,	//Ignore DamageFactors
+	DMSS_FOILBUDDHA			= 16,	//Can kill actors with Buddha flag, except the player.
+	DMSS_NOPROTECT			= 32,	//Ignores PowerProtection entirely
+	DMSS_EXFILTER			= 64,	//Changes filter into a blacklisted class instead of whitelisted.
+	DMSS_EXSPECIES			= 128,	// ^ but with species instead.
+	DMSS_EITHER				= 256,  //Allow either type or species to be affected.
 };
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags, const PClass *filter, FName species)
 {
-	int dmgFlags = 0;
-	if (flags & DMSS_FOILINVUL)
-		dmgFlags += DMG_FOILINVUL;
-	if (flags & DMSS_FOILBUDDHA)
-		dmgFlags += DMG_FOILBUDDHA;
-	if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
-		dmgFlags += DMG_NO_FACTOR;
-	if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
-		dmgFlags += DMG_NO_ARMOR;
-	if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
-		amount += dmgtarget->health;
-	if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
-		dmgFlags += DMG_NO_PROTECT;
-
 	bool filterpass = DoCheckFilter(dmgtarget, filter, (flags & DMSS_EXFILTER) ? true : false),
 		speciespass = DoCheckSpecies(dmgtarget, species, (flags & DMSS_EXSPECIES) ? true : false);
-	
-	if (filterpass && speciespass)
+	if ((flags & DMSS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
+		int dmgFlags = 0;
+		if (flags & DMSS_FOILINVUL)
+			dmgFlags += DMG_FOILINVUL;
+		if (flags & DMSS_FOILBUDDHA)
+			dmgFlags += DMG_FOILBUDDHA;
+		if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
+			dmgFlags += DMG_NO_FACTOR;
+		if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
+			dmgFlags += DMG_NO_ARMOR;
+		if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
+			amount += dmgtarget->health;
+		if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
+			dmgFlags += DMG_NO_PROTECT;
+	
 		if (amount > 0)
 			P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.
 
@@ -5228,27 +5235,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
 //===========================================================================
 enum KILS
 {
-	KILS_FOILINVUL =	1 << 0,
-	KILS_KILLMISSILES = 1 << 1,
-	KILS_NOMONSTERS =	1 << 2,
-	KILS_FOILBUDDHA =	1 << 3,
-	KILS_EXFILTER =		1 << 4,
-	KILS_EXSPECIES =	1 << 5,
+	KILS_FOILINVUL		= 1 << 0,
+	KILS_KILLMISSILES	= 1 << 1,
+	KILS_NOMONSTERS		= 1 << 2,
+	KILS_FOILBUDDHA		= 1 << 3,
+	KILS_EXFILTER		= 1 << 4,
+	KILS_EXSPECIES		= 1 << 5,
+	KILS_EITHER			= 1 << 6,
 };
 
 static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags, const PClass *filter, FName species)
 {
-	int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
-
-	if (KILS_FOILINVUL)
-		dmgFlags += DMG_FOILINVUL;
-	if (KILS_FOILBUDDHA)
-		dmgFlags += DMG_FOILBUDDHA;
-
 	bool filterpass = DoCheckFilter(killtarget, filter, (flags & KILS_EXFILTER) ? true : false),
 		speciespass = DoCheckSpecies(killtarget, species, (flags & KILS_EXSPECIES) ? true : false);
-	if (filterpass && speciespass) //Check this first. I think it'll save the engine a lot more time this way.
+	if ((flags & KILS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass)) //Check this first. I think it'll save the engine a lot more time this way.
 	{
+		int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
+
+		if (KILS_FOILINVUL)
+			dmgFlags += DMG_FOILINVUL;
+		if (KILS_FOILBUDDHA)
+			dmgFlags += DMG_FOILBUDDHA;
+
+	
 		if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
 		{
 			//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
@@ -5386,19 +5395,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 
 enum RMVF_flags
 {
-	RMVF_MISSILES	= 1 << 0,
-	RMVF_NOMONSTERS = 1 << 1,
-	RMVF_MISC		= 1 << 2,
-	RMVF_EVERYTHING = 1 << 3,
-	RMVF_EXFILTER	= 1 << 4,
-	RMVF_EXSPECIES	= 1 << 5,
+	RMVF_MISSILES		= 1 << 0,
+	RMVF_NOMONSTERS		= 1 << 1,
+	RMVF_MISC			= 1 << 2,
+	RMVF_EVERYTHING		= 1 << 3,
+	RMVF_EXFILTER		= 1 << 4,
+	RMVF_EXSPECIES		= 1 << 5,
+	RMVF_EITHER			= 1 << 6,
 };
 
 static void DoRemove(AActor *removetarget, int flags, const PClass *filter, FName species)
 {
 	bool filterpass = DoCheckFilter(removetarget, filter, (flags & RMVF_EXFILTER) ? true : false),
 		speciespass = DoCheckSpecies(removetarget, species, (flags & RMVF_EXSPECIES) ? true : false);
-	if (filterpass && speciespass)
+	if ((flags & RMVF_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		if ((flags & RMVF_EVERYTHING))
 		{

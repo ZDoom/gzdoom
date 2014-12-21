@@ -89,12 +89,18 @@ THIS SOFTWARE.
  * #define IBM for IBM mainframe-style floating-point arithmetic.
  * #define VAX for VAX-style floating-point arithmetic (D_floating).
  * #define No_leftright to omit left-right logic in fast floating-point
- *	computation of dtoa.
+ *	computation of dtoa and gdtoa.  This will cause modes 4 and 5 to be
+ *	treated the same as modes 2 and 3 for some inputs.
  * #define Check_FLT_ROUNDS if FLT_ROUNDS can assume the values 2 or 3.
  * #define RND_PRODQUOT to use rnd_prod and rnd_quot (assembly routines
  *	that use extended-precision instructions to compute rounded
  *	products and quotients) with IBM.
- * #define ROUND_BIASED for IEEE-format with biased rounding.
+ * #define ROUND_BIASED for IEEE-format with biased rounding and arithmetic
+ *	that rounds toward +Infinity.
+ * #define ROUND_BIASED_without_Round_Up for IEEE-format with biased
+ *	rounding when the underlying floating-point arithmetic uses
+ *	unbiased rounding.  This prevent using ordinary floating-point
+ *	arithmetic when the result could be computed with one rounding error.
  * #define Inaccurate_Divide for IEEE-format with correctly rounded
  *	products but inaccurate quotients, e.g., for Intel i860.
  * #define NO_LONG_LONG on machines that do not have a "long long"
@@ -113,7 +119,12 @@ THIS SOFTWARE.
  * #define MALLOC your_malloc, where your_malloc(n) acts like malloc(n)
  *	if memory is available and otherwise does something you deem
  *	appropriate.  If MALLOC is undefined, malloc will be invoked
- *	directly -- and assumed always to succeed.
+ *	directly -- and assumed always to succeed.  Similarly, if you
+ *	want something other than the system's free() to be called to
+ *	recycle memory acquired from MALLOC, #define FREE to be the
+ *	name of the alternate routine.  (FREE or free is only called in
+ *	pathological cases, e.g., in a gdtoa call after a gdtoa return in
+ *	mode 3 with thousands of digits requested.)
  * #define Omit_Private_Memory to omit logic (added Jan. 1998) for making
  *	memory allocations from a private pool of memory when possible.
  *	When used, the private pool is PRIVATE_MEM bytes long:  2304 bytes,
@@ -126,8 +137,10 @@ THIS SOFTWARE.
  *	conversions of IEEE doubles in single-threaded executions with
  *	8-byte pointers, PRIVATE_MEM >= 7400 appears to suffice; with
  *	4-byte pointers, PRIVATE_MEM >= 7112 appears adequate.
- * #define INFNAN_CHECK on IEEE systems to cause strtod to check for
- *	Infinity and NaN (case insensitively).
+ * #define NO_INFNAN_CHECK if you do not wish to have INFNAN_CHECK
+ *	#defined automatically on IEEE systems.  On such systems,
+ *	when INFNAN_CHECK is #defined, strtod checks
+ *	for Infinity and NaN (case insensitively).
  *	When INFNAN_CHECK is #defined and No_Hex_NaN is not #defined,
  *	strtodg also accepts (case insensitively) strings of the form
  *	NaN(x), where x is a string of hexadecimal digits (optionally
@@ -151,7 +164,7 @@ THIS SOFTWARE.
  *	dtoa.  You may do so whether or not MULTIPLE_THREADS is #defined.
  * #define IMPRECISE_INEXACT if you do not care about the setting of
  *	the STRTOG_Inexact bits in the special case of doing IEEE double
- *	precision conversions (which could also be done by the strtog in
+ *	precision conversions (which could also be done by the strtod in
  *	dtoa.c).
  * #define NO_HEX_FP to disable recognition of C9x's hexadecimal
  *	floating-point constants.
@@ -167,7 +180,7 @@ THIS SOFTWARE.
 #define GDTOAIMP_H_INCLUDED
 #include "gdtoa.h"
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 /* [RH] Generating gd_qnan.h strikes me as too cumbersome under Visual
  * Studio, so here's the equivalent, given the limited number of
  * architectures that MSC can target. (Itanium? Who cares about that?)
@@ -188,8 +201,40 @@ THIS SOFTWARE.
  * it turns out that it has a true long double type. I thought that
  * all ia32 compilers had phased out extended precision.
  */
+#elif defined(__APPLE__)
+#if defined(__x86_64__) || defined(__i386__)
+#define f_QNAN 0xffc00000
+#define d_QNAN0 0x0
+#define d_QNAN1 0xfff80000
+#define ld_QNAN0 0x0
+#define ld_QNAN1 0xc0000000
+#define ld_QNAN2 0xffff
+#define ld_QNAN3 0x0
+#define ldus_QNAN0 0x0
+#define ldus_QNAN1 0x0
+#define ldus_QNAN2 0x0
+#define ldus_QNAN3 0xc000
+#define ldus_QNAN4 0xffff
+#else
+#define f_QNAN 0xffc00000
+#define d_QNAN0 0xfff80000
+#define d_QNAN1 0x0
+#define ld_QNAN0 0xfff80000
+#define ld_QNAN1 0x0
+#define ld_QNAN2 0x0
+#define ld_QNAN3 0x0
+#define ldus_QNAN0 0xfff8
+#define ldus_QNAN1 0x0
+#define ldus_QNAN2 0x0
+#define ldus_QNAN3 0x0
+#define ldus_QNAN4 0x0
+#endif
 #else
 #include "gd_qnan.h"
+#endif
+
+#ifdef Honor_FLT_ROUNDS
+#include <fenv.h>
 #endif
 
 #ifdef DEBUG
@@ -201,13 +246,13 @@ THIS SOFTWARE.
 #include "string.h"
 
 #ifdef KR_headers
-#define KR_VOID char
+#define Char char
 #else
-#define KR_VOID void
+#define Char void
 #endif
 
 #ifdef MALLOC
-extern KR_VOID *MALLOC ANSI((size_t));
+extern Char *MALLOC ANSI((size_t));
 #else
 #define MALLOC malloc
 #endif
@@ -279,19 +324,19 @@ extern "C" {
 #endif
 
 #if defined(IEEE_8087) + defined(IEEE_MC68k) + defined(VAX) + defined(IBM) != 1
-#error Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
+Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
 #endif
 
 typedef union { double d; ULong L[2]; } U;
 
 #ifdef IEEE_8087
-#define word0(x) x.L[1]
-#define word1(x) x.L[0]
+#define word0(x) (x)->L[1]
+#define word1(x) (x)->L[0]
 #else
-#define word0(x) x.L[0]
-#define word1(x) x.L[1]
+#define word0(x) (x)->L[0]
+#define word1(x) (x)->L[1]
 #endif
-#define dval(x)  x.d
+#define dval(x) (x)->d
 
 /* The following definition of Storeinc is appropriate for MIPS processors.
  * An alternative that might be better on some machines is
@@ -405,6 +450,11 @@ typedef union { double d; ULong L[2]; } U;
 
 #ifndef IEEE_Arith
 #define ROUND_BIASED
+#else
+#ifdef ROUND_BIASED_without_Round_Up
+#undef  ROUND_BIASED
+#define ROUND_BIASED
+#endif
 #endif
 
 #ifdef RND_PRODQUOT
@@ -460,12 +510,12 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 #define ALL_ON 0xffff
 #endif
 
-#ifndef MULTIPLE_THREADS
+//#ifndef MULTIPLE_THREADS
 #define ACQUIRE_DTOA_LOCK(n)	/*nothing*/
 #define FREE_DTOA_LOCK(n)	/*nothing*/
-#endif
+//#endif
 
-#define Kmax (sizeof(size_t) << 3)
+#define Kmax 9
 
  struct
 Bigint {
@@ -488,12 +538,15 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
 
 #define Balloc Balloc_D2A
 #define Bfree Bfree_D2A
+#define InfName InfName_D2A
+#define NanName NanName_D2A
 #define ULtoQ ULtoQ_D2A
 #define ULtof ULtof_D2A
 #define ULtod ULtod_D2A
 #define ULtodd ULtodd_D2A
 #define ULtox ULtox_D2A
 #define ULtoxL ULtoxL_D2A
+#define add_nanbits add_nanbits_D2A
 #define any_on any_on_D2A
 #define b2d b2d_D2A
 #define bigtens bigtens_D2A
@@ -532,9 +585,11 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
 #define trailz trailz_D2A
 #define ulp ulp_D2A
 
+ extern char *add_nanbits ANSI((char*, size_t, ULong*, int));
  extern char *dtoa_result;
  extern CONST double bigtens[], tens[], tinytens[];
  extern unsigned char hexdig[];
+ extern const char *InfName[6], *NanName[3];
 
  extern Bigint *Balloc ANSI((int));
  extern void Bfree ANSI((Bigint*));
@@ -549,14 +604,14 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern int cmp ANSI((Bigint*, Bigint*));
  extern void copybits ANSI((ULong*, int, Bigint*));
  extern Bigint *d2b ANSI((double, int*, int*));
- extern int decrement ANSI((Bigint*));
+ extern void decrement ANSI((Bigint*));
  extern Bigint *diff ANSI((Bigint*, Bigint*));
  extern char *dtoa ANSI((double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve));
- extern char *g__fmt ANSI((char*, char*, char*, int, ULong));
- extern int gethex ANSI((CONST char**, CONST FPI*, Long*, Bigint**, int));
+ extern char *g__fmt ANSI((char*, char*, char*, int, ULong, size_t));
+ extern int gethex ANSI((CONST char**, FPI*, Long*, Bigint**, int));
  extern void hexdig_init_D2A(Void);
- extern int hexnan ANSI((CONST char**, CONST FPI*, ULong*));
+ extern int hexnan ANSI((CONST char**, FPI*, ULong*));
  extern int hi0bits_D2A ANSI((ULong));
  extern Bigint *i2b ANSI((int));
  extern Bigint *increment ANSI((Bigint*));
@@ -571,14 +626,14 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern double ratio ANSI((Bigint*, Bigint*));
  extern void rshift ANSI((Bigint*, int));
  extern char *rv_alloc ANSI((int));
- extern Bigint *s2b ANSI((CONST char*, int, int, ULong));
+ extern Bigint *s2b ANSI((CONST char*, int, int, ULong, int));
  extern Bigint *set_ones ANSI((Bigint*, int));
  extern char *strcp ANSI((char*, const char*));
- extern int strtoIg ANSI((CONST char*, char**, CONST FPI*, Long*, Bigint**, int*));
- extern double strtod ANSI((const char *s00, char **se));
+ extern int strtoIg ANSI((CONST char*, char**, FPI*, Long*, Bigint**, int*));
+// extern double strtod ANSI((const char *s00, char **se));
  extern Bigint *sum ANSI((Bigint*, Bigint*));
  extern int trailz ANSI((Bigint*));
- extern double ulp ANSI((double));
+ extern double ulp ANSI((U*));
 
 #ifdef __cplusplus
 }
@@ -593,6 +648,10 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  * (On HP Series 700/800 machines, -DNAN_WORD0=0x7ff40000 works.)
  */
 #ifdef IEEE_Arith
+#ifndef NO_INFNAN_CHECK
+#undef INFNAN_CHECK
+#define INFNAN_CHECK
+#endif
 #ifdef IEEE_MC68k
 #define _0 0
 #define _1 1

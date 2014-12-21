@@ -70,6 +70,7 @@ CVAR (Bool,  hud_showmonsters,	true,CVAR_ARCHIVE);		// Show monster stats on HUD
 CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
+CVAR (Bool,  hud_showweapons,	true, CVAR_ARCHIVE);	// Show weapons collected
 CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
 CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 
@@ -133,12 +134,12 @@ static void DrawImageToBox(FTexture * tex, int x, int y, int w, int h, int trans
 
 	if (tex)
 	{
-		int texwidth=tex->GetWidth();
-		int texheight=tex->GetHeight();
+		double texwidth=tex->GetScaledWidthDouble();
+		double texheight=tex->GetScaledHeightDouble();
 
-		if (w<texwidth) scale1=(double)w/texwidth;
+		if (w<texwidth) scale1=w/texwidth;
 		else scale1=1.0f;
-		if (h<texheight) scale2=(double)h/texheight;
+		if (h<texheight) scale2=h/texheight;
 		else scale2=1.0f;
 		if (scale2<scale1) scale1=scale2;
 
@@ -605,22 +606,40 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 // Weapons List
 //
 //---------------------------------------------------------------------------
-
-FTextureID GetWeaponIcon(AWeapon *weapon)	// This function is also used by SBARINFO
+FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale=NULL)	// This function is also used by SBARINFO
 {
-	FTextureID AltIcon = GetHUDIcon(weapon->GetClass());
+	FTextureID picnum, AltIcon = GetHUDIcon(item->GetClass());
 	FState * state=NULL, *ReadyState;
 	
-	FTextureID picnum = !AltIcon.isNull()? AltIcon : weapon->Icon;
-
-	if (picnum.isNull())
+	picnum.SetNull();
+	if (flags & DI_ALTICONFIRST)
 	{
-		if (weapon->SpawnState && weapon->SpawnState->sprite!=0)
+		if (!(flags & DI_SKIPALTICON) && AltIcon.isValid())
+			picnum = AltIcon;
+		else if (!(flags & DI_SKIPICON))
+			picnum = item->Icon;
+	}
+	else
+	{
+		if (!(flags & DI_SKIPICON) && item->Icon.isValid())
+			picnum = item->Icon;
+		else if (!(flags & DI_SKIPALTICON))
+			picnum = AltIcon;
+	}
+	
+	if (!picnum.isValid()) //isNull() is bad for checking, because picnum could be also invalid (-1)
+	{
+		if (!(flags & DI_SKIPSPAWN) && item->SpawnState && item->SpawnState->sprite!=0)
 		{
-			state = weapon->SpawnState;
+			state = item->SpawnState;
+			
+			if (applyscale != NULL && !(flags & DI_FORCESCALE))
+			{
+				*applyscale = true;
+			}
 		}
-		// no spawn state - now try the ready state
-		else if ((ReadyState = weapon->FindState(NAME_Ready)) && ReadyState->sprite!=0)
+		// no spawn state - now try the ready state if it's weapon
+		else if (!(flags & DI_SKIPREADY) && item->GetClass()->IsDescendantOf(RUNTIME_CLASS(AWeapon)) && (ReadyState = item->FindState(NAME_Ready)) && ReadyState->sprite!=0)
 		{
 			state = ReadyState;
 		}
@@ -650,7 +669,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 		if (weapon==CPlayer->ReadyWeapon || weapon==CPlayer->ReadyWeapon->SisterWeapon) trans=0xd999;
 	}
 
-	FTextureID picnum = GetWeaponIcon(weapon);
+	FTextureID picnum = GetInventoryIcon(weapon, DI_ALTICONFIRST);
 
 	if (picnum.isValid())
 	{
@@ -953,7 +972,7 @@ void DrawHUD()
 			CPlayer->mo->FindInventory<AHexenArmor>(),	5, hudheight-20);
 		i=DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		i=DrawAmmo(CPlayer, hudwidth-5, i);
-		DrawWeapons(CPlayer, hudwidth-5, i);
+		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, i);
 		DrawInventory(CPlayer, 144, hudheight-28);
 		if (CPlayer->camera && CPlayer->camera->player)
 		{

@@ -78,6 +78,8 @@ struct FState
 	BYTE		SameFrame:1;	// Ignore Frame (except when spawning actor)
 	BYTE		Fast:1;
 	BYTE		NoDelay:1;		// Spawn states executes its action normally
+	BYTE		CanRaise:1;		// Allows a monster to be resurrected without waiting for an infinate frame
+	BYTE		Slow:1;			// Inverse of fast
 
 	inline int GetFrame() const
 	{
@@ -114,6 +116,10 @@ struct FState
 	inline bool GetNoDelay() const
 	{
 		return NoDelay;
+	}
+	inline bool GetCanRaise() const
+	{
+		return CanRaise;
 	}
 	inline void SetFrame(BYTE frame)
 	{

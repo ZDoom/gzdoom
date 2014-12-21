@@ -44,7 +44,7 @@ strtod(s, sp) CONST char *s; char **sp;
 strtod(CONST char *s, char **sp)
 #endif
 {
-	static CONST FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	ULong bits[2];
 	Long exp;
 	int k;

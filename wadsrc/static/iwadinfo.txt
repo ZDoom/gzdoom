@@ -189,7 +189,7 @@ IWad
 
 IWad
 {
-	Name = "Freedoom"
+	Name = "Freedoom: Phase 2"
 	Autoname = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
@@ -200,7 +200,7 @@ IWad
 
 IWad
 {
-	Name = "Ultimate Freedoom"
+	Name = "Freedoom: Phase 1"
 	Autoname = "Freedoom1"
 	Game = "Doom"
 	Config = "Doom"
@@ -348,9 +348,10 @@ Names
 	"strife1.wad"
 	"strife0.wad"
 	"strife.wad"
-	"freedoom.wad"
 	"freedoom1.wad"
+	"freedoom2.wad"
 	"freedoomu.wad"
+	"freedoom.wad"
 	"freedm.wad"
 	"blasphem.wad"
 	"blasphemer.wad"

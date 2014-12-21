@@ -1399,6 +1399,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 // A_FireProjectile
 //
 //==========================================================================
+enum FP_Flags
+{
+	FPF_AIMATANGLE = 1,
+	FPF_TRANSFERTRANSLATION = 2,
+};
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
@@ -1407,7 +1412,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
 	PARAM_INT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
 	PARAM_FIXED_OPT	(spawnheight)	{ spawnheight = 0; }
-	PARAM_BOOL_OPT	(aimatangle)	{ aimatangle = false; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0; }
 
 	if (!self->player)
@@ -1431,7 +1436,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		fixed_t z = spawnheight;
 		fixed_t shootangle = self->angle;
 
-		if (aimatangle) shootangle += angle;
+		if (flags & FPF_AIMATANGLE) shootangle += angle;
 
 		// Temporarily adjusts the pitch
 		fixed_t saved_player_pitch = self->pitch;
@@ -1441,9 +1446,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		// automatic handling of seeker missiles
 		if (misl)
 		{
+			if (flags & FPF_TRANSFERTRANSLATION)
+				misl->Translation = self->Translation;
 			if (linetarget && (misl->flags2 & MF2_SEEKERMISSILE))
 				misl->tracer = linetarget;
-			if (!aimatangle)
+			if (!(flags & FPF_AIMATANGLE))
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 
@@ -1515,7 +1522,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	if (pufftype == NULL)
 		pufftype = PClass::FindActor(NAME_BulletPuff);
-	int puffFlags = LAF_ISMELEEATTACK | (flags & CPF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+	int puffFlags = LAF_ISMELEEATTACK | ((flags & CPF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0);
 
 	P_LineAttack (self, angle, range, pitch, damage, NAME_Melee, pufftype, puffFlags, &linetarget, &actualdamage);
 
@@ -1534,7 +1541,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;
 		if (flags & CPF_DAGGER) P_DaggerAlert (self, linetarget);
-
 	}
 	return 0;
 }
@@ -2373,7 +2379,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 	PARAM_STRING(text);
 
 	if (text[0] == '$') text = GStrings(&text[1]);
-	Printf("%s\n", text);
+	FString formatted = strbin1(text);
+	Printf("%s\n", formatted.GetChars());
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 	return numret;
 }
@@ -4186,12 +4193,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 // Set actor's angle (in degrees).
 //
 //===========================================================================
+enum
+{
+	SPF_FORCECLAMP = 1,	// players always clamp
+	SPF_INTERPOLATE = 2,
+};
+
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_ANGLE_OPT(angle)	{ angle = 0; }
-	self->angle = angle;
+	PARAM_INT_OPT(flags)	{ flags = 0; }
+
+	self->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
 	return 0;
 }
 
@@ -4202,11 +4217,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 // Set actor's pitch (in degrees).
 //
 //===========================================================================
-
-enum
-{
-	SPF_FORCECLAMP = 1,	// players always clamp
-};
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 {
@@ -4231,7 +4241,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 		pitch = clamp<int>(pitch, min, max);
 	}
 
-	self->pitch = pitch;
+	self->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
 	return 0;
 }
 

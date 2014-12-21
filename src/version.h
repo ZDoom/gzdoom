@@ -51,7 +51,7 @@ const char *GetVersionString();
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 229
+#define NETGAMEVERSION 230
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -61,11 +61,11 @@ const char *GetVersionString();
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
 // Otherwise, it should be safe to leave it alone.
-#define DEMOGAMEVERSION 0x219
+#define DEMOGAMEVERSION 0x21B
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.
-#define MINDEMOVERSION 0x215
+#define MINDEMOVERSION 0x21B
 
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
@@ -76,7 +76,7 @@ const char *GetVersionString();
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
-#define SAVEVER 4504
+#define SAVEVER 4510
 
 #define SAVEVERSTRINGIFY2(x) #x
 #define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
@@ -91,12 +91,10 @@ const char *GetVersionString();
 #define FORUM_URL "http://forum.zdoom.org"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
 
-#ifdef __unix__
-#define GAME_DIR ".config/zdoom"
-#elif defined(__APPLE__)
+#if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
-#define CDROM_DIR "C:\\ZDOOMDAT"
+#define GAME_DIR ".config/zdoom"
 #endif
 
 

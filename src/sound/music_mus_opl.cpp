@@ -100,7 +100,7 @@ OPLMUSDumper::OPLMUSDumper(const OPLMUSSong *original, const char *filename)
 {
 }
 
-void OPLMUSDumper::Play(bool looping)
+void OPLMUSDumper::Play(bool looping, int)
 {
 	Music->Dump();
 }

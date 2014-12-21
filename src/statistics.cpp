@@ -408,12 +408,13 @@ static void StoreLevelStats()
 	{
 		for(i=0;i<LevelData.Size();i++)
 		{
-			if (!stricmp(LevelData[i].levelname, level.mapname)) break;
+			if (!stricmp(LevelData[i].levelname, level.MapName)) break;
 		}
 		if (i==LevelData.Size())
 		{
 			LevelData.Reserve(1);
-			strcpy(LevelData[i].levelname, level.mapname);
+			strncpy(LevelData[i].levelname, level.MapName, 8);
+			LevelData[i].levelname[8] = 0;
 		}
 		LevelData[i].totalkills = level.total_monsters;
 		LevelData[i].killcount = level.killed_monsters;

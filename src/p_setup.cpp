@@ -272,11 +272,12 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		FString fmt;
 		int lump_wad;
 		int lump_map;
-		int lump_name;
+		int lump_name = -1;
 		
 		// Check for both *.wad and *.map in order to load Build maps
 		// as well. The higher one will take precedence.
-		lump_name = Wads.CheckNumForName(mapname);
+		// Names with more than 8 characters will only be checked as .wad and .map.
+		if (strlen(mapname) <= 8) lump_name = Wads.CheckNumForName(mapname);
 		fmt.Format("maps/%s.wad", mapname);
 		lump_wad = Wads.CheckNumForFullName(fmt);
 		fmt.Format("maps/%s.map", mapname);
@@ -311,7 +312,6 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
-				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -576,13 +576,11 @@ void MapData::GetChecksum(BYTE cksum[16])
 //
 //===========================================================================
 
-static void SetTexture (side_t *side, int position, const char *name8, FMissingTextureTracker &track)
+static void SetTexture (side_t *side, int position, const char *name, FMissingTextureTracker &track)
 {
 	static const char *positionnames[] = { "top", "middle", "bottom" };
 	static const char *sidenames[] = { "first", "second" };
-	char name[9];
-	strncpy (name, name8, 8);
-	name[8] = 0;
+
 	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
@@ -618,12 +616,17 @@ static void SetTexture (side_t *side, int position, const char *name8, FMissingT
 //
 //===========================================================================
 
-void SetTexture (sector_t *sector, int index, int position, const char *name8, FMissingTextureTracker &track)
+void SetTexture (sector_t *sector, int index, int position, const char *name, FMissingTextureTracker &track, bool truncate)
 {
 	static const char *positionnames[] = { "floor", "ceiling" };
-	char name[9];
-	strncpy (name, name8, 8);
-	name[8] = 0;
+	char name8[9];
+	if (truncate)
+	{
+		strncpy(name8, name, 8);
+		name8[8] = 0;
+		name = name8;
+	}
+
 	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Flat,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
@@ -673,11 +676,8 @@ static void SummarizeMissingTextures(const FMissingTextureTracker &missing)
 //
 //===========================================================================
 
-static void SetTexture (side_t *side, int position, DWORD *blend, char *name8)
+static void SetTexture (side_t *side, int position, DWORD *blend, const char *name)
 {
-	char name[9];
-	strncpy (name, name8, 8);
-	name[8] = 0;
 	FTextureID texture;
 	if ((*blend = R_ColormapNumForName (name)) == 0)
 	{
@@ -704,12 +704,9 @@ static void SetTexture (side_t *side, int position, DWORD *blend, char *name8)
 	side->SetTexture(position, texture);
 }
 
-static void SetTextureNoErr (side_t *side, int position, DWORD *color, char *name8, bool *validcolor, bool isFog)
+static void SetTextureNoErr (side_t *side, int position, DWORD *color, const char *name, bool *validcolor, bool isFog)
 {
-	char name[9];
 	FTextureID texture;
-	strncpy (name, name8, 8);
-	name[8] = 0;
 	*validcolor = false;
 	texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,	
 		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
@@ -1514,8 +1511,8 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->ceilingplane.d = ss->GetPlaneTexZ(sector_t::ceiling);
 		ss->ceilingplane.c = -FRACUNIT;
 		ss->ceilingplane.ic = -FRACUNIT;
-		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex);
-		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex);
+		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex, true);
+		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex, true);
 		ss->lightlevel = LittleShort(ms->lightlevel);
 		if (map->HasBehavior)
 			ss->special = LittleShort(ms->special);
@@ -1761,6 +1758,9 @@ void P_LoadThings (MapData * map)
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
+		mti[i].RenderStyle = STYLE_Count;
+		mti[i].alpha = -1;
+		mti[i].health = 1;
 		flags &= ~MTF_SKILLMASK;
 		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
 		if (gameinfo.gametype == GAME_Strife)
@@ -1820,6 +1820,8 @@ void P_LoadThings2 (MapData * map)
 
 	for(int i = 0; i< numthings; i++)
 	{
+		memset (&mti[i], 0, sizeof(mti[i]));
+
 		mti[i].thingid = LittleShort(mth[i].thingid);
 		mti[i].x = LittleShort(mth[i].x)<<FRACBITS;
 		mti[i].y = LittleShort(mth[i].y)<<FRACBITS;
@@ -1832,8 +1834,10 @@ void P_LoadThings2 (MapData * map)
 		mti[i].SkillFilter = MakeSkill(mti[i].flags);
 		mti[i].ClassFilter = (mti[i].flags & MTF_CLASS_MASK) >> MTF_CLASS_SHIFT;
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
-		mti[i].Conversation = 0;
 		mti[i].gravity = FRACUNIT;
+		mti[i].RenderStyle = STYLE_Count;
+		mti[i].alpha = -1;
+		mti[i].health = 1;
 	}
 	delete[] mtp;
 }
@@ -1881,13 +1885,6 @@ void P_AdjustLine (line_t *ld)
 	ld->dx = v2->x - v1->x;
 	ld->dy = v2->y - v1->y;
 	
-	if (ld->dx == 0)
-		ld->slopetype = ST_VERTICAL;
-	else if (ld->dy == 0)
-		ld->slopetype = ST_HORIZONTAL;
-	else
-		ld->slopetype = ((ld->dy ^ ld->dx) >= 0) ? ST_POSITIVE : ST_NEGATIVE;
-			
 	if (v1->x < v2->x)
 	{
 		ld->bbox[BOXLEFT] = v1->x;
@@ -2462,11 +2459,8 @@ int P_DetermineTranslucency (int lumpnum)
 	return newcolor.r;
 }
 
-void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex)
+void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex)
 {
-	char name[9];
-	name[8] = 0;
-
 	switch (special)
 	{
 	case Transfer_Heights:	// variable colormap via 242 linedef
@@ -2492,7 +2486,6 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 
 			SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture, &foggood, true);
 			SetTextureNoErr (sd, side_t::top, &color, msd->toptexture, &colorgood, false);
-			strncpy (name, msd->midtexture, 8);
 			SetTexture(sd, side_t::mid, msd->midtexture, missingtex);
 
 			if (colorgood | foggood)
@@ -2523,8 +2516,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapside
 	case Sector_Set3DFloor:
 		if (msd->toptexture[0]=='#')
 		{
-			strncpy (name, msd->toptexture, 8);
-			sd->SetTexture(side_t::top, FNullTextureID() +(-strtol(name+1, NULL, 10)));	// store the alpha as a negative texture index
+			sd->SetTexture(side_t::top, FNullTextureID() +(-strtol(&msd->toptexture[1], NULL, 10)));	// store the alpha as a negative texture index
 														// This will be sorted out by the 3D-floor code later.
 		}
 		else
@@ -2618,7 +2610,13 @@ void P_LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 		{
 			sd->sector = sec = &sectors[LittleShort(msd->sector)];
 		}
-		P_ProcessSideTextures(!map->HasBehavior, sd, sec, msd, 
+
+		intmapsidedef_t imsd;
+		imsd.toptexture.CopyCStrPart(msd->toptexture, 8);
+		imsd.midtexture.CopyCStrPart(msd->midtexture, 8);
+		imsd.bottomtexture.CopyCStrPart(msd->bottomtexture, 8);
+
+		P_ProcessSideTextures(!map->HasBehavior, sd, sec, &imsd, 
 							  sidetemp[i].a.special, sidetemp[i].a.tag, &sidetemp[i].a.alpha, missingtex);
 	}
 	delete[] msdf;
@@ -3549,7 +3547,7 @@ void P_FreeExtraLevelData()
 //
 
 // [RH] position indicates the start spot to spawn at
-void P_SetupLevel (char *lumpname, int position)
+void P_SetupLevel (const char *lumpname, int position)
 {
 	cycle_t times[20];
 	FMapThing *buildthings;
@@ -3751,7 +3749,9 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 		else
 		{
+			times[0].Clock();
 			P_ParseTextMap(map, missingtex);
+			times[0].Unclock();
 		}
 
 		times[6].Clock();

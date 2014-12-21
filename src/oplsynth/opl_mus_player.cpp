@@ -96,7 +96,7 @@ fail:		delete[] scoredata;
 	else if (((DWORD *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
 		((DWORD *)scoredata)[1] == MAKE_ID('W','O','P','L'))
 	{
-		if (((DWORD *)scoredata)[2] == MAKE_ID(0,0,1,0))
+		if (LittleShort(((WORD *)scoredata)[5]) == 1)
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
@@ -104,16 +104,19 @@ fail:		delete[] scoredata;
 		}
 		else if (((DWORD *)scoredata)[2] == MAKE_ID(2,0,0,0))
 		{
-			if (scoredata[20] != 0)
-			{
-				Printf("Unsupported DOSBox Raw OPL format %d\n", scoredata[20]);
-				goto fail;
-			}
+			bool okay = true;
 			if (scoredata[21] != 0)
 			{
-				Printf("Unsupported DOSBox Raw OPL compression %d\n", scoredata[21]);
-				goto fail;
+				Printf("Unsupported DOSBox Raw OPL format %d\n", scoredata[20]);
+				okay = false;
 			}
+			if (scoredata[22] != 0)
+			{
+				Printf("Unsupported DOSBox Raw OPL compression %d\n", scoredata[21]);
+				okay = false;
+			}
+			if (!okay)
+				goto fail;
 			RawPlayer = DosBox2;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
 			int headersize = 0x1A + scoredata[0x19];
@@ -264,7 +267,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 					{
 						for (i = 0; i < io->NumChips; ++i)
 						{
-							io->chips[i]->Update(samples1, samplesleft);
+							io->chips[i]->Update(samples1, numsamples);
 						}
 						OffsetSamples(samples1, numsamples << stereoshift);
 					}

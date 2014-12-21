@@ -439,27 +439,33 @@ CCMD (exec)
 	}
 }
 
+void execLogfile(const char *fn)
+{
+	if ((Logfile = fopen(fn, "w")))
+	{
+		const char *timestr = myasctime();
+		Printf("Log started: %s\n", timestr);
+	}
+	else
+	{
+		Printf("Could not start log\n");
+	}
+}
+
 CCMD (logfile)
 {
-	const char *timestr = myasctime ();
 
 	if (Logfile)
 	{
-		Printf ("Log stopped: %s\n", timestr);
+		const char *timestr = myasctime();
+		Printf("Log stopped: %s\n", timestr);
 		fclose (Logfile);
 		Logfile = NULL;
 	}
 
 	if (argv.argc() >= 2)
 	{
-		if ( (Logfile = fopen (argv[1], "w")) )
-		{
-			Printf ("Log started: %s\n", timestr);
-		}
-		else
-		{
-			Printf ("Could not start log\n");
-		}
+		execLogfile(argv[1]);
 	}
 }
 
@@ -938,8 +944,15 @@ CCMD(changesky)
 	sky1name = argv[1];
 	if (sky1name[0] != 0)
 	{
-		strncpy (level.skypic1, sky1name, 8);
-		sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		FTextureID newsky = TexMan.GetTexture(sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+		if (newsky.Exists())
+		{
+			sky1texture = level.skytexture1 = newsky;
+		}
+		else
+		{
+			Printf("changesky: Texture '%s' not found\n", sky1name);
+		}
 	}
 	R_InitSkyMap ();
 }
@@ -971,14 +984,10 @@ CCMD(nextmap)
 				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
-	char *next = NULL;
 	
-	if (*level.nextmap)
-		next = level.nextmap;
-
-	if (next != NULL && strncmp(next, "enDSeQ", 6))
+	if (level.NextMap.Len() > 0 && level.NextMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(next);
+		G_DeferedInitNew(level.NextMap);
 	}
 	else
 	{
@@ -1001,12 +1010,9 @@ CCMD(nextsecret)
 	}
 	char *next = NULL;
 	
-	if (*level.secretmap)
-		next = level.secretmap;
-
-	if (next != NULL && strncmp(next, "enDSeQ", 6))
+	if (level.NextSecretMap.Len() > 0 && level.NextSecretMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(next);
+		G_DeferedInitNew(level.NextSecretMap);
 	}
 	else
 	{
@@ -1120,8 +1126,8 @@ static void PrintSecretString(const char *string, bool thislevel)
 
 CCMD(secret)
 {
-	const char *mapname = argv.argc() < 2? level.mapname : argv[1];
-	bool thislevel = !stricmp(mapname, level.mapname);
+	const char *mapname = argv.argc() < 2? level.MapName.GetChars() : argv[1];
+	bool thislevel = !stricmp(mapname, level.MapName);
 	bool foundsome = false;
 
 	int lumpno=Wads.CheckNumForName("SECRETS");

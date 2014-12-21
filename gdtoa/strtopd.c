@@ -38,12 +38,17 @@ strtopd(s, sp, d) char *s; char **sp; double *d;
 strtopd(CONST char *s, char **sp, double *d)
 #endif
 {
-	static CONST FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	ULong bits[2];
 	Long exp;
 	int k;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi0, &exp, bits);
+	k = strtodg(s, sp, fpi, &exp, bits);
 	ULtod((ULong*)d, bits, exp, k);
 	return k;
 	}

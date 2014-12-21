@@ -385,7 +385,7 @@ int Nes_Apu::read_status( nes_time_t time )
 		irq_changed();
 	}
 	
-	//dprintf( "%6d/%d Read $4015->$%02X\n", frame_delay, frame, result );
+	//debug_printf( "%6d/%d Read $4015->$%02X\n", frame_delay, frame, result );
 	
 	return result;
 }

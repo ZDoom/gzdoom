@@ -34,7 +34,7 @@ void stripnl(char *str)
 
 int main(int argc, char **argv)
 {
-	char vertag[64], lastlog[64], lasthash[64], *hash = NULL;
+	char vertag[128], lastlog[128], lasthash[128], *hash = NULL;
 	FILE *stream = NULL;
 	int gotrev = 0, needupdate = 1;
 

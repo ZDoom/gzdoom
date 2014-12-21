@@ -21,6 +21,8 @@
 #ifndef __HU_STUFF_H__
 #define __HU_STUFF_H__
 
+#include "doomtype.h"
+
 struct event_t;
 class player_t;
 
@@ -49,5 +51,10 @@ void HU_DrawScores (player_t *me);
 void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight);
 void HU_DrawColorBar(int x, int y, int height, int playernum);
 int HU_GetRowColor(player_t *player, bool hightlight);
+
+// Sorting routines
+
+int STACK_ARGS comparepoints(const void *arg1, const void *arg2);
+int STACK_ARGS compareteams(const void *arg1, const void *arg2);
 
 #endif

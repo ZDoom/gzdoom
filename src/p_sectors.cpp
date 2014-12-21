@@ -230,8 +230,6 @@ fixed_t sector_t::FindNextLowestFloor (vertex_t **v) const
 		check = lines[i];
 		if (NULL != (other = getNextSector (check, this)))
 		{
-			if (other - sectors == 6)
-				other = other;
 			ofloor = other->floorplane.ZatPoint (check->v1);
 			floor = floorplane.ZatPoint (check->v1);
 			if (ofloor < floor && floor - ofloor < heightdiff && !IsLinked(other, false))

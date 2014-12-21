@@ -82,9 +82,7 @@ CVAR (Int,	sb_deathmatch_otherplayercolor,		CR_GREY,	CVAR_ARCHIVE)
 CVAR (Bool,	sb_teamdeathmatch_enable,			true,		CVAR_ARCHIVE)
 CVAR (Int,	sb_teamdeathmatch_headingcolor,		CR_RED,		CVAR_ARCHIVE)
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int STACK_ARGS comparepoints (const void *arg1, const void *arg2)
+int STACK_ARGS comparepoints (const void *arg1, const void *arg2)
 {
 	// Compare first be frags/kills, then by name.
 	player_t *p1 = *(player_t **)arg1;
@@ -99,7 +97,7 @@ static int STACK_ARGS comparepoints (const void *arg1, const void *arg2)
 	return diff;
 }
 
-static int STACK_ARGS compareteams (const void *arg1, const void *arg2)
+int STACK_ARGS compareteams (const void *arg1, const void *arg2)
 {
 	// Compare first by teams, then by frags, then by name.
 	player_t *p1 = *(player_t **)arg1;
@@ -117,6 +115,8 @@ static int STACK_ARGS compareteams (const void *arg1, const void *arg2)
 	}
 	return diff;
 }
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
@@ -247,7 +247,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	lineheight = MAX(height, maxiconheight * CleanYfac);
 	ypadding = (lineheight - height + 1) / 2;
 
-	bottom = gamestate != GS_INTERMISSION ? ST_Y : SCREENHEIGHT;
+	bottom = ST_Y;
 	y = MAX(48*CleanYfac, (bottom - MAXPLAYERS * (height + CleanYfac + 1)) / 2);
 
 	HU_DrawTimeRemaining (bottom - height);
@@ -255,10 +255,6 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	if (teamplay && deathmatch)
 	{
 		y -= (BigFont->GetHeight() + 8) * CleanYfac;
-		if (gamestate == GS_INTERMISSION)
-		{
-			y = MAX(BigFont->GetHeight() * 4, y);
-		}
 
 		for (i = 0; i < Teams.Size (); i++)
 		{

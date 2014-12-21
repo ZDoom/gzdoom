@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Gb_Cpu.h"
 
@@ -94,6 +94,7 @@ unsigned const c_flag = 0x10;
 // -- produced by the BOOST_STATIC_ASSERT line below
 #pragma warning(disable:4101)
 #endif
+
 bool Gb_Cpu::run( blargg_long cycle_count )
 {
 	state_.remain = blargg_ulong (cycle_count + clocks_per_instr) / clocks_per_instr;
@@ -716,7 +717,7 @@ loop:
 		temp += prev;
 		flags &= z_flag;
 	add_16_hl:
-		rp.hl = temp;
+		rp.hl = (uint16_t)temp;
 	add_16_comm:
 		flags |= (temp >> 12) & c_flag;
 		flags |= (((temp & 0x0FFF) - (prev & 0x0FFF)) >> 7) & h_flag;

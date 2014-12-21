@@ -61,6 +61,7 @@
 #include "a_sharedglobal.h"
 #include "farchive.h"
 #include "a_keys.h"
+#include "c_dispatch.h"
 
 // State.
 #include "r_state.h"
@@ -72,9 +73,6 @@
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 void P_SetupPortals();
 
-
-// [GrafZahl] Make this message changable by the user! ;)
-CVAR(String, secretmessage, "A Secret is revealed!", CVAR_ARCHIVE)
 
 IMPLEMENT_POINTY_CLASS (DScroller)
  DECLARE_POINTER (m_Interpolations[0])
@@ -254,7 +252,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 
 	if (buttonSuccess)
 	{
-		if (activationType == SPAC_Use || activationType == SPAC_Impact)
+		if (activationType == SPAC_Use || activationType == SPAC_Impact || activationType == SPAC_Push)
 		{
 			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		}
@@ -581,7 +579,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	if (sector->special & SECRET_MASK)
 	{
 		sector->special &= ~SECRET_MASK;
-		P_GiveSecret(player->mo, true, true);
+		P_GiveSecret(player->mo, true, true, int(sector - sectors));
 	}
 }
 
@@ -672,7 +670,9 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 //
 //============================================================================
 
-void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
+CVAR(Bool, showsecretsector, false, 0)
+
+void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum)
 {
 	if (actor != NULL)
 	{
@@ -682,7 +682,16 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound)
 		}
 		if (actor->CheckLocalView (consoleplayer))
 		{
-			if (printmessage) C_MidPrint (SmallFont, secretmessage);
+			if (printmessage)
+			{
+				if (!showsecretsector || sectornum < 0) C_MidPrint(SmallFont, GStrings["SECRETMESSAGE"]);
+				else
+				{
+					FString s = GStrings["SECRETMESSAGE"];
+					s.AppendFormat(" (Sector %d)", sectornum);
+					C_MidPrint(SmallFont, s);
+				}
+			}
 			if (playsound) S_Sound (CHAN_AUTO | CHAN_UI, "misc/secret", 1, ATTN_NORM);
 		}
 	}
@@ -1981,26 +1990,12 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 	friction = (0x1EB8*amount)/0x80 + 0xD001;
 
 	// killough 8/28/98: prevent odd situations
-	if (friction > FRACUNIT)
-		friction = FRACUNIT;
-	if (friction < 0)
-		friction = 0;
+	friction = clamp(friction, 0, FRACUNIT);
 
 	// The following check might seem odd. At the time of movement,
 	// the move distance is multiplied by 'friction/0x10000', so a
 	// higher friction value actually means 'less friction'.
-
-	// [RH] Twiddled these values so that velocity on ice (with
-	//		friction 0xf900) is the same as in Heretic/Hexen.
-	if (friction >= ORIG_FRICTION)	// ice
-//		movefactor = ((0x10092 - friction)*(0x70))/0x158;
-		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
-	else
-		movefactor = ((friction - 0xDB34)*(0xA))/0x80;
-
-	// killough 8/28/98: prevent odd situations
-	if (movefactor < 32)
-		movefactor = 32;
+	movefactor = FrictionToMoveFactor(friction);
 
 	for (s = -1; (s = P_FindSectorFromTag (tag,s)) >= 0; )
 	{

@@ -1,6 +1,6 @@
 // Z80 CPU emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef AY_CPU_H
 #define AY_CPU_H
 

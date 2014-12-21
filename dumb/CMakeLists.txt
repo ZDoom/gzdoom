@@ -1,5 +1,7 @@
 cmake_minimum_required( VERSION 2.4 )
 
+make_release_only()
+
 include( CheckFunctionExists )
 
 # DUMB is much slower in a Debug build than a Release build, so we force a Release
@@ -11,9 +13,9 @@ endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DDEBUGMODE=1" )
 
-if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -Wno-uninitialized" )
-endif( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+endif( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 
 CHECK_FUNCTION_EXISTS( itoa ITOA_EXISTS )
 if( NOT ITOA_EXISTS )
@@ -101,6 +103,6 @@ add_library( dumb
     src/it/xmeffect.c )
 target_link_libraries( dumb )
 
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set_source_files_properties( src/it/filter.cpp PROPERTIES COMPILE_FLAGS -msse )
-endif( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

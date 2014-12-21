@@ -85,6 +85,14 @@ struct mapsidedef_t
 	short	sector;	// Front sector, towards viewer.
 };
 
+struct intmapsidedef_t
+{
+	FString toptexture;
+	FString bottomtexture;
+	FString midtexture;
+};
+
+
 // A LineDef, as used for editing, and as input to the BSP builder.
 struct maplinedef_t
 {
@@ -192,9 +200,10 @@ enum EMapLineFlags	// These are flags that use different values internally
 	ML_RESERVED_ETERNITY		= 0x0800,
 
 	// [RH] Extra flags for Strife
-	ML_TRANSLUCENT_STRIFE		= 0x1000,
 	ML_RAILING_STRIFE			= 0x0200,
 	ML_BLOCK_FLOATERS_STRIFE	= 0x0400,
+	ML_TRANSPARENT_STRIFE		= 0x0800,
+	ML_TRANSLUCENT_STRIFE		= 0x1000,
 };
 
 
@@ -344,6 +353,15 @@ struct FMapThing
 	int			args[5];
 	int			Conversation;
 	fixed_t		gravity;
+	fixed_t		alpha;
+	DWORD		fillcolor;
+	fixed_t		scaleX;
+	fixed_t		scaleY;
+	int			health;
+	int			score;
+	short		pitch;
+	short		roll;
+	DWORD		RenderStyle;
 
 	void Serialize (FArchive &);
 };
@@ -385,6 +403,7 @@ enum EMapThingFlags
 
 	MTF_SECRET			= 0x080000,	// Secret pickup
 	MTF_NOINFIGHTING	= 0x100000,
+
 	// BOOM and DOOM compatible versions of some of the above
 
 	BTF_NOTSINGLE		= 0x0010,	// (TF_COOPERATIVE|TF_DEATHMATCH)

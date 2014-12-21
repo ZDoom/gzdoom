@@ -231,8 +231,8 @@ void FTextureManager::InitAnimated (void)
 				if (debuganimated)
 				{
 					Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
-						tex1->Name, pic1.GetIndex(), tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
-						tex2->Name, pic2.GetIndex(), tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
+						tex1->Name.GetChars(), pic1.GetIndex(), tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
+						tex2->Name.GetChars(), pic2.GetIndex(), tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
 				}
 
 				if (pic1 == pic2)
@@ -551,7 +551,7 @@ void FTextureManager::ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 
 void FTextureManager::ParseWarp(FScanner &sc)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny | TEXMAN_ShortNameOnly;
 	bool isflat = false;
 	bool type2 = sc.Compare ("warp2");	// [GRB]
 	sc.MustGetString ();
@@ -616,7 +616,7 @@ void FTextureManager::ParseWarp(FScanner &sc)
 
 void FTextureManager::ParseCameraTexture(FScanner &sc)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny | TEXMAN_ShortNameOnly;
 	int width, height;
 	int fitwidth, fitheight;
 	FString picname;
@@ -657,6 +657,17 @@ void FTextureManager::ParseCameraTexture(FScanner &sc)
 		else
 		{
 			sc.UnGet ();
+		}
+	}
+	if (sc.GetString())
+	{
+		if (sc.Compare("WorldPanning"))
+		{
+			viewer->bWorldPanning = true;
+		}
+		else
+		{
+			sc.UnGet();
 		}
 	}
 	viewer->SetScaledSize(fitwidth, fitheight);
@@ -738,8 +749,11 @@ void FTextureManager::ParseAnimatedDoor(FScanner &sc)
 	{
 		error = true;
 	}
-
-	while (sc.GetString ())
+	else
+	{
+		Texture(anim.BaseTexture)->bNoDecals = true;
+	}
+	while (sc.GetString())
 	{
 		if (sc.Compare ("opensound"))
 		{
@@ -765,8 +779,12 @@ void FTextureManager::ParseAnimatedDoor(FScanner &sc)
 				{
 					sc.ScriptError ("Unknown texture %s", sc.String);
 				}
-				frames.Push (v);
 			}
+			frames.Push(v);
+		}
+		else if (sc.Compare("allowdecals"))
+		{
+			if (anim.BaseTexture.Exists()) Texture(anim.BaseTexture)->bNoDecals = false;
 		}
 		else
 		{

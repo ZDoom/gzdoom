@@ -90,7 +90,7 @@ FNodeBuilder::~FNodeBuilder()
 	}
 	if (OldVertexTable != NULL)
 	{
-		delete OldVertexTable;
+		delete[] OldVertexTable;
 	}
 }
 
@@ -125,12 +125,10 @@ void FNodeBuilder::BuildTree ()
 {
 	fixed_t bbox[4];
 
-	C_InitTicker ("Building BSP", FRACUNIT);
 	HackSeg = DWORD_MAX;
 	HackMate = DWORD_MAX;
 	CreateNode (0, Segs.Size(), bbox);
 	CreateSubsectorsForReal ();
-	C_InitTicker (NULL, 0);
 }
 
 int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
@@ -199,10 +197,6 @@ int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
 	}
 
 	SegsStuffed += count;
-	if ((SegsStuffed & ~127) != ((SegsStuffed - count) & ~127))
-	{
-		C_SetTicker (MulScale16 (SegsStuffed, (SDWORD)Segs.Size()));
-	}
 
 	D(Printf (PRINT_LOG, "bbox (%d,%d)-(%d,%d)\n", bbox[BOXLEFT]>>16, bbox[BOXBOTTOM]>>16, bbox[BOXRIGHT]>>16, bbox[BOXTOP]>>16));
 
@@ -503,10 +497,6 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 				{
 					nosplitters = true;
 				}
-			}
-			else
-			{
-				pseg = pseg;
 			}
 		}
 

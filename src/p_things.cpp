@@ -410,18 +410,11 @@ void P_RemoveThing(AActor * actor)
 
 bool P_Thing_Raise(AActor *thing)
 {
-	if (thing == NULL)
-		return false;	// not valid
-
-	if (!(thing->flags & MF_CORPSE) )
-		return true;	// not a corpse
-	
-	if (thing->tics != -1)
-		return true;	// not lying still yet
-	
-	FState * RaiseState = thing->FindState(NAME_Raise);
+	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
+	{
 		return true;	// monster doesn't have a raise state
+	}
 	
 	AActor *info = thing->GetDefault ();
 
@@ -443,25 +436,12 @@ bool P_Thing_Raise(AActor *thing)
 		return false;
 	}
 
-	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
-	
-	thing->SetState (RaiseState);
-	thing->flags = info->flags;
-	thing->flags2 = info->flags2;
-	thing->flags3 = info->flags3;
-	thing->flags4 = info->flags4;
-	thing->flags5 = info->flags5;
-	thing->flags6 = info->flags6;
-	thing->flags7 = info->flags7;
-	thing->health = info->health;
-	thing->target = NULL;
-	thing->lastenemy = NULL;
 
-	// [RH] If it's a monster, it gets to count as another kill
-	if (thing->CountsAsKill())
-	{
-		level.total_monsters++;
-	}
+	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
+
+	thing->Revive();
+
+	thing->SetState (RaiseState);
 	return true;
 }
 

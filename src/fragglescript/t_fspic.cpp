@@ -73,6 +73,7 @@ public:
 	~DHUDPicManager() {}
 	void Serialize(FArchive & ar);
 	virtual void DoDraw (int linenum, int x, int y, int hudheight, float translucent);
+	void DoDraw (int, int, int, bool, int) { assert(false); }
 } ;
 
 IMPLEMENT_CLASS(DHUDPicManager)

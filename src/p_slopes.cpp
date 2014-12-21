@@ -178,6 +178,12 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 	}
 	zang >>= ANGLETOFINESHIFT;
 
+	// Sanitize xyangi to [0,360) range
+	xyangi = xyangi % 360;
+	if (xyangi < 0)
+	{
+		xyangi = 360 + xyangi;
+	}
 	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
 
 	FVector3 norm;
@@ -446,11 +452,11 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 				P_VavoomSlope(sec, mt->thingid, x, y, mt->z, mt->type & 1); 
 			}
 			else if (mt->type <= THING_SlopeCeilingPointLine)
-			{
+			{ // THING_SlopeFloorPointLine and THING_SlopCeilingPointLine
 				P_SlopeLineToPoint (mt->args[0], x, y, z, mt->type & 1);
 			}
 			else
-			{
+			{ // THING_SetFloorSlope and THING_SetCeilingSlope
 				P_SetSlope (refplane, mt->type & 1, mt->angle, mt->args[0], x, y, z);
 			}
 			mt->type = 0;

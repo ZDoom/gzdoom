@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Fir_Resampler.h"
 
@@ -156,7 +156,7 @@ int Fir_Resampler_::input_needed( blargg_long output_count ) const
 		output_count -= 2;
 	}
 	
-	long input_extra = long(input_count - (write_pos - &buf [(width_ - 1) * stereo]));
+	long input_extra = input_count - (write_pos - &buf [(width_ - 1) * stereo]);
 	if ( input_extra < 0 )
 		input_extra = 0;
 	return input_extra;
@@ -187,7 +187,7 @@ int Fir_Resampler_::avail_( blargg_long input_count ) const
 int Fir_Resampler_::skip_input( long count )
 {
 	int remain = int(write_pos - buf.begin());
-	int max_count = remain - width_ * stereo;
+	int max_count = int(remain - width_ * stereo);
 	if ( count > max_count )
 		count = max_count;
 	

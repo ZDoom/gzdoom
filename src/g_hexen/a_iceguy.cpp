@@ -139,7 +139,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *mo;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < 8; i++)
 	{

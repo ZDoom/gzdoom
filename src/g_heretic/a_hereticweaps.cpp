@@ -839,7 +839,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int i;
+	unsigned int i;
 	angle_t angle;
 	AActor *ripper;
 

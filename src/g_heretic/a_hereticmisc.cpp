@@ -202,7 +202,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int i;
+	unsigned int i;
 	AActor *tiny;
 	angle_t angle;
 

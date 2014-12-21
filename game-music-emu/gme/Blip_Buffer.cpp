@@ -233,18 +233,32 @@ static void gen_sinc( float* out, int count, double oversample, double treble, d
 	double const to_angle = PI / 2 / maxh / oversample;
 	for ( int i = 0; i < count; i++ )
 	{
-		double angle = ((i - count) * 2 + 1) * to_angle;
-		double c = rolloff * cos( (maxh - 1.0) * angle ) - cos( maxh * angle );
-		double cos_nc_angle = cos( maxh * cutoff * angle );
-		double cos_nc1_angle = cos( (maxh * cutoff - 1.0) * angle );
-		double cos_angle = cos( angle );
+		double angle          = ((i - count) * 2 + 1) * to_angle;
+		double angle_maxh     = angle * maxh;
+		double angle_maxh_mid = angle_maxh * cutoff;
 		
-		c = c * pow_a_n - rolloff * cos_nc1_angle + cos_nc_angle;
-		double d = 1.0 + rolloff * (rolloff - cos_angle - cos_angle);
-		double b = 2.0 - cos_angle - cos_angle;
-		double a = 1.0 - cos_angle - cos_nc_angle + cos_nc1_angle;
+		double y = maxh;
 		
-		out [i] = (float) ((a * d + c * b) / (b * d)); // a / b + c / d
+		// 0 to Fs/2*cutoff, flat
+		if ( angle_maxh_mid ) // unstable at t=0
+			y *= sin( angle_maxh_mid ) / angle_maxh_mid;
+		
+		// Fs/2*cutoff to Fs/2, logarithmic rolloff
+		double cosa = cos( angle );
+		double den = 1 + rolloff * (rolloff - cosa - cosa);
+		
+		// Becomes unstable when rolloff is near 1.0 and t is near 0,
+		// which is the only time den becomes small
+		if ( den > 1e-13 )
+		{
+			double num =
+				(cos( angle_maxh     - angle ) * rolloff - cos( angle_maxh     )) * pow_a_n -
+				 cos( angle_maxh_mid - angle ) * rolloff + cos( angle_maxh_mid );
+			
+			y = y * cutoff + num / den;
+		}
+		
+		out [i] = (float) y;
 	}
 }
 

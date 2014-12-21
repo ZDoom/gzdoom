@@ -396,7 +396,7 @@ void R_SetDefaultColormap (const char *name)
 		BYTE unremap[256];
 		BYTE remap[256];
 
-		lump = Wads.CheckNumForName (name, ns_colormaps);
+		lump = Wads.CheckNumForFullName (name, true, ns_colormaps);
 		if (lump == -1)
 			lump = Wads.CheckNumForName (name, ns_global);
 

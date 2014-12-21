@@ -198,7 +198,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 	return count;
 }
 
-#elif defined(__sun)
+#elif defined(__sun) || defined(__APPLE__)
 
 int FDirectory::AddDirectory(const char *dirpath)
 {

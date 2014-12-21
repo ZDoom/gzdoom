@@ -915,7 +915,7 @@ void P_NewChaseDir(AActor * actor)
 	// MBF's monster_backing option. Made an actor flag instead. Also cleaned the code up to make it readable.
 	// Todo: implement the movement logic
 	AActor *target = actor->target;
-	if (target->health > 0 && !actor->IsFriend(target))
+	if (target->health > 0 && !actor->IsFriend(target) && target != actor->goal)
     {   // Live enemy target
 
 		if (actor->flags3 & MF3_AVOIDMELEE)
@@ -1542,7 +1542,6 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	int 		c;
-	int 		stop;
 	int			pnum;
 	player_t*	player;
 	bool chasegoal = params? (!(params->flags & LOF_DONTCHASEGOAL)) : true;
@@ -1615,20 +1614,22 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	{
 		pnum = actor->LastLookPlayerNumber;
 	}
-	stop = (pnum - 1) & (MAXPLAYERS-1);
 		
 	for (;;)
 	{
-		pnum = (pnum + 1) & (MAXPLAYERS-1);
-		if (!playeringame[pnum])
-			continue;
-
-		if (actor->TIDtoHate == 0)
+		// [ED850] Each and every player should only ever be checked once.
+		if (c++ < MAXPLAYERS)
 		{
-			actor->LastLookPlayerNumber = pnum;
-		}
+			pnum = (pnum + 1) & (MAXPLAYERS - 1);
+			if (!playeringame[pnum])
+				continue;
 
-		if (++c == MAXPLAYERS-1 || pnum == stop)
+			if (actor->TIDtoHate == 0)
+			{
+				actor->LastLookPlayerNumber = pnum;
+			}
+		}
+		else
 		{
 			// done looking
 			if (actor->target == NULL)
@@ -1692,11 +1693,11 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 					&& P_AproxDistance (player->mo->velx, player->mo->vely)
 					< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
-					return false;
+					continue;
 				}
 				if (pr_lookforplayers() < 225)
 				{ // Player isn't sneaking, but still didn't detect
-					return false;
+					continue;
 				}
 			}
 		}
@@ -2531,150 +2532,126 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 		fixed_t viletryx = self->x + FixedMul (absSpeed, xspeed[self->movedir]);
 		fixed_t viletryy = self->y + FixedMul (absSpeed, yspeed[self->movedir]);
 		AActor *corpsehit;
-		FState *raisestate;
 
 		FBlockThingsIterator it(FBoundingBox(viletryx, viletryy, 32*FRACUNIT));
 		while ((corpsehit = it.Next()))
 		{
-			if (!(corpsehit->flags & MF_CORPSE) )
-				continue;	// not a monster
-			
-			if (corpsehit->tics != -1)
-				continue;	// not lying still yet
-			
-			raisestate = corpsehit->FindState(NAME_Raise);
-			if (raisestate == NULL)
-				continue;	// monster doesn't have a raise state
-
-			if (corpsehit->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
-				continue;	// do not resurrect players
-
-			// use the current actor's radius instead of the Arch Vile's default.
-			fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius; 
-
-			maxdist = corpsehit-> GetDefault()->radius + self->radius; 
-				
-			if ( abs(corpsehit-> x - viletryx) > maxdist ||
-				 abs(corpsehit-> y - viletryy) > maxdist )
-				continue;			// not actually touching
-#ifdef _3DFLOORS
-			// Let's check if there are floors in between the archvile and its target
-			sector_t *vilesec = self->Sector;
-			sector_t *corpsec = corpsehit->Sector;
-			// We only need to test if at least one of the sectors has a 3D floor.
-			sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec : 
-				(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
-			if (testsec)
+			FState *raisestate = corpsehit->GetRaiseState();
+			if (raisestate != NULL)
 			{
-				fixed_t zdist1, zdist2;
-				if (P_Find3DFloor(testsec, corpsehit->x, corpsehit->y, corpsehit->z, false, true, zdist1)
-					!= P_Find3DFloor(testsec, self->x, self->y, self->z, false, true, zdist2))
+				// use the current actor's radius instead of the Arch Vile's default.
+				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
+
+				maxdist = corpsehit->GetDefault()->radius + self->radius;
+
+				if (abs(corpsehit->x - viletryx) > maxdist ||
+					abs(corpsehit->y - viletryy) > maxdist)
+					continue;			// not actually touching
+#ifdef _3DFLOORS
+				// Let's check if there are floors in between the archvile and its target
+				sector_t *vilesec = self->Sector;
+				sector_t *corpsec = corpsehit->Sector;
+				// We only need to test if at least one of the sectors has a 3D floor.
+				sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec :
+					(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
+				if (testsec)
 				{
-					// Not on same floor
-					if (vilesec == corpsec || abs(zdist1 - self->z) > self->height)
+					fixed_t zdist1, zdist2;
+					if (P_Find3DFloor(testsec, corpsehit->x, corpsehit->y, corpsehit->z, false, true, zdist1)
+						!= P_Find3DFloor(testsec, self->x, self->y, self->z, false, true, zdist2))
+					{
+						// Not on same floor
+						if (vilesec == corpsec || abs(zdist1 - self->z) > self->height)
 							continue;
+					}
 				}
-			}
 #endif
 
-			corpsehit->velx = corpsehit->vely = 0;
-			// [RH] Check against real height and radius
+				corpsehit->velx = corpsehit->vely = 0;
+				// [RH] Check against real height and radius
 
-			fixed_t oldheight = corpsehit->height;
-			fixed_t oldradius = corpsehit->radius;
-			int oldflags = corpsehit->flags;
+				fixed_t oldheight = corpsehit->height;
+				fixed_t oldradius = corpsehit->radius;
+				int oldflags = corpsehit->flags;
 
-			corpsehit->flags |= MF_SOLID;
-			corpsehit->height = corpsehit->GetDefault()->height;
-			bool check = P_CheckPosition (corpsehit, corpsehit->x, corpsehit->y);
-			corpsehit->flags = oldflags;
-			corpsehit->radius = oldradius;
-			corpsehit->height = oldheight;
-			if (!check) continue;
+				corpsehit->flags |= MF_SOLID;
+				corpsehit->height = corpsehit->GetDefault()->height;
+				bool check = P_CheckPosition(corpsehit, corpsehit->x, corpsehit->y);
+				corpsehit->flags = oldflags;
+				corpsehit->radius = oldradius;
+				corpsehit->height = oldheight;
+				if (!check) continue;
 
-			// got one!
-			temp = self->target;
-			self->target = corpsehit;
-			A_FaceTarget (self);
-			if (self->flags & MF_FRIENDLY)
-			{
-				// If this is a friendly Arch-Vile (which is turning the resurrected monster into its friend)
-				// and the Arch-Vile is currently targetting the resurrected monster the target must be cleared.
-				if (self->lastenemy == temp) self->lastenemy = NULL;
-				if (self->lastenemy == corpsehit) self->lastenemy = NULL;
-				if (temp == self->target) temp = NULL;
-			}
-			self->target = temp;
-								
-			// Make the state the monster enters customizable.
-			FState * state = self->FindState(NAME_Heal);
-			if (state != NULL)
-			{
-				self->SetState (state);
-			}
-			else if (usevilestates)
-			{
-				// For Dehacked compatibility this has to use the Arch Vile's
-				// heal state as a default if the actor doesn't define one itself.
-				const PClassActor *archvile = PClass::FindActor("Archvile");
-				if (archvile != NULL)
+				// got one!
+				temp = self->target;
+				self->target = corpsehit;
+				A_FaceTarget(self);
+				if (self->flags & MF_FRIENDLY)
 				{
-					self->SetState (archvile->FindState(NAME_Heal));
+					// If this is a friendly Arch-Vile (which is turning the resurrected monster into its friend)
+					// and the Arch-Vile is currently targetting the resurrected monster the target must be cleared.
+					if (self->lastenemy == temp) self->lastenemy = NULL;
+					if (self->lastenemy == corpsehit) self->lastenemy = NULL;
+					if (temp == self->target) temp = NULL;
 				}
-			}
-			S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
-			info = corpsehit->GetDefault ();
-			
-			if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
-			{			
-				corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
-			}
-			if (ib_compatflags & BCOMPATF_VILEGHOSTS)
-			{
-				corpsehit->height <<= 2;
-				// [GZ] This was a commented-out feature, so let's make use of it,
-				// but only for ghost monsters so that they are visibly different.
-				if (corpsehit->height == 0)
+				self->target = temp;
+
+				// Make the state the monster enters customizable.
+				FState * state = self->FindState(NAME_Heal);
+				if (state != NULL)
 				{
-					// Make raised corpses look ghostly
-					if (corpsehit->alpha > TRANSLUC50)
+					self->SetState(state);
+				}
+				else if (usevilestates)
+				{
+					// For Dehacked compatibility this has to use the Arch Vile's
+					// heal state as a default if the actor doesn't define one itself.
+					PClassActor *archvile = PClass::FindActor("Archvile");
+					if (archvile != NULL)
 					{
-						corpsehit->alpha /= 2;
-					}
-					// This will only work if the render style is changed as well.
-					if (corpsehit->RenderStyle == LegacyRenderStyles[STYLE_Normal])
-					{
-						corpsehit->RenderStyle = STYLE_Translucent;
+						self->SetState(archvile->FindState(NAME_Heal));
 					}
 				}
-			}
-			else
-			{
-				corpsehit->height = info->height;	// [RH] Use real mobj height
-				corpsehit->radius = info->radius;	// [RH] Use real radius
-			}
-			corpsehit->flags = info->flags;
-			corpsehit->flags2 = info->flags2;
-			corpsehit->flags3 = info->flags3;
-			corpsehit->flags4 = info->flags4;
-			corpsehit->flags5 = info->flags5;
-			corpsehit->flags6 = info->flags6;
-			corpsehit->flags7 = info->flags7;
-			corpsehit->health = info->health;
-			corpsehit->target = NULL;
-			corpsehit->lastenemy = NULL;
+				S_Sound(corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
+				info = corpsehit->GetDefault();
 
-			// [RH] If it's a monster, it gets to count as another kill
-			if (corpsehit->CountsAsKill())
-			{
-				level.total_monsters++;
+				if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
+				{
+					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
+				}
+				if (ib_compatflags & BCOMPATF_VILEGHOSTS)
+				{
+					corpsehit->height <<= 2;
+					// [GZ] This was a commented-out feature, so let's make use of it,
+					// but only for ghost monsters so that they are visibly different.
+					if (corpsehit->height == 0)
+					{
+						// Make raised corpses look ghostly
+						if (corpsehit->alpha > TRANSLUC50)
+						{
+							corpsehit->alpha /= 2;
+						}
+						// This will only work if the render style is changed as well.
+						if (corpsehit->RenderStyle == LegacyRenderStyles[STYLE_Normal])
+						{
+							corpsehit->RenderStyle = STYLE_Translucent;
+						}
+					}
+				}
+				else
+				{
+					corpsehit->height = info->height;	// [RH] Use real mobj height
+					corpsehit->radius = info->radius;	// [RH] Use real radius
+				}
+
+				corpsehit->Revive();
+
+				// You are the Archvile's minion now, so hate what it hates
+				corpsehit->CopyFriendliness(self, false);
+				corpsehit->SetState(raisestate);
+
+				return true;
 			}
-
-			// You are the Archvile's minion now, so hate what it hates
-			corpsehit->CopyFriendliness (self, false);
-			corpsehit->SetState (raisestate);
-
-			return true;
 		}
 	}
 	return false;

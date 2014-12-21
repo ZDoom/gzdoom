@@ -32,6 +32,20 @@ xx(Cumulative)
 xx(Fuzzy)
 xx(Opaque)
 xx(Stencil)
+xx(AddStencil)
+
+// Render styles
+xx(Normal)
+xx(SoulTrans)
+xx(OptFuzzy)
+xx(Add)
+xx(Shaded)
+xx(AddShaded)
+xx(TranslucentStencil)
+xx(Shadow)
+xx(Subtract)
+xx(Subtractive)
+xx(FillColor)
 
 // Healingradius types
 xx(Mana)
@@ -375,6 +389,11 @@ xx(Friend)
 xx(Strifeally)
 xx(Standing)
 xx(Countsecret)
+xx(Score)
+xx(Roll)
+xx(Scale)
+xx(ScaleX)
+xx(ScaleY)
 
 xx(Blocking)
 xx(Blockmonsters)
@@ -470,6 +489,15 @@ xx(blocksight)
 xx(blockhitscan)
 
 xx(Renderstyle)
+
+xx(ceilingplane_a)
+xx(ceilingplane_b)
+xx(ceilingplane_c)
+xx(ceilingplane_d)
+xx(floorplane_a)
+xx(floorplane_b)
+xx(floorplane_c)
+xx(floorplane_d)
 
 // USDF keywords
 xx(Amount)
@@ -569,6 +597,7 @@ xx(NeverSwitchOnPickup)
 xx(MoveBob)
 xx(StillBob)
 xx(PlayerClass)
+xx(Wi_NoAutostartMap)
 
 // Decorate compatibility functions
 xx(DecoRandom)

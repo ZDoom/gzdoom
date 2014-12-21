@@ -568,7 +568,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		int tspeed = speed;
 
 		if (turnheld < SLOWTURNTICS)
-			tspeed *= 2;		// slow turn
+			tspeed += 2;		// slow turn
 		
 		if (Button_Right.bDown)
 		{
@@ -778,7 +778,7 @@ void G_AddViewPitch (int look)
 	else if (look > 0)
 	{
 		// Avoid overflowing
-		if (LocalViewPitch + look <= LocalViewPitch)
+		if (LocalViewPitch > INT_MAX - look)
 		{
 			LocalViewPitch = 0x78000000;
 		}
@@ -790,7 +790,7 @@ void G_AddViewPitch (int look)
 	else if (look < 0)
 	{
 		// Avoid overflowing
-		if (LocalViewPitch + look >= LocalViewPitch)
+		if (LocalViewPitch < INT_MIN - look)
 		{
 			LocalViewPitch = -0x78000000;
 		}
@@ -1310,7 +1310,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 	}
 
 	// Clears the entire inventory and gives back the defaults for starting a game
-	if (flags & CHANGELEVEL_RESETINVENTORY)
+	if ((flags & CHANGELEVEL_RESETINVENTORY) && p->playerstate != PST_DEAD)
 	{
 		p->mo->ClearInventory();
 		p->mo->GiveDefaultInventory();
@@ -1624,7 +1624,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		{ // Reload the level from scratch
 			bool indemo = demoplayback;
 			BackupSaveName = "";
-			G_InitNew (level.mapname, false);
+			G_InitNew (level.MapName, false);
 			demoplayback = indemo;
 //			gameaction = ga_loadlevel;
 		}
@@ -1838,6 +1838,13 @@ void G_DoLoadGame ()
 		BYTE *vars_p = (BYTE *)text;
 		C_ReadCVars (&vars_p);
 		delete[] text;
+		if (SaveVersion <= 4509)
+		{
+			// account for the flag shuffling for making freelook a 3-state option
+			INTBOOL flag = dmflags & DF_YES_FREELOOK;
+			dmflags = dmflags & ~DF_YES_FREELOOK;
+			if (flag) dmflags2 = dmflags2 | DF2_RESPAWN_SUPER;
+		}
 	}
 
 	// dearchive all the modifications
@@ -1922,32 +1929,10 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	leader = Args->CheckValue ("-savedir");
 	if (leader.IsEmpty())
 	{
-#if !defined(__unix__) && !defined(__APPLE__)
-		if (Args->CheckParm ("-cdrom"))
-		{
-			leader = CDROM_DIR "/";
-		}
-		else
-#endif
-		{
-			leader = save_dir;
-		}
+		leader = save_dir;
 		if (leader.IsEmpty())
 		{
-#ifdef __unix__
-			leader = "~/" GAME_DIR;
-#elif defined(__APPLE__)
-			char cpath[PATH_MAX];
-			FSRef folder;
-
-			if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-				noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-			{
-				leader << cpath << "/" GAME_DIR "/Savegames/";
-			}
-#else
-			leader = progdir;
-#endif
+			leader = M_GetSavegamesPath();
 		}
 	}
 	size_t len = leader.Len();
@@ -2052,7 +2037,7 @@ static void PutSaveComment (FILE *file)
 
 	// Get level name
 	//strcpy (comment, level.level_name);
-	mysnprintf(comment, countof(comment), "%s - %s", level.mapname, level.LevelName.GetChars());
+	mysnprintf(comment, countof(comment), "%s - %s", level.MapName.GetChars(), level.LevelName.GetChars());
 	len = (WORD)strlen (comment);
 	comment[len] = '\n';
 
@@ -2113,7 +2098,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	M_AppendPNGText (stdfile, "Engine", GAMESIG);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
 	M_AppendPNGText (stdfile, "Title", description);
-	M_AppendPNGText (stdfile, "Current Map", level.mapname);
+	M_AppendPNGText (stdfile, "Current Map", level.MapName);
 	PutSaveWads (stdfile);
 	PutSaveComment (stdfile);
 
@@ -2314,7 +2299,7 @@ void G_BeginRecording (const char *startmap)
 
 	if (startmap == NULL)
 	{
-		startmap = level.mapname;
+		startmap = level.MapName;
 	}
 	demo_p = demobuffer;
 
@@ -2327,11 +2312,10 @@ void G_BeginRecording (const char *startmap)
 	WriteWord (DEMOGAMEVERSION, &demo_p);	// Write ZDoom version
 	*demo_p++ = 2;							// Write minimum version needed to use this demo.
 	*demo_p++ = 3;							// (Useful?)
-	for (i = 0; i < 8; i++)					// Write name of map demo was recorded on.
-	{
-		*demo_p++ = startmap[i];
-	}
-	WriteLong (rngseed, &demo_p);			// Write RNG seed
+
+	strcpy((char*)demo_p, startmap);		// Write name of map demo was recorded on.
+	demo_p += strlen(startmap) + 1;
+	WriteLong(rngseed, &demo_p);			// Write RNG seed
 	*demo_p++ = consoleplayer;
 	FinishChunk (&demo_p);
 
@@ -2410,7 +2394,7 @@ CCMD (timedemo)
 
 // [RH] Process all the information in a FORM ZDEM
 //		until a BODY chunk is entered.
-bool G_ProcessIFFDemo (char *mapname)
+bool G_ProcessIFFDemo (FString &mapname)
 {
 	bool headerHit = false;
 	bool bodyHit = false;
@@ -2466,9 +2450,16 @@ bool G_ProcessIFFDemo (char *mapname)
 				Printf ("Demo requires a newer version of ZDoom!\n");
 				return true;
 			}
-			memcpy (mapname, demo_p, 8);	// Read map name
-			mapname[8] = 0;
-			demo_p += 8;
+			if (demover >= 0x21a)
+			{
+				mapname = (char*)demo_p;
+				demo_p += mapname.Len() + 1;
+			}
+			else
+			{
+				mapname = FString((char*)demo_p, 8);
+				demo_p += 8;
+			}
 			rngseed = ReadLong (&demo_p);
 			// Only reset the RNG if this demo is not in conjunction with a savegame.
 			if (mapname[0] != 0)
@@ -2550,7 +2541,7 @@ bool G_ProcessIFFDemo (char *mapname)
 
 void G_DoPlayDemo (void)
 {
-	char mapname[9];
+	FString mapname;
 	int demolump;
 
 	gameaction = ga_nothing;
@@ -2603,7 +2594,7 @@ void G_DoPlayDemo (void)
 		// don't spend a lot of time in loadlevel 
 		precache = false;
 		demonew = true;
-		if (mapname[0] != 0)
+		if (mapname.Len() != 0)
 		{
 			G_InitNew (mapname, false);
 		}

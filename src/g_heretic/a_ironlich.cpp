@@ -179,7 +179,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int i;
+	unsigned int i;
 	angle_t angle;
 	AActor *shard;
 

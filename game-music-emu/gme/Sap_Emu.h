@@ -1,6 +1,6 @@
 // Atari XL/XE SAP music file emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef SAP_EMU_H
 #define SAP_EMU_H
 

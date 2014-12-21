@@ -950,18 +950,6 @@ void FPolyObj::UpdateBBox ()
 		// Update the line's slopetype
 		line->dx = line->v2->x - line->v1->x;
 		line->dy = line->v2->y - line->v1->y;
-		if (!line->dx)
-		{
-			line->slopetype = ST_VERTICAL;
-		}
-		else if (!line->dy)
-		{
-			line->slopetype = ST_HORIZONTAL;
-		}
-		else
-		{
-			line->slopetype = ((line->dy ^ line->dx) >= 0) ? ST_POSITIVE : ST_NEGATIVE;
-		}
 	}
 	CalcCenter();
 }

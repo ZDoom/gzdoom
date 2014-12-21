@@ -686,6 +686,7 @@ OptionMenu "VideoOptions"
 	Option "Show player sprites",		"r_drawplayersprites", "OnOff"
 	Option "Death camera",				"r_deathcamera", "OnOff"
 	Option "Teleporter zoom",			"telezoom", "OnOff"
+	Slider "Earthquake shake intensity",	"r_quakeintensity", 0.0, 1.0, 0.05, 2
 	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
 }
 
@@ -815,6 +816,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show item count",						"hud_showitems", "OnOff"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
 	Option "Show berserk",							"hud_berserk_health", "OnOff"
+	Option "Show weapons",							"hud_showweapons", "OnOff"
 	Option "Show time",								"hud_showtime", "AltHUDTime"
 	Option "Time color",							"hud_timecolor", "TextColors"
 	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
@@ -1156,7 +1158,7 @@ OptionValue  FallingDM
 	3, "Strife"
 }
 
-OptionValue  JumpCrouch
+OptionValue  JumpCrouchFreeLook
 {
 	0, "Default"
 	1, "Off"
@@ -1188,9 +1190,9 @@ OptionMenu GameplayOptions
 	Option "Degeneration",			"sv_degeneration", "YesNo"
 	Option "Allow Autoaim",			"sv_noautoaim", "NoYes"
 	Option "Allow Suicide",			"sv_disallowsuicide", "NoYes"
-	Option "Allow jump",			"sv_jump", "JumpCrouch"
-	Option "Allow crouch",			"sv_crouch", "JumpCrouch"
-	Option "Allow freelook",		"sv_nofreelook", "NoYes"
+	Option "Allow jump",			"sv_jump", "JumpCrouchFreeLook"
+	Option "Allow crouch",			"sv_crouch", "JumpCrouchFreeLook"
+	Option "Allow freelook",		"sv_freelook", "JumpCrouchFreeLook"
 	Option "Allow FOV",				"sv_nofov", "NoYes"
 	Option "Allow BFG aiming",		"sv_nobfgaim", "NoYes"
 	Option "Allow automap",			"sv_noautomap", "NoYes"

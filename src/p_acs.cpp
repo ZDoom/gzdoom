@@ -122,10 +122,11 @@ FRandom pr_acs ("ACS");
 
 struct CallReturn
 {
-	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, bool discard, unsigned int runaway)
+	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
 		: ReturnFunction(func),
 		  ReturnModule(module),
 		  ReturnLocals(locals),
+		  ReturnArrays(arrays),
 		  ReturnAddress(pc),
 		  bDiscardResult(discard),
 		  EntryInstrCount(runaway)
@@ -134,6 +135,7 @@ struct CallReturn
 	ScriptFunction *ReturnFunction;
 	FBehavior *ReturnModule;
 	SDWORD *ReturnLocals;
+	ACSLocalArrays *ReturnArrays;
 	int ReturnAddress;
 	int bDiscardResult;
 	unsigned int EntryInstrCount;
@@ -1673,6 +1675,26 @@ void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
 	}
 }
 
+static int ParseLocalArrayChunk(void *chunk, ACSLocalArrays *arrays, int offset)
+{
+	unsigned count = (LittleShort(static_cast<unsigned short>(((unsigned *)chunk)[1]) - 2)) / 4;
+	int *sizes = (int *)((BYTE *)chunk + 10);
+	arrays->Count = count;
+	if (count > 0)
+	{
+		ACSLocalArrayInfo *info = new ACSLocalArrayInfo[count];
+		arrays->Info = info;
+		for (unsigned i = 0; i < count; ++i)
+		{
+			info[i].Size = LittleLong(sizes[i]);
+			info[i].Offset = offset;
+			offset += info[i].Size;
+		}
+	}
+	// Return the new local variable size, with space for the arrays
+	return offset;
+}
+
 FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 {
 	BYTE *object;
@@ -1822,12 +1844,45 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	{
 		DWORD *chunk;
 
-		Functions = FindChunk (MAKE_ID('F','U','N','C'));
-		if (Functions != NULL)
+		// Load functions
+		BYTE *funcs;
+		Functions = NULL;
+		funcs = FindChunk (MAKE_ID('F','U','N','C'));
+		if (funcs != NULL)
 		{
-			NumFunctions = LittleLong(((DWORD *)Functions)[1]) / 8;
-			Functions += 8;
+			NumFunctions = LittleLong(((DWORD *)funcs)[1]) / 8;
+			funcs += 8;
 			FunctionProfileData = new ACSProfileInfo[NumFunctions];
+			Functions = new ScriptFunction[NumFunctions];
+			for (i = 0; i < NumFunctions; ++i)
+			{
+				ScriptFunctionInFile *funcf = &((ScriptFunctionInFile *)funcs)[i];
+				ScriptFunction *funcm = &Functions[i];
+				funcm->ArgCount = funcf->ArgCount;
+				funcm->HasReturnValue = funcf->HasReturnValue;
+				funcm->ImportNum = funcf->ImportNum;
+				funcm->LocalCount = funcf->LocalCount;
+				funcm->Address = funcf->Address;
+			}
+		}
+
+		// Load local arrays for functions
+		if (NumFunctions > 0)
+		{
+			for (chunk = (DWORD *)FindChunk(MAKE_ID('F','A','R','Y')); chunk != NULL; chunk = (DWORD *)NextChunk((BYTE *)chunk))
+			{
+				int size = LittleLong(chunk[1]);
+				if (size >= 6)
+				{
+					unsigned int func_num = LittleShort(((WORD *)chunk)[4]);
+					if (func_num < (unsigned int)NumFunctions)
+					{
+						ScriptFunction *func = &Functions[func_num];
+						// Unlike scripts, functions do not include their arg count in their local count.
+						func->LocalCount = ParseLocalArrayChunk(chunk, &func->LocalArrays, func->LocalCount + func->ArgCount) - func->ArgCount;
+					}
+				}
+			}
 		}
 
 		// Load JUMP points
@@ -2135,6 +2190,11 @@ FBehavior::~FBehavior ()
 		delete[] ArrayStore;
 		ArrayStore = NULL;
 	}
+	if (Functions != NULL)
+	{
+		delete[] Functions;
+		Functions = NULL;
+	}
 	if (FunctionProfileData != NULL)
 	{
 		delete[] FunctionProfileData;
@@ -2298,6 +2358,21 @@ void FBehavior::LoadScriptsDirectory ()
 			if (ptr != NULL)
 			{
 				ptr->VarCount = LittleShort(scripts.w[1]);
+			}
+		}
+	}
+
+	// Load script array sizes. (One chunk per script that uses arrays.)
+	for (scripts.b = FindChunk(MAKE_ID('S','A','R','Y')); scripts.dw != NULL; scripts.b = NextChunk(scripts.b))
+	{
+		int size = LittleLong(scripts.dw[1]);
+		if (size >= 6)
+		{
+			int script_num = LittleShort(scripts.w[4]);
+			ScriptPtr *ptr = const_cast<ScriptPtr *>(FindScript(script_num));
+			if (ptr != NULL)
+			{
+				ptr->VarCount = ParseLocalArrayChunk(scripts.b, &ptr->LocalArrays, ptr->VarCount);
 			}
 		}
 	}
@@ -3528,7 +3603,9 @@ enum
 	APROP_ReactionTime  = 37,
 	APROP_MeleeRange	= 38,
 	APROP_ViewHeight	= 39,
-	APROP_AttackZOffset	= 40
+	APROP_AttackZOffset	= 40,
+	APROP_StencilColor	= 41,
+	APROP_Friction		= 42,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3544,6 +3621,10 @@ static const int LegacyRenderStyleIndices[] =
 	65,	// STYLE_Add,
 	66,	// STYLE_Shaded,
 	67,	// STYLE_TranslucentStencil,
+	68,	// STYLE_Shadow,
+	69,	// STYLE_Subtract,
+	6,	// STYLE_AddStencil
+	7,	// STYLE_AddShaded
 	-1
 };
 
@@ -3754,6 +3835,13 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
 		break;
 
+	case APROP_StencilColor:
+		actor->SetShade(value);
+		break;
+
+	case APROP_Friction:
+		actor->Friction = value;
+
 	default:
 		// do nothing.
 		break;
@@ -3851,6 +3939,8 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_ActiveSound:	return GlobalACSStrings.AddString(actor->ActiveSound, stack, stackdepth);
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies(), stack, stackdepth);
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag(), stack, stackdepth);
+	case APROP_StencilColor:return actor->fillcolor;
+	case APROP_Friction:	return actor->Friction;
 
 	default:				return 0;
 	}
@@ -3897,6 +3987,7 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MeleeRange:
 		case APROP_ViewHeight:
 		case APROP_AttackZOffset:
+		case APROP_StencilColor:
 			return (GetActorProperty(tid, property, NULL, 0) == value);
 
 		// Boolean values need to compare to a binary version of value
@@ -3932,7 +4023,9 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	{
 		return 0;
 	}
-	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string));
+	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string), FTexture::TEX_Flat,
+			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_DontCreate);
+
 	if (tex == NULL)
 	{ // If the texture we want to check against doesn't exist, then
 	  // they're obviously not the same.
@@ -4250,6 +4343,21 @@ enum EACSFunctions
 	ACSF_CheckFont,
 	ACSF_DropItem,
 	ACSF_CheckFlag,
+	ACSF_SetLineActivation,
+	ACSF_GetLineActivation,
+	ACSF_GetActorPowerupTics,
+	ACSF_ChangeActorAngle,
+	ACSF_ChangeActorPitch,		// 80
+
+	/* Zandronum's - these must be skipped when we reach 99!
+	-100:ResetMap(0),
+	-101 : PlayerIsSpectator(1),
+	-102 : ConsolePlayerNumber(0),
+	-103 : GetTeamProperty(2),
+	-104 : GetPlayerLivesLeft(1),
+	-105 : SetPlayerLivesLeft(2),
+	-106 : KickFromGame(2),
+	*/
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)
@@ -4501,6 +4609,50 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 		actor->z + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
+
+static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetAngle(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetAngle(angle << 16, interpolate);
+		}
+	}
+}
+
+static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetPitch(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetPitch(angle << 16, interpolate);
+		}
+	}
+}
+
+
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const SDWORD *stack, int stackdepth)
 {
@@ -4926,7 +5078,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 			break;
 
 		case ACSF_UniqueTID:
-			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, argCount > 1 ? args[1] : 0);
+			return P_FindUniqueTID(argCount > 0 ? args[0] : 0, (argCount > 1 && args[1] >= 0) ? args[1] : 0);
 
 		case ACSF_IsTIDUsed:
 			return P_IsTIDUsed(args[0]);
@@ -5025,7 +5177,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 					while ((source = it.Next()) != NULL)
 					{
-						P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
+						P_LineAttack(source, angle, range, pitch, damage, damagetype, pufftype, fhflags);
 					}
 				}
 			}
@@ -5288,6 +5440,61 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			break;
 		}
 
+		case ACSF_SetLineActivation:
+			if (argCount >= 2)
+			{
+				int line = -1;
+
+				while ((line = P_FindLineFromID(args[0], line)) >= 0)
+				{
+					lines[line].activation = args[1];
+				}
+			}
+			break;
+
+		case ACSF_GetLineActivation:
+			if (argCount > 0)
+			{
+				int line = P_FindLineFromID(args[0], -1);
+				return line >= 0 ? lines[line].activation : 0;
+			}
+			break;
+
+		case ACSF_GetActorPowerupTics:
+			if (argCount >= 2)
+			{
+				PClassActor *powerupclass = PClass::FindActor(FBehavior::StaticLookupString(args[1]));
+				if (powerupclass == NULL || !RUNTIME_CLASS(APowerup)->IsAncestorOf(powerupclass))
+				{
+					Printf("'%s' is not a type of Powerup.\n", FBehavior::StaticLookupString(args[1]));
+					return 0;
+				}
+
+				AActor *actor = SingleActorFromTID(args[0], activator);
+				if (actor != NULL)
+				{
+					APowerup* powerup = (APowerup*)actor->FindInventory(powerupclass);
+					if (powerup != NULL)
+						return powerup->EffectTics;
+				}
+				return 0;
+			}
+			break;
+
+		case ACSF_ChangeActorAngle:
+			if (argCount >= 2)
+			{
+				SetActorAngle(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_ChangeActorPitch:
+			if (argCount >= 2)
+			{
+				SetActorPitch(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
 		default:
 			break;
 	}
@@ -5325,13 +5532,49 @@ inline int getshort (int *&pc)
 	return res;
 }
 
+static bool CharArrayParms(int &capacity, int &offset, int &a, int *Stack, int &sp, bool ranged)
+{
+	if (ranged)
+	{
+		capacity = STACK(1);
+		offset = STACK(2);
+		if (capacity < 1 || offset < 0)
+		{
+			sp -= 4;
+			return false;
+		}
+		sp -= 2;
+	}
+	else
+	{
+		capacity = INT_MAX;
+		offset = 0;
+	}
+	a = STACK(1);
+	offset += STACK(2);
+	sp -= 2;
+	return true;
+}
+
 int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 	SDWORD *locals = localvars;
+	ACSLocalArrays noarrays;
+	ACSLocalArrays *localarrays = &noarrays;
 	ScriptFunction *activeFunction = NULL;
 	FRemapTable *translation = 0;
 	int resultValue = 1;
+
+	if (InModuleScriptNumber >= 0)
+	{
+		ScriptPtr *ptr = activeBehavior->GetScriptPtr(InModuleScriptNumber);
+		assert(ptr != NULL);
+		if (ptr != NULL)
+		{
+			localarrays = &ptr->LocalArrays;
+		}
+	}
 
 	// Hexen truncates all special arguments to bytes (only when using an old MAPINFO and old ACS format
 	const int specialargmask = ((level.flags2 & LEVEL2_HEXENHACK) && activeBehavior->GetFormat() == ACS_Old) ? 255 : ~0;
@@ -5697,9 +5940,10 @@ int DLevelScript::RunScript ()
 				}
 				sp += i;
 				::new(&Stack[sp]) CallReturn(activeBehavior->PC2Ofs(pc), activeFunction,
-					activeBehavior, mylocals, pcd == PCD_CALLDISCARD, runaway);
+					activeBehavior, mylocals, localarrays, pcd == PCD_CALLDISCARD, runaway);
 				sp += (sizeof(CallReturn) + sizeof(int) - 1) / sizeof(int);
 				pc = module->Ofs2PC (func->Address);
+				localarrays = &func->LocalArrays;
 				activeFunction = func;
 				activeBehavior = module;
 				fmt = module->GetFormat();
@@ -5733,6 +5977,7 @@ int DLevelScript::RunScript ()
 				activeBehavior = ret->ReturnModule;
 				fmt = activeBehavior->GetFormat();
 				locals = ret->ReturnLocals;
+				localarrays = ret->ReturnArrays;
 				if (!ret->bDiscardResult)
 				{
 					Stack[sp++] = value;
@@ -5831,6 +6076,11 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_ASSIGNSCRIPTARRAY:
+			localarrays->Set(locals, NEXTBYTE, STACK(2), STACK(1));
+			sp -= 2;
+			break;
+
 		case PCD_ASSIGNMAPARRAY:
 			activeBehavior->SetArrayVal (*(activeBehavior->MapVars[NEXTBYTE]), STACK(2), STACK(1));
 			sp -= 2;
@@ -5860,6 +6110,10 @@ int DLevelScript::RunScript ()
 
 		case PCD_PUSHGLOBALVAR:
 			PushToStack (ACS_GlobalVars[NEXTBYTE]);
+			break;
+
+		case PCD_PUSHSCRIPTARRAY:
+			STACK(1) = localarrays->Get(locals, NEXTBYTE, STACK(1));
 			break;
 
 		case PCD_PUSHMAPARRAY:
@@ -5892,6 +6146,14 @@ int DLevelScript::RunScript ()
 		case PCD_ADDGLOBALVAR:
 			ACS_GlobalVars[NEXTBYTE] += STACK(1);
 			sp--;
+			break;
+
+		case PCD_ADDSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) + STACK(1));
+				sp -= 2;
+			}
 			break;
 
 		case PCD_ADDMAPARRAY:
@@ -5939,6 +6201,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_SUBSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) - STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_SUBMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -5982,6 +6252,14 @@ int DLevelScript::RunScript ()
 		case PCD_MULGLOBALVAR:
 			ACS_GlobalVars[NEXTBYTE] *= STACK(1);
 			sp--;
+			break;
+
+		case PCD_MULSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) * STACK(1));
+				sp -= 2;
+			}
 			break;
 
 		case PCD_MULMAPARRAY:
@@ -6054,6 +6332,19 @@ int DLevelScript::RunScript ()
 			{
 				ACS_GlobalVars[NEXTBYTE] /= STACK(1);
 				sp--;
+			}
+			break;
+
+		case PCD_DIVSCRIPTARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) / STACK(1));
+				sp -= 2;
 			}
 			break;
 
@@ -6145,6 +6436,19 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_MODSCRIPTARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) % STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_MODMAPARRAY:
 			if (STACK(1) == 0)
 			{
@@ -6206,6 +6510,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_ANDSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) & STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_ANDMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6251,6 +6563,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_EORSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) ^ STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_EORMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6294,6 +6614,14 @@ int DLevelScript::RunScript ()
 		case PCD_ORGLOBALVAR:
 			ACS_GlobalVars[NEXTBYTE] |= STACK(1);
 			sp--;
+			break;
+
+		case PCD_ORSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) | STACK(1));
+				sp -= 2;
+			}
 			break;
 
 		case PCD_ORMAPARRAY:
@@ -6342,6 +6670,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_LSSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) << STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_LSMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6387,6 +6723,14 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
+		case PCD_RSSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(2);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) >> STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_RSMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6429,6 +6773,14 @@ int DLevelScript::RunScript ()
 			++ACS_GlobalVars[NEXTBYTE];
 			break;
 
+		case PCD_INCSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(1);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) + 1);
+				sp--;
+			}
+			break;
+
 		case PCD_INCMAPARRAY:
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
@@ -6468,6 +6820,14 @@ int DLevelScript::RunScript ()
 
 		case PCD_DECGLOBALVAR:
 			--ACS_GlobalVars[NEXTBYTE];
+			break;
+
+		case PCD_DECSCRIPTARRAY:
+			{
+				int a = NEXTBYTE, i = STACK(1);
+				localarrays->Set(locals, a, i, localarrays->Get(locals, a, i) - 1);
+				sp--;
+			}
 			break;
 
 		case PCD_DECMAPARRAY:
@@ -6799,7 +7159,22 @@ scriptwait:
 			break;
 
 		case PCD_PRINTBINARY:
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))) || defined(__clang__)
+#define HAS_DIAGNOSTIC_PRAGMA
+#endif
+#ifdef HAS_DIAGNOSTIC_PRAGMA
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"
+#else
+#pragma GCC diagnostic ignored "-Wformat="
+#endif
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif
 			work.AppendFormat ("%B", STACK(1));
+#ifdef HAS_DIAGNOSTIC_PRAGMA
+#pragma GCC diagnostic pop
+#endif
 			--sp;
 			break;
 
@@ -6833,7 +7208,7 @@ scriptwait:
 						break;
 
 					case PRINTNAME_LEVEL:
-						work += level.mapname;
+						work += level.MapName;
 						break;
 
 					case PRINTNAME_SKILL:
@@ -6881,37 +7256,35 @@ scriptwait:
 			}
 			break;
 
+		// Print script character array
+		case PCD_PRINTSCRIPTCHARARRAY:
+		case PCD_PRINTSCRIPTCHRANGE:
+			{
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTSCRIPTCHRANGE))
+				{
+					while (capacity-- && (c = localarrays->Get(locals, a, offset)) != '\0')
+					{
+						work += (char)c;
+						offset++;
+					}
+				}
+			}
+			break;
+
 		// [JB] Print map character array
 		case PCD_PRINTMAPCHARARRAY:
 		case PCD_PRINTMAPCHRANGE:
 			{
-				int capacity, offset;
-
-				if (pcd == PCD_PRINTMAPCHRANGE)
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTMAPCHRANGE))
 				{
-					capacity = STACK(1);
-					offset = STACK(2);
-					if (capacity < 1 || offset < 0)
+					while (capacity-- && (c = activeBehavior->GetArrayVal (a, offset)) != '\0')
 					{
-						sp -= 4;
-						break;
+						work += (char)c;
+						offset++;
 					}
-					sp -= 2;
 				}
-				else
-				{
-					capacity = 0x7FFFFFFF;
-					offset = 0;
-				}
-
-				int a = *(activeBehavior->MapVars[STACK(1)]);
-				offset += STACK(2);
-				int c;
-				while(capacity-- && (c = activeBehavior->GetArrayVal (a, offset)) != '\0') {
-					work += (char)c;
-					offset++;
-				}
-				sp-= 2;
 			}
 			break;
 
@@ -6919,32 +7292,15 @@ scriptwait:
 		case PCD_PRINTWORLDCHARARRAY:
 		case PCD_PRINTWORLDCHRANGE:
 			{
-				int capacity, offset;
-				if (pcd == PCD_PRINTWORLDCHRANGE)
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTWORLDCHRANGE))
 				{
-					capacity = STACK(1);
-					offset = STACK(2);
-					if (capacity < 1 || offset < 0)
+					while (capacity-- && (c = ACS_WorldArrays[a][offset]) != '\0')
 					{
-						sp -= 4;
-						break;
+						work += (char)c;
+						offset++;
 					}
-					sp -= 2;
 				}
-				else
-				{
-					capacity = 0x7FFFFFFF;
-					offset = 0;
-				}
-
-				int a = STACK(1);
-				offset += STACK(2);
-				int c;
-				while(capacity-- && (c = ACS_WorldArrays[a][offset]) != '\0') {
-					work += (char)c;
-					offset++;
-				}
-				sp-= 2;
 			}
 			break;
 
@@ -6952,32 +7308,15 @@ scriptwait:
 		case PCD_PRINTGLOBALCHARARRAY:
 		case PCD_PRINTGLOBALCHRANGE:
 			{
-				int capacity, offset;
-				if (pcd == PCD_PRINTGLOBALCHRANGE)
+				int capacity, offset, a, c;
+				if (CharArrayParms(capacity, offset, a, Stack, sp, pcd == PCD_PRINTGLOBALCHRANGE))
 				{
-					capacity = STACK(1);
-					offset = STACK(2);
-					if (capacity < 1 || offset < 0)
+					while (capacity-- && (c = ACS_GlobalArrays[a][offset]) != '\0')
 					{
-						sp -= 4;
-						break;
+						work += (char)c;
+						offset++;
 					}
-					sp -= 2;
 				}
-				else
-				{
-					capacity = 0x7FFFFFFF;
-					offset = 0;
-				}
-
-				int a = STACK(1);
-				offset += STACK(2);
-				int c;
-				while(capacity-- && (c = ACS_GlobalArrays[a][offset]) != '\0') {
-					work += (char)c;
-					offset++;
-				}
-				sp-= 2;
 			}
 			break;
 
@@ -7829,14 +8168,22 @@ scriptwait:
 		case PCD_GETSECTORCEILINGZ:
 			// Arguments are (tag, x, y). If you don't use slopes, then (x, y) don't
 			// really matter and can be left as (0, 0) if you like.
+			// [Dusk] If tag = 0, then this returns the z height at whatever sector
+			// is in x, y.
 			{
-				int secnum = P_FindSectorFromTag (STACK(3), -1);
+				int tag = STACK(3);
+				int secnum;
+				fixed_t x = STACK(2) << FRACBITS;
+				fixed_t y = STACK(1) << FRACBITS;
 				fixed_t z = 0;
+
+				if (tag != 0)
+					secnum = P_FindSectorFromTag (tag, -1);
+				else
+					secnum = int(P_PointInSector (x, y) - sectors);
 
 				if (secnum >= 0)
 				{
-					fixed_t x = STACK(2) << FRACBITS;
-					fixed_t y = STACK(1) << FRACBITS;
 					if (pcd == PCD_GETSECTORFLOORZ)
 					{
 						z = sectors[secnum].floorplane.ZatPoint (x, y);
@@ -8194,13 +8541,11 @@ scriptwait:
 				sky2name = FBehavior::StaticLookupString (STACK(1));
 				if (sky1name[0] != 0)
 				{
-					strncpy (level.skypic1, sky1name, 8);
-					sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					sky1texture = level.skytexture1 = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				if (sky2name[0] != 0)
 				{
-					strncpy (level.skypic2, sky2name, 8);
-					sky2texture = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					sky2texture = level.skytexture2 = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				R_InitSkyMap ();
 				sp -= 2;
@@ -8239,40 +8584,12 @@ scriptwait:
 			break;
 
 		case PCD_SETACTORANGLE:		// [GRB]
-			if (STACK(2) == 0)
-			{
-				if (activator != NULL)
-					activator->angle = STACK(1) << 16;
-			}
-			else
-			{
-				FActorIterator iterator (STACK(2));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
-				{
-					actor->angle = STACK(1) << 16;
-				}
-			}
+			SetActorAngle(activator, STACK(2), STACK(1), false);
 			sp -= 2;
 			break;
 
 		case PCD_SETACTORPITCH:
-			if (STACK(2) == 0)
-			{
-				if (activator != NULL)
-					activator->pitch = STACK(1) << 16;
-			}
-			else
-			{
-				FActorIterator iterator (STACK(2));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
-				{
-					actor->pitch = STACK(1) << 16;
-				}
-			}
+			SetActorPitch(activator, STACK(2), STACK(1), false);
 			sp -= 2;
 			break;
 
@@ -8546,6 +8863,7 @@ scriptwait:
 			}		
 			break;
 
+		case PCD_STRCPYTOSCRIPTCHRANGE:
 		case PCD_STRCPYTOMAPCHRANGE:
 		case PCD_STRCPYTOWORLDCHRANGE:
 		case PCD_STRCPYTOGLOBALCHRANGE:
@@ -8576,7 +8894,7 @@ scriptwait:
 					break;
 				}
 
-				for (int i = 0;i < STACK(1); i++)
+				for (int i = 0; i < STACK(1); i++)
 				{
 					if (! (*(lookup++)))
 					{
@@ -8587,43 +8905,55 @@ scriptwait:
 
 				switch (pcd)
 				{
-					case PCD_STRCPYTOMAPCHRANGE:
-						{
-							int a = STACK(5);
-							if (a < NUM_MAPVARS && a > 0 &&
-								activeBehavior->MapVars[a])
-							{
-								Stack[sp-6] = activeBehavior->CopyStringToArray(*(activeBehavior->MapVars[a]), index, capacity, lookup);
-							}
-						}
-						break;
-					case PCD_STRCPYTOWORLDCHRANGE:
-						{
-							int a = STACK(5);
+				case PCD_STRCPYTOSCRIPTCHRANGE:
+					{
+						int a = STACK(5);
 
-							while (capacity-- > 0)
-							{
-								ACS_WorldArrays[a][index++] = *lookup;
-								if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
-							}
-							
-							Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
-						}
-						break;
-					case PCD_STRCPYTOGLOBALCHRANGE:
+						while (capacity-- > 0)
 						{
-							int a = STACK(5);
-
-							while (capacity-- > 0)
-							{
-								ACS_GlobalArrays[a][index++] = *lookup;
-								if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
-							}
-							
-							Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+							localarrays->Set(locals, a, index++, *lookup);
+							if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
 						}
-						break;
-					
+						
+						Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+					}
+					break;
+				case PCD_STRCPYTOMAPCHRANGE:
+					{
+						int a = STACK(5);
+						if (a < NUM_MAPVARS && a > 0 &&
+							activeBehavior->MapVars[a])
+						{
+							Stack[sp-6] = activeBehavior->CopyStringToArray(*(activeBehavior->MapVars[a]), index, capacity, lookup);
+						}
+					}
+					break;
+				case PCD_STRCPYTOWORLDCHRANGE:
+					{
+						int a = STACK(5);
+
+						while (capacity-- > 0)
+						{
+							ACS_WorldArrays[a][index++] = *lookup;
+							if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
+						}
+						
+						Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+					}
+					break;
+				case PCD_STRCPYTOGLOBALCHRANGE:
+					{
+						int a = STACK(5);
+
+						while (capacity-- > 0)
+						{
+							ACS_GlobalArrays[a][index++] = *lookup;
+							if (! (*(lookup++))) goto STRCPYTORANGECOMPLETE; // complete with terminating 0
+						}
+						
+						Stack[sp-6] = !(*lookup); // true/success if only terminating 0 was not copied
+					}
+					break;
 				}
 				sp -= 5;
 			}
@@ -8816,7 +9146,7 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 			def->playernum = -1;
 		}
 		i->defered = def;
-		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->mapname);
+		DPrintf ("%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
 
@@ -8824,7 +9154,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 
 int P_StartScript (AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
-	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
+	if (map == NULL || 0 == strnicmp (level.MapName, map, 8))
 	{
 		FBehavior *module = NULL;
 		const ScriptPtr *scriptdata;
@@ -8877,17 +9207,17 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 	return false;
 }
 
-void P_SuspendScript (int script, char *map)
+void P_SuspendScript (int script, const char *map)
 {
-	if (strnicmp (level.mapname, map, 8))
+	if (strnicmp (level.MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_Suspended);
 }
 
-void P_TerminateScript (int script, char *map)
+void P_TerminateScript (int script, const char *map)
 {
-	if (strnicmp (level.mapname, map, 8))
+	if (strnicmp (level.MapName, map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_PleaseRemove);

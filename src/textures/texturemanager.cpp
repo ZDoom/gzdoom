@@ -220,8 +220,38 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 		{
 			if (firsttype == FTexture::TEX_Null) return FTextureID(0);
 			if (firsttype == FTexture::TEX_FirstDefined && !(flags & TEXMAN_ReturnFirst)) return FTextureID(0);
+			return FTextureID(firstfound);
 		}
-		return FTextureID(firstfound);
+	}
+
+	
+	if (!(flags & TEXMAN_ShortNameOnly))
+	{
+		// We intentionally only look for textures in subdirectories.
+		// Any graphic being placed in the zip's root directory can not be found by this.
+		if (strchr(name, '/'))
+		{
+			FTexture *const NO_TEXTURE = (FTexture*)-1;
+			int lump = Wads.CheckNumForFullName(name);
+			if (lump >= 0)
+			{
+				FTexture *tex = Wads.GetLinkedTexture(lump);
+				if (tex == NO_TEXTURE) return FTextureID(-1);
+				if (tex != NULL) return tex->id;
+				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
+				tex = FTexture::CreateTexture("", lump, FTexture::TEX_Override);
+				if (tex != NULL)
+				{
+					Wads.SetLinkedTexture(lump, tex);
+					return AddTexture(tex);
+				}
+				else
+				{
+					// mark this lump as having no valid texture so that we don't have to retry creating one later.
+					Wads.SetLinkedTexture(lump, NO_TEXTURE);
+				}
+			}
+		}
 	}
 
 	return FTextureID(-1);
@@ -272,30 +302,6 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list)
 	}
 	return list.Size();
 }
-
-//==========================================================================
-//
-// FTextureManager :: FindTextureByLumpNum
-//
-//==========================================================================
-
-FTextureID FTextureManager::FindTextureByLumpNum (int lumpnum)
-{
-	if (lumpnum < 0)
-	{
-		return FTextureID(-1);
-	}
-	// This can't use hashing because using ReplaceTexture would break the hash chains. :(
-	for(unsigned i = 0; i <Textures.Size(); i++)
-	{
-		if (Textures[i].Texture->SourceLump == lumpnum)
-		{
-			return FTextureID(i);
-		}
-	}
-	return FTextureID(-1);
-}
-
 
 //==========================================================================
 //
@@ -367,7 +373,7 @@ FTextureID FTextureManager::AddTexture (FTexture *texture)
 	// Later textures take precedence over earlier ones
 
 	// Textures without name can't be looked for
-	if (texture->Name[0] != 0)
+	if (texture->Name[0] != '\0')
 	{
 		bucket = int(MakeKey (texture->Name) % HASH_SIZE);
 		hash = HashFirst[bucket];
@@ -423,12 +429,12 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FTexture *newtexture, b
 
 	FTexture *oldtexture = Textures[index].Texture;
 
-	strcpy (newtexture->Name, oldtexture->Name);
+	newtexture->Name = oldtexture->Name;
 	newtexture->UseType = oldtexture->UseType;
 	Textures[index].Texture = newtexture;
 
 	newtexture->id = oldtexture->id;
-	if (free)
+	if (free && !oldtexture->bKeepAround)
 	{
 		delete oldtexture;
 	}
@@ -482,9 +488,7 @@ void FTextureManager::AddGroup(int wadnum, int ns, int usetype)
 {
 	int firsttx = Wads.GetFirstLump(wadnum);
 	int lasttx = Wads.GetLastLump(wadnum);
-	char name[9];
-
-	name[8] = 0;
+	FString Name;
 
 	// Go from first to last so that ANIMDEFS work as expected. However,
 	// to avoid duplicates (and to keep earlier entries from overriding
@@ -495,9 +499,9 @@ void FTextureManager::AddGroup(int wadnum, int ns, int usetype)
 	{
 		if (Wads.GetLumpNamespace(firsttx) == ns)
 		{
-			Wads.GetLumpName (name, firsttx);
+			Wads.GetLumpName (Name, firsttx);
 
-			if (Wads.CheckNumForName (name, ns) == firsttx)
+			if (Wads.CheckNumForName (Name, ns) == firsttx)
 			{
 				CreateTexture (firsttx, usetype);
 			}
@@ -505,7 +509,7 @@ void FTextureManager::AddGroup(int wadnum, int ns, int usetype)
 		}
 		else if (ns == ns_flats && Wads.GetLumpFlags(firsttx) & LUMPF_MAYBEFLAT)
 		{
-			if (Wads.CheckNumForName (name, ns) < firsttx)
+			if (Wads.CheckNumForName (Name, ns) < firsttx)
 			{
 				CreateTexture (firsttx, usetype);
 			}
@@ -525,7 +529,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 	int firsttx = Wads.GetFirstLump(wadnum);
 	int lasttx = Wads.GetLastLump(wadnum);
 
-	char name[9];
+	FString Name;
 	TArray<FTextureID> tlist;
 
 	if (firsttx == -1 || lasttx == -1)
@@ -533,18 +537,16 @@ void FTextureManager::AddHiresTextures (int wadnum)
 		return;
 	}
 
-	name[8] = 0;
-
 	for (;firsttx <= lasttx; ++firsttx)
 	{
 		if (Wads.GetLumpNamespace(firsttx) == ns_hires)
 		{
-			Wads.GetLumpName (name, firsttx);
+			Wads.GetLumpName (Name, firsttx);
 
-			if (Wads.CheckNumForName (name, ns_hires) == firsttx)
+			if (Wads.CheckNumForName (Name, ns_hires) == firsttx)
 			{
 				tlist.Clear();
-				int amount = ListTextures(name, tlist);
+				int amount = ListTextures(Name, tlist);
 				if (amount == 0)
 				{
 					// A texture with this name does not yet exist
@@ -588,14 +590,13 @@ void FTextureManager::AddHiresTextures (int wadnum)
 void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 {
 	int remapLump, lastLump;
-	char src[9];
+	FString src;
 	bool is32bit;
 	int width, height;
 	int type, mode;
 	TArray<FTextureID> tlist;
 
 	lastLump = 0;
-	src[8] = '\0';
 
 	while ((remapLump = Wads.FindLump(lumpname, &lastLump)) != -1)
 	{
@@ -672,7 +673,7 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 					FString base = ExtractFileBase(sc.String, false);
 					if (!base.IsEmpty())
 					{
-						strncpy(src, base, 8);
+						src = base.Left(8);
 
 						int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
 						if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
@@ -695,7 +696,7 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 								// Replace the entire texture and adjust the scaling and offset factors.
 								newtex->bWorldPanning = true;
 								newtex->SetScaledSize(width, height);
-								memcpy(newtex->Name, src, sizeof(newtex->Name));
+								newtex->Name = src;
 
 								FTextureID oldtex = TexMan.CheckForTexture(src, FTexture::TEX_MiscPatch);
 								if (oldtex.isValid()) 
@@ -751,7 +752,7 @@ void FTextureManager::AddPatches (int lumpnum)
 	char name[9];
 
 	*file >> numpatches;
-	name[8] = 0;
+	name[8] = '\0';
 
 	for (i = 0; i < numpatches; ++i)
 	{
@@ -833,9 +834,8 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 	for (int i= firsttx; i <= lasttx; i++)
 	{
 		bool skin = false;
-		char name[9];
-		Wads.GetLumpName(name, i);
-		name[8]=0;
+		FString Name;
+		Wads.GetLumpName(Name, i);
 
 		// Ignore anything not in the global namespace
 		int ns = Wads.GetLumpNamespace(i);
@@ -861,20 +861,20 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 			if (Wads.CheckLumpName(i, "BEHAVIOR")) continue;
 
 			// Don't bother looking at this lump if something later overrides it.
-			if (Wads.CheckNumForName(name, ns_graphics) != i) continue;
+			if (Wads.CheckNumForName(Name, ns_graphics) != i) continue;
 
 			// skip this if it has already been added as a wall patch.
-			if (CheckForTexture(name, FTexture::TEX_WallPatch, 0).Exists()) continue;
+			if (CheckForTexture(Name, FTexture::TEX_WallPatch, 0).Exists()) continue;
 		}
 		else if (ns == ns_graphics)
 		{
 			// Don't bother looking this lump if something later overrides it.
-			if (Wads.CheckNumForName(name, ns_graphics) != i) continue;
+			if (Wads.CheckNumForName(Name, ns_graphics) != i) continue;
 		}
 		else if (ns >= ns_firstskin)
 		{
 			// Don't bother looking this lump if something later overrides it.
-			if (Wads.CheckNumForName(name, ns) != i) continue;
+			if (Wads.CheckNumForName(Name, ns) != i) continue;
 			skin = true;
 		}
 		else continue;
@@ -949,7 +949,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 	{
 		if (newtextures[j] != NULL)
 		{
-			Printf("Texture %s has unknown type!\n", newtextures[j]->Name);
+			Printf("Texture %s has unknown type!\n", newtextures[j]->Name.GetChars());
 			AddTexture(newtextures[j]);
 		}
 	}
@@ -964,6 +964,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 void FTextureManager::Init()
 {
 	DeleteAll();
+	SpriteFrames.Clear();
 	// Init Build Tile data if it hasn't been done already
 	if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 	FTexture::InitGrayMap();
@@ -1004,7 +1005,7 @@ void FTextureManager::Init()
 	{
 		if (wadlevelinfos[i].flags & LEVEL_DOUBLESKY)
 		{
-			FTextureID picnum = CheckForTexture (wadlevelinfos[i].skypic1, FTexture::TEX_Wall, false);
+			FTextureID picnum = CheckForTexture (wadlevelinfos[i].SkyPic1, FTexture::TEX_Wall, false);
 			if (picnum.isValid())
 			{
 				Textures[picnum.GetIndex()].Texture->SetFrontSkyLayer ();
@@ -1093,8 +1094,15 @@ void FTextureManager::WriteTexture (FArchive &arc, int picnum)
 		pic = Textures[picnum].Texture;
 	}
 
-	arc.WriteName (pic->Name);
-	arc.WriteCount (pic->UseType);
+	if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
+	{
+		arc.WriteName(Wads.GetLumpFullName(pic->SourceLump));
+	}
+	else
+	{
+		arc.WriteName(pic->Name);
+	}
+	arc.WriteCount(pic->UseType);
 }
 
 //==========================================================================

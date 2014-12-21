@@ -154,7 +154,7 @@ static const char * const ActorNames_init[]=
 	"RocketAmmo",
 	"RocketBox",
 	"Cell",
-	"CellBox",
+	"CellPack",
 	"Shell",
 	"ShellBox",
 	"Backpack",
@@ -3530,8 +3530,17 @@ void FParser::SF_MapThingNumExist()
 		}
 		else
 		{
+			// Inventory items in the player's inventory have to be considered non-present.
+			if (SpawnedThings[intval]->IsKindOf(RUNTIME_CLASS(AInventory)) && 
+				barrier_cast<AInventory*>(SpawnedThings[intval])->Owner != NULL)
+			{
+				t_return.value.i = 0;
+			}
+			else
+			{
+				t_return.value.i = 1;
+			}
 			t_return.type = svt_int;
-			t_return.value.i = 1;
 		}
 	}
 }
@@ -3770,11 +3779,14 @@ void FParser::SF_ObjType()
 		mo = Script->trigger;
 	}
 
-	for(unsigned int i=0;i<countof(ActorTypes);i++) if (mo->GetClass() == ActorTypes[i])
+	if (mo != NULL)
 	{
-		t_return.type = svt_int;
-		t_return.value.i = i;
-		return;
+		for (unsigned int i = 0; i < countof(ActorTypes); i++) if (mo->GetClass() == ActorTypes[i])
+		{
+			t_return.type = svt_int;
+			t_return.value.i = i;
+			return;
+		}
 	}
 	t_return.type = svt_int;
 	t_return.value.i = -1;

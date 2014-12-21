@@ -49,6 +49,9 @@ enum ERenderStyle
 	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
 	STYLE_TranslucentStencil,
 	STYLE_Shadow,
+	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
+	STYLE_AddStencil,		// Fill image interior with alphacolor
+	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
 
 	STYLE_Count
 };

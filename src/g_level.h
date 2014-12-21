@@ -38,6 +38,7 @@
 #include "doomdef.h"
 #include "sc_man.h"
 #include "s_sound.h"
+#include "textures/textures.h"
 
 struct level_info_t;
 struct cluster_info_t;
@@ -76,11 +77,11 @@ struct FMapInfoParser
 
 	bool ParseLookupName(FString &dest);
 	void ParseMusic(FString &name, int &order);
-	void ParseLumpOrTextureName(char *name);
+	//void ParseLumpOrTextureName(char *name);
 	void ParseLumpOrTextureName(FString &name);
 
 	void ParseCluster();
-	void ParseNextMap(char *mapname);
+	void ParseNextMap(FString &mapname);
 	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
 	void ParseMapDefinition(level_info_t &leveldef);
 	void ParseGameInfo();
@@ -266,16 +267,16 @@ struct level_info_t
 {
 	int			levelnum;
 	
-	char		mapname[9];
-	char		pname[9];
-	char		nextmap[11];
-	char		secretmap[11];
-	char		skypic1[9];
-	char		skypic2[9];
-	char		fadetable[9];
-	char		f1[9];
-	char		bordertexture[9];
-	char		mapbg[9];
+	FString		MapName;
+	FString		NextMap;
+	FString		NextSecretMap;
+	FString		PName;
+	FString		SkyPic1;
+	FString		SkyPic2;
+	FString		FadeTable;
+	FString		F1Pic;
+	FString		BorderTexture;
+	FString		MapBackground;
 
 	int			cluster;
 	int			partime;
@@ -310,7 +311,7 @@ struct level_info_t
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;
-	char		RedirectMap[9];
+	FString		RedirectMapName;
 
 	FString		EnterPic;
 	FString		ExitPic;
@@ -388,9 +389,9 @@ struct FLevelLocals
 	int			levelnum;
 	int			lumpnum;
 	FString		LevelName;
-	char		mapname[256];			// the lump name (E1M1, MAP01, etc)
-	char		nextmap[11];			// go here when using the regular exit
-	char		secretmap[11];			// map to go to when used secret exit
+	FString		MapName;			// the lump name (E1M1, MAP01, etc)
+	FString		NextMap;			// go here when using the regular exit
+	FString		NextSecretMap;		// map to go to when used secret exit
 	EMapType	maptype;
 
 	DWORD		flags;
@@ -404,8 +405,8 @@ struct FLevelLocals
 	int			cdtrack;
 	unsigned int cdid;
 	int			nextmusic;				// For MUSINFO purposes
-	char		skypic1[9];
-	char		skypic2[9];
+	FTextureID	skytexture1;
+	FTextureID	skytexture2;
 
 	float		skyspeed1;				// Scrolling speed of sky textures, in pixels per ms
 	float		skyspeed2;
@@ -552,6 +553,7 @@ enum ESkillProperty
 	SKILLP_NoPain,
 	SKILLP_ArmorFactor,
 	SKILLP_EasyKey,
+	SKILLP_SlowMonsters,
 };
 int G_SkillProperty(ESkillProperty prop);
 const char * G_SkillName();
@@ -566,6 +568,7 @@ struct FSkillInfo
 	fixed_t AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
 	fixed_t DamageFactor;
 	bool FastMonsters;
+	bool SlowMonsters;
 	bool DisableCheats;
 	bool AutoUseHealth;
 

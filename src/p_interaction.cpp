@@ -316,6 +316,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		message = GStrings("OB_DEFAULT");
 	}
 
+	// [CK] Don't display empty strings
+	if (message == NULL || strlen(message) <= 0)
+		return;
+		
 	SexMessage (message, gendermessage, gender,
 		self->player->userinfo.GetName(), attacker->player->userinfo.GetName());
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
@@ -359,8 +363,6 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		static int dieticks[MAXPLAYERS];
 		int pnum = int(this->player-players);
-		if (dieticks[pnum] == gametic)
-			gametic=gametic;
 		dieticks[pnum] = gametic;
 		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
 		this->player->cheats&CF_PREDICTING?"predicting":"real");
@@ -1248,7 +1250,9 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// This does not save the player if damage >= TELEFRAG_DAMAGE, still need to
 			// telefrag him right? ;) (Unfortunately the damage is "absorbed" by armor,
 			// but telefragging should still do enough damage to kill the player)
-			if ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE)
+			if ((player->cheats & CF_BUDDHA) && damage < TELEFRAG_DAMAGE
+				// Ignore players that are already dead.
+				&& player->playerstate != PST_DEAD)
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;

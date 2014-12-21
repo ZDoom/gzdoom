@@ -6,6 +6,7 @@ Actor SilverShield : BasicArmorPickup 85
 	Game Heretic
 	SpawnID 68
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.Pickupmessage "$TXT_ITEMSHIELD1"
 	Inventory.Icon "SHLDA0"
 	Armor.Savepercent 50
@@ -25,6 +26,7 @@ Actor EnchantedShield : BasicArmorPickup 31
 	Game Heretic
 	SpawnID 69
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.Pickupmessage "$TXT_ITEMSHIELD2"
 	Inventory.Icon "SHD2A0"
 	Armor.Savepercent 75

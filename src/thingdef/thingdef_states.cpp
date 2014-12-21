@@ -265,6 +265,11 @@ do_stop:
 					state.Fast = true;
 					continue;
 				}
+				if (sc.Compare("SLOW")) 
+				{
+					state.Slow = true;
+					continue;
+				}
 				if (sc.Compare("NODELAY"))
 				{
 					if (bag.statedef.GetStateLabelIndex(NAME_Spawn) == bag.statedef.GetStateCount())
@@ -301,6 +306,11 @@ do_stop:
 					}
 					while (sc.CheckString(","));
 					sc.MustGetStringName(")");
+					continue;
+				}
+				if (sc.Compare("CANRAISE"))
+				{
+					state.CanRaise = true;
 					continue;
 				}
 

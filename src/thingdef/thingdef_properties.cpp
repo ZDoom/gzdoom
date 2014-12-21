@@ -181,7 +181,7 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 	{
 		return fd->flagbit & *(DWORD *)(((char*)owner) + fd->structoffset);
 	}
-#ifdef __BID_ENDIAN__
+#ifdef __BIG_ENDIAN__
 	else if (fd->fieldsize == 2)
 	{
 		return fd->flagbit & *(WORD *)(((char*)owner) + fd->structoffset);
@@ -818,11 +818,13 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * renderstyles[]={
-		"NONE","NORMAL","FUZZY","SOULTRANS","OPTFUZZY","STENCIL","TRANSLUCENT", "ADD","SHADED", NULL};
+		"NONE", "NORMAL", "FUZZY", "SOULTRANS", "OPTFUZZY", "STENCIL", 
+		"TRANSLUCENT", "ADD", "SHADED", "SHADOW", "SUBTRACT", "ADDSTENCIL", "ADDSHADED", NULL };
 
 	static const int renderstyle_values[]={
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
-			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded};
+			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded,
+			STYLE_Shadow, STYLE_Subtract, STYLE_AddStencil, STYLE_AddShaded};
 
 	// make this work for old style decorations, too.
 	if (!strnicmp(str, "style_", 6)) str+=6;
@@ -1330,6 +1332,17 @@ DEFINE_PROPERTY(gravity, F, Actor)
 
 	if (i < 0) I_Error ("Gravity must not be negative.");
 	defaults->gravity = i;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(friction, F, Actor)
+{
+	PROP_FIXED_PARM(i, 0);
+
+	if (i < 0) I_Error ("Friction must not be negative.");
+	defaults->Friction = i;
 }
 
 //==========================================================================

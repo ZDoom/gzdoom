@@ -18,6 +18,7 @@ ACTOR Actor native //: Thinker
 	FloatSpeed 4
 	FloatBobPhase -1	// randomly initialize by default
 	Gravity 1
+	Friction 1
 	DamageFactor 1.0
 	PushFactor 0.25
 	WeaveIndexXY 0
@@ -289,7 +290,7 @@ ACTOR Actor native //: Thinker
 	action native A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	action native A_PigPain ();
 	action native A_MonsterRefire(int chance, state label);
-	action native A_SetAngle(float angle = 0);
+	action native A_SetAngle(float angle = 0, int flags = 0);
 	action native A_SetPitch(float pitch, int flags = 0);
 	action native A_ScaleVelocity(float scale);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);

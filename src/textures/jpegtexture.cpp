@@ -448,7 +448,7 @@ void FJPEGTexture::MakeTexture ()
 	}
 	catch (int)
 	{
-		Printf (TEXTCOLOR_ORANGE "   in texture %s\n", Name);
+		Printf (TEXTCOLOR_ORANGE "   in texture %s\n", Name.GetChars());
 		jpeg_destroy_decompress(&cinfo);
 	}
 	if (buff != NULL)
@@ -532,7 +532,7 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 	}
 	catch(int)
 	{
-		Printf (TEXTCOLOR_ORANGE "   in JPEG texture %s\n", Name);
+		Printf (TEXTCOLOR_ORANGE "   in JPEG texture %s\n", Name.GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL) delete [] buff;

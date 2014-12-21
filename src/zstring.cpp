@@ -349,7 +349,14 @@ FString &FString::AppendCStrPart (const char *tail, size_t tailLen)
 	return *this;
 }
 
-void FString::Truncate (long newlen)
+FString &FString::CopyCStrPart(const char *tail, size_t tailLen)
+{
+	ReallocBuffer(tailLen);
+	StrCopy(Chars, tail, tailLen);
+	return *this;
+}
+
+void FString::Truncate(long newlen)
 {
 	if (newlen >= 0 && newlen < (long)Len())
 	{

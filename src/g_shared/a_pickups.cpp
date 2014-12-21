@@ -543,7 +543,7 @@ bool AInventory::SpecialDropAction (AActor *dropper)
 
 bool AInventory::ShouldRespawn ()
 {
-	if ((ItemFlags & IF_BIGPOWERUP) && !(dmflags & DF_RESPAWN_SUPER)) return false;
+	if ((ItemFlags & IF_BIGPOWERUP) && !(dmflags2 & DF2_RESPAWN_SUPER)) return false;
 	if (ItemFlags & IF_NEVERRESPAWN) return false;
 	return !!(dmflags & DF_ITEMS_RESPAWN);
 }
@@ -831,7 +831,7 @@ void AInventory::BecomePickup ()
 		LinkToWorld ();
 		P_FindFloorCeiling (this);
 	}
-	flags = GetDefault()->flags | MF_DROPPED;
+	flags = (GetDefault()->flags | MF_DROPPED) & ~MF_COUNTITEM;
 	renderflags &= ~RF_INVISIBLE;
 	SetState (SpawnState);
 }
@@ -1064,7 +1064,7 @@ void AInventory::Touch (AActor *toucher)
 
 	if (flags5 & MF5_COUNTSECRET)
 	{
-		P_GiveSecret(toucher, true, true);
+		P_GiveSecret(toucher, true, true, -1);
 	}
 
 	//Added by MC: Check if item taken was the roam destination of any bot
@@ -1868,7 +1868,10 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 AInventory *ABackpackItem::CreateTossable ()
 {
 	ABackpackItem *pack = static_cast<ABackpackItem *>(Super::CreateTossable());
-	pack->bDepleted = true;
+	if (pack != NULL)
+	{
+		pack->bDepleted = true;
+	}
 	return pack;
 }
 

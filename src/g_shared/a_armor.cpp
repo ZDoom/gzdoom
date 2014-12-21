@@ -42,9 +42,9 @@ void ABasicArmor::Tick ()
 	AbsorbCount = 0;
 	if (!Icon.isValid())
 	{
-		const char *icon = gameinfo.ArmorIcon1;
+		FString icon = gameinfo.ArmorIcon1;
 
-		if (SavePercent >= gameinfo.Armor2Percent && gameinfo.ArmorIcon2[0] != 0)
+		if (SavePercent >= gameinfo.Armor2Percent && gameinfo.ArmorIcon2.Len() != 0)
 			icon = gameinfo.ArmorIcon2;
 
 		if (icon[0] != 0)

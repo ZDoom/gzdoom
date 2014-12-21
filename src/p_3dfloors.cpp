@@ -226,11 +226,11 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 		if (param==0)
 		{
 			flags=FF_EXISTS|FF_RENDERALL|FF_SOLID|FF_INVERTSECTOR;
+			alpha = 255;
 			for (i=0;i<sec->linecount;i++)
 			{
 				line_t * l=sec->lines[i];
 
-				alpha=255;
 				if (l->special==Sector_SetContents && l->frontsector==sec)
 				{
 					alpha=clamp<int>(l->args[1], 0, 100);
@@ -252,9 +252,8 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 
 						l->frontsector->ColorMap = 
 							GetSpecialLights (l->frontsector->ColorMap->Color, 
-											  (unsigned int)(vavoomcolors[l->args[0]]&VC_COLORMASK), 
-											  (unsigned int)(vavoomcolors[l->args[0]]&VC_ALPHAMASK)>>24);
-										//	  l->frontsector->ColorMap->Desaturate);
+											  vavoomcolors[l->args[0]], 
+											  l->frontsector->ColorMap->Desaturate);
 					}
 					alpha=(alpha*255)/100;
 					break;
@@ -293,8 +292,9 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 			FTextureID tex = line->sidedef[0]->GetTexture(side_t::top);
 			if (!tex.Exists() && alpha<255)
 			{
-				alpha=clamp(-tex.GetIndex(), 0, 255);
+				alpha = -tex.GetIndex();
 			}
+			alpha = clamp(alpha, 0, 255);
 			if (alpha==0) flags&=~(FF_RENDERALL|FF_BOTHPLANES|FF_ALLSIDES);
 			else if (alpha!=255) flags|=FF_TRANSLUCENT;
 										 

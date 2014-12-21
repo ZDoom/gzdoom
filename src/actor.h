@@ -336,11 +336,13 @@ enum
 	MF6_NOTONAUTOMAP	= 0x40000000,	// will not be shown on automap with the 'scanner' powerup.
 	MF6_RELATIVETOFLOOR	= 0x80000000,	// [RC] Make flying actors be affected by lifts.
 
-// --- mobj.flags6 ---
+// --- mobj.flags7 ---
 
 	MF7_NEVERTARGET		= 0x00000001,	// can not be targetted at all, even if monster friendliness is considered.
 	MF7_NOTELESTOMP		= 0x00000002,	// cannot telefrag under any circumstances (even when set by MAPINFO)
 	MF7_ALWAYSTELEFRAG	= 0x00000004,	// will unconditionally be telefragged when in the way. Overrides all other settings.
+	MF7_HANDLENODELAY	= 0x00000008,	// respect NoDelay state flag
+	MF7_WEAPONSPAWN		= 0x00000010,	// subject to DF_NO_COOP_WEAPON_SPAWN dmflag
 
 // --- mobj.renderflags ---
 
@@ -730,6 +732,10 @@ public:
 		return GetClass()->BloodColor;
 	}
 
+	// These also set CF_INTERPVIEW for players.
+	void SetPitch(int p, bool interpolate);
+	void SetAngle(angle_t ang, bool interpolate);
+
 	PClassActor *GetBloodType(int type = 0) const
 	{
 		PClassActor *bloodcls;
@@ -838,6 +844,7 @@ public:
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	fixed_t			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
+	int				StartHealth;
 	BYTE			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
 	BYTE			WeaveIndexZ;
 	int				skillrespawncount;
@@ -869,6 +876,7 @@ public:
 	fixed_t			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	fixed_t			gravity;		// [GRB] Gravity factor
+	fixed_t			Friction;
 	int 			FastChaseStrafeCount;
 	fixed_t			pushfactor;
 	int				lastpush;
@@ -972,8 +980,11 @@ public:
 	bool SetState (FState *newstate, bool nofunction=false);
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
+	bool isSlow();
 	void SetIdle();
 	void ClearCounters();
+	FState *GetRaiseState();
+	void Revive();
 
 	FState *FindState (FName label) const
 	{

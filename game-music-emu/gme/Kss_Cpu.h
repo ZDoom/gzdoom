@@ -1,6 +1,6 @@
 // Z80 CPU emulator
 
-// Game_Music_Emu 0.5.2
+// Game_Music_Emu 0.6.0
 #ifndef KSS_CPU_H
 #define KSS_CPU_H
 

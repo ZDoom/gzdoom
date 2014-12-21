@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Vgm_Emu.h"
 
@@ -244,7 +244,7 @@ int Vgm_Emu_Impl::play_frame( blip_time_t blip_time, int sample_count, sample_t*
 	int pairs = min_pairs;
 	while ( (pairs = to_fm_time( vgm_time )) < min_pairs )
 		vgm_time++;
-	//dprintf( "pairs: %d, min_pairs: %d\n", pairs, min_pairs );
+	//debug_printf( "pairs: %d, min_pairs: %d\n", pairs, min_pairs );
 	
 	if ( ym2612.enabled() )
 	{

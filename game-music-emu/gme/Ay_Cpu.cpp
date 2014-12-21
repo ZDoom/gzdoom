@@ -1,4 +1,4 @@
-// Game_Music_Emu 0.5.2. http://www.slack.net/~ant/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 /*
 Last validated with zexall 2006.11.21 5:26 PM
@@ -469,7 +469,7 @@ possibly_out_of_time:
 	add_hl_data: {
 		blargg_ulong sum = rp.hl + data;
 		data ^= rp.hl;
-		rp.hl = sum;
+		rp.hl = (uint16_t)sum;
 		flags = (flags & (S80 | Z40 | V04)) |
 				(sum >> 16) |
 				(sum >> 8 & (F20 | F08)) |
@@ -719,7 +719,7 @@ possibly_out_of_time:
 		flags = (flags & (S80 | Z40 | P04)) |
 				(temp & (F20 | F08)) |
 				(temp >> 8);
-		rg.a = temp;
+		rg.a = (uint8_t)temp;
 		goto loop;
 	}
 	
@@ -807,6 +807,7 @@ possibly_out_of_time:
 	case 0xCB:
 		unsigned data2;
 		data2 = INSTR( 1 );
+		(void) data2; // TODO is this the same as data in all cases?
 		pc++;
 		switch ( data )
 		{
@@ -1055,7 +1056,7 @@ possibly_out_of_time:
 					(temp >> 8 & H10) |
 					(sum >> 8 & (S80 | F20 | F08)) |
 					((temp - -0x8000) >> 14 & V04);
-			rp.hl = sum;
+			rp.hl = (uint16_t)sum;
 			if ( (uint16_t) sum )
 				goto loop;
 			flags |= Z40;
@@ -1252,7 +1253,7 @@ possibly_out_of_time:
 		
 		case 0x4F: // LD R,A
 			SET_R( rg.a );
-			dprintf( "LD R,A not supported\n" );
+			debug_printf( "LD R,A not supported\n" );
 			warning = true;
 			goto loop;
 		
@@ -1262,7 +1263,7 @@ possibly_out_of_time:
 		
 		case 0x5F: // LD A,R
 			rg.a = GET_R();
-			dprintf( "LD A,R not supported\n" );
+			debug_printf( "LD A,R not supported\n" );
 			warning = true;
 		ld_ai_common:
 			flags = (flags & C01) | SZ28( rg.a ) | (r.iff2 << 2 & V04);
@@ -1285,7 +1286,7 @@ possibly_out_of_time:
 			goto loop;
 		
 		default:
-			dprintf( "Opcode $ED $%02X not supported\n", data );
+			debug_printf( "Opcode $ED $%02X not supported\n", data );
 			warning = true;
 			goto loop;
 		}
@@ -1545,7 +1546,7 @@ possibly_out_of_time:
 			}
 			
 			default:
-				dprintf( "Opcode $%02X $CB $%02X not supported\n", opcode, data2 );
+				debug_printf( "Opcode $%02X $CB $%02X not supported\n", opcode, data2 );
 				warning = true;
 				goto loop;
 			}
@@ -1634,7 +1635,7 @@ possibly_out_of_time:
 		}
 		
 		default:
-			dprintf( "Unnecessary DD/FD prefix encountered\n" );
+			debug_printf( "Unnecessary DD/FD prefix encountered\n" );
 			warning = true;
 			pc--;
 			goto loop;
@@ -1643,7 +1644,7 @@ possibly_out_of_time:
 	}
 	
 	}
-	dprintf( "Unhandled main opcode: $%02X\n", opcode );
+	debug_printf( "Unhandled main opcode: $%02X\n", opcode );
 	assert( false );
 	
 halt:

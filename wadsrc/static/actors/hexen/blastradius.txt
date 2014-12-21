@@ -4,6 +4,7 @@ ACTOR ArtiBlastRadius : CustomInventory 10110
 	Game Hexen
 	SpawnID 74
 	+FLOATBOB
+	+NOGRAVITY
 	Inventory.DefMaxAmount
 	Inventory.PickupFlash "PickupFlash"
 	+INVBAR +FANCYPICKUPSOUND

@@ -107,8 +107,6 @@ struct FDoorAnimation
 	FName CloseSound;
 };
 
-
-
 // Patches.
 // A patch holds one or more columns.
 // Patches are used for sprites and all masked pictures, and we compose
@@ -119,7 +117,7 @@ struct patch_t
 	SWORD			height; 
 	SWORD			leftoffset; 	// pixels to the left of origin 
 	SWORD			topoffset;		// pixels below the origin 
-	DWORD 			columnofs[8];	// only [width] used
+	DWORD 			columnofs[];	// only [width] used
 	// the [0] is &columnofs[width] 
 };
 
@@ -159,11 +157,7 @@ public:
 	int SourceLump;
 	FTextureID id;
 
-	union
-	{
-		char Name[9];
-		DWORD dwName;		// Used with sprites
-	};
+	FString Name;
 	BYTE UseType;	// This texture's primary purpose
 
 	BYTE bNoDecals:1;		// Decals should not stick to texture
@@ -177,6 +171,7 @@ public:
 							// fully composited before subjected to any kind of postprocessing instead of
 							// doing it per patch.
 	BYTE bMultiPatch:1;		// This is a multipatch texture (we really could use real type info for textures...)
+	BYTE bKeepAround:1;		// This texture was used as part of a multi-patch texture. Do not free it.
 
 	WORD Rotations;
 	SWORD SkyOffset;
@@ -218,7 +213,6 @@ public:
 	virtual int GetSourceLump() { return SourceLump; }
 	virtual FTexture *GetRedirect(bool wantwarped);
 	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
-	FTextureID GetID() const { return id; }
 
 	virtual void Unload () = 0;
 
@@ -364,12 +358,13 @@ public:
 		TEXMAN_TryAny = 1,
 		TEXMAN_Overridable = 2,
 		TEXMAN_ReturnFirst = 4,
-		TEXMAN_AllowSkins = 8
+		TEXMAN_AllowSkins = 8,
+		TEXMAN_ShortNameOnly = 16,
+		TEXMAN_DontCreate = 32
 	};
 
 	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
 	FTextureID GetTexture (const char *name, int usetype, BITFIELD flags=0);
-	FTextureID FindTextureByLumpNum (int lumpnum);
 	int ListTextures (const char *name, TArray<FTextureID> &list);
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);

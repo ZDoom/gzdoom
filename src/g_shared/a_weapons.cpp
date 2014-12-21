@@ -1161,7 +1161,7 @@ AWeapon *FWeaponSlots::PickNextWeapon(player_t *player)
 				return weap;
 			}
 		}
-		while ((slot != startslot || index != startindex) && slotschecked < NUM_WEAPON_SLOTS);
+		while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
 	}
 	return player->ReadyWeapon;
 }
@@ -1216,7 +1216,7 @@ AWeapon *FWeaponSlots::PickPrevWeapon (player_t *player)
 				return weap;
 			}
 		}
-		while ((slot != startslot || index != startindex) && slotschecked < NUM_WEAPON_SLOTS);
+		while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
 	}
 	return player->ReadyWeapon;
 }

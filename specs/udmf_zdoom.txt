@@ -92,30 +92,33 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
    linedef
    {
-      alpha = <float>;          // Translucency of this line, default is 1.0
-      renderstyle = <string>;   // Render style, can be "translucent" or "add",
-                                // default is "translucent".
-      playeruseback = <bool>;   // New SPAC flag, true = player can use from back side.
-      anycross = <bool>;        // New SPAC flag, true = any non-projectile 
-                                // crossing will trigger this line
-      monsteractivate = <bool>; // Monsters can trigger this line.
-                                // For compatibility only because this flag's 
-                                // semantics can not be fully reproduced with
-                                // explicit trigger flags.
-      blockplayers = <bool>;    // Line blocks players' movement.
-      blockeverything = <bool>; // Line blocks everything.
-      firstsideonly = <bool>;   // Line can only be triggered from the front side.
-      zoneboundary = <bool>;    // Line is a boundary for sound reverb zones.
-      clipmidtex = <bool>;      // Line's mid textures are clipped to floor and ceiling.
-      wrapmidtex = <bool>;      // Line's mid textures are wrapped.
-      midtex3d = <bool>;        // Actors can walk on mid texture.
-      checkswitchrange = <bool>;// Switches can only be activated when vertically reachable.
-      blockprojectiles = <bool>;// Line blocks all projectiles
-      blockuse = <bool>;        // Line blocks all use actions
-      blocksight = <bool>;      // Line blocks monster line of sight
-      blockhitscan = <bool>;    // Line blocks hitscan attacks
-      locknumber = <int>;       // Line special is locked
-      arg0str = <string>;       // Alternate string-based version of arg0
+      alpha = <float>;            // Translucency of this line, default is 1.0
+      renderstyle = <string>;     // Render style, can be "translucent" or "add",
+                                  // default is "translucent".
+      playeruseback = <bool> ;    // New SPAC flag, true = player can use from back side.
+      anycross = <bool>;          // New SPAC flag, true = any non-projectile 
+                                  // crossing will trigger this line
+      monsteractivate = <bool>;   // Monsters can trigger this line.
+                                  // For compatibility only because this flag's 
+                                  // semantics can not be fully reproduced with
+                                  // explicit trigger flags.
+      blockplayers = <bool>;      // Line blocks players' movement.
+      blockeverything = <bool>;   // Line blocks everything.
+      firstsideonly = <bool>;     // Line can only be triggered from the front side.
+      zoneboundary = <bool>;      // Line is a boundary for sound reverb zones.
+      clipmidtex = <bool>;        // Line's mid textures are clipped to floor and ceiling.
+      wrapmidtex = <bool>;        // Line's mid textures are wrapped.
+      midtex3d = <bool>;          // Actors can walk on mid texture.
+      midtex3dimpassible = <bool>;// Used in conjuction with midtex3d - causes the mid
+                                  // texture to behave like an impassible line (projectiles
+                                  // pass through it).
+      checkswitchrange = <bool>;  // Switches can only be activated when vertically reachable.
+      blockprojectiles = <bool>;  // Line blocks all projectiles
+      blockuse = <bool>;          // Line blocks all use actions
+      blocksight = <bool>;        // Line blocks monster line of sight
+      blockhitscan = <bool>;      // Line blocks hitscan attacks
+      locknumber = <int>;         // Line special is locked
+      arg0str = <string>;         // Alternate string-based version of arg0
 
       transparent   = <bool>; // true = line is a Strife transparent line (alpha 0.25)
 

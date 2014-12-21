@@ -1581,19 +1581,27 @@ void FBehavior::StaticSerializeModuleStates (FArchive &arc)
 	for (modnum = 0; modnum < StaticModules.Size(); ++modnum)
 	{
 		FBehavior *module = StaticModules[modnum];
+		int ModSize = module->GetDataSize();
 
 		if (arc.IsStoring())
 		{
 			arc.WriteString (module->ModuleName);
+			if (SaveVersion >= 4516) arc << ModSize;
 		}
 		else
 		{
 			char *modname = NULL;
 			arc << modname;
+			if (SaveVersion >= 4516) arc << ModSize;
 			if (stricmp (modname, module->ModuleName) != 0)
 			{
 				delete[] modname;
 				I_Error ("Level was saved with a different set of ACS modules.");
+			}
+			else if (ModSize != module->GetDataSize())
+			{
+				delete[] modname;
+				I_Error("ACS module %s has changed from what was saved. (Have %d bytes, save has %d bytes)", module->ModuleName, module->GetDataSize(), ModSize);
 			}
 			delete[] modname;
 		}
@@ -1873,7 +1881,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 				funcm->HasReturnValue = funcf->HasReturnValue;
 				funcm->ImportNum = funcf->ImportNum;
 				funcm->LocalCount = funcf->LocalCount;
-				funcm->Address = funcf->Address;
+				funcm->Address = LittleLong(funcf->Address);
 			}
 		}
 
@@ -2058,7 +2066,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 			const char *const parse = (char *)&chunk[2];
 			DWORD i;
 
-			for (i = 0; i < chunk[1]; )
+			for (i = 0; i < LittleLong(chunk[1]); )
 			{
 				if (parse[i])
 				{
@@ -2306,6 +2314,12 @@ void FBehavior::LoadScriptsDirectory ()
 	default:
 		break;
 	}
+
+// [EP] Clang 3.5.0 optimizer miscompiles this function and causes random
+// crashes in the program. I hope that Clang 3.5.x will fix this.
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ >= 5
+	asm("" : "+g" (NumScripts));
+#endif
 	for (i = 0; i < NumScripts; ++i)
 	{
 		Scripts[i].Flags = 0;
@@ -2345,7 +2359,7 @@ void FBehavior::LoadScriptsDirectory ()
 	scripts.b = FindChunk (MAKE_ID('S','F','L','G'));
 	if (scripts.dw != NULL)
 	{
-		max = scripts.dw[1] / 4;
+		max = LittleLong(scripts.dw[1]) / 4;
 		scripts.dw += 2;
 		for (i = max; i > 0; --i, scripts.w += 2)
 		{
@@ -2361,7 +2375,7 @@ void FBehavior::LoadScriptsDirectory ()
 	scripts.b = FindChunk (MAKE_ID('S','V','C','T'));
 	if (scripts.dw != NULL)
 	{
-		max = scripts.dw[1] / 4;
+		max = LittleLong(scripts.dw[1]) / 4;
 		scripts.dw += 2;
 		for (i = max; i > 0; --i, scripts.w += 2)
 		{
@@ -2675,7 +2689,7 @@ BYTE *FBehavior::FindChunk (DWORD id) const
 		{
 			return chunk;
 		}
-		chunk += ((DWORD *)chunk)[1] + 8;
+		chunk += LittleLong(((DWORD *)chunk)[1]) + 8;
 	}
 	return NULL;
 }
@@ -2683,14 +2697,14 @@ BYTE *FBehavior::FindChunk (DWORD id) const
 BYTE *FBehavior::NextChunk (BYTE *chunk) const
 {
 	DWORD id = *(DWORD *)chunk;
-	chunk += ((DWORD *)chunk)[1] + 8;
+	chunk += LittleLong(((DWORD *)chunk)[1]) + 8;
 	while (chunk != NULL && chunk < Data + DataSize)
 	{
 		if (((DWORD *)chunk)[0] == id)
 		{
 			return chunk;
 		}
-		chunk += ((DWORD *)chunk)[1] + 8;
+		chunk += LittleLong(((DWORD *)chunk)[1]) + 8;
 	}
 	return NULL;
 }
@@ -2875,9 +2889,57 @@ DACSThinker::~DACSThinker ()
 void DACSThinker::Serialize (FArchive &arc)
 {
 	int scriptnum;
+	int scriptcount = 0;
 
 	Super::Serialize (arc);
-	arc << Scripts << LastScript;
+	if (SaveVersion < 4515)
+		arc << Scripts << LastScript;
+	else
+	{
+		if (arc.IsStoring())
+		{
+			DLevelScript *script;
+			script = Scripts;
+			while (script)
+			{
+				scriptcount++;
+
+				// We want to store this list backwards, so we can't loose the last pointer
+				if (script->next == NULL)
+					break;
+				script = script->next;
+			}
+			arc << scriptcount;
+
+			while (script)
+			{
+				arc << script;
+				script = script->prev;
+			}
+		}
+		else
+		{
+			// We are running through this list backwards, so the next entry is the last processed
+			DLevelScript *next = NULL;
+			arc << scriptcount;
+			Scripts = NULL;
+			LastScript = NULL;
+			for (int i = 0; i < scriptcount; i++)
+			{
+				arc << Scripts;
+
+				Scripts->next = next;
+				Scripts->prev = NULL;
+				if (next != NULL)
+					next->prev = Scripts;
+
+				next = Scripts;
+
+				if (i == 0)
+					LastScript = Scripts;
+			}
+		}
+	}
 	if (arc.IsStoring ())
 	{
 		ScriptMap::Iterator it(RunningScripts);
@@ -2963,7 +3025,8 @@ void DLevelScript::Serialize (FArchive &arc)
 	DWORD i;
 
 	Super::Serialize (arc);
-	arc << next << prev;
+	if (SaveVersion < 4515)
+		arc << next << prev;
 
 	P_SerializeACSScriptNumber(arc, script, false);
 
@@ -3618,6 +3681,7 @@ enum
 	APROP_AttackZOffset	= 40,
 	APROP_StencilColor	= 41,
 	APROP_Friction		= 42,
+	APROP_DamageMultiplier=43,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3807,6 +3871,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		actor->DamageFactor = value;
 		break;
 
+	case APROP_DamageMultiplier:
+		actor->DamageMultiply = value;
+		break;
+
 	case APROP_MasterTID:
 		AActor *other;
 		other = SingleActorFromTID (value, NULL);
@@ -3835,6 +3903,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_ReactionTime:
 		actor->reactiontime = value;
+		break;
+
+	case APROP_MeleeRange:
+		actor->meleerange = value;
 		break;
 
 	case APROP_ViewHeight:
@@ -3874,6 +3946,7 @@ int DLevelScript::GetActorProperty (int tid, int property, const SDWORD *stack, 
 	case APROP_Speed:		return actor->Speed;
 	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
 	case APROP_DamageFactor:return actor->DamageFactor;
+	case APROP_DamageMultiplier: return actor->DamageMultiply;
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
 							{ // Check for a legacy render style that matches.
@@ -4218,7 +4291,7 @@ int DLevelScript::DoClassifyActor(int tid)
 		{
 			classify |= ACTOR_VOODOODOLL;
 		}
-		if (actor->player->isbot)
+		if (actor->player->Bot != NULL)
 		{
 			classify |= ACTOR_BOT;
 		}
@@ -4361,6 +4434,12 @@ enum EACSFunctions
 	ACSF_ChangeActorAngle,
 	ACSF_ChangeActorPitch,		// 80
 	ACSF_GetArmorInfo,
+	ACSF_DropInventory,
+	ACSF_PickActor,
+	ACSF_IsPointerEqual,
+	ACSF_CanRaiseActor,
+	ACSF_SetActorTeleFog,		// 86
+	ACSF_SwapActorTeleFog,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -4670,6 +4749,82 @@ static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolat
 			actor->SetPitch(angle << 16, interpolate);
 		}
 	}
+}
+
+static void SetActorTeleFog(AActor *activator, int tid, FName telefogsrc, FName telefogdest)
+{
+	//Simply put, if it doesn't exist, it won't change. One can use "" in this scenario.
+	const PClass *check;
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			check = PClass::FindClass(telefogsrc);
+			if (check == NULL || !stricmp(telefogsrc, "none") || !stricmp(telefogsrc, "null"))
+				activator->TeleFogSourceType = NULL;
+			else
+				activator->TeleFogSourceType = check;
+
+			check = PClass::FindClass(telefogdest);
+			if (check == NULL || !stricmp(telefogdest, "none") || !stricmp(telefogdest, "null"))
+				activator->TeleFogDestType = NULL;
+			else
+				activator->TeleFogDestType = check;
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			check = PClass::FindClass(telefogsrc);
+			if (check == NULL || !stricmp(telefogsrc, "none") || !stricmp(telefogsrc, "null"))
+				actor->TeleFogSourceType = NULL;
+			else
+				actor->TeleFogSourceType = check;
+
+			check = PClass::FindClass(telefogdest);
+			if (check == NULL || !stricmp(telefogdest, "none") || !stricmp(telefogdest, "null"))
+				actor->TeleFogDestType = NULL;
+			else
+				actor->TeleFogDestType = check;
+		}
+	}
+}
+
+static int SwapActorTeleFog(AActor *activator, int tid)
+{
+	int count = 0;
+	if (tid == 0)
+	{
+		if ((activator == NULL) || (activator->TeleFogSourceType = activator->TeleFogDestType)) 
+			return 0; //Does nothing if they're the same.
+		else 
+		{
+			const PClass *temp = activator->TeleFogSourceType;
+			activator->TeleFogSourceType = activator->TeleFogDestType;
+			activator->TeleFogDestType = temp;
+			return 1;
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+		
+		while ((actor = iterator.Next()))
+		{
+			if (actor->TeleFogSourceType == actor->TeleFogDestType) 
+				continue; //They're the same. Save the effort.
+			const PClass *temp = actor->TeleFogSourceType;
+			actor->TeleFogSourceType = actor->TeleFogDestType;
+			actor->TeleFogDestType = temp;
+			count++;
+		}
+	}
+	return count;
 }
 
 
@@ -5485,6 +5640,42 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			break;
 		}
 
+		case ACSF_DropInventory:
+		{
+			const char *type = FBehavior::StaticLookupString(args[1]);
+			AInventory *inv;
+			
+			if (type != NULL)
+			{
+				if (args[0] == 0)
+				{
+					if (activator != NULL)
+					{
+						inv = activator->FindInventory(type);
+						if (inv)
+						{
+							activator->DropInventory(inv);
+						}
+					}
+				}
+				else
+				{
+					FActorIterator it(args[0]);
+					AActor *actor;
+					
+					while ((actor = it.Next()) != NULL)
+					{
+						inv = actor->FindInventory(type);
+						if (inv)
+						{
+							actor->DropInventory(inv);
+						}
+					}
+				}
+			}
+		break;
+		}
+
 		case ACSF_CheckFlag:
 		{
 			AActor *actor = SingleActorFromTID(args[0], activator);
@@ -5547,6 +5738,97 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				SetActorPitch(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+		case ACSF_SetActorTeleFog:
+			if (argCount >= 3)
+			{
+				SetActorTeleFog(activator, args[0], FBehavior::StaticLookupString(args[1]), FBehavior::StaticLookupString(args[2]));
+			}
+			break;
+		case ACSF_SwapActorTeleFog:
+			if (argCount >= 1)
+			{
+				return SwapActorTeleFog(activator, args[0]);
+			}
+			break;
+		case ACSF_PickActor:
+			if (argCount >= 5)
+			{
+				actor = SingleActorFromTID(args[0], activator);
+				if (actor == NULL)
+				{
+					return 0;
+				}
+
+				DWORD actorMask = MF_SHOOTABLE;
+				if (argCount >= 6) {
+					actorMask = args[5];
+				}
+
+				DWORD wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;
+				if (argCount >= 7) {
+					wallMask = args[6];
+				}
+
+				bool forceTID = 0;
+				if (argCount >= 8)
+				{
+					if (args[7] != 0)
+						forceTID = 1;
+				}
+
+				AActor* pickedActor = P_LinePickActor(actor, args[1] << 16, args[3], args[2] << 16, actorMask, wallMask);
+				if (pickedActor == NULL) {
+					return 0;
+				}
+
+				if (!(forceTID) && (args[4] == 0) && (pickedActor->tid == 0))
+					return 0;
+
+				if ((pickedActor->tid == 0) || (forceTID))
+				{
+					pickedActor->RemoveFromHash();
+					pickedActor->tid = args[4];
+					pickedActor->AddToHash();
+				}
+				return 1;
+			}
+			break;
+
+		case ACSF_IsPointerEqual:
+			{
+				int tid1 = 0, tid2 = 0;
+				switch (argCount)
+				{
+				case 4: tid2 = args[3];
+				case 3: tid1 = args[2];
+				}
+
+				actor = SingleActorFromTID(tid1, activator);
+				AActor * actor2 = tid2 == tid1 ? actor : SingleActorFromTID(tid2, activator);
+
+				return COPY_AAPTR(actor, args[0]) == COPY_AAPTR(actor2, args[1]);
+			}
+			break;
+
+		case ACSF_CanRaiseActor:
+			if (argCount >= 1) {
+				if (args[0] == 0) {
+					actor = SingleActorFromTID(args[0], activator);
+					if (actor != NULL) {
+						return P_Thing_CanRaise(actor);
+					}
+				}
+
+				FActorIterator iterator(args[0]);
+				bool canraiseall = false;
+				while ((actor = iterator.Next()))
+				{
+					canraiseall = !P_Thing_CanRaise(actor) | canraiseall;
+				}
+				
+				return !canraiseall;
 			}
 			break;
 
@@ -7166,7 +7448,7 @@ scriptwait:
 				while (min <= max)
 				{
 					int mid = (min + max) / 2;
-					SDWORD caseval = pc[mid*2];
+					SDWORD caseval = LittleLong(pc[mid*2]);
 					if (caseval == STACK(1))
 					{
 						pc = activeBehavior->Ofs2PC (LittleLong(pc[mid*2+1]));
@@ -7532,13 +7814,6 @@ scriptwait:
 						AddToConsole (-1, consolecolor);
 						AddToConsole (-1, work);
 						AddToConsole (-1, bar);
-						if (Logfile)
-						{
-							fputs (logbar, Logfile);
-							fputs (work, Logfile);
-							fputs (logbar, Logfile);
-							fflush (Logfile);
-						}
 					}
 				}
 			}
@@ -8514,7 +8789,7 @@ scriptwait:
 			}
 			else
 			{
-				STACK(1) = players[STACK(1)].isbot;
+				STACK(1) = (players[STACK(1)].Bot != NULL);
 			}
 			break;
 

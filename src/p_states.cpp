@@ -39,6 +39,7 @@
 #include "cmdlib.h"
 #include "i_system.h"
 #include "c_dispatch.h"
+#include "v_text.h"
 #include "thingdef/thingdef.h"
 
 // Each state is owned by an actor. Actors can own any number of
@@ -698,6 +699,10 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, const PClass *mytype
 	else if (v != 0)
 	{
 		I_Error ("Attempt to get invalid state %s from actor %s.", label, type->TypeName.GetChars());
+	}
+	else
+	{
+		Printf (TEXTCOLOR_RED "Attempt to get invalid state %s from actor %s.\n", label, type->TypeName.GetChars());
 	}
 	delete[] namestart;		// free the allocated string buffer
 	return state;

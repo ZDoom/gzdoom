@@ -82,6 +82,7 @@ enum
 	CP_SETWALLYSCALE,
 	CP_SETTHINGZ,
 	CP_SETTAG,
+	CP_SETTHINGFLAGS,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -141,6 +142,7 @@ static FCompatOption Options[] =
 	{ "maskedmidtex",			COMPATF_MASKEDMIDTEX, SLOT_COMPAT },
 	{ "badangles",				COMPATF2_BADANGLES, SLOT_COMPAT2 },
 	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
+	{ "soundcutoff",			COMPATF2_SOUNDCUTOFF, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };
@@ -312,6 +314,15 @@ void ParseCompatibility()
 			{
 				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
 				CompatParams.Push(CP_SETTAG);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
+			else if (sc.Compare("setthingflags"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETTHINGFLAGS);
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 				sc.MustGetNumber();
@@ -535,6 +546,15 @@ void SetCompatibilityParams()
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
 						sectors[CompatParams[i + 1]].tag = CompatParams[i + 2];
+					}
+					i += 3;
+					break;
+				}
+				case CP_SETTHINGFLAGS:
+				{
+					if ((unsigned)CompatParams[i + 1] < MapThingsConverted.Size())
+					{
+						MapThingsConverted[CompatParams[i + 1]].flags = CompatParams[i + 2];
 					}
 					i += 3;
 					break;

@@ -43,6 +43,8 @@
 #include "tarray.h"
 #include "thingdef.h"
 #include "thingdef_exp.h"
+#include "actor.h"
+#include "actorptrselect.h"
 
 static TMap<FName, FxGlobalFunctionCall::Creator> CreatorMap;
 
@@ -185,3 +187,110 @@ public:
 
 GLOBALFUNCTION_ADDER(Sqrt);
 
+//==========================================================================
+//
+// Function: checkclass
+//
+//==========================================================================
+
+class FxGlobalFunctionCall_CheckClass : public FxGlobalFunctionCall
+{
+	public:
+		GLOBALFUNCTION_DEFINE(CheckClass);
+		
+		FxExpression *Resolve(FCompileContext& ctx)
+		{
+			CHECKRESOLVED();
+			
+			if (!ResolveArgs(ctx, 1, 3, false))
+			return NULL;
+			
+			for (int i = ArgList->Size(); i > 1;)
+			{
+				if (!(*ArgList)[--i]->ValueType.isNumeric())
+				{
+					ScriptPosition.Message(MSG_ERROR, "numeric value expected for parameter");
+					delete this;
+					return NULL;
+				}
+			}
+			
+			switch ((*ArgList)[0]->ValueType.Type)
+			{
+				case VAL_Class: case VAL_Name:break;
+				default:
+					ScriptPosition.Message(MSG_ERROR, "actor class expected for parameter");
+				delete this;
+				return NULL;
+			}
+			
+			ValueType = VAL_Float;
+			return this;
+		}
+		
+		ExpVal EvalExpression(AActor *self)
+		{
+			ExpVal ret;
+			ret.Type = VAL_Int;
+			
+			const PClass  * checkclass;
+			{
+				ExpVal v = (*ArgList)[0]->EvalExpression(self);
+				checkclass = v.GetClass();
+				if (!checkclass)
+				{
+					checkclass = PClass::FindClass(v.GetName());
+					if (!checkclass) { ret.Int = 0; return ret; }
+				}
+			}
+			
+			bool match_superclass = false;
+			int pick_pointer = AAPTR_DEFAULT;
+			
+			switch (ArgList->Size())
+			{
+				case 3: match_superclass = (*ArgList)[2]->EvalExpression(self).GetBool();
+				case 2: pick_pointer = (*ArgList)[1]->EvalExpression(self).GetInt();
+			}
+			
+			self = COPY_AAPTR(self, pick_pointer);
+			if (!self){ ret.Int = 0; return ret; }
+				ret.Int = match_superclass ? checkclass->IsAncestorOf(self->GetClass()) : checkclass == self->GetClass();
+			return ret;
+		}
+	};
+
+GLOBALFUNCTION_ADDER(CheckClass);
+
+//==========================================================================
+//
+// Function: ispointerequal
+//
+//==========================================================================
+
+class FxGlobalFunctionCall_IsPointerEqual : public FxGlobalFunctionCall
+{
+	public:
+		GLOBALFUNCTION_DEFINE(IsPointerEqual);
+		
+		FxExpression *Resolve(FCompileContext& ctx)
+		{
+			CHECKRESOLVED();
+			
+			if (!ResolveArgs(ctx, 2, 2, true))
+				return NULL;
+			
+			ValueType = VAL_Int;
+			return this;
+		}
+		
+		ExpVal EvalExpression(AActor *self)
+		{
+			ExpVal ret;
+			ret.Type = VAL_Int;
+			ret.Int = COPY_AAPTR(self, (*ArgList)[0]->EvalExpression(self).GetInt()) == COPY_AAPTR(self, (*ArgList)[1]->EvalExpression(self).GetInt());
+			return ret;
+		}
+};
+
+GLOBALFUNCTION_ADDER(IsPointerEqual);

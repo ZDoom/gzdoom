@@ -199,6 +199,46 @@ CCMD (map)
 //
 //==========================================================================
 
+CCMD(recordmap)
+{
+	if (netgame)
+	{
+		Printf("You cannot record a new game while in a netgame.");
+		return;
+	}
+	if (argv.argc() > 2)
+	{
+		try
+		{
+			if (!P_CheckMapData(argv[2]))
+			{
+				Printf("No map %s\n", argv[2]);
+			}
+			else
+			{
+				G_DeferedInitNew(argv[2]);
+				gameaction = ga_recordgame;
+				newdemoname = argv[1];
+				newdemomap = argv[2];
+			}
+		}
+		catch (CRecoverableError &error)
+		{
+			if (error.GetMessage())
+				Printf("%s", error.GetMessage());
+		}
+	}
+	else
+	{
+		Printf("Usage: recordmap <filename> <map name>\n");
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
 CCMD (open)
 {
 	if (netgame)
@@ -235,6 +275,18 @@ CCMD (open)
 void G_NewInit ()
 {
 	int i;
+
+	// Destory all old player refrences that may still exist
+	TThinkerIterator<APlayerPawn> it(STAT_TRAVELLING);
+	APlayerPawn *pawn, *next;
+
+	next = it.Next();
+	while ((pawn = next) != NULL)
+	{
+		next = it.Next();
+		pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
+		pawn->Destroy();
+	}
 
 	G_ClearSnapshots ();
 	ST_SetNeedRefresh();
@@ -1112,6 +1164,8 @@ void G_StartTravel ()
 			}
 		}
 	}
+
+	bglobal.StartTravel ();
 }
 
 //==========================================================================
@@ -1183,6 +1237,15 @@ void G_FinishTravel ()
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
 			pawn->player->SendPitchLimits();
+			// Sync the FLY flags.
+			if (pawn->flags2 & MF2_FLY)
+			{
+				pawn->player->cheats |= CF_FLY;
+			}
+			else
+			{
+				pawn->player->cheats &= ~CF_FLY;
+			}
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{
@@ -1200,6 +1263,8 @@ void G_FinishTravel ()
 			}
 		}
 	}
+
+	bglobal.FinishTravel ();
 }
  
 //==========================================================================

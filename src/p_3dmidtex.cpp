@@ -258,6 +258,13 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 
 bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &open, bool restrict)
 {
+	// [TP] Impassible-like 3dmidtextures do not block missiles
+	if ((linedef->flags & ML_3DMIDTEX_IMPASS)
+		&& (thing->flags & MF_MISSILE || thing->BounceFlags & BOUNCE_MBF))
+	{
+		return false;
+	}
+
 	fixed_t tt, tb;
 
 	open.abovemidtex = false;

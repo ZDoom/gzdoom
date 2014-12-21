@@ -52,7 +52,7 @@ class FScanner;
 #define GCC_YSEG
 #else
 #define MSVC_YSEG
-#define GCC_YSEG __attribute__((section(SECTION_YREG)))
+#define GCC_YSEG __attribute__((section(SECTION_YREG))) __attribute__((used))
 #endif
 
 struct FIntermissionDescriptor;

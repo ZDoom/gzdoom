@@ -9,7 +9,7 @@ ACTOR Peasant : StrifeHumanoid
 	Radius 20
 	Height 56
 	Monster
-	+FRIENDLY
+	+NEVERTARGET
 	-COUNTKILL
 	+NOSPLASHALERT
 	+FLOORCLIP

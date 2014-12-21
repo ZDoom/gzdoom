@@ -366,7 +366,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				Results->HitTexture = CurSector->GetTexture(sector_t::ceiling);
 			}
 			else if (entersector == NULL ||
-				hitz <= bf || hitz >= bc ||
+				hitz < bf || hitz > bc ||
 				in->d.line->flags & WallMask)
 			{ // hit the wall
 				Results->HitType = TRACE_HitWall;

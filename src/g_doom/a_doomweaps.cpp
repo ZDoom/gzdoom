@@ -109,6 +109,7 @@ enum SAW_Flags
 	SF_NOUSEAMMO = 16,
 	SF_NOPULLIN = 32,
 	SF_NOTURN = 64,
+	SF_STEALARMOR = 128,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
@@ -119,7 +120,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	AActor *linetarget;
 	int actualdamage;
 
-	ACTION_PARAM_START(9);
+	ACTION_PARAM_START(11);
 	ACTION_PARAM_SOUND(fullsound, 0);
 	ACTION_PARAM_SOUND(hitsound, 1);
 	ACTION_PARAM_INT(damage, 2);
@@ -129,6 +130,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	ACTION_PARAM_ANGLE(Spread_XY, 6);
 	ACTION_PARAM_ANGLE(Spread_Z, 7);
 	ACTION_PARAM_FIXED(LifeSteal, 8);
+	ACTION_PARAM_INT(lifestealmax, 9);
+	ACTION_PARAM_CLASS(armorbonustype, 10);
 
 	if (NULL == (player = self->player))
 	{
@@ -184,7 +187,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	}
 
 	if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
-		P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS);
+	{
+		if (Flags & SF_STEALARMOR)
+		{
+			if (!armorbonustype) armorbonustype = PClass::FindClass("ArmorBonus");
+
+			if (armorbonustype->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+			{
+				ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn (armorbonustype, 0,0,0, NO_REPLACE));
+				armorbonus->SaveAmount *= (actualdamage * LifeSteal) >> FRACBITS;
+				armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
+				armorbonus->flags |= MF_DROPPED;
+				armorbonus->ClearCounters();
+
+				if (!armorbonus->CallTryPickup (self))
+				{
+					armorbonus->Destroy ();
+				}
+			}
+		}
+
+		else
+		{
+			P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS, lifestealmax);
+		}
+	}
 
 	S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		
@@ -546,6 +573,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindClass("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
 }
 
+
 //
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
@@ -559,14 +587,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	AActor				*thingToHit;
 	AActor				*linetarget;
 
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(7);
 	ACTION_PARAM_CLASS(spraytype, 0);
 	ACTION_PARAM_INT(numrays, 1);
 	ACTION_PARAM_INT(damagecnt, 2);
+	ACTION_PARAM_ANGLE(angle, 3);
+	ACTION_PARAM_FIXED(distance, 4);
+	ACTION_PARAM_ANGLE(vrange, 5);
+	ACTION_PARAM_INT(defdamage, 6);
 
 	if (spraytype == NULL) spraytype = PClass::FindClass("BFGExtra");
 	if (numrays <= 0) numrays = 40;
 	if (damagecnt <= 0) damagecnt = 15;
+	if (angle == 0) angle = ANG90;
+	if (distance <= 0) distance = 16 * 64 * FRACUNIT;
+	if (vrange == 0) vrange = ANGLE_1 * 32;
 
 	// [RH] Don't crash if no target
 	if (!self->target)
@@ -575,10 +610,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)
 	{
-		an = self->angle - ANG90/2 + ANG90/numrays*i;
+		an = self->angle - angle/2 + angle/numrays*i;
 
 		// self->target is the originator (player) of the missile
-		P_AimLineAttack (self->target, an, 16*64*FRACUNIT, &linetarget, ANGLE_1*32);
+		P_AimLineAttack (self->target, an, distance, &linetarget, vrange);
 
 		if (!linetarget)
 			continue;
@@ -589,14 +624,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 		if (spray && (spray->flags5 & MF5_PUFFGETSOWNER))
 			spray->target = self->target;
 
-		
-		damage = 0;
-		for (j = 0; j < damagecnt; ++j)
-			damage += (pr_bfgspray() & 7) + 1;
+		if (defdamage == 0)
+		{
+			damage = 0;
+			for (j = 0; j < damagecnt; ++j)
+				damage += (pr_bfgspray() & 7) + 1;
+		}
+		else
+		{
+			// if this is used, damagecnt will be ignored
+			damage = defdamage;
+		}
 
+		int dmgFlagPass = 0;
+		dmgFlagPass += (spray != NULL && (spray->flags3 & MF3_FOILINVUL)) ? DMG_FOILINVUL : 0; //[MC]Because the original foilinvul wasn't working.
+		dmgFlagPass += (spray != NULL && (spray->flags7 & MF7_FOILBUDDHA)) ? DMG_FOILBUDDHA : 0;
 		thingToHit = linetarget;
 		int newdam = P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash), 
-			spray != NULL && (spray->flags3 & MF3_FOILINVUL)? DMG_FOILINVUL : 0);
+			dmgFlagPass);
 		P_TraceBleed (newdam > 0 ? newdam : damage, thingToHit, self->target);
 	}
 }

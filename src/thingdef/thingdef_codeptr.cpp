@@ -4199,16 +4199,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	fixed_t prevX = self->x;
 	fixed_t prevY = self->y;
 	fixed_t prevZ = self->z;
+	fixed_t aboveFloor = spot->z - spot->floorz;
+	fixed_t finalz = spot->floorz + aboveFloor;
+
+	if (spot->z + self->height > spot->ceilingz)
+		finalz = spot->ceilingz - self->height;
+	else if (spot->z < spot->floorz)
+		finalz = spot->floorz;
+
 
 	//Take precedence and cooperate with telefragging first.
-	bool teleResult = P_TeleportMove(self, spot->x, spot->y, spot->z, Flags & TF_TELEFRAG);
-	
-	if ((!(teleResult)) && (Flags & TF_FORCED))
-	{ 
-		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
-		self->SetOrigin(spot->x, spot->y, spot->z);
-		teleResult = true;
+	bool teleResult = P_TeleportMove(self, spot->x, spot->y, finalz, Flags & TF_TELEFRAG);
 
+	if (Flags & TF_FORCED)
+	{
+		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
+		self->SetOrigin(spot->x, spot->y, finalz);
+		teleResult = true;
 	}
 
 	if (teleResult)

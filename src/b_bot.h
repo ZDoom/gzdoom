@@ -130,7 +130,6 @@ private:
 
 protected:
 	bool	 ctf;
-	int		 loaded_bots;
 	int		 t_join;
 	bool	 observer; //Consoleplayer is observer.
 };
@@ -188,12 +187,12 @@ public:
 	fixed_t		oldy;
 
 private:
-	//(B_think.cpp)
+	//(b_think.cpp)
 	void Think ();
 	void ThinkForMove (ticcmd_t *cmd);
 	void Set_enemy ();
 
-	//(B_func.cpp)
+	//(b_func.cpp)
 	bool Reachable (AActor *target);
 	void Dofire (ticcmd_t *cmd);
 	AActor *Choose_Mate ();

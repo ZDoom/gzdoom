@@ -5023,6 +5023,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	self->Speed = speed;
 }
 
+static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
+{
+	FName spec = mo->Species;
+	return (!(species) || !(stricmp(species, "")) || (species && ((exclude) ? (spec != species) : (spec == species))));
+}
+
+static bool DoCheckFilter(AActor *mo, const PClass *filter, bool exclude)
+{
+	const PClass *c1 = mo->GetClass();
+	return (!(filter) || (filter == NULL) || (filter && ((exclude) ? (c1 != filter) : (c1 == filter))));
+}
+
 //===========================================================================
 //
 // Common A_Damage handler
@@ -5040,9 +5052,11 @@ enum DMSS
 	DMSS_NOFACTOR			= 8,
 	DMSS_FOILBUDDHA			= 16,
 	DMSS_NOPROTECT			= 32,
+	DMSS_EXFILTER			= 64,
+	DMSS_EXSPECIES			= 128,
 };
 
-static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
+static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags, const PClass *filter, FName species)
 {
 	int dmgFlags = 0;
 	if (flags & DMSS_FOILINVUL)
@@ -5058,13 +5072,19 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 	if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
 		dmgFlags += DMG_NO_PROTECT;
 
-	if (amount > 0)
-		P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.
-
-	else if (amount < 0)
+	bool filterpass = DoCheckFilter(dmgtarget, filter, (flags & DMSS_EXFILTER) ? true : false),
+		speciespass = DoCheckSpecies(dmgtarget, species, (flags & DMSS_EXSPECIES) ? true : false);
+	
+	if (filterpass && speciespass)
 	{
-		amount = -amount;
-		P_GiveBody(dmgtarget, amount);
+		if (amount > 0)
+			P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.
+
+		else if (amount < 0)
+		{
+			amount = -amount;
+			P_GiveBody(dmgtarget, amount);
+		}
 	}
 }
 
@@ -5075,15 +5095,14 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(filter, 3);
+	ACTION_PARAM_NAME(species, 4);
 
-	const PClass *c1 = self->GetClass();
-	if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-		DoDamage(self, self, amount, DamageType, flags);
+		DoDamage(self, self, amount, DamageType, flags, filter, species);
 }
 
 //===========================================================================
@@ -5093,17 +5112,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(filter, 3);
+	ACTION_PARAM_NAME(species, 4);
 
 	if (self->target != NULL)
 	{
-		const PClass *c1 = self->target->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoDamage(self->target, self, amount, DamageType, flags);
+		DoDamage(self->target, self, amount, DamageType, flags, filter, species);
 	}
 }
 
@@ -5114,17 +5132,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(filter, 3);
+	ACTION_PARAM_NAME(species, 4);
 
 	if (self->tracer != NULL)
 	{
-		const PClass *c1 = self->tracer->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoDamage(self->tracer, self, amount, DamageType, flags);
+		DoDamage(self->tracer, self, amount, DamageType, flags, filter, species);
 	}
 }
 
@@ -5135,17 +5152,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(filter, 3);
+	ACTION_PARAM_NAME(species, 4);
 
 	if (self->master != NULL)
 	{
-		const PClass *c1 = self->master->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoDamage(self->master, self, amount, DamageType, flags);
+		DoDamage(self->master, self, amount, DamageType, flags, filter, species);
 	}
 }
 
@@ -5156,11 +5172,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(filter, 3);
+	ACTION_PARAM_NAME(species, 4);
 
 	TThinkerIterator<AActor> it;
 	AActor * mo;
@@ -5169,9 +5186,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 	{
 		if (mo->master == self)
 		{
-			const PClass *c1 = mo->GetClass();
-			if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-				DoDamage(mo, self, amount, DamageType, flags);
+			DoDamage(mo, self, amount, DamageType, flags, filter, species);
 		}
 	}
 }
@@ -5183,11 +5198,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_INT(amount, 0);
 	ACTION_PARAM_NAME(DamageType, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_CLASS(filter, 3);
+	ACTION_PARAM_NAME(species, 4);
 
 	TThinkerIterator<AActor> it;
 	AActor * mo;
@@ -5198,9 +5214,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
 		{
 			if (mo->master == self->master && mo != self)
 			{
-				const PClass *c1 = mo->GetClass();
-				if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-					DoDamage(mo, self, amount, DamageType, flags);
+				DoDamage(mo, self, amount, DamageType, flags, filter, species);
 			}
 		}
 	}
@@ -5218,9 +5232,11 @@ enum KILS
 	KILS_KILLMISSILES = 1 << 1,
 	KILS_NOMONSTERS =	1 << 2,
 	KILS_FOILBUDDHA =	1 << 3,
+	KILS_EXFILTER =		1 << 4,
+	KILS_EXSPECIES =	1 << 5,
 };
 
-static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags)
+static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags, const PClass *filter, FName species)
 {
 	int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
 
@@ -5229,20 +5245,25 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 	if (KILS_FOILBUDDHA)
 		dmgFlags += DMG_FOILBUDDHA;
 
-	if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
+	bool filterpass = DoCheckFilter(killtarget, filter, (flags & KILS_EXFILTER) ? true : false),
+		speciespass = DoCheckSpecies(killtarget, species, (flags & KILS_EXSPECIES) ? true : false);
+	if (filterpass && speciespass) //Check this first. I think it'll save the engine a lot more time this way.
 	{
-		//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
-		//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
-		//since that's the whole point of it.
-		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && 
-			(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
+		if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
 		{
-			P_ExplodeMissile(killtarget, NULL, NULL);
+			//[MC] Now that missiles can set masters, lets put in a check to properly destroy projectiles. BUT FIRST! New feature~!
+			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
+			//since that's the whole point of it.
+			if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) &&
+				(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
+			{
+				P_ExplodeMissile(killtarget, NULL, NULL);
+			}
 		}
-	}
-	if (!(flags & KILS_NOMONSTERS))
-	{
+		if (!(flags & KILS_NOMONSTERS))
+		{
 			P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, dmgFlags);
+		}
 	}
 }
 
@@ -5254,16 +5275,15 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTarget)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	if (self->target != NULL)
 	{
-		const PClass *c1 = self->target->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoKill(self->target, self, damagetype, flags);
+		DoKill(self->target, self, damagetype, flags, filter, species);
 	}
 }
 
@@ -5274,16 +5294,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTarget)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTracer)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	if (self->tracer != NULL)
 	{
-		const PClass *c1 = self->tracer->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoKill(self->tracer, self, damagetype, flags);
+		DoKill(self->tracer, self, damagetype, flags, filter, species);
 	}
 }
 
@@ -5294,16 +5313,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTracer)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	if (self->master != NULL)
 	{
-		const PClass *c1 = self->master->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoKill(self->master, self, damagetype, flags);
+		DoKill(self->master, self, damagetype, flags, filter, species);
 	}
 }
 
@@ -5314,10 +5332,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
@@ -5326,9 +5345,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 	{
 		if (mo->master == self) 
 		{
-			const PClass *c1 = mo->GetClass();
-			if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-				DoKill(mo, self, damagetype, flags);
+			DoKill(mo, self, damagetype, flags, filter, species);
 		}
 	}
 }
@@ -5340,10 +5357,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_NAME(damagetype, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
@@ -5354,9 +5372,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
 		{
 			if (mo->master == self->master && mo != self)
 			{ 
-				const PClass *c1 = mo->GetClass();
-				if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-					DoKill(mo, self, damagetype, flags); 
+				DoKill(mo, self, damagetype, flags, filter, species);
 			}
 		}
 	}
@@ -5374,25 +5390,32 @@ enum RMVF_flags
 	RMVF_NOMONSTERS = 1 << 1,
 	RMVF_MISC		= 1 << 2,
 	RMVF_EVERYTHING = 1 << 3,
+	RMVF_EXFILTER	= 1 << 4,
+	RMVF_EXSPECIES	= 1 << 5,
 };
 
-static void DoRemove(AActor *removetarget, int flags)
+static void DoRemove(AActor *removetarget, int flags, const PClass *filter, FName species)
 {
-	if ((flags & RMVF_EVERYTHING))
+	bool filterpass = DoCheckFilter(removetarget, filter, (flags & RMVF_EXFILTER) ? true : false),
+		speciespass = DoCheckSpecies(removetarget, species, (flags & RMVF_EXSPECIES) ? true : false);
+	if (filterpass && speciespass)
 	{
-		P_RemoveThing(removetarget);
-	}
-	if ((flags & RMVF_MISC) && !((removetarget->flags3 & MF3_ISMONSTER) && (removetarget->flags & MF_MISSILE)))
-	{
-		P_RemoveThing(removetarget);
-	}
-	if ((removetarget->flags3 & MF3_ISMONSTER) && !(flags & RMVF_NOMONSTERS))
-	{
-		P_RemoveThing(removetarget);
-	}
-	if ((removetarget->flags & MF_MISSILE) && (flags & RMVF_MISSILES))
-	{
-		P_RemoveThing(removetarget);
+		if ((flags & RMVF_EVERYTHING))
+		{
+			P_RemoveThing(removetarget);
+		}
+		if ((flags & RMVF_MISC) && !((removetarget->flags3 & MF3_ISMONSTER) && (removetarget->flags & MF_MISSILE)))
+		{
+			P_RemoveThing(removetarget);
+		}
+		if ((removetarget->flags3 & MF3_ISMONSTER) && !(flags & RMVF_NOMONSTERS))
+		{
+			P_RemoveThing(removetarget);
+		}
+		if ((removetarget->flags & MF_MISSILE) && (flags & RMVF_MISSILES))
+		{
+			P_RemoveThing(removetarget);
+		}
 	}
 }
 
@@ -5406,12 +5429,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTarget)
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(flags, 0);
 	ACTION_PARAM_CLASS(filter, 1);
+	ACTION_PARAM_NAME(species, 2);
 	
 	if (self->target != NULL)
 	{
-		const PClass *c1 = self->target->GetClass();
-		if ((filter && (c1 == filter)) || (filter == NULL) || !(filter))
-			DoRemove(self->target, flags);
+		DoRemove(self->target, flags, filter, species);
 	}
 }
 
@@ -5425,12 +5447,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTracer)
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(flags, 0);
 	ACTION_PARAM_CLASS(filter, 1);
+	ACTION_PARAM_NAME(species, 2);
 	
 	if (self->tracer != NULL)
 	{
-		const PClass *c1 = self->tracer->GetClass();
-		if ((filter && (c1 == filter)) || (filter == NULL) || !(filter))
-			DoRemove(self->tracer, flags);
+		DoRemove(self->tracer, flags, filter, species);
 	}
 }
 
@@ -5444,12 +5465,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveMaster)
 	ACTION_PARAM_START(2);
 	ACTION_PARAM_INT(flags, 0);
 	ACTION_PARAM_CLASS(filter, 1);
+	ACTION_PARAM_NAME(species, 2);
 	
 	if (self->master != NULL)
 	{
-		const PClass *c1 = self->master->GetClass();
-		if ((filter && (c1 == filter)) || (filter == NULL) || !(filter))
-			DoRemove(self->master, flags);
+		DoRemove(self->master, flags, filter, species);
 	}
 }
 
@@ -5462,19 +5482,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
 {
 	TThinkerIterator<AActor> it;
 	AActor *mo;
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_BOOL(removeall, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 	
 
 	while ((mo = it.Next()) != NULL)
 	{
 		if (mo->master == self && (mo->health <= 0 || removeall))
 		{
-			const PClass *c1 = mo->GetClass();
-			if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-				DoRemove(mo, flags);
+			DoRemove(mo, flags, filter, species);
 		}
 	}
 }
@@ -5488,10 +5507,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 {
 	TThinkerIterator<AActor> it;
 	AActor *mo;
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_BOOL(removeall, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	if (self->master != NULL)
 	{
@@ -5499,9 +5519,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 		{
 			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
 			{
-				const PClass *c1 = mo->GetClass();
-				if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-					DoRemove(mo, flags);
+				DoRemove(mo, flags, filter, species);
 			}
 		}
 	}
@@ -5514,17 +5532,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(4);
 	ACTION_PARAM_INT(removee, 0);
 	ACTION_PARAM_INT(flags, 1);
 	ACTION_PARAM_CLASS(filter, 2);
+	ACTION_PARAM_NAME(species, 3);
 
 	AActor *reference = COPY_AAPTR(self, removee);
 	if (reference != NULL)
 	{
-		const PClass *c1 = reference->GetClass();
-		if (!(filter) || (filter == NULL) || (filter && (c1 == filter)))
-			DoRemove(reference, flags);
+		DoRemove(reference, flags, filter, species);
 	}
 }
 

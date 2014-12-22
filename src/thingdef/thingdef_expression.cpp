@@ -440,6 +440,7 @@ ExpEmit FxIntCast::Emit(VMFunctionBuilder *build)
 	ExpEmit from = basex->Emit(build);
 	assert(!from.Konst);
 	assert(basex->ValueType == VAL_Float);
+	from.Free(build);
 	ExpEmit to(build, REGT_INT);
 	build->Emit(OP_CAST, to.RegNum, from.RegNum, CAST_F2I);
 	return to;

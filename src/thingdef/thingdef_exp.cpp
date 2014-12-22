@@ -390,16 +390,14 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 		}
 		sc.MustGetToken('(');
 
-		while (!(sc.CheckToken(')')))
+		for (;;)
 		{
-			FxExpression *min = ParseExpressionM(sc, cls);
-			list.Push(min);
+			FxExpression *expr = ParseExpressionM(sc, cls);
+			list.Push(expr);
 			if (sc.CheckToken(')'))
 				break;
-			else
-				sc.MustGetToken(',');
+			sc.MustGetToken(',');
 		}
-
 		return new FxPick(rng, list, sc);
 	}
 	else if (sc.CheckToken(TK_FRandom))

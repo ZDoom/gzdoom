@@ -2203,17 +2203,25 @@ ExpEmit FxPick::Emit(VMFunctionBuilder *build)
 	for (unsigned i = 0; i < choices.Size(); ++i)
 	{
 		build->BackpatchToHere(jumptable + i);
-		ExpEmit casereg = choices[i]->Emit(build);
-		if (casereg.RegNum != resultreg.RegNum)
-		{ // The result of the case is in a different register from what
-		  // was expected. Copy it to the one we wanted.
-
-			resultreg.Reuse(build);	// This is really just for the assert in Reuse()
-			build->Emit(OP_MOVE, resultreg.RegNum, casereg.RegNum, 0);
-			resultreg.Free(build);
+		if (choices[i]->isConstant())
+		{
+			int val = static_cast<FxConstant *>(choices[i])->GetValue().GetInt();
+			build->EmitLoadInt(resultreg.RegNum, val);
 		}
-		// Free this register so the remaining cases can use it.
-		casereg.Free(build);
+		else
+		{
+			ExpEmit casereg = choices[i]->Emit(build);
+			if (casereg.RegNum != resultreg.RegNum)
+			{ // The result of the case is in a different register from what
+			  // was expected. Copy it to the one we wanted.
+
+				resultreg.Reuse(build);	// This is really just for the assert in Reuse()
+				build->Emit(OP_MOVE, resultreg.RegNum, casereg.RegNum, 0);
+				resultreg.Free(build);
+			}
+			// Free this register so the remaining cases can use it.
+			casereg.Free(build);
+		}
 		// All but the final case needs a jump to the end of the expression's code.
 		if (i + 1 < choices.Size())
 		{

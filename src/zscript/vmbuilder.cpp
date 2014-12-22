@@ -423,8 +423,9 @@ void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 bool VMFunctionBuilder::RegAvailability::Reuse(int reg)
 {
 	assert(reg >= 0 && reg <= 255);
+	assert(reg < MostUsed && "Attempt to reuse a register that was never used");
 
-	VM_UWORD mask = reg & 31;
+	VM_UWORD mask = 1 << (reg & 31);
 	int word = reg / 32;
 
 	if (Used[word] & mask)

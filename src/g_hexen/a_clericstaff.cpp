@@ -177,7 +177,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffInitBlink)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->special1 = (pr_blink()>>1)+20;
+	self->weaponspecial = (pr_blink()>>1)+20;
 	return 0;
 }
 
@@ -193,10 +193,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 
 	if (self->player && self->player->ReadyWeapon)
 	{
-		if (!--self->special1)
+		if (!--self->weaponspecial)
 		{
 			P_SetPsprite (self->player, ps_weapon, self->player->ReadyWeapon->FindState ("Blink"));
-			self->special1 = (pr_blink()+50)>>2;
+			self->weaponspecial = (pr_blink()+50)>>2;
 		}
 		else 
 		{

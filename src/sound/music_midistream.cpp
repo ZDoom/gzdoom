@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -277,7 +278,16 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		return new TimidityMIDIDevice;
 
 	case MDEV_OPL:
-		return new OPLMIDIDevice;
+		try
+		{
+			return new OPLMIDIDevice;
+		}
+		catch (CRecoverableError &err)
+		{
+			// The creation of an OPL MIDI device can abort with an error if no GENMIDI lump can be found.
+			Printf("Unable to create OPL MIDI device: %s\nFalling back to FModEx playback", err.GetMessage());
+			return new FMODMIDIDevice;
+		}
 
 	case MDEV_TIMIDITY:
 		return new TimidityPPMIDIDevice;
@@ -540,7 +550,7 @@ bool MIDIStreamer::IsPlaying()
 
 void MIDIStreamer::MusicVolumeChanged()
 {
-	if (MIDI->FakeVolume())
+	if (MIDI != NULL && MIDI->FakeVolume())
 	{
 		float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
 		Volume = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
@@ -622,7 +632,7 @@ void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
 
 void MIDIStreamer::OutputVolume (DWORD volume)
 {
-	if (MIDI->FakeVolume())
+	if (MIDI != NULL && MIDI->FakeVolume())
 	{
 		NewVolume = volume;
 		VolumeChanged = true;

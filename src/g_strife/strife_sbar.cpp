@@ -586,29 +586,33 @@ private:
 		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_Alpha, FRACUNIT*3/4, TAG_DONE);
 		screen->DrawTexture (Images[bars], left, top, DTA_CleanNoMove, true, TAG_DONE);
 
+
 		switch (CurrentPop)
 		{
 		case POP_Log:
+		{
+			int seconds = Tics2Seconds(level.time);
 			// Draw the latest log message.
-			mysnprintf (buff, countof(buff), "%02d:%02d:%02d",
-				(level.time/TICRATE)/3600,
-				((level.time/TICRATE)%3600)/60,
-				(level.time/TICRATE)%60);
+			mysnprintf(buff, countof(buff), "%02d:%02d:%02d",
+				seconds / 3600,
+				(seconds % 3600) / 60,
+				(seconds) % 60);
 
-			screen->DrawText (SmallFont2, CR_UNTRANSLATED, left+210*xscale, top+8*yscale, buff,
+			screen->DrawText(SmallFont2, CR_UNTRANSLATED, left + 210 * xscale, top + 8 * yscale, buff,
 				DTA_CleanNoMove, true, TAG_DONE);
 
 			if (CPlayer->LogText != NULL)
 			{
-				FBrokenLines *lines = V_BreakLines (SmallFont2, 272, CPlayer->LogText);
+				FBrokenLines *lines = V_BreakLines(SmallFont2, 272, CPlayer->LogText);
 				for (i = 0; lines[i].Width >= 0; ++i)
 				{
-					screen->DrawText (SmallFont2, CR_UNTRANSLATED, left+24*xscale, top+(18+i*12)*yscale,
+					screen->DrawText(SmallFont2, CR_UNTRANSLATED, left + 24 * xscale, top + (18 + i * 12)*yscale,
 						lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
 				}
-				V_FreeBrokenLines (lines);
+				V_FreeBrokenLines(lines);
 			}
 			break;
+		}
 
 		case POP_Keys:
 			// List the keys the player has.

@@ -300,6 +300,9 @@ xx(Abs)
 xx(ACS_NamedExecuteWithResult)
 xx(CallACS)
 xx(Sqrt)
+xx(CheckClass)
+xx(IsPointerEqual)
+xx(Pick)
 
 // Various actor names which are used internally
 xx(MapSpot)
@@ -420,6 +423,7 @@ xx(Passuse)
 xx(Repeatspecial)
 xx(Conversation)
 xx(Locknumber)
+xx(Midtex3dimpassible)
 
 xx(Playercross)
 xx(Playeruse)

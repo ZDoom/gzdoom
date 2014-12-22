@@ -2208,6 +2208,13 @@ static int PatchText (int oldSize)
 			{
 				strncpy (deh.PlayerSprite, newStr, 4);
 			}
+			for (unsigned ii = 0; ii < OrgSprNames.Size(); ii++)
+			{
+				if (!stricmp(OrgSprNames[ii].c, oldStr))
+				{
+					strcpy(OrgSprNames[ii].c, newStr);
+				}
+			}
 			// If this sprite is used by a pickup, then the DehackedPickup sprite map
 			// needs to be updated too.
 			for (i = 0; (size_t)i < countof(DehSpriteMappings); ++i)
@@ -2294,7 +2301,10 @@ static int PatchStrings (int dummy)
 
 		ReplaceSpecialChars (holdstring.LockBuffer());
 		holdstring.UnlockBuffer();
-		GStrings.SetString (Line1, holdstring);
+		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
+		const char *ll = Line1;
+		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
+		GStrings.SetString (ll, holdstring);
 		DPrintf ("%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}
 

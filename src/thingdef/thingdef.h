@@ -244,11 +244,11 @@ enum EDefinitionType
 #define GCC_MSEG
 #else
 #define MSVC_ASEG
-#define GCC_ASEG __attribute__((section(SECTION_AREG)))
+#define GCC_ASEG __attribute__((section(SECTION_AREG))) __attribute__((used))
 #define MSVC_PSEG
-#define GCC_PSEG __attribute__((section(SECTION_GREG)))
+#define GCC_PSEG __attribute__((section(SECTION_GREG))) __attribute__((used))
 #define MSVC_MSEG
-#define GCC_MSEG __attribute__((section(SECTION_MREG)))
+#define GCC_MSEG __attribute__((section(SECTION_MREG))) __attribute__((used))
 #endif
 
 
@@ -367,6 +367,7 @@ int MatchString (const char *in, const char **strings);
 
 
 #define ACTION_SET_RESULT(v) do { if (numret > 0) { assert(ret != NULL); ret->SetInt(v); numret = 1; } } while(0)
+#define ACTION_OR_RESULT(v) do { if (numret > 0) { assert(ret != NULL); ret->SetInt(*(int *)ret->Location | int(v)); numret = 1; } } while(0)
 
 // Checks to see what called the current action function
 #define ACTION_CALL_FROM_ACTOR() (callingstate == self->state)

@@ -60,7 +60,8 @@ bool APowerupGiver::Use (bool pickup)
 	}
 	if (BlendColor != 0)
 	{
-		power->BlendColor = BlendColor;
+		if (BlendColor != MakeSpecialColormap(65535)) power->BlendColor = BlendColor;
+		else power->BlendColor = 0;
 	}
 	if (Mode != NAME_None)
 	{
@@ -1296,6 +1297,18 @@ void APowerTargeter::InitEffect ()
 	PositionAccuracy ();
 }
 
+bool APowerTargeter::HandlePickup(AInventory *item)
+{
+	if (Super::HandlePickup(item))
+	{
+		InitEffect();	// reset the HUD sprites
+		return true;
+	}
+	return false;
+}
+
+
+
 void APowerTargeter::DoEffect ()
 {
 	Super::DoEffect ();
@@ -1382,6 +1395,42 @@ void APowerFrightener::EndEffect ()
 		return;
 
 	Owner->player->cheats &= ~CF_FRIGHTENING;
+}
+
+// Buddha Powerup --------------------------------
+
+IMPLEMENT_CLASS (APowerBuddha)
+
+//===========================================================================
+//
+// APowerBuddha :: InitEffect
+//
+//===========================================================================
+
+void APowerBuddha::InitEffect ()
+{
+	Super::InitEffect();
+
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
+	Owner->player->cheats |= CF_BUDDHA;
+}
+
+//===========================================================================
+//
+// APowerBuddha :: EndEffect
+//
+//===========================================================================
+
+void APowerBuddha::EndEffect ()
+{
+	Super::EndEffect();
+
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
+	Owner->player->cheats &= ~CF_BUDDHA;
 }
 
 // Scanner powerup ----------------------------------------------------------

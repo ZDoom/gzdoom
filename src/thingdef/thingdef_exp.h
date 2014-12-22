@@ -176,6 +176,7 @@ struct ExpEmit
 	ExpEmit(int reg, int type, bool konst)  : RegNum(reg), RegType(type), Konst(konst), Fixed(false) {}
 	ExpEmit(VMFunctionBuilder *build, int type);
 	void Free(VMFunctionBuilder *build);
+	void Reuse(VMFunctionBuilder *build);
 
 	BYTE RegNum, RegType, Konst:1, Fixed:1;
 };
@@ -617,13 +618,34 @@ public:
 class FxRandom : public FxExpression
 {
 protected:
-	FRandom * rng;
+	FRandom *rng;
 	FxExpression *min, *max;
 
 public:
 
 	FxRandom(FRandom *, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos);
 	~FxRandom();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxPick : public FxExpression
+{
+protected:
+	FRandom *rng;
+	TDeletingArray<FxExpression*> choices;
+
+public:
+
+	FxPick(FRandom *, TArray<FxExpression*> &expr, const FScriptPosition &pos);
+	~FxPick();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

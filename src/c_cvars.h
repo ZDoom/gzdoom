@@ -159,6 +159,7 @@ private:
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 	friend FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 	friend void UnlatchCVars (void);
+	friend void DestroyCVarsFlagged (DWORD flags);
 	friend void C_ArchiveCVars (FConfigFile *f, uint32 filter);
 	friend void C_SetCVarsToDefaults (void);
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
@@ -189,6 +190,9 @@ FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, DWORD flags);
 
 // Called from G_InitNew()
 void UnlatchCVars (void);
+
+// Destroy CVars with the matching flags; called from CCMD(restart)
+void DestroyCVarsFlagged (DWORD flags);
 
 // archive cvars to FILE f
 void C_ArchiveCVars (FConfigFile *f, uint32 filter);

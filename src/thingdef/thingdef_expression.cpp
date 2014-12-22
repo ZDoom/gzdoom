@@ -87,6 +87,7 @@ DEFINE_MEMBER_VARIABLE(height, AActor)
 DEFINE_MEMBER_VARIABLE(radius, AActor)
 DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
 DEFINE_MEMBER_VARIABLE(meleerange, AActor)
+DEFINE_MEMBER_VARIABLE(Speed, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
@@ -98,6 +99,15 @@ void ExpEmit::Free(VMFunctionBuilder *build)
 	if (!Fixed && !Konst)
 	{
 		build->Registers[RegType].Return(RegNum, 1);
+	}
+}
+
+void ExpEmit::Reuse(VMFunctionBuilder *build)
+{
+	if (!Fixed && !Konst)
+	{
+		bool success = build->Registers[RegType].Reuse(RegNum);
+		assert(success && "Attempt to reuse a register that is already in use");
 	}
 }
 
@@ -2086,6 +2096,140 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
 	return out;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxPick::FxPick(FRandom *r, TArray<FxExpression*> &expr, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	assert(expr.Size() > 0);
+	choices.Resize(expr.Size());
+	for (unsigned int index = 0; index < expr.Size(); index++)
+	{
+		choices[index] = new FxIntCast(expr[index]);
+	}
+	rng = r;
+	ValueType = VAL_Int;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxPick::~FxPick()
+{
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxPick::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	for (unsigned int index = 0; index < choices.Size(); index++)
+	{
+		RESOLVE(choices[index], ctx);
+		ABORT(choices[index]);
+		assert(choices[index]->ValueType == ValueType.Type);
+	}
+	return this;
+};
+
+
+//==========================================================================
+//
+// FxPick :: Emit
+//
+// The expression:
+//   a = pick[rng](i_0, i_1, i_2, ..., i_n)
+//   [where i_x is a complete expression and not just a value]
+// is syntactic sugar for:
+//
+//   switch(random[rng](0, n)) {
+//     case 0: a = i_0;
+//     case 1: a = i_1;
+//     case 2: a = i_2;
+//     ...
+//     case n: a = i_n;
+//   }
+//
+//==========================================================================
+
+ExpEmit FxPick::Emit(VMFunctionBuilder *build)
+{
+	unsigned i;
+
+	assert(choices.Size() > 0);
+
+	// Call DecoRandom to generate a random number.
+	VMFunction *callfunc;
+	PSymbol *sym = FindDecorateBuiltinFunction(NAME_DecoRandom, DecoRandom);
+
+	assert(sym->IsKindOf(RUNTIME_CLASS(PSymbolVMFunction)));
+	assert(((PSymbolVMFunction *)sym)->Function != NULL);
+	callfunc = ((PSymbolVMFunction *)sym)->Function;
+
+	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
+	build->EmitParamInt(0);
+	build->EmitParamInt(choices.Size() - 1);
+	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
+
+	ExpEmit resultreg(build, REGT_INT);
+	build->Emit(OP_RESULT, 0, REGT_INT, resultreg.RegNum);
+	build->Emit(OP_IJMP, resultreg.RegNum, 0);
+
+	// Free the result register now. The simple code generation algorithm should
+	// automatically pick it as the destination register for each case.
+	resultreg.Free(build);
+
+	// Allocate space for the jump table.
+	size_t jumptable = build->Emit(OP_JMP, 0);
+	for (i = 1; i < choices.Size(); ++i)
+	{
+		build->Emit(OP_JMP, 0);
+	}
+
+	// Emit each case
+	TArray<size_t> finishes(choices.Size() - 1);
+	for (unsigned i = 0; i < choices.Size(); ++i)
+	{
+		build->BackpatchToHere(jumptable + i);
+		ExpEmit casereg = choices[i]->Emit(build);
+		if (casereg.RegNum != resultreg.RegNum)
+		{ // The result of the case is in a different register from what
+		  // was expected. Copy it to the one we wanted.
+
+			resultreg.Reuse(build);	// This is really just for the assert in Reuse()
+			build->Emit(OP_MOVE, resultreg.RegNum, casereg.RegNum, 0);
+			resultreg.Free(build);
+		}
+		// Free this register so the remaining cases can use it.
+		casereg.Free(build);
+		// All but the final case needs a jump to the end of the expression's code.
+		if (i + 1 < choices.Size())
+		{
+			size_t loc = build->Emit(OP_JMP, 0);
+			finishes.Push(loc);
+		}
+	}
+	// Backpatch each case (except the last, since it ends here) to jump to here.
+	for (i = 0; i < choices.Size() - 1; ++i)
+	{
+		build->BackpatchToHere(finishes[i]);
+	}
+	// The result register needs to be in-use when we return.
+	// It should have been freed earlier, so restore it's in-use flag.
+	resultreg.Reuse(build);
+	return resultreg;
 }
 
 //==========================================================================

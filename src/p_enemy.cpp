@@ -1592,7 +1592,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		}
 #endif
 		// [SP] If you don't see any enemies in deathmatch, look for players (but only when friend to a specific player.)
-		if (actor->FriendPlayer == 0 && (!teamplay || actor->DesignatedTeam == TEAM_NONE)) return result;
+		if (actor->FriendPlayer == 0 && (!teamplay || actor->GetTeam() == TEAM_NONE)) return result;
 		if (result || !deathmatch) return true;
 
 
@@ -1600,7 +1600,10 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 	if (!(gameinfo.gametype & (GAME_DoomStrifeChex)) &&
 		!multiplayer &&
-		players[0].health <= 0)
+		players[0].health <= 0 && 
+		actor->goal == NULL &&
+		gamestate != GS_TITLELEVEL
+		)
 	{ // Single player game and player is dead; look for monsters
 		return P_LookForMonsters (actor);
 	}
@@ -3205,7 +3208,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
 
-	P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
+	if (self->flags & MF_MISSILE)
+		P_ExplodeMissile(self, NULL, NULL);
+	else
+		P_DamageMobj(self, NULL, NULL, self->health, damagetype, DMG_FORCED);
 	return 0;
 }
 
@@ -3322,13 +3328,13 @@ void A_BossDeath(AActor *self)
 	{
 		if (type == NAME_Fatso)
 		{
-			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, -1, 0, false);
 			return;
 		}
 		
 		if (type == NAME_Arachnotron)
 		{
-			EV_DoFloor (DFloor::floorRaiseByTexture, NULL, 667, FRACUNIT, 0, 0, 0, false);
+			EV_DoFloor (DFloor::floorRaiseByTexture, NULL, 667, FRACUNIT, 0, -1, 0, false);
 			return;
 		}
 	}
@@ -3337,11 +3343,11 @@ void A_BossDeath(AActor *self)
 		switch (level.flags & LEVEL_SPECACTIONSMASK)
 		{
 		case LEVEL_SPECLOWERFLOOR:
-			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, -1, 0, false);
 			return;
 		
 		case LEVEL_SPECLOWERFLOORTOHIGHEST:
-			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, FRACUNIT, 0, 0, 0, false);
+			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, FRACUNIT, 0, -1, 0, false);
 			return;
 		
 		case LEVEL_SPECOPENDOOR:

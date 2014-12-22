@@ -173,11 +173,20 @@ protected:
 	void EndEffect ();
 	void PositionAccuracy ();
 	void Travelled ();
+	bool HandlePickup(AInventory *item);
 };
 
 class APowerFrightener : public APowerup
 {
 	DECLARE_CLASS (APowerFrightener, APowerup)
+protected:
+	void InitEffect ();
+	void EndEffect ();
+};
+
+class APowerBuddha : public APowerup
+{
+	DECLARE_CLASS (APowerBuddha, APowerup)
 protected:
 	void InitEffect ();
 	void EndEffect ();

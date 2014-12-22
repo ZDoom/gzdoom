@@ -13,6 +13,7 @@ public:
 		RegAvailability();
 		int Get(int count);			// Returns the first register in the range
 		void Return(int reg, int count);
+		bool Reuse(int regnum);
 
 	private:
 		VM_UWORD Used[256/32];		// Bitmap of used registers (bit set means reg is used)

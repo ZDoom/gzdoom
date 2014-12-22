@@ -537,34 +537,31 @@ void MapData::GetChecksum(BYTE cksum[16])
 {
 	MD5Context md5;
 
-	if (file != NULL)
+	if (isText)
 	{
-		if (isText)
+		Seek(ML_TEXTMAP);
+		if (file != NULL) md5.Update(file, Size(ML_TEXTMAP));
+	}
+	else
+	{
+		if (Size(ML_LABEL) != 0)
 		{
-			Seek(ML_TEXTMAP);
-			md5.Update(file, Size(ML_TEXTMAP));
+			Seek(ML_LABEL);
+			if (file != NULL) md5.Update(file, Size(ML_LABEL));
 		}
-		else
-		{
-			if (Size(ML_LABEL) != 0)
-			{
-				Seek(ML_LABEL);
-				md5.Update(file, Size(ML_LABEL));
-			}
-			Seek(ML_THINGS);
-			md5.Update(file, Size(ML_THINGS));
-			Seek(ML_LINEDEFS);
-			md5.Update(file, Size(ML_LINEDEFS));
-			Seek(ML_SIDEDEFS);
-			md5.Update(file, Size(ML_SIDEDEFS));
-			Seek(ML_SECTORS);
-			md5.Update(file, Size(ML_SECTORS));
-		}
-		if (HasBehavior)
-		{
-			Seek(ML_BEHAVIOR);
-			md5.Update(file, Size(ML_BEHAVIOR));
-		}
+		Seek(ML_THINGS);
+		if (file != NULL) md5.Update(file, Size(ML_THINGS));
+		Seek(ML_LINEDEFS);
+		if (file != NULL) md5.Update(file, Size(ML_LINEDEFS));
+		Seek(ML_SIDEDEFS);
+		if (file != NULL) md5.Update(file, Size(ML_SIDEDEFS));
+		Seek(ML_SECTORS);
+		if (file != NULL) md5.Update(file, Size(ML_SECTORS));
+	}
+	if (HasBehavior)
+	{
+		Seek(ML_BEHAVIOR);
+		if (file != NULL) md5.Update(file, Size(ML_BEHAVIOR));
 	}
 	md5.Final(cksum);
 }

@@ -60,9 +60,6 @@
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
-extern bool st_firsttime;
-EXTERN_CVAR (Bool, teamplay)
-
 CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Color,	color,					0x40cf00,	CVAR_USERINFO | CVAR_ARCHIVE);

@@ -120,6 +120,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	
 	//Add the floor
 	ffloor = new F3DFloor;
+	ffloor->top.copied = ffloor->bottom.copied = false;
 	ffloor->top.model = ffloor->bottom.model = ffloor->model = sec2;
 	ffloor->target = sec;
 	ffloor->ceilingclip = ffloor->floorclip = NULL;
@@ -420,6 +421,8 @@ void P_Recalculate3DFloors(sector_t * sector)
 	F3DFloor *		pick;
 	unsigned		pickindex;
 	F3DFloor *		clipped=NULL;
+	F3DFloor *		solid=NULL;
+	fixed_t			solid_bottom=0;
 	fixed_t			clipped_top;
 	fixed_t			clipped_bottom=0;
 	fixed_t			maxheight, minheight;
@@ -477,6 +480,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			}
 
 			oldlist.Delete(pickindex);
+			fixed_t pick_bottom=pick->bottom.plane->ZatPoint(CenterSpot(sector));
 
 			if (pick->flags & FF_THISINSIDE)
 			{
@@ -486,10 +490,38 @@ void P_Recalculate3DFloors(sector_t * sector)
 			}
 			else if (pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) && pick->flags&FF_EXISTS)
 			{
-				clipped=pick;
-				clipped_top=height;
-				clipped_bottom=pick->bottom.plane->ZatPoint(CenterSpot(sector));
-				ffloors.Push(pick);
+				// We must check if this nonsolid segment gets clipped from the top by another 3D floor
+				if (solid != NULL && solid_bottom < height)
+				{
+					ffloors.Push(pick);
+					if (solid_bottom < pick_bottom)
+					{
+						// this one is fully covered
+						pick->flags|=FF_CLIPPED;
+						pick->flags&=~FF_EXISTS;
+					}
+					else
+					{
+						F3DFloor * dyn=new F3DFloor;
+						*dyn=*pick;
+						pick->flags|=FF_CLIPPED;
+						pick->flags&=~FF_EXISTS;
+						dyn->flags|=FF_DYNAMIC;
+						dyn->top.copyPlane(&solid->bottom);
+						ffloors.Push(dyn);
+
+						clipped = dyn;
+						clipped_top = solid_bottom;
+						clipped_bottom = pick_bottom;
+					}
+				}
+				else
+				{
+					clipped = pick;
+					clipped_top = height;
+					clipped_bottom = pick_bottom;
+					ffloors.Push(pick);
+				}
 			}
 			else if (clipped && clipped_bottom<height)
 			{
@@ -499,11 +531,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 				clipped->flags|=FF_CLIPPED;
 				clipped->flags&=~FF_EXISTS;
 				dyn->flags|=FF_DYNAMIC;
-				dyn->bottom=pick->top;
+				dyn->bottom.copyPlane(&pick->top);
 				ffloors.Push(dyn);
 				ffloors.Push(pick);
-
-				fixed_t pick_bottom=pick->bottom.plane->ZatPoint(CenterSpot(sector));
 
 				if (pick_bottom<=clipped_bottom)
 				{
@@ -515,14 +545,25 @@ void P_Recalculate3DFloors(sector_t * sector)
 					dyn=new F3DFloor;
 					*dyn=*clipped;
 					dyn->flags|=FF_DYNAMIC|FF_EXISTS;
-					dyn->top=pick->bottom;
+					dyn->top.copyPlane(&pick->bottom);
 					ffloors.Push(dyn);
+					clipped = dyn;
+					clipped_top = pick_bottom;
 				}
+				solid = pick;
+				solid_bottom = pick_bottom;
 			}
 			else
 			{
-				clipped=NULL;
+				clipped = NULL;
+				if (solid == NULL || solid_bottom > pick_bottom)
+				{
+					// only if this one is lower
+					solid = pick;
+					solid_bottom = pick_bottom;
+				}
 				ffloors.Push(pick);
+
 			}
 
 		}
@@ -910,3 +951,27 @@ int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, b
 }
 
 #endif
+
+#include "c_dispatch.h"
+
+
+CCMD (dump3df)
+{
+	if (argv.argc() > 1) 
+	{
+		int sec = strtol(argv[1], NULL, 10);
+		sector_t *sector = &sectors[sec];
+		TArray<F3DFloor*> & ffloors=sector->e->XFloor.ffloors;
+
+		for (unsigned int i = 0; i < ffloors.Size(); i++)
+		{
+			fixed_t height=ffloors[i]->top.plane->ZatPoint(CenterSpot(sector));
+			fixed_t bheight=ffloors[i]->bottom.plane->ZatPoint(CenterSpot(sector));
+
+			Printf("FFloor %d @ top = %f (model = %d), bottom = %f (model = %d), flags = %B, alpha = %d %s %s\n", 
+				i, height / 65536., ffloors[i]->top.model->sectornum, 
+				bheight / 65536., ffloors[i]->bottom.model->sectornum,
+				ffloors[i]->flags, ffloors[i]->alpha, (ffloors[i]->flags&FF_EXISTS)? "Exists":"", (ffloors[i]->flags&FF_DYNAMIC)? "Dynamic":"");
+		}
+	}
+}

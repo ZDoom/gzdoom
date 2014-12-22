@@ -663,10 +663,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT	(health);
-	PARAM_STATE	(jump);
+	PARAM_INT		(health);
+	PARAM_STATE		(jump);
+	PARAM_INT_OPT	(ptr_selector)	{ ptr_selector = AAPTR_DEFAULT; }
 
-	if (self->health < health)
+	AActor *measured;
+
+	measured = COPY_AAPTR(self, ptr_selector);
+
+	if (measured != NULL && measured->health < health)
 	{
 		ACTION_JUMP(jump);
 	}
@@ -1113,7 +1118,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	else if (flags & CMF_CHECKTARGETDEAD)
 	{
 		// Target is dead and the attack shall be aborted.
-		if (self->SeeState != NULL)
+		if (self->SeeState != NULL && (self->health > 0 || !(self->flags3 & MF3_ISMONSTER)))
 			self->SetState(self->SeeState);
 	}
 	return 0;
@@ -1481,6 +1486,8 @@ enum
 	CPF_DAGGER = 2,
 	CPF_PULLIN = 4,
 	CPF_NORANDOMPUFFZ = 8,
+	CPF_NOTURN = 16,
+	CPF_STEALARMOR = 32,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
@@ -1492,6 +1499,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 	PARAM_FIXED_OPT	(range)				{ range = 0; }
 	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
+	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
+	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
 
 	if (!self->player)
 		return 0;
@@ -1526,18 +1535,46 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	P_LineAttack (self, angle, range, pitch, damage, NAME_Melee, pufftype, puffFlags, &linetarget, &actualdamage);
 
-	// turn to face target
 	if (linetarget)
 	{
 		if (lifesteal && !(linetarget->flags5 & MF5_DONTDRAIN))
-			P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS);
+		{
+			if (flags & CPF_STEALARMOR)
+			{
+				if (armorbonustype == NULL)
+				{
+					armorbonustype = dyn_cast<ABasicArmorBonus::MetaClass>(PClass::FindClass("ArmorBonus"));
+				}
+				if (armorbonustype != NULL)
+				{
+					assert(armorbonustype->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)));
+					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype, 0,0,0, NO_REPLACE));
+					armorbonus->SaveAmount *= (actualdamage * lifesteal) >> FRACBITS;
+					armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
+					armorbonus->flags |= MF_DROPPED;
+					armorbonus->ClearCounters();
 
+					if (!armorbonus->CallTryPickup(self))
+					{
+						armorbonus->Destroy ();
+					}
+				}
+			}
+			else
+			{
+				P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS, lifestealmax);
+			}
+		}
 		if (weapon != NULL)
 		{
 			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 		}
 
-		self->angle = R_PointToAngle2 (self->x, self->y, linetarget->x, linetarget->y);
+		if (!(flags & CPF_NOTURN))
+		{
+			// turn to face target
+			self->angle = R_PointToAngle2 (self->x, self->y, linetarget->x, linetarget->y);
+		}
 
 		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;
 		if (flags & CPF_DAGGER) P_DaggerAlert (self, linetarget);
@@ -1734,7 +1771,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 //
 //===========================================================================
 
-static int DoGiveInventory(AActor *receiver, VM_ARGS)
+static int DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 {
 	int paramnum = NAP-1;
 	PARAM_CLASS		(mi, AInventory);
@@ -1781,20 +1818,66 @@ static int DoGiveInventory(AActor *receiver, VM_ARGS)
 	{
 		res = false;
 	}
-	ACTION_SET_RESULT(res);
+	if (!orresult)
+	{
+		ACTION_SET_RESULT(res);
+	}
+	else
+	{
+		ACTION_OR_RESULT(res);
+	}
 	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoGiveInventory(self, VM_ARGS_NAMES);
+	return DoGiveInventory(self, false, VM_ARGS_NAMES);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoGiveInventory(self->target, VM_ARGS_NAMES);
+	return DoGiveInventory(self->target, false, VM_ARGS_NAMES);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToChildren)
+{
+	PARAM_ACTION_PROLOGUE;
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	ACTION_SET_RESULT(false);
+	while ((mo = it.Next()))
+	{
+		if (mo->master == self)
+		{
+			numret = DoGiveInventory(mo, true, VM_ARGS_NAMES);
+		}
+	}
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToSiblings)
+{
+	PARAM_ACTION_PROLOGUE;
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	ACTION_SET_RESULT(false);
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()))
+		{
+			if (mo->master == self->master && mo != self)
+			{
+				numret = DoGiveInventory(mo, true, VM_ARGS_NAMES);
+			}
+		}
+	}
+	return numret;
 }
 
 //===========================================================================
@@ -1808,7 +1891,7 @@ enum
 	TIF_NOTAKEINFINITE = 1,
 };
 
-int DoTakeInventory(AActor *receiver, VM_ARGS)
+int DoTakeInventory(AActor *receiver, bool orresult, VM_ARGS)
 {
 	int paramnum = NAP-1;
 	PARAM_CLASS		(itemtype, AInventory);
@@ -1856,21 +1939,67 @@ int DoTakeInventory(AActor *receiver, VM_ARGS)
 			inv->Amount -= amount;
 		}
 	}
-	ACTION_SET_RESULT(res);
+	if (!orresult)
+	{
+		ACTION_SET_RESULT(res);
+	}
+	else
+	{
+		ACTION_OR_RESULT(res);
+	}
 	return numret;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoTakeInventory(self, VM_ARGS_NAMES);
+	return DoTakeInventory(self, false, VM_ARGS_NAMES);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	return DoTakeInventory(self->target, VM_ARGS_NAMES);
+	return DoTakeInventory(self->target, false, VM_ARGS_NAMES);
 }	
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromChildren)
+{
+	PARAM_ACTION_PROLOGUE;
+	ACTION_SET_RESULT(false);
+
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	while ((mo = it.Next()))
+	{
+		if (mo->master == self)
+		{
+			DoTakeInventory(mo, true, VM_ARGS_NAMES);
+		}
+	}
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromSiblings)
+{
+	PARAM_ACTION_PROLOGUE;
+	ACTION_SET_RESULT(false);
+
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()))
+		{
+			if (mo->master == self->master && mo != self)
+			{
+				DoTakeInventory(mo, true, VM_ARGS_NAMES);
+			}
+		}
+	}
+	return numret;
+}
 
 //===========================================================================
 //
@@ -1898,6 +2027,12 @@ enum SIX_Flags
 	SIXF_TRANSFERSPECIAL		= 1 << 15,
 	SIXF_CLEARCALLERSPECIAL		= 1 << 16,
 	SIXF_TRANSFERSTENCILCOL		= 1 << 17,
+	SIXF_TRANSFERALPHA			= 1 << 18,
+	SIXF_TRANSFERRENDERSTYLE	= 1 << 19,
+	SIXF_SETTARGET				= 1 << 20,
+	SIXF_SETTRACER				= 1 << 21,
+	SIXF_NOPOINTERS				= 1 << 22,
+	SIXF_ORIGINATOR				= 1 << 23,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -1933,11 +2068,13 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		mo->pitch = self->pitch;
 	}
-	while (originator && originator->isMissile())
+	if (!(flags & SIXF_ORIGINATOR))
 	{
-		originator = originator->target;
+		while (originator && originator->isMissile())
+		{
+			originator = originator->target;
+		}
 	}
-
 	if (flags & SIXF_TELEFRAG) 
 	{
 		P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
@@ -1954,13 +2091,12 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 			mo->Destroy();
 			return false;
 		}
-		else if (originator)
+		else if (originator && !(flags & SIXF_NOPOINTERS))
 		{
 			if (originator->flags3 & MF3_ISMONSTER)
 			{
 				// If this is a monster transfer all friendliness information
 				mo->CopyFriendliness(originator, true);
-				if (flags & SIXF_SETMASTER) mo->master = originator;	// don't let it attack you (optional)!
 			}
 			else if (originator->player)
 			{
@@ -1985,6 +2121,26 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		// If this is a missile or something else set the target to the originator
 		mo->target = originator ? originator : self;
+	}
+	if (flags & SIXF_NOPOINTERS)
+	{
+		//[MC]Intentionally eliminate pointers. Overrides TRANSFERPOINTERS, but is overridden by SETMASTER/TARGET/TRACER.
+		mo->LastHeard = NULL; //Sanity check.
+		mo->target = NULL;
+		mo->master = NULL;
+		mo->tracer = NULL;
+	}
+	if (flags & SIXF_SETMASTER)
+	{ // don't let it attack you (optional)!
+		mo->master = originator;
+	}
+	if (flags & SIXF_SETTARGET)
+	{
+		mo->target = originator;
+	}
+	if (flags & SIXF_SETTRACER)
+	{
+		mo->tracer = originator;
 	}
 	if (flags & SIXF_TRANSFERSCALE)
 	{
@@ -2013,6 +2169,14 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	if (flags & SIXF_TRANSFERSTENCILCOL)
 	{
 		mo->fillcolor = self->fillcolor;
+	}
+	if (flags & SIXF_TRANSFERALPHA)
+	{
+		mo->alpha = self->alpha;
+	}
+	if (flags & SIXF_TRANSFERRENDERSTYLE)
+	{
+		mo->RenderStyle = self->RenderStyle;
 	}
 
 	return true;
@@ -2426,18 +2590,37 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslucent)
 // Fades the actor in
 //
 //===========================================================================
+
+enum FadeFlags
+{
+	FTF_REMOVE =	1 << 0,
+	FTF_CLAMP =		1 << 1,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_FIXED_OPT(reduce)	{ reduce = FRACUNIT/10; }
+	PARAM_INT_OPT(flags)	{ flags = 0; }
 
 	if (reduce == 0)
 	{
-		reduce = FRACUNIT/10;
+		reduce = FRACUNIT / 10;
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha += reduce;
-	// Should this clamp alpha to 1.0?
+
+	if (self->alpha >= FRACUNIT)
+	{
+		if (flags & FTF_CLAMP)
+		{
+			self->alpha = FRACUNIT;
+		}
+		if (flags & FTF_REMOVE)
+		{
+			self->Destroy();
+		}
+	}
 	return 0;
 }
 
@@ -2452,7 +2635,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_FIXED_OPT(reduce)	{ reduce = FRACUNIT/10; }
-	PARAM_BOOL_OPT(remove)	{ remove = true; }
+	PARAM_INT_OPT(flags)	{ flags = FTF_REMOVE; }
 
 	if (reduce == 0)
 	{
@@ -2460,9 +2643,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha -= reduce;
-	if (self->alpha <= 0 && remove)
+	if (self->alpha <= 0)
 	{
-		self->Destroy();
+		if (flags & FTF_CLAMP)
+		{
+			self->alpha = 0;
+		}
+		if (flags & FTF_REMOVE)
+		{
+			self->Destroy();
+		}
 	}
 	return 0;
 }
@@ -2480,7 +2670,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_FIXED		(target);
 	PARAM_FIXED_OPT	(amount)		{ amount = fixed_t(0.1*FRACUNIT); }
-	PARAM_BOOL_OPT	(remove)		{ remove = false; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 
@@ -2502,7 +2692,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 			self->alpha = target;
 		}
 	}
-	if (self->alpha == target && remove)
+	if (flags & FTF_CLAMP)
+	{
+		self->alpha = clamp(self->alpha, 0, FRACUNIT);
+	}
+	if (self->alpha == target && (flags & FTF_REMOVE))
 	{
 		self->Destroy();
 	}
@@ -2831,72 +3025,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 
 //===========================================================================
 //
-// A_KillMaster
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME_OPT(damagetype)	{ damagetype = NAME_None; }
-
-	if (self->master != NULL)
-	{
-		P_DamageMobj(self->master, self, self, self->master->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_KillChildren
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME_OPT(damagetype)	{ damagetype = NAME_None; }
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	while ( (mo = it.Next()) )
-	{
-		if (mo->master == self)
-		{
-			P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-		}
-	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_KillSiblings
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME_OPT(damagetype)	{ damagetype = NAME_None; }
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	if (self->master != NULL)
-	{
-		while ( (mo = it.Next()) )
-		{
-			if (mo->master == self->master && mo != self)
-			{
-				P_DamageMobj(mo, self, self, mo->health, damagetype, DMG_NO_ARMOR | DMG_NO_FACTOR);
-			}
-		}
-	}
-	return 0;
-}
-
-//===========================================================================
-//
 // A_CountdownArg
 //
 //===========================================================================
@@ -3079,6 +3207,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	PARAM_INT_OPT(flags) { flags = RSF_FOG; }
 
 	bool oktorespawn = false;
+	fixed_t oldx = self->x;
+	fixed_t oldy = self->y;
+	fixed_t oldz = self->z;
 
 	self->flags |= MF_SOLID;
 	self->height = self->GetDefault()->height;
@@ -3132,12 +3263,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 		self->flags3 = (defs->flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (self->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
 		self->flags4 = (defs->flags4 & ~MF4_NOHATEPLAYERS) | (self->flags4 & MF4_NOHATEPLAYERS);
 		self->flags5 = defs->flags5;
+		self->flags6 = defs->flags6;
+		self->flags7 = defs->flags7;
 		self->SetState (self->SpawnState);
 		self->renderflags &= ~RF_INVISIBLE;
 
 		if (flags & RSF_FOG)
 		{
-			Spawn<ATeleportFog> (self->x, self->y, self->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+			P_SpawnTeleportFog(self, oldx, oldy, oldz, true);
+			P_SpawnTeleportFog(self, self->x, self->y, self->z, false);
 		}
 		if (self->CountsAsKill())
 		{
@@ -3215,37 +3349,41 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearTarget)
 
 enum CLOF_flags
 {
-	CLOFF_NOAIM_VERT =			0x1,
-	CLOFF_NOAIM_HORZ =			0x2,
+	CLOFF_NOAIM_VERT =			0x00000001,
+	CLOFF_NOAIM_HORZ =			0x00000002,
 
-	CLOFF_JUMPENEMY =			0x4,
-	CLOFF_JUMPFRIEND =			0x8,
-	CLOFF_JUMPOBJECT =			0x10,
-	CLOFF_JUMPNONHOSTILE =		0x20,
+	CLOFF_JUMPENEMY =			0x00000004,
+	CLOFF_JUMPFRIEND =			0x00000008,
+	CLOFF_JUMPOBJECT =			0x00000010,
+	CLOFF_JUMPNONHOSTILE =		0x00000020,
 
-	CLOFF_SKIPENEMY =			0x40,
-	CLOFF_SKIPFRIEND =			0x80,
-	CLOFF_SKIPOBJECT =			0x100,
-	CLOFF_SKIPNONHOSTILE =		0x200,
+	CLOFF_SKIPENEMY =			0x00000040,
+	CLOFF_SKIPFRIEND =			0x00000080,
+	CLOFF_SKIPOBJECT =			0x00000100,
+	CLOFF_SKIPNONHOSTILE =		0x00000200,
 
-	CLOFF_MUSTBESHOOTABLE =		0x400,
+	CLOFF_MUSTBESHOOTABLE =		0x00000400,
 
-	CLOFF_SKIPTARGET =			0x800,
-	CLOFF_ALLOWNULL =			0x1000,
-	CLOFF_CHECKPARTIAL =		0x2000,
+	CLOFF_SKIPTARGET =			0x00000800,
+	CLOFF_ALLOWNULL =			0x00001000,
+	CLOFF_CHECKPARTIAL =		0x00002000,
 
-	CLOFF_MUSTBEGHOST =			0x4000,
-	CLOFF_IGNOREGHOST =			0x8000,
+	CLOFF_MUSTBEGHOST =			0x00004000,
+	CLOFF_IGNOREGHOST =			0x00008000,
 	
-	CLOFF_MUSTBESOLID =			0x10000,
-	CLOFF_BEYONDTARGET =		0x20000,
+	CLOFF_MUSTBESOLID =			0x00010000,
+	CLOFF_BEYONDTARGET =		0x00020000,
 
-	CLOFF_FROMBASE =			0x40000,
-	CLOFF_MUL_HEIGHT =			0x80000,
-	CLOFF_MUL_WIDTH =			0x100000,
+	CLOFF_FROMBASE =			0x00040000,
+	CLOFF_MUL_HEIGHT =			0x00080000,
+	CLOFF_MUL_WIDTH =			0x00100000,
 
-	CLOFF_JUMP_ON_MISS =		0x200000,
-	CLOFF_AIM_VERT_NOOFFSET =	0x400000,
+	CLOFF_JUMP_ON_MISS =		0x00200000,
+	CLOFF_AIM_VERT_NOOFFSET =	0x00400000,
+
+	CLOFF_SETTARGET =			0x00800000,
+	CLOFF_SETMASTER =			0x01000000,
+	CLOFF_SETTRACER =			0x02000000,
 };
 
 struct LOFData
@@ -3488,6 +3626,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		{
 			return numret;
 		}
+		if ((trace.HitType == TRACE_HitActor) && (trace.Actor != NULL) && !(lof_data.BadActor))
+		{
+			if (flags & (CLOFF_SETTARGET))	self->target = trace.Actor;
+			if (flags & (CLOFF_SETMASTER))	self->master = trace.Actor;
+			if (flags & (CLOFF_SETTRACER))	self->tracer = trace.Actor;
+		}
 		ACTION_JUMP(jump);
 	}
 	return numret;
@@ -3510,18 +3654,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 
 enum JLOS_flags
 {
-	JLOSF_PROJECTILE=1,
-	JLOSF_NOSIGHT=2,
-	JLOSF_CLOSENOFOV=4,
-	JLOSF_CLOSENOSIGHT=8,
-	JLOSF_CLOSENOJUMP=16,
-	JLOSF_DEADNOJUMP=32,
-	JLOSF_CHECKMASTER=64,
-	JLOSF_TARGETLOS=128,
-	JLOSF_FLIPFOV=256,
-	JLOSF_ALLYNOJUMP=512,
-	JLOSF_COMBATANTONLY=1024,
-	JLOSF_NOAUTOAIM=2048,
+	JLOSF_PROJECTILE =		1 << 0,
+	JLOSF_NOSIGHT =			1 << 1,
+	JLOSF_CLOSENOFOV = 		1 << 2,
+	JLOSF_CLOSENOSIGHT =	1 << 3,
+	JLOSF_CLOSENOJUMP =		1 << 4,
+	JLOSF_DEADNOJUMP =		1 << 5,
+	JLOSF_CHECKMASTER =		1 << 6,
+	JLOSF_TARGETLOS =		1 << 7,
+	JLOSF_FLIPFOV =			1 << 8,
+	JLOSF_ALLYNOJUMP =		1 << 9,
+	JLOSF_COMBATANTONLY =	1 << 10,
+	JLOSF_NOAUTOAIM =		1 << 11,
+	JLOSF_CHECKTRACER =		1 << 12,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
@@ -3546,9 +3691,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		{
 			target = self->master;
 		}
-		else if (self->flags & MF_MISSILE && (flags & JLOSF_PROJECTILE))
+		else if ((self->flags & MF_MISSILE && (flags & JLOSF_PROJECTILE)) || (flags & JLOSF_CHECKTRACER))
 		{
-			if (self->flags2 & MF2_SEEKERMISSILE)
+			if ((self->flags2 & MF2_SEEKERMISSILE) || (flags & JLOSF_CHECKTRACER))
 				target = self->tracer;
 			else
 				target = NULL;
@@ -3740,106 +3885,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 	ACTION_JUMP(jump);
 	return numret;
 }
-
-
-//===========================================================================
-//
-// A_DamageMaster (int amount)
-// Damages the master of this child by the specified amount. Negative values heal.
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT		(amount);
-	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
-
-	if (self->master != NULL)
-	{
-		if (amount > 0)
-		{
-			P_DamageMobj(self->master, self, self, amount, damagetype, DMG_NO_ARMOR);
-		}
-		else if (amount < 0)
-		{
-			amount = -amount;
-			P_GiveBody(self->master, amount);
-		}
-	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_DamageChildren (amount)
-// Damages the children of this master by the specified amount. Negative values heal.
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT		(amount);
-	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	while ( (mo = it.Next()) )
-	{
-		if (mo->master == self)
-		{
-			if (amount > 0)
-			{
-				P_DamageMobj(mo, self, self, amount, damagetype, DMG_NO_ARMOR);
-			}
-			else if (amount < 0)
-			{
-				amount = -amount;
-				P_GiveBody(mo, amount);
-			}
-		}
-	}
-	return 0;
-}
-
-// [KS] *** End of my modifications ***
-
-//===========================================================================
-//
-// A_DamageSiblings (amount)
-// Damages the siblings of this master by the specified amount. Negative values heal.
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT		(amount);
-	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	if (self->master != NULL)
-	{
-		while ( (mo = it.Next()) )
-		{
-			if (mo->master == self->master && mo != self)
-			{
-				if (amount > 0)
-				{
-					P_DamageMobj(mo, self, self, amount, damagetype, DMG_NO_ARMOR);
-				}
-				else if (amount < 0)
-				{
-					amount = -amount;
-					P_GiveBody(mo, amount);
-				}
-			}
-		}
-	}
-	return 0;
-}
-
 
 //===========================================================================
 //
@@ -4033,79 +4078,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 
 //===========================================================================
 //
-// A_RemoveMaster
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_RemoveMaster)
-{
-	PARAM_ACTION_PROLOGUE;
-	if (self->master != NULL)
-	{
-		P_RemoveThing(self->master);
-	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_RemoveChildren
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_BOOL_OPT(removeall) { removeall = false; }
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	while ((mo = it.Next()) != NULL)
-	{
-		if (mo->master == self && (mo->health <= 0 || removeall))
-		{
-			P_RemoveThing(mo);
-		}
-	}
-	return 0;
-}
-
-//===========================================================================
-//
-// A_RemoveSiblings
-//
-//===========================================================================
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_BOOL_OPT(removeall) { removeall = false; }
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-
-	if (self->master != NULL)
-	{
-		while ((mo = it.Next()) != NULL)
-		{
-			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
-			{
-				P_RemoveThing(mo);
-			}
-		}
-	}
-	return 0;
-}
-
-//===========================================================================
-//
 // A_RaiseMaster
 //
 //===========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(copy)	{ copy = false; }
+
 	if (self->master != NULL)
 	{
-		P_Thing_Raise(self->master);
+		P_Thing_Raise(self->master, copy ? self : NULL);
 	}
 	return 0;
 }
@@ -4118,6 +4101,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseMaster)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(copy)	{ copy = false; }
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
@@ -4126,7 +4110,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 	{
 		if (mo->master == self)
 		{
-			P_Thing_Raise(mo);
+			P_Thing_Raise(mo, copy ? self : NULL);
 		}
 	}
 	return 0;
@@ -4140,6 +4124,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseChildren)
 DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 {
 	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(copy)	{ copy = false; }
 
 	TThinkerIterator<AActor> it;
 	AActor *mo;
@@ -4150,10 +4135,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 		{
 			if (mo->master == self->master && mo != self)
 			{
-				P_Thing_Raise(mo);
+				P_Thing_Raise(mo, copy ? self : NULL);
 			}
 		}
 	}
+	return 0;
+}
+ 
+ //===========================================================================
+ //
+// [TP] A_FaceConsolePlayer
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_FaceConsolePlayer)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_ANGLE_OPT(max_turn_angle) { max_turn_angle = 0; }
+	// NOTE: It does nothing for zdoom.
 	return 0;
 }
 
@@ -4436,8 +4434,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 //===========================================================================
 enum T_Flags
 {
-	TF_TELEFRAG = 1, // Allow telefrag in order to teleport.
-	TF_RANDOMDECIDE = 2, // Randomly fail based on health. (A_Srcr2Decide)
+	TF_TELEFRAG =		0x00000001, // Allow telefrag in order to teleport.
+	TF_RANDOMDECIDE =	0x00000002, // Randomly fail based on health. (A_Srcr2Decide)
+	TF_FORCED =			0x00000004, // Forget what's in the way. TF_Telefrag takes precedence though.
+	TF_KEEPVELOCITY =	0x00000008, // Preserve velocity.
+	TF_KEEPANGLE =		0x00000010, // Keep angle.
+	TF_USESPOTZ =		0x00000020, // Set the z to the spot's z, instead of the floor.
+	TF_NOSRCFOG =		0x00000040, // Don't leave any fog behind when teleporting.
+	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
+	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
+	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4473,17 +4479,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		}
 	}
 
-	if (teleport_state == NULL)
-	{
-		// Default to Teleport.
-		teleport_state = self->FindState("Teleport");
-		// If still nothing, then return.
-		if (teleport_state == NULL)
-		{
-			return numret;
-		}
-	}
-
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL)
 	{
@@ -4504,21 +4499,66 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	fixed_t prevX = self->x;
 	fixed_t prevY = self->y;
 	fixed_t prevZ = self->z;
-	if (P_TeleportMove (self, spot->x, spot->y, spot->z, flags & TF_TELEFRAG))
+	//Take precedence and cooperate with telefragging first.
+	bool tele_result = P_TeleportMove(self, spot->x, spot->y, spot->z, flags & TF_TELEFRAG);
+
+	if (!tele_result && (flags & TF_FORCED))
 	{
 		ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
+		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
+		self->SetOrigin(spot->x, spot->y, spot->z);
+		tele_result = true;
+	}
 
-		if (fog_type != NULL)
-		{
-			Spawn(fog_type, prevX, prevY, prevZ, ALLOW_REPLACE);
+	if (tele_result)
+	{
+		// If a fog type is defined in the parameter, or the user wants to use
+		// the actor's predefined fogs, and if there's no desire to be fogless,
+		// spawn a fog based upon settings.
+		if (fog_type || (flags & TF_USEACTORFOG))
+ 		{
+			if (!(flags & TF_NOSRCFOG))
+			{
+				if (flags & TF_USEACTORFOG)
+					P_SpawnTeleportFog(self, prevX, prevY, prevZ, true);
+				else
+ 					Spawn(fog_type, prevX, prevY, prevZ, ALLOW_REPLACE);
+ 			}
+			if (!(flags & TF_NODESTFOG))
+			{
+				if (flags & TF_USEACTORFOG)
+					P_SpawnTeleportFog(self, self->x, self->y, self->z, false);
+				else
+					Spawn(fog_type, self->x, self->y, self->z, ALLOW_REPLACE);
+			}
 		}
 
-		ACTION_JUMP(teleport_state);
+		self->z = (flags & TF_USESPOTZ) ? spot->z : self->floorz;
 
-		self->z = self->floorz;
-		self->angle = spot->angle;
-		self->velx = self->vely = self->velz = 0;
+		if (!(flags & TF_KEEPANGLE))
+	 		self->angle = spot->angle;
+
+		if (!(flags & TF_KEEPVELOCITY))
+	 		self->velx = self->vely = self->velz = 0;
+
+		if (!(flags & TF_NOJUMP))
+		{
+			ACTION_SET_RESULT(false); // Jumps should never set the result for inventory state chains!
+			if (teleport_state == NULL)
+			{
+				// Default to Teleport.
+				teleport_state = self->FindState("Teleport");
+				// If still nothing, then return.
+				if (teleport_state == NULL)
+				{
+					return numret;
+				}
+			}
+			ACTION_JUMP(teleport_state);
+			return numret;
+		}
 	}
+	ACTION_SET_RESULT(tele_result);
 	return numret;
 }
 
@@ -4791,7 +4831,8 @@ enum WARPF
 
 	WARPF_STOP = 0x80,
 	WARPF_TOFLOOR = 0x100,
-	WARPF_TESTONLY = 0x200
+	WARPF_TESTONLY = 0x200,
+	WARPF_ABSOLUTEPOSITION = 0x400,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
@@ -4805,12 +4846,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_STATE_OPT	(success_state)		{ success_state = NULL; }
 
-	fixed_t
-
-		oldx,
-		oldy,
-		oldz;
-
 	AActor *reference = COPY_AAPTR(self, destination_selector);
 
 	if (!reference)
@@ -4819,65 +4854,78 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		return numret;
 	}
 
+	fixed_t oldx = self->x;
+	fixed_t oldy = self->y;
+	fixed_t oldz = self->z;
+
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
 		angle += (flags & WARPF_USECALLERANGLE) ? self->angle : reference->angle;
 	}
 
-	if (!(flags & WARPF_ABSOLUTEOFFSET))
+	if (!(flags & WARPF_ABSOLUTEPOSITION))
 	{
-		angle_t fineangle = angle>>ANGLETOFINESHIFT;
-		oldx = xofs;
-
-		// (borrowed from A_SpawnItemEx, assumed workable)
-		// in relative mode negative y values mean 'left' and positive ones mean 'right'
-		// This is the inverse orientation of the absolute mode!
-
-		xofs = FixedMul(oldx, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
-		yofs = FixedMul(oldx, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
-	}
-
-	oldx = self->x;
-	oldy = self->y;
-	oldz = self->z;
-
-	if (flags & WARPF_TOFLOOR)
-	{
-		// set correct xy
-
-		self->SetOrigin(
-			reference->x + xofs,
-			reference->y + yofs,
-			reference->z);
-
-		// now the caller's floorz should be appropriate for the assigned xy-position
-		// assigning position again with
-		
-		if (zofs)
+		if (!(flags & WARPF_ABSOLUTEOFFSET))
 		{
-			// extra unlink, link and environment calculation
+			angle_t fineangle = angle >> ANGLETOFINESHIFT;
+			fixed_t xofs1 = xofs;
+
+			// (borrowed from A_SpawnItemEx, assumed workable)
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+
+			xofs = FixedMul(xofs1, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
+			yofs = FixedMul(xofs1, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+		}
+
+		if (flags & WARPF_TOFLOOR)
+		{
+			// set correct xy
+
 			self->SetOrigin(
-				self->x,
-				self->y,
-				self->floorz + zofs);
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z);
+
+			// now the caller's floorz should be appropriate for the assigned xy-position
+			// assigning position again with
+			
+			if (zofs)
+			{
+				// extra unlink, link and environment calculation
+				self->SetOrigin(
+					self->x,
+					self->y,
+					self->floorz + zofs);
+			}
+			else
+			{
+				// if there is no offset, there should be no ill effect from moving down to the
+				// already identified floor
+
+				// A_Teleport does the same thing anyway
+				self->z = self->floorz;
+			}
 		}
 		else
 		{
-			// if there is no offset, there should be no ill effect from moving down to the
-			// already identified floor
-
-			// A_Teleport does the same thing anyway
-			self->z = self->floorz;
+			self->SetOrigin(
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z + zofs);
 		}
 	}
-	else
+	else //[MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
 	{
-		self->SetOrigin(
-			reference->x + xofs,
-			reference->y + yofs,
-			reference->z + zofs);
+		if (flags & WARPF_TOFLOOR)
+		{
+			self->SetOrigin(xofs, yofs, self->floorz + zofs);
+		}
+		else
+		{
+			self->SetOrigin(xofs, yofs, zofs);
+		}
 	}
-	
 	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(self))
 	{
 		if (flags & WARPF_TESTONLY)
@@ -4907,7 +4955,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 				self->PrevY = self->y + reference->PrevY - reference->y;
 				self->PrevZ = self->z + reference->PrevZ - reference->z;
 			}
-			else if (! (flags & WARPF_INTERPOLATE))
+			else if (!(flags & WARPF_INTERPOLATE))
 			{
 				self->PrevX = self->x;
 				self->PrevY = self->y;
@@ -5049,17 +5097,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
 //==========================================================================
 enum RadiusGiveFlags
 {
-	RGF_GIVESELF	=   1,
-	RGF_PLAYERS		=   2,
-	RGF_MONSTERS	=   4,
-	RGF_OBJECTS		=   8,
-	RGF_VOODOO		=  16,
-	RGF_CORPSES		=  32,
-	RGF_MASK		=  63,
-	RGF_NOTARGET	=  64,
-	RGF_NOTRACER	= 128,
-	RGF_NOMASTER	= 256,
-	RGF_CUBE		= 512,
+	RGF_GIVESELF	=   1 << 0,
+	RGF_PLAYERS		=   1 << 1,
+	RGF_MONSTERS	=   1 << 2,
+	RGF_OBJECTS		=   1 << 3,
+	RGF_VOODOO		=	1 << 4,
+	RGF_CORPSES		=	1 << 5,
+	RGF_MASK		=	2111,
+	RGF_NOTARGET	=	1 << 6,
+	RGF_NOTRACER	=	1 << 7,
+	RGF_NOMASTER	=	1 << 8,
+	RGF_CUBE		=	1 << 9,
+	RGF_NOSIGHT		=	1 << 10,
+	RGF_MISSILES	=	1 << 11,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
@@ -5140,6 +5190,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				continue;
 			}
 		}
+		else if (thing->flags & MF_MISSILE)
+		{
+			if (!(flags & RGF_MISSILES))
+			{
+				continue;
+			}
+		}
 		else
 		{
 			continue;
@@ -5165,8 +5222,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		}
 		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
 
-		if (P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
-		{ // OK to give; target is in direct path
+		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
+		{ // OK to give; target is in direct path, or the
+		  // monster doesn't care about it being in line of sight.
 			AInventory *gift = static_cast<AInventory *>(Spawn (item, 0, 0, 0, NO_REPLACE));
 			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
 			{
@@ -5186,7 +5244,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	}
 	return 0;
 }
-
 
 //==========================================================================
 //
@@ -5244,5 +5301,536 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 	PARAM_INT_OPT (chance)		{ chance = 256; }
 
 	P_DropItem(self, spawntype, amount, chance);
+	return 0;
+}
+
+//==========================================================================
+//
+// A_SetSpeed
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(speed);
+
+	self->Speed = speed;
+	return 0;
+}
+
+//===========================================================================
+//
+// Common A_Damage handler
+//
+// A_Damage* (int amount, str damagetype, int flags)
+// Damages the specified actor by the specified amount. Negative values heal.
+//
+//===========================================================================
+
+enum DMSS
+{
+	DMSS_FOILINVUL			= 1,
+	DMSS_AFFECTARMOR		= 2,
+	DMSS_KILL				= 4,
+	DMSS_NOFACTOR			= 8,
+	DMSS_FOILBUDDHA			= 16,
+	DMSS_NOPROTECT			= 32,
+};
+
+static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags)
+{
+	int dmgFlags = 0;
+	if (flags & DMSS_FOILINVUL)
+		dmgFlags += DMG_FOILINVUL;
+	if (flags & DMSS_FOILBUDDHA)
+		dmgFlags += DMG_FOILBUDDHA;
+	if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
+		dmgFlags += DMG_NO_FACTOR;
+	if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
+		dmgFlags += DMG_NO_ARMOR;
+	if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
+		amount += dmgtarget->health;
+	if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
+		dmgFlags += DMG_NO_PROTECT;
+
+	if (amount > 0)
+	{
+		 //Should wind up passing them through just fine.
+		P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags);
+	}
+	else if (amount < 0)
+	{
+		amount = -amount;
+		P_GiveBody(dmgtarget, amount);
+	}
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSelf)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(amount);
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	DoDamage(self, self, amount, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTarget)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(amount);
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	if (self->target != NULL)
+		DoDamage(self->target, self, amount, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageTracer)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(amount);
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	if (self->tracer != NULL)
+		DoDamage(self->tracer, self, amount, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageMaster)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(amount);
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	if (self->master != NULL)
+		DoDamage(self->master, self, amount, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageChildren)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(amount);
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	while ( (mo = it.Next()) )
+	{
+		if (mo->master == self)
+			DoDamage(mo, self, amount, damagetype, flags);
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DamageSiblings)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(amount);
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()))
+		{
+			if (mo->master == self->master && mo != self)
+				DoDamage(mo, self, amount, damagetype, flags);
+		}
+	}
+	return 0;
+}
+
+
+//===========================================================================
+//
+// A_Kill*(damagetype, int flags)
+//
+//===========================================================================
+enum KILS
+{
+	KILS_FOILINVUL =	1 << 0,
+	KILS_KILLMISSILES = 1 << 1,
+	KILS_NOMONSTERS =	1 << 2,
+	KILS_FOILBUDDHA =	1 << 3,
+};
+
+static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags)
+{
+	int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
+
+	if (KILS_FOILINVUL)
+		dmgFlags += DMG_FOILINVUL;
+	if (KILS_FOILBUDDHA)
+		dmgFlags += DMG_FOILBUDDHA;
+
+	if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
+	{
+		// [MC] Now that missiles can set masters, lets put in a check to properly
+		// destroy projectiles. BUT FIRST! New feature~! Check to see if it's
+		// invulnerable. Disregarded if foilinvul is on, but never works on a
+		// missile with NODAMAGE since that's the whole point of it.
+		if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) && 
+			(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
+		{
+			P_ExplodeMissile(killtarget, NULL, NULL);
+		}
+	}
+	if (!(flags & KILS_NOMONSTERS))
+	{
+		P_DamageMobj(killtarget, self, self, killtarget->health, damagetype, dmgFlags);
+	}
+}
+
+
+//===========================================================================
+//
+// A_KillTarget(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTarget)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	if (self->target != NULL)
+		DoKill(self->target, self, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+// A_KillTracer(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillTracer)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	if (self->tracer != NULL)
+		DoKill(self->tracer, self, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+// A_KillMaster(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillMaster)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	if (self->master != NULL)
+		DoKill(self->master, self, damagetype, flags);
+	return 0;
+}
+
+//===========================================================================
+//
+// A_KillChildren(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillChildren)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	while ( (mo = it.Next()) )
+	{
+		if (mo->master == self)
+			DoKill(mo, self, damagetype, flags);
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_KillSiblings(damagetype, int flags)
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KillSiblings)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	if (self->master != NULL)
+	{
+		while ( (mo = it.Next()) )
+		{
+			if (mo->master == self->master && mo != self)
+				DoKill(mo, self, damagetype, flags);
+		}
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// DoRemove
+//
+//===========================================================================
+
+enum RMVF_flags
+{
+	RMVF_MISSILES	= 1 << 0,
+	RMVF_NOMONSTERS = 1 << 1,
+	RMVF_MISC		= 1 << 2,
+	RMVF_EVERYTHING = 1 << 3,
+};
+
+static void DoRemove(AActor *removetarget, int flags)
+{
+	if ((flags & RMVF_EVERYTHING))
+	{
+		P_RemoveThing(removetarget);
+	}
+	if ((flags & RMVF_MISC) && !((removetarget->flags3 & MF3_ISMONSTER) && (removetarget->flags & MF_MISSILE)))
+	{
+		P_RemoveThing(removetarget);
+	}
+	if ((removetarget->flags3 & MF3_ISMONSTER) && !(flags & RMVF_NOMONSTERS))
+	{
+		P_RemoveThing(removetarget);
+	}
+	if ((removetarget->flags & MF_MISSILE) && (flags & RMVF_MISSILES))
+	{
+		P_RemoveThing(removetarget);
+	}
+}
+
+//===========================================================================
+//
+// A_RemoveTarget
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTarget)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(flags) { flags = 0; }
+
+	if (self->target != NULL)
+	{
+		DoRemove(self->target, flags);
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_RemoveTracer
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveTracer)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(flags) { flags = 0; }
+
+	if (self->tracer != NULL)
+	{
+		DoRemove(self->tracer, flags);
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_RemoveMaster
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveMaster)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(flags) { flags = 0; }
+
+	if (self->master != NULL)
+	{
+		DoRemove(self->master, flags);
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_RemoveChildren
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveChildren)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(removeall)	{ removeall = false; }
+	PARAM_INT_OPT(flags)		{ flags = 0; }
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	while ((mo = it.Next()) != NULL)
+	{
+		if (mo->master == self && (mo->health <= 0 || removeall))
+		{
+			DoRemove(mo, flags);
+		}
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_RemoveSiblings
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RemoveSiblings)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(removeall)	{ removeall = false; }
+	PARAM_INT_OPT(flags)		{ flags = 0; }
+
+	TThinkerIterator<AActor> it;
+	AActor *mo;
+
+	if (self->master != NULL)
+	{
+		while ((mo = it.Next()) != NULL)
+		{
+			if (mo->master == self->master && mo != self && (mo->health <= 0 || removeall))
+			{
+				DoRemove(mo, flags);
+			}
+		}
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_Remove
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(removee);
+	PARAM_INT_OPT	(flags)		{ flags = 0; }
+
+	AActor *reference = COPY_AAPTR(self, removee);
+
+	if (reference != NULL)
+	{
+		DoRemove(reference, flags);
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SetTeleFog
+//
+// Sets the teleport fog(s) for the calling actor.
+// Takes a name of the classes for te source and destination. 
+// Can set both at the same time. Use "" to retain the previous fog without
+// changing it.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME(oldpos);
+	PARAM_NAME(newpos);
+
+	PClassActor *check = PClass::FindActor(oldpos);
+	if (check == NULL || !stricmp(oldpos, "none") || !stricmp(oldpos, "null"))
+		self->TeleFogSourceType = NULL;
+	else if (!stricmp(oldpos, ""))
+	{ //Don't change it if it's just ""
+	}
+	else
+	{
+		self->TeleFogSourceType = check;
+	}
+
+	check = PClass::FindActor(newpos);
+	if (check == NULL || !stricmp(newpos, "none") || !stricmp(newpos, "null"))
+		self->TeleFogDestType = NULL;
+	else if (!stricmp(newpos, ""))
+	{ //Don't change it if it's just ""
+	}
+	else
+	{
+		self->TeleFogDestType = check;
+	}
+
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SwapTeleFog
+//
+// Switches the source and dest telefogs around. 
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, A_SwapTeleFog)
+{
+	PARAM_ACTION_PROLOGUE;
+	if ((self->TeleFogSourceType != self->TeleFogDestType)) //Does nothing if they're the same.
+	{
+		PClassActor *temp = self->TeleFogSourceType;
+		self->TeleFogSourceType = self->TeleFogDestType;
+		self->TeleFogDestType = temp;
+	}
 	return 0;
 }

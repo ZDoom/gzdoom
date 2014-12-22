@@ -279,7 +279,7 @@ VMFunctionBuilder::RegAvailability::RegAvailability()
 
 //==========================================================================
 //
-// VMFunctionBuilder :: RegAvailibity :: Get
+// VMFunctionBuilder :: RegAvailability :: Get
 //
 // Gets one or more unused registers. If getting multiple registers, they
 // will all be consecutive. Returns -1 if there were not enough consecutive
@@ -409,6 +409,30 @@ void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 		assert((Used[firstword + 1] & partialmask) == partialmask);
 		Used[firstword + 1] &= ~partialmask;
 	}
+}
+
+//==========================================================================
+//
+// VMFunctionBuilder :: RegAvailability :: Reuse
+//
+// Marks an unused register as in-use. Returns false if the register is
+// already in use or true if it was successfully reused.
+//
+//==========================================================================
+
+bool VMFunctionBuilder::RegAvailability::Reuse(int reg)
+{
+	assert(reg >= 0 && reg <= 255);
+
+	VM_UWORD mask = reg & 31;
+	int word = reg / 32;
+
+	if (Used[word] & mask)
+	{ // It's already in use!
+		return false;
+	}
+	Used[word] |= mask;
+	return true;
 }
 
 //==========================================================================

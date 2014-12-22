@@ -886,8 +886,11 @@ class CommandDrawString : public SBarInfoCommand
 					}
 					break;
 				case TIME:
-					str.Format("%02d:%02d:%02d", (level.time/TICRATE)/3600, ((level.time/TICRATE)%3600)/60, (level.time/TICRATE)%60);
+				{
+					int sec = Tics2Seconds(level.time); 
+					str.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 					break;
+				}
 				case LOGTEXT:
 					str = statusBar->CPlayer->LogText;
 					break;
@@ -3380,43 +3383,16 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
 			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
 			if (invItem[1] != NULL && amount[1] > 0 && invItem[1]->Amount < amount[1]) invItem[1] = NULL;
-			if(invItem[1] != NULL && conditionAnd)
+
+			if (item[1])
 			{
-				if((invItem[0] != NULL && invItem[1] != NULL) && !negate)
-				{
-					SetTruth(true, block, statusBar);
-					return;
-				}
-				else if((invItem[0] == NULL || invItem[1] == NULL) && negate)
-				{
-					SetTruth(true, block, statusBar);
-					return;
-				}
+				if (conditionAnd)
+					SetTruth((invItem[0] && invItem[1]) != negate, block, statusBar);
+				else
+					SetTruth((invItem[0] || invItem[1]) != negate, block, statusBar);
 			}
-			else if(invItem[1] != NULL && !conditionAnd)
-			{
-				if((invItem[0] != NULL || invItem[1] != NULL) && !negate)
-				{
-					SetTruth(true, block, statusBar);
-					return;
-				}
-				else if((invItem[0] == NULL && invItem[1] == NULL) && negate)
-				{
-					SetTruth(true, block, statusBar);
-					return;
-				}
-			}
-			else if((invItem[0] != NULL) && !negate)
-			{
-				SetTruth(true, block, statusBar);
-				return;
-			}
-			else if((invItem[0] == NULL) && negate)
-			{
-				SetTruth(true, block, statusBar);
-				return;
-			}
-			SetTruth(false, block, statusBar);
+			else
+				SetTruth((invItem[0] != NULL) != negate, block, statusBar);
 		}
 	protected:
 		bool			conditionAnd;
@@ -3455,6 +3431,46 @@ class CommandAlpha : public SBarInfoMainBlock
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class CommandIfHealth : public SBarInfoCommandFlowControl
+{
+	public:
+		CommandIfHealth(SBarInfo *script) : SBarInfoCommandFlowControl(script),
+			negate(false), percentage(false)
+		{
+		}
+
+		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		{
+			if (sc.CheckToken(TK_Identifier))
+			{
+				if (sc.Compare("not"))
+					negate = true;
+				else
+					sc.ScriptError("Expected 'not', but got '%s' instead.", sc.String);
+			}
+
+			sc.MustGetToken(TK_IntConst);
+			percentage = sc.CheckToken('%');
+			hpamount = sc.Number;
+
+			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+		}
+		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+
+			int phealth = percentage ? statusBar->CPlayer->mo->health * 100 / statusBar->CPlayer->mo->GetMaxHealth() : statusBar->CPlayer->mo->health;
+
+			SetTruth((phealth >= hpamount) ^ negate, block, statusBar);
+		}
+	protected:
+		bool	negate;
+		bool	percentage;
+		int		hpamount;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 static const char *SBarInfoCommandNames[] =
 {
 	"drawimage", "drawnumber", "drawswitchableimage",
@@ -3464,7 +3480,7 @@ static const char *SBarInfoCommandNames[] =
 	"gamemode", "playerclass", "playertype", "aspectratio",
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
-	"weaponammo", "ininventory", "alpha",
+	"weaponammo", "ininventory", "alpha", "ifhealth",
 	NULL
 };
 
@@ -3477,7 +3493,7 @@ enum SBarInfoCommands
 	SBARINFO_GAMEMODE, SBARINFO_PLAYERCLASS, SBARINFO_PLAYERTYPE, SBARINFO_ASPECTRATIO,
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
-	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA,
+	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA, SBARINFO_IFHEALTH,
 };
 
 SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
@@ -3510,6 +3526,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_WEAPONAMMO: return new CommandWeaponAmmo(script);
 			case SBARINFO_ININVENTORY: return new CommandInInventory(script);
 			case SBARINFO_ALPHA: return new CommandAlpha(script);
+			case SBARINFO_IFHEALTH: return new CommandIfHealth(script);
 		}
 
 		sc.ScriptError("Unknown command '%s'.\n", sc.String);

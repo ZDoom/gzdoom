@@ -12,6 +12,7 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "farchive.h"
+#include "p_enemy.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -527,11 +528,11 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 	if (actor->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
 	{
 		AMorphedMonster *fakeme = static_cast<AMorphedMonster *>(actor);
+		AActor *realme = fakeme->UnmorphedMe;
 		if ((fakeme->UnmorphTime) &&
 			(fakeme->MorphStyle & MORPH_UNDOBYDEATH) &&
-			(fakeme->UnmorphedMe))
+			(realme))
 		{
-			AActor *realme = fakeme->UnmorphedMe;
 			int realstyle = fakeme->MorphStyle;
 			int realhealth = fakeme->health;
 			if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
@@ -541,6 +542,14 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 				*morphedhealth = realhealth;
 				return true;
 			}
+		}
+		if (realme->flags4 & MF4_BOSSDEATH)
+		{
+			realme->health = 0;	// make sure that A_BossDeath considers it dead.
+			// FIXME: Use the caller's stack once the whole chain is scriptable.
+			VMFrameStack stack;
+			VMValue params[3] = { realme, realme, VMValue(NULL, ATAG_STATE) };
+			stack.Call(A_BossDeath_VMPtr, params, countof(params), NULL, 0, NULL);
 		}
 		fakeme->flags3 |= MF3_STAYMORPHED; // moved here from AMorphedMonster::Die()
 		return false;

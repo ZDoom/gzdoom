@@ -444,7 +444,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 		if (bNormal)
 		{
 			bool good;
-			if ((player->cheats & CF_GODMODE) || (player->mo != NULL && player->mo->flags2 & MF2_INVULNERABLE))
+			if ((player->cheats & CF_GODMODE) || (player->cheats & CF_GODMODE2) || (player->mo != NULL && player->mo->flags2 & MF2_INVULNERABLE))
 			{
 				good = SetState((stateflags & ANIMATEDGODMODE) ? "godanimated" : "god");
 			}

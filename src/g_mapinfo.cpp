@@ -1306,6 +1306,7 @@ MapFlagHandlers[] =
 	{ "compat_maskedmidtex",			MITYPE_COMPATFLAG, COMPATF_MASKEDMIDTEX, 0 },
 	{ "compat_badangles",				MITYPE_COMPATFLAG, 0, COMPATF2_BADANGLES },
 	{ "compat_floormove",				MITYPE_COMPATFLAG, 0, COMPATF2_FLOORMOVE },
+	{ "compat_soundcutoff",				MITYPE_COMPATFLAG, 0, COMPATF2_SOUNDCUTOFF },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
@@ -1886,7 +1887,7 @@ static void ClearMapinfo()
 //
 //==========================================================================
 
-void G_ParseMapInfo (const char *basemapinfo)
+void G_ParseMapInfo (FString basemapinfo)
 {
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
@@ -1895,7 +1896,7 @@ void G_ParseMapInfo (const char *basemapinfo)
 	atterm(ClearMapinfo);
 
 	// Parse the default MAPINFO for the current game. This lump *MUST* come from zdoom.pk3.
-	if (basemapinfo != NULL)
+	if (basemapinfo.IsNotEmpty())
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
@@ -1903,7 +1904,7 @@ void G_ParseMapInfo (const char *basemapinfo)
 		if (Wads.GetLumpFile(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo);
+				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}

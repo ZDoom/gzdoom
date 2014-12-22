@@ -50,7 +50,7 @@ class FScanner;
 #define GCC_YSEG
 #else
 #define MSVC_YSEG
-#define GCC_YSEG __attribute__((section(SECTION_YREG)))
+#define GCC_YSEG __attribute__((section(SECTION_YREG))) __attribute__((used))
 #endif
 
 struct FIntermissionDescriptor;
@@ -523,7 +523,7 @@ level_info_t *CheckLevelRedirect (level_info_t *info);
 
 FString CalcMapName (int episode, int level);
 
-void G_ParseMapInfo (const char *basemapinfo);
+void G_ParseMapInfo (FString basemapinfo);
 
 void G_ClearSnapshots (void);
 void P_RemoveDefereds ();

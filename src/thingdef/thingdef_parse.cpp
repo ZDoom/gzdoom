@@ -402,6 +402,16 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	}
 
 	FName symname = sc.String;
+
+	// We must ensure that we do not define duplicates, even when they come from a parent table.
+	if (symt->FindSymbol(symname, true) != NULL)
+	{
+		sc.ScriptMessage ("'%s' is already defined in '%s' or one of its ancestors.",
+			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");
+		FScriptPosition::ErrorCounter++;
+		return;
+	}
+
 	if (sc.CheckToken('['))
 	{
 		FxExpression *expr = ParseExpression(sc, cls);

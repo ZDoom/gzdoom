@@ -191,19 +191,6 @@ else( WIN32 )
 				set( NO_GTK ON )
 			endif( GTK2_FOUND )
 		endif( NOT NO_GTK )
-
-		# Check for Xcursor library and header files
-		find_library( XCURSOR_LIB Xcursor )
-		if( XCURSOR_LIB )
-			find_file( XCURSOR_HEADER "X11/Xcursor/Xcursor.h" )
-			if( XCURSOR_HEADER )
-				add_definitions( -DUSE_XCURSOR=1 )
-				message( STATUS "Found Xcursor at ${XCURSOR_LIB}" )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${XCURSOR_LIB} )
-			else( XCURSOR_HEADER )
-				unset( XCURSOR_LIB )
-			endif( XCURSOR_HEADER )
-		endif( XCURSOR_LIB )
 	endif( APPLE )
 	set( NASM_NAMES nasm )
 	
@@ -212,14 +199,11 @@ else( WIN32 )
 	endif( NO_GTK )
 	
 	# Non-Windows version also needs SDL
-	find_package( SDL )
-	if( NOT SDL_FOUND )
-		message( SEND_ERROR "SDL is required for building." )
-	endif( NOT SDL_FOUND )
+	find_package( SDL2 REQUIRED )
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL_LIBRARY}" )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
 	endif( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-	include_directories( "${SDL_INCLUDE_DIR}" )
+	include_directories( "${SDL2_INCLUDE_DIR}" )
 
 	find_path( FPU_CONTROL_DIR fpu_control.h )
 	if( FPU_CONTROL_DIR )
@@ -579,8 +563,8 @@ set( PLAT_SDL_SPECIAL_SOURCES
 	sdl/i_joystick.cpp
 	sdl/i_timer.cpp )
 set( PLAT_MAC_SOURCES
-	sdl/iwadpicker_cocoa.mm
-	sdl/i_system_cocoa.mm )
+	cocoa/iwadpicker_cocoa.mm
+	cocoa/i_system_cocoa.mm )
 set( PLAT_COCOA_SOURCES
 	cocoa/HID_Config_Utilities.c
 	cocoa/HID_Error_Handler.c
@@ -600,8 +584,9 @@ if( APPLE )
 
 	if( OSX_COCOA_BACKEND )
 		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_COCOA_SOURCES} )
+		add_definitions( -DUSE_NATIVE_COCOA )
 	else( OSX_COCOA_BACKEND )
-		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} sdl/SDLMain.m )
+		set( PLAT_MAC_SOURCES ${PLAT_MAC_SOURCES} ${PLAT_SDL_SPECIAL_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 
 	set_source_files_properties( cocoa/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )

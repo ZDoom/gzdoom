@@ -1064,16 +1064,16 @@ void NetUpdate (void)
 
 	if (consoleplayer == Net_Arbitrator)
 	{
-		for (j = 0; j < doomcom.numnodes; j++)
-		{
-			if (nodeingame[j] && NetMode == NET_PacketServer)
-			{
-				count++;
-			}
-		}
-
 		if (NetMode == NET_PacketServer)
 		{
+			for (j = 0; j < MAXPLAYERS; j++)
+			{
+				if (playeringame[j] && players[j].Bot == NULL)
+				{
+					count++;
+				}
+			}
+
 			// The loop above added the local player to the count a second time,
 			// and it also added the player being sent the packet to the count.
 			count -= 2;
@@ -1203,12 +1203,15 @@ void NetUpdate (void)
 				netbuffer[0] |= NCMD_MULTI;
 				netbuffer[k++] = count;
 
-				for (l = 1, j = 0; j < doomcom.numnodes; j++)
+				if (NetMode == NET_PacketServer)
 				{
-					if (nodeingame[j] && j != i && j != nodeforplayer[consoleplayer] && NetMode == NET_PacketServer)
+					for (l = 1, j = 0; j < MAXPLAYERS; j++)
 					{
-						playerbytes[l++] = playerfornode[j];
-						netbuffer[k++] = playerfornode[j];
+						if (playeringame[j] && players[j].Bot == NULL && j != playerfornode[i] && j != consoleplayer)
+						{
+							playerbytes[l++] = j;
+							netbuffer[k++] = j;
+						}
 					}
 				}
 			}

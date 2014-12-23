@@ -343,6 +343,9 @@ static void CT_ClearChatMessage ()
 
 static void ShoveChatStr (const char *str, BYTE who)
 {
+	if (strlen(str) < 1) // Don't send empty messages
+		return;
+
 	FString substBuff;
 
 	if (str[0] == '/' &&

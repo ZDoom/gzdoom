@@ -34,6 +34,10 @@
 
 #include <sys/stat.h>
 
+#ifdef __APPLE__
+#include <CoreServices/CoreServices.h>
+#endif // __APPLE__
+
 #include "doomerrors.h"
 #include "d_main.h"
 #include "zstring.h"
@@ -167,9 +171,20 @@ TArray<FString> I_GetSteamPath()
 	// we need to figure out on an app-by-app basis where the game is installed.
 	// To do so, we read the virtual registry.
 #ifdef __APPLE__
-	FString OSX_FindApplicationSupport();
+	FString appSupportPath;
 
-	FString regPath = OSX_FindApplicationSupport() + "/Steam/config/config.vdf";
+	{
+		char cpath[PATH_MAX];
+		FSRef folder;
+
+		if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			appSupportPath = cpath;
+		}
+	}
+
+	FString regPath = appSupportPath + "/Steam/config/config.vdf";
 	try
 	{
 		SteamInstallFolders = ParseSteamRegistry(regPath);
@@ -180,7 +195,7 @@ TArray<FString> I_GetSteamPath()
 		return result;
 	}
 
-	SteamInstallFolders.Push(OSX_FindApplicationSupport() + "/Steam/SteamApps/common");
+	SteamInstallFolders.Push(appSupportPath + "/Steam/SteamApps/common");
 #else
 	char* home = getenv("HOME");
 	if(home != NULL && *home != '\0')

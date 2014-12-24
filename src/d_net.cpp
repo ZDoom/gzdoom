@@ -669,25 +669,38 @@ void PlayerIsGone (int netnode, int netconsole)
 {
 	int i;
 
-	if (!nodeingame[netnode])
-		return;
+	if (nodeingame[netnode])
+	{
+		for (i = netnode + 1; i < doomcom.numnodes; ++i)
+		{
+			if (nodeingame[i])
+				break;
+		}
+		if (i == doomcom.numnodes)
+		{
+			doomcom.numnodes = netnode;
+		}
 
-	for (i = netnode + 1; i < doomcom.numnodes; ++i)
-	{
-		if (nodeingame[i])
-			break;
+		if (playeringame[netconsole])
+		{
+			players[netconsole].playerstate = PST_GONE;
+		}
+		nodeingame[netnode] = false;
+		nodejustleft[netnode] = false;
 	}
-	if (i == doomcom.numnodes)
+	else if (nodejustleft[netnode]) // Packet Server
 	{
-		doomcom.numnodes = netnode;
+		if (netnode + 1 == doomcom.numnodes)
+		{
+			doomcom.numnodes = netnode;
+		}
+		if (playeringame[netconsole])
+		{
+			players[netconsole].playerstate = PST_GONE;
+		}
+		nodejustleft[netnode] = false;
 	}
-
-	if (playeringame[netconsole])
-	{
-		players[netconsole].playerstate = PST_GONE;
-	}
-	nodeingame[netnode] = false;
-	nodejustleft[netnode] = false;
+	else return;
 
 	if (netconsole == Net_Arbitrator)
 	{
@@ -790,7 +803,6 @@ void GetPackets (void)
 			else
 			{
 				nodeingame[netnode] = false;
-				playeringame[netconsole] = false;
 				nodejustleft[netnode] = true;
 			}
 			continue;

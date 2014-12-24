@@ -5034,8 +5034,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 
 static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
 {
-	FName spec = mo->Species;
-	return (!(species) || !(stricmp(species, "")) || (species && ((exclude) ? (spec != species) : (spec == species))));
+	return (!(species) || mo->Species == NAME_None || (species && ((exclude) ? (mo->Species != species) : (mo->Species == species))));
 }
 
 static bool DoCheckFilter(AActor *mo, const PClass *filter, bool exclude)

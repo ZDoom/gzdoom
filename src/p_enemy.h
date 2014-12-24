@@ -73,6 +73,8 @@ DECLARE_ACTION(A_BossDeath)
 
 void A_Chase(AActor *self);
 void A_FaceTarget (AActor *actor, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270);
+void A_FaceMaster(AActor *actor, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270);
+void A_FaceTracer(AActor *actor, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270);
 
 bool A_RaiseMobj (AActor *, fixed_t speed);
 bool A_SinkMobj (AActor *, fixed_t speed);

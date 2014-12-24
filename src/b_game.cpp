@@ -178,7 +178,10 @@ void FCajunMaster::End ()
 	{
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			getspawned.Push(players[i].userinfo.GetName());
+			if (players[i].Bot != NULL)
+			{
+				getspawned.Push(players[i].userinfo.GetName());
+			}
 		}
 
 		wanted_botnum = botnum;

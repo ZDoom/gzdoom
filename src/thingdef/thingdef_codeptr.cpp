@@ -907,20 +907,23 @@ enum CM_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 {
-	ACTION_PARAM_START(6);
+	ACTION_PARAM_START(7);
 	ACTION_PARAM_CLASS(ti, 0);
 	ACTION_PARAM_FIXED(SpawnHeight, 1);
 	ACTION_PARAM_INT(Spawnofs_XY, 2);
 	ACTION_PARAM_ANGLE(Angle, 3);
 	ACTION_PARAM_INT(flags, 4);
 	ACTION_PARAM_ANGLE(pitch, 5);
+	ACTION_PARAM_INT(ptr, 6);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
 
 	int aimmode = flags & CMF_AIMMODE;
 
 	AActor * targ;
 	AActor * missile;
 
-	if (self->target != NULL || aimmode==2)
+	if (ref != NULL || aimmode==2)
 	{
 		if (ti) 
 		{
@@ -937,14 +940,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				self->x += x;
 				self->y += y;
 				self->z += z;
-				missile = P_SpawnMissileXYZ(self->x, self->y, self->z + 32*FRACUNIT, self, self->target, ti, false);
+				missile = P_SpawnMissileXYZ(self->x, self->y, self->z + 32*FRACUNIT, self, ref, ti, false);
 				self->x -= x;
 				self->y -= y;
 				self->z -= z;
 				break;
 
 			case 1:
-				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z + self->GetBobOffset() + SpawnHeight, self, self->target, ti, false);
+				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z + self->GetBobOffset() + SpawnHeight, self, ref, ti, false);
 				break;
 
 			case 2:
@@ -1056,7 +1059,7 @@ enum CBA_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
-	ACTION_PARAM_START(7);
+	ACTION_PARAM_START(8);
 	ACTION_PARAM_ANGLE(Spread_XY, 0);
 	ACTION_PARAM_ANGLE(Spread_Z, 1);
 	ACTION_PARAM_INT(NumBullets, 2);
@@ -1064,6 +1067,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	ACTION_PARAM_CLASS(pufftype, 4);
 	ACTION_PARAM_FIXED(Range, 5);
 	ACTION_PARAM_INT(Flags, 6);
+	ACTION_PARAM_INT(ptr, 7);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
 
 	if(Range==0) Range=MISSILERANGE;
 
@@ -1072,9 +1078,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	int bslope = 0;
 	int laflags = (Flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
-	if (self->target || (Flags & CBAF_AIMFACING))
+	if (ref || (Flags & CBAF_AIMFACING))
 	{
-		if (!(Flags & CBAF_AIMFACING)) A_FaceTarget (self);
+		if (!(Flags & CBAF_AIMFACING))
+		{
+			A_Face(self, ref);
+		}
 		bangle = self->angle;
 
 		if (!pufftype) pufftype = PClass::FindClass(NAME_BulletPuff);

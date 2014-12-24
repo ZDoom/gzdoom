@@ -1082,9 +1082,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	{
 		if (!(Flags & CBAF_AIMFACING))
 		{
-			if (ref == self->target)	A_FaceTarget(self);
-			else if (ref == self->master)	A_FaceMaster(self);
-			else if (ref == self->tracer)	A_FaceTracer(self);
+			A_Face(self, ref);
 		}
 		bangle = self->angle;
 

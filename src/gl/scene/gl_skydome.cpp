@@ -471,7 +471,11 @@ void GLSkyPortal::DrawContents()
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	int oldlightmode = glset.lightmode;
-	if (glset.lightmode == 8) glset.lightmode = 2;
+	if (glset.lightmode == 8)
+	{
+		glset.lightmode = 2;
+		gl_RenderState.SetSoftLightLevel(-1);
+	}
 
 
 	gl_RenderState.ResetColor();

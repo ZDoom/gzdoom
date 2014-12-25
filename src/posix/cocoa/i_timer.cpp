@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include <libkern/OSAtomic.h>
 
-#include <SDL.h>
-
 #include "basictypes.h"
 #include "basicinlines.h"
 #include "doomdef.h"
@@ -13,22 +11,35 @@
 #include "templates.h"
 
 
+static timeval s_startTicks;
+
+
 unsigned int I_MSTime()
 {
-	return SDL_GetTicks();
+	timeval now;
+	gettimeofday(&now, NULL);
+
+	const uint32_t ticks =
+		  (now.tv_sec  - s_startTicks.tv_sec ) * 1000
+		+ (now.tv_usec - s_startTicks.tv_usec) / 1000;
+
+	return ticks;
 }
 
 unsigned int I_FPSTime()
 {
-	return SDL_GetTicks();
+	timeval now;
+	gettimeofday(&now, NULL);
+
+	return static_cast<unsigned int>(
+		(now.tv_sec) * 1000 + (now.tv_usec) / 1000);
 }
-
-
-bool g_isTicFrozen;
 
 
 namespace
 {
+
+bool s_isTicFrozen;
 
 timespec GetNextTickTime()
 {
@@ -91,7 +102,7 @@ void* TimerThreadFunc(void*)
 		pthread_mutex_lock(&s_timerMutex);
 		pthread_cond_timedwait(&s_timerEvent, &s_timerMutex, &timeToNextTick);
 
-		if (!g_isTicFrozen)
+		if (!s_isTicFrozen)
 		{
 			// The following GCC/Clang intrinsic can be used instead of OS X specific function:
 			// __sync_add_and_fetch(&s_tics, 1);
@@ -101,7 +112,7 @@ void* TimerThreadFunc(void*)
 			OSAtomicIncrement32(&s_tics);
 		}
 
-		s_timerStart = SDL_GetTicks();
+		s_timerStart = I_MSTime();
 
 		pthread_cond_broadcast(&s_timerEvent);
 		pthread_mutex_unlock(&s_timerMutex);
@@ -122,7 +133,7 @@ int GetTimeThreaded(bool saveMS)
 
 int WaitForTicThreaded(int prevTic)
 {
-	assert(!g_isTicFrozen);
+	assert(!s_isTicFrozen);
 
 	while (s_tics <= prevTic)
 	{
@@ -136,7 +147,7 @@ int WaitForTicThreaded(int prevTic)
 
 void FreezeTimeThreaded(bool frozen)
 {
-	g_isTicFrozen = frozen;
+	s_isTicFrozen = frozen;
 }
 
 } // unnamed namespace
@@ -144,7 +155,7 @@ void FreezeTimeThreaded(bool frozen)
 
 fixed_t I_GetTimeFrac(uint32* ms)
 {
-	const uint32_t now = SDL_GetTicks();
+	const uint32_t now = I_MSTime();
 
 	if (NULL != ms)
 	{
@@ -157,10 +168,12 @@ fixed_t I_GetTimeFrac(uint32* ms)
 }
 
 
-void I_InitTimer ()
+void I_InitTimer()
 {
 	assert(!s_timerInitialized);
 	s_timerInitialized = true;
+
+	gettimeofday(&s_startTicks, NULL);
 
 	pthread_cond_init (&s_timerEvent,  NULL);
 	pthread_mutex_init(&s_timerMutex,  NULL);
@@ -172,7 +185,7 @@ void I_InitTimer ()
 	I_FreezeTime = FreezeTimeThreaded;
 }
 
-void I_ShutdownTimer ()
+void I_ShutdownTimer()
 {
 	if (!s_timerInitialized)
 	{

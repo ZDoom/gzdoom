@@ -36,7 +36,6 @@
 
 #include <sys/time.h>
 #include <sys/sysctl.h>
-#include <pthread.h>
 #include <dlfcn.h>
 
 #include <AppKit/AppKit.h>
@@ -44,8 +43,6 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
-
-#include <SDL.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -56,15 +53,26 @@
 #include "cmdlib.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "d_main.h"
 #include "dikeys.h"
 #include "doomdef.h"
+#include "doomerrors.h"
 #include "doomstat.h"
+#include "hardware.h"
+#include "m_argv.h"
+#include "r_renderer.h"
+#include "r_swrenderer.h"
 #include "s_sound.h"
+#include "stats.h"
 #include "textures.h"
+#include "v_palette.h"
+#include "v_pfx.h"
+#include "v_text.h"
 #include "v_video.h"
 #include "version.h"
 #include "i_rbopts.h"
 #include "i_osversion.h"
+#include "i_system.h"
 
 #undef Class
 
@@ -190,8 +198,11 @@ typedef NSInteger NSApplicationActivationPolicy;
 
 RenderBufferOptions rbOpts;
 
-EXTERN_CVAR(Bool, fullscreen)
-EXTERN_CVAR(Bool, vid_hidpi)
+EXTERN_CVAR(Bool, ticker       )
+EXTERN_CVAR(Bool, vid_hidpi    )
+EXTERN_CVAR(Bool, vid_vsync    )
+EXTERN_CVAR(Int,  vid_defwidth )
+EXTERN_CVAR(Int,  vid_defheight)
 
 CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_noprescale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -217,7 +228,103 @@ extern constate_e ConsoleState;
 
 EXTERN_CVAR(Int, m_use_mouse);
 
+void I_StartupJoysticks();
 void I_ShutdownJoysticks();
+
+
+// ---------------------------------------------------------------------------
+
+
+extern int NewWidth, NewHeight, NewBits, DisplayBits;
+
+
+CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	NewWidth = screen->GetWidth();
+	NewHeight = screen->GetHeight();
+	NewBits = DisplayBits;
+	setmodeneeded = true;
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+DArgs *Args; // command line arguments
+
+namespace
+{
+
+// The maximum number of functions that can be registered with atterm.
+static const size_t MAX_TERMS = 64;
+
+static void (*TermFuncs[MAX_TERMS])();
+static const char *TermNames[MAX_TERMS];
+static size_t NumTerms;
+
+void call_terms()
+{
+	while (NumTerms > 0)
+	{
+		TermFuncs[--NumTerms]();
+	}
+}
+
+} // unnamed namespace
+
+
+void addterm(void (*func)(), const char *name)
+{
+	// Make sure this function wasn't already registered.
+
+	for (size_t i = 0; i < NumTerms; ++i)
+	{
+		if (TermFuncs[i] == func)
+		{
+			return;
+		}
+	}
+
+	if (NumTerms == MAX_TERMS)
+	{
+		func();
+		I_FatalError("Too many exit functions registered.");
+	}
+
+	TermNames[NumTerms] = name;
+	TermFuncs[NumTerms] = func;
+
+	++NumTerms;
+}
+
+void popterm()
+{
+	if (NumTerms)
+	{
+		--NumTerms;
+	}
+}
+
+
+void I_SetMainWindowVisible(bool);
+
+void Mac_I_FatalError(const char* const message)
+{
+	I_SetMainWindowVisible(false);
+
+	const CFStringRef errorString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault,
+		message, kCFStringEncodingASCII, kCFAllocatorNull);
+
+	if (NULL != errorString)
+	{
+		CFOptionFlags dummy;
+
+		CFUserNotificationDisplayAlert( 0, kCFUserNotificationStopAlertLevel, NULL, NULL, NULL,
+			CFSTR("Fatal Error"), errorString, CFSTR("Exit"), NULL, NULL, &dummy);
+
+		CFRelease(errorString);
+	}
+}
 
 
 namespace
@@ -234,11 +341,107 @@ bool s_restartedFromWADPicker;
 
 
 bool s_nativeMouse = true;
-	
+
 // TODO: remove this magic!
 size_t s_skipMouseMoves;
 
 NSCursor* s_cursor;
+
+
+void NewFailure()
+{
+	I_FatalError("Failed to allocate memory from system heap");
+}
+
+
+int OriginalMain(int argc, char** argv)
+{
+	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n\n",
+		GetVersionString(), GetGitTime(), __DATE__);
+
+	seteuid(getuid());
+	std::set_new_handler(NewFailure);
+
+	// Set LC_NUMERIC environment variable in case some library decides to
+	// clear the setlocale call at least this will be correct.
+	// Note that the LANG environment variable is overridden by LC_*
+	setenv("LC_NUMERIC", "C", 1);
+	setlocale(LC_ALL, "C");
+
+	// Set reasonable default values for video settings
+	const NSSize screenSize = [[NSScreen mainScreen] frame].size;
+	vid_defwidth  = static_cast<int>(screenSize.width);
+	vid_defheight = static_cast<int>(screenSize.height);
+	vid_vsync     = true;
+	fullscreen    = true;
+
+	try
+	{
+		Args = new DArgs(argc, argv);
+
+		/*
+		 killough 1/98:
+
+		 This fixes some problems with exit handling
+		 during abnormal situations.
+
+		 The old code called I_Quit() to end program,
+		 while now I_Quit() is installed as an exit
+		 handler and exit() is called to exit, either
+		 normally or abnormally. Seg faults are caught
+		 and the error handler is used, to prevent
+		 being left in graphics mode or having very
+		 loud SFX noise because the sound card is
+		 left in an unstable state.
+		 */
+
+		atexit (call_terms);
+		atterm (I_Quit);
+
+		// Should we even be doing anything with progdir on Unix systems?
+		char program[PATH_MAX];
+		if (realpath (argv[0], program) == NULL)
+			strcpy (program, argv[0]);
+		char *slash = strrchr (program, '/');
+		if (slash != NULL)
+		{
+			*(slash + 1) = '\0';
+			progdir = program;
+		}
+		else
+		{
+			progdir = "./";
+		}
+
+		I_StartupJoysticks();
+		atterm(I_ShutdownJoysticks);
+
+		C_InitConsole(80 * 8, 25 * 8, false);
+		D_DoomMain();
+	}
+	catch(const CDoomError& error)
+	{
+		const char* const message = error.GetMessage();
+
+		if (NULL != message)
+		{
+			fprintf(stderr, "%s\n", message);
+			Mac_I_FatalError(message);
+		}
+
+		exit(-1);
+	}
+	catch(...)
+	{
+		call_terms();
+		throw;
+	}
+
+	return 0;
+}
+
+
+// ---------------------------------------------------------------------------
 
 
 void CheckGUICapture()
@@ -246,7 +449,7 @@ void CheckGUICapture()
 	const bool wantCapture = (MENU_Off == menuactive)
 		? (c_down == ConsoleState || c_falling == ConsoleState || chatmodeon)
 		: (menuactive == MENU_On || menuactive == MENU_OnNoPause);
-	
+
 	if (wantCapture != GUICapture)
 	{
 		GUICapture = wantCapture;
@@ -266,9 +469,9 @@ void CenterCursor()
 	const NSRect  displayRect = [[window screen] frame];
 	const NSRect   windowRect = [window frame];
 	const CGPoint centerPoint = CGPointMake(NSMidX(windowRect), displayRect.size.height - NSMidY(windowRect));
-	
+
 	CGEventSourceRef eventSource = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
-	
+
 	if (NULL != eventSource)
 	{
 		CGEventRef mouseMoveEvent = CGEventCreateMouseEvent(eventSource,
@@ -279,10 +482,10 @@ void CenterCursor()
 			CGEventPost(kCGHIDEventTap, mouseMoveEvent);
 			CFRelease(mouseMoveEvent);
 		}
-		
+
 		CFRelease(eventSource);
 	}
-	
+
 	// TODO: remove this magic!
 	s_skipMouseMoves = 2;
 }
@@ -295,10 +498,10 @@ bool IsInGame()
 		default:
 		case 0:
 			return gamestate == GS_LEVEL;
-			
+
 		case 1:
 			return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
-			
+
 		case 2:
 			return true;
 	}
@@ -314,7 +517,7 @@ void SetNativeMouse(bool wantNative)
 		{
 			CenterCursor();
 		}
-		
+
 		CGAssociateMouseAndMouseCursorPosition(wantNative);
 		
 		if (wantNative)
@@ -332,7 +535,7 @@ void CheckNativeMouse()
 {
 	bool windowed = (NULL == screen) || !screen->IsFullscreen();
 	bool wantNative;
-	
+
 	if (windowed)
 	{
 		if (![NSApp isActive] || !use_mouse)
@@ -355,7 +558,7 @@ void CheckNativeMouse()
 		wantNative = m_use_mouse 
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
-	
+
 	SetNativeMouse(wantNative);
 }
 
@@ -375,7 +578,7 @@ void I_StartTic()
 {
 	CheckGUICapture();
 	CheckNativeMouse();
-	
+
 	I_ProcessJoysticks();
 	I_GetEvent();
 }
@@ -388,12 +591,12 @@ void I_StartFrame()
 
 void I_SetMouseCapture()
 {
-	
+
 }
 
 void I_ReleaseMouseCapture()
 {
-	
+
 }
 
 
@@ -871,7 +1074,7 @@ void ProcessMouseWheelEvent(NSEvent* theEvent)
 }
 
 
-const Uint16 BYTES_PER_PIXEL = 4;
+const size_t BYTES_PER_PIXEL = 4;
 
 } // unnamed namespace
 
@@ -964,8 +1167,6 @@ namespace
 - (void)applicationWillResignActive:(NSNotification*)aNotification;
 
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification;
-
-- (void)applicationWillTerminate:(NSNotification*)aNotification;
 
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename;
 
@@ -1131,7 +1332,7 @@ static bool s_fullscreenNewAPI;
 	[[NSRunLoop currentRunLoop] addTimer:timer
 								 forMode:NSDefaultRunLoopMode];
 
-	exit(SDL_main(s_argc, s_argv));
+	exit(OriginalMain(s_argc, s_argv));
 }
 
 
@@ -1167,17 +1368,6 @@ static bool s_fullscreenNewAPI;
 	s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
 
 	return TRUE;
-}
-
-
-- (void)applicationWillTerminate:(NSNotification*)aNotification
-{
-	ZD_UNUSED(aNotification);
-	
-	// Hide window as nothing will be rendered at this point
-	[m_window orderOut:nil];
-
-	I_ShutdownJoysticks();
 }
 
 
@@ -1537,7 +1727,7 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 void I_SetMainWindowVisible(bool visible)
 {
 	[appCtrl setMainWindowVisible:visible];
-	
+
 	SetNativeMouse(!visible);
 }
 
@@ -1613,334 +1803,83 @@ bool I_SetCursor(FTexture* cursorpic)
 // ---------------------------------------------------------------------------
 
 
-const char* I_GetBackEndName()
-{
-	return "Native Cocoa";
-}
-
-
-FString OSX_FindApplicationSupport()
-{
-	NSURL *url = [[NSFileManager defaultManager] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:nil];
-	if(url == nil)
-		return FString();
-	return [[url path] UTF8String];
-}
-
-// ---------------------------------------------------------------------------
-
-
 extern "C" 
 {
 
-struct SDL_mutex
+typedef enum
 {
-	pthread_mutex_t mutex;
+	SDL_WINDOW_FULLSCREEN = 0x00000001,         /**< fullscreen window */
+	SDL_WINDOW_OPENGL = 0x00000002,             /**< window usable with OpenGL context */
+	SDL_WINDOW_FULLSCREEN_DESKTOP = ( SDL_WINDOW_FULLSCREEN | 0x00001000 ),
+} SDL_WindowFlags;
+
+struct SDL_Window
+{
+	uint32_t flags;
+	int w, h;
+	int pitch;
+	void *pixels;
 };
 
-
-SDL_mutex* SDL_CreateMutex()
+SDL_Window* SDL_CreateWindow(const char* title, int x, int y, int width, int height, uint32_t flags)
 {
-	pthread_mutexattr_t attributes;
-	pthread_mutexattr_init(&attributes);
-	pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_RECURSIVE);
-	
-	SDL_mutex* result = new SDL_mutex;
-	
-	if (0 != pthread_mutex_init(&result->mutex, &attributes))
-	{
-		delete result;
-		result = NULL;
-	}
-	
-	pthread_mutexattr_destroy(&attributes);
-	
-	return result;
-}
-
-int SDL_mutexP(SDL_mutex* mutex)
-{
-	return pthread_mutex_lock(&mutex->mutex);
-}
-
-int SDL_mutexV(SDL_mutex* mutex)
-{
-	return pthread_mutex_unlock(&mutex->mutex);
-}
-
-void SDL_DestroyMutex(SDL_mutex* mutex)
-{
-	pthread_mutex_destroy(&mutex->mutex);
-	delete mutex;
-}
-
-
-static timeval s_startTicks;
-
-uint32_t SDL_GetTicks()
-{
-	timeval now;
-	gettimeofday(&now, NULL);
-	
-	const uint32_t ticks = 
-		  (now.tv_sec  - s_startTicks.tv_sec ) * 1000
-		+ (now.tv_usec - s_startTicks.tv_usec) / 1000;
-	
-	return ticks;
-}
-
-
-int SDL_Init(Uint32 flags)
-{
-	ZD_UNUSED(flags);
-
-	return 0;
-}
-
-void SDL_Quit()
-{
-	if (NULL != appCtrl)
-	{
-		[NSApp setDelegate:nil];
-		[NSApp deactivate];
-
-		[appCtrl release];
-		appCtrl = NULL;
-	}
-}
-
-
-char* SDL_GetError()
-{
-	static char empty[] = {0};
-	return empty;
-}
-
-
-char* SDL_VideoDriverName(char* namebuf, int maxlen)
-{
-	return strncpy(namebuf, "Native OpenGL", maxlen);
-}
-
-const SDL_VideoInfo* SDL_GetVideoInfo()
-{
-	// NOTE: Only required fields are assigned
-	
-	static SDL_PixelFormat pixelFormat;
-	memset(&pixelFormat, 0, sizeof(pixelFormat));
-	
-	pixelFormat.BitsPerPixel = 32;
-	
-	static SDL_VideoInfo videoInfo;
-	memset(&videoInfo, 0, sizeof(videoInfo));
-	
-	const NSRect displayRect = [[NSScreen mainScreen] frame];
-	
-	videoInfo.current_w = displayRect.size.width;
-	videoInfo.current_h = displayRect.size.height;
-	videoInfo.vfmt      = &pixelFormat;
-	
-	return &videoInfo;
-}
-
-SDL_Rect** SDL_ListModes(SDL_PixelFormat* format, Uint32 flags)
-{
-	ZD_UNUSED(format);
-	ZD_UNUSED(flags);
-	
-	static std::vector<SDL_Rect*> resolutions;
-	
-	if (resolutions.empty())
-	{
-#define DEFINE_RESOLUTION(WIDTH, HEIGHT)                                     \
-	static SDL_Rect resolution_##WIDTH##_##HEIGHT = { 0, 0, WIDTH, HEIGHT }; \
-	resolutions.push_back(&resolution_##WIDTH##_##HEIGHT);
-		
-		DEFINE_RESOLUTION( 640,  480);
-		DEFINE_RESOLUTION( 720,  480);
-		DEFINE_RESOLUTION( 800,  480);
-		DEFINE_RESOLUTION( 800,  600);
-		DEFINE_RESOLUTION(1024,  600);
-		DEFINE_RESOLUTION(1024,  640);
-		DEFINE_RESOLUTION(1024,  768);
-		DEFINE_RESOLUTION(1152,  720);
-		DEFINE_RESOLUTION(1152,  864);
-		DEFINE_RESOLUTION(1280,  720);
-		DEFINE_RESOLUTION(1280,  768);
-		DEFINE_RESOLUTION(1280,  800);
-		DEFINE_RESOLUTION(1280,  854);
-		DEFINE_RESOLUTION(1280,  960);
-		DEFINE_RESOLUTION(1280, 1024);
-		DEFINE_RESOLUTION(1366,  768);
-		DEFINE_RESOLUTION(1400, 1050);
-		DEFINE_RESOLUTION(1440,  900);
-		DEFINE_RESOLUTION(1440,  960);
-		DEFINE_RESOLUTION(1440, 1080);
-		DEFINE_RESOLUTION(1600,  900);
-		DEFINE_RESOLUTION(1600, 1200);
-		DEFINE_RESOLUTION(1680, 1050);
-		DEFINE_RESOLUTION(1920, 1080);
-		DEFINE_RESOLUTION(1920, 1200);
-		DEFINE_RESOLUTION(2048, 1080);
-		DEFINE_RESOLUTION(2048, 1536);
-		DEFINE_RESOLUTION(2560, 1080);
-		DEFINE_RESOLUTION(2560, 1440);
-		DEFINE_RESOLUTION(2560, 1600);
-		DEFINE_RESOLUTION(2560, 2048);
-		DEFINE_RESOLUTION(2880, 1800);
-		DEFINE_RESOLUTION(3200, 1800);
-		DEFINE_RESOLUTION(3440, 1440);
-		DEFINE_RESOLUTION(3840, 2160);
-		DEFINE_RESOLUTION(3840, 2400);
-		DEFINE_RESOLUTION(4096, 2160);
-		DEFINE_RESOLUTION(5120, 2880);
-		
-#undef DEFINE_RESOLUTION
-		
-		resolutions.push_back(NULL);
-	}
-	
-	return &resolutions[0];
-}
-
-int SDL_ShowCursor(int)
-{
-	// Does nothing
-	return 0;
-}
-
-
-static SDL_PixelFormat* GetPixelFormat()
-{
-	static SDL_PixelFormat result;
-	
-	result.palette       = NULL;
-	result.BitsPerPixel  = BYTES_PER_PIXEL * 8;
-	result.BytesPerPixel = BYTES_PER_PIXEL;
-	result.Rloss         = 0;
-	result.Gloss         = 0;
-	result.Bloss         = 0;
-	result.Aloss         = 8;
-	result.Rshift        = 8;
-	result.Gshift        = 16;
-	result.Bshift        = 24;
-	result.Ashift        = 0;
-	result.Rmask         = 0x000000FF;
-	result.Gmask         = 0x0000FF00;
-	result.Bmask         = 0x00FF0000;
-	result.Amask         = 0xFF000000;	
-	result.colorkey      = 0;
-	result.alpha         = 0xFF;
-	
-	return &result;
-}
-
-
-SDL_Surface* SDL_SetVideoMode(int width, int height, int, Uint32 flags)
-{
-	[appCtrl changeVideoResolution:(SDL_FULLSCREEN & flags)
+	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
 							 width:width
 							height:height
 						  useHiDPI:vid_hidpi];
 
-	static SDL_Surface result;
+	static SDL_Window result;
 
-	if (!(SDL_OPENGL & flags))
+	if (!(SDL_WINDOW_OPENGL & flags))
 	{
 		[appCtrl setupSoftwareRenderingWithWidth:width
 										  height:height];
 	}
 
 	result.flags    = flags;
-	result.format   = GetPixelFormat();
 	result.w        = width;
 	result.h        = height;
 	result.pitch    = width * BYTES_PER_PIXEL;
 	result.pixels   = [appCtrl softwareRenderingBuffer];
-	result.refcount = 1;
-	
-	result.clip_rect.x = 0;
-	result.clip_rect.y = 0;
-	result.clip_rect.w = width;
-	result.clip_rect.h = height;
-	
+
 	return &result;
 }
-
-
-void SDL_WM_SetCaption(const char* title, const char* icon)
+void SDL_DestroyWindow(SDL_Window *window)
 {
-	ZD_UNUSED(title);
-	ZD_UNUSED(icon);
-	
-	// Window title is set in SDL_SetVideoMode()
+	ZD_UNUSED(window);
 }
 
-int SDL_WM_ToggleFullScreen(SDL_Surface* surface)
+uint32_t SDL_GetWindowFlags(SDL_Window *window)
 {
-	if (surface->flags & SDL_FULLSCREEN)
+	return window->flags;
+}
+
+int SDL_SetWindowFullscreen(SDL_Window* window, uint32_t flags)
+{
+	if ((window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == (flags & SDL_WINDOW_FULLSCREEN_DESKTOP))
+		return 0;
+
+	if (window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
 	{
-		surface->flags &= ~SDL_FULLSCREEN;
+		window->flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 	else
 	{
-		surface->flags |= SDL_FULLSCREEN;
+		window->flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 
-	[appCtrl changeVideoResolution:(SDL_FULLSCREEN & surface->flags)
-							 width:surface->w
-							height:surface->h
+	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
+							 width:window->w
+							height:window->h
 						  useHiDPI:vid_hidpi];
 
-	return 1;
-}
-
-
-void SDL_GL_SwapBuffers()
-{
-	[[NSOpenGLContext currentContext] flushBuffer];
-}
-
-int SDL_GL_SetAttribute(SDL_GLattr attr, int value)
-{
-	if (SDL_GL_MULTISAMPLESAMPLES == attr)
-	{
-		[appCtrl setMultisample:value];
-	}
-
-	// Not interested in other attributes
-
 	return 0;
 }
 
-
-int SDL_LockSurface(SDL_Surface* surface)
-{
-	ZD_UNUSED(surface);
-	
-	return 0;
-}
-
-void SDL_UnlockSurface(SDL_Surface* surface)
-{
-	ZD_UNUSED(surface);
-}
-
-int SDL_BlitSurface(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect)
-{
-	ZD_UNUSED(src);
-	ZD_UNUSED(srcrect);
-	ZD_UNUSED(dst);
-	ZD_UNUSED(dstrect);
-	
-	return 0;
-}
-
-
-int SDL_Flip(SDL_Surface* screen)
+int SDL_UpdateWindowSurface(SDL_Window *screen)
 {
 	assert(NULL != screen);
-	
+
 	if (rbOpts.dirty)
 	{
 		glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
@@ -1952,7 +1891,7 @@ int SDL_Flip(SDL_Surface* screen)
 
 		rbOpts.dirty = false;
 	}
-	
+
 	const int width  = screen->w;
 	const int height = screen->h;
 
@@ -1978,24 +1917,688 @@ int SDL_Flip(SDL_Surface* screen)
 	glEnd();
 
 	glFlush();
-	
-	SDL_GL_SwapBuffers();
-	
-	return 0;	
-}
 
-int SDL_SetPalette(SDL_Surface* surface, int flags, SDL_Color* colors, int firstcolor, int ncolors)
-{
-	ZD_UNUSED(surface);
-	ZD_UNUSED(flags);
-	ZD_UNUSED(colors);
-	ZD_UNUSED(firstcolor);
-	ZD_UNUSED(ncolors);
-	
+	[[NSOpenGLContext currentContext] flushBuffer];
+
 	return 0;
 }
-	
+
 } // extern "C"
+
+
+// ---------------------------------------------------------------------------
+
+
+class CocoaVideo : public IVideo
+{
+public:
+	explicit CocoaVideo(int dummy);
+
+	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
+	virtual void SetWindowedScale(float scale);
+
+	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer* old);
+
+	virtual void StartModeIterator(int bits, bool fs);
+	virtual bool NextMode(int* width, int* height, bool* letterbox);
+
+private:
+	size_t m_modeIterator;
+};
+
+
+class CocoaFrameBuffer : public DFrameBuffer
+{
+public:
+	CocoaFrameBuffer(int width, int height, bool fullscreen);
+	~CocoaFrameBuffer();
+
+	virtual bool IsValid();
+
+	virtual bool Lock(bool buffer);
+	virtual void Unlock();
+	virtual void Update();
+	
+	virtual PalEntry* GetPalette();
+	virtual void GetFlashedPalette(PalEntry pal[256]);
+	virtual void UpdatePalette();
+	
+	virtual bool SetGamma(float gamma);
+	virtual bool SetFlash(PalEntry  rgb, int  amount);
+	virtual void GetFlash(PalEntry &rgb, int &amount);
+
+	virtual int GetPageCount();
+
+	virtual bool IsFullscreen();
+
+	virtual void SetVSync(bool vsync);
+
+	void SetFullscreen(bool fullscreen);
+
+private:
+	PalEntry m_palette[256];
+	bool     m_needPaletteUpdate;
+
+	BYTE     m_gammaTable[3][256];
+	float    m_gamma;
+	bool     m_needGammaUpdate;
+
+	PalEntry m_flashColor;
+	int      m_flashAmount;
+
+	bool     m_isUpdatePending;
+
+	SDL_Window *Screen;
+
+	void UpdateColors();
+};
+
+
+// ---------------------------------------------------------------------------
+
+
+EXTERN_CVAR (Float, Gamma)
+
+CUSTOM_CVAR (Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (NULL != screen)
+	{
+		screen->SetGamma(Gamma);
+	}
+}
+
+CUSTOM_CVAR (Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (NULL != screen)
+	{
+		screen->SetGamma(Gamma);
+	}
+}
+
+CUSTOM_CVAR (Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (NULL != screen)
+	{
+		screen->SetGamma(Gamma);
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+static const struct
+{
+	uint16_t width;
+	uint16_t height;
+}
+VideoModes[] =
+{
+	{  320,  200 },
+	{  320,  240 },
+	{  400,  225 },	// 16:9
+	{  400,  300 },
+	{  480,  270 },	// 16:9
+	{  480,  360 },
+	{  512,  288 },	// 16:9
+	{  512,  384 },
+	{  640,  360 },	// 16:9
+	{  640,  400 },
+	{  640,  480 },
+	{  720,  480 },	// 16:10
+	{  720,  540 },
+	{  800,  450 },	// 16:9
+	{  800,  480 },
+	{  800,  500 },	// 16:10
+	{  800,  600 },
+	{  848,  480 },	// 16:9
+	{  960,  600 },	// 16:10
+	{  960,  720 },
+	{ 1024,  576 },	// 16:9
+	{ 1024,  600 },	// 17:10
+	{ 1024,  640 },	// 16:10
+	{ 1024,  768 },
+	{ 1088,  612 },	// 16:9
+	{ 1152,  648 },	// 16:9
+	{ 1152,  720 },	// 16:10
+	{ 1152,  864 },
+	{ 1280,  720 },	// 16:9
+	{ 1280,  854 },
+	{ 1280,  800 },	// 16:10
+	{ 1280,  960 },
+	{ 1280, 1024 },	// 5:4
+	{ 1360,  768 },	// 16:9
+	{ 1366,  768 },
+	{ 1400,  787 },	// 16:9
+	{ 1400,  875 },	// 16:10
+	{ 1400, 1050 },
+	{ 1440,  900 },
+	{ 1440,  960 },
+	{ 1440, 1080 },
+	{ 1600,  900 },	// 16:9
+	{ 1600, 1000 },	// 16:10
+	{ 1600, 1200 },
+	{ 1920, 1080 },
+	{ 1920, 1200 },
+	{ 2048, 1536 },
+	{ 2560, 1440 },
+	{ 2560, 1600 },
+	{ 2560, 2048 },
+	{ 2880, 1800 },
+	{ 3200, 1800 },
+	{ 3840, 2160 },
+	{ 3840, 2400 },
+	{ 4096, 2160 },
+	{ 5120, 2880 }
+};
+
+
+static cycle_t BlitCycles;
+static cycle_t FlipCycles;
+
+
+// ---------------------------------------------------------------------------
+
+
+CocoaVideo::CocoaVideo(int dummy)
+: m_modeIterator(0)
+{
+	ZD_UNUSED(dummy);
+}
+
+void CocoaVideo::StartModeIterator(int bits, bool fs)
+{
+	ZD_UNUSED(bits);
+	ZD_UNUSED(fs);
+
+	m_modeIterator = 0;
+}
+
+bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
+{
+	assert(NULL != width);
+	assert(NULL != height);
+	ZD_UNUSED(letterbox);
+
+	if (m_modeIterator < sizeof(VideoModes) / sizeof(VideoModes[0]))
+	{
+		*width  = VideoModes[m_modeIterator].width;
+		*height = VideoModes[m_modeIterator].height;
+
+		++m_modeIterator;
+		return true;
+	}
+
+	return false;
+}
+
+DFrameBuffer* CocoaVideo::CreateFrameBuffer(int width, int height, bool fullscreen, DFrameBuffer* old)
+{
+	static int retry = 0;
+	static int owidth, oheight;
+
+	PalEntry flashColor;
+	int flashAmount;
+
+	if (old != NULL)
+	{ // Reuse the old framebuffer if its attributes are the same
+		CocoaFrameBuffer *fb = static_cast<CocoaFrameBuffer *> (old);
+		if (fb->GetWidth() == width &&
+			fb->GetHeight() == height)
+		{
+			if (fb->IsFullscreen() != fullscreen)
+			{
+				fb->SetFullscreen (fullscreen);
+			}
+
+			return old;
+		}
+		old->GetFlash (flashColor, flashAmount);
+		old->ObjectFlags |= OF_YesReallyDelete;
+		if (screen == old) screen = NULL;
+		delete old;
+	}
+	else
+	{
+		flashColor = 0;
+		flashAmount = 0;
+	}
+
+	CocoaFrameBuffer *fb = new CocoaFrameBuffer (width, height, fullscreen);
+	retry = 0;
+
+	// If we could not create the framebuffer, try again with slightly
+	// different parameters in this order:
+	// 1. Try with the closest size
+	// 2. Try in the opposite screen mode with the original size
+	// 3. Try in the opposite screen mode with the closest size
+	// This is a somewhat confusing mass of recursion here.
+
+	while (fb == NULL || !fb->IsValid ())
+	{
+		if (fb != NULL)
+		{
+			delete fb;
+		}
+
+		switch (retry)
+		{
+			case 0:
+				owidth = width;
+				oheight = height;
+			case 2:
+				// Try a different resolution. Hopefully that will work.
+				I_ClosestResolution (&width, &height, 8);
+				break;
+
+			case 1:
+				// Try changing fullscreen mode. Maybe that will work.
+				width = owidth;
+				height = oheight;
+				fullscreen = !fullscreen;
+				break;
+
+			default:
+				// I give up!
+				I_FatalError ("Could not create new screen (%d x %d)", owidth, oheight);
+		}
+
+		++retry;
+		fb = static_cast<CocoaFrameBuffer *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+	}
+
+	fb->SetFlash (flashColor, flashAmount);
+
+	return fb;
+}
+
+void CocoaVideo::SetWindowedScale (float scale)
+{
+}
+
+
+CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
+: DFrameBuffer(width, height)
+, m_needPaletteUpdate(false)
+, m_gamma(0.0f)
+, m_needGammaUpdate(false)
+, m_flashAmount(0)
+, m_isUpdatePending(false)
+{
+	FString caption;
+	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+
+	Screen = SDL_CreateWindow (caption, 0, 0,
+		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+
+	if (Screen == NULL)
+		return;
+
+	GPfx.SetFormat(32, 0x000000FF, 0x0000FF00, 0x00FF0000);
+
+	for (size_t i = 0; i < 256; ++i)
+	{
+		m_gammaTable[0][i] = m_gammaTable[1][i] = m_gammaTable[2][i] = i;
+	}
+
+	memcpy(m_palette, GPalette.BaseColors, sizeof(PalEntry) * 256);
+	UpdateColors();
+
+	SetVSync(vid_vsync);
+}
+
+
+CocoaFrameBuffer::~CocoaFrameBuffer ()
+{
+	if(Screen)
+	{
+		SDL_DestroyWindow (Screen);
+	}
+}
+
+bool CocoaFrameBuffer::IsValid ()
+{
+	return DFrameBuffer::IsValid() && Screen != NULL;
+}
+
+int CocoaFrameBuffer::GetPageCount ()
+{
+	return 1;
+}
+
+bool CocoaFrameBuffer::Lock (bool buffered)
+{
+	return DSimpleCanvas::Lock ();
+}
+
+void CocoaFrameBuffer::Unlock ()
+{
+	if (m_isUpdatePending && LockCount == 1)
+	{
+		Update ();
+	}
+	else if (--LockCount <= 0)
+	{
+		Buffer = NULL;
+		LockCount = 0;
+	}
+}
+
+void CocoaFrameBuffer::Update ()
+{
+	if (LockCount != 1)
+	{
+		if (LockCount > 0)
+		{
+			m_isUpdatePending = true;
+			--LockCount;
+		}
+		return;
+	}
+
+	DrawRateStuff ();
+
+	Buffer = NULL;
+	LockCount = 0;
+	m_isUpdatePending = false;
+
+	BlitCycles.Reset();
+	FlipCycles.Reset();
+	BlitCycles.Clock();
+
+	GPfx.Convert(MemBuffer, Pitch, [appCtrl softwareRenderingBuffer], Width * BYTES_PER_PIXEL,
+		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
+
+	FlipCycles.Clock();
+	SDL_UpdateWindowSurface(Screen);
+	FlipCycles.Unclock();
+
+	BlitCycles.Unclock();
+
+	if (m_needGammaUpdate)
+	{
+		bool Windowed = false;
+		m_needGammaUpdate = false;
+		CalcGamma((Windowed || rgamma == 0.f) ? m_gamma : (m_gamma * rgamma), m_gammaTable[0]);
+		CalcGamma((Windowed || ggamma == 0.f) ? m_gamma : (m_gamma * ggamma), m_gammaTable[1]);
+		CalcGamma((Windowed || bgamma == 0.f) ? m_gamma : (m_gamma * bgamma), m_gammaTable[2]);
+		m_needPaletteUpdate = true;
+	}
+
+	if (m_needPaletteUpdate)
+	{
+		m_needPaletteUpdate = false;
+		UpdateColors();
+	}
+}
+
+void CocoaFrameBuffer::UpdateColors()
+{
+	PalEntry palette[256];
+
+	for (size_t i = 0; i < 256; ++i)
+	{
+		palette[i].r = m_gammaTable[0][m_palette[i].r];
+		palette[i].g = m_gammaTable[1][m_palette[i].g];
+		palette[i].b = m_gammaTable[2][m_palette[i].b];
+	}
+
+	if (m_flashAmount)
+	{
+		DoBlending(palette, palette, 256,
+			m_gammaTable[0][m_flashColor.r], m_gammaTable[1][m_flashColor.g], m_gammaTable[2][m_flashColor.b],
+			m_flashAmount);
+	}
+
+	GPfx.SetPalette(palette);
+}
+
+PalEntry *CocoaFrameBuffer::GetPalette ()
+{
+	return m_palette;
+}
+
+void CocoaFrameBuffer::UpdatePalette()
+{
+	m_needPaletteUpdate = true;
+}
+
+bool CocoaFrameBuffer::SetGamma(float gamma)
+{
+	m_gamma           = gamma;
+	m_needGammaUpdate = true;
+
+	return true;
+}
+
+bool CocoaFrameBuffer::SetFlash(PalEntry rgb, int amount)
+{
+	m_flashColor        = rgb;
+	m_flashAmount       = amount;
+	m_needPaletteUpdate = true;
+
+	return true;
+}
+
+void CocoaFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
+{
+	rgb    = m_flashColor;
+	amount = m_flashAmount;
+}
+
+void CocoaFrameBuffer::GetFlashedPalette(PalEntry pal[256])
+{
+	memcpy(pal, m_palette, sizeof m_palette);
+
+	if (0 != m_flashAmount)
+	{
+		DoBlending (pal, pal, 256, m_flashColor.r, m_flashColor.g, m_flashColor.b, m_flashAmount);
+	}
+}
+
+void CocoaFrameBuffer::SetFullscreen (bool fullscreen)
+{
+	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+}
+
+bool CocoaFrameBuffer::IsFullscreen ()
+{
+	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+}
+
+void CocoaFrameBuffer::SetVSync (bool vsync)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+	const long value = vsync ? 1 : 0;
+#else // 10.5 or newer
+	const GLint value = vsync ? 1 : 0;
+#endif // prior to 10.5
+
+	[[NSOpenGLContext currentContext] setValues:&value
+								   forParameter:NSOpenGLCPSwapInterval];
+}
+
+
+ADD_STAT(blit)
+{
+	FString result;
+	result.Format("blit=%04.1f ms  flip=%04.1f ms", BlitCycles.TimeMS(), FlipCycles.TimeMS());
+	return result;
+}
+
+
+IVideo *Video;
+
+
+void I_ShutdownGraphics ()
+{
+	if (screen)
+	{
+		DFrameBuffer *s = screen;
+		screen = NULL;
+		s->ObjectFlags |= OF_YesReallyDelete;
+		delete s;
+	}
+	if (Video)
+		delete Video, Video = NULL;
+}
+
+void I_InitGraphics ()
+{
+	UCVarValue val;
+
+	val.Bool = !!Args->CheckParm ("-devparm");
+	ticker.SetGenericRepDefault (val, CVAR_Bool);
+
+	Video = new CocoaVideo (0);
+	if (Video == NULL)
+		I_FatalError ("Failed to initialize display");
+
+	atterm (I_ShutdownGraphics);
+}
+
+static void I_DeleteRenderer()
+{
+	if (Renderer != NULL) delete Renderer;
+}
+
+void I_CreateRenderer()
+{
+	if (Renderer == NULL)
+	{
+		Renderer = new FSoftwareRenderer;
+		atterm(I_DeleteRenderer);
+	}
+}
+
+
+DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
+{
+	bool fs = false;
+	switch (Video->GetDisplayType ())
+	{
+		case DISPLAY_WindowOnly:
+			fs = false;
+			break;
+		case DISPLAY_FullscreenOnly:
+			fs = true;
+			break;
+		case DISPLAY_Both:
+			fs = fullscreen;
+			break;
+	}
+
+	return Video->CreateFrameBuffer (width, height, fs, old);
+}
+
+bool I_CheckResolution (int width, int height, int bits)
+{
+	int twidth, theight;
+
+	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+	while (Video->NextMode (&twidth, &theight, NULL))
+	{
+		if (width == twidth && height == theight)
+			return true;
+	}
+	return false;
+}
+
+void I_ClosestResolution (int *width, int *height, int bits)
+{
+	int twidth, theight;
+	int cwidth = 0, cheight = 0;
+	int iteration;
+	DWORD closest = 4294967295u;
+
+	for (iteration = 0; iteration < 2; iteration++)
+	{
+		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+		while (Video->NextMode (&twidth, &theight, NULL))
+		{
+			if (twidth == *width && theight == *height)
+				return;
+
+			if (iteration == 0 && (twidth < *width || theight < *height))
+				continue;
+
+			DWORD dist = (twidth - *width) * (twidth - *width)
+			+ (theight - *height) * (theight - *height);
+
+			if (dist < closest)
+			{
+				closest = dist;
+				cwidth = twidth;
+				cheight = theight;
+			}
+		}
+		if (closest != 4294967295u)
+		{
+			*width = cwidth;
+			*height = cheight;
+			return;
+		}
+	}
+}
+
+
+EXTERN_CVAR(Int, vid_maxfps);
+EXTERN_CVAR(Bool, cl_capfps);
+
+// So Apple doesn't support POSIX timers and I can't find a good substitute short of
+// having Objective-C Cocoa events or something like that.
+void I_SetFPSLimit(int limit)
+{
+}
+
+CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (vid_maxfps < TICRATE && vid_maxfps != 0)
+	{
+		vid_maxfps = TICRATE;
+	}
+	else if (vid_maxfps > 1000)
+	{
+		vid_maxfps = 1000;
+	}
+	else if (cl_capfps == 0)
+	{
+		I_SetFPSLimit(vid_maxfps);
+	}
+}
+
+
+CCMD (vid_listmodes)
+{
+	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
+	int width, height, bits;
+	bool letterbox;
+
+	if (Video == NULL)
+	{
+		return;
+	}
+	for (bits = 1; bits <= 32; bits++)
+	{
+		Video->StartModeIterator (bits, screen->IsFullscreen());
+		while (Video->NextMode (&width, &height, &letterbox))
+		{
+			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
+			int ratio = CheckRatio (width, height);
+			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
+				"%s%4d x%5d x%3d%s%s\n",
+				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
+				width, height, bits,
+				ratios[ratio],
+				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB");
+		}
+	}
+}
+
+CCMD (vid_currentmode)
+{
+	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
+}
 
 
 namespace
@@ -2121,20 +2724,26 @@ DarwinVersion GetDarwinVersion()
 	return result;
 }
 
+void ReleaseApplicationController()
+{
+	if (NULL != appCtrl)
+	{
+		[NSApp setDelegate:nil];
+		[NSApp deactivate];
+
+		[appCtrl release];
+		appCtrl = NULL;
+	}
+}
+
 } // unnamed namespace
 
 
 const DarwinVersion darwinVersion = GetDarwinVersion();
 
 
-#ifdef main
-#undef main
-#endif // main
-
 int main(int argc, char** argv)
 {
-	gettimeofday(&s_startTicks, NULL);
-
 	for (int i = 0; i <= argc; ++i)
 	{
 		const char* const argument = argv[i];
@@ -2168,9 +2777,10 @@ int main(int argc, char** argv)
 
 	CreateMenu();
 
+	atterm(ReleaseApplicationController);
+
 	appCtrl = [ApplicationController new];
 	[NSApp setDelegate:appCtrl];
-
 	[NSApp run];
 
 	[pool release];

@@ -42,7 +42,6 @@ extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;
 
-extern float			WallTMapScale;
 extern float			WallTMapScale2;
 
 extern int				viewwindowx;

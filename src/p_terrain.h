@@ -49,11 +49,13 @@ public:
 
 	WORD operator [](FTextureID tex) const
 	{
+		if ((unsigned)tex.GetIndex() >= Types.Size()) return DefaultTerrainType;
 		WORD type = Types[tex.GetIndex()];
 		return type == 0xffff? DefaultTerrainType : type;
 	}
 	WORD operator [](int texnum) const
 	{
+		if ((unsigned)texnum >= Types.Size()) return DefaultTerrainType;
 		WORD type = Types[texnum];
 		return type == 0xffff? DefaultTerrainType : type;
 	}

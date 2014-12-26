@@ -606,8 +606,8 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	if (topright >= bottomright)
 	{
 		// normal case
-		ztop[1]=FIXED2FLOAT(topright)		;
-		zbottom[1]=FIXED2FLOAT(bottomright)		;
+		ztop[1]=FIXED2FLOAT(topright);
+		zbottom[1]=FIXED2FLOAT(bottomright);
 
 		if (tci)
 		{
@@ -640,17 +640,25 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	uplft.u = lolft.u = l_ul + texlength * glseg.fracleft;
 	uprgt.u = lorgt.u = l_ul + texlength * glseg.fracright;
 
-
-	if (gltexture && gltexture->tex->bHasCanvas && flags&GLT_CLAMPY)
+	if (gltexture != NULL)
 	{
-		// Camera textures are upside down so we have to shift the y-coordinate
-		// from [-1..0] to [0..1] when using texture clamping
-
-		uplft.v+=1.f;
-		uprgt.v+=1.f;
-		lolft.v+=1.f;
-		lorgt.v+=1.f;
+		bool normalize = false;
+		if (gltexture->tex->bHasCanvas) normalize = true;
+		else if (flags & GLT_CLAMPY)
+		{
+			// for negative scales we can get negative coordinates here.
+			normalize = (uplft.v > lolft.v || uprgt.v > lorgt.v);
+		}
+		if (normalize)
+		{
+			// we have to shift the y-coordinate from [-1..0] to [0..1] when using texture clamping with a negative scale
+			uplft.v+=1.f;
+			uprgt.v+=1.f;
+			lolft.v+=1.f;
+			lorgt.v+=1.f;
+		}
 	}
+	
 	return true;
 }
 

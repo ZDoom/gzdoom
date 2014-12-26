@@ -739,6 +739,11 @@ IOKitJoystickManager* s_joystickManager;
 
 void I_StartupJoysticks()
 {
+	if (NULL != s_joystickManager)
+	{
+		return;
+	}
+
 	// HID Manager API is available on 10.5 (Darwin 9.x) or newer
 
 	if (darwinVersion.major >= 9)
@@ -750,6 +755,7 @@ void I_StartupJoysticks()
 void I_ShutdownJoysticks()
 {
 	delete s_joystickManager;
+	s_joystickManager = NULL;
 }
 
 void I_GetJoysticks( TArray< IJoystickConfig* >& sticks )

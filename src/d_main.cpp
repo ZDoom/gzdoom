@@ -2290,6 +2290,9 @@ void D_DoomMain (void)
 		// Now that wads are loaded, define mod-specific cvars.
 		ParseCVarInfo();
 
+		// Try setting previously unknown cvars again, as a CVARINFO may have made them known.
+		C_ExecStoredSets();
+
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);
 

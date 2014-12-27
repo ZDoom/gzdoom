@@ -968,10 +968,12 @@ CCMD (dump3df)
 			fixed_t height=ffloors[i]->top.plane->ZatPoint(CenterSpot(sector));
 			fixed_t bheight=ffloors[i]->bottom.plane->ZatPoint(CenterSpot(sector));
 
+			IGNORE_FORMAT_PRE
 			Printf("FFloor %d @ top = %f (model = %d), bottom = %f (model = %d), flags = %B, alpha = %d %s %s\n", 
 				i, height / 65536., ffloors[i]->top.model->sectornum, 
 				bheight / 65536., ffloors[i]->bottom.model->sectornum,
 				ffloors[i]->flags, ffloors[i]->alpha, (ffloors[i]->flags&FF_EXISTS)? "Exists":"", (ffloors[i]->flags&FF_DYNAMIC)? "Dynamic":"");
+			IGNORE_FORMAT_POST
 		}
 	}
 }

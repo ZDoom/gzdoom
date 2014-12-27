@@ -1215,7 +1215,11 @@ public:
 			if(Scaled)
 			{
 				if(cx != 0 || cy != 0)
+				{
 					screen->VirtualToRealCoords(dcx, dcy, tmp, tmp, script->resW, script->resH, true);
+					if (cx == 0) dcx = 0;
+					if (cy == 0) dcy = 0;
+				}
 				if(cr != 0 || cb != 0 || clearDontDraw)
 					screen->VirtualToRealCoords(dcr, dcb, tmp, tmp, script->resW, script->resH, true);
 				screen->VirtualToRealCoords(dx, dy, w, h, script->resW, script->resH, true);

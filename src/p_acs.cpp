@@ -2393,7 +2393,7 @@ void FBehavior::LoadScriptsDirectory ()
 		int size = LittleLong(scripts.dw[1]);
 		if (size >= 6)
 		{
-			int script_num = LittleShort(scripts.w[4]);
+			int script_num = LittleShort(scripts.sw[4]);
 			ScriptPtr *ptr = const_cast<ScriptPtr *>(FindScript(script_num));
 			if (ptr != NULL)
 			{
@@ -7496,22 +7496,9 @@ scriptwait:
 			break;
 
 		case PCD_PRINTBINARY:
-#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))) || defined(__clang__)
-#define HAS_DIAGNOSTIC_PRAGMA
-#endif
-#ifdef HAS_DIAGNOSTIC_PRAGMA
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"
-#else
-#pragma GCC diagnostic ignored "-Wformat="
-#endif
-#pragma GCC diagnostic ignored "-Wformat-extra-args"
-#endif
+			IGNORE_FORMAT_PRE
 			work.AppendFormat ("%B", STACK(1));
-#ifdef HAS_DIAGNOSTIC_PRAGMA
-#pragma GCC diagnostic pop
-#endif
+			IGNORE_FORMAT_POST
 			--sp;
 			break;
 

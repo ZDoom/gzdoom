@@ -178,7 +178,10 @@ void FCajunMaster::End ()
 	{
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			getspawned.Push(players[i].userinfo.GetName());
+			if (players[i].Bot != NULL)
+			{
+				getspawned.Push(players[i].userinfo.GetName());
+			}
 		}
 
 		wanted_botnum = botnum;
@@ -216,19 +219,16 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 		"\\color\\cf df 90"		//10 = Bleached Bone
 	};
 
-	botinfo_t *thebot;
-	int botshift;
+	botinfo_t *thebot = botinfo;
+	int botshift = 0;
 
 	if (name)
 	{
-		thebot = botinfo;
-
 		// Check if exist or already in the game.
-		botshift = 0;
 		while (thebot && stricmp (name, thebot->name))
 		{
-			thebot = thebot->next;
 			botshift++;
+			thebot = thebot->next;
 		}
 
 		if (thebot == NULL)
@@ -246,27 +246,36 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 			return false;
 		}
 	}
-	else if (botnum < loaded_bots)
-	{
-		bool vacant = false;  //Spawn a random bot from bots.cfg if no name given.
-		while (!vacant)
-		{
-			int rnum = (pr_botspawn() % loaded_bots);
-			thebot = botinfo;
-			botshift = 0;
-			while (rnum)
-			{
-				--rnum, thebot = thebot->next;
-				botshift++;
-			}
-			if (thebot->inuse == BOTINUSE_No)
-				vacant = true;
-		}
-	}
 	else
 	{
-		Printf ("Couldn't spawn bot; no bot left in %s\n", BOTFILENAME);
-		return false;
+		//Spawn a random bot from bots.cfg if no name given.
+		TArray<botinfo_t *> BotInfoAvailable;
+
+		while (thebot)
+		{
+			if (thebot->inuse == BOTINUSE_No)
+				BotInfoAvailable.Push (thebot);
+
+			thebot = thebot->next;
+		}
+
+		if (BotInfoAvailable.Size () == 0)
+		{
+			Printf ("Couldn't spawn bot; no bot left in %s\n", BOTFILENAME);
+			return false;
+		}
+
+		thebot = BotInfoAvailable[pr_botspawn() % BotInfoAvailable.Size ()];
+
+		botinfo_t *thebot2 = botinfo;
+		while (thebot2)
+		{
+			if (thebot == thebot2)
+				break;
+
+			botshift++;
+			thebot2 = thebot2->next;
+		}
 	}
 
 	thebot->inuse = BOTINUSE_Waiting;
@@ -478,7 +487,6 @@ void FCajunMaster::ForgetBots ()
 	}
 
 	botinfo = NULL;
-	loaded_bots = 0;
 }
 
 bool FCajunMaster::LoadBots ()
@@ -486,6 +494,7 @@ bool FCajunMaster::LoadBots ()
 	FScanner sc;
 	FString tmp;
 	bool gotteam = false;
+	int loaded_bots = 0;
 
 	bglobal.ForgetBots ();
 	tmp = M_GetCajunPath(BOTFILENAME);
@@ -602,9 +611,9 @@ bool FCajunMaster::LoadBots ()
 		newinfo->next = bglobal.botinfo;
 		newinfo->lastteam = TEAM_NONE;
 		bglobal.botinfo = newinfo;
-		bglobal.loaded_bots++;
+		loaded_bots++;
 	}
-	Printf ("%d bots read from %s\n", bglobal.loaded_bots, BOTFILENAME);
+	Printf ("%d bots read from %s\n", loaded_bots, BOTFILENAME);
 	return true;
 }
 

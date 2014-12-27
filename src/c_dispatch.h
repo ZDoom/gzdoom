@@ -42,6 +42,7 @@ class APlayerPawn;
 extern bool CheckCheatmode (bool printmsg = true);
 
 void C_ExecCmdLineParams ();
+void C_ExecStoredSets();
 
 // Add commands to the console as if they were typed in. Can handle wait
 // and semicolon-separated commands. This function may modify the source

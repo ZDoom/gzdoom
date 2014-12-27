@@ -2893,6 +2893,8 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x
 { // swall = scale, lwall = texturecolumn
 	double top, bot, i;
 	double xrepeat = fabs((double)walxrepeat);
+	double depth_scale = WallT.InvZstep * WallTMapScale2;
+	double depth_org = -WallT.UoverZstep * WallTMapScale2;
 
 	i = x1 - centerx;
 	top = WallT.UoverZorg + WallT.UoverZstep * i;
@@ -2909,7 +2911,7 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x
 		{
 			lwall[x] = xs_RoundToInt(frac * xrepeat);
 		}
-		swall[x] = xs_RoundToInt(frac * WallT.DepthScale + WallT.DepthOrg);
+		swall[x] = xs_RoundToInt(frac * depth_scale + depth_org);
 		top += WallT.UoverZstep;
 		bot += WallT.InvZstep;
 	}

@@ -41,7 +41,6 @@
 #include "doomerrors.h"
 #include <math.h>
 
-#include "SDL.h"
 #include "doomtype.h"
 #include "doomstat.h"
 #include "version.h"

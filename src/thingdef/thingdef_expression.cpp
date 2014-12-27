@@ -1696,7 +1696,7 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 //
 //
 //==========================================================================
-FxPick::FxPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos)
+FxRandomPick::FxRandomPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	for (unsigned int index = 0; index < mi.Size(); index++)
@@ -1713,7 +1713,7 @@ FxPick::FxPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos
 //
 //==========================================================================
 
-FxPick::~FxPick()
+FxRandomPick::~FxRandomPick()
 {
 }
 
@@ -1723,7 +1723,7 @@ FxPick::~FxPick()
 //
 //==========================================================================
 
-FxExpression *FxPick::Resolve(FCompileContext &ctx)
+FxExpression *FxRandomPick::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	for (unsigned int index = 0; index < min.Size(); index++)
@@ -1741,7 +1741,7 @@ FxExpression *FxPick::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpVal FxPick::EvalExpression(AActor *self)
+ExpVal FxRandomPick::EvalExpression(AActor *self)
 {
 	ExpVal val;
 	val.Type = VAL_Int;

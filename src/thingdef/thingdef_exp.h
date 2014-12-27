@@ -559,7 +559,7 @@ public:
 //
 //==========================================================================
 
-class FxPick : public FxExpression
+class FxRandomPick : public FxExpression
 {
 protected:
 	FRandom * rng;
@@ -567,8 +567,8 @@ protected:
 
 public:
 
-	FxPick(FRandom *, TArray<FxExpression*> mi, const FScriptPosition &pos);
-	~FxPick();
+	FxRandomPick(FRandom *, TArray<FxExpression*> mi, const FScriptPosition &pos);
+	~FxRandomPick();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpVal EvalExpression(AActor *self);

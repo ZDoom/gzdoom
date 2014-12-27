@@ -1814,7 +1814,7 @@ bool I_SetCursor(FTexture* cursorpic)
 class CocoaVideo : public IVideo
 {
 public:
-	explicit CocoaVideo(int dummy);
+	CocoaVideo();
 
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
@@ -1978,10 +1978,9 @@ static cycle_t FlipCycles;
 // ---------------------------------------------------------------------------
 
 
-CocoaVideo::CocoaVideo(int dummy)
+CocoaVideo::CocoaVideo()
 : m_modeIterator(0)
 {
-	ZD_UNUSED(dummy);
 }
 
 void CocoaVideo::StartModeIterator(int bits, bool fs)
@@ -2176,7 +2175,7 @@ void CocoaFrameBuffer::UpdateColors()
 	GPfx.SetPalette(palette);
 }
 
-PalEntry *CocoaFrameBuffer::GetPalette()
+PalEntry* CocoaFrameBuffer::GetPalette()
 {
 	return m_palette;
 }
@@ -2290,41 +2289,40 @@ ADD_STAT(blit)
 IVideo *Video;
 
 
-void I_ShutdownGraphics ()
+void I_ShutdownGraphics()
 {
-	if (screen)
+	if (NULL != screen)
 	{
-		DFrameBuffer *s = screen;
+		screen->ObjectFlags |= OF_YesReallyDelete;
+		delete screen;
 		screen = NULL;
-		s->ObjectFlags |= OF_YesReallyDelete;
-		delete s;
 	}
-	if (Video)
-		delete Video, Video = NULL;
+
+	delete Video;
+	Video = NULL;
 }
 
-void I_InitGraphics ()
+void I_InitGraphics()
 {
 	UCVarValue val;
 
-	val.Bool = !!Args->CheckParm ("-devparm");
-	ticker.SetGenericRepDefault (val, CVAR_Bool);
+	val.Bool = !!Args->CheckParm("-devparm");
+	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
-	Video = new CocoaVideo (0);
-	if (Video == NULL)
-		I_FatalError ("Failed to initialize display");
-
+	Video = new CocoaVideo;
 	atterm (I_ShutdownGraphics);
 }
 
+
 static void I_DeleteRenderer()
 {
-	if (Renderer != NULL) delete Renderer;
+	delete Renderer;
+	Renderer = NULL;
 }
 
 void I_CreateRenderer()
 {
-	if (Renderer == NULL)
+	if (NULL == Renderer)
 	{
 		Renderer = new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);
@@ -2332,58 +2330,53 @@ void I_CreateRenderer()
 }
 
 
-DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
+DFrameBuffer* I_SetMode(int &width, int &height, DFrameBuffer* old)
 {
-	bool fs = false;
-	switch (Video->GetDisplayType ())
-	{
-		case DISPLAY_WindowOnly:
-			fs = false;
-			break;
-		case DISPLAY_FullscreenOnly:
-			fs = true;
-			break;
-		case DISPLAY_Both:
-			fs = fullscreen;
-			break;
-	}
-
-	return Video->CreateFrameBuffer (width, height, fs, old);
+	return Video->CreateFrameBuffer(width, height, fullscreen, old);
 }
 
-bool I_CheckResolution (int width, int height, int bits)
+bool I_CheckResolution(const int width, const int height, const int bits)
 {
 	int twidth, theight;
 
-	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-	while (Video->NextMode (&twidth, &theight, NULL))
+	Video->StartModeIterator(bits, fullscreen);
+
+	while (Video->NextMode(&twidth, &theight, NULL))
 	{
 		if (width == twidth && height == theight)
+		{
 			return true;
+		}
 	}
+
 	return false;
 }
 
-void I_ClosestResolution (int *width, int *height, int bits)
+void I_ClosestResolution(int *width, int *height, int bits)
 {
 	int twidth, theight;
 	int cwidth = 0, cheight = 0;
 	int iteration;
-	DWORD closest = 4294967295u;
+	DWORD closest = DWORD(-1);
 
-	for (iteration = 0; iteration < 2; iteration++)
+	for (iteration = 0; iteration < 2; ++iteration)
 	{
-		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+		Video->StartModeIterator (bits, fullscreen);
+
 		while (Video->NextMode (&twidth, &theight, NULL))
 		{
 			if (twidth == *width && theight == *height)
+			{
 				return;
+			}
 
 			if (iteration == 0 && (twidth < *width || theight < *height))
+			{
 				continue;
+			}
 
-			DWORD dist = (twidth - *width) * (twidth - *width)
-			+ (theight - *height) * (theight - *height);
+			const DWORD dist = (twidth - *width) * (twidth - *width)
+				+ (theight - *height) * (theight - *height);
 
 			if (dist < closest)
 			{
@@ -2392,7 +2385,8 @@ void I_ClosestResolution (int *width, int *height, int bits)
 				cheight = theight;
 			}
 		}
-		if (closest != 4294967295u)
+		
+		if (closest != DWORD(-1))
 		{
 			*width = cwidth;
 			*height = cheight;

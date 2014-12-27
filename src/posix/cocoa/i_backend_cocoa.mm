@@ -1176,6 +1176,8 @@ namespace
 - (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI;
 - (void)useHiDPI:(bool)hiDPI;
 
+- (bool)fullscreen;
+
 - (void)setupSoftwareRenderingWithWidth:(int)width height:(int)height;
 - (void*)softwareRenderingBuffer;
 
@@ -1570,6 +1572,12 @@ static bool s_fullscreenNewAPI;
 }
 
 
+- (bool)fullscreen
+{
+	return m_fullscreen;
+}
+
+
 - (void)setupSoftwareRenderingWithWidth:(int)width height:(int)height
 {
 	if (0 == m_softwareRenderingTexture)
@@ -1803,132 +1811,6 @@ bool I_SetCursor(FTexture* cursorpic)
 // ---------------------------------------------------------------------------
 
 
-extern "C" 
-{
-
-typedef enum
-{
-	SDL_WINDOW_FULLSCREEN = 0x00000001,         /**< fullscreen window */
-	SDL_WINDOW_OPENGL = 0x00000002,             /**< window usable with OpenGL context */
-	SDL_WINDOW_FULLSCREEN_DESKTOP = ( SDL_WINDOW_FULLSCREEN | 0x00001000 ),
-} SDL_WindowFlags;
-
-struct SDL_Window
-{
-	uint32_t flags;
-	int w, h;
-	int pitch;
-	void *pixels;
-};
-
-SDL_Window* SDL_CreateWindow(const char* title, int x, int y, int width, int height, uint32_t flags)
-{
-	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
-							 width:width
-							height:height
-						  useHiDPI:vid_hidpi];
-
-	static SDL_Window result;
-
-	if (!(SDL_WINDOW_OPENGL & flags))
-	{
-		[appCtrl setupSoftwareRenderingWithWidth:width
-										  height:height];
-	}
-
-	result.flags    = flags;
-	result.w        = width;
-	result.h        = height;
-	result.pitch    = width * BYTES_PER_PIXEL;
-	result.pixels   = [appCtrl softwareRenderingBuffer];
-
-	return &result;
-}
-void SDL_DestroyWindow(SDL_Window *window)
-{
-	ZD_UNUSED(window);
-}
-
-uint32_t SDL_GetWindowFlags(SDL_Window *window)
-{
-	return window->flags;
-}
-
-int SDL_SetWindowFullscreen(SDL_Window* window, uint32_t flags)
-{
-	if ((window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == (flags & SDL_WINDOW_FULLSCREEN_DESKTOP))
-		return 0;
-
-	if (window->flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
-	{
-		window->flags &= ~SDL_WINDOW_FULLSCREEN_DESKTOP;
-	}
-	else
-	{
-		window->flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-	}
-
-	[appCtrl changeVideoResolution:(SDL_WINDOW_FULLSCREEN_DESKTOP & flags)
-							 width:window->w
-							height:window->h
-						  useHiDPI:vid_hidpi];
-
-	return 0;
-}
-
-int SDL_UpdateWindowSurface(SDL_Window *screen)
-{
-	assert(NULL != screen);
-
-	if (rbOpts.dirty)
-	{
-		glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
-
-		// TODO: Figure out why the following glClear() call is needed
-		// to avoid drawing of garbage in fullscreen mode when
-		// in-game's aspect ratio is different from display one
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		rbOpts.dirty = false;
-	}
-
-	const int width  = screen->w;
-	const int height = screen->h;
-
-#ifdef __LITTLE_ENDIAN__
-	static const GLenum format = GL_RGBA;
-#else // __BIG_ENDIAN__
-	static const GLenum format = GL_ABGR_EXT;
-#endif // __LITTLE_ENDIAN__
-
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-		width, height, 0, format, GL_UNSIGNED_BYTE, screen->pixels);
-
-	glBegin(GL_QUADS);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(0.0f, 0.0f);
-	glTexCoord2f(width, 0.0f);
-	glVertex2f(width, 0.0f);
-	glTexCoord2f(width, height);
-	glVertex2f(width, height);
-	glTexCoord2f(0.0f, height);
-	glVertex2f(0.0f, height);
-	glEnd();
-
-	glFlush();
-
-	[[NSOpenGLContext currentContext] flushBuffer];
-
-	return 0;
-}
-
-} // extern "C"
-
-
-// ---------------------------------------------------------------------------
-
-
 class CocoaVideo : public IVideo
 {
 public:
@@ -1953,8 +1835,6 @@ public:
 	CocoaFrameBuffer(int width, int height, bool fullscreen);
 	~CocoaFrameBuffer();
 
-	virtual bool IsValid();
-
 	virtual bool Lock(bool buffer);
 	virtual void Unlock();
 	virtual void Update();
@@ -1973,8 +1853,6 @@ public:
 
 	virtual void SetVSync(bool vsync);
 
-	void SetFullscreen(bool fullscreen);
-
 private:
 	PalEntry m_palette[256];
 	bool     m_needPaletteUpdate;
@@ -1988,7 +1866,7 @@ private:
 
 	bool     m_isUpdatePending;
 
-	SDL_Window *Screen;
+	void Flip();
 
 	void UpdateColors();
 };
@@ -2132,87 +2010,42 @@ bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
 	return false;
 }
 
-DFrameBuffer* CocoaVideo::CreateFrameBuffer(int width, int height, bool fullscreen, DFrameBuffer* old)
+DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, const bool fullscreen, DFrameBuffer* const old)
 {
-	static int retry = 0;
-	static int owidth, oheight;
-
-	PalEntry flashColor;
-	int flashAmount;
+	PalEntry flashColor  = 0;
+	int      flashAmount = 0;
 
 	if (old != NULL)
-	{ // Reuse the old framebuffer if its attributes are the same
-		CocoaFrameBuffer *fb = static_cast<CocoaFrameBuffer *> (old);
-		if (fb->GetWidth() == width &&
-			fb->GetHeight() == height)
+	{
+		if (   width  == old->GetWidth()
+			&& height == old->GetHeight())
 		{
-			if (fb->IsFullscreen() != fullscreen)
-			{
-				fb->SetFullscreen (fullscreen);
-			}
+			[appCtrl changeVideoResolution:fullscreen
+									 width:width
+									height:height
+								  useHiDPI:vid_hidpi];
 
 			return old;
 		}
-		old->GetFlash (flashColor, flashAmount);
+
+		old->GetFlash(flashColor, flashAmount);
 		old->ObjectFlags |= OF_YesReallyDelete;
-		if (screen == old) screen = NULL;
+
+		if (old == screen)
+		{
+			screen = NULL;
+		}
+
 		delete old;
 	}
-	else
-	{
-		flashColor = 0;
-		flashAmount = 0;
-	}
 
-	CocoaFrameBuffer *fb = new CocoaFrameBuffer (width, height, fullscreen);
-	retry = 0;
-
-	// If we could not create the framebuffer, try again with slightly
-	// different parameters in this order:
-	// 1. Try with the closest size
-	// 2. Try in the opposite screen mode with the original size
-	// 3. Try in the opposite screen mode with the closest size
-	// This is a somewhat confusing mass of recursion here.
-
-	while (fb == NULL || !fb->IsValid ())
-	{
-		if (fb != NULL)
-		{
-			delete fb;
-		}
-
-		switch (retry)
-		{
-			case 0:
-				owidth = width;
-				oheight = height;
-			case 2:
-				// Try a different resolution. Hopefully that will work.
-				I_ClosestResolution (&width, &height, 8);
-				break;
-
-			case 1:
-				// Try changing fullscreen mode. Maybe that will work.
-				width = owidth;
-				height = oheight;
-				fullscreen = !fullscreen;
-				break;
-
-			default:
-				// I give up!
-				I_FatalError ("Could not create new screen (%d x %d)", owidth, oheight);
-		}
-
-		++retry;
-		fb = static_cast<CocoaFrameBuffer *>(CreateFrameBuffer (width, height, fullscreen, NULL));
-	}
-
-	fb->SetFlash (flashColor, flashAmount);
+	CocoaFrameBuffer* fb = new CocoaFrameBuffer(width, height, fullscreen);
+	fb->SetFlash(flashColor, flashAmount);
 
 	return fb;
 }
 
-void CocoaVideo::SetWindowedScale (float scale)
+void CocoaVideo::SetWindowedScale(float scale)
 {
 }
 
@@ -2225,14 +2058,13 @@ CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 , m_flashAmount(0)
 , m_isUpdatePending(false)
 {
-	FString caption;
-	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+	[appCtrl changeVideoResolution:fullscreen
+							 width:width
+							height:height
+						  useHiDPI:vid_hidpi];
 
-	Screen = SDL_CreateWindow (caption, 0, 0,
-		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
-
-	if (Screen == NULL)
-		return;
+	[appCtrl setupSoftwareRenderingWithWidth:width
+									  height:height];
 
 	GPfx.SetFormat(32, 0x000000FF, 0x0000FF00, 0x00FF0000);
 
@@ -2248,30 +2080,21 @@ CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
 }
 
 
-CocoaFrameBuffer::~CocoaFrameBuffer ()
+CocoaFrameBuffer::~CocoaFrameBuffer()
 {
-	if(Screen)
-	{
-		SDL_DestroyWindow (Screen);
-	}
 }
 
-bool CocoaFrameBuffer::IsValid ()
-{
-	return DFrameBuffer::IsValid() && Screen != NULL;
-}
-
-int CocoaFrameBuffer::GetPageCount ()
+int CocoaFrameBuffer::GetPageCount()
 {
 	return 1;
 }
 
-bool CocoaFrameBuffer::Lock (bool buffered)
+bool CocoaFrameBuffer::Lock(bool buffered)
 {
-	return DSimpleCanvas::Lock ();
+	return DSimpleCanvas::Lock(buffered);
 }
 
-void CocoaFrameBuffer::Unlock ()
+void CocoaFrameBuffer::Unlock()
 {
 	if (m_isUpdatePending && LockCount == 1)
 	{
@@ -2284,7 +2107,7 @@ void CocoaFrameBuffer::Unlock ()
 	}
 }
 
-void CocoaFrameBuffer::Update ()
+void CocoaFrameBuffer::Update()
 {
 	if (LockCount != 1)
 	{
@@ -2296,7 +2119,7 @@ void CocoaFrameBuffer::Update ()
 		return;
 	}
 
-	DrawRateStuff ();
+	DrawRateStuff();
 
 	Buffer = NULL;
 	LockCount = 0;
@@ -2310,18 +2133,18 @@ void CocoaFrameBuffer::Update ()
 		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
 
 	FlipCycles.Clock();
-	SDL_UpdateWindowSurface(Screen);
+	Flip();
 	FlipCycles.Unclock();
 
 	BlitCycles.Unclock();
 
 	if (m_needGammaUpdate)
 	{
-		bool Windowed = false;
-		m_needGammaUpdate = false;
-		CalcGamma((Windowed || rgamma == 0.f) ? m_gamma : (m_gamma * rgamma), m_gammaTable[0]);
-		CalcGamma((Windowed || ggamma == 0.f) ? m_gamma : (m_gamma * ggamma), m_gammaTable[1]);
-		CalcGamma((Windowed || bgamma == 0.f) ? m_gamma : (m_gamma * bgamma), m_gammaTable[2]);
+		CalcGamma(rgamma == 0.0f ? m_gamma : m_gamma * rgamma, m_gammaTable[0]);
+		CalcGamma(ggamma == 0.0f ? m_gamma : m_gamma * ggamma, m_gammaTable[1]);
+		CalcGamma(bgamma == 0.0f ? m_gamma : m_gamma * bgamma, m_gammaTable[2]);
+
+		m_needGammaUpdate  = false;
 		m_needPaletteUpdate = true;
 	}
 
@@ -2353,7 +2176,7 @@ void CocoaFrameBuffer::UpdateColors()
 	GPfx.SetPalette(palette);
 }
 
-PalEntry *CocoaFrameBuffer::GetPalette ()
+PalEntry *CocoaFrameBuffer::GetPalette()
 {
 	return m_palette;
 }
@@ -2396,17 +2219,12 @@ void CocoaFrameBuffer::GetFlashedPalette(PalEntry pal[256])
 	}
 }
 
-void CocoaFrameBuffer::SetFullscreen (bool fullscreen)
+bool CocoaFrameBuffer::IsFullscreen()
 {
-	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	return [appCtrl fullscreen];
 }
 
-bool CocoaFrameBuffer::IsFullscreen ()
-{
-	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-}
-
-void CocoaFrameBuffer::SetVSync (bool vsync)
+void CocoaFrameBuffer::SetVSync(bool vsync)
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
 	const long value = vsync ? 1 : 0;
@@ -2416,6 +2234,48 @@ void CocoaFrameBuffer::SetVSync (bool vsync)
 
 	[[NSOpenGLContext currentContext] setValues:&value
 								   forParameter:NSOpenGLCPSwapInterval];
+}
+
+void CocoaFrameBuffer::Flip()
+{
+	assert(NULL != screen);
+
+	if (rbOpts.dirty)
+	{
+		glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
+
+		// TODO: Figure out why the following glClear() call is needed
+		// to avoid drawing of garbage in fullscreen mode when
+		// in-game's aspect ratio is different from display one
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		rbOpts.dirty = false;
+	}
+
+#ifdef __LITTLE_ENDIAN__
+	static const GLenum format = GL_RGBA;
+#else // __BIG_ENDIAN__
+	static const GLenum format = GL_ABGR_EXT;
+#endif // __LITTLE_ENDIAN__
+
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
+		Width, Height, 0, format, GL_UNSIGNED_BYTE, [appCtrl softwareRenderingBuffer]);
+
+	glBegin(GL_QUADS);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(0.0f, 0.0f);
+	glTexCoord2f(Width, 0.0f);
+	glVertex2f(Width, 0.0f);
+	glTexCoord2f(Width, Height);
+	glVertex2f(Width, Height);
+	glTexCoord2f(0.0f, Height);
+	glVertex2f(0.0f, Height);
+	glEnd();
+
+	glFlush();
+
+	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
 

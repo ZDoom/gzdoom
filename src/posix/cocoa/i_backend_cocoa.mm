@@ -2428,34 +2428,7 @@ CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 
 
-CCMD (vid_listmodes)
-{
-	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
-	int width, height, bits;
-	bool letterbox;
-
-	if (Video == NULL)
-	{
-		return;
-	}
-	for (bits = 1; bits <= 32; bits++)
-	{
-		Video->StartModeIterator (bits, screen->IsFullscreen());
-		while (Video->NextMode (&width, &height, &letterbox))
-		{
-			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
-			int ratio = CheckRatio (width, height);
-			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
-				"%s%4d x%5d x%3d%s%s\n",
-				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
-				width, height, bits,
-				ratios[ratio],
-				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB");
-		}
-	}
-}
-
-CCMD (vid_currentmode)
+CCMD(vid_currentmode)
 {
 	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }

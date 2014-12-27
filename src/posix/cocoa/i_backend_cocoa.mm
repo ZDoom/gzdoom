@@ -1875,9 +1875,9 @@ private:
 // ---------------------------------------------------------------------------
 
 
-EXTERN_CVAR (Float, Gamma)
+EXTERN_CVAR(Float, Gamma)
 
-CUSTOM_CVAR (Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
@@ -1885,7 +1885,7 @@ CUSTOM_CVAR (Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR (Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
@@ -1893,7 +1893,7 @@ CUSTOM_CVAR (Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR (Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
@@ -2014,7 +2014,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 	PalEntry flashColor  = 0;
 	int      flashAmount = 0;
 
-	if (old != NULL)
+	if (NULL != old)
 	{
 		if (   width  == old->GetWidth()
 			&& height == old->GetHeight())
@@ -2049,7 +2049,7 @@ void CocoaVideo::SetWindowedScale(float scale)
 }
 
 
-CocoaFrameBuffer::CocoaFrameBuffer (int width, int height, bool fullscreen)
+CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
 : DFrameBuffer(width, height)
 , m_needPaletteUpdate(false)
 , m_gamma(0.0f)
@@ -2097,7 +2097,7 @@ void CocoaFrameBuffer::Unlock()
 {
 	if (m_isUpdatePending && LockCount == 1)
 	{
-		Update ();
+		Update();
 	}
 	else if (--LockCount <= 0)
 	{
@@ -2165,10 +2165,12 @@ void CocoaFrameBuffer::UpdateColors()
 		palette[i].b = m_gammaTable[2][m_palette[i].b];
 	}
 
-	if (m_flashAmount)
+	if (0 != m_flashAmount)
 	{
 		DoBlending(palette, palette, 256,
-			m_gammaTable[0][m_flashColor.r], m_gammaTable[1][m_flashColor.g], m_gammaTable[2][m_flashColor.b],
+			m_gammaTable[0][m_flashColor.r],
+			m_gammaTable[1][m_flashColor.g],
+			m_gammaTable[2][m_flashColor.b],
 			m_flashAmount);
 	}
 
@@ -2214,7 +2216,9 @@ void CocoaFrameBuffer::GetFlashedPalette(PalEntry pal[256])
 
 	if (0 != m_flashAmount)
 	{
-		DoBlending (pal, pal, 256, m_flashColor.r, m_flashColor.g, m_flashColor.b, m_flashAmount);
+		DoBlending(pal, pal, 256,
+			m_flashColor.r, m_flashColor.g, m_flashColor.b,
+			m_flashAmount);
 	}
 }
 
@@ -2310,7 +2314,7 @@ void I_InitGraphics()
 	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
 	Video = new CocoaVideo;
-	atterm (I_ShutdownGraphics);
+	atterm(I_ShutdownGraphics);
 }
 
 
@@ -2361,9 +2365,9 @@ void I_ClosestResolution(int *width, int *height, int bits)
 
 	for (iteration = 0; iteration < 2; ++iteration)
 	{
-		Video->StartModeIterator (bits, fullscreen);
+		Video->StartModeIterator(bits, fullscreen);
 
-		while (Video->NextMode (&twidth, &theight, NULL))
+		while (Video->NextMode(&twidth, &theight, NULL))
 		{
 			if (twidth == *width && theight == *height)
 			{
@@ -2385,7 +2389,7 @@ void I_ClosestResolution(int *width, int *height, int bits)
 				cheight = theight;
 			}
 		}
-		
+
 		if (closest != DWORD(-1))
 		{
 			*width = cwidth;
@@ -2405,7 +2409,7 @@ void I_SetFPSLimit(int limit)
 {
 }
 
-CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (vid_maxfps < TICRATE && vid_maxfps != 0)
 	{
@@ -2424,7 +2428,7 @@ CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CCMD(vid_currentmode)
 {
-	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
+	Printf("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }
 
 

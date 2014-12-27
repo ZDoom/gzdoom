@@ -4930,7 +4930,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
+AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags, AActor *vict)
 {
 	AActor *puff;
 	
@@ -4940,9 +4940,17 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
+	//Moved puff creation and target/master/tracer setting to here. 
+	if (puff && vict)
+	{
+		if (puff->flags7 & MF7_HITTARGET)	puff->target = vict;
+		if (puff->flags7 & MF7_HITMASTER)	puff->master = vict;
+		if (puff->flags7 & MF7_HITTRACER)	puff->tracer = vict;
+	}
 	// [BB] If the puff came from a player, set the target of the puff to this player.
 	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
 		puff->target = source;
+	
 
 	if (source != NULL) puff->angle = R_PointToAngle2(x, y, source->x, source->y);
 

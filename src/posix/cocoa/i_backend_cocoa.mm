@@ -1095,15 +1095,21 @@ namespace
 // ---------------------------------------------------------------------------
 
 
-@interface FullscreenWindow : NSWindow
+@interface CocoaWindow : NSWindow
 {
-
 }
 
-- (bool)canBecomeKeyWindow;
+- (BOOL)canBecomeKeyWindow;
 
-- (void)setLevel:(NSInteger)level;
-- (void)setStyleMask:(NSUInteger)styleMask;
+@end
+
+
+@implementation CocoaWindow
+
+- (BOOL)canBecomeKeyWindow
+{
+	return true;
+}
 
 @end
 
@@ -1111,9 +1117,8 @@ namespace
 // ---------------------------------------------------------------------------
 
 
-@interface FullscreenView : NSOpenGLView
+@interface CocoaView : NSOpenGLView
 {
-
 }
 
 - (void)resetCursorRects;
@@ -1121,7 +1126,7 @@ namespace
 @end
 
 
-@implementation FullscreenView
+@implementation CocoaView
 
 - (void)resetCursorRects
 {
@@ -1141,24 +1146,7 @@ namespace
 	<NSFileManagerDelegate>
 #endif
 {
-@private
-	FullscreenWindow* m_window;
-
-	uint8_t* m_softwareRenderingBuffer;
-	GLuint   m_softwareRenderingTexture;
-
-	int  m_multisample;
-
-	int  m_width;
-	int  m_height;
-	bool m_fullscreen;
-	bool m_hiDPI;
-
-	bool m_openGLInitialized;
 }
-
-- (id)init;
-- (void)dealloc;
 
 - (void)keyDown:(NSEvent*)theEvent;
 - (void)keyUp:(NSEvent*)theEvent;
@@ -1170,24 +1158,7 @@ namespace
 
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename;
 
-- (int)multisample;
-- (void)setMultisample:(int)multisample;
-
-- (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI;
-- (void)useHiDPI:(bool)hiDPI;
-
-- (bool)fullscreen;
-
-- (void)setupSoftwareRenderingWithWidth:(int)width height:(int)height;
-- (void*)softwareRenderingBuffer;
-
 - (void)processEvents:(NSTimer*)timer;
-
-- (void)invalidateCursorRects;
-
-- (void)setMainWindowVisible:(bool)visible;
-
-- (void)setWindowStyleMask:(NSUInteger)styleMask;
 
 @end
 
@@ -1195,97 +1166,7 @@ namespace
 static ApplicationController* appCtrl;
 
 
-// ---------------------------------------------------------------------------
-
-
-@implementation FullscreenWindow
-
-static bool s_fullscreenNewAPI;
-
-+ (void)initialize
-{
-	// The following value shoud be equal to NSAppKitVersionNumber10_6
-	// and it's hard-coded in order to build on earlier SDKs
-	s_fullscreenNewAPI = NSAppKitVersionNumber >= 1038;
-}
-
-- (bool)canBecomeKeyWindow
-{
-	return true;
-}
-
-- (void)setLevel:(NSInteger)level
-{
-	if (s_fullscreenNewAPI)
-	{
-		[super setLevel:level];
-	}
-	else
-	{
-		// Old Carbon-based way to make fullscreen window above dock and menu
-		// It's supported on 64-bit, but on 10.6 and later the following is preferred:
-		// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
-
-		const SystemUIMode mode = LEVEL_FULLSCREEN == level
-			? kUIModeAllHidden
-			: kUIModeNormal;
-		SetSystemUIMode(mode, 0);
-	}
-}
-
-- (void)setStyleMask:(NSUInteger)styleMask
-{
-	if (s_fullscreenNewAPI)
-	{
-		[super setStyleMask:styleMask];
-	}
-	else
-	{
-		[appCtrl setWindowStyleMask:styleMask];
-	}
-}
-
-@end
-
-
-// ---------------------------------------------------------------------------
-
-
 @implementation ApplicationController
-
-- (id)init
-{
-	self = [super init];
-
-	m_window = nil;
-
-	m_softwareRenderingBuffer  = NULL;
-	m_softwareRenderingTexture = 0;
-
-	m_multisample = 0;
-
-	m_width      = -1;
-	m_height     = -1;
-	m_fullscreen = false;
-	m_hiDPI      = false;
-
-	m_openGLInitialized = false;
-	
-	return self;
-}
-
-- (void)dealloc
-{
-	delete[] m_softwareRenderingBuffer;
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glDeleteTextures(1, &m_softwareRenderingTexture);
-
-	[m_window release];
-	
-	[super dealloc];
-}
-
 
 - (void)keyDown:(NSEvent*)theEvent
 {
@@ -1373,244 +1254,6 @@ static bool s_fullscreenNewAPI;
 }
 
 
-- (int)multisample
-{
-	return m_multisample;
-}
-
-- (void)setMultisample:(int)multisample
-{
-	m_multisample = multisample;
-}
-
-
-- (FullscreenWindow*)createWindow:(NSUInteger)styleMask
-{
-	FullscreenWindow* window = [[FullscreenWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480)
-																   styleMask:styleMask
-																	 backing:NSBackingStoreBuffered
-																	   defer:NO];
-	[window setOpaque:YES];
-	[window makeFirstResponder:self];
-	[window setAcceptsMouseMovedEvents:YES];
-
-	return window;
-}
-
-- (void)initializeOpenGL
-{
-	if (m_openGLInitialized)
-	{
-		return;
-	}
-	
-	m_window = [self createWindow:STYLE_MASK_WINDOWED];
-	
-	// Create OpenGL context and view
-	
-	NSOpenGLPixelFormatAttribute attributes[16];
-	size_t i = 0;
-	
-	attributes[i++] = NSOpenGLPFADoubleBuffer;
-	attributes[i++] = NSOpenGLPFAColorSize;
-	attributes[i++] = NSOpenGLPixelFormatAttribute(32);
-	attributes[i++] = NSOpenGLPFADepthSize;
-	attributes[i++] = NSOpenGLPixelFormatAttribute(24);
-	attributes[i++] = NSOpenGLPFAStencilSize;
-	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
-	
-	if (m_multisample)
-	{
-		attributes[i++] = NSOpenGLPFAMultisample;
-		attributes[i++] = NSOpenGLPFASampleBuffers;
-		attributes[i++] = NSOpenGLPixelFormatAttribute(1);
-		attributes[i++] = NSOpenGLPFASamples;
-		attributes[i++] = NSOpenGLPixelFormatAttribute(m_multisample);
-	}	
-	
-	attributes[i] = NSOpenGLPixelFormatAttribute(0);
-	
-	NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
-	
-	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
-	NSOpenGLView* glView = [[FullscreenView alloc] initWithFrame:contentRect
-													 pixelFormat:pixelFormat];
-	[[glView openGLContext] makeCurrentContext];
-
-	[m_window setContentView:glView];
-	
-	m_openGLInitialized = true;
-}
-
-- (void)setFullscreenModeWidth:(int)width height:(int)height
-{
-	NSScreen* screen = [m_window screen];
-
-	const NSRect screenFrame = [screen frame];
-	const NSRect displayRect = vid_hidpi
-		? [screen convertRectToBacking:screenFrame]
-		: screenFrame;
-
-	const float  displayWidth  = displayRect.size.width;
-	const float  displayHeight = displayRect.size.height;
-	
-	const float pixelScaleFactorX = displayWidth  / static_cast<float>(width );
-	const float pixelScaleFactorY = displayHeight / static_cast<float>(height);
-	
-	rbOpts.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
-	
-	rbOpts.width  = width  * rbOpts.pixelScale;
-	rbOpts.height = height * rbOpts.pixelScale;
-	
-	rbOpts.shiftX = (displayWidth  - rbOpts.width ) / 2.0f;
-	rbOpts.shiftY = (displayHeight - rbOpts.height) / 2.0f;
-
-	if (!m_fullscreen)
-	{
-		[m_window setLevel:LEVEL_FULLSCREEN];
-		[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
-		[m_window setHidesOnDeactivate:YES];
-	}
-
-	[m_window setFrame:displayRect display:YES];
-	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
-}
-
-- (void)setWindowedModeWidth:(int)width height:(int)height
-{
-	rbOpts.pixelScale = 1.0f;
-	
-	rbOpts.width  = static_cast<float>(width );
-	rbOpts.height = static_cast<float>(height);
-	
-	rbOpts.shiftX = 0.0f;
-	rbOpts.shiftY = 0.0f;
-
-	const NSSize windowPixelSize = NSMakeSize(width, height);
-	const NSSize windowSize = vid_hidpi
-		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
-		: windowPixelSize;
-
-	if (m_fullscreen)
-	{
-		[m_window setLevel:LEVEL_WINDOWED];
-		[m_window setStyleMask:STYLE_MASK_WINDOWED];
-		[m_window setHidesOnDeactivate:NO];
-	}
-
-	[m_window setContentSize:windowSize];
-	[m_window center];
-
-	NSButton* closeButton = [m_window standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(terminate:)];
-	[closeButton setTarget:NSApp];
-}
-
-- (void)changeVideoResolution:(bool)fullscreen width:(int)width height:(int)height useHiDPI:(bool)hiDPI
-{
-	if (fullscreen == m_fullscreen
-		&& width   == m_width
-		&& height  == m_height
-		&& hiDPI   == m_hiDPI)
-	{
-		return;
-	}
-
-	[self initializeOpenGL];
-
-	if (IsHiDPISupported())
-	{
-		NSOpenGLView* const glView = [m_window contentView];
-		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
-	}
-
-	if (fullscreen)
-	{
-		[self setFullscreenModeWidth:width height:height];
-	}
-	else
-	{
-		[self setWindowedModeWidth:width height:height];
-	}
-
-	rbOpts.dirty = true;
-
-	const NSSize viewSize = GetRealContentViewSize(m_window);
-	
-	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	CGLFlushDrawable(CGLGetCurrentContext());
-
-	static NSString* const TITLE_STRING = 
-		[NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
-	[m_window setTitle:TITLE_STRING];		
-	
-	if (![m_window isKeyWindow])
-	{
-		[m_window makeKeyAndOrderFront:nil];
-	}
-
-	m_fullscreen = fullscreen;
-	m_width      = width;
-	m_height     = height;
-	m_hiDPI      = hiDPI;
-}
-
-- (void)useHiDPI:(bool)hiDPI
-{
-	if (!m_openGLInitialized)
-	{
-		return;
-	}
-
-	[self changeVideoResolution:m_fullscreen
-						  width:m_width
-						 height:m_height
-					   useHiDPI:hiDPI];
-}
-
-
-- (bool)fullscreen
-{
-	return m_fullscreen;
-}
-
-
-- (void)setupSoftwareRenderingWithWidth:(int)width height:(int)height
-{
-	if (0 == m_softwareRenderingTexture)
-	{
-		glEnable(GL_TEXTURE_RECTANGLE_ARB);
-
-		glGenTextures(1, &m_softwareRenderingTexture);
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, m_softwareRenderingTexture);
-		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
-
-	delete[] m_softwareRenderingBuffer;
-	m_softwareRenderingBuffer = new uint8_t[width * height * BYTES_PER_PIXEL];
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, width, height, 0.0, -1.0, 1.0);
-}
-
-- (void*)softwareRenderingBuffer
-{
-	return m_softwareRenderingBuffer;
-}
-
-
 - (void)processEvents:(NSTimer*)timer
 {
 	ZD_UNUSED(timer);
@@ -1677,135 +1320,7 @@ static bool s_fullscreenNewAPI;
 	[pool release];
 }
 
-
-- (void)invalidateCursorRects
-{
-	[m_window invalidateCursorRectsForView:[m_window contentView]];
-}
-
-
-- (void)setMainWindowVisible:(bool)visible
-{
-	if (visible)
-	{
-		[m_window orderFront:nil];
-	}
-	else
-	{
-		[m_window orderOut:nil];
-	}
-}
-
-
-- (void)setWindowStyleMask:(NSUInteger)styleMask
-{
-	// Before 10.6 it's impossible to change window's style mask
-	// To workaround this new window should be created with required style mask
-    // This method should not be called when building for Snow Leopard or newer
-
-	FullscreenWindow* tempWindow = [self createWindow:styleMask];
-	[tempWindow setContentView:[m_window contentView]];
-
-	[m_window close];
-	m_window = tempWindow;
-}
-
 @end
-
-
-// ---------------------------------------------------------------------------
-
-
-CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (IsHiDPISupported())
-	{
-		[appCtrl useHiDPI:self];
-	}
-	else if (0 != self)
-	{
-		self = 0;
-	}
-}
-
-
-// ---------------------------------------------------------------------------
-
-
-void I_SetMainWindowVisible(bool visible)
-{
-	[appCtrl setMainWindowVisible:visible];
-
-	SetNativeMouse(!visible);
-}
-
-
-// ---------------------------------------------------------------------------
-
-
-bool I_SetCursor(FTexture* cursorpic)
-{
-	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-
-	if (NULL == cursorpic || FTexture::TEX_Null == cursorpic->UseType)
-	{
-		s_cursor = [NSCursor arrowCursor];
-	}
-	else
-	{
-		// Create bitmap image representation
-		
-		const NSInteger imageWidth  = cursorpic->GetWidth();
-		const NSInteger imageHeight = cursorpic->GetHeight();
-		const NSInteger imagePitch  = imageWidth * 4;
-		
-		NSBitmapImageRep* bitmapImageRep = [NSBitmapImageRep alloc];
-		[bitmapImageRep initWithBitmapDataPlanes:NULL
-									  pixelsWide:imageWidth
-									  pixelsHigh:imageHeight
-								   bitsPerSample:8
-								 samplesPerPixel:4
-										hasAlpha:YES
-										isPlanar:NO
-								  colorSpaceName:NSDeviceRGBColorSpace
-									 bytesPerRow:imagePitch
-									bitsPerPixel:0];
-		
-		// Load bitmap data to representation
-		
-		BYTE* buffer = [bitmapImageRep bitmapData];
-		memset(buffer, 0, imagePitch * imageHeight);
-
-		FBitmap bitmap(buffer, imagePitch, imageWidth, imageHeight);
-		cursorpic->CopyTrueColorPixels(&bitmap, 0, 0);
-		
-		// Swap red and blue components in each pixel
-		
-		for (size_t i = 0; i < size_t(imageWidth * imageHeight); ++i)
-		{
-			const size_t offset = i * 4;
-			
-			const BYTE temp    = buffer[offset    ];
-			buffer[offset    ] = buffer[offset + 2];
-			buffer[offset + 2] = temp;
-		}
-		
-		// Create image from representation and set it as cursor
-		
-		NSData* imageData = [bitmapImageRep representationUsingType:NSPNGFileType
-														 properties:nil];		
-		NSImage* cursorImage = [[NSImage alloc] initWithData:imageData];
-		
-		s_cursor = [[NSCursor alloc] initWithImage:cursorImage
-										   hotSpot:NSMakePoint(0.0f, 0.0f)];
-	}
-	
-	[appCtrl invalidateCursorRects];
-
-	[pool release];
-
-	return true;
-}
 
 
 // ---------------------------------------------------------------------------
@@ -1814,7 +1329,8 @@ bool I_SetCursor(FTexture* cursorpic)
 class CocoaVideo : public IVideo
 {
 public:
-	CocoaVideo();
+	explicit CocoaVideo(int multisample);
+	~CocoaVideo();
 
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
@@ -1824,8 +1340,27 @@ public:
 	virtual void StartModeIterator(int bits, bool fs);
 	virtual bool NextMode(int* width, int* height, bool* letterbox);
 
+	static bool IsFullscreen();
+	static void UseHiDPI(bool hiDPI);
+	static void InvalidateCursorRects();
+	static void SetWindowVisible(bool visible);
+
 private:
 	size_t m_modeIterator;
+
+	CocoaWindow* m_window;
+
+	int  m_width;
+	int  m_height;
+	bool m_fullscreen;
+	bool m_hiDPI;
+
+	void SetStyleMask(NSUInteger styleMask);
+	void SetFullscreenMode(int width, int height);
+	void SetWindowedMode(int width, int height);
+	void SetMode(int width, int height, bool fullscreen, bool hiDPI);
+
+	static CocoaVideo* GetInstance();
 };
 
 
@@ -1866,6 +1401,9 @@ private:
 
 	bool     m_isUpdatePending;
 
+	uint8_t* m_pixelBuffer;
+	GLuint   m_texture;
+
 	void Flip();
 
 	void UpdateColors();
@@ -1905,7 +1443,10 @@ CUSTOM_CVAR(Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // ---------------------------------------------------------------------------
 
 
-static const struct
+namespace
+{
+
+const struct
 {
 	uint16_t width;
 	uint16_t height;
@@ -1971,16 +1512,77 @@ VideoModes[] =
 };
 
 
-static cycle_t BlitCycles;
-static cycle_t FlipCycles;
+cycle_t BlitCycles;
+cycle_t FlipCycles;
+
+
+CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
+{
+	CocoaWindow* window = [[CocoaWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480)
+														 styleMask:styleMask
+														   backing:NSBackingStoreBuffered
+															 defer:NO];
+	[window setOpaque:YES];
+	[window makeFirstResponder:appCtrl];
+	[window setAcceptsMouseMovedEvents:YES];
+
+	return window;
+}
+
+} // unnamed namespace
 
 
 // ---------------------------------------------------------------------------
 
 
-CocoaVideo::CocoaVideo()
+CocoaVideo::CocoaVideo(const int multisample)
 : m_modeIterator(0)
+, m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
+//, m_multisample(0)
+, m_width(-1)
+, m_height(-1)
+, m_fullscreen(false)
+, m_hiDPI(false)
 {
+	// Set attributes for OpenGL context
+
+	NSOpenGLPixelFormatAttribute attributes[16];
+	size_t i = 0;
+
+	attributes[i++] = NSOpenGLPFADoubleBuffer;
+	attributes[i++] = NSOpenGLPFAColorSize;
+	attributes[i++] = NSOpenGLPixelFormatAttribute(32);
+	attributes[i++] = NSOpenGLPFADepthSize;
+	attributes[i++] = NSOpenGLPixelFormatAttribute(24);
+	attributes[i++] = NSOpenGLPFAStencilSize;
+	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
+
+	if (multisample)
+	{
+		attributes[i++] = NSOpenGLPFAMultisample;
+		attributes[i++] = NSOpenGLPFASampleBuffers;
+		attributes[i++] = NSOpenGLPixelFormatAttribute(1);
+		attributes[i++] = NSOpenGLPFASamples;
+		attributes[i++] = NSOpenGLPixelFormatAttribute(multisample);
+	}
+
+	attributes[i] = NSOpenGLPixelFormatAttribute(0);
+
+	// Create OpenGL context and view
+
+	NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+
+	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
+	NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect
+												pixelFormat:pixelFormat];
+	[[glView openGLContext] makeCurrentContext];
+
+	[m_window setContentView:glView];
+}
+
+CocoaVideo::~CocoaVideo()
+{
+	[m_window release];
 }
 
 void CocoaVideo::StartModeIterator(int bits, bool fs)
@@ -2016,14 +1618,9 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	if (NULL != old)
 	{
-		if (   width  == old->GetWidth()
-			&& height == old->GetHeight())
+		if (width == m_width && height == m_height)
 		{
-			[appCtrl changeVideoResolution:fullscreen
-									 width:width
-									height:height
-								  useHiDPI:vid_hidpi];
-
+			SetMode(width, height, fullscreen, vid_hidpi);
 			return old;
 		}
 
@@ -2041,11 +1638,219 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 	CocoaFrameBuffer* fb = new CocoaFrameBuffer(width, height, fullscreen);
 	fb->SetFlash(flashColor, flashAmount);
 
+	SetMode(width, height, fullscreen, vid_hidpi);
+
 	return fb;
 }
 
 void CocoaVideo::SetWindowedScale(float scale)
 {
+}
+
+
+bool CocoaVideo::IsFullscreen()
+{
+	CocoaVideo* const video = GetInstance();
+	return NULL == video
+		? false
+		: video->m_fullscreen;
+}
+
+void CocoaVideo::UseHiDPI(const bool hiDPI)
+{
+	if (CocoaVideo* const video = GetInstance())
+	{
+		video->SetMode(video->m_width, video->m_height, video->m_fullscreen, hiDPI);
+	}
+}
+
+void CocoaVideo::InvalidateCursorRects()
+{
+	if (CocoaVideo* const video = GetInstance())
+	{
+		[video->m_window invalidateCursorRectsForView:[video->m_window contentView]];
+	}
+}
+
+void CocoaVideo::SetWindowVisible(bool visible)
+{
+	if (CocoaVideo* const video = GetInstance())
+	{
+		if (visible)
+		{
+			[video->m_window orderFront:nil];
+		}
+		else
+		{
+			[video->m_window orderOut:nil];
+		}
+	}
+}
+
+
+static bool HasModernFullscreenAPI()
+{
+	// The following value shoud be equal to NSAppKitVersionNumber10_6
+	// and it's hard-coded in order to build on earlier SDKs
+
+	return NSAppKitVersionNumber >= 1038;
+}
+
+void CocoaVideo::SetStyleMask(const NSUInteger styleMask)
+{
+	// Before 10.6 it's impossible to change window's style mask
+	// To workaround this new window should be created with required style mask
+	// This method should not be called when running on Snow Leopard or newer
+
+	assert(!HasModernFullscreenAPI());
+
+	CocoaWindow* tempWindow = CreateCocoaWindow(styleMask);
+	[tempWindow setContentView:[m_window contentView]];
+
+	[m_window close];
+	m_window = tempWindow;
+}
+
+void CocoaVideo::SetFullscreenMode(const int width, const int height)
+{
+	NSScreen* screen = [m_window screen];
+
+	const NSRect screenFrame = [screen frame];
+	const NSRect displayRect = vid_hidpi
+		? [screen convertRectToBacking:screenFrame]
+		: screenFrame;
+
+	const float  displayWidth  = displayRect.size.width;
+	const float  displayHeight = displayRect.size.height;
+
+	const float pixelScaleFactorX = displayWidth  / static_cast<float>(width );
+	const float pixelScaleFactorY = displayHeight / static_cast<float>(height);
+
+	rbOpts.pixelScale = std::min(pixelScaleFactorX, pixelScaleFactorY);
+
+	rbOpts.width  = width  * rbOpts.pixelScale;
+	rbOpts.height = height * rbOpts.pixelScale;
+
+	rbOpts.shiftX = (displayWidth  - rbOpts.width ) / 2.0f;
+	rbOpts.shiftY = (displayHeight - rbOpts.height) / 2.0f;
+
+	if (!m_fullscreen)
+	{
+		if (HasModernFullscreenAPI())
+		{
+			[m_window setLevel:LEVEL_FULLSCREEN];
+			[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
+		}
+		else
+		{
+			// Old Carbon-based way to make fullscreen window above dock and menu
+			// It's supported on 64-bit, but on 10.6 and later the following is preferred:
+			// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
+
+			SetSystemUIMode(kUIModeAllHidden, 0);
+			SetStyleMask(STYLE_MASK_FULLSCREEN);
+		}
+
+		[m_window setHidesOnDeactivate:YES];
+	}
+
+	[m_window setFrame:displayRect display:YES];
+	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
+}
+
+void CocoaVideo::SetWindowedMode(const int width, const int height)
+{
+	rbOpts.pixelScale = 1.0f;
+
+	rbOpts.width  = static_cast<float>(width );
+	rbOpts.height = static_cast<float>(height);
+
+	rbOpts.shiftX = 0.0f;
+	rbOpts.shiftY = 0.0f;
+
+	const NSSize windowPixelSize = NSMakeSize(width, height);
+	const NSSize windowSize = vid_hidpi
+		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
+		: windowPixelSize;
+
+	if (m_fullscreen)
+	{
+		if (HasModernFullscreenAPI())
+		{
+			[m_window setLevel:LEVEL_WINDOWED];
+			[m_window setStyleMask:STYLE_MASK_WINDOWED];
+		}
+		else
+		{
+			SetSystemUIMode(kUIModeNormal, 0);
+			SetStyleMask(STYLE_MASK_WINDOWED);
+		}
+
+		[m_window setHidesOnDeactivate:NO];
+	}
+
+	[m_window setContentSize:windowSize];
+	[m_window center];
+
+	NSButton* closeButton = [m_window standardWindowButton:NSWindowCloseButton];
+	[closeButton setAction:@selector(terminate:)];
+	[closeButton setTarget:NSApp];
+}
+
+void CocoaVideo::SetMode(const int width, const int height, const bool fullscreen, const bool hiDPI)
+{
+	if (fullscreen == m_fullscreen
+		&& width   == m_width
+		&& height  == m_height
+		&& hiDPI   == m_hiDPI)
+	{
+		return;
+	}
+
+	if (IsHiDPISupported())
+	{
+		NSOpenGLView* const glView = [m_window contentView];
+		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
+	}
+
+	if (fullscreen)
+	{
+		SetFullscreenMode(width, height);
+	}
+	else
+	{
+		SetWindowedMode(width, height);
+	}
+
+	rbOpts.dirty = true;
+
+	const NSSize viewSize = GetRealContentViewSize(m_window);
+
+	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	CGLFlushDrawable(CGLGetCurrentContext());
+
+	static NSString* const TITLE_STRING =
+	[NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
+	[m_window setTitle:TITLE_STRING];
+
+	if (![m_window isKeyWindow])
+	{
+		[m_window makeKeyAndOrderFront:nil];
+	}
+
+	m_fullscreen = fullscreen;
+	m_width      = width;
+	m_height     = height;
+	m_hiDPI      = hiDPI;
+}
+
+
+CocoaVideo* CocoaVideo::GetInstance()
+{
+	return static_cast<CocoaVideo*>(Video);
 }
 
 
@@ -2056,14 +1861,26 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
 , m_needGammaUpdate(false)
 , m_flashAmount(0)
 , m_isUpdatePending(false)
+, m_pixelBuffer(new uint8_t[width * height * BYTES_PER_PIXEL])
+, m_texture(0)
 {
-	[appCtrl changeVideoResolution:fullscreen
-							 width:width
-							height:height
-						  useHiDPI:vid_hidpi];
+	glEnable(GL_TEXTURE_RECTANGLE_ARB);
 
-	[appCtrl setupSoftwareRenderingWithWidth:width
-									  height:height];
+	glGenTextures(1, &m_texture);
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, m_texture);
+	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, width, height, 0.0, -1.0, 1.0);
 
 	GPfx.SetFormat(32, 0x000000FF, 0x0000FF00, 0x00FF0000);
 
@@ -2081,6 +1898,10 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
 
 CocoaFrameBuffer::~CocoaFrameBuffer()
 {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDeleteTextures(1, &m_texture);
+
+	delete[] m_pixelBuffer;
 }
 
 int CocoaFrameBuffer::GetPageCount()
@@ -2128,7 +1949,7 @@ void CocoaFrameBuffer::Update()
 	FlipCycles.Reset();
 	BlitCycles.Clock();
 
-	GPfx.Convert(MemBuffer, Pitch, [appCtrl softwareRenderingBuffer], Width * BYTES_PER_PIXEL,
+	GPfx.Convert(MemBuffer, Pitch, m_pixelBuffer, Width * BYTES_PER_PIXEL,
 		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
 
 	FlipCycles.Clock();
@@ -2224,7 +2045,7 @@ void CocoaFrameBuffer::GetFlashedPalette(PalEntry pal[256])
 
 bool CocoaFrameBuffer::IsFullscreen()
 {
-	return [appCtrl fullscreen];
+	return CocoaVideo::IsFullscreen();
 }
 
 void CocoaFrameBuffer::SetVSync(bool vsync)
@@ -2262,7 +2083,7 @@ void CocoaFrameBuffer::Flip()
 #endif // __LITTLE_ENDIAN__
 
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-		Width, Height, 0, format, GL_UNSIGNED_BYTE, [appCtrl softwareRenderingBuffer]);
+		Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -2290,7 +2111,7 @@ ADD_STAT(blit)
 }
 
 
-IVideo *Video;
+IVideo* Video;
 
 
 void I_ShutdownGraphics()
@@ -2313,7 +2134,7 @@ void I_InitGraphics()
 	val.Bool = !!Args->CheckParm("-devparm");
 	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
-	Video = new CocoaVideo;
+	Video = new CocoaVideo(0);
 	atterm(I_ShutdownGraphics);
 }
 
@@ -2425,11 +2246,100 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
+CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (IsHiDPISupported())
+	{
+		CocoaVideo::UseHiDPI(self);
+	}
+	else if (0 != self)
+	{
+		self = 0;
+	}
+}
 
 CCMD(vid_currentmode)
 {
 	Printf("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }
+
+
+// ---------------------------------------------------------------------------
+
+
+bool I_SetCursor(FTexture* cursorpic)
+{
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+	if (NULL == cursorpic || FTexture::TEX_Null == cursorpic->UseType)
+	{
+		s_cursor = [NSCursor arrowCursor];
+	}
+	else
+	{
+		// Create bitmap image representation
+
+		const NSInteger imageWidth  = cursorpic->GetWidth();
+		const NSInteger imageHeight = cursorpic->GetHeight();
+		const NSInteger imagePitch  = imageWidth * 4;
+
+		NSBitmapImageRep* bitmapImageRep = [NSBitmapImageRep alloc];
+		[bitmapImageRep initWithBitmapDataPlanes:NULL
+									  pixelsWide:imageWidth
+									  pixelsHigh:imageHeight
+								   bitsPerSample:8
+								 samplesPerPixel:4
+										hasAlpha:YES
+										isPlanar:NO
+								  colorSpaceName:NSDeviceRGBColorSpace
+									 bytesPerRow:imagePitch
+									bitsPerPixel:0];
+
+		// Load bitmap data to representation
+
+		BYTE* buffer = [bitmapImageRep bitmapData];
+		memset(buffer, 0, imagePitch * imageHeight);
+
+		FBitmap bitmap(buffer, imagePitch, imageWidth, imageHeight);
+		cursorpic->CopyTrueColorPixels(&bitmap, 0, 0);
+
+		// Swap red and blue components in each pixel
+
+		for (size_t i = 0; i < size_t(imageWidth * imageHeight); ++i)
+		{
+			const size_t offset = i * 4;
+
+			const BYTE temp    = buffer[offset    ];
+			buffer[offset    ] = buffer[offset + 2];
+			buffer[offset + 2] = temp;
+		}
+
+		// Create image from representation and set it as cursor
+
+		NSData* imageData = [bitmapImageRep representationUsingType:NSPNGFileType
+														 properties:nil];
+		NSImage* cursorImage = [[NSImage alloc] initWithData:imageData];
+
+		s_cursor = [[NSCursor alloc] initWithImage:cursorImage
+										   hotSpot:NSMakePoint(0.0f, 0.0f)];
+	}
+
+	CocoaVideo::InvalidateCursorRects();
+
+	[pool release];
+
+	return true;
+}
+
+
+void I_SetMainWindowVisible(bool visible)
+{
+	CocoaVideo::SetWindowVisible(visible);
+	SetNativeMouse(!visible);
+}
+
+
+// ---------------------------------------------------------------------------
 
 
 namespace

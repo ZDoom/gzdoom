@@ -31,7 +31,10 @@
  **
  */
 
-#include <AppKit/NSApplication.h>
+#import <AppKit/NSApplication.h>
+#import <AppKit/NSScreen.h>
+#import <AppKit/NSView.h>
+#import <AppKit/NSWindow.h>
 
 
 inline bool I_IsHiDPISupported()

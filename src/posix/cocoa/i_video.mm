@@ -31,16 +31,17 @@
  **
  */
 
-#include <AppKit/NSBitmapImageRep.h>
-#include <AppKit/NSButton.h>
-#include <AppKit/NSCursor.h>
-#include <AppKit/NSImage.h>
-#include <AppKit/NSOpenGL.h>
-#include <AppKit/NSOpenGLView.h>
-#include <AppKit/NSWindow.h>
-#include <Carbon/Carbon.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/OpenGL.h>
+#import <AppKit/NSButton.h>
+#import <AppKit/NSCursor.h>
+#import <AppKit/NSImage.h>
+#import <AppKit/NSOpenGL.h>
+#import <AppKit/NSOpenGLView.h>
+#import <Carbon/Carbon.h>
+#import <OpenGL/gl.h>
+#import <OpenGL/OpenGL.h>
+
+// Avoid collision between DObject class and Objective-C
+#define Class ObjectClass
 
 #include "bitmap.h"
 #include "c_dispatch.h"
@@ -60,6 +61,8 @@
 
 #include "i_common.h"
 #include "i_rbopts.h"
+
+#undef Class
 
 
 EXTERN_CVAR(Bool, ticker   )
@@ -215,7 +218,7 @@ public:
 	virtual void SetVSync(bool vsync);
 
 private:
-	const size_t BYTES_PER_PIXEL = 4;
+	static const size_t BYTES_PER_PIXEL = 4;
 
 	PalEntry m_palette[256];
 	bool     m_needPaletteUpdate;

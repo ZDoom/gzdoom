@@ -1337,7 +1337,7 @@ public:
 
 	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer* old);
 
-	virtual void StartModeIterator(int bits, bool fs);
+	virtual void StartModeIterator(int bits, bool fullscreen);
 	virtual bool NextMode(int* width, int* height, bool* letterbox);
 
 	static bool IsFullscreen();
@@ -1346,7 +1346,14 @@ public:
 	static void SetWindowVisible(bool visible);
 
 private:
-	size_t m_modeIterator;
+	struct ModeIterator
+	{
+		size_t index;
+		int    bits;
+		bool   fullscreen;
+	};
+
+	ModeIterator m_modeIterator;
 
 	CocoaWindow* m_window;
 
@@ -1536,14 +1543,14 @@ CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 
 
 CocoaVideo::CocoaVideo(const int multisample)
-: m_modeIterator(0)
-, m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
-//, m_multisample(0)
+: m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
 , m_width(-1)
 , m_height(-1)
 , m_fullscreen(false)
 , m_hiDPI(false)
 {
+	memset(&m_modeIterator, 0, sizeof m_modeIterator);
+
 	// Set attributes for OpenGL context
 
 	NSOpenGLPixelFormatAttribute attributes[16];
@@ -1585,26 +1592,43 @@ CocoaVideo::~CocoaVideo()
 	[m_window release];
 }
 
-void CocoaVideo::StartModeIterator(int bits, bool fs)
+void CocoaVideo::StartModeIterator(const int bits, const bool fullscreen)
 {
-	ZD_UNUSED(bits);
-	ZD_UNUSED(fs);
-
-	m_modeIterator = 0;
+	m_modeIterator.index      = 0;
+	m_modeIterator.bits       = bits;
+	m_modeIterator.fullscreen = fullscreen;
 }
 
-bool CocoaVideo::NextMode(int* width, int* height, bool* letterbox)
+bool CocoaVideo::NextMode(int* const width, int* const height, bool* const letterbox)
 {
 	assert(NULL != width);
 	assert(NULL != height);
-	ZD_UNUSED(letterbox);
 
-	if (m_modeIterator < sizeof(VideoModes) / sizeof(VideoModes[0]))
+	const int bits = m_modeIterator.bits;
+
+	if (8 != bits && 16 != bits && 24 != bits && 32 != bits)
 	{
-		*width  = VideoModes[m_modeIterator].width;
-		*height = VideoModes[m_modeIterator].height;
+		return false;
+	}
 
-		++m_modeIterator;
+	size_t& index = m_modeIterator.index;
+
+	if (index < sizeof(VideoModes) / sizeof(VideoModes[0]))
+	{
+		*width  = VideoModes[index].width;
+		*height = VideoModes[index].height;
+
+		if (m_modeIterator.fullscreen && NULL != letterbox)
+		{
+			const NSSize screenSize  = [[m_window screen] frame].size;
+			const float  screenRatio = screenSize.width / screenSize.height;
+			const float  modeRatio   = float(*width) / *height;
+
+			*letterbox = fabs(screenRatio - modeRatio) > 0.001f;
+		}
+
+		++index;
+
 		return true;
 	}
 
@@ -2255,6 +2279,32 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (0 != self)
 	{
 		self = 0;
+	}
+}
+
+
+CCMD(vid_listmodes)
+{
+	if (Video == NULL)
+	{
+		return;
+	}
+
+	static const char* const ratios[5] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4" };
+	int width, height;
+	bool letterbox;
+
+	Video->StartModeIterator(32, screen->IsFullscreen());
+
+	while (Video->NextMode(&width, &height, &letterbox))
+	{
+		const bool current = width == DisplayWidth && height == DisplayHeight;
+		const int  ratio   = CheckRatio(width, height);
+
+		Printf(current ? PRINT_BOLD : PRINT_HIGH, "%s%4d x%5d x%3d%s%s\n",
+			current || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
+			width, height, 32, ratios[ratio],
+			current || !letterbox ? "" : TEXTCOLOR_BROWN " LB");
 	}
 }
 

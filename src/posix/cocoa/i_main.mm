@@ -51,7 +51,6 @@
 
 #include "i_common.h"
 #include "i_osversion.h"
-#include "i_rbopts.h"
 
 #undef Class
 
@@ -71,17 +70,15 @@ EXTERN_CVAR(Bool, fullscreen   )
 // ---------------------------------------------------------------------------
 
 
-DArgs* Args; // command line arguments
-
 namespace
 {
 
 // The maximum number of functions that can be registered with atterm.
-static const size_t MAX_TERMS = 64;
+const size_t MAX_TERMS = 64;
 
-static void (*TermFuncs[MAX_TERMS])();
-static const char *TermNames[MAX_TERMS];
-static size_t NumTerms;
+void      (*TermFuncs[MAX_TERMS])();
+const char *TermNames[MAX_TERMS];
+size_t      NumTerms;
 
 void call_terms()
 {
@@ -146,6 +143,9 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
+DArgs* Args; // command line arguments
+
+
 namespace
 {
 
@@ -207,23 +207,12 @@ int OriginalMain(int argc, char** argv)
 		 left in an unstable state.
 		 */
 
-		atexit (call_terms);
-		atterm (I_Quit);
+		atexit(call_terms);
+		atterm(I_Quit);
 
-		// Should we even be doing anything with progdir on Unix systems?
-		char program[PATH_MAX];
-		if (realpath (argv[0], program) == NULL)
-			strcpy (program, argv[0]);
-		char *slash = strrchr (program, '/');
-		if (slash != NULL)
-		{
-			*(slash + 1) = '\0';
-			progdir = program;
-		}
-		else
-		{
-			progdir = "./";
-		}
+		NSString* exePath = [[NSBundle mainBundle] executablePath];
+		progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
+		progdir += "/";
 
 		I_StartupJoysticks();
 		atterm(I_ShutdownJoysticks);

@@ -152,7 +152,6 @@ class CocoaVideo : public IVideo
 {
 public:
 	explicit CocoaVideo(int multisample);
-	~CocoaVideo();
 
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
@@ -412,11 +411,6 @@ CocoaVideo::CocoaVideo(const int multisample)
 	[[glView openGLContext] makeCurrentContext];
 
 	[m_window setContentView:glView];
-}
-
-CocoaVideo::~CocoaVideo()
-{
-	[m_window release];
 }
 
 void CocoaVideo::StartModeIterator(const int bits, const bool fullscreen)

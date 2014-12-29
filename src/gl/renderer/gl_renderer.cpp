@@ -90,7 +90,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mLightCount = 0;
 	mAngles = FRotator(0,0,0);
 	mViewVector = FVector2(0,0);
-	mCameraPos = FVector3(0,0,0);
 	mVBO = NULL;
 	mSkyVBO = NULL;
 	gl_spriteindex = 0;

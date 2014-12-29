@@ -67,7 +67,6 @@ public:
 
 	FRotator mAngles;
 	FVector2 mViewVector;
-	FVector3 mCameraPos;
 
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
@@ -83,7 +82,7 @@ public:
 	void SetViewport(GL_IRECT *bounds);
 	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
-	void SetCameraPos(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t viewangle);
+	void SetViewAngle(angle_t viewangle);
 	void SetupView(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t viewangle, bool mirror, bool planemirror);
 
 	void Initialize();
@@ -121,7 +120,7 @@ public:
 	void Flush() {}
 
 	void SetProjection(float fov, float ratio, float fovratio);
-	void SetViewMatrix(bool mirror, bool planemirror);
+	void SetViewMatrix(fixed_t viewx, fixed_t viewy, fixed_t viewz, bool mirror, bool planemirror);
 	void ProcessScene(bool toscreen = false);
 
 	bool StartOffscreen();

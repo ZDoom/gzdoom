@@ -93,8 +93,6 @@ namespace
 
 	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
 	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
-
-	NSCursor* s_cursor;
 }
 
 
@@ -125,9 +123,12 @@ namespace
 
 @interface CocoaView : NSOpenGLView
 {
+	NSCursor* m_cursor;
 }
 
 - (void)resetCursorRects;
+
+- (void)setCursor:(NSCursor*)cursor;
 
 @end
 
@@ -137,8 +138,18 @@ namespace
 - (void)resetCursorRects
 {
 	[super resetCursorRects];
-	[self addCursorRect: [self bounds]
-				 cursor: s_cursor];
+
+	NSCursor* const cursor = nil == m_cursor
+		? [NSCursor arrowCursor]
+		: m_cursor;
+
+	[self addCursorRect:[self bounds]
+				 cursor:cursor];
+}
+
+- (void)setCursor:(NSCursor*)cursor
+{
+	m_cursor = cursor;
 }
 
 @end
@@ -163,7 +174,7 @@ public:
 
 	static bool IsFullscreen();
 	static void UseHiDPI(bool hiDPI);
-	static void InvalidateCursorRects();
+	static void SetCursor(NSCursor* cursor);
 	static void SetWindowVisible(bool visible);
 
 private:
@@ -509,11 +520,15 @@ void CocoaVideo::UseHiDPI(const bool hiDPI)
 	}
 }
 
-void CocoaVideo::InvalidateCursorRects()
+void CocoaVideo::SetCursor(NSCursor* cursor)
 {
 	if (CocoaVideo* const video = GetInstance())
 	{
-		[video->m_window invalidateCursorRectsForView:[video->m_window contentView]];
+		NSWindow*  const window = video->m_window;
+		CocoaView* const view   = [window contentView];
+
+		[view setCursor:cursor];
+		[window invalidateCursorRectsForView:view];
 	}
 }
 
@@ -1141,12 +1156,9 @@ CCMD(vid_currentmode)
 bool I_SetCursor(FTexture* cursorpic)
 {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+	NSCursor* cursor = nil;
 
-	if (NULL == cursorpic || FTexture::TEX_Null == cursorpic->UseType)
-	{
-		s_cursor = [NSCursor arrowCursor];
-	}
-	else
+	if (NULL != cursorpic && FTexture::TEX_Null != cursorpic->UseType)
 	{
 		// Create bitmap image representation
 
@@ -1191,11 +1203,11 @@ bool I_SetCursor(FTexture* cursorpic)
 														 properties:nil];
 		NSImage* cursorImage = [[NSImage alloc] initWithData:imageData];
 
-		s_cursor = [[NSCursor alloc] initWithImage:cursorImage
-										   hotSpot:NSMakePoint(0.0f, 0.0f)];
+		cursor = [[NSCursor alloc] initWithImage:cursorImage
+										 hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
 	
-	CocoaVideo::InvalidateCursorRects();
+	CocoaVideo::SetCursor(cursor);
 	
 	[pool release];
 	

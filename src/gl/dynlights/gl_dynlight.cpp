@@ -102,7 +102,7 @@ public:
 	FLightAssociation(FName actorName, const char *frameName, FName lightName)
 		: m_ActorName(actorName), m_AssocLight(lightName)
 	{
-		mysnprintf(m_FrameName, 8, "%s", frameName);
+		strncpy(m_FrameName, frameName, 8);
 	}
 
 	FName ActorName() { return m_ActorName; }

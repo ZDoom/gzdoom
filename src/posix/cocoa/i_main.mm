@@ -376,48 +376,9 @@ ApplicationController* appCtrl;
         {
             break;
         }
-		
-		const NSEventType eventType = [event type];
-		
-		switch (eventType)
-		{
-			case NSMouseMoved:
-				I_ProcessMouseMoveEvent(event);
-				break;
-				
-			case NSLeftMouseDown:
-			case NSLeftMouseUp:
-			case NSRightMouseDown:
-			case NSRightMouseUp:
-			case NSOtherMouseDown:
-			case NSOtherMouseUp:
-				I_ProcessMouseButtonEvent(event);
-				break;
-				
-			case NSLeftMouseDragged:
-			case NSRightMouseDragged:
-			case NSOtherMouseDragged:
-				I_ProcessMouseButtonEvent(event);
-				I_ProcessMouseMoveEvent(event);
-				break;
-				
-			case NSScrollWheel:
-				I_ProcessMouseWheelEvent(event);
-				break;
-				
-			case NSKeyDown:
-			case NSKeyUp:
-				I_ProcessKeyboardEvent(event);
-				break;
-				
-			case NSFlagsChanged:
-				I_ProcessKeyboardFlagsEvent(event);
-				break;
-				
-			default:
-				break;
-		}
-		
+
+		I_ProcessEvent(event);
+
 		[NSApp sendEvent:event];
 	}
     

@@ -535,10 +535,8 @@ void ProcessMouseMoveInGame(NSEvent* theEvent)
 	}
 }
 
-} // unnamed namespace
 
-
-void I_ProcessKeyboardEvent(NSEvent* theEvent)
+void ProcessKeyboardEvent(NSEvent* theEvent)
 {
 	const unsigned short keyCode = [theEvent keyCode];
 	if (keyCode >= KEY_COUNT)
@@ -567,7 +565,7 @@ void I_ProcessKeyboardEvent(NSEvent* theEvent)
 	}
 }
 
-void I_ProcessKeyboardFlagsEvent(NSEvent* theEvent)
+void ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 {
 	static const uint32_t FLAGS_MASK =
 		NSDeviceIndependentModifierFlagsMask & ~NSNumericPadKeyMask;
@@ -606,7 +604,7 @@ void I_ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 }
 
 
-void I_ProcessMouseMoveEvent(NSEvent* theEvent)
+void ProcessMouseMoveEvent(NSEvent* theEvent)
 {
 	if (GUICapture)
 	{
@@ -618,7 +616,7 @@ void I_ProcessMouseMoveEvent(NSEvent* theEvent)
 	}
 }
 
-void I_ProcessMouseButtonEvent(NSEvent* theEvent)
+void ProcessMouseButtonEvent(NSEvent* theEvent)
 {
 	event_t event = {};
 
@@ -669,7 +667,7 @@ void I_ProcessMouseButtonEvent(NSEvent* theEvent)
 	}
 }
 
-void I_ProcessMouseWheelEvent(NSEvent* theEvent)
+void ProcessMouseWheelEvent(NSEvent* theEvent)
 {
 	const CGFloat delta    = [theEvent deltaY];
 	const bool isZeroDelta = fabs(delta) < 1.0E-5;
@@ -695,4 +693,51 @@ void I_ProcessMouseWheelEvent(NSEvent* theEvent)
 	}
 	
 	D_PostEvent(&event);
+}
+
+} // unnamed namespace
+
+
+void I_ProcessEvent(NSEvent* event)
+{
+	const NSEventType eventType = [event type];
+
+	switch (eventType)
+	{
+		case NSMouseMoved:
+			ProcessMouseMoveEvent(event);
+			break;
+
+		case NSLeftMouseDown:
+		case NSLeftMouseUp:
+		case NSRightMouseDown:
+		case NSRightMouseUp:
+		case NSOtherMouseDown:
+		case NSOtherMouseUp:
+			ProcessMouseButtonEvent(event);
+			break;
+
+		case NSLeftMouseDragged:
+		case NSRightMouseDragged:
+		case NSOtherMouseDragged:
+			ProcessMouseButtonEvent(event);
+			ProcessMouseMoveEvent(event);
+			break;
+
+		case NSScrollWheel:
+			ProcessMouseWheelEvent(event);
+			break;
+
+		case NSKeyDown:
+		case NSKeyUp:
+			ProcessKeyboardEvent(event);
+			break;
+
+		case NSFlagsChanged:
+			ProcessKeyboardFlagsEvent(event);
+			break;
+
+		default:
+			break;
+	}
 }

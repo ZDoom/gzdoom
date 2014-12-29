@@ -45,12 +45,7 @@ inline bool I_IsHiDPISupported()
 	return NSAppKitVersionNumber >= 1138;
 }
 
-void I_ProcessKeyboardEvent(NSEvent* event);
-void I_ProcessKeyboardFlagsEvent(NSEvent* event);
-
-void I_ProcessMouseMoveEvent(NSEvent* event);
-void I_ProcessMouseButtonEvent(NSEvent* event);
-void I_ProcessMouseWheelEvent(NSEvent* event);
+void I_ProcessEvent(NSEvent* event);
 
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();

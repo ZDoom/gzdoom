@@ -212,6 +212,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		notexturefill = -1;
 		skyrotatevector = FVector3(0,0,1);
 		skyrotatevector2 = FVector3(0,0,1);
+		pixelstretch = 1.2f;
 	}
 	virtual FOptionalMapinfoData *Clone() const
 	{
@@ -225,6 +226,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		newopt->notexturefill = notexturefill;
 		newopt->skyrotatevector = skyrotatevector;
 		newopt->skyrotatevector2 = skyrotatevector2;
+		newopt->pixelstretch = pixelstretch;
 		return newopt;
 	}
 	int			fogdensity;
@@ -236,6 +238,7 @@ struct FGLROptions : public FOptionalMapinfoData
 	SBYTE		notexturefill;
 	FVector3	skyrotatevector;
 	FVector3	skyrotatevector2;
+	float		pixelstretch;
 };
 
 DEFINE_MAP_OPTION(fogdensity, false)
@@ -338,6 +341,15 @@ DEFINE_MAP_OPTION(skyrotate2, false)
 	opt->skyrotatevector2.MakeUnit();
 }
 
+DEFINE_MAP_OPTION(pixelratio, false)
+{
+	FGLROptions *opt = info->GetOptData<FGLROptions>("gl_renderer");
+
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	opt->pixelstretch = (float)parse.sc.Float;
+}
+
 bool IsLightmodeValid()
 {
 	return (glset.map_lightmode >= 0 && glset.map_lightmode <= 4) || glset.map_lightmode == 8;
@@ -356,6 +368,7 @@ void InitGLRMapinfoData()
 		glset.map_notexturefill = opt->notexturefill;
 		glset.skyrotatevector = opt->skyrotatevector;
 		glset.skyrotatevector2 = opt->skyrotatevector2;
+		glset.pixelstretch = opt->pixelstretch;
 	}
 	else
 	{
@@ -366,6 +379,7 @@ void InitGLRMapinfoData()
 		glset.map_notexturefill = -1;
 		glset.skyrotatevector = FVector3(0,0,1);
 		glset.skyrotatevector2 = FVector3(0,0,1);
+		glset.pixelstretch = 1.2f;
 	}
 
 	if (!IsLightmodeValid()) glset.lightmode = gl_lightmode;

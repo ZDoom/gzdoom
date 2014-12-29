@@ -38,7 +38,6 @@
 #import <AppKit/NSOpenGLView.h>
 #import <Carbon/Carbon.h>
 #import <OpenGL/gl.h>
-#import <OpenGL/OpenGL.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -690,7 +689,7 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	CGLFlushDrawable(CGLGetCurrentContext());
+	[[NSOpenGLContext currentContext] flushBuffer];
 
 	static NSString* const TITLE_STRING =
 	[NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
@@ -943,7 +942,7 @@ void CocoaFrameBuffer::Flip()
 #endif // __LITTLE_ENDIAN__
 
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-				 Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
+		Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

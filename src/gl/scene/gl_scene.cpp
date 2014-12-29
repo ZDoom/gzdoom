@@ -86,7 +86,6 @@ CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_forcemultipass, false, 0)
-CVAR(Float, gl_aspect, 1.2f, 0)
 
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, cl_capfps)
@@ -302,7 +301,7 @@ void FGLRenderer::SetViewMatrix(fixed_t viewx, fixed_t viewy, fixed_t viewz, boo
 	glLoadIdentity();
 
 	float mult = mirror? -1:1;
-	float planemult = planemirror? -gl_aspect:gl_aspect;
+	float planemult = planemirror? -glset.pixelstretch : glset.pixelstretch;
 
 	glRotatef(GLRenderer->mAngles.Roll,  0.0f, 0.0f, 1.0f);
 	glRotatef(GLRenderer->mAngles.Pitch, 1.0f, 0.0f, 0.0f);

@@ -874,7 +874,17 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	sector_t * retval;
 	R_SetupFrame (camera);
 	SetViewArea();
-	mAngles.Pitch = clamp<float>((float)((double)(int)(viewpitch))/ANGLE_1, -90, 90);
+
+	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
+	double radPitch = bam2rad(viewpitch);
+	if (radPitch > PI) radPitch -= 2 * PI;
+	radPitch = clamp(radPitch, -PI / 2, PI / 2);
+
+	double angx = cos(radPitch);
+	double angy = sin(radPitch) * glset.pixelstretch;
+	double alen = sqrt(angx*angx + angy*angy);
+
+	mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
 
 	// Scroll the sky
 	mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;

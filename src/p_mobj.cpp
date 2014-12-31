@@ -338,6 +338,13 @@ void AActor::Serialize (FArchive &arc)
 		arc << TeleFogSourceType
 			<< TeleFogDestType;
 	}
+	if (SaveVersion >= 4518)
+	{
+		arc << RipperLevel
+			<< RipLevelMin
+			<< RipLevelMax;
+	}
+
 	{
 		FString tagstr;
 		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;

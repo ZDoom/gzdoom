@@ -1207,7 +1207,17 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			return true;
 		}
-		if (tm.DoRipping && !(thing->flags5 & MF5_DONTRIP))
+		// Rippers will rip through anything with an equivalent ripper level,
+		// or if the missile's ripper level is within the min/max range,
+		// or if there's no min/max range and the missile's ripper level is
+		// >= the monster's, then let 'er rip!
+		bool ripmin = (thing->RipLevelMin != 0) ? true : false;
+		bool ripmax = (thing->RipLevelMax != 0) ? true : false;
+		if ((tm.DoRipping && !(thing->flags5 & MF5_DONTRIP)) && 
+			((!(ripmin) && !(ripmax) && (thing->RipperLevel <= tm.thing->RipperLevel)) ||
+			((thing->RipperLevel == tm.thing->RipperLevel) ||
+			(thing->RipLevelMin <= tm.thing->RipperLevel) &&
+			(thing->RipLevelMax >= tm.thing->RipperLevel))))
 		{
 			if (!(tm.thing->flags6 & MF6_NOBOSSRIP) || !(thing->flags2 & MF2_BOSS))
 			{

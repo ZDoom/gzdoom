@@ -154,6 +154,67 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 
 //==========================================================================
 //
+// CheckClass
+//
+// NON-ACTION function to check a pointer's class.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, CheckClass)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_PROLOGUE;
+		PARAM_OBJECT	(self, AActor);
+		PARAM_CLASS		(checktype, AActor);
+		PARAM_INT_OPT	(pick_pointer)		{ pick_pointer = AAPTR_DEFAULT; }
+		PARAM_BOOL_OPT	(match_superclass)	{ match_superclass = false; }
+
+		self = COPY_AAPTR(self, pick_pointer);
+		if (self == NULL)
+		{
+			ret->SetInt(false);
+		}
+		else if (match_superclass)
+		{
+			ret->SetInt(self->IsKindOf(checktype));
+		}
+		else
+		{
+			ret->SetInt(self->GetClass() == checktype);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// IsPointerEqual
+//
+// NON-ACTION function to check if two pointers are equal.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, IsPointerEqual)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_PROLOGUE;
+		PARAM_OBJECT	(self, AActor);
+		PARAM_INT		(ptr_select1);
+		PARAM_INT		(ptr_select2);
+
+		ret->SetInt(COPY_AAPTR(self, ptr_select1) == COPY_AAPTR(self, ptr_select2));
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // A_RearrangePointers
 //
 // Allow an actor to change its relationship to other actors by

@@ -915,6 +915,12 @@ void gl_RenderModel(GLSprite * spr)
 	gl_RenderState.mModelMatrix.rotate(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
 	gl_RenderState.mModelMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	gl_RenderState.mModelMatrix.rotate(-smf->rolloffset, 1, 0, 0);
+
+	// consider the pixel stretching. For non-voxels this must be factored out here
+	float stretch = (smf->models[0] != NULL ? smf->models[0]->getAspectFactor() : 1.f) / glset.pixelstretch;
+	gl_RenderState.mModelMatrix.scale(1, stretch, 1);
+
+
 	gl_RenderState.EnableModelMatrix(true);
 	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), NULL, translation );
 	gl_RenderState.EnableModelMatrix(false);

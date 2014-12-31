@@ -422,6 +422,17 @@ int FVoxelModel::FindFrame(const char * name)
 
 //===========================================================================
 //
+// Voxels need aspect ratio correction according to the current map's setting
+//
+//===========================================================================
+
+float FVoxelModel::getAspectFactor()
+{
+	return glset.pixelstretch;
+}
+
+//===========================================================================
+//
 // Voxels never interpolate between frames, they only have one.
 //
 //===========================================================================

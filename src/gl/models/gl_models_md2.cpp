@@ -186,8 +186,6 @@ bool FDMDModel::Load(const char * path, int, const char * buffer, int length)
 				frame->vertices[k].xyz[axis[c]] =
 					(pVtx->vertex[c] * FLOAT(pfr->scale[c]) + FLOAT(pfr->translate[c]));
 			}
-			// Aspect undo.
-			frame->vertices[k].xyz[VZ] *= rModelAspectMod;
 		}
 	}
 
@@ -467,8 +465,6 @@ bool FMD2Model::Load(const char * path, int, const char * buffer, int length)
 				frame->vertices[k].xyz[axis[c]] =
 					(pVtx->vertex[c] * pfr->scale[c] + pfr->translate[c]);
 			}
-			// Aspect ratio adjustment (1.33 -> 1.6.)
-			frame->vertices[k].xyz[VZ] *= rModelAspectMod;
 		}
 	}
 

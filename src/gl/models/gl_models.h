@@ -11,8 +11,6 @@
 
 enum { VX, VZ, VY };
 
-static const float rModelAspectMod = 1 / 1.2f;	//.833334f;
-
 #define MD2_MAGIC			0x32504449
 #define DMD_MAGIC			0x4D444D44
 #define MD3_MAGIC			0x33504449
@@ -35,6 +33,7 @@ public:
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer() = 0;
+	virtual float getAspectFactor() { return 1.f; }
 
 	FModelVertexBuffer *mVBuf;
 	FString mFileName;
@@ -298,6 +297,7 @@ public:
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	FTexture *GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer();
+	float getAspectFactor();
 };
 
 

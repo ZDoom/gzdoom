@@ -281,11 +281,10 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	}
 
 	
-	// Korshun: fullbright fog in opengl, render weapon sprites fullbright.
+	// Korshun: fullbright fog in opengl, render weapon sprites fullbright (but don't cancel out the light color!)
 	if (glset.brightfog && ((level.flags&LEVEL_HASFADETABLE) || cm.FadeColor != 0))
 	{
 		lightlevel = 255;
-		statebright[0] = statebright[1] = true;
 	}
 
 	PalEntry ThingColor = playermo->fillcolor;

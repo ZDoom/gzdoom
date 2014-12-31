@@ -28,6 +28,9 @@ ACTOR Actor native //: Thinker
 	DeathType Normal
 	TeleFogSourceType "TeleportFog"
 	TeleFogDestType "TeleportFog"
+	RipperLevel 0
+	RipLevelMin 0
+	RipLevelMax 0
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
@@ -321,6 +324,9 @@ ACTOR Actor native //: Thinker
 	action native A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
 	action native A_SetTeleFog(name oldpos, name newpos);
 	action native A_SwapTeleFog();
+	action native A_SetRipperLevel(int level);
+	action native A_SetRipMin(int min);
+	action native A_SetRipMax(int max);
 
 	action native A_CheckSightOrRange(float distance, state label);
 	action native A_CheckRange(float distance, state label);

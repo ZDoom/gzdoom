@@ -1438,6 +1438,45 @@ DEFINE_PROPERTY(telefogdesttype, S, Actor)
 
 //==========================================================================
 //
+//==========================================================================
+DEFINE_PROPERTY(ripperlevel, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+	{
+		I_Error ("RipperLevel must not be negative");
+	}
+	defaults->RipperLevel = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(riplevelmin, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+	{
+		I_Error ("RipLevelMin must not be negative");
+	}
+	defaults->RipLevelMin = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(riplevelmax, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+	{
+		I_Error ("RipLevelMax must not be negative");
+	}
+	defaults->RipLevelMax = id;
+}
+
+//==========================================================================
+//
 // Special inventory properties
 //
 //==========================================================================

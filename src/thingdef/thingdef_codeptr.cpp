@@ -5613,3 +5613,45 @@ DEFINE_ACTION_FUNCTION(AActor, A_SwapTeleFog)
 		self->TeleFogDestType = temp;
 	}
 }
+
+//===========================================================================
+//
+// A_SetRipperLevel(int level)
+//
+// Sets the ripper level/requirement of the calling actor.
+// Also sets the minimum and maximum levels to rip through.
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipperLevel)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(level, 0);
+	self->RipperLevel = level;
+}
+
+//===========================================================================
+//
+// A_SetRipMin(int min)
+//
+// Sets the ripper level/requirement of the calling actor.
+// Also sets the minimum and maximum levels to rip through.
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMin)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(min, 1);
+	self->RipLevelMin = min; 
+}
+
+//===========================================================================
+//
+// A_SetRipMin(int min)
+//
+// Sets the ripper level/requirement of the calling actor.
+// Also sets the minimum and maximum levels to rip through.
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(max, 1);
+	self->RipLevelMax = max;
+}

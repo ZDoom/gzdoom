@@ -887,6 +887,20 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	return true;
 }
 
+
+//==========================================================================
+//
+// Isolated to keep the code readable and fix the logic
+//
+//==========================================================================
+
+static bool CheckRipLevel(AActor *victim, AActor *projectile)
+{
+	if (victim->RipLevelMin > 0 && projectile->RipperLevel < victim->RipLevelMin) return false;
+	if (victim->RipLevelMax > 0 && projectile->RipperLevel > victim->RipLevelMax) return false;
+	return true;
+}
+
 //==========================================================================
 //
 // PIT_CheckThing
@@ -1207,7 +1221,8 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			return true;
 		}
-		if (tm.DoRipping && !(thing->flags5 & MF5_DONTRIP))
+
+		if ((tm.DoRipping && !(thing->flags5 & MF5_DONTRIP)) && CheckRipLevel(thing, tm.thing))
 		{
 			if (!(tm.thing->flags6 & MF6_NOBOSSRIP) || !(thing->flags2 & MF2_BOSS))
 			{

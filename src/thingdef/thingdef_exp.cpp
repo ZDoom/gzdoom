@@ -459,16 +459,21 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		FName identifier = FName(sc.String);
 		if (sc.CheckToken('('))
 		{
-			FArgumentList *args = NULL;
+			FArgumentList *args = new FArgumentList;
+			PFunction *func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
 			try
 			{
-				if (!sc.CheckToken(')'))
+				if (func != NULL)
 				{
-					args = new FArgumentList;
+					sc.UnGet();
+					ParseFunctionParameters(sc, cls, *args, func, "", NULL);
+					return new FxVMFunctionCall(func, args, sc);
+				}
+				else if (!sc.CheckToken(')'))
+				{
 					do
 					{
 						args->Push(ParseExpressionM (sc, cls));
-
 					}
 					while (sc.CheckToken(','));
 					sc.MustGetToken(')');

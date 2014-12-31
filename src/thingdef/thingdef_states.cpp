@@ -326,99 +326,7 @@ do_stop:
 				if (afd != NULL)
 				{
 					tcall->Function = afd->Variants[0].Implementation;
-					const TArray<PType *> &params = afd->Variants[0].Proto->ArgumentTypes;
-					const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
-					int numparams = (int)params.Size();
-					int pnum = 0;
-					if (afd->Flags & VARF_Method)
-					{
-						numparams--;
-						pnum++;
-					}
-					if (afd->Flags & VARF_Action)
-					{
-						numparams -= 2;
-						pnum += 2;
-					}
-					if (numparams > 0)
-					{
-						int v;
-
-						if (!(paramflags[pnum] & VARF_Optional))
-						{
-							sc.MustGetStringName("(");
-						}
-						else
-						{
-							if (!sc.CheckString("(")) 
-							{
-								goto endofstate;
-							}
-						}
-						
-						while (numparams > 0)
-						{
-							FxExpression *x;
-							if (params[pnum] == TypeState && sc.CheckNumber())
-							{
-								// Special case: State label as an offset
-								if (sc.Number > 0 && statestring.Len() > 1)
-								{
-									sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
-								}
-
-								v = sc.Number;
-								if (v<0)
-								{
-									sc.ScriptError("Negative jump offsets are not allowed");
-								}
-
-								if (v > 0)
-								{
-									x = new FxStateByIndex(bag.statedef.GetStateCount() + v, sc);
-								}
-								else
-								{
-									x = new FxConstant((FState*)NULL, sc);
-								}
-							}
-							else
-							{
-								// Use the generic parameter parser for everything else
-								x = ParseParameter(sc, bag.Info, params[pnum], false);
-							}
-							tcall->Parameters.Push(new FxParameter(x));
-							pnum++;
-							numparams--;
-							if (numparams > 0)
-							{
-								if (params[pnum] == NULL)
-								{ // varargs function
-									if (sc.CheckString(")"))
-									{
-										goto endofstate;
-									}
-									pnum--;
-									numparams++;
-								}
-								else if ((paramflags[pnum] & VARF_Optional) && sc.CheckString(")"))
-								{
-									goto endofstate;
-								}
-								sc.MustGetStringName (",");
-							}
-						}
-						sc.MustGetStringName(")");
-					}
-					else 
-					{
-						sc.MustGetString();
-						if (sc.Compare("("))
-						{
-							sc.ScriptError("You cannot pass parameters to '%s'\n",sc.String);
-						}
-						sc.UnGet();
-					}
+					ParseFunctionParameters(sc, bag.Info, tcall->Parameters, afd, statestring, &bag.statedef);
 					goto endofstate;
 				}
 				sc.ScriptError("Invalid state parameter %s\n", sc.String);
@@ -448,3 +356,111 @@ endofstate:
 	sc.SetEscape(true);	// re-enable escape sequences
 }
 
+//==========================================================================
+//
+// ParseFunctionParameters
+//
+// Parses the parameters for a VM function. Called by both ParseStates
+// (which will set statestring and statedef) and by ParseExpression0 (which
+// will not set them). The first token returned by the scanner when entering
+// this function should be '('.
+//
+//==========================================================================
+
+void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
+	PFunction *afd, FString statestring, FStateDefinitions *statedef)
+{
+	const TArray<PType *> &params = afd->Variants[0].Proto->ArgumentTypes;
+	const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
+	int numparams = (int)params.Size();
+	int pnum = 0;
+	if (afd->Flags & VARF_Method)
+	{
+		numparams--;
+		pnum++;
+	}
+	if (afd->Flags & VARF_Action)
+	{
+		numparams -= 2;
+		pnum += 2;
+	}
+	if (numparams > 0)
+	{
+		int v;
+
+		if (!(paramflags[pnum] & VARF_Optional))
+		{
+			sc.MustGetStringName("(");
+		}
+		else
+		{
+			if (!sc.CheckString("(")) 
+			{
+				return;
+			}
+		}
+		
+		while (numparams > 0)
+		{
+			FxExpression *x;
+			if (statedef != NULL && params[pnum] == TypeState && sc.CheckNumber())
+			{
+				// Special case: State label as an offset
+				if (sc.Number > 0 && statestring.Len() > 1)
+				{
+					sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
+				}
+
+				v = sc.Number;
+				if (v<0)
+				{
+					sc.ScriptError("Negative jump offsets are not allowed");
+				}
+
+				if (v > 0)
+				{
+					x = new FxStateByIndex(statedef->GetStateCount() + v, sc);
+				}
+				else
+				{
+					x = new FxConstant((FState*)NULL, sc);
+				}
+			}
+			else
+			{
+				// Use the generic parameter parser for everything else
+				x = ParseParameter(sc, cls, params[pnum], false);
+			}
+			out_params.Push(new FxParameter(x));
+			pnum++;
+			numparams--;
+			if (numparams > 0)
+			{
+				if (params[pnum] == NULL)
+				{ // varargs function
+					if (sc.CheckString(")"))
+					{
+						return;
+					}
+					pnum--;
+					numparams++;
+				}
+				else if ((paramflags[pnum] & VARF_Optional) && sc.CheckString(")"))
+				{
+					return;
+				}
+				sc.MustGetStringName (",");
+			}
+		}
+		sc.MustGetStringName(")");
+	}
+	else 
+	{
+		sc.MustGetString();
+		if (sc.Compare("("))
+		{
+			sc.ScriptError("You cannot pass parameters to '%s'\n", afd->SymbolName.GetChars());
+		}
+		sc.UnGet();
+	}
+}

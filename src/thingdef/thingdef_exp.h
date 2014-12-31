@@ -784,6 +784,25 @@ public:
 
 //==========================================================================
 //
+// FxVMFunctionCall
+//
+//==========================================================================
+
+class FxVMFunctionCall : public FxExpression
+{
+	PFunction *Function;
+	FArgumentList *ArgList;
+	PType *ReturnType;
+
+public:
+	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
+	~FxVMFunctionCall();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxGlobalFunctionCall
 //
 //==========================================================================

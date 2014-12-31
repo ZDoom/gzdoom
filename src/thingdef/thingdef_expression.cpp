@@ -3006,6 +3006,109 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+// FxVMFunctionCall
+//
+//==========================================================================
+
+FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	Function = func;
+	ArgList = args;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxVMFunctionCall::~FxVMFunctionCall()
+{
+	SAFE_DELETE(ArgList);
+}
+
+//==========================================================================
+//
+// FxVMFunctionCall :: Resolve
+//
+//==========================================================================
+
+FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	bool failed = false;
+
+	if (ArgList != NULL)
+	{
+		for (unsigned i = 0; i < ArgList->Size(); i++)
+		{
+			(*ArgList)[i] = (*ArgList)[i]->Resolve(ctx);
+			if ((*ArgList)[i] == NULL) failed = true;
+		}
+	}
+	if (failed)
+	{
+		delete this;
+		return NULL;
+	}
+	TArray<PType *> &rets = Function->Variants[0].Proto->ReturnTypes;
+	assert(rets.Size() == 1);
+	ReturnType = rets[0];
+	// If more types are added to ParseNativeVariable(), add them here too.
+		 if (rets[0] == TypeSInt32)		ValueType = VAL_Int;
+	else if (rets[0] == TypeFloat64)	ValueType = VAL_Float;
+	else if (rets[0] == TypeAngle)		ValueType = VAL_Angle;
+	else if (rets[0] == TypeFixed)		ValueType = VAL_Fixed;
+	else
+	{
+		ValueType = VAL_Int;
+		assert(0 && "Unhandled return type in FxVMFunctionCall::Resolve");
+	}
+	return this;
+}
+
+//==========================================================================
+//
+// Assumption: This call is being made to generate code inside an action
+// method, so the first three address registers are all set up for such a
+// function. (self, stateowner, callingstate)
+//
+//==========================================================================
+
+ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
+{
+	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
+	int count = ArgList->Size();
+
+	// Emit code to pass implied parameters
+	if (Function->Flags & VARF_Method)
+	{
+		build->Emit(OP_PARAM, 0, REGT_POINTER, 0);
+		count += 1;
+	}
+	if (Function->Flags & VARF_Action)
+	{
+		build->Emit(OP_PARAM, 0, REGT_POINTER, 1);
+		build->Emit(OP_PARAM, 0, REGT_POINTER, 2);
+		count += 2;
+	}
+	// Emit code to pass explicit parameters
+	for (unsigned i = 0; i < ArgList->Size(); ++i)
+	{
+		(*ArgList)[i]->Emit(build);
+	}
+	// Get a register to store the return value in
+	assert(ReturnType != NULL);
+	ExpEmit reg(build, ReturnType->GetRegType());
+	// Emit the call itself
+	build->Emit(OP_CALL_K, build->GetConstantAddress(Function->Variants[0].Implementation, ATAG_OBJECT), count, 1);
+	build->Emit(OP_RESULT, 0, reg.RegType, reg.RegNum);
+	return reg;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================

@@ -11,6 +11,7 @@ public:
 	{
 	public:
 		RegAvailability();
+		int GetMostUsed() { return MostUsed; }
 		int Get(int count);			// Returns the first register in the range
 		void Return(int reg, int count);
 		bool Reuse(int regnum);

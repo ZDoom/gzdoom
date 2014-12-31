@@ -1365,7 +1365,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 					weap->SpawnState != ::GetDefault<AActor>()->SpawnState)
 				{
 					item = P_DropItem (this, weap->GetClass(), -1, 256);
-					if (item != NULL)
+					if (item != NULL && item->IsKindOf(RUNTIME_CLASS(AWeapon)))
 					{
 						if (weap->AmmoGive1 && weap->Ammo1)
 						{

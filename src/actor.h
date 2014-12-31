@@ -985,6 +985,9 @@ public:
 	FNameNoInit DeathType;
 	const PClass *TeleFogSourceType;
 	const PClass *TeleFogDestType;
+	int RipperLevel;
+	int RipLevelMin;
+	int RipLevelMax;
 
 	FState *SpawnState;
 	FState *SeeState;

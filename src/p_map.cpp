@@ -887,6 +887,20 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	return true;
 }
 
+
+//==========================================================================
+//
+// Isolated to keep the code readable and fix the logic
+//
+//==========================================================================
+
+static bool CheckRipLevel(AActor *victim, AActor *projectile)
+{
+	if (victim->RipLevelMin > 0 && projectile->RipperLevel < victim->RipLevelMin) return false;
+	if (victim->RipLevelMax > 0 && projectile->RipperLevel > victim->RipLevelMax) return false;
+	return true;
+}
+
 //==========================================================================
 //
 // PIT_CheckThing
@@ -1207,7 +1221,8 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			return true;
 		}
-		if (tm.DoRipping && !(thing->flags5 & MF5_DONTRIP))
+
+		if ((tm.DoRipping && !(thing->flags5 & MF5_DONTRIP)) && CheckRipLevel(thing, tm.thing))
 		{
 			if (!(tm.thing->flags6 & MF6_NOBOSSRIP) || !(thing->flags2 & MF2_BOSS))
 			{
@@ -3761,14 +3776,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 					puffFlags |= PF_HITTHINGBLEED;
 
 				// We must pass the unreplaced puff type here 
-				puff = P_SpawnPuff(t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags | PF_HITTHING);
-			}
-
-			if (puffDefaults != NULL && trace.Actor != NULL && puff != NULL)
-			{
-				if (puffDefaults->flags7 && MF7_HITTARGET)	puff->target = trace.Actor;
-				if (puffDefaults->flags7 && MF7_HITMASTER)	puff->master = trace.Actor;
-				if (puffDefaults->flags7 && MF7_HITTRACER)	puff->tracer = trace.Actor;
+				puff = P_SpawnPuff(t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags | PF_HITTHING, trace.Actor);
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -4211,14 +4219,9 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		}
 		if (spawnpuff)
 		{
-			P_SpawnPuff(source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags);
+			P_SpawnPuff(source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags, hitactor);
 		}
-		if (hitactor != NULL && puffDefaults != NULL && thepuff != NULL)
-		{
-			if (puffDefaults->flags7 & MF7_HITTARGET)	thepuff->target = hitactor;
-			if (puffDefaults->flags7 & MF7_HITMASTER)	thepuff->master = hitactor;
-			if (puffDefaults->flags7 & MF7_HITTRACER)	thepuff->tracer = hitactor;
-		}
+		
 		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
 		{
 			P_PoisonMobj(hitactor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);

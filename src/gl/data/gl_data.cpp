@@ -207,6 +207,7 @@ struct FGLROptions : public FOptionalMapinfoData
 		fogdensity = 0;
 		outsidefogdensity = 0;
 		skyfog = 0;
+		brightfog = false;
 		lightmode = -1;
 		nocoloredspritelighting = -1;
 		notexturefill = -1;

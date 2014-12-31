@@ -199,7 +199,7 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 		{
 			s->vertices[i].x = LittleShort(vt[i].x)/64.f;
 			s->vertices[i].y = LittleShort(vt[i].y)/64.f;
-			s->vertices[i].z = LittleShort(vt[i].z)/64.f * rModelAspectMod;
+			s->vertices[i].z = LittleShort(vt[i].z)/64.f;
 			UnpackVector( LittleShort(vt[i].n), s->vertices[i].nx, s->vertices[i].ny, s->vertices[i].nz);
 		}
 	}

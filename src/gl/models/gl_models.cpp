@@ -59,6 +59,7 @@
 #include "gl/utility/gl_geometric.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/data/gl_data.h"
 
 static inline float GetTimeFloat()
 {
@@ -786,7 +787,12 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
 	glRotatef(smf->pitchoffset, 0, 0, 1);
 	glRotatef(-smf->rolloffset, 1, 0, 0);
-		
+
+	// consider the pixel stretching. For non-voxels this must be factored out here
+	float stretch = (smf->models[0] != NULL ? smf->models[0]->getAspectFactor() : 1.f) / glset.pixelstretch;
+	glScalef(1, stretch, 1);
+
+
 	if (gl.shadermodel >= 4) glActiveTexture(GL_TEXTURE0);
 
 #if 0

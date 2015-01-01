@@ -2613,7 +2613,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 // Useful for maps with many multi-actor special effects.
 //
 //===========================================================================
-static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
+static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool twodi)
 {
 	if (camera == NULL)
 	{
@@ -2636,8 +2636,9 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
 	{
 		dz = 0;
 	}
-	if ((dx*dx) + (dy*dy) + (dz*dz) <= range)
-	{ // Within range
+	double distance = (dx * dx) + (dy * dy) + (twodi == 0? (dz * dz) : 0);
+	if (distance <= range){
+		// Within range
 		return true;
 	}
 
@@ -2651,9 +2652,10 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	double range = EvalExpressionF(ParameterIndex+0, self);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_BOOL(twodi, 2);
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
@@ -2663,13 +2665,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 		if (playeringame[i])
 		{
 			// Always check from each player.
-			if (DoCheckSightOrRange(self, players[i].mo, range))
+			if (DoCheckSightOrRange(self, players[i].mo, range, twodi))
 			{
 				return;
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckSightOrRange(self, players[i].camera, range))
+				DoCheckSightOrRange(self, players[i].camera, range, twodi))
 			{
 				return;
 			}
@@ -2684,7 +2686,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 // Jumps if this actor is out of range of all players.
 //
 //===========================================================================
-static bool DoCheckRange(AActor *self, AActor *camera, double range)
+static bool DoCheckRange(AActor *self, AActor *camera, double range, bool twodi)
 {
 	if (camera == NULL)
 	{
@@ -2704,7 +2706,8 @@ static bool DoCheckRange(AActor *self, AActor *camera, double range)
 	else{
 		dz = 0;
 	}
-	if ((dx*dx) + (dy*dy) + (dz*dz) <= range){
+	double distance = (dx * dx) + (dy * dy) + (twodi == 0? (dz * dz) : 0);
+	if (distance <= range){
 		// Within range
 		return true;
 	}
@@ -2713,9 +2716,10 @@ static bool DoCheckRange(AActor *self, AActor *camera, double range)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	double range = EvalExpressionF(ParameterIndex+0, self);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_BOOL(twodi, 2);
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
@@ -2725,13 +2729,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 		if (playeringame[i])
 		{
 			// Always check from each player.
-			if (DoCheckRange(self, players[i].mo, range))
+			if (DoCheckRange(self, players[i].mo, range, twodi))
 			{
 				return;
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckRange(self, players[i].camera, range))
+				DoCheckRange(self, players[i].camera, range, twodi))
 			{
 				return;
 			}

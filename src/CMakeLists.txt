@@ -601,9 +601,11 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/hid/IOHIDElement_.c
 	posix/cocoa/hid/ImmrHIDUtilAddOn.c
 	posix/cocoa/critsec.cpp
-	posix/cocoa/i_backend_cocoa.mm
+	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
-	posix/cocoa/i_timer.cpp )
+	posix/cocoa/i_main.mm
+	posix/cocoa/i_timer.cpp
+	posix/cocoa/i_video.mm )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )

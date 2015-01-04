@@ -783,6 +783,9 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 	mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
 
+	// roll the camera
+	mAngles.Roll = (float)(camera->roll>>ANGLETOFINESHIFT)*360.0f/FINEANGLES;
+
 	// Scroll the sky
 	mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
 	mSky2Pos = (float)fmod(gl_frameMS * level.skyspeed2, 1024.f) * 90.f/256.f;

@@ -798,7 +798,10 @@ public:
 	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual ExpEmit Emit(VMFunctionBuilder *build);
+	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
+	unsigned GetArgCount() { return ArgList == NULL ? 0 : ArgList->Size(); }
+	VMFunction *GetVMFunction() { return Function->Variants[0].Implementation; }
 };
 
 //==========================================================================

@@ -119,11 +119,10 @@ public:
 
 struct FStateTempCall
 {
-	FStateTempCall() : ActorClass(NULL), Function(NULL), FirstState(0), NumStates(0) {}
+	FStateTempCall() : ActorClass(NULL), Call(NULL), FirstState(0), NumStates(0) {}
 
 	PClassActor *ActorClass;
-	VMFunction *Function;
-	TArray<FxExpression *> Parameters;
+	class FxVMFunctionCall *Call;
 	int FirstState;
 	int NumStates;
 };

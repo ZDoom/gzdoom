@@ -3053,17 +3053,23 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 	TArray<PType *> &rets = Function->Variants[0].Proto->ReturnTypes;
-	assert(rets.Size() == 1);
-	ReturnType = rets[0];
-	// If more types are added to ParseNativeVariable(), add them here too.
-		 if (rets[0] == TypeSInt32)		ValueType = VAL_Int;
-	else if (rets[0] == TypeFloat64)	ValueType = VAL_Float;
-	else if (rets[0] == TypeAngle)		ValueType = VAL_Angle;
-	else if (rets[0] == TypeFixed)		ValueType = VAL_Fixed;
+	if (rets.Size() == NULL)
+	{
+		ReturnType = TypeVoid;
+	}
 	else
 	{
-		ValueType = VAL_Int;
-		assert(0 && "Unhandled return type in FxVMFunctionCall::Resolve");
+		ReturnType = rets[0];
+		// If more types are added to ParseNativeVariable(), add them here too.
+			 if (rets[0] == TypeSInt32)		ValueType = VAL_Int;
+		else if (rets[0] == TypeFloat64)	ValueType = VAL_Float;
+		else if (rets[0] == TypeAngle)		ValueType = VAL_Angle;
+		else if (rets[0] == TypeFixed)		ValueType = VAL_Fixed;
+		else
+		{
+			ValueType = VAL_Int;
+			assert(0 && "Unhandled return type in FxVMFunctionCall::Resolve");
+		}
 	}
 	return this;
 }
@@ -3077,6 +3083,11 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 //==========================================================================
 
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
+{
+	return Emit(build, false);
+}
+
+ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 {
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
 	int count = ArgList->Size();
@@ -3098,13 +3109,27 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		(*ArgList)[i]->Emit(build);
 	}
-	// Get a register to store the return value in
-	assert(ReturnType != NULL);
-	ExpEmit reg(build, ReturnType->GetRegType());
-	// Emit the call itself
-	build->Emit(OP_CALL_K, build->GetConstantAddress(Function->Variants[0].Implementation, ATAG_OBJECT), count, 1);
-	build->Emit(OP_RESULT, 0, reg.RegType, reg.RegNum);
-	return reg;
+	// Get a constant register for this function
+	int funcaddr = build->GetConstantAddress(Function->Variants[0].Implementation, ATAG_OBJECT);
+	// Emit the call
+	if (tailcall)
+	{ // Tail call
+		build->Emit(OP_TAIL_K, funcaddr, count, 0);
+		return ExpEmit();
+	}
+	else if (ReturnType != TypeVoid)
+	{ // Call, expecting one result
+		assert(ReturnType != NULL);
+		ExpEmit reg(build, ReturnType->GetRegType());
+		build->Emit(OP_CALL_K, funcaddr, count, 1);
+		build->Emit(OP_RESULT, 0, reg.RegType, reg.RegNum);
+		return reg;
+	}
+	else
+	{ // Call, expecting no results
+		build->Emit(OP_CALL_K, funcaddr, count, 0);
+		return ExpEmit();
+	}
 }
 
 //==========================================================================

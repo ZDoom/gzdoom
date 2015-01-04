@@ -276,7 +276,7 @@ static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label,
 static void FinishThingdef()
 {
 	int errorcount = 0;
-	unsigned i, j;
+	unsigned i;
 	int codesize = 0;
 
 #if 1
@@ -289,34 +289,26 @@ static void FinishThingdef()
 		FStateTempCall *tcall = StateTempCalls[i];
 		VMFunction *func;
 
-		assert(tcall->Function != NULL);
-		if (tcall->Parameters.Size() == 0)
+		assert(tcall->Call != NULL);
+		if (tcall->Call->GetArgCount() == 0)
 		{
-			func = tcall->Function;
+			// There are no arguments, so we can call this function directly
+			// without wrapping it in an anonymous function.
+			func = tcall->Call->GetVMFunction();
 		}
 		else
 		{
 			FCompileContext ctx(tcall->ActorClass);
-			for (j = 0; j < tcall->Parameters.Size(); ++j)
-			{
-				tcall->Parameters[j]->Resolve(ctx);
-			}
+			tcall->Call->Resolve(ctx);
 			VMFunctionBuilder buildit;
+
 			// Allocate registers used to pass parameters in.
 			// self, stateowner, state (all are pointers)
 			buildit.Registers[REGT_POINTER].Get(3);
-			// Emit code to pass the standard action function parameters.
-			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 0);
-			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 1);
-			buildit.Emit(OP_PARAM, 0, REGT_POINTER, 2);
-			// Emit code for action parameters.
-			for (j = 0; j < tcall->Parameters.Size(); ++j)
-			{
-				FxExpression *p = /*new FxParameter*/(tcall->Parameters[j]);
-				p->Emit(&buildit);
-				delete p;
-			}
-			buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(tcall->Function, ATAG_OBJECT), NAP + j, 0);
+
+			// Emit a tail call via FxVMFunctionCall
+			tcall->Call->Emit(&buildit, true);
+
 			VMScriptFunction *sfunc = buildit.MakeFunction();
 			sfunc->NumArgs = NAP;
 			func = sfunc;
@@ -330,6 +322,8 @@ static void FinishThingdef()
 				codesize += sfunc->CodeSize;
 			}
 		}
+		delete tcall->Call;
+		tcall->Call = NULL;
 		for (int k = 0; k < tcall->NumStates; ++k)
 		{
 			tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);

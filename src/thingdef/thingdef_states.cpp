@@ -72,24 +72,25 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 	int min_args, max_args;
 	FString specname = sc.String;
 
+	FArgumentList *args = new FArgumentList;
 	int special = P_FindLineSpecial(sc.String, &min_args, &max_args);
 
 	if (special > 0 && min_args >= 0)
 	{
-		tcall->Parameters.Push(new FxParameter(new FxConstant(special, sc)));
+		args->Push(new FxParameter(new FxConstant(special, sc)));
+		i = 0;
 
 		// Make this consistent with all other parameter parsing
 		if (sc.CheckToken('('))
 		{
-			for (i = 0; i < 5;)
+			while (i < 5)
 			{
-				tcall->Parameters.Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info))));
+				args->Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info))));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
 			sc.MustGetToken (')');
 		}
-		else i=0;
 
 		if (i < min_args)
 		{
@@ -100,7 +101,7 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
 
-		tcall->Function = FindGlobalActionFunction("A_CallSpecial")->Variants[0].Implementation;
+		tcall->Call = new FxVMFunctionCall(FindGlobalActionFunction("A_CallSpecial"), args, sc);
 		return true;
 	}
 	return false;
@@ -143,6 +144,7 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	FState state;
 	char lastsprite[5] = "";
 	FStateTempCall *tcall = NULL;
+	FArgumentList *args = NULL;
 
 	sc.MustGetStringName ("{");
 	sc.SetEscape(false);	// disable escape sequences in the state parser
@@ -325,8 +327,19 @@ do_stop:
 				PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(FName(sc.String, true), true));
 				if (afd != NULL)
 				{
-					tcall->Function = afd->Variants[0].Implementation;
-					ParseFunctionParameters(sc, bag.Info, tcall->Parameters, afd, statestring, &bag.statedef);
+					// When creating the FxVMFunctionCall, we only pass args if there are any.
+					// So if the previous call had no args, then we can use the argument list
+					// allocated for it. Otherwise, we need to create a new one.
+					if (args == NULL)
+					{
+						args = new FArgumentList;
+					}
+					ParseFunctionParameters(sc, bag.Info, *args, afd, statestring, &bag.statedef);
+					tcall->Call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc);
+					if (args->Size() > 0)
+					{
+						args = NULL;
+					}
 					goto endofstate;
 				}
 				sc.ScriptError("Invalid state parameter %s\n", sc.String);
@@ -339,7 +352,7 @@ endofstate:
 				sc.ScriptError ("Invalid frame character string '%s'", statestring.GetChars());
 				count = -count;
 			}
-			if (tcall->Function != NULL)
+			if (tcall->Call != NULL)
 			{
 				tcall->ActorClass = actor;
 				tcall->FirstState = bag.statedef.GetStateCount() - count;
@@ -352,6 +365,10 @@ endofstate:
 	if (tcall != NULL)
 	{
 		delete tcall;
+	}
+	if (args != NULL)
+	{
+		delete args;
 	}
 	sc.SetEscape(true);	// re-enable escape sequences
 }

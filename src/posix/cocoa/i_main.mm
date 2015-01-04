@@ -2,7 +2,7 @@
  ** i_main.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2015 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -213,9 +213,6 @@ int OriginalMain(int argc, char** argv)
 		NSString* exePath = [[NSBundle mainBundle] executablePath];
 		progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
 		progdir += "/";
-
-		I_StartupJoysticks();
-		atterm(I_ShutdownJoysticks);
 
 		C_InitConsole(80 * 8, 25 * 8, false);
 		D_DoomMain();

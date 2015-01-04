@@ -2,7 +2,7 @@
  ** i_common.h
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2015 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,6 @@ inline bool I_IsHiDPISupported()
 
 void I_ProcessEvent(NSEvent* event);
 
-void I_StartupJoysticks();
-void I_ShutdownJoysticks();
 void I_ProcessJoysticks();
 
 NSSize I_GetContentViewSize(const NSWindow* window);

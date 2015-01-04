@@ -3971,6 +3971,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 
 //===========================================================================
 //
+// [Nash] A_SetRoll
+//
+// Set actor's roll (in degrees).
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_ANGLE(roll, 0);
+	ACTION_PARAM_INT(flags, 1);
+	self->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
+}
+
+//===========================================================================
+//
 // A_ScaleVelocity
 //
 // Scale actor's velocity.

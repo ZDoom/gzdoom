@@ -785,6 +785,7 @@ public:
 	// These also set CF_INTERPVIEW for players.
 	void SetPitch(int p, bool interpolate);
 	void SetAngle(angle_t ang, bool interpolate);
+	void SetRoll(angle_t r, bool interpolate);
 
 	const PClass *GetBloodType(int type = 0) const
 	{

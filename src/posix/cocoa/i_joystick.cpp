@@ -45,6 +45,9 @@
 #include "v_text.h"
 
 
+EXTERN_CVAR(Bool, joy_axespolling)
+
+
 namespace
 {
 
@@ -105,6 +108,8 @@ public:
 
 	void Update();
 
+	void UseAxesPolling(bool axesPolling);
+
 private:
 	IOHIDDeviceInterface** m_interface;
 	IOHIDQueueInterface**  m_queue;
@@ -154,6 +159,8 @@ private:
 	TArray<DigitalButton> m_buttons;
 	TArray<DigitalButton> m_POVs;
 
+	bool m_useAxesPolling;
+
 
 	static const float DEFAULT_DEADZONE;
 	static const float DEFAULT_SENSITIVITY;
@@ -171,7 +178,9 @@ private:
 	void AddAxis(CFDictionaryRef element);
 	void AddButton(CFDictionaryRef element);
 	void AddPOV(CFDictionaryRef element);
+
 	void AddToQueue(IOHIDElementCookie cookie);
+	void RemoveFromQueue(IOHIDElementCookie cookie);
 };
 
 
@@ -261,6 +270,7 @@ IOKitJoystick::IOKitJoystick(const io_object_t device)
 : m_interface(CreateDeviceInterface(device))
 , m_queue(CreateDeviceQueue(m_interface))
 , m_sensitivity(DEFAULT_SENSITIVITY)
+, m_useAxesPolling(true)
 {
 	if (NULL == m_interface || NULL == m_queue)
 	{
@@ -281,6 +291,8 @@ IOKitJoystick::IOKitJoystick(const io_object_t device)
 	GatherCollectionElements(properties);
 
 	CFRelease(properties);
+
+	UseAxesPolling(joy_axespolling);
 
 	(*m_queue)->start(m_queue);
 
@@ -486,6 +498,26 @@ void IOKitJoystick::AddAxes(float axes[NUM_JOYAXIS]) const
 }
 
 
+void IOKitJoystick::UseAxesPolling(const bool axesPolling)
+{
+	m_useAxesPolling = axesPolling;
+
+	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
+	{
+		AnalogAxis& axis = m_axes[i];
+
+		if (m_useAxesPolling)
+		{
+			RemoveFromQueue(axis.cookie);
+		}
+		else
+		{
+			AddToQueue(axis.cookie);
+		}
+	}
+}
+
+
 void IOKitJoystick::Update()
 {
 	if (NULL == m_queue)
@@ -509,12 +541,14 @@ void IOKitJoystick::Update()
 	{
 		Printf(TEXTCOLOR_RED "IOHIDQueueInterface::getNextEvent() failed with code 0x%08X\n", eventResult);
 	}
+
+	ProcessAxes();
 }
 
 
 void IOKitJoystick::ProcessAxes()
 {
-	if (NULL == m_interface)
+	if (NULL == m_interface || !m_useAxesPolling)
 	{
 		return;
 	}
@@ -546,6 +580,11 @@ void IOKitJoystick::ProcessAxes()
 
 bool IOKitJoystick::ProcessAxis(const IOHIDEventStruct& event)
 {
+	if (m_useAxesPolling)
+	{
+		return false;
+	}
+
 	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
 	{
 		if (event.elementCookie != m_axes[i].cookie)
@@ -827,8 +866,6 @@ void IOKitJoystick::AddAxis(const CFDictionaryRef element)
 	}
 
 	m_axes.Push(axis);
-
-	AddToQueue(axis.cookie);
 }
 
 void IOKitJoystick::AddButton(CFDictionaryRef element)
@@ -849,13 +886,30 @@ void IOKitJoystick::AddPOV(CFDictionaryRef element)
 	AddToQueue(pov.cookie);
 }
 
+
 void IOKitJoystick::AddToQueue(const IOHIDElementCookie cookie)
 {
-	assert(NULL != m_queue);
+	if (NULL == m_queue)
+	{
+		return;
+	}
 
 	if (!(*m_queue)->hasElement(m_queue, cookie))
 	{
 		(*m_queue)->addElement(m_queue, cookie, 0);
+	}
+}
+
+void IOKitJoystick::RemoveFromQueue(const IOHIDElementCookie cookie)
+{
+	if (NULL == m_queue)
+	{
+		return;
+	}
+
+	if ((*m_queue)->hasElement(m_queue, cookie))
+	{
+		(*m_queue)->removeElement(m_queue, cookie);
 	}
 }
 
@@ -878,6 +932,8 @@ public:
 
 	// Rebuilds device list
 	void Rescan();
+
+	void UseAxesPolling(bool axesPolling);
 
 private:
 	TArray<IOKitJoystick*> m_joysticks;
@@ -993,6 +1049,15 @@ void IOKitJoystickManager::ReleaseJoysticks()
 }
 
 
+void IOKitJoystickManager::UseAxesPolling(const bool axesPolling)
+{
+	for (size_t i = 0, count = m_joysticks.Size(); i <count; ++i)
+	{
+		m_joysticks[i]->UseAxesPolling(axesPolling);
+	}
+}
+
+
 IOKitJoystickManager* s_joystickManager;
 
 
@@ -1066,5 +1131,17 @@ void I_ProcessJoysticks()
 	if (NULL != s_joystickManager)
 	{
 		s_joystickManager->Update();
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+CUSTOM_CVAR(Bool, joy_axespolling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (NULL != s_joystickManager)
+	{
+		s_joystickManager->UseAxesPolling(self);
 	}
 }

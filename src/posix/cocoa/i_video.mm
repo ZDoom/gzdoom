@@ -2,7 +2,7 @@
  ** i_video.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2015 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,8 @@
  **
  */
 
-#import <AppKit/NSButton.h>
-#import <AppKit/NSCursor.h>
-#import <AppKit/NSImage.h>
-#import <AppKit/NSOpenGL.h>
-#import <AppKit/NSOpenGLView.h>
+#include "i_common.h"
+
 #import <Carbon/Carbon.h>
 #import <OpenGL/gl.h>
 
@@ -57,9 +54,6 @@
 #include "v_text.h"
 #include "v_video.h"
 #include "version.h"
-
-#include "i_common.h"
-#include "i_rbopts.h"
 
 #undef Class
 

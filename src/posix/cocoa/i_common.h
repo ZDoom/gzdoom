@@ -31,10 +31,23 @@
  **
  */
 
-#import <AppKit/NSApplication.h>
-#import <AppKit/NSScreen.h>
-#import <AppKit/NSView.h>
-#import <AppKit/NSWindow.h>
+#import <AppKit/AppKit.h>
+
+
+struct RenderBufferOptions
+{
+	float pixelScale;
+
+	float shiftX;
+	float shiftY;
+
+	float width;
+	float height;
+
+	bool dirty;
+};
+
+extern RenderBufferOptions rbOpts;
 
 
 inline bool I_IsHiDPISupported()

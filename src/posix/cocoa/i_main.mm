@@ -34,6 +34,7 @@
 #include "i_common.h"
 
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass

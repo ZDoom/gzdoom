@@ -128,17 +128,6 @@ enum
 	kVK_UpArrow       = 0x7E
 };
 
-@interface NSView(SupportOutdatedOSX)
-- (NSPoint)convertPointFromBase:(NSPoint)aPoint;
-@end
-
-@implementation NSView(SupportOutdatedOSX)
-- (NSPoint)convertPointFromBase:(NSPoint)aPoint
-{
-	return [self convertPoint:aPoint fromView:nil];
-}
-@end
-
 #endif // prior to 10.5
 
 

@@ -346,7 +346,7 @@ Const Int WARPF_TESTONLY = 0x200;
 Const Int WAPRF_ABSOLUTEPOSITION = 0x400;
 Const Int WARPF_ABSOLUTEPOSITION = 0x400;
 
-// flags for A_SetPitch/SetAngle
+// flags for A_SetPitch/SetAngle/SetRoll
 const int SPF_FORCECLAMP = 1;
 const int SPF_INTERPOLATE = 2;
 

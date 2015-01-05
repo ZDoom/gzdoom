@@ -4440,6 +4440,9 @@ enum EACSFunctions
 	ACSF_CanRaiseActor,
 	ACSF_SetActorTeleFog,		// 86
 	ACSF_SwapActorTeleFog,
+	ACSF_SetActorRoll,
+	ACSF_ChangeActorRoll,
+	ACSF_GetActorRoll,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -4747,6 +4750,27 @@ static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolat
 		while ((actor = iterator.Next()))
 		{
 			actor->SetPitch(angle << 16, interpolate);
+		}
+	}
+}
+
+static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetRoll(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetRoll(angle << 16, interpolate);
 		}
 	}
 }
@@ -5831,6 +5855,26 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return !canraiseall;
 			}
 			break;
+
+		// [Nash] Actor roll functions. Let's roll!
+		case ACSF_SetActorRoll:
+			actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				actor->SetRoll(args[1] << 16, false);
+			}
+			return 0;
+
+		case ACSF_ChangeActorRoll:
+			if (argCount >= 2)
+			{
+				SetActorRoll(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_GetActorRoll:
+			actor = SingleActorFromTID(args[0], activator);
+			return actor != NULL? actor->roll >> 16 : 0;
 
 		default:
 			break;

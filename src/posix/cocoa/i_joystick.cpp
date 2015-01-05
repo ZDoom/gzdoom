@@ -221,7 +221,8 @@ IOHIDDeviceInterface** CreateDeviceInterface(const io_object_t device)
 		}
 		else
 		{
-			Printf(TEXTCOLOR_RED "IOCFPlugInInterface::QueryInterface() failed with code 0x%08X\n", queryResult);
+			Printf(TEXTCOLOR_RED "IOCFPlugInInterface::QueryInterface() failed with code 0x%08X\n",
+				static_cast<int>(queryResult));
 			return NULL;
 		}
 	}

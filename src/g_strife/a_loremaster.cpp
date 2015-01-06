@@ -23,7 +23,7 @@ int ALoreShot::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 {
 	FVector3 thrust;
 	
-	if (this->target != NULL)
+	if (this->target != NULL && !(this->target->flags7 & MF7_DONTTHRUST))
 	{
 		thrust.X = float(this->target->x - target->x);
 		thrust.Y = float(this->target->y - target->y);

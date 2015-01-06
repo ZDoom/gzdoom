@@ -326,6 +326,7 @@ ACTOR Actor native //: Thinker
 	action native A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
 	action native A_SetTeleFog(name oldpos, name newpos);
 	action native A_SwapTeleFog();
+	action native A_SetFloatBobPhase(int bob);
 	action native A_SetRipperLevel(int level);
 	action native A_SetRipMin(int min);
 	action native A_SetRipMax(int max);

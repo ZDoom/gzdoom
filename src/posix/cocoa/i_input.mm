@@ -2,7 +2,7 @@
  ** i_input.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2015 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
  **
  */
 
-#import <AppKit/NSCursor.h>
-#import <AppKit/NSEvent.h>
+#include "i_common.h"
+
 #import <Carbon/Carbon.h>
 
 // Avoid collision between DObject class and Objective-C
@@ -47,9 +47,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "v_video.h"
-
-#include "i_common.h"
-#include "i_rbopts.h"
 
 #undef Class
 

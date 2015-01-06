@@ -33,6 +33,7 @@
 
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOKitLib.h>
+#include <IOKit/IOMessage.h>
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hid/IOHIDUsageTables.h>
 
@@ -43,6 +44,9 @@
 #include "m_joy.h"
 #include "templates.h"
 #include "v_text.h"
+
+
+EXTERN_CVAR(Bool, joy_axespolling)
 
 
 namespace
@@ -71,6 +75,9 @@ FString ToFString(const CFStringRef string)
 
 	return FString(buffer);
 }
+
+
+// ---------------------------------------------------------------------------
 
 
 class IOKitJoystick : public IJoystickConfig
@@ -104,6 +111,10 @@ public:
 	void AddAxes(float axes[NUM_JOYAXIS]) const;
 
 	void Update();
+
+	void UseAxesPolling(bool axesPolling);
+
+	io_object_t* GetNotificationPtr();
 
 private:
 	IOHIDDeviceInterface** m_interface;
@@ -154,6 +165,10 @@ private:
 	TArray<DigitalButton> m_buttons;
 	TArray<DigitalButton> m_POVs;
 
+	bool m_useAxesPolling;
+
+	io_object_t m_notification;
+
 
 	static const float DEFAULT_DEADZONE;
 	static const float DEFAULT_SENSITIVITY;
@@ -171,7 +186,9 @@ private:
 	void AddAxis(CFDictionaryRef element);
 	void AddButton(CFDictionaryRef element);
 	void AddPOV(CFDictionaryRef element);
+
 	void AddToQueue(IOHIDElementCookie cookie);
+	void RemoveFromQueue(IOHIDElementCookie cookie);
 };
 
 
@@ -212,7 +229,8 @@ IOHIDDeviceInterface** CreateDeviceInterface(const io_object_t device)
 		}
 		else
 		{
-			Printf(TEXTCOLOR_RED "IOCFPlugInInterface::QueryInterface() failed with code 0x%08X\n", queryResult);
+			Printf(TEXTCOLOR_RED "IOCFPlugInInterface::QueryInterface() failed with code 0x%08X\n",
+				static_cast<int>(queryResult));
 			return NULL;
 		}
 	}
@@ -261,6 +279,8 @@ IOKitJoystick::IOKitJoystick(const io_object_t device)
 : m_interface(CreateDeviceInterface(device))
 , m_queue(CreateDeviceQueue(m_interface))
 , m_sensitivity(DEFAULT_SENSITIVITY)
+, m_useAxesPolling(true)
+, m_notification(0)
 {
 	if (NULL == m_interface || NULL == m_queue)
 	{
@@ -282,6 +302,8 @@ IOKitJoystick::IOKitJoystick(const io_object_t device)
 
 	CFRelease(properties);
 
+	UseAxesPolling(joy_axespolling);
+
 	(*m_queue)->start(m_queue);
 
 	SetDefaultConfig();
@@ -290,6 +312,11 @@ IOKitJoystick::IOKitJoystick(const io_object_t device)
 IOKitJoystick::~IOKitJoystick()
 {
 	M_SaveJoystickConfig(this);
+
+	if (0 != m_notification)
+	{
+		IOObjectRelease(m_notification);
+	}
 
 	if (NULL != m_queue)
 	{
@@ -486,6 +513,26 @@ void IOKitJoystick::AddAxes(float axes[NUM_JOYAXIS]) const
 }
 
 
+void IOKitJoystick::UseAxesPolling(const bool axesPolling)
+{
+	m_useAxesPolling = axesPolling;
+
+	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
+	{
+		AnalogAxis& axis = m_axes[i];
+
+		if (m_useAxesPolling)
+		{
+			RemoveFromQueue(axis.cookie);
+		}
+		else
+		{
+			AddToQueue(axis.cookie);
+		}
+	}
+}
+
+
 void IOKitJoystick::Update()
 {
 	if (NULL == m_queue)
@@ -509,12 +556,14 @@ void IOKitJoystick::Update()
 	{
 		Printf(TEXTCOLOR_RED "IOHIDQueueInterface::getNextEvent() failed with code 0x%08X\n", eventResult);
 	}
+
+	ProcessAxes();
 }
 
 
 void IOKitJoystick::ProcessAxes()
 {
-	if (NULL == m_interface)
+	if (NULL == m_interface || !m_useAxesPolling)
 	{
 		return;
 	}
@@ -546,6 +595,11 @@ void IOKitJoystick::ProcessAxes()
 
 bool IOKitJoystick::ProcessAxis(const IOHIDEventStruct& event)
 {
+	if (m_useAxesPolling)
+	{
+		return false;
+	}
+
 	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
 	{
 		if (event.elementCookie != m_axes[i].cookie)
@@ -827,8 +881,6 @@ void IOKitJoystick::AddAxis(const CFDictionaryRef element)
 	}
 
 	m_axes.Push(axis);
-
-	AddToQueue(axis.cookie);
 }
 
 void IOKitJoystick::AddButton(CFDictionaryRef element)
@@ -849,14 +901,37 @@ void IOKitJoystick::AddPOV(CFDictionaryRef element)
 	AddToQueue(pov.cookie);
 }
 
+
 void IOKitJoystick::AddToQueue(const IOHIDElementCookie cookie)
 {
-	assert(NULL != m_queue);
+	if (NULL == m_queue)
+	{
+		return;
+	}
 
 	if (!(*m_queue)->hasElement(m_queue, cookie))
 	{
 		(*m_queue)->addElement(m_queue, cookie, 0);
 	}
+}
+
+void IOKitJoystick::RemoveFromQueue(const IOHIDElementCookie cookie)
+{
+	if (NULL == m_queue)
+	{
+		return;
+	}
+
+	if ((*m_queue)->hasElement(m_queue, cookie))
+	{
+		(*m_queue)->removeElement(m_queue, cookie);
+	}
+}
+
+
+io_object_t* IOKitJoystick::GetNotificationPtr()
+{
+	return &m_notification;
 }
 
 
@@ -876,26 +951,75 @@ public:
 	// Updates axes/buttons states
 	void Update();
 
-	// Rebuilds device list
-	void Rescan();
+	void UseAxesPolling(bool axesPolling);
 
 private:
-	TArray<IOKitJoystick*> m_joysticks;
+	typedef TDeletingArray<IOKitJoystick*> JoystickList;
+	JoystickList m_joysticks;
 
-	void Rescan(int usagePage, int usage);
+	static const size_t NOTIFICATION_PORT_COUNT = 2;
 
-	void ReleaseJoysticks();
+	IONotificationPortRef m_notificationPorts[NOTIFICATION_PORT_COUNT];
+	io_iterator_t         m_notifications    [NOTIFICATION_PORT_COUNT];
+
+	// Rebuilds device list
+	void Rescan(int usagePage, int usage, size_t notificationPortIndex);
+	void AddDevices(IONotificationPortRef notificationPort, const io_iterator_t iterator);
+
+	static void OnDeviceAttached(void* refcon, io_iterator_t iterator);
+	static void OnDeviceRemoved(void* refcon, io_service_t service,
+		natural_t messageType, void* messageArgument);
 };
+
+
+IOKitJoystickManager* s_joystickManager;
 
 
 IOKitJoystickManager::IOKitJoystickManager()
 {
-	Rescan();
+	memset(m_notifications, 0, sizeof m_notifications);
+
+	for (size_t i = 0; i < NOTIFICATION_PORT_COUNT; ++i)
+	{
+		m_notificationPorts[i] = IONotificationPortCreate(kIOMasterPortDefault);
+
+		if (NULL == m_notificationPorts[i])
+		{
+			Printf(TEXTCOLOR_RED "IONotificationPortCreate(%zu) failed\n", i);
+			return;
+		}
+
+		CFRunLoopAddSource(CFRunLoopGetCurrent(),
+			IONotificationPortGetRunLoopSource(m_notificationPorts[i]), kCFRunLoopDefaultMode);
+	}
+
+	Rescan(kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick, 0);
+	Rescan(kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad,  1);
 }
 
 IOKitJoystickManager::~IOKitJoystickManager()
 {
-	ReleaseJoysticks();
+	for (size_t i = 0; i < NOTIFICATION_PORT_COUNT; ++i)
+	{
+		IONotificationPortRef& port = m_notificationPorts[i];
+
+		if (NULL != port)
+		{
+			CFRunLoopRemoveSource(CFRunLoopGetCurrent(),
+				IONotificationPortGetRunLoopSource(port), kCFRunLoopDefaultMode);
+
+			IONotificationPortDestroy(port);
+			port = NULL;
+		}
+
+		io_iterator_t& notification = m_notifications[i];
+
+		if (0 != notification)
+		{
+			IOObjectRelease(notification);
+			notification = NULL;
+		}
+	}
 }
 
 
@@ -931,15 +1055,23 @@ void IOKitJoystickManager::Update()
 }
 
 
-void IOKitJoystickManager::Rescan()
+void IOKitJoystickManager::UseAxesPolling(const bool axesPolling)
 {
-	ReleaseJoysticks();
-
-	Rescan(kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick);
-	Rescan(kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad);
+	for (size_t i = 0, count = m_joysticks.Size(); i < count; ++i)
+	{
+		m_joysticks[i]->UseAxesPolling(axesPolling);
+	}
 }
 
-void IOKitJoystickManager::Rescan(const int usagePage, const int usage)
+
+void PostDeviceChangeEvent()
+{
+	const event_t event = { EV_DeviceChange };
+	D_PostEvent(&event);
+}
+
+
+void IOKitJoystickManager::Rescan(const int usagePage, const int usage, const size_t notificationPortIndex)
 {
 	CFMutableDictionaryRef deviceMatching = IOServiceMatching(kIOHIDDeviceKey);
 
@@ -957,44 +1089,85 @@ void IOKitJoystickManager::Rescan(const int usagePage, const int usage)
 		CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
 	CFDictionarySetValue(deviceMatching, CFSTR(kIOHIDPrimaryUsageKey), usageRef);
 
-	io_iterator_t iterator = 0;
-	const kern_return_t matchResult =
-		IOServiceGetMatchingServices(kIOMasterPortDefault, deviceMatching, &iterator);
+	assert(notificationPortIndex < NOTIFICATION_PORT_COUNT);
+	io_iterator_t* iteratorPtr = &m_notifications[notificationPortIndex];
+
+	const IONotificationPortRef notificationPort = m_notificationPorts[notificationPortIndex];
+	assert(NULL != notificationPort);
+
+	const kern_return_t notificationResult = IOServiceAddMatchingNotification(notificationPort,
+		kIOFirstMatchNotification, deviceMatching, OnDeviceAttached, notificationPort, iteratorPtr);
+
+	// IOServiceAddMatchingNotification() consumes one reference of matching dictionary
+	// Thus CFRelease(deviceMatching) is not needed
 
 	CFRelease(usageRef);
 	CFRelease(usagePageRef);
 
-	if (KERN_SUCCESS != matchResult)
+	if (KERN_SUCCESS != notificationResult)
 	{
-		Printf(TEXTCOLOR_RED "IOServiceGetMatchingServices() failed with code %i\n", matchResult);
-		return;
+		Printf(TEXTCOLOR_RED "IOServiceAddMatchingNotification() failed with code %i\n", notificationResult);
 	}
 
+	AddDevices(notificationPort, *iteratorPtr);
+}
+
+void IOKitJoystickManager::AddDevices(const IONotificationPortRef notificationPort, const io_iterator_t iterator)
+{
 	while (io_object_t device = IOIteratorNext(iterator))
 	{
 		IOKitJoystick* joystick = new IOKitJoystick(device);
 		m_joysticks.Push(joystick);
 
+		const kern_return_t notificationResult = IOServiceAddInterestNotification(notificationPort,
+			device, kIOGeneralInterest, OnDeviceRemoved, joystick, joystick->GetNotificationPtr());
+		if (KERN_SUCCESS != notificationResult)
+		{
+			Printf(TEXTCOLOR_RED "IOServiceAddInterestNotification() failed with code %i\n", notificationResult);
+		}
+
 		IOObjectRelease(device);
+		
+		PostDeviceChangeEvent();
 	}
-
-	IOObjectRelease(iterator);
 }
 
 
-void IOKitJoystickManager::ReleaseJoysticks()
+void IOKitJoystickManager::OnDeviceAttached(void* const refcon, const io_iterator_t iterator)
 {
-	for (size_t i = 0, count = m_joysticks.Size(); i <count; ++i)
-	{
-		delete m_joysticks[i];
-	}
+	assert(NULL != refcon);
+	const IONotificationPortRef notificationPort = static_cast<IONotificationPortRef>(refcon);
 
-	m_joysticks.Clear();
+	assert(NULL != s_joystickManager);
+	s_joystickManager->AddDevices(notificationPort, iterator);
 }
 
+void IOKitJoystickManager::OnDeviceRemoved(void* const refcon, io_service_t, const natural_t messageType, void*)
+{
+	if (messageType != kIOMessageServiceIsTerminated)
+	{
+		return;
+	}
 
-IOKitJoystickManager* s_joystickManager;
+	assert(NULL != refcon);
+	IOKitJoystick* const joystick = static_cast<IOKitJoystick*>(refcon);
 
+	assert(NULL != s_joystickManager);
+	JoystickList& joysticks = s_joystickManager->m_joysticks;
+
+	for (unsigned int i = 0, count = joysticks.Size(); i < count; ++i)
+	{
+		if (joystick == joysticks[i])
+		{
+			joysticks.Delete(i);
+			break;
+		}
+	}
+
+	delete joystick;
+
+	PostDeviceChangeEvent();
+}
 
 } // unnamed namespace
 
@@ -1036,7 +1209,7 @@ void I_GetJoysticks(TArray<IJoystickConfig*>& sticks)
 
 void I_GetAxes(float axes[NUM_JOYAXIS])
 {
-	for (size_t i = 0; i <NUM_JOYAXIS; ++i)
+	for (size_t i = 0; i < NUM_JOYAXIS; ++i)
 	{
 		axes[i] = 0.0f;
 	}
@@ -1049,10 +1222,7 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 
 IJoystickConfig* I_UpdateDeviceList()
 {
-	if (use_joystick && NULL != s_joystickManager)
-	{
-		s_joystickManager->Rescan();
-	}
+	// Does nothing, device list is always kept up-to-date
 
 	return NULL;
 }
@@ -1066,5 +1236,17 @@ void I_ProcessJoysticks()
 	if (NULL != s_joystickManager)
 	{
 		s_joystickManager->Update();
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+CUSTOM_CVAR(Bool, joy_axespolling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (NULL != s_joystickManager)
+	{
+		s_joystickManager->UseAxesPolling(self);
 	}
 }

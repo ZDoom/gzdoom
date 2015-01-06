@@ -31,10 +31,23 @@
  **
  */
 
-#import <AppKit/NSApplication.h>
-#import <AppKit/NSScreen.h>
-#import <AppKit/NSView.h>
-#import <AppKit/NSWindow.h>
+#import <AppKit/AppKit.h>
+
+
+struct RenderBufferOptions
+{
+	float pixelScale;
+
+	float shiftX;
+	float shiftY;
+
+	float width;
+	float height;
+
+	bool dirty;
+};
+
+extern RenderBufferOptions rbOpts;
 
 
 inline bool I_IsHiDPISupported()
@@ -114,17 +127,6 @@ enum
 	kVK_DownArrow     = 0x7D,
 	kVK_UpArrow       = 0x7E
 };
-
-@interface NSView(SupportOutdatedOSX)
-- (NSPoint)convertPointFromBase:(NSPoint)aPoint;
-@end
-
-@implementation NSView(SupportOutdatedOSX)
-- (NSPoint)convertPointFromBase:(NSPoint)aPoint
-{
-	return [self convertPoint:aPoint fromView:nil];
-}
-@end
 
 #endif // prior to 10.5
 

@@ -408,21 +408,28 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 
 	@try
 	{
-		const int commandLineParametersCount = Args->NumArgs();
-		assert(commandLineParametersCount > 0);
-
 		NSString* executablePath = [NSString stringWithUTF8String:Args->GetArg(0)];
-		NSString* architecture   = GetArchitectureString();
 
-		NSMutableArray* arguments = [NSMutableArray arrayWithCapacity:commandLineParametersCount + 6];
-		[arguments addObject:@"-arch"];
-		[arguments addObject:architecture];
-		[arguments addObject:executablePath];
+		NSMutableArray* const arguments = [[NSMutableArray alloc] init];
+
+		// The following value shoud be equal to NSAppKitVersionNumber10_5
+		// It's hard-coded in order to build with earlier SDKs
+		const bool canSelectArchitecture = NSAppKitVersionNumber >= 949;
+
+		if (canSelectArchitecture)
+		{
+			[arguments addObject:@"-arch"];
+			[arguments addObject:GetArchitectureString()];
+			[arguments addObject:executablePath];
+
+			executablePath = @"/usr/bin/arch";
+		}
+
 		[arguments addObject:@"-wad_picker_restart"];
 		[arguments addObject:@"-iwad"];
 		[arguments addObject:[NSString stringWithUTF8String:iwadPath]];
 
-		for (int i = 1; i < commandLineParametersCount; ++i)
+		for (int i = 1, count = Args->NumArgs(); i < count; ++i)
 		{
 			NSString* currentParameter = [NSString stringWithUTF8String:Args->GetArg(i)];
 			[arguments addObject:currentParameter];
@@ -442,7 +449,8 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 			wordfree(&expansion);
 		}
 
-		[NSTask launchedTaskWithLaunchPath:@"/usr/bin/arch" arguments:arguments];
+		[NSTask launchedTaskWithLaunchPath:executablePath
+								 arguments:arguments];
 
 		_exit(0); // to avoid atexit()'s functions
 	}

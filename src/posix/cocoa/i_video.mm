@@ -355,10 +355,14 @@ cycle_t FlipCycles;
 
 CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 {
-	CocoaWindow* window = [[CocoaWindow alloc] initWithContentRect:NSMakeRect(0, 0, 640, 480)
-														 styleMask:styleMask
-														   backing:NSBackingStoreBuffered
-															 defer:NO];
+	static const CGFloat TEMP_WIDTH  = VideoModes[0].width  - 1;
+	static const CGFloat TEMP_HEIGHT = VideoModes[0].height - 1;
+
+	CocoaWindow* const window = [CocoaWindow alloc];
+	[window initWithContentRect:NSMakeRect(0, 0, TEMP_WIDTH, TEMP_HEIGHT)
+					  styleMask:styleMask
+						backing:NSBackingStoreBuffered
+						  defer:NO];
 	[window setOpaque:YES];
 	[window makeFirstResponder:appCtrl];
 	[window setAcceptsMouseMovedEvents:YES];

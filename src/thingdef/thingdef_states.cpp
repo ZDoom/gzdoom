@@ -66,7 +66,7 @@ TDeletingArray<FStateTempCall *> StateTempCalls;
 // handles action specials as code pointers
 //
 //==========================================================================
-bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall *tcall)
+FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 {
 	int i;
 	int min_args, max_args;
@@ -100,11 +100,9 @@ bool DoActionSpecials(FScanner &sc, FState & state, Baggage &bag, FStateTempCall
 		{
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
-
-		tcall->Call = new FxVMFunctionCall(FindGlobalActionFunction("A_CallSpecial"), args, sc);
-		return true;
+		return new FxVMFunctionCall(FindGlobalActionFunction("A_CallSpecial"), args, sc);
 	}
-	return false;
+	return NULL;
 }
 
 //==========================================================================
@@ -319,7 +317,8 @@ do_stop:
 				// Make the action name lowercase
 				strlwr (sc.String);
 
-				if (DoActionSpecials(sc, state, bag, tcall))
+				tcall->Call = DoActionSpecials(sc, state, bag);
+				if (tcall->Call != NULL)
 				{
 					goto endofstate;
 				}

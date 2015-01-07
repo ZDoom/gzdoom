@@ -39,7 +39,7 @@ ACTOR Demon 3002
 		Goto See
 	Death:
 		SARG I 8
-		SARG J 8 A_Scream
+		SARG J 8 A_Scream()
 		SARG K 4
 		SARG L 4 A_NoBlocking
 		SARG M 4

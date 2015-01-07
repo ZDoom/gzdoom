@@ -332,7 +332,8 @@ do_stop:
 					goto endofstate;
 				}
 
-				PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc.String, true), true);
+				FName funcname = FName(sc.String, true);
+				PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (funcname, true);
 				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
 					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
@@ -434,7 +435,7 @@ do_stop:
 						sc.MustGetString();
 						if (sc.Compare("("))
 						{
-							sc.ScriptError("You cannot pass parameters to '%s'\n",sc.String);
+							sc.ScriptError("You cannot pass parameters to '%s'\n", funcname.GetChars());
 						}
 						sc.UnGet();
 					}

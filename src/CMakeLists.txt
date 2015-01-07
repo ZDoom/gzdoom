@@ -584,13 +584,11 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
 	posix/sdl/i_timer.cpp
-	posix/sdl/sdlvideo.cpp )
+	posix/sdl/sdlvideo.cpp
+	posix/sdl/sdlglvideo.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/zdoom.icns )
-
-# Fixme: This must be adjusted to the new way of doing things:
-# 	sdl/sdlglvideo.cpp
 set( PLAT_COCOA_SOURCES
 	posix/cocoa/hid/HID_Config_Utilities.c
 	posix/cocoa/hid/HID_Error_Handler.c

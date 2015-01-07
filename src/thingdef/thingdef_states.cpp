@@ -391,6 +391,8 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
 	int numparams = (int)params.Size();
 	int pnum = 0;
+	bool zeroparm;
+
 	if (afd->Flags & VARF_Method)
 	{
 		numparams--;
@@ -401,83 +403,80 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 		numparams -= 2;
 		pnum += 2;
 	}
-	if (numparams > 0)
+	assert(numparams >= 0);
+	zeroparm = numparams == 0;
+	if (numparams > 0 && !(paramflags[pnum] & VARF_Optional))
 	{
-		int v;
-
-		if (!(paramflags[pnum] & VARF_Optional))
+		sc.MustGetStringName("(");
+	}
+	else
+	{
+		if (!sc.CheckString("(")) 
 		{
-			sc.MustGetStringName("(");
+			return;
 		}
-		else
+	}
+	while (numparams > 0)
+	{
+		FxExpression *x;
+		if (statedef != NULL && params[pnum] == TypeState && sc.CheckNumber())
 		{
-			if (!sc.CheckString("(")) 
+			// Special case: State label as an offset
+			if (sc.Number > 0 && statestring.Len() > 1)
 			{
-				return;
+				sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
 			}
-		}
-		
-		while (numparams > 0)
-		{
-			FxExpression *x;
-			if (statedef != NULL && params[pnum] == TypeState && sc.CheckNumber())
+
+			int v = sc.Number;
+			if (v < 0)
 			{
-				// Special case: State label as an offset
-				if (sc.Number > 0 && statestring.Len() > 1)
-				{
-					sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
-				}
+				sc.ScriptError("Negative jump offsets are not allowed");
+			}
 
-				v = sc.Number;
-				if (v<0)
-				{
-					sc.ScriptError("Negative jump offsets are not allowed");
-				}
-
-				if (v > 0)
-				{
-					x = new FxStateByIndex(statedef->GetStateCount() + v, sc);
-				}
-				else
-				{
-					x = new FxConstant((FState*)NULL, sc);
-				}
+			if (v > 0)
+			{
+				x = new FxStateByIndex(statedef->GetStateCount() + v, sc);
 			}
 			else
 			{
-				// Use the generic parameter parser for everything else
-				x = ParseParameter(sc, cls, params[pnum], false);
+				x = new FxConstant((FState*)NULL, sc);
 			}
-			out_params.Push(new FxParameter(x));
-			pnum++;
-			numparams--;
-			if (numparams > 0)
-			{
-				if (params[pnum] == NULL)
-				{ // varargs function
-					if (sc.CheckString(")"))
-					{
-						return;
-					}
-					pnum--;
-					numparams++;
-				}
-				else if ((paramflags[pnum] & VARF_Optional) && sc.CheckString(")"))
+		}
+		else
+		{
+			// Use the generic parameter parser for everything else
+			x = ParseParameter(sc, cls, params[pnum], false);
+		}
+		out_params.Push(new FxParameter(x));
+		pnum++;
+		numparams--;
+		if (numparams > 0)
+		{
+			if (params[pnum] == NULL)
+			{ // varargs function
+				if (sc.CheckString(")"))
 				{
 					return;
 				}
-				sc.MustGetStringName (",");
+				pnum--;
+				numparams++;
 			}
+			else if ((paramflags[pnum] & VARF_Optional) && sc.CheckString(")"))
+			{
+				return;
+			}
+			sc.MustGetStringName (",");
 		}
-		sc.MustGetStringName(")");
 	}
-	else 
+	if (zeroparm)
 	{
-		sc.MustGetString();
-		if (sc.Compare("("))
+		if (!sc.CheckString(")"))
 		{
 			sc.ScriptError("You cannot pass parameters to '%s'\n", afd->SymbolName.GetChars());
 		}
-		sc.UnGet();
+	}
+	else
+	{
+		sc.MustGetStringName(")");
 	}
 }

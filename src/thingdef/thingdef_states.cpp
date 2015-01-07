@@ -314,34 +314,10 @@ do_stop:
 					continue;
 				}
 
-				// Make the action name lowercase
-				strlwr (sc.String);
-
-				tcall->Call = DoActionSpecials(sc, state, bag);
-				if (tcall->Call != NULL)
+				if (ParseAction(sc, state, statestring, tcall, bag))
 				{
 					goto endofstate;
 				}
-
-				PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(FName(sc.String, true), true));
-				if (afd != NULL)
-				{
-					// When creating the FxVMFunctionCall, we only pass args if there are any.
-					// So if the previous call had no args, then we can use the argument list
-					// allocated for it. Otherwise, we need to create a new one.
-					if (args == NULL)
-					{
-						args = new FArgumentList;
-					}
-					ParseFunctionParameters(sc, bag.Info, *args, afd, statestring, &bag.statedef);
-					tcall->Call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc);
-					if (args->Size() > 0)
-					{
-						args = NULL;
-					}
-					goto endofstate;
-				}
-				sc.ScriptError("Invalid state parameter %s\n", sc.String);
 			}
 			sc.UnGet();
 endofstate:
@@ -370,6 +346,39 @@ endofstate:
 		delete args;
 	}
 	sc.SetEscape(true);	// re-enable escape sequences
+}
+
+//==========================================================================
+//
+// ParseAction
+//
+//==========================================================================
+
+bool ParseAction(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag)
+{
+	// Make the action name lowercase
+	strlwr (sc.String);
+
+	tcall->Call = DoActionSpecials(sc, state, bag);
+	if (tcall->Call != NULL)
+	{
+		return true;
+	}
+
+	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(FName(sc.String, true), true));
+	if (afd != NULL)
+	{
+		FArgumentList *args = new FArgumentList;
+		ParseFunctionParameters(sc, bag.Info, *args, afd, statestring, &bag.statedef);
+		tcall->Call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc);
+		if (args->Size() == 0)
+		{
+			delete args;
+		}
+		return true;
+	}
+	sc.ScriptError("Invalid state parameter %s\n", sc.String);
+	return false;
 }
 
 //==========================================================================

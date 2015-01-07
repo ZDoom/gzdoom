@@ -189,6 +189,7 @@ AFuncDesc *FindFunction(const char * string);
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
+bool ParseAction(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag);
 
 PFunction *FindGlobalActionFunction(const char *name);
 

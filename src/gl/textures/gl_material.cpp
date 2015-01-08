@@ -413,19 +413,16 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	if (tx->bWarped)
 	{
 		mShaderIndex = tx->bWarped;
-		expanded = false;
 		tx->gl_info.shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
 	}
 	else if (tx->bHasCanvas)
 	{
-		expanded = false;
 	}
 	else
 	{
 		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
 		{
 			mShaderIndex = tx->gl_info.shaderindex;
-			expanded = false;
 		}
 		else
 		{
@@ -439,7 +436,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			}
 		}
 	}
-	assert(tx->gl_info.Material[expanded] == NULL);
 	mBaseLayer = ValidateSysTexture(tx, true);
 
 
@@ -765,6 +761,10 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 		FMaterial *gltex = tex->gl_info.Material[expand];
 		if (gltex == NULL) 
 		{
+			if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)
+			{
+				expand = false;
+			}
 			gltex = new FMaterial(tex, expand);
 		}
 		return gltex;

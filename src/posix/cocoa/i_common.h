@@ -2,7 +2,7 @@
  ** i_common.h
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2015 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,23 @@
  **
  */
 
-#import <AppKit/NSApplication.h>
-#import <AppKit/NSScreen.h>
-#import <AppKit/NSView.h>
-#import <AppKit/NSWindow.h>
+#import <AppKit/AppKit.h>
+
+
+struct RenderBufferOptions
+{
+	float pixelScale;
+
+	float shiftX;
+	float shiftY;
+
+	float width;
+	float height;
+
+	bool dirty;
+};
+
+extern RenderBufferOptions rbOpts;
 
 
 inline bool I_IsHiDPISupported()
@@ -47,8 +60,6 @@ inline bool I_IsHiDPISupported()
 
 void I_ProcessEvent(NSEvent* event);
 
-void I_StartupJoysticks();
-void I_ShutdownJoysticks();
 void I_ProcessJoysticks();
 
 NSSize I_GetContentViewSize(const NSWindow* window);
@@ -116,17 +127,6 @@ enum
 	kVK_DownArrow     = 0x7D,
 	kVK_UpArrow       = 0x7E
 };
-
-@interface NSView(SupportOutdatedOSX)
-- (NSPoint)convertPointFromBase:(NSPoint)aPoint;
-@end
-
-@implementation NSView(SupportOutdatedOSX)
-- (NSPoint)convertPointFromBase:(NSPoint)aPoint
-{
-	return [self convertPoint:aPoint fromView:nil];
-}
-@end
 
 #endif // prior to 10.5
 

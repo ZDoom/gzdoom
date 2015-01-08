@@ -2,7 +2,7 @@
  ** i_main.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2015 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,10 @@
  **
  */
 
-#include <sys/sysctl.h>
+#include "i_common.h"
 
-#import <AppKit/NSMenu.h>
-#import <AppKit/NSEvent.h>
+#include <sys/sysctl.h>
+#include <unistd.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -48,9 +48,6 @@
 #include "m_argv.h"
 #include "s_sound.h"
 #include "version.h"
-
-#include "i_common.h"
-#include "i_osversion.h"
 
 #undef Class
 
@@ -213,9 +210,6 @@ int OriginalMain(int argc, char** argv)
 		NSString* exePath = [[NSBundle mainBundle] executablePath];
 		progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
 		progdir += "/";
-
-		I_StartupJoysticks();
-		atterm(I_ShutdownJoysticks);
 
 		C_InitConsole(80 * 8, 25 * 8, false);
 		D_DoomMain();
@@ -495,27 +489,6 @@ void CreateMenu()
 	[NSApp setMainMenu:menuBar];
 }
 
-DarwinVersion GetDarwinVersion()
-{
-	DarwinVersion result = {};
-
-	int mib[2] = { CTL_KERN, KERN_OSRELEASE };
-	size_t size = 0;
-
-	if (0 == sysctl(mib, 2, NULL, &size, NULL, 0))
-	{
-		char* version = static_cast<char*>(alloca(size));
-
-		if (0 == sysctl(mib, 2, version, &size, NULL, 0))
-		{
-			sscanf(version, "%hu.%hu.%hu",
-				&result.major, &result.minor, &result.bugfix);
-		}
-	}
-
-	return result;
-}
-
 void ReleaseApplicationController()
 {
 	if (NULL != appCtrl)
@@ -529,9 +502,6 @@ void ReleaseApplicationController()
 }
 
 } // unnamed namespace
-
-
-const DarwinVersion darwinVersion = GetDarwinVersion();
 
 
 int main(int argc, char** argv)

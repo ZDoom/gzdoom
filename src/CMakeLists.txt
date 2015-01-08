@@ -592,14 +592,6 @@ set( PLAT_OSX_SOURCES
 # Fixme: This must be adjusted to the new way of doing things:
 # 	sdl/sdlglvideo.cpp
 set( PLAT_COCOA_SOURCES
-	posix/cocoa/hid/HID_Config_Utilities.c
-	posix/cocoa/hid/HID_Error_Handler.c
-	posix/cocoa/hid/HID_Name_Lookup.c
-	posix/cocoa/hid/HID_Queue_Utilities.c
-	posix/cocoa/hid/HID_Utilities.c
-	posix/cocoa/hid/IOHIDDevice_.c
-	posix/cocoa/hid/IOHIDElement_.c
-	posix/cocoa/hid/ImmrHIDUtilAddOn.c
 	posix/cocoa/critsec.cpp
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp

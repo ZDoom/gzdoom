@@ -2613,7 +2613,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 // Useful for maps with many multi-actor special effects.
 //
 //===========================================================================
-static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
+static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool twodi)
 {
 	if (camera == NULL)
 	{
@@ -2636,8 +2636,9 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
 	{
 		dz = 0;
 	}
-	if ((dx*dx) + (dy*dy) + (dz*dz) <= range)
-	{ // Within range
+	double distance = (dx * dx) + (dy * dy) + (twodi == 0? (dz * dz) : 0);
+	if (distance <= range){
+		// Within range
 		return true;
 	}
 
@@ -2651,9 +2652,10 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	double range = EvalExpressionF(ParameterIndex+0, self);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_BOOL(twodi, 2);
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
@@ -2663,13 +2665,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 		if (playeringame[i])
 		{
 			// Always check from each player.
-			if (DoCheckSightOrRange(self, players[i].mo, range))
+			if (DoCheckSightOrRange(self, players[i].mo, range, twodi))
 			{
 				return;
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckSightOrRange(self, players[i].camera, range))
+				DoCheckSightOrRange(self, players[i].camera, range, twodi))
 			{
 				return;
 			}
@@ -2684,7 +2686,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 // Jumps if this actor is out of range of all players.
 //
 //===========================================================================
-static bool DoCheckRange(AActor *self, AActor *camera, double range)
+static bool DoCheckRange(AActor *self, AActor *camera, double range, bool twodi)
 {
 	if (camera == NULL)
 	{
@@ -2704,7 +2706,8 @@ static bool DoCheckRange(AActor *self, AActor *camera, double range)
 	else{
 		dz = 0;
 	}
-	if ((dx*dx) + (dy*dy) + (dz*dz) <= range){
+	double distance = (dx * dx) + (dy * dy) + (twodi == 0? (dz * dz) : 0);
+	if (distance <= range){
 		// Within range
 		return true;
 	}
@@ -2713,9 +2716,10 @@ static bool DoCheckRange(AActor *self, AActor *camera, double range)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	double range = EvalExpressionF(ParameterIndex+0, self);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_BOOL(twodi, 2);
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
@@ -2725,13 +2729,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 		if (playeringame[i])
 		{
 			// Always check from each player.
-			if (DoCheckRange(self, players[i].mo, range))
+			if (DoCheckRange(self, players[i].mo, range, twodi))
 			{
 				return;
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckRange(self, players[i].camera, range))
+				DoCheckRange(self, players[i].camera, range, twodi))
 			{
 				return;
 			}
@@ -3971,6 +3975,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 
 //===========================================================================
 //
+// [Nash] A_SetRoll
+//
+// Set actor's roll (in degrees).
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_ANGLE(roll, 0);
+	ACTION_PARAM_INT(flags, 1);
+	self->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
+}
+
+//===========================================================================
+//
 // A_ScaleVelocity
 //
 // Scale actor's velocity.
@@ -4543,6 +4563,8 @@ enum WARPF
 	WARPF_TOFLOOR = 0x100,
 	WARPF_TESTONLY = 0x200,
 	WARPF_ABSOLUTEPOSITION = 0x400,
+	WARPF_BOB				= 0x800,
+	WARPF_MOVEPTR = 0x1000,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
@@ -4559,19 +4581,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 
 	AActor *reference = COPY_AAPTR(self, destination_selector);
 
+	//If there is no actor to warp to, fail.
 	if (!reference)
 	{
 		ACTION_SET_RESULT(false);
 		return;
 	}
 
-	fixed_t	oldx = self->x;
-	fixed_t	oldy = self->y;
-	fixed_t	oldz = self->z;
+	AActor *caller = self;
+
+	if (flags & WARPF_MOVEPTR)
+	{
+		AActor *temp = reference;
+		reference = caller;
+		caller = temp;
+	}
+
+	fixed_t	oldx = caller->x;
+	fixed_t	oldy = caller->y;
+	fixed_t	oldz = caller->z;
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
-		angle += (flags & WARPF_USECALLERANGLE) ? self->angle : reference->angle;
+		angle += (flags & WARPF_USECALLERANGLE) ? caller->angle : reference->angle;
 	}
 	if (!(flags & WARPF_ABSOLUTEPOSITION))
 	{
@@ -4592,7 +4624,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		{
 			// set correct xy
 
-			self->SetOrigin(
+			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
 				reference->z);
@@ -4603,10 +4635,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 			if (zofs)
 			{
 				// extra unlink, link and environment calculation
-				self->SetOrigin(
-					self->x,
-					self->y,
-					self->floorz + zofs);
+				caller->SetOrigin(
+					caller->x,
+					caller->y,
+					caller->floorz + zofs);
 			}
 			else
 			{
@@ -4614,12 +4646,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 				// already identified floor
 
 				// A_Teleport does the same thing anyway
-				self->z = self->floorz;
+				caller->z = caller->floorz;
 			}
 		}
 		else
 		{
-			self->SetOrigin(
+			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
 				reference->z + zofs);
@@ -4629,50 +4661,56 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	{
 		if (flags & WARPF_TOFLOOR)
 		{
-			self->SetOrigin(xofs, yofs, self->floorz + zofs);
+			caller->SetOrigin(xofs, yofs, caller->floorz + zofs);
 		}
 		else
 		{
-			self->SetOrigin(xofs, yofs, zofs);
+			caller->SetOrigin(xofs, yofs, zofs);
 		}
 	}
 	
-	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(self))
+	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(caller))
 	{
 		if (flags & WARPF_TESTONLY)
 		{
-			self->SetOrigin(oldx, oldy, oldz);
+			caller->SetOrigin(oldx, oldy, oldz);
 		}
 		else
 		{
-			self->angle = angle;
+			caller->angle = angle;
 
 			if (flags & WARPF_STOP)
 			{
-				self->velx = 0;
-				self->vely = 0;
-				self->velz = 0;
+				caller->velx = 0;
+				caller->vely = 0;
+				caller->velz = 0;
 			}
 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
-				self->PrevX += self->x - oldx;
-				self->PrevY += self->y - oldy;
-				self->PrevZ += self->z - oldz;
+				caller->PrevX += caller->x - oldx;
+				caller->PrevY += caller->y - oldy;
+				caller->PrevZ += caller->z - oldz;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
-				self->PrevX = self->x + reference->PrevX - reference->x;
-				self->PrevY = self->y + reference->PrevY - reference->y;
-				self->PrevZ = self->z + reference->PrevZ - reference->z;
+				caller->PrevX = caller->x + reference->PrevX - reference->x;
+				caller->PrevY = caller->y + reference->PrevY - reference->y;
+				caller->PrevZ = caller->z + reference->PrevZ - reference->z;
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
 			{
-				self->PrevX = self->x;
-				self->PrevY = self->y;
-				self->PrevZ = self->z;
+				caller->PrevX = caller->x;
+				caller->PrevY = caller->y;
+				caller->PrevZ = caller->z;
+			}
+
+			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
+			{
+				caller->z += reference->GetBobOffset();
 			}
 		}
+
 
 		if (success_state)
 		{
@@ -4686,7 +4724,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	}
 	else
 	{
-		self->SetOrigin(oldx, oldy, oldz);
+		caller->SetOrigin(oldx, oldy, oldz);
 		ACTION_SET_RESULT(false);
 	}
 
@@ -5612,6 +5650,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_SwapTeleFog)
 		self->TeleFogSourceType = self->TeleFogDestType;
 		self->TeleFogDestType = temp;
 	}
+}
+
+//===========================================================================
+//
+// A_SetFloatBobPhase
+//
+// Changes the FloatBobPhase of the 
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatBobPhase)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(bob, 0);
+
+	//Respect float bob phase limits.
+	if (self && (bob >= 0 && bob <= 63))
+		self->FloatBobPhase = bob;
 }
 
 //===========================================================================

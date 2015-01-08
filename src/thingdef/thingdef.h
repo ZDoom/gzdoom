@@ -119,10 +119,10 @@ public:
 
 struct FStateTempCall
 {
-	FStateTempCall() : ActorClass(NULL), Call(NULL), FirstState(0), NumStates(0) {}
+	FStateTempCall() : ActorClass(NULL), Code(NULL), FirstState(0), NumStates(0) {}
 
 	PClassActor *ActorClass;
-	class FxVMFunctionCall *Call;
+	class FxTailable *Code;
 	int FirstState;
 	int NumStates;
 };
@@ -189,7 +189,8 @@ AFuncDesc *FindFunction(const char * string);
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
-bool ParseAction(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag);
+void ParseActions(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag);
+class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 
 PFunction *FindGlobalActionFunction(const char *name);
 

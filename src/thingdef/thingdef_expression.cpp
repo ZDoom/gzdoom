@@ -3006,12 +3006,34 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+ExpEmit FxTailable::Emit(VMFunctionBuilder *build)
+{
+	return Emit(build, false);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+VMFunction *FxTailable::GetDirectFunction()
+{
+	return NULL;
+}
+
+//==========================================================================
+//
 // FxVMFunctionCall
 //
 //==========================================================================
 
 FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos)
-: FxExpression(pos)
+: FxTailable(pos)
 {
 	Function = func;
 	ArgList = args;
@@ -3082,15 +3104,10 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
-{
-	return Emit(build, false);
-}
-
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 {
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
-	int count = ArgList->Size();
+	int count = GetArgCount();
 
 	// Emit code to pass implied parameters
 	if (Function->Flags & VARF_Method)
@@ -3105,9 +3122,12 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 		count += 2;
 	}
 	// Emit code to pass explicit parameters
-	for (unsigned i = 0; i < ArgList->Size(); ++i)
+	if (ArgList != NULL)
 	{
-		(*ArgList)[i]->Emit(build);
+		for (unsigned i = 0; i < ArgList->Size(); ++i)
+		{
+			(*ArgList)[i]->Emit(build);
+		}
 	}
 	// Get a constant register for this function
 	int funcaddr = build->GetConstantAddress(Function->Variants[0].Implementation, ATAG_OBJECT);
@@ -3130,6 +3150,24 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 		build->Emit(OP_CALL_K, funcaddr, count, 0);
 		return ExpEmit();
 	}
+}
+
+//==========================================================================
+//
+// FxVMFunctionCall :: GetDirectFunction
+//
+// If the function is not passed any explicit arguments, returns the
+// function. Otherwise returns NULL.
+//
+//==========================================================================
+
+VMFunction *FxVMFunctionCall::GetDirectFunction()
+{
+	if (GetArgCount() == 0)
+	{
+		return GetVMFunction();
+	}
+	return NULL;
 }
 
 //==========================================================================
@@ -3219,6 +3257,58 @@ ExpEmit FxGlobalFunctionCall::Emit(VMFunctionBuilder *build)
 		(Name == NAME_Sin) ?	FLOP_SIN_DEG :
 								FLOP_COS_DEG);
 	return v;
+}
+
+//==========================================================================
+//
+// FxSequence :: Resolve
+//
+//==========================================================================
+
+FxExpression *FxSequence::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	for (unsigned i = 0; i < Expressions.Size(); ++i)
+	{
+		if (NULL == (Expressions[i] = static_cast<FxTailable *>(Expressions[i]->Resolve(ctx))))
+		{
+			delete this;
+			return NULL;
+		}
+	}
+	return this;
+}
+
+//==========================================================================
+//
+// FxSequence :: Emit
+//
+//==========================================================================
+
+ExpEmit FxSequence::Emit(VMFunctionBuilder *build, bool tailcall)
+{
+	for (unsigned i = 0; i < Expressions.Size(); ++i)
+	{
+		ExpEmit v = Expressions[i]->Emit(build, tailcall ? i == Expressions.Size()-1 : false);
+		// Throw away any result. We don't care about it.
+		v.Free(build);
+	}
+	return ExpEmit();
+}
+
+//==========================================================================
+//
+// FxSequence :: GetDirectFunction
+//
+//==========================================================================
+
+VMFunction *FxSequence::GetDirectFunction()
+{
+	if (Expressions.Size() == 1)
+	{
+		return Expressions[0]->GetDirectFunction();
+	}
+	return NULL;
 }
 
 //==========================================================================

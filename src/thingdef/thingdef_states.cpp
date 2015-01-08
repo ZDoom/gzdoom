@@ -314,10 +314,8 @@ do_stop:
 					continue;
 				}
 
-				if (ParseAction(sc, state, statestring, tcall, bag))
-				{
-					goto endofstate;
-				}
+				ParseActions(sc, state, statestring, tcall, bag);
+				goto endofstate;
 			}
 			sc.UnGet();
 endofstate:
@@ -327,7 +325,7 @@ endofstate:
 				sc.ScriptError ("Invalid frame character string '%s'", statestring.GetChars());
 				count = -count;
 			}
-			if (tcall->Call != NULL)
+			if (tcall->Code != NULL)
 			{
 				tcall->ActorClass = actor;
 				tcall->FirstState = bag.statedef.GetStateCount() - count;
@@ -350,19 +348,49 @@ endofstate:
 
 //==========================================================================
 //
+// ParseActions
+//
+//==========================================================================
+
+void ParseActions(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag)
+{
+	// If it's not a '{', then it should be a single action.
+	// Otherwise, it's a sequence of actions.
+	if (!sc.Compare("{"))
+	{
+		tcall->Code = ParseAction(sc, state, statestring, bag);
+		return;
+	}
+
+	FxSequence *seq = new FxSequence(sc);
+	sc.MustGetString();
+	while (!sc.Compare("}"))
+	{
+		FxVMFunctionCall *call = ParseAction(sc, state, statestring, bag);
+		seq->Add(call);
+		sc.MustGetStringName(";");
+		sc.MustGetString();
+	}
+	tcall->Code = seq;
+}
+
+//==========================================================================
+//
 // ParseAction
 //
 //==========================================================================
 
-bool ParseAction(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag)
+FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag)
 {
+	FxVMFunctionCall *call;
+
 	// Make the action name lowercase
 	strlwr (sc.String);
 
-	tcall->Call = DoActionSpecials(sc, state, bag);
-	if (tcall->Call != NULL)
+	call = DoActionSpecials(sc, state, bag);
+	if (call != NULL)
 	{
-		return true;
+		return call;
 	}
 
 	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(FName(sc.String, true), true));
@@ -370,15 +398,15 @@ bool ParseAction(FScanner &sc, FState state, FString statestring, FStateTempCall
 	{
 		FArgumentList *args = new FArgumentList;
 		ParseFunctionParameters(sc, bag.Info, *args, afd, statestring, &bag.statedef);
-		tcall->Call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc);
+		call = new FxVMFunctionCall(afd, args->Size() > 0 ? args : NULL, sc);
 		if (args->Size() == 0)
 		{
 			delete args;
 		}
-		return true;
+		return call;
 	}
 	sc.ScriptError("Invalid state parameter %s\n", sc.String);
-	return false;
+	return NULL;
 }
 
 //==========================================================================

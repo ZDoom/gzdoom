@@ -784,28 +784,6 @@ public:
 
 //==========================================================================
 //
-// FxVMFunctionCall
-//
-//==========================================================================
-
-class FxVMFunctionCall : public FxExpression
-{
-	PFunction *Function;
-	FArgumentList *ArgList;
-	PType *ReturnType;
-
-public:
-	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
-	~FxVMFunctionCall();
-	FxExpression *Resolve(FCompileContext&);
-	virtual ExpEmit Emit(VMFunctionBuilder *build);
-	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
-	unsigned GetArgCount() { return ArgList == NULL ? 0 : ArgList->Size(); }
-	VMFunction *GetVMFunction() { return Function->Variants[0].Implementation; }
-};
-
-//==========================================================================
-//
 //	FxGlobalFunctionCall
 //
 //==========================================================================
@@ -823,6 +801,62 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+//==========================================================================
+//
+// FxTailable
+//
+// An expression that can produce a tail call
+//
+//==========================================================================
+
+class FxTailable : public FxExpression
+{
+public:
+	FxTailable(const FScriptPosition &pos) : FxExpression(pos) {}
+	virtual ExpEmit Emit(VMFunctionBuilder *build, bool tailcall) = 0;
+	ExpEmit Emit(VMFunctionBuilder *build);
+	virtual VMFunction *GetDirectFunction();
+};
+
+//==========================================================================
+//
+// FxVMFunctionCall
+//
+//==========================================================================
+
+class FxVMFunctionCall : public FxTailable
+{
+	PFunction *Function;
+	FArgumentList *ArgList;
+	PType *ReturnType;
+
+public:
+	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
+	~FxVMFunctionCall();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
+	unsigned GetArgCount() { return ArgList == NULL ? 0 : ArgList->Size(); }
+	VMFunction *GetVMFunction() { return Function->Variants[0].Implementation; }
+	VMFunction *GetDirectFunction();
+};
+
+//==========================================================================
+//
+// FxSequence
+//
+//==========================================================================
+
+class FxSequence : public FxTailable
+{
+	TDeletingArray<FxTailable *> Expressions;
+
+public:
+	FxSequence(const FScriptPosition &pos) : FxTailable(pos) {}
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
+	void Add(FxTailable *expr) { Expressions.Push(expr); }
+	VMFunction *GetDirectFunction();
+};
 
 //==========================================================================
 //

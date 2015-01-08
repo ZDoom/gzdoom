@@ -289,17 +289,15 @@ static void FinishThingdef()
 		FStateTempCall *tcall = StateTempCalls[i];
 		VMFunction *func;
 
-		assert(tcall->Call != NULL);
-		if (tcall->Call->GetArgCount() == 0)
-		{
-			// There are no arguments, so we can call this function directly
-			// without wrapping it in an anonymous function.
-			func = tcall->Call->GetVMFunction();
-		}
-		else
+		assert(tcall->Code != NULL);
+
+		// Can we call this function directly without wrapping it in an
+		// anonymous function? e.g. Are we passing any parameters to it?
+		func = tcall->Code->GetDirectFunction();
+		if (func == NULL)
 		{
 			FCompileContext ctx(tcall->ActorClass);
-			tcall->Call->Resolve(ctx);
+			tcall->Code->Resolve(ctx);
 			VMFunctionBuilder buildit;
 
 			// Allocate registers used to pass parameters in.
@@ -307,7 +305,7 @@ static void FinishThingdef()
 			buildit.Registers[REGT_POINTER].Get(3);
 
 			// Emit a tail call via FxVMFunctionCall
-			tcall->Call->Emit(&buildit, true);
+			tcall->Code->Emit(&buildit, true);
 
 			VMScriptFunction *sfunc = buildit.MakeFunction();
 			sfunc->NumArgs = NAP;
@@ -322,8 +320,8 @@ static void FinishThingdef()
 				codesize += sfunc->CodeSize;
 			}
 		}
-		delete tcall->Call;
-		tcall->Call = NULL;
+		delete tcall->Code;
+		tcall->Code = NULL;
 		for (int k = 0; k < tcall->NumStates; ++k)
 		{
 			tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);

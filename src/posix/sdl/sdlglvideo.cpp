@@ -77,6 +77,7 @@ static MiniModeInfo WinModes[] =
 	{ 720, 480 },	// 16:10
 	{ 720, 540 },
 	{ 800, 450 },	// 16:9
+	{ 800, 480 },
 	{ 800, 500 },	// 16:10
 	{ 800, 600 },
 	{ 848, 480 },	// 16:9
@@ -91,23 +92,33 @@ static MiniModeInfo WinModes[] =
 	{ 1152, 720 },	// 16:10
 	{ 1152, 864 },
 	{ 1280, 720 },	// 16:9
+	{ 1280, 854 },
 	{ 1280, 800 },	// 16:10
 	{ 1280, 960 },
-	{ 1344, 756 },  // 16:9
+	{ 1280, 1024 },	// 5:4
 	{ 1360, 768 },	// 16:9
+	{ 1366, 768 },
 	{ 1400, 787 },	// 16:9
 	{ 1400, 875 },	// 16:10
-	{ 1440, 900 },
 	{ 1400, 1050 },
+	{ 1440, 900 },
+	{ 1440, 960 },
+	{ 1440, 1080 },
 	{ 1600, 900 },	// 16:9
 	{ 1600, 1000 },	// 16:10
 	{ 1600, 1200 },
-	{ 1680, 1050 }, // 16:10
-	{ 1920, 1080 }, // 16:9
-	{ 1920, 1200 }, // 16:10
-	{ 2054, 1536 },
-	{ 2560, 1440 },  // 16:9
-	{ 2880, 1800 }  // 16:10
+	{ 1920, 1080 },
+	{ 1920, 1200 },
+	{ 2048, 1536 },
+	{ 2560, 1440 },
+	{ 2560, 1600 },
+	{ 2560, 2048 },
+	{ 2880, 1800 },
+	{ 3200, 1800 },
+	{ 3840, 2160 },
+	{ 3840, 2400 },
+	{ 4096, 2160 },
+	{ 5120, 2880 }
 };
 
 // CODE --------------------------------------------------------------------
@@ -115,7 +126,6 @@ static MiniModeInfo WinModes[] =
 SDLGLVideo::SDLGLVideo (int parm)
 {
 	IteratorBits = 0;
-	IteratorFS = false;
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
         fprintf( stderr, "Video initialization failed: %s\n",
              SDL_GetError( ) );
@@ -135,38 +145,18 @@ void SDLGLVideo::StartModeIterator (int bits, bool fs)
 {
 	IteratorMode = 0;
 	IteratorBits = bits;
-	IteratorFS = fs;
 }
 
 bool SDLGLVideo::NextMode (int *width, int *height, bool *letterbox)
 {
 	if (IteratorBits != 8)
 		return false;
-	
-	if (!IteratorFS)
-	{
-		if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
-		{
-			*width = WinModes[IteratorMode].Width;
-			*height = WinModes[IteratorMode].Height;
-			++IteratorMode;
-			return true;
-		}
-	}
-	else
-	{
-		SDL_DisplayMode mode = {}, oldmode = {};
-		if(IteratorMode != 0)
-			SDL_GetDisplayMode(vid_adapter, IteratorMode-1, &oldmode);
-		do
-		{
-			if (SDL_GetDisplayMode(vid_adapter, IteratorMode, &mode) != 0)
-				return false;
-			++IteratorMode;
-		} while(mode.w == oldmode.w && mode.h == oldmode.h);
 
-		*width = mode.w;
-		*height = mode.h;
+	if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
+	{
+		*width = WinModes[IteratorMode].Width;
+		*height = WinModes[IteratorMode].Height;
+		++IteratorMode;
 		return true;
 	}
 	return false;
@@ -294,7 +284,7 @@ bool SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE,  8 );
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE,  24 );
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE,  8 );
-//		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 );
+	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 );
 	if (multisample > 0) {
 		SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
 		SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, multisample );

@@ -1586,6 +1586,10 @@ OptionMenu VideoModeMenu
 	Title "VIDEO MODE"
 	
 	Option "Fullscreen",			"fullscreen", "YesNo"
+	IfOption(Mac)
+	{
+		Option "Retina/HiDPI support", "vid_hidpi", "YesNo"
+	}
 	Option "Aspect ratio",			"menu_screenratios", "Ratios"
 	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
 	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"

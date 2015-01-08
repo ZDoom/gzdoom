@@ -3,7 +3,6 @@
 
 #include "hardware.h"
 #include "v_video.h"
-#include <SDL.h>
 #include "gl/system/gl_system.h"
 
 EXTERN_CVAR (Float, dimamount)
@@ -33,7 +32,6 @@ class SDLGLVideo : public IVideo
 private:
 	int IteratorMode;
 	int IteratorBits;
-	bool IteratorFS;
 };
 class SDLGLFB : public DFrameBuffer
 {
@@ -70,9 +68,11 @@ protected:
 	SDLGLFB () {}
 	BYTE GammaTable[3][256];
 	bool UpdatePending;
-	
-	SDL_Surface *Screen;
-	
+
+	SDL_Window *Screen;
+
+	SDL_GLContext GLContext;
+
 	void UpdateColors ();
 
 	int m_Lock;

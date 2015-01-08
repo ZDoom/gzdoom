@@ -519,19 +519,19 @@ FUNC(LS_Generic_Stairs)
 FUNC(LS_Pillar_Build)
 // Pillar_Build (tag, speed, height)
 {
-	return EV_DoPillar (DPillar::pillarBuild, arg0, SPEED(arg1), arg2*FRACUNIT, 0, -1, false);
+	return EV_DoPillar (DPillar::pillarBuild, ln, arg0, SPEED(arg1), arg2*FRACUNIT, 0, -1, false);
 }
 
 FUNC(LS_Pillar_BuildAndCrush)
 // Pillar_BuildAndCrush (tag, speed, height, crush, crushtype)
 {
-	return EV_DoPillar (DPillar::pillarBuild, arg0, SPEED(arg1), arg2*FRACUNIT, 0, arg3, CRUSHTYPE(arg4));
+	return EV_DoPillar (DPillar::pillarBuild, ln, arg0, SPEED(arg1), arg2*FRACUNIT, 0, arg3, CRUSHTYPE(arg4));
 }
 
 FUNC(LS_Pillar_Open)
 // Pillar_Open (tag, speed, f_height, c_height)
 {
-	return EV_DoPillar (DPillar::pillarOpen, arg0, SPEED(arg1), arg2*FRACUNIT, arg3*FRACUNIT, -1, false);
+	return EV_DoPillar (DPillar::pillarOpen, ln, arg0, SPEED(arg1), arg2*FRACUNIT, arg3*FRACUNIT, -1, false);
 }
 
 FUNC(LS_Ceiling_LowerByValue)

@@ -96,7 +96,7 @@ ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 
 void ExpEmit::Free(VMFunctionBuilder *build)
 {
-	if (!Fixed && !Konst)
+	if (!Fixed && !Konst && RegType <= REGT_TYPE)
 	{
 		build->Registers[RegType].Return(RegNum, 1);
 	}

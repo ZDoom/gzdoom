@@ -515,8 +515,8 @@ private:
 	DPillar ();
 };
 
-bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
-				  fixed_t height2, int crush, bool hexencrush);
+bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
+				  fixed_t speed, fixed_t height, fixed_t height2, int crush, bool hexencrush);
 
 //
 // P_DOORS

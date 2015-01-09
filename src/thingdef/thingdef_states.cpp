@@ -314,7 +314,7 @@ do_stop:
 					continue;
 				}
 
-				ParseActions(sc, state, statestring, tcall, bag);
+				tcall->Code = ParseActions(sc, state, statestring, bag);
 				goto endofstate;
 			}
 			sc.UnGet();
@@ -352,26 +352,57 @@ endofstate:
 //
 //==========================================================================
 
-void ParseActions(FScanner &sc, FState state, FString statestring, FStateTempCall *tcall, Baggage &bag)
+FxTailable *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag)
 {
 	// If it's not a '{', then it should be a single action.
 	// Otherwise, it's a sequence of actions.
 	if (!sc.Compare("{"))
 	{
-		tcall->Code = ParseAction(sc, state, statestring, bag);
-		return;
+		return ParseAction(sc, state, statestring, bag);
 	}
 
-	FxSequence *seq = new FxSequence(sc);
+	const FScriptPosition pos(sc);
+
+	FxSequence *seq = NULL;
 	sc.MustGetString();
 	while (!sc.Compare("}"))
 	{
-		FxVMFunctionCall *call = ParseAction(sc, state, statestring, bag);
-		seq->Add(call);
-		sc.MustGetStringName(";");
-		sc.MustGetString();
+		FxTailable *add;
+		if (sc.Compare("if"))
+		{ // Hangle an if statement
+			FxExpression *cond;
+			FxTailable *true_part, *false_part = NULL;
+			sc.MustGetStringName("(");
+			cond = ParseExpression(sc, bag.Info);
+			sc.MustGetStringName(")");
+			sc.MustGetStringName("{");	// braces are mandatory
+			true_part = ParseActions(sc, state, statestring, bag);
+			sc.MustGetString();
+			if (sc.Compare("else"))
+			{
+				sc.MustGetStringName("{");	// braces are still mandatory
+				false_part = ParseActions(sc, state, statestring, bag);
+				sc.MustGetString();
+			}
+			add = new FxIfStatement(cond, true_part, false_part, sc);
+		}
+		else
+		{ // Handle a regular action function call
+			add = ParseAction(sc, state, statestring, bag);
+			sc.MustGetStringName(";");
+			sc.MustGetString();
+		}
+		// Only return a sequence if it has actual content.
+		if (add != NULL)
+		{
+			if (seq == NULL)
+			{
+				seq = new FxSequence(pos);
+			}
+			seq->Add(add);
+		}
 	}
-	tcall->Code = seq;
+	return seq;
 }
 
 //==========================================================================

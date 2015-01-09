@@ -854,8 +854,27 @@ public:
 	FxSequence(const FScriptPosition &pos) : FxTailable(pos) {}
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
-	void Add(FxTailable *expr) { Expressions.Push(expr); }
+	void Add(FxTailable *expr) { if (expr != NULL) Expressions.Push(expr); }
 	VMFunction *GetDirectFunction();
+};
+
+//==========================================================================
+//
+// FxIfStatement
+//
+//==========================================================================
+
+class FxIfStatement : public FxTailable
+{
+	FxExpression *Condition;
+	FxTailable *WhenTrue;
+	FxTailable *WhenFalse;
+
+public:
+	FxIfStatement(FxExpression *cond, FxTailable *true_part, FxTailable *false_part, const FScriptPosition &pos);
+	~FxIfStatement();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
 };
 
 //==========================================================================

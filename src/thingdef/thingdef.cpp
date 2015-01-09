@@ -297,34 +297,42 @@ static void FinishThingdef()
 		if (func == NULL)
 		{
 			FCompileContext ctx(tcall->ActorClass);
-			tcall->Code->Resolve(ctx);
-			VMFunctionBuilder buildit;
+			tcall->Code = static_cast<FxTailable *>(tcall->Code->Resolve(ctx));
 
-			// Allocate registers used to pass parameters in.
-			// self, stateowner, state (all are pointers)
-			buildit.Registers[REGT_POINTER].Get(3);
-
-			// Emit a tail call via FxVMFunctionCall
-			tcall->Code->Emit(&buildit, true);
-
-			VMScriptFunction *sfunc = buildit.MakeFunction();
-			sfunc->NumArgs = NAP;
-			func = sfunc;
-
-			if (dump != NULL)
+			// Make sure resolving it didn't obliterate it.
+			if (tcall->Code != NULL)
 			{
-				char label[64];
-				int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
-					tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
-				DumpFunction(dump, sfunc, label, labellen);
-				codesize += sfunc->CodeSize;
+				VMFunctionBuilder buildit;
+
+				// Allocate registers used to pass parameters in.
+				// self, stateowner, state (all are pointers)
+				buildit.Registers[REGT_POINTER].Get(3);
+
+				// Emit a tail call via FxVMFunctionCall
+				tcall->Code->Emit(&buildit, true);
+
+				VMScriptFunction *sfunc = buildit.MakeFunction();
+				sfunc->NumArgs = NAP;
+				func = sfunc;
+
+				if (dump != NULL)
+				{
+					char label[64];
+					int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
+						tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
+					DumpFunction(dump, sfunc, label, labellen);
+					codesize += sfunc->CodeSize;
+				}
 			}
 		}
-		delete tcall->Code;
-		tcall->Code = NULL;
-		for (int k = 0; k < tcall->NumStates; ++k)
+		if (tcall->Code != NULL)
 		{
-			tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
+			delete tcall->Code;
+			tcall->Code = NULL;
+			for (int k = 0; k < tcall->NumStates; ++k)
+			{
+				tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
+			}
 		}
 	}
 

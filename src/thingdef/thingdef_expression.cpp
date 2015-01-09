@@ -3313,6 +3313,120 @@ VMFunction *FxSequence::GetDirectFunction()
 
 //==========================================================================
 //
+// FxIfStatement
+//
+//==========================================================================
+
+FxIfStatement::FxIfStatement(FxExpression *cond, FxTailable *true_part,
+	FxTailable *false_part, const FScriptPosition &pos)
+: FxTailable(pos)
+{
+	Condition = cond;
+	WhenTrue = true_part;
+	WhenFalse = false_part;
+	assert(cond != NULL);
+}
+
+FxIfStatement::~FxIfStatement()
+{
+	SAFE_DELETE(Condition);
+	SAFE_DELETE(WhenTrue);
+	SAFE_DELETE(WhenFalse);
+}
+
+FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	if (WhenTrue == NULL && WhenFalse == NULL)
+	{ // We don't do anything either way, so disappear
+		delete this;
+		return NULL;
+	}
+	Condition = Condition->ResolveAsBoolean(ctx);
+	ABORT(Condition);
+	if (WhenTrue != NULL)
+	{
+		WhenTrue = static_cast<FxTailable *>(WhenTrue->Resolve(ctx));
+		ABORT(WhenTrue);
+	}
+	if (WhenFalse != NULL)
+	{
+		WhenFalse = static_cast<FxTailable *>(WhenFalse->Resolve(ctx));
+		ABORT(WhenFalse);
+	}
+	ValueType = VAL_Unknown;
+
+	if (Condition->isConstant())
+	{
+		ExpVal condval = static_cast<FxConstant *>(Condition)->GetValue();
+		bool result = condval.GetBool();
+
+		FxTailable *e = result ? WhenTrue : WhenFalse;
+		delete (result ? WhenFalse : WhenTrue);
+		WhenTrue = WhenFalse = NULL;
+		delete this;
+		return e;
+	}
+	return this;
+}
+
+ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build, bool tailcall)
+{
+	ExpEmit v;
+	size_t jumpspot;
+	FxTailable *path1, *path2;
+	int condcheck;
+
+	// This is pretty much copied from FxConditional, except we don't
+	// keep any results.
+	ExpEmit cond = Condition->Emit(build);
+	assert(cond.RegType == REGT_INT && !cond.Konst);
+
+	if (WhenTrue != NULL)
+	{
+		path1 = WhenTrue;
+		path2 = WhenFalse;
+		condcheck = 1;
+	}
+	else
+	{
+		// When there is only a false path, reverse the condition so we can
+		// treat it as a true path.
+		assert(WhenFalse != NULL);
+		path1 = WhenFalse;
+		path2 = NULL;
+		condcheck = 0;
+	}
+
+	// Test condition.
+	build->Emit(OP_EQ_K, condcheck, cond.RegNum, build->GetConstantInt(0));
+	jumpspot = build->Emit(OP_JMP, 0);
+	cond.Free(build);
+
+	// Evaluate first path
+	v = path1->Emit(build, tailcall);
+	v.Free(build);
+	if (path2 != NULL)
+	{
+		size_t path1jump = build->Emit(OP_JMP, 0);
+		// Evaluate second path
+		build->BackpatchToHere(jumpspot);
+		v = path2->Emit(build, tailcall);
+		v.Free(build);
+		jumpspot = path1jump;
+	}
+	build->BackpatchToHere(jumpspot);
+	if (tailcall)
+	{
+		// When tailcall is true, execution is not expected to get past
+		// this if statement, so issue a RET.
+		build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+	}
+	return ExpEmit();
+}
+
+//==========================================================================
+//
 //==========================================================================
 
 FxClassTypeCast::FxClassTypeCast(const PClass *dtype, FxExpression *x)

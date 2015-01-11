@@ -610,6 +610,7 @@ xx(DecoCallLineSpecial)
 xx(DecoNameToClass)
 xx(DecoFindMultiNameState)
 xx(DecoFindSingleNameState)
+xx(Damage)
 
 // basic type names
 xx(Default)

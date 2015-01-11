@@ -721,6 +721,20 @@ public:
 
 //==========================================================================
 //
+//	FxDamage
+//
+//==========================================================================
+
+class FxDamage : public FxExpression
+{
+public:
+	FxDamage(const FScriptPosition&);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxArrayElement
 //
 //==========================================================================

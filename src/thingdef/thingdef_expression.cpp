@@ -2424,6 +2424,11 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			ScriptPosition.Message(MSG_ERROR, "Invalid member identifier '%s'\n", Identifier.GetChars());
 		}
 	}
+	// the damage property needs special handling
+	else if (Identifier == NAME_Damage)
+	{
+		newex = new FxDamage(ScriptPosition);
+	}
 	// now check the global identifiers.
 	else if ((sym = ctx.FindGlobal(Identifier)) != NULL)
 	{
@@ -2515,6 +2520,66 @@ ExpEmit FxSelf::Emit(VMFunctionBuilder *build)
 	me.Fixed = true;
 	return me;
 }
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxDamage::FxDamage(const FScriptPosition &pos)
+: FxExpression(pos)
+{
+}
+
+//==========================================================================
+//
+// FxDamage :: Resolve
+//
+//==========================================================================
+
+FxExpression *FxDamage::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	ValueType = VAL_Int;
+	return this;
+}
+
+//==========================================================================
+//
+// FxDamage :: Emit
+//
+// Call this actor's damage function, if it has one
+//
+//==========================================================================
+
+ExpEmit FxDamage::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit dmgval(build, REGT_INT);
+
+	// Get damage function
+	ExpEmit dmgfunc(build, REGT_POINTER);
+	build->Emit(OP_LO, dmgfunc.RegNum, 0/*self*/, build->GetConstantInt(myoffsetof(AActor, Damage)));
+
+	// If it's non-null...
+	build->Emit(OP_EQA_K, 1, dmgfunc.RegNum, build->GetConstantAddress(0, ATAG_GENERIC));
+	size_t nulljump = build->Emit(OP_JMP, 0);
+
+	// ...call it
+	build->Emit(OP_PARAM, 0, REGT_POINTER, 0/*self*/);
+	build->Emit(OP_CALL, dmgfunc.RegNum, 1, 1);
+	build->Emit(OP_RESULT, 0, REGT_INT, dmgval.RegNum);
+	size_t notnulljump = build->Emit(OP_JMP, 0);
+
+	// Otherwise, use 0
+	build->BackpatchToHere(nulljump);
+	build->EmitLoadInt(dmgval.RegNum, 0);
+	build->BackpatchToHere(notnulljump);
+
+	return dmgval;
+}
+
 
 //==========================================================================
 //

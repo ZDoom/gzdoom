@@ -682,6 +682,7 @@ struct VMFrame
 
 	VMValue *GetParam() const
 	{
+		assert(((size_t)this & 15) == 0 && "VM frame is unaligned");
 		return (VMValue *)(((size_t)(this + 1) + 15) & ~15);
 	}
 
@@ -789,6 +790,11 @@ private:
 		VMFrame *LastFrame;
 		VM_UBYTE *FreeSpace;
 		int BlockSize;
+
+		void InitFreeSpace()
+		{
+			FreeSpace = (VM_UBYTE *)(((size_t)(this + 1) + 15) & ~15);
+		}
 	};
 	BlockHeader *Blocks;
 	BlockHeader *UnusedBlocks;

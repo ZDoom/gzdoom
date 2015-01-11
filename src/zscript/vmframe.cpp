@@ -286,7 +286,7 @@ VMFrame *VMFrameStack::Alloc(int size)
 			block = (BlockHeader *)new VM_UBYTE[blocksize];
 			block->BlockSize = blocksize;
 		}
-		block->FreeSpace = (VM_UBYTE *)block + ((sizeof(BlockHeader) + 15) & ~15);
+		block->InitFreeSpace();
 		block->LastFrame = NULL;
 		block->NextBlock = Blocks;
 		Blocks = block;
@@ -340,7 +340,7 @@ VMFrame *VMFrameStack::PopFrame()
 		{
 			assert(Blocks->NextBlock == NULL);
 			Blocks->LastFrame = NULL;
-			Blocks->FreeSpace = (VM_UBYTE *)Blocks + ((sizeof(BlockHeader) + 15) & ~15);
+			Blocks->InitFreeSpace();
 		}
 		return NULL;
 	}

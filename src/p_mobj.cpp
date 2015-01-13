@@ -4959,6 +4959,13 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
+	if ((puff->flags4 & MF4_RANDOMIZE) && puff->tics > 0)
+	{
+		puff->tics -= pr_spawnpuff() & 3;
+		if (puff->tics < 1)
+			puff->tics = 1;
+	}
+
 	//Moved puff creation and target/master/tracer setting to here. 
 	if (puff && vict)
 	{

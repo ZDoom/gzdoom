@@ -559,6 +559,27 @@ public:
 //
 //==========================================================================
 
+class FxRandomPick : public FxExpression
+{
+protected:
+	FRandom * rng;
+	TDeletingArray<FxExpression*> min;
+
+public:
+
+	FxRandomPick(FRandom *, TArray<FxExpression*> mi, const FScriptPosition &pos);
+	~FxRandomPick();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpVal EvalExpression(AActor *self);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 class FxFRandom : public FxRandom
 {
 public:

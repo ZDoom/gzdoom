@@ -548,7 +548,7 @@ void APowerCoupling::Die (AActor *source, AActor *inflictor, int dmgflags)
 		P_NoiseAlert (source, this);
 	}
 	EV_DoDoor (DDoor::doorClose, NULL, players[i].mo, 225, 2*FRACUNIT, 0, 0, 0);
-	EV_DoFloor (DFloor::floorLowerToHighest, NULL, 44, FRACUNIT, 0, 0, 0, false);
+	EV_DoFloor (DFloor::floorLowerToHighest, NULL, 44, FRACUNIT, 0, -1, 0, false);
 	players[i].mo->GiveInventoryType (QuestItemClasses[5]);
 	S_Sound (CHAN_VOICE, "svox/voc13", 1, ATTN_NORM);
 	players[i].SetLogNumber (13);

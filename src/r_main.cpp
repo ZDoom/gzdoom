@@ -117,7 +117,6 @@ FDynamicColormap*basecolormap;		// [RH] colormap currently drawing with
 int				fixedlightlev;
 lighttable_t	*fixedcolormap;
 FSpecialColormap *realfixedcolormap;
-float			WallTMapScale;
 float			WallTMapScale2;
 
 
@@ -386,8 +385,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	iyaspectmulfloat = (float)virtwidth * r_Yaspect / 320.f / (float)virtheight;
 	InvZtoScale = yaspectmul * centerx;
 
-	WallTMapScale = (float)centerx * 32.f;
-	WallTMapScale2 = iyaspectmulfloat * 2.f / (float)centerx;
+	WallTMapScale2 = iyaspectmulfloat * 64.f / (float)centerx;
 
 	// psprite scales
 	pspritexscale = (centerxwide << FRACBITS) / 160;

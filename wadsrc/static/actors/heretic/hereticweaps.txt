@@ -110,7 +110,7 @@ ACTOR StaffPuff2
 
 // Gold wand ----------------------------------------------------------------
 
-ACTOR GoldWand : HereticWeapon
+ACTOR GoldWand : HereticWeapon 9042
 {
 	Game Heretic
 	+BLOODSPLATTER
@@ -120,6 +120,7 @@ ACTOR GoldWand : HereticWeapon
 	Weapon.AmmoType "GoldWandAmmo"
 	Weapon.SisterWeapon "GoldWandPowered"
 	Weapon.YAdjust 5
+	Inventory.PickupMessage "$TXT_WPNGOLDWAND"
 	Obituary "$OB_MPGOLDWAND"
 	Tag "$TAG_GOLDWAND"
 
@@ -127,6 +128,9 @@ ACTOR GoldWand : HereticWeapon
 	
 	States
 	{
+	Spawn:
+		GWAN A -1
+		Stop
 	Ready:
 		GWND A 1 A_WeaponReady
 		Loop

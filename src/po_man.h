@@ -74,7 +74,7 @@ struct FPolyObj
 
 	int GetMirror();
 	bool MovePolyobj (int x, int y, bool force = false);
-	bool RotatePolyobj (angle_t angle);
+	bool RotatePolyobj (angle_t angle, bool fromsave = false);
 	void ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, side_t **side) const;
 	void LinkPolyobj ();
 	void RecalcActorFloorCeil(FBoundingBox bounds) const;

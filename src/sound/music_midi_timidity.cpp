@@ -433,7 +433,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 	
 	int forkres;
-	wordexp_t words;
+	wordexp_t words = {};
 
 	switch (wordexp (CommandLine.GetChars(), &words, 0))
 	{

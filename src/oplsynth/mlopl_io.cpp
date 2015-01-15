@@ -323,7 +323,7 @@ int OPLio::OPLinit(uint numchips, bool stereo, bool initopl3)
 {
 	assert(numchips >= 1 && numchips <= countof(chips));
 	uint i;
-	IsOPL3 = (opl_core == 1 || opl_core == 2);
+	IsOPL3 = (opl_core == 1 || opl_core == 2 || opl_core == 3);
 
 	memset(chips, 0, sizeof(chips));
 	if (IsOPL3)
@@ -332,7 +332,7 @@ int OPLio::OPLinit(uint numchips, bool stereo, bool initopl3)
 	}
 	for (i = 0; i < numchips; ++i)
 	{
-		OPLEmul *chip = IsOPL3 ? (opl_core == 1 ? DBOPLCreate(stereo) : JavaOPLCreate(stereo)) : YM3812Create(stereo);
+		OPLEmul *chip = IsOPL3 ? (opl_core == 1 ? DBOPLCreate(stereo) : (opl_core == 2 ? JavaOPLCreate(stereo) : NukedOPL3Create(stereo))) : YM3812Create(stereo);
 		if (chip == NULL)
 		{
 			break;

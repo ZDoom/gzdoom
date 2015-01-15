@@ -110,6 +110,7 @@ const char *neterror (void);
 enum
 {
 	PRE_CONNECT,			// Sent from guest to host for initial connection
+	PRE_KEEPALIVE,
 	PRE_DISCONNECT,			// Sent from guest that aborts the game
 	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
 	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
@@ -134,8 +135,8 @@ struct PreGamePacket
 	};
 	struct
 	{
-		u_long	address;
-		u_short	port;
+		DWORD	address;
+		WORD	port;
 		BYTE	player;
 		BYTE	pad;
 	} machines[MAXNETNODES];
@@ -208,11 +209,11 @@ void PacketSend (void)
 	{
 		I_FatalError("Netbuffer overflow!");
 	}
+	assert(!(doomcom.data[0] & NCMD_COMPRESSED));
 
 	uLong size = TRANSMIT_SIZE - 1;
 	if (doomcom.datalength >= 10)
 	{
-		assert(!(doomcom.data[0] & NCMD_COMPRESSED));
 		TransmitBuffer[0] = doomcom.data[0] | NCMD_COMPRESSED;
 		c = compress2(TransmitBuffer + 1, &size, doomcom.data + 1, doomcom.datalength - 1, 9);
 		size += 1;
@@ -548,10 +549,15 @@ bool Host_CheckForConnects (void *userdata)
 				SendConAck (doomcom.numnodes, numplayers);
 			}
 			break;
+
+		case PRE_KEEPALIVE:
+			break;
 		}
 	}
 	if (doomcom.numnodes < numplayers)
 	{
+		// Send message to everyone as a keepalive
+		SendConAck(doomcom.numnodes, numplayers);
 		return false;
 	}
 
@@ -652,6 +658,12 @@ void HostGame (int i)
 	if ((i == Args->NumArgs() - 1) || !(numplayers = atoi (Args->GetArg(i+1))))
 	{	// No player count specified, assume 2
 		numplayers = 2;
+	}
+
+	if (numplayers > MAXNETNODES)
+	{
+		I_FatalError("You cannot host a game with %d players. The limit is currently %d.", numplayers, MAXNETNODES);
+		return;
 	}
 
 	if (numplayers == 1)
@@ -822,6 +834,10 @@ bool Guest_WaitForOthers (void *userdata)
 		}
 	}
 
+	packet.Fake = PRE_FAKE;
+	packet.Message = PRE_KEEPALIVE;
+	PreSend(&packet, 2, &sendaddress[1]);
+
 	return false;
 }
 
@@ -937,11 +953,6 @@ bool I_InitNetwork (void)
 	{
 		doomcom.ticdup = 1;
 	}
-
-	if (Args->CheckParm ("-extratic"))
-		doomcom.extratics = 1;
-	else
-		doomcom.extratics = 0;
 
 	v = Args->CheckValue ("-port");
 	if (v)

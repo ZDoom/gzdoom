@@ -271,7 +271,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 
 	dst->cheats |= chasecam;
 
-	if (dst->isbot)
+	if (dst->Bot != NULL)
 	{
 		botinfo_t *thebot = bglobal.botinfo;
 		while (thebot && stricmp (name, thebot->name))
@@ -280,10 +280,9 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 		}
 		if (thebot)
 		{
-			thebot->inuse = true;
+			thebot->inuse = BOTINUSE_Yes;
 		}
 		bglobal.botnum++;
-		bglobal.botingame[dst - players] = true;
 		dst->userinfo.TransferFrom(uibackup2);
 	}
 	else
@@ -567,7 +566,7 @@ void P_SerializePolyobjs (FArchive &arc)
 				I_Error ("UnarchivePolyobjs: Invalid polyobj tag");
 			}
 			arc << angle;
-			po->RotatePolyobj (angle);
+			po->RotatePolyobj (angle, true);
 			arc << deltaX << deltaY << po->interpolation;
 			deltaX -= po->StartSpot.x;
 			deltaY -= po->StartSpot.y;

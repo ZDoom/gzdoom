@@ -37,7 +37,6 @@
 #include <windows.h>
 #include <mmsystem.h>
 #else
-#include <SDL.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>

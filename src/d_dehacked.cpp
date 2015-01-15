@@ -2247,7 +2247,10 @@ static int PatchStrings (int dummy)
 
 		ReplaceSpecialChars (holdstring.LockBuffer());
 		holdstring.UnlockBuffer();
-		GStrings.SetString (Line1, holdstring);
+		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
+		const char *ll = Line1;
+		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
+		GStrings.SetString (ll, holdstring);
 		DPrintf ("%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}
 

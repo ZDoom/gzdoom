@@ -41,7 +41,6 @@
 #include "doomerrors.h"
 #include <math.h>
 
-#include "SDL.h"
 #include "doomtype.h"
 #include "doomstat.h"
 #include "version.h"
@@ -71,12 +70,9 @@
 #include "m_fixed.h"
 #include "g_level.h"
 
-#ifdef USE_XCURSOR
-// Xlib has its own GC, so don't let it interfere.
-#define GC XGC
-#include <X11/Xcursor/Xcursor.h>
-#undef GC
-#endif
+#ifdef __APPLE__
+#include <ApplicationServices/ApplicationServices.h>
+#endif // __APPLE__
 
 EXTERN_CVAR (String, language)
 
@@ -90,11 +86,6 @@ extern "C"
 extern bool GtkAvailable;
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
-#endif
-#ifdef USE_XCURSOR
-bool UseXCursor;
-SDL_Cursor *X11Cursor;
-SDL_Cursor *FirstCursor;
 #endif
 
 DWORD LanguageIDs[4];
@@ -122,185 +113,6 @@ void I_EndRead(void)
 }
 
 
-static DWORD TicStart;
-static DWORD BaseTime;
-static int TicFrozen;
-
-// Signal based timer.
-static Semaphore timerWait;
-static int tics;
-static DWORD sig_start;
-
-void I_SelectTimer();
-
-// [RH] Returns time in milliseconds
-unsigned int I_MSTime (void)
-{
-	unsigned int time = SDL_GetTicks ();
-	return time - BaseTime;
-}
-
-// Exactly the same thing, but based does no modification to the time.
-unsigned int I_FPSTime()
-{
-	return SDL_GetTicks();
-}
-
-//
-// I_GetTime
-// returns time in 1/35th second tics
-//
-int I_GetTimeSelect (bool saveMS)
-{
-	I_SelectTimer();
-	return I_GetTime (saveMS);
-}
-
-int I_GetTimePolled (bool saveMS)
-{
-	if (TicFrozen != 0)
-	{
-		return TicFrozen;
-	}
-
-	DWORD tm = SDL_GetTicks();
-
-	if (saveMS)
-	{
-		TicStart = tm;
-	}
-	return Scale(tm - BaseTime, TICRATE, 1000);
-}
-
-int I_GetTimeSignaled (bool saveMS)
-{
-	if (saveMS)
-	{
-		TicStart = sig_start;
-	}
-	return tics;
-}
-
-int I_WaitForTicPolled (int prevtic)
-{
-    int time;
-
-	assert (TicFrozen == 0);
-    while ((time = I_GetTimePolled(false)) <= prevtic)
-		;
-
-    return time;
-}
-
-int I_WaitForTicSignaled (int prevtic)
-{
-	assert (TicFrozen == 0);
-
-	while(tics <= prevtic)
-	{
-		SEMAPHORE_WAIT(timerWait)
-	}
-
-	return tics;
-}
-
-void I_FreezeTimeSelect (bool frozen)
-{
-	I_SelectTimer();
-	return I_FreezeTime (frozen);
-}
-
-void I_FreezeTimePolled (bool frozen)
-{
-	if (frozen)
-	{
-		assert(TicFrozen == 0);
-		TicFrozen = I_GetTimePolled(false);
-	}
-	else
-	{
-		assert(TicFrozen != 0);
-		int froze = TicFrozen;
-		TicFrozen = 0;
-		int now = I_GetTimePolled(false);
-		BaseTime += (now - froze) * 1000 / TICRATE;
-	}
-}
-
-void I_FreezeTimeSignaled (bool frozen)
-{
-	TicFrozen = frozen;
-}
-
-int I_WaitForTicSelect (int prevtic)
-{
-	I_SelectTimer();
-	return I_WaitForTic (prevtic);
-}
-
-//
-// I_HandleAlarm
-// Should be called every time there is an alarm.
-//
-void I_HandleAlarm (int sig)
-{
-	if(!TicFrozen)
-		tics++;
-	sig_start = SDL_GetTicks();
-	SEMAPHORE_SIGNAL(timerWait)
-}
-
-//
-// I_SelectTimer
-// Sets up the timer function based on if we can use signals for efficent CPU
-// usage.
-//
-void I_SelectTimer()
-{
-	SEMAPHORE_INIT(timerWait, 0, 0)
-#ifndef __sun
-	signal(SIGALRM, I_HandleAlarm);
-#else
-	struct sigaction alrmaction;
-	sigaction(SIGALRM, NULL, &alrmaction);
-	alrmaction.sa_handler = I_HandleAlarm;
-	sigaction(SIGALRM, &alrmaction, NULL);
-#endif
-
-	struct itimerval itv;
-	itv.it_interval.tv_sec = itv.it_value.tv_sec = 0;
-	itv.it_interval.tv_usec = itv.it_value.tv_usec = 1000000/TICRATE;
-
-	if (setitimer(ITIMER_REAL, &itv, NULL) != 0)
-	{
-		I_GetTime = I_GetTimePolled;
-		I_FreezeTime = I_FreezeTimePolled;
-		I_WaitForTic = I_WaitForTicPolled;
-	}
-	else
-	{
-		I_GetTime = I_GetTimeSignaled;
-		I_FreezeTime = I_FreezeTimeSignaled;
-		I_WaitForTic = I_WaitForTicSignaled;
-	}
-}
-
-// Returns the fractional amount of a tic passed since the most recent tic
-fixed_t I_GetTimeFrac (uint32 *ms)
-{
-	DWORD now = SDL_GetTicks ();
-	if (ms) *ms = TicStart + (1000 / TICRATE);
-	if (TicStart == 0)
-	{
-		return FRACUNIT;
-	}
-	else
-	{
-		fixed_t frac = clamp<fixed_t> ((now - TicStart)*FRACUNIT*TICRATE/1000, 0, FRACUNIT);
-		return frac;
-	}
-}
-
 void I_WaitVBL (int count)
 {
     // I_WaitVBL is never used to actually synchronize to the
@@ -322,6 +134,9 @@ void SetLanguageIDs ()
 	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
 }
 
+void I_InitTimer ();
+void I_ShutdownTimer ();
+
 //
 // I_Init
 //
@@ -330,11 +145,9 @@ void I_Init (void)
 	CheckCPUID (&CPU);
 	DumpCPUInfo (&CPU);
 
-	I_GetTime = I_GetTimeSelect;
-	I_WaitForTic = I_WaitForTicSelect;
-	I_FreezeTime = I_FreezeTimeSelect;
 	atterm (I_ShutdownSound);
     I_InitSound ();
+	I_InitTimer ();
 }
 
 //
@@ -350,6 +163,8 @@ void I_Quit (void)
 		G_CheckDemoStatus();
 
 	C_DeinitConsole();
+
+	I_ShutdownTimer();
 }
 
 
@@ -785,6 +600,10 @@ int I_FindAttr (findstate_t *fileinfo)
 	return 0;
 }
 
+#ifdef __APPLE__
+static PasteboardRef s_clipboard;
+#endif // __APPLE__
+
 // Clipboard support requires GTK+
 // TODO: GTK+ uses UTF-8. We don't, so some conversions would be appropriate.
 void I_PutInClipboard (const char *str)
@@ -804,6 +623,23 @@ void I_PutInClipboard (const char *str)
 			gtk_clipboard_set_text(clipboard, str, -1);
 		}
 		*/
+	}
+#elif defined __APPLE__
+	if (NULL == s_clipboard)
+	{
+		PasteboardCreate(kPasteboardClipboard, &s_clipboard);
+	}
+
+	PasteboardClear(s_clipboard);
+	PasteboardSynchronize(s_clipboard);
+
+	const CFDataRef textData = CFDataCreate(kCFAllocatorDefault,
+		reinterpret_cast<const UInt8*>(str), strlen(str));
+
+	if (NULL != textData)
+	{
+		PasteboardPutItemFlavor(s_clipboard, PasteboardItemID(1),
+			CFSTR("public.utf8-plain-text"), textData, 0);
 	}
 #endif
 }
@@ -826,6 +662,61 @@ FString I_GetFromClipboard (bool use_primary_selection)
 			}
 		}
 	}
+#elif defined __APPLE__
+	FString result;
+
+	if (NULL == s_clipboard)
+	{
+		PasteboardCreate(kPasteboardClipboard, &s_clipboard);
+	}
+
+	PasteboardSynchronize(s_clipboard);
+
+	ItemCount itemCount = 0;
+	PasteboardGetItemCount(s_clipboard, &itemCount);
+
+	if (0 == itemCount)
+	{
+		return FString();
+	}
+
+	PasteboardItemID itemID;
+
+	if (0 != PasteboardGetItemIdentifier(s_clipboard, 1, &itemID))
+	{
+		return FString();
+	}
+
+	CFArrayRef flavorTypeArray;
+
+	if (0 != PasteboardCopyItemFlavors(s_clipboard, itemID, &flavorTypeArray))
+	{
+		return FString();
+	}
+
+	const CFIndex flavorCount = CFArrayGetCount(flavorTypeArray);
+
+	for (CFIndex flavorIndex = 0; flavorIndex < flavorCount; ++flavorIndex)
+	{
+		const CFStringRef flavorType = static_cast<const CFStringRef>(
+			CFArrayGetValueAtIndex(flavorTypeArray, flavorIndex));
+
+		if (UTTypeConformsTo(flavorType, CFSTR("public.utf8-plain-text")))
+		{
+			CFDataRef flavorData;
+
+			if (0 == PasteboardCopyItemFlavorData(s_clipboard, itemID, flavorType, &flavorData))
+			{
+				result += reinterpret_cast<const char*>(CFDataGetBytePtr(flavorData));
+			}
+
+			CFRelease(flavorData);
+		}
+	}
+
+	CFRelease(flavorTypeArray);
+
+	return result;
 #endif
 	return "";
 }
@@ -850,105 +741,4 @@ unsigned int I_MakeRNGSeed()
 		close(file);
 	}
 	return seed;
-}
-
-#ifdef USE_XCURSOR
-// Hack! Hack! SDL does not provide a clean way to get the XDisplay.
-// On the other hand, there are no more planned updates for SDL 1.2,
-// so we should be fine making assumptions.
-struct SDL_PrivateVideoData
-{
-	int local_X11;
-	Display *X11_Display;
-};
-
-struct SDL_VideoDevice
-{
-	const char *name;
-	int (*functions[9])();
-	SDL_VideoInfo info;
-	SDL_PixelFormat *displayformatalphapixel;
-	int (*morefuncs[9])();
-	Uint16 *gamma;
-	int (*somefuncs[9])();
-	unsigned int texture;				// Only here if SDL was compiled with OpenGL support. Ack!
-	int is_32bit;
-	int (*itsafuncs[13])();
-	SDL_Surface *surfaces[3];
-	SDL_Palette *physpal;
-	SDL_Color *gammacols;
-	char *wm_strings[2];
-	int offsets[2];
-	SDL_GrabMode input_grab;
-	int handles_any_size;
-	SDL_PrivateVideoData *hidden;	// Why did they have to bury this so far in?
-};
-
-extern SDL_VideoDevice *current_video;
-#define SDL_Display (current_video->hidden->X11_Display)
-
-SDL_Cursor *CreateColorCursor(FTexture *cursorpic)
-{
-	return NULL;
-}
-#endif
-
-SDL_Surface *cursorSurface = NULL;
-SDL_Rect cursorBlit = {0, 0, 32, 32};
-bool I_SetCursor(FTexture *cursorpic)
-{
-	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
-	{
-		// Must be no larger than 32x32.
-		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
-		{
-			return false;
-		}
-
-#ifdef USE_XCURSOR
-		if (UseXCursor)
-		{
-			if (FirstCursor == NULL)
-			{
-				FirstCursor = SDL_GetCursor();
-			}
-			X11Cursor = CreateColorCursor(cursorpic);
-			if (X11Cursor != NULL)
-			{
-				SDL_SetCursor(X11Cursor);
-				return true;
-			}
-		}
-#endif
-		if (cursorSurface == NULL)
-			cursorSurface = SDL_CreateRGBSurface (0, 32, 32, 32, MAKEARGB(0,255,0,0), MAKEARGB(0,0,255,0), MAKEARGB(0,0,0,255), MAKEARGB(255,0,0,0));
-
-		SDL_ShowCursor(0);
-		SDL_LockSurface(cursorSurface);
-		BYTE buffer[32*32*4];
-		memset(buffer, 0, 32*32*4);
-		FBitmap bmp(buffer, 32*4, 32, 32);
-		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
-		memcpy(cursorSurface->pixels, bmp.GetPixels(), 32*32*4);
-		SDL_UnlockSurface(cursorSurface);
-	}
-	else
-	{
-		SDL_ShowCursor(1);
-
-		if (cursorSurface != NULL)
-		{
-			SDL_FreeSurface(cursorSurface);
-			cursorSurface = NULL;
-		}
-#ifdef USE_XCURSOR
-		if (X11Cursor != NULL)
-		{
-			SDL_SetCursor(FirstCursor);
-			SDL_FreeCursor(X11Cursor);
-			X11Cursor = NULL;
-		}
-#endif
-	}
-	return true;
 }

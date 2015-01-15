@@ -389,3 +389,8 @@ B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
 {
 	DisablePushWindowCheck
 }
+
+A53AE580A4AF2B5D0B0893F86914781E // TNT: Evilution map31
+{
+	setthingflags 470 2016
+}

@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -277,7 +278,16 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		return new TimidityMIDIDevice;
 
 	case MDEV_OPL:
-		return new OPLMIDIDevice;
+		try
+		{
+			return new OPLMIDIDevice;
+		}
+		catch (CRecoverableError &err)
+		{
+			// The creation of an OPL MIDI device can abort with an error if no GENMIDI lump can be found.
+			Printf("Unable to create OPL MIDI device: %s\nFalling back to FModEx playback", err.GetMessage());
+			return new FMODMIDIDevice;
+		}
 
 	case MDEV_TIMIDITY:
 		return new TimidityPPMIDIDevice;

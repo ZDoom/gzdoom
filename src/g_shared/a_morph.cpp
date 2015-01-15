@@ -12,6 +12,7 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "farchive.h"
+#include "p_enemy.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -527,19 +528,26 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 	if (actor->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
 	{
 		AMorphedMonster *fakeme = static_cast<AMorphedMonster *>(actor);
-		if ((fakeme->UnmorphTime) &&
-			(fakeme->MorphStyle & MORPH_UNDOBYDEATH) &&
-			(fakeme->UnmorphedMe))
+		AActor *realme = fakeme->UnmorphedMe;
+		if (realme != NULL)
 		{
-			AActor *realme = fakeme->UnmorphedMe;
-			int realstyle = fakeme->MorphStyle;
-			int realhealth = fakeme->health;
-			if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+			if ((fakeme->UnmorphTime) &&
+				(fakeme->MorphStyle & MORPH_UNDOBYDEATH))
 			{
-				*morphed = realme;
-				*morphedstyle = realstyle;
-				*morphedhealth = realhealth;
-				return true;
+				int realstyle = fakeme->MorphStyle;
+				int realhealth = fakeme->health;
+				if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+				{
+					*morphed = realme;
+					*morphedstyle = realstyle;
+					*morphedhealth = realhealth;
+					return true;
+				}
+			}
+			if (realme->flags4 & MF4_BOSSDEATH)
+			{
+				realme->health = 0;	// make sure that A_BossDeath considers it dead.
+				CALL_ACTION(A_BossDeath, realme);
 			}
 		}
 		fakeme->flags3 |= MF3_STAYMORPHED; // moved here from AMorphedMonster::Die()

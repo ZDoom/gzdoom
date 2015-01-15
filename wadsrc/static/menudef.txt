@@ -341,6 +341,7 @@ OptionMenu "OptionsMenu"
 	Submenu "Automap Options",			"AutomapOptions"
 	Submenu "HUD Options",				"HUDOptions"
 	Submenu "Miscellaneous Options",	"MiscOptions"
+	Submenu "Network Options",			"NetworkOptions"
 	Submenu "Sound Options",			"SoundOptions"
 	Submenu "Display Options",			"VideoOptions"
 	Submenu "Set video mode",			"VideoModeMenu"
@@ -457,6 +458,7 @@ OptionMenu "CustomizeControls"
 	Control 	"Run",					"+speed"
 	Control 	"Strafe",				"+strafe"
 	Control 	"Show Scoreboard",		"+showscores"
+	Control 	"Toggle Scoreboard",	"togglescoreboard"
 	StaticText 	""
 	StaticText 	"Chat", 1
 	Control 	"Say",					"messagemode"
@@ -663,6 +665,7 @@ OptionMenu "VideoOptions"
 	Slider "Screen size",				"screenblocks", 3.0, 12.0, 1.0, 0
 	Slider "Brightness",				"Gamma", 0.75, 3.0, 0.05, 2
 	Option "Vertical Sync",				"vid_vsync", "OnOff"
+	Option "Rendering Interpolation",	"cl_capfps", "OffOn"
 	Option "Column render mode",		"r_columnmethod", "ColumnMethods"
 
 	StaticText " "
@@ -683,6 +686,7 @@ OptionMenu "VideoOptions"
 	Option "Blood Type",				"cl_bloodtype", "BloodTypes"
 	Option "Bullet Puff Type",			"cl_pufftype", "PuffTypes"
 	Slider "Number of particles",		"r_maxparticles", 100, 10000, 100, 0
+	Slider "Number of decals",			"cl_maxdecals", 0, 10000, 100, 0
 	Option "Show player sprites",		"r_drawplayersprites", "OnOff"
 	Option "Death camera",				"r_deathcamera", "OnOff"
 	Option "Teleporter zoom",			"telezoom", "OnOff"
@@ -805,6 +809,13 @@ OptionValue "AltHUDTime"
 	9, "System"
 }
 
+OptionValue "AltHUDLag"
+{
+	0, "Off"
+	1, "Netgames only"
+	2, "Always"
+}
+
 OptionMenu "AltHUDOptions"
 {
 	Title "Alternative HUD"
@@ -819,6 +830,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show weapons",							"hud_showweapons", "OnOff"
 	Option "Show time",								"hud_showtime", "AltHUDTime"
 	Option "Time color",							"hud_timecolor", "TextColors"
+	Option "Show network latency",					"hud_showlag", "AltHUDLag"
 	Slider "Red ammo display below %",				"hud_ammo_red", 0, 100, 1, 0
 	Slider "Yellow ammo display below %",			"hud_ammo_yellow", 0, 100, 1, 0
 	Slider "Red health display below",				"hud_health_red", 0, 100, 1, 0
@@ -1088,6 +1100,7 @@ OptionMenu MessageOptions
 	Title 	"MESSAGES"
 	Option "Show messages",				"show_messages", "OnOff"
 	Option "Show obituaries",			"show_obituaries", "OnOff"
+	Option "Show secret notifications",	"cl_showsecretmessage", "OnOff"
 	Option "Scale text in high res", 	"con_scaletext", "ScaleValues"
 	Option "Minimum message level", 	"msg", "MessageLevels"
 	Option "Center messages",			"con_centernotify", "OnOff"
@@ -1290,6 +1303,7 @@ OptionMenu "CompatibilityOptions"
 	Option "Ignore Y offsets on masked midtextures",	"compat_MASKEDMIDTEX", "YesNo"
 	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
 	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
+	Option "Sounds stop when actor vanishes",			"compat_soundcutoff", "YesNo"
 	
 	Class "CompatibilityMenu"
 }
@@ -1500,6 +1514,7 @@ OptionValue OplCores
 	0, "MAME OPL2"
 	1, "DOSBox OPL3"
 	2, "Java OPL3"
+	3, "Nuked OPL3"
 }
 
 OptionMenu AdvSoundOptions
@@ -1603,6 +1618,10 @@ OptionMenu VideoModeMenu
 	Title "VIDEO MODE"
 	
 	Option "Fullscreen",			"fullscreen", "YesNo"
+	IfOption(Mac)
+	{
+		Option "Retina/HiDPI support", "vid_hidpi", "YesNo"
+	}
 	Option "Aspect ratio",			"menu_screenratios", "Ratios"
 	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
 	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"
@@ -1623,3 +1642,30 @@ OptionMenu VideoModeMenu
 	class VideoModeMenu
 }
 
+/*=======================================
+ *
+ * Network options menu
+ *
+ *=======================================*/
+
+OptionMenu NetworkOptions
+{
+	Title "NETWORK OPTIONS"
+	StaticText "Local options", 1
+	Option "Movement prediction",		"cl_noprediction", "OffOn"
+	Option "Predict line actions",		"cl_predict_specials", "OnOff"
+	Slider "Prediction Lerp Scale",		"cl_predict_lerpscale", 0.0, 0.5, 0.05
+	Slider "Lerp Threshold",			"cl_predict_lerpthreshold", 0.1, 16.0, 0.1
+	StaticText " "
+	StaticText "Host options", 1
+	Option "Extra Tics",				"net_extratic", "ExtraTicMode"
+	Option "Latency balancing",			"net_ticbalance", "OnOff"
+	
+}
+
+OptionValue ExtraTicMode
+{
+	0, "None"
+	1, "1"
+	2, "All unacknowledged"
+}

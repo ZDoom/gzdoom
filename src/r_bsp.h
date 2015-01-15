@@ -44,13 +44,11 @@ struct FWallCoords
 
 struct FWallTmapVals
 {
-	float		DepthOrg, DepthScale;
 	float		UoverZorg, UoverZstep;
 	float		InvZorg, InvZstep;
 
 	void InitFromWallCoords(const FWallCoords *wallc);
 	void InitFromLine(int x1, int y1, int x2, int y2);
-	void InitDepth();
 };
 
 extern FWallCoords WallC;

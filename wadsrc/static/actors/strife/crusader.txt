@@ -99,7 +99,7 @@ ACTOR CrusaderMissile
 		Loop
 	Death:
 		SMIS A 0 Bright A_SetTranslucent(1,1)
-		SMIS A 5 Bright A_StopSoundEx("Voice")
+		SMIS A 5 Bright
 		SMIS B 5 Bright
 		SMIS C 4 Bright
 		SMIS DEFG 2 Bright

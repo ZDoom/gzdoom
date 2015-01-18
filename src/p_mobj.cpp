@@ -1970,6 +1970,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					{
 						//int dir;
 						//angle_t delta;
+						angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
 
@@ -1989,7 +1990,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 								//dest->x - source->x
 								FVector3 velocity(origin->x - mo->x, origin->y - mo->y, (origin->z + (origin->height/2)) - mo->z);
 								velocity.Resize(speed);
-								angle = mo->angle >> ANGLETOFINESHIFT;
+								angle = mo->angle >>= ANGLETOFINESHIFT;
 								mo->velx = (fixed_t)(velocity.X);
 								mo->vely = (fixed_t)(velocity.Y);
 								mo->velz = (fixed_t)(velocity.Z);
@@ -2001,6 +2002,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							}
 							else
 							{
+								
 								mo->angle = angle;
 								angle >>= ANGLETOFINESHIFT;
 								mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);

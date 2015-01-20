@@ -353,8 +353,8 @@ enum
 	MF7_HITTARGET		= 0x00004000,	// The actor the projectile dies on is set to target, provided it's targetable anyway.
 	MF7_HITMASTER		= 0x00008000,	// Same as HITTARGET, except it's master instead of target.
 	MF7_HITTRACER		= 0x00010000,	// Same as HITTARGET, but for tracer.
-
-
+	MF7_NODECAL			= 0x00020000,	// [ZK] Forces puff to have no impact decal
+	MF7_FORCEDECAL		= 0x00040000,	// [ZK] Forces P_LineAttack to use the puff's decal, even if the player's weapon has a decal defined
 
 // --- mobj.renderflags ---
 

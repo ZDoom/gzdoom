@@ -5656,7 +5656,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SwapTeleFog)
 //
 // A_SetFloatBobPhase
 //
-// Changes the FloatBobPhase of the 
+// Changes the FloatBobPhase of the actor.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatBobPhase)
@@ -5667,6 +5667,43 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatBobPhase)
 	//Respect float bob phase limits.
 	if (self && (bob >= 0 && bob <= 63))
 		self->FloatBobPhase = bob;
+}
+
+//===========================================================================
+// A_SetHealth
+//
+// Changes the health of the actor.
+// Takes a pointer as well.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetHealth)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(health, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (!mobj)
+	{
+		return;
+	}
+
+	player_t *player = mobj->player;
+	if (player)
+	{
+		if (health <= 0)
+			player->mo->health = mobj->health = player->health = 1; //Copied from the buddha cheat.
+		else
+			player->mo->health = mobj->health = player->health = health;
+	}
+	else if (mobj)
+	{
+		if (health <= 0)
+			mobj->health = 1;
+		else
+			mobj->health = health;
+	}
 }
 
 //===========================================================================

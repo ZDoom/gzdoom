@@ -259,7 +259,7 @@ IWad
 IWad
 {
 	Name = "The Ultimate DOOM"
-	Autoname = "Doom1"
+	Autoname = "DoomU"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/ultdoom.txt"

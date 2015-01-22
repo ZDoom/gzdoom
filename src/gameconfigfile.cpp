@@ -181,8 +181,9 @@ FGameConfigFile::FGameConfigFile ()
 	CreateSectionAtStart("TNT.Autoload");
 	CreateSectionAtStart("Doom2BFG.Autoload");
 	CreateSectionAtStart("Doom2.Autoload");
-	CreateSectionAtStart("Doom1.Autoload");
 	CreateSectionAtStart("DoomBFG.Autoload");
+	CreateSectionAtStart("DoomU.Autoload");
+	CreateSectionAtStart("Doom1.Autoload");
 	CreateSectionAtStart("Doom.Autoload");
 	CreateSectionAtStart("Global.Autoload");
 

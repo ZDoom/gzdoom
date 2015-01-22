@@ -197,6 +197,7 @@ IWad
 {
 	Name = "FreeDM"
 	Autoname = "FreeDM"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
@@ -208,6 +209,7 @@ IWad
 {
 	Name = "Freedoom: Phase 2"
 	Autoname = "Freedoom2"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
@@ -219,6 +221,7 @@ IWad
 {
 	Name = "Freedoom: Phase 1"
 	Autoname = "Freedoom1"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom1.txt"
@@ -230,6 +233,7 @@ IWad
 {
 	Name = "Freedoom: Demo Version"
 	Autoname = "Freedoom1"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom1.txt"

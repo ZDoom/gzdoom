@@ -1990,15 +1990,9 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 								//dest->x - source->x
 								FVector3 velocity(origin->x - mo->x, origin->y - mo->y, (origin->z + (origin->height/2)) - mo->z);
 								velocity.Resize(speed);
-								angle = mo->angle >>= ANGLETOFINESHIFT;
 								mo->velx = (fixed_t)(velocity.X);
 								mo->vely = (fixed_t)(velocity.Y);
 								mo->velz = (fixed_t)(velocity.Z);
-								/*
-								mo->velx = FixedMul(mo->Speed, finecosine[angle]);
-								mo->vely = FixedMul(mo->Speed, finesine[angle]);
-								mo->velz = -mo->velz;
-								*/
 							}
 							else
 							{

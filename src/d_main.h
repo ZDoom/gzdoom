@@ -75,6 +75,7 @@ struct FIWADInfo
 {
 	FString Name;			// Title banner text for this IWAD
 	FString Autoname;		// Name of autoload ini section for this IWAD
+	FString Group;			// Groupname for this IWAD
 	FString Configname;		// Name of config section for this IWAD
 	FString Required;		// Requires another IWAD
 	DWORD FgColor;			// Foreground color for title banner

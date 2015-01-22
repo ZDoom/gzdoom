@@ -1989,7 +1989,7 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *gamesection)
+static void AddAutoloadFiles(const char *group, const char *autoname)
 {
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
@@ -2026,10 +2026,18 @@ static void AddAutoloadFiles(const char *gamesection)
 		file += ".Autoload";
 		D_AddConfigWads (allwads, file);
 
-		// Add IWAD-specific wads
-		if (gamesection != NULL)
+		// Add group-specific wads
+		if (group != NULL)
 		{
-			file = gamesection;
+			file = group;
+			file += ".Autoload";
+			D_AddConfigWads(allwads, file);
+		}
+
+		// Add IWAD-specific wads
+		if (autoname != NULL)
+		{
+			file = autoname;
 			file += ".Autoload";
 			D_AddConfigWads(allwads, file);
 		}
@@ -2262,7 +2270,7 @@ void D_DoomMain (void)
 		FBaseCVar::DisableCallbacks();
 		GameConfig->DoGameSetup (gameinfo.ConfigName);
 
-		AddAutoloadFiles(iwad_info->Autoname);
+		AddAutoloadFiles(iwad_info->Group, iwad_info->Autoname);
 
 		// Run automatically executed files
 		execFiles = new DArgs;

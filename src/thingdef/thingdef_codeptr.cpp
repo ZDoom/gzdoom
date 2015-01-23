@@ -2504,12 +2504,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_FIXED(scalex, 0);
 	ACTION_PARAM_FIXED(scaley, 1);
+	ACTION_PARAM_INT(ptr, 2);
 
-	self->scaleX = scalex;
-	self->scaleY = scaley ? scaley : scalex;
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	ref->scaleX = scalex;
+	ref->scaleY = scaley ? scaley : scalex;
 }
 
 //===========================================================================
@@ -3934,10 +3943,19 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_ANGLE(angle, 0);
-	ACTION_PARAM_INT(flags, 1)
-	self->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
+	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	ref->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================
@@ -3950,18 +3968,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_ANGLE(pitch, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_INT(ptr, 2);
 
-	if (self->player != NULL || (flags & SPF_FORCECLAMP))
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	if (ref->player != NULL || (flags & SPF_FORCECLAMP))
 	{ // clamp the pitch we set
 		int min, max;
 
-		if (self->player != NULL)
+		if (ref->player != NULL)
 		{
-			min = self->player->MinPitch;
-			max = self->player->MaxPitch;
+			min = ref->player->MinPitch;
+			max = ref->player->MaxPitch;
 		}
 		else
 		{
@@ -3970,7 +3997,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 		}
 		pitch = clamp<int>(pitch, min, max);
 	}
-	self->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
+	ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================
@@ -3999,20 +4026,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(scale, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
 
 	INTBOOL was_moving = self->velx | self->vely | self->velz;
 
-	self->velx = FixedMul(self->velx, scale);
-	self->vely = FixedMul(self->vely, scale);
-	self->velz = FixedMul(self->velz, scale);
+	ref->velx = FixedMul(ref->velx, scale);
+	ref->vely = FixedMul(ref->vely, scale);
+	ref->velz = FixedMul(ref->velz, scale);
 
 	// If the actor was previously moving but now is not, and is a player,
 	// update its player variables. (See A_Stop.)
 	if (was_moving)
 	{
-		CheckStopped(self);
+		CheckStopped(ref);
 	}
 }
 
@@ -5073,10 +5109,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(speed, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
 	
-	self->Speed = speed;
+	ref->Speed = speed;
 }
 
 static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
@@ -5712,6 +5757,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetHealth)
 			mobj->health = 1;
 		else
 			mobj->health = health;
+	}
+}
+
+//===========================================================================
+// A_ResetHealth
+//
+// Resets the health of the actor to default, except if their dead.
+// Takes a pointer.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(ptr, 0);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (!mobj)
+	{
+		return;
+	}
+
+	player_t *player = mobj->player;
+	if (player && (player->mo->health > 0))
+	{
+		player->health = player->mo->health = player->mo->GetDefault()->health; //Copied from the resurrect cheat.
+	}
+	else if (mobj && (mobj->health > 0))
+	{
+		mobj->health = mobj->GetDefault()->health;
 	}
 }
 

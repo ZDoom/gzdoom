@@ -4010,10 +4010,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_ANGLE(roll, 0);
 	ACTION_PARAM_INT(flags, 1);
-	self->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	ref->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================

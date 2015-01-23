@@ -296,6 +296,16 @@ protected:
 	static FNullStringData NullString;
 
 	friend struct FStringData;
+
+private:
+	// Prevent these from being called as current practices are to use Compare.
+	// Without this FStrings will be accidentally compared against char* ptrs.
+	bool operator == (const FString &illegal) const;
+	bool operator != (const FString &illegal) const;
+	bool operator < (const FString &illegal) const;
+	bool operator > (const FString &illegal) const;
+	bool operator <= (const FString &illegal) const;
+	bool operator >= (const FString &illegal) const;
 };
 
 namespace StringFormat

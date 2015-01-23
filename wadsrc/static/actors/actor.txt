@@ -231,7 +231,7 @@ ACTOR Actor native //: Thinker
 	action native A_FadeIn(float reduce = 0.1, int flags = 0);
 	action native A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
 	action native A_FadeTo(float target, float amount = 0.1, int flags = 0);
-	action native A_SetScale(float scalex, float scaley = 0);
+	action native A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetMass(int mass);
 	action native A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
 	action native A_CheckSight(state label);
@@ -289,11 +289,11 @@ ACTOR Actor native //: Thinker
 	action native A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	action native A_PigPain ();
 	action native A_MonsterRefire(int chance, state label);
-	action native A_SetAngle(float angle = 0, int flags = 0);
-	action native A_SetPitch(float pitch, int flags = 0);
-	action native A_SetRoll(float roll, int flags = 0);
-	action native A_ScaleVelocity(float scale);
-	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
+	action native A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetPitch(float pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetRoll(float roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
+	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetArg(int pos, int value);
 	action native A_SetUserVar(name varname, int value);
 	action native A_SetUserArray(name varname, int index, int value);
@@ -302,7 +302,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetTics(int tics);
 	action native A_SetDamageType(name damagetype);
 	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
-	action native A_SetSpeed(float speed);
+	action native A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT);
 	action native A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
 	action native A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
 	action native A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
@@ -327,6 +327,8 @@ ACTOR Actor native //: Thinker
 	action native A_SetTeleFog(name oldpos, name newpos);
 	action native A_SwapTeleFog();
 	action native A_SetFloatBobPhase(int bob);
+	action native A_SetHealth(int health, int ptr = AAPTR_DEFAULT);
+	action native A_ResetHealth(int ptr = AAPTR_DEFAULT);
 	action native A_SetRipperLevel(int level);
 	action native A_SetRipMin(int min);
 	action native A_SetRipMax(int max);

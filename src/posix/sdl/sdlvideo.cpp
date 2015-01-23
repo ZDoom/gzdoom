@@ -286,7 +286,6 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 	}
 	
 	SDLFB *fb = new SDLFB (width, height, fullscreen);
-	retry = 0;
 	
 	// If we could not create the framebuffer, try again with slightly
 	// different parameters in this order:
@@ -327,6 +326,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		++retry;
 		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
 	}
+	retry = 0;
 
 	fb->SetFlash (flashColor, flashAmount);
 

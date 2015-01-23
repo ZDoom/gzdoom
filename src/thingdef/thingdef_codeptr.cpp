@@ -5795,7 +5795,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
 	}
 	else if (mobj && (mobj->health > 0))
 	{
-		mobj->health = mobj->GetDefault()->health;
+		mobj->health = mobj->SpawnHealth();
 	}
 }
 

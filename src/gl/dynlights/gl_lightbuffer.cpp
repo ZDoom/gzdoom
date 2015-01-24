@@ -70,6 +70,7 @@ FLightBuffer::FLightBuffer()
 
 	glGenBuffers(1, &mBufferId);
 	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
+	glBindBuffer(mBufferType, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
 	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
 		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -144,6 +145,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 		// create and bind the new buffer, bind the old one to a copy target (too bad that DSA is not yet supported well enough to omit this crap.)
 		glGenBuffers(1, &newbuffer);
 		glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, newbuffer);
+		glBindBuffer(mBufferType, newbuffer);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
 		glBindBuffer(GL_COPY_READ_BUFFER, mBufferId);
 
 		// create the new buffer's storage (twice as large as the old one)

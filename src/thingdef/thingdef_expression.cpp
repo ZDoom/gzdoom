@@ -88,6 +88,7 @@ DEFINE_MEMBER_VARIABLE(radius, AActor)
 DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
 DEFINE_MEMBER_VARIABLE(meleerange, AActor)
 DEFINE_MEMBER_VARIABLE(Speed, AActor)
+DEFINE_MEMBER_VARIABLE(roll, AActor)
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
@@ -2104,7 +2105,7 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
-FxPick::FxPick(FRandom *r, TArray<FxExpression*> &expr, const FScriptPosition &pos)
+FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	assert(expr.Size() > 0);
@@ -2123,7 +2124,7 @@ FxPick::FxPick(FRandom *r, TArray<FxExpression*> &expr, const FScriptPosition &p
 //
 //==========================================================================
 
-FxPick::~FxPick()
+FxRandomPick::~FxRandomPick()
 {
 }
 
@@ -2133,7 +2134,7 @@ FxPick::~FxPick()
 //
 //==========================================================================
 
-FxExpression *FxPick::Resolve(FCompileContext &ctx)
+FxExpression *FxRandomPick::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	for (unsigned int index = 0; index < choices.Size(); index++)
@@ -2165,7 +2166,7 @@ FxExpression *FxPick::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpEmit FxPick::Emit(VMFunctionBuilder *build)
+ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 {
 	unsigned i;
 

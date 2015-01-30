@@ -636,7 +636,7 @@ public:
 //
 //==========================================================================
 
-class FxPick : public FxExpression
+class FxRandomPick : public FxExpression
 {
 protected:
 	FRandom *rng;
@@ -644,8 +644,8 @@ protected:
 
 public:
 
-	FxPick(FRandom *, TArray<FxExpression*> &expr, const FScriptPosition &pos);
-	~FxPick();
+	FxRandomPick(FRandom *, TArray<FxExpression*> &expr, const FScriptPosition &pos);
+	~FxRandomPick();
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

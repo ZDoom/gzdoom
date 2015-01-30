@@ -345,8 +345,10 @@ Const Int WARPF_TOFLOOR = 0x100;
 Const Int WARPF_TESTONLY = 0x200;
 Const Int WAPRF_ABSOLUTEPOSITION = 0x400;
 Const Int WARPF_ABSOLUTEPOSITION = 0x400;
+Const Int WARPF_BOB = 0x800;
+Const Int WARPF_MOVEPTR = 0x1000;
 
-// flags for A_SetPitch/SetAngle
+// flags for A_SetPitch/SetAngle/SetRoll
 const int SPF_FORCECLAMP = 1;
 const int SPF_INTERPOLATE = 2;
 
@@ -396,19 +398,30 @@ enum
 };
 
 // Flags for A_Kill (Master/Target/Tracer/Children/Siblings) series
-
-const int KILS_FOILINVUL =		1;
-const int KILS_KILLMISSILES =	2;
-const int KILS_NOMONSTERS =		4;
-const int KILS_FOILBUDDHA =		8;
+enum
+{
+	KILS_FOILINVUL =		0x00000001,
+	KILS_KILLMISSILES =		0x00000002,
+	KILS_NOMONSTERS =		0x00000004,
+	KILS_FOILBUDDHA =		0x00000008,
+	KILS_EXFILTER =			0x00000010,
+	KILS_EXSPECIES =		0x00000020,
+	KILS_EITHER =			0x00000040,
+};
 
 // Flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
-const int DMSS_FOILINVUL =		1;
-const int DMSS_AFFECTARMOR =	2;
-const int DMSS_KILL =			4;
-const int DMSS_NOFACTOR =		8;
-const int DMSS_FOILBUDDHA =		16;
-const int DMSS_NOPROTECT =		32;
+enum
+{
+	DMSS_FOILINVUL =		0x00000001,
+	DMSS_AFFECTARMOR =		0x00000002,
+	DMSS_KILL =				0x00000004,
+	DMSS_NOFACTOR =			0x00000008,
+	DMSS_FOILBUDDHA =		0x00000010,
+	DMSS_NOPROTECT =		0x00000020,
+	DMSS_EXFILTER =			0x00000040,
+	DMSS_EXSPECIES =		0x00000080,
+	DMSS_EITHER =			0x00000100,
+};
 
 // Flags for A_AlertMonsters
 const int AMF_TARGETEMITTER = 1;
@@ -418,10 +431,13 @@ const int AMF_EMITFROMTARGET = 4;
 // Flags for A_Remove*
 enum
 {
-	RMVF_MISSILES =			1 << 0,
-	RMVF_NOMONSTERS =		1 << 1,
-	RMVF_MISC =				1 << 2,
-	RMVF_EVERYTHING =		1 << 3,
+	RMVF_MISSILES =			0x00000001,
+	RMVF_NOMONSTERS =		0x00000002,
+	RMVF_MISC =				0x00000004,
+	RMVF_EVERYTHING =		0x00000008,
+	RMVF_EXFILTER =			0x00000010,
+	RMVF_EXSPECIES =		0x00000020,
+	RMVF_EITHER =			0x00000040,
 };
 
 // Flags for A_Fade*

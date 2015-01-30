@@ -529,27 +529,29 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 	{
 		AMorphedMonster *fakeme = static_cast<AMorphedMonster *>(actor);
 		AActor *realme = fakeme->UnmorphedMe;
-		if ((fakeme->UnmorphTime) &&
-			(fakeme->MorphStyle & MORPH_UNDOBYDEATH) &&
-			(realme))
+		if (realme != NULL)
 		{
-			int realstyle = fakeme->MorphStyle;
-			int realhealth = fakeme->health;
-			if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+			if ((fakeme->UnmorphTime) &&
+				(fakeme->MorphStyle & MORPH_UNDOBYDEATH))
 			{
-				*morphed = realme;
-				*morphedstyle = realstyle;
-				*morphedhealth = realhealth;
-				return true;
+				int realstyle = fakeme->MorphStyle;
+				int realhealth = fakeme->health;
+				if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+				{
+					*morphed = realme;
+					*morphedstyle = realstyle;
+					*morphedhealth = realhealth;
+					return true;
+				}
 			}
-		}
-		if (realme->flags4 & MF4_BOSSDEATH)
-		{
-			realme->health = 0;	// make sure that A_BossDeath considers it dead.
-			// FIXME: Use the caller's stack once the whole chain is scriptable.
-			VMFrameStack stack;
-			VMValue params[3] = { realme, realme, VMValue(NULL, ATAG_STATE) };
-			stack.Call(A_BossDeath_VMPtr, params, countof(params), NULL, 0, NULL);
+			if (realme->flags4 & MF4_BOSSDEATH)
+			{
+				realme->health = 0;	// make sure that A_BossDeath considers it dead.
+				// FIXME: Use the caller's stack once the whole chain is scriptable.
+				VMFrameStack stack;
+				VMValue params[3] = { realme, realme, VMValue(NULL, ATAG_STATE) };
+				stack.Call(A_BossDeath_VMPtr, params, countof(params), NULL, 0, NULL);
+			}
 		}
 		fakeme->flags3 |= MF3_STAYMORPHED; // moved here from AMorphedMonster::Die()
 		return false;

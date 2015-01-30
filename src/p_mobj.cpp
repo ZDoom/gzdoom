@@ -423,6 +423,13 @@ void AActor::Serialize (FArchive &arc)
 		arc << TeleFogSourceType
 			<< TeleFogDestType;
 	}
+	if (SaveVersion >= 4518)
+	{
+		arc << RipperLevel
+			<< RipLevelMin
+			<< RipLevelMax;
+	}
+
 	{
 		FString tagstr;
 		if (arc.IsStoring() && Tag != NULL && Tag->Len() > 0) tagstr = *Tag;
@@ -2056,48 +2063,46 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						int dir;
-						angle_t delta;
-						
-						if (BlockingMobj->flags7 & MF7_MIRRORREFLECT)
-							angle = mo->angle + ANG180;
-						else
-							angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
-
+						//int dir;
+						//angle_t delta;
+						angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
+						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
-						// AIMREFLECT calls precedence so make sure not to bother with adjusting here if declared.
-						if (!(BlockingMobj->flags7 & MF7_AIMREFLECT) && (mo->AdjustReflectionAngle(BlockingMobj, angle)))
-						{
-							goto explode;
-						}
 
-						// Reflect the missile along angle
-						if (BlockingMobj->flags7 & MF7_AIMREFLECT)
+						if (!dontReflect)
 						{
-							dir = P_FaceMobj(mo, mo->target, &delta);
-							if (dir)
-							{ // Turn clockwise
-								mo->angle += delta;
+							bool tg = (mo->target != NULL);
+							bool blockingtg = (BlockingMobj->target != NULL);
+							if (BlockingMobj->flags7 & MF7_AIMREFLECT && (tg || blockingtg))
+							{
+								AActor *origin;
+								if (tg)
+									origin = mo->target;
+								else if (blockingtg)
+									origin = BlockingMobj->target;
+
+								float speed = (float)(mo->Speed);
+								//dest->x - source->x
+								FVector3 velocity(origin->x - mo->x, origin->y - mo->y, (origin->z + (origin->height/2)) - mo->z);
+								velocity.Resize(speed);
+								mo->velx = (fixed_t)(velocity.X);
+								mo->vely = (fixed_t)(velocity.Y);
+								mo->velz = (fixed_t)(velocity.Z);
 							}
 							else
-							{ // Turn counter clockwise
-								mo->angle -= delta;
+							{
+								
+								mo->angle = angle;
+								angle >>= ANGLETOFINESHIFT;
+								mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);
+								mo->vely = FixedMul(mo->Speed >> 1, finesine[angle]);
+								mo->velz = -mo->velz / 2;
 							}
-							angle = mo->angle >> ANGLETOFINESHIFT;
-							mo->velx = FixedMul(mo->Speed, finecosine[angle]);
-							mo->vely = FixedMul(mo->Speed, finesine[angle]);
-							mo->velz = -mo->velz;
 						}
 						else
 						{
-							mo->angle = angle;
-							angle >>= ANGLETOFINESHIFT;
-							mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);
-							mo->vely = FixedMul(mo->Speed >> 1, finesine[angle]);
-							mo->velz = -mo->velz / 2;
-						}
-						
-						
+							goto explode;
+						}						
 					}
 					if (mo->flags2 & MF2_SEEKERMISSILE)
 					{
@@ -3036,8 +3041,10 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 	if (flags2 & MF2_DONTREFLECT) return true;
 	if (thing->flags7 & MF7_THRUREFLECT) return false;
 
+	if (thing->flags7 & MF7_MIRRORREFLECT)
+		angle += ANGLE_180;
 	// Change angle for reflection
-	if (thing->flags4&MF4_SHIELDREFLECT)
+	else if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur
 		if (abs (angle - thing->angle)>>24 > 45)
@@ -3059,6 +3066,13 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 			angle += ANG45;
 		else 
 			angle -= ANG45;
+	}
+	else if (thing->flags7 & MF7_AIMREFLECT)
+	{
+		if (this->target != NULL)
+			A_Face(this, this->target);
+		else if (thing->target != NULL)
+			A_Face(this, thing->target);
 	}
 	else 
 		angle += ANGLE_1 * ((pr_reflect()%16)-8);
@@ -3160,6 +3174,18 @@ void AActor::SetAngle(angle_t ang, bool interpolate)
 	if (ang != angle)
 	{
 		angle = ang;
+		if (player != NULL && interpolate)
+		{
+			player->cheats |= CF_INTERPVIEW;
+		}
+	}
+}
+
+void AActor::SetRoll(angle_t r, bool interpolate)
+{
+	if (r != roll)
+	{
+		roll = r;
 		if (player != NULL && interpolate)
 		{
 			player->cheats |= CF_INTERPVIEW;
@@ -5029,7 +5055,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
+AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags, AActor *vict)
 {
 	AActor *puff;
 	
@@ -5039,9 +5065,24 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
+	if ((puff->flags4 & MF4_RANDOMIZE) && puff->tics > 0)
+	{
+		puff->tics -= pr_spawnpuff() & 3;
+		if (puff->tics < 1)
+			puff->tics = 1;
+	}
+
+	//Moved puff creation and target/master/tracer setting to here. 
+	if (puff && vict)
+	{
+		if (puff->flags7 & MF7_HITTARGET)	puff->target = vict;
+		if (puff->flags7 & MF7_HITMASTER)	puff->master = vict;
+		if (puff->flags7 & MF7_HITTRACER)	puff->tracer = vict;
+	}
 	// [BB] If the puff came from a player, set the target of the puff to this player.
 	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
 		puff->target = source;
+	
 
 	if (source != NULL) puff->angle = R_PointToAngle2(x, y, source->x, source->y);
 

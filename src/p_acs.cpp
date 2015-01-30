@@ -2393,7 +2393,7 @@ void FBehavior::LoadScriptsDirectory ()
 		int size = LittleLong(scripts.dw[1]);
 		if (size >= 6)
 		{
-			int script_num = LittleShort(scripts.w[4]);
+			int script_num = LittleShort(scripts.sw[4]);
 			ScriptPtr *ptr = const_cast<ScriptPtr *>(FindScript(script_num));
 			if (ptr != NULL)
 			{
@@ -4439,6 +4439,9 @@ enum EACSFunctions
 	ACSF_CanRaiseActor,
 	ACSF_SetActorTeleFog,		// 86
 	ACSF_SwapActorTeleFog,
+	ACSF_SetActorRoll,
+	ACSF_ChangeActorRoll,
+	ACSF_GetActorRoll,
 
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -4739,6 +4742,27 @@ static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolat
 		while ((actor = iterator.Next()))
 		{
 			actor->SetPitch(angle << 16, interpolate);
+		}
+	}
+}
+
+static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate)
+{
+	if (tid == 0)
+	{
+		if (activator != NULL)
+		{
+			activator->SetRoll(angle << 16, interpolate);
+		}
+	}
+	else
+	{
+		FActorIterator iterator(tid);
+		AActor *actor;
+
+		while ((actor = iterator.Next()))
+		{
+			actor->SetRoll(angle << 16, interpolate);
 		}
 	}
 }
@@ -5823,6 +5847,26 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return !canraiseall;
 			}
 			break;
+
+		// [Nash] Actor roll functions. Let's roll!
+		case ACSF_SetActorRoll:
+			actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				actor->SetRoll(args[1] << 16, false);
+			}
+			return 0;
+
+		case ACSF_ChangeActorRoll:
+			if (argCount >= 2)
+			{
+				SetActorRoll(activator, args[0], args[1], argCount > 2 ? !!args[2] : false);
+			}
+			break;
+
+		case ACSF_GetActorRoll:
+			actor = SingleActorFromTID(args[0], activator);
+			return actor != NULL? actor->roll >> 16 : 0;
 
 		default:
 			break;
@@ -7488,22 +7532,9 @@ scriptwait:
 			break;
 
 		case PCD_PRINTBINARY:
-#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))) || defined(__clang__)
-#define HAS_DIAGNOSTIC_PRAGMA
-#endif
-#ifdef HAS_DIAGNOSTIC_PRAGMA
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"
-#else
-#pragma GCC diagnostic ignored "-Wformat="
-#endif
-#pragma GCC diagnostic ignored "-Wformat-extra-args"
-#endif
+			IGNORE_FORMAT_PRE
 			work.AppendFormat ("%B", STACK(1));
-#ifdef HAS_DIAGNOSTIC_PRAGMA
-#pragma GCC diagnostic pop
-#endif
+			IGNORE_FORMAT_POST
 			--sp;
 			break;
 

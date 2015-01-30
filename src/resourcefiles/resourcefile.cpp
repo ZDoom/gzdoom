@@ -150,11 +150,28 @@ void FResourceLump::LumpNameSetup(const char *iname)
 //
 //==========================================================================
 
+static bool IsWadInFolder(const FResourceFile* const archive, const char* const resPath)
+{
+	// Checks a special case when <somefile.wad> was put in
+	// <myproject> directory inside <myproject.zip>
+
+	if (NULL == archive)
+	{
+		return false;
+	}
+
+    const FString dirName = ExtractFileBase(archive->Filename);
+	const FString fileName = ExtractFileBase(resPath, true);
+	const FString filePath = dirName + '/' + fileName;
+
+	return 0 == filePath.CompareNoCase(resPath);
+}
+
 void FResourceLump::CheckEmbedded()
 {
 	// Checks for embedded archives
 	const char *c = strstr(FullName, ".wad");
-	if (c && strlen(c) == 4 && !strchr(FullName, '/'))
+	if (c && strlen(c) == 4 && (!strchr(FullName, '/') || IsWadInFolder(Owner, FullName)))
 	{
 		// Mark all embedded WADs
 		Flags |= LUMPF_EMBEDDED;

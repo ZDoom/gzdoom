@@ -185,6 +185,9 @@ static const char *KeyConfCommands[] =
 	"clearplayerclasses"
 };
 
+static TArray<FString> StoredStartupSets;
+static bool RunningStoredStartups;
+
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_CLASS (DWaitingCommand)
@@ -537,6 +540,18 @@ void ResetButtonStates ()
 	}
 }
 
+void C_ExecStoredSets()
+{
+	assert(!RunningStoredStartups);
+	RunningStoredStartups = true;
+	for (unsigned i = 0; i < StoredStartupSets.Size(); ++i)
+	{
+		C_DoCommand(StoredStartupSets[i]);
+	}
+	StoredStartupSets.Clear();
+	RunningStoredStartups = false;
+}
+
 void C_DoCommand (const char *cmd, int keynum)
 {
 	FConsoleCommand *com;
@@ -612,7 +627,22 @@ void C_DoCommand (const char *cmd, int keynum)
 
 	if ( (com = FindNameInHashTable (Commands, beg, len)) )
 	{
-		if (gamestate != GS_STARTUP || ParsingKeyConf ||
+		if (gamestate == GS_STARTUP && !RunningStoredStartups &&
+			len == 3 && strnicmp(beg, "set", 3) == 0)
+		{
+			// Save setting of unknown cvars for later, in case a loaded wad has a
+			// CVARINFO that defines it.
+			FCommandLine args(beg);
+			if (args.argc() > 1 && FindCVar(args[1], NULL) == NULL)
+			{
+				StoredStartupSets.Push(beg);
+			}
+			else
+			{
+				com->Run(args, players[consoleplayer].mo, keynum);
+			}
+		}
+		else if (gamestate != GS_STARTUP || ParsingKeyConf ||
 			(len == 3 && strnicmp (beg, "set", 3) == 0) ||
 			(len == 7 && strnicmp (beg, "logfile", 7) == 0) ||
 			(len == 9 && strnicmp (beg, "unbindall", 9) == 0) ||
@@ -657,12 +687,15 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 		else
 		{ // We don't know how to handle this command
-			char cmdname[64];
-			size_t minlen = MIN<size_t> (len, 63);
-
-			memcpy (cmdname, beg, minlen);
-			cmdname[len] = 0;
-			Printf ("Unknown command \"%s\"\n", cmdname);
+			if (gamestate == GS_STARTUP && !RunningStoredStartups)
+			{
+				// Save it for later, in case a CVARINFO defines it.
+				StoredStartupSets.Push(beg);
+			}
+			else
+			{
+				Printf ("Unknown command \"%.*s\"\n", len, beg);
+			}
 		}
 	}
 }

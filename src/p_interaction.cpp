@@ -1278,7 +1278,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
 			{
 				int newdam = damage;
-				player->mo->Inventory->AbsorbDamage(damage, mod, newdam);
+				if (damage > 0)
+				{
+					player->mo->Inventory->AbsorbDamage(damage, mod, newdam);
+				}
 				if (damage < TELEFRAG_DAMAGE)
 				{
 					// if we are telefragging don't let the damage value go below that magic value. Some further checks would fail otherwise.

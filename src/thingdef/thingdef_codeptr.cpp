@@ -1670,14 +1670,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 //
 //===========================================================================
 
-static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
+static void DoGiveInventory(AActor * receiver, bool use_aaptr, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(3);
+	ACTION_PARAM_START(2+use_aaptr);
 	ACTION_PARAM_CLASS(mi, 0);
 	ACTION_PARAM_INT(amount, 1);
-	ACTION_PARAM_INT(setreceiver, 2);
 
-	COPY_AAPTR_NOT_NULL(receiver, receiver, setreceiver);
+	if (use_aaptr)
+	{
+		ACTION_PARAM_INT(setreceiver, 2);
+		COPY_AAPTR_NOT_NULL(receiver, receiver, setreceiver);
+	}
 
 	bool res=true;
 	
@@ -1685,6 +1688,11 @@ static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 	if (mi) 
 	{
 		AInventory *item = static_cast<AInventory *>(Spawn (mi, 0, 0, 0, NO_REPLACE));
+		if (!item)
+		{
+			ACTION_SET_RESULT(false);
+			return;
+		}
 		if (item->IsKindOf(RUNTIME_CLASS(AHealth)))
 		{
 			item->Amount *= amount;
@@ -1709,12 +1717,12 @@ static void DoGiveInventory(AActor * receiver, DECLARE_PARAMINFO)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
-	DoGiveInventory(self, PUSH_PARAMINFO);
+	DoGiveInventory(self, true, PUSH_PARAMINFO);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
-	DoGiveInventory(self->target, PUSH_PARAMINFO);
+	DoGiveInventory(self->target, true, PUSH_PARAMINFO);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToChildren)
@@ -1724,7 +1732,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToChildren)
 
 	while ((mo = it.Next()))
 	{
-		if (mo->master == self) DoGiveInventory(mo, PUSH_PARAMINFO);
+		if (mo->master == self) DoGiveInventory(mo, false, PUSH_PARAMINFO);
 	}
 }
 
@@ -1737,7 +1745,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToSiblings)
 	{
 		while ((mo = it.Next()))
 		{
-			if (mo->master == self->master && mo != self) DoGiveInventory(mo, PUSH_PARAMINFO);
+			if (mo->master == self->master && mo != self) DoGiveInventory(mo, false, PUSH_PARAMINFO);
 		}
 	}
 }
@@ -1753,16 +1761,23 @@ enum
 	TIF_NOTAKEINFINITE = 1,
 };
 
-void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
+void DoTakeInventory(AActor * receiver, bool use_aaptr, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(4);
+	ACTION_PARAM_START(3+use_aaptr);
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_INT(amount, 1);
 	ACTION_PARAM_INT(flags, 2);
-	ACTION_PARAM_INT(setreceiver, 3);
 	
-	if (!item) return;
-	COPY_AAPTR_NOT_NULL(receiver, receiver, setreceiver);
+	if (!item)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	if (use_aaptr)
+	{
+		ACTION_PARAM_INT(setreceiver, 3);
+		COPY_AAPTR_NOT_NULL(receiver, receiver, setreceiver);
+	}
 
 	bool res = false;
 
@@ -1794,12 +1809,12 @@ void DoTakeInventory(AActor * receiver, DECLARE_PARAMINFO)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
-	DoTakeInventory(self, PUSH_PARAMINFO);
+	DoTakeInventory(self, true, PUSH_PARAMINFO);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
-	DoTakeInventory(self->target, PUSH_PARAMINFO);
+	DoTakeInventory(self->target, true, PUSH_PARAMINFO);
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromChildren)
@@ -1809,7 +1824,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromChildren)
 
 	while ((mo = it.Next()))
 	{
-		if (mo->master == self) DoTakeInventory(mo, PUSH_PARAMINFO);
+		if (mo->master == self) DoTakeInventory(mo, false, PUSH_PARAMINFO);
 	}
 }
 
@@ -1822,7 +1837,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromSiblings)
 	{
 		while ((mo = it.Next()))
 		{
-			if (mo->master == self->master && mo != self) DoTakeInventory(mo, PUSH_PARAMINFO);
+			if (mo->master == self->master && mo != self) DoTakeInventory(mo, false, PUSH_PARAMINFO);
 		}
 	}
 }
@@ -2504,12 +2519,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_FIXED(scalex, 0);
 	ACTION_PARAM_FIXED(scaley, 1);
+	ACTION_PARAM_INT(ptr, 2);
 
-	self->scaleX = scalex;
-	self->scaleY = scaley ? scaley : scalex;
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	ref->scaleX = scalex;
+	ref->scaleY = scaley ? scaley : scalex;
 }
 
 //===========================================================================
@@ -3934,10 +3958,19 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_ANGLE(angle, 0);
-	ACTION_PARAM_INT(flags, 1)
-	self->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
+	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	ref->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================
@@ -3950,18 +3983,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_ANGLE(pitch, 0);
 	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_INT(ptr, 2);
 
-	if (self->player != NULL || (flags & SPF_FORCECLAMP))
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	if (ref->player != NULL || (flags & SPF_FORCECLAMP))
 	{ // clamp the pitch we set
 		int min, max;
 
-		if (self->player != NULL)
+		if (ref->player != NULL)
 		{
-			min = self->player->MinPitch;
-			max = self->player->MaxPitch;
+			min = ref->player->MinPitch;
+			max = ref->player->MaxPitch;
 		}
 		else
 		{
@@ -3970,7 +4012,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 		}
 		pitch = clamp<int>(pitch, min, max);
 	}
-	self->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
+	ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================
@@ -3983,10 +4025,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_ANGLE(roll, 0);
 	ACTION_PARAM_INT(flags, 1);
-	self->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	ref->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
 }
 
 //===========================================================================
@@ -3999,20 +4050,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(scale, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
 
 	INTBOOL was_moving = self->velx | self->vely | self->velz;
 
-	self->velx = FixedMul(self->velx, scale);
-	self->vely = FixedMul(self->vely, scale);
-	self->velz = FixedMul(self->velz, scale);
+	ref->velx = FixedMul(ref->velx, scale);
+	ref->vely = FixedMul(ref->vely, scale);
+	ref->velz = FixedMul(ref->velz, scale);
 
 	// If the actor was previously moving but now is not, and is a player,
 	// update its player variables. (See A_Stop.)
 	if (was_moving)
 	{
-		CheckStopped(self);
+		CheckStopped(ref);
 	}
 }
 
@@ -4029,12 +4089,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
 	ACTION_PARAM_FIXED(y, 1);
 	ACTION_PARAM_FIXED(z, 2);
 	ACTION_PARAM_INT(flags, 3);
+	ACTION_PARAM_INT(ptr, 4);
 
-	INTBOOL was_moving = self->velx | self->vely | self->velz;
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	INTBOOL was_moving = ref->velx | ref->vely | ref->velz;
 
 	fixed_t vx = x, vy = y, vz = z;
-	fixed_t sina = finesine[self->angle >> ANGLETOFINESHIFT];
-	fixed_t cosa = finecosine[self->angle >> ANGLETOFINESHIFT];
+	fixed_t sina = finesine[ref->angle >> ANGLETOFINESHIFT];
+	fixed_t cosa = finecosine[ref->angle >> ANGLETOFINESHIFT];
 
 	if (flags & 1)	// relative axes - make x, y relative to actor's current angle
 	{
@@ -4043,15 +4112,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
 	}
 	if (flags & 2)	// discard old velocity - replace old velocity with new velocity
 	{
-		self->velx = vx;
-		self->vely = vy;
-		self->velz = vz;
+		ref->velx = vx;
+		ref->vely = vy;
+		ref->velz = vz;
 	}
 	else	// add new velocity to old velocity
 	{
-		self->velx += vx;
-		self->vely += vy;
-		self->velz += vz;
+		ref->velx += vx;
+		ref->vely += vy;
+		ref->velz += vz;
 	}
 
 	if (was_moving)
@@ -5064,10 +5133,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 {
-	ACTION_PARAM_START(1);
+	ACTION_PARAM_START(2);
 	ACTION_PARAM_FIXED(speed, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
 	
-	self->Speed = speed;
+	ref->Speed = speed;
 }
 
 static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
@@ -5656,7 +5734,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SwapTeleFog)
 //
 // A_SetFloatBobPhase
 //
-// Changes the FloatBobPhase of the 
+// Changes the FloatBobPhase of the actor.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatBobPhase)
@@ -5667,6 +5745,73 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatBobPhase)
 	//Respect float bob phase limits.
 	if (self && (bob >= 0 && bob <= 63))
 		self->FloatBobPhase = bob;
+}
+
+//===========================================================================
+// A_SetHealth
+//
+// Changes the health of the actor.
+// Takes a pointer as well.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetHealth)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(health, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (!mobj)
+	{
+		return;
+	}
+
+	player_t *player = mobj->player;
+	if (player)
+	{
+		if (health <= 0)
+			player->mo->health = mobj->health = player->health = 1; //Copied from the buddha cheat.
+		else
+			player->mo->health = mobj->health = player->health = health;
+	}
+	else if (mobj)
+	{
+		if (health <= 0)
+			mobj->health = 1;
+		else
+			mobj->health = health;
+	}
+}
+
+//===========================================================================
+// A_ResetHealth
+//
+// Resets the health of the actor to default, except if their dead.
+// Takes a pointer.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(ptr, 0);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	if (!mobj)
+	{
+		return;
+	}
+
+	player_t *player = mobj->player;
+	if (player && (player->mo->health > 0))
+	{
+		player->health = player->mo->health = player->mo->GetDefault()->health; //Copied from the resurrect cheat.
+	}
+	else if (mobj && (mobj->health > 0))
+	{
+		mobj->health = mobj->SpawnHealth();
+	}
 }
 
 //===========================================================================

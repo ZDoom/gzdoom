@@ -301,14 +301,14 @@ void APathFollower::Tick ()
 		bJustStepped = false;
 		if (CurrNode->args[2])
 		{
-			HoldTime = gametic + CurrNode->args[2] * TICRATE / 8;
+			HoldTime = level.time + CurrNode->args[2] * TICRATE / 8;
 			x = CurrNode->x;
 			y = CurrNode->y;
 			z = CurrNode->z;
 		}
 	}
 
-	if (HoldTime > gametic)
+	if (HoldTime > level.time)
 		return;
 
 	// Splines must have a previous node.

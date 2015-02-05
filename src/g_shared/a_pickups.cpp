@@ -1407,16 +1407,10 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 				Invstack = titem->Inventory;
 				if (titem->Owner == this)
 				{
-					Printf("Crantech: %s::CallTryPickup doing transfer of %s\n", GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
 					if (!titem->CallTryPickup(toucher)) // The object no longer can exist
 					{
-						Printf("Crantech: %s::CallTryPickup, %s is now being destroyed\n", GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
 						titem->Destroy();
 					}
-				}
-				else
-				{
-					Printf("Crantech: %s::CallTryPickup, %s didn't belong to this object\n", GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
 				}
 			}
 		}

@@ -551,12 +551,17 @@ void AActor::AddInventory (AInventory *item)
 	{
 		// Is it attached to us?
 		if (item->Owner == this)
+		{
+			Printf("Crantech: AddInventory->%s->Owner was Owner\n", item->GetClass()->TypeName.GetChars());
 			return;
+		}
 
 		// No, then remove it from the other actor first
 		item->Owner->RemoveInventory (item);
+		Printf("Crantech: AddInventory->%s->Owner was nonNULL\n", item->GetClass()->TypeName.GetChars());
 	}
 
+	TObjPtr<AInventory> Invstack = item->Inventory;
 	item->Owner = this;
 	item->Inventory = Inventory;
 	Inventory = item;
@@ -567,6 +572,26 @@ void AActor::AddInventory (AInventory *item)
 	// run sometime in the future, so by the time it runs, the inventory
 	// might not be in the same state as it was when DEM_INVUSE was sent.
 	Inventory->InventoryID = InventoryID++;
+
+	// If the flag exists, transfer all inventory accross that the old object had.
+	if ((item->ItemFlags & IF_TRANSFER))
+	{
+		while (Invstack)
+		{
+			AInventory* titem = Invstack;
+			Invstack = titem->Inventory;
+
+			Printf("Crantech: AddInventory->%s doing transfer of %s\n", item->GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
+			bool success = titem->CallTryPickup(this);
+			if (!success)
+			{
+				Printf("Crantech: AddInventory->%s, %s is now being destroyed\n", item->GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
+				titem->Destroy();
+			}
+			//AddInventory(item->Inventory); // Adds current inventory item to present index
+		}
+	}
+
 }
 
 //============================================================================
@@ -587,6 +612,7 @@ void AActor::RemoveInventory (AInventory *item)
 			*invp = item->Inventory;
 			item->DetachFromOwner ();
 			item->Owner = NULL;
+			item->Inventory = NULL;
 			break;
 		}
 	}

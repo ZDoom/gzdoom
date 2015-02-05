@@ -939,7 +939,7 @@ void NetUpdate (void)
 	newtics = nowtime - gametime;
 	gametime = nowtime;
 
-	if (newtics <= 0 || pauseext)	// nothing new to update or window paused
+	if (newtics <= 0)	// nothing new to update
 	{
 		GetPackets ();
 		return;
@@ -1795,6 +1795,7 @@ void TryRunTics (void)
 
 	// If paused, do not eat more CPU time than we need, because it
 	// will all be wasted anyway.
+	if (pauseext) r_NoInterpolate = true;
 	bool doWait = cl_capfps || r_NoInterpolate /*|| netgame*/;
 
 	// get real tics
@@ -1919,7 +1920,7 @@ void TryRunTics (void)
 			C_Ticker ();
 			M_Ticker ();
 			I_GetTime (true);
-			G_Ticker ();
+			if (!pauseext) G_Ticker();
 			gametic++;
 
 			NetUpdate ();	// check for new console commands

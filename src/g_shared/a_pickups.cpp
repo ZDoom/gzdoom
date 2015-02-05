@@ -1372,6 +1372,8 @@ bool AInventory::TryPickupRestricted (AActor *&toucher)
 
 bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 {
+	TObjPtr<AInventory> Invstack = Inventory; // A pointer of the inventories item stack.
+
 	// unmorphed versions of a currently morphed actor cannot pick up anything. 
 	if (toucher->flags & MF_UNMORPHED) return false;
 
@@ -1392,7 +1394,33 @@ bool AInventory::CallTryPickup (AActor *toucher, AActor **toucher_return)
 		GoAwayAndDie();
 	}
 
-	if (res) GiveQuest(toucher);
+	if (res)
+	{
+		GiveQuest(toucher);
+
+		// Transfer all inventory accross that the old object had, if requested.
+		if ((ItemFlags & IF_TRANSFER))
+		{
+			while (Invstack)
+			{
+				AInventory* titem = Invstack;
+				Invstack = titem->Inventory;
+				if (titem->Owner == this)
+				{
+					Printf("Crantech: %s::CallTryPickup doing transfer of %s\n", GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
+					if (!titem->CallTryPickup(toucher)) // The object no longer can exist
+					{
+						Printf("Crantech: %s::CallTryPickup, %s is now being destroyed\n", GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
+						titem->Destroy();
+					}
+				}
+				else
+				{
+					Printf("Crantech: %s::CallTryPickup, %s didn't belong to this object\n", GetClass()->TypeName.GetChars(), titem->GetClass()->TypeName.GetChars());
+				}
+			}
+		}
+	}
 	return res;
 }
 

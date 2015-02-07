@@ -217,7 +217,7 @@ public:
 	bool ReplaceFactor;
 	bool NoArmor;
 
-	void Apply(FName const type);
+	void Apply(FName const &type);
 	void Clear()
 	{
 		DefaultFactor = FRACUNIT;
@@ -225,9 +225,9 @@ public:
 		NoArmor = false;
 	}
 
-	static DamageTypeDefinition *Get(FName const type);
-	static bool IgnoreArmor(FName const type);
-	static int ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors);
+	static DamageTypeDefinition *Get(FName const &type);
+	static bool IgnoreArmor(FName const &type);
+	static int ApplyMobjDamageFactor(int damage, FName const &type, DmgFactors const * const factors);
 };
 
 

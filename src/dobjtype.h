@@ -24,7 +24,7 @@ struct PSymbol
 	FName SymbolName;
 
 protected:
-	PSymbol(FName name, ESymbolType type) { SymbolType = type; SymbolName = name; }
+	PSymbol(FName name, ESymbolType type):SymbolName(name) { SymbolType = type; }
 };
 
 // A constant value ---------------------------------------------------------

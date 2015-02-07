@@ -443,7 +443,6 @@ void FDecalLib::ParseDecal (FScanner &sc)
 	FString decalName;
 	WORD decalNum;
 	FDecalTemplate newdecal;
-	int code;
 	FTextureID picnum;
 	int lumpnum;
 
@@ -467,7 +466,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 			AddDecal (decalName, decalNum, newdecal);
 			break;
 		}
-		switch ((code = sc.MustMatchString (DecalKeywords)))
+		switch (sc.MustMatchString (DecalKeywords))
 		{
 		case DECAL_XSCALE:
 			newdecal.ScaleX = ReadScale (sc);
@@ -763,8 +762,6 @@ void FDecalLib::ParseSlider (FScanner &sc)
 		}
 		else if (sc.Compare ("DistX"))
 		{
-			sc.MustGetFloat ();
-			distX = (fixed_t)(sc.Float * FRACUNIT);
 			Printf ("DistX in slider decal %s is unsupported\n", sliderName.GetChars());
 		}
 		else if (sc.Compare ("DistY"))
@@ -1024,9 +1021,8 @@ FDecalLib::FTranslation *FDecalLib::GenerateTranslation (DWORD start, DWORD end)
 	return trans;
 }
 
-FDecalBase::FDecalBase ()
+FDecalBase::FDecalBase () : Name(NAME_None)
 {
-	Name = NAME_None;
 }
 
 FDecalBase::~FDecalBase ()
@@ -1139,9 +1135,8 @@ const FDecalTemplate *FDecalGroup::GetDecal () const
 	return static_cast<const FDecalTemplate *>(remember);
 }
 
-FDecalAnimator::FDecalAnimator (const char *name)
+FDecalAnimator::FDecalAnimator (const char *name) : Name(name)
 {
-	Name = name;
 }
 
 FDecalAnimator::~FDecalAnimator ()

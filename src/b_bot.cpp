@@ -61,8 +61,8 @@ void DBot::Serialize (FArchive &arc)
 
 	if (SaveVersion < 4515)
 	{
-		angle_t savedyaw;
-		int savedpitch;
+		angle_t savedyaw=0;
+		int savedpitch=0;
 		arc << savedyaw
 			<< savedpitch;
 	}

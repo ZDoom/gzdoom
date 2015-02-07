@@ -439,7 +439,7 @@ static BYTE HexToByte (const char *hex)
 UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 {
 	UCVarValue ret;
-	int i;
+	int i=0;
 
 	switch (type)
 	{
@@ -475,39 +475,29 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		// 0         1         2         3
 
 		ret.pGUID = NULL;
-		for (i = 0; i < 38; ++i)
+		if(value)
+			for (; i < 38; i++)
 		{
-			if (value[i] == 0)
-			{
-				break;
-			}
-			bool goodv = true;
 			switch (i)
 			{
 			case 0:
 				if (value[i] != '{')
-					goodv = false;
-				break;
+					break;
 			case 9:
 			case 14:
 			case 19:
 			case 24:
 				if (value[i] != '-')
-					goodv = false;
-				break;
+					break;
 			case 37:
 				if (value[i] != '}')
-					goodv = false;
-				break;
+					break;
 			default:
 				if (value[i] < '0' || 
 					(value[i] > '9' && value[i] < 'A') || 
 					(value[i] > 'F' && value[i] < 'a') || 
 					value[i] > 'f')
-				{
-					goodv = false;
-				}
-				break;
+					break;
 			}
 		}
 		if (i == 38 && value[i] == 0)
@@ -1673,9 +1663,6 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 		if (CheckWildcards (filter, var->GetName()))
 		{
 			DWORD flags = var->GetFlags();
-			UCVarValue val;
-
-			val = var->GetGenericRep (CVAR_String);
 			if (plain)
 			{ // plain formatting does not include user-defined cvars
 				if (!(flags & CVAR_UNSETTABLE))

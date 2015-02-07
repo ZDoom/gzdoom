@@ -856,11 +856,10 @@ void C_DrawConsole (bool hw2d)
 	}
 	else if (ConBottom)
 	{
-		int visheight, realheight;
+		int visheight;
 		FTexture *conpic = TexMan[conback];
 
 		visheight = ConBottom;
-		realheight = (visheight * conpic->GetHeight()) / SCREENHEIGHT;
 
 		screen->DrawTexture (conpic, 0, visheight - screen->GetHeight(),
 			DTA_DestWidth, screen->GetWidth(),

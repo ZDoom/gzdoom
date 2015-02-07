@@ -513,7 +513,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 
 	bglobal.SetBodyAt (enemy->x + FixedMul(enemy->velx, (m+2*FRACUNIT)),
 					   enemy->y + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
-	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
+	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{

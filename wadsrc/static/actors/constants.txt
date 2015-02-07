@@ -447,6 +447,15 @@ enum
 	FTF_CLAMP =		1 << 1,
 };
 
+// Flags for A_Face*
+enum
+{
+	FAF_BOTTOM = 1,
+	FAF_MIDDLE = 2,
+	FAF_TOP = 4,
+	FAF_NODISTFACTOR = 8,
+};
+
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

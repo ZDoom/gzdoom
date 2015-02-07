@@ -587,6 +587,7 @@ void AActor::RemoveInventory (AInventory *item)
 			*invp = item->Inventory;
 			item->DetachFromOwner ();
 			item->Owner = NULL;
+			item->Inventory = NULL;
 			break;
 		}
 	}
@@ -1968,8 +1969,6 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						//int dir;
-						//angle_t delta;
 						angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
@@ -1996,12 +1995,21 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							}
 							else
 							{
-								
-								mo->angle = angle;
-								angle >>= ANGLETOFINESHIFT;
-								mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);
-								mo->vely = FixedMul(mo->Speed >> 1, finesine[angle]);
-								mo->velz = -mo->velz / 2;
+								if (BlockingMobj->flags7 & MF7_MIRRORREFLECT && (tg || blockingtg))
+								{
+									mo->angle += ANGLE_180;
+									mo->velx = -mo->velx / 2;
+									mo->vely = -mo->vely / 2;
+									mo->velz = -mo->velz / 2;
+								}
+								else
+								{
+									mo->angle = angle;
+									angle >>= ANGLETOFINESHIFT;
+									mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);
+									mo->vely = FixedMul(mo->Speed >> 1, finesine[angle]);
+									mo->velz = -mo->velz / 2;
+								}
 							}
 						}
 						else
@@ -2932,11 +2940,8 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 {
 	if (flags2 & MF2_DONTREFLECT) return true;
 	if (thing->flags7 & MF7_THRUREFLECT) return false;
-
-	if (thing->flags7 & MF7_MIRRORREFLECT)
-		angle += ANGLE_180;
 	// Change angle for reflection
-	else if (thing->flags4&MF4_SHIELDREFLECT)
+	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur
 		if (abs (angle - thing->angle)>>24 > 45)
@@ -2959,15 +2964,23 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 		else 
 			angle -= ANG45;
 	}
-	else if (thing->flags7 & MF7_AIMREFLECT)
+	else
+	{
+		angle += ANGLE_1 * ((pr_reflect() % 16) - 8);
+	}
+	//Always check for AIMREFLECT, no matter what else is checked above.
+	if (thing->flags7 & MF7_AIMREFLECT)
 	{
 		if (this->target != NULL)
+		{
 			A_Face(this, this->target);
+		}
 		else if (thing->target != NULL)
+		{
 			A_Face(this, thing->target);
+		}
 	}
-	else 
-		angle += ANGLE_1 * ((pr_reflect()%16)-8);
+	
 	return false;
 }
 

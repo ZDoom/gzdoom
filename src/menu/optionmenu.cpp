@@ -196,9 +196,9 @@ bool DOptionMenu::MenuEvent (int mkey, bool fromcontroller)
 			--mDesc->mSelectedItem;
 
 			if (mDesc->mScrollPos > 0 &&
-				mDesc->mSelectedItem == mDesc->mScrollTop + mDesc->mScrollPos)
+				mDesc->mSelectedItem <= mDesc->mScrollTop + mDesc->mScrollPos)
 			{
-				mDesc->mScrollPos--;
+				mDesc->mScrollPos = MAX(mDesc->mSelectedItem - mDesc->mScrollTop - 1, 0);
 			}
 
 			if (mDesc->mSelectedItem < 0) 

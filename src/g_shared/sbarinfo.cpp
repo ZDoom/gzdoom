@@ -1280,8 +1280,8 @@ public:
 
 			// We can't use DTA_HUDRules since it forces a width and height.
 			// Translation: No high res.
-			bool xright = *x < 0;
-			bool ybot = *y < 0;
+			bool xright = *x < 0 && !x.RelCenter();
+			bool ybot = *y < 0 && !y.RelCenter();
 
 			w = (forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth);
 			h = (forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight);

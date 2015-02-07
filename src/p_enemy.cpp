@@ -2803,7 +2803,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 			target_z = other->z + (other->height / 2) + other->GetBobOffset();
 		if (flags & FAF_TOP)
 			target_z = other->z + (other->height) + other->GetBobOffset();
-		if (!flags & FAF_NODISTFACTOR)
+		if (!(flags & FAF_NODISTFACTOR))
 			target_z += pitch_offset;
 
 		double dist_z = target_z - source_z;

@@ -1,4 +1,4 @@
-#include <SDL_joystick.h>
+#include <SDL.h>
 
 #include "doomdef.h"
 #include "templates.h"
@@ -266,11 +266,16 @@ static SDLInputJoystickManager *JoystickManager;
 
 void I_StartupJoysticks()
 {
-	JoystickManager = new SDLInputJoystickManager();
+	if(SDL_InitSubSystem(SDL_INIT_JOYSTICK) >= 0)
+		JoystickManager = new SDLInputJoystickManager();
 }
 void I_ShutdownJoysticks()
 {
-	delete JoystickManager;
+	if(JoystickManager)
+	{
+		delete JoystickManager;
+		SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+	}
 }
 
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)

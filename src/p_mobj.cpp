@@ -587,6 +587,7 @@ void AActor::RemoveInventory (AInventory *item)
 			*invp = item->Inventory;
 			item->DetachFromOwner ();
 			item->Owner = NULL;
+			item->Inventory = NULL;
 			break;
 		}
 	}

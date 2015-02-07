@@ -195,6 +195,9 @@ fixed_t I_GetTimeFrac (uint32 *ms)
 
 void I_InitTimer ()
 {
+	if(SDL_InitSubSystem(SDL_INIT_TIMER) < 0)
+		I_FatalError("Could not initialize SDL timers:\n%s\n", SDL_GetError());
+
 	I_GetTime = I_GetTimeSelect;
 	I_WaitForTic = I_WaitForTicSelect;
 	I_FreezeTime = I_FreezeTimeSelect;
@@ -202,5 +205,5 @@ void I_InitTimer ()
 
 void I_ShutdownTimer ()
 {
-
+	SDL_QuitSubSystem(SDL_INIT_TIMER);
 }

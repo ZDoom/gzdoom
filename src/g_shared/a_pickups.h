@@ -136,7 +136,7 @@ enum
 	IF_NOSCREENFLASH	= 1<<21,	// No pickup flash on the player's screen
 	IF_TOSSED			= 1<<22,	// Was spawned by P_DropItem (i.e. as a monster drop)
 	IF_ALWAYSRESPAWN	= 1<<23,	// Always respawn, regardless of dmflag
-
+	IF_TRANSFER			= 1<<24,	// All inventory items that the inventory item contains is also transfered to the pickuper
 };
 
 

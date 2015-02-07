@@ -2455,6 +2455,12 @@ static bool DoDehPatch()
 			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchFile);
 			return false;
 		}
+		// fix for broken WolfenDoom patches which contain \0 characters in some places.
+		for (int i = 0; i < PatchSize; i++)
+		{
+			if (PatchFile[i] == 0) PatchFile[i] = ' ';	
+		}
+
 		PatchPt = strchr (PatchFile, '\n');
 		while ((cont = GetLine()) == 1)
 		{

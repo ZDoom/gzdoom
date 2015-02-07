@@ -694,7 +694,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{
-				Printf ("Unknown command \"%.*s\"\n", len, beg);
+				Printf ("Unknown command \"%.*s\"\n", (int)len, beg);
 			}
 		}
 	}

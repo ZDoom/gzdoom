@@ -1336,7 +1336,7 @@ CCMD (alias)
 			}
 			else
 			{
-				alias = new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
+				new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
 			}
 		}
 	}

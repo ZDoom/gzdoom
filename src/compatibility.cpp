@@ -448,7 +448,7 @@ void SetCompatibilityParams()
 	{
 		unsigned i = ii_compatparams;
 
-		while (CompatParams[i] != CP_END && i < CompatParams.Size())
+		while (i < CompatParams.Size() && CompatParams[i] != CP_END)
 		{
 			switch (CompatParams[i])
 			{

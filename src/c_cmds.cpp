@@ -1028,8 +1028,7 @@ CCMD(nextsecret)
 				TEXTCOLOR_NORMAL " is for single-player only.\n");
 		return;
 	}
-	char *next = NULL;
-	
+
 	if (level.NextSecretMap.Len() > 0 && level.NextSecretMap.Compare("enDSeQ", 6))
 	{
 		G_DeferedInitNew(level.NextSecretMap);

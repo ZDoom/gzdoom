@@ -238,7 +238,7 @@ void PacketSend (void)
 		else
 		{
 //			Printf("send %d\n", doomcom.datalength);
-			c = sendto(mysocket, (char *)doomcom.data, doomcom.datalength,
+			/*c = */sendto(mysocket, (char *)doomcom.data, doomcom.datalength,
 				0, (sockaddr *)&sendaddress[doomcom.remotenode],
 				sizeof(sendaddress[doomcom.remotenode]));
 		}
@@ -800,7 +800,6 @@ bool Guest_WaitForOthers (void *userdata)
 			{
 				int node;
 
-				packet.NumNodes = packet.NumNodes;
 				doomcom.numnodes = packet.NumNodes + 2;
 				sendplayer[0] = packet.ConsoleNum;	// My player number
 				doomcom.consoleplayer = packet.ConsoleNum;

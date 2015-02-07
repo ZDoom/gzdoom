@@ -241,7 +241,7 @@ struct FOptionalMapinfoData
 {
 	FOptionalMapinfoData *Next;
 	FName identifier;
-	FOptionalMapinfoData() { Next = NULL; identifier = NAME_None; }
+	FOptionalMapinfoData():identifier(NAME_None) { Next = NULL; }
 	virtual ~FOptionalMapinfoData() {}
 	virtual FOptionalMapinfoData *Clone() const = 0;
 };

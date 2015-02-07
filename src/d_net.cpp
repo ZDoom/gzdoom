@@ -2048,7 +2048,7 @@ void FDynamicBuffer::SetData (const BYTE *data, int len)
 		m_BufferLen = (len + 255) & ~255;
 		m_Data = (BYTE *)M_Realloc (m_Data, m_BufferLen);
 	}
-	if (data)
+	if (data != NULL)
 	{
 		m_Len = len;
 		memcpy (m_Data, data, len);
@@ -2056,7 +2056,6 @@ void FDynamicBuffer::SetData (const BYTE *data, int len)
 	else
 	{
 		m_Len = 0;
-		M_Free((void *)data);
 	}
 }
 

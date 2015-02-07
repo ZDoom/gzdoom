@@ -762,6 +762,7 @@ void FDecalLib::ParseSlider (FScanner &sc)
 		}
 		else if (sc.Compare ("DistX"))
 		{
+			sc.MustGetFloat ();	// must remain to avoid breaking definitions that accidentally used DistX
 			Printf ("DistX in slider decal %s is unsupported\n", sliderName.GetChars());
 		}
 		else if (sc.Compare ("DistY"))

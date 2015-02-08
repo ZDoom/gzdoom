@@ -217,7 +217,7 @@ public:
 	bool ReplaceFactor;
 	bool NoArmor;
 
-	void Apply(FName const &type);
+	void Apply(FName const type);
 	void Clear()
 	{
 		DefaultFactor = FRACUNIT;

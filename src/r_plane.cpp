@@ -438,7 +438,6 @@ void R_MapTiltedPlane (int y, int x1)
 		}
 		startu = endu;
 		startv = endv;
-		startz = endz;
 		width -= SPANSIZE;
 	}
 	if (width > 0)

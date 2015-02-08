@@ -924,7 +924,7 @@ public:
 	{
 		const char *speakerName;
 		int x, y, linesize;
-		int width, fontheight;
+		int width=screen->GetWidth(), height=screen->GetHeight(), fontheight;
 
 		player_t *cp = &players[consoleplayer];
 
@@ -949,8 +949,8 @@ public:
 		{
 			screen->DrawTexture (TexMan(CurNode->Backdrop), 0, 0, DTA_320x200, true, TAG_DONE);
 		}
-		x = 16 * screen->GetWidth() / 320;
-		y = 16 * screen->GetHeight() / 200;
+		x = 16 * width / 320;
+		y = 16 * height / 200;
 		linesize = 10 * CleanYfac;
 
 		// Who is talking to you?
@@ -970,16 +970,16 @@ public:
 			int i;
 			for (i = 0; mDialogueLines[i].Width >= 0; ++i)
 			{ }
-			screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
-				308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
+			screen->Dim (0, 0.45f, 14 * width / 320, 13 * height / 200,
+				308 * width / 320 - 14 * width / 320,
 				speakerName == NULL ? linesize * i + 6 * CleanYfac
 				: linesize * i + 6 * CleanYfac + linesize * 3/2);
 		}
 
 		// Dim the screen behind the PC's choices.
 
-		screen->Dim (0, 0.45f, (24-160) * CleanXfac + screen->GetWidth()/2,
-			(mYpos - 2 - 100) * CleanYfac + screen->GetHeight()/2,
+		screen->Dim (0, 0.45f, (24-160) * CleanXfac + width/2,
+			(mYpos - 2 - 100) * CleanYfac + height/2,
 			272 * CleanXfac,
 			MIN<int>(mResponseLines.Size() * OptionSettings.mLinespacing + 4, 200 - mYpos) * CleanYfac);
 
@@ -989,7 +989,7 @@ public:
 				DTA_CleanNoMove, true, TAG_DONE);
 			y += linesize * 3 / 2;
 		}
-		x = 24 * screen->GetWidth() / 320;
+		x = 24 * width / 320;
 		for (int i = 0; mDialogueLines[i].Width >= 0; ++i)
 		{
 			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, mDialogueLines[i].Text,
@@ -1019,7 +1019,6 @@ public:
 		int response = 0;
 		for (unsigned i = 0; i < mResponseLines.Size(); i++, y += fontheight)
 		{
-			width = SmallFont->StringWidth(mResponseLines[i]);
 			x = 64;
 
 			screen->DrawText (SmallFont, CR_GREEN, x, y, mResponseLines[i], DTA_Clean, true, TAG_DONE);
@@ -1037,8 +1036,8 @@ public:
 				{
 					int color = ((DMenu::MenuTime%8) < 4) || DMenu::CurrentMenu != this ? CR_RED:CR_GREY;
 
-					x = (50 + 3 - 160) * CleanXfac + screen->GetWidth() / 2;
-					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + screen->GetHeight() / 2;
+					x = (50 + 3 - 160) * CleanXfac + width / 2;
+					int yy = (y + fontheight/2 - 5 - 100) * CleanYfac + height / 2;
 					screen->DrawText (ConFont, color, x, yy, "\xd",
 						DTA_CellX, 8 * CleanXfac,
 						DTA_CellY, 8 * CleanYfac,

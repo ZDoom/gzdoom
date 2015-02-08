@@ -72,7 +72,7 @@ const int SXF_SETTARGET =				1 << 20;
 const int SXF_SETTRACER =				1 << 21;
 const int SXF_NOPOINTERS =				1 << 22;
 const int SXF_ORIGINATOR =				1 << 23;
-const int SIXF_TRANSFERSPRITEFRAME =	1 << 24;
+const int SXF_TRANSFERSPRITEFRAME	=	1 << 24;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;

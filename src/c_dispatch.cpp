@@ -694,7 +694,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{
-				Printf ("Unknown command \"%.*s\"\n", len, beg);
+				Printf ("Unknown command \"%.*s\"\n", (int)len, beg);
 			}
 		}
 	}
@@ -1336,7 +1336,7 @@ CCMD (alias)
 			}
 			else
 			{
-				alias = new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
+				new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
 			}
 		}
 	}

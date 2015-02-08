@@ -1234,9 +1234,16 @@ void AM_initVariables ()
 		for (pnum=0;pnum<MAXPLAYERS;pnum++)
 			if (playeringame[pnum])
 				break;
-  
-	m_x = (players[pnum].camera->x >> FRACTOMAPBITS) - m_w/2;
-	m_y = (players[pnum].camera->y >> FRACTOMAPBITS) - m_h/2;
+	// [ZzZombo] no access out of bounds.
+	if(pnum>=MAXPLAYERS)
+	{
+		m_x=m_y=0;
+	}
+	else
+	{
+		m_x = (players[pnum].camera->x >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[pnum].camera->y >> FRACTOMAPBITS) - m_h/2;
+	}
 	AM_changeWindowLoc();
 
 	// for saving & restoring

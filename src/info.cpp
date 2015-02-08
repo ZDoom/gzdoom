@@ -158,7 +158,6 @@ void FActorInfo::StaticSetActorNums ()
 void FActorInfo::RegisterIDs ()
 {
 	const PClass *cls = PClass::FindClass(Class->TypeName);
-	bool set = false;
 
 	if (GameFilter == GAME_Any || (GameFilter & gameinfo.gametype))
 	{
@@ -578,17 +577,17 @@ CCMD (summonfoe)
 
 TMap<FName, DamageTypeDefinition> GlobalDamageDefinitions;
 
-void DamageTypeDefinition::Apply(FName const type) 
+void DamageTypeDefinition::Apply(FName type) 
 { 
 	GlobalDamageDefinitions[type] = *this; 
 }
 
-DamageTypeDefinition *DamageTypeDefinition::Get(FName const type) 
+DamageTypeDefinition *DamageTypeDefinition::Get(FName type) 
 { 
 	return GlobalDamageDefinitions.CheckKey(type); 
 }
 
-bool DamageTypeDefinition::IgnoreArmor(FName const type)
+bool DamageTypeDefinition::IgnoreArmor(FName type)
 { 
 	DamageTypeDefinition *dtd = Get(type);
 	if (dtd) return dtd->NoArmor;
@@ -610,7 +609,7 @@ bool DamageTypeDefinition::IgnoreArmor(FName const type)
 //
 //==========================================================================
 
-int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors)
+int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors)
 {
 	if (factors)
 	{

@@ -78,9 +78,8 @@ DMover::DMover ()
 }
 
 DMover::DMover (sector_t *sector)
-	: DSectorEffect (sector)
+	: DSectorEffect (sector), interpolation(NULL)
 {
-	interpolation = NULL;
 }
 
 void DMover::Destroy()

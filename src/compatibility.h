@@ -20,11 +20,11 @@ struct FCompatValues
 
 struct FMD5HashTraits
 {
-	hash_t Hash(const FMD5Holder key)
+	hash_t Hash(const FMD5Holder &key)
 	{
 		return key.Hash;
 	}
-	int Compare(const FMD5Holder left, const FMD5Holder right)
+	int Compare(const FMD5Holder &left, const FMD5Holder &right)
 	{
 		return left.DWords[0] != right.DWords[0] ||
 			   left.DWords[1] != right.DWords[1] ||

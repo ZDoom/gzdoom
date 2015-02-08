@@ -937,7 +937,6 @@ void FNodeBuilder::SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const
 
 DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
 {
-	double dx, dy;
 	FPrivSeg newseg;
 	int newnum = (int)Segs.Size();
 

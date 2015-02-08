@@ -2668,7 +2668,9 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_SUMMONFOE2:
 			skip = strlen ((char *)(*stream)) + 26;
 			break;
-
+		case DEM_CHANGEMAP2:
+			skip = strlen((char *)(*stream + 1)) + 2;
+			break;
 		case DEM_MUSICCHANGE:
 		case DEM_PRINT:
 		case DEM_CENTERPRINT:

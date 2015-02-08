@@ -795,6 +795,13 @@ OptionValue "AltHUDScale"
 	2, "Pixel double"
 }
 
+OptionValue "AltHUDAmmo"
+{
+	0, "Current weapon"
+	1, "Available weapons"
+	2, "All weapons"
+}
+
 OptionValue "AltHUDTime"
 {
 	0, "Off"
@@ -828,6 +835,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
 	Option "Show berserk",							"hud_berserk_health", "OnOff"
 	Option "Show weapons",							"hud_showweapons", "OnOff"
+	Option "Show ammo for",							"hud_showammo", "AltHUDAmmo"
 	Option "Show time",								"hud_showtime", "AltHUDTime"
 	Option "Time color",							"hud_timecolor", "TextColors"
 	Option "Show network latency",					"hud_showlag", "AltHUDLag"

@@ -937,13 +937,10 @@ void FNodeBuilder::SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const
 
 DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
 {
-	double dx, dy;
 	FPrivSeg newseg;
 	int newnum = (int)Segs.Size();
 
 	newseg = Segs[segnum];
-	dx = double(Vertices[splitvert].x - Vertices[newseg.v1].x);
-	dy = double(Vertices[splitvert].y - Vertices[newseg.v1].y);
 	if (v1InFront > 0)
 	{
 		newseg.v1 = splitvert;
@@ -1129,8 +1126,7 @@ int ClassifyLineBackpatchC (node_t &node, const FSimpleVert *v1, const FSimpleVe
 	long pagesize = sysconf(_SC_PAGESIZE);
 	char *callerpage = (char *)((intptr_t)calleroffset & ~(pagesize - 1));
 	size_t protectlen = (intptr_t)calleroffset + sizeof(void*) - (intptr_t)callerpage;
-	int ptect;
-	if (!(ptect = mprotect(callerpage, protectlen, PROT_READ|PROT_WRITE|PROT_EXEC)))
+	if (!mprotect(callerpage, protectlen, PROT_READ|PROT_WRITE|PROT_EXEC))
 #endif
 	{
 		*calleroffset = diff;

@@ -317,7 +317,6 @@ int FNodeBuilder::CloseSubsector (TArray<glseg_t> &segs, int subsector, vertex_t
 		{
 			angle_t bestdiff = ANGLE_MAX;
 			FPrivSeg *bestseg = NULL;
-			DWORD bestj = DWORD_MAX;
 			j = first;
 			do
 			{
@@ -328,14 +327,12 @@ int FNodeBuilder::CloseSubsector (TArray<glseg_t> &segs, int subsector, vertex_t
 				{
 					bestdiff = diff;
 					bestseg = seg;
-					bestj = j;
 					break;
 				}
 				if (diff < bestdiff && diff > 0)
 				{
 					bestdiff = diff;
 					bestseg = seg;
-					bestj = j;
 				}
 			}
 			while (++j < max);

@@ -101,11 +101,10 @@ FPlayerClass::FPlayerClass ()
 	Flags = 0;
 }
 
-FPlayerClass::FPlayerClass (const FPlayerClass &other)
+FPlayerClass::FPlayerClass (const FPlayerClass &other) : Skins(other.Skins)
 {
 	Type = other.Type;
 	Flags = other.Flags;
-	Skins = other.Skins;
 }
 
 FPlayerClass::~FPlayerClass ()

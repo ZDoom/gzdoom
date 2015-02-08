@@ -2533,8 +2533,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				// use the current actor's radius instead of the Arch Vile's default.
 				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				maxdist = corpsehit->GetDefault()->radius + self->radius;
-
 				if (abs(corpsehit->x - viletryx) > maxdist ||
 					abs(corpsehit->y - viletryy) > maxdist)
 					continue;			// not actually touching

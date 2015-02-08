@@ -249,7 +249,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	BYTE infoBlock[37];
 	int mapver = data[5];
 	DWORD matt;
-	int numRevisions, numWalls, numsprites, skyLen, visibility, parallaxType;
+	int numRevisions, numWalls, numsprites, skyLen, visibility;
 	int i;
 	int k;
 
@@ -271,7 +271,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *
 	}
 	skyLen = 2 << LittleShort(*(WORD *)(infoBlock + 16));
 	visibility = LittleLong(*(DWORD *)(infoBlock + 18));
-	parallaxType = infoBlock[26];
+
 	numRevisions = LittleLong(*(DWORD *)(infoBlock + 27));
 	numsectors = LittleShort(*(WORD *)(infoBlock + 31));
 	numWalls = LittleShort(*(WORD *)(infoBlock + 33));

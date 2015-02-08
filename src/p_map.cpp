@@ -755,12 +755,14 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
 	{
-		secplane_t frontplane = ld->frontsector->floorplane;
-		secplane_t backplane = ld->backsector->floorplane;
+		secplane_t frontplane, backplane;
 #ifdef _3DFLOORS
 		// Check 3D floors as well
 		frontplane = P_FindFloorPlane(ld->frontsector, tm.thing->x, tm.thing->y, tm.thing->floorz);
 		backplane = P_FindFloorPlane(ld->backsector, tm.thing->x, tm.thing->y, tm.thing->floorz);
+#else
+		frontplane = ld->frontsector->floorplane;
+		backplane = ld->backsector->floorplane;
 #endif
 		if (frontplane.c < STEEPSLOPE || backplane.c < STEEPSLOPE)
 		{
@@ -2964,7 +2966,6 @@ bool FSlide::BounceWall(AActor *mo)
 	deltaangle = (2 * lineangle) - moveangle;
 	mo->angle = deltaangle;
 
-	lineangle >>= ANGLETOFINESHIFT;
 	deltaangle >>= ANGLETOFINESHIFT;
 
 	movelen = fixed_t(sqrt(double(mo->velx)*mo->velx + double(mo->vely)*mo->vely));
@@ -3150,9 +3151,6 @@ bool aim_t::AimTraverse3DFloors(const divline_t &trace, intercept_t * in)
 		fixed_t trX = trace.x + FixedMul(trace.dx, in->frac);
 		fixed_t trY = trace.y + FixedMul(trace.dy, in->frac);
 		fixed_t dist = FixedMul(attackrange, in->frac);
-
-
-		int dir = aimpitch < 0 ? 1 : aimpitch > 0 ? -1 : 0;
 
 		frontflag = P_PointOnLineSide(shootthing->x, shootthing->y, li);
 

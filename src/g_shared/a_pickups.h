@@ -16,7 +16,7 @@ class FWeaponSlot
 {
 public:
 	FWeaponSlot() { Clear(); }
-	FWeaponSlot(const FWeaponSlot &other):Weapons(other.Weapons) {}
+	FWeaponSlot(const FWeaponSlot &other) { Weapons = other.Weapons; }
 	FWeaponSlot &operator= (const FWeaponSlot &other) { Weapons = other.Weapons; return *this; }
 	void Clear() { Weapons.Clear(); }
 	bool AddWeapon (const char *type);

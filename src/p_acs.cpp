@@ -660,7 +660,10 @@ void ACSStringPool::ReadStrings(PNGHandle *png, DWORD id)
 			i++;
 			j = arc.ReadCount();
 		}
-		delete[] str;
+		if (str != NULL)
+		{
+			delete[] str;
+		}
 		FindFirstFreeEntry(0);
 	}
 }
@@ -5845,7 +5848,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				bool canraiseall = true;
 				while ((actor = iterator.Next()))
 				{
-					canraiseall = P_Thing_CanRaise(actor) && canraiseall;
+					canraiseall = P_Thing_CanRaise(actor) & canraiseall;
 				}
 				
 				return canraiseall;

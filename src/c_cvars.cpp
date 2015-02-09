@@ -439,7 +439,7 @@ static BYTE HexToByte (const char *hex)
 UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 {
 	UCVarValue ret;
-	int i=0;
+	int i;
 
 	switch (type)
 	{
@@ -475,8 +475,11 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		// 0         1         2         3
 
 		ret.pGUID = NULL;
-		if(value)
-			for (; i < 38; i++)
+		if (value == NULL)
+		{
+			break;
+		}
+		for (i = 0; value[i] != 0 && i < 38; i++)
 		{
 			switch (i)
 			{
@@ -1685,7 +1688,7 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 					flags & CVAR_MOD ? 'M' : ' ',
 					flags & CVAR_IGNORE ? 'X' : ' ',
 					var->GetName(),
-					var->GetGenericRep (CVAR_String).String);
+					var->GetGenericRep(CVAR_String).String);
 			}
 		}
 		var = var->m_Next;

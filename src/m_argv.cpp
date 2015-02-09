@@ -55,8 +55,8 @@ DArgs::DArgs()
 //
 //===========================================================================
 
-DArgs::DArgs(const DArgs &other):Argv(other.Argv),
-	DObject()
+DArgs::DArgs(const DArgs &other)
+: DObject(), Argv(other.Argv)
 {
 }
 

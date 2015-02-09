@@ -50,11 +50,12 @@ static FRandom pr_endtag;
 //
 //====================================================================
 
-FConfigFile::FConfigFile () : PathName(NAME_None)
+FConfigFile::FConfigFile ()
 {
 	Sections = CurrentSection = NULL;
 	LastSectionPtr = &Sections;
 	CurrentEntry = NULL;
+	PathName = "";
 	OkayToWrite = true;
 	FileExisted = true;
 }

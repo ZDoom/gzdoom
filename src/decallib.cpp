@@ -1022,8 +1022,9 @@ FDecalLib::FTranslation *FDecalLib::GenerateTranslation (DWORD start, DWORD end)
 	return trans;
 }
 
-FDecalBase::FDecalBase () : Name(NAME_None)
+FDecalBase::FDecalBase ()
 {
+	Name = NAME_None;
 }
 
 FDecalBase::~FDecalBase ()
@@ -1136,8 +1137,9 @@ const FDecalTemplate *FDecalGroup::GetDecal () const
 	return static_cast<const FDecalTemplate *>(remember);
 }
 
-FDecalAnimator::FDecalAnimator (const char *name) : Name(name)
+FDecalAnimator::FDecalAnimator (const char *name)
 {
+	Name = name;
 }
 
 FDecalAnimator::~FDecalAnimator ()

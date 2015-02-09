@@ -1066,14 +1066,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 	item->ClearCounters();
 	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		if (static_cast<ABasicArmorPickup*>(item)->SaveAmount != 0)
-		{
-			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-		}
-		else
-		{
-			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-		}
+		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
 	}
 	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
 	{

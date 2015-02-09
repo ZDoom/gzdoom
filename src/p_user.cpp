@@ -1012,7 +1012,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
 				item->IsKindOf(RUNTIME_CLASS(AArmor)))
 			{
-				if (defitem != NULL)
+				if (defitem == NULL)
 				{
 					item->Destroy();
 				}

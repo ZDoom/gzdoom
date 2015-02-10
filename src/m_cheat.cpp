@@ -149,8 +149,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_FLY:
 		if (player->mo != NULL)
 		{
-			player->cheats ^= CF_FLY;
-			if (player->cheats & CF_FLY)
+			if ((player->mo->flags7 ^= MF7_FLYCHEAT) != 0)
 			{
 				player->mo->flags |= MF_NOGRAVITY;
 				player->mo->flags2 |= MF2_FLY;

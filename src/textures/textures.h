@@ -233,6 +233,7 @@ public:
 
 	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
+	int GetScaledHeight(fixed_t scale) { int foo = (Height << 17) / scale; return (foo >> 1) + (foo & 1); }
 	double GetScaledWidthDouble () { return (Width * 65536.) / xScale; }
 	double GetScaledHeightDouble () { return (Height * 65536.) / yScale; }
 

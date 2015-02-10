@@ -152,9 +152,11 @@ struct ExpVal
 class FxExpression
 {
 protected:
-	FxExpression(const FScriptPosition &pos):ScriptPosition(pos)
+	FxExpression(const FScriptPosition &pos)
+	: ScriptPosition(pos)
 	{
 		isresolved = false;
+		ScriptPosition = pos;
 	}
 public:
 	virtual ~FxExpression() {}

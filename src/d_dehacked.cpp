@@ -2190,24 +2190,25 @@ static int PatchText (int oldSize)
 		}
 	}
 
-	if (!good)
-	{	
-		// Search through most other texts
-		const char *str;
-		str = EnglishStrings->MatchString (oldStr);
+	// Search through most other texts
+	const char *str;
+	do
+	{
+		str = EnglishStrings->MatchString(oldStr);
 		if (str != NULL)
 		{
-			GStrings.SetString (str, newStr);
+			GStrings.SetString(str, newStr);
+			EnglishStrings->SetString(str, "~~");	// set to something invalid so that it won't get found again by the next iteration or  by another replacement later
 			good = true;
 		}
+	} 
+	while (str != NULL);	// repeat search until the text can no longer be found
 
-		if (!good)
-		{
-			DPrintf ("   (Unmatched)\n");
-		}
+	if (!good)
+	{
+		DPrintf ("   (Unmatched)\n");
 	}
 		
-
 donewithtext:
 	if (newStr)
 		delete[] newStr;

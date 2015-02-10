@@ -238,7 +238,7 @@ void PacketSend (void)
 		else
 		{
 //			Printf("send %d\n", doomcom.datalength);
-			/*c = */sendto(mysocket, (char *)doomcom.data, doomcom.datalength,
+			c = sendto(mysocket, (char *)doomcom.data, doomcom.datalength,
 				0, (sockaddr *)&sendaddress[doomcom.remotenode],
 				sizeof(sendaddress[doomcom.remotenode]));
 		}

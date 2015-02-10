@@ -900,12 +900,12 @@ DElevator::DElevator ()
 }
 
 DElevator::DElevator (sector_t *sec)
-	: m_Interp_Floor(sec->SetInterpolation(sector_t::FloorMove, true)),
-	m_Interp_Ceiling(sec->SetInterpolation(sector_t::CeilingMove, true)),
-	Super (sec)
+	: Super (sec)
 {
 	sec->floordata = this;
 	sec->ceilingdata = this;
+	m_Interp_Floor = sec->SetInterpolation(sector_t::FloorMove, true);
+	m_Interp_Ceiling = sec->SetInterpolation(sector_t::CeilingMove, true);
 }
 
 void DElevator::Serialize (FArchive &arc)

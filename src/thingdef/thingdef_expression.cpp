@@ -1576,6 +1576,7 @@ FxExpression *FxAbs::Resolve(FCompileContext &ctx)
 
 		case VAL_Float:
 			value.Float = fabs(value.Float);
+			break;
 
 		default:
 			// shouldn't happen
@@ -2052,6 +2053,7 @@ FxExpression *FxGlobalVariable::Resolve(FCompileContext&)
 	case VAL_Fixed:
 	case VAL_Angle:
 		ValueType = VAL_Float;
+		break;
 
 	case VAL_Object:
 	case VAL_Class:

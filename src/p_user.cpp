@@ -101,10 +101,11 @@ FPlayerClass::FPlayerClass ()
 	Flags = 0;
 }
 
-FPlayerClass::FPlayerClass (const FPlayerClass &other) : Skins(other.Skins)
+FPlayerClass::FPlayerClass (const FPlayerClass &other)
 {
 	Type = other.Type;
 	Flags = other.Flags;
+	Skins = other.Skins;
 }
 
 FPlayerClass::~FPlayerClass ()
@@ -1011,7 +1012,7 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
 				item->IsKindOf(RUNTIME_CLASS(AArmor)))
 			{
-				if (defitem != NULL)
+				if (defitem == NULL)
 				{
 					item->Destroy();
 				}

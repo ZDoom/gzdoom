@@ -176,7 +176,7 @@ void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset,
 	{
 		if (prev != NULL)
 		{
-			DWORD fseg1, bseg1;
+			DWORD fseg1, bseg1, fseg2, bseg2;
 			DWORD fnseg, bnseg;
 
 			// Minisegs should only be added when they can create valid loops on both the front and
@@ -186,8 +186,8 @@ void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset,
 
 			if ((fseg1 = CheckLoopStart (node.dx, node.dy, prev->Info.Vertex, event->Info.Vertex)) != DWORD_MAX &&
 				(bseg1 = CheckLoopStart (-node.dx, -node.dy, event->Info.Vertex, prev->Info.Vertex)) != DWORD_MAX &&
-				(CheckLoopEnd (node.dx, node.dy, event->Info.Vertex)) != DWORD_MAX &&
-				(CheckLoopEnd (-node.dx, -node.dy, prev->Info.Vertex)) != DWORD_MAX)
+				(fseg2 = CheckLoopEnd (node.dx, node.dy, event->Info.Vertex)) != DWORD_MAX &&
+				(bseg2 = CheckLoopEnd (-node.dx, -node.dy, prev->Info.Vertex)) != DWORD_MAX)
 			{
 				// Add miniseg on the front side
 				fnseg = AddMiniseg (prev->Info.Vertex, event->Info.Vertex, DWORD_MAX, fseg1, splitseg);

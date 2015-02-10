@@ -628,7 +628,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		if (x.ffloors.Size())
 		{
 			light = P_GetPlaneLight(sector, &frontsector->floorplane, false);
-			if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light!=&x.lightlist[0])	
+			if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || !light->fromsector)	
 				&& (light->p_lightlevel != &frontsector->lightlevel))
 			{
 				lightlevel = *light->p_lightlevel;

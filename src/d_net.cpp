@@ -107,7 +107,7 @@ int 			resendcount[MAXNETNODES];
 
 unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
-unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
+unsigned int	lastglobalrecvtime;						// Identify the last time a packet was received.
 bool			hadlate;
 int				netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
 int				lastaverage;
@@ -1861,7 +1861,7 @@ void TryRunTics (void)
 	if (counts == 0 && !doWait)
 	{
 		// Check possible stall conditions
-		Net_CheckLastRecieved(counts);
+		Net_CheckLastReceived(counts);
 		if (realtics >= 1)
 		{
 			C_Ticker();
@@ -1897,7 +1897,7 @@ void TryRunTics (void)
 			I_Error ("TryRunTics: lowtic < gametic");
 
 		// Check possible stall conditions
-		Net_CheckLastRecieved (counts);
+		Net_CheckLastReceived (counts);
 
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime (false) - entertic >= 1)
@@ -1945,9 +1945,9 @@ void TryRunTics (void)
 	}
 }
 
-void Net_CheckLastRecieved (int counts)
+void Net_CheckLastReceived (int counts)
 {
-	// [Ed850] Check to see the last time a packet was recieved.
+	// [Ed850] Check to see the last time a packet was received.
 	// If it's longer then 3 seconds, a node has likely stalled.
 	if (I_GetTime(false) - lastglobalrecvtime >= TICRATE * 3)
 	{
@@ -1974,11 +1974,11 @@ void Net_CheckLastRecieved (int counts)
 		}
 		else
 		{	//Send a resend request to the Arbitrator, as it's obvious we are stuck here.
-			if (debugfile && !players[playerfornode[Net_Arbitrator]].waiting)
+			if (debugfile && !players[Net_Arbitrator].waiting)
 				fprintf(debugfile, "Arbitrator is slow (%i to %i)\n",
-				nettics[Net_Arbitrator], gametic + counts);
+				nettics[nodeforplayer[Net_Arbitrator]], gametic + counts);
 			//Send resend request to the Arbitrator. Also mark the Arbitrator as waiting to display it in the hud.
-			remoteresend[Net_Arbitrator] = players[playerfornode[Net_Arbitrator]].waiting = hadlate = true;
+			remoteresend[nodeforplayer[Net_Arbitrator]] = players[Net_Arbitrator].waiting = hadlate = true;
 		}
 	}
 }

@@ -198,14 +198,6 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	clearlineflags 1069 0x200
 }
 
-CBDE77E3ACB4B166D53C1812E5C72F54 // Hexen IWAD map04
-{
-	setthingz 49 0
-	setthingz 50 0
-	setthingz 51 0
-	setthingz 52 0
-}
-
 3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01
 {
 	clearlinespecial 66

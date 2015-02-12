@@ -8,7 +8,6 @@ ACTOR ClericWeaponPiece : WeaponPiece
 	Inventory.ForbiddenTo FighterPlayer, MagePlayer
 	WeaponPiece.Weapon CWeapWraithverge
 	+FLOATBOB
-	+NOGRAVITY
 }
 
 // Cleric Weapon Piece 1 ----------------------------------------------------

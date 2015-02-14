@@ -1875,6 +1875,7 @@ enum SIX_Flags
 	SIXF_NOPOINTERS				= 0x00400000,
 	SIXF_ORIGINATOR				= 0x00800000,
 	SIXF_TRANSFERSPRITEFRAME	= 0x01000000,
+	SIXF_TRANSFERROLL			= 0x02000000,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -2025,6 +2026,11 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		mo->sprite = self->sprite;
 		mo->frame = self->frame;
+	}
+
+	if (flags & SIXF_TRANSFERROLL)
+	{
+		mo->roll = self->roll;
 	}
 
 	return true;

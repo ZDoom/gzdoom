@@ -457,6 +457,11 @@ enum
 	FAF_NODISTFACTOR = 8,
 };
 
+// Flags for A_QuakeEx
+enum
+{
+	QF_RELATIVE = 1,
+};
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

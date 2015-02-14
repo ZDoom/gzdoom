@@ -875,13 +875,37 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		int intensity = DEarthquake::StaticGetQuakeIntensity (camera);
-		if (intensity != 0)
+		int intensityX = DEarthquake::StaticGetQuakeIntensity(camera, 0);
+		int intensityY = DEarthquake::StaticGetQuakeIntensity(camera, 1);
+		int intensityZ = DEarthquake::StaticGetQuakeIntensity(camera, 2);
+		int quakeflags = DEarthquake::StaticGetQuakeFlags(camera);
+		if (intensityX || intensityY || intensityZ)
 		{
 			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
 
-			viewx += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
-			viewy += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
+			if ((quakeflags & QF_RELATIVE) && (intensityX != intensityY))
+			{
+				if (intensityX)
+				{
+					int ang = (camera->angle) >> ANGLETOFINESHIFT;
+					int tflicker = pr_torchflicker();
+					viewx += FixedMul(finecosine[ang], (quakefactor * ((tflicker % (intensityX << 2)) - (intensityX << 1))));
+					viewy += FixedMul(finesine[ang], (quakefactor * ((tflicker % (intensityX << 2)) - (intensityX << 1))));
+				}
+				if (intensityY)
+				{
+					int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
+					int tflicker = pr_torchflicker();
+					viewx += FixedMul(finecosine[ang], (quakefactor * ((tflicker % (intensityY << 2)) - (intensityY << 1))));
+					viewy += FixedMul(finesine[ang], (quakefactor * ((tflicker % (intensityY << 2)) - (intensityY << 1))));
+				}
+			}
+			else
+			{
+				if (intensityX)	viewx += quakefactor * ((pr_torchflicker() % (intensityX << 2)) - (intensityX << 1));
+				if (intensityY)	viewy += quakefactor * ((pr_torchflicker() % (intensityY << 2)) - (intensityY << 1));
+			}
+			if (intensityZ)	viewz += quakefactor * ((pr_torchflicker() % (intensityZ << 2)) - (intensityZ << 1));
 		}
 	}
 

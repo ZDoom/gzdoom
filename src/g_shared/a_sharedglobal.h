@@ -131,23 +131,31 @@ protected:
 	DFlashFader ();
 };
 
+enum
+{
+	QF_RELATIVE = 1,
+};
+
 class DEarthquake : public DThinker
 {
 	DECLARE_CLASS (DEarthquake, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx);
+	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, FSoundID quakesfx, int flags);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
-
 	TObjPtr<AActor> m_Spot;
 	fixed_t m_TremorRadius, m_DamageRadius;
 	int m_Intensity;
 	int m_Countdown;
 	FSoundID m_QuakeSFX;
+	int m_Flags;
+	int m_iX, m_iY, m_iZ;
 
-	static int StaticGetQuakeIntensity (AActor *viewer);
+	static int StaticGetQuakeFlags(AActor *viewer);
+	static int StaticGetQuakeIntensity (AActor *viewer, int selector);
+	
 
 private:
 	DEarthquake ();

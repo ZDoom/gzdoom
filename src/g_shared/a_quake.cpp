@@ -42,12 +42,11 @@ DEarthquake::DEarthquake (AActor *center, int intensityX, int intensityY, int in
 	// Radii are specified in tile units (64 pixels)
 	m_DamageRadius = damrad << (FRACBITS);
 	m_TremorRadius = tremrad << (FRACBITS);
-	m_Intensity = intensityX;
+	m_IntensityX = intensityX;
+	m_IntensityY = intensityY;
+	m_IntensityZ = intensityZ;
 	m_Countdown = duration;
 	m_Flags = flags;
-	m_iX = intensityX;
-	m_iY = intensityY;
-	m_iZ = intensityZ;
 }
 
 //==========================================================================
@@ -58,10 +57,20 @@ DEarthquake::DEarthquake (AActor *center, int intensityX, int intensityY, int in
 
 void DEarthquake::Serialize (FArchive &arc)
 {
-	Super::Serialize (arc); //[MC] m_Intensity is unused now but I don't want to break compatibility...
-	arc << m_Spot << m_Intensity << m_Countdown
+	Super::Serialize (arc);
+	arc << m_Spot << m_IntensityX << m_Countdown
 		<< m_TremorRadius << m_DamageRadius
-		<< m_QuakeSFX << m_Flags << m_iX << m_iY << m_iZ;
+		<< m_QuakeSFX;
+	if (SaveVersion < 4519)
+	{
+		m_IntensityY = m_IntensityX;
+		m_IntensityZ = 0;
+		m_Flags = 0;
+	}
+	else
+	{
+		arc << m_IntensityY << m_IntensityZ << m_Flags;
+	}
 }
 
 //==========================================================================
@@ -106,7 +115,18 @@ void DEarthquake::Tick ()
 					}
 					// Thrust player around
 					angle_t an = victim->angle + ANGLE_1*pr_quake();
-					P_ThrustMobj (victim, an, m_Intensity << (FRACBITS-1));
+					if (m_IntensityX == m_IntensityY)
+					{ // Thrust in a circle
+						P_ThrustMobj (victim, an, m_IntensityX << (FRACBITS-1));
+					}
+					else
+					{ // Thrust in an ellipse
+						an >>= ANGLETOFINESHIFT;
+						// So this is actually completely wrong, but it ought to be good
+						// enough. Otherwise, I'd have to use tangents and square roots.
+						victim->velx += FixedMul(m_IntensityX << (FRACBITS-1), finecosine[an]);
+						victim->vely += FixedMul(m_IntensityY << (FRACBITS-1), finesine[an]);
+					}
 				}
 			}
 		}
@@ -130,17 +150,19 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-int DEarthquake::StaticGetQuakeIntensity (AActor *victim, int selector)
+int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
+	int &x, int &y, int &z, int &relx, int &rely, int &relz)
 {
-	int intensity = 0;
-	int quakeIntensity = 0;
-	TThinkerIterator<DEarthquake> iterator (STAT_EARTHQUAKE);
-	DEarthquake *quake;
-
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
 		return 0;
 	}
+
+	x = y = z = relx = rely = 0;
+
+	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
+	DEarthquake *quake;
+	int count = 0;
 
 	while ( (quake = iterator.Next()) != NULL)
 	{
@@ -150,64 +172,25 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim, int selector)
 				victim->y - quake->m_Spot->y);
 			if (dist < quake->m_TremorRadius)
 			{
-				switch (selector)
+				++count;
+				if (quake->m_Flags & QF_RELATIVE)
 				{
-				default:
-				case 0:				
-					quakeIntensity = quake->m_iX;
-					break;
-				case 1:
-					quakeIntensity = quake->m_iY;
-					break;
-				case 2:
-					quakeIntensity = quake->m_iZ;
-					break;
-				
+					relx = MAX(relx, quake->m_IntensityX);
+					rely = MAX(rely, quake->m_IntensityY);
+					relz = MAX(relz, quake->m_IntensityZ);
 				}
-
-				if (intensity < quakeIntensity)
-					intensity = quakeIntensity;
+				else
+				{
+					x = MAX(x, quake->m_IntensityX);
+					y = MAX(y, quake->m_IntensityY);
+					z = MAX(z, quake->m_IntensityZ);
+				}
 			}
 		}
 	}
-	return intensity;
+	return count;
 }
 
-//==========================================================================
-//
-// DEarthquake::StaticGetQuakeIntensity
-//
-// Searches for all quakes near the victim and returns their combined
-// intensity.
-//
-//==========================================================================
-
-int DEarthquake::StaticGetQuakeFlags(AActor *victim)
-{
-	int flags = 0;
-	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
-	DEarthquake *quake;
-
-	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
-	{
-		return 0;
-	}
-
-	while ((quake = iterator.Next()) != NULL)
-	{
-		if (quake->m_Spot != NULL)
-		{
-			fixed_t dist = P_AproxDistance(victim->x - quake->m_Spot->x,
-				victim->y - quake->m_Spot->y);
-			if (dist < quake->m_TremorRadius)
-			{
-				if (!(flags & QF_RELATIVE) && (quake->m_Flags & QF_RELATIVE))
-					flags += QF_RELATIVE;
-			}
-		}
-	}
-	return flags;
-}
 //==========================================================================
 //
 // P_StartQuake

@@ -764,6 +764,23 @@ bool R_GetViewInterpolationStatus()
 	return NoInterpolateView;
 }
 
+//==========================================================================
+//
+// QuakePower
+//
+//==========================================================================
+
+static fixed_t QuakePower(fixed_t factor, int intensity)
+{
+	if (intensity == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return factor * ((pr_torchflicker() % (intensity << 2)) - (intensity << 1));
+	}
+}
 
 //==========================================================================
 //
@@ -875,13 +892,41 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		int intensity = DEarthquake::StaticGetQuakeIntensity (camera);
-		if (intensity != 0)
+		int intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
+		if (DEarthquake::StaticGetQuakeIntensities(camera,
+			intensityX, intensityY, intensityZ,
+			relIntensityX, relIntensityY, relIntensityZ) > 0)
 		{
 			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
 
-			viewx += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
-			viewy += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
+			if (relIntensityX != 0)
+			{
+				int ang = (camera->angle) >> ANGLETOFINESHIFT;
+				fixed_t power = QuakePower(quakefactor, relIntensityX);
+				viewx += FixedMul(finecosine[ang], power);
+				viewy += FixedMul(finesine[ang], power);
+			}
+			if (relIntensityY != 0)
+			{
+				int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
+				fixed_t power = QuakePower(quakefactor, relIntensityY);
+				viewx += FixedMul(finecosine[ang], power);
+				viewy += FixedMul(finesine[ang], power);
+			}
+			if (intensityX != 0)
+			{
+				viewx += QuakePower(quakefactor, intensityX);
+			}
+			if (intensityY != 0)
+			{
+				viewy += QuakePower(quakefactor, intensityY);
+			}
+			// FIXME: Relative Z is not relative
+			intensityZ = MAX(intensityZ, relIntensityZ);
+			if (intensityZ != 0)
+			{
+				viewz += QuakePower(quakefactor, intensityZ);
+			}
 		}
 	}
 

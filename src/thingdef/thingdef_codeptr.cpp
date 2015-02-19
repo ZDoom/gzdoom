@@ -1875,6 +1875,7 @@ enum SIX_Flags
 	SIXF_NOPOINTERS				= 0x00400000,
 	SIXF_ORIGINATOR				= 0x00800000,
 	SIXF_TRANSFERSPRITEFRAME	= 0x01000000,
+	SIXF_TRANSFERROLL			= 0x02000000,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -2025,6 +2026,11 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	{
 		mo->sprite = self->sprite;
 		mo->frame = self->frame;
+	}
+
+	if (flags & SIXF_TRANSFERROLL)
+	{
+		mo->roll = self->roll;
 	}
 
 	return true;
@@ -4401,6 +4407,28 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
 	ACTION_PARAM_INT(tremrad, 3);
 	ACTION_PARAM_SOUND(sound, 4);
 	P_StartQuake(self, 0, intensity, duration, damrad, tremrad, sound);
+}
+
+//===========================================================================
+//
+// A_QuakeEx
+//
+// Extended version of A_Quake. Takes individual axis into account and can
+// take a flag.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
+{
+	ACTION_PARAM_START(8);
+	ACTION_PARAM_INT(intensityX, 0);
+	ACTION_PARAM_INT(intensityY, 1);
+	ACTION_PARAM_INT(intensityZ, 2);
+	ACTION_PARAM_INT(duration, 3);
+	ACTION_PARAM_INT(damrad, 4);
+	ACTION_PARAM_INT(tremrad, 5);
+	ACTION_PARAM_SOUND(sound, 6);
+	ACTION_PARAM_INT(flags, 7);
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags);
 }
 
 //===========================================================================

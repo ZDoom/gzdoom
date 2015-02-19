@@ -98,8 +98,7 @@ Bit16s envelope_calcsin0(Bit16u phase, Bit16u envelope) {
 	phase &= 0x3ff;
 	Bit16u out = 0;
 	Bit16u neg = 0;
-	if (phase & 0x200 && (phase & 0x1ff)) {
-		phase--;
+	if (phase & 0x200) {
 		neg = ~0;
 	}
 	if (phase & 0x100) {
@@ -154,8 +153,7 @@ Bit16s envelope_calcsin4(Bit16u phase, Bit16u envelope) {
 	phase &= 0x3ff;
 	Bit16u out = 0;
 	Bit16u neg = 0;
-	if ((phase & 0x300) == 0x100 && (phase & 0xff)) {
-		phase--;
+	if ((phase & 0x300) == 0x100) {
 		neg = ~0;
 	}
 	if (phase & 0x200) {
@@ -188,8 +186,7 @@ Bit16s envelope_calcsin5(Bit16u phase, Bit16u envelope) {
 Bit16s envelope_calcsin6(Bit16u phase, Bit16u envelope) {
 	phase &= 0x3ff;
 	Bit16u neg = 0;
-	if (phase & 0x200 && (phase & 0x1ff)) {
-		phase--;
+	if (phase & 0x200) {
 		neg = ~0;
 	}
 	return envelope_calcexp(envelope << 3) ^ neg;
@@ -199,8 +196,7 @@ Bit16s envelope_calcsin7(Bit16u phase, Bit16u envelope) {
 	phase &= 0x3ff;
 	Bit16u out = 0;
 	Bit16u neg = 0;
-	if (phase & 0x200 && (phase & 0x1ff)) {
-		phase--;
+	if (phase & 0x200) {
 		neg = ~0;
 		phase = (phase & 0x1ff) ^ 0x1ff;
 	}

@@ -7,7 +7,6 @@ ACTOR SuperMap : MapRevealer 35
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	+FLOATBOB
-	+NOGRAVITY
 	Inventory.MaxAmount 0
 	Inventory.PickupMessage "$TXT_ITEMSUPERMAP"
 	States
@@ -27,7 +26,6 @@ ACTOR ArtiInvisibility : PowerupGiver 75
 	SpawnID 135
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	RenderStyle Translucent
 	Alpha 0.4
@@ -53,7 +51,6 @@ ACTOR ArtiTomeOfPower : PowerupGiver 86 native
 	SpawnID 134
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	Inventory.Icon "ARTIPWBK"
 	Powerup.Type Weaponlevel2
@@ -97,7 +94,6 @@ ACTOR ArtiTimeBomb : Inventory 34 native
 	SpawnID 72
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.INVBAR
 	+INVENTORY.FANCYPICKUPSOUND

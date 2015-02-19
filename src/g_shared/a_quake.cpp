@@ -158,7 +158,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
 		return 0;
 	}
 
-	x = y = z = relx = rely = 0;
+	x = y = z = relx = rely = relz = 0;
 
 	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
 	DEarthquake *quake;

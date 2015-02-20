@@ -151,7 +151,6 @@ public:
 	fixed_t m_TremorRadius, m_DamageRadius;
 	int m_Countdown;
 	double m_CountdownStart;
-	double m_Countup;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;

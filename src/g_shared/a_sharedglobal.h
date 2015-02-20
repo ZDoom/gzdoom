@@ -136,12 +136,14 @@ enum
 	QF_RELATIVE =	1,
 	QF_SCALEDOWN =	1 << 1,
 	QF_SCALEUP =	1 << 2,
+	QF_MAX =		1 << 3,
 };
 
 struct quakeInfo
 {
 	int intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
 	double scaleDown, scaleDownStart;
+	bool isScalingDown, isScalingUp, preferMaximum;
 };
 
 class DEarthquake : public DThinker

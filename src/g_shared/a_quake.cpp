@@ -80,7 +80,6 @@ void DEarthquake::Serialize (FArchive &arc)
 	{
 		arc << m_CountdownStart;
 	}
-	
 }
 
 //==========================================================================
@@ -101,7 +100,7 @@ void DEarthquake::Tick ()
 		Destroy ();
 		return;
 	}
-
+	
 	if (!S_IsActorPlayingSomething (m_Spot, CHAN_BODY, m_QuakeSFX))
 	{
 		S_Sound (m_Spot, CHAN_BODY | CHAN_LOOP, m_QuakeSFX, 1, ATTN_NORM);
@@ -141,6 +140,7 @@ void DEarthquake::Tick ()
 			}
 		}
 	}
+	
 	if (--m_Countdown == 0)
 	{
 		if (S_IsActorPlayingSomething(m_Spot, CHAN_BODY, m_QuakeSFX))
@@ -166,7 +166,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 	{
 		return 0;
 	}
-
+	qprop.isScalingDown = qprop.isScalingUp = false, qprop.preferMaximum = false;
 	qprop.intensityX = qprop.intensityY = qprop.intensityZ = qprop.relIntensityX = qprop.relIntensityY = qprop.relIntensityZ = 0;
 
 	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
@@ -194,10 +194,13 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 					qprop.intensityY = MAX(qprop.intensityY, quake->m_IntensityY);
 					qprop.intensityZ = MAX(qprop.intensityZ, quake->m_IntensityZ);
 				}
-				if (quake->m_Flags & QF_SCALEDOWN)
+				if (quake->m_Flags)
 				{
 					qprop.scaleDownStart = quake->m_CountdownStart;
 					qprop.scaleDown = quake->m_Countdown;
+					qprop.isScalingDown = (quake->m_Flags & QF_SCALEDOWN) ? true : false;
+					qprop.isScalingUp = (quake->m_Flags & QF_SCALEUP) ? true : false;
+					qprop.preferMaximum = (quake->m_Flags & QF_MAX) ? true : false;
 				}
 				else
 				{

@@ -781,13 +781,31 @@ static fixed_t QuakePower(double factor, int intensity, quakeInfo quake)
 	else
 	{
 		double ss = (double)((pr_torchflicker() % (intensity << 2)) - (intensity << 1));
-		if (scaleDownStart == 0)
+		
+		if (quake.isScalingDown || quake.isScalingUp)
 		{
-			return FLOAT2FIXED(factor * ss);
+			fixed_t result;
+			if (scaleDownStart == 0)	scaleDownStart = 1;
+
+			if (quake.isScalingDown && quake.isScalingUp)
+			{
+				if (quake.preferMaximum)
+					result = FLOAT2FIXED((factor * ss) * MAX((scaleDown / scaleDownStart), (scaleDownStart - scaleDown) / scaleDownStart));
+				else
+					result = FLOAT2FIXED((factor * ss) * MIN((scaleDown / scaleDownStart), (scaleDownStart - scaleDown) / scaleDownStart));
+			}
+			else if (quake.isScalingDown)
+				result = FLOAT2FIXED((factor * ss) * (scaleDown / scaleDownStart));
+			else if (quake.isScalingUp)
+				result = FLOAT2FIXED((factor * ss) * ((scaleDownStart - scaleDown) / scaleDownStart));
+			else
+				result = FLOAT2FIXED(factor * ss);
+
+			return result;
 		}
 		else
 		{
-			return FLOAT2FIXED(((factor * ss) * ((scaleDown / scaleDownStart))));
+			return FLOAT2FIXED(factor * ss);
 		}
 	}
 	

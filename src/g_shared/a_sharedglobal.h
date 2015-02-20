@@ -149,14 +149,14 @@ public:
 	void Tick ();
 	TObjPtr<AActor> m_Spot;
 	fixed_t m_TremorRadius, m_DamageRadius;
-	int m_ScaleDownStart;
 	int m_Countdown;
-	int m_Countup;
+	double m_CountdownStart;
+	double m_Countup;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
 
-	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart, double &scaleUp);
+	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart);
 
 private:
 	DEarthquake ();

@@ -45,9 +45,8 @@ DEarthquake::DEarthquake (AActor *center, int intensityX, int intensityY, int in
 	m_IntensityX = intensityX;
 	m_IntensityY = intensityY;
 	m_IntensityZ = intensityZ;
+	m_CountdownStart = (double)duration;
 	m_Countdown = duration;
-	m_Countup = 0;
-	m_ScaleDownStart = duration;
 	m_Flags = flags;
 }
 
@@ -133,7 +132,6 @@ void DEarthquake::Tick ()
 			}
 		}
 	}
-	++m_Countup;
 	if (--m_Countdown == 0)
 	{
 		if (S_IsActorPlayingSomething(m_Spot, CHAN_BODY, m_QuakeSFX))
@@ -154,7 +152,7 @@ void DEarthquake::Tick ()
 //==========================================================================
 
 int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
-	int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart, double &scaleUp)
+	int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart)
 {
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
@@ -188,18 +186,15 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
 					y = MAX(y, quake->m_IntensityY);
 					z = MAX(z, quake->m_IntensityZ);
 				}
-				scaleDownStart = scaleDown = scaleUp = 1;
 				if (quake->m_Flags & QF_SCALEDOWN)
 				{
+					scaleDownStart = quake->m_CountdownStart;
 					scaleDown = (double)quake->m_Countdown;
 				}
 				else
 				{
-					scaleDownStart = 0.0;
-					scaleDown = 0.0;
+					scaleDownStart = scaleDown = 0.0;
 				}
-				if (quake->m_Flags & QF_SCALEUP)
-					scaleUp = (double)quake->m_Countup;
 			}
 		}
 	}

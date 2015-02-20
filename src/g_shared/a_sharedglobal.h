@@ -133,17 +133,18 @@ protected:
 
 enum
 {
-	QF_RELATIVE =	1,
-	QF_SCALEDOWN =	1 << 1,
-	QF_SCALEUP =	1 << 2,
-	QF_MAX =		1 << 3,
+	QF_RELATIVE =		1,
+	QF_SCALEDOWN =		1 << 1,
+	QF_SCALEUP =		1 << 2,
+	QF_MAX =			1 << 3,
+	QF_FULLINTENSITY =	1 << 4,
 };
 
 struct quakeInfo
 {
 	int intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
 	double scaleDown, scaleDownStart;
-	bool isScalingDown, isScalingUp, preferMaximum;
+	bool isScalingDown, isScalingUp, preferMaximum, fullIntensity;
 };
 
 class DEarthquake : public DThinker

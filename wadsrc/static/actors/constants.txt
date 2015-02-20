@@ -465,6 +465,7 @@ enum
 	QF_SCALEDOWN =		1 << 1,
 	QF_SCALEUP =		1 << 2,
 	QF_MAX =			1 << 3,
+	QF_FULLINTENSITY =	1 << 4,
 };
 
 // This is only here to provide one global variable for testing.

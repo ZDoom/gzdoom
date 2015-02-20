@@ -166,7 +166,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 	{
 		return 0;
 	}
-	qprop.isScalingDown = qprop.isScalingUp = false, qprop.preferMaximum = false;
+	qprop.isScalingDown = qprop.isScalingUp = qprop.preferMaximum = qprop.fullIntensity = false;
 	qprop.intensityX = qprop.intensityY = qprop.intensityZ = qprop.relIntensityX = qprop.relIntensityY = qprop.relIntensityZ = 0;
 
 	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
@@ -201,6 +201,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 					qprop.isScalingDown = (quake->m_Flags & QF_SCALEDOWN) ? true : false;
 					qprop.isScalingUp = (quake->m_Flags & QF_SCALEUP) ? true : false;
 					qprop.preferMaximum = (quake->m_Flags & QF_MAX) ? true : false;
+					qprop.fullIntensity = (quake->m_Flags & QF_FULLINTENSITY) ? true : false;
 				}
 				else
 				{

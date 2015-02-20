@@ -154,7 +154,7 @@ void DEarthquake::Tick ()
 //==========================================================================
 
 int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
-	int &x, int &y, int &z, int &relx, int &rely, int &relz, int &scaleDown, int &scaleDownStart, int &scaleUp)
+	int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart, double &scaleUp)
 {
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
@@ -191,15 +191,15 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
 				scaleDownStart = scaleDown = scaleUp = 1;
 				if (quake->m_Flags & QF_SCALEDOWN)
 				{
-					scaleDown = quake->m_Countdown;
+					scaleDown = (double)quake->m_Countdown;
 				}
 				else
 				{
-					scaleDownStart = 0;
-					scaleDown = 0;
+					scaleDownStart = 0.0;
+					scaleDown = 0.0;
 				}
 				if (quake->m_Flags & QF_SCALEUP)
-					scaleUp = quake->m_Countup;
+					scaleUp = (double)quake->m_Countup;
 			}
 		}
 	}

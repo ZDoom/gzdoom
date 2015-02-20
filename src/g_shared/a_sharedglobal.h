@@ -156,7 +156,7 @@ public:
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
 
-	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz, int &scaleDown, int &scaleDownStart, int &scaleUp);
+	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart, double &scaleUp);
 
 private:
 	DEarthquake ();

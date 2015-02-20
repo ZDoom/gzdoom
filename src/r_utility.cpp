@@ -770,16 +770,27 @@ bool R_GetViewInterpolationStatus()
 //
 //==========================================================================
 
-static fixed_t QuakePower(fixed_t factor, int intensity)
+static fixed_t QuakePower(double factor, int intensity, quakeInfo quake)
 {
+	double scaleDownStart = quake.scaleDownStart;
+	double scaleDown = quake.scaleDown;
 	if (intensity == 0)
 	{
 		return 0;
 	}
 	else
 	{
-		return factor * ((pr_torchflicker() % (intensity << 2)) - (intensity << 1));
+		double ss = (double)((pr_torchflicker() % (intensity << 2)) - (intensity << 1));
+		if (scaleDownStart == 0)
+		{
+			return FLOAT2FIXED(factor * ss);
+		}
+		else
+		{
+			return FLOAT2FIXED(((factor * ss) * ((scaleDown / scaleDownStart))));
+		}
 	}
+	
 }
 
 //==========================================================================
@@ -892,40 +903,38 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		int intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
-		if (DEarthquake::StaticGetQuakeIntensities(camera,
-			intensityX, intensityY, intensityZ,
-			relIntensityX, relIntensityY, relIntensityZ) > 0)
+		quakeInfo quake;
+		if (DEarthquake::StaticGetQuakeIntensities(camera, quake) > 0)
 		{
-			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
+			double quakefactor = r_quakeintensity;
 
-			if (relIntensityX != 0)
+			if (quake.relIntensityX != 0)
 			{
 				int ang = (camera->angle) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, relIntensityX);
+				fixed_t power = QuakePower(quakefactor, quake.relIntensityX, quake);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
-			if (relIntensityY != 0)
+			if (quake.relIntensityY != 0)
 			{
 				int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, relIntensityY);
+				fixed_t power = QuakePower(quakefactor, quake.relIntensityY, quake);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
-			if (intensityX != 0)
+			if (quake.intensityX != 0)
 			{
-				viewx += QuakePower(quakefactor, intensityX);
+				viewx += QuakePower(quakefactor, quake.intensityX, quake);
 			}
-			if (intensityY != 0)
+			if (quake.intensityY != 0)
 			{
-				viewy += QuakePower(quakefactor, intensityY);
+				viewy += QuakePower(quakefactor, quake.intensityY, quake);
 			}
 			// FIXME: Relative Z is not relative
-			intensityZ = MAX(intensityZ, relIntensityZ);
-			if (intensityZ != 0)
+			quake.intensityZ = MAX(quake.intensityZ, quake.relIntensityZ);
+			if (quake.intensityZ != 0)
 			{
-				viewz += QuakePower(quakefactor, intensityZ);
+				viewz += QuakePower(quakefactor, quake.intensityZ, quake);
 			}
 		}
 	}

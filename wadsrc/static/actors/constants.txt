@@ -461,7 +461,9 @@ enum
 // Flags for A_QuakeEx
 enum
 {
-	QF_RELATIVE = 1,
+	QF_RELATIVE =		1,
+	QF_SCALEDOWN =		1 << 1,
+	QF_SCALEUP =		1 << 2,
 };
 
 // This is only here to provide one global variable for testing.

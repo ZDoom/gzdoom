@@ -138,6 +138,12 @@ enum
 	QF_SCALEUP =	1 << 2,
 };
 
+struct quakeInfo
+{
+	int intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
+	double scaleDown, scaleDownStart;
+};
+
 class DEarthquake : public DThinker
 {
 	DECLARE_CLASS (DEarthquake, DThinker)
@@ -155,7 +161,7 @@ public:
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
 
-	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart);
+	static int StaticGetQuakeIntensities(AActor *viewer, quakeInfo &a);
 
 private:
 	DEarthquake ();

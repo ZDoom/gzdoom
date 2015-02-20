@@ -153,15 +153,14 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
-	int &x, int &y, int &z, int &relx, int &rely, int &relz, double &scaleDown, double &scaleDownStart)
+int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 {
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
 		return 0;
 	}
 
-	x = y = z = relx = rely = relz = 0;
+	qprop.intensityX = qprop.intensityY = qprop.intensityZ = qprop.relIntensityX = qprop.relIntensityY = qprop.relIntensityZ = 0;
 
 	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
 	DEarthquake *quake;
@@ -178,24 +177,24 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
 				++count;
 				if (quake->m_Flags & QF_RELATIVE)
 				{
-					relx = MAX(relx, quake->m_IntensityX);
-					rely = MAX(rely, quake->m_IntensityY);
-					relz = MAX(relz, quake->m_IntensityZ);
+					qprop.relIntensityX = MAX(qprop.relIntensityX, quake->m_IntensityX);
+					qprop.relIntensityY = MAX(qprop.relIntensityY, quake->m_IntensityY);
+					qprop.relIntensityZ = MAX(qprop.relIntensityZ, quake->m_IntensityZ);
 				}
 				else
 				{
-					x = MAX(x, quake->m_IntensityX);
-					y = MAX(y, quake->m_IntensityY);
-					z = MAX(z, quake->m_IntensityZ);
+					qprop.intensityX = MAX(qprop.intensityX, quake->m_IntensityX);
+					qprop.intensityY = MAX(qprop.intensityY, quake->m_IntensityY);
+					qprop.intensityZ = MAX(qprop.intensityZ, quake->m_IntensityZ);
 				}
 				if (quake->m_Flags & QF_SCALEDOWN)
 				{
-					scaleDownStart = quake->m_CountdownStart;
-					scaleDown = (double)quake->m_Countdown;
+					qprop.scaleDownStart = quake->m_CountdownStart;
+					qprop.scaleDown = quake->m_Countdown;
 				}
 				else
 				{
-					scaleDownStart = scaleDown = 0.0;
+					qprop.scaleDownStart = qprop.scaleDown = 0.0;
 				}
 			}
 		}

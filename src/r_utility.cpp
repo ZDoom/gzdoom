@@ -792,7 +792,7 @@ static fixed_t QuakePower(double factor, int intensity, quakeInfo quake)
 				if (quake.preferMaximum)
 					result = FLOAT2FIXED((factor * ss) * MAX((scaleDown / scaleDownStart), (scaleDownStart - scaleDown) / scaleDownStart));
 				else
-					result = FLOAT2FIXED((factor * ss) * MIN((scaleDown / scaleDownStart), (scaleDownStart - scaleDown) / scaleDownStart));
+					result = FLOAT2FIXED((factor * ss) * MIN(((scaleDown*2) / scaleDownStart), ((scaleDownStart - scaleDown)*2) / scaleDownStart));
 			}
 			else if (quake.isScalingDown)
 				result = FLOAT2FIXED((factor * ss) * (scaleDown / scaleDownStart));

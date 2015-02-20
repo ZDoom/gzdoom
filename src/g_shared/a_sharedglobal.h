@@ -161,7 +161,7 @@ public:
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
 
-	static int StaticGetQuakeIntensities(AActor *viewer, quakeInfo &a);
+	static int StaticGetQuakeIntensities(AActor *viewer, quakeInfo &qprop);
 
 private:
 	DEarthquake ();

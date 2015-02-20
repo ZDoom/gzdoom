@@ -68,6 +68,8 @@ void DEarthquake::Serialize (FArchive &arc)
 		m_IntensityZ = 0;
 		m_Flags = 0;
 	}
+	if (SaveVersion < 4520)
+		m_CountdownStart = 0;
 	else
 	{
 		arc << m_IntensityY << m_IntensityZ << m_Flags;

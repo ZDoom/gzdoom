@@ -133,7 +133,9 @@ protected:
 
 enum
 {
-	QF_RELATIVE = 1,
+	QF_RELATIVE =	1,
+	QF_SCALEDOWN =	1 << 1,
+	QF_SCALEUP =	1 << 2,
 };
 
 class DEarthquake : public DThinker
@@ -147,12 +149,14 @@ public:
 	void Tick ();
 	TObjPtr<AActor> m_Spot;
 	fixed_t m_TremorRadius, m_DamageRadius;
+	int m_ScaleDownStart;
 	int m_Countdown;
+	int m_Countup;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
 
-	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz);
+	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz, int &scaleDown, int &scaleDownStart, int &scaleUp);
 
 private:
 	DEarthquake ();

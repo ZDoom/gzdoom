@@ -45,6 +45,7 @@ DEarthquake::DEarthquake (AActor *center, int intensityX, int intensityY, int in
 	m_IntensityX = intensityX;
 	m_IntensityY = intensityY;
 	m_IntensityZ = intensityZ;
+	m_CountdownStart = (double)duration;
 	m_Countdown = duration;
 	m_Flags = flags;
 }
@@ -71,6 +72,14 @@ void DEarthquake::Serialize (FArchive &arc)
 	{
 		arc << m_IntensityY << m_IntensityZ << m_Flags;
 	}
+	if (SaveVersion < 4520)
+	{
+		m_CountdownStart = 0;
+	}
+	else
+	{
+		arc << m_CountdownStart;
+	}
 }
 
 //==========================================================================
@@ -91,7 +100,7 @@ void DEarthquake::Tick ()
 		Destroy ();
 		return;
 	}
-
+	
 	if (!S_IsActorPlayingSomething (m_Spot, CHAN_BODY, m_QuakeSFX))
 	{
 		S_Sound (m_Spot, CHAN_BODY | CHAN_LOOP, m_QuakeSFX, 1, ATTN_NORM);
@@ -131,6 +140,7 @@ void DEarthquake::Tick ()
 			}
 		}
 	}
+	
 	if (--m_Countdown == 0)
 	{
 		if (S_IsActorPlayingSomething(m_Spot, CHAN_BODY, m_QuakeSFX))
@@ -150,15 +160,14 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
-	int &x, int &y, int &z, int &relx, int &rely, int &relz)
+int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 {
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
 		return 0;
 	}
-
-	x = y = z = relx = rely = 0;
+	qprop.isScalingDown = qprop.isScalingUp = qprop.preferMaximum = qprop.fullIntensity = false;
+	qprop.intensityX = qprop.intensityY = qprop.intensityZ = qprop.relIntensityX = qprop.relIntensityY = qprop.relIntensityZ = 0;
 
 	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
 	DEarthquake *quake;
@@ -175,15 +184,28 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
 				++count;
 				if (quake->m_Flags & QF_RELATIVE)
 				{
-					relx = MAX(relx, quake->m_IntensityX);
-					rely = MAX(rely, quake->m_IntensityY);
-					relz = MAX(relz, quake->m_IntensityZ);
+					qprop.relIntensityX = MAX(qprop.relIntensityX, quake->m_IntensityX);
+					qprop.relIntensityY = MAX(qprop.relIntensityY, quake->m_IntensityY);
+					qprop.relIntensityZ = MAX(qprop.relIntensityZ, quake->m_IntensityZ);
 				}
 				else
 				{
-					x = MAX(x, quake->m_IntensityX);
-					y = MAX(y, quake->m_IntensityY);
-					z = MAX(z, quake->m_IntensityZ);
+					qprop.intensityX = MAX(qprop.intensityX, quake->m_IntensityX);
+					qprop.intensityY = MAX(qprop.intensityY, quake->m_IntensityY);
+					qprop.intensityZ = MAX(qprop.intensityZ, quake->m_IntensityZ);
+				}
+				if (quake->m_Flags)
+				{
+					qprop.scaleDownStart = quake->m_CountdownStart;
+					qprop.scaleDown = quake->m_Countdown;
+					qprop.isScalingDown = (quake->m_Flags & QF_SCALEDOWN) ? true : false;
+					qprop.isScalingUp = (quake->m_Flags & QF_SCALEUP) ? true : false;
+					qprop.preferMaximum = (quake->m_Flags & QF_MAX) ? true : false;
+					qprop.fullIntensity = (quake->m_Flags & QF_FULLINTENSITY) ? true : false;
+				}
+				else
+				{
+					qprop.scaleDownStart = qprop.scaleDown = 0.0;
 				}
 			}
 		}

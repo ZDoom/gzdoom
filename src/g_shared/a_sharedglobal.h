@@ -133,7 +133,18 @@ protected:
 
 enum
 {
-	QF_RELATIVE = 1,
+	QF_RELATIVE =		1,
+	QF_SCALEDOWN =		1 << 1,
+	QF_SCALEUP =		1 << 2,
+	QF_MAX =			1 << 3,
+	QF_FULLINTENSITY =	1 << 4,
+};
+
+struct quakeInfo
+{
+	int intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
+	double scaleDown, scaleDownStart;
+	bool isScalingDown, isScalingUp, preferMaximum, fullIntensity;
 };
 
 class DEarthquake : public DThinker
@@ -148,11 +159,12 @@ public:
 	TObjPtr<AActor> m_Spot;
 	fixed_t m_TremorRadius, m_DamageRadius;
 	int m_Countdown;
+	double m_CountdownStart;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
 
-	static int StaticGetQuakeIntensities(AActor *viewer, int &x, int &y, int &z, int &relx, int &rely, int &relz);
+	static int StaticGetQuakeIntensities(AActor *viewer, quakeInfo &qprop);
 
 private:
 	DEarthquake ();

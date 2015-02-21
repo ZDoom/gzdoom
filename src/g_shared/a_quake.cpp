@@ -45,7 +45,7 @@ DEarthquake::DEarthquake (AActor *center, int intensityX, int intensityY, int in
 	m_IntensityX = intensityX;
 	m_IntensityY = intensityY;
 	m_IntensityZ = intensityZ;
-	m_CountdownStart = (double)duration;
+	m_CountdownStart = duration;
 	m_Countdown = duration;
 	m_Flags = flags;
 }
@@ -153,6 +153,48 @@ void DEarthquake::Tick ()
 
 //==========================================================================
 //
+// DEarthquake :: GetModIntensity
+//
+// Given a base intensity, modify it according to the quake's flags.
+//
+//==========================================================================
+
+fixed_t DEarthquake::GetModIntensity(int intensity) const
+{
+	assert(m_CountdownStart >= m_Countdown);
+	intensity += intensity;		// always doubled
+	if (m_Flags & (QF_SCALEDOWN | QF_SCALEUP))
+	{
+		int scalar;
+		if ((m_Flags & (QF_SCALEDOWN | QF_SCALEUP)) == (QF_SCALEDOWN | QF_SCALEUP))
+		{
+			scalar = (m_Flags & QF_MAX) ? MAX(m_Countdown, m_CountdownStart - m_Countdown)
+										: MIN(m_Countdown, m_CountdownStart - m_Countdown);
+			if (m_Flags & QF_FULLINTENSITY)
+			{
+				scalar *= 2;
+			}
+		}
+		else if (m_Flags & QF_SCALEDOWN)
+		{
+			scalar = m_Countdown;
+		}
+		else			// QF_SCALEUP
+		{
+			scalar = m_CountdownStart - m_Countdown;
+		}
+		assert(m_CountdownStart > 0);
+		intensity = intensity * (scalar << FRACBITS) / m_CountdownStart;
+	}
+	else
+	{
+		intensity <<= FRACBITS;
+	}
+	return intensity;
+}
+
+//==========================================================================
+//
 // DEarthquake::StaticGetQuakeIntensity
 //
 // Searches for all quakes near the victim and returns their combined
@@ -160,14 +202,15 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
+int DEarthquake::StaticGetQuakeIntensities(AActor *victim,
+	fixed_t &intensityX, fixed_t &intensityY, fixed_t &intensityZ,
+	fixed_t &relIntensityX, fixed_t &relIntensityY, fixed_t &relIntensityZ)
 {
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
 		return 0;
 	}
-	qprop.isScalingDown = qprop.isScalingUp = qprop.preferMaximum = qprop.fullIntensity = false;
-	qprop.intensityX = qprop.intensityY = qprop.intensityZ = qprop.relIntensityX = qprop.relIntensityY = qprop.relIntensityZ = 0;
+	intensityX = intensityY = intensityZ = relIntensityX = relIntensityY = relIntensityZ = 0;
 
 	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
 	DEarthquake *quake;
@@ -182,30 +225,20 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 			if (dist < quake->m_TremorRadius)
 			{
 				++count;
+				fixed_t x = quake->GetModIntensity(quake->m_IntensityX);
+				fixed_t y = quake->GetModIntensity(quake->m_IntensityY);
+				fixed_t z = quake->GetModIntensity(quake->m_IntensityZ);
 				if (quake->m_Flags & QF_RELATIVE)
 				{
-					qprop.relIntensityX = MAX(qprop.relIntensityX, quake->m_IntensityX);
-					qprop.relIntensityY = MAX(qprop.relIntensityY, quake->m_IntensityY);
-					qprop.relIntensityZ = MAX(qprop.relIntensityZ, quake->m_IntensityZ);
+					relIntensityX = MAX(relIntensityX, x);
+					relIntensityY = MAX(relIntensityY, y);
+					relIntensityZ = MAX(relIntensityZ, z);
 				}
 				else
 				{
-					qprop.intensityX = MAX(qprop.intensityX, quake->m_IntensityX);
-					qprop.intensityY = MAX(qprop.intensityY, quake->m_IntensityY);
-					qprop.intensityZ = MAX(qprop.intensityZ, quake->m_IntensityZ);
-				}
-				if (quake->m_Flags)
-				{
-					qprop.scaleDownStart = quake->m_CountdownStart;
-					qprop.scaleDown = quake->m_Countdown;
-					qprop.isScalingDown = (quake->m_Flags & QF_SCALEDOWN) ? true : false;
-					qprop.isScalingUp = (quake->m_Flags & QF_SCALEUP) ? true : false;
-					qprop.preferMaximum = (quake->m_Flags & QF_MAX) ? true : false;
-					qprop.fullIntensity = (quake->m_Flags & QF_FULLINTENSITY) ? true : false;
-				}
-				else
-				{
-					qprop.scaleDownStart = qprop.scaleDown = 0.0;
+					intensityX = MAX(intensityX, x);
+					intensityY = MAX(intensityY, y);
+					intensityZ = MAX(intensityZ, z);
 				}
 			}
 		}

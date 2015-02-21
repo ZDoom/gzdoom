@@ -1849,7 +1849,7 @@ ExpVal FxRandomPick::EvalExpression(AActor *self)
 		val.Type = VAL_Float;
 		val.Float = (*rng)(0x40000000) / double(0x40000000);
 	}
-	assert(val.Type == ValueType);
+	assert(val.Type == ValueType.Type);
 	return val;
 }
 

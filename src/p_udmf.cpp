@@ -1103,6 +1103,7 @@ public:
 		sdt->midtexture = "-";
 		sd->SetTextureXScale(FRACUNIT);
 		sd->SetTextureYScale(FRACUNIT);
+		sd->Index = index;
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))

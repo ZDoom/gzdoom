@@ -452,6 +452,82 @@ ExpVal FxIntCast::EvalExpression (AActor *self)
 //
 //==========================================================================
 
+FxFloatCast::FxFloatCast(FxExpression *x)
+: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = VAL_Float;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxFloatCast::~FxFloatCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType == VAL_Float)
+	{
+		FxExpression *x = basex;
+		basex = NULL;
+		delete this;
+		return x;
+	}
+	else if (basex->ValueType == VAL_Int)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = basex->EvalExpression(NULL);
+			FxExpression *x = new FxConstant(constval.GetFloat(), ScriptPosition);
+			delete this;
+			return x;
+		}
+		return this;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+		delete this;
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpVal FxFloatCast::EvalExpression (AActor *self)
+{
+	ExpVal baseval = basex->EvalExpression(self);
+	baseval.Float = baseval.GetFloat();
+	baseval.Type = VAL_Float;
+	return baseval;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxPlusSign::FxPlusSign(FxExpression *operand)
 : FxExpression(operand->ScriptPosition)
 {
@@ -1698,15 +1774,24 @@ ExpVal FxRandom::EvalExpression (AActor *self)
 //
 //
 //==========================================================================
-FxRandomPick::FxRandomPick(FRandom * r, TArray<FxExpression*> mi, const FScriptPosition &pos)
+FxRandomPick::FxRandomPick(FRandom * r, TArray<FxExpression*> mi, bool floaty, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	for (unsigned int index = 0; index < mi.Size(); index++)
 	{
-		min.Push(new FxIntCast(mi[index]));
+		FxExpression *casted;
+		if (floaty)
+		{
+			casted = new FxFloatCast(mi[index]);
+		}
+		else
+		{
+			casted = new FxIntCast(mi[index]);
+		}
+		min.Push(casted);
 	}
 	rng = r;
-	ValueType = VAL_Int;
+	ValueType = floaty ? VAL_Float : VAL_Int;
 }
 
 //==========================================================================
@@ -1746,17 +1831,25 @@ FxExpression *FxRandomPick::Resolve(FCompileContext &ctx)
 ExpVal FxRandomPick::EvalExpression(AActor *self)
 {
 	ExpVal val;
-	val.Type = VAL_Int;
 	int max = min.Size();
 	if (max > 0)
 	{
 		int select = (*rng)(max);
-		val.Int = min[select]->EvalExpression(self).GetInt();
+		val = min[select]->EvalExpression(self);
+	}
+	/* Is a default even important when the parser requires at least one
+	 * choice? Why do we do this? */
+	else if (ValueType == VAL_Int)
+	{
+		val.Type = VAL_Int;
+		val.Int = (*rng)();
 	}
 	else
 	{
-		val.Int = (*rng)();
+		val.Type = VAL_Float;
+		val.Float = (*rng)(0x40000000) / double(0x40000000);
 	}
+	assert(val.Type == ValueType.Type);
 	return val;
 }
 

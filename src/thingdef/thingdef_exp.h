@@ -316,6 +316,25 @@ public:
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+class FxFloatCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxFloatCast(FxExpression *x);
+	~FxFloatCast();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpVal EvalExpression (AActor *self);
+};
+
+//==========================================================================
+//
 //	FxSign
 //
 //==========================================================================
@@ -568,7 +587,7 @@ protected:
 
 public:
 
-	FxRandomPick(FRandom *, TArray<FxExpression*> mi, const FScriptPosition &pos);
+	FxRandomPick(FRandom *, TArray<FxExpression*> mi, bool floaty, const FScriptPosition &pos);
 	~FxRandomPick();
 	FxExpression *Resolve(FCompileContext&);
 

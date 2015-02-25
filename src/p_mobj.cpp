@@ -3673,17 +3673,9 @@ void AActor::Tick ()
 		if (state->GetNoDelay())
 		{
 			// For immediately spawned objects with the NoDelay flag set for their
-			// Spawn state, explicitly set the current state so that it calls its
-			// action and chains 0-tic states.
-			int starttics = tics;
-			if (!SetState(state))
+			// Spawn state, explicitly call the current state's function.
+			if (state->CallAction(this, this) && (ObjectFlags & OF_EuthanizeMe))
 				return;				// freed itself
-			// If the initial state had a duration of 0 tics, let the next state run
-			// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
-			else if (starttics > 0 && tics >= 0)
-			{
-				tics++;
-			}
 		}
 	}
 	// cycle through states, calling action functions at transitions

@@ -164,7 +164,7 @@ CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, norawinput, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
-	Printf("This won't take effect until "GAMENAME" is restarted.\n");
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
 extern int chatmodeon;

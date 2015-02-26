@@ -2375,7 +2375,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Log)
 
 	if (text[0] == '$') text = GStrings(text+1);
 	FString formatted = strbin1(text);
-	Printf("%4d: %s\n", gametic, formatted.GetChars());
+	Printf("%s\n", formatted.GetChars());
 	ACTION_SET_RESULT(false);	// Prints should never set the result for inventory state chains!
 }
 

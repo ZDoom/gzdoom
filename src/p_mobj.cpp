@@ -575,20 +575,23 @@ void AActor::AddInventory (AInventory *item)
 //
 //============================================================================
 
-void AActor::RemoveInventory (AInventory *item)
+void AActor::RemoveInventory(AInventory *item)
 {
 	AInventory *inv, **invp;
 
-	invp = &item->Owner->Inventory;
-	for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
+	if (item != NULL && item->Owner != NULL)	// can happen if the owner was destroyed by some action from an item's use state.
 	{
-		if (inv == item)
+		invp = &item->Owner->Inventory;
+		for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
 		{
-			*invp = item->Inventory;
-			item->DetachFromOwner ();
-			item->Owner = NULL;
-			item->Inventory = NULL;
-			break;
+			if (inv == item)
+			{
+				*invp = item->Inventory;
+				item->DetachFromOwner();
+				item->Owner = NULL;
+				item->Inventory = NULL;
+				break;
+			}
 		}
 	}
 }

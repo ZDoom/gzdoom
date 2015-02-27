@@ -63,7 +63,7 @@ extern HWND Window;
 #include "cmdlib.h"
 #include "s_sound.h"
 
-#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43600
+#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43400
 #error You are trying to compile with an unsupported version of FMOD.
 #endif
 

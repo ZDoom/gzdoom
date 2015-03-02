@@ -4099,9 +4099,11 @@ struct SRailHit
 };
 struct RailData
 {
+	AActor *Caller;
 	TArray<SRailHit> RailHits;
 	bool StopAtOne;
 	bool StopAtInvul;
+	bool ThruSpecies;
 };
 
 static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
@@ -4116,6 +4118,12 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	if (data->StopAtInvul && res.Actor->flags2 & MF2_INVULNERABLE)
 	{
 		return TRACE_Stop;
+	}
+
+	// Skip actors with the same species if the puff has MTHRUSPECIES.
+	if (data->ThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies())
+	{
+		return TRACE_Skip;
 	}
 
 	// Save this thing for damaging later, and continue the trace
@@ -4172,7 +4180,8 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	y1 += offset_xy * finesine[angle];
 
 	RailData rail_data;
-
+	rail_data.Caller = source;
+	
 	rail_data.StopAtOne = !!(railflags & RAF_NOPIERCE);
 	start.X = FIXED2FLOAT(x1);
 	start.Y = FIXED2FLOAT(y1);
@@ -4185,7 +4194,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0 : TRACE_PCross | TRACE_Impact;
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
-
+	rail_data.ThruSpecies = (puffDefaults->flags6 & MF6_MTHRUSPECIES) ? true : false;
 	Trace(x1, y1, shootz, source->Sector, vx, vy, vz,
 		distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
 		flags, ProcessRailHit, &rail_data);
@@ -4201,13 +4210,15 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 	for (i = 0; i < rail_data.RailHits.Size(); i++)
 	{
+		
+
 		fixed_t x, y, z;
 		bool spawnpuff;
 		bool bleed = false;
 
 		int puffflags = PF_HITTHING;
 		AActor *hitactor = rail_data.RailHits[i].HitActor;
-		fixed_t hitdist = rail_data.RailHits[i].Distance;
+		fixed_t hitdist = rail_data.RailHits[i].Distance;		
 
 		x = x1 + FixedMul(hitdist, vx);
 		y = y1 + FixedMul(hitdist, vy);

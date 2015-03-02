@@ -211,6 +211,10 @@ fixed_t DEarthquake::GetModIntensity(int intensity) const
 		assert(m_CountdownStart > 0);
 		intensity = intensity * (scalar << FRACBITS) / m_CountdownStart;
 	}
+	else
+	{
+		intensity <<= FRACBITS;
+	}
 	return intensity;
 }
 

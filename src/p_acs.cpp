@@ -4435,7 +4435,7 @@ enum EACSFunctions
 	ACSF_SetActorRoll,
 	ACSF_ChangeActorRoll,
 	ACSF_GetActorRoll,
-
+	ACSF_QuakeEx,
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
 	-101 : PlayerIsSpectator(1),
@@ -5695,6 +5695,15 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				return !!CheckActorFlag(actor, FBehavior::StaticLookupString(args[1]));
 			}
 			break;
+		}
+
+		case ACSF_QuakeEx:
+		{
+			return P_StartQuakeXYZ(activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], FBehavior::StaticLookupString(args[7]), 
+				argCount > 8 && args[8] ? args[8] : 0,
+				argCount > 9 && args[9] ? args[9] : 1, 
+				argCount > 10 && args[10] ? args[10] : 1, 
+				argCount > 11 && args[11] ? args[11] : 1 );
 		}
 
 		case ACSF_SetLineActivation:

@@ -138,6 +138,15 @@ enum
 	QF_SCALEUP =		1 << 2,
 	QF_MAX =			1 << 3,
 	QF_FULLINTENSITY =	1 << 4,
+	QF_WAVE =			1 << 5,
+};
+
+struct FQuakeJiggers
+{
+	int IntensityX, IntensityY, IntensityZ;
+	int RelIntensityX, RelIntensityY, RelIntensityZ;
+	int OffsetX, OffsetY, OffsetZ;
+	int RelOffsetX, RelOffsetY, RelOffsetZ;
 };
 
 class DEarthquake : public DThinker
@@ -145,7 +154,9 @@ class DEarthquake : public DThinker
 	DECLARE_CLASS (DEarthquake, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, FSoundID quakesfx, int flags);
+	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
+		int damrad, int tremrad, FSoundID quakesfx, int flags, 
+		fixed_t waveSpeedX, fixed_t waveSpeedY, fixed_t waveSpeedZ);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -156,12 +167,12 @@ public:
 	FSoundID m_QuakeSFX;
 	int m_Flags;
 	int m_IntensityX, m_IntensityY, m_IntensityZ;
+	fixed_t m_WaveSpeedX, m_WaveSpeedY, m_WaveSpeedZ;
 
 	fixed_t GetModIntensity(int intensity) const;
+	fixed_t GetModWave(fixed_t waveMultiplier) const;
 
-	static int StaticGetQuakeIntensities(AActor *viewer,
-		fixed_t &intensityX, fixed_t &intensityY, fixed_t &intensityZ,
-		fixed_t &relIntensityX, fixed_t &relIntensityY, fixed_t &relIntensityZ);
+	static int StaticGetQuakeIntensities(AActor *viewer, FQuakeJiggers &jiggers);
 
 private:
 	DEarthquake ();

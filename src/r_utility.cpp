@@ -770,9 +770,19 @@ bool R_GetViewInterpolationStatus()
 //
 //==========================================================================
 
-static fixed_t QuakePower(fixed_t factor, fixed_t intensity)
-{
-	return FixedMul(factor, pr_torchflicker(intensity * 2) - intensity);
+static fixed_t QuakePower(fixed_t factor, fixed_t intensity, fixed_t offset)
+{ 
+	fixed_t randumb;
+
+	if (intensity == 0)
+	{
+		randumb = 0;
+	}
+	else
+	{
+		randumb = pr_torchflicker(intensity * 2) - intensity;
+	}
+	return FixedMul(factor, randumb + offset);
 }
 
 //==========================================================================
@@ -885,40 +895,43 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		fixed_t intensityX, intensityY, intensityZ, relIntensityX, relIntensityY, relIntensityZ;
-		if (DEarthquake::StaticGetQuakeIntensities(camera,
-			intensityX, intensityY, intensityZ,
-			relIntensityX, relIntensityY, relIntensityZ) > 0)
+		FQuakeJiggers jiggers = { 0, };
+
+		if (DEarthquake::StaticGetQuakeIntensities(camera, jiggers) > 0)
 		{
 			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
 
-			if (relIntensityX != 0)
+			if ((jiggers.RelIntensityX | jiggers.RelOffsetX) != 0)
 			{
 				int ang = (camera->angle) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, relIntensityX);
+				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityX, jiggers.RelOffsetX);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
-			if (relIntensityY != 0)
+			if ((jiggers.RelIntensityY | jiggers.RelOffsetY) != 0)
 			{
 				int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, relIntensityY);
+				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityY, jiggers.RelOffsetY);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
-			if (intensityX != 0)
-			{
-				viewx += QuakePower(quakefactor, intensityX);
-			}
-			if (intensityY != 0)
-			{
-				viewy += QuakePower(quakefactor, intensityY);
-			}
 			// FIXME: Relative Z is not relative
-			intensityZ = MAX(intensityZ, relIntensityZ);
-			if (intensityZ != 0)
+			// [MC]On it! Will be introducing pitch after QF_WAVE.
+			if ((jiggers.RelIntensityZ | jiggers.RelOffsetZ) != 0)
 			{
-				viewz += QuakePower(quakefactor, intensityZ);
+				viewz += QuakePower(quakefactor, jiggers.RelIntensityZ, jiggers.RelOffsetZ);
+			}
+			if ((jiggers.IntensityX | jiggers.OffsetX) != 0)
+			{
+				viewx += QuakePower(quakefactor, jiggers.IntensityX, jiggers.OffsetX);
+			}
+			if ((jiggers.IntensityY | jiggers.OffsetY) != 0)
+			{
+				viewy += QuakePower(quakefactor, jiggers.IntensityY, jiggers.OffsetY);
+			}
+			if ((jiggers.IntensityZ | jiggers.OffsetZ) != 0)
+			{
+				viewz += QuakePower(quakefactor, jiggers.IntensityZ, jiggers.OffsetZ);
 			}
 		}
 	}

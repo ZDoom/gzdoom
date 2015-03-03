@@ -156,7 +156,7 @@ class DEarthquake : public DThinker
 public:
 	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
-		fixed_t waveSpeedX, fixed_t waveSpeedY, fixed_t waveSpeedZ);
+		double waveSpeedX, double waveSpeedY, double waveSpeedZ);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -166,11 +166,11 @@ public:
 	int m_CountdownStart;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
-	int m_IntensityX, m_IntensityY, m_IntensityZ;
-	fixed_t m_WaveSpeedX, m_WaveSpeedY, m_WaveSpeedZ;
+	fixed_t m_IntensityX, m_IntensityY, m_IntensityZ;
+	float m_WaveSpeedX, m_WaveSpeedY, m_WaveSpeedZ;
 
 	fixed_t GetModIntensity(int intensity) const;
-	fixed_t GetModWave(fixed_t waveMultiplier) const;
+	fixed_t GetModWave(double waveMultiplier) const;
 
 	static int StaticGetQuakeIntensities(AActor *viewer, FQuakeJiggers &jiggers);
 

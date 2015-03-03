@@ -4428,9 +4428,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	ACTION_PARAM_INT(tremrad, 5);
 	ACTION_PARAM_SOUND(sound, 6);
 	ACTION_PARAM_INT(flags, 7);
-	ACTION_PARAM_FIXED(mulWaveX, 8);
-	ACTION_PARAM_FIXED(mulWaveY, 9);
-	ACTION_PARAM_FIXED(mulWaveZ, 10);
+	ACTION_PARAM_DOUBLE(mulWaveX, 8);
+	ACTION_PARAM_DOUBLE(mulWaveY, 9);
+	ACTION_PARAM_DOUBLE(mulWaveZ, 10);
 	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ);
 }
 

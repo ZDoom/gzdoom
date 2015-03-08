@@ -509,7 +509,7 @@ static int DUMBCALLBACK dumbfile_mem_seek(void *f, long n)
 	return 0;
 }
 
-static int32 DUMBCALLBACK dumbfile_mem_get_size(void *f)
+static long DUMBCALLBACK dumbfile_mem_get_size(void *f)
 {
 	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
 	return s->size;

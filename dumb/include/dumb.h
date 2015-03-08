@@ -177,7 +177,7 @@ typedef struct DUMBFILE_SYSTEM
 	int32 (DUMBCALLBACK *getnc)(char *ptr, int32 n, void *f);
 	void (DUMBCALLBACK *close)(void *f);
     int (DUMBCALLBACK *seek)(void *f, long n);
-    int32 (DUMBCALLBACK *get_size)(void *f);
+    long (DUMBCALLBACK *get_size)(void *f);
 }
 DUMBFILE_SYSTEM;
 

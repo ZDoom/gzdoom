@@ -58,7 +58,7 @@ int32 dumb_resample(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, VO
 
 	done = 0;
 	dt = xs_CRoundToInt(delta * 65536.0);
-	if (dt == 0 || dt == INT_MIN) return 0;
+	if (dt == 0 || dt == 0x80000000) return 0;
 	inv_dt = xs_CRoundToInt(1.0 / delta * 65536.0);
 	SET_VOLUME_VARIABLES;
 

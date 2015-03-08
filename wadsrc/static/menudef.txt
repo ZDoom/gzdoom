@@ -1541,21 +1541,24 @@ OptionValue ModReplayers
 }
 
 
-OptionValue ModInterpolations
+OptionValue ModQuality
 {
-	0.0, "None"
+	0.0, "Aliasing"
 	1.0, "Linear"
 	2.0, "Cubic"
+	3.0, "Band-limited step"		// BLEP
+	4.0, "Linear (Slower)"
+	5.0, "Band-limited linear"		// BLAM
+	6.0, "Cubic (Slower)"
+	7.0, "Sinc"
 }
 
 
 OptionValue ModVolumeRamps
 {
 	0.0, "None"
-	1.0, "Logarithmic"
-	2.0, "Linear"
-	3.0, "XM=lin, else none"
-	4.0, "XM=lin, else log"
+	1.0, "Note on/off only"
+	2.0, "Full ramping"
 }
 
 
@@ -1565,7 +1568,7 @@ OptionMenu ModReplayerOptions
 	Option "Replayer engine",		"mod_dumb", "ModReplayers"
 	StaticText " "
 	Option "Sample rate",			"mod_samplerate", "SampleRates", "mod_dumb"
-	Option "Interpolation",			"mod_interp", "ModInterpolations", "mod_dumb"
+	Option "Quality",				"mod_interp", "ModQuality", "mod_dumb"
 	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps", "mod_dumb"
 	StaticText " "
 	Option "Chip-o-matic",			"mod_autochip", "OnOff", "mod_dumb"

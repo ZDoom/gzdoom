@@ -1020,11 +1020,11 @@ void G_Ticker ()
 	{
 		if (playeringame[i])
 		{
-			if ((players[i].playerstate == PST_GONE))
+			if (players[i].playerstate == PST_GONE)
 			{
 				G_DoPlayerPop(i);
 			}
-			if ((players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER))
+			if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
 			{
 				G_DoReborn(i, false);
 			}

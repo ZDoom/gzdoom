@@ -36,6 +36,7 @@
 #ifndef __TABLES_H__
 #define __TABLES_H__
 
+#include <stdlib.h>
 #include <math.h>
 #include "basictypes.h"
 
@@ -92,14 +93,15 @@ extern fixed_t			finetangent[FINEANGLES/2];
 
 typedef uint32			angle_t;
 
-// Avoid "ambiguous call to overloaded function" errors
-// Only to be used when you have subtracted two angles.
-#ifndef __GNUC__
-inline angle_t abs (angle_t ang)
+// Previously seen all over the place, code like this:  abs(ang1 - ang2)
+// Clang warns (and is absolutely correct) that technically, this
+// could be optimized away and do nothing:
+//   warning: taking the absolute value of unsigned type 'unsigned int' has no effect
+//   note: remove the call to 'abs' since unsigned values cannot be negative
+inline angle_t absangle(angle_t a)
 {
-	return (angle_t)abs((SDWORD)ang);
+	return (angle_t)abs((int32)a);
 }
-#endif
 
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y

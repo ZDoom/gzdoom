@@ -109,14 +109,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryCheck)
 		if (playeringame[i])
 		{
 			AActor *pmo = players[i].mo;
-			if (P_CheckSight (self, pmo) && (abs (R_PointToAngle2 (pmo->x,
+			if (P_CheckSight (self, pmo) && (absangle(R_PointToAngle2 (pmo->x,
 				pmo->y, self->x, self->y) - pmo->angle) <= ANGLE_45))
 			{ // Previous state (pottery bit waiting state)
 				self->SetState (self->state - 1);
 				return;
 			}
 		}
-	}		
+	}
 }
 
 // Lynched corpse (no heart) ------------------------------------------------

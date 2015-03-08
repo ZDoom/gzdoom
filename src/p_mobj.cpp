@@ -2951,7 +2951,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur
-		if (abs (angle - thing->angle)>>24 > 45)
+		if (absangle(angle - thing->angle)>>24 > 45)
 			return true;	// Let missile explode
 
 		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???

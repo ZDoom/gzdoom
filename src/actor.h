@@ -845,7 +845,8 @@ public:
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info
-	fixed_t			pitch, roll;
+	fixed_t			pitch;
+	angle_t			roll;	// This was fixed_t before, which is probably wrong
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;

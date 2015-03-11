@@ -2042,6 +2042,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\internal\mulsc.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\internal\resampler.h"
 					>
 				</File>

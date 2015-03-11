@@ -27,6 +27,7 @@
 #include "internal/lpc.h"
 
 #include "internal/resampler.h"
+#include "internal/mulsc.h"
 
 // #define BIT_ARRAY_BULLSHIT
 
@@ -601,7 +602,6 @@ static void it_filter_int(DUMB_CLICK_REMOVER *cr, IT_FILTER_STATE *state, sample
 
 #define INT_FILTERS
 #ifdef INT_FILTERS
-#define MULSCA(a, b) ((int)((LONG_LONG)((a) << 4) * (b) >> 32))
 #define SCALEB 12
 	{
 		int ai = (int)(a * (1 << (16+SCALEB)));

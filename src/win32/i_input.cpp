@@ -531,9 +531,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (screen && !VidResizing)
 		{
 			LPMINMAXINFO mmi = (LPMINMAXINFO)lParam;
-			mmi->ptMinTrackSize.x = SCREENWIDTH + GetSystemMetrics (SM_CXSIZEFRAME) * 2;
-			mmi->ptMinTrackSize.y = SCREENHEIGHT + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
-									GetSystemMetrics (SM_CYCAPTION);
+			RECT rect = { 0, 0, screen->GetWidth(), screen->GetHeight() };
+			AdjustWindowRectEx(&rect, WS_VISIBLE|WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
+			mmi->ptMinTrackSize.x = rect.right - rect.left;
+			mmi->ptMinTrackSize.y = rect.bottom - rect.top;
 			return 0;
 		}
 		break;

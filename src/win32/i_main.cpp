@@ -907,11 +907,7 @@ void DoMain (HINSTANCE hInstance)
 		FixPathSeperator(program);
 		progdir.Truncate((long)strlen(program));
 		progdir.UnlockBuffer();
-/*
-		height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
-				GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
-		width  = GetSystemMetrics (SM_CXFIXEDFRAME) * 2 + 8 * 78;
-*/
+
 		width = 512;
 		height = 384;
 

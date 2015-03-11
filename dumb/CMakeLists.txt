@@ -40,7 +40,6 @@ add_library( dumb
     src/helpers/clickrem.c
     src/helpers/barray.c
     src/helpers/tarray.c
-    src/it/filter.cpp
     src/it/xmeffect.c
     src/it/readxm2.c
     src/it/readxm.c

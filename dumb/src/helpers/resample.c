@@ -85,7 +85,7 @@ int dumb_resampling_quality = DUMB_RQ_CUBIC;
 
 
 
-#if !defined(_MSC_VER) || !defined(_M_IX86)
+#if !defined(_MSC_VER) || !defined(_M_IX86) || _MSC_VER >= 1800
 //#define MULSC(a, b) ((int)((LONG_LONG)(a) * (b) >> 16))
 //#define MULSC(a, b) ((a) * ((b) >> 2) >> 14)
 #define MULSCV(a, b) ((int)((LONG_LONG)(a) * (b) >> 32))

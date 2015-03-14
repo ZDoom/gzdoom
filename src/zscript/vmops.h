@@ -146,20 +146,20 @@ xx(ZAP_R,		zap,	RIRIRI),		// dA = dB, with bytes zeroed where bits in C/dC are o
 xx(ZAP_I,		zap,	RIRII8),
 xx(ZAPNOT_R,	zapnot,	RIRIRI),		// dA = dB, with bytes zeroed where bits in C/dC are zero
 xx(ZAPNOT_I,	zapnot,	RIRII8),
-xx(EQ_R,		eq,		I8RIRI),		// if ((dB == dkC) != A) then pc++
-xx(EQ_K,		eq,		I8RIKI),
-xx(LT_RR,		lt,		I8RIRI),		// if ((dkB < dkC) != A) then pc++
-xx(LT_RK,		lt,		I8RIKI),
-xx(LT_KR,		lt,		I8KIRI),
-xx(LE_RR,		le,		I8RIRI),		// if ((dkB <= dkC) != A) then pc++
-xx(LE_RK,		le,		I8RIKI),
-xx(LE_KR,		le,		I8KIRI),
-xx(LTU_RR,		ltu,	I8RIRI),		// if ((dkB < dkC) != A) then pc++		-- unsigned
-xx(LTU_RK,		ltu,	I8RIKI),
-xx(LTU_KR,		ltu,	I8KIRI),	
-xx(LEU_RR,		leu,	I8RIRI),		// if ((dkB <= dkC) != A) then pc++		-- unsigned
-xx(LEU_RK,		leu,	I8RIKI),
-xx(LEU_KR,		leu,	I8KIRI),
+xx(EQ_R,		beq,	CIRR),			// if ((dB == dkC) != A) then pc++
+xx(EQ_K,		beq,	CIRK),
+xx(LT_RR,		blt,	CIRR),			// if ((dkB < dkC) != A) then pc++
+xx(LT_RK,		blt,	CIRK),
+xx(LT_KR,		blt,	CIKR),
+xx(LE_RR,		ble,	CIRR),			// if ((dkB <= dkC) != A) then pc++
+xx(LE_RK,		ble,	CIRK),
+xx(LE_KR,		ble,	CIKR),
+xx(LTU_RR,		bltu,	CIRR),			// if ((dkB < dkC) != A) then pc++		-- unsigned
+xx(LTU_RK,		bltu,	CIRK),
+xx(LTU_KR,		bltu,	CIKR),	
+xx(LEU_RR,		bleu,	CIRR),			// if ((dkB <= dkC) != A) then pc++		-- unsigned
+xx(LEU_RK,		bleu,	CIRK),
+xx(LEU_KR,		bleu,	CIKR),
 
 // Double-precision floating point math.
 xx(ADDF_RR,		add,	RFRFRF),		// fA = fB + fkC
@@ -183,14 +183,14 @@ xx(MINF_RK,		min,	RFRFKF),
 xx(MAXF_RR,		max,	RFRFRF),		// fA = max(fB),fkC)
 xx(MAXF_RK,		max,	RFRFKF),
 xx(FLOP,		flop,	RFRFI8),		// fA = f(fB), where function is selected by C
-xx(EQF_R,		eq,		I8RFRF),		// if ((fB == fkC) != (A & 1)) then pc++
-xx(EQF_K,		eq,		I8RFKF),
-xx(LTF_RR,		lt,		I8RFRF),		// if ((fkB < fkC) != (A & 1)) then pc++
-xx(LTF_RK,		lt,		I8RFKF),
-xx(LTF_KR,		lt,		I8KFRF),
-xx(LEF_RR,		le,		I8RFRF),		// if ((fkb <= fkC) != (A & 1)) then pc++
-xx(LEF_RK,		le,		I8RFKF),
-xx(LEF_KR,		le,		I8KFRF),
+xx(EQF_R,		beq,	CFRR),			// if ((fB == fkC) != (A & 1)) then pc++
+xx(EQF_K,		beq,	CFRK),
+xx(LTF_RR,		blt,	CFRR),			// if ((fkB < fkC) != (A & 1)) then pc++
+xx(LTF_RK,		blt,	CFRK),
+xx(LTF_KR,		blt,	CFKR),
+xx(LEF_RR,		ble,	CFRR),			// if ((fkb <= fkC) != (A & 1)) then pc++
+xx(LEF_RK,		ble,	CFRK),
+xx(LEF_KR,		ble,	CFKR),
 
 // Vector math.
 xx(NEGV,		negv,	RVRV),			// vA = -vB
@@ -208,14 +208,14 @@ xx(MULVF_RR,	mulv,	RVRVRV),		// vA = vkB * fkC
 xx(MULVF_RK,	mulv,	RVRVKV),
 xx(MULVF_KR,	mulv,	RVKVRV),
 xx(LENV,		lenv,	RFRV),			// fA = vB.Length
-xx(EQV_R,		eqv,	I8RVRV),		// if ((vB == vkC) != A) then pc++ (inexact if A & 32)
-xx(EQV_K,		eqv,	I8RVKV),
+xx(EQV_R,		beqv,	CVRR),			// if ((vB == vkC) != A) then pc++ (inexact if A & 32)
+xx(EQV_K,		beqv,	CVRK),
 
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI),		// pA = pB + dkC
 xx(ADDA_RK,		add,	RPRPKI),
 xx(SUBA,		sub,	RIRPRP),		// dA = pB - pC
-xx(EQA_R,		eq,		I8RPRP),		// if ((pB == pkC) != A) then pc++
-xx(EQA_K,		eq,		I8RPKP),
+xx(EQA_R,		beq,	CPRR),			// if ((pB == pkC) != A) then pc++
+xx(EQA_K,		beq,	CPRK),
 
 #undef xx

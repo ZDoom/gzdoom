@@ -93,6 +93,17 @@
 #define I8RPRP	MODE_AIMMZ | MODE_BP | MODE_CP
 #define I8RPKP	MODE_AIMMZ | MODE_BP | MODE_CKP
 
+#define CIRR	MODE_ACMP | MODE_BI | MODE_CI
+#define CIRK	MODE_ACMP | MODE_BI | MODE_CKI
+#define CIKR	MODE_ACMP | MODE_BKI | MODE_CI
+#define CFRR	MODE_ACMP | MODE_BF | MODE_CF
+#define CFRK	MODE_ACMP | MODE_BF | MODE_CKF
+#define CFKR	MODE_ACMP | MODE_BKF | MODE_CF
+#define CVRR	MODE_ACMP | MODE_BV | MODE_CV
+#define CVRK	MODE_ACMP | MODE_BV | MODE_CKV
+#define CPRR	MODE_ACMP | MODE_BP | MODE_CP
+#define CPRK	MODE_ACMP | MODE_BP | MODE_CKP
+
 const VMOpInfo OpInfo[NUM_OPS] =
 {
 #define xx(op, name, mode)	{ #name, mode }
@@ -214,28 +225,51 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 	int col;
 	int mode;
 	int a;
+	bool cmp;
+	char cmpname[8];
 
 	for (int i = 0; i < codesize; ++i)
 	{
 		name = OpInfo[code[i].op].Name;
 		mode = OpInfo[code[i].op].Mode;
 		a = code[i].a;
+		cmp = (mode & MODE_ATYPE) == MODE_ACMP;
 
 		// String comparison encodes everything in a single instruction.
 		if (code[i].op == OP_CMPS)
 		{
 			switch (a & CMP_METHOD_MASK)
 			{
-			case CMP_EQ:	name = "eq";	break;
-			case CMP_LT:	name = "lt";	break;
-			case CMP_LE:	name = "le";	break;
+			case CMP_EQ:	name = "beq";	break;
+			case CMP_LT:	name = "blt";	break;
+			case CMP_LE:	name = "ble";	break;
 			}
 			mode = MODE_AIMMZ;
 			mode |= (a & CMP_BK) ? MODE_BKS : MODE_BS;
 			mode |= (a & CMP_CK) ? MODE_CKS : MODE_CS;
 			a &= CMP_CHECK | CMP_APPROX;
+			cmp = true;
 		}
-
+		if (cmp)
+		{ // Comparison instruction. Modify name for inverted test.
+			if (!(a & CMP_CHECK))
+			{
+				strcpy(cmpname, name);
+				if (name[1] == 'e')
+				{ // eq -> ne
+					cmpname[1] = 'n', cmpname[2] = 'e';
+				}
+				else if (name[2] == 't')
+				{ // lt -> ge
+					cmpname[1] = 'g', cmpname[2] = 'e';
+				}
+				else
+				{ // le -> gt
+					cmpname[1] = 'g', cmpname[2] = 't';
+				}
+				name = cmpname;
+			}
+		}
 		printf_wrapper(out, "%08x: %02x%02x%02x%02x %-8s", i << 2, code[i].op, code[i].a, code[i].b, code[i].c, name);
 		col = 0;
 		switch (code[i].op)
@@ -299,7 +333,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			col = printf_wrapper(out, "f%d,f%d,%d", code[i].a, code[i].b, code[i].c);
 			if (code[i].c < countof(FlopNames))
 			{
-				col +=printf_wrapper(out, " [%s]", FlopNames[code[i].c]);
+				col += printf_wrapper(out, " [%s]", FlopNames[code[i].c]);
 			}
 			break;
 
@@ -371,19 +405,34 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			}
 			break;
 		}
+		if (cmp && i + 1 < codesize)
+		{
+			if (code[i+1].op != OP_JMP)
+			{ // comparison instructions must be followed by jump
+				col += printf_wrapper(out, " => *!*!*!*\n");
+			}
+			else
+			{ 
+				col += printf_wrapper(out, " => %08x", (i + 2 + code[i+1].i24) << 2);
+			}
+		}
 		if (col > 30)
 		{
 			col = 30;
 		}
 		printf_wrapper(out, "%*c", 30 - col, ';');
-		if (code[i].op == OP_JMP || code[i].op == OP_TRY || code[i].op == OP_PARAMI)
+		if (!cmp && (code[i].op == OP_JMP || code[i].op == OP_TRY || code[i].op == OP_PARAMI))
 		{
 			printf_wrapper(out, "%d\n", code[i].i24);
 		}
 		else
 		{
 			printf_wrapper(out, "%d,%d,%d", code[i].a, code[i].b, code[i].c);
-			if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
+			if (cmp && i + 1 < codesize && code[i+1].op == OP_JMP)
+			{
+				printf_wrapper(out, ",%d\n", code[++i].i24);
+			}
+			else if (code[i].op == OP_CALL_K || code[i].op == OP_TAIL_K)
 			{
 				printf_wrapper(out, "  [%p]\n", callfunc);
 			}
@@ -397,7 +446,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 
 static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const VMScriptFunction *func)
 {
-	if (mode == MODE_UNUSED)
+	if (mode == MODE_UNUSED || mode == MODE_CMP)
 	{
 		return 0;
 	}

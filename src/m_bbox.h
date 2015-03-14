@@ -43,13 +43,7 @@ public:
 		m_Box[BOXBOTTOM] = bottom;
 	}
 
-	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius)
-	{
-		m_Box[BOXTOP] = y + radius;
-		m_Box[BOXLEFT] = x - radius;
-		m_Box[BOXRIGHT] = x + radius;
-		m_Box[BOXBOTTOM] = y - radius;
-	}
+	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius);
 
 	void ClearBox ()
 	{

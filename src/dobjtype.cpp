@@ -1300,6 +1300,26 @@ void PPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 	id2 = 0;
 }
 
+//==========================================================================
+//
+// NewPointer
+//
+// Returns a PPointer to an object of the specified type
+//
+//==========================================================================
+
+PPointer *NewPointer(PType *type)
+{
+	size_t bucket;
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, 0, &bucket);
+	if (ptype == NULL)
+	{
+		ptype = new PPointer(type);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, 0, bucket);
+	}
+	return static_cast<PPointer *>(ptype);
+}
+
 
 /* PClassPointer **********************************************************/
 

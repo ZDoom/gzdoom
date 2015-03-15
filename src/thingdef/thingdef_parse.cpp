@@ -391,7 +391,7 @@ static void ParseArgListDef(FScanner &sc, PClassActor *cls,
 //==========================================================================
 
 void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
-	TArray<PType *> &rets, DWORD funcflags, unsigned int error)
+	TArray<PType *> &rets, DWORD funcflags)
 {
 	assert(cls != NULL);
 
@@ -403,7 +403,7 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 	if (afd == NULL)
 	{
 		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", funcname.GetChars());
-		++error;
+		FScriptPosition::ErrorCounter++;
 	}
 	sc.MustGetToken('(');
 
@@ -423,11 +423,7 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 		PFunction *sym = new PFunction(funcname);
 		sym->AddVariant(NewPrototype(rets, args), argflags, *(afd->VMPointer));
 		sym->Flags = funcflags;
-		if (error)
-		{
-			FScriptPosition::ErrorCounter += error;
-		}
-		else if (cls->Symbols.AddSymbol(sym) == NULL)
+		if (cls->Symbols.AddSymbol(sym) == NULL)
 		{
 			delete sym;
 			sc.ScriptMessage ("'%s' is already defined in class '%s'.",
@@ -439,22 +435,20 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 
 //==========================================================================
 //
-// ParseNativeVariable
+// ParseNativeFunction
 //
-// Parses a native variable or non-action function declaration.
+// Parses a non-action function declaration.
 //
 //==========================================================================
 
-static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
+static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 {
-	PType *valuetype;
-	unsigned int error = 0;
+	TArray<PType *> rets(1);
 
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
-		sc.ScriptMessage ("variables can only be imported by internal class and actor definitions!");
+		sc.ScriptMessage ("functions can only be declared by native actors!");
 		FScriptPosition::ErrorCounter++;
-		error++;
 	}
 
 	// Read the type and make sure it's int or float.
@@ -463,80 +457,33 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable *symt, PClassActor *
 	{
 	case TK_Int:
 	case TK_Bool:
-		valuetype = TypeSInt32;
+		rets.Push(TypeSInt32);
 		break;
 
 	case TK_Float:
-		valuetype = TypeFloat64;
+		rets.Push(TypeFloat64);
 		break;
 
 	case TK_Angle_t:
-		valuetype = TypeAngle;
+		rets.Push(TypeAngle);
 		break;
 
 	case TK_Fixed_t:
-		valuetype = TypeFixed;
+		rets.Push(TypeFixed);
 		break;
 
 	case TK_Identifier:
-		valuetype = NULL;
+		rets.Push(NewPointer(RUNTIME_CLASS(DObject)));
 		// Todo: Object type
 		sc.ScriptError("Object type variables not implemented yet!");
 		break;
 
 	default:
-		sc.ScriptError("Invalid variable type %s", sc.String);
+		sc.ScriptError("Invalid return type %s", sc.String);
 		return;
 	}
-
 	sc.MustGetToken(TK_Identifier);
-	FName symname = sc.String;
-	if (sc.CheckToken('('))
-	{
-		TArray<PType *> rets;
-
-		rets.Push(valuetype);
-		sc.UnGet();
-		ParseFunctionDef(sc, cls, symname, rets, VARF_Method, error);
-		return;
-	}
-	else
-	{
-		if (sc.CheckToken('['))
-		{
-			FxExpression *expr = ParseExpression (sc, cls);
-			if (!expr->isConstant())
-			{
-				sc.ScriptError("Array size must be constant");
-			}
-			int maxelems = static_cast<FxConstant *>(expr)->GetValue().GetInt();
-			delete expr;
-			sc.MustGetToken(']');
-			valuetype = NewArray(valuetype, maxelems);
-		}
-		sc.MustGetToken(';');
-
-		const FVariableInfo *vi = FindVariable(symname, cls);
-		if (vi == NULL)
-		{
-			sc.ScriptError("Unknown native variable '%s'", symname.GetChars());
-		}
-
-		PField *sym = new PField(symname, valuetype, VARF_Native);
-		sym->Offset = (unsigned)vi->address;	// todo
-
-		if (symt->AddSymbol(sym) == NULL)
-		{
-			delete sym;
-			sc.ScriptMessage ("'%s' is already defined in '%s'.",
-				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
-			FScriptPosition::ErrorCounter++;
-		}
-		else
-		{
-			cls->Fields.Push(sym);
-		}
-	}
+	ParseFunctionDef(sc, cls, sc.String, rets, VARF_Method);
 }
 
 //==========================================================================
@@ -1089,7 +1036,7 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
 		sc.ScriptMessage ("Action functions can only be imported by internal class and actor definitions!");
-		++error;
+		FScriptPosition::ErrorCounter++;
 	}
 
 	sc.MustGetToken(TK_Native);
@@ -1100,7 +1047,7 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	}
 	sc.MustGetToken(TK_Identifier);
 	funcname = sc.String;
-	ParseFunctionDef(sc, cls, funcname, rets, VARF_Method | VARF_Action, error);
+	ParseFunctionDef(sc, cls, funcname, rets, VARF_Method | VARF_Action);
 }
 
 //==========================================================================
@@ -1239,7 +1186,7 @@ static void ParseActor(FScanner &sc)
 			break;
 
 		case TK_Native:
-			ParseNativeVariable (sc, &info->Symbols, info);
+			ParseNativeFunction (sc, info);
 			break;
 
 		case TK_Var:
@@ -1364,10 +1311,6 @@ void ParseDecorate (FScanner &sc)
 
 		case TK_Enum:
 			ParseEnum (sc, &GlobalSymbols, NULL);
-			break;
-
-		case TK_Native:
-			ParseNativeVariable(sc, &GlobalSymbols, NULL);
 			break;
 
 		case ';':

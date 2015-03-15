@@ -280,16 +280,7 @@ struct FPropertyInfo
 	int category;
 };
 
-struct FVariableInfo
-{
-	const char *name;
-	intptr_t address;
-	const PClass * const *owner;
-};
-
-
 FPropertyInfo *FindProperty(const char * string);
-FVariableInfo *FindVariable(const char * string, const PClass *cls);
 int MatchString (const char *in, const char **strings);
 
 
@@ -335,15 +326,6 @@ int MatchString (const char *in, const char **strings);
 	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
 
 
-#define DEFINE_MEMBER_VARIABLE(name, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, name)), &RUNTIME_CLASS_CASTLESS(cls) }; \
-	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
-
-#define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, alias)), &RUNTIME_CLASS_CASTLESS(cls) }; \
-	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
-
-	
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
 #define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;

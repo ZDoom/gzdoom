@@ -53,7 +53,7 @@
 // for initialized read-only data.)
 
 #pragma comment(linker, "/merge:.areg=.rdata /merge:.creg=.rdata /merge:.greg=.rdata")
-#pragma comment(linker, "/merge:.mreg=.rdata /merge:.yreg=.rdata")
+#pragma comment(linker, "/merge:.yreg=.rdata")
 
 #pragma section(".areg$a",read)
 __declspec(allocate(".areg$a")) void *const ARegHead = 0;
@@ -63,9 +63,6 @@ __declspec(allocate(".creg$a")) void *const CRegHead = 0;
 
 #pragma section(".greg$a",read)
 __declspec(allocate(".greg$a")) void *const GRegHead = 0;
-
-#pragma section(".mreg$a",read)
-__declspec(allocate(".mreg$a")) void *const MRegHead = 0;
 
 #pragma section(".yreg$a",read)
 __declspec(allocate(".yreg$a")) void *const YRegHead = 0;
@@ -101,7 +98,6 @@ __declspec(allocate(".yreg$a")) void *const YRegHead = 0;
 void *const ARegHead __attribute__((section(SECTION_AREG))) = 0;
 void *const CRegHead __attribute__((section(SECTION_CREG))) = 0;
 void *const GRegHead __attribute__((section(SECTION_GREG))) = 0;
-void *const MRegHead __attribute__((section(SECTION_MREG))) = 0;
 void *const YRegHead __attribute__((section(SECTION_YREG))) = 0;
 
 #else

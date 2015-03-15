@@ -46,9 +46,6 @@ __declspec(allocate(".creg$z")) void *const CRegTail = 0;
 #pragma section(".greg$z",read)
 __declspec(allocate(".greg$z")) void *const GRegTail = 0;
 
-#pragma section(".mreg$z",read)
-__declspec(allocate(".mreg$z")) void *const MRegTail = 0;
-
 #pragma section(".yreg$z",read)
 __declspec(allocate(".yreg$z")) void *const YRegTail = 0;
 
@@ -60,7 +57,6 @@ __declspec(allocate(".yreg$z")) void *const YRegTail = 0;
 void *const ARegTail __attribute__((section(SECTION_AREG))) = 0;
 void *const CRegTail __attribute__((section(SECTION_CREG))) = 0;
 void *const GRegTail __attribute__((section(SECTION_GREG))) = 0;
-void *const MRegTail __attribute__((section(SECTION_MREG))) = 0;
 void *const YRegTail __attribute__((section(SECTION_YREG))) = 0;
 
 #else

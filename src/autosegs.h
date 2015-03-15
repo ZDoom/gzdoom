@@ -50,10 +50,6 @@ extern REGINFO CRegTail;
 extern REGINFO GRegHead;
 extern REGINFO GRegTail;
 
-// List of variables
-extern REGINFO MRegHead;
-extern REGINFO MRegTail;
-
 // List of MAPINFO map options
 extern REGINFO YRegHead;
 extern REGINFO YRegTail;

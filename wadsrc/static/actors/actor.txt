@@ -32,46 +32,11 @@ ACTOR Actor native //: Thinker
 	RipLevelMin 0
 	RipLevelMax 0
 
-	// Variables for the expression evaluator
-	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
-	// Internally they are handled as floats.
-	// Variables must be native.
-	native fixed_t alpha;
-	native angle_t angle;
-	native int args[5];
-	native fixed_t ceilingz;
-	native fixed_t floorz;
-	native int health;
-	native int mass;
-	native angle_t pitch;
-	native int special;
-	native int tid;
-	native int TIDtoHate;
-	native int waterlevel;
-	//native int damage;
-	native fixed_t x;
-	native fixed_t y;
-	native fixed_t z;
-	native fixed_t velx;
-	native fixed_t vely;
-	native fixed_t velz;
-	native fixed_t momx;	// alias for velx
-	native fixed_t momy;	// alias for vely
-	native fixed_t momz;	// alias for velz
-	native fixed_t scaleX;
-	native fixed_t scaleY;
-	native int score;
-	native int accuracy;
-	native int stamina;
-	native fixed_t height;
-	native fixed_t radius;
-	native int reactiontime;
-	native fixed_t meleerange;
-	native fixed_t speed;
-	native angle_t roll;
-
+	// Functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native bool IsPointerEqual(int ptr_select1, int ptr_select2);
+
+	// Action functions
 
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);

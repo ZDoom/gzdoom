@@ -53,43 +53,6 @@
 #include "m_fixed.h"
 #include "vmbuilder.h"
 
-// Accessible actor member variables
-DEFINE_MEMBER_VARIABLE(alpha, AActor)
-DEFINE_MEMBER_VARIABLE(angle, AActor)
-DEFINE_MEMBER_VARIABLE(args, AActor)
-DEFINE_MEMBER_VARIABLE(ceilingz, AActor)
-DEFINE_MEMBER_VARIABLE(floorz, AActor)
-DEFINE_MEMBER_VARIABLE(health, AActor)
-DEFINE_MEMBER_VARIABLE(Mass, AActor)
-DEFINE_MEMBER_VARIABLE(pitch, AActor)
-DEFINE_MEMBER_VARIABLE(special, AActor)
-DEFINE_MEMBER_VARIABLE(special1, AActor)
-DEFINE_MEMBER_VARIABLE(special2, AActor)
-DEFINE_MEMBER_VARIABLE(tid, AActor)
-DEFINE_MEMBER_VARIABLE(TIDtoHate, AActor)
-DEFINE_MEMBER_VARIABLE(waterlevel, AActor)
-DEFINE_MEMBER_VARIABLE(x, AActor)
-DEFINE_MEMBER_VARIABLE(y, AActor)
-DEFINE_MEMBER_VARIABLE(z, AActor)
-DEFINE_MEMBER_VARIABLE(velx, AActor)
-DEFINE_MEMBER_VARIABLE(vely, AActor)
-DEFINE_MEMBER_VARIABLE(velz, AActor)
-DEFINE_MEMBER_VARIABLE_ALIAS(momx, velx, AActor)
-DEFINE_MEMBER_VARIABLE_ALIAS(momy, vely, AActor)
-DEFINE_MEMBER_VARIABLE_ALIAS(momz, velz, AActor)
-DEFINE_MEMBER_VARIABLE(scaleX, AActor)
-DEFINE_MEMBER_VARIABLE(scaleY, AActor)
-//DEFINE_MEMBER_VARIABLE(Damage, AActor)
-DEFINE_MEMBER_VARIABLE(Score, AActor)
-DEFINE_MEMBER_VARIABLE(accuracy, AActor)
-DEFINE_MEMBER_VARIABLE(stamina, AActor)
-DEFINE_MEMBER_VARIABLE(height, AActor)
-DEFINE_MEMBER_VARIABLE(radius, AActor)
-DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
-DEFINE_MEMBER_VARIABLE(meleerange, AActor)
-DEFINE_MEMBER_VARIABLE(Speed, AActor)
-DEFINE_MEMBER_VARIABLE(roll, AActor)
-
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
 {
@@ -3148,7 +3111,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	else
 	{
 		ReturnType = rets[0];
-		// If more types are added to ParseNativeVariable(), add them here too.
+		// If more types are added to ParseNativeFunction(), add them here too.
 			 if (rets[0] == TypeSInt32)		ValueType = VAL_Int;
 		else if (rets[0] == TypeFloat64)	ValueType = VAL_Float;
 		else if (rets[0] == TypeAngle)		ValueType = VAL_Angle;

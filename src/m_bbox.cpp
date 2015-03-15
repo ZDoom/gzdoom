@@ -27,6 +27,27 @@
 #include "m_bbox.h"
 #include "p_local.h"
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FBoundingBox::FBoundingBox(fixed_t x, fixed_t y, fixed_t radius)
+{
+	m_Box[BOXTOP] = (fixed_t)MIN<SQWORD>((SQWORD)y + radius, FIXED_MAX);
+	m_Box[BOXLEFT] = (fixed_t)MAX<SQWORD>((SQWORD)x - radius, FIXED_MIN);
+	m_Box[BOXRIGHT] = (fixed_t)MIN<SQWORD>((SQWORD)x + radius, FIXED_MAX);
+	m_Box[BOXBOTTOM] = (fixed_t)MAX<SQWORD>((SQWORD)y - radius, FIXED_MIN);
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FBoundingBox::AddToBox (fixed_t x, fixed_t y)
 {
 	if (x < m_Box[BOXLEFT])

@@ -24,22 +24,22 @@
 #include "internal/it.h"
 #include "internal/riff.h"
 
-DUH *dumb_read_riff_dsmf( struct riff * stream );
-
-static int it_riff_dsmf_process_sample( IT_SAMPLE * sample, const unsigned char * data, int len )
+static int it_riff_dsmf_process_sample( IT_SAMPLE * sample, DUMBFILE * f, int len )
 {
 	int flags;
 
-	memcpy( sample->filename, data, 13 );
-	sample->filename[ 13 ] = 0;
-
-	flags = data[ 13 ] | ( data[ 14 ] << 8 );
-	sample->default_volume = data[ 15 ];
-	sample->length = data[ 16 ] | ( data[ 17 ] << 8 ) | ( data[ 18 ] << 16 ) | ( data[ 19 ] << 24 );
-	sample->loop_start = data[ 20 ] | ( data[ 21 ] << 8 ) | ( data[ 22 ] << 16 ) | ( data[ 23 ] << 24 );
-	sample->loop_end = data[ 24 ] | ( data[ 25 ] << 8 ) | ( data[ 26 ] << 16 ) | ( data[ 27 ] << 24 );
-	sample->C5_speed = ( data[ 32 ] | ( data[ 33 ] << 8 ) ) * 2;
-	memcpy( sample->name, data + 36, 28 );
+    dumbfile_getnc( (char *) sample->filename, 13, f );
+	sample->filename[ 14 ] = 0;
+	
+    flags = dumbfile_igetw( f );
+    sample->default_volume = dumbfile_getc( f );
+    sample->length = dumbfile_igetl( f );
+    sample->loop_start = dumbfile_igetl( f );
+    sample->loop_end = dumbfile_igetl( f );
+    dumbfile_skip( f, 32 - 28 );
+    sample->C5_speed = dumbfile_igetw( f ) * 2;
+    dumbfile_skip( f, 36 - 34 );
+    dumbfile_getnc( (char *) sample->name, 28, f );
 	sample->name[ 28 ] = 0;
 
 	/*if ( data[ 0x38 ] || data[ 0x39 ] || data[ 0x3A ] || data[ 0x3B ] )
@@ -82,7 +82,7 @@ static int it_riff_dsmf_process_sample( IT_SAMPLE * sample, const unsigned char 
 	if ( ! sample->data )
 		return -1;
 
-	memcpy( sample->data, data + 64, sample->length );
+    dumbfile_getnc( sample->data, sample->length, f );
 
 	if ( ! ( flags & 2 ) )
 	{
@@ -93,39 +93,42 @@ static int it_riff_dsmf_process_sample( IT_SAMPLE * sample, const unsigned char 
 	return 0;
 }
 
-static int it_riff_dsmf_process_pattern( IT_PATTERN * pattern, const unsigned char * data, int len )
+static int it_riff_dsmf_process_pattern( IT_PATTERN * pattern, DUMBFILE * f, int len )
 {
-	int length, row, pos;
+    int length, row;
 	unsigned flags;
+    long start, end;
+    int p, q, r;
 	IT_ENTRY * entry;
 
-	length = data[ 0 ] | ( data[ 1 ] << 8 );
+    length = dumbfile_igetw( f );
 	if ( length > len ) return -1;
 
-	data += 2;
 	len = length - 2;
 
 	pattern->n_rows = 64;
 	pattern->n_entries = 64;
 
 	row = 0;
-	pos = 0;
 
-	while ( (row < 64) && (pos < len) ) {
-		if ( ! data[ pos ] ) {
+    start = dumbfile_pos( f );
+    end = start + len;
+
+    while ( (row < 64) && !dumbfile_error( f ) && (dumbfile_pos( f ) < end) ) {
+        p = dumbfile_getc( f );
+        if ( ! p ) {
 			++ row;
-			++ pos;
 			continue;
 		}
 
-		flags = data[ pos++ ] & 0xF0;
+        flags = p & 0xF0;
 
 		if (flags) {
 			++ pattern->n_entries;
-			if (flags & 0x80) pos ++;
-			if (flags & 0x40) pos ++;
-			if (flags & 0x20) pos ++;
-			if (flags & 0x10) pos += 2;
+            if (flags & 0x80) dumbfile_skip( f, 1 );
+            if (flags & 0x40) dumbfile_skip( f, 1 );
+            if (flags & 0x20) dumbfile_skip( f, 1 );
+            if (flags & 0x10) dumbfile_skip( f, 2 );
 		}
 	}
 
@@ -137,20 +140,21 @@ static int it_riff_dsmf_process_pattern( IT_PATTERN * pattern, const unsigned ch
 	entry = pattern->entry;
 
 	row = 0;
-	pos = 0;
 
-	while ( ( row < 64 ) && ( pos < len ) )
+    if ( dumbfile_seek( f, start, DFS_SEEK_SET ) ) return -1;
+
+    while ( ( row < 64 ) && !dumbfile_error( f ) && ( dumbfile_pos( f ) < end ) )
 	{
-		if ( ! data[ pos ] )
+        p = dumbfile_getc( f );
+        if ( ! p )
 		{
 			IT_SET_END_ROW( entry );
 			++ entry;
 			++ row;
-			++ pos;
 			continue;
 		}
 
-		flags = data[ pos++ ];
+        flags = p;
 		entry->channel = flags & 0x0F;
 		entry->mask = 0;
 
@@ -158,35 +162,35 @@ static int it_riff_dsmf_process_pattern( IT_PATTERN * pattern, const unsigned ch
 		{
 			if ( flags & 0x80 )
 			{
-				if ( data[ pos ] )
+                q = dumbfile_getc( f );
+                if ( q )
 				{
 					entry->mask |= IT_ENTRY_NOTE;
-					entry->note = data[ pos ] - 1;
+                    entry->note = q - 1;
 				}
-				++ pos;
 			}
 
 			if ( flags & 0x40 )
 			{
-				if ( data[ pos ] )
+                q = dumbfile_getc( f );
+                if ( q )
 				{
 					entry->mask |= IT_ENTRY_INSTRUMENT;
-					entry->instrument = data[ pos ];
+                    entry->instrument = q;
 				}
-				++ pos;
 			}
 
 			if ( flags & 0x20 )
 			{
 				entry->mask |= IT_ENTRY_VOLPAN;
-				entry->volpan = data[ pos ];
-				++ pos;
+                entry->volpan = dumbfile_getc( f );
 			}
 
 			if ( flags & 0x10 )
 			{
-				_dumb_it_xm_convert_effect( data[ pos ], data[ pos + 1 ], entry, 0 );
-				pos += 2;
+                q = dumbfile_getc( f );
+                r = dumbfile_getc( f );
+                _dumb_it_xm_convert_effect( q, r, entry, 0 );
 			}
 
 			if (entry->mask) entry++;
@@ -206,13 +210,11 @@ static int it_riff_dsmf_process_pattern( IT_PATTERN * pattern, const unsigned ch
 	return 0;
 }
 
-static DUMB_IT_SIGDATA *it_riff_dsmf_load_sigdata( struct riff * stream )
+static DUMB_IT_SIGDATA *it_riff_dsmf_load_sigdata( DUMBFILE * f, struct riff * stream )
 {
 	DUMB_IT_SIGDATA *sigdata;
 
 	int n, o, found;
-
-	unsigned char * ptr;
 
 	if ( ! stream ) goto error;
 
@@ -227,7 +229,7 @@ static DUMB_IT_SIGDATA *it_riff_dsmf_load_sigdata( struct riff * stream )
 
 	found = 0;
 
-	for ( n = 0; (unsigned int)n < stream->chunk_count; ++n )
+    for ( n = 0; (unsigned)n < stream->chunk_count; ++n )
 	{
 		struct riff_chunk * c = stream->chunks + n;
 		switch( c->type )
@@ -270,39 +272,42 @@ static DUMB_IT_SIGDATA *it_riff_dsmf_load_sigdata( struct riff * stream )
 	memset(sigdata->channel_volume, 64, DUMB_IT_N_CHANNELS);
 
 	for (n = 0; n < DUMB_IT_N_CHANNELS; n += 4) {
-		sigdata->channel_pan[n  ] = 16;
-		sigdata->channel_pan[n+1] = 48;
-		sigdata->channel_pan[n+2] = 48;
-		sigdata->channel_pan[n+3] = 16;
+		int sep = 32 * dumb_it_default_panning_separation / 100;
+		sigdata->channel_pan[n  ] = 32 - sep;
+		sigdata->channel_pan[n+1] = 32 + sep;
+		sigdata->channel_pan[n+2] = 32 + sep;
+		sigdata->channel_pan[n+3] = 32 - sep;
 	}
 
-	for ( n = 0; (unsigned int)n < stream->chunk_count; ++n )
+    for ( n = 0; (unsigned)n < stream->chunk_count; ++n )
 	{
 		struct riff_chunk * c = stream->chunks + n;
 		switch ( c->type )
 		{
 		case DUMB_ID( 'S', 'O', 'N', 'G' ):
-			ptr = ( unsigned char * ) c->data;
-			memcpy( sigdata->name, c->data, 28 );
+            if ( dumbfile_seek( f, c->offset, DFS_SEEK_SET ) ) goto error_usd;
+            dumbfile_getnc( (char *) sigdata->name, 28, f );
 			sigdata->name[ 28 ] = 0;
-			sigdata->flags = IT_WAS_AN_XM | IT_WAS_A_MOD | IT_STEREO | IT_OLD_EFFECTS | IT_COMPATIBLE_GXX;
-			sigdata->n_orders = ptr[ 36 ] | ( ptr[ 37 ] << 8 );
+			sigdata->flags = IT_STEREO | IT_OLD_EFFECTS | IT_COMPATIBLE_GXX;
+            dumbfile_skip( f, 36 - 28 );
+            sigdata->n_orders = dumbfile_igetw( f );
 			//sigdata->n_samples = ptr[ 38 ] | ( ptr[ 39 ] << 8 ); // whatever
 			//sigdata->n_patterns = ptr[ 40 ] | ( ptr[ 41 ] << 8 );
-			sigdata->n_pchannels = ptr[ 42 ] | ( ptr[ 43 ] << 8 );
-			sigdata->global_volume = ptr[ 44 ];
-			sigdata->mixing_volume = ptr[ 45 ];
-			sigdata->speed = ptr[ 46 ];
-			sigdata->tempo = ptr[ 47 ];
+            dumbfile_skip( f, 42 - 38 );
+            sigdata->n_pchannels = dumbfile_igetw( f );
+            sigdata->global_volume = dumbfile_getc( f );
+            sigdata->mixing_volume = dumbfile_getc( f );
+            sigdata->speed = dumbfile_getc( f );
+            sigdata->tempo = dumbfile_getc( f );
 
 			for ( o = 0; o < 16; ++o )
 			{
-				sigdata->channel_pan[ o ] = ptr[ 48 + o ] / 2;
+                sigdata->channel_pan[ o ] = dumbfile_getc( f ) / 2;
 			}
 
 			sigdata->order = malloc( 128 );
 			if ( ! sigdata->order ) goto error_usd;
-			memcpy( sigdata->order, ptr + 64, 128 );
+            dumbfile_getnc( (char *) sigdata->order, 128, f );
 
 			break;
 		}
@@ -324,18 +329,20 @@ static DUMB_IT_SIGDATA *it_riff_dsmf_load_sigdata( struct riff * stream )
 	sigdata->n_samples = 0;
 	sigdata->n_patterns = 0;
 
-	for ( n = 0; (unsigned int)n < stream->chunk_count; ++n )
+    for ( n = 0; (unsigned)n < stream->chunk_count; ++n )
 	{
 		struct riff_chunk * c = stream->chunks + n;
 		switch ( c->type )
 		{
 		case DUMB_ID( 'P', 'A', 'T', 'T' ):
-			if ( it_riff_dsmf_process_pattern( sigdata->pattern + sigdata->n_patterns, ( unsigned char * ) c->data, c->size ) ) goto error_usd;
+            if ( dumbfile_seek( f, c->offset, DFS_SEEK_SET ) ) goto error_usd;
+            if ( it_riff_dsmf_process_pattern( sigdata->pattern + sigdata->n_patterns, f, c->size ) ) goto error_usd;
 			++ sigdata->n_patterns;
 			break;
 
 		case DUMB_ID( 'I', 'N', 'S', 'T' ):
-			if ( it_riff_dsmf_process_sample( sigdata->sample + sigdata->n_samples, ( unsigned char * ) c->data, c->size ) ) goto error_usd;
+            if ( dumbfile_seek( f, c->offset, DFS_SEEK_SET ) ) goto error_usd;
+            if ( it_riff_dsmf_process_sample( sigdata->sample + sigdata->n_samples, f, c->size ) ) goto error_usd;
 			++ sigdata->n_samples;
 			break;
 		}
@@ -354,13 +361,13 @@ error:
 	return NULL;
 }
 
-DUH *dumb_read_riff_dsmf( struct riff * stream )
+DUH *dumb_read_riff_dsmf( DUMBFILE * f, struct riff * stream )
 {
 	sigdata_t *sigdata;
 
 	DUH_SIGTYPE_DESC *descptr = &_dumb_sigtype_it;
 
-	sigdata = it_riff_dsmf_load_sigdata( stream );
+    sigdata = it_riff_dsmf_load_sigdata( f, stream );
 
 	if (!sigdata)
 		return NULL;
@@ -368,7 +375,7 @@ DUH *dumb_read_riff_dsmf( struct riff * stream )
 	{
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		tag[1][1] = "RIFF DSMF";
 		return make_duh( -1, 2, ( const char * const (*) [ 2 ] ) tag, 1, & descptr, & sigdata );

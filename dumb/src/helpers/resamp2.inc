@@ -95,10 +95,8 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 #define SET_VOLUME_VARIABLES SET_MONO_DEST_VOLUME_VARIABLES
 #define RETURN_VOLUME_VARIABLES RETURN_MONO_DEST_VOLUME_VARIABLES
 #define VOLUMES_ARE_ZERO MONO_DEST_VOLUMES_ARE_ZERO
-#define MIX_ALIAS(count) MONO_DEST_MIX_ALIAS(count)
-#define PEEK_ALIAS MONO_DEST_PEEK_ALIAS
-#define MIX_LINEAR(op, upd, o0, o1) MONO_DEST_MIX_LINEAR(op, upd, o0, o1)
-#define MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3) MONO_DEST_MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3)
+#define PEEK_FIR MONO_DEST_PEEK_FIR
+#define MIX_FIR MONO_DEST_MIX_FIR
 #define MIX_ZEROS(op) *dst++ op 0
 #include "resamp3.inc"
 #else
@@ -111,26 +109,30 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 #define VOLUME_VARIABLES lvol, lvolr, lvold, lvolt, lvolm, rvol, rvolr, rvold, rvolt, rvolm
 #define SET_VOLUME_VARIABLES { \
 	if ( volume_left ) { \
-		lvolr = (int)(volume_left->volume * 16777216.0); \
-		lvold = (int)(volume_left->delta * 16777216.0); \
-		lvolt = (int)(volume_left->target * 16777216.0); \
-		lvolm = (int)(volume_left->mix * 16777216.0); \
+		lvolr = xs_FloorToInt(volume_left->volume * 16777216.f); \
+		lvold = xs_FloorToInt(volume_left->delta * 16777216.f); \
+		lvolt = xs_FloorToInt(volume_left->target * 16777216.f); \
+		lvolm = xs_FloorToInt(volume_left->mix * 16777216.f); \
 		lvol = MULSCV( lvolr, lvolm ); \
 		if ( lvolr == lvolt ) volume_left = NULL; \
 	} else { \
 		lvol = 0; \
+		lvold = 0; \
 		lvolt = 0; \
+		lvolm = 0; \
 	} \
 	if ( volume_right ) { \
-		rvolr = (int)(volume_right->volume * 16777216.0); \
-		rvold = (int)(volume_right->delta * 16777216.0); \
-		rvolt = (int)(volume_right->target * 16777216.0); \
-		rvolm = (int)(volume_right->mix * 16777216.0); \
+		rvolr = xs_FloorToInt(volume_right->volume * 16777216.f); \
+		rvold = xs_FloorToInt(volume_right->delta * 16777216.f); \
+		rvolt = xs_FloorToInt(volume_right->target * 16777216.f); \
+		rvolm = xs_FloorToInt(volume_right->mix * 16777216.f); \
 		rvol = MULSCV( rvolr, rvolm ); \
 		if ( rvolr == rvolt ) volume_right = NULL; \
 	} else { \
 		rvol = 0; \
+		rvold = 0; \
 		rvolt = 0; \
+		rvolm = 0; \
 	} \
 }
 #define RETURN_VOLUME_VARIABLES { \
@@ -138,21 +140,19 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 	if ( volume_right ) volume_right->volume = (float)rvolr / 16777216.0f; \
 }
 #define VOLUMES_ARE_ZERO (lvol == 0 && lvolt == 0 && rvol == 0 && rvolt == 0)
-#define MIX_ALIAS(count) STEREO_DEST_MIX_ALIAS(count)
-#define PEEK_ALIAS STEREO_DEST_PEEK_ALIAS
+#define MIX_ALIAS(op, upd, offset) STEREO_DEST_MIX_ALIAS(op, upd, offset)
 #define MIX_LINEAR(op, upd, o0, o1) STEREO_DEST_MIX_LINEAR(op, upd, o0, o1)
 #define MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3) STEREO_DEST_MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3)
+#define PEEK_FIR STEREO_DEST_PEEK_FIR
+#define MIX_FIR STEREO_DEST_MIX_FIR
 #define MIX_ZEROS(op) { *dst++ op 0; *dst++ op 0; }
 #include "resamp3.inc"
 
 
 
 #undef STEREO_DEST_MIX_CUBIC
-#undef MONO_DEST_MIX_CUBIC
 #undef STEREO_DEST_MIX_LINEAR
-#undef MONO_DEST_MIX_LINEAR
 #undef STEREO_DEST_MIX_ALIAS
-#undef MONO_DEST_MIX_ALIAS
 #undef MONO_DEST_VOLUMES_ARE_ZERO
 #undef SET_MONO_DEST_VOLUME_VARIABLES
 #undef RETURN_MONO_DEST_VOLUME_VARIABLES
@@ -160,8 +160,13 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 #undef MONO_DEST_VOLUME_VARIABLES
 #undef MONO_DEST_VOLUME_PARAMETERS
 #undef STEREO_DEST_PEEK_ALIAS
-#undef MONO_DEST_PEEK_ALIAS
 #undef POKE_ALIAS
+#undef MONO_DEST_PEEK_FIR
+#undef STEREO_DEST_PEEK_FIR
+#undef MONO_DEST_MIX_FIR
+#undef STEREO_DEST_MIX_FIR
+#undef ADVANCE_FIR
+#undef POKE_FIR
 #undef COPYSRC2
 #undef COPYSRC
 #undef DIVIDE_BY_SRC_CHANNELS

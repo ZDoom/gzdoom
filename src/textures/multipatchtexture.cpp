@@ -534,7 +534,7 @@ void FMultiPatchTexture::MakeTexture ()
 			{
 				if (*out == 0 && in[3] != 0)
 				{
-					*out = RGB32k[in[2]>>3][in[1]>>3][in[0]>>3];
+					*out = RGB32k.RGB[in[2]>>3][in[1]>>3][in[0]>>3];
 				}
 				out += Height;
 				in += 4;

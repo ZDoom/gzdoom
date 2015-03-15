@@ -871,8 +871,8 @@ int append_to_zip(FILE *zip_file, file_sorted_t *filep, FILE *ozip, BYTE *odir)
 	LocalFileHeader local;
 	uLong crc;
 	file_entry_t *file;
-	char *readbuf;
-	char *compbuf[2];
+	Byte *readbuf;
+	Byte *compbuf[2];
 	unsigned int comp_len[2];
 	int offset[2];
 	int method[2];
@@ -937,7 +937,7 @@ int append_to_zip(FILE *zip_file, file_sorted_t *filep, FILE *ozip, BYTE *odir)
 	if (odir != NULL && ozip != NULL)
 	{
 		CentralDirectoryEntry *dirent;
-		
+
 		dirent = find_file_in_zip(odir, filep->path_in_zip, len, crc, file->date, file->time);
 		if (dirent != NULL)
 		{
@@ -1256,7 +1256,7 @@ int compress_lzma(Byte *out, unsigned int *outlen, const Byte *in, unsigned int 
 
 int compress_bzip2(Byte *out, unsigned int *outlen, const Byte *in, unsigned int inlen)
 {
-	if (BZ_OK == BZ2_bzBuffToBuffCompress(out, outlen, (char *)in, inlen, 9, 0, 0))
+	if (BZ_OK == BZ2_bzBuffToBuffCompress((char *)out, outlen, (char *)in, inlen, 9, 0, 0))
 	{
 		return 0;
 	}
@@ -1525,7 +1525,7 @@ int copy_zip_file(FILE *zip, file_entry_t *file, FILE *ozip, CentralDirectoryEnt
 		return 0;
 	}
 	// Check to be sure name matches.
-	if (strncmp(buf, (char *)(ent + 1), LittleShort(lfh.NameLength)) != 0)
+	if (strncmp((char *)buf, (char *)(ent + 1), LittleShort(lfh.NameLength)) != 0)
 	{
 		free(buf);
 		return 0;

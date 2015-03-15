@@ -903,6 +903,82 @@ static bool CheckRipLevel(AActor *victim, AActor *projectile)
 	return true;
 }
 
+
+//==========================================================================
+//
+// Isolated to keep the code readable and allow reuse in other attacks
+//
+//==========================================================================
+
+static bool CanAttackHurt(AActor *victim, AActor *shooter)
+{
+	// players are never subject to infighting settings and are always allowed
+	// to harm / be harmed by anything.
+	if (!victim->player && !shooter->player)
+	{
+		int infight;
+		if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight = 1;
+		else if (level.flags2 & LEVEL2_NOINFIGHTING) infight = -1;
+		else infight = infighting;
+
+		if (infight < 0)
+		{
+			// -1: Monsters cannot hurt each other, but make exceptions for
+			//     friendliness and hate status.
+			if (shooter->flags & MF_SHOOTABLE)
+			{
+				// Question: Should monsters be allowed to shoot barrels in this mode?
+				// The old code does not.
+				if (victim->flags3 & MF3_ISMONSTER)
+				{
+					// Monsters that are clearly hostile can always hurt each other
+					if (!victim->IsHostile(shooter))
+					{
+						// The same if the shooter hates the target
+						if (victim->tid == 0 || shooter->TIDtoHate != victim->tid)
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+		else if (infight == 0)
+		{
+			//  0: Monsters cannot hurt same species except 
+			//     cases where they are clearly supposed to do that
+			if (victim->IsFriend(shooter))
+			{
+				// Friends never harm each other, unless the shooter has the HARMFRIENDS set.
+				if (!(shooter->flags7 & MF7_HARMFRIENDS)) return false;
+			}
+			else
+			{
+				if (victim->TIDtoHate != 0 && victim->TIDtoHate == shooter->TIDtoHate)
+				{
+					// [RH] Don't hurt monsters that hate the same victim as you do
+					return false;
+				}
+				if (victim->GetSpecies() == shooter->GetSpecies() && !(victim->flags6 & MF6_DOHARMSPECIES))
+				{
+					// Don't hurt same species or any relative -
+					// but only if the target isn't one's hostile.
+					if (!victim->IsHostile(shooter))
+					{
+						// Allow hurting monsters the shooter hates.
+						if (victim->tid == 0 || shooter->TIDtoHate != victim->tid)
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+		// else if (infight==1) every shot hurts anything - no further tests needed
+	}
+	return true;
+}
+
 //==========================================================================
 //
 // PIT_CheckThing
@@ -1139,10 +1215,6 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		// [RH] Extend DeHacked infighting to allow for monsters
 		// to never fight each other
 
-		// [Graf Zahl] Why do I have the feeling that this didn't really work anymore now
-		// that ZDoom supports friendly monsters?
-
-
 		if (tm.thing->target != NULL)
 		{
 			if (thing == tm.thing->target)
@@ -1150,69 +1222,9 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 				return true;
 			}
 
-			// players are never subject to infighting settings and are always allowed
-			// to harm / be harmed by anything.
-			if (!thing->player && !tm.thing->target->player)
+			if (!CanAttackHurt(thing, tm.thing->target))
 			{
-				int infight;
-				if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight = 1;
-				else if (level.flags2 & LEVEL2_NOINFIGHTING) infight = -1;
-				else infight = infighting;
-
-				if (infight < 0)
-				{
-					// -1: Monsters cannot hurt each other, but make exceptions for
-					//     friendliness and hate status.
-					if (tm.thing->target->flags & MF_SHOOTABLE)
-					{
-						// Question: Should monsters be allowed to shoot barrels in this mode?
-						// The old code does not.
-						if (thing->flags3 & MF3_ISMONSTER)
-						{
-							// Monsters that are clearly hostile can always hurt each other
-							if (!thing->IsHostile(tm.thing->target))
-							{
-								// The same if the shooter hates the target
-								if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
-								{
-									return false;
-								}
-							}
-						}
-					}
-				}
-				else if (infight == 0)
-				{
-					//  0: Monsters cannot hurt same species except 
-					//     cases where they are clearly supposed to do that
-					if (thing->IsFriend(tm.thing->target))
-					{
-						// Friends never harm each other, unless the shooter has the HARMFRIENDS set.
-						if (!(thing->flags7 & MF7_HARMFRIENDS)) return false;
-					}
-					else
-					{
-						if (thing->TIDtoHate != 0 && thing->TIDtoHate == tm.thing->target->TIDtoHate)
-						{
-							// [RH] Don't hurt monsters that hate the same thing as you do
-							return false;
-						}
-						if (thing->GetSpecies() == tm.thing->target->GetSpecies() && !(thing->flags6 & MF6_DOHARMSPECIES))
-						{
-							// Don't hurt same species or any relative -
-							// but only if the target isn't one's hostile.
-							if (!thing->IsHostile(tm.thing->target))
-							{
-								// Allow hurting monsters the shooter hates.
-								if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
-								{
-									return false;
-								}
-							}
-						}
-					}
-				}
-				// else if (infight==1) any shot hurts anything - no further tests
+				return false;
 			}
 		}
 		if (!(thing->flags & MF_SHOOTABLE))
@@ -4087,9 +4099,11 @@ struct SRailHit
 };
 struct RailData
 {
+	AActor *Caller;
 	TArray<SRailHit> RailHits;
 	bool StopAtOne;
 	bool StopAtInvul;
+	bool ThruSpecies;
 };
 
 static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
@@ -4104,6 +4118,12 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	if (data->StopAtInvul && res.Actor->flags2 & MF2_INVULNERABLE)
 	{
 		return TRACE_Stop;
+	}
+
+	// Skip actors with the same species if the puff has MTHRUSPECIES.
+	if (data->ThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies())
+	{
+		return TRACE_Skip;
 	}
 
 	// Save this thing for damaging later, and continue the trace
@@ -4160,7 +4180,8 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	y1 += offset_xy * finesine[angle];
 
 	RailData rail_data;
-
+	rail_data.Caller = source;
+	
 	rail_data.StopAtOne = !!(railflags & RAF_NOPIERCE);
 	start.X = FIXED2FLOAT(x1);
 	start.Y = FIXED2FLOAT(y1);
@@ -4173,7 +4194,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0 : TRACE_PCross | TRACE_Impact;
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
-
+	rail_data.ThruSpecies = (puffDefaults->flags6 & MF6_MTHRUSPECIES) ? true : false;
 	Trace(x1, y1, shootz, source->Sector, vx, vy, vz,
 		distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
 		flags, ProcessRailHit, &rail_data);
@@ -4189,13 +4210,15 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 	for (i = 0; i < rail_data.RailHits.Size(); i++)
 	{
+		
+
 		fixed_t x, y, z;
 		bool spawnpuff;
 		bool bleed = false;
 
 		int puffflags = PF_HITTHING;
 		AActor *hitactor = rail_data.RailHits[i].HitActor;
-		fixed_t hitdist = rail_data.RailHits[i].Distance;
+		fixed_t hitdist = rail_data.RailHits[i].Distance;		
 
 		x = x1 + FixedMul(hitdist, vx);
 		y = y1 + FixedMul(hitdist, vy);
@@ -4669,8 +4692,6 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 
 	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
 	double bombdamagefloat = (double)bombdamage;
-
-	FVector3 bombvec(FIXED2FLOAT(bombspot->x), FIXED2FLOAT(bombspot->y), FIXED2FLOAT(bombspot->z));
 
 	FBlockThingsIterator it(FBoundingBox(bombspot->x, bombspot->y, bombdistance << FRACBITS));
 	AActor *thing;

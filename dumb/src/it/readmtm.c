@@ -96,7 +96,7 @@ static int it_mtm_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
 {
 	int finetune, flags;
 
-	dumbfile_getnc(sample->name, 22, f);
+    dumbfile_getnc((char *)sample->name, 22, f);
 	sample->name[22] = 0;
 
 	sample->filename[0] = 0;
@@ -125,7 +125,7 @@ static int it_mtm_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
 	}
 
 	sample->default_pan = 0;
-	sample->C5_speed = (int)( AMIGA_CLOCK / 214.0 );//(int32)(16726.0*pow(DUMB_PITCH_BASE, finetune*32));
+	sample->C5_speed = (int)( AMIGA_CLOCK / 214.0 );//(long)(16726.0*pow(DUMB_PITCH_BASE, finetune*32));
 	sample->finetune = finetune * 32;
 	// the above line might be wrong
 
@@ -195,7 +195,7 @@ static DUMB_IT_SIGDATA *it_mtm_load_sigdata(DUMBFILE *f, int * version)
 	sigdata = malloc(sizeof(*sigdata));
 	if (!sigdata) goto error;
 
-	dumbfile_getnc(sigdata->name, 20, f);
+    dumbfile_getnc((char *)sigdata->name, 20, f);
 	sigdata->name[20] = 0;
 
 	n_tracks = dumbfile_igetw(f);
@@ -216,7 +216,7 @@ static DUMB_IT_SIGDATA *it_mtm_load_sigdata(DUMBFILE *f, int * version)
 
 	memset(sigdata->channel_volume, 64, DUMB_IT_N_CHANNELS);
 
-	if (dumbfile_getnc(sigdata->channel_pan, 32, f) < 32) goto error_sd;
+    if (dumbfile_getnc((char *)sigdata->channel_pan, 32, f) < 32) goto error_sd;
 
 	for (n = 0; n < 32; n++) {
 		if (sigdata->channel_pan[n] <= 15) {
@@ -229,10 +229,11 @@ static DUMB_IT_SIGDATA *it_mtm_load_sigdata(DUMBFILE *f, int * version)
 	}
 
 	for (n = 32; n < DUMB_IT_N_CHANNELS; n += 4) {
-		sigdata->channel_pan[n  ] = 16;
-		sigdata->channel_pan[n+1] = 48;
-		sigdata->channel_pan[n+2] = 48;
-		sigdata->channel_pan[n+3] = 16;
+		int sep = 32 * dumb_it_default_panning_separation / 100;
+		sigdata->channel_pan[n  ] = 32 - sep;
+		sigdata->channel_pan[n+1] = 32 + sep;
+		sigdata->channel_pan[n+2] = 32 + sep;
+		sigdata->channel_pan[n+3] = 32 - sep;
 	}
 
 	sigdata->sample = malloc(sigdata->n_samples * sizeof(*sigdata->sample));
@@ -268,14 +269,14 @@ static DUMB_IT_SIGDATA *it_mtm_load_sigdata(DUMBFILE *f, int * version)
 	sigdata->order = malloc(sigdata->n_orders);
 	if (!sigdata->order) goto error_usd;
 
-	if (dumbfile_getnc(sigdata->order, sigdata->n_orders, f) < sigdata->n_orders) goto error_usd;
+    if (dumbfile_getnc((char *)sigdata->order, sigdata->n_orders, f) < sigdata->n_orders) goto error_usd;
 	if (sigdata->n_orders < 128)
 		if (dumbfile_skip(f, 128 - sigdata->n_orders)) goto error_usd;
 
 	track = malloc(192 * n_tracks);
 	if (!track) goto error_usd;
 
-	if (dumbfile_getnc(track, 192 * n_tracks, f) < 192 * n_tracks) goto error_ft;
+    if (dumbfile_getnc((char *)track, 192 * n_tracks, f) < 192 * n_tracks) goto error_ft;
 
 	sigdata->pattern = malloc(sigdata->n_patterns * sizeof(*sigdata->pattern));
 	if (!sigdata->pattern) goto error_ft;
@@ -319,7 +320,6 @@ static DUMB_IT_SIGDATA *it_mtm_load_sigdata(DUMBFILE *f, int * version)
 
 			size_t l;
 			int m;
-
 			for (l = 0, n = 0; n <= o; n += 40) {
 				l += strlen_max(&comment[n], 40) + 2;
 			}
@@ -396,7 +396,7 @@ DUH *DUMBEXPORT dumb_read_mtm_quick(DUMBFILE *f)
 		char version[16];
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		version[0] = 'M';
 		version[1] = 'T';

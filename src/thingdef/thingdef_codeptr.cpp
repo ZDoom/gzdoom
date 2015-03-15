@@ -1337,7 +1337,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	AWeapon * weapon=player->ReadyWeapon;
 	AActor *linetarget;
 
-	if (UseAmmo && weapon)
+		// Only use ammo if called from a weapon
+	if (UseAmmo && ACTION_CALL_FROM_WEAPON() && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -4419,7 +4420,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 {
-	ACTION_PARAM_START(8);
+	ACTION_PARAM_START(11);
 	ACTION_PARAM_INT(intensityX, 0);
 	ACTION_PARAM_INT(intensityY, 1);
 	ACTION_PARAM_INT(intensityZ, 2);
@@ -4428,7 +4429,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	ACTION_PARAM_INT(tremrad, 5);
 	ACTION_PARAM_SOUND(sound, 6);
 	ACTION_PARAM_INT(flags, 7);
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags);
+	ACTION_PARAM_DOUBLE(mulWaveX, 8);
+	ACTION_PARAM_DOUBLE(mulWaveY, 9);
+	ACTION_PARAM_DOUBLE(mulWaveZ, 10);
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ);
 }
 
 //===========================================================================
@@ -5064,9 +5068,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 
 		if (flags & RGF_CUBE)
 		{ // check if inside a cube
-			if (abs(thing->x - self->x) > distance ||
-				abs(thing->y - self->y) > distance ||
-				abs((thing->z + thing->height/2) - (self->z + self->height/2)) > distance)
+			if (fabs((double)thing->x - self->x) > (double)distance ||
+				fabs((double)thing->y - self->y) > (double)distance ||
+				fabs((double)(thing->z + thing->height/2) - (self->z + self->height/2)) > (double)distance)
 			{
 				continue;
 			}
@@ -5080,7 +5084,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				continue;
 			}
 		}
-		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.

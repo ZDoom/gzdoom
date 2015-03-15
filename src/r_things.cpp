@@ -2500,7 +2500,7 @@ void R_DrawParticle (vissprite_t *vis)
 		{
 			DWORD bg = bg2rgb[*dest];
 			bg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k[0][0][bg & (bg>>15)];
+			*dest++ = RGB32k.All[bg & (bg>>15)];
 		} while (--count);
 		dest += spacing;
 	} while (--ycount);

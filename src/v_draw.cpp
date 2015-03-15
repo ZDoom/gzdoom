@@ -893,7 +893,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	DWORD fg = fg2rgb[basecolor];
 	DWORD bg = bg2rgb[*spot];
 	bg = (fg+bg) | 0x1f07c1f;
-	*spot = RGB32k[0][0][bg&(bg>>15)];
+	*spot = RGB32k.All[bg&(bg>>15)];
 }
 
 void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)

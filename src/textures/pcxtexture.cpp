@@ -528,7 +528,7 @@ void FPCXTexture::MakeTexture()
 		{
 			for(int x=0; x < Width; x++)
 			{
-				Pixels[y+Height*x] = RGB32k[row[0]>>3][row[1]>>3][row[2]>>3];
+				Pixels[y+Height*x] = RGB32k.RGB[row[0]>>3][row[1]>>3][row[2]>>3];
 				row+=3;
 			}
 		}

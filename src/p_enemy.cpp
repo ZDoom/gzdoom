@@ -2754,7 +2754,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
-	if (max_turn && (max_turn < (angle_t)abs(self->angle - other_angle)))
+	if (max_turn && (max_turn < absangle(self->angle - other_angle)))
 	{
 		if (self->angle > other_angle)
 		{

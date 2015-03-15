@@ -1311,7 +1311,7 @@ void P_LoadSegs (MapData * map)
 
 			ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
 			dis = 0;
-			delta_angle = (abs(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
+			delta_angle = (absangle(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
 
 			if (delta_angle != 0)
 			{

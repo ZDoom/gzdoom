@@ -63,7 +63,7 @@ extern HWND Window;
 #include "cmdlib.h"
 #include "s_sound.h"
 
-#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43600
+#if FMOD_VERSION > 0x42899 && FMOD_VERSION < 0x43400
 #error You are trying to compile with an unsupported version of FMOD.
 #endif
 
@@ -198,7 +198,7 @@ static const FEnumList SpeakerModeNames[] =
 	{ "Surround",				FMOD_SPEAKERMODE_SURROUND },
 	{ "5.1",					FMOD_SPEAKERMODE_5POINT1 },
 	{ "7.1",					FMOD_SPEAKERMODE_7POINT1 },
-#if FMOD_VERSION < 0x44400
+#if FMOD_VERSION < 0x44000
 	{ "Prologic",				FMOD_SPEAKERMODE_PROLOGIC },
 #endif
 	{ "1",						FMOD_SPEAKERMODE_MONO },
@@ -1046,7 +1046,6 @@ bool FMODSoundRenderer::Init()
 	}
 
 	// Create DSP units for underwater effect
-#if FMOD_VERSION < 0x43600
 	result = Sys->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &WaterLP);
 	if (result != FMOD_OK)
 	{
@@ -1054,15 +1053,12 @@ bool FMODSoundRenderer::Init()
 	}
 	else
 	{
-		result = Sys->createDSPByType(FMOD_DSP_TYPE_REVERB, &WaterReverb);
+		result = Sys->createDSPByType(FMOD_DSP_TYPE_SFXREVERB, &WaterReverb);
 		if (result != FMOD_OK)
 		{
 			Printf(TEXTCOLOR_BLUE"  Could not create underwater reverb unit. (Error %d)\n", result);
 		}
 	}
-#else
-	result = FMOD_ERR_UNSUPPORTED;
-#endif
 
 	// Connect underwater DSP unit between PausableSFX and SFX groups, while
 	// retaining the connection established by SfxGroup->addGroup().
@@ -1109,32 +1105,35 @@ bool FMODSoundRenderer::Init()
 				WaterLP->setActive(false);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
 				WaterLP->setParameter(FMOD_DSP_LOWPASS_RESONANCE, 2);
-#if FMOD_VERSION < 0x43600
+
 				if (WaterReverb != NULL)
 				{
-					FMOD::DSPConnection *dry;
-					result = WaterReverb->addInput(pausable_head, &dry);
+					result = WaterReverb->addInput(WaterLP, NULL);
 					if (result == FMOD_OK)
 					{
-						result = dry->setMix(0.1f);
+						result = sfx_head->addInput(WaterReverb, NULL);
 						if (result == FMOD_OK)
 						{
-							result = WaterReverb->addInput(WaterLP, NULL);
-							if (result == FMOD_OK)
-							{
-								result = sfx_head->addInput(WaterReverb, NULL);
-								if (result == FMOD_OK)
-								{
-									WaterReverb->setParameter(FMOD_DSP_REVERB_ROOMSIZE, 0.001f);
-									WaterReverb->setParameter(FMOD_DSP_REVERB_DAMP, 0.2f);
-									WaterReverb->setActive(false);
-								}
-							}
+//							WaterReverb->setParameter(FMOD_DSP_REVERB_ROOMSIZE, 0.001f);
+//							WaterReverb->setParameter(FMOD_DSP_REVERB_DAMP, 0.2f);
+
+							// These parameters are entirely empirical and can probably
+							// stand some improvement, but it sounds remarkably close
+							// to the old reverb unit's output.
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_LFREFERENCE, 150);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_HFREFERENCE, 10000);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_ROOM, 0);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_ROOMHF, -5000);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_DRYLEVEL, 0);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_DECAYHFRATIO, 1);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_DECAYTIME, 0.25f);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_DENSITY, 100);
+							WaterReverb->setParameter(FMOD_DSP_SFXREVERB_DIFFUSION, 100);
+							WaterReverb->setActive(false);
 						}
 					}
 				}
 				else
-#endif
 				{
 					result = sfx_head->addInput(WaterLP, NULL);
 				}

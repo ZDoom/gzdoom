@@ -813,21 +813,6 @@ CCMD (save)
         Printf ("usage: save <filename> [description]\n");
         return;
     }
-    if (!usergame)
-	{
-        Printf ("not in a saveable game\n");
-        return;
-    }
-    if (gamestate != GS_LEVEL)
-	{
-        Printf ("not in a level\n");
-        return;
-    }
-    if(players[consoleplayer].health <= 0 && !multiplayer)
-    {
-        Printf ("player is dead in a single-player game\n");
-        return;
-    }
     FString fname = argv[1];
 	DefaultExtension (fname, ".zds");
 	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);

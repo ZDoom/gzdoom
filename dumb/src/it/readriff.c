@@ -22,9 +22,9 @@
 #include "internal/riff.h"
 
 
-DUH *dumb_read_riff_amff( struct riff * stream );
-DUH *dumb_read_riff_am( struct riff * stream );
-DUH *dumb_read_riff_dsmf( struct riff * stream );
+DUH *dumb_read_riff_amff( DUMBFILE * f, struct riff * stream );
+DUH *dumb_read_riff_am( DUMBFILE * f, struct riff * stream );
+DUH *dumb_read_riff_dsmf( DUMBFILE * f, struct riff * stream );
 
 /* dumb_read_riff_quick(): reads a RIFF file into a DUH struct, returning a
  * pointer to the DUH struct. When you have finished with it, you must pass
@@ -34,37 +34,21 @@ DUH *DUMBEXPORT dumb_read_riff_quick( DUMBFILE * f )
 {
 	DUH * duh;
 	struct riff * stream;
+    long size;
 
-	{
-		unsigned char * buffer = 0;
-		int32 size = 0;
-		int32 read;
-		do
-		{
-			buffer = realloc( buffer, 32768 + size );
-			if ( ! buffer ) return 0;
-			read = dumbfile_getnc( buffer + size, 32768, f );
-			if ( read < 0 )
-			{
-				free( buffer );
-				return 0;
-			}
-			size += read;
-		}
-		while ( read == 32768 );
-		stream = riff_parse( buffer, size, 1 );
-		if ( ! stream ) stream = riff_parse( buffer, size, 0 );
-		free( buffer );
-	}
+    size = dumbfile_get_size(f);
+
+    stream = riff_parse( f, 0, size, 1 );
+    if ( ! stream ) stream = riff_parse( f, 0, size, 0 );
 
 	if ( ! stream ) return 0;
 
 	if ( stream->type == DUMB_ID( 'A', 'M', ' ', ' ' ) )
-		duh = dumb_read_riff_am( stream );
+        duh = dumb_read_riff_am( f, stream );
 	else if ( stream->type == DUMB_ID( 'A', 'M', 'F', 'F' ) )
-		duh = dumb_read_riff_amff( stream );
+        duh = dumb_read_riff_amff( f, stream );
 	else if ( stream->type == DUMB_ID( 'D', 'S', 'M', 'F' ) )
-		duh = dumb_read_riff_dsmf( stream );
+        duh = dumb_read_riff_dsmf( f, stream );
 	else duh = 0;
 
 	riff_free( stream );

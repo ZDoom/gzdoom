@@ -3069,8 +3069,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
 					if(hold->PieceWeapon == weapon)
 					{
-						if(hold->PieceMask & (1 << (piece-1)))
-							SetTruth(true, block, statusBar);
+						SetTruth(0 != (hold->PieceMask & (1 << (piece-1))), block, statusBar);
 						return;
 					}
 				}

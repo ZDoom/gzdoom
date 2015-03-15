@@ -973,7 +973,7 @@ static void DrawLatency()
 	const int millis = (level.time % TICRATE) * (1000 / TICRATE);
 	mysnprintf(tempstr, sizeof(tempstr), "a:%dms - l:%dms", arbitratordelay, localdelay);
 
-	const int characterCount = strlen(tempstr);
+	const int characterCount = (int)strlen(tempstr);
 	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight() * 2;
 

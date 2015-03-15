@@ -610,19 +610,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)
 	{
-		an = self->angle - angle/2 + angle/numrays*i;
+		an = self->angle - angle / 2 + angle / numrays*i;
 
 		// self->target is the originator (player) of the missile
-		P_AimLineAttack (self->target, an, distance, &linetarget, vrange);
+		P_AimLineAttack(self->target, an, distance, &linetarget, vrange);
 
 		if (!linetarget)
 			continue;
 
-		AActor *spray = Spawn (spraytype, linetarget->x, linetarget->y,
-			linetarget->z + (linetarget->height>>2), ALLOW_REPLACE);
+		AActor *spray = Spawn(spraytype, linetarget->x, linetarget->y,
+			linetarget->z + (linetarget->height >> 2), ALLOW_REPLACE);
 
-		if (spray && (spray->flags5 & MF5_PUFFGETSOWNER))
-			spray->target = self->target;
+		if (spray)
+		{
+			if (spray->flags6 & MF6_MTHRUSPECIES && spray->GetSpecies() == linetarget->GetSpecies())
+			{
+				spray->Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
+				continue;
+			}
+			if (spray->flags5 & MF5_PUFFGETSOWNER)
+				spray->target = self->target;
+		}
 
 		if (defdamage == 0)
 		{

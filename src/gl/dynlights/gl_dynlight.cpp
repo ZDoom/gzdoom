@@ -1113,8 +1113,8 @@ void gl_SetActorLights(AActor *actor)
 		ADynamicLight *lights, *tmpLight;
 		unsigned int i;
 
-		int sprite = actor->state->sprite;
-		int frame = actor->state->GetFrame();
+		int sprite = actor->sprite;
+		int frame = actor->frame;
 
 		lights = tmpLight = NULL;
 

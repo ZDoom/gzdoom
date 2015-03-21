@@ -468,7 +468,7 @@ FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int 
 		swapvalues (framenum, picnum);
 	}
 	FAnimDef *ani = AddSimpleAnim (picnum, framenum - picnum + 1, min, max - min);
-	ani->AnimType = type;
+	if (ani != NULL) ani->AnimType = type;
 	return ani;
 }
 

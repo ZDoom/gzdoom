@@ -676,13 +676,9 @@ void DPolyDoor::Tick ()
 		break;
 
 	case PODOOR_SWING:
-		if (poly->RotatePolyobj (m_Speed))
+		if (m_Dist <= 0 || poly->RotatePolyobj (m_Speed))
 		{
 			absSpeed = abs (m_Speed);
-			if (m_Dist == -1)
-			{ // perpetual polyobj
-				return;
-			}
 			m_Dist -= absSpeed;
 			if (m_Dist <= 0)
 			{

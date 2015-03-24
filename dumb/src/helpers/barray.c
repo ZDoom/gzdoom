@@ -53,6 +53,21 @@ void bit_array_set(void * array, size_t bit)
 	}
 }
 
+void bit_array_set_range(void * array, size_t bit, size_t count)
+{
+    if (array && count)
+    {
+        size_t * size = (size_t *) array;
+        if (bit < *size)
+        {
+            unsigned char * ptr = (unsigned char *)(size + 1);
+            size_t i;
+            for (i = bit; i < *size && i < bit + count; ++i)
+                ptr[i >> 3] |= (1U << (i & 7));
+        }
+    }
+}
+
 int bit_array_test(void * array, size_t bit)
 {
 	if (array)
@@ -118,6 +133,21 @@ void bit_array_clear(void * array, size_t bit)
 			ptr[bit >> 3] &= ~(1U << (bit & 7));
 		}
 	}
+}
+
+void bit_array_clear_range(void * array, size_t bit, size_t count)
+{
+    if (array && count)
+    {
+        size_t * size = (size_t *) array;
+        if (bit < *size)
+        {
+            unsigned char * ptr = (unsigned char *)(size + 1);
+            size_t i;
+            for (i = bit; i < *size && i < bit + count; ++i)
+                ptr[i >> 3] &= ~(1U << (i & 7));
+        }
+    }
 }
 
 void bit_array_merge(void * dest, void * source, size_t offset)

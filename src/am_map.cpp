@@ -1234,7 +1234,7 @@ void AM_initVariables ()
 		for (pnum=0;pnum<MAXPLAYERS;pnum++)
 			if (playeringame[pnum])
 				break;
-  
+	assert(pnum >= 0 && pnum < MAXPLAYERS);
 	m_x = (players[pnum].camera->x >> FRACTOMAPBITS) - m_w/2;
 	m_y = (players[pnum].camera->y >> FRACTOMAPBITS) - m_h/2;
 	AM_changeWindowLoc();

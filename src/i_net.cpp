@@ -800,7 +800,6 @@ bool Guest_WaitForOthers (void *userdata)
 			{
 				int node;
 
-				packet.NumNodes = packet.NumNodes;
 				doomcom.numnodes = packet.NumNodes + 2;
 				sendplayer[0] = packet.ConsoleNum;	// My player number
 				doomcom.consoleplayer = packet.ConsoleNum;

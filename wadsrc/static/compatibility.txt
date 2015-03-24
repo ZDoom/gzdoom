@@ -170,6 +170,7 @@ DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller dependi
 040F83028FFA74456E335ED300BE2C33 // MAP17 (TownInfection.wad)
 156FA31F5FF72A87BF345B68029D3051 // MAP02 (nprject5.wad)
 AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
+91341EF9250760C9B550752E1D91CC24 // rock and roll rebel radio against satan city (rnrrrasc.wad) map01
 {
 	ignoreteleporttags
 }
@@ -196,14 +197,6 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	// this into a one-shot Door_Open so that it won't close.
 	setlinespecial 1069 Door_Open 0 16 0 0 0
 	clearlineflags 1069 0x200
-}
-
-CBDE77E3ACB4B166D53C1812E5C72F54 // Hexen IWAD map04
-{
-	setthingz 49 0
-	setthingz 50 0
-	setthingz 51 0
-	setthingz 52 0
 }
 
 3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01

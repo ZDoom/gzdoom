@@ -138,7 +138,13 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "~/" GAME_DIR, true);
-		SetValueForKey ("Path", SHARE_DIR, true);
+		// Arch Linux likes them in /usr/share/doom
+		// Debian likes them in /usr/share/games/doom
+		// I assume other distributions don't do anything radically different
+		SetValueForKey ("Path", "/usr/local/share/doom", true);
+		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
+		SetValueForKey ("Path", "/usr/share/doom", true);
+		SetValueForKey ("Path", "/usr/share/games/doom", true);
 #endif
 	}
 
@@ -166,18 +172,23 @@ FGameConfigFile::FGameConfigFile ()
 	CreateSectionAtStart("Harmony.Autoload");
 	CreateSectionAtStart("UrbanBrawl.Autoload");
 	CreateSectionAtStart("Chex3.Autoload");
+	CreateSectionAtStart("Chex1.Autoload");
 	CreateSectionAtStart("Chex.Autoload");
 	CreateSectionAtStart("Strife.Autoload");
-	CreateSectionAtStart("HexenDemo.Autoload");
 	CreateSectionAtStart("HexenDK.Autoload");
 	CreateSectionAtStart("Hexen.Autoload");
+	CreateSectionAtStart("HereticSR.Autoload");
 	CreateSectionAtStart("Heretic.Autoload");
 	CreateSectionAtStart("FreeDM.Autoload");
+	CreateSectionAtStart("Freedoom2.Autoload");
 	CreateSectionAtStart("Freedoom1.Autoload");
 	CreateSectionAtStart("Freedoom.Autoload");
 	CreateSectionAtStart("Plutonia.Autoload");
 	CreateSectionAtStart("TNT.Autoload");
+	CreateSectionAtStart("Doom2BFG.Autoload");
 	CreateSectionAtStart("Doom2.Autoload");
+	CreateSectionAtStart("DoomBFG.Autoload");
+	CreateSectionAtStart("DoomU.Autoload");
 	CreateSectionAtStart("Doom1.Autoload");
 	CreateSectionAtStart("Doom.Autoload");
 	CreateSectionAtStart("Global.Autoload");

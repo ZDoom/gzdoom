@@ -73,6 +73,7 @@ CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
 CVAR (Bool,  hud_showweapons,	true, CVAR_ARCHIVE);	// Show weapons collected
+CVAR (Int ,  hud_showammo,		2, CVAR_ARCHIVE);		// Show ammo collected
 CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
 CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 CVAR (Int ,  hud_showlag,		0, CVAR_ARCHIVE);		// Show input latency (maketic - gametic difference)
@@ -547,23 +548,37 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 
 	orderedammos.Clear();
 
-	// Order ammo by use of weapons in the weapon slots
-	// Do not check for actual presence in the inventory!
-	// We want to show all ammo types that can be used by
-	// the weapons in the weapon slots.
-	for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.Slots[k].Size(); j++)
+	if (0 == hud_showammo)
 	{
-		const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
-
-		if (weap) AddAmmoToList((AWeapon*)GetDefaultByType(weap));
+		// Show ammo for current weapon if any
+		if (wi) AddAmmoToList(wi);
 	}
-
-	// Now check for the remaining weapons that are in the inventory but not in the weapon slots
-	for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
+	else
 	{
-		if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)))
+		// Order ammo by use of weapons in the weapon slots
+		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.Slots[k].Size(); j++)
 		{
-			AddAmmoToList((AWeapon*)inv);
+			const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+
+			if (weap)
+			{
+				// Show ammo for available weapons if hud_showammo CVAR is 1
+				// or show ammo for all weapons if hud_showammo is greater than 1
+				
+				if (hud_showammo > 1 || CPlayer->mo->FindInventory(weap))
+				{
+					AddAmmoToList((AWeapon*)GetDefaultByType(weap));
+				}
+			}
+		}
+
+		// Now check for the remaining weapons that are in the inventory but not in the weapon slots
+		for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
+		{
+			if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			{
+				AddAmmoToList((AWeapon*)inv);
+			}
 		}
 	}
 
@@ -958,7 +973,7 @@ static void DrawLatency()
 	const int millis = (level.time % TICRATE) * (1000 / TICRATE);
 	mysnprintf(tempstr, sizeof(tempstr), "a:%dms - l:%dms", arbitratordelay, localdelay);
 
-	const int characterCount = strlen(tempstr);
+	const int characterCount = (int)strlen(tempstr);
 	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight() * 2;
 

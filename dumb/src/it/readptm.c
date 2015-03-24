@@ -26,30 +26,13 @@
 
 
 
-/** WARNING: this is duplicated in itread.c */
-static int it_seek(DUMBFILE *f, int32 offset)
-{
-	int32 pos = dumbfile_pos(f);
-
-	if (pos > offset)
-		return -1;
-
-	if (pos < offset)
-		if (dumbfile_skip(f, offset - pos))
-			return -1;
-
-	return 0;
-}
-
-
-
 static int it_ptm_read_sample_header(IT_SAMPLE *sample, int32 *offset, DUMBFILE *f)
 {
 	int flags;
 
 	flags = dumbfile_getc(f);
 
-	dumbfile_getnc(sample->filename, 12, f);
+    dumbfile_getnc((char *)sample->filename, 12, f);
 	sample->filename[12] = 0;
 
 	sample->default_volume = dumbfile_getc(f);
@@ -67,7 +50,7 @@ static int it_ptm_read_sample_header(IT_SAMPLE *sample, int32 *offset, DUMBFILE 
 	/* GUSBegin, GUSLStart, GUSLEnd, GUSLoop, reserverd */
 	dumbfile_skip(f, 4+4+4+1+1);
 
-	dumbfile_getnc(sample->name, 28, f);
+    dumbfile_getnc((char *)sample->name, 28, f);
 	sample->name[28] = 0;
 
 	/*
@@ -195,7 +178,7 @@ static int it_ptm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, unsigned char *
 		pattern->n_entries++;
 		if (b) {
 			if (buflen + used[b] >= 65536) return -1;
-			dumbfile_getnc(buffer + buflen, used[b], f);
+            dumbfile_getnc((char *)buffer + buflen, used[b], f);
 			buflen += used[b];
 		} else {
 			/* End of row */
@@ -351,7 +334,7 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 	if (!sigdata) return NULL;
 
 	/* Skip song name. */
-	dumbfile_getnc(sigdata->name, 28, f);
+    dumbfile_getnc((char *)sigdata->name, 28, f);
 	sigdata->name[28] = 0;
 
 	if (dumbfile_getc(f) != 0x1A || dumbfile_igetw(f) != 0x203) {
@@ -446,7 +429,7 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 	}
 
 	/* Orders, byte each, length = sigdata->n_orders (should be even) */
-	dumbfile_getnc(sigdata->order, sigdata->n_orders, f);
+    dumbfile_getnc((char *)sigdata->order, sigdata->n_orders, f);
 	sigdata->restart_position = 0;
 
 	component = malloc(768*sizeof(*component));
@@ -455,7 +438,7 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 		return NULL;
 	}
 
-	if (it_seek(f, 352)) {
+    if (dumbfile_seek(f, 352, DFS_SEEK_SET)) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
@@ -467,7 +450,7 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 		n_components++;
 	}
 
-	if (it_seek(f, 608)) {
+    if (dumbfile_seek(f, 608, DFS_SEEK_SET)) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
@@ -510,7 +493,7 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 	}
 
 	for (n = 0; n < n_components; n++) {
-		if (it_seek(f, component[n].offset)) {
+        if (dumbfile_seek(f, component[n].offset, DFS_SEEK_SET)) {
 			free(buffer);
 			free(component);
 			_dumb_it_unload_sigdata(sigdata);
@@ -560,7 +543,7 @@ DUH *DUMBEXPORT dumb_read_ptm_quick(DUMBFILE *f)
 	{
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		tag[1][1] = "PTM";
 		return make_duh(-1, 2, (const char *const (*)[2])tag, 1, &descptr, &sigdata);

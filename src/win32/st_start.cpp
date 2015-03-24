@@ -1227,9 +1227,11 @@ void ST_Util_SizeWindowForBitmap (int scale)
 	{
 		rect.bottom = 0;
 	}
-	w = StartupBitmap->bmiHeader.biWidth * scale + GetSystemMetrics (SM_CXSIZEFRAME)*2;
-	h = StartupBitmap->bmiHeader.biHeight * scale + rect.bottom
-		+ GetSystemMetrics (SM_CYSIZEFRAME) * 2 + GetSystemMetrics (SM_CYCAPTION);
+	RECT sizerect = { 0, 0, StartupBitmap->bmiHeader.biWidth * scale,
+		StartupBitmap->bmiHeader.biHeight * scale + rect.bottom };
+	AdjustWindowRectEx(&sizerect, WS_VISIBLE|WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
+	w = sizerect.right - sizerect.left;
+	h = sizerect.bottom - sizerect.top;
 
 	// Resize the window, but keep its center point the same, unless that
 	// puts it partially offscreen.

@@ -353,6 +353,7 @@ enum
 	MF7_HITTARGET		= 0x00004000,	// The actor the projectile dies on is set to target, provided it's targetable anyway.
 	MF7_HITMASTER		= 0x00008000,	// Same as HITTARGET, except it's master instead of target.
 	MF7_HITTRACER		= 0x00010000,	// Same as HITTARGET, but for tracer.
+	MF7_FLYCHEAT		= 0x00020000,	// must be part of the actor so that it can be tracked properly
 
 
 
@@ -844,7 +845,8 @@ public:
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info
-	fixed_t			pitch, roll;
+	fixed_t			pitch;
+	angle_t			roll;	// This was fixed_t before, which is probably wrong
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;

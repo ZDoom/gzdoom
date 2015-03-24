@@ -26,7 +26,7 @@
 
 #if defined(_DEBUG) && defined(_MSC_VER)
 #ifndef _CRTDBG_MAP_ALLOC
-#define _CRTDBG_MAP_ALLOC
+//#define _CRTDBG_MAP_ALLOC
 #endif
 #include <crtdbg.h>
 #endif
@@ -171,11 +171,13 @@ void dumb_exit(void);
 
 typedef struct DUMBFILE_SYSTEM
 {
-	void *(*open)(const char *filename);
-	int (*skip)(void *f, int32 n);
-	int (*getc)(void *f);
-	int32 (*getnc)(char *ptr, int32 n, void *f);
-	void (*close)(void *f);
+	void *(DUMBCALLBACK *open)(const char *filename);
+	int (DUMBCALLBACK *skip)(void *f, long n);
+	int (DUMBCALLBACK *getc)(void *f);
+	int32 (DUMBCALLBACK *getnc)(char *ptr, int32 n, void *f);
+	void (DUMBCALLBACK *close)(void *f);
+    int (DUMBCALLBACK *seek)(void *f, long n);
+    long (DUMBCALLBACK *get_size)(void *f);
 }
 DUMBFILE_SYSTEM;
 
@@ -187,7 +189,15 @@ DUMBFILE *DUMBEXPORT dumbfile_open(const char *filename);
 DUMBFILE *DUMBEXPORT dumbfile_open_ex(void *file, const DUMBFILE_SYSTEM *dfs);
 
 int32 DUMBEXPORT dumbfile_pos(DUMBFILE *f);
-int DUMBEXPORT dumbfile_skip(DUMBFILE *f, int32 n);
+int DUMBEXPORT dumbfile_skip(DUMBFILE *f, long n);
+
+#define DFS_SEEK_SET 0
+#define DFS_SEEK_CUR 1
+#define DFS_SEEK_END 2
+
+int DUMBEXPORT dumbfile_seek(DUMBFILE *f, long n, int origin);
+
+int32 DUMBEXPORT dumbfile_get_size(DUMBFILE *f);
 
 int DUMBEXPORT dumbfile_getc(DUMBFILE *f);
 
@@ -383,10 +393,15 @@ int DUMBEXPORT dumb_it_scan_for_playable_orders(DUMB_IT_SIGDATA *sigdata, dumb_s
 
 DUH_SIGRENDERER *DUMBEXPORT dumb_it_start_at_order(DUH *duh, int n_channels, int startorder);
 
-void DUMBEXPORT dumb_it_set_resampling_quality(DUMB_IT_SIGRENDERER * sigrenderer, int quality);
-
+enum
+{
+    DUMB_IT_RAMP_NONE = 0,
+    DUMB_IT_RAMP_ONOFF_ONLY = 1,
+    DUMB_IT_RAMP_FULL = 2
+};
+        
 void DUMBEXPORT dumb_it_set_ramp_style(DUMB_IT_SIGRENDERER * sigrenderer, int ramp_style);
-
+        
 void DUMBEXPORT dumb_it_set_loop_callback(DUMB_IT_SIGRENDERER *sigrenderer, int (DUMBCALLBACK *callback)(void *data), void *data);
 void DUMBEXPORT dumb_it_set_xm_speed_zero_callback(DUMB_IT_SIGRENDERER *sigrenderer, int (DUMBCALLBACK *callback)(void *data), void *data);
 void DUMBEXPORT dumb_it_set_midi_callback(DUMB_IT_SIGRENDERER *sigrenderer, int (DUMBCALLBACK *callback)(void *data, int channel, unsigned char midi_byte), void *data);
@@ -395,13 +410,13 @@ void DUMBEXPORT dumb_it_set_global_volume_zero_callback(DUMB_IT_SIGRENDERER *sig
 int DUMBCALLBACK dumb_it_callback_terminate(void *data);
 int DUMBCALLBACK dumb_it_callback_midi_block(void *data, int channel, unsigned char midi_byte);
 
-/* dumb_*_mod*: restrict |= 1-Don't read 15 sample files / 2-Use old pattern counting method */
+/* dumb_*_mod*: restrict_ |= 1-Don't read 15 sample files / 2-Use old pattern counting method */
 
 DUH *DUMBEXPORT dumb_load_it(const char *filename);
 DUH *DUMBEXPORT dumb_load_xm(const char *filename);
 DUH *DUMBEXPORT dumb_load_s3m(const char *filename);
 DUH *DUMBEXPORT dumb_load_stm(const char *filename);
-DUH *DUMBEXPORT dumb_load_mod(const char *filename, int rstrict);
+DUH *DUMBEXPORT dumb_load_mod(const char *filename, int restrict_);
 DUH *DUMBEXPORT dumb_load_ptm(const char *filename);
 DUH *DUMBEXPORT dumb_load_669(const char *filename);
 DUH *DUMBEXPORT dumb_load_psm(const char *filename, int subsong);
@@ -409,13 +424,14 @@ DUH *DUMBEXPORT dumb_load_old_psm(const char * filename);
 DUH *DUMBEXPORT dumb_load_mtm(const char *filename);
 DUH *DUMBEXPORT dumb_load_riff(const char *filename);
 DUH *DUMBEXPORT dumb_load_asy(const char *filename);
+DUH *DUMBEXPORT dumb_load_amf(const char *filename);
 DUH *DUMBEXPORT dumb_load_okt(const char *filename);
 
 DUH *DUMBEXPORT dumb_read_it(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_xm(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_s3m(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_stm(DUMBFILE *f);
-DUH *DUMBEXPORT dumb_read_mod(DUMBFILE *f, int rstrict);
+DUH *DUMBEXPORT dumb_read_mod(DUMBFILE *f, int restrict_);
 DUH *DUMBEXPORT dumb_read_ptm(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_669(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_psm(DUMBFILE *f, int subsong);
@@ -423,13 +439,14 @@ DUH *DUMBEXPORT dumb_read_old_psm(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_mtm(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_riff(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_asy(DUMBFILE *f);
+DUH *DUMBEXPORT dumb_read_amf(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_okt(DUMBFILE *f);
 
 DUH *DUMBEXPORT dumb_load_it_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_xm_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_s3m_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_stm_quick(const char *filename);
-DUH *DUMBEXPORT dumb_load_mod_quick(const char *filename, int rstrict);
+DUH *DUMBEXPORT dumb_load_mod_quick(const char *filename, int restrict_);
 DUH *DUMBEXPORT dumb_load_ptm_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_669_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_psm_quick(const char *filename, int subsong);
@@ -437,13 +454,14 @@ DUH *DUMBEXPORT dumb_load_old_psm_quick(const char * filename);
 DUH *DUMBEXPORT dumb_load_mtm_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_riff_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_asy_quick(const char *filename);
+DUH *DUMBEXPORT dumb_load_amf_quick(const char *filename);
 DUH *DUMBEXPORT dumb_load_okt_quick(const char *filename);
 
 DUH *DUMBEXPORT dumb_read_it_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_xm_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_s3m_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_stm_quick(DUMBFILE *f);
-DUH *DUMBEXPORT dumb_read_mod_quick(DUMBFILE *f, int rstrict);
+DUH *DUMBEXPORT dumb_read_mod_quick(DUMBFILE *f, int restrict_);
 DUH *DUMBEXPORT dumb_read_ptm_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_669_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_psm_quick(DUMBFILE *f, int subsong);
@@ -451,7 +469,14 @@ DUH *DUMBEXPORT dumb_read_old_psm_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_mtm_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_riff_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_asy_quick(DUMBFILE *f);
+DUH *DUMBEXPORT dumb_read_amf_quick(DUMBFILE *f);
 DUH *DUMBEXPORT dumb_read_okt_quick(DUMBFILE *f);
+
+DUH *DUMBEXPORT dumb_read_any_quick(DUMBFILE *f, int restrict_, int subsong);
+DUH *DUMBEXPORT dumb_read_any(DUMBFILE *f, int restrict_, int subsong);
+
+DUH *DUMBEXPORT dumb_load_any_quick(const char *filename, int restrict_, int subsong);
+DUH *DUMBEXPORT dumb_load_any(const char *filename, int restrict_, int subsong);
 
 int32 DUMBEXPORT dumb_it_build_checkpoints(DUMB_IT_SIGDATA *sigdata, int startorder);
 void DUMBEXPORT dumb_it_do_initial_runthrough(DUH *duh);
@@ -581,6 +606,10 @@ typedef void (*DUH_SIGRENDERER_GET_CURRENT_SAMPLE)(
 	sample_t *samples
 );
 
+typedef int32 (*DUH_SIGRENDERER_GET_POSITION)(
+	sigrenderer_t *sigrenderer
+);
+
 typedef void (*DUH_END_SIGRENDERER)(sigrenderer_t *sigrenderer);
 
 typedef void (*DUH_UNLOAD_SIGDATA)(sigdata_t *sigdata);
@@ -596,6 +625,7 @@ typedef struct DUH_SIGTYPE_DESC
 	DUH_SIGRENDERER_SET_SIGPARAM       sigrenderer_set_sigparam;
 	DUH_SIGRENDERER_GENERATE_SAMPLES   sigrenderer_generate_samples;
 	DUH_SIGRENDERER_GET_CURRENT_SAMPLE sigrenderer_get_current_sample;
+	DUH_SIGRENDERER_GET_POSITION       sigrenderer_get_position;
 	DUH_END_SIGRENDERER                end_sigrenderer;
 	DUH_UNLOAD_SIGDATA                 unload_sigdata;
 }
@@ -658,18 +688,27 @@ void DUMBEXPORT dumb_destroy_click_remover_array(int n, DUMB_CLICK_REMOVER **cr)
 /* Resampling Helpers */
 
 #define DUMB_RQ_ALIASING 0
-#define DUMB_RQ_LINEAR   1
-#define DUMB_RQ_CUBIC    2
-#define DUMB_RQ_N_LEVELS 3
-extern int dumb_resampling_quality;
+#define DUMB_LQ_LINEAR   1
+#define DUMB_LQ_CUBIC    2
+
+#define DUMB_RQ_BLEP     3
+#define DUMB_RQ_LINEAR   4
+#define DUMB_RQ_BLAM     5
+#define DUMB_RQ_CUBIC    6
+#define DUMB_RQ_FIR      7
+#define DUMB_RQ_N_LEVELS 8
+
+/* Subtract quality above by this to convert to resampler.c's quality */
+#define DUMB_RESAMPLER_BASE	2
+
+extern int dumb_resampling_quality; /* This specifies the default */
+void DUMBEXPORT dumb_it_set_resampling_quality(DUMB_IT_SIGRENDERER * sigrenderer, int quality); /* This overrides it */
 
 typedef struct DUMB_RESAMPLER DUMB_RESAMPLER;
 
 typedef struct DUMB_VOLUME_RAMP_INFO DUMB_VOLUME_RAMP_INFO;
 
 typedef void (*DUMB_RESAMPLE_PICKUP)(DUMB_RESAMPLER *resampler, void *data);
-
-#include "internal/blip_buf.h"
 
 struct DUMB_RESAMPLER
 {
@@ -688,9 +727,8 @@ struct DUMB_RESAMPLER
 		signed char x8[3*2];
 	} x;
 	int overshot;
-	int last_clock;
-	int last_amp[2];
-	blip_t* blip_buffer[2];
+    double fir_resampler_ratio;
+    void* fir_resampler[2];
 };
 
 struct DUMB_VOLUME_RAMP_INFO
@@ -699,6 +737,7 @@ struct DUMB_VOLUME_RAMP_INFO
 	float delta;
 	float target;
 	float mix;
+    unsigned char declick_stage;
 };
 
 void dumb_reset_resampler(DUMB_RESAMPLER *resampler, sample_t *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
@@ -749,6 +788,11 @@ void dumb_resample_get_current_sample_n_1_2(int n, DUMB_RESAMPLER *resampler, DU
 void dumb_resample_get_current_sample_n_2_2(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_end_resampler_n(int n, DUMB_RESAMPLER *resampler);
 
+/* This sets the default panning separation for hard panned formats,
+   or for formats with default panning information. This must be set
+   before using any readers or loaders, and is not really thread safe. */
+
+extern int dumb_it_default_panning_separation; /* in percent, default 25 */
 
 /* DUH Construction */
 

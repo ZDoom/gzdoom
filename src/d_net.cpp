@@ -107,7 +107,7 @@ int 			resendcount[MAXNETNODES];
 
 unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
 unsigned int	currrecvtime[MAXPLAYERS];
-unsigned int	lastglobalrecvtime;						// Identify the last time a packet was recieved.
+unsigned int	lastglobalrecvtime;						// Identify the last time a packet was received.
 bool			hadlate;
 int				netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
 int				lastaverage;
@@ -230,7 +230,7 @@ static struct TicSpecial
 
 		specialsize = MAX(specialsize * 2, needed + 30);
 
-		DPrintf ("Expanding special size to %d\n", specialsize);
+		DPrintf ("Expanding special size to %zu\n", specialsize);
 
 		for (i = 0; i < BACKUPTICS; i++)
 			streams[i] = (BYTE *)M_Realloc (streams[i], specialsize);
@@ -951,7 +951,7 @@ void NetUpdate (void)
 	newtics = nowtime - gametime;
 	gametime = nowtime;
 
-	if (newtics <= 0 || pauseext)	// nothing new to update or window paused
+	if (newtics <= 0)	// nothing new to update
 	{
 		GetPackets ();
 		return;
@@ -1810,6 +1810,7 @@ void TryRunTics (void)
 
 	// If paused, do not eat more CPU time than we need, because it
 	// will all be wasted anyway.
+	if (pauseext) r_NoInterpolate = true;
 	bool doWait = cl_capfps || r_NoInterpolate /*|| netgame*/;
 
 	// get real tics
@@ -1860,7 +1861,7 @@ void TryRunTics (void)
 	if (counts == 0 && !doWait)
 	{
 		// Check possible stall conditions
-		Net_CheckLastRecieved(counts);
+		Net_CheckLastReceived(counts);
 		if (realtics >= 1)
 		{
 			C_Ticker();
@@ -1896,7 +1897,7 @@ void TryRunTics (void)
 			I_Error ("TryRunTics: lowtic < gametic");
 
 		// Check possible stall conditions
-		Net_CheckLastRecieved (counts);
+		Net_CheckLastReceived (counts);
 
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime (false) - entertic >= 1)
@@ -1934,7 +1935,7 @@ void TryRunTics (void)
 			C_Ticker ();
 			M_Ticker ();
 			I_GetTime (true);
-			G_Ticker ();
+			if (!pauseext) G_Ticker();
 			gametic++;
 
 			NetUpdate ();	// check for new console commands
@@ -1944,9 +1945,9 @@ void TryRunTics (void)
 	}
 }
 
-void Net_CheckLastRecieved (int counts)
+void Net_CheckLastReceived (int counts)
 {
-	// [Ed850] Check to see the last time a packet was recieved.
+	// [Ed850] Check to see the last time a packet was received.
 	// If it's longer then 3 seconds, a node has likely stalled.
 	if (I_GetTime(false) - lastglobalrecvtime >= TICRATE * 3)
 	{
@@ -1973,11 +1974,11 @@ void Net_CheckLastRecieved (int counts)
 		}
 		else
 		{	//Send a resend request to the Arbitrator, as it's obvious we are stuck here.
-			if (debugfile && !players[playerfornode[Net_Arbitrator]].waiting)
+			if (debugfile && !players[Net_Arbitrator].waiting)
 				fprintf(debugfile, "Arbitrator is slow (%i to %i)\n",
-				nettics[Net_Arbitrator], gametic + counts);
+				nettics[nodeforplayer[Net_Arbitrator]], gametic + counts);
 			//Send resend request to the Arbitrator. Also mark the Arbitrator as waiting to display it in the hud.
-			remoteresend[Net_Arbitrator] = players[playerfornode[Net_Arbitrator]].waiting = hadlate = true;
+			remoteresend[nodeforplayer[Net_Arbitrator]] = players[Net_Arbitrator].waiting = hadlate = true;
 		}
 	}
 }
@@ -2047,14 +2048,14 @@ void FDynamicBuffer::SetData (const BYTE *data, int len)
 		m_BufferLen = (len + 255) & ~255;
 		m_Data = (BYTE *)M_Realloc (m_Data, m_BufferLen);
 	}
-	if (data)
+	if (data != NULL)
 	{
 		m_Len = len;
 		memcpy (m_Data, data, len);
 	}
-	else
+	else 
 	{
-		len = 0;
+		m_Len = 0;
 	}
 }
 
@@ -2667,7 +2668,9 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_SUMMONFOE2:
 			skip = strlen ((char *)(*stream)) + 26;
 			break;
-
+		case DEM_CHANGEMAP2:
+			skip = strlen((char *)(*stream + 1)) + 2;
+			break;
 		case DEM_MUSICCHANGE:
 		case DEM_PRINT:
 		case DEM_CENTERPRINT:

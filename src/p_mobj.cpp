@@ -575,19 +575,23 @@ void AActor::AddInventory (AInventory *item)
 //
 //============================================================================
 
-void AActor::RemoveInventory (AInventory *item)
+void AActor::RemoveInventory(AInventory *item)
 {
 	AInventory *inv, **invp;
 
-	invp = &item->Owner->Inventory;
-	for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
+	if (item != NULL && item->Owner != NULL)	// can happen if the owner was destroyed by some action from an item's use state.
 	{
-		if (inv == item)
+		invp = &item->Owner->Inventory;
+		for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
 		{
-			*invp = item->Inventory;
-			item->DetachFromOwner ();
-			item->Owner = NULL;
-			break;
+			if (inv == item)
+			{
+				*invp = item->Inventory;
+				item->DetachFromOwner();
+				item->Owner = NULL;
+				item->Inventory = NULL;
+				break;
+			}
 		}
 	}
 }
@@ -1968,8 +1972,6 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						//int dir;
-						//angle_t delta;
 						angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
@@ -1978,13 +1980,9 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						{
 							bool tg = (mo->target != NULL);
 							bool blockingtg = (BlockingMobj->target != NULL);
-							if (BlockingMobj->flags7 & MF7_AIMREFLECT && (tg || blockingtg))
+							if ((BlockingMobj->flags7 & MF7_AIMREFLECT) && (tg | blockingtg))
 							{
-								AActor *origin;
-								if (tg)
-									origin = mo->target;
-								else if (blockingtg)
-									origin = BlockingMobj->target;
+								AActor *origin = tg ? mo->target : BlockingMobj->target;
 
 								float speed = (float)(mo->Speed);
 								//dest->x - source->x
@@ -1996,12 +1994,21 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							}
 							else
 							{
-								
-								mo->angle = angle;
-								angle >>= ANGLETOFINESHIFT;
-								mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);
-								mo->vely = FixedMul(mo->Speed >> 1, finesine[angle]);
-								mo->velz = -mo->velz / 2;
+								if ((BlockingMobj->flags7 & MF7_MIRRORREFLECT) && (tg | blockingtg))
+								{
+									mo->angle += ANGLE_180;
+									mo->velx = -mo->velx / 2;
+									mo->vely = -mo->vely / 2;
+									mo->velz = -mo->velz / 2;
+								}
+								else
+								{
+									mo->angle = angle;
+									angle >>= ANGLETOFINESHIFT;
+									mo->velx = FixedMul(mo->Speed >> 1, finecosine[angle]);
+									mo->vely = FixedMul(mo->Speed >> 1, finesine[angle]);
+									mo->velz = -mo->velz / 2;
+								}
 							}
 						}
 						else
@@ -2310,6 +2317,16 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		}
 	}
 
+	// Hexen compatibility handling for floatbobbing. Ugh...
+	// Hexen yanked all items to the floor, except those being spawned at map start in the air.
+	// Those were kept at their original height.
+	// Do this only if the item was actually spawned by the map above ground to avoid problems.
+	if (mo->special1 > 0 && (mo->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
+	{
+		mo->z = mo->floorz + mo->special1;
+	}
+
+
 //
 // adjust height
 //
@@ -2612,8 +2629,6 @@ void P_NightmareRespawn (AActor *mobj)
 		z = ONCEILINGZ;
 	else if (info->flags2 & MF2_SPAWNFLOAT)
 		z = FLOATRANDZ;
-	else if (info->flags2 & MF2_FLOATBOB)
-		z = mobj->SpawnPoint[2];
 	else
 		z = ONFLOORZ;
 
@@ -2932,14 +2947,11 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 {
 	if (flags2 & MF2_DONTREFLECT) return true;
 	if (thing->flags7 & MF7_THRUREFLECT) return false;
-
-	if (thing->flags7 & MF7_MIRRORREFLECT)
-		angle += ANGLE_180;
 	// Change angle for reflection
-	else if (thing->flags4&MF4_SHIELDREFLECT)
+	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur
-		if (abs (angle - thing->angle)>>24 > 45)
+		if (absangle(angle - thing->angle)>>24 > 45)
 			return true;	// Let missile explode
 
 		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???
@@ -2959,15 +2971,23 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 		else 
 			angle -= ANG45;
 	}
-	else if (thing->flags7 & MF7_AIMREFLECT)
+	else
+	{
+		angle += ANGLE_1 * ((pr_reflect() % 16) - 8);
+	}
+	//Always check for AIMREFLECT, no matter what else is checked above.
+	if (thing->flags7 & MF7_AIMREFLECT)
 	{
 		if (this->target != NULL)
+		{
 			A_Face(this, this->target);
+		}
 		else if (thing->target != NULL)
+		{
 			A_Face(this, thing->target);
+		}
 	}
-	else 
-		angle += ANGLE_1 * ((pr_reflect()%16)-8);
+	
 	return false;
 }
 
@@ -3483,11 +3503,13 @@ void AActor::Tick ()
 			velz <= 0 &&
 			floorz == z)
 		{
-			secplane_t floorplane = floorsector->floorplane;
+			secplane_t floorplane;
 
 #ifdef _3DFLOORS
 			// Check 3D floors as well
 			floorplane = P_FindFloorPlane(floorsector, x, y, floorz);
+#else
+			floorplane = floorsector->floorplane;
 #endif
 
 			if (floorplane.c < STEEPSLOPE &&
@@ -3654,17 +3676,9 @@ void AActor::Tick ()
 		if (state->GetNoDelay())
 		{
 			// For immediately spawned objects with the NoDelay flag set for their
-			// Spawn state, explicitly set the current state so that it calls its
-			// action and chains 0-tic states.
-			int starttics = tics;
-			if (!SetState(state))
+			// Spawn state, explicitly call the current state's function.
+			if (state->CallAction(this, this) && (ObjectFlags & OF_EuthanizeMe))
 				return;				// freed itself
-			// If the initial state had a duration of 0 tics, let the next state run
-			// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
-			else if (starttics > 0 && tics >= 0)
-			{
-				tics++;
-			}
 		}
 	}
 	// cycle through states, calling action functions at transitions
@@ -4466,7 +4480,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 	p->MinPitch = p->MaxPitch = 0;	// will be filled in by PostBeginPlay()/netcode
-	p->cheats &= ~CF_FLY;
+
 
 	p->velx = p->vely = 0;		// killough 10/98: initialize bobbing to 0.
 
@@ -4858,7 +4872,13 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj = AActor::StaticSpawn (i, x, y, z, NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
+	{
 		mobj->z += mthing->z;
+		if ((mobj->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
+		{
+			mobj->special1 = mthing->z;
+		}
+	}
 	else if (z == ONCEILINGZ)
 		mobj->z -= mthing->z;
 
@@ -4871,7 +4891,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else if (mthing->gravity > 0) mobj->gravity = FixedMul(mobj->gravity, mthing->gravity);
 	else mobj->flags &= ~MF_NOGRAVITY;
 
-	P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	// For Hexen floatbob 'compatibility' we do not really want to alter the floorz.
+	if (mobj->special1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(ib_compatflags & BCOMPATF_FLOATBOB))
+	{
+		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
+	}
 
 	if (!(mobj->flags2 & MF2_ARGSDEFINED))
 	{
@@ -5618,18 +5642,31 @@ static fixed_t GetDefaultSpeed(const PClass *type)
 
 AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type, AActor *owner)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT + source->GetBobOffset(),
 		source, dest, type, true, owner);
 }
 
 AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *type)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	return P_SpawnMissileXYZ (source->x, source->y, z, source, dest, type);
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	AActor *source, AActor *dest, const PClass *type, bool checkspawn, AActor *owner)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
+
 	if (dest == NULL)
 	{
 		Printf ("P_SpawnMissilyXYZ: Tried to shoot %s from %s with no dest\n",
@@ -5699,6 +5736,10 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	angle_t an;
 	fixed_t dist;
 	AActor *th = Spawn (type, source->x, source->y, source->z + 4*8*FRACUNIT, ALLOW_REPLACE);
@@ -5740,6 +5781,10 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
 	angle_t angle, fixed_t velz)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT + source->GetBobOffset(),
 		type, angle, velz, GetDefaultSpeed (type));
 }
@@ -5753,6 +5798,10 @@ AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
 
 AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	angle_t an;
 	fixed_t dist;
 	fixed_t speed;
@@ -5783,6 +5832,10 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
 	angle_t angle, fixed_t velz, fixed_t speed)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT + source->GetBobOffset(),
 		type, angle, velz, speed);
 }
@@ -5790,9 +5843,13 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	const PClass *type, angle_t angle, fixed_t velz, fixed_t speed, AActor *owner, bool checkspawn)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	AActor *mo;
 
-	if (z != ONFLOORZ && z != ONCEILINGZ && source != NULL) 
+	if (z != ONFLOORZ && z != ONCEILINGZ) 
 	{
 		z -= source->floorclip;
 	}
@@ -5827,6 +5884,10 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 
 AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type)
 {
+	if (source == NULL)
+	{
+		return NULL;
+	}
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->angle);
 }
 

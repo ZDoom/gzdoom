@@ -72,6 +72,8 @@ const int SXF_SETTARGET =				1 << 20;
 const int SXF_SETTRACER =				1 << 21;
 const int SXF_NOPOINTERS =				1 << 22;
 const int SXF_ORIGINATOR =				1 << 23;
+const int SXF_TRANSFERSPRITEFRAME	=	1 << 24;
+const int SXF_TRANSFERROLL =			1 << 25;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;
@@ -447,6 +449,25 @@ enum
 	FTF_CLAMP =		1 << 1,
 };
 
+// Flags for A_Face*
+enum
+{
+	FAF_BOTTOM = 1,
+	FAF_MIDDLE = 2,
+	FAF_TOP = 4,
+	FAF_NODISTFACTOR = 8,
+};
+
+// Flags for A_QuakeEx
+enum
+{
+	QF_RELATIVE =		1,
+	QF_SCALEDOWN =		1 << 1,
+	QF_SCALEUP =		1 << 2,
+	QF_MAX =			1 << 3,
+	QF_FULLINTENSITY =	1 << 4,
+	QF_WAVE =			1 << 5,
+};
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

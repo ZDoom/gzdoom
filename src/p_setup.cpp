@@ -1311,7 +1311,7 @@ void P_LoadSegs (MapData * map)
 
 			ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
 			dis = 0;
-			delta_angle = (abs(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
+			delta_angle = (absangle(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
 
 			if (delta_angle != 0)
 			{
@@ -1362,7 +1362,7 @@ void P_LoadSegs (MapData * map)
 			}
 		}
 	}
-	catch (badseg bad)
+	catch (const badseg &bad) // the preferred way is to catch by (const) reference.
 	{
 		switch (bad.badtype)
 		{
@@ -1467,7 +1467,6 @@ void P_LoadSubsectors (MapData * map)
 
 void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 {
-	char				fname[9];
 	int 				i;
 	char				*msp;
 	mapsector_t			*ms;
@@ -1486,7 +1485,6 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		defSeqType = -1;
 
 	fogMap = normMap = NULL;
-	fname[8] = 0;
 
 	msp = new char[lumplen];
 	map->Read(ML_SECTORS, msp);
@@ -3044,15 +3042,12 @@ void P_LoadBlockMap (MapData * map)
 	blockmap = blockmaplump+4;
 }
 
-
-
 //
 // P_GroupLines
 // Builds sector line lists and subsector sector numbers.
 // Finds block bounding boxes for sectors.
 // [RH] Handles extra lights
 //
-struct linf { short tag; WORD count; };
 line_t**				linebuffer;
 
 static void P_GroupLines (bool buildmap)
@@ -3062,7 +3057,6 @@ static void P_GroupLines (bool buildmap)
 	int 				i;
 	int 				j;
 	int 				total;
-	int					totallights;
 	line_t* 			li;
 	sector_t*			sector;
 	FBoundingBox		bbox;
@@ -3095,7 +3089,6 @@ static void P_GroupLines (bool buildmap)
 	// count number of lines in each sector
 	times[1].Clock();
 	total = 0;
-	totallights = 0;
 	for (i = 0, li = lines; i < numlines; i++, li++)
 	{
 		if (li->frontsector == NULL)

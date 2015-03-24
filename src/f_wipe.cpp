@@ -303,7 +303,7 @@ bool wipe_doBurn (int ticks)
 				DWORD fg = fg2rgb[fromnew[x]];
 				DWORD bg = bg2rgb[fromold[x]];
 				fg = (fg+bg) | 0x1f07c1f;
-				to[x] = RGB32k[0][0][fg & (fg>>15)];
+				to[x] = RGB32k.All[fg & (fg>>15)];
 				done = false;
 			}
 		}
@@ -354,7 +354,7 @@ bool wipe_doFade (int ticks)
 				DWORD fg = fg2rgb[fromnew[x]];
 				DWORD bg = bg2rgb[fromold[x]];
 				fg = (fg+bg) | 0x1f07c1f;
-				to[x] = RGB32k[0][0][fg & (fg>>15)];
+				to[x] = RGB32k.All[fg & (fg>>15)];
 			}
 			fromnew += SCREENWIDTH;
 			fromold += SCREENWIDTH;

@@ -82,9 +82,9 @@ ACTOR Actor native //: Thinker
 	action native A_XScream();
 	action native A_Look();
 	action native A_Chase(state melee = "*", state missile = "none", int flags = 0);
-	action native A_FaceTarget(float max_turn = 0, float max_pitch = 270);
-	action native A_FaceTracer(float max_turn = 0, float max_pitch = 270);
-	action native A_FaceMaster(float max_turn = 0, float max_pitch = 270);
+	action native A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0);
+	action native A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0);
+	action native A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0);
 	action native A_PosAttack();
 	action native A_Scream();
 	action native A_SPosAttack();
@@ -299,6 +299,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetUserArray(name varname, int index, int value);
 	action native A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
+	action native A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1);
 	action native A_SetTics(int tics);
 	action native A_SetDamageType(name damagetype);
 	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);

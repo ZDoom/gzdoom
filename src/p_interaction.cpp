@@ -366,7 +366,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	if (debugfile && this->player)
 	{
-		static int dieticks[MAXPLAYERS];
+		static int dieticks[MAXPLAYERS]; // [ZzZombo] not used? Except if for peeking in debugger...
 		int pnum = int(this->player-players);
 		dieticks[pnum] = gametic;
 		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
@@ -1325,7 +1325,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			if ((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA) || (player->mo->flags7 & MF7_BUDDHA)) && (damage < TELEFRAG_DAMAGE)) && (player->playerstate != PST_DEAD))
+			if (((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA) || (player->mo->flags7 & MF7_BUDDHA)) && (damage < TELEFRAG_DAMAGE))) && (player->playerstate != PST_DEAD))
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;
@@ -1716,14 +1716,12 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	bool playPainSound)
 {
 	AActor *target;
-	AActor *inflictor;
 
 	if (player == NULL)
 	{
 		return;
 	}
 	target = player->mo;
-	inflictor = source;
 	if (target->health <= 0)
 	{
 		return;

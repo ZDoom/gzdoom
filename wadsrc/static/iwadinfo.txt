@@ -163,7 +163,7 @@ IWad
 IWad
 {
 	Name = "Heretic: Shadow of the Serpent Riders"
-	Autoname = "Heretic1"
+	Autoname = "HereticSR"
 	Game = "Heretic"
 	Config = "Heretic"
 	Mapinfo = "mapinfo/heretic.txt"
@@ -175,7 +175,6 @@ IWad
 IWad
 {
 	Name = "Heretic"
-	Autoname = "Heretic1"
 	Game = "Heretic"
 	Config = "Heretic"
 	Mapinfo = "mapinfo/heretic.txt"
@@ -198,6 +197,7 @@ IWad
 {
 	Name = "FreeDM"
 	Autoname = "FreeDM"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
@@ -208,7 +208,8 @@ IWad
 IWad
 {
 	Name = "Freedoom: Phase 2"
-	Autoname = "Freedoom"
+	Autoname = "Freedoom2"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
@@ -220,6 +221,7 @@ IWad
 {
 	Name = "Freedoom: Phase 1"
 	Autoname = "Freedoom1"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom1.txt"
@@ -229,8 +231,9 @@ IWad
 	
 IWad
 {
-	Name = "Freedoom 'Demo'"
+	Name = "Freedoom: Demo Version"
 	Autoname = "Freedoom1"
+	Group = "Freedoom"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom1.txt"
@@ -240,8 +243,8 @@ IWad
 	
 IWad
 {
-	Name = "DOOM 1: BFG Edition"
-	Autoname = "Doom1"
+	Name = "DOOM: BFG Edition"
+	Autoname = "DoomBFG"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/ultdoom.txt"
@@ -256,7 +259,7 @@ IWad
 IWad
 {
 	Name = "The Ultimate DOOM"
-	Autoname = "Doom1"
+	Autoname = "DoomU"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/ultdoom.txt"

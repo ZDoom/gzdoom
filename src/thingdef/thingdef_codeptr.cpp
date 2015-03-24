@@ -1337,7 +1337,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	AWeapon * weapon=player->ReadyWeapon;
 	AActor *linetarget;
 
-	if (UseAmmo && weapon)
+		// Only use ammo if called from a weapon
+	if (UseAmmo && ACTION_CALL_FROM_WEAPON() && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -1850,30 +1851,32 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromSiblings)
 
 enum SIX_Flags
 {
-	SIXF_TRANSFERTRANSLATION	= 1 << 0,
-	SIXF_ABSOLUTEPOSITION		= 1 << 1,
-	SIXF_ABSOLUTEANGLE			= 1 << 2,
-	SIXF_ABSOLUTEVELOCITY		= 1 << 3,
-	SIXF_SETMASTER				= 1 << 4,
-	SIXF_NOCHECKPOSITION		= 1 << 5,
-	SIXF_TELEFRAG				= 1 << 6,
-	SIXF_CLIENTSIDE				= 1 << 7,	// only used by Skulldronum
-	SIXF_TRANSFERAMBUSHFLAG		= 1 << 8,
-	SIXF_TRANSFERPITCH			= 1 << 9,
-	SIXF_TRANSFERPOINTERS		= 1 << 10,
-	SIXF_USEBLOODCOLOR			= 1 << 11,
-	SIXF_CLEARCALLERTID			= 1 << 12,
-	SIXF_MULTIPLYSPEED			= 1 << 13,
-	SIXF_TRANSFERSCALE			= 1 << 14,
-	SIXF_TRANSFERSPECIAL		= 1 << 15,
-	SIXF_CLEARCALLERSPECIAL		= 1 << 16,
-	SIXF_TRANSFERSTENCILCOL		= 1 << 17,
-	SIXF_TRANSFERALPHA			= 1 << 18,
-	SIXF_TRANSFERRENDERSTYLE	= 1 << 19,
-	SIXF_SETTARGET				= 1 << 20,
-	SIXF_SETTRACER				= 1 << 21,
-	SIXF_NOPOINTERS				= 1 << 22,
-	SIXF_ORIGINATOR				= 1 << 23,
+	SIXF_TRANSFERTRANSLATION	= 0x00000001,
+	SIXF_ABSOLUTEPOSITION		= 0x00000002,
+	SIXF_ABSOLUTEANGLE			= 0x00000004,
+	SIXF_ABSOLUTEVELOCITY		= 0x00000008,
+	SIXF_SETMASTER				= 0x00000010,
+	SIXF_NOCHECKPOSITION		= 0x00000020,
+	SIXF_TELEFRAG				= 0x00000040,
+	SIXF_CLIENTSIDE				= 0x00000080,	// only used by Skulldronum
+	SIXF_TRANSFERAMBUSHFLAG		= 0x00000100,
+	SIXF_TRANSFERPITCH			= 0x00000200,
+	SIXF_TRANSFERPOINTERS		= 0x00000400,
+	SIXF_USEBLOODCOLOR			= 0x00000800,
+	SIXF_CLEARCALLERTID			= 0x00001000,
+	SIXF_MULTIPLYSPEED			= 0x00002000,
+	SIXF_TRANSFERSCALE			= 0x00004000,
+	SIXF_TRANSFERSPECIAL		= 0x00008000,
+	SIXF_CLEARCALLERSPECIAL		= 0x00010000,
+	SIXF_TRANSFERSTENCILCOL		= 0x00020000,
+	SIXF_TRANSFERALPHA			= 0x00040000,
+	SIXF_TRANSFERRENDERSTYLE	= 0x00080000,
+	SIXF_SETTARGET				= 0x00100000,
+	SIXF_SETTRACER				= 0x00200000,
+	SIXF_NOPOINTERS				= 0x00400000,
+	SIXF_ORIGINATOR				= 0x00800000,
+	SIXF_TRANSFERSPRITEFRAME	= 0x01000000,
+	SIXF_TRANSFERROLL			= 0x02000000,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -2018,6 +2021,17 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	if (flags & SIXF_TRANSFERRENDERSTYLE)
 	{
 		mo->RenderStyle = self->RenderStyle;
+	}
+	
+	if (flags & SIXF_TRANSFERSPRITEFRAME)
+	{
+		mo->sprite = self->sprite;
+		mo->frame = self->frame;
+	}
+
+	if (flags & SIXF_TRANSFERROLL)
+	{
+		mo->roll = self->roll;
 	}
 
 	return true;
@@ -4398,6 +4412,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
 
 //===========================================================================
 //
+// A_QuakeEx
+//
+// Extended version of A_Quake. Takes individual axis into account and can
+// take a flag.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
+{
+	ACTION_PARAM_START(11);
+	ACTION_PARAM_INT(intensityX, 0);
+	ACTION_PARAM_INT(intensityY, 1);
+	ACTION_PARAM_INT(intensityZ, 2);
+	ACTION_PARAM_INT(duration, 3);
+	ACTION_PARAM_INT(damrad, 4);
+	ACTION_PARAM_INT(tremrad, 5);
+	ACTION_PARAM_SOUND(sound, 6);
+	ACTION_PARAM_INT(flags, 7);
+	ACTION_PARAM_DOUBLE(mulWaveX, 8);
+	ACTION_PARAM_DOUBLE(mulWaveY, 9);
+	ACTION_PARAM_DOUBLE(mulWaveZ, 10);
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ);
+}
+
+//===========================================================================
+//
 // A_Weave
 //
 //===========================================================================
@@ -5029,9 +5068,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 
 		if (flags & RGF_CUBE)
 		{ // check if inside a cube
-			if (abs(thing->x - self->x) > distance ||
-				abs(thing->y - self->y) > distance ||
-				abs((thing->z + thing->height/2) - (self->z + self->height/2)) > distance)
+			if (fabs((double)thing->x - self->x) > (double)distance ||
+				fabs((double)thing->y - self->y) > (double)distance ||
+				fabs((double)(thing->z + thing->height/2) - (self->z + self->height/2)) > (double)distance)
 			{
 				continue;
 			}
@@ -5045,7 +5084,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				continue;
 			}
 		}
-		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.

@@ -265,14 +265,13 @@ int main (int argc, char **argv)
 	
 	setlocale (LC_ALL, "C");
 
-	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
+	if (SDL_Init (0) < 0)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
 	}
 	atterm (SDL_Quit);
 
-	printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
 	printf("\n");
 	
     try

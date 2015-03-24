@@ -221,7 +221,6 @@ ACTOR BagOfHolding : BackpackItem 8
 	Inventory.PickupMessage "$TXT_ITEMBAGOFHOLDING"
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	States
 	{
 	Spawn:

@@ -217,7 +217,7 @@ FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 //
 // When the string table needs to grow to hold more strings, a garbage
 // collection is first attempted to see if more room can be made to store
-// strings without growing. A string is concidered in use if any value
+// strings without growing. A string is considered in use if any value
 // in any of these variable blocks contains a valid ID in the global string
 // table:
 //   * The active area of the ACS stack
@@ -226,7 +226,7 @@ FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 //   * All world variables
 //   * All global variables
 // It's not important whether or not they are really used as strings, only
-// that they might be. A string is also concidered in use if its lock count
+// that they might be. A string is also considered in use if its lock count
 // is non-zero, even if none of the above variable blocks referenced it.
 //
 // To keep track of local and map variables for nonresident maps in a hub,
@@ -1066,14 +1066,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 	item->ClearCounters();
 	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		if (static_cast<ABasicArmorPickup*>(item)->SaveAmount != 0)
-		{
-			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-		}
-		else
-		{
-			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-		}
+		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
 	}
 	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
 	{
@@ -2052,7 +2045,6 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 								}
 							}
 						}
-						i += 4+ArrayStore[arraynum].ArraySize;
 					}
 				}
 
@@ -4443,7 +4435,7 @@ enum EACSFunctions
 	ACSF_SetActorRoll,
 	ACSF_ChangeActorRoll,
 	ACSF_GetActorRoll,
-
+	ACSF_QuakeEx,
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
 	-101 : PlayerIsSpectator(1),
@@ -4823,15 +4815,11 @@ static int SwapActorTeleFog(AActor *activator, int tid)
 	int count = 0;
 	if (tid == 0)
 	{
-		if ((activator == NULL) || (activator->TeleFogSourceType = activator->TeleFogDestType)) 
+		if ((activator == NULL) || (activator->TeleFogSourceType == activator->TeleFogDestType)) 
 			return 0; //Does nothing if they're the same.
-		else 
-		{
-			const PClass *temp = activator->TeleFogSourceType;
-			activator->TeleFogSourceType = activator->TeleFogDestType;
-			activator->TeleFogDestType = temp;
-			return 1;
-		}
+
+		swapvalues (activator->TeleFogSourceType, activator->TeleFogDestType);
+		return 1;
 	}
 	else
 	{
@@ -4842,9 +4830,8 @@ static int SwapActorTeleFog(AActor *activator, int tid)
 		{
 			if (actor->TeleFogSourceType == actor->TeleFogDestType) 
 				continue; //They're the same. Save the effort.
-			const PClass *temp = actor->TeleFogSourceType;
-			actor->TeleFogSourceType = actor->TeleFogDestType;
-			actor->TeleFogDestType = temp;
+
+			swapvalues (actor->TeleFogSourceType, actor->TeleFogDestType);
 			count++;
 		}
 	}
@@ -5710,6 +5697,15 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			break;
 		}
 
+		case ACSF_QuakeEx:
+		{
+			return P_StartQuakeXYZ(activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], FBehavior::StaticLookupString(args[7]), 
+				argCount > 8 ? args[8] : 0,
+				argCount > 9 ? FIXED2DBL(args[9]) : 1.0, 
+				argCount > 10 ? FIXED2DBL(args[10]) : 1.0, 
+				argCount > 11 ? FIXED2DBL(args[11]) : 1.0 );
+		}
+
 		case ACSF_SetLineActivation:
 			if (argCount >= 2)
 			{
@@ -5846,13 +5842,13 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				}
 
 				FActorIterator iterator(args[0]);
-				bool canraiseall = false;
+				bool canraiseall = true;
 				while ((actor = iterator.Next()))
 				{
-					canraiseall = !P_Thing_CanRaise(actor) | canraiseall;
+					canraiseall = P_Thing_CanRaise(actor) & canraiseall;
 				}
 				
-				return !canraiseall;
+				return canraiseall;
 			}
 			break;
 
@@ -8803,7 +8799,7 @@ scriptwait:
 			break;
 
 		case PCD_PLAYERINGAME:
-			if (STACK(1) < 0 || STACK(1) > MAXPLAYERS)
+			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS)
 			{
 				STACK(1) = false;
 			}
@@ -8814,7 +8810,7 @@ scriptwait:
 			break;
 
 		case PCD_PLAYERISBOT:
-			if (STACK(1) < 0 || STACK(1) > MAXPLAYERS || !playeringame[STACK(1)])
+			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !playeringame[STACK(1)])
 			{
 				STACK(1) = false;
 			}

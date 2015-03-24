@@ -18,66 +18,159 @@
  */
 
 
-******************************************
-*** DUMB v
-******************************************
+*******************************************
+*** DUMB v0.9.3, released 7 August 2005 ***
+*******************************************
 
-Pattern loop stuff improved; not quite right for XM files, but better than
-before
+Hello! Welcome to a long-awaited-or-probably-just-given-up-on-by-everybody
+release! New to this release are lower memory usage, faster mixing loops,
+loading of text fields in the module files, and faster load functions for
+projects that don't need to seek within the module or know its length.
+Additionally, Chad Austin has contributed a dumb2wav tool for converting
+modules to .wav files and updated the Visual Studio 6 project files to
+compile all the examples as well as the library. Users of Unix-like systems
+will be pleased to know that on Chad's suggestion I have made the build
+system cope with variables such as $HOME or ${HOME} in the prefix.
 
-say where ModPlug's source can be obtained
+Chad has also contributed an Autotools build system, but neither of us
+recommends its use. The Autotools are an evil black box, we haven't quite
+managed to get it right, and goodness help you if it happens not to work for
+you. The files are available in a separate download if you absolutely need
+them. Notice that that download is almost twice as large as the rest of DUMB!
 
-Notes now cease to exist if they have faded out, even if they are still in
-the foreground. This means a new note will be started even if a Gxx occurs
-on the same row, as Impulse Tracker does in this scenario.
+Maybe we'll do SCons next time.
 
-XM key off fixed more: now the effect value acts as a delay, matching FT2
+Thanks to Chad for all his work. Chad is the author of Audiere, a portable
+sound library which has started using DUMB for its module playback! Wahoo!
 
-Added dumb2wav example to convert mod files to WAV files.  (Chad
-Austin)
+   http://audiere.sf.net/
 
-Major update to VC6 build.  It builds every example as well as both
-dumb.lib and aldumb.lib.  (Chad Austin)
+There are three main optimisations that went into the mixing loops.
 
-Added first pass of the automake build.  Unix users can compile and
-install dumb with the standard "./configure && make && make install"
-dance.  Caveats: Allegro isn't searched for at configuration time, so
-the examples don't build.  The build also does not attempt to install
-aldumb.h.  (Chad Austin)
+First, I downloaded ModPlugXMMS and had a peek at the mixing code, which is
+Public Domain. It uses look-up tables for the cubic mixing. I pinched the
+idea, and that sped DUMB's cubic (best quality) resamplers up by a factor of
+two or three.
 
-For IT files, tone portamento didn't work properly when no note was playing.
-The effect value wasn't stored. Thanks to Maim from #trax on EFnet for
-discovering this bug.
+Secondly, the samples loaded from the file are now kept in 8-bit or 16-bit
+format, whereas previously they were being converted to 24-bit-in-32-bit on
+loading. This means the samples occupy a half or a quarter of the memory they
+used to occupy. It also had the side-effect of speeding up the mixing loops,
+but it meant I had to duplicate the resampling code. (It is all done with
+macros in the source code, but it becomes two copies on the binary level.)
 
-XM key off fixed - doesn't overwrite note any more
+Secondly, stereo samples and stereo mixing buffers are now kept in
+interleaved format, where previously the two channels were done separately to
+keep the code simpler. This change has made the library quite a bit bigger,
+but has made the code run almost twice as fast for stereo output (tested for
+modules whose samples are mostly mono)!
 
-tagging system added - title
-sample/instrument names/filenames
-more functions (n_samples n_instruments)
+DUMB is now as fast as ModPlugXMMS on my system.
 
-made timing more accurate; this may affect length by a second or two ...
+Some people have also commented that DUMB seems to take a long time loading
+files. This is because immediately upon loading the file it runs the playback
+engine over it up as far as the point of first loop, taking snapshots at 30-
+second intervals to be used as references for fast seeking and finally
+storing the playback time. Of course, most games don't need this. You can now
+skip it by calling the _quick versions of the dumb_load_*(), dumb_read_*() or
+dumb_register_dat_*() functions. Should you need the data later, you can call
+dumb_it_do_initial_runthrough() to calculate it. Please note that this cannot
+currently be done safely from a concurrent thread while the music is playing.
 
-Thanks to networm for valgrinding the new envelope handling code
+As mentioned, DUMB loads the text fields in module files now. You can
+retrieve the song title with duh_get_tag(). Sample names and file names and
+instrument names and filenames, and the song message for IT files, are
+available with a call to duh_get_it_sigdata() and various dumb_it_sd_*()
+functions. Please note that text fields added as extensions by ModPlug
+Tracker are not supported.
 
-DUMB used to process the first row when you created the DUMB_IT_SIGRENDERER.
-This happened before you had a chance to install any callbacks. If an F00
-effect occurred on the first row, the music would stop immediately and the
-xm_speed_zero callback would be called if it were present. Unfortunately, it
-wasn't present, and the algorithm for calculating the length subsequently
-went into an endless loop while waiting for it. Worse still, the same
-algorithm accumulated data for fast seeking, and never stopped, so it pretty
-quickly consumed all the resources.
+DUMB's timing is ever so slightly more accurate. This is hardly noticeable,
+but it has meant that the length computed will increase very slightly.
 
-DUMB will now not process the first row until you first request some samples,
-provided you pass zero for pos. Ironically, any MOD or XM file with F00 in
-the very first row won't play anyway! But at least such files won't crash the
-library now.
+There are many small playback fixes in this release:
 
-    * The make/config.bat file, responsible for generating make/config.txt, wrote a crucial line to the wrong place, causing it to be left out of the file. As a result, the makefile would fail to install everything for Allegro users, and enter infinite recursion for other users. If you are trying to compile with DJGPP or MinGW, please download dumb-0.9.2-fixed.zip (linked below, and incidentally including the fix for the bug detailed in the next point).
-    * DUMB's makefile doesn't install the example programs on any platforms. (It is supposed to install them on all platforms except DOS and Windows.) You can fix this by editing Makefile and changing the one occurrence of $COMSPEC to $(COMSPEC). Alternatively you can run the example programs from the examples directory.
-    * There is a subtle bug that affects a few XM files. For instruments with no associated samples, the array mapping notes to samples is uninitialised. This becomes a problem if such instruments are then used, which does happen sometimes. On many systems, memory is initialised to zero when first given to a program (for security reasons), so the problem won't come up most of the time. However, on platforms like DOS where memory isn't initialised, or in programs that reuse memory later on (this includes the XMMS plug-in), a rogue note will occasionally play. If you are worried that this might happen to you, then use DUMB CVS or wait for the next release (which won't be for a while). If you have access to an i386 Linux system, you can use Valgrind on the 'dumbout' example program to determine whether your XM file causes DUMB to use uninitialised values.
-    * For IT files, DUMB breaks out of single-point envelope sustain loops one tick too early. The correct behaviour for multi-point sustain loops is yet to be determined. The worst that can happen is that notes may seem to be ever so slightly shorter than they should be, except in pathological cases. This bug has not yet been fixed in CVS.
+* The Lxx effect in XM files (set envelope position) is now supported.
 
+* Pattern looping is now correct for XM files. Bizarrely, an ordinary pattern
+  loop whose start point isn't the first row seems to cause the next pattern
+  to start at the row corresponding to the loop start point. That must have
+  been a headache for people creating XM files! Nevertheless, DUMB now
+  emulates this behaviour. If you have an XM file that was written in a
+  tracker other than Fast Tracker II and breaks in DUMB, you can get around
+  it by putting a D00 effect (break to row 0) right at the end of the pattern
+  containing the loop.
+
+* XM pattern looping can be infinite. DUMB should detect this and call the
+  loop callback when it happens. Specifically, it has a loop counter for each
+  channel, so each time it sets or decrements that counter, it remembers the
+  loop end point for that channel. When the loop terminates, the loop end
+  point is reset to 0. If the loop end point ever decreases during a loop,
+  the loop callback is called. If anyone manages to get around this check and
+  prevent DUMB from calling the callback, please let me know and send me an
+  illustrative XM file!
+
+* For IT files, notes are now removed from channels if they have faded out,
+  even if they are still in the foreground. After this has happened, a row
+  with a note and Gxx (tone portamento) specified will cause a new note to
+  start playing, which is what Impulse Tracker does in this scenario.
+  (Normally, Gxx prevents the new note from playing and instead causes the
+  old note to start sliding towards the new note.)
+
+* If a tone portamento command occurred when no note was playing, the effect
+  value wasn't stored. This has been fixed. Thanks to Maim from #trax on
+  EFnet for discovering this bug.
+
+* DUMB now treats the parameter to the undocumented XM key off effect Kxx as
+  a delay, consistent with Fast Tracker II's behaviour. It has also been made
+  not to clear the note, so a subsequent volume command will restore it, as
+  in Fast Tracker II.
+
+* DUMB used to process the first row when you created the
+  DUMB_IT_SIGRENDERER. This happened before you had a chance to install any
+  callbacks. If an F00 effect occurred on the first row, the music would stop
+  immediately and the xm_speed_zero callback would be called if it were
+  present. Unfortunately, it wasn't present, and the algorithm for
+  calculating the length subsequently went into an endless loop while waiting
+  for it. Worse still, the same algorithm accumulated data for fast seeking,
+  and never stopped, so it pretty quickly consumed all the resources. DUMB
+  will now not process the first row until you first request some samples,
+  provided you pass zero for pos. Of course, any MOD or XM file with F00 in
+  the very first row won't do much anyway, but such files won't crash the
+  library now.
+
+* There was a subtle bug that affected a few XM files. For instruments with
+  no associated samples, the array mapping notes to samples is uninitialised.
+  This became a problem if such instruments were then used, which does happen
+  sometimes. On many systems, memory is initialised to zero when first given
+  to a program (for security reasons), so the problem didn't come up most of
+  the time. However, on platforms like DOS where memory isn't initialised, or
+  in programs that reuse memory later on (this includes the XMMS plug-in with
+  which I discovered the bug), a rogue note would occasionally play. This has
+  now been fixed.
+
+* DUMB's envelope handling for IT files was subtly wrong. Upon note off, it
+  stopped obeying the sustain loop points one tick too early. Notes were
+  often shorter than they should have been, and in pathological cases a whole
+  extra iteration of the sustain loop section might have been skipped. The
+  envelope code has now been rewritten. Thanks go to Allefant for Valgrinding
+  the new code!
+
+Finally, there were two build problems in the last version, which were fixed
+in the download marked with -fixed. They are of course correct in this
+version. For the record:
+
+* The make/config.bat file, responsible for generating make/config.txt, wrote
+  a crucial line to the wrong place, causing it to be left out of the file.
+  As a result, the makefile would fail to install everything for Allegro
+  users, and enter infinite recursion for other users. This applied to people
+  using DJGPP and MinGW.
+
+* DUMB's Makefile was supposed to install the example programs on Unix-based
+  platforms, but it wasn't doing. The fix was to edit Makefile and change the
+  one occurrence of $COMSPEC to $(COMSPEC).
+
+That's it! I hope you enjoy this long-awaited-or-probably-just-given-up-on-
+by-everybody release of DUMB!
 
 
 ******************************************

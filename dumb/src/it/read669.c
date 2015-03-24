@@ -35,7 +35,7 @@ static int it_669_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int tempo, int 
 
 	pattern->n_rows = 64;
 
-	if (dumbfile_getnc(buffer, 64 * 3 * 8, f) < 64 * 3 * 8)
+    if (dumbfile_getnc((char *)buffer, 64 * 3 * 8, f) < 64 * 3 * 8)
 		return -1;
 
 	/* compute number of entries */
@@ -156,7 +156,7 @@ static int it_669_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int tempo, int 
 
 static int it_669_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
 {
-	dumbfile_getnc(sample->name, 13, f);
+    dumbfile_getnc((char *)sample->name, 13, f);
 	sample->name[13] = 0;
 
 	sample->filename[0] = 0;
@@ -268,7 +268,7 @@ static DUMB_IT_SIGDATA *it_669_load_sigdata(DUMBFILE *f, int * ext)
 		return NULL;
 	}
 
-	if (dumbfile_getnc(sigdata->name, 36, f) < 36) {
+    if (dumbfile_getnc((char *)sigdata->name, 36, f) < 36) {
 		free(sigdata);
 		return NULL;
 	}
@@ -288,13 +288,13 @@ static DUMB_IT_SIGDATA *it_669_load_sigdata(DUMBFILE *f, int * ext)
 		free(sigdata);
 		return NULL;
 	}
-	if (dumbfile_getnc(sigdata->song_message, 36, f) < 36) {
+    if (dumbfile_getnc((char *)sigdata->song_message, 36, f) < 36) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
 	sigdata->song_message[36] = 13;
 	sigdata->song_message[36 + 1] = 10;
-	if (dumbfile_getnc(sigdata->song_message + 38, 36, f) < 36) {
+    if (dumbfile_getnc((char *)sigdata->song_message + 38, 36, f) < 36) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
@@ -314,7 +314,7 @@ static DUMB_IT_SIGDATA *it_669_load_sigdata(DUMBFILE *f, int * ext)
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
-	if (dumbfile_getnc(sigdata->order, 128, f) < 128) {
+    if (dumbfile_getnc((char *)sigdata->order, 128, f) < 128) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
@@ -332,12 +332,12 @@ static DUMB_IT_SIGDATA *it_669_load_sigdata(DUMBFILE *f, int * ext)
 	}
 	sigdata->n_orders = i;
 
-	if (dumbfile_getnc(tempolist, 128, f) < 128) {
+    if (dumbfile_getnc((char *)tempolist, 128, f) < 128) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
 
-	if (dumbfile_getnc(breaklist, 128, f) < 128) {
+    if (dumbfile_getnc((char *)breaklist, 128, f) < 128) {
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
@@ -413,8 +413,9 @@ static DUMB_IT_SIGDATA *it_669_load_sigdata(DUMBFILE *f, int * ext)
 	memset(sigdata->channel_volume, 64, DUMB_IT_N_CHANNELS);
 
 	for (i = 0; i < DUMB_IT_N_CHANNELS; i += 2) {
-		sigdata->channel_pan[i+0] = 48;
-		sigdata->channel_pan[i+1] = 16;
+		int sep = 32 * dumb_it_default_panning_separation / 100;
+		sigdata->channel_pan[i+0] = 32 + sep;
+		sigdata->channel_pan[i+1] = 32 - sep;
 	}
 
 	_dumb_it_fix_invalid_orders(sigdata);
@@ -439,7 +440,7 @@ DUH *DUMBEXPORT dumb_read_669_quick(DUMBFILE *f)
 	{
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		tag[1][1] = ext ? "669 Extended" : "669";
 		return make_duh(-1, 2, (const char *const (*)[2])tag, 1, &descptr, &sigdata);

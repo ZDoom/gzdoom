@@ -1023,7 +1023,6 @@ bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, i
 		}
 	}
 
-	y = sizeof(buffer) - stream.avail_out;
 	deflateEnd (&stream);
 
 	if (err != Z_STREAM_END)

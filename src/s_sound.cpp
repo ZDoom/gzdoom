@@ -2971,3 +2971,23 @@ CCMD (cachesound)
 		}
 	}
 }
+
+
+CCMD(listsoundchannels)
+{	
+	FSoundChan *chan;
+	int count = 0;
+	for (chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (!(chan->ChanFlags & CHAN_EVICTED))
+		{
+			FVector3 chanorigin;
+
+			CalcPosVel(chan, &chanorigin, NULL);
+
+			Printf("%s at (%1.5f, %1.5f, %1.5f)\n", (const char*)chan->SoundID, chanorigin.X, chanorigin.Y, chanorigin.Z);
+			count++;
+		}
+	}
+	Printf("%d sounds playing\n", count);
+}

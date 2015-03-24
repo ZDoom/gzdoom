@@ -68,7 +68,7 @@ static FRandom pr_animatepictures ("AnimatePics");
 //
 //==========================================================================
 
-void FTextureManager::AddAnim (FAnimDef *anim)
+FAnimDef *FTextureManager::AddAnim (FAnimDef *anim)
 {
 	// Search for existing duplicate.
 	for (unsigned int i = 0; i < mAnimations.Size(); ++i)
@@ -78,11 +78,12 @@ void FTextureManager::AddAnim (FAnimDef *anim)
 			// Found one!
 			free (mAnimations[i]);
 			mAnimations[i] = anim;
-			return;
+			return anim;
 		}
 	}
 	// Didn't find one, so add it at the end.
 	mAnimations.Push (anim);
+	return anim;
 }
 
 //==========================================================================
@@ -94,7 +95,7 @@ void FTextureManager::AddAnim (FAnimDef *anim)
 //
 //==========================================================================
 
-void FTextureManager::AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange)
+FAnimDef *FTextureManager::AddSimpleAnim (FTextureID picnum, int animcount, DWORD speedmin, DWORD speedrange)
 {
 	if (AreTexturesCompatible(picnum, picnum + (animcount - 1)))
 	{
@@ -102,13 +103,15 @@ void FTextureManager::AddSimpleAnim (FTextureID picnum, int animcount, int animt
 		anim->CurFrame = 0;
 		anim->BasePic = picnum;
 		anim->NumFrames = animcount;
-		anim->AnimType = animtype;
+		anim->AnimType = FAnimDef::ANIM_Forward;
+		anim->bDiscrete = false;
 		anim->SwitchTime = 0;
 		anim->Frames[0].SpeedMin = speedmin;
 		anim->Frames[0].SpeedRange = speedrange;
 		anim->Frames[0].FramePic = anim->BasePic;
-		AddAnim (anim);
+		return AddAnim (anim);
 	}
+	return NULL;
 }
 
 //==========================================================================
@@ -119,16 +122,17 @@ void FTextureManager::AddSimpleAnim (FTextureID picnum, int animcount, int animt
 //
 //==========================================================================
 
-void FTextureManager::AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames)
+FAnimDef *FTextureManager::AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames)
 {
 	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef) + (frames.Size()-1) * sizeof(frames[0]));
 	anim->BasePic = picnum;
 	anim->NumFrames = frames.Size();
 	anim->CurFrame = 0;
-	anim->AnimType = FAnimDef::ANIM_DiscreteFrames;
+	anim->AnimType = FAnimDef::ANIM_Forward;
+	anim->bDiscrete = true;
 	anim->SwitchTime = 0;
 	memcpy (&anim->Frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
-	AddAnim (anim);
+	return AddAnim (anim);
 }
 
 //==========================================================================
@@ -333,6 +337,8 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 	FTextureID picnum;
 	int defined = 0;
 	bool optional = false, missing = false;
+	FAnimDef *ani = NULL;
+	BYTE type = FAnimDef::ANIM_Forward;
 
 	sc.MustGetString ();
 	if (sc.Compare ("optional"))
@@ -370,6 +376,22 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 			}
 			continue;
 		}
+		else if (sc.Compare ("Oscillate"))
+		{
+			if (type == FAnimDef::ANIM_Random)
+			{
+				sc.ScriptError ("You cannot use \"random\" and \"oscillate\" together in a single animation.");
+			}
+			type = FAnimDef::ANIM_OscillateUp;
+		}
+		else if (sc.Compare("Random"))
+		{
+			if (type == FAnimDef::ANIM_OscillateUp)
+			{
+				sc.ScriptError ("You cannot use \"random\" and \"oscillate\" together in a single animation.");
+			}
+			type = FAnimDef::ANIM_Random;
+		}
 		else if (sc.Compare ("range"))
 		{
 			if (defined == 2)
@@ -381,7 +403,7 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 				sc.ScriptError ("You can only use one \"range\" per animation.");
 			}
 			defined = 1;
-			ParseRangeAnim (sc, picnum, usetype, missing);
+			ani = ParseRangeAnim (sc, picnum, usetype, missing);
 		}
 		else if (sc.Compare ("pic"))
 		{
@@ -407,7 +429,12 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 		{
 			sc.ScriptError ("Animation needs at least 2 frames");
 		}
-		AddComplexAnim (picnum, frames);
+		ani = AddComplexAnim (picnum, frames);
+	}
+	if (ani != NULL && type != FAnimDef::ANIM_Forward)
+	{
+		if (ani->AnimType == FAnimDef::ANIM_Backward && type == FAnimDef::ANIM_OscillateUp) ani->AnimType = FAnimDef::ANIM_OscillateDown;
+		else ani->AnimType = type;
 	}
 }
 
@@ -420,7 +447,7 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 //
 //==========================================================================
 
-void FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing)
+FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing)
 {
 	int type;
 	FTextureID framenum;
@@ -432,7 +459,7 @@ void FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usety
 
 	if (framenum == picnum || !picnum.Exists())
 	{
-		return;		// Animation is only one frame or does not exist
+		return NULL;		// Animation is only one frame or does not exist
 	}
 	if (framenum < picnum)
 	{
@@ -440,18 +467,9 @@ void FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usety
 		Texture(framenum)->bNoDecals = Texture(picnum)->bNoDecals;
 		swapvalues (framenum, picnum);
 	}
-	if (sc.GetString())
-	{
-		if (sc.Compare ("Oscillate"))
-		{
-			type = type == FAnimDef::ANIM_Forward ? FAnimDef::ANIM_OscillateUp : FAnimDef::ANIM_OscillateDown;
-		}
-		else
-		{
-			sc.UnGet ();
-		}
-	}
-	AddSimpleAnim (picnum, framenum - picnum + 1, type, min, max - min);
+	FAnimDef *ani = AddSimpleAnim (picnum, framenum - picnum + 1, min, max - min);
+	if (ani != NULL) ani->AnimType = type;
+	return ani;
 }
 
 //==========================================================================
@@ -691,7 +709,7 @@ void FTextureManager::FixAnimations ()
 	for (i = 0; i < mAnimations.Size(); ++i)
 	{
 		FAnimDef *anim = mAnimations[i];
-		if (anim->AnimType == FAnimDef::ANIM_DiscreteFrames)
+		if (anim->bDiscrete)
 		{
 			if (Texture(anim->BasePic)->bNoRemap0)
 			{
@@ -830,7 +848,7 @@ FDoorAnimation *FTextureManager::FindAnimatedDoor (FTextureID picnum)
 
 void FAnimDef::SetSwitchTime (DWORD mstime)
 {
-	int speedframe = (AnimType == FAnimDef::ANIM_DiscreteFrames) ? CurFrame : 0;
+	int speedframe = bDiscrete ? CurFrame : 0;
 
 	SwitchTime = mstime + Frames[speedframe].SpeedMin;
 	if (Frames[speedframe].SpeedRange != 0)
@@ -889,7 +907,6 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 			{
 			default:
 			case FAnimDef::ANIM_Forward:
-			case FAnimDef::ANIM_DiscreteFrames:
 				anim->CurFrame = (anim->CurFrame + 1) % anim->NumFrames;
 				break;
 
@@ -901,6 +918,16 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 				else
 				{
 					anim->CurFrame -= 1;
+				}
+				break;
+
+			case FAnimDef::ANIM_Random:
+				// select a random frame other than the current one
+				if (anim->NumFrames > 1)
+				{
+					WORD rndFrame = (WORD)pr_animatepictures(anim->NumFrames - 1);
+					if (rndFrame >= anim->CurFrame) rndFrame++;
+					anim->CurFrame = rndFrame;
 				}
 				break;
 
@@ -923,7 +950,7 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 			anim->SetSwitchTime (mstime);
 		}
 
-		if (anim->AnimType == FAnimDef::ANIM_DiscreteFrames)
+		if (anim->bDiscrete)
 		{
 			SetTranslation (anim->BasePic, anim->Frames[anim->CurFrame].FramePic);
 		}

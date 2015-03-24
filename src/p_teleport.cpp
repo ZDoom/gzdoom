@@ -188,8 +188,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	// Spawn teleport fog at source and destination
 	if (sourceFog && !predicting)
 	{
-		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		P_SpawnTeleportFog(thing, oldx, oldy, oldz, true, true); //Passes the actor through which then pulls the TeleFog metadate types based on properties.
+		P_SpawnTeleportFog(thing, oldx, oldy, oldz, true, true); //Passes the actor through which then pulls the TeleFog metadata types based on properties.
 	}
 	if (useFog)
 	{

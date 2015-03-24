@@ -44,6 +44,8 @@ if(__create_launchers)
 endif()
 set(__create_launchers YES)
 
+cmake_policy( SET CMP0026 OLD )
+
 include(CleanDirectoryList)
 
 # We must run the following at "include" time, not at function call time,
@@ -184,7 +186,7 @@ macro(_launcher_process_args)
 	set(USERFILE_ENV_COMMANDS)
 	foreach(_arg "${RUNTIME_LIBRARIES_ENVIRONMENT}" ${ENVIRONMENT})
 		string(CONFIGURE
-			"@USERFILE_ENVIRONMENT@@LAUNCHER_LINESEP@@_arg@"
+			"${USERFILE_ENVIRONMENT}${LAUNCHER_LINESEP}${_arg}"
 			USERFILE_ENVIRONMENT
 			@ONLY)
 		string(CONFIGURE

@@ -109,6 +109,7 @@ static FCompatOption Options[] =
 	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
 	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
 	{ "disablepushwindowcheck",	BCOMPATF_NOWINDOWCHECK, SLOT_BCOMPAT },
+	{ "floatbob",				BCOMPATF_FLOATBOB, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
@@ -434,6 +435,11 @@ void CheckCompatibility(MapData *map)
 	// Reset i_compatflags
 	compatflags.Callback();
 	compatflags2.Callback();
+	// Set floatbob compatibility for all maps with an original Hexen MAPINFO.
+	if (level.flags2 & LEVEL2_HEXENHACK)
+	{
+		ib_compatflags |= BCOMPATF_FLOATBOB;
+	}
 }
 
 //==========================================================================
@@ -448,7 +454,7 @@ void SetCompatibilityParams()
 	{
 		unsigned i = ii_compatparams;
 
-		while (CompatParams[i] != CP_END && i < CompatParams.Size())
+		while (i < CompatParams.Size() && CompatParams[i] != CP_END)
 		{
 			switch (CompatParams[i])
 			{

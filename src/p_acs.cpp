@@ -5700,10 +5700,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_QuakeEx:
 		{
 			return P_StartQuakeXYZ(activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], FBehavior::StaticLookupString(args[7]), 
-				argCount > 8 && args[8] ? args[8] : 0,
-				argCount > 9 && args[9] ? args[9] : 1, 
-				argCount > 10 && args[10] ? args[10] : 1, 
-				argCount > 11 && args[11] ? args[11] : 1 );
+				argCount > 8 ? args[8] : 0,
+				argCount > 9 ? FIXED2DBL(args[9]) : 1.0, 
+				argCount > 10 ? FIXED2DBL(args[10]) : 1.0, 
+				argCount > 11 ? FIXED2DBL(args[11]) : 1.0 );
 		}
 
 		case ACSF_SetLineActivation:

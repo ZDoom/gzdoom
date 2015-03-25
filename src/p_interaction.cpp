@@ -925,9 +925,9 @@ static inline bool MustForcePain(AActor *target, AActor *inflictor)
 		(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS));
 }
 
-static inline bool isFakePain(AActor *target, AActor *inflictor)
+static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 {
-	return ((target->flags7 & MF7_ALLOWPAIN) || ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN)));
+	return ((target->flags7 & MF7_ALLOWPAIN && damage > 0) || ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN)));
 }
 
 
@@ -956,7 +956,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	}
 
 	//Rather than unnecessarily call the function over and over again, let's be a little more efficient.
-	fakedPain = (isFakePain(target, inflictor)); 
+	fakedPain = (isFakePain(target, inflictor, damage)); 
 	forcedPain = (MustForcePain(target, inflictor));
 
 	// Spectral targets only take damage from spectral projectiles.
@@ -1453,8 +1453,8 @@ fakepain: //Needed so we can skip the rest of the above, but still obey the orig
 
 	//CAUSEPAIN can always attempt to trigger the chances of pain.
 	//ALLOWPAIN can do the same, only if the (unfiltered aka fake) damage is greater than 0. 
-	if ((((target->flags7 & MF7_ALLOWPAIN) && (fakeDamage > 0))
-		|| ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN))))
+	if (((target->flags7 & MF7_ALLOWPAIN) && (fakeDamage > 0))
+		|| ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN)))
 	{
 		holdDamage = damage;	//Store the modified damage away after factors are taken into account.
 		damage = fakeDamage;	//Retrieve the original damage.
@@ -1474,7 +1474,7 @@ fakepain: //Needed so we can skip the rest of the above, but still obey the orig
 			}
 		}
 
-		if ((((damage >= target->PainThreshold)) && (pr_damagemobj() < painchance)) 
+		if ((((damage >= target->PainThreshold) || (fakedPain)) && (pr_damagemobj() < painchance)) 
 			|| (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)))
 		{
 dopain:	

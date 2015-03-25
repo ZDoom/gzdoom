@@ -253,7 +253,8 @@ void FTextureManager::InitAnimated (void)
 				}
 
 				// Speed is stored as tics, but we want ms so scale accordingly.
-				AddSimpleAnim (pic1, pic2 - pic1 + 1, animtype, Scale (animspeed, 1000, 35));
+				FAnimDef *adef = AddSimpleAnim (pic1, pic2 - pic1 + 1, Scale (animspeed, 1000, 35));
+				if (adef != NULL) adef->AnimType = animtype;
 			}
 		}
 	}

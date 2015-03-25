@@ -2482,6 +2482,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				}
 			}
 		}
+		else
+		{
+			// Load an external file.
+			reader.reset(new FileReader(musicname));
+		}
 
 		// shutdown old music
 		S_StopMusic (true);

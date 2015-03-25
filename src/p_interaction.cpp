@@ -1474,7 +1474,7 @@ fakepain: //Needed so we can skip the rest of the above, but still obey the orig
 			}
 		}
 
-		if ((((damage >= target->PainThreshold) || (fakedPain)) && (pr_damagemobj() < painchance)) 
+		if (((damage >= target->PainThreshold) && (pr_damagemobj() < painchance)) 
 			|| (inflictor != NULL && (inflictor->flags6 & MF6_FORCEPAIN)))
 		{
 dopain:	

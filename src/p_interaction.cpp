@@ -1066,11 +1066,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				}
 			}
 			damage = inflictor->DoSpecialDamage (target, damage, mod);
-
-			if ((damage == -1) && (target->player == NULL)) //This isn't meant for the player.
+			if (damage == -1)
 			{
-				if (fakedPain) //Hold off ending the function before we can deal the pain chances.
-					goto fakepain;
 				return -1;
 			}
 		}

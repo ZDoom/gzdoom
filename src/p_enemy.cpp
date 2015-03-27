@@ -44,6 +44,7 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "r_data/r_translate.h"
 #include "teaminfo.h"
 
 #include "gi.h"
@@ -2615,7 +2616,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				S_Sound(corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
-				if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
+				if (GetTranslationType(corpsehit->Translation) == TRANSLATION_Blood)
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}

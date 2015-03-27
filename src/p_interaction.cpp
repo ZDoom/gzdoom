@@ -1129,8 +1129,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				return -1;
 			}
 		}
-		if (damage > 0)
-			damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
+		damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	}
 	if (damage == -1 && target->player == NULL) //Make sure it's not a player, the pain has yet to be processed with cheats.
 	{

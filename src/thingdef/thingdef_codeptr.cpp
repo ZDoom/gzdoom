@@ -5234,17 +5234,17 @@ static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageTy
 	{
 		int dmgFlags = 0;
 		if (flags & DMSS_FOILINVUL)
-			dmgFlags += DMG_FOILINVUL;
+			dmgFlags |= DMG_FOILINVUL;
 		if (flags & DMSS_FOILBUDDHA)
-			dmgFlags += DMG_FOILBUDDHA;
-		if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
-			dmgFlags += DMG_NO_FACTOR;
+			dmgFlags |= DMG_FOILBUDDHA;
+		if (flags & (DMSS_KILL | DMSS_NOFACTOR)) //Kill implies NoFactor
+			dmgFlags |= DMG_NO_FACTOR;
 		if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
-			dmgFlags += DMG_NO_ARMOR;
+			dmgFlags |= DMG_NO_ARMOR;
 		if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
 			amount += dmgtarget->health;
 		if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
-			dmgFlags += DMG_NO_PROTECT;
+			dmgFlags |= DMG_NO_PROTECT;
 	
 		if (amount > 0)
 			P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.
@@ -5412,12 +5412,12 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 		speciespass = DoCheckSpecies(killtarget, species, (flags & KILS_EXSPECIES) ? true : false);
 	if ((flags & KILS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass)) //Check this first. I think it'll save the engine a lot more time this way.
 	{
-		int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
+		int dmgFlags = DMG_NO_ARMOR | DMG_NO_FACTOR;
 
 		if (KILS_FOILINVUL)
-			dmgFlags += DMG_FOILINVUL;
+			dmgFlags |= DMG_FOILINVUL;
 		if (KILS_FOILBUDDHA)
-			dmgFlags += DMG_FOILBUDDHA;
+			dmgFlags |= DMG_FOILBUDDHA;
 
 	
 		if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
@@ -5426,7 +5426,8 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
 			//since that's the whole point of it.
 			if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) &&
-				(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
+				(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && 
+				!(killtarget->flags5 & MF5_NODAMAGE))
 			{
 				P_ExplodeMissile(killtarget, NULL, NULL);
 			}

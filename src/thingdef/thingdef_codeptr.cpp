@@ -5186,15 +5186,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	ref->Speed = speed;
 }
 
-static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
+static bool DoCheckSpecies(AActor *mo, FName filterSpecies, bool exclude)
 {
-	return (!(species) || mo->Species == NAME_None || (species && ((exclude) ? (mo->Species != species) : (mo->Species == species))));
+	FName actorSpecies = mo->GetSpecies();
+	if (filterSpecies == NAME_None) return true;
+	return exclude ? (actorSpecies != filterSpecies) : (actorSpecies == filterSpecies);
 }
 
-static bool DoCheckFilter(AActor *mo, const PClass *filter, bool exclude)
+static bool DoCheckClass(AActor *mo, const PClass *filterClass, bool exclude)
 {
-	const PClass *c1 = mo->GetClass();
-	return (!(filter) || (filter == NULL) || (filter && ((exclude) ? (c1 != filter) : (c1 == filter))));
+	const PClass *actorClass = mo->GetClass();
+	if (filterClass == NULL) return true;
+	return exclude ? (actorClass != filterClass) : (actorClass == filterClass);
 }
 
 //===========================================================================
@@ -5228,8 +5231,8 @@ enum DMSS
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags, const PClass *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(dmgtarget, filter, (flags & DMSS_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(dmgtarget, species, (flags & DMSS_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(dmgtarget, filter, !!(flags & DMSS_EXFILTER)),
+		speciespass = DoCheckSpecies(dmgtarget, species, !!(flags & DMSS_EXSPECIES));
 	if ((flags & DMSS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		int dmgFlags = 0;
@@ -5408,8 +5411,8 @@ enum KILS
 
 static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags, const PClass *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(killtarget, filter, (flags & KILS_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(killtarget, species, (flags & KILS_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(killtarget, filter, !!(flags & KILS_EXFILTER)),
+		speciespass = DoCheckSpecies(killtarget, species, !!(flags & KILS_EXSPECIES));
 	if ((flags & KILS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass)) //Check this first. I think it'll save the engine a lot more time this way.
 	{
 		int dmgFlags = DMG_NO_ARMOR | DMG_NO_FACTOR;
@@ -5569,8 +5572,8 @@ enum RMVF_flags
 
 static void DoRemove(AActor *removetarget, int flags, const PClass *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(removetarget, filter, (flags & RMVF_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(removetarget, species, (flags & RMVF_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(removetarget, filter, !!(flags & RMVF_EXFILTER)),
+		speciespass = DoCheckSpecies(removetarget, species, !!(flags & RMVF_EXSPECIES));
 	if ((flags & RMVF_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		if ((flags & RMVF_EVERYTHING))

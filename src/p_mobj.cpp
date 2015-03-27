@@ -4480,7 +4480,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 	p->MinPitch = p->MaxPitch = 0;	// will be filled in by PostBeginPlay()/netcode
-
+	p->MUSINFOactor = NULL;
+	p->MUSINFOtics = -1;
 
 	p->velx = p->vely = 0;		// killough 10/98: initialize bobbing to 0.
 

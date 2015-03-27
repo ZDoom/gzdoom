@@ -1457,7 +1457,9 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	if (SaveVersion >= 3313)
 	{
-		arc << level.nextmusic;
+		// This is a player property now
+		int nextmusic;
+		arc << nextmusic;
 	}
 
 	// Hub transitions must keep the current total time

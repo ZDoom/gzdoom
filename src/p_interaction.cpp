@@ -1031,87 +1031,90 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	{
 		target->velx = target->vely = target->velz = 0;
 	}
-	if (!(flags & DMG_FORCED) && damage < TELEFRAG_DAMAGE)	// DMG_FORCED skips all special damage checks, TELEFRAG_DAMAGE may not be reduced at all
+	if (!(flags & DMG_FORCED))	// DMG_FORCED skips all special damage checks, TELEFRAG_DAMAGE may not be reduced at all
 	{
 		if (target->flags2 & MF2_DORMANT)
 		{
 			// Invulnerable, and won't wake up
 			return -1;
 		}
-		player = target->player;
-		if (player && damage > 1)
+		if (damage < TELEFRAG_DAMAGE) // TELEFRAG_DAMAGE may not be reduced at all or it may not guarantee its effect.
 		{
-			// Take half damage in trainer mode
-			damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
-		}
-		// Special damage types
-		if (inflictor)
-		{
-			if (inflictor->flags4 & MF4_SPECTRAL)
+			player = target->player;
+			if (player && damage > 1)
 			{
-				if (player != NULL)
+				// Take half damage in trainer mode
+				damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
+			}
+			// Special damage types
+			if (inflictor)
+			{
+				if (inflictor->flags4 & MF4_SPECTRAL)
 				{
-					if (!deathmatch && inflictor->FriendPlayer > 0)
-						return -1;
+					if (player != NULL)
+					{
+						if (!deathmatch && inflictor->FriendPlayer > 0)
+							return -1;
+					}
+					else if (target->flags4 & MF4_SPECTRAL)
+					{
+						if (inflictor->FriendPlayer == 0 && !target->IsHostile(inflictor))
+							return -1;
+					}
 				}
-				else if (target->flags4 & MF4_SPECTRAL)
+
+				damage = inflictor->DoSpecialDamage(target, damage, mod);
+				if (damage < 0)
 				{
-					if (inflictor->FriendPlayer == 0 && !target->IsHostile(inflictor))
-						return -1;
+					return -1;
 				}
 			}
 
-			damage = inflictor->DoSpecialDamage (target, damage, mod);
-			if (damage < 0)
+			int olddam = damage;
+
+			if (damage > 0 && source != NULL)
 			{
-				return -1;
-			}
-		}
+				damage = FixedMul(damage, source->DamageMultiply);
 
-		int olddam = damage;
-
-		if (damage > 0 && source != NULL)
-		{
-			damage = FixedMul(damage, source->DamageMultiply);
-			
-			// Handle active damage modifiers (e.g. PowerDamage)
-			if (damage > 0 && source->Inventory != NULL)
-			{
-				source->Inventory->ModifyDamage(damage, mod, damage, false); 
-			}
-		}
-		// Handle passive damage modifiers (e.g. PowerProtection), provided they are not afflicted with protection penetrating powers.
-		if (damage > 0 && (target->Inventory != NULL) && !(flags & DMG_NO_PROTECT))
-		{
-			target->Inventory->ModifyDamage(damage, mod, damage, true);
-		}
-		if (damage > 0 && !(flags & DMG_NO_FACTOR))
-		{
-			damage = FixedMul(damage, target->DamageFactor);
-			if (damage > 0)
-			{
-				damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, mod, target->GetClass()->ActorInfo->DamageFactors);
-			}
-		}
-
-		if (damage >= 0)
-		{
-			damage = target->TakeSpecialDamage(inflictor, source, damage, mod);
-		}
-
-		// '<0' is handled below. This only handles the case where damage gets reduced to 0.
-		if (damage == 0 && olddam > 0)
-		{
-			{ // Still allow FORCEPAIN
-				if (forcedPain)
+				// Handle active damage modifiers (e.g. PowerDamage)
+				if (damage > 0 && source->Inventory != NULL)
 				{
-					goto dopain;
+					source->Inventory->ModifyDamage(damage, mod, damage, false);
 				}
-				else if (fakedPain)
+			}
+			// Handle passive damage modifiers (e.g. PowerProtection), provided they are not afflicted with protection penetrating powers.
+			if (damage > 0 && (target->Inventory != NULL) && !(flags & DMG_NO_PROTECT))
+			{
+				target->Inventory->ModifyDamage(damage, mod, damage, true);
+			}
+			if (damage > 0 && !(flags & DMG_NO_FACTOR))
+			{
+				damage = FixedMul(damage, target->DamageFactor);
+				if (damage > 0)
 				{
-					goto fakepain;
+					damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, mod, target->GetClass()->ActorInfo->DamageFactors);
 				}
-				return -1;
+			}
+
+			if (damage >= 0)
+			{
+				damage = target->TakeSpecialDamage(inflictor, source, damage, mod);
+			}
+
+			// '<0' is handled below. This only handles the case where damage gets reduced to 0.
+			if (damage == 0 && olddam > 0)
+			{
+				{ // Still allow FORCEPAIN
+					if (forcedPain)
+					{
+						goto dopain;
+					}
+					else if (fakedPain)
+					{
+						goto fakepain;
+					}
+					return -1;
+				}
 			}
 		}
 	}

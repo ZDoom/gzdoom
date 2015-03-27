@@ -1094,7 +1094,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			}
 		}
 
-		if (damage > 0)
+		if (damage >= 0)
 		{
 			damage = target->TakeSpecialDamage(inflictor, source, damage, mod);
 		}

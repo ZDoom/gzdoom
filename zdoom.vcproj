@@ -117,6 +117,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="src\win32\zdoom.exe.manifest"
 				SuppressStartupBanner="true"
 				AssemblyIdentity=""
 			/>
@@ -233,6 +234,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="src\win32\zdoom.exe.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -339,6 +341,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="src\win32\zdoom.exe.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -446,6 +449,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="src\win32\zdoom.exe.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -2617,6 +2621,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\oplsynth\nukedopl3.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\nukedopl3.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\oplsynth\opl.h"
 					>
 				</File>
@@ -2630,14 +2642,6 @@
 				</File>
 				<File
 					RelativePath=".\src\oplsynth\opl_mus_player.h"
-					>
-				</File>
-				<File
-					RelativePath=".\src\oplsynth\nukedopl3.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\src\oplsynth\nukedopl3.h"
 					>
 				</File>
 				<Filter

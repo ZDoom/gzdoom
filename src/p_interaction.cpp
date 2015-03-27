@@ -1065,8 +1065,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 						return -1;
 				}
 			}
-			if (damage > 0)
-				damage = inflictor->DoSpecialDamage (target, damage, mod);
+			damage = inflictor->DoSpecialDamage (target, damage, mod);
 
 			if ((damage == -1) && (target->player == NULL)) //This isn't meant for the player.
 			{

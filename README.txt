@@ -6,4 +6,4 @@ More information can be found here:
 
 * http://zdoom.org/wiki/GZDoom
 
-* http://doom.wikia.com/wiki/GZDoom
+* http://doomwiki.org/wiki/GZDoom

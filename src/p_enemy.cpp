@@ -3203,10 +3203,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_NAME(damagetype, 0);
 
-	if (self->flags & MF_MISSILE)
-		P_ExplodeMissile(self, NULL, NULL);
-	else
-		P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
+	P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
 }
 
 //

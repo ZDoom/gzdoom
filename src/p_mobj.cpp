@@ -4480,7 +4480,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 	p->MinPitch = p->MaxPitch = 0;	// will be filled in by PostBeginPlay()/netcode
-
+	p->MUSINFOactor = NULL;
+	p->MUSINFOtics = -1;
 
 	p->velx = p->vely = 0;		// killough 10/98: initialize bobbing to 0.
 
@@ -6442,7 +6443,8 @@ void PrintMiscActorInfo(AActor *query)
 			}
 		}
 		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
-			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
+			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil",
+			"Shadow", "Subtract", "AddStencil", "AddShaded"};
 
 		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags);
 		for (flagi = 0; flagi <= 31; flagi++)

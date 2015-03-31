@@ -5186,15 +5186,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	ref->Speed = speed;
 }
 
-static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
+static bool DoCheckSpecies(AActor *mo, FName filterSpecies, bool exclude)
 {
-	return (!(species) || mo->Species == NAME_None || (species && ((exclude) ? (mo->Species != species) : (mo->Species == species))));
+	FName actorSpecies = mo->GetSpecies();
+	if (filterSpecies == NAME_None) return true;
+	return exclude ? (actorSpecies != filterSpecies) : (actorSpecies == filterSpecies);
 }
 
-static bool DoCheckFilter(AActor *mo, const PClass *filter, bool exclude)
+static bool DoCheckClass(AActor *mo, const PClass *filterClass, bool exclude)
 {
-	const PClass *c1 = mo->GetClass();
-	return (!(filter) || (filter == NULL) || (filter && ((exclude) ? (c1 != filter) : (c1 == filter))));
+	const PClass *actorClass = mo->GetClass();
+	if (filterClass == NULL) return true;
+	return exclude ? (actorClass != filterClass) : (actorClass == filterClass);
 }
 
 //===========================================================================
@@ -5228,23 +5231,23 @@ enum DMSS
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags, const PClass *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(dmgtarget, filter, (flags & DMSS_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(dmgtarget, species, (flags & DMSS_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(dmgtarget, filter, !!(flags & DMSS_EXFILTER)),
+		speciespass = DoCheckSpecies(dmgtarget, species, !!(flags & DMSS_EXSPECIES));
 	if ((flags & DMSS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		int dmgFlags = 0;
 		if (flags & DMSS_FOILINVUL)
-			dmgFlags += DMG_FOILINVUL;
+			dmgFlags |= DMG_FOILINVUL;
 		if (flags & DMSS_FOILBUDDHA)
-			dmgFlags += DMG_FOILBUDDHA;
-		if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
-			dmgFlags += DMG_NO_FACTOR;
+			dmgFlags |= DMG_FOILBUDDHA;
+		if (flags & (DMSS_KILL | DMSS_NOFACTOR)) //Kill implies NoFactor
+			dmgFlags |= DMG_NO_FACTOR;
 		if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
-			dmgFlags += DMG_NO_ARMOR;
+			dmgFlags |= DMG_NO_ARMOR;
 		if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
 			amount += dmgtarget->health;
 		if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
-			dmgFlags += DMG_NO_PROTECT;
+			dmgFlags |= DMG_NO_PROTECT;
 	
 		if (amount > 0)
 			P_DamageMobj(dmgtarget, self, self, amount, DamageType, dmgFlags); //Should wind up passing them through just fine.
@@ -5408,16 +5411,16 @@ enum KILS
 
 static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags, const PClass *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(killtarget, filter, (flags & KILS_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(killtarget, species, (flags & KILS_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(killtarget, filter, !!(flags & KILS_EXFILTER)),
+		speciespass = DoCheckSpecies(killtarget, species, !!(flags & KILS_EXSPECIES));
 	if ((flags & KILS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass)) //Check this first. I think it'll save the engine a lot more time this way.
 	{
-		int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
+		int dmgFlags = DMG_NO_ARMOR | DMG_NO_FACTOR;
 
 		if (KILS_FOILINVUL)
-			dmgFlags += DMG_FOILINVUL;
+			dmgFlags |= DMG_FOILINVUL;
 		if (KILS_FOILBUDDHA)
-			dmgFlags += DMG_FOILBUDDHA;
+			dmgFlags |= DMG_FOILBUDDHA;
 
 	
 		if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
@@ -5426,7 +5429,8 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
 			//since that's the whole point of it.
 			if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) &&
-				(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
+				(!(killtarget->flags7 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && 
+				!(killtarget->flags5 & MF5_NODAMAGE))
 			{
 				P_ExplodeMissile(killtarget, NULL, NULL);
 			}
@@ -5568,8 +5572,8 @@ enum RMVF_flags
 
 static void DoRemove(AActor *removetarget, int flags, const PClass *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(removetarget, filter, (flags & RMVF_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(removetarget, species, (flags & RMVF_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(removetarget, filter, !!(flags & RMVF_EXFILTER)),
+		speciespass = DoCheckSpecies(removetarget, species, !!(flags & RMVF_EXSPECIES));
 	if ((flags & RMVF_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		if ((flags & RMVF_EVERYTHING))
@@ -5722,33 +5726,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
 // A_SetTeleFog
 //
 // Sets the teleport fog(s) for the calling actor.
-// Takes a name of the classes for te source and destination. 
-// Can set both at the same time. Use "" to retain the previous fog without
-// changing it.
+// Takes a name of the classes for the source and destination.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
 {
 	ACTION_PARAM_START(2);
-	ACTION_PARAM_NAME(oldpos, 0);
-	ACTION_PARAM_NAME(newpos, 1);
-	const PClass *check = PClass::FindClass(oldpos);
-	if (check == NULL || !stricmp(oldpos, "none") || !stricmp(oldpos, "null"))
-		self->TeleFogSourceType = NULL;
-	else if (!stricmp(oldpos, ""))
-	{ //Don't change it if it's just ""
-	}
-	else
-		self->TeleFogSourceType = check;
+	ACTION_PARAM_CLASS(oldpos, 0);
+	ACTION_PARAM_CLASS(newpos, 1);
 
-	check = PClass::FindClass(newpos);
-	if (check == NULL || !stricmp(newpos, "none") || !stricmp(newpos, "null"))
-		self->TeleFogDestType = NULL;
-	else if (!stricmp(newpos, ""))
-	{ //Don't change it if it's just ""
-	}
-	else
-		self->TeleFogDestType = check;
+	self->TeleFogSourceType = oldpos;
+	self->TeleFogDestType = newpos;
 }
 
 //===========================================================================

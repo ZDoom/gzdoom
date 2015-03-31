@@ -87,6 +87,7 @@ struct FAnimDef
 	WORD	NumFrames;
 	WORD	CurFrame;
 	BYTE	AnimType;
+	bool	bDiscrete;			// taken out of AnimType to have better control
 	DWORD	SwitchTime;			// Time to advance to next frame
 	struct FAnimFrame
 	{
@@ -100,7 +101,7 @@ struct FAnimDef
 		ANIM_Backward,
 		ANIM_OscillateUp,
 		ANIM_OscillateDown,
-		ANIM_DiscreteFrames
+		ANIM_Random
 	};
 
 	void SetSwitchTime (DWORD mstime);
@@ -493,14 +494,14 @@ private:
 	void InitBuildTiles ();
 
 	// Animation stuff
-	void AddAnim (FAnimDef *anim);
+	FAnimDef *AddAnim (FAnimDef *anim);
 	void FixAnimations ();
 	void InitAnimated ();
 	void InitAnimDefs ();
-	void AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange=0);
-	void AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
+	FAnimDef *AddSimpleAnim (FTextureID picnum, int animcount, DWORD speedmin, DWORD speedrange=0);
+	FAnimDef *AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
 	void ParseAnim (FScanner &sc, int usetype);
-	void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
+	FAnimDef *ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
 	void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
 	void ParseWarp(FScanner &sc);
 	void ParseCameraTexture(FScanner &sc);

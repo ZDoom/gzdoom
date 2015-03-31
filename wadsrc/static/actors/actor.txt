@@ -325,7 +325,7 @@ ACTOR Actor native //: Thinker
 	action native A_GiveToSiblings(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromChildren(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
-	action native A_SetTeleFog(name oldpos, name newpos);
+	action native A_SetTeleFog(class<TeleportFog> oldpos, class<TeleportFog> newpos);
 	action native A_SwapTeleFog();
 	action native A_SetFloatBobPhase(int bob);
 	action native A_SetHealth(int health, int ptr = AAPTR_DEFAULT);

@@ -4767,25 +4767,19 @@ static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate
 	}
 }
 
-static void SetActorTeleFog(AActor *activator, int tid, FName telefogsrc, FName telefogdest)
+static void SetActorTeleFog(AActor *activator, int tid, FString telefogsrc, FString telefogdest)
 {
-	//Simply put, if it doesn't exist, it won't change. One can use "" in this scenario.
-	const PClass *check;
+	// Set the actor's telefog to the specified actor. Handle "" as "don't
+	// change" since "None" should work just fine for disabling the fog (given
+	// that it will resolve to NAME_None which is not a valid actor name).
 	if (tid == 0)
 	{
 		if (activator != NULL)
 		{
-			check = PClass::FindClass(telefogsrc);
-			if (check == NULL || !stricmp(telefogsrc, "none") || !stricmp(telefogsrc, "null"))
-				activator->TeleFogSourceType = NULL;
-			else
-				activator->TeleFogSourceType = check;
-
-			check = PClass::FindClass(telefogdest);
-			if (check == NULL || !stricmp(telefogdest, "none") || !stricmp(telefogdest, "null"))
-				activator->TeleFogDestType = NULL;
-			else
-				activator->TeleFogDestType = check;
+			if (telefogsrc.IsNotEmpty())
+				activator->TeleFogSourceType = PClass::FindClass(telefogsrc);
+			if (telefogdest.IsNotEmpty())
+				activator->TeleFogDestType = PClass::FindClass(telefogdest);
 		}
 	}
 	else
@@ -4793,19 +4787,14 @@ static void SetActorTeleFog(AActor *activator, int tid, FName telefogsrc, FName 
 		FActorIterator iterator(tid);
 		AActor *actor;
 
+		const PClass * const src = telefogsrc.IsNotEmpty() ? PClass::FindClass(telefogsrc) : NULL;
+		const PClass * const dest = telefogdest.IsNotEmpty() ? PClass::FindClass(telefogdest) : NULL;
 		while ((actor = iterator.Next()))
 		{
-			check = PClass::FindClass(telefogsrc);
-			if (check == NULL || !stricmp(telefogsrc, "none") || !stricmp(telefogsrc, "null"))
-				actor->TeleFogSourceType = NULL;
-			else
-				actor->TeleFogSourceType = check;
-
-			check = PClass::FindClass(telefogdest);
-			if (check == NULL || !stricmp(telefogdest, "none") || !stricmp(telefogdest, "null"))
-				actor->TeleFogDestType = NULL;
-			else
-				actor->TeleFogDestType = check;
+			if (telefogsrc.IsNotEmpty())
+				actor->TeleFogSourceType = src;
+			if (telefogdest.IsNotEmpty())
+				actor->TeleFogDestType = dest;
 		}
 	}
 }
@@ -5700,10 +5689,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_QuakeEx:
 		{
 			return P_StartQuakeXYZ(activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], FBehavior::StaticLookupString(args[7]), 
-				argCount > 8 && args[8] ? args[8] : 0,
-				argCount > 9 && args[9] ? args[9] : 1, 
-				argCount > 10 && args[10] ? args[10] : 1, 
-				argCount > 11 && args[11] ? args[11] : 1 );
+				argCount > 8 ? args[8] : 0,
+				argCount > 9 ? FIXED2DBL(args[9]) : 1.0, 
+				argCount > 10 ? FIXED2DBL(args[10]) : 1.0, 
+				argCount > 11 ? FIXED2DBL(args[11]) : 1.0 );
 		}
 
 		case ACSF_SetLineActivation:

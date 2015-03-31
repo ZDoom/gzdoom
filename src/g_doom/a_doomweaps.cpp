@@ -584,7 +584,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	int 				j;
 	int 				damage;
 	angle_t 			an;
-	AActor				*thingToHit;
 	AActor				*linetarget;
 
 	ACTION_PARAM_START(7);
@@ -615,42 +614,42 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 		// self->target is the originator (player) of the missile
 		P_AimLineAttack(self->target, an, distance, &linetarget, vrange);
 
-		if (!linetarget)
-			continue;
-
-		AActor *spray = Spawn(spraytype, linetarget->x, linetarget->y,
-			linetarget->z + (linetarget->height >> 2), ALLOW_REPLACE);
-
-		if (spray)
+		if (linetarget != NULL)
 		{
-			if (spray->flags6 & MF6_MTHRUSPECIES && spray->GetSpecies() == linetarget->GetSpecies())
+			AActor *spray = Spawn(spraytype, linetarget->x, linetarget->y,
+				linetarget->z + (linetarget->height >> 2), ALLOW_REPLACE);
+
+			int dmgFlags = 0;
+			FName dmgType = NAME_BFGSplash;
+
+			if (spray != NULL)
 			{
-				spray->Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
-				continue;
+				if (spray->flags6 & MF6_MTHRUSPECIES && spray->GetSpecies() == linetarget->GetSpecies())
+				{
+					spray->Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
+					continue;
+				}
+				if (spray->flags5 & MF5_PUFFGETSOWNER) spray->target = self->target;
+				if (spray->flags3 & MF3_FOILINVUL) dmgFlags |= DMG_FOILINVUL;
+				if (spray->flags7 & MF7_FOILBUDDHA) dmgFlags |= DMG_FOILBUDDHA;
+				dmgType = spray->DamageType;
 			}
-			if (spray->flags5 & MF5_PUFFGETSOWNER)
-				spray->target = self->target;
-		}
 
-		if (defdamage == 0)
-		{
-			damage = 0;
-			for (j = 0; j < damagecnt; ++j)
-				damage += (pr_bfgspray() & 7) + 1;
-		}
-		else
-		{
-			// if this is used, damagecnt will be ignored
-			damage = defdamage;
-		}
+			if (defdamage == 0)
+			{
+				damage = 0;
+				for (j = 0; j < damagecnt; ++j)
+					damage += (pr_bfgspray() & 7) + 1;
+			}
+			else
+			{
+				// if this is used, damagecnt will be ignored
+				damage = defdamage;
+			}
 
-		int dmgFlagPass = 0;
-		dmgFlagPass += (spray != NULL && (spray->flags3 & MF3_FOILINVUL)) ? DMG_FOILINVUL : 0; //[MC]Because the original foilinvul wasn't working.
-		dmgFlagPass += (spray != NULL && (spray->flags7 & MF7_FOILBUDDHA)) ? DMG_FOILBUDDHA : 0;
-		thingToHit = linetarget;
-		int newdam = P_DamageMobj (thingToHit, self->target, self->target, damage, spray != NULL? FName(spray->DamageType) : FName(NAME_BFGSplash), 
-			dmgFlagPass);
-		P_TraceBleed (newdam > 0 ? newdam : damage, thingToHit, self->target);
+			int newdam = P_DamageMobj(linetarget, self->target, self->target, damage, dmgType, dmgFlags);
+			P_TraceBleed(newdam > 0 ? newdam : damage, linetarget, self->target);
+		}
 	}
 }
 

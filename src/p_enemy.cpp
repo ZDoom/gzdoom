@@ -44,6 +44,7 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "r_data/r_translate.h"
 #include "teaminfo.h"
 
 #include "gi.h"
@@ -2615,7 +2616,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				S_Sound(corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
-				if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
+				if (GetTranslationType(corpsehit->Translation) == TRANSLATION_Blood)
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
@@ -3203,10 +3204,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_NAME(damagetype, 0);
 
-	if (self->flags & MF_MISSILE)
-		P_ExplodeMissile(self, NULL, NULL);
-	else
-		P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
+	P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
 }
 
 //

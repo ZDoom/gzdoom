@@ -595,12 +595,13 @@ CCMD (mapchecksum)
 		else
 		{
 			map->GetChecksum(cksum);
+			const char *wadname = Wads.GetWadName(Wads.GetLumpFile(map->lumpnum));
 			delete map;
 			for (size_t j = 0; j < sizeof(cksum); ++j)
 			{
 				Printf("%02X", cksum[j]);
 			}
-			Printf(" // %s\n", argv[i]);
+			Printf(" // %s %s\n", wadname, argv[i]);
 		}
 	}
 }

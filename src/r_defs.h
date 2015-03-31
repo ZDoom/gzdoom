@@ -633,6 +633,11 @@ struct sector_t
 		return pos == floor? floorplane:ceilingplane;
 	}
 
+	bool HasTag(int checktag) const;
+	void SetTag(int tagnum, bool discardall = true);
+	int GetTag() const;
+	static void HashTags();
+
 	bool PlaneMoving(int pos);
 
 

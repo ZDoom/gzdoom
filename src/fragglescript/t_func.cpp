@@ -1158,7 +1158,7 @@ void FParser::SF_ObjSector(void)
 	}
 
 	t_return.type = svt_int;
-	t_return.value.i = mo ? mo->Sector->tag : 0; // nullptr check
+	t_return.value.i = mo ? mo->Sector->GetTag() : 0; // nullptr check
 }
 
 //==========================================================================
@@ -4291,7 +4291,7 @@ void  FParser::SF_KillInSector()
 
 		while ((mo=it.Next()))
 		{
-			if (mo->flags3&MF3_ISMONSTER && mo->Sector->tag==tag) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
+			if (mo->flags3&MF3_ISMONSTER && mo->Sector->HasTag(tag)) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
 		}
 	}
 }
@@ -4388,19 +4388,9 @@ void FParser::SF_ChangeTag()
 	{
 		for (int secnum = -1; (secnum = P_FindSectorFromTag (t_argv[0].value.i, secnum)) >= 0; ) 
 		{
-			sectors[secnum].tag=t_argv[1].value.i;
+			sectors[secnum].SetTag(t_argv[1].value.i);
 		}
-
-		// Recreate the hash tables
-		int i;
-
-		for (i=numsectors; --i>=0; ) sectors[i].firsttag = -1;
-		for (i=numsectors; --i>=0; )
-		{
-			int j = (unsigned) sectors[i].tag % (unsigned) numsectors;
-			sectors[i].nexttag = sectors[j].firsttag;
-			sectors[j].firsttag = i;
-		}
+		sector_t::HashTags();
 	}
 }
 

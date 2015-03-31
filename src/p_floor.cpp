@@ -572,7 +572,7 @@ static int P_FindSectorFromTagLinear (int tag, int start)
 {
     for (int i=start+1;i<numsectors;i++)
 	{
-		if (sectors[i].tag == tag) return i;
+		if (sectors[i].HasTag(tag)) return i;
 	}
     return -1;
 }

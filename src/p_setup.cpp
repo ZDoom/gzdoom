@@ -1514,7 +1514,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
 		ss->secretsector = !!(ss->special&SECRET_MASK);
-		ss->tag = LittleShort(ms->tag);
+		ss->SetTag(LittleShort(ms->tag));
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
 		ss->seqType = defSeqType;
@@ -2495,7 +2495,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 				for (s = 0; s < numsectors; s++)
 				{
-					if (sectors[s].tag == tag)
+					if (sectors[s].HasTag(tag))
 					{
 						if (!colorgood) color = sectors[s].ColorMap->Color;
 						if (!foggood) fog = sectors[s].ColorMap->Fade;
@@ -3131,9 +3131,9 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (sector->linecount == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, sector->tag);
+			Printf ("Sector %i (tag %i) has no lines\n", i, sector->GetTag());
 			// 0 the sector's tag so that no specials can use it
-			sector->tag = 0;
+			sector->SetTag(0);
 		}
 		else
 		{
@@ -3309,18 +3309,10 @@ void P_LoadBehavior (MapData * map)
 // Hash the sector tags across the sectors and linedefs.
 static void P_InitTagLists ()
 {
-	int i;
-
-	for (i=numsectors; --i>=0; )		// Initially make all slots empty.
-		sectors[i].firsttag = -1;
-	for (i=numsectors; --i>=0; )		// Proceed from last to first sector
-	{									// so that lower sectors appear first
-		int j = (unsigned) sectors[i].tag % (unsigned) numsectors;	// Hash func
-		sectors[i].nexttag = sectors[j].firsttag;	// Prepend sector to chain
-		sectors[j].firsttag = i;
-	}
+	sector_t::HashTags();
 
 	// killough 4/17/98: same thing, only for linedefs
+	int i;
 
 	for (i=numlines; --i>=0; )			// Initially make all slots empty.
 		lines[i].firstid = -1;

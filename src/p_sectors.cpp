@@ -825,6 +825,36 @@ sector_t *sector_t::GetHeightSec() const
 }
 
 
+bool sector_t::HasTag(int checktag) const
+{
+	return tag == checktag;
+}
+
+void sector_t::SetTag(int tagnum, bool discardall)
+{
+	tag = tagnum;
+}
+
+int sector_t::GetTag() const
+{
+	return tag;
+}
+
+void sector_t::HashTags()
+{
+	int i;
+
+	for (i=numsectors; --i>=0; )		// Initially make all slots empty.
+		sectors[i].firsttag = -1;
+	for (i=numsectors; --i>=0; )		// Proceed from last to first sector
+	{									// so that lower sectors appear first
+		int j = (unsigned) sectors[i].tag % (unsigned) numsectors;	// Hash func
+		sectors[i].nexttag = sectors[j].firsttag;	// Prepend sector to chain
+		sectors[j].firsttag = i;
+	}
+}
+
+
 bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
 {
 	bool copy = false;

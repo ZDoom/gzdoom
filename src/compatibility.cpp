@@ -551,7 +551,7 @@ void SetCompatibilityParams()
 				{
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
-						sectors[CompatParams[i + 1]].tag = CompatParams[i + 2];
+						sectors[CompatParams[i + 1]].SetTag(CompatParams[i + 2]);
 					}
 					i += 3;
 					break;

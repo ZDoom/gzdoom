@@ -278,7 +278,7 @@ static void RemoveTaggedSectors(extsector_t::linked::plane &scrollplane, int tag
 {
 	for(int i = scrollplane.Sectors.Size()-1; i>=0; i--)
 	{
-		if (scrollplane.Sectors[i].Sector->tag == tag)
+		if (scrollplane.Sectors[i].Sector->HasTag(tag))
 		{
 			scrollplane.Sectors.Delete(i);
 		}

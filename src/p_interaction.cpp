@@ -950,6 +950,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	int fakeDamage = 0;
 	int holdDamage = 0;
 	
+	if (damage < 0) damage = 0;
+
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
 		return -1;

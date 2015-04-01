@@ -950,6 +950,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	int fakeDamage = 0;
 	int holdDamage = 0;
 	
+	if (damage < 0) damage = 0;
+
 	if (target == NULL || !((target->flags & MF_SHOOTABLE) || (target->flags6 & MF6_VULNERABLE)))
 	{ // Shouldn't happen
 		return -1;
@@ -1038,6 +1040,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// Invulnerable, and won't wake up
 			return -1;
 		}
+
 		if (damage < TELEFRAG_DAMAGE) // TELEFRAG_DAMAGE may not be reduced at all or it may not guarantee its effect.
 		{
 			player = target->player;
@@ -1115,6 +1118,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 					}
 					return -1;
 				}
+			}
+			if (target->flags5 & MF5_NODAMAGE)
+			{
+				damage = 0;
 			}
 		}
 	}

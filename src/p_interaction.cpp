@@ -1119,10 +1119,10 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 					return -1;
 				}
 			}
-			if (target->flags5 & MF5_NODAMAGE)
-			{
-				damage = 0;
-			}
+		}
+		if (target->flags5 & MF5_NODAMAGE)
+		{
+			damage = 0;
 		}
 	}
 	if (damage < 0)

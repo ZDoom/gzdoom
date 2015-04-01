@@ -332,7 +332,8 @@ void OpenGLFrameBuffer::GetHitlist(BYTE *hitlist)
 	// check skybox textures and mark the separate faces as used
 	for(int i=0;i<TexMan.NumTextures(); i++)
 	{
-		if (hitlist[i] & FTextureManager::HIT_Sky)
+		// HIT_Wall must be checked for MBF-style sky transfers. 
+		if (hitlist[i] & (FTextureManager::HIT_Sky|FTextureManager::HIT_Wall))
 		{
 			FTexture *tex = TexMan.ByIndex(i);
 			if (tex->gl_info.bSkybox)

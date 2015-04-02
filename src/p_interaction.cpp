@@ -1033,6 +1033,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	{
 		target->velx = target->vely = target->velz = 0;
 	}
+
+	player = target->player;
 	if (!(flags & DMG_FORCED))	// DMG_FORCED skips all special damage checks, TELEFRAG_DAMAGE may not be reduced at all
 	{
 		if (target->flags2 & MF2_DORMANT)
@@ -1043,7 +1045,6 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 		if (damage < TELEFRAG_DAMAGE) // TELEFRAG_DAMAGE may not be reduced at all or it may not guarantee its effect.
 		{
-			player = target->player;
 			if (player && damage > 1)
 			{
 				// Take half damage in trainer mode

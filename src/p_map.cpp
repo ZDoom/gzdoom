@@ -1034,7 +1034,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 	// Both things overlap in x or y direction
 	bool unblocking = false;
 
-	if (tm.FromPMove)
+	if (tm.FromPMove || tm.thing->player != NULL)
 	{
 		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)

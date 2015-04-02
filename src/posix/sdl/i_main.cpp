@@ -240,7 +240,7 @@ int main (int argc, char **argv)
 #if !defined (__APPLE__)
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
+		cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", DoomSpecificInfo);
 	}
 #endif // !__APPLE__
 

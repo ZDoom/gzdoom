@@ -37,7 +37,7 @@ static struct {
 	pid_t pid;
 	int has_siginfo;
 	siginfo_t siginfo;
-	char buf[1024];
+	char buf[4096];
 } crash_info;
 
 

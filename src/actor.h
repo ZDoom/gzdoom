@@ -1035,7 +1035,7 @@ public:
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
 	bool isSlow();
-	void SetIdle();
+	void SetIdle(bool nofunction=false);
 	void ClearCounters();
 	FState *GetRaiseState();
 	void Revive();

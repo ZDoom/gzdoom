@@ -93,6 +93,7 @@
 #include "actors/hexen/mageplayer.txt"
 #include "actors/hexen/pig.txt"
 #include "actors/hexen/flame.txt"
+#include "actors/hexen/flies.txt"
 #include "actors/hexen/hexenarmor.txt"
 #include "actors/hexen/hexendecorations.txt"
 #include "actors/hexen/hexenkeys.txt"

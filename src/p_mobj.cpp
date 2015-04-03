@@ -6236,11 +6236,11 @@ void AActor::Crash()
 	}
 }
 
-void AActor::SetIdle()
+void AActor::SetIdle(bool nofunction)
 {
 	FState *idle = FindState (NAME_Idle);
 	if (idle == NULL) idle = SpawnState;
-	SetState(idle);
+	SetState(idle, nofunction);
 }
 
 int AActor::SpawnHealth()

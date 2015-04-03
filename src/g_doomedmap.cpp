@@ -34,20 +34,34 @@
 */
 
 #include "info.h"
+#include "p_lnspec.h"
 #include "m_fixed.h"
 #include "c_dispatch.h"
-#include "d_net.h"
-#include "v_text.h"
-
-#include "gi.h"
-
-#include "actor.h"
-#include "r_state.h"
-#include "i_system.h"
-#include "p_local.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "g_level.h"
+#include "v_text.h"
+#include "i_system.h"
+
+//==========================================================================
+//
+// Stuff that's only valid during definition time
+//
+//==========================================================================
+
+struct MapinfoEdMapItem
+{
+	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.
+	int special;
+	int args[5];
+	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
+	FString filename;
+	int linenum;
+};
+
+typedef TMap<int, MapinfoEdMapItem> IdMap;
+
+static IdMap DoomEdFromMapinfo;
 
 //==========================================================================
 //
@@ -56,108 +70,20 @@
 
 FDoomEdMap DoomEdMap;
 
-FDoomEdMap::FDoomEdEntry *FDoomEdMap::DoomEdHash[DOOMED_HASHSIZE];
-
-FDoomEdMap::~FDoomEdMap()
-{
-	Empty();
-}
-
-void FDoomEdMap::AddType (int doomednum, const PClass *type, bool temporary)
-{
-	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
-	FDoomEdEntry *entry = DoomEdHash[hash];
-	while (entry && entry->DoomEdNum != doomednum)
-	{
-		entry = entry->HashNext;
-	}
-	if (entry == NULL)
-	{
-		entry = new FDoomEdEntry;
-		entry->HashNext = DoomEdHash[hash];
-		entry->DoomEdNum = doomednum;
-		DoomEdHash[hash] = entry;
-	}
-	else if (!entry->temp)
-	{
-		Printf (PRINT_BOLD, "Warning: %s and %s both have doomednum %d.\n",
-			type->TypeName.GetChars(), entry->Type->TypeName.GetChars(), doomednum);
-	}
-	entry->temp = temporary;
-	entry->Type = type;
-}
-
-void FDoomEdMap::DelType (int doomednum)
-{
-	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
-	FDoomEdEntry **prev = &DoomEdHash[hash];
-	FDoomEdEntry *entry = *prev;
-	while (entry && entry->DoomEdNum != doomednum)
-	{
-		prev = &entry->HashNext;
-		entry = entry->HashNext;
-	}
-	if (entry != NULL)
-	{
-		*prev = entry->HashNext;
-		delete entry;
-	}
-}
-
-void FDoomEdMap::Empty ()
-{
-	int bucket;
-
-	for (bucket = 0; bucket < DOOMED_HASHSIZE; ++bucket)
-	{
-		FDoomEdEntry *probe = DoomEdHash[bucket];
-
-		while (probe != NULL)
-		{
-			FDoomEdEntry *next = probe->HashNext;
-			delete probe;
-			probe = next;
-		}
-		DoomEdHash[bucket] = NULL;
-	}
-}
-
-const PClass *FDoomEdMap::FindType (int doomednum) const
-{
-	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
-	FDoomEdEntry *entry = DoomEdHash[hash];
-	while (entry && entry->DoomEdNum != doomednum)
-		entry = entry->HashNext;
-	return entry ? entry->Type : NULL;
-}
-
-struct EdSorting
-{
-	const PClass *Type;
-	int DoomEdNum;
-};
-
 static int STACK_ARGS sortnums (const void *a, const void *b)
 {
-	return ((const EdSorting *)a)->DoomEdNum -
-		((const EdSorting *)b)->DoomEdNum;
+	return (*(const FDoomEdMap::Pair**)a)->Key - (*(const FDoomEdMap::Pair**)b)->Key;
 }
 
-void FDoomEdMap::DumpMapThings ()
+CCMD (dumpmapthings)
 {
-	TArray<EdSorting> infos (PClass::m_Types.Size());
-	int i;
+	TArray<FDoomEdMap::Pair*> infos(DoomEdMap.CountUsed());
+	FDoomEdMap::Iterator it(DoomEdMap);
+	FDoomEdMap::Pair *pair;
 
-	for (i = 0; i < DOOMED_HASHSIZE; ++i)
+	while (it.NextPair(pair))
 	{
-		FDoomEdEntry *probe = DoomEdHash[i];
-
-		while (probe != NULL)
-		{
-			EdSorting sorting = { probe->Type, probe->DoomEdNum };
-			infos.Push (sorting);
-			probe = probe->HashNext;
-		}
+		infos.Push(pair);
 	}
 
 	if (infos.Size () == 0)
@@ -166,17 +92,145 @@ void FDoomEdMap::DumpMapThings ()
 	}
 	else
 	{
-		qsort (&infos[0], infos.Size (), sizeof(EdSorting), sortnums);
+		qsort (&infos[0], infos.Size (), sizeof(FDoomEdMap::Pair*), sortnums);
 
-		for (i = 0; i < (int)infos.Size (); ++i)
+		for (unsigned i = 0; i < infos.Size (); ++i)
 		{
 			Printf ("%6d %s\n",
-				infos[i].DoomEdNum, infos[i].Type->TypeName.GetChars());
+				infos[i]->Key, infos[i]->Value.Type->TypeName.GetChars());
 		}
 	}
 }
 
-CCMD (dumpmapthings)
+
+void FMapInfoParser::ParseDoomEdNums()
 {
-	FDoomEdMap::DumpMapThings ();
+	TMap<int, bool> defined;
+	int error = 0;
+
+	MapinfoEdMapItem editem;
+
+	editem.filename = sc.ScriptName;
+
+	sc.MustGetStringName("{");
+	while (true)
+	{
+		if (sc.CheckString("}")) return;
+		else if (sc.CheckNumber())
+		{
+			int ednum = sc.Number;
+			sc.MustGetStringName("=");
+			sc.MustGetString();
+
+			bool *def = defined.CheckKey(ednum);
+			if (def != NULL)
+			{
+				sc.ScriptMessage("Editor Number %d defined more than once", ednum);
+				error++;
+			}
+			defined[ednum] = true;
+			if (sc.String[0] == '$')
+			{
+				// todo: add special stuff like playerstarts and sound sequence overrides here, too.
+				editem.classname = NAME_None;
+				editem.special = 1; // todo: assign proper constants
+			}
+			else
+			{
+				editem.classname = sc.String;
+				editem.special = -1;
+			}
+			memset(editem.args, 0, sizeof(editem.args));
+
+			int minargs = 0;
+			int maxargs = 5;
+			FString specialname;
+			if (sc.CheckString(","))
+			{
+				// todo: parse a special or args
+				editem.special = 0;	// mark args as used - if this is done we need to prevent assignment of map args in P_SpawnMapThing.
+				if (!sc.CheckNumber())
+				{
+					sc.MustGetString();
+					specialname = sc.String;	// save for later error reporting.
+					editem.special = P_FindLineSpecial(sc.String, &minargs, &maxargs);
+					if (editem.special == 0 || minargs == -1)
+					{
+						sc.ScriptMessage("Invalid special %s for Editor Number %d", sc.String, ednum);
+						error++;
+						minargs = 0;
+						maxargs = 5;
+					}
+					if (!sc.CheckString(","))
+					{
+						// special case: Special without arguments
+						if (minargs != 0)
+						{
+							sc.ScriptMessage("Incorrect number of args for special %s, min = %d, max = %d, found = 0", specialname.GetChars(), minargs, maxargs);
+							error++;
+						}
+						DoomEdFromMapinfo.Insert(ednum, editem);
+						continue;
+					}
+					sc.MustGetStringName(",");
+					sc.MustGetNumber();
+				}
+				int i = 0;
+				while (i < 5)
+				{
+					editem.args[i++] = sc.Number;
+					i++;
+					if (!sc.CheckString(",")) break;
+					sc.MustGetNumber();
+				}
+				if (specialname.IsNotEmpty() && (i < minargs || i > maxargs))
+				{
+					sc.ScriptMessage("Incorrect number of args for special %s, min = %d, max = %d, found = %d", specialname.GetChars(), minargs, maxargs, i);
+					error++;
+				}
+			}
+			DoomEdFromMapinfo.Insert(ednum, editem);
+		}
+		else
+		{
+			sc.ScriptError("Number expected");
+		}
+	}
+	if (error > 0)
+	{
+		sc.ScriptError("%d errors encountered in DoomEdNum definition");
+	}
+}
+
+void InitActorNumsFromMapinfo()
+{
+	DoomEdMap.Clear();
+	IdMap::Iterator it(DoomEdFromMapinfo);
+	IdMap::Pair *pair;
+	int error = 0;
+
+	while (it.NextPair(pair))
+	{
+		const PClass *cls = NULL;
+		if (pair->Value.classname != NAME_None)
+		{
+			cls = PClass::FindClass(pair->Value.classname);
+			if (cls == NULL)
+			{
+				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",
+					pair->Value.filename.GetChars(), pair->Value.linenum, pair->Value.classname.GetChars());
+				error++;
+			}
+		}
+		FDoomEdEntry ent;
+		ent.Type = cls;
+		ent.Special = pair->Value.special;
+		memcpy(ent.Args, pair->Value.args, sizeof(ent.Args));
+		DoomEdMap.Insert(pair->Key, ent);
+	}
+	if (error > 0)
+	{
+		I_Error("%d unknown actor classes found", error);
+	}
+	DoomEdFromMapinfo.Clear();	// we do not need this any longer
 }

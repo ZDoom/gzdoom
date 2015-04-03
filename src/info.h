@@ -278,33 +278,19 @@ struct FActorInfo
 	TArray<const PClass *> ForbiddenToPlayerClass;
 };
 
-class FDoomEdMap
+struct FDoomEdEntry
 {
-public:
-	~FDoomEdMap();
-
-	const PClass *FindType (int doomednum) const;
-	void AddType (int doomednum, const PClass *type, bool temporary = false);
-	void DelType (int doomednum);
-	void Empty ();
-
-	static void DumpMapThings ();
-
-private:
-	enum { DOOMED_HASHSIZE = 256 };
-
-	struct FDoomEdEntry
-	{
-		FDoomEdEntry *HashNext;
-		const PClass *Type;
-		int DoomEdNum;
-		bool temp;
-	};
-
-	static FDoomEdEntry *DoomEdHash[DOOMED_HASHSIZE];
+	const PClass *Type;
+	int Special;
+	int Args[5];
 };
 
+typedef TMap<int, FDoomEdEntry> FDoomEdMap;
+
 extern FDoomEdMap DoomEdMap;
+
+void InitActorNumsFromMapinfo();
+
 
 int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);

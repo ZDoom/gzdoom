@@ -2440,6 +2440,7 @@ void D_DoomMain (void)
 		// Create replacements for dehacked pickups
 		FinishDehPatch();
 
+		InitActorNumsFromMapinfo();
 		FActorInfo::StaticSetActorNums ();
 
 		//Added by MC:

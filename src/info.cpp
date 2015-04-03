@@ -142,7 +142,6 @@ void FActorInfo::StaticInit ()
 void FActorInfo::StaticSetActorNums ()
 {
 	SpawnableThings.Clear();
-	DoomEdMap.Empty ();
 
 	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
 	{
@@ -171,7 +170,16 @@ void FActorInfo::RegisterIDs ()
 		}
 		if (DoomEdNum != -1)
 		{
-			DoomEdMap.AddType (DoomEdNum, cls);
+			FDoomEdEntry *oldent = DoomEdMap.CheckKey(DoomEdNum);
+			if (oldent != NULL && oldent->Special == -2)
+			{
+				Printf(TEXTCOLOR_RED"Editor number %d defined twice for classes '%s' and '%s'\n", DoomEdNum, cls->TypeName.GetChars(), oldent->Type->TypeName.GetChars());
+			}
+			FDoomEdEntry ent;
+			memset(&ent, 0, sizeof(ent));
+			ent.Type = cls;
+			ent.Special = -2;	// use -2 instead of -1 so that we can recognize DECORATE defined entries and print a warning message if duplicates occur.
+			DoomEdMap.Insert(DoomEdNum, ent);
 			if (cls != Class) 
 			{
 				Printf(TEXTCOLOR_RED"Editor number %d refers to hidden class type '%s'\n", DoomEdNum, cls->TypeName.GetChars());
@@ -179,15 +187,6 @@ void FActorInfo::RegisterIDs ()
 		}
 	}
 	// Fill out the list for Chex Quest with Doom's actors
-	if (gameinfo.gametype == GAME_Chex && DoomEdMap.FindType(DoomEdNum) == NULL &&
-		(GameFilter & GAME_Doom))
-	{
-		DoomEdMap.AddType (DoomEdNum, Class, true);
-		if (cls != Class) 
-		{
-			Printf(TEXTCOLOR_RED"Editor number %d refers to hidden class type '%s'\n", DoomEdNum, cls->TypeName.GetChars());
-		}
-	}
 }
 
 //==========================================================================

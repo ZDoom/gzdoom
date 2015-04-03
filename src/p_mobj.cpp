@@ -4600,6 +4600,28 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->type == 0 || mthing->type == -1)
 		return NULL;
 
+	// find which type to spawn
+	FDoomEdEntry *mentry = DoomEdMap.CheckKey(mthing->type);
+
+	if (mentry == NULL)
+	{
+		// [RH] Don't die if the map tries to spawn an unknown thing
+		Printf ("Unknown type %i at (%i, %i)\n",
+				 mthing->type,
+				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+		mentry = DoomEdMap.CheckKey(0);
+		if (mentry == NULL)	// we need a valid entry for the rest of this function so if we can't find a default, let's exit right away.
+		{
+			return NULL;
+		}
+	}
+	if (mentry->Type == NULL && mentry->Special <= 0)
+	{
+		// has been explicitly set to not spawning anything.
+		return NULL;
+	}
+
+
 	// count deathmatch start positions
 	if (mthing->type == 11)
 	{
@@ -4776,39 +4798,25 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mthing->args[0] = mthing->type - 14100;
 		mthing->type = 14165;
 	}
-	// find which type to spawn
-	i = DoomEdMap.FindType (mthing->type);
-
-	if (i == NULL)
-	{
-		// [RH] Don't die if the map tries to spawn an unknown thing
-		Printf ("Unknown type %i at (%i, %i)\n",
-				 mthing->type,
-				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-		i = PClass::FindClass("Unknown");
-	}
 	// [RH] If the thing's corresponding sprite has no frames, also map
 	//		it to the unknown thing.
-	else
+	// Handle decorate replacements explicitly here
+	// to check for missing frames in the replacement object.
+	i = mentry->Type->GetReplacement();
+
+	const AActor *defaults = GetDefaultByType (i);
+	if (defaults->SpawnState == NULL ||
+		sprites[defaults->SpawnState->sprite].numframes == 0)
 	{
-		// Handle decorate replacements explicitly here
-		// to check for missing frames in the replacement object.
-		i = i->GetReplacement();
+		// We don't load mods for shareware games so we'll just ignore
+		// missing actors. Heretic needs this since the shareware includes
+		// the retail weapons in Deathmatch.
+		if (gameinfo.flags & GI_SHAREWARE)
+			return NULL;
 
-		const AActor *defaults = GetDefaultByType (i);
-		if (defaults->SpawnState == NULL ||
-			sprites[defaults->SpawnState->sprite].numframes == 0)
-		{
-			// We don't load mods for shareware games so we'll just ignore
-			// missing actors. Heretic needs this since the shareware includes
-			// the retail weapons in Deathmatch.
-			if (gameinfo.flags & GI_SHAREWARE)
-				return NULL;
-
-			Printf ("%s at (%i, %i) has no frames\n",
-					i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-			i = PClass::FindClass("Unknown");
-		}
+		Printf ("%s at (%i, %i) has no frames\n",
+				i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+		i = PClass::FindClass("Unknown");
 	}
 
 	const AActor *info = GetDefaultByType (i);
@@ -4898,7 +4906,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}
 
-	if (!(mobj->flags2 & MF2_ARGSDEFINED))
+	// if the actor got args defined either in DECORATE or MAPINFO we must ignore the map's properties.
+	if (!(mobj->flags2 & MF2_ARGSDEFINED) && (mentry == NULL || mentry->Special < 0))
 	{
 		// [RH] Set the thing's special
 		mobj->special = mthing->special;

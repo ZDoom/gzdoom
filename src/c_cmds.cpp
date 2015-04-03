@@ -641,6 +641,23 @@ CCMD (error_fatal)
 	}
 }
 
+//==========================================================================
+//
+// CCMD crashout
+//
+// Debugging routine for testing the crash logger.
+// Useless in a win32 debug build, because that doesn't enable the crash logger.
+//
+//==========================================================================
+
+#if !defined(_WIN32) || !defined(_DEBUG)
+CCMD (crashout)
+{
+	*(volatile int *)0 = 0;
+}
+#endif
+
+
 CCMD (dir)
 {
 	FString dir, path;

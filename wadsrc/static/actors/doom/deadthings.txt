@@ -1,6 +1,6 @@
 // Gibbed marine -----------------------------------------------------------
 
-actor GibbedMarine 10
+actor GibbedMarine
 {
 	Game Doom
 	SpawnID 145
@@ -14,14 +14,14 @@ actor GibbedMarine 10
 
 // Gibbed marine (extra copy) ----------------------------------------------
 
-actor GibbedMarineExtra : GibbedMarine 12
+actor GibbedMarineExtra : GibbedMarine
 {
 	Game Doom
 }
 
 // Dead marine -------------------------------------------------------------
 
-actor DeadMarine 15
+actor DeadMarine
 {
 	Game Doom
 	States
@@ -39,7 +39,7 @@ actor DeadMarine 15
 
 // Dead zombie man ---------------------------------------------------------
 
-actor DeadZombieMan : ZombieMan 18
+actor DeadZombieMan : ZombieMan
 {
 	Skip_Super
 	Game Doom
@@ -53,7 +53,7 @@ actor DeadZombieMan : ZombieMan 18
 
 // Dead shotgun guy --------------------------------------------------------
 
-actor DeadShotgunGuy : ShotgunGuy 19
+actor DeadShotgunGuy : ShotgunGuy
 {
 	Skip_Super
 	Game Doom
@@ -67,7 +67,7 @@ actor DeadShotgunGuy : ShotgunGuy 19
 
 // Dead imp ----------------------------------------------------------------
 
-actor DeadDoomImp : DoomImp 20
+actor DeadDoomImp : DoomImp
 {
 	Skip_Super
 	Game Doom
@@ -80,7 +80,7 @@ actor DeadDoomImp : DoomImp 20
 
 // Dead demon --------------------------------------------------------------
 
-actor DeadDemon : Demon 21
+actor DeadDemon : Demon
 {
 	Skip_Super
 	Game Doom
@@ -93,7 +93,7 @@ actor DeadDemon : Demon 21
 
 // Dead cacodemon ----------------------------------------------------------
 
-actor DeadCacodemon : Cacodemon 22
+actor DeadCacodemon : Cacodemon
 {
 	Skip_Super
 	Game Doom
@@ -112,7 +112,7 @@ actor DeadCacodemon : Cacodemon 22
  * a holdover from that.)
  */
 
-actor DeadLostSoul : LostSoul 23
+actor DeadLostSoul : LostSoul
 {
 	Skip_Super
 	Game Doom

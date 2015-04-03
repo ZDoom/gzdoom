@@ -1,7 +1,7 @@
 
 // FireDemon ----------------------------------------------------------------
 
-ACTOR FireDemon 10060
+ACTOR FireDemon
 {
 	Game Hexen
 	SpawnID 5

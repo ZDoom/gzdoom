@@ -12,7 +12,7 @@ ACTOR MageWeaponPiece : WeaponPiece
 
 // Mage Weapon Piece 1 ------------------------------------------------------
 
-ACTOR MWeaponPiece1 : MageWeaponPiece 21
+ACTOR MWeaponPiece1 : MageWeaponPiece
 {
 	Game Hexen
 	SpawnID 37
@@ -27,7 +27,7 @@ ACTOR MWeaponPiece1 : MageWeaponPiece 21
 
 // Mage Weapon Piece 2 ------------------------------------------------------
 
-ACTOR MWeaponPiece2 : MageWeaponPiece 22
+ACTOR MWeaponPiece2 : MageWeaponPiece
 {
 	Game Hexen
 	SpawnID 38
@@ -42,7 +42,7 @@ ACTOR MWeaponPiece2 : MageWeaponPiece 22
 
 // Mage Weapon Piece 3 ------------------------------------------------------
 
-ACTOR MWeaponPiece3 : MageWeaponPiece 23
+ACTOR MWeaponPiece3 : MageWeaponPiece
 {
 	Game Hexen
 	SpawnID 39

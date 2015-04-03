@@ -1,4 +1,4 @@
-ACTOR DoomBuilderCamera 32000
+ACTOR DoomBuilderCamera
 {
 	States
 	{
@@ -9,7 +9,7 @@ ACTOR DoomBuilderCamera 32000
 }
 
 
-ACTOR SecurityCamera 9025 native 
+ACTOR SecurityCamera native 
 {
 	+NOBLOCKMAP 
 	+NOGRAVITY
@@ -17,6 +17,6 @@ ACTOR SecurityCamera 9025 native
 	RenderStyle None
 }
 
-ACTOR AimingCamera : SecurityCamera 9073 native 
+ACTOR AimingCamera : SecurityCamera native 
 {
 }

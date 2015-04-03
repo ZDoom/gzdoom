@@ -1,6 +1,6 @@
 // Clip --------------------------------------------------------------------
 
-ACTOR Clip : Ammo 2007
+ACTOR Clip : Ammo
 {
 	Game Doom
 	SpawnID 11
@@ -20,7 +20,7 @@ ACTOR Clip : Ammo 2007
 
 // Clip box ----------------------------------------------------------------
 
-ACTOR ClipBox : Clip 2048
+ACTOR ClipBox : Clip
 {
 	Game Doom
 	SpawnID 139
@@ -36,7 +36,7 @@ ACTOR ClipBox : Clip 2048
 
 // Rocket ------------------------------------------------------------------
 
-ACTOR RocketAmmo : Ammo 2010
+ACTOR RocketAmmo : Ammo
 {
 	Game Doom
 	SpawnID 140
@@ -56,7 +56,7 @@ ACTOR RocketAmmo : Ammo 2010
 
 // Rocket box --------------------------------------------------------------
 
-ACTOR RocketBox : RocketAmmo 2046
+ACTOR RocketBox : RocketAmmo
 {
 	Game Doom
 	SpawnID 141
@@ -72,7 +72,7 @@ ACTOR RocketBox : RocketAmmo 2046
 
 // Cell --------------------------------------------------------------------
 
-ACTOR Cell : Ammo 2047
+ACTOR Cell : Ammo
 {
 	Game Doom
 	SpawnID 75
@@ -92,7 +92,7 @@ ACTOR Cell : Ammo 2047
 
 // Cell pack ---------------------------------------------------------------
 
-ACTOR CellPack : Cell 17
+ACTOR CellPack : Cell
 {
 	Game Doom
 	SpawnID 142
@@ -108,7 +108,7 @@ ACTOR CellPack : Cell 17
 
 // Shells ------------------------------------------------------------------
 
-ACTOR Shell : Ammo 2008
+ACTOR Shell : Ammo
 {
 	Game Doom
 	SpawnID 12
@@ -128,7 +128,7 @@ ACTOR Shell : Ammo 2008
 
 // Shell box ---------------------------------------------------------------
 
-ACTOR ShellBox : Shell 2049
+ACTOR ShellBox : Shell
 {
 	Game Doom
 	SpawnID 143
@@ -144,7 +144,7 @@ ACTOR ShellBox : Shell 2049
 
 // Backpack ---------------------------------------------------------------
 
-ACTOR Backpack : BackpackItem 8
+ACTOR Backpack : BackpackItem
 {
 	Game Doom
 	SpawnID 144

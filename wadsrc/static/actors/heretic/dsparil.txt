@@ -1,7 +1,7 @@
 
 // Boss spot ----------------------------------------------------------------
 
-ACTOR BossSpot : SpecialSpot 56
+ACTOR BossSpot : SpecialSpot
 {
 	Game Heretic
 	SpawnID 141
@@ -10,7 +10,7 @@ ACTOR BossSpot : SpecialSpot 56
 
 // Sorcerer (D'Sparil on his serpent) ---------------------------------------
 
-ACTOR Sorcerer1 7
+ACTOR Sorcerer1
 {
 	Game Heretic
 	SpawnID 142

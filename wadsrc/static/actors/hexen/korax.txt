@@ -1,4 +1,4 @@
-ACTOR Korax 10200
+ACTOR Korax
 {
 	Game Hexen
 	Health 5000

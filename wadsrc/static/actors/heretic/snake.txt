@@ -1,5 +1,5 @@
 
-ACTOR Snake 92
+ACTOR Snake
 {
 	Game Heretic
 	SpawnID 132

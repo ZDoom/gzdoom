@@ -1,7 +1,7 @@
 
 // Tech lamp ---------------------------------------------------------------
 
-ACTOR TechLamp 85
+ACTOR TechLamp
 {
 	Game Doom
 	Radius 16
@@ -18,7 +18,7 @@ ACTOR TechLamp 85
 
 // Tech lamp 2 -------------------------------------------------------------
 
-ACTOR TechLamp2 86
+ACTOR TechLamp2
 {
 	Game Doom
 	Radius 16
@@ -35,7 +35,7 @@ ACTOR TechLamp2 86
 
 // Column ------------------------------------------------------------------
 
-ACTOR Column 2028
+ACTOR Column
 {
 	Game Doom
 	Radius 16
@@ -52,7 +52,7 @@ ACTOR Column 2028
 
 // Tall green column -------------------------------------------------------
 
-ACTOR TallGreenColumn 30
+ACTOR TallGreenColumn
 {
 	Game Doom
 	Radius 16
@@ -69,7 +69,7 @@ ACTOR TallGreenColumn 30
 
 // Short green column ------------------------------------------------------
 
-ACTOR ShortGreenColumn 31
+ACTOR ShortGreenColumn
 {
 	Game Doom
 	Radius 16
@@ -86,7 +86,7 @@ ACTOR ShortGreenColumn 31
 
 // Tall red column ---------------------------------------------------------
 
-ACTOR TallRedColumn 32
+ACTOR TallRedColumn
 {
 	Game Doom
 	Radius 16
@@ -103,7 +103,7 @@ ACTOR TallRedColumn 32
 
 // Short red column --------------------------------------------------------
 
-ACTOR ShortRedColumn 33
+ACTOR ShortRedColumn
 {
 	Game Doom
 	Radius 16
@@ -120,7 +120,7 @@ ACTOR ShortRedColumn 33
 
 // Skull column ------------------------------------------------------------
 
-ACTOR SkullColumn 37
+ACTOR SkullColumn
 {
 	Game Doom
 	Radius 16
@@ -137,7 +137,7 @@ ACTOR SkullColumn 37
 
 // Heart column ------------------------------------------------------------
 
-ACTOR HeartColumn 36
+ACTOR HeartColumn
 {
 	Game Doom
 	Radius 16
@@ -154,7 +154,7 @@ ACTOR HeartColumn 36
 
 // Evil eye ----------------------------------------------------------------
 
-ACTOR EvilEye 41
+ACTOR EvilEye
 {
 	Game Doom
 	Radius 16
@@ -171,7 +171,7 @@ ACTOR EvilEye 41
 
 // Floating skull ----------------------------------------------------------
 
-ACTOR FloatingSkull 42
+ACTOR FloatingSkull
 {
 	Game Doom
 	Radius 16
@@ -188,7 +188,7 @@ ACTOR FloatingSkull 42
 
 // Torch tree --------------------------------------------------------------
 
-ACTOR TorchTree 43
+ACTOR TorchTree
 {
 	Game Doom
 	Radius 16
@@ -205,7 +205,7 @@ ACTOR TorchTree 43
 
 // Blue torch --------------------------------------------------------------
 
-ACTOR BlueTorch 44
+ACTOR BlueTorch
 {
 	Game Doom
 	Radius 16
@@ -222,7 +222,7 @@ ACTOR BlueTorch 44
 
 // Green torch -------------------------------------------------------------
 
-ACTOR GreenTorch 45
+ACTOR GreenTorch
 {
 	Game Doom
 	Radius 16
@@ -239,7 +239,7 @@ ACTOR GreenTorch 45
 
 // Red torch ---------------------------------------------------------------
 
-ACTOR RedTorch 46
+ACTOR RedTorch
 {
 	Game Doom
 	Radius 16
@@ -256,7 +256,7 @@ ACTOR RedTorch 46
 
 // Short blue torch --------------------------------------------------------
 
-ACTOR ShortBlueTorch 55
+ACTOR ShortBlueTorch
 {
 	Game Doom
 	Radius 16
@@ -273,7 +273,7 @@ ACTOR ShortBlueTorch 55
 
 // Short green torch -------------------------------------------------------
 
-ACTOR ShortGreenTorch 56
+ACTOR ShortGreenTorch
 {
 	Game Doom
 	Radius 16
@@ -290,7 +290,7 @@ ACTOR ShortGreenTorch 56
 
 // Short red torch ---------------------------------------------------------
 
-ACTOR ShortRedTorch 57
+ACTOR ShortRedTorch
 {
 	Game Doom
 	Radius 16
@@ -307,7 +307,7 @@ ACTOR ShortRedTorch 57
 
 // Stalagtite --------------------------------------------------------------
 
-ACTOR Stalagtite 47
+ACTOR Stalagtite
 {
 	Game Doom
 	Radius 16
@@ -324,7 +324,7 @@ ACTOR Stalagtite 47
 
 // Tech pillar -------------------------------------------------------------
 
-ACTOR TechPillar 48
+ACTOR TechPillar
 {
 	Game Doom
 	Radius 16
@@ -341,7 +341,7 @@ ACTOR TechPillar 48
 
 // Candle stick ------------------------------------------------------------
 
-ACTOR Candlestick 34
+ACTOR Candlestick
 {
 	Game Doom
 	Radius 20
@@ -357,7 +357,7 @@ ACTOR Candlestick 34
 
 // Candelabra --------------------------------------------------------------
 
-ACTOR Candelabra 35
+ACTOR Candelabra
 {
 	Game Doom
 	Radius 16
@@ -374,7 +374,7 @@ ACTOR Candelabra 35
 
 // Bloody twitch -----------------------------------------------------------
 
-ACTOR BloodyTwitch 49
+ACTOR BloodyTwitch
 {
 	Game Doom
 	Radius 16
@@ -395,7 +395,7 @@ ACTOR BloodyTwitch 49
 
 // Meat 2 ------------------------------------------------------------------
 
-ACTOR Meat2 50
+ACTOR Meat2
 {
 	Game Doom
 	Radius 16
@@ -413,7 +413,7 @@ ACTOR Meat2 50
 
 // Meat 3 ------------------------------------------------------------------
 
-ACTOR Meat3 51
+ACTOR Meat3
 {
 	Game Doom
 	Radius 16
@@ -431,7 +431,7 @@ ACTOR Meat3 51
 
 // Meat 4 ------------------------------------------------------------------
 
-ACTOR Meat4 52
+ACTOR Meat4
 {
 	Game Doom
 	Radius 16
@@ -449,7 +449,7 @@ ACTOR Meat4 52
 
 // Meat 5 ------------------------------------------------------------------
 
-ACTOR Meat5 53
+ACTOR Meat5
 {
 	Game Doom
 	Radius 16
@@ -467,28 +467,28 @@ ACTOR Meat5 53
 
 // Nonsolid meat -----------------------------------------------------------
 
-ACTOR NonsolidMeat2 : Meat2 59
+ACTOR NonsolidMeat2 : Meat2
 {
 	Game Doom
 	-SOLID
 	Radius 20
 }
 
-ACTOR NonsolidMeat3 : Meat3 61
+ACTOR NonsolidMeat3 : Meat3
 {
 	Game Doom
 	-SOLID
 	Radius 20
 }
 
-ACTOR NonsolidMeat4 : Meat4 60
+ACTOR NonsolidMeat4 : Meat4
 {
 	Game Doom
 	-SOLID
 	Radius 20
 }
 
-ACTOR NonsolidMeat5 : Meat5 62
+ACTOR NonsolidMeat5 : Meat5
 {
 	Game Doom
 	-SOLID
@@ -497,7 +497,7 @@ ACTOR NonsolidMeat5 : Meat5 62
 
 // Nonsolid bloody twitch --------------------------------------------------
 
-ACTOR NonsolidTwitch : BloodyTwitch 63
+ACTOR NonsolidTwitch : BloodyTwitch
 {
 	Game Doom
 	-SOLID
@@ -506,7 +506,7 @@ ACTOR NonsolidTwitch : BloodyTwitch 63
 
 // Head on a stick ---------------------------------------------------------
 
-ACTOR HeadOnAStick 27
+ACTOR HeadOnAStick
 {
 	Game Doom
 	Radius 16
@@ -523,7 +523,7 @@ ACTOR HeadOnAStick 27
 
 // Heads (plural!) on a stick ----------------------------------------------
 
-ACTOR HeadsOnAStick 28
+ACTOR HeadsOnAStick
 {
 	Game Doom
 	Radius 16
@@ -540,7 +540,7 @@ ACTOR HeadsOnAStick 28
 
 // Head candles ------------------------------------------------------------
 
-ACTOR HeadCandles 29
+ACTOR HeadCandles
 {
 	Game Doom
 	Radius 16
@@ -557,7 +557,7 @@ ACTOR HeadCandles 29
 
 // Dead on a stick ---------------------------------------------------------
 
-ACTOR DeadStick 25
+ACTOR DeadStick
 {
 	Game Doom
 	Radius 16
@@ -574,7 +574,7 @@ ACTOR DeadStick 25
 
 // Still alive on a stick --------------------------------------------------
 
-ACTOR LiveStick 26
+ACTOR LiveStick
 {
 	Game Doom
 	Radius 16
@@ -592,7 +592,7 @@ ACTOR LiveStick 26
 
 // Big tree ----------------------------------------------------------------
 
-ACTOR BigTree 54
+ACTOR BigTree
 {
 	Game Doom
 	Radius 32
@@ -609,7 +609,7 @@ ACTOR BigTree 54
 
 // Burning barrel ----------------------------------------------------------
 
-ACTOR BurningBarrel 70
+ACTOR BurningBarrel
 {
 	Game Doom
 	SpawnID 149
@@ -627,7 +627,7 @@ ACTOR BurningBarrel 70
 
 // Hanging with no guts ----------------------------------------------------
 
-ACTOR HangNoGuts 73
+ACTOR HangNoGuts
 {
 	Game Doom
 	Radius 16
@@ -645,7 +645,7 @@ ACTOR HangNoGuts 73
 
 // Hanging from bottom with no brain ---------------------------------------
 
-ACTOR HangBNoBrain 74
+ACTOR HangBNoBrain
 {
 	Game Doom
 	Radius 16
@@ -663,7 +663,7 @@ ACTOR HangBNoBrain 74
 
 // Hanging from top, looking down ------------------------------------------
 
-ACTOR HangTLookingDown 75
+ACTOR HangTLookingDown
 {
 	Game Doom
 	Radius 16
@@ -681,7 +681,7 @@ ACTOR HangTLookingDown 75
 
 // Hanging from top, looking up --------------------------------------------
 
-ACTOR HangTLookingUp 77
+ACTOR HangTLookingUp
 {
 	Game Doom
 	Radius 16
@@ -699,7 +699,7 @@ ACTOR HangTLookingUp 77
 
 // Hanging from top, skully ------------------------------------------------
 
-ACTOR HangTSkull 76
+ACTOR HangTSkull
 {
 	Game Doom
 	Radius 16
@@ -717,7 +717,7 @@ ACTOR HangTSkull 76
 
 // Hanging from top without a brain ----------------------------------------
 
-ACTOR HangTNoBrain 78
+ACTOR HangTNoBrain
 {
 	Game Doom
 	Radius 16
@@ -735,7 +735,7 @@ ACTOR HangTNoBrain 78
 
 // Colon gibs --------------------------------------------------------------
 
-ACTOR ColonGibs 79
+ACTOR ColonGibs
 {
 	Game Doom
 	SpawnID 147
@@ -753,7 +753,7 @@ ACTOR ColonGibs 79
 
 // Small pool o' blood -----------------------------------------------------
 
-ACTOR SmallBloodPool 80
+ACTOR SmallBloodPool
 {
 	Game Doom
 	SpawnID 148
@@ -771,7 +771,7 @@ ACTOR SmallBloodPool 80
 
 // brain stem lying on the ground ------------------------------------------
 
-ACTOR BrainStem 81
+ACTOR BrainStem
 {
 	Game Doom
 	SpawnID 150
@@ -790,7 +790,7 @@ ACTOR BrainStem 81
 
 // Grey stalagmite (unused Doom sprite, definition taken from Skulltag -----
 
-ACTOR Stalagmite 5050
+ACTOR Stalagmite
 {
 	Game Doom
 	Radius 16

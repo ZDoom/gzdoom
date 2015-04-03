@@ -7,7 +7,7 @@ actor Bootspoon : Fist
 	Tag "$TAG_SPOON"
 }
 
-actor SuperBootspork : Chainsaw 2005
+actor SuperBootspork : Chainsaw
 {
 	game Chex
 	obituary "$OB_MPBOOTSPORK"
@@ -28,7 +28,7 @@ actor MiniZorcher : Pistol
 	}
 }
 
-actor LargeZorcher : Shotgun 2001
+actor LargeZorcher : Shotgun
 {
 	game Chex
 	obituary "$OB_MPZORCH"
@@ -36,7 +36,7 @@ actor LargeZorcher : Shotgun 2001
 	Tag "$TAG_LARGEZORCHER"
 }
 
-actor SuperLargeZorcher : SuperShotgun 82
+actor SuperLargeZorcher : SuperShotgun
 {
 	game Chex
 	obituary "$OB_MPMEGAZORCH"
@@ -44,7 +44,7 @@ actor SuperLargeZorcher : SuperShotgun 82
 	Tag "$TAG_SUPERLARGEZORCHER"
 }
 
-actor RapidZorcher : Chaingun 2002
+actor RapidZorcher : Chaingun
 {
 	game Chex
 	obituary "$OB_MPRAPIDZORCH"
@@ -52,7 +52,7 @@ actor RapidZorcher : Chaingun 2002
 	Tag "$TAG_RAPIDZORCHER"
 }
 
-actor ZorchPropulsor : RocketLauncher 2003
+actor ZorchPropulsor : RocketLauncher
 {
 	game Chex
 	obituary ""
@@ -77,7 +77,7 @@ actor PropulsorMissile : Rocket
 	Alpha 0.75
 }	
 
-actor PhasingZorcher : PlasmaRifle 2004
+actor PhasingZorcher : PlasmaRifle
 {
 	game Chex
 	obituary ""
@@ -107,7 +107,7 @@ actor PhaseZorchMissile : PlasmaBall
 	Alpha 0.75
 }	
 
-actor LAZDevice : BFG9000 2006
+actor LAZDevice : BFG9000
 {
 	game Chex
 	obituary ""

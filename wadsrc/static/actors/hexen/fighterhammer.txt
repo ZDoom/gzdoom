@@ -1,7 +1,7 @@
 
 // The Fighter's Hammer -----------------------------------------------------
 
-ACTOR FWeapHammer : FighterWeapon 123
+ACTOR FWeapHammer : FighterWeapon
 {
 	Game Hexen
 	SpawnID 28

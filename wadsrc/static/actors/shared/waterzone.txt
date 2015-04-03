@@ -1,4 +1,4 @@
-ACTOR WaterZone 9045 native
+ACTOR WaterZone native
 {
 	+NOSECTOR
 	+NOBLOCKMAP

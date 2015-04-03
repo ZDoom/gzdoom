@@ -1,7 +1,7 @@
 
 // Wimpy ammo ---------------------------------------------------------------
 
-ACTOR GoldWandAmmo : Ammo 10
+ACTOR GoldWandAmmo : Ammo
 {
 	Game Heretic
 	SpawnID 11
@@ -21,7 +21,7 @@ ACTOR GoldWandAmmo : Ammo 10
 
 // Hefty ammo ---------------------------------------------------------------
 
-ACTOR GoldWandHefty : GoldWandAmmo 12
+ACTOR GoldWandHefty : GoldWandAmmo
 {
 	Game Heretic
 	SpawnID 12
@@ -36,7 +36,7 @@ ACTOR GoldWandHefty : GoldWandAmmo 12
 }
 // Wimpy ammo ---------------------------------------------------------------
 
-ACTOR CrossbowAmmo : Ammo 18
+ACTOR CrossbowAmmo : Ammo
 {
 	Game Heretic
 	SpawnID 33
@@ -56,7 +56,7 @@ ACTOR CrossbowAmmo : Ammo 18
 
 // Hefty ammo ---------------------------------------------------------------
 
-ACTOR CrossbowHefty : CrossbowAmmo 19
+ACTOR CrossbowHefty : CrossbowAmmo
 {
 	Game Heretic
 	SpawnID 34
@@ -71,7 +71,7 @@ ACTOR CrossbowHefty : CrossbowAmmo 19
 }
 // Wimpy ammo ---------------------------------------------------------------
 
-ACTOR MaceAmmo : Ammo 13
+ACTOR MaceAmmo : Ammo
 {
 	Game Heretic
 	SpawnID 35
@@ -91,7 +91,7 @@ ACTOR MaceAmmo : Ammo 13
 
 // Hefty ammo ---------------------------------------------------------------
 
-ACTOR MaceHefty : MaceAmmo 16
+ACTOR MaceHefty : MaceAmmo
 {
 	Game Heretic
 	SpawnID 36
@@ -107,7 +107,7 @@ ACTOR MaceHefty : MaceAmmo 16
 
 // Wimpy ammo ---------------------------------------------------------------
 
-ACTOR BlasterAmmo : Ammo 54
+ACTOR BlasterAmmo : Ammo
 {
 	Game Heretic
 	SpawnID 37
@@ -127,7 +127,7 @@ ACTOR BlasterAmmo : Ammo 54
 
 // Hefty ammo ---------------------------------------------------------------
 
-ACTOR BlasterHefty : BlasterAmmo 55
+ACTOR BlasterHefty : BlasterAmmo
 {
 	Game Heretic
 	SpawnID 38
@@ -143,7 +143,7 @@ ACTOR BlasterHefty : BlasterAmmo 55
 
 // Wimpy ammo ---------------------------------------------------------------
 
-ACTOR SkullRodAmmo : Ammo 20
+ACTOR SkullRodAmmo : Ammo
 {
 	Game Heretic
 	SpawnID 158
@@ -163,7 +163,7 @@ ACTOR SkullRodAmmo : Ammo 20
 
 // Hefty ammo ---------------------------------------------------------------
 
-ACTOR SkullRodHefty : SkullRodAmmo 21
+ACTOR SkullRodHefty : SkullRodAmmo
 {
 	Game Heretic
 	SpawnID 159
@@ -179,7 +179,7 @@ ACTOR SkullRodHefty : SkullRodAmmo 21
 
 // Wimpy ammo ---------------------------------------------------------------
 
-ACTOR PhoenixRodAmmo : Ammo 22
+ACTOR PhoenixRodAmmo : Ammo
 {
 	Game Heretic
 	SpawnID 161
@@ -198,7 +198,7 @@ ACTOR PhoenixRodAmmo : Ammo 22
 }
 // Hefty ammo ---------------------------------------------------------------
 
-ACTOR PhoenixRodHefty : PhoenixRodAmmo 23
+ACTOR PhoenixRodHefty : PhoenixRodAmmo
 {
 	Game Heretic
 	SpawnID 162
@@ -214,7 +214,7 @@ ACTOR PhoenixRodHefty : PhoenixRodAmmo 23
 
 // --- Bag of holding -------------------------------------------------------
 
-ACTOR BagOfHolding : BackpackItem 8
+ACTOR BagOfHolding : BackpackItem
 {
 	Game Heretic
 	SpawnID 136

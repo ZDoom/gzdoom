@@ -3,7 +3,7 @@
 // Baron of Hell
 //
 //===========================================================================
-ACTOR BaronOfHell 3003
+ACTOR BaronOfHell
 {
 	Game Doom
 	SpawnID 3
@@ -59,7 +59,7 @@ ACTOR BaronOfHell 3003
 // Hell Knight
 //
 //===========================================================================
-ACTOR HellKnight : BaronOfHell 69
+ACTOR HellKnight : BaronOfHell
 {
 	Game Doom
 	SpawnID 113

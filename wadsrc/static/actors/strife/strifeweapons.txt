@@ -150,7 +150,7 @@ ACTOR PoisonBolt native
 
 // Strife's Crossbow --------------------------------------------------------
 
-ACTOR StrifeCrossbow : StrifeWeapon 2001
+ACTOR StrifeCrossbow : StrifeWeapon
 {
 	Game Strife
 	+FLOORCLIP
@@ -238,7 +238,7 @@ ACTOR StrifeCrossbow2 : StrifeCrossbow
 
 // Assault Gun --------------------------------------------------------------
 
-actor AssaultGun : StrifeWeapon 2002
+actor AssaultGun : StrifeWeapon
 {
 	Game Strife
 	ConversationID 188, 182, 186
@@ -277,7 +277,7 @@ actor AssaultGun : StrifeWeapon 2002
 
 // Standing variant of the assault gun --------------------------------------
 
-ACTOR AssaultGunStanding : WeaponGiver 2006
+ACTOR AssaultGunStanding : WeaponGiver
 {
 	Game Strife
 	ConversationID 189, 183, 187
@@ -295,7 +295,7 @@ ACTOR AssaultGunStanding : WeaponGiver 2006
 // Mini-Missile Launcher ----------------------------------------------------
 
 
-ACTOR MiniMissileLauncher : StrifeWeapon 2003
+ACTOR MiniMissileLauncher : StrifeWeapon
 {
 	Game Strife
 	ConversationID 192, 186, 190
@@ -401,7 +401,7 @@ ACTOR MiniMissile
 
 // Flame Thrower ------------------------------------------------------------
 
-ACTOR FlameThrower : StrifeWeapon 2005
+ACTOR FlameThrower : StrifeWeapon
 {
 	Game Strife
 	ConversationID 190, 184, 188
@@ -480,7 +480,7 @@ ACTOR FlameMissile
 // Mauler -------------------------------------------------------------------
 // The scatter version
 
-ACTOR Mauler : StrifeWeapon 2004
+ACTOR Mauler : StrifeWeapon
 {
 	Game Strife
 	ConversationID 193, 187, 191
@@ -752,7 +752,7 @@ ACTOR PhosphorousFire native
 
 // High-Explosive Grenade Launcher ------------------------------------------
 
-ACTOR StrifeGrenadeLauncher : StrifeWeapon 154
+ACTOR StrifeGrenadeLauncher : StrifeWeapon
 {
 	Game Strife
 	ConversationID 195, 189, 193

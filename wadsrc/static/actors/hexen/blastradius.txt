@@ -1,5 +1,5 @@
 
-ACTOR ArtiBlastRadius : CustomInventory 10110
+ACTOR ArtiBlastRadius : CustomInventory
 {
 	Game Hexen
 	SpawnID 74

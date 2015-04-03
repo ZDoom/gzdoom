@@ -1,7 +1,7 @@
 
 // Inquisitor ---------------------------------------------------------------
 
-ACTOR Inquisitor 16
+ACTOR Inquisitor
 {
 	Game Strife
 	ConversationID 93,-1,-1

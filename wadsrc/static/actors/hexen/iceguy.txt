@@ -1,7 +1,7 @@
 
 // Ice Guy ------------------------------------------------------------------
 
-ACTOR IceGuy 8020
+ACTOR IceGuy
 {
 	Game Hexen
 	SpawnID 20

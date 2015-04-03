@@ -1,7 +1,7 @@
 
 // Programmer ---------------------------------------------------------------
 
-ACTOR Programmer 71
+ACTOR Programmer
 {
 	Game Strife
 	ConversationID 95, -1, -1

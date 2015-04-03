@@ -3,7 +3,7 @@
 // Lost Soul
 //
 //===========================================================================
-ACTOR LostSoul 3006
+ACTOR LostSoul
 {
 	Game Doom
 	SpawnID 110
@@ -50,7 +50,7 @@ ACTOR LostSoul 3006
 	}
 }
 
-Actor BetaSkull : LostSoul 9037
+Actor BetaSkull : LostSoul
 {
 	States
 	{

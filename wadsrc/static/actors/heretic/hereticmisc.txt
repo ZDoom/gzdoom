@@ -1,7 +1,7 @@
 
 // Pod ----------------------------------------------------------------------
 
-ACTOR Pod 2035
+ACTOR Pod
 {
 	Game Heretic
 	SpawnID 125
@@ -62,7 +62,7 @@ ACTOR PodGoo
 
 // Pod generator ------------------------------------------------------------
 
-ACTOR PodGenerator 43
+ACTOR PodGenerator
 {
 	Game Heretic
 	SpawnID 126
@@ -84,7 +84,7 @@ ACTOR PodGenerator 43
 
 // Teleglitter generator 1 --------------------------------------------------
 
-ACTOR TeleGlitterGenerator1 74
+ACTOR TeleGlitterGenerator1
 {
 	Game Heretic
 	SpawnID 166
@@ -102,7 +102,7 @@ ACTOR TeleGlitterGenerator1 74
 
 // Teleglitter generator 2 --------------------------------------------------
 
-ACTOR TeleGlitterGenerator2 52
+ACTOR TeleGlitterGenerator2
 {
 	Game Heretic
 	SpawnID 167
@@ -160,7 +160,7 @@ ACTOR TeleGlitter2 : TeleGlitter1
 
 // --- Volcano --------------------------------------------------------------
 
-ACTOR Volcano 87
+ACTOR Volcano
 {
 	Game Heretic
 	SpawnID 150

@@ -1,7 +1,7 @@
 
 // Bishop -------------------------------------------------------------------
 
-ACTOR StrifeBishop 187
+ACTOR StrifeBishop
 {
 	Game Strife
 	ConversationID 64,-1,-1

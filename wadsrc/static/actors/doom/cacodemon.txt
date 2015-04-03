@@ -3,7 +3,7 @@
 // Cacodemon
 //
 //===========================================================================
-ACTOR Cacodemon 3005
+ACTOR Cacodemon
 {
 	Game Doom
 	SpawnID 19

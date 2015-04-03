@@ -3,7 +3,7 @@
 // Arachnotron
 //
 //===========================================================================
-ACTOR Arachnotron 68
+ACTOR Arachnotron
 {
 	Game Doom
 	SpawnID 6

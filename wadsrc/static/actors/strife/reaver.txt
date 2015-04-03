@@ -1,5 +1,5 @@
 
-ACTOR Reaver 3001
+ACTOR Reaver
 {
 	Game Strife
 	Health 150

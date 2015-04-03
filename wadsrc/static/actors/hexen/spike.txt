@@ -79,7 +79,7 @@ ACTOR ThrustFloor native
 
 // Spike up -----------------------------------------------------------------
 
-ACTOR ThrustFloorUp : ThrustFloor 10091
+ACTOR ThrustFloorUp : ThrustFloor
 {
 	Game Hexen
 	SpawnID 104
@@ -94,7 +94,7 @@ ACTOR ThrustFloorUp : ThrustFloor 10091
 
 // Spike down ---------------------------------------------------------------
 
-ACTOR ThrustFloorDown : ThrustFloor 10090
+ACTOR ThrustFloorDown : ThrustFloor
 {
 	Game Hexen
 	+NOTELEPORT +FLOORCLIP

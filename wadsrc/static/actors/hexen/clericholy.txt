@@ -12,7 +12,7 @@ ACTOR ClericWeaponPiece : WeaponPiece
 
 // Cleric Weapon Piece 1 ----------------------------------------------------
 
-ACTOR CWeaponPiece1 : ClericWeaponPiece 18
+ACTOR CWeaponPiece1 : ClericWeaponPiece
 {
 	Game Hexen
 	SpawnID 33
@@ -27,7 +27,7 @@ ACTOR CWeaponPiece1 : ClericWeaponPiece 18
 
 // Cleric Weapon Piece 2 ----------------------------------------------------
 
-ACTOR CWeaponPiece2 : ClericWeaponPiece 19
+ACTOR CWeaponPiece2 : ClericWeaponPiece
 {
 	Game Hexen
 	SpawnID 34
@@ -42,7 +42,7 @@ ACTOR CWeaponPiece2 : ClericWeaponPiece 19
 
 // Cleric Weapon Piece 3 ----------------------------------------------------
 
-ACTOR CWeaponPiece3 : ClericWeaponPiece 20
+ACTOR CWeaponPiece3 : ClericWeaponPiece
 {
 	Game Hexen
 	SpawnID 35

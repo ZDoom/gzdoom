@@ -1,7 +1,7 @@
 
 // Mummy --------------------------------------------------------------------
 
-ACTOR Mummy 68
+ACTOR Mummy
 {
 	Game Heretic
 	SpawnID 4
@@ -51,7 +51,7 @@ ACTOR Mummy 68
 
 // Mummy leader -------------------------------------------------------------
 
-ACTOR MummyLeader : Mummy 45
+ACTOR MummyLeader : Mummy
 {
 	Game Heretic
 	SpawnID 2
@@ -74,7 +74,7 @@ ACTOR MummyLeader : Mummy 45
 
 // Mummy ghost --------------------------------------------------------------
 
-ACTOR MummyGhost : Mummy 69
+ACTOR MummyGhost : Mummy
 {
 	Game Heretic
 	SpawnID 8
@@ -86,7 +86,7 @@ ACTOR MummyGhost : Mummy 69
 
 // Mummy leader ghost -------------------------------------------------------
 
-ACTOR MummyLeaderGhost : MummyLeader 46
+ACTOR MummyLeaderGhost : MummyLeader
 {
 	Game Heretic
 	SpawnID 9

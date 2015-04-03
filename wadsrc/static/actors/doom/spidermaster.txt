@@ -3,7 +3,7 @@
 // Spider boss
 //
 //===========================================================================
-ACTOR SpiderMastermind 7
+ACTOR SpiderMastermind
 {
 	Game Doom
 	SpawnID 7

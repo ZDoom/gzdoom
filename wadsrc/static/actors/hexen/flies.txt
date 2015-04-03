@@ -1,7 +1,7 @@
 
 // Buzzy fly ----------------------------------------------------------------
 
-ACTOR LittleFly 112
+ACTOR LittleFly
 {
 	Game Hexen
 	+NOBLOCKMAP +NOGRAVITY

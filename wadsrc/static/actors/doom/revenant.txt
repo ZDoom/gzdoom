@@ -3,7 +3,7 @@
 // Revenant
 //
 //===========================================================================
-ACTOR Revenant 66
+ACTOR Revenant
 {
 	Game Doom
 	SpawnID 20

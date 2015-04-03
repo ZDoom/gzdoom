@@ -1,6 +1,6 @@
 // Tank 1 Huge ------------------------------------------------------------
 
-ACTOR Tank1 209
+ACTOR Tank1
 {
 	Game Strife
 	Radius 16
@@ -19,7 +19,7 @@ ACTOR Tank1 209
 
 // Tank 2 Huge ------------------------------------------------------------
 
-ACTOR Tank2 210
+ACTOR Tank2
 {
 	Game Strife
 	Radius 16
@@ -38,7 +38,7 @@ ACTOR Tank2 210
 
 // Tank 3 Huge ------------------------------------------------------------
 
-ACTOR Tank3 211
+ACTOR Tank3
 {
 	Game Strife
 	Radius 16
@@ -57,7 +57,7 @@ ACTOR Tank3 211
 
 // Tank 4 -------------------------------------------------------------------
 
-ACTOR Tank4 213
+ACTOR Tank4
 {
 	Game Strife
 	Radius 16
@@ -76,7 +76,7 @@ ACTOR Tank4 213
 
 // Tank 5 -------------------------------------------------------------------
 
-ACTOR Tank5 214
+ACTOR Tank5
 {
 	Game Strife
 	Radius 16
@@ -95,7 +95,7 @@ ACTOR Tank5 214
 
 // Tank 6 -------------------------------------------------------------------
 
-ACTOR Tank6 229
+ACTOR Tank6
 {
 	Game Strife
 	Radius 16
@@ -114,7 +114,7 @@ ACTOR Tank6 229
 
 // Water Bottle -------------------------------------------------------------
 
-ACTOR WaterBottle 2014
+ACTOR WaterBottle
 {
 	Game Strife
 	ConversationID 131, -1, -1
@@ -128,7 +128,7 @@ ACTOR WaterBottle 2014
 
 // Mug ----------------------------------------------------------------------
 
-ACTOR Mug 164
+ACTOR Mug
 {
 	Game Strife
 	ConversationID 132, -1, -1
@@ -142,7 +142,7 @@ ACTOR Mug 164
 
 // Wooden Barrel ------------------------------------------------------------
 
-ACTOR WoodenBarrel 82
+ACTOR WoodenBarrel
 {
 	Game Strife
 	Health 10
@@ -169,7 +169,7 @@ ACTOR WoodenBarrel 82
 
 // Strife's explosive barrel ------------------------------------------------
 
-ACTOR ExplosiveBarrel2 94
+ACTOR ExplosiveBarrel2
 {
 	Game Strife
 	Health 30
@@ -198,7 +198,7 @@ ACTOR ExplosiveBarrel2 94
 
 // Light Silver, Fluorescent ----------------------------------------------
 
-ACTOR LightSilverFluorescent 95
+ACTOR LightSilverFluorescent
 {
 	Game Strife
 	Radius 2.5
@@ -216,7 +216,7 @@ ACTOR LightSilverFluorescent 95
 
 // Light Brown, Fluorescent -----------------------------------------------
 
-ACTOR LightBrownFluorescent 96
+ACTOR LightBrownFluorescent
 {
 	Game Strife
 	Radius 2.5
@@ -234,7 +234,7 @@ ACTOR LightBrownFluorescent 96
 
 // Light Gold, Fluorescent ------------------------------------------------
 
-ACTOR LightGoldFluorescent 97
+ACTOR LightGoldFluorescent
 {
 	Game Strife
 	Radius 2.5
@@ -252,7 +252,7 @@ ACTOR LightGoldFluorescent 97
 
 // Light Globe --------------------------------------------------------------
 
-ACTOR LightGlobe 2028
+ACTOR LightGlobe
 {
 	Game Strife
 	Radius 16
@@ -269,7 +269,7 @@ ACTOR LightGlobe 2028
 
 // Techno Pillar ------------------------------------------------------------
 
-ACTOR PillarTechno 48
+ACTOR PillarTechno
 {
 	Game Strife
 	Radius 20
@@ -286,7 +286,7 @@ ACTOR PillarTechno 48
 
 // Aztec Pillar -------------------------------------------------------------
 
-ACTOR PillarAztec 54
+ACTOR PillarAztec
 {
 	Game Strife
 	Radius 16
@@ -303,7 +303,7 @@ ACTOR PillarAztec 54
 
 // Damaged Aztec Pillar -----------------------------------------------------
 
-ACTOR PillarAztecDamaged 55
+ACTOR PillarAztecDamaged
 {
 	Game Strife
 	Radius 16
@@ -320,7 +320,7 @@ ACTOR PillarAztecDamaged 55
 
 // Ruined Aztec Pillar ------------------------------------------------------
 
-ACTOR PillarAztecRuined 56
+ACTOR PillarAztecRuined
 {
 	Game Strife
 	Radius 16
@@ -337,7 +337,7 @@ ACTOR PillarAztecRuined 56
 
 // Huge Tech Pillar ---------------------------------------------------------
 
-ACTOR PillarHugeTech 57
+ACTOR PillarHugeTech
 {
 	Game Strife
 	Radius 24
@@ -354,7 +354,7 @@ ACTOR PillarHugeTech 57
 
 // Alien Power Crystal in a Pillar ------------------------------------------
 
-ACTOR PillarAlienPower 227
+ACTOR PillarAlienPower
 {
 	Game Strife
 	Radius 24
@@ -372,7 +372,7 @@ ACTOR PillarAlienPower 227
 
 // SStalactiteBig -----------------------------------------------------------
 
-ACTOR SStalactiteBig 98
+ACTOR SStalactiteBig
 {
 	Game Strife
 	Radius 16
@@ -389,7 +389,7 @@ ACTOR SStalactiteBig 98
 
 // SStalactiteSmall ---------------------------------------------------------
 
-ACTOR SStalactiteSmall 161
+ACTOR SStalactiteSmall
 {
 	Game Strife
 	Radius 16
@@ -406,7 +406,7 @@ ACTOR SStalactiteSmall 161
 
 // SStalagmiteBig -----------------------------------------------------------
 
-ACTOR SStalagmiteBig 160
+ACTOR SStalagmiteBig
 {
 	Game Strife
 	Radius 16
@@ -423,7 +423,7 @@ ACTOR SStalagmiteBig 160
 
 // Cave Pillar Top ----------------------------------------------------------
 
-ACTOR CavePillarTop 159
+ACTOR CavePillarTop
 {
 	Game Strife
 	Radius 16
@@ -440,7 +440,7 @@ ACTOR CavePillarTop 159
 
 // Cave Pillar Bottom -------------------------------------------------------
 
-ACTOR CavePillarBottom 162
+ACTOR CavePillarBottom
 {
 	Game Strife
 	Radius 16
@@ -457,7 +457,7 @@ ACTOR CavePillarBottom 162
 
 // SStalagmiteSmall ---------------------------------------------------------
 
-ACTOR SStalagmiteSmall 163
+ACTOR SStalagmiteSmall
 {
 	Game Strife
 	Radius 16
@@ -474,7 +474,7 @@ ACTOR SStalagmiteSmall 163
 
 // Candle -------------------------------------------------------------------
 
-ACTOR Candle 34
+ACTOR Candle
 {
 	Game Strife
 	ConversationID 222, -1, -1
@@ -488,7 +488,7 @@ ACTOR Candle 34
 
 // StrifeCandelabra ---------------------------------------------------------
 
-ACTOR StrifeCandelabra 35
+ACTOR StrifeCandelabra
 {
 	Game Strife
 	Radius 16
@@ -505,7 +505,7 @@ ACTOR StrifeCandelabra 35
 
 // Floor Water Drop ---------------------------------------------------------
 
-ACTOR WaterDropOnFloor 103
+ACTOR WaterDropOnFloor
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -526,7 +526,7 @@ ACTOR WaterDropOnFloor 103
 
 // Waterfall Splash ---------------------------------------------------------
 
-ACTOR WaterfallSplash 104
+ACTOR WaterfallSplash
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -543,7 +543,7 @@ ACTOR WaterfallSplash 104
 
 // Ceiling Water Drip -------------------------------------------------------
 
-ACTOR WaterDrip 53
+ACTOR WaterDrip
 {
 	Game Strife
 	Height 1
@@ -560,7 +560,7 @@ ACTOR WaterDrip 53
 
 // WaterFountain ------------------------------------------------------------
 
-ACTOR WaterFountain 112
+ACTOR WaterFountain
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -577,7 +577,7 @@ ACTOR WaterFountain 112
 
 // Hearts in Tank -----------------------------------------------------------
 
-ACTOR HeartsInTank 113
+ACTOR HeartsInTank
 {
 	Game Strife
 	Radius 16
@@ -594,7 +594,7 @@ ACTOR HeartsInTank 113
 
 // Teleport Swirl -----------------------------------------------------------
 
-ACTOR TeleportSwirl 23
+ACTOR TeleportSwirl
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -612,7 +612,7 @@ ACTOR TeleportSwirl 23
 // Dead Player --------------------------------------------------------------
 // Strife's disappeared. This one doesn't.
 
-ACTOR DeadStrifePlayer 15
+ACTOR DeadStrifePlayer
 {
 	Game Strife
 	ConversationID 231, -1, -1
@@ -628,7 +628,7 @@ ACTOR DeadStrifePlayer 15
 // Dead Peasant -------------------------------------------------------------
 // Unlike Strife's, this one does not turn into gibs and disappear.
 
-ACTOR DeadPeasant 18
+ACTOR DeadPeasant
 {
 	Game Strife
 	ConversationID 232, -1, -1
@@ -643,7 +643,7 @@ ACTOR DeadPeasant 18
 // Dead Acolyte -------------------------------------------------------------
 // Unlike Strife's, this one does not turn into gibs and disappear.
 
-ACTOR DeadAcolyte 21
+ACTOR DeadAcolyte
 {
 	Game Strife
 	ConversationID 233, -1, -1
@@ -657,7 +657,7 @@ ACTOR DeadAcolyte 21
 
 // Dead Reaver --------------------------------------------------------------
 
-ACTOR DeadReaver 20
+ACTOR DeadReaver
 {
 	Game Strife
 	ConversationID 234, -1, -1
@@ -671,7 +671,7 @@ ACTOR DeadReaver 20
 
 // Dead Rebel ---------------------------------------------------------------
 
-ACTOR DeadRebel 19
+ACTOR DeadRebel
 {
 	Game Strife
 	ConversationID 235, -1, -1
@@ -685,7 +685,7 @@ ACTOR DeadRebel 19
 
 // Sacrificed Guy -----------------------------------------------------------
 
-ACTOR SacrificedGuy 212
+ACTOR SacrificedGuy
 {
 	Game Strife
 	ConversationID 236, -1, -1
@@ -716,7 +716,7 @@ ACTOR PileOfGuts
 
 // Burning Barrel -----------------------------------------------------------
 
-ACTOR StrifeBurningBarrel 70
+ACTOR StrifeBurningBarrel
 {
 	Game Strife
 	Radius 16
@@ -733,7 +733,7 @@ ACTOR StrifeBurningBarrel 70
 
 // Burning Bowl -----------------------------------------------------------
 
-ACTOR BurningBowl 105
+ACTOR BurningBowl
 {
 	Game Strife
 	Radius 16
@@ -751,7 +751,7 @@ ACTOR BurningBowl 105
 
 // Burning Brazier -----------------------------------------------------------
 
-ACTOR BurningBrazier 106
+ACTOR BurningBrazier
 {
 	Game Strife
 	Radius 10
@@ -769,7 +769,7 @@ ACTOR BurningBrazier 106
 
 // Small Torch Lit --------------------------------------------------------
 
-ACTOR SmallTorchLit 107
+ACTOR SmallTorchLit
 {
 	Game Strife
 	Radius 2.5
@@ -790,7 +790,7 @@ ACTOR SmallTorchLit 107
 
 // Small Torch Unlit --------------------------------------------------------
 
-ACTOR SmallTorchUnlit 108
+ACTOR SmallTorchUnlit
 {
 	Game Strife
 	Radius 2.5
@@ -808,7 +808,7 @@ ACTOR SmallTorchUnlit 108
 
 // Ceiling Chain ------------------------------------------------------------
 
-ACTOR CeilingChain 109
+ACTOR CeilingChain
 {
 	Game Strife
 	Radius 20
@@ -825,7 +825,7 @@ ACTOR CeilingChain 109
 
 // Cage Light ---------------------------------------------------------------
 
-ACTOR CageLight 28
+ACTOR CageLight
 {
 	// No, it's not bright even though it's a light.
 	Game Strife
@@ -842,7 +842,7 @@ ACTOR CageLight 28
 
 // Statue -------------------------------------------------------------------
 
-ACTOR Statue 110
+ACTOR Statue
 {
 	Game Strife
 	Radius 20
@@ -859,7 +859,7 @@ ACTOR Statue 110
 
 // Ruined Statue ------------------------------------------------------------
 
-ACTOR StatueRuined 44
+ACTOR StatueRuined
 {
 	Game Strife
 	Radius 20
@@ -876,7 +876,7 @@ ACTOR StatueRuined 44
 
 // Medium Torch -------------------------------------------------------------
 
-ACTOR MediumTorch 111
+ACTOR MediumTorch
 {
 	Game Strife
 	Radius 4
@@ -893,7 +893,7 @@ ACTOR MediumTorch 111
 
 // Outside Lamp -------------------------------------------------------------
 
-ACTOR OutsideLamp 43
+ACTOR OutsideLamp
 {
 	// No, it's not bright.
 	Game Strife
@@ -911,7 +911,7 @@ ACTOR OutsideLamp 43
 
 // Pole Lantern -------------------------------------------------------------
 
-ACTOR PoleLantern 46
+ACTOR PoleLantern
 {
 	// No, it's not bright.
 	Game Strife
@@ -929,7 +929,7 @@ ACTOR PoleLantern 46
 
 // Rock 1 -------------------------------------------------------------------
 
-ACTOR SRock1 99
+ACTOR SRock1
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -944,7 +944,7 @@ ACTOR SRock1 99
 
 // Rock 2 -------------------------------------------------------------------
 
-ACTOR SRock2 100
+ACTOR SRock2
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -959,7 +959,7 @@ ACTOR SRock2 100
 
 // Rock 3 -------------------------------------------------------------------
 
-ACTOR SRock3 101
+ACTOR SRock3
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -974,7 +974,7 @@ ACTOR SRock3 101
 
 // Rock 4 -------------------------------------------------------------------
 
-ACTOR SRock4 102
+ACTOR SRock4
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -989,7 +989,7 @@ ACTOR SRock4 102
 
 // Stick in Water -----------------------------------------------------------
 
-ACTOR StickInWater 215
+ACTOR StickInWater
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -1006,7 +1006,7 @@ ACTOR StickInWater 215
 
 // Rubble 1 -----------------------------------------------------------------
 
-ACTOR Rubble1 29
+ACTOR Rubble1
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1021,7 +1021,7 @@ ACTOR Rubble1 29
 
 // Rubble 2 -----------------------------------------------------------------
 
-ACTOR Rubble2 30
+ACTOR Rubble2
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1036,7 +1036,7 @@ ACTOR Rubble2 30
 
 // Rubble 3 -----------------------------------------------------------------
 
-ACTOR Rubble3 31
+ACTOR Rubble3
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1051,7 +1051,7 @@ ACTOR Rubble3 31
 
 // Rubble 4 -----------------------------------------------------------------
 
-ACTOR Rubble4 32
+ACTOR Rubble4
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1066,7 +1066,7 @@ ACTOR Rubble4 32
 
 // Rubble 5 -----------------------------------------------------------------
 
-ACTOR Rubble5 36
+ACTOR Rubble5
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1081,7 +1081,7 @@ ACTOR Rubble5 36
 
 // Rubble 6 -----------------------------------------------------------------
 
-ACTOR Rubble6 37
+ACTOR Rubble6
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1096,7 +1096,7 @@ ACTOR Rubble6 37
 
 // Rubble 7 -----------------------------------------------------------------
 
-ACTOR Rubble7 41
+ACTOR Rubble7
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1111,7 +1111,7 @@ ACTOR Rubble7 41
 
 // Rubble 8 -----------------------------------------------------------------
 
-ACTOR Rubble8 42
+ACTOR Rubble8
 {
 	Game Strife
 	+NOBLOCKMAP +NOCLIP
@@ -1126,7 +1126,7 @@ ACTOR Rubble8 42
 
 // Surgery Crab -------------------------------------------------------------
 
-ACTOR SurgeryCrab 117
+ACTOR SurgeryCrab
 {
 	Game Strife
 	+SOLID +SPAWNCEILING +NOGRAVITY
@@ -1143,7 +1143,7 @@ ACTOR SurgeryCrab 117
 
 // Large Torch --------------------------------------------------------------
 
-ACTOR LargeTorch 47
+ACTOR LargeTorch
 {
 	Game Strife
 	Radius 10
@@ -1161,7 +1161,7 @@ ACTOR LargeTorch 47
 
 // Huge Torch --------------------------------------------------------------
 
-ACTOR HugeTorch 50
+ACTOR HugeTorch
 {
 	Game Strife
 	Radius 10
@@ -1179,7 +1179,7 @@ ACTOR HugeTorch 50
 
 // Palm Tree ----------------------------------------------------------------
 
-ACTOR PalmTree 51
+ACTOR PalmTree
 {
 	Game Strife
 	Radius 15
@@ -1196,7 +1196,7 @@ ACTOR PalmTree 51
 
 // Big Tree ----------------------------------------------------------------
 
-ACTOR BigTree2 202
+ACTOR BigTree2
 {
 	Game Strife
 	Radius 15
@@ -1213,7 +1213,7 @@ ACTOR BigTree2 202
 
 // Potted Tree ----------------------------------------------------------------
 
-ACTOR PottedTree 203
+ACTOR PottedTree
 {
 	Game Strife
 	Radius 15
@@ -1230,7 +1230,7 @@ ACTOR PottedTree 203
 
 // Tree Stub ----------------------------------------------------------------
 
-ACTOR TreeStub 33
+ACTOR TreeStub
 {
 	Game Strife
 	Radius 15
@@ -1247,7 +1247,7 @@ ACTOR TreeStub 33
 
 // Short Bush ---------------------------------------------------------------
 
-ACTOR ShortBush 60
+ACTOR ShortBush
 {
 	Game Strife
 	Radius 15
@@ -1264,7 +1264,7 @@ ACTOR ShortBush 60
 
 // Tall Bush ---------------------------------------------------------------
 
-ACTOR TallBush 62
+ACTOR TallBush
 {
 	Game Strife
 	Radius 20
@@ -1281,7 +1281,7 @@ ACTOR TallBush 62
 
 // Chimney Stack ------------------------------------------------------------
 
-ACTOR ChimneyStack 63
+ACTOR ChimneyStack
 {
 	Game Strife
 	Radius 20
@@ -1298,7 +1298,7 @@ ACTOR ChimneyStack 63
 
 // Barricade Column ---------------------------------------------------------
 
-ACTOR BarricadeColumn 69
+ACTOR BarricadeColumn
 {
 	Game Strife
 	Radius 16
@@ -1315,7 +1315,7 @@ ACTOR BarricadeColumn 69
 
 // Pot ----------------------------------------------------------------------
 
-ACTOR Pot 165
+ACTOR Pot
 {
 	Game Strife
 	Radius 12
@@ -1332,7 +1332,7 @@ ACTOR Pot 165
 
 // Pitcher ------------------------------------------------------------------
 
-ACTOR Pitcher 188
+ACTOR Pitcher
 {
 	Game Strife
 	Radius 12
@@ -1349,7 +1349,7 @@ ACTOR Pitcher 188
 
 // Stool --------------------------------------------------------------------
 
-ACTOR Stool 189
+ACTOR Stool
 {
 	Game Strife
 	Radius 6
@@ -1366,7 +1366,7 @@ ACTOR Stool 189
 
 // Metal Pot ----------------------------------------------------------------
 
-ACTOR MetalPot 190
+ACTOR MetalPot
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -1381,7 +1381,7 @@ ACTOR MetalPot 190
 
 // Tub ----------------------------------------------------------------------
 
-ACTOR Tub 191
+ACTOR Tub
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -1396,7 +1396,7 @@ ACTOR Tub 191
 
 // Anvil --------------------------------------------------------------------
 
-ACTOR Anvil 194
+ACTOR Anvil
 {
 	Game Strife
 	Radius 16
@@ -1413,7 +1413,7 @@ ACTOR Anvil 194
 
 // Silver Tech Lamp ----------------------------------------------------------
 
-ACTOR TechLampSilver 196
+ACTOR TechLampSilver
 {
 	Game Strife
 	Radius 11
@@ -1430,7 +1430,7 @@ ACTOR TechLampSilver 196
 
 // Brass Tech Lamp ----------------------------------------------------------
 
-ACTOR TechLampBrass 197
+ACTOR TechLampBrass
 {
 	Game Strife
 	Radius 8
@@ -1447,7 +1447,7 @@ ACTOR TechLampBrass 197
 
 // Tray --------------------------------------------------------------------
 
-ACTOR Tray 68
+ACTOR Tray
 {
 	Game Strife
 	Radius 24
@@ -1464,7 +1464,7 @@ ACTOR Tray 68
 
 // AmmoFiller ---------------------------------------------------------------
 
-ACTOR AmmoFiller 228
+ACTOR AmmoFiller
 {
 	Game Strife
 	Radius 12
@@ -1481,7 +1481,7 @@ ACTOR AmmoFiller 228
 
 // Sigil Banner -------------------------------------------------------------
 
-ACTOR SigilBanner 216
+ACTOR SigilBanner
 {
 	Game Strife
 	Radius 24
@@ -1498,7 +1498,7 @@ ACTOR SigilBanner 216
 
 // RebelBoots ---------------------------------------------------------------
 
-ACTOR RebelBoots 217
+ACTOR RebelBoots
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -1513,7 +1513,7 @@ ACTOR RebelBoots 217
 
 // RebelHelmet --------------------------------------------------------------
 
-ACTOR RebelHelmet 218
+ACTOR RebelHelmet
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -1528,7 +1528,7 @@ ACTOR RebelHelmet 218
 
 // RebelShirt ---------------------------------------------------------------
 
-ACTOR RebelShirt 219
+ACTOR RebelShirt
 {
 	Game Strife
 	+NOBLOCKMAP
@@ -1543,7 +1543,7 @@ ACTOR RebelShirt 219
 
 // Alien Bubble Column ------------------------------------------------------
 
-ACTOR AlienBubbleColumn 221
+ACTOR AlienBubbleColumn
 {
 	Game Strife
 	Radius 16
@@ -1561,7 +1561,7 @@ ACTOR AlienBubbleColumn 221
 
 // Alien Floor Bubble -------------------------------------------------------
 
-ACTOR AlienFloorBubble 222
+ACTOR AlienFloorBubble
 {
 	Game Strife
 	Radius 16
@@ -1579,7 +1579,7 @@ ACTOR AlienFloorBubble 222
 
 // Alien Ceiling Bubble -----------------------------------------------------
 
-ACTOR AlienCeilingBubble 223
+ACTOR AlienCeilingBubble
 {
 	Game Strife
 	Radius 16
@@ -1597,7 +1597,7 @@ ACTOR AlienCeilingBubble 223
 
 // Alien Asp Climber --------------------------------------------------------
 
-ACTOR AlienAspClimber 224
+ACTOR AlienAspClimber
 {
 	Game Strife
 	Radius 16
@@ -1615,7 +1615,7 @@ ACTOR AlienAspClimber 224
 
 // Alien Spider Light -------------------------------------------------------
 
-ACTOR AlienSpiderLight 225
+ACTOR AlienSpiderLight
 {
 	Game Strife
 	Radius 32
@@ -1633,7 +1633,7 @@ ACTOR AlienSpiderLight 225
 
 // Target Practice -----------------------------------------------------------
 
-ACTOR TargetPractice 208
+ACTOR TargetPractice
 {
 	Game Strife
 	Health 99999999
@@ -1659,7 +1659,7 @@ ACTOR TargetPractice 208
 
 // Force Field Guard --------------------------------------------------------
 
-ACTOR ForceFieldGuard 25 native
+ACTOR ForceFieldGuard native
 {
 	Game Strife
 	Health 10
@@ -1683,7 +1683,7 @@ ACTOR ForceFieldGuard 25 native
 
 // Kneeling Guy -------------------------------------------------------------
 
-ACTOR KneelingGuy 204
+ACTOR KneelingGuy
 {
 	Game Strife
 	ConversationID 37,-1,-1
@@ -1732,7 +1732,7 @@ ACTOR KneelingGuy 204
 
 // Klaxon Warning Light -----------------------------------------------------
 
-ACTOR KlaxonWarningLight 24
+ACTOR KlaxonWarningLight
 {
 	Game Strife
 	ConversationID 121,-1,-1
@@ -1757,7 +1757,7 @@ ACTOR KlaxonWarningLight 24
 
 // CeilingTurret ------------------------------------------------------------
 
-ACTOR CeilingTurret 27
+ACTOR CeilingTurret
 {
 	Game Strife
 	ConversationID 122,-1,-1
@@ -1801,7 +1801,7 @@ ACTOR CeilingTurret 27
 
 // Power Coupling -----------------------------------------------------------
 
-ACTOR PowerCoupling 220 native
+ACTOR PowerCoupling native
 {
 	Game Strife
 	ConversationID 288,-1,-1

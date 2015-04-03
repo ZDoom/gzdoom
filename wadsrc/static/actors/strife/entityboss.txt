@@ -1,7 +1,7 @@
 
 // Entity Nest --------------------------------------------------------------
 
-ACTOR EntityNest 26
+ACTOR EntityNest
 {
 	Game Strife
 	ConversationID 76,-1,-1
@@ -20,7 +20,7 @@ ACTOR EntityNest 26
 
 // Entity Pod ---------------------------------------------------------------
 
-ACTOR EntityPod 198
+ACTOR EntityPod
 {
 	Game Strife
 	ConversationID 77,-1,-1
@@ -50,7 +50,7 @@ ACTOR EntityPod 198
 
 // Entity Boss --------------------------------------------------------------
 
-ACTOR EntityBoss : SpectralMonster 128
+ACTOR EntityBoss : SpectralMonster
 {
 	Game Strife
 	ConversationID 74,-1,-1

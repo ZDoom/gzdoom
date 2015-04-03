@@ -52,7 +52,7 @@ ACTOR Fist : Weapon
 //
 // --------------------------------------------------------------------------
 
-ACTOR Pistol : DoomWeapon 5010
+ACTOR Pistol : DoomWeapon
 {
 	Game Doom
 	Weapon.SelectionOrder 1900
@@ -97,7 +97,7 @@ ACTOR Pistol : DoomWeapon 5010
 //
 // --------------------------------------------------------------------------
 
-ACTOR Chainsaw : Weapon 2005
+ACTOR Chainsaw : Weapon
 {
 	Game Doom
 	SpawnID 32
@@ -137,7 +137,7 @@ ACTOR Chainsaw : Weapon 2005
 //
 // --------------------------------------------------------------------------
 
-ACTOR Shotgun : DoomWeapon 2001
+ACTOR Shotgun : DoomWeapon
 {
 	Game Doom
 	SpawnID 27
@@ -184,7 +184,7 @@ ACTOR Shotgun : DoomWeapon 2001
 //
 // --------------------------------------------------------------------------
 
-ACTOR SuperShotgun : DoomWeapon 82
+ACTOR SuperShotgun : DoomWeapon
 {
 	Game Doom
 	SpawnID 33
@@ -238,7 +238,7 @@ ACTOR SuperShotgun : DoomWeapon 82
 //
 // --------------------------------------------------------------------------
 
-ACTOR Chaingun : DoomWeapon 2002
+ACTOR Chaingun : DoomWeapon
 {
 	Game Doom
 	SpawnID 28
@@ -281,7 +281,7 @@ ACTOR Chaingun : DoomWeapon 2002
 //
 // --------------------------------------------------------------------------
 
-ACTOR RocketLauncher : DoomWeapon 2003
+ACTOR RocketLauncher : DoomWeapon
 {
 	Game Doom
 	SpawnID 29
@@ -404,7 +404,7 @@ ACTOR Grenade
 //
 // --------------------------------------------------------------------------
 
-ACTOR PlasmaRifle : DoomWeapon 2004
+ACTOR PlasmaRifle : DoomWeapon
 {
 	Game Doom
 	SpawnID 30
@@ -508,7 +508,7 @@ ACTOR PlasmaBall2 : PlasmaBall1
 //
 // --------------------------------------------------------------------------
 
-ACTOR BFG9000 : DoomWeapon 2006
+ACTOR BFG9000 : DoomWeapon
 {
 	Game Doom
 	Height 20

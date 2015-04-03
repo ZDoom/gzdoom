@@ -1,5 +1,5 @@
 
-ACTOR Clink 90
+ACTOR Clink
 {
 	Game Heretic
 	SpawnID 1

@@ -3,7 +3,7 @@
 // Commander Keen
 //
 //===========================================================================
-ACTOR CommanderKeen 72
+ACTOR CommanderKeen
 {
 	Game Doom
 	Health 100

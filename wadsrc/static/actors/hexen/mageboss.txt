@@ -1,7 +1,7 @@
 
 // Mage Boss (Menelkir) -----------------------------------------------------
 
-ACTOR MageBoss 10102
+ACTOR MageBoss
 {
 	Game Hexen
 	Health 800

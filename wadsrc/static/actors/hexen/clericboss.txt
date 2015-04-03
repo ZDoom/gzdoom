@@ -1,7 +1,7 @@
 
 // Cleric Boss (Traductus) --------------------------------------------------
 
-ACTOR ClericBoss 10101
+ACTOR ClericBoss
 {
 	Game Hexen
 	Health 800

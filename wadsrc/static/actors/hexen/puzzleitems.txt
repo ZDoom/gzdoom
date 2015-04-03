@@ -1,7 +1,7 @@
 
 // Yorick's Skull -----------------------------------------------------------
 
-ACTOR PuzzSkull : PuzzleItem 9002
+ACTOR PuzzSkull : PuzzleItem
 {
 	Game Hexen
 	SpawnID 76
@@ -20,7 +20,7 @@ ACTOR PuzzSkull : PuzzleItem 9002
 
 // Heart of D'Sparil --------------------------------------------------------
 
-ACTOR PuzzGemBig : PuzzleItem 9003
+ACTOR PuzzGemBig : PuzzleItem
 {
 	Game Hexen
 	SpawnID 77
@@ -38,7 +38,7 @@ ACTOR PuzzGemBig : PuzzleItem 9003
 
 // Red Gem (Ruby Planet) ----------------------------------------------------
 
-ACTOR PuzzGemRed : PuzzleItem 9004
+ACTOR PuzzGemRed : PuzzleItem
 {
 	Game Hexen
 	SpawnID 78
@@ -57,7 +57,7 @@ ACTOR PuzzGemRed : PuzzleItem 9004
 
 // Green Gem 1 (Emerald Planet) ---------------------------------------------
 
-ACTOR PuzzGemGreen1 : PuzzleItem 9005
+ACTOR PuzzGemGreen1 : PuzzleItem
 {
 	Game Hexen
 	SpawnID 79
@@ -76,7 +76,7 @@ ACTOR PuzzGemGreen1 : PuzzleItem 9005
 
 // Green Gem 2 (Emerald Planet) ---------------------------------------------
 
-ACTOR PuzzGemGreen2 : PuzzleItem 9009
+ACTOR PuzzGemGreen2 : PuzzleItem
 {
 	Game Hexen
 	SpawnID 80
@@ -95,7 +95,7 @@ ACTOR PuzzGemGreen2 : PuzzleItem 9009
 
 // Blue Gem 1 (Sapphire Planet) ---------------------------------------------
 
-ACTOR PuzzGemBlue1 : PuzzleItem 9006
+ACTOR PuzzGemBlue1 : PuzzleItem
 {
 	Game Hexen
 	SpawnID 81
@@ -114,7 +114,7 @@ ACTOR PuzzGemBlue1 : PuzzleItem 9006
 
 // Blue Gem 2 (Sapphire Planet) ---------------------------------------------
 
-ACTOR PuzzGemBlue2 : PuzzleItem 9010
+ACTOR PuzzGemBlue2 : PuzzleItem
 {
 	Game Hexen
 	SpawnID 82
@@ -133,7 +133,7 @@ ACTOR PuzzGemBlue2 : PuzzleItem 9010
 
 // Book 1 (Daemon Codex) ----------------------------------------------------
 
-ACTOR PuzzBook1 : PuzzleItem 9007
+ACTOR PuzzBook1 : PuzzleItem
 {
 	Game Hexen
 	SpawnID 83
@@ -152,7 +152,7 @@ ACTOR PuzzBook1 : PuzzleItem 9007
 
 // Book 2 (Liber Oscura) ----------------------------------------------------
 
-ACTOR PuzzBook2 : PuzzleItem 9008
+ACTOR PuzzBook2 : PuzzleItem
 {
 	Game Hexen
 	SpawnID 84
@@ -172,7 +172,7 @@ ACTOR PuzzBook2 : PuzzleItem 9008
 // Flame Mask ---------------------------------------------------------------
 
 
-ACTOR PuzzFlameMask : PuzzleItem 9014
+ACTOR PuzzFlameMask : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 9
@@ -189,7 +189,7 @@ ACTOR PuzzFlameMask : PuzzleItem 9014
 
 // Fighter Weapon (Glaive Seal) ---------------------------------------------
 
-ACTOR PuzzFWeapon : PuzzleItem 9015
+ACTOR PuzzFWeapon : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 10
@@ -207,7 +207,7 @@ ACTOR PuzzFWeapon : PuzzleItem 9015
 
 // Cleric Weapon (Holy Relic) -----------------------------------------------
 
-ACTOR PuzzCWeapon : PuzzleItem 9016
+ACTOR PuzzCWeapon : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 11
@@ -225,7 +225,7 @@ ACTOR PuzzCWeapon : PuzzleItem 9016
 
 // Mage Weapon (Sigil of the Magus) -----------------------------------------
 
-ACTOR PuzzMWeapon : PuzzleItem 9017
+ACTOR PuzzMWeapon : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 12
@@ -242,7 +242,7 @@ ACTOR PuzzMWeapon : PuzzleItem 9017
 
 // Clock Gear 1 -------------------------------------------------------------
 
-ACTOR PuzzGear1 : PuzzleItem 9018
+ACTOR PuzzGear1 : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 13
@@ -260,7 +260,7 @@ ACTOR PuzzGear1 : PuzzleItem 9018
 
 // Clock Gear 2 -------------------------------------------------------------
 
-ACTOR PuzzGear2 : PuzzleItem 9019
+ACTOR PuzzGear2 : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 14
@@ -278,7 +278,7 @@ ACTOR PuzzGear2 : PuzzleItem 9019
 
 // Clock Gear 3 -------------------------------------------------------------
 
-ACTOR PuzzGear3 : PuzzleItem 9020
+ACTOR PuzzGear3 : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 15
@@ -296,7 +296,7 @@ ACTOR PuzzGear3 : PuzzleItem 9020
 
 // Clock Gear 4 -------------------------------------------------------------
 
-ACTOR PuzzGear4 : PuzzleItem 9021
+ACTOR PuzzGear4 : PuzzleItem
 {
 	Game Hexen
 	PuzzleItem.Number 16

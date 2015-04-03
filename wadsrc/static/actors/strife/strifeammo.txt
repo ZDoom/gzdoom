@@ -1,6 +1,6 @@
 // HE-Grenade Rounds --------------------------------------------------------
 
-ACTOR HEGrenadeRounds : Ammo 152
+ACTOR HEGrenadeRounds : Ammo
 {
 	Game Strife
 	+FLOORCLIP
@@ -22,7 +22,7 @@ ACTOR HEGrenadeRounds : Ammo 152
 
 // Phosphorus-Grenade Rounds ------------------------------------------------
 
-ACTOR PhosphorusGrenadeRounds : Ammo 153
+ACTOR PhosphorusGrenadeRounds : Ammo
 {
 	Game Strife
 	+FLOORCLIP
@@ -44,7 +44,7 @@ ACTOR PhosphorusGrenadeRounds : Ammo 153
 
 // Clip of Bullets ----------------------------------------------------------
 
-ACTOR ClipOfBullets : Ammo 2007
+ACTOR ClipOfBullets : Ammo
 {
 	Game Strife
 	SpawnID 11
@@ -67,7 +67,7 @@ ACTOR ClipOfBullets : Ammo 2007
 
 // Box of Bullets -----------------------------------------------------------
 
-ACTOR BoxOfBullets : ClipOfBullets 2048
+ACTOR BoxOfBullets : ClipOfBullets
 {
 	Game Strife
 	SpawnID 139
@@ -85,7 +85,7 @@ ACTOR BoxOfBullets : ClipOfBullets 2048
 
 // Mini Missiles ------------------------------------------------------------
 
-ACTOR MiniMissiles : Ammo 2010
+ACTOR MiniMissiles : Ammo
 {
 	Game Strife
 	SpawnID 140
@@ -108,7 +108,7 @@ ACTOR MiniMissiles : Ammo 2010
 
 // Crate of Missiles --------------------------------------------------------
 
-ACTOR CrateOfMissiles : MiniMissiles 2046
+ACTOR CrateOfMissiles : MiniMissiles
 {
 	Game Strife
 	SpawnID 141
@@ -126,7 +126,7 @@ ACTOR CrateOfMissiles : MiniMissiles 2046
 
 // Energy Pod ---------------------------------------------------------------
 
-ACTOR EnergyPod : Ammo 2047
+ACTOR EnergyPod : Ammo
 {
 	Game Strife
 	SpawnID 75
@@ -150,7 +150,7 @@ ACTOR EnergyPod : Ammo 2047
 
 // Energy pack ---------------------------------------------------------------
 
-ACTOR EnergyPack : EnergyPod 17
+ACTOR EnergyPack : EnergyPod
 {
 	Game Strife
 	SpawnID 142
@@ -168,7 +168,7 @@ ACTOR EnergyPack : EnergyPod 17
 
 // Poison Bolt Quiver -------------------------------------------------------
 
-ACTOR PoisonBolts : Ammo 115
+ACTOR PoisonBolts : Ammo
 {
 	Game Strife
 	ConversationID 185, 179, 183
@@ -190,7 +190,7 @@ ACTOR PoisonBolts : Ammo 115
 
 // Electric Bolt Quiver -------------------------------------------------------
 
-ACTOR ElectricBolts : Ammo 114
+ACTOR ElectricBolts : Ammo
 {
 	Game Strife
 	ConversationID 186, 180, 184
@@ -212,7 +212,7 @@ ACTOR ElectricBolts : Ammo 114
 
 // Ammo Satchel -------------------------------------------------------------
 
-ACTOR AmmoSatchel : BackpackItem 183
+ACTOR AmmoSatchel : BackpackItem
 {
 	Game Strife
 	SpawnID 144

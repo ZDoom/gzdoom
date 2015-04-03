@@ -5,7 +5,7 @@ ACTOR HexenKey : Key
 	Height 20
 }
 
-ACTOR KeySteel : HexenKey 8030
+ACTOR KeySteel : HexenKey
 {
 	Game Hexen
 	SpawnID 85
@@ -19,7 +19,7 @@ ACTOR KeySteel : HexenKey 8030
 	}
 }
 
-ACTOR KeyCave : HexenKey 8031
+ACTOR KeyCave : HexenKey
 {
 	Game Hexen
 	SpawnID 86
@@ -33,7 +33,7 @@ ACTOR KeyCave : HexenKey 8031
 	}
 }
 
-ACTOR KeyAxe : HexenKey 8032
+ACTOR KeyAxe : HexenKey
 {
 	Game Hexen
 	SpawnID 87
@@ -47,7 +47,7 @@ ACTOR KeyAxe : HexenKey 8032
 	}
 }
 
-ACTOR KeyFire : HexenKey 8033
+ACTOR KeyFire : HexenKey
 {
 	Game Hexen
 	SpawnID 88
@@ -61,7 +61,7 @@ ACTOR KeyFire : HexenKey 8033
 	}
 }
 
-ACTOR KeyEmerald : HexenKey 8034
+ACTOR KeyEmerald : HexenKey
 {
 	Game Hexen
 	SpawnID 89
@@ -75,7 +75,7 @@ ACTOR KeyEmerald : HexenKey 8034
 	}
 }
 
-ACTOR KeyDungeon : HexenKey 8035
+ACTOR KeyDungeon : HexenKey
 {
 	Game Hexen
 	SpawnID 90
@@ -89,7 +89,7 @@ ACTOR KeyDungeon : HexenKey 8035
 	}
 }
 
-ACTOR KeySilver : HexenKey 8036
+ACTOR KeySilver : HexenKey
 {
 	Game Hexen
 	SpawnID 91
@@ -103,7 +103,7 @@ ACTOR KeySilver : HexenKey 8036
 	}
 }
 
-ACTOR KeyRusted : HexenKey 8037
+ACTOR KeyRusted : HexenKey
 {
 	Game Hexen
 	SpawnID 92
@@ -117,7 +117,7 @@ ACTOR KeyRusted : HexenKey 8037
 	}
 }
 
-ACTOR KeyHorn : HexenKey 8038
+ACTOR KeyHorn : HexenKey
 {
 	Game Hexen
 	SpawnID 93
@@ -131,7 +131,7 @@ ACTOR KeyHorn : HexenKey 8038
 	}
 }
 
-ACTOR KeySwamp : HexenKey 8039
+ACTOR KeySwamp : HexenKey
 {
 	Game Hexen
 	SpawnID 94
@@ -145,7 +145,7 @@ ACTOR KeySwamp : HexenKey 8039
 	}
 }
 
-ACTOR KeyCastle : HexenKey 8200
+ACTOR KeyCastle : HexenKey
 {
 	Game Hexen
 	Inventory.Icon KEYSLOTB

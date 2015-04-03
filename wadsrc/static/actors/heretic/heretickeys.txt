@@ -8,7 +8,7 @@ ACTOR HereticKey : Key
 
 // Green key ------------------------------------------------------------
 
-ACTOR KeyGreen : HereticKey 73
+ACTOR KeyGreen : HereticKey
 {
 	Game Heretic
 	SpawnID 86
@@ -24,7 +24,7 @@ ACTOR KeyGreen : HereticKey 73
 
 // Blue key -----------------------------------------------------------------
 
-ACTOR KeyBlue : HereticKey 79
+ACTOR KeyBlue : HereticKey
 {
 	Game Heretic
 	SpawnID 85
@@ -40,7 +40,7 @@ ACTOR KeyBlue : HereticKey 79
 
 // Yellow key ---------------------------------------------------------------
 
-ACTOR KeyYellow : HereticKey 80
+ACTOR KeyYellow : HereticKey
 {
 	Game Heretic
 	SpawnID 87
@@ -57,7 +57,7 @@ ACTOR KeyYellow : HereticKey 80
  
 // --- Blue Key gizmo -----------------------------------------------------------
 
-ACTOR KeyGizmoBlue 94
+ACTOR KeyGizmoBlue
 {
 	Game Heretic
 	Radius 16
@@ -89,7 +89,7 @@ ACTOR KeyGizmoFloatBlue
 
 // --- Green Key gizmo -----------------------------------------------------------
 
-ACTOR KeyGizmoGreen 95
+ACTOR KeyGizmoGreen
 {
 	Game Heretic
 	Radius 16
@@ -121,7 +121,7 @@ ACTOR KeyGizmoFloatGreen
 
 // --- Yellow Key gizmo -----------------------------------------------------------
 
-ACTOR KeyGizmoYellow 96
+ACTOR KeyGizmoYellow
 {
 	Game Heretic
 	Radius 16

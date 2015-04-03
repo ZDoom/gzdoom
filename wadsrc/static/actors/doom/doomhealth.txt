@@ -1,6 +1,6 @@
 // Health bonus -------------------------------------------------------------
 
-ACTOR HealthBonus : Health 2014
+ACTOR HealthBonus : Health
 {
 	Game Doom
 	SpawnID 152
@@ -19,7 +19,7 @@ ACTOR HealthBonus : Health 2014
 	
 // Stimpack -----------------------------------------------------------------
 
-ACTOR Stimpack : Health 2011
+ACTOR Stimpack : Health
 {
 	Game Doom
 	SpawnID 23
@@ -35,7 +35,7 @@ ACTOR Stimpack : Health 2011
 
 // Medikit -----------------------------------------------------------------
 
-ACTOR Medikit : Health 2012
+ACTOR Medikit : Health
 {
 	Game Doom
 	SpawnID 24

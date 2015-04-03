@@ -1,5 +1,5 @@
 
-ACTOR Spark 9026 native
+ACTOR Spark native
 {
 	+NOSECTOR
 	+NOBLOCKMAP

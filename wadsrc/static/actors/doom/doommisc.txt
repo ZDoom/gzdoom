@@ -1,6 +1,6 @@
 // The barrel of green goop ------------------------------------------------
 
-ACTOR ExplosiveBarrel 2035
+ACTOR ExplosiveBarrel
 {
 	Game Doom
 	SpawnID 125
@@ -85,7 +85,7 @@ ACTOR DoomUnusedStates
 
 // MBF Beta emulation items
 
-Actor EvilSceptre : ScoreItem 2016
+Actor EvilSceptre : ScoreItem
 {
 	Game Doom
 	Inventory.PickupMessage "$BETA_BONUS3"
@@ -97,7 +97,7 @@ Actor EvilSceptre : ScoreItem 2016
 	}
 }
 
-Actor UnholyBible : ScoreItem 2017
+Actor UnholyBible : ScoreItem
 {
 	Game Doom
 	Inventory.PickupMessage "$BETA_BONUS4"

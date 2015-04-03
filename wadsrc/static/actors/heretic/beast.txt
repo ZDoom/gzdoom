@@ -1,7 +1,7 @@
 
 // Beast --------------------------------------------------------------------
 
-ACTOR Beast 70
+ACTOR Beast
 {
 	Game Heretic
 	SpawnID 3

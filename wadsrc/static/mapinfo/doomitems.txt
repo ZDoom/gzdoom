@@ -119,6 +119,10 @@ DoomEdNums
   3004 = Zombieman
   3005 = Cacodemon
   3006 = LostSoul
+  4001 = "$Player5Start"
+  4002 = "$Player6Start"
+  4003 = "$Player7Start"
+  4004 = "$Player8Start"
   5010 = Pistol
   5050 = Stalagmite
   9050 = StealthArachnotron

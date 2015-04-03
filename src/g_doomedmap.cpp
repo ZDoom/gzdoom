@@ -43,6 +43,23 @@
 #include "v_text.h"
 #include "i_system.h"
 
+
+const char *SpecialMapthingNames[] = {
+	"$PLAYER1START",
+	"$PLAYER2START",
+	"$PLAYER3START",
+	"$PLAYER4START",
+	"$PLAYER5START",
+	"$PLAYER6START",
+	"$PLAYER7START",
+	"$PLAYER8START",
+	"$DEATHMATCHSTART",
+	"$SSEQOVERRIDE",
+	"$POLYANCHOR",
+	"$POLYSPAWN",
+	"$POLYSPAWNCRUSH",
+	"$POLYSPAWNHURT"
+};
 //==========================================================================
 //
 // Stuff that's only valid during definition time
@@ -112,7 +129,7 @@ void FMapInfoParser::ParseDoomEdNums()
 
 	editem.filename = sc.ScriptName;
 
-	sc.MustGetStringName("{");
+	ParseOpenBrace();
 	while (true)
 	{
 		if (sc.CheckString("}")) return;
@@ -133,7 +150,7 @@ void FMapInfoParser::ParseDoomEdNums()
 			{
 				// todo: add special stuff like playerstarts and sound sequence overrides here, too.
 				editem.classname = NAME_None;
-				editem.special = 1; // todo: assign proper constants
+				editem.special = sc.MustMatchString(SpecialMapthingNames) + 1; // todo: assign proper constants
 			}
 			else
 			{
@@ -148,7 +165,7 @@ void FMapInfoParser::ParseDoomEdNums()
 			if (sc.CheckString(","))
 			{
 				// todo: parse a special or args
-				editem.special = 0;	// mark args as used - if this is done we need to prevent assignment of map args in P_SpawnMapThing.
+				if (editem.special < 0) editem.special = 0;	// mark args as used - if this is done we need to prevent assignment of map args in P_SpawnMapThing.
 				if (!sc.CheckNumber())
 				{
 					sc.MustGetString();

@@ -39,7 +39,6 @@ gameinfo
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
-	player5start = 9100
 	pickupcolor = "d7 ba 45"
 	quitmessages = "$*RAVENQUITMSG"
 	menufontcolor_title = "UNTRANSLATED"
@@ -181,6 +180,9 @@ DoomEdNums
    140 = TeleSmoke
    254 = Dragon
   1410 = SoundWindHexen
+  3000 = "$PolyAnchor"
+  3001 = "$PolySpawn"
+  3002 = "$PolySpawnCrush"
   8000 = ArtiPoisonBag
   8002 = ArtiSpeedBoots
   8003 = ArtiBoostMana
@@ -269,6 +271,10 @@ DoomEdNums
   9019 = PuzzGear2
   9020 = PuzzGear3
   9021 = PuzzGear4
+  9100 = "$Player5Start"
+  9101 = "$Player6Start"
+  9102 = "$Player7Start"
+  9103 = "$Player8Start"
  10000 = FogSpawner
  10001 = FogPatchSmall
  10002 = FogPatchMedium

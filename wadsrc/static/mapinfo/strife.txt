@@ -68,6 +68,10 @@ gameinfo
 
 DoomEdNums
 {
+     5 = "$Player5Start"
+     6 = "$Player6Start"
+     7 = "$Player7Start"
+     8 = "$Player8Start"
      9 = Rebel1
     10 = TeleporterBeacon
     12 = Loremaster
@@ -170,6 +174,16 @@ DoomEdNums
    115 = PoisonBolts
    116 = WeaponSmith
    117 = SurgeryCrab
+   118 = "$Player1Start", 1
+   119 = "$Player1Start", 2
+   120 = "$Player1Start", 3
+   121 = "$Player1Start", 4
+   122 = "$Player1Start", 5
+   123 = "$Player1Start", 6
+   124 = "$Player1Start", 7
+   125 = "$Player1Start", 8
+   126 = "$Player1Start", 9
+   127 = "$Player1Start", 10
    128 = EntityBoss
    129 = AlienSpectre1
    130 = Peasant2

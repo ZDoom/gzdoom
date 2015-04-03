@@ -21,7 +21,7 @@ gameinfo
 	borderflat = "F_022"
 	border = HereticBorder
 	telefogheight = 32
-	defkickback = 150
+	defkickback   150
 	skyflatname = "F_SKY"
 	translator = "xlat/heretic.txt"	// not really correct but this was used before.
 	defaultbloodcolor = "68 00 00"
@@ -30,15 +30,15 @@ gameinfo
 	statusbar = "sbarinfo/hexen.txt"
 	intermissionmusic = "hub"
 	intermissioncounter = false
-	weaponslot = 1, "FWeapFist", "CWeapMace", "MWeapWand"
+	weaponslot   1, "FWeapFist", "CWeapMace", "MWeapWand"
 	weaponslot = 2, "FWeapAxe", "CWeapStaff", "MWeapFrost"
 	weaponslot = 3, "FWeapHammer", "CWeapFlame", "MWeapLightning"
 	weaponslot = 4, "FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
 	dimcolor = "00 00 ff"
 	dimamount = 0.2
 	definventorymaxamount = 25
-	defaultrespawntime = 12
-	defaultdropstyle = 1
+	defaultrespawntime   12
+	defaultdropstyle   1
 	player5start = 9100
 	pickupcolor = "d7 ba 45"
 	quitmessages = "$*RAVENQUITMSG"
@@ -55,7 +55,7 @@ gameinfo
 	pausesign = "PAUSED"
 	gibfactor = 0.5
 	cursorpic = "hexncurs"
-	textscreenx = 10
+	textscreenx   10
 	textscreeny = 5
 	defaultendsequence = "Inter_Chess"
 	maparrow = "maparrows/dagger.txt"
@@ -66,238 +66,238 @@ gameinfo
 
 DoomEdNums
 {
-     5   ZWingedStatue
-     6   ZRock1
-     7   ZRock2
-     9   ZRock3
-    10   CWeapStaff
-    12   FWeaponPiece1
-    13   FWeaponPiece2
-    15   ZRock4
-    16   FWeaponPiece3
-    17   ZChandelier
-    18   CWeaponPiece1
-    19   CWeaponPiece2
-    20   CWeaponPiece3
-    21   MWeaponPiece1
-    22   MWeaponPiece2
-    23   MWeaponPiece3
-    24   ZTreeDead
-    25   ZTree
-    26   ZTreeSwamp150
-    27   ZTreeSwamp120
-    28   ZStumpBurned
-    29   ZStumpBare
-    30   ArtiPork
-    31   Demon1
-    32   ArtiSuperHealth
-    33   ArtiTorch
-    34   Wraith
-    36   ArtiTeleport
-    37   ZStumpSwamp1
-    38   ZStumpSwamp2
-    39   ZShroomLarge1
-    40   ZShroomLarge2
-    41   ZShroomLarge3
-    42   ZShroomSmall1
-    44   ZShroomSmall2
-    45   ZShroomSmall3
-    46   ZShroomSmall4
-    47   ZShroomSmall5
-    48   ZStalagmitePillar
-    49   ZStalagmiteLarge
-    50   ZStalagmiteMedium
-    51   ZStalagmiteSmall
-    52   ZStalactiteLarge
-    53   MWeapFrost
-    54   ZWallTorch
-    55   ZWallTorchUnlit
-    56   ZStalactiteMedium
-    57   ZStalactiteSmall
-    58   ZMossCeiling1
-    59   ZMossCeiling2
-    60   ZSwampVine
-    61   ZCorpseKabob
-    62   ZCorpseSleeping
-    63   ZTombstoneRIP
-    64   ZTombstoneShane
-    65   ZTombstoneBigCross
-    66   ZTombstoneBrianR
-    67   ZTombstoneCrossCircle
-    68   ZTombstoneSmallCross
-    69   ZTombstoneBrianP
-    71   ZCorpseHanging
-    72   ZStatueGargoyleGreenTall
-    73   ZStatueGargoyleBlueTall
-    74   ZStatueGargoyleGreenShort
-    76   ZStatueGargoyleBlueShort
-    77   ZBannerTattered
-    78   ZTreeLarge1
-    79   ZTreeLarge2
-    80   ZTreeGnarled1
-    81   CrystalVial
-    82   ArtiHealth
-    83   ArtiFly
-    84   ArtiInvulnerability2
-    86   ArtiDarkServant
-    87   ZTreeGnarled2
-    88   ZLog
-    89   ZStalactiteIceLarge
-    90   ZStalactiteIceMedium
-    91   ZStalactiteIceSmall
-    92   ZStalactiteIceTiny
-    93   ZStalagmiteIceLarge
-    94   ZStalagmiteIceMedium
-    95   ZStalagmiteIceSmall
-    96   ZStalagmiteIceTiny
-    97   ZRockBrown1
-    98   ZRockBrown2
-    99   ZRockBlack
-   100   ZRubble1
-   101   ZRubble2
-   102   ZRubble3
-   103   ZVasePillar
-   104   Pottery1
-   105   Pottery2
-   106   Pottery3
-   107   Centaur
-   108   ZCorpseLynched
-   109   ZCorpseLynchedNoHeart
-   110   ZCorpseSitting
-   111   BloodPool
-   112   LittleFly
-   113   LeafSpawner
-   114   Bishop
-   115   CentaurLeader
-   116   ZTwinedTorch
-   117   ZTwinedTorchUnlit
-   118   Bridge
-   119   ZCandle
-   120   SerpentLeader
-   121   Serpent
-   122   Mana1
-   123   FWeapHammer
-   124   Mana2
-   140   TeleSmoke
-   254   Dragon
-  1410   SoundWindHexen
-  8000   ArtiPoisonBag
-  8002   ArtiSpeedBoots
-  8003   ArtiBoostMana
-  8004   Mana3
-  8005   MeshArmor
-  8006   FalconShield
-  8007   PlatinumHelm
-  8008   AmuletOfWarding
-  8009   CWeapFlame
-  8010   FWeapAxe
-  8020   IceGuy
-  8030   KeySteel
-  8031   KeyCave
-  8032   KeyAxe
-  8033   KeyFire
-  8034   KeyEmerald
-  8035   KeyDungeon
-  8036   KeySilver
-  8037   KeyRusted
-  8038   KeyHorn
-  8039   KeySwamp
-  8040   MWeapLightning
-  8041   ArtiBoostArmor
-  8042   ZFireBull
-  8043   ZFireBullUnlit
-  8044   ZStatueGargoyleStripeTall
-  8045   ZStatueGargoyleDarkRedTall
-  8046   ZStatueGargoyleRedTall
-  8047   ZStatueGargoyleTanTall
-  8048   ZStatueGargoyleRustTall
-  8049   ZStatueGargoyleDarkRedShort
-  8050   ZStatueGargoyleRedShort
-  8051   ZStatueGargoyleTanShort
-  8052   ZStatueGargoyleRustShort
-  8060   FireThing
-  8061   BrassTorch
-  8062   TreeDestructible
-  8063   ZChandelierUnlit
-  8064   ZSuitOfArmor
-  8065   ZBell
-  8066   ZBlueCandle
-  8067   ZIronMaiden
-  8068   ZXmasTree
-  8069   ZCauldron
-  8070   ZCauldronUnlit
-  8071   ZChainBit32
-  8072   ZChainBit64
-  8073   ZChainEndHeart
-  8074   ZChainEndHook1
-  8075   ZChainEndHook2
-  8076   ZChainEndSpike
-  8077   ZChainEndSkull
-  8080   Demon2
-  8100   ZBarrel
-  8101   ZShrub1
-  8102   ZShrub2
-  8103   ZBucket
-  8104   ZPoisonShroom
-  8200   KeyCastle
-  8500   TableShit1
-  8501   TableShit2
-  8502   TableShit3
-  8503   TableShit4
-  8504   TableShit5
-  8505   TableShit6
-  8506   TableShit7
-  8507   TableShit8
-  8508   TableShit9
-  8509   TableShit10
-  9002   PuzzSkull
-  9003   PuzzGemBig
-  9004   PuzzGemRed
-  9005   PuzzGemGreen1
-  9006   PuzzGemBlue1
-  9007   PuzzBook1
-  9008   PuzzBook2
-  9009   PuzzGemGreen2
-  9010   PuzzGemBlue2
-  9011   ZWingedStatueNoSkull
-  9012   ZGemPedestal
-  9014   PuzzFlameMask
-  9015   PuzzFWeapon
-  9016   PuzzCWeapon
-  9017   PuzzMWeapon
-  9018   PuzzGear1
-  9019   PuzzGear2
-  9020   PuzzGear3
-  9021   PuzzGear4
- 10000   FogSpawner
- 10001   FogPatchSmall
- 10002   FogPatchMedium
- 10003   FogPatchLarge
- 10011   WraithBuried
- 10030   Ettin
- 10040   ArtiTeleportOther
- 10060   FireDemon
- 10080   Heresiarch
- 10090   ThrustFloorDown
- 10091   ThrustFloorUp
- 10100   FighterBoss
- 10101   ClericBoss
- 10102   MageBoss
- 10110   ArtiBlastRadius
- 10120   ArtiHealingRadius
- 10200   Korax
- 10225   BatSpawner
- 10500   FlameSmallTemp
- 10501   FlameSmall
- 10502   FlameLargeTemp
- 10503   FlameLarge
+     5 = ZWingedStatue
+     6 = ZRock1
+     7 = ZRock2
+     9 = ZRock3
+    10 = CWeapStaff
+    12 = FWeaponPiece1
+    13 = FWeaponPiece2
+    15 = ZRock4
+    16 = FWeaponPiece3
+    17 = ZChandelier
+    18 = CWeaponPiece1
+    19 = CWeaponPiece2
+    20 = CWeaponPiece3
+    21 = MWeaponPiece1
+    22 = MWeaponPiece2
+    23 = MWeaponPiece3
+    24 = ZTreeDead
+    25 = ZTree
+    26 = ZTreeSwamp150
+    27 = ZTreeSwamp120
+    28 = ZStumpBurned
+    29 = ZStumpBare
+    30 = ArtiPork
+    31 = Demon1
+    32 = ArtiSuperHealth
+    33 = ArtiTorch
+    34 = Wraith
+    36 = ArtiTeleport
+    37 = ZStumpSwamp1
+    38 = ZStumpSwamp2
+    39 = ZShroomLarge1
+    40 = ZShroomLarge2
+    41 = ZShroomLarge3
+    42 = ZShroomSmall1
+    44 = ZShroomSmall2
+    45 = ZShroomSmall3
+    46 = ZShroomSmall4
+    47 = ZShroomSmall5
+    48 = ZStalagmitePillar
+    49 = ZStalagmiteLarge
+    50 = ZStalagmiteMedium
+    51 = ZStalagmiteSmall
+    52 = ZStalactiteLarge
+    53 = MWeapFrost
+    54 = ZWallTorch
+    55 = ZWallTorchUnlit
+    56 = ZStalactiteMedium
+    57 = ZStalactiteSmall
+    58 = ZMossCeiling1
+    59 = ZMossCeiling2
+    60 = ZSwampVine
+    61 = ZCorpseKabob
+    62 = ZCorpseSleeping
+    63 = ZTombstoneRIP
+    64 = ZTombstoneShane
+    65 = ZTombstoneBigCross
+    66 = ZTombstoneBrianR
+    67 = ZTombstoneCrossCircle
+    68 = ZTombstoneSmallCross
+    69 = ZTombstoneBrianP
+    71 = ZCorpseHanging
+    72 = ZStatueGargoyleGreenTall
+    73 = ZStatueGargoyleBlueTall
+    74 = ZStatueGargoyleGreenShort
+    76 = ZStatueGargoyleBlueShort
+    77 = ZBannerTattered
+    78 = ZTreeLarge1
+    79 = ZTreeLarge2
+    80 = ZTreeGnarled1
+    81 = CrystalVial
+    82 = ArtiHealth
+    83 = ArtiFly
+    84 = ArtiInvulnerability2
+    86 = ArtiDarkServant
+    87 = ZTreeGnarled2
+    88 = ZLog
+    89 = ZStalactiteIceLarge
+    90 = ZStalactiteIceMedium
+    91 = ZStalactiteIceSmall
+    92 = ZStalactiteIceTiny
+    93 = ZStalagmiteIceLarge
+    94 = ZStalagmiteIceMedium
+    95 = ZStalagmiteIceSmall
+    96 = ZStalagmiteIceTiny
+    97 = ZRockBrown1
+    98 = ZRockBrown2
+    99 = ZRockBlack
+   100 = ZRubble1
+   101 = ZRubble2
+   102 = ZRubble3
+   103 = ZVasePillar
+   104 = Pottery1
+   105 = Pottery2
+   106 = Pottery3
+   107 = Centaur
+   108 = ZCorpseLynched
+   109 = ZCorpseLynchedNoHeart
+   110 = ZCorpseSitting
+   111 = BloodPool
+   112 = LittleFly
+   113 = LeafSpawner
+   114 = Bishop
+   115 = CentaurLeader
+   116 = ZTwinedTorch
+   117 = ZTwinedTorchUnlit
+   118 = Bridge
+   119 = ZCandle
+   120 = SerpentLeader
+   121 = Serpent
+   122 = Mana1
+   123 = FWeapHammer
+   124 = Mana2
+   140 = TeleSmoke
+   254 = Dragon
+  1410 = SoundWindHexen
+  8000 = ArtiPoisonBag
+  8002 = ArtiSpeedBoots
+  8003 = ArtiBoostMana
+  8004 = Mana3
+  8005 = MeshArmor
+  8006 = FalconShield
+  8007 = PlatinumHelm
+  8008 = AmuletOfWarding
+  8009 = CWeapFlame
+  8010 = FWeapAxe
+  8020 = IceGuy
+  8030 = KeySteel
+  8031 = KeyCave
+  8032 = KeyAxe
+  8033 = KeyFire
+  8034 = KeyEmerald
+  8035 = KeyDungeon
+  8036 = KeySilver
+  8037 = KeyRusted
+  8038 = KeyHorn
+  8039 = KeySwamp
+  8040 = MWeapLightning
+  8041 = ArtiBoostArmor
+  8042 = ZFireBull
+  8043 = ZFireBullUnlit
+  8044 = ZStatueGargoyleStripeTall
+  8045 = ZStatueGargoyleDarkRedTall
+  8046 = ZStatueGargoyleRedTall
+  8047 = ZStatueGargoyleTanTall
+  8048 = ZStatueGargoyleRustTall
+  8049 = ZStatueGargoyleDarkRedShort
+  8050 = ZStatueGargoyleRedShort
+  8051 = ZStatueGargoyleTanShort
+  8052 = ZStatueGargoyleRustShort
+  8060 = FireThing
+  8061 = BrassTorch
+  8062 = TreeDestructible
+  8063 = ZChandelierUnlit
+  8064 = ZSuitOfArmor
+  8065 = ZBell
+  8066 = ZBlueCandle
+  8067 = ZIronMaiden
+  8068 = ZXmasTree
+  8069 = ZCauldron
+  8070 = ZCauldronUnlit
+  8071 = ZChainBit32
+  8072 = ZChainBit64
+  8073 = ZChainEndHeart
+  8074 = ZChainEndHook1
+  8075 = ZChainEndHook2
+  8076 = ZChainEndSpike
+  8077 = ZChainEndSkull
+  8080 = Demon2
+  8100 = ZBarrel
+  8101 = ZShrub1
+  8102 = ZShrub2
+  8103 = ZBucket
+  8104 = ZPoisonShroom
+  8200 = KeyCastle
+  8500 = TableShit1
+  8501 = TableShit2
+  8502 = TableShit3
+  8503 = TableShit4
+  8504 = TableShit5
+  8505 = TableShit6
+  8506 = TableShit7
+  8507 = TableShit8
+  8508 = TableShit9
+  8509 = TableShit10
+  9002 = PuzzSkull
+  9003 = PuzzGemBig
+  9004 = PuzzGemRed
+  9005 = PuzzGemGreen1
+  9006 = PuzzGemBlue1
+  9007 = PuzzBook1
+  9008 = PuzzBook2
+  9009 = PuzzGemGreen2
+  9010 = PuzzGemBlue2
+  9011 = ZWingedStatueNoSkull
+  9012 = ZGemPedestal
+  9014 = PuzzFlameMask
+  9015 = PuzzFWeapon
+  9016 = PuzzCWeapon
+  9017 = PuzzMWeapon
+  9018 = PuzzGear1
+  9019 = PuzzGear2
+  9020 = PuzzGear3
+  9021 = PuzzGear4
+ 10000 = FogSpawner
+ 10001 = FogPatchSmall
+ 10002 = FogPatchMedium
+ 10003 = FogPatchLarge
+ 10011 = WraithBuried
+ 10030 = Ettin
+ 10040 = ArtiTeleportOther
+ 10060 = FireDemon
+ 10080 = Heresiarch
+ 10090 = ThrustFloorDown
+ 10091 = ThrustFloorUp
+ 10100 = FighterBoss
+ 10101 = ClericBoss
+ 10102 = MageBoss
+ 10110 = ArtiBlastRadius
+ 10120 = ArtiHealingRadius
+ 10200 = Korax
+ 10225 = BatSpawner
+ 10500 = FlameSmallTemp
+ 10501 = FlameSmall
+ 10502 = FlameLargeTemp
+ 10503 = FlameLarge
 }
 
 skill baby
 {
 	AutoUseHealth
-	AmmoFactor = 1.5
-	DoubleAmmoFactor = 1.5
+	AmmoFactor   1.5
+	DoubleAmmoFactor   1.5
 	DamageFactor = 0.5
 	EasyBossBrain
 	SpawnFilter = Baby
@@ -309,7 +309,7 @@ skill baby
 
 skill easy
 {
-	DoubleAmmoFactor = 1.5
+	DoubleAmmoFactor   1.5
 	SpawnFilter = Easy
 	Name = "$MNU_YELLOWBELLIES"
 	playerclassname = "fighter", "$MNU_KNIGHT"
@@ -319,7 +319,7 @@ skill easy
 
 skill normal
 {
-	DoubleAmmoFactor = 1.5
+	DoubleAmmoFactor   1.5
 	SpawnFilter = Normal
 	Name = "$MNU_BRINGEST"
 	playerclassname = "fighter", "$MNU_WARRIOR"
@@ -330,7 +330,7 @@ skill normal
 
 skill hard
 {
-	DoubleAmmoFactor = 1.5
+	DoubleAmmoFactor   1.5
 	SpawnFilter = Hard
 	Name = "$MNU_SMITE"
 	playerclassname = "fighter", "$MNU_BERSERKER"
@@ -340,8 +340,8 @@ skill hard
 
 skill nightmare
 {
-	AmmoFactor = 1.5
-	DoubleAmmoFactor = 1.5
+	AmmoFactor   1.5
+	DoubleAmmoFactor   1.5
 	FastMonsters
 	DisableCheats
 	SpawnFilter = Nightmare

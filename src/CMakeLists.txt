@@ -834,6 +834,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	f_wipe.cpp
 	farchive.cpp
 	files.cpp
+	g_doomedmap.cpp
 	g_game.cpp
 	g_hub.cpp
 	g_level.cpp

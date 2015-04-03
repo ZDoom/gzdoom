@@ -21,7 +21,7 @@ gameinfo
 	borderflat = "F_022"
 	border = HereticBorder
 	telefogheight = 32
-	defkickback   150
+	defkickback = 150
 	skyflatname = "F_SKY"
 	translator = "xlat/heretic.txt"	// not really correct but this was used before.
 	defaultbloodcolor = "68 00 00"
@@ -30,15 +30,15 @@ gameinfo
 	statusbar = "sbarinfo/hexen.txt"
 	intermissionmusic = "hub"
 	intermissioncounter = false
-	weaponslot   1, "FWeapFist", "CWeapMace", "MWeapWand"
+	weaponslot = 1, "FWeapFist", "CWeapMace", "MWeapWand"
 	weaponslot = 2, "FWeapAxe", "CWeapStaff", "MWeapFrost"
 	weaponslot = 3, "FWeapHammer", "CWeapFlame", "MWeapLightning"
 	weaponslot = 4, "FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
 	dimcolor = "00 00 ff"
 	dimamount = 0.2
 	definventorymaxamount = 25
-	defaultrespawntime   12
-	defaultdropstyle   1
+	defaultrespawntime = 12
+	defaultdropstyle = 1
 	player5start = 9100
 	pickupcolor = "d7 ba 45"
 	quitmessages = "$*RAVENQUITMSG"
@@ -55,7 +55,7 @@ gameinfo
 	pausesign = "PAUSED"
 	gibfactor = 0.5
 	cursorpic = "hexncurs"
-	textscreenx   10
+	textscreenx = 10
 	textscreeny = 5
 	defaultendsequence = "Inter_Chess"
 	maparrow = "maparrows/dagger.txt"
@@ -296,8 +296,8 @@ DoomEdNums
 skill baby
 {
 	AutoUseHealth
-	AmmoFactor   1.5
-	DoubleAmmoFactor   1.5
+	AmmoFactor = 1.5
+	DoubleAmmoFactor = 1.5
 	DamageFactor = 0.5
 	EasyBossBrain
 	SpawnFilter = Baby
@@ -309,7 +309,7 @@ skill baby
 
 skill easy
 {
-	DoubleAmmoFactor   1.5
+	DoubleAmmoFactor = 1.5
 	SpawnFilter = Easy
 	Name = "$MNU_YELLOWBELLIES"
 	playerclassname = "fighter", "$MNU_KNIGHT"
@@ -319,7 +319,7 @@ skill easy
 
 skill normal
 {
-	DoubleAmmoFactor   1.5
+	DoubleAmmoFactor = 1.5
 	SpawnFilter = Normal
 	Name = "$MNU_BRINGEST"
 	playerclassname = "fighter", "$MNU_WARRIOR"
@@ -330,7 +330,7 @@ skill normal
 
 skill hard
 {
-	DoubleAmmoFactor   1.5
+	DoubleAmmoFactor = 1.5
 	SpawnFilter = Hard
 	Name = "$MNU_SMITE"
 	playerclassname = "fighter", "$MNU_BERSERKER"
@@ -340,8 +340,8 @@ skill hard
 
 skill nightmare
 {
-	AmmoFactor   1.5
-	DoubleAmmoFactor   1.5
+	AmmoFactor = 1.5
+	DoubleAmmoFactor = 1.5
 	FastMonsters
 	DisableCheats
 	SpawnFilter = Nightmare

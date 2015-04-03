@@ -113,8 +113,19 @@ CCMD (dumpmapthings)
 
 		for (unsigned i = 0; i < infos.Size (); ++i)
 		{
-			Printf ("%6d %s\n",
-				infos[i]->Key, infos[i]->Value.Type->TypeName.GetChars());
+			if (infos[i]->Value.Type != NULL)
+			{
+				Printf("%6d %s\n", infos[i]->Key, infos[i]->Value.Type->TypeName.GetChars());
+			}
+			else if (infos[i]->Value.Special > 0)
+			{
+				Printf("%6d %s\n", infos[i]->Key, SpecialMapthingNames[infos[i]->Value.Special - 1]);
+			}
+			else
+			{
+				Printf("%6d none", infos[i]->Key);
+			}
+
 		}
 	}
 }

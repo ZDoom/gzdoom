@@ -153,7 +153,6 @@ struct gameinfo_t
 	int definventorymaxamount;
 	int defaultrespawntime;
 	int defaultdropstyle;
-	int player5start;
 	DWORD pickupcolor;
 	TArray<FString> quitmessages;
 	FName mTitleColor;

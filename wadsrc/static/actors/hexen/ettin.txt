@@ -3,8 +3,6 @@
 
 ACTOR Ettin
 {
-	Game Hexen
-	SpawnID 4
 	Health 175
 	Radius 25
 	Height 68
@@ -91,8 +89,6 @@ ACTOR EttinMace
 
 ACTOR EttinMash : Ettin
 {
-	Game Hexen
-	SpawnID 102
 	+NOBLOOD
 	+NOICEDEATH
 	RenderStyle Translucent

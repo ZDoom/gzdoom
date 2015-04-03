@@ -2,8 +2,6 @@
 
 ACTOR SuperMap : MapRevealer
 {
-	Game Heretic
-	SpawnID 137
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	+FLOATBOB
@@ -22,8 +20,6 @@ ACTOR SuperMap : MapRevealer
 
 ACTOR ArtiInvisibility : PowerupGiver
 {
-	Game Heretic
-	SpawnID 135
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -47,8 +43,6 @@ ACTOR ArtiInvisibility : PowerupGiver
 
 ACTOR ArtiTomeOfPower : PowerupGiver native
 {
-	Game Heretic
-	SpawnID 134
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -90,8 +84,6 @@ ACTOR ActivatedTimeBomb
 
 ACTOR ArtiTimeBomb : Inventory native
 {
-	Game Heretic
-	SpawnID 72
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH

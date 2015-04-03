@@ -7,8 +7,6 @@ ACTOR HexenKey : Key
 
 ACTOR KeySteel : HexenKey
 {
-	Game Hexen
-	SpawnID 85
 	Inventory.Icon KEYSLOT1
 	Inventory.PickupMessage "$TXT_KEY_STEEL"
 	States
@@ -21,8 +19,6 @@ ACTOR KeySteel : HexenKey
 
 ACTOR KeyCave : HexenKey
 {
-	Game Hexen
-	SpawnID 86
 	Inventory.Icon KEYSLOT2
 	Inventory.PickupMessage "$TXT_KEY_CAVE"
 	States
@@ -35,8 +31,6 @@ ACTOR KeyCave : HexenKey
 
 ACTOR KeyAxe : HexenKey
 {
-	Game Hexen
-	SpawnID 87
 	Inventory.Icon KEYSLOT3
 	Inventory.PickupMessage "$TXT_KEY_AXE"
 	States
@@ -49,8 +43,6 @@ ACTOR KeyAxe : HexenKey
 
 ACTOR KeyFire : HexenKey
 {
-	Game Hexen
-	SpawnID 88
 	Inventory.Icon KEYSLOT4
 	Inventory.PickupMessage "$TXT_KEY_FIRE"
 	States
@@ -63,8 +55,6 @@ ACTOR KeyFire : HexenKey
 
 ACTOR KeyEmerald : HexenKey
 {
-	Game Hexen
-	SpawnID 89
 	Inventory.Icon KEYSLOT5
 	Inventory.PickupMessage "$TXT_KEY_EMERALD"
 	States
@@ -77,8 +67,6 @@ ACTOR KeyEmerald : HexenKey
 
 ACTOR KeyDungeon : HexenKey
 {
-	Game Hexen
-	SpawnID 90
 	Inventory.Icon KEYSLOT6
 	Inventory.PickupMessage "$TXT_KEY_DUNGEON"
 	States
@@ -91,8 +79,6 @@ ACTOR KeyDungeon : HexenKey
 
 ACTOR KeySilver : HexenKey
 {
-	Game Hexen
-	SpawnID 91
 	Inventory.Icon KEYSLOT7
 	Inventory.PickupMessage "$TXT_KEY_SILVER"
 	States
@@ -105,8 +91,6 @@ ACTOR KeySilver : HexenKey
 
 ACTOR KeyRusted : HexenKey
 {
-	Game Hexen
-	SpawnID 92
 	Inventory.Icon KEYSLOT8
 	Inventory.PickupMessage "$TXT_KEY_RUSTED"
 	States
@@ -119,8 +103,6 @@ ACTOR KeyRusted : HexenKey
 
 ACTOR KeyHorn : HexenKey
 {
-	Game Hexen
-	SpawnID 93
 	Inventory.Icon KEYSLOT9
 	Inventory.PickupMessage "$TXT_KEY_HORN"
 	States
@@ -133,8 +115,6 @@ ACTOR KeyHorn : HexenKey
 
 ACTOR KeySwamp : HexenKey
 {
-	Game Hexen
-	SpawnID 94
 	Inventory.Icon KEYSLOTA
 	Inventory.PickupMessage "$TXT_KEY_SWAMP"
 	States
@@ -147,7 +127,6 @@ ACTOR KeySwamp : HexenKey
 
 ACTOR KeyCastle : HexenKey
 {
-	Game Hexen
 	Inventory.Icon KEYSLOTB
 	Inventory.PickupMessage "$TXT_KEY_CASTLE"
 	States

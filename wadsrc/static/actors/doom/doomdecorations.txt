@@ -3,7 +3,6 @@
 
 ACTOR TechLamp
 {
-	Game Doom
 	Radius 16
 	Height 80
 	ProjectilePassHeight -16
@@ -20,7 +19,6 @@ ACTOR TechLamp
 
 ACTOR TechLamp2
 {
-	Game Doom
 	Radius 16
 	Height 60
 	ProjectilePassHeight -16
@@ -37,7 +35,6 @@ ACTOR TechLamp2
 
 ACTOR Column
 {
-	Game Doom
 	Radius 16
 	Height 48
 	ProjectilePassHeight -16
@@ -54,7 +51,6 @@ ACTOR Column
 
 ACTOR TallGreenColumn
 {
-	Game Doom
 	Radius 16
 	Height 52
 	ProjectilePassHeight -16
@@ -71,7 +67,6 @@ ACTOR TallGreenColumn
 
 ACTOR ShortGreenColumn
 {
-	Game Doom
 	Radius 16
 	Height 40
 	ProjectilePassHeight -16
@@ -88,7 +83,6 @@ ACTOR ShortGreenColumn
 
 ACTOR TallRedColumn
 {
-	Game Doom
 	Radius 16
 	Height 52
 	ProjectilePassHeight -16
@@ -105,7 +99,6 @@ ACTOR TallRedColumn
 
 ACTOR ShortRedColumn
 {
-	Game Doom
 	Radius 16
 	Height 40
 	ProjectilePassHeight -16
@@ -122,7 +115,6 @@ ACTOR ShortRedColumn
 
 ACTOR SkullColumn
 {
-	Game Doom
 	Radius 16
 	Height 40
 	ProjectilePassHeight -16
@@ -139,7 +131,6 @@ ACTOR SkullColumn
 
 ACTOR HeartColumn
 {
-	Game Doom
 	Radius 16
 	Height 40
 	ProjectilePassHeight -16
@@ -156,7 +147,6 @@ ACTOR HeartColumn
 
 ACTOR EvilEye
 {
-	Game Doom
 	Radius 16
 	Height 54
 	ProjectilePassHeight -16
@@ -173,7 +163,6 @@ ACTOR EvilEye
 
 ACTOR FloatingSkull
 {
-	Game Doom
 	Radius 16
 	Height 26
 	ProjectilePassHeight -16
@@ -190,7 +179,6 @@ ACTOR FloatingSkull
 
 ACTOR TorchTree
 {
-	Game Doom
 	Radius 16
 	Height 56
 	ProjectilePassHeight -16
@@ -207,7 +195,6 @@ ACTOR TorchTree
 
 ACTOR BlueTorch
 {
-	Game Doom
 	Radius 16
 	Height 68
 	ProjectilePassHeight -16
@@ -224,7 +211,6 @@ ACTOR BlueTorch
 
 ACTOR GreenTorch
 {
-	Game Doom
 	Radius 16
 	Height 68
 	ProjectilePassHeight -16
@@ -241,7 +227,6 @@ ACTOR GreenTorch
 
 ACTOR RedTorch
 {
-	Game Doom
 	Radius 16
 	Height 68
 	ProjectilePassHeight -16
@@ -258,7 +243,6 @@ ACTOR RedTorch
 
 ACTOR ShortBlueTorch
 {
-	Game Doom
 	Radius 16
 	Height 37
 	ProjectilePassHeight -16
@@ -275,7 +259,6 @@ ACTOR ShortBlueTorch
 
 ACTOR ShortGreenTorch
 {
-	Game Doom
 	Radius 16
 	Height 37
 	ProjectilePassHeight -16
@@ -292,7 +275,6 @@ ACTOR ShortGreenTorch
 
 ACTOR ShortRedTorch
 {
-	Game Doom
 	Radius 16
 	Height 37
 	ProjectilePassHeight -16
@@ -309,7 +291,6 @@ ACTOR ShortRedTorch
 
 ACTOR Stalagtite
 {
-	Game Doom
 	Radius 16
 	Height 40
 	ProjectilePassHeight -16
@@ -326,7 +307,6 @@ ACTOR Stalagtite
 
 ACTOR TechPillar
 {
-	Game Doom
 	Radius 16
 	Height 128
 	ProjectilePassHeight -16
@@ -343,7 +323,6 @@ ACTOR TechPillar
 
 ACTOR Candlestick
 {
-	Game Doom
 	Radius 20
 	Height 14
 	ProjectilePassHeight -16
@@ -359,7 +338,6 @@ ACTOR Candlestick
 
 ACTOR Candelabra
 {
-	Game Doom
 	Radius 16
 	Height 60
 	ProjectilePassHeight -16
@@ -376,7 +354,6 @@ ACTOR Candelabra
 
 ACTOR BloodyTwitch
 {
-	Game Doom
 	Radius 16
 	Height 68
 	+SOLID
@@ -397,7 +374,6 @@ ACTOR BloodyTwitch
 
 ACTOR Meat2
 {
-	Game Doom
 	Radius 16
 	Height 84
 	+SOLID
@@ -415,7 +391,6 @@ ACTOR Meat2
 
 ACTOR Meat3
 {
-	Game Doom
 	Radius 16
 	Height 84
 	+SOLID
@@ -433,7 +408,6 @@ ACTOR Meat3
 
 ACTOR Meat4
 {
-	Game Doom
 	Radius 16
 	Height 68
 	+SOLID
@@ -451,7 +425,6 @@ ACTOR Meat4
 
 ACTOR Meat5
 {
-	Game Doom
 	Radius 16
 	Height 52
 	+SOLID
@@ -469,28 +442,24 @@ ACTOR Meat5
 
 ACTOR NonsolidMeat2 : Meat2
 {
-	Game Doom
 	-SOLID
 	Radius 20
 }
 
 ACTOR NonsolidMeat3 : Meat3
 {
-	Game Doom
 	-SOLID
 	Radius 20
 }
 
 ACTOR NonsolidMeat4 : Meat4
 {
-	Game Doom
 	-SOLID
 	Radius 20
 }
 
 ACTOR NonsolidMeat5 : Meat5
 {
-	Game Doom
 	-SOLID
 	Radius 20
 }
@@ -499,7 +468,6 @@ ACTOR NonsolidMeat5 : Meat5
 
 ACTOR NonsolidTwitch : BloodyTwitch
 {
-	Game Doom
 	-SOLID
 	Radius 20
 }
@@ -508,7 +476,6 @@ ACTOR NonsolidTwitch : BloodyTwitch
 
 ACTOR HeadOnAStick
 {
-	Game Doom
 	Radius 16
 	Height 56
 	ProjectilePassHeight -16
@@ -525,7 +492,6 @@ ACTOR HeadOnAStick
 
 ACTOR HeadsOnAStick
 {
-	Game Doom
 	Radius 16
 	Height 64
 	ProjectilePassHeight -16
@@ -542,7 +508,6 @@ ACTOR HeadsOnAStick
 
 ACTOR HeadCandles
 {
-	Game Doom
 	Radius 16
 	Height 42
 	ProjectilePassHeight -16
@@ -559,7 +524,6 @@ ACTOR HeadCandles
 
 ACTOR DeadStick
 {
-	Game Doom
 	Radius 16
 	Height 64
 	ProjectilePassHeight -16
@@ -576,7 +540,6 @@ ACTOR DeadStick
 
 ACTOR LiveStick
 {
-	Game Doom
 	Radius 16
 	Height 64
 	ProjectilePassHeight -16
@@ -594,7 +557,6 @@ ACTOR LiveStick
 
 ACTOR BigTree
 {
-	Game Doom
 	Radius 32
 	Height 108
 	ProjectilePassHeight -16
@@ -611,8 +573,6 @@ ACTOR BigTree
 
 ACTOR BurningBarrel
 {
-	Game Doom
-	SpawnID 149
 	Radius 16
 	Height 32
 	ProjectilePassHeight -16
@@ -629,7 +589,6 @@ ACTOR BurningBarrel
 
 ACTOR HangNoGuts
 {
-	Game Doom
 	Radius 16
 	Height 88
 	+SOLID
@@ -647,7 +606,6 @@ ACTOR HangNoGuts
 
 ACTOR HangBNoBrain
 {
-	Game Doom
 	Radius 16
 	Height 88
 	+SOLID
@@ -665,7 +623,6 @@ ACTOR HangBNoBrain
 
 ACTOR HangTLookingDown
 {
-	Game Doom
 	Radius 16
 	Height 64
 	+SOLID
@@ -683,7 +640,6 @@ ACTOR HangTLookingDown
 
 ACTOR HangTLookingUp
 {
-	Game Doom
 	Radius 16
 	Height 64
 	+SOLID
@@ -701,7 +657,6 @@ ACTOR HangTLookingUp
 
 ACTOR HangTSkull
 {
-	Game Doom
 	Radius 16
 	Height 64
 	+SOLID
@@ -719,7 +674,6 @@ ACTOR HangTSkull
 
 ACTOR HangTNoBrain
 {
-	Game Doom
 	Radius 16
 	Height 64
 	+SOLID
@@ -737,8 +691,6 @@ ACTOR HangTNoBrain
 
 ACTOR ColonGibs
 {
-	Game Doom
-	SpawnID 147
 	Radius 20
 	Height 4
 	+NOBLOCKMAP
@@ -755,8 +707,6 @@ ACTOR ColonGibs
 
 ACTOR SmallBloodPool
 {
-	Game Doom
-	SpawnID 148
 	Radius 20
 	Height 1
 	+NOBLOCKMAP
@@ -773,8 +723,6 @@ ACTOR SmallBloodPool
 
 ACTOR BrainStem
 {
-	Game Doom
-	SpawnID 150
 	Radius 20
 	Height 4
 	+NOBLOCKMAP
@@ -792,7 +740,6 @@ ACTOR BrainStem
 
 ACTOR Stalagmite
 {
-	Game Doom
 	Radius 16
 	Height 48
 	+SOLID

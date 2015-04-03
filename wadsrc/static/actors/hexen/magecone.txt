@@ -3,8 +3,6 @@
 
 ACTOR MWeapFrost : MageWeapon
 {
-	Game Hexen
-	SpawnID 36
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 1700
 	Weapon.AmmoUse1 3
@@ -79,8 +77,6 @@ ACTOR FrostMissile native
 
 ACTOR IceShard : FrostMissile
 {
-	Game Hexen
-	SpawnID 65
 	DamageType "Ice"
 	-ACTIVATEIMPACT
 	-ACTIVATEPCROSS

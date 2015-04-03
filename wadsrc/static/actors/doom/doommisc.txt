@@ -2,8 +2,6 @@
 
 ACTOR ExplosiveBarrel
 {
-	Game Doom
-	SpawnID 125
 	Health 20
 	Radius 10
 	Height 42
@@ -37,8 +35,6 @@ ACTOR ExplosiveBarrel
 
 ACTOR BulletPuff
 {
-	Game Doom
-	SpawnID 131
 	+NOBLOCKMAP
 	+NOGRAVITY
 	+ALLOWPARTICLES
@@ -87,7 +83,6 @@ ACTOR DoomUnusedStates
 
 Actor EvilSceptre : ScoreItem
 {
-	Game Doom
 	Inventory.PickupMessage "$BETA_BONUS3"
 	States
 	{
@@ -99,7 +94,6 @@ Actor EvilSceptre : ScoreItem
 
 Actor UnholyBible : ScoreItem
 {
-	Game Doom
 	Inventory.PickupMessage "$BETA_BONUS4"
 	States
 	{

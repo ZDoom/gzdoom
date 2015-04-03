@@ -5,7 +5,6 @@
 //===========================================================================
 ACTOR CommanderKeen
 {
-	Game Doom
 	Health 100
 	Radius 16
 	Height 72

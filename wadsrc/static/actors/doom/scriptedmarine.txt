@@ -3,8 +3,6 @@
 
 ACTOR ScriptedMarine native
 {
-	Game Doom
-	SpawnID 151
 	Health 100
 	Radius 16
 	Height 56
@@ -174,7 +172,6 @@ ACTOR ScriptedMarine native
 
 ACTOR MarineFist : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Melee:		
@@ -189,7 +186,6 @@ ACTOR MarineFist : ScriptedMarine
 
 ACTOR MarineBerserk : MarineFist
 {
-	Game Doom
 	States
 	{
 	Melee:		
@@ -202,7 +198,6 @@ ACTOR MarineBerserk : MarineFist
 
 ACTOR MarineChainsaw : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Melee:
@@ -218,7 +213,6 @@ ACTOR MarineChainsaw : ScriptedMarine
 
 ACTOR MarinePistol : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -231,7 +225,6 @@ ACTOR MarinePistol : ScriptedMarine
 
 ACTOR MarineShotgun : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -246,7 +239,6 @@ ACTOR MarineShotgun : ScriptedMarine
 
 ACTOR MarineSSG : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -258,7 +250,6 @@ ACTOR MarineSSG : ScriptedMarine
 
 ACTOR MarineChaingun : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -271,7 +262,6 @@ ACTOR MarineChaingun : ScriptedMarine
 
 ACTOR MarineRocket : MarineFist
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -284,7 +274,6 @@ ACTOR MarineRocket : MarineFist
 
 ACTOR MarinePlasma : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -297,7 +286,6 @@ ACTOR MarinePlasma : ScriptedMarine
 
 ACTOR MarineRailgun : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -310,7 +298,6 @@ ACTOR MarineRailgun : ScriptedMarine
 
 ACTOR MarineBFG : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:

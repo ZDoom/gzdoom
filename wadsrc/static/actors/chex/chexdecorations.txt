@@ -4,19 +4,16 @@
 
 actor ChexCivilian1 : GreenTorch
 {
-	game Chex
 	height 54
 }
 
 actor ChexCivilian2 : ShortGreenTorch
 {
-	game Chex
 	height 54
 }
 
 actor ChexCivilian3 : ShortRedTorch
 {
-	game Chex
 	height 48
 }
 
@@ -24,13 +21,11 @@ actor ChexCivilian3 : ShortRedTorch
 
 actor ChexLandingLight : Column
 {
-	game Chex
 	height 35
 }
 
 actor ChexSpaceship : TechPillar
 {
-	game Chex
 	height 52
 }
 
@@ -38,37 +33,31 @@ actor ChexSpaceship : TechPillar
 
 actor ChexAppleTree : Stalagtite
 {
-	game Chex
 	height 92
 }
 
 actor ChexBananaTree : BigTree
 {
-	game Chex
 	height 108
 }
 
 actor ChexOrangeTree : TorchTree
 {
-	game Chex
 	height 92
 }
 
 actor ChexSubmergedPlant : ShortGreenColumn
 {
-	game Chex
 	height 42
 }
 
 actor ChexTallFlower : HeadsOnAStick
 {
-	game Chex
 	height 25
 }
 
 actor ChexTallFlower2 : DeadStick
 {
-	game Chex
 	height 25
 }
 
@@ -76,7 +65,6 @@ actor ChexTallFlower2 : DeadStick
 
 actor ChexSlimeFountain : BlueTorch
 {
-	game Chex
 	height 48
 	States
 	{
@@ -90,13 +78,11 @@ actor ChexSlimeFountain : BlueTorch
 
 actor ChexCavernColumn : TallRedColumn
 {
-	game Chex
 	height 128
 }
 
 actor ChexCavernStalagmite : TallGreenColumn
 {
-	game Chex
 	height 60
 }
 
@@ -104,37 +90,31 @@ actor ChexCavernStalagmite : TallGreenColumn
 
 actor ChexChemicalBurner : EvilEye
 {
-	game Chex
 	height 25
 }
 
 actor ChexChemicalFlask : Candlestick
 {
-	game Chex
 	renderstyle translucent
 	alpha 0.75
 }
 
 actor ChexFlagOnPole : SkullColumn
 {
-	game Chex
 	height 128
 }
 
 actor ChexGasTank : Candelabra
 {
-	game Chex
 	height 36
 }
 
 actor ChexLightColumn : ShortBlueTorch
 {
-	game Chex
 	height 86
 }
 
 actor ChexMineCart : ShortRedColumn
 {
-	game Chex
 	height 30
 }

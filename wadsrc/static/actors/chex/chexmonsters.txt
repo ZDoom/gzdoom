@@ -7,7 +7,6 @@
 
 actor FlemoidusCommonus : ZombieMan
 {
-	Game Chex
 	DropItem ""
 	Obituary "$OB_COMMONUS"
 	States
@@ -27,7 +26,6 @@ actor FlemoidusCommonus : ZombieMan
 
 actor FlemoidusBipedicus : ShotgunGuy
 {
-	Game Chex
 	DropItem ""
 	Obituary "$OB_BIPEDICUS"
 	States
@@ -47,7 +45,6 @@ actor FlemoidusBipedicus : ShotgunGuy
 
 actor ArmoredFlemoidusBipedicus : DoomImp
 {
-	Game Chex
 	Obituary "$OB_BIPEDICUS2"
 	HitObituary "$OB_BIPEDICUS2"
 }
@@ -60,7 +57,6 @@ actor ArmoredFlemoidusBipedicus : DoomImp
 
 actor FlemoidusCycloptisCommonus : Demon
 {
-	Game Chex
 	Obituary "$OB_CYCLOPTIS"
 }
 
@@ -72,7 +68,6 @@ actor FlemoidusCycloptisCommonus : Demon
 
 actor Flembrane : BaronOfHell
 {
-	Game Chex
 	radius 44
 	height 100
 	speed 0
@@ -90,6 +85,5 @@ actor Flembrane : BaronOfHell
 
 actor ChexSoul : LostSoul
 {
-	Game Chex
 	height 0
 }

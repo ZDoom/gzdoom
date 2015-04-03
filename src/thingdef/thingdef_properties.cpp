@@ -976,7 +976,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 	if (type == 0)
 	{
 		PROP_INT_PARM(trans, 1);
-		int max = (gameinfo.gametype==GAME_Strife || (info->GameFilter&GAME_Strife)) ? 6:2;
+		int max = 6;// (gameinfo.gametype == GAME_Strife || (info->GameFilter&GAME_Strife)) ? 6 : 2;
 		if (trans < 0 || trans > max)
 		{
 			I_Error ("Translation must be in the range [0,%d]", max);

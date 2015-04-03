@@ -1,6 +1,5 @@
 ACTOR ZWingedStatue
 {
-	Game Hexen
 	Radius 10
 	Height 62
 	+SOLID
@@ -14,7 +13,6 @@ ACTOR ZWingedStatue
 	
 ACTOR ZRock1
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -27,7 +25,6 @@ ACTOR ZRock1
 
 ACTOR ZRock2
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -40,7 +37,6 @@ ACTOR ZRock2
 
 ACTOR ZRock3
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -53,7 +49,6 @@ ACTOR ZRock3
 
 ACTOR ZRock4
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -66,7 +61,6 @@ ACTOR ZRock4
 
 ACTOR ZChandelier
 {
-	Game Hexen
 	Radius 20
 	Height 60
 	+SPAWNCEILING
@@ -81,7 +75,6 @@ ACTOR ZChandelier
 
 ACTOR ZChandelierUnlit
 {
-	Game Hexen
 	Radius 20
 	Height 60
 	+SPAWNCEILING
@@ -96,7 +89,6 @@ ACTOR ZChandelierUnlit
 
 ACTOR ZTreeDead
 {
-	Game Hexen
 	Radius 10
 	Height 96
 	+SOLID
@@ -110,7 +102,6 @@ ACTOR ZTreeDead
 
 ACTOR ZTree
 {
-	Game Hexen
 	Radius 15
 	Height 128
 	+SOLID
@@ -124,7 +115,6 @@ ACTOR ZTree
 
 ACTOR ZTreeSwamp150
 {
-	Game Hexen
 	Radius 10
 	Height 150
 	+SOLID
@@ -138,7 +128,6 @@ ACTOR ZTreeSwamp150
 
 ACTOR ZTreeSwamp120
 {
-	Game Hexen
 	Radius 10
 	Height 120
 	+SOLID
@@ -152,7 +141,6 @@ ACTOR ZTreeSwamp120
 
 ACTOR ZStumpBurned
 {
-	Game Hexen
 	Radius 12
 	Height 20
 	+SOLID
@@ -166,7 +154,6 @@ ACTOR ZStumpBurned
 
 ACTOR ZStumpBare
 {
-	Game Hexen
 	Radius 12
 	Height 20
 	+SOLID
@@ -180,7 +167,6 @@ ACTOR ZStumpBare
 
 ACTOR ZStumpSwamp1
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -193,7 +179,6 @@ ACTOR ZStumpSwamp1
 
 ACTOR ZStumpSwamp2
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -206,7 +191,6 @@ ACTOR ZStumpSwamp2
 
 ACTOR ZShroomLarge1
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -219,7 +203,6 @@ ACTOR ZShroomLarge1
 
 ACTOR ZShroomLarge2
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -232,7 +215,6 @@ ACTOR ZShroomLarge2
 
 ACTOR ZShroomLarge3
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -245,7 +227,6 @@ ACTOR ZShroomLarge3
 
 ACTOR ZShroomSmall1
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -258,7 +239,6 @@ ACTOR ZShroomSmall1
 
 ACTOR ZShroomSmall2
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -271,7 +251,6 @@ ACTOR ZShroomSmall2
 
 ACTOR ZShroomSmall3
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -284,7 +263,6 @@ ACTOR ZShroomSmall3
 
 ACTOR ZShroomSmall4
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -297,7 +275,6 @@ ACTOR ZShroomSmall4
 
 ACTOR ZShroomSmall5
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -310,7 +287,6 @@ ACTOR ZShroomSmall5
 
 ACTOR ZStalagmitePillar
 {
-	Game Hexen
 	Radius 8
 	Height 138
 	+SOLID
@@ -324,7 +300,6 @@ ACTOR ZStalagmitePillar
 
 ACTOR ZStalagmiteLarge
 {
-	Game Hexen
 	Radius 8
 	Height 48
 	+SOLID
@@ -338,7 +313,6 @@ ACTOR ZStalagmiteLarge
 
 ACTOR ZStalagmiteMedium
 {
-	Game Hexen
 	Radius 6
 	Height 40
 	+SOLID
@@ -352,7 +326,6 @@ ACTOR ZStalagmiteMedium
 
 ACTOR ZStalagmiteSmall
 {
-	Game Hexen
 	Radius 8
 	Height 36
 	+SOLID
@@ -366,7 +339,6 @@ ACTOR ZStalagmiteSmall
 
 ACTOR ZStalactiteLarge
 {
-	Game Hexen
 	Radius 8
 	Height 66
 	+SOLID
@@ -382,7 +354,6 @@ ACTOR ZStalactiteLarge
 
 ACTOR ZStalactiteMedium
 {
-	Game Hexen
 	Radius 6
 	Height 50
 	+SOLID
@@ -398,7 +369,6 @@ ACTOR ZStalactiteMedium
 
 ACTOR ZStalactiteSmall
 {
-	Game Hexen
 	Radius 8
 	Height 40
 	+SOLID
@@ -414,7 +384,6 @@ ACTOR ZStalactiteSmall
 
 ACTOR ZMossCeiling1
 {
-	Game Hexen
 	Radius 20
 	Height 20
 	+SPAWNCEILING
@@ -429,7 +398,6 @@ ACTOR ZMossCeiling1
 
 ACTOR ZMossCeiling2
 {
-	Game Hexen
 	Radius 20
 	Height 24
 	+SPAWNCEILING
@@ -444,7 +412,6 @@ ACTOR ZMossCeiling2
 
 ACTOR ZSwampVine
 {
-	Game Hexen
 	Radius 8
 	Height 52
 	+SOLID
@@ -458,7 +425,6 @@ ACTOR ZSwampVine
 
 ACTOR ZCorpseKabob 
 {
-	Game Hexen
 	Radius 10
 	Height 92
 	+SOLID
@@ -472,7 +438,6 @@ ACTOR ZCorpseKabob
 
 ACTOR ZCorpseSleeping
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -485,7 +450,6 @@ ACTOR ZCorpseSleeping
 
 ACTOR ZTombstoneRIP
 {
-	Game Hexen
 	Radius 10
 	Height 46
 	+SOLID
@@ -499,7 +463,6 @@ ACTOR ZTombstoneRIP
 
 ACTOR ZTombstoneShane
 {
-	Game Hexen
 	Radius 10
 	Height 46
 	+SOLID
@@ -513,7 +476,6 @@ ACTOR ZTombstoneShane
 
 ACTOR ZTombstoneBigCross
 {
-	Game Hexen
 	Radius 10
 	Height 46
 	+SOLID
@@ -527,7 +489,6 @@ ACTOR ZTombstoneBigCross
 
 ACTOR ZTombstoneBrianR
 {
-	Game Hexen
 	Radius 10
 	Height 52
 	+SOLID
@@ -541,7 +502,6 @@ ACTOR ZTombstoneBrianR
 
 ACTOR ZTombstoneCrossCircle
 {
-	Game Hexen
 	Radius 10
 	Height 52
 	+SOLID
@@ -555,7 +515,6 @@ ACTOR ZTombstoneCrossCircle
 
 ACTOR ZTombstoneSmallCross
 {
-	Game Hexen
 	Radius 8
 	Height 46
 	+SOLID
@@ -569,7 +528,6 @@ ACTOR ZTombstoneSmallCross
 
 ACTOR ZTombstoneBrianP
 {
-	Game Hexen
 	Radius 8
 	Height 46
 	+SOLID
@@ -583,7 +541,6 @@ ACTOR ZTombstoneBrianP
 
 ACTOR ZCorpseHanging
 {
-	Game Hexen
 	Radius 6
 	Height 75
 	+SOLID
@@ -599,7 +556,6 @@ ACTOR ZCorpseHanging
 
 ACTOR ZStatueGargoyleGreenTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -613,7 +569,6 @@ ACTOR ZStatueGargoyleGreenTall
 
 ACTOR ZStatueGargoyleBlueTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -627,7 +582,6 @@ ACTOR ZStatueGargoyleBlueTall
 
 ACTOR ZStatueGargoyleGreenShort
 {
-	Game Hexen
 	Radius 14
 	Height 62
 	+SOLID
@@ -641,7 +595,6 @@ ACTOR ZStatueGargoyleGreenShort
 
 ACTOR ZStatueGargoyleBlueShort
 {
-	Game Hexen
 	Radius 14
 	Height 62
 	+SOLID
@@ -655,7 +608,6 @@ ACTOR ZStatueGargoyleBlueShort
 
 ACTOR ZStatueGargoyleStripeTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -669,7 +621,6 @@ ACTOR ZStatueGargoyleStripeTall
 
 ACTOR ZStatueGargoyleDarkRedTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -683,7 +634,6 @@ ACTOR ZStatueGargoyleDarkRedTall
 
 ACTOR ZStatueGargoyleRedTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -697,7 +647,6 @@ ACTOR ZStatueGargoyleRedTall
 
 ACTOR ZStatueGargoyleTanTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -711,7 +660,6 @@ ACTOR ZStatueGargoyleTanTall
 
 ACTOR ZStatueGargoyleRustTall
 {
-	Game Hexen
 	Radius 14
 	Height 108
 	+SOLID
@@ -725,7 +673,6 @@ ACTOR ZStatueGargoyleRustTall
 
 ACTOR ZStatueGargoyleDarkRedShort
 {
-	Game Hexen
 	Radius 14
 	Height 62
 	+SOLID
@@ -739,7 +686,6 @@ ACTOR ZStatueGargoyleDarkRedShort
 
 ACTOR ZStatueGargoyleRedShort
 {
-	Game Hexen
 	Radius 14
 	Height 62
 	+SOLID
@@ -753,7 +699,6 @@ ACTOR ZStatueGargoyleRedShort
 
 ACTOR ZStatueGargoyleTanShort
 {
-	Game Hexen
 	Radius 14
 	Height 62
 	+SOLID
@@ -767,7 +712,6 @@ ACTOR ZStatueGargoyleTanShort
 
 ACTOR ZStatueGargoyleRustShort
 {
-	Game Hexen
 	Radius 14
 	Height 62
 	+SOLID
@@ -781,7 +725,6 @@ ACTOR ZStatueGargoyleRustShort
 
 ACTOR ZBannerTattered
 {
-	Game Hexen
 	Radius 8
 	Height 120
 	+SOLID
@@ -795,7 +738,6 @@ ACTOR ZBannerTattered
 
 ACTOR ZTreeLarge1
 {
-	Game Hexen
 	Radius 15
 	Height 180
 	+SOLID
@@ -809,7 +751,6 @@ ACTOR ZTreeLarge1
 
 ACTOR ZTreeLarge2
 {
-	Game Hexen
 	Radius 15
 	Height 180
 	+SOLID
@@ -823,7 +764,6 @@ ACTOR ZTreeLarge2
 
 ACTOR ZTreeGnarled1
 {
-	Game Hexen
 	Radius 22
 	Height 100
 	+SOLID
@@ -837,7 +777,6 @@ ACTOR ZTreeGnarled1
 
 ACTOR ZTreeGnarled2
 {
-	Game Hexen
 	Radius 22
 	Height 100
 	+SOLID
@@ -851,7 +790,6 @@ ACTOR ZTreeGnarled2
 
 ACTOR ZLog
 {
-	Game Hexen
 	Radius 20
 	Height 25
 	+SOLID
@@ -865,7 +803,6 @@ ACTOR ZLog
 
 ACTOR ZStalactiteIceLarge
 {
-	Game Hexen
 	Radius 8
 	Height 66
 	+SOLID
@@ -881,7 +818,6 @@ ACTOR ZStalactiteIceLarge
 
 ACTOR ZStalactiteIceMedium
 {
-	Game Hexen
 	Radius 5
 	Height 50
 	+SOLID
@@ -897,7 +833,6 @@ ACTOR ZStalactiteIceMedium
 
 ACTOR ZStalactiteIceSmall
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SOLID
@@ -913,7 +848,6 @@ ACTOR ZStalactiteIceSmall
 
 ACTOR ZStalactiteIceTiny
 {
-	Game Hexen
 	Radius 4
 	Height 8
 	+SOLID
@@ -929,7 +863,6 @@ ACTOR ZStalactiteIceTiny
 
 ACTOR ZStalagmiteIceLarge
 {
-	Game Hexen
 	Radius 8
 	Height 66
 	+SOLID
@@ -943,7 +876,6 @@ ACTOR ZStalagmiteIceLarge
 
 ACTOR ZStalagmiteIceMedium
 {
-	Game Hexen
 	Radius 5
 	Height 50
 	+SOLID
@@ -957,7 +889,6 @@ ACTOR ZStalagmiteIceMedium
 
 ACTOR ZStalagmiteIceSmall
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SOLID
@@ -971,7 +902,6 @@ ACTOR ZStalagmiteIceSmall
 
 ACTOR ZStalagmiteIceTiny
 {
-	Game Hexen
 	Radius 4
 	Height 8
 	+SOLID
@@ -985,7 +915,6 @@ ACTOR ZStalagmiteIceTiny
 
 ACTOR ZRockBrown1
 {
-	Game Hexen
 	Radius 17
 	Height 72
 	+SOLID
@@ -999,7 +928,6 @@ ACTOR ZRockBrown1
 
 ACTOR ZRockBrown2
 {
-	Game Hexen
 	Radius 15
 	Height 50
 	+SOLID
@@ -1013,7 +941,6 @@ ACTOR ZRockBrown2
 
 ACTOR ZRockBlack
 {
-	Game Hexen
 	Radius 20
 	Height 40
 	+SOLID
@@ -1027,7 +954,6 @@ ACTOR ZRockBlack
 
 ACTOR ZRubble1
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -1040,7 +966,6 @@ ACTOR ZRubble1
 
 ACTOR ZRubble2
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -1053,7 +978,6 @@ ACTOR ZRubble2
 
 ACTOR ZRubble3
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	States
@@ -1066,7 +990,6 @@ ACTOR ZRubble3
 
 ACTOR ZVasePillar
 {
-	Game Hexen
 	Radius 12
 	Height 54
 	+SOLID
@@ -1080,7 +1003,6 @@ ACTOR ZVasePillar
 
 ACTOR ZCorpseLynched
 {
-	Game Hexen
 	Radius 11
 	Height 95
 	+SOLID
@@ -1096,7 +1018,6 @@ ACTOR ZCorpseLynched
 
 ACTOR ZCandle
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOGRAVITY
@@ -1111,7 +1032,6 @@ ACTOR ZCandle
 
 ACTOR ZBarrel
 {
-	Game Hexen
 	Radius 15
 	Height 32
 	+SOLID
@@ -1125,7 +1045,6 @@ ACTOR ZBarrel
 
 ACTOR ZBucket
 {
-	Game Hexen
 	Radius 8
 	Height 72
 	+SOLID
@@ -1141,7 +1060,6 @@ ACTOR ZBucket
 
 ACTOR FireThing
 {
-	Game Hexen
 	Radius 5
 	Height 10
 	+SOLID
@@ -1163,7 +1081,6 @@ ACTOR FireThing
 
 ACTOR BrassTorch
 {
-	Game Hexen
 	Radius 6
 	Height 35
 	+SOLID
@@ -1177,7 +1094,6 @@ ACTOR BrassTorch
 
 ACTOR ZBlueCandle
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1191,7 +1107,6 @@ ACTOR ZBlueCandle
 
 ACTOR ZIronMaiden
 {
-	Game Hexen
 	Radius 12
 	Height 60
 	+SOLID
@@ -1205,7 +1120,6 @@ ACTOR ZIronMaiden
 
 ACTOR ZChainBit32
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SPAWNCEILING
@@ -1221,7 +1135,6 @@ ACTOR ZChainBit32
 
 ACTOR ZChainBit64
 {
-	Game Hexen
 	Radius 4
 	Height 64
 	+SPAWNCEILING
@@ -1237,7 +1150,6 @@ ACTOR ZChainBit64
 
 ACTOR ZChainEndHeart
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SPAWNCEILING
@@ -1253,7 +1165,6 @@ ACTOR ZChainEndHeart
 
 ACTOR ZChainEndHook1
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SPAWNCEILING
@@ -1269,7 +1180,6 @@ ACTOR ZChainEndHook1
 
 ACTOR ZChainEndHook2
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SPAWNCEILING
@@ -1285,7 +1195,6 @@ ACTOR ZChainEndHook2
 
 ACTOR ZChainEndSpike
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SPAWNCEILING
@@ -1301,7 +1210,6 @@ ACTOR ZChainEndSpike
 
 ACTOR ZChainEndSkull
 {
-	Game Hexen
 	Radius 4
 	Height 32
 	+SPAWNCEILING
@@ -1317,7 +1225,6 @@ ACTOR ZChainEndSkull
 
 ACTOR TableShit1
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1331,7 +1238,6 @@ ACTOR TableShit1
 
 ACTOR TableShit2
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1345,7 +1251,6 @@ ACTOR TableShit2
 
 ACTOR TableShit3
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1359,7 +1264,6 @@ ACTOR TableShit3
 
 ACTOR TableShit4
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1373,7 +1277,6 @@ ACTOR TableShit4
 
 ACTOR TableShit5
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1387,7 +1290,6 @@ ACTOR TableShit5
 
 ACTOR TableShit6
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1401,7 +1303,6 @@ ACTOR TableShit6
 
 ACTOR TableShit7
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1415,7 +1316,6 @@ ACTOR TableShit7
 
 ACTOR TableShit8
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1429,7 +1329,6 @@ ACTOR TableShit8
 
 ACTOR TableShit9
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1443,7 +1342,6 @@ ACTOR TableShit9
 
 ACTOR TableShit10
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOBLOCKMAP
@@ -1457,7 +1355,6 @@ ACTOR TableShit10
 
 ACTOR TeleSmoke
 {
-	Game Hexen
 	Radius 20
 	Height 16
 	+NOGRAVITY

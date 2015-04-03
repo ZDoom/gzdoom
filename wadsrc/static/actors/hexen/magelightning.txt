@@ -3,7 +3,6 @@
 
 ACTOR MWeapLightning : MageWeapon
 {
-	Game Hexen
 	+NOGRAVITY
 	Weapon.SelectionOrder 1100
 	Weapon.AmmoUse1 5

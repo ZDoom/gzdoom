@@ -222,6 +222,30 @@ DoomEdNums
  32000 = DoomBuilderCamera
 }
 
+SpawnNums
+{
+	41 = Rock1
+	42 = Rock2
+	43 = Rock3
+	44 = Dirt1
+	45 = Dirt2
+	46 = Dirt3
+	47 = Dirt4
+	48 = Dirt5
+	49 = Dirt6
+	54 = SGShard1
+	55 = SGShard2
+	56 = SGShard3
+	57 = SGShard4
+	58 = SGShard5
+	59 = SGShard6
+	60 = SGShard7
+	61 = SGShard8
+	62 = SGShard9
+	63 = SGShard0
+	130 = Blood
+}
+
 
 Intermission Inter_Titlescreen
 {

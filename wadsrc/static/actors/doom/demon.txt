@@ -5,8 +5,6 @@
 //===========================================================================
 ACTOR Demon
 {
-	Game Doom
-	SpawnID 8
 	Health 150
 	PainChance 180
 	Speed 10
@@ -59,8 +57,6 @@ ACTOR Demon
 //===========================================================================
 ACTOR Spectre : Demon
 {
-	Game Doom
-	SpawnID 9
 	+SHADOW
 	RenderStyle OptFuzzy
 	Alpha 0.5

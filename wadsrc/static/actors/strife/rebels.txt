@@ -66,7 +66,6 @@ ACTOR Rebel : StrifeHumanoid
 
 ACTOR Rebel1 : Rebel
 {
-	Game Strife
 	ConversationID 43, 42, 43
 	DropItem "ClipOfBullets"
 }
@@ -75,7 +74,6 @@ ACTOR Rebel1 : Rebel
 
 ACTOR Rebel2 : Rebel
 {
-	Game Strife
 	ConversationID 44, 43, 44
 }
 
@@ -83,7 +81,6 @@ ACTOR Rebel2 : Rebel
 
 ACTOR Rebel3 : Rebel
 {
-	Game Strife
 	ConversationID 45, 44, 45
 }
 
@@ -91,7 +88,6 @@ ACTOR Rebel3 : Rebel
 
 ACTOR Rebel4 : Rebel
 {
-	Game Strife
 	ConversationID 46, 45, 56
 }
 
@@ -99,7 +95,6 @@ ACTOR Rebel4 : Rebel
 
 ACTOR Rebel5 : Rebel
 {
-	Game Strife
 	ConversationID 47, 46, 47
 }
 
@@ -107,7 +102,6 @@ ACTOR Rebel5 : Rebel
 
 ACTOR Rebel6 : Rebel
 {
-	Game Strife
 	ConversationID 48, 47, 48
 }
 
@@ -115,7 +109,6 @@ ACTOR Rebel6 : Rebel
 
 ACTOR TeleporterBeacon : Inventory native
 {
-	Game Strife
 	ConversationID 166,-1,-1
 	Health 5
 	Radius 16

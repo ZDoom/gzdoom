@@ -3,7 +3,6 @@
 
 ACTOR EntityNest
 {
-	Game Strife
 	ConversationID 76,-1,-1
 	Radius 84
 	Height 47
@@ -22,7 +21,6 @@ ACTOR EntityNest
 
 ACTOR EntityPod
 {
-	Game Strife
 	ConversationID 77,-1,-1
 	Radius 25
 	Height 91
@@ -52,7 +50,6 @@ ACTOR EntityPod
 
 ACTOR EntityBoss : SpectralMonster
 {
-	Game Strife
 	ConversationID 74,-1,-1
 	Health 2500
 	Painchance 255

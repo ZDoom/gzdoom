@@ -2,8 +2,6 @@
 
 ACTOR Centaur
 {
-	Game Hexen
-	SpawnID 1
 	Health 200
 	Painchance 135
 	Speed 13
@@ -80,8 +78,6 @@ ACTOR Centaur
 
 ACTOR CentaurLeader : Centaur
 {
-	Game Hexen
-	SpawnID 2
 	Health 250
 	PainChance 96 
 	Speed 10
@@ -105,8 +101,6 @@ ACTOR CentaurLeader : Centaur
 
 ACTOR CentaurMash : Centaur
 {
-	Game Hexen
-	SpawnID 103
 	+NOBLOOD
 	+BLASTED
 	-TELESTOMP

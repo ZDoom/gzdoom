@@ -3,8 +3,6 @@
 
 ACTOR ArtiHealth : HealthPickup
 {
-	Game Raven
-	SpawnID 24
 	Health 25
 	+COUNTITEM
 	+FLOATBOB
@@ -27,8 +25,6 @@ ACTOR ArtiHealth : HealthPickup
 
 ACTOR ArtiSuperHealth : HealthPickup
 {
-	Game Raven
-	SpawnID 25
 	Health 100
 	+COUNTITEM
 	+FLOATBOB
@@ -51,8 +47,6 @@ ACTOR ArtiSuperHealth : HealthPickup
 
 ACTOR ArtiFly : PowerupGiver
 {
-	Game Raven
-	SpawnID 15
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -74,8 +68,6 @@ ACTOR ArtiFly : PowerupGiver
 
 ACTOR ArtiInvulnerability : PowerupGiver
 {
-	Game Heretic
-	SpawnID 133
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -97,8 +89,6 @@ ACTOR ArtiInvulnerability : PowerupGiver
 
 ACTOR ArtiInvulnerability2 : PowerupGiver
 {
-	Game Hexen
-	SpawnID 133
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -119,8 +109,6 @@ ACTOR ArtiInvulnerability2 : PowerupGiver
 
 ACTOR ArtiTorch : PowerupGiver
 {
-	Game Raven
-	SpawnID 73
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH

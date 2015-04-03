@@ -321,6 +321,22 @@ DoomEdNums
   3006 = Sentinel
 }
 
+SpawnNums
+{
+	11 = ClipOfBullets
+	68 = LeatherArmor
+	69 = MetalArmor
+	75 = EnergyPod
+	135 = ShadowArmor
+	136 = EnvironmentalSuit
+	137 = StrifeMap
+	139 = BoxOfBullets
+	140 = MiniMissiles
+	141 = CrateOfMissiles
+	142 = EnergyPack
+	144 = AmmoSatchel
+}
+
 Intermission Inter_Strife_Good
 {
 	Image

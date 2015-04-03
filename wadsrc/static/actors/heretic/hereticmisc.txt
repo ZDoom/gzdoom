@@ -3,8 +3,6 @@
 
 ACTOR Pod
 {
-	Game Heretic
-	SpawnID 125
 	Health 45
 	Radius 16
 	Height 54
@@ -64,8 +62,6 @@ ACTOR PodGoo
 
 ACTOR PodGenerator
 {
-	Game Heretic
-	SpawnID 126
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
@@ -86,8 +82,6 @@ ACTOR PodGenerator
 
 ACTOR TeleGlitterGenerator1
 {
-	Game Heretic
-	SpawnID 166
 	+NOBLOCKMAP 
 	+NOGRAVITY
 	+DONTSPLASH
@@ -104,8 +98,6 @@ ACTOR TeleGlitterGenerator1
 
 ACTOR TeleGlitterGenerator2
 {
-	Game Heretic
-	SpawnID 167
 	+NOBLOCKMAP 
 	+NOGRAVITY
 	+DONTSPLASH
@@ -162,8 +154,6 @@ ACTOR TeleGlitter2 : TeleGlitter1
 
 ACTOR Volcano
 {
-	Game Heretic
-	SpawnID 150
 	Radius 12
 	Height 20
 	+SOLID
@@ -187,8 +177,6 @@ ACTOR Volcano
 
 ACTOR VolcanoBlast
 {
-	Game Heretic
-	SpawnID 123
 	Radius 8
 	Height 8
 	Speed 2
@@ -219,8 +207,6 @@ ACTOR VolcanoBlast
 
 ACTOR VolcanoTBlast
 {
-	Game Heretic
-	SpawnID 124
 	Radius 8
 	Height 6
 	Speed 2

@@ -5,8 +5,6 @@
 //===========================================================================
 ACTOR PainElemental
 {
-	Game Doom
-	SpawnID 115
 	Health 400
 	Radius 31
 	Height 56

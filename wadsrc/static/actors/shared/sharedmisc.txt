@@ -105,8 +105,6 @@ ACTOR RealGibs
 
 ACTOR Gibs : RealGibs
 {
-	Game Doom
-	SpawnID 146
 	ClearFlags
 }
 

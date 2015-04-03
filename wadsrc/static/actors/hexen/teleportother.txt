@@ -3,8 +3,6 @@
 
 ACTOR ArtiTeleportOther : Inventory native
 {
-	Game Hexen
-	SpawnID 17
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.INVBAR

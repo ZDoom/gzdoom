@@ -2,7 +2,6 @@
 
 ACTOR Tank1
 {
-	Game Strife
 	Radius 16
 	Height 192
 	+SOLID
@@ -21,7 +20,6 @@ ACTOR Tank1
 
 ACTOR Tank2
 {
-	Game Strife
 	Radius 16
 	Height 192
 	+SOLID
@@ -40,7 +38,6 @@ ACTOR Tank2
 
 ACTOR Tank3
 {
-	Game Strife
 	Radius 16
 	Height 192
 	+SOLID
@@ -59,7 +56,6 @@ ACTOR Tank3
 
 ACTOR Tank4
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
@@ -78,7 +74,6 @@ ACTOR Tank4
 
 ACTOR Tank5
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
@@ -97,7 +92,6 @@ ACTOR Tank5
 
 ACTOR Tank6
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
@@ -116,7 +110,6 @@ ACTOR Tank6
 
 ACTOR WaterBottle
 {
-	Game Strife
 	ConversationID 131, -1, -1
 	States
 	{
@@ -130,7 +123,6 @@ ACTOR WaterBottle
 
 ACTOR Mug
 {
-	Game Strife
 	ConversationID 132, -1, -1
 	States
 	{
@@ -144,7 +136,6 @@ ACTOR Mug
 
 ACTOR WoodenBarrel
 {
-	Game Strife
 	Health 10
 	Radius 10
 	Height 32
@@ -171,7 +162,6 @@ ACTOR WoodenBarrel
 
 ACTOR ExplosiveBarrel2
 {
-	Game Strife
 	Health 30
 	Radius 10
 	Height 32
@@ -200,7 +190,6 @@ ACTOR ExplosiveBarrel2
 
 ACTOR LightSilverFluorescent
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
@@ -218,7 +207,6 @@ ACTOR LightSilverFluorescent
 
 ACTOR LightBrownFluorescent
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
@@ -236,7 +224,6 @@ ACTOR LightBrownFluorescent
 
 ACTOR LightGoldFluorescent
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
@@ -254,7 +241,6 @@ ACTOR LightGoldFluorescent
 
 ACTOR LightGlobe
 {
-	Game Strife
 	Radius 16
 	Height 16
 	+SOLID
@@ -271,7 +257,6 @@ ACTOR LightGlobe
 
 ACTOR PillarTechno
 {
-	Game Strife
 	Radius 20
 	Height 128
 	+SOLID
@@ -288,7 +273,6 @@ ACTOR PillarTechno
 
 ACTOR PillarAztec
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
@@ -305,7 +289,6 @@ ACTOR PillarAztec
 
 ACTOR PillarAztecDamaged
 {
-	Game Strife
 	Radius 16
 	Height 80
 	+SOLID
@@ -322,7 +305,6 @@ ACTOR PillarAztecDamaged
 
 ACTOR PillarAztecRuined
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID
@@ -339,7 +321,6 @@ ACTOR PillarAztecRuined
 
 ACTOR PillarHugeTech
 {
-	Game Strife
 	Radius 24
 	Height 192
 	+SOLID
@@ -356,7 +337,6 @@ ACTOR PillarHugeTech
 
 ACTOR PillarAlienPower
 {
-	Game Strife
 	Radius 24
 	Height 192
 	+SOLID
@@ -374,7 +354,6 @@ ACTOR PillarAlienPower
 
 ACTOR SStalactiteBig
 {
-	Game Strife
 	Radius 16
 	Height 54
 	+SOLID +SPAWNCEILING +NOGRAVITY
@@ -391,7 +370,6 @@ ACTOR SStalactiteBig
 
 ACTOR SStalactiteSmall
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID +SPAWNCEILING +NOGRAVITY
@@ -408,7 +386,6 @@ ACTOR SStalactiteSmall
 
 ACTOR SStalagmiteBig
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID
@@ -425,7 +402,6 @@ ACTOR SStalagmiteBig
 
 ACTOR CavePillarTop
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID +SPAWNCEILING +NOGRAVITY
@@ -442,7 +418,6 @@ ACTOR CavePillarTop
 
 ACTOR CavePillarBottom
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
@@ -459,7 +434,6 @@ ACTOR CavePillarBottom
 
 ACTOR SStalagmiteSmall
 {
-	Game Strife
 	Radius 16
 	Height 25
 	+SOLID
@@ -476,7 +450,6 @@ ACTOR SStalagmiteSmall
 
 ACTOR Candle
 {
-	Game Strife
 	ConversationID 222, -1, -1
 	States
 	{
@@ -490,7 +463,6 @@ ACTOR Candle
 
 ACTOR StrifeCandelabra
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID
@@ -507,7 +479,6 @@ ACTOR StrifeCandelabra
 
 ACTOR WaterDropOnFloor
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 224, -1, -1
 	ActiveSound "world/waterdrip"
@@ -528,7 +499,6 @@ ACTOR WaterDropOnFloor
 
 ACTOR WaterfallSplash
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 225, -1, -1
 	ActiveSound "world/waterfall"
@@ -545,7 +515,6 @@ ACTOR WaterfallSplash
 
 ACTOR WaterDrip
 {
-	Game Strife
 	Height 1
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
 	ConversationID 226, -1, -1
@@ -562,7 +531,6 @@ ACTOR WaterDrip
 
 ACTOR WaterFountain
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 227, -1, -1
 	ActiveSound "world/watersplash"
@@ -579,7 +547,6 @@ ACTOR WaterFountain
 
 ACTOR HeartsInTank
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
@@ -596,7 +563,6 @@ ACTOR HeartsInTank
 
 ACTOR TeleportSwirl
 {
-	Game Strife
 	+NOBLOCKMAP
 	RenderStyle Add
 	Alpha 0.25
@@ -614,7 +580,6 @@ ACTOR TeleportSwirl
 
 ACTOR DeadStrifePlayer
 {
-	Game Strife
 	ConversationID 231, -1, -1
 	States
 	{
@@ -630,7 +595,6 @@ ACTOR DeadStrifePlayer
 
 ACTOR DeadPeasant
 {
-	Game Strife
 	ConversationID 232, -1, -1
 	States
 	{
@@ -645,7 +609,6 @@ ACTOR DeadPeasant
 
 ACTOR DeadAcolyte
 {
-	Game Strife
 	ConversationID 233, -1, -1
 	States
 	{
@@ -659,7 +622,6 @@ ACTOR DeadAcolyte
 
 ACTOR DeadReaver
 {
-	Game Strife
 	ConversationID 234, -1, -1
 	States
 	{
@@ -673,7 +635,6 @@ ACTOR DeadReaver
 
 ACTOR DeadRebel
 {
-	Game Strife
 	ConversationID 235, -1, -1
 	States
 	{
@@ -687,7 +648,6 @@ ACTOR DeadRebel
 
 ACTOR SacrificedGuy
 {
-	Game Strife
 	ConversationID 236, -1, -1
 	States
 	{
@@ -704,7 +664,6 @@ ACTOR PileOfGuts
 	// Strife used a doomednum, which is the same as the Aztec Pillar. Since
 	// the pillar came first in the mobjinfo list, you could not spawn this
 	// in a map. Pity.
-	Game Strife
 	ConversationID 237, -1, -1
 	States
 	{
@@ -718,7 +677,6 @@ ACTOR PileOfGuts
 
 ACTOR StrifeBurningBarrel
 {
-	Game Strife
 	Radius 16
 	Height 48
 	+SOLID
@@ -735,7 +693,6 @@ ACTOR StrifeBurningBarrel
 
 ACTOR BurningBowl
 {
-	Game Strife
 	Radius 16
 	Height 16
 	+SOLID
@@ -753,7 +710,6 @@ ACTOR BurningBowl
 
 ACTOR BurningBrazier
 {
-	Game Strife
 	Radius 10
 	Height 32
 	+SOLID
@@ -771,7 +727,6 @@ ACTOR BurningBrazier
 
 ACTOR SmallTorchLit
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
@@ -792,7 +747,6 @@ ACTOR SmallTorchLit
 
 ACTOR SmallTorchUnlit
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
@@ -810,7 +764,6 @@ ACTOR SmallTorchUnlit
 
 ACTOR CeilingChain
 {
-	Game Strife
 	Radius 20
 	Height 93
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
@@ -828,7 +781,6 @@ ACTOR CeilingChain
 ACTOR CageLight
 {
 	// No, it's not bright even though it's a light.
-	Game Strife
 	Height 3
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
 	ConversationID 244, -1, -1
@@ -844,7 +796,6 @@ ACTOR CageLight
 
 ACTOR Statue
 {
-	Game Strife
 	Radius 20
 	Height 64
 	+SOLID
@@ -861,7 +812,6 @@ ACTOR Statue
 
 ACTOR StatueRuined
 {
-	Game Strife
 	Radius 20
 	Height 56
 	+SOLID
@@ -878,7 +828,6 @@ ACTOR StatueRuined
 
 ACTOR MediumTorch
 {
-	Game Strife
 	Radius 4
 	Height 72
 	+SOLID
@@ -896,7 +845,6 @@ ACTOR MediumTorch
 ACTOR OutsideLamp
 {
 	// No, it's not bright.
-	Game Strife
 	Radius 3
 	Height 80
 	+SOLID
@@ -914,7 +862,6 @@ ACTOR OutsideLamp
 ACTOR PoleLantern
 {
 	// No, it's not bright.
-	Game Strife
 	Radius 3
 	Height 80
 	+SOLID
@@ -931,7 +878,6 @@ ACTOR PoleLantern
 
 ACTOR SRock1
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 250, -1, -1
 	States
@@ -946,7 +892,6 @@ ACTOR SRock1
 
 ACTOR SRock2
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 251, -1, -1
 	States
@@ -961,7 +906,6 @@ ACTOR SRock2
 
 ACTOR SRock3
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 252, -1, -1
 	States
@@ -976,7 +920,6 @@ ACTOR SRock3
 
 ACTOR SRock4
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 253, -1, -1
 	States
@@ -991,7 +934,6 @@ ACTOR SRock4
 
 ACTOR StickInWater
 {
-	Game Strife
 	+NOBLOCKMAP
 	+FLOORCLIP
 	ConversationID 254, -1, -1
@@ -1008,7 +950,6 @@ ACTOR StickInWater
 
 ACTOR Rubble1
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 255, -1, -1
 	States
@@ -1023,7 +964,6 @@ ACTOR Rubble1
 
 ACTOR Rubble2
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 256, -1, -1
 	States
@@ -1038,7 +978,6 @@ ACTOR Rubble2
 
 ACTOR Rubble3
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 257, -1, -1
 	States
@@ -1053,7 +992,6 @@ ACTOR Rubble3
 
 ACTOR Rubble4
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 258, -1, -1
 	States
@@ -1068,7 +1006,6 @@ ACTOR Rubble4
 
 ACTOR Rubble5
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 259, -1, -1
 	States
@@ -1083,7 +1020,6 @@ ACTOR Rubble5
 
 ACTOR Rubble6
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 260, -1, -1
 	States
@@ -1098,7 +1034,6 @@ ACTOR Rubble6
 
 ACTOR Rubble7
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 261, -1, -1
 	States
@@ -1113,7 +1048,6 @@ ACTOR Rubble7
 
 ACTOR Rubble8
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
 	ConversationID 262, -1, -1
 	States
@@ -1128,7 +1062,6 @@ ACTOR Rubble8
 
 ACTOR SurgeryCrab
 {
-	Game Strife
 	+SOLID +SPAWNCEILING +NOGRAVITY
 	Radius 20
 	Height 16
@@ -1145,7 +1078,6 @@ ACTOR SurgeryCrab
 
 ACTOR LargeTorch
 {
-	Game Strife
 	Radius 10
 	Height 72
 	+SOLID
@@ -1163,7 +1095,6 @@ ACTOR LargeTorch
 
 ACTOR HugeTorch
 {
-	Game Strife
 	Radius 10
 	Height 80
 	+SOLID
@@ -1181,7 +1112,6 @@ ACTOR HugeTorch
 
 ACTOR PalmTree
 {
-	Game Strife
 	Radius 15
 	Height 109
 	+SOLID
@@ -1198,7 +1128,6 @@ ACTOR PalmTree
 
 ACTOR BigTree2
 {
-	Game Strife
 	Radius 15
 	Height 109
 	+SOLID
@@ -1215,7 +1144,6 @@ ACTOR BigTree2
 
 ACTOR PottedTree
 {
-	Game Strife
 	Radius 15
 	Height 64
 	+SOLID
@@ -1232,7 +1160,6 @@ ACTOR PottedTree
 
 ACTOR TreeStub
 {
-	Game Strife
 	Radius 15
 	Height 80
 	+SOLID
@@ -1249,7 +1176,6 @@ ACTOR TreeStub
 
 ACTOR ShortBush
 {
-	Game Strife
 	Radius 15
 	Height 40
 	+SOLID
@@ -1266,7 +1192,6 @@ ACTOR ShortBush
 
 ACTOR TallBush
 {
-	Game Strife
 	Radius 20
 	Height 64
 	+SOLID
@@ -1283,7 +1208,6 @@ ACTOR TallBush
 
 ACTOR ChimneyStack
 {
-	Game Strife
 	Radius 20
 	Height 64	// This height does not fit the sprite
 	+SOLID
@@ -1300,7 +1224,6 @@ ACTOR ChimneyStack
 
 ACTOR BarricadeColumn
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
@@ -1317,7 +1240,6 @@ ACTOR BarricadeColumn
 
 ACTOR Pot
 {
-	Game Strife
 	Radius 12
 	Height 24
 	+SOLID
@@ -1334,7 +1256,6 @@ ACTOR Pot
 
 ACTOR Pitcher
 {
-	Game Strife
 	Radius 12
 	Height 32
 	+SOLID
@@ -1351,7 +1272,6 @@ ACTOR Pitcher
 
 ACTOR Stool
 {
-	Game Strife
 	Radius 6
 	Height 24
 	+SOLID
@@ -1368,7 +1288,6 @@ ACTOR Stool
 
 ACTOR MetalPot
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 277, -1, -1
 	States
@@ -1383,7 +1302,6 @@ ACTOR MetalPot
 
 ACTOR Tub
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 278, -1, -1
 	States
@@ -1398,7 +1316,6 @@ ACTOR Tub
 
 ACTOR Anvil
 {
-	Game Strife
 	Radius 16
 	Height 32
 	+SOLID
@@ -1415,7 +1332,6 @@ ACTOR Anvil
 
 ACTOR TechLampSilver
 {
-	Game Strife
 	Radius 11
 	Height 64
 	+SOLID
@@ -1432,7 +1348,6 @@ ACTOR TechLampSilver
 
 ACTOR TechLampBrass
 {
-	Game Strife
 	Radius 8
 	Height 64
 	+SOLID
@@ -1449,7 +1364,6 @@ ACTOR TechLampBrass
 
 ACTOR Tray
 {
-	Game Strife
 	Radius 24
 	Height 40
 	+SOLID
@@ -1466,7 +1380,6 @@ ACTOR Tray
 
 ACTOR AmmoFiller
 {
-	Game Strife
 	Radius 12
 	Height 24
 	+SOLID
@@ -1483,7 +1396,6 @@ ACTOR AmmoFiller
 
 ACTOR SigilBanner
 {
-	Game Strife
 	Radius 24
 	Height 96
 	+NOBLOCKMAP	// I take it this was once solid, yes?
@@ -1500,7 +1412,6 @@ ACTOR SigilBanner
 
 ACTOR RebelBoots
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 285, -1, -1
 	States
@@ -1515,7 +1426,6 @@ ACTOR RebelBoots
 
 ACTOR RebelHelmet
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 286, -1, -1
 	States
@@ -1530,7 +1440,6 @@ ACTOR RebelHelmet
 
 ACTOR RebelShirt
 {
-	Game Strife
 	+NOBLOCKMAP
 	ConversationID 287, -1, -1
 	States
@@ -1545,7 +1454,6 @@ ACTOR RebelShirt
 
 ACTOR AlienBubbleColumn
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
@@ -1563,7 +1471,6 @@ ACTOR AlienBubbleColumn
 
 ACTOR AlienFloorBubble
 {
-	Game Strife
 	Radius 16
 	Height 72
 	+SOLID
@@ -1581,7 +1488,6 @@ ACTOR AlienFloorBubble
 
 ACTOR AlienCeilingBubble
 {
-	Game Strife
 	Radius 16
 	Height 72
 	+SOLID +SPAWNCEILING +NOGRAVITY
@@ -1599,7 +1505,6 @@ ACTOR AlienCeilingBubble
 
 ACTOR AlienAspClimber
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
@@ -1617,7 +1522,6 @@ ACTOR AlienAspClimber
 
 ACTOR AlienSpiderLight
 {
-	Game Strife
 	Radius 32
 	Height 56
 	+SOLID
@@ -1635,7 +1539,6 @@ ACTOR AlienSpiderLight
 
 ACTOR TargetPractice
 {
-	Game Strife
 	Health 99999999
 	PainChance 255
 	Radius 10
@@ -1661,7 +1564,6 @@ ACTOR TargetPractice
 
 ACTOR ForceFieldGuard native
 {
-	Game Strife
 	Health 10
 	Radius 2
 	Height 1
@@ -1685,7 +1587,6 @@ ACTOR ForceFieldGuard native
 
 ACTOR KneelingGuy
 {
-	Game Strife
 	ConversationID 37,-1,-1
 	Health 51
 	Painchance 255
@@ -1734,7 +1635,6 @@ ACTOR KneelingGuy
 
 ACTOR KlaxonWarningLight
 {
-	Game Strife
 	ConversationID 121,-1,-1
 	ReactionTime 60
 	Radius 5
@@ -1759,7 +1659,6 @@ ACTOR KlaxonWarningLight
 
 ACTOR CeilingTurret
 {
-	Game Strife
 	ConversationID 122,-1,-1
 	Health 125
 	Speed 0
@@ -1803,7 +1702,6 @@ ACTOR CeilingTurret
 
 ACTOR PowerCoupling native
 {
-	Game Strife
 	ConversationID 288,-1,-1
 	Health 40
 	Radius 17

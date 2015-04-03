@@ -3,7 +3,6 @@
 
 ACTOR Dragon
 {
-	Game Hexen
 	Health 640
 	PainChance 128
 	Speed 10

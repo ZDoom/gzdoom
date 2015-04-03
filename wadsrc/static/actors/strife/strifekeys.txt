@@ -10,7 +10,6 @@ ACTOR StrifeKey : Key
 
 ACTOR BaseKey : StrifeKey
 {
-	Game Strife
 	ConversationID 133, 129, 132
 	Inventory.Icon "I_FUSL"
 	Tag "$TAG_BASEKEY"
@@ -28,7 +27,6 @@ ACTOR BaseKey : StrifeKey
 
 ACTOR GovsKey : StrifeKey
 {
-	Game Strife
 	ConversationID 134, 130, 133
 	Inventory.Icon "I_REBL"
 	Tag "$TAG_GOVSKEY"
@@ -46,7 +44,6 @@ ACTOR GovsKey : StrifeKey
 
 ACTOR Passcard : StrifeKey
 {
-	Game Strife
 	ConversationID 135, 131, 134
 	Inventory.Icon "I_TPAS"
 	Tag "$TAG_PASSCARD"
@@ -64,7 +61,6 @@ ACTOR Passcard : StrifeKey
 
 ACTOR IDBadge : StrifeKey
 {
-	Game Strife
 	ConversationID 136, 132, 135
 	Inventory.Icon "I_CRD1"
 	Tag "$TAG_IDBADGE"
@@ -82,7 +78,6 @@ ACTOR IDBadge : StrifeKey
 
 ACTOR PrisonKey : StrifeKey
 {
-	Game Strife
 	ConversationID 137, 133, 136
 	Inventory.Icon "I_PRIS"
 	Tag "$TAG_PRISONKEY"
@@ -101,7 +96,6 @@ ACTOR PrisonKey : StrifeKey
 
 ACTOR SeveredHand : StrifeKey
 {
-	Game Strife
 	ConversationID 138, 134, 137
 	Inventory.Icon "I_HAND"
 	Tag "$TAG_SEVEREDHAND"
@@ -120,7 +114,6 @@ ACTOR SeveredHand : StrifeKey
 
 ACTOR Power1Key : StrifeKey
 {
-	Game Strife
 	ConversationID 139, 135, 138
 	Inventory.Icon "I_PWR1"
 	Tag "$TAG_POWER1KEY"
@@ -138,7 +131,6 @@ ACTOR Power1Key : StrifeKey
 
 ACTOR Power2Key : StrifeKey
 {
-	Game Strife
 	ConversationID 140, 136, 139
 	Inventory.Icon "I_PWR2"
 	Tag "$TAG_POWER2KEY"
@@ -156,7 +148,6 @@ ACTOR Power2Key : StrifeKey
 
 ACTOR Power3Key : StrifeKey
 {
-	Game Strife
 	ConversationID 141, 137, 140
 	Inventory.Icon "I_PWR3"
 	Tag "$TAG_POWER3KEY"
@@ -174,7 +165,6 @@ ACTOR Power3Key : StrifeKey
 
 ACTOR GoldKey : StrifeKey
 {
-	Game Strife
 	ConversationID 142, 138, 141
 	Inventory.Icon "I_KY1G"
 	Tag "$TAG_GOLDKEY"
@@ -192,7 +182,6 @@ ACTOR GoldKey : StrifeKey
 
 ACTOR IDCard : StrifeKey
 {
-	Game Strife
 	ConversationID 143, 139, 142
 	Inventory.Icon "I_CRD2"
 	Tag "$TAG_IDCARD"
@@ -210,7 +199,6 @@ ACTOR IDCard : StrifeKey
 
 ACTOR SilverKey : StrifeKey
 {
-	Game Strife
 	ConversationID 144, 140, 143
 	Inventory.Icon "I_KY2S"
 	Tag "$TAG_SILVERKEY"
@@ -228,7 +216,6 @@ ACTOR SilverKey : StrifeKey
 
 ACTOR OracleKey : StrifeKey
 {
-	Game Strife
 	ConversationID 145, 141, 144
 	Inventory.Icon "I_ORAC"
 	Tag "$TAG_ORACLEKEY"
@@ -246,7 +233,6 @@ ACTOR OracleKey : StrifeKey
 
 ACTOR MilitaryID : StrifeKey
 {
-	Game Strife
 	ConversationID 146, 142, 145
 	Inventory.Icon "I_GYID"
 	Tag "$TAG_MILITARYID"
@@ -264,7 +250,6 @@ ACTOR MilitaryID : StrifeKey
 
 ACTOR OrderKey : StrifeKey
 {
-	Game Strife
 	ConversationID 147, 143, 146
 	Inventory.Icon "I_FUBR"
 	Tag "$TAG_ORDERKEY"
@@ -282,7 +267,6 @@ ACTOR OrderKey : StrifeKey
 
 ACTOR WarehouseKey : StrifeKey
 {
-	Game Strife
 	ConversationID 148, 144, 147
 	Inventory.Icon "I_WARE"
 	Tag "$TAG_WAREHOUSEKEY"
@@ -300,7 +284,6 @@ ACTOR WarehouseKey : StrifeKey
 
 ACTOR BrassKey : StrifeKey
 {
-	Game Strife
 	ConversationID 149, 145, 148
 	Inventory.Icon "I_KY3B"
 	Tag "$TAG_BRASSKEY"
@@ -318,7 +301,6 @@ ACTOR BrassKey : StrifeKey
 
 ACTOR RedCrystalKey : StrifeKey
 {
-	Game Strife
 	ConversationID 150, 146, 149
 	Inventory.Icon "I_RCRY"
 	Tag "$TAG_REDCRYSTALKEY"
@@ -336,7 +318,6 @@ ACTOR RedCrystalKey : StrifeKey
 
 ACTOR BlueCrystalKey : StrifeKey
 {
-	Game Strife
 	ConversationID 151, 147, 150
 	Inventory.Icon "I_BCRY"
 	Tag "$TAG_BLUECRYSTALKEY"
@@ -354,7 +335,6 @@ ACTOR BlueCrystalKey : StrifeKey
 
 ACTOR ChapelKey : StrifeKey
 {
-	Game Strife
 	ConversationID 152, 148, 151
 	Inventory.Icon "I_CHAP"
 	Tag "$TAG_CHAPELKEY"
@@ -372,7 +352,6 @@ ACTOR ChapelKey : StrifeKey
 
 ACTOR CatacombKey : StrifeKey
 {
-	Game Strife
 	ConversationID 153, 149, 152
 	Inventory.Icon "I_TUNL"
 	Tag "$TAG_CATACOMBKEY"
@@ -391,7 +370,6 @@ ACTOR CatacombKey : StrifeKey
 
 ACTOR SecurityKey : StrifeKey
 {
-	Game Strife
 	ConversationID 154, 150, 153
 	Inventory.Icon "I_SECK"
 	Tag "$TAG_SECURITYKEY"
@@ -409,7 +387,6 @@ ACTOR SecurityKey : StrifeKey
 
 ACTOR CoreKey : StrifeKey
 {
-	Game Strife
 	ConversationID 155, 151, 154
 	Inventory.Icon "I_GOID"
 	Tag "$TAG_COREKEY"
@@ -427,7 +404,6 @@ ACTOR CoreKey : StrifeKey
 
 ACTOR MaulerKey : StrifeKey
 {
-	Game Strife
 	ConversationID 156, 152, 155
 	Inventory.Icon "I_BLTK"
 	Tag "$TAG_MAULERKEY"
@@ -445,7 +421,6 @@ ACTOR MaulerKey : StrifeKey
 
 ACTOR FactoryKey : StrifeKey
 {
-	Game Strife
 	ConversationID 157, 153, 156
 	Inventory.Icon "I_PROC"
 	Tag "$TAG_FACTORYKEY"
@@ -463,7 +438,6 @@ ACTOR FactoryKey : StrifeKey
 
 ACTOR MineKey : StrifeKey
 {
-	Game Strife
 	ConversationID 158, 154, 157
 	Inventory.Icon "I_MINE"
 	Tag "$TAG_MINEKEY"
@@ -481,7 +455,6 @@ ACTOR MineKey : StrifeKey
 
 ACTOR NewKey5 : StrifeKey
 {
-	Game Strife
 	ConversationID 159, 155, 158
 	Inventory.Icon "I_BLTK"
 	Tag "$TAG_NEWKEY5"
@@ -499,7 +472,6 @@ ACTOR NewKey5 : StrifeKey
 
 ACTOR OraclePass : Inventory
 {
-	Game Strife
 	ConversationID 311, 292, 309
 	+INVENTORY.INVBAR
 	Inventory.Icon "I_OTOK"

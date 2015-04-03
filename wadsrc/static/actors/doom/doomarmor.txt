@@ -3,8 +3,6 @@
 
 Actor ArmorBonus : BasicArmorBonus
 {
-	Game Doom
-	SpawnID 22
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTARMBONUS"
@@ -26,8 +24,6 @@ Actor ArmorBonus : BasicArmorBonus
 
 Actor GreenArmor : BasicArmorPickup
 {
-	Game Doom
-	SpawnID 68
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTARMOR"
@@ -47,8 +43,6 @@ Actor GreenArmor : BasicArmorPickup
 
 Actor BlueArmor : BasicArmorPickup
 {
-	Game Doom
-	SpawnID 69
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTMEGA"

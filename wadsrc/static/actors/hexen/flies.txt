@@ -3,7 +3,6 @@
 
 ACTOR LittleFly
 {
-	Game Hexen
 	+NOBLOCKMAP +NOGRAVITY
 	+CANPASS
 	

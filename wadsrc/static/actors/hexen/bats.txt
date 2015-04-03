@@ -3,7 +3,6 @@
 
 ACTOR BatSpawner : SwitchableDecoration
 {
-	Game Hexen
 	+NOBLOCKMAP +NOSECTOR +NOGRAVITY
 	RenderStyle None
 

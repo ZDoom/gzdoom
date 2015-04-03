@@ -2,18 +2,15 @@
 
 actor ChexBlueCard : BlueCard
 {
-	Game Chex
 	inventory.pickupmessage "$GOTCBLUEKEY"
 }
 
 actor ChexYellowCard : YellowCard
 {
-	Game Chex
 	inventory.pickupmessage "$GOTCYELLOWKEY"
 }
 
 actor ChexRedCard : RedCard
 {
-	Game Chex
 	inventory.pickupmessage "$GOTCREDKEY"
 }

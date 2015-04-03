@@ -3,8 +3,6 @@
 
 Actor SilverShield : BasicArmorPickup
 {
-	Game Heretic
-	SpawnID 68
 	+FLOATBOB
 	Inventory.Pickupmessage "$TXT_ITEMSHIELD1"
 	Inventory.Icon "SHLDA0"
@@ -22,8 +20,6 @@ Actor SilverShield : BasicArmorPickup
 
 Actor EnchantedShield : BasicArmorPickup
 {
-	Game Heretic
-	SpawnID 69
 	+FLOATBOB
 	Inventory.Pickupmessage "$TXT_ITEMSHIELD2"
 	Inventory.Icon "SHD2A0"

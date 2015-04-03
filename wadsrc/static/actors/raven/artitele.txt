@@ -3,8 +3,6 @@
 
 ACTOR ArtiTeleport : Inventory native
 {
-	Game Raven
-	SpawnID 18
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.INVBAR

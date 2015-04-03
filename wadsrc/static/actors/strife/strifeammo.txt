@@ -2,7 +2,6 @@
 
 ACTOR HEGrenadeRounds : Ammo
 {
-	Game Strife
 	+FLOORCLIP
 	ConversationID 177, 170, 174
 	Inventory.Amount 6
@@ -24,7 +23,6 @@ ACTOR HEGrenadeRounds : Ammo
 
 ACTOR PhosphorusGrenadeRounds : Ammo
 {
-	Game Strife
 	+FLOORCLIP
 	ConversationID 178, 171, 175
 	Inventory.Amount 4
@@ -46,8 +44,6 @@ ACTOR PhosphorusGrenadeRounds : Ammo
 
 ACTOR ClipOfBullets : Ammo
 {
-	Game Strife
-	SpawnID 11
 	ConversationID 179, 173, 177
 	+FLOORCLIP
 	Inventory.Amount 10
@@ -69,8 +65,6 @@ ACTOR ClipOfBullets : Ammo
 
 ACTOR BoxOfBullets : ClipOfBullets
 {
-	Game Strife
-	SpawnID 139
 	ConversationID 180, 174, 178
 	Inventory.Amount 50
 	Tag "$TAG_BOXOFBULLETS"
@@ -87,8 +81,6 @@ ACTOR BoxOfBullets : ClipOfBullets
 
 ACTOR MiniMissiles : Ammo
 {
-	Game Strife
-	SpawnID 140
 	ConversationID 181, 175, 179
 	+FLOORCLIP
 	Inventory.Amount 4
@@ -110,8 +102,6 @@ ACTOR MiniMissiles : Ammo
 
 ACTOR CrateOfMissiles : MiniMissiles
 {
-	Game Strife
-	SpawnID 141
 	ConversationID 182, 176, 180
 	Inventory.Amount 20
 	Tag "$TAG_CRATEOFMISSILES"
@@ -128,8 +118,6 @@ ACTOR CrateOfMissiles : MiniMissiles
 
 ACTOR EnergyPod : Ammo
 {
-	Game Strife
-	SpawnID 75
 	ConversationID 183, 177, 181
 	+FLOORCLIP
 	Inventory.Amount 20
@@ -152,8 +140,6 @@ ACTOR EnergyPod : Ammo
 
 ACTOR EnergyPack : EnergyPod
 {
-	Game Strife
-	SpawnID 142
 	ConversationID 184, 178, 182
 	Inventory.Amount 100
 	Tag "$TAG_ENERGYPACK"
@@ -170,7 +156,6 @@ ACTOR EnergyPack : EnergyPod
 
 ACTOR PoisonBolts : Ammo
 {
-	Game Strife
 	ConversationID 185, 179, 183
 	+FLOORCLIP
 	Inventory.Amount 10
@@ -192,7 +177,6 @@ ACTOR PoisonBolts : Ammo
 
 ACTOR ElectricBolts : Ammo
 {
-	Game Strife
 	ConversationID 186, 180, 184
 	+FLOORCLIP
 	Inventory.Amount 20
@@ -214,8 +198,6 @@ ACTOR ElectricBolts : Ammo
 
 ACTOR AmmoSatchel : BackpackItem
 {
-	Game Strife
-	SpawnID 144
 	ConversationID 187, 181, 184
 	+FLOORCLIP
 	Inventory.Icon "I_BKPK"

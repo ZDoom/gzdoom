@@ -3,7 +3,6 @@
 
 ACTOR FighterBoss
 {
-	Game Hexen
 	health 800
 	PainChance 50
 	Speed 25

@@ -2441,6 +2441,7 @@ void D_DoomMain (void)
 		FinishDehPatch();
 
 		InitActorNumsFromMapinfo();
+		InitSpawnablesFromMapinfo();
 		FActorInfo::StaticSetActorNums ();
 
 		//Added by MC:

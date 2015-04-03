@@ -299,6 +299,101 @@ DoomEdNums
  10503 = FlameLarge
 }
 
+SpawnNums
+{
+	1 = Centaur
+	2 = CentaurLeader
+	3 = Demon1
+	4 = Ettin
+	5 = FireDemon
+	6 = Serpent
+	7 = SerpentLeader
+	8 = Wraith
+	9 = WraithBuried
+	10 = FireBall
+	11 = Mana1
+	12 = Mana2
+	13 = ArtiSpeedBoots
+	14 = ArtiPork
+	15 = ArtiFly
+	16 = ArtiDarkServant
+	17 = ArtiTeleportOther
+	18 = ArtiTeleport
+	19 = Bishop
+	20 = IceGuy
+	21 = Bridge
+	22 = ArtiBoostArmor
+	23 = CrystalVial
+	24 = ArtiHealth
+	25 = ArtiSuperHealth
+	26 = ArtiBoostMana
+	27 = FWeapAxe
+	28 = FWeapHammer
+	29 = FWeaponPiece1
+	30 = FWeaponPiece2
+	31 = FWeaponPiece3
+	32 = CWeapStaff
+	33 = CWeaponPiece1
+	34 = CWeaponPiece2
+	35 = CWeaponPiece3
+	36 = MWeapFrost
+	37 = MWeaponPiece1
+	38 = MWeaponPiece2
+	39 = MWeaponPiece3
+	40 = PorkFX
+	50 = Arrow
+	51 = Dart
+	52 = PoisonDart
+	53 = RipperBall
+	64 = ProjectileBlade
+	65 = IceShard
+	66 = FlameSmall2
+	67 = FlameLarge2
+	68 = MeshArmor
+	69 = FalconShield
+	70 = PlatinumHelm
+	71 = AmuletOfWarding
+	72 = ArtiPoisonBag
+	73 = ArtiTorch
+	74 = ArtiBlastRadius
+	75 = Mana3
+	76 = PuzzSkull
+	77 = PuzzGemBig
+	78 = PuzzGemRed
+	79 = PuzzGemGreen1
+	80 = PuzzGemGreen2
+	81 = PuzzGemBlue1
+	82 = PuzzGemBlue2
+	83 = PuzzBook1
+	84 = PuzzBook2
+	85 = KeySteel
+	86 = KeyCave
+	87 = KeyAxe
+	88 = KeyFire
+	89 = KeyEmerald
+	90 = KeyDungeon
+	91 = KeySilver
+	92 = KeyRusted
+	93 = KeyHorn
+	94 = KeySwamp
+	95 = HWaterDrip
+	96 = FlameSmallTemp
+	97 = FlameSmall
+	98 = FlameLargeTemp
+	99 = FlameLarge
+	100 = Demon1Mash
+	101 = Demon2Mash
+	102 = EttinMash
+	103 = CentaurMash
+	104 = ThrustFloorUp
+	105 = ThrustFloorDown
+	106 = WraithFX4
+	107 = WraithFX5
+	108 = WraithFX2
+	110 = SoundWindHexen
+	133 = ArtiInvulnerability2
+}
+
 skill baby
 {
 	AutoUseHealth

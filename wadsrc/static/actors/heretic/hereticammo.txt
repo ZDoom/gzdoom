@@ -3,8 +3,6 @@
 
 ACTOR GoldWandAmmo : Ammo
 {
-	Game Heretic
-	SpawnID 11
 	Inventory.PickupMessage "$TXT_AMMOGOLDWAND1"
 	Inventory.Amount 10
 	Inventory.MaxAmount 100
@@ -23,8 +21,6 @@ ACTOR GoldWandAmmo : Ammo
 
 ACTOR GoldWandHefty : GoldWandAmmo
 {
-	Game Heretic
-	SpawnID 12
 	Inventory.PickupMessage "$TXT_AMMOGOLDWAND2"
 	Inventory.Amount 50
 	States
@@ -38,8 +34,6 @@ ACTOR GoldWandHefty : GoldWandAmmo
 
 ACTOR CrossbowAmmo : Ammo
 {
-	Game Heretic
-	SpawnID 33
 	Inventory.PickupMessage "$TXT_AMMOCROSSBOW1"
 	Inventory.Amount 5
 	Inventory.MaxAmount 50
@@ -58,8 +52,6 @@ ACTOR CrossbowAmmo : Ammo
 
 ACTOR CrossbowHefty : CrossbowAmmo
 {
-	Game Heretic
-	SpawnID 34
 	Inventory.PickupMessage "$TXT_AMMOCROSSBOW2"
 	Inventory.Amount 20
 	States
@@ -73,8 +65,6 @@ ACTOR CrossbowHefty : CrossbowAmmo
 
 ACTOR MaceAmmo : Ammo
 {
-	Game Heretic
-	SpawnID 35
 	Inventory.PickupMessage "$TXT_AMMOMACE1"
 	Inventory.Amount 20
 	Inventory.MaxAmount 150
@@ -93,8 +83,6 @@ ACTOR MaceAmmo : Ammo
 
 ACTOR MaceHefty : MaceAmmo
 {
-	Game Heretic
-	SpawnID 36
 	Inventory.PickupMessage "$TXT_AMMOMACE2"
 	Inventory.Amount 100
 	States
@@ -109,8 +97,6 @@ ACTOR MaceHefty : MaceAmmo
 
 ACTOR BlasterAmmo : Ammo
 {
-	Game Heretic
-	SpawnID 37
 	Inventory.PickupMessage "$TXT_AMMOBLASTER1"
 	Inventory.Amount 10
 	Inventory.MaxAmount 200
@@ -129,8 +115,6 @@ ACTOR BlasterAmmo : Ammo
 
 ACTOR BlasterHefty : BlasterAmmo
 {
-	Game Heretic
-	SpawnID 38
 	Inventory.PickupMessage "$TXT_AMMOBLASTER2"
 	Inventory.Amount 25
 	States
@@ -145,8 +129,6 @@ ACTOR BlasterHefty : BlasterAmmo
 
 ACTOR SkullRodAmmo : Ammo
 {
-	Game Heretic
-	SpawnID 158
 	Inventory.PickupMessage "$TXT_AMMOSKULLROD1"
 	Inventory.Amount 20
 	Inventory.MaxAmount 200
@@ -165,8 +147,6 @@ ACTOR SkullRodAmmo : Ammo
 
 ACTOR SkullRodHefty : SkullRodAmmo
 {
-	Game Heretic
-	SpawnID 159
 	Inventory.PickupMessage "$TXT_AMMOSKULLROD2"
 	Inventory.Amount 100
 	States
@@ -181,8 +161,6 @@ ACTOR SkullRodHefty : SkullRodAmmo
 
 ACTOR PhoenixRodAmmo : Ammo
 {
-	Game Heretic
-	SpawnID 161
 	Inventory.PickupMessage "$TXT_AMMOPHOENIXROD1"
 	Inventory.Amount 1
 	Inventory.MaxAmount 20
@@ -200,8 +178,6 @@ ACTOR PhoenixRodAmmo : Ammo
 
 ACTOR PhoenixRodHefty : PhoenixRodAmmo
 {
-	Game Heretic
-	SpawnID 162
 	Inventory.PickupMessage "$TXT_AMMOPHOENIXROD2"
 	Inventory.Amount 10
 	States
@@ -216,8 +192,6 @@ ACTOR PhoenixRodHefty : PhoenixRodAmmo
 
 ACTOR BagOfHolding : BackpackItem
 {
-	Game Heretic
-	SpawnID 136
 	Inventory.PickupMessage "$TXT_ITEMBAGOFHOLDING"
 	+COUNTITEM
 	+FLOATBOB

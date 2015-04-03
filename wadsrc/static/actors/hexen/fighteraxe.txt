@@ -3,8 +3,6 @@
 
 ACTOR FWeapAxe : FighterWeapon native
 {
-	Game Hexen
-	SpawnID 27
 	Weapon.SelectionOrder 1500
 	+WEAPON.AXEBLOOD +WEAPON.AMMO_OPTIONAL +WEAPON.MELEEWEAPON
 	Weapon.AmmoUse1 2

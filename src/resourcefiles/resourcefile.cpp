@@ -98,8 +98,7 @@ void FResourceLump::LumpNameSetup(const char *iname)
 	base = base.Left(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
-	FString temp = iname;	// Note: iname can point to inside FullName's string buffer so we cannot do the assignment directly.
-	FullName = temp;
+	FullName = iname;
 
 	// Map some directories to WAD namespaces.
 	// Note that some of these namespaces don't exist in WADS.
@@ -382,7 +381,7 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 		{
 			FResourceLump *lump = (FResourceLump *)lump_p;
 			assert(lump->FullName.CompareNoCase(filter, (int)filter.Len()) == 0);
-			lump->LumpNameSetup(&lump->FullName[filter.Len()]);
+			lump->LumpNameSetup(lump->FullName.Mid(filter.Len()));
 		}
 
 		// Move filtered lumps to the end of the lump list.

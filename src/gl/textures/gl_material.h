@@ -65,7 +65,9 @@ private:
 	FHardwareTexture *mHwTexture;
 
 	bool bHasColorkey;		// only for hires
-	bool bExpand;
+	bool bExpandFlag;
+	int mExpandX;
+	int mExpandY;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 
@@ -77,7 +79,12 @@ public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded = true);
+	void SetExpand(int x, int y) 
+	{
+		mExpandX = x;
+		mExpandY = y;
+	}
 
 	void Clean(bool all);
 	int Dump(int i);
@@ -139,9 +146,9 @@ public:
 
 	void Bind(int clamp, int translation);
 
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool allowhires=true) const
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool allowhires=true, bool createexpanded = true) const
 	{
-		return mBaseLayer->CreateTexBuffer(translation, w, h, allowhires? tex : NULL);
+		return mBaseLayer->CreateTexBuffer(translation, w, h, allowhires? tex : NULL, createexpanded);
 	}
 
 	void Clean(bool f)

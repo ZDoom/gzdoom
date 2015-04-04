@@ -88,7 +88,8 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	hirestexture = NULL;
 	bHasColorkey = false;
 	bIsTransparent = -1;
-	bExpand = expandpatches;
+	bExpandFlag = expandpatches;
+	mExpandX = mExpandY = 0;
 	tex->gl_info.SystemTexture[expandpatches] = this;
 }
 
@@ -111,6 +112,8 @@ FGLTexture::~FGLTexture()
 //==========================================================================
 unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *height)
 {
+	if (bExpandFlag) return NULL;	// doesn't work for expanded textures
+
 	if (HiresLump==-1) 
 	{
 		bHasColorkey = false;
@@ -179,7 +182,7 @@ void FGLTexture::Clean(bool all)
 //
 //===========================================================================
 
-unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck)
+unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded)
 {
 	unsigned char * buffer;
 	int W, H;
@@ -196,8 +199,20 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		}
 	}
 
-	W = w = tex->GetWidth() + bExpand*2;
-	H = h = tex->GetHeight() + bExpand*2;
+	int exx, exy;
+	if (createexpanded)
+	{
+		exx = mExpandX;
+		exy = mExpandY;
+	}
+	else
+	{
+		exx = exy = 0;
+	}
+
+
+	W = w = tex->GetWidth() + 2 * exx;
+	H = h = tex->GetHeight() + 2 * exy;
 
 
 	buffer=new unsigned char[W*(H+1)*4];
@@ -215,7 +230,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		if (imgCreate.Create(W, H))
 		{
 			memset(imgCreate.GetPixels(), 0, W * H * 4);
-			int trans = tex->CopyTrueColorPixels(&imgCreate, bExpand, bExpand);
+			int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exy);
 			bmp.CopyPixelDataRGB(0, 0, imgCreate.GetPixels(), W, H, 4, W * 4, 0, CF_BGRA);
 			tex->CheckTrans(buffer, W*H, trans);
 			bIsTransparent = tex->gl_info.mIsTransparent;
@@ -223,7 +238,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	}
 	else if (translation<=0)
 	{
-		int trans = tex->CopyTrueColorPixels(&bmp, bExpand, bExpand);
+		int trans = tex->CopyTrueColorPixels(&bmp, exx, exy);
 		tex->CheckTrans(buffer, W*H, trans);
 		bIsTransparent = tex->gl_info.mIsTransparent;
 	}
@@ -232,9 +247,12 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		// When using translations everything must be mapped to the base palette.
 		// Since FTexture's method is doing exactly that by calling GetPixels let's use that here
 		// to do all the dirty work for us. ;)
-		tex->FTexture::CopyTrueColorPixels(&bmp, bExpand, bExpand);
+		tex->FTexture::CopyTrueColorPixels(&bmp, exx, exy);
 		bIsTransparent = 0;
 	}
+
+	// if we just want the texture for some checks there's no need for upsampling.
+	if (!createexpanded) return buffer;
 
 	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
 	// [BB] Potentially upsample the buffer.
@@ -253,7 +271,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 	if (tex->UseType==FTexture::TEX_Null) return NULL;		// Cannot register a NULL texture
 	if (mHwTexture == NULL)
 	{
-		mHwTexture = new FHardwareTexture(tex->GetWidth() + bExpand*2, tex->GetHeight() + bExpand*2, tex->gl_info.bNoCompress);
+		mHwTexture = new FHardwareTexture(tex->GetWidth() + mExpandX*2, tex->GetHeight() + mExpandY*2, tex->gl_info.bNoCompress);
 	}
 	return mHwTexture; 
 }
@@ -451,11 +469,14 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	FTexture *basetex = tx->GetRedirect(false);
 	mBaseLayer = ValidateSysTexture(basetex, expanded);
 
+	float fxScale = FIXED2FLOAT(tx->xScale);
+	float fyScale = FIXED2FLOAT(tx->yScale);
+
 	// mSpriteRect is for positioning the sprite in the scene.
-	mSpriteRect.left = -mLeftOffset / FIXED2FLOAT(tx->xScale);
-	mSpriteRect.top = -mTopOffset / FIXED2FLOAT(tx->yScale);
-	mSpriteRect.width = mWidth / FIXED2FLOAT(tx->xScale);
-	mSpriteRect.height = mHeight / FIXED2FLOAT(tx->yScale);
+	mSpriteRect.left = -mLeftOffset / fxScale;
+	mSpriteRect.top = -mTopOffset / fyScale;
+	mSpriteRect.width = mWidth / fxScale;
+	mSpriteRect.height = mHeight / fyScale;
 
 	if (expanded)
 	{
@@ -477,25 +498,24 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		mRenderWidth = mRenderWidth * mWidth / oldwidth;
 		mRenderHeight = mRenderHeight * mHeight / oldheight;
 
-		/* NOTE: This formula is a bit broken and needs fixing.*/
+		// Reposition the sprite with the frame considered
+		mSpriteRect.left = -mLeftOffset / fxScale;
+		mSpriteRect.top = -mTopOffset / fyScale;
+		mSpriteRect.width = mWidth / fxScale;
+		mSpriteRect.height = mHeight / fyScale;
+
 		if (trimmed)
 		{
-			mSpriteRect.left = -(mLeftOffset - trim[0]) / FIXED2FLOAT(tx->xScale);
-			mSpriteRect.top = -(mTopOffset - trim[1]) / FIXED2FLOAT(tx->yScale);
-			mSpriteRect.width = (trim[2] + 2) / FIXED2FLOAT(tx->xScale);
-			mSpriteRect.height = (trim[3] + 2) / FIXED2FLOAT(tx->yScale);
+			mSpriteRect.left += trim[0] / fxScale;
+			mSpriteRect.top += trim[1] / fyScale;
+
+			mSpriteRect.width -= (oldwidth - trim[2]) / fxScale;
+			mSpriteRect.height -= (oldheight - trim[3]) / fyScale;
 
 			mSpriteU[0] = trim[0] / (float)mWidth;
 			mSpriteV[0] = trim[1] / (float)mHeight;
-			mSpriteU[1] *= (trim[0]+trim[2]+2) / (float)mWidth; 
-			mSpriteV[1] *= (trim[1]+trim[3]+2) / (float)mHeight; 
-		}
-		else
-		{
-			mSpriteRect.left = -mLeftOffset / FIXED2FLOAT(tx->xScale);
-			mSpriteRect.top = -mTopOffset / FIXED2FLOAT(tx->yScale);
-			mSpriteRect.width = mWidth / FIXED2FLOAT(tx->xScale);
-			mSpriteRect.height = mHeight / FIXED2FLOAT(tx->yScale);
+			mSpriteU[1] -= (oldwidth - trim[0] - trim[2]) / (float)mWidth; 
+			mSpriteV[1] -= (oldheight - trim[1] - trim[3]) / (float)mHeight; 
 		}
 	}
 
@@ -540,7 +560,7 @@ bool FMaterial::TrimBorders(int *rect)
 	int w;
 	int h;
 
-	unsigned char *buffer = CreateTexBuffer(0, w, h);
+	unsigned char *buffer = CreateTexBuffer(0, w, h, false, false);
 
 	if (buffer == NULL) 
 	{
@@ -554,6 +574,7 @@ bool FMaterial::TrimBorders(int *rect)
 	}
 
 	int size = w*h;
+	if (size == 1) return false;
 
 	int first, last;
 
@@ -563,6 +584,7 @@ bool FMaterial::TrimBorders(int *rect)
 	}
 	if (first >= size)
 	{
+		// completely empty
 		rect[0] = 0;
 		rect[1] = 0;
 		rect[2] = 1;

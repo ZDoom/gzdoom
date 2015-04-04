@@ -111,9 +111,12 @@ FDirectory::FDirectory(const char * directory)
 	#ifdef _WIN32
 		directory = _fullpath(NULL, directory, _MAX_PATH);
 	#else
-		// Todo for Linux: Resolve the path befire using it
+		// Todo for Linux: Resolve the path before using it
 	#endif
 	dirname = directory;
+	#ifdef _WIN32
+		free((void *)directory);
+	#endif
 	dirname.ReplaceChars('\\', '/');
 	if (dirname[dirname.Len()-1] != '/') dirname += '/';
 	Filename = copystring(dirname);

@@ -365,8 +365,6 @@ struct FMapThing
 	short		pitch;
 	short		roll;
 	DWORD		RenderStyle;
-
-	//void Serialize (FArchive &);
 };
 
 

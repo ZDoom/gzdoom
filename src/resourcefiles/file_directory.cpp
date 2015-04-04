@@ -133,7 +133,7 @@ int STACK_ARGS FDirectory::lumpcmp(const void * a, const void * b)
 	FDirectoryLump * rec1 = (FDirectoryLump *)a;
 	FDirectoryLump * rec2 = (FDirectoryLump *)b;
 
-	return stricmp(rec1->FullName, rec2->FullName);
+	return rec1->FullName.CompareNoCase(rec2->FullName);
 }
 
 #ifdef _WIN32

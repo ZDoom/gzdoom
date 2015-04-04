@@ -206,7 +206,7 @@ int STACK_ARGS F7ZFile::lumpcmp(const void * a, const void * b)
 	F7ZLump * rec1 = (F7ZLump *)a;
 	F7ZLump * rec2 = (F7ZLump *)b;
 
-	return stricmp(rec1->FullName, rec2->FullName);
+	return rec1->FullName.CompareNoCase(rec2->FullName);
 }
 
 

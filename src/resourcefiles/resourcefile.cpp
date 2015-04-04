@@ -74,11 +74,6 @@ public:
 
 FResourceLump::~FResourceLump()
 {
-	if (FullName != NULL)
-	{
-		delete [] FullName;
-		FullName = NULL;
-	}
 	if (Cache != NULL && RefCount >= 0)
 	{
 		delete [] Cache;
@@ -102,7 +97,7 @@ void FResourceLump::LumpNameSetup(const char *iname)
 	base = base.Left(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
-	FullName = copystring(iname);
+	FullName = iname;
 
 	// Map some directories to WAD namespaces.
 	// Note that some of these namespaces don't exist in WADS.

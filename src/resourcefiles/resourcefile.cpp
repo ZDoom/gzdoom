@@ -115,12 +115,12 @@ void FResourceLump::LumpNameSetup(FString iname)
 				!strncmp(iname, "sounds/", 7)		? ns_sounds :
 				!strncmp(iname, "music/", 6)		? ns_music : 
 				!strchr(iname, '/')					? ns_global :
-				-1;
+				ns_hidden;
 	
 	// Anything that is not in one of these subdirectories or the main directory 
 	// should not be accessible through the standard WAD functions but only through 
 	// the ones which look for the full name.
-	if (Namespace == -1)
+	if (Namespace == ns_hidden)
 	{
 		memset(Name, 0, 8);
 	}
@@ -428,7 +428,7 @@ void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max)
 			FResourceLump *lump = (FResourceLump *)p;
 			lump->FullName = 0;
 			lump->Name[0] = '\0';
-			lump->Namespace = ns_invalid;
+			lump->Namespace = ns_hidden;
 		}
 	}
 }

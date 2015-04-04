@@ -450,6 +450,8 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 	FResourceLump *lump;
 	int cmp;
 
+	end = start = 0;
+
 	// Pretend that our range starts at 1 instead of 0 so that we can avoid
 	// unsigned overflow if the range starts at the first lump.
 	lumps = (BYTE *)lumps - lumpsize;

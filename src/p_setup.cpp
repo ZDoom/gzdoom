@@ -1665,7 +1665,7 @@ AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 	if (dumpspawnedthings)
 	{
 		Printf("%5d: (%5d, %5d, %5d), doomednum = %5d, flags = %04x, type = %s\n",
-			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->type, mt->flags, 
+			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->EdNum, mt->flags, 
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
 	T_AddSpawnedThing(spawned);
@@ -1785,7 +1785,8 @@ void P_LoadThings (MapData * map)
 		mti[i].x = LittleShort(mt->x) << FRACBITS;
 		mti[i].y = LittleShort(mt->y) << FRACBITS;
 		mti[i].angle = LittleShort(mt->angle);
-		mti[i].type = LittleShort(mt->type);
+		mti[i].EdNum = LittleShort(mt->type);
+		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
 	}
 	delete [] mtp;
 }
@@ -1825,7 +1826,8 @@ void P_LoadThings2 (MapData * map)
 		mti[i].y = LittleShort(mth[i].y)<<FRACBITS;
 		mti[i].z = LittleShort(mth[i].z)<<FRACBITS;
 		mti[i].angle = LittleShort(mth[i].angle);
-		mti[i].type = LittleShort(mth[i].type);
+		mti[i].EdNum = LittleShort(mth[i].type);
+		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
 		mti[i].flags = LittleShort(mth[i].flags);
 		mti[i].special = mth[i].special;
 		for(int j=0;j<5;j++) mti[i].args[j] = mth[i].args[j];
@@ -3336,14 +3338,14 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 	{
 		for (unsigned int i = 0; i < MapThingsConverted.Size(); ++i)
 		{
-			FDoomEdEntry *mentry = DoomEdMap.CheckKey(MapThingsConverted[i].type);
-			if (mentry != NULL && mentry->Type == NULL && mentry->Special >= SMT_POLYANCHOR && mentry->Special <= SMT_POLYSPAWNHURT)
+			FDoomEdEntry *mentry = MapThingsConverted[i].info;
+			if (mentry != NULL && mentry->Type == NULL && mentry->Special >= SMT_PolyAnchor && mentry->Special <= SMT_PolySpawnHurt)
 			{
 				FNodeBuilder::FPolyStart newvert;
 				newvert.x = MapThingsConverted[i].x;
 				newvert.y = MapThingsConverted[i].y;
 				newvert.polynum = MapThingsConverted[i].angle;
-				if (mentry->Special == SMT_POLYANCHOR)
+				if (mentry->Special == SMT_PolyAnchor)
 				{
 					anchors.Push (newvert);
 				}

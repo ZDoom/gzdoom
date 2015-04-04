@@ -1,9 +1,8 @@
 
 // Cleric Boss (Traductus) --------------------------------------------------
 
-ACTOR ClericBoss 10101
+ACTOR ClericBoss
 {
-	Game Hexen
 	Health 800
 	PainChance 50
 	Speed 25

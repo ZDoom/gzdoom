@@ -21,9 +21,8 @@ ACTOR Bang4Cloud
 
 // Piston -------------------------------------------------------------------
 
-ACTOR Piston 45
+ACTOR Piston
 {
-	Game Strife
 	ConversationID 123,-1,-1
 	Health 100
 	Speed 16
@@ -58,9 +57,8 @@ ACTOR Piston 45
 
 // Computer -----------------------------------------------------------------
 
-ACTOR Computer 182
+ACTOR Computer
 {
-	Game Strife
 	ConversationID 124,-1,-1
 	Health 80
 	Speed 27
@@ -98,9 +96,8 @@ ACTOR Computer 182
 
 // Power Crystal ------------------------------------------------------------
 
-ACTOR PowerCrystal 92
+ACTOR PowerCrystal
 {
-	Game Strife
 	ConversationID 201,-1,-1
 	Health 50
 	Speed 14

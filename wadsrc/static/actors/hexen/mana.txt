@@ -1,9 +1,7 @@
 // Blue mana ----------------------------------------------------------------
 
-ACTOR Mana1 : Ammo 122
+ACTOR Mana1 : Ammo
 {
-	Game Hexen
-	SpawnID 11
 	Inventory.Amount 15
 	Inventory.MaxAmount 200
 	Ammo.BackpackAmount 15
@@ -23,10 +21,8 @@ ACTOR Mana1 : Ammo 122
 
 // Green mana ---------------------------------------------------------------
 
-ACTOR Mana2 : Ammo 124
+ACTOR Mana2 : Ammo
 {
-	Game Hexen
-	SpawnID 12
 	Inventory.Amount 15
 	Inventory.MaxAmount 200
 	Ammo.BackpackAmount 15
@@ -46,10 +42,8 @@ ACTOR Mana2 : Ammo 124
 
 // Combined mana ------------------------------------------------------------
 
-ACTOR Mana3 : CustomInventory 8004
+ACTOR Mana3 : CustomInventory
 {
-	Game Hexen
-	SpawnID 75
 	Radius 8
 	Height 8
 	+FLOATBOB
@@ -68,10 +62,8 @@ ACTOR Mana3 : CustomInventory 8004
 
 // Boost Mana Artifact Krater of Might ------------------------------------
 
-ACTOR ArtiBoostMana : CustomInventory 8003
+ACTOR ArtiBoostMana : CustomInventory
 {
-	Game Hexen
-	SpawnID 26
 	+FLOATBOB
 	+COUNTITEM
 	+INVENTORY.INVBAR

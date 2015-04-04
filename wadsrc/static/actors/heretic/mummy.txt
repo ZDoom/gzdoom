@@ -1,10 +1,8 @@
 
 // Mummy --------------------------------------------------------------------
 
-ACTOR Mummy 68
+ACTOR Mummy
 {
-	Game Heretic
-	SpawnID 4
 	Health 80
 	Radius 22
 	Height 62
@@ -51,10 +49,8 @@ ACTOR Mummy 68
 
 // Mummy leader -------------------------------------------------------------
 
-ACTOR MummyLeader : Mummy 45
+ACTOR MummyLeader : Mummy
 {
-	Game Heretic
-	SpawnID 2
 	Species "MummyLeader"
 	Health 100
 	Painchance 64
@@ -74,10 +70,8 @@ ACTOR MummyLeader : Mummy 45
 
 // Mummy ghost --------------------------------------------------------------
 
-ACTOR MummyGhost : Mummy 69
+ACTOR MummyGhost : Mummy
 {
-	Game Heretic
-	SpawnID 8
 	+SHADOW
 	+GHOST
 	RenderStyle Translucent
@@ -86,10 +80,8 @@ ACTOR MummyGhost : Mummy 69
 
 // Mummy leader ghost -------------------------------------------------------
 
-ACTOR MummyLeaderGhost : MummyLeader 46
+ACTOR MummyLeaderGhost : MummyLeader
 {
-	Game Heretic
-	SpawnID 9
 	Species "MummyLeaderGhost"
 	+SHADOW
 	+GHOST
@@ -116,8 +108,6 @@ ACTOR MummySoul
 
 ACTOR MummyFX1
 {
-	Game Heretic
-	SpawnID 131
 	Radius 8
 	Height 14
 	Speed 9

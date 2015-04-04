@@ -17,7 +17,6 @@ ACTOR DoomWeapon : Weapon
 
 ACTOR Fist : Weapon
 {
-	Game Doom
 	Weapon.SelectionOrder 3700
 	Weapon.Kickback 100
 	Obituary "$OB_MPFIST"
@@ -52,9 +51,8 @@ ACTOR Fist : Weapon
 //
 // --------------------------------------------------------------------------
 
-ACTOR Pistol : DoomWeapon 5010
+ACTOR Pistol : DoomWeapon
 {
-	Game Doom
 	Weapon.SelectionOrder 1900
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive 20
@@ -97,10 +95,8 @@ ACTOR Pistol : DoomWeapon 5010
 //
 // --------------------------------------------------------------------------
 
-ACTOR Chainsaw : Weapon 2005
+ACTOR Chainsaw : Weapon
 {
-	Game Doom
-	SpawnID 32
 	Weapon.Kickback 0
 	Weapon.SelectionOrder 2200
 	Weapon.UpSound "weapons/sawup"
@@ -137,10 +133,8 @@ ACTOR Chainsaw : Weapon 2005
 //
 // --------------------------------------------------------------------------
 
-ACTOR Shotgun : DoomWeapon 2001
+ACTOR Shotgun : DoomWeapon
 {
-	Game Doom
-	SpawnID 27
 	Weapon.SelectionOrder 1300
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive 8
@@ -184,10 +178,8 @@ ACTOR Shotgun : DoomWeapon 2001
 //
 // --------------------------------------------------------------------------
 
-ACTOR SuperShotgun : DoomWeapon 82
+ACTOR SuperShotgun : DoomWeapon
 {
-	Game Doom
-	SpawnID 33
 	Weapon.SelectionOrder 400
 	Weapon.AmmoUse 2
 	Weapon.AmmoGive 8
@@ -238,10 +230,8 @@ ACTOR SuperShotgun : DoomWeapon 82
 //
 // --------------------------------------------------------------------------
 
-ACTOR Chaingun : DoomWeapon 2002
+ACTOR Chaingun : DoomWeapon
 {
-	Game Doom
-	SpawnID 28
 	Weapon.SelectionOrder 700
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive 20
@@ -281,10 +271,8 @@ ACTOR Chaingun : DoomWeapon 2002
 //
 // --------------------------------------------------------------------------
 
-ACTOR RocketLauncher : DoomWeapon 2003
+ACTOR RocketLauncher : DoomWeapon
 {
-	Game Doom
-	SpawnID 29
 	Weapon.SelectionOrder 2500
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive 2
@@ -321,8 +309,6 @@ ACTOR RocketLauncher : DoomWeapon 2003
 
 ACTOR Rocket
 {
-	Game Doom
-	SpawnID 127
 	Radius 11
 	Height 8
 	Speed 20
@@ -355,8 +341,6 @@ ACTOR Rocket
 
 ACTOR Grenade
 {
-	Game Doom
-	SpawnID 216
 	Radius 8
 	Height 8
 	Speed 25
@@ -404,10 +388,8 @@ ACTOR Grenade
 //
 // --------------------------------------------------------------------------
 
-ACTOR PlasmaRifle : DoomWeapon 2004
+ACTOR PlasmaRifle : DoomWeapon
 {
-	Game Doom
-	SpawnID 30
 	Weapon.SelectionOrder 100
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive 40
@@ -442,8 +424,6 @@ ACTOR PlasmaRifle : DoomWeapon 2004
 
 ACTOR PlasmaBall
 {
-	Game Doom
-	SpawnID 51
 	Radius 13
 	Height 8
 	Speed 25
@@ -508,11 +488,9 @@ ACTOR PlasmaBall2 : PlasmaBall1
 //
 // --------------------------------------------------------------------------
 
-ACTOR BFG9000 : DoomWeapon 2006
+ACTOR BFG9000 : DoomWeapon
 {
-	Game Doom
 	Height 20
-	SpawnID 31
 	Weapon.SelectionOrder 2800
 	Weapon.AmmoUse 40
 	Weapon.AmmoGive 40
@@ -556,8 +534,6 @@ ACTOR BFG9000 : DoomWeapon 2006
 
 ACTOR BFGBall
 {
-	Game Doom
-	SpawnID 128
 	Radius 13
 	Height 8
 	Speed 25

@@ -1,10 +1,8 @@
 
 // Health -------------------------------------------------------------------
 
-ACTOR ArtiHealth : HealthPickup 82
+ACTOR ArtiHealth : HealthPickup
 {
-	Game Raven
-	SpawnID 24
 	Health 25
 	+COUNTITEM
 	+FLOATBOB
@@ -25,10 +23,8 @@ ACTOR ArtiHealth : HealthPickup 82
 
 // Super health -------------------------------------------------------------
 
-ACTOR ArtiSuperHealth : HealthPickup 32
+ACTOR ArtiSuperHealth : HealthPickup
 {
-	Game Raven
-	SpawnID 25
 	Health 100
 	+COUNTITEM
 	+FLOATBOB
@@ -49,10 +45,8 @@ ACTOR ArtiSuperHealth : HealthPickup 32
 
 // Flight -------------------------------------------------------------------
 
-ACTOR ArtiFly : PowerupGiver 83
+ACTOR ArtiFly : PowerupGiver
 {
-	Game Raven
-	SpawnID 15
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -72,10 +66,8 @@ ACTOR ArtiFly : PowerupGiver 83
 
 // Invulnerability Heretic (Ring of invincibility) --------------------------
 
-ACTOR ArtiInvulnerability : PowerupGiver 84
+ACTOR ArtiInvulnerability : PowerupGiver
 {
-	Game Heretic
-	SpawnID 133
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -95,10 +87,8 @@ ACTOR ArtiInvulnerability : PowerupGiver 84
 	
 // Invulnerability Hexen (Icon of the defender) -----------------------------
 
-ACTOR ArtiInvulnerability2 : PowerupGiver 84
+ACTOR ArtiInvulnerability2 : PowerupGiver
 {
-	Game Hexen
-	SpawnID 133
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH
@@ -117,10 +107,8 @@ ACTOR ArtiInvulnerability2 : PowerupGiver 84
 	
 // Torch --------------------------------------------------------------------
 
-ACTOR ArtiTorch : PowerupGiver 33
+ACTOR ArtiTorch : PowerupGiver
 {
-	Game Raven
-	SpawnID 73
 	+COUNTITEM
 	+FLOATBOB
 	+INVENTORY.PICKUPFLASH

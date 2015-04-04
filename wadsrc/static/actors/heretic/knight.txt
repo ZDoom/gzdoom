@@ -1,10 +1,8 @@
 
 // Knight -------------------------------------------------------------------
 
-ACTOR Knight 64
+ACTOR Knight
 {
-	Game Heretic
-	SpawnID 6
 	Health 200
 	Radius 24
 	Height 78
@@ -60,10 +58,8 @@ ACTOR Knight 64
 
 // Knight ghost -------------------------------------------------------------
 
-ACTOR KnightGhost : Knight 65
+ACTOR KnightGhost : Knight
 {
-	Game Heretic
-	SpawnID 129
 	+SHADOW
 	+GHOST
 	RenderStyle Translucent
@@ -74,8 +70,6 @@ ACTOR KnightGhost : Knight 65
 
 ACTOR KnightAxe 
 {
-	Game Heretic
-	SpawnID 127
 	Radius 10
 	Height 8
 	Speed 9
@@ -105,8 +99,6 @@ ACTOR KnightAxe
 
 ACTOR RedAxe : KnightAxe
 {
-	Game Heretic
-	SpawnID 128
 	+NOBLOCKMAP
 	-WINDTHRUST
 	Damage 7

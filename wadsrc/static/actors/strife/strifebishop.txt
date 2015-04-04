@@ -1,9 +1,8 @@
 
 // Bishop -------------------------------------------------------------------
 
-ACTOR StrifeBishop 187
+ACTOR StrifeBishop
 {
-	Game Strife
 	ConversationID 64,-1,-1
 	Health 500
 	Painchance 128

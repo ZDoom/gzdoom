@@ -4600,67 +4600,80 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->type == 0 || mthing->type == -1)
 		return NULL;
 
-	// count deathmatch start positions
-	if (mthing->type == 11)
-	{
-		FPlayerStart start(mthing);
-		deathmatchstarts.Push(start);
-		return NULL;
-	}
+	// find which type to spawn
+	FDoomEdEntry *mentry = DoomEdMap.CheckKey(mthing->type);
 
-	// Convert Strife starts to Hexen-style starts
-	if (gameinfo.gametype == GAME_Strife && mthing->type >= 118 && mthing->type <= 127)
+	if (mentry == NULL)
 	{
-		mthing->args[0] = mthing->type - 117;
-		mthing->type = 1;
-	}
-
-	// [RH] Record polyobject-related things
-	if (gameinfo.gametype == GAME_Hexen)
-	{
-		switch (mthing->type)
+		// [RH] Don't die if the map tries to spawn an unknown thing
+		Printf ("Unknown type %i at (%i, %i)\n",
+				 mthing->type,
+				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+		mentry = DoomEdMap.CheckKey(0);
+		if (mentry == NULL)	// we need a valid entry for the rest of this function so if we can't find a default, let's exit right away.
 		{
-		case PO_HEX_ANCHOR_TYPE:
-			mthing->type = PO_ANCHOR_TYPE;
-			break;
-		case PO_HEX_SPAWN_TYPE:
-			mthing->type = PO_SPAWN_TYPE;
-			break;
-		case PO_HEX_SPAWNCRUSH_TYPE:
-			mthing->type = PO_SPAWNCRUSH_TYPE;
-			break;
+			return NULL;
 		}
 	}
-
-	if (mthing->type == PO_ANCHOR_TYPE ||
-		mthing->type == PO_SPAWN_TYPE ||
-		mthing->type == PO_SPAWNCRUSH_TYPE ||
-		mthing->type == PO_SPAWNHURT_TYPE)
+	if (mentry->Type == NULL && mentry->Special <= 0)
 	{
-		polyspawns_t *polyspawn = new polyspawns_t;
-		polyspawn->next = polyspawns;
-		polyspawn->x = mthing->x;
-		polyspawn->y = mthing->y;
-		polyspawn->angle = mthing->angle;
-		polyspawn->type = mthing->type;
-		polyspawns = polyspawn;
-		if (mthing->type != PO_ANCHOR_TYPE)
-			po_NumPolyobjs++;
+		// has been explicitly set to not spawning anything.
 		return NULL;
 	}
 
-	// check for players specially
-	int pnum = -1;
-
-	if (mthing->type <= 4 && mthing->type > 0)
+	// copy args to mapthing so that we have them in one place for the rest of this function	
+	if (mentry->Special >= 0)
 	{
-		pnum = mthing->type - 1;
+		mthing->special = mentry->Special;
+		memcpy(mthing->args, mentry->Args, sizeof(mthing->args));
 	}
-	else
+
+	int pnum = -1;
+	if (mentry->Type == NULL)
 	{
-		if (mthing->type >= gameinfo.player5start && mthing->type < gameinfo.player5start + MAXPLAYERS - 4)
+
+		switch (mentry->Special)
 		{
-			pnum = mthing->type - gameinfo.player5start + 4;
+		case SMT_DEATHMATCHSTART:
+		{
+			// count deathmatch start positions
+			FPlayerStart start(mthing, 0);
+			deathmatchstarts.Push(start);
+			return NULL;
+		}
+
+		case SMT_POLYANCHOR:
+		case SMT_POLYSPAWN:
+		case SMT_POLYSPAWNCRUSH:
+		case SMT_POLYSPAWNHURT:
+		{
+			polyspawns_t *polyspawn = new polyspawns_t;
+			polyspawn->next = polyspawns;
+			polyspawn->x = mthing->x;
+			polyspawn->y = mthing->y;
+			polyspawn->angle = mthing->angle;
+			polyspawn->type = mentry->Special;
+			polyspawns = polyspawn;
+			if (mentry->Special != SMT_POLYANCHOR)
+				po_NumPolyobjs++;
+			return NULL;
+		}
+
+		case SMT_PLAYER1START:
+		case SMT_PLAYER2START:
+		case SMT_PLAYER3START:
+		case SMT_PLAYER4START:
+		case SMT_PLAYER5START:
+		case SMT_PLAYER6START:
+		case SMT_PLAYER7START:
+		case SMT_PLAYER8START:
+			pnum = mentry->Special - SMT_PLAYER1START;
+			break;
+
+		// Sound sequence override will be handled later
+		default:
+			break;
+
 		}
 	}
 
@@ -4728,7 +4741,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			return NULL;
 
 		// save spots for respawning in network games
-		FPlayerStart start(mthing);
+		FPlayerStart start(mthing, pnum+1);
 		playerstarts[pnum] = start;
 		AllPlayerStarts.Push(start);
 		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
@@ -4739,20 +4752,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// [RH] sound sequence overriders
-	if (mthing->type >= 1400 && mthing->type < 1410)
+	if (mentry->Type == NULL && mentry->Special == SMT_SSEQOVERRIDE)
 	{
-		P_PointInSector (mthing->x, mthing->y)->seqType = mthing->type - 1400;
-		return NULL;
-	}
-	else if (mthing->type == 1411)
-	{
-		int type;
-
-		if (mthing->args[0] == 255)
-			type = -1;
-		else
-			type = mthing->args[0];
-
+		int type = mentry->Args[0];
+		if (type == 255) type = -1;
 		if (type > 63)
 		{
 			Printf ("Sound sequence %d out of range\n", type);
@@ -4764,51 +4767,25 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		return NULL;
 	}
 
-	// [RH] Determine if it is an old ambient thing, and if so,
-	//		map it to MT_AMBIENT with the proper parameter.
-	if (mthing->type >= 14001 && mthing->type <= 14064)
-	{
-		mthing->args[0] = mthing->type - 14000;
-		mthing->type = 14065;
-	}
-	else if (mthing->type >= 14101 && mthing->type <= 14164)
-	{
-		mthing->args[0] = mthing->type - 14100;
-		mthing->type = 14165;
-	}
-	// find which type to spawn
-	i = DoomEdMap.FindType (mthing->type);
-
-	if (i == NULL)
-	{
-		// [RH] Don't die if the map tries to spawn an unknown thing
-		Printf ("Unknown type %i at (%i, %i)\n",
-				 mthing->type,
-				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-		i = PClass::FindClass("Unknown");
-	}
 	// [RH] If the thing's corresponding sprite has no frames, also map
 	//		it to the unknown thing.
-	else
+	// Handle decorate replacements explicitly here
+	// to check for missing frames in the replacement object.
+	i = mentry->Type->GetReplacement();
+
+	const AActor *defaults = GetDefaultByType (i);
+	if (defaults->SpawnState == NULL ||
+		sprites[defaults->SpawnState->sprite].numframes == 0)
 	{
-		// Handle decorate replacements explicitly here
-		// to check for missing frames in the replacement object.
-		i = i->GetReplacement();
+		// We don't load mods for shareware games so we'll just ignore
+		// missing actors. Heretic needs this since the shareware includes
+		// the retail weapons in Deathmatch.
+		if (gameinfo.flags & GI_SHAREWARE)
+			return NULL;
 
-		const AActor *defaults = GetDefaultByType (i);
-		if (defaults->SpawnState == NULL ||
-			sprites[defaults->SpawnState->sprite].numframes == 0)
-		{
-			// We don't load mods for shareware games so we'll just ignore
-			// missing actors. Heretic needs this since the shareware includes
-			// the retail weapons in Deathmatch.
-			if (gameinfo.flags & GI_SHAREWARE)
-				return NULL;
-
-			Printf ("%s at (%i, %i) has no frames\n",
-					i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-			i = PClass::FindClass("Unknown");
-		}
+		Printf ("%s at (%i, %i) has no frames\n",
+				i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+		i = PClass::FindClass("Unknown");
 	}
 
 	const AActor *info = GetDefaultByType (i);
@@ -4898,6 +4875,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}
 
+	// if the actor got args defined either in DECORATE or MAPINFO we must ignore the map's properties.
 	if (!(mobj->flags2 & MF2_ARGSDEFINED))
 	{
 		// [RH] Set the thing's special

@@ -1,12 +1,12 @@
 
-ACTOR AmbientSound 14065 native
+ACTOR AmbientSound native
 {
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
 }
 
-ACTOR AmbientSoundNoGravity : AmbientSound 14067
+ACTOR AmbientSoundNoGravity : AmbientSound
 {
 	+NOGRAVITY
 }
@@ -18,7 +18,7 @@ ACTOR SoundSequenceSlot native
 	+DONTSPLASH
 }
 
-ACTOR SoundSequence 14066 native
+ACTOR SoundSequence native
 {
 	+NOSECTOR
 	+NOBLOCKMAP
@@ -27,63 +27,53 @@ ACTOR SoundSequence 14066 native
 
 // Heretic Sound sequences -----------------------------------------------------------
 
-ACTOR HereticSoundSequence1 : SoundSequence 1200
+ACTOR HereticSoundSequence1 : SoundSequence
 {
-	Game Heretic
 	Args 0
 }
 
-ACTOR HereticSoundSequence2 : SoundSequence 1201
+ACTOR HereticSoundSequence2 : SoundSequence
 {
-	Game Heretic
 	Args 1
 }
 
-ACTOR HereticSoundSequence3 : SoundSequence 1202
+ACTOR HereticSoundSequence3 : SoundSequence
 {
-	Game Heretic
 	Args 2
 }
 
-ACTOR HereticSoundSequence4 : SoundSequence 1203
+ACTOR HereticSoundSequence4 : SoundSequence
 {
-	Game Heretic
 	Args 3
 }
 
-ACTOR HereticSoundSequence5 : SoundSequence 1204
+ACTOR HereticSoundSequence5 : SoundSequence
 {
-	Game Heretic
 	Args 4
 }
 
-ACTOR HereticSoundSequence6 : SoundSequence 1205
+ACTOR HereticSoundSequence6 : SoundSequence
 {
-	Game Heretic
 	Args 5
 }
 
-ACTOR HereticSoundSequence7 : SoundSequence 1206
+ACTOR HereticSoundSequence7 : SoundSequence
 {
-	Game Heretic
 	Args 6
 }
 
-ACTOR HereticSoundSequence8 : SoundSequence 1207
+ACTOR HereticSoundSequence8 : SoundSequence
 {
-	Game Heretic
 	Args 7
 }
 
-ACTOR HereticSoundSequence9 : SoundSequence 1208
+ACTOR HereticSoundSequence9 : SoundSequence
 {
-	Game Heretic
 	Args 8
 }
 
-ACTOR HereticSoundSequence10 : SoundSequence 1209
+ACTOR HereticSoundSequence10 : SoundSequence
 {
-	Game Heretic
 	Args 9
 }
 

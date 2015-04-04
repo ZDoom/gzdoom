@@ -9,7 +9,6 @@ ACTOR HereticWeapon : Weapon
 
 ACTOR Staff : HereticWeapon
 {
-	Game Heretic
 	Weapon.SelectionOrder 3800
 	+THRUGHOST
 	+WIMPY_WEAPON
@@ -41,7 +40,6 @@ ACTOR Staff : HereticWeapon
 
 ACTOR StaffPowered : Staff
 {
-	Game Heretic
 	Weapon.sisterweapon "Staff"
 	Weapon.ReadySound "weapons/staffcrackle"
 	+WEAPON.POWERED_UP
@@ -110,9 +108,8 @@ ACTOR StaffPuff2
 
 // Gold wand ----------------------------------------------------------------
 
-ACTOR GoldWand : HereticWeapon 9042
+ACTOR GoldWand : HereticWeapon
 {
-	Game Heretic
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 2000
 	Weapon.AmmoGive 25
@@ -151,7 +148,6 @@ ACTOR GoldWand : HereticWeapon 9042
 
 ACTOR GoldWandPowered : GoldWand
 {
-	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "GoldWand"
@@ -176,8 +172,6 @@ ACTOR GoldWandPowered : GoldWand
 
 ACTOR GoldWandFX1
 {
-	Game Heretic
-	SpawnID 151
 	Radius 10
 	Height 6
 	Speed 22
@@ -201,8 +195,6 @@ ACTOR GoldWandFX1
 
 ACTOR GoldWandFX2 : GoldWandFX1
 {
-	Game Heretic
-	SpawnID 152
 	Speed 18
 	Damage 1
 	DeathSound ""
@@ -248,10 +240,8 @@ ACTOR GoldWandPuff2 : GoldWandFX1
 
 // Crossbow -----------------------------------------------------------------
 
-ACTOR Crossbow : HereticWeapon 2001
+ACTOR Crossbow : HereticWeapon
 {
-	Game Heretic
-	SpawnID 27
 	Weapon.SelectionOrder 800
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive 10
@@ -289,7 +279,6 @@ ACTOR Crossbow : HereticWeapon 2001
 
 ACTOR CrossbowPowered : Crossbow
 {
-	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "Crossbow"
@@ -317,8 +306,6 @@ ACTOR CrossbowPowered : Crossbow
 
 ACTOR CrossbowFX1
 {
-	Game Heretic
-	SpawnID 147
 	Radius 11
 	Height 8
 	Speed 30
@@ -344,8 +331,6 @@ ACTOR CrossbowFX1
 
 ACTOR CrossbowFX2 : CrossbowFX1
 {
-	Game Heretic
-	SpawnID 148
 	Speed 32
 	Damage 6
 	Obituary "$OB_MPPCROSSBOW"
@@ -361,8 +346,6 @@ ACTOR CrossbowFX2 : CrossbowFX1
 
 ACTOR CrossbowFX3 : CrossbowFX1
 {
-	Game Heretic
-	SpawnID 149
 	Speed 20
 	Damage 2
 	SeeSound ""
@@ -400,10 +383,8 @@ ACTOR CrossbowFX4
 
 // Gauntlets ----------------------------------------------------------------
 
-ACTOR Gauntlets : Weapon 2005
+ACTOR Gauntlets : Weapon
 {
-	Game Heretic
-	SpawnID 32
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 2300
 	+WEAPON.WIMPY_WEAPON
@@ -446,7 +427,6 @@ ACTOR Gauntlets : Weapon 2005
 
 ACTOR GauntletsPowered : Gauntlets
 {
-	Game Heretic
 	+POWERED_UP
 	Tag "$TAG_GAUNTLETSP"
 	Obituary "$OB_MPPGAUNTLETS"
@@ -509,8 +489,6 @@ ACTOR GauntletPuff2 : GauntletPuff1
 
 ACTOR Mace : HereticWeapon
 {
-	Game Heretic
-	SpawnID 31
 	Weapon.SelectionOrder 1400
 	Weapon.AmmoUse 1
 	Weapon.AmmoGive1 50
@@ -548,7 +526,6 @@ ACTOR Mace : HereticWeapon
 
 ACTOR MacePowered : Mace
 {
-	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoUse 5
 	Weapon.AmmoGive 0
@@ -573,8 +550,6 @@ ACTOR MacePowered : Mace
 
 ACTOR MaceFX1
 {
-	Game Heretic
-	SpawnID 154
 	Radius 8
 	Height 6
 	Speed 20
@@ -604,8 +579,6 @@ ACTOR MaceFX1
 
 ACTOR MaceFX2 : MaceFX1
 {
-	Game Heretic
-	SpawnID 156
 	Speed 10
 	Damage 6
 	Gravity 0.125
@@ -629,8 +602,6 @@ ACTOR MaceFX2 : MaceFX1
 
 ACTOR MaceFX3 : MaceFX1
 {
-	Game Heretic
-	SpawnID 155
 	Speed 7
 	Damage 4
 	-NOGRAVITY
@@ -648,8 +619,6 @@ ACTOR MaceFX3 : MaceFX1
 
 ACTOR MaceFX4 native
 {
-	Game Heretic
-	SpawnID 153
 	Radius 8
 	Height 6
 	Speed 7
@@ -681,9 +650,8 @@ ACTOR MaceFX4 native
 
 // Mace spawn spot ----------------------------------------------------------
 
-ACTOR MaceSpawner : SpecialSpot 2002
+ACTOR MaceSpawner : SpecialSpot
 {
-	Game Heretic
 	+NOSECTOR
 	+NOBLOCKMAP
 	States
@@ -698,10 +666,8 @@ ACTOR MaceSpawner : SpecialSpot 2002
 
 // Blaster ------------------------------------------------------------------
 
-ACTOR Blaster : HereticWeapon 53
+ACTOR Blaster : HereticWeapon
 {
-	Game Heretic
-	SpawnID 28
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 500
 	Weapon.AmmoUse 1
@@ -741,7 +707,6 @@ ACTOR Blaster : HereticWeapon 53
 
 ACTOR BlasterPowered : Blaster
 {
-	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoUse 5
 	Weapon.AmmoGive 0
@@ -809,8 +774,6 @@ ACTOR BlasterSmoke
 
 ACTOR Ripper native
 {
-	Game Heretic
-	SpawnID 157
 	Radius 8
 	Height 6
 	Speed 14
@@ -854,10 +817,8 @@ ACTOR BlasterPuff
 
 // Skull (Horn) Rod ---------------------------------------------------------
 
-ACTOR SkullRod : HereticWeapon 2004
+ACTOR SkullRod : HereticWeapon
 {
-	Game Heretic
-	SpawnID 30
 	Weapon.SelectionOrder 200
 	Weapon.AmmoUse1 1
 	Weapon.AmmoGive1 50
@@ -892,7 +853,6 @@ ACTOR SkullRod : HereticWeapon 2004
 
 ACTOR SkullRodPowered : SkullRod
 {
-	Game Heretic
 	+WEAPON.POWERED_UP
 	Weapon.AmmoUse1 5
 	Weapon.AmmoGive1 0
@@ -921,8 +881,6 @@ ACTOR SkullRodPowered : SkullRod
 
 ACTOR HornRodFX1
 {
-	Game Heretic
-	SpawnID 160
 	Radius 12
 	Height 8
 	Speed 22
@@ -1028,10 +986,8 @@ ACTOR RainTracker : Inventory native
 
 // Phoenix Rod --------------------------------------------------------------
 
-ACTOR PhoenixRod : Weapon 2003 native
+ACTOR PhoenixRod : Weapon native
 {
-	Game Heretic
-	SpawnID 29
 	+WEAPON.NOAUTOFIRE
 	Weapon.SelectionOrder 2600
 	Weapon.Kickback 150
@@ -1070,7 +1026,6 @@ ACTOR PhoenixRod : Weapon 2003 native
 
 ACTOR PhoenixRodPowered : PhoenixRod native
 {
-	Game Heretic
 	+WEAPON.POWERED_UP
 	+WEAPON.MELEEWEAPON
 	Weapon.SisterWeapon "PhoenixRod"
@@ -1098,8 +1053,6 @@ ACTOR PhoenixRodPowered : PhoenixRod native
 
 ACTOR PhoenixFX1 native
 {
-	Game Heretic
-	SpawnID 163
 	Radius 11
 	Height 8
 	Speed 20

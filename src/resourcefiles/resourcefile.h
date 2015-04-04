@@ -13,7 +13,7 @@ struct FResourceLump
 	friend class FResourceFile;
 
 	int				LumpSize;
-	char *			FullName;		// only valid for files loaded from a .zip file
+	FString			FullName;		// only valid for files loaded from a non-wad archive
 	union
 	{
 		char		Name[9];
@@ -30,7 +30,6 @@ struct FResourceLump
 
 	FResourceLump()
 	{
-		FullName = NULL;
 		Cache = NULL;
 		Owner = NULL;
 		Flags = 0;
@@ -66,8 +65,15 @@ protected:
 
 	FResourceFile(const char *filename, FileReader *r);
 
+	// for archives that can contain directories
+	void PostProcessArchive(void *lumps, size_t lumpsize);
+
 private:
 	DWORD FirstLump;
+
+	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, DWORD max);
+	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, DWORD max, DWORD &start, DWORD &end);
+	void JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max);
 
 public:
 	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false);

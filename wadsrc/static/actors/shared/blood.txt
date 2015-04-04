@@ -3,7 +3,6 @@
 
 ACTOR Blood
 {
-	SpawnID 130
 	Mass 5
 	+NOBLOCKMAP
 	+NOTELEPORT

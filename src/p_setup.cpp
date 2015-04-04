@@ -3334,32 +3334,16 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 {
 	if (map->HasBehavior)
 	{
-		int spot1, spot2, spot3, anchor;
-
-		if (gameinfo.gametype == GAME_Hexen)
-		{
-			spot1 = PO_HEX_SPAWN_TYPE;
-			spot2 = PO_HEX_SPAWNCRUSH_TYPE;
-			anchor = PO_HEX_ANCHOR_TYPE;
-		}
-		else
-		{
-			spot1 = PO_SPAWN_TYPE;
-			spot2 = PO_SPAWNCRUSH_TYPE;
-			anchor = PO_ANCHOR_TYPE;
-		}
-		spot3 = PO_SPAWNHURT_TYPE;
-
 		for (unsigned int i = 0; i < MapThingsConverted.Size(); ++i)
 		{
-			if (MapThingsConverted[i].type == spot1 || MapThingsConverted[i].type == spot2 || 
-				MapThingsConverted[i].type == spot3 || MapThingsConverted[i].type == anchor)
+			FDoomEdEntry *mentry = DoomEdMap.CheckKey(MapThingsConverted[i].type);
+			if (mentry != NULL && mentry->Type == NULL && mentry->Special >= SMT_POLYANCHOR && mentry->Special <= SMT_POLYSPAWNHURT)
 			{
 				FNodeBuilder::FPolyStart newvert;
 				newvert.x = MapThingsConverted[i].x;
 				newvert.y = MapThingsConverted[i].y;
 				newvert.polynum = MapThingsConverted[i].angle;
-				if (MapThingsConverted[i].type == anchor)
+				if (mentry->Special == SMT_POLYANCHOR)
 				{
 					anchors.Push (newvert);
 				}

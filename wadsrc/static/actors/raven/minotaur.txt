@@ -1,6 +1,5 @@
-ACTOR Minotaur 9 native
+ACTOR Minotaur native
 {
-	Game Heretic
 	Health 3000
 	Radius 28
 	Height 100

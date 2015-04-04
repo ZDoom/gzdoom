@@ -1,10 +1,8 @@
 
 // Ironlich -----------------------------------------------------------------
 
-ACTOR Ironlich 6
+ACTOR Ironlich
 {
-	Game Heretic
-	SpawnID 20
 	Health 700
 	Radius 40
 	Height 72
@@ -59,8 +57,6 @@ ACTOR Ironlich 6
 
 ACTOR HeadFX1
 {
-	Game Heretic
-	SpawnID 164
 	Radius 12
 	Height 6
 	Speed 13
@@ -147,8 +143,6 @@ ACTOR HeadFX3
 
 ACTOR Whirlwind native
 {
-	Game Heretic
-	SpawnID 165
 	Radius 16
 	Height 74
 	Speed 10

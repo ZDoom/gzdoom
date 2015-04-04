@@ -1,8 +1,6 @@
 
-ACTOR MetalArmor : BasicArmorPickup 2019
+ACTOR MetalArmor : BasicArmorPickup
 {
-	Game Strife
-	SpawnID 69
 	ConversationID 129, 125, 128
 	Radius 20
 	Height 16
@@ -23,10 +21,8 @@ ACTOR MetalArmor : BasicArmorPickup 2019
 	}
 }
 
-ACTOR LeatherArmor : BasicArmorPickup 2018
+ACTOR LeatherArmor : BasicArmorPickup
 {
-	Game Strife
-	SpawnID 68
 	ConversationID 130, 126, 129
 	Radius 20
 	Height 16

@@ -1,4 +1,4 @@
-ACTOR SkyViewpoint 9080 native 
+ACTOR SkyViewpoint native 
 {
 	+NOSECTOR
 	+NOBLOCKMAP
@@ -6,7 +6,7 @@ ACTOR SkyViewpoint 9080 native
 	+DONTSPLASH
 }
 
-ACTOR SkyPicker 9081 native 
+ACTOR SkyPicker native 
 {
 	+NOSECTOR
 	+NOBLOCKMAP
@@ -14,7 +14,7 @@ ACTOR SkyPicker 9081 native
 	+DONTSPLASH
 }
 
-Actor SkyCamCompat : SkyViewpoint 9083 native
+Actor SkyCamCompat : SkyViewpoint native
 {
 }
 
@@ -22,16 +22,16 @@ ACTOR StackPoint : SkyViewpoint native
 {
 }
 
-ACTOR UpperStackLookOnly : StackPoint 9077
+ACTOR UpperStackLookOnly : StackPoint
 {
 }
 
-ACTOR LowerStackLookOnly : StackPoint 9078
+ACTOR LowerStackLookOnly : StackPoint
 {
 }
 
 
-ACTOR SectorSilencer 9082 native 
+ACTOR SectorSilencer native 
 {
 	+NOBLOCKMAP
 	+NOGRAVITY

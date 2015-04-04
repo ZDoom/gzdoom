@@ -1,19 +1,15 @@
 
 // Boss spot ----------------------------------------------------------------
 
-ACTOR BossSpot : SpecialSpot 56
+ACTOR BossSpot : SpecialSpot
 {
-	Game Heretic
-	SpawnID 141
 	+INVISIBLE
 }
 
 // Sorcerer (D'Sparil on his serpent) ---------------------------------------
 
-ACTOR Sorcerer1 7
+ACTOR Sorcerer1
 {
-	Game Heretic
-	SpawnID 142
 	Health 2000
 	Radius 28
 	Height 100
@@ -84,8 +80,6 @@ ACTOR Sorcerer1 7
 
 ACTOR SorcererFX1
 {
-	Game Heretic
-	SpawnID 144
 	Radius 10
 	Height 10
 	Speed 20
@@ -112,8 +106,6 @@ ACTOR SorcererFX1
 
 ACTOR Sorcerer2
 {
-	Game Heretic
-	SpawnID 143
 	Health 3500
 	Radius 16
 	Height 70
@@ -192,8 +184,6 @@ ACTOR Sorcerer2
 
 ACTOR Sorcerer2FX1
 {
-	Game Heretic
-	SpawnID 145
 	Radius 10
 	Height 6
 	Speed 20
@@ -241,8 +231,6 @@ ACTOR Sorcerer2FXSpark
 
 ACTOR Sorcerer2FX2
 {
-	Game Heretic
-	SpawnID 146
 	Radius 10
 	Height 6
 	Speed 6

@@ -1,9 +1,8 @@
 
 // Oracle -------------------------------------------------------------------
 
-ACTOR Oracle 199
+ACTOR Oracle
 {
-	Game Strife
 	ConversationID 65, 62, 63
 	Health 1
 	Radius 15

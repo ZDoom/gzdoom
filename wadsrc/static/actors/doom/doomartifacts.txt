@@ -1,9 +1,7 @@
 // Invulnerability Sphere ---------------------------------------------------
 
-ACTOR InvulnerabilitySphere : PowerupGiver 2022
+ACTOR InvulnerabilitySphere : PowerupGiver
 {
-	Game Doom
-	SpawnID 133
 	+COUNTITEM
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -22,10 +20,8 @@ ACTOR InvulnerabilitySphere : PowerupGiver 2022
 
 // Soulsphere --------------------------------------------------------------
 
-ACTOR Soulsphere : Health 2013
+ACTOR Soulsphere : Health
 {
-	Game Doom
-	SpawnID 25
 	+COUNTITEM
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -58,10 +54,8 @@ actor BlueArmorForMegasphere : BlueArmor
 	Armor.SaveAmount 200
 }
 
-ACTOR Megasphere : CustomInventory 83
+ACTOR Megasphere : CustomInventory
 {
-	Game Doom
-	SpawnID 132
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.PickupMessage "$GOTMSPHERE"
@@ -80,10 +74,8 @@ ACTOR Megasphere : CustomInventory 83
 
 // Invisibility -------------------------------------------------------------
 
-ACTOR BlurSphere : PowerupGiver 2024
+ACTOR BlurSphere : PowerupGiver
 {
-	Game Doom
-	SpawnID 135
 	+COUNTITEM
 	+VISIBILITYPULSE
 	+INVENTORY.AUTOACTIVATE
@@ -103,10 +95,8 @@ ACTOR BlurSphere : PowerupGiver 2024
 
 // Radiation suit (aka iron feet) -------------------------------------------
 
-ACTOR RadSuit : PowerupGiver 2025
+ACTOR RadSuit : PowerupGiver
 {
-	Game Doom
-	SpawnID 136
 	Height 46
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -123,10 +113,8 @@ ACTOR RadSuit : PowerupGiver 2025
 
 // infrared -----------------------------------------------------------------
 
-ACTOR Infrared : PowerupGiver 2045
+ACTOR Infrared : PowerupGiver
 {
-	Game Doom
-	SpawnID 138
 	+COUNTITEM
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -144,10 +132,8 @@ ACTOR Infrared : PowerupGiver 2045
 	
 // Allmap -------------------------------------------------------------------
 
-ACTOR Allmap : MapRevealer 2026
+ACTOR Allmap : MapRevealer
 {
-	Game Doom
-	SpawnID 137
 	+COUNTITEM
 	+INVENTORY.FANCYPICKUPSOUND
 	+INVENTORY.ALWAYSPICKUP
@@ -164,10 +150,8 @@ ACTOR Allmap : MapRevealer 2026
 
 // Berserk ------------------------------------------------------------------
 
-ACTOR Berserk : CustomInventory 2023
+ACTOR Berserk : CustomInventory
 {
-	Game Doom
-	SpawnID 134
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.PickupMessage "$GOTBERSERK"

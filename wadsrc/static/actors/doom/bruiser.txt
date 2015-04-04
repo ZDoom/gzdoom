@@ -3,10 +3,8 @@
 // Baron of Hell
 //
 //===========================================================================
-ACTOR BaronOfHell 3003
+ACTOR BaronOfHell
 {
-	Game Doom
-	SpawnID 3
 	Health 1000
 	Radius 24
 	Height 64
@@ -59,10 +57,8 @@ ACTOR BaronOfHell 3003
 // Hell Knight
 //
 //===========================================================================
-ACTOR HellKnight : BaronOfHell 69
+ACTOR HellKnight : BaronOfHell
 {
-	Game Doom
-	SpawnID 113
 	Health 500
 	-BOSSDEATH
 	SeeSound "knight/sight"
@@ -110,8 +106,6 @@ ACTOR HellKnight : BaronOfHell 69
 //===========================================================================
 ACTOR BaronBall
 {
-	Game Doom
-	SpawnID 154
 	Radius 6
 	Height 16
 	Speed 15

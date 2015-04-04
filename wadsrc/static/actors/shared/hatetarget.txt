@@ -2,7 +2,7 @@
 
 // Hate Target --------------------------------------------------------------
 
-ACTOR HateTarget 9076 native
+ACTOR HateTarget native
 {
 	Radius 20
 	Height 56

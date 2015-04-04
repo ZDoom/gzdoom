@@ -1,9 +1,8 @@
 
 // Crusader -----------------------------------------------------------------
 
-ACTOR Crusader 3005
+ACTOR Crusader
 {
-	Game Strife
 	ConversationID 63,-1,-1
 	Speed 8
 	Radius 40
@@ -110,9 +109,8 @@ ACTOR CrusaderMissile
 
 // Dead Crusader ------------------------------------------------------------
 
-ACTOR DeadCrusader 22
+ACTOR DeadCrusader
 {
-	Game Strife 
 	ConversationID 230
 	States
 	{

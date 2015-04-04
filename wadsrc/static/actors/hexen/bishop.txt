@@ -1,10 +1,8 @@
 
 // Bishop -------------------------------------------------------------------
 
-ACTOR Bishop 114
+ACTOR Bishop
 {
-	Game Hexen
-	SpawnID 19
 	Health 130
 	Radius 22
 	Height 65
@@ -81,7 +79,6 @@ ACTOR Bishop 114
 
 ACTOR BishopPuff
 {
-	Game Hexen
 	+NOBLOCKMAP +NOGRAVITY
 	RenderStyle Translucent
 	Alpha 0.6
@@ -99,7 +96,6 @@ ACTOR BishopPuff
 
 ACTOR BishopPainBlur
 {
-	Game Hexen
 	+NOBLOCKMAP +NOGRAVITY
 	RenderStyle Translucent
 	Alpha 0.6
@@ -115,7 +111,6 @@ ACTOR BishopPainBlur
 
 ACTOR BishopFX
 {
-	Game Hexen
 	Radius 10
 	Height 6
 	Speed 10

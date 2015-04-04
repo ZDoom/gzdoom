@@ -1,9 +1,8 @@
 
 // Mage Boss (Menelkir) -----------------------------------------------------
 
-ACTOR MageBoss 10102
+ACTOR MageBoss
 {
-	Game Hexen
 	Health 800
 	PainChance 50
 	Speed 25

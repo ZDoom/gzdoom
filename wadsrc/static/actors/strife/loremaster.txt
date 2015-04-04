@@ -1,9 +1,8 @@
 
 // Loremaster (aka Priest) --------------------------------------------------
 
-ACTOR Loremaster 12
+ACTOR Loremaster
 {	
-	Game Strife
 	ConversationID 66, 63, 64
 	Health 800	
 	Speed 10

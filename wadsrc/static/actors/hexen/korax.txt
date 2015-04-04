@@ -1,6 +1,5 @@
-ACTOR Korax 10200
+ACTOR Korax
 {
-	Game Hexen
 	Health 5000
 	Painchance 20
 	Speed 10

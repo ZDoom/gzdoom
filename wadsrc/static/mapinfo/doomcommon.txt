@@ -1,4 +1,5 @@
 include "mapinfo/common.txt"
+include "mapinfo/doomitems.txt"
 
 gameinfo
 {
@@ -41,7 +42,6 @@ gameinfo
 	defaultrespawntime = 12
 	defaultdropstyle = 1
 	endoom = "ENDOOM"
-	player5start = 4001
 	pickupcolor = "d7 ba 45"
 	quitmessages = "$QUITMSG", "$QUITMSG1", "$QUITMSG2", "$QUITMSG3", "$QUITMSG4", "$QUITMSG5", "$QUITMSG6", "$QUITMSG7",
 				   "$QUITMSG8", "$QUITMSG9", "$QUITMSG10", "$QUITMSG11", "$QUITMSG12", "$QUITMSG13", "$QUITMSG14"
@@ -65,6 +65,97 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+}
+
+spawnnums
+{
+	1 = ShotgunGuy
+	2 = ChaingunGuy
+	3 = BaronOfHell
+	4 = Zombieman
+	5 = DoomImp
+	6 = Arachnotron
+	7 = SpiderMastermind
+	8 = Demon
+	9 = Spectre
+	10 = DoomImpBall
+	11 = Clip
+	12 = Shell
+	19 = Cacodemon
+	20 = Revenant
+	21 = ZBridge
+	22 = ArmorBonus
+	23 = Stimpack
+	24 = Medikit
+	25 = Soulsphere
+	27 = Shotgun
+	28 = Chaingun
+	29 = RocketLauncher
+	30 = PlasmaRifle
+	31 = BFG9000
+	32 = Chainsaw
+	33 = SuperShotgun
+	51 = PlasmaBall
+	53 = RevenantTracer
+	68 = GreenArmor
+	69 = BlueArmor
+	75 = Cell
+	85 = BlueCard
+	86 = RedCard
+	87 = YellowCard
+	88 = YellowSkull
+	89 = RedSkull
+	90 = BlueSkull
+	98 = ArchvileFire
+	100 = StealthBaron
+	101 = StealthHellKnight
+	102 = StealthZombieMan
+	103 = StealthShotgunGuy
+	110 = LostSoul
+	111 = Archvile
+	112 = Fatso
+	113 = HellKnight
+	114 = Cyberdemon
+	115 = PainElemental
+	116 = WolfensteinSS
+	117 = StealthArachnotron
+	118 = StealthArchvile
+	119 = StealthCacodemon
+	120 = StealthChaingunGuy
+	121 = StealthDemon
+	122 = StealthDoomImp
+	123 = StealthFatso
+	124 = StealthRevenant
+	125 = ExplosiveBarrel
+	126 = CacodemonBall
+	127 = Rocket
+	128 = BFGBall
+	129 = ArachnotronPlasma
+	131 = BulletPuff
+	132 = Megasphere
+	133 = InvulnerabilitySphere
+	134 = Berserk
+	135 = BlurSphere
+	136 = RadSuit
+	137 = Allmap
+	138 = Infrared
+	139 = ClipBox
+	140 = RocketAmmo
+	141 = RocketBox
+	142 = CellPack
+	143 = ShellBox
+	144 = Backpack
+	145 = GibbedMarine
+	146 = Gibs
+	147 = ColonGibs
+	148 = SmallBloodPool
+	149 = BurningBarrel
+	150 = BrainStem
+	151 = ScriptedMarine
+	152 = HealthBonus
+	153 = FatShot
+	154 = BaronBall
+	216 = Grenade
 }
 
 skill baby

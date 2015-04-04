@@ -1,10 +1,8 @@
 
 // Heretic imp (as opposed to the Doom variety) -----------------------------
 
-ACTOR HereticImp 66
+ACTOR HereticImp
 {
-	Game Heretic
-	SpawnID 5
 	Health 40
 	Radius 16
 	Height 36
@@ -78,10 +76,8 @@ ACTOR HereticImp 66
 
 // Heretic imp leader -------------------------------------------------------
 
-ACTOR HereticImpLeader : HereticImp 5
+ACTOR HereticImpLeader : HereticImp
 {
-	Game Heretic
-	SpawnID 7
 	Species "HereticImpLeader"
 	Health 80
 	-MISSILEMORE
@@ -135,8 +131,6 @@ ACTOR HereticImpChunk2
 
 ACTOR HereticImpBall
 {
-	Game Heretic
-	SpawnID 10
 	Radius 8
 	Height 8
 	Speed 10

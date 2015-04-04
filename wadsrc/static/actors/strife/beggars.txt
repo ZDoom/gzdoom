@@ -62,36 +62,31 @@ ACTOR Beggar : StrifeHumanoid
 
 // Beggars -----------------------------------------------------------------
 
-ACTOR Beggar1 : Beggar 141
+ACTOR Beggar1 : Beggar
 {
-	Game Strife
 	ConversationID 38, 37, 38
 }
 
 
-ACTOR Beggar2 : Beggar 155
+ACTOR Beggar2 : Beggar
 {
-	Game Strife
 	ConversationID 39, 38, 39
 }
 
 
-ACTOR Beggar3 : Beggar 156
+ACTOR Beggar3 : Beggar
 {
-	Game Strife
 	ConversationID 40, 39, 40
 }
 
 
-ACTOR Beggar4 : Beggar 157
+ACTOR Beggar4 : Beggar
 {
-	Game Strife
 	ConversationID 41, 40, 41
 }
 
 
-ACTOR Beggar5 : Beggar 158
+ACTOR Beggar5 : Beggar
 {
-	Game Strife
 	ConversationID 42, 41, 42
 }

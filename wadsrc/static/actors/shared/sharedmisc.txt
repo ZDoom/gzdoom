@@ -18,7 +18,7 @@ ACTOR Unknown
 
 // Route node for monster patrols -------------------------------------------
 
-ACTOR PatrolPoint 9024
+ACTOR PatrolPoint
 {
 	Radius 8
 	Height 8
@@ -31,7 +31,7 @@ ACTOR PatrolPoint 9024
 
 // A special to execute when a monster reaches a matching patrol point ------
 
-ACTOR PatrolSpecial 9047
+ACTOR PatrolSpecial
 {
 	Radius 8
 	Height 8
@@ -44,7 +44,7 @@ ACTOR PatrolSpecial 9047
 
 // Map spot ----------------------------------------------------------------
 
-ACTOR MapSpot 9001
+ACTOR MapSpot
 {
 	+NOBLOCKMAP
 	+NOSECTOR
@@ -55,13 +55,13 @@ ACTOR MapSpot 9001
 
 // same with different editor number for Legacy maps -----------------------
 
-ACTOR FS_Mapspot : Mapspot 5004
+ACTOR FS_Mapspot : Mapspot 
 {
 }
 
 // Map spot with gravity ---------------------------------------------------
 
-ACTOR MapSpotGravity : MapSpot 9013
+ACTOR MapSpotGravity : MapSpot
 {
 	-NOBLOCKMAP
 	-NOSECTOR
@@ -70,13 +70,13 @@ ACTOR MapSpotGravity : MapSpot 9013
 
 // Point Pushers -----------------------------------------------------------
 
-ACTOR PointPusher 5001
+ACTOR PointPusher
 {
 	+NOBLOCKMAP
 	+INVISIBLE
 }
 
-ACTOR PointPuller 5002
+ACTOR PointPuller
 {
 	+NOBLOCKMAP
 	+INVISIBLE
@@ -103,16 +103,14 @@ ACTOR RealGibs
 // a deh patch to change the gibs, since ZDoom actually creates a gib actor
 // for actors that get crushed instead of changing their state as Doom did.
 
-ACTOR Gibs : RealGibs 24
+ACTOR Gibs : RealGibs
 {
-	Game Doom
-	SpawnID 146
 	ClearFlags
 }
 
 // Needed for loading Build maps -------------------------------------------
 
-ACTOR CustomSprite 9988 native
+ACTOR CustomSprite native
 {
 	+NOBLOCKMAP
 	+NOGRAVITY
@@ -154,7 +152,7 @@ ACTOR FastProjectile native
 
 // Sector flag setter ------------------------------------------------------
 
-ACTOR SectorFlagSetter 9041 native
+ACTOR SectorFlagSetter native
 {
 	+NOBLOCKMAP
 	+NOGRAVITY

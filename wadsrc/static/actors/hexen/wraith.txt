@@ -1,10 +1,8 @@
 
 // Wraith -------------------------------------------------------------------
 
-ACTOR Wraith 34
+ACTOR Wraith
 {
-	Game Hexen
-	SpawnID 8
 	Health 150
 	PainChance 25
 	Speed 11
@@ -81,10 +79,8 @@ ACTOR Wraith 34
 
 // Buried wraith ------------------------------------------------------------
 
-ACTOR WraithBuried : Wraith 10011
+ACTOR WraithBuried : Wraith
 {
-	Game Hexen
-	SpawnID 9
 	Height 68
 	-SHOOTABLE
 	-SOLID
@@ -151,8 +147,6 @@ ACTOR WraithFX1
 
 ACTOR WraithFX2
 {
-	Game Hexen
-	SpawnID 108
 	Radius 2
 	Height 5
 	Mass 5
@@ -191,8 +185,6 @@ ACTOR WraithFX3
 
 ACTOR WraithFX4
 {
-	Game Hexen
-	SpawnID 106
 	Radius 2
 	Height 5
 	Mass 5
@@ -214,8 +206,6 @@ ACTOR WraithFX4
 
 ACTOR WraithFX5 : WraithFX4
 {
-	Game Hexen
-	SpawnID 107
 	States
 	{
 	Spawn:

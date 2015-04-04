@@ -79,10 +79,8 @@ ACTOR ThrustFloor native
 
 // Spike up -----------------------------------------------------------------
 
-ACTOR ThrustFloorUp : ThrustFloor 10091
+ACTOR ThrustFloorUp : ThrustFloor
 {
-	Game Hexen
-	SpawnID 104
 	+SOLID
 	+NOTELEPORT +FLOORCLIP
 	States
@@ -94,12 +92,10 @@ ACTOR ThrustFloorUp : ThrustFloor 10091
 
 // Spike down ---------------------------------------------------------------
 
-ACTOR ThrustFloorDown : ThrustFloor 10090
+ACTOR ThrustFloorDown : ThrustFloor
 {
-	Game Hexen
 	+NOTELEPORT +FLOORCLIP
 	+INVISIBLE
-	SpawnID 105
 	States
 	{
 	Spawn:

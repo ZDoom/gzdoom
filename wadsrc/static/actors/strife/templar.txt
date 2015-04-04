@@ -1,7 +1,6 @@
 
-ACTOR Templar 3003
+ACTOR Templar
 {
-	Game Strife
 	ConversationID 62, 61, 62
 	Health 300
 	Painchance 100

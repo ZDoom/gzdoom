@@ -12,10 +12,8 @@ ACTOR ClericWeaponPiece : WeaponPiece
 
 // Cleric Weapon Piece 1 ----------------------------------------------------
 
-ACTOR CWeaponPiece1 : ClericWeaponPiece 18
+ACTOR CWeaponPiece1 : ClericWeaponPiece
 {
-	Game Hexen
-	SpawnID 33
 	WeaponPiece.Number 1
 	States
 	{
@@ -27,10 +25,8 @@ ACTOR CWeaponPiece1 : ClericWeaponPiece 18
 
 // Cleric Weapon Piece 2 ----------------------------------------------------
 
-ACTOR CWeaponPiece2 : ClericWeaponPiece 19
+ACTOR CWeaponPiece2 : ClericWeaponPiece
 {
-	Game Hexen
-	SpawnID 34
 	WeaponPiece.Number 2
 	States
 	{
@@ -42,10 +38,8 @@ ACTOR CWeaponPiece2 : ClericWeaponPiece 19
 
 // Cleric Weapon Piece 3 ----------------------------------------------------
 
-ACTOR CWeaponPiece3 : ClericWeaponPiece 20
+ACTOR CWeaponPiece3 : ClericWeaponPiece
 {
-	Game Hexen
-	SpawnID 35
 	WeaponPiece.Number 3
 	States
 	{
@@ -72,7 +66,6 @@ ACTOR WraithvergeDrop
 
 ACTOR CWeapWraithverge : ClericWeapon native
 {
-	Game Hexen
 	Health 3
 	Weapon.SelectionOrder 3000
 	+WEAPON.PRIMARY_USES_BOTH

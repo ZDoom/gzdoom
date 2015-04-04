@@ -1,10 +1,8 @@
 
 // The Cleric's Serpent Staff -----------------------------------------------
 
-ACTOR CWeapStaff : ClericWeapon 10
+ACTOR CWeapStaff : ClericWeapon
 {
-	Game Hexen
-	SpawnID 32
 	Weapon.SelectionOrder 1600
 	Weapon.AmmoUse1 1
 	Weapon.AmmoGive1 25

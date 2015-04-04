@@ -1,9 +1,8 @@
 
 // Macil (version 1) ---------------------------------------------------------
 
-ACTOR Macil1 64
+ACTOR Macil1
 {
-	Game Strife
 	ConversationID 49, 48, 49
 	Health 95
 	Radius 20
@@ -58,9 +57,8 @@ ACTOR Macil1 64
 
 // Macil (version 2) ---------------------------------------------------------
 
-ACTOR Macil2 : Macil1 200
+ACTOR Macil2 : Macil1
 {
-	Game Strife
 	ConversationID 50, 49, 50
 	Painchance 200
 	+COUNTKILL

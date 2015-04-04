@@ -1,9 +1,8 @@
 
 // Alien Spectre 1 -----------------------------------------------------------
 
-ACTOR AlienSpectre1 : SpectralMonster 129
+ACTOR AlienSpectre1 : SpectralMonster
 {
-	Game Strife
 	ConversationID 67,-1,-1
 	Health 1000
 	Painchance 250
@@ -80,9 +79,8 @@ ACTOR AlienSpectre1 : SpectralMonster 129
 
 // Alien Spectre 2 -----------------------------------------------------------
 
-ACTOR AlienSpectre2 : AlienSpectre1 75
+ACTOR AlienSpectre2 : AlienSpectre1
 {
-	Game Strife
 	ConversationID 70
 	Health 1200
 	Painchance 50
@@ -101,9 +99,8 @@ ACTOR AlienSpectre2 : AlienSpectre1 75
 // Alien Spectre 3 ----------------------------------------------------------
 // This is the Oracle's personal spectre, so it's a little different.
 
-ACTOR AlienSpectre3 : AlienSpectre1 76
+ACTOR AlienSpectre3 : AlienSpectre1
 {
-	Game Strife
 	ConversationID 71,-1,-1
 	Health 1500
 	Painchance 50
@@ -143,9 +140,8 @@ ACTOR AlienSpectre3 : AlienSpectre1 76
 
 // Alien Spectre 4 -----------------------------------------------------------
 
-ACTOR AlienSpectre4 : AlienSpectre1 167
+ACTOR AlienSpectre4 : AlienSpectre1
 {
-	Game Strife
 	ConversationID 72,-1,-1
 	Health 1700
 	Painchance 50
@@ -164,9 +160,8 @@ ACTOR AlienSpectre4 : AlienSpectre1 167
 
 // Alien Spectre 5 -----------------------------------------------------------
 
-ACTOR AlienSpectre5 : AlienSpectre1 168
+ACTOR AlienSpectre5 : AlienSpectre1
 {
-	Game Strife
 	ConversationID 73,-1,-1
 	Health 2000
 	Painchance 50

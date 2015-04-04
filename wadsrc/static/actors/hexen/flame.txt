@@ -1,9 +1,7 @@
 // Temp Small Flame --------------------------------------------------------
 
-ACTOR FlameSmallTemp 10500
+ACTOR FlameSmallTemp
 {
-	Game Hexen
-	SpawnID 96
 	+NOTELEPORT
 	RenderStyle Add
 	States
@@ -21,10 +19,8 @@ ACTOR FlameSmallTemp 10500
 
 // Temp Large Flame ---------------------------------------------------------
 
-ACTOR FlameLargeTemp 10502
+ACTOR FlameLargeTemp
 {
-	Game Hexen
-	SpawnID 98
 	+NOTELEPORT
 	RenderStyle Add
 	States
@@ -52,10 +48,8 @@ ACTOR FlameLargeTemp 10502
 
 // Small Flame --------------------------------------------------------------
 
-ACTOR FlameSmall : SwitchableDecoration 10501
+ACTOR FlameSmall : SwitchableDecoration
 {
-	Game Hexen
-	SpawnID 97
 	+NOTELEPORT
 	+INVISIBLE
 	Radius 15
@@ -79,16 +73,12 @@ ACTOR FlameSmall : SwitchableDecoration 10501
 
 ACTOR FlameSmall2 : FlameSmall
 {
-	Game Hexen
-	SpawnID 66
 }	
 
 // Large Flame --------------------------------------------------------------
 
-ACTOR FlameLarge : SwitchableDecoration 10503
+ACTOR FlameLarge : SwitchableDecoration
 {
-	Game Hexen
-	SpawnID 99
 	+NOTELEPORT
 	+INVISIBLE
 	Radius 15
@@ -112,7 +102,5 @@ ACTOR FlameLarge : SwitchableDecoration 10503
 		
 ACTOR FlameLarge2 : FlameLarge
 {
-	Game Hexen
-	SpawnID 67
 }
 

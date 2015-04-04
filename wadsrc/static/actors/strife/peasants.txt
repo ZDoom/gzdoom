@@ -67,159 +67,137 @@ ACTOR Peasant : StrifeHumanoid
 
 // Peasant Variant 1 --------------------------------------------------------
 
-ACTOR Peasant1 : Peasant 3004
+ACTOR Peasant1 : Peasant
 {
-	Game Strife
 	ConversationID 6
 	Speed 4
 }
 
-ACTOR Peasant2 : Peasant 130
+ACTOR Peasant2 : Peasant
 {
-	Game Strife
 	ConversationID 7
 	Speed 5
 }
 
-ACTOR Peasant3 : Peasant 131
+ACTOR Peasant3 : Peasant
 {
-	Game Strife
 	ConversationID 8
 	Speed 5
 }
 
-ACTOR Peasant4 : Peasant 65
+ACTOR Peasant4 : Peasant
 {
-	Game Strife
 	Translation 0
 	ConversationID 9
 	Speed 7
 }
 
-ACTOR Peasant5 : Peasant 132
+ACTOR Peasant5 : Peasant
 {
-	Game Strife
 	Translation 0
 	ConversationID 10
 	Speed 7
 }
 
-ACTOR Peasant6 : Peasant 133
+ACTOR Peasant6 : Peasant
 {
-	Game Strife
 	Translation 0
 	ConversationID 11
 	Speed 7
 }
 
-ACTOR Peasant7 : Peasant 66
+ACTOR Peasant7 : Peasant
 {
-	Game Strife
 	Translation 2
 	ConversationID 12
 }
 
-ACTOR Peasant8 : Peasant 134
+ACTOR Peasant8 : Peasant
 {
-	Game Strife
 	Translation 2
 	ConversationID 13
 }
 
-ACTOR Peasant9 : Peasant 135
+ACTOR Peasant9 : Peasant
 {
-	Game Strife
 	Translation 2
 	ConversationID 14
 }
 
-ACTOR Peasant10 : Peasant 67
+ACTOR Peasant10 : Peasant
 {
-	Game Strife
 	Translation 1
 	ConversationID 15
 }
 
-ACTOR Peasant11 : Peasant 136
+ACTOR Peasant11 : Peasant
 {
-	Game Strife
 	Translation 1
 	ConversationID 16
 }
 
-ACTOR Peasant12 : Peasant 137
+ACTOR Peasant12 : Peasant
 {
-	Game Strife
 	Translation 1
 	ConversationID 17
 }
 
-ACTOR Peasant13 : Peasant 172
+ACTOR Peasant13 : Peasant
 {
-	Game Strife
 	Translation 3
 	ConversationID 18
 }
 
-ACTOR Peasant14 : Peasant 173
+ACTOR Peasant14 : Peasant
 {
-	Game Strife
 	Translation 3
 	ConversationID 19
 }
 
-ACTOR Peasant15 : Peasant 174
+ACTOR Peasant15 : Peasant
 {
-	Game Strife
 	Translation 3
 	ConversationID 20
 }
 
-ACTOR Peasant16 : Peasant 175
+ACTOR Peasant16 : Peasant
 {
-	Game Strife
 	Translation 5
 	ConversationID 21
 }
 
-ACTOR Peasant17 : Peasant 176
+ACTOR Peasant17 : Peasant
 {
-	Game Strife
 	Translation 5
 	ConversationID 22
 }
 
-ACTOR Peasant18 : Peasant 177
+ACTOR Peasant18 : Peasant
 {
-	Game Strife
 	Translation 5
 	ConversationID 23
 }
 
-ACTOR Peasant19 : Peasant 178
+ACTOR Peasant19 : Peasant
 {
-	Game Strife
 	Translation 4
 	ConversationID 24
 }
 
-ACTOR Peasant20 : Peasant 179
+ACTOR Peasant20 : Peasant
 {
-	Game Strife
 	Translation 4
 	ConversationID 25
 }
 
-ACTOR Peasant21 : Peasant 180
+ACTOR Peasant21 : Peasant
 {
-	Game Strife
 	Translation 4
 	ConversationID 26
 }
 
-ACTOR Peasant22 : Peasant 181
+ACTOR Peasant22 : Peasant
 {
-	Game Strife
 	Translation 6
 	ConversationID 27
 }

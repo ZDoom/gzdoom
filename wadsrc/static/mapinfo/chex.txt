@@ -1,5 +1,6 @@
 // MAPINFO for Chex Quest
 include "mapinfo/common.txt"
+include "mapinfo/doomitems.txt"
 
 gameinfo
 {
@@ -65,6 +66,64 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+}
+
+DoomEdNums
+{
+     5 = ChexBlueCard
+     6 = ChexYellowCard
+     8 = Zorchpack
+     9 = FlemoidusBipedicus
+    13 = ChexRedCard
+    17 = PhasingZorchPack
+    25 = ChexTallFlower2
+    28 = ChexTallFlower
+    30 = ChexCavernStalagmite
+    31 = ChexSubmergedPlant
+    32 = ChexCavernColumn
+    33 = ChexMineCart
+    34 = ChexChemicalFlask
+    35 = ChexGasTank
+    37 = ChexFlagOnPole
+    41 = ChexChemicalBurner
+    43 = ChexOrangeTree
+    44 = ChexSlimeFountain
+    45 = ChexCivilian1
+    47 = ChexAppleTree
+    48 = ChexSpaceship
+    54 = ChexBananaTree
+    55 = ChexLightColumn
+    56 = ChexCivilian2
+    57 = ChexCivilian3
+    82 = SuperLargeZorcher
+  2001 = LargeZorcher
+  2002 = RapidZorcher
+  2003 = ZorchPropulsor
+  2004 = PhasingZorcher
+  2005 = SuperBootspork
+  2006 = LAZDevice
+  2007 = MiniZorchRecharge
+  2008 = LargeZorchRecharge
+  2010 = PropulsorZorch
+  2011 = BowlOfFruit
+  2012 = BowlOfVegetables
+  2013 = SuperchargeBreakfast
+  2014 = GlassOfWater
+  2015 = SlimeRepellent
+  2018 = ChexArmor
+  2019 = SuperChexArmor
+  2025 = SlimeProofSuit
+  2026 = ComputerAreaMap
+  2028 = ChexLandingLight
+  2046 = PropulsorZorchPack
+  2047 = PhasingZorch
+  2048 = MiniZorchPack
+  2049 = LargeZorchPack
+  3001 = ArmoredFlemoidusBipedicus
+  3002 = FlemoidusCycloptisCommonus
+  3003 = Flembrane
+  3004 = FlemoidusCommonus
+  3006 = ChexSoul
 }
 
 skill baby

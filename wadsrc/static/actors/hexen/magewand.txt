@@ -3,7 +3,6 @@
 
 ACTOR MWeapWand : MageWeapon
 {
-	Game Hexen
 	Weapon.SelectionOrder 3600
 	Weapon.KickBack 0
 	Weapon.YAdjust 9

@@ -1,9 +1,8 @@
 
 // The Cleric's Flame Strike ------------------------------------------------
 
-ACTOR CWeapFlame : ClericWeapon 8009
+ACTOR CWeapFlame : ClericWeapon
 {
-	Game Hexen
 	+NOGRAVITY
 	Weapon.SelectionOrder 1000
 	Weapon.AmmoUse 4

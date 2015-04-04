@@ -3,7 +3,6 @@
 
 ACTOR Sigil : Weapon native
 {
-	Game Strife
 
 	Weapon.Kickback 100
 	Weapon.SelectionOrder 4000
@@ -123,9 +122,8 @@ ACTOR Sigil : Weapon native
 
 // Sigil 1 ------------------------------------------------------------------
 
-ACTOR Sigil1 : Sigil 77
+ACTOR Sigil1 : Sigil
 {
-	Game Strife
 	ConversationID 196, 190, 194
 	Inventory.Icon "I_SGL1"
 	Health 1
@@ -133,9 +131,8 @@ ACTOR Sigil1 : Sigil 77
 
 // Sigil 2 ------------------------------------------------------------------
 
-ACTOR Sigil2 : Sigil 78
+ACTOR Sigil2 : Sigil
 {
-	Game Strife
 	ConversationID 197, 191, 195
 	Inventory.Icon "I_SGL2"
 	Health 2
@@ -143,9 +140,8 @@ ACTOR Sigil2 : Sigil 78
 
 // Sigil 3 ------------------------------------------------------------------
 
-ACTOR Sigil3 : Sigil 79
+ACTOR Sigil3 : Sigil
 {
-	Game Strife
 	ConversationID 198, 192, 196
 	Inventory.Icon "I_SGL3"
 	Health 3
@@ -153,9 +149,8 @@ ACTOR Sigil3 : Sigil 79
 
 // Sigil 4 ------------------------------------------------------------------
 
-ACTOR Sigil4 : Sigil 80
+ACTOR Sigil4 : Sigil
 {
-	Game Strife
 	ConversationID 199, 193, 197
 	Inventory.Icon "I_SGL4"
 	Health 4
@@ -163,9 +158,8 @@ ACTOR Sigil4 : Sigil 80
 
 // Sigil 5 ------------------------------------------------------------------
 
-ACTOR Sigil5 : Sigil 81
+ACTOR Sigil5 : Sigil
 {
-	Game Strife
 	ConversationID 200, 194, 198
 	Inventory.Icon "I_SGL5"
 	Health 5

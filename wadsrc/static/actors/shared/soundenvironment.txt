@@ -1,5 +1,5 @@
 
-ACTOR SoundEnvironment 9048 native
+ACTOR SoundEnvironment native
 {
 	+NOSECTOR
 	+NOBLOCKMAP

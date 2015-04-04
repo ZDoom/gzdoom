@@ -4,10 +4,8 @@
 // Cyberdemon
 //
 //===========================================================================
-ACTOR Cyberdemon 16
+ACTOR Cyberdemon
 {
-	Game Doom
-	SpawnID 114
 	Health 4000
 	Radius 40
 	Height 110

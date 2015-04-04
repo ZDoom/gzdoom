@@ -5,9 +5,8 @@
 //
 //===========================================================================
 
-ACTOR BossBrain 88
+ACTOR BossBrain
 {
-	Game Doom
 	Health 250
 	Mass 10000000
 	PainChance 255
@@ -43,9 +42,8 @@ ACTOR BossBrain 88
 //
 //===========================================================================
 
-ACTOR BossEye 89
+ACTOR BossEye
 {
-	Game Doom
 	Height 32
 	+NOBLOCKMAP
 	+NOSECTOR
@@ -67,9 +65,8 @@ ACTOR BossEye 89
 //
 //===========================================================================
 
-ACTOR BossTarget : SpecialSpot 87
+ACTOR BossTarget : SpecialSpot
 {
-	Game Doom
 	Height 32
 	+NOBLOCKMAP
 	+NOSECTOR

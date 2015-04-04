@@ -3,7 +3,6 @@
 
 ACTOR PoisonBag
 {
-	Game Hexen
 	Radius 5
 	Height 5
 	+NOBLOCKMAP +NOGRAVITY
@@ -51,7 +50,6 @@ ACTOR FireBomb
 
 ACTOR ThrowingBomb
 {
-	Game Hexen
 	Health 48
 	Speed 12
 	Radius 8
@@ -94,10 +92,8 @@ ACTOR ThrowingBomb
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
-ACTOR ArtiPoisonBag : Inventory 8000 native
+ACTOR ArtiPoisonBag : Inventory native
 {
-	Game Hexen
-	SpawnID 72
 	+FLOATBOB
 	Inventory.DefMaxAmount
 	Inventory.PickupFlash "PickupFlash"
@@ -189,9 +185,8 @@ ACTOR PoisonCloud native
 
 // Poison Shroom ------------------------------------------------------------
 
-ACTOR ZPoisonShroom : PoisonBag 8104
+ACTOR ZPoisonShroom : PoisonBag
 {
-	Game Hexen
 	Radius 6
 	Height 20
 	PainChance 255

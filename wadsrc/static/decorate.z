@@ -10,93 +10,93 @@ ACTOR DynamicLight native
 }
 
 
-ACTOR PointLight : DynamicLight 9800
+ACTOR PointLight : DynamicLight
 {
 	DynamicLight.Type "Point"
 }
 
-ACTOR PointLightPulse : PointLight 9801
+ACTOR PointLightPulse : PointLight
 {
 	DynamicLight.Type "Pulse"
 }
 
-ACTOR PointLightFlicker : PointLight 9802
+ACTOR PointLightFlicker : PointLight
 {
 	DynamicLight.Type "Flicker"
 }
 
-ACTOR SectorPointLight : PointLight 9803
+ACTOR SectorPointLight : PointLight
 {
 	DynamicLight.Type "Sector"
 }
 
-ACTOR PointLightFlickerRandom : PointLight 9804
+ACTOR PointLightFlickerRandom : PointLight
 {
 	DynamicLight.Type "RandomFlicker"
 }
 
 // MISSILEMORE and MISSILEEVENMORE are used by the lights for additive and subtractive lights
 
-ACTOR PointLightAdditive : PointLight 9810
+ACTOR PointLightAdditive : PointLight
 {
    +MISSILEMORE
 }
 
-ACTOR PointLightPulseAdditive : PointLightPulse 9811
+ACTOR PointLightPulseAdditive : PointLightPulse
 {
    +MISSILEMORE
 }
 
-ACTOR PointLightFlickerAdditive : PointLightFlicker 9812
+ACTOR PointLightFlickerAdditive : PointLightFlicker
 {
    +MISSILEMORE
 }
 
-ACTOR SectorPointLightAdditive : SectorPointLight 9813
+ACTOR SectorPointLightAdditive : SectorPointLight
 {
    +MISSILEMORE
 }
 
-ACTOR PointLightFlickerRandomAdditive :PointLightFlickerRandom 9814
+ACTOR PointLightFlickerRandomAdditive :PointLightFlickerRandom
 {
    +MISSILEMORE
 }
 
-ACTOR PointLightSubtractive : PointLight 9820
+ACTOR PointLightSubtractive : PointLight
 {
    +MISSILEEVENMORE
 }
 
-ACTOR PointLightPulseSubtractive : PointLightPulse 9821
+ACTOR PointLightPulseSubtractive : PointLightPulse
 {
    +MISSILEEVENMORE
 }
 
-ACTOR PointLightFlickerSubtractive : PointLightFlicker 9822
+ACTOR PointLightFlickerSubtractive : PointLightFlicker
 {
    +MISSILEEVENMORE
 }
 
-ACTOR SectorPointLightSubtractive : SectorPointLight 9823
+ACTOR SectorPointLightSubtractive : SectorPointLight
 {
    +MISSILEEVENMORE
 }
 
-ACTOR PointLightFlickerRandomSubtractive : PointLightFlickerRandom 9824
+ACTOR PointLightFlickerRandomSubtractive : PointLightFlickerRandom
 {
    +MISSILEEVENMORE
 }
 
 
-ACTOR VavoomLight : DynamicLight 9825 native
+ACTOR VavoomLight : DynamicLight native
 {
 }
 
-ACTOR VavoomLightWhite : VavoomLight 1502 native
+ACTOR VavoomLightWhite : VavoomLight native
 {
 }
 
-ACTOR VavoomLightColor : VavoomLight 1503 native
+ACTOR VavoomLightColor : VavoomLight native
 {
 }
 

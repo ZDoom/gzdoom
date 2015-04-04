@@ -89,7 +89,6 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	bHasColorkey = false;
 	bIsTransparent = -1;
 	bExpandFlag = expandpatches;
-	mExpandX = mExpandY = 0;
 	tex->gl_info.SystemTexture[expandpatches] = this;
 }
 
@@ -199,20 +198,10 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		}
 	}
 
-	int exx, exy;
-	if (createexpanded)
-	{
-		exx = mExpandX;
-		exy = mExpandY;
-	}
-	else
-	{
-		exx = exy = 0;
-	}
-
+	int exx = bExpandFlag && createexpanded;
 
 	W = w = tex->GetWidth() + 2 * exx;
-	H = h = tex->GetHeight() + 2 * exy;
+	H = h = tex->GetHeight() + 2 * exx;
 
 
 	buffer=new unsigned char[W*(H+1)*4];
@@ -230,7 +219,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		if (imgCreate.Create(W, H))
 		{
 			memset(imgCreate.GetPixels(), 0, W * H * 4);
-			int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exy);
+			int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exx);
 			bmp.CopyPixelDataRGB(0, 0, imgCreate.GetPixels(), W, H, 4, W * 4, 0, CF_BGRA);
 			tex->CheckTrans(buffer, W*H, trans);
 			bIsTransparent = tex->gl_info.mIsTransparent;
@@ -238,7 +227,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	}
 	else if (translation<=0)
 	{
-		int trans = tex->CopyTrueColorPixels(&bmp, exx, exy);
+		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
 		tex->CheckTrans(buffer, W*H, trans);
 		bIsTransparent = tex->gl_info.mIsTransparent;
 	}
@@ -247,7 +236,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 		// When using translations everything must be mapped to the base palette.
 		// Since FTexture's method is doing exactly that by calling GetPixels let's use that here
 		// to do all the dirty work for us. ;)
-		tex->FTexture::CopyTrueColorPixels(&bmp, exx, exy);
+		tex->FTexture::CopyTrueColorPixels(&bmp, exx, exx);
 		bIsTransparent = 0;
 	}
 
@@ -271,7 +260,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 	if (tex->UseType==FTexture::TEX_Null) return NULL;		// Cannot register a NULL texture
 	if (mHwTexture == NULL)
 	{
-		mHwTexture = new FHardwareTexture(tex->GetWidth() + mExpandX*2, tex->GetHeight() + mExpandY*2, tex->gl_info.bNoCompress);
+		mHwTexture = new FHardwareTexture(tex->GetWidth() + bExpandFlag*2, tex->GetHeight() + bExpandFlag*2, tex->gl_info.bNoCompress);
 	}
 	return mHwTexture; 
 }
@@ -454,7 +443,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			}
 		}
 	}
-	mBaseLayer = ValidateSysTexture(tx, true);
+	mBaseLayer = ValidateSysTexture(tx, expanded);
 
 
 	mWidth = tx->GetWidth();
@@ -467,7 +456,11 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mSpriteU[1] = mSpriteV[1] = 1.f;
 
 	FTexture *basetex = tx->GetRedirect(false);
-	mBaseLayer = ValidateSysTexture(basetex, expanded);
+	// allow the redirect only if the textute is not expanded or the scale matches.
+	if (!expanded || (tx->xScale == basetex->xScale && tx->yScale == basetex->yScale))
+	{
+		mBaseLayer = ValidateSysTexture(basetex, expanded);
+	}
 
 	float fxScale = FIXED2FLOAT(tx->xScale);
 	float fyScale = FIXED2FLOAT(tx->yScale);
@@ -481,20 +474,17 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	if (expanded)
 	{
 		// a little adjustment to make sprites look better with texture filtering:
-		// create a 1 pixel wide empty frame around them. The frame must be the same size as the texture scale so that
-		// position calculations remain scale independent.
+		// create a 1 pixel wide empty frame around them.
 		int trim[4];
 		bool trimmed = TrimBorders(trim);	// get the trim size before adding the empty frame
 
-		int intscaleX = MAX(1, tex->xScale >> FRACBITS);
-		int intscaleY = MAX(1, tex->yScale >> FRACBITS);
 		int oldwidth = mWidth;
 		int oldheight = mHeight;
 
-		mWidth+=2*intscaleX;
-		mHeight+=2*intscaleY;
-		mLeftOffset+=intscaleX;
-		mTopOffset+=intscaleY;
+		mWidth+=2;
+		mHeight+=2;
+		mLeftOffset+=1;
+		mTopOffset+=1;
 		mRenderWidth = mRenderWidth * mWidth / oldwidth;
 		mRenderHeight = mRenderHeight * mHeight / oldheight;
 
@@ -793,14 +783,30 @@ void FMaterial::BindToFrameBuffer()
 
 FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 {
+again:
 	if (tex	&& tex->UseType!=FTexture::TEX_Null)
 	{
+		if (tex->gl_info.bNoExpand) expand = false;
+
 		FMaterial *gltex = tex->gl_info.Material[expand];
 		if (gltex == NULL) 
 		{
-			if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)// || tex->xScale != FRACUNIT && tex->yScale != FRACUNIT)
+			if (expand)
 			{
-				expand = false;
+				if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)
+				{
+					tex->gl_info.bNoExpand = true;
+					goto again;
+				}
+				if (tex->gl_info.Brightmap != NULL &&
+					(tex->GetWidth() != tex->gl_info.Brightmap->GetWidth() ||
+					tex->GetHeight() != tex->gl_info.Brightmap->GetHeight())
+					)
+				{
+					// do not expand if the brightmap's size differs.
+					tex->gl_info.bNoExpand = true;
+					goto again;
+				}
 			}
 			gltex = new FMaterial(tex, expand);
 		}

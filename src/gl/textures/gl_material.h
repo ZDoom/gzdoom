@@ -66,8 +66,6 @@ private:
 
 	bool bHasColorkey;		// only for hires
 	bool bExpandFlag;
-	int mExpandX;
-	int mExpandY;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 
@@ -80,11 +78,6 @@ public:
 	~FGLTexture();
 
 	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded = true);
-	void SetExpand(int x, int y) 
-	{
-		mExpandX = x;
-		mExpandY = y;
-	}
 
 	void Clean(bool all);
 	int Dump(int i);

@@ -352,6 +352,7 @@ public:
 		bool bDisableFullbright:1;				// This texture will not be displayed as fullbright sprite
 		bool bNoFilter:1;
 		bool bNoCompress:1;
+		bool bNoExpand:1;
 
 		MiscGLInfo() throw ();
 		~MiscGLInfo();

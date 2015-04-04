@@ -75,13 +75,13 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
-	fixed_t			tx;
-	int				x1,y1,x2,y2;
+	float			tx;
+	float			x1,y1,x2,y2;
 	float			scale;
-	fixed_t			scalex;
+	float			scalex;
 	float			ftexturemid;
-	                         // 4:3	     16:9          16:10         17:10           5:4
-	static fixed_t xratio[] = {FRACUNIT, FRACUNIT*3/4, FRACUNIT*5/6, FRACUNIT*40/51, FRACUNIT};
+	                      // 4:3  16:9   16:10  17:10    5:4
+	static float xratio[] = {1.f, 3.f/4, 5.f/6, 40.f/51, 1.f};
 	
 	// [BB] In the HUD model step we just render the model and break out. 
 	if ( hudModelStep )
@@ -100,30 +100,34 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 
 	gl_RenderState.SetMaterial(tex, CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
 
-	int vw = viewwidth;
-	int vh = viewheight;
+	float vw = (float)viewwidth;
+	float vh = (float)viewheight;
+
+	FloatRect r;
+	tex->GetSpriteRect(&r);
 
 	// calculate edges of the shape
 	scalex = xratio[WidescreenRatio] * vw / 320;
 
-	tx = sx - ((160 + tex->GetScaledLeftOffset())<<FRACBITS);
-	x1 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
+	tx = FIXED2FLOAT(sx) - (160 - r.left);
+	x1 = tx * scalex + vw/2;
 	if (x1 > vw)	return; // off the right side
-	x1+=viewwindowx;
+	x1 += viewwindowx;
 
-	tx +=  tex->TextureWidth() << FRACBITS;
-	x2 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
+	tx += r.width;
+	x2 = tx * scalex + vw / 2;
 	if (x2 < 0) return; // off the left side
-	x2+=viewwindowx;
+	x2 += viewwindowx;
+
 
 	// killough 12/98: fix psprite positioning problem
-	ftexturemid = 100.f - FIXED2FLOAT(sy) + tex->GetScaledTopOffsetFloat();
+	ftexturemid = 100.f - FIXED2FLOAT(sy) - r.top;
 
 	AWeapon * wi=player->ReadyWeapon;
 	if (wi && wi->YAdjust)
 	{
 		float fYAd = FIXED2FLOAT(wi->YAdjust);
-		if (screenblocks>=11)
+		if (screenblocks >= 11)
 		{
 			ftexturemid -= fYAd;
 		}
@@ -133,23 +137,23 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 		}
 	}
 
-	scale =  (SCREENHEIGHT*vw)/ (SCREENWIDTH * 200.0f);    
-	y1 = viewwindowy + (vh >> 1) - (int)(ftexturemid * scale);
-	y2 = y1 + (int)((float)tex->TextureHeight() * scale) + 1;
+	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
+	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
+	y2 = y1 + (r.height * scale) + 1;
 
 	if (!mirror)
 	{
-		fU1=tex->GetUL();
-		fV1=tex->GetVT();
-		fU2=tex->GetUR();
-		fV2=tex->GetVB();
+		fU1=tex->GetSpriteUL();
+		fV1=tex->GetSpriteVT();
+		fU2=tex->GetSpriteUR();
+		fV2=tex->GetSpriteVB();
 	}
 	else
 	{
-		fU2=tex->GetUL();
-		fV1=tex->GetVT();
-		fU1=tex->GetUR();
-		fV2=tex->GetVB();
+		fU2=tex->GetSpriteUL();
+		fV1=tex->GetSpriteVT();
+		fU1=tex->GetSpriteUR();
+		fV2=tex->GetSpriteVB();
 	}
 
 	if (tex->GetTransparent() || OverrideShader != -1)

@@ -3,7 +3,6 @@
 
 ACTOR EntityNest
 {
-	ConversationID 76,-1,-1
 	Radius 84
 	Height 47
 	+SOLID
@@ -21,7 +20,6 @@ ACTOR EntityNest
 
 ACTOR EntityPod
 {
-	ConversationID 77,-1,-1
 	Radius 25
 	Height 91
 	+SOLID
@@ -50,7 +48,6 @@ ACTOR EntityPod
 
 ACTOR EntityBoss : SpectralMonster
 {
-	ConversationID 74,-1,-1
 	Health 2500
 	Painchance 255
 	Speed 13
@@ -129,7 +126,6 @@ ACTOR EntityBoss : SpectralMonster
 
 ACTOR EntitySecond : SpectralMonster
 {
-	ConversationID 75,-1,-1
 	Health 990
 	Painchance 255
 	Speed 14

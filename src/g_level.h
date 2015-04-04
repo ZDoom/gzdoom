@@ -106,6 +106,7 @@ struct FMapInfoParser
 	void ParseIntermission();
 	void ParseDoomEdNums();
 	void ParseSpawnNums();
+	void ParseConversationIDs();
 	void ParseAMColors(bool);
 	FName CheckEndSequence();
 	FName ParseEndGame();

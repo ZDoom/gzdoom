@@ -80,7 +80,6 @@ ACTOR Acolyte : StrifeHumanoid
 
 ACTOR AcolyteTan : Acolyte
 {
-	ConversationID 53, 52, 53
 	+MISSILEMORE +MISSILEEVENMORE
 	DropItem "ClipOfBullets"
 }
@@ -89,7 +88,6 @@ ACTOR AcolyteTan : Acolyte
 
 ACTOR AcolyteRed : Acolyte
 {
-	ConversationID 54, 53, 54
 	+MISSILEMORE +MISSILEEVENMORE
 	Translation 0
 }
@@ -98,7 +96,6 @@ ACTOR AcolyteRed : Acolyte
 
 ACTOR AcolyteRust : Acolyte
 {
-	ConversationID 55, 54, 55
 	+MISSILEMORE +MISSILEEVENMORE
 	Translation 1
 }
@@ -107,7 +104,6 @@ ACTOR AcolyteRust : Acolyte
 
 ACTOR AcolyteGray : Acolyte
 {
-	ConversationID 56, 55, 56
 	+MISSILEMORE +MISSILEEVENMORE
 	Translation 2
 }
@@ -116,7 +112,6 @@ ACTOR AcolyteGray : Acolyte
 
 ACTOR AcolyteDGreen : Acolyte
 {
-	ConversationID 57, 56, 57
 	+MISSILEMORE +MISSILEEVENMORE
 	Translation 3
 }
@@ -125,7 +120,6 @@ ACTOR AcolyteDGreen : Acolyte
 
 ACTOR AcolyteGold : Acolyte
 {
-	ConversationID 58, 57, 58
 	+MISSILEMORE +MISSILEEVENMORE
 	Translation 4
 }
@@ -135,7 +129,6 @@ ACTOR AcolyteGold : Acolyte
 ACTOR AcolyteLGreen : Acolyte
 {
 	Health 60
-	ConversationID 59, -1, -1
 	Translation 5
 }
 
@@ -144,7 +137,6 @@ ACTOR AcolyteLGreen : Acolyte
 ACTOR AcolyteBlue : Acolyte
 {
 	Health 60
-	ConversationID 60, -1, -1
 	Translation 6
 }
 
@@ -152,7 +144,6 @@ ACTOR AcolyteBlue : Acolyte
 
 ACTOR AcolyteShadow : Acolyte
 {
-	ConversationID 61, 58, 59
 	+MISSILEMORE
 	DropItem "ClipOfBullets"
 	States
@@ -171,7 +162,6 @@ ACTOR AcolyteShadow : Acolyte
 
 ACTOR AcolyteToBe : Acolyte
 {
-	ConversationID 29, -1, -1
 	Health 61
 	Radius 20
 	Height 56

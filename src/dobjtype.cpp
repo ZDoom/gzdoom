@@ -328,6 +328,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->Class = type;
 		info->GameFilter = GAME_Any;
 		info->SpawnID = 0;
+		info->ConversationID = 0;
 		info->DoomEdNum = -1;
 		info->OwnedStates = NULL;
 		info->NumOwnedStates = 0;
@@ -423,6 +424,7 @@ void PClass::InitializeActorInfo ()
 	info->Class = this;
 	info->GameFilter = GAME_Any;
 	info->SpawnID = 0;
+	info->ConversationID = 0;
 	info->DoomEdNum = -1;
 	info->OwnedStates = NULL;
 	info->NumOwnedStates = 0;

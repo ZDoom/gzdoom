@@ -49,18 +49,7 @@
 #include "i_system.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-TMap<int, const PClass *> SpawnableThings;
-
-struct MapinfoSpawnItem
-{
-	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.
-	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
-	FString filename;
-	int linenum;
-};
-
-typedef TMap<int, MapinfoSpawnItem> SpawnMap;
-static SpawnMap SpawnablesFromMapinfo;
+FClassMap SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
@@ -543,22 +532,32 @@ const PClass *P_GetSpawnableType(int spawnnum)
 	return NULL;
 }
 
-typedef TMap<int, const PClass *>::Pair SpawnablePair;
+struct MapinfoSpawnItem
+{
+	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.
+	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
+	FString filename;
+	int linenum;
+};
+
+typedef TMap<int, MapinfoSpawnItem> SpawnMap;
+static SpawnMap SpawnablesFromMapinfo;
+static SpawnMap ConversationIDsFromMapinfo;
 
 static int STACK_ARGS SpawnableSort(const void *a, const void *b)
 {
-	return (*((SpawnablePair **)a))->Key - (*((SpawnablePair **)b))->Key;
+	return (*((FClassMap::Pair **)a))->Key - (*((FClassMap::Pair **)b))->Key;
 }
 
-CCMD (dumpspawnables)
+static void DumpClassMap(FClassMap &themap)
 {
-	TMapIterator<int, const PClass *> it(SpawnableThings);
-	SpawnablePair *pair, **allpairs;
+	FClassMap::Iterator it(themap);
+	FClassMap::Pair *pair, **allpairs;
 	int i = 0;
 
 	// Sort into numerical order, since their arrangement in the map can
 	// be in an unspecified order.
-	allpairs = new TMap<int, const PClass *>::Pair *[SpawnableThings.CountUsed()];
+	allpairs = new FClassMap::Pair *[themap.CountUsed()];
 	while (it.NextPair(pair))
 	{
 		allpairs[i++] = pair;
@@ -572,7 +571,18 @@ CCMD (dumpspawnables)
 	delete[] allpairs;
 }
 
-void FMapInfoParser::ParseSpawnNums()
+CCMD(dumpspawnables)
+{
+	DumpClassMap(SpawnableThings);
+}
+
+CCMD (dumpconversationids)
+{
+	DumpClassMap(StrifeTypes);
+}
+
+
+static void ParseSpawnMap(FScanner &sc, SpawnMap & themap, const char *descript)
 {
 	TMap<int, bool> defined;
 	int error = 0;
@@ -581,7 +591,6 @@ void FMapInfoParser::ParseSpawnNums()
 
 	editem.filename = sc.ScriptName;
 
-	ParseOpenBrace();
 	while (true)
 	{
 		if (sc.CheckString("}")) return;
@@ -594,18 +603,18 @@ void FMapInfoParser::ParseSpawnNums()
 			bool *def = defined.CheckKey(ednum);
 			if (def != NULL)
 			{
-				sc.ScriptMessage("Spawn Number %d defined more than once", ednum);
+				sc.ScriptMessage("%s %d defined more than once", descript, ednum);
 				error++;
 			}
 			else if (ednum < 0)
 			{
-				sc.ScriptMessage("Spawn Number must be positive, got %d", ednum);
+				sc.ScriptMessage("%s must be positive, got %d", descript, ednum);
 				error++;
 			}
 			defined[ednum] = true;
 			editem.classname = sc.String;
 
-			SpawnablesFromMapinfo.Insert(ednum, editem);
+			themap.Insert(ednum, editem);
 		}
 		else
 		{
@@ -614,14 +623,27 @@ void FMapInfoParser::ParseSpawnNums()
 	}
 	if (error > 0)
 	{
-		sc.ScriptError("%d errors encountered in SpawnNum definition");
+		sc.ScriptError("%d errors encountered in %s definition", error, descript);
 	}
 }
 
-void InitSpawnablesFromMapinfo()
+void FMapInfoParser::ParseSpawnNums()
 {
-	SpawnableThings.Clear();
-	SpawnMap::Iterator it(SpawnablesFromMapinfo);
+	ParseOpenBrace();
+	ParseSpawnMap(sc, SpawnablesFromMapinfo, "Spawn number");
+}
+
+void FMapInfoParser::ParseConversationIDs()
+{
+	ParseOpenBrace();
+	ParseSpawnMap(sc, ConversationIDsFromMapinfo, "Conversation ID");
+}
+
+
+void InitClassMap(FClassMap &themap, SpawnMap &thedata)
+{
+	themap.Clear();
+	SpawnMap::Iterator it(thedata);
 	SpawnMap::Pair *pair;
 	int error = 0;
 
@@ -638,11 +660,17 @@ void InitSpawnablesFromMapinfo()
 				error++;
 			}
 		}
-		SpawnableThings.Insert(pair->Key, cls);
+		themap.Insert(pair->Key, cls);
 	}
 	if (error > 0)
 	{
 		I_Error("%d unknown actor classes found", error);
 	}
-	SpawnablesFromMapinfo.Clear();	// we do not need this any longer
+	thedata.Clear();	// we do not need this any longer
+}
+
+void InitSpawnablesFromMapinfo()
+{
+	InitClassMap(SpawnableThings, SpawnablesFromMapinfo);
+	InitClassMap(StrifeTypes, ConversationIDsFromMapinfo);
 }

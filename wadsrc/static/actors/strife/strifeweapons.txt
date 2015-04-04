@@ -99,7 +99,6 @@ ACTOR StrifeZap1
 
 ACTOR ElectricBolt : StrifeZap1
 {
-	ConversationID 102,-1,-1
 	Speed 30
 	Radius 10
 	Height 10
@@ -124,7 +123,6 @@ ACTOR ElectricBolt : StrifeZap1
 
 ACTOR PoisonBolt native
 {
-	ConversationID 102,-1,-1
 	Speed 30
 	Radius 10
 	Height 10
@@ -152,7 +150,6 @@ ACTOR PoisonBolt native
 ACTOR StrifeCrossbow : StrifeWeapon
 {
 	+FLOORCLIP
-	ConversationID 194, 188, 192
 	Weapon.SelectionOrder 1200
 	+WEAPON.NOALERT
 	Weapon.AmmoUse1 1
@@ -237,7 +234,6 @@ ACTOR StrifeCrossbow2 : StrifeCrossbow
 
 actor AssaultGun : StrifeWeapon
 {
-	ConversationID 188, 182, 186
 	+FLOORCLIP
 	Weapon.SelectionOrder 600
 	Weapon.AmmoUse1 1
@@ -275,7 +271,6 @@ actor AssaultGun : StrifeWeapon
 
 ACTOR AssaultGunStanding : WeaponGiver
 {
-	ConversationID 189, 183, 187
 	DropItem "AssaultGun"
 	Inventory.PickupMessage "$TXT_ASSAULTGUN"
 	States
@@ -292,7 +287,6 @@ ACTOR AssaultGunStanding : WeaponGiver
 
 ACTOR MiniMissileLauncher : StrifeWeapon
 {
-	ConversationID 192, 186, 190
 	+FLOORCLIP
 	Weapon.SelectionOrder 1800
 	Weapon.AmmoUse1 1
@@ -335,7 +329,6 @@ ACTOR MiniMissileLauncher : StrifeWeapon
 
 ACTOR RocketTrail
 {
-	ConversationID 51,-1,-1
 	+NOBLOCKMAP
 	+NOGRAVITY
 	RenderStyle Translucent
@@ -365,7 +358,6 @@ ACTOR MiniMissilePuff : StrifePuff
 
 ACTOR MiniMissile
 {
-	ConversationID 99,-1,-1
 	Speed 20
 	Radius 10
 	Height 14
@@ -396,7 +388,6 @@ ACTOR MiniMissile
 
 ACTOR FlameThrower : StrifeWeapon
 {
-	ConversationID 190, 184, 188
 	+FLOORCLIP
 	Weapon.SelectionOrder 2100
 	Weapon.Kickback 0
@@ -474,7 +465,6 @@ ACTOR FlameMissile
 
 ACTOR Mauler : StrifeWeapon
 {
-	ConversationID 193, 187, 191
 	+FLOORCLIP
 	Weapon.SelectionOrder 300
 	Weapon.AmmoUse1 20
@@ -633,7 +623,6 @@ ACTOR MaulerTorpedoWave
 
 ACTOR HEGrenade
 {
-	ConversationID 106,-1,-1
 	Speed 15
 	Radius 13
 	Height 13
@@ -670,7 +659,6 @@ ACTOR HEGrenade
 
 ACTOR PhosphorousGrenade
 {
-	ConversationID 107,-1,-1
 	Speed 15
 	Radius 13
 	Height 13
@@ -742,7 +730,6 @@ ACTOR PhosphorousFire native
 
 ACTOR StrifeGrenadeLauncher : StrifeWeapon
 {
-	ConversationID 195, 189, 193
 	+FLOORCLIP
 	Weapon.SelectionOrder 2400
 	Weapon.AmmoUse1 1

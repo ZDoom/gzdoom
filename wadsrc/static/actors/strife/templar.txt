@@ -1,7 +1,6 @@
 
 ACTOR Templar
 {
-	ConversationID 62, 61, 62
 	Health 300
 	Painchance 100
 	Speed 8

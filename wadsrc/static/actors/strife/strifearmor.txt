@@ -1,7 +1,6 @@
 
 ACTOR MetalArmor : BasicArmorPickup
 {
-	ConversationID 129, 125, 128
 	Radius 20
 	Height 16
 	+FLOORCLIP 
@@ -23,7 +22,6 @@ ACTOR MetalArmor : BasicArmorPickup
 
 ACTOR LeatherArmor : BasicArmorPickup
 {
-	ConversationID 130, 126, 129
 	Radius 20
 	Height 16
 	+FLOORCLIP 

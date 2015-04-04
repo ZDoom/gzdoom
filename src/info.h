@@ -266,7 +266,8 @@ struct FActorInfo
 	FActorInfo *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
-	BYTE SpawnID;
+	WORD SpawnID;
+	WORD ConversationID;
 	SWORD DoomEdNum;
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;

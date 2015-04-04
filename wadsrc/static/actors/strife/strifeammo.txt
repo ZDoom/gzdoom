@@ -3,7 +3,6 @@
 ACTOR HEGrenadeRounds : Ammo
 {
 	+FLOORCLIP
-	ConversationID 177, 170, 174
 	Inventory.Amount 6
 	Inventory.MaxAmount 30
 	Ammo.BackpackAmount 6
@@ -24,7 +23,6 @@ ACTOR HEGrenadeRounds : Ammo
 ACTOR PhosphorusGrenadeRounds : Ammo
 {
 	+FLOORCLIP
-	ConversationID 178, 171, 175
 	Inventory.Amount 4
 	Inventory.MaxAmount 16
 	Ammo.BackpackAmount 4
@@ -44,7 +42,6 @@ ACTOR PhosphorusGrenadeRounds : Ammo
 
 ACTOR ClipOfBullets : Ammo
 {
-	ConversationID 179, 173, 177
 	+FLOORCLIP
 	Inventory.Amount 10
 	Inventory.MaxAmount 250
@@ -65,7 +62,6 @@ ACTOR ClipOfBullets : Ammo
 
 ACTOR BoxOfBullets : ClipOfBullets
 {
-	ConversationID 180, 174, 178
 	Inventory.Amount 50
 	Tag "$TAG_BOXOFBULLETS"
 	Inventory.PickupMessage "$TXT_BOXOFBULLETS"
@@ -81,7 +77,6 @@ ACTOR BoxOfBullets : ClipOfBullets
 
 ACTOR MiniMissiles : Ammo
 {
-	ConversationID 181, 175, 179
 	+FLOORCLIP
 	Inventory.Amount 4
 	Inventory.MaxAmount 100
@@ -102,7 +97,6 @@ ACTOR MiniMissiles : Ammo
 
 ACTOR CrateOfMissiles : MiniMissiles
 {
-	ConversationID 182, 176, 180
 	Inventory.Amount 20
 	Tag "$TAG_CRATEOFMISSILES"
 	Inventory.PickupMessage "$TXT_CRATEOFMISSILES"
@@ -118,7 +112,6 @@ ACTOR CrateOfMissiles : MiniMissiles
 
 ACTOR EnergyPod : Ammo
 {
-	ConversationID 183, 177, 181
 	+FLOORCLIP
 	Inventory.Amount 20
 	Inventory.MaxAmount 400
@@ -140,7 +133,6 @@ ACTOR EnergyPod : Ammo
 
 ACTOR EnergyPack : EnergyPod
 {
-	ConversationID 184, 178, 182
 	Inventory.Amount 100
 	Tag "$TAG_ENERGYPACK"
 	Inventory.PickupMessage "$TXT_ENERGYPACK"
@@ -156,7 +148,6 @@ ACTOR EnergyPack : EnergyPod
 
 ACTOR PoisonBolts : Ammo
 {
-	ConversationID 185, 179, 183
 	+FLOORCLIP
 	Inventory.Amount 10
 	Inventory.MaxAmount 25
@@ -177,7 +168,6 @@ ACTOR PoisonBolts : Ammo
 
 ACTOR ElectricBolts : Ammo
 {
-	ConversationID 186, 180, 184
 	+FLOORCLIP
 	Inventory.Amount 20
 	Inventory.MaxAmount 50
@@ -198,7 +188,6 @@ ACTOR ElectricBolts : Ammo
 
 ACTOR AmmoSatchel : BackpackItem
 {
-	ConversationID 187, 181, 184
 	+FLOORCLIP
 	Inventory.Icon "I_BKPK"
 	Tag "$TAG_AMMOSATCHEL"

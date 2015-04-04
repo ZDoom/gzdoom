@@ -40,7 +40,6 @@ ACTOR StrifeHumanoid
 
 ACTOR FireDroplet
 {
-	ConversationID 297, -1, -1
 	+NOBLOCKMAP
 	+NOCLIP
 	States

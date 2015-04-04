@@ -124,7 +124,6 @@ ACTOR Sigil : Weapon native
 
 ACTOR Sigil1 : Sigil
 {
-	ConversationID 196, 190, 194
 	Inventory.Icon "I_SGL1"
 	Health 1
 }
@@ -133,7 +132,6 @@ ACTOR Sigil1 : Sigil
 
 ACTOR Sigil2 : Sigil
 {
-	ConversationID 197, 191, 195
 	Inventory.Icon "I_SGL2"
 	Health 2
 }
@@ -142,7 +140,6 @@ ACTOR Sigil2 : Sigil
 
 ACTOR Sigil3 : Sigil
 {
-	ConversationID 198, 192, 196
 	Inventory.Icon "I_SGL3"
 	Health 3
 }
@@ -151,7 +148,6 @@ ACTOR Sigil3 : Sigil
 
 ACTOR Sigil4 : Sigil
 {
-	ConversationID 199, 193, 197
 	Inventory.Icon "I_SGL4"
 	Health 4
 }
@@ -160,7 +156,6 @@ ACTOR Sigil4 : Sigil
 
 ACTOR Sigil5 : Sigil
 {
-	ConversationID 200, 194, 198
 	Inventory.Icon "I_SGL5"
 	Health 5
 }

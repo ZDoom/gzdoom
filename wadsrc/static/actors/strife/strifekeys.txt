@@ -10,7 +10,6 @@ ACTOR StrifeKey : Key
 
 ACTOR BaseKey : StrifeKey
 {
-	ConversationID 133, 129, 132
 	Inventory.Icon "I_FUSL"
 	Tag "$TAG_BASEKEY"
 	Inventory.PickupMessage "$TXT_BASEKEY"
@@ -27,7 +26,6 @@ ACTOR BaseKey : StrifeKey
 
 ACTOR GovsKey : StrifeKey
 {
-	ConversationID 134, 130, 133
 	Inventory.Icon "I_REBL"
 	Tag "$TAG_GOVSKEY"
 	Inventory.PickupMessage "$TXT_GOVSKEY"
@@ -44,7 +42,6 @@ ACTOR GovsKey : StrifeKey
 
 ACTOR Passcard : StrifeKey
 {
-	ConversationID 135, 131, 134
 	Inventory.Icon "I_TPAS"
 	Tag "$TAG_PASSCARD"
 	Inventory.PickupMessage "$TXT_PASSCARD"
@@ -61,7 +58,6 @@ ACTOR Passcard : StrifeKey
 
 ACTOR IDBadge : StrifeKey
 {
-	ConversationID 136, 132, 135
 	Inventory.Icon "I_CRD1"
 	Tag "$TAG_IDBADGE"
 	Inventory.PickupMessage "$TXT_IDBADGE"
@@ -78,7 +74,6 @@ ACTOR IDBadge : StrifeKey
 
 ACTOR PrisonKey : StrifeKey
 {
-	ConversationID 137, 133, 136
 	Inventory.Icon "I_PRIS"
 	Tag "$TAG_PRISONKEY"
 	Inventory.GiveQuest 11
@@ -96,7 +91,6 @@ ACTOR PrisonKey : StrifeKey
 
 ACTOR SeveredHand : StrifeKey
 {
-	ConversationID 138, 134, 137
 	Inventory.Icon "I_HAND"
 	Tag "$TAG_SEVEREDHAND"
 	Inventory.GiveQuest 12
@@ -114,7 +108,6 @@ ACTOR SeveredHand : StrifeKey
 
 ACTOR Power1Key : StrifeKey
 {
-	ConversationID 139, 135, 138
 	Inventory.Icon "I_PWR1"
 	Tag "$TAG_POWER1KEY"
 	Inventory.PickupMessage "$TXT_POWER1KEY"
@@ -131,7 +124,6 @@ ACTOR Power1Key : StrifeKey
 
 ACTOR Power2Key : StrifeKey
 {
-	ConversationID 140, 136, 139
 	Inventory.Icon "I_PWR2"
 	Tag "$TAG_POWER2KEY"
 	Inventory.PickupMessage "$TXT_POWER2KEY"
@@ -148,7 +140,6 @@ ACTOR Power2Key : StrifeKey
 
 ACTOR Power3Key : StrifeKey
 {
-	ConversationID 141, 137, 140
 	Inventory.Icon "I_PWR3"
 	Tag "$TAG_POWER3KEY"
 	Inventory.PickupMessage "$TXT_POWER3KEY"
@@ -165,7 +156,6 @@ ACTOR Power3Key : StrifeKey
 
 ACTOR GoldKey : StrifeKey
 {
-	ConversationID 142, 138, 141
 	Inventory.Icon "I_KY1G"
 	Tag "$TAG_GOLDKEY"
 	Inventory.PickupMessage "$TXT_GOLDKEY"
@@ -182,7 +172,6 @@ ACTOR GoldKey : StrifeKey
 
 ACTOR IDCard : StrifeKey
 {
-	ConversationID 143, 139, 142
 	Inventory.Icon "I_CRD2"
 	Tag "$TAG_IDCARD"
 	Inventory.PickupMessage "$TXT_IDCARD"
@@ -199,7 +188,6 @@ ACTOR IDCard : StrifeKey
 
 ACTOR SilverKey : StrifeKey
 {
-	ConversationID 144, 140, 143
 	Inventory.Icon "I_KY2S"
 	Tag "$TAG_SILVERKEY"
 	Inventory.PickupMessage "$TXT_SILVERKEY"
@@ -216,7 +204,6 @@ ACTOR SilverKey : StrifeKey
 
 ACTOR OracleKey : StrifeKey
 {
-	ConversationID 145, 141, 144
 	Inventory.Icon "I_ORAC"
 	Tag "$TAG_ORACLEKEY"
 	Inventory.PickupMessage "$TXT_ORACLEKEY"
@@ -233,7 +220,6 @@ ACTOR OracleKey : StrifeKey
 
 ACTOR MilitaryID : StrifeKey
 {
-	ConversationID 146, 142, 145
 	Inventory.Icon "I_GYID"
 	Tag "$TAG_MILITARYID"
 	Inventory.PickupMessage "$TXT_MILITARYID"
@@ -250,7 +236,6 @@ ACTOR MilitaryID : StrifeKey
 
 ACTOR OrderKey : StrifeKey
 {
-	ConversationID 147, 143, 146
 	Inventory.Icon "I_FUBR"
 	Tag "$TAG_ORDERKEY"
 	Inventory.PickupMessage "$TXT_ORDERKEY"
@@ -267,7 +252,6 @@ ACTOR OrderKey : StrifeKey
 
 ACTOR WarehouseKey : StrifeKey
 {
-	ConversationID 148, 144, 147
 	Inventory.Icon "I_WARE"
 	Tag "$TAG_WAREHOUSEKEY"
 	Inventory.PickupMessage "$TXT_WAREHOUSEKEY"
@@ -284,7 +268,6 @@ ACTOR WarehouseKey : StrifeKey
 
 ACTOR BrassKey : StrifeKey
 {
-	ConversationID 149, 145, 148
 	Inventory.Icon "I_KY3B"
 	Tag "$TAG_BRASSKEY"
 	Inventory.PickupMessage "$TXT_BRASSKEY"
@@ -301,7 +284,6 @@ ACTOR BrassKey : StrifeKey
 
 ACTOR RedCrystalKey : StrifeKey
 {
-	ConversationID 150, 146, 149
 	Inventory.Icon "I_RCRY"
 	Tag "$TAG_REDCRYSTALKEY"
 	Inventory.PickupMessage "$TXT_REDCRYSTAL"
@@ -318,7 +300,6 @@ ACTOR RedCrystalKey : StrifeKey
 
 ACTOR BlueCrystalKey : StrifeKey
 {
-	ConversationID 151, 147, 150
 	Inventory.Icon "I_BCRY"
 	Tag "$TAG_BLUECRYSTALKEY"
 	Inventory.PickupMessage "$TXT_BLUECRYSTAL"
@@ -335,7 +316,6 @@ ACTOR BlueCrystalKey : StrifeKey
 
 ACTOR ChapelKey : StrifeKey
 {
-	ConversationID 152, 148, 151
 	Inventory.Icon "I_CHAP"
 	Tag "$TAG_CHAPELKEY"
 	Inventory.PickupMessage "$TXT_CHAPELKEY"
@@ -352,7 +332,6 @@ ACTOR ChapelKey : StrifeKey
 
 ACTOR CatacombKey : StrifeKey
 {
-	ConversationID 153, 149, 152
 	Inventory.Icon "I_TUNL"
 	Tag "$TAG_CATACOMBKEY"
 	Inventory.GiveQuest 28
@@ -370,7 +349,6 @@ ACTOR CatacombKey : StrifeKey
 
 ACTOR SecurityKey : StrifeKey
 {
-	ConversationID 154, 150, 153
 	Inventory.Icon "I_SECK"
 	Tag "$TAG_SECURITYKEY"
 	Inventory.PickupMessage "$TXT_SECURITYKEY"
@@ -387,7 +365,6 @@ ACTOR SecurityKey : StrifeKey
 
 ACTOR CoreKey : StrifeKey
 {
-	ConversationID 155, 151, 154
 	Inventory.Icon "I_GOID"
 	Tag "$TAG_COREKEY"
 	Inventory.PickupMessage "$TXT_COREKEY"
@@ -404,7 +381,6 @@ ACTOR CoreKey : StrifeKey
 
 ACTOR MaulerKey : StrifeKey
 {
-	ConversationID 156, 152, 155
 	Inventory.Icon "I_BLTK"
 	Tag "$TAG_MAULERKEY"
 	Inventory.PickupMessage "$TXT_MAULERKEY"
@@ -421,7 +397,6 @@ ACTOR MaulerKey : StrifeKey
 
 ACTOR FactoryKey : StrifeKey
 {
-	ConversationID 157, 153, 156
 	Inventory.Icon "I_PROC"
 	Tag "$TAG_FACTORYKEY"
 	Inventory.PickupMessage "$TXT_FACTORYKEY"
@@ -438,7 +413,6 @@ ACTOR FactoryKey : StrifeKey
 
 ACTOR MineKey : StrifeKey
 {
-	ConversationID 158, 154, 157
 	Inventory.Icon "I_MINE"
 	Tag "$TAG_MINEKEY"
 	Inventory.PickupMessage "$TXT_MINEKEY"
@@ -455,7 +429,6 @@ ACTOR MineKey : StrifeKey
 
 ACTOR NewKey5 : StrifeKey
 {
-	ConversationID 159, 155, 158
 	Inventory.Icon "I_BLTK"
 	Tag "$TAG_NEWKEY5"
 	Inventory.PickupMessage "$TXT_NEWKEY5"
@@ -472,7 +445,6 @@ ACTOR NewKey5 : StrifeKey
 
 ACTOR OraclePass : Inventory
 {
-	ConversationID 311, 292, 309
 	+INVENTORY.INVBAR
 	Inventory.Icon "I_OTOK"
 	Inventory.GiveQuest 18

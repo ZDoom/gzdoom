@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include "dobject.h"
 #include "r_state.h"
+#include "tflags.h"
 
 class FFile
 {
@@ -332,5 +333,11 @@ FArchive &operator<< (FArchive &arc, vertex_t *&vert);
 FArchive &operator<< (FArchive &arc, side_t *&side);
 
 
+
+template<typename T, typename TT>
+FArchive& operator<< (FArchive& arc, TFlags<T, TT>& flag)
+{
+	return flag.Serialize (arc);
+}
 
 #endif //__FARCHIVE_H__

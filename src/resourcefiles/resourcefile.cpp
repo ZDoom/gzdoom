@@ -94,7 +94,7 @@ void FResourceLump::LumpNameSetup(FString iname)
 {
 	long slash = iname.LastIndexOf('/');
 	FString base = (slash >= 0) ? iname.Mid(slash + 1) : iname;
-	base = base.Left(base.LastIndexOf('.'));
+	base.Truncate(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
 	FullName = iname;

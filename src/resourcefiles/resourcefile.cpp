@@ -98,7 +98,8 @@ void FResourceLump::LumpNameSetup(const char *iname)
 	base = base.Left(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
-	FullName = iname;
+	FString temp = iname;	// Note: iname can point to inside FullName's string buffer so we cannot do the assignment directly.
+	FullName = temp;
 
 	// Map some directories to WAD namespaces.
 	// Note that some of these namespaces don't exist in WADS.

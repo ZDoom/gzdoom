@@ -1062,7 +1062,7 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 DEFINE_PROPERTY(bouncetype, S, Actor)
 {
 	static const char *names[] = { "None", "Doom", "Heretic", "Hexen", "DoomCompat", "HereticCompat", "HexenCompat", "Grenade", "Classic", NULL };
-	static const int flags[] = { BOUNCE_None,
+	static const ActorBounceFlag flags[] = { BOUNCE_None,
 		BOUNCE_Doom, BOUNCE_Heretic, BOUNCE_Hexen,
 		BOUNCE_DoomCompat, BOUNCE_HereticCompat, BOUNCE_HexenCompat,
 		BOUNCE_Grenade, BOUNCE_Classic, };
@@ -1322,13 +1322,13 @@ DEFINE_PROPERTY(species, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(clearflags, 0, Actor)
 {
-	defaults->flags =
-		defaults->flags3 =
-		defaults->flags4 =
-		defaults->flags5 =
-		defaults->flags6 =
-		defaults->flags7 = 0;
+	defaults->flags = 0;
 	defaults->flags2 &= MF2_ARGSDEFINED;	// this flag must not be cleared
+	defaults->flags3 = 0;
+	defaults->flags4 = 0;
+	defaults->flags5 = 0;
+	defaults->flags6 = 0;
+	defaults->flags7 = 0;
 }
 
 //==========================================================================

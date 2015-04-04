@@ -481,7 +481,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		}
 		state = newstate;
 		tics = GetTics(newstate);
-		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
+		renderflags = (renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (newstate->GetFullbright());
 		newsprite = newstate->sprite;
 		if (newsprite != SPR_FIXED)
 		{ // okay to change sprite and/or frame
@@ -3940,7 +3940,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	
 	actor->sprite = st->sprite;
 	actor->frame = st->GetFrame();
-	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->GetFullbright();
+	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (st->GetFullbright());
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 	if (G_SkillProperty(SKILLP_FastMonsters))
 		actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);

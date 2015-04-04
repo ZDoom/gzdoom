@@ -90,11 +90,10 @@ FResourceLump::~FResourceLump()
 //
 //==========================================================================
 
-void FResourceLump::LumpNameSetup(const char *iname)
+void FResourceLump::LumpNameSetup(FString iname)
 {
-	const char *lname = strrchr(iname,'/');
-	lname = (lname == NULL) ? iname : lname + 1;
-	FString base = lname;
+	long slash = iname.LastIndexOf('/');
+	FString base = (slash >= 0) ? iname.Mid(slash + 1) : iname;
 	base = base.Left(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;

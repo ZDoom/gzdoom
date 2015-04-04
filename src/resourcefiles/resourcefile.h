@@ -65,8 +65,15 @@ protected:
 
 	FResourceFile(const char *filename, FileReader *r);
 
+	// for archives that can contain directories
+	void PostProcessArchive(void *lumps, size_t lumpsize);
+
 private:
 	DWORD FirstLump;
+
+	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, DWORD max);
+	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, DWORD max, DWORD &start, DWORD &end);
+	void JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max);
 
 public:
 	static FResourceFile *OpenResourceFile(const char *filename, FileReader *file, bool quiet = false);
@@ -76,7 +83,6 @@ public:
 	DWORD LumpCount() const { return NumLumps; }
 	DWORD GetFirstLump() const { return FirstLump; }
 	void SetFirstLump(DWORD f) { FirstLump = f; }
-	void PostProcessArchive(void *lumps, size_t lumpsize);	// for archives that can contain directories
 
 	virtual void FindStrifeTeaserVoices ();
 	virtual bool Open(bool quiet) = 0;

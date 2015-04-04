@@ -1992,6 +1992,9 @@ static void D_DoomInit()
 
 static void AddAutoloadFiles(const char *group, const char *autoname)
 {
+	LumpFilterGroup = group;
+	LumpFilterIWAD = autoname;
+
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
 		FString file;

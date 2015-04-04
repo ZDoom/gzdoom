@@ -1571,3 +1571,33 @@ static void PrintLastError ()
 	Printf (TEXTCOLOR_RED "  %s\n", strerror(errno));
 }
 #endif
+
+#ifdef _DEBUG
+//==========================================================================
+//
+// CCMD LumpNum
+//
+//==========================================================================
+
+CCMD(lumpnum)
+{
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		Printf("%s: %d\n", argv[i], Wads.CheckNumForName(argv[i]));
+	}
+}
+
+//==========================================================================
+//
+// CCMD LumpNumFull
+//
+//==========================================================================
+
+CCMD(lumpnumfull)
+{
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		Printf("%s: %d\n", argv[i], Wads.CheckNumForFullName(argv[i]));
+	}
+}
+#endif

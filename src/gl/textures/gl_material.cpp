@@ -460,17 +460,25 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	if (expanded)
 	{
 		// a little adjustment to make sprites look better with texture filtering:
-		// create a 1 pixel wide empty frame around them.
-		mWidth+=2;
-		mHeight+=2;
-		mLeftOffset+=1;
-		mTopOffset+=1;
-		mRenderWidth = mRenderWidth * mWidth / (mWidth-2);
-		mRenderHeight = mRenderHeight * mHeight / (mHeight-2);
-
+		// create a 1 pixel wide empty frame around them. The frame must be the same size as the texture scale so that
+		// position calculations remain scale independent.
 		int trim[4];
+		bool trimmed = TrimBorders(trim);	// get the trim size before adding the empty frame
 
-		if (TrimBorders(trim))
+		int intscaleX = MAX(1, tex->xScale >> FRACBITS);
+		int intscaleY = MAX(1, tex->yScale >> FRACBITS);
+		int oldwidth = mWidth;
+		int oldheight = mHeight;
+
+		mWidth+=2*intscaleX;
+		mHeight+=2*intscaleY;
+		mLeftOffset+=intscaleX;
+		mTopOffset+=intscaleY;
+		mRenderWidth = mRenderWidth * mWidth / oldwidth;
+		mRenderHeight = mRenderHeight * mHeight / oldheight;
+
+		/* NOTE: This formula is a bit broken and needs fixing.*/
+		if (trimmed)
 		{
 			mSpriteRect.left = -(mLeftOffset - trim[0]) / FIXED2FLOAT(tx->xScale);
 			mSpriteRect.top = -(mTopOffset - trim[1]) / FIXED2FLOAT(tx->yScale);
@@ -481,6 +489,13 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			mSpriteV[0] = trim[1] / (float)mHeight;
 			mSpriteU[1] *= (trim[0]+trim[2]+2) / (float)mWidth; 
 			mSpriteV[1] *= (trim[1]+trim[3]+2) / (float)mHeight; 
+		}
+		else
+		{
+			mSpriteRect.left = -mLeftOffset / FIXED2FLOAT(tx->xScale);
+			mSpriteRect.top = -mTopOffset / FIXED2FLOAT(tx->yScale);
+			mSpriteRect.width = mWidth / FIXED2FLOAT(tx->xScale);
+			mSpriteRect.height = mHeight / FIXED2FLOAT(tx->yScale);
 		}
 	}
 
@@ -761,7 +776,7 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 		FMaterial *gltex = tex->gl_info.Material[expand];
 		if (gltex == NULL) 
 		{
-			if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)
+			if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)// || tex->xScale != FRACUNIT && tex->yScale != FRACUNIT)
 			{
 				expand = false;
 			}

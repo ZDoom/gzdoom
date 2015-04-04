@@ -79,7 +79,8 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	int				x1,y1,x2,y2;
 	float			scale;
 	fixed_t			scalex;
-	fixed_t			texturemid;// 4:3		16:9		16:10			17:10			5:4
+	float			ftexturemid;
+	                         // 4:3	     16:9          16:10         17:10           5:4
 	static fixed_t xratio[] = {FRACUNIT, FRACUNIT*3/4, FRACUNIT*5/6, FRACUNIT*40/51, FRACUNIT};
 	
 	// [BB] In the HUD model step we just render the model and break out. 
@@ -116,23 +117,24 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	x2+=viewwindowx;
 
 	// killough 12/98: fix psprite positioning problem
-	texturemid = (100<<FRACBITS) - (sy-(tex->GetScaledTopOffset()<<FRACBITS));
+	ftexturemid = 100.f - FIXED2FLOAT(sy) + tex->GetScaledTopOffsetFloat();
 
 	AWeapon * wi=player->ReadyWeapon;
 	if (wi && wi->YAdjust)
 	{
+		float fYAd = FIXED2FLOAT(wi->YAdjust);
 		if (screenblocks>=11)
 		{
-			texturemid -= wi->YAdjust;
+			ftexturemid -= fYAd;
 		}
 		else if (!st_scale)
 		{
-			texturemid -= FixedMul (StatusBar->GetDisplacement (), wi->YAdjust);
+			ftexturemid -= FIXED2FLOAT(StatusBar->GetDisplacement ()) * fYAd;
 		}
 	}
 
-	scale = ((SCREENHEIGHT*vw)/SCREENWIDTH) / 200.0f;    
-	y1 = viewwindowy + (vh >> 1) - (int)(((float)texturemid / (float)FRACUNIT) * scale);
+	scale =  (SCREENHEIGHT*vw)/ (SCREENWIDTH * 200.0f);    
+	y1 = viewwindowy + (vh >> 1) - (int)(ftexturemid * scale);
 	y2 = y1 + (int)((float)tex->TextureHeight() * scale) + 1;
 
 	if (!mirror)

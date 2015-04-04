@@ -316,6 +316,27 @@ FResourceFile::~FResourceFile()
 	delete Reader;
 }
 
+int STACK_ARGS lumpcmp(const void * a, const void * b)
+{
+	FResourceLump * rec1 = (FResourceLump *)a;
+	FResourceLump * rec2 = (FResourceLump *)b;
+
+	return rec1->FullName.CompareNoCase(rec2->FullName);
+}
+
+//==========================================================================
+//
+// FResourceFile :: PostProcessArchive
+//
+// Sorts files by name.
+//
+//==========================================================================
+
+void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
+{
+	// Entries in archives are sorted alphabetically
+	qsort(lumps, NumLumps, lumpsize, lumpcmp);
+}
 
 //==========================================================================
 //

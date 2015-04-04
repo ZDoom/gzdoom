@@ -253,7 +253,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 
 //==========================================================================
 //
-// Lool for IWAD definition lump
+// Look for IWAD definition lump
 //
 //==========================================================================
 

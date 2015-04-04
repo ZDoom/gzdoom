@@ -76,6 +76,7 @@ public:
 	DWORD LumpCount() const { return NumLumps; }
 	DWORD GetFirstLump() const { return FirstLump; }
 	void SetFirstLump(DWORD f) { FirstLump = f; }
+	void PostProcessArchive(void *lumps, size_t lumpsize);	// for archives that can contain directories
 
 	virtual void FindStrifeTeaserVoices ();
 	virtual bool Open(bool quiet) = 0;

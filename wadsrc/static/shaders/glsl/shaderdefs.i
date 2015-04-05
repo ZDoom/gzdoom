@@ -7,6 +7,7 @@ precision highp float;
 uniform vec4 uCameraPos;
 uniform int uTextureMode;
 uniform float uClipHeightTop, uClipHeightBottom;
+uniform vec2 uClipSplit;
 
 uniform float uAlphaThreshold;
 
@@ -28,6 +29,9 @@ uniform vec4 uGlowTopPlane;
 uniform vec4 uGlowTopColor;
 uniform vec4 uGlowBottomPlane;
 uniform vec4 uGlowBottomColor;
+
+uniform vec4 uSplitTopPlane;
+uniform vec4 uSplitBottomPlane;
 
 // Lighting + Fog
 uniform vec4 uLightAttr;

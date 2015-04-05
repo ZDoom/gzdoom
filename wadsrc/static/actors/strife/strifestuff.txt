@@ -5,7 +5,6 @@ ACTOR Tank1
 	Radius 16
 	Height 192
 	+SOLID
-	ConversationID 31, -1, -1
 	States
 	{
 	Spawn:
@@ -23,7 +22,6 @@ ACTOR Tank2
 	Radius 16
 	Height 192
 	+SOLID
-	ConversationID 32, -1, -1
 	States
 	{
 	Spawn:
@@ -41,7 +39,6 @@ ACTOR Tank3
 	Radius 16
 	Height 192
 	+SOLID
-	ConversationID 33, -1, -1
 	States
 	{
 	Spawn:
@@ -59,7 +56,6 @@ ACTOR Tank4
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 34, -1, -1
 	States
 	{
 	Spawn:
@@ -77,7 +73,6 @@ ACTOR Tank5
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 35, -1, -1
 	States
 	{
 	Spawn:
@@ -95,7 +90,6 @@ ACTOR Tank6
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 36, -1, -1
 	States
 	{
 	Spawn:
@@ -110,7 +104,6 @@ ACTOR Tank6
 
 ACTOR WaterBottle
 {
-	ConversationID 131, -1, -1
 	States
 	{
 	Spawn:
@@ -123,7 +116,6 @@ ACTOR WaterBottle
 
 ACTOR Mug
 {
-	ConversationID 132, -1, -1
 	States
 	{
 	Spawn:
@@ -141,7 +133,6 @@ ACTOR WoodenBarrel
 	Height 32
 	+SOLID +SHOOTABLE +NOBLOOD
 	+INCOMBAT
-	ConversationID 203, -1, -1
 	DeathSound "woodenbarrel/death"
 	States
 	{
@@ -165,7 +156,6 @@ ACTOR ExplosiveBarrel2
 	Health 30
 	Radius 10
 	Height 32
-	ConversationID 204, -1, -1
 	+SOLID +SHOOTABLE +NOBLOOD +OLDRADIUSDMG
 	DeathSound "world/barrelx"
 	+INCOMBAT
@@ -194,7 +184,6 @@ ACTOR LightSilverFluorescent
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 206, -1, -1
 	States
 	{
 	Spawn:
@@ -211,7 +200,6 @@ ACTOR LightBrownFluorescent
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 207, -1, -1
 	States
 	{
 	Spawn:
@@ -228,7 +216,6 @@ ACTOR LightGoldFluorescent
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 208, -1, -1
 	States
 	{
 	Spawn:
@@ -244,7 +231,6 @@ ACTOR LightGlobe
 	Radius 16
 	Height 16
 	+SOLID
-	ConversationID 209, -1, -1
 	States
 	{
 	Spawn:
@@ -260,7 +246,6 @@ ACTOR PillarTechno
 	Radius 20
 	Height 128
 	+SOLID
-	ConversationID 210, -1, -1
 	States
 	{
 	Spawn:
@@ -276,7 +261,6 @@ ACTOR PillarAztec
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 211, -1, -1
 	States
 	{
 	Spawn:
@@ -292,7 +276,6 @@ ACTOR PillarAztecDamaged
 	Radius 16
 	Height 80
 	+SOLID
-	ConversationID 212, -1, -1
 	States
 	{
 	Spawn:
@@ -308,7 +291,6 @@ ACTOR PillarAztecRuined
 	Radius 16
 	Height 40
 	+SOLID
-	ConversationID 213, -1, -1
 	States
 	{
 	Spawn:
@@ -324,7 +306,6 @@ ACTOR PillarHugeTech
 	Radius 24
 	Height 192
 	+SOLID
-	ConversationID 214, -1, -1
 	States
 	{
 	Spawn:
@@ -340,7 +321,6 @@ ACTOR PillarAlienPower
 	Radius 24
 	Height 192
 	+SOLID
-	ConversationID 215, -1, -1
 	ActiveSound "ambient/alien2"
 	States
 	{
@@ -357,7 +337,6 @@ ACTOR SStalactiteBig
 	Radius 16
 	Height 54
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 216, -1, -1
 	States
 	{
 	Spawn:
@@ -373,7 +352,6 @@ ACTOR SStalactiteSmall
 	Radius 16
 	Height 40
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 217, -1, -1
 	States
 	{
 	Spawn:
@@ -389,7 +367,6 @@ ACTOR SStalagmiteBig
 	Radius 16
 	Height 40
 	+SOLID
-	ConversationID 218, -1, -1
 	States
 	{
 	Spawn:
@@ -405,7 +382,6 @@ ACTOR CavePillarTop
 	Radius 16
 	Height 128
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 219, -1, -1
 	States
 	{
 	Spawn:
@@ -421,7 +397,6 @@ ACTOR CavePillarBottom
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 220, -1, -1
 	States
 	{
 	Spawn:
@@ -437,7 +412,6 @@ ACTOR SStalagmiteSmall
 	Radius 16
 	Height 25
 	+SOLID
-	ConversationID 221, -1, -1
 	States
 	{
 	Spawn:
@@ -450,7 +424,6 @@ ACTOR SStalagmiteSmall
 
 ACTOR Candle
 {
-	ConversationID 222, -1, -1
 	States
 	{
 	Spawn:
@@ -466,7 +439,6 @@ ACTOR StrifeCandelabra
 	Radius 16
 	Height 40
 	+SOLID
-	ConversationID 223, -1, -1
 	States
 	{
 	Spawn:
@@ -480,7 +452,6 @@ ACTOR StrifeCandelabra
 ACTOR WaterDropOnFloor
 {
 	+NOBLOCKMAP
-	ConversationID 224, -1, -1
 	ActiveSound "world/waterdrip"
 	States
 	{
@@ -500,7 +471,6 @@ ACTOR WaterDropOnFloor
 ACTOR WaterfallSplash
 {
 	+NOBLOCKMAP
-	ConversationID 225, -1, -1
 	ActiveSound "world/waterfall"
 	States
 	{
@@ -517,7 +487,6 @@ ACTOR WaterDrip
 {
 	Height 1
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
-	ConversationID 226, -1, -1
 	States
 	{
 	Spawn:
@@ -532,7 +501,6 @@ ACTOR WaterDrip
 ACTOR WaterFountain
 {
 	+NOBLOCKMAP
-	ConversationID 227, -1, -1
 	ActiveSound "world/watersplash"
 	States
 	{
@@ -550,7 +518,6 @@ ACTOR HeartsInTank
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 228, -1, -1
 	States
 	{
 	Spawn:
@@ -566,7 +533,6 @@ ACTOR TeleportSwirl
 	+NOBLOCKMAP
 	RenderStyle Add
 	Alpha 0.25
-	ConversationID 229, -1, -1
 	States
 	{
 	Spawn:
@@ -580,7 +546,6 @@ ACTOR TeleportSwirl
 
 ACTOR DeadStrifePlayer
 {
-	ConversationID 231, -1, -1
 	States
 	{
 	Spawn:
@@ -595,7 +560,6 @@ ACTOR DeadStrifePlayer
 
 ACTOR DeadPeasant
 {
-	ConversationID 232, -1, -1
 	States
 	{
 	Spawn:
@@ -609,7 +573,6 @@ ACTOR DeadPeasant
 
 ACTOR DeadAcolyte
 {
-	ConversationID 233, -1, -1
 	States
 	{
 	Spawn:
@@ -622,7 +585,6 @@ ACTOR DeadAcolyte
 
 ACTOR DeadReaver
 {
-	ConversationID 234, -1, -1
 	States
 	{
 	Spawn:
@@ -635,7 +597,6 @@ ACTOR DeadReaver
 
 ACTOR DeadRebel
 {
-	ConversationID 235, -1, -1
 	States
 	{
 	Spawn:
@@ -648,7 +609,6 @@ ACTOR DeadRebel
 
 ACTOR SacrificedGuy
 {
-	ConversationID 236, -1, -1
 	States
 	{
 	Spawn:
@@ -664,7 +624,6 @@ ACTOR PileOfGuts
 	// Strife used a doomednum, which is the same as the Aztec Pillar. Since
 	// the pillar came first in the mobjinfo list, you could not spawn this
 	// in a map. Pity.
-	ConversationID 237, -1, -1
 	States
 	{
 	Spawn:
@@ -680,7 +639,6 @@ ACTOR StrifeBurningBarrel
 	Radius 16
 	Height 48
 	+SOLID
-	ConversationID 238, -1, -1
 	States
 	{
 	Spawn:
@@ -696,7 +654,6 @@ ACTOR BurningBowl
 	Radius 16
 	Height 16
 	+SOLID
-	ConversationID 239, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -713,7 +670,6 @@ ACTOR BurningBrazier
 	Radius 10
 	Height 32
 	+SOLID
-	ConversationID 240, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -731,7 +687,6 @@ ACTOR SmallTorchLit
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 241, -1, -1
 
 	// It doesn't have any action functions, so how does it use this sound?
 	ActiveSound "world/smallfire"
@@ -751,7 +706,6 @@ ACTOR SmallTorchUnlit
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 242, -1, -1
 	States
 	{
 	Spawn:
@@ -767,7 +721,6 @@ ACTOR CeilingChain
 	Radius 20
 	Height 93
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
-	ConversationID 243, -1, -1
 	States
 	{
 	Spawn:
@@ -783,7 +736,6 @@ ACTOR CageLight
 	// No, it's not bright even though it's a light.
 	Height 3
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
-	ConversationID 244, -1, -1
 	States
 	{
 	Spawn:
@@ -799,7 +751,6 @@ ACTOR Statue
 	Radius 20
 	Height 64
 	+SOLID
-	ConversationID 245, -1, -1
 	States
 	{
 	Spawn:
@@ -815,7 +766,6 @@ ACTOR StatueRuined
 	Radius 20
 	Height 56
 	+SOLID
-	ConversationID 246, -1, -1
 	States
 	{
 	Spawn:
@@ -831,7 +781,6 @@ ACTOR MediumTorch
 	Radius 4
 	Height 72
 	+SOLID
-	ConversationID 247, -1, -1
 	States
 	{
 	Spawn:
@@ -848,7 +797,6 @@ ACTOR OutsideLamp
 	Radius 3
 	Height 80
 	+SOLID
-	ConversationID 248, -1, -1
 	States
 	{
 	Spawn:
@@ -865,7 +813,6 @@ ACTOR PoleLantern
 	Radius 3
 	Height 80
 	+SOLID
-	ConversationID 249, -1, -1
 	States
 	{
 	Spawn:
@@ -879,7 +826,6 @@ ACTOR PoleLantern
 ACTOR SRock1
 {
 	+NOBLOCKMAP
-	ConversationID 250, -1, -1
 	States
 	{
 	Spawn:
@@ -893,7 +839,6 @@ ACTOR SRock1
 ACTOR SRock2
 {
 	+NOBLOCKMAP
-	ConversationID 251, -1, -1
 	States
 	{
 	Spawn:
@@ -907,7 +852,6 @@ ACTOR SRock2
 ACTOR SRock3
 {
 	+NOBLOCKMAP
-	ConversationID 252, -1, -1
 	States
 	{
 	Spawn:
@@ -921,7 +865,6 @@ ACTOR SRock3
 ACTOR SRock4
 {
 	+NOBLOCKMAP
-	ConversationID 253, -1, -1
 	States
 	{
 	Spawn:
@@ -936,7 +879,6 @@ ACTOR StickInWater
 {
 	+NOBLOCKMAP
 	+FLOORCLIP
-	ConversationID 254, -1, -1
 	ActiveSound "world/river"
 	States
 	{
@@ -951,7 +893,6 @@ ACTOR StickInWater
 ACTOR Rubble1
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 255, -1, -1
 	States
 	{
 	Spawn:
@@ -965,7 +906,6 @@ ACTOR Rubble1
 ACTOR Rubble2
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 256, -1, -1
 	States
 	{
 	Spawn:
@@ -979,7 +919,6 @@ ACTOR Rubble2
 ACTOR Rubble3
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 257, -1, -1
 	States
 	{
 	Spawn:
@@ -993,7 +932,6 @@ ACTOR Rubble3
 ACTOR Rubble4
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 258, -1, -1
 	States
 	{
 	Spawn:
@@ -1007,7 +945,6 @@ ACTOR Rubble4
 ACTOR Rubble5
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 259, -1, -1
 	States
 	{
 	Spawn:
@@ -1021,7 +958,6 @@ ACTOR Rubble5
 ACTOR Rubble6
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 260, -1, -1
 	States
 	{
 	Spawn:
@@ -1035,7 +971,6 @@ ACTOR Rubble6
 ACTOR Rubble7
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 261, -1, -1
 	States
 	{
 	Spawn:
@@ -1049,7 +984,6 @@ ACTOR Rubble7
 ACTOR Rubble8
 {
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 262, -1, -1
 	States
 	{
 	Spawn:
@@ -1065,7 +999,6 @@ ACTOR SurgeryCrab
 	+SOLID +SPAWNCEILING +NOGRAVITY
 	Radius 20
 	Height 16
-	ConversationID 263, -1, -1
 	States
 	{
 	Spawn:
@@ -1081,7 +1014,6 @@ ACTOR LargeTorch
 	Radius 10
 	Height 72
 	+SOLID
-	ConversationID 264, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -1098,7 +1030,6 @@ ACTOR HugeTorch
 	Radius 10
 	Height 80
 	+SOLID
-	ConversationID 265, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -1115,7 +1046,6 @@ ACTOR PalmTree
 	Radius 15
 	Height 109
 	+SOLID
-	ConversationID 266, -1, -1
 	States
 	{
 	Spawn:
@@ -1131,7 +1061,6 @@ ACTOR BigTree2
 	Radius 15
 	Height 109
 	+SOLID
-	ConversationID 267, -1, -1
 	States
 	{
 	Spawn:
@@ -1147,7 +1076,6 @@ ACTOR PottedTree
 	Radius 15
 	Height 64
 	+SOLID
-	ConversationID 268, -1, -1
 	States
 	{
 	Spawn:
@@ -1163,7 +1091,6 @@ ACTOR TreeStub
 	Radius 15
 	Height 80
 	+SOLID
-	ConversationID 269, -1, -1
 	States
 	{
 	Spawn:
@@ -1179,7 +1106,6 @@ ACTOR ShortBush
 	Radius 15
 	Height 40
 	+SOLID
-	ConversationID 270, -1, -1
 	States
 	{
 	Spawn:
@@ -1195,7 +1121,6 @@ ACTOR TallBush
 	Radius 20
 	Height 64
 	+SOLID
-	ConversationID 271, -1, -1
 	States
 	{
 	Spawn:
@@ -1211,7 +1136,6 @@ ACTOR ChimneyStack
 	Radius 20
 	Height 64	// This height does not fit the sprite
 	+SOLID
-	ConversationID 272, -1, -1
 	States
 	{
 	Spawn:
@@ -1227,7 +1151,6 @@ ACTOR BarricadeColumn
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 273, -1, -1
 	States
 	{
 	Spawn:
@@ -1243,7 +1166,6 @@ ACTOR Pot
 	Radius 12
 	Height 24
 	+SOLID
-	ConversationID 274, -1, -1
 	States
 	{
 	Spawn:
@@ -1259,7 +1181,6 @@ ACTOR Pitcher
 	Radius 12
 	Height 32
 	+SOLID
-	ConversationID 275, -1, -1
 	States
 	{
 	Spawn:
@@ -1275,7 +1196,6 @@ ACTOR Stool
 	Radius 6
 	Height 24
 	+SOLID
-	ConversationID 276, -1, -1
 	States
 	{
 	Spawn:
@@ -1289,7 +1209,6 @@ ACTOR Stool
 ACTOR MetalPot
 {
 	+NOBLOCKMAP
-	ConversationID 277, -1, -1
 	States
 	{
 	Spawn:
@@ -1303,7 +1222,6 @@ ACTOR MetalPot
 ACTOR Tub
 {
 	+NOBLOCKMAP
-	ConversationID 278, -1, -1
 	States
 	{
 	Spawn:
@@ -1319,7 +1237,6 @@ ACTOR Anvil
 	Radius 16
 	Height 32
 	+SOLID
-	ConversationID 279, -1, -1
 	States
 	{
 	Spawn:
@@ -1335,7 +1252,6 @@ ACTOR TechLampSilver
 	Radius 11
 	Height 64
 	+SOLID
-	ConversationID 280, -1, -1
 	States
 	{
 	Spawn:
@@ -1351,7 +1267,6 @@ ACTOR TechLampBrass
 	Radius 8
 	Height 64
 	+SOLID
-	ConversationID 281, -1, -1
 	States
 	{
 	Spawn:
@@ -1367,7 +1282,6 @@ ACTOR Tray
 	Radius 24
 	Height 40
 	+SOLID
-	ConversationID 282, -1, -1
 	States
 	{
 	Spawn:
@@ -1383,7 +1297,6 @@ ACTOR AmmoFiller
 	Radius 12
 	Height 24
 	+SOLID
-	ConversationID 283, -1, -1
 	States
 	{
 	Spawn:
@@ -1399,7 +1312,6 @@ ACTOR SigilBanner
 	Radius 24
 	Height 96
 	+NOBLOCKMAP	// I take it this was once solid, yes?
-	ConversationID 284, -1, -1
 	States
 	{
 	Spawn:
@@ -1413,7 +1325,6 @@ ACTOR SigilBanner
 ACTOR RebelBoots
 {
 	+NOBLOCKMAP
-	ConversationID 285, -1, -1
 	States
 	{
 	Spawn:
@@ -1427,7 +1338,6 @@ ACTOR RebelBoots
 ACTOR RebelHelmet
 {
 	+NOBLOCKMAP
-	ConversationID 286, -1, -1
 	States
 	{
 	Spawn:
@@ -1441,7 +1351,6 @@ ACTOR RebelHelmet
 ACTOR RebelShirt
 {
 	+NOBLOCKMAP
-	ConversationID 287, -1, -1
 	States
 	{
 	Spawn:
@@ -1457,7 +1366,6 @@ ACTOR AlienBubbleColumn
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 290, -1, -1
 	ActiveSound "ambient/alien5"
 	States
 	{
@@ -1474,7 +1382,6 @@ ACTOR AlienFloorBubble
 	Radius 16
 	Height 72
 	+SOLID
-	ConversationID 291, -1, -1
 	ActiveSound "ambient/alien6"
 	States
 	{
@@ -1491,7 +1398,6 @@ ACTOR AlienCeilingBubble
 	Radius 16
 	Height 72
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 292, -1, -1
 	ActiveSound "ambient/alien4"
 	States
 	{
@@ -1508,7 +1414,6 @@ ACTOR AlienAspClimber
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 293, -1, -1
 	ActiveSound "ambient/alien3"
 	States
 	{
@@ -1525,7 +1430,6 @@ ACTOR AlienSpiderLight
 	Radius 32
 	Height 56
 	+SOLID
-	ConversationID 294, -1, -1
 	ActiveSound "ambient/alien1"
 	States
 	{
@@ -1546,7 +1450,6 @@ ACTOR TargetPractice
 	Mass 9999999
 	+SOLID +SHOOTABLE +NOBLOOD
 	+INCOMBAT +NODAMAGE
-	ConversationID 205, -1, -1
 	PainSound "misc/metalhit"
 	States
 	{
@@ -1587,7 +1490,6 @@ ACTOR ForceFieldGuard native
 
 ACTOR KneelingGuy
 {
-	ConversationID 37,-1,-1
 	Health 51
 	Painchance 255
 	Radius 6
@@ -1635,7 +1537,6 @@ ACTOR KneelingGuy
 
 ACTOR KlaxonWarningLight
 {
-	ConversationID 121,-1,-1
 	ReactionTime 60
 	Radius 5
 	+NOBLOCKMAP +AMBUSH
@@ -1659,7 +1560,6 @@ ACTOR KlaxonWarningLight
 
 ACTOR CeilingTurret
 {
-	ConversationID 122,-1,-1
 	Health 125
 	Speed 0
 	Painchance 0
@@ -1702,7 +1602,6 @@ ACTOR CeilingTurret
 
 ACTOR PowerCoupling native
 {
-	ConversationID 288,-1,-1
 	Health 40
 	Radius 17
 	Height 64

@@ -3,7 +3,6 @@
 
 ACTOR Macil1
 {
-	ConversationID 49, 48, 49
 	Health 95
 	Radius 20
 	Height 56
@@ -59,7 +58,6 @@ ACTOR Macil1
 
 ACTOR Macil2 : Macil1
 {
-	ConversationID 50, 49, 50
 	Painchance 200
 	+COUNTKILL
 	+SPECTRAL

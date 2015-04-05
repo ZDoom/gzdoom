@@ -3,7 +3,6 @@
 
 ACTOR Loremaster
 {	
-	ConversationID 66, 63, 64
 	Health 800	
 	Speed 10
 	Radius 15	
@@ -76,7 +75,6 @@ ACTOR Loremaster
 
 ACTOR LoreShot native
 {
-	ConversationID 97,-1,-1
 	Speed 20
 	Height 14
 	Radius 10
@@ -104,7 +102,6 @@ ACTOR LoreShot native
 
 ACTOR LoreShot2
 {
-	ConversationID 98,-1,-1
 	+NOBLOCKMAP
 	+NOGRAVITY
 	States

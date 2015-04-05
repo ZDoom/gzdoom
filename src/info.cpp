@@ -156,6 +156,15 @@ void FActorInfo::RegisterIDs ()
 {
 	const PClass *cls = PClass::FindClass(Class->TypeName);
 
+	// Conversation IDs have never been filtered by game so we cannot start doing that.
+	if (ConversationID > 0)
+	{
+		StrifeTypes[ConversationID] = cls;
+		if (cls != Class) 
+		{
+			Printf(TEXTCOLOR_RED"Conversation ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
+		}
+	}
 	if (GameFilter == GAME_Any || (GameFilter & gameinfo.gametype))
 	{
 		if (SpawnID > 0)
@@ -184,7 +193,6 @@ void FActorInfo::RegisterIDs ()
 			}
 		}
 	}
-	// Fill out the list for Chex Quest with Doom's actors
 }
 
 //==========================================================================

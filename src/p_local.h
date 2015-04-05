@@ -160,7 +160,8 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 //
 // [RH] P_THINGS
 //
-extern TMap<int, const PClass *> SpawnableThings;
+extern FClassMap SpawnableThings;
+extern FClassMap StrifeTypes;
 
 bool	P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, angle_t angle,

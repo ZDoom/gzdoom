@@ -1409,12 +1409,6 @@ void DPlaneWatcher::Tick ()
 // own behavior is loaded (if it has one).
 void FBehavior::StaticLoadDefaultModules ()
 {
-	// When playing Strife, STRFHELP is always loaded.
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		StaticLoadModule (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
-	}
-
 	// Scan each LOADACS lump and load the specified modules in order
 	int lump, lastlump = 0;
 

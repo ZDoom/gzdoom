@@ -64,29 +64,24 @@ ACTOR Beggar : StrifeHumanoid
 
 ACTOR Beggar1 : Beggar
 {
-	ConversationID 38, 37, 38
 }
 
 
 ACTOR Beggar2 : Beggar
 {
-	ConversationID 39, 38, 39
 }
 
 
 ACTOR Beggar3 : Beggar
 {
-	ConversationID 40, 39, 40
 }
 
 
 ACTOR Beggar4 : Beggar
 {
-	ConversationID 41, 40, 41
 }
 
 
 ACTOR Beggar5 : Beggar
 {
-	ConversationID 42, 41, 42
 }

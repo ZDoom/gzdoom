@@ -3,7 +3,6 @@
 
 ACTOR Programmer
 {
-	ConversationID 95, -1, -1
 	Health 1100
 	PainChance 50
 	Speed 26
@@ -85,7 +84,6 @@ ACTOR Programmer
 
 ACTOR ProgrammerBase
 {
-	ConversationID 96,-1,-1
 	+NOBLOCKMAP
 	+NOCLIP
 	+NOBLOOD

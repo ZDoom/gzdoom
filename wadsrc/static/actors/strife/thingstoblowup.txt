@@ -23,7 +23,6 @@ ACTOR Bang4Cloud
 
 ACTOR Piston
 {
-	ConversationID 123,-1,-1
 	Health 100
 	Speed 16
 	Radius 20
@@ -59,7 +58,6 @@ ACTOR Piston
 
 ACTOR Computer
 {
-	ConversationID 124,-1,-1
 	Health 80
 	Speed 27
 	Radius 26
@@ -98,7 +96,6 @@ ACTOR Computer
 
 ACTOR PowerCrystal
 {
-	ConversationID 201,-1,-1
 	Health 50
 	Speed 14
 	Radius 20

@@ -699,7 +699,12 @@ FString I_GetFromClipboard (bool use_primary_selection)
 
 	if (CFDataRef data = GetPasteboardData(itemID, kUTTypeUTF8PlainText))
 	{
-		result = reinterpret_cast<const char*>(CFDataGetBytePtr(data));
+		const CFIndex bufferLength = CFDataGetLength(data);
+		char* const buffer = result.LockNewBuffer(bufferLength);
+
+		memcpy(buffer, CFDataGetBytePtr(data), bufferLength);
+
+		result.UnlockBuffer();
 	}
 	else if (CFDataRef data = GetPasteboardData(itemID, kUTTypeUTF16PlainText))
 	{

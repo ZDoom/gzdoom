@@ -307,41 +307,23 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 {
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLWall * ws=&walls[drawitems[sort->itemindex].index];
-	GLWall * ws1;
 
 	bool ceiling = fh->z > FIXED2FLOAT(viewz);
 
-
-	if (ws->ztop[0]>fh->z && ws->zbottom[0]<fh->z)
+	if ((ws->ztop[0] > fh->z || ws->ztop[1] > fh->z) && (ws->zbottom[0] < fh->z || ws->zbottom[1] < fh->z))
 	{
 		// We have to split this wall!
 
 		// WARNING: NEVER EVER push a member of an array onto the array itself.
 		// Bad things will happen if the memory must be reallocated!
-		GLWall w=*ws;
+		GLWall w = *ws;
 		AddWall(&w);
 
-		ws1=&walls[walls.Size()-1];
-		ws=&walls[drawitems[sort->itemindex].index];	// may have been reallocated!
-		float newtexv = ws->uplft.v + ((ws->lolft.v - ws->uplft.v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
+		// Splitting is done in the shader with clip planes.
 
-		// I make the very big assumption here that translucent walls in sloped sectors
-		// and 3D-floors never coexist in the same level. If that were the case this
-		// code would become extremely more complicated.
-		if (!ceiling)
-		{
-			ws->ztop[1] = ws1->zbottom[1] = ws->ztop[0] = ws1->zbottom[0] = fh->z;
-			ws->uprgt.v = ws1->lorgt.v = ws->uplft.v = ws1->lolft.v = newtexv;
-		}
-		else
-		{
-			ws1->ztop[1] = ws->zbottom[1] = ws1->ztop[0] = ws->zbottom[0] = fh->z;
-			ws1->uplft.v = ws->lolft.v = ws1->uprgt.v = ws->lorgt.v=newtexv;
-		}
-
-		SortNode * sort2=SortNodes.GetNew();
-		memset(sort2,0,sizeof(SortNode));
-		sort2->itemindex=drawitems.Size()-1;
+		SortNode * sort2 = SortNodes.GetNew();
+		memset(sort2, 0, sizeof(SortNode));
+		sort2->itemindex = drawitems.Size() - 1;
 
 		head->AddToLeft(sort);
 		head->AddToRight(sort2);
@@ -366,29 +348,16 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 {
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
-	GLSprite * ss1;
 
 	bool ceiling = fh->z > FIXED2FLOAT(viewz);
 
-	if (ss->z1>fh->z && ss->z2<fh->z)
+	if ((ss->z1>fh->z && ss->z2<fh->z) || ss->modelframe)
 	{
-		// We have to split this sprite!
+		// We have to split this sprite
 		GLSprite s=*ss;
-		AddSprite(&s);
-		ss1=&sprites[sprites.Size()-1];
-		ss=&sprites[drawitems[sort->itemindex].index];	// may have been reallocated!
-		float newtexv=ss->vt + ((ss->vb-ss->vt)/(ss->z2-ss->z1))*(fh->z-ss->z1);
+		AddSprite(&s);	// add a copy to avoid reallocation issues.
 
-		if (!ceiling)
-		{
-			ss->z1=ss1->z2=fh->z;
-			ss->vt=ss1->vb=newtexv;
-		}
-		else
-		{
-			ss1->z1=ss->z2=fh->z;
-			ss1->vt=ss->vb=newtexv;
-		}
+		// Splitting is done in the shader with clip planes.
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -729,24 +698,57 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 //==========================================================================
 void GLDrawList::DoDrawSorted(SortNode * head)
 {
-	do
+	float clipsplit[2];
+	int relation = 0;
+	float z = 0.f;
+
+	gl_RenderState.GetClipSplit(clipsplit);
+
+	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
-		if (head->left) 
+		z = flats[drawitems[head->itemindex].index].z;
+		relation = z > FIXED2FLOAT(viewz)? 1 : -1;
+	}
+
+
+	// left is further away, i.e. for stuff above viewz its z coordinate higher, for stuff below viewz its z coordinate is lower
+	if (head->left) 
+	{
+		if (relation == -1)
 		{
-			DoDrawSorted(head->left);
+			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
 		}
-		DoDraw(GLPASS_TRANSLUCENT, head->itemindex, true);
-		if (head->equal)
+		else if (relation == 1)
 		{
-			SortNode * ehead=head->equal;
-			while (ehead)
-			{
-				DoDraw(GLPASS_TRANSLUCENT, ehead->itemindex, true);
-				ehead=ehead->equal;
-			}
+			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
+		}
+		DoDrawSorted(head->left);
+		gl_RenderState.SetClipSplit(clipsplit);
+	}
+	DoDraw(GLPASS_TRANSLUCENT, head->itemindex, true);
+	if (head->equal)
+	{
+		SortNode * ehead=head->equal;
+		while (ehead)
+		{
+			DoDraw(GLPASS_TRANSLUCENT, ehead->itemindex, true);
+			ehead=ehead->equal;
 		}
 	}
-	while ((head=head->right));
+	// right is closer, i.e. for stuff above viewz its z coordinate is lower, for stuff below viewz its z coordinate is higher
+	if (head->right)
+	{
+		if (relation == 1)
+		{
+			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
+		}
+		else if (relation == -1)
+		{
+			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
+		}
+		DoDrawSorted(head->right);
+		gl_RenderState.SetClipSplit(clipsplit);
+	}
 }
 
 //==========================================================================
@@ -763,7 +765,11 @@ void GLDrawList::DrawSorted()
 		MakeSortList();
 		sorted=DoSort(SortNodes[SortNodeStart]);
 	}
+	glEnable(GL_CLIP_DISTANCE2);
+	glEnable(GL_CLIP_DISTANCE3);
 	DoDrawSorted(sorted);
+	glDisable(GL_CLIP_DISTANCE2);
+	glDisable(GL_CLIP_DISTANCE3);
 }
 
 //==========================================================================

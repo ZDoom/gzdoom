@@ -86,6 +86,7 @@ void FRenderState::Reset()
 	mSpecialEffect = EFF_NONE;
 	mClipHeightTop = 65536.f;
 	mClipHeightBottom = -65536.f;
+	ClearClipSplit();
 
 	stSrcBlend = stDstBlend = -1;
 	stBlendEquation = -1;
@@ -141,6 +142,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
+	activeShader->muClipSplit.Set(mClipSplit);
 
 	if (mGlowEnabled)
 	{

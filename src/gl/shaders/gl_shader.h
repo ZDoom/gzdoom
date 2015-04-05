@@ -103,6 +103,28 @@ public:
 	}
 };
 
+class FBufferedUniform2f
+{
+	float mBuffer[2];
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		memset(mBuffer, 0, sizeof(mBuffer));
+	}
+
+	void Set(const float *newvalue)
+	{
+		if (memcmp(newvalue, mBuffer, sizeof(mBuffer)))
+		{
+			memcpy(mBuffer, newvalue, sizeof(mBuffer));
+			glUniform2fv(mIndex, 1, newvalue);
+		}
+	}
+};
+
 class FBufferedUniform4f
 {
 	float mBuffer[4];
@@ -184,6 +206,7 @@ class FShader
 	FBufferedUniform1i muTextureMode;
 	FBufferedUniform4f muCameraPos;
 	FBufferedUniform4f muLightParms;
+	FBufferedUniform2f muClipSplit;
 	FUniform1i muFixedColormap;
 	FUniform4f muColormapStart;
 	FUniform4f muColormapRange;

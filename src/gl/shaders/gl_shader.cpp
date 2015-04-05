@@ -205,6 +205,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muTextureMode.Init(hShader, "uTextureMode");
 	muCameraPos.Init(hShader, "uCameraPos");
 	muLightParms.Init(hShader, "uLightAttr");
+	muClipSplit.Init(hShader, "uClipSplit");
 	muColormapStart.Init(hShader, "uFixedColormapStart");
 	muColormapRange.Init(hShader, "uFixedColormapRange");
 	muLightIndex.Init(hShader, "uLightIndex");

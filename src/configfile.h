@@ -41,8 +41,7 @@ class FConfigFile
 {
 public:
 	FConfigFile ();
-	FConfigFile (const char *pathname,
-		void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata)=0, void *userdata=NULL);
+	FConfigFile (const char *pathname);
 	FConfigFile (const FConfigFile &other);
 	virtual ~FConfigFile ();
 
@@ -70,7 +69,7 @@ public:
 	const char *GetPathName () const { return PathName.GetChars(); }
 	void ChangePathName (const char *path);
 
-	void LoadConfigFile (void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata), void *userdata);
+	void LoadConfigFile ();
 	bool WriteConfigFile () const;
 
 protected:

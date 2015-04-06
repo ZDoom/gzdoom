@@ -60,13 +60,9 @@ protected:
 	void CreateStandardAutoExec (const char *section, bool start);
 
 private:
-	static void MigrateStub (const char *pathname, FConfigFile *config, void *userdata);
-
-	void MigrateOldConfig ();
 	void SetRavenDefaults (bool isHexen);
 	void ReadCVars (DWORD flags);
 
-	bool bMigrating;
 	bool bModSetup;
 
 	char section[64];

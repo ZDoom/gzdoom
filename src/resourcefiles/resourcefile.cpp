@@ -430,13 +430,14 @@ int FResourceFile::FilterLumpsByGameType(int type, void *lumps, size_t lumpsize,
 		{ GAME_Raven,			"game-Raven" },
 		{ GAME_DoomStrifeChex,	"game-DoomStrifeChex" },
 		{ GAME_DoomChex,		"game-DoomChex" },
+		{ GAME_Any, NULL }
 	};
 	if (type == 0)
 	{
 		return 0;
 	}
 	int count = 0;
-	for (int i = 0; i < countof(blanket); ++i)
+	for (int i = 0; blanket[i].name != NULL; ++i)
 	{
 		if (type & blanket[i].match)
 		{

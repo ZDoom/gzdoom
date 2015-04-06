@@ -116,8 +116,7 @@ FConfigFile::~FConfigFile ()
 			delete[] (char *)entry;
 			entry = nextentry;
 		}
-		section->~FConfigSection();
-		delete[] (char *)section;
+		delete section;
 		section = nextsection;
 	}
 }

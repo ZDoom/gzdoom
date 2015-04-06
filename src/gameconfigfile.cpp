@@ -433,6 +433,7 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 		{ "Bindings", &Bindings },
 		{ "DoubleBindings", &DoubleBindings },
 		{ "AutomapBindings", &AutomapBindings },
+		NULL, NULL
 	};
 	const char *key, *value;
 
@@ -442,7 +443,7 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 
 	C_SetDefaultBindings ();
 
-	for (int i = 0; i < countof(binders); ++i)
+	for (int i = 0; binders[i].label != NULL; ++i)
 	{
 		strncpy(subsection, binders[i].label, sublen);
 		if (SetSection(section))

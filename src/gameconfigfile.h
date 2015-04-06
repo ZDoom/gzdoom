@@ -47,6 +47,7 @@ public:
 
 	void DoGlobalSetup ();
 	void DoGameSetup (const char *gamename);
+	void DoKeySetup (const char *gamename);
 	void DoModSetup (const char *gamename);
 	void ArchiveGlobalData ();
 	void ArchiveGameData (const char *gamename);

@@ -244,9 +244,6 @@ void FGameConfigFile::MigrateStub (const char *pathname, FConfigFile *config, vo
 
 void FGameConfigFile::MigrateOldConfig ()
 {
-	// Set default key bindings. These will be overridden
-	// by the bindings in the config file if it exists.
-	C_SetDefaultBindings ();
 }
 
 void FGameConfigFile::DoGlobalSetup ()
@@ -400,41 +397,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		ReadCVars (0);
 	}
 
-	if (!bMigrating)
-	{
-		C_SetDefaultBindings ();
-	}
-
-	strncpy (subsection, "Bindings", sublen);
-	if (SetSection (section))
-	{
-		Bindings.UnbindAll();
-		while (NextInSection (key, value))
-		{
-			Bindings.DoBind (key, value);
-		}
-	}
-
-	strncpy (subsection, "DoubleBindings", sublen);
-	if (SetSection (section))
-	{
-		DoubleBindings.UnbindAll();
-		while (NextInSection (key, value))
-		{
-			DoubleBindings.DoBind (key, value);
-		}
-	}
-
-	strncpy (subsection, "AutomapBindings", sublen);
-	if (SetSection (section))
-	{
-		AutomapBindings.UnbindAll();
-		while (NextInSection (key, value))
-		{
-			AutomapBindings.DoBind (key, value);
-		}
-	}
-
 	strncpy (subsection, "ConsoleAliases", sublen);
 	if (SetSection (section))
 	{
@@ -453,6 +415,38 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 	OkayToWrite = true;
+}
+
+// Moved from DoGameSetup so that it can happen after wads are loaded
+void FGameConfigFile::DoKeySetup(const char *gamename)
+{
+	static const struct { const char *label; FKeyBindings *bindings; } binders[] =
+	{
+		{ "Bindings", &Bindings },
+		{ "DoubleBindings", &DoubleBindings },
+		{ "AutomapBindings", &AutomapBindings },
+	};
+	const char *key, *value;
+
+	sublen = countof(section) - 1 - mysnprintf(section, countof(section), "%s.", gamename);
+	subsection = section + countof(section) - sublen - 1;
+	section[countof(section) - 1] = '\0';
+
+	C_SetDefaultBindings ();
+
+	for (int i = 0; i < countof(binders); ++i)
+	{
+		strncpy(subsection, binders[i].label, sublen);
+		if (SetSection(section))
+		{
+			FKeyBindings *bindings = binders[i].bindings;
+			bindings->UnbindAll();
+			while (NextInSection(key, value))
+			{
+				bindings->DoBind(key, value);
+			}
+		}
+	}
 }
 
 // Like DoGameSetup(), but for mod-specific cvars.

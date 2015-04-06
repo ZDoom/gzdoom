@@ -2324,6 +2324,8 @@ void D_DoomMain (void)
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
 
+		GameConfig->DoKeySetup(gameinfo.ConfigName);
+
 		// Now that wads are loaded, define mod-specific cvars.
 		ParseCVarInfo();
 

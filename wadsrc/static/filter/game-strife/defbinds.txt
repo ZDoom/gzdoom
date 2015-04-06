@@ -1,0 +1,11 @@
+/* Default keybindings for Strife */
+
+a +jump
+w "showpop 1"
+backspace invdrop
+z "showpop 3"
+k "showpop 2"
+q invquery
+
+; not done
+; h - use health

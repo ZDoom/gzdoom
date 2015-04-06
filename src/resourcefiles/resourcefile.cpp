@@ -345,9 +345,16 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
 	// each one so that we don't risk refiltering already filtered lumps.
 	DWORD max = NumLumps;
 	max -= FilterLumpsByGameType(gameinfo.gametype, lumps, lumpsize, max);
-	max -= FilterLumps(gameinfo.ConfigName, lumps, lumpsize, max);
-	max -= FilterLumps(LumpFilterGroup, lumps, lumpsize, max);
-	max -= FilterLumps(LumpFilterIWAD, lumps, lumpsize, max);
+
+	long len;
+	int lastpos = -1;
+	FString file;
+
+	while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
+	{
+		max -= FilterLumps(LumpFilterIWAD.Left(len), lumps, lumpsize, max);
+		lastpos = len;
+	}
 	JunkLeftoverFilters(lumps, lumpsize, max);
 }
 

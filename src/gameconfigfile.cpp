@@ -163,6 +163,7 @@ FGameConfigFile::FGameConfigFile ()
 	// Create auto-load sections, so users know what's available.
 	// Note that this totem pole is the reverse of the order that
 	// they will appear in the file.
+#if 0
 	CreateSectionAtStart("Harmony.Autoload");
 	CreateSectionAtStart("UrbanBrawl.Autoload");
 	CreateSectionAtStart("Chex3.Autoload");
@@ -185,6 +186,7 @@ FGameConfigFile::FGameConfigFile ()
 	CreateSectionAtStart("DoomU.Autoload");
 	CreateSectionAtStart("Doom1.Autoload");
 	CreateSectionAtStart("Doom.Autoload");
+#endif
 	CreateSectionAtStart("Global.Autoload");
 
 	// The same goes for auto-exec files.
@@ -336,9 +338,6 @@ void FGameConfigFile::DoGlobalSetup ()
 			}
 			if (last < 211)
 			{
-				//RenameSection("Hacx2.Autoload", "hacx.2_0.Autoload");
-				//RenameSection("Hacx12.Autoload", "hacx.1_2.Autoload");
-				//RenameSection("Hexen1.Autoload", "hexen.hexen.Autoload");
 				RenameSection("Chex3.Autoload", "chex.3.Autoload");
 				RenameSection("Chex1.Autoload", "chex.1.Autoload");
 				RenameSection("HexenDK.Autoload", "hexen.deathkings.Autoload");

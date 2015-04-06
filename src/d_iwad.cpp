@@ -138,12 +138,6 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 					sc.MustGetString();
 					iwad->Autoname = sc.String;
 				}
-				else if (sc.Compare("Group"))
-				{
-					sc.MustGetStringName("=");
-					sc.MustGetString();
-					iwad->Group = sc.String;
-				}
 				else if (sc.Compare("Config"))
 				{
 					sc.MustGetStringName("=");

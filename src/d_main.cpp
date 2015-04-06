@@ -1990,10 +1990,9 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *group, const char *autoname)
+static void AddAutoloadFiles(const char *autoname)
 {
-	LumpFilterGroup = group;
-	LumpFilterIWAD = autoname;
+	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
@@ -2025,25 +2024,14 @@ static void AddAutoloadFiles(const char *group, const char *autoname)
 		// Add common (global) wads
 		D_AddConfigWads (allwads, "Global.Autoload");
 
-		// Add game-specific wads
-		file = gameinfo.ConfigName;
-		file += ".Autoload";
-		D_AddConfigWads (allwads, file);
+		long len;
+		int lastpos = -1;
 
-		// Add group-specific wads
-		if (group != NULL && group[0] != 0)
+		while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
 		{
-			file = group;
-			file += ".Autoload";
+			file = LumpFilterIWAD.Left(len) + ".Autoload";
 			D_AddConfigWads(allwads, file);
-		}
-
-		// Add IWAD-specific wads
-		if (autoname != NULL && autoname[0] != 0)
-		{
-			file = autoname;
-			file += ".Autoload";
-			D_AddConfigWads(allwads, file);
+			lastpos = len;
 		}
 	}
 }
@@ -2294,7 +2282,7 @@ void D_DoomMain (void)
 		FBaseCVar::DisableCallbacks();
 		GameConfig->DoGameSetup (gameinfo.ConfigName);
 
-		AddAutoloadFiles(iwad_info->Group, iwad_info->Autoname);
+		AddAutoloadFiles(iwad_info->Autoname);
 
 		// Run automatically executed files
 		execFiles = new DArgs;

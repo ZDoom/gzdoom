@@ -344,6 +344,7 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
 	// in the ini file use. We reduce the maximum lump concidered after
 	// each one so that we don't risk refiltering already filtered lumps.
 	DWORD max = NumLumps;
+	max -= FilterLumpsByGameType(gameinfo.gametype, lumps, lumpsize, max);
 	max -= FilterLumps(gameinfo.ConfigName, lumps, lumpsize, max);
 	max -= FilterLumps(LumpFilterGroup, lumps, lumpsize, max);
 	max -= FilterLumps(LumpFilterIWAD, lumps, lumpsize, max);
@@ -404,6 +405,40 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 		}
 	}
 	return end - start;
+}
+
+//==========================================================================
+//
+// FResourceFile :: FilterLumpsByGameType
+//
+// Matches any lumps that match "filter/game-<gametype>/*". Includes
+// inclusive gametypes like Raven.
+//
+//==========================================================================
+
+int FResourceFile::FilterLumpsByGameType(int type, void *lumps, size_t lumpsize, DWORD max)
+{
+	static const struct { int match; const char *name; } blanket[] =
+	{
+		{ GAME_Raven,			"game-Raven" },
+		{ GAME_DoomStrifeChex,	"game-DoomStrifeChex" },
+		{ GAME_DoomChex,		"game-DoomChex" },
+	};
+	if (type == 0)
+	{
+		return 0;
+	}
+	int count = 0;
+	for (int i = 0; i < countof(blanket); ++i)
+	{
+		if (type & blanket[i].match)
+		{
+			count += FilterLumps(blanket[i].name, lumps, lumpsize, max);
+		}
+	}
+	FString filter = "game-";
+	filter += GameNames[type];
+	return count + FilterLumps(filter, lumps, lumpsize, max);
 }
 
 //==========================================================================

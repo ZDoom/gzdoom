@@ -93,11 +93,12 @@ private:
 	};
 	struct FConfigSection
 	{
+		FString SectionName;
 		FConfigEntry *RootEntry;
 		FConfigEntry **LastEntryPtr;
 		FConfigSection *Next;
 		FString Note;
-		char Name[1];	// + length of name
+		//char Name[1];	// + length of name
 	};
 
 	FConfigSection *Sections;

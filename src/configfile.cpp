@@ -515,6 +515,22 @@ FConfigFile::FConfigSection *FConfigFile::FindSection (const char *name) const
 
 //====================================================================
 //
+// FConfigFile :: RenameSection
+//
+//====================================================================
+
+void FConfigFile::RenameSection (const char *oldname, const char *newname) const
+{
+	FConfigSection *section = FindSection(oldname);
+
+	if (section != NULL)
+	{
+		section->SectionName = newname;
+	}
+}
+
+//====================================================================
+//
 // FConfigFile :: FindEntry
 //
 //====================================================================

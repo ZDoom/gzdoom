@@ -78,6 +78,7 @@ protected:
 	virtual char *ReadLine (char *string, int n, void *file) const;
 	bool ReadConfig (void *file);
 	static const char *GenerateEndTag(const char *value);
+	void RenameSection(const char *oldname, const char *newname) const;
 
 	bool OkayToWrite;
 	bool FileExisted;

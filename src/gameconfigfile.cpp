@@ -334,6 +334,26 @@ void FGameConfigFile::DoGlobalSetup ()
 					SetValueForKey ("5", "use ArtiInvulnerability2");
 				}
 			}
+			if (last < 211)
+			{
+				//RenameSection("Hacx2.Autoload", "hacx.2_0.Autoload");
+				//RenameSection("Hacx12.Autoload", "hacx.1_2.Autoload");
+				//RenameSection("Hexen1.Autoload", "hexen.hexen.Autoload");
+				RenameSection("Chex3.Autoload", "chex.3.Autoload");
+				RenameSection("Chex1.Autoload", "chex.1.Autoload");
+				RenameSection("HexenDK.Autoload", "hexen.deathkings.Autoload");
+				RenameSection("HereticSR.Autoload", "heretic.shadow.Autoload");
+				RenameSection("FreeDM.Autoload", "doom.freedoom.freedm.Autoload");
+				RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
+				RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
+				RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
+				RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
+				RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");
+				RenameSection("TNT.Autoload", "doom.doom2.tnt.Autoload");
+				RenameSection("Plutonia.Autoload", "doom.doom2.plutonia.Autoload");
+				RenameSection("Doom2BFG.Autoload", "doom.doom2.bfg.Autoload");
+				RenameSection("Doom2.Autoload", "doom.doom2.commercial.Autoload");
+			}
 		}
 	}
 }

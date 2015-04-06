@@ -38,11 +38,12 @@
 #include "configfile.h"
 
 class DArgs;
+class FIWadManager;
 
 class FGameConfigFile : public FConfigFile
 {
 public:
-	FGameConfigFile ();
+	FGameConfigFile (FIWadManager *iwad_man);
 	~FGameConfigFile ();
 
 	void DoGlobalSetup ();

@@ -28,6 +28,7 @@
 
 class FConfigFile;
 class FGameConfigFile;
+class FIWadManager;
 
 extern FGameConfigFile *GameConfig;
 
@@ -40,7 +41,7 @@ void M_FindResponseFile (void);
 //		Pass a NULL to get the original behavior.
 void M_ScreenShot (const char *filename);
 
-void M_LoadDefaults ();
+void M_LoadDefaults (FIWadManager *iwad_man);
 
 bool M_SaveDefaults (const char *filename);
 void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen);

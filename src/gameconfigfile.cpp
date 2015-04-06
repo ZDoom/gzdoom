@@ -61,6 +61,7 @@ extern HWND Window;
 #include "doomstat.h"
 #include "i_system.h"
 #include "gi.h"
+#include "d_main.h"
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)
@@ -75,7 +76,7 @@ EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
 
-FGameConfigFile::FGameConfigFile ()
+FGameConfigFile::FGameConfigFile (FIWadManager *iwad_man)
 {
 #ifdef __APPLE__
 	FString user_docs, user_app_support, local_app_support;
@@ -163,30 +164,36 @@ FGameConfigFile::FGameConfigFile ()
 	// Create auto-load sections, so users know what's available.
 	// Note that this totem pole is the reverse of the order that
 	// they will appear in the file.
-#if 0
-	CreateSectionAtStart("Harmony.Autoload");
-	CreateSectionAtStart("UrbanBrawl.Autoload");
-	CreateSectionAtStart("Chex3.Autoload");
-	CreateSectionAtStart("Chex1.Autoload");
-	CreateSectionAtStart("Chex.Autoload");
-	CreateSectionAtStart("Strife.Autoload");
-	CreateSectionAtStart("HexenDK.Autoload");
-	CreateSectionAtStart("Hexen.Autoload");
-	CreateSectionAtStart("HereticSR.Autoload");
-	CreateSectionAtStart("Heretic.Autoload");
-	CreateSectionAtStart("FreeDM.Autoload");
-	CreateSectionAtStart("Freedoom2.Autoload");
-	CreateSectionAtStart("Freedoom1.Autoload");
-	CreateSectionAtStart("Freedoom.Autoload");
-	CreateSectionAtStart("Plutonia.Autoload");
-	CreateSectionAtStart("TNT.Autoload");
-	CreateSectionAtStart("Doom2BFG.Autoload");
-	CreateSectionAtStart("Doom2.Autoload");
-	CreateSectionAtStart("DoomBFG.Autoload");
-	CreateSectionAtStart("DoomU.Autoload");
-	CreateSectionAtStart("Doom1.Autoload");
-	CreateSectionAtStart("Doom.Autoload");
-#endif
+
+	double last = 0;
+	if (SetSection ("LastRun"))
+	{
+		const char *lastver = GetValueForKey ("Version");
+		if (lastver != NULL) last = atof(lastver);
+	}
+
+	// don't create the autoload section if we are about to migrate an old config because it'd mess up the upcoming migration step.
+	// This will be taken care of once the game runs again with the migrated config file.
+	if (last >= 211)
+	{
+		const FString *pAuto;
+		for (int num = 0; (pAuto = iwad_man->GetAutoname(num)) != NULL; num++)
+		{
+			if (!(iwad_man->GetIWadFlags(num) & GI_SHAREWARE))	// we do not want autoload sections for shareware IWADs (which may have an autoname for resource filtering)
+			{
+				FString workname = *pAuto;
+
+				while (workname.IsNotEmpty())
+				{
+					FString section = workname + ".Autoload";
+					CreateSectionAtStart(section.GetChars());
+					long dotpos = workname.LastIndexOf('.');
+					if (dotpos < 0) break;
+					workname.Truncate(dotpos);
+				}
+			}
+		}
+	}
 	CreateSectionAtStart("Global.Autoload");
 
 	// The same goes for auto-exec files.
@@ -345,6 +352,7 @@ void FGameConfigFile::DoGlobalSetup ()
 				RenameSection("FreeDM.Autoload", "doom.freedoom.freedm.Autoload");
 				RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
 				RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
+				RenameSection("Freedoom.Autoload", "doom.freedoom.Autoload");
 				RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
 				RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
 				RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");

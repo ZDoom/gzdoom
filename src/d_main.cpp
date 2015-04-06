@@ -1978,10 +1978,6 @@ static void D_DoomInit()
 	}
 		
 	FRandom::StaticClearRandom ();
-
-	Printf ("M_LoadDefaults: Load system defaults.\n");
-	M_LoadDefaults ();			// load before initing other systems
-
 }
 
 //==========================================================================
@@ -2203,7 +2199,8 @@ void D_DoomMain (void)
 	DArgs *execFiles;
 	TArray<FString> pwads;
 	FString *args;
-	int argcount;
+	int argcount;	
+	FIWadManager *iwad_man;
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
 	FString logfile = Args->TakeValue("+logfile");
@@ -2233,8 +2230,6 @@ void D_DoomMain (void)
 	}
 
 	D_DoomInit();
-	PClass::StaticInit ();
-	atterm(FinalGC);
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
@@ -2246,6 +2241,14 @@ void D_DoomMain (void)
 	}
 	FString basewad = wad;
 
+	iwad_man = new FIWadManager;
+	iwad_man->ParseIWadInfos(basewad);
+
+	Printf ("M_LoadDefaults: Load system defaults.\n");
+	M_LoadDefaults (iwad_man);			// load before initing other systems
+
+	PClass::StaticInit ();
+	atterm(FinalGC);
 
 	// reinit from here
 
@@ -2267,7 +2270,11 @@ void D_DoomMain (void)
 		// restart is initiated without a defined IWAD assume for now that it's not going to change.
 		if (iwad.IsEmpty()) iwad = lastIWAD;
 
-		FIWadManager *iwad_man = new FIWadManager;
+		if (iwad_man == NULL)
+		{
+			iwad_man = new FIWadManager;
+			iwad_man->ParseIWadInfos(basewad);
+		}
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
 		gameinfo.gametype = iwad_info->gametype;
 		gameinfo.flags = iwad_info->flags;
@@ -2486,6 +2493,7 @@ void D_DoomMain (void)
 		FBaseCVar::EnableNoSet ();
 
 		delete iwad_man;	// now we won't need this anymore
+		iwad_man = NULL;
 
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;

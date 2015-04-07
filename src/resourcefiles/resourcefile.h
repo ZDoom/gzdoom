@@ -72,6 +72,7 @@ private:
 	DWORD FirstLump;
 
 	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, DWORD max);
+	int FilterLumpsByGameType(int gametype, void *lumps, size_t lumpsize, DWORD max);
 	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, DWORD max, DWORD &start, DWORD &end);
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max);
 

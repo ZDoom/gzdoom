@@ -38,15 +38,17 @@
 #include "configfile.h"
 
 class DArgs;
+class FIWadManager;
 
 class FGameConfigFile : public FConfigFile
 {
 public:
-	FGameConfigFile ();
+	FGameConfigFile (FIWadManager *iwad_man);
 	~FGameConfigFile ();
 
 	void DoGlobalSetup ();
 	void DoGameSetup (const char *gamename);
+	void DoKeySetup (const char *gamename);
 	void DoModSetup (const char *gamename);
 	void ArchiveGlobalData ();
 	void ArchiveGameData (const char *gamename);
@@ -59,13 +61,9 @@ protected:
 	void CreateStandardAutoExec (const char *section, bool start);
 
 private:
-	static void MigrateStub (const char *pathname, FConfigFile *config, void *userdata);
-
-	void MigrateOldConfig ();
 	void SetRavenDefaults (bool isHexen);
 	void ReadCVars (DWORD flags);
 
-	bool bMigrating;
 	bool bModSetup;
 
 	char section[64];

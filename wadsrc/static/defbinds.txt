@@ -1,0 +1,103 @@
+/* Default keybindings for all games */
+
+` toggleconsole
+1 "slot 1"
+2 "slot 2"
+3 "slot 3"
+4 "slot 4"
+5 "slot 5"
+6 "slot 6"
+7 "slot 7"
+8 "slot 8"
+9 "slot 9"
+0 "slot 0"
+[ invprev
+] invnext
+mwheelleft invprev
+mwheelright invnext
+enter invuse
+- sizedown
+= sizeup
+ctrl +attack
+alt +strafe
+shift +speed
+space +use
+rightarrow +right
+leftarrow +left
+uparrow +forward
+downarrow +back
+, +moveleft
+. +moveright
+mouse1 +attack
+mouse2 +strafe
+mouse3 +forward
+mouse4 +speed
+capslock "toggle cl_run"
+f1 menu_help
+f2 menu_save
+f3 menu_load
+f4 menu_options
+f5 menu_display
+f6 quicksave
+f7 menu_endgame
+f8 togglemessages
+f9 quickload
+f11 bumpgamma
+f10 menu_quit
+tab togglemap
+pause pause
+sysrq screenshot
+t messagemode
+\ +showscores
+f12 spynext
+mwheeldown weapnext
+mwheelup weapprev
+
+// Originally just for Heretic, Hexen, and Strife.
+// I can't see why they shouldn't be for Doom or Chex either.
+pgup +moveup
+ins +movedown
+home land
+pgdn +lookup
+del +lookdown
+end centerview
+
+// Generic joystick buttons
+joy1 +attack
+joy2 +strafe
+joy3 +speed
+joy4 +use
+
+// Xbox 360 / PS2 controllers
+pad_a +use
+pad_y +jump
+rtrigger +attack
+ltrigger +altattack
+lshoulder weapprev
+rshoulder weapnext
+dpadleft invprev
+dpadright invnext
+dpaddown invuse
+dpadup togglemap
+pad_start pause
+pad_back menu_main
+lthumb crouch
+
+
+/* Default automap bindings */
+mapbind f am_togglefollow
+mapbind g am_togglegrid
+mapbind p am_toggletexture
+mapbind m am_setmark
+mapbind c am_clearmarks
+mapbind 0 am_gobig
+mapbind rightarrow +am_panright
+mapbind leftarrow +am_panleft
+mapbind uparrow +am_panup
+mapbind downarrow +am_pandown
+mapbind - +am_zoomout
+mapbind = +am_zoomin
+mapbind kp- +am_zoomout
+mapbind kp+ +am_zoomin
+mapbind mwheelup "am_zoom 1.2"
+mapbind mwheeldown "am_zoom -1.2"

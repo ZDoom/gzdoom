@@ -94,7 +94,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false);
+					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -132,8 +132,8 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	{
 		if (fog)
 		{
-			P_SpawnTeleportFog(source, x, y, z);
-			P_SpawnTeleportFog(source, oldx, oldy, oldz, false);
+			P_SpawnTeleportFog(source, x, y, z, false, true);
+			P_SpawnTeleportFog(source, oldx, oldy, oldz, true, true);
 		}
 		source->PrevX = x;
 		source->PrevY = y;

@@ -172,25 +172,38 @@ FGameConfigFile::FGameConfigFile (FIWadManager *iwad_man)
 		if (lastver != NULL) last = atof(lastver);
 	}
 
-	// don't create the autoload section if we are about to migrate an old config because it'd mess up the upcoming migration step.
-	// This will be taken care of once the game runs again with the migrated config file.
-	if (last >= 211)
+	if (last < 211)
 	{
-		const FString *pAuto;
-		for (int num = 0; (pAuto = iwad_man->GetAutoname(num)) != NULL; num++)
+		RenameSection("Chex3.Autoload", "chex.chex3.Autoload");
+		RenameSection("Chex1.Autoload", "chex.chex1.Autoload");
+		RenameSection("HexenDK.Autoload", "hexen.deathkings.Autoload");
+		RenameSection("HereticSR.Autoload", "heretic.shadow.Autoload");
+		RenameSection("FreeDM.Autoload", "doom.freedoom.freedm.Autoload");
+		RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
+		RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
+		RenameSection("Freedoom.Autoload", "doom.freedoom.Autoload");
+		RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
+		RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
+		RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");
+		RenameSection("TNT.Autoload", "doom.doom2.tnt.Autoload");
+		RenameSection("Plutonia.Autoload", "doom.doom2.plutonia.Autoload");
+		RenameSection("Doom2BFG.Autoload", "doom.doom2.bfg.Autoload");
+		RenameSection("Doom2.Autoload", "doom.doom2.commercial.Autoload");
+	}
+	const FString *pAuto;
+	for (int num = 0; (pAuto = iwad_man->GetAutoname(num)) != NULL; num++)
+	{
+		if (!(iwad_man->GetIWadFlags(num) & GI_SHAREWARE))	// we do not want autoload sections for shareware IWADs (which may have an autoname for resource filtering)
 		{
-			if (!(iwad_man->GetIWadFlags(num) & GI_SHAREWARE))	// we do not want autoload sections for shareware IWADs (which may have an autoname for resource filtering)
-			{
-				FString workname = *pAuto;
+			FString workname = *pAuto;
 
-				while (workname.IsNotEmpty())
-				{
-					FString section = workname + ".Autoload";
-					CreateSectionAtStart(section.GetChars());
-					long dotpos = workname.LastIndexOf('.');
-					if (dotpos < 0) break;
-					workname.Truncate(dotpos);
-				}
+			while (workname.IsNotEmpty())
+			{
+				FString section = workname + ".Autoload";
+				CreateSectionAtStart(section.GetChars());
+				long dotpos = workname.LastIndexOf('.');
+				if (dotpos < 0) break;
+				workname.Truncate(dotpos);
 			}
 		}
 	}
@@ -342,24 +355,6 @@ void FGameConfigFile::DoGlobalSetup ()
 					SetValueForKey ("6", "use ArtiPork");
 					SetValueForKey ("5", "use ArtiInvulnerability2");
 				}
-			}
-			if (last < 211)
-			{
-				RenameSection("Chex3.Autoload", "chex.3.Autoload");
-				RenameSection("Chex1.Autoload", "chex.1.Autoload");
-				RenameSection("HexenDK.Autoload", "hexen.deathkings.Autoload");
-				RenameSection("HereticSR.Autoload", "heretic.shadow.Autoload");
-				RenameSection("FreeDM.Autoload", "doom.freedoom.freedm.Autoload");
-				RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
-				RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
-				RenameSection("Freedoom.Autoload", "doom.freedoom.Autoload");
-				RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
-				RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
-				RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");
-				RenameSection("TNT.Autoload", "doom.doom2.tnt.Autoload");
-				RenameSection("Plutonia.Autoload", "doom.doom2.plutonia.Autoload");
-				RenameSection("Doom2BFG.Autoload", "doom.doom2.bfg.Autoload");
-				RenameSection("Doom2.Autoload", "doom.doom2.commercial.Autoload");
 			}
 		}
 	}

@@ -39,31 +39,6 @@
 class FConfigFile;
 class APlayerPawn;
 
-extern bool CheckCheatmode (bool printmsg = true);
-
-void C_ExecCmdLineParams ();
-void C_ExecStoredSets();
-
-// Add commands to the console as if they were typed in. Can handle wait
-// and semicolon-separated commands. This function may modify the source
-// string, but the string will be restored to its original state before
-// returning. Therefore, commands passed must not be in read-only memory.
-void AddCommandString (char *text, int keynum=0);
-
-// Process a single console command. Does not handle wait.
-void C_DoCommand (const char *cmd, int keynum=0);
-
-int C_ExecFile (const char *cmd, bool usePullin);
-
-// Write out alias commands to a file for all current aliases.
-void C_ArchiveAliases (FConfigFile *f);
-
-void C_SetAlias (const char *name, const char *cmd);
-void C_ClearAliases ();
-
-// build a single string out of multiple strings
-FString BuildString (int argc, FString *argv);
-
 // Class that can parse command lines
 class FCommandLine
 {
@@ -82,6 +57,44 @@ private:
 	long argsize;
 	bool noescapes;
 };
+
+// Contains the contents of an exec'ed file
+struct FExecList
+{
+	TArray<FString> Commands;
+	TArray<FString> Pullins;
+
+	void AddCommand(const char *cmd, const char *file = NULL);
+	void ExecCommands() const;
+	void AddPullins(TArray<FString> &wads) const;
+};
+
+
+extern bool CheckCheatmode (bool printmsg = true);
+
+FExecList *C_ParseCmdLineParams(FExecList *exec);
+
+// Add commands to the console as if they were typed in. Can handle wait
+// and semicolon-separated commands. This function may modify the source
+// string, but the string will be restored to its original state before
+// returning. Therefore, commands passed must not be in read-only memory.
+void AddCommandString (char *text, int keynum=0);
+
+// Process a single console command. Does not handle wait.
+void C_DoCommand (const char *cmd, int keynum=0);
+
+FExecList *C_ParseExecFile(const char *file, FExecList *source);
+void C_SearchForPullins(FExecList *exec, const char *file, class FCommandLine &args);
+bool C_ExecFile(const char *file);
+
+// Write out alias commands to a file for all current aliases.
+void C_ArchiveAliases (FConfigFile *f);
+
+void C_SetAlias (const char *name, const char *cmd);
+void C_ClearAliases ();
+
+// build a single string out of multiple strings
+FString BuildString (int argc, FString *argv);
 
 typedef void (*CCmdRun) (FCommandLine &argv, APlayerPawn *instigator, int key);
 

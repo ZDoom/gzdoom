@@ -6,6 +6,7 @@ IWad
 	Autoname = "square.square"
 	Game = "Doom"
 	Config = "Square"
+	Mapinfo = "mapinfo/mindefaults.txt"
 	MustContain = "SQU-IWAD", "E1A1"
 	BannerColors = "ff ff ff", "80 00 80"
 }
@@ -16,6 +17,7 @@ IWad
 	Autoname = "square.squareware"
 	Game = "Doom"
 	Config = "Square"
+	Mapinfo = "mapinfo/mindefaults.txt"
 	MustContain = "SQU-SWE1", "E1A1"
 	BannerColors = "ff ff ff", "80 00 80"
 }

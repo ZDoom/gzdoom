@@ -2310,7 +2310,7 @@ void D_DoomMain (void)
 
 		if (hashfile)
 		{
-			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer then usual.\n");
+			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer than usual.\n");
 		}
 
 		Printf ("W_Init: Init WADfiles.\n");

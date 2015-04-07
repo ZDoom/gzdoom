@@ -4617,9 +4617,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// copy args to mapthing so that we have them in one place for the rest of this function	
-	if (mentry->Type != NULL && mentry->Special >= 0)
+	if (mentry->ArgsDefined)
 	{
-		mthing->special = mentry->Special;
+		if (mentry->Type!= NULL) mthing->special = mentry->Special;
 		memcpy(mthing->args, mentry->Args, sizeof(mthing->args));
 	}
 

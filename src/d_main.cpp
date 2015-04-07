@@ -1723,12 +1723,13 @@ bool ConsiderPatches (const char *arg)
 //
 //==========================================================================
 
-void D_MultiExec (DArgs *list, bool usePullin)
+FExecList *D_MultiExec (DArgs *list, FExecList *exec)
 {
 	for (int i = 0; i < list->NumArgs(); ++i)
 	{
-		C_ExecFile (list->GetArg (i), usePullin);
+		exec = C_ParseExecFile(list->GetArg(i), exec);
 	}
+	return exec;
 }
 
 static void GetCmdLineFiles(TArray<FString> &wadfiles)
@@ -2291,18 +2292,24 @@ void D_DoomMain (void)
 
 		AddAutoloadFiles(iwad_info->Autoname);
 
-		// Run automatically executed files
+		// Process automatically executed files
+		FExecList *exec;
 		execFiles = new DArgs;
-		GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
-		D_MultiExec (execFiles, true);
+		GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
+		exec = D_MultiExec(execFiles, NULL);
 
-		// Run .cfg files at the start of the command line.
+		// Process .cfg files at the start of the command line.
 		execFiles = Args->GatherFiles ("-exec");
-		D_MultiExec (execFiles, true);
+		exec = D_MultiExec(execFiles, exec);
 
-		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
+		// [RH] process all + commands on the command line
+		exec = C_ParseCmdLineParams(exec);
 
 		CopyFiles(allwads, pwads);
+		if (exec != NULL)
+		{
+			exec->AddPullins(allwads);
+		}
 
 		// Since this function will never leave we must delete this array here manually.
 		pwads.Clear();
@@ -2310,7 +2317,7 @@ void D_DoomMain (void)
 
 		if (hashfile)
 		{
-			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer then usual.\n");
+			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer than usual.\n");
 		}
 
 		Printf ("W_Init: Init WADfiles.\n");
@@ -2324,8 +2331,13 @@ void D_DoomMain (void)
 		// Now that wads are loaded, define mod-specific cvars.
 		ParseCVarInfo();
 
-		// Try setting previously unknown cvars again, as a CVARINFO may have made them known.
-		C_ExecStoredSets();
+		// Actually exec command line commands and exec files.
+		if (exec != NULL)
+		{
+			exec->ExecCommands();
+			delete exec;
+			exec = NULL;
+		}
 
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);

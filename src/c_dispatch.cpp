@@ -185,9 +185,6 @@ static const char *KeyConfCommands[] =
 	"clearplayerclasses"
 };
 
-static TArray<FString> StoredStartupSets;
-static bool RunningStoredStartups;
-
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_CLASS (DWaitingCommand)
@@ -540,18 +537,6 @@ void ResetButtonStates ()
 	}
 }
 
-void C_ExecStoredSets()
-{
-	assert(!RunningStoredStartups);
-	RunningStoredStartups = true;
-	for (unsigned i = 0; i < StoredStartupSets.Size(); ++i)
-	{
-		C_DoCommand(StoredStartupSets[i]);
-	}
-	StoredStartupSets.Clear();
-	RunningStoredStartups = false;
-}
-
 void C_DoCommand (const char *cmd, int keynum)
 {
 	FConsoleCommand *com;
@@ -627,22 +612,7 @@ void C_DoCommand (const char *cmd, int keynum)
 
 	if ( (com = FindNameInHashTable (Commands, beg, len)) )
 	{
-		if (gamestate == GS_STARTUP && !RunningStoredStartups &&
-			len == 3 && strnicmp(beg, "set", 3) == 0)
-		{
-			// Save setting of unknown cvars for later, in case a loaded wad has a
-			// CVARINFO that defines it.
-			FCommandLine args(beg);
-			if (args.argc() > 1 && FindCVar(args[1], NULL) == NULL)
-			{
-				StoredStartupSets.Push(beg);
-			}
-			else
-			{
-				com->Run(args, players[consoleplayer].mo, keynum);
-			}
-		}
-		else if (gamestate != GS_STARTUP || ParsingKeyConf ||
+		if (gamestate != GS_STARTUP || ParsingKeyConf ||
 			(len == 3 && strnicmp (beg, "set", 3) == 0) ||
 			(len == 7 && strnicmp (beg, "logfile", 7) == 0) ||
 			(len == 9 && strnicmp (beg, "unbindall", 9) == 0) ||
@@ -687,15 +657,7 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 		else
 		{ // We don't know how to handle this command
-			if (gamestate == GS_STARTUP && !RunningStoredStartups)
-			{
-				// Save it for later, in case a CVARINFO defines it.
-				StoredStartupSets.Push(beg);
-			}
-			else
-			{
-				Printf ("Unknown command \"%.*s\"\n", (int)len, beg);
-			}
+			Printf ("Unknown command \"%.*s\"\n", (int)len, beg);
 		}
 	}
 }
@@ -1368,7 +1330,7 @@ CCMD (key)
 
 // Execute any console commands specified on the command line.
 // These all begin with '+' as opposed to '-'.
-void C_ExecCmdLineParams ()
+FExecList *C_ParseCmdLineParams(FExecList *exec)
 {
 	for (int currArg = 1; currArg < Args->NumArgs(); )
 	{
@@ -1389,10 +1351,15 @@ void C_ExecCmdLineParams ()
 			cmdString = BuildString (cmdlen, Args->GetArgList (argstart));
 			if (!cmdString.IsEmpty())
 			{
-				C_DoCommand (&cmdString[1]);
+				if (exec == NULL)
+				{
+					exec = new FExecList;
+				}
+				exec->AddCommand(&cmdString[1]);
 			}
 		}
 	}
+	return exec;
 }
 
 bool FConsoleCommand::IsAlias ()
@@ -1469,28 +1436,60 @@ void FConsoleAlias::SafeDelete ()
 	}
 }
 
-static BYTE PullinBad = 2;
-static const char *PullinFile;
-extern TArray<FString> allwads;
+void FExecList::AddCommand(const char *cmd, const char *file)
+{
+	// Pullins are special and need to be separated from general commands.
+	// They also turned out to be a really bad idea, since they make things
+	// more complicated. :(
+	if (file != NULL && strnicmp(cmd, "pullin", 6) == 0 && isspace(cmd[6]))
+	{
+		FCommandLine line(cmd);
+		C_SearchForPullins(this, file, line);
+	}
+	// Recursive exec: Parse this file now.
+	else if (strnicmp(cmd, "exec", 4) == 0 && isspace(cmd[4]))
+	{
+		FCommandLine argv(cmd);
+		for (int i = 1; i < argv.argc(); ++i)
+		{
+			C_ParseExecFile(argv[i], this);
+		}
+	}
+	else
+	{
+		Commands.Push(cmd);
+	}
+}
 
-int C_ExecFile (const char *file, bool usePullin)
+void FExecList::ExecCommands() const
+{
+	for (unsigned i = 0; i < Commands.Size(); ++i)
+	{
+		AddCommandString(Commands[i].LockBuffer());
+		Commands[i].UnlockBuffer();
+	}
+}
+
+void FExecList::AddPullins(TArray<FString> &wads) const
+{
+	for (unsigned i = 0; i < Pullins.Size(); ++i)
+	{
+		D_AddFile(wads, Pullins[i]);
+	}
+}
+
+FExecList *C_ParseExecFile(const char *file, FExecList *exec)
 {
 	FILE *f;
 	char cmd[4096];
 	int retval = 0;
 
-	BYTE pullinSaved = PullinBad;
-	const char *fileSaved = PullinFile;
-
 	if ( (f = fopen (file, "r")) )
 	{
-		PullinBad = 1-usePullin;
-		PullinFile = file;
-
-		while (fgets (cmd, 4095, f))
+		while (fgets(cmd, countof(cmd)-1, f))
 		{
 			// Comments begin with //
-			char *stop = cmd + strlen (cmd) - 1;
+			char *stop = cmd + strlen(cmd) - 1;
 			char *comment = cmd;
 			int inQuote = 0;
 
@@ -1517,88 +1516,78 @@ int C_ExecFile (const char *file, bool usePullin)
 			{ // Comment in middle of line
 				*comment = 0;
 			}
-
-			AddCommandString (cmd);
+			if (exec == NULL)
+			{
+				exec = new FExecList;
+			}
+			exec->AddCommand(cmd, file);
 		}
-		if (!feof (f))
+		if (!feof(f))
 		{
-			retval = 2;
+			Printf("Error parsing \"%s\"\n", file);
 		}
-		fclose (f);
+		fclose(f);
 	}
 	else
 	{
-		retval = 1;
+		Printf ("Could not open \"%s\"\n", file);
 	}
-	PullinBad = pullinSaved;
-	PullinFile = fileSaved;
-	return retval;
+	return exec;
+}
+
+bool C_ExecFile (const char *file)
+{
+	FExecList *exec = C_ParseExecFile(file, NULL);
+	if (exec != NULL)
+	{
+		exec->ExecCommands();
+		if (exec->Pullins.Size() > 0)
+		{
+			Printf(TEXTCOLOR_BOLD "Notice: Pullin files were ignored.\n");
+		}
+		delete exec;
+	}
+	return exec != NULL;
+}
+
+void C_SearchForPullins(FExecList *exec, const char *file, FCommandLine &argv)
+{
+	const char *lastSlash;
+
+	assert(exec != NULL);
+	assert(file != NULL);
+#ifdef __unix__
+	lastSlash = strrchr(file, '/');
+#else
+	const char *lastSlash1, *lastSlash2;
+
+	lastSlash1 = strrchr(file, '/');
+	lastSlash2 = strrchr(file, '\\');
+	lastSlash = MAX(lastSlash1, lastSlash2);
+#endif
+
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		// Try looking for the wad in the same directory as the .cfg
+		// before looking for it in the current directory.
+		if (lastSlash != NULL)
+		{
+			FString path(file, (lastSlash - file) + 1);
+			path += argv[i];
+			if (FileExists(path))
+			{
+				exec->Pullins.Push(path);
+				continue;
+			}
+		}
+		exec->Pullins.Push(argv[i]);
+	}
 }
 
 CCMD (pullin)
 {
-	if (PullinBad == 2)
-	{
-		Printf ("This command is only valid from .cfg\n"
-				"files and only when used at startup.\n");
-	}
-	else if (argv.argc() > 1)
-	{
-		const char *lastSlash;
-
-#ifdef __unix__
-		lastSlash = strrchr (PullinFile, '/');
-#else
-		const char *lastSlash1, *lastSlash2;
-
-		lastSlash1 = strrchr (PullinFile, '/');
-		lastSlash2 = strrchr (PullinFile, '\\');
-		lastSlash = MAX (lastSlash1, lastSlash2);
-#endif
-
-		if (PullinBad)
-		{
-			Printf ("Not loading:");
-		}
-		for (int i = 1; i < argv.argc(); ++i)
-		{
-			if (PullinBad)
-			{
-				Printf (" %s", argv[i]);
-			}
-			else
-			{
-				// Try looking for the wad in the same directory as the .cfg
-				// before looking for it in the current directory.
-				char *path = argv[i];
-
-				if (lastSlash != NULL)
-				{
-					size_t pathlen = lastSlash - PullinFile + strlen (argv[i]) + 2;
-					path = new char[pathlen];
-					strncpy (path, PullinFile, (lastSlash - PullinFile) + 1);
-					strcpy (path + (lastSlash - PullinFile) + 1, argv[i]);
-					if (!FileExists (path))
-					{
-						delete[] path;
-						path = argv[i];
-					}
-					else
-					{
-						FixPathSeperator (path);
-					}
-				}
-				D_AddFile (allwads, path);
-				if (path != argv[i])
-				{
-					delete[] path;
-				}
-			}
-		}
-		if (PullinBad)
-		{
-			Printf ("\n");
-		}
-	}
+	// Actual handling for pullin is now completely special-cased above
+	Printf (TEXTCOLOR_BOLD "Pullin" TEXTCOLOR_NORMAL " is only valid from .cfg\n"
+			"files and only when used at startup.\n");
 }
 

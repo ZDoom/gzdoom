@@ -219,6 +219,11 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 					sc.ScriptError("Unknown keyword '%s'", sc.String);
 				}
 			}
+			if (iwad->MapInfo.IsEmpty())
+			{
+				// We must at least load the minimum defaults to allow the engine to run.
+				iwad->MapInfo = "mapinfo/mindefaults.txt";
+			}
 		}
 		else if (sc.Compare("NAMES"))
 		{

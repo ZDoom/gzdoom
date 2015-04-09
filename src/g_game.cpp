@@ -2516,7 +2516,7 @@ bool G_ProcessIFFDemo (FString &mapname)
 	id = ReadLong (&demo_p);
 	if (id != ZDEM_ID)
 	{
-		Printf ("Not a ZDoom demo file!\n");
+		Printf ("Not a " GAMENAME " demo file!\n");
 		return true;
 	}
 
@@ -2541,12 +2541,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 			demover = ReadWord (&demo_p);	// ZDoom version demo was created with
 			if (demover < MINDEMOVERSION)
 			{
-				Printf ("Demo requires an older version of ZDoom!\n");
+				Printf ("Demo requires an older version of " GAMENAME "!\n");
 				//return true;
 			}
 			if (ReadWord (&demo_p) > DEMOGAMEVERSION)	// Minimum ZDoom version
 			{
-				Printf ("Demo requires a newer version of ZDoom!\n");
+				Printf ("Demo requires a newer version of " GAMENAME "!\n");
 				return true;
 			}
 			if (demover >= 0x21a)
@@ -2673,7 +2673,7 @@ void G_DoPlayDemo (void)
 
 	if (ReadLong (&demo_p) != FORM_ID)
 	{
-		const char *eek = "Cannot play non-ZDoom demos.\n";
+		const char *eek = "Cannot play non-" GAMENAME " demos.\n";
 
 		C_ForgetCVars();
 		M_Free(demobuffer);

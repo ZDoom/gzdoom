@@ -22,7 +22,7 @@ void ChildSigHandler (int signum)
 #ifdef _WIN32
 BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode);
 
-static char TimidityTitle[] = "TiMidity (ZDoom Launched)";
+static char TimidityTitle[] = "TiMidity (" GAMENAME " Launched)";
 const char TimidityPPMIDIDevice::EventName[] = "TiMidity Killer";
 
 CVAR (String, timidity_exe, "timidity.exe", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -347,7 +347,7 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 	}
 	if (!good)
 	{
-		Printf(PRINT_BOLD, "ZDoom requires a special version of TiMidity++\n");
+		Printf(PRINT_BOLD, GAMENAME " requires a special version of TiMidity++\n");
 	}
 
 	UnmapViewOfFile((LPVOID)exeBase);

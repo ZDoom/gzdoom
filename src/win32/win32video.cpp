@@ -301,7 +301,7 @@ void Win32Video::InitDDraw ()
 		DDraw->Release ();
 		DDraw = NULL;
 		I_FatalError ("DirectDraw returned no display modes.\n\n"
-					"If you started ZDoom from a fullscreen DOS box, run it from "
+					"If you started " GAMENAME " from a fullscreen DOS box, run it from "
 					"a DOS window instead. If that does not work, you may need to reboot.");
 	}
 	if (Args->CheckParm ("-2"))

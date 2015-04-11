@@ -1158,10 +1158,17 @@ if( MSVC )
 		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
-	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
-		COMMENT "Adding manifest..."
-	)
+	if( NO_GENERATOR_EXPRESSIONS )
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
+			COMMENT "Adding manifest..."
+		)
+	else( NO_GENERATOR_EXPRESSIONS )
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:$<TARGET_FILE:zdoom>
+			COMMENT "Adding manifest..."
+		)
+	endif( NO_GENERATOR_EXPRESSIONS )
 
 	create_default_target_launcher( zdoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 endif( MSVC )

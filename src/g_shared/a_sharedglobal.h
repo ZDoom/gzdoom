@@ -202,7 +202,7 @@ public:
 	TObjPtr<AActor> UnmorphedMe;
 	int UnmorphTime, MorphStyle;
 	const PClass *MorphExitFlash;
-	DWORD FlagsSave;
+	ActorFlags FlagsSave;
 };
 
 class AMapMarker : public AActor

@@ -1216,11 +1216,14 @@ void FParser::SF_ObjFlag(void)
 			
 			if(mo && flagnum<26)          // nullptr check
 			{
+				DWORD tempflags = mo->flags;
+
 				// remove old bit
-				mo->flags &= ~(1 << flagnum);
+				tempflags &= ~(1 << flagnum);
 				
 				// make the new flag
-				mo->flags |= (!!intvalue(t_argv[2])) << flagnum;
+				tempflags |= (!!intvalue(t_argv[2])) << flagnum;
+				mo->flags = ActorFlags::FromInt (tempflags);
 			}  
 		}
 		t_return.type = svt_int;  

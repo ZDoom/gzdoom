@@ -228,7 +228,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->angle = pmo->angle;
 	mo->player = player;
 	mo->reactiontime = 18;
-	mo->flags = pmo->special2 & ~MF_JUSTHIT;
+	mo->flags = ActorFlags::FromInt (pmo->special2) & ~MF_JUSTHIT;
 	mo->velx = 0;
 	mo->vely = 0;
 	player->velx = 0;
@@ -438,7 +438,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->SetOrigin (beast->x, beast->y, beast->z);
 	actor->flags |= MF_SOLID;
 	beast->flags &= ~MF_SOLID;
-	int beastflags6 = beast->flags6;
+	ActorFlags6 beastflags6 = beast->flags6;
 	beast->flags6 &= ~MF6_TOUCHY;
 	if (!force && !P_TestMobjLocation (actor))
 	{ // Didn't fit

@@ -341,7 +341,7 @@ int FDirectoryLump::FillCache()
 	FileReader *reader = NewReader();
 	if (reader == NULL)
 	{
-		memset(Cache, 0, sizeof(Cache));
+		memset(Cache, 0, LumpSize);
 		return 0;
 	}
 	reader->Read(Cache, LumpSize);

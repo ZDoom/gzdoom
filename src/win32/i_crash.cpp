@@ -125,10 +125,7 @@ RtlVirtualUnwind (
 #define UPLOAD_BOUNDARY	"Von-DnrNbJl0 P9d_BD;cEEsQVWpYMq0pbZ6NUmYHus;yIbFbkgB?.N=YC5O=BGZm+Rab5"
 #define DBGHELP_URI		"/msredist/dbghelp.dl_"
 
-// If you are working on your own modified version of ZDoom, change
-// the last part of the UPLOAD_AGENT (between parentheses) to your
-// own program's name. e.g. (Skulltag) or (ZDaemon) or (ZDoomFu)
-#define UPLOAD_AGENT	"ZDoom/" VERSIONSTR " (" GAMESIG ")"
+#define UPLOAD_AGENT	GAMENAME "/" VERSIONSTR " (" GAMESIG ")"
 
 // Time, in milliseconds, to wait for a send() or recv() to complete.
 #define TIMEOUT			60000

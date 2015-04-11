@@ -331,7 +331,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	gtk_container_add (GTK_CONTAINER(window), vbox);
 
 	// Create the top label.
-	widget = gtk_label_new ("ZDoom found more than one IWAD\nSelect from the list below to determine which one to use:");
+	widget = gtk_label_new (GAMENAME " found more than one IWAD\nSelect from the list below to determine which one to use:");
 	gtk_box_pack_start (GTK_BOX(vbox), widget, false, false, 0);
 	gtk_misc_set_alignment (GTK_MISC(widget), 0, 0);
 
@@ -450,7 +450,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	{
 		FString cmd("kdialog --title \"" GAMESIG " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
-		            " --menu \"ZDoom found more than one IWAD\n"
+		            " --menu \"" GAMENAME " found more than one IWAD\n"
 		            "Select from the list below to determine which one to use:\"";
 
 		for(i = 0; i < numwads; ++i)

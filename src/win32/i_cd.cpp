@@ -45,6 +45,7 @@
 #include "c_dispatch.h"
 #include "m_argv.h"
 #include "i_system.h"
+#include "version.h"
 
 #include "i_cd.h"
 #include "helperthread.h"

@@ -2,6 +2,7 @@
 #include "c_cvars.h"
 #include "cmdlib.h"
 #include "templates.h"
+#include "version.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -20,6 +21,8 @@ void ChildSigHandler (int signum)
 #endif
 
 #ifdef _WIN32
+
+
 BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode);
 
 static char TimidityTitle[] = "TiMidity (" GAMENAME " Launched)";

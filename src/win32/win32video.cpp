@@ -70,6 +70,7 @@
 #include "r_defs.h"
 #include "v_text.h"
 #include "r_swrenderer.h"
+#include "version.h"
 
 #include "win32iface.h"
 

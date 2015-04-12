@@ -50,9 +50,14 @@
 
 #define MAX_QPATH 64
 
+//===========================================================================
+//
+// decode the lat/lng normal to a 3 float normal
+//
+//===========================================================================
+
 static void UnpackVector(unsigned short packed, float & nx, float & ny, float & nz)
 {
-	// decode the lat/lng normal to a 3 float normal
 	double lat = ( packed >> 8 ) & 0xff;
 	double lng = ( packed & 0xff );
 	lat *= PI/128;
@@ -63,75 +68,86 @@ static void UnpackVector(unsigned short packed, float & nx, float & ny, float & 
 	nz = cos(lng);
 }
 
+//===========================================================================
+//
+// MD3 File structure
+//
+//===========================================================================
 
-
-bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
+#pragma pack(4)
+struct md3_header_t
 {
-	#pragma pack(4)
-	struct md3_header_t
-	{
-		DWORD Magic;
-		DWORD Version;
-		char Name[MAX_QPATH];
-		DWORD Flags;
-		DWORD Num_Frames;
-		DWORD Num_Tags;
-		DWORD Num_Surfaces;
-		DWORD Num_Skins;
-		DWORD Ofs_Frames;
-		DWORD Ofs_Tags;
-		DWORD Ofs_Surfaces;
-		DWORD Ofs_Eof;
-	};
+	DWORD Magic;
+	DWORD Version;
+	char Name[MAX_QPATH];
+	DWORD Flags;
+	DWORD Num_Frames;
+	DWORD Num_Tags;
+	DWORD Num_Surfaces;
+	DWORD Num_Skins;
+	DWORD Ofs_Frames;
+	DWORD Ofs_Tags;
+	DWORD Ofs_Surfaces;
+	DWORD Ofs_Eof;
+};
 
-	struct md3_surface_t
-	{
-		DWORD Magic;
-		char Name[MAX_QPATH];
-		DWORD Flags;
-		DWORD Num_Frames;
-		DWORD Num_Shaders;
-		DWORD Num_Verts;
-		DWORD Num_Triangles;
-		DWORD Ofs_Triangles;
-		DWORD Ofs_Shaders;
-		DWORD Ofs_Texcoord;
-		DWORD Ofs_XYZNormal;
-		DWORD Ofs_End;
-	};
+struct md3_surface_t
+{
+	DWORD Magic;
+	char Name[MAX_QPATH];
+	DWORD Flags;
+	DWORD Num_Frames;
+	DWORD Num_Shaders;
+	DWORD Num_Verts;
+	DWORD Num_Triangles;
+	DWORD Ofs_Triangles;
+	DWORD Ofs_Shaders;
+	DWORD Ofs_Texcoord;
+	DWORD Ofs_XYZNormal;
+	DWORD Ofs_End;
+};
 
-	struct md3_triangle_t
-	{
-		DWORD vt_index[3];
-	};
+struct md3_triangle_t
+{
+	DWORD vt_index[3];
+};
 
-	struct md3_shader_t
-	{
-		char Name[MAX_QPATH];
-		DWORD index;
-	};
+struct md3_shader_t
+{
+	char Name[MAX_QPATH];
+	DWORD index;
+};
 
-	struct md3_texcoord_t
-	{
-		float s,t;
-	};
+struct md3_texcoord_t
+{
+	float s, t;
+};
 
-	struct md3_vertex_t
-	{
-		short x,y,z,n;
-	};
+struct md3_vertex_t
+{
+	short x, y, z, n;
+};
 
-	struct md3_frame_t
-	{
-		float min_Bounds[3];
-		float max_Bounds[3];
-		float localorigin[3];
-		float radius;
-		char Name[16];
-	};
-	#pragma pack()
+struct md3_frame_t
+{
+	float min_Bounds[3];
+	float max_Bounds[3];
+	float localorigin[3];
+	float radius;
+	char Name[16];
+};
+#pragma pack()
 
-	md3_header_t * hdr=(md3_header_t *)buffer;
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int length)
+{
+	md3_header_t * hdr = (md3_header_t *)buffer;
 
 	numFrames = LittleLong(hdr->Num_Frames);
 	numTags = LittleLong(hdr->Num_Tags);
@@ -140,16 +156,17 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 	md3_frame_t * frm = (md3_frame_t*)(buffer + LittleLong(hdr->Ofs_Frames));
 
 	frames = new MD3Frame[numFrames];
-	for(int i=0;i<numFrames;i++)
+	for (int i = 0; i < numFrames; i++)
 	{
 		strncpy(frames[i].Name, frm[i].Name, 16);
-		for(int j=0;j<3;j++) frames[i].origin[j] = frm[i].localorigin[j];
+		for (int j = 0; j < 3; j++) frames[i].origin[j] = frm[i].localorigin[j];
 	}
 
 	md3_surface_t * surf = (md3_surface_t*)(buffer + LittleLong(hdr->Ofs_Surfaces));
 
 	surfaces = new MD3Surface[numSurfaces];
-	for(int i=0;i<numSurfaces;i++)
+
+	for (int i = 0; i < numSurfaces; i++)
 	{
 		MD3Surface * s = &surfaces[i];
 		md3_surface_t * ss = surf;
@@ -160,6 +177,43 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 		s->numTriangles = LittleLong(ss->Num_Triangles);
 		s->numVertices = LittleLong(ss->Num_Verts);
 
+		// copy shaders (skins)
+		md3_shader_t * shader = (md3_shader_t*)(((char*)ss) + LittleLong(ss->Ofs_Shaders));
+		s->skins = new FTexture *[s->numSkins];
+
+		for (int i = 0; i < s->numSkins; i++)
+		{
+			// [BB] According to the MD3 spec, Name is supposed to include the full path.
+			s->skins[i] = LoadSkin("", shader[i].Name);
+			// [BB] Fall back and check if Name is relative.
+			if (s->skins[i] == NULL)
+				s->skins[i] = LoadSkin(path, shader[i].Name);
+		}
+	}
+	mLumpNum = lumpnum;
+	return true;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void FMD3Model::LoadGeometry()
+{
+	FMemLump lumpdata = Wads.ReadLump(mLumpNum);
+	const char *buffer = (const char *)lumpdata.GetMem();
+	md3_header_t * hdr = (md3_header_t *)buffer;
+	md3_surface_t * surf = (md3_surface_t*)(buffer + LittleLong(hdr->Ofs_Surfaces));
+
+	for(int i=0;i<numSurfaces;i++)
+	{
+		MD3Surface * s = &surfaces[i];
+		md3_surface_t * ss = surf;
+
+		surf = (md3_surface_t *)(((char*)surf) + LittleLong(surf->Ofs_End));
+
 		// copy triangle indices
 		md3_triangle_t * tris = (md3_triangle_t*)(((char*)ss)+LittleLong(ss->Ofs_Triangles));
 		s->tris = new MD3Triangle[s->numTriangles];
@@ -167,19 +221,6 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 		for(int i=0;i<s->numTriangles;i++) for (int j=0;j<3;j++)
 		{
 			s->tris[i].VertIndex[j]=LittleLong(tris[i].vt_index[j]);
-		}
-
-		// copy shaders (skins)
-		md3_shader_t * shader = (md3_shader_t*)(((char*)ss)+LittleLong(ss->Ofs_Shaders));
-		s->skins = new FTexture *[s->numSkins];
-
-		for(int i=0;i<s->numSkins;i++)
-		{
-			// [BB] According to the MD3 spec, Name is supposed to include the full path.
-			s->skins[i] = LoadSkin("", shader[i].Name);
-			// [BB] Fall back and check if Name is relative.
-			if ( s->skins[i] == NULL )
-				s->skins[i] = LoadSkin(path, shader[i].Name);
 		}
 
 		// Load texture coordinates
@@ -204,7 +245,6 @@ bool FMD3Model::Load(const char * path, int, const char * buffer, int length)
 			UnpackVector( LittleShort(vt[i].n), s->vertices[i].nx, s->vertices[i].ny, s->vertices[i].nz);
 		}
 	}
-	return true;
 }
 
 //===========================================================================
@@ -217,6 +257,8 @@ void FMD3Model::BuildVertexBuffer()
 {
 	if (mVBuf == NULL)
 	{
+		LoadGeometry();
+
 		unsigned int vbufsize = 0;
 		unsigned int ibufsize = 0;
 
@@ -259,7 +301,7 @@ void FMD3Model::BuildVertexBuffer()
 					indxptr[iindex++] = surf->tris[k].VertIndex[l];
 				}
 			}
-			surf->CleanTempData();
+			surf->UnloadGeometry();
 		}
 		mVBuf->UnlockVertexBuffer();
 		mVBuf->UnlockIndexBuffer();

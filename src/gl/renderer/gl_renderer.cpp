@@ -99,6 +99,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 }
 
 void gl_LoadModels();
+void gl_FlushModels();
 
 void FGLRenderer::Initialize()
 {
@@ -119,6 +120,7 @@ void FGLRenderer::Initialize()
 
 FGLRenderer::~FGLRenderer() 
 {
+	gl_FlushModels();
 	gl_DeleteAllAttachedLights();
 	FMaterial::FlushAll();
 	if (mShaderManager != NULL) delete mShaderManager;

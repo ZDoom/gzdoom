@@ -220,10 +220,10 @@ class FMD3Model : public FModel
 		~MD3Surface()
 		{
 			if (skins) delete [] skins;
-			CleanTempData();
+			UnloadGeometry();
 		}
 
-		void CleanTempData()
+		void UnloadGeometry()
 		{
 			if (tris) delete [] tris;
 			if (vertices) delete [] vertices;
@@ -245,6 +245,7 @@ class FMD3Model : public FModel
 	int numFrames;
 	int numTags;
 	int numSurfaces;
+	int mLumpNum;
 
 	MD3Frame * frames;
 	MD3Surface * surfaces;
@@ -256,6 +257,7 @@ public:
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	void LoadGeometry();
 	void BuildVertexBuffer();
 };
 

@@ -800,7 +800,7 @@ void GLPlaneMirrorPortal::DrawContents()
 	float f = FIXED2FLOAT(planez);
 	if (PlaneMirrorMode < 0)
 	{
-		gl_RenderState.SetClipHeightTop(f);	// ceiling mirror: clip everytihng with a z lower than the portal's ceiling
+		gl_RenderState.SetClipHeightTop(f);	// ceiling mirror: clip everything with a z lower than the portal's ceiling
 		glEnable(GL_CLIP_DISTANCE1);
 	}
 	else

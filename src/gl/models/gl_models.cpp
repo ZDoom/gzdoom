@@ -101,6 +101,14 @@ void gl_LoadModels()
 	}
 }
 
+void gl_FlushModels()
+{
+	for (int i = Models.Size() - 1; i >= 0; i--)
+	{
+		Models[i]->DestroyVertexBuffer();
+	}
+}
+
 //===========================================================================
 //
 //

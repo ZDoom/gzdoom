@@ -2093,10 +2093,11 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int
 		}
 
 		size_t numcollected = Collection.Size ();
-		int linenum = -1;
+		int linenum;
 
 		// Now create scrollers for any walls that don't already have them.
-		while ((linenum = P_FindLineFromID (id, linenum)) >= 0)
+		FLineIdIterator itr(id);
+		while ((linenum = itr.Next()) >= 0)
 		{
 			if (lines[linenum].sidedef[sidechoice] != NULL)
 			{
@@ -2431,30 +2432,28 @@ FUNC(LS_Sector_SetRotation)
 FUNC(LS_Line_AlignCeiling)
 // Line_AlignCeiling (lineid, side)
 {
-	int line = P_FindLineFromID (arg0, -1);
 	bool ret = 0;
 
-	if (line < 0)
-		I_Error ("Sector_AlignCeiling: Lineid %d is undefined", arg0);
-	do
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		ret |= P_AlignFlat (line, !!arg1, 1);
-	} while ( (line = P_FindLineFromID (arg0, line)) >= 0);
+	}
 	return ret;
 }
 
 FUNC(LS_Line_AlignFloor)
 // Line_AlignFloor (lineid, side)
 {
-	int line = P_FindLineFromID (arg0, -1);
 	bool ret = 0;
 
-	if (line < 0)
-		I_Error ("Sector_AlignFloor: Lineid %d is undefined", arg0);
-	do
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		ret |= P_AlignFlat (line, !!arg1, 0);
-	} while ( (line = P_FindLineFromID (arg0, line)) >= 0);
+	}
 	return ret;
 }
 
@@ -2466,7 +2465,9 @@ FUNC(LS_Line_SetTextureOffset)
 	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
 		return false;
 
-	for(int line = -1; (line = P_FindLineFromID (arg0, line)) >= 0; )
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		side_t *side = lines[line].sidedef[arg3];
 		if (side != NULL)
@@ -2517,7 +2518,9 @@ FUNC(LS_Line_SetTextureScale)
 	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
 		return false;
 
-	for(int line = -1; (line = P_FindLineFromID (arg0, line)) >= 0; )
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		side_t *side = lines[line].sidedef[arg3];
 		if (side != NULL)
@@ -2588,7 +2591,9 @@ FUNC(LS_Line_SetBlocking)
 		if (arg2 & 1) clearflags |= flagtrans[i];
 	}
 
-	for(int line = -1; (line = P_FindLineFromID (arg0, line)) >= 0; )
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		lines[line].flags = (lines[line].flags & ~clearflags) | setflags;
 	}
@@ -2881,8 +2886,9 @@ FUNC(LS_SetPlayerProperty)
 FUNC(LS_TranslucentLine)
 // TranslucentLine (id, amount, type)
 {
-	int linenum = -1;
-	while ((linenum = P_FindLineFromID (arg0, linenum)) >= 0)
+	FLineIdIterator itr(arg0);
+	int linenum;
+	while ((linenum = itr.Next()) >= 0)
 	{
 		lines[linenum].Alpha = Scale(clamp(arg1, 0, 255), FRACUNIT, 255);
 		if (arg2 == 0)

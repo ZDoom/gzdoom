@@ -143,7 +143,9 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 
 	if (tag == 0)
 	{
-		for(int line = -1; (line = P_FindLineFromID(lineid,line)) >= 0; )
+		FLineIdIterator itr(lineid);
+		int line;
+		while ((line = itr.Next()) >= 0)
 		{
 			line_t *ln = &lines[line];
 

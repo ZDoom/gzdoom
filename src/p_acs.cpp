@@ -3300,7 +3300,8 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 
 	texture = TexMan.GetTexture (texname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
-	while ((linenum = P_FindLineFromID (lineid, linenum)) >= 0)
+	FLineIdIterator itr(lineid);
+	while ((linenum = itr.Next()) >= 0)
 	{
 		side_t *sidedef;
 
@@ -4458,7 +4459,7 @@ int DLevelScript::SideFromID(int id, int side)
 	}
 	else
 	{
-		int line = P_FindLineFromID(id, -1);
+		int line = P_FindFirstLineFromID(id);
 		if (line == -1) return -1;
 		if (lines[line].sidedef[side] == NULL) return -1;
 		return lines[line].sidedef[side]->Index;
@@ -4474,7 +4475,7 @@ int DLevelScript::LineFromID(int id)
 	}
 	else
 	{
-		return P_FindLineFromID(id, -1);
+		return P_FindFirstLineFromID(id);
 	}
 }
 
@@ -5693,9 +5694,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_SetLineActivation:
 			if (argCount >= 2)
 			{
-				int line = -1;
-
-				while ((line = P_FindLineFromID(args[0], line)) >= 0)
+				int line;
+				FLineIdIterator itr(args[0]);
+				while ((line = itr.Next()) >= 0)
 				{
 					lines[line].activation = args[1];
 				}
@@ -5705,7 +5706,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_GetLineActivation:
 			if (argCount > 0)
 			{
-				int line = P_FindLineFromID(args[0], -1);
+				int line = P_FindFirstLineFromID(args[0]);
 				return line >= 0 ? lines[line].activation : 0;
 			}
 			break;
@@ -7999,9 +8000,10 @@ scriptwait:
 
 		case PCD_SETLINEBLOCKING:
 			{
-				int line = -1;
+				int line;
 
-				while ((line = P_FindLineFromID (STACK(2), line)) >= 0)
+				FLineIdIterator itr(STACK(2));
+				while ((line = itr.Next()) >= 0)
 				{
 					switch (STACK(1))
 					{
@@ -8034,9 +8036,10 @@ scriptwait:
 
 		case PCD_SETLINEMONSTERBLOCKING:
 			{
-				int line = -1;
+				int line;
 
-				while ((line = P_FindLineFromID (STACK(2), line)) >= 0)
+				FLineIdIterator itr(STACK(2));
+				while ((line = itr.Next()) >= 0)
 				{
 					if (STACK(1))
 						lines[line].flags |= ML_BLOCKMONSTERS;
@@ -8061,7 +8064,8 @@ scriptwait:
 					arg0 = -FName(FBehavior::StaticLookupString(arg0));
 				}
 
-				while ((linenum = P_FindLineFromID (STACK(7), linenum)) >= 0)
+				FLineIdIterator itr(STACK(7));
+				while ((linenum = itr.Next()) >= 0)
 				{
 					line_t *line = &lines[linenum];
 					line->special = specnum;

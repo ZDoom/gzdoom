@@ -2297,9 +2297,11 @@ void FParser::SF_SetLineBlocking(void)
 		{
 			blocking=blocks[blocking];
 			int tag=intvalue(t_argv[0]);
-			for (int i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+			FLineIdIterator itr(tag);
+			int i;
+			while ((i = itr.Next()) >= 0)
 			{
-				lines[i].flags = (lines[i].flags & ~(ML_BLOCKING|ML_BLOCKEVERYTHING)) | blocking;
+				lines[i].flags = (lines[i].flags & ~(ML_BLOCKING | ML_BLOCKEVERYTHING)) | blocking;
 			}
 		}
 	}
@@ -2318,7 +2320,9 @@ void FParser::SF_SetLineMonsterBlocking(void)
 		int blocking = intvalue(t_argv[1]) ? ML_BLOCKMONSTERS : 0;
 		int tag=intvalue(t_argv[0]);
 
-		for (int i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+		FLineIdIterator itr(tag);
+		int i;
+		while ((i = itr.Next()) >= 0)
 		{
 			lines[i].flags = (lines[i].flags & ~ML_BLOCKMONSTERS) | blocking;
 		}
@@ -2373,12 +2377,13 @@ void FParser::SF_SetLineTexture(void)
 			texture = stringvalue(t_argv[3]);
 			texturenum = TexMan.GetTexture(texture, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 			
-			for (i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+			FLineIdIterator itr(tag);
+			while ((i = itr.Next()) >= 0)
 			{
 				// bad sidedef, Hexen just SEGV'd here!
-				if(lines[i].sidedef[side] != NULL)
+				if (lines[i].sidedef[side] != NULL)
 				{
-					if (position >=0 && position <=2)
+					if (position >= 0 && position <= 2)
 					{
 						lines[i].sidedef[side]->SetTexture(position, texturenum);
 					}
@@ -2392,7 +2397,8 @@ void FParser::SF_SetLineTexture(void)
 			int sections = intvalue(t_argv[3]); 
 			
 			// set all sectors with tag 
-			for (i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+			FLineIdIterator itr(tag);
+			while ((i = itr.Next()) >= 0)
 			{ 
 				side_t *sided = lines[i].sidedef[side];
 				if(sided != NULL)
@@ -4373,7 +4379,8 @@ void FParser::SF_SetLineTrigger()
 		id=intvalue(t_argv[0]);
 		spec=intvalue(t_argv[1]);
 		if (t_argc>2) tag=intvalue(t_argv[2]);
-		for (i = -1; (i = P_FindLineFromID (id, i)) >= 0; )
+		FLineIdIterator itr(id);
+		while ((i = itr.Next()) >= 0)
 		{
 			if (t_argc==2) tag=lines[i].id;
 			maplinedef_t mld;

@@ -424,7 +424,8 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidedef[1] == NULL)
 		return false;
 
-	for (i = -1; (i = P_FindLineFromID (id, i)) >= 0; )
+	FLineIdIterator itr(id);
+	while ((i = itr.Next()) >= 0)
 	{
 		if (line-lines == i)
 			continue;

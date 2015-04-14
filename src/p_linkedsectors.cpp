@@ -348,7 +348,9 @@ void P_AddSectorLinksByID(sector_t *control, int id, INTBOOL ceiling)
 {
 	extsector_t::linked::plane &scrollplane = ceiling? control->e->Linked.Ceiling : control->e->Linked.Floor;
 
-	for(int line = -1; (line = P_FindLineFromID(id, line)) >= 0; )
+	FLineIdIterator itr(id);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		line_t *ld = &lines[line];
 

@@ -225,7 +225,6 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 	{
 		sec = &sectors[secnum];
 
-manual_pillar:
 		if (sec->PlaneMoving(sector_t::floor) || sec->PlaneMoving(sector_t::ceiling))
 			continue;
 

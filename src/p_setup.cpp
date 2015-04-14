@@ -1514,7 +1514,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
 		ss->secretsector = !!(ss->special&SECRET_MASK);
-		ss->SetTag(LittleShort(ms->tag));
+		ss->SetMainTag(LittleShort(ms->tag));
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
 		ss->seqType = defSeqType;
@@ -3131,9 +3131,9 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (sector->linecount == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, sector->GetTag());
+			Printf ("Sector %i (tag %i) has no lines\n", i, sector->GetMainTag());
 			// 0 the sector's tag so that no specials can use it
-			sector->SetTag(0);
+			sector->ClearTags();
 		}
 		else
 		{

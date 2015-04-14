@@ -634,8 +634,9 @@ struct sector_t
 	}
 
 	bool HasTag(int checktag) const;
-	void SetTag(int tagnum, bool discardall = true);
-	int GetTag() const;
+	void SetMainTag(int tagnum);
+	int GetMainTag() const;
+	void ClearTags();
 	static void HashTags();
 
 	bool PlaneMoving(int pos);

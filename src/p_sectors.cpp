@@ -830,14 +830,19 @@ bool sector_t::HasTag(int checktag) const
 	return tag == checktag;
 }
 
-void sector_t::SetTag(int tagnum, bool discardall)
+void sector_t::SetMainTag(int tagnum)
 {
 	tag = tagnum;
 }
 
-int sector_t::GetTag() const
+int sector_t::GetMainTag() const
 {
 	return tag;
+}
+
+void sector_t::ClearTags()
+{
+	tag = 0;
 }
 
 void sector_t::HashTags()

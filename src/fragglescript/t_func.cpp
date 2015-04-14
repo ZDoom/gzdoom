@@ -1158,7 +1158,7 @@ void FParser::SF_ObjSector(void)
 	}
 
 	t_return.type = svt_int;
-	t_return.value.i = mo ? mo->Sector->GetTag() : 0; // nullptr check
+	t_return.value.i = mo ? mo->Sector->GetMainTag() : 0; // nullptr check
 }
 
 //==========================================================================
@@ -4388,7 +4388,8 @@ void FParser::SF_ChangeTag()
 	{
 		for (int secnum = -1; (secnum = P_FindSectorFromTag (t_argv[0].value.i, secnum)) >= 0; ) 
 		{
-			sectors[secnum].SetTag(t_argv[1].value.i);
+			sectors[secnum].ClearTags();
+			sectors[secnum].SetMainTag(t_argv[1].value.i);
 		}
 		sector_t::HashTags();
 	}

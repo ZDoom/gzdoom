@@ -316,7 +316,9 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 
 	if (movetype > 0)
 	{
-		for(int sec = -1; (sec = P_FindSectorFromTag(tag, sec)) >= 0; )
+		int sec;
+		FSectorTagIterator itr(tag);
+		while ((sec = itr.Next()) >= 0)
 		{
 			// Don't attach to self!
 			if (control != &sectors[sec])

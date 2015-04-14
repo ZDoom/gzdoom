@@ -242,8 +242,45 @@ inline sector_t *getNextSector (line_t *line, const sector_t *sec)
 	       line->frontsector;
 }
 
+class FSectorTagIterator
+{
+protected:
+	int searchtag;
+	int start;
 
-int		P_FindSectorFromTag (int tag, int start);
+public:
+	FSectorTagIterator(int tag)
+	{
+		searchtag = tag;
+		start = sectors[(unsigned)tag % (unsigned)numsectors].firsttag;
+	}
+
+	// Special constructor for actions that treat tag 0 as  'back of activation line'
+	FSectorTagIterator(int tag, line_t *line)
+	{
+		if (tag == 0)
+		{
+			searchtag = INT_MIN;
+			start = (line == NULL || line->backsector == NULL)? -1 : (int)(line->backsector - sectors);
+		}
+		else
+		{
+			searchtag = tag;
+			start = sectors[(unsigned)tag % (unsigned)numsectors].firsttag;
+		}
+	}
+
+	int Next();
+	int NextCompat(bool compat, int secnum);
+};
+
+
+inline int P_FindFirstSectorFromTag(int tag)
+{
+	FSectorTagIterator it(tag);
+	return it.Next();
+}
+
 int		P_FindLineFromID (int id, int start);
 
 

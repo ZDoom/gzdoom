@@ -157,7 +157,9 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 	}
 	else
 	{
-		for(int sec = -1; (sec = P_FindSectorFromTag(tag, sec)) >= 0; )
+		FSectorTagIterator it(tag);
+		int sec;
+		while ((sec = it.Next()) >= 0)
 		{
 			for (int line = 0; line < sectors[sec].linecount; line ++)
 			{

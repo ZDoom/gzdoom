@@ -312,18 +312,24 @@ static int T_GetPlayerNum(const svalue_t &arg)
 // sectors directly by passing a negative value
 //
 //==========================================================================
-int T_FindSectorFromTag(int tagnum,int startsector)
+class FSSectorTagIterator : public FSectorTagIterator
 {
-	if (tagnum<=0)
+public:
+	FSSectorTagIterator(int tag)
+		: FSectorTagIterator(tag)
 	{
-		if (startsector<0)
+		if (tag < 0)
 		{
-			if (tagnum==-32768) return 0;
-			if (-tagnum<numsectors) return -tagnum;
+			searchtag = INT_MIN;
+			start = tag == -32768? 0 : -tag < numsectors? -tag : -1;
 		}
-		return -1;
 	}
-	return P_FindSectorFromTag(tagnum,startsector);
+};
+
+inline int T_FindFirstSectorFromTag(int tagnum)
+{
+	FSSectorTagIterator it(tagnum);
+	return it.Next();
 }
 
 
@@ -1536,7 +1542,8 @@ void FParser::SF_StartSectorSound(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		int i=-1;
-		while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((i = itr.Next()) >= 0)
 		{
 			sector = &sectors[i];
 			S_Sound(sector, CHAN_BODY, T_FindSound(stringvalue(t_argv[1])), 1.0f, ATTN_NORM);
@@ -1595,7 +1602,8 @@ void FParser::SF_FloorHeight(void)
 			
 			// set all sectors with tag
 			
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				if (sectors[i].floordata) continue;	// don't move floors that are active!
 
@@ -1612,7 +1620,7 @@ void FParser::SF_FloorHeight(void)
 		}
 		else
 		{
-			secnum = T_FindSectorFromTag(tagnum, -1);
+			secnum = T_FindFirstSectorFromTag(tagnum);
 			if(secnum < 0)
 			{ 
 				script_error("sector not found with tagnum %i\n", tagnum); 
@@ -1671,7 +1679,8 @@ void FParser::SF_MoveFloor(void)
 		
 		// move all sectors with tag
 		
-		while ((secnum = T_FindSectorFromTag(tagnum, secnum)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((secnum = itr.Next()) >= 0)
 		{
 			sec = &sectors[secnum];
 			// Don't start a second thinker on the same floor
@@ -1733,7 +1742,8 @@ void FParser::SF_CeilingHeight(void)
 			dest = fixedvalue(t_argv[1]);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				if (sectors[i].ceilingdata) continue;	// don't move ceilings that are active!
 
@@ -1750,7 +1760,7 @@ void FParser::SF_CeilingHeight(void)
 		}
 		else
 		{
-			secnum = T_FindSectorFromTag(tagnum, -1);
+			secnum = T_FindFirstSectorFromTag(tagnum);
 			if(secnum < 0)
 			{ 
 				script_error("sector not found with tagnum %i\n", tagnum); 
@@ -1823,7 +1833,8 @@ void FParser::SF_MoveCeiling(void)
 		silent=t_argc>4 ? intvalue(t_argv[4]):1;
 		
 		// move all sectors with tag
-		while ((secnum = T_FindSectorFromTag(tagnum, secnum)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((secnum = itr.Next()) >= 0)
 		{
 			sec = &sectors[secnum];
 			
@@ -1851,7 +1862,7 @@ void FParser::SF_LightLevel(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ 
@@ -1865,7 +1876,8 @@ void FParser::SF_LightLevel(void)
 			int i = -1;
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].SetLightLevel(intvalue(t_argv[1]));
 			}
@@ -1984,7 +1996,8 @@ void FParser::SF_FadeLight(void)
 		destlevel = intvalue(t_argv[1]);
 		speed = t_argc>2 ? intvalue(t_argv[2]) : 1;
 		
-		for (i = -1; (i = P_FindSectorFromTag(sectag,i)) >= 0;) 
+		FSectorTagIterator it(sectag);
+		while ((i = it.Next()) >= 0)
 		{
 			if (!sectors[i].lightingdata) new DLightLevel(&sectors[i],destlevel,speed);
 		}
@@ -2006,7 +2019,7 @@ void FParser::SF_FloorTexture(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -2019,7 +2032,8 @@ void FParser::SF_FloorTexture(void)
 			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].SetTexture(sector_t::floor, picnum);
 			}
@@ -2057,7 +2071,7 @@ void FParser::SF_SectorColormap(void)
 	tagnum = intvalue(t_argv[0]);
 	
 	// argv is sector tag
-	secnum = T_FindSectorFromTag(tagnum, -1);
+	secnum = T_FindFirstSectorFromTag(tagnum);
 	
 	if(secnum < 0)
 	{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -2068,7 +2082,8 @@ void FParser::SF_SectorColormap(void)
 	{
 		DWORD cm = R_ColormapNumForName(t_argv[1].value.s);
 
-		while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((i = itr.Next()) >= 0)
 		{
 			sectors[i].midmap=cm;
 			sectors[i].heightsec=&sectors[i];
@@ -2094,7 +2109,7 @@ void FParser::SF_CeilingTexture(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -2107,7 +2122,8 @@ void FParser::SF_CeilingTexture(void)
 			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].SetTexture(sector_t::ceiling, picnum);
 			}
@@ -4201,7 +4217,7 @@ void FParser::SF_SetColor(void)
 	{
 		tagnum = intvalue(t_argv[0]);
 		
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ 
@@ -4222,7 +4238,8 @@ void FParser::SF_SetColor(void)
 		else return;
 
 		// set all sectors with tag
-		while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((i = itr.Next()) >= 0)
 		{
 			sectors[i].ColorMap = GetSpecialLights (color, sectors[i].ColorMap->Fade, 0);
 		}
@@ -4314,7 +4331,7 @@ void FParser::SF_SectorType(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -4327,7 +4344,8 @@ void FParser::SF_SectorType(void)
 			int spec = intvalue(t_argv[1]);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].special = spec;
 			}
@@ -4386,7 +4404,9 @@ void FParser::SF_ChangeTag()
 {
 	if (CheckArgs(2))
 	{
-		for (int secnum = -1; (secnum = P_FindSectorFromTag (t_argv[0].value.i, secnum)) >= 0; ) 
+		FSectorTagIterator it(t_argv[0].value.i);
+		int secnum;
+		while ((secnum = it.Next()) >= 0)
 		{
 			sectors[secnum].ClearTags();
 			sectors[secnum].SetMainTag(t_argv[1].value.i);

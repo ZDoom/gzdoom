@@ -123,7 +123,7 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 	int secnum;
 	size_t planeofs;
 
-	secnum = P_FindSectorFromTag (tag, -1);
+	secnum = P_FindFirstSectorFromTag (tag);
 	if (secnum == -1)
 	{
 		return;

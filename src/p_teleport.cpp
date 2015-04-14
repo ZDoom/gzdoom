@@ -300,9 +300,10 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 
 	if (tag != 0)
 	{
-		int secnum = -1;
+		int secnum;
 
-		while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+		FSectorTagIterator itr(tag);
+		while ((secnum = itr.Next()) >= 0)
 		{
 			// Scanning the snext links of things in the sector will not work, because
 			// TeleportDests have MF_NOSECTOR set. So you have to search *everything*.
@@ -726,7 +727,8 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 	int secnum;
 
 	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator itr(tag);
+	while ((secnum = itr.Next()) >= 0)
 	{
 		msecnode_t *node;
 		const sector_t * const sec = &sectors[secnum];

@@ -220,7 +220,8 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 	int tag=line->args[0];
     sector_t * sec = line->frontsector, * ss;
 
-    for (s=-1; (s = P_FindSectorFromTag(tag,s)) >= 0;)
+	FSectorTagIterator it(tag);
+	while ((s = it.Next()) >= 0)
 	{
 		ss=&sectors[s];
 

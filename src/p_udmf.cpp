@@ -754,7 +754,7 @@ public:
 				mld.flags = 0;
 				mld.special = th->special;
 				mld.tag = th->args[0];
-				P_TranslateLineDef(&ld, &mld);
+				P_TranslateLineDef(&ld, &mld, true);
 				th->special = ld.special;
 				memcpy(th->args, ld.args, sizeof (ld.args));
 			}
@@ -1068,7 +1068,7 @@ public:
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
 			mld.tag = ld->GetMainId();
-			P_TranslateLineDef(ld, &mld);
+			P_TranslateLineDef(ld, &mld, false);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}
 		if (passuse && (ld->activation & SPAC_Use)) 

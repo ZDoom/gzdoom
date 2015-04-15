@@ -96,7 +96,6 @@ CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 CVAR (Bool, showloadtimes, false, 0);
 
-static void P_InitTagLists ();
 static void P_Shutdown ();
 
 bool P_IsBuildMap(MapData *map);
@@ -2146,11 +2145,10 @@ void P_LoadLineDefs (MapData * map)
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
-		P_TranslateLineDef (ld, mld);
+		P_TranslateLineDef (ld, mld, true);
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
-		//ld->id = -1;		ID has been assigned in P_TranslateLineDef
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
@@ -3209,7 +3207,9 @@ static void P_GroupLines (bool buildmap)
 
 	// [RH] Moved this here
 	times[4].Clock();
-	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
+	// killough 1/30/98: Create xref tables for tags
+	sector_t::HashTags();
+	line_t::HashIds();
 	times[4].Unclock();
 
 	times[5].Clock();
@@ -3304,13 +3304,6 @@ void P_LoadBehavior (MapData * map)
 		Printf ("ACS scripts unloaded.\n");
 		FBehavior::StaticUnloadModules ();
 	}
-}
-
-// Hash the sector tags across the sectors and linedefs.
-static void P_InitTagLists ()
-{
-	sector_t::HashTags();
-	line_t::HashIds();
 }
 
 void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)

@@ -1920,40 +1920,40 @@ void P_SetLineID (line_t *ld)
 		case Line_SetIdentification:
 			if (!(level.flags2 & LEVEL2_HEXENHACK))
 			{
-				ld->id = ld->args[0] + 256 * ld->args[4];
+				ld->SetMainId(ld->args[0] + 256 * ld->args[4]);
 				ld->flags |= ld->args[1]<<16;
 			}
 			else
 			{
-				ld->id = ld->args[0];
+				ld->SetMainId(ld->args[0]);
 			}
 			ld->special = 0;
 			break;
 
 		case TranslucentLine:
-			ld->id = ld->args[0];
+			ld->SetMainId(ld->args[0]);
 			ld->flags |= ld->args[3]<<16;
 			break;
 
 		case Teleport_Line:
 		case Scroll_Texture_Model:
-			ld->id = ld->args[0];
+			ld->SetMainId(ld->args[0]);
 			break;
 
 		case Polyobj_StartLine:
-			ld->id = ld->args[3];
+			ld->SetMainId(ld->args[3]);
 			break;
 
 		case Polyobj_ExplicitLine:
-			ld->id = ld->args[4];
+			ld->SetMainId(ld->args[4]);
 			break;
 			
 		case Plane_Align:
-			ld->id = ld->args[2];
+			ld->SetMainId(ld->args[2]);
 			break;
 			
 		case Static_Init:
-			if (ld->args[1] == Init_SectorLink) ld->id = ld->args[0];
+			if (ld->args[1] == Init_SectorLink) ld->SetMainId(ld->args[0]);
 			break;
 		}
 	}
@@ -2038,7 +2038,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		{
 			for (j = 0; j < numlines; j++)
 			{
-				if (lines[j].id == ld->args[0])
+				if (lines[j].HasId(ld->args[0]))
 				{
 					lines[j].Alpha = alpha;
 					if (additive)
@@ -2233,7 +2233,7 @@ void P_LoadLineDefs2 (MapData * map)
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
 		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
-		ld->id = -1;
+		ld->ClearIds();
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
@@ -3310,18 +3310,7 @@ void P_LoadBehavior (MapData * map)
 static void P_InitTagLists ()
 {
 	sector_t::HashTags();
-
-	// killough 4/17/98: same thing, only for linedefs
-	int i;
-
-	for (i=numlines; --i>=0; )			// Initially make all slots empty.
-		lines[i].firstid = -1;
-	for (i=numlines; --i>=0; )        // Proceed from last to first linedef
-	{									// so that lower linedefs appear first
-		int j = (unsigned) lines[i].id % (unsigned) numlines;	// Hash func
-		lines[i].nextid = lines[j].firstid;	// Prepend linedef to chain
-		lines[j].firstid = i;
-	}
+	line_t::HashIds();
 }
 
 void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)

@@ -279,11 +279,11 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	}
 	// some old WADs use this method to create walls that change the texture when shot.
 	else if (activationType == SPAC_Impact &&					// only for shootable triggers
-		(level.flags2 & LEVEL2_DUMMYSWITCHES) &&					// this is only a compatibility setting for an old hack!
+		(level.flags2 & LEVEL2_DUMMYSWITCHES) &&				// this is only a compatibility setting for an old hack!
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
 		special &&												// not for lines without a special
-		line->args[0] == line->id &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
+		line->HasId(line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
 		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
 		P_FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
 	{

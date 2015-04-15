@@ -859,6 +859,42 @@ void sector_t::HashTags()
 	}
 }
 
+void line_t::SetMainId(int newid)
+{
+	id = newid;
+}
+
+int line_t::GetMainId() const
+{
+	return id;
+}
+
+void line_t::ClearIds()
+{
+	id = -1;
+}
+
+bool line_t::HasId(int checkid) const
+{
+	return id == checkid;
+}
+
+
+void line_t::HashIds()
+{
+	// killough 4/17/98: same thing, only for linedefs
+	int i;
+
+	for (i=numlines; --i>=0; )			// Initially make all slots empty.
+		lines[i].firstid = -1;
+	for (i=numlines; --i>=0; )        // Proceed from last to first linedef
+	{									// so that lower linedefs appear first
+		int j = (unsigned) lines[i].id % (unsigned) numlines;	// Hash func
+		lines[i].nextid = lines[j].firstid;	// Prepend linedef to chain
+		lines[j].firstid = i;
+	}
+}
+
 
 bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
 {

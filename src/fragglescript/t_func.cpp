@@ -4382,16 +4382,17 @@ void FParser::SF_SetLineTrigger()
 		FLineIdIterator itr(id);
 		while ((i = itr.Next()) >= 0)
 		{
-			if (t_argc==2) tag=lines[i].id;
+			if (t_argc == 2) tag = lines[i].GetMainId();
 			maplinedef_t mld;
-			mld.special=spec;
-			mld.tag=tag;
-			mld.flags=0;
+			mld.special = spec;
+			mld.tag = tag;
+			mld.flags = 0;
 			int f = lines[i].flags;
-			P_TranslateLineDef(&lines[i], &mld);	
-			lines[i].id=tag;
-			lines[i].flags = (lines[i].flags & (ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_SPAC_MASK|ML_FIRSTSIDEONLY)) |
-										(f & ~(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_SPAC_MASK|ML_FIRSTSIDEONLY));
+			P_TranslateLineDef(&lines[i], &mld);
+			lines[i].ClearIds();
+			lines[i].SetMainId(tag);
+			lines[i].flags = (lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
+				(f & ~(ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY));
 
 		}
 	}

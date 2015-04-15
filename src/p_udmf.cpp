@@ -780,7 +780,7 @@ public:
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
-		ld->id = -1;
+		ld->ClearIds();
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
@@ -813,7 +813,7 @@ public:
 				continue;
 
 			case NAME_Id:
-				ld->id = CheckInt(key);
+				ld->SetMainId(CheckInt(key));
 				continue;
 
 			case NAME_Sidefront:
@@ -1040,6 +1040,19 @@ public:
 				break;
 			}
 
+#if 0 // for later
+			if (if (namespace_bits & (Zd)) && !strnicmp(key.GetChars(), "Id", 2))
+			{
+				char *endp;
+				int num = strtol(key.GetChars(), &endp, 10);
+				if (num > 0 && *endp == NULL)
+				{
+					// only allow ID## with ## as a proper number
+					ld->SetId((short)CheckInt(key), false);
+				}
+			}
+#endif
+
 			if (!strnicmp("user_", key.GetChars(), 5))
 			{
 				AddUserKey(key, UDMF_Line, index);
@@ -1053,7 +1066,7 @@ public:
 			maplinedef_t mld;
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
-			mld.tag = ld->id;
+			mld.tag = ld->GetMainId();
 			P_TranslateLineDef(ld, &mld);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}
@@ -1497,6 +1510,18 @@ public:
 				default:
 					break;
 			}
+#if 0 // for later
+			if (namespace_bits & (Zd)) && !strnicmp(key.GetChars(), "Id", 2))
+			{
+				char *endp;
+				int num = strtol(key.GetChars(), &endp, 10);
+				if (num > 0 && *endp == NULL)
+				{
+					// only allow ID## with ## as a proper number
+					sec->SetTag((short)CheckInt(key), false);
+				}
+			}
+#endif
 				
 			if (!strnicmp("user_", key.GetChars(), 5))
 			{

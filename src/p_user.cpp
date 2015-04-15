@@ -295,23 +295,23 @@ player_t::player_t()
   respawn_time(0),
   camera(0),
   air_finished(0),
+  MUSINFOactor(0),
+  MUSINFOtics(-1),
+  crouching(0),
+  crouchdir(0),
   Bot(0),
   BlendR(0),
   BlendG(0),
   BlendB(0),
   BlendA(0),
   LogText(),
-  crouching(0),
-  crouchdir(0),
   crouchfactor(0),
   crouchoffset(0),
   crouchviewdelta(0),
   ConversationNPC(0),
   ConversationPC(0),
   ConversationNPCAngle(0),
-  ConversationFaceTalker(0),
-  MUSINFOactor(0),
-  MUSINFOtics(-1)
+  ConversationFaceTalker(0)
 {
 	memset (&cmd, 0, sizeof(cmd));
 	memset (frags, 0, sizeof(frags));

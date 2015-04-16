@@ -806,6 +806,19 @@ bool DDrawFB::Is8BitMode()
 	return vid_displaybits == 8;
 }
 
+void DDrawFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+{
+	RECT rect;
+
+	if (GetClientRect(Window, &rect))
+	{
+		x = SWORD(x * Width / (rect.right - rect.left));
+		y = SWORD(y * TrueHeight / (rect.bottom - rect.top));
+	}
+	// Subtract letterboxing borders
+	y -= (TrueHeight - Height) / 2;
+}
+
 bool DDrawFB::IsValid ()
 {
 	return PrimarySurf != NULL;

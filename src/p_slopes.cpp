@@ -45,9 +45,10 @@
 
 static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, bool slopeCeil)
 {
-	int linenum = -1;
+	int linenum;
 
-	while ((linenum = P_FindLineFromID (lineid, linenum)) != -1)
+	FLineIdIterator itr(lineid);
+	while ((linenum = itr.Next()) >= 0)
 	{
 		const line_t *line = &lines[linenum];
 		sector_t *sec;
@@ -123,7 +124,7 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 	int secnum;
 	size_t planeofs;
 
-	secnum = P_FindSectorFromTag (tag, -1);
+	secnum = P_FindFirstSectorFromTag (tag);
 	if (secnum == -1)
 	{
 		return;

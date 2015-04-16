@@ -484,8 +484,8 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 	else
 	{	// [RH] Remote door
 
-		secnum = -1;
-		while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+		FSectorTagIterator it(tag);
+		while ((secnum = it.Next()) >= 0)
 		{
 			sec = &sectors[secnum];
 			// if the ceiling is already moving, don't start the door action
@@ -812,7 +812,8 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 		return false;
 	}
 
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sec = &sectors[secnum];
 		if (sec->ceilingdata != NULL)

@@ -96,7 +96,6 @@ CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 CVAR (Bool, showloadtimes, false, 0);
 
-static void P_InitTagLists ();
 static void P_Shutdown ();
 
 bool P_IsBuildMap(MapData *map);
@@ -1514,7 +1513,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
 		ss->secretsector = !!(ss->special&SECRET_MASK);
-		ss->tag = LittleShort(ms->tag);
+		ss->SetMainTag(LittleShort(ms->tag));
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
 		ss->seqType = defSeqType;
@@ -1920,40 +1919,40 @@ void P_SetLineID (line_t *ld)
 		case Line_SetIdentification:
 			if (!(level.flags2 & LEVEL2_HEXENHACK))
 			{
-				ld->id = ld->args[0] + 256 * ld->args[4];
+				ld->SetMainId(ld->args[0] + 256 * ld->args[4]);
 				ld->flags |= ld->args[1]<<16;
 			}
 			else
 			{
-				ld->id = ld->args[0];
+				ld->SetMainId(ld->args[0]);
 			}
 			ld->special = 0;
 			break;
 
 		case TranslucentLine:
-			ld->id = ld->args[0];
+			ld->SetMainId(ld->args[0]);
 			ld->flags |= ld->args[3]<<16;
 			break;
 
 		case Teleport_Line:
 		case Scroll_Texture_Model:
-			ld->id = ld->args[0];
+			ld->SetMainId(ld->args[0]);
 			break;
 
 		case Polyobj_StartLine:
-			ld->id = ld->args[3];
+			ld->SetMainId(ld->args[3]);
 			break;
 
 		case Polyobj_ExplicitLine:
-			ld->id = ld->args[4];
+			ld->SetMainId(ld->args[4]);
 			break;
 			
 		case Plane_Align:
-			ld->id = ld->args[2];
+			ld->SetMainId(ld->args[2]);
 			break;
 			
 		case Static_Init:
-			if (ld->args[1] == Init_SectorLink) ld->id = ld->args[0];
+			if (ld->args[1] == Init_SectorLink) ld->SetMainId(ld->args[0]);
 			break;
 		}
 	}
@@ -2038,7 +2037,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		{
 			for (j = 0; j < numlines; j++)
 			{
-				if (lines[j].id == ld->args[0])
+				if (lines[j].HasId(ld->args[0]))
 				{
 					lines[j].Alpha = alpha;
 					if (additive)
@@ -2146,11 +2145,10 @@ void P_LoadLineDefs (MapData * map)
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
-		P_TranslateLineDef (ld, mld);
+		P_TranslateLineDef (ld, mld, true);
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
-		//ld->id = -1;		ID has been assigned in P_TranslateLineDef
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
@@ -2233,7 +2231,7 @@ void P_LoadLineDefs2 (MapData * map)
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
 		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
-		ld->id = -1;
+		ld->ClearIds();
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
@@ -2495,7 +2493,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 				for (s = 0; s < numsectors; s++)
 				{
-					if (sectors[s].tag == tag)
+					if (sectors[s].HasTag(tag))
 					{
 						if (!colorgood) color = sectors[s].ColorMap->Color;
 						if (!foggood) fog = sectors[s].ColorMap->Fade;
@@ -3131,9 +3129,9 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (sector->linecount == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, sector->tag);
+			Printf ("Sector %i (tag %i) has no lines\n", i, sector->GetMainTag());
 			// 0 the sector's tag so that no specials can use it
-			sector->tag = 0;
+			sector->ClearTags();
 		}
 		else
 		{
@@ -3209,7 +3207,9 @@ static void P_GroupLines (bool buildmap)
 
 	// [RH] Moved this here
 	times[4].Clock();
-	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
+	// killough 1/30/98: Create xref tables for tags
+	sector_t::HashTags();
+	line_t::HashIds();
 	times[4].Unclock();
 
 	times[5].Clock();
@@ -3303,32 +3303,6 @@ void P_LoadBehavior (MapData * map)
 	{
 		Printf ("ACS scripts unloaded.\n");
 		FBehavior::StaticUnloadModules ();
-	}
-}
-
-// Hash the sector tags across the sectors and linedefs.
-static void P_InitTagLists ()
-{
-	int i;
-
-	for (i=numsectors; --i>=0; )		// Initially make all slots empty.
-		sectors[i].firsttag = -1;
-	for (i=numsectors; --i>=0; )		// Proceed from last to first sector
-	{									// so that lower sectors appear first
-		int j = (unsigned) sectors[i].tag % (unsigned) numsectors;	// Hash func
-		sectors[i].nexttag = sectors[j].firsttag;	// Prepend sector to chain
-		sectors[j].firsttag = i;
-	}
-
-	// killough 4/17/98: same thing, only for linedefs
-
-	for (i=numlines; --i>=0; )			// Initially make all slots empty.
-		lines[i].firstid = -1;
-	for (i=numlines; --i>=0; )        // Proceed from last to first linedef
-	{									// so that lower linedefs appear first
-		int j = (unsigned) lines[i].id % (unsigned) numlines;	// Hash func
-		lines[i].nextid = lines[j].firstid;	// Prepend linedef to chain
-		lines[j].firstid = i;
 	}
 }
 

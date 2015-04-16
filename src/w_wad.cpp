@@ -317,7 +317,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 					sprintf(cksumout + (j * 2), "%02X", cksum[j]);
 				}
 
-				fprintf(hashfile, "file: %s, hash: %s, size: %d\n", filename, cksumout, reader->GetLength());
+				fprintf(hashfile, "file: %s, hash: %s, size: %ld\n", filename, cksumout, reader->GetLength());
 			}
 
 			else

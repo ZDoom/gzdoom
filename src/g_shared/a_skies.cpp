@@ -119,7 +119,9 @@ void ASkyCamCompat::BeginPlay ()
 				// Finally, skyboxify all tagged sectors
 				// This involves changing their texture to the sky flat, because while
 				// EE works with any texture for its skybox portals, ZDoom doesn't.
-				for (int secnum =-1; (secnum = P_FindSectorFromTag (skybox_id, secnum)) != -1; )
+				FSectorTagIterator it(skybox_id);
+				int secnum;
+				while ((secnum = it.Next()) >= 0)
 				{
 					// plane: 0=floor, 1=ceiling, 2=both
 					if (refline->args[2] == 1 || refline->args[2] == 2)

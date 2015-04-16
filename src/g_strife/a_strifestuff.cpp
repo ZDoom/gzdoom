@@ -636,7 +636,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		}
 		else if ((sec->special & 0xFF) == Scroll_StrifeCurrent)
 		{
-			int anglespeed = sec->tag - 100;
+			int anglespeed = sec->GetMainTag() - 100;
 			fixed_t speed = (anglespeed % 10) << (FRACBITS - 4);
 			angle_t finean = (anglespeed / 10) << (32-3);
 			finean >>= ANGLETOFINESHIFT;

@@ -44,6 +44,7 @@
 #include "r_data/colormaps.h"
 
 #ifdef _3DFLOORS
+EXTERN_CVAR(Int, vid_renderer)
 
 //==========================================================================
 //
@@ -201,7 +202,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 
 	// kg3D - software renderer only hack
 	// this is really required because of ceilingclip and floorclip
-	if(flags & FF_BOTHPLANES)
+	if((vid_renderer == 0) && (flags & FF_BOTHPLANES))
 	{
 		P_Add3DFloor(sec, sec2, master, FF_EXISTS | FF_THISINSIDE | FF_RENDERPLANES | FF_NOSHADE | FF_SEETHROUGH | FF_SHOOTTHROUGH |
 			(flags & (FF_INVERTSECTOR | FF_TRANSLUCENT | FF_ADDITIVETRANS)), alpha);
@@ -220,8 +221,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 	int tag=line->args[0];
     sector_t * sec = line->frontsector, * ss;
 
-	FSectorTagIterator it(tag);
-	while ((s = it.Next()) >= 0)
+    for (s=-1; (s = P_FindSectorFromTag(tag,s)) >= 0;)
 	{
 		ss=&sectors[s];
 
@@ -265,6 +265,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 		else if (param==4)
 		{
 			flags=FF_EXISTS|FF_RENDERPLANES|FF_INVERTPLANES|FF_NOSHADE|FF_FIX;
+			if (param2 & 1) flags |= FF_SEETHROUGH;	// marker for allowing missing texture checks
 			alpha=255;
 		}
 		else 
@@ -489,7 +490,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 				// by the clipping code below.
 				ffloors.Push(pick);
 			}
-			else if ((pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) || (!(pick->flags&(FF_ALLSIDES|FF_BOTHPLANES)))) && pick->flags&FF_EXISTS)
+			else if ((pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) || (!(pick->flags&FF_RENDERALL))) && pick->flags&FF_EXISTS)
 			{
 				// We must check if this nonsolid segment gets clipped from the top by another 3D floor
 				if (solid != NULL && solid_bottom < height)
@@ -583,6 +584,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 		lightlist[0].extra_colormap = sector->ColorMap;
 		lightlist[0].blend = 0;
 		lightlist[0].flags = 0;
+		lightlist[0].fromsector = true;
 		
 		maxheight = sector->CenterCeiling();
 		minheight = sector->CenterFloor();
@@ -604,6 +606,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 				newlight.extra_colormap = rover->GetColormap();
 				newlight.blend = rover->GetBlend();
 				newlight.flags = rover->flags;
+				newlight.fromsector = false;
 				lightlist.Push(newlight);
 			}
 			else if (i==0)
@@ -618,6 +621,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 					lightlist[0].extra_colormap = rover->GetColormap();
 					lightlist[0].blend = rover->GetBlend();
 					lightlist[0].flags = rover->flags;
+					lightlist[0].fromsector = false;
 				}
 			}
 			if (rover->flags&FF_DOUBLESHADOW)
@@ -642,6 +646,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 						newlight.blend = 0;
 					}
 					newlight.flags = rover->flags;
+					newlight.fromsector = false;
 					lightlist.Push(newlight);
 				}
 			}
@@ -844,7 +849,7 @@ void P_Spawn3DFloors (void)
 			{
 				if (line->args[1]&8)
 				{
-					line->SetMainId(line->args[4]);
+					line->id = line->args[4];
 				}
 				else
 				{

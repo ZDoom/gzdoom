@@ -150,9 +150,10 @@ static int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
 	int arg0, int arg1, int arg2, int arg3, int arg4)
 {
 // Sector_SetPlaneReflection (tag, floor, ceiling)
-	int secnum = -1;
+	int secnum;
+	FSectorTagIterator itr(arg0);
 
-	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+	while ((secnum = itr.Next()) >= 0)
 	{
 		sector_t * s = &sectors[secnum];
 		if (s->floorplane.a==0 && s->floorplane.b==0) s->reflect[sector_t::floor] = arg1/255.f;

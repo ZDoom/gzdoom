@@ -1030,28 +1030,6 @@ bool D3DFB::IsFullscreen ()
 
 //==========================================================================
 //
-// D3DFB :: ScaleCoordsFromWindow
-//
-// Given coordinates in window space, return coordinates in what the game
-// thinks screen space is.
-//
-//==========================================================================
-
-void D3DFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
-{
-	RECT rect;
-
-	if (GetClientRect(Window, &rect))
-	{
-		x = SWORD(x * Width / (rect.right - rect.left));
-		y = SWORD(y * TrueHeight / (rect.bottom - rect.top));
-	}
-	// Subtract letterboxing borders
-	y -= (TrueHeight - Height) / 2;
-}
-
-//==========================================================================
-//
 // D3DFB :: Lock
 //
 //==========================================================================

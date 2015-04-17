@@ -18,8 +18,6 @@
 #include "templates.h"
 #include "s_sound.h"
 
-void ScaleWithAspect (int &w, int &h, int Width, int Height);
-
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
 
@@ -320,35 +318,11 @@ void MessagePump (const SDL_Event &sev)
 			int x, y;
 			SDL_GetMouseState (&x, &y);
 
-			// Detect if we're doing scaling in the Window and adjust the mouse
-			// coordinates accordingly. This could be more efficent, but I
-			// don't think performance is an issue in the menus.
-			SDL_Window *focus;
-			if (screen->IsFullscreen() && (focus = SDL_GetMouseFocus ()))
-			{
-				int w, h;
-				SDL_GetWindowSize (focus, &w, &h);
-				int realw = w, realh = h;
-				ScaleWithAspect (realw, realh, SCREENWIDTH, SCREENHEIGHT);
-				if (realw != SCREENWIDTH || realh != SCREENHEIGHT)
-				{
-					double xratio = (double)SCREENWIDTH/realw;
-					double yratio = (double)SCREENHEIGHT/realh;
-					if (realw < w)
-					{
-						x = (x - (w - realw)/2)*xratio;
-						y *= yratio;
-					}
-					else
-					{
-						y = (y - (h - realh)/2)*yratio;
-						x *= xratio;
-					}
-				}
-			}
-
 			event.data1 = x;
 			event.data2 = y;
+
+			screen->ScaleCoordsFromWindow(event.data1, event.data2);
+
 			event.type = EV_GUI_Event;
 			if(sev.type == SDL_MOUSEMOTION)
 				event.subtype = EV_GUI_MouseMove;

@@ -186,57 +186,6 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 // UTILITIES
 //
 
-
-
-//
-// RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
-//
-
-// Find the next sector with a specified tag.
-// Rewritten by Lee Killough to use chained hashing to improve speed
-
-int FSectorTagIterator::Next()
-{
-	int ret;
-	if (searchtag == INT_MIN)
-	{
-		ret = start;
-		start = -1;
-	}
-	else
-	{
-		while (start != -1 && sectors[start].tag != searchtag) start = sectors[start].nexttag;
-		if (start == -1) return -1;
-		ret = start;
-		start = sectors[start].nexttag;
-	}
-	return ret;
-}
-
-int FSectorTagIterator::NextCompat(bool compat, int start)
-{
-	if (!compat) return Next();
-
-	for (int i = start + 1; i < numsectors; i++)
-	{
-		if (sectors[i].HasTag(searchtag)) return i;
-	}
-	return -1;
-}
-
-
-// killough 4/16/98: Same thing, only for linedefs
-
-int FLineIdIterator::Next()
-{
-	while (start != -1 && lines[start].id != searchtag) start = lines[start].nextid;
-	if (start == -1) return -1;
-	int ret = start;
-	start = lines[start].nextid;
-	return ret;
-}
-
-
 //============================================================================
 //
 // P_ActivateLine

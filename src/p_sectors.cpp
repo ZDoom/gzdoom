@@ -825,45 +825,6 @@ sector_t *sector_t::GetHeightSec() const
 }
 
 
-bool sector_t::HasTag(int checktag) const
-{
-	return tag == checktag;
-}
-
-bool sector_t::HasTags() const
-{
-	return tag != 0;
-}
-
-void sector_t::SetMainTag(int tagnum)
-{
-	tag = tagnum;
-}
-
-int sector_t::GetMainTag() const
-{
-	return tag;
-}
-
-void sector_t::ClearTags()
-{
-	tag = 0;
-}
-
-void sector_t::HashTags()
-{
-	int i;
-
-	for (i=numsectors; --i>=0; )		// Initially make all slots empty.
-		sectors[i].firsttag = -1;
-	for (i=numsectors; --i>=0; )		// Proceed from last to first sector
-	{									// so that lower sectors appear first
-		int j = (unsigned) sectors[i].tag % (unsigned) numsectors;	// Hash func
-		sectors[i].nexttag = sectors[j].firsttag;	// Prepend sector to chain
-		sectors[j].firsttag = i;
-	}
-}
-
 void line_t::SetMainId(int newid)
 {
 	id = newid;

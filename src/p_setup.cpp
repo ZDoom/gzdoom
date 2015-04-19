@@ -1513,7 +1513,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
 		ss->secretsector = !!(ss->special&SECRET_MASK);
-		ss->SetMainTag(LittleShort(ms->tag));
+		tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
 		ss->seqType = defSeqType;
@@ -2493,7 +2493,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 				for (s = 0; s < numsectors; s++)
 				{
-					if (sectors[s].HasTag(tag))
+					if (tagManager.SectorHasTag(s, tag))
 					{
 						if (!colorgood) color = sectors[s].ColorMap->Color;
 						if (!foggood) fog = sectors[s].ColorMap->Fade;
@@ -3129,9 +3129,9 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (sector->linecount == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, sector->GetMainTag());
+			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(sector));
 			// 0 the sector's tag so that no specials can use it
-			sector->ClearTags();
+			tagManager.RemoveSectorTags(i);
 		}
 		else
 		{
@@ -3208,7 +3208,7 @@ static void P_GroupLines (bool buildmap)
 	// [RH] Moved this here
 	times[4].Clock();
 	// killough 1/30/98: Create xref tables for tags
-	sector_t::HashTags();
+	tagManager.HashTags();
 	line_t::HashIds();
 	times[4].Unclock();
 
@@ -3340,6 +3340,7 @@ void P_FreeLevelData ()
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
+	tagManager.Clear();
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;

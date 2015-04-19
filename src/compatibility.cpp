@@ -49,6 +49,7 @@
 #include "gi.h"
 #include "g_level.h"
 #include "p_lnspec.h"
+#include "p_tags.h"
 #include "r_state.h"
 #include "w_wad.h"
 
@@ -551,8 +552,8 @@ void SetCompatibilityParams()
 				{
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
-						sectors[CompatParams[i + 1]].ClearTags();
-						sectors[CompatParams[i + 1]].SetMainTag(CompatParams[i + 2]);
+						// this assumes that the sector does not have any tags yet!
+						tagManager.AddSectorTag(CompatParams[i + 1],  CompatParams[i + 2]);
 					}
 					i += 3;
 					break;

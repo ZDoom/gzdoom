@@ -4,6 +4,59 @@
 #include "r_defs.h"
 #include "r_state.h"
 
+struct FTagItem
+{
+	int target;		// either sector or line
+	int tag;
+	int nexttag;	// for hashing
+};
+
+class FSectorTagIterator;
+
+class FTagManager
+{
+	enum
+	{
+		TAG_HASH_SIZE = 256
+	};
+
+	friend class FSectorTagIterator;
+
+	TArray<FTagItem> allTags;
+	TArray<FTagItem> allIDs;
+	TArray<int> startForSector;
+	TArray<int> startForLine;
+	int TagHashFirst[TAG_HASH_SIZE];
+
+	bool SectorHasTags(int sect) const
+	{
+		return sect >= 0 && sect < (int)startForSector.Size() && startForSector[sect] >= 0;
+	}
+
+
+public:
+	void Clear()
+	{
+		allTags.Clear();
+		allIDs.Clear();
+		startForSector.Clear();
+		startForLine.Clear();
+		memset(TagHashFirst, -1, sizeof(TagHashFirst));
+	}
+
+	bool SectorHasTags(const sector_t *sector) const;
+	int GetFirstSectorTag(const sector_t *sect) const;
+	bool SectorHasTag(int sector, int tag) const;
+	bool SectorHasTag(const sector_t *sector, int tag) const;
+
+	bool LineHasID(int line, int id);
+	void HashTags();
+	void AddSectorTag(int sector, int tag);
+	void RemoveSectorTags(int sect);
+};
+
+extern FTagManager tagManager;
+
 class FSectorTagIterator
 {
 protected:
@@ -14,7 +67,7 @@ public:
 	FSectorTagIterator(int tag)
 	{
 		searchtag = tag;
-		start = sectors[(unsigned)tag % (unsigned)numsectors].firsttag;
+		start = tagManager.TagHashFirst[((unsigned int)tag) % FTagManager::TAG_HASH_SIZE];
 	}
 
 	// Special constructor for actions that treat tag 0 as  'back of activation line'
@@ -28,7 +81,7 @@ public:
 		else
 		{
 			searchtag = tag;
-			start = sectors[(unsigned)tag % (unsigned)numsectors].firsttag;
+			start = tagManager.TagHashFirst[((unsigned int)tag) % FTagManager::TAG_HASH_SIZE];
 		}
 	}
 

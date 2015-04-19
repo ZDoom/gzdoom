@@ -1741,7 +1741,7 @@ static void P_SpawnScrollers(void)
 		if (lines[i].special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (lines[i].frontsector->HasTag(lines[i].args[0]))
+			if (tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
 			{
 				copyscrollers.Push(i);
 			}
@@ -2149,7 +2149,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 
 int DPusher::CheckForSectorMatch (EPusher type, int tag)
 {
-	if (m_Type == type && sectors[m_Affectee].HasTag(tag))
+	if (m_Type == type && tagManager.SectorHasTag(m_Affectee, tag))
 		return m_Affectee;
 	else
 		return -1;

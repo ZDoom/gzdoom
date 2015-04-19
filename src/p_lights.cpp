@@ -838,7 +838,7 @@ void EV_StopLightEffect (int tag)
 
 	while ((effect = iterator.Next()) != NULL)
 	{
-		if (effect->GetSector()->HasTag(tag))
+		if (tagManager.SectorHasTag(effect->GetSector(), tag))
 		{
 			effect->Destroy();
 		}

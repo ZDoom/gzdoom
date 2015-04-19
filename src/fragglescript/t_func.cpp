@@ -2235,7 +2235,7 @@ void FParser::SF_LineTrigger()
 		maplinedef_t mld;
 		mld.special=intvalue(t_argv[0]);
 		mld.tag=t_argc > 1 ? intvalue(t_argv[1]) : 0;
-		P_TranslateLineDef(&line, &mld, false);
+		P_TranslateLineDef(&line, &mld);
 		P_ExecuteSpecial(line.special, NULL, Script->trigger, false, 
 			line.args[0],line.args[1],line.args[2],line.args[3],line.args[4]); 
 	}
@@ -4385,7 +4385,7 @@ void FParser::SF_SetLineTrigger()
 			mld.tag = tag;
 			mld.flags = 0;
 			int f = lines[i].flags;
-			P_TranslateLineDef(&lines[i], &mld, false);
+			P_TranslateLineDef(&lines[i], &mld);
 			lines[i].flags = (lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
 				(f & ~(ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY));
 

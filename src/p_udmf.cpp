@@ -755,7 +755,7 @@ public:
 				mld.flags = 0;
 				mld.special = th->special;
 				mld.tag = th->args[0];
-				P_TranslateLineDef(&ld, &mld, true);
+				P_TranslateLineDef(&ld, &mld);
 				th->special = ld.special;
 				memcpy(th->args, ld.args, sizeof (ld.args));
 			}
@@ -780,10 +780,10 @@ public:
 		bool strifetrans2 = false;
 		FString arg0str, arg1str;
 		int lineid;	// forZDoomTranslated namespace
+		FString tagstring;
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
-		ld->ClearIds();
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
@@ -817,7 +817,7 @@ public:
 
 			case NAME_Id:
 				lineid = CheckInt(key);
-				ld->SetMainId(lineid);
+				tagManager.AddLineID(index, lineid);
 				continue;
 
 			case NAME_Sidefront:
@@ -1040,26 +1040,32 @@ public:
 				Flag(ld->flags, ML_3DMIDTEX_IMPASS, key);
 				continue;
 
+			case NAME_MoreIds:
+				// delay parsing of the tag string until parsing of the sector is complete
+				// This ensures that the ID is always the first tag in the list.
+				tagstring = CheckString(key);
+				break;
+
+
 			default:
 				break;
 			}
 
-#if 0 // for later
-			if (namespace_bits & (Zd)) && !strnicmp(key.GetChars(), "Id", 2))
-			{
-				char *endp;
-				int num = strtol(key.GetChars(), &endp, 10);
-				if (num > 0 && *endp == NULL)
-				{
-					// only allow ID## with ## as a proper number
-					ld->SetId((short)CheckInt(key), false);
-				}
-			}
-#endif
 
 			if ((namespace_bits & (Zd | Zdt)) && !strnicmp("user_", key.GetChars(), 5))
 			{
 				AddUserKey(key, UDMF_Line, index);
+			}
+		}
+
+		if (tagstring.IsNotEmpty())
+		{
+			FScanner sc;
+			sc.OpenMem("tagstring", tagstring.GetChars(), tagstring.Len());
+			// scan the string as long as valid numbers can be found
+			while (sc.CheckNumber())
+			{
+				if (sc.Number != 0)	tagManager.AddLineID(index, sc.Number);
 			}
 		}
 
@@ -1071,7 +1077,7 @@ public:
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
 			mld.tag = lineid;
-			P_TranslateLineDef(ld, &mld, false);
+			P_TranslateLineDef(ld, &mld);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}
 		if (passuse && (ld->activation & SPAC_Use)) 

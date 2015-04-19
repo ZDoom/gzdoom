@@ -12,6 +12,7 @@ struct FTagItem
 };
 
 class FSectorTagIterator;
+class FLineIdIterator;
 
 class FTagManager
 {
@@ -21,12 +22,14 @@ class FTagManager
 	};
 
 	friend class FSectorTagIterator;
+	friend class FLineIdIterator;
 
 	TArray<FTagItem> allTags;
 	TArray<FTagItem> allIDs;
 	TArray<int> startForSector;
 	TArray<int> startForLine;
 	int TagHashFirst[TAG_HASH_SIZE];
+	int IDHashFirst[TAG_HASH_SIZE];
 
 	bool SectorHasTags(int sect) const
 	{
@@ -49,9 +52,12 @@ public:
 	bool SectorHasTag(int sector, int tag) const;
 	bool SectorHasTag(const sector_t *sector, int tag) const;
 
-	bool LineHasID(int line, int id);
+	bool LineHasID(int line, int id) const;
+	bool LineHasID(const line_t *line, int id) const;
+
 	void HashTags();
 	void AddSectorTag(int sector, int tag);
+	void AddLineID(int line, int tag);
 	void RemoveSectorTags(int sect);
 };
 
@@ -99,7 +105,7 @@ public:
 	FLineIdIterator(int id)
 	{
 		searchtag = id;
-		start = lines[(unsigned) id % (unsigned) numlines].firstid;
+		start = tagManager.IDHashFirst[((unsigned int)id) % FTagManager::TAG_HASH_SIZE];
 	}
 
 	int Next();

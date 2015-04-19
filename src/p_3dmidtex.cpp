@@ -167,7 +167,7 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 			{
 				line_t *ln = sectors[sec].lines[line];
 
-				if (lineid != 0 && !ln->HasId(lineid)) continue;
+				if (lineid != 0 && !tagManager.LineHasID(ln, lineid)) continue;
 
 				if (ln->frontsector == NULL || ln->backsector == NULL || !(ln->flags & ML_3DMIDTEX))
 				{

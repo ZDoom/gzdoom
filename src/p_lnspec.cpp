@@ -2063,7 +2063,7 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int
 		{
 			int wallnum = scroller->GetWallNum ();
 
-			if (wallnum >= 0 && sides[wallnum].linedef->HasId(id) &&
+			if (wallnum >= 0 && tagManager.LineHasID(sides[wallnum].linedef, id) &&
 				int(sides[wallnum].linedef->sidedef[sidechoice] - sides) == wallnum &&
 				Where == scroller->GetScrollParts())
 			{
@@ -2082,7 +2082,7 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int
 			while ( (collect.Obj = iterator.Next ()) )
 			{
 				if ((collect.RefNum = ((DScroller *)collect.Obj)->GetWallNum ()) != -1 &&
-					sides[collect.RefNum].linedef->HasId(id) &&
+					tagManager.LineHasID(sides[collect.RefNum].linedef, id) &&
 					int(sides[collect.RefNum].linedef->sidedef[sidechoice] - sides) == collect.RefNum &&
 					Where == ((DScroller *)collect.Obj)->GetScrollParts())
 				{

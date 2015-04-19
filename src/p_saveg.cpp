@@ -409,8 +409,13 @@ void P_SerializeWorld (FArchive &arc)
 		arc << li->flags
 			<< li->activation
 			<< li->special
-			<< li->Alpha
-			<< li->id;
+			<< li->Alpha;
+
+		if (SaveVersion < 4523)
+		{
+			int id;
+			arc << id;
+		}
 		if (P_IsACSSpecial(li->special))
 		{
 			P_SerializeACSScriptNumber(arc, li->args[0], false);

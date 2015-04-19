@@ -2223,7 +2223,7 @@ void P_LoadLineDefs2 (MapData * map)
 
 	mld = (maplinedef2_t *)mldf;
 	ld = lines;
-	for (i = numlines; i > 0; i--, mld++, ld++)
+	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		int j;
 

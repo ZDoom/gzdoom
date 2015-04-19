@@ -36,6 +36,10 @@ class FTagManager
 		return sect >= 0 && sect < (int)startForSector.Size() && startForSector[sect] >= 0;
 	}
 
+	bool LineHasIDs(int sect) const
+	{
+		return sect >= 0 && sect < (int)startForLine.Size() && startForLine[sect] >= 0;
+	}
 
 public:
 	void Clear()
@@ -59,6 +63,8 @@ public:
 	void AddSectorTag(int sector, int tag);
 	void AddLineID(int line, int tag);
 	void RemoveSectorTags(int sect);
+
+	void DumpTags();
 };
 
 extern FTagManager tagManager;

@@ -271,6 +271,29 @@ bool FTagManager::LineHasID(const line_t *line, int tag) const
 
 //-----------------------------------------------------------------------------
 //
+//
+//
+//-----------------------------------------------------------------------------
+
+void FTagManager::DumpTags()
+{
+	for (unsigned i = 0; i < allTags.Size(); i++)
+	{
+		Printf("Sector %d, tag %d\n", allTags[i].target, allTags[i].tag);
+	}
+	for (unsigned i = 0; i < allIDs.Size(); i++)
+	{
+		Printf("Line %d, ID %d\n", allIDs[i].target, allIDs[i].tag);
+	}
+}
+
+CCMD(dumptags)
+{
+	tagManager.DumpTags();
+}
+
+//-----------------------------------------------------------------------------
+//
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
 // Find the next sector with a specified tag.
@@ -290,7 +313,7 @@ int FSectorTagIterator::Next()
 	{
 		while (start >= 0 && tagManager.allTags[start].tag != searchtag) start = tagManager.allTags[start].nexttag;
 		if (start == -1) return -1;
-		ret = start;
+		ret = tagManager.allTags[start].target;
 		start = start = tagManager.allTags[start].nexttag;
 	}
 	return ret;
@@ -324,9 +347,7 @@ int FLineIdIterator::Next()
 {
 	while (start >= 0 && tagManager.allIDs[start].tag != searchtag) start = tagManager.allIDs[start].nexttag;
 	if (start == -1) return -1;
-	int ret = start;
+	int ret = tagManager.allIDs[start].target;
 	start = start = tagManager.allIDs[start].nexttag;
 	return ret;
 }
-
-

@@ -213,13 +213,12 @@ void FMapInfoParser::ParseDoomEdNums()
 						DoomEdFromMapinfo.Insert(ednum, editem);
 						continue;
 					}
-					sc.MustGetStringName(",");
 					sc.MustGetNumber();
 				}
 				int i = 0;
 				while (i < 5)
 				{
-					editem.args[i++] = sc.Number;
+					editem.args[i] = sc.Number;
 					i++;
 					if (!sc.CheckString(",")) break;
 					sc.MustGetNumber();

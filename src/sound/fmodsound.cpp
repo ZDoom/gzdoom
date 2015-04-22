@@ -895,6 +895,15 @@ bool FMODSoundRenderer::Init()
 	// Set software format
 	eval = Enum_NumForName(SoundFormatNames, snd_output_format);
 	format = eval >= 0 ? FMOD_SOUND_FORMAT(eval) : FMOD_SOUND_FORMAT_PCM16;
+	if (format == FMOD_SOUND_FORMAT_PCM8)
+	{
+		// PCM-8 sounds like garbage with anything but DirectSound.
+		FMOD_OUTPUTTYPE output;
+		if (FMOD_OK != Sys->getOutput(&output) || output != FMOD_OUTPUTTYPE_DSOUND)
+		{
+			format = FMOD_SOUND_FORMAT_PCM16;
+		}
+	}
 	eval = Enum_NumForName(ResamplerNames, snd_resampler);
 	resampler = eval >= 0 ? FMOD_DSP_RESAMPLER(eval) : FMOD_DSP_RESAMPLER_LINEAR;
 	// These represented the frequency limits for hardware channels, which we never used anyway.

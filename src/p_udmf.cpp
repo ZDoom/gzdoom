@@ -1061,7 +1061,7 @@ public:
 		if (tagstring.IsNotEmpty())
 		{
 			FScanner sc;
-			sc.OpenMem("tagstring", tagstring.GetChars(), tagstring.Len());
+			sc.OpenString("tagstring", tagstring);
 			// scan the string as long as valid numbers can be found
 			while (sc.CheckNumber())
 			{
@@ -1536,7 +1536,7 @@ public:
 		if (tagstring.IsNotEmpty())
 		{
 			FScanner sc;
-			sc.OpenMem("tagstring", tagstring.GetChars(), tagstring.Len());
+			sc.OpenString("tagstring", tagstring);
 			// scan the string as long as valid numbers can be found
 			while (sc.CheckNumber())
 			{

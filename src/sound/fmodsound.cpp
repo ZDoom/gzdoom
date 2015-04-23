@@ -165,9 +165,6 @@ static const FEnumList OutputNames[] =
 	{ "Windows Multimedia",		FMOD_OUTPUTTYPE_WINMM },
 	{ "WinMM",					FMOD_OUTPUTTYPE_WINMM },
 	{ "WaveOut",				FMOD_OUTPUTTYPE_WINMM },
-#if FMOD_VERSION < 0x43400
-	{ "OpenAL",					FMOD_OUTPUTTYPE_OPENAL },
-#endif
 	{ "WASAPI",					FMOD_OUTPUTTYPE_WASAPI },
 	{ "ASIO",					FMOD_OUTPUTTYPE_ASIO },
 
@@ -182,9 +179,6 @@ static const FEnumList OutputNames[] =
 	{ "SDL",					666 },
 
 	// Mac
-#if FMOD_VERSION < 0x43000
-	{ "Sound Manager",			FMOD_OUTPUTTYPE_SOUNDMANAGER },
-#endif
 	{ "Core Audio",				FMOD_OUTPUTTYPE_COREAUDIO },
 
 	{ NULL, 0 }

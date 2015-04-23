@@ -163,7 +163,7 @@ void FTagManager::HashTags()
 	// Proceed from last to first so that lower targets appear first
 	for (int i = allTags.Size() - 1; i >= 0; i--)
 	{
-		if (allTags[i].target > 0)	// only link valid entries
+		if (allTags[i].target >= 0)	// only link valid entries
 		{
 			int hash = ((unsigned int)allTags[i].tag) % FTagManager::TAG_HASH_SIZE;
 			allTags[i].nexttag = TagHashFirst[hash];
@@ -173,7 +173,7 @@ void FTagManager::HashTags()
 
 	for (int i = allIDs.Size() - 1; i >= 0; i--)
 	{
-		if (allIDs[i].target > 0)	// only link valid entries
+		if (allIDs[i].target >= 0)	// only link valid entries
 		{
 			int hash = ((unsigned int)allIDs[i].tag) % FTagManager::TAG_HASH_SIZE;
 			allIDs[i].nexttag = IDHashFirst[hash];

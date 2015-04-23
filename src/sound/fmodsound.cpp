@@ -2050,7 +2050,7 @@ FISoundChannel *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, FISou
 
 //==========================================================================
 //
-// FMODSoundRenderer :: StopSound
+// FMODSoundRenderer :: StopChannel
 //
 //==========================================================================
 
@@ -2058,7 +2058,10 @@ void FMODSoundRenderer::StopChannel(FISoundChannel *chan)
 {
 	if (chan != NULL && chan->SysChannel != NULL)
 	{
-		((FMOD::Channel *)chan->SysChannel)->stop();
+		if (((FMOD::Channel *)chan->SysChannel)->stop() == FMOD_ERR_INVALID_HANDLE)
+		{ // The channel handle was invalid; pretend it ended.
+			S_ChannelEnded(chan);
+		}
 	}
 }
 

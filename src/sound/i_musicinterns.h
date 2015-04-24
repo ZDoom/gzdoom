@@ -23,6 +23,7 @@
 #include "i_sound.h"
 #include "i_music.h"
 #include "s_sound.h"
+#include "files.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();

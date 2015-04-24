@@ -15,7 +15,7 @@ sf_count_t SndFileDecoder::file_seek(sf_count_t offset, int whence, void *user_d
 {
     FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
 
-    if(reader->Seek(offset, whence) != 0)
+    if(reader->Seek((long)offset, whence) != 0)
         return -1;
     return reader->Tell();
 }
@@ -23,7 +23,7 @@ sf_count_t SndFileDecoder::file_seek(sf_count_t offset, int whence, void *user_d
 sf_count_t SndFileDecoder::file_read(void *ptr, sf_count_t count, void *user_data)
 {
     FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-    return reader->Read(ptr, count);
+    return reader->Read(ptr, (long)count);
 }
 
 sf_count_t SndFileDecoder::file_write(const void *ptr, sf_count_t count, void *user_data)
@@ -93,7 +93,7 @@ size_t SndFileDecoder::read(char *buffer, size_t bytes)
         size_t todo = std::min<size_t>(frames-total, 64/SndInfo.channels);
         float tmp[64];
 
-        size_t got = sf_readf_float(SndFile, tmp, todo);
+        size_t got = (size_t)sf_readf_float(SndFile, tmp, todo);
         if(got < todo) frames = total + got;
 
         for(size_t i = 0;i < got*SndInfo.channels;i++)
@@ -111,7 +111,7 @@ TArray<char> SndFileDecoder::readAll()
     int framesize = 2 * SndInfo.channels;
     TArray<char> output;
 
-    output.Resize(SndInfo.frames * framesize);
+    output.Resize((unsigned)(SndInfo.frames * framesize));
     size_t got = read(&output[0], output.Size());
     output.Resize(got);
 
@@ -128,12 +128,12 @@ bool SndFileDecoder::seek(size_t ms_offset)
 
 size_t SndFileDecoder::getSampleOffset()
 {
-    return sf_seek(SndFile, 0, SEEK_CUR);
+    return (size_t)sf_seek(SndFile, 0, SEEK_CUR);
 }
 
 size_t SndFileDecoder::getSampleLength()
 {
-    return (SndInfo.frames > 0) ? SndInfo.frames : 0;
+    return (size_t)((SndInfo.frames > 0) ? SndInfo.frames : 0);
 }
 
 #endif

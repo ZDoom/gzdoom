@@ -215,6 +215,7 @@ endif( WIN32 )
 
 if( NOT NO_OPENAL )
     find_package( OpenAL )
+	mark_as_advanced(CLEAR OPENAL_LIBRARY OPENAL_INCLUDE_DIR)
     if( OPENAL_FOUND )
         include_directories( ${OPENAL_INCLUDE_DIR} )
         set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )

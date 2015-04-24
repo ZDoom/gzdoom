@@ -1,9 +1,8 @@
 
 // The Mage's Lightning Arc of Death ----------------------------------------
 
-ACTOR MWeapLightning : MageWeapon 8040
+ACTOR MWeapLightning : MageWeapon
 {
-	Game Hexen
 	+NOGRAVITY
 	Weapon.SelectionOrder 1100
 	Weapon.AmmoUse1 5

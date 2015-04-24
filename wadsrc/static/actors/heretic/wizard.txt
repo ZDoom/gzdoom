@@ -1,10 +1,8 @@
 
 // Wizard --------------------------------------------------------
 
-ACTOR Wizard 15
+ACTOR Wizard
 {
-	Game Heretic
-	SpawnID 19
 	Health 180
 	Radius 16
 	Height 68
@@ -75,8 +73,6 @@ ACTOR Wizard 15
 
 ACTOR WizardFX1
 {
-	Game Heretic
-	SpawnID 140
 	Radius 10
 	Height 6
 	Speed 18

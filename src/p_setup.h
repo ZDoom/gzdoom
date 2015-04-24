@@ -115,7 +115,7 @@ struct line_t;
 struct maplinedef_t;
 
 void P_LoadTranslator(const char *lumpname);
-void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
+void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
 int P_TranslateSectorSpecial (int);
 
 int GetUDMFInt(int type, int index, const char *key);

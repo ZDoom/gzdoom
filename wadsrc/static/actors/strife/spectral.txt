@@ -77,7 +77,6 @@ ACTOR SpectralLightningDeathShort : SpectralLightningBase
 
 ACTOR SpectralLightningBall1 : SpectralLightningBase
 {
-	ConversationID 80,-1,-1
 	Speed 30
 	Radius 8
 	Height 16
@@ -96,7 +95,6 @@ ACTOR SpectralLightningBall1 : SpectralLightningBase
 
 ACTOR SpectralLightningBall2 : SpectralLightningBall1
 {
-	ConversationID 81,-1,-1
 	Damage 20
 }
 
@@ -104,7 +102,6 @@ ACTOR SpectralLightningBall2 : SpectralLightningBall1
 
 ACTOR SpectralLightningH1 : SpectralLightningBase
 {
-	ConversationID 78,-1,-1
 	Speed 30
 	Radius 8
 	Height 16
@@ -128,7 +125,6 @@ ACTOR SpectralLightningH1 : SpectralLightningBase
 
 ACTOR SpectralLightningH2 : SpectralLightningH1
 {
-	ConversationID 79,-1,-1
 	Damage 20
 }
 
@@ -136,7 +132,6 @@ ACTOR SpectralLightningH2 : SpectralLightningH1
 
 ACTOR SpectralLightningH3 : SpectralLightningH1
 {
-	ConversationID 82,-1,-1
 	Damage 10
 }
 
@@ -160,7 +155,6 @@ ACTOR SpectralLightningHTail
 
 ACTOR SpectralLightningBigBall1 : SpectralLightningDeath2
 {
-	ConversationID 84,-1,-1
 	Speed 18
 	Radius 20
 	Height 40
@@ -184,7 +178,6 @@ ACTOR SpectralLightningBigBall1 : SpectralLightningDeath2
 
 ACTOR SpectralLightningBigBall2 : SpectralLightningBigBall1
 {
-	ConversationID 85,-1,-1
 	Damage 30
 }
 
@@ -192,7 +185,6 @@ ACTOR SpectralLightningBigBall2 : SpectralLightningBigBall1
 
 ACTOR SpectralLightningV1 : SpectralLightningDeathShort
 {
-	ConversationID 86,-1,-1
 	Speed 22
 	Radius 8
 	Height 24
@@ -213,7 +205,6 @@ ACTOR SpectralLightningV1 : SpectralLightningDeathShort
 
 ACTOR SpectralLightningV2 : SpectralLightningV1
 {
-	ConversationID 87,-1,-1
 	Damage 50
 }
 
@@ -221,7 +212,6 @@ ACTOR SpectralLightningV2 : SpectralLightningV1
 
 ACTOR SpectralLightningSpot : SpectralLightningDeath1
 {
-	ConversationID 88,-1,-1
 	Speed 18
 	ReactionTime 70
 	+NOBLOCKMAP
@@ -246,7 +236,6 @@ ACTOR SpectralLightningSpot : SpectralLightningDeath1
 
 ACTOR SpectralLightningBigV1 : SpectralLightningDeath1
 {
-	ConversationID 89,-1,-1
 	Speed 28
 	Radius 8
 	Height 16
@@ -265,7 +254,6 @@ ACTOR SpectralLightningBigV1 : SpectralLightningDeath1
 
 ACTOR SpectralLightningBigV2 : SpectralLightningBigV1
 {
-	ConversationID 90, -1, -1
 	Damage 60
 }
 

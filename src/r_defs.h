@@ -633,6 +633,7 @@ struct sector_t
 		return pos == floor? floorplane:ceilingplane;
 	}
 
+
 	bool PlaneMoving(int pos);
 
 
@@ -650,11 +651,8 @@ struct sector_t
 	TObjPtr<AActor> SoundTarget;
 
 	short		special;
-	short		tag;
 	short		lightlevel;
 	short		seqType;		// this sector's sound sequence
-
-	int			nexttag,firsttag;	// killough 1/30/98: improves searches for tags.
 
 	int			sky;
 	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
@@ -890,11 +888,8 @@ struct line_t
 	DWORD		activation;	// activation type
 	int			special;
 	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
-	int			id;			// <--- same as tag or set with Line_SetIdentification
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
-	int			firstid, nextid;
 	side_t		*sidedef[2];
-	//DWORD		sidenum[2];	// sidenum[1] will be NO_SIDE if one sided
 	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked

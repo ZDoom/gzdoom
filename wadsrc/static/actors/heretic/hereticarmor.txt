@@ -1,10 +1,8 @@
 
 // Silver Shield (Shield1) --------------------------------------------------
 
-Actor SilverShield : BasicArmorPickup 85
+Actor SilverShield : BasicArmorPickup
 {
-	Game Heretic
-	SpawnID 68
 	+FLOATBOB
 	Inventory.Pickupmessage "$TXT_ITEMSHIELD1"
 	Inventory.Icon "SHLDA0"
@@ -20,10 +18,8 @@ Actor SilverShield : BasicArmorPickup 85
 
 // Enchanted shield (Shield2) -----------------------------------------------
 
-Actor EnchantedShield : BasicArmorPickup 31
+Actor EnchantedShield : BasicArmorPickup
 {
-	Game Heretic
-	SpawnID 69
 	+FLOATBOB
 	Inventory.Pickupmessage "$TXT_ITEMSHIELD2"
 	Inventory.Icon "SHD2A0"

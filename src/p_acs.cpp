@@ -1341,7 +1341,7 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 {
 	int secnum;
 
-	secnum = P_FindSectorFromTag (tag, -1);
+	secnum = P_FindFirstSectorFromTag (tag);
 	if (secnum >= 0)
 	{
 		secplane_t plane;
@@ -1409,12 +1409,6 @@ void DPlaneWatcher::Tick ()
 // own behavior is loaded (if it has one).
 void FBehavior::StaticLoadDefaultModules ()
 {
-	// When playing Strife, STRFHELP is always loaded.
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		StaticLoadModule (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
-	}
-
 	// Scan each LOADACS lump and load the specified modules in order
 	int lump, lastlump = 0;
 
@@ -3217,7 +3211,7 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				if (actor->Sector->tag == tag || tag == -1)
+				if (tag == -1 || tagManager.SectorHasTag(actor->Sector, tag))
 				{
 					// Don't count items in somebody's inventory
 					if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
@@ -3237,7 +3231,7 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				if (actor->Sector->tag == tag || tag == -1)
+				if (tag == -1 || tagManager.SectorHasTag(actor->Sector, tag))
 				{
 					// Don't count items in somebody's inventory
 					if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
@@ -3274,7 +3268,8 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 
 	flat = TexMan.GetTexture (flatname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		int pos = floorOrCeiling? sector_t::ceiling : sector_t::floor;
 		sectors[secnum].SetTexture(pos, flat);
@@ -3305,7 +3300,8 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 
 	texture = TexMan.GetTexture (texname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
-	while ((linenum = P_FindLineFromID (lineid, linenum)) >= 0)
+	FLineIdIterator itr(lineid);
+	while ((linenum = itr.Next()) >= 0)
 	{
 		side_t *sidedef;
 
@@ -3903,7 +3899,13 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_ViewHeight:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+		{
 			static_cast<APlayerPawn *>(actor)->ViewHeight = value;
+			if (actor->player != NULL)
+			{
+				actor->player->viewheight = value;
+			}
+		}
 		break;
 
 	case APROP_AttackZOffset:
@@ -4463,7 +4465,7 @@ int DLevelScript::SideFromID(int id, int side)
 	}
 	else
 	{
-		int line = P_FindLineFromID(id, -1);
+		int line = P_FindFirstLineFromID(id);
 		if (line == -1) return -1;
 		if (lines[line].sidedef[side] == NULL) return -1;
 		return lines[line].sidedef[side]->Index;
@@ -4479,7 +4481,7 @@ int DLevelScript::LineFromID(int id)
 	}
 	else
 	{
-		return P_FindLineFromID(id, -1);
+		return P_FindFirstLineFromID(id);
 	}
 }
 
@@ -4767,25 +4769,19 @@ static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate
 	}
 }
 
-static void SetActorTeleFog(AActor *activator, int tid, FName telefogsrc, FName telefogdest)
+static void SetActorTeleFog(AActor *activator, int tid, FString telefogsrc, FString telefogdest)
 {
-	//Simply put, if it doesn't exist, it won't change. One can use "" in this scenario.
-	const PClass *check;
+	// Set the actor's telefog to the specified actor. Handle "" as "don't
+	// change" since "None" should work just fine for disabling the fog (given
+	// that it will resolve to NAME_None which is not a valid actor name).
 	if (tid == 0)
 	{
 		if (activator != NULL)
 		{
-			check = PClass::FindClass(telefogsrc);
-			if (check == NULL || !stricmp(telefogsrc, "none") || !stricmp(telefogsrc, "null"))
-				activator->TeleFogSourceType = NULL;
-			else
-				activator->TeleFogSourceType = check;
-
-			check = PClass::FindClass(telefogdest);
-			if (check == NULL || !stricmp(telefogdest, "none") || !stricmp(telefogdest, "null"))
-				activator->TeleFogDestType = NULL;
-			else
-				activator->TeleFogDestType = check;
+			if (telefogsrc.IsNotEmpty())
+				activator->TeleFogSourceType = PClass::FindClass(telefogsrc);
+			if (telefogdest.IsNotEmpty())
+				activator->TeleFogDestType = PClass::FindClass(telefogdest);
 		}
 	}
 	else
@@ -4793,19 +4789,14 @@ static void SetActorTeleFog(AActor *activator, int tid, FName telefogsrc, FName 
 		FActorIterator iterator(tid);
 		AActor *actor;
 
+		const PClass * const src = telefogsrc.IsNotEmpty() ? PClass::FindClass(telefogsrc) : NULL;
+		const PClass * const dest = telefogdest.IsNotEmpty() ? PClass::FindClass(telefogdest) : NULL;
 		while ((actor = iterator.Next()))
 		{
-			check = PClass::FindClass(telefogsrc);
-			if (check == NULL || !stricmp(telefogsrc, "none") || !stricmp(telefogsrc, "null"))
-				actor->TeleFogSourceType = NULL;
-			else
-				actor->TeleFogSourceType = check;
-
-			check = PClass::FindClass(telefogdest);
-			if (check == NULL || !stricmp(telefogdest, "none") || !stricmp(telefogdest, "null"))
-				actor->TeleFogDestType = NULL;
-			else
-				actor->TeleFogDestType = check;
+			if (telefogsrc.IsNotEmpty())
+				actor->TeleFogSourceType = src;
+			if (telefogdest.IsNotEmpty())
+				actor->TeleFogDestType = dest;
 		}
 	}
 }
@@ -4856,10 +4847,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 			return 0;	// Not implemented yet
 
 		case ACSF_GetSectorUDMFInt:
-			return GetUDMFInt(UDMF_Sector, P_FindSectorFromTag(args[0], -1), FBehavior::StaticLookupString(args[1]));
+			return GetUDMFInt(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1]));
 
 		case ACSF_GetSectorUDMFFixed:
-			return GetUDMFFixed(UDMF_Sector, P_FindSectorFromTag(args[0], -1), FBehavior::StaticLookupString(args[1]));
+			return GetUDMFFixed(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1]));
 
 		case ACSF_GetSideUDMFInt:
 			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
@@ -5186,11 +5177,11 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				int space = args[2] < CHAN_FLOOR || args[2] > CHAN_INTERIOR ? CHAN_FULLHEIGHT : args[2];
 				if (seqname != NULL)
 				{
-					int secnum = -1;
-
-					while ((secnum = P_FindSectorFromTag(args[0], secnum)) >= 0)
+					FSectorTagIterator it(args[0]);
+					int s;
+					while ((s = it.Next()) >= 0)
 					{
-						SN_StartSequence(&sectors[secnum], args[2], seqname, 0);
+						SN_StartSequence(&sectors[s], args[2], seqname, 0);
 					}
 				}
 			}
@@ -5709,9 +5700,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_SetLineActivation:
 			if (argCount >= 2)
 			{
-				int line = -1;
-
-				while ((line = P_FindLineFromID(args[0], line)) >= 0)
+				int line;
+				FLineIdIterator itr(args[0]);
+				while ((line = itr.Next()) >= 0)
 				{
 					lines[line].activation = args[1];
 				}
@@ -5721,7 +5712,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_GetLineActivation:
 			if (argCount > 0)
 			{
-				int line = P_FindLineFromID(args[0], -1);
+				int line = P_FindFirstLineFromID(args[0]);
 				return line >= 0 ? lines[line].activation : 0;
 			}
 			break;
@@ -5969,11 +5960,13 @@ int DLevelScript::RunScript ()
 		// Wait for tagged sector(s) to go inactive, then enter
 		// state running
 	{
-		int secnum = -1;
-
-		while ((secnum = P_FindSectorFromTag (statedata, secnum)) >= 0)
+		int secnum;
+		FSectorTagIterator it(statedata);
+		while ((secnum = it.Next()) >= 0)
+		{
 			if (sectors[secnum].floordata || sectors[secnum].ceilingdata)
 				return resultValue;
+		}
 
 		// If we got here, none of the tagged sectors were busy
 		state = SCRIPT_Running;
@@ -8013,9 +8006,10 @@ scriptwait:
 
 		case PCD_SETLINEBLOCKING:
 			{
-				int line = -1;
+				int line;
 
-				while ((line = P_FindLineFromID (STACK(2), line)) >= 0)
+				FLineIdIterator itr(STACK(2));
+				while ((line = itr.Next()) >= 0)
 				{
 					switch (STACK(1))
 					{
@@ -8048,9 +8042,10 @@ scriptwait:
 
 		case PCD_SETLINEMONSTERBLOCKING:
 			{
-				int line = -1;
+				int line;
 
-				while ((line = P_FindLineFromID (STACK(2), line)) >= 0)
+				FLineIdIterator itr(STACK(2));
+				while ((line = itr.Next()) >= 0)
 				{
 					if (STACK(1))
 						lines[line].flags |= ML_BLOCKMONSTERS;
@@ -8075,7 +8070,8 @@ scriptwait:
 					arg0 = -FName(FBehavior::StaticLookupString(arg0));
 				}
 
-				while ((linenum = P_FindLineFromID (STACK(7), linenum)) >= 0)
+				FLineIdIterator itr(STACK(7));
+				while ((linenum = itr.Next()) >= 0)
 				{
 					line_t *line = &lines[linenum];
 					line->special = specnum;
@@ -8535,7 +8531,7 @@ scriptwait:
 				fixed_t z = 0;
 
 				if (tag != 0)
-					secnum = P_FindSectorFromTag (tag, -1);
+					secnum = P_FindFirstSectorFromTag (tag);
 				else
 					secnum = int(P_PointInSector (x, y) - sectors);
 
@@ -8557,7 +8553,7 @@ scriptwait:
 
 		case PCD_GETSECTORLIGHTLEVEL:
 			{
-				int secnum = P_FindSectorFromTag (STACK(1), -1);
+				int secnum = P_FindFirstSectorFromTag (STACK(1));
 				int z = -1;
 
 				if (secnum >= 0)

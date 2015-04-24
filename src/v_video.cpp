@@ -1245,7 +1245,7 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 					FTextureID pic = frame->Texture[k];
 					if (pic.isValid())
 					{
-						hitlist[pic.GetIndex()] = 1;
+						hitlist[pic.GetIndex()] = FTextureManager::HIT_Sprite;
 					}
 				}
 			}
@@ -1257,14 +1257,14 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 	for (i = numsectors - 1; i >= 0; i--)
 	{
 		hitlist[sectors[i].GetTexture(sector_t::floor).GetIndex()] = 
-			hitlist[sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= 2;
+			hitlist[sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= FTextureManager::HIT_Flat;
 	}
 
 	for (i = numsides - 1; i >= 0; i--)
 	{
 		hitlist[sides[i].GetTexture(side_t::top).GetIndex()] =
 		hitlist[sides[i].GetTexture(side_t::mid).GetIndex()] =
-		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= 1;
+		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 
 	// Sky texture is always present.
@@ -1276,11 +1276,11 @@ void DFrameBuffer::GetHitlist(BYTE *hitlist)
 
 	if (sky1texture.isValid())
 	{
-		hitlist[sky1texture.GetIndex()] |= 1;
+		hitlist[sky1texture.GetIndex()] |= FTextureManager::HIT_Sky;
 	}
 	if (sky2texture.isValid())
 	{
-		hitlist[sky2texture.GetIndex()] |= 1;
+		hitlist[sky2texture.GetIndex()] |= FTextureManager::HIT_Sky;
 	}
 }
 

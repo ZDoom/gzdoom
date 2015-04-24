@@ -365,6 +365,16 @@ public:
 		TEXMAN_DontCreate = 32
 	};
 
+	enum
+	{
+		HIT_Wall = 1,
+		HIT_Flat = 2,
+		HIT_Sky = 4,
+		HIT_Sprite = 8,
+
+		HIT_Columnmode = HIT_Wall|HIT_Sky|HIT_Sprite
+	};
+
 	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
 	FTextureID GetTexture (const char *name, int usetype, BITFIELD flags=0);
 	int ListTextures (const char *name, TArray<FTextureID> &list);

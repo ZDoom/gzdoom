@@ -1034,7 +1034,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 	// Both things overlap in x or y direction
 	bool unblocking = false;
 
-	if (tm.FromPMove)
+	if (tm.FromPMove || tm.thing->player != NULL)
 	{
 		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
@@ -1288,7 +1288,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 
 		// Do damage
 		damage = tm.thing->GetMissileDamage((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN))
+		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN) || (tm.thing->flags7 & MF7_CAUSEPAIN))
 		{
 			int newdam = P_DamageMobj(thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
 			if (damage > 0)
@@ -4140,7 +4140,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 //
 //
 //==========================================================================
-void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, float maxdiff, int railflags, const PClass *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, float sparsity, float drift, const PClass *spawnclass)
+void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, float maxdiff, int railflags, const PClass *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, float sparsity, float drift, const PClass *spawnclass, int SpiralOffset)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -4243,13 +4243,16 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 			P_SpawnPuff(source, puffclass, x, y, z, (source->angle + angleoffset) - ANG90, 1, puffflags, hitactor);
 		}
 		
-		if (puffDefaults && puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
-		{
-			P_PoisonMobj(hitactor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
-		}
 		int dmgFlagPass = DMG_INFLICTOR_IS_PUFF;
-		dmgFlagPass += (puffDefaults->flags3 & MF3_FOILINVUL) ? DMG_FOILINVUL : 0; //[MC]Because the original foilinvul check wasn't working.
-		dmgFlagPass += (puffDefaults->flags7 & MF7_FOILBUDDHA) ? DMG_FOILBUDDHA : 0;
+		if (puffDefaults != NULL)	// is this even possible?
+		{
+			if (puffDefaults->PoisonDamage > 0 && puffDefaults->PoisonDuration != INT_MIN)
+			{
+				P_PoisonMobj(hitactor, thepuff ? thepuff : source, source, puffDefaults->PoisonDamage, puffDefaults->PoisonDuration, puffDefaults->PoisonPeriod, puffDefaults->PoisonDamageType);
+			}
+			if (puffDefaults->flags3 & MF3_FOILINVUL) dmgFlagPass |= DMG_FOILINVUL;
+			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
+		}
 		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, damage, damagetype, dmgFlagPass);
 
 		if (bleed)
@@ -4289,7 +4292,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	end.X = FIXED2FLOAT(trace.X);
 	end.Y = FIXED2FLOAT(trace.Y);
 	end.Z = FIXED2FLOAT(trace.Z);
-	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift);
+	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift, SpiralOffset);
 }
 
 //==========================================================================
@@ -4787,7 +4790,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT) / (double)FRACUNIT;
 
 			// points and bombdamage should be the same sign
-			if (((bombspot->flags7 & MF7_CAUSEPAIN) || (points * bombdamage) > 0) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+			if (((points * bombdamage) > 0) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
 				double velz;
 				double thrust;

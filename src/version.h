@@ -56,7 +56,7 @@ const char *GetVersionString();
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().
-#define LASTRUNVERSION "210"
+#define LASTRUNVERSION "211"
 
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
@@ -76,7 +76,7 @@ const char *GetVersionString();
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
-#define SAVEVER 4521
+#define SAVEVER 4523
 
 #define SAVEVERSTRINGIFY2(x) #x
 #define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
@@ -88,13 +88,14 @@ const char *GetVersionString();
 
 // More stuff that needs to be different for derivatives.
 #define GAMENAME "ZDoom"
+#define GAMENAMELOWERCASE "zdoom"
 #define FORUM_URL "http://forum.zdoom.org"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
-#define GAME_DIR ".config/zdoom"
+#define GAME_DIR ".config/" GAMENAMELOWERCASE
 #endif
 
 

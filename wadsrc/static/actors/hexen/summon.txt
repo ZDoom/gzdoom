@@ -1,10 +1,8 @@
 
 // Dark Servant Artifact ----------------------------------------------------
 
-ACTOR ArtiDarkServant : Inventory 86 native
+ACTOR ArtiDarkServant : Inventory native
 {
-	Game Hexen
-	SpawnID 16
 	+COUNTITEM
 	+FLOATBOB
 	Inventory.RespawnTics 4230
@@ -27,7 +25,6 @@ ACTOR ArtiDarkServant : Inventory 86 native
 
 ACTOR SummoningDoll
 {
-	Game Hexen
 	Speed 20
 	+NOBLOCKMAP +DROPOFF +MISSILE
 	+NOTELEPORT
@@ -50,7 +47,6 @@ ACTOR SummoningDoll
 
 ACTOR MinotaurSmoke
 {
-	Game Hexen
 	+NOBLOCKMAP +NOGRAVITY
 	+NOTELEPORT
 	RenderStyle Translucent

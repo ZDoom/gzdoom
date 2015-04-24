@@ -4,10 +4,8 @@
 //
 //===========================================================================
 
-ACTOR Archvile 64
+ACTOR Archvile
 {
-	Game Doom
-	SpawnID 111
 	Health 700
 	Radius 20
 	Height 56
@@ -67,8 +65,6 @@ ACTOR Archvile 64
 
 ACTOR ArchvileFire
 {
-	Game Doom
-	SpawnID 98
 	+NOBLOCKMAP +NOGRAVITY
 	RenderStyle Add
 	Alpha 1

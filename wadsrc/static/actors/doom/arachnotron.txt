@@ -3,10 +3,8 @@
 // Arachnotron
 //
 //===========================================================================
-ACTOR Arachnotron 68
+ACTOR Arachnotron
 {
-	Game Doom
-	SpawnID 6
 	Health 500
 	Radius 64
 	Height 64
@@ -63,8 +61,6 @@ ACTOR Arachnotron 68
 //===========================================================================
 ACTOR ArachnotronPlasma
 {
-	Game Doom
-	SpawnID 129
 	Radius 13
 	Height 8
 	Speed 25

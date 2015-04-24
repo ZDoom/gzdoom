@@ -1,9 +1,8 @@
 
 // Healing Radius Artifact --------------------------------------------------
 
-ACTOR ArtiHealingRadius : Inventory 10120 native
+ACTOR ArtiHealingRadius : Inventory native
 {
-	Game Hexen
 	+COUNTITEM
 	+FLOATBOB
 	Inventory.DefMaxAmount

@@ -243,9 +243,7 @@ inline sector_t *getNextSector (line_t *line, const sector_t *sec)
 }
 
 
-int		P_FindSectorFromTag (int tag, int start);
-int		P_FindLineFromID (int id, int start);
-
+#include "p_tags.h"
 
 //
 // P_LIGHTS

@@ -1,5 +1,5 @@
 
-ACTOR MapMarker 9040 native
+ACTOR MapMarker native
 {
 	+NOBLOCKMAP
 	+NOGRAVITY

@@ -233,42 +233,33 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 	fixed_t newheight = 0;
 	vertex_t *spot;
 
+	if (tag != 0)
+	{
+		//	Activate all <type> plats that are in_stasis
+		switch (type)
+		{
+		case DPlat::platToggle:
+			rtn = true;
+		case DPlat::platPerpetualRaise:
+			P_ActivateInStasis (tag);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+
 	// [RH] If tag is zero, use the sector on the back side
 	//		of the activating line (if any).
-	if (!tag)
-	{
-		if (!line || !(sec = line->backsector))
-			return false;
-		secnum = (int)(sec - sectors);
-		manual = true;
-		goto manual_plat;
-	}
-
-	//	Activate all <type> plats that are in_stasis
-	switch (type)
-	{
-	case DPlat::platToggle:
-		rtn = true;
-	case DPlat::platPerpetualRaise:
-		P_ActivateInStasis (tag);
-		break;
-
-	default:
-		break;
-	}
-
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator itr(tag, line);
+	while ((secnum = itr.Next()) >= 0)
 	{
 		sec = &sectors[secnum];
 
-manual_plat:
 		if (sec->PlaneMoving(sector_t::floor))
 		{
-			if (!manual)
-				continue;
-			else
-				return false;
+			continue;
 		}
 
 		// Find lowest & highest floors around sector
@@ -406,8 +397,6 @@ manual_plat:
 		default:
 			break;
 		}
-		if (manual)
-			return rtn;
 	}
 	return rtn;
 }

@@ -278,7 +278,7 @@ static void RemoveTaggedSectors(extsector_t::linked::plane &scrollplane, int tag
 {
 	for(int i = scrollplane.Sectors.Size()-1; i>=0; i--)
 	{
-		if (scrollplane.Sectors[i].Sector->tag == tag)
+		if (tagManager.SectorHasTag(scrollplane.Sectors[i].Sector, tag))
 		{
 			scrollplane.Sectors.Delete(i);
 		}
@@ -316,7 +316,9 @@ bool P_AddSectorLinks(sector_t *control, int tag, INTBOOL ceiling, int movetype)
 
 	if (movetype > 0)
 	{
-		for(int sec = -1; (sec = P_FindSectorFromTag(tag, sec)) >= 0; )
+		int sec;
+		FSectorTagIterator itr(tag);
+		while ((sec = itr.Next()) >= 0)
 		{
 			// Don't attach to self!
 			if (control != &sectors[sec])
@@ -346,7 +348,9 @@ void P_AddSectorLinksByID(sector_t *control, int id, INTBOOL ceiling)
 {
 	extsector_t::linked::plane &scrollplane = ceiling? control->e->Linked.Ceiling : control->e->Linked.Floor;
 
-	for(int line = -1; (line = P_FindLineFromID(id, line)) >= 0; )
+	FLineIdIterator itr(id);
+	int line;
+	while ((line = itr.Next()) >= 0)
 	{
 		line_t *ld = &lines[line];
 

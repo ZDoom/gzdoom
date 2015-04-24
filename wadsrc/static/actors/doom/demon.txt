@@ -3,10 +3,8 @@
 // Pink Demon
 //
 //===========================================================================
-ACTOR Demon 3002
+ACTOR Demon
 {
-	Game Doom
-	SpawnID 8
 	Health 150
 	PainChance 180
 	Speed 10
@@ -57,10 +55,8 @@ ACTOR Demon 3002
 // Spectre
 //
 //===========================================================================
-ACTOR Spectre : Demon 58
+ACTOR Spectre : Demon
 {
-	Game Doom
-	SpawnID 9
 	+SHADOW
 	RenderStyle OptFuzzy
 	Alpha 0.5

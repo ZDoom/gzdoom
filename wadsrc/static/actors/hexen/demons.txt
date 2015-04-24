@@ -1,10 +1,8 @@
 
 // Demon, type 1 (green, like D'Sparil's) -----------------------------------
 
-ACTOR Demon1 31
+ACTOR Demon1
 {
-	Game Hexen
-	SpawnID 3
 	Health 250
 	Painchance 50
 	Speed 13
@@ -70,8 +68,6 @@ ACTOR Demon1 31
 
 ACTOR Demon1Mash : Demon1
 {
-	Game Hexen
-	SpawnID 100
 	+NOBLOOD
 	+BLASTED
 	-TELESTOMP
@@ -212,9 +208,8 @@ ACTOR Demon1FX1
 
 // Demon, type 2 (brown) ----------------------------------------------------
 
-ACTOR Demon2 : Demon1 8080
+ACTOR Demon2 : Demon1
 {
-	Game Hexen
 	Obituary "$OB_DEMON2"
 	Species "Demon2"
 	States
@@ -262,8 +257,6 @@ ACTOR Demon2 : Demon1 8080
 
 ACTOR Demon2Mash : Demon2
 {
-	Game Hexen
-	SpawnID 101
 	+NOBLOOD
 	+BLASTED
 	-TELESTOMP

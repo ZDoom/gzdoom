@@ -1,0 +1,292 @@
+
+/****************************************************************************/
+/*																			*/
+/* HERETIC SOUNDS															*/
+/*																			*/
+/****************************************************************************/
+
+$rolloff * custom 0 1600
+
+$pitchshiftrange 2
+
+$playersound	player	male	*wimpydeath	plrwdth
+$playersound	player	male	*death		plrdth
+$playersound	player	male	*crazydeath	plrcdth
+$playersound	player	male	*gibbed		gibdth
+$playersound	player	male	*pain100	plrpai
+$playersounddup	player	male	*pain75		*pain100
+$playersounddup	player	male	*pain50		*pain100
+$playersounddup	player	male	*pain25		*pain100
+$playersound	player	male	*weaponlaugh	wpnup
+$playersounddup	player	male	*evillaugh	*weaponlaugh
+$playersound	player	male	*grunt		plroof
+$playersounddup	player	male	*usefail	*grunt
+$playersounddup	player	male	*land		*grunt
+$playersound	player	male	*jump		plrjmp
+$playersound	player	male	*burndeath	hedat1
+
+$playeralias	chicken male	*usefail	chicken/peck
+$PlayerAlias   	Chicken Male   	*Grunt   	chicken/pain
+$PlayerAlias   	Chicken Male   	*Land      	chicken/pain
+$PlayerAlias   	Chicken Male   	*Jump      	chicken/active
+$PlayerAlias   	Chicken Male   	*EvilLaugh 	chicken/active
+
+chicken/sight			chicpai
+chicken/pain			chicpai
+chicken/death			chicdth
+chicken/attack			chicatk
+
+misc/burn			hedat1
+
+weapons/staffhit		stfhit
+weapons/staffpowerhit		stfpow
+weapons/staffcrackle		stfcrk
+weapons/wandhit			gldhit
+weapons/bowshoot		bowsht
+weapons/bowhit			hrnhit
+weapons/gauntletsactivate	gntact
+weapons/gauntletsuse		gntuse
+weapons/gauntletson		gntful
+weapons/gauntletshit		gnthit
+weapons/gauntletspowhit		gntpow
+weapons/maceshoot		lobsht
+weapons/macebounce		bounce
+weapons/macehit			lobhit
+weapons/macestop		pstop
+weapons/maceexplode		phohit
+weapons/blasterhit		blshit
+weapons/blasterpowhit		hrnhit
+weapons/blastershoot		blssht
+weapons/hornrodshoot		hrnsht
+weapons/hornrodhit		hrnhit
+weapons/hornrodpowshoot		hrnpow
+weapons/hornrodpowhit		ramphit
+weapons/phoenixshoot		phosht
+weapons/phoenixhit		phohit
+weapons/phoenixpowshoot		phopow
+
+$limit	weapons/gauntletson		0
+$limit	weapons/gauntletshit		0
+$limit	weapons/gauntletspowhit		0
+$limit	weapons/gauntletsactivate	0
+$limit	weapons/gauntletsuse		0
+$limit	weapons/maceexplode		0
+$limit	weapons/phoenixhit		0
+$limit	weapons/phoenixpowshoot		1
+
+// [RH] Heretic didn't have these limitless, but they can sound bad if they're not
+$limit weapons/bowhit 0
+$limit weapons/hornrodshoot 0
+$limit weapons/hornrodhit 0
+$limit weapons/maceshoot 0
+
+himp/sight			impsit
+himp/attack			impat1
+himp/pain			imppai
+himp/death			impdth
+himp/active			impsit
+himp/leaderattack		impat2
+
+misc/invuse			artiuse
+
+$limit	misc/invuse		1
+
+world/podexplode		podexp
+world/podgrow			newpod
+world/wind			wind
+world/waterfall			waterfl
+
+$limit world/podexplode		0
+$limit world/podgrow		0
+$limit world/wind		1
+
+misc/i_pkup			itemup
+misc/k_pkup			keyup
+misc/p_pkup			artiup
+$alias misc/w_pkup		*weaponlaugh
+
+misc/rain			ramrain
+misc/spawn			respawn
+
+$limit misc/spawn		1
+
+//
+// Minotaur sounds
+//
+
+minotaur/sight			minsit
+minotaur/melee			stfpow
+minotaur/attack1		minat1
+minotaur/attack2		minat2
+minotaur/attack3		minat3
+minotaur/pain			minpai
+minotaur/death			mindth
+minotaur/active			minact
+minotaur/fx2hit			phohit
+minotaur/fx3hit			phohit
+
+//
+// Wizard sounds
+//
+
+wizard/sight			wizsit
+wizard/attack			wizatk
+wizard/death			wizdth
+wizard/pain			wizpai
+wizard/active1			wizact
+$random wizard/active 		{ wizard/sight wizard/active1 }
+
+//
+// Switch sounds
+//
+
+switches/normbutn		switch
+$alias switches/exitbutn	switches/normbutn // Heretic has no special exit button sound
+
+//
+//
+// Platform Sounds
+//
+
+plats/pt1_strt			pstart
+plats/pt1_stop			pstop
+plats/pt1_mid			dormov
+
+//
+// Door Sounds
+//
+
+doors/dr1_open			doropn
+doors/dr1_clos			dorcls
+doors/dr2_open			doropn
+doors/dr2_clos			dorcls
+
+//
+// Ambient sounds
+//
+
+world/amb1			amb1
+world/amb2			amb2
+world/amb3			amb3
+world/amb4			amb4
+world/amb5			amb5
+world/amb6			amb6
+world/amb7			amb7
+world/amb8			amb8
+world/amb9			amb9
+world/amb10			amb10
+world/amb11			amb11
+world/amb12			bstsit
+
+$limit world/amb1		1
+$limit world/amb2		1
+$limit world/amb3		1
+$limit world/amb4		1
+$limit world/amb5		1
+$limit world/amb6		1
+$limit world/amb7		1
+$limit world/amb8		1
+$limit world/amb9		1
+$limit world/amb10		1
+$limit world/amb11		0
+
+misc/chat			chat
+misc/teleport			telept
+misc/ripslop			ripslop
+
+$limit misc/chat		1
+
+world/drip			gloop
+world/watersplash		gloop
+world/lavasizzle		burn
+world/sludgegloop		dsempty
+
+mummy/sight			mumsit
+mummy/attack1			mumat1
+mummy/attack2			mumat2
+mummy/pain			mumpai
+mummy/death			mumdth
+mummy/active			mumsit
+mummy/head			mumhed
+
+beast/sight			bstsit
+beast/attack			bstatk
+beast/pain			bstpai
+beast/death			bstdth
+beast/active			bstact
+
+snake/attack			snkatk
+snake/sight			snksit
+snake/pain			snkpai
+snake/death			snkdth
+snake/active			snkact
+
+clink/sight			clksit
+clink/attack			clkatk
+clink/pain			clkpai
+clink/death			clkdth
+clink/active			clkact
+
+hknight/sight			kgtsit
+hknight/attack			kgtatk
+hknight/melee			kgtat2
+hknight/pain			kgtpai
+hknight/death			kgtdth
+hknight/active			kgtsit
+hknight/hit			hrnhit
+hknight/axewhoosh		kgtatk
+
+misc/timebomb			phohit
+world/volcano/blast		lobhit
+world/volcano/shoot		bstatk
+
+ironlich/sight			hedsit
+ironlich/attack1		hedat1
+ironlich/attack2		hedat2
+ironlich/attack3		hedat3
+ironlich/pain			hedpai
+ironlich/death			heddth
+ironlich/active			hedact
+
+dsparilserpent/sight		bstsit
+dsparilserpent/attack		bstatk
+dsparilserpent/pain		sbtpai
+dsparilserpent/death		sbtdth
+dsparilserpent/active		sbtact
+
+dsparil/sight			sorsit
+dsparil/attack			soratk
+dsparil/pain			sorpai
+dsparil/active			soract
+dsparil/rise			sorrise
+dsparil/zap			sorzap
+dsparil/scream			sordsph
+dsparil/explode			sordexp
+dsparil/bones			sordbon
+
+chicken/active			chicact
+chicken/attack			chicatk
+chicken/pain			chicpai
+chicken/death			chicdth
+chicken/peck1			chicpk1
+chicken/peck2			chicpk2
+chicken/peck3			chicpk3
+$random chicken/peck		{ chicken/peck1  chicken/peck2  chicken/peck3 }
+
+menu/activate			dorcls
+menu/backup			switch
+menu/prompt			chat
+menu/choose			dorcls
+menu/cursor			switch
+menu/change			keyup
+menu/invalid			plroof
+menu/dismiss			dorcls
+menu/clear			dorcls
+
+misc/secret			dssecret
+
+$alias				intermission/cooptotal		*death
+$alias				intermission/nextstage		doors/dr1_clos
+$alias				intermission/paststats		plats/pt1_stop
+$alias				intermission/pastcoopstats	plats/pt1_stop
+$alias				intermission/pastdmstats	*gibbed

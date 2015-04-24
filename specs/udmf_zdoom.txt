@@ -119,6 +119,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       blockhitscan = <bool>;      // Line blocks hitscan attacks
       locknumber = <int>;         // Line special is locked
       arg0str = <string>;         // Alternate string-based version of arg0
+	  moreids = <string>;         // Additional line IDs, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
 
       transparent   = <bool>; // true = line is a Strife transparent line (alpha 0.25)
 
@@ -201,6 +202,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                       // sound sequence thing in the sector will override this property.
       hidden = <bool>;                // if true this sector will not be drawn on the textured automap.
       waterzone = <bool>;             // Sector is under water and swimmable
+	  moreids = <string>;             // Additional sector IDs/tags, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
       
       * Note about dropactors
 
@@ -369,6 +371,9 @@ Added transparent line property (to be folded back to core UDMF standard), and h
 1.24 14.05.2014
 Added plane equations for sector slopes. (Please read carefully to ensure proper use!)
 Changed language describing the DIALOGUE lump to mention USDF as an option.
+
+1.25 19.04.2015
+Added 'moreids' for linedefs and sectors.
 
 ===============================================================================
 EOF

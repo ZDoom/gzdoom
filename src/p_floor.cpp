@@ -290,28 +290,13 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 	rtn = false;
 
 	// check if a manual trigger; if so do just the sector on the backside
-	if (tag == 0)
-	{
-		if (!line || !(sec = line->backsector))
-			return rtn;
-		secnum = (int)(sec-sectors);
-		goto manual_floor;
-	}
-
-	secnum = -1;
-	while (tag && (secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator it(tag, line);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sec = &sectors[secnum];
-
-manual_floor:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		if (sec->PlaneMoving(sector_t::floor))
 		{
-			// There was a test for 0/non-0 here, supposed to prevent 0-tags from executing "continue" and searching for unrelated sectors
-			// Unfortunately, the condition had been reversed, so that searches for tag-0 would continue,
-			// while numbered tags would abort (return false, even if some floors have been successfully triggered)
-
-			// All occurences of the condition (faulty or not) have been replaced by a looping condition: Looping only occurs if we're looking for a non-0 tag.
 			continue;
 		}
 		
@@ -545,9 +530,9 @@ manual_floor:
 
 bool EV_FloorCrushStop (int tag)
 {
-	int secnum = -1;
-
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	int secnum;
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = sectors + secnum;
 
@@ -564,21 +549,6 @@ bool EV_FloorCrushStop (int tag)
 
 //==========================================================================
 //
-// Linear tag search to emulate stair building from Doom.exe
-//
-//==========================================================================
-
-static int P_FindSectorFromTagLinear (int tag, int start)
-{
-    for (int i=start+1;i<numsectors;i++)
-	{
-		if (sectors[i].tag == tag) return i;
-	}
-    return -1;
-}
-
-//==========================================================================
-//
 // BUILD A STAIRCASE!
 // [RH] Added stairsize, srcspeed, delay, reset, igntxt, usespecials parameters
 //		If usespecials is non-zero, then each sector in a stair is determined
@@ -591,7 +561,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 					 fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
 					 int usespecials)
 {
-	int 				secnum;
+	int 				secnum = -1;
 	int					osecnum;	//jff 3/4/98 save old loop index
 	int 				height;
 	fixed_t				stairstep;
@@ -607,44 +577,27 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	sector_t*			prev = NULL;
 
 	DFloor*				floor;
-	bool				manual = false;
 
 	if (speed == 0)
 		return false;
 
 	persteptime = FixedDiv (stairsize, speed) >> FRACBITS;
 
-	int (* FindSector) (int tag, int start)  =
-		(i_compatflags & COMPATF_STAIRINDEX)? P_FindSectorFromTagLinear : P_FindSectorFromTag;
-
 	// check if a manual trigger, if so do just the sector on the backside
-	if (tag == 0)
-	{
-		if (!line || !(sec = line->backsector))
-			return rtn;
-		secnum = (int)(sec-sectors);
-		manual = true;
-		goto manual_stair;
-	}
-
+	FSectorTagIterator itr(tag, line);
 	// The compatibility mode doesn't work with a hashing algorithm.
 	// It needs the original linear search method. This was broken in Boom.
-
-	secnum = -1;
-	while ((secnum = FindSector (tag, secnum)) >= 0)
+	bool compatible = tag != 0 && (i_compatflags & COMPATF_STAIRINDEX);
+	while ((secnum = itr.NextCompat(compatible, secnum)) >= 0)
 	{
 		sec = &sectors[secnum];
 
-manual_stair:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		//jff 2/26/98 add special lockout condition to wait for entire
 		//staircase to build before retriggering
 		if (sec->PlaneMoving(sector_t::floor) || sec->stairlock)
 		{
-			if (!manual)
-				continue;
-			else
-				return rtn;
+			continue;
 		}
 		
 		// new floor thinker
@@ -781,14 +734,6 @@ manual_stair:
 		// [RH] make sure the first sector doesn't point to a previous one, otherwise
 		// it can infinite loop when the first sector stops moving.
 		sectors[osecnum].prevsec = -1;	
-		if (manual)
-		{
-			return rtn;
-		}
-		if (!(i_compatflags & COMPATF_STAIRINDEX))
-		{
-			secnum = osecnum;	//jff 3/4/98 restore loop index
-		}
 	}
 	return rtn;
 }
@@ -811,21 +756,13 @@ bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
 	vertex_t*			spot;
 	fixed_t				height;
 		
-	secnum = -1;
 	rtn = false;
 
-	if (tag == 0)
-	{
-		if (!line || !(s1 = line->backsector))
-			return rtn;
-		goto manual_donut;
-	}
-
-	while (tag && (secnum = P_FindSectorFromTag(tag,secnum)) >= 0)
+	FSectorTagIterator itr(tag, line);
+	while ((secnum = itr.Next()) >= 0)
 	{
 		s1 = &sectors[secnum];					// s1 is pillar's sector
 
-manual_donut:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		if (s1->PlaneMoving(sector_t::floor))
 			continue; // safe now, because we check that tag is non-0 in the looping condition [fdari]
@@ -1042,19 +979,12 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 	secnum = -1;
 	rtn = false;
 
-	if (tag == 0)
-	{
-		if (!line || !(sec = line->backsector))
-			return rtn;
-		goto manual_elevator;
-	}
-
+	FSectorTagIterator itr(tag, line);
 
 	// act on all sectors with the same tag as the triggering linedef
-	while (tag && (secnum = P_FindSectorFromTag (tag, secnum)) >= 0) // never loop for a non-0 tag (condition moved to beginning of loop) [FDARI]
+	while ((secnum = itr.Next()) >= 0)
 	{
 		sec = &sectors[secnum];
-manual_elevator:
 		// If either floor or ceiling is already activated, skip it
 		if (sec->PlaneMoving(sector_t::floor) || sec->ceilingdata) //jff 2/22/98
 			continue; // the loop used to break at the end if tag were 0, but would miss that step if "continue" occured [FDARI]
@@ -1142,10 +1072,10 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 	sector_t	*sec;
 	sector_t	*secm;
 
-	secnum = -1;
 	rtn = false;
 	// change all sectors with the same tag as the linedef
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sec = &sectors[secnum];
               
@@ -1374,20 +1304,12 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 	bool retCode;
 
 	retCode = false;
-	sectorIndex = -1;
 
-	if (tag == 0)
-	{
-		if (!line || !(sector = line->backsector))
-			return retCode;
-		goto manual_waggle;
-	}
+	FSectorTagIterator itr(tag, line);
 
-
-	while (tag && (sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
+	while ((sectorIndex = itr.Next()) >= 0)
 	{
 		sector = &sectors[sectorIndex];
-manual_waggle:
 		if ((!ceiling && sector->PlaneMoving(sector_t::floor)) || 
 			(ceiling && sector->PlaneMoving(sector_t::ceiling)))
 		{ // Already busy with another thinker

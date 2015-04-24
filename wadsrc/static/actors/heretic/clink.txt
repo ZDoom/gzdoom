@@ -1,8 +1,6 @@
 
-ACTOR Clink 90
+ACTOR Clink
 {
-	Game Heretic
-	SpawnID 1
 	Health 150
 	Radius 20
 	Height 64

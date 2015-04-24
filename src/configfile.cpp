@@ -66,15 +66,13 @@ FConfigFile::FConfigFile ()
 //
 //====================================================================
 
-FConfigFile::FConfigFile (const char *pathname,
-	void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata),
-	void *userdata)
+FConfigFile::FConfigFile (const char *pathname)
 {
 	Sections = CurrentSection = NULL;
 	LastSectionPtr = &Sections;
 	CurrentEntry = NULL;
 	ChangePathName (pathname);
-	LoadConfigFile (nosechandler, userdata);
+	LoadConfigFile ();
 	OkayToWrite = true;
 	FileExisted = true;
 }
@@ -118,8 +116,7 @@ FConfigFile::~FConfigFile ()
 			delete[] (char *)entry;
 			entry = nextentry;
 		}
-		section->~FConfigSection();
-		delete[] (char *)section;
+		delete section;
 		section = nextsection;
 	}
 }
@@ -140,7 +137,7 @@ FConfigFile &FConfigFile::operator = (const FConfigFile &other)
 	while (fromsection != NULL)
 	{
 		fromentry = fromsection->RootEntry;
-		tosection = NewConfigSection (fromsection->Name);
+		tosection = NewConfigSection (fromsection->SectionName);
 		while (fromentry != NULL)
 		{
 			NewConfigEntry (tosection, fromentry->Key, fromentry->Value);
@@ -311,7 +308,7 @@ const char *FConfigFile::GetCurrentSection () const
 {
 	if (CurrentSection != NULL)
 	{
-		return CurrentSection->Name;
+		return CurrentSection->SectionName.GetChars();
 	}
 	return NULL;
 }
@@ -508,11 +505,27 @@ FConfigFile::FConfigSection *FConfigFile::FindSection (const char *name) const
 {
 	FConfigSection *section = Sections;
 
-	while (section != NULL && stricmp (section->Name, name) != 0)
+	while (section != NULL && section->SectionName.CompareNoCase(name) != 0)
 	{
 		section = section->Next;
 	}
 	return section;
+}
+
+//====================================================================
+//
+// FConfigFile :: RenameSection
+//
+//====================================================================
+
+void FConfigFile::RenameSection (const char *oldname, const char *newname) const
+{
+	FConfigSection *section = FindSection(oldname);
+
+	if (section != NULL)
+	{
+		section->SectionName = newname;
+	}
 }
 
 //====================================================================
@@ -542,19 +555,15 @@ FConfigFile::FConfigEntry *FConfigFile::FindEntry (
 FConfigFile::FConfigSection *FConfigFile::NewConfigSection (const char *name)
 {
 	FConfigSection *section;
-	char *memblock;
 
 	section = FindSection (name);
 	if (section == NULL)
 	{
-		size_t namelen = strlen (name);
-		memblock = new char[sizeof(*section)+namelen];
-		section = ::new(memblock) FConfigSection;
+		section = new FConfigSection;
 		section->RootEntry = NULL;
 		section->LastEntryPtr = &section->RootEntry;
 		section->Next = NULL;
-		memcpy (section->Name, name, namelen);
-		section->Name[namelen] = 0;
+		section->SectionName = name;
 		*LastSectionPtr = section;
 		LastSectionPtr = &section->Next;
 	}
@@ -591,7 +600,7 @@ FConfigFile::FConfigEntry *FConfigFile::NewConfigEntry (
 //
 //====================================================================
 
-void FConfigFile::LoadConfigFile (void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata), void *userdata)
+void FConfigFile::LoadConfigFile ()
 {
 	FILE *file = fopen (PathName, "r");
 	bool succ;
@@ -605,14 +614,6 @@ void FConfigFile::LoadConfigFile (void (*nosechandler)(const char *pathname, FCo
 	succ = ReadConfig (file);
 	fclose (file);
 	FileExisted = succ;
-
-	if (!succ)
-	{ // First valid line did not define a section
-		if (nosechandler != NULL)
-		{
-			nosechandler (PathName, this, userdata);
-		}
-	}
 }
 
 //====================================================================
@@ -787,7 +788,7 @@ bool FConfigFile::WriteConfigFile () const
 		{
 			fputs (section->Note.GetChars(), file);
 		}
-		fprintf (file, "[%s]\n", section->Name);
+		fprintf (file, "[%s]\n", section->SectionName.GetChars());
 		while (entry != NULL)
 		{
 			if (strpbrk(entry->Value, "\r\n") == NULL)

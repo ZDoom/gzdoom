@@ -50,6 +50,7 @@ public:
 	friend class SDLVideo;
 
 	virtual void SetVSync (bool vsync);
+	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y);
 
 private:
 	PalEntry SourcePalette[256];
@@ -721,6 +722,35 @@ void SDLFB::SetVSync (bool vsync)
 #else
 	ResetSDLRenderer ();
 #endif // __APPLE__
+}
+
+void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+{
+	// Detect if we're doing scaling in the Window and adjust the mouse
+	// coordinates accordingly. This could be more efficent, but I
+	// don't think performance is an issue in the menus.
+	if(IsFullscreen())
+	{
+		int w, h;
+		SDL_GetWindowSize (Screen, &w, &h);
+		int realw = w, realh = h;
+		ScaleWithAspect (realw, realh, SCREENWIDTH, SCREENHEIGHT);
+		if (realw != SCREENWIDTH || realh != SCREENHEIGHT)
+		{
+			double xratio = (double)SCREENWIDTH/realw;
+			double yratio = (double)SCREENHEIGHT/realh;
+			if (realw < w)
+			{
+				x = (x - (w - realw)/2)*xratio;
+				y *= yratio;
+			}
+			else
+			{
+				y = (y - (h - realh)/2)*yratio;
+				x *= xratio;
+			}
+		}
+	}
 }
 
 ADD_STAT (blit)

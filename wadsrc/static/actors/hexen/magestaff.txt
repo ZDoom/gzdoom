@@ -12,10 +12,8 @@ ACTOR MageWeaponPiece : WeaponPiece
 
 // Mage Weapon Piece 1 ------------------------------------------------------
 
-ACTOR MWeaponPiece1 : MageWeaponPiece 21
+ACTOR MWeaponPiece1 : MageWeaponPiece
 {
-	Game Hexen
-	SpawnID 37
 	WeaponPiece.Number 1
 	States
 	{
@@ -27,10 +25,8 @@ ACTOR MWeaponPiece1 : MageWeaponPiece 21
 
 // Mage Weapon Piece 2 ------------------------------------------------------
 
-ACTOR MWeaponPiece2 : MageWeaponPiece 22
+ACTOR MWeaponPiece2 : MageWeaponPiece
 {
-	Game Hexen
-	SpawnID 38
 	WeaponPiece.Number 2
 	States
 	{
@@ -42,10 +38,8 @@ ACTOR MWeaponPiece2 : MageWeaponPiece 22
 
 // Mage Weapon Piece 3 ------------------------------------------------------
 
-ACTOR MWeaponPiece3 : MageWeaponPiece 23
+ACTOR MWeaponPiece3 : MageWeaponPiece
 {
-	Game Hexen
-	SpawnID 39
 	WeaponPiece.Number 3
 	States
 	{
@@ -72,7 +66,6 @@ ACTOR BloodscourgeDrop
 
 ACTOR MWeapBloodscourge : MageWeapon native
 {
-	Game Hexen
 	Health 3
 	Weapon.SelectionOrder 3100
 	Weapon.AmmoUse1 15

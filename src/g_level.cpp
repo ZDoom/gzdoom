@@ -1229,6 +1229,7 @@ void G_FinishTravel ()
 			pawn->lastenemy = NULL;
 			pawn->player->mo = pawn;
 			pawn->player->camera = pawn;
+			pawn->player->viewheight = pawn->ViewHeight;
 			pawn->flags2 &= ~MF2_BLASTED;
 			DObject::StaticPointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();
@@ -1457,7 +1458,9 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	if (SaveVersion >= 3313)
 	{
-		arc << level.nextmusic;
+		// This is a player property now
+		int nextmusic;
+		arc << nextmusic;
 	}
 
 	// Hub transitions must keep the current total time

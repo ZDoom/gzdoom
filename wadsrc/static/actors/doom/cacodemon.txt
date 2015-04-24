@@ -3,10 +3,8 @@
 // Cacodemon
 //
 //===========================================================================
-ACTOR Cacodemon 3005
+ACTOR Cacodemon
 {
-	Game Doom
-	SpawnID 19
 	Health 400
 	Radius 31
 	Height 56
@@ -61,8 +59,6 @@ ACTOR Cacodemon 3005
 //===========================================================================
 ACTOR CacodemonBall
 {
-	Game Doom
-	SpawnID 126
 	Radius 6
 	Height 8
 	Speed 10

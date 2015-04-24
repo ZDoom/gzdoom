@@ -1,9 +1,7 @@
 // Clip --------------------------------------------------------------------
 
-ACTOR Clip : Ammo 2007
+ACTOR Clip : Ammo
 {
-	Game Doom
-	SpawnID 11
 	Inventory.PickupMessage "$GOTCLIP"
 	Inventory.Amount 10
 	Inventory.MaxAmount 200
@@ -20,10 +18,8 @@ ACTOR Clip : Ammo 2007
 
 // Clip box ----------------------------------------------------------------
 
-ACTOR ClipBox : Clip 2048
+ACTOR ClipBox : Clip
 {
-	Game Doom
-	SpawnID 139
 	Inventory.PickupMessage "$GOTCLIPBOX"
 	Inventory.Amount 50
 	States
@@ -36,10 +32,8 @@ ACTOR ClipBox : Clip 2048
 
 // Rocket ------------------------------------------------------------------
 
-ACTOR RocketAmmo : Ammo 2010
+ACTOR RocketAmmo : Ammo
 {
-	Game Doom
-	SpawnID 140
 	Inventory.PickupMessage "$GOTROCKET"
 	Inventory.Amount 1
 	Inventory.MaxAmount 50
@@ -56,10 +50,8 @@ ACTOR RocketAmmo : Ammo 2010
 
 // Rocket box --------------------------------------------------------------
 
-ACTOR RocketBox : RocketAmmo 2046
+ACTOR RocketBox : RocketAmmo
 {
-	Game Doom
-	SpawnID 141
 	Inventory.PickupMessage "$GOTROCKBOX"
 	Inventory.Amount 5
 	States
@@ -72,10 +64,8 @@ ACTOR RocketBox : RocketAmmo 2046
 
 // Cell --------------------------------------------------------------------
 
-ACTOR Cell : Ammo 2047
+ACTOR Cell : Ammo
 {
-	Game Doom
-	SpawnID 75
 	Inventory.PickupMessage "$GOTCELL"
 	Inventory.Amount 20
 	Inventory.MaxAmount 300
@@ -92,10 +82,8 @@ ACTOR Cell : Ammo 2047
 
 // Cell pack ---------------------------------------------------------------
 
-ACTOR CellPack : Cell 17
+ACTOR CellPack : Cell
 {
-	Game Doom
-	SpawnID 142
 	Inventory.PickupMessage "$GOTCELLBOX"
 	Inventory.Amount 100
 	States
@@ -108,10 +96,8 @@ ACTOR CellPack : Cell 17
 
 // Shells ------------------------------------------------------------------
 
-ACTOR Shell : Ammo 2008
+ACTOR Shell : Ammo
 {
-	Game Doom
-	SpawnID 12
 	Inventory.PickupMessage "$GOTSHELLS"
 	Inventory.Amount 4
 	Inventory.MaxAmount 50
@@ -128,10 +114,8 @@ ACTOR Shell : Ammo 2008
 
 // Shell box ---------------------------------------------------------------
 
-ACTOR ShellBox : Shell 2049
+ACTOR ShellBox : Shell
 {
-	Game Doom
-	SpawnID 143
 	Inventory.PickupMessage "$GOTSHELLBOX"
 	Inventory.Amount 20
 	States
@@ -144,10 +128,8 @@ ACTOR ShellBox : Shell 2049
 
 // Backpack ---------------------------------------------------------------
 
-ACTOR Backpack : BackpackItem 8
+ACTOR Backpack : BackpackItem
 {
-	Game Doom
-	SpawnID 144
 	Height 26
 	Inventory.PickupMessage "$GOTBACKPACK"
 	States

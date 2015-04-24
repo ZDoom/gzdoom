@@ -384,7 +384,7 @@ void S_Start ()
 	{
 		// kill all playing sounds at start of level (trust me - a good idea)
 		S_StopAllChannels();
-		
+
 		// Check for local sound definitions. Only reload if they differ
 		// from the previous ones.
 		FString LocalSndInfo;
@@ -487,6 +487,11 @@ void S_PrecacheLevel ()
 		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
 		{
 			level.info->PrecacheSounds[i].MarkUsed();
+		}
+		// Don't unload sounds that are playing right now.
+		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+		{
+			chan->SoundID.MarkUsed();
 		}
 
 		for (i = 1; i < S_sfx.Size(); ++i)
@@ -2067,12 +2072,6 @@ void S_ChannelEnded(FISoundChannel *ichan)
 				evicted = (pos < len);
 			}
 		}
-		/*
-		else
-		{
-			evicted = false;
-		}
-		*/
 		if (!evicted)
 		{
 			S_ReturnChannel(schan);

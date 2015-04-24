@@ -61,6 +61,7 @@ extern HWND Window;
 #include "doomstat.h"
 #include "i_system.h"
 #include "gi.h"
+#include "d_main.h"
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)
@@ -75,7 +76,7 @@ EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
 
-FGameConfigFile::FGameConfigFile ()
+FGameConfigFile::FGameConfigFile (FIWadManager *iwad_man)
 {
 #ifdef __APPLE__
 	FString user_docs, user_app_support, local_app_support;
@@ -83,16 +84,10 @@ FGameConfigFile::FGameConfigFile ()
 	FString pathname;
 
 	OkayToWrite = false;	// Do not allow saving of the config before DoGameSetup()
-	bMigrating = false;
 	bModSetup = false;
 	pathname = GetConfigPath (true);
 	ChangePathName (pathname);
-	LoadConfigFile (MigrateStub, NULL);
-
-	if (!HaveSections ())
-	{ // Config file not found; try the old one
-		MigrateOldConfig ();
-	}
+	LoadConfigFile ();
 
 	// If zdoom.ini was read from the program directory, switch
 	// to the user directory now. If it was read from the user
@@ -169,28 +164,49 @@ FGameConfigFile::FGameConfigFile ()
 	// Create auto-load sections, so users know what's available.
 	// Note that this totem pole is the reverse of the order that
 	// they will appear in the file.
-	CreateSectionAtStart("Harmony.Autoload");
-	CreateSectionAtStart("UrbanBrawl.Autoload");
-	CreateSectionAtStart("Chex3.Autoload");
-	CreateSectionAtStart("Chex1.Autoload");
-	CreateSectionAtStart("Chex.Autoload");
-	CreateSectionAtStart("Strife.Autoload");
-	CreateSectionAtStart("HexenDK.Autoload");
-	CreateSectionAtStart("Hexen.Autoload");
-	CreateSectionAtStart("HereticSR.Autoload");
-	CreateSectionAtStart("Heretic.Autoload");
-	CreateSectionAtStart("FreeDM.Autoload");
-	CreateSectionAtStart("Freedoom2.Autoload");
-	CreateSectionAtStart("Freedoom1.Autoload");
-	CreateSectionAtStart("Freedoom.Autoload");
-	CreateSectionAtStart("Plutonia.Autoload");
-	CreateSectionAtStart("TNT.Autoload");
-	CreateSectionAtStart("Doom2BFG.Autoload");
-	CreateSectionAtStart("Doom2.Autoload");
-	CreateSectionAtStart("DoomBFG.Autoload");
-	CreateSectionAtStart("DoomU.Autoload");
-	CreateSectionAtStart("Doom1.Autoload");
-	CreateSectionAtStart("Doom.Autoload");
+
+	double last = 0;
+	if (SetSection ("LastRun"))
+	{
+		const char *lastver = GetValueForKey ("Version");
+		if (lastver != NULL) last = atof(lastver);
+	}
+
+	if (last < 211)
+	{
+		RenameSection("Chex3.Autoload", "chex.chex3.Autoload");
+		RenameSection("Chex1.Autoload", "chex.chex1.Autoload");
+		RenameSection("HexenDK.Autoload", "hexen.deathkings.Autoload");
+		RenameSection("HereticSR.Autoload", "heretic.shadow.Autoload");
+		RenameSection("FreeDM.Autoload", "doom.freedoom.freedm.Autoload");
+		RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
+		RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
+		RenameSection("Freedoom.Autoload", "doom.freedoom.Autoload");
+		RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
+		RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
+		RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");
+		RenameSection("TNT.Autoload", "doom.doom2.tnt.Autoload");
+		RenameSection("Plutonia.Autoload", "doom.doom2.plutonia.Autoload");
+		RenameSection("Doom2BFG.Autoload", "doom.doom2.bfg.Autoload");
+		RenameSection("Doom2.Autoload", "doom.doom2.commercial.Autoload");
+	}
+	const FString *pAuto;
+	for (int num = 0; (pAuto = iwad_man->GetAutoname(num)) != NULL; num++)
+	{
+		if (!(iwad_man->GetIWadFlags(num) & GI_SHAREWARE))	// we do not want autoload sections for shareware IWADs (which may have an autoname for resource filtering)
+		{
+			FString workname = *pAuto;
+
+			while (workname.IsNotEmpty())
+			{
+				FString section = workname + ".Autoload";
+				CreateSectionAtStart(section.GetChars());
+				long dotpos = workname.LastIndexOf('.');
+				if (dotpos < 0) break;
+				workname.Truncate(dotpos);
+			}
+		}
+	}
 	CreateSectionAtStart("Global.Autoload");
 
 	// The same goes for auto-exec files.
@@ -223,9 +239,10 @@ FGameConfigFile::FGameConfigFile ()
 		"# Wad files to automatically load depending on the game and IWAD you are\n"
 		"# playing.  You may have have files that are loaded for all similar IWADs\n"
 		"# (the game) and files that are only loaded for particular IWADs. For example,\n"
-		"# any files listed under Doom.Autoload will be loaded for any version of Doom,\n"
-		"# but files listed under Doom2.Autoload will only load when you are\n"
-		"# playing Doom 2.\n\n");
+		"# any files listed under 'doom.Autoload' will be loaded for any version of Doom,\n"
+		"# but files listed under 'doom.doom2.Autoload' will only load when you are\n"
+		"# playing a Doom 2 based game (doom2.wad, tnt.wad or plutonia.wad), and files listed under\n"
+		"# 'doom.doom2.commercial.Autoload' only when playing doom2.wad.\n\n");
 }
 
 FGameConfigFile::~FGameConfigFile ()
@@ -235,18 +252,6 @@ FGameConfigFile::~FGameConfigFile ()
 void FGameConfigFile::WriteCommentHeader (FILE *file) const
 {
 	fprintf (file, "# This file was generated by " GAMENAME " %s on %s\n", GetVersionString(), myasctime());
-}
-
-void FGameConfigFile::MigrateStub (const char *pathname, FConfigFile *config, void *userdata)
-{
-	static_cast<FGameConfigFile *>(config)->bMigrating = true;
-}
-
-void FGameConfigFile::MigrateOldConfig ()
-{
-	// Set default key bindings. These will be overridden
-	// by the bindings in the config file if it exists.
-	C_SetDefaultBindings ();
 }
 
 void FGameConfigFile::DoGlobalSetup ()
@@ -361,10 +366,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	const char *key;
 	const char *value;
 
-	if (bMigrating)
-	{
-		MigrateOldConfig ();
-	}
 	sublen = countof(section) - 1 - mysnprintf (section, countof(section), "%s.", gamename);
 	subsection = section + countof(section) - sublen - 1;
 	section[countof(section) - 1] = '\0';
@@ -400,41 +401,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		ReadCVars (0);
 	}
 
-	if (!bMigrating)
-	{
-		C_SetDefaultBindings ();
-	}
-
-	strncpy (subsection, "Bindings", sublen);
-	if (SetSection (section))
-	{
-		Bindings.UnbindAll();
-		while (NextInSection (key, value))
-		{
-			Bindings.DoBind (key, value);
-		}
-	}
-
-	strncpy (subsection, "DoubleBindings", sublen);
-	if (SetSection (section))
-	{
-		DoubleBindings.UnbindAll();
-		while (NextInSection (key, value))
-		{
-			DoubleBindings.DoBind (key, value);
-		}
-	}
-
-	strncpy (subsection, "AutomapBindings", sublen);
-	if (SetSection (section))
-	{
-		AutomapBindings.UnbindAll();
-		while (NextInSection (key, value))
-		{
-			AutomapBindings.DoBind (key, value);
-		}
-	}
-
 	strncpy (subsection, "ConsoleAliases", sublen);
 	if (SetSection (section))
 	{
@@ -453,6 +419,39 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 	OkayToWrite = true;
+}
+
+// Moved from DoGameSetup so that it can happen after wads are loaded
+void FGameConfigFile::DoKeySetup(const char *gamename)
+{
+	static const struct { const char *label; FKeyBindings *bindings; } binders[] =
+	{
+		{ "Bindings", &Bindings },
+		{ "DoubleBindings", &DoubleBindings },
+		{ "AutomapBindings", &AutomapBindings },
+		{ NULL, NULL }
+	};
+	const char *key, *value;
+
+	sublen = countof(section) - 1 - mysnprintf(section, countof(section), "%s.", gamename);
+	subsection = section + countof(section) - sublen - 1;
+	section[countof(section) - 1] = '\0';
+
+	C_SetDefaultBindings ();
+
+	for (int i = 0; binders[i].label != NULL; ++i)
+	{
+		strncpy(subsection, binders[i].label, sublen);
+		if (SetSection(section))
+		{
+			FKeyBindings *bindings = binders[i].bindings;
+			bindings->UnbindAll();
+			while (NextInSection(key, value))
+			{
+				bindings->DoBind(key, value);
+			}
+		}
+	}
 }
 
 // Like DoGameSetup(), but for mod-specific cvars.
@@ -628,41 +627,20 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 
 	mysnprintf (section, countof(section), "%s.AutoExec", game);
 
-	if (bMigrating)
+	// If <game>.AutoExec section does not exist, create it
+	// with a default autoexec.cfg file present.
+	CreateStandardAutoExec(section, false);
+	// Run any files listed in the <game>.AutoExec section
+	if (!SectionIsEmpty())
 	{
-		FBaseCVar *autoexec = FindCVar ("autoexec", NULL);
-
-		if (autoexec != NULL)
+		while (NextInSection (key, value))
 		{
-			UCVarValue val;
-			char *path;
-
-			val = autoexec->GetGenericRep (CVAR_String);
-			path = copystring (val.String);
-			delete autoexec;
-			SetSection (section, true);
-			SetValueForKey ("Path", path);
-			list->AppendArg (path);
-			delete[] path;
-		}
-	}
-	else
-	{
-		// If <game>.AutoExec section does not exist, create it
-		// with a default autoexec.cfg file present.
-		CreateStandardAutoExec(section, false);
-		// Run any files listed in the <game>.AutoExec section
-		if (!SectionIsEmpty())
-		{
-			while (NextInSection (key, value))
+			if (stricmp (key, "Path") == 0 && *value != '\0')
 			{
-				if (stricmp (key, "Path") == 0 && *value != '\0')
+				FString expanded_path = ExpandEnvVars(value);
+				if (FileExists(expanded_path))
 				{
-					FString expanded_path = ExpandEnvVars(value);
-					if (FileExists(expanded_path))
-					{
-						list->AppendArg (ExpandEnvVars(value));
-					}
+					list->AppendArg (ExpandEnvVars(value));
 				}
 			}
 		}
@@ -672,13 +650,6 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 void FGameConfigFile::SetRavenDefaults (bool isHexen)
 {
 	UCVarValue val;
-
-	if (bMigrating)
-	{
-		con_centernotify.ResetToDefault ();
-		msg0color.ResetToDefault ();
-		color.ResetToDefault ();
-	}
 
 	val.Bool = false;
 	wi_percents.SetGenericRepDefault (val, CVAR_Bool);

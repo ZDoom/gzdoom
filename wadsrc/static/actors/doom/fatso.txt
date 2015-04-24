@@ -3,10 +3,8 @@
 // Mancubus
 //
 //===========================================================================
-ACTOR Fatso 67
+ACTOR Fatso
 {
-	Game Doom
-	SpawnID 112
 	Health 600
 	Radius 48
 	Height 64
@@ -65,8 +63,6 @@ ACTOR Fatso 67
 //===========================================================================
 ACTOR FatShot
 {
-	Game Doom
-	SpawnID 153
 	Radius 6
 	Height 8
 	Speed 20

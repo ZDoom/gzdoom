@@ -167,9 +167,6 @@ static const FEnumList OutputNames[] =
 	{ "Windows Multimedia",		FMOD_OUTPUTTYPE_WINMM },
 	{ "WinMM",					FMOD_OUTPUTTYPE_WINMM },
 	{ "WaveOut",				FMOD_OUTPUTTYPE_WINMM },
-#if FMOD_VERSION < 0x43400
-	{ "OpenAL",					FMOD_OUTPUTTYPE_OPENAL },
-#endif
 	{ "WASAPI",					FMOD_OUTPUTTYPE_WASAPI },
 	{ "ASIO",					FMOD_OUTPUTTYPE_ASIO },
 
@@ -184,9 +181,6 @@ static const FEnumList OutputNames[] =
 	{ "SDL",					666 },
 
 	// Mac
-#if FMOD_VERSION < 0x43000
-	{ "Sound Manager",			FMOD_OUTPUTTYPE_SOUNDMANAGER },
-#endif
 	{ "Core Audio",				FMOD_OUTPUTTYPE_COREAUDIO },
 
 	{ NULL, 0 }
@@ -905,6 +899,15 @@ bool FMODSoundRenderer::Init()
 	// Set software format
 	eval = Enum_NumForName(SoundFormatNames, snd_output_format);
 	format = eval >= 0 ? FMOD_SOUND_FORMAT(eval) : FMOD_SOUND_FORMAT_PCM16;
+	if (format == FMOD_SOUND_FORMAT_PCM8)
+	{
+		// PCM-8 sounds like garbage with anything but DirectSound.
+		FMOD_OUTPUTTYPE output;
+		if (FMOD_OK != Sys->getOutput(&output) || output != FMOD_OUTPUTTYPE_DSOUND)
+		{
+			format = FMOD_SOUND_FORMAT_PCM16;
+		}
+	}
 	eval = Enum_NumForName(ResamplerNames, snd_resampler);
 	resampler = eval >= 0 ? FMOD_DSP_RESAMPLER(eval) : FMOD_DSP_RESAMPLER_LINEAR;
 	// These represented the frequency limits for hardware channels, which we never used anyway.
@@ -2145,7 +2148,7 @@ FISoundChannel *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, FISou
 
 //==========================================================================
 //
-// FMODSoundRenderer :: StopSound
+// FMODSoundRenderer :: StopChannel
 //
 //==========================================================================
 
@@ -2153,7 +2156,10 @@ void FMODSoundRenderer::StopChannel(FISoundChannel *chan)
 {
 	if (chan != NULL && chan->SysChannel != NULL)
 	{
-		((FMOD::Channel *)chan->SysChannel)->stop();
+		if (((FMOD::Channel *)chan->SysChannel)->stop() == FMOD_ERR_INVALID_HANDLE)
+		{ // The channel handle was invalid; pretend it ended.
+			S_ChannelEnded(chan);
+		}
 	}
 }
 

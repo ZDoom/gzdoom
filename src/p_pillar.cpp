@@ -220,20 +220,11 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 	bool rtn = false;
 
 	// check if a manual trigger; if so do just the sector on the backside
-	if (tag == 0)
-	{
-		if (!line || !(sec = line->backsector))
-			return rtn;
-		secnum = (int)(sec-sectors);
-		goto manual_pillar;
-	}
-
-	secnum = -1;
-	while (tag && (secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator itr(tag, line);
+	while ((secnum = itr.Next()) >= 0)
 	{
 		sec = &sectors[secnum];
 
-manual_pillar:
 		if (sec->PlaneMoving(sector_t::floor) || sec->PlaneMoving(sector_t::ceiling))
 			continue;
 

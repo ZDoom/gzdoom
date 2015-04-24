@@ -8,10 +8,8 @@ Actor DoomKey : Key
 
 // Blue key card ------------------------------------------------------------
 
-Actor BlueCard : DoomKey 5
+Actor BlueCard : DoomKey
 {
-	Game Doom
-	SpawnID 85
 	Inventory.Pickupmessage "$GOTBLUECARD"
 	Inventory.Icon "STKEYS0"
 	States
@@ -25,10 +23,8 @@ Actor BlueCard : DoomKey 5
 
 // Yellow key card ----------------------------------------------------------
 
-Actor YellowCard : DoomKey 6
+Actor YellowCard : DoomKey
 {
-	Game Doom
-	SpawnID 87
 	Inventory.Pickupmessage "$GOTYELWCARD"
 	Inventory.Icon "STKEYS1"
 	States
@@ -42,10 +38,8 @@ Actor YellowCard : DoomKey 6
 
 // Red key card -------------------------------------------------------------
 
-Actor RedCard : DoomKey 13
+Actor RedCard : DoomKey
 {
-	Game Doom
-	SpawnID 86
 	Inventory.Pickupmessage "$GOTREDCARD"
 	Inventory.Icon "STKEYS2"
 	States
@@ -59,10 +53,8 @@ Actor RedCard : DoomKey 13
 
 // Blue skull key -----------------------------------------------------------
 
-Actor BlueSkull : DoomKey 40
+Actor BlueSkull : DoomKey
 {
-	Game Doom
-	SpawnID 90
 	Inventory.Pickupmessage "$GOTBLUESKUL"
 	Inventory.Icon "STKEYS3"
 	States
@@ -76,10 +68,8 @@ Actor BlueSkull : DoomKey 40
 
 // Yellow skull key ---------------------------------------------------------
 
-Actor YellowSkull : DoomKey 39
+Actor YellowSkull : DoomKey
 {
-	Game Doom
-	SpawnID 88
 	Inventory.Pickupmessage "$GOTYELWSKUL"
 	Inventory.Icon "STKEYS4"
 	States
@@ -93,10 +83,8 @@ Actor YellowSkull : DoomKey 39
 
 // Red skull key ------------------------------------------------------------
 
-Actor RedSkull : DoomKey 38
+Actor RedSkull : DoomKey
 {
-	Game Doom
-	SpawnID 89
 	Inventory.Pickupmessage "$GOTREDSKUL"
 	Inventory.Icon "STKEYS5"
 	States

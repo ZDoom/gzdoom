@@ -1,9 +1,8 @@
 
 // Fighter Boss (Zedek) -----------------------------------------------------
 
-ACTOR FighterBoss 10100
+ACTOR FighterBoss
 {
-	Game Hexen
 	health 800
 	PainChance 50
 	Speed 25

@@ -2,8 +2,6 @@
 
 ACTOR FireBall
 {
-	Game Hexen
-	SpawnID 10
 	Speed 2
 	Radius 8
 	Height 8
@@ -28,8 +26,6 @@ ACTOR FireBall
 
 ACTOR Arrow
 {
-	Game Hexen
-	SpawnID 50
 	Speed 6
 	Radius 8
 	Height 4
@@ -51,8 +47,6 @@ ACTOR Arrow
 
 ACTOR Dart
 {
-	Game Hexen
-	SpawnID 51
 	Speed 6
 	Radius 8
 	Height 4
@@ -74,8 +68,6 @@ ACTOR Dart
 
 ACTOR PoisonDart : Dart
 {
-	Game Hexen
-	SpawnID 52
 	PoisonDamage 20
 }
 
@@ -83,8 +75,6 @@ ACTOR PoisonDart : Dart
 
 ACTOR RipperBall
 {
-	Game Hexen
-	SpawnID 53
 	Speed 6
 	Radius 8
 	Damage 2
@@ -114,8 +104,6 @@ ACTOR RipperBall
 
 ACTOR ProjectileBlade
 {
-	Game Hexen
-	SpawnID 64
 	Speed 6
 	Radius 6
 	Height 6

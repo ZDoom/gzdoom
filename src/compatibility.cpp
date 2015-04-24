@@ -49,6 +49,7 @@
 #include "gi.h"
 #include "g_level.h"
 #include "p_lnspec.h"
+#include "p_tags.h"
 #include "r_state.h"
 #include "w_wad.h"
 
@@ -551,7 +552,8 @@ void SetCompatibilityParams()
 				{
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
-						sectors[CompatParams[i + 1]].tag = CompatParams[i + 2];
+						// this assumes that the sector does not have any tags yet!
+						tagManager.AddSectorTag(CompatParams[i + 1],  CompatParams[i + 2]);
 					}
 					i += 3;
 					break;
@@ -595,12 +597,13 @@ CCMD (mapchecksum)
 		else
 		{
 			map->GetChecksum(cksum);
+			const char *wadname = Wads.GetWadName(Wads.GetLumpFile(map->lumpnum));
 			delete map;
 			for (size_t j = 0; j < sizeof(cksum); ++j)
 			{
 				Printf("%02X", cksum[j]);
 			}
-			Printf(" // %s\n", argv[i]);
+			Printf(" // %s %s\n", wadname, argv[i]);
 		}
 	}
 }

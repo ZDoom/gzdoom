@@ -450,11 +450,10 @@ CCMD (exec)
 
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		switch (C_ExecFile (argv[i], gamestate == GS_STARTUP))
+		if (!C_ExecFile(argv[i]))
 		{
-		case 1: Printf ("Could not open \"%s\"\n", argv[1]); break;
-		case 2: Printf ("Error parsing \"%s\"\n", argv[1]); break;
-		default: break;
+			Printf ("Could not exec \"%s\"\n", argv[i]);
+			break;
 		}
 	}
 }
@@ -640,6 +639,23 @@ CCMD (error_fatal)
 		Printf ("Usage: error_fatal <error text>\n");
 	}
 }
+
+//==========================================================================
+//
+// CCMD crashout
+//
+// Debugging routine for testing the crash logger.
+// Useless in a win32 debug build, because that doesn't enable the crash logger.
+//
+//==========================================================================
+
+#if !defined(_WIN32) || !defined(_DEBUG)
+CCMD (crashout)
+{
+	*(volatile int *)0 = 0;
+}
+#endif
+
 
 CCMD (dir)
 {
@@ -889,21 +905,42 @@ CCMD(info)
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
 }
 
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-CCMD(monster)
-{
-	AActor * mo;
+typedef bool (*ActorTypeChecker) (AActor *);
 
-	if (CheckCheatmode ()) return;
+static bool IsActorAMonster(AActor *mo)
+{
+	return mo->flags3&MF3_ISMONSTER && !(mo->flags&MF_CORPSE) && !(mo->flags&MF_FRIENDLY);
+}
+
+static bool IsActorAnItem(AActor *mo)
+{
+	return mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL;
+}
+
+static bool IsActorACountItem(AActor *mo)
+{
+	return mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL && mo->flags&MF_COUNTITEM;
+}
+
+static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const char *FilterName)
+{
+	AActor *mo;
+	const PClass *FilterClass = NULL;
+
+	if (FilterName != NULL)
+	{
+		FilterClass = PClass::FindClass(FilterName);
+		if (FilterClass == NULL || FilterClass->ActorInfo == NULL)
+		{
+			Printf("%s is not an actor class.\n", FilterName);
+			return;
+		}
+	}
 	TThinkerIterator<AActor> it;
 
 	while ( (mo = it.Next()) )
 	{
-		if (mo->flags3&MF3_ISMONSTER && !(mo->flags&MF_CORPSE) && !(mo->flags&MF_FRIENDLY))
+		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
 			Printf ("%s at (%d,%d,%d)\n",
 				mo->GetClass()->TypeName.GetChars(),
@@ -917,22 +954,35 @@ CCMD(monster)
 //
 //
 //-----------------------------------------------------------------------------
+CCMD(monster)
+{
+	if (CheckCheatmode ()) return;
+
+	PrintFilteredActorList(IsActorAMonster, argv.argc() > 1 ? argv[1] : NULL);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 CCMD(items)
 {
-	AActor * mo;
-
 	if (CheckCheatmode ()) return;
-	TThinkerIterator<AActor> it;
 
-	while ( (mo = it.Next()) )
-	{
-		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL)
-		{
-			Printf ("%s at (%d,%d,%d)\n",
-				mo->GetClass()->TypeName.GetChars(),
-				mo->x >> FRACBITS, mo->y >> FRACBITS, mo->z >> FRACBITS);
-		}
-	}
+	PrintFilteredActorList(IsActorAnItem, argv.argc() > 1 ? argv[1] : NULL);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(countitems)
+{
+	if (CheckCheatmode ()) return;
+
+	PrintFilteredActorList(IsActorACountItem, argv.argc() > 1 ? argv[1] : NULL);
 }
 
 //-----------------------------------------------------------------------------

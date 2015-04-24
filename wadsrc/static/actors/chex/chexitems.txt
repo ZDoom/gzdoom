@@ -3,67 +3,57 @@
 
 // Health ---------------------------------------------------------------------
 
-actor GlassOfWater : HealthBonus 2014
+actor GlassOfWater : HealthBonus
 {
-	game Chex
 	inventory.pickupmessage "$GOTWATER"
 }
 
-actor BowlOfFruit : Stimpack 2011
+actor BowlOfFruit : Stimpack
 {
-	game Chex
 	inventory.pickupmessage "$GOTFRUIT"
 }
 
-actor BowlOfVegetables : Medikit 2012
+actor BowlOfVegetables : Medikit
 {
-	game Chex
 	inventory.pickupmessage "$GOTVEGETABLES"
 	health.lowmessage 25, "$GOTVEGETABLESNEED"
 }
 
-actor SuperchargeBreakfast : Soulsphere 2013
+actor SuperchargeBreakfast : Soulsphere
 {
-	game Chex
 	inventory.pickupmessage "$GOTBREAKFAST"
 }
 
 // Armor ----------------------------------------------------------------------
 
-actor SlimeRepellent : ArmorBonus 2015
+actor SlimeRepellent : ArmorBonus
 {
-	game Chex
 	inventory.pickupmessage "$GOTREPELLENT"
 }
 
-actor ChexArmor : GreenArmor 2018
+actor ChexArmor : GreenArmor
 {
-	game Chex
 	inventory.pickupmessage "$GOTCHEXARMOR"
 }
 
-actor SuperChexArmor : BlueArmor 2019
+actor SuperChexArmor : BlueArmor
 {
-	game Chex
 	inventory.pickupmessage "$GOTSUPERCHEXARMOR"
 }
 
 // Powerups ===================================================================
 
-actor ComputerAreaMap : Allmap 2026
+actor ComputerAreaMap : Allmap
 {
-	game Chex
 	inventory.pickupmessage "$GOTCHEXMAP"
 }
 
-actor SlimeProofSuit : RadSuit 2025
+actor SlimeProofSuit : RadSuit
 {
-	game Chex
 	inventory.pickupmessage "$GOTSLIMESUIT"
 }
 
-actor Zorchpack : Backpack 8
+actor Zorchpack : Backpack
 {
-	game Chex
 	inventory.pickupmessage "$GOTZORCHPACK"
 }

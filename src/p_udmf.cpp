@@ -46,6 +46,7 @@
 #include "r_state.h"
 #include "r_data/colormaps.h"
 #include "w_wad.h"
+#include "p_tags.h"
 
 //===========================================================================
 //
@@ -500,7 +501,8 @@ public:
 				break;
 
 			case NAME_Type:
-				th->type = (short)CheckInt(key);
+				th->EdNum = (short)CheckInt(key);
+				th->info = DoomEdMap.CheckKey(th->EdNum);
 				break;
 
 			case NAME_Conversation:
@@ -721,6 +723,7 @@ public:
 				break;
 
 			default:
+				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))
 				{ // Custom user key - Sets an actor's user variable directly
 					FMapThingUserData ud;
@@ -776,10 +779,11 @@ public:
 		bool strifetrans = false;
 		bool strifetrans2 = false;
 		FString arg0str, arg1str;
+		int lineid;	// forZDoomTranslated namespace
+		FString tagstring;
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
-		ld->id = -1;
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
@@ -812,7 +816,8 @@ public:
 				continue;
 
 			case NAME_Id:
-				ld->id = CheckInt(key);
+				lineid = CheckInt(key);
+				tagManager.AddLineID(index, lineid);
 				continue;
 
 			case NAME_Sidefront:
@@ -1035,13 +1040,32 @@ public:
 				Flag(ld->flags, ML_3DMIDTEX_IMPASS, key);
 				continue;
 
+			case NAME_MoreIds:
+				// delay parsing of the tag string until parsing of the sector is complete
+				// This ensures that the ID is always the first tag in the list.
+				tagstring = CheckString(key);
+				break;
+
+
 			default:
 				break;
 			}
 
-			if (!strnicmp("user_", key.GetChars(), 5))
+
+			if ((namespace_bits & (Zd | Zdt)) && !strnicmp("user_", key.GetChars(), 5))
 			{
 				AddUserKey(key, UDMF_Line, index);
+			}
+		}
+
+		if (tagstring.IsNotEmpty())
+		{
+			FScanner sc;
+			sc.OpenString("tagstring", tagstring);
+			// scan the string as long as valid numbers can be found
+			while (sc.CheckNumber())
+			{
+				if (sc.Number != 0)	tagManager.AddLineID(index, sc.Number);
 			}
 		}
 
@@ -1052,7 +1076,7 @@ public:
 			maplinedef_t mld;
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
-			mld.tag = ld->id;
+			mld.tag = lineid;
 			P_TranslateLineDef(ld, &mld);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}
@@ -1225,7 +1249,7 @@ public:
 				break;
 
 			}
-			if (!strnicmp("user_", key.GetChars(), 5))
+			if ((namespace_bits & (Zd | Zdt)) && !strnicmp("user_", key.GetChars(), 5))
 			{
 				AddUserKey(key, UDMF_Side, index);
 			}
@@ -1252,6 +1276,7 @@ public:
 		int desaturation = -1;
 		int fplaneflags = 0, cplaneflags = 0;
 		double fp[4] = { 0 }, cp[4] = { 0 };
+		FString tagstring;
 
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
@@ -1315,7 +1340,7 @@ public:
 				continue;
 
 			case NAME_Id:
-				sec->tag = (short)CheckInt(key);
+				tagManager.AddSectorTag(index, CheckInt(key));
 				continue;
 
 			default:
@@ -1493,13 +1518,29 @@ public:
 					cp[3] = CheckFloat(key);
 					break;
 
+				case NAME_MoreIds:
+					// delay parsing of the tag string until parsing of the sector is complete
+					// This ensures that the ID is always the first tag in the list.
+					tagstring = CheckString(key);
+					break;
+
 				default:
 					break;
 			}
-				
-			if (!strnicmp("user_", key.GetChars(), 5))
+			if ((namespace_bits & (Zd | Zdt)) && !strnicmp("user_", key.GetChars(), 5))
 			{
 				AddUserKey(key, UDMF_Sector, index);
+			}
+		}
+
+		if (tagstring.IsNotEmpty())
+		{
+			FScanner sc;
+			sc.OpenString("tagstring", tagstring);
+			// scan the string as long as valid numbers can be found
+			while (sc.CheckNumber())
+			{
+				if (sc.Number != 0)	tagManager.AddSectorTag(index, sc.Number);
 			}
 		}
 

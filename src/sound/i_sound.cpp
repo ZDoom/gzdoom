@@ -48,7 +48,6 @@ extern HINSTANCE g_hInst;
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <memory>
 
 #include "doomtype.h"
 #include <math.h>
@@ -173,8 +172,9 @@ public:
 	{
 		return NULL;
 	}
-	SoundStream *OpenStream (std::auto_ptr<FileReader> reader, int flags)
+	SoundStream *OpenStream (FileReader *reader, int flags)
 	{
+		delete reader;
 		return NULL;
 	}
 
@@ -372,17 +372,19 @@ short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes,
     SampleType type;
     int srate;
 
-    std::auto_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
-    if(!decoder.get()) return samples;
+    SoundDecoder *decoder = CreateDecoder(&reader);
+    if(!decoder) return samples;
 
     decoder->getInfo(&srate, &chans, &type);
     if(chans != ChannelConfig_Mono || type != SampleType_Int16)
     {
         DPrintf("Sample is not 16-bit mono\n");
+        delete decoder;
         return samples;
     }
 
     decoder->read((char*)samples, outlen);
+    delete decoder;
     return samples;
 }
 

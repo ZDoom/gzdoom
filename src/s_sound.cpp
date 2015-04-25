@@ -26,7 +26,6 @@
 #include <io.h>
 #endif
 #include <fcntl.h>
-#include <memory>
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -2434,7 +2433,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			musicname += 7;
 		}
 
-        std::auto_ptr<FileReader> reader;
+		FileReader *reader = NULL;
 		if (!FileExists (musicname))
 		{
 			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)
@@ -2472,7 +2471,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 					musiccache.Resize(length);
 					Wads.ReadLump(lumpnum, &musiccache[0]);
 
-                    reader.reset(new MemoryReader((const char*)&musiccache[0], musiccache.Size()));
+                    reader = new MemoryReader((const char*)&musiccache[0], musiccache.Size());
 				}
 				else
 				{
@@ -2480,14 +2479,14 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 					{
 						return false;
 					}
-					reader.reset(Wads.ReopenLumpNum(lumpnum));
+					reader = Wads.ReopenLumpNum(lumpnum);
 				}
 			}
 		}
 		else
 		{
 			// Load an external file.
-			reader.reset(new FileReader(musicname));
+			reader = new FileReader(musicname);
 		}
 
 		// shutdown old music
@@ -2500,6 +2499,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			mus_playing.name = musicname;
 			mus_playing.baseorder = order;
 			LastSong = musicname;
+			delete reader;
 			return true;
 		}
 
@@ -2507,6 +2507,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		if (handle != NULL)
 		{
 			mus_playing.handle = handle;
+			delete reader;
 		}
 		else
 		{

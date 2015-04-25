@@ -90,11 +90,6 @@ void I_BuildALDeviceList(FOptionValues *opt)
 
 #ifndef NO_OPENAL
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <vector>
-
 
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
@@ -173,8 +168,8 @@ class OpenALSoundStream : public SoundStream
     ALfloat Volume;
 
 
-    std::auto_ptr<FileReader> Reader;
-    std::auto_ptr<SoundDecoder> Decoder;
+    FileReader *Reader;
+    SoundDecoder *Decoder;
     static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
     {
         OpenALSoundStream *self = static_cast<OpenALSoundStream*>(_sstream);
@@ -230,7 +225,7 @@ class OpenALSoundStream : public SoundStream
 
 public:
     OpenALSoundStream(OpenALSoundRenderer *renderer)
-      : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f)
+      : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f), Reader(NULL), Decoder(NULL)
     {
         Renderer->Streams.Push(this);
         memset(Buffers, 0, sizeof(Buffers));
@@ -256,6 +251,9 @@ public:
 
         Renderer->Streams.Delete(Renderer->Streams.Find(this));
         Renderer = NULL;
+
+        delete Decoder;
+        delete Reader;
     }
 
 
@@ -516,14 +514,19 @@ public:
         return true;
     }
 
-    bool Init(std::auto_ptr<FileReader> reader, bool loop)
+    bool Init(FileReader *reader, bool loop)
     {
         if(!SetupSource())
+        {
+            delete reader;
             return false;
+        }
 
+        if(Decoder) delete Decoder;
+        if(Reader) delete Reader;
         Reader = reader;
-        Decoder.reset(Renderer->CreateDecoder(Reader.get()));
-        if(!Decoder.get()) return false;
+        Decoder = Renderer->CreateDecoder(Reader);
+        if(!Decoder) return false;
 
         Callback = DecoderCallback;
         UserData = NULL;
@@ -652,20 +655,20 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  ALC Version: "TEXTCOLOR_BLUE"%d.%d\n", major, minor);
     DPrintf("  ALC Extensions: "TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
 
-    std::vector<ALCint> attribs;
+    TArray<ALCint> attribs;
     if(*snd_samplerate > 0)
     {
-        attribs.push_back(ALC_FREQUENCY);
-        attribs.push_back(*snd_samplerate);
+        attribs.Push(ALC_FREQUENCY);
+        attribs.Push(*snd_samplerate);
     }
     // Make sure one source is capable of stereo output with the rest doing
     // mono, without running out of voices
-    attribs.push_back(ALC_MONO_SOURCES);
-    attribs.push_back(std::max<ALCint>(*snd_channels, 2) - 1);
-    attribs.push_back(ALC_STEREO_SOURCES);
-    attribs.push_back(1);
+    attribs.Push(ALC_MONO_SOURCES);
+    attribs.Push(MAX<ALCint>(*snd_channels, 2) - 1);
+    attribs.Push(ALC_STEREO_SOURCES);
+    attribs.Push(1);
     // Other attribs..?
-    attribs.push_back(0);
+    attribs.Push(0);
 
     Context = alcCreateContext(Device, &attribs[0]);
     if(!Context || alcMakeContextCurrent(Context) == ALC_FALSE)
@@ -678,7 +681,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
         Device = NULL;
         return;
     }
-    attribs.clear();
+    attribs.Clear();
 
     DPrintf("  Vendor: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
     DPrintf("  Renderer: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
@@ -723,7 +726,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     alcGetIntegerv(Device, ALC_MONO_SOURCES, 1, &numMono);
     alcGetIntegerv(Device, ALC_STEREO_SOURCES, 1, &numStereo);
 
-    Sources.Resize(std::min<int>(std::max<int>(*snd_channels, 2), numMono+numStereo));
+    Sources.Resize(MIN<int>(MAX<int>(*snd_channels, 2), numMono+numStereo));
     for(size_t i = 0;i < Sources.Size();i++)
     {
         alGenSources(1, &Sources[i]);
@@ -1024,8 +1027,8 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
     SampleType type;
     int srate;
 
-    std::auto_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
-    if(!decoder.get()) return retval;
+    SoundDecoder *decoder = CreateDecoder(&reader);
+    if(!decoder) return retval;
 
     decoder->getInfo(&srate, &chans, &type);
     if(chans == ChannelConfig_Mono)
@@ -1043,6 +1046,7 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
     {
         Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
                GetSampleTypeName(type));
+        delete decoder;
         return retval;
     }
 
@@ -1058,10 +1062,12 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
         Printf("Failed to buffer data: %s\n", alGetString(err));
         alDeleteBuffers(1, &buffer);
         getALError();
+        delete decoder;
         return retval;
     }
 
     retval.data = MAKE_PTRID(buffer);
+    delete decoder;
     return retval;
 }
 
@@ -1096,18 +1102,24 @@ void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
 
 SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
 {
-    std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
-    if(!stream->Init(callback, buffbytes, flags, samplerate, userdata))
-        return NULL;
-    return stream.release();
+	OpenALSoundStream *stream = new OpenALSoundStream(this);
+	if (!stream->Init(callback, buffbytes, flags, samplerate, userdata))
+	{
+		delete stream;
+		return NULL;
+	}
+	return stream;
 }
 
-SoundStream *OpenALSoundRenderer::OpenStream(std::auto_ptr<FileReader> reader, int flags)
+SoundStream *OpenALSoundRenderer::OpenStream(FileReader *reader, int flags)
 {
-    std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
-
-	if (!stream->Init(reader, !!(flags&SoundStream::Loop))) return NULL;
-    return stream.release();
+	OpenALSoundStream *stream = new OpenALSoundStream(this);
+	if (!stream->Init(reader, !!(flags&SoundStream::Loop)))
+	{
+		delete stream;
+		return NULL;
+	}
+	return stream;
 }
 
 FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)

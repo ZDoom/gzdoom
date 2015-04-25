@@ -92,7 +92,7 @@ static const BYTE CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (std::auto_ptr<FileReader> reader, EMidiDevice type)
+MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), MusBuffer(0)
 {
 #ifdef _WIN32
@@ -105,7 +105,7 @@ MUSSong2::MUSSong2 (std::auto_ptr<FileReader> reader, EMidiDevice type)
 	BYTE front[32];
 	int start;
 
-	if (reader->Read(front, sizeof(front)) != sizeof(front))
+	if (reader.Read(front, sizeof(front)) != sizeof(front))
 	{
 		return;
 	}
@@ -121,14 +121,14 @@ MUSSong2::MUSSong2 (std::auto_ptr<FileReader> reader, EMidiDevice type)
 	}
 
 	// Read the remainder of the song.
-	int len = int(reader->GetLength() - start);
+	int len = int(reader.GetLength() - start);
 	if (len < (int)sizeof(MusHeader))
 	{ // It's too short.
 		return;
 	}
 	MusHeader = (MUSHeader *)new BYTE[len];
     memcpy(MusHeader, front + start, sizeof(front) - start);
-    if (reader->Read((BYTE *)MusHeader + sizeof(front) - start, len - (sizeof(front) - start)) != (len - (32 - start)))
+    if (reader.Read((BYTE *)MusHeader + sizeof(front) - start, len - (sizeof(front) - start)) != (len - (32 - start)))
     {
         return;
     }

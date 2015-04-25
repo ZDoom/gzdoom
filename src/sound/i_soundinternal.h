@@ -1,7 +1,6 @@
 #ifndef __SNDINT_H
 #define __SNDINT_H
 
-#include <vector>
 #include <stdio.h>
 
 #include "basictypes.h"

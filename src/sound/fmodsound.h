@@ -24,7 +24,7 @@ public:
 
 	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffsamples, int flags, int samplerate, void *userdata);
-    SoundStream *OpenStream (std::auto_ptr<FileReader> reader, int flags);
+    SoundStream *OpenStream (FileReader *reader, int flags);
 	SoundStream *OpenStream (const char *url, int flags);
 
 	// Starts a sound.

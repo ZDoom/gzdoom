@@ -35,8 +35,6 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
-#include <memory>
-
 #include "doomtype.h"
 #include "i_soundinternal.h"
 
@@ -107,7 +105,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
-    virtual SoundStream *OpenStream (std::auto_ptr<FileReader> reader, int flags) = 0;
+    virtual SoundStream *OpenStream (FileReader *reader, int flags) = 0;
 	virtual SoundStream *OpenStream (const char *url, int flags);
 
 	// Starts a sound.

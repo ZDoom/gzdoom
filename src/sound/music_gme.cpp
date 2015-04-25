@@ -105,7 +105,7 @@ const char *GME_CheckFormat(uint32 id)
 //
 //==========================================================================
 
-MusInfo *GME_OpenSong(std::auto_ptr<FileReader> &reader, const char *fmt)
+MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
 {
 	gme_type_t type;
 	gme_err_t err;
@@ -125,14 +125,14 @@ MusInfo *GME_OpenSong(std::auto_ptr<FileReader> &reader, const char *fmt)
 		return NULL;
 	}
 
-    int fpos = reader->Tell();
-    int len = reader->GetLength();
+    int fpos = reader.Tell();
+    int len = reader.GetLength();
     song = new BYTE[len];
-    if (reader->Read(song, len) != len)
+    if (reader.Read(song, len) != len)
     {
         delete[] song;
         gme_delete(emu);
-        reader->Seek(fpos, SEEK_SET);
+        reader.Seek(fpos, SEEK_SET);
         return NULL;
     }
 
@@ -143,10 +143,9 @@ MusInfo *GME_OpenSong(std::auto_ptr<FileReader> &reader, const char *fmt)
 	{
 		Printf("Failed loading song: %s\n", err);
 		gme_delete(emu);
-        reader->Seek(fpos, SEEK_SET);
+        reader.Seek(fpos, SEEK_SET);
 		return NULL;
 	}
-	reader.reset();
 	return new GMESong(emu, sample_rate);
 }
 

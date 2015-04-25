@@ -6,11 +6,11 @@
 #include "except.h"
 
 #include "sndfile_decoder.h"
+#include "templates.h"
 #include "files.h"
+#include "xs_Float.h"
 
 #ifdef HAVE_SNDFILE
-
-#include <algorithm>
 
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)
 {
@@ -103,14 +103,14 @@ size_t SndFileDecoder::read(char *buffer, size_t bytes)
     // could be more.
     while(total < frames)
     {
-        size_t todo = std::min<size_t>(frames-total, 64/SndInfo.channels);
+        size_t todo = MIN<size_t>(frames-total, 64/SndInfo.channels);
         float tmp[64];
 
         size_t got = (size_t)sf_readf_float(SndFile, tmp, todo);
         if(got < todo) frames = total + got;
 
         for(size_t i = 0;i < got*SndInfo.channels;i++)
-            *out++ = (short)((std::min)((std::max)(tmp[i] * 32767.f, -32768.f), 32767.f));
+            *out++ = (short)xs_CRoundToInt(clamp(tmp[i] * 32767.f, -32768.f, 32767.f));
         total += got;
     }
     return total * SndInfo.channels * 2;

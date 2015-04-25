@@ -128,7 +128,7 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-HMISong::HMISong (std::auto_ptr<FileReader> reader, EMidiDevice type)
+HMISong::HMISong (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Tracks(0)
 {
 #ifdef _WIN32
@@ -137,7 +137,7 @@ HMISong::HMISong (std::auto_ptr<FileReader> reader, EMidiDevice type)
 		return;
 	}
 #endif
-    int len = reader->GetLength();
+    int len = reader.GetLength();
 	if (len < 0x100)
 	{ // Way too small to be HMI.
 		return;
@@ -145,7 +145,7 @@ HMISong::HMISong (std::auto_ptr<FileReader> reader, EMidiDevice type)
 	MusHeader = new BYTE[len];
 	SongLen = len;
 	NumTracks = 0;
-    if (reader->Read(MusHeader, len) != len)
+    if (reader.Read(MusHeader, len) != len)
         return;
 
 	// Do some validation of the MIDI file

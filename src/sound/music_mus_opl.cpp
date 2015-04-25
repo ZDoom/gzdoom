@@ -22,11 +22,11 @@ CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Int, opl_core, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-OPLMUSSong::OPLMUSSong (std::auto_ptr<FileReader> reader)
+OPLMUSSong::OPLMUSSong (FileReader &reader)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 
-	Music = new OPLmusicFile (reader.get());
+	Music = new OPLmusicFile (&reader);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
 		(opl_core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);

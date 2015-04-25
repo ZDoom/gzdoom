@@ -102,7 +102,7 @@ char MIDI_CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (std::auto_ptr<FileReader> reader, EMidiDevice type)
+MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Tracks(0)
 {
 	int p;
@@ -114,9 +114,9 @@ MIDISong2::MIDISong2 (std::auto_ptr<FileReader> reader, EMidiDevice type)
 		return;
 	}
 #endif
-    SongLen = reader->GetLength();
+    SongLen = reader.GetLength();
 	MusHeader = new BYTE[SongLen];
-    if (reader->Read(MusHeader, SongLen) != SongLen)
+    if (reader.Read(MusHeader, SongLen) != SongLen)
         return;
 
 	// Do some validation of the MIDI file

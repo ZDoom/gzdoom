@@ -532,7 +532,7 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, std::auto_ptr<FileReader> &reader, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FileReader &reader, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
@@ -542,7 +542,7 @@ DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, std::au
     {
         BYTE *mem = new BYTE[lenfull];
         memcpy(mem, start, lenhave);
-        if (reader->Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
+        if (reader.Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
         {
             delete[] mem;
             return NULL;
@@ -747,7 +747,7 @@ static void MOD_SetAutoChip(DUH *duh)
 //
 //==========================================================================
 
-MusInfo *MOD_OpenSong(std::auto_ptr<FileReader> &reader)
+MusInfo *MOD_OpenSong(FileReader &reader)
 {
 	DUH *duh = 0;
 	int headsize;
@@ -771,14 +771,14 @@ MusInfo *MOD_OpenSong(std::auto_ptr<FileReader> &reader)
 
 	atterm(dumb_exit);
 
-    int size = reader->GetLength();
-    fpos = reader->Tell();
+    int size = reader.GetLength();
+    fpos = reader.Tell();
 
 	filestate.ptr = start;
 	filestate.offset = 0;
 	headsize = MIN((int)sizeof(start), size);
 
-    if (headsize != reader->Read(start, headsize))
+    if (headsize != reader.Read(start, headsize))
     {
         return NULL;
     }
@@ -890,7 +890,7 @@ MusInfo *MOD_OpenSong(std::auto_ptr<FileReader> &reader)
 		{
 			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
-                reader->Seek(fpos, SEEK_SET);
+                reader.Seek(fpos, SEEK_SET);
 				return NULL;
 			}
 		}
@@ -931,13 +931,12 @@ MusInfo *MOD_OpenSong(std::auto_ptr<FileReader> &reader)
 	else
 	{
 		// Reposition file pointer for other codecs to do their checks.
-        reader->Seek(fpos, SEEK_SET);
+        reader.Seek(fpos, SEEK_SET);
 	}
 	if (filestate.ptr != (BYTE *)start)
 	{
 		delete[] const_cast<BYTE *>(filestate.ptr);
 	}
-	if(state) reader.reset();
 	return state;
 }
 

@@ -108,7 +108,7 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-XMISong::XMISong (std::auto_ptr<FileReader> reader, EMidiDevice type)
+XMISong::XMISong (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Songs(0)
 {
 #ifdef _WIN32
@@ -117,9 +117,9 @@ XMISong::XMISong (std::auto_ptr<FileReader> reader, EMidiDevice type)
 		return;
 	}
 #endif
-    SongLen = reader->GetLength();
+    SongLen = reader.GetLength();
 	MusHeader = new BYTE[SongLen];
-    if (reader->Read(MusHeader, SongLen) != SongLen)
+    if (reader.Read(MusHeader, SongLen) != SongLen)
         return;
 
 	// Find all the songs in this file.

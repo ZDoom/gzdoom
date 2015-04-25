@@ -254,12 +254,11 @@ int SndSysMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD),
 
 bool SndSysMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
-    std::auto_ptr<MemoryArrayReader> reader(new MemoryArrayReader(NULL, 0));
+    MemoryArrayReader *reader = new MemoryArrayReader(NULL, 0);
     song->CreateSMF(reader->GetArray(), looping ? 0 : 1);
     reader->UpdateLength();
 
     bLooping = looping;
-    Stream = GSnd->OpenStream(std::auto_ptr<FileReader>(reader.release()),
-                              looping ? SoundStream::Loop : 0);
+    Stream = GSnd->OpenStream(reader, looping ? SoundStream::Loop : 0);
     return false;
 }

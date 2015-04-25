@@ -1624,10 +1624,6 @@ void OpenALSoundRenderer::UpdateSounds()
 {
     alProcessUpdatesSOFT();
 
-    // For some reason this isn't being called?
-    for(uint32 i = 0;i < Streams.Size();++i)
-        Streams[i]->IsEnded();
-
     if(ALC.EXT_disconnect)
     {
         ALCint connected = ALC_TRUE;
@@ -1642,6 +1638,13 @@ void OpenALSoundRenderer::UpdateSounds()
     }
 
     PurgeStoppedSources();
+}
+
+void OpenALSoundRenderer::UpdateMusic()
+{
+    // For some reason this isn't being called?
+    for(uint32 i = 0;i < Streams.Size();++i)
+        Streams[i]->IsEnded();
 }
 
 bool OpenALSoundRenderer::IsValid()

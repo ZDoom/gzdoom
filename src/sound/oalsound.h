@@ -111,6 +111,7 @@ public:
 
 	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
+	virtual void UpdateMusic();
 
 	virtual void MarkStartTime(FISoundChannel*);
 	virtual float GetAudibility(FISoundChannel*);

@@ -329,6 +329,7 @@ int S_GetMusic (char **name);
 
 // Stops the music for sure.
 void S_StopMusic (bool force);
+void S_UpdateMusic();
 
 // Stop and resume music, during game PAUSE.
 void S_PauseSound (bool notmusic, bool notsfx);

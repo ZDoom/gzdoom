@@ -1229,6 +1229,7 @@ void G_FinishTravel ()
 			pawn->lastenemy = NULL;
 			pawn->player->mo = pawn;
 			pawn->player->camera = pawn;
+			pawn->player->viewheight = pawn->ViewHeight;
 			pawn->flags2 &= ~MF2_BLASTED;
 			DObject::StaticPointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();

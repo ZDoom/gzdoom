@@ -1513,7 +1513,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
 		ss->secretsector = !!(ss->special&SECRET_MASK);
-		ss->SetMainTag(LittleShort(ms->tag));
+		tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
 		ss->seqType = defSeqType;
@@ -1907,53 +1907,58 @@ void P_AdjustLine (line_t *ld)
 	}
 }
 
-void P_SetLineID (line_t *ld)
+void P_SetLineID (int i, line_t *ld)
 {
 	// [RH] Set line id (as appropriate) here
 	// for Doom format maps this must be done in P_TranslateLineDef because
 	// the tag doesn't always go into the first arg.
 	if (level.maptype == MAPTYPE_HEXEN)	
 	{
+		int setid = -1;
 		switch (ld->special)
 		{
 		case Line_SetIdentification:
 			if (!(level.flags2 & LEVEL2_HEXENHACK))
 			{
-				ld->SetMainId(ld->args[0] + 256 * ld->args[4]);
+				setid = ld->args[0] + 256 * ld->args[4];
 				ld->flags |= ld->args[1]<<16;
 			}
 			else
 			{
-				ld->SetMainId(ld->args[0]);
+				setid = ld->args[0];
 			}
 			ld->special = 0;
 			break;
 
 		case TranslucentLine:
-			ld->SetMainId(ld->args[0]);
+			setid = ld->args[0];
 			ld->flags |= ld->args[3]<<16;
 			break;
 
 		case Teleport_Line:
 		case Scroll_Texture_Model:
-			ld->SetMainId(ld->args[0]);
+			setid = ld->args[0];
 			break;
 
 		case Polyobj_StartLine:
-			ld->SetMainId(ld->args[3]);
+			setid = ld->args[3];
 			break;
 
 		case Polyobj_ExplicitLine:
-			ld->SetMainId(ld->args[4]);
+			setid = ld->args[4];
 			break;
 			
 		case Plane_Align:
-			ld->SetMainId(ld->args[2]);
+			setid = ld->args[2];
 			break;
 			
 		case Static_Init:
-			if (ld->args[1] == Init_SectorLink) ld->SetMainId(ld->args[0]);
+			if (ld->args[1] == Init_SectorLink) setid = ld->args[0];
 			break;
+		}
+		if (setid != -1)
+		{
+			tagManager.AddLineID(i, setid);
 		}
 	}
 }
@@ -2037,7 +2042,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		{
 			for (j = 0; j < numlines; j++)
 			{
-				if (lines[j].HasId(ld->args[0]))
+				if (tagManager.LineHasID(j, ld->args[0]))
 				{
 					lines[j].Alpha = alpha;
 					if (additive)
@@ -2139,13 +2144,13 @@ void P_LoadLineDefs (MapData * map)
 
 	mld = (maplinedef_t *)mldf;
 	ld = lines;
-	for (i = numlines; i > 0; i--, mld++, ld++)
+	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
-		P_TranslateLineDef (ld, mld, true);
+		P_TranslateLineDef (ld, mld, i);
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
@@ -2218,7 +2223,7 @@ void P_LoadLineDefs2 (MapData * map)
 
 	mld = (maplinedef2_t *)mldf;
 	ld = lines;
-	for (i = numlines; i > 0; i--, mld++, ld++)
+	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		int j;
 
@@ -2231,13 +2236,12 @@ void P_LoadLineDefs2 (MapData * map)
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
 		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
-		ld->ClearIds();
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
 
 		P_AdjustLine (ld);
-		P_SetLineID(ld);
+		P_SetLineID(i, ld);
 		P_SaveLineSpecial (ld);
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
@@ -2493,7 +2497,7 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 
 				for (s = 0; s < numsectors; s++)
 				{
-					if (sectors[s].HasTag(tag))
+					if (tagManager.SectorHasTag(s, tag))
 					{
 						if (!colorgood) color = sectors[s].ColorMap->Color;
 						if (!foggood) fog = sectors[s].ColorMap->Fade;
@@ -3129,9 +3133,9 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (sector->linecount == 0)
 		{
-			Printf ("Sector %i (tag %i) has no lines\n", i, sector->GetMainTag());
+			Printf ("Sector %i (tag %i) has no lines\n", i, tagManager.GetFirstSectorTag(sector));
 			// 0 the sector's tag so that no specials can use it
-			sector->ClearTags();
+			tagManager.RemoveSectorTags(i);
 		}
 		else
 		{
@@ -3208,8 +3212,7 @@ static void P_GroupLines (bool buildmap)
 	// [RH] Moved this here
 	times[4].Clock();
 	// killough 1/30/98: Create xref tables for tags
-	sector_t::HashTags();
-	line_t::HashIds();
+	tagManager.HashTags();
 	times[4].Unclock();
 
 	times[5].Clock();
@@ -3340,6 +3343,7 @@ void P_FreeLevelData ()
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
+	tagManager.Clear();
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;

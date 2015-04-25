@@ -196,8 +196,21 @@ void FScanner::OpenFile (const char *name)
 
 void FScanner::OpenMem (const char *name, const char *buffer, int size)
 {
+	OpenString(name, FString(buffer, size));
+}
+
+//==========================================================================
+//
+// FScanner :: OpenString
+//
+// Like OpenMem, but takes a string directly.
+//
+//==========================================================================
+
+void FScanner::OpenString (const char *name, FString buffer)
+{
 	Close ();
-	ScriptBuffer = FString(buffer, size);
+	ScriptBuffer = buffer;
 	ScriptName = name;
 	LumpNum = -1;
 	PrepareScript ();

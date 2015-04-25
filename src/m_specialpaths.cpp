@@ -22,6 +22,8 @@
 
 #if defined(_WIN32)
 
+#include "i_system.h"
+
 typedef HRESULT (WINAPI *GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
 
 //===========================================================================
@@ -73,18 +75,7 @@ bool UseKnownFolders()
 
 bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
 {
-	static GKFP SHGetKnownFolderPath = NULL;
-	static bool tested = false;
-
-	if (!tested)
-	{
-		tested = true;
-		HMODULE shell32 = GetModuleHandle("shell32.dll");
-		if (shell32 != NULL)
-		{
-			SHGetKnownFolderPath = (GKFP)GetProcAddress(shell32, "SHGetKnownFolderPath");
-		}
-	}
+	static TOptWin32Proc<GKFP> SHGetKnownFolderPath("shell32.dll", "SHGetKnownFolderPath");
 
 	char pathstr[MAX_PATH];
 
@@ -92,6 +83,13 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	// new to Vista, hence the reason we support both.
 	if (SHGetKnownFolderPath == NULL)
 	{
+		static TOptWin32Proc<HRESULT(*)(HWND, int, HANDLE, DWORD, LPTSTR)>
+			SHGetFolderPathA("shell32.dll", "SHGetFolderPathA");
+
+		// NT4 doesn't even have this function.
+		if (SHGetFolderPathA == NULL)
+			return false;
+
 		if (shell_folder < 0)
 		{ // Not supported by SHGetFolderPath
 			return false;
@@ -100,7 +98,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 		{
 			shell_folder |= CSIDL_FLAG_CREATE;
 		}
-		if (FAILED(SHGetFolderPathA(NULL, shell_folder, NULL, 0, pathstr)))
+		if (FAILED(SHGetFolderPathA.Call(NULL, shell_folder, NULL, 0, pathstr)))
 		{
 			return false;
 		}
@@ -110,7 +108,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	else
 	{
 		PWSTR wpath;
-		if (FAILED(SHGetKnownFolderPath(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
+		if (FAILED(SHGetKnownFolderPath.Call(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
 		{
 			return false;
 		}

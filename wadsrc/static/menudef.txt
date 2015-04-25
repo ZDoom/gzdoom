@@ -1402,7 +1402,6 @@ OptionString SoundOutputsWindows
 	"WASAPI",		"Vista WASAPI"
 	"ASIO",			"ASIO"
 	"WaveOut",		"WaveOut"
-	"OpenAL",		"OpenAL (very beta)"
 	"No sound",		"No sound"
 }
 
@@ -1420,7 +1419,6 @@ OptionString SoundOutputsUnix
 
 OptionString SoundOutputsMac
 {
-	"Sound Manager",	"Sound Manager"
 	"Core Audio",		"Core Audio"
 	"No sound",			"No sound"
 }

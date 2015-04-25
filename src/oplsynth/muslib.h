@@ -195,25 +195,11 @@ struct DiskWriterIO : public OPLio
 	DiskWriterIO(const char *filename);
 	~DiskWriterIO();
 
-	int OPLinit(uint numchips, bool notused=false, bool notused2=false);
-	void OPLdeinit();
-	void OPLwriteReg(int which, uint reg, uchar data);
+	int OPLinit(uint numchips, bool notused, bool initopl3);
 	void SetClockRate(double samples_per_tick);
 	void WriteDelay(int ticks);
 
-	void SetChip(int chipnum);
-
-	FILE *File;
 	FString Filename;
-	int Format;
-	bool NeedClockRate;
-	double TimePerTick;		// In milliseconds
-	double CurTime;
-	int CurIntTime;
-	int TickMul;
-	int CurChip;
-
-	enum { FMT_RDOS, FMT_DOSBOX };
 };
 
 struct musicBlock {

@@ -664,11 +664,11 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  Version: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
     DPrintf("  Extensions: "TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
-    ALC.EXT_EFX = alcIsExtensionPresent(Device, "ALC_EXT_EFX");
-    ALC.EXT_disconnect = alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
-    AL.EXT_source_distance_model = alIsExtensionPresent("AL_EXT_source_distance_model");
-    AL.SOFT_deferred_updates = alIsExtensionPresent("AL_SOFT_deferred_updates");
-    AL.SOFT_loop_points = alIsExtensionPresent("AL_SOFT_loop_points");
+    ALC.EXT_EFX = !!alcIsExtensionPresent(Device, "ALC_EXT_EFX");
+    ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
+    AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");
+    AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
+    AL.SOFT_loop_points = !!alIsExtensionPresent("AL_SOFT_loop_points");
 
     alDopplerFactor(0.5f);
     alSpeedOfSound(343.3f * 96.0f);
@@ -1085,9 +1085,7 @@ SoundStream *OpenALSoundRenderer::OpenStream(std::auto_ptr<FileReader> reader, i
 {
     std::auto_ptr<OpenALSoundStream> stream(new OpenALSoundStream(this));
 
-    bool ok = stream->Init(reader, (flags&SoundStream::Loop));
-    if(ok == false) return NULL;
-
+	if (!stream->Init(reader, !!(flags&SoundStream::Loop))) return NULL;
     return stream.release();
 }
 
@@ -1186,7 +1184,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
     int channum, int chanflags, FISoundChannel *reuse_chan)
 {
-    float dist_sqr = (pos - listener->position).LengthSquared();
+    float dist_sqr = (float)(pos - listener->position).LengthSquared();
 
     if(FreeSfx.Size() == 0)
     {
@@ -1488,7 +1486,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     alDeferUpdatesSOFT();
 
     FVector3 dir = pos - listener->position;
-    chan->DistanceSqr = dir.LengthSquared();
+    chan->DistanceSqr = (float)dir.LengthSquared();
 
     if(chan->ManualRolloff)
     {

@@ -1601,7 +1601,7 @@ unsigned int I_MakeRNGSeed()
 FString I_GetLongPathName(FString shortpath)
 {
 	static TOptWin32Proc<DWORD (WINAPI*)(LPCTSTR, LPTSTR, DWORD)>
-		GetLongPathName("kernel32.dll", "GetLongPathNameW", "GetLongPathNameA");
+		GetLongPathName("kernel32.dll", "GetLongPathNameA", NULL);
 
 	// Doesn't exist on NT4
 	if (GetLongPathName == NULL)

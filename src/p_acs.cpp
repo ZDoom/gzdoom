@@ -1562,7 +1562,7 @@ void FBehavior::StaticSerializeModuleStates (FArchive &arc)
 
 	if (modnum != StaticModules.Size())
 	{
-		I_Error ("Level was saved with a different number of ACS modules.");
+		I_Error("Level was saved with a different number of ACS modules. (Have %d, save has %d)", StaticModules.Size(), modnum);
 	}
 
 	for (modnum = 0; modnum < StaticModules.Size(); ++modnum)
@@ -1583,7 +1583,7 @@ void FBehavior::StaticSerializeModuleStates (FArchive &arc)
 			if (stricmp (modname, module->ModuleName) != 0)
 			{
 				delete[] modname;
-				I_Error ("Level was saved with a different set of ACS modules.");
+				I_Error("Level was saved with a different set or order of ACS modules. (Have %s, save has %s)", module->ModuleName, modname);
 			}
 			else if (ModSize != module->GetDataSize())
 			{

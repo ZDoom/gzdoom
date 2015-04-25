@@ -206,6 +206,8 @@ private:
 
     TArray<OpenALSoundStream*> Streams;
     friend class OpenALSoundStream;
+
+	ALCdevice *InitDevice();
 };
 
 #endif // NO_OPENAL

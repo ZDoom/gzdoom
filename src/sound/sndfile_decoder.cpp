@@ -1,3 +1,10 @@
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define USE_WINDOWS_DWORD
+#endif
+#include "except.h"
+
 #include "sndfile_decoder.h"
 #include "files.h"
 
@@ -47,19 +54,25 @@ SndFileDecoder::~SndFileDecoder()
 
 bool SndFileDecoder::open(FileReader *reader)
 {
-    SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
+	__try
+	{
+		SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
-    Reader = reader;
-    SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
-    if(SndFile)
-    {
-        if(SndInfo.channels == 1 || SndInfo.channels == 2)
-            return true;
+		Reader = reader;
+		SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
+		if (SndFile)
+		{
+			if (SndInfo.channels == 1 || SndInfo.channels == 2)
+				return true;
 
-        sf_close(SndFile);
-        SndFile = 0;
-    }
-
+			sf_close(SndFile);
+			SndFile = 0;
+		}
+	}
+	__except (CheckException(GetExceptionCode()))
+	{
+		// this means that the delay loaded decoder DLL was not found.
+	}
     return false;
 }
 

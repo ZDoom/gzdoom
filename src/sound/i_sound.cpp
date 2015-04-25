@@ -53,6 +53,7 @@ extern HINSTANCE g_hInst;
 #include "doomtype.h"
 #include <math.h>
 
+#include "except.h"
 #include "fmodsound.h"
 #include "oalsound.h"
 
@@ -574,22 +575,22 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
     int pos = reader->Tell();
 
 #ifdef HAVE_MPG123
-    decoder = new MPG123Decoder;
-    if(decoder->open(reader))
-        return decoder;
-    reader->Seek(pos, SEEK_SET);
+		decoder = new MPG123Decoder;
+		if (decoder->open(reader))
+			return decoder;
+		reader->Seek(pos, SEEK_SET);
 
-    delete decoder;
-    decoder = NULL;
+		delete decoder;
+		decoder = NULL;
 #endif
 #ifdef HAVE_SNDFILE
-    decoder = new SndFileDecoder;
-    if(decoder->open(reader))
-        return decoder;
-    reader->Seek(pos, SEEK_SET);
+		decoder = new SndFileDecoder;
+		if (decoder->open(reader))
+			return decoder;
+		reader->Seek(pos, SEEK_SET);
 
-    delete decoder;
-    decoder = NULL;
+		delete decoder;
+		decoder = NULL;
 #endif
     return decoder;
 }

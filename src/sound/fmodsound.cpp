@@ -52,6 +52,7 @@ extern HWND Window;
 #include <malloc.h>
 #endif
 
+#include "except.h"
 #include "templates.h"
 #include "fmodsound.h"
 #include "c_cvars.h"
@@ -629,30 +630,6 @@ bool FMODSoundRenderer::IsValid()
 	return InitSuccess;
 }
 
-#ifdef _MSC_VER
-//==========================================================================
-//
-// CheckException
-//
-//==========================================================================
-
-#ifndef FACILITY_VISUALCPP
-#define FACILITY_VISUALCPP  ((LONG)0x6d)
-#endif
-#define VcppException(sev,err)  ((sev) | (FACILITY_VISUALCPP<<16) | err)
-
-static int CheckException(DWORD code)
-{
-	if (code == VcppException(ERROR_SEVERITY_ERROR,ERROR_MOD_NOT_FOUND) ||
-		code == VcppException(ERROR_SEVERITY_ERROR,ERROR_PROC_NOT_FOUND))
-	{
-		return EXCEPTION_EXECUTE_HANDLER;
-	}
-	return EXCEPTION_CONTINUE_SEARCH;
-}
-
-#endif
-
 //==========================================================================
 //
 // FMODSoundRenderer :: Init
@@ -690,12 +667,12 @@ bool FMODSoundRenderer::Init()
 
 	Printf("I_InitSound: Initializing FMOD\n");
 
+	HMODULE a = GetModuleHandle("fmodex.dll");
+
 	// Create a System object and initialize.
-#ifdef _MSC_VER
-	__try {
-#endif
-	result = FMOD::System_Create(&Sys);
-#ifdef _MSC_VER
+	__try 
+	{
+		result = FMOD::System_Create(&Sys);
 	}
 	__except(CheckException(GetExceptionCode()))
 	{
@@ -707,7 +684,6 @@ bool FMODSoundRenderer::Init()
 			".dll\n");
 		return false;
 	}
-#endif
 	if (result != FMOD_OK)
 	{
 		Sys = NULL;

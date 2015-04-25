@@ -1,3 +1,10 @@
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define USE_WINDOWS_DWORD
+#endif
+#include "except.h"
+
 #include "mpg123_decoder.h"
 #include "files.h"
 
@@ -49,9 +56,17 @@ bool MPG123Decoder::open(FileReader *reader)
 {
     if(!inited)
     {
-        if(mpg123_init() != MPG123_OK)
-            return false;
-        inited = true;
+		__try
+		{
+			if(mpg123_init() != MPG123_OK)
+				return false;
+			inited = true;
+		}
+		__except (CheckException(GetExceptionCode()))
+		{
+			// this means that the delay loaded decoder DLL was not found.
+			return false;
+		}
     }
 
     Reader = reader;

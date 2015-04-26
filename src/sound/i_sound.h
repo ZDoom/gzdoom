@@ -175,4 +175,7 @@ FISoundChannel *S_GetChannel(void *syschan);
 
 extern ReverbContainer *DefaultEnvironments[26];
 
+bool IsFModExPresent();
+bool IsOpenALPresent();
+
 #endif

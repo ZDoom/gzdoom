@@ -671,14 +671,8 @@ bool FMODSoundRenderer::Init()
 
 	Printf("I_InitSound: Initializing FMOD\n");
 
-	HMODULE a = GetModuleHandle("fmodex.dll");
-
-	// Create a System object and initialize.
-	__try 
-	{
-		result = FMOD::System_Create(&Sys);
-	}
-	__except(CheckException(GetExceptionCode()))
+	// This is just for safety. Normally this should never be called if FMod Ex cannot be found.
+	if (!IsFModExPresent())
 	{
 		Sys = NULL;
 		Printf(TEXTCOLOR_ORANGE"Failed to load fmodex"
@@ -688,6 +682,9 @@ bool FMODSoundRenderer::Init()
 			".dll\n");
 		return false;
 	}
+
+	// Create a System object and initialize.
+	result = FMOD::System_Create(&Sys);
 	if (result != FMOD_OK)
 	{
 		Sys = NULL;
@@ -3177,3 +3174,44 @@ FMOD_RESULT FMODSoundRenderer::SetSystemReverbProperties(const REVERB_PROPERTIES
 }
 
 #endif // NO_FMOD
+
+
+//==========================================================================
+//
+// IsFModExPresent
+//
+// Check if FMod can be used
+//
+//==========================================================================
+
+bool IsFModExPresent()
+{
+#ifdef NO_FMOD
+	return false;
+#elif !defined _WIN32
+	return true;	// on non-Windows we cannot delay load the library so it has to be present.
+#else
+	static bool cached_result;
+	static bool done = false;
+
+	if (!done)
+	{
+		done = true;
+
+		FMOD::System *Sys;
+		FMOD_RESULT result;
+		__try
+		{
+			result = FMOD::System_Create(&Sys);
+		}
+		__except (CheckException(GetExceptionCode()))
+		{
+			// FMod could not be delay loaded
+			return false;
+		}
+		if (result == FMOD_OK) Sys->release();
+		cached_result = true;
+	}
+	return cached_result;
+#endif
+}

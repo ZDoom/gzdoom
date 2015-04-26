@@ -49,6 +49,7 @@
 #include "i_music.h"
 #include "m_joy.h"
 #include "gi.h"
+#include "i_sound.h"
 
 #include "optionmenuitems.h"
 
@@ -169,6 +170,14 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 			#ifdef __APPLE__
 				filter = true;
 			#endif
+		}
+		else if (sc.Compare("OpenAL"))
+		{
+			filter |= IsOpenALPresent();
+		}
+		else if (sc.Compare("FModEx"))
+		{
+			filter |= IsFModExPresent();
 		}
 	}
 	while (sc.CheckString(","));
@@ -591,7 +600,11 @@ static void ParseOptionSettings(FScanner &sc)
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("ifgame"))
+		if (sc.Compare("else"))
+		{
+			SkipSubBlock(sc);
+		}
+		else if (sc.Compare("ifgame"))
 		{
 			if (!CheckSkipGameBlock(sc))
 			{
@@ -628,7 +641,11 @@ static void ParseOptionMenuBody(FScanner &sc, FOptionMenuDescriptor *desc)
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("ifgame"))
+		if (sc.Compare("else"))
+		{
+			SkipSubBlock(sc);
+		}
+		else if (sc.Compare("ifgame"))
 		{
 			if (!CheckSkipGameBlock(sc))
 			{

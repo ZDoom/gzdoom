@@ -1450,11 +1450,22 @@ OptionString Resamplers
 
 OptionString SoundBackends
 {
-	"fmod",		"FMOD"
+	"fmod",		"FMOD Ex"
 	"openal",	"OpenAL"
 	"null",		"No Sound"
 }
 
+OptionString SoundBackendsFModOnly
+{
+	"fmod",		"FMOD Ex"
+	"null",		"No Sound"
+}
+
+OptionString SoundBackendsOpenALOnly
+{
+	"openal",	"OpenAL"
+	"null",		"No Sound"
+}
 
 OptionMenu FMODSoundItems
 {
@@ -1507,9 +1518,34 @@ OptionMenu SoundOptions
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
-	Option "Sound backend",		"snd_backend", "SoundBackends"
-	Submenu "FMOD options",		"FMODSoundItems"
-	Submenu "OpenAL options",	"OpenALSoundItems"
+
+	ifoption(fmodex)
+	{
+		ifoption(openal)
+		{
+			Option "Sound backend",		"snd_backend", "SoundBackends"
+		}
+		else
+		{
+			Option "Sound backend",		"snd_backend", "SoundBackendsFModOnly"
+		}
+	}
+	else
+	{
+		ifoption(openal)
+		{
+			Option "Sound backend",		"snd_backend", "SoundBackendsOpenALOnly"
+		}
+	}
+	
+	ifoption(fmodex)
+	{
+		Submenu "FMOD options",		"FMODSoundItems"
+	}
+	ifoption(openal)
+	{
+		Submenu "OpenAL options",	"OpenALSoundItems"
+	}
 	StaticText " "
 	Command "Restart sound",	"snd_reset"
 

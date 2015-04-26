@@ -59,6 +59,36 @@ CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
+bool IsOpenALPresent()
+{
+#ifdef NO_OPENAL
+	return false;
+#elif !defined _WIN32
+	return true;	// on non-Windows we cannot delay load the library so it has to be present.
+#else
+	static bool cached_result;
+	static bool done = false;
+
+	if (!done)
+	{
+		done = true;
+
+		__try
+		{
+			// just call one function from the API to force loading the DLL
+			alcGetError(NULL);
+		}
+		__except (CheckException(GetExceptionCode()))
+		{
+			// FMod could not be delay loaded
+			return false;
+		}
+		cached_result = true;
+	}
+	return cached_result;
+#endif
+}
+
 void I_BuildALDeviceList(FOptionValues *opt)
 {
     opt->mValues.Resize(1);
@@ -66,7 +96,7 @@ void I_BuildALDeviceList(FOptionValues *opt)
     opt->mValues[0].Text = "Default";
 
 #ifndef NO_OPENAL
-	__try
+	if (IsOpenALPresent())
 	{
 		const ALCchar *names = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
 			alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER) :
@@ -81,9 +111,6 @@ void I_BuildALDeviceList(FOptionValues *opt)
 
 			names += strlen(names) + 1;
 		}
-	}
-	__except (CheckException(GetExceptionCode()))
-	{
 	}
 #endif
 }
@@ -601,7 +628,7 @@ static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 ALCdevice *OpenALSoundRenderer::InitDevice()
 {
 	ALCdevice *device = NULL;
-	__try
+	if (IsOpenALPresent())
 	{
 		if(strcmp(snd_aldevice, "Default") != 0)
 		{
@@ -619,7 +646,7 @@ ALCdevice *OpenALSoundRenderer::InitDevice()
 			}
 		}
 	}
-	__except(CheckException(GetExceptionCode()))
+	else
 	{
 		Printf(TEXTCOLOR_ORANGE"Failed to load openal32.dll\n");
 	}

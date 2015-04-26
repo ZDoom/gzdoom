@@ -4749,7 +4749,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// [RH] sound sequence overriders
 	if (mentry->Type == NULL && mentry->Special == SMT_SSeqOverride)
 	{
-		int type = mentry->Args[0];
+		int type = mthing->args[0];
 		if (type == 255) type = -1;
 		if (type > 63)
 		{

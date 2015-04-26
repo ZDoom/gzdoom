@@ -2458,7 +2458,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				{
 					return false;
 				}
-				reader = Wads.ReopenLumpNum(lumpnum);
+				reader = Wads.ReopenLumpNumNewFile(lumpnum);
+				if (reader == NULL)
+				{
+					return false;
+				}
 			}
 		}
 		else

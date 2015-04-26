@@ -2331,8 +2331,6 @@ bool S_StartMusic (const char *m_id)
 // specified, it will only be played if the specified CD is in a drive.
 //==========================================================================
 
-TArray<BYTE> musiccache;
-
 bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 {
 	if (!force && PlayList)
@@ -2456,31 +2454,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			}
 			if (handle == NULL)
 			{
-				if (!Wads.IsUncompressedFile(lumpnum))
+				if (Wads.LumpLength (lumpnum) == 0)
 				{
-					// We must cache the music data and use it from memory.
-
-					// shut down old music before reallocating and overwriting the cache!
-					S_StopMusic (true);
-
-					length = Wads.LumpLength (lumpnum);
-					if (length == 0)
-					{
-						return false;
-					}
-					musiccache.Resize(length);
-					Wads.ReadLump(lumpnum, &musiccache[0]);
-
-                    reader = new MemoryReader((const char*)&musiccache[0], musiccache.Size());
+					return false;
 				}
-				else
-				{
-					if (Wads.LumpLength (lumpnum) == 0)
-					{
-						return false;
-					}
-					reader = Wads.ReopenLumpNum(lumpnum);
-				}
+				reader = Wads.ReopenLumpNum(lumpnum);
 			}
 		}
 		else

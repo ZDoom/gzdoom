@@ -331,7 +331,10 @@ public:
 		{
 			Stream->release();
 		}
-		delete Reader;
+		if (Reader != NULL)
+		{
+			delete Reader;
+		}
 	}
 
 	void SetStream(FMOD::Sound *stream)

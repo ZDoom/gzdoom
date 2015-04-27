@@ -1034,7 +1034,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 	// Both things overlap in x or y direction
 	bool unblocking = false;
 
-	if (tm.FromPMove || tm.thing->player != NULL)
+	if ((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID)
 	{
 		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
@@ -1042,7 +1042,9 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			unblocking = true;
 		}
-		else
+		else if (abs(thing->x - tm.thing->x) < (thing->radius+tm.thing->radius)/2 &&
+				 abs(thing->y - tm.thing->y) < (thing->radius+tm.thing->radius)/2)
+
 		{
 			fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
 			fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);

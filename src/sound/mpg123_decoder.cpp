@@ -3,10 +3,10 @@
 #include <windows.h>
 #define USE_WINDOWS_DWORD
 #endif
-#include "except.h"
 
 #include "mpg123_decoder.h"
 #include "files.h"
+#include "except.h"
 
 #ifdef HAVE_MPG123
 static bool inited = false;

@@ -639,11 +639,11 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
 TArray<char> SoundDecoder::readAll()
 {
     TArray<char> output;
-    size_t total = 0;
-    size_t got;
+    unsigned total = 0;
+    unsigned got;
 
     output.Resize(total+32768);
-    while((got=read(&output[total], output.Size()-total)) > 0)
+    while((got=(unsigned)read(&output[total], output.Size()-total)) > 0)
     {
         total += got;
         output.Resize(total*2);

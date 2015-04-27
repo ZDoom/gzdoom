@@ -56,25 +56,20 @@ extern os_t OSPlatform;
 template<typename Proto>
 class TOptWin32Proc
 {
-	static Proto GetOptionalWin32Proc(const char* module, const char* function, const char* alt)
+	static Proto GetOptionalWin32Proc(const char* module, const char* function)
 	{
 		HMODULE hmodule = GetModuleHandle(module);
 		if (hmodule == NULL)
 			return NULL;
 
-		Proto ret = (Proto)GetProcAddress(hmodule, function);
-		if(ret != NULL || alt == NULL)
-			return ret;
-
-		// Lookup alternate function name (ex. ProcW -> ProcA)
-		return (Proto)GetProcAddress(hmodule, alt);
+		return (Proto)GetProcAddress(hmodule, function);
 	}
 
 public:
 	const Proto Call;
 
-	TOptWin32Proc(const char* module, const char* function, const char* alt=NULL)
-		: Call(GetOptionalWin32Proc(module, function, alt)) {}
+	TOptWin32Proc(const char* module, const char* function)
+		: Call(GetOptionalWin32Proc(module, function)) {}
 
 	// Wrapper object can be tested against NULL, but not directly called.
 	operator const void*() const { return Call; }

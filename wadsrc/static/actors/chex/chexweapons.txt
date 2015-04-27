@@ -21,6 +21,7 @@ actor MiniZorcher : Pistol
 	states
 	{
 		Spawn:
+			MINZ A -1
 			stop
 	}
 }

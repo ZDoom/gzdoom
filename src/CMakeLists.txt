@@ -213,6 +213,18 @@ else( WIN32 )
 	endif( FPU_CONTROL_DIR )
 endif( WIN32 )
 
+if( X64 )
+	set( NO_ASM ON )
+endif( X64 )
+
+# Check if we have OpenGL
+
+if( NOT OPENGL_FOUND )
+	message( FATAL_ERROR "OpenGL is required for building." )
+endif( NOT OPENGL_FOUND )
+
+set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENGL_LIBRARIES} )
+include_directories( ${OPENGL_INCLUDE_DIR} )
 
 if( NOT NO_OPENAL )
     find_package( OpenAL )

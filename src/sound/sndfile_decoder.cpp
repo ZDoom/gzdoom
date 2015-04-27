@@ -3,12 +3,12 @@
 #include <windows.h>
 #define USE_WINDOWS_DWORD
 #endif
-#include "except.h"
 
 #include "sndfile_decoder.h"
 #include "templates.h"
 #include "files.h"
 #include "xs_Float.h"
+#include "except.h"
 
 #ifdef HAVE_SNDFILE
 

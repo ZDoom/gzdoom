@@ -113,7 +113,7 @@ public:
 		BYTE chipnum = reg >> 8;
 		if (chipnum != CurChip)
 		{
-			BYTE switcher[2] = { chipnum + 1, 2 };
+			BYTE switcher[2] = { (BYTE)(chipnum + 1), 2 };
 			fwrite(switcher, 1, 2, File);
 		}
 		reg &= 255;
@@ -192,7 +192,7 @@ public:
 			   "\0\0\0\0"	// Total milliseconds
 			   "\0\0\0",	// Total data
 			   1, 20, File);
-		char type[4] = { Dual * 2, 0, 0, 0 };	// Single or dual OPL-2
+		char type[4] = { (char)(Dual * 2), 0, 0, 0 };	// Single or dual OPL-2
 		fwrite(type, 1, 4, File);
 	}
 	virtual ~OPL_DOSBOXdump()

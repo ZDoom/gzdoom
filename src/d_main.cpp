@@ -1981,6 +1981,9 @@ static void D_DoomInit()
 	}
 		
 	FRandom::StaticClearRandom ();
+
+	Printf ("M_LoadDefaults: Load system defaults.\n");
+	M_LoadDefaults ();			// load before initing other systems
 }
 
 //==========================================================================
@@ -2247,8 +2250,8 @@ void D_DoomMain (void)
 	iwad_man = new FIWadManager;
 	iwad_man->ParseIWadInfos(basewad);
 
-	Printf ("M_LoadDefaults: Load system defaults.\n");
-	M_LoadDefaults (iwad_man);			// load before initing other systems
+	// Now that we have the IWADINFO, initialize the autoload ini sections.
+	GameConfig->DoAutoloadSetup(iwad_man);
 
 	PClass::StaticInit ();
 	atterm(FinalGC);

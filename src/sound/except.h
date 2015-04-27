@@ -26,7 +26,14 @@ inline int CheckException(DWORD code)
 
 #else
 
+#ifdef __try
+#undef __try
+#endif
 #define __try
+
+#ifdef __except
+#undef __except
+#endif
 #define __except(a) if (0)
 
 #endif

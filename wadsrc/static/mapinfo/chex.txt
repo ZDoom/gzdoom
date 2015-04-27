@@ -124,6 +124,7 @@ DoomEdNums
   3003 = Flembrane
   3004 = FlemoidusCommonus
   3006 = ChexSoul
+  5010 = MiniZorcher
 }
 
 skill baby

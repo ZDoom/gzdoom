@@ -611,7 +611,7 @@ int TimidityPPMIDIDevice::Resume()
 	{
 		if (LaunchTimidity())
 		{
-			// Assume success if not mixing with FMOD
+			// Assume success if not mixing with the sound system
 			if (Stream == NULL || Stream->Play(true, timidity_mastervolume))
 			{
 				Started = true;

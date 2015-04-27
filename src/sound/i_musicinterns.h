@@ -23,6 +23,7 @@
 #include "i_sound.h"
 #include "i_music.h"
 #include "s_sound.h"
+#include "files.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -168,16 +169,16 @@ protected:
 	bool bLooping;
 };
 
-// FMOD pseudo-MIDI device --------------------------------------------------
+// Sound System pseudo-MIDI device ------------------------------------------
 
-class FMODMIDIDevice : public PseudoMIDIDevice
+class SndSysMIDIDevice : public PseudoMIDIDevice
 {
 public:
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
 	bool Preprocess(MIDIStreamer *song, bool looping);
 };
 
-// MIDI file played with TiMidity++ and possibly streamed through FMOD ------
+// MIDI file played with TiMidity++ and possibly streamed through the Sound System
 
 class TimidityPPMIDIDevice : public PseudoMIDIDevice
 {
@@ -500,7 +501,7 @@ protected:
 class MUSSong2 : public MIDIStreamer
 {
 public:
-	MUSSong2(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
+	MUSSong2(FileReader &reader, EMidiDevice type);
 	~MUSSong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -526,7 +527,7 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
+	MIDISong2(FileReader &reader, EMidiDevice type);
 	~MIDISong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -583,7 +584,7 @@ protected:
 class HMISong : public MIDIStreamer
 {
 public:
-	HMISong(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
+	HMISong(FileReader &reader, EMidiDevice type);
 	~HMISong();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -626,7 +627,7 @@ protected:
 class XMISong : public MIDIStreamer
 {
 public:
-	XMISong(FILE *file, BYTE *musiccache, int length, EMidiDevice type);
+	XMISong(FileReader &reader, EMidiDevice type);
 	~XMISong();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -660,12 +661,13 @@ protected:
 	EventSource EventDue;
 };
 
-// Anything supported by FMOD out of the box --------------------------------
+// Anything supported by the sound system out of the box --------------------
 
 class StreamSong : public MusInfo
 {
 public:
-	StreamSong (const char *file, int offset, int length);
+    StreamSong (FileReader *reader);
+	StreamSong (const char *url);
 	~StreamSong ();
 	void Play (bool looping, int subsong);
 	void Pause ();
@@ -683,12 +685,12 @@ protected:
 	SoundStream *m_Stream;
 };
 
-// MUS file played by a software OPL2 synth and streamed through FMOD -------
+// MUS file played by a software OPL2 synth and streamed through the sound system
 
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FILE *file, BYTE *musiccache, int length);
+	OPLMUSSong (FileReader &reader);
 	~OPLMUSSong ();
 	void Play (bool looping, int subsong);
 	bool IsPlaying ();
@@ -737,17 +739,17 @@ protected:
 class CDDAFile : public CDSong
 {
 public:
-	CDDAFile (FILE *file, int length);
+	CDDAFile (FileReader &reader);
 };
 
 // Module played via foo_dumb -----------------------------------------------
 
-MusInfo *MOD_OpenSong(FILE *file, BYTE *musiccache, int len);
+MusInfo *MOD_OpenSong(FileReader &reader);
 
 // Music played via Game Music Emu ------------------------------------------
 
 const char *GME_CheckFormat(uint32 header);
-MusInfo *GME_OpenSong(FILE *file, BYTE *musiccache, int len, const char *fmt);
+MusInfo *GME_OpenSong(FileReader &reader, const char *fmt);
 
 // --------------------------------------------------------------------------
 

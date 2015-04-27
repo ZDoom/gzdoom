@@ -1601,19 +1601,19 @@ unsigned int I_MakeRNGSeed()
 FString I_GetLongPathName(FString shortpath)
 {
 	static TOptWin32Proc<DWORD (WINAPI*)(LPCTSTR, LPTSTR, DWORD)>
-		GetLongPathName("kernel32.dll", "GetLongPathNameA", NULL);
+		GetLongPathNameA("kernel32.dll", "GetLongPathNameA");
 
 	// Doesn't exist on NT4
 	if (GetLongPathName == NULL)
 		return shortpath;
 
-	DWORD buffsize = GetLongPathName.Call(shortpath.GetChars(), NULL, 0);
+	DWORD buffsize = GetLongPathNameA.Call(shortpath.GetChars(), NULL, 0);
 	if (buffsize == 0)
 	{ // nothing to change (it doesn't exist, maybe?)
 		return shortpath;
 	}
 	TCHAR *buff = new TCHAR[buffsize];
-	DWORD buffsize2 = GetLongPathName.Call(shortpath.GetChars(), buff, buffsize);
+	DWORD buffsize2 = GetLongPathNameA.Call(shortpath.GetChars(), buff, buffsize);
 	if (buffsize2 >= buffsize)
 	{ // Failure! Just return the short path
 		delete[] buff;

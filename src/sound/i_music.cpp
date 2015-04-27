@@ -99,7 +99,7 @@ EXTERN_CVAR (Int, snd_mididevice)
 
 static bool MusicDown = true;
 
-static BYTE *ungzip(BYTE *data, int *size);
+static bool ungzip(BYTE *data, int size, TArray<BYTE> &newdata);
 
 MusInfo *currSong;
 int		nomusic = 0;
@@ -301,21 +301,21 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-static MIDIStreamer *CreateMIDIStreamer(FILE *file, BYTE *musiccache, int len, EMidiDevice devtype, EMIDIType miditype)
+static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype, EMIDIType miditype)
 {
 	switch (miditype)
 	{
 	case MIDI_MUS:
-		return new MUSSong2(file, musiccache, len, devtype);
+		return new MUSSong2(reader, devtype);
 
 	case MIDI_MIDI:
-		return new MIDISong2(file, musiccache, len, devtype);
+		return new MIDISong2(reader, devtype);
 
 	case MIDI_HMI:
-		return new HMISong(file, musiccache, len, devtype);
+		return new HMISong(reader, devtype);
 
 	case MIDI_XMI:
-		return new XMISong(file, musiccache, len, devtype);
+		return new XMISong(reader, devtype);
 
 	default:
 		return NULL;
@@ -377,100 +377,61 @@ static EMIDIType IdentifyMIDIType(DWORD *id, int size)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int len, int device)
+MusInfo *I_RegisterSong (FileReader *reader, int device)
 {
-	FILE *file;
 	MusInfo *info = NULL;
 	const char *fmt;
 	DWORD id[32/4];
-	BYTE *ungzipped;
-	int i;
 
 	if (nomusic)
 	{
+		delete reader;
 		return 0;
 	}
 
-	if (offset != -1)
+	if(reader->Read(id, 32) != 32 || reader->Seek(-32, SEEK_CUR) != 0)
 	{
-		file = fopen (filename, "rb");
-		if (file == NULL)
-		{
-			return 0;
-		}
-
-		if (len == 0 && offset == 0)
-		{
-			fseek (file, 0, SEEK_END);
-			len = ftell (file);
-			fseek (file, 0, SEEK_SET);
-		}
-		else
-		{
-			fseek (file, offset, SEEK_SET);
-		}
-		if (len < 32)
-		{
-			return 0;
-		}
-		if (fread (id, 4, 32/4, file) != 32/4)
-		{
-			fclose (file);
-			return 0;
-		}
-		fseek (file, -32, SEEK_CUR);
-	}
-	else 
-	{
-		file = NULL;
-		if (len < 32)
-		{
-			return 0;
-		}
-		for (i = 0; i < 32/4; ++i)
-		{
-			id[i] = ((DWORD *)musiccache)[i];
-		}
+		delete reader;
+		return 0;
 	}
 
 #ifndef _WIN32
-	// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_FMOD
+	// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
 	if (device == MDEV_MMAPI)
-		device = MDEV_FMOD;
+		device = MDEV_SNDSYS;
 #endif
 
-	// Check for gzip compression. Some formats are expected to have players
-	// that can handle it, so it simplifies things if we make all songs
-	// gzippable.
-	ungzipped = NULL;
-	if ((id[0] & MAKE_ID(255,255,255,0)) == GZIP_ID)
+    // Check for gzip compression. Some formats are expected to have players
+    // that can handle it, so it simplifies things if we make all songs
+    // gzippable.
+	if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
 	{
-		if (offset != -1)
+		int len = reader->GetLength();
+		BYTE *gzipped = new BYTE[len];
+		if (reader->Read(gzipped, len) != len)
 		{
-			BYTE *gzipped = new BYTE[len];
-			if (fread(gzipped, 1, len, file) != (size_t)len)
-			{
-				delete[] gzipped;
-				fclose(file);
-				return NULL;
-			}
-			ungzipped = ungzip(gzipped, &len);
 			delete[] gzipped;
-		}
-		else
-		{
-			ungzipped = ungzip(musiccache, &len);
-		}
-		if (ungzipped == NULL)
-		{
-			fclose(file);
+			delete reader;
 			return NULL;
 		}
-		musiccache = ungzipped;
-		for (i = 0; i < 32/4; ++i)
+		delete reader;
+
+		MemoryArrayReader *memreader = new MemoryArrayReader(NULL, 0);
+		if (!ungzip(gzipped, len, memreader->GetArray()))
 		{
-			id[i] = ((DWORD *)musiccache)[i];
+			delete[] gzipped;
+			delete memreader;
+			return 0;
 		}
+		delete[] gzipped;
+		memreader->UpdateLength();
+
+		if (memreader->Read(id, 32) != 32 || memreader->Seek(-32, SEEK_CUR) != 0)
+		{
+			delete memreader;
+			return 0;
+		}
+		reader = memreader;
 	}
 
 	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
@@ -478,22 +439,22 @@ MusInfo *I_RegisterSong (const char *filename, BYTE *musiccache, int offset, int
 	{
 		EMidiDevice devtype = (EMidiDevice)device;
 
-retry_as_fmod:
-		info = CreateMIDIStreamer(file, musiccache, len, devtype, miditype);
+retry_as_sndsys:
+		info = CreateMIDIStreamer(*reader, devtype, miditype);
 		if (info != NULL && !info->IsValid())
 		{
 			delete info;
 			info = NULL;
 		}
-		if (info == NULL && devtype != MDEV_FMOD && snd_mididevice < 0)
+		if (info == NULL && devtype != MDEV_SNDSYS && snd_mididevice < 0)
 		{
-			devtype = MDEV_FMOD;
-			goto retry_as_fmod;
+			devtype = MDEV_SNDSYS;
+			goto retry_as_sndsys;
 		}
 #ifdef _WIN32
 		if (info == NULL && devtype != MDEV_MMAPI && snd_mididevice >= 0)
 		{
-			info = CreateMIDIStreamer(file, musiccache, len, MDEV_MMAPI, miditype);
+			info = CreateMIDIStreamer(*reader, MDEV_MMAPI, miditype);
 		}
 #endif
 	}
@@ -504,73 +465,61 @@ retry_as_fmod:
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
 		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		info = new OPLMUSSong (file, musiccache, len);
+		info = new OPLMUSSong (*reader);
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
 	{
-		info = GME_OpenSong(file, musiccache, len, fmt);
+		info = GME_OpenSong(*reader, fmt);
 	}
 	// Check for module formats
 	else
 	{
-		info = MOD_OpenSong(file, musiccache, len);
+		info = MOD_OpenSong(*reader);
 	}
 
-	if (info == NULL)
-	{
-		// Check for CDDA "format"
-		if (id[0] == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
-		{
-			if (file != NULL)
-			{
-				DWORD subid;
+    if (info == NULL)
+    {
+        // Check for CDDA "format"
+        if (id[0] == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
+        {
+            DWORD subid;
 
-				fseek (file, 8, SEEK_CUR);
-				if (fread (&subid, 4, 1, file) != 1)
-				{
-					fclose (file);
-					return 0;
-				}
-				fseek (file, -12, SEEK_CUR);
+            reader->Seek(8, SEEK_CUR);
+            if (reader->Read (&subid, 4) != 4)
+            {
+                delete reader;
+                return 0;
+            }
+            reader->Seek(-12, SEEK_CUR);
 
-				if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
-				{
-					// This is a CDDA file
-					info = new CDDAFile (file, len);
-				}
-			}
-		}
+            if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
+            {
+                // This is a CDDA file
+                info = new CDDAFile (*reader);
+            }
+        }
 
-		// no FMOD => no modules/streams
-		// 1024 bytes is an arbitrary restriction. It's assumed that anything
-		// smaller than this can't possibly be a valid music file if it hasn't
-		// been identified already, so don't even bother trying to load it.
-		// Of course MIDIs shorter than 1024 bytes should pass.
-		if (info == NULL && (len >= 1024 || id[0] == MAKE_ID('M','T','h','d')))
-		{
-			// Let FMOD figure out what it is.
-			if (file != NULL)
-			{
-				fclose (file);
-				file = NULL;
-			}
-			info = new StreamSong (offset >= 0 ? filename : (const char *)musiccache, offset, len);
-		}
-	}
+        // no support in sound system => no modules/streams
+        // 1024 bytes is an arbitrary restriction. It's assumed that anything
+        // smaller than this can't possibly be a valid music file if it hasn't
+        // been identified already, so don't even bother trying to load it.
+        // Of course MIDIs shorter than 1024 bytes should pass.
+        if (info == NULL && (reader->GetLength() >= 1024 || id[0] == MAKE_ID('M','T','h','d')))
+        {
+            // Let the sound system figure out what it is.
+            info = new StreamSong (reader);
+			// Assumed ownership
+			reader = NULL;
+        }
+    }
+
+	if (reader != NULL) delete reader;
 
 	if (info && !info->IsValid ())
 	{
 		delete info;
 		info = NULL;
-	}
-	if (file != NULL)
-	{
-		fclose (file);
-	}
-	if (ungzipped != NULL)
-	{
-		delete[] ungzipped;
 	}
 
 	return info;
@@ -605,7 +554,7 @@ MusInfo *I_RegisterURLSong (const char *url)
 {
 	StreamSong *song;
 
-	song = new StreamSong(url, 0, 0);
+	song = new StreamSong(url);
 	if (song->IsValid())
 	{
 		return song;
@@ -623,13 +572,12 @@ MusInfo *I_RegisterURLSong (const char *url)
 //
 //==========================================================================
 
-BYTE *ungzip(BYTE *data, int *complen)
+static bool ungzip(BYTE *data, int complen, TArray<BYTE> &newdata)
 {
-	const BYTE *max = data + *complen - 8;
+	const BYTE *max = data + complen - 8;
 	const BYTE *compstart = data + 10;
 	BYTE flags = data[3];
 	unsigned isize;
-	BYTE *newdata;
 	z_stream stream;
 	int err;
 
@@ -658,16 +606,16 @@ BYTE *ungzip(BYTE *data, int *complen)
 	}
 	if (compstart >= max - 1)
 	{
-		return NULL;
+		return false;
 	}
 
 	// Decompress
-	isize = LittleLong(*(DWORD *)(data + *complen - 4));
-	newdata = new BYTE[isize];
+	isize = LittleLong(*(DWORD *)(data + complen - 4));
+    newdata.Resize(isize);
 
 	stream.next_in = (Bytef *)compstart;
 	stream.avail_in = (uInt)(max - compstart);
-	stream.next_out = newdata;
+	stream.next_out = &newdata[0];
 	stream.avail_out = isize;
 	stream.zalloc = (alloc_func)0;
 	stream.zfree = (free_func)0;
@@ -675,25 +623,20 @@ BYTE *ungzip(BYTE *data, int *complen)
 	err = inflateInit2(&stream, -MAX_WBITS);
 	if (err != Z_OK)
 	{
-		delete[] newdata;
-		return NULL;
+		return false;
 	}
-
 	err = inflate(&stream, Z_FINISH);
 	if (err != Z_STREAM_END)
 	{
 		inflateEnd(&stream);
-		delete[] newdata;
-		return NULL;
+		return false;
 	}
 	err = inflateEnd(&stream);
 	if (err != Z_OK)
 	{
-		delete[] newdata;
-		return NULL;
+		return false;
 	}
-	*complen = isize;
-	return newdata;
+	return true;
 }
 
 //==========================================================================

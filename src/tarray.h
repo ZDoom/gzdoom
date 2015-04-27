@@ -136,6 +136,17 @@ public:
 		return Array[Count-1];
 	}
 
+    unsigned int Find(const T& item) const
+    {
+        unsigned int i;
+        for(i = 0;i < Count;++i)
+        {
+            if(Array[i] == item)
+                break;
+        }
+        return i;
+    }
+
 	unsigned int Push (const T &item)
 	{
 		Grow (1);

@@ -37,6 +37,7 @@ DoomEdNums
   5001 = PointPusher
   5002 = PointPuller
   5004 = FS_Mapspot
+  5006 = SkyCamCompat
   5061 = InvisibleBridge32
   5064 = InvisibleBridge16
   5065 = InvisibleBridge8

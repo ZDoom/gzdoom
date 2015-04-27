@@ -43,9 +43,10 @@ class FIWadManager;
 class FGameConfigFile : public FConfigFile
 {
 public:
-	FGameConfigFile (FIWadManager *iwad_man);
+	FGameConfigFile ();
 	~FGameConfigFile ();
 
+	void DoAutoloadSetup (FIWadManager *iwad_man);
 	void DoGlobalSetup ();
 	void DoGameSetup (const char *gamename);
 	void DoKeySetup (const char *gamename);

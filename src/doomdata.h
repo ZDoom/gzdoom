@@ -337,6 +337,7 @@ struct mapthinghexen_t
 };
 
 class FArchive;
+struct FDoomEdEntry;
 
 // Internal representation of a mapthing
 struct FMapThing
@@ -346,7 +347,8 @@ struct FMapThing
 	fixed_t		y;
 	fixed_t		z;
 	short		angle;
-	short		type;
+	FDoomEdEntry *info;
+	short		EdNum;
 	WORD		SkillFilter;
 	WORD		ClassFilter;
 	DWORD		flags;
@@ -363,8 +365,6 @@ struct FMapThing
 	short		pitch;
 	short		roll;
 	DWORD		RenderStyle;
-
-	void Serialize (FArchive &);
 };
 
 

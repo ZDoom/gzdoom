@@ -86,8 +86,6 @@ class FDirectory : public FResourceFile
 {
 	TArray<FDirectoryLump> Lumps;
 
-	static int STACK_ARGS lumpcmp(const void * a, const void * b);
-
 	int AddDirectory(const char *dirpath);
 	void AddEntry(const char *fullpath, int size);
 
@@ -113,28 +111,17 @@ FDirectory::FDirectory(const char * directory)
 	#ifdef _WIN32
 		directory = _fullpath(NULL, directory, _MAX_PATH);
 	#else
-		// Todo for Linux: Resolve the path befire using it
+		// Todo for Linux: Resolve the path before using it
 	#endif
 	dirname = directory;
+	#ifdef _WIN32
+		free((void *)directory);
+	#endif
 	dirname.ReplaceChars('\\', '/');
 	if (dirname[dirname.Len()-1] != '/') dirname += '/';
 	Filename = copystring(dirname);
 }
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-int STACK_ARGS FDirectory::lumpcmp(const void * a, const void * b)
-{
-	FDirectoryLump * rec1 = (FDirectoryLump *)a;
-	FDirectoryLump * rec2 = (FDirectoryLump *)b;
-
-	return stricmp(rec1->FullName, rec2->FullName);
-}
 
 #ifdef _WIN32
 //==========================================================================
@@ -299,8 +286,7 @@ bool FDirectory::Open(bool quiet)
 {
 	NumLumps = AddDirectory(Filename);
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
-	// Entries in Zips are sorted alphabetically.
-	qsort(&Lumps[0], NumLumps, sizeof(FDirectoryLump), lumpcmp);
+	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump));
 	return true;
 }
 

@@ -45,20 +45,31 @@
 
 
 const char *SpecialMapthingNames[] = {
-	"$PLAYER1START",
-	"$PLAYER2START",
-	"$PLAYER3START",
-	"$PLAYER4START",
-	"$PLAYER5START",
-	"$PLAYER6START",
-	"$PLAYER7START",
-	"$PLAYER8START",
-	"$DEATHMATCHSTART",
-	"$SSEQOVERRIDE",
-	"$POLYANCHOR",
-	"$POLYSPAWN",
-	"$POLYSPAWNCRUSH",
-	"$POLYSPAWNHURT"
+	"$Player1Start",
+	"$Player2Start",
+	"$Player3Start",
+	"$Player4Start",
+	"$Player5Start",
+	"$Player6Start",
+	"$Player7Start",
+	"$Player8Start",
+	"$DeathmatchStart",
+	"$SSeqOverride",
+	"$PolyAnchor",
+	"$PolySpawn",
+	"$PolySpawnCrush",
+	"$PolySpawnHurt",
+	"$SlopeFloorPointLine",
+	"$SlopeCeilingPointLine",
+	"$SetFloorSlope",
+	"$SetCeilingSlope",
+	"$VavoomFloor",
+	"$VavoomCeiling",
+	"$CopyFloorPlane",
+	"$CopyCeilingPlane",
+	"$VertexFloorZ",
+	"$VertexCeilingZ",
+
 };
 //==========================================================================
 //

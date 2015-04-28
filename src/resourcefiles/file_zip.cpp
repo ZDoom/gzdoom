@@ -138,24 +138,12 @@ class FZipFile : public FResourceFile
 {
 	FZipLump *Lumps;
 
-	static int STACK_ARGS lumpcmp(const void * a, const void * b);
-
 public:
 	FZipFile(const char * filename, FileReader *file);
 	virtual ~FZipFile();
 	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
-
-
-
-int STACK_ARGS FZipFile::lumpcmp(const void * a, const void * b)
-{
-	FZipLump * rec1 = (FZipLump *)a;
-	FZipLump * rec2 = (FZipLump *)b;
-
-	return stricmp(rec1->FullName, rec2->FullName);
-}
 
 
 //==========================================================================
@@ -274,8 +262,7 @@ bool FZipFile::Open(bool quiet)
 
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	
-	// Entries in Zips are sorted alphabetically.
-	qsort(Lumps, NumLumps, sizeof(FZipLump), lumpcmp);
+	PostProcessArchive(&Lumps[0], sizeof(FZipLump));
 	return true;
 }
 

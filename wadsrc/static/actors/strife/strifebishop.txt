@@ -3,7 +3,6 @@
 
 ACTOR StrifeBishop
 {
-	ConversationID 64,-1,-1
 	Health 500
 	Painchance 128
 	Speed 8

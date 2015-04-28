@@ -56,7 +56,6 @@ ACTOR Merchant
 
 ACTOR WeaponSmith : Merchant
 {
-	ConversationID 2
 	PainSound "smith/pain"
 	Tag "$TAG_WEAPONSMITH"
 }
@@ -67,7 +66,6 @@ ACTOR WeaponSmith : Merchant
 ACTOR BarKeep : Merchant
 {
 	Translation 4
-	ConversationID 3
 	PainSound "barkeep/pain"
 	ActiveSound "barkeep/active"
 	Tag "$TAG_BARKEEP"
@@ -79,7 +77,6 @@ ACTOR BarKeep : Merchant
 ACTOR Armorer : Merchant
 {
 	Translation 5
-	ConversationID 4
 	PainSound "armorer/pain"
 	Tag "$TAG_ARMORER"
 }
@@ -90,7 +87,6 @@ ACTOR Armorer : Merchant
 ACTOR Medic : Merchant
 {
 	Translation 6
-	ConversationID 5
 	PainSound "medic/pain"
 	Tag "$TAG_MEDIC"
 }

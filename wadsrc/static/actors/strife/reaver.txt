@@ -12,7 +12,6 @@ ACTOR Reaver
 	MinMissileChance 150
 	MaxDropoffHeight 32
 	Mass 500
-	ConversationID 52, -1, -1
 	SeeSound "reaver/sight"
 	PainSound "reaver/pain"
 	DeathSound "reaver/death"

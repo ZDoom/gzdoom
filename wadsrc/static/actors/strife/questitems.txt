@@ -48,159 +48,128 @@ ACTOR QuestItem : Inventory
 
 ACTOR QuestItem1 : QuestItem
 {
-	ConversationID 312, 293, 310
 }
 
 ACTOR QuestItem2 : QuestItem
 {
-	ConversationID 313, 294, 311
 }
 
 ACTOR QuestItem3 : QuestItem
 {
-	ConversationID 314, 295, 312
 }
 
 ACTOR QuestItem4 : QuestItem
 {
-	ConversationID 315, 296, 313
 	Tag "$TAG_QUEST4"
 }
 
 ACTOR QuestItem5 : QuestItem
 {
-	ConversationID 316, 297, 314
 	Tag "$TAG_QUEST5"
 }
 
 ACTOR QuestItem6 : QuestItem
 {
-	ConversationID 317, 298, 315
 	Tag "TAG_QUEST6"
 }
 
 ACTOR QuestItem7 : QuestItem
 {
-	ConversationID 318, -1, -1
 }
 
 ACTOR QuestItem8 : QuestItem
 {
-	ConversationID 319, -1, -1
 }
 
 ACTOR QuestItem9 : QuestItem
 {
-	ConversationID 320, -1, -1
 }
 
 ACTOR QuestItem10 : QuestItem
 {
-	ConversationID 321, -1, -1
 }
 
 ACTOR QuestItem11 : QuestItem
 {
-	ConversationID 322, -1, -1
 }
 
 ACTOR QuestItem12 : QuestItem
 {
-	ConversationID 323, -1, -1
 }
 
 ACTOR QuestItem13 : QuestItem
 {
-	ConversationID 324, -1, -1
 }
 
 ACTOR QuestItem14 : QuestItem
 {
-	ConversationID 325, -1, -1
 }
 
 ACTOR QuestItem15 : QuestItem
 {
-	ConversationID 326, -1, -1
 }
 
 ACTOR QuestItem16 : QuestItem
 {
-	ConversationID 327, -1, -1
 }
 
 ACTOR QuestItem17 : QuestItem
 {
-	ConversationID 328, -1, -1
 }
 
 ACTOR QuestItem18 : QuestItem
 {
-	ConversationID 329, -1, -1
 }
 
 ACTOR QuestItem19 : QuestItem
 {
-	ConversationID 330, -1, -1
 }
 
 ACTOR QuestItem20 : QuestItem
 {
-	ConversationID 331, -1, -1
 }
 
 ACTOR QuestItem21 : QuestItem
 {
-	ConversationID 332, -1, -1
 }
 
 ACTOR QuestItem22 : QuestItem
 {
-	ConversationID 333, -1, -1
 }
 
 ACTOR QuestItem23 : QuestItem
 {
-	ConversationID 334, -1, -1
 }
 
 ACTOR QuestItem24 : QuestItem
 {
-	ConversationID 335, -1, -1
 }
 
 ACTOR QuestItem25 : QuestItem
 {
-	ConversationID 336, -1, -1
 }
 
 ACTOR QuestItem26 : QuestItem
 {
-	ConversationID 337, -1, -1
 }
 
 ACTOR QuestItem27 : QuestItem
 {
-	ConversationID 338, -1, -1
 }
 
 ACTOR QuestItem28 : QuestItem
 {
-	ConversationID 339, -1, -1
 }
 
 ACTOR QuestItem29 : QuestItem
 {
-	ConversationID 340, -1, -1
 }
 
 ACTOR QuestItem30 : QuestItem
 {
-	ConversationID 341, -1, -1
 }
 
 ACTOR QuestItem31 : QuestItem
 {
-	ConversationID 342, -1, -1
 }
 

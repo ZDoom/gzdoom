@@ -3,7 +3,6 @@
 
 ACTOR Sentinel
 {
-	ConversationID 91,-1,-1
 	Health 100
 	Painchance 255
 	Speed 7

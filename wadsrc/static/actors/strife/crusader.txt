@@ -3,7 +3,6 @@
 
 ACTOR Crusader
 {
-	ConversationID 63,-1,-1
 	Speed 8
 	Radius 40
 	Height 56
@@ -111,7 +110,6 @@ ACTOR CrusaderMissile
 
 ACTOR DeadCrusader
 {
-	ConversationID 230
 	States
 	{
 	Spawn:

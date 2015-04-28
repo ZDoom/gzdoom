@@ -17,7 +17,6 @@ ACTOR Zombie : StrifeHumanoid
 	MaxStepHeight 16
 	MaxDropOffHeight 32
 	Translation 0
-	ConversationID 28, -1, -1
 	DeathSound "zombie/death"
 	CrushPainSound "misc/pcrush"
 	States
@@ -48,7 +47,6 @@ ACTOR ZombieSpawner
 	+SHOOTABLE
 	+NOSECTOR
 	RenderStyle None
-	ConversationID 30, -1, -1
 	ActiveSound "zombie/spawner"	// Does Strife use this somewhere else?
 	States
 	{

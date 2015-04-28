@@ -164,7 +164,8 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target);	/
 //
 // [RH] P_THINGS
 //
-extern TMap<int, PClassActor *> SpawnableThings;
+extern FClassMap SpawnableThings;
+extern FClassMap StrifeTypes;
 
 bool	P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, angle_t angle,

@@ -2,7 +2,6 @@
 
 ACTOR MedPatch : HealthPickup
 {
-	ConversationID 125, 121, 124
 	Health 10
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -24,7 +23,6 @@ ACTOR MedPatch : HealthPickup
 
 ACTOR MedicalKit : HealthPickup
 {
-	ConversationID 126, 122, 125
 	Health 25
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -46,7 +44,6 @@ ACTOR MedicalKit : HealthPickup
 
 ACTOR SurgeryKit : HealthPickup
 {
-	ConversationID 127, 123, 126
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Health -100
@@ -67,7 +64,6 @@ ACTOR SurgeryKit : HealthPickup
 
 ACTOR StrifeMap : MapRevealer
 {
-	ConversationID 164, 160, 163
 	+FLOORCLIP
 	Inventory.PickupSound "misc/p_pkup"
 	Inventory.PickupMessage "$TXT_STRIFEMAP"
@@ -87,7 +83,6 @@ ACTOR BeldinsRing : Inventory
 	+NOTDMATCH
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	ConversationID 173, 165, 169
 	Tag "$TAG_BELDINSRING"
 	Inventory.Icon "I_RING"
 	Inventory.GiveQuest 1
@@ -108,7 +103,6 @@ ACTOR OfferingChalice : Inventory
 	+DROPPED
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	ConversationID 174, 166, 170
 	Radius 10
 	Height 16
 	Tag "$TAG_OFFERINGCHALICE"
@@ -130,7 +124,6 @@ ACTOR Ear : Inventory
 {
 	+FLOORCLIP
 	+INVENTORY.INVBAR
-	ConversationID 175, 167, 171
 	Tag "$TAG_EAR"
 	Inventory.Icon "I_EARS"
 	Inventory.PickupMessage "$TXT_EAR"
@@ -148,7 +141,6 @@ ACTOR Ear : Inventory
 
 ACTOR BrokenPowerCoupling : Inventory
 {
-	ConversationID 289, -1, -1
 	Health 40
 	+DROPPED
 	+FLOORCLIP
@@ -173,7 +165,6 @@ ACTOR BrokenPowerCoupling : Inventory
 
 ACTOR ShadowArmor : PowerupGiver
 {
-	ConversationID 160, 156, 159
 	+FLOORCLIP
 	+VISIBILITYPULSE
 	+INVENTORY.INVBAR
@@ -198,7 +189,6 @@ ACTOR ShadowArmor : PowerupGiver
 
 ACTOR EnvironmentalSuit : PowerupGiver
 {
-	ConversationID 161, 157, 160
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	-INVENTORY.FANCYPICKUPSOUND
@@ -221,7 +211,6 @@ ACTOR EnvironmentalSuit : PowerupGiver
 
 ACTOR GuardUniform : Inventory
 {
-	ConversationID 162, 158, 161
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Tag "$TAG_GUARDUNIFORM"
@@ -241,7 +230,6 @@ ACTOR GuardUniform : Inventory
 
 ACTOR OfficersUniform : Inventory
 {
-	ConversationID 163, 159, 162
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Tag "$TAG_OFFICERSUNIFORM"
@@ -260,7 +248,6 @@ ACTOR OfficersUniform : Inventory
 
 ACTOR FlameThrowerParts : Inventory 
 {
-	ConversationID 191, 185, 189
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Inventory.Icon "I_BFLM"
@@ -281,7 +268,6 @@ ACTOR FlameThrowerParts : Inventory
 
 ACTOR InterrogatorReport : Inventory
 {
-	ConversationID 308, 289, 306
 	+FLOORCLIP
 	Tag "$TAG_REPORT"
 	Inventory.PickupMessage "$TXT_REPORT"
@@ -298,7 +284,6 @@ ACTOR InterrogatorReport : Inventory
 
 ACTOR Info : Inventory
 {
-	ConversationID 300, 282, 299
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	Tag "$TAG_INFO"
@@ -317,7 +302,6 @@ ACTOR Info : Inventory
 
 ACTOR Targeter : PowerupGiver
 {
-	ConversationID 167, 169, 173
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	-INVENTORY.FANCYPICKUPSOUND
@@ -339,7 +323,6 @@ ACTOR Targeter : PowerupGiver
 
 ACTOR Communicator : Inventory
 {
-	ConversationID 176, 168, 172
 	+NOTDMATCH
 	Tag "$TAG_COMMUNICATOR"
 	Inventory.Icon "I_COMM"
@@ -357,7 +340,6 @@ ACTOR Communicator : Inventory
 
 ACTOR DegninOre : Inventory native
 {	
-	ConversationID 128, 124, 127
 	Health 10
 	Radius 16
 	Height 16
@@ -391,7 +373,6 @@ ACTOR DegninOre : Inventory native
 
 ACTOR GunTraining : Inventory
 {
-	ConversationID 310,-1,-1
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	+INVENTORY.UNDROPPABLE
@@ -410,7 +391,6 @@ ACTOR GunTraining : Inventory
 
 ACTOR HealthTraining : Inventory native
 {
-	ConversationID 309,-1,-1
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	+INVENTORY.UNDROPPABLE
@@ -431,7 +411,6 @@ ACTOR HealthTraining : Inventory native
 
 ACTOR Scanner : PowerupGiver native
 {
-	ConversationID 165,-1,-1
 	+FLOORCLIP
 	+INVENTORY.FANCYPICKUPSOUND
 	Inventory.MaxAmount 1
@@ -452,7 +431,6 @@ ACTOR Scanner : PowerupGiver native
 
 ACTOR PrisonPass : Key native
 {
-	ConversationID 304, 286, 303
 	Inventory.Icon "I_TOKN"
 	Tag "$TAG_PRISONPASS"
 	Inventory.PickupMessage "$TXT_PRISONPASS"
@@ -483,7 +461,6 @@ ACTOR DummyStrifeItem : Inventory native
 
 ACTOR RaiseAlarm : DummyStrifeItem native
 {	
-	ConversationID 301, 283, 300
 	Tag "$TAG_ALARM"
 }
 
@@ -491,28 +468,24 @@ ACTOR RaiseAlarm : DummyStrifeItem native
 
 ACTOR OpenDoor222 : DummyStrifeItem native
 {
-	ConversationID 302, 284, 301
 }
 
 // Close door tag 222 -------------------------------------------------------
 
 ACTOR CloseDoor222 : DummyStrifeItem native
 {
-	ConversationID 303, 285, 302
 }
 
 // Open door tag 224 --------------------------------------------------------
 
 ACTOR OpenDoor224 : DummyStrifeItem native
 {
-	ConversationID 305, -1, -1
 }
 
 // Ammo ---------------------------------------------------------------------
 
 ACTOR AmmoFillup : DummyStrifeItem native
 {
-	ConversationID 298,280,297
 	Tag "$TAG_AMMOFILLUP"
 }
 
@@ -520,7 +493,6 @@ ACTOR AmmoFillup : DummyStrifeItem native
 
 ACTOR HealthFillup : DummyStrifeItem native
 {
-	ConversationID 299,281,298
 	Tag "$TAG_HEALTHFILLUP"
 }
 
@@ -528,7 +500,6 @@ ACTOR HealthFillup : DummyStrifeItem native
 
 ACTOR UpgradeStamina : DummyStrifeItem native
 {
-	ConversationID 306, 287, 307
 	Inventory.Amount 10
 	Inventory.MaxAmount 100
 }
@@ -537,14 +508,12 @@ ACTOR UpgradeStamina : DummyStrifeItem native
 
 ACTOR UpgradeAccuracy : DummyStrifeItem native
 {
-	ConversationID 307, 288, 308
 }
 
 // Start a slideshow --------------------------------------------------------
 
 ACTOR SlideshowStarter : DummyStrifeItem native
 {
-	ConversationID 343,-1,-1
 }
 
 

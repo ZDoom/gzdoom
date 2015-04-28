@@ -66,7 +66,6 @@ ACTOR Rebel : StrifeHumanoid
 
 ACTOR Rebel1 : Rebel
 {
-	ConversationID 43, 42, 43
 	DropItem "ClipOfBullets"
 }
 
@@ -74,42 +73,36 @@ ACTOR Rebel1 : Rebel
 
 ACTOR Rebel2 : Rebel
 {
-	ConversationID 44, 43, 44
 }
 
 // Rebel 3 ------------------------------------------------------------------
 
 ACTOR Rebel3 : Rebel
 {
-	ConversationID 45, 44, 45
 }
 
 // Rebel 4 ------------------------------------------------------------------
 
 ACTOR Rebel4 : Rebel
 {
-	ConversationID 46, 45, 56
 }
 
 // Rebel 5 ------------------------------------------------------------------
 
 ACTOR Rebel5 : Rebel
 {
-	ConversationID 47, 46, 47
 }
 
 // Rebel 6 ------------------------------------------------------------------
 
 ACTOR Rebel6 : Rebel
 {
-	ConversationID 48, 47, 48
 }
 
 // Teleporter Beacon --------------------------------------------------------
 
 ACTOR TeleporterBeacon : Inventory native
 {
-	ConversationID 166,-1,-1
 	Health 5
 	Radius 16
 	Height 16

@@ -3,7 +3,6 @@
 
 ACTOR Oracle
 {
-	ConversationID 65, 62, 63
 	Health 1
 	Radius 15
 	Height 56

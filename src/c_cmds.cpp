@@ -911,8 +911,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 
 	if (FilterName != NULL)
 	{
-		FilterClass = PClass::FindClass(FilterName);
-		if (FilterClass == NULL || FilterClass->ActorInfo == NULL)
+		FilterClass = PClass::FindActor(FilterName);
+		if (FilterClass == NULL)
 		{
 			Printf("%s is not an actor class.\n", FilterName);
 			return;

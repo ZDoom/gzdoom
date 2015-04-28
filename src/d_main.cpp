@@ -1657,7 +1657,7 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 		return wad;
 	}
 
-	if (GameConfig->SetSection ("FileSearch.Directories"))
+	if (GameConfig != NULL && GameConfig->SetSection ("FileSearch.Directories"))
 	{
 		const char *key;
 		const char *value;
@@ -1723,12 +1723,13 @@ bool ConsiderPatches (const char *arg)
 //
 //==========================================================================
 
-void D_MultiExec (DArgs *list, bool usePullin)
+FExecList *D_MultiExec (DArgs *list, FExecList *exec)
 {
 	for (int i = 0; i < list->NumArgs(); ++i)
 	{
-		C_ExecFile (list->GetArg (i), usePullin);
+		exec = C_ParseExecFile(list->GetArg(i), exec);
 	}
+	return exec;
 }
 
 static void GetCmdLineFiles(TArray<FString> &wadfiles)
@@ -1998,10 +1999,6 @@ static void D_DoomInit()
 	}
 		
 	FRandom::StaticClearRandom ();
-
-	Printf ("M_LoadDefaults: Load system defaults.\n");
-	M_LoadDefaults ();			// load before initing other systems
-
 }
 
 //==========================================================================
@@ -2010,10 +2007,9 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *group, const char *autoname)
+static void AddAutoloadFiles(const char *autoname)
 {
-	LumpFilterGroup = group;
-	LumpFilterIWAD = autoname;
+	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
@@ -2045,25 +2041,14 @@ static void AddAutoloadFiles(const char *group, const char *autoname)
 		// Add common (global) wads
 		D_AddConfigWads (allwads, "Global.Autoload");
 
-		// Add game-specific wads
-		file = gameinfo.ConfigName;
-		file += ".Autoload";
-		D_AddConfigWads (allwads, file);
+		long len;
+		int lastpos = -1;
 
-		// Add group-specific wads
-		if (group != NULL)
+		while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
 		{
-			file = group;
-			file += ".Autoload";
+			file = LumpFilterIWAD.Left(len) + ".Autoload";
 			D_AddConfigWads(allwads, file);
-		}
-
-		// Add IWAD-specific wads
-		if (autoname != NULL)
-		{
-			file = autoname;
-			file += ".Autoload";
-			D_AddConfigWads(allwads, file);
+			lastpos = len;
 		}
 	}
 }
@@ -2220,7 +2205,8 @@ void D_DoomMain (void)
 	DArgs *execFiles;
 	TArray<FString> pwads;
 	FString *args;
-	int argcount;
+	int argcount;	
+	FIWadManager *iwad_man;
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
 	FString logfile = Args->TakeValue("+logfile");
@@ -2260,6 +2246,11 @@ void D_DoomMain (void)
 	}
 	FString basewad = wad;
 
+	iwad_man = new FIWadManager;
+	iwad_man->ParseIWadInfos(basewad);
+
+	Printf ("M_LoadDefaults: Load system defaults.\n");
+	M_LoadDefaults (iwad_man);			// load before initing other systems
 
 	// reinit from here
 
@@ -2281,7 +2272,11 @@ void D_DoomMain (void)
 		// restart is initiated without a defined IWAD assume for now that it's not going to change.
 		if (iwad.IsEmpty()) iwad = lastIWAD;
 
-		FIWadManager *iwad_man = new FIWadManager;
+		if (iwad_man == NULL)
+		{
+			iwad_man = new FIWadManager;
+			iwad_man->ParseIWadInfos(basewad);
+		}
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
 		gameinfo.gametype = iwad_info->gametype;
 		gameinfo.flags = iwad_info->flags;
@@ -2296,20 +2291,26 @@ void D_DoomMain (void)
 		FBaseCVar::DisableCallbacks();
 		GameConfig->DoGameSetup (gameinfo.ConfigName);
 
-		AddAutoloadFiles(iwad_info->Group, iwad_info->Autoname);
+		AddAutoloadFiles(iwad_info->Autoname);
 
-		// Run automatically executed files
+		// Process automatically executed files
+		FExecList *exec;
 		execFiles = new DArgs;
-		GameConfig->AddAutoexec (execFiles, gameinfo.ConfigName);
-		D_MultiExec (execFiles, true);
+		GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
+		exec = D_MultiExec(execFiles, NULL);
 
-		// Run .cfg files at the start of the command line.
+		// Process .cfg files at the start of the command line.
 		execFiles = Args->GatherFiles ("-exec");
-		D_MultiExec (execFiles, true);
+		exec = D_MultiExec(execFiles, exec);
 
-		C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
+		// [RH] process all + commands on the command line
+		exec = C_ParseCmdLineParams(exec);
 
 		CopyFiles(allwads, pwads);
+		if (exec != NULL)
+		{
+			exec->AddPullins(allwads);
+		}
 
 		// Since this function will never leave we must delete this array here manually.
 		pwads.Clear();
@@ -2317,7 +2318,7 @@ void D_DoomMain (void)
 
 		if (hashfile)
 		{
-			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer then usual.\n");
+			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer than usual.\n");
 		}
 
 		Printf ("W_Init: Init WADfiles.\n");
@@ -2326,11 +2327,18 @@ void D_DoomMain (void)
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
 
+		GameConfig->DoKeySetup(gameinfo.ConfigName);
+
 		// Now that wads are loaded, define mod-specific cvars.
 		ParseCVarInfo();
 
-		// Try setting previously unknown cvars again, as a CVARINFO may have made them known.
-		C_ExecStoredSets();
+		// Actually exec command line commands and exec files.
+		if (exec != NULL)
+		{
+			exec->ExecCommands();
+			delete exec;
+			exec = NULL;
+		}
 
 		// [RH] Initialize localizable strings.
 		GStrings.LoadStrings (false);
@@ -2496,6 +2504,7 @@ void D_DoomMain (void)
 		FBaseCVar::EnableNoSet ();
 
 		delete iwad_man;	// now we won't need this anymore
+		iwad_man = NULL;
 
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;

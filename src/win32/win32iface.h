@@ -127,10 +127,12 @@ public:
 	virtual void Blank () = 0;
 	virtual bool PaintToWindow () = 0;
 	virtual HRESULT GetHR () = 0;
+	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y);
 
 protected:
 	virtual bool CreateResources () = 0;
 	virtual void ReleaseResources () = 0;
+    virtual int GetTrueHeight() { return GetHeight(); }
 
 	bool Windowed;
 
@@ -164,8 +166,8 @@ public:
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
 	HRESULT GetHR ();
-	virtual int GetTrueHeight() { return TrueHeight; }
 	bool Is8BitMode();
+    virtual int GetTrueHeight() { return TrueHeight; }
 
 	void Blank ();
 	bool PaintToWindow ();
@@ -269,8 +271,8 @@ public:
 	bool WipeDo(int ticks);
 	void WipeCleanup();
 	HRESULT GetHR ();
-	virtual int GetTrueHeight() { return TrueHeight; }
 	bool Is8BitMode() { return false; }
+    virtual int GetTrueHeight() { return TrueHeight; }
 
 private:
 	friend class D3DTex;
@@ -380,7 +382,6 @@ private:
 	void EndLineBatch();
 	void EndBatch();
 	void CopyNextFrontBuffer();
-	int GetPixelDoubling() const { return PixelDoubling; }
 
 	D3DCAPS9 DeviceCaps;
 

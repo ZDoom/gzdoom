@@ -128,6 +128,8 @@ enum
 	kVK_UpArrow       = 0x7E
 };
 
+static const NSOpenGLPixelFormatAttribute NSOpenGLPFAAllowOfflineRenderers = NSOpenGLPixelFormatAttribute(96);
+
 #endif // prior to 10.5
 
 

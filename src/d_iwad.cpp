@@ -138,12 +138,6 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 					sc.MustGetString();
 					iwad->Autoname = sc.String;
 				}
-				else if (sc.Compare("Group"))
-				{
-					sc.MustGetStringName("=");
-					sc.MustGetString();
-					iwad->Group = sc.String;
-				}
 				else if (sc.Compare("Config"))
 				{
 					sc.MustGetStringName("=");
@@ -224,6 +218,11 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize)
 				{
 					sc.ScriptError("Unknown keyword '%s'", sc.String);
 				}
+			}
+			if (iwad->MapInfo.IsEmpty())
+			{
+				// We must at least load the minimum defaults to allow the engine to run.
+				iwad->MapInfo = "mapinfo/mindefaults.txt";
 			}
 		}
 		else if (sc.Compare("NAMES"))
@@ -393,7 +392,6 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	bool iwadparmfound = false;
 	FString custwad;
 
-	ParseIWadInfos(zdoom_wad);
 	wads.Resize(mIWadNames.Size());
 	foundwads.Resize(mIWads.Size());
 	memset(&foundwads[0], 0, foundwads.Size() * sizeof(foundwads[0]));

@@ -67,6 +67,7 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "p_setup.h"
 
 static FRandom pr_script("FScript");
 
@@ -312,18 +313,24 @@ static int T_GetPlayerNum(const svalue_t &arg)
 // sectors directly by passing a negative value
 //
 //==========================================================================
-int T_FindSectorFromTag(int tagnum,int startsector)
+class FSSectorTagIterator : public FSectorTagIterator
 {
-	if (tagnum<=0)
+public:
+	FSSectorTagIterator(int tag)
+		: FSectorTagIterator(tag)
 	{
-		if (startsector<0)
+		if (tag < 0)
 		{
-			if (tagnum==-32768) return 0;
-			if (-tagnum<numsectors) return -tagnum;
+			searchtag = INT_MIN;
+			start = tag == -32768? 0 : -tag < numsectors? -tag : -1;
 		}
-		return -1;
 	}
-	return P_FindSectorFromTag(tagnum,startsector);
+};
+
+inline int T_FindFirstSectorFromTag(int tagnum)
+{
+	FSSectorTagIterator it(tagnum);
+	return it.Next();
 }
 
 
@@ -1158,7 +1165,7 @@ void FParser::SF_ObjSector(void)
 	}
 
 	t_return.type = svt_int;
-	t_return.value.i = mo ? mo->Sector->tag : 0; // nullptr check
+	t_return.value.i = mo ? mo->Sector->GetMainTag() : 0; // nullptr check
 }
 
 //==========================================================================
@@ -1536,7 +1543,8 @@ void FParser::SF_StartSectorSound(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		int i=-1;
-		while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((i = itr.Next()) >= 0)
 		{
 			sector = &sectors[i];
 			S_Sound(sector, CHAN_BODY, T_FindSound(stringvalue(t_argv[1])), 1.0f, ATTN_NORM);
@@ -1595,7 +1603,8 @@ void FParser::SF_FloorHeight(void)
 			
 			// set all sectors with tag
 			
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				if (sectors[i].floordata) continue;	// don't move floors that are active!
 
@@ -1612,7 +1621,7 @@ void FParser::SF_FloorHeight(void)
 		}
 		else
 		{
-			secnum = T_FindSectorFromTag(tagnum, -1);
+			secnum = T_FindFirstSectorFromTag(tagnum);
 			if(secnum < 0)
 			{ 
 				script_error("sector not found with tagnum %i\n", tagnum); 
@@ -1671,7 +1680,8 @@ void FParser::SF_MoveFloor(void)
 		
 		// move all sectors with tag
 		
-		while ((secnum = T_FindSectorFromTag(tagnum, secnum)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((secnum = itr.Next()) >= 0)
 		{
 			sec = &sectors[secnum];
 			// Don't start a second thinker on the same floor
@@ -1733,7 +1743,8 @@ void FParser::SF_CeilingHeight(void)
 			dest = fixedvalue(t_argv[1]);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				if (sectors[i].ceilingdata) continue;	// don't move ceilings that are active!
 
@@ -1750,7 +1761,7 @@ void FParser::SF_CeilingHeight(void)
 		}
 		else
 		{
-			secnum = T_FindSectorFromTag(tagnum, -1);
+			secnum = T_FindFirstSectorFromTag(tagnum);
 			if(secnum < 0)
 			{ 
 				script_error("sector not found with tagnum %i\n", tagnum); 
@@ -1823,7 +1834,8 @@ void FParser::SF_MoveCeiling(void)
 		silent=t_argc>4 ? intvalue(t_argv[4]):1;
 		
 		// move all sectors with tag
-		while ((secnum = T_FindSectorFromTag(tagnum, secnum)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((secnum = itr.Next()) >= 0)
 		{
 			sec = &sectors[secnum];
 			
@@ -1851,7 +1863,7 @@ void FParser::SF_LightLevel(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ 
@@ -1865,7 +1877,8 @@ void FParser::SF_LightLevel(void)
 			int i = -1;
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].SetLightLevel(intvalue(t_argv[1]));
 			}
@@ -1984,7 +1997,8 @@ void FParser::SF_FadeLight(void)
 		destlevel = intvalue(t_argv[1]);
 		speed = t_argc>2 ? intvalue(t_argv[2]) : 1;
 		
-		for (i = -1; (i = P_FindSectorFromTag(sectag,i)) >= 0;) 
+		FSectorTagIterator it(sectag);
+		while ((i = it.Next()) >= 0)
 		{
 			if (!sectors[i].lightingdata) new DLightLevel(&sectors[i],destlevel,speed);
 		}
@@ -2006,7 +2020,7 @@ void FParser::SF_FloorTexture(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -2019,7 +2033,8 @@ void FParser::SF_FloorTexture(void)
 			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].SetTexture(sector_t::floor, picnum);
 			}
@@ -2057,7 +2072,7 @@ void FParser::SF_SectorColormap(void)
 	tagnum = intvalue(t_argv[0]);
 	
 	// argv is sector tag
-	secnum = T_FindSectorFromTag(tagnum, -1);
+	secnum = T_FindFirstSectorFromTag(tagnum);
 	
 	if(secnum < 0)
 	{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -2068,7 +2083,8 @@ void FParser::SF_SectorColormap(void)
 	{
 		DWORD cm = R_ColormapNumForName(t_argv[1].value.s);
 
-		while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((i = itr.Next()) >= 0)
 		{
 			sectors[i].midmap=cm;
 			sectors[i].heightsec=&sectors[i];
@@ -2094,7 +2110,7 @@ void FParser::SF_CeilingTexture(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -2107,7 +2123,8 @@ void FParser::SF_CeilingTexture(void)
 			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].SetTexture(sector_t::ceiling, picnum);
 			}
@@ -2210,9 +2227,6 @@ void FParser::SF_RunCommand(void)
 //
 //==========================================================================
 
-// any linedef type
-extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
-
 void FParser::SF_LineTrigger()
 {
 	if (CheckArgs(1))
@@ -2221,7 +2235,7 @@ void FParser::SF_LineTrigger()
 		maplinedef_t mld;
 		mld.special=intvalue(t_argv[0]);
 		mld.tag=t_argc > 1 ? intvalue(t_argv[1]) : 0;
-		P_TranslateLineDef(&line, &mld);
+		P_TranslateLineDef(&line, &mld, false);
 		P_ExecuteSpecial(line.special, NULL, Script->trigger, false, 
 			line.args[0],line.args[1],line.args[2],line.args[3],line.args[4]); 
 	}
@@ -2281,9 +2295,11 @@ void FParser::SF_SetLineBlocking(void)
 		{
 			blocking=blocks[blocking];
 			int tag=intvalue(t_argv[0]);
-			for (int i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+			FLineIdIterator itr(tag);
+			int i;
+			while ((i = itr.Next()) >= 0)
 			{
-				lines[i].flags = (lines[i].flags & ~(ML_BLOCKING|ML_BLOCKEVERYTHING)) | blocking;
+				lines[i].flags = (lines[i].flags & ~(ML_BLOCKING | ML_BLOCKEVERYTHING)) | blocking;
 			}
 		}
 	}
@@ -2302,7 +2318,9 @@ void FParser::SF_SetLineMonsterBlocking(void)
 		int blocking = intvalue(t_argv[1]) ? ML_BLOCKMONSTERS : 0;
 		int tag=intvalue(t_argv[0]);
 
-		for (int i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+		FLineIdIterator itr(tag);
+		int i;
+		while ((i = itr.Next()) >= 0)
 		{
 			lines[i].flags = (lines[i].flags & ~ML_BLOCKMONSTERS) | blocking;
 		}
@@ -2357,12 +2375,13 @@ void FParser::SF_SetLineTexture(void)
 			texture = stringvalue(t_argv[3]);
 			texturenum = TexMan.GetTexture(texture, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 			
-			for (i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+			FLineIdIterator itr(tag);
+			while ((i = itr.Next()) >= 0)
 			{
 				// bad sidedef, Hexen just SEGV'd here!
-				if(lines[i].sidedef[side] != NULL)
+				if (lines[i].sidedef[side] != NULL)
 				{
-					if (position >=0 && position <=2)
+					if (position >= 0 && position <= 2)
 					{
 						lines[i].sidedef[side]->SetTexture(position, texturenum);
 					}
@@ -2376,7 +2395,8 @@ void FParser::SF_SetLineTexture(void)
 			int sections = intvalue(t_argv[3]); 
 			
 			// set all sectors with tag 
-			for (i = -1; (i = P_FindLineFromID(tag, i)) >= 0;) 
+			FLineIdIterator itr(tag);
+			while ((i = itr.Next()) >= 0)
 			{ 
 				side_t *sided = lines[i].sidedef[side];
 				if(sided != NULL)
@@ -4201,7 +4221,7 @@ void FParser::SF_SetColor(void)
 	{
 		tagnum = intvalue(t_argv[0]);
 		
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ 
@@ -4222,7 +4242,8 @@ void FParser::SF_SetColor(void)
 		else return;
 
 		// set all sectors with tag
-		while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+		FSSectorTagIterator itr(tagnum);
+		while ((i = itr.Next()) >= 0)
 		{
 			sectors[i].ColorMap = GetSpecialLights (color, sectors[i].ColorMap->Fade, 0);
 		}
@@ -4291,7 +4312,7 @@ void  FParser::SF_KillInSector()
 
 		while ((mo=it.Next()))
 		{
-			if (mo->flags3&MF3_ISMONSTER && mo->Sector->tag==tag) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
+			if (mo->flags3&MF3_ISMONSTER && mo->Sector->HasTag(tag)) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
 		}
 	}
 }
@@ -4314,7 +4335,7 @@ void FParser::SF_SectorType(void)
 		tagnum = intvalue(t_argv[0]);
 		
 		// argv is sector tag
-		secnum = T_FindSectorFromTag(tagnum, -1);
+		secnum = T_FindFirstSectorFromTag(tagnum);
 		
 		if(secnum < 0)
 		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
@@ -4327,7 +4348,8 @@ void FParser::SF_SectorType(void)
 			int spec = intvalue(t_argv[1]);
 			
 			// set all sectors with tag
-			while ((i = T_FindSectorFromTag(tagnum, i)) >= 0)
+			FSSectorTagIterator itr(tagnum);
+			while ((i = itr.Next()) >= 0)
 			{
 				sectors[i].special = spec;
 			}
@@ -4355,18 +4377,17 @@ void FParser::SF_SetLineTrigger()
 		id=intvalue(t_argv[0]);
 		spec=intvalue(t_argv[1]);
 		if (t_argc>2) tag=intvalue(t_argv[2]);
-		for (i = -1; (i = P_FindLineFromID (id, i)) >= 0; )
+		FLineIdIterator itr(id);
+		while ((i = itr.Next()) >= 0)
 		{
-			if (t_argc==2) tag=lines[i].id;
 			maplinedef_t mld;
-			mld.special=spec;
-			mld.tag=tag;
-			mld.flags=0;
+			mld.special = spec;
+			mld.tag = tag;
+			mld.flags = 0;
 			int f = lines[i].flags;
-			P_TranslateLineDef(&lines[i], &mld);	
-			lines[i].id=tag;
-			lines[i].flags = (lines[i].flags & (ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_SPAC_MASK|ML_FIRSTSIDEONLY)) |
-										(f & ~(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_SPAC_MASK|ML_FIRSTSIDEONLY));
+			P_TranslateLineDef(&lines[i], &mld, false);
+			lines[i].flags = (lines[i].flags & (ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY)) |
+				(f & ~(ML_MONSTERSCANACTIVATE | ML_REPEAT_SPECIAL | ML_SPAC_MASK | ML_FIRSTSIDEONLY));
 
 		}
 	}
@@ -4375,33 +4396,13 @@ void FParser::SF_SetLineTrigger()
 
 //==========================================================================
 //
-// new for GZDoom: Changes a sector's tag
-// (I only need this because MAP02 in RTC-3057 has some issues with the GL 
-// renderer that I can't fix without the scripts. But loading a FS on top on
-// ACS still works so I can hack around it with this.)
+//
 //
 //==========================================================================
 
 void FParser::SF_ChangeTag()
 {
-	if (CheckArgs(2))
-	{
-		for (int secnum = -1; (secnum = P_FindSectorFromTag (t_argv[0].value.i, secnum)) >= 0; ) 
-		{
-			sectors[secnum].tag=t_argv[1].value.i;
-		}
-
-		// Recreate the hash tables
-		int i;
-
-		for (i=numsectors; --i>=0; ) sectors[i].firsttag = -1;
-		for (i=numsectors; --i>=0; )
-		{
-			int j = (unsigned) sectors[i].tag % (unsigned) numsectors;
-			sectors[i].nexttag = sectors[j].firsttag;
-			sectors[j].firsttag = i;
-		}
-	}
+	// Development garbage!
 }
 
 

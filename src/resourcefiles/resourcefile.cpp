@@ -90,16 +90,14 @@ FResourceLump::~FResourceLump()
 //
 //==========================================================================
 
-void FResourceLump::LumpNameSetup(const char *iname)
+void FResourceLump::LumpNameSetup(FString iname)
 {
-	const char *lname = strrchr(iname,'/');
-	lname = (lname == NULL) ? iname : lname + 1;
-	FString base = lname;
-	base = base.Left(base.LastIndexOf('.'));
+	long slash = iname.LastIndexOf('/');
+	FString base = (slash >= 0) ? iname.Mid(slash + 1) : iname;
+	base.Truncate(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
-	FString temp = iname;	// Note: iname can point to inside FullName's string buffer so we cannot do the assignment directly.
-	FullName = temp;
+	FullName = iname;
 
 	// Map some directories to WAD namespaces.
 	// Note that some of these namespaces don't exist in WADS.
@@ -117,12 +115,12 @@ void FResourceLump::LumpNameSetup(const char *iname)
 				!strncmp(iname, "sounds/", 7)		? ns_sounds :
 				!strncmp(iname, "music/", 6)		? ns_music : 
 				!strchr(iname, '/')					? ns_global :
-				-1;
+				ns_hidden;
 	
 	// Anything that is not in one of these subdirectories or the main directory 
 	// should not be accessible through the standard WAD functions but only through 
 	// the ones which look for the full name.
-	if (Namespace == -1)
+	if (Namespace == ns_hidden)
 	{
 		memset(Name, 0, 8);
 	}
@@ -346,9 +344,17 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
 	// in the ini file use. We reduce the maximum lump concidered after
 	// each one so that we don't risk refiltering already filtered lumps.
 	DWORD max = NumLumps;
-	max -= FilterLumps(gameinfo.ConfigName, lumps, lumpsize, max);
-	max -= FilterLumps(LumpFilterGroup, lumps, lumpsize, max);
-	max -= FilterLumps(LumpFilterIWAD, lumps, lumpsize, max);
+	max -= FilterLumpsByGameType(gameinfo.gametype, lumps, lumpsize, max);
+
+	long len;
+	int lastpos = -1;
+	FString file;
+
+	while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
+	{
+		max -= FilterLumps(LumpFilterIWAD.Left(len), lumps, lumpsize, max);
+		lastpos = len;
+	}
 	JunkLeftoverFilters(lumps, lumpsize, max);
 }
 
@@ -382,7 +388,7 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 		{
 			FResourceLump *lump = (FResourceLump *)lump_p;
 			assert(lump->FullName.CompareNoCase(filter, (int)filter.Len()) == 0);
-			lump->LumpNameSetup(&lump->FullName[filter.Len()]);
+			lump->LumpNameSetup(lump->FullName.Mid(filter.Len()));
 		}
 
 		// Move filtered lumps to the end of the lump list.
@@ -410,6 +416,41 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 
 //==========================================================================
 //
+// FResourceFile :: FilterLumpsByGameType
+//
+// Matches any lumps that match "filter/game-<gametype>/*". Includes
+// inclusive gametypes like Raven.
+//
+//==========================================================================
+
+int FResourceFile::FilterLumpsByGameType(int type, void *lumps, size_t lumpsize, DWORD max)
+{
+	static const struct { int match; const char *name; } blanket[] =
+	{
+		{ GAME_Raven,			"game-Raven" },
+		{ GAME_DoomStrifeChex,	"game-DoomStrifeChex" },
+		{ GAME_DoomChex,		"game-DoomChex" },
+		{ GAME_Any, NULL }
+	};
+	if (type == 0)
+	{
+		return 0;
+	}
+	int count = 0;
+	for (int i = 0; blanket[i].name != NULL; ++i)
+	{
+		if (type & blanket[i].match)
+		{
+			count += FilterLumps(blanket[i].name, lumps, lumpsize, max);
+		}
+	}
+	FString filter = "game-";
+	filter += GameNames[type];
+	return count + FilterLumps(filter, lumps, lumpsize, max);
+}
+
+//==========================================================================
+//
 // FResourceFile :: JunkLeftoverFilters
 //
 // Deletes any lumps beginning with "filter/" that were not matched.
@@ -430,7 +471,7 @@ void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max)
 			FResourceLump *lump = (FResourceLump *)p;
 			lump->FullName = 0;
 			lump->Name[0] = '\0';
-			lump->Namespace = ns_invalid;
+			lump->Namespace = ns_hidden;
 		}
 	}
 }

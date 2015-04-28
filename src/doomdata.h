@@ -347,10 +347,10 @@ struct FMapThing
 	fixed_t		y;
 	fixed_t		z;
 	short		angle;
-	FDoomEdEntry *info;
-	short		EdNum;
 	WORD		SkillFilter;
 	WORD		ClassFilter;
+	short		EdNum;
+	FDoomEdEntry *info;
 	DWORD		flags;
 	int			special;
 	int			args[5];

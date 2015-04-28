@@ -1,0 +1,59 @@
+// defines the minimum needed entries to let an unknown IWAD run
+
+gameinfo
+{
+	titlepage = "-NOFLAT-"
+	titletime = 999
+	infopage = "-NOFLAT-"
+	titlemusic = ""
+	advisorytime = 0
+	chatsound = ""
+	finalemusic = ""
+	finaleflat = "-NOFLAT-"
+	finalepage = "-NOFLAT-"
+	quitsound = ""
+	borderflat = "-NOFLAT-"
+	border = DoomBorder
+	telefogheight = 0
+	defkickback = 100
+	skyflatname = "F_SKY1"
+	translator = "xlat/doom.txt"
+	defaultbloodcolor = "68 00 00"
+	defaultbloodparticlecolor = "ff 00 00"
+	backpacktype = "Backpack"
+	armoricons = "AICNA0", 0.75, "AICNC0"
+	statusbar = "sbarinfo/doom.txt"
+	intermissionmusic = ""
+	intermissioncounter = true
+	dimcolor = "6f 00 6b"
+	dimamount = 0.8
+	definventorymaxamount = 25
+	defaultrespawntime = 12
+	defaultdropstyle = 1
+	endoom = "ENDOOM"
+	player5start = 4001
+	pickupcolor = "c0 c0 c0"
+	quitmessages = "Do you want to quit?"
+
+	menufontcolor_title = "purple"
+	menufontcolor_label = "default"
+	menufontcolor_value = "gray"
+	menufontcolor_action = "gray"
+	menufontcolor_header = "blue"
+	menufontcolor_highlight = "lightblue"
+	menufontcolor_selection = "purple"
+	menubackbutton = "M_BACK_D"
+	playerclasses = "DoomPlayer"
+	pausesign = "-NOFLAT-"
+	gibfactor = 1
+	cursorpic = "doomcurs"
+	textscreenx = 10
+	textscreeny = 10
+	defaultendsequence = "Inter_Cast"
+	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
+	statscreen_mapnamefont = "BigFont"
+	statscreen_finishedpatch = "WIF"
+	statscreen_enteringpatch = "WIENTER"
+}
+
+include "mapinfo/common.txt"

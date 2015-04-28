@@ -177,8 +177,8 @@ void FTextureManager::InitAnimated (void)
 	{
 		FMemLump animatedlump = Wads.ReadLump (lumpnum);
 		int animatedlen = Wads.LumpLength(lumpnum);
-		const char *animdefs = (const char *)animatedlump.GetMem();
-		const char *anim_p;
+		const BYTE *animdefs = (const BYTE *)animatedlump.GetMem();
+		const BYTE *anim_p;
 		FTextureID pic1, pic2;
 		int animtype;
 		DWORD animspeed;
@@ -186,7 +186,7 @@ void FTextureManager::InitAnimated (void)
 		// Init animation
 		animtype = FAnimDef::ANIM_Forward;
 
-		for (anim_p = animdefs; *anim_p != -1; anim_p += 23)
+		for (anim_p = animdefs; *anim_p != 0xFF; anim_p += 23)
 		{
 			// make sure the current chunk of data is inside the lump boundaries.
 			if (anim_p + 22 >= animdefs + animatedlen)
@@ -196,8 +196,8 @@ void FTextureManager::InitAnimated (void)
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
-				if (!(pic1 = CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall, texflags)).Exists() ||
-					!(pic2 = CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall, texflags)).Exists())
+				if (!(pic1 = CheckForTexture ((const char*)(anim_p + 10) /* .startname */, FTexture::TEX_Wall, texflags)).Exists() ||
+					!(pic2 = CheckForTexture ((const char*)(anim_p + 1) /* .endname */, FTexture::TEX_Wall, texflags)).Exists())
 					continue;		
 
 				// [RH] Bit 1 set means allow decals on walls with this texture
@@ -205,16 +205,16 @@ void FTextureManager::InitAnimated (void)
 			}
 			else
 			{
-				if (!(pic1 = CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat, texflags)).Exists() ||
-					!(pic2 = CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
+				if (!(pic1 = CheckForTexture ((const char*)(anim_p + 10) /* .startname */, FTexture::TEX_Flat, texflags)).Exists() ||
+					!(pic2 = CheckForTexture ((const char*)(anim_p + 1) /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
 					continue;
 			}
 
 			FTexture *tex1 = Texture(pic1);
 			FTexture *tex2 = Texture(pic2);
 
-			animspeed = (BYTE(anim_p[19]) << 0)  | (BYTE(anim_p[20]) << 8) |
-						(BYTE(anim_p[21]) << 16) | (BYTE(anim_p[22]) << 24);
+			animspeed = (anim_p[19] << 0)  | (anim_p[20] << 8) |
+						(anim_p[21] << 16) | (anim_p[22] << 24);
 
 			// SMMU-style swirly hack? Don't apply on already-warping texture
 			if (animspeed > 65535 && tex1 != NULL && !tex1->bWarped)
@@ -242,7 +242,7 @@ void FTextureManager::InitAnimated (void)
 				if (pic1 == pic2)
 				{
 					// This animation only has one frame. Skip it. (Doom aborted instead.)
-					Printf ("Animation %s in ANIMATED has only one frame\n", anim_p + 10);
+					Printf ("Animation %s in ANIMATED has only one frame\n", (const char*)(anim_p + 10));
 					continue;
 				}
 				// [RH] Allow for backward animations as well as forward.

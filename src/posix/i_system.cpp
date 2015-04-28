@@ -331,7 +331,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	gtk_container_add (GTK_CONTAINER(window), vbox);
 
 	// Create the top label.
-	widget = gtk_label_new ("ZDoom found more than one IWAD\nSelect from the list below to determine which one to use:");
+	widget = gtk_label_new (GAMENAME " found more than one IWAD\nSelect from the list below to determine which one to use:");
 	gtk_box_pack_start (GTK_BOX(vbox), widget, false, false, 0);
 	gtk_misc_set_alignment (GTK_MISC(widget), 0, 0);
 
@@ -450,7 +450,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	{
 		FString cmd("kdialog --title \"" GAMESIG " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
-		            " --menu \"ZDoom found more than one IWAD\n"
+		            " --menu \"" GAMENAME " found more than one IWAD\n"
 		            "Select from the list below to determine which one to use:\"";
 
 		for(i = 0; i < numwads; ++i)
@@ -603,6 +603,15 @@ int I_FindAttr (findstate_t *fileinfo)
 
 #ifdef __APPLE__
 static PasteboardRef s_clipboard;
+
+static CFDataRef GetPasteboardData(const PasteboardItemID itemID, const CFStringRef flavorType)
+{
+	CFDataRef data = NULL;
+
+	const OSStatus result = PasteboardCopyItemFlavorData(s_clipboard, itemID, flavorType, &data);
+
+	return noErr == result ? data : NULL;
+}
 #endif // __APPLE__
 
 // Clipboard support requires GTK+
@@ -688,34 +697,40 @@ FString I_GetFromClipboard (bool use_primary_selection)
 		return FString();
 	}
 
-	CFArrayRef flavorTypeArray;
-
-	if (0 != PasteboardCopyItemFlavors(s_clipboard, itemID, &flavorTypeArray))
+	if (CFDataRef data = GetPasteboardData(itemID, kUTTypeUTF8PlainText))
 	{
-		return FString();
+		const CFIndex bufferLength = CFDataGetLength(data);
+		char* const buffer = result.LockNewBuffer(bufferLength);
+
+		memcpy(buffer, CFDataGetBytePtr(data), bufferLength);
+
+		result.UnlockBuffer();
 	}
-
-	const CFIndex flavorCount = CFArrayGetCount(flavorTypeArray);
-
-	for (CFIndex flavorIndex = 0; flavorIndex < flavorCount; ++flavorIndex)
+	else if (CFDataRef data = GetPasteboardData(itemID, kUTTypeUTF16PlainText))
 	{
-		const CFStringRef flavorType = static_cast<const CFStringRef>(
-			CFArrayGetValueAtIndex(flavorTypeArray, flavorIndex));
+#ifdef __LITTLE_ENDIAN__
+		static const CFStringEncoding ENCODING = kCFStringEncodingUTF16LE;
+#else // __BIG_ENDIAN__
+		static const CFStringEncoding ENCODING = kCFStringEncodingUTF16BE;
+#endif // __LITTLE_ENDIAN__
 
-		if (UTTypeConformsTo(flavorType, CFSTR("public.utf8-plain-text")))
+		if (const CFStringRef utf16 = CFStringCreateFromExternalRepresentation(kCFAllocatorDefault, data, ENCODING))
 		{
-			CFDataRef flavorData;
+			const CFRange range = { 0, CFStringGetLength(utf16) };
+			CFIndex bufferLength = 0;
 
-			if (0 == PasteboardCopyItemFlavorData(s_clipboard, itemID, flavorType, &flavorData))
+			if (CFStringGetBytes(utf16, range, kCFStringEncodingUTF8, '?', false, NULL, 0, &bufferLength) > 0)
 			{
-				result += reinterpret_cast<const char*>(CFDataGetBytePtr(flavorData));
+				UInt8* const buffer = reinterpret_cast<UInt8*>(result.LockNewBuffer(bufferLength));
+
+				CFStringGetBytes(utf16, range, kCFStringEncodingUTF8, '?', false, buffer, bufferLength, NULL);
+
+				result.UnlockBuffer();
 			}
 
-			CFRelease(flavorData);
+			CFRelease(utf16);
 		}
 	}
-
-	CFRelease(flavorTypeArray);
 
 	return result;
 #endif

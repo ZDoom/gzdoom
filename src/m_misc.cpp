@@ -410,9 +410,9 @@ CCMD (writeini)
 // M_LoadDefaults
 //
 
-void M_LoadDefaults ()
+void M_LoadDefaults (FIWadManager *iwad_man)
 {
-	GameConfig = new FGameConfigFile;
+	GameConfig = new FGameConfigFile(iwad_man);
 	GameConfig->DoGlobalSetup ();
 	atterm (M_SaveDefaultsFinal);
 }

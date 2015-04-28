@@ -72,6 +72,11 @@ CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	setmodeneeded = true;
 }
 
+CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
+}
+
 
 RenderBufferOptions rbOpts;
 
@@ -398,6 +403,11 @@ CocoaVideo::CocoaVideo(const int multisample)
 	attributes[i++] = NSOpenGLPixelFormatAttribute(24);
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
+
+	if (!vid_autoswitch)
+	{
+		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
+	}
 
 	if (multisample)
 	{

@@ -189,9 +189,8 @@ DFlicker::DFlicker (sector_t *sector, int upper, int lower)
 void EV_StartLightFlickering (int tag, int upper, int lower)
 {
 	int secnum;
-		
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		new DFlicker (&sectors[secnum], upper, lower);
 	}
@@ -359,9 +358,8 @@ DStrobe::DStrobe (sector_t *sector, int utics, int ltics, bool inSync)
 void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 {
 	int secnum;
-		
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
 		if (sec->lightingdata)
@@ -374,9 +372,8 @@ void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 void EV_StartLightStrobing (int tag, int utics, int ltics)
 {
 	int secnum;
-		
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
 		if (sec->lightingdata)
@@ -396,16 +393,14 @@ void EV_StartLightStrobing (int tag, int utics, int ltics)
 
 void EV_TurnTagLightsOff (int tag)
 {
-	int i;
 	int secnum;
-
-	// [RH] Don't do a linear search
-	for (secnum = -1; (secnum = P_FindSectorFromTag (tag, secnum)) >= 0; ) 
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sector = sectors + secnum;
 		int min = sector->lightlevel;
 
-		for (i = 0; i < sector->linecount; i++)
+		for (int i = 0; i < sector->linecount; i++)
 		{
 			sector_t *tsec = getNextSector (sector->lines[i],sector);
 			if (!tsec)
@@ -427,10 +422,9 @@ void EV_TurnTagLightsOff (int tag)
 
 void EV_LightTurnOn (int tag, int bright)
 {
-	int secnum = -1;
-
-	// [RH] Don't do a linear search
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0) 
+	int secnum;
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sector = sectors + secnum;
 		int tbright = bright; //jff 5/17/98 search for maximum PER sector
@@ -480,15 +474,14 @@ void EV_LightTurnOn (int tag, int bright)
 
 void EV_LightTurnOnPartway (int tag, fixed_t frac)
 {
-	int i;
-
 	frac = clamp<fixed_t> (frac, 0, FRACUNIT);
 
 	// Search all sectors for ones with same tag as activating line
-	i = -1;
-	while ((i = P_FindSectorFromTag (tag, i)) >= 0)
+	int secnum;
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
-		sector_t *temp, *sector = sectors + i;
+		sector_t *temp, *sector = &sectors[secnum];
 		int j, bright = 0, min = sector->lightlevel;
 
 		for (j = 0; j < sector->linecount; ++j)
@@ -520,9 +513,9 @@ void EV_LightTurnOnPartway (int tag, fixed_t frac)
 
 void EV_LightChange (int tag, int value)
 {
-	int secnum = -1;
-
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	int secnum;
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sectors[secnum].SetLightLevel(sectors[secnum].lightlevel + value);
 	}
@@ -681,8 +674,8 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 		lower = temp;
 	}
 
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
 		if (sec->lightingdata)
@@ -701,9 +694,8 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 void EV_StartLightFading (int tag, int value, int tics)
 {
 	int secnum;
-
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
 		if (sec->lightingdata)
@@ -846,7 +838,7 @@ void EV_StopLightEffect (int tag)
 
 	while ((effect = iterator.Next()) != NULL)
 	{
-		if (effect->GetSector()->tag == tag)
+		if (effect->GetSector()->HasTag(tag))
 		{
 			effect->Destroy();
 		}

@@ -3545,7 +3545,7 @@ void AActor::Tick ()
 					}
 					else if (scrolltype == Scroll_StrifeCurrent)
 					{ // Strife scroll special
-						int anglespeed = sec->tag - 100;
+						int anglespeed = sec->GetMainTag() - 100;
 						fixed_t carryspeed = DivScale32 (anglespeed % 10, 16*CARRYFACTOR);
 						angle_t fineangle = (anglespeed / 10) << (32-3);
 						fineangle >>= ANGLETOFINESHIFT;
@@ -4725,9 +4725,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// copy args to mapthing so that we have them in one place for the rest of this function	
-	if (mentry->Special >= 0)
+	if (mentry->ArgsDefined)
 	{
-		mthing->special = mentry->Special;
+		if (mentry->Type!= NULL) mthing->special = mentry->Special;
 		memcpy(mthing->args, mentry->Args, sizeof(mthing->args));
 	}
 

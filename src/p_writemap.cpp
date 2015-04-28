@@ -262,7 +262,7 @@ static int WriteSECTORS (FILE *file)
 		uppercopy (ms.ceilingpic, GetTextureName (sectors[i].GetTexture(sector_t::ceiling)));
 		ms.lightlevel = LittleShort((short)sectors[i].lightlevel);
 		ms.special = LittleShort(sectors[i].special);
-		ms.tag = LittleShort(sectors[i].tag);
+		ms.tag = LittleShort(sectors[i].GetMainTag());
 		fwrite (&ms, sizeof(ms), 1, file);
 	}
 	return numsectors * sizeof(ms);

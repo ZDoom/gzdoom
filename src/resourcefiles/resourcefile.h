@@ -44,7 +44,7 @@ struct FResourceLump
 	virtual FileReader *NewReader();
 	virtual int GetFileOffset() { return -1; }
 	virtual int GetIndexNum() const { return 0; }
-	void LumpNameSetup(const char *iname);
+	void LumpNameSetup(FString iname);
 	void CheckEmbedded();
 
 	void *CacheLump();
@@ -72,6 +72,7 @@ private:
 	DWORD FirstLump;
 
 	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, DWORD max);
+	int FilterLumpsByGameType(int gametype, void *lumps, size_t lumpsize, DWORD max);
 	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, DWORD max, DWORD &start, DWORD &end);
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, DWORD max);
 

@@ -279,7 +279,8 @@ inline PClassActor *PClass::FindActor(FName name)
 struct FDoomEdEntry
 {
 	PClassActor *Type;
-	int Special;
+	short Special;
+	bool ArgsDefined;
 	int Args[5];
 };
 

@@ -510,9 +510,9 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 		P_ActivateInStasisCeiling (tag);
 	}
 
-	secnum = -1;
 	// affects all sectors with the same tag as the linedef
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	FSectorTagIterator it(tag);
+	while ((secnum = it.Next()) >= 0)
 	{
 		rtn |= !!DCeiling::Create(&sectors[secnum], type, line, tag, speed, speed2, height, crush, silent, change, hexencrush);
 	}

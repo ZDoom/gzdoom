@@ -2892,8 +2892,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
 	PARAM_ANGLE_OPT(max_pitch)	{ max_pitch = 270; }
 	PARAM_ANGLE_OPT(ang_offset)	{ max_turn = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ max_turn = 0; }
-	PARAM_INT_OPT(flags)		{ max_turn = 0; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
+	PARAM_INT_OPT(flags)		{ flags = 0; }
 
 	A_FaceTarget(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 	return 0;
@@ -2905,8 +2905,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
 	PARAM_ANGLE_OPT(max_pitch)	{ max_pitch = 270; }
 	PARAM_ANGLE_OPT(ang_offset)	{ max_turn = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ max_turn = 0; }
-	PARAM_INT_OPT(flags)	{ max_turn = 0; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
+	PARAM_INT_OPT(flags)		{ flags = 0; }
 
 	A_FaceMaster(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 	return 0;
@@ -2918,8 +2918,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
 	PARAM_ANGLE_OPT(max_pitch)	{ max_pitch = 270; }
 	PARAM_ANGLE_OPT(ang_offset)	{ max_turn = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ max_turn = 0; }
-	PARAM_INT_OPT(flags)		{ max_turn = 0; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
+	PARAM_INT_OPT(flags)		{ flags = 0; }
 
 	A_FaceTracer(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 	return 0;

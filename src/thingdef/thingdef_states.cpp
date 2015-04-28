@@ -72,11 +72,11 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 	int min_args, max_args;
 	FString specname = sc.String;
 
-	FArgumentList *args = new FArgumentList;
 	int special = P_FindLineSpecial(sc.String, &min_args, &max_args);
 
 	if (special > 0 && min_args >= 0)
 	{
+		FArgumentList *args = new FArgumentList;
 		args->Push(new FxParameter(new FxConstant(special, sc)));
 		i = 0;
 

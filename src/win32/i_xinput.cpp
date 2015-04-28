@@ -783,6 +783,10 @@ void I_StartupXInput()
 			{
 				JoyDevices[INPUT_XInput] = joys;
 			}
+			else
+			{
+				delete joys;
+			}
 		}
 	}
 }

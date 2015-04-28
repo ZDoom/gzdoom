@@ -2261,6 +2261,8 @@ void D_DoomMain (void)
 
 	do
 	{
+		InitGlobalSymbols();
+
 		if (restart)
 		{
 			C_InitConsole(SCREENWIDTH, SCREENHEIGHT, false);

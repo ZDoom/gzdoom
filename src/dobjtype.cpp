@@ -517,8 +517,18 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeFixed = new PFixed);
 	TypeTable.AddType(TypeAngle = new PAngle);
+}
 
+void ReleaseGlobalSymbols()
+{
+	GlobalSymbols.ReleaseSymbols();
+}
+
+void InitGlobalSymbols()
+{
 	// Add types to the global symbol table.
+	atterm(ReleaseGlobalSymbols);
+	GlobalSymbols.ReleaseSymbols();
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Short, TypeSInt16));

@@ -769,10 +769,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				 static_cast<PClassActor *>(type)->GetReplacement()->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup))))
 			{
 				// Give the weapon only if it belongs to the current game or
-				// is in a weapon slot. 
-				if (static_cast<PClassActor *>(type)->GameFilter == GAME_Any || 
-					(static_cast<PClassActor *>(type)->GameFilter & gameinfo.gametype) ||	
-					player->weapons.LocateWeapon(static_cast<PClassWeapon *>(type), NULL, NULL))
+				if (player->weapons.LocateWeapon(static_cast<PClassWeapon*>(type), NULL, NULL))
 				{
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (giveall == ALL_YESYES || !(def->WeaponFlags & WIF_CHEATNOTWEAPON))
@@ -854,7 +851,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 void cht_Take (player_t *player, const char *name, int amount)
 {
 	bool takeall;
-	PClass *type;
+	PClassActor *type;
 
 	if (player->mo == NULL || player->health <= 0)
 	{
@@ -1045,7 +1042,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 	if (takeall)
 		return;
 
-	type = PClass::FindClass (name);
+	type = PClass::FindActor (name);
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS (AInventory)))
 	{
 		if (player == &players[consoleplayer])
@@ -1053,24 +1050,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 	}
 	else
 	{
-		AInventory *inventory = player->mo->FindInventory(static_cast<PClassActor *>(type));
-
-		if (inventory != NULL)
-		{
-			inventory->Amount -= amount ? amount : 1;
-
-			if (inventory->Amount <= 0)
-			{
-				if (inventory->ItemFlags & IF_KEEPDEPLETED)
-				{
-					inventory->Amount = 0;
-				}
-				else
-				{
-					inventory->Destroy ();
-				}
-			}
-		}
+		player->mo->TakeInventory(type, amount ? amount : 1);
 	}
 	return;
 }

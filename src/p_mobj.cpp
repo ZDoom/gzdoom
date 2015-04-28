@@ -687,6 +687,57 @@ void AActor::RemoveInventory(AInventory *item)
 
 //============================================================================
 //
+// AActor :: TakeInventory
+//
+//============================================================================
+
+bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
+{
+	AInventory *item = FindInventory(itemclass);
+
+	if (item == NULL)
+		return false;
+
+	if (!fromdecorate)
+	{
+		item->Amount -= amount;
+		if (item->Amount <= 0)
+		{
+			item->DepleteOrDestroy();
+		}
+		// It won't be used in non-decorate context, so return false here
+		return false;
+	}
+
+	bool result = false;
+	if (item->Amount > 0)
+	{
+		result = true;
+	}
+
+	if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
+		return false;
+
+	// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
+	// and infinite ammo is on
+	if (notakeinfinite &&
+	((dmflags & DF_INFINITE_AMMO) || (player && player->cheats & CF_INFINITEAMMO)) &&
+		item->IsKindOf(RUNTIME_CLASS(AAmmo)))
+	{
+		// Nothing to do here, except maybe res = false;? Would it make sense?
+	}
+	else if (!amount || amount>=item->Amount)
+	{
+		item->DepleteOrDestroy();
+	}
+	else item->Amount-=amount;
+
+	return result;
+}
+
+
+//============================================================================
+//
 // AActor :: DestroyAllInventory
 //
 //============================================================================
@@ -752,9 +803,9 @@ bool AActor::UseInventory (AInventory *item)
 	if (dmflags2 & DF2_INFINITE_INVENTORY)
 		return true;
 
-	if (--item->Amount <= 0 && !(item->ItemFlags & IF_KEEPDEPLETED))
+	if (--item->Amount <= 0)
 	{
-		item->Destroy ();
+		item->DepleteOrDestroy ();
 	}
 	return true;
 }

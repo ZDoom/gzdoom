@@ -944,13 +944,13 @@ bool P_LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(i+1)->Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(li+i+1)->Name, check[i], 8))
 				{
 					result=false;
 					break;
 				}
 				else
-					gwalumps[i] = f_gwa->GetLump(i+1)->NewReader();
+					gwalumps[i] = f_gwa->GetLump(li+i+1)->NewReader();
 			}
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}

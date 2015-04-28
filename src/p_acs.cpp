@@ -1133,40 +1133,6 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 
 //============================================================================
 //
-// DoTakeInv
-//
-// Takes an item from a single actor.
-//
-//============================================================================
-
-static void DoTakeInv (AActor *actor, PClassActor *info, int amount)
-{
-	AInventory *item = actor->FindInventory (info);
-	if (item != NULL)
-	{
-		item->Amount -= amount;
-		if (item->Amount <= 0)
-		{
-			// If it's not ammo or an internal armor, destroy it.
-			// Ammo needs to stick around, even when it's zero for the benefit
-			// of the weapons that use it and to maintain the maximum ammo
-			// amounts a backpack might have given.
-			// Armor shouldn't be removed because they only work properly when
-			// they are the last items in the inventory.
-			if (item->ItemFlags & IF_KEEPDEPLETED)
-			{
-				item->Amount = 0;
-			}
-			else
-			{
-				item->Destroy ();
-			}
-		}
-	}
-}
-
-//============================================================================
-//
 // TakeInventory
 //
 // Takes an item from one or more actors.
@@ -1199,12 +1165,12 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				DoTakeInv (players[i].mo, info, amount);
+				players[i].mo->TakeInventory(info, amount);
 		}
 	}
 	else
 	{
-		DoTakeInv (activator, info, amount);
+		activator->TakeInventory(info, amount);
 	}
 }
 
@@ -2302,8 +2268,8 @@ void FBehavior::LoadScriptsDirectory ()
 	}
 
 // [EP] Clang 3.5.0 optimizer miscompiles this function and causes random
-// crashes in the program. I hope that Clang 3.5.x will fix this.
-#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ >= 5
+// crashes in the program. This is fixed in 3.5.1 onwards.
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ == 5 && __clang_patchlevel__ == 0
 	asm("" : "+g" (NumScripts));
 #endif
 	for (i = 0; i < NumScripts; ++i)
@@ -4781,8 +4747,8 @@ static void SetActorTeleFog(AActor *activator, int tid, FString telefogsrc, FStr
 		FActorIterator iterator(tid);
 		AActor *actor;
 
-		PClassActor * src = telefogsrc.IsNotEmpty() ? PClass::FindActor(telefogsrc) : NULL;
-		PClassActor * dest = telefogdest.IsNotEmpty() ? PClass::FindActor(telefogdest) : NULL;
+		PClassActor * src = PClass::FindActor(telefogsrc);
+		PClassActor * dest = PClass::FindActor(telefogdest);
 		while ((actor = iterator.Next()))
 		{
 			if (telefogsrc.IsNotEmpty())

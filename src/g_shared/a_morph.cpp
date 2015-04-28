@@ -137,14 +137,9 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 				hxarmor->Slots[3] = 0;
 				hxarmor->Slots[4] = spawntype->Meta.GetMetaFixed (APMETA_Hexenarmor0);
 			}
-			else if (item->ItemFlags & IF_KEEPDEPLETED)
-			{
-				// Set depletable armor to 0 (this includes BasicArmor).
-				item->Amount = 0;
-			}
 			else
 			{
-				item->Destroy ();
+				item->DepleteOrDestroy();
 			}
 		}
 		item = next;

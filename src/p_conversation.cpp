@@ -649,22 +649,7 @@ static void TakeStrifeItem (player_t *player, const PClass *itemtype, int amount
 	if (itemtype == RUNTIME_CLASS(ASigil))
 		return;
 
-	AInventory *item = player->mo->FindInventory (itemtype);
-	if (item != NULL)
-	{
-		item->Amount -= amount;
-		if (item->Amount <= 0)
-		{
-			if (item->ItemFlags & IF_KEEPDEPLETED)
-			{
-				item->Amount = 0;
-			}
-			else
-			{
-				item->Destroy ();
-			}
-		}
-	}
+	player->mo->TakeInventory(itemtype, amount);
 }
 
 CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)

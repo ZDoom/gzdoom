@@ -1,7 +1,7 @@
 
 // Dragon -------------------------------------------------------------------
 
-ACTOR Dragon 254
+ACTOR Dragon
 {
 	Game Hexen
 	Health 640

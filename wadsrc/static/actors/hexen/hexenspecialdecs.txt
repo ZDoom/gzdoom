@@ -1,7 +1,7 @@
 
 // Winged Statue (no skull) -------------------------------------------------
 
-ACTOR ZWingedStatueNoSkull : SwitchingDecoration 9011
+ACTOR ZWingedStatueNoSkull : SwitchingDecoration
 {
 	Game Hexen
 	Radius 10
@@ -21,7 +21,7 @@ ACTOR ZWingedStatueNoSkull : SwitchingDecoration 9011
 
 // Gem pedestal -------------------------------------------------------------
 
-ACTOR ZGemPedestal : SwitchingDecoration 9012
+ACTOR ZGemPedestal : SwitchingDecoration
 {
 	Game Hexen
 	Radius 10
@@ -41,7 +41,7 @@ ACTOR ZGemPedestal : SwitchingDecoration 9012
 
 // Tree (destructible) ------------------------------------------------------
 
-ACTOR TreeDestructible 8062
+ACTOR TreeDestructible
 {
 	Game Hexen
 	Health 70
@@ -77,7 +77,7 @@ ACTOR TreeDestructible 8062
 
 // Pottery1 ------------------------------------------------------------------
 
-ACTOR Pottery1 104 native
+ACTOR Pottery1 native
 {
 	Game Hexen
 	Health 15
@@ -102,7 +102,7 @@ ACTOR Pottery1 104 native
 
 // Pottery2 -----------------------------------------------------------------
 
-ACTOR Pottery2 : Pottery1 105
+ACTOR Pottery2 : Pottery1
 {
 	Game Hexen
 	Height 25
@@ -116,7 +116,7 @@ ACTOR Pottery2 : Pottery1 105
 
 // Pottery3 -----------------------------------------------------------------
 
-ACTOR Pottery3 : Pottery1 106
+ACTOR Pottery3 : Pottery1
 {
 	Game Hexen
 	Height 25
@@ -175,7 +175,7 @@ ACTOR PotteryBit
 
 // Blood pool ---------------------------------------------------------------
 
-ACTOR BloodPool 111
+ACTOR BloodPool
 {
 	Game Hexen
 	States
@@ -189,7 +189,7 @@ ACTOR BloodPool 111
 
 // Lynched corpse (no heart) ------------------------------------------------
 
-ACTOR ZCorpseLynchedNoHeart 109 native
+ACTOR ZCorpseLynchedNoHeart native
 {
 	Game Hexen
 	Radius 10
@@ -255,7 +255,7 @@ ACTOR CorpseBit
 
 // Corpse (sitting, splatterable) -------------------------------------------
 
-ACTOR ZCorpseSitting 110
+ACTOR ZCorpseSitting
 {
 	Game Hexen
 	Health 30
@@ -281,7 +281,7 @@ ACTOR ZCorpseSitting 110
 
 // Leaf Spawner -------------------------------------------------------------
 
-ACTOR LeafSpawner 113
+ACTOR LeafSpawner
 {
 	Game Hexen
 	+NOBLOCKMAP +NOSECTOR
@@ -357,7 +357,7 @@ ACTOR Leaf2 : Leaf1
 
 // Twined torch -------------------------------------------------------------
 
-ACTOR ZTwinedTorch : SwitchableDecoration 116
+ACTOR ZTwinedTorch : SwitchableDecoration
 {
 	Game Hexen
 	Radius 10
@@ -376,7 +376,7 @@ ACTOR ZTwinedTorch : SwitchableDecoration 116
 	}
 }
 
-ACTOR ZTwinedTorchUnlit : ZTwinedTorch 117
+ACTOR ZTwinedTorchUnlit : ZTwinedTorch
 {
 	Game Hexen
 	States
@@ -389,7 +389,7 @@ ACTOR ZTwinedTorchUnlit : ZTwinedTorch 117
 
 // Wall torch ---------------------------------------------------------------
 
-ACTOR ZWallTorch : SwitchableDecoration 54
+ACTOR ZWallTorch : SwitchableDecoration
 {
 	Game Hexen
 	+NOBLOCKMAP
@@ -409,7 +409,7 @@ ACTOR ZWallTorch : SwitchableDecoration 54
 	}
 }
 
-ACTOR ZWallTorchUnlit : ZWallTorch 55
+ACTOR ZWallTorchUnlit : ZWallTorch
 {
 	Game Hexen
 	States
@@ -422,7 +422,7 @@ ACTOR ZWallTorchUnlit : ZWallTorch 55
 
 // Shrub1 -------------------------------------------------------------------
 
-ACTOR ZShrub1 8101
+ACTOR ZShrub1
 {
 	Game Hexen
 	Radius 8
@@ -447,7 +447,7 @@ ACTOR ZShrub1 8101
 
 // Shrub2 -------------------------------------------------------------------
 
-ACTOR ZShrub2 8102
+ACTOR ZShrub2
 {
 	Game Hexen
 	Radius 16
@@ -473,7 +473,7 @@ ACTOR ZShrub2 8102
 
 // Fire Bull ----------------------------------------------------------------
 
-ACTOR ZFireBull : SwitchableDecoration 8042
+ACTOR ZFireBull : SwitchableDecoration
 {
 	Game Hexen
 	Radius 20
@@ -494,7 +494,7 @@ ACTOR ZFireBull : SwitchableDecoration 8042
 	}
 }
 
-ACTOR ZFireBullUnlit : ZFireBull 8043
+ACTOR ZFireBullUnlit : ZFireBull
 {
 	Game Hexen
 	States
@@ -507,7 +507,7 @@ ACTOR ZFireBullUnlit : ZFireBull 8043
 
 // Suit of armor ------------------------------------------------------------
 
-ACTOR ZSuitOfArmor 8064
+ACTOR ZSuitOfArmor
 {
 	Game Hexen
 	Health 60
@@ -567,7 +567,7 @@ ACTOR ZArmorChunk
 
 // Bell ---------------------------------------------------------------------
 
-ACTOR ZBell 8065 native
+ACTOR ZBell native
 {
 	Game Hexen
 	Health 5
@@ -627,7 +627,7 @@ ACTOR ZBell 8065 native
 
 // "Christmas" Tree ---------------------------------------------------------
 
-ACTOR ZXmasTree 8068
+ACTOR ZXmasTree
 {
 	Game Hexen
 	Radius 11
@@ -658,7 +658,7 @@ ACTOR ZXmasTree 8068
 
 // Cauldron -----------------------------------------------------------------
 
-ACTOR ZCauldron : SwitchableDecoration 8069
+ACTOR ZCauldron : SwitchableDecoration
 {
 	Game Hexen
 	Radius 12
@@ -677,7 +677,7 @@ ACTOR ZCauldron : SwitchableDecoration 8069
 	}
 }
 
-ACTOR ZCauldronUnlit : ZCauldron 8070
+ACTOR ZCauldronUnlit : ZCauldron
 {
 	Game Hexen
 	States

@@ -1246,7 +1246,7 @@ void FTextureManager::PrecacheLevel (void)
 
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
-		hitlist[level.info->PrecacheTextures[i].GetIndex()] |= 1;
+		hitlist[level.info->PrecacheTextures[i].GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 
 	for (int i = cnt - 1; i >= 0; i--)

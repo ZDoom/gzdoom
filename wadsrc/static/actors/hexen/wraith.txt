@@ -1,7 +1,7 @@
 
 // Wraith -------------------------------------------------------------------
 
-ACTOR Wraith 34
+ACTOR Wraith
 {
 	Game Hexen
 	SpawnID 8
@@ -81,7 +81,7 @@ ACTOR Wraith 34
 
 // Buried wraith ------------------------------------------------------------
 
-ACTOR WraithBuried : Wraith 10011
+ACTOR WraithBuried : Wraith
 {
 	Game Hexen
 	SpawnID 9

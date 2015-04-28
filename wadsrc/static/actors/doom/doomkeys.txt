@@ -8,7 +8,7 @@ Actor DoomKey : Key
 
 // Blue key card ------------------------------------------------------------
 
-Actor BlueCard : DoomKey 5
+Actor BlueCard : DoomKey
 {
 	Game Doom
 	SpawnID 85
@@ -25,7 +25,7 @@ Actor BlueCard : DoomKey 5
 
 // Yellow key card ----------------------------------------------------------
 
-Actor YellowCard : DoomKey 6
+Actor YellowCard : DoomKey
 {
 	Game Doom
 	SpawnID 87
@@ -42,7 +42,7 @@ Actor YellowCard : DoomKey 6
 
 // Red key card -------------------------------------------------------------
 
-Actor RedCard : DoomKey 13
+Actor RedCard : DoomKey
 {
 	Game Doom
 	SpawnID 86
@@ -59,7 +59,7 @@ Actor RedCard : DoomKey 13
 
 // Blue skull key -----------------------------------------------------------
 
-Actor BlueSkull : DoomKey 40
+Actor BlueSkull : DoomKey
 {
 	Game Doom
 	SpawnID 90
@@ -76,7 +76,7 @@ Actor BlueSkull : DoomKey 40
 
 // Yellow skull key ---------------------------------------------------------
 
-Actor YellowSkull : DoomKey 39
+Actor YellowSkull : DoomKey
 {
 	Game Doom
 	SpawnID 88
@@ -93,7 +93,7 @@ Actor YellowSkull : DoomKey 39
 
 // Red skull key ------------------------------------------------------------
 
-Actor RedSkull : DoomKey 38
+Actor RedSkull : DoomKey
 {
 	Game Doom
 	SpawnID 89

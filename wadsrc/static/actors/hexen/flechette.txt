@@ -94,7 +94,7 @@ ACTOR ThrowingBomb
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
-ACTOR ArtiPoisonBag : Inventory 8000 native
+ACTOR ArtiPoisonBag : Inventory native
 {
 	Game Hexen
 	SpawnID 72
@@ -189,7 +189,7 @@ ACTOR PoisonCloud native
 
 // Poison Shroom ------------------------------------------------------------
 
-ACTOR ZPoisonShroom : PoisonBag 8104
+ACTOR ZPoisonShroom : PoisonBag
 {
 	Game Hexen
 	Radius 6

@@ -12,7 +12,7 @@ ACTOR FighterWeaponPiece : WeaponPiece
 
 // Fighter Weapon Piece 1 ---------------------------------------------------
 
-ACTOR FWeaponPiece1 : FighterWeaponPiece 12
+ACTOR FWeaponPiece1 : FighterWeaponPiece
 {
 	Game Hexen
 	SpawnID 29
@@ -27,7 +27,7 @@ ACTOR FWeaponPiece1 : FighterWeaponPiece 12
 
 // Fighter Weapon Piece 2 ---------------------------------------------------
 
-ACTOR FWeaponPiece2 : FighterWeaponPiece 13
+ACTOR FWeaponPiece2 : FighterWeaponPiece
 {
 	Game Hexen
 	SpawnID 30
@@ -42,7 +42,7 @@ ACTOR FWeaponPiece2 : FighterWeaponPiece 13
 
 // Fighter Weapon Piece 3 ---------------------------------------------------
 
-ACTOR FWeaponPiece3 : FighterWeaponPiece 16
+ACTOR FWeaponPiece3 : FighterWeaponPiece
 {
 	Game Hexen
 	SpawnID 31

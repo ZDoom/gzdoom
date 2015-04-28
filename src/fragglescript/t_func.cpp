@@ -1420,7 +1420,7 @@ void FParser::SF_PointToDist(void)
 		double y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
    
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sqrt(x*x+y*y)*65536.f);
+		t_return.value.f = FLOAT2FIXED(sqrt(x*x+y*y));
 	}
 }
 

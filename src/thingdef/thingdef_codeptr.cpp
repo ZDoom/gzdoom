@@ -928,7 +928,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	PARAM_INT_OPT	(fulldmgdistance)  { fulldmgdistance = 0; }
 	PARAM_INT_OPT	(nails)			   { nails = 0; }
 	PARAM_INT_OPT	(naildamage)	   { naildamage = 10; }
-	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor("BulletPuff"); }
+	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
 
 	if (damage < 0)	// get parameters from metadata
 	{
@@ -4904,7 +4904,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	PARAM_INT_OPT	(pointblank)		{ pointblank = 2; }
 	PARAM_INT_OPT	(longrange)			{ longrange = 4; }
 	PARAM_FIXED_OPT	(runspeed)			{ runspeed = 160*FRACUNIT; }
-	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor("BulletPuff"); }
+	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
 
 	if (!self->target)
 		return 0;
@@ -6074,39 +6074,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Remove)
 // A_SetTeleFog
 //
 // Sets the teleport fog(s) for the calling actor.
-// Takes a name of the classes for te source and destination. 
-// Can set both at the same time. Use "" to retain the previous fog without
-// changing it.
+// Takes a name of the classes for the source and destination.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTeleFog)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME(oldpos);
-	PARAM_NAME(newpos);
+	PARAM_CLASS(oldpos, AActor);
+	PARAM_CLASS(newpos, AActor);
 
-	PClassActor *check = PClass::FindActor(oldpos);
-	if (check == NULL || !stricmp(oldpos, "none") || !stricmp(oldpos, "null"))
-		self->TeleFogSourceType = NULL;
-	else if (!stricmp(oldpos, ""))
-	{ //Don't change it if it's just ""
-	}
-	else
-	{
-		self->TeleFogSourceType = check;
-	}
-
-	check = PClass::FindActor(newpos);
-	if (check == NULL || !stricmp(newpos, "none") || !stricmp(newpos, "null"))
-		self->TeleFogDestType = NULL;
-	else if (!stricmp(newpos, ""))
-	{ //Don't change it if it's just ""
-	}
-	else
-	{
-		self->TeleFogDestType = check;
-	}
-
+	self->TeleFogSourceType = oldpos;
+	self->TeleFogDestType = newpos;
 	return 0;
 }
 

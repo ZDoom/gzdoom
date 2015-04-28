@@ -1,7 +1,7 @@
 
 // Wizard --------------------------------------------------------
 
-ACTOR Wizard 15
+ACTOR Wizard
 {
 	Game Heretic
 	SpawnID 19

@@ -1,5 +1,5 @@
 
-ACTOR StealthArachnotron : Arachnotron 9050
+ACTOR StealthArachnotron : Arachnotron
 {
 	Game Doom
 	SpawnID 117
@@ -9,7 +9,7 @@ ACTOR StealthArachnotron : Arachnotron 9050
 	Obituary "$OB_STEALTHBABY"
 }
 
-ACTOR StealthArchvile : Archvile 9051
+ACTOR StealthArchvile : Archvile
 {
 	Game Doom
 	SpawnID 118
@@ -19,7 +19,7 @@ ACTOR StealthArchvile : Archvile 9051
 	Obituary "$OB_STEALTHVILE"
 }
 
-ACTOR StealthBaron : BaronOfHell 9052
+ACTOR StealthBaron : BaronOfHell
 {
 	Game Doom
 	SpawnID 100
@@ -30,7 +30,7 @@ ACTOR StealthBaron : BaronOfHell 9052
 	HitObituary "$OB_STEALTHBARON"
 }
 
-ACTOR StealthCacodemon : Cacodemon 9053
+ACTOR StealthCacodemon : Cacodemon
 {
 	Game Doom
 	SpawnID 119
@@ -41,7 +41,7 @@ ACTOR StealthCacodemon : Cacodemon 9053
 	HitObituary "$OB_STEALTHCACO"
 }
 
-ACTOR StealthChaingunGuy : ChaingunGuy 9054
+ACTOR StealthChaingunGuy : ChaingunGuy
 {
 	Game Doom
 	SpawnID 120
@@ -51,7 +51,7 @@ ACTOR StealthChaingunGuy : ChaingunGuy 9054
 	Obituary "$OB_STEALTHCHAINGUY"
 }
 
-ACTOR StealthDemon : Demon 9055
+ACTOR StealthDemon : Demon
 {
 	Game Doom
 	SpawnID 121
@@ -62,7 +62,7 @@ ACTOR StealthDemon : Demon 9055
 	HitObituary "$OB_STEALTHDEMON"
 }
 
-ACTOR StealthHellKnight : HellKnight 9056
+ACTOR StealthHellKnight : HellKnight
 {
 	Game Doom
 	SpawnID 101
@@ -73,7 +73,7 @@ ACTOR StealthHellKnight : HellKnight 9056
 	HitObituary "$OB_STEALTHKNIGHT"
 }
 
-ACTOR StealthDoomImp : DoomImp 9057
+ACTOR StealthDoomImp : DoomImp
 {
 	Game Doom
 	SpawnID 122
@@ -84,7 +84,7 @@ ACTOR StealthDoomImp : DoomImp 9057
 	HitObituary "$OB_STEALTHIMP"
 }
 
-ACTOR StealthFatso : Fatso 9058
+ACTOR StealthFatso : Fatso
 {
 	Game Doom
 	SpawnID 123
@@ -94,7 +94,7 @@ ACTOR StealthFatso : Fatso 9058
 	Obituary "$OB_STEALTHFATSO"
 }
 
-ACTOR StealthRevenant : Revenant 9059
+ACTOR StealthRevenant : Revenant
 {
 	Game Doom
 	SpawnID 124
@@ -105,7 +105,7 @@ ACTOR StealthRevenant : Revenant 9059
 	HitObituary "$OB_STEALTHUNDEAD"
 }
 
-ACTOR StealthShotgunGuy : ShotgunGuy 9060
+ACTOR StealthShotgunGuy : ShotgunGuy
 {
 	Game Doom
 	SpawnID 103
@@ -115,7 +115,7 @@ ACTOR StealthShotgunGuy : ShotgunGuy 9060
 	Obituary "$OB_STEALTHSHOTGUNGUY"
 }
 
-ACTOR StealthZombieMan : ZombieMan 9061
+ACTOR StealthZombieMan : ZombieMan
 {
 	Game Doom
 	SpawnID 102

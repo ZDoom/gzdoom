@@ -110,7 +110,7 @@ ACTOR StaffPuff2
 
 // Gold wand ----------------------------------------------------------------
 
-ACTOR GoldWand : HereticWeapon 9042
+ACTOR GoldWand : HereticWeapon
 {
 	Game Heretic
 	+BLOODSPLATTER
@@ -248,7 +248,7 @@ ACTOR GoldWandPuff2 : GoldWandFX1
 
 // Crossbow -----------------------------------------------------------------
 
-ACTOR Crossbow : HereticWeapon 2001
+ACTOR Crossbow : HereticWeapon
 {
 	Game Heretic
 	SpawnID 27
@@ -400,7 +400,7 @@ ACTOR CrossbowFX4
 
 // Gauntlets ----------------------------------------------------------------
 
-ACTOR Gauntlets : Weapon 2005
+ACTOR Gauntlets : Weapon
 {
 	Game Heretic
 	SpawnID 32
@@ -681,7 +681,7 @@ ACTOR MaceFX4 native
 
 // Mace spawn spot ----------------------------------------------------------
 
-ACTOR MaceSpawner : SpecialSpot 2002
+ACTOR MaceSpawner : SpecialSpot
 {
 	Game Heretic
 	+NOSECTOR
@@ -698,7 +698,7 @@ ACTOR MaceSpawner : SpecialSpot 2002
 
 // Blaster ------------------------------------------------------------------
 
-ACTOR Blaster : HereticWeapon 53
+ACTOR Blaster : HereticWeapon
 {
 	Game Heretic
 	SpawnID 28
@@ -854,7 +854,7 @@ ACTOR BlasterPuff
 
 // Skull (Horn) Rod ---------------------------------------------------------
 
-ACTOR SkullRod : HereticWeapon 2004
+ACTOR SkullRod : HereticWeapon
 {
 	Game Heretic
 	SpawnID 30
@@ -1028,7 +1028,7 @@ ACTOR RainTracker : Inventory native
 
 // Phoenix Rod --------------------------------------------------------------
 
-ACTOR PhoenixRod : Weapon 2003 native
+ACTOR PhoenixRod : Weapon native
 {
 	Game Heretic
 	SpawnID 29

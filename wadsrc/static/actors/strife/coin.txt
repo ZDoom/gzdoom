@@ -1,7 +1,7 @@
 
 // Coin ---------------------------------------------------------------------
 
-ACTOR Coin : Inventory 93 native
+ACTOR Coin : Inventory native
 {
 	Game Strife
 	ConversationID 168, 161, 165
@@ -24,7 +24,7 @@ ACTOR Coin : Inventory 93 native
 
 // 10 Gold ------------------------------------------------------------------
 
-ACTOR Gold10 : Coin 138
+ACTOR Gold10 : Coin
 {
 	Game Strife
 	ConversationID 169, 162, 166
@@ -41,7 +41,7 @@ ACTOR Gold10 : Coin 138
 
 // 25 Gold ------------------------------------------------------------------
 
-ACTOR Gold25 : Coin 139
+ACTOR Gold25 : Coin
 {
 	Game Strife
 	ConversationID 170, 163, 167
@@ -58,7 +58,7 @@ ACTOR Gold25 : Coin 139
 
 // 50 Gold ------------------------------------------------------------------
 
-ACTOR Gold50 : Coin 140
+ACTOR Gold50 : Coin
 {
 	Game Strife
 	ConversationID 171, 164, 168

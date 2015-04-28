@@ -25,7 +25,7 @@ ACTOR EggFX : MorphProjectile
 
 // Morph Ovum ----------------------------------------------------------------
 
-ACTOR ArtiEgg : CustomInventory 30
+ACTOR ArtiEgg : CustomInventory
 {
 	Game Heretic
 	SpawnID 14
@@ -79,7 +79,7 @@ ACTOR PorkFX : MorphProjectile
 
 // Porkalator ---------------------------------------------------------------
 
-ACTOR ArtiPork : CustomInventory 30
+ACTOR ArtiPork : CustomInventory
 {
 	Game Hexen
 	SpawnID 14

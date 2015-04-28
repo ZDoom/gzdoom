@@ -5,7 +5,7 @@
 //
 //===========================================================================
 
-ACTOR BossBrain 88
+ACTOR BossBrain
 {
 	Game Doom
 	Health 250
@@ -43,7 +43,7 @@ ACTOR BossBrain 88
 //
 //===========================================================================
 
-ACTOR BossEye 89
+ACTOR BossEye
 {
 	Game Doom
 	Height 32
@@ -67,7 +67,7 @@ ACTOR BossEye 89
 //
 //===========================================================================
 
-ACTOR BossTarget : SpecialSpot 87
+ACTOR BossTarget : SpecialSpot
 {
 	Game Doom
 	Height 32

@@ -1,7 +1,7 @@
 
 // Ettin --------------------------------------------------------------------
 
-ACTOR Ettin 10030
+ACTOR Ettin
 {
 	Game Hexen
 	SpawnID 4

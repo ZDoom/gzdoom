@@ -1,7 +1,7 @@
 
 // Ironlich -----------------------------------------------------------------
 
-ACTOR Ironlich 6
+ACTOR Ironlich
 {
 	Game Heretic
 	SpawnID 20

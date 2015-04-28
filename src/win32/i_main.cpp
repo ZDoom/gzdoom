@@ -1288,20 +1288,3 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	return 0;
 }
-
-//==========================================================================
-//
-// CCMD crashout
-//
-// Debugging routine for testing the crash logger.
-// Useless in a debug build, because that doesn't enable the crash logger.
-//
-//==========================================================================
-
-#ifndef _DEBUG
-#include "c_dispatch.h"
-CCMD (crashout)
-{
-	*(int *)0 = 0;
-}
-#endif

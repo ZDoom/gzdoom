@@ -2441,8 +2441,8 @@ void D_DoomMain (void)
 		// Create replacements for dehacked pickups
 		FinishDehPatch();
 
+		InitActorNumsFromMapinfo();
 		PClassActor::StaticSetActorNums ();
-
 		//Added by MC:
 		bglobal.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);

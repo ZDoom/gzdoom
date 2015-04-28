@@ -8,7 +8,7 @@ ACTOR StrifeKey : Key
 
 // Base Key -----------------------------------------------------------------
 
-ACTOR BaseKey : StrifeKey 230
+ACTOR BaseKey : StrifeKey
 {
 	Game Strife
 	ConversationID 133, 129, 132
@@ -44,7 +44,7 @@ ACTOR GovsKey : StrifeKey
 
 // Passcard -----------------------------------------------------------------
 
-ACTOR Passcard : StrifeKey 185
+ACTOR Passcard : StrifeKey
 {
 	Game Strife
 	ConversationID 135, 131, 134
@@ -62,7 +62,7 @@ ACTOR Passcard : StrifeKey 185
 
 // ID Badge -----------------------------------------------------------------
 
-ACTOR IDBadge : StrifeKey 184
+ACTOR IDBadge : StrifeKey
 {
 	Game Strife
 	ConversationID 136, 132, 135
@@ -99,7 +99,7 @@ ACTOR PrisonKey : StrifeKey
 
 // Severed Hand -------------------------------------------------------------
 
-ACTOR SeveredHand : StrifeKey 91
+ACTOR SeveredHand : StrifeKey
 {
 	Game Strife
 	ConversationID 138, 134, 137
@@ -172,7 +172,7 @@ ACTOR Power3Key : StrifeKey
 
 // Gold Key -----------------------------------------------------------------
 
-ACTOR GoldKey : StrifeKey 40
+ACTOR GoldKey : StrifeKey
 {
 	Game Strife
 	ConversationID 142, 138, 141
@@ -190,7 +190,7 @@ ACTOR GoldKey : StrifeKey 40
 
 // ID Card ------------------------------------------------------------------
 
-ACTOR IDCard : StrifeKey 13
+ACTOR IDCard : StrifeKey
 {
 	Game Strife
 	ConversationID 143, 139, 142
@@ -208,7 +208,7 @@ ACTOR IDCard : StrifeKey 13
 
 // Silver Key ---------------------------------------------------------------
 
-ACTOR SilverKey : StrifeKey 38
+ACTOR SilverKey : StrifeKey
 {
 	Game Strife
 	ConversationID 144, 140, 143
@@ -226,7 +226,7 @@ ACTOR SilverKey : StrifeKey 38
 
 // Oracle Key ---------------------------------------------------------------
 
-ACTOR OracleKey : StrifeKey 61
+ACTOR OracleKey : StrifeKey
 {
 	Game Strife
 	ConversationID 145, 141, 144
@@ -262,7 +262,7 @@ ACTOR MilitaryID : StrifeKey
 
 // Order Key ----------------------------------------------------------------
 
-ACTOR OrderKey : StrifeKey 86
+ACTOR OrderKey : StrifeKey
 {
 	Game Strife
 	ConversationID 147, 143, 146
@@ -280,7 +280,7 @@ ACTOR OrderKey : StrifeKey 86
 
 // Warehouse Key ------------------------------------------------------------
 
-ACTOR WarehouseKey : StrifeKey 166
+ACTOR WarehouseKey : StrifeKey
 {
 	Game Strife
 	ConversationID 148, 144, 147
@@ -298,7 +298,7 @@ ACTOR WarehouseKey : StrifeKey 166
 
 // Brass Key ----------------------------------------------------------------
 
-ACTOR BrassKey : StrifeKey 39
+ACTOR BrassKey : StrifeKey
 {
 	Game Strife
 	ConversationID 149, 145, 148
@@ -316,7 +316,7 @@ ACTOR BrassKey : StrifeKey 39
 
 // Red Crystal Key ----------------------------------------------------------
 
-ACTOR RedCrystalKey : StrifeKey 192
+ACTOR RedCrystalKey : StrifeKey
 {
 	Game Strife
 	ConversationID 150, 146, 149
@@ -334,7 +334,7 @@ ACTOR RedCrystalKey : StrifeKey 192
 
 // Blue Crystal Key ---------------------------------------------------------
 
-ACTOR BlueCrystalKey : StrifeKey 193
+ACTOR BlueCrystalKey : StrifeKey
 {
 	Game Strife
 	ConversationID 151, 147, 150
@@ -352,7 +352,7 @@ ACTOR BlueCrystalKey : StrifeKey 193
 
 // Chapel Key ---------------------------------------------------------------
 
-ACTOR ChapelKey : StrifeKey 195
+ACTOR ChapelKey : StrifeKey
 {
 	Game Strife
 	ConversationID 152, 148, 151
@@ -407,7 +407,7 @@ ACTOR SecurityKey : StrifeKey
 
 // Core Key -----------------------------------------------------------------
 
-ACTOR CoreKey : StrifeKey 236
+ACTOR CoreKey : StrifeKey
 {
 	Game Strife
 	ConversationID 155, 151, 154
@@ -425,7 +425,7 @@ ACTOR CoreKey : StrifeKey 236
 
 // Mauler Key ---------------------------------------------------------------
 
-ACTOR MaulerKey : StrifeKey 233
+ACTOR MaulerKey : StrifeKey
 {
 	Game Strife
 	ConversationID 156, 152, 155
@@ -443,7 +443,7 @@ ACTOR MaulerKey : StrifeKey 233
 
 // Factory Key --------------------------------------------------------------
 
-ACTOR FactoryKey : StrifeKey 234
+ACTOR FactoryKey : StrifeKey
 {
 	Game Strife
 	ConversationID 157, 153, 156
@@ -461,7 +461,7 @@ ACTOR FactoryKey : StrifeKey 234
 
 // Mine Key -----------------------------------------------------------------
 
-ACTOR MineKey : StrifeKey 235
+ACTOR MineKey : StrifeKey
 {
 	Game Strife
 	ConversationID 158, 154, 157

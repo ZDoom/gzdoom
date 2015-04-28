@@ -1,4 +1,4 @@
-ACTOR Minotaur 9 native
+ACTOR Minotaur native
 {
 	Game Heretic
 	Health 3000

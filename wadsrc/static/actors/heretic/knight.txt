@@ -1,7 +1,7 @@
 
 // Knight -------------------------------------------------------------------
 
-ACTOR Knight 64
+ACTOR Knight
 {
 	Game Heretic
 	SpawnID 6
@@ -60,7 +60,7 @@ ACTOR Knight 64
 
 // Knight ghost -------------------------------------------------------------
 
-ACTOR KnightGhost : Knight 65
+ACTOR KnightGhost : Knight
 {
 	Game Heretic
 	SpawnID 129

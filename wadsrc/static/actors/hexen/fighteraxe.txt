@@ -1,7 +1,7 @@
 
 // The Fighter's Axe --------------------------------------------------------
 
-ACTOR FWeapAxe : FighterWeapon 8010 native
+ACTOR FWeapAxe : FighterWeapon native
 {
 	Game Hexen
 	SpawnID 27

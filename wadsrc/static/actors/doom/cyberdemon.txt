@@ -4,7 +4,7 @@
 // Cyberdemon
 //
 //===========================================================================
-ACTOR Cyberdemon 16
+ACTOR Cyberdemon
 {
 	Game Doom
 	SpawnID 114

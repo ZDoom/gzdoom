@@ -1,7 +1,7 @@
 
 // The Mage's Frost Cone ----------------------------------------------------
 
-ACTOR MWeapFrost : MageWeapon 53
+ACTOR MWeapFrost : MageWeapon
 {
 	Game Hexen
 	SpawnID 36

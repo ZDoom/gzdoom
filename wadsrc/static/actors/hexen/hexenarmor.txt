@@ -1,7 +1,7 @@
 
 // Mesh Armor (1) -----------------------------------------------------------
 
-ACTOR MeshArmor : HexenArmor 8005
+ACTOR MeshArmor : HexenArmor
 {
 	Game Hexen
 	SpawnID 68
@@ -19,7 +19,7 @@ ACTOR MeshArmor : HexenArmor 8005
 	
 // Falcon Shield (2) --------------------------------------------------------
 
-ACTOR FalconShield : HexenArmor 8006
+ACTOR FalconShield : HexenArmor
 {
 	Game Hexen
 	SpawnID 69
@@ -37,7 +37,7 @@ ACTOR FalconShield : HexenArmor 8006
 
 // Platinum Helm (3) --------------------------------------------------------
 
-ACTOR PlatinumHelm : HexenArmor 8007
+ACTOR PlatinumHelm : HexenArmor
 {
 	Game Hexen
 	SpawnID 70
@@ -55,7 +55,7 @@ ACTOR PlatinumHelm : HexenArmor 8007
 
 // Amulet of Warding (4) ----------------------------------------------------
 
-ACTOR AmuletOfWarding : HexenArmor 8008
+ACTOR AmuletOfWarding : HexenArmor
 {
 	Game Hexen
 	SpawnID 71

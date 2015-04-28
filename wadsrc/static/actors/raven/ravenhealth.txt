@@ -1,4 +1,4 @@
-ACTOR CrystalVial : Health 81
+ACTOR CrystalVial : Health
 {
 	Game Raven
 	SpawnID 23

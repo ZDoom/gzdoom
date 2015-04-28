@@ -64,7 +64,7 @@ ACTOR Rebel : StrifeHumanoid
 
 // Rebel 1 ------------------------------------------------------------------
 
-ACTOR Rebel1 : Rebel 9
+ACTOR Rebel1 : Rebel
 {
 	Game Strife
 	ConversationID 43, 42, 43
@@ -73,7 +73,7 @@ ACTOR Rebel1 : Rebel 9
 
 // Rebel 2 ------------------------------------------------------------------
 
-ACTOR Rebel2 : Rebel 144
+ACTOR Rebel2 : Rebel
 {
 	Game Strife
 	ConversationID 44, 43, 44
@@ -81,7 +81,7 @@ ACTOR Rebel2 : Rebel 144
 
 // Rebel 3 ------------------------------------------------------------------
 
-ACTOR Rebel3 : Rebel 145
+ACTOR Rebel3 : Rebel
 {
 	Game Strife
 	ConversationID 45, 44, 45
@@ -89,7 +89,7 @@ ACTOR Rebel3 : Rebel 145
 
 // Rebel 4 ------------------------------------------------------------------
 
-ACTOR Rebel4 : Rebel 149
+ACTOR Rebel4 : Rebel
 {
 	Game Strife
 	ConversationID 46, 45, 56
@@ -97,7 +97,7 @@ ACTOR Rebel4 : Rebel 149
 
 // Rebel 5 ------------------------------------------------------------------
 
-ACTOR Rebel5 : Rebel 150
+ACTOR Rebel5 : Rebel
 {
 	Game Strife
 	ConversationID 47, 46, 47
@@ -105,7 +105,7 @@ ACTOR Rebel5 : Rebel 150
 
 // Rebel 6 ------------------------------------------------------------------
 
-ACTOR Rebel6 : Rebel 151
+ACTOR Rebel6 : Rebel
 {
 	Game Strife
 	ConversationID 48, 47, 48
@@ -113,7 +113,7 @@ ACTOR Rebel6 : Rebel 151
 
 // Teleporter Beacon --------------------------------------------------------
 
-ACTOR TeleporterBeacon : Inventory 10 native
+ACTOR TeleporterBeacon : Inventory native
 {
 	Game Strife
 	ConversationID 166,-1,-1

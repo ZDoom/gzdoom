@@ -595,19 +595,6 @@ struct polyspawns_t
 	short type;
 };
 
-enum
-{
-	PO_HEX_ANCHOR_TYPE = 3000,
-	PO_HEX_SPAWN_TYPE,
-	PO_HEX_SPAWNCRUSH_TYPE,
-
-	// [RH] Thing numbers that don't conflict with Doom things
-	PO_ANCHOR_TYPE = 9300,
-	PO_SPAWN_TYPE,
-	PO_SPAWNCRUSH_TYPE,
-	PO_SPAWNHURT_TYPE
-};
-
 extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 

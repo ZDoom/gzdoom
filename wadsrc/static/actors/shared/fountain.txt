@@ -6,37 +6,37 @@ ACTOR ParticleFountain native
 	+INVISIBLE
 }
 
-ACTOR RedParticleFountain : ParticleFountain 9027
+ACTOR RedParticleFountain : ParticleFountain
 {
 	Health 1
 }
 
-ACTOR GreenParticleFountain : ParticleFountain 9028
+ACTOR GreenParticleFountain : ParticleFountain
 {
 	Health 2
 }
 
-ACTOR BlueParticleFountain : ParticleFountain 9029
+ACTOR BlueParticleFountain : ParticleFountain
 {
 	Health 3
 }
 
-ACTOR YellowParticleFountain : ParticleFountain 9030
+ACTOR YellowParticleFountain : ParticleFountain
 {
 	Health 4
 }
 
-ACTOR PurpleParticleFountain : ParticleFountain 9031
+ACTOR PurpleParticleFountain : ParticleFountain
 {
 	Health 5
 }
 
-ACTOR BlackParticleFountain : ParticleFountain 9032
+ACTOR BlackParticleFountain : ParticleFountain
 {
 	Health 6
 }
 
-ACTOR WhiteParticleFountain : ParticleFountain 9033
+ACTOR WhiteParticleFountain : ParticleFountain
 {
 	Health 7
 }

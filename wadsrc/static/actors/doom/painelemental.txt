@@ -3,7 +3,7 @@
 // Pain Elemental
 //
 //===========================================================================
-ACTOR PainElemental 71
+ACTOR PainElemental
 {
 	Game Doom
 	SpawnID 115

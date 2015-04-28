@@ -1,4 +1,4 @@
-ACTOR SkullHang70 17
+ACTOR SkullHang70
 {
 	Game Heretic
 	Radius 20
@@ -13,7 +13,7 @@ ACTOR SkullHang70 17
 	}
 }
 	
-ACTOR SkullHang60 24
+ACTOR SkullHang60
 {
 	Game Heretic
 	Radius 20
@@ -28,7 +28,7 @@ ACTOR SkullHang60 24
 	}
 }
 	
-ACTOR SkullHang45 25
+ACTOR SkullHang45
 {
 	Game Heretic
 	Radius 20
@@ -43,7 +43,7 @@ ACTOR SkullHang45 25
 	}
 }
 	
-ACTOR SkullHang35 26
+ACTOR SkullHang35
 {
 	Game Heretic
 	Radius 20
@@ -58,7 +58,7 @@ ACTOR SkullHang35 26
 	}
 }
 	
-ACTOR Chandelier 28
+ACTOR Chandelier
 {
 	Game Heretic
 	Radius 20
@@ -73,7 +73,7 @@ ACTOR Chandelier 28
 	}
 }
 
-ACTOR SerpentTorch 27
+ACTOR SerpentTorch
 {
 	Game Heretic
 	Radius 12
@@ -87,7 +87,7 @@ ACTOR SerpentTorch 27
 	}
 }
 
-ACTOR SmallPillar 29
+ACTOR SmallPillar
 {
 	Game Heretic
 	Radius 16
@@ -101,7 +101,7 @@ ACTOR SmallPillar 29
 	}
 }
 
-ACTOR StalagmiteSmall 37
+ACTOR StalagmiteSmall
 {
 	Game Heretic
 	Radius 8
@@ -115,7 +115,7 @@ ACTOR StalagmiteSmall 37
 	}
 }
 
-ACTOR StalagmiteLarge 38
+ACTOR StalagmiteLarge
 {
 	Game Heretic
 	Radius 12
@@ -129,7 +129,7 @@ ACTOR StalagmiteLarge 38
 	}
 }
 
-ACTOR StalactiteSmall 39
+ACTOR StalactiteSmall
 {
 	Game Heretic
 	Radius 8
@@ -145,7 +145,7 @@ ACTOR StalactiteSmall 39
 	}
 }
 
-ACTOR StalactiteLarge 40
+ACTOR StalactiteLarge
 {
 	Game Heretic
 	Radius 12
@@ -161,7 +161,7 @@ ACTOR StalactiteLarge 40
 	}
 }
 
-ACTOR FireBrazier 76
+ACTOR FireBrazier
 {
 	Game Heretic
 	Radius 16
@@ -175,7 +175,7 @@ ACTOR FireBrazier 76
 	}
 }
 
-ACTOR Barrel 44
+ACTOR Barrel
 {
 	Game Heretic
 	Radius 12
@@ -189,7 +189,7 @@ ACTOR Barrel 44
 	}
 }
 
-ACTOR BrownPillar 47
+ACTOR BrownPillar
 {
 	Game Heretic
 	Radius 14
@@ -203,7 +203,7 @@ ACTOR BrownPillar 47
 	}
 }
 
-ACTOR Moss1 48
+ACTOR Moss1
 {
 	Game Heretic
 	Radius 20
@@ -218,7 +218,7 @@ ACTOR Moss1 48
 	}
 }
 
-ACTOR Moss2 49
+ACTOR Moss2
 {
 	Game Heretic
 	Radius 20
@@ -233,7 +233,7 @@ ACTOR Moss2 49
 	}
 }
 
-ACTOR WallTorch 50
+ACTOR WallTorch
 {
 	Game Heretic
 	Radius 6
@@ -248,7 +248,7 @@ ACTOR WallTorch 50
 	}
 }
 
-ACTOR HangingCorpse 51
+ACTOR HangingCorpse
 {
 	Game Heretic
 	Radius 8

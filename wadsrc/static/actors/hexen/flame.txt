@@ -1,6 +1,6 @@
 // Temp Small Flame --------------------------------------------------------
 
-ACTOR FlameSmallTemp 10500
+ACTOR FlameSmallTemp
 {
 	Game Hexen
 	SpawnID 96
@@ -21,7 +21,7 @@ ACTOR FlameSmallTemp 10500
 
 // Temp Large Flame ---------------------------------------------------------
 
-ACTOR FlameLargeTemp 10502
+ACTOR FlameLargeTemp
 {
 	Game Hexen
 	SpawnID 98
@@ -52,7 +52,7 @@ ACTOR FlameLargeTemp 10502
 
 // Small Flame --------------------------------------------------------------
 
-ACTOR FlameSmall : SwitchableDecoration 10501
+ACTOR FlameSmall : SwitchableDecoration
 {
 	Game Hexen
 	SpawnID 97
@@ -85,7 +85,7 @@ ACTOR FlameSmall2 : FlameSmall
 
 // Large Flame --------------------------------------------------------------
 
-ACTOR FlameLarge : SwitchableDecoration 10503
+ACTOR FlameLarge : SwitchableDecoration
 {
 	Game Hexen
 	SpawnID 99

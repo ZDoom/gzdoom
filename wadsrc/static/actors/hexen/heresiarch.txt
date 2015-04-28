@@ -1,7 +1,7 @@
 
 // The Heresiarch him/itself ------------------------------------------------
 
-ACTOR Heresiarch 10080 native
+ACTOR Heresiarch native
 {
 	Game Hexen
 	Health 5000

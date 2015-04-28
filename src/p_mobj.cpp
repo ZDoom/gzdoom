@@ -4708,69 +4708,82 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->type == 0 || mthing->type == -1)
 		return NULL;
 
-	// count deathmatch start positions
-	if (mthing->type == 11)
+	// find which type to spawn
+	FDoomEdEntry *mentry = DoomEdMap.CheckKey(mthing->type);
+
+	if (mentry == NULL)
 	{
-		FPlayerStart start(mthing);
-		deathmatchstarts.Push(start);
+		// [RH] Don't die if the map tries to spawn an unknown thing
+		Printf ("Unknown type %i at (%i, %i)\n",
+				 mthing->type,
+				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+		mentry = DoomEdMap.CheckKey(0);
+		if (mentry == NULL)	// we need a valid entry for the rest of this function so if we can't find a default, let's exit right away.
+		{
+		return NULL;
+	}
+	}
+	if (mentry->Type == NULL && mentry->Special <= 0)
+	{
+		// has been explicitly set to not spawning anything.
 		return NULL;
 	}
 
-	// Convert Strife starts to Hexen-style starts
-	if (gameinfo.gametype == GAME_Strife && mthing->type >= 118 && mthing->type <= 127)
+	// copy args to mapthing so that we have them in one place for the rest of this function	
+	if (mentry->Special >= 0)
 	{
-		mthing->args[0] = mthing->type - 117;
-		mthing->type = 1;
+		mthing->special = mentry->Special;
+		memcpy(mthing->args, mentry->Args, sizeof(mthing->args));
 	}
 
-	// [RH] Record polyobject-related things
-	if (gameinfo.gametype == GAME_Hexen)
+	int pnum = -1;
+	if (mentry->Type == NULL)
 	{
-		switch (mthing->type)
+
+		switch (mentry->Special)
 		{
-		case PO_HEX_ANCHOR_TYPE:
-			mthing->type = PO_ANCHOR_TYPE;
-			break;
-		case PO_HEX_SPAWN_TYPE:
-			mthing->type = PO_SPAWN_TYPE;
-			break;
-		case PO_HEX_SPAWNCRUSH_TYPE:
-			mthing->type = PO_SPAWNCRUSH_TYPE;
-			break;
+		case SMT_DEATHMATCHSTART:
+		{
+			// count deathmatch start positions
+			FPlayerStart start(mthing, 0);
+			deathmatchstarts.Push(start);
+			return NULL;
 		}
-	}
 
-	if (mthing->type == PO_ANCHOR_TYPE ||
-		mthing->type == PO_SPAWN_TYPE ||
-		mthing->type == PO_SPAWNCRUSH_TYPE ||
-		mthing->type == PO_SPAWNHURT_TYPE)
+		case SMT_POLYANCHOR:
+		case SMT_POLYSPAWN:
+		case SMT_POLYSPAWNCRUSH:
+		case SMT_POLYSPAWNHURT:
 	{
 		polyspawns_t *polyspawn = new polyspawns_t;
 		polyspawn->next = polyspawns;
 		polyspawn->x = mthing->x;
 		polyspawn->y = mthing->y;
 		polyspawn->angle = mthing->angle;
-		polyspawn->type = mthing->type;
+			polyspawn->type = mentry->Special;
 		polyspawns = polyspawn;
-		if (mthing->type != PO_ANCHOR_TYPE)
+			if (mentry->Special != SMT_POLYANCHOR)
 			po_NumPolyobjs++;
 		return NULL;
 	}
 
-	// check for players specially
-	int pnum = -1;
+		case SMT_PLAYER1START:
+		case SMT_PLAYER2START:
+		case SMT_PLAYER3START:
+		case SMT_PLAYER4START:
+		case SMT_PLAYER5START:
+		case SMT_PLAYER6START:
+		case SMT_PLAYER7START:
+		case SMT_PLAYER8START:
+			pnum = mentry->Special - SMT_PLAYER1START;
+			break;
 
-	if (mthing->type <= 4 && mthing->type > 0)
-	{
-		pnum = mthing->type - 1;
+		// Sound sequence override will be handled later
+		default:
+			break;
+
 	}
-	else
-	{
-		if (mthing->type >= gameinfo.player5start && mthing->type < gameinfo.player5start + MAXPLAYERS - 4)
-		{
-			pnum = mthing->type - gameinfo.player5start + 4;
 		}
-	}
 
 	if (pnum == -1 || (level.flags & LEVEL_FILTERSTARTS))
 	{
@@ -4836,7 +4849,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			return NULL;
 
 		// save spots for respawning in network games
-		FPlayerStart start(mthing);
+		FPlayerStart start(mthing, pnum+1);
 		playerstarts[pnum] = start;
 		AllPlayerStarts.Push(start);
 		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
@@ -4847,20 +4860,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// [RH] sound sequence overriders
-	if (mthing->type >= 1400 && mthing->type < 1410)
+	if (mentry->Type == NULL && mentry->Special == SMT_SSEQOVERRIDE)
 	{
-		P_PointInSector (mthing->x, mthing->y)->seqType = mthing->type - 1400;
-		return NULL;
-	}
-	else if (mthing->type == 1411)
-	{
-		int type;
-
-		if (mthing->args[0] == 255)
-			type = -1;
-		else
-			type = mthing->args[0];
-
+		int type = mentry->Args[0];
+		if (type == 255) type = -1;
 		if (type > 63)
 		{
 			Printf ("Sound sequence %d out of range\n", type);
@@ -4872,37 +4875,11 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		return NULL;
 	}
 
-	// [RH] Determine if it is an old ambient thing, and if so,
-	//		map it to MT_AMBIENT with the proper parameter.
-	if (mthing->type >= 14001 && mthing->type <= 14064)
-	{
-		mthing->args[0] = mthing->type - 14000;
-		mthing->type = 14065;
-	}
-	else if (mthing->type >= 14101 && mthing->type <= 14164)
-	{
-		mthing->args[0] = mthing->type - 14100;
-		mthing->type = 14165;
-	}
-	// find which type to spawn
-	i = DoomEdMap.FindType (mthing->type);
-
-	if (i == NULL)
-	{
-		// [RH] Don't die if the map tries to spawn an unknown thing
-		Printf ("Unknown type %i at (%i, %i)\n",
-				 mthing->type,
-				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-		i = PClass::FindActor("Unknown");
-		assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	}
 	// [RH] If the thing's corresponding sprite has no frames, also map
 	//		it to the unknown thing.
-	else
-	{
 		// Handle decorate replacements explicitly here
 		// to check for missing frames in the replacement object.
-		i = i->GetReplacement();
+	i = mentry->Type->GetReplacement();
 
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||
@@ -4919,7 +4896,6 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			i = PClass::FindActor("Unknown");
 			assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
 		}
-	}
 
 	const AActor *info = GetDefaultByType (i);
 
@@ -5008,6 +4984,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}
 
+	// if the actor got args defined either in DECORATE or MAPINFO we must ignore the map's properties.
 	if (!(mobj->flags2 & MF2_ARGSDEFINED))
 	{
 		// [RH] Set the thing's special
@@ -6271,11 +6248,6 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 {
 	FState *death;
 
-	if (flags5 & MF5_NODAMAGE)
-	{
-		return 0;
-	}
-
 	// If the actor does not have a corresponding death state, then it does not take damage.
 	// Note that DeathState matches every kind of damagetype, so an actor has that, it can
 	// be hurt with any type of damage. Exception: Massacre damage always succeeds, because
@@ -6348,11 +6320,11 @@ void AActor::Crash()
 	}
 }
 
-void AActor::SetIdle()
+void AActor::SetIdle(bool nofunction)
 {
 	FState *idle = FindState (NAME_Idle);
 	if (idle == NULL) idle = SpawnState;
-	SetState(idle);
+	SetState(idle, nofunction);
 }
 
 int AActor::SpawnHealth() const

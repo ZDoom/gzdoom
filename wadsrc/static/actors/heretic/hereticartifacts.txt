@@ -1,6 +1,6 @@
 // Super map ----------------------------------------------------------------
 
-ACTOR SuperMap : MapRevealer 35
+ACTOR SuperMap : MapRevealer
 {
 	Game Heretic
 	SpawnID 137
@@ -20,7 +20,7 @@ ACTOR SuperMap : MapRevealer 35
 
 // Invisibility -------------------------------------------------------------
 
-ACTOR ArtiInvisibility : PowerupGiver 75
+ACTOR ArtiInvisibility : PowerupGiver
 {
 	Game Heretic
 	SpawnID 135
@@ -45,7 +45,7 @@ ACTOR ArtiInvisibility : PowerupGiver 75
  
 // Tome of power ------------------------------------------------------------
 
-ACTOR ArtiTomeOfPower : PowerupGiver 86 native
+ACTOR ArtiTomeOfPower : PowerupGiver native
 {
 	Game Heretic
 	SpawnID 134
@@ -88,7 +88,7 @@ ACTOR ActivatedTimeBomb
 }
 
 
-ACTOR ArtiTimeBomb : Inventory 34 native
+ACTOR ArtiTimeBomb : Inventory native
 {
 	Game Heretic
 	SpawnID 72

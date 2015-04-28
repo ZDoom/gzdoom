@@ -1,7 +1,7 @@
 
 // Heretic imp (as opposed to the Doom variety) -----------------------------
 
-ACTOR HereticImp 66
+ACTOR HereticImp
 {
 	Game Heretic
 	SpawnID 5
@@ -78,7 +78,7 @@ ACTOR HereticImp 66
 
 // Heretic imp leader -------------------------------------------------------
 
-ACTOR HereticImpLeader : HereticImp 5
+ACTOR HereticImpLeader : HereticImp
 {
 	Game Heretic
 	SpawnID 7

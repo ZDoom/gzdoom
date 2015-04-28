@@ -23,19 +23,19 @@ ACTOR TeleportFog native
 
 
 
-ACTOR TeleportDest 14
+ACTOR TeleportDest
 {
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
 }
 
-ACTOR TeleportDest2 : TeleportDest 9044
+ACTOR TeleportDest2 : TeleportDest
 {
 	+NOGRAVITY
 }
 
-ACTOR TeleportDest3 : TeleportDest2 9043
+ACTOR TeleportDest3 : TeleportDest2
 {
 	-NOGRAVITY
 }

@@ -1,4 +1,4 @@
-ACTOR ColorSetter 9038 native
+ACTOR ColorSetter native
 {
 	+NOBLOCKMAP
 	+NOGRAVITY
@@ -7,7 +7,7 @@ ACTOR ColorSetter 9038 native
 }
 
 
-ACTOR FadeSetter 9039 native
+ACTOR FadeSetter native
 {
 	+NOBLOCKMAP
 	+NOGRAVITY

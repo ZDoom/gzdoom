@@ -723,7 +723,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 			if (xsprites[i].Data1 < 4)
 				mapthings[count].type = 1 + xsprites[i].Data1;
 			else
-				mapthings[count].type = gameinfo.player5start + xsprites[i].Data1 - 4;
+				mapthings[count].type = 4001 + xsprites[i].Data1 - 4;
 		}
 		else if (xsprites != NULL && sprites[i].lotag == 2)
 		{ // Bloodbath start

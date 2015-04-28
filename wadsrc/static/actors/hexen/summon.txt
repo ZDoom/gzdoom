@@ -1,7 +1,7 @@
 
 // Dark Servant Artifact ----------------------------------------------------
 
-ACTOR ArtiDarkServant : Inventory 86 native
+ACTOR ArtiDarkServant : Inventory native
 {
 	Game Hexen
 	SpawnID 16

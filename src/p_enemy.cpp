@@ -2742,7 +2742,14 @@ void A_Chase(VMFrameStack *stack, AActor *self)
 // A_FaceTracer
 //
 //=============================================================================
-void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
+enum FAF_Flags
+{
+	FAF_BOTTOM = 1,
+	FAF_MIDDLE = 2,
+	FAF_TOP = 4,
+	FAF_NODISTFACTOR = 8,
+};
+void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
 	if (!other)
 		return;
@@ -2765,28 +2772,28 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		{
 			if (self->angle - other_angle < ANGLE_180)
 			{
-				self->angle -= max_turn;
+				self->angle -= max_turn + ang_offset;
 			}
 			else
 			{
-				self->angle += max_turn;
+				self->angle += max_turn + ang_offset;
 			}
 		}
 		else
 		{
 			if (other_angle - self->angle < ANGLE_180)
 			{
-				self->angle += max_turn;
+				self->angle += max_turn + ang_offset;
 			}
 			else
 			{
-				self->angle -= max_turn;
+				self->angle -= max_turn + ang_offset;
 			}
 		}
 	}
 	else
 	{
-		self->angle = other_angle;
+		self->angle = other_angle + ang_offset;
 	}
 
 	// [DH] Now set pitch. In order to maintain compatibility, this can be
@@ -2797,20 +2804,33 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		// result is only used in a ratio.
 		double dist_x = other->x - self->x;
 		double dist_y = other->y - self->y;
+		
 		// Positioning ala missile spawning, 32 units above foot level
 		fixed_t source_z = self->z + 32*FRACUNIT + self->GetBobOffset();
 		fixed_t target_z = other->z + 32*FRACUNIT + other->GetBobOffset();
+
 		// If the target z is above the target's head, reposition to the middle of
-		// its body.
+		// its body.		
 		if (target_z >= other->z + other->height)
 		{
-			target_z = other->z + other->height / 2;
+			target_z = other->z + (other->height / 2);
 		}
+
+		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
+		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
+		if (flags & FAF_BOTTOM)
+			target_z = other->z + other->GetBobOffset(); 
+		if (flags & FAF_MIDDLE)
+			target_z = other->z + (other->height / 2) + other->GetBobOffset();
+		if (flags & FAF_TOP)
+			target_z = other->z + (other->height) + other->GetBobOffset();
+		if (!flags & FAF_NODISTFACTOR)
+			target_z += pitch_offset;
+
 		double dist_z = target_z - source_z;
 		double dist = sqrt(dist_x*dist_x + dist_y*dist_y + dist_z*dist_z);
-
 		int other_pitch = (int)rad2bam(asin(dist_z / dist));
-
+		
 		if (max_pitch != 0)
 		{
 			if (self->pitch > other_pitch)
@@ -2828,7 +2848,11 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		{
 			self->pitch = other_pitch;
 		}
+		if (flags & FAF_NODISTFACTOR)
+			self->pitch += pitch_offset;
 	}
+	
+
 
 	// This will never work well if the turn angle is limited.
 	if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
@@ -2837,19 +2861,19 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
     }
 }
 
-void A_FaceTarget (AActor *self, angle_t max_turn, angle_t max_pitch)
+void A_FaceTarget(AActor *self, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
-	A_Face(self, self->target, max_turn, max_pitch);
+	A_Face(self, self->target, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
-void A_FaceMaster (AActor *self, angle_t max_turn, angle_t max_pitch)
+void A_FaceMaster(AActor *self, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
-	A_Face(self, self->master, max_turn, max_pitch);
+	A_Face(self, self->master, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
-void A_FaceTracer (AActor *self, angle_t max_turn, angle_t max_pitch)
+void A_FaceTracer(AActor *self, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
-	A_Face(self, self->tracer, max_turn, max_pitch);
+	A_Face(self, self->tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
@@ -2857,8 +2881,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
 	PARAM_ANGLE_OPT(max_pitch)	{ max_pitch = 270; }
+	PARAM_ANGLE_OPT(ang_offset)	{ max_turn = 0; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ max_turn = 0; }
+	PARAM_INT_OPT(flags)		{ max_turn = 0; }
 
-	A_FaceTarget(self, max_turn, max_pitch);
+	A_FaceTarget(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 	return 0;
 }
 
@@ -2867,8 +2894,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
 	PARAM_ANGLE_OPT(max_pitch)	{ max_pitch = 270; }
+	PARAM_ANGLE_OPT(ang_offset)	{ max_turn = 0; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ max_turn = 0; }
+	PARAM_INT_OPT(flags)	{ max_turn = 0; }
 
-	A_FaceMaster(self, max_turn, max_pitch);
+	A_FaceMaster(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 	return 0;
 }
 
@@ -2877,8 +2907,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_ANGLE_OPT(max_turn)	{ max_turn = 0; }
 	PARAM_ANGLE_OPT(max_pitch)	{ max_pitch = 270; }
+	PARAM_ANGLE_OPT(ang_offset)	{ max_turn = 0; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ max_turn = 0; }
+	PARAM_INT_OPT(flags)		{ max_turn = 0; }
 
-	A_FaceTracer(self, max_turn, max_pitch);
+	A_FaceTracer(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 	return 0;
 }
 

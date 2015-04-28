@@ -391,25 +391,6 @@ public:
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-class FxFloatCast : public FxExpression
-{
-	FxExpression *basex;
-
-public:
-
-	FxFloatCast(FxExpression *x);
-	~FxFloatCast();
-	FxExpression *Resolve(FCompileContext&);
-
-	ExpVal EvalExpression (AActor *self);
-};
-
-//==========================================================================
-//
 //	FxSign
 //
 //==========================================================================

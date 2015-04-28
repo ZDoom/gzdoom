@@ -797,6 +797,7 @@ DEFINE_PROPERTY(dropitem, S_i_i, Actor)
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
+	GC::WriteBarrier(di);
 }
 
 //==========================================================================
@@ -2739,6 +2740,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
+	GC::WriteBarrier(di);
 }
 
 //==========================================================================

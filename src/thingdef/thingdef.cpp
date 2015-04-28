@@ -218,6 +218,7 @@ void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
 	if (bag.DropItemSet)
 	{
 		info->DropItems = bag.DropItemList;
+		GC::WriteBarrier(info, info->DropItems);
 	}
 	if (info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{

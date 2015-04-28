@@ -594,6 +594,7 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of native action functions
+	AFTable.Clear();
 	if (AFTable.Size() == 0)
 	{
 		FAutoSegIterator probe(ARegHead, ARegTail);

@@ -10,5 +10,6 @@ class AActor;
 void T_PreprocessScripts();
 void T_LoadScripts(MapData * map);
 void T_AddSpawnedThing(AActor * );
+void FS_Close();
 
 #endif

@@ -670,24 +670,28 @@ void FS_Close()
 	int i;
 	DFsVariable *current, *next;
 
-	// we have to actually delete the global variables if we don't want
-	// to get them reported as memory leaks.
-	for(i=0; i<VARIABLESLOTS; i++)
-    {
-		current = global_script->variables[i];
-		
-		while(current)
+	if (global_script != NULL)
+	{
+		// we have to actually delete the global variables if we don't want
+		// to get them reported as memory leaks.
+		for (i = 0; i < VARIABLESLOTS; i++)
 		{
-			next = current->next; // save for after freeing
-			
-			current->ObjectFlags |= OF_YesReallyDelete;
-			delete current;
-			current = next; // go to next in chain
+			current = global_script->variables[i];
+
+			while (current)
+			{
+				next = current->next; // save for after freeing
+
+				current->ObjectFlags |= OF_YesReallyDelete;
+				delete current;
+				current = next; // go to next in chain
+			}
 		}
-    }
-	GC::DelSoftRoot(global_script);
-	global_script->ObjectFlags |= OF_YesReallyDelete;
-	delete global_script;
+		GC::DelSoftRoot(global_script);
+		global_script->ObjectFlags |= OF_YesReallyDelete;
+		delete global_script;
+		global_script = NULL;
+	}
 }
 
 void T_Init()
@@ -701,7 +705,6 @@ void T_Init()
 		global_script = new DFsScript;
 		GC::AddSoftRoot(global_script);
 		init_functions();
-		atterm(FS_Close);
 	}
 }
 

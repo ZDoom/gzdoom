@@ -45,6 +45,7 @@
 #include "v_text.h"
 #include "a_pickups.h"
 #include "d_player.h"
+#include "fragglescript/t_fs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2032,6 +2033,7 @@ void PClass::StaticShutdown ()
 	TArray<size_t *> uniqueFPs(64);
 	unsigned int i, j;
 
+	FS_Close();	// this must be done before the classes get deleted.
 	for (i = 0; i < PClass::AllClasses.Size(); ++i)
 	{
 		PClass *type = PClass::AllClasses[i];

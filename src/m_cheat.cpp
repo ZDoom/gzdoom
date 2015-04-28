@@ -1052,24 +1052,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 	}
 	else
 	{
-		AInventory *inventory = player->mo->FindInventory (type);
-
-		if (inventory != NULL)
-		{
-			inventory->Amount -= amount ? amount : 1;
-
-			if (inventory->Amount <= 0)
-			{
-				if (inventory->ItemFlags & IF_KEEPDEPLETED)
-				{
-					inventory->Amount = 0;
-				}
-				else
-				{
-					inventory->Destroy ();
-				}
-			}
-		}
+		player->mo->TakeInventory(type, amount ? amount : 1);
 	}
 	return;
 }

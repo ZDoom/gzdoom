@@ -151,6 +151,7 @@ public:
 	virtual void MarkPrecacheSounds() const;
 	virtual void BeginPlay ();
 	virtual void Destroy ();
+	virtual void DepleteOrDestroy ();
 	virtual void Tick ();
 	virtual bool ShouldRespawn ();
 	virtual bool ShouldStay ();

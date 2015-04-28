@@ -3,8 +3,6 @@
 
 ACTOR ArtiBoostArmor : Inventory native
 {
-	Game Hexen
-	SpawnID 22
 	+COUNTITEM
 	+FLOATBOB
 	Inventory.DefMaxAmount

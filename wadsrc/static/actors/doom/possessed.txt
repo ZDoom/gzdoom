@@ -6,8 +6,6 @@
 //===========================================================================
 ACTOR ZombieMan
 {
-	Game Doom
-	SpawnID 4
 	Health 20
 	Radius 20
 	Height 56
@@ -67,8 +65,6 @@ ACTOR ZombieMan
 //===========================================================================
 ACTOR ShotgunGuy
 {
-	Game Doom
-	SpawnID 1
 	Health 30
 	Radius 20
 	Height 56
@@ -129,8 +125,6 @@ ACTOR ShotgunGuy
 //===========================================================================
 ACTOR ChaingunGuy
 {
-	Game Doom
-	SpawnID 2
 	Health 70
 	Radius 20
 	Height 56
@@ -191,8 +185,6 @@ ACTOR ChaingunGuy
 //===========================================================================
 ACTOR WolfensteinSS
 {
-	Game Doom
-	SpawnID 116
 	Health 50
 	Radius 20
 	Height 56

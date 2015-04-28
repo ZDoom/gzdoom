@@ -5,26 +5,22 @@
 
 actor GlassOfWater : HealthBonus
 {
-	game Chex
 	inventory.pickupmessage "$GOTWATER"
 }
 
 actor BowlOfFruit : Stimpack
 {
-	game Chex
 	inventory.pickupmessage "$GOTFRUIT"
 }
 
 actor BowlOfVegetables : Medikit
 {
-	game Chex
 	inventory.pickupmessage "$GOTVEGETABLES"
 	health.lowmessage 25, "$GOTVEGETABLESNEED"
 }
 
 actor SuperchargeBreakfast : Soulsphere
 {
-	game Chex
 	inventory.pickupmessage "$GOTBREAKFAST"
 }
 
@@ -32,19 +28,16 @@ actor SuperchargeBreakfast : Soulsphere
 
 actor SlimeRepellent : ArmorBonus
 {
-	game Chex
 	inventory.pickupmessage "$GOTREPELLENT"
 }
 
 actor ChexArmor : GreenArmor
 {
-	game Chex
 	inventory.pickupmessage "$GOTCHEXARMOR"
 }
 
 actor SuperChexArmor : BlueArmor
 {
-	game Chex
 	inventory.pickupmessage "$GOTSUPERCHEXARMOR"
 }
 
@@ -52,18 +45,15 @@ actor SuperChexArmor : BlueArmor
 
 actor ComputerAreaMap : Allmap
 {
-	game Chex
 	inventory.pickupmessage "$GOTCHEXMAP"
 }
 
 actor SlimeProofSuit : RadSuit
 {
-	game Chex
 	inventory.pickupmessage "$GOTSLIMESUIT"
 }
 
 actor Zorchpack : Backpack
 {
-	game Chex
 	inventory.pickupmessage "$GOTZORCHPACK"
 }

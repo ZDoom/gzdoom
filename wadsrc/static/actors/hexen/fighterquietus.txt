@@ -14,8 +14,6 @@ ACTOR FighterWeaponPiece : WeaponPiece
 
 ACTOR FWeaponPiece1 : FighterWeaponPiece
 {
-	Game Hexen
-	SpawnID 29
 	WeaponPiece.Number 1
 	States
 	{
@@ -29,8 +27,6 @@ ACTOR FWeaponPiece1 : FighterWeaponPiece
 
 ACTOR FWeaponPiece2 : FighterWeaponPiece
 {
-	Game Hexen
-	SpawnID 30
 	WeaponPiece.Number 2
 	States
 	{
@@ -44,8 +40,6 @@ ACTOR FWeaponPiece2 : FighterWeaponPiece
 
 ACTOR FWeaponPiece3 : FighterWeaponPiece
 {
-	Game Hexen
-	SpawnID 31
 	WeaponPiece.Number 3
 	States
 	{
@@ -72,7 +66,6 @@ ACTOR QuietusDrop
 
 ACTOR FWeapQuietus : FighterWeapon
 {
-	Game Hexen
 	Health 3
 	Weapon.SelectionOrder 2900
 	+WEAPON.PRIMARY_USES_BOTH

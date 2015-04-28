@@ -4,8 +4,6 @@
 
 ACTOR SoundWind
 {
-	Game Heretic
-	SpawnID 110
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
@@ -19,8 +17,6 @@ ACTOR SoundWind
 
 ACTOR SoundWindHexen : SoundWind
 {
-	Game Hexen
-	SpawnID 110
 }
 
 
@@ -28,8 +24,6 @@ ACTOR SoundWindHexen : SoundWind
 
 ACTOR SoundWaterfall
 {
-	Game Heretic
-	SpawnID 111
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH

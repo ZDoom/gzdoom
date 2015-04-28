@@ -168,8 +168,6 @@ void PClassActor::StaticInit()
 
 void PClassActor::StaticSetActorNums()
 {
-	SpawnableThings.Clear();
-
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
 		static_cast<PClassActor *>(PClassActor::AllActorClasses[i])->RegisterIDs();

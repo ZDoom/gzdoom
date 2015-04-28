@@ -4,7 +4,6 @@
 
 ACTOR Stalker
 {
-	Game Strife
 	ConversationID 92,-1,-1
 	Health 80
 	Painchance 40

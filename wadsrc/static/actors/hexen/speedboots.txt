@@ -2,8 +2,6 @@
 
 ACTOR ArtiSpeedBoots : PowerupGiver
 {
-	Game Hexen
-	SpawnID 13
 	+FLOATBOB
 	+COUNTITEM
 	+INVENTORY.PICKUPFLASH

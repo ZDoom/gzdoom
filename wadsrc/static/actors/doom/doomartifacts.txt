@@ -2,8 +2,6 @@
 
 ACTOR InvulnerabilitySphere : PowerupGiver
 {
-	Game Doom
-	SpawnID 133
 	+COUNTITEM
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -24,8 +22,6 @@ ACTOR InvulnerabilitySphere : PowerupGiver
 
 ACTOR Soulsphere : Health
 {
-	Game Doom
-	SpawnID 25
 	+COUNTITEM
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -60,8 +56,6 @@ actor BlueArmorForMegasphere : BlueArmor
 
 ACTOR Megasphere : CustomInventory
 {
-	Game Doom
-	SpawnID 132
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.PickupMessage "$GOTMSPHERE"
@@ -82,8 +76,6 @@ ACTOR Megasphere : CustomInventory
 
 ACTOR BlurSphere : PowerupGiver
 {
-	Game Doom
-	SpawnID 135
 	+COUNTITEM
 	+VISIBILITYPULSE
 	+INVENTORY.AUTOACTIVATE
@@ -105,8 +97,6 @@ ACTOR BlurSphere : PowerupGiver
 
 ACTOR RadSuit : PowerupGiver
 {
-	Game Doom
-	SpawnID 136
 	Height 46
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -125,8 +115,6 @@ ACTOR RadSuit : PowerupGiver
 
 ACTOR Infrared : PowerupGiver
 {
-	Game Doom
-	SpawnID 138
 	+COUNTITEM
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
@@ -146,8 +134,6 @@ ACTOR Infrared : PowerupGiver
 
 ACTOR Allmap : MapRevealer
 {
-	Game Doom
-	SpawnID 137
 	+COUNTITEM
 	+INVENTORY.FANCYPICKUPSOUND
 	+INVENTORY.ALWAYSPICKUP
@@ -166,8 +152,6 @@ ACTOR Allmap : MapRevealer
 
 ACTOR Berserk : CustomInventory
 {
-	Game Doom
-	SpawnID 134
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.PickupMessage "$GOTBERSERK"

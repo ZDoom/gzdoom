@@ -3,7 +3,6 @@
 
 ACTOR Zombie : StrifeHumanoid
 {
-	Game Strife
 	Health 31
 	Radius 20
 	Height 56
@@ -45,7 +44,6 @@ ACTOR Zombie : StrifeHumanoid
 
 ACTOR ZombieSpawner
 {
-	Game Strife
 	Health 20
 	+SHOOTABLE
 	+NOSECTOR

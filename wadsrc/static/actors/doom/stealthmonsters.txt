@@ -1,8 +1,6 @@
 
 ACTOR StealthArachnotron : Arachnotron
 {
-	Game Doom
-	SpawnID 117
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -11,8 +9,6 @@ ACTOR StealthArachnotron : Arachnotron
 
 ACTOR StealthArchvile : Archvile
 {
-	Game Doom
-	SpawnID 118
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -21,8 +17,6 @@ ACTOR StealthArchvile : Archvile
 
 ACTOR StealthBaron : BaronOfHell
 {
-	Game Doom
-	SpawnID 100
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -32,8 +26,6 @@ ACTOR StealthBaron : BaronOfHell
 
 ACTOR StealthCacodemon : Cacodemon
 {
-	Game Doom
-	SpawnID 119
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -43,8 +35,6 @@ ACTOR StealthCacodemon : Cacodemon
 
 ACTOR StealthChaingunGuy : ChaingunGuy
 {
-	Game Doom
-	SpawnID 120
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -53,8 +43,6 @@ ACTOR StealthChaingunGuy : ChaingunGuy
 
 ACTOR StealthDemon : Demon
 {
-	Game Doom
-	SpawnID 121
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -64,8 +52,6 @@ ACTOR StealthDemon : Demon
 
 ACTOR StealthHellKnight : HellKnight
 {
-	Game Doom
-	SpawnID 101
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -75,8 +61,6 @@ ACTOR StealthHellKnight : HellKnight
 
 ACTOR StealthDoomImp : DoomImp
 {
-	Game Doom
-	SpawnID 122
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -86,8 +70,6 @@ ACTOR StealthDoomImp : DoomImp
 
 ACTOR StealthFatso : Fatso
 {
-	Game Doom
-	SpawnID 123
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -96,8 +78,6 @@ ACTOR StealthFatso : Fatso
 
 ACTOR StealthRevenant : Revenant
 {
-	Game Doom
-	SpawnID 124
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -107,8 +87,6 @@ ACTOR StealthRevenant : Revenant
 
 ACTOR StealthShotgunGuy : ShotgunGuy
 {
-	Game Doom
-	SpawnID 103
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0
@@ -117,8 +95,6 @@ ACTOR StealthShotgunGuy : ShotgunGuy
 
 ACTOR StealthZombieMan : ZombieMan
 {
-	Game Doom
-	SpawnID 102
 	+STEALTH
 	RenderStyle Translucent
 	Alpha 0

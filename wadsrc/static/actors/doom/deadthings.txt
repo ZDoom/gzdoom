@@ -2,8 +2,6 @@
 
 actor GibbedMarine
 {
-	Game Doom
-	SpawnID 145
 	States
 	{
 	Spawn:
@@ -16,14 +14,12 @@ actor GibbedMarine
 
 actor GibbedMarineExtra : GibbedMarine
 {
-	Game Doom
 }
 
 // Dead marine -------------------------------------------------------------
 
 actor DeadMarine
 {
-	Game Doom
 	States
 	{
 	Spawn:
@@ -42,7 +38,6 @@ actor DeadMarine
 actor DeadZombieMan : ZombieMan
 {
 	Skip_Super
-	Game Doom
 	DropItem None
 	States
 	{
@@ -56,7 +51,6 @@ actor DeadZombieMan : ZombieMan
 actor DeadShotgunGuy : ShotgunGuy
 {
 	Skip_Super
-	Game Doom
 	DropItem None
 	States
 	{
@@ -70,7 +64,6 @@ actor DeadShotgunGuy : ShotgunGuy
 actor DeadDoomImp : DoomImp
 {
 	Skip_Super
-	Game Doom
 	States
 	{
 	Spawn:
@@ -83,7 +76,6 @@ actor DeadDoomImp : DoomImp
 actor DeadDemon : Demon
 {
 	Skip_Super
-	Game Doom
 	States
 	{
 	Spawn:
@@ -96,7 +88,6 @@ actor DeadDemon : Demon
 actor DeadCacodemon : Cacodemon
 {
 	Skip_Super
-	Game Doom
 	States
 	{
 	Spawn:
@@ -115,7 +106,6 @@ actor DeadCacodemon : Cacodemon
 actor DeadLostSoul : LostSoul
 {
 	Skip_Super
-	Game Doom
 	States
 	{
 	Spawn:

@@ -3,7 +3,6 @@
 
 ACTOR FogSpawner
 {
-	Game Hexen
 	+NOSECTOR +NOBLOCKMAP
 	+FLOATBOB
 	+NOGRAVITY
@@ -23,7 +22,6 @@ ACTOR FogSpawner
 
 ACTOR FogPatchSmall
 {
-	Game Hexen
 	Speed 1
 	+NOBLOCKMAP +NOGRAVITY +NOCLIP +FLOAT
 	+NOTELEPORT
@@ -47,7 +45,6 @@ ACTOR FogPatchSmall
 
 ACTOR FogPatchMedium : FogPatchSmall
 {
-	Game Hexen
 	States
 	{
 	Spawn:
@@ -63,7 +60,6 @@ ACTOR FogPatchMedium : FogPatchSmall
 
 ACTOR FogPatchLarge : FogPatchMedium
 {
-	Game Hexen
 	States
 	{
 	Spawn:

@@ -1,6 +1,5 @@
 ACTOR SkullHang70
 {
-	Game Heretic
 	Radius 20
 	Height 70
 	+SPAWNCEILING
@@ -15,7 +14,6 @@ ACTOR SkullHang70
 	
 ACTOR SkullHang60
 {
-	Game Heretic
 	Radius 20
 	Height 60
 	+SPAWNCEILING
@@ -30,7 +28,6 @@ ACTOR SkullHang60
 	
 ACTOR SkullHang45
 {
-	Game Heretic
 	Radius 20
 	Height 45
 	+SPAWNCEILING
@@ -45,7 +42,6 @@ ACTOR SkullHang45
 	
 ACTOR SkullHang35
 {
-	Game Heretic
 	Radius 20
 	Height 35
 	+SPAWNCEILING
@@ -60,7 +56,6 @@ ACTOR SkullHang35
 	
 ACTOR Chandelier
 {
-	Game Heretic
 	Radius 20
 	Height 60
 	+SPAWNCEILING
@@ -75,7 +70,6 @@ ACTOR Chandelier
 
 ACTOR SerpentTorch
 {
-	Game Heretic
 	Radius 12
 	Height 54
 	+SOLID
@@ -89,7 +83,6 @@ ACTOR SerpentTorch
 
 ACTOR SmallPillar
 {
-	Game Heretic
 	Radius 16
 	Height 34
 	+SOLID
@@ -103,7 +96,6 @@ ACTOR SmallPillar
 
 ACTOR StalagmiteSmall
 {
-	Game Heretic
 	Radius 8
 	Height 32
 	+SOLID
@@ -117,7 +109,6 @@ ACTOR StalagmiteSmall
 
 ACTOR StalagmiteLarge
 {
-	Game Heretic
 	Radius 12
 	Height 64
 	+SOLID
@@ -131,7 +122,6 @@ ACTOR StalagmiteLarge
 
 ACTOR StalactiteSmall
 {
-	Game Heretic
 	Radius 8
 	Height 36
 	+SOLID
@@ -147,7 +137,6 @@ ACTOR StalactiteSmall
 
 ACTOR StalactiteLarge
 {
-	Game Heretic
 	Radius 12
 	Height 68
 	+SOLID
@@ -163,7 +152,6 @@ ACTOR StalactiteLarge
 
 ACTOR FireBrazier
 {
-	Game Heretic
 	Radius 16
 	Height 44
 	+SOLID
@@ -177,7 +165,6 @@ ACTOR FireBrazier
 
 ACTOR Barrel
 {
-	Game Heretic
 	Radius 12
 	Height 32
 	+SOLID
@@ -191,7 +178,6 @@ ACTOR Barrel
 
 ACTOR BrownPillar
 {
-	Game Heretic
 	Radius 14
 	Height 128
 	+SOLID
@@ -205,7 +191,6 @@ ACTOR BrownPillar
 
 ACTOR Moss1
 {
-	Game Heretic
 	Radius 20
 	Height 23
 	+SPAWNCEILING
@@ -220,7 +205,6 @@ ACTOR Moss1
 
 ACTOR Moss2
 {
-	Game Heretic
 	Radius 20
 	Height 27
 	+SPAWNCEILING
@@ -235,7 +219,6 @@ ACTOR Moss2
 
 ACTOR WallTorch
 {
-	Game Heretic
 	Radius 6
 	Height 16
 	+NOGRAVITY
@@ -250,7 +233,6 @@ ACTOR WallTorch
 
 ACTOR HangingCorpse
 {
-	Game Heretic
 	Radius 8
 	Height 104
 	+SOLID

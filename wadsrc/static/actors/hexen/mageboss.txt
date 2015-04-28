@@ -3,7 +3,6 @@
 
 ACTOR MageBoss
 {
-	Game Hexen
 	Health 800
 	PainChance 50
 	Speed 25

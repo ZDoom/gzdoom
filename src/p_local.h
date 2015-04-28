@@ -178,6 +178,7 @@ void P_RemoveThing(AActor * actor);
 bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
+void InitSpawnablesFromMapinfo();
 
 //
 // P_MAPUTL

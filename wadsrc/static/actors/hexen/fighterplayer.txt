@@ -104,7 +104,6 @@ ACTOR FighterPlayer : PlayerPawn
 
 Actor BloodyFighterSkull : PlayerChunk
 {
-	Game Hexen
 	Radius 4
 	Height 4
 	+NOBLOCKMAP

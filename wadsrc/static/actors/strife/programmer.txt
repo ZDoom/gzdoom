@@ -3,7 +3,6 @@
 
 ACTOR Programmer
 {
-	Game Strife
 	ConversationID 95, -1, -1
 	Health 1100
 	PainChance 50

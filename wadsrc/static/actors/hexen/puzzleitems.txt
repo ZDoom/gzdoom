@@ -3,8 +3,6 @@
 
 ACTOR PuzzSkull : PuzzleItem
 {
-	Game Hexen
-	SpawnID 76
 	PuzzleItem.Number 0
 	Inventory.Icon ARTISKLL
 	Inventory.PickupMessage "$TXT_ARTIPUZZSKULL"
@@ -22,8 +20,6 @@ ACTOR PuzzSkull : PuzzleItem
 
 ACTOR PuzzGemBig : PuzzleItem
 {
-	Game Hexen
-	SpawnID 77
 	PuzzleItem.Number 1
 	Inventory.Icon ARTIBGEM
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBIG"
@@ -40,8 +36,6 @@ ACTOR PuzzGemBig : PuzzleItem
 
 ACTOR PuzzGemRed : PuzzleItem
 {
-	Game Hexen
-	SpawnID 78
 	PuzzleItem.Number 2
 	Inventory.Icon ARTIGEMR
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMRED"
@@ -59,8 +53,6 @@ ACTOR PuzzGemRed : PuzzleItem
 
 ACTOR PuzzGemGreen1 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 79
 	PuzzleItem.Number 3
 	Inventory.Icon ARTIGEMG
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMGREEN1"
@@ -78,8 +70,6 @@ ACTOR PuzzGemGreen1 : PuzzleItem
 
 ACTOR PuzzGemGreen2 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 80
 	PuzzleItem.Number 4
 	Inventory.Icon ARTIGMG2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMGREEN2"
@@ -97,8 +87,6 @@ ACTOR PuzzGemGreen2 : PuzzleItem
 
 ACTOR PuzzGemBlue1 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 81
 	PuzzleItem.Number 5
 	Inventory.Icon ARTIGEMB
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBLUE1"
@@ -116,8 +104,6 @@ ACTOR PuzzGemBlue1 : PuzzleItem
 
 ACTOR PuzzGemBlue2 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 82
 	PuzzleItem.Number 6
 	Inventory.Icon ARTIGMB2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBLUE2"
@@ -135,8 +121,6 @@ ACTOR PuzzGemBlue2 : PuzzleItem
 
 ACTOR PuzzBook1 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 83
 	PuzzleItem.Number 7
 	Inventory.Icon ARTIBOK1
 	Inventory.PickupMessage "$TXT_ARTIPUZZBOOK1"
@@ -154,8 +138,6 @@ ACTOR PuzzBook1 : PuzzleItem
 
 ACTOR PuzzBook2 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 84
 	PuzzleItem.Number 8
 	Inventory.Icon ARTIBOK2
 	Inventory.PickupMessage "$TXT_ARTIPUZZBOOK2"
@@ -174,7 +156,6 @@ ACTOR PuzzBook2 : PuzzleItem
 
 ACTOR PuzzFlameMask : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 9
 	Inventory.Icon ARTISKL2
 	Inventory.PickupMessage "$TXT_ARTIPUZZSKULL2"
@@ -191,7 +172,6 @@ ACTOR PuzzFlameMask : PuzzleItem
 
 ACTOR PuzzFWeapon : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 10
 	Inventory.Icon ARTIFWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZFWEAPON"
@@ -209,7 +189,6 @@ ACTOR PuzzFWeapon : PuzzleItem
 
 ACTOR PuzzCWeapon : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 11
 	Inventory.Icon ARTICWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZCWEAPON"
@@ -227,7 +206,6 @@ ACTOR PuzzCWeapon : PuzzleItem
 
 ACTOR PuzzMWeapon : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 12
 	Inventory.Icon ARTIMWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZMWEAPON"
@@ -244,7 +222,6 @@ ACTOR PuzzMWeapon : PuzzleItem
 
 ACTOR PuzzGear1 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 13
 	Inventory.Icon ARTIGEAR
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
@@ -262,7 +239,6 @@ ACTOR PuzzGear1 : PuzzleItem
 
 ACTOR PuzzGear2 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 14
 	Inventory.Icon ARTIGER2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
@@ -280,7 +256,6 @@ ACTOR PuzzGear2 : PuzzleItem
 
 ACTOR PuzzGear3 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 15
 	Inventory.Icon ARTIGER3
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
@@ -298,7 +273,6 @@ ACTOR PuzzGear3 : PuzzleItem
 
 ACTOR PuzzGear4 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 16
 	Inventory.Icon ARTIGER4
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"

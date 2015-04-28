@@ -53,8 +53,6 @@ ACTOR CustomBridge native
 
 ACTOR Bridge : CustomBridge
 {
-	Game Raven
-	SpawnID 21
 	RenderStyle None
 	Args 32, 2, 3, 0
 }
@@ -63,8 +61,6 @@ ACTOR Bridge : CustomBridge
 
 ACTOR ZBridge : CustomBridge
 {
-	Game Doom
-	SpawnID 21
 	Args 36, 4, 0, 0
 }
 

@@ -113,8 +113,6 @@ ACTOR ChickenPlayer : PlayerPawn native
 
 ACTOR Chicken : MorphedMonster
 {
-	Game Heretic
-	SpawnID 122
 	Health 10
 	Radius 9
 	Height 22
@@ -164,8 +162,6 @@ ACTOR Chicken : MorphedMonster
 
 ACTOR Feather
 {
-	Game Heretic
-	SpawnID 121
 	Radius 2
 	Height 4
 	+MISSILE +DROPOFF

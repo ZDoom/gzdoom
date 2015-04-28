@@ -2,8 +2,6 @@
 
 ACTOR Clip : Ammo
 {
-	Game Doom
-	SpawnID 11
 	Inventory.PickupMessage "$GOTCLIP"
 	Inventory.Amount 10
 	Inventory.MaxAmount 200
@@ -22,8 +20,6 @@ ACTOR Clip : Ammo
 
 ACTOR ClipBox : Clip
 {
-	Game Doom
-	SpawnID 139
 	Inventory.PickupMessage "$GOTCLIPBOX"
 	Inventory.Amount 50
 	States
@@ -38,8 +34,6 @@ ACTOR ClipBox : Clip
 
 ACTOR RocketAmmo : Ammo
 {
-	Game Doom
-	SpawnID 140
 	Inventory.PickupMessage "$GOTROCKET"
 	Inventory.Amount 1
 	Inventory.MaxAmount 50
@@ -58,8 +52,6 @@ ACTOR RocketAmmo : Ammo
 
 ACTOR RocketBox : RocketAmmo
 {
-	Game Doom
-	SpawnID 141
 	Inventory.PickupMessage "$GOTROCKBOX"
 	Inventory.Amount 5
 	States
@@ -74,8 +66,6 @@ ACTOR RocketBox : RocketAmmo
 
 ACTOR Cell : Ammo
 {
-	Game Doom
-	SpawnID 75
 	Inventory.PickupMessage "$GOTCELL"
 	Inventory.Amount 20
 	Inventory.MaxAmount 300
@@ -94,8 +84,6 @@ ACTOR Cell : Ammo
 
 ACTOR CellPack : Cell
 {
-	Game Doom
-	SpawnID 142
 	Inventory.PickupMessage "$GOTCELLBOX"
 	Inventory.Amount 100
 	States
@@ -110,8 +98,6 @@ ACTOR CellPack : Cell
 
 ACTOR Shell : Ammo
 {
-	Game Doom
-	SpawnID 12
 	Inventory.PickupMessage "$GOTSHELLS"
 	Inventory.Amount 4
 	Inventory.MaxAmount 50
@@ -130,8 +116,6 @@ ACTOR Shell : Ammo
 
 ACTOR ShellBox : Shell
 {
-	Game Doom
-	SpawnID 143
 	Inventory.PickupMessage "$GOTSHELLBOX"
 	Inventory.Amount 20
 	States
@@ -146,8 +130,6 @@ ACTOR ShellBox : Shell
 
 ACTOR Backpack : BackpackItem
 {
-	Game Doom
-	SpawnID 144
 	Height 26
 	Inventory.PickupMessage "$GOTBACKPACK"
 	States

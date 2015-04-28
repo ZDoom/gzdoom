@@ -2,7 +2,6 @@
 
 ACTOR MedPatch : HealthPickup
 {
-	Game Strife
 	ConversationID 125, 121, 124
 	Health 10
 	+FLOORCLIP
@@ -25,7 +24,6 @@ ACTOR MedPatch : HealthPickup
 
 ACTOR MedicalKit : HealthPickup
 {
-	Game Strife
 	ConversationID 126, 122, 125
 	Health 25
 	+FLOORCLIP
@@ -48,7 +46,6 @@ ACTOR MedicalKit : HealthPickup
 
 ACTOR SurgeryKit : HealthPickup
 {
-	Game Strife
 	ConversationID 127, 123, 126
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -70,8 +67,6 @@ ACTOR SurgeryKit : HealthPickup
 
 ACTOR StrifeMap : MapRevealer
 {
-	Game Strife
-	SpawnID 137
 	ConversationID 164, 160, 163
 	+FLOORCLIP
 	Inventory.PickupSound "misc/p_pkup"
@@ -89,7 +84,6 @@ ACTOR StrifeMap : MapRevealer
 
 ACTOR BeldinsRing : Inventory
 {
-	Game Strife
 	+NOTDMATCH
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -111,7 +105,6 @@ ACTOR BeldinsRing : Inventory
 
 ACTOR OfferingChalice : Inventory
 {
-	Game Strife
 	+DROPPED
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -135,7 +128,6 @@ ACTOR OfferingChalice : Inventory
 
 ACTOR Ear : Inventory
 {
-	Game Strife
 	+FLOORCLIP
 	+INVENTORY.INVBAR
 	ConversationID 175, 167, 171
@@ -156,7 +148,6 @@ ACTOR Ear : Inventory
 
 ACTOR BrokenPowerCoupling : Inventory
 {
-	Game Strife
 	ConversationID 289, -1, -1
 	Health 40
 	+DROPPED
@@ -182,8 +173,6 @@ ACTOR BrokenPowerCoupling : Inventory
 
 ACTOR ShadowArmor : PowerupGiver
 {
-	Game Strife
-	SpawnID 135
 	ConversationID 160, 156, 159
 	+FLOORCLIP
 	+VISIBILITYPULSE
@@ -209,8 +198,6 @@ ACTOR ShadowArmor : PowerupGiver
 
 ACTOR EnvironmentalSuit : PowerupGiver
 {
-	Game Strife
-	SpawnID 136
 	ConversationID 161, 157, 160
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -234,7 +221,6 @@ ACTOR EnvironmentalSuit : PowerupGiver
 
 ACTOR GuardUniform : Inventory
 {
-	Game Strife
 	ConversationID 162, 158, 161
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -255,7 +241,6 @@ ACTOR GuardUniform : Inventory
 
 ACTOR OfficersUniform : Inventory
 {
-	Game Strife
 	ConversationID 163, 159, 162
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -275,7 +260,6 @@ ACTOR OfficersUniform : Inventory
 
 ACTOR FlameThrowerParts : Inventory 
 {
-	Game Strife
 	ConversationID 191, 185, 189
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -297,7 +281,6 @@ ACTOR FlameThrowerParts : Inventory
 
 ACTOR InterrogatorReport : Inventory
 {
-	Game Strife
 	ConversationID 308, 289, 306
 	+FLOORCLIP
 	Tag "$TAG_REPORT"
@@ -315,7 +298,6 @@ ACTOR InterrogatorReport : Inventory
 
 ACTOR Info : Inventory
 {
-	Game Strife
 	ConversationID 300, 282, 299
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -335,7 +317,6 @@ ACTOR Info : Inventory
 
 ACTOR Targeter : PowerupGiver
 {
-	Game Strife
 	ConversationID 167, 169, 173
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -358,7 +339,6 @@ ACTOR Targeter : PowerupGiver
 
 ACTOR Communicator : Inventory
 {
-	Game Strife
 	ConversationID 176, 168, 172
 	+NOTDMATCH
 	Tag "$TAG_COMMUNICATOR"
@@ -377,7 +357,6 @@ ACTOR Communicator : Inventory
 
 ACTOR DegninOre : Inventory native
 {	
-	Game Strife
 	ConversationID 128, 124, 127
 	Health 10
 	Radius 16
@@ -412,7 +391,6 @@ ACTOR DegninOre : Inventory native
 
 ACTOR GunTraining : Inventory
 {
-	Game Strife
 	ConversationID 310,-1,-1
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -432,7 +410,6 @@ ACTOR GunTraining : Inventory
 
 ACTOR HealthTraining : Inventory native
 {
-	Game Strife
 	ConversationID 309,-1,-1
 	+FLOORCLIP
 	+INVENTORY.INVBAR
@@ -454,7 +431,6 @@ ACTOR HealthTraining : Inventory native
 
 ACTOR Scanner : PowerupGiver native
 {
-	Game Strife
 	ConversationID 165,-1,-1
 	+FLOORCLIP
 	+INVENTORY.FANCYPICKUPSOUND
@@ -476,7 +452,6 @@ ACTOR Scanner : PowerupGiver native
 
 ACTOR PrisonPass : Key native
 {
-	Game Strife
 	ConversationID 304, 286, 303
 	Inventory.Icon "I_TOKN"
 	Tag "$TAG_PRISONPASS"

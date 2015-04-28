@@ -2443,6 +2443,7 @@ void D_DoomMain (void)
 
 		InitActorNumsFromMapinfo();
 		PClassActor::StaticSetActorNums ();
+		InitSpawnablesFromMapinfo();
 		//Added by MC:
 		bglobal.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);

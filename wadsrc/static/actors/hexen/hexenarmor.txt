@@ -3,8 +3,6 @@
 
 ACTOR MeshArmor : HexenArmor
 {
-	Game Hexen
-	SpawnID 68
 	+NOGRAVITY
 	Health 0	// Armor class
 	Inventory.Amount 0
@@ -21,8 +19,6 @@ ACTOR MeshArmor : HexenArmor
 
 ACTOR FalconShield : HexenArmor
 {
-	Game Hexen
-	SpawnID 69
 	+NOGRAVITY
 	Health 1	// Armor class
 	Inventory.Amount 0
@@ -39,8 +35,6 @@ ACTOR FalconShield : HexenArmor
 
 ACTOR PlatinumHelm : HexenArmor
 {
-	Game Hexen
-	SpawnID 70
 	+NOGRAVITY
 	Health 2	// Armor class
 	Inventory.Amount 0
@@ -57,8 +51,6 @@ ACTOR PlatinumHelm : HexenArmor
 
 ACTOR AmuletOfWarding : HexenArmor
 {
-	Game Hexen
-	SpawnID 71
 	+NOGRAVITY
 	Health 3	// Armor class
 	Inventory.Amount 0

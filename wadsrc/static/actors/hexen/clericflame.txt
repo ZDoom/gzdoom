@@ -3,7 +3,6 @@
 
 ACTOR CWeapFlame : ClericWeapon
 {
-	Game Hexen
 	+NOGRAVITY
 	Weapon.SelectionOrder 1000
 	Weapon.AmmoUse 4

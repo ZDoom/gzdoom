@@ -3,7 +3,6 @@
 
 ACTOR ArtiHealingRadius : Inventory native
 {
-	Game Hexen
 	+COUNTITEM
 	+FLOATBOB
 	Inventory.DefMaxAmount

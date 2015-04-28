@@ -56,7 +56,6 @@ ACTOR Merchant
 
 ACTOR WeaponSmith : Merchant
 {
-	Game Strife
 	ConversationID 2
 	PainSound "smith/pain"
 	Tag "$TAG_WEAPONSMITH"
@@ -67,7 +66,6 @@ ACTOR WeaponSmith : Merchant
 
 ACTOR BarKeep : Merchant
 {
-	Game Strife
 	Translation 4
 	ConversationID 3
 	PainSound "barkeep/pain"
@@ -80,7 +78,6 @@ ACTOR BarKeep : Merchant
 
 ACTOR Armorer : Merchant
 {
-	Game Strife
 	Translation 5
 	ConversationID 4
 	PainSound "armorer/pain"
@@ -92,7 +89,6 @@ ACTOR Armorer : Merchant
 
 ACTOR Medic : Merchant
 {
-	Game Strife
 	Translation 6
 	ConversationID 5
 	PainSound "medic/pain"

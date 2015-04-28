@@ -3,7 +3,6 @@
 
 ACTOR Sentinel
 {
-	Game Strife
 	ConversationID 91,-1,-1
 	Health 100
 	Painchance 255

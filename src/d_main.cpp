@@ -1973,8 +1973,6 @@ static void D_DoomInit()
 	M_FindResponseFile ();
 
 	atterm(FinalGC);
-	PClass::StaticInit();
-	PType::StaticInit();
 
 	// Combine different file parameters with their pre-switch bits.
 	Args->CollectFiles("-deh", ".deh");
@@ -2261,7 +2259,8 @@ void D_DoomMain (void)
 
 	do
 	{
-		InitGlobalSymbols();
+		PClass::StaticInit();
+		PType::StaticInit();
 
 		if (restart)
 		{
@@ -2637,6 +2636,8 @@ void D_DoomMain (void)
 			S_Shutdown();					// free all channels and delete playlist
 			C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 			DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
+			ReleaseGlobalSymbols();
+			PClass::StaticShutdown();
 
 			GC::FullGC();					// perform one final garbage collection before deleting the class data
 			restart++;

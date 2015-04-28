@@ -170,6 +170,7 @@ DFsScript::DFsScript()
 
 void DFsScript::Destroy()
 {
+	if (this == global_script) global_script = NULL;
 	ClearVariables(true);
 	ClearSections();
 	ClearChildren();

@@ -801,6 +801,6 @@ public:
 	PSymbolConstString() {}
 };
 
-void InitGlobalSymbols();
+void ReleaseGlobalSymbols();
 
 #endif

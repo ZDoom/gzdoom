@@ -472,8 +472,17 @@ void PType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 //
 //==========================================================================
 
+void ReleaseGlobalSymbols()
+{
+	TypeTable.Clear();
+	GlobalSymbols.ReleaseSymbols();
+}
+
 void PType::StaticInit()
 {
+	// Add types to the global symbol table.
+	atterm(ReleaseGlobalSymbols);
+
 	// Set up TypeTable hash keys.
 	RUNTIME_CLASS(PErrorType)->TypeTableType = RUNTIME_CLASS(PErrorType);
 	RUNTIME_CLASS(PVoidType)->TypeTableType = RUNTIME_CLASS(PVoidType);
@@ -517,18 +526,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeFixed = new PFixed);
 	TypeTable.AddType(TypeAngle = new PAngle);
-}
 
-void ReleaseGlobalSymbols()
-{
-	GlobalSymbols.ReleaseSymbols();
-}
-
-void InitGlobalSymbols()
-{
-	// Add types to the global symbol table.
-	atterm(ReleaseGlobalSymbols);
-	GlobalSymbols.ReleaseSymbols();
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Short, TypeSInt16));
@@ -2061,6 +2059,17 @@ void PClass::StaticShutdown ()
 	}
 	TypeTable.Clear();
 	bShutdown = true;
+
+	AllClasses.Clear();
+	PClassActor::AllActorClasses.Clear();
+
+	FAutoSegIterator probe(CRegHead, CRegTail);
+
+	while (*++probe != NULL)
+	{
+		((ClassReg *)*probe)->MyClass = NULL;
+	}
+
 }
 
 //==========================================================================

@@ -770,45 +770,19 @@ bool R_GetViewInterpolationStatus()
 //
 //==========================================================================
 
-static fixed_t QuakePower(double factor, int intensity, quakeInfo quake)
-{
-	double scaleDownStart = quake.scaleDownStart;
-	double scaleDown = quake.scaleDown;
+static fixed_t QuakePower(fixed_t factor, fixed_t intensity, fixed_t offset)
+{ 
+	fixed_t randumb;
+
 	if (intensity == 0)
 	{
-		return 0;
+		randumb = 0;
 	}
 	else
 	{
-		double ss = (double)((pr_torchflicker() % (intensity << 2)) - (intensity << 1));
-		double mtp = (quake.fullIntensity) ? 2.0 : 1.0;
-		if (quake.isScalingDown || quake.isScalingUp)
-		{
-			fixed_t result;
-			if (scaleDownStart == 0)	scaleDownStart = 1;
-
-			if (quake.isScalingDown && quake.isScalingUp)
-			{
-				if (quake.preferMaximum)
-					result = FLOAT2FIXED((factor * ss) * MAX(((scaleDown*mtp) / scaleDownStart), ((scaleDownStart - scaleDown)*mtp) / scaleDownStart));
-				else
-					result = FLOAT2FIXED((factor * ss) * MIN(((scaleDown*mtp) / scaleDownStart), ((scaleDownStart - scaleDown)*mtp) / scaleDownStart));
-			}
-			else if (quake.isScalingDown)
-				result = FLOAT2FIXED((factor * ss) * (scaleDown / scaleDownStart));
-			else if (quake.isScalingUp)
-				result = FLOAT2FIXED((factor * ss) * ((scaleDownStart - scaleDown) / scaleDownStart));
-			else
-				result = FLOAT2FIXED(factor * ss);
-
-			return result;
-		}
-		else
-		{
-			return FLOAT2FIXED(factor * ss);
-		}
+		randumb = pr_torchflicker(intensity * 2) - intensity;
 	}
-	
+	return FixedMul(factor, randumb + offset);
 }
 
 //==========================================================================
@@ -921,38 +895,43 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		quakeInfo quake;
-		if (DEarthquake::StaticGetQuakeIntensities(camera, quake) > 0)
-		{
-			double quakefactor = r_quakeintensity;
+		FQuakeJiggers jiggers = { 0, };
 
-			if (quake.relIntensityX != 0)
+		if (DEarthquake::StaticGetQuakeIntensities(camera, jiggers) > 0)
+		{
+			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
+
+			if ((jiggers.RelIntensityX | jiggers.RelOffsetX) != 0)
 			{
 				int ang = (camera->angle) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, quake.relIntensityX, quake);
+				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityX, jiggers.RelOffsetX);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
-			if (quake.relIntensityY != 0)
+			if ((jiggers.RelIntensityY | jiggers.RelOffsetY) != 0)
 			{
 				int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, quake.relIntensityY, quake);
+				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityY, jiggers.RelOffsetY);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
-			if (quake.intensityX != 0)
-			{
-				viewx += QuakePower(quakefactor, quake.intensityX, quake);
-			}
-			if (quake.intensityY != 0)
-			{
-				viewy += QuakePower(quakefactor, quake.intensityY, quake);
-			}
 			// FIXME: Relative Z is not relative
-			quake.intensityZ = MAX(quake.intensityZ, quake.relIntensityZ);
-			if (quake.intensityZ != 0)
+			// [MC]On it! Will be introducing pitch after QF_WAVE.
+			if ((jiggers.RelIntensityZ | jiggers.RelOffsetZ) != 0)
 			{
-				viewz += QuakePower(quakefactor, quake.intensityZ, quake);
+				viewz += QuakePower(quakefactor, jiggers.RelIntensityZ, jiggers.RelOffsetZ);
+			}
+			if ((jiggers.IntensityX | jiggers.OffsetX) != 0)
+			{
+				viewx += QuakePower(quakefactor, jiggers.IntensityX, jiggers.OffsetX);
+			}
+			if ((jiggers.IntensityY | jiggers.OffsetY) != 0)
+			{
+				viewy += QuakePower(quakefactor, jiggers.IntensityY, jiggers.OffsetY);
+			}
+			if ((jiggers.IntensityZ | jiggers.OffsetZ) != 0)
+			{
+				viewz += QuakePower(quakefactor, jiggers.IntensityZ, jiggers.OffsetZ);
 			}
 		}
 	}

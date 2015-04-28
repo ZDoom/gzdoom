@@ -1497,7 +1497,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	AWeapon *weapon = player->ReadyWeapon;
 	AActor *linetarget;
 
-	if (useammo && weapon)
+		// Only use ammo if called from a weapon
+	if (useammo && ACTION_CALL_FROM_WEAPON() && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return 0;	// out of ammo
@@ -4777,7 +4778,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	PARAM_INT(tremrad);
 	PARAM_SOUND_OPT	(sound)	{ sound = "world/quake"; }
 	PARAM_INT_OPT(flags) { flags = 0; }
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags);
+	PARAM_FLOAT_OPT(mulWaveX) { mulWaveX = 1.; }
+	PARAM_FLOAT_OPT(mulWaveY) { mulWaveY = 1.; }
+	PARAM_FLOAT_OPT(mulWaveZ) { mulWaveZ = 1.; }
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ);
 	return 0;
 }
 
@@ -5408,9 +5412,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 
 		if (flags & RGF_CUBE)
 		{ // check if inside a cube
-			if (abs(thing->x - self->x) > distance ||
-				abs(thing->y - self->y) > distance ||
-				abs((thing->z + thing->height/2) - (self->z + self->height/2)) > distance)
+			if (fabs((double)thing->x - self->x) > (double)distance ||
+				fabs((double)thing->y - self->y) > (double)distance ||
+				fabs((double)(thing->z + thing->height/2) - (self->z + self->height/2)) > (double)distance)
 			{
 				continue;
 			}
@@ -5424,7 +5428,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				continue;
 			}
 		}
-		fixed_t dz = abs ((thing->z + thing->height/2) - (self->z + self->height/2));
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the
@@ -5529,15 +5532,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	return 0;
 }
 
-static bool DoCheckSpecies(AActor *mo, FName species, bool exclude)
+static bool DoCheckSpecies(AActor *mo, FName filterSpecies, bool exclude)
 {
-	return (!(species) || mo->Species == NAME_None || (species && ((exclude) ? (mo->Species != species) : (mo->Species == species))));
+	FName actorSpecies = mo->GetSpecies();
+	if (filterSpecies == NAME_None) return true;
+	return exclude ? (actorSpecies != filterSpecies) : (actorSpecies == filterSpecies);
 }
 
-static bool DoCheckFilter(AActor *mo, PClassActor *filter, bool exclude)
+static bool DoCheckClass(AActor *mo, PClassActor *filterClass, bool exclude)
 {
-	const PClass *c1 = mo->GetClass();
-	return (!(filter) || (filter == NULL) || (filter && ((exclude) ? (c1 != filter) : (c1 == filter))));
+	const PClass *actorClass = mo->GetClass();
+	if (filterClass == NULL) return true;
+	return exclude ? (actorClass != filterClass) : (actorClass == filterClass);
 }
 
 //===========================================================================
@@ -5571,23 +5577,23 @@ enum DMSS
 
 static void DoDamage(AActor *dmgtarget, AActor *self, int amount, FName DamageType, int flags, PClassActor *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(dmgtarget, filter, (flags & DMSS_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(dmgtarget, species, (flags & DMSS_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(dmgtarget, filter, !!(flags & DMSS_EXFILTER)),
+		speciespass = DoCheckSpecies(dmgtarget, species, !!(flags & DMSS_EXSPECIES));
 	if ((flags & DMSS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		int dmgFlags = 0;
 		if (flags & DMSS_FOILINVUL)
-			dmgFlags += DMG_FOILINVUL;
+			dmgFlags |= DMG_FOILINVUL;
 		if (flags & DMSS_FOILBUDDHA)
-			dmgFlags += DMG_FOILBUDDHA;
-		if ((flags & DMSS_KILL) || (flags & DMSS_NOFACTOR)) //Kill implies NoFactor
-			dmgFlags += DMG_NO_FACTOR;
+			dmgFlags |= DMG_FOILBUDDHA;
+		if (flags & (DMSS_KILL | DMSS_NOFACTOR)) //Kill implies NoFactor
+			dmgFlags |= DMG_NO_FACTOR;
 		if (!(flags & DMSS_AFFECTARMOR) || (flags & DMSS_KILL)) //Kill overrides AffectArmor
-			dmgFlags += DMG_NO_ARMOR;
+			dmgFlags |= DMG_NO_ARMOR;
 		if (flags & DMSS_KILL) //Kill adds the value of the damage done to it. Allows for more controlled extreme death types.
 			amount += dmgtarget->health;
 		if (flags & DMSS_NOPROTECT) //Ignore PowerProtection.
-			dmgFlags += DMG_NO_PROTECT;
+			dmgFlags |= DMG_NO_PROTECT;
 	
 		if (amount > 0)
 		{ //Should wind up passing them through just fine.
@@ -5748,16 +5754,16 @@ enum KILS
 
 static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags, PClassActor *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(killtarget, filter, (flags & KILS_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(killtarget, species, (flags & KILS_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(killtarget, filter, !!(flags & KILS_EXFILTER)),
+		speciespass = DoCheckSpecies(killtarget, species, !!(flags & KILS_EXSPECIES));
 	if ((flags & KILS_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass)) //Check this first. I think it'll save the engine a lot more time this way.
 	{
-		int dmgFlags = DMG_NO_ARMOR + DMG_NO_FACTOR;
+		int dmgFlags = DMG_NO_ARMOR | DMG_NO_FACTOR;
 
 		if (KILS_FOILINVUL)
-			dmgFlags += DMG_FOILINVUL;
+			dmgFlags |= DMG_FOILINVUL;
 		if (KILS_FOILBUDDHA)
-			dmgFlags += DMG_FOILBUDDHA;
+			dmgFlags |= DMG_FOILBUDDHA;
 	
 		if ((killtarget->flags & MF_MISSILE) && (flags & KILS_KILLMISSILES))
 		{
@@ -5765,7 +5771,8 @@ static void DoKill(AActor *killtarget, AActor *self, FName damagetype, int flags
 			//Check to see if it's invulnerable. Disregarded if foilinvul is on, but never works on a missile with NODAMAGE
 			//since that's the whole point of it.
 			if ((!(killtarget->flags2 & MF2_INVULNERABLE) || (flags & KILS_FOILINVUL)) &&
-				(!(killtarget->flags2 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && !(killtarget->flags5 & MF5_NODAMAGE))
+				(!(killtarget->flags7 & MF7_BUDDHA) || (flags & KILS_FOILBUDDHA)) && 
+				!(killtarget->flags5 & MF5_NODAMAGE))
 			{
 				P_ExplodeMissile(killtarget, NULL, NULL);
 			}
@@ -5906,8 +5913,8 @@ enum RMVF_flags
 
 static void DoRemove(AActor *removetarget, int flags, PClassActor *filter, FName species)
 {
-	bool filterpass = DoCheckFilter(removetarget, filter, (flags & RMVF_EXFILTER) ? true : false),
-		speciespass = DoCheckSpecies(removetarget, species, (flags & RMVF_EXSPECIES) ? true : false);
+	bool filterpass = DoCheckClass(removetarget, filter, !!(flags & RMVF_EXFILTER)),
+		speciespass = DoCheckSpecies(removetarget, species, !!(flags & RMVF_EXSPECIES));
 	if ((flags & RMVF_EITHER) ? (filterpass || speciespass) : (filterpass && speciespass))
 	{
 		if ((flags & RMVF_EVERYTHING))

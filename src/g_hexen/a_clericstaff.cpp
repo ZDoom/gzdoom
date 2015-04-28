@@ -75,8 +75,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &linetarget);
-			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
-				linetarget->x, linetarget->y);
+			if (linetarget != NULL)
+			{
+				pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, linetarget->x, linetarget->y);
 			if (((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0))|| linetarget->flags3&MF3_ISMONSTER)
 				&& (!(linetarget->flags2&(MF2_DORMANT+MF2_INVULNERABLE))))
 			{
@@ -86,11 +87,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 				{
 					pmo->health = player->health = newLife;
 				}
-				P_SetPsprite (player, ps_weapon, weapon->FindState ("Drain"));
+					if (weapon != NULL)
+					{
+						FState * newstate = weapon->FindState("Drain");
+						if (newstate != NULL) P_SetPsprite(player, ps_weapon, newstate);
 			}
+				}
 			if (weapon != NULL)
 			{
 				weapon->DepleteAmmo (weapon->bAltFire, false);
+			}
 			}
 			break;
 		}
@@ -99,8 +105,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &linetarget);
-			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
-				linetarget->x, linetarget->y);
+			if (linetarget != NULL)
+			{
+				pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, linetarget->x, linetarget->y);
 			if ((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0)) || linetarget->flags3&MF3_ISMONSTER)
 			{
 				newLife = player->health+(damage>>4);
@@ -108,7 +115,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 				pmo->health = player->health = newLife;
 				P_SetPsprite (player, ps_weapon, weapon->FindState ("Drain"));
 			}
-			weapon->DepleteAmmo (weapon->bAltFire, false);
+				if (weapon != NULL)
+				{
+					weapon->DepleteAmmo (weapon->bAltFire, false);
+				}
+			}
 			break;
 		}
 	}

@@ -1512,11 +1512,11 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	yscale = pl->yscale << (16 - ds_ybits);
 	if (planeang != 0)
 	{
-		fixed_t cosine = finecosine[planeang >> ANGLETOFINESHIFT];
-		fixed_t sine = finesine[planeang >> ANGLETOFINESHIFT];
+		double rad = bam2rad(planeang);
+		double cosine = cos(rad), sine = sin(rad);
 
-		pviewx = pl->xoffs + FixedMul (viewx, cosine) - FixedMul (viewy, sine);
-		pviewy = pl->yoffs - FixedMul (viewx, sine) - FixedMul (viewy, cosine);
+		pviewx = xs_RoundToInt(pl->xoffs + viewx * cosine - viewy * sine);
+		pviewy = xs_RoundToInt(pl->yoffs - viewx * sine - viewy * cosine);
 	}
 	else
 	{

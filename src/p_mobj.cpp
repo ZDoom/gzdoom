@@ -669,20 +669,23 @@ void AActor::AddInventory (AInventory *item)
 //
 //============================================================================
 
-void AActor::RemoveInventory (AInventory *item)
+void AActor::RemoveInventory(AInventory *item)
 {
 	AInventory *inv, **invp;
 
-	invp = &item->Owner->Inventory;
-	for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
+	if (item != NULL && item->Owner != NULL)	// can happen if the owner was destroyed by some action from an item's use state.
 	{
-		if (inv == item)
+		invp = &item->Owner->Inventory;
+		for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
 		{
-			*invp = item->Inventory;
-			item->DetachFromOwner ();
-			item->Owner = NULL;
-			item->Inventory = NULL;
-			break;
+			if (inv == item)
+			{
+				*invp = item->Inventory;
+				item->DetachFromOwner();
+				item->Owner = NULL;
+				item->Inventory = NULL;
+				break;
+			}
 		}
 	}
 }
@@ -3056,7 +3059,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur
-		if (abs (angle - thing->angle)>>24 > 45)
+		if (absangle(angle - thing->angle)>>24 > 45)
 			return true;	// Let missile explode
 
 		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???
@@ -3782,17 +3785,9 @@ void AActor::Tick ()
 		if (state->GetNoDelay())
 		{
 			// For immediately spawned objects with the NoDelay flag set for their
-			// Spawn state, explicitly set the current state so that it calls its
-			// action and chains 0-tic states.
-			int starttics = tics;
-			if (!SetState(state))
+			// Spawn state, explicitly call the current state's function.
+			if (state->CallAction(this, this) && (ObjectFlags & OF_EuthanizeMe))
 				return;				// freed itself
-			// If the initial state had a duration of 0 tics, let the next state run
-			// normally. Otherwise, increment tics by 1 so that we don't double up ticks.
-			else if (starttics > 0 && tics >= 0)
-			{
-				tics++;
-			}
 		}
 	}
 	// cycle through states, calling action functions at transitions
@@ -4593,7 +4588,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
 	p->MinPitch = p->MaxPitch = 0;	// will be filled in by PostBeginPlay()/netcode
-
+	p->MUSINFOactor = NULL;
+	p->MUSINFOtics = -1;
 
 	p->velx = p->vely = 0;		// killough 10/98: initialize bobbing to 0.
 
@@ -6545,7 +6541,8 @@ void PrintMiscActorInfo(AActor *query)
 			}
 		}
 		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
-			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil"};
+			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil",
+			"Shadow", "Subtract", "AddStencil", "AddShaded"};
 
 		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags);
 		for (flagi = 0; flagi <= 31; flagi++)

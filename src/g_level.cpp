@@ -901,11 +901,13 @@ void G_DoLoadLevel (int position, bool autosave)
 	if (level.flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
+	FString mapname = level.MapName;
+	mapname.ToLower();
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			level.MapName.GetChars(), level.LevelName.GetChars());
+			mapname.GetChars(), level.LevelName.GetChars());
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -1455,7 +1457,9 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	if (SaveVersion >= 3313)
 	{
-		arc << level.nextmusic;
+		// This is a player property now
+		int nextmusic;
+		arc << nextmusic;
 	}
 
 	// Hub transitions must keep the current total time

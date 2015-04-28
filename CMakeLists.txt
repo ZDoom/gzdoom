@@ -1,6 +1,15 @@
 cmake_minimum_required( VERSION 2.4 )
 project(ZDoom)
 
+if( COMMAND cmake_policy )
+	if( POLICY CMP0011 )
+		cmake_policy( SET CMP0011 NEW )
+	endif( POLICY CMP0011 )
+	if( POLICY CMP0054 )
+		cmake_policy( SET CMP0054 NEW )
+	endif( POLICY CMP0054 )
+endif( COMMAND cmake_policy )
+
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} )
 include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
@@ -26,8 +35,6 @@ endif(CMAKE_CROSSCOMPILING)
 
 # Simplify pk3 building, add_pk3(filename srcdirectory)
 function( add_pk3 PK3_NAME PK3_DIR )
-	get_target_property(ZIPDIR_EXE zipdir LOCATION)
-
 	# Generate target name. Just use "pk3" for main pk3 target.
 	string( REPLACE "." "_" PK3_TARGET ${PK3_NAME} )
 	if( ${PK3_TARGET} STREQUAL "zdoom_pk3" )
@@ -36,20 +43,22 @@ function( add_pk3 PK3_NAME PK3_DIR )
 
 	if( NOT NO_GENERATOR_EXPRESSIONS AND NOT ZDOOM_OUTPUT_OLDSTYLE )
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
-			COMMAND ${ZIPDIR_EXE} -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
+			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} $<TARGET_FILE_DIR:zdoom>/${PK3_NAME}
 			DEPENDS zipdir )
 	else( NOT NO_GENERATOR_EXPRESSIONS AND NOT ZDOOM_OUTPUT_OLDSTYLE )
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
-			COMMAND ${ZIPDIR_EXE} -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
+			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			DEPENDS zipdir )
 	endif( NOT NO_GENERATOR_EXPRESSIONS AND NOT ZDOOM_OUTPUT_OLDSTYLE )
 
-	# Touch the zipdir executable here so that the pk3s are forced to rebuild
-	# each time since their dependecy has "changed."
-	add_custom_target( ${PK3_TARGET} ALL
-		COMMAND ${CMAKE_COMMAND} -E touch ${ZIPDIR_EXE}
-		DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} )
+	if( NOT NO_GENERATOR_EXPRESSIONS )
+		# Touch the zipdir executable here so that the pk3s are forced to
+		# rebuild each time since their dependecy has "changed."
+		add_custom_target( ${PK3_TARGET} ALL
+			COMMAND ${CMAKE_COMMAND} -E touch $<TARGET_FILE:zipdir>
+			DEPENDS ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} )
+	endif( NOT NO_GENERATOR_EXPRESSIONS )
 endfunction( add_pk3 )
 
 # Macro for building libraries without debugging information

@@ -354,7 +354,7 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
 		fg = (fg+bg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][fg & (fg>>15)];
+		*dest = RGB32k.All[fg & (fg>>15)];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -387,14 +387,14 @@ void STACK_ARGS rt_add4cols_c (int sx, int yl, int yh)
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
 		fg = (fg+bg) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][fg & (fg>>15)];
+		dest[0] = RGB32k.All[fg & (fg>>15)];
 
 		fg = colormap[source[1]];
 		bg = dest[1];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
 		fg = (fg+bg) | 0x1f07c1f;
-		dest[1] = RGB32k[0][0][fg & (fg>>15)];
+		dest[1] = RGB32k.All[fg & (fg>>15)];
 
 
 		fg = colormap[source[2]];
@@ -402,14 +402,14 @@ void STACK_ARGS rt_add4cols_c (int sx, int yl, int yh)
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
 		fg = (fg+bg) | 0x1f07c1f;
-		dest[2] = RGB32k[0][0][fg & (fg>>15)];
+		dest[2] = RGB32k.All[fg & (fg>>15)];
 
 		fg = colormap[source[3]];
 		bg = dest[3];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
 		fg = (fg+bg) | 0x1f07c1f;
-		dest[3] = RGB32k[0][0][fg & (fg>>15)];
+		dest[3] = RGB32k.All[fg & (fg>>15)];
 
 		source += 4;
 		dest += pitch;
@@ -455,7 +455,7 @@ void rt_shaded1col (int hx, int sx, int yl, int yh)
 		DWORD val = colormap[*source];
 		DWORD fg = fgstart[val<<8];
 		val = (Col2RGB8[64-val][*dest] + fg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][val & (val>>15)];
+		*dest = RGB32k.All[val & (val>>15)];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -487,19 +487,19 @@ void STACK_ARGS rt_shaded4cols_c (int sx, int yl, int yh)
 		
 		val = colormap[source[0]];
 		val = (Col2RGB8[64-val][dest[0]] + fgstart[val<<8]) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][val & (val>>15)];
+		dest[0] = RGB32k.All[val & (val>>15)];
 
 		val = colormap[source[1]];
 		val = (Col2RGB8[64-val][dest[1]] + fgstart[val<<8]) | 0x1f07c1f;
-		dest[1] = RGB32k[0][0][val & (val>>15)];
+		dest[1] = RGB32k.All[val & (val>>15)];
 
 		val = colormap[source[2]];
 		val = (Col2RGB8[64-val][dest[2]] + fgstart[val<<8]) | 0x1f07c1f;
-		dest[2] = RGB32k[0][0][val & (val>>15)];
+		dest[2] = RGB32k.All[val & (val>>15)];
 
 		val = colormap[source[3]];
 		val = (Col2RGB8[64-val][dest[3]] + fgstart[val<<8]) | 0x1f07c1f;
-		dest[3] = RGB32k[0][0][val & (val>>15)];
+		dest[3] = RGB32k.All[val & (val>>15)];
 
 		source += 4;
 		dest += pitch;
@@ -536,7 +536,7 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 		a &= 0x3fffffff;
 		b = b - (b >> 5);
 		a |= b;
-		*dest = RGB32k[0][0][(a>>15) & a];
+		*dest = RGB32k.All[(a>>15) & a];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -572,7 +572,7 @@ void STACK_ARGS rt_addclamp4cols_c (int sx, int yl, int yh)
 		a &= 0x3fffffff;
 		b = b - (b >> 5);
 		a |= b;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
+		dest[0] = RGB32k.All[(a>>15) & a];
 
 		a = fg2rgb[colormap[source[1]]] + bg2rgb[dest[1]];
 		b = a;
@@ -581,7 +581,7 @@ void STACK_ARGS rt_addclamp4cols_c (int sx, int yl, int yh)
 		a &= 0x3fffffff;
 		b = b - (b >> 5);
 		a |= b;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
+		dest[1] = RGB32k.All[(a>>15) & a];
 
 		a = fg2rgb[colormap[source[2]]] + bg2rgb[dest[2]];
 		b = a;
@@ -590,7 +590,7 @@ void STACK_ARGS rt_addclamp4cols_c (int sx, int yl, int yh)
 		a &= 0x3fffffff;
 		b = b - (b >> 5);
 		a |= b;
-		dest[2] = RGB32k[0][0][(a>>15) & a];
+		dest[2] = RGB32k.All[(a>>15) & a];
 
 		a = fg2rgb[colormap[source[3]]] + bg2rgb[dest[3]];
 		b = a;
@@ -599,7 +599,7 @@ void STACK_ARGS rt_addclamp4cols_c (int sx, int yl, int yh)
 		a &= 0x3fffffff;
 		b = b - (b >> 5);
 		a |= b;
-		dest[3] = RGB32k[0][0][(a>>15) & a];
+		dest[3] = RGB32k.All[(a>>15) & a];
 
 		source += 4;
 		dest += pitch;
@@ -649,7 +649,7 @@ void rt_subclamp1col (int hx, int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		*dest = RGB32k[0][0][(a>>15) & a];
+		*dest = RGB32k.All[(a>>15) & a];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -684,7 +684,7 @@ void STACK_ARGS rt_subclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
+		dest[0] = RGB32k.All[(a>>15) & a];
 
 		a = (fg2rgb[colormap[source[1]]] | 0x40100400) - bg2rgb[dest[1]];
 		b = a;
@@ -692,7 +692,7 @@ void STACK_ARGS rt_subclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
+		dest[1] = RGB32k.All[(a>>15) & a];
 
 		a = (fg2rgb[colormap[source[2]]] | 0x40100400) - bg2rgb[dest[2]];
 		b = a;
@@ -700,7 +700,7 @@ void STACK_ARGS rt_subclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[2] = RGB32k[0][0][(a>>15) & a];
+		dest[2] = RGB32k.All[(a>>15) & a];
 
 		a = (fg2rgb[colormap[source[3]]] | 0x40100400) - bg2rgb[dest[3]];
 		b = a;
@@ -708,7 +708,7 @@ void STACK_ARGS rt_subclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[3] = RGB32k[0][0][(a>>15) & a];
+		dest[3] = RGB32k.All[(a>>15) & a];
 
 		source += 4;
 		dest += pitch;
@@ -758,7 +758,7 @@ void rt_revsubclamp1col (int hx, int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		*dest = RGB32k[0][0][(a>>15) & a];
+		*dest = RGB32k.All[(a>>15) & a];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -793,7 +793,7 @@ void STACK_ARGS rt_revsubclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
+		dest[0] = RGB32k.All[(a>>15) & a];
 
 		a = (bg2rgb[dest[1]] | 0x40100400) - fg2rgb[colormap[source[1]]];
 		b = a;
@@ -801,7 +801,7 @@ void STACK_ARGS rt_revsubclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
+		dest[1] = RGB32k.All[(a>>15) & a];
 
 		a = (bg2rgb[dest[2]] | 0x40100400) - fg2rgb[colormap[source[2]]];
 		b = a;
@@ -809,7 +809,7 @@ void STACK_ARGS rt_revsubclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[2] = RGB32k[0][0][(a>>15) & a];
+		dest[2] = RGB32k.All[(a>>15) & a];
 
 		a = (bg2rgb[dest[3]] | 0x40100400) - fg2rgb[colormap[source[3]]];
 		b = a;
@@ -817,7 +817,7 @@ void STACK_ARGS rt_revsubclamp4cols (int sx, int yl, int yh)
 		b = b - (b >> 5);
 		a &= b;
 		a |= 0x01f07c1f;
-		dest[3] = RGB32k[0][0][(a>>15) & a];
+		dest[3] = RGB32k.All[(a>>15) & a];
 
 		source += 4;
 		dest += pitch;

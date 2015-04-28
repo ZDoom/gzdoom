@@ -713,7 +713,7 @@ void ShowErrorPane(const char *text)
 	if (text != NULL)
 	{
 		char caption[100];
-		mysnprintf(caption, countof(caption), "Fatal Error - "GAMESIG" %s "X64" (%s)", GetVersionString(), GetGitTime());
+		mysnprintf(caption, countof(caption), "Fatal Error - " GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 		SetWindowText (Window, caption);
 		ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 		if (ErrorIcon != NULL)
@@ -907,11 +907,7 @@ void DoMain (HINSTANCE hInstance)
 		FixPathSeperator(program);
 		progdir.Truncate((long)strlen(program));
 		progdir.UnlockBuffer();
-/*
-		height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
-				GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
-		width  = GetSystemMetrics (SM_CXFIXEDFRAME) * 2 + 8 * 78;
-*/
+
 		width = 512;
 		height = 384;
 
@@ -946,7 +942,7 @@ void DoMain (HINSTANCE hInstance)
 		
 		/* create window */
 		char caption[100];
-		mysnprintf(caption, countof(caption), ""GAMESIG" %s "X64" (%s)", GetVersionString(), GetGitTime());
+		mysnprintf(caption, countof(caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 		Window = CreateWindowEx(
 				WS_EX_APPWINDOW,
 				(LPCTSTR)WinClassName,

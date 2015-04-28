@@ -44,6 +44,7 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "r_data/r_translate.h"
 #include "teaminfo.h"
 
 #include "gi.h"
@@ -2627,7 +2628,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				S_Sound(corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
-				if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
+				if (GetTranslationType(corpsehit->Translation) == TRANSLATION_Blood)
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
@@ -2775,7 +2776,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
-	if (max_turn && (max_turn < (angle_t)abs(self->angle - other_angle)))
+	if (max_turn && (max_turn < absangle(self->angle - other_angle)))
 	{
 		if (self->angle > other_angle)
 		{
@@ -3250,9 +3251,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_None; }
 
-	if (self->flags & MF_MISSILE)
-		P_ExplodeMissile(self, NULL, NULL);
-	else
 		P_DamageMobj(self, NULL, NULL, self->health, damagetype, DMG_FORCED);
 	return 0;
 }

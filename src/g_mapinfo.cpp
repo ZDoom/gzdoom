@@ -1065,6 +1065,25 @@ DEFINE_MAP_OPTION(PrecacheSounds, true)
 	} while (parse.sc.CheckString(","));
 }
 
+DEFINE_MAP_OPTION(PrecacheTextures, true)
+{
+	parse.ParseAssign();
+
+	do
+	{
+		parse.sc.MustGetString();
+		FTextureID tex = TexMan.CheckForTexture(parse.sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_ReturnFirst);
+		if (!tex.isValid())
+		{
+			parse.sc.ScriptMessage("Unknown texture \"%s\"", parse.sc.String);
+		}
+		else
+		{
+			info->PrecacheTextures.Push(tex);
+		}
+	} while (parse.sc.CheckString(","));
+}
+
 DEFINE_MAP_OPTION(redirect, true)
 {
 	parse.ParseAssign();

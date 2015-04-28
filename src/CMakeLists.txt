@@ -121,7 +121,7 @@ if( WIN32 )
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Include )
 	if( NOT XINPUT_INCLUDE_DIR )
-		message( SEND_ERROR "Could not find xinput.h. XInput will be disabled." )
+		message( WARNING "Could not find xinput.h. XInput will be disabled." )
 		add_definitions( -DNO_XINPUT )
 	else( NOT XINPUT_INCLUDE_DIR )
 		include_directories( ${XINPUT_INCLUDE_DIR} )
@@ -504,10 +504,8 @@ endif( BACKPATCH )
 
 # Update gitinfo.h
 
-get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )
-
 add_custom_target( revision_check ALL
-	COMMAND ${UPDATEREVISION_EXE} src/gitinfo.h
+	COMMAND updaterevision src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
@@ -627,12 +625,9 @@ else( NO_ASM )
 	endif( X64 )
 endif( NO_ASM )
 
-get_target_property( LEMON_EXE lemon LOCATION )
-get_target_property( RE2C_EXE re2c LOCATION )
-
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .
-	COMMAND ${LEMON_EXE} xlat_parser.y
+	COMMAND lemon xlat_parser.y
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
 
@@ -643,7 +638,7 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRE
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/zscript/zcc-parse.lemon )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND ${RE2C_EXE} --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
+	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )

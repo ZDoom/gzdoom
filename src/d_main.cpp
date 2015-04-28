@@ -214,6 +214,7 @@ bool autostart;
 FString StoredWarp;
 bool advancedemo;
 FILE *debugfile;
+FILE *hashfile;
 event_t events[MAXEVENTS];
 int eventhead;
 int eventtail;
@@ -2009,7 +2010,7 @@ static void D_DoomInit()
 //
 //==========================================================================
 
-static void AddAutoloadFiles(const char *gamesection)
+static void AddAutoloadFiles(const char *group, const char *autoname)
 {
 	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
 	{
@@ -2046,10 +2047,18 @@ static void AddAutoloadFiles(const char *gamesection)
 		file += ".Autoload";
 		D_AddConfigWads (allwads, file);
 
-		// Add IWAD-specific wads
-		if (gamesection != NULL)
+		// Add group-specific wads
+		if (group != NULL)
 		{
-			file = gamesection;
+			file = group;
+			file += ".Autoload";
+			D_AddConfigWads(allwads, file);
+		}
+
+		// Add IWAD-specific wads
+		if (autoname != NULL)
+		{
+			file = autoname;
 			file += ".Autoload";
 			D_AddConfigWads(allwads, file);
 		}
@@ -2217,6 +2226,26 @@ void D_DoomMain (void)
 		execLogfile(logfile);
 	}
 
+	if (Args->CheckParm("-hashfiles"))
+	{
+		const char *filename = "fileinfo.txt";
+		Printf("Hashing loaded content to: %s\n", filename);
+		hashfile = fopen(filename, "w");
+		if (hashfile)
+		{
+			fprintf(hashfile, "%s version %s (%s)\n", GAMENAME, GetVersionString(), GetGitHash());
+#ifdef __VERSION__
+			fprintf(hashfile, "Compiler version: %s\n", __VERSION__);
+#endif
+			fprintf(hashfile, "Command line:");
+			for (int i = 0; i < Args->NumArgs(); ++i)
+			{
+				fprintf(hashfile, " %s", Args->GetArg(i));
+			}
+			fprintf(hashfile, "\n");
+		}
+	}
+
 	D_DoomInit();
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
@@ -2264,7 +2293,7 @@ void D_DoomMain (void)
 		FBaseCVar::DisableCallbacks();
 		GameConfig->DoGameSetup (gameinfo.ConfigName);
 
-		AddAutoloadFiles(iwad_info->Autoname);
+		AddAutoloadFiles(iwad_info->Group, iwad_info->Autoname);
 
 		// Run automatically executed files
 		execFiles = new DArgs;
@@ -2282,6 +2311,11 @@ void D_DoomMain (void)
 		// Since this function will never leave we must delete this array here manually.
 		pwads.Clear();
 		pwads.ShrinkToFit();
+
+		if (hashfile)
+		{
+			Printf("Notice: File hashing is incredibly verbose. Expect loading files to take much longer then usual.\n");
+		}
 
 		Printf ("W_Init: Init WADfiles.\n");
 		Wads.InitMultipleFiles (allwads);

@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "v_text.h"
 #include "w_wad.h"
+#include "gi.h"
 
 // Console Doom LZSS wrapper.
 class FileReaderLZSS : public FileReaderBase
@@ -354,7 +355,7 @@ bool FWadFile::Open(bool quiet)
 	{
 		uppercopy (Lumps[i].Name, fileinfo[i].Name);
 		Lumps[i].Name[8] = 0;
-		Lumps[i].Compressed = (Lumps[i].Name[0] & 0x80) == 0x80;
+		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (Lumps[i].Name[0] & 0x80) == 0x80;
 		Lumps[i].Name[0] &= ~0x80;
 
 		Lumps[i].Owner = this;

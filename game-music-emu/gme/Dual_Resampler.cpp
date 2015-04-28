@@ -18,7 +18,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #include "blargg_source.h"
 
-unsigned const resampler_extra = 256;
+//unsigned const resampler_extra = 256;
 
 Dual_Resampler::Dual_Resampler() :
 	sample_buf_size(0),
@@ -71,6 +71,7 @@ void Dual_Resampler::play_frame_( Blip_Buffer& blip_buf, dsample_t* out )
 	
 	long count = resampler.read( sample_buf.begin(), sample_buf_size );
 	assert( count == (long) sample_buf_size );
+	(void)count;	// Silence warning in non-debug build
 	
 	mix_samples( blip_buf, out );
 	blip_buf.remove_samples( pair_count );

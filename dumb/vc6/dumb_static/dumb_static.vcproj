@@ -878,10 +878,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\helpers\blip_buf.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\helpers\clickrem.c"
 					>
 					<FileConfiguration
@@ -926,6 +922,10 @@
 							PreprocessorDefinitions=""
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\src\helpers\lpc.c"
+					>
 				</File>
 				<File
 					RelativePath="..\..\src\helpers\memfile.c"
@@ -1031,6 +1031,7 @@
 							Optimization="2"
 							AdditionalIncludeDirectories=""
 							PreprocessorDefinitions=""
+							AssemblerOutput="4"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -1055,6 +1056,10 @@
 							Name="VCCustomBuildTool"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\src\helpers\resampler.c"
+					>
 				</File>
 				<File
 					RelativePath="..\..\src\helpers\riff.c"
@@ -1198,14 +1203,14 @@
 						/>
 					</FileConfiguration>
 				</File>
+				<File
+					RelativePath="..\..\src\helpers\tarray.c"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="it"
 				>
-				<File
-					RelativePath="..\..\src\it\filter.cpp"
-					>
-				</File>
 				<File
 					RelativePath="..\..\src\it\itload.c"
 					>
@@ -1499,6 +1504,22 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\it\loadamf.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\loadamf2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\loadany.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\loadany2.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\it\loadasy.c"
 					>
 				</File>
@@ -1726,6 +1747,22 @@
 				</File>
 				<File
 					RelativePath="..\..\src\it\readam.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\readamf.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\readamf2.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\readany.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\it\readany2.c"
 					>
 				</File>
 				<File
@@ -1981,7 +2018,11 @@
 				Name="internal"
 				>
 				<File
-					RelativePath="..\..\include\internal\blip_buf.h"
+					RelativePath="..\..\include\internal\aldumb.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\barray.h"
 					>
 				</File>
 				<File
@@ -1989,7 +2030,35 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\internal\dumbfile.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\internal\it.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\lpc.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\mulsc.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\resampler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\riff.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\stack_alloc.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\internal\tarray.h"
 					>
 				</File>
 			</Filter>

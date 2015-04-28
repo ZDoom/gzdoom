@@ -39,7 +39,7 @@ int const ram_addr = 0x2000;
 // status flags
 int const st_n = 0x80;
 int const st_v = 0x40;
-int const st_t = 0x20;
+//unused: int const st_t = 0x20;
 int const st_b = 0x10;
 int const st_d = 0x08;
 int const st_i = 0x04;

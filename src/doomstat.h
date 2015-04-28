@@ -172,6 +172,7 @@ extern	bool	 		playeringame[/*MAXPLAYERS*/];
 
 // File handling stuff.
 extern	FILE*			debugfile;
+extern	FILE*			hashfile;
 
 // if true, load all graphics at level load
 extern	bool	 		precache;

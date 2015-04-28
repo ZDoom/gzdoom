@@ -836,7 +836,7 @@ const char *FConfigFile::GenerateEndTag(const char *value)
 
 		for (int i = 0; i < 5; ++i)
 		{
-			DWORD three_bytes = (rand_bytes[i*3] << 16) | (rand_bytes[i*3+1] << 8) | (rand_bytes[i*3+2]);
+			//DWORD three_bytes = (rand_bytes[i*3] << 16) | (rand_bytes[i*3+1] << 8) | (rand_bytes[i*3+2]); // ???
 			EndTag[4+i*4  ] = Base64Table[rand_bytes[i*3] >> 2];
 			EndTag[4+i*4+1] = Base64Table[((rand_bytes[i*3] & 3) << 4) | (rand_bytes[i*3+1] >> 4)];
 			EndTag[4+i*4+2] = Base64Table[((rand_bytes[i*3+1] & 15) << 2) | (rand_bytes[i*3+2] >> 6)];

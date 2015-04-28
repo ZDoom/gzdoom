@@ -529,11 +529,9 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 
 	FVector3 p, v1, v2, cross;
 
-	const secplane_t *refplane;
 	secplane_t *srcplane;
 	fixed_t srcheight, destheight;
 
-	refplane = (which == 0) ? &refsec->floorplane : &refsec->ceilingplane;
 	srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
 	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);

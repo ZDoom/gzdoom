@@ -131,7 +131,6 @@ class USDFParser : public UDMFParserBase
 		while (!sc.CheckToken('}'))
 		{
 			bool block = false;
-			int costs = 0;
 			FName key = ParseKey(true, &block);
 			if (!block)
 			{

@@ -367,7 +367,6 @@ static void InitPlayerClasses ()
 
 void G_InitNew (const char *mapname, bool bTitleLevel)
 {
-	EGameSpeed oldSpeed;
 	bool wantFast;
 	int i;
 
@@ -454,7 +453,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		I_Error ("Could not find map %s\n", mapname);
 	}
 
-	oldSpeed = GameSpeed;
 	wantFast = !!G_SkillProperty(SKILLP_FastMonsters);
 	GameSpeed = wantFast ? SPEED_Fast : SPEED_Normal;
 
@@ -1237,15 +1235,6 @@ void G_FinishTravel ()
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
 			pawn->player->SendPitchLimits();
-			// Sync the FLY flags.
-			if (pawn->flags2 & MF2_FLY)
-			{
-				pawn->player->cheats |= CF_FLY;
-			}
-			else
-			{
-				pawn->player->cheats &= ~CF_FLY;
-			}
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{

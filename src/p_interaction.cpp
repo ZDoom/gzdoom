@@ -361,7 +361,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	if (debugfile && this->player)
 	{
-		static int dieticks[MAXPLAYERS];
+		static int dieticks[MAXPLAYERS]; // [ZzZombo] not used? Except if for peeking in debugger...
 		int pnum = int(this->player-players);
 		dieticks[pnum] = gametic;
 		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
@@ -1711,14 +1711,12 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	bool playPainSound)
 {
 	AActor *target;
-	AActor *inflictor;
 
 	if (player == NULL)
 	{
 		return;
 	}
 	target = player->mo;
-	inflictor = source;
 	if (target->health <= 0)
 	{
 		return;

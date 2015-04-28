@@ -7,7 +7,6 @@ ACTOR ArtiDarkServant : Inventory 86 native
 	SpawnID 16
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	Inventory.RespawnTics 4230
 	Inventory.DefMaxAmount
 	Inventory.PickupFlash "PickupFlash"

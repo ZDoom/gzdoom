@@ -2592,6 +2592,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 			demo_p = nextchunk;
 	}
 
+	if (!headerHit)
+	{
+		Printf ("Demo has no header!\n");
+		return true;
+	}
+
 	if (!numPlayers)
 	{
 		Printf ("Demo has no players!\n");

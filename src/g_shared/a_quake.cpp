@@ -33,8 +33,8 @@ DEarthquake::DEarthquake()
 //
 //==========================================================================
 
-DEarthquake::DEarthquake (AActor *center, int intensity, int duration,
-						  int damrad, int tremrad, FSoundID quakesound)
+DEarthquake::DEarthquake (AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
+						  int damrad, int tremrad, FSoundID quakesound, int flags)
 						  : DThinker(STAT_EARTHQUAKE)
 {
 	m_QuakeSFX = quakesound;
@@ -42,8 +42,12 @@ DEarthquake::DEarthquake (AActor *center, int intensity, int duration,
 	// Radii are specified in tile units (64 pixels)
 	m_DamageRadius = damrad << (FRACBITS);
 	m_TremorRadius = tremrad << (FRACBITS);
-	m_Intensity = intensity;
+	m_IntensityX = intensityX;
+	m_IntensityY = intensityY;
+	m_IntensityZ = intensityZ;
+	m_CountdownStart = (double)duration;
 	m_Countdown = duration;
+	m_Flags = flags;
 }
 
 //==========================================================================
@@ -55,9 +59,27 @@ DEarthquake::DEarthquake (AActor *center, int intensity, int duration,
 void DEarthquake::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Spot << m_Intensity << m_Countdown
+	arc << m_Spot << m_IntensityX << m_Countdown
 		<< m_TremorRadius << m_DamageRadius
 		<< m_QuakeSFX;
+	if (SaveVersion < 4519)
+	{
+		m_IntensityY = m_IntensityX;
+		m_IntensityZ = 0;
+		m_Flags = 0;
+	}
+	else
+	{
+		arc << m_IntensityY << m_IntensityZ << m_Flags;
+	}
+	if (SaveVersion < 4520)
+	{
+		m_CountdownStart = 0;
+	}
+	else
+	{
+		arc << m_CountdownStart;
+	}
 }
 
 //==========================================================================
@@ -78,7 +100,7 @@ void DEarthquake::Tick ()
 		Destroy ();
 		return;
 	}
-
+	
 	if (!S_IsActorPlayingSomething (m_Spot, CHAN_BODY, m_QuakeSFX))
 	{
 		S_Sound (m_Spot, CHAN_BODY | CHAN_LOOP, m_QuakeSFX, 1, ATTN_NORM);
@@ -102,11 +124,23 @@ void DEarthquake::Tick ()
 					}
 					// Thrust player around
 					angle_t an = victim->angle + ANGLE_1*pr_quake();
-					P_ThrustMobj (victim, an, m_Intensity << (FRACBITS-1));
+					if (m_IntensityX == m_IntensityY)
+					{ // Thrust in a circle
+						P_ThrustMobj (victim, an, m_IntensityX << (FRACBITS-1));
+					}
+					else
+					{ // Thrust in an ellipse
+						an >>= ANGLETOFINESHIFT;
+						// So this is actually completely wrong, but it ought to be good
+						// enough. Otherwise, I'd have to use tangents and square roots.
+						victim->velx += FixedMul(m_IntensityX << (FRACBITS-1), finecosine[an]);
+						victim->vely += FixedMul(m_IntensityY << (FRACBITS-1), finesine[an]);
+					}
 				}
 			}
 		}
 	}
+	
 	if (--m_Countdown == 0)
 	{
 		if (S_IsActorPlayingSomething(m_Spot, CHAN_BODY, m_QuakeSFX))
@@ -126,16 +160,18 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
+int DEarthquake::StaticGetQuakeIntensities(AActor *victim, quakeInfo &qprop)
 {
-	int intensity = 0;
-	TThinkerIterator<DEarthquake> iterator (STAT_EARTHQUAKE);
-	DEarthquake *quake;
-
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
 		return 0;
 	}
+	qprop.isScalingDown = qprop.isScalingUp = qprop.preferMaximum = qprop.fullIntensity = false;
+	qprop.intensityX = qprop.intensityY = qprop.intensityZ = qprop.relIntensityX = qprop.relIntensityY = qprop.relIntensityZ = 0;
+
+	TThinkerIterator<DEarthquake> iterator(STAT_EARTHQUAKE);
+	DEarthquake *quake;
+	int count = 0;
 
 	while ( (quake = iterator.Next()) != NULL)
 	{
@@ -145,12 +181,36 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
 				victim->y - quake->m_Spot->y);
 			if (dist < quake->m_TremorRadius)
 			{
-				if (intensity < quake->m_Intensity)
-					intensity = quake->m_Intensity;
+				++count;
+				if (quake->m_Flags & QF_RELATIVE)
+				{
+					qprop.relIntensityX = MAX(qprop.relIntensityX, quake->m_IntensityX);
+					qprop.relIntensityY = MAX(qprop.relIntensityY, quake->m_IntensityY);
+					qprop.relIntensityZ = MAX(qprop.relIntensityZ, quake->m_IntensityZ);
+				}
+				else
+				{
+					qprop.intensityX = MAX(qprop.intensityX, quake->m_IntensityX);
+					qprop.intensityY = MAX(qprop.intensityY, quake->m_IntensityY);
+					qprop.intensityZ = MAX(qprop.intensityZ, quake->m_IntensityZ);
+				}
+				if (quake->m_Flags)
+				{
+					qprop.scaleDownStart = quake->m_CountdownStart;
+					qprop.scaleDown = quake->m_Countdown;
+					qprop.isScalingDown = (quake->m_Flags & QF_SCALEDOWN) ? true : false;
+					qprop.isScalingUp = (quake->m_Flags & QF_SCALEUP) ? true : false;
+					qprop.preferMaximum = (quake->m_Flags & QF_MAX) ? true : false;
+					qprop.fullIntensity = (quake->m_Flags & QF_FULLINTENSITY) ? true : false;
+				}
+				else
+				{
+					qprop.scaleDownStart = qprop.scaleDown = 0.0;
+				}
 			}
 		}
 	}
-	return intensity;
+	return count;
 }
 
 //==========================================================================
@@ -159,18 +219,20 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
 //
 //==========================================================================
 
-bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
+bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, FSoundID quakesfx, int flags)
 {
 	AActor *center;
 	bool res = false;
 
-	intensity = clamp (intensity, 1, 9);
+	if (intensityX)		intensityX = clamp(intensityX, 1, 9);
+	if (intensityY)		intensityY = clamp(intensityY, 1, 9);
+	if (intensityZ)		intensityZ = clamp(intensityZ, 1, 9);
 
 	if (tid == 0)
 	{
 		if (activator != NULL)
 		{
-			new DEarthquake(activator, intensity, duration, damrad, tremrad, quakesfx);
+			new DEarthquake(activator, intensityX, intensityY, intensityZ, duration, damrad, tremrad, quakesfx, flags);
 			return true;
 		}
 	}
@@ -180,9 +242,14 @@ bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int 
 		while ( (center = iterator.Next ()) )
 		{
 			res = true;
-			new DEarthquake (center, intensity, duration, damrad, tremrad, quakesfx);
+			new DEarthquake(center, intensityX, intensityY, intensityZ, duration, damrad, tremrad, quakesfx, flags);
 		}
 	}
 	
 	return res;
+}
+
+bool P_StartQuake(AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
+{	//Maintains original behavior by passing 0 to intensityZ, and flags.
+	return P_StartQuakeXYZ(activator, tid, intensity, intensity, 0, duration, damrad, tremrad, quakesfx, 0);
 }

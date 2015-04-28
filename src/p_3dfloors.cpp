@@ -488,7 +488,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 				// by the clipping code below.
 				ffloors.Push(pick);
 			}
-			else if (pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) && pick->flags&FF_EXISTS)
+			else if ((pick->flags&(FF_SWIMMABLE|FF_TRANSLUCENT) || (!(pick->flags&(FF_ALLSIDES|FF_BOTHPLANES)))) && pick->flags&FF_EXISTS)
 			{
 				// We must check if this nonsolid segment gets clipped from the top by another 3D floor
 				if (solid != NULL && solid_bottom < height)

@@ -705,8 +705,6 @@ void FMapInfoParser::ParseCluster()
 		}
 		else if (sc.Compare("music"))
 		{
-			int order = 0;
-
 			ParseAssign();
 			ParseMusic(clusterinfo->MessageMusic, clusterinfo->musicorder);
 		}

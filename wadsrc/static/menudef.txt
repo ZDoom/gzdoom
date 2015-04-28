@@ -795,6 +795,13 @@ OptionValue "AltHUDScale"
 	2, "Pixel double"
 }
 
+OptionValue "AltHUDAmmo"
+{
+	0, "Current weapon"
+	1, "Available weapons"
+	2, "All weapons"
+}
+
 OptionValue "AltHUDTime"
 {
 	0, "Off"
@@ -828,6 +835,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
 	Option "Show berserk",							"hud_berserk_health", "OnOff"
 	Option "Show weapons",							"hud_showweapons", "OnOff"
+	Option "Show ammo for",							"hud_showammo", "AltHUDAmmo"
 	Option "Show time",								"hud_showtime", "AltHUDTime"
 	Option "Time color",							"hud_timecolor", "TextColors"
 	Option "Show network latency",					"hud_showlag", "AltHUDLag"
@@ -1268,42 +1276,60 @@ OptionMenu "CompatibilityOptions"
 {
 	Title "COMPATIBILITY OPTIONS"
 	Option "Compatibility mode",						"compatmode", "CompatModes", "", 1
+	
 	StaticText " "
+	StaticText "Actor Behavior",1
+	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"	
+	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
+	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
+	Option "Monster movement is affected by effects",	"compat_MBFMONSTERMOVE", "YesNo"
+	Option "Monsters cannot cross dropoffs",			"compat_CROSSDROPOFF", "YesNo"
+	Option "Monsters get stuck over dropoffs",			"compat_DROPOFF", "YesNo"
+	Option "Monsters see invisible players",			"compat_INVISIBILITY", "YesNo"
+	Option "No Minotaur floor flames in water",			"compat_MINOTAUR", "YesNo"
+	Option "Spawn item drops on the floor",				"compat_NOTOSSDROPS", "YesNo"
+	
+	StaticText " "
+	StaticText "DehackEd Behavior",1
+	Option "DEH health settings like Doom2.exe",		"compat_DEHHEALTH", "YesNo"
+	Option "Original A_Mushroom speed in DEH mods",		"compat_MUSHROOM", "YesNo"
+	
+	StaticText " "
+	StaticText "Map/Action Behavior",1
+	Option "All special lines can block <use>",			"compat_USEBLOCKING", "YesNo"
+	Option "Allow any bossdeath for level special",		"compat_ANYBOSSDEATH", "YesNo"
+	Option "Disable BOOM door light effect",			"compat_NODOORLIGHT", "YesNo"
+	Option "Find neighboring light like Doom",			"compat_LIGHT", "YesNo"
 	Option "Find shortest textures like Doom",			"compat_SHORTTEX", "YesNo"
 	Option "Use buggier stair building",				"compat_stairs", "YesNo"
-	Option "Find neighboring light like Doom",			"compat_LIGHT", "YesNo"
-	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
-	Option "Don't let others hear your pickups",		"compat_SILENTPICKUP", "YesNo"
+	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
+	
+	StaticText " "
+	StaticText "Physics Behavior",1
 	Option "Actors are infinitely tall",				"compat_nopassover", "YesNo"
-	Option "Enable wall running",						"compat_WALLRUN", "YesNo"
-	Option "Spawn item drops on the floor",				"compat_NOTOSSDROPS", "YesNo"
-	Option "All special lines can block <use>",			"compat_USEBLOCKING", "YesNo"
-	Option "Disable BOOM door light effect",			"compat_NODOORLIGHT", "YesNo"
-	Option "Raven scrollers use original speed",		"compat_RAVENSCROLL", "YesNo"
-	Option "Use original sound target handling",		"compat_SOUNDTARGET", "YesNo"
-	Option "DEH health settings like Doom2.exe",		"compat_DEHHEALTH", "YesNo"
-	Option "Self ref. sectors don't block shots",		"compat_TRACE", "YesNo"
-	Option "Monsters get stuck over dropoffs",			"compat_DROPOFF", "YesNo"
-	Option "Monsters cannot cross dropoffs",			"compat_CROSSDROPOFF", "YesNo"
-	Option "Monsters see invisible players",			"compat_INVISIBILITY", "YesNo"
 	Option "Boom scrollers are additive",				"compat_BOOMSCROLL", "YesNo"
-	Option "Inst. moving floors are not silent",		"compat_silentinstantfloors", "YesNo"
-	Option "Sector sounds use center as source",		"compat_SECTORSOUNDS", "YesNo"
-	Option "Use Doom heights for missile clipping",		"compat_MISSILECLIP", "YesNo"
-	Option "Allow any bossdeath for level special",		"compat_ANYBOSSDEATH", "YesNo"
-	Option "No Minotaur floor flames in water",			"compat_MINOTAUR", "YesNo"
-	Option "Original A_Mushroom speed in DEH mods",		"compat_MUSHROOM", "YesNo"
-	Option "Monster movement is affected by effects",	"compat_MBFMONSTERMOVE", "YesNo"
-	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"
-	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
-	Option "Invert sprite sorting",						"compat_SPRITESORT", "YesNo"
+	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
+	Option "Enable wall running",						"compat_WALLRUN", "YesNo"
+	Option "Raven scrollers use original speed",		"compat_RAVENSCROLL", "YesNo"
+	Option "Self ref. sectors don't block shots",		"compat_TRACE", "YesNo"
 	Option "Use Doom code for hitscan checks",			"compat_HITSCAN", "YesNo"
-	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
+	Option "Use Doom heights for missile clipping",		"compat_MISSILECLIP", "YesNo"
+
+	
+	StaticText " "
+	StaticText "Rendering Behavior",1
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
 	Option "Ignore Y offsets on masked midtextures",	"compat_MASKEDMIDTEX", "YesNo"
-	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
-	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
+	Option "Invert sprite sorting",						"compat_SPRITESORT", "YesNo"
+	
+	StaticText " "
+	StaticText "Sound Behavior",1
+	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
+	Option "Don't let others hear your pickups",		"compat_SILENTPICKUP", "YesNo"
+	Option "Inst. moving floors are not silent",		"compat_silentinstantfloors", "YesNo"
+	Option "Sector sounds use center as source",		"compat_SECTORSOUNDS", "YesNo"
 	Option "Sounds stop when actor vanishes",			"compat_soundcutoff", "YesNo"
+	Option "Use original sound target handling",		"compat_SOUNDTARGET", "YesNo"
 	
 	Class "CompatibilityMenu"
 }

@@ -2652,7 +2652,7 @@ void D_DoomMain (void)
 			ReleaseGlobalSymbols();
 			PClass::StaticShutdown();
 
-			GC::FullGC();					// perform one final garbage collection before deleting the class data
+			GC::FullGC();					// perform one final garbage collection after shutdown
 
 			for (DObject *obj = GC::Root; obj; obj = obj->ObjNext)
 			{
@@ -2660,6 +2660,7 @@ void D_DoomMain (void)
 			}
 
 			restart++;
+			PClass::bShutdown = false;
 		}
 	}
 	while (1);

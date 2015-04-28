@@ -51,6 +51,9 @@ public:
 	void FillAddressConstants(FVoidObj *konst, VM_ATAG *tags);
 	void FillStringConstants(FString *strings);
 
+	// PARAM increases ActiveParam; CALL decreases it.
+	void ParamChange(int delta);
+
 	// Track available registers.
 	RegAvailability Registers[4];
 
@@ -76,8 +79,6 @@ private:
 
 	TArray<VMOP> Code;
 
-	// PARAM increases ActiveParam; CALL decreases it.
-	void ParamChange(int delta);
 };
 
 #endif

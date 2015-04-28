@@ -2189,6 +2189,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 			{
 				double val = static_cast<FxConstant *>(choices[i])->GetValue().GetFloat();
 				build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(val));
+				build->ParamChange(-1);	// all params should use the same register here.
 			}
 		}
 		else

@@ -636,7 +636,7 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CUR
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
 
-add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.lemon ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h
+add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/zscript/zcc-parse.lemon .
 	COMMAND ${LEMON_EXE} zcc-parse.lemon
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -1081,7 +1081,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	thingdef/thingdef_data.cpp
 	thingdef/thingdef_exp.cpp
 	thingdef/thingdef_expression.cpp
-	thingdef/thingdef_function.cpp
 	thingdef/thingdef_parse.cpp
 	thingdef/thingdef_properties.cpp
 	thingdef/thingdef_states.cpp

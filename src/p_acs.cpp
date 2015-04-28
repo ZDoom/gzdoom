@@ -2268,8 +2268,8 @@ void FBehavior::LoadScriptsDirectory ()
 	}
 
 // [EP] Clang 3.5.0 optimizer miscompiles this function and causes random
-// crashes in the program. I hope that Clang 3.5.x will fix this.
-#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ >= 5
+// crashes in the program. This is fixed in 3.5.1 onwards.
+#if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ == 5 && __clang_patchlevel__ == 0
 	asm("" : "+g" (NumScripts));
 #endif
 	for (i = 0; i < NumScripts; ++i)

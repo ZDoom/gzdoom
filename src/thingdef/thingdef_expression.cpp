@@ -2069,17 +2069,25 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
-FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, const FScriptPosition &pos)
+FxRandomPick::FxRandomPick(FRandom *r, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos)
 : FxExpression(pos)
 {
 	assert(expr.Size() > 0);
 	choices.Resize(expr.Size());
 	for (unsigned int index = 0; index < expr.Size(); index++)
 	{
-		choices[index] = new FxIntCast(expr[index]);
+		if (floaty)
+		{
+			choices[index] = new FxFloatCast(expr[index]);
+		}
+		else
+		{
+			choices[index] = new FxIntCast(expr[index]);
+		}
+
 	}
 	rng = r;
-	ValueType = VAL_Int;
+	ValueType = floaty ? VAL_Float : VAL_Int;
 }
 
 //==========================================================================
@@ -2132,6 +2140,7 @@ FxExpression *FxRandomPick::Resolve(FCompileContext &ctx)
 
 ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 {
+#pragma message("FxRandomPick::Emit: Floating point part needs reviewing!")
 	unsigned i;
 
 	assert(choices.Size() > 0);
@@ -2171,8 +2180,16 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 		build->BackpatchToHere(jumptable + i);
 		if (choices[i]->isConstant())
 		{
-			int val = static_cast<FxConstant *>(choices[i])->GetValue().GetInt();
-			build->EmitLoadInt(resultreg.RegNum, val);
+			if (ValueType == VAL_Int)
+			{
+				int val = static_cast<FxConstant *>(choices[i])->GetValue().GetInt();
+				build->EmitLoadInt(resultreg.RegNum, val);
+			}
+			else
+			{
+				double val = static_cast<FxConstant *>(choices[i])->GetValue().GetFloat();
+				build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(val));
+			}
 		}
 		else
 		{
@@ -2182,7 +2199,14 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 			  // was expected. Copy it to the one we wanted.
 
 				resultreg.Reuse(build);	// This is really just for the assert in Reuse()
-				build->Emit(OP_MOVE, resultreg.RegNum, casereg.RegNum, 0);
+				if (ValueType == VAL_Int)
+				{
+					build->Emit(OP_MOVE, resultreg.RegNum, casereg.RegNum, 0);
+				}
+				else
+				{
+					build->Emit(OP_MOVEF, resultreg.RegNum, casereg.RegNum, 0);
+				}
 				resultreg.Free(build);
 			}
 			// Free this register so the remaining cases can use it.
@@ -2201,7 +2225,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 		build->BackpatchToHere(finishes[i]);
 	}
 	// The result register needs to be in-use when we return.
-	// It should have been freed earlier, so restore it's in-use flag.
+	// It should have been freed earlier, so restore its in-use flag.
 	resultreg.Reuse(build);
 	return resultreg;
 }

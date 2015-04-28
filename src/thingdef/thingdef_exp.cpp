@@ -369,8 +369,9 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 
 		return new FxRandom(rng, min, max, sc);
 	}
-	else if (sc.CheckToken(TK_RandomPick))
+	else if (sc.CheckToken(TK_RandomPick) || sc.CheckToken(TK_FRandomPick))
 	{
+		bool floaty = sc.TokenType == TK_FRandomPick;
 		FRandom *rng;
 		TArray<FxExpression*> list;
 		list.Clear();
@@ -396,7 +397,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				break;
 			sc.MustGetToken(',');
 		}
-		return new FxRandomPick(rng, list, sc);
+		return new FxRandomPick(rng, list, floaty, sc);
 	}
 	else if (sc.CheckToken(TK_FRandom))
 	{

@@ -645,7 +645,7 @@ protected:
 
 public:
 
-	FxRandomPick(FRandom *, TArray<FxExpression*> &expr, const FScriptPosition &pos);
+	FxRandomPick(FRandom *, TArray<FxExpression*> &expr, bool floaty, const FScriptPosition &pos);
 	~FxRandomPick();
 	FxExpression *Resolve(FCompileContext&);
 

@@ -1679,6 +1679,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	PARAM_FLOAT_OPT	(driftspeed)		{ driftspeed = 1; }
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
 	PARAM_FIXED_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
+	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
 	
 	if (range == 0) range = 8192*FRACUNIT;
 	if (sparsity == 0) sparsity=1.0;
@@ -1709,7 +1710,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 		slope = pr_crailgun.Random2() * (spread_z / 255);
 	}
 
-	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angle, slope, range, duration, sparsity, driftspeed, spawnclass);
+	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angle, slope, range, duration, sparsity, driftspeed, spawnclass, SpiralOffset);
 	return 0;
 }
 
@@ -1745,6 +1746,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_FLOAT_OPT	(driftspeed)		{ driftspeed = 1; }
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
 	PARAM_FIXED_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
+	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
 
 	if (range == 0) range = 8192*FRACUNIT;
 	if (sparsity == 0) sparsity = 1;
@@ -1828,7 +1830,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		slopeoffset = pr_crailgun.Random2() * (spread_z / 255);
 	}
 
-	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angleoffset, slopeoffset, range, duration, sparsity, driftspeed, spawnclass);
+	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angleoffset, slopeoffset, range, duration, sparsity, driftspeed, spawnclass,SpiralOffset);
 
 	self->x = saved_x;
 	self->y = saved_y;
@@ -4871,7 +4873,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LineEffect)
 		if ((oldjunk.special = special))					// Linedef type
 		{
 			oldjunk.tag = tag;								// Sector tag for linedef
-			P_TranslateLineDef(&junk, &oldjunk, false);			// Turn into native type
+			P_TranslateLineDef(&junk, &oldjunk);			// Turn into native type
 			res = !!P_ExecuteSpecial(junk.special, NULL, self, false, junk.args[0], 
 				junk.args[1], junk.args[2], junk.args[3], junk.args[4]); 
 			if (res && !(junk.flags & ML_REPEAT_SPECIAL))	// If only once,

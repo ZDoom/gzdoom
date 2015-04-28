@@ -3545,7 +3545,7 @@ void AActor::Tick ()
 					}
 					else if (scrolltype == Scroll_StrifeCurrent)
 					{ // Strife scroll special
-						int anglespeed = sec->GetMainTag() - 100;
+						int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
 						fixed_t carryspeed = DivScale32 (anglespeed % 10, 16*CARRYFACTOR);
 						angle_t fineangle = (anglespeed / 10) << (32-3);
 						fineangle >>= ANGLETOFINESHIFT;
@@ -4857,7 +4857,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	// [RH] sound sequence overriders
 	if (mentry->Type == NULL && mentry->Special == SMT_SSeqOverride)
 	{
-		int type = mentry->Args[0];
+		int type = mthing->args[0];
 		if (type == 255) type = -1;
 		if (type > 63)
 		{

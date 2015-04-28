@@ -844,7 +844,7 @@ void P_Spawn3DFloors (void)
 			{
 				if (line->args[1]&8)
 				{
-					line->SetMainId(line->args[4]);
+					tagManager.AddLineID(i, line->args[4]);
 				}
 				else
 				{

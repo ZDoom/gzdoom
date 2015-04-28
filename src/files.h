@@ -336,6 +336,24 @@ protected:
 	const char * bufptr;
 };
 
+class MemoryArrayReader : public FileReader
+{
+public:
+    MemoryArrayReader (const char *buffer, long length);
+    ~MemoryArrayReader ();
+
+    virtual long Tell () const;
+    virtual long Seek (long offset, int origin);
+    virtual long Read (void *buffer, long len);
+    virtual char *Gets(char *strbuf, int len);
+    virtual const char *GetBuffer() const { return (char*)&buf[0]; }
+    TArray<BYTE> &GetArray() { return buf; }
+
+    void UpdateLength() { Length = buf.Size(); }
+
+protected:
+    TArray<BYTE> buf;
+};
 
 
 #endif

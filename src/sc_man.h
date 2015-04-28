@@ -21,6 +21,7 @@ public:
 	void Open(const char *lumpname);
 	void OpenFile(const char *filename);
 	void OpenMem(const char *name, const char *buffer, int size);
+	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);
 	void Close();
 

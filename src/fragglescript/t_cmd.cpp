@@ -169,6 +169,7 @@ void FS_EmulateCmd(char * string)
 			{
 				// No, this is not correct. But this is the way Legacy WADs expect it to be handled!
 				if (players[i].mo != NULL) players[i].mo->ViewHeight = playerviewheight;
+				players[i].viewheight = playerviewheight;
 				players[i].Uncrouch();
 			}
 			while (sc.GetString())

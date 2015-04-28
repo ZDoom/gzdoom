@@ -329,6 +329,7 @@ int S_GetMusic (char **name);
 
 // Stops the music for sure.
 void S_StopMusic (bool force);
+void S_UpdateMusic();
 
 // Stop and resume music, during game PAUSE.
 void S_PauseSound (bool notmusic, bool notsfx);
@@ -389,7 +390,7 @@ enum EMidiDevice
 	MDEV_DEFAULT = -1,
 	MDEV_MMAPI = 0,
 	MDEV_OPL = 1,
-	MDEV_FMOD = 2,
+	MDEV_SNDSYS = 2,
 	MDEV_TIMIDITY = 3,
 	MDEV_FLUIDSYNTH = 4,
 	MDEV_GUS = 5,

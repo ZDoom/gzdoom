@@ -586,7 +586,7 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift)
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
 {
 	double length, lengthsquared;
 	int steps, i;
@@ -679,7 +679,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = start;
-		deg = FAngle(270);
+		deg = FAngle(SpiralOffset);
 		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle ();

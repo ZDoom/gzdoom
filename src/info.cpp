@@ -358,7 +358,7 @@ void PClassActor::RegisterIDs()
 	if (ConversationID > 0)
 	{
 		StrifeTypes[ConversationID] = cls;
-		if (cls != Class) 
+		if (cls != this) 
 		{
 			Printf(TEXTCOLOR_RED"Conversation ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
 		}

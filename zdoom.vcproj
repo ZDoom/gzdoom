@@ -57,7 +57,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu&quot;;gdtoa;bzip2;lzma\C"
-				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH"
+				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH,NO_OPENAL"
 				StringPooling="true"
 				ExceptionHandling="1"
 				RuntimeLibrary="0"
@@ -180,7 +180,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu;gdtoa;bzip2;lzma\C"
-				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY"
+				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,NO_OPENAL"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="false"
@@ -290,7 +290,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu&quot;;gdtoa;bzip2;lzma\C"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH,NO_OPENAL"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -398,7 +398,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu;gdtoa;bzip2;lzma\C"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,NO_OPENAL"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -888,6 +888,10 @@
 			</File>
 			<File
 				RelativePath=".\src\p_switch.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\p_tags.cpp"
 				>
 			</File>
 			<File
@@ -1449,6 +1453,10 @@
 			</File>
 			<File
 				RelativePath=".\src\p_spec.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\p_tags.h"
 				>
 			</File>
 			<File
@@ -2474,6 +2482,10 @@
 			Name="Audio Files"
 			>
 			<File
+				RelativePath=".\src\sound\efx.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\sound\fmod_wrap.h"
 				>
 			</File>
@@ -2583,6 +2595,14 @@
 			</File>
 			<File
 				RelativePath=".\src\sound\music_xmi_midiout.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\oalsound.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\oalsound.h"
 				>
 			</File>
 			<Filter

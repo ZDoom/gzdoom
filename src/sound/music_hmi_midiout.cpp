@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -127,7 +128,7 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-HMISong::HMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
+HMISong::HMISong (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Tracks(0)
 {
 #ifdef _WIN32
@@ -136,6 +137,7 @@ HMISong::HMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 		return;
 	}
 #endif
+    int len = reader.GetLength();
 	if (len < 0x100)
 	{ // Way too small to be HMI.
 		return;
@@ -143,15 +145,8 @@ HMISong::HMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 	MusHeader = new BYTE[len];
 	SongLen = len;
 	NumTracks = 0;
-	if (file != NULL)
-	{
-		if (fread(MusHeader, 1, len, file) != (size_t)len)
-			return;
-	}
-	else
-	{
-		memcpy(MusHeader, musiccache, len);
-	}
+    if (reader.Read(MusHeader, len) != len)
+        return;
 
 	// Do some validation of the MIDI file
 	if (memcmp(MusHeader, HMI_SONG_MAGIC, sizeof(HMI_SONG_MAGIC)) == 0)

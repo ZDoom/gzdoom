@@ -639,7 +639,7 @@ bool AInventory::HandlePickup (AInventory *item)
 {
 	if (item->GetClass() == GetClass())
 	{
-		if (Amount < MaxAmount || sv_unlimited_pickup)
+		if (Amount < MaxAmount || (sv_unlimited_pickup && !item->ShouldStay()))
 		{
 			if (Amount > 0 && Amount + item->Amount < 0)
 			{

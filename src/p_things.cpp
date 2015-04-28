@@ -659,8 +659,12 @@ void InitClassMap(FClassMap &themap, SpawnMap &thedata)
 					pair->Value.filename.GetChars(), pair->Value.linenum, pair->Value.classname.GetChars());
 				error++;
 			}
+			themap.Insert(pair->Key, cls);
 		}
-		themap.Insert(pair->Key, cls);
+		else
+		{
+			themap.Remove(pair->Key);
+		}
 	}
 	if (error > 0)
 	{

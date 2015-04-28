@@ -489,7 +489,13 @@ bool FOptionMenuItem::MouseEvent(int type, int x, int y)
 
 int  FOptionMenuItem::GetIndent()
 {
-	return mCentered? 0 : SmallFont->StringWidth(mLabel);
+	if (mCentered)
+	{
+		return 0;
+	}
+	const char *label = mLabel;
+	if (*label == '$') label = GStrings(label+1);
+	return SmallFont->StringWidth(label);
 }
 
 void FOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool grayed)

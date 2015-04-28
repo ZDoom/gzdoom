@@ -1034,7 +1034,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 	// Both things overlap in x or y direction
 	bool unblocking = false;
 
-	if (tm.FromPMove || tm.thing->player != NULL)
+	if ((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID)
 	{
 		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
@@ -1042,7 +1042,9 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			unblocking = true;
 		}
-		else
+		else if (abs(thing->x - tm.thing->x) < (thing->radius+tm.thing->radius)/2 &&
+				 abs(thing->y - tm.thing->y) < (thing->radius+tm.thing->radius)/2)
+
 		{
 			fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
 			fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
@@ -4140,7 +4142,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 //
 //
 //==========================================================================
-void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, double maxdiff, int railflags, PClassActor *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, double sparsity, double drift, PClassActor *spawnclass)
+void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, double maxdiff, int railflags, PClassActor *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, double sparsity, double drift, PClassActor *spawnclass, int SpiralOffset)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -4295,7 +4297,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	end.X = FIXED2FLOAT(trace.X);
 	end.Y = FIXED2FLOAT(trace.Y);
 	end.Z = FIXED2FLOAT(trace.Z);
-	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift);
+	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift, SpiralOffset);
 }
 
 //==========================================================================

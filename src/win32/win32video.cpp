@@ -414,7 +414,10 @@ void Win32Video::DumpAdapters()
 		HMONITOR hm = D3D->GetAdapterMonitor(i);
 		MONITORINFOEX mi;
 		mi.cbSize = sizeof(mi);
-		if (GetMonitorInfo(hm, &mi))
+
+		TOptWin32Proc<BOOL(WINAPI*)(HMONITOR, LPMONITORINFO)> GetMonitorInfo("user32.dll", "GetMonitorInfoW");
+		assert(GetMonitorInfo != NULL); // Missing in NT4, but so is D3D
+		if (GetMonitorInfo.Call(hm, &mi))
 		{
 			mysnprintf(moreinfo, countof(moreinfo), " [%ldx%ld @ (%ld,%ld)]%s",
 				mi.rcMonitor.right - mi.rcMonitor.left,

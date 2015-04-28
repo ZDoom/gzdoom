@@ -186,57 +186,6 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 // UTILITIES
 //
 
-
-
-//
-// RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
-//
-
-// Find the next sector with a specified tag.
-// Rewritten by Lee Killough to use chained hashing to improve speed
-
-int FSectorTagIterator::Next()
-{
-	int ret;
-	if (searchtag == INT_MIN)
-	{
-		ret = start;
-		start = -1;
-	}
-	else
-	{
-		while (start != -1 && sectors[start].tag != searchtag) start = sectors[start].nexttag;
-		if (start == -1) return -1;
-		ret = start;
-		start = sectors[start].nexttag;
-	}
-	return ret;
-}
-
-int FSectorTagIterator::NextCompat(bool compat, int start)
-{
-	if (!compat) return Next();
-
-	for (int i = start + 1; i < numsectors; i++)
-	{
-		if (sectors[i].HasTag(searchtag)) return i;
-	}
-	return -1;
-}
-
-
-// killough 4/16/98: Same thing, only for linedefs
-
-int FLineIdIterator::Next()
-{
-	while (start != -1 && lines[start].id != searchtag) start = lines[start].nextid;
-	if (start == -1) return -1;
-	int ret = start;
-	start = lines[start].nextid;
-	return ret;
-}
-
-
 //============================================================================
 //
 // P_ActivateLine
@@ -283,7 +232,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
 		special &&												// not for lines without a special
-		line->HasId(line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
+		tagManager.LineHasID(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
 		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
 		P_FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
 	{
@@ -1792,7 +1741,7 @@ static void P_SpawnScrollers(void)
 		if (lines[i].special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (lines[i].frontsector->HasTag(lines[i].args[0]))
+			if (tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
 			{
 				copyscrollers.Push(i);
 			}
@@ -2200,7 +2149,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 
 int DPusher::CheckForSectorMatch (EPusher type, int tag)
 {
-	if (m_Type == type && sectors[m_Affectee].HasTag(tag))
+	if (m_Type == type && tagManager.SectorHasTag(m_Affectee, tag))
 		return m_Affectee;
 	else
 		return -1;

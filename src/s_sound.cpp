@@ -383,7 +383,7 @@ void S_Start ()
 	{
 		// kill all playing sounds at start of level (trust me - a good idea)
 		S_StopAllChannels();
-		
+
 		// Check for local sound definitions. Only reload if they differ
 		// from the previous ones.
 		FString LocalSndInfo;
@@ -486,6 +486,11 @@ void S_PrecacheLevel ()
 		for (i = 0; i < level.info->PrecacheSounds.Size(); ++i)
 		{
 			level.info->PrecacheSounds[i].MarkUsed();
+		}
+		// Don't unload sounds that are playing right now.
+		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+		{
+			chan->SoundID.MarkUsed();
 		}
 
 		for (i = 1; i < S_sfx.Size(); ++i)
@@ -1311,52 +1316,35 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 		int size = Wads.LumpLength(sfx->lumpnum);
 		if (size > 0)
 		{
-			BYTE *sfxdata;
-			BYTE *sfxstart;
 			FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
-			sfxstart = sfxdata = new BYTE[size];
+			BYTE *sfxdata = new BYTE[size];
 			wlump.Read(sfxdata, size);
-			SDWORD len = LittleLong(((SDWORD *)sfxdata)[1]);
+			SDWORD dmxlen = LittleLong(((SDWORD *)sfxdata)[1]);
 
 			// If the sound is voc, use the custom loader.
-			if (strncmp ((const char *)sfxstart, "Creative Voice File", 19) == 0)
+			if (strncmp ((const char *)sfxdata, "Creative Voice File", 19) == 0)
 			{
-				sfx->data = GSnd->LoadSoundVoc(sfxstart, size);
+				sfx->data = GSnd->LoadSoundVoc(sfxdata, size);
 			}
 			// If the sound is raw, just load it as such.
-			// Otherwise, try the sound as DMX format.
-			// If that fails, let FMOD try and figure it out.
-			else if (sfx->bLoadRAW ||
-				(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
+			else if (sfx->bLoadRAW)
 			{
-				int frequency;
-
-				if (sfx->bLoadRAW)
-				{
-					len = Wads.LumpLength (sfx->lumpnum);
-					frequency = sfx->RawRate;
-				}
-				else
-				{
-					frequency = LittleShort(((WORD *)sfxdata)[1]);
-					if (frequency == 0)
-					{
-						frequency = 11025;
-					}
-					sfxstart = sfxdata + 8;
-				}
-				sfx->data = GSnd->LoadSoundRaw(sfxstart, len, frequency, 1, 8, sfx->LoopStart);
+				sfx->data = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart);
 			}
+			// Otherwise, try the sound as DMX format.
+			else if (((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && dmxlen <= size - 8)
+			{
+				int frequency = LittleShort(((WORD *)sfxdata)[1]);
+				if (frequency == 0) frequency = 11025;
+				sfx->data = GSnd->LoadSoundRaw(sfxdata+8, dmxlen, frequency, 1, 8, sfx->LoopStart);
+			}
+			// If that fails, let the sound system try and figure it out.
 			else
 			{
-				len = Wads.LumpLength (sfx->lumpnum);
-				sfx->data = GSnd->LoadSound(sfxstart, len);
+				sfx->data = GSnd->LoadSound(sfxdata, size);
 			}
-			
-			if (sfxdata != NULL)
-			{
-				delete[] sfxdata;
-			}
+
+			delete[] sfxdata;
 		}
 
 		if (!sfx->data.isValid())
@@ -1925,29 +1913,32 @@ void S_UpdateSounds (AActor *listenactor)
 		S_ActivatePlayList(false);
 	}
 
-	// should never happen
-	S_SetListener(listener, listenactor);
-
-	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	if (listenactor != NULL)
 	{
-		if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
+		// should never happen
+		S_SetListener(listener, listenactor);
+
+		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
-			CalcPosVel(chan, &pos, &vel);
-			GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
+			if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
+			{
+				CalcPosVel(chan, &pos, &vel);
+				GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
+			}
+			chan->ChanFlags &= ~CHAN_JUSTSTARTED;
 		}
-		chan->ChanFlags &= ~CHAN_JUSTSTARTED;
-	}
 
-	SN_UpdateActiveSequences();
+		SN_UpdateActiveSequences();
 
 
-	GSnd->UpdateListener(&listener);
-	GSnd->UpdateSounds();
+		GSnd->UpdateListener(&listener);
+		GSnd->UpdateSounds();
 
-	if (level.time >= RestartEvictionsAt)
-	{
-		RestartEvictionsAt = 0;
-		S_RestoreEvictedChannels();
+		if (level.time >= RestartEvictionsAt)
+		{
+			RestartEvictionsAt = 0;
+			S_RestoreEvictedChannels();
+		}
 	}
 }
 
@@ -2083,12 +2074,6 @@ void S_ChannelEnded(FISoundChannel *ichan)
 				evicted = (pos < len);
 			}
 		}
-		/*
-		else
-		{
-			evicted = false;
-		}
-		*/
 		if (!evicted)
 		{
 			S_ReturnChannel(schan);
@@ -2346,8 +2331,6 @@ bool S_StartMusic (const char *m_id)
 // specified, it will only be played if the specified CD is in a drive.
 //==========================================================================
 
-TArray<BYTE> musiccache;
-
 bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 {
 	if (!force && PlayList)
@@ -2427,7 +2410,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	else
 	{
 		int lumpnum = -1;
-		int offset = 0, length = 0;
+		int length = 0;
 		int device = MDEV_DEFAULT;
 		MusInfo *handle = NULL;
 		FName musicasname = musicname;
@@ -2448,6 +2431,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			musicname += 7;
 		}
 
+		FileReader *reader = NULL;
 		if (!FileExists (musicname))
 		{
 			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)
@@ -2470,33 +2454,21 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			}
 			if (handle == NULL)
 			{
-				if (!Wads.IsUncompressedFile(lumpnum))
+				if (Wads.LumpLength (lumpnum) == 0)
 				{
-					// We must cache the music data and use it from memory.
-
-					// shut down old music before reallocating and overwriting the cache!
-					S_StopMusic (true);
-
-					offset = -1;							// this tells the low level code that the music 
-															// is being used from memory
-					length = Wads.LumpLength (lumpnum);
-					if (length == 0)
-					{
-						return false;
-					}
-					musiccache.Resize(length);
-					Wads.ReadLump(lumpnum, &musiccache[0]);
+					return false;
 				}
-				else
+				reader = Wads.ReopenLumpNumNewFile(lumpnum);
+				if (reader == NULL)
 				{
-					offset = Wads.GetLumpOffset (lumpnum);
-					length = Wads.LumpLength (lumpnum);
-					if (length == 0)
-					{
-						return false;
-					}
+					return false;
 				}
 			}
+		}
+		else
+		{
+			// Load an external file.
+			reader = new FileReader(musicname);
 		}
 
 		// shutdown old music
@@ -2509,6 +2481,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			mus_playing.name = musicname;
 			mus_playing.baseorder = order;
 			LastSong = musicname;
+			delete reader;
 			return true;
 		}
 
@@ -2516,16 +2489,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		if (handle != NULL)
 		{
 			mus_playing.handle = handle;
-		}
-		else if (offset != -1)
-		{
-			mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
-				Wads.GetWadFullName (Wads.GetLumpFile (lumpnum)) :
-				musicname, NULL, offset, length, device);
+			delete reader;
 		}
 		else
 		{
-			mus_playing.handle = I_RegisterSong (NULL, &musiccache[0], -1, length, device);
+			mus_playing.handle = I_RegisterSong (reader, device);
 		}
 	}
 
@@ -2621,6 +2589,17 @@ void S_StopMusic (bool force)
 		LastSong = mus_playing.name;
 		mus_playing.name = "";
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void S_UpdateMusic()
+{
+	GSnd->UpdateMusic();
 }
 
 //==========================================================================

@@ -41,6 +41,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -101,7 +102,7 @@ char MIDI_CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
+MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Tracks(0)
 {
 	int p;
@@ -113,17 +114,10 @@ MIDISong2::MIDISong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 		return;
 	}
 #endif
-	MusHeader = new BYTE[len];
-	SongLen = len;
-	if (file != NULL)
-	{
-		if (fread(MusHeader, 1, len, file) != (size_t)len)
-			return;
-	}
-	else
-	{
-		memcpy(MusHeader, musiccache, len);
-	}
+    SongLen = reader.GetLength();
+	MusHeader = new BYTE[SongLen];
+    if (reader.Read(MusHeader, SongLen) != SongLen)
+        return;
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)
@@ -153,7 +147,7 @@ MIDISong2::MIDISong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 	Tracks = new TrackInfo[NumTracks];
 
 	// Gather information about each track
-	for (i = 0, p = 14; i < NumTracks && p < len + 8; ++i)
+	for (i = 0, p = 14; i < NumTracks && p < SongLen + 8; ++i)
 	{
 		DWORD chunkLen =
 			(MusHeader[p+4]<<24) |
@@ -161,9 +155,9 @@ MIDISong2::MIDISong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 			(MusHeader[p+6]<<8)  |
 			(MusHeader[p+7]);
 
-		if (chunkLen + p + 8 > (DWORD)len)
+		if (chunkLen + p + 8 > (DWORD)SongLen)
 		{ // Track too long, so truncate it
-			chunkLen = len - p - 8;
+			chunkLen = SongLen - p - 8;
 		}
 
 		if (MusHeader[p+0] == 'M' &&

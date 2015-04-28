@@ -107,6 +107,8 @@
 #include "resourcefiles/resourcefile.h"
 #include "r_renderer.h"
 #include "p_local.h"
+#include "autosegs.h"
+#include "fragglescript/t_fs.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -2636,10 +2638,27 @@ void D_DoomMain (void)
 			S_Shutdown();					// free all channels and delete playlist
 			C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 			DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
+
+			GC::FullGC();					// clean up before taking down the object list.
+
+			// Delete the VM functions here. The garbage collector will not do this automatically because they are referenced from the global action function definitions.
+			FAutoSegIterator probe(ARegHead, ARegTail);
+			while (*++probe != NULL)
+			{
+				AFuncDesc *afunc = (AFuncDesc *)*probe;
+				*(afunc->VMPointer) = NULL;
+			}
+
 			ReleaseGlobalSymbols();
 			PClass::StaticShutdown();
 
 			GC::FullGC();					// perform one final garbage collection before deleting the class data
+
+			for (DObject *obj = GC::Root; obj; obj = obj->ObjNext)
+			{
+				obj->ClearClass();	// Delete the Class pointer because the data it points to has been deleted. This will automatically be reset if needed.
+			}
+
 			restart++;
 		}
 	}

@@ -462,6 +462,10 @@ public:
 
 	void SerializeUserVars(FArchive &arc);
 	virtual void Serialize (FArchive &arc);
+	void ClearClass()
+	{
+		Class = NULL;
+	}
 
 	// For catching Serialize functions in derived classes
 	// that don't call their base class.

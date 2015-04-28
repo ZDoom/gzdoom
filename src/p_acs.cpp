@@ -4755,8 +4755,8 @@ static void SetActorTeleFog(AActor *activator, int tid, FString telefogsrc, FStr
 		FActorIterator iterator(tid);
 		AActor *actor;
 
-		const PClass * const src = telefogsrc.IsNotEmpty() ? PClass::FindClass(telefogsrc) : NULL;
-		const PClass * const dest = telefogdest.IsNotEmpty() ? PClass::FindClass(telefogdest) : NULL;
+		const PClass *src = PClass::FindClass(telefogsrc);
+		const PClass * dest = PClass::FindClass(telefogdest);
 		while ((actor = iterator.Next()))
 		{
 			if (telefogsrc.IsNotEmpty())

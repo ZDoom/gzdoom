@@ -663,7 +663,9 @@ static void DtoS(ZCC_ExprConstant *expr, FSharedStringArena &str_arena)
 	// Convert to a string with enough precision such that converting
 	// back to a double will not lose any data.
 	char str[64];
+	IGNORE_FORMAT_PRE
 	int len = mysnprintf(str, countof(str), "%H", expr->DoubleVal);
+	IGNORE_FORMAT_POST
 	expr->StringVal = str_arena.Alloc(str, len);
 	expr->Type = TypeString;
 }

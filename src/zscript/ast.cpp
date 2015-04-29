@@ -83,7 +83,7 @@ public:
 			NeedSpace = false;
 			if (NestDepth > 0)
 			{
-				Str.AppendFormat("%*s", NestDepth, "");
+				Str.AppendFormat("%*s", (int)NestDepth, "");
 			}
 			if (ConsecOpens > 0)
 			{

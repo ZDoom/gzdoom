@@ -476,8 +476,8 @@ struct VMValue
 	{
 		Kill();
 		a = v;
-		atag = atag;
-		Type = atag;
+		this->atag = atag;
+		Type = REGT_POINTER;
 	}
 	void SetNil()
 	{

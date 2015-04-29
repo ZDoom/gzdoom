@@ -792,7 +792,7 @@ void SetDehParams(FState *state, int codepointer)
 	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
-	if (codepointer < 0 || codepointer >= countof(MBFCodePointerFactories))
+	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
 	{
 		// This simply should not happen.
 		Printf("Unmanaged dehacked codepointer alias num %i\n", codepointer);

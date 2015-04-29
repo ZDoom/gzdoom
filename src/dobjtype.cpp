@@ -101,7 +101,7 @@ void DumpTypeTable()
 	for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
 	{
 		int len = 0;
-		Printf("%4d:", i);
+		Printf("%4zu:", i);
 		for (PType *ty = TypeTable.TypeHash[i]; ty != NULL; ty = ty->HashNext)
 		{
 			Printf(" -> %s", ty->IsKindOf(RUNTIME_CLASS(PNamedType)) ? static_cast<PNamedType*>(ty)->TypeName.GetChars(): ty->GetClass()->TypeName.GetChars());
@@ -122,7 +122,7 @@ void DumpTypeTable()
 		}
 		Printf("\n");
 	}
-	Printf("Used buckets: %d/%u (%.2f%%) for %d entries\n", used, countof(TypeTable.TypeHash), double(used)/countof(TypeTable.TypeHash)*100, all);
+	Printf("Used buckets: %d/%lu (%.2f%%) for %d entries\n", used, countof(TypeTable.TypeHash), double(used)/countof(TypeTable.TypeHash)*100, all);
 	Printf("Min bucket size: %d\n", min);
 	Printf("Max bucket size: %d\n", max);
 	Printf("Avg bucket size: %.2f\n", double(all) / used);

@@ -3130,7 +3130,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		return NULL;
 	}
 	TArray<PType *> &rets = Function->Variants[0].Proto->ReturnTypes;
-	if (rets.Size() == NULL)
+	if (rets.Size() == 0)
 	{
 		ReturnType = TypeVoid;
 	}

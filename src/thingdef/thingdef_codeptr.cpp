@@ -4350,8 +4350,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_ANGLE		(roll);
-	PARAM_INT_OPT	(flags);	{ flags = 0; }
-	PARAM_INT_OPT	(ptr);		{ ptr = AAPTR_DEFAULT; }
+	PARAM_INT_OPT	(flags)		{ flags = 0; }
+	PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	if (ref != NULL)

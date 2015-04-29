@@ -723,7 +723,7 @@ void D_WriteUserInfoStrings (int pnum, BYTE **stream, bool compact)
 
 		case NAME_PlayerClass:
 			*stream += sprintf(*((char **)stream), "\\%s", info->GetPlayerClassNum() == -1 ? "Random" :
-				D_EscapeUserInfo(info->GetPlayerClassType()->DisplayName.GetChars()));
+				D_EscapeUserInfo(info->GetPlayerClassType()->DisplayName.GetChars()).GetChars());
 			break;
 
 		case NAME_Skin:

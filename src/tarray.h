@@ -389,7 +389,7 @@ public:
 			if ((*this)[i] != NULL) 
 				delete (*this)[i];
 		}
-		Clear();
+		this->Clear();
 	}
 };
 
@@ -461,7 +461,12 @@ template<class KT> struct THashTraits
 {
 	// Returns the hash value for a key.
 	hash_t Hash(const KT key) { return (hash_t)(intptr_t)key; }
-	hash_t Hash(double key) { return ((hash_t *)&key)[0] ^ ((hash_t *)&key)[1]; }
+	hash_t Hash(double key)
+	{
+		hash_t keyhash[2];
+		memcpy(&keyhash, &key, sizeof(keyhash));
+		return keyhash[0] ^ keyhash[1];
+	}
 
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const KT left, const KT right) { return left != right; }
@@ -470,14 +475,24 @@ template<class KT> struct THashTraits
 template<> struct THashTraits<float>
 {
 	// Use all bits when hashing singles instead of converting them to ints.
-	hash_t Hash(float key) { return *((hash_t *)&key); }
+	hash_t Hash(float key)
+	{
+		hash_t keyhash;
+		memcpy(&keyhash, &key, sizeof(keyhash));
+		return keyhash;
+	}
 	int Compare(float left, float right) { return left != right; }
 };
 
 template<> struct THashTraits<double>
 {
 	// Use all bits when hashing doubles instead of converting them to ints.
-	hash_t Hash(double key) { return ((hash_t *)&key)[0] ^ ((hash_t *)&key)[1]; }
+	hash_t Hash(double key)
+	{
+		hash_t keyhash[2];
+		memcpy(&keyhash, &key, sizeof(keyhash));
+		return keyhash[0] ^ keyhash[1];
+	}
 	int Compare(double left, double right) { return left != right; }
 };
 

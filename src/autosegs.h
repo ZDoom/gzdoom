@@ -37,6 +37,7 @@
 
 #define REGMARKER(x) (x)
 typedef void * const REGINFO;
+typedef void * NCREGINFO;
 
 // List of Action functons
 extern REGINFO ARegHead;
@@ -72,7 +73,7 @@ class FAutoSegIterator
 			}
 			Probe = Head;
 		}
-		REGINFO operator*() const
+		NCREGINFO operator*() const
 		{
 			return *Probe;
 		}

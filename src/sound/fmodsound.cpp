@@ -304,7 +304,7 @@ class FMODStreamCapsule : public SoundStream
 public:
 	FMODStreamCapsule(FMOD::Sound *stream, FMODSoundRenderer *owner, const char *url)
 		: Owner(owner), Stream(NULL), Channel(NULL),
-		  UserData(NULL), Callback(NULL), URL(url), Reader(NULL), Ended(false)
+		  UserData(NULL), Callback(NULL), Reader(NULL), URL(url), Ended(false)
 	{
 		SetStream(stream);
 	}

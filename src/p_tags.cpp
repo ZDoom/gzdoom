@@ -314,7 +314,7 @@ int FSectorTagIterator::Next()
 		while (start >= 0 && tagManager.allTags[start].tag != searchtag) start = tagManager.allTags[start].nexttag;
 		if (start == -1) return -1;
 		ret = tagManager.allTags[start].target;
-		start = start = tagManager.allTags[start].nexttag;
+		start = tagManager.allTags[start].nexttag;
 	}
 	return ret;
 }
@@ -348,6 +348,6 @@ int FLineIdIterator::Next()
 	while (start >= 0 && tagManager.allIDs[start].tag != searchtag) start = tagManager.allIDs[start].nexttag;
 	if (start == -1) return -1;
 	int ret = tagManager.allIDs[start].target;
-	start = start = tagManager.allIDs[start].nexttag;
+	start = tagManager.allIDs[start].nexttag;
 	return ret;
 }

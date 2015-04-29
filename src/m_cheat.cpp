@@ -768,11 +768,8 @@ void cht_Give (player_t *player, const char *name, int amount)
 				 type->GetReplacement()->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup))))
 
 			{
-				// Give the weapon only if it belongs to the current game or
-				// is in a weapon slot. 
-				if (type->ActorInfo->GameFilter == GAME_Any || 
-					(type->ActorInfo->GameFilter & gameinfo.gametype) ||	
-					player->weapons.LocateWeapon(type, NULL, NULL))
+				// Give the weapon only if it is in a weapon slot. 
+				if (player->weapons.LocateWeapon(type, NULL, NULL))
 				{
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (giveall == ALL_YESYES || !(def->WeaponFlags & WIF_CHEATNOTWEAPON))
@@ -1052,24 +1049,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 	}
 	else
 	{
-		AInventory *inventory = player->mo->FindInventory (type);
-
-		if (inventory != NULL)
-		{
-			inventory->Amount -= amount ? amount : 1;
-
-			if (inventory->Amount <= 0)
-			{
-				if (inventory->ItemFlags & IF_KEEPDEPLETED)
-				{
-					inventory->Amount = 0;
-				}
-				else
-				{
-					inventory->Destroy ();
-				}
-			}
-		}
+		player->mo->TakeInventory(type, amount ? amount : 1);
 	}
 	return;
 }

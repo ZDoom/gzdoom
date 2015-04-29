@@ -1833,6 +1833,11 @@ void P_LoadThings2 (MapData * map)
 		mti[i].SkillFilter = MakeSkill(mti[i].flags);
 		mti[i].ClassFilter = (mti[i].flags & MTF_CLASS_MASK) >> MTF_CLASS_SHIFT;
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
+		if (level.flags2 & LEVEL2_HEXENHACK)
+		{
+			mti[i].flags &= 0x7ff;	// mask out Strife flags if playing an original Hexen map.
+		}
+
 		mti[i].gravity = FRACUNIT;
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;

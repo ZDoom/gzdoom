@@ -4685,7 +4685,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 					P_SpawnTeleportFog(ref, ref->x, ref->y, ref->z, false, true);
 				else
 				{
-					fog2 = Spawn(fog_type, prevX, prevY, prevZ, ALLOW_REPLACE);
+					fog2 = Spawn(fog_type, ref->x, ref->y, ref->z, ALLOW_REPLACE);
 					if (fog2 != NULL)
 						fog2->target = ref;
 				}

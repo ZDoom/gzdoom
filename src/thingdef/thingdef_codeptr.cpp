@@ -5845,6 +5845,43 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
 }
 
 //===========================================================================
+// A_JumpIfHigherOrLower
+//
+// Jumps if a target, master, or tracer is higher or lower than the calling 
+// actor. Can also specify how much higher/lower the actor needs to be than 
+// itself. Can also take into account the height of the actor in question,
+// depending on which it's checking. This means adding height of the
+// calling actor's self if the pointer is higher, or height of the pointer 
+// if its lower.
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
+{
+	ACTION_PARAM_START(6);
+	ACTION_PARAM_STATE(high, 0);
+	ACTION_PARAM_STATE(low, 1);
+	ACTION_PARAM_FIXED(offsethigh, 2);
+	ACTION_PARAM_FIXED(offsetlow, 3);
+	ACTION_PARAM_BOOL(includeHeight, 4);
+	ACTION_PARAM_INT(ptr, 5);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+
+	if (!mobj || (mobj == self)) //AAPTR_DEFAULT is completely useless in this regard.
+	{
+		return;
+	}
+	ACTION_SET_RESULT(false); //No inventory jump chains please.
+
+	if ((high) && (mobj->z > ((includeHeight ? self->height : 0) + self->z + offsethigh)))
+		ACTION_JUMP(high);
+	else if ((low) && (mobj->z + (includeHeight ? mobj->height : 0)) < (self->z + offsetlow))
+		ACTION_JUMP(low);
+}
+
+
+//===========================================================================
 //
 // A_SetRipperLevel(int level)
 //

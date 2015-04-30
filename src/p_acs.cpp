@@ -113,8 +113,9 @@ FRandom pr_acs ("ACS");
 #define NOT_FLOOR			8
 #define NOT_CEILING			16
 
-// LineAtack flags
+// LineAttack flags
 #define FHF_NORANDOMPUFFZ	1
+#define FHF_NOIMPACTDECAL	2
 
 // SpawnDecal flags
 #define SDF_ABSANGLE		1
@@ -5342,7 +5343,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
 				int flags			= argCount > 7 && args[7]? args[7] : 0;
 
-				int fhflags = (flags & FHF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+				int fhflags = 0;
+				if (flags & FHF_NORANDOMPUFFZ) fhflags |= LAF_NORANDOMPUFFZ;
+				if (flags & FHF_NOIMPACTDECAL) fhflags |= LAF_NOIMPACTDECAL;
 
 				if (args[0] == 0)
 				{

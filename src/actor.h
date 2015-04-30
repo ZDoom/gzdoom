@@ -354,9 +354,7 @@ enum
 	MF7_HITMASTER		= 0x00008000,	// Same as HITTARGET, except it's master instead of target.
 	MF7_HITTRACER		= 0x00010000,	// Same as HITTARGET, but for tracer.
 	MF7_FLYCHEAT		= 0x00020000,	// must be part of the actor so that it can be tracked properly
-
-
-
+	MF7_NODECAL			= 0x00040000,	// [ZK] Forces puff to have no impact decal
 // --- mobj.renderflags ---
 
 	RF_XFLIP			= 0x0001,	// Flip sprite horizontally

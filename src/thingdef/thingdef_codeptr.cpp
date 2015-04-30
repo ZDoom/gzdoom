@@ -5858,12 +5858,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 {
 	ACTION_PARAM_START(6);
-	ACTION_PARAM_INT(ptr, 0);
-	ACTION_PARAM_STATE(high, 1);
-	ACTION_PARAM_STATE(low, 2);
-	ACTION_PARAM_FIXED(offsethigh, 3);
-	ACTION_PARAM_FIXED(offsetlow, 4);
-	ACTION_PARAM_BOOL(includeHeight, 5);
+	ACTION_PARAM_STATE(high, 0);
+	ACTION_PARAM_STATE(low, 1);
+	ACTION_PARAM_FIXED(offsethigh, 2);
+	ACTION_PARAM_FIXED(offsetlow, 3);
+	ACTION_PARAM_BOOL(includeHeight, 4);
+	ACTION_PARAM_INT(ptr, 5);
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 

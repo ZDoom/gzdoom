@@ -660,7 +660,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	FState *diestate = NULL;
 	int gibhealth = GibHealth();
-	int iflags4 = inflictor == NULL ? 0 : inflictor->flags4;
+	ActorFlags4 iflags4 = inflictor == NULL ? ActorFlags4::FromInt(0) : inflictor->flags4;
 	bool extremelydead = ((health < gibhealth || iflags4 & MF4_EXTREMEDEATH) && !(iflags4 & MF4_NOEXTREMEDEATH));
 
 	// Special check for 'extreme' damage type to ensure that it gets recorded properly as an extreme death for subsequent checks.

@@ -108,3 +108,4 @@ inline T operator| (T::EnumType a, T b) { return T::FromInt (T::IntType (a) | T:
 inline T operator& (T::EnumType a, T b) { return T::FromInt (T::IntType (a) & T::IntType (b)); } \
 inline T operator^ (T::EnumType a, T b) { return T::FromInt (T::IntType (a) ^ T::IntType (b)); } \
 inline T operator~ (T::EnumType a) { return T::FromInt (~T::IntType (a)); }
+

@@ -6465,35 +6465,35 @@ void PrintMiscActorInfo(AActor *query)
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil",
 			"Shadow", "Subtract", "AddStencil", "AddShaded"};
 
-		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags);
+		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
-		Printf("\n   flags2: %x", query->flags2);
+		Printf("\n   flags2: %x", query->flags2.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
-		Printf("\n   flags3: %x", query->flags3);
+		Printf("\n   flags3: %x", query->flags3.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
-		Printf("\n   flags4: %x", query->flags4);
+		Printf("\n   flags4: %x", query->flags4.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
-		Printf("\n   flags5: %x", query->flags5);
+		Printf("\n   flags5: %x", query->flags5.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
-		Printf("\n   flags6: %x", query->flags6);
+		Printf("\n   flags6: %x", query->flags6.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
-		Printf("\n   flags7: %x", query->flags7);
+		Printf("\n   flags7: %x", query->flags7.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags7 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
-			query->BounceFlags, FIXED2FLOAT(query->bouncefactor), 
+			query->BounceFlags.GetValue(), FIXED2FLOAT(query->bouncefactor),
 			FIXED2FLOAT(query->wallbouncefactor));
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 
 			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
-			FIXED2FLOAT(query->alpha), query->renderflags);
+			FIXED2FLOAT(query->alpha), query->renderflags.GetValue());
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
 		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",

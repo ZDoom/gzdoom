@@ -2573,7 +2573,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 				fixed_t oldheight = corpsehit->height;
 				fixed_t oldradius = corpsehit->radius;
-				int oldflags = corpsehit->flags;
+				ActorFlags oldflags = corpsehit->flags;
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;

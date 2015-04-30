@@ -1409,7 +1409,17 @@ FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader *fr, int len)
 		}
 	}
 
-	return new FBehavior (lumpnum, fr, len);
+	FBehavior * behavior = new FBehavior ();
+	if (behavior->Init(lumpnum, fr, len))
+	{
+		return behavior;
+	}
+	else
+	{
+		delete behavior;
+		Printf("%s: invalid ACS module", Wads.GetLumpFullName(lumpnum));
+		return NULL;
+	}
 }
 
 bool FBehavior::StaticCheckAllGood ()
@@ -1668,11 +1678,8 @@ static int ParseLocalArrayChunk(void *chunk, ACSLocalArrays *arrays, int offset)
 	return offset;
 }
 
-FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
+FBehavior::FBehavior()
 {
-	BYTE *object;
-	int i;
-
 	NumScripts = 0;
 	NumFunctions = 0;
 	NumArrays = 0;
@@ -1684,10 +1691,20 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	Chunks = NULL;
 	Data = NULL;
 	Format = ACS_Unknown;
-	LumpNum = lumpnum;
+	LumpNum = -1;
 	memset (MapVarStore, 0, sizeof(MapVarStore));
 	ModuleName[0] = 0;
 	FunctionProfileData = NULL;
+
+}
+	
+	
+bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
+{
+	BYTE *object;
+	int i;
+
+	LumpNum = lumpnum;
 
 	// Now that everything is set up, record this module as being among the loaded modules.
 	// We need to do this before resolving any imports, because an import might (indirectly)
@@ -1699,7 +1716,6 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	// 1. If not, corrupt modules cause memory leaks
 	// 2. Corrupt modules won't be reported when a level is being loaded if this function quits before
 	//    adding it to the list.
-    LibraryID = StaticModules.Push (this) << LIBRARYID_SHIFT;
 
 	if (fr == NULL) len = Wads.LumpLength (lumpnum);
 
@@ -1711,7 +1727,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	// has 24 bytes if it is completely empty. An empty SPTR chunk adds 8 bytes.)
 	if (len < 32)
 	{
-		return;
+		return false;
 	}
 
 	object = new BYTE[len];
@@ -1727,7 +1743,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	if (object[0] != 'A' || object[1] != 'C' || object[2] != 'S')
 	{
 		delete[] object;
-		return;
+		return false;
 	}
 
 	switch (object[3])
@@ -1743,8 +1759,9 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		break;
 	default:
 		delete[] object;
-		return;
+		return false;
 	}
+    LibraryID = StaticModules.Push (this) << LIBRARYID_SHIFT;
 
 	if (fr == NULL)
 	{
@@ -2135,6 +2152,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	}
 
 	DPrintf ("Loaded %d scripts, %d functions\n", NumScripts, NumFunctions);
+	return true;
 }
 
 FBehavior::~FBehavior ()

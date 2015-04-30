@@ -3745,7 +3745,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 		}
 		else
 		{
-			DWORD *flagp = (DWORD*) (((char*)self) + fd->structoffset);
+			ActorFlags *flagp = (ActorFlags*) (((char*)self) + fd->structoffset);
 
 			// If these 2 flags get changed we need to update the blockmap and sector links.
 			bool linkchange = flagp == &self->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);

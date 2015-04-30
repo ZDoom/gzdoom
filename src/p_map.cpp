@@ -1592,7 +1592,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, bool actorsonly)
 
 bool P_TestMobjLocation(AActor *mobj)
 {
-	int flags;
+	ActorFlags flags;
 
 	flags = mobj->flags;
 	mobj->flags &= ~MF_PICKUP;
@@ -4922,7 +4922,7 @@ EXTERN_CVAR(Int, cl_bloodtype)
 
 bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 {
-	int flags2 = thing->flags2 & MF2_PASSMOBJ;
+	ActorFlags2 flags2 = thing->flags2 & MF2_PASSMOBJ;
 	FCheckPosition tm;
 
 	if ((thing->flags2 & MF2_PASSMOBJ) && (thing->flags3 & MF3_ISMONSTER))

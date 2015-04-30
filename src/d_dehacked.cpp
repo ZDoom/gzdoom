@@ -1180,8 +1180,8 @@ static int PatchThing (int thingy)
 					else
 						info->renderflags &= ~RF_INVISIBLE;
 				}
-				DPrintf ("Bits: %d,%d (0x%08x,0x%08x)\n", info->flags, info->flags2,
-													      info->flags, info->flags2);
+				DPrintf ("Bits: %d,%d (0x%08x,0x%08x)\n", info->flags.GetValue(), info->flags2.GetValue(),
+													      info->flags.GetValue(), info->flags2.GetValue());
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{

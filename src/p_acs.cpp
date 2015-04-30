@@ -1391,7 +1391,7 @@ void FBehavior::StaticLoadDefaultModules ()
 			}
 			else
 			{
-				Printf ("Could not find autoloaded ACS library %s\n", sc.String);
+				Printf (TEXTCOLOR_RED "Could not find autoloaded ACS library %s\n", sc.String);
 			}
 		}
 	}
@@ -1417,7 +1417,7 @@ FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader *fr, int len)
 	else
 	{
 		delete behavior;
-		Printf("%s: invalid ACS module", Wads.GetLumpFullName(lumpnum));
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module", Wads.GetLumpFullName(lumpnum));
 		return NULL;
 	}
 }
@@ -2044,7 +2044,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					int lump = Wads.CheckNumForName (&parse[i], ns_acslibrary);
 					if (lump < 0)
 					{
-						Printf ("Could not find ACS library %s.\n", &parse[i]);
+						Printf (TEXTCOLOR_RED "Could not find ACS library %s.\n", &parse[i]);
 					}
 					else
 					{
@@ -2085,7 +2085,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 								func->ImportNum = i+1;
 								if (realfunc->ArgCount != func->ArgCount)
 								{
-									Printf ("Function %s in %s has %d arguments. %s expects it to have %d.\n",
+									Printf (TEXTCOLOR_ORANGE "Function %s in %s has %d arguments. %s expects it to have %d.\n",
 										(char *)(chunk + 2) + chunk[3+j], lib->ModuleName, realfunc->ArgCount,
 										ModuleName, func->ArgCount);
 									Format = ACS_Unknown;
@@ -2138,7 +2138,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 							if (lib->ArrayStore[impNum].ArraySize != expectedSize)
 							{
 								Format = ACS_Unknown;
-								Printf ("The array %s in %s has %u elements, but %s expects it to only have %u.\n",
+								Printf (TEXTCOLOR_ORANGE "The array %s in %s has %u elements, but %s expects it to only have %u.\n",
 									parse, lib->ModuleName, lib->ArrayStore[impNum].ArraySize,
 									ModuleName, expectedSize);
 							}
@@ -2311,7 +2311,7 @@ void FBehavior::LoadScriptsDirectory ()
 			{
 				if (Scripts[i].Number == Scripts[i+1].Number)
 				{
-					Printf("%s appears more than once.\n",
+					Printf(TEXTCOLOR_ORANGE "%s appears more than once.\n",
 						ScriptPresentation(Scripts[i].Number).GetChars());
 					// Make the closed version the first one.
 					if (Scripts[i+1].Type == SCRIPT_Closed)
@@ -2508,7 +2508,7 @@ bool FBehavior::IsGood ()
 		if (funcdef->Address == 0 && funcdef->ImportNum == 0)
 		{
 			DWORD *chunk = (DWORD *)FindChunk (MAKE_ID('F','N','A','M'));
-			Printf ("Could not find ACS function %s for use in %s.\n",
+			Printf (TEXTCOLOR_RED "Could not find ACS function %s for use in %s.\n",
 				(char *)(chunk + 2) + chunk[3+i], ModuleName);
 			bad = true;
 		}
@@ -2519,7 +2519,7 @@ bool FBehavior::IsGood ()
 	{
 		if (Imports[i] == NULL)
 		{
-			Printf ("Not all the libraries used by %s could be found.\n", ModuleName);
+			Printf (TEXTCOLOR_RED "Not all the libraries used by %s could be found.\n", ModuleName);
 			return false;
 		}
 	}

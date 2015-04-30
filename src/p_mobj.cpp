@@ -2750,10 +2750,10 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->PrevZ = z;		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
-	P_SpawnTeleportFog(mobj, mobj->x, mobj->y, mobj->z + TELEFOGHEIGHT, true);
+	P_SpawnTeleportFog(mobj, mobj->x, mobj->y, mobj->z + TELEFOGHEIGHT, true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, x, y, z + TELEFOGHEIGHT, false);
+	P_SpawnTeleportFog(mobj, x, y, z + TELEFOGHEIGHT, false, true);
 
 	// remove the old monster
 	mobj->Destroy ();

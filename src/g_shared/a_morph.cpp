@@ -105,7 +105,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
 	morphed->flags2 |= actor->flags2 & MF2_FLY;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
-	Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	AActor *eflash = Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	actor->player = NULL;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
@@ -151,6 +151,8 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 		p->camera = morphed;
 	}
 	morphed->ScoreIcon = actor->ScoreIcon;	// [GRB]
+	if (eflash)	
+		eflash->target = p->mo;
 	return true;
 }
 
@@ -305,9 +307,11 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 
 	angle = mo->angle >> ANGLETOFINESHIFT;
+	AActor *eflash = NULL;
 	if (exit_flash != NULL)
 	{
-		Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		eflash = Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		if (eflash)	eflash->target = mo;
 	}
 	mo->SetupWeaponSlots();		// Use original class's weapon slots.
 	beastweap = player->ReadyWeapon;
@@ -406,7 +410,9 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
-	Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	AActor *eflash = Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	if (eflash)
+		eflash->target = morphed;
 	return true;
 }
 
@@ -466,7 +472,9 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	DObject::StaticPointerSubstitution (beast, actor);
 	const PClass *exit_flash = beast->MorphExitFlash;
 	beast->Destroy ();
-	Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	AActor *eflash = Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	if (eflash)
+		eflash->target = actor;
 	return true;
 }
 

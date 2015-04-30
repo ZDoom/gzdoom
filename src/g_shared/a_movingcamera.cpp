@@ -603,9 +603,9 @@ void AActorMover::Deactivate (AActor *activator)
 		if (tracer != NULL)
 		{
 			tracer->UnlinkFromWorld ();
-			tracer->flags = special1;
+			tracer->flags = ActorFlags::FromInt (special1);
 			tracer->LinkToWorld ();
-			tracer->flags2 = special2;
+			tracer->flags2 = ActorFlags2::FromInt (special2);
 		}
 	}
 }

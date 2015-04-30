@@ -3352,8 +3352,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 
 		if (flags & RSF_FOG)
 		{
-			P_SpawnTeleportFog(self, oldx, oldy, oldz, true);
-			P_SpawnTeleportFog(self, self->x, self->y, self->z, false);
+			P_SpawnTeleportFog(self, oldx, oldy, oldz, true, true);
+			P_SpawnTeleportFog(self, self->x, self->y, self->z, false, true);
 		}
 		if (self->CountsAsKill())
 		{
@@ -4072,7 +4072,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 		}
 		else
 		{
-			DWORD *flagp = (DWORD*) (((char*)self) + fd->structoffset);
+			ActorFlags *flagp = (ActorFlags*) (((char*)self) + fd->structoffset);
 
 			// If these 2 flags get changed we need to update the blockmap and sector links.
 			bool linkchange = flagp == &self->flags && (fd->flagbit == MF_NOBLOCKMAP || fd->flagbit == MF_NOSECTOR);
@@ -4557,9 +4557,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 
 //===========================================================================
 //
-// A_Teleport(optional state teleportstate, optional class targettype,
-// optional class fogtype, optional int flags, optional fixed mindist,
-// optional fixed maxdist)
+// A_Teleport([state teleportstate, [class targettype,
+// [class fogtype, [int flags, [fixed mindist,
+// [fixed maxdist]]]]]])
 //
 // Attempts to teleport to a targettype at least mindist away and at most
 // maxdist away (0 means unlimited). If successful, spawn a fogtype at old
@@ -4589,8 +4589,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	PARAM_INT_OPT		(flags)						{ flags = 0; }
 	PARAM_FIXED_OPT		(mindist)					{ mindist = 128 << FRACBITS; }
 	PARAM_FIXED_OPT		(maxdist)					{ maxdist = 128 << FRACBITS; }
+	PARAM_INT_OPT		(ptr)						{ ptr = AAPTR_DEFAULT; }
 
-	ACTION_SET_RESULT(true);
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return 0;
+	}
+
+	if (ref->flags2 & MF2_NOTELEPORT)
+		return 0;
 
 	// Randomly choose not to teleport like A_Srcr2Decide.
 	if (flags & TF_RANDOMDECIDE)
@@ -4600,7 +4610,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 			192, 120, 120, 120, 64, 64, 32, 16, 0
 		};
 
-		unsigned int chanceindex = self->health / ((self->SpawnHealth()/8 == 0) ? 1 : self->SpawnHealth()/8);
+		unsigned int chanceindex = ref->health / ((ref->SpawnHealth()/8 == 0) ? 1 : ref->SpawnHealth()/8);
 
 		if (chanceindex >= countof(chance))
 		{
@@ -4624,65 +4634,78 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		target_type = PClass::FindActor("BossSpot");
 	}
 
-	AActor *spot = state->GetSpotWithMinMaxDistance(target_type, self->x, self->y, mindist, maxdist);
+	AActor * spot = state->GetSpotWithMinMaxDistance(target_type, ref->x, ref->y, mindist, maxdist);
 	if (spot == NULL)
 	{
 		return numret;
 	}
 
-	fixed_t prevX = self->x;
-	fixed_t prevY = self->y;
-	fixed_t prevZ = self->z;
+	fixed_t prevX = ref->x;
+	fixed_t prevY = ref->y;
+	fixed_t prevZ = ref->z;
 	fixed_t aboveFloor = spot->z - spot->floorz;
 	fixed_t finalz = spot->floorz + aboveFloor;
 
-	if (spot->z + self->height > spot->ceilingz)
-		finalz = spot->ceilingz - self->height;
+	if (spot->z + ref->height > spot->ceilingz)
+		finalz = spot->ceilingz - ref->height;
 	else if (spot->z < spot->floorz)
 		finalz = spot->floorz;
 
 	//Take precedence and cooperate with telefragging first.
-	bool tele_result = P_TeleportMove(self, spot->x, spot->y, spot->z, flags & TF_TELEFRAG);
+	bool tele_result = P_TeleportMove(ref, spot->x, spot->y, finalz, flags & TF_TELEFRAG);
 
-	if (flags & TF_FORCED)
+	if (!tele_result && (flags & TF_FORCED))
 	{
 		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
-		self->SetOrigin(spot->x, spot->y, spot->z);
+		ref->SetOrigin(spot->x, spot->y, finalz);
 		tele_result = true;
 	}
 
+	AActor *fog1 = NULL, *fog2 = NULL;
 	if (tele_result)
 	{
-		// If a fog type is defined in the parameter, or the user wants to use
-		// the actor's predefined fogs, and if there's no desire to be fogless,
-		// spawn a fog based upon settings.
+		//If a fog type is defined in the parameter, or the user wants to use the actor's predefined fogs,
+		//and if there's no desire to be fogless, spawn a fog based upon settings.
 		if (fog_type || (flags & TF_USEACTORFOG))
- 		{
+		{ 
 			if (!(flags & TF_NOSRCFOG))
 			{
 				if (flags & TF_USEACTORFOG)
-					P_SpawnTeleportFog(self, prevX, prevY, prevZ, true);
+					P_SpawnTeleportFog(ref, prevX, prevY, prevZ, true, true);
 				else
- 					Spawn(fog_type, prevX, prevY, prevZ, ALLOW_REPLACE);
- 			}
+				{
+					fog1 = Spawn(fog_type, prevX, prevY, prevZ, ALLOW_REPLACE);
+					if (fog1 != NULL)
+						fog1->target = ref;
+				}
+			}
 			if (!(flags & TF_NODESTFOG))
 			{
 				if (flags & TF_USEACTORFOG)
-					P_SpawnTeleportFog(self, self->x, self->y, self->z, false);
+					P_SpawnTeleportFog(ref, ref->x, ref->y, ref->z, false, true);
 				else
-					Spawn(fog_type, self->x, self->y, self->z, ALLOW_REPLACE);
+				{
+					fog2 = Spawn(fog_type, prevX, prevY, prevZ, ALLOW_REPLACE);
+					if (fog2 != NULL)
+						fog2->target = ref;
+				}
 			}
 		}
+		
+		if (flags & TF_USESPOTZ)
+			ref->z = spot->z;
+		else
+			ref->z = ref->floorz;
 
 		self->z = (flags & TF_USESPOTZ) ? spot->z : self->floorz;
 
 		if (!(flags & TF_KEEPANGLE))
-	 		self->angle = spot->angle;
+			ref->angle = spot->angle;
 
 		if (!(flags & TF_KEEPVELOCITY))
-	 		self->velx = self->vely = self->velz = 0;
+			ref->velx = ref->vely = ref->velz = 0;
 
-		if (!(flags & TF_NOJUMP))
+		if (!(flags & TF_NOJUMP)) //The state jump should only happen with the calling actor.
 		{
 			ACTION_SET_RESULT(false); // Jumps should never set the result for inventory state chains!
 			if (teleport_state == NULL)

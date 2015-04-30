@@ -1592,7 +1592,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, bool actorsonly)
 
 bool P_TestMobjLocation(AActor *mobj)
 {
-	int flags;
+	ActorFlags flags;
 
 	flags = mobj->flags;
 	mobj->flags &= ~MF_PICKUP;
@@ -3726,13 +3726,17 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 			}
 
 			// [RH] Spawn a decal
-			if (trace.HitType == TRACE_HitWall && trace.Line->special != Line_Horizon)
+			if (trace.HitType == TRACE_HitWall && trace.Line->special != Line_Horizon && !(flags & LAF_NOIMPACTDECAL) && !(puffDefaults->flags7 & MF7_NODECAL))
 			{
 				// [TN] If the actor or weapon has a decal defined, use that one.
 				if (t1->DecalGenerator != NULL ||
 					(t1->player != NULL && t1->player->ReadyWeapon != NULL && t1->player->ReadyWeapon->DecalGenerator != NULL))
 				{
-					SpawnShootDecal(t1, trace);
+					// [ZK] If puff has FORCEDECAL set, do not use the weapon's decal
+					if (puffDefaults->flags7 & MF7_FORCEDECAL && puff != NULL && puff->DecalGenerator)
+						SpawnShootDecal(puff, trace);
+					else
+						SpawnShootDecal(t1, trace);
 				}
 
 				// Else, look if the bulletpuff has a decal defined.
@@ -4921,7 +4925,7 @@ EXTERN_CVAR(Int, cl_bloodtype)
 
 bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 {
-	int flags2 = thing->flags2 & MF2_PASSMOBJ;
+	ActorFlags2 flags2 = thing->flags2 & MF2_PASSMOBJ;
 	FCheckPosition tm;
 
 	if ((thing->flags2 & MF2_PASSMOBJ) && (thing->flags3 & MF3_ISMONSTER))

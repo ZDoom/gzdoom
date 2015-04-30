@@ -1923,7 +1923,7 @@ void APowerMorph::EndEffect( )
 	if (!bNoCallUndoMorph)
 	{
 		int savedMorphTics = Player->morphTics;
-		P_UndoPlayerMorph (Player, Player);
+		P_UndoPlayerMorph (Player, Player, 0, !!(Player->MorphStyle & MORPH_UNDOALWAYS));
 
 		// Abort if unmorph failed; in that case,
 		// set the usual retry timer and return.

@@ -544,7 +544,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 // creating side-effects during gameplay.
 bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm)
 {
-	int savedFlags = actor->flags;
+	ActorFlags savedFlags = actor->flags;
 	actor->flags &= ~MF_PICKUP;
 	bool res = P_CheckPosition (actor, x, y, tm);
 	actor->flags = savedFlags;

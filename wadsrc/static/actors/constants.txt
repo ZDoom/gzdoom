@@ -140,6 +140,7 @@ const int MRF_NEWTIDBEHAVIOUR = 256;
 const int MRF_UNDOBYDEATH = 512;
 const int MRF_UNDOBYDEATHFORCED = 1024;
 const int MRF_UNDOBYDEATHSAVES = 2048;
+const int MRF_UNDOALWAYS = 4096;
 
 // Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT = 1;

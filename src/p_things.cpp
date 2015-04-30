@@ -86,7 +86,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 
 		if (mobj != NULL)
 		{
-			DWORD oldFlags2 = mobj->flags2;
+			ActorFlags2 oldFlags2 = mobj->flags2;
 			mobj->flags2 |= MF2_PASSMOBJ;
 			if (P_TestMobjLocation (mobj))
 			{
@@ -94,7 +94,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false);
+					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -132,8 +132,8 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	{
 		if (fog)
 		{
-			P_SpawnTeleportFog(source, x, y, z);
-			P_SpawnTeleportFog(source, oldx, oldy, oldz, false);
+			P_SpawnTeleportFog(source, x, y, z, false, true);
+			P_SpawnTeleportFog(source, oldx, oldy, oldz, true, true);
 		}
 		source->PrevX = x;
 		source->PrevY = y;
@@ -429,7 +429,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	// [RH] Check against real height and radius
 	fixed_t oldheight = thing->height;
 	fixed_t oldradius = thing->radius;
-	int oldflags = thing->flags;
+	ActorFlags oldflags = thing->flags;
 
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
@@ -468,7 +468,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	AActor *info = thing->GetDefault();
 
 	// Check against real height and radius
-	int oldflags = thing->flags;
+	ActorFlags oldflags = thing->flags;
 	fixed_t oldheight = thing->height;
 	fixed_t oldradius = thing->radius;
 

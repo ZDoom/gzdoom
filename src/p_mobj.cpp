@@ -566,7 +566,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		}
 		state = newstate;
 		tics = GetTics(newstate);
-		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
+		renderflags = (renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (newstate->GetFullbright());
 		newsprite = newstate->sprite;
 		if (newsprite != SPR_FIXED)
 		{ // okay to change sprite and/or frame
@@ -2845,10 +2845,10 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->PrevZ = z;		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
-	P_SpawnTeleportFog(mobj, mobj->x, mobj->y, mobj->z + TELEFOGHEIGHT, true);
+	P_SpawnTeleportFog(mobj, mobj->x, mobj->y, mobj->z + TELEFOGHEIGHT, true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, x, y, z + TELEFOGHEIGHT, false);
+	P_SpawnTeleportFog(mobj, x, y, z + TELEFOGHEIGHT, false, true);
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -4096,7 +4096,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	
 	actor->sprite = st->sprite;
 	actor->frame = st->GetFrame();
-	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->GetFullbright();
+	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (st->GetFullbright());
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
 		actor->Speed = actor->GetClass()->FastSpeed;

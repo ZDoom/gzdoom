@@ -1391,7 +1391,7 @@ void FBehavior::StaticLoadDefaultModules ()
 			}
 			else
 			{
-				Printf ("Could not find autoloaded ACS library %s\n", sc.String);
+				Printf (TEXTCOLOR_RED "Could not find autoloaded ACS library %s\n", sc.String);
 			}
 		}
 	}
@@ -1409,7 +1409,17 @@ FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader *fr, int len)
 		}
 	}
 
-	return new FBehavior (lumpnum, fr, len);
+	FBehavior * behavior = new FBehavior ();
+	if (behavior->Init(lumpnum, fr, len))
+	{
+		return behavior;
+	}
+	else
+	{
+		delete behavior;
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module", Wads.GetLumpFullName(lumpnum));
+		return NULL;
+	}
 }
 
 bool FBehavior::StaticCheckAllGood ()
@@ -1668,11 +1678,8 @@ static int ParseLocalArrayChunk(void *chunk, ACSLocalArrays *arrays, int offset)
 	return offset;
 }
 
-FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
+FBehavior::FBehavior()
 {
-	BYTE *object;
-	int i;
-
 	NumScripts = 0;
 	NumFunctions = 0;
 	NumArrays = 0;
@@ -1684,10 +1691,20 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	Chunks = NULL;
 	Data = NULL;
 	Format = ACS_Unknown;
-	LumpNum = lumpnum;
+	LumpNum = -1;
 	memset (MapVarStore, 0, sizeof(MapVarStore));
 	ModuleName[0] = 0;
 	FunctionProfileData = NULL;
+
+}
+	
+	
+bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
+{
+	BYTE *object;
+	int i;
+
+	LumpNum = lumpnum;
 
 	// Now that everything is set up, record this module as being among the loaded modules.
 	// We need to do this before resolving any imports, because an import might (indirectly)
@@ -1699,7 +1716,6 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	// 1. If not, corrupt modules cause memory leaks
 	// 2. Corrupt modules won't be reported when a level is being loaded if this function quits before
 	//    adding it to the list.
-    LibraryID = StaticModules.Push (this) << LIBRARYID_SHIFT;
 
 	if (fr == NULL) len = Wads.LumpLength (lumpnum);
 
@@ -1711,7 +1727,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	// has 24 bytes if it is completely empty. An empty SPTR chunk adds 8 bytes.)
 	if (len < 32)
 	{
-		return;
+		return false;
 	}
 
 	object = new BYTE[len];
@@ -1727,7 +1743,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	if (object[0] != 'A' || object[1] != 'C' || object[2] != 'S')
 	{
 		delete[] object;
-		return;
+		return false;
 	}
 
 	switch (object[3])
@@ -1743,8 +1759,9 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		break;
 	default:
 		delete[] object;
-		return;
+		return false;
 	}
+    LibraryID = StaticModules.Push (this) << LIBRARYID_SHIFT;
 
 	if (fr == NULL)
 	{
@@ -2027,7 +2044,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 					int lump = Wads.CheckNumForName (&parse[i], ns_acslibrary);
 					if (lump < 0)
 					{
-						Printf ("Could not find ACS library %s.\n", &parse[i]);
+						Printf (TEXTCOLOR_RED "Could not find ACS library %s.\n", &parse[i]);
 					}
 					else
 					{
@@ -2068,7 +2085,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 								func->ImportNum = i+1;
 								if (realfunc->ArgCount != func->ArgCount)
 								{
-									Printf ("Function %s in %s has %d arguments. %s expects it to have %d.\n",
+									Printf (TEXTCOLOR_ORANGE "Function %s in %s has %d arguments. %s expects it to have %d.\n",
 										(char *)(chunk + 2) + chunk[3+j], lib->ModuleName, realfunc->ArgCount,
 										ModuleName, func->ArgCount);
 									Format = ACS_Unknown;
@@ -2121,7 +2138,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 							if (lib->ArrayStore[impNum].ArraySize != expectedSize)
 							{
 								Format = ACS_Unknown;
-								Printf ("The array %s in %s has %u elements, but %s expects it to only have %u.\n",
+								Printf (TEXTCOLOR_ORANGE "The array %s in %s has %u elements, but %s expects it to only have %u.\n",
 									parse, lib->ModuleName, lib->ArrayStore[impNum].ArraySize,
 									ModuleName, expectedSize);
 							}
@@ -2135,6 +2152,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	}
 
 	DPrintf ("Loaded %d scripts, %d functions\n", NumScripts, NumFunctions);
+	return true;
 }
 
 FBehavior::~FBehavior ()
@@ -2293,7 +2311,7 @@ void FBehavior::LoadScriptsDirectory ()
 			{
 				if (Scripts[i].Number == Scripts[i+1].Number)
 				{
-					Printf("%s appears more than once.\n",
+					Printf(TEXTCOLOR_ORANGE "%s appears more than once.\n",
 						ScriptPresentation(Scripts[i].Number).GetChars());
 					// Make the closed version the first one.
 					if (Scripts[i+1].Type == SCRIPT_Closed)
@@ -2490,7 +2508,7 @@ bool FBehavior::IsGood ()
 		if (funcdef->Address == 0 && funcdef->ImportNum == 0)
 		{
 			DWORD *chunk = (DWORD *)FindChunk (MAKE_ID('F','N','A','M'));
-			Printf ("Could not find ACS function %s for use in %s.\n",
+			Printf (TEXTCOLOR_RED "Could not find ACS function %s for use in %s.\n",
 				(char *)(chunk + 2) + chunk[3+i], ModuleName);
 			bad = true;
 		}
@@ -2501,7 +2519,7 @@ bool FBehavior::IsGood ()
 	{
 		if (Imports[i] == NULL)
 		{
-			Printf ("Not all the libraries used by %s could be found.\n", ModuleName);
+			Printf (TEXTCOLOR_RED "Not all the libraries used by %s could be found.\n", ModuleName);
 			return false;
 		}
 	}

@@ -437,7 +437,8 @@ struct acttab {
 #define acttab_yylookahead(X,N)  ((X)->aAction[N].lookahead)
 
 /* Free all memory associated with the given acttab */
-void acttab_free(acttab *p){
+void acttab_free(acttab **pp){
+  acttab *p = *pp;
   free( p->aAction );
   free( p->aLookahead );
   free( p );
@@ -3127,9 +3128,11 @@ struct lemon *lemp;
   in = fopen(tpltname,"rb");
   if( in==0 ){
     fprintf(stderr,"Can't open the template file \"%s\".\n",templatename);
+    free(tpltname);
     lemp->errorcnt++;
     return 0;
   }
+  free(tpltname);
   return in;
 }
 
@@ -4016,6 +4019,7 @@ int mhflag;     /* Output in makeheaders format if true */
   /* Append any addition code the user desires */
   tplt_print(out,lemp,lemp->extracode,&lineno);
 
+  acttab_free(&pActtab);
   fclose(in);
   fclose(out);
   return;

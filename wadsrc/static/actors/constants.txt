@@ -199,6 +199,7 @@ enum
 	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
 	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
 	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
+	TF_OVERRIDE =		0x00000400, // Ignore NOTELEPORT.
 
 	TF_KEEPORIENTATION = TF_KEEPVELOCITY|TF_KEEPANGLE,
 	TF_NOFOG = TF_NOSRCFOG|TF_NODESTFOG,

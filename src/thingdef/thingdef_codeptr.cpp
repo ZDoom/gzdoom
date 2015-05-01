@@ -4249,6 +4249,7 @@ enum T_Flags
 	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
 	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
 	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
+	TF_OVERRIDE =		0x00000400, // Ignore NOTELEPORT.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4270,8 +4271,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		return;
 	}
 
-	if (ref->flags2 & MF2_NOTELEPORT)
+	if ((ref->flags2 & MF2_NOTELEPORT) && !(Flags & TF_OVERRIDE))
+	{
+		ACTION_SET_RESULT(false);
 		return;
+	}
 
 	// Randomly choose not to teleport like A_Srcr2Decide.
 	if (Flags & TF_RANDOMDECIDE)
@@ -4292,15 +4296,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	}
 
 	DSpotState *state = DSpotState::GetSpotState();
-	if (state == NULL) 
+	if (state == NULL)
+	{
+		ACTION_SET_RESULT(false);
 		return;
+	}
 
 	if (!TargetType) 
 		TargetType = PClass::FindClass("BossSpot");
 
 	AActor * spot = state->GetSpotWithMinMaxDistance(TargetType, ref->x, ref->y, MinDist, MaxDist);
 	if (spot == NULL) 
+	{
+		ACTION_SET_RESULT(false);
 		return;
+	}
 
 	fixed_t prevX = ref->x;
 	fixed_t prevY = ref->y;

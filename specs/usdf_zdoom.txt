@@ -63,6 +63,10 @@ either refuse loading dialogues with the 'ZDoom' namespace or if it does not
 outright abort on incompatible namespaces fail with a type mismatch error on
 one of the specified propeties.
 
+In addition ZDoom defines one new field in the top level of a conversation block:
+
+id = <integer>; 	Assigns a conversation ID for use in Thing_SetConversation or in UDMF's 'conversation' actor property.
+
 ZDoom-format dialogues need to start with the line:
 
 namespace = "ZDoom";

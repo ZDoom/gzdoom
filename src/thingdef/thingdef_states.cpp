@@ -253,7 +253,7 @@ do_stop:
 				state.TicRange = 0;
 			}
 
-			while (sc.GetString() && !sc.Crossed)
+			while (sc.GetString() && (!sc.Crossed || sc.Compare("{")))
 			{
 				if (sc.Compare("BRIGHT")) 
 				{

@@ -4578,6 +4578,7 @@ enum T_Flags
 	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
 	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
 	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
+	TF_OVERRIDE =		0x00000400, // Ignore NOTELEPORT.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4593,14 +4594,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 
 	AActor *ref = COPY_AAPTR(self, ptr);
 
+	ACTION_SET_RESULT(false);
 	if (!ref)
 	{
 		ACTION_SET_RESULT(false);
-		return 0;
+		return numret;
 	}
 
-	if (ref->flags2 & MF2_NOTELEPORT)
-		return 0;
+	if ((ref->flags2 & MF2_NOTELEPORT) && !(Flags & TF_OVERRIDE))
+	{
+		return numret;
+	}
 
 	// Randomly choose not to teleport like A_Srcr2Decide.
 	if (flags & TF_RANDOMDECIDE)

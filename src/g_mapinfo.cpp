@@ -312,6 +312,10 @@ FString level_info_t::LookupLevelName()
 			{
 				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(&MapName[5]));
 			}
+			else
+			{
+				checkstring[0] = '\0';
+			}
 			thename = strstr (lookedup, checkstring);
 			if (thename == NULL)
 			{

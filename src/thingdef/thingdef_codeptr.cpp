@@ -4597,11 +4597,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	ACTION_SET_RESULT(false);
 	if (!ref)
 	{
-		ACTION_SET_RESULT(false);
 		return numret;
 	}
 
-	if ((ref->flags2 & MF2_NOTELEPORT) && !(Flags & TF_OVERRIDE))
+	if ((ref->flags2 & MF2_NOTELEPORT) && !(flags & TF_OVERRIDE))
 	{
 		return numret;
 	}

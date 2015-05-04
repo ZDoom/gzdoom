@@ -309,12 +309,23 @@ int FSectorTagIterator::Next()
 		ret = start;
 		start = -1;
 	}
-	else
+	else if (searchtag != 0)
 	{
 		while (start >= 0 && tagManager.allTags[start].tag != searchtag) start = tagManager.allTags[start].nexttag;
 		if (start == -1) return -1;
 		ret = tagManager.allTags[start].target;
 		start = tagManager.allTags[start].nexttag;
+	}
+	else
+	{
+		// with the tag manager, searching for tag 0 has to be different, because it won't create entries for untagged sectors.
+		while (start < numsectors && tagManager.SectorHasTags(start))
+		{
+			start++;
+		}
+		if (start == numsectors) return -1;
+		ret = start;
+		start++;
 	}
 	return ret;
 }

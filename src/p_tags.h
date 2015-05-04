@@ -79,7 +79,7 @@ public:
 	FSectorTagIterator(int tag)
 	{
 		searchtag = tag;
-		start = tagManager.TagHashFirst[((unsigned int)tag) % FTagManager::TAG_HASH_SIZE];
+		start = tag == 0 ? 0 : tagManager.TagHashFirst[((unsigned int)tag) % FTagManager::TAG_HASH_SIZE];
 	}
 
 	// Special constructor for actions that treat tag 0 as  'back of activation line'

@@ -5895,8 +5895,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 //
 // A_SetRipperLevel(int level)
 //
-// Sets the ripper level/requirement of the calling actor.
-// Also sets the minimum and maximum levels to rip through.
+// Sets the ripper level of the calling actor.
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipperLevel)
 {
@@ -5909,26 +5908,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipperLevel)
 //
 // A_SetRipMin(int min)
 //
-// Sets the ripper level/requirement of the calling actor.
-// Also sets the minimum and maximum levels to rip through.
+// Sets the minimum level a ripper must be in order to rip through this actor.
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMin)
 {
 	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(min, 1);
+	ACTION_PARAM_INT(min, 0);
 	self->RipLevelMin = min; 
 }
 
 //===========================================================================
 //
-// A_SetRipMin(int min)
+// A_SetRipMax(int max)
 //
-// Sets the ripper level/requirement of the calling actor.
-// Also sets the minimum and maximum levels to rip through.
+// Sets the minimum level a ripper must be in order to rip through this actor.
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 {
 	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(max, 1);
+	ACTION_PARAM_INT(max, 0);
 	self->RipLevelMax = max;
 }

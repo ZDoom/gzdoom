@@ -24,7 +24,7 @@ extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
 CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL )
 {
-	Printf("This won't take effect until "GAMENAME" is restarted.\n");
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
 CVAR(Bool, gl_debug, false, 0)

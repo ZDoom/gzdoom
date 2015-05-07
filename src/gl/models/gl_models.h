@@ -50,8 +50,8 @@ protected:
 
 	struct FTriangle
 	{
-		short           vertexIndices[3];
-		short           textureIndices[3];
+		unsigned short           vertexIndices[3];
+		unsigned short           textureIndices[3];
 	};
 
 

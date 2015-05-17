@@ -111,6 +111,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	CHECK_CXX_COMPILER_FLAG( -msse DUMB_CAN_USE_SSE )
 
 	if( DUMB_CAN_USE_SSE )
-		set_source_files_properties( src/it/filter.cpp PROPERTIES COMPILE_FLAGS -msse )
+		set_source_files_properties( src/helpers/resampler.c PROPERTIES COMPILE_FLAGS -msse )
 	endif( DUMB_CAN_USE_SSE )
 endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

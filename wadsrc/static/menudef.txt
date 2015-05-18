@@ -1462,14 +1462,7 @@ OptionString Resamplers
 
 OptionString SoundBackends
 {
-	"fmod",		"FMOD Ex"
 	"openal",	"OpenAL"
-	"null",		"No Sound"
-}
-
-OptionString SoundBackendsFModOnly
-{
-	"fmod",		"FMOD Ex"
 	"null",		"No Sound"
 }
 
@@ -1477,31 +1470,6 @@ OptionString SoundBackendsOpenALOnly
 {
 	"openal",	"OpenAL"
 	"null",		"No Sound"
-}
-
-OptionMenu FMODSoundItems
-{
-	Title "FMOD OPTIONS"
-	Slider	"Underwater cutoff",	"snd_waterlp", 0.0, 2000.0, 50.0, 0
-	IfOption(Windows)
-	{
-		Option "Output system",  "snd_output", "SoundOutputsWindows"
-	}
-	IfOption(Unix)
-	{
-		Option "Output system",  "snd_output", "SoundOutputsUnix"
-	}
-	IfOption(Mac)
-	{
-		Option "Output system",  "snd_output", "SoundOutputsMac"
-	}
-	Option "Output format",      "snd_output_format", "OutputFormats"
-	Option "Speaker mode",       "snd_speakermode", "SpeakerModes"
-	Option "Resampler",          "snd_resampler", "Resamplers"
-	Option "HRTF filter",        "snd_hrtf", "OnOff"
-	StaticText " "
-	Option "Buffer size",			"snd_buffersize", "BufferSizes"
-	Option "Buffer count",			"snd_buffercount", "BufferCounts"
 }
 
 
@@ -1531,29 +1499,11 @@ OptionMenu SoundOptions
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
 
-	ifoption(fmodex)
+	ifoption(openal)
 	{
-		ifoption(openal)
-		{
-			Option "Sound backend",		"snd_backend", "SoundBackends"
-		}
-		else
-		{
-			Option "Sound backend",		"snd_backend", "SoundBackendsFModOnly"
-		}
-	}
-	else
-	{
-		ifoption(openal)
-		{
-			Option "Sound backend",		"snd_backend", "SoundBackendsOpenALOnly"
-		}
+		Option "Sound backend",		"snd_backend", "SoundBackendsOpenALOnly"
 	}
 	
-	ifoption(fmodex)
-	{
-		Submenu "FMOD options",		"FMODSoundItems"
-	}
 	ifoption(openal)
 	{
 		Submenu "OpenAL options",	"OpenALSoundItems"

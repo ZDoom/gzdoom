@@ -91,13 +91,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="shfolder.lib gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib fmodex_vc.lib setupapi.lib ws2_32.lib oleaut32.lib"
+				AdditionalDependencies="shfolder.lib gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib setupapi.lib ws2_32.lib oleaut32.lib"
 				ShowProgress="0"
 				OutputFile="../zdoom.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				IgnoreDefaultLibraryNames=""
-				DelayLoadDLLs="fmodex.dll"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\zdoom.pdb"
 				StripPrivateSymbols=""
@@ -208,13 +207,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ddraw.lib dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib ws2_32.lib winmm.lib fmodex64_vc.lib setupapi.lib oleaut32.lib"
+				AdditionalDependencies="ddraw.lib dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib ws2_32.lib winmm.lib setupapi.lib oleaut32.lib"
 				ShowProgress="0"
 				OutputFile="../zdoom64.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				IgnoreDefaultLibraryNames=""
-				DelayLoadDLLs="fmodex64.dll"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="..\zdoom64.pdb"
 				StripPrivateSymbols=""
@@ -321,13 +319,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="shfolder.lib gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib setupapi.lib ws2_32.lib oleaut32.lib fmodex_vc.lib"
+				AdditionalDependencies="shfolder.lib gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib setupapi.lib ws2_32.lib oleaut32.lib"
 				OutputFile="../zdoomd.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
-				DelayLoadDLLs="fmodex.dll"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/zdoomd.pdb"
 				SubSystem="2"
@@ -429,13 +426,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dxguid.lib ddraw.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodex64_vc.lib setupapi.lib ws2_32.lib oleaut32.lib"
+				AdditionalDependencies="dxguid.lib ddraw.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib setupapi.lib ws2_32.lib oleaut32.lib"
 				OutputFile="../zdoomd64.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="msvcrtd;libcmt"
-				DelayLoadDLLs="fmodex64.dll"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/zdoomd.pdb"
 				SubSystem="2"
@@ -2486,18 +2482,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\sound\fmod_wrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sound\fmodsound.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sound\fmodsound.h"
-				>
-			</File>
-			<File
 				RelativePath="src\sound\i_music.cpp"
 				>
 			</File>
@@ -2599,6 +2583,10 @@
 			</File>
 			<File
 				RelativePath=".\src\sound\oalsound.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\commonsound.cpp"
 				>
 			</File>
 			<File

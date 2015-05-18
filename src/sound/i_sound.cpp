@@ -53,7 +53,6 @@ extern HINSTANCE g_hInst;
 #include <math.h>
 
 #include "except.h"
-#include "fmodsound.h"
 #include "oalsound.h"
 
 #include "mpg123_decoder.h"
@@ -82,9 +81,7 @@ CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-#ifndef NO_FMOD
-#define DEF_BACKEND "fmod"
-#elif !defined(NO_OPENAL)
+#if !defined(NO_OPENAL)
 #define DEF_BACKEND "openal"
 #else
 #define DEF_BACKEND "null"
@@ -266,45 +263,19 @@ void I_InitSound ()
 		return;
 	}
 
-	// This has been extended to allow falling back from FMod to OpenAL and vice versa if the currently active sound system cannot be found.
 	if (stricmp(snd_backend, "null") == 0)
 	{
 		GSnd = new NullSoundRenderer;
 	}
-	else if(stricmp(snd_backend, "fmod") == 0)
-	{
-		#ifndef NO_FMOD
-			if (IsFModExPresent())
-			{
-				GSnd = new FMODSoundRenderer;
-			}
-		#endif
-		#ifndef NO_OPENAL
-			if ((!GSnd || !GSnd->IsValid()) && IsOpenALPresent())
-			{
-				Printf (TEXTCOLOR_RED"FMod Ex Sound init failed. Trying OpenAL.\n");
-				GSnd = new OpenALSoundRenderer;
-				snd_backend = "openal";
-			}
-		#endif
-	}
+	#ifndef NO_OPENAL
 	else if(stricmp(snd_backend, "openal") == 0)
 	{
-		#ifndef NO_OPENAL
-			if (IsOpenALPresent())
-			{
-				GSnd = new OpenALSoundRenderer;
-			}
-		#endif
-		#ifndef NO_FMOD
-			if ((!GSnd || !GSnd->IsValid()) && IsFModExPresent())
-			{
-				Printf (TEXTCOLOR_RED"OpenAL Sound init failed. Trying FMod Ex.\n");
-				GSnd = new FMODSoundRenderer;
-				snd_backend = "fmod";
-			}
-		#endif
+		if (IsOpenALPresent())
+		{
+			GSnd = new OpenALSoundRenderer;
+		}
 	}
+	#endif
 	else
 	{
 		Printf (TEXTCOLOR_RED"%s: Unknown sound system specified\n", *snd_backend);

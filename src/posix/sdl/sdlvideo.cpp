@@ -28,7 +28,7 @@ class SDLFB : public DFrameBuffer
 {
 	DECLARE_CLASS(SDLFB, DFrameBuffer)
 public:
-	SDLFB (int width, int height, bool fullscreen);
+	SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin);
 	~SDLFB ();
 
 	bool Lock (bool buffer);
@@ -67,7 +67,6 @@ private:
 		SDL_Texture *Texture;
 		SDL_Surface *Surface;
 	};
-	SDL_Rect UpdateRect;
 
 	bool UsingRenderer;
 	bool NeedPalUpdate;
@@ -261,6 +260,8 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 	PalEntry flashColor;
 	int flashAmount;
 
+	SDL_Window *oldwin = NULL;
+
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
 		SDLFB *fb = static_cast<SDLFB *> (old);
@@ -275,6 +276,10 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 			}
 			return old;
 		}
+
+		oldwin = fb->Screen;
+		fb->Screen = NULL;
+
 		old->GetFlash (flashColor, flashAmount);
 		old->ObjectFlags |= OF_YesReallyDelete;
 		if (screen == old) screen = NULL;
@@ -286,7 +291,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		flashAmount = 0;
 	}
 	
-	SDLFB *fb = new SDLFB (width, height, fullscreen);
+	SDLFB *fb = new SDLFB (width, height, fullscreen, oldwin);
 	
 	// If we could not create the framebuffer, try again with slightly
 	// different parameters in this order:
@@ -340,7 +345,7 @@ void SDLVideo::SetWindowedScale (float scale)
 
 // FrameBuffer implementation -----------------------------------------------
 
-SDLFB::SDLFB (int width, int height, bool fullscreen)
+SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
 	: DFrameBuffer (width, height)
 {
 	int i;
@@ -351,15 +356,27 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	NotPaletted = false;
 	FlashAmount = 0;
 
-	FString caption;
-	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+	if (oldwin)
+	{
+		// In some cases (Mac OS X fullscreen) SDL2 doesn't like having multiple windows which
+		// appears to inevitably happen while compositor animations are running. So lets try
+		// to reuse the existing window.
+		Screen = oldwin;
+		SDL_SetWindowSize (Screen, width, height);
+		SetFullscreen (fullscreen);
+	}
+	else
+	{
+		FString caption;
+		caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
 
-	Screen = SDL_CreateWindow (caption,
-		SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+		Screen = SDL_CreateWindow (caption,
+			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
+			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_RESIZABLE);
 
-	if (Screen == NULL)
-		return;
+		if (Screen == NULL)
+			return;
+	}
 
 	Renderer = NULL;
 	Texture = NULL;
@@ -381,15 +398,15 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 
 SDLFB::~SDLFB ()
 {
+	if (Renderer)
+	{
+		if (Texture)
+			SDL_DestroyTexture (Texture);
+		SDL_DestroyRenderer (Renderer);
+	}
+
 	if(Screen)
 	{
-		if (Renderer)
-		{
-			if (Texture)
-				SDL_DestroyTexture (Texture);
-			SDL_DestroyRenderer (Renderer);
- 		}
-
 		SDL_DestroyWindow (Screen);
 	}
 }
@@ -498,7 +515,8 @@ void SDLFB::Update ()
 		SDL_UnlockTexture (Texture);
 
 		SDLFlipCycles.Clock();
-		SDL_RenderCopy(Renderer, Texture, NULL, &UpdateRect);
+		SDL_RenderClear(Renderer);
+		SDL_RenderCopy(Renderer, Texture, NULL, NULL);
 		SDL_RenderPresent(Renderer);
 		SDLFlipCycles.Unclock();
 	}
@@ -613,6 +631,9 @@ void SDLFB::GetFlashedPalette (PalEntry pal[256])
 
 void SDLFB::SetFullscreen (bool fullscreen)
 {
+	if (IsFullscreen() == fullscreen)
+		return;
+
 	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	if (!fullscreen)
 	{
@@ -644,6 +665,8 @@ void SDLFB::ResetSDLRenderer ()
 										(vid_vsync ? SDL_RENDERER_PRESENTVSYNC : 0));
 		if (!Renderer)
 			return;
+
+		SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 
 		Uint32 fmt;
 		switch(vid_displaybits)
@@ -681,24 +704,18 @@ void SDLFB::ResetSDLRenderer ()
 			NotPaletted = false;
 	}
 
-	// Calculate update rectangle
+	// In fullscreen, set logical size according to animorphic ratio.
+	// Windowed modes are always rendered 1:1.
 	if (IsFullscreen ())
 	{
 		int w, h;
 		SDL_GetWindowSize (Screen, &w, &h);
-		UpdateRect.w = w;
-		UpdateRect.h = h;
-		ScaleWithAspect (UpdateRect.w, UpdateRect.h, Width, Height);
-		UpdateRect.x = (w - UpdateRect.w)/2;
-		UpdateRect.y = (h - UpdateRect.h)/2;
+		ScaleWithAspect (w, h, Width, Height);
+		SDL_RenderSetLogicalSize (Renderer, w, h);
 	}
 	else
 	{
-		// In windowed mode we just update the whole window.
-		UpdateRect.x = 0;
-		UpdateRect.y = 0;
-		UpdateRect.w = Width;
-		UpdateRect.h = Height;
+		SDL_RenderSetLogicalSize (Renderer, Width, Height);
 	}
 }
 

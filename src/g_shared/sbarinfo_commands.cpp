@@ -525,7 +525,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else if(condition == INVULNERABILITY)
 			{
-				if(statusBar->CPlayer->cheats&CF_GODMODE)
+				if(statusBar->CPlayer->cheats&(CF_GODMODE|CF_GODMODE2))
 				{
 					drawAlt = 1;
 				}

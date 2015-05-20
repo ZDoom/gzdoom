@@ -1730,7 +1730,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 		static int		artiflashTick;
 		static fixed_t	itemflashFade;
 };
-int CommandDrawSelectedInventory::artiflashTick = 4;
+int CommandDrawSelectedInventory::artiflashTick = 0;
 int CommandDrawSelectedInventory::itemflashFade = FRACUNIT*3/4;
 
 void DSBarInfo::FlashItem(const PClass *itemtype)

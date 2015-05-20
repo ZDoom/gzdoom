@@ -705,17 +705,13 @@ void SDLFB::ResetSDLRenderer ()
 	}
 
 	// In fullscreen, set logical size according to animorphic ratio.
-	// Windowed modes are always rendered 1:1.
+	// Windowed modes are rendered to fill the window (usually 1:1)
 	if (IsFullscreen ())
 	{
 		int w, h;
 		SDL_GetWindowSize (Screen, &w, &h);
 		ScaleWithAspect (w, h, Width, Height);
 		SDL_RenderSetLogicalSize (Renderer, w, h);
-	}
-	else
-	{
-		SDL_RenderSetLogicalSize (Renderer, Width, Height);
 	}
 }
 
@@ -743,13 +739,14 @@ void SDLFB::SetVSync (bool vsync)
 
 void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
 {
+	int w, h;
+	SDL_GetWindowSize (Screen, &w, &h);
+
 	// Detect if we're doing scaling in the Window and adjust the mouse
 	// coordinates accordingly. This could be more efficent, but I
 	// don't think performance is an issue in the menus.
 	if(IsFullscreen())
 	{
-		int w, h;
-		SDL_GetWindowSize (Screen, &w, &h);
 		int realw = w, realh = h;
 		ScaleWithAspect (realw, realh, SCREENWIDTH, SCREENHEIGHT);
 		if (realw != SCREENWIDTH || realh != SCREENHEIGHT)
@@ -767,6 +764,11 @@ void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
 				x *= xratio;
 			}
 		}
+	}
+	else
+	{
+		x = (SWORD)(x*Width/w);
+		y = (SWORD)(y*Height/h);
 	}
 }
 

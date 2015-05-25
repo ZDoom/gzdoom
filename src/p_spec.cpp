@@ -1741,7 +1741,7 @@ static void P_SpawnScrollers(void)
 		if (lines[i].special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
+			if (!tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
 			{
 				copyscrollers.Push(i);
 			}

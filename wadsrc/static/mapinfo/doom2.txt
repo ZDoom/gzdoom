@@ -536,7 +536,7 @@ map LEVEL09 lookup "NHUSTR_9"
 
 cluster 11
 {
-	flat = "RROCK19"
+	flat = "SLIME16"
 	music = "$MUSIC_READ_M"
 	exittext = lookup, "NERVETEXT"
 }

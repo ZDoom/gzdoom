@@ -644,9 +644,13 @@ class DTextEnterMenu : public DMenu
 	int InputGridX;
 	int InputGridY;
 
+	// [TP]
+	bool AllowColors;
+
 public:
 
-	DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid);
+	// [TP] Added allowcolors
+	DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors = false);
 
 	void Drawer ();
 	bool MenuEvent (int mkey, bool fromcontroller);

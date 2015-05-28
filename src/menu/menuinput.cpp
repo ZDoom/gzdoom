@@ -40,6 +40,8 @@
 #include "d_gui.h"
 #include "v_font.h"
 #include "v_palette.h"
+// [TP] New #includes
+#include "v_text.h"
 
 IMPLEMENT_ABSTRACT_CLASS(DTextEnterMenu)
 
@@ -64,7 +66,8 @@ CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //=============================================================================
 
-DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid)
+// [TP] Added allowcolors
+DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int sizemode, bool showgrid, bool allowcolors)
 : DMenu(parent)
 {
 	mEnterString = textbuffer;
@@ -83,6 +86,7 @@ DTextEnterMenu::DTextEnterMenu(DMenu *parent, char *textbuffer, int maxlen, int 
 		InputGridX = 0;
 		InputGridY = 0;
 	}
+	AllowColors = allowcolors; // [TP]
 }
 
 //=============================================================================
@@ -140,6 +144,10 @@ bool DTextEnterMenu::Responder(event_t *ev)
 			{
 				if (mEnterString[0])
 				{
+					// [TP] If we allow color codes, colorize the string now.
+					if (AllowColors)
+						strbin(mEnterString);
+
 					DMenu *parent = mParentMenu;
 					Close();
 					parent->MenuEvent(MKEY_Input, false);

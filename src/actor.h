@@ -823,7 +823,7 @@ public:
 	}
 
 	// These also set CF_INTERPVIEW for players.
-	void SetPitch(int p, bool interpolate);
+	void SetPitch(int p, bool interpolate, bool forceclamp = false);
 	void SetAngle(angle_t ang, bool interpolate);
 	void SetRoll(angle_t roll, bool interpolate);
 

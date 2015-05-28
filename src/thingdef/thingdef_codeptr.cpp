@@ -3989,23 +3989,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 		return;
 	}
 
-	if (ref->player != NULL || (flags & SPF_FORCECLAMP))
-	{ // clamp the pitch we set
-		int min, max;
-
-		if (ref->player != NULL)
-		{
-			min = ref->player->MinPitch;
-			max = ref->player->MaxPitch;
-		}
-		else
-		{
-			min = -ANGLE_90 + (1 << ANGLETOFINESHIFT);
-			max = ANGLE_90 - (1 << ANGLETOFINESHIFT);
-		}
-		pitch = clamp<int>(pitch, min, max);
-	}
-	ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE));
+	ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE), !!(flags & SPF_FORCECLAMP));
 }
 
 //===========================================================================

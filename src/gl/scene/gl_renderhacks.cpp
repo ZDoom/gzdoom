@@ -1045,8 +1045,6 @@ void FDrawInfo::AddCeilingStack(sector_t * sec)
 
 void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 {
-	sector_t fake;
-
 	// mark it checked
 	sub->validcount=validcount;
 
@@ -1057,7 +1055,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	if (sub->numlines>2 && !(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
-	sector_t * me = gl_FakeFlat(sub->render_sector, &fake, false);
+	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, false);
 	if (me->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
 		me->ceilingplane != anchor->ceilingplane ||
 		me->GetCeilingLight() != anchor->GetCeilingLight() ||
@@ -1094,7 +1092,6 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 
 void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 {
-	sector_t fake;
 	// mark it checked
 	sub->validcount=validcount;
 
@@ -1105,7 +1102,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	if (sub->numlines>2 && !(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
-	sector_t * me = gl_FakeFlat(sub->render_sector, &fake, false);
+	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, false);
 	if (me->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
 		me->floorplane != anchor->floorplane ||
 		me->GetFloorLight() != anchor->GetFloorLight() ||

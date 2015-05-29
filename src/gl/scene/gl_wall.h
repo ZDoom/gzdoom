@@ -127,7 +127,6 @@ public:
 	float bottomglowcolor[4];
 
 	int firstdynlight, lastdynlight;
-	int firstwall, numwalls;	// splitting info.
 
 	union
 	{

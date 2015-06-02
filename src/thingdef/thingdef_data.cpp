@@ -258,6 +258,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, NODECAL, AActor, flags7),
 	DEFINE_FLAG(MF7, FORCEDECAL, AActor, flags7),
 
+	DEFINE_FLAG(MF7, LAXTELEFRAGDMG, AActor, flags7),
+
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
 	DEFINE_FLAG2(FX_ROCKET, ROCKETTRAIL, AActor, effects),

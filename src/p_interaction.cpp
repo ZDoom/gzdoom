@@ -1045,7 +1045,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			return -1;
 		}
 
-		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_NOTELEFRAGPIERCE)) // TELEFRAG_DAMAGE may only be reduced with NOTELEFRAGPIERCE or it may not guarantee its effect.
+		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with NOTELEFRAGPIERCE or it may not guarantee its effect.
 		{
 			if (player && damage > 1)
 			{
@@ -1291,7 +1291,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				{
 					player->mo->Inventory->AbsorbDamage(damage, mod, newdam);
 				}
-				if ((rawdamage < TELEFRAG_DAMAGE) || (player->mo->flags7 & MF7_NOTELEFRAGPIERCE)) //rawdamage is never modified.
+				if ((rawdamage < TELEFRAG_DAMAGE) || (player->mo->flags7 & MF7_LAXTELEFRAGDMG)) //rawdamage is never modified.
 				{
 					// if we are telefragging don't let the damage value go below that magic value. Some further checks would fail otherwise.
 					damage = newdam;

@@ -372,6 +372,7 @@ enum ActorFlag7
 	MF7_FLYCHEAT		= 0x00020000,	// must be part of the actor so that it can be tracked properly
 	MF7_NODECAL			= 0x00040000,	// [ZK] Forces puff to have no impact decal
 	MF7_FORCEDECAL		= 0x00080000,	// [ZK] Forces puff's decal to override the weapon's.
+	MF7_LAXTELEFRAGDMG	= 0x00100000,	// [MC] Telefrag damage can be reduced.
 };
 
 // --- mobj.renderflags ---

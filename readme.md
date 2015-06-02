@@ -13,12 +13,9 @@ If you feel any of the below is incorrect, please post an issue on the issue tra
 ### Compatible
 
 * **Doom Source License:** Most code under the Doom Source License is also released under the GPL. An audit of the code to ensure any code under the DSL that is not also available under the GPL is removed or replaced.
-* **DUMB License:** Compatible with the GPL.
-* **General Public License, LGPL:** Compatible.
 * **Paul Hsieh Derivative License:** AFAIK compatible, double check later on.
 * **ZDoom License:** The 3-point modified BSD license. This is the preferred license of the GplZDoom project, as it allows ZDoom and GZDoom to use any newly-added code.
-* **GZDoom License:** Compatible.
-* **zlib License:** Compatible.
+* **zlib License, General Public License, LGPL, DUMB License, GZDoom License:** Compatible.
 
 ### Incompatible
 

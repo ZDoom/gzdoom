@@ -1366,9 +1366,8 @@ static void S_AddSNDINFO (int lump)
 				FName nm = sc.String;
 				sc.MustGetString();
 				if (sc.Compare("timidity")) MidiDevices[nm] = MDEV_TIMIDITY;
-				else if (/*sc.Compare("fmod") || */sc.Compare("sndsys")) MidiDevices[nm] = MDEV_SNDSYS;
+				else if (sc.Compare("sndsys")) MidiDevices[nm] = MDEV_SNDSYS;
 				else if (sc.Compare("standard")) MidiDevices[nm] = MDEV_MMAPI;
-				else if (sc.Compare("opl")) MidiDevices[nm] = MDEV_OPL;
 				else if (sc.Compare("default")) MidiDevices[nm] = MDEV_DEFAULT;
 				else if (sc.Compare("fluidsynth")) MidiDevices[nm] = MDEV_FLUIDSYNTH;
 				else if (sc.Compare("gus")) MidiDevices[nm] = MDEV_GUS;

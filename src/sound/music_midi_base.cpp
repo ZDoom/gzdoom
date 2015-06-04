@@ -11,9 +11,9 @@ static DWORD	nummididevices;
 static bool		nummididevicesset;
 
 #ifdef HAVE_FLUIDSYNTH
-#define NUM_DEF_DEVICES 5
-#else
 #define NUM_DEF_DEVICES 4
+#else
+#define NUM_DEF_DEVICES 3
 #endif
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
@@ -22,15 +22,13 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
 #ifdef HAVE_FLUIDSYNTH
 	pair[0].Text = "FluidSynth";
-	pair[0].Value = -5.0;
+	pair[0].Value = -4.0;
 	p = 1;
 #else
 	p = 0;
 #endif
 	pair[p].Text = "GUS";
-	pair[p].Value = -4.0;
-	pair[p+1].Text = "OPL Synth Emulation";
-	pair[p+1].Value = -3.0;
+	pair[p].Value = -3.0;
 	pair[p+2].Text = "TiMidity++";
 	pair[p+2].Value = -2.0;
 	pair[p+3].Text = "Sound System";
@@ -70,7 +68,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -5))
+	if ((self >= (signed)nummididevices) || (self < -4))
 	{
 		Printf ("ID out of range. Using default device.\n");
 		self = 0;
@@ -167,10 +165,9 @@ CCMD (snd_listmididevices)
 	MMRESULT res;
 
 #ifdef HAVE_FLUIDSYNTH
-	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-4, "FluidSynth", MOD_SWSYNTH, 0);
 #endif
-	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MOD_SWSYNTH, 0);
-	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
+	PrintMidiDevice (-3, "Gravis Ultrasound Emulation", MOD_SWSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", MOD_SWSYNTH, 0);
 	PrintMidiDevice (-1, "Sound System", 0, 0);
 	if (nummididevices != 0)
@@ -196,8 +193,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -5)
-		self = -5;
+	if (self < -4)
+		self = -4;
 	else if (self > -1)
 		self = -1;
 	else
@@ -212,10 +209,9 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 CCMD (snd_listmididevices)
 {
 #ifdef HAVE_FLUIDSYNTH
-	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-4. FluidSynth\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 #endif
-	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-3. Gravis Ultrasound Emulation\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-1. Sound System\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }

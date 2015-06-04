@@ -608,8 +608,6 @@ file( GLOB HEADER_FILES
 	g_strife/*.h
 	intermission/*.h
 	menu/*.h
-	oplsynth/*.h
-	oplsynth/dosbox/*.h
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
@@ -992,15 +990,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	gl/models/gl_models_md2.cpp
 	gl/models/gl_models.cpp
 	gl/models/gl_voxels.cpp
-	oplsynth/fmopl.cpp
-	oplsynth/mlopl.cpp
-	oplsynth/mlopl_io.cpp
-	oplsynth/music_opldumper_mididevice.cpp
-	oplsynth/music_opl_mididevice.cpp
-	oplsynth/opl_mus_player.cpp
-	oplsynth/dosbox/opl.cpp
-	oplsynth/OPL3.cpp
-	oplsynth/nukedopl3.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1025,7 +1014,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
 	sound/music_midi_timidity.cpp
-	sound/music_mus_opl.cpp
 	sound/music_stream.cpp
 	sound/music_fluidsynth_mididevice.cpp
 	sound/music_softsynth_mididevice.cpp
@@ -1111,7 +1099,6 @@ include_directories( .
 	g_raven
 	g_strife
 	g_shared
-	oplsynth
 	sound
 	textures
 	thingdef
@@ -1172,10 +1159,6 @@ if( NOT WIN32 )
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 endif( NOT WIN32 )
-if( CMAKE_COMPILER_IS_GNUCXX )
-	# GCC misoptimizes this file
-	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
-endif( CMAKE_COMPILER_IS_GNUCXX )
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for this file.
 	if( SSE_MATTERS )
@@ -1196,8 +1179,6 @@ endif( APPLE )
 source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
 source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
-source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
 source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
 source_group("Decorate++" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thingdef/.+")

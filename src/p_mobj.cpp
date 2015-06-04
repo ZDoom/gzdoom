@@ -3115,8 +3115,24 @@ void AActor::SetShade (int r, int g, int b)
 	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
 }
 
-void AActor::SetPitch(int p, bool interpolate)
+void AActor::SetPitch(int p, bool interpolate, bool forceclamp)
 {
+	if (player != NULL || forceclamp)
+	{ // clamp the pitch we set
+		int min, max;
+
+		if (player != NULL)
+		{
+			min = player->MinPitch;
+			max = player->MaxPitch;
+		}
+		else
+		{
+			min = -ANGLE_90 + (1 << ANGLETOFINESHIFT);
+			max = ANGLE_90 - (1 << ANGLETOFINESHIFT);
+		}
+		p = clamp<int>(p, min, max);
+	}
 	if (p != pitch)
 	{
 		pitch = p;

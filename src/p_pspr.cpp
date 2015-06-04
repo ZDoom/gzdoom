@@ -207,10 +207,10 @@ void P_BringUpWeapon (player_t *player)
 	player->ReadyWeapon = weapon;
 	player->psprites[ps_weapon].sy = player->cheats & CF_INSTANTWEAPSWITCH
 		? WEAPONTOP : WEAPONBOTTOM;
-	P_SetPsprite (player, ps_weapon, newstate);
 	// make sure that the previous weapon's flash state is terminated.
 	// When coming here from a weapon drop it may still be active.
 	P_SetPsprite(player, ps_flash, NULL);
+	P_SetPsprite (player, ps_weapon, newstate);
 	player->mo->weaponspecial = 0;
 }
 

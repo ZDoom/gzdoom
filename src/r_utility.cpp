@@ -62,7 +62,6 @@
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
 
-extern FSpecialColormap*realfixedcolormap;
 
 // TYPES -------------------------------------------------------------------
 

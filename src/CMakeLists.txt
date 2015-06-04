@@ -452,9 +452,6 @@ set( PLAT_WIN32_SOURCES
 	gl/hqnx_asm/hq4x_asm.cpp
 	gl/hqnx_asm/hqnx_asm_Image.cpp
 	win32/eaxedit.cpp
-	win32/fb_d3d9.cpp
-	win32/fb_d3d9_wipe.cpp
-	win32/fb_ddraw.cpp
 	win32/hardware.cpp
 	win32/helperthread.cpp
 	win32/i_cd.cpp

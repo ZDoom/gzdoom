@@ -1016,7 +1016,7 @@ void I_CreateRenderer()
 {
 	if (NULL == Renderer)
 	{
-		Renderer = new FSoftwareRenderer;
+		Renderer = gl_CreateInterface();
 		atterm(I_DeleteRenderer);
 	}
 }

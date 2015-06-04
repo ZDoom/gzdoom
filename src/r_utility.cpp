@@ -62,7 +62,6 @@
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
 
-extern lighttable_t*	fixedcolormap;
 extern FSpecialColormap*realfixedcolormap;
 
 // TYPES -------------------------------------------------------------------
@@ -1097,7 +1096,7 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, int fov)
 //
 //==========================================================================
 
-void FCanvasTextureInfo::UpdateAll ()
+/*void FCanvasTextureInfo::UpdateAll ()
 {
 	FCanvasTextureInfo *probe;
 
@@ -1116,7 +1115,7 @@ void FCanvasTextureInfo::UpdateAll ()
 
 	fixedcolormap = savecolormap;
 	realfixedcolormap = savecm;
-}
+}*/
 
 //==========================================================================
 //

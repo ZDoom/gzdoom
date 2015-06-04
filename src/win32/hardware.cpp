@@ -133,8 +133,7 @@ void I_InitGraphics ()
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
 	//currentrenderer = vid_renderer;
-	if (currentrenderer==1) Video = gl_CreateVideo();
-	else Video = new Win32Video (0);
+	Video = gl_CreateVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

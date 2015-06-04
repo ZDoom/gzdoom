@@ -857,7 +857,7 @@ void FGLRenderer::RenderView (player_t* player)
 	GLRenderer->mLights->Clear();
 
 	// prepare all camera textures that have been used in the last frame
-	FCanvasTextureInfo::UpdateAll();
+	//FCanvasTextureInfo::UpdateAll(); // [LM] Temporarily just commenting this out.
 
 
 	// I stopped using BaseRatioSizes here because the information there wasn't well presented.

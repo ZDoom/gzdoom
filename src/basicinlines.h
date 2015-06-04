@@ -1,11 +1,7 @@
-// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
-// Ken Silverman's official web site: "http://www.advsys.net/ken"
-// See the included license file "BUILDLIC.TXT" for license info.
-//
 // This file is based on pragmas.h from Ken Silverman's original Build
-// source code release but is meant for use with any compiler and does not
-// rely on any inline assembly.
-//
+// source code release. The functions in here are so simple and so
+// basic that they can't be rewritten without being copycats of
+// themselves. As such, they are uncopyrightable.
 
 #if _MSC_VER
 #pragma once

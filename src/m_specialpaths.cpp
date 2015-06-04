@@ -83,7 +83,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	// new to Vista, hence the reason we support both.
 	if (SHGetKnownFolderPath == NULL)
 	{
-		static TOptWin32Proc<HRESULT(*)(HWND, int, HANDLE, DWORD, LPTSTR)>
+		static TOptWin32Proc<HRESULT(WINAPI*)(HWND, int, HANDLE, DWORD, LPTSTR)>
 			SHGetFolderPathA("shell32.dll", "SHGetFolderPathA");
 
 		// NT4 doesn't even have this function.
@@ -146,6 +146,7 @@ FString M_GetCachePath(bool create)
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
 	path += "/zdoom/cache";
+	path.Substitute("//", "/");	// needed because progdir ends with a slash.
 	return path;
 }
 

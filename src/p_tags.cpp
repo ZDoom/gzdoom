@@ -98,13 +98,16 @@ void FTagManager::AddSectorTag(int sector, int tag)
 
 void FTagManager::RemoveSectorTags(int sect)
 {
-	int start = startForSector[sect];
-	if (start >= 0)
+	if (startForSector.Size() > 0)
 	{
-		while (allTags[start].target == sect)
+		int start = startForSector[sect];
+		if (start >= 0)
 		{
-			allTags[start].tag = allTags[start].target = -1;
-			start++;
+			while (allTags[start].target == sect)
+			{
+				allTags[start].tag = allTags[start].target = -1;
+				start++;
+			}
 		}
 	}
 }

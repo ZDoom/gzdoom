@@ -725,7 +725,6 @@ set( NOT_COMPILED_SOURCE_FILES
 
 	# We could have the ASM macro add these files, but it wouldn't add all
 	# platforms.
-	asm_ia32/a.asm
 	asm_ia32/misc.asm
 	asm_ia32/tmap.asm
 	asm_ia32/tmap2.asm
@@ -854,15 +853,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	parsecontext.cpp
 	po_man.cpp
 	r_utility.cpp
-	r_3dfloors.cpp
-	r_bsp.cpp
-	r_draw.cpp
-	r_drawt.cpp
-	r_main.cpp
-	r_plane.cpp
-	r_segs.cpp
 	r_sky.cpp
-	r_things.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp

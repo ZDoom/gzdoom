@@ -29,10 +29,10 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 #endif
 	pair[p].Text = "GUS";
 	pair[p].Value = -3.0;
-	pair[p+2].Text = "TiMidity++";
-	pair[p+2].Value = -2.0;
-	pair[p+3].Text = "Sound System";
-	pair[p+3].Value = -1.0;
+	pair[p+1].Text = "TiMidity++";
+	pair[p+1].Value = -2.0;
+	pair[p+2].Text = "Sound System";
+	pair[p+2].Value = -1.0;
 
 }
 

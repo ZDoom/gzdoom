@@ -20,11 +20,13 @@ If you feel any of the below is incorrect, please post an issue on the issue tra
 ### Incompatible
 
 * **Build License:** Incompatible. The following needs to be removed or replaced:
-  * inline fixed point multiplication functions (`mscinlines.h` and `gccinlines.h`)
+  * inline fixed point multiplication functions (`mscinlines.h`, `gccinlines.h`, and 'basicinlines.h')
   * some assembly code (`asm_ia32/a.asm`)
   * the (unused) Polymost implementation (`r_polymost.cpp`)
   * voxels rendering (`r_things.cpp`)
   * part of the decal and wall rendering code (`r_segs.cpp`, `r_draw.cpp`)
+  * something (`r_bsp.cpp`)
+  * assembly code converted to C (`m_fixed.h`)
 * **FMOD Ex License:** ~~FMOD will need to be completely removed.~~ *Done.*
 * **MAME License:** Incompatible. The MAME OPL2 emulator will need to be removed.
 * **MUSLib License:** Vladimir Arnost's OPL library will need to be removed.

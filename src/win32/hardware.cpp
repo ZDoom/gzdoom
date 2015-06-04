@@ -73,7 +73,6 @@ bool changerenderer;
 // [ZDoomGL]
 CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	// 0: Software renderer
 	// 1: OpenGL renderer
 
 	if (self != currentrenderer)
@@ -85,7 +84,7 @@ CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 			break;
 		default:
 			Printf("Unknown renderer (%d).  Falling back to the OpenGL renderer...\n", *vid_renderer);
-			self = 1; // make sure to actually switch to the software renderer
+			self = 1; // make sure to actually switch to the OpenGL renderer
 			break;
 		}
 		//changerenderer = true;

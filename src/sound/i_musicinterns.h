@@ -17,7 +17,7 @@
 #define TRUE 1
 #endif
 #include "tempfiles.h"
-#include "oplsynth/opl_mus_player.h"
+#include "critsec.h"
 #include "c_cvars.h"
 #include "mus2midi.h"
 #include "i_sound.h"
@@ -264,37 +264,6 @@ protected:
 	virtual void ComputeOutput(float *buffer, int len) = 0;
 };
 
-// OPL implementation of a MIDI output device -------------------------------
-
-class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
-{
-public:
-	OPLMIDIDevice();
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void Close();
-	int GetTechnology() const;
-	FString GetStats();
-
-protected:
-	void CalcTickRate();
-	int PlayTick();
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const BYTE *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	bool ServiceStream(void *buff, int numbytes);
-};
-
-// OPL dumper implementation of a MIDI output device ------------------------
-
-class OPLDumperMIDIDevice : public OPLMIDIDevice
-{
-public:
-	OPLDumperMIDIDevice(const char *filename);
-	~OPLDumperMIDIDevice();
-	int Resume();
-	void Stop();
-};
-
 // Internal TiMidity MIDI device --------------------------------------------
 
 namespace Timidity { struct Renderer; }
@@ -504,7 +473,6 @@ public:
 	MUSSong2(FileReader &reader, EMidiDevice type);
 	~MUSSong2();
 
-	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
@@ -530,7 +498,6 @@ public:
 	MIDISong2(FileReader &reader, EMidiDevice type);
 	~MIDISong2();
 
-	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
@@ -587,7 +554,6 @@ public:
 	HMISong(FileReader &reader, EMidiDevice type);
 	~HMISong();
 
-	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
@@ -630,7 +596,6 @@ public:
 	XMISong(FileReader &reader, EMidiDevice type);
 	~XMISong();
 
-	MusInfo *GetOPLDumper(const char *filename);
 	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
@@ -683,34 +648,6 @@ protected:
 	StreamSong () : m_Stream(NULL) {}
 
 	SoundStream *m_Stream;
-};
-
-// MUS file played by a software OPL2 synth and streamed through the sound system
-
-class OPLMUSSong : public StreamSong
-{
-public:
-	OPLMUSSong (FileReader &reader);
-	~OPLMUSSong ();
-	void Play (bool looping, int subsong);
-	bool IsPlaying ();
-	bool IsValid () const;
-	void ResetChips ();
-	MusInfo *GetOPLDumper(const char *filename);
-
-protected:
-	OPLMUSSong(const OPLMUSSong *original, const char *filename);	// OPL dump constructor
-
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
-
-	OPLmusicFile *Music;
-};
-
-class OPLMUSDumper : public OPLMUSSong
-{
-public:
-	OPLMUSDumper(const OPLMUSSong *original, const char *filename);
-	void Play(bool looping, int);
 };
 
 // CD track/disk played through the multimedia system -----------------------

@@ -46,7 +46,6 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "r_renderer.h"
-#include "r_swrenderer.h"
 #include "stats.h"
 #include "textures.h"
 #include "v_palette.h"
@@ -1017,7 +1016,7 @@ void I_CreateRenderer()
 {
 	if (NULL == Renderer)
 	{
-		Renderer = new FSoftwareRenderer;
+		Renderer = gl_CreateInterface();
 		atterm(I_DeleteRenderer);
 	}
 }

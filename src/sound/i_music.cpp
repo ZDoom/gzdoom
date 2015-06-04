@@ -285,11 +285,6 @@ FString MusInfo::GetStats()
 	return "No stats available for this song";
 }
 
-MusInfo *MusInfo::GetOPLDumper(const char *filename)
-{
-	return NULL;
-}
-
 MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 {
 	return NULL;
@@ -465,7 +460,9 @@ retry_as_sndsys:
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
 		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		info = new OPLMUSSong (*reader);
+		//These are no longer supported.
+		delete reader;
+		return 0;
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
@@ -696,43 +693,6 @@ ADD_STAT(music)
 		return currSong->GetStats();
 	}
 	return "No song playing";
-}
-
-//==========================================================================
-//
-// CCMD writeopl
-//
-// If the current song can be played with OPL instruments, dump it to
-// the specified file on disk.
-//
-//==========================================================================
-
-CCMD (writeopl)
-{
-	if (argv.argc() == 2)
-	{
-		if (currSong == NULL)
-		{
-			Printf ("No song is currently playing.\n");
-		}
-		else
-		{
-			MusInfo *dumper = currSong->GetOPLDumper(argv[1]);
-			if (dumper == NULL)
-			{
-				Printf ("Current song cannot be saved as OPL data.\n");
-			}
-			else
-			{
-				dumper->Play(false, 0);		// FIXME: Remember subsong.
-				delete dumper;
-			}
-		}
-	}
-	else
-	{
-		Printf ("Usage: writeopl <filename>\n");
-	}
 }
 
 //==========================================================================

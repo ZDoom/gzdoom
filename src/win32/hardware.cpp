@@ -47,7 +47,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "version.h"
-#include "r_swrenderer.h"
+#include "r_renderer.h"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
@@ -73,22 +73,18 @@ bool changerenderer;
 // [ZDoomGL]
 CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	// 0: Software renderer
 	// 1: OpenGL renderer
 
 	if (self != currentrenderer)
 	{
 		switch (self)
 		{
-		case 0:
-			Printf("Switching to software renderer...\n");
-			break;
 		case 1:
-			Printf("Switching to OpenGL renderer...\n");
+			Printf("Switching to the OpenGL renderer...\n");
 			break;
 		default:
-			Printf("Unknown renderer (%d).  Falling back to software renderer...\n", *vid_renderer);
-			self = 0; // make sure to actually switch to the software renderer
+			Printf("Unknown renderer (%d).  Falling back to the OpenGL renderer...\n", *vid_renderer);
+			self = 1; // make sure to actually switch to the OpenGL renderer
 			break;
 		}
 		//changerenderer = true;
@@ -137,8 +133,7 @@ void I_InitGraphics ()
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
 	//currentrenderer = vid_renderer;
-	if (currentrenderer==1) Video = gl_CreateVideo();
-	else Video = new Win32Video (0);
+	Video = gl_CreateVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
@@ -158,8 +153,7 @@ void I_CreateRenderer()
 	currentrenderer = vid_renderer;
 	if (Renderer == NULL)
 	{
-		if (currentrenderer==1) Renderer = gl_CreateInterface();
-		else Renderer = new FSoftwareRenderer;
+		Renderer = gl_CreateInterface();
 		atterm(I_DeleteRenderer);
 	}
 }

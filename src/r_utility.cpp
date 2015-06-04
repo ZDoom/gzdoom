@@ -62,6 +62,7 @@
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
 
+
 // TYPES -------------------------------------------------------------------
 
 struct InterpolationViewer

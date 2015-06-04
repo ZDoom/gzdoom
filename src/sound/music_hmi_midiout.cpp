@@ -382,11 +382,7 @@ void HMISong::SetupForHMP(int len)
 void HMISong::CheckCaps(int tech)
 {
 	// What's the equivalent HMI device for our technology?
-	if (tech == MOD_FMSYNTH)
-	{
-		tech = HMI_DEV_OPL3;
-	}
-	else if (tech == MOD_MIDIPORT)
+	if (tech == MOD_MIDIPORT)
 	{
 		tech = HMI_DEV_MPU401;
 	}
@@ -972,17 +968,6 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 	return track;
 }
 
-
-//==========================================================================
-//
-// HMISong :: GetOPLDumper
-//
-//==========================================================================
-
-MusInfo *HMISong::GetOPLDumper(const char *filename)
-{
-	return new HMISong(this, filename, MDEV_OPL);
-}
 
 //==========================================================================
 //

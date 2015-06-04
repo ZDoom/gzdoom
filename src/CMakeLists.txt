@@ -36,52 +36,6 @@ if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 	set( X64 64 )
 endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 
-# You can either use "make install" on the FMOD distribution to put it
-# in standard system locations, or you can unpack the FMOD distribution
-# in the root of the zdoom tree. e.g.:
-# zdoom
-#   docs
-#   fmodapi<version>linux[64] -or simply- fmod
-#   jpeg-6b
-#   ...
-# The recommended method is to put it in the zdoom tree, since its
-# headers are unversioned. Especially now that we can't work properly
-# with anything newer than 4.26.xx, you probably don't want to use
-# a system-wide version.
-
-# Construct version numbers for searching for the FMOD library on Linux.
-set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
-	"40" "39" "38" "37" "36" "35" "34" "33" "32" "31" "30" "29" "28"
-	"27" "26" "25" "24" "23" "22" "21" "20" "21" "19" "18" "17" "16"
-	"15" "14" "13" "12" "11" "10" "09" "08" "07" "06" "05" "04" "03"
-	"02" "01" "00" )
-set( MAJOR_VERSIONS "44" "34" "28" "26" "24" "22" "20" )
-
-if( NOT FMOD_DIR_VERSIONS )
-	set( FMOD_DIR_VERSIONS "" )
-endif( NOT FMOD_DIR_VERSIONS )
-if( NOT FMOD_VERSIONS )
-	set( FMOD_VERSIONS "" )
-endif( NOT FMOD_VERSIONS )
-if( NOT FMOD_LOCAL_INC_DIRS )
-	set( FMOD_LOCAL_INC_DIRS "" )
-endif( NOT FMOD_LOCAL_INC_DIRS )
-if( NOT FMOD_LOCAL_LIB_DIRS )
-	set( FMOD_LOCAL_LIB_DIRS "" )
-endif( NOT FMOD_LOCAL_LIB_DIRS )
-
-set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
-foreach( majver ${MAJOR_VERSIONS} )
-	foreach( minver ${MINOR_VERSIONS} )
-		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmodex${X64}-4.${majver}.${minver}" )
-		set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux${X64}" )
-	endforeach( minver ${MINOR_VERSIONS} )
-	foreach( dir ${FMOD_DIR_VERSIONS} )
-		set( FMOD_LOCAL_INC_DIRS ${FMOD_LOCAL_INC_DIRS} "${dir}/api/inc" )
-		set( FMOD_LOCAL_LIB_DIRS ${FMOD_LOCAL_LIB_DIRS} "${dir}/api/lib" )
-	endforeach( dir ${FMOD_DIR_VERSIONS} )
-endforeach( majver ${MAJOR_VERSIONS} )
-
 if( NOT ZDOOM_LIBS )
 	set( ZDOOM_LIBS "" )
 endif( NOT ZDOOM_LIBS )
@@ -97,16 +51,6 @@ if( WIN32 )
 	
 	add_definitions( -D_WIN32 )
 	
-	set( FMOD_SEARCH_PATHS
-		"C:/Program Files/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		"C:/Program Files (x86)/FMOD SoundSystem/FMOD Programmers API ${WIN_TYPE}/api"
-		# This next one is for Randy.
-		"E:/Software/Dev/FMOD/${WIN_TYPE}/api" 
-		# .. and this one for Graf Zahl
-		"D:/portable/FMOD SoundSystem 4.26/FMOD Programmers API WIN32/api"
-		)
-	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
-	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	set( NASM_NAMES nasmw nasm )
 	
 	find_path( D3D_INCLUDE_DIR d3d9.h
@@ -163,24 +107,10 @@ if( WIN32 )
 		DelayImp )
 else( WIN32 )
 	if( APPLE )
-		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )
-		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
-		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
 	else( APPLE )
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
-
-		set( FMOD_SEARCH_PATHS
-			/usr/local/include
-			/usr/local/include/fmodex
-			/usr/include
-			/usr/include/fmodex
-			/opt/local/include
-			/opt/local/include/fmodex
-			/opt/include
-			/opt/include/fmodex )
-		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
 
 		# Use GTK+ for the IWAD picker, if available.
 		if( NOT NO_GTK )
@@ -237,65 +167,6 @@ if( NOT NO_OPENAL )
     endif( OPENAL_FOUND )
 endif( NOT NO_OPENAL )
 
-if( NOT NO_FMOD )
-	# Search for FMOD include files
-	if( NOT WIN32 )
-		find_path( FMOD_INCLUDE_DIR fmod.hpp
-			PATHS ${FMOD_LOCAL_INC_DIRS} )
-	endif( NOT WIN32 )
-
-	if( NOT FMOD_INCLUDE_DIR )
-		find_path( FMOD_INCLUDE_DIR fmod.hpp
-			PATHS ${FMOD_SEARCH_PATHS}
-			${FMOD_INC_PATH_SUFFIXES} )
-	endif( NOT FMOD_INCLUDE_DIR )
-
-	if( FMOD_INCLUDE_DIR )
-		message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
-		include_directories( "${FMOD_INCLUDE_DIR}" )
-	else( FMOD_INCLUDE_DIR )
-		message( STATUS "Could not find FMOD include files" )
-		set( NO_FMOD ON )
-	endif( FMOD_INCLUDE_DIR )
-endif( NOT NO_FMOD )
-
-if( NOT NO_FMOD )
-	# Decide on the name of the FMOD library we want to use.
-	if( NOT FMOD_LIB_NAME AND MSVC )
-		set( FMOD_LIB_NAME fmodex${X64}_vc )
-	endif( NOT FMOD_LIB_NAME AND MSVC )
-
-	if( NOT FMOD_LIB_NAME AND BORLAND )
-		set( FMOD_LIB_NAME fmodex${X64}_bc )
-	endif( NOT FMOD_LIB_NAME AND BORLAND )
-
-	if( NOT FMOD_LIB_NAME )
-		set( FMOD_LIB_NAME fmodex${X64} )
-	endif( NOT FMOD_LIB_NAME )
-
-	# Search for FMOD library
-	if( WIN32 OR APPLE )
-		find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
-			PATHS ${FMOD_SEARCH_PATHS}
-			${FMOD_LIB_PATH_SUFFIXES} )
-	else( WIN32 OR APPLE )
-		find_library( FMOD_LIBRARY
-			NAMES ${FMOD_VERSIONS}
-			PATHS ${FMOD_LOCAL_LIB_DIRS} )
-	endif( WIN32 OR APPLE )
-
-	if( FMOD_LIBRARY )
-		message( STATUS "FMOD library found at ${FMOD_LIBRARY}" )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FMOD_LIBRARY}" )
-	else( FMOD_LIBRARY )
-		message( STATUS "Could not find FMOD library" )
-		set( NO_FMOD ON )
-	endif( FMOD_LIBRARY )
-endif( NOT NO_FMOD )
-
-if( NO_FMOD )
-	add_definitions( -DNO_FMOD=1 )
-endif( NO_FMOD )
 if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
 endif( NO_OPENAL )
@@ -581,9 +452,6 @@ set( PLAT_WIN32_SOURCES
 	gl/hqnx_asm/hq4x_asm.cpp
 	gl/hqnx_asm/hqnx_asm_Image.cpp
 	win32/eaxedit.cpp
-	win32/fb_d3d9.cpp
-	win32/fb_d3d9_wipe.cpp
-	win32/fb_ddraw.cpp
 	win32/hardware.cpp
 	win32/helperthread.cpp
 	win32/i_cd.cpp
@@ -653,10 +521,9 @@ elseif( APPLE )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} )
 	endif( OSX_COCOA_BACKEND )
 
-	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_OSX_SOURCES} "${FMOD_LIBRARY}" )
+	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_OSX_SOURCES} )
 
 	set_source_files_properties( posix/osx/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
-	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR posix posix/sdl )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )
@@ -741,8 +608,6 @@ file( GLOB HEADER_FILES
 	g_strife/*.h
 	intermission/*.h
 	menu/*.h
-	oplsynth/*.h
-	oplsynth/dosbox/*.h
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
@@ -855,7 +720,6 @@ set( NOT_COMPILED_SOURCE_FILES
 
 	# We could have the ASM macro add these files, but it wouldn't add all
 	# platforms.
-	asm_ia32/a.asm
 	asm_ia32/misc.asm
 	asm_ia32/tmap.asm
 	asm_ia32/tmap2.asm
@@ -983,17 +847,8 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	p_xlat.cpp
 	parsecontext.cpp
 	po_man.cpp
-	r_swrenderer.cpp
 	r_utility.cpp
-	r_3dfloors.cpp
-	r_bsp.cpp
-	r_draw.cpp
-	r_drawt.cpp
-	r_main.cpp
-	r_plane.cpp
-	r_segs.cpp
 	r_sky.cpp
-	r_things.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp
@@ -1135,15 +990,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	gl/models/gl_models_md2.cpp
 	gl/models/gl_models.cpp
 	gl/models/gl_voxels.cpp
-	oplsynth/fmopl.cpp
-	oplsynth/mlopl.cpp
-	oplsynth/mlopl_io.cpp
-	oplsynth/music_opldumper_mididevice.cpp
-	oplsynth/music_opl_mididevice.cpp
-	oplsynth/opl_mus_player.cpp
-	oplsynth/dosbox/opl.cpp
-	oplsynth/OPL3.cpp
-	oplsynth/nukedopl3.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1155,7 +1001,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	resourcefiles/file_directory.cpp
 	resourcefiles/resourcefile.cpp
 	sfmt/SFMT.cpp
-	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
 	sound/mpg123_decoder.cpp
@@ -1169,13 +1014,13 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
 	sound/music_midi_timidity.cpp
-	sound/music_mus_opl.cpp
 	sound/music_stream.cpp
 	sound/music_fluidsynth_mididevice.cpp
 	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
 	sound/music_win_mididevice.cpp
 	sound/oalsound.cpp
+	sound/commonsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	textures/animations.cpp
@@ -1254,7 +1099,6 @@ include_directories( .
 	g_raven
 	g_strife
 	g_shared
-	oplsynth
 	sound
 	textures
 	thingdef
@@ -1289,9 +1133,9 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
 	else( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
 	if( NO_GENERATOR_EXPRESSIONS )
@@ -1315,10 +1159,6 @@ if( NOT WIN32 )
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 endif( NOT WIN32 )
-if( CMAKE_COMPILER_IS_GNUCXX )
-	# GCC misoptimizes this file
-	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
-endif( CMAKE_COMPILER_IS_GNUCXX )
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for this file.
 	if( SSE_MATTERS )
@@ -1331,25 +1171,14 @@ if( APPLE )
 		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
-	# Fix fmod link so that it can be found in the app bundle.
-	find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-	find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-	execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
-		COMMAND grep "libfmodex.dylib (compat"
-		COMMAND head -n1
-		COMMAND awk "{print $1}"
-		OUTPUT_VARIABLE FMOD_LINK
-		OUTPUT_STRIP_TRAILING_WHITESPACE )
-	add_custom_command( TARGET zdoom POST_BUILD
-		COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
-		COMMENT "Relinking FMOD Ex" )
+	## Fix fmod link so that it can be found in the app bundle.
+	#find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
+	#find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
 endif( APPLE )
 
 source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
 source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
-source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
 source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
 source_group("Decorate++" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thingdef/.+")

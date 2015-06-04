@@ -207,23 +207,19 @@ void MIDIStreamer::CheckCaps(int tech)
 EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 {
 	/* MIDI are played as:
-		- OPL: 
-			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -3 and no midi device is set for the song
-
 		- Timidity: 
 			- if explicitly selected by $mididevice 
-			- when snd_mididevice  is -2 and no midi device is set for the song
+			- when snd_mididevice is -2 and no midi device is set for the song
 
 		- Sound System:
 			- if explicitly selected by $mididevice 
 			- when snd_mididevice  is -1 and no midi device is set for the song
-			- as fallback when both OPL and Timidity failed unless snd_mididevice is >= 0
+			- as fallback when Timidity has failed unless snd_mididevice is >= 0
 
 		- MMAPI (Win32 only):
 			- if explicitly selected by $mididevice (non-Win32 redirects this to Sound System)
 			- when snd_mididevice  is >= 0 and no midi device is set for the song
-			- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
+			- as fallback when Timidity has failed and snd_mididevice is >= 0
 	*/
 
 	// Choose the type of MIDI device we want.
@@ -235,10 +231,9 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	{
 	case -1:		return MDEV_SNDSYS;
 	case -2:		return MDEV_TIMIDITY;
-	case -3:		return MDEV_OPL;
-	case -4:		return MDEV_GUS;
+	case -3:		return MDEV_GUS;
 #ifdef HAVE_FLUIDSYNTH
-	case -5:		return MDEV_FLUIDSYNTH;
+	case -4:		return MDEV_FLUIDSYNTH;
 #endif
 	default:
 		#ifdef _WIN32
@@ -277,18 +272,6 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 	case MDEV_GUS:
 		return new TimidityMIDIDevice;
 
-	case MDEV_OPL:
-		try
-		{
-			return new OPLMIDIDevice;
-		}
-		catch (CRecoverableError &err)
-		{
-			// The creation of an OPL MIDI device can abort with an error if no GENMIDI lump can be found.
-			Printf("Unable to create OPL MIDI device: %s\nFalling back to Sound System playback", err.GetMessage());
-			return new SndSysMIDIDevice;
-		}
-
 	case MDEV_TIMIDITY:
 		return new TimidityPPMIDIDevice;
 
@@ -319,11 +302,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	devtype = SelectMIDIDevice(DeviceType);
 	if (DumpFilename.IsNotEmpty())
 	{
-		if (devtype == MDEV_OPL)
-		{
-			MIDI = new OPLDumperMIDIDevice(DumpFilename);
-		}
-		else if (devtype == MDEV_GUS)
+		if (devtype == MDEV_GUS)
 		{
 			MIDI = new TimidityWaveWriterMIDIDevice(DumpFilename, 0);
 		}

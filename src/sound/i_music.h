@@ -76,7 +76,6 @@ public:
 	virtual bool SetSubsong (int subsong);
 	virtual void Update();
 	virtual FString GetStats();
-	virtual MusInfo *GetOPLDumper(const char *filename);
 	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
 	virtual void FluidSettingInt(const char *setting, int value);			// FluidSynth settings
 	virtual void FluidSettingNum(const char *setting, double value);		// "

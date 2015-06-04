@@ -1,10 +1,7 @@
-// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
-// Ken Silverman's official web site: "http://www.advsys.net/ken"
-// See the included license file "BUILDLIC.TXT" for license info.
-//
 // This file is based on pragmas.h from Ken Silverman's original Build
-// source code release and contains routines that were originally
-// inline assembly but are not now.
+// source code release. The functions in here are so simple and so
+// basic that they can't be rewritten without being copycats of
+// themselves. As such, they are uncopyrightable.
 
 #ifndef __M_FIXED__
 #define __M_FIXED__
@@ -12,13 +9,7 @@
 #include <stdlib.h>
 #include "doomtype.h"
 
-#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__)
-#include "gccinlines.h"
-#elif defined(_MSC_VER) && defined(_M_IX86)
-#include "mscinlines.h"
-#else
 #include "basicinlines.h"
-#endif
 
 #include "xs_Float.h"
 

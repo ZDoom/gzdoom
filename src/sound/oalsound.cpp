@@ -80,7 +80,7 @@ bool IsOpenALPresent()
 		}
 		__except (CheckException(GetExceptionCode()))
 		{
-			// FMod could not be delay loaded
+			// OpenAL could not be delay loaded
 			return false;
 		}
 		cached_result = true;

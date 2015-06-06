@@ -738,12 +738,13 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 			}
 		}
 
+		int damage = 0;
 		if (ironfeet == NULL)
 		{
-			P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
+			damage = P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
 				Terrains[floorType].DamageMOD);
 		}
-		if (Terrains[floorType].Splash != -1)
+		if (damage > 0 && Terrains[floorType].Splash != -1)
 		{
 			S_Sound (player->mo, CHAN_AUTO,
 				Splashes[Terrains[floorType].Splash].NormalSplashSound, 1,

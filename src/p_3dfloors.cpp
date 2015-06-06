@@ -41,6 +41,7 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "g_level.h"
+#include "p_terrain.h"
 #include "r_data/colormaps.h"
 
 #ifdef _3DFLOORS
@@ -341,8 +342,15 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 				(player->mo->z + player->mo->height) < rover->bottom.plane->ZatPoint(player->mo->x, player->mo->y))
 				continue;
 		}
-		
-		if (rover->model->special || rover->model->damage) P_PlayerInSpecialSector(player, rover->model);
+
+		// Apply sector specials
+		if (rover->model->special || rover->model->damage)
+			P_PlayerInSpecialSector(player, rover->model);
+
+		// Apply flat specials (using the ceiling!)
+		P_PlayerOnSpecialFlat(
+			player, TerrainTypes[rover->model->GetTexture(sector_t::ceiling)]);
+
 		break;
 	}
 }

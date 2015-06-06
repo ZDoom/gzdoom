@@ -574,6 +574,27 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 	{
 		friction = secfriction(mo->Sector);
 		movefactor = secmovefac(mo->Sector) >> 1;
+
+#ifdef _3DFLOORS
+			// Check 3D floors -- might be the source of the waterlevel
+			for (unsigned i = 0; i < mo->Sector->e->XFloor.ffloors.Size(); i++)
+			{
+				F3DFloor *rover = mo->Sector->e->XFloor.ffloors[i];
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if (!(rover->flags & FF_SWIMMABLE)) continue;
+
+				if (mo->z > rover->top.plane->ZatPoint(mo->x, mo->y) ||
+					mo->z < rover->bottom.plane->ZatPoint(mo->x, mo->y))
+					continue;
+
+				newfriction = secfriction(rover->model);
+				if (newfriction < friction || friction == ORIG_FRICTION)
+				{
+					friction = newfriction;
+					movefactor = secmovefac(rover->model) >> 1;
+				}
+			}
+#endif
 	}
 	else if (var_friction && !(mo->flags & (MF_NOCLIP | MF_NOGRAVITY)))
 	{	// When the object is straddling sectors with the same
@@ -590,10 +611,22 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 			{
 				F3DFloor *rover = sec->e->XFloor.ffloors[i];
 				if (!(rover->flags & FF_EXISTS)) continue;
-				if (!(rover->flags & FF_SOLID)) continue;
 
-				// Player must be on top of the floor to be affected...
-				if (mo->z != rover->top.plane->ZatPoint(mo->x, mo->y)) continue;
+				if (rover->flags & FF_SOLID)
+				{
+					// Must be standing on a solid floor
+					if (mo->z != rover->top.plane->ZatPoint(mo->x, mo->y)) continue;
+				}
+				else if (rover->flags & FF_SWIMMABLE)
+				{
+					// Or on or inside a swimmable floor (e.g. in shallow water)
+					if (mo->z > rover->top.plane->ZatPoint(mo->x, mo->y) ||
+						(mo->z + mo->height) < rover->bottom.plane->ZatPoint(mo->x, mo->y))
+						continue;
+				}
+				else
+					continue;
+
 				newfriction = secfriction(rover->model);
 				if (newfriction < friction || friction == ORIG_FRICTION)
 				{

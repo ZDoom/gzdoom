@@ -557,8 +557,8 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
 
 	// find positioning
-	xscale = FixedMul(rw_pic->xScale, sidedef->GetTextureXScale(side_t::mid));
-	yscale = FixedMul(rw_pic->yScale, sidedef->GetTextureYScale(side_t::mid));
+	xscale = FixedMul(rw_pic->xScale, curline->sidedef->GetTextureXScale(side_t::mid));
+	yscale = FixedMul(rw_pic->yScale, curline->sidedef->GetTextureYScale(side_t::mid));
 	// encapsulate the lifetime of rowoffset
 	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 	dc_texturemid = rover->model->GetPlaneTexZ(sector_t::ceiling);

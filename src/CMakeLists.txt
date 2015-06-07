@@ -1242,18 +1242,20 @@ if( APPLE )
 		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
-	# Fix fmod link so that it can be found in the app bundle.
-	find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-	find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-	execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
-		COMMAND grep "libfmodex.dylib (compat"
-		COMMAND head -n1
-		COMMAND awk "{print $1}"
-		OUTPUT_VARIABLE FMOD_LINK
-		OUTPUT_STRIP_TRAILING_WHITESPACE )
-	add_custom_command( TARGET zdoom POST_BUILD
-		COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
-		COMMENT "Relinking FMOD Ex" )
+	if( NOT NO_FMOD )
+		# Fix fmod link so that it can be found in the app bundle.
+		find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
+		find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
+		execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
+			COMMAND grep "libfmodex.dylib (compat"
+			COMMAND head -n1
+			COMMAND awk "{print $1}"
+			OUTPUT_VARIABLE FMOD_LINK
+			OUTPUT_STRIP_TRAILING_WHITESPACE )
+		add_custom_command( TARGET zdoom POST_BUILD
+			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
+			COMMENT "Relinking FMOD Ex" )
+	endif( NOT NO_FMOD )
 endif( APPLE )
 
 source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")

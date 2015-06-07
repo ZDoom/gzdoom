@@ -1959,13 +1959,12 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			chunk = (DWORD *)FindChunk (MAKE_ID('M','S','T','R'));
 			if (chunk != NULL)
 			{
-				for (DWORD i = 0; i < chunk[1]/4; ++i)
+				for (DWORD i = 0; i < LittleLong(chunk[1])/4; ++i)
 				{
-//					MapVarStore[chunk[i+2]] |= LibraryID;
-					const char *str = LookupString(MapVarStore[chunk[i+2]]);
+					const char *str = LookupString(MapVarStore[LittleLong(chunk[i+2])]);
 					if (str != NULL)
 					{
-						MapVarStore[chunk[i+2]] = GlobalACSStrings.AddString(str, NULL, 0);
+						MapVarStore[LittleLong(chunk[i+2])] = GlobalACSStrings.AddString(str, NULL, 0);
 					}
 				}
 			}
@@ -1973,7 +1972,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			chunk = (DWORD *)FindChunk (MAKE_ID('A','S','T','R'));
 			if (chunk != NULL)
 			{
-				for (DWORD i = 0; i < chunk[1]/4; ++i)
+				for (DWORD i = 0; i < LittleLong(chunk[1])/4; ++i)
 				{
 					int arraynum = MapVarStore[LittleLong(chunk[i+2])];
 					if ((unsigned)arraynum < (unsigned)NumArrays)
@@ -2000,13 +1999,13 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				// First byte is version, it should be 0
 				if(*chunkData++ == 0)
 				{
-					int arraynum = MapVarStore[uallong(*(const int*)(chunkData))];
+					int arraynum = MapVarStore[uallong(LittleLong(*(const int*)(chunkData)))];
 					chunkData += 4;
 					if ((unsigned)arraynum < (unsigned)NumArrays)
 					{
 						SDWORD *elems = ArrayStore[arraynum].Elements;
 						// Ending zeros may be left out.
-						for (int j = MIN(chunk[1]-5, ArrayStore[arraynum].ArraySize); j > 0; --j, ++elems, ++chunkData)
+						for (int j = MIN(LittleLong(chunk[1])-5, ArrayStore[arraynum].ArraySize); j > 0; --j, ++elems, ++chunkData)
 						{
 							// For ATAG, a value of 0 = Integer, 1 = String, 2 = FunctionPtr
 							// Our implementation uses the same tags for both String and FunctionPtr
@@ -2073,7 +2072,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 					ScriptFunction *func = &((ScriptFunction *)Functions)[j];
 					if (func->Address == 0 && func->ImportNum == 0)
 					{
-						int libfunc = lib->FindFunctionName ((char *)(chunk + 2) + chunk[3+j]);
+						int libfunc = lib->FindFunctionName ((char *)(chunk + 2) + LittleLong(chunk[3+j]));
 						if (libfunc >= 0)
 						{
 							ScriptFunction *realfunc = &((ScriptFunction *)lib->Functions)[libfunc];
@@ -2086,14 +2085,14 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 								if (realfunc->ArgCount != func->ArgCount)
 								{
 									Printf (TEXTCOLOR_ORANGE "Function %s in %s has %d arguments. %s expects it to have %d.\n",
-										(char *)(chunk + 2) + chunk[3+j], lib->ModuleName, realfunc->ArgCount,
+										(char *)(chunk + 2) + LittleLong(chunk[3+j]), lib->ModuleName, realfunc->ArgCount,
 										ModuleName, func->ArgCount);
 									Format = ACS_Unknown;
 								}
 								// The next two properties do not affect code compatibility, so it is
 								// okay for them to be different in the imported module than they are
 								// in this one, as long as we make sure to use the real values.
-								func->LocalCount = realfunc->LocalCount;
+								func->LocalCount = LittleLong(realfunc->LocalCount);
 								func->HasReturnValue = realfunc->HasReturnValue;
 							}
 						}
@@ -2105,7 +2104,7 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 				if (chunk != NULL)
 				{
 					char *parse = (char *)&chunk[2];
-					for (DWORD j = 0; j < chunk[1]; )
+					for (DWORD j = 0; j < LittleLong(chunk[1]); )
 					{
 						DWORD varNum = LittleLong(*(DWORD *)&parse[j]);
 						j += 4;

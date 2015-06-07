@@ -2516,7 +2516,6 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 		}
 		break;
 
-#ifdef _3DFLOORS
 	case Sector_Set3DFloor:
 		if (msd->toptexture[0]=='#')
 		{
@@ -2531,7 +2530,6 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 		SetTexture(sd, side_t::mid, msd->midtexture, missingtex);
 		SetTexture(sd, side_t::bottom, msd->bottomtexture, missingtex);
 		break;
-#endif
 
 	case TranslucentLine:	// killough 4/11/98: apply translucency to 2s normal texture
 		if (checktranmap)

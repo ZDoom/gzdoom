@@ -1100,7 +1100,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	x = self->x + ((pr_storm()&127) - 64) * FRACUNIT;
 	y = self->y + ((pr_storm()&127) - 64) * FRACUNIT;
 	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ, ALLOW_REPLACE);
-#ifdef _3DFLOORS
 	// We used bouncecount to store the 3D floor index in A_HideInCeiling
 	if (!mo) return 0;
 	fixed_t newz;
@@ -1112,7 +1111,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	int moceiling = P_Find3DFloor(NULL, x, y, newz, false, false, newz);
 	if (moceiling >= 0)
 		mo->z = newz - mo->height;
-#endif
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_PlayersExtra,self->special2) : 0;
 	mo->target = self->target;
@@ -1158,7 +1156,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 {
 	PARAM_ACTION_PROLOGUE;
 
-#ifdef _3DFLOORS
 	// We use bouncecount to store the 3D floor index
 	fixed_t foo;
 	for (unsigned int i=0; i< self->Sector->e->XFloor.ffloors.Size(); i++)
@@ -1174,7 +1171,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		}
 	}
 	self->bouncecount = -1;
-#endif
 	self->z = self->ceilingz + 4*FRACUNIT;
 	return 0;
 }

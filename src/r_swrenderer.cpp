@@ -267,6 +267,11 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	BYTE *Pixels = const_cast<BYTE*>(tex->GetPixels());
 	DSimpleCanvas *Canvas = tex->GetCanvas();
 
+	// curse Doom's overuse of global variables in the renderer.
+	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
+	unsigned char *savecolormap = fixedcolormap;
+	FSpecialColormap *savecm = realfixedcolormap;
+
 	float savedfov = LastFOV;
 	R_SetFOV ((float)fov);
 	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
@@ -280,6 +285,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 		FTexture::FlipNonSquareBlockRemap (Pixels, Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
 	}
 	tex->SetUpdated();
+	fixedcolormap = savecolormap;
+	realfixedcolormap = savecm;
 }
 
 //==========================================================================

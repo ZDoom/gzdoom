@@ -718,12 +718,6 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 
 void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 {
-	if (player->mo->z > player->mo->Sector->floorplane.ZatPoint (
-		player->mo->x, player->mo->y) &&
-		!player->mo->waterlevel)
-	{ // Player is not touching the floor
-		return;
-	}
 	if (Terrains[floorType].DamageAmount &&
 		!(level.time & Terrains[floorType].DamageTimeMask))
 	{
@@ -738,12 +732,13 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 			}
 		}
 
+		int damage = 0;
 		if (ironfeet == NULL)
 		{
-			P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
+			damage = P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
 				Terrains[floorType].DamageMOD);
 		}
-		if (Terrains[floorType].Splash != -1)
+		if (damage > 0 && Terrains[floorType].Splash != -1)
 		{
 			S_Sound (player->mo, CHAN_AUTO,
 				Splashes[Terrains[floorType].Splash].NormalSplashSound, 1,
@@ -1741,7 +1736,7 @@ static void P_SpawnScrollers(void)
 		if (lines[i].special == Sector_CopyScroller)
 		{
 			// don't allow copying the scroller if the sector has the same tag as it would just duplicate it.
-			if (tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
+			if (!tagManager.SectorHasTag(lines[i].frontsector, lines[i].args[0]))
 			{
 				copyscrollers.Push(i);
 			}

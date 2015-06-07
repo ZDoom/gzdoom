@@ -44,8 +44,6 @@
 #include "p_terrain.h"
 #include "r_data/colormaps.h"
 
-#ifdef _3DFLOORS
-
 //==========================================================================
 //
 //  3D Floors
@@ -958,8 +956,6 @@ int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, b
 	// Failsafe
 	return -1;
 }
-
-#endif
 
 #include "c_dispatch.h"
 

@@ -104,7 +104,6 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	res.Crossed3DWater = NULL;
 	*/
 
-#ifdef _3DFLOORS
 	// Do a 3D floor check in the starting sector
 	TDeletingArray<F3DFloor*> &ff = sector->e->XFloor.ffloors;
 
@@ -174,7 +173,6 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 			}
 		}
 	}
-#endif
 
 	// check for overflows and clip if necessary
 	SQWORD xd = (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
@@ -257,7 +255,6 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		fixed_t dist;
 
 		// Deal with splashes in 3D floors
-#ifdef _3DFLOORS
 		if (CurSector->e->XFloor.ffloors.Size())
 		{
 			for(unsigned int i=0;i<CurSector->e->XFloor.ffloors.Size();i++)
@@ -274,7 +271,6 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 				}
 			}
 		}
-#endif
 
 		if (in->isaline)
 		{
@@ -381,7 +377,6 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 			}
 			else
 			{ 	// made it past the wall
-#ifdef _3DFLOORS
 				// check for 3D floors first
 				if (entersector->e->XFloor.ffloors.Size())
 				{
@@ -435,9 +430,6 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 						}
 					}
 				}
-#endif
-
-
 
 				Results->HitType = TRACE_HitNone;
 				if (TraceFlags & TRACE_PCross)
@@ -450,9 +442,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 					P_ActivateLine (in->d.line, IgnoreThis, lineside, SPAC_Impact);
 				}
 			}
-#ifdef _3DFLOORS
 cont:
-#endif
 
 			if (Results->HitType != TRACE_HitNone)
 			{

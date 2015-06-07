@@ -2548,7 +2548,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				if (abs(corpsehit->x - viletryx) > maxdist ||
 					abs(corpsehit->y - viletryy) > maxdist)
 					continue;			// not actually touching
-#ifdef _3DFLOORS
 				// Let's check if there are floors in between the archvile and its target
 				sector_t *vilesec = self->Sector;
 				sector_t *corpsec = corpsehit->Sector;
@@ -2566,7 +2565,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 							continue;
 					}
 				}
-#endif
 
 				corpsehit->velx = corpsehit->vely = 0;
 				// [RH] Check against real height and radius

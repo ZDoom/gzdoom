@@ -5,6 +5,7 @@
 #include "r_segs.h"
 #include "c_cvars.h"
 #include "m_bbox.h"
+#include "p_tags.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -127,7 +128,7 @@ bool P_CheckPortal(line_t* line)
 			{
 				if (&lines[i] == line)
 					continue;
-				if (lines[i].id == line->args[0])
+				if (tagManager.LineHasID(&lines[i], line->args[0]))
 				{
 					dst = &lines[i];
 					break;

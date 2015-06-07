@@ -349,7 +349,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 
 		// Apply flat specials (using the ceiling!)
 		P_PlayerOnSpecialFlat(
-			player, TerrainTypes[rover->model->GetTexture(sector_t::ceiling)]);
+			player, TerrainTypes[rover->model->GetTexture(rover->flags & FF_INVERTSECTOR? sector_t::floor : sector_t::ceiling)]);
 
 		break;
 	}

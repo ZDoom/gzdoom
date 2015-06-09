@@ -177,7 +177,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 
 	if ((TexMan.FindSwitch(side->GetTexture(side_t::top))) != NULL)
 	{
-		return (user->z + user->height >= open.top);
+		return (user->z + user->height > open.top);
 	}
 	else if ((TexMan.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
@@ -194,7 +194,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	else
 	{
 		// no switch found. Check whether the player can touch either top or bottom texture
-		return (user->z + user->height >= open.top) || (user->z < open.bottom);
+		return (user->z + user->height > open.top) || (user->z < open.bottom);
 	}
 }
 

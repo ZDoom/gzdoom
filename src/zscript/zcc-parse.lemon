@@ -850,12 +850,13 @@ primary(X) ::= primary(A) SUBSUB.		/* postfix-- */
 	UNARY_EXPR(A,PEX_PostDec);
 	X = expr1;
 }
+/*
 primary(X) ::= SCOPE primary(B).
 {
 	BINARY_EXPR(NULL,B,PEX_Scope);
 	X = expr2;
 }
-
+*/
 /*----- Unary Expressions -----*/
 
 unary_expr(X) ::= primary(A).

@@ -124,9 +124,9 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 
 		if (sv_fastweapons >= 2 && position == ps_weapon)
-			psp->tics = state->ActionFunc == NULL? 0 : 1;
+			psp->tics = state->ActionFunc == NULL ? 0 : !(state->GetTics() == 0);
 		else if (sv_fastweapons)
-			psp->tics = 1;		// great for producing decals :)
+			psp->tics = !(state->GetTics() == 0);		// great for producing decals :)
 		else
 			psp->tics = state->GetTics(); // could be 0
 

@@ -4150,12 +4150,12 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 //
 //
 //==========================================================================
-void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, float maxdiff, int railflags, const PClass *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, float sparsity, float drift, const PClass *spawnclass, int SpiralOffset)
+void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, double maxdiff, int railflags, const PClass *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, double sparsity, double drift, const PClass *spawnclass, int SpiralOffset)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
 	fixed_t x1, y1;
-	FVector3 start, end;
+	TVector3<double> start, end;
 	FTraceResults trace;
 	fixed_t shootz;
 
@@ -4304,9 +4304,9 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	}
 
 	// Draw the slug's trail.
-	end.X = FIXED2FLOAT(trace.X);
-	end.Y = FIXED2FLOAT(trace.Y);
-	end.Z = FIXED2FLOAT(trace.Z);
+	end.X = FIXED2DBL(trace.X);
+	end.Y = FIXED2DBL(trace.Y);
+	end.Z = FIXED2DBL(trace.Z);
 	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift, SpiralOffset);
 }
 

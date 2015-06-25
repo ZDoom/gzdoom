@@ -2931,7 +2931,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		FVector2 xydiff(self->target->x - self->x, self->target->y - self->y);
+		TVector2<double> xydiff(self->target->x - self->x, self->target->y - self->y);
 		double zdiff = (self->target->z + (self->target->height>>1)) -
 						(self->z + (self->height>>1) - self->floorclip);
 		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);

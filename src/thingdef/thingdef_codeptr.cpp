@@ -1502,14 +1502,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	ACTION_PARAM_COLOR(Color1, 3);
 	ACTION_PARAM_COLOR(Color2, 4);
 	ACTION_PARAM_INT(Flags, 5);
-	ACTION_PARAM_FLOAT(MaxDiff, 6);
+	ACTION_PARAM_DOUBLE(MaxDiff, 6);
 	ACTION_PARAM_CLASS(PuffType, 7);
 	ACTION_PARAM_ANGLE(Spread_XY, 8);
 	ACTION_PARAM_ANGLE(Spread_Z, 9);
 	ACTION_PARAM_FIXED(Range, 10);
 	ACTION_PARAM_INT(Duration, 11);
-	ACTION_PARAM_FLOAT(Sparsity, 12);
-	ACTION_PARAM_FLOAT(DriftSpeed, 13);
+	ACTION_PARAM_DOUBLE(Sparsity, 12);
+	ACTION_PARAM_DOUBLE(DriftSpeed, 13);
 	ACTION_PARAM_CLASS(SpawnClass, 14);
 	ACTION_PARAM_FIXED(Spawnofs_Z, 15);
 	ACTION_PARAM_INT(SpiralOffset, 16);
@@ -1566,14 +1566,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	ACTION_PARAM_COLOR(Color2, 3);
 	ACTION_PARAM_INT(Flags, 4);
 	ACTION_PARAM_INT(aim, 5);
-	ACTION_PARAM_FLOAT(MaxDiff, 6);
+	ACTION_PARAM_DOUBLE(MaxDiff, 6);
 	ACTION_PARAM_CLASS(PuffType, 7);
 	ACTION_PARAM_ANGLE(Spread_XY, 8);
 	ACTION_PARAM_ANGLE(Spread_Z, 9);
 	ACTION_PARAM_FIXED(Range, 10);
 	ACTION_PARAM_INT(Duration, 11);
-	ACTION_PARAM_FLOAT(Sparsity, 12);
-	ACTION_PARAM_FLOAT(DriftSpeed, 13);
+	ACTION_PARAM_DOUBLE(Sparsity, 12);
+	ACTION_PARAM_DOUBLE(DriftSpeed, 13);
 	ACTION_PARAM_CLASS(SpawnClass, 14);
 	ACTION_PARAM_FIXED(Spawnofs_Z, 15);
 	ACTION_PARAM_INT(SpiralOffset, 16);
@@ -1612,7 +1612,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	if (linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		FVector2 xydiff(self->target->x - self->x, self->target->y - self->y);
+		TVector2<double> xydiff(self->target->x - self->x, self->target->y - self->y);
 		double zdiff = (self->target->z + (self->target->height>>1)) -
 						(self->z + (self->height>>1) - self->floorclip);
 		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);

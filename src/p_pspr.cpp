@@ -125,17 +125,6 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 		if (sv_fastweapons == 2 && position == ps_weapon)
 			psp->tics = state->ActionFunc == NULL ? 0 : 1;
-		else if (sv_fastweapons >= 4 && position == ps_weapon)
-		{
-			if(state->ActionFunc == NULL)
-			{
-				psp->tics = 0;
-			}
-			else
-			{
-				psp->tics = (state->GetTics() != 0);
-			}
-		}
 		else if (sv_fastweapons == 3)
 			psp->tics = (state->GetTics() != 0);
 		else if (sv_fastweapons)

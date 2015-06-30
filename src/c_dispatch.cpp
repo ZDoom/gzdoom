@@ -1076,7 +1076,8 @@ FString BuildString (int argc, FString *argv)
 // %x or %{x} in the command line with argument x. If argument x does not
 // exist, then the empty string is substituted in its place.
 //
-// Substitution is not done inside of quoted strings.
+// Substitution is not done inside of quoted strings, unless that string is
+// prepended with a % character.
 //
 // To avoid a substitution, use %%. The %% will be replaced by a single %.
 //
@@ -1091,19 +1092,12 @@ FString SubstituteAliasParams (FString &command, FCommandLine &args)
 	char *p = command.LockBuffer(), *start = p;
 	unsigned long argnum;
 	FString buf;
+	bool inquote = false;
 
 	while (*p != '\0')
 	{
-		if (*p == '%' && ((p[1] >= '0' && p[1] <= '9') || p[1] == '{' || p[1] == '%'))
+		if (p[0] == '%' && ((p[1] >= '0' && p[1] <= '9') || p[1] == '{'))
 		{
-			if (p[1] == '%')
-			{
-				// Do not substitute. Just collapse to a single %.
-				buf.AppendCStrPart (start, p - start + 1);
-				start = p = p + 2;
-				continue;
-			}
-
 			// Do a substitution. Output what came before this.
 			buf.AppendCStrPart (start, p - start);
 
@@ -1115,14 +1109,50 @@ FString SubstituteAliasParams (FString &command, FCommandLine &args)
 			}
 			p = (start += (p[1] == '{' && *start == '}'));
 		}
-		else if (*p == '"')
+		else if (p[0] == '%' && p[1] == '%')
 		{
-			// Don't substitute inside quoted strings.
-			p++;
-			while (*p != '\0' && (*p != '"' || *(p-1) == '\\'))
+			// Do not substitute. Just collapse to a single %.
+			buf.AppendCStrPart (start, p - start + 1);
+			start = p = p + 2;
+			continue;
+		}
+		else if (p[0] == '%' && p[1] == '"')
+		{
+			// Collapse %" to " and remember that we're in a quote so when we
+			// see a " character again, we don't start skipping below.
+			if (!inquote)
+			{
+				inquote = true;
+				buf.AppendCStrPart(start, p - start);
+				start = p + 1;
+			}
+			else
+			{
+				inquote = false;
+			}
+			p += 2;
+		}
+		else if (p[0] == '\\' && p[1] == '"')
+		{
+			p += 2;
+		}
+		else if (p[0] == '"')
+		{
+			// Don't substitute inside quoted strings if it didn't start
+			// with a %"
+			if (!inquote)
+			{
 				p++;
-			if (*p != '\0')
+				while (*p != '\0' && (*p != '"' || *(p-1) == '\\'))
+					p++;
+				if (*p != '\0')
+					p++;
+			}
+			else
+			{
+				inquote = false;
 				p++;
+			}
 		}
 		else
 		{

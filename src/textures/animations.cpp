@@ -395,6 +395,11 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 		}
 		else if (sc.Compare ("range"))
 		{
+			if (picnum.Exists() && Texture(picnum)->Name.IsEmpty())
+			{
+				// long texture name: We cannot do ranged anims on these because they have no defined order
+				sc.ScriptError ("You cannot use \"range\" for long texture names.");
+			}
 			if (defined == 2)
 			{
 				sc.ScriptError ("You cannot use \"pic\" and \"range\" together in a single animation.");
@@ -456,12 +461,20 @@ FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int 
 
 	type = FAnimDef::ANIM_Forward;
 	framenum = ParseFramenum (sc, picnum, usetype, missing);
+
 	ParseTime (sc, min, max);
 
-	if (framenum == picnum || !picnum.Exists())
+	if (framenum == picnum || !picnum.Exists() || !framenum.Exists())
 	{
 		return NULL;		// Animation is only one frame or does not exist
 	}
+
+	if (Texture(framenum)->Name.IsEmpty())
+	{
+		// long texture name: We cannot do ranged anims on these because they have no defined order
+		sc.ScriptError ("You cannot use \"range\" for long texture names.");
+	}
+
 	if (framenum < picnum)
 	{
 		type = FAnimDef::ANIM_Backward;
@@ -570,7 +583,7 @@ void FTextureManager::ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 
 void FTextureManager::ParseWarp(FScanner &sc)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny | TEXMAN_ShortNameOnly;
+	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	bool isflat = false;
 	bool type2 = sc.Compare ("warp2");	// [GRB]
 	sc.MustGetString ();
@@ -591,7 +604,15 @@ void FTextureManager::ParseWarp(FScanner &sc)
 	FTextureID picnum = CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
 	if (picnum.isValid())
 	{
+
 		FTexture *warper = Texture(picnum);
+
+		if (warper->Name.IsEmpty())
+		{
+			// long texture name: We cannot do warps on these due to the way the texture manager implements warping as a texture replacement.
+			sc.ScriptError ("You cannot use \"warp\" for long texture names.");
+		}
+
 
 		// don't warp a texture more than once
 		if (!warper->bWarped)

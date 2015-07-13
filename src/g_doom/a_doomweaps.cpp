@@ -624,7 +624,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 
 			if (spray != NULL)
 			{
-				if (spray->flags6 & MF6_MTHRUSPECIES && spray->GetSpecies() == linetarget->GetSpecies())
+				if (spray->flags6 & MF6_MTHRUSPECIES && self->target->GetSpecies() == linetarget->GetSpecies())
 				{
 					spray->Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
 					continue;

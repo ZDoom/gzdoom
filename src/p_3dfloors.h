@@ -4,8 +4,6 @@
 
 #define CenterSpot(sec) (vertex_t*)&(sec)->soundorg[0]
 
-#define _3DFLOORS
-
 // 3D floor flags. Most are the same as in Legacy but I added some for EDGE's and Vavoom's features as well.
 typedef enum
 {
@@ -59,8 +57,6 @@ enum
 	VC_ALPHAMASK = 0xFF000000,
 	VC_COLORMASK = 0x00FFFFFF,
 };
-
-#ifdef _3DFLOORS
 
 
 struct secplane_t;
@@ -150,39 +146,5 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z);
 int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz);
 							
-#else
-
-// Dummy definitions for disabled 3D floor code
-
-struct F3DFloor
-{
-	int dummy;
-};
-
-struct lightlist_t
-{
-	int dummy;
-};
-
-class player_s;
-inline void P_PlayerOnSpecial3DFloor(player_t* player) {}
-
-inline void P_Get3DFloorAndCeiling(AActor * thing, sector_t * sector, fixed_t * floorz, fixed_t * ceilingz, int * floorpic) {}
-inline bool P_CheckFor3DFloorHit(AActor * mo) { return false; }
-inline bool P_CheckFor3DCeilingHit(AActor * mo) { return false; }
-inline void P_Recalculate3DFloors(sector_t *) {}
-inline void P_RecalculateAttached3DFloors(sector_t * sec) {}
-inline lightlist_t * P_GetPlaneLight(sector_t * , secplane_t * plane, bool underside) { return NULL; }
-inline void P_Spawn3DFloors( void ) {}
-
-struct FLineOpening;
-
-inline void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict) {}
-
-//secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z){return sector->floorplane;}
-
-#endif
-
 
 #endif

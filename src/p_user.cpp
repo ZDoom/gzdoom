@@ -2535,7 +2535,13 @@ void P_PlayerThink (player_t *player)
 		{
 			P_PlayerInSpecialSector (player);
 		}
-		P_PlayerOnSpecialFlat (player, P_GetThingFloorType (player->mo));
+		if (player->mo->z <= player->mo->Sector->floorplane.ZatPoint(
+			player->mo->x, player->mo->y) ||
+			player->mo->waterlevel)
+		{
+			// Player must be touching the floor
+			P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
+		}
 		if (player->mo->velz <= -player->mo->FallingScreamMinSpeed &&
 			player->mo->velz >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
 			player->mo->waterlevel == 0)

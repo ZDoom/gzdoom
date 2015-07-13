@@ -804,7 +804,7 @@ void write_zip(const char *zipname, dir_tree_t *trees, int update)
 		if (i == num_files)
 		{
 			// Write central directory.
-			dirend.DirectoryOffset = ftell(zip);
+			dirend.DirectoryOffset = LittleLong(ftell(zip));
 			for (i = 0; i < num_files; ++i)
 			{
 				write_central_dir(zip, sorted + i);
@@ -814,8 +814,8 @@ void write_zip(const char *zipname, dir_tree_t *trees, int update)
 			dirend.DiskNumber = 0;
 			dirend.FirstDisk = 0;
 			dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(i);
-			dirend.DirectorySize = LittleLong(ftell(zip) - dirend.DirectoryOffset);
-			dirend.DirectoryOffset = LittleLong(dirend.DirectoryOffset);
+			// In this case LittleLong(dirend.DirectoryOffset) is undoing the transformation done above.
+			dirend.DirectorySize = LittleLong(ftell(zip) - LittleLong(dirend.DirectoryOffset));
 			dirend.ZipCommentLength = 0;
 			if (fwrite(&dirend, sizeof(dirend), 1, zip) != 1)
 			{
@@ -1405,7 +1405,7 @@ BYTE *find_central_dir(FILE *fin)
 	if (pos_found == 0 ||
 		fseek(fin, pos_found, SEEK_SET) != 0 ||
 		fread(&eod, sizeof(eod), 1, fin) != 1 ||
-		fseek(fin, LittleShort(eod.DirectoryOffset), SEEK_SET) != 0)
+		fseek(fin, LittleLong(eod.DirectoryOffset), SEEK_SET) != 0)
 	{
 		return NULL;
 	}

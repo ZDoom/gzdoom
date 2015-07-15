@@ -44,7 +44,6 @@
 #include "p_terrain.h"
 #include "r_data/colormaps.h"
 
-#ifdef _3DFLOORS
 EXTERN_CVAR(Int, vid_renderer)
 
 //==========================================================================

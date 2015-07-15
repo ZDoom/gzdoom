@@ -110,6 +110,11 @@
 #include "rawinput.h"
 
 
+// Compensate for w32api's lack
+#ifndef GET_XBUTTON_WPARAM
+#define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
+#endif
+
 
 #ifdef _DEBUG
 #define INGAME_PRIORITY_CLASS	NORMAL_PRIORITY_CLASS

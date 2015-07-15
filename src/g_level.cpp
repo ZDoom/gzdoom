@@ -533,6 +533,10 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
+	if (gameaction == ga_completed)	// do not exit multiple times.
+	{
+		return;
+	}
 
 	if (levelname == NULL || *levelname == 0)
 	{

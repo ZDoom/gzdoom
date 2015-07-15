@@ -106,6 +106,7 @@ LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
 extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
+void I_FlushBufferedConsoleStuff();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -128,6 +129,7 @@ HANDLE			MainThread;
 DWORD			MainThreadID;
 HANDLE			StdOut;
 bool			FancyStdOut, AttachedStdOut;
+bool			ConWindowHidden;
 
 // The main window
 HWND			Window;
@@ -644,6 +646,7 @@ void I_SetWndProc()
 		SetWindowLongPtr (Window, GWLP_USERDATA, 1);
 		SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)WndProc);
 		ShowWindow (ConWindow, SW_HIDE);
+		ConWindowHidden = true;
 		ShowWindow (GameTitleWindow, SW_HIDE);
 		I_InitInput (Window);
 	}
@@ -675,8 +678,10 @@ void RestoreConView()
 
 	SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)LConProc);
 	ShowWindow (ConWindow, SW_SHOW);
+	ConWindowHidden = false;
 	ShowWindow (GameTitleWindow, SW_SHOW);
 	I_ShutdownInput ();		// Make sure the mouse pointer is available.
+	I_FlushBufferedConsoleStuff();
 	// Make sure the progress bar isn't visible.
 	if (StartScreen != NULL)
 	{

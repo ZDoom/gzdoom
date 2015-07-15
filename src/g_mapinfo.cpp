@@ -318,7 +318,7 @@ FString level_info_t::LookupLevelName()
 				checkstring[0] = '\0';
 			}
 			thename = strstr (lookedup, checkstring);
-			if (thename == NULL || thename == lookedup)
+			if (thename == NULL)
 			{
 				thename = lookedup;
 			}

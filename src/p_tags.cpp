@@ -98,7 +98,7 @@ void FTagManager::AddSectorTag(int sector, int tag)
 
 void FTagManager::RemoveSectorTags(int sect)
 {
-	if (startForSector.Size() > 0)
+	if (startForSector.Size() > (unsigned int)sect)
 	{
 		int start = startForSector[sect];
 		if (start >= 0)

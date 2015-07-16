@@ -209,7 +209,7 @@ finline static uint32 xs_FloorToUInt(real64 val)
 
 finline static uint32 xs_CeilToUInt(real64 val)
 {
-	return (uint32)xs_CeilToUInt(val);
+	return (uint32)xs_CeilToInt(val);
 }
 
 finline static uint32 xs_RoundToUInt(real64 val)

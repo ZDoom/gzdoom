@@ -5079,7 +5079,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 			}
 		}
 
-		bool itemPass = !!((flags & RGF_ITEMS) && thing->flags & MF_SPECIAL);
+		bool itemPass = !!((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory)));
 		bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
 
 		if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)

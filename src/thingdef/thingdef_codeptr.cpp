@@ -4948,12 +4948,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, ACS_NamedTerminate)
 }
 
 
+static bool DoCheckSpecies(AActor *mo, FName filterSpecies, bool exclude)
+{
+	FName actorSpecies = mo->GetSpecies();
+	if (filterSpecies == NAME_None) return true;
+	return exclude ? (actorSpecies != filterSpecies) : (actorSpecies == filterSpecies);
+}
+
+static bool DoCheckClass(AActor *mo, const PClass *filterClass, bool exclude)
+{
+	const PClass *actorClass = mo->GetClass();
+	if (filterClass == NULL) return true;
+	return exclude ? (actorClass != filterClass) : (actorClass == filterClass);
+}
 //==========================================================================
 //
-// A_RadiusGive
+// A_RadiusGive(item, distance, flags, amount, filter, species)
 //
 // Uses code roughly similar to A_Explode (but without all the compatibility
-// baggage and damage computation code to give an item to all eligible mobjs
+// baggage and damage computation code) to give an item to all eligible mobjs
 // in range.
 //
 //==========================================================================
@@ -4972,21 +4985,30 @@ enum RadiusGiveFlags
 	RGF_CUBE		=	1 << 9,
 	RGF_NOSIGHT		=	1 << 10,
 	RGF_MISSILES	=	1 << 11,
+	RGF_INCLUSIVE	=	1 << 12,
+	RGF_ITEMS		=	1 << 13,
+	RGF_KILLED		=	1 << 14,
+	RGF_EXFILTER	=	1 << 15,
+	RGF_EXSPECIES	=	1 << 16,
+	RGF_EITHER		=	1 << 17,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 {
-	ACTION_PARAM_START(7);
+	ACTION_PARAM_START(6);
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_FIXED(distance, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_INT(amount, 3);
+	ACTION_PARAM_CLASS(filter, 4);
+	ACTION_PARAM_NAME(species, 5);
 
 	// We need a valid item, valid targets, and a valid range
-	if (item == NULL || (flags & RGF_MASK) == 0 || distance <= 0)
+	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0)
 	{
 		return;
 	}
+	
 	if (amount == 0)
 	{
 		amount = 1;
@@ -4997,108 +5019,107 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	AActor *thing;
 	while ((thing = it.Next()))
 	{
-		// Don't give to inventory items
-		if (thing->flags & MF_SPECIAL)
+		//[MC] Check for a filter, species, and the related exfilter/expecies/either flag(s).
+		bool filterpass = DoCheckClass(thing, filter, !!(flags & RGF_EXFILTER)),
+			speciespass = DoCheckSpecies(thing, species, !!(flags & RGF_EXSPECIES));
+
+		if ((flags & RGF_EITHER) ? (!(filterpass || speciespass)) : (!(filterpass && speciespass)))
 		{
-			continue;
-		}
-		// Avoid giving to self unless requested
-		if (thing == self && !(flags & RGF_GIVESELF))
-		{
-			continue;
-		}
-		// Avoiding special pointers if requested
-		if (((thing == self->target) && (flags & RGF_NOTARGET)) ||
-			((thing == self->tracer) && (flags & RGF_NOTRACER)) ||
-			((thing == self->master) && (flags & RGF_NOMASTER)))
-		{
-			continue;
-		}
-		// Don't give to dead thing unless requested
-		if (thing->flags & MF_CORPSE)
-		{
-			if (!(flags & RGF_CORPSES))
-			{
+			if (thing != self)	//Don't let filter and species obstruct RGF_GIVESELF.
 				continue;
-			}
-		}
-		else if (thing->health <= 0 || thing->flags6 & MF6_KILLED)
-		{
-			continue;
-		}
-		// Players, monsters, and other shootable objects
-		if (thing->player)
-		{
-			if ((thing->player->mo == thing) && !(flags & RGF_PLAYERS))
-			{
-				continue;
-			}
-			if ((thing->player->mo != thing) && !(flags & RGF_VOODOO))
-			{
-				continue;
-			}
-		}
-		else if (thing->flags3 & MF3_ISMONSTER)
-		{
-			if (!(flags & RGF_MONSTERS))
-			{
-				continue;
-			}
-		}
-		else if (thing->flags & MF_SHOOTABLE || thing->flags6 & MF6_VULNERABLE)
-		{
-			if (!(flags & RGF_OBJECTS))
-			{
-				continue;
-			}
-		}
-		else if (thing->flags & MF_MISSILE)
-		{
-			if (!(flags & RGF_MISSILES))
-			{
-				continue;
-			}
-		}
-		else
-		{
-			continue;
 		}
 
-		if (flags & RGF_CUBE)
-		{ // check if inside a cube
-			if (fabs((double)thing->x - self->x) > (double)distance ||
-				fabs((double)thing->y - self->y) > (double)distance ||
-				fabs((double)(thing->z + thing->height/2) - (self->z + self->height/2)) > (double)distance)
-			{
+		if (thing == self)
+		{
+			if (!(flags & RGF_GIVESELF))
 				continue;
-			}
 		}
-		else
-		{ // check if inside a sphere
-			TVector3<double> tpos(thing->x, thing->y, thing->z + thing->height/2);
-			TVector3<double> spos(self->x, self->y, self->z + self->height/2);
-			if ((tpos - spos).LengthSquared() > distsquared)
-			{
+
+		//Check for target, master, and tracer flagging.
+		bool targetPass = true;
+		bool masterPass = true;
+		bool tracerPass = true;
+		bool ptrPass = false;
+		if ((thing != self) && (flags & (RGF_NOTARGET | RGF_NOMASTER | RGF_NOTRACER)))
+		{
+			if ((thing == self->target) && (flags & RGF_NOTARGET))
+				targetPass = false;
+			if ((thing == self->master) && (flags & RGF_NOMASTER))
+				masterPass = false;
+			if ((thing == self->tracer) && (flags & RGF_NOTRACER))
+				tracerPass = false;
+
+			ptrPass = (flags & RGF_INCLUSIVE) ? (targetPass || masterPass || tracerPass) : (targetPass && masterPass && tracerPass);
+
+			//We should not care about what the actor is here. It's safe to abort this actor.
+			if (!ptrPass)
 				continue;
+		}
+
+		//Next, actor flag checking. 
+		bool selfPass = !!((flags & RGF_GIVESELF) && thing == self);
+		bool corpsePass = !!((flags & RGF_CORPSES) && thing->flags & MF_CORPSE);
+		bool killedPass = !!((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED);
+		bool monsterPass = !!((flags & RGF_MONSTERS) && thing->flags3 & MF3_ISMONSTER);
+		bool objectPass = !!((flags & RGF_OBJECTS) && ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
+		bool playerPass = !!((flags & RGF_PLAYERS) && thing->player->mo == thing);
+		bool voodooPass = !!((flags & RGF_VOODOO) && thing->player->mo != thing);
+		//Self calls priority over the rest of this.
+		if (!selfPass)
+		{
+			//If it's specifically a monster/object/player/voodoo... Can be either or...
+			if (monsterPass || objectPass || playerPass || voodooPass)
+			{
+				//...and is dead, without desire to give to the dead...
+				if (((thing->health <= 0) && !(corpsePass || killedPass)))
+				{
+					//Skip!
+					continue;
+				}
 			}
 		}
 
-		if ((flags & RGF_NOSIGHT) || P_CheckSight (thing, self, SF_IGNOREVISIBILITY|SF_IGNOREWATERBOUNDARY))
-		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
-			AInventory *gift = static_cast<AInventory *>(Spawn (item, 0, 0, 0, NO_REPLACE));
-			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
-			{
-				gift->Amount *= amount;
+		bool itemPass = !!((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory)));
+		bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
+
+		if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
+		{
+			if (flags & RGF_CUBE)
+			{ // check if inside a cube
+				if (fabs((double)thing->x - self->x) > (double)distance ||
+					fabs((double)thing->y - self->y) > (double)distance ||
+					fabs((double)(thing->z + thing->height / 2) - (self->z + self->height / 2)) > (double)distance)
+				{
+					continue;
+				}
 			}
 			else
-			{
-				gift->Amount = amount;
+			{ // check if inside a sphere
+				TVector3<double> tpos(thing->x, thing->y, thing->z + thing->height / 2);
+				TVector3<double> spos(self->x, self->y, self->z + self->height / 2);
+				if ((tpos - spos).LengthSquared() > distsquared)
+				{
+					continue;
+				}
 			}
-			gift->flags |= MF_DROPPED;
-			gift->ClearCounters();
-			if (!gift->CallTryPickup (thing))
-			{
-				gift->Destroy ();
+
+			if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+			{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
+				AInventory *gift = static_cast<AInventory *>(Spawn(item, 0, 0, 0, NO_REPLACE));
+				if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
+				{
+					gift->Amount *= amount;
+				}
+				else
+				{
+					gift->Amount = amount;
+				}
+				gift->flags |= MF_DROPPED;
+				gift->ClearCounters();
+				if (!gift->CallTryPickup(thing))
+				{
+					gift->Destroy();
+				}
 			}
 		}
 	}
@@ -5182,20 +5203,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	}
 	
 	ref->Speed = speed;
-}
-
-static bool DoCheckSpecies(AActor *mo, FName filterSpecies, bool exclude)
-{
-	FName actorSpecies = mo->GetSpecies();
-	if (filterSpecies == NAME_None) return true;
-	return exclude ? (actorSpecies != filterSpecies) : (actorSpecies == filterSpecies);
-}
-
-static bool DoCheckClass(AActor *mo, const PClass *filterClass, bool exclude)
-{
-	const PClass *actorClass = mo->GetClass();
-	if (filterClass == NULL) return true;
-	return exclude ? (actorClass != filterClass) : (actorClass == filterClass);
 }
 
 //===========================================================================

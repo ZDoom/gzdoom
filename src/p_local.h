@@ -197,6 +197,7 @@ enum WARPF
 	WARPF_BOB              = 0x800,
 	WARPF_MOVEPTR          = 0x1000,
 	WARPF_USEPTR           = 0x2000,
+	WARPF_USETID           = 0x2000,
 };
 
 

@@ -4664,8 +4664,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	ACTION_PARAM_ANGLE(angle, 4);
 	ACTION_PARAM_INT(flags, 5);
 	ACTION_PARAM_STATE(success_state, 6);
-
-	AActor *reference = COPY_AAPTR(self, destination_selector);
+	
+	AActor *reference;
+	
+	if((flags & WARPF_USETID))
+	{
+		reference = SingleActorFromTID(destination_selector, self);
+	}
+	else
+	{
+		reference = COPY_AAPTR(self, destination_selector);
+	}
 
 	//If there is no actor to warp to, fail.
 	if (!reference)

@@ -4422,6 +4422,8 @@ enum EACSFunctions
 	ACSF_ChangeActorRoll,
 	ACSF_GetActorRoll,
 	ACSF_QuakeEx,
+	ACSF_Warp,					// 92
+	
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
 	-101 : PlayerIsSpectator(1),
@@ -4431,9 +4433,6 @@ enum EACSFunctions
 	-105 : SetPlayerLivesLeft(2),
 	-106 : KickFromGame(2),
 	*/
-	
-	// GLOOME
-	ACSF_Warp = 11201,
 
 	// ZDaemon
 	ACSF_GetTeamScore = 19620,	// (int team)

@@ -24,6 +24,11 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 
+extern "C" {
+    _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
+}
+
 void gl_CalculateCPUSpeed();
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 

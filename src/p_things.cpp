@@ -678,3 +678,130 @@ void InitSpawnablesFromMapinfo()
 	InitClassMap(SpawnableThings, SpawnablesFromMapinfo);
 	InitClassMap(StrifeTypes, ConversationIDsFromMapinfo);
 }
+
+
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags)
+{
+	if (flags & WARPF_MOVEPTR)
+	{
+		AActor *temp = reference;
+		reference = caller;
+		caller = temp;
+	}
+
+	fixed_t	oldx = caller->x;
+	fixed_t	oldy = caller->y;
+	fixed_t	oldz = caller->z;
+
+	if (!(flags & WARPF_ABSOLUTEANGLE))
+	{
+		angle += (flags & WARPF_USECALLERANGLE) ? caller->angle : reference->angle;
+	}
+	if (!(flags & WARPF_ABSOLUTEPOSITION))
+	{
+		if (!(flags & WARPF_ABSOLUTEOFFSET))
+		{
+			angle_t fineangle = angle >> ANGLETOFINESHIFT;
+			fixed_t xofs1 = xofs;
+
+			// (borrowed from A_SpawnItemEx, assumed workable)
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+
+			xofs = FixedMul(xofs1, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
+			yofs = FixedMul(xofs1, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+		}
+
+		if (flags & WARPF_TOFLOOR)
+		{
+			// set correct xy
+
+			caller->SetOrigin(
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z);
+
+			// now the caller's floorz should be appropriate for the assigned xy-position
+			// assigning position again with
+
+			if (zofs)
+			{
+				// extra unlink, link and environment calculation
+				caller->SetOrigin(
+					caller->x,
+					caller->y,
+					caller->floorz + zofs);
+			}
+			else
+			{
+				// if there is no offset, there should be no ill effect from moving down to the already defined floor
+
+				// A_Teleport does the same thing anyway
+				caller->z = caller->floorz;
+			}
+		}
+		else
+		{
+			caller->SetOrigin(
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z + zofs);
+		}
+	}
+	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
+	{
+		if (flags & WARPF_TOFLOOR)
+		{
+			caller->SetOrigin(xofs, yofs, caller->floorz + zofs);
+		}
+		else
+		{
+			caller->SetOrigin(xofs, yofs, zofs);
+		}
+	}
+
+	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(caller))
+	{
+		if (flags & WARPF_TESTONLY)
+		{
+			caller->SetOrigin(oldx, oldy, oldz);
+		}
+		else
+		{
+			caller->angle = angle;
+
+			if (flags & WARPF_STOP)
+			{
+				caller->velx = 0;
+				caller->vely = 0;
+				caller->velz = 0;
+			}
+
+			if (flags & WARPF_WARPINTERPOLATION)
+			{
+				caller->PrevX += caller->x - oldx;
+				caller->PrevY += caller->y - oldy;
+				caller->PrevZ += caller->z - oldz;
+			}
+			else if (flags & WARPF_COPYINTERPOLATION)
+			{
+				caller->PrevX = caller->x + reference->PrevX - reference->x;
+				caller->PrevY = caller->y + reference->PrevY - reference->y;
+				caller->PrevZ = caller->z + reference->PrevZ - reference->z;
+			}
+			else if (!(flags & WARPF_INTERPOLATE))
+			{
+				caller->PrevX = caller->x;
+				caller->PrevY = caller->y;
+				caller->PrevZ = caller->z;
+			}
+			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
+			{
+				caller->z += reference->GetBobOffset();
+			}
+		}
+		return true;
+	}
+	caller->SetOrigin(oldx, oldy, oldz);
+	return false;
+}

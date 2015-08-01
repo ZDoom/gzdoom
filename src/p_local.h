@@ -176,6 +176,31 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 const PClass *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags);
+
+enum WARPF
+{
+	WARPF_ABSOLUTEOFFSET = 0x1,
+	WARPF_ABSOLUTEANGLE  = 0x2,
+	WARPF_USECALLERANGLE = 0x4,
+
+	WARPF_NOCHECKPOSITION = 0x8,
+
+	WARPF_INTERPOLATE       = 0x10,
+	WARPF_WARPINTERPOLATION = 0x20,
+	WARPF_COPYINTERPOLATION = 0x40,
+
+	WARPF_STOP             = 0x80,
+	WARPF_TOFLOOR          = 0x100,
+	WARPF_TESTONLY         = 0x200,
+	WARPF_ABSOLUTEPOSITION = 0x400,
+	WARPF_BOB              = 0x800,
+	WARPF_MOVEPTR          = 0x1000,
+	WARPF_USEPTR           = 0x2000,
+	WARPF_USETID           = 0x2000,
+};
+
+
 
 //
 // P_MAPUTL

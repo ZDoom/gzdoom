@@ -320,6 +320,8 @@ static DUMB_IT_SIGDATA *it_amf_load_sigdata(DUMBFILE *f, int * version)
 		free( sigdata );
 		return NULL;
 	}
+    
+    sigdata->n_pchannels = nchannels;
 
 	memset( sigdata->channel_volume, 64, DUMB_IT_N_CHANNELS );
 

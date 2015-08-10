@@ -743,7 +743,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				// if there is no offset, there should be no ill effect from moving down to the already defined floor
 
 				// A_Teleport does the same thing anyway
-				caller->z = caller->floorz;
+				caller->z = caller->floorz + height;
 			}
 		}
 		else

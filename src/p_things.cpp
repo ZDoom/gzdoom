@@ -692,12 +692,16 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixed_t	oldx = caller->x;
 	fixed_t	oldy = caller->y;
 	fixed_t	oldz = caller->z;
-	fixed_t height = 0;
+
 
 	if (flags & WARPF_ADDHEIGHT)
-		height = reference->height + heightoffset;
+	{
+		zofs += reference->height + heightoffset;
+	}
 	else if (flags & WARPF_MULHEIGHT)
-		height = FixedMul(reference->height, heightoffset);
+	{
+		zofs += FixedMul(reference->height, heightoffset);
+	}
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
@@ -725,44 +729,33 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
-				reference->z + height);
+				reference->z);
 
 			// now the caller's floorz should be appropriate for the assigned xy-position
-			// assigning position again with
-
-			if (zofs)
-			{
-				// extra unlink, link and environment calculation
-				caller->SetOrigin(
-					caller->x,
-					caller->y,
-					caller->floorz + zofs + height);
-			}
-			else
-			{
-				// if there is no offset, there should be no ill effect from moving down to the already defined floor
-
-				// A_Teleport does the same thing anyway
-				caller->z = caller->floorz + height;
-			}
+			// assigning position again with.
+			// extra unlink, link and environment calculation
+			caller->SetOrigin(
+				caller->x,
+				caller->y,
+				caller->floorz + zofs);
 		}
 		else
 		{
 			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
-				reference->z + zofs + height);
+				reference->z + zofs);
 		}
 	}
 	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
 	{
 		if (flags & WARPF_TOFLOOR)
 		{
-			caller->SetOrigin(xofs, yofs, caller->floorz + zofs + height);
+			caller->SetOrigin(xofs, yofs, caller->floorz + zofs);
 		}
 		else
 		{
-			caller->SetOrigin(xofs, yofs, zofs + height);
+			caller->SetOrigin(xofs, yofs, zofs);
 		}
 	}
 

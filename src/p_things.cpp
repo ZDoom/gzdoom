@@ -693,15 +693,8 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixed_t	oldy = caller->y;
 	fixed_t	oldz = caller->z;
 
+	zofs += FixedMul(reference->height, heightoffset);
 
-	if (flags & WARPF_ADDHEIGHT)
-	{
-		zofs += reference->height + heightoffset;
-	}
-	else
-	{
-		zofs += FixedMul(reference->height, heightoffset);
-	}
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{

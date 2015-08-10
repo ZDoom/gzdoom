@@ -176,7 +176,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 const PClass *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
-int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags);
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset);
 
 enum WARPF
 {
@@ -198,6 +198,8 @@ enum WARPF
 	WARPF_MOVEPTR          = 0x1000,
 	WARPF_USEPTR           = 0x2000,
 	WARPF_USETID           = 0x2000,
+	WARPF_ADDHEIGHT			= 0x4000,
+	WARPF_MULHEIGHT		= 0x8000,
 };
 
 

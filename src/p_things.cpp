@@ -680,7 +680,7 @@ void InitSpawnablesFromMapinfo()
 }
 
 
-int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags)
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset)
 {
 	if (flags & WARPF_MOVEPTR)
 	{
@@ -692,6 +692,12 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixed_t	oldx = caller->x;
 	fixed_t	oldy = caller->y;
 	fixed_t	oldz = caller->z;
+	fixed_t height = 0;
+
+	if (flags & WARPF_ADDHEIGHT)
+		height = reference->height + heightoffset;
+	else if (flags & WARPF_MULHEIGHT)
+		height = FixedMul(reference->height, heightoffset);
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
@@ -719,7 +725,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
-				reference->z);
+				reference->z + height);
 
 			// now the caller's floorz should be appropriate for the assigned xy-position
 			// assigning position again with
@@ -730,7 +736,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				caller->SetOrigin(
 					caller->x,
 					caller->y,
-					caller->floorz + zofs);
+					caller->floorz + zofs + height);
 			}
 			else
 			{
@@ -745,18 +751,18 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
-				reference->z + zofs);
+				reference->z + zofs + height);
 		}
 	}
 	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
 	{
 		if (flags & WARPF_TOFLOOR)
 		{
-			caller->SetOrigin(xofs, yofs, caller->floorz + zofs);
+			caller->SetOrigin(xofs, yofs, caller->floorz + zofs + height);
 		}
 		else
 		{
-			caller->SetOrigin(xofs, yofs, zofs);
+			caller->SetOrigin(xofs, yofs, zofs + height);
 		}
 	}
 

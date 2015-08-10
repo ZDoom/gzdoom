@@ -4671,7 +4671,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 {
-	ACTION_PARAM_START(7);
+	ACTION_PARAM_START(8);
 
 	ACTION_PARAM_INT(destination_selector, 0);
 	ACTION_PARAM_FIXED(xofs, 1);
@@ -4680,6 +4680,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	ACTION_PARAM_ANGLE(angle, 4);
 	ACTION_PARAM_INT(flags, 5);
 	ACTION_PARAM_STATE(success_state, 6);
+	ACTION_PARAM_FIXED(heightoffset,7)
 	
 	AActor *reference;
 	
@@ -4699,7 +4700,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		return;
 	}
 
-	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags))
+	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags, heightoffset))
 	{
 		if (success_state)
 		{

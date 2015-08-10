@@ -5862,6 +5862,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int flags = args[5];
 			const char *statename = argCount > 6 ? FBehavior::StaticLookupString(args[6]) : "";
 			bool exact = argCount > 7 ? !!args[7] : false;
+			fixed_t heightoffset = argCount > 8 ? args[8] : 0;
 
 			FState *state = argCount > 6 ? activator->GetClass()->ActorInfo->FindStateByString(statename, exact) : 0;
 
@@ -5879,7 +5880,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (!reference)
 				return false;
 
-			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags))
+			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset))
 			{
 				if (state && argCount > 6)
 				{

@@ -199,7 +199,6 @@ enum WARPF
 	WARPF_USEPTR           = 0x2000,
 	WARPF_USETID           = 0x2000,
 	WARPF_ADDHEIGHT			= 0x4000,
-	WARPF_MULHEIGHT		= 0x8000,
 };
 
 

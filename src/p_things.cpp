@@ -698,7 +698,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	{
 		zofs += reference->height + heightoffset;
 	}
-	else if (flags & WARPF_MULHEIGHT)
+	else
 	{
 		zofs += FixedMul(reference->height, heightoffset);
 	}

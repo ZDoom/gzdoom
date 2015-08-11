@@ -3017,6 +3017,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	fixed_t oldz = self->z;
 	self->flags |= MF_SOLID;
 	self->height = self->GetDefault()->height;
+	self->radius = self->GetDefault()->radius;
 	CALL_ACTION(A_RestoreSpecialPosition, self);
 
 	if (flags & RSF_TELEFRAG)

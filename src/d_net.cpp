@@ -2095,7 +2095,7 @@ static int RemoveClass(const PClass *cls)
 		if (actor->IsA(cls))
 		{
 			// [MC]Do not remove LIVE players.
-			if (actor->IsKindOf(RUNTIME_CLASS(APlayerPawn)) && actor->player != NULL)
+			if (actor->player != NULL)
 			{
 				player = true;
 				continue;
@@ -2728,6 +2728,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_SUMMONFRIEND:
 		case DEM_SUMMONFOE:
 		case DEM_SUMMONMBF:
+		case DEM_REMOVE:
 		case DEM_SPRAY:
 		case DEM_MORPHEX:
 		case DEM_KILLCLASSCHEAT:

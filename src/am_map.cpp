@@ -360,6 +360,20 @@ static FColorCVar *cv_overlay[] = {
 	&am_ovsecretsectorcolor
 };
 
+CCMD(am_restorecolors)
+{
+	for (unsigned i = 0; i < countof(cv_standard); i++)
+	{
+		cv_standard[i]->ResetToDefault();
+	}
+	for (unsigned i = 0; i < countof(cv_overlay); i++)
+	{
+		cv_overlay[i]->ResetToDefault();
+	}
+}
+
+
+
 #define NOT_USED 1,0,0	// use almost black as indicator for an unused color
 
 static unsigned char DoomColors[]= {

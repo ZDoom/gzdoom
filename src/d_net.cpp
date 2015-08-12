@@ -2083,6 +2083,33 @@ static int KillAll(const PClass *cls)
 	return killcount;
 
 }
+
+static int RemoveClass(const PClass *cls)
+{
+	AActor *actor;
+	int removecount = 0;
+	bool player = false;
+	TThinkerIterator<AActor> iterator(cls);
+	while ((actor = iterator.Next()))
+	{
+		if (actor->IsA(cls))
+		{
+			// [MC]Do not remove LIVE players.
+			if (actor->player != NULL)
+			{
+				player = true;
+				continue;
+			}
+			removecount++; 
+			actor->ClearCounters();
+			actor->Destroy();
+		}
+	}
+	if (player)
+		Printf("Cannot remove live players!\n");
+	return removecount;
+
+}
 // [RH] Execute a special "ticcmd". The type byte should
 //		have already been read, and the stream is positioned
 //		at the beginning of the command's actual data.
@@ -2555,6 +2582,27 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 		}
 		break;
+	case DEM_REMOVE:
+	{
+		char *classname = ReadString(stream);
+		int removecount = 0;
+		const PClass *cls = PClass::FindClass(classname);
+		if (cls != NULL && cls->ActorInfo != NULL)
+		{
+			removecount = RemoveClass(cls);
+			const PClass *cls_rep = cls->GetReplacement();
+			if (cls != cls_rep)
+			{
+				removecount += RemoveClass(cls_rep);
+			}
+			Printf("Removed %d actors of type %s.\n", removecount, classname);
+		}
+		else
+		{
+			Printf("%s is not an actor class.\n", classname);
+		}
+	}
+		break;
 
 	case DEM_CONVREPLY:
 	case DEM_CONVCLOSE:
@@ -2680,6 +2728,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_SUMMONFRIEND:
 		case DEM_SUMMONFOE:
 		case DEM_SUMMONMBF:
+		case DEM_REMOVE:
 		case DEM_SPRAY:
 		case DEM_MORPHEX:
 		case DEM_KILLCLASSCHEAT:

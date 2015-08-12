@@ -74,6 +74,9 @@ const int SXF_NOPOINTERS =				1 << 22;
 const int SXF_ORIGINATOR =				1 << 23;
 const int SXF_TRANSFERSPRITEFRAME	=	1 << 24;
 const int SXF_TRANSFERROLL =			1 << 25;
+const int SXF_ISTARGET				=	1 << 26;
+const int SXF_ISMASTER				=	1 << 27;
+const int SXF_ISTRACER				=	1 << 28;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;

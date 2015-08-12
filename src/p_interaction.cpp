@@ -1841,3 +1841,22 @@ CCMD (kill)
 	}
 	C_HideConsole ();
 }
+
+CCMD(remove)
+{
+	if (argv.argc() == 2)
+	{
+		if (CheckCheatmode())
+			return;
+
+		Net_WriteByte(DEM_REMOVE);
+		Net_WriteString(argv[1]);
+		C_HideConsole();
+	}
+	else
+	{
+		Printf("Usage: remove <actor class name>\n");
+		return;
+	}
+	
+}

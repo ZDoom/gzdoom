@@ -225,6 +225,7 @@ ACTOR PowerWeaponLevel2 : Powerup native
 {
 	Powerup.Duration -40
 	Inventory.Icon "SPINBK0"
+	+INVENTORY.NOTELEPORTFREEZE
 }
 
 ACTOR PowerSpeed : Powerup native
@@ -232,6 +233,7 @@ ACTOR PowerSpeed : Powerup native
 	Powerup.Duration -45
 	Speed 1.5
 	Inventory.Icon "SPBOOT0"
+	+INVENTORY.NOTELEPORTFREEZE
 }
 
 // Player Speed Trail (used by the Speed Powerup) ----------------------------

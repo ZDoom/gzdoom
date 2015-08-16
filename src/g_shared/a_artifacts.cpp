@@ -72,7 +72,7 @@ bool APowerupGiver::Use (bool pickup)
 		power->Strength = Strength;
 	}
 
-	power->ItemFlags |= ItemFlags & (IF_ALWAYSPICKUP|IF_ADDITIVETIME);
+	power->ItemFlags |= ItemFlags & (IF_ALWAYSPICKUP|IF_ADDITIVETIME|IF_NOTELEPORTFREEZE);
 	if (power->CallTryPickup (Owner))
 	{
 		return true;
@@ -340,6 +340,18 @@ AInventory *APowerup::CreateTossable ()
 void APowerup::OwnerDied ()
 {
 	Destroy ();
+}
+
+//===========================================================================
+//
+// AInventory :: GetNoTeleportFreeze
+//
+//===========================================================================
+
+bool APowerup::GetNoTeleportFreeze ()
+{
+	if (ItemFlags & IF_NOTELEPORTFREEZE) return true;
+	return Super::GetNoTeleportFreeze();
 }
 
 // Invulnerability Powerup ---------------------------------------------------

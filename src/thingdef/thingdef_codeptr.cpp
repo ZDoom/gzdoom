@@ -5781,10 +5781,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecies)
 		return;
 	}
 
-	if (!stricmp(species, "None") || !stricmp(species, ""))
-		mobj->Species = NAME_None;
-	else
-		mobj->Species = species;
+	mobj->Species = species;
 }
 
 //===========================================================================

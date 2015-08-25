@@ -5764,6 +5764,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 		ACTION_JUMP(low);
 }
 
+//===========================================================================
+// A_SetSpecies(str species, ptr)
+//
+// Sets the species of the calling actor('s pointer).
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecies)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_NAME(species, 0);
+	ACTION_PARAM_INT(ptr, 1);
+	AActor *mobj = COPY_AAPTR(self, ptr);
+	if (!mobj)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	mobj->Species = species;
+}
 
 //===========================================================================
 //

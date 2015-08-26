@@ -718,19 +718,13 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			// set correct xy
-
-			caller->SetOrigin(
-				reference->x + xofs,
-				reference->y + yofs,
-				reference->z);
-
 			// now the caller's floorz should be appropriate for the assigned xy-position
 			// assigning position again with.
 			// extra unlink, link and environment calculation
 			caller->SetOrigin(
-				caller->x,
-				caller->y,
-				caller->floorz + zofs);
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->floorz + zofs);
 		}
 		else
 		{

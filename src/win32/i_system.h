@@ -168,6 +168,9 @@ void I_SetWndProc();
 // directories for IWADs if the user purchased any through Steam.
 TArray<FString> I_GetSteamPath();
 
+// [GZ] Same deal for GOG paths
+TArray<FString> I_GetGogPaths();
+
 // Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
 // giving them proper prototypes under Win32, they are just macros for
 // Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.

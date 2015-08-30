@@ -268,8 +268,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	{
 		if (friendly)
 		{
-			attacker->player->fragcount -= 2;
-			attacker->player->frags[attacker->player - players]++;
 			self = attacker;
 			gender = self->player->userinfo.GetGender();
 			mysnprintf (gendermessage, countof(gendermessage), "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
@@ -467,12 +465,21 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				if ((dmflags2 & DF2_YES_LOSEFRAG) && deathmatch)
 					player->fragcount--;
 
-				++source->player->fragcount;
-				++source->player->spreecount;
+				if (this->IsTeammate(source))
+				{
+					source->player->fragcount--;
+				}
+				else
+				{
+					++source->player->fragcount;
+					++source->player->spreecount;
+				}
+
 				if (source->player->morphTics)
 				{ // Make a super chicken
 					source->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
 				}
+
 				if (deathmatch && cl_showsprees)
 				{
 					const char *spreemsg;

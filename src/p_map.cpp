@@ -1013,15 +1013,15 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 	bool 	solid;
 	int 	damage;
 
+	// don't clip against self
+	if (thing == tm.thing)
+		return true;
+
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
 		return true;	// can't hit thing
 
 	fixed_t blockdist = thing->radius + tm.thing->radius;
 	if (abs(thing->x - tm.x) >= blockdist || abs(thing->y - tm.y) >= blockdist)
-		return true;
-
-	// don't clip against self
-	if (thing == tm.thing)
 		return true;
 
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)

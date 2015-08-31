@@ -1109,8 +1109,7 @@ void pspdef_t::UpdateInterpolation(int player)
 {
 	if (interpolation != NULL)
 	{
-		DInterpolation *pointer = interpolation;
-		static_cast<DPSpriteInterpolation *>(pointer)->UpdatePointer(player);
+		barrier_cast<DPSpriteInterpolation *>(interpolation)->UpdatePointer(player);
 	}
 }
 

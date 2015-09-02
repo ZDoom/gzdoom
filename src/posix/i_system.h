@@ -124,6 +124,8 @@ int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
 // directories for IWADs if the user purchased any through Steam.
 TArray<FString> I_GetSteamPath();
 
+TArray<FString> I_GetGogPaths();
+
 // The ini could not be saved at exit
 bool I_WriteIniFailed ();
 

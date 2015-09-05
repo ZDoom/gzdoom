@@ -8880,7 +8880,22 @@ scriptwait:
 			break;
 
 		case PCD_STRLEN:
-			STACK(1) = SDWORD(strlen(FBehavior::StaticLookupString (STACK(1))));
+			{
+				const char *str = FBehavior::StaticLookupString(STACK(1));
+				if (str != NULL)
+				{
+					STACK(1) = SDWORD(strlen(str));
+					break;
+				}
+
+				static bool StrlenInvalidPrintedAlready = false;
+				if (!StrlenInvalidPrintedAlready)
+				{
+					Printf(PRINT_BOLD, "Warning: ACS function strlen called with invalid string argument.\n");
+					StrlenInvalidPrintedAlready = true;
+				}
+				STACK(1) = 0;
+			}
 			break;
 
 		case PCD_GETCVAR:

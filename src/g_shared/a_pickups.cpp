@@ -852,6 +852,25 @@ fixed_t AInventory::GetSpeedFactor ()
 
 //===========================================================================
 //
+// AInventory :: GetNoTeleportFreeze
+//
+//===========================================================================
+
+bool AInventory::GetNoTeleportFreeze ()
+{
+	// do not check the flag here because it's only active when used on PowerUps, not on PowerupGivers.
+	if (Inventory != NULL)
+	{
+		return Inventory->GetNoTeleportFreeze();
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//===========================================================================
+//
 // AInventory :: AlterWeaponSprite
 //
 // Allows inventory items to alter a player's weapon sprite just before it

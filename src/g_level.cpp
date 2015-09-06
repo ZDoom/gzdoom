@@ -1793,8 +1793,14 @@ void G_ReadSnapshots (PNGHandle *png)
 		DWORD snapver;
 
 		arc << snapver;
-		arc << namelen;
-		arc.Read (mapname, namelen);
+		if (SaveVersion < 4508)
+		{
+			arc << namelen;
+			arc.Read(mapname, namelen);
+			mapname[namelen] = 0;
+			MapName = mapname;
+		}
+		else arc << MapName;
 		TheDefaultLevelInfo.snapshotVer = snapver;
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
 		TheDefaultLevelInfo.snapshot->Serialize (arc);

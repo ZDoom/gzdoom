@@ -680,7 +680,7 @@ void InitSpawnablesFromMapinfo()
 }
 
 
-int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags)
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset)
 {
 	if (flags & WARPF_MOVEPTR)
 	{
@@ -692,6 +692,9 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixed_t	oldx = caller->x;
 	fixed_t	oldy = caller->y;
 	fixed_t	oldz = caller->z;
+
+	zofs += FixedMul(reference->height, heightoffset);
+
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
@@ -715,30 +718,13 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			// set correct xy
-
+			// now the caller's floorz should be appropriate for the assigned xy-position
+			// assigning position again with.
+			// extra unlink, link and environment calculation
 			caller->SetOrigin(
 				reference->x + xofs,
 				reference->y + yofs,
-				reference->z);
-
-			// now the caller's floorz should be appropriate for the assigned xy-position
-			// assigning position again with
-
-			if (zofs)
-			{
-				// extra unlink, link and environment calculation
-				caller->SetOrigin(
-					caller->x,
-					caller->y,
-					caller->floorz + zofs);
-			}
-			else
-			{
-				// if there is no offset, there should be no ill effect from moving down to the already defined floor
-
-				// A_Teleport does the same thing anyway
-				caller->z = caller->floorz;
-			}
+				reference->floorz + zofs);
 		}
 		else
 		{

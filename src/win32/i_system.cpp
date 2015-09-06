@@ -1504,28 +1504,81 @@ int I_FindClose(void *handle)
 
 static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
 {
-	HKEY steamkey;
+	HKEY pathkey;
 	DWORD pathtype;
 	DWORD pathlen;
 	LONG res;
 
-	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &steamkey))
+	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &pathkey))
 	{
-		if (ERROR_SUCCESS == RegQueryValueEx(steamkey, valname, 0, &pathtype, NULL, &pathlen) &&
+		if (ERROR_SUCCESS == RegQueryValueEx(pathkey, valname, 0, &pathtype, NULL, &pathlen) &&
 			pathtype == REG_SZ && pathlen != 0)
 		{
 			// Don't include terminating null in count
 			char *chars = value.LockNewBuffer(pathlen - 1);
-			res = RegQueryValueEx(steamkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
+			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
 			value.UnlockBuffer();
 			if (res != ERROR_SUCCESS)
 			{
 				value = "";
 			}
 		}
-		RegCloseKey(steamkey);
+		RegCloseKey(pathkey);
 	}
 	return value.IsNotEmpty();
+}
+
+//==========================================================================
+//
+// I_GetGogPaths
+//
+// Check the registry for GOG installation paths, so we can search for IWADs
+// that were bought from GOG.com. This is a bit different from the Steam
+// version because each game has its own independent installation path, no
+// such thing as <steamdir>/SteamApps/common/<GameName>.
+//
+//==========================================================================
+
+TArray<FString> I_GetGogPaths()
+{
+	TArray<FString> result;
+	FString path;
+	FString gamepath;
+
+#ifdef _WIN64
+	FString gogregistrypath = "Software\\Wow6432Node\\GOG.com\\Games";
+#else
+	// If a 32-bit ZDoom runs on a 64-bit Windows, this will be transparently and
+	// automatically redirected to the Wow6432Node address instead, so this address
+	// should be safe to use in all cases.
+	FString gogregistrypath = "Software\\GOG.com\\Games";
+#endif
+
+	// Look for Ultimate Doom
+	gamepath = gogregistrypath + "\\1435827232";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		result.Push(path);	// directly in install folder
+	}
+
+	// Look for Doom II
+	gamepath = gogregistrypath + "\\1435848814";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		result.Push(path + "/doom2");	// in a subdirectory
+		// If direct support for the Master Levels is ever added, they are in path + /master/wads
+	}
+
+	// Look for Final Doom
+	gamepath = gogregistrypath + "\\1435848742";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		// in subdirectories
+		result.Push(path + "/TNT");
+		result.Push(path + "/Plutonia");
+	}
+
+	return result;
 }
 
 //==========================================================================

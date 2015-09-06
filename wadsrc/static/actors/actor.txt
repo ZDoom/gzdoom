@@ -249,7 +249,7 @@ ACTOR Actor native //: Thinker
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
 	action native A_Teleport(state teleportstate = "", class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 0, int ptr = AAPTR_DEFAULT);
-	action native A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, state success_state = "");
+	action native A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, state success_state = "", float heightoffset = 0);
 	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
 	action native A_Weave(int xspeed, int yspeed, float xdist, float ydist);
 
@@ -331,6 +331,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetHealth(int health, int ptr = AAPTR_DEFAULT);
 	action native A_ResetHealth(int ptr = AAPTR_DEFAULT);
 	action native A_JumpIfHigherOrLower(state high, state low, float offsethigh = 0, float offsetlow = 0, bool includeHeight = true, int ptr = AAPTR_TARGET);
+	action native A_SetSpecies(name species, int ptr = AAPTR_DEFAULT);
 	action native A_SetRipperLevel(int level);
 	action native A_SetRipMin(int min);
 	action native A_SetRipMax(int max);

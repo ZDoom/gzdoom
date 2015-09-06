@@ -39,6 +39,7 @@
 #include "s_sound.h"
 #include "memarena.h"
 #include "g_level.h"
+#include "tflags.h"
 
 struct subsector_t;
 //
@@ -105,10 +106,9 @@ struct subsector_t;
 // Any questions?
 //
 
-enum
-{
 // --- mobj.flags ---
-
+enum ActorFlag
+{
 	MF_SPECIAL			= 0x00000001,	// call P_SpecialThing when touched
 	MF_SOLID			= 0x00000002,
 	MF_SHOOTABLE		= 0x00000004,
@@ -152,8 +152,13 @@ enum
 	MF_STEALTH			= 0x40000000,	// [RH] Andy Baker's stealth monsters
 	MF_ICECORPSE		= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
 
-// --- mobj.flags2 ---
+	// --- dummies for unknown/unimplemented Strife flags ---
+	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
+};
 
+// --- mobj.flags2 ---
+enum ActorFlag2
+{
 	MF2_DONTREFLECT		= 0x00000001,	// this projectile cannot be reflected
 	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind specials
 	MF2_DONTSEEKINVISIBLE=0x00000004,	// For seeker missiles: Don't home in on invisible/shadow targets
@@ -191,9 +196,11 @@ enum
 										// args should not be taken from the mapthing definition
 	MF2_SEEKERMISSILE	= 0x40000000,	// is a seeker (for reflection)
 	MF2_REFLECTIVE		= 0x80000000,	// reflects missiles
+};
 
 // --- mobj.flags3 ---
-
+enum ActorFlag3
+{
 	MF3_FLOORHUGGER		= 0x00000001,	// Missile stays on floor
 	MF3_CEILINGHUGGER	= 0x00000002,	// Missile stays on ceiling
 	MF3_NORADIUSDMG		= 0x00000004,	// Actor does not take radius damage
@@ -226,9 +233,11 @@ enum
 	MF3_WARNBOT			= 0x20000000,	// Missile warns bot
 	MF3_PUFFONACTORS	= 0x40000000,	// Puff appears even when hit bleeding actors
 	MF3_HUNTPLAYERS		= 0x80000000,	// Used with TIDtoHate, means to hate players too
+};
 
 // --- mobj.flags4 ---
-
+enum ActorFlag4
+{
 	MF4_NOHATEPLAYERS	= 0x00000001,	// Ignore player attacks
 	MF4_QUICKTORETALIATE= 0x00000002,	// Always switch targets when hurt
 	MF4_NOICEDEATH		= 0x00000004,	// Actor never enters an ice death, not even the generic one
@@ -262,9 +271,12 @@ enum
 	MF4_EXTREMEDEATH	= 0x20000000,	// this projectile or weapon always gibs its victim
 	MF4_FRIGHTENED		= 0x40000000,	// Monster runs away from player
 	MF4_BOSSSPAWNED		= 0x80000000,	// Spawned by a boss spawn cube
-	
+};
+
 // --- mobj.flags5 ---
 
+enum ActorFlag5
+{
 	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
 	/*					= 0x00000002,	   reserved for use by scripting branch */
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
@@ -298,9 +310,11 @@ enum
 	MF5_INCONVERSATION	= 0x20000000,	// Actor is having a conversation
 	MF5_PAINLESS		= 0x40000000,	// Actor always inflicts painless damage.
 	MF5_MOVEWITHSECTOR	= 0x80000000,	// P_ChangeSector() will still process this actor if it has MF_NOBLOCKMAP
+};
 
 // --- mobj.flags6 ---
-
+enum ActorFlag6
+{
 	MF6_NOBOSSRIP		= 0x00000001,	// For rippermissiles: Don't rip through bosses.
 	MF6_THRUSPECIES		= 0x00000002,	// Actors passes through other of the same species.
 	MF6_MTHRUSPECIES	= 0x00000004,	// Missile passes through actors of its shooter's species.
@@ -333,9 +347,11 @@ enum
 	MF6_NOTAUTOAIMED	= 0x20000000,	// Do not subject actor to player autoaim.
 	MF6_NOTONAUTOMAP	= 0x40000000,	// will not be shown on automap with the 'scanner' powerup.
 	MF6_RELATIVETOFLOOR	= 0x80000000,	// [RC] Make flying actors be affected by lifts.
+};
 
 // --- mobj.flags7 ---
-
+enum ActorFlag7
+{
 	MF7_NEVERTARGET		= 0x00000001,	// can not be targetted at all, even if monster friendliness is considered.
 	MF7_NOTELESTOMP		= 0x00000002,	// cannot telefrag under any circumstances (even when set by MAPINFO)
 	MF7_ALWAYSTELEFRAG	= 0x00000004,	// will unconditionally be telefragged when in the way. Overrides all other settings.
@@ -353,11 +369,15 @@ enum
 	MF7_HITTARGET		= 0x00004000,	// The actor the projectile dies on is set to target, provided it's targetable anyway.
 	MF7_HITMASTER		= 0x00008000,	// Same as HITTARGET, except it's master instead of target.
 	MF7_HITTRACER		= 0x00010000,	// Same as HITTARGET, but for tracer.
-
-
+	MF7_FLYCHEAT		= 0x00020000,	// must be part of the actor so that it can be tracked properly
+	MF7_NODECAL			= 0x00040000,	// [ZK] Forces puff to have no impact decal
+	MF7_FORCEDECAL		= 0x00080000,	// [ZK] Forces puff's decal to override the weapon's.
+	MF7_LAXTELEFRAGDMG	= 0x00100000,	// [MC] Telefrag damage can be reduced.
+};
 
 // --- mobj.renderflags ---
-
+enum ActorRenderFlag
+{
 	RF_XFLIP			= 0x0001,	// Flip sprite horizontally
 	RF_YFLIP			= 0x0002,	// Flip sprite vertically
 	RF_ONESIDED			= 0x0004,	// Wall/floor sprite is visible from front only
@@ -386,10 +406,6 @@ enum
 
 	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
 	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
-
-// --- dummies for unknown/unimplemented Strife flags ---
-
-	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
 };
 
 #define TRANSLUC25			(FRACUNIT/4)
@@ -418,7 +434,7 @@ enum replace_t
 	ALLOW_REPLACE = 1
 };
 
-enum EBounceFlags
+enum ActorBounceFlag
 {
 	BOUNCE_Walls = 1<<0,		// bounces off of walls
 	BOUNCE_Floors = 1<<1,		// bounces off of floors
@@ -471,6 +487,26 @@ enum EBounceFlags
 
 
 };
+
+// [TP] Flagset definitions
+typedef TFlags<ActorFlag> ActorFlags;
+typedef TFlags<ActorFlag2> ActorFlags2;
+typedef TFlags<ActorFlag3> ActorFlags3;
+typedef TFlags<ActorFlag4> ActorFlags4;
+typedef TFlags<ActorFlag5> ActorFlags5;
+typedef TFlags<ActorFlag6> ActorFlags6;
+typedef TFlags<ActorFlag7> ActorFlags7;
+typedef TFlags<ActorRenderFlag> ActorRenderFlags;
+typedef TFlags<ActorBounceFlag, WORD> ActorBounceFlags;
+DEFINE_TFLAGS_OPERATORS (ActorFlags)
+DEFINE_TFLAGS_OPERATORS (ActorFlags2)
+DEFINE_TFLAGS_OPERATORS (ActorFlags3)
+DEFINE_TFLAGS_OPERATORS (ActorFlags4)
+DEFINE_TFLAGS_OPERATORS (ActorFlags5)
+DEFINE_TFLAGS_OPERATORS (ActorFlags6)
+DEFINE_TFLAGS_OPERATORS (ActorFlags7)
+DEFINE_TFLAGS_OPERATORS (ActorRenderFlags)
+DEFINE_TFLAGS_OPERATORS (ActorBounceFlags)
 
 // Used to affect the logic for thing activation through death, USESPECIAL and BUMPSPECIAL
 // "thing" refers to what has the flag and the special, "trigger" refers to what used or bumped it
@@ -676,6 +712,11 @@ public:
 	// Removes the item from the inventory list.
 	virtual void RemoveInventory (AInventory *item);
 
+	// Take the amount value of an item from the inventory list.
+	// If nothing is left, the item may be destroyed.
+	// Returns true if the initial item count is positive.
+	virtual bool TakeInventory (const PClass *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
+
 	// Uses an item and removes it from the inventory.
 	virtual bool UseInventory (AInventory *item);
 
@@ -783,8 +824,9 @@ public:
 	}
 
 	// These also set CF_INTERPVIEW for players.
-	void SetPitch(int p, bool interpolate);
+	void SetPitch(int p, bool interpolate, bool forceclamp = false);
 	void SetAngle(angle_t ang, bool interpolate);
+	void SetRoll(angle_t roll, bool interpolate);
 
 	const PClass *GetBloodType(int type = 0) const
 	{
@@ -836,14 +878,15 @@ public:
 	BYTE			frame;				// sprite frame to draw
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
-	DWORD			renderflags;		// Different rendering flags
+	ActorRenderFlags	renderflags;		// Different rendering flags
 	FTextureID		picnum;				// Draw this instead of sprite if valid
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info
-	fixed_t			pitch, roll;
+	fixed_t			pitch;
+	angle_t			roll;	// This was fixed_t before, which is probably wrong
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
@@ -861,13 +904,13 @@ public:
 	FState			*state;
 	SDWORD			Damage;			// For missiles and monster railgun
 	int				projectileKickback;
-	DWORD			flags;
-	DWORD			flags2;			// Heretic flags
-	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
-	DWORD			flags4;			// [RH] Even more flags!
-	DWORD			flags5;			// OMG! We need another one.
-	DWORD			flags6;			// Shit! Where did all the flags go?
-	DWORD			flags7;			// WHO WANTS TO BET ON 8!?
+	ActorFlags		flags;
+	ActorFlags2		flags2;			// Heretic flags
+	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
+	ActorFlags4		flags4;			// [RH] Even more flags!
+	ActorFlags5		flags5;			// OMG! We need another one.
+	ActorFlags6		flags6;			// Shit! Where did all the flags go?
+	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
 
 	// [BB] If 0, everybody can see the actor, if > 0, only members of team (VisibleToTeam-1) can see it.
 	DWORD			VisibleToTeam;
@@ -913,7 +956,7 @@ public:
 	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
-	WORD			BounceFlags;	// which bouncing type?
+	ActorBounceFlags	BounceFlags;	// which bouncing type?
 	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
 	fixed_t			meleerange;		// specifies how far a melee attack reaches.
 	fixed_t			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
@@ -985,6 +1028,9 @@ public:
 	FNameNoInit DeathType;
 	const PClass *TeleFogSourceType;
 	const PClass *TeleFogDestType;
+	int RipperLevel;
+	int RipLevelMin;
+	int RipLevelMax;
 
 	FState *SpawnState;
 	FState *SeeState;
@@ -1029,7 +1075,7 @@ public:
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
 	bool isSlow();
-	void SetIdle();
+	void SetIdle(bool nofunction=false);
 	void ClearCounters();
 	FState *GetRaiseState();
 	void Revive();

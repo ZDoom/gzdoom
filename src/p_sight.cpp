@@ -127,7 +127,6 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	if (topslope <= bottomslope)
 		return false;		// stop
 
-#ifdef _3DFLOORS
 	// now handle 3D-floors
 	if(li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
 	{
@@ -219,7 +218,6 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 	lastztop= FixedMul (topslope, in->frac) + sightzstart;
 	lastzbottom= FixedMul (bottomslope, in->frac) + sightzstart;
-#endif
 
 	return true;			// keep going
 }
@@ -401,7 +399,6 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		}
 	}
 
-#ifdef _3DFLOORS
 	if (lastsector==seeingthing->Sector && lastsector->e->XFloor.ffloors.Size())
 	{
 		// we must do one last check whether the trace has crossed a 3D floor in the last sector
@@ -424,7 +421,6 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		}
 	
 	}
-#endif
 	return true;			// everything was traversed
 }
 
@@ -453,7 +449,6 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 	validcount++;
 	intercepts.Clear ();
 
-#ifdef _3DFLOORS
 	// for FF_SEETHROUGH the following rule applies:
 	// If the viewer is in an area without FF_SEETHROUGH he can only see into areas without this flag
 	// If the viewer is in an area with FF_SEETHROUGH he can only see into areas with this flag
@@ -472,7 +467,6 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 			break;
 		}
 	}
-#endif
 
 	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
 		x1 += FRACUNIT;							// don't side exactly on a line

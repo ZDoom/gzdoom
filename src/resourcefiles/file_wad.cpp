@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "v_text.h"
 #include "w_wad.h"
+#include "gi.h"
 
 // Console Doom LZSS wrapper.
 class FileReaderLZSS : public FileReaderBase
@@ -354,7 +355,7 @@ bool FWadFile::Open(bool quiet)
 	{
 		uppercopy (Lumps[i].Name, fileinfo[i].Name);
 		Lumps[i].Name[8] = 0;
-		Lumps[i].Compressed = (Lumps[i].Name[0] & 0x80) == 0x80;
+		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (Lumps[i].Name[0] & 0x80) == 0x80;
 		Lumps[i].Name[0] &= ~0x80;
 
 		Lumps[i].Owner = this;
@@ -581,9 +582,18 @@ void FWadFile::SkinHack ()
 				namespc++;
 			}
 		}
-		if (lump->Name[0] == 'M' &&
-			lump->Name[1] == 'A' &&
-			lump->Name[2] == 'P')
+		if ((lump->Name[0] == 'M' &&
+			 lump->Name[1] == 'A' &&
+			 lump->Name[2] == 'P' &&
+			 lump->Name[3] >= '0' && lump->Name[3] <= '9' &&
+			 lump->Name[4] >= '0' && lump->Name[4] <= '9' &&
+			 lump->Name[5] >= '\0')
+			||
+			(lump->Name[0] == 'E' &&
+			 lump->Name[1] >= '0' && lump->Name[1] <= '9' &&
+			 lump->Name[2] == 'M' &&
+			 lump->Name[3] >= '0' && lump->Name[3] <= '9' &&
+			 lump->Name[4] >= '\0'))
 		{
 			hasmap = true;
 		}

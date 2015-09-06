@@ -20,7 +20,7 @@ ACTOR BridgeBall
 
 // The bridge itself -------------------------------------------------------
 
-ACTOR CustomBridge 9991 native
+ACTOR CustomBridge native
 {
 	+SOLID
 	+NOGRAVITY
@@ -51,27 +51,23 @@ ACTOR CustomBridge 9991 native
 
 // The Hexen bridge -------------------------------------------------------
 
-ACTOR Bridge : CustomBridge 118
+ACTOR Bridge : CustomBridge
 {
-	Game Raven
-	SpawnID 21
 	RenderStyle None
 	Args 32, 2, 3, 0
 }
 
 // The ZDoom bridge -------------------------------------------------------
 
-ACTOR ZBridge : CustomBridge 118
+ACTOR ZBridge : CustomBridge
 {
-	Game Doom
-	SpawnID 21
 	Args 36, 4, 0, 0
 }
 
 
 // Invisible bridge --------------------------------------------------------
 
-ACTOR InvisibleBridge 9990 native
+ACTOR InvisibleBridge native
 {
 	RenderStyle None
 	Radius 32
@@ -90,19 +86,19 @@ ACTOR InvisibleBridge 9990 native
 
 // And some invisible bridges from Skull Tag -------------------------------
 
-ACTOR InvisibleBridge32 : InvisibleBridge 5061
+ACTOR InvisibleBridge32 : InvisibleBridge
 {
 	Radius 32
 	Height 8
 }
 
-ACTOR InvisibleBridge16 : InvisibleBridge 5064
+ACTOR InvisibleBridge16 : InvisibleBridge
 {
 	Radius 16
 	Height 8
 }
 
-ACTOR InvisibleBridge8 : InvisibleBridge 5065
+ACTOR InvisibleBridge8 : InvisibleBridge
 {
 	Radius 8
 	Height 8

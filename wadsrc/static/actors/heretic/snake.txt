@@ -1,8 +1,6 @@
 
-ACTOR Snake 92
+ACTOR Snake
 {
-	Game Heretic
-	SpawnID 132
 	Health 280
 	Radius 22
 	Height 70
@@ -50,8 +48,6 @@ ACTOR Snake 92
 
 ACTOR SnakeProjA
 {
-	Game Heretic
-	SpawnID 138
 	Radius 12
 	Height 8
 	Speed 14
@@ -82,8 +78,6 @@ ACTOR SnakeProjA
 
 ACTOR SnakeProjB : SnakeProjA
 {
-	Game Heretic
-	SpawnID 139
 	Damage 3
 	+NOBLOCKMAP
 	-WINDTHRUST

@@ -45,6 +45,35 @@
 
 // TYPES -------------------------------------------------------------------
 
+class OPLDump : public OPLEmul
+{
+public:
+	OPLDump(FILE *file) : File(file), TimePerTick(0), CurTime(0),
+		CurIntTime(0), TickMul(1), CurChip(0) {}
+
+	// If we're doing things right, these should never be reset.
+	virtual void Reset() { assert(0); }
+
+	// Update() is only used for getting waveform data, which dumps don't do.
+	virtual void Update(float *buffer, int length) { assert(0); }
+
+	// OPL dumps don't pan beyond what OPL3 is capable of (which is
+	// already written using registers from the original data).
+	virtual void SetPanning(int c, float left, float right) {}
+
+	// Only for the OPL dumpers, not the emulators
+	virtual void SetClockRate(double samples_per_tick) {}
+	virtual void WriteDelay(int ticks) = 0;
+
+protected:
+	FILE *File;
+	double TimePerTick;	// in milliseconds
+	double CurTime;
+	int CurIntTime;
+	int TickMul;
+	BYTE CurChip;
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -58,6 +87,173 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+class OPL_RDOSdump : public OPLDump
+{
+public:
+	OPL_RDOSdump(FILE *file) : OPLDump(file)
+	{
+		assert(File != NULL);
+		fwrite("RAWADATA\0", 1, 10, File);
+		NeedClockRate = true;
+	}
+	virtual ~OPL_RDOSdump()
+	{
+		if (File != NULL)
+		{
+			WORD endmark = 0xFFFF;
+			fwrite(&endmark, 2, 1, File);
+			fclose(File);
+		}
+	}
+
+	virtual void WriteReg(int reg, int v)
+	{
+		assert(File != NULL);
+		BYTE chipnum = reg >> 8;
+		if (chipnum != CurChip)
+		{
+			BYTE switcher[2] = { (BYTE)(chipnum + 1), 2 };
+			fwrite(switcher, 1, 2, File);
+		}
+		reg &= 255;
+		if (reg != 0 && reg != 2 && (reg != 255 || v != 255))
+		{
+			BYTE cmd[2] = { BYTE(v), BYTE(reg) };
+			fwrite(cmd, 1, 2, File);
+		}
+	}
+
+	virtual void SetClockRate(double samples_per_tick)
+	{
+		TimePerTick = samples_per_tick / OPL_SAMPLE_RATE * 1000.0;
+
+		double clock_rate;
+		int clock_mul;
+		WORD clock_word;
+
+		clock_rate = samples_per_tick * ADLIB_CLOCK_MUL;
+		clock_mul = 1;
+
+		// The RDos raw format's clock rate is stored in a word. Therefore,
+		// the longest tick that can be stored is only ~55 ms.
+		while (clock_rate / clock_mul + 0.5 > 65535.0)
+		{
+			clock_mul++;
+		}
+		clock_word = WORD(clock_rate / clock_mul + 0.5);
+
+		if (NeedClockRate)
+		{ // Set the initial clock rate.
+			clock_word = LittleShort(clock_word);
+			fseek(File, 8, SEEK_SET);
+			fwrite(&clock_word, 2, 1, File);
+			fseek(File, 0, SEEK_END);
+			NeedClockRate = false;
+		}
+		else
+		{ // Change the clock rate in the middle of the song.
+			BYTE clock_change[4] = { 0, 2, BYTE(clock_word & 255), BYTE(clock_word >> 8) };
+			fwrite(clock_change, 1, 4, File);
+		}
+	}
+	virtual void WriteDelay(int ticks)
+	{
+		if (ticks > 0)
+		{ // RDos raw has very precise delays but isn't very efficient at
+		  // storing long delays.
+			BYTE delay[2];
+
+			ticks *= TickMul;
+			delay[1] = 0;
+			while (ticks > 255)
+			{
+				ticks -= 255;
+				delay[0] = 255;
+				fwrite(delay, 1, 2, File);
+			}
+			delay[0] = BYTE(ticks);
+			fwrite(delay, 1, 2, File);
+		}
+	}
+protected:
+	bool NeedClockRate;
+};
+
+class OPL_DOSBOXdump : public OPLDump
+{
+public:
+	OPL_DOSBOXdump(FILE *file, bool dual) : OPLDump(file), Dual(dual)
+	{
+		assert(File != NULL);
+		fwrite("DBRAWOPL"
+			   "\0\0"		// Minor version number
+			   "\1\0"		// Major version number
+			   "\0\0\0\0"	// Total milliseconds
+			   "\0\0\0",	// Total data
+			   1, 20, File);
+		char type[4] = { (char)(Dual * 2), 0, 0, 0 };	// Single or dual OPL-2
+		fwrite(type, 1, 4, File);
+	}
+	virtual ~OPL_DOSBOXdump()
+	{
+		if (File != NULL)
+		{
+			long where_am_i = ftell(File);
+			DWORD len[2];
+
+			fseek(File, 12, SEEK_SET);
+			len[0] = LittleLong(CurIntTime);
+			len[1] = LittleLong(DWORD(where_am_i - 24));
+			fwrite(len, 4, 2, File);
+			fclose(File);
+		}
+	}
+	virtual void WriteReg(int reg, int v)
+	{
+		assert(File != NULL);
+		BYTE chipnum = reg >> 8;
+		if (chipnum != CurChip)
+		{
+			CurChip = chipnum;
+			fputc(chipnum + 2, File);
+		}
+		reg &= 255;
+		BYTE cmd[3] = { 4, BYTE(reg), BYTE(v) };
+		fwrite (cmd + (reg > 4), 1, 3 - (reg > 4), File);
+	}
+	virtual void WriteDelay(int ticks)
+	{
+		if (ticks > 0)
+		{ // DosBox only has millisecond-precise delays.
+			int delay;
+
+			CurTime += TimePerTick * ticks;
+			delay = int(CurTime + 0.5) - CurIntTime;
+			CurIntTime += delay;
+			while (delay > 65536)
+			{
+				BYTE cmd[3] = { 1, 255, 255 };
+				fwrite(cmd, 1, 2, File);
+				delay -= 65536;
+			}
+			delay--;
+			if (delay <= 255)
+			{
+				BYTE cmd[2] = { 0, BYTE(delay) };
+				fwrite(cmd, 1, 2, File);
+			}
+			else
+			{
+				assert(delay <= 65535);
+				BYTE cmd[3] = { 1, BYTE(delay & 255), BYTE(delay >> 8) };
+				fwrite(cmd, 1, 3, File);
+			}
+		}
+	}
+protected:
+	bool Dual;
+};
 
 //==========================================================================
 //
@@ -139,137 +335,32 @@ DiskWriterIO::~DiskWriterIO()
 //
 //==========================================================================
 
-int DiskWriterIO::OPLinit(uint numchips, bool, bool)
+int DiskWriterIO::OPLinit(uint numchips, bool, bool initopl3)
 {
-	// If the file extension is unknown or not present, the default format
-	// is RAW. Otherwise, you can use DRO.
-	if (Filename.Len() < 5 || stricmp(&Filename[Filename.Len() - 4], ".dro") != 0)
-	{
-		Format = FMT_RDOS;
-	}
-	else
-	{
-		Format = FMT_DOSBOX;
-	}
-	File = fopen(Filename, "wb");
-	if (File == NULL)
+	FILE *file = fopen(Filename, "wb");
+	if (file == NULL)
 	{
 		Printf("Could not open %s for writing.\n", Filename.GetChars());
 		return 0;
 	}
 
-	if (Format == FMT_RDOS)
+	numchips = clamp(numchips, 1u, 2u);
+	memset(chips, 0, sizeof(chips));
+	// If the file extension is unknown or not present, the default format
+	// is RAW. Otherwise, you can use DRO.
+	if (Filename.Len() < 5 || stricmp(&Filename[Filename.Len() - 4], ".dro") != 0)
 	{
-		fwrite("RAWADATA\0", 1, 10, File);
-		NeedClockRate = true;
+		chips[0] = new OPL_RDOSdump(file);
 	}
 	else
 	{
-		fwrite("DBRAWOPL"
-			   "\0\0"		// Minor version number
-			   "\1\0"		// Major version number
-			   "\0\0\0\0"	// Total milliseconds
-			   "\0\0\0",	// Total data
-			   1, 20, File);
-		if (numchips == 1)
-		{
-			fwrite("\0\0\0", 1, 4, File);	// Single OPL-2
-		}
-		else
-		{
-			fwrite("\2\0\0", 1, 4, File);	// Dual OPL-2
-		}
-		NeedClockRate = false;
+		chips[0] = new OPL_DOSBOXdump(file, numchips > 1);
 	}
-
-	TimePerTick = 0;
-	TickMul = 1;
-	CurTime = 0;
-	CurIntTime = 0;
-	CurChip = 0;
 	OPLchannels = OPL2CHANNELS * numchips;
-	OPLwriteInitState(false);
+	NumChips = numchips;
+	IsOPL3 = numchips > 1;
+	OPLwriteInitState(initopl3);
 	return numchips;
-}
-
-//==========================================================================
-//
-// DiskWriterIO :: OPLdeinit
-//
-//==========================================================================
-
-void DiskWriterIO::OPLdeinit()
-{
-	if (File != NULL)
-	{
-		if (Format == FMT_RDOS)
-		{
-			WORD endmark = 65535;
-			fwrite(&endmark, 2, 1, File);
-		}
-		else
-		{
-			long where_am_i = ftell(File);
-			DWORD len[2];
-
-			fseek(File, 12, SEEK_SET);
-			len[0] = LittleLong(CurIntTime);
-			len[1] = LittleLong(DWORD(where_am_i - 24));
-			fwrite(len, 4, 2, File);
-		}
-		fclose(File);
-		File = NULL;
-	}
-}
-
-//==========================================================================
-//
-// DiskWriterIO :: OPLwriteReg
-//
-//==========================================================================
-
-void DiskWriterIO::OPLwriteReg(int which, uint reg, uchar data)
-{
-	SetChip(which);
-	if (Format == FMT_RDOS)
-	{
-		if (reg != 0 && reg != 2 && (reg != 255 || data != 255))
-		{
-			BYTE cmd[2] = { data, BYTE(reg) };
-			fwrite(cmd, 1, 2, File);
-		}
-	}
-	else
-	{
-		BYTE cmd[3] = { 4, BYTE(reg), data };
-		fwrite (cmd + (reg > 4), 1, 3 - (reg > 4), File);
-	}
-}
-
-//==========================================================================
-//
-// DiskWriterIO :: SetChip
-//
-//==========================================================================
-
-void DiskWriterIO :: SetChip(int chipnum)
-{
-	assert(chipnum == 0 || chipnum == 1);
-
-	if (chipnum != CurChip)
-	{
-		CurChip = chipnum;
-		if (Format == FMT_RDOS)
-		{
-			BYTE switcher[2] = { BYTE(chipnum + 1), 2 };
-			fwrite(switcher, 1, 2, File);
-		}
-		else
-		{
-			BYTE switcher = chipnum + 2;
-			fwrite(&switcher, 1, 1, File);
-		}
-	}
 }
 
 //==========================================================================
@@ -280,39 +371,7 @@ void DiskWriterIO :: SetChip(int chipnum)
 
 void DiskWriterIO::SetClockRate(double samples_per_tick)
 {
-	TimePerTick = samples_per_tick / OPL_SAMPLE_RATE * 1000.0;
-
-	if (Format == FMT_RDOS)
-	{
-		double clock_rate;
-		int clock_mul;
-		WORD clock_word;
-
-		clock_rate = samples_per_tick * ADLIB_CLOCK_MUL;
-		clock_mul = 1;
-
-		// The RDos raw format's clock rate is stored in a word. Therefore,
-		// the longest tick that can be stored is only ~55 ms.
-		while (clock_rate / clock_mul + 0.5 > 65535.0)
-		{
-			clock_mul++;
-		}
-		clock_word = WORD(clock_rate / clock_mul + 0.5);
-
-		if (NeedClockRate)
-		{ // Set the initial clock rate.
-			clock_word = LittleShort(clock_word);
-			fseek(File, 8, SEEK_SET);
-			fwrite(&clock_word, 2, 1, File);
-			fseek(File, 0, SEEK_END);
-			NeedClockRate = false;
-		}
-		else
-		{ // Change the clock rate in the middle of the song.
-			BYTE clock_change[4] = { 0, 2, BYTE(clock_word & 255), BYTE(clock_word >> 8) };
-			fwrite(clock_change, 1, 4, File);
-		}
-	}
+	static_cast<OPLDump *>(chips[0])->SetClockRate(samples_per_tick);
 }
 
 //==========================================================================
@@ -323,50 +382,5 @@ void DiskWriterIO::SetClockRate(double samples_per_tick)
 
 void DiskWriterIO :: WriteDelay(int ticks)
 {
-	if (ticks <= 0)
-	{
-		return;
-	}
-	if (Format == FMT_RDOS)
-	{ // RDos raw has very precise delays but isn't very efficient at
-	  // storing long delays.
-		BYTE delay[2];
-
-		ticks *= TickMul;
-		delay[1] = 0;
-		while (ticks > 255)
-		{
-			ticks -= 255;
-			delay[0] = 255;
-			fwrite(delay, 1, 2, File);
-		}
-		delay[0] = BYTE(ticks);
-		fwrite(delay, 1, 2, File);
-	}
-	else
-	{ // DosBox only has millisecond-precise delays.
-		int delay;
-
-		CurTime += TimePerTick * ticks;
-		delay = int(CurTime + 0.5) - CurIntTime;
-		CurIntTime += delay;
-		while (delay > 65536)
-		{
-			BYTE cmd[3] = { 1, 255, 255 };
-			fwrite(cmd, 1, 2, File);
-			delay -= 65536;
-		}
-		delay--;
-		if (delay <= 255)
-		{
-			BYTE cmd[2] = { 0, BYTE(delay) };
-			fwrite(cmd, 1, 2, File);
-		}
-		else
-		{
-			assert(delay <= 65535);
-			BYTE cmd[3] = { 1, BYTE(delay & 255), BYTE(delay >> 8) };
-			fwrite(cmd, 1, 3, File);
-		}
-	}
+	static_cast<OPLDump *>(chips[0])->WriteDelay(ticks);
 }

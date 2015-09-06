@@ -22,6 +22,8 @@
 
 #if defined(_WIN32)
 
+#include "i_system.h"
+
 typedef HRESULT (WINAPI *GKFP)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
 
 //===========================================================================
@@ -73,18 +75,7 @@ bool UseKnownFolders()
 
 bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
 {
-	static GKFP SHGetKnownFolderPath = NULL;
-	static bool tested = false;
-
-	if (!tested)
-	{
-		tested = true;
-		HMODULE shell32 = GetModuleHandle("shell32.dll");
-		if (shell32 != NULL)
-		{
-			SHGetKnownFolderPath = (GKFP)GetProcAddress(shell32, "SHGetKnownFolderPath");
-		}
-	}
+	static TOptWin32Proc<GKFP> SHGetKnownFolderPath("shell32.dll", "SHGetKnownFolderPath");
 
 	char pathstr[MAX_PATH];
 
@@ -92,6 +83,13 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	// new to Vista, hence the reason we support both.
 	if (SHGetKnownFolderPath == NULL)
 	{
+		static TOptWin32Proc<HRESULT(WINAPI*)(HWND, int, HANDLE, DWORD, LPTSTR)>
+			SHGetFolderPathA("shell32.dll", "SHGetFolderPathA");
+
+		// NT4 doesn't even have this function.
+		if (SHGetFolderPathA == NULL)
+			return false;
+
 		if (shell_folder < 0)
 		{ // Not supported by SHGetFolderPath
 			return false;
@@ -100,7 +98,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 		{
 			shell_folder |= CSIDL_FLAG_CREATE;
 		}
-		if (FAILED(SHGetFolderPathA(NULL, shell_folder, NULL, 0, pathstr)))
+		if (FAILED(SHGetFolderPathA.Call(NULL, shell_folder, NULL, 0, pathstr)))
 		{
 			return false;
 		}
@@ -110,7 +108,7 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 	else
 	{
 		PWSTR wpath;
-		if (FAILED(SHGetKnownFolderPath(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
+		if (FAILED(SHGetKnownFolderPath.Call(known_folder, create ? KF_FLAG_CREATE : 0, NULL, &wpath)))
 		{
 			return false;
 		}
@@ -148,6 +146,7 @@ FString M_GetCachePath(bool create)
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
 	path += "/zdoom/cache";
+	path.Substitute("//", "/");	// needed because progdir ends with a slash.
 	return path;
 }
 
@@ -204,7 +203,7 @@ FString M_GetConfigPath(bool for_reading)
 	{
 		path += "/" GAME_DIR;
 		CreatePath(path);
-		path += "/zdoom.ini";
+		path += "/" GAMENAMELOWERCASE ".ini";
 	}
 	else
 	{ // construct "$PROGDIR/zdoom-$USER.ini"
@@ -224,11 +223,11 @@ FString M_GetConfigPath(bool for_reading)
 					*probe = '_';
 				++probe;
 			}
-			path << "zdoom-" << uname << ".ini";
+			path << GAMENAMELOWERCASE "-" << uname << ".ini";
 		}
 		else
 		{ // Couldn't get user name, so just use zdoom.ini
-			path += "zdoom.ini";
+			path += GAMENAMELOWERCASE ".ini";
 		}
 	}
 
@@ -239,7 +238,7 @@ FString M_GetConfigPath(bool for_reading)
 		if (!FileExists(path))
 		{
 			path = progdir;
-			path << "zdoom.ini";
+			path << GAMENAMELOWERCASE ".ini";
 		}
 	}
 
@@ -411,11 +410,11 @@ FString M_GetConfigPath(bool for_reading)
 		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
 	{
 		FString path;
-		path << cpath << "/zdoom.ini";
+		path << cpath << "/" GAMENAMELOWERCASE ".ini";
 		return path;
 	}
 	// Ungh.
-	return "zdoom.ini";
+	return GAMENAMELOWERCASE ".ini";
 }
 
 //===========================================================================
@@ -497,12 +496,12 @@ FString GetUserFile (const char *file)
 		// This can be removed after a release or two
 		// Transfer the old zdoom directory to the new location
 		bool moved = false;
-		FString oldpath = NicePath("~/.zdoom/");
+		FString oldpath = NicePath("~/." GAMENAMELOWERCASE "/");
 		if (stat (oldpath, &extrainfo) != -1)
 		{
 			if (rename(oldpath, path) == -1)
 			{
-				I_Error ("Failed to move old zdoom directory (%s) to new location (%s).",
+				I_Error ("Failed to move old " GAMENAMELOWERCASE " directory (%s) to new location (%s).",
 					oldpath.GetChars(), path.GetChars());
 			}
 			else
@@ -598,7 +597,7 @@ FString M_GetCajunPath(const char *botfilename)
 
 FString M_GetConfigPath(bool for_reading)
 {
-	return GetUserFile("zdoom.ini");
+	return GetUserFile(GAMENAMELOWERCASE ".ini");
 }
 
 //===========================================================================

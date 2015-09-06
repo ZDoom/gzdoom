@@ -38,14 +38,14 @@ static int it_mod_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels,
 	if (n_channels == 0) {
 		/* Read the first four channels, leaving gaps for the rest. */
 		for (pos = 0; pos < 64*8*4; pos += 8*4)
-			dumbfile_getnc(buffer + pos, 4*4, f);
+            dumbfile_getnc((char *)buffer + pos, 4*4, f);
 		/* Read the other channels into the gaps we left. */
 		for (pos = 4*4; pos < 64*8*4; pos += 8*4)
-			dumbfile_getnc(buffer + pos, 4*4, f);
+            dumbfile_getnc((char *)buffer + pos, 4*4, f);
 
 		n_channels = 8;
 	} else
-		dumbfile_getnc(buffer, 64 * n_channels * 4, f);
+        dumbfile_getnc((char *)buffer, 64 * n_channels * 4, f);
 
 	if (dumbfile_error(f))
 		return -1;
@@ -118,7 +118,7 @@ static int it_mod_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels,
 
 
 
-static int it_mod_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
+static int it_mod_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f, int stk)
 {
 	int finetune, loop_start, loop_length;
 
@@ -131,7 +131,7 @@ If
 the sample name begins with a '#' character (ASCII $23 (35)) then this is
 assumed not to be an instrument name, and is probably a message.
 */
-	dumbfile_getnc(sample->name, 22, f);
+    dumbfile_getnc((char *)sample->name, 22, f);
 	sample->name[22] = 0;
 
 	sample->filename[0] = 0;
@@ -141,7 +141,8 @@ assumed not to be an instrument name, and is probably a message.
 /** Each  finetune step changes  the note 1/8th  of  a  semitone. */
 	sample->global_volume = 64;
 	sample->default_volume = dumbfile_getc(f); // Should we be setting global_volume to this instead?
-	loop_start = dumbfile_mgetw(f) << 1;
+	loop_start = dumbfile_mgetw(f);
+	if ( !stk ) loop_start <<= 1;
 	loop_length = dumbfile_mgetw(f) << 1;
 	if ( loop_length > 2 && loop_start + loop_length > sample->length && loop_start / 2 + loop_length <= sample->length )
 		loop_start /= 2;
@@ -164,7 +165,7 @@ told to stop.
 	sample->flags = IT_SAMPLE_EXISTS;
 
 	sample->default_pan = 0;
-	sample->C5_speed = (int)( AMIGA_CLOCK / 214.0 ); //(int32)(16726.0*pow(DUMB_PITCH_BASE, finetune*32));
+	sample->C5_speed = (int)( AMIGA_CLOCK / 214.0 ); //(long)(16726.0*pow(DUMB_PITCH_BASE, finetune*32));
 	sample->finetune = finetune * 32;
 	// the above line might be wrong
 
@@ -270,209 +271,28 @@ static int it_mod_read_sample_data(IT_SAMPLE *sample, DUMBFILE *f, uint32 fft)
 
 
 
-typedef struct BUFFERED_MOD BUFFERED_MOD;
-
-struct BUFFERED_MOD
-{
-	unsigned char *buffered;
-	int32 ptr, len;
-	DUMBFILE *remaining;
-};
-
-
-
-static int buffer_mod_skip(void *f, int32 n)
-{
-	BUFFERED_MOD *bm = f;
-	if (bm->buffered) {
-		bm->ptr += n;
-		if (bm->ptr >= bm->len) {
-			free(bm->buffered);
-			bm->buffered = NULL;
-			return dumbfile_skip(bm->remaining, bm->ptr - bm->len);
-		}
-		return 0;
-	}
-	return dumbfile_skip(bm->remaining, n);
-}
-
-
-
-static int buffer_mod_getc(void *f)
-{
-	BUFFERED_MOD *bm = f;
-	if (bm->buffered) {
-		int rv = bm->buffered[bm->ptr++];
-		if (bm->ptr >= bm->len) {
-			free(bm->buffered);
-			bm->buffered = NULL;
-		}
-		return rv;
-	}
-	return dumbfile_getc(bm->remaining);
-}
-
-
-
-static int32 buffer_mod_getnc(char *ptr, int32 n, void *f)
-{
-	BUFFERED_MOD *bm = f;
-	if (bm->buffered) {
-		int left = bm->len - bm->ptr;
-		if (n >= left) {
-			memcpy(ptr, bm->buffered + bm->ptr, left);
-			free(bm->buffered);
-			bm->buffered = NULL;
-			if (n - left) {
-				int rv = dumbfile_getnc(ptr + left, n - left, bm->remaining);
-				return left + MAX(rv, 0);
-			} else {
-				return left;
-			}
-		}
-		memcpy(ptr, bm->buffered + bm->ptr, n);
-		bm->ptr += n;
-		return n;
-	}
-	return dumbfile_getnc(ptr, n, bm->remaining);
-}
-
-
-
-static void buffer_mod_close(void *f)
-{
-	BUFFERED_MOD *bm = f;
-	if (bm->buffered) free(bm->buffered);
-	/* Do NOT close bm->remaining */
-	free(f);
-}
-
-
-
-DUMBFILE_SYSTEM buffer_mod_dfs = {
-	NULL,
-	&buffer_mod_skip,
-	&buffer_mod_getc,
-	&buffer_mod_getnc,
-	&buffer_mod_close
-};
-
-
 
 #define MOD_FFT_OFFSET (20 + 31*(22+2+1+1+2+2) + 1 + 1 + 128)
 
-static DUMBFILE *dumbfile_buffer_mod(DUMBFILE *f, uint32 *fft)
-{
-	BUFFERED_MOD *bm = malloc(sizeof(*bm));
-	if (!bm) return NULL;
-
-	bm->buffered = malloc(MOD_FFT_OFFSET + 4);
-	if (!bm->buffered) {
-		free(bm);
-		return NULL;
-	}
-
-	bm->len = dumbfile_getnc(bm->buffered, MOD_FFT_OFFSET + 4, f);
-
-	if (bm->len > 0) {
-		if (bm->len >= MOD_FFT_OFFSET + 4)
-			*fft = (uint32)bm->buffered[MOD_FFT_OFFSET  ] << 24
-			     | (uint32)bm->buffered[MOD_FFT_OFFSET+1] << 16
-			     | (uint32)bm->buffered[MOD_FFT_OFFSET+2] << 8
-			     | (uint32)bm->buffered[MOD_FFT_OFFSET+3];
-		else
-			*fft = 0;
-		bm->ptr = 0;
-	} else {
-		free(bm->buffered);
-		bm->buffered = NULL;
-	}
-
-	bm->remaining = f;
-
-	return dumbfile_open_ex(bm, &buffer_mod_dfs);
-}
-
-static DUMBFILE *dumbfile_buffer_mod_2(DUMBFILE *f, int n_samples, IT_SAMPLE *sample, int32 *total_sample_size, int32 *remain)
-{
-	int32 read;
-	int sample_number;
-	BUFFERED_MOD *bm = malloc(sizeof(*bm));
-	unsigned char *ptr;
-	if (!bm) return NULL;
-
-	bm->buffered = malloc(32768);
-	if (!bm->buffered) {
-		free(bm);
-		return NULL;
-	}
-
-	bm->len = 0;
-	*remain = 0;
-
-	read = dumbfile_getnc(bm->buffered, 32768, f);
-
-	if (read >= 0) {
-		bm->len += read;
-		*remain += read;
-
-		while (read >= 32768) {
-			bm->buffered = realloc(bm->buffered, *remain + 32768);
-			if (!bm->buffered) {
-				free(bm);
-				return 0;
-			}
-			read = dumbfile_getnc(bm->buffered + *remain, 32768, f);
-			if (read >= 0) {
-				bm->len += read;
-				*remain += read;
-			}
-		}
-	}
-
-	if (*remain) {
-		bm->ptr = 0;
-		ptr = bm->buffered + *remain;
-		sample_number = n_samples - 1;
-		*total_sample_size = 0;
-		while (ptr > bm->buffered && sample_number >= 0) {
-			if (sample[sample_number].flags & IT_SAMPLE_EXISTS) {
-				ptr -= (sample[sample_number].length + 1) / 2 + 5 + 16;
-				if (ptr >= bm->buffered && !memcmp(ptr, "ADPCM", 5)) { /* BAH */
-					*total_sample_size += (sample[sample_number].length + 1) / 2 + 5 + 16;
-				} else {
-					*total_sample_size += sample[sample_number].length;
-					ptr -= sample[sample_number].length - ((sample[sample_number].length + 1) / 2 + 5 + 16);
-				}
-			}
-			sample_number--;
-		}
-	} else {
-		free(bm->buffered);
-		bm->buffered = NULL;
-	}
-
-	bm->remaining = f;
-
-	return dumbfile_open_ex(bm, &buffer_mod_dfs);
-}
-
-
-static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
+static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int restrict_)
 {
 	DUMB_IT_SIGDATA *sigdata;
 	int n_channels;
 	int i;
-	uint32 fft = 0;
-	DUMBFILE *rem = NULL;
+	uint32 fft;
 
-	f = dumbfile_buffer_mod(f, &fft);
-	if (!f)
-		return NULL;
+    if ( dumbfile_seek(f, MOD_FFT_OFFSET, DFS_SEEK_SET) )
+        return NULL;
+
+    fft = dumbfile_mgetl(f);
+    if (dumbfile_error(f))
+        return NULL;
+
+    if ( dumbfile_seek(f, 0, DFS_SEEK_SET) )
+        return NULL;
 
 	sigdata = malloc(sizeof(*sigdata));
 	if (!sigdata) {
-		dumbfile_close(f);
 		return NULL;
 	}
 
@@ -481,10 +301,9 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
                              full 20 chars in length, it will be null-
                              terminated.
 	*/
-	if (dumbfile_getnc(sigdata->name, 20, f) < 20) {
+    if (dumbfile_getnc((char *)sigdata->name, 20, f) < 20) {
 		free(sigdata);
-		dumbfile_close(f);
-		return NULL;
+        return NULL;
 	}
 	sigdata->name[20] = 0;
 
@@ -567,11 +386,10 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	}
 
 	// moo
-	if ( ( rstrict & 1 ) && sigdata->n_samples == 15 )
+	if ( ( restrict_ & 1 ) && sigdata->n_samples == 15 )
 	{
 		free(sigdata);
-		dumbfile_close(f);
-		return NULL;
+        return NULL;
 	}
 
 	sigdata->n_pchannels = n_channels ? n_channels : 8; /* special case for 0, see above */
@@ -579,8 +397,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	sigdata->sample = malloc(sigdata->n_samples * sizeof(*sigdata->sample));
 	if (!sigdata->sample) {
 		free(sigdata);
-		dumbfile_close(f);
-		return NULL;
+        return NULL;
 	}
 
 	sigdata->song_message = NULL;
@@ -596,10 +413,9 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		sigdata->sample[i].data = NULL;
 
 	for (i = 0; i < sigdata->n_samples; i++) {
-		if (it_mod_read_sample_header(&sigdata->sample[i], f)) {
+		if (it_mod_read_sample_header(&sigdata->sample[i], f, sigdata->n_samples == 15)) {
 			_dumb_it_unload_sigdata(sigdata);
-			dumbfile_close(f);
-			return NULL;
+            return NULL;
 		}
 	}
 
@@ -609,8 +425,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 /*	if (sigdata->n_orders <= 0 || sigdata->n_orders > 128) { // is this right?
 		_dumb_it_unload_sigdata(sigdata);
-		dumbfile_close(f);
-		return NULL;
+        return NULL;
 	}*/
 
 	//if (sigdata->restart_position >= sigdata->n_orders)
@@ -619,13 +434,11 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	sigdata->order = malloc(128); /* We may need to scan the extra ones! */
 	if (!sigdata->order) {
 		_dumb_it_unload_sigdata(sigdata);
-		dumbfile_close(f);
-		return NULL;
+        return NULL;
 	}
-	if (dumbfile_getnc(sigdata->order, 128, f) < 128) {
+    if (dumbfile_getnc((char *)sigdata->order, 128, f) < 128) {
 		_dumb_it_unload_sigdata(sigdata);
-		dumbfile_close(f);
-		return NULL;
+        return NULL;
 	}
 
 	if (sigdata->n_orders <= 0 || sigdata->n_orders > 128) { // is this right?
@@ -648,44 +461,67 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 	sigdata->n_patterns = -1;
 
-	if ( ( rstrict & 2 ) )
+    if ( ( restrict_ & 2 ) )
 	{
-		int32 total_sample_size;
-		int32 remain;
-		rem = f;
-		f = dumbfile_buffer_mod_2(rem, sigdata->n_samples, sigdata->sample, &total_sample_size, &remain);
-		if (!f) {
-			_dumb_it_unload_sigdata(sigdata);
-			dumbfile_close(rem);
-			return NULL;
-		}
+        unsigned char buffer[5];
+        long sample_number;
+        long total_sample_size;
+        long offset = dumbfile_pos(f);
+        long remain = dumbfile_get_size(f) - offset;
+        if ( dumbfile_error( f ) ||
+             dumbfile_seek( f, 0, SEEK_END ) ) {
+            _dumb_it_unload_sigdata(sigdata);
+            return NULL;
+        }
+        sample_number = sigdata->n_samples - 1;
+        total_sample_size = 0;
+        while (dumbfile_pos(f) > offset && sample_number >= 0) {
+            if (sigdata->sample[sample_number].flags & IT_SAMPLE_EXISTS) {
+                if ( dumbfile_seek(f, -((sigdata->sample[sample_number].length + 1) / 2 + 5 + 16), DFS_SEEK_CUR) ||
+                     dumbfile_getnc((char *)buffer, 5, f) < 5 ) {
+                    _dumb_it_unload_sigdata(sigdata);
+                    return NULL;
+                }
+                if ( !memcmp( buffer, "ADPCM", 5 ) ) { /* BAH */
+                    total_sample_size += (sigdata->sample[sample_number].length + 1) / 2 + 5 + 16;
+                    if ( dumbfile_seek(f, -5, DFS_SEEK_CUR) ) {
+                        _dumb_it_unload_sigdata(sigdata);
+                        return NULL;
+                    }
+                } else {
+                    total_sample_size += sigdata->sample[sample_number].length;
+                    if ( dumbfile_seek(f, -(sigdata->sample[sample_number].length - ((sigdata->sample[sample_number].length + 1) / 2 + 5 + 16) + 5), DFS_SEEK_CUR) ) {
+                        _dumb_it_unload_sigdata(sigdata);
+                        return NULL;
+                    }
+                }
+            }
+            --sample_number;
+        }
+
 		if (remain > total_sample_size) {
 			sigdata->n_patterns = ( remain - total_sample_size + 4 ) / ( 256 * sigdata->n_pchannels );
 			if (fft == DUMB_ID('M',0,0,0) || fft == DUMB_ID('8',0,0,0)) {
 				remain -= sigdata->n_patterns * 256 * sigdata->n_pchannels;
 				if (dumbfile_skip(f, remain - total_sample_size)) {
 					_dumb_it_unload_sigdata(sigdata);
-					dumbfile_close(f);
-					dumbfile_close(rem);
 					return NULL;
 				}
 			}
 		}
 	}
 	else
-	{
-		for (i = 0; i < 128; i++)
-		{
-			if (sigdata->order[i] > sigdata->n_patterns)
-				sigdata->n_patterns = sigdata->order[i];
-		}
+    {
+        for (i = 0; i < 128; i++)
+        {
+            if (sigdata->order[i] > sigdata->n_patterns)
+                sigdata->n_patterns = sigdata->order[i];
+        }
 		sigdata->n_patterns++;
 	}
 
 	if ( sigdata->n_patterns <= 0 ) {
 		_dumb_it_unload_sigdata(sigdata);
-		dumbfile_close(f);
-		if (rem) dumbfile_close(rem);
 		return NULL;
 	}
 
@@ -698,8 +534,6 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	sigdata->pattern = malloc(sigdata->n_patterns * sizeof(*sigdata->pattern));
 	if (!sigdata->pattern) {
 		_dumb_it_unload_sigdata(sigdata);
-		dumbfile_close(f);
-		if (rem) dumbfile_close(rem);
 		return NULL;
 	}
 	for (i = 0; i < sigdata->n_patterns; i++)
@@ -710,16 +544,12 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		unsigned char *buffer = malloc(256 * sigdata->n_pchannels); /* 64 rows * 4 bytes */
 		if (!buffer) {
 			_dumb_it_unload_sigdata(sigdata);
-			dumbfile_close(f);
-			if (rem) dumbfile_close(rem);
 			return NULL;
 		}
 		for (i = 0; i < sigdata->n_patterns; i++) {
 			if (it_mod_read_pattern(&sigdata->pattern[i], f, n_channels, buffer) != 0) {
 				free(buffer);
 				_dumb_it_unload_sigdata(sigdata);
-				dumbfile_close(f);
-				if (rem) dumbfile_close(rem);
 				return NULL;
 			}
 		}
@@ -730,8 +560,6 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	for (i = 0; i < sigdata->n_samples; i++) {
 		if (it_mod_read_sample_data(&sigdata->sample[i], f, fft)) {
 			_dumb_it_unload_sigdata(sigdata);
-			dumbfile_close(f);
-			if (rem) dumbfile_close(rem);
 			return NULL;
 		}
 	}
@@ -754,10 +582,6 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		}
 	}*/
 
-	dumbfile_close(f); /* Destroy the BUFFERED_MOD DUMBFILE we were using. */
-	if (rem) dumbfile_close(rem); /* And the BUFFERED_MOD DUMBFILE used to pre-read the signature. */
-	/* The DUMBFILE originally passed to our function is intact. */
-
 	/* Now let's initialise the remaining variables, and we're done! */
 	sigdata->flags = IT_WAS_AN_XM | IT_WAS_A_MOD | IT_OLD_EFFECTS | IT_COMPATIBLE_GXX | IT_STEREO;
 
@@ -773,10 +597,11 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 	memset(sigdata->channel_volume, 64, DUMB_IT_N_CHANNELS);
 
 	for (i = 0; i < DUMB_IT_N_CHANNELS; i += 4) {
-		sigdata->channel_pan[i+0] = 16;
-		sigdata->channel_pan[i+1] = 48;
-		sigdata->channel_pan[i+2] = 48;
-		sigdata->channel_pan[i+3] = 16;
+		int sep = 32 * dumb_it_default_panning_separation / 100;
+		sigdata->channel_pan[i+0] = 32 - sep;
+		sigdata->channel_pan[i+1] = 32 + sep;
+		sigdata->channel_pan[i+2] = 32 + sep;
+		sigdata->channel_pan[i+3] = 32 - sep;
 	}
 
 	_dumb_it_fix_invalid_orders(sigdata);
@@ -786,13 +611,13 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 
 
 
-DUH *DUMBEXPORT dumb_read_mod_quick(DUMBFILE *f, int rstrict)
+DUH *DUMBEXPORT dumb_read_mod_quick(DUMBFILE *f, int restrict_)
 {
 	sigdata_t *sigdata;
 
 	DUH_SIGTYPE_DESC *descptr = &_dumb_sigtype_it;
 
-	sigdata = it_mod_load_sigdata(f, rstrict);
+	sigdata = it_mod_load_sigdata(f, restrict_);
 
 	if (!sigdata)
 		return NULL;
@@ -800,7 +625,7 @@ DUH *DUMBEXPORT dumb_read_mod_quick(DUMBFILE *f, int rstrict)
 	{
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		tag[1][1] = "MOD";
 		return make_duh(-1, 2, (const char *const (*)[2])tag, 1, &descptr, &sigdata);

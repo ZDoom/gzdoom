@@ -1,0 +1,191 @@
+
+/****************************************************************************/
+/*																			*/
+/* HEXEN SOUNDS																*/
+/*																			*/
+/****************************************************************************/
+
+$rolloff * custom 0 2025
+
+$pitchshiftrange 3
+
+$random PlayerFighterExtremeDeathPicker	{ PlayerFighterExtreme1Death
+					  PlayerFighterExtreme2Death
+					  PlayerFighterExtreme3Death }
+
+$playeralias	fighter	male	*death		PlayerFighterNormalDeath
+$playeralias	fighter	male	*crazydeath	PlayerFighterCrazyDeath
+$playeralias	fighter	male	*burndeath	PlayerFighterBurnDeath
+$playeralias	fighter	male	*xdeath		PlayerFighterExtremeDeathPicker
+$playeralias	fighter	male	*pain100	PlayerFighterPain
+$playersounddup	fighter	male	*pain75		*pain100
+$playersounddup	fighter	male	*pain50		*pain100
+$playersounddup	fighter	male	*pain25		*pain100
+$playeralias	fighter	male	*grunt		PlayerFighterGrunt
+$playeralias	fighter	male	*land		PlayerLand
+$playeralias	fighter	male	*poison		PlayerPoisonCough
+$playeralias	fighter	male	*falling	PlayerFighterFallingScream
+$playeralias	fighter	male	*splat		PlayerFallingSplat
+$playeralias	fighter	male	*usefail	PlayerFighterFailedUse
+$playeralias	fighter	male	*puzzfail	PuzzleFailFighter
+$playersound	fighter	male	*jump		fgtjump
+$playeralias	fighter male 	*fistgrunt	FighterGrunt
+
+$random PlayerClericExtremeDeathPicker	{ PlayerClericExtreme1Death
+					  PlayerClericExtreme2Death
+					  PlayerClericExtreme3Death }
+
+$playeralias	cleric	male	*death		PlayerClericNormalDeath
+$playeralias	cleric	male	*crazydeath	PlayerClericCrazyDeath
+$playeralias	cleric	male	*burndeath	PlayerClericBurnDeath
+$playeralias	cleric	male	*xdeath		PlayerClericExtremeDeathPicker
+$playeralias	cleric	male	*pain100	PlayerClericPain
+$playersounddup	cleric	male	*pain75		*pain100
+$playersounddup	cleric	male	*pain50		*pain100
+$playersounddup	cleric	male	*pain25		*pain100
+$playeralias	cleric	male	*grunt		PlayerClericGrunt
+$playeralias	cleric	male	*land		PlayerLand
+$playeralias	cleric	male	*poison		PlayerPoisonCough
+$playeralias	cleric	male	*falling	PlayerClericFallingScream
+$playeralias	cleric	male	*splat		PlayerFallingSplat
+$playeralias	cleric	male	*usefail	PlayerClericFailedUse
+$playeralias	cleric	male	*puzzfail	PuzzleFailCleric
+$playersound	cleric	male	*jump		plrjump
+
+$random PlayerMageExtremeDeathPicker	{ PlayerMageExtreme1Death
+					  PlayerMageExtreme2Death
+					  PlayerMageExtreme3Death }
+
+$playeralias	mage	male	*death		PlayerMageNormalDeath
+$playeralias	mage	male	*crazydeath	PlayerMageCrazyDeath
+$playeralias	mage	male	*burndeath	PlayerMageBurnDeath
+$playeralias	mage	male	*xdeath		PlayerMageExtremeDeathPicker
+$playeralias	mage	male	*pain100	PlayerMagePain
+$playersounddup	mage	male	*pain75		*pain100
+$playersounddup	mage	male	*pain50		*pain100
+$playersounddup	mage	male	*pain25		*pain100
+$playeralias	mage	male	*grunt		PlayerMageGrunt
+$playeralias	mage	male	*land		PlayerLand
+$playeralias	mage	male	*poison		PlayerPoisonCough
+$playeralias	mage	male	*falling	PlayerMageFallingScream
+$playeralias	mage	male	*splat		PlayerFallingSplat
+$playeralias	mage	male	*usefail	PlayerMageFailedUse
+$playeralias	mage	male	*puzzfail	PuzzleFailMage
+$playersound	mage	male	*jump		mgjump
+
+$playeralias   	pig     male   	*usefail   	PigActive1
+$playeralias   	pig     male   	*puzzfail   PigActive2
+$playeralias   	pig     male   	*grunt   	PigActive1
+$playeralias   	pig     male   	*land      	PigActive2
+$playeralias   	pig     male   	*jump      	PigActive1
+$playeralias   	pig     male   	*poison   	PigActive2
+$playeralias   	pig     male   	*falling   	PigPain
+$playeralias   	pig     male   	*splat   	PigDeath
+
+$alias world/drip		Ambient10
+$alias world/watersplash	WaterSplash
+$alias world/lavasizzle		LavaSizzle
+$alias world/sludgegloop	SludgeGloop
+$alias world/wind		Wind
+$alias world/quake		Earthquake
+$alias world/thunder		ThunderCrash
+
+$alias misc/w_pkup		PickupWeapon
+$alias misc/p_pkup		PickupArtifact
+$alias misc/k_pkup		PickupKey
+$alias misc/i_pkup		PickupItem
+$alias misc/spawn		Respawn
+$alias misc/teleport		Teleport
+$alias misc/keytry		DoorLocked
+$alias misc/invuse		UseArtifact
+$alias misc/freeze		FreezeDeath
+$alias misc/icebreak		FreezeShatter
+
+$alias misc/chat		Chat
+$alias misc/chat2		Chat
+
+$alias misc/fallingsplat	PlayerFallingSplat
+
+$alias minotaur/sight		MaulatorSight
+$alias minotaur/pain		MaulatorPain
+$alias minotaur/death		MaulatorDeath
+$alias minotaur/active		MaulatorActive
+$alias minotaur/attack1		MaulatorHamHit
+$alias minotaur/attack2		MaulatorHamSwing
+
+$random BishopActiveSounds	{ BishopActive BishopSight }
+$random PigActive		{ PigActive1 PigActive2 }
+
+$limit PlayerFighterFailedUse	1
+$limit PlayerClericFailedUse	1
+$limit PlayerMageFailedUse	1
+$limit SorcererBallWoosh	4
+$limit SorcererBallBounce	3
+$limit SorcererBallExplode	3
+$limit SorcererBallPop		3
+$limit SorcererBigBallExplode	3
+$limit Ambient1			1
+$limit Ambient2			1
+$limit Ambient3			1
+$limit Ambient4			1
+$limit Ambient5			1
+$limit Ambient6			1
+$limit Ambient7			1
+$limit Ambient8			1
+$limit Ambient9			1
+$limit Ambient10		1
+$limit Ambient11		1
+$limit Ambient12		1
+$limit Ambient13		1
+$limit Ambient14		1
+$limit Ambient15		1
+$limit MysticIncant		4
+
+$pitchshift PlayerMageNormalDeath	0
+$pitchshift PlayerMageCrazyDeath	0
+$pitchshift PlayerMageExtreme1Death	0
+$pitchshift PlayerMageExtreme2Death	0
+$pitchshift PlayerMageExtreme3Death	0
+$pitchshift PlayerMageBurnDeath		0
+$pitchshift PlayerMagePain		0
+$pitchshift PlayerMageGrunt		0
+$pitchshift PlayerMageFallingScream	0
+$pitchshift PlayerMageFailedUse		0
+$pitchshift PickupWeapon		0
+$pitchshift PickupPiece			0
+$pitchshift WeaponBuild			0
+$pitchshift BellRing			0
+
+$alias menu/activate		DoorCloseLight
+$alias menu/backup		PickupKey
+$alias menu/prompt		Chat
+$alias menu/cursor		FighterHammerHitWall
+$alias menu/change		PickupKey
+$alias menu/invalid		DoorCloseMetal	// Hexen does not use this, but I do
+$alias menu/dismiss		PlatformStop
+$alias menu/choose		DoorCloseLight
+$alias menu/clear		PlatformStop
+
+// Hexen does not have ripslop sound like Heretic
+misc/ripslop			dsempty
+misc/netnotch			blddrp1
+
+$alias				intermission/cooptotal		*death
+$alias				intermission/nextstage		DoorCloseLight
+$alias				intermission/paststats		PlatformStop
+$alias				intermission/pastcoopstats	PlatformStop
+$alias				intermission/pastdmstats	*gibbed
+
+$limit DoorCloseLight 4
+
+$limit PuppyBeat 0
+$limit CeantaurPain 0
+$limit BishopPain 0
+$limit SerpentPain 0
+$limit DemonPain 0
+$limit WraithPain 0
+$limit MaulatorPain 0
+$limit EttinPain 0
+$limit FireDemonPain 0
+$limit SorcererPain 0
+$limit DragonPain 0

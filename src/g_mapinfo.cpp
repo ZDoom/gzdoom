@@ -312,6 +312,11 @@ FString level_info_t::LookupLevelName()
 			{
 				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(&MapName[5]));
 			}
+			else
+			{
+				// make sure nothing is stripped.
+				checkstring[0] = '\0';
+			}
 			thename = strstr (lookedup, checkstring);
 			if (thename == NULL)
 			{
@@ -705,8 +710,6 @@ void FMapInfoParser::ParseCluster()
 		}
 		else if (sc.Compare("music"))
 		{
-			int order = 0;
-
 			ParseAssign();
 			ParseMusic(clusterinfo->MessageMusic, clusterinfo->musicorder);
 		}
@@ -1063,6 +1066,25 @@ DEFINE_MAP_OPTION(PrecacheSounds, true)
 		else
 		{
 			info->PrecacheSounds.Push(snd);
+		}
+	} while (parse.sc.CheckString(","));
+}
+
+DEFINE_MAP_OPTION(PrecacheTextures, true)
+{
+	parse.ParseAssign();
+
+	do
+	{
+		parse.sc.MustGetString();
+		FTextureID tex = TexMan.CheckForTexture(parse.sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_ReturnFirst);
+		if (!tex.isValid())
+		{
+			parse.sc.ScriptMessage("Unknown texture \"%s\"", parse.sc.String);
+		}
+		else
+		{
+			info->PrecacheTextures.Push(tex);
 		}
 	} while (parse.sc.CheckString(","));
 }
@@ -1857,6 +1879,42 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 			else
 			{
 				sc.ScriptError("intermission definitions not supported with old MAPINFO syntax");
+			}
+		}
+		else if (sc.Compare("doomednums"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseDoomEdNums();
+			}
+			else
+			{
+				sc.ScriptError("doomednums definitions not supported with old MAPINFO syntax");
+			}
+		}
+		else if (sc.Compare("spawnnums"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseSpawnNums();
+			}
+			else
+			{
+				sc.ScriptError("spawnnums definitions not supported with old MAPINFO syntax");
+			}
+		}
+		else if (sc.Compare("conversationids"))
+		{
+			if (format_type != FMT_Old)
+			{
+				format_type = FMT_New;
+				ParseConversationIDs();
+			}
+			else
+			{
+				sc.ScriptError("conversationids definitions not supported with old MAPINFO syntax");
 			}
 		}
 		else if (sc.Compare("automap") || sc.Compare("automap_overlay"))

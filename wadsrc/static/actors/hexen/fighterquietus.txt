@@ -8,15 +8,12 @@ ACTOR FighterWeaponPiece : WeaponPiece
 	Inventory.ForbiddenTo ClericPlayer, MagePlayer
 	WeaponPiece.Weapon FWeapQuietus
 	+FLOATBOB
-	+NOGRAVITY
 }
 
 // Fighter Weapon Piece 1 ---------------------------------------------------
 
-ACTOR FWeaponPiece1 : FighterWeaponPiece 12
+ACTOR FWeaponPiece1 : FighterWeaponPiece
 {
-	Game Hexen
-	SpawnID 29
 	WeaponPiece.Number 1
 	States
 	{
@@ -28,10 +25,8 @@ ACTOR FWeaponPiece1 : FighterWeaponPiece 12
 
 // Fighter Weapon Piece 2 ---------------------------------------------------
 
-ACTOR FWeaponPiece2 : FighterWeaponPiece 13
+ACTOR FWeaponPiece2 : FighterWeaponPiece
 {
-	Game Hexen
-	SpawnID 30
 	WeaponPiece.Number 2
 	States
 	{
@@ -43,10 +38,8 @@ ACTOR FWeaponPiece2 : FighterWeaponPiece 13
 
 // Fighter Weapon Piece 3 ---------------------------------------------------
 
-ACTOR FWeaponPiece3 : FighterWeaponPiece 16
+ACTOR FWeaponPiece3 : FighterWeaponPiece
 {
-	Game Hexen
-	SpawnID 31
 	WeaponPiece.Number 3
 	States
 	{
@@ -73,7 +66,6 @@ ACTOR QuietusDrop
 
 ACTOR FWeapQuietus : FighterWeapon
 {
-	Game Hexen
 	Health 3
 	Weapon.SelectionOrder 2900
 	+WEAPON.PRIMARY_USES_BOTH

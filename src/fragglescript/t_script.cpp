@@ -452,9 +452,9 @@ bool DFraggleThinker::wait_finished(DRunningScript *script)
 		
     case wt_tagwait:
 		{
-			int secnum = -1;
-			
-			while ((secnum = P_FindSectorFromTag(script->wait_data, secnum)) >= 0)
+			int secnum;
+			FSectorTagIterator itr(script->wait_data);
+			while ((secnum = itr.Next()) >= 0)
 			{
 				sector_t *sec = &sectors[secnum];
 				if(sec->floordata || sec->ceilingdata || sec->lightingdata)

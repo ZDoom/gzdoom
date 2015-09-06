@@ -1,9 +1,7 @@
 // Health bonus -------------------------------------------------------------
 
-ACTOR HealthBonus : Health 2014
+ACTOR HealthBonus : Health
 {
-	Game Doom
-	SpawnID 152
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.Amount 1
@@ -19,10 +17,8 @@ ACTOR HealthBonus : Health 2014
 	
 // Stimpack -----------------------------------------------------------------
 
-ACTOR Stimpack : Health 2011
+ACTOR Stimpack : Health
 {
-	Game Doom
-	SpawnID 23
 	Inventory.Amount 10
 	Inventory.PickupMessage "$GOTSTIM"
 	States
@@ -35,10 +31,8 @@ ACTOR Stimpack : Health 2011
 
 // Medikit -----------------------------------------------------------------
 
-ACTOR Medikit : Health 2012
+ACTOR Medikit : Health
 {
-	Game Doom
-	SpawnID 24
 	Inventory.Amount 25
 	Inventory.PickupMessage "$GOTMEDIKIT"
 	Health.LowMessage 25, "$GOTMEDINEED"

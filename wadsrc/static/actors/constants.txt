@@ -72,6 +72,11 @@ const int SXF_SETTARGET =				1 << 20;
 const int SXF_SETTRACER =				1 << 21;
 const int SXF_NOPOINTERS =				1 << 22;
 const int SXF_ORIGINATOR =				1 << 23;
+const int SXF_TRANSFERSPRITEFRAME	=	1 << 24;
+const int SXF_TRANSFERROLL =			1 << 25;
+const int SXF_ISTARGET				=	1 << 26;
+const int SXF_ISMASTER				=	1 << 27;
+const int SXF_ISTRACER				=	1 << 28;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;
@@ -138,6 +143,7 @@ const int MRF_NEWTIDBEHAVIOUR = 256;
 const int MRF_UNDOBYDEATH = 512;
 const int MRF_UNDOBYDEATHFORCED = 1024;
 const int MRF_UNDOBYDEATHSAVES = 2048;
+const int MRF_UNDOALWAYS = 4096;
 
 // Flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT = 1;
@@ -196,6 +202,7 @@ enum
 	TF_NODESTFOG =		0x00000080, // Don't spawn any fog at the arrival position.
 	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
 	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
+	TF_OVERRIDE =		0x00000400, // Ignore NOTELEPORT.
 
 	TF_KEEPORIENTATION = TF_KEEPVELOCITY|TF_KEEPANGLE,
 	TF_NOFOG = TF_NOSRCFOG|TF_NODESTFOG,
@@ -220,6 +227,12 @@ enum
 	RGF_CUBE		=	1 << 9,
 	RGF_NOSIGHT		=	1 << 10,
 	RGF_MISSILES	=	1 << 11,
+	RGF_INCLUSIVE	=	1 << 12,
+	RGF_ITEMS		=	1 << 13,
+	RGF_KILLED		=	1 << 14,
+	RGF_EXFILTER	=	1 << 15,
+	RGF_EXSPECIES	=	1 << 16,
+	RGF_EITHER		=	1 << 17,
 };
 
 // Activation flags
@@ -345,8 +358,11 @@ Const Int WARPF_TOFLOOR = 0x100;
 Const Int WARPF_TESTONLY = 0x200;
 Const Int WAPRF_ABSOLUTEPOSITION = 0x400;
 Const Int WARPF_ABSOLUTEPOSITION = 0x400;
+Const Int WARPF_BOB = 0x800;
+Const Int WARPF_MOVEPTR = 0x1000;
+Const Int WARPF_USETID = 0x2000;
 
-// flags for A_SetPitch/SetAngle
+// flags for A_SetPitch/SetAngle/SetRoll
 const int SPF_FORCECLAMP = 1;
 const int SPF_INTERPOLATE = 2;
 
@@ -445,6 +461,25 @@ enum
 	FTF_CLAMP =		1 << 1,
 };
 
+// Flags for A_Face*
+enum
+{
+	FAF_BOTTOM = 1,
+	FAF_MIDDLE = 2,
+	FAF_TOP = 4,
+	FAF_NODISTFACTOR = 8,
+};
+
+// Flags for A_QuakeEx
+enum
+{
+	QF_RELATIVE =		1,
+	QF_SCALEDOWN =		1 << 1,
+	QF_SCALEUP =		1 << 2,
+	QF_MAX =			1 << 3,
+	QF_FULLINTENSITY =	1 << 4,
+	QF_WAVE =			1 << 5,
+};
 
 // This is only here to provide one global variable for testing.
 native int testglobalvar;

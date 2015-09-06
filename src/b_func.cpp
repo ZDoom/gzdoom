@@ -123,7 +123,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return (angle_t)abs (R_PointToAngle2 (player->mo->x, player->mo->y, to->x, to->y) - player->mo->angle) <= vangle/2;
+	return absangle(R_PointToAngle2 (player->mo->x, player->mo->y, to->x, to->y) - player->mo->angle) <= vangle/2;
 }
 
 //-------------------------------------
@@ -210,7 +210,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 			{
 				angle = an;
 				//have to be somewhat precise. to avoid suicide.
-				if (abs (angle - player->mo->angle) < 12*ANGLE_1)
+				if (absangle(angle - player->mo->angle) < 12*ANGLE_1)
 				{
 					t_rocket = 9;
 					no_fire = false;
@@ -252,7 +252,7 @@ shootmissile:
 				angle -= m;
 		}
 
-		if (abs (angle - player->mo->angle) < 4*ANGLE_1)
+		if (absangle(angle - player->mo->angle) < 4*ANGLE_1)
 		{
 			increase = !increase;
 		}
@@ -513,7 +513,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 
 	bglobal.SetBodyAt (enemy->x + FixedMul(enemy->velx, (m+2*FRACUNIT)),
 					   enemy->y + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
-	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
+	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
@@ -544,7 +544,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 // creating side-effects during gameplay.
 bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm)
 {
-	int savedFlags = actor->flags;
+	ActorFlags savedFlags = actor->flags;
 	actor->flags &= ~MF_PICKUP;
 	bool res = P_CheckPosition (actor, x, y, tm);
 	actor->flags = savedFlags;

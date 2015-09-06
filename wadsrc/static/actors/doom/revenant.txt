@@ -3,10 +3,8 @@
 // Revenant
 //
 //===========================================================================
-ACTOR Revenant 66
+ACTOR Revenant
 {
-	Game Doom
-	SpawnID 20
 	Health 300
 	Radius 20
 	Height 56
@@ -70,8 +68,6 @@ ACTOR Revenant 66
 //===========================================================================
 ACTOR RevenantTracer
 {
-	Game Doom
-	SpawnID 53
 	Radius 11
 	Height 8
 	Speed 10

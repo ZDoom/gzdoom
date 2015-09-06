@@ -35,7 +35,7 @@ static int it_asy_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 
 	pattern->n_rows = 64;
 
-	if ( dumbfile_getnc( buffer, 64 * 8 * 4, f ) != 64 * 8 * 4 )
+    if ( dumbfile_getnc( (char *) buffer, 64 * 8 * 4, f ) != 64 * 8 * 4 )
 		return -1;
 
 	/* compute number of entries */
@@ -72,6 +72,13 @@ static int it_asy_read_pattern( IT_PATTERN *pattern, DUMBFILE *f, unsigned char 
 				}
 
 				_dumb_it_xm_convert_effect( buffer[ pos + 2 ], buffer[ pos + 3 ], entry, 1 );
+                
+                // fixup
+                switch ( entry->effect ) {
+                    case IT_SET_PANNING:
+                        entry->effectvalue <<= 1;
+                        break;
+                }
 
 				if ( entry->mask ) ++entry;
 			}
@@ -101,7 +108,7 @@ If
 the sample name begins with a '#' character (ASCII $23 (35)) then this is
 assumed not to be an instrument name, and is probably a message.
 */
-	dumbfile_getnc( sample->name, 22, f );
+    dumbfile_getnc( (char *) sample->name, 22, f );
 	sample->name[22] = 0;
 
 	sample->filename[0] = 0;
@@ -212,7 +219,7 @@ static DUMB_IT_SIGDATA *it_asy_load_sigdata(DUMBFILE *f)
 		return NULL;
 	}
 
-	if ( dumbfile_getnc( sigdata->order, sigdata->n_orders, f ) != sigdata->n_orders ||
+    if ( dumbfile_getnc( (char *) sigdata->order, sigdata->n_orders, f ) != sigdata->n_orders ||
 		dumbfile_skip( f, 256 - sigdata->n_orders ) ) {
 		free( sigdata->order );
 		free( sigdata );
@@ -296,10 +303,11 @@ static DUMB_IT_SIGDATA *it_asy_load_sigdata(DUMBFILE *f)
 	memset(sigdata->channel_volume, 64, DUMB_IT_N_CHANNELS);
 
 	for (i = 0; i < DUMB_IT_N_CHANNELS; i += 4) {
-		sigdata->channel_pan[i+0] = 16;
-		sigdata->channel_pan[i+1] = 48;
-		sigdata->channel_pan[i+2] = 48;
-		sigdata->channel_pan[i+3] = 16;
+		int sep = 32 * dumb_it_default_panning_separation / 100;
+		sigdata->channel_pan[i+0] = 32 - sep;
+		sigdata->channel_pan[i+1] = 32 + sep;
+		sigdata->channel_pan[i+2] = 32 + sep;
+		sigdata->channel_pan[i+3] = 32 - sep;
 	}
 
 	_dumb_it_fix_invalid_orders(sigdata);
@@ -323,7 +331,7 @@ DUH *DUMBEXPORT dumb_read_asy_quick(DUMBFILE *f)
 	{
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		tag[1][1] = "ASYLUM Music Format";
 		return make_duh(-1, 2, (const char *const (*)[2])tag, 1, &descptr, &sigdata);

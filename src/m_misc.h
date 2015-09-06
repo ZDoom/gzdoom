@@ -28,6 +28,7 @@
 
 class FConfigFile;
 class FGameConfigFile;
+class FIWadManager;
 
 extern FGameConfigFile *GameConfig;
 

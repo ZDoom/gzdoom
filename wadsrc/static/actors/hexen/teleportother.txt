@@ -1,13 +1,10 @@
 
 // Teleport Other Artifact --------------------------------------------------
 
-ACTOR ArtiTeleportOther : Inventory 10040 native
+ACTOR ArtiTeleportOther : Inventory native
 {
-	Game Hexen
-	SpawnID 17
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.INVBAR
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.FANCYPICKUPSOUND

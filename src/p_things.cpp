@@ -45,9 +45,11 @@
 #include "gi.h"
 #include "templates.h"
 #include "g_level.h"
+#include "v_text.h"
+#include "i_system.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-TMap<int, const PClass *> SpawnableThings;
+FClassMap SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
@@ -84,7 +86,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 
 		if (mobj != NULL)
 		{
-			DWORD oldFlags2 = mobj->flags2;
+			ActorFlags2 oldFlags2 = mobj->flags2;
 			mobj->flags2 |= MF2_PASSMOBJ;
 			if (P_TestMobjLocation (mobj))
 			{
@@ -92,7 +94,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false);
+					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -130,8 +132,8 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	{
 		if (fog)
 		{
-			P_SpawnTeleportFog(source, x, y, z);
-			P_SpawnTeleportFog(source, oldx, oldy, oldz, false);
+			P_SpawnTeleportFog(source, x, y, z, false, true);
+			P_SpawnTeleportFog(source, oldx, oldy, oldz, true, true);
 		}
 		source->PrevX = x;
 		source->PrevY = y;
@@ -427,7 +429,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	// [RH] Check against real height and radius
 	fixed_t oldheight = thing->height;
 	fixed_t oldradius = thing->radius;
-	int oldflags = thing->flags;
+	ActorFlags oldflags = thing->flags;
 
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
@@ -466,7 +468,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	AActor *info = thing->GetDefault();
 
 	// Check against real height and radius
-	int oldflags = thing->flags;
+	ActorFlags oldflags = thing->flags;
 	fixed_t oldheight = thing->height;
 	fixed_t oldradius = thing->radius;
 
@@ -530,22 +532,32 @@ const PClass *P_GetSpawnableType(int spawnnum)
 	return NULL;
 }
 
-typedef TMap<int, const PClass *>::Pair SpawnablePair;
+struct MapinfoSpawnItem
+{
+	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.
+	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
+	FString filename;
+	int linenum;
+};
+
+typedef TMap<int, MapinfoSpawnItem> SpawnMap;
+static SpawnMap SpawnablesFromMapinfo;
+static SpawnMap ConversationIDsFromMapinfo;
 
 static int STACK_ARGS SpawnableSort(const void *a, const void *b)
 {
-	return (*((SpawnablePair **)a))->Key - (*((SpawnablePair **)b))->Key;
+	return (*((FClassMap::Pair **)a))->Key - (*((FClassMap::Pair **)b))->Key;
 }
 
-CCMD (dumpspawnables)
+static void DumpClassMap(FClassMap &themap)
 {
-	TMapIterator<int, const PClass *> it(SpawnableThings);
-	SpawnablePair *pair, **allpairs;
+	FClassMap::Iterator it(themap);
+	FClassMap::Pair *pair, **allpairs;
 	int i = 0;
 
 	// Sort into numerical order, since their arrangement in the map can
 	// be in an unspecified order.
-	allpairs = new TMap<int, const PClass *>::Pair *[SpawnableThings.CountUsed()];
+	allpairs = new FClassMap::Pair *[themap.CountUsed()];
 	while (it.NextPair(pair))
 	{
 		allpairs[i++] = pair;
@@ -559,3 +571,223 @@ CCMD (dumpspawnables)
 	delete[] allpairs;
 }
 
+CCMD(dumpspawnables)
+{
+	DumpClassMap(SpawnableThings);
+}
+
+CCMD (dumpconversationids)
+{
+	DumpClassMap(StrifeTypes);
+}
+
+
+static void ParseSpawnMap(FScanner &sc, SpawnMap & themap, const char *descript)
+{
+	TMap<int, bool> defined;
+	int error = 0;
+
+	MapinfoSpawnItem editem;
+
+	editem.filename = sc.ScriptName;
+
+	while (true)
+	{
+		if (sc.CheckString("}")) return;
+		else if (sc.CheckNumber())
+		{
+			int ednum = sc.Number;
+			sc.MustGetStringName("=");
+			sc.MustGetString();
+
+			bool *def = defined.CheckKey(ednum);
+			if (def != NULL)
+			{
+				sc.ScriptMessage("%s %d defined more than once", descript, ednum);
+				error++;
+			}
+			else if (ednum < 0)
+			{
+				sc.ScriptMessage("%s must be positive, got %d", descript, ednum);
+				error++;
+			}
+			defined[ednum] = true;
+			editem.classname = sc.String;
+
+			themap.Insert(ednum, editem);
+		}
+		else
+		{
+			sc.ScriptError("Number expected");
+		}
+	}
+	if (error > 0)
+	{
+		sc.ScriptError("%d errors encountered in %s definition", error, descript);
+	}
+}
+
+void FMapInfoParser::ParseSpawnNums()
+{
+	ParseOpenBrace();
+	ParseSpawnMap(sc, SpawnablesFromMapinfo, "Spawn number");
+}
+
+void FMapInfoParser::ParseConversationIDs()
+{
+	ParseOpenBrace();
+	ParseSpawnMap(sc, ConversationIDsFromMapinfo, "Conversation ID");
+}
+
+
+void InitClassMap(FClassMap &themap, SpawnMap &thedata)
+{
+	themap.Clear();
+	SpawnMap::Iterator it(thedata);
+	SpawnMap::Pair *pair;
+	int error = 0;
+
+	while (it.NextPair(pair))
+	{
+		const PClass *cls = NULL;
+		if (pair->Value.classname != NAME_None)
+		{
+			cls = PClass::FindClass(pair->Value.classname);
+			if (cls == NULL)
+			{
+				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",
+					pair->Value.filename.GetChars(), pair->Value.linenum, pair->Value.classname.GetChars());
+				error++;
+			}
+			themap.Insert(pair->Key, cls);
+		}
+		else
+		{
+			themap.Remove(pair->Key);
+		}
+	}
+	if (error > 0)
+	{
+		I_Error("%d unknown actor classes found", error);
+	}
+	thedata.Clear();	// we do not need this any longer
+}
+
+void InitSpawnablesFromMapinfo()
+{
+	InitClassMap(SpawnableThings, SpawnablesFromMapinfo);
+	InitClassMap(StrifeTypes, ConversationIDsFromMapinfo);
+}
+
+
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset)
+{
+	if (flags & WARPF_MOVEPTR)
+	{
+		AActor *temp = reference;
+		reference = caller;
+		caller = temp;
+	}
+
+	fixed_t	oldx = caller->x;
+	fixed_t	oldy = caller->y;
+	fixed_t	oldz = caller->z;
+
+	zofs += FixedMul(reference->height, heightoffset);
+
+
+	if (!(flags & WARPF_ABSOLUTEANGLE))
+	{
+		angle += (flags & WARPF_USECALLERANGLE) ? caller->angle : reference->angle;
+	}
+	if (!(flags & WARPF_ABSOLUTEPOSITION))
+	{
+		if (!(flags & WARPF_ABSOLUTEOFFSET))
+		{
+			angle_t fineangle = angle >> ANGLETOFINESHIFT;
+			fixed_t xofs1 = xofs;
+
+			// (borrowed from A_SpawnItemEx, assumed workable)
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+
+			xofs = FixedMul(xofs1, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
+			yofs = FixedMul(xofs1, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+		}
+
+		if (flags & WARPF_TOFLOOR)
+		{
+			// set correct xy
+			// now the caller's floorz should be appropriate for the assigned xy-position
+			// assigning position again with.
+			// extra unlink, link and environment calculation
+			caller->SetOrigin(
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->floorz + zofs);
+		}
+		else
+		{
+			caller->SetOrigin(
+				reference->x + xofs,
+				reference->y + yofs,
+				reference->z + zofs);
+		}
+	}
+	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
+	{
+		if (flags & WARPF_TOFLOOR)
+		{
+			caller->SetOrigin(xofs, yofs, caller->floorz + zofs);
+		}
+		else
+		{
+			caller->SetOrigin(xofs, yofs, zofs);
+		}
+	}
+
+	if ((flags & WARPF_NOCHECKPOSITION) || P_TestMobjLocation(caller))
+	{
+		if (flags & WARPF_TESTONLY)
+		{
+			caller->SetOrigin(oldx, oldy, oldz);
+		}
+		else
+		{
+			caller->angle = angle;
+
+			if (flags & WARPF_STOP)
+			{
+				caller->velx = 0;
+				caller->vely = 0;
+				caller->velz = 0;
+			}
+
+			if (flags & WARPF_WARPINTERPOLATION)
+			{
+				caller->PrevX += caller->x - oldx;
+				caller->PrevY += caller->y - oldy;
+				caller->PrevZ += caller->z - oldz;
+			}
+			else if (flags & WARPF_COPYINTERPOLATION)
+			{
+				caller->PrevX = caller->x + reference->PrevX - reference->x;
+				caller->PrevY = caller->y + reference->PrevY - reference->y;
+				caller->PrevZ = caller->z + reference->PrevZ - reference->z;
+			}
+			else if (!(flags & WARPF_INTERPOLATE))
+			{
+				caller->PrevX = caller->x;
+				caller->PrevY = caller->y;
+				caller->PrevZ = caller->z;
+			}
+			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
+			{
+				caller->z += reference->GetBobOffset();
+			}
+		}
+		return true;
+	}
+	caller->SetOrigin(oldx, oldy, oldz);
+	return false;
+}

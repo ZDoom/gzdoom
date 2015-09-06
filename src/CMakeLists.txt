@@ -122,7 +122,7 @@ if( WIN32 )
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Include )
 	if( NOT XINPUT_INCLUDE_DIR )
-		message( SEND_ERROR "Could not find xinput.h. XInput will be disabled." )
+		message( WARNING "Could not find xinput.h. XInput will be disabled." )
 		add_definitions( -DNO_XINPUT )
 	else( NOT XINPUT_INCLUDE_DIR )
 		include_directories( ${XINPUT_INCLUDE_DIR} )
@@ -259,57 +259,87 @@ set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GLEW_LIBRARY} )
 
 # Decide on the name of the FMOD library we want to use.
 
-if( NOT FMOD_LIB_NAME AND MSVC )
-	set( FMOD_LIB_NAME fmodex${X64}_vc )
-endif( NOT FMOD_LIB_NAME AND MSVC )
+if( NOT NO_OPENAL )
+    find_package( OpenAL )
+	mark_as_advanced(CLEAR OPENAL_LIBRARY OPENAL_INCLUDE_DIR)
+    if( OPENAL_FOUND )
+        include_directories( ${OPENAL_INCLUDE_DIR} )
+        set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
+    else( OPENAL_FOUND )
+        set( NO_OPENAL ON )
+    endif( OPENAL_FOUND )
+endif( NOT NO_OPENAL )
 
-if( NOT FMOD_LIB_NAME AND BORLAND )
-	set( FMOD_LIB_NAME fmodex${X64}_bc )
-endif( NOT FMOD_LIB_NAME AND BORLAND )
-
-if( NOT FMOD_LIB_NAME )
-	set( FMOD_LIB_NAME fmodex${X64} )
-endif( NOT FMOD_LIB_NAME )
-
-
-# Search for FMOD include files
-
-if( NOT WIN32 )
+if( NOT NO_FMOD )
+	# Search for FMOD include files
+	if( NOT WIN32 )
 	find_path( FMOD_INCLUDE_DIR fmod.hpp
 		PATHS ${FMOD_LOCAL_INC_DIRS} )
-endif( NOT WIN32 )
+	endif( NOT WIN32 )
 
-if( NOT FMOD_INCLUDE_DIR )
+	if( NOT FMOD_INCLUDE_DIR )
 	find_path( FMOD_INCLUDE_DIR fmod.hpp
 		PATHS ${FMOD_SEARCH_PATHS}
 		${FMOD_INC_PATH_SUFFIXES} )
-endif( NOT FMOD_INCLUDE_DIR )
+	endif( NOT FMOD_INCLUDE_DIR )
 
-if( FMOD_INCLUDE_DIR )
+	if( FMOD_INCLUDE_DIR )
 	message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
-else( FMOD_INCLUDE_DIR )
-	message( SEND_ERROR "Could not find FMOD include files" )
-endif( FMOD_INCLUDE_DIR )
+		include_directories( "${FMOD_INCLUDE_DIR}" )
+	else( FMOD_INCLUDE_DIR )
+		message( STATUS "Could not find FMOD include files" )
+		set( NO_FMOD ON )
+	endif( FMOD_INCLUDE_DIR )
+endif( NOT NO_FMOD )
 
+if( NOT NO_FMOD )
+	# Decide on the name of the FMOD library we want to use.
+	if( NOT FMOD_LIB_NAME AND MSVC )
+		set( FMOD_LIB_NAME fmodex${X64}_vc )
+	endif( NOT FMOD_LIB_NAME AND MSVC )
 
-# Search for FMOD library
+	if( NOT FMOD_LIB_NAME AND BORLAND )
+		set( FMOD_LIB_NAME fmodex${X64}_bc )
+	endif( NOT FMOD_LIB_NAME AND BORLAND )
 
-if( WIN32 OR APPLE )
+	if( NOT FMOD_LIB_NAME )
+		set( FMOD_LIB_NAME fmodex${X64} )
+	endif( NOT FMOD_LIB_NAME )
+
+	# Search for FMOD library
+	if( WIN32 OR APPLE )
 	find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
 		PATHS ${FMOD_SEARCH_PATHS}
 		${FMOD_LIB_PATH_SUFFIXES} )
-else( WIN32 OR APPLE )
+	else( WIN32 OR APPLE )
 	find_library( FMOD_LIBRARY
 		NAMES ${FMOD_VERSIONS}
 		PATHS ${FMOD_LOCAL_LIB_DIRS} )
-endif( WIN32 OR APPLE )
+	endif( WIN32 OR APPLE )
 
-if( FMOD_LIBRARY )
+	if( FMOD_LIBRARY )
 	message( STATUS "FMOD library found at ${FMOD_LIBRARY}" )
-else( FMOD_LIBRARY )
-	message( SEND_ERROR "Could not find FMOD library" )
-endif( FMOD_LIBRARY )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FMOD_LIBRARY}" )
+	else( FMOD_LIBRARY )
+		message( STATUS "Could not find FMOD library" )
+		set( NO_FMOD ON )
+	endif( FMOD_LIBRARY )
+endif( NOT NO_FMOD )
 
+if( NO_FMOD )
+	add_definitions( -DNO_FMOD=1 )
+endif( NO_FMOD )
+if( NO_OPENAL )
+	add_definitions( -DNO_OPENAL=1 )
+endif( NO_OPENAL )
+
+# Search for libSndFile
+
+find_package( SndFile )
+
+# Search for libmpg123
+
+find_package( MPG123 )
 
 # Search for FluidSynth
 
@@ -549,19 +579,25 @@ endif( BACKPATCH )
 
 # Update gitinfo.h
 
-get_target_property( UPDATEREVISION_EXE updaterevision LOCATION )
-
 add_custom_target( revision_check ALL
-	COMMAND ${UPDATEREVISION_EXE} src/gitinfo.h
+	COMMAND updaterevision src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	DEPENDS updaterevision )
 
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${FMOD_LIBRARY}" )
-include_directories( "${ZLIB_INCLUDE_DIR}" "${FMOD_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
 
+if( SNDFILE_FOUND )
+    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SNDFILE_LIBRARIES}" )
+    include_directories( "${SNDFILE_INCLUDE_DIRS}" )
+endif( SNDFILE_FOUND )
+if( MPG123_FOUND )
+    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${MPG123_LIBRARIES}" )
+    include_directories( "${MPG123_INCLUDE_DIR}" )
+endif( MPG123_FOUND )
 if( NOT DYN_FLUIDSYNTH)
 	if( FLUIDSYNTH_FOUND )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FLUIDSYNTH_LIBRARIES}" )
@@ -612,18 +648,12 @@ set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/zdoom.icns )
 set( PLAT_COCOA_SOURCES
-	posix/cocoa/hid/HID_Config_Utilities.c
-	posix/cocoa/hid/HID_Error_Handler.c
-	posix/cocoa/hid/HID_Name_Lookup.c
-	posix/cocoa/hid/HID_Queue_Utilities.c
-	posix/cocoa/hid/HID_Utilities.c
-	posix/cocoa/hid/IOHIDDevice_.c
-	posix/cocoa/hid/IOHIDElement_.c
-	posix/cocoa/hid/ImmrHIDUtilAddOn.c
 	posix/cocoa/critsec.cpp
-	posix/cocoa/i_backend_cocoa.mm
+	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
-	posix/cocoa/i_timer.cpp )
+	posix/cocoa/i_main.mm
+	posix/cocoa/i_timer.cpp
+	posix/cocoa/i_video.mm )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
@@ -679,17 +709,14 @@ else( NO_ASM )
 	endif( X64 )
 endif( NO_ASM )
 
-get_target_property( LEMON_EXE lemon LOCATION )
-get_target_property( RE2C_EXE re2c LOCATION )
-
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .
-	COMMAND ${LEMON_EXE} xlat_parser.y
+	COMMAND lemon xlat_parser.y
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND ${RE2C_EXE} --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
+	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
@@ -706,6 +733,12 @@ else( SSE_MATTERS )
 	set( X86_SOURCES )
 endif( SSE_MATTERS )
 
+if( SNDFILE_FOUND )
+    add_definitions( -DHAVE_SNDFILE )
+endif( SNDFILE_FOUND )
+if( MPG123_FOUND )
+    add_definitions( -DHAVE_MPG123 )
+endif( MPG123_FOUND )
 if( DYN_FLUIDSYNTH )
 	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
 elseif( FLUIDSYNTH_FOUND )
@@ -810,6 +843,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	g_hexen/a_fighterquietus.cpp
 	g_hexen/a_firedemon.cpp
 	g_hexen/a_flechette.cpp
+	g_hexen/a_flies.cpp
 	g_hexen/a_fog.cpp
 	g_hexen/a_healingradius.cpp
 	g_hexen/a_heresiarch.cpp
@@ -902,6 +936,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	f_wipe.cpp
 	farchive.cpp
 	files.cpp
+	g_doomedmap.cpp
 	g_game.cpp
 	g_hub.cpp
 	g_level.cpp
@@ -962,6 +997,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	p_spec.cpp
 	p_states.cpp
 	p_switch.cpp
+	p_tags.cpp
 	p_teleport.cpp
 	p_terrain.cpp
 	p_things.cpp
@@ -1146,6 +1182,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
+	sound/mpg123_decoder.cpp
 	sound/music_cd.cpp
 	sound/music_dumb.cpp
 	sound/music_gme.cpp
@@ -1162,6 +1199,8 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
 	sound/music_win_mididevice.cpp
+	sound/oalsound.cpp
+	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	textures/animations.cpp
 	textures/anim_switches.cpp
@@ -1274,15 +1313,22 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /MAP")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
 	else( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\"")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
+	if( NO_GENERATOR_EXPRESSIONS )
 	add_custom_command(TARGET zdoom POST_BUILD
 		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
 		COMMENT "Adding manifest..."
 	)
+	else( NO_GENERATOR_EXPRESSIONS )
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
+			COMMENT "Adding manifest..."
+		)
+	endif( NO_GENERATOR_EXPRESSIONS )
 
 	create_default_target_launcher( zdoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 endif( MSVC )
@@ -1309,6 +1355,7 @@ if( APPLE )
 		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
+	if( NOT NO_FMOD )
 	# Fix fmod link so that it can be found in the app bundle.
 	find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
 	find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
@@ -1321,6 +1368,7 @@ if( APPLE )
 	add_custom_command( TARGET zdoom POST_BUILD
 		COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
 		COMMENT "Relinking FMOD Ex" )
+	endif( NOT NO_FMOD )
 endif( APPLE )
 
 source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")

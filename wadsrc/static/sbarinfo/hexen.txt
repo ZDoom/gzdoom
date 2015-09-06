@@ -51,7 +51,7 @@ statusbar fullscreen, fullscreenoffsets
 
 statusbar Normal
 {
-	drawimage "H2BAR", 0, 135;
+	drawimage "H2BAR", 0, 134;
 	drawimage "STATBAR", 38, 162;
 
 	drawselectedinventory artiflash, INDEXFONT_RAVEN, 143, 163, 174, 184, untranslated;
@@ -204,7 +204,7 @@ statusbar Normal
 
 statusbar Automap
 {
-	drawimage "H2BAR", 0, 135;
+	drawimage "H2BAR", 0, 134;
 	drawimage "KEYBAR", 38, 162;
 	drawkeybar 5, horizontal, 20, 46, 164;
 	drawimage hexenarmor(armor, "ARMSLOT1"), 150, 164;

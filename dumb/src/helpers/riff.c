@@ -1,61 +1,59 @@
 #include "dumb.h"
 #include "internal/riff.h"
-#include "internal/dumb.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-struct riff * riff_parse( unsigned char * ptr, unsigned size, unsigned proper )
+struct riff * riff_parse( DUMBFILE * f, int32 offset, int32 size, unsigned proper )
 {
 	unsigned stream_size;
 	struct riff * stream;
 
-	if ( size < 8 ) return 0;
 
-	if ( ptr[0] != 'R' || ptr[1] != 'I' || ptr[2] != 'F' || ptr[3] != 'F' ) return 0;
+    if ( size < 8 ) return 0;
 
-	stream_size = ptr[4] | ( ptr[5] << 8 ) | ( ptr[6] << 16 ) | ( ptr[7] << 24 );
-	if ( stream_size + 8 > size ) return 0;
+    if ( dumbfile_seek(f, offset, DFS_SEEK_SET) ) return 0;
+    if ( dumbfile_mgetl(f) != DUMB_ID('R','I','F','F') ) return 0;
+
+    stream_size = dumbfile_igetl(f);
+    if ( stream_size + 8 > (unsigned)size ) return 0;
 	if ( stream_size < 4 ) return 0;
 
-	stream = malloc( sizeof( struct riff ) );
+    stream = (struct riff *) malloc( sizeof( struct riff ) );
 	if ( ! stream ) return 0;
 
-	stream->type = ( ptr[8] << 24 ) | ( ptr[9] << 16 ) | ( ptr[10] << 8 ) | ptr[11];
+    stream->type = dumbfile_mgetl(f);
 	stream->chunk_count = 0;
 	stream->chunks = 0;
 
-	ptr += 12;
 	stream_size -= 4;
 
-	while ( stream_size )
+    while ( stream_size && !dumbfile_error(f) )
 	{
 		struct riff_chunk * chunk;
 		if ( stream_size < 8 ) break;
-		stream->chunks = realloc( stream->chunks, ( stream->chunk_count + 1 ) * sizeof( struct riff_chunk ) );
+        stream->chunks = ( struct riff_chunk * ) realloc( stream->chunks, ( stream->chunk_count + 1 ) * sizeof( struct riff_chunk ) );
 		if ( ! stream->chunks ) break;
 		chunk = stream->chunks + stream->chunk_count;
-		chunk->type = ( ptr[0] << 24 ) | ( ptr[1] << 16 ) | ( ptr[2] << 8 ) | ptr[3];
-		chunk->size = ptr[4] | ( ptr[5] << 8 ) | ( ptr[6] << 16 ) | ( ptr[7] << 24 );
-		ptr += 8;
+        chunk->type = dumbfile_mgetl(f);
+        chunk->size = dumbfile_igetl(f);
+        chunk->offset = dumbfile_pos(f);
 		stream_size -= 8;
 		if ( stream_size < chunk->size ) break;
-		if ( chunk->type == DUMB_ID('R','I','F','F') )
+        if ( chunk->type == DUMB_ID('R','I','F','F') )
 		{
-			chunk->data = riff_parse( ptr - 8, chunk->size + 8, proper );
-			if ( ! chunk->data ) break;
+            chunk->nested = riff_parse( f, chunk->offset - 8, chunk->size + 8, proper );
+            if ( ! chunk->nested ) break;
 		}
 		else
 		{
-			chunk->data = malloc( chunk->size );
-			if ( ! chunk->data ) break;
-			memcpy( chunk->data, ptr, chunk->size );
+            chunk->nested = 0;
 		}
-		ptr += chunk->size;
+        dumbfile_seek(f, chunk->offset + chunk->size, DFS_SEEK_SET);
 		stream_size -= chunk->size;
 		if ( proper && ( chunk->size & 1 ) )
 		{
-			++ ptr;
+            dumbfile_skip(f, 1);
 			-- stream_size;
 		}
 		++stream->chunk_count;
@@ -80,8 +78,7 @@ void riff_free( struct riff * stream )
 			for ( i = 0; i < stream->chunk_count; ++i )
 			{
 				struct riff_chunk * chunk = stream->chunks + i;
-				if ( chunk->type == DUMB_ID('R','I','F','F') ) riff_free( ( struct riff * ) chunk->data );
-				else free( chunk->data );
+                if ( chunk->nested ) riff_free( chunk->nested );
 			}
 			free( stream->chunks );
 		}

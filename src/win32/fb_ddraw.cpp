@@ -308,9 +308,10 @@ bool DDrawFB::CreateResources ()
 		MaybeCreatePalette ();
 
 		// Resize the window to match desired dimensions
-		int sizew = (Width << PixelDoubling) + GetSystemMetrics (SM_CXSIZEFRAME)*2;
-		int sizeh = (Height << PixelDoubling) + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
-					 GetSystemMetrics (SM_CYCAPTION);
+		RECT rect = { 0, 0, Width << PixelDoubling, Height << PixelDoubling };
+		AdjustWindowRectEx(&rect, WS_VISIBLE|WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
+		int sizew = rect.right - rect.left;
+		int sizeh = rect.bottom - rect.top;
 		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
 		VidResizing = true;
 		// Make sure the window has a border in windowed mode

@@ -48,6 +48,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
 	self->z += 32*FRACUNIT;
+	self->PrevZ = self->z;	// no interpolation!
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);

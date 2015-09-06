@@ -1,7 +1,13 @@
 #ifndef __SNDINT_H
 #define __SNDINT_H
 
+#include <stdio.h>
+
 #include "basictypes.h"
+#include "vectors.h"
+#include "tarray.h"
+
+class FileReader;
 
 // For convenience, this structure matches FMOD_REVERB_PROPERTIES.
 // Since I can't very well #include system-specific stuff in the
@@ -96,8 +102,46 @@ struct FISoundChannel
 	// callback that can't be passed a sound channel pointer
 	FRolloffInfo Rolloff;
 	float		DistanceScale;
+	float		DistanceSqr;
+	bool		ManualRolloff;
 };
 
 
+enum SampleType
+{
+    SampleType_UInt8,
+    SampleType_Int16
+};
+enum ChannelConfig
+{
+    ChannelConfig_Mono,
+    ChannelConfig_Stereo
+};
+
+const char *GetSampleTypeName(enum SampleType type);
+const char *GetChannelConfigName(enum ChannelConfig chan);
+
+struct SoundDecoder
+{
+    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) = 0;
+
+    virtual size_t read(char *buffer, size_t bytes) = 0;
+    virtual TArray<char> readAll();
+    virtual bool seek(size_t ms_offset) = 0;
+    virtual size_t getSampleOffset() = 0;
+    virtual size_t getSampleLength() { return 0; }
+
+    SoundDecoder() { }
+    virtual ~SoundDecoder() { }
+
+protected:
+    virtual bool open(FileReader *reader) = 0;
+    friend class SoundRenderer;
+
+private:
+    // Make non-copyable
+    SoundDecoder(const SoundDecoder &rhs);
+    SoundDecoder& operator=(const SoundDecoder &rhs);
+};
 
 #endif

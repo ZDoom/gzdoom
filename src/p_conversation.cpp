@@ -60,6 +60,7 @@
 #include "farchive.h"
 #include "p_lnspec.h"
 #include "r_utility.h"
+#include "p_local.h"
 #include "menu/menu.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
@@ -105,11 +106,10 @@ void GiveSpawner (player_t *player, const PClass *type);
 
 TArray<FStrifeDialogueNode *> StrifeDialogues;
 
-typedef TMap<int, const PClass *> FStrifeTypeMap;	// maps conversation IDs to actor classes
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)
 typedef TMap<FName, int> FDialogueMap;				// maps actor class names to dialogue array index
 
-static FStrifeTypeMap StrifeTypes;
+FClassMap StrifeTypes;
 static FDialogueIDMap DialogueRoots;
 static FDialogueMap ClassRoots;
 static int ConversationMenuY;
@@ -649,22 +649,7 @@ static void TakeStrifeItem (player_t *player, const PClass *itemtype, int amount
 	if (itemtype == RUNTIME_CLASS(ASigil))
 		return;
 
-	AInventory *item = player->mo->FindInventory (itemtype);
-	if (item != NULL)
-	{
-		item->Amount -= amount;
-		if (item->Amount <= 0)
-		{
-			if (item->ItemFlags & IF_KEEPDEPLETED)
-			{
-				item->Amount = 0;
-			}
-			else
-			{
-				item->Destroy ();
-			}
-		}
-	}
+	player->mo->TakeInventory(itemtype, amount);
 }
 
 CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)

@@ -1,10 +1,8 @@
 
 // Yorick's Skull -----------------------------------------------------------
 
-ACTOR PuzzSkull : PuzzleItem 9002
+ACTOR PuzzSkull : PuzzleItem
 {
-	Game Hexen
-	SpawnID 76
 	PuzzleItem.Number 0
 	Inventory.Icon ARTISKLL
 	Inventory.PickupMessage "$TXT_ARTIPUZZSKULL"
@@ -20,10 +18,8 @@ ACTOR PuzzSkull : PuzzleItem 9002
 
 // Heart of D'Sparil --------------------------------------------------------
 
-ACTOR PuzzGemBig : PuzzleItem 9003
+ACTOR PuzzGemBig : PuzzleItem
 {
-	Game Hexen
-	SpawnID 77
 	PuzzleItem.Number 1
 	Inventory.Icon ARTIBGEM
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBIG"
@@ -38,10 +34,8 @@ ACTOR PuzzGemBig : PuzzleItem 9003
 
 // Red Gem (Ruby Planet) ----------------------------------------------------
 
-ACTOR PuzzGemRed : PuzzleItem 9004
+ACTOR PuzzGemRed : PuzzleItem
 {
-	Game Hexen
-	SpawnID 78
 	PuzzleItem.Number 2
 	Inventory.Icon ARTIGEMR
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMRED"
@@ -57,10 +51,8 @@ ACTOR PuzzGemRed : PuzzleItem 9004
 
 // Green Gem 1 (Emerald Planet) ---------------------------------------------
 
-ACTOR PuzzGemGreen1 : PuzzleItem 9005
+ACTOR PuzzGemGreen1 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 79
 	PuzzleItem.Number 3
 	Inventory.Icon ARTIGEMG
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMGREEN1"
@@ -76,10 +68,8 @@ ACTOR PuzzGemGreen1 : PuzzleItem 9005
 
 // Green Gem 2 (Emerald Planet) ---------------------------------------------
 
-ACTOR PuzzGemGreen2 : PuzzleItem 9009
+ACTOR PuzzGemGreen2 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 80
 	PuzzleItem.Number 4
 	Inventory.Icon ARTIGMG2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMGREEN2"
@@ -95,10 +85,8 @@ ACTOR PuzzGemGreen2 : PuzzleItem 9009
 
 // Blue Gem 1 (Sapphire Planet) ---------------------------------------------
 
-ACTOR PuzzGemBlue1 : PuzzleItem 9006
+ACTOR PuzzGemBlue1 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 81
 	PuzzleItem.Number 5
 	Inventory.Icon ARTIGEMB
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBLUE1"
@@ -114,10 +102,8 @@ ACTOR PuzzGemBlue1 : PuzzleItem 9006
 
 // Blue Gem 2 (Sapphire Planet) ---------------------------------------------
 
-ACTOR PuzzGemBlue2 : PuzzleItem 9010
+ACTOR PuzzGemBlue2 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 82
 	PuzzleItem.Number 6
 	Inventory.Icon ARTIGMB2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEMBLUE2"
@@ -133,10 +119,8 @@ ACTOR PuzzGemBlue2 : PuzzleItem 9010
 
 // Book 1 (Daemon Codex) ----------------------------------------------------
 
-ACTOR PuzzBook1 : PuzzleItem 9007
+ACTOR PuzzBook1 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 83
 	PuzzleItem.Number 7
 	Inventory.Icon ARTIBOK1
 	Inventory.PickupMessage "$TXT_ARTIPUZZBOOK1"
@@ -152,10 +136,8 @@ ACTOR PuzzBook1 : PuzzleItem 9007
 
 // Book 2 (Liber Oscura) ----------------------------------------------------
 
-ACTOR PuzzBook2 : PuzzleItem 9008
+ACTOR PuzzBook2 : PuzzleItem
 {
-	Game Hexen
-	SpawnID 84
 	PuzzleItem.Number 8
 	Inventory.Icon ARTIBOK2
 	Inventory.PickupMessage "$TXT_ARTIPUZZBOOK2"
@@ -172,9 +154,8 @@ ACTOR PuzzBook2 : PuzzleItem 9008
 // Flame Mask ---------------------------------------------------------------
 
 
-ACTOR PuzzFlameMask : PuzzleItem 9014
+ACTOR PuzzFlameMask : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 9
 	Inventory.Icon ARTISKL2
 	Inventory.PickupMessage "$TXT_ARTIPUZZSKULL2"
@@ -189,9 +170,8 @@ ACTOR PuzzFlameMask : PuzzleItem 9014
 
 // Fighter Weapon (Glaive Seal) ---------------------------------------------
 
-ACTOR PuzzFWeapon : PuzzleItem 9015
+ACTOR PuzzFWeapon : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 10
 	Inventory.Icon ARTIFWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZFWEAPON"
@@ -207,9 +187,8 @@ ACTOR PuzzFWeapon : PuzzleItem 9015
 
 // Cleric Weapon (Holy Relic) -----------------------------------------------
 
-ACTOR PuzzCWeapon : PuzzleItem 9016
+ACTOR PuzzCWeapon : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 11
 	Inventory.Icon ARTICWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZCWEAPON"
@@ -225,9 +204,8 @@ ACTOR PuzzCWeapon : PuzzleItem 9016
 
 // Mage Weapon (Sigil of the Magus) -----------------------------------------
 
-ACTOR PuzzMWeapon : PuzzleItem 9017
+ACTOR PuzzMWeapon : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 12
 	Inventory.Icon ARTIMWEP
 	Inventory.PickupMessage "$TXT_ARTIPUZZMWEAPON"
@@ -242,9 +220,8 @@ ACTOR PuzzMWeapon : PuzzleItem 9017
 
 // Clock Gear 1 -------------------------------------------------------------
 
-ACTOR PuzzGear1 : PuzzleItem 9018
+ACTOR PuzzGear1 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 13
 	Inventory.Icon ARTIGEAR
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
@@ -260,9 +237,8 @@ ACTOR PuzzGear1 : PuzzleItem 9018
 
 // Clock Gear 2 -------------------------------------------------------------
 
-ACTOR PuzzGear2 : PuzzleItem 9019
+ACTOR PuzzGear2 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 14
 	Inventory.Icon ARTIGER2
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
@@ -278,9 +254,8 @@ ACTOR PuzzGear2 : PuzzleItem 9019
 
 // Clock Gear 3 -------------------------------------------------------------
 
-ACTOR PuzzGear3 : PuzzleItem 9020
+ACTOR PuzzGear3 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 15
 	Inventory.Icon ARTIGER3
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"
@@ -296,9 +271,8 @@ ACTOR PuzzGear3 : PuzzleItem 9020
 
 // Clock Gear 4 -------------------------------------------------------------
 
-ACTOR PuzzGear4 : PuzzleItem 9021
+ACTOR PuzzGear4 : PuzzleItem
 {
-	Game Hexen
 	PuzzleItem.Number 16
 	Inventory.Icon ARTIGER4
 	Inventory.PickupMessage "$TXT_ARTIPUZZGEAR"

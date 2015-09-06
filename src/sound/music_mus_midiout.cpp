@@ -42,6 +42,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -91,7 +92,7 @@ static const BYTE CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
+MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), MusBuffer(0)
 {
 #ifdef _WIN32
@@ -104,11 +105,7 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 	BYTE front[32];
 	int start;
 
-	if (file == NULL)
-	{
-		memcpy(front, musiccache, sizeof(front));
-	}
-	else if (fread(front, 1, sizeof(front), file) != sizeof(front))
+	if (reader.Read(front, sizeof(front)) != sizeof(front))
 	{
 		return;
 	}
@@ -124,24 +121,17 @@ MUSSong2::MUSSong2 (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 	}
 
 	// Read the remainder of the song.
-	len = int(len - start);
+	int len = int(reader.GetLength() - start);
 	if (len < (int)sizeof(MusHeader))
 	{ // It's too short.
 		return;
 	}
 	MusHeader = (MUSHeader *)new BYTE[len];
-	if (file == NULL)
-	{
-		memcpy(MusHeader, musiccache + start, len);
-	}
-	else
-	{
-		memcpy(MusHeader, front + start, sizeof(front) - start);
-		if (fread((BYTE *)MusHeader + sizeof(front) - start, 1, len - (sizeof(front) - start), file) != (size_t)(len - (32 - start)))
-		{
-			return;
-		}
-	}
+    memcpy(MusHeader, front + start, sizeof(front) - start);
+    if (reader.Read((BYTE *)MusHeader + sizeof(front) - start, len - (sizeof(front) - start)) != (len - (32 - start)))
+    {
+        return;
+    }
 
 	// Do some validation of the MUS file.
 	if (LittleShort(MusHeader->NumChans) > 15)

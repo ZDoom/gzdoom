@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -107,7 +108,7 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
+XMISong::XMISong (FileReader &reader, EMidiDevice type)
 : MIDIStreamer(type), MusHeader(0), Songs(0)
 {
 #ifdef _WIN32
@@ -116,20 +117,13 @@ XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 		return;
 	}
 #endif
-	MusHeader = new BYTE[len];
-	SongLen = len;
-	if (file != NULL)
-	{
-		if (fread(MusHeader, 1, len, file) != (size_t)len)
-			return;
-	}
-	else
-	{
-		memcpy(MusHeader, musiccache, len);
-	}
+    SongLen = reader.GetLength();
+	MusHeader = new BYTE[SongLen];
+    if (reader.Read(MusHeader, SongLen) != SongLen)
+        return;
 
 	// Find all the songs in this file.
-	NumSongs = FindXMIDforms(MusHeader, len, NULL);
+	NumSongs = FindXMIDforms(MusHeader, SongLen, NULL);
 	if (NumSongs == 0)
 	{
 		return;
@@ -147,7 +141,7 @@ XMISong::XMISong (FILE *file, BYTE *musiccache, int len, EMidiDevice type)
 
 	Songs = new TrackInfo[NumSongs];
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
-	FindXMIDforms(MusHeader, len, Songs);
+	FindXMIDforms(MusHeader, SongLen, Songs);
 	CurrSong = Songs;
 	DPrintf("XMI song count: %d\n", NumSongs);
 }

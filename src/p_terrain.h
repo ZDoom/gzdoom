@@ -69,6 +69,12 @@ public:
 	}
 	void Set(int index, int value)
 	{
+		if ((unsigned)index >= Types.Size())
+		{
+			int oldsize = Types.Size();
+			Resize(index + 1);
+			memset(&Types[oldsize], 0xff, (index + 1 - oldsize)*sizeof(WORD));
+		}
 		Types[index] = value;
 	}
 };

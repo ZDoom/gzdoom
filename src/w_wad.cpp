@@ -56,6 +56,7 @@
 #include "doomerrors.h"
 #include "resourcefiles/resourcefile.h"
 #include "md5.h"
+#include "doomstat.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -289,15 +290,62 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 			FResourceLump *lump = resfile->GetLump(i);
 			if (lump->Flags & LUMPF_EMBEDDED)
 			{
-				char path[256];
-
-				mysnprintf(path, countof(path), "%s:", filename);
-				char *wadstr = path + strlen(path);
-
+				FString path;
+				path.Format("%s:%s", filename, lump->FullName.GetChars());
 				FileReader *embedded = lump->NewReader();
-				strcpy(wadstr, lump->FullName);
-
 				AddFile(path, embedded);
+			}
+		}
+
+		if (hashfile)
+		{
+			BYTE cksum[16];
+			char cksumout[33];
+			memset(cksumout, 0, sizeof(cksumout));
+
+			FileReader *reader = wadinfo;
+
+			if (reader != NULL)
+			{
+				MD5Context md5;
+				reader->Seek(0, SEEK_SET);
+				md5.Update(reader, reader->GetLength());
+				md5.Final(cksum);
+
+				for (size_t j = 0; j < sizeof(cksum); ++j)
+				{
+					sprintf(cksumout + (j * 2), "%02X", cksum[j]);
+				}
+
+				fprintf(hashfile, "file: %s, hash: %s, size: %ld\n", filename, cksumout, reader->GetLength());
+			}
+
+			else
+				fprintf(hashfile, "file: %s, Directory structure\n", filename);
+
+			for (DWORD i = 0; i < resfile->LumpCount(); i++)
+			{
+				FResourceLump *lump = resfile->GetLump(i);
+
+				if (!(lump->Flags & LUMPF_EMBEDDED))
+				{
+					reader = lump->NewReader();
+
+					MD5Context md5;
+					md5.Update(reader, lump->LumpSize);
+					md5.Final(cksum);
+
+					for (size_t j = 0; j < sizeof(cksum); ++j)
+					{
+						sprintf(cksumout + (j * 2), "%02X", cksum[j]);
+					}
+
+					fprintf(hashfile, "file: %s, lump: %s, hash: %s, size: %d\n", filename,
+						lump->FullName.IsNotEmpty() ? lump->FullName.GetChars() : lump->Name,
+						cksumout, lump->LumpSize);
+
+					delete reader;
+				}
 			}
 		}
 		return;
@@ -686,7 +734,7 @@ void FWadCollection::InitHashChains (void)
 		FirstLumpIndex[j] = i;
 
 		// Do the same for the full paths
-		if (LumpInfo[i].lump->FullName!=NULL)
+		if (LumpInfo[i].lump->FullName.IsNotEmpty())
 		{
 			j = MakeKey(LumpInfo[i].lump->FullName) % NumLumps;
 			NextLumpIndex_FullName[i] = FirstLumpIndex_FullName[j];
@@ -1037,7 +1085,7 @@ const char *FWadCollection::GetLumpFullName (int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 		return NULL;
-	else if (LumpInfo[lump].lump->FullName != NULL)
+	else if (LumpInfo[lump].lump->FullName.IsNotEmpty())
 		return LumpInfo[lump].lump->FullName;
 	else
 		return LumpInfo[lump].lump->Name;
@@ -1179,6 +1227,17 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 
 	return new FWadLump(LumpInfo[lump].lump, true);
 }
+
+FWadLump *FWadCollection::ReopenLumpNumNewFile (int lump)
+{
+	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
+	{
+		return NULL;
+	}
+
+	return new FWadLump(lump, LumpInfo[lump].lump);
+}
+
 
 //==========================================================================
 //
@@ -1369,6 +1428,34 @@ FWadLump::FWadLump(FResourceLump *lump, bool alwayscache)
 	}
 }
 
+FWadLump::FWadLump(int lumpnum, FResourceLump *lump)
+: FileReader()
+{
+	FileReader *f = lump->GetReader();
+
+	if (f != NULL && f->GetFile() != NULL)
+	{
+		// Uncompressed lump in a file. For this we will have to open a new FILE, since we need it for streaming
+		int fileno = Wads.GetLumpFile(lumpnum);
+		const char *filename = Wads.GetWadFullName(fileno);
+		File = fopen(filename, "rb");
+		if (File != NULL)
+		{
+			Length = lump->LumpSize;
+			StartPos = FilePos = lump->GetFileOffset();
+			Lump = NULL;
+			CloseOnDestruct = true;
+			Seek(0, SEEK_SET);
+			return;
+		}
+	}
+	File = NULL;
+	Length = lump->LumpSize;
+	StartPos = FilePos = 0;
+	Lump = lump;
+	Lump->CacheLump();
+}
+
 FWadLump::~FWadLump()
 {
 	if (Lump != NULL)
@@ -1521,5 +1608,35 @@ static void PrintLastError ()
 static void PrintLastError ()
 {
 	Printf (TEXTCOLOR_RED "  %s\n", strerror(errno));
+}
+#endif
+
+#ifdef _DEBUG
+//==========================================================================
+//
+// CCMD LumpNum
+//
+//==========================================================================
+
+CCMD(lumpnum)
+{
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		Printf("%s: %d\n", argv[i], Wads.CheckNumForName(argv[i]));
+	}
+}
+
+//==========================================================================
+//
+// CCMD LumpNumFull
+//
+//==========================================================================
+
+CCMD(lumpnumfull)
+{
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		Printf("%s: %d\n", argv[i], Wads.CheckNumForFullName(argv[i]));
+	}
 }
 #endif

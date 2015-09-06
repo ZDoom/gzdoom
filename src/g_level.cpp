@@ -367,7 +367,6 @@ static void InitPlayerClasses ()
 
 void G_InitNew (const char *mapname, bool bTitleLevel)
 {
-	EGameSpeed oldSpeed;
 	bool wantFast;
 	int i;
 
@@ -454,7 +453,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		I_Error ("Could not find map %s\n", mapname);
 	}
 
-	oldSpeed = GameSpeed;
 	wantFast = !!G_SkillProperty(SKILLP_FastMonsters);
 	GameSpeed = wantFast ? SPEED_Fast : SPEED_Normal;
 
@@ -533,6 +531,10 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	if (unloading)
 	{
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
+		return;
+	}
+	if (gameaction == ga_completed)	// do not exit multiple times.
+	{
 		return;
 	}
 
@@ -903,11 +905,13 @@ void G_DoLoadLevel (int position, bool autosave)
 	if (level.flags2 & LEVEL2_FORCETEAMPLAYOFF)
 		teamplay = false;
 
+	FString mapname = level.MapName;
+	mapname.ToLower();
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
 			TEXTCOLOR_BOLD "%s - %s\n\n",
-			level.MapName.GetChars(), level.LevelName.GetChars());
+			mapname.GetChars(), level.LevelName.GetChars());
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -1229,6 +1233,7 @@ void G_FinishTravel ()
 			pawn->lastenemy = NULL;
 			pawn->player->mo = pawn;
 			pawn->player->camera = pawn;
+			pawn->player->viewheight = pawn->ViewHeight;
 			pawn->flags2 &= ~MF2_BLASTED;
 			DObject::StaticPointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();
@@ -1237,15 +1242,6 @@ void G_FinishTravel ()
 			pawn->AddToHash ();
 			pawn->SetState(pawn->SpawnState);
 			pawn->player->SendPitchLimits();
-			// Sync the FLY flags.
-			if (pawn->flags2 & MF2_FLY)
-			{
-				pawn->player->cheats |= CF_FLY;
-			}
-			else
-			{
-				pawn->player->cheats &= ~CF_FLY;
-			}
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{
@@ -1468,7 +1464,9 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	if (SaveVersion >= 3313)
 	{
-		arc << level.nextmusic;
+		// This is a player property now
+		int nextmusic;
+		arc << nextmusic;
 	}
 
 	// Hub transitions must keep the current total time
@@ -1795,8 +1793,14 @@ void G_ReadSnapshots (PNGHandle *png)
 		DWORD snapver;
 
 		arc << snapver;
-		arc << namelen;
-		arc.Read (mapname, namelen);
+		if (SaveVersion < 4508)
+		{
+			arc << namelen;
+			arc.Read(mapname, namelen);
+			mapname[namelen] = 0;
+			MapName = mapname;
+		}
+		else arc << MapName;
 		TheDefaultLevelInfo.snapshotVer = snapver;
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
 		TheDefaultLevelInfo.snapshot->Serialize (arc);

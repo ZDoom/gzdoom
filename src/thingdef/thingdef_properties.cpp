@@ -404,11 +404,11 @@ DEFINE_INFO_PROPERTY(game, S, Actor)
 DEFINE_INFO_PROPERTY(spawnid, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	if (id<0 || id>255)
+	if (id<0 || id>65535)
 	{
-		I_Error ("SpawnID must be in the range [0,255]");
+		I_Error ("SpawnID must be in the range [0,65535]");
 	}
-	else info->SpawnID=(BYTE)id;
+	else info->SpawnID=(WORD)id;
 }
 
 //==========================================================================
@@ -420,20 +420,8 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 	PROP_INT_PARM(id1, 1);
 	PROP_INT_PARM(id2, 2);
 
-	// Handling for Strife teaser IDs - only of meaning for the standard items
-	// as PWADs cannot be loaded with the teasers.
-	if (PROP_PARM_COUNT > 1)
-	{
-		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE))
-			convid=id1;
-
-		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
-			convid=id2;
-
-	}
-
-	if (convid <= 0) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
-	SetStrifeType(convid, info->Class);
+	if (convid <= 0 || convid > 65535) return;	// 0 is not usable because the dialogue scripts use it as 'no object'.
+	else info->ConversationID=(WORD)convid;
 }
 
 //==========================================================================
@@ -976,7 +964,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 	if (type == 0)
 	{
 		PROP_INT_PARM(trans, 1);
-		int max = (gameinfo.gametype==GAME_Strife || (info->GameFilter&GAME_Strife)) ? 6:2;
+		int max = 6;// (gameinfo.gametype == GAME_Strife || (info->GameFilter&GAME_Strife)) ? 6 : 2;
 		if (trans < 0 || trans > max)
 		{
 			I_Error ("Translation must be in the range [0,%d]", max);
@@ -1062,7 +1050,7 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 DEFINE_PROPERTY(bouncetype, S, Actor)
 {
 	static const char *names[] = { "None", "Doom", "Heretic", "Hexen", "DoomCompat", "HereticCompat", "HexenCompat", "Grenade", "Classic", NULL };
-	static const int flags[] = { BOUNCE_None,
+	static const ActorBounceFlag flags[] = { BOUNCE_None,
 		BOUNCE_Doom, BOUNCE_Heretic, BOUNCE_Hexen,
 		BOUNCE_DoomCompat, BOUNCE_HereticCompat, BOUNCE_HexenCompat,
 		BOUNCE_Grenade, BOUNCE_Classic, };
@@ -1322,13 +1310,13 @@ DEFINE_PROPERTY(species, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(clearflags, 0, Actor)
 {
-	defaults->flags =
-		defaults->flags3 =
-		defaults->flags4 =
-		defaults->flags5 =
-		defaults->flags6 =
-		defaults->flags7 = 0;
+	defaults->flags = 0;
 	defaults->flags2 &= MF2_ARGSDEFINED;	// this flag must not be cleared
+	defaults->flags3 = 0;
+	defaults->flags4 = 0;
+	defaults->flags5 = 0;
+	defaults->flags6 = 0;
+	defaults->flags7 = 0;
 }
 
 //==========================================================================
@@ -1422,8 +1410,7 @@ DEFINE_PROPERTY(stamina, I, Actor)
 DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	if (!stricmp(str, "") || (!stricmp(str, "none")) || (!stricmp(str, "null")) || *str == 0) defaults->TeleFogSourceType = NULL;
-	else defaults->TeleFogSourceType = FindClassTentative(str,"TeleportFog");
+	defaults->TeleFogSourceType = FindClassTentative(str,"Actor");
 }
 
 //==========================================================================
@@ -1432,8 +1419,46 @@ DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 DEFINE_PROPERTY(telefogdesttype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	if (!stricmp(str, "") || (!stricmp(str, "none")) || (!stricmp(str, "null")) || *str == 0) defaults->TeleFogDestType = NULL;
-	else defaults->TeleFogDestType = FindClassTentative(str, "TeleportFog");
+	defaults->TeleFogDestType = FindClassTentative(str, "Actor");
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(ripperlevel, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+	{
+		I_Error ("RipperLevel must not be negative");
+	}
+	defaults->RipperLevel = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(riplevelmin, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+	{
+		I_Error ("RipLevelMin must not be negative");
+	}
+	defaults->RipLevelMin = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(riplevelmax, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+	{
+		I_Error ("RipLevelMax must not be negative");
+	}
+	defaults->RipLevelMax = id;
 }
 
 //==========================================================================

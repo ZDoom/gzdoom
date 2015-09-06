@@ -1,10 +1,8 @@
 
 // Scriptable marine -------------------------------------------------------
 
-ACTOR ScriptedMarine 9100 native
+ACTOR ScriptedMarine native
 {
-	Game Doom
-	SpawnID 151
 	Health 100
 	Radius 16
 	Height 56
@@ -172,9 +170,8 @@ ACTOR ScriptedMarine 9100 native
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineFist : ScriptedMarine 9101
+ACTOR MarineFist : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Melee:		
@@ -187,9 +184,8 @@ ACTOR MarineFist : ScriptedMarine 9101
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineBerserk : MarineFist 9102
+ACTOR MarineBerserk : MarineFist
 {
-	Game Doom
 	States
 	{
 	Melee:		
@@ -200,9 +196,8 @@ ACTOR MarineBerserk : MarineFist 9102
 }
 //---------------------------------------------------------------------------
 
-ACTOR MarineChainsaw : ScriptedMarine 9103
+ACTOR MarineChainsaw : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Melee:
@@ -216,9 +211,8 @@ ACTOR MarineChainsaw : ScriptedMarine 9103
 
 //---------------------------------------------------------------------------
 
-ACTOR MarinePistol : ScriptedMarine 9104
+ACTOR MarinePistol : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -229,9 +223,8 @@ ACTOR MarinePistol : ScriptedMarine 9104
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineShotgun : ScriptedMarine 9105
+ACTOR MarineShotgun : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -244,9 +237,8 @@ ACTOR MarineShotgun : ScriptedMarine 9105
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineSSG : ScriptedMarine 9106
+ACTOR MarineSSG : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -256,9 +248,8 @@ ACTOR MarineSSG : ScriptedMarine 9106
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineChaingun : ScriptedMarine 9107
+ACTOR MarineChaingun : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -269,9 +260,8 @@ ACTOR MarineChaingun : ScriptedMarine 9107
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineRocket : MarineFist 9108
+ACTOR MarineRocket : MarineFist
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -282,9 +272,8 @@ ACTOR MarineRocket : MarineFist 9108
 
 //---------------------------------------------------------------------------
 
-ACTOR MarinePlasma : ScriptedMarine 9109
+ACTOR MarinePlasma : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -295,9 +284,8 @@ ACTOR MarinePlasma : ScriptedMarine 9109
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineRailgun : ScriptedMarine 9110
+ACTOR MarineRailgun : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:
@@ -308,9 +296,8 @@ ACTOR MarineRailgun : ScriptedMarine 9110
 
 //---------------------------------------------------------------------------
 
-ACTOR MarineBFG : ScriptedMarine 9111
+ACTOR MarineBFG : ScriptedMarine
 {
-	Game Doom
 	States
 	{
 	Missile:

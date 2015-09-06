@@ -1,10 +1,8 @@
 
 // Programmer ---------------------------------------------------------------
 
-ACTOR Programmer 71
+ACTOR Programmer
 {
-	Game Strife
-	ConversationID 95, -1, -1
 	Health 1100
 	PainChance 50
 	Speed 26
@@ -86,7 +84,6 @@ ACTOR Programmer 71
 
 ACTOR ProgrammerBase
 {
-	ConversationID 96,-1,-1
 	+NOBLOCKMAP
 	+NOCLIP
 	+NOBLOOD

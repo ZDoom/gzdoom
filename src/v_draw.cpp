@@ -333,6 +333,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	int intval;
 	bool translationset = false;
 	bool virtBottom;
+	bool fillcolorset = false;
 
 	if (img == NULL || img->UseType == FTexture::TEX_Null)
 	{
@@ -539,6 +540,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 
 		case DTA_FillColor:
 			parms->fillcolor = va_arg(tags, uint32);
+			fillcolorset = true;
 			break;
 
 		case DTA_Translation:
@@ -711,7 +713,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 
 	if (parms->style.BlendOp == 255)
 	{
-		if (parms->fillcolor != ~0u)
+		if (fillcolorset)
 		{
 			if (parms->alphaChannel)
 			{
@@ -893,7 +895,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	DWORD fg = fg2rgb[basecolor];
 	DWORD bg = bg2rgb[*spot];
 	bg = (fg+bg) | 0x1f07c1f;
-	*spot = RGB32k[0][0][bg&(bg>>15)];
+	*spot = RGB32k.All[bg&(bg>>15)];
 }
 
 void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)

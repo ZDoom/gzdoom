@@ -240,7 +240,7 @@ int main (int argc, char **argv)
 #if !defined (__APPLE__)
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-		cc_install_handlers(argc, argv, 4, s, "zdoom-crash.log", DoomSpecificInfo);
+		cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", DoomSpecificInfo);
 	}
 #endif // !__APPLE__
 
@@ -265,14 +265,13 @@ int main (int argc, char **argv)
 	
 	setlocale (LC_ALL, "C");
 
-	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE|SDL_INIT_JOYSTICK) == -1)
+	if (SDL_Init (0) < 0)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
 	}
 	atterm (SDL_Quit);
 
-	printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
 	printf("\n");
 	
     try

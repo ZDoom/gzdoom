@@ -52,6 +52,8 @@ struct wadlump_t
 
 // [RH] Namespaces from BOOM.
 typedef enum {
+	ns_hidden = -1,
+
 	ns_global = 0,
 	ns_sprites,
 	ns_flats,
@@ -110,6 +112,7 @@ public:
 
 private:
 	FWadLump (FResourceLump *Lump, bool alwayscache = false);
+	FWadLump(int lumpnum, FResourceLump *lump);
 
 	FResourceLump *Lump;
 
@@ -183,6 +186,7 @@ public:
 	FWadLump OpenLumpNum (int lump);
 	FWadLump OpenLumpName (const char *name) { return OpenLumpNum (GetNumForName (name)); }
 	FWadLump *ReopenLumpNum (int lump);	// Opens a new, independent FILE
+	FWadLump *ReopenLumpNumNewFile (int lump);	// Opens a new, independent FILE
 	
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 

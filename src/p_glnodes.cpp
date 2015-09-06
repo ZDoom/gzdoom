@@ -338,7 +338,14 @@ static bool LoadGLSegs(FileReader * lump)
 					
 					ml->side=LittleShort(ml->side);
 					segs[i].sidedef = ldef->sidedef[ml->side];
-					segs[i].frontsector = ldef->sidedef[ml->side]->sector;
+					if (ldef->sidedef[ml->side] != NULL)
+					{
+						segs[i].frontsector = ldef->sidedef[ml->side]->sector;
+					}
+					else
+					{
+						segs[i].frontsector = NULL;
+					}
 					if (ldef->flags & ML_TWOSIDED && ldef->sidedef[ml->side^1] != NULL)
 					{
 						segs[i].backsector = ldef->sidedef[ml->side^1]->sector;
@@ -346,7 +353,7 @@ static bool LoadGLSegs(FileReader * lump)
 					else
 					{
 						ldef->flags &= ~ML_TWOSIDED;
-						segs[i].backsector = 0;
+						segs[i].backsector = NULL;
 					}
 	
 				}
@@ -385,7 +392,14 @@ static bool LoadGLSegs(FileReader * lump)
 					
 					ml->side=LittleShort(ml->side);
 					segs[i].sidedef = ldef->sidedef[ml->side];
-					segs[i].frontsector = ldef->sidedef[ml->side]->sector;
+					if (ldef->sidedef[ml->side] != NULL)
+					{
+						segs[i].frontsector = ldef->sidedef[ml->side]->sector;
+					}
+					else
+					{
+						segs[i].frontsector = NULL;
+					}
 					if (ldef->flags & ML_TWOSIDED && ldef->sidedef[ml->side^1] != NULL)
 					{
 						segs[i].backsector = ldef->sidedef[ml->side^1]->sector;
@@ -393,7 +407,7 @@ static bool LoadGLSegs(FileReader * lump)
 					else
 					{
 						ldef->flags &= ~ML_TWOSIDED;
-						segs[i].backsector = 0;
+						segs[i].backsector = NULL;
 					}
 	
 				}
@@ -930,13 +944,13 @@ bool P_LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(i+1)->Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(li+i+1)->Name, check[i], 8))
 				{
 					result=false;
 					break;
 				}
 				else
-					gwalumps[i] = f_gwa->GetLump(i+1)->NewReader();
+					gwalumps[i] = f_gwa->GetLump(li+i+1)->NewReader();
 			}
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}
@@ -1116,10 +1130,10 @@ static void CreateCachedNodes(MapData *map)
 	WriteLong(ZNodes, numnodes);
 	for(int i=0;i<numnodes;i++)
 	{
-		WriteWord(ZNodes, nodes[i].x >> FRACBITS);
-		WriteWord(ZNodes, nodes[i].y >> FRACBITS);
-		WriteWord(ZNodes, nodes[i].dx >> FRACBITS);
-		WriteWord(ZNodes, nodes[i].dy >> FRACBITS);
+		WriteLong(ZNodes, nodes[i].x);
+		WriteLong(ZNodes, nodes[i].y);
+		WriteLong(ZNodes, nodes[i].dx);
+		WriteLong(ZNodes, nodes[i].dy);
 		for (int j = 0; j < 2; ++j)
 		{
 			for (int k = 0; k < 4; ++k)
@@ -1168,7 +1182,7 @@ static void CreateCachedNodes(MapData *map)
 		DWORD ndx[2] = {LittleLong(DWORD(lines[i].v1 - vertexes)), LittleLong(DWORD(lines[i].v2 - vertexes)) };
 		memcpy(compressed+8+16+8*i, ndx, 8);
 	}
-	memcpy(compressed + offset - 4, "ZGL2", 4);
+	memcpy(compressed + offset - 4, "ZGL3", 4);
 
 	FString path = CreateCacheName(map, true);
 	FILE *f = fopen(path, "wb");
@@ -1218,7 +1232,7 @@ static bool CheckCachedNodes(MapData *map)
 	if (fread(verts, 8, numlin, f) != numlin) goto errorout;
 
 	if (fread(magic, 1, 4, f) != 4) goto errorout;
-	if (memcmp(magic, "ZGL2", 4))  goto errorout;
+	if (memcmp(magic, "ZGL2", 4) && memcmp(magic, "ZGL3", 4))  goto errorout;
 
 
 	try
@@ -1226,7 +1240,7 @@ static bool CheckCachedNodes(MapData *map)
 		long pos = ftell(f);
 		FileReader fr(f);
 		fr.Seek(pos, SEEK_SET);
-		P_LoadZNodes (fr, MAKE_ID('Z','G','L','2'));
+		P_LoadZNodes (fr, MAKE_ID(magic[0],magic[1],magic[2],magic[3]));
 	}
 	catch (CRecoverableError &error)
 	{

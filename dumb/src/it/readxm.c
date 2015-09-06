@@ -23,6 +23,7 @@
 
 #include "dumb.h"
 #include "internal/it.h"
+#include "internal/dumbfile.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -185,7 +186,7 @@ static void it_xm_convert_volume(int volume, IT_ENTRY *entry)
 
 
 
-static int it_xm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels, unsigned char **bufferptr, int *buffersize, int version)
+static int it_xm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels, unsigned char *buffer, int version)
 {
 	int size;
 	int pos;
@@ -193,7 +194,6 @@ static int it_xm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels, 
 	int row;
 	int effect, effectvalue;
 	IT_ENTRY *entry;
-	unsigned char *buffer;
 
 	/* pattern header size */
 	if (dumbfile_igetl(f) != ( version == 0x0102 ? 0x08 : 0x09 ) ) {
@@ -220,20 +220,12 @@ static int it_xm_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels, 
 	if (size == 0)
 		return 0;
 
-	if (size > *buffersize) {
-		if (*bufferptr != NULL) {
-			free(*bufferptr);
-		}
-		*bufferptr = malloc(size);
-		*buffersize = size;
-	}
-	buffer = *bufferptr;
-	if (buffer == NULL) {
-		TRACE("XM error: out of memory reading pattern\n");
+	if (size > 1280 * n_channels) {
+		TRACE("XM error: pattern data size > %d bytes\n", 1280 * n_channels);
 		return -1;
 	}
 
-	if (dumbfile_getnc(buffer, size, f) < size)
+    if (dumbfile_getnc((char *)buffer, size, f) < size)
 		return -1;
 
 	/* compute number of entries */
@@ -378,15 +370,7 @@ struct LIMITED_XM
 	DUMBFILE *remaining;
 };
 
-/* XXX */
-struct DUMBFILE
-{
-	DUMBFILE_SYSTEM *dfs;
-	void *file;
-	long pos;
-};
-
-static int limit_xm_resize(void *f, long n)
+static int DUMBCALLBACK limit_xm_resize(void *f, long n)
 {
 	DUMBFILE *df = f;
 	LIMITED_XM *lx = df->file;
@@ -398,7 +382,7 @@ static int limit_xm_resize(void *f, long n)
 			memset( buffered + lx->allocated, 0, n - lx->allocated );
 			lx->allocated = n;
 		}
-		if ( dumbfile_getnc( lx->buffered, n, lx->remaining ) < n ) return -1;
+        if ( dumbfile_getnc( (char *)lx->buffered, n, lx->remaining ) < n ) return -1;
 	} else if (!n) {
 		if ( lx->buffered ) free( lx->buffered );
 		lx->buffered = NULL;
@@ -409,14 +393,14 @@ static int limit_xm_resize(void *f, long n)
 	return 0;
 }
 
-static int limit_xm_skip_end(void *f, int32 n)
+static int DUMBCALLBACK limit_xm_skip_end(void *f, int32 n)
 {
 	DUMBFILE *df = f;
 	LIMITED_XM *lx = df->file;
 	return dumbfile_skip( lx->remaining, n );
 }
 
-static int limit_xm_skip(void *f, int32 n)
+static int DUMBCALLBACK limit_xm_skip(void *f, long n)
 {
 	LIMITED_XM *lx = f;
 	lx->ptr += n;
@@ -425,7 +409,7 @@ static int limit_xm_skip(void *f, int32 n)
 
 
 
-static int limit_xm_getc(void *f)
+static int DUMBCALLBACK limit_xm_getc(void *f)
 {
 	LIMITED_XM *lx = f;
 	if (lx->ptr >= lx->allocated) {
@@ -436,7 +420,7 @@ static int limit_xm_getc(void *f)
 
 
 
-static int32 limit_xm_getnc(char *ptr, int32 n, void *f)
+static int32 DUMBCALLBACK limit_xm_getnc(char *ptr, int32 n, void *f)
 {
 	LIMITED_XM *lx = f;
 	int left;
@@ -457,7 +441,7 @@ static int32 limit_xm_getnc(char *ptr, int32 n, void *f)
 
 
 
-static void limit_xm_close(void *f)
+static void DUMBCALLBACK limit_xm_close(void *f)
 {
 	LIMITED_XM *lx = f;
 	if (lx->buffered) free(lx->buffered);
@@ -467,12 +451,32 @@ static void limit_xm_close(void *f)
 
 
 
+/* These two can be stubs since this implementation doesn't use seeking */
+static int DUMBCALLBACK limit_xm_seek(void *f, long n)
+{
+    (void)f;
+    (void)n;
+    return 1;
+}
+
+
+
+static long DUMBCALLBACK limit_xm_get_size(void *f)
+{
+    (void)f;
+    return 0;
+}
+
+
+
 DUMBFILE_SYSTEM limit_xm_dfs = {
 	NULL,
 	&limit_xm_skip,
 	&limit_xm_getc,
 	&limit_xm_getnc,
-	&limit_xm_close
+    &limit_xm_close,
+    &limit_xm_seek,
+    &limit_xm_get_size
 };
 
 static DUMBFILE *dumbfile_limit_xm(DUMBFILE *f)
@@ -513,9 +517,9 @@ static int it_xm_read_instrument(IT_INSTRUMENT *instrument, XM_INSTRUMENT_EXTRA 
 
 	if ( limit_xm_resize( f, size - 4 ) < 0 ) return -1;
 
-	dumbfile_getnc(instrument->name, 22, f);
+    dumbfile_getnc((char *)instrument->name, 22, f);
 	instrument->name[22] = 0;
-	trim_whitespace(instrument->name, 22);
+    trim_whitespace((char *)instrument->name, 22);
 	instrument->filename[0] = 0;
 	dumbfile_skip(f, 1);  /* Instrument type. Should be 0, but seems random. */
 	extra->n_samples = dumbfile_igetw(f);
@@ -673,9 +677,9 @@ static int it_xm_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
 
 	reserved = dumbfile_getc(f);
 
-	dumbfile_getnc(sample->name, 22, f);
+    dumbfile_getnc((char *)sample->name, 22, f);
 	sample->name[22] = 0;
-	trim_whitespace(sample->name, 22);
+    trim_whitespace((char *)sample->name, 22);
 
 	sample->filename[0] = 0;
 
@@ -763,13 +767,22 @@ static int it_xm_read_sample_data(IT_SAMPLE *sample, unsigned char roguebytes, D
 {
 	int old;
 	int32 i;
+//	long truncated_size;
 	int n_channels;
 	int32 datasizebytes;
-	void *ibuffer;
 
 	if (!(sample->flags & IT_SAMPLE_EXISTS))
 		return dumbfile_skip(f, roguebytes);
 
+#if 0
+	/* let's get rid of the sample data coming after the end of the loop */
+	if ((sample->flags & IT_SAMPLE_LOOP) && sample->loop_end < sample->length && roguebytes != 4) {
+		truncated_size = sample->length - sample->loop_end;
+		sample->length = sample->loop_end;
+	} else {
+		truncated_size = 0;
+	}
+#endif
 	n_channels = sample->flags & IT_SAMPLE_STEREO ? 2 : 1;
 	datasizebytes = sample->length;
 
@@ -848,7 +861,7 @@ static int it_xm_read_sample_data(IT_SAMPLE *sample, unsigned char roguebytes, D
 		 * players that don't know about it (and FastTracker 2 itself), the two
 		 * channels are not stored interleaved but rather, one after the other. */
 		int old_r = 0;
-		ibuffer = malloc(sample->length << ((sample->flags & IT_SAMPLE_16BIT) ? 2 : 1));
+		void *ibuffer = malloc(sample->length << ((sample->flags & IT_SAMPLE_16BIT) ? 2 : 1));
 		if (ibuffer == NULL)
 		{
 			/* No memory => ignore stereo bits at the end */
@@ -925,12 +938,12 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 		return NULL;
 
 	/* song name */
-	if (dumbfile_getnc(sigdata->name, 20, f) < 20) {
+    if (dumbfile_getnc((char *)sigdata->name, 20, f) < 20) {
 		free(sigdata);
 		return NULL;
 	}
 	sigdata->name[20] = 0;
-	trim_whitespace(sigdata->name, 20);
+    trim_whitespace((char *)sigdata->name, 20);
 
 	if (dumbfile_getc(f) != 0x1A) {
 		TRACE("XM error: 0x1A not found\n");
@@ -986,6 +999,16 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 	if (sigdata->speed == 0) sigdata->speed = 6; // Should we? What about tempo?
 	sigdata->tempo            = dumbfile_igetw(f);
 
+    // FT2 always clips restart position against the song length
+    if (sigdata->restart_position > sigdata->n_orders)
+        sigdata->restart_position = sigdata->n_orders;
+    // And FT2 starts playback on order 0, regardless of length,
+    // and only checks if the next order is greater than or equal
+    // to this, not the current pattern. Work around this with
+    // DUMB's playback core by overriding a zero length with one.
+    if (sigdata->n_orders == 0)
+        sigdata->n_orders = 1;
+
 	/* sanity checks */
 	// XXX
 	i = header_size - 4 - 2 * 8; /* Maximum number of orders expected */
@@ -1003,7 +1026,7 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
-	dumbfile_getnc(sigdata->order, sigdata->n_orders, f);
+    dumbfile_getnc((char *)sigdata->order, sigdata->n_orders, f);
 	dumbfile_skip(f, i - sigdata->n_orders);
 
 	if (dumbfile_error(f)) {
@@ -1027,13 +1050,14 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 			sigdata->pattern[i].entry = NULL;
 
 		{
-			unsigned char *buffer = NULL;
-			int buffersize = 0;
+			unsigned char *buffer = malloc(1280 * n_channels); /* 256 rows * 5 bytes */
+			if (!buffer) {
+				_dumb_it_unload_sigdata(sigdata);
+				return NULL;
+			}
 			for (i = 0; i < sigdata->n_patterns; i++) {
-				if (it_xm_read_pattern(&sigdata->pattern[i], f, n_channels, &buffer, &buffersize, * version) != 0) {
-					if (buffer != NULL) {
-						free(buffer);
-					}
+				if (it_xm_read_pattern(&sigdata->pattern[i], f, n_channels, buffer, * version) != 0) {
+					free(buffer);
 					_dumb_it_unload_sigdata(sigdata);
 					return NULL;
 				}
@@ -1271,13 +1295,15 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 			sigdata->pattern[i].entry = NULL;
 
 		{
-			unsigned char *buffer = NULL;
-			int buffersize = 0;
+			unsigned char *buffer = malloc(1280 * n_channels); /* 256 rows * 5 bytes */
+			if (!buffer) {
+				free(roguebytes);
+				_dumb_it_unload_sigdata(sigdata);
+				return NULL;
+			}
 			for (i = 0; i < sigdata->n_patterns; i++) {
-				if (it_xm_read_pattern(&sigdata->pattern[i], f, n_channels, &buffer, &buffersize, * version) != 0) {
-					if (buffer != NULL) {
-						free(buffer);
-					}
+				if (it_xm_read_pattern(&sigdata->pattern[i], f, n_channels, buffer, * version) != 0) {
+					free(buffer);
 					free(roguebytes);
 					_dumb_it_unload_sigdata(sigdata);
 					return NULL;
@@ -1486,7 +1512,7 @@ DUH *DUMBEXPORT dumb_read_xm_quick(DUMBFILE *f)
 		char version[16];
 		const char *tag[2][2];
 		tag[0][0] = "TITLE";
-		tag[0][1] = ((DUMB_IT_SIGDATA *)sigdata)->name;
+        tag[0][1] = (const char *)(((DUMB_IT_SIGDATA *)sigdata)->name);
 		tag[1][0] = "FORMAT";
 		version[0] = 'X';
 		version[1] = 'M';

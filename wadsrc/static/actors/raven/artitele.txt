@@ -1,13 +1,10 @@
 
 // Teleport (self) ----------------------------------------------------------
 
-ACTOR ArtiTeleport : Inventory 36 native
+ACTOR ArtiTeleport : Inventory native
 {
-	Game Raven
-	SpawnID 18
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.INVBAR
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.FANCYPICKUPSOUND

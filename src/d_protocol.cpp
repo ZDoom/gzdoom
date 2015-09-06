@@ -500,5 +500,5 @@ void SkipChunk (BYTE **stream)
 	int len;
 
 	len = ReadLong (stream);
-	stream += len + (len & 1);
+	*stream += len + (len & 1);
 }

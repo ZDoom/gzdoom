@@ -1366,7 +1366,7 @@ static void S_AddSNDINFO (int lump)
 				FName nm = sc.String;
 				sc.MustGetString();
 				if (sc.Compare("timidity")) MidiDevices[nm] = MDEV_TIMIDITY;
-				else if (sc.Compare("fmod")) MidiDevices[nm] = MDEV_FMOD;
+				else if (sc.Compare("fmod") || sc.Compare("sndsys")) MidiDevices[nm] = MDEV_SNDSYS;
 				else if (sc.Compare("standard")) MidiDevices[nm] = MDEV_MMAPI;
 				else if (sc.Compare("opl")) MidiDevices[nm] = MDEV_OPL;
 				else if (sc.Compare("default")) MidiDevices[nm] = MDEV_DEFAULT;
@@ -2348,7 +2348,6 @@ class AMusicChanger : public ASectorAction
 	DECLARE_CLASS (AMusicChanger, ASectorAction)
 public:
 	virtual bool DoTriggerAction (AActor *triggerer, int activationType);
-	virtual void Tick();
 	virtual void PostBeginPlay();
 };
 
@@ -2356,49 +2355,27 @@ IMPLEMENT_CLASS(AMusicChanger)
 
 bool AMusicChanger::DoTriggerAction (AActor *triggerer, int activationType)
 {
-	if (activationType & SECSPAC_Enter)
+	if (activationType & SECSPAC_Enter && triggerer->player != NULL)
 	{
-		if (args[0] == 0 || level.info->MusicMap.CheckKey(args[0]))
- 		{
-			level.nextmusic = args[0];
-			reactiontime = 30;
+		if (triggerer->player->MUSINFOactor != this)
+		{
+			triggerer->player->MUSINFOactor = this;
+			triggerer->player->MUSINFOtics = 30;
 		}
 	}
 	return Super::DoTriggerAction (triggerer, activationType);
 }
  
-void AMusicChanger::Tick()
-{
-	Super::Tick();
-	if (reactiontime > -1 && --reactiontime == 0)
-	{
-		// Is it our music that's queued for being played?
-		if (level.nextmusic == args[0])
-		{
-			if (args[0] != 0)
- 			{
-				FName *music = level.info->MusicMap.CheckKey(args[0]);
-
-				if (music != NULL)
-				{
-					S_ChangeMusic(music->GetChars(), args[1]);
-				}
- 			}
-			else
-			{
-				S_ChangeMusic("*");
-			}
- 		}
- 	}
- }
-
 void AMusicChanger::PostBeginPlay()
 {
 	// The music changer should consider itself activated if the player
 	// spawns in its sector as well as if it enters the sector during a P_TryMove.
 	Super::PostBeginPlay();
-	if (players[consoleplayer].mo && players[consoleplayer].mo->Sector == this->Sector)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		TriggerAction(players[consoleplayer].mo, SECSPAC_Enter);
+		if (playeringame[i] && players[i].mo && players[i].mo->Sector == this->Sector)
+		{
+			TriggerAction(players[i].mo, SECSPAC_Enter);
+		}
 	}
 }

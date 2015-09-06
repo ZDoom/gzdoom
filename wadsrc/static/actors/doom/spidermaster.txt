@@ -3,12 +3,10 @@
 // Spider boss
 //
 //===========================================================================
-ACTOR SpiderMastermind 7
+ACTOR SpiderMastermind
 {
-	Game Doom
-	SpawnID 7
 	Health 3000
-	Radius 100
+	Radius 128
 	Height 100
 	Mass 1000
 	Speed 12

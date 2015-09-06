@@ -1,10 +1,8 @@
 
 // Mesh Armor (1) -----------------------------------------------------------
 
-ACTOR MeshArmor : HexenArmor 8005
+ACTOR MeshArmor : HexenArmor
 {
-	Game Hexen
-	SpawnID 68
 	+NOGRAVITY
 	Health 0	// Armor class
 	Inventory.Amount 0
@@ -19,10 +17,8 @@ ACTOR MeshArmor : HexenArmor 8005
 	
 // Falcon Shield (2) --------------------------------------------------------
 
-ACTOR FalconShield : HexenArmor 8006
+ACTOR FalconShield : HexenArmor
 {
-	Game Hexen
-	SpawnID 69
 	+NOGRAVITY
 	Health 1	// Armor class
 	Inventory.Amount 0
@@ -37,10 +33,8 @@ ACTOR FalconShield : HexenArmor 8006
 
 // Platinum Helm (3) --------------------------------------------------------
 
-ACTOR PlatinumHelm : HexenArmor 8007
+ACTOR PlatinumHelm : HexenArmor
 {
-	Game Hexen
-	SpawnID 70
 	+NOGRAVITY
 	Health 2	// Armor class
 	Inventory.Amount 0
@@ -55,10 +49,8 @@ ACTOR PlatinumHelm : HexenArmor 8007
 
 // Amulet of Warding (4) ----------------------------------------------------
 
-ACTOR AmuletOfWarding : HexenArmor 8008
+ACTOR AmuletOfWarding : HexenArmor
 {
-	Game Hexen
-	SpawnID 71
 	+NOGRAVITY
 	Health 3	// Armor class
 	Inventory.Amount 0

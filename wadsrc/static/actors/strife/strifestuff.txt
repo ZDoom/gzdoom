@@ -1,12 +1,10 @@
 // Tank 1 Huge ------------------------------------------------------------
 
-ACTOR Tank1 209
+ACTOR Tank1
 {
-	Game Strife
 	Radius 16
 	Height 192
 	+SOLID
-	ConversationID 31, -1, -1
 	States
 	{
 	Spawn:
@@ -19,13 +17,11 @@ ACTOR Tank1 209
 
 // Tank 2 Huge ------------------------------------------------------------
 
-ACTOR Tank2 210
+ACTOR Tank2
 {
-	Game Strife
 	Radius 16
 	Height 192
 	+SOLID
-	ConversationID 32, -1, -1
 	States
 	{
 	Spawn:
@@ -38,13 +34,11 @@ ACTOR Tank2 210
 
 // Tank 3 Huge ------------------------------------------------------------
 
-ACTOR Tank3 211
+ACTOR Tank3
 {
-	Game Strife
 	Radius 16
 	Height 192
 	+SOLID
-	ConversationID 33, -1, -1
 	States
 	{
 	Spawn:
@@ -57,13 +51,11 @@ ACTOR Tank3 211
 
 // Tank 4 -------------------------------------------------------------------
 
-ACTOR Tank4 213
+ACTOR Tank4
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 34, -1, -1
 	States
 	{
 	Spawn:
@@ -76,13 +68,11 @@ ACTOR Tank4 213
 
 // Tank 5 -------------------------------------------------------------------
 
-ACTOR Tank5 214
+ACTOR Tank5
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 35, -1, -1
 	States
 	{
 	Spawn:
@@ -95,13 +85,11 @@ ACTOR Tank5 214
 
 // Tank 6 -------------------------------------------------------------------
 
-ACTOR Tank6 229
+ACTOR Tank6
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 36, -1, -1
 	States
 	{
 	Spawn:
@@ -114,10 +102,8 @@ ACTOR Tank6 229
 
 // Water Bottle -------------------------------------------------------------
 
-ACTOR WaterBottle 2014
+ACTOR WaterBottle
 {
-	Game Strife
-	ConversationID 131, -1, -1
 	States
 	{
 	Spawn:
@@ -128,10 +114,8 @@ ACTOR WaterBottle 2014
 
 // Mug ----------------------------------------------------------------------
 
-ACTOR Mug 164
+ACTOR Mug
 {
-	Game Strife
-	ConversationID 132, -1, -1
 	States
 	{
 	Spawn:
@@ -142,15 +126,13 @@ ACTOR Mug 164
 
 // Wooden Barrel ------------------------------------------------------------
 
-ACTOR WoodenBarrel 82
+ACTOR WoodenBarrel
 {
-	Game Strife
 	Health 10
 	Radius 10
 	Height 32
 	+SOLID +SHOOTABLE +NOBLOOD
 	+INCOMBAT
-	ConversationID 203, -1, -1
 	DeathSound "woodenbarrel/death"
 	States
 	{
@@ -169,13 +151,11 @@ ACTOR WoodenBarrel 82
 
 // Strife's explosive barrel ------------------------------------------------
 
-ACTOR ExplosiveBarrel2 94
+ACTOR ExplosiveBarrel2
 {
-	Game Strife
 	Health 30
 	Radius 10
 	Height 32
-	ConversationID 204, -1, -1
 	+SOLID +SHOOTABLE +NOBLOOD +OLDRADIUSDMG
 	DeathSound "world/barrelx"
 	+INCOMBAT
@@ -198,14 +178,12 @@ ACTOR ExplosiveBarrel2 94
 
 // Light Silver, Fluorescent ----------------------------------------------
 
-ACTOR LightSilverFluorescent 95
+ACTOR LightSilverFluorescent
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 206, -1, -1
 	States
 	{
 	Spawn:
@@ -216,14 +194,12 @@ ACTOR LightSilverFluorescent 95
 
 // Light Brown, Fluorescent -----------------------------------------------
 
-ACTOR LightBrownFluorescent 96
+ACTOR LightBrownFluorescent
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 207, -1, -1
 	States
 	{
 	Spawn:
@@ -234,14 +210,12 @@ ACTOR LightBrownFluorescent 96
 
 // Light Gold, Fluorescent ------------------------------------------------
 
-ACTOR LightGoldFluorescent 97
+ACTOR LightGoldFluorescent
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 208, -1, -1
 	States
 	{
 	Spawn:
@@ -252,13 +226,11 @@ ACTOR LightGoldFluorescent 97
 
 // Light Globe --------------------------------------------------------------
 
-ACTOR LightGlobe 2028
+ACTOR LightGlobe
 {
-	Game Strife
 	Radius 16
 	Height 16
 	+SOLID
-	ConversationID 209, -1, -1
 	States
 	{
 	Spawn:
@@ -269,13 +241,11 @@ ACTOR LightGlobe 2028
 
 // Techno Pillar ------------------------------------------------------------
 
-ACTOR PillarTechno 48
+ACTOR PillarTechno
 {
-	Game Strife
 	Radius 20
 	Height 128
 	+SOLID
-	ConversationID 210, -1, -1
 	States
 	{
 	Spawn:
@@ -286,13 +256,11 @@ ACTOR PillarTechno 48
 
 // Aztec Pillar -------------------------------------------------------------
 
-ACTOR PillarAztec 54
+ACTOR PillarAztec
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 211, -1, -1
 	States
 	{
 	Spawn:
@@ -303,13 +271,11 @@ ACTOR PillarAztec 54
 
 // Damaged Aztec Pillar -----------------------------------------------------
 
-ACTOR PillarAztecDamaged 55
+ACTOR PillarAztecDamaged
 {
-	Game Strife
 	Radius 16
 	Height 80
 	+SOLID
-	ConversationID 212, -1, -1
 	States
 	{
 	Spawn:
@@ -320,13 +286,11 @@ ACTOR PillarAztecDamaged 55
 
 // Ruined Aztec Pillar ------------------------------------------------------
 
-ACTOR PillarAztecRuined 56
+ACTOR PillarAztecRuined
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID
-	ConversationID 213, -1, -1
 	States
 	{
 	Spawn:
@@ -337,13 +301,11 @@ ACTOR PillarAztecRuined 56
 
 // Huge Tech Pillar ---------------------------------------------------------
 
-ACTOR PillarHugeTech 57
+ACTOR PillarHugeTech
 {
-	Game Strife
 	Radius 24
 	Height 192
 	+SOLID
-	ConversationID 214, -1, -1
 	States
 	{
 	Spawn:
@@ -354,13 +316,11 @@ ACTOR PillarHugeTech 57
 
 // Alien Power Crystal in a Pillar ------------------------------------------
 
-ACTOR PillarAlienPower 227
+ACTOR PillarAlienPower
 {
-	Game Strife
 	Radius 24
 	Height 192
 	+SOLID
-	ConversationID 215, -1, -1
 	ActiveSound "ambient/alien2"
 	States
 	{
@@ -372,13 +332,11 @@ ACTOR PillarAlienPower 227
 
 // SStalactiteBig -----------------------------------------------------------
 
-ACTOR SStalactiteBig 98
+ACTOR SStalactiteBig
 {
-	Game Strife
 	Radius 16
 	Height 54
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 216, -1, -1
 	States
 	{
 	Spawn:
@@ -389,13 +347,11 @@ ACTOR SStalactiteBig 98
 
 // SStalactiteSmall ---------------------------------------------------------
 
-ACTOR SStalactiteSmall 161
+ACTOR SStalactiteSmall
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 217, -1, -1
 	States
 	{
 	Spawn:
@@ -406,13 +362,11 @@ ACTOR SStalactiteSmall 161
 
 // SStalagmiteBig -----------------------------------------------------------
 
-ACTOR SStalagmiteBig 160
+ACTOR SStalagmiteBig
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID
-	ConversationID 218, -1, -1
 	States
 	{
 	Spawn:
@@ -423,13 +377,11 @@ ACTOR SStalagmiteBig 160
 
 // Cave Pillar Top ----------------------------------------------------------
 
-ACTOR CavePillarTop 159
+ACTOR CavePillarTop
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 219, -1, -1
 	States
 	{
 	Spawn:
@@ -440,13 +392,11 @@ ACTOR CavePillarTop 159
 
 // Cave Pillar Bottom -------------------------------------------------------
 
-ACTOR CavePillarBottom 162
+ACTOR CavePillarBottom
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 220, -1, -1
 	States
 	{
 	Spawn:
@@ -457,13 +407,11 @@ ACTOR CavePillarBottom 162
 
 // SStalagmiteSmall ---------------------------------------------------------
 
-ACTOR SStalagmiteSmall 163
+ACTOR SStalagmiteSmall
 {
-	Game Strife
 	Radius 16
 	Height 25
 	+SOLID
-	ConversationID 221, -1, -1
 	States
 	{
 	Spawn:
@@ -474,10 +422,8 @@ ACTOR SStalagmiteSmall 163
 
 // Candle -------------------------------------------------------------------
 
-ACTOR Candle 34
+ACTOR Candle
 {
-	Game Strife
-	ConversationID 222, -1, -1
 	States
 	{
 	Spawn:
@@ -488,13 +434,11 @@ ACTOR Candle 34
 
 // StrifeCandelabra ---------------------------------------------------------
 
-ACTOR StrifeCandelabra 35
+ACTOR StrifeCandelabra
 {
-	Game Strife
 	Radius 16
 	Height 40
 	+SOLID
-	ConversationID 223, -1, -1
 	States
 	{
 	Spawn:
@@ -505,11 +449,9 @@ ACTOR StrifeCandelabra 35
 
 // Floor Water Drop ---------------------------------------------------------
 
-ACTOR WaterDropOnFloor 103
+ACTOR WaterDropOnFloor
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 224, -1, -1
 	ActiveSound "world/waterdrip"
 	States
 	{
@@ -526,11 +468,9 @@ ACTOR WaterDropOnFloor 103
 
 // Waterfall Splash ---------------------------------------------------------
 
-ACTOR WaterfallSplash 104
+ACTOR WaterfallSplash
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 225, -1, -1
 	ActiveSound "world/waterfall"
 	States
 	{
@@ -543,12 +483,10 @@ ACTOR WaterfallSplash 104
 
 // Ceiling Water Drip -------------------------------------------------------
 
-ACTOR WaterDrip 53
+ACTOR WaterDrip
 {
-	Game Strife
 	Height 1
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
-	ConversationID 226, -1, -1
 	States
 	{
 	Spawn:
@@ -560,11 +498,9 @@ ACTOR WaterDrip 53
 
 // WaterFountain ------------------------------------------------------------
 
-ACTOR WaterFountain 112
+ACTOR WaterFountain
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 227, -1, -1
 	ActiveSound "world/watersplash"
 	States
 	{
@@ -577,13 +513,11 @@ ACTOR WaterFountain 112
 
 // Hearts in Tank -----------------------------------------------------------
 
-ACTOR HeartsInTank 113
+ACTOR HeartsInTank
 {
-	Game Strife
 	Radius 16
 	Height 56
 	+SOLID
-	ConversationID 228, -1, -1
 	States
 	{
 	Spawn:
@@ -594,13 +528,11 @@ ACTOR HeartsInTank 113
 
 // Teleport Swirl -----------------------------------------------------------
 
-ACTOR TeleportSwirl 23
+ACTOR TeleportSwirl
 {
-	Game Strife
 	+NOBLOCKMAP
 	RenderStyle Add
 	Alpha 0.25
-	ConversationID 229, -1, -1
 	States
 	{
 	Spawn:
@@ -612,10 +544,8 @@ ACTOR TeleportSwirl 23
 // Dead Player --------------------------------------------------------------
 // Strife's disappeared. This one doesn't.
 
-ACTOR DeadStrifePlayer 15
+ACTOR DeadStrifePlayer
 {
-	Game Strife
-	ConversationID 231, -1, -1
 	States
 	{
 	Spawn:
@@ -628,10 +558,8 @@ ACTOR DeadStrifePlayer 15
 // Dead Peasant -------------------------------------------------------------
 // Unlike Strife's, this one does not turn into gibs and disappear.
 
-ACTOR DeadPeasant 18
+ACTOR DeadPeasant
 {
-	Game Strife
-	ConversationID 232, -1, -1
 	States
 	{
 	Spawn:
@@ -643,10 +571,8 @@ ACTOR DeadPeasant 18
 // Dead Acolyte -------------------------------------------------------------
 // Unlike Strife's, this one does not turn into gibs and disappear.
 
-ACTOR DeadAcolyte 21
+ACTOR DeadAcolyte
 {
-	Game Strife
-	ConversationID 233, -1, -1
 	States
 	{
 	Spawn:
@@ -657,10 +583,8 @@ ACTOR DeadAcolyte 21
 
 // Dead Reaver --------------------------------------------------------------
 
-ACTOR DeadReaver 20
+ACTOR DeadReaver
 {
-	Game Strife
-	ConversationID 234, -1, -1
 	States
 	{
 	Spawn:
@@ -671,10 +595,8 @@ ACTOR DeadReaver 20
 
 // Dead Rebel ---------------------------------------------------------------
 
-ACTOR DeadRebel 19
+ACTOR DeadRebel
 {
-	Game Strife
-	ConversationID 235, -1, -1
 	States
 	{
 	Spawn:
@@ -685,10 +607,8 @@ ACTOR DeadRebel 19
 
 // Sacrificed Guy -----------------------------------------------------------
 
-ACTOR SacrificedGuy 212
+ACTOR SacrificedGuy
 {
-	Game Strife
-	ConversationID 236, -1, -1
 	States
 	{
 	Spawn:
@@ -704,8 +624,6 @@ ACTOR PileOfGuts
 	// Strife used a doomednum, which is the same as the Aztec Pillar. Since
 	// the pillar came first in the mobjinfo list, you could not spawn this
 	// in a map. Pity.
-	Game Strife
-	ConversationID 237, -1, -1
 	States
 	{
 	Spawn:
@@ -716,13 +634,11 @@ ACTOR PileOfGuts
 
 // Burning Barrel -----------------------------------------------------------
 
-ACTOR StrifeBurningBarrel 70
+ACTOR StrifeBurningBarrel
 {
-	Game Strife
 	Radius 16
 	Height 48
 	+SOLID
-	ConversationID 238, -1, -1
 	States
 	{
 	Spawn:
@@ -733,13 +649,11 @@ ACTOR StrifeBurningBarrel 70
 
 // Burning Bowl -----------------------------------------------------------
 
-ACTOR BurningBowl 105
+ACTOR BurningBowl
 {
-	Game Strife
 	Radius 16
 	Height 16
 	+SOLID
-	ConversationID 239, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -751,13 +665,11 @@ ACTOR BurningBowl 105
 
 // Burning Brazier -----------------------------------------------------------
 
-ACTOR BurningBrazier 106
+ACTOR BurningBrazier
 {
-	Game Strife
 	Radius 10
 	Height 32
 	+SOLID
-	ConversationID 240, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -769,14 +681,12 @@ ACTOR BurningBrazier 106
 
 // Small Torch Lit --------------------------------------------------------
 
-ACTOR SmallTorchLit 107
+ACTOR SmallTorchLit
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 241, -1, -1
 
 	// It doesn't have any action functions, so how does it use this sound?
 	ActiveSound "world/smallfire"
@@ -790,14 +700,12 @@ ACTOR SmallTorchLit 107
 
 // Small Torch Unlit --------------------------------------------------------
 
-ACTOR SmallTorchUnlit 108
+ACTOR SmallTorchUnlit
 {
-	Game Strife
 	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
-	ConversationID 242, -1, -1
 	States
 	{
 	Spawn:
@@ -808,13 +716,11 @@ ACTOR SmallTorchUnlit 108
 
 // Ceiling Chain ------------------------------------------------------------
 
-ACTOR CeilingChain 109
+ACTOR CeilingChain
 {
-	Game Strife
 	Radius 20
 	Height 93
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
-	ConversationID 243, -1, -1
 	States
 	{
 	Spawn:
@@ -825,13 +731,11 @@ ACTOR CeilingChain 109
 
 // Cage Light ---------------------------------------------------------------
 
-ACTOR CageLight 28
+ACTOR CageLight
 {
 	// No, it's not bright even though it's a light.
-	Game Strife
 	Height 3
 	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
-	ConversationID 244, -1, -1
 	States
 	{
 	Spawn:
@@ -842,13 +746,11 @@ ACTOR CageLight 28
 
 // Statue -------------------------------------------------------------------
 
-ACTOR Statue 110
+ACTOR Statue
 {
-	Game Strife
 	Radius 20
 	Height 64
 	+SOLID
-	ConversationID 245, -1, -1
 	States
 	{
 	Spawn:
@@ -859,13 +761,11 @@ ACTOR Statue 110
 
 // Ruined Statue ------------------------------------------------------------
 
-ACTOR StatueRuined 44
+ACTOR StatueRuined
 {
-	Game Strife
 	Radius 20
 	Height 56
 	+SOLID
-	ConversationID 246, -1, -1
 	States
 	{
 	Spawn:
@@ -876,13 +776,11 @@ ACTOR StatueRuined 44
 
 // Medium Torch -------------------------------------------------------------
 
-ACTOR MediumTorch 111
+ACTOR MediumTorch
 {
-	Game Strife
 	Radius 4
 	Height 72
 	+SOLID
-	ConversationID 247, -1, -1
 	States
 	{
 	Spawn:
@@ -893,14 +791,12 @@ ACTOR MediumTorch 111
 
 // Outside Lamp -------------------------------------------------------------
 
-ACTOR OutsideLamp 43
+ACTOR OutsideLamp
 {
 	// No, it's not bright.
-	Game Strife
 	Radius 3
 	Height 80
 	+SOLID
-	ConversationID 248, -1, -1
 	States
 	{
 	Spawn:
@@ -911,14 +807,12 @@ ACTOR OutsideLamp 43
 
 // Pole Lantern -------------------------------------------------------------
 
-ACTOR PoleLantern 46
+ACTOR PoleLantern
 {
 	// No, it's not bright.
-	Game Strife
 	Radius 3
 	Height 80
 	+SOLID
-	ConversationID 249, -1, -1
 	States
 	{
 	Spawn:
@@ -929,11 +823,9 @@ ACTOR PoleLantern 46
 
 // Rock 1 -------------------------------------------------------------------
 
-ACTOR SRock1 99
+ACTOR SRock1
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 250, -1, -1
 	States
 	{
 	Spawn:
@@ -944,11 +836,9 @@ ACTOR SRock1 99
 
 // Rock 2 -------------------------------------------------------------------
 
-ACTOR SRock2 100
+ACTOR SRock2
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 251, -1, -1
 	States
 	{
 	Spawn:
@@ -959,11 +849,9 @@ ACTOR SRock2 100
 
 // Rock 3 -------------------------------------------------------------------
 
-ACTOR SRock3 101
+ACTOR SRock3
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 252, -1, -1
 	States
 	{
 	Spawn:
@@ -974,11 +862,9 @@ ACTOR SRock3 101
 
 // Rock 4 -------------------------------------------------------------------
 
-ACTOR SRock4 102
+ACTOR SRock4
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 253, -1, -1
 	States
 	{
 	Spawn:
@@ -989,12 +875,10 @@ ACTOR SRock4 102
 
 // Stick in Water -----------------------------------------------------------
 
-ACTOR StickInWater 215
+ACTOR StickInWater
 {
-	Game Strife
 	+NOBLOCKMAP
 	+FLOORCLIP
-	ConversationID 254, -1, -1
 	ActiveSound "world/river"
 	States
 	{
@@ -1006,11 +890,9 @@ ACTOR StickInWater 215
 
 // Rubble 1 -----------------------------------------------------------------
 
-ACTOR Rubble1 29
+ACTOR Rubble1
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 255, -1, -1
 	States
 	{
 	Spawn:
@@ -1021,11 +903,9 @@ ACTOR Rubble1 29
 
 // Rubble 2 -----------------------------------------------------------------
 
-ACTOR Rubble2 30
+ACTOR Rubble2
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 256, -1, -1
 	States
 	{
 	Spawn:
@@ -1036,11 +916,9 @@ ACTOR Rubble2 30
 
 // Rubble 3 -----------------------------------------------------------------
 
-ACTOR Rubble3 31
+ACTOR Rubble3
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 257, -1, -1
 	States
 	{
 	Spawn:
@@ -1051,11 +929,9 @@ ACTOR Rubble3 31
 
 // Rubble 4 -----------------------------------------------------------------
 
-ACTOR Rubble4 32
+ACTOR Rubble4
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 258, -1, -1
 	States
 	{
 	Spawn:
@@ -1066,11 +942,9 @@ ACTOR Rubble4 32
 
 // Rubble 5 -----------------------------------------------------------------
 
-ACTOR Rubble5 36
+ACTOR Rubble5
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 259, -1, -1
 	States
 	{
 	Spawn:
@@ -1081,11 +955,9 @@ ACTOR Rubble5 36
 
 // Rubble 6 -----------------------------------------------------------------
 
-ACTOR Rubble6 37
+ACTOR Rubble6
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 260, -1, -1
 	States
 	{
 	Spawn:
@@ -1096,11 +968,9 @@ ACTOR Rubble6 37
 
 // Rubble 7 -----------------------------------------------------------------
 
-ACTOR Rubble7 41
+ACTOR Rubble7
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 261, -1, -1
 	States
 	{
 	Spawn:
@@ -1111,11 +981,9 @@ ACTOR Rubble7 41
 
 // Rubble 8 -----------------------------------------------------------------
 
-ACTOR Rubble8 42
+ACTOR Rubble8
 {
-	Game Strife
 	+NOBLOCKMAP +NOCLIP
-	ConversationID 262, -1, -1
 	States
 	{
 	Spawn:
@@ -1126,13 +994,11 @@ ACTOR Rubble8 42
 
 // Surgery Crab -------------------------------------------------------------
 
-ACTOR SurgeryCrab 117
+ACTOR SurgeryCrab
 {
-	Game Strife
 	+SOLID +SPAWNCEILING +NOGRAVITY
 	Radius 20
 	Height 16
-	ConversationID 263, -1, -1
 	States
 	{
 	Spawn:
@@ -1143,13 +1009,11 @@ ACTOR SurgeryCrab 117
 
 // Large Torch --------------------------------------------------------------
 
-ACTOR LargeTorch 47
+ACTOR LargeTorch
 {
-	Game Strife
 	Radius 10
 	Height 72
 	+SOLID
-	ConversationID 264, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -1161,13 +1025,11 @@ ACTOR LargeTorch 47
 
 // Huge Torch --------------------------------------------------------------
 
-ACTOR HugeTorch 50
+ACTOR HugeTorch
 {
-	Game Strife
 	Radius 10
 	Height 80
 	+SOLID
-	ConversationID 265, -1, -1
 	ActiveSound "world/smallfire"
 	States
 	{
@@ -1179,13 +1041,11 @@ ACTOR HugeTorch 50
 
 // Palm Tree ----------------------------------------------------------------
 
-ACTOR PalmTree 51
+ACTOR PalmTree
 {
-	Game Strife
 	Radius 15
 	Height 109
 	+SOLID
-	ConversationID 266, -1, -1
 	States
 	{
 	Spawn:
@@ -1196,13 +1056,11 @@ ACTOR PalmTree 51
 
 // Big Tree ----------------------------------------------------------------
 
-ACTOR BigTree2 202
+ACTOR BigTree2
 {
-	Game Strife
 	Radius 15
 	Height 109
 	+SOLID
-	ConversationID 267, -1, -1
 	States
 	{
 	Spawn:
@@ -1213,13 +1071,11 @@ ACTOR BigTree2 202
 
 // Potted Tree ----------------------------------------------------------------
 
-ACTOR PottedTree 203
+ACTOR PottedTree
 {
-	Game Strife
 	Radius 15
 	Height 64
 	+SOLID
-	ConversationID 268, -1, -1
 	States
 	{
 	Spawn:
@@ -1230,13 +1086,11 @@ ACTOR PottedTree 203
 
 // Tree Stub ----------------------------------------------------------------
 
-ACTOR TreeStub 33
+ACTOR TreeStub
 {
-	Game Strife
 	Radius 15
 	Height 80
 	+SOLID
-	ConversationID 269, -1, -1
 	States
 	{
 	Spawn:
@@ -1247,13 +1101,11 @@ ACTOR TreeStub 33
 
 // Short Bush ---------------------------------------------------------------
 
-ACTOR ShortBush 60
+ACTOR ShortBush
 {
-	Game Strife
 	Radius 15
 	Height 40
 	+SOLID
-	ConversationID 270, -1, -1
 	States
 	{
 	Spawn:
@@ -1264,13 +1116,11 @@ ACTOR ShortBush 60
 
 // Tall Bush ---------------------------------------------------------------
 
-ACTOR TallBush 62
+ACTOR TallBush
 {
-	Game Strife
 	Radius 20
 	Height 64
 	+SOLID
-	ConversationID 271, -1, -1
 	States
 	{
 	Spawn:
@@ -1281,13 +1131,11 @@ ACTOR TallBush 62
 
 // Chimney Stack ------------------------------------------------------------
 
-ACTOR ChimneyStack 63
+ACTOR ChimneyStack
 {
-	Game Strife
 	Radius 20
 	Height 64	// This height does not fit the sprite
 	+SOLID
-	ConversationID 272, -1, -1
 	States
 	{
 	Spawn:
@@ -1298,13 +1146,11 @@ ACTOR ChimneyStack 63
 
 // Barricade Column ---------------------------------------------------------
 
-ACTOR BarricadeColumn 69
+ACTOR BarricadeColumn
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 273, -1, -1
 	States
 	{
 	Spawn:
@@ -1315,13 +1161,11 @@ ACTOR BarricadeColumn 69
 
 // Pot ----------------------------------------------------------------------
 
-ACTOR Pot 165
+ACTOR Pot
 {
-	Game Strife
 	Radius 12
 	Height 24
 	+SOLID
-	ConversationID 274, -1, -1
 	States
 	{
 	Spawn:
@@ -1332,13 +1176,11 @@ ACTOR Pot 165
 
 // Pitcher ------------------------------------------------------------------
 
-ACTOR Pitcher 188
+ACTOR Pitcher
 {
-	Game Strife
 	Radius 12
 	Height 32
 	+SOLID
-	ConversationID 275, -1, -1
 	States
 	{
 	Spawn:
@@ -1349,13 +1191,11 @@ ACTOR Pitcher 188
 
 // Stool --------------------------------------------------------------------
 
-ACTOR Stool 189
+ACTOR Stool
 {
-	Game Strife
 	Radius 6
 	Height 24
 	+SOLID
-	ConversationID 276, -1, -1
 	States
 	{
 	Spawn:
@@ -1366,11 +1206,9 @@ ACTOR Stool 189
 
 // Metal Pot ----------------------------------------------------------------
 
-ACTOR MetalPot 190
+ACTOR MetalPot
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 277, -1, -1
 	States
 	{
 	Spawn:
@@ -1381,11 +1219,9 @@ ACTOR MetalPot 190
 
 // Tub ----------------------------------------------------------------------
 
-ACTOR Tub 191
+ACTOR Tub
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 278, -1, -1
 	States
 	{
 	Spawn:
@@ -1396,13 +1232,11 @@ ACTOR Tub 191
 
 // Anvil --------------------------------------------------------------------
 
-ACTOR Anvil 194
+ACTOR Anvil
 {
-	Game Strife
 	Radius 16
 	Height 32
 	+SOLID
-	ConversationID 279, -1, -1
 	States
 	{
 	Spawn:
@@ -1413,13 +1247,11 @@ ACTOR Anvil 194
 
 // Silver Tech Lamp ----------------------------------------------------------
 
-ACTOR TechLampSilver 196
+ACTOR TechLampSilver
 {
-	Game Strife
 	Radius 11
 	Height 64
 	+SOLID
-	ConversationID 280, -1, -1
 	States
 	{
 	Spawn:
@@ -1430,13 +1262,11 @@ ACTOR TechLampSilver 196
 
 // Brass Tech Lamp ----------------------------------------------------------
 
-ACTOR TechLampBrass 197
+ACTOR TechLampBrass
 {
-	Game Strife
 	Radius 8
 	Height 64
 	+SOLID
-	ConversationID 281, -1, -1
 	States
 	{
 	Spawn:
@@ -1447,13 +1277,11 @@ ACTOR TechLampBrass 197
 
 // Tray --------------------------------------------------------------------
 
-ACTOR Tray 68
+ACTOR Tray
 {
-	Game Strife
 	Radius 24
 	Height 40
 	+SOLID
-	ConversationID 282, -1, -1
 	States
 	{
 	Spawn:
@@ -1464,13 +1292,11 @@ ACTOR Tray 68
 
 // AmmoFiller ---------------------------------------------------------------
 
-ACTOR AmmoFiller 228
+ACTOR AmmoFiller
 {
-	Game Strife
 	Radius 12
 	Height 24
 	+SOLID
-	ConversationID 283, -1, -1
 	States
 	{
 	Spawn:
@@ -1481,13 +1307,11 @@ ACTOR AmmoFiller 228
 
 // Sigil Banner -------------------------------------------------------------
 
-ACTOR SigilBanner 216
+ACTOR SigilBanner
 {
-	Game Strife
 	Radius 24
 	Height 96
 	+NOBLOCKMAP	// I take it this was once solid, yes?
-	ConversationID 284, -1, -1
 	States
 	{
 	Spawn:
@@ -1498,11 +1322,9 @@ ACTOR SigilBanner 216
 
 // RebelBoots ---------------------------------------------------------------
 
-ACTOR RebelBoots 217
+ACTOR RebelBoots
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 285, -1, -1
 	States
 	{
 	Spawn:
@@ -1513,11 +1335,9 @@ ACTOR RebelBoots 217
 
 // RebelHelmet --------------------------------------------------------------
 
-ACTOR RebelHelmet 218
+ACTOR RebelHelmet
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 286, -1, -1
 	States
 	{
 	Spawn:
@@ -1528,11 +1348,9 @@ ACTOR RebelHelmet 218
 
 // RebelShirt ---------------------------------------------------------------
 
-ACTOR RebelShirt 219
+ACTOR RebelShirt
 {
-	Game Strife
 	+NOBLOCKMAP
-	ConversationID 287, -1, -1
 	States
 	{
 	Spawn:
@@ -1543,13 +1361,11 @@ ACTOR RebelShirt 219
 
 // Alien Bubble Column ------------------------------------------------------
 
-ACTOR AlienBubbleColumn 221
+ACTOR AlienBubbleColumn
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 290, -1, -1
 	ActiveSound "ambient/alien5"
 	States
 	{
@@ -1561,13 +1377,11 @@ ACTOR AlienBubbleColumn 221
 
 // Alien Floor Bubble -------------------------------------------------------
 
-ACTOR AlienFloorBubble 222
+ACTOR AlienFloorBubble
 {
-	Game Strife
 	Radius 16
 	Height 72
 	+SOLID
-	ConversationID 291, -1, -1
 	ActiveSound "ambient/alien6"
 	States
 	{
@@ -1579,13 +1393,11 @@ ACTOR AlienFloorBubble 222
 
 // Alien Ceiling Bubble -----------------------------------------------------
 
-ACTOR AlienCeilingBubble 223
+ACTOR AlienCeilingBubble
 {
-	Game Strife
 	Radius 16
 	Height 72
 	+SOLID +SPAWNCEILING +NOGRAVITY
-	ConversationID 292, -1, -1
 	ActiveSound "ambient/alien4"
 	States
 	{
@@ -1597,13 +1409,11 @@ ACTOR AlienCeilingBubble 223
 
 // Alien Asp Climber --------------------------------------------------------
 
-ACTOR AlienAspClimber 224
+ACTOR AlienAspClimber
 {
-	Game Strife
 	Radius 16
 	Height 128
 	+SOLID
-	ConversationID 293, -1, -1
 	ActiveSound "ambient/alien3"
 	States
 	{
@@ -1615,13 +1425,11 @@ ACTOR AlienAspClimber 224
 
 // Alien Spider Light -------------------------------------------------------
 
-ACTOR AlienSpiderLight 225
+ACTOR AlienSpiderLight
 {
-	Game Strife
 	Radius 32
 	Height 56
 	+SOLID
-	ConversationID 294, -1, -1
 	ActiveSound "ambient/alien1"
 	States
 	{
@@ -1633,9 +1441,8 @@ ACTOR AlienSpiderLight 225
 
 // Target Practice -----------------------------------------------------------
 
-ACTOR TargetPractice 208
+ACTOR TargetPractice
 {
-	Game Strife
 	Health 99999999
 	PainChance 255
 	Radius 10
@@ -1643,7 +1450,6 @@ ACTOR TargetPractice 208
 	Mass 9999999
 	+SOLID +SHOOTABLE +NOBLOOD
 	+INCOMBAT +NODAMAGE
-	ConversationID 205, -1, -1
 	PainSound "misc/metalhit"
 	States
 	{
@@ -1659,9 +1465,8 @@ ACTOR TargetPractice 208
 
 // Force Field Guard --------------------------------------------------------
 
-ACTOR ForceFieldGuard 25 native
+ACTOR ForceFieldGuard native
 {
-	Game Strife
 	Health 10
 	Radius 2
 	Height 1
@@ -1683,10 +1488,8 @@ ACTOR ForceFieldGuard 25 native
 
 // Kneeling Guy -------------------------------------------------------------
 
-ACTOR KneelingGuy 204
+ACTOR KneelingGuy
 {
-	Game Strife
-	ConversationID 37,-1,-1
 	Health 51
 	Painchance 255
 	Radius 6
@@ -1732,10 +1535,8 @@ ACTOR KneelingGuy 204
 
 // Klaxon Warning Light -----------------------------------------------------
 
-ACTOR KlaxonWarningLight 24
+ACTOR KlaxonWarningLight
 {
-	Game Strife
-	ConversationID 121,-1,-1
 	ReactionTime 60
 	Radius 5
 	+NOBLOCKMAP +AMBUSH
@@ -1757,10 +1558,8 @@ ACTOR KlaxonWarningLight 24
 
 // CeilingTurret ------------------------------------------------------------
 
-ACTOR CeilingTurret 27
+ACTOR CeilingTurret
 {
-	Game Strife
-	ConversationID 122,-1,-1
 	Health 125
 	Speed 0
 	Painchance 0
@@ -1801,10 +1600,8 @@ ACTOR CeilingTurret 27
 
 // Power Coupling -----------------------------------------------------------
 
-ACTOR PowerCoupling 220 native
+ACTOR PowerCoupling native
 {
-	Game Strife
-	ConversationID 288,-1,-1
 	Health 40
 	Radius 17
 	Height 64

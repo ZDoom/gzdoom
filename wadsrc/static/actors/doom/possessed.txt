@@ -4,10 +4,8 @@
 // Zombie man
 //
 //===========================================================================
-ACTOR ZombieMan 3004
+ACTOR ZombieMan
 {
-	Game Doom
-	SpawnID 4
 	Health 20
 	Radius 20
 	Height 56
@@ -65,10 +63,8 @@ ACTOR ZombieMan 3004
 // Sergeant / Shotgun guy
 //
 //===========================================================================
-ACTOR ShotgunGuy 9
+ACTOR ShotgunGuy
 {
-	Game Doom
-	SpawnID 1
 	Health 30
 	Radius 20
 	Height 56
@@ -127,10 +123,8 @@ ACTOR ShotgunGuy 9
 // Chaingunner
 //
 //===========================================================================
-ACTOR ChaingunGuy 65
+ACTOR ChaingunGuy
 {
-	Game Doom
-	SpawnID 2
 	Health 70
 	Radius 20
 	Height 56
@@ -189,10 +183,8 @@ ACTOR ChaingunGuy 65
 // SS Nazi
 //
 //===========================================================================
-ACTOR WolfensteinSS 84
+ACTOR WolfensteinSS
 {
-	Game Doom
-	SpawnID 116
 	Health 50
 	Radius 20
 	Height 56

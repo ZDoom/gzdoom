@@ -106,6 +106,7 @@ LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
 extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
+void I_FlushBufferedConsoleStuff();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -128,6 +129,7 @@ HANDLE			MainThread;
 DWORD			MainThreadID;
 HANDLE			StdOut;
 bool			FancyStdOut, AttachedStdOut;
+bool			ConWindowHidden;
 
 // The main window
 HWND			Window;
@@ -143,7 +145,7 @@ LONG			ErrorIconChar;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char WinClassName[] = "ZDoomMainWindow";
+static const char WinClassName[] = GAMENAME "MainWindow";
 static HMODULE hwtsapi32;		// handle to wtsapi32.dll
 static void (*TermFuncs[MAX_TERMS])(void);
 static int NumTerms;
@@ -644,6 +646,7 @@ void I_SetWndProc()
 		SetWindowLongPtr (Window, GWLP_USERDATA, 1);
 		SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)WndProc);
 		ShowWindow (ConWindow, SW_HIDE);
+		ConWindowHidden = true;
 		ShowWindow (GameTitleWindow, SW_HIDE);
 		I_InitInput (Window);
 	}
@@ -675,8 +678,10 @@ void RestoreConView()
 
 	SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)LConProc);
 	ShowWindow (ConWindow, SW_SHOW);
+	ConWindowHidden = false;
 	ShowWindow (GameTitleWindow, SW_SHOW);
 	I_ShutdownInput ();		// Make sure the mouse pointer is available.
+	I_FlushBufferedConsoleStuff();
 	// Make sure the progress bar isn't visible.
 	if (StartScreen != NULL)
 	{
@@ -713,7 +718,7 @@ void ShowErrorPane(const char *text)
 	if (text != NULL)
 	{
 		char caption[100];
-		mysnprintf(caption, countof(caption), "Fatal Error - "GAMESIG" %s "X64" (%s)", GetVersionString(), GetGitTime());
+		mysnprintf(caption, countof(caption), "Fatal Error - " GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 		SetWindowText (Window, caption);
 		ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 		if (ErrorIcon != NULL)
@@ -907,11 +912,7 @@ void DoMain (HINSTANCE hInstance)
 		FixPathSeperator(program);
 		progdir.Truncate((long)strlen(program));
 		progdir.UnlockBuffer();
-/*
-		height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
-				GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
-		width  = GetSystemMetrics (SM_CXFIXEDFRAME) * 2 + 8 * 78;
-*/
+
 		width = 512;
 		height = 384;
 
@@ -946,7 +947,7 @@ void DoMain (HINSTANCE hInstance)
 		
 		/* create window */
 		char caption[100];
-		mysnprintf(caption, countof(caption), ""GAMESIG" %s "X64" (%s)", GetVersionString(), GetGitTime());
+		mysnprintf(caption, countof(caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 		Window = CreateWindowEx(
 				WS_EX_APPWINDOW,
 				(LPCTSTR)WinClassName,
@@ -1228,7 +1229,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		// This should only happen on basic Windows 95 installations, but since we
 		// don't support Windows 95, we have no obligation to provide assistance in
 		// getting it installed.
-		MessageBoxA(NULL, "Could not load riched20.dll", "ZDoom Error", MB_OK | MB_ICONSTOP);
+		MessageBoxA(NULL, "Could not load riched20.dll", GAMENAME " Error", MB_OK | MB_ICONSTOP);
 		exit(0);
 	}
 
@@ -1292,20 +1293,3 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	return 0;
 }
-
-//==========================================================================
-//
-// CCMD crashout
-//
-// Debugging routine for testing the crash logger.
-// Useless in a debug build, because that doesn't enable the crash logger.
-//
-//==========================================================================
-
-#ifndef _DEBUG
-#include "c_dispatch.h"
-CCMD (crashout)
-{
-	*(int *)0 = 0;
-}
-#endif

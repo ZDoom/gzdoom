@@ -3,8 +3,6 @@
 
 ACTOR EggFX : MorphProjectile
 {
-	Game Heretic
-	SpawnID 40
 	Radius 8
 	Height 8
 	Speed 18
@@ -25,13 +23,10 @@ ACTOR EggFX : MorphProjectile
 
 // Morph Ovum ----------------------------------------------------------------
 
-ACTOR ArtiEgg : CustomInventory 30
+ACTOR ArtiEgg : CustomInventory
 {
-	Game Heretic
-	SpawnID 14
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.INVBAR
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.FANCYPICKUPSOUND
@@ -59,8 +54,6 @@ ACTOR ArtiEgg : CustomInventory 30
 
 ACTOR PorkFX : MorphProjectile
 {
-	Game Hexen
-	SpawnID 40
 	Radius 8
 	Height 8
 	Speed 18
@@ -80,13 +73,10 @@ ACTOR PorkFX : MorphProjectile
 
 // Porkalator ---------------------------------------------------------------
 
-ACTOR ArtiPork : CustomInventory 30
+ACTOR ArtiPork : CustomInventory
 {
-	Game Hexen
-	SpawnID 14
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.INVBAR
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.FANCYPICKUPSOUND

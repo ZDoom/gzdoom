@@ -3,7 +3,6 @@
 
 ACTOR Rock1
 {
-	SpawnID 41
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -21,7 +20,6 @@ ACTOR Rock1
 	
 ACTOR Rock2
 {
-	SpawnID 42
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -40,7 +38,6 @@ ACTOR Rock2
 
 ACTOR Rock3
 {
-	SpawnID 43
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -61,7 +58,6 @@ ACTOR Rock3
 
 ACTOR Dirt1
 {
-	SpawnID 44
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -79,7 +75,6 @@ ACTOR Dirt1
 
 ACTOR Dirt2
 {
-	SpawnID 45
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -97,7 +92,6 @@ ACTOR Dirt2
 
 ACTOR Dirt3
 {
-	SpawnID 46
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -115,7 +109,6 @@ ACTOR Dirt3
 
 ACTOR Dirt4
 {
-	SpawnID 47
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -133,7 +126,6 @@ ACTOR Dirt4
 
 ACTOR Dirt5
 {
-	SpawnID 48
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -151,7 +143,6 @@ ACTOR Dirt5
 
 ACTOR Dirt6
 {
-	SpawnID 49
 	+NOBLOCKMAP
 	+DROPOFF
 	+MISSILE
@@ -182,7 +173,6 @@ ACTOR GlassShard native
 
 ACTOR SGShard1 : GlassShard
 {
-	SpawnID 54
 	States
 	{
 	Spawn:
@@ -196,7 +186,6 @@ ACTOR SGShard1 : GlassShard
 
 ACTOR SGShard2 : GlassShard
 {
-	SpawnID 55
 	States
 	{
 	Spawn:
@@ -210,7 +199,6 @@ ACTOR SGShard2 : GlassShard
 
 ACTOR SGShard3 : GlassShard
 {
-	SpawnID 56
 	States
 	{
 	Spawn:
@@ -224,7 +212,6 @@ ACTOR SGShard3 : GlassShard
 
 ACTOR SGShard4 : GlassShard
 {
-	SpawnID 57
 	States
 	{
 	Spawn:
@@ -238,7 +225,6 @@ ACTOR SGShard4 : GlassShard
 
 ACTOR SGShard5 : GlassShard
 {
-	SpawnID 58
 	States
 	{
 	Spawn:
@@ -252,7 +238,6 @@ ACTOR SGShard5 : GlassShard
 
 ACTOR SGShard6 : GlassShard
 {
-	SpawnID 59
 	States
 	{
 	Spawn:
@@ -266,7 +251,6 @@ ACTOR SGShard6 : GlassShard
 
 ACTOR SGShard7 : GlassShard
 {
-	SpawnID 60
 	States
 	{
 	Spawn:
@@ -280,7 +264,6 @@ ACTOR SGShard7 : GlassShard
 
 ACTOR SGShard8 : GlassShard
 {
-	SpawnID 61
 	States
 	{
 	Spawn:
@@ -294,7 +277,6 @@ ACTOR SGShard8 : GlassShard
 
 ACTOR SGShard9 : GlassShard
 {
-	SpawnID 62
 	States
 	{
 	Spawn:
@@ -308,7 +290,6 @@ ACTOR SGShard9 : GlassShard
 
 ACTOR SGShard0 : GlassShard
 {
-	SpawnID 63
 	States
 	{
 	Spawn:

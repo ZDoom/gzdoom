@@ -243,9 +243,7 @@ inline sector_t *getNextSector (line_t *line, const sector_t *sec)
 }
 
 
-int		P_FindSectorFromTag (int tag, int start);
-int		P_FindLineFromID (int id, int start);
-
+#include "p_tags.h"
 
 //
 // P_LIGHTS
@@ -515,8 +513,8 @@ private:
 	DPillar ();
 };
 
-bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
-				  fixed_t height2, int crush, bool hexencrush);
+bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
+				  fixed_t speed, fixed_t height, fixed_t height2, int crush, bool hexencrush);
 
 //
 // P_DOORS
@@ -929,6 +927,7 @@ void P_DoDeferedScripts (void);
 //
 // [RH] p_quake.c
 //
-bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx);
+bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, FSoundID quakesfx, int flags, double waveSpeedX, double waveSpeedY, double waveSpeedZ);
+bool P_StartQuake(AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx);
 
 #endif

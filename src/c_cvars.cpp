@@ -475,39 +475,32 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		// 0         1         2         3
 
 		ret.pGUID = NULL;
-		for (i = 0; i < 38; ++i)
+		if (value == NULL)
 		{
-			if (value[i] == 0)
-			{
-				break;
-			}
-			bool goodv = true;
+			break;
+		}
+		for (i = 0; value[i] != 0 && i < 38; i++)
+		{
 			switch (i)
 			{
 			case 0:
 				if (value[i] != '{')
-					goodv = false;
-				break;
+					break;
 			case 9:
 			case 14:
 			case 19:
 			case 24:
 				if (value[i] != '-')
-					goodv = false;
-				break;
+					break;
 			case 37:
 				if (value[i] != '}')
-					goodv = false;
-				break;
+					break;
 			default:
 				if (value[i] < '0' || 
 					(value[i] > '9' && value[i] < 'A') || 
 					(value[i] > 'F' && value[i] < 'a') || 
 					value[i] > 'f')
-				{
-					goodv = false;
-				}
-				break;
+					break;
 			}
 		}
 		if (i == 38 && value[i] == 0)
@@ -1673,9 +1666,6 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 		if (CheckWildcards (filter, var->GetName()))
 		{
 			DWORD flags = var->GetFlags();
-			UCVarValue val;
-
-			val = var->GetGenericRep (CVAR_String);
 			if (plain)
 			{ // plain formatting does not include user-defined cvars
 				if (!(flags & CVAR_UNSETTABLE))
@@ -1698,7 +1688,7 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 					flags & CVAR_MOD ? 'M' : ' ',
 					flags & CVAR_IGNORE ? 'X' : ' ',
 					var->GetName(),
-					var->GetGenericRep (CVAR_String).String);
+					var->GetGenericRep(CVAR_String).String);
 			}
 		}
 		var = var->m_Next;

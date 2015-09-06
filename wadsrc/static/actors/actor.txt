@@ -28,6 +28,9 @@ ACTOR Actor native //: Thinker
 	DeathType Normal
 	TeleFogSourceType "TeleportFog"
 	TeleFogDestType "TeleportFog"
+	RipperLevel 0
+	RipLevelMin 0
+	RipLevelMax 0
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
@@ -65,6 +68,7 @@ ACTOR Actor native //: Thinker
 	native int reactiontime;
 	native fixed_t meleerange;
 	native fixed_t speed;
+	native angle_t roll;
 
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
@@ -78,9 +82,9 @@ ACTOR Actor native //: Thinker
 	action native A_XScream();
 	action native A_Look();
 	action native A_Chase(state melee = "*", state missile = "none", int flags = 0);
-	action native A_FaceTarget(float max_turn = 0, float max_pitch = 270);
-	action native A_FaceTracer(float max_turn = 0, float max_pitch = 270);
-	action native A_FaceMaster(float max_turn = 0, float max_pitch = 270);
+	action native A_FaceTarget(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0);
+	action native A_FaceTracer(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0);
+	action native A_FaceMaster(float max_turn = 0, float max_pitch = 270, float ang_offset = 0, float pitch_offset = 0, int flags = 0);
 	action native A_PosAttack();
 	action native A_Scream();
 	action native A_SPosAttack();
@@ -206,7 +210,7 @@ ACTOR Actor native //: Thinker
 	action native A_Jump(int chance = 256, state label, ...);
 	action native A_CustomMissile(class<Actor> missiletype, float spawnheight = 32, int spawnofs_xy = 0, float angle = 0, int flags = 0, float pitch = 0, int ptr = AAPTR_TARGET);
 	action native A_CustomBulletAttack(float spread_xy, float spread_z, int	numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET);
-	action native A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = "", color color2 = "", int flags = 0, bool aim = false, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0);
+	action native A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = "", color color2 = "", int flags = 0, bool aim = false, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0, int spiraloffset = 270);
 	action native A_JumpIfHealthLower(int health, state label, int ptr_selector = AAPTR_DEFAULT);
 	action native A_JumpIfCloser(float distance, state label);
 	action native A_JumpIfTracerCloser(float distance, state label);
@@ -227,7 +231,7 @@ ACTOR Actor native //: Thinker
 	action native A_FadeIn(float reduce = 0.1, int flags = 0);
 	action native A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
 	action native A_FadeTo(float target, float amount = 0.1, int flags = 0);
-	action native A_SetScale(float scalex, float scaley = 0);
+	action native A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetMass(int mass);
 	action native A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
 	action native A_CheckSight(state label);
@@ -244,8 +248,8 @@ ACTOR Actor native //: Thinker
 	action native A_CheckCeiling(state label);
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
-	action native A_Teleport(state teleportstate = "", class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 0);
-	action native A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, state success_state = "");
+	action native A_Teleport(state teleportstate = "", class<SpecialSpot> targettype = "BossSpot", class<Actor> fogtype = "TeleportFog", int flags = 0, float mindist = 0, float maxdist = 0, int ptr = AAPTR_DEFAULT);
+	action native A_Warp(int ptr_destination, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0, int flags = 0, state success_state = "", float heightoffset = 0);
 	action native A_ThrowGrenade(class<Actor> itemtype, float zheight = 0, float xyvel = 0, float zvel = 0, bool useammo = true);
 	action native A_Weave(int xspeed, int yspeed, float xdist, float ydist);
 
@@ -253,7 +257,7 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label, int forward_ptr = AAPTR_DEFAULT);
 	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
 	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
-	action native A_RadiusGive(class<Inventory> itemtype, int distance, int flags, int amount = 0);
+	action native A_RadiusGive(class<Inventory> itemtype, int distance, int flags, int amount = 0, class<Actor> filter = "None", name species = "None");
 	action native A_CountdownArg(int argnum, state targstate = "");
 	action native A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
@@ -285,19 +289,21 @@ ACTOR Actor native //: Thinker
 	action native A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	action native A_PigPain ();
 	action native A_MonsterRefire(int chance, state label);
-	action native A_SetAngle(float angle = 0, int flags = 0);
-	action native A_SetPitch(float pitch, int flags = 0);
-	action native A_ScaleVelocity(float scale);
-	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0);
+	action native A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetPitch(float pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetRoll(float roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
+	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetArg(int pos, int value);
 	action native A_SetUserVar(name varname, int value);
 	action native A_SetUserArray(name varname, int index, int value);
 	action native A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
+	action native A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1);
 	action native A_SetTics(int tics);
 	action native A_SetDamageType(name damagetype);
 	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
-	action native A_SetSpeed(float speed);
+	action native A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT);
 	action native A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
 	action native A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
 	action native A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
@@ -319,11 +325,19 @@ ACTOR Actor native //: Thinker
 	action native A_GiveToSiblings(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromChildren(class<Inventory> itemtype, int amount = 0);
 	action native A_TakeFromSiblings(class<Inventory> itemtype, int amount = 0);
-	action native A_SetTeleFog(name oldpos, name newpos);
+	action native A_SetTeleFog(class<Actor> oldpos, class<Actor> newpos);
 	action native A_SwapTeleFog();
+	action native A_SetFloatBobPhase(int bob);
+	action native A_SetHealth(int health, int ptr = AAPTR_DEFAULT);
+	action native A_ResetHealth(int ptr = AAPTR_DEFAULT);
+	action native A_JumpIfHigherOrLower(state high, state low, float offsethigh = 0, float offsetlow = 0, bool includeHeight = true, int ptr = AAPTR_TARGET);
+	action native A_SetSpecies(name species, int ptr = AAPTR_DEFAULT);
+	action native A_SetRipperLevel(int level);
+	action native A_SetRipMin(int min);
+	action native A_SetRipMax(int max);
 
-	action native A_CheckSightOrRange(float distance, state label);
-	action native A_CheckRange(float distance, state label);
+	action native A_CheckSightOrRange(float distance, state label, bool two_dimension = false);
+	action native A_CheckRange(float distance, state label, bool two_dimension = false);
 
 	action native A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	action native A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);

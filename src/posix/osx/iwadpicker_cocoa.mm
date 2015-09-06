@@ -139,7 +139,7 @@ static NSDictionary* GetKnownFileTypes()
 		@"-bex"     , @"bex",
 		@"-exec"    , @"cfg",
 		@"-playdemo", @"lmp",
-		nil];	
+		nil];
 }
 
 static NSArray* GetKnownExtensions()
@@ -156,7 +156,7 @@ static NSArray* GetKnownExtensions()
 {
 	NSString* extension = [[filePath pathExtension] lowercaseString];
 	NSString* parameter = [GetKnownFileTypes() objectForKey:extension];
-	
+
 	if (nil == parameter)
 	{
 		return;
@@ -211,7 +211,7 @@ static NSArray* GetKnownExtensions()
 	{
 		NSArray* files = [openPanel URLs];
 		NSMutableString* parameters = [NSMutableString string];
-		
+
 		for (NSUInteger i = 0, ei = [files count]; i < ei; ++i)
 		{
 			NSString* filePath = [[files objectAtIndex:i] path];
@@ -236,9 +236,9 @@ static NSArray* GetKnownExtensions()
 			{
 				newParameters = [newParameters stringByAppendingString:@" "];
 			}
-			
+
 			newParameters = [newParameters stringByAppendingString:parameters];
-			
+
 			[parametersTextField setStringValue: newParameters];
 		}
 	}
@@ -337,7 +337,7 @@ static NSArray* GetKnownExtensions()
 	[cancelButton setTarget:self];
 	[cancelButton setKeyEquivalent:@"\033"];
 	[[window contentView] addSubview:cancelButton];
-	
+
 	browseButton = [[NSButton alloc] initWithFrame:NSMakeRect(14, 8, 96, 32)];
 	[browseButton setTitle:@"Browse..."];
 	[browseButton setBezelStyle:NSRoundedBezelStyle];
@@ -398,31 +398,38 @@ static NSString* GetArchitectureString()
 static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 {
 	assert(nil != parameters);
-	
+
 	defaultiwad = ExtractFileBase(iwadPath);
-	
+
 	GameConfig->DoGameSetup("Doom");
 	M_SaveDefaults(NULL);
-	
+
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
 	@try
 	{
-		const int commandLineParametersCount = Args->NumArgs();
-		assert(commandLineParametersCount > 0);
-		
 		NSString* executablePath = [NSString stringWithUTF8String:Args->GetArg(0)];
-		NSString* architecture   = GetArchitectureString();
-		
-		NSMutableArray* arguments = [NSMutableArray arrayWithCapacity:commandLineParametersCount + 6];
-		[arguments addObject:@"-arch"];
-		[arguments addObject:architecture];
-		[arguments addObject:executablePath];
+
+		NSMutableArray* const arguments = [[NSMutableArray alloc] init];
+
+		// The following value shoud be equal to NSAppKitVersionNumber10_5
+		// It's hard-coded in order to build with earlier SDKs
+		const bool canSelectArchitecture = NSAppKitVersionNumber >= 949;
+
+		if (canSelectArchitecture)
+		{
+			[arguments addObject:@"-arch"];
+			[arguments addObject:GetArchitectureString()];
+			[arguments addObject:executablePath];
+
+			executablePath = @"/usr/bin/arch";
+		}
+
 		[arguments addObject:@"-wad_picker_restart"];
 		[arguments addObject:@"-iwad"];
 		[arguments addObject:[NSString stringWithUTF8String:iwadPath]];
 
-		for (int i = 1; i < commandLineParametersCount; ++i)
+		for (int i = 1, count = Args->NumArgs(); i < count; ++i)
 		{
 			NSString* currentParameter = [NSString stringWithUTF8String:Args->GetArg(i)];
 			[arguments addObject:currentParameter];
@@ -442,7 +449,8 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 			wordfree(&expansion);
 		}
 
-		[NSTask launchedTaskWithLaunchPath:@"/usr/bin/arch" arguments:arguments];
+		[NSTask launchedTaskWithLaunchPath:executablePath
+								 arguments:arguments];
 
 		_exit(0); // to avoid atexit()'s functions
 	}
@@ -450,7 +458,7 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 	{
 		NSLog(@"Cannot restart: %@", [e reason]);
 	}
-	
+
 	[pool release];
 }
 

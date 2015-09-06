@@ -217,7 +217,7 @@ public:
 	bool ReplaceFactor;
 	bool NoArmor;
 
-	void Apply(FName const type);
+	void Apply(FName type);
 	void Clear()
 	{
 		DefaultFactor = FRACUNIT;
@@ -225,9 +225,9 @@ public:
 		NoArmor = false;
 	}
 
-	static DamageTypeDefinition *Get(FName const type);
-	static bool IgnoreArmor(FName const type);
-	static int ApplyMobjDamageFactor(int damage, FName const type, DmgFactors const * const factors);
+	static DamageTypeDefinition *Get(FName type);
+	static bool IgnoreArmor(FName type);
+	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
 };
 
 
@@ -266,7 +266,8 @@ struct FActorInfo
 	FActorInfo *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
-	BYTE SpawnID;
+	WORD SpawnID;
+	WORD ConversationID;
 	SWORD DoomEdNum;
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
@@ -278,33 +279,50 @@ struct FActorInfo
 	TArray<const PClass *> ForbiddenToPlayerClass;
 };
 
-class FDoomEdMap
+struct FDoomEdEntry
 {
-public:
-	~FDoomEdMap();
-
-	const PClass *FindType (int doomednum) const;
-	void AddType (int doomednum, const PClass *type, bool temporary = false);
-	void DelType (int doomednum);
-	void Empty ();
-
-	static void DumpMapThings ();
-
-private:
-	enum { DOOMED_HASHSIZE = 256 };
-
-	struct FDoomEdEntry
-	{
-		FDoomEdEntry *HashNext;
-		const PClass *Type;
-		int DoomEdNum;
-		bool temp;
-	};
-
-	static FDoomEdEntry *DoomEdHash[DOOMED_HASHSIZE];
+	const PClass *Type;
+	short Special;
+	bool ArgsDefined;
+	int Args[5];
 };
 
+enum ESpecialMapthings
+{
+	SMT_Player1Start = 1,
+	SMT_Player2Start,
+	SMT_Player3Start,
+	SMT_Player4Start,
+	SMT_Player5Start,
+	SMT_Player6Start,
+	SMT_Player7Start,
+	SMT_Player8Start,
+	SMT_DeathmatchStart,
+	SMT_SSeqOverride,
+	SMT_PolyAnchor,
+	SMT_PolySpawn,
+	SMT_PolySpawnCrush,
+	SMT_PolySpawnHurt,
+	SMT_SlopeFloorPointLine,
+	SMT_SlopeCeilingPointLine,
+	SMT_SetFloorSlope,
+	SMT_SetCeilingSlope,
+	SMT_VavoomFloor,
+	SMT_VavoomCeiling,
+	SMT_CopyFloorPlane,
+	SMT_CopyCeilingPlane,
+	SMT_VertexFloorZ,
+	SMT_VertexCeilingZ,
+
+};
+
+
+typedef TMap<int, FDoomEdEntry> FDoomEdMap;
+
 extern FDoomEdMap DoomEdMap;
+
+void InitActorNumsFromMapinfo();
+
 
 int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);

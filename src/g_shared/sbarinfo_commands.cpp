@@ -525,7 +525,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else if(condition == INVULNERABILITY)
 			{
-				if(statusBar->CPlayer->cheats&CF_GODMODE)
+				if(statusBar->CPlayer->cheats&(CF_GODMODE|CF_GODMODE2))
 				{
 					drawAlt = 1;
 				}
@@ -1730,7 +1730,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 		static int		artiflashTick;
 		static fixed_t	itemflashFade;
 };
-int CommandDrawSelectedInventory::artiflashTick = 4;
+int CommandDrawSelectedInventory::artiflashTick = 0;
 int CommandDrawSelectedInventory::itemflashFade = FRACUNIT*3/4;
 
 void DSBarInfo::FlashItem(const PClass *itemtype)
@@ -3069,8 +3069,7 @@ class CommandHasWeaponPiece : public SBarInfoCommandFlowControl
 					AWeaponHolder *hold = static_cast<AWeaponHolder*>(inv);
 					if(hold->PieceWeapon == weapon)
 					{
-						if(hold->PieceMask & (1 << (piece-1)))
-							SetTruth(true, block, statusBar);
+						SetTruth(0 != (hold->PieceMask & (1 << (piece-1))), block, statusBar);
 						return;
 					}
 				}

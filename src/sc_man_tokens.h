@@ -122,5 +122,6 @@ xx(TK_Array,				"'array'")
 xx(TK_In,					"'in'")
 xx(TK_SizeOf,				"'sizeof'")
 xx(TK_AlignOf,				"'alignof'")
-xx(TK_RandomPick,			"'randompick'")	
+xx(TK_RandomPick,			"'randompick'")
+xx(TK_FRandomPick,			"'frandompick'")
 #undef xx

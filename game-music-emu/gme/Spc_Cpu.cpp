@@ -529,7 +529,7 @@ BOOST::uint8_t* Snes_Spc::run_until_( time_t end_time )\
 	return &REGS [r_cpuio0];\
 }
 
-int const cpu_lag_max = 12 - 1; // DIV YA,X takes 12 clocks
+#define cpu_lag_max (12 - 1) // DIV YA,X takes 12 clocks
 
 void Snes_Spc::end_frame( time_t end_time )
 {

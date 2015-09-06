@@ -46,6 +46,9 @@
 #include "zstring.h"
 #include "vectors.h"
 
+struct PClass;
+typedef TMap<int, const PClass *> FClassMap;
+
 // Since this file is included by everything, it seems an appropriate place
 // to check the NOASM/USEASM macros.
 

@@ -360,6 +360,20 @@ static FColorCVar *cv_overlay[] = {
 	&am_ovsecretsectorcolor
 };
 
+CCMD(am_restorecolors)
+{
+	for (unsigned i = 0; i < countof(cv_standard); i++)
+	{
+		cv_standard[i]->ResetToDefault();
+	}
+	for (unsigned i = 0; i < countof(cv_overlay); i++)
+	{
+		cv_overlay[i]->ResetToDefault();
+	}
+}
+
+
+
 #define NOT_USED 1,0,0	// use almost black as indicator for an unused color
 
 static unsigned char DoomColors[]= {
@@ -1234,7 +1248,7 @@ void AM_initVariables ()
 		for (pnum=0;pnum<MAXPLAYERS;pnum++)
 			if (playeringame[pnum])
 				break;
-  
+	assert(pnum >= 0 && pnum < MAXPLAYERS);
 	m_x = (players[pnum].camera->x >> FRACTOMAPBITS) - m_w/2;
 	m_y = (players[pnum].camera->y >> FRACTOMAPBITS) - m_h/2;
 	AM_changeWindowLoc();
@@ -1935,8 +1949,6 @@ void AM_drawSubsectors()
 		scalex = sec->GetXScale(sector_t::floor);
 		scaley = sec->GetYScale(sector_t::floor);
 
-#ifdef _3DFLOORS
-
 		if (sec->e->XFloor.ffloors.Size())
 		{
 			secplane_t *floorplane = &sec->floorplane;
@@ -1997,7 +2009,6 @@ void AM_drawSubsectors()
 			floorlight = *light->p_lightlevel;
 			colormap = light->extra_colormap;
 		}
-#endif
 		if (maptex == skyflatnum)
 		{
 			continue;
@@ -2153,8 +2164,6 @@ void AM_showSS()
 	}
 }
 
-#ifdef _3DFLOORS
-
 //=============================================================================
 //
 // Determines if a 3D floor boundary should be drawn
@@ -2214,7 +2223,6 @@ bool AM_Check3DFloors(line_t *line)
 	// All 3D floors could be matched so let's not draw a boundary.
 	return false;
 }
-#endif
 
 //=============================================================================
 //
@@ -2345,12 +2353,10 @@ void AM_drawWalls (bool allmap)
 			{
 				AM_drawMline(&l, AMColors.CDWallColor); // ceiling level change
 			}
-#ifdef _3DFLOORS
 			else if (AM_Check3DFloors(&lines[i]))
 			{
 				AM_drawMline(&l, AMColors.EFWallColor); // Extra floor border
 			}
-#endif
 			else if (am_cheat > 0 && am_cheat < 4)
 			{
 				AM_drawMline(&l, AMColors.TSWallColor);

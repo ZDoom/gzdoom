@@ -789,6 +789,8 @@ void I_StartupXInput()
 
 #else	// NO_XINPUT
 
+#include "i_input.h"
+
 void I_StartupXInput()
 {
 	JoyDevices[INPUT_XInput] = NULL;

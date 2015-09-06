@@ -676,13 +676,9 @@ void DPolyDoor::Tick ()
 		break;
 
 	case PODOOR_SWING:
-		if (poly->RotatePolyobj (m_Speed))
+		if (m_Dist <= 0 || poly->RotatePolyobj (m_Speed))
 		{
 			absSpeed = abs (m_Speed);
-			if (m_Dist == -1)
-			{ // perpetual polyobj
-				return;
-			}
 			m_Dist -= absSpeed;
 			if (m_Dist <= 0)
 			{
@@ -1565,8 +1561,8 @@ static void SpawnPolyobj (int index, int tag, int type)
 			sd->linedef->args[0] = 0;
 			IterFindPolySides(&polyobjs[index], sd);
 			po->MirrorNum = sd->linedef->args[1];
-			po->crush = (type != PO_SPAWN_TYPE) ? 3 : 0;
-			po->bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
+			po->crush = (type != SMT_PolySpawn) ? 3 : 0;
+			po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
 			po->tag = tag;
 			po->seqType = sd->linedef->args[2];
 			if (po->seqType < 0 || po->seqType > 63)
@@ -1636,8 +1632,8 @@ static void SpawnPolyobj (int index, int tag, int type)
 		}
 		if (po->Sidedefs.Size() > 0)
 		{
-			po->crush = (type != PO_SPAWN_TYPE) ? 3 : 0;
-			po->bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
+			po->crush = (type != SMT_PolySpawn) ? 3 : 0;
+			po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
 			po->tag = tag;
 			po->seqType = po->Sidedefs[0]->linedef->args[3];
 			po->MirrorNum = po->Sidedefs[0]->linedef->args[2];
@@ -1760,9 +1756,7 @@ void PO_Init (void)
 	for (polyspawn = polyspawns, prev = &polyspawns; polyspawn;)
 	{
 		// 9301 (3001) = no crush, 9302 (3002) = crushing, 9303 = hurting touch
-		if (polyspawn->type == PO_SPAWN_TYPE ||
-			polyspawn->type == PO_SPAWNCRUSH_TYPE ||
-			polyspawn->type == PO_SPAWNHURT_TYPE)
+		if (polyspawn->type >= SMT_PolySpawn &&	polyspawn->type <= SMT_PolySpawnHurt)
 		{ 
 			// Polyobj StartSpot Pt.
 			polyobjs[polyIndex].StartSpot.x = polyspawn->x;
@@ -1782,7 +1776,7 @@ void PO_Init (void)
 	for (polyspawn = polyspawns; polyspawn;)
 	{
 		polyspawns_t *next = polyspawn->next;
-		if (polyspawn->type == PO_ANCHOR_TYPE)
+		if (polyspawn->type == SMT_PolyAnchor)
 		{ 
 			// Polyobj Anchor Pt.
 			TranslateToStartSpot (polyspawn->angle, polyspawn->x, polyspawn->y);

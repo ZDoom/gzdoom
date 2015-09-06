@@ -138,24 +138,12 @@ class FZipFile : public FResourceFile
 {
 	FZipLump *Lumps;
 
-	static int STACK_ARGS lumpcmp(const void * a, const void * b);
-
 public:
 	FZipFile(const char * filename, FileReader *file);
 	virtual ~FZipFile();
 	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
-
-
-
-int STACK_ARGS FZipFile::lumpcmp(const void * a, const void * b)
-{
-	FZipLump * rec1 = (FZipLump *)a;
-	FZipLump * rec2 = (FZipLump *)b;
-
-	return stricmp(rec1->FullName, rec2->FullName);
-}
 
 
 //==========================================================================
@@ -180,7 +168,7 @@ bool FZipFile::Open(bool quiet)
 
 	if (centraldir == 0)
 	{
-		if (!quiet) Printf("\n%s: ZIP file corrupt!\n", Filename);
+		if (!quiet) Printf(TEXTCOLOR_RED "\n%s: ZIP file corrupt!\n", Filename);
 		return false;
 	}
 
@@ -192,7 +180,7 @@ bool FZipFile::Open(bool quiet)
 	if (info.NumEntries != info.NumEntriesOnAllDisks ||
 		info.FirstDisk != 0 || info.DiskNumber != 0)
 	{
-		if (!quiet) Printf("\n%s: Multipart Zip files are not supported.\n", Filename);
+		if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Multipart Zip files are not supported.\n", Filename);
 		return false;
 	}
 
@@ -200,9 +188,10 @@ bool FZipFile::Open(bool quiet)
 	Lumps = new FZipLump[NumLumps];
 
 	// Load the entire central directory. Too bad that this contains variable length entries...
-	void *directory = malloc(LittleLong(info.DirectorySize));
+	int dirsize = LittleLong(info.DirectorySize);
+	void *directory = malloc(dirsize);
 	Reader->Seek(LittleLong(info.DirectoryOffset), SEEK_SET);
-	Reader->Read(directory, LittleLong(info.DirectorySize));
+	Reader->Read(directory, dirsize);
 
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
@@ -216,6 +205,13 @@ bool FZipFile::Open(bool quiet)
 				  LittleShort(zip_fh->NameLength) + 
 				  LittleShort(zip_fh->ExtraLength) + 
 				  LittleShort(zip_fh->CommentLength);
+
+		if (dirptr > ((char*)directory) + dirsize)	// This directory entry goes beyond the end of the file.
+		{
+			free(directory);
+			if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Central directory corrupted.", Filename);
+			return false;
+		}
 		
 		// skip Directories
 		if (name[len - 1] == '/' && LittleLong(zip_fh->UncompressedSize) == 0) 
@@ -233,7 +229,7 @@ bool FZipFile::Open(bool quiet)
 			zip_fh->Method != METHOD_IMPLODE &&
 			zip_fh->Method != METHOD_SHRINK)
 		{
-			if (!quiet) Printf("\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name.GetChars(), zip_fh->Method);
+			if (!quiet) Printf(TEXTCOLOR_YELLOW "\n%s: '%s' uses an unsupported compression algorithm (#%d).\n", Filename, name.GetChars(), zip_fh->Method);
 			skipped++;
 			continue;
 		}
@@ -241,7 +237,7 @@ bool FZipFile::Open(bool quiet)
 		zip_fh->Flags = LittleShort(zip_fh->Flags);
 		if (zip_fh->Flags & ZF_ENCRYPTED)
 		{
-			if (!quiet) Printf("\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name.GetChars());
+			if (!quiet) Printf(TEXTCOLOR_YELLOW "\n%s: '%s' is encrypted. Encryption is not supported.\n", Filename, name.GetChars());
 			skipped++;
 			continue;
 		}
@@ -272,10 +268,9 @@ bool FZipFile::Open(bool quiet)
 	NumLumps -= skipped;
 	free(directory);
 
-	if (!quiet) Printf(", %d lumps\n", NumLumps);
+	if (!quiet) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
 	
-	// Entries in Zips are sorted alphabetically.
-	qsort(Lumps, NumLumps, sizeof(FZipLump), lumpcmp);
+	PostProcessArchive(&Lumps[0], sizeof(FZipLump));
 	return true;
 }
 

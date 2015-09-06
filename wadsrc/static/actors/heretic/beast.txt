@@ -1,10 +1,8 @@
 
 // Beast --------------------------------------------------------------------
 
-ACTOR Beast 70
+ACTOR Beast
 {
-	Game Heretic
-	SpawnID 3
 	Health 220
 	Radius 32
 	Height 74
@@ -61,8 +59,6 @@ ACTOR Beast 70
 
 ACTOR BeastBall
 {
-	Game Heretic
-	SpawnID 120
 	Radius 9
 	Height 8
 	Speed 12

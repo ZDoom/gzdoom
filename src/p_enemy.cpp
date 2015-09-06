@@ -44,6 +44,7 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "r_data/r_translate.h"
 #include "teaminfo.h"
 
 #include "gi.h"
@@ -670,33 +671,39 @@ bool P_TryWalk (AActor *actor)
 
 void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 {
-	dirtype_t	d[3];
+	dirtype_t	d[2];
 	int			tdir;
 	dirtype_t	olddir, turnaround;
+	bool		attempts[NUMDIRS-1]; // We don't need to attempt DI_NODIR.
 
+	memset(&attempts, false, sizeof(attempts));
 	olddir = (dirtype_t)actor->movedir;
 	turnaround = opposite[olddir];
 
 	if (deltax>10*FRACUNIT)
-		d[1]= DI_EAST;
+		d[0]= DI_EAST;
 	else if (deltax<-10*FRACUNIT)
-		d[1]= DI_WEST;
+		d[0]= DI_WEST;
+	else
+		d[0]=DI_NODIR;
+
+	if (deltay<-10*FRACUNIT)
+		d[1]= DI_SOUTH;
+	else if (deltay>10*FRACUNIT)
+		d[1]= DI_NORTH;
 	else
 		d[1]=DI_NODIR;
 
-	if (deltay<-10*FRACUNIT)
-		d[2]= DI_SOUTH;
-	else if (deltay>10*FRACUNIT)
-		d[2]= DI_NORTH;
-	else
-		d[2]=DI_NODIR;
-
 	// try direct route
-	if (d[1] != DI_NODIR && d[2] != DI_NODIR)
+	if (d[0] != DI_NODIR && d[1] != DI_NODIR)
 	{
 		actor->movedir = diags[((deltay<0)<<1) + (deltax>0)];
-		if (actor->movedir != turnaround && P_TryWalk(actor))
-			return;
+		if (actor->movedir != turnaround)
+		{
+			attempts[actor->movedir] = true;
+			if (P_TryWalk(actor))
+				return;
+		}
 	}
 
 	// try other directions
@@ -704,18 +711,19 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	{
 		if ((pr_newchasedir() > 200 || abs(deltay) > abs(deltax)))
 		{
-			swapvalues (d[1], d[2]);
+			swapvalues (d[0], d[1]);
 		}
 
+		if (d[0] == turnaround)
+			d[0] = DI_NODIR;
 		if (d[1] == turnaround)
 			d[1] = DI_NODIR;
-		if (d[2] == turnaround)
-			d[2] = DI_NODIR;
 	}
 		
-	if (d[1] != DI_NODIR)
+	if (d[0] != DI_NODIR && attempts[d[0]] == false)
 	{
-		actor->movedir = d[1];
+		actor->movedir = d[0];
+		attempts[d[0]] = true;
 		if (P_TryWalk (actor))
 		{
 			// either moved forward or attacked
@@ -723,9 +731,10 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 		}
 	}
 
-	if (d[2] != DI_NODIR)
+	if (d[1] != DI_NODIR && attempts[d[1]] == false)
 	{
-		actor->movedir = d[2];
+		actor->movedir = d[1];
+		attempts[d[1]] = true;
 		if (P_TryWalk (actor))
 			return;
 	}
@@ -733,9 +742,10 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	if (!(actor->flags5 & MF5_AVOIDINGDROPOFF))
 	{
 		// there is no direct path to the player, so pick another direction.
-		if (olddir != DI_NODIR)
+		if (olddir != DI_NODIR && attempts[olddir] == false)
 		{
 			actor->movedir = olddir;
+			attempts[olddir] = true;
 			if (P_TryWalk (actor))
 				return;
 		}
@@ -746,9 +756,10 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	{
 		for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
 		{
-			if (tdir != turnaround)
+			if (tdir != turnaround && attempts[tdir] == false)
 			{
 				actor->movedir = tdir;
+				attempts[tdir] = true;
 				if ( P_TryWalk(actor) )
 					return;
 			}
@@ -758,16 +769,17 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	{
 		for (tdir = DI_SOUTHEAST; tdir != (DI_EAST-1); tdir--)
 		{
-			if (tdir != turnaround)
+			if (tdir != turnaround && attempts[tdir] == false)
 			{
 				actor->movedir = tdir;
+				attempts[tdir] = true;
 				if ( P_TryWalk(actor) )
 					return;
 			}
 		}
 	}
 
-	if (turnaround != DI_NODIR)
+	if (turnaround != DI_NODIR && attempts[turnaround] == false)
 	{
 		actor->movedir =turnaround;
 		if ( P_TryWalk(actor) )
@@ -2533,12 +2545,9 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				// use the current actor's radius instead of the Arch Vile's default.
 				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				maxdist = corpsehit->GetDefault()->radius + self->radius;
-
 				if (abs(corpsehit->x - viletryx) > maxdist ||
 					abs(corpsehit->y - viletryy) > maxdist)
 					continue;			// not actually touching
-#ifdef _3DFLOORS
 				// Let's check if there are floors in between the archvile and its target
 				sector_t *vilesec = self->Sector;
 				sector_t *corpsec = corpsehit->Sector;
@@ -2556,14 +2565,13 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 							continue;
 					}
 				}
-#endif
 
 				corpsehit->velx = corpsehit->vely = 0;
 				// [RH] Check against real height and radius
 
 				fixed_t oldheight = corpsehit->height;
 				fixed_t oldradius = corpsehit->radius;
-				int oldflags = corpsehit->flags;
+				ActorFlags oldflags = corpsehit->flags;
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
@@ -2606,7 +2614,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				S_Sound(corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
-				if (corpsehit->state == corpsehit->FindState(NAME_GenericCrush))
+				if (GetTranslationType(corpsehit->Translation) == TRANSLATION_Blood)
 				{
 					corpsehit->Translation = info->Translation; // Clean up bloodcolor translation from crushed corpses
 				}
@@ -2721,7 +2729,14 @@ void A_Chase(AActor *self)
 // A_FaceTracer
 //
 //=============================================================================
-void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
+enum FAF_Flags
+{
+	FAF_BOTTOM = 1,
+	FAF_MIDDLE = 2,
+	FAF_TOP = 4,
+	FAF_NODISTFACTOR = 8,
+};
+void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
 	if (!other)
 		return;
@@ -2738,34 +2753,34 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
-	if (max_turn && (max_turn < (angle_t)abs(self->angle - other_angle)))
+	if (max_turn && (max_turn < absangle(self->angle - other_angle)))
 	{
 		if (self->angle > other_angle)
 		{
 			if (self->angle - other_angle < ANGLE_180)
 			{
-				self->angle -= max_turn;
+				self->angle -= max_turn + ang_offset;
 			}
 			else
 			{
-				self->angle += max_turn;
+				self->angle += max_turn + ang_offset;
 			}
 		}
 		else
 		{
 			if (other_angle - self->angle < ANGLE_180)
 			{
-				self->angle += max_turn;
+				self->angle += max_turn + ang_offset;
 			}
 			else
 			{
-				self->angle -= max_turn;
+				self->angle -= max_turn + ang_offset;
 			}
 		}
 	}
 	else
 	{
-		self->angle = other_angle;
+		self->angle = other_angle + ang_offset;
 	}
 
 	// [DH] Now set pitch. In order to maintain compatibility, this can be
@@ -2776,20 +2791,33 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		// result is only used in a ratio.
 		double dist_x = other->x - self->x;
 		double dist_y = other->y - self->y;
+		
 		// Positioning ala missile spawning, 32 units above foot level
 		fixed_t source_z = self->z + 32*FRACUNIT + self->GetBobOffset();
 		fixed_t target_z = other->z + 32*FRACUNIT + other->GetBobOffset();
+
 		// If the target z is above the target's head, reposition to the middle of
-		// its body.
+		// its body.		
 		if (target_z >= other->z + other->height)
 		{
-			target_z = other->z + other->height / 2;
+			target_z = other->z + (other->height / 2);
 		}
+
+		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
+		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
+		if (flags & FAF_BOTTOM)
+			target_z = other->z + other->GetBobOffset(); 
+		if (flags & FAF_MIDDLE)
+			target_z = other->z + (other->height / 2) + other->GetBobOffset();
+		if (flags & FAF_TOP)
+			target_z = other->z + (other->height) + other->GetBobOffset();
+		if (!(flags & FAF_NODISTFACTOR))
+			target_z += pitch_offset;
+
 		double dist_z = target_z - source_z;
 		double dist = sqrt(dist_x*dist_x + dist_y*dist_y + dist_z*dist_z);
-
 		int other_pitch = (int)rad2bam(asin(dist_z / dist));
-
+		
 		if (max_pitch != 0)
 		{
 			if (self->pitch > other_pitch)
@@ -2807,7 +2835,11 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
 		{
 			self->pitch = other_pitch;
 		}
+		if (flags & FAF_NODISTFACTOR)
+			self->pitch += pitch_offset;
 	}
+	
+
 
 	// This will never work well if the turn angle is limited.
 	if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
@@ -2816,46 +2848,55 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch)
     }
 }
 
-void A_FaceTarget (AActor *self, angle_t max_turn, angle_t max_pitch)
+void A_FaceTarget(AActor *self, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
-	A_Face(self, self->target, max_turn, max_pitch);
+	A_Face(self, self->target, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
-void A_FaceMaster (AActor *self, angle_t max_turn, angle_t max_pitch)
+void A_FaceMaster(AActor *self, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
-	A_Face(self, self->master, max_turn, max_pitch);
+	A_Face(self, self->master, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
-void A_FaceTracer (AActor *self, angle_t max_turn, angle_t max_pitch)
+void A_FaceTracer(AActor *self, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags)
 {
-	A_Face(self, self->tracer, max_turn, max_pitch);
+	A_Face(self, self->tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_ANGLE(max_turn, 0);
 	ACTION_PARAM_ANGLE(max_pitch, 1);
+	ACTION_PARAM_ANGLE(ang_offset, 2);
+	ACTION_PARAM_ANGLE(pitch_offset, 3);
+	ACTION_PARAM_INT(flags, 4);
 
-	A_FaceTarget(self, max_turn, max_pitch);
+	A_FaceTarget(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_ANGLE(max_turn, 0);
 	ACTION_PARAM_ANGLE(max_pitch, 1);
+	ACTION_PARAM_ANGLE(ang_offset, 2);
+	ACTION_PARAM_ANGLE(pitch_offset, 3);
+	ACTION_PARAM_INT(flags, 4);
 
-	A_FaceMaster(self, max_turn, max_pitch);
+	A_FaceMaster(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(5);
 	ACTION_PARAM_ANGLE(max_turn, 0);
 	ACTION_PARAM_ANGLE(max_pitch, 1);
+	ACTION_PARAM_ANGLE(ang_offset, 2);
+	ACTION_PARAM_ANGLE(pitch_offset, 3);
+	ACTION_PARAM_INT(flags, 4);
 
-	A_FaceTracer(self, max_turn, max_pitch);
+	A_FaceTracer(self, max_turn, max_pitch, ang_offset, pitch_offset, flags);
 }
 
 //===========================================================================
@@ -2890,7 +2931,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		FVector2 xydiff(self->target->x - self->x, self->target->y - self->y);
+		TVector2<double> xydiff(self->target->x - self->x, self->target->y - self->y);
 		double zdiff = (self->target->z + (self->target->height>>1)) -
 						(self->z + (self->height>>1) - self->floorclip);
 		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
@@ -3161,10 +3202,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Die)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_NAME(damagetype, 0);
 
-	if (self->flags & MF_MISSILE)
-		P_ExplodeMissile(self, NULL, NULL);
-	else
-		P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
+	P_DamageMobj (self, NULL, NULL, self->health, damagetype, DMG_FORCED);
 }
 
 //

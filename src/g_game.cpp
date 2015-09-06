@@ -1020,11 +1020,11 @@ void G_Ticker ()
 	{
 		if (playeringame[i])
 		{
-			if ((players[i].playerstate == PST_GONE))
+			if (players[i].playerstate == PST_GONE)
 			{
 				G_DoPlayerPop(i);
 			}
-			if ((players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER))
+			if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
 			{
 				G_DoReborn(i, false);
 			}
@@ -1983,10 +1983,25 @@ void G_SaveGame (const char *filename, const char *description)
 		Printf ("A game save is still pending.\n");
 		return;
 	}
-	savegamefile = filename;
-	strncpy (savedescription, description, sizeof(savedescription)-1);
-	savedescription[sizeof(savedescription)-1] = '\0';
-	sendsave = true;
+    else if (!usergame)
+	{
+        Printf ("not in a saveable game\n");
+    }
+    else if (gamestate != GS_LEVEL)
+	{
+        Printf ("not in a level\n");
+    }
+    else if (players[consoleplayer].health <= 0 && !multiplayer)
+    {
+        Printf ("player is dead in a single-player game\n");
+    }
+	else
+	{
+		savegamefile = filename;
+		strncpy (savedescription, description, sizeof(savedescription)-1);
+		savedescription[sizeof(savedescription)-1] = '\0';
+		sendsave = true;
+	}
 }
 
 FString G_BuildSaveName (const char *prefix, int slot)
@@ -2138,7 +2153,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	// Do not even try, if we're not in a level. (Can happen after
 	// a demo finishes playback.)
-	if (lines == NULL || sectors == NULL)
+	if (lines == NULL || sectors == NULL || gamestate != GS_LEVEL)
 	{
 		return;
 	}
@@ -2501,7 +2516,7 @@ bool G_ProcessIFFDemo (FString &mapname)
 	id = ReadLong (&demo_p);
 	if (id != ZDEM_ID)
 	{
-		Printf ("Not a ZDoom demo file!\n");
+		Printf ("Not a " GAMENAME " demo file!\n");
 		return true;
 	}
 
@@ -2526,12 +2541,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 			demover = ReadWord (&demo_p);	// ZDoom version demo was created with
 			if (demover < MINDEMOVERSION)
 			{
-				Printf ("Demo requires an older version of ZDoom!\n");
+				Printf ("Demo requires an older version of " GAMENAME "!\n");
 				//return true;
 			}
 			if (ReadWord (&demo_p) > DEMOGAMEVERSION)	// Minimum ZDoom version
 			{
-				Printf ("Demo requires a newer version of ZDoom!\n");
+				Printf ("Demo requires a newer version of " GAMENAME "!\n");
 				return true;
 			}
 			if (demover >= 0x21a)
@@ -2587,6 +2602,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 
 		if (!bodyHit)
 			demo_p = nextchunk;
+	}
+
+	if (!headerHit)
+	{
+		Printf ("Demo has no header!\n");
+		return true;
 	}
 
 	if (!numPlayers)
@@ -2652,7 +2673,7 @@ void G_DoPlayDemo (void)
 
 	if (ReadLong (&demo_p) != FORM_ID)
 	{
-		const char *eek = "Cannot play non-ZDoom demos.\n";
+		const char *eek = "Cannot play non-" GAMENAME " demos.\n";
 
 		C_ForgetCVars();
 		M_Free(demobuffer);

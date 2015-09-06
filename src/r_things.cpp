@@ -1359,6 +1359,11 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		{
 			noaccel = true;
 		}
+		// If drawing with a BOOM colormap, disable acceleration.
+		if (mybasecolormap == &NormalLight && NormalLight.Maps != realcolormaps)
+		{
+			noaccel = true;
+		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
 		if (!noaccel && realfixedcolormap == NULL &&
@@ -2500,7 +2505,7 @@ void R_DrawParticle (vissprite_t *vis)
 		{
 			DWORD bg = bg2rgb[*dest];
 			bg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k[0][0][bg & (bg>>15)];
+			*dest++ = RGB32k.All[bg & (bg>>15)];
 		} while (--count);
 		dest += spacing;
 	} while (--ycount);

@@ -56,13 +56,13 @@ extern TArray<FSpecialColormap> SpecialColormaps;
 // some utility functions to store special colormaps in powerup blends
 #define SPECIALCOLORMAP_MASK 0x00b60000
 
-inline int MakeSpecialColormap(int index)
+inline uint32 MakeSpecialColormap(int index)
 {
 	assert(index >= 0 && index < 65536);
 	return index | SPECIALCOLORMAP_MASK;
 }
 
-inline bool IsSpecialColormap(int map)
+inline bool IsSpecialColormap(uint32 map)
 {
 	return (map & 0xFFFF0000) == SPECIALCOLORMAP_MASK;
 }

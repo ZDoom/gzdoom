@@ -1959,9 +1959,9 @@ void WI_drawStats (void)
 	}
 	else
 	{
-		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 65, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 90, "ITEMS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
-		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 115, "SECRETS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 65, GStrings("TXT_IMKILLS"), DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 90, GStrings("TXT_IMITEMS"), DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (BigFont, CR_UNTRANSLATED, 50, 115, GStrings("TXT_IMSECRETS"), DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 
 		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
@@ -1978,7 +1978,7 @@ void WI_drawStats (void)
 		}
 		if (sp_state >= 8)
 		{
-			screen->DrawText (BigFont, CR_UNTRANSLATED, 85, 160, "TIME",
+			screen->DrawText (BigFont, CR_UNTRANSLATED, 85, 160, GStrings("TXT_IMTIME"),
 				DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 			WI_drawTime (249, 160, cnt_time);
 			if (wi_showtotaltime)

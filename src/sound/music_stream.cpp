@@ -52,9 +52,14 @@ StreamSong::~StreamSong ()
 	}
 }
 
-StreamSong::StreamSong (const char *filename_or_data, int offset, int len)
+StreamSong::StreamSong (FileReader *reader)
 {
-   	m_Stream = GSnd->OpenStream (filename_or_data, SoundStream::Loop, offset, len);
+    m_Stream = GSnd->OpenStream (reader, SoundStream::Loop);
+}
+
+StreamSong::StreamSong (const char *url)
+{
+    m_Stream = GSnd->OpenStream (url, SoundStream::Loop);
 }
 
 bool StreamSong::IsPlaying ()

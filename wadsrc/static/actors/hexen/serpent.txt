@@ -1,10 +1,8 @@
 
 // Serpent ------------------------------------------------------------------
 
-ACTOR Serpent 121
+ACTOR Serpent
 {
-	Game Hexen
-	SpawnID 6
 	Health 90
 	PainChance 96
 	Speed 12
@@ -102,10 +100,8 @@ ACTOR Serpent 121
 
 // Serpent Leader -----------------------------------------------------------
 
-ACTOR SerpentLeader : Serpent 120
+ACTOR SerpentLeader : Serpent
 {
-	Game Hexen
-	SpawnID 7
 	Mass 200
 	Obituary "$OB_SERPENT"
 	States

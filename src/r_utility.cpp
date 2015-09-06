@@ -62,9 +62,6 @@
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
 
-extern lighttable_t*	fixedcolormap;
-extern FSpecialColormap*realfixedcolormap;
-
 // TYPES -------------------------------------------------------------------
 
 struct InterpolationViewer
@@ -764,6 +761,26 @@ bool R_GetViewInterpolationStatus()
 	return NoInterpolateView;
 }
 
+//==========================================================================
+//
+// QuakePower
+//
+//==========================================================================
+
+static fixed_t QuakePower(fixed_t factor, fixed_t intensity, fixed_t offset)
+{ 
+	fixed_t randumb;
+
+	if (intensity == 0)
+	{
+		randumb = 0;
+	}
+	else
+	{
+		randumb = pr_torchflicker(intensity * 2) - intensity;
+	}
+	return FixedMul(factor, randumb + offset);
+}
 
 //==========================================================================
 //
@@ -875,13 +892,44 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		int intensity = DEarthquake::StaticGetQuakeIntensity (camera);
-		if (intensity != 0)
+		FQuakeJiggers jiggers = { 0, };
+
+		if (DEarthquake::StaticGetQuakeIntensities(camera, jiggers) > 0)
 		{
 			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
 
-			viewx += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
-			viewy += quakefactor * ((pr_torchflicker() % (intensity<<2)) - (intensity<<1));
+			if ((jiggers.RelIntensityX | jiggers.RelOffsetX) != 0)
+			{
+				int ang = (camera->angle) >> ANGLETOFINESHIFT;
+				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityX, jiggers.RelOffsetX);
+				viewx += FixedMul(finecosine[ang], power);
+				viewy += FixedMul(finesine[ang], power);
+			}
+			if ((jiggers.RelIntensityY | jiggers.RelOffsetY) != 0)
+			{
+				int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
+				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityY, jiggers.RelOffsetY);
+				viewx += FixedMul(finecosine[ang], power);
+				viewy += FixedMul(finesine[ang], power);
+			}
+			// FIXME: Relative Z is not relative
+			// [MC]On it! Will be introducing pitch after QF_WAVE.
+			if ((jiggers.RelIntensityZ | jiggers.RelOffsetZ) != 0)
+			{
+				viewz += QuakePower(quakefactor, jiggers.RelIntensityZ, jiggers.RelOffsetZ);
+			}
+			if ((jiggers.IntensityX | jiggers.OffsetX) != 0)
+			{
+				viewx += QuakePower(quakefactor, jiggers.IntensityX, jiggers.OffsetX);
+			}
+			if ((jiggers.IntensityY | jiggers.OffsetY) != 0)
+			{
+				viewy += QuakePower(quakefactor, jiggers.IntensityY, jiggers.OffsetY);
+			}
+			if ((jiggers.IntensityZ | jiggers.OffsetZ) != 0)
+			{
+				viewz += QuakePower(quakefactor, jiggers.IntensityZ, jiggers.OffsetZ);
+			}
 		}
 	}
 
@@ -1050,11 +1098,6 @@ void FCanvasTextureInfo::UpdateAll ()
 {
 	FCanvasTextureInfo *probe;
 
-	// curse Doom's overuse of global variables in the renderer.
-	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
-	unsigned char *savecolormap = fixedcolormap;
-	FSpecialColormap *savecm = realfixedcolormap;
-
 	for (probe = List; probe != NULL; probe = probe->Next)
 	{
 		if (probe->Viewpoint != NULL && probe->Texture->bNeedsUpdate)
@@ -1062,9 +1105,6 @@ void FCanvasTextureInfo::UpdateAll ()
 			Renderer->RenderTextureView(probe->Texture, probe->Viewpoint, probe->FOV);
 		}
 	}
-
-	fixedcolormap = savecolormap;
-	realfixedcolormap = savecm;
 }
 
 //==========================================================================

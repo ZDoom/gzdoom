@@ -56,9 +56,8 @@ DArgs::DArgs()
 //===========================================================================
 
 DArgs::DArgs(const DArgs &other)
-: DObject()
+: DObject(), Argv(other.Argv)
 {
-	Argv = other.Argv;
 }
 
 //===========================================================================
@@ -263,7 +262,6 @@ void DArgs::RemoveArgs(const char *check)
 const char *DArgs::GetArg(int arg) const
 {
 	return ((unsigned)arg < Argv.Size()) ? Argv[arg].GetChars() : NULL;
-		return Argv[arg];
 }
 
 //===========================================================================
@@ -351,7 +349,6 @@ void DArgs::RemoveArg(int argindex)
 void DArgs::CollectFiles(const char *param, const char *extension)
 {
 	TArray<FString> work;
-	DArgs *out = new DArgs;
 	unsigned int i;
 	size_t extlen = extension == NULL ? 0 : strlen(extension);
 

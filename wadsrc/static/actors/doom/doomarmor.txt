@@ -1,10 +1,8 @@
 
 // Armor bonus --------------------------------------------------------------
 
-Actor ArmorBonus : BasicArmorBonus 2015
+Actor ArmorBonus : BasicArmorBonus
 {
-	Game Doom
-	SpawnID 22
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTARMBONUS"
@@ -24,10 +22,8 @@ Actor ArmorBonus : BasicArmorBonus 2015
 
 // Green armor --------------------------------------------------------------
 
-Actor GreenArmor : BasicArmorPickup 2018
+Actor GreenArmor : BasicArmorPickup
 {
-	Game Doom
-	SpawnID 68
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTARMOR"
@@ -45,10 +41,8 @@ Actor GreenArmor : BasicArmorPickup 2018
 
 // Blue armor ---------------------------------------------------------------
 
-Actor BlueArmor : BasicArmorPickup 2019
+Actor BlueArmor : BasicArmorPickup
 {
-	Game Doom
-	SpawnID 69
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTMEGA"

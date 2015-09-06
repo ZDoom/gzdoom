@@ -1,10 +1,8 @@
 
 // Inquisitor ---------------------------------------------------------------
 
-ACTOR Inquisitor 16
+ACTOR Inquisitor
 {
-	Game Strife
-	ConversationID 93,-1,-1
 	Health 1000
 	Speed 12
 	Radius 40
@@ -87,7 +85,6 @@ ACTOR Inquisitor 16
 
 ACTOR InquisitorShot
 {
-	ConversationID 108,-1,-1
 	ReactionTime 15
 	Speed 25
 	Radius 13
@@ -127,7 +124,6 @@ ACTOR InquisitorShot
 
 ACTOR InquisitorArm
 {
-	ConversationID 94
 	Speed 25
 	+NOBLOCKMAP
 	+NOCLIP

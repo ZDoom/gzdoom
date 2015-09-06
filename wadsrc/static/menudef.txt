@@ -795,6 +795,13 @@ OptionValue "AltHUDScale"
 	2, "Pixel double"
 }
 
+OptionValue "AltHUDAmmo"
+{
+	0, "Current weapon"
+	1, "Available weapons"
+	2, "All weapons"
+}
+
 OptionValue "AltHUDTime"
 {
 	0, "Off"
@@ -828,6 +835,7 @@ OptionMenu "AltHUDOptions"
 	Option "Show stamina and accuracy",				"hud_showstats", "OnOff"
 	Option "Show berserk",							"hud_berserk_health", "OnOff"
 	Option "Show weapons",							"hud_showweapons", "OnOff"
+	Option "Show ammo for",							"hud_showammo", "AltHUDAmmo"
 	Option "Show time",								"hud_showtime", "AltHUDTime"
 	Option "Time color",							"hud_timecolor", "TextColors"
 	Option "Show network latency",					"hud_showlag", "AltHUDLag"
@@ -1268,42 +1276,60 @@ OptionMenu "CompatibilityOptions"
 {
 	Title "COMPATIBILITY OPTIONS"
 	Option "Compatibility mode",						"compatmode", "CompatModes", "", 1
+	
 	StaticText " "
+	StaticText "Actor Behavior",1
+	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"	
+	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
+	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
+	Option "Monster movement is affected by effects",	"compat_MBFMONSTERMOVE", "YesNo"
+	Option "Monsters cannot cross dropoffs",			"compat_CROSSDROPOFF", "YesNo"
+	Option "Monsters get stuck over dropoffs",			"compat_DROPOFF", "YesNo"
+	Option "Monsters see invisible players",			"compat_INVISIBILITY", "YesNo"
+	Option "No Minotaur floor flames in water",			"compat_MINOTAUR", "YesNo"
+	Option "Spawn item drops on the floor",				"compat_NOTOSSDROPS", "YesNo"
+	
+	StaticText " "
+	StaticText "DehackEd Behavior",1
+	Option "DEH health settings like Doom2.exe",		"compat_DEHHEALTH", "YesNo"
+	Option "Original A_Mushroom speed in DEH mods",		"compat_MUSHROOM", "YesNo"
+	
+	StaticText " "
+	StaticText "Map/Action Behavior",1
+	Option "All special lines can block <use>",			"compat_USEBLOCKING", "YesNo"
+	Option "Allow any bossdeath for level special",		"compat_ANYBOSSDEATH", "YesNo"
+	Option "Disable BOOM door light effect",			"compat_NODOORLIGHT", "YesNo"
+	Option "Find neighboring light like Doom",			"compat_LIGHT", "YesNo"
 	Option "Find shortest textures like Doom",			"compat_SHORTTEX", "YesNo"
 	Option "Use buggier stair building",				"compat_stairs", "YesNo"
-	Option "Find neighboring light like Doom",			"compat_LIGHT", "YesNo"
-	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
-	Option "Don't let others hear your pickups",		"compat_SILENTPICKUP", "YesNo"
+	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
+	
+	StaticText " "
+	StaticText "Physics Behavior",1
 	Option "Actors are infinitely tall",				"compat_nopassover", "YesNo"
-	Option "Enable wall running",						"compat_WALLRUN", "YesNo"
-	Option "Spawn item drops on the floor",				"compat_NOTOSSDROPS", "YesNo"
-	Option "All special lines can block <use>",			"compat_USEBLOCKING", "YesNo"
-	Option "Disable BOOM door light effect",			"compat_NODOORLIGHT", "YesNo"
-	Option "Raven scrollers use original speed",		"compat_RAVENSCROLL", "YesNo"
-	Option "Use original sound target handling",		"compat_SOUNDTARGET", "YesNo"
-	Option "DEH health settings like Doom2.exe",		"compat_DEHHEALTH", "YesNo"
-	Option "Self ref. sectors don't block shots",		"compat_TRACE", "YesNo"
-	Option "Monsters get stuck over dropoffs",			"compat_DROPOFF", "YesNo"
-	Option "Monsters cannot cross dropoffs",			"compat_CROSSDROPOFF", "YesNo"
-	Option "Monsters see invisible players",			"compat_INVISIBILITY", "YesNo"
 	Option "Boom scrollers are additive",				"compat_BOOMSCROLL", "YesNo"
-	Option "Inst. moving floors are not silent",		"compat_silentinstantfloors", "YesNo"
-	Option "Sector sounds use center as source",		"compat_SECTORSOUNDS", "YesNo"
-	Option "Use Doom heights for missile clipping",		"compat_MISSILECLIP", "YesNo"
-	Option "Allow any bossdeath for level special",		"compat_ANYBOSSDEATH", "YesNo"
-	Option "No Minotaur floor flames in water",			"compat_MINOTAUR", "YesNo"
-	Option "Original A_Mushroom speed in DEH mods",		"compat_MUSHROOM", "YesNo"
-	Option "Monster movement is affected by effects",	"compat_MBFMONSTERMOVE", "YesNo"
-	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"
-	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
-	Option "Invert sprite sorting",						"compat_SPRITESORT", "YesNo"
+	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
+	Option "Enable wall running",						"compat_WALLRUN", "YesNo"
+	Option "Raven scrollers use original speed",		"compat_RAVENSCROLL", "YesNo"
+	Option "Self ref. sectors don't block shots",		"compat_TRACE", "YesNo"
 	Option "Use Doom code for hitscan checks",			"compat_HITSCAN", "YesNo"
-	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
+	Option "Use Doom heights for missile clipping",		"compat_MISSILECLIP", "YesNo"
+
+	
+	StaticText " "
+	StaticText "Rendering Behavior",1
 	Option "Draw polyobjects like Hexen",				"compat_POLYOBJ", "YesNo"
 	Option "Ignore Y offsets on masked midtextures",	"compat_MASKEDMIDTEX", "YesNo"
-	Option "Cannot travel straight NSEW",				"compat_badangles", "YesNo"
-	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
+	Option "Invert sprite sorting",						"compat_SPRITESORT", "YesNo"
+	
+	StaticText " "
+	StaticText "Sound Behavior",1
+	Option "Cripple sound for silent BFG trick",		"compat_soundslots", "YesNo"
+	Option "Don't let others hear your pickups",		"compat_SILENTPICKUP", "YesNo"
+	Option "Inst. moving floors are not silent",		"compat_silentinstantfloors", "YesNo"
+	Option "Sector sounds use center as source",		"compat_SECTORSOUNDS", "YesNo"
 	Option "Sounds stop when actor vanishes",			"compat_soundcutoff", "YesNo"
+	Option "Use original sound target handling",		"compat_SOUNDTARGET", "YesNo"
 	
 	Class "CompatibilityMenu"
 }
@@ -1364,7 +1390,6 @@ OptionString SoundOutputsWindows
 	"WASAPI",		"Vista WASAPI"
 	"ASIO",			"ASIO"
 	"WaveOut",		"WaveOut"
-	"OpenAL",		"OpenAL (very beta)"
 	"No sound",		"No sound"
 }
 
@@ -1382,9 +1407,13 @@ OptionString SoundOutputsUnix
 
 OptionString SoundOutputsMac
 {
-	"Sound Manager",	"Sound Manager"
 	"Core Audio",		"Core Audio"
 	"No sound",			"No sound"
+}
+
+OptionString ALDevices
+{
+	// filled in by the sound code
 }
 
 OptionString OutputFormats
@@ -1418,6 +1447,60 @@ OptionString Resamplers
 	"Spline",		"Spline"
 }
 
+
+OptionString SoundBackends
+{
+	"fmod",		"FMOD Ex"
+	"openal",	"OpenAL"
+	"null",		"No Sound"
+}
+
+OptionString SoundBackendsFModOnly
+{
+	"fmod",		"FMOD Ex"
+	"null",		"No Sound"
+}
+
+OptionString SoundBackendsOpenALOnly
+{
+	"openal",	"OpenAL"
+	"null",		"No Sound"
+}
+
+OptionMenu FMODSoundItems
+{
+	Title "FMOD OPTIONS"
+	Slider	"Underwater cutoff",	"snd_waterlp", 0.0, 2000.0, 50.0, 0
+	IfOption(Windows)
+	{
+		Option "Output system",  "snd_output", "SoundOutputsWindows"
+	}
+	IfOption(Unix)
+	{
+		Option "Output system",  "snd_output", "SoundOutputsUnix"
+	}
+	IfOption(Mac)
+	{
+		Option "Output system",  "snd_output", "SoundOutputsMac"
+	}
+	Option "Output format",      "snd_output_format", "OutputFormats"
+	Option "Speaker mode",       "snd_speakermode", "SpeakerModes"
+	Option "Resampler",          "snd_resampler", "Resamplers"
+	Option "HRTF filter",        "snd_hrtf", "OnOff"
+	StaticText " "
+	Option "Buffer size",			"snd_buffersize", "BufferSizes"
+	Option "Buffer count",			"snd_buffercount", "BufferCounts"
+}
+
+
+OptionMenu OpenALSoundItems
+{
+	Title "OPENAL OPTIONS"
+	Option "Playback device",	"snd_aldevice",	"ALDevices"
+	Option "Enable EFX",		"snd_efx",		"OnOff"
+}
+
+
 OptionValue MidiDevices
 {
 	// filled in by the sound code
@@ -1432,28 +1515,39 @@ OptionMenu SoundOptions
 	Option "MIDI device",		"snd_mididevice", "MidiDevices"
 	StaticText " "
 	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
-	Slider "Underwater cutoff",	"snd_waterlp", 0, 2000, 50, 0
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
-	Command "Restart sound",	"snd_reset"
+
+	ifoption(fmodex)
+	{
+		ifoption(openal)
+		{
+			Option "Sound backend",		"snd_backend", "SoundBackends"
+		}
+		else
+		{
+			Option "Sound backend",		"snd_backend", "SoundBackendsFModOnly"
+		}
+	}
+	else
+	{
+		ifoption(openal)
+		{
+			Option "Sound backend",		"snd_backend", "SoundBackendsOpenALOnly"
+		}
+	}
+	
+	ifoption(fmodex)
+	{
+		Submenu "FMOD options",		"FMODSoundItems"
+	}
+	ifoption(openal)
+	{
+		Submenu "OpenAL options",	"OpenALSoundItems"
+	}
 	StaticText " "
-	IfOption(Windows)
-	{
-		Option "Output system",		"snd_output", "SoundOutputsWindows"
-	}
-	IfOption(Unix)
-	{
-		Option "Output system",		"snd_output", "SoundOutputsUnix"
-	}
-	IfOption(Mac)
-	{
-		Option "Output system",		"snd_output", "SoundOutputsMac"
-	}
-	Option "Output format",		"snd_output_format", "OutputFormats"
-	Option "Speaker mode",		"snd_speakermode", "SpeakerModes"
-	Option "Resampler",			"snd_resampler", "Resamplers"
-	Option "HRTF filter",		"snd_hrtf", "OnOff"
+	Command "Restart sound",	"snd_reset"
 
 	StaticText " "
 	Submenu "Advanced options",			"AdvSoundOptions"
@@ -1487,8 +1581,6 @@ OptionMenu AdvSoundOptions
 {
 	Title "ADVANCED SOUND OPTIONS"
 	Option "Sample rate",			"snd_samplerate", "SampleRates"
-	Option "Buffer size",			"snd_buffersize", "BufferSizes"
-	Option "Buffer count",			"snd_buffercount", "BufferCounts"
 	StaticText " "
 	StaticText "OPL Synthesis",	1
 	Slider "Number of emulated OPL chips", "opl_numchips", 1, 8, 1, 0
@@ -1510,26 +1602,29 @@ OptionMenu AdvSoundOptions
 
 OptionValue ModReplayers
 {
-	0.0, "FMOD"
+	0.0, "Sound System"
 	1.0, "foo_dumb"
 }
 
 
-OptionValue ModInterpolations
+OptionValue ModQuality
 {
-	0.0, "None"
+	0.0, "Aliasing"
 	1.0, "Linear"
 	2.0, "Cubic"
+	3.0, "Band-limited step"		// BLEP
+	4.0, "Linear (Slower)"
+	5.0, "Band-limited linear"		// BLAM
+	6.0, "Cubic (Slower)"
+	7.0, "Sinc"
 }
 
 
 OptionValue ModVolumeRamps
 {
 	0.0, "None"
-	1.0, "Logarithmic"
-	2.0, "Linear"
-	3.0, "XM=lin, else none"
-	4.0, "XM=lin, else log"
+	1.0, "Note on/off only"
+	2.0, "Full ramping"
 }
 
 
@@ -1539,7 +1634,7 @@ OptionMenu ModReplayerOptions
 	Option "Replayer engine",		"mod_dumb", "ModReplayers"
 	StaticText " "
 	Option "Sample rate",			"mod_samplerate", "SampleRates", "mod_dumb"
-	Option "Interpolation",			"mod_interp", "ModInterpolations", "mod_dumb"
+	Option "Quality",				"mod_interp", "ModQuality", "mod_dumb"
 	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps", "mod_dumb"
 	StaticText " "
 	Option "Chip-o-matic",			"mod_autochip", "OnOff", "mod_dumb"
@@ -1586,6 +1681,10 @@ OptionMenu VideoModeMenu
 	Title "VIDEO MODE"
 	
 	Option "Fullscreen",			"fullscreen", "YesNo"
+	IfOption(Mac)
+	{
+		Option "Retina/HiDPI support", "vid_hidpi", "YesNo"
+	}
 	Option "Aspect ratio",			"menu_screenratios", "Ratios"
 	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
 	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"

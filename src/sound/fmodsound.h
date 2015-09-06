@@ -2,6 +2,8 @@
 #define FMODSOUND_H
 
 #include "i_sound.h"
+
+#ifndef NO_FMOD
 #include "fmod_wrap.h"
 
 class FMODSoundRenderer : public SoundRenderer
@@ -22,9 +24,8 @@ public:
 
 	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffsamples, int flags, int samplerate, void *userdata);
-	SoundStream *OpenStream (const char *filename, int flags, int offset, int length);
-	long PlayStream (SoundStream *stream, int volume);
-	void StopStream (SoundStream *stream);
+    SoundStream *OpenStream (FileReader *reader, int flags);
+	SoundStream *OpenStream (const char *url, int flags);
 
 	// Starts a sound.
 	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);
@@ -125,4 +126,5 @@ private:
 	friend class FMODStreamCapsule;
 };
 
+#endif
 #endif

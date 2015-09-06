@@ -1,13 +1,10 @@
 // Super map ----------------------------------------------------------------
 
-ACTOR SuperMap : MapRevealer 35
+ACTOR SuperMap : MapRevealer
 {
-	Game Heretic
-	SpawnID 137
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	+FLOATBOB
-	+NOGRAVITY
 	Inventory.MaxAmount 0
 	Inventory.PickupMessage "$TXT_ITEMSUPERMAP"
 	States
@@ -21,13 +18,10 @@ ACTOR SuperMap : MapRevealer 35
 
 // Invisibility -------------------------------------------------------------
 
-ACTOR ArtiInvisibility : PowerupGiver 75
+ACTOR ArtiInvisibility : PowerupGiver
 {
-	Game Heretic
-	SpawnID 135
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	RenderStyle Translucent
 	Alpha 0.4
@@ -47,13 +41,10 @@ ACTOR ArtiInvisibility : PowerupGiver 75
  
 // Tome of power ------------------------------------------------------------
 
-ACTOR ArtiTomeOfPower : PowerupGiver 86 native
+ACTOR ArtiTomeOfPower : PowerupGiver native
 {
-	Game Heretic
-	SpawnID 134
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	Inventory.Icon "ARTIPWBK"
 	Powerup.Type Weaponlevel2
@@ -91,13 +82,10 @@ ACTOR ActivatedTimeBomb
 }
 
 
-ACTOR ArtiTimeBomb : Inventory 34 native
+ACTOR ArtiTimeBomb : Inventory native
 {
-	Game Heretic
-	SpawnID 72
 	+COUNTITEM
 	+FLOATBOB
-	+NOGRAVITY
 	+INVENTORY.PICKUPFLASH
 	+INVENTORY.INVBAR
 	+INVENTORY.FANCYPICKUPSOUND

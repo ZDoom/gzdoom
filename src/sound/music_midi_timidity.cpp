@@ -2,6 +2,7 @@
 #include "c_cvars.h"
 #include "cmdlib.h"
 #include "templates.h"
+#include "version.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -20,9 +21,11 @@ void ChildSigHandler (int signum)
 #endif
 
 #ifdef _WIN32
+
+
 BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode);
 
-static char TimidityTitle[] = "TiMidity (ZDoom Launched)";
+static char TimidityTitle[] = "TiMidity (" GAMENAME " Launched)";
 const char TimidityPPMIDIDevice::EventName[] = "TiMidity Killer";
 
 CVAR (String, timidity_exe, "timidity.exe", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -347,7 +350,7 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 	}
 	if (!good)
 	{
-		Printf(PRINT_BOLD, "ZDoom requires a special version of TiMidity++\n");
+		Printf(PRINT_BOLD, GAMENAME " requires a special version of TiMidity++\n");
 	}
 
 	UnmapViewOfFile((LPVOID)exeBase);
@@ -608,7 +611,7 @@ int TimidityPPMIDIDevice::Resume()
 	{
 		if (LaunchTimidity())
 		{
-			// Assume success if not mixing with FMOD
+			// Assume success if not mixing with the sound system
 			if (Stream == NULL || Stream->Play(true, timidity_mastervolume))
 			{
 				Started = true;

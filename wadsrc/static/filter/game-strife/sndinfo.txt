@@ -1,0 +1,315 @@
+
+/****************************************************************************/
+/*																			*/
+/* STRIFE SOUNDS															*/
+/*																			*/
+/****************************************************************************/
+
+$rolloff * 200 1200
+
+$playersound	player	male	*death		dspldeth
+$playersound	player	male	*xdeath		dsplxdth
+$playersound	player	male	*gibbed		dsslop
+$playersound	player	male	*pain100	dsplpain
+$playersounddup	player	male	*pain75		*pain100
+$playersounddup	player	male	*pain50		*pain100
+$playersounddup	player	male	*pain25		*pain100
+$playersound	player	male	*grunt		dsoof
+$playersounddup	player	male	*land		*grunt
+$playersound	player	male	*jump		dsjump
+$playersound	player	male	*fist		dspunch
+$playersound	player	male	*usefail	dsnoway
+
+$playersound	player	female	*death		dsfldeth
+$playersound	player	female	*xdeath		dsfdiehi
+$playersound	player	female	*gibbed		dsslop
+$playersound	player	female	*pain100	dsflpain
+$playersounddup	player	female	*pain75		*pain100
+$playersounddup	player	female	*pain50		*pain100
+$playersounddup	player	female	*pain25		*pain100
+$playersound	player	female	*grunt		dsfoof
+$playersounddup	player	female	*land		*grunt
+$playersound	player	female	*jump		dsfjump
+$playersound	player	female	*fist		dspunch
+$playersound	player	female	*usefail	dsfnoway
+
+$playersound	player	other	*death		dscldeth
+$playersound	player	other	*xdeath		dscdiehi
+$playersound	player	other	*gibbed		dsslop
+$playersound	player	other	*pain100	dsclpain
+$playersounddup	player	other	*pain75		*pain100
+$playersounddup	player	other	*pain50		*pain100
+$playersounddup	player	other	*pain25		*pain100
+$playersound	player	other	*grunt		dscoof
+$playersounddup	player	other	*land		*grunt
+$playersound	player	other	*jump		dscjump
+$playersound	player	other	*fist		dspunch
+$playersound	player	other	*usefail	dscnoway
+
+weapons/xbowshoot	dsxbow
+weapons/xbowhit		dsfirxpl
+weapons/assaultgun	dsrifle
+weapons/minimissile	dsrlaunc
+weapons/minimissilehit	dsmislht
+weapons/flamethrower	dsflburn
+weapons/flameidle	dsflidl
+weapons/mauler1		dspgrdat
+weapons/mauler2charge	dsproton
+weapons/mauler2fire	dsprotfl
+weapons/mauler2hit	dsexplod
+weapons/hegrenadeshoot	dsphoot
+weapons/hegrenadebang	dsexplod
+weapons/phgrenadeshoot	dsphoot
+weapons/phgrenadebang	dsexplod
+weapons/sigil		dssigil
+weapons/sigilhit	dssglhit
+weapons/sigilcharge	dssiglup
+
+monsters/rifle		dsrifle
+
+switches/normbutn 	dsswtchn
+$alias switches/exitbutn 	switches/normbutn
+switches/chain		dspulchn
+switches/knob		dsswknob
+switches/keycard	dskeycrd
+switches/stone		dsswston
+switches/bolt		dsswbolt
+switches/boltback	dsempty
+switches/scanner	dsswscan
+switches/fool		dsdifool
+switches/valve		dsvalve
+switches/sizzle		dsfirxpl
+
+world/glassbreak	dsbglass
+world/barrelx		dsbarexp
+world/smallfire		dssmfire
+world/largefire		dslgfire
+world/river		dswriver
+world/waterfall		dswfall
+world/waterdrip		dswdrip
+world/watersplash	dswsplsh
+
+$limit world/river	1
+$limit world/waterfall	1
+$limit world/waterdrip	1
+
+world/drip		dsempty		// These four satisfy the Heretic/Hexen terrain definitions
+world/sludgegloop	dsempty
+world/lavasizzle	dsempty
+world/lavasizzle 	dsempty
+
+menu/activate		dsswtchn	// Activate a new menu
+menu/backup		dsswtchn	// Backup to previous menu
+menu/prompt		dsswtchn	// Activate a prompt "menu"
+menu/cursor		dspstop		// Move cursor up/down
+menu/change		dsstnmov	// Select new value for option
+menu/invalid		dsoof		// Menu not available
+menu/dismiss		dsswish		// Dismiss a prompt message
+menu/choose		dsrifl		// Choose a menu item
+menu/clear		dsmtalht	// Close top menu
+
+misc/startupdone	dspsdtha
+misc/teleport		dstelept
+misc/swish		dsswish
+misc/meathit		dsmeatht
+misc/metalhit		dsmtalht
+misc/pcrush			dspcrush
+misc/gibbed			dsslop
+misc/explosion			dsexplod
+misc/reactor			dsreactr
+misc/missileinflight	dsrflite
+misc/static		dsstatic
+misc/chant		dschant
+misc/alarm		dsalarm
+misc/disruptordeath	dsdsrptr
+$singular misc/alarm
+
+misc/secret			dsyeah
+misc/w_pkup			dswpnup
+misc/p_pkup			dsyeah
+misc/i_pkup			dsitemup
+misc/k_pkup			dsitemup
+misc/spawn			dsitmbk
+misc/chat			dsradio
+misc/invuse			dsitemup
+misc/mask			dsmask
+
+plats/pt1_strt			dspstart
+plats/pt1_stop			dspstop
+plats/pt1_mid			dsstnmov
+
+doors/dr2_open			dsbdopn
+doors/dr2_clos			dsbdcls
+
+doors/stone_open		dsdrston
+doors/stone_close		dsdrston
+
+doors/large_metal_open		dsdrlmto
+doors/large_metal_close		dsdrlmtc
+
+doors/small_metal_open		dsdrsmto
+doors/small_metal_close		dsdrsmtc
+
+doors/large_wood_open		dsdrlwud
+doors/large_wood_close		dsdrlwud
+
+doors/small_wood_open		dsdrswud
+doors/small_wood_close		dsdrswud
+
+doors/airlock_open		dsairlck
+doors/airlock_close		dsairlck
+
+doors/chain_open		dsdrchno
+doors/chain_close		dsdrchnc
+
+woodenbarrel/death		dswbrldt
+
+human/imonfire		dsburnme
+
+ambient/alien1		dsamaln1
+ambient/alien2		dsamaln2
+ambient/alien3		dsamaln3
+ambient/alien4		dsamaln4
+ambient/alien5		dsamaln5
+ambient/alien6		dsamaln6
+
+reaver/sight		dsrevsee
+reaver/pain		dsreavpn
+reaver/death		dsrevdth
+reaver/active		dsrevact
+reaver/attack		dsreavat
+reaver/blade		dsrevbld
+
+crusader/sight		dsrb2see
+crusader/pain		dsrb2pn
+crusader/death		dsrb2dth
+crusader/active		dsrb2act
+crusader/misl		dsrlaunc
+crusader/mislx		dsmislht
+
+bishop/sight		dsrb2see
+bishop/pain		dsrb2pn
+bishop/death		dspgrdth
+bishop/active		dsrb2act
+bishop/misl		dsrlaunc
+bishop/mislx		dsmislht
+
+sentinel/sight		dssntsee
+sentinel/death		dssntdth
+sentinel/active		dssntact
+sentinel/plasma		dsplasma
+
+$random peasant/pain 	{ peasant/pain1 peasant/pain2 peasant/pain3 peasant/pain4 }
+peasant/pain1		dspespna
+peasant/pain2		dspespnb
+peasant/pain3		dspespnc
+peasant/pain4		dspespnd
+
+//$random peasant/death	{ peasant/death1 peasant/death2 peasant/death3 }
+$alias peasant/death	peasant/death1
+peasant/death1		dspsdtha
+peasant/death2		dspsdthb
+peasant/death3		dspsdthc
+
+peasant/sight 		dsrebact
+peasant/attack		dsmeatht
+peasant/active		dsrebact
+
+beggar/attack		dsmeatht
+$alias beggar/pain	peasant/pain
+$alias beggar/death	peasant/death
+
+rebel/sight		dswpnup
+$alias rebel/pain	peasant/pain
+rebel/death		dsrebdth
+rebel/active		dsrebact
+
+barkeep/pain		dsambbar
+barkeep/active		dsambppl
+$singular barkeep/pain
+$singular barkeep/active
+
+$alias smith/pain	peasant/pain
+$alias armorer/pain	peasant/pain
+$alias medic/pain	peasant/pain
+$alias zombie/death	peasant/death
+$alias becoming/death	peasant/death
+zombie/spawner		dstelept
+
+acolyte/sight		dsagrsee
+acolyte/pain		dsagrdpn
+acolyte/death		dsagrdth
+acolyte/rifle		dsrifle
+$random acolyte/active	{ acolyte/active1 acolyte/active2 acolyte/active3 acolyte/active4 }
+acolyte/active1		dsagrac1
+acolyte/active2		dsagrac2
+acolyte/active3		dsagrac3
+acolyte/active4		dsagrac4
+
+macil/sight		dsagrsee
+$alias macil/pain	peasant/pain
+macil/active		dsrebact
+macil/slop		dsslop
+
+alienspectre/sight	dsalnsee
+alienspectre/blade	dsrevbld
+alienspectre/pain	dsalnpn
+alienspectre/death	dsalndth
+alienspectre/active	dsalnact
+
+turret/death		dsmislht
+
+ore/explode		dsexplod
+
+rat/sight		dsratact
+rat/death		dsratact
+rat/active		dsratact
+$singular rat/sight
+
+loremaster/chain	dschain
+loremaster/swish	dsswish
+loremaster/sight	dslorsee
+loremaster/attack	dsrevbld
+loremaster/pain		dslorpn
+loremaster/death	dsslop
+loremaster/active	dstend
+
+stalker/sight		dsspisit
+stalker/attack		dsspdatk
+stalker/pain		dsspdatk
+stalker/death		dsspidth
+stalker/active		dsspisit
+stalker/walk		dsspdwlk
+
+templar/sight		dspgrsee
+templar/pain		dspgrdpn
+templar/death		dspgrdth
+templar/active		dspgract
+templar/shoot		dspgrdat
+
+inquisitor/sight	dsinqsee
+inquisitor/death	dsinqdth
+inquisitor/active	dsinqact
+inquisitor/walk		dsinqact
+inquisitor/jump		dsinqjmp
+inquisitor/attack	dsphoot
+inquisitor/atkexplode	dsexplod
+
+programmer/clank	dsmtalht
+programmer/attack	dsrevbld	// Unused?
+programmer/pain		dsprgpn
+programmer/death	dsrb2dth
+programmer/active	dsprogac
+
+entity/sight		dsmnalse
+entity/melee		dsrevbld
+entity/pain		dsalnpn
+entity/death		dsmnaldt
+entity/active		dsalnact
+
+$alias				intermission/tick			weapons/assaultgun
+$alias				intermission/cooptotal		*death
+$alias				intermission/nextstage		misc/explosion
+$alias				intermission/paststats		world/barrelx
+$alias				intermission/pastcoopstats	world/barrelx
+$alias				intermission/pastdmstats	*gibbed

@@ -105,7 +105,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
 	morphed->flags2 |= actor->flags2 & MF2_FLY;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
-	Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	AActor *eflash = Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	actor->player = NULL;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
@@ -137,14 +137,9 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 				hxarmor->Slots[3] = 0;
 				hxarmor->Slots[4] = spawntype->Meta.GetMetaFixed (APMETA_Hexenarmor0);
 			}
-			else if (item->ItemFlags & IF_KEEPDEPLETED)
-			{
-				// Set depletable armor to 0 (this includes BasicArmor).
-				item->Amount = 0;
-			}
 			else
 			{
-				item->Destroy ();
+				item->DepleteOrDestroy();
 			}
 		}
 		item = next;
@@ -156,6 +151,8 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 		p->camera = morphed;
 	}
 	morphed->ScoreIcon = actor->ScoreIcon;	// [GRB]
+	if (eflash)	
+		eflash->target = p->mo;
 	return true;
 }
 
@@ -228,7 +225,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->angle = pmo->angle;
 	mo->player = player;
 	mo->reactiontime = 18;
-	mo->flags = pmo->special2 & ~MF_JUSTHIT;
+	mo->flags = ActorFlags::FromInt (pmo->special2) & ~MF_JUSTHIT;
 	mo->velx = 0;
 	mo->vely = 0;
 	player->velx = 0;
@@ -310,9 +307,11 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	}
 
 	angle = mo->angle >> ANGLETOFINESHIFT;
+	AActor *eflash = NULL;
 	if (exit_flash != NULL)
 	{
-		Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		eflash = Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		if (eflash)	eflash->target = mo;
 	}
 	mo->SetupWeaponSlots();		// Use original class's weapon slots.
 	beastweap = player->ReadyWeapon;
@@ -411,7 +410,9 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
-	Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	AActor *eflash = Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	if (eflash)
+		eflash->target = morphed;
 	return true;
 }
 
@@ -438,7 +439,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	actor->SetOrigin (beast->x, beast->y, beast->z);
 	actor->flags |= MF_SOLID;
 	beast->flags &= ~MF_SOLID;
-	int beastflags6 = beast->flags6;
+	ActorFlags6 beastflags6 = beast->flags6;
 	beast->flags6 &= ~MF6_TOUCHY;
 	if (!force && !P_TestMobjLocation (actor))
 	{ // Didn't fit
@@ -471,7 +472,9 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	DObject::StaticPointerSubstitution (beast, actor);
 	const PClass *exit_flash = beast->MorphExitFlash;
 	beast->Destroy ();
-	Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	AActor *eflash = Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	if (eflash)
+		eflash->target = actor;
 	return true;
 }
 
@@ -529,24 +532,26 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 	{
 		AMorphedMonster *fakeme = static_cast<AMorphedMonster *>(actor);
 		AActor *realme = fakeme->UnmorphedMe;
-		if ((fakeme->UnmorphTime) &&
-			(fakeme->MorphStyle & MORPH_UNDOBYDEATH) &&
-			(realme))
+		if (realme != NULL)
 		{
-			int realstyle = fakeme->MorphStyle;
-			int realhealth = fakeme->health;
-			if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+			if ((fakeme->UnmorphTime) &&
+				(fakeme->MorphStyle & MORPH_UNDOBYDEATH))
 			{
-				*morphed = realme;
-				*morphedstyle = realstyle;
-				*morphedhealth = realhealth;
-				return true;
+				int realstyle = fakeme->MorphStyle;
+				int realhealth = fakeme->health;
+				if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+				{
+					*morphed = realme;
+					*morphedstyle = realstyle;
+					*morphedhealth = realhealth;
+					return true;
+				}
 			}
-		}
-		if (realme->flags4 & MF4_BOSSDEATH)
-		{
-			realme->health = 0;	// make sure that A_BossDeath considers it dead.
-			CALL_ACTION(A_BossDeath, realme);
+			if (realme->flags4 & MF4_BOSSDEATH)
+			{
+				realme->health = 0;	// make sure that A_BossDeath considers it dead.
+				CALL_ACTION(A_BossDeath, realme);
+			}
 		}
 		fakeme->flags3 |= MF3_STAYMORPHED; // moved here from AMorphedMonster::Die()
 		return false;

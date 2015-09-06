@@ -2,15 +2,13 @@
 
 // Mini Zorch -----------------------------------------------------------------
 
-actor MiniZorchRecharge : Clip 2007
+actor MiniZorchRecharge : Clip
 {
-	Game Chex
 	inventory.pickupmessage "$GOTZORCHRECHARGE"
 }
 
-actor MiniZorchPack : Clip 2048
+actor MiniZorchPack : Clip
 {
-	Game Chex
 	Inventory.PickupMessage "$GOTMINIZORCHPACK"
 	Inventory.Amount 50
 	States
@@ -23,15 +21,13 @@ actor MiniZorchPack : Clip 2048
 
 // Large Zorch ----------------------------------------------------------------
 
-actor LargeZorchRecharge : Shell 2008
+actor LargeZorchRecharge : Shell
 {
-	Game Chex
 	inventory.pickupmessage "$GOTLARGEZORCHERRECHARGE"
 }
 
-actor LargeZorchPack : Shell 2049
+actor LargeZorchPack : Shell
 {
-	Game Chex
 	Inventory.PickupMessage "$GOTLARGEZORCHERPACK"
 	Inventory.Amount 20
 	States
@@ -44,15 +40,13 @@ actor LargeZorchPack : Shell 2049
 
 // Zorch Propulsor ------------------------------------------------------------
 
-actor PropulsorZorch : RocketAmmo 2010
+actor PropulsorZorch : RocketAmmo
 {
-	Game Chex
 	inventory.pickupmessage "$GOTPROPULSORRECHARGE"
 }
 
-actor PropulsorZorchPack : RocketAmmo 2046
+actor PropulsorZorchPack : RocketAmmo
 {
-	Game Chex
 	Inventory.PickupMessage "$GOTPROPULSORPACK"
 	Inventory.Amount 5
 	States
@@ -65,16 +59,13 @@ actor PropulsorZorchPack : RocketAmmo 2046
 
 // Phasing Zorch --------------------------------------------------------------
 
-actor PhasingZorch : Cell 2047
+actor PhasingZorch : Cell
 {
-	Game Chex
 	inventory.pickupmessage "$GOTPHASINGZORCHERRECHARGE"
 }
 
-actor PhasingZorchPack : Cell 17
+actor PhasingZorchPack : Cell
 {
-	Game Chex
-	SpawnID 142
 	Inventory.PickupMessage "$GOTPHASINGZORCHERPACK"
 	Inventory.Amount 100
 	States

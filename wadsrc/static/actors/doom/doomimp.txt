@@ -3,10 +3,8 @@
 // Imp
 //
 //===========================================================================
-ACTOR DoomImp 3001
+ACTOR DoomImp
 {
-	Game Doom
-	SpawnID 5
 	Health 60
 	Radius 20
 	Height 56
@@ -66,8 +64,6 @@ ACTOR DoomImp 3001
 //===========================================================================
 ACTOR DoomImpBall
 {
-	Game Doom
-	SpawnID 10
 	Radius 6
 	Height 8
 	Speed 10

@@ -1281,6 +1281,14 @@ TXT_LEADBOOTSOFF = "LEAD BOOTS OFF";
 TXT_LIGHTER = "You feel lighter";
 TXT_GRAVITY = "Gravity weighs you down";
 
+// Raven intermission
+
+TXT_IMKILLS = "KILLS";
+TXT_IMITEMS = "ITEMS";
+TXT_IMSECRETS = "SECRETS";
+TXT_IMTIME = "TIME";
+
+
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
 
 // Hexen strings

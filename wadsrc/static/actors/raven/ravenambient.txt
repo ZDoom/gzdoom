@@ -2,10 +2,8 @@
 
 // Wind ---------------------------------------------------------------------
 
-ACTOR SoundWind 42
+ACTOR SoundWind
 {
-	Game Heretic
-	SpawnID 110
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH
@@ -17,19 +15,15 @@ ACTOR SoundWind 42
 	}
 }
 
-ACTOR SoundWindHexen : SoundWind 1410
+ACTOR SoundWindHexen : SoundWind
 {
-	Game Hexen
-	SpawnID 110
 }
 
 
 // Waterfall ----------------------------------------------------------------
 
-ACTOR SoundWaterfall 41
+ACTOR SoundWaterfall
 {
-	Game Heretic
-	SpawnID 111
 	+NOBLOCKMAP
 	+NOSECTOR
 	+DONTSPLASH

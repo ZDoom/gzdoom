@@ -301,14 +301,14 @@ void APathFollower::Tick ()
 		bJustStepped = false;
 		if (CurrNode->args[2])
 		{
-			HoldTime = gametic + CurrNode->args[2] * TICRATE / 8;
+			HoldTime = level.time + CurrNode->args[2] * TICRATE / 8;
 			x = CurrNode->x;
 			y = CurrNode->y;
 			z = CurrNode->z;
 		}
 	}
 
-	if (HoldTime > gametic)
+	if (HoldTime > level.time)
 		return;
 
 	// Splines must have a previous node.
@@ -603,9 +603,9 @@ void AActorMover::Deactivate (AActor *activator)
 		if (tracer != NULL)
 		{
 			tracer->UnlinkFromWorld ();
-			tracer->flags = special1;
+			tracer->flags = ActorFlags::FromInt (special1);
 			tracer->LinkToWorld ();
-			tracer->flags2 = special2;
+			tracer->flags2 = ActorFlags2::FromInt (special2);
 		}
 	}
 }

@@ -1,10 +1,8 @@
 
 // The Fighter's Hammer -----------------------------------------------------
 
-ACTOR FWeapHammer : FighterWeapon 123
+ACTOR FWeapHammer : FighterWeapon
 {
-	Game Hexen
-	SpawnID 28
 	+BLOODSPLATTER
 	Weapon.SelectionOrder 900
 	+WEAPON.AMMO_OPTIONAL +WEAPON.MELEEWEAPON

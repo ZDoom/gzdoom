@@ -1,4 +1,4 @@
-ACTOR InterpolationPoint 9070 native
+ACTOR InterpolationPoint native
 {
 	+NOBLOCKMAP
 	+NOGRAVITY
@@ -6,7 +6,7 @@ ACTOR InterpolationPoint 9070 native
 	RenderStyle None
 }
 
-ACTOR InterpolationSpecial 9075 native
+ACTOR InterpolationSpecial native
 {
 	+NOBLOCKMAP
 	+NOSECTOR
@@ -14,7 +14,7 @@ ACTOR InterpolationSpecial 9075 native
 	+DONTSPLASH
 }
 
-ACTOR PathFollower 9071 native
+ACTOR PathFollower native
 {
 	+NOBLOCKMAP
 	+NOSECTOR
@@ -22,11 +22,11 @@ ACTOR PathFollower 9071 native
 	+DONTSPLASH
 }
 
-ACTOR ActorMover : PathFollower 9074 native
+ACTOR ActorMover : PathFollower native
 {
 }
 
-ACTOR MovingCamera : PathFollower 9072 native
+ACTOR MovingCamera : PathFollower native
 {
 }
 

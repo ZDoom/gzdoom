@@ -1562,11 +1562,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 	if (player != NULL)
 	{
 		player->mo = mo;
-		if (player->camera == self)
-		{
-			player->camera = mo;
-		}
 		player->damagecount = 32;
+	}
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] && players[i].camera == self)
+		{
+			players[i].camera = mo;
+		}
 	}
 }
 

@@ -1359,7 +1359,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		// Temporarily adjusts the pitch
 		fixed_t SavedPlayerPitch = self->pitch;
 		self->pitch -= pitch;
-		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &linetarget, NULL, false, Flags & FPF_NOAUTOAIM);
+		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &linetarget, NULL, false, (Flags & FPF_NOAUTOAIM) != 0);
 		self->pitch = SavedPlayerPitch;
 
 		// automatic handling of seeker missiles
